@@ -1441,6 +1441,15 @@ bool ParmVarDecl::isParameterPack() const {
   return isa<PackExpansionType>(getType());
 }
 
+void ParmVarDecl::setParameterIndexLarge(unsigned parameterIndex) {
+  getASTContext().setParameterIndex(this, parameterIndex);
+  ParmVarDeclBits.ParameterIndex = ParameterIndexSentinel;
+}
+
+unsigned ParmVarDecl::getParameterIndexLarge() const {
+  return getASTContext().getParameterIndex(this);
+}
+
 //===----------------------------------------------------------------------===//
 // FunctionDecl Implementation
 //===----------------------------------------------------------------------===//

@@ -1246,7 +1246,7 @@ public:
 
   /// Returns the index of this parameter in its prototype or method scope.
   unsigned getFunctionScopeIndex() const {
-    return ParmVarDeclBits.ParameterIndex;
+    return getParameterIndex();
   }
 
   ObjCDeclQualifier getObjCDeclQualifier() const {
@@ -1365,11 +1365,24 @@ public:
   static bool classofKind(Kind K) { return K == ParmVar; }
   
 private:
+  enum { ParameterIndexSentinel = (1 << NumParameterIndexBits) - 1 };
+
   void setParameterIndex(unsigned parameterIndex) {
+    if (parameterIndex >= ParameterIndexSentinel) {
+      setParameterIndexLarge(parameterIndex);
+      return;
+    }
+    
     ParmVarDeclBits.ParameterIndex = parameterIndex;
     assert(ParmVarDeclBits.ParameterIndex == parameterIndex && "truncation!");
   }
-
+  unsigned getParameterIndex() const {
+    unsigned d = ParmVarDeclBits.ParameterIndex;
+    return d == ParameterIndexSentinel ? getParameterIndexLarge() : d;
+  }
+  
+  void setParameterIndexLarge(unsigned parameterIndex);
+  unsigned getParameterIndexLarge() const;
 };
 
 /// FunctionDecl - An instance of this class is created to represent a

@@ -6516,3 +6516,14 @@ size_t ASTContext::getSideTableAllocatedMemory() const {
     + llvm::capacity_in_bytes(VariableArrayTypes)
     + llvm::capacity_in_bytes(ClassScopeSpecializationPattern);
 }
+
+void ASTContext::setParameterIndex(const ParmVarDecl *D, unsigned int index) {
+  ParamIndices[D] = index;
+}
+
+unsigned ASTContext::getParameterIndex(const ParmVarDecl *D) const {
+  ParameterIndexTable::const_iterator I = ParamIndices.find(D);
+  assert(I != ParamIndices.end() && 
+         "ParmIndices lacks entry set by ParmVarDecl");
+  return I->second;
+}

@@ -63,6 +63,7 @@ namespace clang {
   class ObjCIvarDecl;
   class ObjCIvarRefExpr;
   class ObjCPropertyDecl;
+  class ParmVarDecl;
   class RecordDecl;
   class StoredDeclsMap;
   class TagDecl;
@@ -312,6 +313,12 @@ class ASTContext : public llvm::RefCountedBase<ASTContext> {
   typedef UsuallyTinyPtrVector<const CXXMethodDecl> CXXMethodVector;
   llvm::DenseMap<const CXXMethodDecl *, CXXMethodVector> OverriddenMethods;
 
+  /// \brief Mapping that stores parameterIndex values for ParmVarDecls
+  /// when that value exceeds the bitfield size of
+  /// ParmVarDeclBits.ParameterIndex.
+  typedef llvm::DenseMap<const VarDecl *, unsigned> ParameterIndexTable;
+  ParameterIndexTable ParamIndices;  
+  
   TranslationUnitDecl *TUDecl;
 
   /// SourceMgr - The associated SourceManager object.
@@ -1622,6 +1629,15 @@ public:
   /// it is not used.
   bool DeclMustBeEmitted(const Decl *D);
 
+  
+  /// \brief Used by ParmVarDecl to store on the side the
+  /// index of the parameter when it exceeds the size of the normal bitfield.
+  void setParameterIndex(const ParmVarDecl *D, unsigned index);
+
+  /// \brief Used by ParmVarDecl to retrieve on the side the
+  /// index of the parameter when it exceeds the size of the normal bitfield.
+  unsigned getParameterIndex(const ParmVarDecl *D) const;
+  
   //===--------------------------------------------------------------------===//
   //                    Statistics
   //===--------------------------------------------------------------------===//
