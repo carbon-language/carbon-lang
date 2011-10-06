@@ -115,7 +115,10 @@ typedef enum {
     LLVMNoImplicitFloatAttribute = 1<<23,
     LLVMNakedAttribute      = 1<<24,
     LLVMInlineHintAttribute = 1<<25,
-    LLVMStackAlignment = 7<<26
+    LLVMStackAlignment = 7<<26,
+    LLVMReturnsTwice = 1 << 29,
+    LLVMUWTable = 1 << 30,
+    LLVMNonLazyBind = 1 << 31
 } LLVMAttribute;
 
 typedef enum {
