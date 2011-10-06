@@ -1,11 +1,11 @@
 set(LLVM_TARGET_DEFINITIONS Sparc.td)
 
-tablegen(SparcGenRegisterInfo.inc -gen-register-info)
-tablegen(SparcGenInstrInfo.inc -gen-instr-info)
-tablegen(SparcGenAsmWriter.inc -gen-asm-writer)
-tablegen(SparcGenDAGISel.inc -gen-dag-isel)
-tablegen(SparcGenSubtargetInfo.inc -gen-subtarget)
-tablegen(SparcGenCallingConv.inc -gen-callingconv)
+llvm_tablegen(SparcGenRegisterInfo.inc -gen-register-info)
+llvm_tablegen(SparcGenInstrInfo.inc -gen-instr-info)
+llvm_tablegen(SparcGenAsmWriter.inc -gen-asm-writer)
+llvm_tablegen(SparcGenDAGISel.inc -gen-dag-isel)
+llvm_tablegen(SparcGenSubtargetInfo.inc -gen-subtarget)
+llvm_tablegen(SparcGenCallingConv.inc -gen-callingconv)
 add_public_tablegen_target(SparcCommonTableGen)
 
 add_llvm_target(SparcCodeGen

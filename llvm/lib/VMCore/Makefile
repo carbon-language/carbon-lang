@@ -20,9 +20,9 @@ GENFILE:=$(PROJ_OBJ_ROOT)/include/llvm/Intrinsics.gen
 INTRINSICTD  := $(PROJ_SRC_ROOT)/include/llvm/Intrinsics.td
 INTRINSICTDS := $(wildcard $(PROJ_SRC_ROOT)/include/llvm/Intrinsics*.td)
 
-$(ObjDir)/Intrinsics.gen.tmp: $(ObjDir)/.dir $(INTRINSICTDS) $(TBLGEN)
+$(ObjDir)/Intrinsics.gen.tmp: $(ObjDir)/.dir $(INTRINSICTDS) $(LLVM_TBLGEN)
 	$(Echo) Building Intrinsics.gen.tmp from Intrinsics.td
-	$(Verb) $(TableGen) $(call SYSPATH, $(INTRINSICTD)) -o $(call SYSPATH, $@) -gen-intrinsic
+	$(Verb) $(LLVMTableGen) $(call SYSPATH, $(INTRINSICTD)) -o $(call SYSPATH, $@) -gen-intrinsic
 
 $(GENFILE): $(ObjDir)/Intrinsics.gen.tmp
 	$(Verb) $(CMP) -s $@ $< || ( $(CP) $< $@ && \

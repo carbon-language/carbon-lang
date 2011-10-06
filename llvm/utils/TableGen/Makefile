@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL = ../..
-TOOLNAME = tblgen
+TOOLNAME = llvm-tblgen
 USEDLIBS = LLVMTableGen.a LLVMSupport.a
 REQUIRES_EH := 1
 REQUIRES_RTTI := 1

@@ -1,6 +1,6 @@
 set(LLVM_TARGET_DEFINITIONS Intrinsics.td)
 
-tablegen(Intrinsics.gen -gen-intrinsic)
+llvm_tablegen(Intrinsics.gen -gen-intrinsic)
 
 add_custom_target(intrinsics_gen ALL
   DEPENDS ${llvm_builded_incs_dir}/Intrinsics.gen)

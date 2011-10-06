@@ -1,11 +1,11 @@
 set(LLVM_TARGET_DEFINITIONS Alpha.td)
 
-tablegen(AlphaGenRegisterInfo.inc -gen-register-info)
-tablegen(AlphaGenInstrInfo.inc -gen-instr-info)
-tablegen(AlphaGenAsmWriter.inc -gen-asm-writer)
-tablegen(AlphaGenDAGISel.inc -gen-dag-isel)
-tablegen(AlphaGenCallingConv.inc -gen-callingconv)
-tablegen(AlphaGenSubtargetInfo.inc -gen-subtarget)
+llvm_tablegen(AlphaGenRegisterInfo.inc -gen-register-info)
+llvm_tablegen(AlphaGenInstrInfo.inc -gen-instr-info)
+llvm_tablegen(AlphaGenAsmWriter.inc -gen-asm-writer)
+llvm_tablegen(AlphaGenDAGISel.inc -gen-dag-isel)
+llvm_tablegen(AlphaGenCallingConv.inc -gen-callingconv)
+llvm_tablegen(AlphaGenSubtargetInfo.inc -gen-subtarget)
 add_public_tablegen_target(AlphaCommonTableGen)
 
 add_llvm_target(AlphaCodeGen
