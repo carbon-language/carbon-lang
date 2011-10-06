@@ -14,7 +14,7 @@ ifndef CLANG_LEVEL
 
 IS_TOP_LEVEL := 1
 CLANG_LEVEL := .
-DIRS := include lib tools runtime docs unittests
+DIRS := utils/TableGen include lib tools runtime docs unittests
 
 PARALLEL_DIRS :=
 
@@ -63,9 +63,9 @@ CXX.Flags += -fno-strict-aliasing
 # Set up Clang's tblgen.
 ifndef CLANG_TBLGEN
   ifeq ($(LLVM_CROSS_COMPILING),1)
-    CLANG_TBLGEN := $(BuildLLVMToolDir)/llvm-tblgen$(BUILD_EXEEXT)
+    CLANG_TBLGEN := $(BuildLLVMToolDir)/clang-tblgen$(BUILD_EXEEXT)
   else
-    CLANG_TBLGEN := $(LLVMToolDir)/llvm-tblgen$(EXEEXT)
+    CLANG_TBLGEN := $(LLVMToolDir)/clang-tblgen$(EXEEXT)
   endif
 endif
 ClangTableGen = $(CLANG_TBLGEN) $(TableGen.Flags)
