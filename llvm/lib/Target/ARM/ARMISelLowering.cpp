@@ -5512,79 +5512,8 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
   const TargetRegisterClass *TRC =
     isThumb ? ARM::tGPRRegisterClass : ARM::GPRRegisterClass;
 
-  MachineMemOperand *CPMMO =
-    MF->getMachineMemOperand(MachinePointerInfo::getConstantPool(),
-                             MachineMemOperand::MOLoad, 4, 4);
-
-  MachineMemOperand *FIMMO =
-    MF->getMachineMemOperand(MachinePointerInfo::getFixedStack(FI),
-                             MachineMemOperand::MOStore, 4, 4);
-
-  // Load the address of the dispatch MBB into the jump buffer.
-  if (isThumb2) {
-    // Incoming value: jbuf
-    // ldr.n  r1, LCPI1_4
-    // add    r1, pc
-    // str    r5, [$jbuf, #+4] ; &jbuf[1]
-    unsigned NewVReg1 = MRI->createVirtualRegister(TRC);
-    AddDefaultPred(BuildMI(*MBB, MI, dl, TII->get(ARM::t2LDRpci), NewVReg1)
-                   .addConstantPoolIndex(CPI)
-                   .addMemOperand(CPMMO));
-    unsigned NewVReg2 = MRI->createVirtualRegister(TRC);
-    BuildMI(*MBB, MI, dl, TII->get(ARM::tPICADD), NewVReg2)
-      .addReg(NewVReg1, RegState::Kill)
-      .addImm(PCLabelId);
-    AddDefaultPred(BuildMI(*MBB, MI, dl, TII->get(ARM::t2STRi12))
-                   .addReg(NewVReg2, RegState::Kill)
-                   .addFrameIndex(FI)
-                   .addImm(36)  // &jbuf[1] :: pc
-                   .addMemOperand(FIMMO));
-  } else if (isThumb) {
-    // Incoming value: jbuf
-    // ldr.n  r1, LCPI1_4
-    // add    r1, pc
-    // add    r2, $jbuf, #+4 ; &jbuf[1]
-    // str    r1, [r2]
-    unsigned NewVReg1 = MRI->createVirtualRegister(TRC);
-    AddDefaultPred(BuildMI(*MBB, MI, dl, TII->get(ARM::tLDRpci), NewVReg1)
-                   .addConstantPoolIndex(CPI)
-                   .addMemOperand(CPMMO));
-    unsigned NewVReg2 = MRI->createVirtualRegister(TRC);
-    BuildMI(*MBB, MI, dl, TII->get(ARM::tPICADD), NewVReg2)
-      .addReg(NewVReg1)
-      .addImm(PCLabelId);
-    unsigned NewVReg3 = MRI->createVirtualRegister(TRC);
-    AddDefaultPred(BuildMI(*MBB, MI, dl, TII->get(ARM::tADDrSPi), NewVReg3)
-                   .addFrameIndex(FI)
-                   .addImm(36)); // &jbuf[1] :: pc
-    AddDefaultPred(BuildMI(*MBB, MI, dl, TII->get(ARM::tSTRi))
-                   .addReg(NewVReg2, RegState::Kill)
-                   .addReg(NewVReg3, RegState::Kill)
-                   .addImm(0)
-                   .addMemOperand(FIMMO));
-  } else {
-    // Incoming value: jbuf
-    // ldr  r1, LCPI1_1
-    // add  r1, pc, r1
-    // str  r1, [$jbuf, #+4] ; &jbuf[1]
-    unsigned NewVReg1 = MRI->createVirtualRegister(TRC);
-    AddDefaultPred(BuildMI(*MBB, MI, dl, TII->get(ARM::LDRi12),  NewVReg1)
-                   .addConstantPoolIndex(CPI)
-                   .addImm(0)
-                   .addMemOperand(CPMMO));
-    unsigned NewVReg2 = MRI->createVirtualRegister(TRC);
-    AddDefaultPred(BuildMI(*MBB, MI, dl, TII->get(ARM::PICADD), NewVReg2)
-                   .addReg(NewVReg1, RegState::Kill)
-                   .addImm(PCLabelId));
-    AddDefaultPred(BuildMI(*MBB, MI, dl, TII->get(ARM::STRi12))
-                   .addReg(NewVReg2, RegState::Kill)
-                   .addFrameIndex(FI)
-                   .addImm(36)  // &jbuf[1] :: pc
-                   .addMemOperand(FIMMO));
-  }
-
-  // Now get a mapping of the call site numbers to all of the landing pads
-  // they're associated with.
+  // Get a mapping of the call site numbers to all of the landing pads they're
+  // associated with.
   DenseMap<unsigned, SmallVector<MachineBasicBlock*, 2> > CallSiteNumToLPad;
   unsigned MaxCSNum = 0;
   MachineModuleInfo &MMI = MF->getMMI();
@@ -5624,11 +5553,13 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
   assert(!LPadList.empty() &&
          "No landing pad destinations for the dispatch jump table!");
 
+  // Create the jump table and associated information.
   MachineJumpTableInfo *JTI =
     MF->getOrCreateJumpTableInfo(MachineJumpTableInfo::EK_Inline);
   unsigned MJTI = JTI->createJumpTableIndex(LPadList);
   unsigned UId = AFI->createJumpTableUId();
 
+  // Create the MBBs for the dispatch code.
   MachineBasicBlock *TrapBB = MF->CreateMachineBasicBlock();
   BuildMI(TrapBB, dl, TII->get(ARM::TRAP));
   DispatchBB->addSuccessor(TrapBB);
@@ -5642,6 +5573,92 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
   MF->insert(MF->end(), DispContBB);
   MF->insert(MF->end(), TrapBB);
   MF->RenumberBlocks(Last);
+
+  // Grab constant pool and fixed stack memory operands.
+  MachineMemOperand *CPMMO =
+    MF->getMachineMemOperand(MachinePointerInfo::getConstantPool(),
+                             MachineMemOperand::MOLoad, 4, 4);
+
+  MachineMemOperand *FIMMO =
+    MF->getMachineMemOperand(MachinePointerInfo::getFixedStack(FI),
+                             MachineMemOperand::MOStore, 4, 4);
+
+  // Load the address of the dispatch MBB into the jump buffer.
+  if (isThumb2) {
+    // Incoming value: jbuf
+    //   ldr.n  r5, LCPI1_1
+    //   orr    r5, r5, #1
+    //   add    r5, pc
+    //   str    r5, [$jbuf, #+4] ; &jbuf[1]
+    unsigned NewVReg1 = MRI->createVirtualRegister(TRC);
+    AddDefaultPred(BuildMI(*MBB, MI, dl, TII->get(ARM::t2LDRpci), NewVReg1)
+                   .addConstantPoolIndex(CPI)
+                   .addMemOperand(CPMMO));
+    // Set the low bit because of thumb mode.
+    unsigned NewVReg2 = MRI->createVirtualRegister(TRC);
+    AddDefaultCC(
+      AddDefaultPred(BuildMI(*MBB, MI, dl, TII->get(ARM::t2ORRri), NewVReg2)
+                     .addReg(NewVReg1, RegState::Kill)
+                     .addImm(0x01)));
+    unsigned NewVReg3 = MRI->createVirtualRegister(TRC);
+    BuildMI(*MBB, MI, dl, TII->get(ARM::tPICADD), NewVReg3)
+      .addReg(NewVReg2, RegState::Kill)
+      .addImm(PCLabelId);
+    AddDefaultPred(BuildMI(*MBB, MI, dl, TII->get(ARM::t2STRi12))
+                   .addReg(NewVReg3, RegState::Kill)
+                   .addFrameIndex(FI)
+                   .addImm(36)  // &jbuf[1] :: pc
+                   .addMemOperand(FIMMO));
+  } else if (isThumb) {
+    // Incoming value: jbuf
+    //   ldr.n  r1, LCPI1_4
+    //   add    r1, pc
+    //   orr    r1, r1, #1
+    //   add    r2, $jbuf, #+4 ; &jbuf[1]
+    //   str    r1, [r2]
+    unsigned NewVReg1 = MRI->createVirtualRegister(TRC);
+    AddDefaultPred(BuildMI(*MBB, MI, dl, TII->get(ARM::tLDRpci), NewVReg1)
+                   .addConstantPoolIndex(CPI)
+                   .addMemOperand(CPMMO));
+    unsigned NewVReg2 = MRI->createVirtualRegister(TRC);
+    BuildMI(*MBB, MI, dl, TII->get(ARM::tPICADD), NewVReg2)
+      .addReg(NewVReg1, RegState::Kill)
+      .addImm(PCLabelId);
+    // Set the low bit because of thumb mode.
+    unsigned NewVReg3 = MRI->createVirtualRegister(TRC);
+    AddDefaultCC(
+      AddDefaultPred(BuildMI(*MBB, MI, dl, TII->get(ARM::t2ORRri), NewVReg3)
+                     .addReg(NewVReg2, RegState::Kill)
+                     .addImm(0x01)));
+    unsigned NewVReg4 = MRI->createVirtualRegister(TRC);
+    AddDefaultPred(BuildMI(*MBB, MI, dl, TII->get(ARM::tADDrSPi), NewVReg4)
+                   .addFrameIndex(FI)
+                   .addImm(36)); // &jbuf[1] :: pc
+    AddDefaultPred(BuildMI(*MBB, MI, dl, TII->get(ARM::tSTRi))
+                   .addReg(NewVReg3, RegState::Kill)
+                   .addReg(NewVReg4, RegState::Kill)
+                   .addImm(0)
+                   .addMemOperand(FIMMO));
+  } else {
+    // Incoming value: jbuf
+    //   ldr  r1, LCPI1_1
+    //   add  r1, pc, r1
+    //   str  r1, [$jbuf, #+4] ; &jbuf[1]
+    unsigned NewVReg1 = MRI->createVirtualRegister(TRC);
+    AddDefaultPred(BuildMI(*MBB, MI, dl, TII->get(ARM::LDRi12),  NewVReg1)
+                   .addConstantPoolIndex(CPI)
+                   .addImm(0)
+                   .addMemOperand(CPMMO));
+    unsigned NewVReg2 = MRI->createVirtualRegister(TRC);
+    AddDefaultPred(BuildMI(*MBB, MI, dl, TII->get(ARM::PICADD), NewVReg2)
+                   .addReg(NewVReg1, RegState::Kill)
+                   .addImm(PCLabelId));
+    AddDefaultPred(BuildMI(*MBB, MI, dl, TII->get(ARM::STRi12))
+                   .addReg(NewVReg2, RegState::Kill)
+                   .addFrameIndex(FI)
+                   .addImm(36)  // &jbuf[1] :: pc
+                   .addMemOperand(FIMMO));
+  }
 
   FIMMO = MF->getMachineMemOperand(MachinePointerInfo::getFixedStack(FI),
                                    MachineMemOperand::MOLoad, 4, 4);
