@@ -7,10 +7,6 @@ add_tablegen(llvm-tblgen LLVM
   AsmWriterEmitter.cpp
   AsmWriterInst.cpp
   CallingConvEmitter.cpp
-  ClangASTNodesEmitter.cpp
-  ClangAttrEmitter.cpp
-  ClangDiagnosticsEmitter.cpp
-  ClangSACheckersEmitter.cpp
   CodeEmitterGen.cpp
   CodeGenDAGPatterns.cpp
   CodeGenInstruction.cpp
@@ -28,8 +24,6 @@ add_tablegen(llvm-tblgen LLVM
   InstrEnumEmitter.cpp
   InstrInfoEmitter.cpp
   IntrinsicEmitter.cpp
-  NeonEmitter.cpp
-  OptParserEmitter.cpp
   PseudoLoweringEmitter.cpp
   RegisterInfoEmitter.cpp
   SetTheory.cpp
