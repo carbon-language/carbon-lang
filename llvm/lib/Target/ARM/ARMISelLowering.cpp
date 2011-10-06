@@ -5613,7 +5613,8 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
     // Incoming value: jbuf
     //   ldr.n  r1, LCPI1_4
     //   add    r1, pc
-    //   orr    r1, r1, #1
+    //   mov    r2, #1
+    //   orrs   r1, r2
     //   add    r2, $jbuf, #+4 ; &jbuf[1]
     //   str    r1, [r2]
     unsigned NewVReg1 = MRI->createVirtualRegister(TRC);
@@ -5626,17 +5627,21 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
       .addImm(PCLabelId);
     // Set the low bit because of thumb mode.
     unsigned NewVReg3 = MRI->createVirtualRegister(TRC);
-    AddDefaultCC(
-      AddDefaultPred(BuildMI(*MBB, MI, dl, TII->get(ARM::t2ORRri), NewVReg3)
-                     .addReg(NewVReg2, RegState::Kill)
-                     .addImm(0x01)));
+    AddDefaultPred(BuildMI(*MBB, MI, dl, TII->get(ARM::tMOVi8), NewVReg3)
+                   .addReg(ARM::CPSR, RegState::Define)
+                   .addImm(1));
     unsigned NewVReg4 = MRI->createVirtualRegister(TRC);
-    AddDefaultPred(BuildMI(*MBB, MI, dl, TII->get(ARM::tADDrSPi), NewVReg4)
+    AddDefaultPred(BuildMI(*MBB, MI, dl, TII->get(ARM::tORR), NewVReg4)
+                   .addReg(ARM::CPSR, RegState::Define)
+                   .addReg(NewVReg2, RegState::Kill)
+                   .addReg(NewVReg3, RegState::Kill));
+    unsigned NewVReg5 = MRI->createVirtualRegister(TRC);
+    AddDefaultPred(BuildMI(*MBB, MI, dl, TII->get(ARM::tADDrSPi), NewVReg5)
                    .addFrameIndex(FI)
                    .addImm(36)); // &jbuf[1] :: pc
     AddDefaultPred(BuildMI(*MBB, MI, dl, TII->get(ARM::tSTRi))
-                   .addReg(NewVReg3, RegState::Kill)
                    .addReg(NewVReg4, RegState::Kill)
+                   .addReg(NewVReg5, RegState::Kill)
                    .addImm(0)
                    .addMemOperand(FIMMO));
   } else {
