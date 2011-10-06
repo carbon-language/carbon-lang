@@ -2,6 +2,7 @@ set(CLANG_TEST_DIRECTORIES
   "Analysis"
   "CodeCompletion"
   "CodeGen"
+  "CodeGenCUDA"
   "CodeGenCXX"
   "CodeGenObjC"
   "CodeGenOpenCL"
