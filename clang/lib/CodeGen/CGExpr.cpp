@@ -2192,6 +2192,9 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E,
   if (const CXXMemberCallExpr *CE = dyn_cast<CXXMemberCallExpr>(E))
     return EmitCXXMemberCallExpr(CE, ReturnValue);
 
+  if (const CUDAKernelCallExpr *CE = dyn_cast<CUDAKernelCallExpr>(E))
+    return EmitCUDAKernelCallExpr(CE, ReturnValue);
+
   const Decl *TargetDecl = E->getCalleeDecl();
   if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(TargetDecl)) {
     if (unsigned builtinID = FD->getBuiltinID())

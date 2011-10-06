@@ -76,6 +76,7 @@ namespace CodeGen {
   class CGDebugInfo;
   class CGObjCRuntime;
   class CGOpenCLRuntime;
+  class CGCUDARuntime;
   class BlockFieldFlags;
   class FunctionArgList;
   
@@ -228,6 +229,7 @@ class CodeGenModule : public CodeGenTypeCache {
 
   CGObjCRuntime* ObjCRuntime;
   CGOpenCLRuntime* OpenCLRuntime;
+  CGCUDARuntime* CUDARuntime;
   CGDebugInfo* DebugInfo;
   ARCEntrypoints *ARCData;
   RREntrypoints *RRData;
@@ -320,6 +322,7 @@ class CodeGenModule : public CodeGenTypeCache {
   void createObjCRuntime();
 
   void createOpenCLRuntime();
+  void createCUDARuntime();
 
   llvm::LLVMContext &VMContext;
 
@@ -361,10 +364,16 @@ public:
   /// been configured.
   bool hasObjCRuntime() { return !!ObjCRuntime; }
 
-  /// getObjCRuntime() - Return a reference to the configured OpenCL runtime.
+  /// getOpenCLRuntime() - Return a reference to the configured OpenCL runtime.
   CGOpenCLRuntime &getOpenCLRuntime() {
     assert(OpenCLRuntime != 0);
     return *OpenCLRuntime;
+  }
+
+  /// getCUDARuntime() - Return a reference to the configured CUDA runtime.
+  CGCUDARuntime &getCUDARuntime() {
+    assert(CUDARuntime != 0);
+    return *CUDARuntime;
   }
 
   /// getCXXABI() - Return a reference to the configured C++ ABI.

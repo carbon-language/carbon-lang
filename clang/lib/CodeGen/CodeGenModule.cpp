@@ -16,6 +16,7 @@
 #include "CodeGenFunction.h"
 #include "CodeGenTBAA.h"
 #include "CGCall.h"
+#include "CGCUDARuntime.h"
 #include "CGCXXABI.h"
 #include "CGObjCRuntime.h"
 #include "CGOpenCLRuntime.h"
@@ -66,9 +67,9 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
     ABI(createCXXABI(*this)), 
     Types(C, M, TD, getTargetCodeGenInfo().getABIInfo(), ABI, CGO),
     TBAA(0),
-    VTables(*this), ObjCRuntime(0), OpenCLRuntime(0), DebugInfo(0), ARCData(0),
-    RRData(0), CFConstantStringClassRef(0), ConstantStringClassRef(0),
-    NSConstantStringType(0),
+    VTables(*this), ObjCRuntime(0), OpenCLRuntime(0), CUDARuntime(0),
+    DebugInfo(0), ARCData(0), RRData(0), CFConstantStringClassRef(0),
+    ConstantStringClassRef(0), NSConstantStringType(0),
     VMContext(M.getContext()),
     NSConcreteGlobalBlock(0), NSConcreteStackBlock(0),
     BlockObjectAssign(0), BlockObjectDispose(0),
@@ -77,6 +78,8 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
     createObjCRuntime();
   if (Features.OpenCL)
     createOpenCLRuntime();
+  if (Features.CUDA)
+    createCUDARuntime();
 
   // Enable TBAA unless it's suppressed.
   if (!CodeGenOpts.RelaxedAliasing && CodeGenOpts.OptimizationLevel > 0)
@@ -113,6 +116,7 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
 CodeGenModule::~CodeGenModule() {
   delete ObjCRuntime;
   delete OpenCLRuntime;
+  delete CUDARuntime;
   delete &ABI;
   delete TBAA;
   delete DebugInfo;
@@ -129,6 +133,10 @@ void CodeGenModule::createObjCRuntime() {
 
 void CodeGenModule::createOpenCLRuntime() {
   OpenCLRuntime = new CGOpenCLRuntime(*this);
+}
+
+void CodeGenModule::createCUDARuntime() {
+  CUDARuntime = CreateNVCUDARuntime(*this);
 }
 
 void CodeGenModule::Release() {

@@ -13,6 +13,7 @@
 
 #include "clang/Frontend/CodeGenOptions.h"
 #include "CodeGenFunction.h"
+#include "CGCUDARuntime.h"
 #include "CGCXXABI.h"
 #include "CGObjCRuntime.h"
 #include "CGDebugInfo.h"
@@ -345,6 +346,11 @@ CodeGenFunction::EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
   llvm::Value *Callee = EmitCXXOperatorMemberCallee(E, MD, This);
   return EmitCXXMemberCall(MD, Callee, ReturnValue, This, /*VTT=*/0,
                            E->arg_begin() + 1, E->arg_end());
+}
+
+RValue CodeGenFunction::EmitCUDAKernelCallExpr(const CUDAKernelCallExpr *E,
+                                               ReturnValueSlot ReturnValue) {
+  return CGM.getCUDARuntime().EmitCUDAKernelCallExpr(*this, E, ReturnValue);
 }
 
 void

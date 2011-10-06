@@ -14,6 +14,8 @@ add_clang_library(clangCodeGen
   CGBuiltin.cpp
   CGCall.cpp
   CGClass.cpp
+  CGCUDANV.cpp
+  CGCUDARuntime.cpp
   CGCXX.cpp
   CGCXXABI.cpp
   CGCleanup.cpp

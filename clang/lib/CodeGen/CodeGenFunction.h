@@ -2076,6 +2076,9 @@ public:
                                        const CXXMethodDecl *MD,
                                        ReturnValueSlot ReturnValue);
 
+  RValue EmitCUDAKernelCallExpr(const CUDAKernelCallExpr *E,
+                                ReturnValueSlot ReturnValue);
+
 
   RValue EmitBuiltinExpr(const FunctionDecl *FD,
                          unsigned BuiltinID, const CallExpr *E);
