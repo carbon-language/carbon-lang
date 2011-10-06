@@ -179,8 +179,8 @@ typedef enum {
   LLVMPHI            = 44,
   LLVMCall           = 45,
   LLVMSelect         = 46,
-  /* UserOp1 */
-  /* UserOp2 */
+  LLVMUserOp1        = 47,
+  LLVMUserOp2        = 48,
   LLVMVAArg          = 49,
   LLVMExtractElement = 50,
   LLVMInsertElement  = 51,
@@ -195,7 +195,9 @@ typedef enum {
 
   /* Exception Handling Operators */
   LLVMResume         = 58,
-  LLVMLandingPad     = 59
+  LLVMLandingPad     = 59,
+  LLVMUnwind         = 60
+
 
 } LLVMOpcode;
 

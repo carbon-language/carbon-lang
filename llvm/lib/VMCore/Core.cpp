@@ -654,10 +654,35 @@ LLVMValueRef LLVMConstVector(LLVMValueRef *ScalarConstantVals, unsigned Size) {
   return wrap(ConstantVector::get(makeArrayRef(
                             unwrap<Constant>(ScalarConstantVals, Size), Size)));
 }
+
+/*-- Opcode mapping */
+
+static LLVMOpcode map_to_llvmopcode(int opcode)
+{
+    switch (opcode) {
+#define HANDLE_INST(num, opc, clas) case num: return LLVM##opc;
+#include "llvm/Instruction.def"
+#undef HANDLE_INST
+	default:
+	    assert(false && "Unhandled Opcode.");
+    }
+}
+
+static int map_from_llvmopcode(LLVMOpcode code)
+{
+    switch (code) {
+#define HANDLE_INST(num, opc, clas) case LLVM##opc: return num;
+#include "llvm/Instruction.def"
+#undef HANDLE_INST
+	default:
+	    assert(false && "Unhandled Opcode.");
+    }
+}
+
 /*--.. Constant expressions ................................................--*/
 
 LLVMOpcode LLVMGetConstOpcode(LLVMValueRef ConstantVal) {
-  return (LLVMOpcode)unwrap<ConstantExpr>(ConstantVal)->getOpcode();
+  return map_to_llvmopcode(unwrap<ConstantExpr>(ConstantVal)->getOpcode());
 }
 
 LLVMValueRef LLVMAlignOf(LLVMTypeRef Ty) {
@@ -1919,7 +1944,7 @@ LLVMValueRef LLVMBuildXor(LLVMBuilderRef B, LLVMValueRef LHS, LLVMValueRef RHS,
 LLVMValueRef LLVMBuildBinOp(LLVMBuilderRef B, LLVMOpcode Op,
                             LLVMValueRef LHS, LLVMValueRef RHS,
                             const char *Name) {
-  return wrap(unwrap(B)->CreateBinOp(Instruction::BinaryOps(Op), unwrap(LHS),
+  return wrap(unwrap(B)->CreateBinOp(Instruction::BinaryOps(map_from_llvmopcode(Op)), unwrap(LHS),
                                      unwrap(RHS), Name));
 }
 
@@ -2106,7 +2131,7 @@ LLVMValueRef LLVMBuildTruncOrBitCast(LLVMBuilderRef B, LLVMValueRef Val,
 
 LLVMValueRef LLVMBuildCast(LLVMBuilderRef B, LLVMOpcode Op, LLVMValueRef Val,
                            LLVMTypeRef DestTy, const char *Name) {
-  return wrap(unwrap(B)->CreateCast(Instruction::CastOps(Op), unwrap(Val),
+  return wrap(unwrap(B)->CreateCast(Instruction::CastOps(map_from_llvmopcode(Op)), unwrap(Val),
                                     unwrap(DestTy), Name));
 }
 
