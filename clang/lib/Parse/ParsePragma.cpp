@@ -451,8 +451,11 @@ PragmaOpenCLExtensionHandler::HandlePragma(Preprocessor &PP,
   }
 
   OpenCLOptions &f = Actions.getOpenCLOptions();
-  if (ename->isStr("all")) {
-#define OPENCLEXT(nm)   f.nm = state;
+  // OpenCL 1.1 9.1: "The all variant sets the behavior for all extensions,
+  // overriding all previously issued extension directives, but only if the
+  // behavior is set to disable."
+  if (state == 0 && ename->isStr("all")) {
+#define OPENCLEXT(nm)   f.nm = 0;
 #include "clang/Basic/OpenCLExtensions.def"
   }
 #define OPENCLEXT(nm) else if (ename->isStr(#nm)) { f.nm = state; }
