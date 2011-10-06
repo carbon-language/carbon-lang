@@ -99,7 +99,8 @@ class CrashLog:
         self.images = list()
         self.crashed_thread_idx = -1
         self.version = -1
-        f = open(self.path)
+        # With possible initial component of ~ or ~user replaced by that user's home directory.
+        f = open(os.path.expanduser(self.path))
         self.file_lines = f.read().splitlines()
         parse_mode = PARSE_MODE_NORMAL
         thread = None
