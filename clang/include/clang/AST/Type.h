@@ -1362,6 +1362,7 @@ public:
   /// various convenient purposes within Clang.  All such types are
   /// BuiltinTypes.
   bool isPlaceholderType() const;
+  const BuiltinType *getAsPlaceholderType() const;
 
   /// isSpecificPlaceholderType - Test for a specific placeholder type.
   bool isSpecificPlaceholderType(unsigned K) const;
@@ -4753,9 +4754,16 @@ inline bool Type::isSpecificBuiltinType(unsigned K) const {
 }
 
 inline bool Type::isPlaceholderType() const {
-  if (const BuiltinType *BT = getAs<BuiltinType>())
+  if (const BuiltinType *BT = dyn_cast<BuiltinType>(this))
     return BT->isPlaceholderType();
   return false;
+}
+
+inline const BuiltinType *Type::getAsPlaceholderType() const {
+  if (const BuiltinType *BT = dyn_cast<BuiltinType>(this))
+    if (BT->isPlaceholderType())
+      return BT;
+  return 0;
 }
 
 inline bool Type::isSpecificPlaceholderType(unsigned K) const {

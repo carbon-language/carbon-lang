@@ -2493,6 +2493,7 @@ public:
                                  TypeSourceInfo *Ty,
                                  SourceLocation RParenLoc,
                                  Expr *Op);
+  CastKind PrepareScalarCast(ExprResult &src, QualType destType);
 
   /// \brief Build an altivec or OpenCL literal.
   ExprResult BuildVectorLiteral(SourceLocation LParenLoc,
@@ -5769,11 +5770,6 @@ public:
                                                       bool &ObjCConversion,
                                                 bool &ObjCLifetimeConversion);
 
-  /// CheckCCastTypes - Check type constraints for casting between
-  /// types under C semantics.
-  ExprResult CheckCCastTypes(SourceLocation CastStartLoc, SourceRange TypeRange, 
-                             QualType CastType, Expr *CastExpr, CastKind &Kind);
-
   ExprResult checkUnknownAnyCast(SourceRange TypeRange, QualType CastType,
                                  Expr *CastExpr, CastKind &CastKind,
                                  ExprValueKind &VK, CXXCastPath &Path);
@@ -5793,12 +5789,6 @@ public:
   ExprResult CheckExtVectorCast(SourceRange R, QualType DestTy, Expr *CastExpr,
                                 CastKind &Kind);
 
-  /// CXXBuildCStyleCastExpr - Check constraints of a C-style or function-style
-  /// cast under C++ semantics.
-  ExprResult CXXBuildCStyleCastExpr(SourceLocation LParenLoc,
-                                    TypeSourceInfo *TInfo,
-                                    SourceLocation RParenLoc,
-                                    Expr *CastExpr);
   ExprResult BuildCXXFunctionalCastExpr(TypeSourceInfo *TInfo,
                                         SourceLocation LParenLoc,
                                         Expr *CastExpr,
