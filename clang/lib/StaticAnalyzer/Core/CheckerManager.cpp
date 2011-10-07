@@ -140,9 +140,12 @@ namespace {
     void runChecker(CheckerManager::CheckStmtFunc checkFn,
                     ExplodedNodeSet &Dst, ExplodedNode *Pred) {
       // FIXME: Remove respondsToCallback from CheckerContext;
-      CheckerContext C(Dst, Eng.getBuilder(), Eng, Pred, checkFn.Checker,
-                       IsPreVisit ? ProgramPoint::PreStmtKind :
-                                    ProgramPoint::PostStmtKind, 0, S);
+      ProgramPoint::Kind K =  IsPreVisit ? ProgramPoint::PreStmtKind :
+                                           ProgramPoint::PostStmtKind;
+      const ProgramPoint &L = ProgramPoint::getProgramPoint(S, K,
+                                Pred->getLocationContext(), checkFn.Checker);
+      CheckerContext C(Dst, Eng.getBuilder(), Eng, Pred, L, 0);
+
       checkFn(S, C);
     }
   };
@@ -176,10 +179,12 @@ namespace {
 
     void runChecker(CheckerManager::CheckObjCMessageFunc checkFn,
                     ExplodedNodeSet &Dst, ExplodedNode *Pred) {
-      CheckerContext C(Dst, Eng.getBuilder(), Eng, Pred, checkFn.Checker,
-                       IsPreVisit ? ProgramPoint::PreStmtKind :
-                                    ProgramPoint::PostStmtKind, 0,
-                       Msg.getOriginExpr());
+      ProgramPoint::Kind K =  IsPreVisit ? ProgramPoint::PreStmtKind :
+                                           ProgramPoint::PostStmtKind;
+      const ProgramPoint &L = ProgramPoint::getProgramPoint(Msg.getOriginExpr(),
+                                K, Pred->getLocationContext(), checkFn.Checker);
+      CheckerContext C(Dst, Eng.getBuilder(), Eng, Pred, L, 0);
+
       checkFn(Msg, C);
     }
   };
@@ -216,9 +221,12 @@ namespace {
 
     void runChecker(CheckerManager::CheckLocationFunc checkFn,
                     ExplodedNodeSet &Dst, ExplodedNode *Pred) {
-      CheckerContext C(Dst, Eng.getBuilder(), Eng, Pred, checkFn.Checker,
-                       IsLoad ? ProgramPoint::PreLoadKind :
-                       ProgramPoint::PreStoreKind, 0, S);
+      ProgramPoint::Kind K =  IsLoad ? ProgramPoint::PreLoadKind :
+                                       ProgramPoint::PreStoreKind;
+      const ProgramPoint &L = ProgramPoint::getProgramPoint(S, K,
+                                Pred->getLocationContext(), checkFn.Checker);
+      CheckerContext C(Dst, Eng.getBuilder(), Eng, Pred, L, 0);
+
       checkFn(Loc, IsLoad, S, C);
     }
   };
@@ -251,8 +259,11 @@ namespace {
 
     void runChecker(CheckerManager::CheckBindFunc checkFn,
                     ExplodedNodeSet &Dst, ExplodedNode *Pred) {
-      CheckerContext C(Dst, Eng.getBuilder(), Eng, Pred, checkFn.Checker,
-                       ProgramPoint::PreStmtKind, 0, S);
+      ProgramPoint::Kind K =  ProgramPoint::PreStmtKind;
+      const ProgramPoint &L = ProgramPoint::getProgramPoint(S, K,
+                                Pred->getLocationContext(), checkFn.Checker);
+      CheckerContext C(Dst, Eng.getBuilder(), Eng, Pred, L, 0);
+
       checkFn(Loc, Val, S, C);
     }
   };
@@ -318,8 +329,11 @@ namespace {
 
     void runChecker(CheckerManager::CheckDeadSymbolsFunc checkFn,
                     ExplodedNodeSet &Dst, ExplodedNode *Pred) {
-      CheckerContext C(Dst, Eng.getBuilder(), Eng, Pred, checkFn.Checker,
-                       ProgramPoint::PostPurgeDeadSymbolsKind, 0, S);
+      ProgramPoint::Kind K = ProgramPoint::PostPurgeDeadSymbolsKind;
+      const ProgramPoint &L = ProgramPoint::getProgramPoint(S, K,
+                                Pred->getLocationContext(), checkFn.Checker);
+      CheckerContext C(Dst, Eng.getBuilder(), Eng, Pred, L, 0);
+
       checkFn(SR, C);
     }
   };
@@ -428,8 +442,11 @@ void CheckerManager::runCheckersForEvalCall(ExplodedNodeSet &Dst,
            EI = EvalCallCheckers.begin(), EE = EvalCallCheckers.end();
          EI != EE; ++EI) {
       ExplodedNodeSet checkDst;
-      CheckerContext C(checkDst, Eng.getBuilder(), Eng, Pred, EI->Checker,
-                       ProgramPoint::PostStmtKind, 0, CE);
+      ProgramPoint::Kind K = ProgramPoint::PostStmtKind;
+      const ProgramPoint &L = ProgramPoint::getProgramPoint(CE, K,
+                                Pred->getLocationContext(), EI->Checker);
+
+      CheckerContext C(checkDst, Eng.getBuilder(), Eng, Pred, L, 0);
       bool evaluated = (*EI)(CE, C);
       assert(!(evaluated && anyEvaluated)
              && "There are more than one checkers evaluating the call");

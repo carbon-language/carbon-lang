@@ -28,11 +28,9 @@ class CheckerContext {
   ExprEngine &Eng;
   ExplodedNode *Pred;
   SaveAndRestore<bool> OldSink;
-  const ProgramPointTag *checkerTag;
-  SaveAndRestore<ProgramPoint::Kind> OldPointKind;
   SaveOr OldHasGen;
+  const ProgramPoint Location;
   const ProgramState *ST;
-  const Stmt *statement;
   const unsigned size;
 public:
   bool *respondsToCallback;
@@ -41,21 +39,17 @@ public:
                  StmtNodeBuilder &builder,
                  ExprEngine &eng,
                  ExplodedNode *pred,
-                 const ProgramPointTag *tag,
-                 ProgramPoint::Kind K,
+                 const ProgramPoint &loc,
                  bool *respondsToCB = 0,
-                 const Stmt *stmt = 0,
                  const ProgramState *st = 0)
     : Dst(dst),
       B(builder),
       Eng(eng),
       Pred(pred),
       OldSink(B.BuildSinks),
-      checkerTag(tag),
-      OldPointKind(B.PointKind, K),
       OldHasGen(B.hasGeneratedNode),
+      Location(loc),
       ST(st),
-      statement(stmt),
       size(Dst.size()),
       respondsToCallback(respondsToCB) {}
 
@@ -172,10 +166,10 @@ private:
                                  bool markAsSink,
                                  ExplodedNode *pred = 0,
                                  const ProgramPointTag *tag = 0) {
-    assert(statement && "Only transitions with statements currently supported");
-    ExplodedNode *node = B.generateNode(statement, state,
-                                        pred ? pred : Pred,
-                                        tag  ? tag  : checkerTag);
+
+    ExplodedNode *node = B.generateNode(tag ? Location.withTag(tag) : Location,
+                                        state,
+                                        pred ? pred : Pred);
     if (markAsSink && node)
       node->markAsSink();
     return node;
