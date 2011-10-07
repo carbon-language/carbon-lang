@@ -71,7 +71,7 @@ case $TRIPLE in
 	    LDSHARED_FLAGS="-o libc++.1.dylib \
 			-dynamiclib -nodefaultlibs  \
 			-current_version ${RC_ProjectSourceVersion} \
-			-compatibility_version ${RC_ProjectSourceVersion} \
+			-compatibility_version 1 \
 			-install_name /usr/lib/libc++.1.dylib \
 			-lSystem  \
 			-Wl,-unexported_symbols_list,libc++unexp.exp  \
