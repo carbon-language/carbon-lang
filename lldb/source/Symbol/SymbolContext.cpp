@@ -584,8 +584,6 @@ SymbolContext::GetParentOfInlinedScope (const Address &curr_frame_pc,
                                  curr_frame_pc.GetFileAddress(),
                                  objfile->GetFileSpec().GetDirectory().GetCString(),
                                  objfile->GetFileSpec().GetFilename().GetCString());
-                        
-                        curr_inlined_block->GetRangeContainingAddress (curr_frame_pc, range); // REMOVE THIS!!!
                     }
                     else
                     {
