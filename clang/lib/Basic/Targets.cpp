@@ -3053,6 +3053,12 @@ namespace {
   // target processor and program binary. TCE co-design environment is
   // publicly available in http://tce.cs.tut.fi
 
+  static const unsigned TCEOpenCLAddrSpaceMap[] = {
+      3, // opencl_global
+      4, // opencl_local
+      5  // opencl_constant
+  };
+
   class TCETargetInfo : public TargetInfo{
   public:
     TCETargetInfo(const std::string& triple) : TargetInfo(triple) {
@@ -3081,6 +3087,7 @@ namespace {
                           "i16:16:32-i32:32:32-i64:32:32-"
                           "f32:32:32-f64:32:32-v64:32:32-"
                           "v128:32:32-a0:0:32-n32";
+      AddrSpaceMap = &TCEOpenCLAddrSpaceMap;
     }
 
     virtual void getTargetDefines(const LangOptions &Opts,
