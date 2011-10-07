@@ -2210,7 +2210,8 @@ SDValue
 ARMTargetLowering::LowerEH_SJLJ_SETJMP(SDValue Op, SelectionDAG &DAG) const {
   DebugLoc dl = Op.getDebugLoc();
   SDValue Val = DAG.getConstant(0, MVT::i32);
-  return DAG.getNode(ARMISD::EH_SJLJ_SETJMP, dl, MVT::i32, Op.getOperand(0),
+  return DAG.getNode(ARMISD::EH_SJLJ_SETJMP, dl,
+                     DAG.getVTList(MVT::i32, MVT::Other), Op.getOperand(0),
                      Op.getOperand(1), Val);
 }
 

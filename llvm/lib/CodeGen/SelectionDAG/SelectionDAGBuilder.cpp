@@ -4744,8 +4744,14 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     return 0;
   }
   case Intrinsic::eh_sjlj_setjmp: {
-    setValue(&I, DAG.getNode(ISD::EH_SJLJ_SETJMP, dl, MVT::i32, getRoot(),
-                             getValue(I.getArgOperand(0))));
+    SDValue Ops[2];
+    Ops[0] = getRoot();
+    Ops[1] = getValue(I.getArgOperand(0));
+    SDValue Op = DAG.getNode(ISD::EH_SJLJ_SETJMP, dl,
+                             DAG.getVTList(MVT::i32, MVT::Other),
+                             Ops, 2);
+    setValue(&I, Op.getValue(0));
+    DAG.setRoot(Op.getValue(1));
     return 0;
   }
   case Intrinsic::eh_sjlj_longjmp: {

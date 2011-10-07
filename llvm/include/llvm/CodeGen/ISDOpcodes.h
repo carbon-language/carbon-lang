@@ -95,7 +95,7 @@ namespace ISD {
     // execution to HANDLER. Many platform-related details also :)
     EH_RETURN,
 
-    // OUTCHAIN = EH_SJLJ_SETJMP(INCHAIN, buffer)
+    // RESULT, OUTCHAIN = EH_SJLJ_SETJMP(INCHAIN, buffer)
     // This corresponds to the eh.sjlj.setjmp intrinsic.
     // It takes an input chain and a pointer to the jump buffer as inputs
     // and returns an outchain.
