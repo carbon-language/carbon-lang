@@ -76,12 +76,12 @@ def MOVZX32rm16: I<0xB7, MRMSrcMem, (outs GR32:$dst), (ins i16mem:$src),
 // except that they use GR32_NOREX for the output operand register class
 // instead of GR32. This allows them to operate on h registers on x86-64.
 def MOVZX32_NOREXrr8 : I<0xB6, MRMSrcReg,
-                         (outs GR32_NOREX:$dst), (ins GR8:$src),
+                         (outs GR32_NOREX:$dst), (ins GR8_NOREX:$src),
                          "movz{bl|x}\t{$src, $dst|$dst, $src}",
                          []>, TB;
 let mayLoad = 1 in
 def MOVZX32_NOREXrm8 : I<0xB6, MRMSrcMem,
-                         (outs GR32_NOREX:$dst), (ins i8mem:$src),
+                         (outs GR32_NOREX:$dst), (ins i8mem_NOREX:$src),
                          "movz{bl|x}\t{$src, $dst|$dst, $src}",
                          []>, TB;
 
