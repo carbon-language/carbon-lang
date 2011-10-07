@@ -59,14 +59,14 @@ namespace llvm {
       return reinterpret_cast<LLVMObjectFileRef>(const_cast<ObjectFile*>(OF));
     }
 
-    inline ObjectFile::section_iterator *unwrap(LLVMSectionIteratorRef SI) {
-      return reinterpret_cast<ObjectFile::section_iterator*>(SI);
+    inline section_iterator *unwrap(LLVMSectionIteratorRef SI) {
+      return reinterpret_cast<section_iterator*>(SI);
     }
 
     inline LLVMSectionIteratorRef
-    wrap(const ObjectFile::section_iterator *SI) {
+    wrap(const section_iterator *SI) {
       return reinterpret_cast<LLVMSectionIteratorRef>
-        (const_cast<ObjectFile::section_iterator*>(SI));
+        (const_cast<section_iterator*>(SI));
     }
   }
 }

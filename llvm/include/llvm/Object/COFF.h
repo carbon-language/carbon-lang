@@ -84,6 +84,8 @@ private:
         error_code        getSection(int32_t index,
                                      const coff_section *&Res) const;
         error_code        getString(uint32_t offset, StringRef &Res) const;
+        error_code        getSymbol(uint32_t index,
+                                    const coff_symbol *&Res) const;
 
   const coff_symbol      *toSymb(DataRefImpl Symb) const;
   const coff_section     *toSec(DataRefImpl Sec) const;
@@ -110,6 +112,8 @@ protected:
   virtual error_code isSectionBSS(DataRefImpl Sec, bool &Res) const;
   virtual error_code sectionContainsSymbol(DataRefImpl Sec, DataRefImpl Symb,
                                            bool &Result) const;
+  virtual relocation_iterator getSectionRelBegin(DataRefImpl Sec) const;
+  virtual relocation_iterator getSectionRelEnd(DataRefImpl Sec) const;
 
   virtual error_code getRelocationNext(DataRefImpl Rel,
                                        RelocationRef &Res) const;
@@ -119,16 +123,19 @@ protected:
                                          SymbolRef &Res) const;
   virtual error_code getRelocationType(DataRefImpl Rel,
                                        uint32_t &Res) const;
+  virtual error_code getRelocationTypeName(DataRefImpl Rel,
+                                           SmallVectorImpl<char> &Result) const;
   virtual error_code getRelocationAdditionalInfo(DataRefImpl Rel,
                                                  int64_t &Res) const;
+  virtual error_code getRelocationValueString(DataRefImpl Rel,
+                                           SmallVectorImpl<char> &Result) const;
+
 public:
   COFFObjectFile(MemoryBuffer *Object, error_code &ec);
   virtual symbol_iterator begin_symbols() const;
   virtual symbol_iterator end_symbols() const;
   virtual section_iterator begin_sections() const;
   virtual section_iterator end_sections() const;
-  virtual relocation_iterator begin_relocations() const;
-  virtual relocation_iterator end_relocations() const;
 
   virtual uint8_t getBytesInAddress() const;
   virtual StringRef getFileFormatName() const;
