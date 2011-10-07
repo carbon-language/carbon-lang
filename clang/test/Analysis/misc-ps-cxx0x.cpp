@@ -21,3 +21,27 @@ void test_rdar10243398(RDar10243398 *p) {
   RDar10243398MemberFn q = &RDar10243398::bar;
   ((*p).*(q))(1);
 }
+
+// Tests for CXXTemporaryObjectExpr.
+struct X {
+    X( int *ip, int );
+};
+
+// Test to see if CXXTemporaryObjectExpr is being handled.
+int tempobj1()
+{
+  int j;
+  int i;
+  X a = X( &j, 1 );
+
+  return i; // expected-warning {{Undefined or garbage value returned to caller}}
+}
+
+// Test to see if CXXTemporaryObjectExpr invalidates arguments.
+int tempobj2()
+{
+  int j;
+  X a = X( &j, 1 );
+
+  return j; // no-warning
+}

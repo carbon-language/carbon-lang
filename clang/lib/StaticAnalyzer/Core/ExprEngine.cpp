@@ -455,7 +455,6 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::CXXDependentScopeMemberExprClass:
     case Stmt::CXXForRangeStmtClass:
     case Stmt::CXXPseudoDestructorExprClass:
-    case Stmt::CXXTemporaryObjectExprClass:
     case Stmt::CXXThrowExprClass:
     case Stmt::CXXTryStmtClass:
     case Stmt::CXXTypeidExprClass:
@@ -628,6 +627,7 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
       break;
     }
 
+    case Stmt::CXXTemporaryObjectExprClass:
     case Stmt::CXXConstructExprClass: {
       const CXXConstructExpr *C = cast<CXXConstructExpr>(S);
       // For block-level CXXConstructExpr, we don't have a destination region.
