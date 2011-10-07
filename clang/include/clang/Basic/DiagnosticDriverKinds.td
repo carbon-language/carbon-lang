@@ -65,6 +65,9 @@ def err_drv_command_signalled : Error<
   "%0 command failed due to signal %1 (use -v to see invocation)">;
 def err_drv_invalid_mfloat_abi : Error<
   "invalid float ABI '%0'">;
+def err_drv_invalid_libcxx_deployment : Error<
+  "invalid deployment target for -stdlib=libc++ (requires %0 or later)">;
+
 def err_drv_I_dash_not_supported : Error<
   "'%0' not supported, please use -iquote instead">;
 def err_drv_unknown_argument : Error<"unknown argument: '%0'">;

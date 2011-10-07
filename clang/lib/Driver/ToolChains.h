@@ -66,6 +66,12 @@ private:
     ARCSimulator_NoARCRuntime
   } ARCRuntimeForSimulator;
 
+  mutable enum {
+    LibCXXSimulator_None,
+    LibCXXSimulator_NotAvailable,
+    LibCXXSimulator_Available
+  } LibCXXForSimulator;
+
 private:
   /// Whether we are targeting iPhoneOS target.
   mutable bool TargetIsIPhoneOS;
