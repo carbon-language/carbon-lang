@@ -670,3 +670,5 @@ void LiveVariablesImpl::dumpBlockLiveness(const SourceManager &M) {
   llvm::errs() << "\n";  
 }
 
+const void *LiveVariables::getTag() { static int x; return &x; }
+const void *RelaxedLiveVariables::getTag() { static int x; return &x; }

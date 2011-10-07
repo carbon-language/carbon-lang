@@ -348,7 +348,7 @@ class DeadStoresChecker : public Checker<check::ASTCodeBody> {
 public:
   void checkASTCodeBody(const Decl *D, AnalysisManager& mgr,
                         BugReporter &BR) const {
-    if (LiveVariables *L = mgr.getLiveVariables(D)) {
+    if (LiveVariables *L = mgr.getAnalysis<LiveVariables>(D)) {
       CFG &cfg = *mgr.getCFG(D);
       AnalysisContext *AC = mgr.getAnalysisContext(D);
       ParentMap &pmap = mgr.getParentMap(D);

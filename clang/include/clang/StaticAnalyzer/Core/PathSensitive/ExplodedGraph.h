@@ -138,8 +138,9 @@ public:
 
   ParentMap &getParentMap() const {return getLocationContext()->getParentMap();}
 
-  LiveVariables &getLiveVariables() const { 
-    return *getLocationContext()->getLiveVariables(); 
+  template <typename T>
+  T &getAnalysis() const {
+    return *getLocationContext()->getAnalysis<T>();
   }
 
   const ProgramState *getState() const { return State; }

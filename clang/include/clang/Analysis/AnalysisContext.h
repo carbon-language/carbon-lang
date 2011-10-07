@@ -32,14 +32,35 @@ class Stmt;
 class CFGReverseBlockReachabilityAnalysis;
 class CFGStmtMap;
 class LiveVariables;
+class ManagedAnalysis;
 class ParentMap;
 class PseudoConstantAnalysis;
 class ImplicitParamDecl;
 class LocationContextManager;
 class StackFrameContext;
-
+  
 namespace idx { class TranslationUnit; }
 
+/// The base class of a hierarchy of objects representing analyses tied
+/// to AnalysisContext.
+class ManagedAnalysis {
+protected:
+  ManagedAnalysis() {}
+public:
+  virtual ~ManagedAnalysis();
+  
+  // Subclasses need to implement:
+  //
+  //  static const void *getTag();
+  //
+  // Which returns a fixed pointer address to distinguish classes of
+  // analysis objects.  They also need to implement:
+  //
+  //  static [Derived*] create(AnalysisContext &Ctx);
+  //
+  // which creates the analysis object given an AnalysisContext.
+};
+  
 /// AnalysisContext contains the context data for the function or method under
 /// analysis.
 class AnalysisContext {
@@ -66,6 +87,8 @@ class AnalysisContext {
 
   // FIXME: remove.
   llvm::DenseMap<const BlockDecl*,void*> *ReferencedBlockVars;
+
+  void *ManagedAnalyses;
 
 public:
   AnalysisContext(const Decl *d, idx::TranslationUnit *tu);
@@ -122,8 +145,6 @@ public:
 
   ParentMap &getParentMap();
   PseudoConstantAnalysis *getPseudoConstantAnalysis();
-  LiveVariables *getLiveVariables();
-  LiveVariables *getRelaxedLiveVariables();
 
   typedef const VarDecl * const * referenced_decls_iterator;
 
@@ -133,6 +154,20 @@ public:
   /// Return the ImplicitParamDecl* associated with 'self' if this
   /// AnalysisContext wraps an ObjCMethodDecl.  Returns NULL otherwise.
   const ImplicitParamDecl *getSelfDecl() const;
+  
+  /// Return the specified analysis object, lazily running the analysis if
+  /// necessary.  Return NULL if the analysis could not run.
+  template <typename T>
+  T *getAnalysis() {
+    const void *tag = T::getTag();
+    ManagedAnalysis *&data = getAnalysisImpl(tag);
+    if (!data) {
+      data = T::create(*this);
+    }
+    return static_cast<T*>(data);
+  }
+private:
+  ManagedAnalysis *&getAnalysisImpl(const void* tag);
 };
 
 class AnalysisContextManager {
@@ -196,8 +231,9 @@ public:
 
   CFG *getCFG() const { return getAnalysisContext()->getCFG(); }
 
-  LiveVariables *getLiveVariables() const {
-    return getAnalysisContext()->getLiveVariables();
+  template <typename T>
+  T *getAnalysis() const {
+    return getAnalysisContext()->getAnalysis<T>();
   }
 
   ParentMap &getParentMap() const {

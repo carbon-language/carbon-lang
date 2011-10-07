@@ -30,6 +30,8 @@
 
 using namespace clang;
 
+typedef llvm::DenseMap<const void *, ManagedAnalysis *> ManagedAnalysisMap;
+
 AnalysisContext::AnalysisContext(const Decl *d,
                                  idx::TranslationUnit *tu,
                                  const CFG::BuildOptions &buildOptions)
@@ -38,7 +40,8 @@ AnalysisContext::AnalysisContext(const Decl *d,
     forcedBlkExprs(0),
     builtCFG(false),
     builtCompleteCFG(false),
-    ReferencedBlockVars(0)
+    ReferencedBlockVars(0),
+    ManagedAnalyses(0)
 {  
   cfgBuildOptions.forcedBlkExprs = &forcedBlkExprs;
 }
@@ -49,7 +52,8 @@ AnalysisContext::AnalysisContext(const Decl *d,
   forcedBlkExprs(0),
   builtCFG(false),
   builtCompleteCFG(false),
-  ReferencedBlockVars(0)
+  ReferencedBlockVars(0),
+  ManagedAnalyses(0)
 {  
   cfgBuildOptions.forcedBlkExprs = &forcedBlkExprs;
 }
@@ -174,18 +178,6 @@ PseudoConstantAnalysis *AnalysisContext::getPseudoConstantAnalysis() {
   if (!PCA)
     PCA.reset(new PseudoConstantAnalysis(getBody()));
   return PCA.get();
-}
-
-LiveVariables *AnalysisContext::getLiveVariables() {
-  if (!liveness)
-    liveness.reset(LiveVariables::computeLiveness(*this));
-  return liveness.get();
-}
-
-LiveVariables *AnalysisContext::getRelaxedLiveVariables() {
-  if (!relaxedLiveness)
-    relaxedLiveness.reset(LiveVariables::computeLiveness(*this, false));
-  return relaxedLiveness.get();
 }
 
 AnalysisContext *AnalysisContextManager::getContext(const Decl *D,
@@ -395,13 +387,29 @@ AnalysisContext::getReferencedBlockVars(const BlockDecl *BD) {
   return std::make_pair(V->begin(), V->end());
 }
 
+ManagedAnalysis *&AnalysisContext::getAnalysisImpl(const void *tag) {
+  if (!ManagedAnalyses)
+    ManagedAnalyses = new ManagedAnalysisMap();
+  ManagedAnalysisMap *M = (ManagedAnalysisMap*) ManagedAnalyses;
+  return (*M)[tag];
+}
+
 //===----------------------------------------------------------------------===//
 // Cleanup.
 //===----------------------------------------------------------------------===//
 
+ManagedAnalysis::~ManagedAnalysis() {}
+
 AnalysisContext::~AnalysisContext() {
   delete forcedBlkExprs;
   delete ReferencedBlockVars;
+  // Release the managed analyses.
+  if (ManagedAnalyses) {
+    ManagedAnalysisMap *M = (ManagedAnalysisMap*) ManagedAnalyses;
+    for (ManagedAnalysisMap::iterator I = M->begin(), E = M->end(); I!=E; ++I)
+      delete I->second;  
+    delete M;
+  }
 }
 
 AnalysisContextManager::~AnalysisContextManager() {

@@ -172,8 +172,9 @@ public:
     return AnaCtxMgr.getContext(D)->getCFG();
   }
 
-  LiveVariables *getLiveVariables(Decl const *D) {
-    return AnaCtxMgr.getContext(D)->getLiveVariables();
+  template <typename T>
+  T *getAnalysis(Decl const *D) {
+    return AnaCtxMgr.getContext(D)->getAnalysis<T>();
   }
 
   ParentMap &getParentMap(Decl const *D) {

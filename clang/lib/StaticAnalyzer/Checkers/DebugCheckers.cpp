@@ -28,7 +28,7 @@ class LiveVariablesDumper : public Checker<check::ASTCodeBody> {
 public:
   void checkASTCodeBody(const Decl *D, AnalysisManager& mgr,
                         BugReporter &BR) const {
-    if (LiveVariables* L = mgr.getLiveVariables(D)) {
+    if (LiveVariables* L = mgr.getAnalysis<LiveVariables>(D)) {
       L->dumpBlockLiveness(mgr.getSourceManager());
     }
   }

@@ -382,8 +382,7 @@ bool SymbolReaper::isLive(SymbolRef sym) {
 }
 
 bool SymbolReaper::isLive(const Stmt *ExprVal) const {
-  return LCtx->getAnalysisContext()->getRelaxedLiveVariables()->
-      isLive(Loc, ExprVal);
+  return LCtx->getAnalysis<RelaxedLiveVariables>()->isLive(Loc, ExprVal);
 }
 
 bool SymbolReaper::isLive(const VarRegion *VR, bool includeStoreBindings) const{
@@ -391,8 +390,7 @@ bool SymbolReaper::isLive(const VarRegion *VR, bool includeStoreBindings) const{
   const StackFrameContext *CurrentContext = LCtx->getCurrentStackFrame();
 
   if (VarContext == CurrentContext) {
-    if (LCtx->getAnalysisContext()->getRelaxedLiveVariables()->
-          isLive(Loc, VR->getDecl()))
+    if (LCtx->getAnalysis<RelaxedLiveVariables>()->isLive(Loc, VR->getDecl()))
       return true;
 
     if (!includeStoreBindings)

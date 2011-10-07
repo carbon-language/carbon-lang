@@ -304,10 +304,9 @@ void AnalysisConsumer::HandleCode(Decl *D) {
 
 static void ActionExprEngine(AnalysisConsumer &C, AnalysisManager &mgr,
                              Decl *D, bool ObjCGCEnabled) {
-  // Construct the analysis engine.  We first query for the LiveVariables
-  // information to see if the CFG is valid.
+  // Construct the analysis engine.  First check if the CFG is valid.
   // FIXME: Inter-procedural analysis will need to handle invalid CFGs.
-  if (!mgr.getLiveVariables(D))
+  if (!mgr.getCFG(D))
     return;
   ExprEngine Eng(mgr, ObjCGCEnabled);
 
