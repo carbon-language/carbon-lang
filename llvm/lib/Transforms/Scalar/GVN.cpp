@@ -1980,6 +1980,42 @@ bool GVN::propagateEquality(Value *LHS, Value *RHS, BasicBlock *Root) {
   return Changed;
 }
 
+/// isOnlyReachableViaThisEdge - There is an edge from 'Src' to 'Dst'.  Return
+/// true if every path from the entry block to 'Dst' passes via this edge.  In
+/// particular 'Dst' must not be reachable via another edge from 'Src'.
+static bool isOnlyReachableViaThisEdge(BasicBlock *Src, BasicBlock *Dst,
+                                       DominatorTree *DT) {
+  // First off, there must not be more than one edge from Src to Dst, there
+  // should be exactly one.  So keep track of the number of times Src occurs
+  // as a predecessor of Dst and fail if it's more than once.  Secondly, any
+  // other predecessors of Dst should be dominated by Dst (see logic below).
+  bool SawEdgeFromSrc = false;
+  for (pred_iterator PI = pred_begin(Dst), PE = pred_end(Dst); PI != PE; ++PI) {
+    BasicBlock *Pred = *PI;
+    if (Pred == Src) {
+      // An edge from Src to Dst.
+      if (SawEdgeFromSrc)
+        // There are multiple edges from Src to Dst - fail.
+        return false;
+      SawEdgeFromSrc = true;
+      continue;
+    }
+    // If the predecessor is not dominated by Dst, then it must be possible to
+    // reach it either without passing through Src (and thus not via the edge)
+    // or by passing through Src but taking a different edge out of Src.  Either
+    // way it is possible to reach Dst without passing via the edge, so fail.
+    if (!DT->dominates(Dst, *PI))
+      return false;
+  }
+  assert(SawEdgeFromSrc && "No edge between these basic blocks!");
+
+  // Every path from the entry block to Dst must at some point pass to Dst from
+  // a predecessor that is not dominated by Dst.  This predecessor can only be
+  // Src, since all others are dominated by Dst.  As there is only one edge from
+  // Src to Dst, the path passes by this edge.
+  return true;
+}
+
 /// processInstruction - When calculating availability, handle an instruction
 /// by inserting it into the appropriate sets
 bool GVN::processInstruction(Instruction *I) {
@@ -2011,7 +2047,6 @@ bool GVN::processInstruction(Instruction *I) {
 
   // For conditional branches, we can perform simple conditional propagation on
   // the condition value itself.
-  // TODO: Add conditional propagation of switch cases.
   if (BranchInst *BI = dyn_cast<BranchInst>(I)) {
     if (!BI->isConditional() || isa<Constant>(BI->getCondition()))
       return false;
@@ -2021,41 +2056,34 @@ bool GVN::processInstruction(Instruction *I) {
     BasicBlock *TrueSucc = BI->getSuccessor(0);
     BasicBlock *FalseSucc = BI->getSuccessor(1);
     BasicBlock *Parent = BI->getParent();
+    bool Changed = false;
 
-    // If the true and false branches are to the same basic block then the
-    // branch gives no information about the condition.  Eliminating this
-    // here simplifies the rest of the logic.
-    if (TrueSucc == FalseSucc)
-      return false;
-
-    // If the true block can be reached without executing the true edge then we
-    // can't say anything about the value of the condition there.
-    for (pred_iterator PI = pred_begin(TrueSucc), PE = pred_end(TrueSucc);
-         PI != PE; ++PI)
-      if (*PI != Parent && !DT->dominates(TrueSucc, *PI)) {
-        TrueSucc = 0;
-        break;
-      }
-
-    // If the false block can be reached without executing the false edge then
-    // we can't say anything about the value of the condition there.
-    for (pred_iterator PI = pred_begin(FalseSucc), PE = pred_end(FalseSucc);
-         PI != PE; ++PI)
-      if (*PI != Parent && !DT->dominates(FalseSucc, *PI)) {
-        FalseSucc = 0;
-        break;
-      }
-
-    // Replace the condition with true/false in basic blocks that can only be
-    // reached via the true/false arm of the branch.
-    return (TrueSucc && propagateEquality(BranchCond,
+    if (isOnlyReachableViaThisEdge(Parent, TrueSucc, DT))
+      Changed |= propagateEquality(BranchCond,
                                    ConstantInt::getTrue(TrueSucc->getContext()),
-                                   TrueSucc))
-      || (FalseSucc && propagateEquality(BranchCond,
-                                 ConstantInt::getFalse(FalseSucc->getContext()),
-                                 FalseSucc));
+                                   TrueSucc);
+
+    if (isOnlyReachableViaThisEdge(Parent, FalseSucc, DT))
+      Changed |= propagateEquality(BranchCond,
+                                   ConstantInt::getFalse(FalseSucc->getContext()),
+                                   FalseSucc);
+
+    return Changed;
   }
-  
+
+  // For switches, propagate the case values into the case destinations.
+  if (SwitchInst *SI = dyn_cast<SwitchInst>(I)) {
+    Value *SwitchCond = SI->getCondition();
+    BasicBlock *Parent = SI->getParent();
+    bool Changed = false;
+    for (unsigned i = 1, e = SI->getNumCases(); i != e; ++i) {
+      BasicBlock *Dst = SI->getSuccessor(i);
+      if (isOnlyReachableViaThisEdge(Parent, Dst, DT))
+        Changed |= propagateEquality(SwitchCond, SI->getCaseValue(i), Dst);
+    }
+    return Changed;
+  }
+
   // Instructions with void type don't return a value, so there's
   // no point in trying to find redudancies in them.
   if (I->getType()->isVoidTy()) return false;

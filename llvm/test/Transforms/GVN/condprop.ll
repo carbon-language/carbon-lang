@@ -97,3 +97,36 @@ nope:
 ; CHECK: call void @foo(i1 false)
   ret void
 }
+
+; CHECK: @test4
+define void @test4(i1 %b, i32 %x) {
+  br i1 %b, label %sw, label %case3
+sw:
+  switch i32 %x, label %default [
+    i32 0, label %case0
+    i32 1, label %case1
+    i32 2, label %case0
+    i32 3, label %case3
+    i32 4, label %default
+  ]
+default:
+; CHECK: default:
+  call void @bar(i32 %x)
+; CHECK: call void @bar(i32 %x)
+  ret void
+case0:
+; CHECK: case0:
+  call void @bar(i32 %x)
+; CHECK: call void @bar(i32 %x)
+  ret void
+case1:
+; CHECK: case1:
+  call void @bar(i32 %x)
+; CHECK: call void @bar(i32 1)
+  ret void
+case3:
+; CHECK: case3:
+  call void @bar(i32 %x)
+; CHECK: call void @bar(i32 %x)
+  ret void
+}
