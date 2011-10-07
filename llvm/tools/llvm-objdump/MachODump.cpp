@@ -122,7 +122,7 @@ static Symbol copySymbol(const T &STE) {
   return S;
 }
 
-// Print addtitional information about an address, if available.
+// Print additional information about an address, if available.
 static void DumpAddress(uint64_t Address, ArrayRef<Section> Sections,
                         MachOObject *MachOObj, raw_ostream &OS) {
   for (unsigned i = 0; i != Sections.size(); ++i) {
@@ -298,7 +298,7 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
                               AsmPrinterVariant, *AsmInfo, *STI));
 
   if (!InstrAnalysis || !AsmInfo || !STI || !DisAsm || !IP) {
-    errs() << "error: couldn't initialize disassmbler for target "
+    errs() << "error: couldn't initialize disassembler for target "
            << TripleName << '\n';
     return;
   }
@@ -573,7 +573,7 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
             IP->printInst(&Inst.Inst, outs(), "");
 
             // Look for relocations inside this instructions, if there is one
-            // print its target and additional information if availbable.
+            // print its target and additional information if available.
             for (unsigned j = 0; j != Relocs.size(); ++j)
               if (Relocs[j].first >= Sections[SectIdx].Address + Inst.Address &&
                   Relocs[j].first < Sections[SectIdx].Address + Inst.Address +
