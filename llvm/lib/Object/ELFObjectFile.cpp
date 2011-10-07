@@ -20,8 +20,6 @@
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/raw_ostream.h"
-#include <algorithm>
 #include <limits>
 #include <utility>
 
@@ -288,7 +286,6 @@ class ELFObjectFile : public ObjectFile {
 
   typedef SmallVector<const Elf_Shdr*, 1> Sections_t;
   typedef DenseMap<unsigned, unsigned> IndexMap_t;
-  typedef DenseMap<const Elf_Shdr*, SmallVector<uint32_t, 1> > RelocMap_t;
 
   const Elf_Ehdr *Header;
   const Elf_Shdr *SectionHeaderTable;
@@ -296,22 +293,12 @@ class ELFObjectFile : public ObjectFile {
   const Elf_Shdr *dot_strtab_sec;   // Symbol header string table.
   Sections_t SymbolTableSections;
   IndexMap_t SymbolTableSectionsIndexMap;
-
-  /// @brief Map sections to an array of relocation sections that reference
-  ///        them sorted by section index.
-  RelocMap_t SectionRelocMap;
-
-  /// @brief Get the relocation section that contains \a Rel.
-  const Elf_Shdr *getRelSection(DataRefImpl Rel) const {
-    return getSection(Rel.w.b);
-  }
+  Sections_t RelocationTableSections;
 
   void            validateSymbol(DataRefImpl Symb) const;
   bool            isRelocationHasAddend(DataRefImpl Rel) const;
   template<typename T>
-  const T        *getEntry(uint16_t Section, uint32_t Entry) const;
-  template<typename T>
-  const T        *getEntry(const Elf_Shdr *Section, uint32_t Entry) const;
+  const T        *getEntry(DataRefImpl Entry, Sections_t Sections) const;
   const Elf_Sym  *getSymbol(DataRefImpl Symb) const;
   const Elf_Shdr *getSection(DataRefImpl index) const;
   const Elf_Shdr *getSection(uint16_t index) const;
@@ -319,7 +306,6 @@ class ELFObjectFile : public ObjectFile {
   const Elf_Rela *getRela(DataRefImpl Rela) const;
   const char     *getString(uint16_t section, uint32_t offset) const;
   const char     *getString(const Elf_Shdr *section, uint32_t offset) const;
-  error_code      getSymbolName(const Elf_Sym *Symb, StringRef &Res) const;
 
 protected:
   virtual error_code getSymbolNext(DataRefImpl Symb, SymbolRef &Res) const;
@@ -342,8 +328,6 @@ protected:
   virtual error_code isSectionBSS(DataRefImpl Sec, bool &Res) const;
   virtual error_code sectionContainsSymbol(DataRefImpl Sec, DataRefImpl Symb,
                                            bool &Result) const;
-  virtual relocation_iterator getSectionRelBegin(DataRefImpl Sec) const;
-  virtual relocation_iterator getSectionRelEnd(DataRefImpl Sec) const;
 
   virtual error_code getRelocationNext(DataRefImpl Rel,
                                        RelocationRef &Res) const;
@@ -353,12 +337,8 @@ protected:
                                          SymbolRef &Res) const;
   virtual error_code getRelocationType(DataRefImpl Rel,
                                        uint32_t &Res) const;
-  virtual error_code getRelocationTypeName(DataRefImpl Rel,
-                                           SmallVectorImpl<char> &Result) const;
   virtual error_code getRelocationAdditionalInfo(DataRefImpl Rel,
                                                  int64_t &Res) const;
-  virtual error_code getRelocationValueString(DataRefImpl Rel,
-                                           SmallVectorImpl<char> &Result) const;
 
 public:
   ELFObjectFile(MemoryBuffer *Object, error_code &ec);
@@ -366,6 +346,8 @@ public:
   virtual symbol_iterator end_symbols() const;
   virtual section_iterator begin_sections() const;
   virtual section_iterator end_sections() const;
+  virtual relocation_iterator begin_relocations() const;
+  virtual relocation_iterator end_relocations() const;
 
   virtual uint8_t getBytesInAddress() const;
   virtual StringRef getFileFormatName() const;
@@ -422,7 +404,18 @@ error_code ELFObjectFile<target_endianness, is64Bits>
                                         StringRef &Result) const {
   validateSymbol(Symb);
   const Elf_Sym  *symb = getSymbol(Symb);
-  return getSymbolName(symb, Result);
+  if (symb->st_name == 0) {
+    const Elf_Shdr *section = getSection(symb->st_shndx);
+    if (!section)
+      Result = "";
+    else
+      Result = getString(dot_shstrtab_sec, section->sh_name);
+    return object_error::success;
+  }
+
+  // Use the default symbol table name section.
+  Result = getString(dot_strtab_sec, symb->st_name);
+  return object_error::success;
 }
 
 template<support::endianness target_endianness, bool is64Bits>
@@ -719,65 +712,24 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   return object_error::success;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-relocation_iterator ELFObjectFile<target_endianness, is64Bits>
-                                 ::getSectionRelBegin(DataRefImpl Sec) const {
-  DataRefImpl RelData;
-  memset(&RelData, 0, sizeof(RelData));
-  const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
-  RelocMap_t::const_iterator ittr = SectionRelocMap.find(sec);
-  if (sec != 0 && ittr != SectionRelocMap.end()) {
-    RelData.w.a = getSection(ittr->second[0])->sh_link;
-    RelData.w.b = ittr->second[0];
-    RelData.w.c = 0;
-  }
-  return relocation_iterator(RelocationRef(RelData, this));
-}
-
-template<support::endianness target_endianness, bool is64Bits>
-relocation_iterator ELFObjectFile<target_endianness, is64Bits>
-                                 ::getSectionRelEnd(DataRefImpl Sec) const {
-  DataRefImpl RelData;
-  memset(&RelData, 0, sizeof(RelData));
-  const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
-  RelocMap_t::const_iterator ittr = SectionRelocMap.find(sec);
-  if (sec != 0 && ittr != SectionRelocMap.end()) {
-    // Get the index of the last relocation section for this section.
-    std::size_t relocsecindex = ittr->second[ittr->second.size() - 1];
-    const Elf_Shdr *relocsec = getSection(relocsecindex);
-    RelData.w.a = relocsec->sh_link;
-    RelData.w.b = relocsecindex;
-    RelData.w.c = relocsec->sh_size / relocsec->sh_entsize;
-  }
-  return relocation_iterator(RelocationRef(RelData, this));
-}
-
 // Relocations
 template<support::endianness target_endianness, bool is64Bits>
 error_code ELFObjectFile<target_endianness, is64Bits>
                         ::getRelocationNext(DataRefImpl Rel,
                                             RelocationRef &Result) const {
-  ++Rel.w.c;
-  const Elf_Shdr *relocsec = getSection(Rel.w.b);
-  if (Rel.w.c >= (relocsec->sh_size / relocsec->sh_entsize)) {
-    // We have reached the end of the relocations for this section. See if there
-    // is another relocation section.
-    RelocMap_t::mapped_type &relocseclist =
-      SectionRelocMap.lookup(getSection(Rel.w.a));
+  const Elf_Shdr *RelocationTableSection = RelocationTableSections[Rel.d.b];
 
-    // Do a binary search for the current reloc section index (which must be
-    // present). Then get the next one.
-    RelocMap_t::mapped_type::const_iterator loc =
-      std::lower_bound(relocseclist.begin(), relocseclist.end(), Rel.w.b);
-    ++loc;
-
-    // If there is no next one, don't do anything. The ++Rel.w.c above sets Rel
-    // to the end iterator.
-    if (loc != relocseclist.end()) {
-      Rel.w.b = *loc;
-      Rel.w.a = 0;
+  // Check to see if we are at the end of this relocation table.
+  if (++Rel.d.a >= RelocationTableSection->getEntityCount()) {
+    // We are at the end. If there are other relocation tables, jump to them.
+    Rel.d.a = 0;
+    // Otherwise return the terminator.
+    if (++Rel.d.b >= SymbolTableSections.size()) {
+      Rel.d.a = std::numeric_limits<uint32_t>::max();
+      Rel.d.b = std::numeric_limits<uint32_t>::max();
     }
   }
+
   Result = RelocationRef(Rel, this);
   return object_error::success;
 }
@@ -787,7 +739,7 @@ error_code ELFObjectFile<target_endianness, is64Bits>
                         ::getRelocationSymbol(DataRefImpl Rel,
                                               SymbolRef &Result) const {
   uint32_t symbolIdx;
-  const Elf_Shdr *sec = getSection(Rel.w.b);
+  const Elf_Shdr *sec = RelocationTableSections[Rel.d.b];
   switch (sec->sh_type) {
     default :
       report_fatal_error("Invalid section type in Rel!");
@@ -815,7 +767,7 @@ error_code ELFObjectFile<target_endianness, is64Bits>
                         ::getRelocationAddress(DataRefImpl Rel,
                                                uint64_t &Result) const {
   uint64_t offset;
-  const Elf_Shdr *sec = getSection(Rel.w.b);
+  const Elf_Shdr *sec = RelocationTableSections[Rel.d.b];
   switch (sec->sh_type) {
     default :
       report_fatal_error("Invalid section type in Rel!");
@@ -829,7 +781,8 @@ error_code ELFObjectFile<target_endianness, is64Bits>
     }
   }
 
-  Result = offset;
+  const Elf_Shdr *secAddr = getSection(sec->sh_info);
+  Result = offset + reinterpret_cast<uintptr_t>(base() + secAddr->sh_offset);
   return object_error::success;
 }
 
@@ -837,7 +790,7 @@ template<support::endianness target_endianness, bool is64Bits>
 error_code ELFObjectFile<target_endianness, is64Bits>
                         ::getRelocationType(DataRefImpl Rel,
                                             uint32_t &Result) const {
-  const Elf_Shdr *sec = getSection(Rel.w.b);
+  const Elf_Shdr *sec = RelocationTableSections[Rel.d.b];
   switch (sec->sh_type) {
     default :
       report_fatal_error("Invalid section type in Rel!");
@@ -853,127 +806,11 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   return object_error::success;
 }
 
-#define LLVM_ELF_SWITCH_RELOC_TYPE_NAME(enum) \
-  case ELF::enum: res = #enum; break;
-
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
-                        ::getRelocationTypeName(DataRefImpl Rel,
-                                          SmallVectorImpl<char> &Result) const {
-  const Elf_Shdr *sec = getSection(Rel.w.b);
-  uint8_t type;
-  StringRef res;
-  switch (sec->sh_type) {
-    default :
-      return object_error::parse_failed;
-    case ELF::SHT_REL : {
-      type = getRel(Rel)->getType();
-      break;
-    }
-    case ELF::SHT_RELA : {
-      type = getRela(Rel)->getType();
-      break;
-    }
-  }
-  switch (Header->e_machine) {
-  case ELF::EM_X86_64:
-    switch (type) {
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_X86_64_NONE);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_X86_64_64);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_X86_64_PC32);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_X86_64_GOT32);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_X86_64_PLT32);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_X86_64_COPY);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_X86_64_GLOB_DAT);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_X86_64_JUMP_SLOT);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_X86_64_RELATIVE);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_X86_64_GOTPCREL);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_X86_64_32);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_X86_64_32S);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_X86_64_16);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_X86_64_PC16);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_X86_64_8);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_X86_64_PC8);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_X86_64_DTPMOD64);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_X86_64_DTPOFF64);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_X86_64_TPOFF64);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_X86_64_TLSGD);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_X86_64_TLSLD);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_X86_64_DTPOFF32);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_X86_64_GOTTPOFF);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_X86_64_TPOFF32);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_X86_64_PC64);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_X86_64_GOTOFF64);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_X86_64_GOTPC32);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_X86_64_SIZE32);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_X86_64_SIZE64);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_X86_64_GOTPC32_TLSDESC);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_X86_64_TLSDESC_CALL);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_X86_64_TLSDESC);
-    default:
-      res = "Unknown";
-    }
-    break;
-  case ELF::EM_386:
-    switch (type) {
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_NONE);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_32);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_PC32);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_GOT32);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_PLT32);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_COPY);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_GLOB_DAT);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_JUMP_SLOT);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_RELATIVE);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_GOTOFF);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_GOTPC);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_32PLT);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_TLS_TPOFF);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_TLS_IE);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_TLS_GOTIE);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_TLS_LE);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_TLS_GD);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_TLS_LDM);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_16);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_PC16);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_8);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_PC8);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_TLS_GD_32);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_TLS_GD_PUSH);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_TLS_GD_CALL);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_TLS_GD_POP);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_TLS_LDM_32);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_TLS_LDM_PUSH);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_TLS_LDM_CALL);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_TLS_LDM_POP);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_TLS_LDO_32);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_TLS_IE_32);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_TLS_LE_32);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_TLS_DTPMOD32);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_TLS_DTPOFF32);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_TLS_TPOFF32);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_TLS_GOTDESC);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_TLS_DESC_CALL);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_TLS_DESC);
-      LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_IRELATIVE);
-    default:
-      res = "Unknown";
-    }
-    break;
-  default:
-    res = "Unknown";
-  }
-  Result.append(res.begin(), res.end());
-  return object_error::success;
-}
-
-#undef LLVM_ELF_SWITCH_RELOC_TYPE_NAME
-
 template<support::endianness target_endianness, bool is64Bits>
 error_code ELFObjectFile<target_endianness, is64Bits>
                         ::getRelocationAdditionalInfo(DataRefImpl Rel,
                                                       int64_t &Result) const {
-  const Elf_Shdr *sec = getSection(Rel.w.b);
+  const Elf_Shdr *sec = RelocationTableSections[Rel.d.b];
   switch (sec->sh_type) {
     default :
       report_fatal_error("Invalid section type in Rel!");
@@ -988,60 +825,7 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   }
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
-                        ::getRelocationValueString(DataRefImpl Rel,
-                                          SmallVectorImpl<char> &Result) const {
-  const Elf_Shdr *sec = getSection(Rel.w.b);
-  uint8_t type;
-  StringRef res;
-  int64_t addend = 0;
-  uint16_t symbol_index = 0;
-  switch (sec->sh_type) {
-    default :
-      return object_error::parse_failed;
-    case ELF::SHT_REL : {
-      type = getRel(Rel)->getType();
-      symbol_index = getRel(Rel)->getSymbol();
-      // TODO: Read implicit addend from section data.
-      break;
-    }
-    case ELF::SHT_RELA : {
-      type = getRela(Rel)->getType();
-      symbol_index = getRela(Rel)->getSymbol();
-      addend = getRela(Rel)->r_addend;
-      break;
-    }
-  }
-  const Elf_Sym *symb = getEntry<Elf_Sym>(sec->sh_link, symbol_index);
-  StringRef symname;
-  if (error_code ec = getSymbolName(symb, symname))
-    return ec;
-  switch (Header->e_machine) {
-  case ELF::EM_X86_64:
-    switch (type) {
-    case ELF::R_X86_64_32S:
-      res = symname;
-      break;
-    case ELF::R_X86_64_PC32: {
-        std::string fmtbuf;
-        raw_string_ostream fmt(fmtbuf);
-        fmt << symname << (addend < 0 ? "" : "+") << addend << "-P";
-        fmt.flush();
-        Result.append(fmtbuf.begin(), fmtbuf.end());
-      }
-      break;
-    default:
-      res = "Unknown";
-    }
-    break;
-  default:
-    res = "Unknown";
-  }
-  if (Result.empty())
-    Result.append(res.begin(), res.end());
-  return object_error::success;
-}
+
 
 template<support::endianness target_endianness, bool is64Bits>
 ELFObjectFile<target_endianness, is64Bits>::ELFObjectFile(MemoryBuffer *Object
@@ -1065,22 +849,17 @@ ELFObjectFile<target_endianness, is64Bits>::ELFObjectFile(MemoryBuffer *Object
 
 
   // To find the symbol tables we walk the section table to find SHT_STMTAB.
-  const Elf_Shdr* sh = reinterpret_cast<const Elf_Shdr*>(SectionHeaderTable);
+  const Elf_Shdr* sh =
+                    reinterpret_cast<const Elf_Shdr*>(SectionHeaderTable);
   for (unsigned i = 0; i < Header->e_shnum; ++i) {
     if (sh->sh_type == ELF::SHT_SYMTAB) {
       SymbolTableSectionsIndexMap[i] = SymbolTableSections.size();
       SymbolTableSections.push_back(sh);
     }
     if (sh->sh_type == ELF::SHT_REL || sh->sh_type == ELF::SHT_RELA) {
-      SectionRelocMap[getSection(sh->sh_link)].push_back(i);
+      RelocationTableSections.push_back(sh);
     }
     ++sh;
-  }
-
-  // Sort section relocation lists by index.
-  for (RelocMap_t::iterator i = SectionRelocMap.begin(),
-                            e = SectionRelocMap.end(); i != e; ++i) {
-    std::sort(i->second.begin(), i->second.end());
   }
 
   // Get string table sections.
@@ -1115,8 +894,8 @@ ELFObjectFile<target_endianness, is64Bits>::ELFObjectFile(MemoryBuffer *Object
 }
 
 template<support::endianness target_endianness, bool is64Bits>
-symbol_iterator ELFObjectFile<target_endianness, is64Bits>
-                             ::begin_symbols() const {
+ObjectFile::symbol_iterator ELFObjectFile<target_endianness, is64Bits>
+                                         ::begin_symbols() const {
   DataRefImpl SymbolData;
   memset(&SymbolData, 0, sizeof(SymbolData));
   if (SymbolTableSections.size() == 0) {
@@ -1130,8 +909,8 @@ symbol_iterator ELFObjectFile<target_endianness, is64Bits>
 }
 
 template<support::endianness target_endianness, bool is64Bits>
-symbol_iterator ELFObjectFile<target_endianness, is64Bits>
-                             ::end_symbols() const {
+ObjectFile::symbol_iterator ELFObjectFile<target_endianness, is64Bits>
+                                         ::end_symbols() const {
   DataRefImpl SymbolData;
   memset(&SymbolData, 0, sizeof(SymbolData));
   SymbolData.d.a = std::numeric_limits<uint32_t>::max();
@@ -1140,8 +919,8 @@ symbol_iterator ELFObjectFile<target_endianness, is64Bits>
 }
 
 template<support::endianness target_endianness, bool is64Bits>
-section_iterator ELFObjectFile<target_endianness, is64Bits>
-                              ::begin_sections() const {
+ObjectFile::section_iterator ELFObjectFile<target_endianness, is64Bits>
+                                          ::begin_sections() const {
   DataRefImpl ret;
   memset(&ret, 0, sizeof(DataRefImpl));
   ret.p = reinterpret_cast<intptr_t>(base() + Header->e_shoff);
@@ -1149,14 +928,39 @@ section_iterator ELFObjectFile<target_endianness, is64Bits>
 }
 
 template<support::endianness target_endianness, bool is64Bits>
-section_iterator ELFObjectFile<target_endianness, is64Bits>
-                              ::end_sections() const {
+ObjectFile::section_iterator ELFObjectFile<target_endianness, is64Bits>
+                                          ::end_sections() const {
   DataRefImpl ret;
   memset(&ret, 0, sizeof(DataRefImpl));
   ret.p = reinterpret_cast<intptr_t>(base()
                                      + Header->e_shoff
                                      + (Header->e_shentsize * Header->e_shnum));
   return section_iterator(SectionRef(ret, this));
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+ObjectFile::relocation_iterator ELFObjectFile<target_endianness, is64Bits>
+                                         ::begin_relocations() const {
+  DataRefImpl RelData;
+  memset(&RelData, 0, sizeof(RelData));
+  if (RelocationTableSections.size() == 0) {
+    RelData.d.a = std::numeric_limits<uint32_t>::max();
+    RelData.d.b = std::numeric_limits<uint32_t>::max();
+  } else {
+    RelData.d.a = 0;
+    RelData.d.b = 0;
+  }
+  return relocation_iterator(RelocationRef(RelData, this));
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+ObjectFile::relocation_iterator ELFObjectFile<target_endianness, is64Bits>
+                                         ::end_relocations() const {
+  DataRefImpl RelData;
+  memset(&RelData, 0, sizeof(RelData));
+  RelData.d.a = std::numeric_limits<uint32_t>::max();
+  RelData.d.b = std::numeric_limits<uint32_t>::max();
+  return relocation_iterator(RelocationRef(RelData, this));
 }
 
 template<support::endianness target_endianness, bool is64Bits>
@@ -1208,49 +1012,41 @@ unsigned ELFObjectFile<target_endianness, is64Bits>::getArch() const {
   }
 }
 
-
 template<support::endianness target_endianness, bool is64Bits>
 template<typename T>
 inline const T *
-ELFObjectFile<target_endianness, is64Bits>::getEntry(uint16_t Section,
-                                                     uint32_t Entry) const {
-  return getEntry<T>(getSection(Section), Entry);
-}
-
-template<support::endianness target_endianness, bool is64Bits>
-template<typename T>
-inline const T *
-ELFObjectFile<target_endianness, is64Bits>::getEntry(const Elf_Shdr * Section,
-                                                     uint32_t Entry) const {
+ELFObjectFile<target_endianness, is64Bits>::getEntry(DataRefImpl Entry,
+                                                     Sections_t Sections) const {
+  const Elf_Shdr *sec = Sections[Entry.d.b];
   return reinterpret_cast<const T *>(
            base()
-           + Section->sh_offset
-           + (Entry * Section->sh_entsize));
+           + sec->sh_offset
+           + (Entry.d.a * sec->sh_entsize));
 }
 
 template<support::endianness target_endianness, bool is64Bits>
 const typename ELFObjectFile<target_endianness, is64Bits>::Elf_Sym *
 ELFObjectFile<target_endianness, is64Bits>::getSymbol(DataRefImpl Symb) const {
-  return getEntry<Elf_Sym>(SymbolTableSections[Symb.d.b], Symb.d.a);
+  return getEntry<Elf_Sym>(Symb, SymbolTableSections);
 }
 
 template<support::endianness target_endianness, bool is64Bits>
 const typename ELFObjectFile<target_endianness, is64Bits>::Elf_Rel *
 ELFObjectFile<target_endianness, is64Bits>::getRel(DataRefImpl Rel) const {
-  return getEntry<Elf_Rel>(Rel.w.b, Rel.w.c);
+  return getEntry<Elf_Rel>(Rel, RelocationTableSections);
 }
 
 template<support::endianness target_endianness, bool is64Bits>
 const typename ELFObjectFile<target_endianness, is64Bits>::Elf_Rela *
 ELFObjectFile<target_endianness, is64Bits>::getRela(DataRefImpl Rela) const {
-  return getEntry<Elf_Rela>(Rela.w.b, Rela.w.c);
+  return getEntry<Elf_Rela>(Rela, RelocationTableSections);
 }
 
 template<support::endianness target_endianness, bool is64Bits>
 const typename ELFObjectFile<target_endianness, is64Bits>::Elf_Shdr *
 ELFObjectFile<target_endianness, is64Bits>::getSection(DataRefImpl Symb) const {
   const Elf_Shdr *sec = getSection(Symb.d.b);
-  if (sec->sh_type != ELF::SHT_SYMTAB || sec->sh_type != ELF::SHT_DYNSYM)
+  if (sec->sh_type != ELF::SHT_SYMTAB)
     // FIXME: Proper error handling.
     report_fatal_error("Invalid symbol table section!");
   return sec;
@@ -1286,24 +1082,6 @@ const char *ELFObjectFile<target_endianness, is64Bits>
     // FIXME: Proper error handling.
     report_fatal_error("Symbol name offset outside of string table!");
   return (const char *)base() + section->sh_offset + offset;
-}
-
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
-                        ::getSymbolName(const Elf_Sym *symb,
-                                        StringRef &Result) const {
-  if (symb->st_name == 0) {
-    const Elf_Shdr *section = getSection(symb->st_shndx);
-    if (!section)
-      Result = "";
-    else
-      Result = getString(dot_shstrtab_sec, section->sh_name);
-    return object_error::success;
-  }
-
-  // Use the default symbol table name section.
-  Result = getString(dot_strtab_sec, symb->st_name);
-  return object_error::success;
 }
 
 // EI_CLASS, EI_DATA.

@@ -27,8 +27,8 @@ void LLVMDisposeObjectFile(LLVMObjectFileRef ObjectFile) {
 }
 
 LLVMSectionIteratorRef LLVMGetSections(LLVMObjectFileRef ObjectFile) {
-  section_iterator SI = unwrap(ObjectFile)->begin_sections();
-  return wrap(new section_iterator(SI));
+  ObjectFile::section_iterator SI = unwrap(ObjectFile)->begin_sections();
+  return wrap(new ObjectFile::section_iterator(SI));
 }
 
 void LLVMDisposeSectionIterator(LLVMSectionIteratorRef SI) {

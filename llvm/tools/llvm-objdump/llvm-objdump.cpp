@@ -155,7 +155,7 @@ void llvm::DisassembleInputLibObject(StringRef Filename) {
          << ":\tfile format " << Obj->getFileFormatName() << "\n\n";
 
   error_code ec;
-  for (section_iterator i = Obj->begin_sections(),
+  for (ObjectFile::section_iterator i = Obj->begin_sections(),
                                     e = Obj->end_sections();
                                     i != e; i.increment(ec)) {
     if (error(ec)) break;
@@ -165,7 +165,7 @@ void llvm::DisassembleInputLibObject(StringRef Filename) {
 
     // Make a list of all the symbols in this section.
     std::vector<std::pair<uint64_t, StringRef> > Symbols;
-    for (symbol_iterator si = Obj->begin_symbols(),
+    for (ObjectFile::symbol_iterator si = Obj->begin_symbols(),
                                      se = Obj->end_symbols();
                                      si != se; si.increment(ec)) {
       bool contains;

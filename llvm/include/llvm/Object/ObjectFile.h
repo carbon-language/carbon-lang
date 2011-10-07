@@ -28,48 +28,9 @@ class ObjectFile;
 
 union DataRefImpl {
   struct {
-    // ELF needs this for relocations. This entire union should probably be a
-    // char[max(8, sizeof(uintptr_t))] and require the impl to cast.
-    uint16_t a, b;
-    uint32_t c;
-  } w;
-  struct {
     uint32_t a, b;
   } d;
   uintptr_t p;
-};
-
-template<class content_type>
-class content_iterator {
-  content_type Current;
-public:
-  content_iterator(content_type symb)
-    : Current(symb) {}
-
-  const content_type* operator->() const {
-    return &Current;
-  }
-
-  const content_type &operator*() const {
-    return Current;
-  }
-
-  bool operator==(const content_iterator &other) const {
-    return Current == other.Current;
-  }
-
-  bool operator!=(const content_iterator &other) const {
-    return !(*this == other);
-  }
-
-  content_iterator& increment(error_code &err) {
-    content_type next;
-    if (error_code ec = Current.getNext(next))
-      err = ec;
-    else
-      Current = next;
-    return *this;
-  }
 };
 
 static bool operator ==(const DataRefImpl &a, const DataRefImpl &b) {
@@ -121,7 +82,6 @@ public:
   /// such as library functions
   error_code isGlobal(bool &Result) const;
 };
-typedef content_iterator<SymbolRef> symbol_iterator;
 
 /// RelocationRef - This is a value type class that represents a single
 /// relocation in the list of relocations in the object file.
@@ -143,20 +103,8 @@ public:
   error_code getAddress(uint64_t &Result) const;
   error_code getSymbol(SymbolRef &Result) const;
   error_code getType(uint32_t &Result) const;
-
-  /// @brief Get a string that represents the type of this relocation.
-  ///
-  /// This is for display purposes only.
-  error_code getTypeName(SmallVectorImpl<char> &Result) const;
   error_code getAdditionalInfo(int64_t &Result) const;
-
-  /// @brief Get a string that represents the calculation of the value of this
-  ///        relocation.
-  ///
-  /// This is for display purposes only.
-  error_code getValueString(SmallVectorImpl<char> &Result) const;
 };
-typedef content_iterator<RelocationRef> relocation_iterator;
 
 /// SectionRef - This is a value type class that represents a single section in
 /// the list of sections in the object file.
@@ -187,11 +135,7 @@ public:
   error_code isBSS(bool &Result) const;
 
   error_code containsSymbol(SymbolRef S, bool &Result) const;
-
-  relocation_iterator begin_relocations() const;
-  relocation_iterator end_relocations() const;
 };
-typedef content_iterator<SectionRef> section_iterator;
 
 const uint64_t UnknownAddressOrSize = ~0ULL;
 
@@ -241,8 +185,6 @@ protected:
   virtual error_code isSectionBSS(DataRefImpl Sec, bool &Res) const = 0;
   virtual error_code sectionContainsSymbol(DataRefImpl Sec, DataRefImpl Symb,
                                            bool &Result) const = 0;
-  virtual relocation_iterator getSectionRelBegin(DataRefImpl Sec) const = 0;
-  virtual relocation_iterator getSectionRelEnd(DataRefImpl Sec) const = 0;
 
 
   // Same as above for RelocationRef.
@@ -255,20 +197,55 @@ protected:
                                          SymbolRef &Res) const = 0;
   virtual error_code getRelocationType(DataRefImpl Rel,
                                        uint32_t &Res) const = 0;
-  virtual error_code getRelocationTypeName(DataRefImpl Rel,
-                                       SmallVectorImpl<char> &Result) const = 0;
   virtual error_code getRelocationAdditionalInfo(DataRefImpl Rel,
                                                  int64_t &Res) const = 0;
-  virtual error_code getRelocationValueString(DataRefImpl Rel,
-                                       SmallVectorImpl<char> &Result) const = 0;
 
 public:
+  template<class content_type>
+  class content_iterator {
+    content_type Current;
+  public:
+    content_iterator(content_type symb)
+      : Current(symb) {}
+
+    const content_type* operator->() const {
+      return &Current;
+    }
+
+    const content_type &operator*() const {
+      return Current;
+    }
+
+    bool operator==(const content_iterator &other) const {
+      return Current == other.Current;
+    }
+
+    bool operator!=(const content_iterator &other) const {
+      return !(*this == other);
+    }
+
+    content_iterator& increment(error_code &err) {
+      content_type next;
+      if (error_code ec = Current.getNext(next))
+        err = ec;
+      else
+        Current = next;
+      return *this;
+    }
+  };
+
+  typedef content_iterator<SymbolRef> symbol_iterator;
+  typedef content_iterator<SectionRef> section_iterator;
+  typedef content_iterator<RelocationRef> relocation_iterator;
 
   virtual symbol_iterator begin_symbols() const = 0;
   virtual symbol_iterator end_symbols() const = 0;
 
   virtual section_iterator begin_sections() const = 0;
   virtual section_iterator end_sections() const = 0;
+
+  virtual relocation_iterator begin_relocations() const = 0;
+  virtual relocation_iterator end_relocations() const = 0;
 
   /// @brief The number of bytes used to represent an address in this object
   ///        file format.
@@ -389,14 +366,6 @@ inline error_code SectionRef::containsSymbol(SymbolRef S, bool &Result) const {
                                              Result);
 }
 
-inline relocation_iterator SectionRef::begin_relocations() const {
-  return OwningObject->getSectionRelBegin(SectionPimpl);
-}
-
-inline relocation_iterator SectionRef::end_relocations() const {
-  return OwningObject->getSectionRelEnd(SectionPimpl);
-}
-
 
 /// RelocationRef
 inline RelocationRef::RelocationRef(DataRefImpl RelocationP,
@@ -424,18 +393,8 @@ inline error_code RelocationRef::getType(uint32_t &Result) const {
   return OwningObject->getRelocationType(RelocationPimpl, Result);
 }
 
-inline error_code RelocationRef::getTypeName(SmallVectorImpl<char> &Result)
-  const {
-  return OwningObject->getRelocationTypeName(RelocationPimpl, Result);
-}
-
 inline error_code RelocationRef::getAdditionalInfo(int64_t &Result) const {
   return OwningObject->getRelocationAdditionalInfo(RelocationPimpl, Result);
-}
-
-inline error_code RelocationRef::getValueString(SmallVectorImpl<char> &Result)
-  const {
-  return OwningObject->getRelocationValueString(RelocationPimpl, Result);
 }
 
 } // end namespace object

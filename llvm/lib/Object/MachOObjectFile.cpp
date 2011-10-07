@@ -39,6 +39,8 @@ public:
   virtual symbol_iterator end_symbols() const;
   virtual section_iterator begin_sections() const;
   virtual section_iterator end_sections() const;
+  virtual relocation_iterator begin_relocations() const;
+  virtual relocation_iterator end_relocations() const;
 
   virtual uint8_t getBytesInAddress() const;
   virtual StringRef getFileFormatName() const;
@@ -65,8 +67,6 @@ protected:
   virtual error_code isSectionBSS(DataRefImpl Sec, bool &Res) const;
   virtual error_code sectionContainsSymbol(DataRefImpl DRI, DataRefImpl S,
                                            bool &Result) const;
-  virtual relocation_iterator getSectionRelBegin(DataRefImpl Sec) const;
-  virtual relocation_iterator getSectionRelEnd(DataRefImpl Sec) const;
 
   virtual error_code getRelocationNext(DataRefImpl Rel,
                                        RelocationRef &Res) const;
@@ -76,13 +76,8 @@ protected:
                                          SymbolRef &Res) const;
   virtual error_code getRelocationType(DataRefImpl Rel,
                                        uint32_t &Res) const;
-  virtual error_code getRelocationTypeName(DataRefImpl Rel,
-                                           SmallVectorImpl<char> &Result) const;
   virtual error_code getRelocationAdditionalInfo(DataRefImpl Rel,
                                                  int64_t &Res) const;
-  virtual error_code getRelocationValueString(DataRefImpl Rel,
-                                           SmallVectorImpl<char> &Result) const;
-
 private:
   MachOObject *MachOObj;
   mutable uint32_t RegisteredStringTable;
@@ -101,7 +96,6 @@ private:
                     InMemoryStruct<macho::Section64> &Res) const;
   void getRelocation(DataRefImpl Rel,
                      InMemoryStruct<macho::RelocationEntry> &Res) const;
-  std::size_t getSectionIndex(DataRefImpl Sec) const;
 };
 
 MachOObjectFile::MachOObjectFile(MemoryBuffer *Object, MachOObject *MOO,
@@ -330,7 +324,7 @@ error_code MachOObjectFile::getSymbolType(DataRefImpl Symb,
 }
 
 
-symbol_iterator MachOObjectFile::begin_symbols() const {
+ObjectFile::symbol_iterator MachOObjectFile::begin_symbols() const {
   // DRI.d.a = segment number; DRI.d.b = symbol index.
   DataRefImpl DRI;
   DRI.d.a = DRI.d.b = 0;
@@ -338,7 +332,7 @@ symbol_iterator MachOObjectFile::begin_symbols() const {
   return symbol_iterator(SymbolRef(DRI, this));
 }
 
-symbol_iterator MachOObjectFile::end_symbols() const {
+ObjectFile::symbol_iterator MachOObjectFile::end_symbols() const {
   DataRefImpl DRI;
   DRI.d.a = MachOObj->getHeader().NumLoadCommands;
   DRI.d.b = 0;
@@ -384,13 +378,6 @@ MachOObjectFile::getSection(DataRefImpl DRI,
   LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(DRI.d.a);
   MachOObj->ReadSegmentLoadCommand(LCI, SLC);
   MachOObj->ReadSection(LCI, DRI.d.b, Res);
-}
-
-std::size_t MachOObjectFile::getSectionIndex(DataRefImpl Sec) const {
-  SectionList::const_iterator loc =
-    std::find(Sections.begin(), Sections.end(), Sec);
-  assert(loc != Sections.end() && "Sec is not a valid section!");
-  return std::distance(Sections.begin(), loc);
 }
 
 void
@@ -524,37 +511,14 @@ error_code MachOObjectFile::sectionContainsSymbol(DataRefImpl Sec,
   return object_error::success;
 }
 
-relocation_iterator MachOObjectFile::getSectionRelBegin(DataRefImpl Sec) const {
-  DataRefImpl ret;
-  ret.d.a = 0;
-  ret.d.b = getSectionIndex(Sec);
-  return relocation_iterator(RelocationRef(ret, this));
-}
-relocation_iterator MachOObjectFile::getSectionRelEnd(DataRefImpl Sec) const {
-  uint32_t last_reloc;
-  if (is64BitLoadCommand(MachOObj, Sec)) {
-    InMemoryStruct<macho::Section64> Sect;
-    getSection64(Sec, Sect);
-    last_reloc = Sect->NumRelocationTableEntries;
-  } else {
-    InMemoryStruct<macho::Section> Sect;
-    getSection(Sec, Sect);
-    last_reloc = Sect->NumRelocationTableEntries;
-  }
-  DataRefImpl ret;
-  ret.d.a = last_reloc;
-  ret.d.b = getSectionIndex(Sec);
-  return relocation_iterator(RelocationRef(ret, this));
-}
-
-section_iterator MachOObjectFile::begin_sections() const {
+ObjectFile::section_iterator MachOObjectFile::begin_sections() const {
   DataRefImpl DRI;
   DRI.d.a = DRI.d.b = 0;
   moveToNextSection(DRI);
   return section_iterator(SectionRef(DRI, this));
 }
 
-section_iterator MachOObjectFile::end_sections() const {
+ObjectFile::section_iterator MachOObjectFile::end_sections() const {
   DataRefImpl DRI;
   DRI.d.a = MachOObj->getHeader().NumLoadCommands;
   DRI.d.b = 0;
@@ -581,6 +545,23 @@ getRelocation(DataRefImpl Rel,
 error_code MachOObjectFile::getRelocationNext(DataRefImpl Rel,
                                               RelocationRef &Res) const {
   ++Rel.d.a;
+  while (Rel.d.b < Sections.size()) {
+    unsigned relocationCount;
+    if (MachOObj->is64Bit()) {
+      InMemoryStruct<macho::Section64> Sect;
+      getSection64(Sections[Rel.d.b], Sect);
+      relocationCount = Sect->NumRelocationTableEntries;
+    } else {
+      InMemoryStruct<macho::Section> Sect;
+      getSection(Sections[Rel.d.b], Sect);
+      relocationCount = Sect->NumRelocationTableEntries;
+    }
+    if (Rel.d.a < relocationCount)
+      break;
+
+    Rel.d.a = 0;
+    ++Rel.d.b;
+  }
   Res = RelocationRef(Rel, this);
   return object_error::success;
 }
@@ -629,10 +610,6 @@ error_code MachOObjectFile::getRelocationType(DataRefImpl Rel,
   Res = RE->Word1;
   return object_error::success;
 }
-error_code MachOObjectFile::getRelocationTypeName(DataRefImpl Rel,
-                                          SmallVectorImpl<char> &Result) const {
-  return object_error::success;
-}
 error_code MachOObjectFile::getRelocationAdditionalInfo(DataRefImpl Rel,
                                                         int64_t &Res) const {
   InMemoryStruct<macho::RelocationEntry> RE;
@@ -654,9 +631,16 @@ error_code MachOObjectFile::getRelocationAdditionalInfo(DataRefImpl Rel,
   }
   return object_error::success;
 }
-error_code MachOObjectFile::getRelocationValueString(DataRefImpl Rel,
-                                          SmallVectorImpl<char> &Result) const {
-  return object_error::success;
+ObjectFile::relocation_iterator MachOObjectFile::begin_relocations() const {
+  DataRefImpl ret;
+  ret.d.a = ret.d.b = 0;
+  return relocation_iterator(RelocationRef(ret, this));
+}
+ObjectFile::relocation_iterator MachOObjectFile::end_relocations() const {
+  DataRefImpl ret;
+  ret.d.a = 0;
+  ret.d.b = Sections.size();
+  return relocation_iterator(RelocationRef(ret, this));
 }
 
 /*===-- Miscellaneous -----------------------------------------------------===*/
