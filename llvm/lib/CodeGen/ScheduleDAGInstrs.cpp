@@ -134,6 +134,7 @@ static const Value *getUnderlyingObjectForInstr(const MachineInstr *MI,
 }
 
 void ScheduleDAGInstrs::StartBlock(MachineBasicBlock *BB) {
+  LoopRegs.Deps.clear();
   if (MachineLoop *ML = MLI.getLoopFor(BB))
     if (BB == ML->getLoopLatch()) {
       MachineBasicBlock *Header = ML->getHeader();

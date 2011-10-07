@@ -48,7 +48,8 @@ namespace llvm {
     /// VisitLoop - Clear out any previous state and analyze the given loop.
     ///
     void VisitLoop(const MachineLoop *Loop) {
-      Deps.clear();
+      assert(Deps.empty() && "stale loop dependencies");
+
       MachineBasicBlock *Header = Loop->getHeader();
       SmallSet<unsigned, 8> LoopLiveIns;
       for (MachineBasicBlock::livein_iterator LI = Header->livein_begin(),
