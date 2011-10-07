@@ -15,6 +15,7 @@
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/Symbol.h"
+#include "lldb/Symbol/SymbolFile.h"
 #include "lldb/Symbol/SymbolVendor.h"
 #include "lldb/Target/Target.h"
 
@@ -565,8 +566,32 @@ SymbolContext::GetParentOfInlinedScope (const Address &curr_frame_pc,
 #ifdef LLDB_CONFIGURATION_DEBUG
                 else
                 {
-                    fprintf (stderr, "warning: inlined block 0x%8.8x doesn't have a range that contains file address 0x%llx\n", 
-                             curr_inlined_block->GetID(), curr_frame_pc.GetFileAddress());
+                    ObjectFile *objfile = NULL;
+                    if (module_sp)
+                    {
+                        SymbolVendor *symbol_vendor = module_sp->GetSymbolVendor();
+                        if (symbol_vendor)
+                        {
+                            SymbolFile *symbol_file = symbol_vendor->GetSymbolFile();
+                            if (symbol_file)
+                                objfile = symbol_file->GetObjectFile();
+                        }
+                    }
+                    if (objfile)
+                    {
+                        fprintf (stderr, "warning: inlined block 0x%8.8x doesn't have a range that contains file address 0x%llx in %s/%s\n", 
+                                 curr_inlined_block->GetID(), 
+                                 curr_frame_pc.GetFileAddress(),
+                                 objfile->GetFileSpec().GetDirectory().GetCString(),
+                                 objfile->GetFileSpec().GetFilename().GetCString());
+                        
+                        curr_inlined_block->GetRangeContainingAddress (curr_frame_pc, range); // REMOVE THIS!!!
+                    }
+                    else
+                    {
+                        fprintf (stderr, "warning: inlined block 0x%8.8x doesn't have a range that contains file address 0x%llx\n", 
+                                 curr_inlined_block->GetID(), curr_frame_pc.GetFileAddress());
+                    }
                 }
 #endif
             }
