@@ -202,13 +202,6 @@ public:
                                            B.getBlockID());
   }
 
-  ExplodedNode *generateNode(PostStmt PP,
-                             const ProgramState *St,
-                             ExplodedNode *Pred) {
-    hasGeneratedNode = true;
-    return generateNodeInternal(PP, St, Pred);
-  }
-
   ExplodedNode *generateNode(const Stmt *S,
                              const ProgramState *St,
                              ExplodedNode *Pred,
@@ -245,7 +238,7 @@ public:
   generateNodeInternal(const Stmt *S,
                        const ProgramState *State,
                        ExplodedNode *Pred,
-                       ProgramPoint::Kind K = ProgramPoint::PostStmtKind,
+                       ProgramPoint::Kind K,
                        const ProgramPointTag *tag = 0);
 
   /// getStmt - Return the current block-level expression associated with
