@@ -232,7 +232,7 @@ public:
 
   /// setIsLandingPad - Indicates the block is a landing pad.  That is
   /// this basic block is entered via an exception handler.
-  void setIsLandingPad() { IsLandingPad = true; }
+  void setIsLandingPad(bool V = true) { IsLandingPad = V; }
 
   /// getLandingPadSuccessor - If this block has a successor that is a landing
   /// pad, return it. Otherwise return NULL.
