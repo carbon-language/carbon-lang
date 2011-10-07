@@ -400,6 +400,8 @@ def CPUID : I<0xA2, RawFrm, (outs), (ins), "cpuid", []>, TB;
 def INVD : I<0x08, RawFrm, (outs), (ins), "invd", []>, TB;
 def WBINVD : I<0x09, RawFrm, (outs), (ins), "wbinvd", []>, TB;
 
+//===----------------------------------------------------------------------===//
+// XSAVE instructions
 let Defs = [RDX, RAX], Uses = [RCX] in
   def XGETBV : I<0x01, MRM_D0, (outs), (ins), "xgetbv", []>, TB;
 
@@ -442,3 +444,24 @@ let Defs = [RAX, RSI, RDI], Uses = [RAX, RSI, RDI] in {
 }
 let Defs = [RAX, RDX, RSI], Uses = [RAX, RSI] in
   def MONTMUL : I<0xc0, RawFrm, (outs), (ins), "montmul", []>, A6;
+
+//===----------------------------------------------------------------------===//
+// FS/GS Base Instructions
+let Predicates = [In64BitMode] in {
+  def RDFSBASE : I<0xAE, MRM0r, (outs GR32:$dst), (ins),
+                   "rdfsbase{l}\t$dst", []>, TB, XS;
+  def RDFSBASE64 : RI<0xAE, MRM0r, (outs GR64:$dst), (ins),
+                     "rdfsbase{q}\t$dst", []>, TB, XS;
+  def RDGSBASE : I<0xAE, MRM1r, (outs GR32:$dst), (ins),
+                   "rdgsbase{l}\t$dst", []>, TB, XS;
+  def RDGSBASE64 : RI<0xAE, MRM1r, (outs GR64:$dst), (ins),
+                     "rdgsbase{q}\t$dst", []>, TB, XS;
+  def WRFSBASE : I<0xAE, MRM2r, (outs), (ins GR32:$dst),
+                   "wrfsbase{l}\t$dst", []>, TB, XS;
+  def WRFSBASE64 : RI<0xAE, MRM2r, (outs), (ins GR64:$dst),
+                   "wrfsbase{q}\t$dst", []>, TB, XS;
+  def WRGSBASE : I<0xAE, MRM3r, (outs), (ins GR32:$dst),
+                   "wrgsbase{l}\t$dst", []>, TB, XS;
+  def WRGSBASE64 : RI<0xAE, MRM3r, (outs), (ins GR64:$dst),
+                    "wrgsbase{q}\t$dst", []>, TB, XS;
+}
