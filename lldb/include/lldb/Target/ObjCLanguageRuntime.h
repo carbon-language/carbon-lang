@@ -102,7 +102,25 @@ public:
     static bool
     IsPossibleObjCMethodName (const char *name)
     {
-        return (name && (name[0] == '+' || name[0] == '-') && name[1] == '[');
+        if (!name)
+            return false;
+        bool starts_right = (name[0] == '+' || name[0] == '-') && name[1] == '[';
+        bool ends_right = (name[strlen(name) - 1] == ']');
+        return (starts_right && ends_right);
+    }
+    
+    static bool
+    IsPossibleObjCSelector (const char *name)
+    {
+        if (!name)
+            return false;
+            
+        if (strchr(name, ':') == NULL)
+            return true;
+        else if (name[strlen(name) - 1] == ':')
+            return true;
+        else
+            return false;
     }
     
 protected:

@@ -588,11 +588,11 @@ SBTarget::BreakpointCreateByName (const char *symbol_name, const char *module_na
         {
             FileSpecList module_spec_list;
             module_spec_list.Append (FileSpec (module_name, false));
-            *sb_bp = m_opaque_sp->CreateBreakpoint (&module_spec_list, NULL, symbol_name, eFunctionNameTypeFull | eFunctionNameTypeBase, false);
+            *sb_bp = m_opaque_sp->CreateBreakpoint (&module_spec_list, NULL, symbol_name, eFunctionNameTypeAuto, false);
         }
         else
         {
-            *sb_bp = m_opaque_sp->CreateBreakpoint (NULL, NULL, symbol_name, eFunctionNameTypeFull | eFunctionNameTypeBase, false);
+            *sb_bp = m_opaque_sp->CreateBreakpoint (NULL, NULL, symbol_name, eFunctionNameTypeAuto, false);
         }
     }
     

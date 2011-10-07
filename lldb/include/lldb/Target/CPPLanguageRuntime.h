@@ -42,6 +42,15 @@ public:
     virtual bool
     GetObjectDescription (Stream &str, Value &value, ExecutionContextScope *exe_scope);
     
+    static bool
+    IsCPPMangledName(const char *name);
+    
+    static bool
+    IsPossibleCPPCall (const char *name, const char *&base_name_start, const char *&base_name_end);
+
+    static bool
+    StripNamespacesFromVariableName (const char *name, const char *&base_name_start, const char *&base_name_end);
+
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from CPPLanguageRuntime can see and modify these

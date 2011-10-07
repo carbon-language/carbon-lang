@@ -43,6 +43,7 @@
 #include "lldb/Symbol/VariableList.h"
 
 #include "lldb/Target/ObjCLanguageRuntime.h"
+#include "lldb/Target/CPPLanguageRuntime.h"
 
 #include "DWARFCompileUnit.h"
 #include "DWARFDebugAbbrev.h"
@@ -1655,14 +1656,19 @@ SymbolFileDWARF::GetFunction (DWARFCompileUnit* curr_cu, const DWARFDebugInfoEnt
 {
     sc.Clear();
     // Check if the symbol vendor already knows about this compile unit?
-    sc.module_sp = m_obj_file->GetModule();
     sc.comp_unit = GetCompUnitForDWARFCompUnit(curr_cu, UINT32_MAX);
 
     sc.function = sc.comp_unit->FindFunctionByUID (func_die->GetOffset()).get();
     if (sc.function == NULL)
         sc.function = ParseCompileUnitFunction(sc, curr_cu, func_die);
-
-    return sc.function != NULL;
+        
+    if (sc.function)
+    {        
+        sc.module_sp = sc.function->CalculateSymbolContextModule();
+        return true;
+    }
+    
+    return false;
 }
 
 uint32_t
@@ -1969,11 +1975,13 @@ SymbolFileDWARF::FindGlobalVariables (const ConstString &name, bool append, uint
     if (m_apple_names_ap.get())
     {
         const char *name_cstr = name.GetCString();
-        DWARFMappedHash::MemoryTable::Pair kv_pair;
-        if (m_apple_names_ap->Find (name_cstr, kv_pair))
-        {
-            die_offsets.swap(kv_pair.value);
-        }
+        const char *base_name_start;
+        const char *base_name_end = NULL;
+        
+        if (!CPPLanguageRuntime::StripNamespacesFromVariableName(name_cstr, base_name_start, base_name_end))
+            base_name_start = name_cstr;
+            
+        m_apple_names_ap->FindByName (base_name_start, die_offsets);
     }
     else
     {
@@ -2080,95 +2088,75 @@ SymbolFileDWARF::FindGlobalVariables(const RegularExpression& regex, bool append
     return variables.GetSize() - original_size;
 }
 
-
-uint32_t
-SymbolFileDWARF::ResolveFunctions (const DIEArray &die_offsets,
-                                   SymbolContextList& sc_list,
-                                   const ConstString &name,
-                                   uint32_t name_type_mask)
+bool
+SymbolFileDWARF::ResolveFunction (dw_offset_t die_offset,
+                                  DWARFCompileUnit *&dwarf_cu,
+                                  SymbolContextList& sc_list)
 {
-    DWARFDebugInfo* info = DebugInfo();
-    if (info == NULL)
-        return 0;
-    
-    const uint32_t sc_list_initial_size = sc_list.GetSize();
     SymbolContext sc;
-    sc.module_sp = m_obj_file->GetModule();
-    assert (sc.module_sp);
     
-    DWARFCompileUnit* dwarf_cu = NULL;
-    const size_t num_matches = die_offsets.size();
-    for (size_t i=0; i<num_matches; ++i)
+    DWARFDebugInfo* info = DebugInfo();
+    bool resolved_it = false;
+    
+    if (info == NULL)
+        return resolved_it;
+        
+    DWARFDebugInfoEntry *die = info->GetDIEPtrWithCompileUnitHint (die_offset, &dwarf_cu);
+    
+    // If we were passed a die that is not a function, just return false...
+    if (die->Tag() != DW_TAG_subprogram && die->Tag() != DW_TAG_inlined_subroutine)
+        return false;
+    
+    const DWARFDebugInfoEntry* inlined_die = NULL;
+    if (die->Tag() == DW_TAG_inlined_subroutine)
     {
-        const dw_offset_t die_offset = die_offsets[i];
-        const DWARFDebugInfoEntry* die = info->GetDIEPtrWithCompileUnitHint (die_offset, &dwarf_cu);
+        inlined_die = die;
         
-        // If we aren't doing full names, 
-        if ((name_type_mask & eFunctionNameTypeFull) == 0)
+        while ((die = die->GetParent()) != NULL)
         {
-            const char *name_cstr = name.GetCString();
-            if (ObjCLanguageRuntime::IsPossibleObjCMethodName(name_cstr))
-                continue;
-        }
-        
-
-        const DWARFDebugInfoEntry* inlined_die = NULL;
-        if (die->Tag() == DW_TAG_inlined_subroutine)
-        {
-            // We only are looking for selectors, which disallows anything inlined
-            if (name_type_mask == eFunctionNameTypeSelector)
-                continue;
-        
-            inlined_die = die;
-            
-            while ((die = die->GetParent()) != NULL)
-            {
-                if (die->Tag() == DW_TAG_subprogram)
-                    break;
-            }
-        }
-        if (die->Tag() == DW_TAG_subprogram)
-        {
-            if (GetFunction (dwarf_cu, die, sc))
-            {
-                Address addr;
-                // Parse all blocks if needed
-                if (inlined_die)
-                {
-                    sc.block = sc.function->GetBlock (true).FindBlockByID (inlined_die->GetOffset());
-                    assert (sc.block != NULL);
-                    if (sc.block->GetStartAddress (addr) == false)
-                        addr.Clear();
-                }
-                else 
-                {
-                    sc.block = NULL;
-                    addr = sc.function->GetAddressRange().GetBaseAddress();
-                }
-                
-                if (addr.IsValid())
-                {
-                    
-                    // We found the function, so we should find the line table
-                    // and line table entry as well
-                    LineTable *line_table = sc.comp_unit->GetLineTable();
-                    if (line_table == NULL)
-                    {
-                        if (ParseCompileUnitLineTable(sc))
-                            line_table = sc.comp_unit->GetLineTable();
-                    }
-                    if (line_table != NULL)
-                        line_table->FindLineEntryByAddress (addr, sc.line_entry);
-                    
-                    sc_list.Append(sc);
-                }
-            }
+            if (die->Tag() == DW_TAG_subprogram)
+                break;
         }
     }
-    return sc_list.GetSize() - sc_list_initial_size;
+    assert (die->Tag() == DW_TAG_subprogram);
+    if (GetFunction (dwarf_cu, die, sc))
+    {
+        Address addr;
+        // Parse all blocks if needed
+        if (inlined_die)
+        {
+            sc.block = sc.function->GetBlock (true).FindBlockByID (inlined_die->GetOffset());
+            assert (sc.block != NULL);
+            if (sc.block->GetStartAddress (addr) == false)
+                addr.Clear();
+        }
+        else 
+        {
+            sc.block = NULL;
+            addr = sc.function->GetAddressRange().GetBaseAddress();
+        }
+
+        if (addr.IsValid())
+        {
+        
+            // We found the function, so we should find the line table
+            // and line table entry as well
+            LineTable *line_table = sc.comp_unit->GetLineTable();
+            if (line_table == NULL)
+            {
+                if (ParseCompileUnitLineTable(sc))
+                    line_table = sc.comp_unit->GetLineTable();
+            }
+            if (line_table != NULL)
+                line_table->FindLineEntryByAddress (addr, sc.line_entry);
+
+            sc_list.Append(sc);
+            resolved_it = true;
+        }
+    }
+    
+    return resolved_it;
 }
-
-
 
 void
 SymbolFileDWARF::FindFunctions (const ConstString &name, 
@@ -2216,65 +2204,78 @@ SymbolFileDWARF::ParseFunctions (const DIEArray &die_offsets,
     if (num_matches)
     {
         SymbolContext sc;
-        sc.module_sp = m_obj_file->GetModule();
 
         DWARFCompileUnit* dwarf_cu = NULL;
-        const DWARFDebugInfoEntry* die = NULL;
-        DWARFDebugInfo* debug_info = DebugInfo();
         for (size_t i=0; i<num_matches; ++i)
         {
             const dw_offset_t die_offset = die_offsets[i];
-            die = debug_info->GetDIEPtrWithCompileUnitHint (die_offset, &dwarf_cu);
-            const DWARFDebugInfoEntry* inlined_die = NULL;
-            if (die->Tag() == DW_TAG_inlined_subroutine)
-            {
-                inlined_die = die;
-                
-                while ((die = die->GetParent()) != NULL)
-                {
-                    if (die->Tag() == DW_TAG_subprogram)
-                        break;
-                }
-            }
-            assert (die->Tag() == DW_TAG_subprogram);
-            if (GetFunction (dwarf_cu, die, sc))
-            {
-                Address addr;
-                // Parse all blocks if needed
-                if (inlined_die)
-                {
-                    sc.block = sc.function->GetBlock (true).FindBlockByID (inlined_die->GetOffset());
-                    assert (sc.block != NULL);
-                    if (sc.block->GetStartAddress (addr) == false)
-                        addr.Clear();
-                }
-                else 
-                {
-                    sc.block = NULL;
-                    addr = sc.function->GetAddressRange().GetBaseAddress();
-                }
-                
-                if (addr.IsValid())
-                {
-                    
-                    // We found the function, so we should find the line table
-                    // and line table entry as well
-                    LineTable *line_table = sc.comp_unit->GetLineTable();
-                    if (line_table == NULL)
-                    {
-                        if (ParseCompileUnitLineTable(sc))
-                            line_table = sc.comp_unit->GetLineTable();
-                    }
-                    if (line_table != NULL)
-                        line_table->FindLineEntryByAddress (addr, sc.line_entry);
-                    
-                    sc_list.Append(sc);
-                }
-            }
+            ResolveFunction (die_offset, dwarf_cu, sc_list);
         }
     }
 }
 
+bool
+SymbolFileDWARF::FunctionDieMatchesPartialName (const DWARFDebugInfoEntry* die,
+                                                const DWARFCompileUnit *dwarf_cu,
+                                                uint32_t name_type_mask, 
+                                                const char *partial_name,
+                                                const char *base_name_start,
+                                                const char *base_name_end)
+{
+    // If we are looking only for methods, throw away all the ones that aren't in C++ classes:
+    if (name_type_mask == eFunctionNameTypeMethod
+        || name_type_mask == eFunctionNameTypeBase)
+    {
+            clang::DeclContext *containing_decl_ctx = GetClangDeclContextContainingDIEOffset(die->GetOffset());
+            if (!containing_decl_ctx)
+                return false;
+                
+            bool is_cxx_method = (containing_decl_ctx->getDeclKind() == clang::Decl::CXXRecord);
+
+            if (!is_cxx_method && name_type_mask == eFunctionNameTypeMethod)
+                return false;
+            if (is_cxx_method && name_type_mask == eFunctionNameTypeBase)
+                return false;
+    }
+
+    // Now we need to check whether the name we got back for this type matches the extra specifications
+    // that were in the name we're looking up:
+    if (base_name_start != partial_name || *base_name_end != '\0')
+    {
+        // First see if the stuff to the left matches the full name.  To do that let's see if
+        // we can pull out the mips linkage name attribute:
+        
+        Mangled best_name;
+
+        DWARFDebugInfoEntry::Attributes attributes;
+        die->GetAttributes(this, dwarf_cu, NULL, attributes);
+        uint32_t idx = attributes.FindAttributeIndex(DW_AT_MIPS_linkage_name);
+        if (idx != UINT32_MAX)
+        {
+            DWARFFormValue form_value;
+            if (attributes.ExtractFormValueAtIndex(this, idx, form_value))
+            {
+                const char *name = form_value.AsCString(&get_debug_str_data());
+                best_name.SetValue (name, true);
+            } 
+        }
+        if (best_name)
+        {
+            const char *demangled = best_name.GetDemangledName().GetCString();
+            if (demangled)
+            {
+                std::string name_no_parens(partial_name, base_name_end - partial_name);
+                if (strstr (demangled, name_no_parens.c_str()) == NULL)
+                {
+                    printf ("name: \"%s\" didn't match full name: \"%s\".\n", partial_name, demangled);
+                    return false;
+                }
+            }
+        }
+    }
+    
+    return true;
+}
 
 uint32_t
 SymbolFileDWARF::FindFunctions (const ConstString &name, 
@@ -2299,18 +2300,134 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
     // If we aren't appending the results to this list, then clear the list
     if (!append)
         sc_list.Clear();
+        
+    // If name is empty then we won't find anything.
+    if (name.IsEmpty())
+        return 0;
 
     // Remember how many sc_list are in the list before we search in case
     // we are appending the results to a variable list.
 
     const uint32_t original_size = sc_list.GetSize();
 
+    const char *name_cstr = name.GetCString();
+    uint32_t effective_name_type_mask = eFunctionNameTypeNone;
+    const char *base_name_start = name_cstr;
+    const char *base_name_end = name_cstr + strlen(name_cstr);
+    
+    if (name_type_mask & eFunctionNameTypeAuto)
+    {
+        if (CPPLanguageRuntime::IsCPPMangledName (name_cstr))
+            effective_name_type_mask = eFunctionNameTypeFull;
+        else if (ObjCLanguageRuntime::IsPossibleObjCMethodName (name_cstr))
+            effective_name_type_mask = eFunctionNameTypeFull;
+        else
+        {
+            if (ObjCLanguageRuntime::IsPossibleObjCSelector(name_cstr))
+                effective_name_type_mask |= eFunctionNameTypeSelector;
+                
+            if (CPPLanguageRuntime::IsPossibleCPPCall(name_cstr, base_name_start, base_name_end))
+                effective_name_type_mask |= (eFunctionNameTypeMethod | eFunctionNameTypeBase);
+        }
+    }
+    else
+    {
+        effective_name_type_mask = name_type_mask;
+        if (effective_name_type_mask & eFunctionNameTypeMethod || name_type_mask & eFunctionNameTypeBase)
+        {
+            // If they've asked for a CPP method or function name and it can't be that, we don't
+            // even need to search for CPP methods or names.
+            if (!CPPLanguageRuntime::IsPossibleCPPCall(name_cstr, base_name_start, base_name_end))
+            {
+                effective_name_type_mask &= ~(eFunctionNameTypeMethod | eFunctionNameTypeBase);
+                if (effective_name_type_mask == eFunctionNameTypeNone)
+                    return 0;
+            }
+        }
+        
+        if (effective_name_type_mask & eFunctionNameTypeSelector)
+        {
+            if (!ObjCLanguageRuntime::IsPossibleObjCSelector(name_cstr))
+            {
+                effective_name_type_mask &= ~(eFunctionNameTypeSelector);
+                if (effective_name_type_mask == eFunctionNameTypeNone)
+                    return 0;
+            }
+        }
+    }
+    
+    DWARFDebugInfo* info = DebugInfo();
+    if (info == NULL)
+        return 0;
+
     if (m_apple_names_ap.get())
     {
-        const char *name_cstr = name.GetCString();
-        DWARFMappedHash::MemoryTable::Pair kv_pair;
-        if (m_apple_names_ap->Find (name_cstr, kv_pair))
-            ResolveFunctions (kv_pair.value, sc_list, name, name_type_mask);
+        DIEArray die_offsets;
+
+        uint32_t num_matches = 0;
+            
+        if (effective_name_type_mask & eFunctionNameTypeFull)
+        {
+            // If they asked for the full name, match what they typed.  At some point we may
+            // want to canonicalize this (strip double spaces, etc.  For now, we just add all the
+            // dies that we find by exact match.
+            DWARFCompileUnit *dwarf_cu = NULL;
+            num_matches = m_apple_names_ap->FindByName (name_cstr, die_offsets);
+            for (uint32_t i = 0; i < num_matches; i++)
+                ResolveFunction (die_offsets[i], dwarf_cu, sc_list);
+        }
+        else
+        {                
+            DWARFCompileUnit* dwarf_cu = NULL;
+            
+            if (effective_name_type_mask & eFunctionNameTypeSelector)
+            {
+                num_matches = m_apple_names_ap->FindByName (name_cstr, die_offsets);
+                // Now make sure these are actually ObjC methods.  In this case we can simply look up the name,
+                // and if it is an ObjC method name, we're good.
+                
+                for (uint32_t i = 0; i < num_matches; i++)
+                {
+                    const DWARFDebugInfoEntry* die = info->GetDIEPtrWithCompileUnitHint (die_offsets[i], &dwarf_cu);
+                    assert (die);
+                    
+                    const char *die_name = die->GetName(this, dwarf_cu);
+                    if (ObjCLanguageRuntime::IsPossibleObjCMethodName(die_name))
+                        ResolveFunction (die_offsets[i], dwarf_cu, sc_list);
+                }
+                die_offsets.clear();
+            }
+            
+            if (effective_name_type_mask & eFunctionNameTypeMethod
+                || effective_name_type_mask & eFunctionNameTypeBase)
+            {
+                // The apple_names table stores just the "base name" of C++ methods in the table.  So we have to 
+                // extract the base name, look that up, and if there is any other information in the name we were
+                // passed in we have to post-filter based on that.
+                
+                // FIXME: Arrange the logic above so that we don't calculate the base name twice:
+                std::string base_name(base_name_start, base_name_end - base_name_start);
+                num_matches = m_apple_names_ap->FindByName (base_name.c_str(), die_offsets);
+                
+                for (uint32_t i = 0; i < num_matches; i++)
+                {
+                    dw_offset_t offset = die_offsets[i];
+                    const DWARFDebugInfoEntry* die = info->GetDIEPtrWithCompileUnitHint (offset, &dwarf_cu);
+                    assert (die);
+                    if (!FunctionDieMatchesPartialName(die, 
+                                                       dwarf_cu, 
+                                                       effective_name_type_mask, 
+                                                       name_cstr, 
+                                                       base_name_start, 
+                                                       base_name_end))
+                        continue;
+                        
+                    // If we get to here, the die is good, and we should add it:
+                    ResolveFunction (offset, dwarf_cu, sc_list);
+                }
+                die_offsets.clear();
+            }
+        }
     }
     else
     {
@@ -2319,23 +2436,72 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
         if (!m_indexed)
             Index ();
 
-        if (name_type_mask & eFunctionNameTypeBase)
-            FindFunctions (name, m_function_basename_index, sc_list);
-
         if (name_type_mask & eFunctionNameTypeFull)
             FindFunctions (name, m_function_fullname_index, sc_list);
 
+        std::string base_name(base_name_start, base_name_end - base_name_start);
+        ConstString base_name_const(base_name.c_str());
+        DIEArray die_offsets;
+        DWARFCompileUnit *dwarf_cu = NULL;
+        
+        if (effective_name_type_mask & eFunctionNameTypeBase)
+        {
+            uint32_t num_base = m_function_basename_index.Find(base_name_const, die_offsets);
+            {
+              for (uint32_t i = 0; i < num_base; i++)
+              {
+                dw_offset_t offset = die_offsets[i];
+                const DWARFDebugInfoEntry* die = info->GetDIEPtrWithCompileUnitHint (offset, &dwarf_cu);
+                assert (die);
+                if (!FunctionDieMatchesPartialName(die, 
+                                                   dwarf_cu, 
+                                                   effective_name_type_mask, 
+                                                   name_cstr, 
+                                                   base_name_start, 
+                                                   base_name_end))
+                    continue;
+                    
+                // If we get to here, the die is good, and we should add it:
+                ResolveFunction (offset, dwarf_cu, sc_list);
+              }
+            }
+            die_offsets.clear();
+        }
+        
         if (name_type_mask & eFunctionNameTypeMethod)
-            FindFunctions (name, m_function_method_index, sc_list);
+        {
+            uint32_t num_base = m_function_method_index.Find(base_name_const, die_offsets);
+            {
+              for (uint32_t i = 0; i < num_base; i++)
+              {
+                dw_offset_t offset = die_offsets[i];
+                const DWARFDebugInfoEntry* die = info->GetDIEPtrWithCompileUnitHint (offset, &dwarf_cu);
+                assert (die);
+                if (!FunctionDieMatchesPartialName(die, 
+                                                   dwarf_cu, 
+                                                   effective_name_type_mask, 
+                                                   name_cstr, 
+                                                   base_name_start, 
+                                                   base_name_end))
+                    continue;
+                    
+                // If we get to here, the die is good, and we should add it:
+                ResolveFunction (offset, dwarf_cu, sc_list);
+              }
+            }
+            die_offsets.clear();
+        }
 
         if (name_type_mask & eFunctionNameTypeSelector)
+        {
             FindFunctions (name, m_function_selector_index, sc_list);
+        }
+        
     }
 
     // Return the number of variable that were appended to the list
     return sc_list.GetSize() - original_size;
 }
-
 
 uint32_t
 SymbolFileDWARF::FindFunctions(const RegularExpression& regex, bool append, SymbolContextList& sc_list)
@@ -2363,13 +2529,13 @@ SymbolFileDWARF::FindFunctions(const RegularExpression& regex, bool append, Symb
     // we are appending the results to a variable list.
     uint32_t original_size = sc_list.GetSize();
 
-    // Index the DWARF if we haven't already
     if (m_apple_names_ap.get())
     {
         FindFunctions (regex, *m_apple_names_ap, sc_list);
     }
     else
     {
+        // Index the DWARF if we haven't already
         if (!m_indexed)
             Index ();
 
@@ -2442,11 +2608,7 @@ SymbolFileDWARF::FindTypes(const SymbolContext& sc, const ConstString &name, boo
     if (m_apple_types_ap.get())
     {
         const char *name_cstr = name.GetCString();
-        DWARFMappedHash::MemoryTable::Pair kv_pair;
-        if (m_apple_types_ap->Find (name_cstr, kv_pair))
-        {
-            die_offsets.swap(kv_pair.value);
-        }
+        m_apple_types_ap->FindByName (name_cstr, die_offsets);
     }
     else
     {
@@ -2518,11 +2680,7 @@ SymbolFileDWARF::FindNamespace (const SymbolContext& sc,
         if (m_apple_namespaces_ap.get())
         {
             const char *name_cstr = name.GetCString();
-            DWARFMappedHash::MemoryTable::Pair kv_pair;
-            if (m_apple_namespaces_ap->Find (name_cstr, kv_pair))
-            {
-                die_offsets.swap(kv_pair.value);
-            }
+            m_apple_namespaces_ap->FindByName (name_cstr, die_offsets);
         }
         else
         {
@@ -3192,11 +3350,7 @@ SymbolFileDWARF::FindDefinitionTypeForDIE (DWARFCompileUnit* cu,
     if (m_apple_types_ap.get())
     {
         const char *name_cstr = type_name.GetCString();
-        DWARFMappedHash::MemoryTable::Pair kv_pair;
-        if (m_apple_types_ap->Find (name_cstr, kv_pair))
-        {
-            die_offsets.swap(kv_pair.value);
-        }
+        m_apple_types_ap->FindByName (name_cstr, die_offsets);
     }
     else
     {

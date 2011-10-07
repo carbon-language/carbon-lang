@@ -322,11 +322,19 @@ protected:
                                 uint32_t& byte_stride,
                                 uint32_t& bit_stride);
 
-    uint32_t                ResolveFunctions (
-                                const DIEArray &die_offsets,
-                                lldb_private::SymbolContextList& sc_list,
-                                const lldb_private::ConstString &name,
-                                uint32_t name_type_mask);
+                            // Given a die_offset, figure out the symbol context representing that die.
+    bool                    ResolveFunction (
+                                dw_offset_t offset,
+                                DWARFCompileUnit *&dwarf_cu,
+                                lldb_private::SymbolContextList& sc_list);
+                                
+    bool                    FunctionDieMatchesPartialName (
+                                const DWARFDebugInfoEntry* die,
+                                const DWARFCompileUnit *dwarf_cu,
+                                uint32_t name_type_mask,
+                                const char *partial_name,
+                                const char *base_name_start,
+                                const char *base_name_end);
 
     void                    FindFunctions(
                                 const lldb_private::ConstString &name, 

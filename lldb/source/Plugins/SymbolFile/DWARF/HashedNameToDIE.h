@@ -652,6 +652,19 @@ struct DWARFMappedHash
             return die_offsets.size();
         }
 
+        size_t 
+        FindByName (const char *name, DIEArray &die_offsets)
+        {
+            Pair kv_pair;
+            size_t old_size = die_offsets.size();
+            if (Find (name, kv_pair))
+            {
+                die_offsets.swap(kv_pair.value);
+                return die_offsets.size() - old_size;
+            }
+            return 0;
+        }
+        
     protected:
         const lldb_private::DataExtractor &m_data;
         const lldb_private::DataExtractor &m_string_table;

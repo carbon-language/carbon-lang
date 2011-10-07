@@ -120,6 +120,9 @@ class TargetAPITestCase(TestBase):
         # Now launch the process, and do not stop at entry point.
         process = target.LaunchSimple(None, None, os.getcwd())
         self.assertTrue(process, PROCESS_IS_VALID)
+        # Make sure we hit our breakpoint:
+        thread_list = lldbutil.get_threads_stopped_at_breakpoint (process, breakpoint)
+        self.assertTrue (len(thread_list) == 1)
 
         value_list = target.FindGlobalVariables('my_global_var_of_char_type', 3)
         self.assertTrue(value_list.GetSize() == 1)
