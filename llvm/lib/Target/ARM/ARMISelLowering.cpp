@@ -5699,12 +5699,15 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
 
   // Get an ordered list of the machine basic blocks for the jump table.
   std::vector<MachineBasicBlock*> LPadList;
+  SmallPtrSet<MachineBasicBlock*, 64> InvokeBBs;
   LPadList.reserve(CallSiteNumToLPad.size());
   for (unsigned I = 1; I <= MaxCSNum; ++I) {
     SmallVectorImpl<MachineBasicBlock*> &MBBList = CallSiteNumToLPad[I];
     for (SmallVectorImpl<MachineBasicBlock*>::iterator
-           II = MBBList.begin(), IE = MBBList.end(); II != IE; ++II)
+           II = MBBList.begin(), IE = MBBList.end(); II != IE; ++II) {
       LPadList.push_back(*II);
+      InvokeBBs.insert((*II)->pred_begin(), (*II)->pred_end());
+    }
   }
 
   assert(!LPadList.empty() &&
@@ -5721,7 +5724,6 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
   // Shove the dispatch's address into the return slot in the function context.
   MachineBasicBlock *DispatchBB = MF->CreateMachineBasicBlock();
   DispatchBB->setIsLandingPad();
-  MBB->addSuccessor(DispatchBB);
 
   MachineBasicBlock *TrapBB = MF->CreateMachineBasicBlock();
   BuildMI(TrapBB, dl, TII->get(Subtarget->isThumb() ? ARM::tTRAP : ARM::TRAP));
@@ -5873,9 +5875,31 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
   }
 
   // Add the jump table entries as successors to the MBB.
+  MachineBasicBlock *PrevMBB = 0;
   for (std::vector<MachineBasicBlock*>::iterator
-         I = LPadList.begin(), E = LPadList.end(); I != E; ++I)
-    DispContBB->addSuccessor(*I);
+         I = LPadList.begin(), E = LPadList.end(); I != E; ++I) {
+    MachineBasicBlock *CurMBB = *I;
+    if (PrevMBB != CurMBB)
+      DispContBB->addSuccessor(CurMBB);
+    PrevMBB = CurMBB;
+  }
+
+  // Remove the landing pad successor from the invoke block and replace it with
+  // the new dispatch block.
+  for (SmallPtrSet<MachineBasicBlock*, 64>::iterator
+         I = InvokeBBs.begin(), E = InvokeBBs.end(); I != E; ++I) {
+    MachineBasicBlock *BB = *I;
+    for (MachineBasicBlock::succ_iterator
+           SI = BB->succ_begin(), SE = BB->succ_end(); SI != SE; ++SI) {
+      MachineBasicBlock *SMBB = *SI;
+      if (SMBB->isLandingPad()) {
+        BB->removeSuccessor(SMBB);
+        SMBB->setIsLandingPad(false);
+      }
+    }
+
+    BB->addSuccessor(DispatchBB);
+  }
 
   // The instruction is gone now.
   MI->eraseFromParent();
