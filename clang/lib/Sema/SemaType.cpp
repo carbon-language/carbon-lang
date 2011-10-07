@@ -3779,6 +3779,11 @@ static void processTypeAttrs(TypeProcessingState &state, QualType &type,
     switch (attr.getKind()) {
     default: break;
 
+    case AttributeList::AT_may_alias:
+      // FIXME: This attribute needs to actually be handled, but if we ignore
+      // it it breaks large amounts of Linux software.
+      attr.setUsedAsTypeAttr();
+      break;
     case AttributeList::AT_address_space:
       HandleAddressSpaceTypeAttribute(type, attr, state.getSema());
       attr.setUsedAsTypeAttr();

@@ -41,3 +41,12 @@ int __attribute__ ((vector_size (8), vector_size (8))) v;  // expected-error {{i
 void test(int i) {
   char c = (char __attribute__((align(8)))) i; // expected-error {{'align' attribute ignored when parsing type}}
 }
+
+// http://llvm.org/PR11082
+//
+// FIXME: This may or may not be the correct approach (no warning or error),
+// but large amounts of Linux and FreeBSD code need this attribute to not be
+// a hard error in order to work correctly.
+void test2(int i) {
+  char c = (char __attribute__((may_alias))) i;
+}
