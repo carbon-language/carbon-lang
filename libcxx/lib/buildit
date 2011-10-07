@@ -35,7 +35,7 @@ then
   RC_ProjectSourceVersion=1
 fi
 
-EXTRA_FLAGS="-std=c++0x "
+EXTRA_FLAGS="-std=c++0x -Wglobal-constructors"
 
 case $TRIPLE in
   *-apple-*)
@@ -70,7 +70,8 @@ case $TRIPLE in
 		fi
 	    LDSHARED_FLAGS="-o libc++.1.dylib \
 			-dynamiclib -nodefaultlibs  \
-			-current_version ${RC_ProjectSourceVersion} -compatibility_version 1 \
+			-current_version ${RC_ProjectSourceVersion} \
+			-compatibility_version ${RC_ProjectSourceVersion} \
 			-install_name /usr/lib/libc++.1.dylib \
 			-lSystem  \
 			-Wl,-unexported_symbols_list,libc++unexp.exp  \
