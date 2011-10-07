@@ -159,10 +159,9 @@ class DynamicValueTestCase(TestBase):
         self.examine_value_object_of_this_ptr (this_static, this_dynamic, myB_loc)
 
         # Get "this" using the EvaluateExpression:
-        # These tests fail for now because EvaluateExpression doesn't currently support dynamic typing...
-        #this_static = frame.EvaluateExpression ('this', False)
-        #this_dynamic = frame.EvaluateExpression ('this', True)
-        #self.examine_value_object_of_this_ptr (this_static, this_dynamic, myB_loc)
+        this_static = frame.EvaluateExpression ('this', False)
+        this_dynamic = frame.EvaluateExpression ('this', True)
+        self.examine_value_object_of_this_ptr (this_static, this_dynamic, myB_loc)
         
         # The "frame var" code uses another path to get into children, so let's
         # make sure that works as well:
