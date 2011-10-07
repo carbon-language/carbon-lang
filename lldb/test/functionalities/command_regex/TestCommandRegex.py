@@ -18,7 +18,7 @@ class CommandRegexTestCase(TestBase):
         regex_prompt = "Enter regular expressions in the form 's/<regex>/<subst>/' and terminate with an empty line:\r\n"
         regex_prompt1 = "\r\n"
 
-        child = pexpect.spawn('%s' % self.lldbHere)
+        child = pexpect.spawn('%s %s' % (self.lldbHere, self.lldbOption))
         # Turn on logging for what the child sends back.
         if self.TraceOn():
             child.logfile_read = sys.stdout

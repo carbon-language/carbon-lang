@@ -43,7 +43,7 @@ class DisassembleDriverMainLoop(BenchBase):
         prompt = self.child_prompt
 
         # So that the child gets torn down after the test.
-        self.child = pexpect.spawn('%s %s' % (self.lldbExec, exe))
+        self.child = pexpect.spawn('%s %s %s' % (self.lldbExec, self.lldbOption, exe))
         child = self.child
 
         # Turn on logging for what the child sends back.
@@ -83,7 +83,7 @@ class DisassembleDriverMainLoop(BenchBase):
         prompt = self.child_prompt
 
         # So that the child gets torn down after the test.
-        self.child = pexpect.spawn('gdb %s' % exe)
+        self.child = pexpect.spawn('gdb --nx %s' % exe)
         child = self.child
 
         # Turn on logging for what the child sends back.

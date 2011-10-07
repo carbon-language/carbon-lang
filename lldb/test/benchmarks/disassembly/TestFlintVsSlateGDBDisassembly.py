@@ -49,7 +49,7 @@ class FlintVsSlateGDBDisassembly(BenchBase):
         prompt = self.child_prompt
 
         # So that the child gets torn down after the test.
-        self.child = pexpect.spawn('%s %s' % (gdb_exe_path, exe))
+        self.child = pexpect.spawn('%s --nx %s' % (gdb_exe_path, exe))
         child = self.child
 
         # Turn on logging for what the child sends back.

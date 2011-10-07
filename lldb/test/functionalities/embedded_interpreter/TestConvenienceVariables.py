@@ -34,7 +34,7 @@ class ConvenienceVariablesCase(TestBase):
         python_prompt = ">>> "
 
         # So that the child gets torn down after the test.
-        self.child = pexpect.spawn('%s %s' % (self.lldbHere, exe))
+        self.child = pexpect.spawn('%s %s %s' % (self.lldbHere, self.lldbOption, exe))
         child = self.child
         # Turn on logging for what the child sends back.
         if self.TraceOn():

@@ -484,6 +484,12 @@ class Base(unittest2.TestCase):
             self.lldbHere = os.environ["LLDB_HERE"]
         else:
             self.lldbHere = None
+        # If we spawn an lldb process for test (via pexpect), do not load the
+        # init file unless told otherwise.
+        if "NO_LLDBINIT" in os.environ and "NO" == os.environ["NO_LLDBINIT"]:
+            self.lldbOption = ""
+        else:
+            self.lldbOption = "--no-lldbinit"
 
         # Assign the test method name to self.testMethodName.
         #
