@@ -112,9 +112,9 @@ static void PrintObjectSectionSizes(ObjectFile *o) {
     std::size_t max_size_len = strlen("size");
     std::size_t max_addr_len = strlen("addr");
     error_code ec;
-    for (ObjectFile::section_iterator i = o->begin_sections(),
-                                      e = o->end_sections(); i != e;
-                                      i.increment(ec)) {
+    for (section_iterator i = o->begin_sections(),
+                          e = o->end_sections(); i != e;
+                          i.increment(ec)) {
       if (error(ec))
         return;
       uint64_t size = 0;
@@ -154,9 +154,9 @@ static void PrintObjectSectionSizes(ObjectFile *o) {
         << "%#" << max_addr_len << radix_fmt << "\n";
 
     // Print each section.
-    for (ObjectFile::section_iterator i = o->begin_sections(),
-                                      e = o->end_sections(); i != e;
-                                      i.increment(ec)) {
+    for (section_iterator i = o->begin_sections(),
+                          e = o->end_sections(); i != e;
+                          i.increment(ec)) {
       if (error(ec))
         return;
 
@@ -190,9 +190,9 @@ static void PrintObjectSectionSizes(ObjectFile *o) {
 
     // Make one pass over the section table to calculate sizes.
     error_code ec;
-    for (ObjectFile::section_iterator i = o->begin_sections(),
-                                      e = o->end_sections(); i != e;
-                                      i.increment(ec)) {
+    for (section_iterator i = o->begin_sections(),
+                          e = o->end_sections(); i != e;
+                          i.increment(ec)) {
       if (error(ec))
         return;
 

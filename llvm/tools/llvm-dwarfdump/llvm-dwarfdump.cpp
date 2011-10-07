@@ -56,9 +56,9 @@ static void DumpInput(const StringRef &Filename) {
   StringRef DebugStringSection;
 
   error_code ec;
-  for (ObjectFile::section_iterator i = Obj->begin_sections(),
-                                    e = Obj->end_sections();
-                                    i != e; i.increment(ec)) {
+  for (section_iterator i = Obj->begin_sections(),
+                        e = Obj->end_sections();
+                        i != e; i.increment(ec)) {
     StringRef name;
     i->getName(name);
     StringRef data;
