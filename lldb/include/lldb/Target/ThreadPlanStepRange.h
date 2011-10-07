@@ -61,11 +61,6 @@ protected:
     bool m_first_run_event;  // We want to broadcast only one running event, our first.
 
 private:
-
-    // friend ThreadPlan *
-    // Thread::QueueThreadPlanForStepRange (bool abort_other_plans, StepType type, const AddressRange &range, SymbolContext *addr_context, bool stop_others);
-
-
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanStepRange);
 
 };
