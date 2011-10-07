@@ -404,4 +404,10 @@ void PR11069(int a, int b) {
   }
 }
 
+// Test uninitialized value used in loop condition.
+void rdar9432305(float *P) {
+  int i; // expected-note {{initialize the variable 'i' to silence this warning}}
+  for (; i < 10000; ++i) // expected-warning {{variable 'i' is uninitialized when used here}}
+    P[i] = 0.0f;
+}
 
