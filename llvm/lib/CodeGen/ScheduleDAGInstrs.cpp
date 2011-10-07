@@ -36,7 +36,7 @@ ScheduleDAGInstrs::ScheduleDAGInstrs(MachineFunction &mf,
                                      const MachineDominatorTree &mdt)
   : ScheduleDAG(mf), MLI(mli), MDT(mdt), MFI(mf.getFrameInfo()),
     InstrItins(mf.getTarget().getInstrItineraryData()),
-    Defs(TRI->getNumRegs()), Uses(TRI->getNumRegs()), 
+    Defs(TRI->getNumRegs()), Uses(TRI->getNumRegs()),
     LoopRegs(MLI, MDT), FirstDbgValue(0) {
   DbgValues.clear();
 }
