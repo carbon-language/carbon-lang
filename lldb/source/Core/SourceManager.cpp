@@ -35,6 +35,7 @@ SourceManager::SourceManager(Target &target) :
     m_last_file_line (0),
     m_last_file_context_before (0),
     m_last_file_context_after (10),
+    m_default_set(false),
     m_target (&target),
     m_debugger(NULL)
 {
@@ -46,6 +47,7 @@ SourceManager::SourceManager(Debugger &debugger) :
     m_last_file_line (0),
     m_last_file_context_before (0),
     m_last_file_context_after (10),
+    m_default_set(false),
     m_target (NULL),
     m_debugger (&debugger)
 {
@@ -206,6 +208,8 @@ SourceManager::SetDefaultFileAndLine (const FileSpec &file_spec, uint32_t line)
 {
     FileSP old_file_sp = m_last_file_sp;
     m_last_file_sp = GetFile (file_spec);
+    
+    m_default_set = true;
     if (m_last_file_sp)
     {
         m_last_file_line = line;
@@ -226,6 +230,35 @@ SourceManager::GetDefaultFileAndLine (FileSpec &file_spec, uint32_t &line)
         file_spec = m_last_file_sp->GetFileSpec();
         line = m_last_file_line;
         return true;
+    }
+    else if (!m_default_set)
+    {
+        // If nobody has set the default file and line then try here.  If there's no executable, then we
+        // will try again later when there is one.  Otherwise, if we can't find it we won't look again,
+        // somebody will have to set it (for instance when we stop somewhere...)
+        Module *executable_ptr = m_target->GetExecutableModulePointer();
+        if (executable_ptr)
+        {
+            SymbolContextList sc_list;
+            uint32_t num_matches;
+            ConstString main_name("main");
+            bool symbols_okay = false;  // Force it to be a debug symbol.
+            bool append = false;
+            num_matches = executable_ptr->FindFunctions (main_name, lldb::eFunctionNameTypeBase, symbols_okay, append, sc_list);
+            for (uint32_t idx = 0; idx < num_matches; idx++)
+            {
+                SymbolContext sc;
+                sc_list.GetContextAtIndex(idx, sc);
+                if (sc.line_entry.file)
+                {
+                    SetDefaultFileAndLine(sc.line_entry.file, sc.line_entry.line);
+                    break;
+                }
+            }
+            return GetDefaultFileAndLine (file_spec, line);
+        }
+        else
+            return false;
     }
     else
         return false;

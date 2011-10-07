@@ -178,6 +178,7 @@ protected:
     uint32_t m_last_file_line;
     uint32_t m_last_file_context_before;
     uint32_t m_last_file_context_after;
+    bool     m_default_set;
     Target *m_target;
     Debugger *m_debugger;
     
