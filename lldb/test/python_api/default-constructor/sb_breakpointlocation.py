@@ -6,6 +6,7 @@ import sys
 import lldb
 
 def fuzz_obj(obj):
+    obj.GetAddress()
     obj.GetLoadAddress()
     obj.SetEnabled(True)
     obj.IsEnabled()
