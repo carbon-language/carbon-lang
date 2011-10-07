@@ -1568,23 +1568,6 @@ struct MultiClass {
   typedef std::vector<Record*> RecordVector;
   RecordVector DefPrototypes;
 
-  struct MultiDef {
-    Record *Rec;          // The base record for all defs generated.
-                          // This serves as the multiclass def prototype.
-    TypedInit *List;      // A list of values to process.
-                          // Each one generates a new def.
-    IntInit *Start;       // This specified the list index from which to start
-                          // processing.
-    std::string ItemName; // The name of a temporary iterator value to
-                          // track the current list item being processed.
-
-    MultiDef(Record *R, TypedInit *L, IntInit *S, const std::string &I) 
-        : Rec(R), List(L), Start(S), ItemName(I) {};
-  };
-
-  typedef std::vector<MultiDef> MultiDefVector;
-  MultiDefVector MultiDefPrototypes;
-
   void dump() const;
 
   MultiClass(const std::string &Name, SMLoc Loc, RecordKeeper &Records) : 

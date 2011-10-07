@@ -100,7 +100,6 @@ private:  // Parser methods.
                             SMLoc DefmPrefixLoc);
   bool ParseDefm(MultiClass *CurMultiClass);
   bool ParseDef(MultiClass *CurMultiClass);
-  bool ParseMultiDef(MultiClass *CurMultiClass);
   bool ParseTopLevelLet(MultiClass *CurMultiClass);
   std::vector<LetRecord> ParseLetList();
 
