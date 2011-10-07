@@ -3770,6 +3770,7 @@ LSRInstance::ImplementSolution(const SmallVectorImpl<const Formula *> &Solution,
 
   SCEVExpander Rewriter(SE, "lsr");
   Rewriter.disableCanonicalMode();
+  Rewriter.enableLSRMode();
   Rewriter.setIVIncInsertPos(L, IVIncInsertPos);
 
   // Expand the new value definitions and update the users.
