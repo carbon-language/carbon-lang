@@ -40,14 +40,9 @@ namespace Constexpr {
   // FIXME: Provide FixIts for static data members too.
 #if 0
   struct S {
-    static constexpr int a = 0;
-
     static constexpr int b; // xpected-error {{requires an initializer}}
     // -> const int b;
   };
-
-  constexpr int S::a; // xpected-error {{requires an initializer}}
-  // -> const int S::a;
 
   constexpr int S::b = 0;
 #endif
