@@ -43,19 +43,32 @@ private:
  void* fData;
 };
 
+class Trivial
+{
+public:
+ Trivial(const Trivial& inObj);
+ Trivial();
+ ~Trivial();
+private:
+ void* fData;
+};
+
 @interface MyDocument
 {
 @private
  TCPPObject _cppObject;
  TCPPObject _ncppObject;
+ Trivial _tcppObject;
 }
 @property (assign, readwrite) const TCPPObject& cppObject;
 @property (assign, readwrite, nonatomic) const TCPPObject& ncppObject;
+@property (assign, readwrite) const Trivial& tcppObject;
 @end
 
 @implementation MyDocument
 
-@synthesize cppObject = _cppObject; // expected-warning {{atomic property of type 'const TCPPObject &' synthesizing setter using non-trivial assignmentoperator}}
+@synthesize cppObject = _cppObject; // expected-warning {{atomic property of type 'const TCPPObject &' synthesizing setter using non-trivial assignment operator}}
 @synthesize ncppObject = _ncppObject;
 
+@synthesize tcppObject = _tcppObject;
 @end

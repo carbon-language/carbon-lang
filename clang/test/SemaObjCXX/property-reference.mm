@@ -29,7 +29,7 @@ typedef const TCPPObject& CREF_TCPPObject;
 @implementation TNSObject
 
 @synthesize cppObjectNonAtomic;
-@synthesize cppObjectAtomic; // expected-warning{{atomic property of type 'CREF_TCPPObject' (aka 'const TCPPObject &') synthesizing setter using non-trivial assignmentoperator}}
+@synthesize cppObjectAtomic; // expected-warning{{atomic property of type 'CREF_TCPPObject' (aka 'const TCPPObject &') synthesizing setter using non-trivial assignment operator}}
 @dynamic cppObjectDynamic;
 
 - (const TCPPObject&) cppObjectNonAtomic
