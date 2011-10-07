@@ -2292,7 +2292,7 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
   if (RecordDecl *Record = dyn_cast_or_null<RecordDecl>(Tag)) {
     ProcessDeclAttributeList(S, Record, DS.getAttributes().getList());
     
-    if (!Record->getDeclName() && Record->isDefinition() &&
+    if (!Record->getDeclName() && Record->isCompleteDefinition() &&
         DS.getStorageClassSpec() != DeclSpec::SCS_typedef) {
       if (getLangOptions().CPlusPlus ||
           Record->getDeclContext()->isRecord())
@@ -2313,7 +2313,7 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
     // and
     //   STRUCT_TYPE;  <- where STRUCT_TYPE is a typedef struct.
     RecordDecl *Record = dyn_cast_or_null<RecordDecl>(Tag);
-    if ((Record && Record->getDeclName() && !Record->isDefinition()) ||
+    if ((Record && Record->getDeclName() && !Record->isCompleteDefinition()) ||
         (DS.getTypeSpecType() == DeclSpec::TST_typename &&
          DS.getRepAsType().get()->isStructureType())) {
       Diag(DS.getSourceRange().getBegin(), diag::ext_ms_anonymous_struct)

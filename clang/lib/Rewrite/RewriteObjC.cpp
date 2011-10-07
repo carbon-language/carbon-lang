@@ -5979,7 +5979,7 @@ void RewriteObjC::HandleDeclInMainFile(Decl *D) {
       }
     } else if (VD->getType()->isRecordType()) {
       RecordDecl *RD = VD->getType()->getAs<RecordType>()->getDecl();
-      if (RD->isDefinition())
+      if (RD->isCompleteDefinition())
         RewriteRecordBody(RD);
     }
     if (VD->getInit()) {
@@ -6011,7 +6011,7 @@ void RewriteObjC::HandleDeclInMainFile(Decl *D) {
     return;
   }
   if (RecordDecl *RD = dyn_cast<RecordDecl>(D)) {
-    if (RD->isDefinition()) 
+    if (RD->isCompleteDefinition()) 
       RewriteRecordBody(RD);
     return;
   }

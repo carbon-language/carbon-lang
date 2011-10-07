@@ -297,7 +297,7 @@ class LLVMConventionsChecker : public Checker<
 public:
   void checkASTDecl(const CXXRecordDecl *R, AnalysisManager& mgr,
                     BugReporter &BR) const {
-    if (R->isDefinition())
+    if (R->isCompleteDefinition())
       CheckASTMemory(R, BR);
   }
 

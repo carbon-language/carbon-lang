@@ -123,7 +123,7 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
   }
   case Decl::Enum: {
     const EnumDecl* ED = cast<EnumDecl>(DC);
-    if (ED->isDefinition())
+    if (ED->isCompleteDefinition())
       Out << "[enum] ";
     else
       Out << "<enum> ";
@@ -132,7 +132,7 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
   }
   case Decl::Record: {
     const RecordDecl* RD = cast<RecordDecl>(DC);
-    if (RD->isDefinition())
+    if (RD->isCompleteDefinition())
       Out << "[struct] ";
     else
       Out << "<struct> ";
@@ -141,7 +141,7 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
   }
   case Decl::CXXRecord: {
     const CXXRecordDecl* RD = cast<CXXRecordDecl>(DC);
-    if (RD->isDefinition())
+    if (RD->isCompleteDefinition())
       Out << "[class] ";
     else
       Out << "<class> ";

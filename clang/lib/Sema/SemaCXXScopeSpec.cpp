@@ -237,7 +237,7 @@ bool Sema::RequireCompleteDeclContext(CXXScopeSpec &SS,
     // until we see a definition, so awkwardly pull out this special
     // case.
     if (const EnumType *enumType = dyn_cast_or_null<EnumType>(tagType)) {
-      if (!enumType->getDecl()->isDefinition()) {
+      if (!enumType->getDecl()->isCompleteDefinition()) {
         Diag(loc, diag::err_incomplete_nested_name_spec)
           << type << SS.getRange();
         SS.SetInvalid(SS.getRange());

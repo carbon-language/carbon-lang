@@ -669,7 +669,7 @@ static bool LookupDirect(Sema &S, LookupResult &R, const DeclContext *DC) {
   //   name lookup. Instead, any conversion function templates visible in the
   //   context of the use are considered. [...]
   const CXXRecordDecl *Record = cast<CXXRecordDecl>(DC);
-  if (!Record->isDefinition())
+  if (!Record->isCompleteDefinition())
     return Found;
 
   const UnresolvedSetImpl *Unresolved = Record->getConversionFunctions();
@@ -1353,7 +1353,7 @@ bool Sema::LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx,
   // Make sure that the declaration context is complete.
   assert((!isa<TagDecl>(LookupCtx) ||
           LookupCtx->isDependentContext() ||
-          cast<TagDecl>(LookupCtx)->isDefinition() ||
+          cast<TagDecl>(LookupCtx)->isCompleteDefinition() ||
           Context.getTypeDeclType(cast<TagDecl>(LookupCtx))->getAs<TagType>()
             ->isBeingDefined()) &&
          "Declaration context must already be complete!");

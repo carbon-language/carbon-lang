@@ -2449,7 +2449,7 @@ static void handleTransparentUnionAttr(Sema &S, Decl *D,
     return;
   }
 
-  if (!RD->isDefinition()) {
+  if (!RD->isCompleteDefinition()) {
     S.Diag(Attr.getLoc(),
         diag::warn_transparent_union_attribute_not_definition);
     return;

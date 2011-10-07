@@ -2233,7 +2233,7 @@ Decl *ASTNodeImporter::VisitEnumDecl(EnumDecl *D) {
   D2->setIntegerType(ToIntegerType);
   
   // Import the definition
-  if (D->isDefinition() && ImportDefinition(D, D2))
+  if (D->isCompleteDefinition() && ImportDefinition(D, D2))
     return 0;
 
   return D2;
@@ -2286,7 +2286,7 @@ Decl *ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
       
       if (RecordDecl *FoundRecord = dyn_cast<RecordDecl>(Found)) {
         if (RecordDecl *FoundDef = FoundRecord->getDefinition()) {
-          if (!D->isDefinition() || IsStructuralMatch(D, FoundDef)) {
+          if (!D->isCompleteDefinition() || IsStructuralMatch(D, FoundDef)) {
             // The record types structurally match, or the "from" translation
             // unit only had a forward declaration anyway; call it the same
             // function.
@@ -2334,7 +2334,7 @@ Decl *ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
   
   Importer.Imported(D, D2);
 
-  if (D->isDefinition() && ImportDefinition(D, D2))
+  if (D->isCompleteDefinition() && ImportDefinition(D, D2))
     return 0;
   
   return D2;
@@ -3713,7 +3713,8 @@ Decl *ASTNodeImporter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
   Importer.Imported(D, D2);
   Importer.Imported(DTemplated, D2Templated);
 
-  if (DTemplated->isDefinition() && !D2Templated->isDefinition()) {
+  if (DTemplated->isCompleteDefinition() &&
+      !D2Templated->isCompleteDefinition()) {
     // FIXME: Import definition!
   }
   
@@ -3775,7 +3776,7 @@ Decl *ASTNodeImporter::VisitClassTemplateSpecializationDecl(
     // FIXME: Check for specialization vs. instantiation errors.
     
     if (RecordDecl *FoundDef = D2->getDefinition()) {
-      if (!D->isDefinition() || IsStructuralMatch(D, FoundDef)) {
+      if (!D->isCompleteDefinition() || IsStructuralMatch(D, FoundDef)) {
         // The record types structurally match, or the "from" translation
         // unit only had a forward declaration anyway; call it the same
         // function.
@@ -3805,7 +3806,7 @@ Decl *ASTNodeImporter::VisitClassTemplateSpecializationDecl(
   }
   Importer.Imported(D, D2);
   
-  if (D->isDefinition() && ImportDefinition(D, D2))
+  if (D->isCompleteDefinition() && ImportDefinition(D, D2))
     return 0;
   
   return D2;

@@ -905,7 +905,7 @@ bool Type::isIncompleteType() const {
   case Record:
     // A tagged type (struct/union/enum/class) is incomplete if the decl is a
     // forward declaration, but not a full definition (C99 6.2.5p22).
-    return !cast<TagType>(CanonicalType)->getDecl()->isDefinition();
+    return !cast<TagType>(CanonicalType)->getDecl()->isCompleteDefinition();
   case ConstantArray:
     // An array is incomplete if its element type is incomplete
     // (C++ [dcl.array]p1).
@@ -1747,7 +1747,7 @@ static TagDecl *getInterestingTagDecl(TagDecl *decl) {
   for (TagDecl::redecl_iterator I = decl->redecls_begin(),
                                 E = decl->redecls_end();
        I != E; ++I) {
-    if (I->isDefinition() || I->isBeingDefined())
+    if (I->isCompleteDefinition() || I->isBeingDefined())
       return *I;
   }
   // If there's no definition (not even in progress), return what we have.

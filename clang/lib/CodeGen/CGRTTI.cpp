@@ -267,7 +267,7 @@ static bool ShouldUseExternalRTTIDescriptor(CodeGenModule &CGM, QualType Ty) {
 
 /// IsIncompleteClassType - Returns whether the given record type is incomplete.
 static bool IsIncompleteClassType(const RecordType *RecordTy) {
-  return !RecordTy->getDecl()->isDefinition();
+  return !RecordTy->getDecl()->isCompleteDefinition();
 }  
 
 /// ContainsIncompleteClassType - Returns whether the given type contains an

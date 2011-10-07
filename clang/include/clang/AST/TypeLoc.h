@@ -568,7 +568,7 @@ public:
 
   /// \brief True if the tag was defined in this type specifier. 
   bool isDefinition() const {
-    return getDecl()->isDefinition() &&
+    return getDecl()->isCompleteDefinition() &&
          (getNameLoc().isInvalid() || getNameLoc() == getDecl()->getLocation());
   }
 };

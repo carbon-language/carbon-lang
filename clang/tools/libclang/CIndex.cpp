@@ -1592,7 +1592,7 @@ bool CursorVisitor::VisitCXXRecordDecl(CXXRecordDecl *D) {
     if (VisitNestedNameSpecifierLoc(QualifierLoc))
       return true;
 
-  if (D->isDefinition()) {
+  if (D->isCompleteDefinition()) {
     for (CXXRecordDecl::base_class_iterator I = D->bases_begin(),
          E = D->bases_end(); I != E; ++I) {
       if (Visit(cxcursor::MakeCursorCXXBaseSpecifier(I, TU)))

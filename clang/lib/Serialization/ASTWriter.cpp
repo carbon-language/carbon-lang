@@ -3912,7 +3912,7 @@ void ASTWriter::MacroDefinitionRead(serialization::PreprocessedEntityID ID,
 }
 
 void ASTWriter::CompletedTagDefinition(const TagDecl *D) {
-  assert(D->isDefinition());
+  assert(D->isCompleteDefinition());
   assert(!WritingAST && "Already writing the AST!");
   if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D)) {
     // We are interested when a PCH decl is modified.
@@ -3962,7 +3962,7 @@ void ASTWriter::AddedCXXImplicitMember(const CXXRecordDecl *RD, const Decl *D) {
     return; // We are interested in lazily declared implicit methods.
 
   // A decl coming from PCH was modified.
-  assert(RD->isDefinition());
+  assert(RD->isCompleteDefinition());
   UpdateRecord &Record = DeclUpdates[RD];
   Record.push_back(UPD_CXX_ADDED_IMPLICIT_MEMBER);
   Record.push_back(reinterpret_cast<uint64_t>(D));

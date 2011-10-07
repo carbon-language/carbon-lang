@@ -897,7 +897,7 @@ RegionOffset MemRegion::getAsOffset() const {
     case FieldRegionKind: {
       const FieldRegion *FR = cast<FieldRegion>(R);
       const RecordDecl *RD = FR->getDecl()->getParent();
-      if (!RD->isDefinition())
+      if (!RD->isCompleteDefinition())
         // We cannot compute offset for incomplete type.
         return RegionOffset(0);
       // Get the field number.

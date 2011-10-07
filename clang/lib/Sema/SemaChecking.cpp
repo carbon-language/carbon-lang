@@ -2592,7 +2592,7 @@ struct IntRange {
     // For enum types, use the known bit width of the enumerators.
     if (const EnumType *ET = dyn_cast<EnumType>(T)) {
       EnumDecl *Enum = ET->getDecl();
-      if (!Enum->isDefinition())
+      if (!Enum->isCompleteDefinition())
         return IntRange(C.getIntWidth(QualType(T, 0)), false);
 
       unsigned NumPositive = Enum->getNumPositiveBits();

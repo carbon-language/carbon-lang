@@ -2200,7 +2200,7 @@ void VTableContext::ComputeMethodVTableIndices(const CXXRecordDecl *RD) {
   const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
   
   if (PrimaryBase) {
-    assert(PrimaryBase->isDefinition() && 
+    assert(PrimaryBase->isCompleteDefinition() && 
            "Should have the definition decl of the primary base!");
 
     // Since the record decl shares its vtable pointer with the primary base

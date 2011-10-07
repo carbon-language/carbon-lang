@@ -1841,7 +1841,7 @@ static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,
   }
 
   if (SemaRef.getLangOptions().CPlusPlus &&
-      OwnedTagDecl && OwnedTagDecl->isDefinition()) {
+      OwnedTagDecl && OwnedTagDecl->isCompleteDefinition()) {
     // Check the contexts where C++ forbids the declaration of a new class
     // or enumeration in a type-specifier-seq.
     switch (D.getContext()) {
@@ -2094,7 +2094,7 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
         // C++ [dcl.fct]p6:
         //   Types shall not be defined in return or parameter types.
         TagDecl *Tag = cast<TagDecl>(D.getDeclSpec().getRepAsDecl());
-        if (Tag->isDefinition())
+        if (Tag->isCompleteDefinition())
           S.Diag(Tag->getLocation(), diag::err_type_defined_in_result_type)
             << Context.getTypeDeclType(Tag);
       }

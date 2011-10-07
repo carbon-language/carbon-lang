@@ -282,7 +282,7 @@ void ASTDeclReader::VisitTagDecl(TagDecl *TD) {
   VisitRedeclarable(TD);
   TD->IdentifierNamespace = Record[Idx++];
   TD->setTagKind((TagDecl::TagKind)Record[Idx++]);
-  TD->setDefinition(Record[Idx++]);
+  TD->setCompleteDefinition(Record[Idx++]);
   TD->setEmbeddedInDeclarator(Record[Idx++]);
   TD->setFreeStanding(Record[Idx++]);
   TD->setRBraceLoc(ReadSourceLocation(Record, Idx));
@@ -977,7 +977,7 @@ void ASTDeclReader::VisitCXXRecordDecl(CXXRecordDecl *D) {
 
   // Load the key function to avoid deserializing every method so we can
   // compute it.
-  if (D->IsDefinition) {
+  if (D->IsCompleteDefinition) {
     if (CXXMethodDecl *Key = ReadDeclAs<CXXMethodDecl>(Record, Idx))
       C.KeyFunctions[D] = Key;
   }

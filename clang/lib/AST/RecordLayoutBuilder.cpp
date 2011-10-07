@@ -2013,7 +2013,7 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
   // until we *finish* parsing the definition.
   D = D->getDefinition();
   assert(D && "Cannot get layout of forward declarations!");
-  assert(D->isDefinition() && "Cannot layout type before complete!");
+  assert(D->isCompleteDefinition() && "Cannot layout type before complete!");
 
   // Look up this layout, if already laid out, return what we have.
   // Note that we can't save a reference to the entry because this function

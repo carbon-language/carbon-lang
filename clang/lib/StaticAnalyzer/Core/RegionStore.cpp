@@ -1485,7 +1485,7 @@ StoreRef RegionStoreManager::BindStruct(Store store, const TypedValueRegion* R,
   const RecordType* RT = T->getAs<RecordType>();
   RecordDecl *RD = RT->getDecl();
 
-  if (!RD->isDefinition())
+  if (!RD->isCompleteDefinition())
     return StoreRef(store, *this);
 
   // Handle lazy compound values.
