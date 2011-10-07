@@ -130,7 +130,7 @@ void ELFObjectWriter::WriteHeader(uint64_t SectionDataSize,
     Write16(NumberOfSections);
 
   // e_shstrndx  = Section # of '.shstrtab'
-  if (NumberOfSections >= ELF::SHN_LORESERVE)
+  if (ShstrtabIndex >= ELF::SHN_LORESERVE)
     Write16(ELF::SHN_XINDEX);
   else
     Write16(ShstrtabIndex);
