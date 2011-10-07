@@ -245,7 +245,7 @@ void ASTDumper::VisitTypeDecl (clang::TypeDecl *type_decl)
 void ASTDumper::VisitTagDecl (clang::TagDecl *tag_decl)
 {
     m_stream.Indent();  m_stream.Printf("class : TagDecl\n");
-    m_stream.Indent();  m_stream.Printf("isDefinition() : %s\n", SfB(tag_decl->isDefinition()));
+    m_stream.Indent();  m_stream.Printf("getDefinition() : %s\n", SfB((bool)tag_decl->getDefinition()));
     m_stream.Indent();  m_stream.Printf("isBeingDefined() : %s\n", SfB(tag_decl->isBeingDefined()));
     m_stream.Indent();  m_stream.Printf("isEmbeddedInDeclarator() : %s\n", SfB(tag_decl->isEmbeddedInDeclarator()));
     m_stream.Indent();  m_stream.Printf("isDependentType() : %s\n", SfB(tag_decl->isDependentType()));
@@ -416,7 +416,7 @@ void ASTDumper::VisitType (const clang::Type *type)
         switch (type->getScalarTypeKind())
         {
             default:                                m_stream.Printf("~\n"); break;
-            case clang::Type::STK_Pointer:          m_stream.Printf("STK_Pointer\n"); break;
+            case clang::Type::STK_CPointer:         m_stream.Printf("STK_CPointer\n"); break;
             case clang::Type::STK_MemberPointer:    m_stream.Printf("STK_MemberPointer\n"); break;
             case clang::Type::STK_Bool:             m_stream.Printf("STK_Bool\n"); break;
             case clang::Type::STK_Integral:         m_stream.Printf("STK_Integral\n"); break;

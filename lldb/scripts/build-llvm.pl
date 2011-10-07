@@ -22,8 +22,8 @@ our @llvm_clang_slices; # paths to the single architecture static libraries (arc
 
 our $llvm_configuration = $ENV{LLVM_CONFIGURATION};
 
-our $llvm_revision = "137311";
-our $clang_revision = "137311";
+our $llvm_revision = "141418";
+our $clang_revision = "141418";
 
 our $llvm_source_dir = "$ENV{SRCROOT}";
 our @archs = split (/\s+/, $ENV{ARCHS});
@@ -42,7 +42,6 @@ our @archive_files = (
 	"$llvm_configuration/lib/libclangParse.a",
 	"$llvm_configuration/lib/libclangSema.a",
     "$llvm_configuration/lib/libclangSerialization.a",
-	"$llvm_configuration/lib/libCompilerDriver.a",
 	"$llvm_configuration/lib/libEnhancedDisassembly.a",
 	"$llvm_configuration/lib/libLLVMAnalysis.a",
 	"$llvm_configuration/lib/libLLVMArchive.a",

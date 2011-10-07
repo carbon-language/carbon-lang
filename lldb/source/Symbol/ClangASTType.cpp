@@ -1286,7 +1286,7 @@ ClangASTType::DumpTypeDescription (clang::ASTContext *ast_context, clang_type_t 
                     {
                         clang::ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
                         if (class_interface_decl)
-                            class_interface_decl->print(llvm_ostrm, ast_context->PrintingPolicy, s->GetIndentLevel());
+                            class_interface_decl->print(llvm_ostrm, ast_context->getPrintingPolicy(), s->GetIndentLevel());
                     }
                 }
                 break;

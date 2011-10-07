@@ -84,11 +84,11 @@ public:
     clang::SourceManager *
     getSourceManager();
 
-    clang::Diagnostic *
-    getDiagnostic();
+    clang::DiagnosticsEngine *
+    getDiagnosticsEngine();
     
-    clang::DiagnosticClient *
-    getDiagnosticClient();
+    clang::DiagnosticConsumer *
+    getDiagnosticConsumer();
 
     clang::TargetOptions *
     getTargetOptions();
@@ -760,8 +760,8 @@ protected:
     std::auto_ptr<clang::FileManager>       m_file_manager_ap;
     std::auto_ptr<clang::FileSystemOptions> m_file_system_options_ap;
     std::auto_ptr<clang::SourceManager>     m_source_manager_ap;
-    std::auto_ptr<clang::Diagnostic>        m_diagnostic_ap;
-    std::auto_ptr<clang::DiagnosticClient>  m_diagnostic_client_ap;
+    std::auto_ptr<clang::DiagnosticsEngine>  m_diagnostics_engine_ap;
+    std::auto_ptr<clang::DiagnosticConsumer> m_diagnostic_consumer_ap;
     std::auto_ptr<clang::TargetOptions>     m_target_options_ap;
     std::auto_ptr<clang::TargetInfo>        m_target_info_ap;
     std::auto_ptr<clang::IdentifierTable>   m_identifier_table_ap;

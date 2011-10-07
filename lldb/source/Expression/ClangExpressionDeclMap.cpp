@@ -2388,6 +2388,10 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
             
             return;
         }
+        
+        // any other $__lldb names should be weeded out now
+        if (!::strncmp(name_unique_cstr, "$__lldb", sizeof("$__lldb") - 1))
+            return;
 
         do
         {

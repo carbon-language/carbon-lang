@@ -359,7 +359,7 @@ ClangASTContext::ClangASTContext (const char *target_triple) :
     m_ast_ap(),
     m_language_options_ap(),
     m_source_manager_ap(),
-    m_diagnostic_ap(),
+    m_diagnostics_engine_ap(),
     m_target_options_ap(),
     m_target_info_ap(),
     m_identifier_table_ap(),
@@ -384,7 +384,7 @@ ClangASTContext::~ClangASTContext()
     m_identifier_table_ap.reset();
     m_target_info_ap.reset();
     m_target_options_ap.reset();
-    m_diagnostic_ap.reset();
+    m_diagnostics_engine_ap.reset();
     m_source_manager_ap.reset();
     m_language_options_ap.reset();
     m_ast_ap.reset();
@@ -397,7 +397,7 @@ ClangASTContext::Clear()
     m_ast_ap.reset();
     m_language_options_ap.reset();
     m_source_manager_ap.reset();
-    m_diagnostic_ap.reset();
+    m_diagnostics_engine_ap.reset();
     m_target_options_ap.reset();
     m_target_info_ap.reset();
     m_identifier_table_ap.reset();
@@ -468,7 +468,7 @@ ClangASTContext::getASTContext()
     {
         m_ast_ap.reset(new ASTContext (*getLanguageOptions(),
                                        *getSourceManager(),
-                                       *getTargetInfo(),
+                                       getTargetInfo(),
                                        *getIdentifierTable(),
                                        *getSelectorTable(),
                                        *getBuiltinContext(),
@@ -480,7 +480,7 @@ ClangASTContext::getASTContext()
             //m_ast_ap->getTranslationUnitDecl()->setHasExternalVisibleStorage();
         }
         
-        m_ast_ap->getDiagnostics().setClient(getDiagnosticClient(), false);
+        m_ast_ap->getDiagnostics().setClient(getDiagnosticConsumer(), false);
     }
     return m_ast_ap.get();
 }
@@ -489,7 +489,7 @@ Builtin::Context *
 ClangASTContext::getBuiltinContext()
 {
     if (m_builtins_ap.get() == NULL)
-        m_builtins_ap.reset (new Builtin::Context(*getTargetInfo()));
+        m_builtins_ap.reset (new Builtin::Context());
     return m_builtins_ap.get();
 }
 
@@ -536,30 +536,30 @@ clang::SourceManager *
 ClangASTContext::getSourceManager()
 {
     if (m_source_manager_ap.get() == NULL)
-        m_source_manager_ap.reset(new clang::SourceManager(*getDiagnostic(), *getFileManager()));
+        m_source_manager_ap.reset(new clang::SourceManager(*getDiagnosticsEngine(), *getFileManager()));
     return m_source_manager_ap.get();
 }
 
-Diagnostic *
-ClangASTContext::getDiagnostic()
+clang::DiagnosticsEngine *
+ClangASTContext::getDiagnosticsEngine()
 {
-    if (m_diagnostic_ap.get() == NULL)
+    if (m_diagnostics_engine_ap.get() == NULL)
     {
         llvm::IntrusiveRefCntPtr<DiagnosticIDs> diag_id_sp(new DiagnosticIDs());
-        m_diagnostic_ap.reset(new Diagnostic(diag_id_sp));
+        m_diagnostics_engine_ap.reset(new DiagnosticsEngine(diag_id_sp));
     }
-    return m_diagnostic_ap.get();
+    return m_diagnostics_engine_ap.get();
 }
 
-class NullDiagnosticClient : public DiagnosticClient
+class NullDiagnosticConsumer : public DiagnosticConsumer
 {
 public:
-    NullDiagnosticClient ()
+    NullDiagnosticConsumer ()
     {
         m_log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
     }
     
-    void HandleDiagnostic (Diagnostic::Level DiagLevel, const DiagnosticInfo &info)
+    void HandleDiagnostic (DiagnosticsEngine::Level DiagLevel, const Diagnostic &info)
     {
         if (m_log)
         {
@@ -569,17 +569,22 @@ public:
             m_log->Printf("Compiler diagnostic: %s\n", diag_str.data());
         }
     }
+    
+    DiagnosticConsumer *clone (DiagnosticsEngine &Diags) const
+    {
+        return new NullDiagnosticConsumer ();
+    }
 private:
     LogSP m_log;
 };
 
-DiagnosticClient *
-ClangASTContext::getDiagnosticClient()
+DiagnosticConsumer *
+ClangASTContext::getDiagnosticConsumer()
 {
-    if (m_diagnostic_client_ap.get() == NULL)
-        m_diagnostic_client_ap.reset(new NullDiagnosticClient);
+    if (m_diagnostic_consumer_ap.get() == NULL)
+        m_diagnostic_consumer_ap.reset(new NullDiagnosticConsumer);
     
-    return m_diagnostic_client_ap.get();
+    return m_diagnostic_consumer_ap.get();
 }
 
 TargetOptions *
@@ -600,7 +605,7 @@ ClangASTContext::getTargetInfo()
 {
     // target_triple should be something like "x86_64-apple-darwin10"
     if (m_target_info_ap.get() == NULL && !m_target_triple.empty())
-        m_target_info_ap.reset (TargetInfo::CreateTargetInfo(*getDiagnostic(), *getTargetOptions()));
+        m_target_info_ap.reset (TargetInfo::CreateTargetInfo(*getDiagnosticsEngine(), *getTargetOptions()));
     return m_target_info_ap.get();
 }
 
@@ -1466,7 +1471,8 @@ ClangASTContext::AddMethodToCXXRecordType
                                                       NULL, // TypeSourceInfo *
                                                       is_explicit, 
                                                       is_inline,
-                                                      is_implicitly_declared);
+                                                      is_implicitly_declared,
+                                                      false /*is_constexpr*/);
     }
     else
     {   
@@ -1492,6 +1498,7 @@ ClangASTContext::AddMethodToCXXRecordType
                                                          is_static,
                                                          SC_None,
                                                          is_inline,
+                                                         false /*is_constexpr*/,
                                                          SourceLocation());
             }
             else if (num_params == 0)
@@ -1505,6 +1512,7 @@ ClangASTContext::AddMethodToCXXRecordType
                                                              NULL, // TypeSourceInfo *
                                                              is_inline,
                                                              is_explicit,
+                                                             false /*is_constexpr*/,
                                                              SourceLocation());
             }
         }
@@ -1520,6 +1528,7 @@ ClangASTContext::AddMethodToCXXRecordType
                                                      is_static,
                                                      SC_None,
                                                      is_inline,
+                                                     false /*is_constexpr*/,
                                                      SourceLocation());
         }
     }
@@ -1549,7 +1558,7 @@ ClangASTContext::AddMethodToCXXRecordType
                                                NULL));
     }
     
-    cxx_method_decl->setParams (params.data(), num_params);
+    cxx_method_decl->setParams (ArrayRef<ParmVarDecl*>(params));
     
     cxx_record_decl->addDecl (cxx_method_decl);
 
@@ -2020,9 +2029,10 @@ ClangASTContext::AddMethodToObjCObjectType
                                                                name[0] == '-',
                                                                is_variadic,
                                                                is_synthesized,
+                                                               true, // is_implicitly_declared
                                                                is_defined,
                                                                imp_control,
-                                                               num_args);
+                                                               false /*has_related_result_type*/);
 
 
     if (objc_method_decl == NULL)
@@ -2046,7 +2056,7 @@ ClangASTContext::AddMethodToObjCObjectType
                                                    NULL));
         }
         
-        objc_method_decl->setMethodParams(*ast, params.data(), params.size(), num_args);
+        objc_method_decl->setMethodParams(*ast, ArrayRef<ParmVarDecl*>(params), ArrayRef<SourceLocation>());
     }
     
     class_interface_decl->addDecl (objc_method_decl);
@@ -4208,7 +4218,7 @@ void
 ClangASTContext::SetFunctionParameters (FunctionDecl *function_decl, ParmVarDecl **params, unsigned num_params)
 {
     if (function_decl)
-        function_decl->setParams (params, num_params);
+        function_decl->setParams (ArrayRef<ParmVarDecl*>(params, num_params));
 }
 
 

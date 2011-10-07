@@ -200,6 +200,10 @@ ASTResultSynthesizer::SynthesizeObjCMethodResult (ObjCMethodDecl *MethodDecl)
     }
     
     Stmt *method_body = MethodDecl->getBody();
+    
+    if (!method_body)
+        return false;
+    
     CompoundStmt *compound_stmt = dyn_cast<CompoundStmt>(method_body);
     
     bool ret = SynthesizeBodyResult (compound_stmt,

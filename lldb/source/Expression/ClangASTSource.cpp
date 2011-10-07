@@ -197,27 +197,25 @@ NameSearchContext::AddFunDecl (void *type)
         unsigned NumArgs = func_proto_type->getNumArgs();
         unsigned ArgIndex;
         
-        ParmVarDecl **param_var_decls = new ParmVarDecl*[NumArgs];
-        
+        SmallVector<ParmVarDecl *, 5> parm_var_decls;
+                
         for (ArgIndex = 0; ArgIndex < NumArgs; ++ArgIndex)
         {
             QualType arg_qual_type (func_proto_type->getArgType(ArgIndex));
             
-            param_var_decls[ArgIndex] = ParmVarDecl::Create (m_ast_source.m_ast_context,
-                                                             const_cast<DeclContext*>(m_decl_context),
-                                                             SourceLocation(),
-                                                             SourceLocation(),
-                                                             NULL,
-                                                             arg_qual_type,
-                                                             NULL,
-                                                             SC_Static,
-                                                             SC_Static,
-                                                             NULL);
+            parm_var_decls.push_back(ParmVarDecl::Create (m_ast_source.m_ast_context,
+                                                          const_cast<DeclContext*>(m_decl_context),
+                                                          SourceLocation(),
+                                                          SourceLocation(),
+                                                          NULL,
+                                                          arg_qual_type,
+                                                          NULL,
+                                                          SC_Static,
+                                                          SC_Static,
+                                                          NULL));
         }
         
-        func_decl->setParams(param_var_decls, NumArgs);
-        
-        delete [] param_var_decls;
+        func_decl->setParams(ArrayRef<ParmVarDecl*>(parm_var_decls));
     }
     
     m_decls.push_back(func_decl);

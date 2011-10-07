@@ -41,7 +41,6 @@
 #include "clang/Frontend/FrontendPluginRegistry.h"
 #include "clang/Frontend/TextDiagnosticBuffer.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
-#include "clang/Frontend/VerifyDiagnosticsClient.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Parse/ParseAST.h"
 #include "clang/Rewrite/FrontendActions.h"
@@ -50,6 +49,7 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
+#include "llvm/Support/TargetSelect.h"
 
 #if !defined(__APPLE__)
 #define USE_STANDARD_JIT
@@ -67,8 +67,6 @@
 #include "llvm/Support/DynamicLibrary.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/Signals.h"
-#include "llvm/Target/TargetRegistry.h"
-#include "llvm/Target/TargetSelect.h"
 
 using namespace clang;
 using namespace llvm;
@@ -103,12 +101,12 @@ std::string GetBuiltinIncludePath(const char *Argv0) {
 //===----------------------------------------------------------------------===//
 
 static void LLVMErrorHandler(void *UserData, const std::string &Message) {
-    Diagnostic &Diags = *static_cast<Diagnostic*>(UserData);
+    DiagnosticsEngine &Diags = *static_cast<DiagnosticsEngine*>(UserData);
     
     Diags.Report(diag::err_fe_error_backend) << Message;
     
     // We cannot recover from llvm errors.
-    exit(1);
+    assert(0);
 }
 
 static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {
@@ -132,7 +130,7 @@ static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {
         case EmitCodeGenOnly:        return new EmitCodeGenOnlyAction();
         case EmitObj:                return new EmitObjAction();
         case FixIt:                  return new FixItAction();
-        case GeneratePCH:            return new GeneratePCHAction();
+        case GeneratePCH:            return new GeneratePCHAction(false);
         case GeneratePTH:            return new GeneratePTHAction();
         case InitOnly:               return new InitOnlyAction();
         case ParseSyntaxOnly:        return new SyntaxOnlyAction();
@@ -308,11 +306,11 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
     // 6. Most of this we get from the CompilerInstance, but we 
     // also want to give the context an ExternalASTSource.
     m_selector_table.reset(new SelectorTable());
-    m_builtin_context.reset(new Builtin::Context(m_compiler->getTarget()));
+    m_builtin_context.reset(new Builtin::Context());
     
     std::auto_ptr<clang::ASTContext> ast_context(new ASTContext(m_compiler->getLangOpts(),
                                                                 m_compiler->getSourceManager(),
-                                                                m_compiler->getTarget(),
+                                                                &m_compiler->getTarget(),
                                                                 m_compiler->getPreprocessor().getIdentifierTable(),
                                                                 *m_selector_table.get(),
                                                                 *m_builtin_context.get(),
