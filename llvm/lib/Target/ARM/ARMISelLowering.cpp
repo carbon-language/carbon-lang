@@ -422,6 +422,13 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setLibcallName(RTLIB::MEMSET,  "__aeabi_memset");
   }
 
+  // Use divmod compiler-rt calls for iOS 5.0 and later.
+  if (Subtarget->getTargetTriple().getOS() == Triple::IOS &&
+      !Subtarget->getTargetTriple().isOSVersionLT(5, 0)) {
+    setLibcallName(RTLIB::SDIVREM_I32, "__divmodsi4");
+    setLibcallName(RTLIB::UDIVREM_I32, "__udivmodsi4");
+  }
+
   if (Subtarget->isThumb1Only())
     addRegisterClass(MVT::i32, ARM::tGPRRegisterClass);
   else
