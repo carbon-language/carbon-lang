@@ -212,13 +212,6 @@ BVPair &CFGBlockValues::getValueVectors(const clang::CFGBlock *block,
   return vals[idx];
 }
 
-void CFGBlockValues::mergeIntoScratch(ValueVector const &source,
-                                      bool isFirst) {
-  if (isFirst)
-    scratch = source;
-  else
-    scratch |= source;
-}
 #if 0
 static void printVector(const CFGBlock *block, ValueVector &bv,
                         unsigned num) {
@@ -229,7 +222,23 @@ static void printVector(const CFGBlock *block, ValueVector &bv,
   }
   llvm::errs() << " : " << num << '\n';
 }
+
+static void printVector(const char *name, ValueVector const &bv) {
+  llvm::errs() << name << " : ";
+  for (unsigned i = 0; i < bv.size(); ++i) {
+    llvm::errs() << ' ' << bv[i];
+  }
+  llvm::errs() << "\n";
+}
 #endif
+
+void CFGBlockValues::mergeIntoScratch(ValueVector const &source,
+                                      bool isFirst) {
+  if (isFirst)
+    scratch = source;
+  else
+    scratch |= source;
+}
 
 bool CFGBlockValues::updateValueVectorWithScratch(const CFGBlock *block) {
   ValueVector &dst = getValueVector(block, 0);
@@ -529,14 +538,9 @@ void TransferFunctions::VisitUnaryOperator(clang::UnaryOperator *uo) {
 void TransferFunctions::VisitCastExpr(clang::CastExpr *ce) {
   if (ce->getCastKind() == CK_LValueToRValue) {
     const FindVarResult &res = findBlockVarDecl(ce->getSubExpr());
-    if (const VarDecl *vd = res.getDecl()) {
+    if (res.getDecl()) {
       assert(res.getDeclRefExpr() == lastDR);
-      if (isUninitialized(vals[vd])) {
-        // Record this load of an uninitialized value.  Normally this
-        // results in a warning, but we delay reporting the issue
-        // in case it is wrapped in a void cast, etc.
-        lastLoad = ce;
-      }
+      lastLoad = ce;
     }
   }
   else if (ce->getCastKind() == CK_NoOp ||
@@ -573,16 +577,19 @@ void TransferFunctions::ProcessUses(Stmt *s) {
     if (lastLoad == s)
       return;
 
-    // If we reach here, we have seen a load of an uninitialized value
-    // and it hasn't been casted to void or otherwise handled.  In this
-    // situation, report the incident.
     const DeclRefExpr *DR =
       cast<DeclRefExpr>(stripCasts(ac.getASTContext(),
                                    lastLoad->getSubExpr()));
     const VarDecl *VD = cast<VarDecl>(DR->getDecl());
-    reportUninit(DR, VD, isAlwaysUninit(vals[VD]));
+
+    // If we reach here, we may have seen a load of an uninitialized value
+    // and it hasn't been casted to void or otherwise handled.  In this
+    // situation, report the incident.
+    if (isUninitialized(vals[VD]))
+      reportUninit(DR, VD, isAlwaysUninit(vals[VD]));
+
     lastLoad = 0;
-    
+
     if (DR == lastDR) {
       lastDR = 0;
       return;

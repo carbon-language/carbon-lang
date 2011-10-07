@@ -391,3 +391,17 @@ int test_block_and_dead_code() {
   return x; // no-warning
 }
 
+// This previously triggered an infinite loop in the analysis.
+void PR11069(int a, int b) {
+  unsigned long flags;
+  for (;;) {
+    if (a && !b)
+      break;
+  }
+  for (;;) {
+    // This does not trigger a warning because it isn't a real use.
+    (void)(flags); // no-warning
+  }
+}
+
+
