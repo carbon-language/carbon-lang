@@ -1951,7 +1951,6 @@ class NVDupLane<bits<4> op19_16, bit op6, dag oops, dag iops,
 
   bits<5> Vd;
   bits<5> Vm;
-  bits<4> lane;
 
   let Inst{22}     = Vd{4};
   let Inst{15-12} = Vd{3-0};

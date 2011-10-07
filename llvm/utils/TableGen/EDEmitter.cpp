@@ -624,6 +624,9 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
   IMM("postidx_imm8s4");
   IMM("imm_sr");
   IMM("imm1_31");
+  IMM("VectorIndex8");
+  IMM("VectorIndex16");
+  IMM("VectorIndex32");
 
   MISC("brtarget", "kOperandTypeARMBranchTarget");                // ?
   MISC("uncondbrtarget", "kOperandTypeARMBranchTarget");           // ?

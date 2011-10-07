@@ -254,6 +254,7 @@ class ARMOperand : public MCParsedAsmOperand {
     k_PostIndexRegister,
     k_MSRMask,
     k_ProcIFlags,
+    k_VectorIndex,
     k_Register,
     k_RegisterList,
     k_DPRRegisterList,
@@ -302,6 +303,10 @@ class ARMOperand : public MCParsedAsmOperand {
     struct {
       unsigned RegNum;
     } Reg;
+
+    struct {
+      unsigned Val;
+    } VectorIndex;
 
     struct {
       const MCExpr *Val;
@@ -419,6 +424,9 @@ public:
     case k_BitfieldDescriptor:
       Bitfield = o.Bitfield;
       break;
+    case k_VectorIndex:
+      VectorIndex = o.VectorIndex;
+      break;
     }
   }
 
@@ -461,6 +469,11 @@ public:
   unsigned getFPImm() const {
     assert(Kind == k_FPImmediate && "Invalid access!");
     return FPImm.Val;
+  }
+
+  unsigned getVectorIndex() const {
+    assert(Kind == k_VectorIndex && "Invalid access!");
+    return VectorIndex.Val;
   }
 
   ARM_MB::MemBOpt getMemBarrierOpt() const {
@@ -858,6 +871,21 @@ public:
 
   bool isMSRMask() const { return Kind == k_MSRMask; }
   bool isProcIFlags() const { return Kind == k_ProcIFlags; }
+
+  bool isVectorIndex8() const {
+    if (Kind != k_VectorIndex) return false;
+    return VectorIndex.Val < 8;
+  }
+  bool isVectorIndex16() const {
+    if (Kind != k_VectorIndex) return false;
+    return VectorIndex.Val < 4;
+  }
+  bool isVectorIndex32() const {
+    if (Kind != k_VectorIndex) return false;
+    return VectorIndex.Val < 2;
+  }
+
+
 
   void addExpr(MCInst &Inst, const MCExpr *Expr) const {
     // Add as immediates when possible.  Null MCExpr = 0.
@@ -1343,6 +1371,21 @@ public:
     Inst.addOperand(MCOperand::CreateImm(unsigned(getProcIFlags())));
   }
 
+  void addVectorIndex8Operands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateImm(getVectorIndex()));
+  }
+
+  void addVectorIndex16Operands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateImm(getVectorIndex()));
+  }
+
+  void addVectorIndex32Operands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateImm(getVectorIndex()));
+  }
+
   virtual void print(raw_ostream &OS) const;
 
   static ARMOperand *CreateITMask(unsigned Mask, SMLoc S) {
@@ -1476,6 +1519,15 @@ public:
     array_pod_sort(Op->Registers.begin(), Op->Registers.end());
     Op->StartLoc = StartLoc;
     Op->EndLoc = EndLoc;
+    return Op;
+  }
+
+  static ARMOperand *CreateVectorIndex(unsigned Idx, SMLoc S, SMLoc E,
+                                       MCContext &Ctx) {
+    ARMOperand *Op = new ARMOperand(k_VectorIndex);
+    Op->VectorIndex.Val = Idx;
+    Op->StartLoc = S;
+    Op->EndLoc = E;
     return Op;
   }
 
@@ -1659,6 +1711,9 @@ void ARMOperand::print(raw_ostream &OS) const {
   case k_Token:
     OS << "'" << getToken() << "'";
     break;
+  case k_VectorIndex:
+    OS << "<vectorindex " << getVectorIndex() << ">";
+    break;
   }
 }
 
@@ -1700,6 +1755,39 @@ int ARMAsmParser::tryParseRegister() {
   if (!RegNum) return -1;
 
   Parser.Lex(); // Eat identifier token.
+
+#if 0
+  // Also check for an index operand. This is only legal for vector registers,
+  // but that'll get caught OK in operand matching, so we don't need to
+  // explicitly filter everything else out here.
+  if (Parser.getTok().is(AsmToken::LBrac)) {
+    SMLoc SIdx = Parser.getTok().getLoc();
+    Parser.Lex(); // Eat left bracket token.
+
+    const MCExpr *ImmVal;
+    SMLoc ExprLoc = Parser.getTok().getLoc();
+    if (getParser().ParseExpression(ImmVal))
+      return MatchOperand_ParseFail;
+    const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(ImmVal);
+    if (!MCE) {
+      TokError("immediate value expected for vector index");
+      return MatchOperand_ParseFail;
+    }
+
+    SMLoc E = Parser.getTok().getLoc();
+    if (Parser.getTok().isNot(AsmToken::RBrac)) {
+      Error(E, "']' expected");
+      return MatchOperand_ParseFail;
+    }
+
+    Parser.Lex(); // Eat right bracket token.
+
+    Operands.push_back(ARMOperand::CreateVectorIndex(MCE->getValue(),
+                                                     SIdx, E,
+                                                     getContext()));
+  }
+#endif
+
   return RegNum;
 }
 
@@ -1815,6 +1903,37 @@ tryParseRegisterWithWriteBack(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     Operands.push_back(ARMOperand::CreateToken(ExclaimTok.getString(),
                                                ExclaimTok.getLoc()));
     Parser.Lex(); // Eat exclaim token
+    return false;
+  }
+
+  // Also check for an index operand. This is only legal for vector registers,
+  // but that'll get caught OK in operand matching, so we don't need to
+  // explicitly filter everything else out here.
+  if (Parser.getTok().is(AsmToken::LBrac)) {
+    SMLoc SIdx = Parser.getTok().getLoc();
+    Parser.Lex(); // Eat left bracket token.
+
+    const MCExpr *ImmVal;
+    SMLoc ExprLoc = Parser.getTok().getLoc();
+    if (getParser().ParseExpression(ImmVal))
+      return MatchOperand_ParseFail;
+    const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(ImmVal);
+    if (!MCE) {
+      TokError("immediate value expected for vector index");
+      return MatchOperand_ParseFail;
+    }
+
+    SMLoc E = Parser.getTok().getLoc();
+    if (Parser.getTok().isNot(AsmToken::RBrac)) {
+      Error(E, "']' expected");
+      return MatchOperand_ParseFail;
+    }
+
+    Parser.Lex(); // Eat right bracket token.
+
+    Operands.push_back(ARMOperand::CreateVectorIndex(MCE->getValue(),
+                                                     SIdx, E,
+                                                     getContext()));
   }
 
   return false;

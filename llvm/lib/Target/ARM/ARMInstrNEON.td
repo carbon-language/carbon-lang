@@ -11,6 +11,35 @@
 //
 //===----------------------------------------------------------------------===//
 
+
+//===----------------------------------------------------------------------===//
+// NEON-specific Operands.
+//===----------------------------------------------------------------------===//
+def VectorIndex8Operand  : AsmOperandClass { let Name = "VectorIndex8"; }
+def VectorIndex16Operand : AsmOperandClass { let Name = "VectorIndex16"; }
+def VectorIndex32Operand : AsmOperandClass { let Name = "VectorIndex32"; }
+def VectorIndex8 : Operand<i32>, ImmLeaf<i32, [{
+  return ((uint64_t)Imm) < 8;
+}]> {
+  let ParserMatchClass = VectorIndex8Operand;
+  let PrintMethod = "printVectorIndex";
+  let MIOperandInfo = (ops i32imm);
+}
+def VectorIndex16 : Operand<i32>, ImmLeaf<i32, [{
+  return ((uint64_t)Imm) < 4;
+}]> {
+  let ParserMatchClass = VectorIndex16Operand;
+  let PrintMethod = "printVectorIndex";
+  let MIOperandInfo = (ops i32imm);
+}
+def VectorIndex32 : Operand<i32>, ImmLeaf<i32, [{
+  return ((uint64_t)Imm) < 2;
+}]> {
+  let ParserMatchClass = VectorIndex32Operand;
+  let PrintMethod = "printVectorIndex";
+  let MIOperandInfo = (ops i32imm);
+}
+
 //===----------------------------------------------------------------------===//
 // NEON-specific DAG Nodes.
 //===----------------------------------------------------------------------===//
@@ -4518,36 +4547,42 @@ def : Pat<(v4f32 (NEONvdup (f32 (bitconvert GPR:$R)))), (VDUP32q GPR:$R)>;
 //   VDUP     : Vector Duplicate Lane (from scalar to all elements)
 
 class VDUPLND<bits<4> op19_16, string OpcodeStr, string Dt,
-              ValueType Ty>
-  : NVDupLane<op19_16, 0, (outs DPR:$Vd), (ins DPR:$Vm, nohash_imm:$lane),
-              IIC_VMOVD, OpcodeStr, Dt, "$Vd, $Vm[$lane]",
+              ValueType Ty, Operand IdxTy>
+  : NVDupLane<op19_16, 0, (outs DPR:$Vd), (ins DPR:$Vm, IdxTy:$lane),
+              IIC_VMOVD, OpcodeStr, Dt, "$Vd, $Vm$lane",
               [(set DPR:$Vd, (Ty (NEONvduplane (Ty DPR:$Vm), imm:$lane)))]>;
 
 class VDUPLNQ<bits<4> op19_16, string OpcodeStr, string Dt,
-              ValueType ResTy, ValueType OpTy>
-  : NVDupLane<op19_16, 1, (outs QPR:$Vd), (ins DPR:$Vm, nohash_imm:$lane),
-              IIC_VMOVQ, OpcodeStr, Dt, "$Vd, $Vm[$lane]",
+              ValueType ResTy, ValueType OpTy, Operand IdxTy>
+  : NVDupLane<op19_16, 1, (outs QPR:$Vd), (ins DPR:$Vm, IdxTy:$lane),
+              IIC_VMOVQ, OpcodeStr, Dt, "$Vd, $Vm$lane",
               [(set QPR:$Vd, (ResTy (NEONvduplane (OpTy DPR:$Vm),
-                                      imm:$lane)))]>;
+                                      VectorIndex32:$lane)))]>;
 
 // Inst{19-16} is partially specified depending on the element size.
 
-def VDUPLN8d  : VDUPLND<{?,?,?,1}, "vdup", "8", v8i8> {
+def VDUPLN8d  : VDUPLND<{?,?,?,1}, "vdup", "8", v8i8, VectorIndex8> {
+  bits<3> lane;
   let Inst{19-17} = lane{2-0};
 }
-def VDUPLN16d : VDUPLND<{?,?,1,0}, "vdup", "16", v4i16> {
+def VDUPLN16d : VDUPLND<{?,?,1,0}, "vdup", "16", v4i16, VectorIndex16> {
+  bits<2> lane;
   let Inst{19-18} = lane{1-0};
 }
-def VDUPLN32d : VDUPLND<{?,1,0,0}, "vdup", "32", v2i32> {
+def VDUPLN32d : VDUPLND<{?,1,0,0}, "vdup", "32", v2i32, VectorIndex32> {
+  bits<1> lane;
   let Inst{19} = lane{0};
 }
-def VDUPLN8q  : VDUPLNQ<{?,?,?,1}, "vdup", "8", v16i8, v8i8> {
+def VDUPLN8q  : VDUPLNQ<{?,?,?,1}, "vdup", "8", v16i8, v8i8, VectorIndex8> {
+  bits<3> lane;
   let Inst{19-17} = lane{2-0};
 }
-def VDUPLN16q : VDUPLNQ<{?,?,1,0}, "vdup", "16", v8i16, v4i16> {
+def VDUPLN16q : VDUPLNQ<{?,?,1,0}, "vdup", "16", v8i16, v4i16, VectorIndex16> {
+  bits<2> lane;
   let Inst{19-18} = lane{1-0};
 }
-def VDUPLN32q : VDUPLNQ<{?,1,0,0}, "vdup", "32", v4i32, v2i32> {
+def VDUPLN32q : VDUPLNQ<{?,1,0,0}, "vdup", "32", v4i32, v2i32, VectorIndex32> {
+  bits<1> lane;
   let Inst{19} = lane{0};
 }
 

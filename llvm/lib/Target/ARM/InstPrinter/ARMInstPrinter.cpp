@@ -981,3 +981,8 @@ void ARMInstPrinter::printRotImmOperand(const MCInst *MI, unsigned OpNum,
   case 3: O << "24"; break;
   }
 }
+
+void ARMInstPrinter::printVectorIndex(const MCInst *MI, unsigned OpNum,
+                                      raw_ostream &O) {
+  O << "[" << MI->getOperand(OpNum).getImm() << "]";
+}
