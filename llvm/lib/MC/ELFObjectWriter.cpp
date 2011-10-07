@@ -125,7 +125,7 @@ void ELFObjectWriter::WriteHeader(uint64_t SectionDataSize,
 
   // e_shnum     = # of section header ents
   if (NumberOfSections >= ELF::SHN_LORESERVE)
-    Write16(0);
+    Write16(ELF::SHN_UNDEF);
   else
     Write16(NumberOfSections);
 
@@ -1233,7 +1233,7 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
 
   FileOff = OS.tell();
 
-  // ... and then the remainting sections ...
+  // ... and then the remaining sections ...
   for (unsigned i = NumRegularSections + 1; i < NumSections; ++i)
     WriteDataSectionData(Asm, Layout, *Sections[i]);
 }
