@@ -1154,11 +1154,15 @@ def XCHG64rr : RI<0x87, MRMSrcReg, (outs GR64:$dst), (ins GR64:$val,GR64:$src),
                   "xchg{q}\t{$val, $src|$src, $val}", []>;
 }
 
-def XCHG16ar : I<0x90, AddRegFrm, (outs), (ins GR16_NOAX:$src),
+def XCHG16ar : I<0x90, AddRegFrm, (outs), (ins GR16:$src),
                   "xchg{w}\t{$src, %ax|AX, $src}", []>, OpSize;
-def XCHG32ar : I<0x90, AddRegFrm, (outs), (ins GR32_NOAX:$src),
-                  "xchg{l}\t{$src, %eax|EAX, $src}", []>;
-def XCHG64ar : RI<0x90, AddRegFrm, (outs), (ins GR64_NOAX:$src),
+def XCHG32ar : I<0x90, AddRegFrm, (outs), (ins GR32:$src),
+                  "xchg{l}\t{$src, %eax|EAX, $src}", []>, Requires<[In32BitMode]>;
+// Uses GR32_NOAX in 64-bit mode to prevent encoding using the 0x90 NOP encoding.
+// xchg %eax, %eax needs to clear upper 32-bits of RAX so is not a NOP.
+def XCHG32ar64 : I<0x90, AddRegFrm, (outs), (ins GR32_NOAX:$src),
+                   "xchg{l}\t{$src, %eax|EAX, $src}", []>, Requires<[In64BitMode]>;
+def XCHG64ar : RI<0x90, AddRegFrm, (outs), (ins GR64:$src),
                   "xchg{q}\t{$src, %rax|RAX, $src}", []>;
 
 
@@ -1716,6 +1720,7 @@ def : InstAlias<"xchgl $mem, $val", (XCHG32rm GR32:$val, i32mem:$mem)>;
 def : InstAlias<"xchgq $mem, $val", (XCHG64rm GR64:$val, i64mem:$mem)>;
 
 // xchg: We accept "xchgX <reg>, %eax" and "xchgX %eax, <reg>" as synonyms.
-def : InstAlias<"xchgw %ax, $src", (XCHG16ar GR16_NOAX:$src)>;
-def : InstAlias<"xchgl %eax, $src", (XCHG32ar GR32_NOAX:$src)>;
-def : InstAlias<"xchgq %rax, $src", (XCHG64ar GR64_NOAX:$src)>;
+def : InstAlias<"xchgw %ax, $src", (XCHG16ar GR16:$src)>;
+def : InstAlias<"xchgl %eax, $src", (XCHG32ar GR32:$src)>, Requires<[In32BitMode]>;
+def : InstAlias<"xchgl %eax, $src", (XCHG32ar64 GR32_NOAX:$src)>, Requires<[In64BitMode]>;
+def : InstAlias<"xchgq %rax, $src", (XCHG64ar GR64:$src)>;

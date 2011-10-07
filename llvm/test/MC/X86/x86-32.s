@@ -948,11 +948,11 @@ fsubp   %st, %st(2)
 
 // PR10345
 // CHECK: xchgl %eax, %eax
-// CHECK: encoding: [0x87,0xc0]
+// CHECK: encoding: [0x90]
 xchgl %eax, %eax
 
 // CHECK: xchgw %ax, %ax
-// CHECK: encoding: [0x66,0x87,0xc0]
+// CHECK: encoding: [0x66,0x90]
 xchgw %ax, %ax
 
 // CHECK: xchgl %ecx, %eax
