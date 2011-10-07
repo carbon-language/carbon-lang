@@ -816,11 +816,15 @@ DeclContext *DeclContext::getNextContext() {
 }
 
 std::pair<Decl *, Decl *>
-DeclContext::BuildDeclChain(const SmallVectorImpl<Decl*> &Decls) {
+DeclContext::BuildDeclChain(const SmallVectorImpl<Decl*> &Decls,
+                            bool FieldsAlreadyLoaded) {
   // Build up a chain of declarations via the Decl::NextDeclInContext field.
   Decl *FirstNewDecl = 0;
   Decl *PrevDecl = 0;
   for (unsigned I = 0, N = Decls.size(); I != N; ++I) {
+    if (FieldsAlreadyLoaded && isa<FieldDecl>(Decls[I]))
+      continue;
+
     Decl *D = Decls[I];
     if (PrevDecl)
       PrevDecl->NextDeclInContext = D;
@@ -842,22 +846,6 @@ DeclContext::LoadLexicalDeclsFromExternalStorage() const {
 
   // Notify that we have a DeclContext that is initializing.
   ExternalASTSource::Deserializing ADeclContext(Source);
-
-  // We may have already loaded just the fields of this record, in which case
-  // we remove all of the fields from the list. The fields will be reloaded
-  // from the external source as part of re-establishing the context.
-  if (const RecordDecl *RD = dyn_cast<RecordDecl>(this)) {
-    if (RD->LoadedFieldsFromExternalStorage) {
-      while (FirstDecl && isa<FieldDecl>(FirstDecl)) {
-        Decl *Next = FirstDecl->NextDeclInContext;
-        FirstDecl->NextDeclInContext = 0;
-        FirstDecl = Next;
-      }
-      
-      if (!FirstDecl)
-        LastDecl = 0;
-    }
-  }
   
   // Load the external declarations, if any.
   SmallVector<Decl*, 64> Decls;
@@ -874,10 +862,17 @@ DeclContext::LoadLexicalDeclsFromExternalStorage() const {
   if (Decls.empty())
     return;
 
+  // We may have already loaded just the fields of this record, in which case
+  // we need to ignore them.
+  bool FieldsAlreadyLoaded = false;
+  if (const RecordDecl *RD = dyn_cast<RecordDecl>(this))
+    FieldsAlreadyLoaded = RD->LoadedFieldsFromExternalStorage;
+  
   // Splice the newly-read declarations into the beginning of the list
   // of declarations.
   Decl *ExternalFirst, *ExternalLast;
-  llvm::tie(ExternalFirst, ExternalLast) = BuildDeclChain(Decls);
+  llvm::tie(ExternalFirst, ExternalLast) = BuildDeclChain(Decls,
+                                                          FieldsAlreadyLoaded);
   ExternalLast->NextDeclInContext = FirstDecl;
   FirstDecl = ExternalFirst;
   if (!LastDecl)

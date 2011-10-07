@@ -2432,7 +2432,8 @@ void RecordDecl::LoadFieldsFromExternalStorage() const {
   if (Decls.empty())
     return;
 
-  llvm::tie(FirstDecl, LastDecl) = BuildDeclChain(Decls);
+  llvm::tie(FirstDecl, LastDecl) = BuildDeclChain(Decls,
+                                                 /*FieldsAlreadyLoaded=*/false);
 }
 
 //===----------------------------------------------------------------------===//
