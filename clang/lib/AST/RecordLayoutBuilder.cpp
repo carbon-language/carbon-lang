@@ -2007,8 +2007,13 @@ RecordLayoutBuilder::Diag(SourceLocation Loc, unsigned DiagID) {
 /// position information.
 const ASTRecordLayout &
 ASTContext::getASTRecordLayout(const RecordDecl *D) const {
+  // These asserts test different things.  A record has a definition
+  // as soon as we begin to parse the definition.  That definition is
+  // not a complete definition (which is what isDefinition() tests)
+  // until we *finish* parsing the definition.
   D = D->getDefinition();
   assert(D && "Cannot get layout of forward declarations!");
+  assert(D->isDefinition() && "Cannot layout type before complete!");
 
   // Look up this layout, if already laid out, return what we have.
   // Note that we can't save a reference to the entry because this function

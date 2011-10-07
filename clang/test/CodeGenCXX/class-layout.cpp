@@ -45,3 +45,35 @@ namespace Test5 {
     char c;
   } *b;
 }
+
+// PR10912: don't crash
+namespace Test6 {
+  template <typename T> class A {
+    // If T is complete, IR-gen will want to translate it recursively
+    // when translating T*.
+    T *foo;
+  };
+
+  class B;
+
+  // This causes IR-gen to have an incomplete translation of A<B>
+  // sitting around.
+  A<B> *a;
+
+  class C {};
+  class B : public C {
+    // This forces Sema to instantiate A<B>, which triggers a callback
+    // to IR-gen.  Because of the previous, incomplete translation,
+    // IR-gen actually cares, and it immediately tries to complete
+    // A<B>'s IR type.  That, in turn, causes the translation of B*.
+    // B isn't complete yet, but it has a definition, and if we try to
+    // compute a record layout for that definition then we'll really
+    // regret it later.
+    A<B> a;
+  };
+
+  // The derived class E and empty base class C are required to
+  // provoke the original assertion.
+  class E : public B {};
+  E *e;
+}
