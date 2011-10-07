@@ -242,28 +242,28 @@ namespace {
 /// instruction.
 class ARMOperand : public MCParsedAsmOperand {
   enum KindTy {
-    CondCode,
-    CCOut,
-    ITCondMask,
-    CoprocNum,
-    CoprocReg,
-    Immediate,
-    FPImmediate,
-    MemBarrierOpt,
-    Memory,
-    PostIndexRegister,
-    MSRMask,
-    ProcIFlags,
-    Register,
-    RegisterList,
-    DPRRegisterList,
-    SPRRegisterList,
-    ShiftedRegister,
-    ShiftedImmediate,
-    ShifterImmediate,
-    RotateImmediate,
-    BitfieldDescriptor,
-    Token
+    k_CondCode,
+    k_CCOut,
+    k_ITCondMask,
+    k_CoprocNum,
+    k_CoprocReg,
+    k_Immediate,
+    k_FPImmediate,
+    k_MemBarrierOpt,
+    k_Memory,
+    k_PostIndexRegister,
+    k_MSRMask,
+    k_ProcIFlags,
+    k_Register,
+    k_RegisterList,
+    k_DPRRegisterList,
+    k_SPRRegisterList,
+    k_ShiftedRegister,
+    k_ShiftedImmediate,
+    k_ShifterImmediate,
+    k_RotateImmediate,
+    k_BitfieldDescriptor,
+    k_Token
   } Kind;
 
   SMLoc StartLoc, EndLoc;
@@ -361,62 +361,62 @@ public:
     StartLoc = o.StartLoc;
     EndLoc = o.EndLoc;
     switch (Kind) {
-    case CondCode:
+    case k_CondCode:
       CC = o.CC;
       break;
-    case ITCondMask:
+    case k_ITCondMask:
       ITMask = o.ITMask;
       break;
-    case Token:
+    case k_Token:
       Tok = o.Tok;
       break;
-    case CCOut:
-    case Register:
+    case k_CCOut:
+    case k_Register:
       Reg = o.Reg;
       break;
-    case RegisterList:
-    case DPRRegisterList:
-    case SPRRegisterList:
+    case k_RegisterList:
+    case k_DPRRegisterList:
+    case k_SPRRegisterList:
       Registers = o.Registers;
       break;
-    case CoprocNum:
-    case CoprocReg:
+    case k_CoprocNum:
+    case k_CoprocReg:
       Cop = o.Cop;
       break;
-    case Immediate:
+    case k_Immediate:
       Imm = o.Imm;
       break;
-    case FPImmediate:
+    case k_FPImmediate:
       FPImm = o.FPImm;
       break;
-    case MemBarrierOpt:
+    case k_MemBarrierOpt:
       MBOpt = o.MBOpt;
       break;
-    case Memory:
+    case k_Memory:
       Mem = o.Mem;
       break;
-    case PostIndexRegister:
+    case k_PostIndexRegister:
       PostIdxReg = o.PostIdxReg;
       break;
-    case MSRMask:
+    case k_MSRMask:
       MMask = o.MMask;
       break;
-    case ProcIFlags:
+    case k_ProcIFlags:
       IFlags = o.IFlags;
       break;
-    case ShifterImmediate:
+    case k_ShifterImmediate:
       ShifterImm = o.ShifterImm;
       break;
-    case ShiftedRegister:
+    case k_ShiftedRegister:
       RegShiftedReg = o.RegShiftedReg;
       break;
-    case ShiftedImmediate:
+    case k_ShiftedImmediate:
       RegShiftedImm = o.RegShiftedImm;
       break;
-    case RotateImmediate:
+    case k_RotateImmediate:
       RotImm = o.RotImm;
       break;
-    case BitfieldDescriptor:
+    case k_BitfieldDescriptor:
       Bitfield = o.Bitfield;
       break;
     }
@@ -428,66 +428,66 @@ public:
   SMLoc getEndLoc() const { return EndLoc; }
 
   ARMCC::CondCodes getCondCode() const {
-    assert(Kind == CondCode && "Invalid access!");
+    assert(Kind == k_CondCode && "Invalid access!");
     return CC.Val;
   }
 
   unsigned getCoproc() const {
-    assert((Kind == CoprocNum || Kind == CoprocReg) && "Invalid access!");
+    assert((Kind == k_CoprocNum || Kind == k_CoprocReg) && "Invalid access!");
     return Cop.Val;
   }
 
   StringRef getToken() const {
-    assert(Kind == Token && "Invalid access!");
+    assert(Kind == k_Token && "Invalid access!");
     return StringRef(Tok.Data, Tok.Length);
   }
 
   unsigned getReg() const {
-    assert((Kind == Register || Kind == CCOut) && "Invalid access!");
+    assert((Kind == k_Register || Kind == k_CCOut) && "Invalid access!");
     return Reg.RegNum;
   }
 
   const SmallVectorImpl<unsigned> &getRegList() const {
-    assert((Kind == RegisterList || Kind == DPRRegisterList ||
-            Kind == SPRRegisterList) && "Invalid access!");
+    assert((Kind == k_RegisterList || Kind == k_DPRRegisterList ||
+            Kind == k_SPRRegisterList) && "Invalid access!");
     return Registers;
   }
 
   const MCExpr *getImm() const {
-    assert(Kind == Immediate && "Invalid access!");
+    assert(Kind == k_Immediate && "Invalid access!");
     return Imm.Val;
   }
 
   unsigned getFPImm() const {
-    assert(Kind == FPImmediate && "Invalid access!");
+    assert(Kind == k_FPImmediate && "Invalid access!");
     return FPImm.Val;
   }
 
   ARM_MB::MemBOpt getMemBarrierOpt() const {
-    assert(Kind == MemBarrierOpt && "Invalid access!");
+    assert(Kind == k_MemBarrierOpt && "Invalid access!");
     return MBOpt.Val;
   }
 
   ARM_PROC::IFlags getProcIFlags() const {
-    assert(Kind == ProcIFlags && "Invalid access!");
+    assert(Kind == k_ProcIFlags && "Invalid access!");
     return IFlags.Val;
   }
 
   unsigned getMSRMask() const {
-    assert(Kind == MSRMask && "Invalid access!");
+    assert(Kind == k_MSRMask && "Invalid access!");
     return MMask.Val;
   }
 
-  bool isCoprocNum() const { return Kind == CoprocNum; }
-  bool isCoprocReg() const { return Kind == CoprocReg; }
-  bool isCondCode() const { return Kind == CondCode; }
-  bool isCCOut() const { return Kind == CCOut; }
-  bool isITMask() const { return Kind == ITCondMask; }
-  bool isITCondCode() const { return Kind == CondCode; }
-  bool isImm() const { return Kind == Immediate; }
-  bool isFPImm() const { return Kind == FPImmediate; }
+  bool isCoprocNum() const { return Kind == k_CoprocNum; }
+  bool isCoprocReg() const { return Kind == k_CoprocReg; }
+  bool isCondCode() const { return Kind == k_CondCode; }
+  bool isCCOut() const { return Kind == k_CCOut; }
+  bool isITMask() const { return Kind == k_ITCondMask; }
+  bool isITCondCode() const { return Kind == k_CondCode; }
+  bool isImm() const { return Kind == k_Immediate; }
+  bool isFPImm() const { return Kind == k_FPImmediate; }
   bool isImm8s4() const {
-    if (Kind != Immediate)
+    if (Kind != k_Immediate)
       return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
@@ -495,7 +495,7 @@ public:
     return ((Value & 3) == 0) && Value >= -1020 && Value <= 1020;
   }
   bool isImm0_1020s4() const {
-    if (Kind != Immediate)
+    if (Kind != k_Immediate)
       return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
@@ -503,7 +503,7 @@ public:
     return ((Value & 3) == 0) && Value >= 0 && Value <= 1020;
   }
   bool isImm0_508s4() const {
-    if (Kind != Immediate)
+    if (Kind != k_Immediate)
       return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
@@ -511,7 +511,7 @@ public:
     return ((Value & 3) == 0) && Value >= 0 && Value <= 508;
   }
   bool isImm0_255() const {
-    if (Kind != Immediate)
+    if (Kind != k_Immediate)
       return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
@@ -519,7 +519,7 @@ public:
     return Value >= 0 && Value < 256;
   }
   bool isImm0_7() const {
-    if (Kind != Immediate)
+    if (Kind != k_Immediate)
       return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
@@ -527,7 +527,7 @@ public:
     return Value >= 0 && Value < 8;
   }
   bool isImm0_15() const {
-    if (Kind != Immediate)
+    if (Kind != k_Immediate)
       return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
@@ -535,7 +535,7 @@ public:
     return Value >= 0 && Value < 16;
   }
   bool isImm0_31() const {
-    if (Kind != Immediate)
+    if (Kind != k_Immediate)
       return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
@@ -543,7 +543,7 @@ public:
     return Value >= 0 && Value < 32;
   }
   bool isImm1_16() const {
-    if (Kind != Immediate)
+    if (Kind != k_Immediate)
       return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
@@ -551,7 +551,7 @@ public:
     return Value > 0 && Value < 17;
   }
   bool isImm1_32() const {
-    if (Kind != Immediate)
+    if (Kind != k_Immediate)
       return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
@@ -559,7 +559,7 @@ public:
     return Value > 0 && Value < 33;
   }
   bool isImm0_65535() const {
-    if (Kind != Immediate)
+    if (Kind != k_Immediate)
       return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
@@ -567,7 +567,7 @@ public:
     return Value >= 0 && Value < 65536;
   }
   bool isImm0_65535Expr() const {
-    if (Kind != Immediate)
+    if (Kind != k_Immediate)
       return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     // If it's not a constant expression, it'll generate a fixup and be
@@ -577,7 +577,7 @@ public:
     return Value >= 0 && Value < 65536;
   }
   bool isImm24bit() const {
-    if (Kind != Immediate)
+    if (Kind != k_Immediate)
       return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
@@ -585,7 +585,7 @@ public:
     return Value >= 0 && Value <= 0xffffff;
   }
   bool isImmThumbSR() const {
-    if (Kind != Immediate)
+    if (Kind != k_Immediate)
       return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
@@ -593,7 +593,7 @@ public:
     return Value > 0 && Value < 33;
   }
   bool isPKHLSLImm() const {
-    if (Kind != Immediate)
+    if (Kind != k_Immediate)
       return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
@@ -601,7 +601,7 @@ public:
     return Value >= 0 && Value < 32;
   }
   bool isPKHASRImm() const {
-    if (Kind != Immediate)
+    if (Kind != k_Immediate)
       return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
@@ -609,7 +609,7 @@ public:
     return Value > 0 && Value <= 32;
   }
   bool isARMSOImm() const {
-    if (Kind != Immediate)
+    if (Kind != k_Immediate)
       return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
@@ -617,7 +617,7 @@ public:
     return ARM_AM::getSOImmVal(Value) != -1;
   }
   bool isT2SOImm() const {
-    if (Kind != Immediate)
+    if (Kind != k_Immediate)
       return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
@@ -625,37 +625,37 @@ public:
     return ARM_AM::getT2SOImmVal(Value) != -1;
   }
   bool isSetEndImm() const {
-    if (Kind != Immediate)
+    if (Kind != k_Immediate)
       return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
     return Value == 1 || Value == 0;
   }
-  bool isReg() const { return Kind == Register; }
-  bool isRegList() const { return Kind == RegisterList; }
-  bool isDPRRegList() const { return Kind == DPRRegisterList; }
-  bool isSPRRegList() const { return Kind == SPRRegisterList; }
-  bool isToken() const { return Kind == Token; }
-  bool isMemBarrierOpt() const { return Kind == MemBarrierOpt; }
-  bool isMemory() const { return Kind == Memory; }
-  bool isShifterImm() const { return Kind == ShifterImmediate; }
-  bool isRegShiftedReg() const { return Kind == ShiftedRegister; }
-  bool isRegShiftedImm() const { return Kind == ShiftedImmediate; }
-  bool isRotImm() const { return Kind == RotateImmediate; }
-  bool isBitfield() const { return Kind == BitfieldDescriptor; }
-  bool isPostIdxRegShifted() const { return Kind == PostIndexRegister; }
+  bool isReg() const { return Kind == k_Register; }
+  bool isRegList() const { return Kind == k_RegisterList; }
+  bool isDPRRegList() const { return Kind == k_DPRRegisterList; }
+  bool isSPRRegList() const { return Kind == k_SPRRegisterList; }
+  bool isToken() const { return Kind == k_Token; }
+  bool isMemBarrierOpt() const { return Kind == k_MemBarrierOpt; }
+  bool isMemory() const { return Kind == k_Memory; }
+  bool isShifterImm() const { return Kind == k_ShifterImmediate; }
+  bool isRegShiftedReg() const { return Kind == k_ShiftedRegister; }
+  bool isRegShiftedImm() const { return Kind == k_ShiftedImmediate; }
+  bool isRotImm() const { return Kind == k_RotateImmediate; }
+  bool isBitfield() const { return Kind == k_BitfieldDescriptor; }
+  bool isPostIdxRegShifted() const { return Kind == k_PostIndexRegister; }
   bool isPostIdxReg() const {
-    return Kind == PostIndexRegister && PostIdxReg.ShiftTy == ARM_AM::no_shift;
+    return Kind == k_PostIndexRegister && PostIdxReg.ShiftTy == ARM_AM::no_shift;
   }
   bool isMemNoOffset() const {
-    if (Kind != Memory)
+    if (Kind != k_Memory)
       return false;
     // No offset of any kind.
     return Mem.OffsetRegNum == 0 && Mem.OffsetImm == 0;
   }
   bool isAddrMode2() const {
-    if (Kind != Memory)
+    if (Kind != k_Memory)
       return false;
     // Check for register offset.
     if (Mem.OffsetRegNum) return true;
@@ -665,7 +665,7 @@ public:
     return Val > -4096 && Val < 4096;
   }
   bool isAM2OffsetImm() const {
-    if (Kind != Immediate)
+    if (Kind != k_Immediate)
       return false;
     // Immediate offset in range [-4095, 4095].
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
@@ -674,7 +674,7 @@ public:
     return Val > -4096 && Val < 4096;
   }
   bool isAddrMode3() const {
-    if (Kind != Memory)
+    if (Kind != k_Memory)
       return false;
     // No shifts are legal for AM3.
     if (Mem.ShiftType != ARM_AM::no_shift) return false;
@@ -686,9 +686,9 @@ public:
     return Val > -256 && Val < 256;
   }
   bool isAM3Offset() const {
-    if (Kind != Immediate && Kind != PostIndexRegister)
+    if (Kind != k_Immediate && Kind != k_PostIndexRegister)
       return false;
-    if (Kind == PostIndexRegister)
+    if (Kind == k_PostIndexRegister)
       return PostIdxReg.ShiftTy == ARM_AM::no_shift;
     // Immediate offset in range [-255, 255].
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
@@ -698,7 +698,7 @@ public:
     return (Val > -256 && Val < 256) || Val == INT32_MIN;
   }
   bool isAddrMode5() const {
-    if (Kind != Memory)
+    if (Kind != k_Memory)
       return false;
     // Check for register offset.
     if (Mem.OffsetRegNum) return false;
@@ -709,24 +709,24 @@ public:
            Val == INT32_MIN;
   }
   bool isMemTBB() const {
-    if (Kind != Memory || !Mem.OffsetRegNum || Mem.isNegative ||
+    if (Kind != k_Memory || !Mem.OffsetRegNum || Mem.isNegative ||
         Mem.ShiftType != ARM_AM::no_shift)
       return false;
     return true;
   }
   bool isMemTBH() const {
-    if (Kind != Memory || !Mem.OffsetRegNum || Mem.isNegative ||
+    if (Kind != k_Memory || !Mem.OffsetRegNum || Mem.isNegative ||
         Mem.ShiftType != ARM_AM::lsl || Mem.ShiftImm != 1)
       return false;
     return true;
   }
   bool isMemRegOffset() const {
-    if (Kind != Memory || !Mem.OffsetRegNum)
+    if (Kind != k_Memory || !Mem.OffsetRegNum)
       return false;
     return true;
   }
   bool isT2MemRegOffset() const {
-    if (Kind != Memory || !Mem.OffsetRegNum || Mem.isNegative)
+    if (Kind != k_Memory || !Mem.OffsetRegNum || Mem.isNegative)
       return false;
     // Only lsl #{0, 1, 2, 3} allowed.
     if (Mem.ShiftType == ARM_AM::no_shift)
@@ -738,14 +738,14 @@ public:
   bool isMemThumbRR() const {
     // Thumb reg+reg addressing is simple. Just two registers, a base and
     // an offset. No shifts, negations or any other complicating factors.
-    if (Kind != Memory || !Mem.OffsetRegNum || Mem.isNegative ||
+    if (Kind != k_Memory || !Mem.OffsetRegNum || Mem.isNegative ||
         Mem.ShiftType != ARM_AM::no_shift)
       return false;
     return isARMLowRegister(Mem.BaseRegNum) &&
       (!Mem.OffsetRegNum || isARMLowRegister(Mem.OffsetRegNum));
   }
   bool isMemThumbRIs4() const {
-    if (Kind != Memory || Mem.OffsetRegNum != 0 ||
+    if (Kind != k_Memory || Mem.OffsetRegNum != 0 ||
         !isARMLowRegister(Mem.BaseRegNum))
       return false;
     // Immediate offset, multiple of 4 in range [0, 124].
@@ -754,7 +754,7 @@ public:
     return Val >= 0 && Val <= 124 && (Val % 4) == 0;
   }
   bool isMemThumbRIs2() const {
-    if (Kind != Memory || Mem.OffsetRegNum != 0 ||
+    if (Kind != k_Memory || Mem.OffsetRegNum != 0 ||
         !isARMLowRegister(Mem.BaseRegNum))
       return false;
     // Immediate offset, multiple of 4 in range [0, 62].
@@ -763,7 +763,7 @@ public:
     return Val >= 0 && Val <= 62 && (Val % 2) == 0;
   }
   bool isMemThumbRIs1() const {
-    if (Kind != Memory || Mem.OffsetRegNum != 0 ||
+    if (Kind != k_Memory || Mem.OffsetRegNum != 0 ||
         !isARMLowRegister(Mem.BaseRegNum))
       return false;
     // Immediate offset in range [0, 31].
@@ -772,7 +772,7 @@ public:
     return Val >= 0 && Val <= 31;
   }
   bool isMemThumbSPI() const {
-    if (Kind != Memory || Mem.OffsetRegNum != 0 || Mem.BaseRegNum != ARM::SP)
+    if (Kind != k_Memory || Mem.OffsetRegNum != 0 || Mem.BaseRegNum != ARM::SP)
       return false;
     // Immediate offset, multiple of 4 in range [0, 1020].
     if (!Mem.OffsetImm) return true;
@@ -780,7 +780,7 @@ public:
     return Val >= 0 && Val <= 1020 && (Val % 4) == 0;
   }
   bool isMemImm8s4Offset() const {
-    if (Kind != Memory || Mem.OffsetRegNum != 0)
+    if (Kind != k_Memory || Mem.OffsetRegNum != 0)
       return false;
     // Immediate offset a multiple of 4 in range [-1020, 1020].
     if (!Mem.OffsetImm) return true;
@@ -788,7 +788,7 @@ public:
     return Val >= -1020 && Val <= 1020 && (Val & 3) == 0;
   }
   bool isMemImm0_1020s4Offset() const {
-    if (Kind != Memory || Mem.OffsetRegNum != 0)
+    if (Kind != k_Memory || Mem.OffsetRegNum != 0)
       return false;
     // Immediate offset a multiple of 4 in range [0, 1020].
     if (!Mem.OffsetImm) return true;
@@ -796,7 +796,7 @@ public:
     return Val >= 0 && Val <= 1020 && (Val & 3) == 0;
   }
   bool isMemImm8Offset() const {
-    if (Kind != Memory || Mem.OffsetRegNum != 0)
+    if (Kind != k_Memory || Mem.OffsetRegNum != 0)
       return false;
     // Immediate offset in range [-255, 255].
     if (!Mem.OffsetImm) return true;
@@ -804,7 +804,7 @@ public:
     return (Val == INT32_MIN) || (Val > -256 && Val < 256);
   }
   bool isMemPosImm8Offset() const {
-    if (Kind != Memory || Mem.OffsetRegNum != 0)
+    if (Kind != k_Memory || Mem.OffsetRegNum != 0)
       return false;
     // Immediate offset in range [0, 255].
     if (!Mem.OffsetImm) return true;
@@ -812,7 +812,7 @@ public:
     return Val >= 0 && Val < 256;
   }
   bool isMemNegImm8Offset() const {
-    if (Kind != Memory || Mem.OffsetRegNum != 0)
+    if (Kind != k_Memory || Mem.OffsetRegNum != 0)
       return false;
     // Immediate offset in range [-255, -1].
     if (!Mem.OffsetImm) return true;
@@ -823,10 +823,10 @@ public:
     // If we have an immediate that's not a constant, treat it as a label
     // reference needing a fixup. If it is a constant, it's something else
     // and we reject it.
-    if (Kind == Immediate && !isa<MCConstantExpr>(getImm()))
+    if (Kind == k_Immediate && !isa<MCConstantExpr>(getImm()))
       return true;
 
-    if (Kind != Memory || Mem.OffsetRegNum != 0)
+    if (Kind != k_Memory || Mem.OffsetRegNum != 0)
       return false;
     // Immediate offset in range [0, 4095].
     if (!Mem.OffsetImm) return true;
@@ -837,10 +837,10 @@ public:
     // If we have an immediate that's not a constant, treat it as a label
     // reference needing a fixup. If it is a constant, it's something else
     // and we reject it.
-    if (Kind == Immediate && !isa<MCConstantExpr>(getImm()))
+    if (Kind == k_Immediate && !isa<MCConstantExpr>(getImm()))
       return true;
 
-    if (Kind != Memory || Mem.OffsetRegNum != 0)
+    if (Kind != k_Memory || Mem.OffsetRegNum != 0)
       return false;
     // Immediate offset in range [-4095, 4095].
     if (!Mem.OffsetImm) return true;
@@ -848,7 +848,7 @@ public:
     return (Val > -4096 && Val < 4096) || (Val == INT32_MIN);
   }
   bool isPostIdxImm8() const {
-    if (Kind != Immediate)
+    if (Kind != k_Immediate)
       return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
@@ -856,8 +856,8 @@ public:
     return (Val > -256 && Val < 256) || (Val == INT32_MIN);
   }
 
-  bool isMSRMask() const { return Kind == MSRMask; }
-  bool isProcIFlags() const { return Kind == ProcIFlags; }
+  bool isMSRMask() const { return Kind == k_MSRMask; }
+  bool isProcIFlags() const { return Kind == k_ProcIFlags; }
 
   void addExpr(MCInst &Inst, const MCExpr *Expr) const {
     // Add as immediates when possible.  Null MCExpr = 0.
@@ -1150,7 +1150,7 @@ public:
 
   void addAM3OffsetOperands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
-    if (Kind == PostIndexRegister) {
+    if (Kind == k_PostIndexRegister) {
       int32_t Val =
         ARM_AM::getAM3Opc(PostIdxReg.isAdd ? ARM_AM::add : ARM_AM::sub, 0);
       Inst.addOperand(MCOperand::CreateReg(PostIdxReg.RegNum));
@@ -1216,7 +1216,7 @@ public:
   void addMemUImm12OffsetOperands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
     // If this is an immediate, it's a label reference.
-    if (Kind == Immediate) {
+    if (Kind == k_Immediate) {
       addExpr(Inst, getImm());
       Inst.addOperand(MCOperand::CreateImm(0));
       return;
@@ -1231,7 +1231,7 @@ public:
   void addMemImm12OffsetOperands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
     // If this is an immediate, it's a label reference.
-    if (Kind == Immediate) {
+    if (Kind == k_Immediate) {
       addExpr(Inst, getImm());
       Inst.addOperand(MCOperand::CreateImm(0));
       return;
@@ -1346,7 +1346,7 @@ public:
   virtual void print(raw_ostream &OS) const;
 
   static ARMOperand *CreateITMask(unsigned Mask, SMLoc S) {
-    ARMOperand *Op = new ARMOperand(ITCondMask);
+    ARMOperand *Op = new ARMOperand(k_ITCondMask);
     Op->ITMask.Mask = Mask;
     Op->StartLoc = S;
     Op->EndLoc = S;
@@ -1354,7 +1354,7 @@ public:
   }
 
   static ARMOperand *CreateCondCode(ARMCC::CondCodes CC, SMLoc S) {
-    ARMOperand *Op = new ARMOperand(CondCode);
+    ARMOperand *Op = new ARMOperand(k_CondCode);
     Op->CC.Val = CC;
     Op->StartLoc = S;
     Op->EndLoc = S;
@@ -1362,7 +1362,7 @@ public:
   }
 
   static ARMOperand *CreateCoprocNum(unsigned CopVal, SMLoc S) {
-    ARMOperand *Op = new ARMOperand(CoprocNum);
+    ARMOperand *Op = new ARMOperand(k_CoprocNum);
     Op->Cop.Val = CopVal;
     Op->StartLoc = S;
     Op->EndLoc = S;
@@ -1370,7 +1370,7 @@ public:
   }
 
   static ARMOperand *CreateCoprocReg(unsigned CopVal, SMLoc S) {
-    ARMOperand *Op = new ARMOperand(CoprocReg);
+    ARMOperand *Op = new ARMOperand(k_CoprocReg);
     Op->Cop.Val = CopVal;
     Op->StartLoc = S;
     Op->EndLoc = S;
@@ -1378,7 +1378,7 @@ public:
   }
 
   static ARMOperand *CreateCCOut(unsigned RegNum, SMLoc S) {
-    ARMOperand *Op = new ARMOperand(CCOut);
+    ARMOperand *Op = new ARMOperand(k_CCOut);
     Op->Reg.RegNum = RegNum;
     Op->StartLoc = S;
     Op->EndLoc = S;
@@ -1386,7 +1386,7 @@ public:
   }
 
   static ARMOperand *CreateToken(StringRef Str, SMLoc S) {
-    ARMOperand *Op = new ARMOperand(Token);
+    ARMOperand *Op = new ARMOperand(k_Token);
     Op->Tok.Data = Str.data();
     Op->Tok.Length = Str.size();
     Op->StartLoc = S;
@@ -1395,7 +1395,7 @@ public:
   }
 
   static ARMOperand *CreateReg(unsigned RegNum, SMLoc S, SMLoc E) {
-    ARMOperand *Op = new ARMOperand(Register);
+    ARMOperand *Op = new ARMOperand(k_Register);
     Op->Reg.RegNum = RegNum;
     Op->StartLoc = S;
     Op->EndLoc = E;
@@ -1407,7 +1407,7 @@ public:
                                            unsigned ShiftReg,
                                            unsigned ShiftImm,
                                            SMLoc S, SMLoc E) {
-    ARMOperand *Op = new ARMOperand(ShiftedRegister);
+    ARMOperand *Op = new ARMOperand(k_ShiftedRegister);
     Op->RegShiftedReg.ShiftTy = ShTy;
     Op->RegShiftedReg.SrcReg = SrcReg;
     Op->RegShiftedReg.ShiftReg = ShiftReg;
@@ -1421,7 +1421,7 @@ public:
                                             unsigned SrcReg,
                                             unsigned ShiftImm,
                                             SMLoc S, SMLoc E) {
-    ARMOperand *Op = new ARMOperand(ShiftedImmediate);
+    ARMOperand *Op = new ARMOperand(k_ShiftedImmediate);
     Op->RegShiftedImm.ShiftTy = ShTy;
     Op->RegShiftedImm.SrcReg = SrcReg;
     Op->RegShiftedImm.ShiftImm = ShiftImm;
@@ -1432,7 +1432,7 @@ public:
 
   static ARMOperand *CreateShifterImm(bool isASR, unsigned Imm,
                                    SMLoc S, SMLoc E) {
-    ARMOperand *Op = new ARMOperand(ShifterImmediate);
+    ARMOperand *Op = new ARMOperand(k_ShifterImmediate);
     Op->ShifterImm.isASR = isASR;
     Op->ShifterImm.Imm = Imm;
     Op->StartLoc = S;
@@ -1441,7 +1441,7 @@ public:
   }
 
   static ARMOperand *CreateRotImm(unsigned Imm, SMLoc S, SMLoc E) {
-    ARMOperand *Op = new ARMOperand(RotateImmediate);
+    ARMOperand *Op = new ARMOperand(k_RotateImmediate);
     Op->RotImm.Imm = Imm;
     Op->StartLoc = S;
     Op->EndLoc = E;
@@ -1450,7 +1450,7 @@ public:
 
   static ARMOperand *CreateBitfield(unsigned LSB, unsigned Width,
                                     SMLoc S, SMLoc E) {
-    ARMOperand *Op = new ARMOperand(BitfieldDescriptor);
+    ARMOperand *Op = new ARMOperand(k_BitfieldDescriptor);
     Op->Bitfield.LSB = LSB;
     Op->Bitfield.Width = Width;
     Op->StartLoc = S;
@@ -1461,13 +1461,13 @@ public:
   static ARMOperand *
   CreateRegList(const SmallVectorImpl<std::pair<unsigned, SMLoc> > &Regs,
                 SMLoc StartLoc, SMLoc EndLoc) {
-    KindTy Kind = RegisterList;
+    KindTy Kind = k_RegisterList;
 
     if (ARMMCRegisterClasses[ARM::DPRRegClassID].contains(Regs.front().first))
-      Kind = DPRRegisterList;
+      Kind = k_DPRRegisterList;
     else if (ARMMCRegisterClasses[ARM::SPRRegClassID].
              contains(Regs.front().first))
-      Kind = SPRRegisterList;
+      Kind = k_SPRRegisterList;
 
     ARMOperand *Op = new ARMOperand(Kind);
     for (SmallVectorImpl<std::pair<unsigned, SMLoc> >::const_iterator
@@ -1480,7 +1480,7 @@ public:
   }
 
   static ARMOperand *CreateImm(const MCExpr *Val, SMLoc S, SMLoc E) {
-    ARMOperand *Op = new ARMOperand(Immediate);
+    ARMOperand *Op = new ARMOperand(k_Immediate);
     Op->Imm.Val = Val;
     Op->StartLoc = S;
     Op->EndLoc = E;
@@ -1488,7 +1488,7 @@ public:
   }
 
   static ARMOperand *CreateFPImm(unsigned Val, SMLoc S, MCContext &Ctx) {
-    ARMOperand *Op = new ARMOperand(FPImmediate);
+    ARMOperand *Op = new ARMOperand(k_FPImmediate);
     Op->FPImm.Val = Val;
     Op->StartLoc = S;
     Op->EndLoc = S;
@@ -1502,7 +1502,7 @@ public:
                                unsigned ShiftImm,
                                bool isNegative,
                                SMLoc S, SMLoc E) {
-    ARMOperand *Op = new ARMOperand(Memory);
+    ARMOperand *Op = new ARMOperand(k_Memory);
     Op->Mem.BaseRegNum = BaseRegNum;
     Op->Mem.OffsetImm = OffsetImm;
     Op->Mem.OffsetRegNum = OffsetRegNum;
@@ -1518,7 +1518,7 @@ public:
                                       ARM_AM::ShiftOpc ShiftTy,
                                       unsigned ShiftImm,
                                       SMLoc S, SMLoc E) {
-    ARMOperand *Op = new ARMOperand(PostIndexRegister);
+    ARMOperand *Op = new ARMOperand(k_PostIndexRegister);
     Op->PostIdxReg.RegNum = RegNum;
     Op->PostIdxReg.isAdd = isAdd;
     Op->PostIdxReg.ShiftTy = ShiftTy;
@@ -1529,7 +1529,7 @@ public:
   }
 
   static ARMOperand *CreateMemBarrierOpt(ARM_MB::MemBOpt Opt, SMLoc S) {
-    ARMOperand *Op = new ARMOperand(MemBarrierOpt);
+    ARMOperand *Op = new ARMOperand(k_MemBarrierOpt);
     Op->MBOpt.Val = Opt;
     Op->StartLoc = S;
     Op->EndLoc = S;
@@ -1537,7 +1537,7 @@ public:
   }
 
   static ARMOperand *CreateProcIFlags(ARM_PROC::IFlags IFlags, SMLoc S) {
-    ARMOperand *Op = new ARMOperand(ProcIFlags);
+    ARMOperand *Op = new ARMOperand(k_ProcIFlags);
     Op->IFlags.Val = IFlags;
     Op->StartLoc = S;
     Op->EndLoc = S;
@@ -1545,7 +1545,7 @@ public:
   }
 
   static ARMOperand *CreateMSRMask(unsigned MMask, SMLoc S) {
-    ARMOperand *Op = new ARMOperand(MSRMask);
+    ARMOperand *Op = new ARMOperand(k_MSRMask);
     Op->MMask.Val = MMask;
     Op->StartLoc = S;
     Op->EndLoc = S;
@@ -1557,17 +1557,17 @@ public:
 
 void ARMOperand::print(raw_ostream &OS) const {
   switch (Kind) {
-  case FPImmediate:
+  case k_FPImmediate:
     OS << "<fpimm " << getFPImm() << "(" << ARM_AM::getFPImmFloat(getFPImm())
        << ") >";
     break;
-  case CondCode:
+  case k_CondCode:
     OS << "<ARMCC::" << ARMCondCodeToString(getCondCode()) << ">";
     break;
-  case CCOut:
+  case k_CCOut:
     OS << "<ccout " << getReg() << ">";
     break;
-  case ITCondMask: {
+  case k_ITCondMask: {
     static char MaskStr[][6] = { "()", "(t)", "(e)", "(tt)", "(et)", "(te)",
       "(ee)", "(ttt)", "(ett)", "(tet)", "(eet)", "(tte)", "(ete)",
       "(tee)", "(eee)" };
@@ -1575,27 +1575,27 @@ void ARMOperand::print(raw_ostream &OS) const {
     OS << "<it-mask " << MaskStr[ITMask.Mask] << ">";
     break;
   }
-  case CoprocNum:
+  case k_CoprocNum:
     OS << "<coprocessor number: " << getCoproc() << ">";
     break;
-  case CoprocReg:
+  case k_CoprocReg:
     OS << "<coprocessor register: " << getCoproc() << ">";
     break;
-  case MSRMask:
+  case k_MSRMask:
     OS << "<mask: " << getMSRMask() << ">";
     break;
-  case Immediate:
+  case k_Immediate:
     getImm()->print(OS);
     break;
-  case MemBarrierOpt:
+  case k_MemBarrierOpt:
     OS << "<ARM_MB::" << MemBOptToString(getMemBarrierOpt()) << ">";
     break;
-  case Memory:
+  case k_Memory:
     OS << "<memory "
        << " base:" << Mem.BaseRegNum;
     OS << ">";
     break;
-  case PostIndexRegister:
+  case k_PostIndexRegister:
     OS << "post-idx register " << (PostIdxReg.isAdd ? "" : "-")
        << PostIdxReg.RegNum;
     if (PostIdxReg.ShiftTy != ARM_AM::no_shift)
@@ -1603,7 +1603,7 @@ void ARMOperand::print(raw_ostream &OS) const {
          << PostIdxReg.ShiftImm;
     OS << ">";
     break;
-  case ProcIFlags: {
+  case k_ProcIFlags: {
     OS << "<ARM_PROC::";
     unsigned IFlags = getProcIFlags();
     for (int i=2; i >= 0; --i)
@@ -1612,14 +1612,14 @@ void ARMOperand::print(raw_ostream &OS) const {
     OS << ">";
     break;
   }
-  case Register:
+  case k_Register:
     OS << "<register " << getReg() << ">";
     break;
-  case ShifterImmediate:
+  case k_ShifterImmediate:
     OS << "<shift " << (ShifterImm.isASR ? "asr" : "lsl")
        << " #" << ShifterImm.Imm << ">";
     break;
-  case ShiftedRegister:
+  case k_ShiftedRegister:
     OS << "<so_reg_reg "
        << RegShiftedReg.SrcReg
        << ARM_AM::getShiftOpcStr(ARM_AM::getSORegShOp(RegShiftedReg.ShiftImm))
@@ -1627,23 +1627,23 @@ void ARMOperand::print(raw_ostream &OS) const {
        << ARM_AM::getSORegOffset(RegShiftedReg.ShiftImm)
        << ">";
     break;
-  case ShiftedImmediate:
+  case k_ShiftedImmediate:
     OS << "<so_reg_imm "
        << RegShiftedImm.SrcReg
        << ARM_AM::getShiftOpcStr(ARM_AM::getSORegShOp(RegShiftedImm.ShiftImm))
        << ", " << ARM_AM::getSORegOffset(RegShiftedImm.ShiftImm)
        << ">";
     break;
-  case RotateImmediate:
+  case k_RotateImmediate:
     OS << "<ror " << " #" << (RotImm.Imm * 8) << ">";
     break;
-  case BitfieldDescriptor:
+  case k_BitfieldDescriptor:
     OS << "<bitfield " << "lsb: " << Bitfield.LSB
        << ", width: " << Bitfield.Width << ">";
     break;
-  case RegisterList:
-  case DPRRegisterList:
-  case SPRRegisterList: {
+  case k_RegisterList:
+  case k_DPRRegisterList:
+  case k_SPRRegisterList: {
     OS << "<register_list ";
 
     const SmallVectorImpl<unsigned> &RegList = getRegList();
@@ -1656,7 +1656,7 @@ void ARMOperand::print(raw_ostream &OS) const {
     OS << ">";
     break;
   }
-  case Token:
+  case k_Token:
     OS << "'" << getToken() << "'";
     break;
   }
@@ -3640,8 +3640,8 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
   // ARM mode 'blx' need special handling, as the register operand version
   // is predicable, but the label operand version is not. So, we can't rely
   // on the Mnemonic based checking to correctly figure out when to put
-  // a CondCode operand in the list. If we're trying to match the label
-  // version, remove the CondCode operand here.
+  // a k_CondCode operand in the list. If we're trying to match the label
+  // version, remove the k_CondCode operand here.
   if (!isThumb() && Mnemonic == "blx" && Operands.size() == 3 &&
       static_cast<ARMOperand*>(Operands[2])->isImm()) {
     ARMOperand *Op = static_cast<ARMOperand*>(Operands[1]);
