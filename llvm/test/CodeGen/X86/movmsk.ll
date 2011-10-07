@@ -77,3 +77,34 @@ entry:
   %shr.i = lshr i32 %2, 31
   ret i32 %shr.i
 }
+
+; rdar://10247336
+; movmskp{s|d} only set low 4/2 bits, high bits are known zero
+
+define i32 @t1(<4 x float> %x, i32* nocapture %indexTable) nounwind uwtable readonly ssp {
+entry:
+; CHECK: t1:
+; CHECK: movmskps
+; CHECK-NOT: movslq
+  %0 = tail call i32 @llvm.x86.sse.movmsk.ps(<4 x float> %x) nounwind
+  %idxprom = sext i32 %0 to i64
+  %arrayidx = getelementptr inbounds i32* %indexTable, i64 %idxprom
+  %1 = load i32* %arrayidx, align 4
+  ret i32 %1
+}
+
+define i32 @t2(<4 x float> %x, i32* nocapture %indexTable) nounwind uwtable readonly ssp {
+entry:
+; CHECK: t2:
+; CHECK: movmskpd
+; CHECK-NOT: movslq
+  %0 = bitcast <4 x float> %x to <2 x double>
+  %1 = tail call i32 @llvm.x86.sse2.movmsk.pd(<2 x double> %0) nounwind
+  %idxprom = sext i32 %1 to i64
+  %arrayidx = getelementptr inbounds i32* %indexTable, i64 %idxprom
+  %2 = load i32* %arrayidx, align 4
+  ret i32 %2
+}
+
+declare i32 @llvm.x86.sse2.movmsk.pd(<2 x double>) nounwind readnone
+declare i32 @llvm.x86.sse.movmsk.ps(<4 x float>) nounwind readnone

@@ -12333,6 +12333,33 @@ void X86TargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
     KnownZero |= APInt::getHighBitsSet(Mask.getBitWidth(),
                                        Mask.getBitWidth() - 1);
     break;
+  case ISD::INTRINSIC_WO_CHAIN: {
+    unsigned IntId = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
+    unsigned NumLoBits = 0;
+    switch (IntId) {
+    default: break;
+    case Intrinsic::x86_sse_movmsk_ps:
+    case Intrinsic::x86_avx_movmsk_ps_256:
+    case Intrinsic::x86_sse2_movmsk_pd:
+    case Intrinsic::x86_avx_movmsk_pd_256:
+    case Intrinsic::x86_mmx_pmovmskb:
+    case Intrinsic::x86_sse2_pmovmskb_128: {
+      // High bits of movmskp{s|d}, pmovmskb are known zero.
+      switch (IntId) {
+        case Intrinsic::x86_sse_movmsk_ps:      NumLoBits = 4; break;
+        case Intrinsic::x86_avx_movmsk_ps_256:  NumLoBits = 8; break;
+        case Intrinsic::x86_sse2_movmsk_pd:     NumLoBits = 2; break;
+        case Intrinsic::x86_avx_movmsk_pd_256:  NumLoBits = 4; break;
+        case Intrinsic::x86_mmx_pmovmskb:       NumLoBits = 8; break;
+        case Intrinsic::x86_sse2_pmovmskb_128:  NumLoBits = 16; break;
+      }
+      KnownZero = APInt::getHighBitsSet(Mask.getBitWidth(),
+                                        Mask.getBitWidth() - NumLoBits);
+      break;
+    }
+    }
+    break;
+  }
   }
 }
 
