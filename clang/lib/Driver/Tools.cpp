@@ -3372,6 +3372,18 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
   // more information.
   ArgStringList CmdArgs;
 
+  /// Hack(tm) to ignore linking errors when we are doing ARC migration.
+  if (Args.hasArg(options::OPT_ccc_arcmt_check,
+                  options::OPT_ccc_arcmt_migrate)) {
+    for (ArgList::const_iterator I = Args.begin(), E = Args.end(); I != E; ++I)
+      (*I)->claim();
+    const char *Exec =
+      Args.MakeArgString(getToolChain().GetProgramPath("touch"));
+    CmdArgs.push_back(Output.getFilename());
+    C.addCommand(new Command(JA, *this, Exec, CmdArgs));
+    return;
+  }
+
   // I'm not sure why this particular decomposition exists in gcc, but
   // we follow suite for ease of comparison.
   AddLinkArgs(C, Args, CmdArgs);
