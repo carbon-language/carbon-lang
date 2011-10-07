@@ -3,10 +3,11 @@
 // TYPE_EXT_QUAL
 typedef __attribute__((address_space(1))) int ASInt;
 
-// FIXME: TYPE_FIXED_WIDTH_INT
-
 // TYPE_COMPLEX
 typedef _Complex float Cfloat;
+
+// TYPE_ATOMIC
+typedef _Atomic(int) AtomicInt;
 
 // TYPE_POINTER
 typedef int * int_ptr;

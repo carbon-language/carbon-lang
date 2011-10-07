@@ -14,11 +14,13 @@ __attribute__((address_space(1))) int int_as_one;
 ASInt *as_int_ptr1 = &int_value;  // expected-error{{changes address space of pointer}}
 ASInt *as_int_ptr2 = &int_as_one;
 
-// FIXME: TYPE_FIXED_WIDTH_INT
-
 // TYPE_COMPLEX
 _Complex float Cfloat_val;
 Cfloat *Cfloat_ptr = &Cfloat_val;
+
+// TYPE_ATOMIC
+_Atomic(int) AtomicInt_val;
+AtomicInt *AtomicInt_ptr = &AtomicInt_val;
 
 // TYPE_POINTER
 int_ptr int_value_ptr = &int_value;
