@@ -387,6 +387,16 @@ Function::CalculateSymbolContext(SymbolContext* sc)
 Module *
 Function::CalculateSymbolContextModule ()
 {
+    const Section *section = m_range.GetBaseAddress().GetSection();
+    if (section)
+    {
+        const Section *linked_section = section->GetLinkedSection();
+        if (linked_section)
+            return linked_section->GetModule();
+        else
+            return section->GetModule();
+    }
+    
     return this->GetCompileUnit()->GetModule();
 }
 
