@@ -20,25 +20,35 @@
   <h1 class ="postheader">Status</h1>
 <div class="postcontent">
 
-  <p>LLDB supports Emacs integration through customizing the GUD (Grand Unified Debugger) library.
+  <p>LLDB supports emacs integration through customizing the GUD (Grand Unified Debugger) library.
   Take a look at <a href="http://www.gnu.org/software/libtool/manual/emacs/Debuggers.html#Debuggers">Grand Unified Debugger</a>
   and the <a href="http://www.emacswiki.org/emacs/GrandUnifiedDebugger">Emacs Wiki Page</a> for more details.</p>
 
   <p>The lldb-enhanced gud.el is based on the emacs 22.3.1 version from Aquamacs 1.8c distribution.
   To use it, within emacs, load the gud.el file located under the utils/emacs directory.
-  Type 'M-x lldb' to invoke lldb.  The first time you do this, emacs will ask you to supply the command line to invoke lldb.
+  Type <font color=blue>M-x lldb</font> to invoke lldb.  The first time you do this, emacs will ask you to supply the command line to invoke lldb.
   If lldb is not in your PATH, be sure to specify the full path to the lldb executable.</p>
 
-  <p>This is a screen shot of the gud (with lldb) at work on Aquamacs distribution 2.1 by loading gud.el and 'M-x lldb'
+  <p>This is a screen shot of the gud (with lldb) at work on Aquamacs distribution 2.1 by loading gud.el and then <font color=blue>M-x lldb</font>
   on the a.out file in the test/functionalities/conditional_break directory:</p>
 
   <p>
   <img src="lldb-gud-window.png">
   </p>
 
+  <p>For a very simple interaction using 'M-x lldb', you can supply your executable to the "Run lldb (like this)" prompt.
+  For example:<br><br>
+
+  <font color=blue>Run lldb (like this)</font>: /Volumes/data/lldb/svn/trunk/build/Debug/lldb a.out
+  </p>
+
+  <p>Visit your source code buffer, go to the line where you want to set the breakpoint on, type <font color=blue>C-x &lt;SPC&gt;</font>
+  to set a breakpoint on the source line that point is on, and then run the inferior program.  The inferior should then stop and emacs
+  shows the buffer and marks the line where it breaks on.</p>
+
   <p>We welcome any help fleshing out missing pieces and improving the elisp code.</p>
 
-  <p>Last Update: Oct 05, 2011.</p>
+  <p>Last Update: Oct 06, 2011.</p>
 
 </div>
 <div class="postfooter"></div>
