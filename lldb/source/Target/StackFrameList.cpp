@@ -116,7 +116,15 @@ StackFrameList::GetNumFrames (bool can_create)
                 Block *unwind_block = unwind_sc.block;
                 if (unwind_block)
                 {
-                    Address curr_frame_address = unwind_frame_sp->GetFrameCodeAddress();
+                    Address curr_frame_address (unwind_frame_sp->GetFrameCodeAddress());
+                    // Be sure to adjust the frame address to match the address
+                    // that was used to lookup the symbol context above. If we are
+                    // in the first concrete frame, then we lookup using the current
+                    // address, else we decrement the address by one to get the correct
+                    // location.
+                    if (idx > 0)
+                        curr_frame_address.Slide(-1);
+                        
                     SymbolContext next_frame_sc;
                     Address next_frame_address;
                     
