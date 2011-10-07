@@ -762,7 +762,7 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   if (Rel.w.c >= (relocsec->sh_size / relocsec->sh_entsize)) {
     // We have reached the end of the relocations for this section. See if there
     // is another relocation section.
-    typename RelocMap_t::mapped_type &relocseclist =
+    typename RelocMap_t::mapped_type relocseclist =
       SectionRelocMap.lookup(getSection(Rel.w.a));
 
     // Do a binary search for the current reloc section index (which must be

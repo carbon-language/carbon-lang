@@ -271,9 +271,9 @@ static void DumpSymbolNamesFromModule(Module *M) {
 
 static void DumpSymbolNamesFromObject(ObjectFile *obj) {
   error_code ec;
-  for (ObjectFile::symbol_iterator i = obj->begin_symbols(),
-                                   e = obj->end_symbols();
-                                   i != e; i.increment(ec)) {
+  for (symbol_iterator i = obj->begin_symbols(),
+                       e = obj->end_symbols();
+                       i != e; i.increment(ec)) {
     if (error(ec)) break;
     bool internal;
     if (error(i->isInternal(internal))) break;
