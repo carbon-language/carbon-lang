@@ -441,4 +441,13 @@ TEST(APIntTest, StringDeath) {
 #endif
 #endif
 
+TEST(APIntTest, mul_clear) {
+  APInt ValA(65, -1ULL);
+  APInt ValB(65, 4);
+  APInt ValC(65, 0);
+  ValC = ValA * ValB;
+  ValA *= ValB;
+  EXPECT_EQ(ValA.toString(10, false), ValC.toString(10, false));
+}
+
 }

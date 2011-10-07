@@ -386,6 +386,7 @@ APInt& APInt::operator*=(const APInt& RHS) {
   clearAllBits();
   unsigned wordsToCopy = destWords >= getNumWords() ? getNumWords() : destWords;
   memcpy(pVal, dest, wordsToCopy * APINT_WORD_SIZE);
+  clearUnusedBits();
 
   // delete dest array and return
   delete[] dest;
@@ -471,7 +472,7 @@ APInt APInt::operator*(const APInt& RHS) const {
     return APInt(BitWidth, VAL * RHS.VAL);
   APInt Result(*this);
   Result *= RHS;
-  return Result.clearUnusedBits();
+  return Result;
 }
 
 APInt APInt::operator+(const APInt& RHS) const {

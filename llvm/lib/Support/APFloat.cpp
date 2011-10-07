@@ -3455,7 +3455,7 @@ void APFloat::toString(SmallVectorImpl<char> &Str,
     //                 <= semantics->precision + e * 137 / 59
     //   (log_2(5) ~ 2.321928 < 2.322034 ~ 137/59)
 
-    unsigned precision = semantics->precision + 137 * texp / 59;
+    unsigned precision = semantics->precision + (137 * texp + 136) / 59;
 
     // Multiply significand by 5^e.
     //   N * 5^0101 == N * 5^(1*1) * 5^(0*2) * 5^(1*4) * 5^(0*8)
