@@ -307,11 +307,8 @@ public:
             
             case 'm':
                 {
-                    bool found_one = false;
                     OptionEnumValueElement *enum_values = g_option_table[option_idx].enum_values; 
-                    m_run_mode = (lldb::RunMode) Args::StringToOptionEnum(option_arg, enum_values, eOnlyDuringStepping, &found_one);
-                    if (!found_one)
-                        error.SetErrorStringWithFormat("Invalid enumeration value for option '%c'.\n", short_option);
+                    m_run_mode = (lldb::RunMode) Args::StringToOptionEnum(option_arg, enum_values, eOnlyDuringStepping, error);
                 }
                 break;
             
@@ -807,17 +804,16 @@ public:
                 break;
                 case 'm':
                 {
-                    bool found_one = false;
                     OptionEnumValueElement *enum_values = g_option_table[option_idx].enum_values; 
-                    lldb::RunMode run_mode = (lldb::RunMode) Args::StringToOptionEnum(option_arg, enum_values, eOnlyDuringStepping, &found_one);
+                    lldb::RunMode run_mode = (lldb::RunMode) Args::StringToOptionEnum(option_arg, enum_values, eOnlyDuringStepping, error);
 
-                    if (!found_one)
-                        error.SetErrorStringWithFormat("Invalid enumeration value for option '%c'.\n", short_option);
-                    else if (run_mode == eAllThreads)
-                        m_stop_others = false;
-                    else
-                        m_stop_others = true;
-        
+                    if (error.Success())
+                    {
+                        if (run_mode == eAllThreads)
+                            m_stop_others = false;
+                        else
+                            m_stop_others = true;
+                    }
                 }
                 break;
                 default:

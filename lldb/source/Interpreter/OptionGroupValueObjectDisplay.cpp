@@ -72,12 +72,9 @@ OptionGroupValueObjectDisplay::SetOptionValue (CommandInterpreter &interpreter,
     {
         case 'd':
             {
-                bool success;
                 int32_t result;
-                result = Args::StringToOptionEnum (option_arg, TargetInstanceSettings::g_dynamic_value_types, 2, &success);
-                if (!success)
-                    error.SetErrorStringWithFormat("Invalid dynamic value setting: \"%s\".\n", option_arg);
-                else
+                result = Args::StringToOptionEnum (option_arg, TargetInstanceSettings::g_dynamic_value_types, 2, error);
+                if (error.Success())
                     use_dynamic = (lldb::DynamicValueType) result;
             }
             break;

@@ -64,21 +64,16 @@ OptionGroupWatchpoint::SetOptionValue (CommandInterpreter &interpreter,
     char short_option = (char) g_option_table[option_idx].short_option;
     switch (short_option)
     {
-        case 'w': {
-            OptionEnumValueElement *enum_values = g_option_table[option_idx].enum_values;
-            watch_type = (WatchType) Args::StringToOptionEnum(option_arg, enum_values, 0, &watch_variable);
-            if (!watch_variable)
-                error.SetErrorStringWithFormat("Invalid option arg for '-w': '%s'.\n", option_arg);
+        case 'w':
+            watch_type = (WatchType) Args::StringToOptionEnum(option_arg, g_option_table[option_idx].enum_values, 0, error);
+            if (error.Success())
+                watch_variable = true;
             break;
-        }
-        case 'x': {
-            bool success = false;
-            OptionEnumValueElement *enum_values = g_option_table[option_idx].enum_values;
-            watch_size = (WatchType) Args::StringToOptionEnum(option_arg, enum_values, 0, &success);
-            if (!success)
-                error.SetErrorStringWithFormat("Invalid option arg for '-x': '%s'.\n", option_arg);
+
+        case 'x':
+            watch_size = (WatchType) Args::StringToOptionEnum(option_arg, g_option_table[option_idx].enum_values, 0, error);
             break;
-        }
+
         default:
             error.SetErrorStringWithFormat("Invalid short option character '%c'.\n", short_option);
             break;
@@ -91,8 +86,8 @@ void
 OptionGroupWatchpoint::OptionParsingStarting (CommandInterpreter &interpreter)
 {
     watch_variable = false;
-    watch_type     = eWatchInvalid;
-    watch_size     = 0;
+    watch_type = eWatchInvalid;
+    watch_size = 0;
 }
 
 

@@ -2381,14 +2381,9 @@ void
 UserSettingsController::UpdateEnumVariable (OptionEnumValueElement *enum_values,
                                             int *enum_var,
                                             const char *new_value,
-                                            Error &err)
+                                            Error &error)
 {
-    bool found_one;
-    
-    *enum_var = Args::StringToOptionEnum (new_value, enum_values, enum_values[0].value, &found_one);
-
-    if (!found_one)
-        err.SetErrorString ("Invalid enumeration value; cannot update variable.\n");
+    *enum_var = Args::StringToOptionEnum (new_value, enum_values, enum_values[0].value, error);
 }
 
 void

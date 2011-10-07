@@ -1876,17 +1876,10 @@ public:
             switch (short_option)
             {
                 case 's':
-                {
-                    bool found_one = false;
                     m_sort_order = (SortOrder) Args::StringToOptionEnum (option_arg, 
                                                                          g_option_table[option_idx].enum_values, 
                                                                          eSortOrderNone,
-                                                                         &found_one);
-                    if (!found_one)
-                        error.SetErrorStringWithFormat("Invalid enumeration value '%s' for option '%c'.\n", 
-                                                       option_arg, 
-                                                       short_option);
-                }
+                                                                         error);
                     break;
                     
                 default:

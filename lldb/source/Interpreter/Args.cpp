@@ -834,21 +834,36 @@ Args::StringToVersion (const char *s, uint32_t &major, uint32_t &minor, uint32_t
 
 
 int32_t
-Args::StringToOptionEnum (const char *s, OptionEnumValueElement *enum_values, int32_t fail_value, bool *success_ptr)
+Args::StringToOptionEnum (const char *s, OptionEnumValueElement *enum_values, int32_t fail_value, Error &error)
 {    
-    if (enum_values && s && s[0])
+    if (enum_values)
     {
-        for (int i = 0; enum_values[i].string_value != NULL ; i++) 
+        if (s && s[0])
         {
-            if (strstr(enum_values[i].string_value, s) == enum_values[i].string_value)
+            for (int i = 0; enum_values[i].string_value != NULL ; i++) 
             {
-                if (success_ptr) *success_ptr = true;
-                return enum_values[i].value;
+                if (strstr(enum_values[i].string_value, s) == enum_values[i].string_value)
+                {
+                    error.Clear();
+                    return enum_values[i].value;
+                }
             }
         }
+
+        StreamString strm;
+        strm.PutCString ("invalid enumeration value, valid values are: ");
+        for (int i = 0; enum_values[i].string_value != NULL; i++) 
+        {
+            strm.Printf ("%s\"%s\"", 
+                         i > 0 ? ", " : "",
+                         enum_values[i].string_value);
+        }
+        error.SetErrorString(strm.GetData());
     }
-    if (success_ptr) *success_ptr = false;
-    
+    else
+    {
+        error.SetErrorString ("invalid enumeration argument");
+    }
     return fail_value;
 }
 

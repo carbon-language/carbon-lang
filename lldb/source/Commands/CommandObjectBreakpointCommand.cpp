@@ -91,45 +91,42 @@ CommandObjectBreakpointCommandAdd::CommandOptions::SetOptionValue
     char short_option = (char) m_getopt_table[option_idx].val;
 
     switch (short_option)
-      {
-      case 'o':
-          m_use_one_liner = true;
-          m_one_liner = option_arg;
-          break;
-          break;
-      case 's':
-          {
-              bool found_one = false;
-              m_script_language = (lldb::ScriptLanguage) Args::StringToOptionEnum (option_arg, 
-                                                                         g_option_table[option_idx].enum_values, 
-                                                                         eScriptLanguageNone,
-                                                                         &found_one);
-              if (!found_one)
-                  error.SetErrorStringWithFormat("Invalid enumeration value '%s' for option '%c'.\n", 
-                                                 option_arg, 
-                                                 short_option);
+    {
+    case 'o':
+        m_use_one_liner = true;
+        m_one_liner = option_arg;
+        break;
 
-              if (m_script_language == eScriptLanguagePython || m_script_language == eScriptLanguageDefault)
-              {
-                  m_use_commands = false;
-                  m_use_script_language = true;
-              }
-              else
-              {
-                  m_use_commands = true;
-                  m_use_script_language = false;
-              }          
-          }
-      break;
-      case 'e':
-          bool success_ptr;
-          m_stop_on_error = Args::StringToBoolean(option_arg, false, &success_ptr);
-          if (!success_ptr)
-              error.SetErrorStringWithFormat("Invalid value for stop-on-error: \"%s\".\n", option_arg);
-          break;
-      default:
-          break;
-      }
+    case 's':
+        m_script_language = (lldb::ScriptLanguage) Args::StringToOptionEnum (option_arg, 
+                                                                             g_option_table[option_idx].enum_values, 
+                                                                             eScriptLanguageNone,
+                                                                             error);
+
+        if (m_script_language == eScriptLanguagePython || m_script_language == eScriptLanguageDefault)
+        {
+            m_use_commands = false;
+            m_use_script_language = true;
+        }
+        else
+        {
+            m_use_commands = true;
+            m_use_script_language = false;
+        }          
+        break;
+
+    case 'e':
+        {
+            bool success = false;
+            m_stop_on_error = Args::StringToBoolean(option_arg, false, &success);
+            if (!success)
+                error.SetErrorStringWithFormat("Invalid value for stop-on-error: \"%s\".\n", option_arg);
+        }
+        break;
+
+    default:
+        break;
+    }
     return error;
 }
 
