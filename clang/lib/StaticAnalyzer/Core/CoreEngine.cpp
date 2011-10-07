@@ -541,31 +541,6 @@ ExplodedNode *StmtNodeBuilder::MakeNode(ExplodedNodeSet &Dst,
   return N;
 }
 
-static ProgramPoint GetProgramPoint(const Stmt *S, ProgramPoint::Kind K,
-                                    const LocationContext *LC,
-                                    const ProgramPointTag *tag){
-  switch (K) {
-    default:
-      llvm_unreachable("Unhandled ProgramPoint kind");    
-    case ProgramPoint::PreStmtKind:
-      return PreStmt(S, LC, tag);
-    case ProgramPoint::PostStmtKind:
-      return PostStmt(S, LC, tag);
-    case ProgramPoint::PreLoadKind:
-      return PreLoad(S, LC, tag);
-    case ProgramPoint::PostLoadKind:
-      return PostLoad(S, LC, tag);
-    case ProgramPoint::PreStoreKind:
-      return PreStore(S, LC, tag);
-    case ProgramPoint::PostStoreKind:
-      return PostStore(S, LC, tag);
-    case ProgramPoint::PostLValueKind:
-      return PostLValue(S, LC, tag);
-    case ProgramPoint::PostPurgeDeadSymbolsKind:
-      return PostPurgeDeadSymbols(S, LC, tag);
-  }
-}
-
 ExplodedNode*
 StmtNodeBuilder::generateNodeInternal(const Stmt *S,
                                       const ProgramState *state,
@@ -573,8 +548,8 @@ StmtNodeBuilder::generateNodeInternal(const Stmt *S,
                                       ProgramPoint::Kind K,
                                       const ProgramPointTag *tag) {
   
-  const ProgramPoint &L = GetProgramPoint(S, K, Pred->getLocationContext(),
-                                          tag);
+  const ProgramPoint &L = ProgramPoint::getProgramPoint(S, K,
+                                        Pred->getLocationContext(), tag);
   return generateNodeInternal(L, state, Pred);
 }
 

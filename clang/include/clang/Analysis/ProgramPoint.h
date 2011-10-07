@@ -78,12 +78,9 @@ protected:
   const void *getData2() const { return Data.second; }
 
 public:
-  ProgramPoint(const ProgramPoint &P)
-    : Data(P.Data), K(P.K), L(P.L), Tag(P.Tag) {}
-
   /// Create a new ProgramPoint object that is the same as the original
   /// except for using the specified tag value.
-  ProgramPoint withTag(const ProgramPointTag *tag) {
+  ProgramPoint withTag(const ProgramPointTag *tag) const {
     return ProgramPoint(Data.first, Data.second, K, L, tag);
   }
 
@@ -117,6 +114,11 @@ public:
     ID.AddPointer(L);
     ID.AddPointer(Tag);
   }
+
+  static ProgramPoint getProgramPoint(const Stmt *S, ProgramPoint::Kind K,
+                                      const LocationContext *LC,
+                                      const ProgramPointTag *tag);
+
 };
 
 class BlockEntrance : public ProgramPoint {
