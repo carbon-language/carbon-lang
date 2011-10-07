@@ -255,10 +255,15 @@ class ScopStmt {
 
   /// Build the statment.
   //@{
-  isl_set *toConditionSet(const Comparison &Cmp, isl_space *space) const;
-  void addConditionsToDomain(TempScop &tempScop, const Region &CurRegion);
-  void buildIterationDomainFromLoops(TempScop &tempScop);
-  void buildIterationDomain(TempScop &tempScop, const Region &CurRegion);
+  __isl_give isl_set *buildConditionSet(const Comparison &Cmp,
+                                        __isl_take isl_space *Space) const;
+  __isl_give isl_set *addConditionsToDomain(__isl_take isl_set *Domain,
+                                            TempScop &tempScop,
+                                            const Region &CurRegion) const;
+  __isl_give isl_set *addLoopBoundsToDomain(__isl_take isl_set *Domain,
+                                            TempScop &tempScop) const;
+  __isl_give isl_set *buildDomain(TempScop &tempScop,
+                                           const Region &CurRegion) const;
   void buildScattering(SmallVectorImpl<unsigned> &Scatter);
   void buildAccesses(TempScop &tempScop, const Region &CurRegion);
   //@}
