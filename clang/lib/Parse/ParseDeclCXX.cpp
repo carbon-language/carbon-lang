@@ -2689,9 +2689,9 @@ void Parser::ParseCXX0XAttributes(ParsedAttributesWithRange &attrs,
   if (!endLoc)
     endLoc = &Loc;
 
-  do
+  do {
     ParseCXX0XAttributeSpecifier(attrs, endLoc);
-  while (isCXX0XAttributeSpecifier());
+  } while (isCXX0XAttributeSpecifier());
 
   attrs.Range = SourceRange(StartLoc, *endLoc);
 }
