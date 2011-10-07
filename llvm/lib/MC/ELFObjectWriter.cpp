@@ -302,7 +302,8 @@ void ELFObjectWriter::WriteSymbolTable(MCDataFragment *SymtabF,
     if (Section.getType() == ELF::SHT_RELA ||
         Section.getType() == ELF::SHT_REL ||
         Section.getType() == ELF::SHT_STRTAB ||
-        Section.getType() == ELF::SHT_SYMTAB)
+        Section.getType() == ELF::SHT_SYMTAB ||
+        Section.getType() == ELF::SHT_SYMTAB_SHNDX)
       continue;
     WriteSymbolEntry(SymtabF, ShndxF, 0, ELF::STT_SECTION, 0, 0,
                      ELF::STV_DEFAULT, SectionIndexMap.lookup(&Section), false);
