@@ -13,113 +13,81 @@
 #include "DWARFDebugArangeSet.h"
 #include <list>
 
+#include "lldb/Core/RangeMap.h"
+
 class SymbolFileDWARF;
 
 class DWARFDebugAranges
 {
+protected:
+    typedef lldb_private::RangeMap<dw_addr_t, uint32_t, dw_offset_t> RangeToDIE;
+
 public:
-    struct Range
+    typedef RangeToDIE::Entry Range;
+    typedef std::vector<RangeToDIE::Entry> RangeColl;
+
+    DWARFDebugAranges();
+
+    void
+    Clear() 
     {
-        explicit 
-        Range (dw_addr_t lo = DW_INVALID_ADDRESS,
-               dw_addr_t hi = DW_INVALID_ADDRESS,
-               dw_offset_t off = DW_INVALID_OFFSET) :
-                lo_pc  (lo),
-                length (hi-lo),
-                offset (off)
-        {
-        }
+        m_aranges.Clear(); 
+    }
 
-        void Clear()
-        {
-            lo_pc = DW_INVALID_ADDRESS;
-            length = 0;
-            offset = DW_INVALID_OFFSET;
-        }
+    bool
+    Extract(const lldb_private::DataExtractor &debug_aranges_data);
 
-        void
-        set_hi_pc (dw_addr_t hi_pc)
-        {
-            if (hi_pc == DW_INVALID_ADDRESS || hi_pc <= lo_pc)
-                length = 0;
-            else
-                length = hi_pc - lo_pc;
-        }
-        dw_addr_t
-        hi_pc() const
-        {
-            if (length)
-                return lo_pc + length;
-            return DW_INVALID_ADDRESS;
-        }
-        bool 
-        ValidRange() const
-        {
-            return length > 0;
-        }
-        
-        static bool 
-        SortedOverlapCheck (const Range& curr_range, const Range& next_range, uint32_t n)
-        {
-            if (curr_range.offset != next_range.offset)
-                return false;
-            return curr_range.hi_pc() + n >= next_range.lo_pc;
-        }
-
-        bool Contains(const Range& range) const
-        {
-            return lo_pc <= range.lo_pc && range.hi_pc() <= hi_pc();
-        }
-
-        void Dump(lldb_private::Stream *s) const;
-        dw_addr_t   lo_pc;      // Start of address range
-        uint32_t    length;      // End of address range (not including this address)
-        dw_offset_t offset;     // Offset of the compile unit or die
-    };
-
-                DWARFDebugAranges();
-
-    void        Clear() { m_aranges.clear(); }
-    bool        AllRangesAreContiguous(dw_addr_t& lo_pc, dw_addr_t& hi_pc) const;
-    bool        GetMaxRange(dw_addr_t& lo_pc, dw_addr_t& hi_pc) const;
-    bool        Extract(const lldb_private::DataExtractor &debug_aranges_data);
-    bool        Generate(SymbolFileDWARF* dwarf2Data);
+    bool
+    Generate(SymbolFileDWARF* dwarf2Data);
     
                 // Use append range multiple times and then call sort
-    void        AppendRange (dw_offset_t cu_offset, dw_addr_t low_pc, dw_addr_t high_pc);
-    void        Sort (bool minimize, uint32_t n);
+    void
+    AppendRange (dw_offset_t cu_offset, 
+                 dw_addr_t low_pc, 
+                 dw_addr_t high_pc);
 
-    const Range* RangeAtIndex(uint32_t idx) const
-                {
-                    if (idx < m_aranges.size())
-                        return &m_aranges[idx];
-                    return NULL;
-                }
-    void        Dump (lldb_private::Log *log) const;
-    dw_offset_t FindAddress(dw_addr_t address) const;
-    bool        IsEmpty() const { return m_aranges.empty(); }
-//    void        Dump(lldb_private::Stream *s);
-    uint32_t    NumRanges() const
-                {
-                    return m_aranges.size();
-                }
+    void 
+    Sort (bool minimize);
 
-    dw_offset_t OffsetAtIndex(uint32_t idx) const
-                {
-                    if (idx < m_aranges.size())
-                        return m_aranges[idx].offset;
-                    return DW_INVALID_OFFSET;
-                }
-//  void    AppendDebugRanges(BinaryStreamBuf& debug_ranges, dw_addr_t cu_base_addr, uint32_t addr_size) const;
+    const Range* 
+    RangeAtIndex(uint32_t idx) const
+    {
+        return m_aranges.GetEntryAtIndex (idx);
+    }
+    
+    void
+    Dump (lldb_private::Log *log) const;
+    
+    dw_offset_t
+    FindAddress(dw_addr_t address) const;
 
-    static void Dump(SymbolFileDWARF* dwarf2Data, lldb_private::Stream *s);
+    bool
+    IsEmpty() const 
+    {
+        return m_aranges.IsEmpty(); 
+    }
+    uint32_t
+    GetNumRanges() const
+    {
+        return m_aranges.GetNumEntries();
+    }
 
-    typedef std::vector<Range>              RangeColl;
-    typedef RangeColl::const_iterator       RangeCollIterator;
+    dw_offset_t 
+    OffsetAtIndex(uint32_t idx) const
+    {
+        const Range *range = m_aranges.GetEntryAtIndex (idx);
+        if (range)
+            return range->data;
+        return DW_INVALID_OFFSET;
+    }
 
+    static void 
+    Dump(SymbolFileDWARF* dwarf2Data, lldb_private::Stream *s);
+    
 protected:
 
-    RangeColl m_aranges;
+
+    RangeToDIE m_aranges;
 };
 
 

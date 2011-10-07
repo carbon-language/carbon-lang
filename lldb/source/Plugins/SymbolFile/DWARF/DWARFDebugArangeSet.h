@@ -18,21 +18,21 @@ class SymbolFileDWARF;
 class DWARFDebugArangeSet
 {
 public:
-    typedef struct HeaderTag
+    struct Header
     {
         uint32_t    length;     // The total length of the entries for that set, not including the length field itself.
         uint16_t    version;    // The DWARF version number
         uint32_t    cu_offset;  // The offset from the beginning of the .debug_info section of the compilation unit entry referenced by the table.
         uint8_t     addr_size;  // The size in bytes of an address on the target architecture. For segmented addressing, this is the size of the offset portion of the address
         uint8_t     seg_size;   // The size in bytes of a segment descriptor on the target architecture. If the target system uses a flat address space, this value is 0.
-    } Header;
+    };
 
-    typedef struct DescriptorTag
+    struct Descriptor
     {
         dw_addr_t   address;
         dw_addr_t   length;
         dw_addr_t end_address() const { return address + length; }
-    } Descriptor;
+    };
 
 
                     DWARFDebugArangeSet();
@@ -53,6 +53,12 @@ public:
             if (i < m_arange_descriptors.size())
                 return &m_arange_descriptors[i];
             return NULL;
+        }
+
+        const Descriptor &  
+        GetDescriptorRef (uint32_t i) const
+        {
+            return m_arange_descriptors[i];
         }
 
 

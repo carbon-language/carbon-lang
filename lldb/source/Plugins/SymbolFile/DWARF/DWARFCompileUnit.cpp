@@ -363,8 +363,7 @@ DWARFCompileUnit::GetFunctionAranges ()
                          m_offset);
         DIE()->BuildFunctionAddressRangeTable (m_dwarf2Data, this, m_func_aranges_ap.get());
         const bool minimize = false;
-        const uint32_t fudge_size = 0;        
-        m_func_aranges_ap->Sort(minimize, fudge_size);
+        m_func_aranges_ap->Sort(minimize);
     }
     return *m_func_aranges_ap.get();
 }
