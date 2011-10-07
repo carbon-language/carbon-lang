@@ -660,25 +660,23 @@ LLVMValueRef LLVMConstVector(LLVMValueRef *ScalarConstantVals, unsigned Size) {
 static LLVMOpcode map_to_llvmopcode(int opcode)
 {
     switch (opcode) {
+      default:
+        assert(0 && "Unhandled Opcode.");
 #define HANDLE_INST(num, opc, clas) case num: return LLVM##opc;
 #include "llvm/Instruction.def"
 #undef HANDLE_INST
-	default:
-	    assert(false && "Unhandled Opcode.");
     }
-    return static_cast<LLVMOpcode>(0);
 }
 
 static int map_from_llvmopcode(LLVMOpcode code)
 {
     switch (code) {
+      default:
+        assert(0 && "Unhandled Opcode.");
 #define HANDLE_INST(num, opc, clas) case LLVM##opc: return num;
 #include "llvm/Instruction.def"
 #undef HANDLE_INST
-	default:
-	    assert(false && "Unhandled Opcode.");
     }
-    return 0;
 }
 
 /*--.. Constant expressions ................................................--*/
