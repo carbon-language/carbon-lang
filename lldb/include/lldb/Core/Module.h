@@ -199,6 +199,11 @@ public:
     //------------------------------------------------------------------
     /// Find functions by name.
     ///
+    /// If the function is an inlined function, it will have a block,
+    /// representing the inlined function, and the function will be the
+    /// containing function.  If it is not inlined, then the block will 
+    /// be NULL.
+    ///
     /// @param[in] name
     ///     The name of the compile unit we are looking for.
     ///
@@ -228,6 +233,11 @@ public:
 
     //------------------------------------------------------------------
     /// Find functions by name.
+    ///
+    /// If the function is an inlined function, it will have a block,
+    /// representing the inlined function, and the function will be the
+    /// containing function.  If it is not inlined, then the block will 
+    /// be NULL.
     ///
     /// @param[in] regex
     ///     A regular expression to use when matching the name.
