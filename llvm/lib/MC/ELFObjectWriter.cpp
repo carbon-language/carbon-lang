@@ -1001,11 +1001,10 @@ void ELFObjectWriter::WriteSection(MCAssembler &Asm,
     // Nothing to do.
     break;
 
-  case ELF::SHT_GROUP: {
+  case ELF::SHT_GROUP:
     sh_link = SymbolTableIndex;
     sh_info = GroupSymbolIndex;
     break;
-  }
 
   default:
     assert(0 && "FIXME: sh_type value not supported!");
