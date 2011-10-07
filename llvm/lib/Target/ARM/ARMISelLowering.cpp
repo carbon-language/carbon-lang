@@ -5491,6 +5491,52 @@ ARMTargetLowering::EmitAtomicBinary64(MachineInstr *MI, MachineBasicBlock *BB,
   return BB;
 }
 
+/// EmitBasePointerRecalculation - For functions using a base pointer, we
+/// rematerialize it (via the frame pointer).
+void ARMTargetLowering::
+EmitBasePointerRecalculation(MachineInstr *MI, MachineBasicBlock *MBB,
+                             MachineBasicBlock *DispatchBB) const {
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  const ARMBaseInstrInfo *AII = static_cast<const ARMBaseInstrInfo*>(TII);
+  MachineFunction &MF = *MI->getParent()->getParent();
+  ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+  const ARMBaseRegisterInfo &RI = AII->getRegisterInfo();
+
+  if (!RI.hasBasePointer(MF)) return;
+
+  MachineBasicBlock::iterator MBBI = MI;
+
+  int32_t NumBytes = AFI->getFramePtrSpillOffset();
+  unsigned FramePtr = RI.getFrameRegister(MF);
+  assert(MF.getTarget().getFrameLowering()->hasFP(MF) &&
+         "Base pointer without frame pointer?");
+
+  if (AFI->isThumb2Function())
+    llvm::emitT2RegPlusImmediate(*MBB, MBBI, MI->getDebugLoc(), ARM::R6,
+                                 FramePtr, -NumBytes, ARMCC::AL, 0, *AII);
+  else if (AFI->isThumbFunction())
+    llvm::emitThumbRegPlusImmediate(*MBB, MBBI, MI->getDebugLoc(), ARM::R6,
+                                    FramePtr, -NumBytes, *AII, RI);
+  else
+    llvm::emitARMRegPlusImmediate(*MBB, MBBI, MI->getDebugLoc(), ARM::R6,
+                                  FramePtr, -NumBytes, ARMCC::AL, 0, *AII);
+
+  if (!RI.needsStackRealignment(MF)) return;
+
+  // If there's dynamic realignment, adjust for it.
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  unsigned MaxAlign = MFI->getMaxAlignment();
+  assert(!AFI->isThumb1OnlyFunction());
+
+  // Emit bic r6, r6, MaxAlign
+  unsigned bicOpc = AFI->isThumbFunction() ? ARM::t2BICri : ARM::BICri;
+  AddDefaultCC(
+    AddDefaultPred(
+      BuildMI(*MBB, MBBI, MI->getDebugLoc(), TII->get(bicOpc), ARM::R6)
+      .addReg(ARM::R6, RegState::Kill)
+      .addImm(MaxAlign - 1)));
+}
+
 /// SetupEntryBlockForSjLj - Insert code into the entry block that creates and
 /// registers the function context.
 void ARMTargetLowering::
@@ -5524,6 +5570,8 @@ SetupEntryBlockForSjLj(MachineInstr *MI, MachineBasicBlock *MBB,
   MachineMemOperand *FIMMOSt =
     MF->getMachineMemOperand(MachinePointerInfo::getFixedStack(FI),
                              MachineMemOperand::MOStore, 4, 4);
+
+  EmitBasePointerRecalculation(MI, MBB, DispatchBB);
 
   // Load the address of the dispatch MBB into the jump buffer.
   if (isThumb2) {
@@ -5736,6 +5784,7 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
                    .addFrameIndex(FI)
                    .addImm(1)
                    .addMemOperand(FIMMOLd));
+
     AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::tCMPi8))
                    .addReg(NewVReg1)
                    .addImm(LPadList.size()));
