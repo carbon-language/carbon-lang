@@ -245,3 +245,8 @@ class FFR1P<bits<6> funct, bits<5> fmt, string opstr, string fmtstr,
   let ft = 0;
 }
 
+class FFR2P<bits<6> funct, bits<5> fmt, string opstr,
+            string fmtstr, RegisterClass RC, SDNode OpNode> :
+  FFR<0x11, funct, fmt, (outs RC:$fd), (ins RC:$fs, RC:$ft),
+      !strconcat(opstr, ".", fmtstr, "\t$fd, $fs, $ft"),
+      [(set RC:$fd, (OpNode RC:$fs, RC:$ft))]>;

@@ -98,18 +98,13 @@ multiclass FFR1P_M<bits<6> funct, string opstr, SDNode OpNode> {
              Requires<[IsFP64bit]>;
 }
 
-multiclass FFR1_4<bits<6> funct, string asmstr, SDNode FOp, bit isComm = 0> {
+multiclass FFR2P_M<bits<6> funct, string opstr, SDNode OpNode, bit isComm = 0> {
   let isCommutable = isComm in {
-  def _S32 : FFR<0x11, funct, 0x0, (outs FGR32:$fd),
-                 (ins FGR32:$fs, FGR32:$ft),
-                 !strconcat(asmstr, ".s\t$fd, $fs, $ft"),
-                 [(set FGR32:$fd, (FOp FGR32:$fs, FGR32:$ft))]>;
-
-  def _D32 : FFR<0x11, funct, 0x1, (outs AFGR64:$fd),
-                 (ins AFGR64:$fs, AFGR64:$ft),
-                 !strconcat(asmstr, ".d\t$fd, $fs, $ft"),
-                 [(set AFGR64:$fd, (FOp AFGR64:$fs, AFGR64:$ft))]>,
-                 Requires<[NotFP64bit]>;
+  def _S   : FFR2P<funct, 16, opstr, "s", FGR32, OpNode>;
+  def _D32 : FFR2P<funct, 17, opstr, "d", AFGR64, OpNode>,
+             Requires<[NotFP64bit]>;
+  def _D64 : FFR2P<funct, 17, opstr, "d", FGR64, OpNode>,
+             Requires<[IsFP64bit]>;
   }
 }
 
@@ -189,10 +184,10 @@ def SWC1  : FFI<0b111001, (outs), (ins FGR32:$ft, mem:$addr),
                "swc1\t$ft, $addr", [(store FGR32:$ft, addr:$addr)]>;
 
 /// Floating-point Aritmetic
-defm FADD : FFR1_4<0x10, "add", fadd, 1>;
-defm FDIV : FFR1_4<0x03, "div", fdiv>;
-defm FMUL : FFR1_4<0x02, "mul", fmul, 1>;
-defm FSUB : FFR1_4<0x01, "sub", fsub>;
+defm FADD : FFR2P_M<0x10, "add", fadd, 1>;
+defm FDIV : FFR2P_M<0x03, "div", fdiv>;
+defm FMUL : FFR2P_M<0x02, "mul", fmul, 1>;
+defm FSUB : FFR2P_M<0x01, "sub", fsub>;
 
 //===----------------------------------------------------------------------===//
 // Floating Point Branch Codes
