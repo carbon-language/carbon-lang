@@ -27,8 +27,8 @@ test()
     std::match_results<const char*>::const_iterator i = m.cbegin();
     std::match_results<const char*>::const_iterator e = m.cend();
 
-    assert(e - i == m.size() - 1);
-    for (int j = 1; i != e; ++i, ++j)
+    assert(e - i == m.size());
+    for (int j = 0; i != e; ++i, ++j)
         assert(*i == m[j]);
 }
 

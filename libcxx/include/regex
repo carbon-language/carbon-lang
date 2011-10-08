@@ -5210,11 +5210,11 @@ public:
     const_reference suffix() const {return __suffix_;}
 
     _LIBCPP_INLINE_VISIBILITY
-    const_iterator begin() const {return empty() ? __matches_.end() : __matches_.begin() + 1;}
+    const_iterator begin() const {return empty() ? __matches_.end() : __matches_.begin();}
     _LIBCPP_INLINE_VISIBILITY
     const_iterator end() const {return __matches_.end();}
     _LIBCPP_INLINE_VISIBILITY
-    const_iterator cbegin() const {return empty() ? __matches_.end() : __matches_.begin() + 1;}
+    const_iterator cbegin() const {return empty() ? __matches_.end() : __matches_.begin();}
     _LIBCPP_INLINE_VISIBILITY
     const_iterator cend() const {return __matches_.end();}
 
