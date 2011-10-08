@@ -8,5 +8,5 @@
 // RUN: %clang -ccc-arcmt-migrate /foo/bar -ccc-host-triple i386-apple-darwin9 -### %t.o 2> %t.log
 // RUN: FileCheck -check-prefix=LINK %s < %t.log
 
-// LINK-NOT: ld"
-// LINK: touch"
+// LINK-NOT: {{ld(.exe)?"}}
+// LINK: {{touch(.exe)?"}}
