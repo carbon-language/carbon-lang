@@ -24,6 +24,7 @@ class   AddressRange;
 class   AddressResolver;
 class   ArchSpec;
 class   Args;
+class   ASTResultSynthesizer;
 class   Baton;
 class   Block;
 class   Breakpoint;

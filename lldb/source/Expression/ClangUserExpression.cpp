@@ -72,10 +72,13 @@ ClangUserExpression::ASTTransformer (clang::ASTConsumer *passthrough)
     if (!clang_ast_context)
         return NULL;
     
-    return new ASTResultSynthesizer(passthrough,
-                                    m_desired_type,
-                                    *m_target->GetScratchClangASTContext()->getASTContext(),
-                                    m_target->GetPersistentVariables());
+    if (!m_result_synthesizer.get())
+        m_result_synthesizer.reset(new ASTResultSynthesizer(passthrough,
+                                                            m_desired_type,
+                                                            *m_target->GetScratchClangASTContext()->getASTContext(),
+                                                            m_target->GetPersistentVariables()));
+    
+    return m_result_synthesizer.get();
 }
 
 void
