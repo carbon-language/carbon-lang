@@ -177,7 +177,7 @@ DWARFDebugLine::parsePrologue(DataExtractor debug_line_data,
 
   if (*offset_ptr != end_prologue_offset) {
     fprintf(stderr, "warning: parsing line table prologue at 0x%8.8x should"
-                    " have ended at 0x%8.8x but it ended ad 0x%8.8x\n", 
+                    " have ended at 0x%8.8x but it ended ad 0x%8.8x\n",
             prologue_offset, end_prologue_offset, *offset_ptr);
   }
   return end_prologue_offset;
