@@ -2322,6 +2322,9 @@ SDNode *ARMDAGToDAGISel::SelectABSOp(SDNode *N){
   if (DisableARMIntABS)
     return NULL;
 
+  if (Subtarget->isThumb1Only())
+    return NULL;
+
   if (XORSrc0.getOpcode() != ISD::ADD ||
     XORSrc1.getOpcode() != ISD::SRA)
     return NULL;
