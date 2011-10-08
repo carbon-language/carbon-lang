@@ -109,6 +109,7 @@ class ScopDetection : public FunctionPass {
   // Remember the invalid functions producted by backends;
   typedef std::set<const Function*> FunctionSet;
   FunctionSet InvalidFunctions;
+  mutable std::string LastFailure;
 
   // Try to expand the region R. If R can be expanded return the expanded
   // region, NULL otherwise.
@@ -232,6 +233,13 @@ public:
   ///
   /// @return Return true if R is the maximum Region in a Scop, false otherwise.
   bool isMaxRegionInScop(const Region &R) const;
+
+  /// @brief Get a message why a region is invalid
+  ///
+  /// @param R The region for which we get the error message
+  ///
+  /// @return The error or "" if no error appeared.
+  std::string regionIsInvalidBecause(const Region *R) const;
 
   /// @name Maximum Region In Scops Iterators
   ///

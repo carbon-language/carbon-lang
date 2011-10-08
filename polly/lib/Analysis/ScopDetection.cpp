@@ -77,6 +77,11 @@ STATISTIC(ValidRegion, "Number of regions that a valid part of Scop");
 
 #define INVALID(NAME, MESSAGE) \
   do { \
+    std::string Buf; \
+    raw_string_ostream fmt(Buf); \
+    fmt << MESSAGE; \
+    fmt.flush(); \
+    LastFailure = Buf; \
     DEBUG(dbgs() << MESSAGE); \
     DEBUG(dbgs() << "\n"); \
     STATSCOP(NAME); \
@@ -101,6 +106,14 @@ bool ScopDetection::isMaxRegionInScop(const Region &R) const {
   // The Region is valid only if it could be found in the set.
   return ValidRegions.count(&R);
 }
+
+std::string ScopDetection::regionIsInvalidBecause(const Region *R) const {
+  if (!InvalidRegions.count(R))
+    return "";
+
+  return InvalidRegions.find(R)->second;
+}
+
 
 bool ScopDetection::isValidAffineFunction(const SCEV *S, Region &RefRegion,
                                           Value **BasePtr) const {
@@ -438,6 +451,8 @@ void ScopDetection::findScops(Region &R) {
     return;
   }
 
+  InvalidRegions[&R] = LastFailure;
+
   for (Region::iterator I = R.begin(), E = R.end(); I != E; ++I)
     findScops(**I);
 
@@ -583,6 +598,7 @@ void ScopDetection::print(raw_ostream &OS, const Module *) const {
 
 void ScopDetection::releaseMemory() {
   ValidRegions.clear();
+  InvalidRegions.clear();
   // Do not clear the invalid function set.
 }
 

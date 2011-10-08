@@ -107,7 +107,8 @@ struct DOTGraphTraits<ScopDetection*> : public DOTGraphTraits<RegionNode*> {
                                  raw_ostream &O, unsigned depth = 0) {
     O.indent(2 * depth) << "subgraph cluster_" << static_cast<const void*>(R)
       << " {\n";
-    O.indent(2 * (depth + 1)) << "label = \"\";\n";
+    std::string ErrorMessage = SD->regionIsInvalidBecause(R);
+    O.indent(2 * (depth + 1)) << "label = \"" << ErrorMessage << "\";\n";
 
     if (SD->isMaxRegionInScop(*R)) {
       O.indent(2 * (depth + 1)) << "style = filled;\n";
