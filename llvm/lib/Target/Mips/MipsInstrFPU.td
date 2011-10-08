@@ -89,11 +89,13 @@ multiclass FFR1_L_M<bits<6> funct, string opstr> {
   def _D64 : FFR1<funct, 17, opstr, "l.d", FGR64, FGR64>;
 }
 
-multiclass FFR1_2<bits<6> funct, string asmstr, SDNode FOp>
-{
-  def _S32 : FFR1P<funct, 16, asmstr, "s", FGR32, FGR32, FOp>;
-  def _D32 : FFR1P<funct, 17, asmstr, "d", AFGR64, AFGR64, FOp>,
-                   Requires<[NotFP64bit]>;
+// FP-to-FP conversion instructions.
+multiclass FFR1P_M<bits<6> funct, string opstr, SDNode OpNode> {
+  def _S   : FFR1P<funct, 16, opstr, "s", FGR32, FGR32, OpNode>;
+  def _D32 : FFR1P<funct, 17, opstr, "d", AFGR64, AFGR64, OpNode>,
+             Requires<[NotFP64bit]>;
+  def _D64 : FFR1P<funct, 17, opstr, "d", FGR64, FGR64, OpNode>,
+             Requires<[IsFP64bit]>;
 }
 
 multiclass FFR1_4<bits<6> funct, string asmstr, SDNode FOp, bit isComm = 0> {
@@ -141,11 +143,9 @@ let Predicates = [IsFP64bit] in {
  def CVT_D64_L : FFR1<0x21, 21, "cvt", "d.l", FGR64, FGR64>;
 }
 
-let ft = 0 in {
-  defm FABS    : FFR1_2<0b000101, "abs",  fabs>;
-  defm FNEG    : FFR1_2<0b000111, "neg",  fneg>;
-  defm FSQRT   : FFR1_2<0b000100, "sqrt", fsqrt>;
-}
+defm FABS    : FFR1P_M<0x5, "abs",  fabs>;
+defm FNEG    : FFR1P_M<0x7, "neg",  fneg>;
+defm FSQRT   : FFR1P_M<0x4, "sqrt", fsqrt>;
 
 // The odd-numbered registers are only referenced when doing loads,
 // stores, and moves between floating-point and integer registers.
@@ -333,7 +333,7 @@ def fpimm0neg : PatLeaf<(fpimm), [{
 }]>;
 
 def : Pat<(f32 fpimm0), (MTC1 ZERO)>;
-def : Pat<(f32 fpimm0neg), (FNEG_S32 (MTC1 ZERO))>;
+def : Pat<(f32 fpimm0neg), (FNEG_S (MTC1 ZERO))>;
 
 def : Pat<(f32 (sint_to_fp CPURegs:$src)), (CVT_S_W (MTC1 CPURegs:$src))>;
 def : Pat<(f64 (sint_to_fp CPURegs:$src)), (CVT_D32_W (MTC1 CPURegs:$src))>;
