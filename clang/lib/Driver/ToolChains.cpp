@@ -1511,11 +1511,11 @@ class GCCInstallationDetector {
     unsigned Major, Minor, Patch;
 
     static GCCVersion Parse(StringRef VersionText) {
-      const GCCVersion BadVersion = {};
+      const GCCVersion BadVersion = {0, 0, 0};
       std::pair<StringRef, StringRef> First = VersionText.split('.');
       std::pair<StringRef, StringRef> Second = First.second.split('.');
 
-      GCCVersion GoodVersion = {};
+      GCCVersion GoodVersion = {0, 0, 0};
       if (First.first.getAsInteger(10, GoodVersion.Major))
         return BadVersion;
       if (Second.first.getAsInteger(10, GoodVersion.Minor))
@@ -1605,7 +1605,7 @@ public:
 
     // Loop over the various components which exist and select the best GCC
     // installation available. GCC installs are ranked by version number.
-    GCCVersion BestVersion = {};
+    GCCVersion BestVersion = {0, 0, 0};
     for (unsigned i = 0, ie = Prefixes.size(); i < ie; ++i) {
       if (!PathExists(Prefixes[i]))
         continue;

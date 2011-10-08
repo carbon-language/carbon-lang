@@ -1579,10 +1579,10 @@ StmtResult Parser::ParseMicrosoftAsmStatement(SourceLocation AsmLoc) {
   SourceLocation EndLoc = AsmLoc;
   do {
     bool InBraces = false;
-    unsigned short savedBraceCount;
+    unsigned short savedBraceCount = 0;
     bool InAsmComment = false;
     FileID FID;
-    unsigned LineNo;
+    unsigned LineNo = 0;
     unsigned NumTokensRead = 0;
     SourceLocation LBraceLoc;
 
