@@ -51,6 +51,7 @@
 #include "llvm/Analysis/AliasSetTracker.h"
 
 #include <set>
+#include <map>
 
 using namespace llvm;
 
@@ -101,6 +102,9 @@ class ScopDetection : public FunctionPass {
   // Remember the valid regions
   typedef std::set<const Region*> RegionSet;
   RegionSet ValidRegions;
+
+  // Invalid regions and the reason they fail.
+  std::map<const Region*, std::string> InvalidRegions;
 
   // Remember the invalid functions producted by backends;
   typedef std::set<const Function*> FunctionSet;
