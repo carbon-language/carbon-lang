@@ -30,94 +30,62 @@ DWARFDebugRanges::Extract(SymbolFileDWARF* dwarf2Data)
     RangeList range_list;
     dw_offset_t offset = 0;
     dw_offset_t debug_ranges_offset = offset;
-    while (range_list.Extract(dwarf2Data, &offset))
+    while (Extract(dwarf2Data, &offset, range_list))
     {
         m_range_map[debug_ranges_offset] = range_list;
         debug_ranges_offset = offset;
     }
 }
 
-bool
-DWARFDebugRanges::RangeList::AddRange(dw_addr_t lo_addr, dw_addr_t hi_addr)
-{
-    if (lo_addr <= hi_addr)
-    {
-        Range range(lo_addr, hi_addr);
-        ranges.push_back(range);
-        return true;
-    }
-    return false;
-}
-
-const DWARFDebugRanges::Range*
-DWARFDebugRanges::RangeList::Lookup(dw_addr_t offset) const
-{
-    Range::const_iterator pos = ranges.begin();
-    Range::const_iterator end_pos = ranges.end();
-    for (pos = ranges.begin(); pos != end_pos; ++pos)
-    {
-        if (pos->begin_offset <= offset && offset < pos->end_offset)
-        {
-            return &(*pos);
-        }
-    }
-    return NULL;
-}
-
-size_t
-DWARFDebugRanges::RangeList::Size() const
-{
-    return ranges.size();
-}
-
-void
-DWARFDebugRanges::RangeList::AddOffset(dw_addr_t offset)
-{
-    if (!ranges.empty())
-    {
-        Range::iterator pos = ranges.begin();
-        Range::iterator end_pos = ranges.end();
-        for (pos = ranges.begin(); pos != end_pos; ++pos)
-        {
-            // assert for unsigned overflows
-            assert (~pos->begin_offset >= offset);
-            assert (~pos->end_offset >= offset);
-            pos->begin_offset += offset;
-            pos->end_offset += offset;
-        }
-    }
-}
-
-void
-DWARFDebugRanges::RangeList::SubtractOffset(dw_addr_t offset)
-{
-    if (!ranges.empty())
-    {
-        Range::iterator pos = ranges.begin();
-        Range::iterator end_pos = ranges.end();
-        for (pos = ranges.begin(); pos != end_pos; ++pos)
-        {
-            assert (pos->begin_offset >= offset);
-            assert (pos->end_offset >= offset);
-            pos->begin_offset -= offset;
-            pos->end_offset -= offset;
-        }
-    }
-}
-
-
-const DWARFDebugRanges::Range*
-DWARFDebugRanges::RangeList::RangeAtIndex(size_t i) const
-{
-    if (i < ranges.size())
-        return &ranges[i];
-    return NULL;
-}
+//void
+//DWARFDebugRanges::RangeList::AddOffset(dw_addr_t offset)
+//{
+//    if (!ranges.empty())
+//    {
+//        Range::iterator pos = ranges.begin();
+//        Range::iterator end_pos = ranges.end();
+//        for (pos = ranges.begin(); pos != end_pos; ++pos)
+//        {
+//            // assert for unsigned overflows
+//            assert (~pos->begin_offset >= offset);
+//            assert (~pos->end_offset >= offset);
+//            pos->begin_offset += offset;
+//            pos->end_offset += offset;
+//        }
+//    }
+//}
+//
+//void
+//DWARFDebugRanges::RangeList::SubtractOffset(dw_addr_t offset)
+//{
+//    if (!ranges.empty())
+//    {
+//        Range::iterator pos = ranges.begin();
+//        Range::iterator end_pos = ranges.end();
+//        for (pos = ranges.begin(); pos != end_pos; ++pos)
+//        {
+//            assert (pos->begin_offset >= offset);
+//            assert (pos->end_offset >= offset);
+//            pos->begin_offset -= offset;
+//            pos->end_offset -= offset;
+//        }
+//    }
+//}
+//
+//
+//const DWARFDebugRanges::Range*
+//DWARFDebugRanges::RangeList::RangeAtIndex(size_t i) const
+//{
+//    if (i < ranges.size())
+//        return &ranges[i];
+//    return NULL;
+//}
 
 bool
-DWARFDebugRanges::RangeList::Extract(SymbolFileDWARF* dwarf2Data, uint32_t* offset_ptr)
+DWARFDebugRanges::Extract(SymbolFileDWARF* dwarf2Data, uint32_t* offset_ptr, RangeList &range_list)
 {
-    Clear();
+    range_list.Clear();
+
     uint32_t range_offset = *offset_ptr;
     const DataExtractor& debug_ranges_data = dwarf2Data->get_debug_ranges_data();
     uint32_t addr_size = debug_ranges_data.GetAddressByteSize();
@@ -154,65 +122,65 @@ DWARFDebugRanges::RangeList::Extract(SymbolFileDWARF* dwarf2Data, uint32_t* offs
         }
 
         // Filter out empty ranges
-        if (begin != end)
-            ranges.push_back(Range(begin, end));
+        if (begin < end)
+            range_list.Append(Range(begin, end - begin));
     }
 
     // Make sure we consumed at least something
     return range_offset != *offset_ptr;
 }
 
-
-dw_addr_t
-DWARFDebugRanges::RangeList::LowestAddress(const dw_addr_t cu_base_addr) const
-{
-    dw_addr_t addr = DW_INVALID_ADDRESS;
-    dw_addr_t curr_base_addr = cu_base_addr;
-    if (!ranges.empty())
-    {
-        Range::const_iterator pos = ranges.begin();
-        Range::const_iterator end_pos = ranges.end();
-        for (pos = ranges.begin(); pos != end_pos; ++pos)
-        {
-            if (pos->begin_offset == DW_INVALID_ADDRESS)
-                curr_base_addr = pos->end_offset;
-            else if (curr_base_addr != DW_INVALID_ADDRESS)
-            {
-                dw_addr_t curr_addr = curr_base_addr + pos->begin_offset;
-                if (addr > curr_addr)
-                    addr = curr_addr;
-            }
-        }
-    }
-    return addr;
-}
-
-dw_addr_t
-DWARFDebugRanges::RangeList::HighestAddress(const dw_addr_t cu_base_addr) const
-{
-    dw_addr_t addr = 0;
-    dw_addr_t curr_base_addr = cu_base_addr;
-    if (!ranges.empty())
-    {
-        Range::const_iterator pos = ranges.begin();
-        Range::const_iterator end_pos = ranges.end();
-        for (pos = ranges.begin(); pos != end_pos; ++pos)
-        {
-            if (pos->begin_offset == DW_INVALID_ADDRESS)
-                curr_base_addr = pos->end_offset;
-            else if (curr_base_addr != DW_INVALID_ADDRESS)
-            {
-                dw_addr_t curr_addr = curr_base_addr + pos->end_offset;
-                if (addr < curr_addr)
-                    addr = curr_addr;
-            }
-        }
-    }
-    if (addr != 0)
-        return addr;
-    return DW_INVALID_ADDRESS;
-}
-
+//
+//dw_addr_t
+//DWARFDebugRanges::RangeList::LowestAddress(const dw_addr_t cu_base_addr) const
+//{
+//    dw_addr_t addr = DW_INVALID_ADDRESS;
+//    dw_addr_t curr_base_addr = cu_base_addr;
+//    if (!ranges.empty())
+//    {
+//        Range::const_iterator pos = ranges.begin();
+//        Range::const_iterator end_pos = ranges.end();
+//        for (pos = ranges.begin(); pos != end_pos; ++pos)
+//        {
+//            if (pos->begin_offset == DW_INVALID_ADDRESS)
+//                curr_base_addr = pos->end_offset;
+//            else if (curr_base_addr != DW_INVALID_ADDRESS)
+//            {
+//                dw_addr_t curr_addr = curr_base_addr + pos->begin_offset;
+//                if (addr > curr_addr)
+//                    addr = curr_addr;
+//            }
+//        }
+//    }
+//    return addr;
+//}
+//
+//dw_addr_t
+//DWARFDebugRanges::RangeList::HighestAddress(const dw_addr_t cu_base_addr) const
+//{
+//    dw_addr_t addr = 0;
+//    dw_addr_t curr_base_addr = cu_base_addr;
+//    if (!ranges.empty())
+//    {
+//        Range::const_iterator pos = ranges.begin();
+//        Range::const_iterator end_pos = ranges.end();
+//        for (pos = ranges.begin(); pos != end_pos; ++pos)
+//        {
+//            if (pos->begin_offset == DW_INVALID_ADDRESS)
+//                curr_base_addr = pos->end_offset;
+//            else if (curr_base_addr != DW_INVALID_ADDRESS)
+//            {
+//                dw_addr_t curr_addr = curr_base_addr + pos->end_offset;
+//                if (addr < curr_addr)
+//                    addr = curr_addr;
+//            }
+//        }
+//    }
+//    if (addr != 0)
+//        return addr;
+//    return DW_INVALID_ADDRESS;
+//}
+//
 
 void
 DWARFDebugRanges::Dump(Stream &s, const DataExtractor& debug_ranges_data, uint32_t* offset_ptr, dw_addr_t cu_base_addr)

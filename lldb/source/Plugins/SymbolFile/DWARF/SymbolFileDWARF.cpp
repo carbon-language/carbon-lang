@@ -650,20 +650,19 @@ SymbolFileDWARF::ParseCompileUnitAtIndex(uint32_t cu_idx)
 }
 
 static void
-AddRangesToBlock
-(
-    Block& block,
-    DWARFDebugRanges::RangeList& ranges,
-    addr_t block_base_addr
-)
+AddRangesToBlock (Block& block,
+                  DWARFDebugRanges::RangeList& ranges,
+                  addr_t block_base_addr)
 {
-    ranges.SubtractOffset (block_base_addr);
-    size_t range_idx = 0;
-    const DWARFDebugRanges::Range *debug_range;
-    for (range_idx = 0; (debug_range = ranges.RangeAtIndex(range_idx)) != NULL; range_idx++)
+    const size_t num_ranges = ranges.GetSize();
+    for (size_t i = 0; i<num_ranges; ++i)
     {
-        block.AddRange(VMRange (debug_range->begin_offset, debug_range->end_offset));
+        const DWARFDebugRanges::Range &range = ranges.GetEntryRef (i);
+        const addr_t range_base = range.GetRangeBase();
+        assert (range_base >= block_base_addr);
+        block.AddRange(Block::Range (range_base - block_base_addr, range.GetByteSize()));;
     }
+    block.FinalizeRanges ();
 }
 
 
@@ -690,8 +689,8 @@ SymbolFileDWARF::ParseCompileUnitFunction (const SymbolContext& sc, DWARFCompile
     {
         // Union of all ranges in the function DIE (if the function is discontiguous)
         AddressRange func_range;
-        lldb::addr_t lowest_func_addr = func_ranges.LowestAddress(0);
-        lldb::addr_t highest_func_addr = func_ranges.HighestAddress(0);
+        lldb::addr_t lowest_func_addr = func_ranges.GetMinRangeBase (0);
+        lldb::addr_t highest_func_addr = func_ranges.GetMaxRangeEnd (0);
         if (lowest_func_addr != LLDB_INVALID_ADDRESS && lowest_func_addr <= highest_func_addr)
         {
             func_range.GetBaseAddress().ResolveAddressUsingFileSections (lowest_func_addr, m_obj_file->GetSectionList());
@@ -1054,7 +1053,7 @@ SymbolFileDWARF::ParseFunctionBlocks
                     if (tag == DW_TAG_subprogram)
                     {
                         assert (subprogram_low_pc == LLDB_INVALID_ADDRESS);
-                        subprogram_low_pc = ranges.LowestAddress(0);
+                        subprogram_low_pc = ranges.GetMinRangeBase(0);
                     }
                     else if (tag == DW_TAG_inlined_subroutine)
                     {
@@ -1068,7 +1067,7 @@ SymbolFileDWARF::ParseFunctionBlocks
                         // function the offset will be for that function.  
                         if (subprogram_low_pc == LLDB_INVALID_ADDRESS)
                         {
-                            subprogram_low_pc = ranges.LowestAddress(0);
+                            subprogram_low_pc = ranges.GetMinRangeBase(0);
                         }
                     }
                     

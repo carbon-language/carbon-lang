@@ -4106,6 +4106,7 @@ ClangASTContext::GetDeclContextForType (clang_type_t clang_type)
     case clang::Type::Auto:                     break;
     case clang::Type::InjectedClassName:        break;
     case clang::Type::DependentName:            break;
+    case clang::Type::Atomic:                   break;
     }
     // No DeclContext in this type...
     return NULL;

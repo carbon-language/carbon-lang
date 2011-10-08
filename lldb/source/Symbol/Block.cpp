@@ -44,8 +44,8 @@ Block::GetDescription(Stream *s, Function *function, lldb::DescriptionLevel leve
 {
     *s << "id = " << ((const UserID&)*this);
 
-    size_t num_ranges = m_ranges.size();
-    if (num_ranges)
+    size_t num_ranges = m_ranges.GetSize();
+    if (num_ranges > 0)
     {
         
         addr_t base_addr = LLDB_INVALID_ADDRESS;
@@ -55,9 +55,11 @@ Block::GetDescription(Stream *s, Function *function, lldb::DescriptionLevel leve
             base_addr = function->GetAddressRange().GetBaseAddress().GetFileAddress();
 
         s->Printf(", range%s = ", num_ranges > 1 ? "s" : "");
-        std::vector<VMRange>::const_iterator pos, end = m_ranges.end();
-        for (pos = m_ranges.begin(); pos != end; ++pos)
-            pos->Dump(s, base_addr, 4);
+        for (size_t i=0; i<num_ranges; ++i)
+        {
+            const Range &range = m_ranges.GetEntryRef(i);
+            s->AddressRange(base_addr + range.GetRangeBase(), base_addr + range.GetRangeEnd(), 4);
+        }
     }
 
     if (m_inlineInfoSP.get() != NULL)
@@ -95,18 +97,19 @@ Block::Dump(Stream *s, addr_t base_addr, int32_t depth, bool show_context) const
         m_inlineInfoSP->Dump(s, show_fullpaths);
     }
 
-    if (!m_ranges.empty())
+    if (!m_ranges.IsEmpty())
     {
         *s << ", ranges =";
-        std::vector<VMRange>::const_iterator pos;
-        std::vector<VMRange>::const_iterator end = m_ranges.end();
-        for (pos = m_ranges.begin(); pos != end; ++pos)
+        
+        size_t num_ranges = m_ranges.GetSize();
+        for (size_t i=0; i<num_ranges; ++i)
         {
-            if (parent_block != NULL && parent_block->Contains(*pos) == false)
+            const Range &range = m_ranges.GetEntryRef(i);
+            if (parent_block != NULL && parent_block->Contains(range) == false)
                 *s << '!';
             else
                 *s << ' ';
-            pos->Dump(s, base_addr);
+            s->AddressRange(base_addr + range.GetRangeBase(), base_addr + range.GetRangeEnd(), 4);
         }
     }
     s->EOL();
@@ -197,18 +200,21 @@ Block::DumpSymbolContext(Stream *s)
 void
 Block::DumpAddressRanges (Stream *s, lldb::addr_t base_addr)
 {
-    if (!m_ranges.empty())
+    if (!m_ranges.IsEmpty())
     {
-        std::vector<VMRange>::const_iterator pos, end = m_ranges.end();
-        for (pos = m_ranges.begin(); pos != end; ++pos)
-            pos->Dump (s, base_addr);
+        size_t num_ranges = m_ranges.GetSize();
+        for (size_t i=0; i<num_ranges; ++i)
+        {
+            const Range &range = m_ranges.GetEntryRef(i);
+            s->AddressRange(base_addr + range.GetRangeBase(), base_addr + range.GetRangeEnd(), 4);
+        }
     }
 }
 
 bool
 Block::Contains (addr_t range_offset) const
 {
-    return VMRange::ContainsValue(m_ranges, range_offset);
+    return m_ranges.FindEntryThatContains(range_offset) != NULL;
 }
 
 bool
@@ -230,9 +236,9 @@ Block::Contains (const Block *block) const
 }
 
 bool
-Block::Contains (const VMRange& range) const
+Block::Contains (const Range& range) const
 {
-    return VMRange::ContainsRange(m_ranges, range);
+    return m_ranges.FindEntryThatContains (range) != NULL;
 }
 
 Block *
@@ -267,12 +273,12 @@ Block::GetInlinedParent ()
 
 
 bool
-Block::GetRangeContainingOffset (const addr_t offset, VMRange &range)
+Block::GetRangeContainingOffset (const addr_t offset, Range &range)
 {
-    uint32_t range_idx = VMRange::FindRangeIndexThatContainsValue (m_ranges, offset);
-    if (range_idx < m_ranges.size())
+    const Range *range_ptr = m_ranges.FindEntryThatContains (offset);
+    if (range_ptr)
     {
-        range = m_ranges[range_idx];
+        range = *range_ptr;
         return true;
     }
     range.Clear();
@@ -281,7 +287,7 @@ Block::GetRangeContainingOffset (const addr_t offset, VMRange &range)
 
 
 bool
-Block::GetRangeContainingAddress (const Address& addr, AddressRange &range, uint32_t *range_idx_ptr)
+Block::GetRangeContainingAddress (const Address& addr, AddressRange &range)
 {
     Function *function = CalculateSymbolContextFunction();
     if (function)
@@ -295,36 +301,55 @@ Block::GetRangeContainingAddress (const Address& addr, AddressRange &range, uint
             {
                 addr_t offset = addr_offset - func_offset;
                 
-                uint32_t range_idx = VMRange::FindRangeIndexThatContainsValue (m_ranges, offset);
-                if (range_idx < m_ranges.size())
+                const Range *range_ptr = m_ranges.FindEntryThatContains (offset);
+
+                if (range_ptr)
                 {
                     range.GetBaseAddress() = func_range.GetBaseAddress();
-                    range.GetBaseAddress().SetOffset(func_offset + m_ranges[range_idx].GetBaseAddress());
-                    range.SetByteSize(m_ranges[range_idx].GetByteSize());
-                    if (range_idx_ptr)
-                        *range_idx_ptr = range_idx;
+                    range.GetBaseAddress().SetOffset(func_offset + range_ptr->GetRangeBase());
+                    range.SetByteSize(range_ptr->GetByteSize());
                     return true;
                 }
             }
         }
     }
-    if (range_idx_ptr)
-        *range_idx_ptr = UINT32_MAX;
     range.Clear();
     return false;
+}
+
+uint32_t
+Block::GetRangeIndexContainingAddress (const Address& addr)
+{
+    Function *function = CalculateSymbolContextFunction();
+    if (function)
+    {
+        const AddressRange &func_range = function->GetAddressRange();
+        if (addr.GetSection() == func_range.GetBaseAddress().GetSection())
+        {
+            const addr_t addr_offset = addr.GetOffset();
+            const addr_t func_offset = func_range.GetBaseAddress().GetOffset();
+            if (addr_offset >= func_offset && addr_offset < func_offset + func_range.GetByteSize())
+            {
+                addr_t offset = addr_offset - func_offset;
+                return m_ranges.FindEntryIndexThatContains (offset);
+            }
+        }
+    }
+    return UINT32_MAX;
 }
 
 bool
 Block::GetRangeAtIndex (uint32_t range_idx, AddressRange &range)
 {
-    if (range_idx < m_ranges.size())
+    if (range_idx < m_ranges.GetSize())
     {
         Function *function = CalculateSymbolContextFunction();
         if (function)
         {
+            const Range &vm_range = m_ranges.GetEntryRef(range_idx);
             range.GetBaseAddress() = function->GetAddressRange().GetBaseAddress();
-            range.GetBaseAddress().Slide(m_ranges[range_idx].GetBaseAddress ());
-            range.SetByteSize (m_ranges[range_idx].GetByteSize());
+            range.GetBaseAddress().Slide(vm_range.GetRangeBase ());
+            range.SetByteSize (vm_range.GetByteSize());
             return true;
         }
     }
@@ -334,24 +359,31 @@ Block::GetRangeAtIndex (uint32_t range_idx, AddressRange &range)
 bool
 Block::GetStartAddress (Address &addr)
 {
-    if (m_ranges.empty())
+    if (m_ranges.IsEmpty())
         return false;
 
     Function *function = CalculateSymbolContextFunction();
     if (function)
     {
         addr = function->GetAddressRange().GetBaseAddress();
-        addr.Slide(m_ranges.front().GetBaseAddress ());
+        addr.Slide(m_ranges.GetEntryRef(0).GetRangeBase ());
         return true;
     }
     return false;
 }
 
 void
-Block::AddRange (const VMRange& new_range)
+Block::FinalizeRanges ()
+{
+    m_ranges.Sort();
+    m_ranges.CombineConsecutiveRanges ();
+}
+
+void
+Block::AddRange (const Range& range)
 {
     Block *parent_block = GetParent ();
-    if (parent_block && !parent_block->Contains(new_range))
+    if (parent_block && !parent_block->Contains(range))
     {
         LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SYMBOLS));
         if (log)
@@ -359,8 +391,8 @@ Block::AddRange (const VMRange& new_range)
             Module *module = m_parent_scope->CalculateSymbolContextModule();
             Function *function = m_parent_scope->CalculateSymbolContextFunction();
             const addr_t function_file_addr = function->GetAddressRange().GetBaseAddress().GetFileAddress();
-            const addr_t block_start_addr = function_file_addr + new_range.GetBaseAddress ();
-            const addr_t block_end_addr = function_file_addr + new_range.GetEndAddress ();
+            const addr_t block_start_addr = function_file_addr + range.GetRangeBase ();
+            const addr_t block_end_addr = function_file_addr + range.GetRangeEnd ();
             Type *func_type = function->GetType();
             
             const Declaration &func_decl = func_type->GetDeclaration();
@@ -371,7 +403,7 @@ Block::AddRange (const VMRange& new_range)
                              func_decl.GetFile().GetFilename().GetCString(),
                              func_decl.GetLine(),
                              GetID(),
-                             (uint32_t)m_ranges.size(),
+                             (uint32_t)m_ranges.GetSize(),
                              block_start_addr,
                              block_end_addr,
                              parent_block->GetID(),
@@ -383,7 +415,7 @@ Block::AddRange (const VMRange& new_range)
             {
                 log->Printf ("warning: block {0x%8.8x} has range[%u] [0x%llx - 0x%llx) which is not contained in parent block {0x%8.8x} in function {0x%8.8x} from %s/%s",
                              GetID(),
-                             (uint32_t)m_ranges.size(),
+                             (uint32_t)m_ranges.GetSize(),
                              block_start_addr,
                              block_end_addr,
                              parent_block->GetID(),
@@ -392,16 +424,16 @@ Block::AddRange (const VMRange& new_range)
                              module->GetFileSpec().GetFilename().GetCString());
             }
         }
-        parent_block->AddRange (new_range);
+        parent_block->AddRange (range);
     }
-    m_ranges.push_back(new_range);
+    m_ranges.Append(range);
 }
 
 // Return the current number of bytes that this object occupies in memory
 size_t
 Block::MemorySize() const
 {
-    size_t mem_size = sizeof(Block) + m_ranges.size() * sizeof(VMRange);
+    size_t mem_size = sizeof(Block) + m_ranges.GetSize() * sizeof(Range);
     if (m_inlineInfoSP.get())
         mem_size += m_inlineInfoSP->MemorySize();
     if (m_variable_list_sp.get())

@@ -281,6 +281,7 @@ ClangASTType::GetTypeClass (clang::ASTContext *ast_context, lldb::clang_type_t c
         case clang::Type::TypeOf:                   break;
         case clang::Type::Decltype:                 break;
         case clang::Type::TemplateSpecialization:   break;
+        case clang::Type::Atomic:                   break;
     }
     // We don't know hot to display this type...
     return lldb::eTypeClassOther;
@@ -492,8 +493,10 @@ ClangASTType::GetEncoding (clang_type_t clang_type, uint32_t &count)
     case clang::Type::TypeOfExpr:
     case clang::Type::TypeOf:
     case clang::Type::Decltype:
-//    case clang::Type::QualifiedName:
-    case clang::Type::TemplateSpecialization:   break;
+    case clang::Type::TemplateSpecialization:
+    case clang::Type::Atomic:
+        break;
+
     }
     count = 0;
     return lldb::eEncodingInvalid;
@@ -607,8 +610,9 @@ ClangASTType::GetFormat (clang_type_t clang_type)
     case clang::Type::TypeOfExpr:
     case clang::Type::TypeOf:
     case clang::Type::Decltype:
-//    case clang::Type::QualifiedName:
-    case clang::Type::TemplateSpecialization:   break;
+    case clang::Type::TemplateSpecialization:
+    case clang::Type::Atomic:
+            break;
     }
     // We don't know hot to display this type...
     return lldb::eFormatBytes;

@@ -933,7 +933,7 @@ DWARFDebugInfoEntry::GetDIENamesAndRanges
                         // All DW_AT_ranges are relative to the base address of the
                         // compile unit. We add the compile unit base address to make
                         // sure all the addresses are properly fixed up.
-                        ranges.AddOffset(cu->GetBaseAddress());
+                        ranges.Slide(cu->GetBaseAddress());
                     }
                     break;
 
@@ -1024,26 +1024,25 @@ DWARFDebugInfoEntry::GetDIENamesAndRanges
         }
     }
 
-    size_t numRanges = ranges.Size();
-
-    if (numRanges == 0)
+    if (ranges.IsEmpty())
     {
         if (lo_pc != DW_INVALID_ADDRESS)
         {
-            if (hi_pc != DW_INVALID_ADDRESS)
-                ranges.AddRange(lo_pc, hi_pc);
+            if (hi_pc != DW_INVALID_ADDRESS && hi_pc > lo_pc)
+                ranges.Append(DWARFDebugRanges::Range (lo_pc, hi_pc - lo_pc));
             else
-                ranges.AddRange(lo_pc, lo_pc);
+                ranges.Append(DWARFDebugRanges::Range (lo_pc, 0));
         }
     }
     
     if (set_frame_base_loclist_addr)
     {
-        assert (ranges.LowestAddress(0) >= cu->GetBaseAddress());
-        frame_base->SetLocationListSlide(ranges.LowestAddress(0) - cu->GetBaseAddress());
+        dw_addr_t lowest_range_pc = ranges.GetMinRangeBase(0);
+        assert (lowest_range_pc >= cu->GetBaseAddress());
+        frame_base->SetLocationListSlide (lowest_range_pc - cu->GetBaseAddress());
     }
 
-    if (ranges.Size() == 0 || (name == NULL) || (mangled == NULL))
+    if (ranges.IsEmpty() || name == NULL || mangled == NULL)
     {
         std::vector<dw_offset_t>::const_iterator pos;
         std::vector<dw_offset_t>::const_iterator end = die_offsets.end();
@@ -1060,7 +1059,7 @@ DWARFDebugInfoEntry::GetDIENamesAndRanges
             }
         }
     }
-    return ranges.Size() > 0;
+    return !ranges.IsEmpty();
 }
 
 //----------------------------------------------------------------------
@@ -2038,8 +2037,8 @@ DWARFDebugInfoEntry::LookupAddress
                     // All DW_AT_ranges are relative to the base address of the
                     // compile unit. We add the compile unit base address to make
                     // sure all the addresses are properly fixed up.
-                    ranges.AddOffset(cu->GetBaseAddress());
-                    if (ranges.Lookup(address))
+                    ranges.Slide (cu->GetBaseAddress());
+                    if (ranges.FindEntryThatContains(address))
                     {
                         found_address = true;
                     //  puts("***MATCH***");

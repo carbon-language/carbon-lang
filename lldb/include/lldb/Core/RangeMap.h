@@ -46,6 +46,13 @@ namespace lldb_private {
         {
         }
         
+        void
+        Clear (BaseType b = 0)
+        {
+            base = b;
+            size = 0;
+        }
+
         // Set the start value for the range, and keep the same size
         BaseType
         GetRangeBase () const
@@ -57,6 +64,12 @@ namespace lldb_private {
         SetRangeBase (BaseType b)
         {
             base = b;
+        }
+        
+        void
+        Slide (BaseType slide)
+        {
+            base += slide;
         }
         
         BaseType
@@ -111,7 +124,18 @@ namespace lldb_private {
         }
         
         bool
-        operator < (const Range &rhs)
+        Overlap (const Range &rhs) const
+        {
+            const BaseType lhs_base = this->GetRangeBase();
+            const BaseType rhs_base = rhs.GetRangeBase();
+            const BaseType lhs_end = this->GetRangeEnd();
+            const BaseType rhs_end = rhs.GetRangeEnd();
+            bool result = (lhs_base <= rhs_end) && (lhs_end >= rhs_base);
+            return result;
+        }
+        
+        bool
+        operator < (const Range &rhs) const
         {
             if (base == rhs.base)
                 return size < rhs.size;
@@ -119,13 +143,13 @@ namespace lldb_private {
         }
         
         bool
-        operator == (const Range &rhs)
+        operator == (const Range &rhs) const
         {
             return base == rhs.base && size == rhs.size;
         }
         
         bool
-        operator != (const Range &rhs)
+        operator != (const Range &rhs) const
         {
             return  base != rhs.base || size != rhs.size;
         }
@@ -139,9 +163,13 @@ namespace lldb_private {
     template <typename B, typename S>
     class RangeArray
     {
+    public:
+        typedef B BaseType;
+        typedef S SizeType;
         typedef Range<B,S> Entry;
         
-        RangeArray ()
+        RangeArray () :
+            m_entries ()
         {
         }
         
@@ -163,40 +191,74 @@ namespace lldb_private {
         }
         
         void
-        CombineConsecutiveEntriesWithEqualData ()
+        CombineConsecutiveRanges ()
         {
-            typename std::vector<Entry>::iterator pos;
-            typename std::vector<Entry>::iterator end;
-            typename std::vector<Entry>::iterator prev;
-            bool can_combine = false;
-            // First we determine if we can combine any of the Entry objects so we
-            // don't end up allocating and making a new collection for no reason
-            for (pos = m_entries.begin(), end = m_entries.end(), prev = end; pos != end; prev = pos++)
+            // Can't combine if ranges if we have zero or one range
+            if (m_entries.size() > 1)
             {
-                if (prev != end && prev->data == pos->data)
-                {
-                    can_combine = true;
-                    break;
-                }
-            }
-            
-            // We we can combine at least one entry, then we make a new collection
-            // and populate it accordingly, and then swap it into place. 
-            if (can_combine)
-            {
-                std::vector<Entry> minimal_ranges;
+                // The list should be sorted prior to calling this function
+                typename std::vector<Entry>::iterator pos;
+                typename std::vector<Entry>::iterator end;
+                typename std::vector<Entry>::iterator prev;
+                bool can_combine = false;
+                // First we determine if we can combine any of the Entry objects so we
+                // don't end up allocating and making a new collection for no reason
                 for (pos = m_entries.begin(), end = m_entries.end(), prev = end; pos != end; prev = pos++)
                 {
-                    if (prev != end && prev->data == pos->data)
-                        minimal_ranges.back().range.SetEnd (pos->range.GetRangeEnd());
-                    else
-                        minimal_ranges.push_back (*pos);
+                    if (prev != end && prev->Overlap(*pos))
+                    {
+                        can_combine = true;
+                        break;
+                    }
                 }
-                // Use the swap technique in case our new vector is much smaller.
-                // We must swap when using the STL because std::vector objects never
-                // release or reduce the memory once it has been allocated/reserved.
-                m_entries.swap (minimal_ranges);
+                
+                // We we can combine at least one entry, then we make a new collection
+                // and populate it accordingly, and then swap it into place. 
+                if (can_combine)
+                {
+                    std::vector<Entry> minimal_ranges;
+                    for (pos = m_entries.begin(), end = m_entries.end(), prev = end; pos != end; prev = pos++)
+                    {
+                        if (prev != end && prev->Overlap(*pos))
+                            minimal_ranges.back().SetRangeEnd (std::max<BaseType>(prev->GetRangeEnd(), pos->GetRangeEnd()));
+                        else
+                            minimal_ranges.push_back (*pos);
+                    }
+                    // Use the swap technique in case our new vector is much smaller.
+                    // We must swap when using the STL because std::vector objects never
+                    // release or reduce the memory once it has been allocated/reserved.
+                    m_entries.swap (minimal_ranges);
+                }
             }
+        }
+
+        
+        BaseType
+        GetMinRangeBase (BaseType fail_value) const
+        {
+            if (m_entries.empty())
+                return fail_value;
+            // m_entries must be sorted, so if we aren't empty, we grab the
+            // first range's base
+            return m_entries.front().GetRangeBase();
+        }
+
+        BaseType
+        GetMaxRangeEnd (BaseType fail_value) const
+        {
+            if (m_entries.empty())
+                return fail_value;
+            // m_entries must be sorted, so if we aren't empty, we grab the
+            // last range's end
+            return m_entries.back().GetRangeEnd();
+        }
+        
+        void
+        Slide (BaseType slide)
+        {
+            typename std::vector<Entry>::iterator pos, end;
+            for (pos = m_entries.begin(), end = m_entries.end(); pos != end; ++pos)
+                pos->Slide (slide);
         }
         
         void
@@ -212,25 +274,56 @@ namespace lldb_private {
         }
         
         size_t
-        GetNumEntries () const
+        GetSize () const
         {
             return m_entries.size();
         }
         
         const Entry *
-        GetEntryAtIndex (uint32_t i) const
+        GetEntryAtIndex (size_t i) const
         {
             if (i<m_entries.size())
                 return &m_entries[i];
             return NULL;
         }
         
+        // Clients must ensure that "i" is a valid index prior to calling this function
+        const Entry &
+        GetEntryRef (size_t i) const
+        {
+            return m_entries[i];
+        }
+
         static bool 
         BaseLessThan (const Entry& lhs, const Entry& rhs)
         {
             return lhs.GetRangeBase() < rhs.GetRangeBase();
         }
         
+        uint32_t
+        FindEntryIndexThatContains (B addr) const
+        {
+            if ( !m_entries.empty() )
+            {
+                Entry entry (addr, 1);
+                typename std::vector<Entry>::const_iterator begin = m_entries.begin();
+                typename std::vector<Entry>::const_iterator end = m_entries.end();
+                typename std::vector<Entry>::const_iterator pos = std::lower_bound (begin, end, entry, BaseLessThan);
+                
+                if (pos != end && pos->Contains(addr))
+                {
+                    return std::distance (begin, pos);
+                }
+                else if (pos != begin)
+                {
+                    --pos;
+                    if (pos->Contains(addr))
+                        return std::distance (begin, pos);
+                }
+            }
+            return UINT32_MAX;
+        }
+
         const Entry *
         FindEntryThatContains (B addr) const
         {
@@ -256,7 +349,32 @@ namespace lldb_private {
             }
             return NULL;
         }
-        
+
+        const Entry *
+        FindEntryThatContains (const Entry &range) const
+        {
+            if ( !m_entries.empty() )
+            {
+                typename std::vector<Entry>::const_iterator begin = m_entries.begin();
+                typename std::vector<Entry>::const_iterator end = m_entries.end();
+                typename std::vector<Entry>::const_iterator pos = std::lower_bound (begin, end, range, BaseLessThan);
+                
+                if (pos != end && pos->Contains(range))
+                {
+                    return &(*pos); 
+                }
+                else if (pos != begin)
+                {
+                    --pos;
+                    if (pos->Contains(range))
+                    {
+                        return &(*pos); 
+                    }
+                }
+            }
+            return NULL;
+        }
+
     protected:
         std::vector<Entry> m_entries;
     };
@@ -392,23 +510,54 @@ namespace lldb_private {
         }
         
         size_t
-        GetNumEntries () const
+        GetSize () const
         {
             return m_entries.size();
         }
         
         const Entry *
-        GetEntryAtIndex (uint32_t i) const
+        GetEntryAtIndex (size_t i) const
         {
             if (i<m_entries.size())
                 return &m_entries[i];
             return NULL;
         }
-        
+
+        // Clients must ensure that "i" is a valid index prior to calling this function
+        const Entry &
+        GetEntryRef (size_t i) const
+        {
+            return m_entries[i];
+        }
+
         static bool 
         BaseLessThan (const Entry& lhs, const Entry& rhs)
         {
             return lhs.GetRangeBase() < rhs.GetRangeBase();
+        }
+        
+        uint32_t
+        FindEntryIndexThatContains (B addr) const
+        {
+            if ( !m_entries.empty() )
+            {
+                Entry entry (addr, 1);
+                typename std::vector<Entry>::const_iterator begin = m_entries.begin();
+                typename std::vector<Entry>::const_iterator end = m_entries.end();
+                typename std::vector<Entry>::const_iterator pos = std::lower_bound (begin, end, entry, BaseLessThan);
+                
+                if (pos != end && pos->Contains(addr))
+                {
+                    return std::distance (begin, pos);
+                }
+                else if (pos != begin)
+                {
+                    --pos;
+                    if (pos->Contains(addr))
+                        return std::distance (begin, pos);
+                }
+            }
+            return UINT32_MAX;
         }
         
         const Entry *
@@ -439,6 +588,32 @@ namespace lldb_private {
             return NULL;
         }
         
+        const Entry *
+        FindEntryThatContains (const Entry &range) const
+        {
+            if ( !m_entries.empty() )
+            {
+                typename std::vector<Entry>::const_iterator begin = m_entries.begin();
+                typename std::vector<Entry>::const_iterator end = m_entries.end();
+                typename std::vector<Entry>::const_iterator pos = std::lower_bound (begin, end, range, BaseLessThan);
+                
+                if (pos != end && pos->Contains(range))
+                {
+                    return &(*pos); 
+                }
+                else if (pos != begin)
+                {
+                    --pos;
+                    if (pos->Contains(range))
+                    {
+                        return &(*pos); 
+                    }
+                }
+            }
+            return NULL;
+        }
+        
+
     protected:
         std::vector<Entry> m_entries;
     };

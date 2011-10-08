@@ -237,12 +237,7 @@ SBBlock::GetRangeIndexForBlockAddress (lldb::SBAddress block_addr)
 {
     if (m_opaque_ptr && block_addr.IsValid())
     {
-        uint32_t range_idx = UINT32_MAX;
-        AddressRange range;
-        if (m_opaque_ptr->GetRangeContainingAddress (block_addr.ref(), range, &range_idx))
-        {
-            return range_idx;
-        }
+        return m_opaque_ptr->GetRangeIndexContainingAddress (block_addr.ref());
     }
 
     return UINT32_MAX;

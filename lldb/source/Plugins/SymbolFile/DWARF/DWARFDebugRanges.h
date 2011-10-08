@@ -11,66 +11,17 @@
 #define SymbolFileDWARF_DWARFDebugRanges_h_
 
 #include "SymbolFileDWARF.h"
+
 #include <map>
 #include <vector>
 
+#include "lldb/Core/RangeMap.h"
 
 class DWARFDebugRanges
 {
 public:
-
-    //------------------------------------------------------------------
-    // Address range
-    //------------------------------------------------------------------
-    struct Range
-    {
-        Range(dw_addr_t begin = DW_INVALID_ADDRESS, dw_addr_t end = DW_INVALID_ADDRESS) :
-            begin_offset(begin),
-            end_offset(end)
-        {
-        }
-
-        void Clear()
-        {
-            begin_offset = DW_INVALID_ADDRESS;
-            end_offset = DW_INVALID_ADDRESS;
-        }
-
-        dw_addr_t   begin_offset;
-        dw_addr_t   end_offset;
-
-        typedef std::vector<Range>          collection;
-        typedef collection::iterator        iterator;
-        typedef collection::const_iterator  const_iterator;
-
-    };
-
-    //------------------------------------------------------------------
-    // Collection of ranges
-    //------------------------------------------------------------------
-    struct RangeList
-    {
-            RangeList() :
-                ranges()
-            {
-            }
-
-        bool Extract(SymbolFileDWARF* dwarf2Data, uint32_t* offset_ptr);
-        bool AddRange(dw_addr_t lo_addr, dw_addr_t hi_addr);
-        void Clear()
-            {
-                ranges.clear();
-            }
-
-        dw_addr_t LowestAddress(const dw_addr_t base_addr) const;
-        dw_addr_t HighestAddress(const dw_addr_t base_addr) const;
-        void AddOffset(dw_addr_t offset);
-        void SubtractOffset(dw_addr_t offset);
-        size_t Size() const;
-        const Range* RangeAtIndex(size_t i) const;
-        const Range* Lookup(dw_addr_t offset) const;
-        Range::collection   ranges;
-    };
+    typedef lldb_private::RangeArray<dw_addr_t, dw_addr_t> RangeList;
+    typedef RangeList::Entry Range;
 
     DWARFDebugRanges();
     ~DWARFDebugRanges();
@@ -79,6 +30,12 @@ public:
     bool FindRanges(dw_offset_t debug_ranges_offset, DWARFDebugRanges::RangeList& range_list) const;
 
 protected:
+
+    bool
+    Extract (SymbolFileDWARF* dwarf2Data, 
+             uint32_t* offset_ptr, 
+             RangeList &range_list);
+
     typedef std::map<dw_offset_t, RangeList>    range_map;
     typedef range_map::iterator                 range_map_iterator;
     typedef range_map::const_iterator           range_map_const_iterator;

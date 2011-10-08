@@ -69,7 +69,7 @@ public:
     uint32_t
     GetNumRanges() const
     {
-        return m_aranges.GetNumEntries();
+        return m_aranges.GetSize();
     }
 
     dw_offset_t 

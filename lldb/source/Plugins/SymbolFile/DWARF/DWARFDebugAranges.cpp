@@ -113,7 +113,7 @@ DWARFDebugAranges::Dump (Log *log) const
     if (log == NULL)
         return;
     
-    const size_t num_entries = m_aranges.GetNumEntries();
+    const size_t num_entries = m_aranges.GetSize();
     for (size_t i=0; i<num_entries; ++i)
     {
         const RangeToDIE::Entry *entry = m_aranges.GetEntryAtIndex(i);
@@ -141,7 +141,7 @@ DWARFDebugAranges::Sort (bool minimize)
     size_t orig_arange_size = 0;
     if (log)
     {
-        orig_arange_size = m_aranges.GetNumEntries();
+        orig_arange_size = m_aranges.GetSize();
         log->Printf ("DWARFDebugAranges::Sort(minimize = %u) with %zu entries", minimize, orig_arange_size);
     }
 
@@ -152,7 +152,7 @@ DWARFDebugAranges::Sort (bool minimize)
     {
         if (minimize)
         {
-            const size_t new_arange_size = m_aranges.GetNumEntries();
+            const size_t new_arange_size = m_aranges.GetSize();
             const size_t delta = orig_arange_size - new_arange_size;
             log->Printf ("DWARFDebugAranges::Sort() %zu entries after minimizing (%zu entries combined for %zu bytes saved)", 
                          new_arange_size, delta, delta * sizeof(Range));
