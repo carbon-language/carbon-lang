@@ -1721,7 +1721,7 @@ llvm::Constant *CGObjCGNU::MakeBitField(llvm::SmallVectorImpl<bool> &bits) {
   if (bitCount < 64) {
     uint64_t val = 1;
     for (int i=0 ; i<bitCount ; ++i) {
-      if (bits[i]) val |= 1<<(i+1);
+      if (bits[i]) val |= 1ULL<<(i+1);
     }
     return llvm::ConstantInt::get(Int64Ty, val);
   }
