@@ -536,7 +536,7 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
     if (char *env = ::getenv("IOS_SIMULATOR_DEPLOYMENT_TARGET"))
       iOSSimTarget = env;
 
-    // If no '-miphoneos-version-min' specified on the command line and 
+    // If no '-miphoneos-version-min' specified on the command line and
     // IPHONEOS_DEPLOYMENT_TARGET is not defined, see if we can set the default
     // based on isysroot.
     if (iOSTarget.empty()) {
