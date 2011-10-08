@@ -1145,5 +1145,11 @@ let Defs = [EFLAGS] in {
                            "{$src, %eax|EAX, $src}">;
   def TEST64i32  : BinOpAI<0xA8, "test", Xi64, RAX,
                            "{$src, %rax|RAX, $src}">;
+
+  // When testing the result of EXTRACT_SUBREG sub_8bit_hi, make sure the
+  // register class is constrained to GR8_NOREX.
+  let isPseudo = 1 in
+  def TEST8ri_NOREX : I<0, Pseudo, (outs), (ins GR8_NOREX:$src, i8imm:$mask),
+                        "", []>;
 }                          
 

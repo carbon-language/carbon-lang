@@ -2421,6 +2421,9 @@ bool X86InstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
   switch (MI->getOpcode()) {
   case X86::V_SET0:
     return Expand2AddrUndef(MI, get(HasAVX ? X86::VPXORrr : X86::PXORrr));
+  case X86::TEST8ri_NOREX:
+    MI->setDesc(get(X86::TEST8ri));
+    return true;
   }
   return false;
 }

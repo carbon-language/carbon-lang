@@ -2173,9 +2173,10 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
         SDValue Subreg = CurDAG->getTargetExtractSubreg(X86::sub_8bit_hi, dl,
                                                         MVT::i8, Reg);
 
-        // Emit a testb. No special NOREX tricks are needed since there's
-        // only one GPR operand!
-        return CurDAG->getMachineNode(X86::TEST8ri, dl, MVT::i32,
+        // Emit a testb.  The EXTRACT_SUBREG becomes a COPY that can only
+        // target GR8_NOREX registers, so make sure the register class is
+        // forced.
+        return CurDAG->getMachineNode(X86::TEST8ri_NOREX, dl, MVT::i32,
                                       Subreg, ShiftedImm);
       }
 
