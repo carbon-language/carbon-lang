@@ -15,6 +15,7 @@
 
 #include "llvm-objdump.h"
 #include "MCFunction.h"
+#include "llvm/Object/Archive.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/Triple.h"
@@ -27,8 +28,10 @@
 #include "llvm/MC/MCInstrDesc.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/GraphWriter.h"
 #include "llvm/Support/Host.h"
@@ -56,6 +59,9 @@ Disassemble("disassemble",
 static cl::alias
 Disassembled("d", cl::desc("Alias for --disassemble"),
              cl::aliasopt(Disassemble));
+
+static cl::opt<bool>
+Relocations("r", cl::desc("Display the relocation entries in the file"));
 
 static cl::opt<bool>
 MachO("macho", cl::desc("Use MachO specific object file parser"));
@@ -131,17 +137,8 @@ void llvm::DumpBytes(StringRef bytes) {
   outs() << output;
 }
 
-void llvm::DisassembleInputLibObject(StringRef Filename) {
-  OwningPtr<MemoryBuffer> Buff;
-
-  if (error_code ec = MemoryBuffer::getFileOrSTDIN(Filename, Buff)) {
-    errs() << ToolName << ": " << Filename << ": " << ec.message() << "\n";
-    return;
-  }
-
-  OwningPtr<ObjectFile> Obj(ObjectFile::createObjectFile(Buff.take()));
-
-  const Target *TheTarget = GetTarget(Obj.get());
+static void DisassembleObject(const ObjectFile *Obj) {
+  const Target *TheTarget = GetTarget(Obj);
   if (!TheTarget) {
     // GetTarget prints out stuff.
     return;
@@ -151,13 +148,13 @@ void llvm::DisassembleInputLibObject(StringRef Filename) {
     InstrAnalysis(TheTarget->createMCInstrAnalysis(InstrInfo));
 
   outs() << '\n';
-  outs() << Filename
+  outs() << Obj->getFileName()
          << ":\tfile format " << Obj->getFileFormatName() << "\n\n";
 
   error_code ec;
   for (section_iterator i = Obj->begin_sections(),
-                                    e = Obj->end_sections();
-                                    i != e; i.increment(ec)) {
+                        e = Obj->end_sections();
+                        i != e; i.increment(ec)) {
     if (error(ec)) break;
     bool text;
     if (error(i->isText(text))) break;
@@ -166,8 +163,8 @@ void llvm::DisassembleInputLibObject(StringRef Filename) {
     // Make a list of all the symbols in this section.
     std::vector<std::pair<uint64_t, StringRef> > Symbols;
     for (symbol_iterator si = Obj->begin_symbols(),
-                                     se = Obj->end_symbols();
-                                     si != se; si.increment(ec)) {
+                         se = Obj->end_symbols();
+                         si != se; si.increment(ec)) {
       bool contains;
       if (!error(i->containsSymbol(*si, contains)) && contains) {
         uint64_t Address;
@@ -198,14 +195,16 @@ void llvm::DisassembleInputLibObject(StringRef Filename) {
       return;
     }
 
-    OwningPtr<const MCSubtargetInfo> STI(TheTarget->createMCSubtargetInfo(TripleName, "", ""));
+    OwningPtr<const MCSubtargetInfo> STI(
+      TheTarget->createMCSubtargetInfo(TripleName, "", ""));
 
     if (!STI) {
       errs() << "error: no subtarget info for target " << TripleName << "\n";
       return;
     }
 
-    OwningPtr<const MCDisassembler> DisAsm(TheTarget->createMCDisassembler(*STI));
+    OwningPtr<const MCDisassembler> DisAsm(
+      TheTarget->createMCDisassembler(*STI));
     if (!DisAsm) {
       errs() << "error: no disassembler for target " << TripleName << "\n";
       return;
@@ -215,7 +214,8 @@ void llvm::DisassembleInputLibObject(StringRef Filename) {
     OwningPtr<MCInstPrinter> IP(TheTarget->createMCInstPrinter(
                                 AsmPrinterVariant, *AsmInfo, *STI));
     if (!IP) {
-      errs() << "error: no instruction printer for target " << TripleName << '\n';
+      errs() << "error: no instruction printer for target " << TripleName
+             << '\n';
       return;
     }
 
@@ -260,6 +260,87 @@ void llvm::DisassembleInputLibObject(StringRef Filename) {
   }
 }
 
+static void PrintRelocations(const ObjectFile *o) {
+  error_code ec;
+  for (section_iterator si = o->begin_sections(), se = o->end_sections();
+                                                  si != se; si.increment(ec)){
+    if (error(ec)) return;
+    if (si->begin_relocations() == si->end_relocations())
+      continue;
+    StringRef secname;
+    if (error(si->getName(secname))) continue;
+    outs() << "RELOCATION RECORDS FOR [" << secname << "]:\n";
+    for (relocation_iterator ri = si->begin_relocations(),
+                             re = si->end_relocations();
+                             ri != re; ri.increment(ec)) {
+      if (error(ec)) return;
+
+      uint64_t address;
+      SmallString<32> relocname;
+      SmallString<32> valuestr;
+      if (error(ri->getTypeName(relocname))) continue;
+      if (error(ri->getAddress(address))) continue;
+      if (error(ri->getValueString(valuestr))) continue;
+      outs() << address << " " << relocname << " " << valuestr << "\n";
+    }
+    outs() << "\n";
+  }
+}
+
+static void DumpObject(const ObjectFile *o) {
+  if (Disassemble)
+    DisassembleObject(o);
+  if (Relocations)
+    PrintRelocations(o);
+}
+
+/// @brief Dump each object file in \a a;
+static void DumpArchive(const Archive *a) {
+  for (Archive::child_iterator i = a->begin_children(),
+                               e = a->end_children(); i != e; ++i) {
+    OwningPtr<Binary> child;
+    if (error_code ec = i->getAsBinary(child)) {
+      errs() << ToolName << ": '" << a->getFileName() << "': " << ec.message()
+             << ".\n";
+      continue;
+    }
+    if (ObjectFile *o = dyn_cast<ObjectFile>(child.get()))
+      DumpObject(o);
+    else
+      errs() << ToolName << ": '" << a->getFileName() << "': "
+              << "Unrecognized file type.\n";
+  }
+}
+
+/// @brief Open file and figure out how to dump it.
+static void DumpInput(StringRef file) {
+  // If file isn't stdin, check that it exists.
+  if (file != "-" && !sys::fs::exists(file)) {
+    errs() << ToolName << ": '" << file << "': " << "No such file\n";
+    return;
+  }
+
+  if (MachO && Disassemble) {
+    DisassembleInputMachO(file);
+    return;
+  }
+
+  // Attempt to open the binary.
+  OwningPtr<Binary> binary;
+  if (error_code ec = createBinary(file, binary)) {
+    errs() << ToolName << ": '" << file << "': " << ec.message() << ".\n";
+    return;
+  }
+
+  if (Archive *a = dyn_cast<Archive>(binary.get())) {
+    DumpArchive(a);
+  } else if (ObjectFile *o = dyn_cast<ObjectFile>(binary.get())) {
+    DumpObject(o);
+  } else {
+    errs() << ToolName << ": '" << file << "': " << "Unrecognized file type.\n";
+  }
+}
+
 int main(int argc, char **argv) {
   // Print a stack trace if we signal out.
   sys::PrintStackTraceOnErrorSignal();
@@ -281,19 +362,13 @@ int main(int argc, char **argv) {
   if (InputFilenames.size() == 0)
     InputFilenames.push_back("a.out");
 
-  // -d is the only flag that is currently implemented, so just print help if
-  // it is not set.
-  if (!Disassemble) {
+  if (!Disassemble && !Relocations) {
     cl::PrintHelpMessage();
     return 2;
   }
 
-  if (MachO)
-    std::for_each(InputFilenames.begin(), InputFilenames.end(),
-                  DisassembleInputMachO);
-  else
-    std::for_each(InputFilenames.begin(), InputFilenames.end(),
-                  DisassembleInputLibObject);
+  std::for_each(InputFilenames.begin(), InputFilenames.end(),
+                DumpInput);
 
   return 0;
 }

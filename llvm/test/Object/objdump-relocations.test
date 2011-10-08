@@ -1,0 +1,24 @@
+RUN: llvm-objdump -r %p/TestObjectFiles/trivial-object-test.coff-i386 \
+RUN:              | FileCheck %s -check-prefix COFF-i386
+RUN: llvm-objdump -r %p/TestObjectFiles/trivial-object-test.coff-x86-64 \
+RUN:              | FileCheck %s -check-prefix COFF-x86-64
+RUN: llvm-objdump -r %p/TestObjectFiles/trivial-object-test.elf-i386 \
+RUN:              | FileCheck %s -check-prefix ELF-i386
+RUN: llvm-objdump -r %p/TestObjectFiles/trivial-object-test.elf-x86-64 \
+RUN:              | FileCheck %s -check-prefix ELF-x86-64
+
+COFF-i386: IMAGE_REL_I386_DIR32 L_.str
+COFF-i386: IMAGE_REL_I386_REL32 _puts
+COFF-i386: IMAGE_REL_I386_REL32 _SomeOtherFunction
+
+COFF-x86-64: IMAGE_REL_AMD64_REL32 L.str
+COFF-x86-64: IMAGE_REL_AMD64_REL32 puts
+COFF-x86-64: IMAGE_REL_AMD64_REL32 SomeOtherFunction
+
+ELF-i386: R_386_32
+ELF-i386: R_386_PC32
+ELF-i386: R_386_PC32
+
+ELF-x86-64: R_X86_64_32S .rodata.str1.1
+ELF-x86-64: R_X86_64_PC32 puts
+ELF-x86-64: R_X86_64_PC32 SomeOtherFunction
