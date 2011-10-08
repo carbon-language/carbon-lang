@@ -146,7 +146,7 @@ Archive::Archive(MemoryBuffer *source, error_code &ec)
   // Get the string table. It's the 3rd member.
   child_iterator StrTable = begin_children();
   child_iterator e = end_children();
-  for (int i = 0; StrTable != e && i < 2; ++StrTable, ++i);
+  for (int i = 0; StrTable != e && i < 2; ++StrTable, ++i) {}
 
   // Check to see if there were 3 members, or the 3rd member wasn't named "//".
   StringRef name;

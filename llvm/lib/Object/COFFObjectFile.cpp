@@ -640,7 +640,7 @@ error_code COFFObjectFile::getRelocationAdditionalInfo(DataRefImpl Rel,
 error_code COFFObjectFile::getRelocationValueString(DataRefImpl Rel,
                                           SmallVectorImpl<char> &Result) const {
   const coff_relocation *reloc = toRel(Rel);
-  const coff_symbol *symb;
+  const coff_symbol *symb = 0;
   if (error_code ec = getSymbol(reloc->SymbolTableIndex, symb)) return ec;
   DataRefImpl sym;
   ::memset(&sym, 0, sizeof(sym));
