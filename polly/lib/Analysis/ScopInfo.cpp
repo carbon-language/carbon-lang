@@ -578,6 +578,7 @@ void ScopStmt::buildScattering(SmallVectorImpl<unsigned> &Scatter) {
   isl_int_clear(v);
   Scattering = isl_map_from_basic_map(bmap);
   Scattering = isl_map_align_params(Scattering, Parent.getParamSpace());
+  isl_local_space_free(LSpace);
 }
 
 void ScopStmt::buildAccesses(TempScop &tempScop, const Region &CurRegion) {
