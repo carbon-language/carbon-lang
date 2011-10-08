@@ -76,6 +76,8 @@ namespace {
   private:
     bool setupEntryBlockAndCallSites(Function &F);
     Value *setupFunctionContext(Function &F, ArrayRef<LandingPadInst*> LPads);
+    void lowerIncomingArguments(Function &F);
+    void lowerAcrossUnwindEdges(Function &F, ArrayRef<InvokeInst*> Invokes);
 
     void insertCallSiteStore(Instruction *I, int Number, Value *CallSite);
     void markInvokeCallSite(InvokeInst *II, int InvokeNo, Value *CallSite,
@@ -345,9 +347,8 @@ splitLiveRangesAcrossInvokes(SmallVector<InvokeInst*,16> &Invokes) {
       bool NeedsSpill = false;
       for (unsigned i = 0, e = Invokes.size(); i != e; ++i) {
         BasicBlock *UnwindBlock = Invokes[i]->getUnwindDest();
-        if (UnwindBlock != BB && LiveBBs.count(UnwindBlock)) {
+        if (UnwindBlock != BB && LiveBBs.count(UnwindBlock))
           NeedsSpill = true;
-        }
       }
 
       // If we decided we need a spill, do it.
@@ -789,6 +790,125 @@ setupFunctionContext(Function &F, ArrayRef<LandingPadInst*> LPads) {
   return FuncCtx;
 }
 
+/// lowerIncomingArguments - To avoid having to handle incoming arguments
+/// specially, we lower each arg to a copy instruction in the entry block. This
+/// ensures that the argument value itself cannot be live out of the entry
+/// block.
+void SjLjEHPass::lowerIncomingArguments(Function &F) {
+  BasicBlock::iterator AfterAllocaInsPt = F.begin()->begin();
+  while (isa<AllocaInst>(AfterAllocaInsPt) &&
+         isa<ConstantInt>(cast<AllocaInst>(AfterAllocaInsPt)->getArraySize()))
+    ++AfterAllocaInsPt;
+
+  for (Function::arg_iterator
+         AI = F.arg_begin(), AE = F.arg_end(); AI != AE; ++AI) {
+    Type *Ty = AI->getType();
+
+    // Aggregate types can't be cast, but are legal argument types, so we have
+    // to handle them differently. We use an extract/insert pair as a
+    // lightweight method to achieve the same goal.
+    if (isa<StructType>(Ty) || isa<ArrayType>(Ty) || isa<VectorType>(Ty)) {
+      Instruction *EI = ExtractValueInst::Create(AI, 0, "", AfterAllocaInsPt);
+      Instruction *NI = InsertValueInst::Create(AI, EI, 0);
+      NI->insertAfter(EI);
+      AI->replaceAllUsesWith(NI);
+
+      // Set the operand of the instructions back to the AllocaInst.
+      EI->setOperand(0, AI);
+      NI->setOperand(0, AI);
+    } else {
+      // This is always a no-op cast because we're casting AI to AI->getType()
+      // so src and destination types are identical. BitCast is the only
+      // possibility.
+      CastInst *NC =
+        new BitCastInst(AI, AI->getType(), AI->getName() + ".tmp",
+                        AfterAllocaInsPt);
+      AI->replaceAllUsesWith(NC);
+
+      // Set the operand of the cast instruction back to the AllocaInst.
+      // Normally it's forbidden to replace a CastInst's operand because it
+      // could cause the opcode to reflect an illegal conversion. However, we're
+      // replacing it here with the same value it was constructed with.  We do
+      // this because the above replaceAllUsesWith() clobbered the operand, but
+      // we want this one to remain.
+      NC->setOperand(0, AI);
+    }
+  }
+}
+
+/// lowerAcrossUnwindEdges - Find all variables which are alive across an unwind
+/// edge and spill them.
+void SjLjEHPass::lowerAcrossUnwindEdges(Function &F,
+                                        ArrayRef<InvokeInst*> Invokes) {
+  // Finally, scan the code looking for instructions with bad live ranges.
+  for (Function::iterator
+         BB = F.begin(), BBE = F.end(); BB != BBE; ++BB) {
+    for (BasicBlock::iterator
+           II = BB->begin(), IIE = BB->end(); II != IIE; ++II) {
+      // Ignore obvious cases we don't have to handle. In particular, most
+      // instructions either have no uses or only have a single use inside the
+      // current block. Ignore them quickly.
+      Instruction *Inst = II;
+      if (Inst->use_empty()) continue;
+      if (Inst->hasOneUse() &&
+          cast<Instruction>(Inst->use_back())->getParent() == BB &&
+          !isa<PHINode>(Inst->use_back())) continue;
+
+      // If this is an alloca in the entry block, it's not a real register
+      // value.
+      if (AllocaInst *AI = dyn_cast<AllocaInst>(Inst))
+        if (isa<ConstantInt>(AI->getArraySize()) && BB == F.begin())
+          continue;
+
+      // Avoid iterator invalidation by copying users to a temporary vector.
+      SmallVector<Instruction*, 16> Users;
+      for (Value::use_iterator
+             UI = Inst->use_begin(), E = Inst->use_end(); UI != E; ++UI) {
+        Instruction *User = cast<Instruction>(*UI);
+        if (User->getParent() != BB || isa<PHINode>(User))
+          Users.push_back(User);
+      }
+
+      // Find all of the blocks that this value is live in.
+      std::set<BasicBlock*> LiveBBs;
+      LiveBBs.insert(Inst->getParent());
+      while (!Users.empty()) {
+        Instruction *U = Users.back();
+        Users.pop_back();
+
+        if (!isa<PHINode>(U)) {
+          MarkBlocksLiveIn(U->getParent(), LiveBBs);
+        } else {
+          // Uses for a PHI node occur in their predecessor block.
+          PHINode *PN = cast<PHINode>(U);
+          for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+            if (PN->getIncomingValue(i) == Inst)
+              MarkBlocksLiveIn(PN->getIncomingBlock(i), LiveBBs);
+        }
+      }
+
+      // Now that we know all of the blocks that this thing is live in, see if
+      // it includes any of the unwind locations.
+      bool NeedsSpill = false;
+      for (unsigned i = 0, e = Invokes.size(); i != e; ++i) {
+        BasicBlock *UnwindBlock = Invokes[i]->getUnwindDest();
+        if (UnwindBlock != BB && LiveBBs.count(UnwindBlock)) {
+          NeedsSpill = true;
+        }
+      }
+
+      // If we decided we need a spill, do it.
+      // FIXME: Spilling this way is overkill, as it forces all uses of
+      // the value to be reloaded from the stack slot, even those that aren't
+      // in the unwind blocks. We should be more selective.
+      if (NeedsSpill) {
+        ++NumSpilled;
+        DemoteRegToStack(*Inst, true);
+      }
+    }
+  }
+}
+
 /// setupEntryBlockAndCallSites - Setup the entry block by creating and filling
 /// the function context and marking the call sites with the appropriate
 /// values. These values are used by the DWARF EH emitter.
@@ -807,6 +927,9 @@ bool SjLjEHPass::setupEntryBlockAndCallSites(Function &F) {
     }
 
   if (Invokes.empty()) return false;
+
+  lowerIncomingArguments(F);
+  lowerAcrossUnwindEdges(F, Invokes);
 
   Value *FuncCtx = setupFunctionContext(F, LPads);
   BasicBlock *EntryBB = F.begin();
