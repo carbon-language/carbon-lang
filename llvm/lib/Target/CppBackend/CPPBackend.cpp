@@ -534,10 +534,18 @@ void CppWriter::printType(Type* Ty) {
   case Type::StructTyID: {
     StructType* ST = cast<StructType>(Ty);
     if (!ST->isLiteral()) {
-      Out << "StructType *" << typeName << " = ";
+      Out << "StructType *" << typeName << " = mod->getTypeByName(\"";
+      printEscapedString(ST->getName());
+      Out << "\");";
+      nl(Out);
+      Out << "if (!" << typeName << ") {";
+      nl(Out);
+      Out << typeName << " = ";
       Out << "StructType::create(mod->getContext(), \"";
       printEscapedString(ST->getName());
       Out << "\");";
+      nl(Out);
+      Out << "}";
       nl(Out);
       // Indicate that this type is now defined.
       DefinedTypes.insert(Ty);
@@ -560,12 +568,18 @@ void CppWriter::printType(Type* Ty) {
       Out << "StructType *" << typeName << " = ";
       Out << "StructType::get(" << "mod->getContext(), ";
     } else {
+      Out << "if (" << typeName << "->isOpaque()) {";
+      nl(Out);
       Out << typeName << "->setBody(";
     }
 
     Out << typeName << "_fields, /*isPacked=*/"
         << (ST->isPacked() ? "true" : "false") << ");";
     nl(Out);
+    if (!ST->isLiteral()) {
+      Out << "}";
+      nl(Out);
+    }
     break;
   }
   case Type::ArrayTyID: {
@@ -1538,13 +1552,12 @@ void CppWriter::printFunctionUses(const Function* F) {
 
 void CppWriter::printFunctionHead(const Function* F) {
   nl(Out) << "Function* " << getCppName(F);
-  if (is_inline) {
-    Out << " = mod->getFunction(\"";
-    printEscapedString(F->getName());
-    Out << "\", " << getCppName(F->getFunctionType()) << ");";
-    nl(Out) << "if (!" << getCppName(F) << ") {";
-    nl(Out) << getCppName(F);
-  }
+  Out << " = mod->getFunction(\"";
+  printEscapedString(F->getName());
+  Out << "\");";
+  nl(Out) << "if (!" << getCppName(F) << ") {";
+  nl(Out) << getCppName(F);
+
   Out<< " = Function::Create(";
   nl(Out,1) << "/*Type=*/" << getCppName(F->getFunctionType()) << ",";
   nl(Out) << "/*Linkage=*/";
@@ -1581,10 +1594,8 @@ void CppWriter::printFunctionHead(const Function* F) {
     Out << "->setGC(\"" << F->getGC() << "\");";
     nl(Out);
   }
-  if (is_inline) {
-    Out << "}";
-    nl(Out);
-  }
+  Out << "}";
+  nl(Out);
   printAttributes(F->getAttributes(), getCppName(F));
   printCppName(F);
   Out << "->setAttributes(" << getCppName(F) << "_PAL);";
