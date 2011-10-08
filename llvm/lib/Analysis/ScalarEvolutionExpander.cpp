@@ -908,6 +908,15 @@ bool SCEVExpander::isExpandedAddRecExprPHI(PHINode *PN, Instruction *IncV,
       if (IncV->getType() != Type::getInt1PtrTy(SE.getContext(), AS)
           && IncV->getType() != Type::getInt8PtrTy(SE.getContext(), AS))
         return false;
+      // Ensure the operands dominate the insertion point. I don't know of a
+      // case when this would not be true, so this is somewhat untested.
+      if (L == IVIncInsertLoop) {
+        for (User::op_iterator OI = IncV->op_begin()+1,
+               OE = IncV->op_end(); OI != OE; ++OI)
+          if (Instruction *OInst = dyn_cast<Instruction>(OI))
+            if (!SE.DT->dominates(OInst, IVIncInsertPos))
+              return false;
+      }
       break;
     }
     IncV = dyn_cast<Instruction>(IncV->getOperand(0));
