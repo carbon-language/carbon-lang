@@ -221,6 +221,13 @@ bool exists(file_status status);
 ///          platform specific error_code.
 error_code exists(const Twine &path, bool &result);
 
+/// @brief Simpler version of exists for clients that don't need to
+///        differentiate between an error and false.
+inline bool exists(const Twine &path) {
+  bool result;
+  return !exists(path, result) && result;
+}
+
 /// @brief Do file_status's represent the same thing?
 ///
 /// @param A Input file_status.
