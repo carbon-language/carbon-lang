@@ -26,7 +26,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#ifdef _MSC_VER
+#ifdef _WIN32
 #include <direct.h>
 #endif
 
