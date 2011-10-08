@@ -56,29 +56,29 @@ class ExprFormattersTestCase(TestBase):
         self.runCmd("frame variable foo1.b -T")
         self.runCmd("frame variable foo1.b.b_ref -T")
 
-        self.expect("p *(new foo(47))",
+        self.expect("expression *(new foo(47))",
             substrs = ['(int) a = 47', '(bar) b = {', '(int) i = 94', '(baz) b = {', '(int) k = 99'])
 
         self.runCmd("type summary add -F formatters.foo_SummaryProvider foo")
 
-        self.expect("p new int(12)",
+        self.expect("expression new int(12)",
             substrs = ['(int *) $', ' = 0x'])
 
         self.runCmd("type summary add -s \"${var%pointer} -> ${*var%decimal}\" \"int *\"")
 
-        self.expect("p new int(12)",
+        self.expect("expression new int(12)",
             substrs = ['(int *) $', '= 0x', ' -> 12'])
 
-        self.expect("p foo1.a_ptr",
+        self.expect("expression foo1.a_ptr",
             substrs = ['(int *) $', '= 0x', ' -> 13'])
 
-        self.expect("p foo1",
+        self.expect("expression foo1",
             substrs = ['(foo) $', ' = a = 12, a_ptr = ', ' -> 13, i = 24, i_ptr = ', ' -> 25'])
 
-        self.expect("p new foo(47)",
+        self.expect("expression new foo(47)",
             substrs = ['(foo *) $', ' a = 47, a_ptr = ', ' -> 48, i = 94, i_ptr = ', ' -> 95'])
 
-        self.expect("p foo2",
+        self.expect("expression foo2",
             substrs = ['(foo) $', ' = a = 121, a_ptr = ', ' -> 122, i = 242, i_ptr = ', ' -> 243'])
 
         object_name = self.res.GetOutput()
@@ -88,13 +88,13 @@ class ExprFormattersTestCase(TestBase):
         self.expect("frame variable foo2",
                     substrs = ['(foo)', 'foo2', ' = a = 121, a_ptr = ', ' -> 122, i = 242, i_ptr = ', ' -> 243'])
         
-        self.expect("p $" + object_name,
+        self.expect("expression $" + object_name,
             substrs = ['(foo) $', ' = a = 121, a_ptr = ', ' -> 122, i = 242, i_ptr = ', ' -> 243', ', h = 245 , k = 247'])
 
         self.runCmd("type summary delete foo")
         self.runCmd("type synthetic add --python-class foosynth.FooSyntheticProvider foo")
 
-        self.expect("p $" + object_name,
+        self.expect("expression $" + object_name,
             substrs = ['(foo) $', ' = {', '(int) *i_ptr = 243'])
 
         self.runCmd("n")
@@ -103,22 +103,22 @@ class ExprFormattersTestCase(TestBase):
         self.runCmd("type synthetic delete foo")
         self.runCmd("type summary add -F formatters.foo_SummaryProvider foo")
 
-        self.expect("p foo2",
+        self.expect("expression foo2",
             substrs = ['(foo) $', ' = a = 7777, a_ptr = ', ' -> 122, i = 242, i_ptr = ', ' -> 8888'])
 
-        self.expect("p $" + object_name + '.a',
+        self.expect("expression $" + object_name + '.a',
             substrs = ['7777'])
 
-        self.expect("p *$" + object_name + '.b.i_ptr',
+        self.expect("expression *$" + object_name + '.b.i_ptr',
             substrs = ['8888'])
 
-        self.expect("p $" + object_name,
+        self.expect("expression $" + object_name,
             substrs = ['(foo) $', ' = a = 121, a_ptr = ', ' -> 122, i = 242, i_ptr = ', ' -> 8888', 'h = 245 , k = 247'])
 
         self.runCmd("type summary delete foo")
         self.runCmd("type synthetic add --python-class foosynth.FooSyntheticProvider foo")
 
-        self.expect("p $" + object_name,
+        self.expect("expression $" + object_name,
             substrs = ['(foo) $', ' = {', '(int) *i_ptr = 8888'])
 
         self.runCmd("n")
@@ -126,7 +126,7 @@ class ExprFormattersTestCase(TestBase):
         self.runCmd("type synthetic delete foo")
         self.runCmd("type summary add -F formatters.foo_SummaryProvider foo")
 
-        self.expect("p $" + object_name,
+        self.expect("expression $" + object_name,
                     substrs = ['(foo) $', ' = a = 121, a_ptr = ', ' -> 122, i = 242, i_ptr = ', ' -> 8888', 'h = 9999 , k = 247'])
 
         process = self.dbg.GetSelectedTarget().GetProcess()
@@ -145,7 +145,7 @@ class ExprFormattersTestCase(TestBase):
         self.expect("frame variable numbers",
                     substrs = ['1','2','3','4','5'])
 
-        self.expect("p numbers",
+        self.expect("expression numbers",
                     substrs = ['1','2','3','4','5'])
 
         frozen = frame.EvaluateExpression("&numbers")

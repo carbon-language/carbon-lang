@@ -2182,7 +2182,8 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
         {
             const bool include_symbols = true;
             const bool append = false;
-            m_parser_vars->m_sym_ctx.FindFunctionsByName (name, 
+            m_parser_vars->m_sym_ctx.FindFunctionsByName (name,
+                                                          eFunctionNameTypeBase,
                                                           include_symbols, 
                                                           append, 
                                                           sc_list);

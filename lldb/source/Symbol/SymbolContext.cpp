@@ -463,12 +463,14 @@ SymbolContext::FindNamespace (const ConstString &name) const
 
 size_t
 SymbolContext::FindFunctionsByName (const ConstString &name, 
+                                    uint32_t name_type_mask,
                                     bool include_symbols, 
                                     bool append, 
                                     SymbolContextList &sc_list) const
 {    
     if (!append)
         sc_list.Clear();
+    uint32_t old_size = sc_list.GetSize();
     
     if (function != NULL)
     {
@@ -477,12 +479,27 @@ SymbolContext::FindFunctionsByName (const ConstString &name,
     }
 
     if (module_sp)
-        module_sp->FindFunctions (name, eFunctionNameTypeBase | eFunctionNameTypeFull, include_symbols, true, sc_list);
+        module_sp->FindFunctions (name, name_type_mask, include_symbols, true, sc_list);
 
     if (target_sp)
-        target_sp->GetImages().FindFunctions (name, eFunctionNameTypeBase | eFunctionNameTypeFull, include_symbols, true, sc_list);
-
-    return sc_list.GetSize();
+    {
+        if (!module_sp)
+        {
+            target_sp->GetImages().FindFunctions (name, name_type_mask, include_symbols, true, sc_list);
+        }
+        else
+        {
+            ModuleList &modules = target_sp->GetImages();
+            uint32_t num_modules = modules.GetSize();
+            for (uint32_t i = 0; i < num_modules; i++)
+            {
+                ModuleSP iter_module_sp = modules.GetModuleAtIndex(i);
+                if (module_sp != iter_module_sp)
+                    iter_module_sp->FindFunctions (name, name_type_mask, include_symbols, true, sc_list);
+            }
+        }
+    }
+    return sc_list.GetSize() - old_size;
 }
 
 //lldb::VariableSP

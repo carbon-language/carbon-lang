@@ -229,8 +229,9 @@ public:
     ///     The number of symbol contexts found.
     //------------------------------------------------------------------
     size_t
-    FindFunctionsByName (const ConstString &name, 
-                         bool include_symbols, 
+    FindFunctionsByName (const ConstString &name,
+                         uint32_t name_type_mask,
+                         bool include_symbols,
                          bool append, 
                          SymbolContextList &sc_list) const;
 
