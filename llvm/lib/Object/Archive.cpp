@@ -156,14 +156,14 @@ Archive::Archive(MemoryBuffer *source, error_code &ec)
   ec = object_error::success;
 }
 
-Archive::child_iterator Archive::begin_children() {
+Archive::child_iterator Archive::begin_children() const {
   const char *Loc = Data->getBufferStart() + Magic.size();
   size_t Size = sizeof(ArchiveMemberHeader) +
     ToHeader(Loc)->getSize();
   return Child(this, StringRef(Loc, Size));
 }
 
-Archive::child_iterator Archive::end_children() {
+Archive::child_iterator Archive::end_children() const {
   return Child(this, StringRef(0, 0));
 }
 

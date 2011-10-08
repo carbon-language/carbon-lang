@@ -24,11 +24,11 @@ namespace object {
 class Archive : public Binary {
 public:
   class Child {
-    Archive *Parent;
+    const Archive *Parent;
     StringRef Data;
 
   public:
-    Child(Archive *p, StringRef d) : Parent(p), Data(d) {}
+    Child(const Archive *p, StringRef d) : Parent(p), Data(d) {}
 
     bool operator ==(const Child &other) const {
       return (Parent == other.Parent) && (Data.begin() == other.Data.begin());
@@ -71,8 +71,8 @@ public:
 
   Archive(MemoryBuffer *source, error_code &ec);
 
-  child_iterator begin_children();
-  child_iterator end_children();
+  child_iterator begin_children() const;
+  child_iterator end_children() const;
 
   // Cast methods.
   static inline bool classof(Archive const *v) { return true; }
