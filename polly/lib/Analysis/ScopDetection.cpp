@@ -278,7 +278,7 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
   // FIXME: Alias Analysis thinks IntToPtrInst aliases with alloca instructions
   // created by IndependentBlocks Pass.
   if (isa<IntToPtrInst>(BasePtr))
-    INVALID(Other, "Find bad intoptr prt: " << *BasePtr);
+    INVALID(Other, "Find bad intToptr prt: " << *BasePtr);
 
   // Check if the base pointer of the memory access does alias with
   // any other pointer. This cannot be handled at the moment.
@@ -334,12 +334,8 @@ bool ScopDetection::isValidInstruction(Instruction &Inst,
                                        DetectionContext &Context) const {
   // Only canonical IVs are allowed.
   if (PHINode *PN = dyn_cast<PHINode>(&Inst))
-    if (!isIndVar(PN, LI)) {
-      DEBUG(dbgs() << "Non canonical PHI node found: ";
-            WriteAsOperand(dbgs(), &Inst, false);
-            dbgs() << "\n");
-      return false;
-    }
+    if (!isIndVar(PN, LI))
+      INVALID(IndVar, "Non canonical PHI node: " << Inst);
 
   // Scalar dependencies are not allowed.
   if (hasScalarDependency(Inst, Context.CurRegion))
@@ -350,16 +346,16 @@ bool ScopDetection::isValidInstruction(Instruction &Inst,
     if (isValidCallInst(*CI))
       return true;
 
-    INVALID(FuncCall, "Call instruction not allowed: " << Inst);
+    INVALID(FuncCall, "Call instruction: " << Inst);
   }
 
   if (!Inst.mayWriteToMemory() && !Inst.mayReadFromMemory()) {
     // Handle cast instruction.
     if (isa<IntToPtrInst>(Inst) || isa<BitCastInst>(Inst))
-      INVALID(Other, "Cast instruction not allowed: " << Inst);
+      INVALID(Other, "Cast instruction: " << Inst);
 
     if (isa<AllocaInst>(Inst))
-      INVALID(Other, "Alloca instruction not allowed: " << Inst);
+      INVALID(Other, "Alloca instruction: " << Inst);
 
     return true;
   }
@@ -393,13 +389,13 @@ bool ScopDetection::isValidLoop(Loop *L, DetectionContext &Context) const {
   PHINode *IndVar = L->getCanonicalInductionVariable();
   // No canonical induction variable.
   if (!IndVar)
-    INVALID(IndVar, "No single induction variable for loop: "
+    INVALID(IndVar, "No canonical IV at loop header: "
                     << L->getHeader()->getNameStr());
 
   // Is the loop count affine?
   const SCEV *LoopCount = SE->getBackedgeTakenCount(L);
   if (!isValidAffineFunction(LoopCount, Context.CurRegion))
-    INVALID(LoopBound, "Non affine loop bound for loop: "
+    INVALID(LoopBound, "Non affine loop bound '" << LoopCount << "'for loop: "
                        << L->getHeader()->getNameStr());
 
   return true;
