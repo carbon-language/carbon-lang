@@ -97,7 +97,7 @@ error_code object::createBinary(MemoryBuffer *Source,
 
 error_code object::createBinary(StringRef Path, OwningPtr<Binary> &Result) {
   OwningPtr<MemoryBuffer> File;
-  if (error_code ec = MemoryBuffer::getFile(Path, File))
+  if (error_code ec = MemoryBuffer::getFileOrSTDIN(Path, File))
     return ec;
   return createBinary(File.take(), Result);
 }
