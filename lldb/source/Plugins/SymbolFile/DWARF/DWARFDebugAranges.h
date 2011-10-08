@@ -20,7 +20,7 @@ class SymbolFileDWARF;
 class DWARFDebugAranges
 {
 protected:
-    typedef lldb_private::RangeDataArray<dw_addr_t, uint32_t, dw_offset_t> RangeToDIE;
+    typedef lldb_private::RangeDataArray<dw_addr_t, uint32_t, dw_offset_t, 1> RangeToDIE;
 
 public:
     typedef RangeToDIE::Entry Range;

@@ -43,7 +43,7 @@ class Block :
     public SymbolContextScope
 {
 public:
-    typedef RangeArray<uint32_t, uint32_t> RangeArray;
+    typedef RangeArray<uint32_t, uint32_t, 1> RangeArray;
     typedef RangeArray::Entry Range;
 
     //------------------------------------------------------------------

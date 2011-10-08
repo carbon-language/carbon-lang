@@ -11,7 +11,7 @@
 #define liblldb_RangeMap_h_
 
 #include "lldb/lldb-private.h"
-#include <vector>
+#include "llvm/ADT/SmallVector.h"
 
 // Uncomment to make sure all Range objects are sorted when needed
 //#define ASSERT_RANGEMAP_ARE_SORTED
@@ -163,13 +163,15 @@ namespace lldb_private {
     // that the collection contains.
     //----------------------------------------------------------------------
 
-    template <typename B, typename S>
+    template <typename B, typename S, unsigned N>
     class RangeArray
     {
     public:
         typedef B BaseType;
         typedef S SizeType;
         typedef Range<B,S> Entry;
+        //typedef std::vector<Entry> Collection;
+        typedef llvm::SmallVector<Entry, N> Collection;
         
         RangeArray () :
             m_entries ()
@@ -197,7 +199,7 @@ namespace lldb_private {
         bool
         IsSorted () const
         {
-            typename std::vector<Entry>::const_iterator pos, end, prev;
+            typename Collection::const_iterator pos, end, prev;
             // First we determine if we can combine any of the Entry objects so we
             // don't end up allocating and making a new collection for no reason
             for (pos = m_entries.begin(), end = m_entries.end(), prev = end; pos != end; prev = pos++)
@@ -218,9 +220,9 @@ namespace lldb_private {
             if (m_entries.size() > 1)
             {
                 // The list should be sorted prior to calling this function
-                typename std::vector<Entry>::iterator pos;
-                typename std::vector<Entry>::iterator end;
-                typename std::vector<Entry>::iterator prev;
+                typename Collection::iterator pos;
+                typename Collection::iterator end;
+                typename Collection::iterator prev;
                 bool can_combine = false;
                 // First we determine if we can combine any of the Entry objects so we
                 // don't end up allocating and making a new collection for no reason
@@ -237,7 +239,7 @@ namespace lldb_private {
                 // and populate it accordingly, and then swap it into place. 
                 if (can_combine)
                 {
-                    std::vector<Entry> minimal_ranges;
+                    Collection minimal_ranges;
                     for (pos = m_entries.begin(), end = m_entries.end(), prev = end; pos != end; prev = pos++)
                     {
                         if (prev != end && prev->Overlap(*pos))
@@ -283,7 +285,7 @@ namespace lldb_private {
         void
         Slide (BaseType slide)
         {
-            typename std::vector<Entry>::iterator pos, end;
+            typename Collection::iterator pos, end;
             for (pos = m_entries.begin(), end = m_entries.end(); pos != end; ++pos)
                 pos->Slide (slide);
         }
@@ -336,9 +338,9 @@ namespace lldb_private {
             if (!m_entries.empty())
             {
                 Entry entry (addr, 1);
-                typename std::vector<Entry>::const_iterator begin = m_entries.begin();
-                typename std::vector<Entry>::const_iterator end = m_entries.end();
-                typename std::vector<Entry>::const_iterator pos = std::lower_bound (begin, end, entry, BaseLessThan);
+                typename Collection::const_iterator begin = m_entries.begin();
+                typename Collection::const_iterator end = m_entries.end();
+                typename Collection::const_iterator pos = std::lower_bound (begin, end, entry, BaseLessThan);
                 
                 if (pos != end && pos->Contains(addr))
                 {
@@ -363,9 +365,9 @@ namespace lldb_private {
             if (!m_entries.empty())
             {
                 Entry entry (addr, 1);
-                typename std::vector<Entry>::const_iterator begin = m_entries.begin();
-                typename std::vector<Entry>::const_iterator end = m_entries.end();
-                typename std::vector<Entry>::const_iterator pos = std::lower_bound (begin, end, entry, BaseLessThan);
+                typename Collection::const_iterator begin = m_entries.begin();
+                typename Collection::const_iterator end = m_entries.end();
+                typename Collection::const_iterator pos = std::lower_bound (begin, end, entry, BaseLessThan);
                 
                 if (pos != end && pos->Contains(addr))
                 {
@@ -391,9 +393,9 @@ namespace lldb_private {
 #endif
             if (!m_entries.empty())
             {
-                typename std::vector<Entry>::const_iterator begin = m_entries.begin();
-                typename std::vector<Entry>::const_iterator end = m_entries.end();
-                typename std::vector<Entry>::const_iterator pos = std::lower_bound (begin, end, range, BaseLessThan);
+                typename Collection::const_iterator begin = m_entries.begin();
+                typename Collection::const_iterator end = m_entries.end();
+                typename Collection::const_iterator pos = std::lower_bound (begin, end, range, BaseLessThan);
                 
                 if (pos != end && pos->Contains(range))
                 {
@@ -412,7 +414,7 @@ namespace lldb_private {
         }
 
     protected:
-        std::vector<Entry> m_entries;
+        Collection m_entries;
     };
 
     //----------------------------------------------------------------------
@@ -469,12 +471,15 @@ namespace lldb_private {
         }
     };
     
-    template <typename B, typename S, typename T>
+    template <typename B, typename S, typename T, unsigned N>
     class RangeDataArray
     {
     public:
         typedef RangeData<B,S,T> Entry;
-        
+        //typedef std::vector<Entry> Collection;
+        typedef llvm::SmallVector<Entry, N> Collection;
+
+
         RangeDataArray ()
         {
         }
@@ -500,7 +505,7 @@ namespace lldb_private {
         bool
         IsSorted () const
         {
-            typename std::vector<Entry>::const_iterator pos, end, prev;
+            typename Collection::const_iterator pos, end, prev;
             // First we determine if we can combine any of the Entry objects so we
             // don't end up allocating and making a new collection for no reason
             for (pos = m_entries.begin(), end = m_entries.end(), prev = end; pos != end; prev = pos++)
@@ -518,9 +523,9 @@ namespace lldb_private {
 #ifdef ASSERT_RANGEMAP_ARE_SORTED
             assert (IsSorted());
 #endif
-            typename std::vector<Entry>::iterator pos;
-            typename std::vector<Entry>::iterator end;
-            typename std::vector<Entry>::iterator prev;
+            typename Collection::iterator pos;
+            typename Collection::iterator end;
+            typename Collection::iterator prev;
             bool can_combine = false;
             // First we determine if we can combine any of the Entry objects so we
             // don't end up allocating and making a new collection for no reason
@@ -537,7 +542,7 @@ namespace lldb_private {
             // and populate it accordingly, and then swap it into place. 
             if (can_combine)
             {
-                std::vector<Entry> minimal_ranges;
+                Collection minimal_ranges;
                 for (pos = m_entries.begin(), end = m_entries.end(), prev = end; pos != end; prev = pos++)
                 {
                     if (prev != end && prev->data == pos->data)
@@ -600,9 +605,9 @@ namespace lldb_private {
             if ( !m_entries.empty() )
             {
                 Entry entry (addr, 1);
-                typename std::vector<Entry>::const_iterator begin = m_entries.begin();
-                typename std::vector<Entry>::const_iterator end = m_entries.end();
-                typename std::vector<Entry>::const_iterator pos = std::lower_bound (begin, end, entry, BaseLessThan);
+                typename Collection::const_iterator begin = m_entries.begin();
+                typename Collection::const_iterator end = m_entries.end();
+                typename Collection::const_iterator pos = std::lower_bound (begin, end, entry, BaseLessThan);
                 
                 if (pos != end && pos->Contains(addr))
                 {
@@ -629,9 +634,9 @@ namespace lldb_private {
                 Entry entry;
                 entry.SetRangeBase(addr);
                 entry.SetByteSize(1);
-                typename std::vector<Entry>::const_iterator begin = m_entries.begin();
-                typename std::vector<Entry>::const_iterator end = m_entries.end();
-                typename std::vector<Entry>::const_iterator pos = std::lower_bound (begin, end, entry, BaseLessThan);
+                typename Collection::const_iterator begin = m_entries.begin();
+                typename Collection::const_iterator end = m_entries.end();
+                typename Collection::const_iterator pos = std::lower_bound (begin, end, entry, BaseLessThan);
                 
                 if (pos != end && pos->Contains(addr))
                 {
@@ -657,9 +662,9 @@ namespace lldb_private {
 #endif
             if ( !m_entries.empty() )
             {
-                typename std::vector<Entry>::const_iterator begin = m_entries.begin();
-                typename std::vector<Entry>::const_iterator end = m_entries.end();
-                typename std::vector<Entry>::const_iterator pos = std::lower_bound (begin, end, range, BaseLessThan);
+                typename Collection::const_iterator begin = m_entries.begin();
+                typename Collection::const_iterator end = m_entries.end();
+                typename Collection::const_iterator pos = std::lower_bound (begin, end, range, BaseLessThan);
                 
                 if (pos != end && pos->Contains(range))
                 {
@@ -679,7 +684,7 @@ namespace lldb_private {
         
 
     protected:
-        std::vector<Entry> m_entries;
+        Collection m_entries;
     };
 
 } // namespace lldb_private

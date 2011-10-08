@@ -20,7 +20,7 @@
 class DWARFDebugRanges
 {
 public:
-    typedef lldb_private::RangeArray<dw_addr_t, dw_addr_t> RangeList;
+    typedef lldb_private::RangeArray<dw_addr_t, dw_addr_t, 2> RangeList;
     typedef RangeList::Entry Range;
 
     DWARFDebugRanges();
