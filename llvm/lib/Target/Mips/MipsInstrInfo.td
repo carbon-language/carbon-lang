@@ -189,6 +189,45 @@ def immZExt5 : PatLeaf<(imm), [{
 def addr : ComplexPattern<iPTR, 2, "SelectAddr", [frameindex], []>;
 
 //===----------------------------------------------------------------------===//
+// Pattern fragment for load/store
+//===----------------------------------------------------------------------===//
+class UnalignedLoad<PatFrag Node> : PatFrag<(ops node:$ptr), (Node node:$ptr), [{
+  LoadSDNode *LD = cast<LoadSDNode>(N);
+  return LD->getMemoryVT().getSizeInBits()/8 > LD->getAlignment();
+}]>;
+
+class AlignedLoad<PatFrag Node> : PatFrag<(ops node:$ptr), (Node node:$ptr), [{
+  LoadSDNode *LD = cast<LoadSDNode>(N);
+  return LD->getMemoryVT().getSizeInBits()/8 <= LD->getAlignment();
+}]>;
+
+class UnalignedStore<PatFrag Node> : PatFrag<(ops node:$val, node:$ptr),
+                                             (Node node:$val, node:$ptr), [{
+  StoreSDNode *SD = cast<StoreSDNode>(N);
+  return SD->getMemoryVT().getSizeInBits()/8 > SD->getAlignment();
+}]>;
+
+class AlignedStore<PatFrag Node> : PatFrag<(ops node:$val, node:$ptr),
+                                           (Node node:$val, node:$ptr), [{
+  StoreSDNode *SD = cast<StoreSDNode>(N);
+  return SD->getMemoryVT().getSizeInBits()/8 <= SD->getAlignment();
+}]>;
+
+// Load/Store PatFrags.
+def sextloadi16_a   : AlignedLoad<sextloadi16>;
+def zextloadi16_a   : AlignedLoad<zextloadi16>;
+def extloadi16_a    : AlignedLoad<extloadi16>;
+def load_a          : AlignedLoad<load>;
+def truncstorei16_a : AlignedStore<truncstorei16>;
+def store_a         : AlignedStore<store>;
+def sextloadi16_u   : UnalignedLoad<sextloadi16>;
+def zextloadi16_u   : UnalignedLoad<zextloadi16>;
+def extloadi16_u    : UnalignedLoad<extloadi16>;
+def load_u          : UnalignedLoad<load>;
+def truncstorei16_u : UnalignedStore<truncstorei16>;
+def store_u         : UnalignedStore<store>;
+
+//===----------------------------------------------------------------------===//
 // Instructions specific format
 //===----------------------------------------------------------------------===//
 
@@ -274,15 +313,19 @@ class LoadUpper<bits<6> op, string instr_asm>:
 
 // Memory Load/Store
 let canFoldAsLoad = 1 in
-class LoadM<bits<6> op, string instr_asm, PatFrag OpNode>:
+class LoadM<bits<6> op, string instr_asm, PatFrag OpNode, bit Pseudo = 0>:
   FI<op, (outs CPURegs:$dst), (ins mem:$addr),
      !strconcat(instr_asm, "\t$dst, $addr"),
-     [(set CPURegs:$dst, (OpNode addr:$addr))], IILoad>;
+     [(set CPURegs:$dst, (OpNode addr:$addr))], IILoad> {
+  let isPseudo = Pseudo;
+}
 
-class StoreM<bits<6> op, string instr_asm, PatFrag OpNode>:
+class StoreM<bits<6> op, string instr_asm, PatFrag OpNode, bit Pseudo = 0>:
   FI<op, (outs), (ins CPURegs:$dst, mem:$addr),
      !strconcat(instr_asm, "\t$dst, $addr"),
-     [(OpNode CPURegs:$dst, addr:$addr)], IIStore>;
+     [(OpNode CPURegs:$dst, addr:$addr)], IIStore> {
+  let isPseudo = Pseudo;
+}
 
 // Conditional Branch
 let isBranch = 1, isTerminator=1, hasDelaySlot = 1 in {
@@ -498,19 +541,6 @@ let usesCustomInserter = 1 in {
   def ATOMIC_CMP_SWAP_I32  : AtomicCmpSwap<atomic_cmp_swap_32, "32">;
 }
 
-// Unaligned loads and stores.
-// Replaces LW or SW during MCInstLowering if memory access is unaligned.
-def ULW :
-  MipsPseudo<(outs CPURegs:$dst), (ins mem:$addr), "ulw\t$dst, $addr", []>;
-def ULH :
-  MipsPseudo<(outs CPURegs:$dst), (ins mem:$addr), "ulh\t$dst, $addr", []>;
-def ULHu :
-  MipsPseudo<(outs CPURegs:$dst), (ins mem:$addr), "ulhu\t$dst, $addr", []>;
-def USW : 
-  MipsPseudo<(outs), (ins CPURegs:$dst, mem:$addr), "usw\t$dst, $addr", []>;
-def USH : 
-  MipsPseudo<(outs), (ins CPURegs:$dst, mem:$addr), "ush\t$dst, $addr", []>;
-
 //===----------------------------------------------------------------------===//
 // Instruction definition
 //===----------------------------------------------------------------------===//
@@ -556,14 +586,22 @@ let Predicates = [HasMips32r2] in {
 }
 
 /// Load and Store Instructions
+///  aligned
 def LB      : LoadM<0x20, "lb",  sextloadi8>;
 def LBu     : LoadM<0x24, "lbu", zextloadi8>;
-def LH      : LoadM<0x21, "lh",  sextloadi16>;
-def LHu     : LoadM<0x25, "lhu", zextloadi16>;
-def LW      : LoadM<0x23, "lw",  load>;
+def LH      : LoadM<0x21, "lh",  sextloadi16_a>;
+def LHu     : LoadM<0x25, "lhu", zextloadi16_a>;
+def LW      : LoadM<0x23, "lw",  load_a>;
 def SB      : StoreM<0x28, "sb", truncstorei8>;
-def SH      : StoreM<0x29, "sh", truncstorei16>;
-def SW      : StoreM<0x2b, "sw", store>;
+def SH      : StoreM<0x29, "sh", truncstorei16_a>;
+def SW      : StoreM<0x2b, "sw", store_a>;
+
+///  unaligned
+def ULH     : LoadM<0x21, "ulh",  sextloadi16_u, 1>;
+def ULHu    : LoadM<0x25, "ulhu", zextloadi16_u, 1>;
+def ULW     : LoadM<0x23, "ulw",  load_u, 1>;
+def USH     : StoreM<0x29, "ush", truncstorei16_u, 1>;
+def USW     : StoreM<0x2b, "usw", store_u, 1>;
 
 let hasSideEffects = 1 in
 def SYNC : MipsInst<(outs), (ins i32imm:$stype), "sync $stype",
@@ -789,7 +827,8 @@ def : Pat<(not CPURegs:$in),
 // extended load and stores
 def : Pat<(extloadi1  addr:$src), (LBu addr:$src)>;
 def : Pat<(extloadi8  addr:$src), (LBu addr:$src)>;
-def : Pat<(extloadi16 addr:$src), (LHu addr:$src)>;
+def : Pat<(extloadi16_a addr:$src), (LHu addr:$src)>;
+def : Pat<(extloadi16_u addr:$src), (ULHu addr:$src)>;
 
 // peepholes
 def : Pat<(store (i32 0), addr:$dst), (SW ZERO, addr:$dst)>;
