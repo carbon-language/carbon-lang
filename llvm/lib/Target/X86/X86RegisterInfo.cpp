@@ -246,6 +246,17 @@ X86RegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
 
 const TargetRegisterClass*
 X86RegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC) const{
+  // Don't allow super-classes of GR8_NOREX.  This class is only used after
+  // extrating sub_8bit_hi sub-registers.  The H sub-registers cannot be copied
+  // to the full GR8 register class in 64-bit mode, so we cannot allow the
+  // reigster class inflation.
+  //
+  // The GR8_NOREX class is always used in a way that won't be constrained to a
+  // sub-class, so sub-classes like GR8_ABCD_L are allowed to expand to the
+  // full GR8 class.
+  if (RC == X86::GR8_NOREXRegisterClass)
+    return RC;
+
   const TargetRegisterClass *Super = RC;
   TargetRegisterClass::sc_iterator I = RC->getSuperClasses();
   do {
