@@ -899,7 +899,7 @@ Sema::DiagnosePropertyMismatch(ObjCPropertyDecl *Property,
       != (SAttr & ObjCPropertyDecl::OBJC_PR_copy))
     Diag(Property->getLocation(), diag::warn_property_attribute)
       << Property->getDeclName() << "copy" << inheritedName;
-  else {
+  else if (!(SAttr & ObjCPropertyDecl::OBJC_PR_readonly)){
     unsigned CAttrRetain = 
       (CAttr & 
        (ObjCPropertyDecl::OBJC_PR_retain | ObjCPropertyDecl::OBJC_PR_strong));

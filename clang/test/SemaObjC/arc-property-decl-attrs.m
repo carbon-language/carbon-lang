@@ -65,3 +65,17 @@
 @property(unsafe_unretained) __weak id y; // expected-error {{property attributes 'unsafe_unretained' and 'weak' are mutually exclusive}}
 @property(unsafe_unretained) __autoreleasing id z; // expected-error {{unsafe_unretained property 'z' may not also be declared __autoreleasing}}
 @end
+
+// rdar://9396329
+@interface Super
+@property (readonly, retain) id foo;
+@property (readonly, weak) id fee;
+@property (readonly, strong) id frr;
+@end
+
+@interface Bugg : Super
+@property (readwrite) id foo;
+@property (readwrite) id fee;
+@property (readwrite) id frr;
+@end
+
