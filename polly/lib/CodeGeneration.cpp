@@ -1567,8 +1567,8 @@ class CodeGeneration : public ScopPass {
     AU.addRequired<CloogInfo>();
     AU.addRequired<Dependences>();
     AU.addRequired<DominatorTree>();
-    AU.addRequired<ScalarEvolution>();
     AU.addRequired<RegionInfo>();
+    AU.addRequired<ScalarEvolution>();
     AU.addRequired<ScopDetection>();
     AU.addRequired<ScopInfo>();
     AU.addRequired<TargetData>();
@@ -1594,8 +1594,17 @@ class CodeGeneration : public ScopPass {
 
 char CodeGeneration::ID = 1;
 
-static RegisterPass<CodeGeneration>
-Z("polly-codegen", "Polly - Create LLVM-IR from the polyhedral information");
+INITIALIZE_PASS_BEGIN(CodeGeneration, "polly-codegen",
+                      "Polly - Create LLVM-IR form SCoPs", false, false)
+INITIALIZE_PASS_DEPENDENCY(CloogInfo)
+INITIALIZE_PASS_DEPENDENCY(Dependences)
+INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_PASS_DEPENDENCY(RegionInfo)
+INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
+INITIALIZE_PASS_DEPENDENCY(ScopDetection)
+INITIALIZE_PASS_DEPENDENCY(TargetData)
+INITIALIZE_PASS_END(CodeGeneration, "polly-codegen",
+                      "Polly - Create LLVM-IR form SCoPs", false, false)
 
 Pass* polly::createCodeGenerationPass() {
   return new CodeGeneration();

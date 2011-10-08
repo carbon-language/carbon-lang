@@ -539,11 +539,16 @@ void IndependentBlocks::verifyScop(const Region *R) const {
 }
 
 char IndependentBlocks::ID = 0;
-
-static RegisterPass<IndependentBlocks>
-Z("polly-independent", "Polly - Create independent blocks");
-
 char &polly::IndependentBlocksID = IndependentBlocks::ID;
+
+INITIALIZE_PASS_BEGIN(IndependentBlocks, "polly-independent",
+                      "Polly - Create independent blocks", false, false)
+INITIALIZE_PASS_DEPENDENCY(LoopInfo)
+INITIALIZE_PASS_DEPENDENCY(RegionInfo)
+INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
+INITIALIZE_PASS_DEPENDENCY(ScopDetection)
+INITIALIZE_PASS_END(IndependentBlocks, "polly-independent",
+                    "Polly - Create independent blocks", false, false)
 
 Pass* polly::createIndependentBlocksPass() {
   return new IndependentBlocks();

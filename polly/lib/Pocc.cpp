@@ -280,8 +280,12 @@ void Pocc::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<Dependences>();
 }
 
-static RegisterPass<Pocc> A("polly-optimize",
-                            "Polly - Optimize the scop using pocc");
+INITIALIZE_PASS_BEGIN(Pocc, "polly-optimize",
+                    "Polly - Optimize the scop using pocc", false, false)
+INITIALIZE_PASS_DEPENDENCY(Dependences)
+INITIALIZE_PASS_DEPENDENCY(ScopInfo)
+INITIALIZE_PASS_END(Pocc, "polly-optimize",
+                    "Polly - Optimize the scop using pocc", false, false)
 
 Pass* polly::createPoccPass() {
   return new Pocc();

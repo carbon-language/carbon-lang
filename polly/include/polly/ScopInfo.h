@@ -29,13 +29,13 @@
 using namespace llvm;
 
 namespace llvm {
-  class SCEV;
-  class ScalarEvolution;
-  class SCEVAddRecExpr;
   class Loop;
   class LoopInfo;
-  class Type;
   class PHINode;
+  class ScalarEvolution;
+  class SCEV;
+  class SCEVAddRecExpr;
+  class Type;
 }
 
 struct isl_map;
@@ -595,5 +595,10 @@ public:
 };
 
 } //end namespace polly
+
+namespace llvm {
+  class PassRegistry;
+  void initializeScopInfoPass(llvm::PassRegistry&);
+}
 
 #endif

@@ -61,4 +61,9 @@ namespace polly {
     virtual void releaseMemory();
   };
 }
+
+namespace llvm {
+  class PassRegistry;
+  void initializeCloogInfoPass(llvm::PassRegistry&);
+}
 #endif /* POLLY_CLOOG_H */

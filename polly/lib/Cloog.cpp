@@ -297,9 +297,11 @@ void CloogInfo::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 char CloogInfo::ID = 0;
 
-
-static RegisterPass<CloogInfo> B("polly-cloog",
-                                 "Execute Cloog code generation");
+INITIALIZE_PASS_BEGIN(CloogInfo, "polly-cloog",
+                      "Execute Cloog code generation", false, false)
+INITIALIZE_PASS_DEPENDENCY(ScopInfo)
+INITIALIZE_PASS_END(CloogInfo, "polly-cloog",
+                    "Execute Cloog code generation", false, false)
 
 Pass* polly::createCloogInfoPass() {
   return new CloogInfo();

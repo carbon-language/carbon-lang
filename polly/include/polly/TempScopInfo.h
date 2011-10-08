@@ -386,5 +386,9 @@ public:
 
 } // end namespace polly
 
+namespace llvm {
+  class PassRegistry;
+  void initializeTempScopInfoPass(llvm::PassRegistry&);
+}
 
 #endif

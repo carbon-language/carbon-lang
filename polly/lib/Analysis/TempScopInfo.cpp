@@ -457,8 +457,19 @@ void TempScopInfo::clear() {
 // TempScop information extraction pass implement
 char TempScopInfo::ID = 0;
 
-static RegisterPass<TempScopInfo>
-X("polly-analyze-ir", "Polly - Analyse the LLVM-IR in the detected regions");
+INITIALIZE_PASS_BEGIN(TempScopInfo, "polly-analyze-ir",
+                      "Polly - Analyse the LLVM-IR in the detected regions",
+                      false, false)
+INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
+INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_PASS_DEPENDENCY(LoopInfo)
+INITIALIZE_PASS_DEPENDENCY(PostDominatorTree)
+INITIALIZE_PASS_DEPENDENCY(RegionInfo)
+INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
+INITIALIZE_PASS_DEPENDENCY(TargetData)
+INITIALIZE_PASS_END(TempScopInfo, "polly-analyze-ir",
+                    "Polly - Analyse the LLVM-IR in the detected regions",
+                    false, false)
 
 Pass *polly::createTempScopInfoPass() {
   return new TempScopInfo();

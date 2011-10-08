@@ -19,24 +19,48 @@
 
 #include "polly/LinkAllPasses.h"
 
+#include "polly/Cloog.h"
+#include "polly/Dependences.h"
+#include "polly/ScopDetection.h"
+#include "polly/ScopInfo.h"
+#include "polly/TempScopInfo.h"
+
+using namespace llvm;
+
+void initializePollyPasses(PassRegistry &Registry) {
+  initializeCloogInfoPass(Registry);
+  initializeCodeGenerationPass(Registry);
+  initializeCodePreparationPass(Registry);
+  initializeDependencesPass(Registry);
+  initializeIndependentBlocksPass(Registry);
+  initializeIslScheduleOptimizerPass(Registry);
+#ifdef SCOPLIB_FOUND
+  initializePoccPass(Registry);
+#endif
+  initializeRegionSimplifyPass(Registry);
+  initializeScopDetectionPass(Registry);
+  initializeScopInfoPass(Registry);
+  initializeTempScopInfoPass(Registry);
+}
+
+// Statically register all Polly passes such that they are available after
+// loading Polly.
+class StaticInitializer {
+
+public:
+    StaticInitializer() {
+      PassRegistry &Registry = *PassRegistry::getPassRegistry();
+      initializePollyPasses(Registry);
+    }
+};
+
+static StaticInitializer InitializeEverything;
+
 static void registerPollyPasses(const llvm::PassManagerBuilder &Builder,
                                 llvm::PassManagerBase &PM) {
   // Polly is only enabled at -O3
   if (Builder.OptLevel != 3)
     return;
-
-  // We need to initialize the passes before we use them.
-  //
-  // This is not necessary for the opt tool, however clang crashes if passes
-  // are not initialized. (FIXME?)
-  PassRegistry &Registry = *PassRegistry::getPassRegistry();
-  initializeDominatorTreePass(Registry);
-  initializePostDominatorTreePass(Registry);
-  initializeLoopInfoPass(Registry);
-  initializeScalarEvolutionPass(Registry);
-  initializeRegionInfoPass(Registry);
-  initializeDominanceFrontierPass(Registry);
-  initializeAliasAnalysisAnalysisGroup(Registry);
 
   // A standard set of optimization passes partially taken/copied from the
   // set of default optimization passes. It is used to bring the code into
@@ -51,26 +75,15 @@ static void registerPollyPasses(const llvm::PassManagerBuilder &Builder,
   PM.add(llvm::createLoopRotatePass());            // Rotate Loop
   PM.add(llvm::createInstructionCombiningPass());
   PM.add(llvm::createIndVarSimplifyPass());        // Canonicalize indvars
-  PM.add(llvm::createRegionInfoPass());
 
-  PM.add(polly::createCodePreperationPass());
+  PM.add(polly::createCodePreparationPass());
   PM.add(polly::createRegionSimplifyPass());
 
   // FIXME: Needed as RegionSimplifyPass destroys the canonical form of
   //        induction variables (It changes the order of the operands in the
   //        PHI nodes).
   PM.add(llvm::createIndVarSimplifyPass());
-  PM.add(polly::createScopDetectionPass());
-  PM.add(polly::createIndependentBlocksPass());
-
-  // FIXME: We should not need to schedule passes like the TempScopInfoPass
-  //        explicitally, as it is alread required by the ScopInfo pass.
-  //        However, without this clang crashes because of unitialized passes.
-  PM.add(polly::createTempScopInfoPass());
-  PM.add(polly::createScopInfoPass());
-  PM.add(polly::createDependencesPass());
-  PM.add(polly::createScheduleOptimizerPass());
-  PM.add(polly::createCloogInfoPass());
+  PM.add(polly::createIslScheduleOptimizerPass());
   PM.add(polly::createCodeGenerationPass());
 }
 
@@ -79,6 +92,7 @@ static void registerPollyPasses(const llvm::PassManagerBuilder &Builder,
 // We run Polly that early to run before loop optimizer passes like LICM or
 // the LoopIdomPass. Both transform the code in a way that Polly will recognize
 // less scops.
+
 static llvm::RegisterStandardPasses
 PassRegister(llvm::PassManagerBuilder::EP_EarlyAsPossible,
              registerPollyPasses);

@@ -21,6 +21,7 @@
 namespace llvm {
   class Pass;
   class PassInfo;
+  class PassRegistry;
   class RegionPass;
 }
 
@@ -31,7 +32,7 @@ namespace polly {
   Pass *createCloogExporterPass();
   Pass *createCloogInfoPass();
   Pass *createCodeGenerationPass();
-  Pass *createCodePreperationPass();
+  Pass *createCodePreparationPass();
   Pass *createDependencesPass();
   Pass *createDOTOnlyPrinterPass();
   Pass *createDOTOnlyViewerPass();
@@ -43,7 +44,7 @@ namespace polly {
   Pass *createRegionSimplifyPass();
   Pass *createScopDetectionPass();
   Pass *createScopInfoPass();
-  Pass *createScheduleOptimizerPass();
+  Pass *createIslScheduleOptimizerPass();
   Pass *createTempScopInfoPass();
 
 #ifdef OPENSCOP_FOUND
@@ -58,7 +59,7 @@ namespace polly {
 #endif
 
   extern char &IndependentBlocksID;
-  extern char &CodePreperationID;
+  extern char &CodePreparationID;
 }
 
 using namespace polly;
@@ -77,7 +78,7 @@ namespace {
        createCloogExporterPass();
        createCloogInfoPass();
        createCodeGenerationPass();
-       createCodePreperationPass();
+       createCodePreparationPass();
        createDependencesPass();
        createDOTOnlyPrinterPass();
        createDOTOnlyViewerPass();
@@ -89,7 +90,7 @@ namespace {
        createRegionSimplifyPass();
        createScopDetectionPass();
        createScopInfoPass();
-       createScheduleOptimizerPass();
+       createIslScheduleOptimizerPass();
        createTempScopInfoPass();
 
 #ifdef OPENSCOP_FOUND
@@ -104,6 +105,18 @@ namespace {
 
     }
   } PollyForcePassLinking; // Force link by creating a global definition.
+}
+
+namespace llvm {
+  class PassRegistry;
+  void initializeCodeGenerationPass(llvm::PassRegistry&);
+  void initializeCodePreparationPass(llvm::PassRegistry&);
+  void initializeIndependentBlocksPass(llvm::PassRegistry&);
+  void initializeIslScheduleOptimizerPass(llvm::PassRegistry&);
+#ifdef SCOPLIB_FOUND
+  void initializePoccPass(llvm::PassRegistry&);
+#endif
+  void initializeRegionSimplifyPass(llvm::PassRegistry&);
 }
 
 #endif

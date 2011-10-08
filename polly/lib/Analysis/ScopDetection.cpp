@@ -650,8 +650,17 @@ void ScopDetection::releaseMemory() {
 
 char ScopDetection::ID = 0;
 
-static RegisterPass<ScopDetection>
-X("polly-detect", "Polly - Detect Scops in functions");
+INITIALIZE_PASS_BEGIN(ScopDetection, "polly-detect",
+                      "Polly - Detect static control parts (SCoPs)", false,
+                      false)
+INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
+INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_PASS_DEPENDENCY(LoopInfo)
+INITIALIZE_PASS_DEPENDENCY(PostDominatorTree)
+INITIALIZE_PASS_DEPENDENCY(RegionInfo)
+INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
+INITIALIZE_PASS_END(ScopDetection, "polly-detect",
+                    "Polly - Detect static control parts (SCoPs)", false, false)
 
 Pass *polly::createScopDetectionPass() {
   return new ScopDetection();

@@ -45,11 +45,11 @@ Prevector("enable-schedule-prevector",
 
 namespace {
 
-  class ScheduleOptimizer : public ScopPass {
+  class IslScheduleOptimizer : public ScopPass {
 
   public:
     static char ID;
-    explicit ScheduleOptimizer() : ScopPass(ID) {}
+    explicit IslScheduleOptimizer() : ScopPass(ID) {}
 
     virtual bool runOnScop(Scop &S);
     void printScop(llvm::raw_ostream &OS) const;
@@ -58,7 +58,7 @@ namespace {
 
 }
 
-char ScheduleOptimizer::ID = 0;
+char IslScheduleOptimizer::ID = 0;
 
 static int getSingleMap(__isl_take isl_map *map, void *user) {
   isl_map **singleMap = (isl_map **) user;
@@ -341,7 +341,7 @@ static isl_union_map *tileSchedule(isl_schedule *schedule) {
   return tiledSchedule;
 }
 
-bool ScheduleOptimizer::runOnScop(Scop &S) {
+bool IslScheduleOptimizer::runOnScop(Scop &S) {
   Dependences *D = &getAnalysis<Dependences>();
 
   // Build input data.
@@ -410,19 +410,21 @@ bool ScheduleOptimizer::runOnScop(Scop &S) {
   return false;
 }
 
-void ScheduleOptimizer::printScop(raw_ostream &OS) const {
+void IslScheduleOptimizer::printScop(raw_ostream &OS) const {
 }
 
-void ScheduleOptimizer::getAnalysisUsage(AnalysisUsage &AU) const {
+void IslScheduleOptimizer::getAnalysisUsage(AnalysisUsage &AU) const {
   ScopPass::getAnalysisUsage(AU);
   AU.addRequired<Dependences>();
 }
 
-static RegisterPass<ScheduleOptimizer> A("polly-optimize-isl",
-                                         "Polly - Calculate optimized "
-                                         "schedules using the isl schedule "
-                                         "calculator");
+INITIALIZE_PASS_BEGIN(IslScheduleOptimizer, "polly-optimize-isl",
+                      "Polly - Optimize schedule of SCoP", false, false)
+INITIALIZE_PASS_DEPENDENCY(Dependences)
+INITIALIZE_PASS_DEPENDENCY(ScopInfo)
+INITIALIZE_PASS_END(IslScheduleOptimizer, "polly-optimize-isl",
+                      "Polly - Optimize schedule of SCoP", false, false)
 
-Pass* polly::createScheduleOptimizerPass() {
-  return new ScheduleOptimizer();
+Pass* polly::createIslScheduleOptimizerPass() {
+  return new IslScheduleOptimizer();
 }

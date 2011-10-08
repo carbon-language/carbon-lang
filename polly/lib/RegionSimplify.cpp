@@ -49,10 +49,15 @@ public:
 };
 }
 
-static RegisterPass<RegionSimplify>
-X("polly-region-simplify", "Transform refined regions into simple regions");
-
 char RegionSimplify::ID = 0;
+
+INITIALIZE_PASS_BEGIN(RegionSimplify, "polly-region-simplify",
+                      "Transform refined regions into simple regions", false,
+                      false)
+INITIALIZE_PASS_DEPENDENCY(RegionInfo)
+INITIALIZE_PASS_END(RegionSimplify, "polly-region-simplify",
+                    "Transform refined regions into simple regions", false,
+                    false)
 namespace polly {
   Pass *createRegionSimplifyPass() {
     return new RegionSimplify();

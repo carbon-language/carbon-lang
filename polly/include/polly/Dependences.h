@@ -108,4 +108,9 @@ namespace polly {
   };
 } // End polly namespace.
 
+namespace llvm {
+  class PassRegistry;
+  void initializeDependencesPass(llvm::PassRegistry&);
+}
+
 #endif

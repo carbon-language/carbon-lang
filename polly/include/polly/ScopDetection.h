@@ -273,4 +273,9 @@ public:
 
 } //end namespace polly
 
+namespace llvm {
+  class PassRegistry;
+  void initializeScopDetectionPass(llvm::PassRegistry&);
+}
+
 #endif

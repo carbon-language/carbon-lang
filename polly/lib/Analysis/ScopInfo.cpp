@@ -1064,9 +1064,16 @@ bool ScopInfo::runOnRegion(Region *R, RGPassManager &RGM) {
 
 char ScopInfo::ID = 0;
 
-
-static RegisterPass<ScopInfo>
-X("polly-scops", "Polly - Create polyhedral description of Scops");
+INITIALIZE_PASS_BEGIN(ScopInfo, "polly-scops",
+                      "Polly - Create polyhedral description of Scops", false,
+                      false)
+INITIALIZE_PASS_DEPENDENCY(LoopInfo)
+INITIALIZE_PASS_DEPENDENCY(RegionInfo)
+INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
+INITIALIZE_PASS_DEPENDENCY(TempScopInfo)
+INITIALIZE_PASS_END(ScopInfo, "polly-scops",
+                    "Polly - Create polyhedral description of Scops", false,
+                    false)
 
 Pass *polly::createScopInfoPass() {
   return new ScopInfo();

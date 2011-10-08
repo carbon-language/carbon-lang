@@ -39,11 +39,11 @@ namespace {
 /// @brief Scop Code Preparation - Perform some transforms to make scop detect
 /// easier.
 ///
-class CodePreperation : public FunctionPass {
+class CodePreparation : public FunctionPass {
   // DO NOT IMPLEMENT.
-  CodePreperation(const CodePreperation &);
+  CodePreparation(const CodePreparation &);
   // DO NOT IMPLEMENT.
-  const CodePreperation &operator=(const CodePreperation &);
+  const CodePreparation &operator=(const CodePreparation &);
 
   // LoopInfo to compute canonical induction variable.
   LoopInfo *LI;
@@ -56,8 +56,8 @@ class CodePreperation : public FunctionPass {
 public:
   static char ID;
 
-  explicit CodePreperation() : FunctionPass(ID) {}
-  ~CodePreperation();
+  explicit CodePreparation() : FunctionPass(ID) {}
+  ~CodePreparation();
 
   /// @name FunctionPass interface.
   //@{
@@ -71,16 +71,16 @@ public:
 }
 
 //===----------------------------------------------------------------------===//
-/// CodePreperation implement.
+/// CodePreparation implement.
 
-void CodePreperation::clear() {
+void CodePreparation::clear() {
 }
 
-CodePreperation::~CodePreperation() {
+CodePreparation::~CodePreparation() {
   clear();
 }
 
-bool CodePreperation::eliminatePHINodes(Function &F) {
+bool CodePreparation::eliminatePHINodes(Function &F) {
   // The PHINodes that will be deleted.
   std::vector<PHINode*> PNtoDel;
   // The PHINodes that will be preserved.
@@ -134,7 +134,7 @@ bool CodePreperation::eliminatePHINodes(Function &F) {
   return true;
 }
 
-void CodePreperation::getAnalysisUsage(AnalysisUsage &AU) const {
+void CodePreparation::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<LoopInfo>();
 
   AU.addPreserved<LoopInfo>();
@@ -143,7 +143,7 @@ void CodePreperation::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<DominanceFrontier>();
 }
 
-bool CodePreperation::runOnFunction(Function &F) {
+bool CodePreparation::runOnFunction(Function &F) {
   LI = &getAnalysis<LoopInfo>();
 
   splitEntryBlockForAlloca(&F.getEntryBlock(), this);
@@ -153,21 +153,22 @@ bool CodePreperation::runOnFunction(Function &F) {
   return false;
 }
 
-void CodePreperation::releaseMemory() {
+void CodePreparation::releaseMemory() {
   clear();
 }
 
-void CodePreperation::print(raw_ostream &OS, const Module *) const {
+void CodePreparation::print(raw_ostream &OS, const Module *) const {
 }
 
-char CodePreperation::ID = 0;
+char CodePreparation::ID = 0;
+char &polly::CodePreparationID = CodePreparation::ID;
 
-RegisterPass<CodePreperation> X("polly-prepare",
-                              "Polly - Prepare code for polly.",
-                              false, true);
+INITIALIZE_PASS_BEGIN(CodePreparation, "polly-prepare",
+                      "Polly - Prepare code for polly", false, false)
+INITIALIZE_PASS_DEPENDENCY(LoopInfo)
+INITIALIZE_PASS_END(CodePreparation, "polly-prepare",
+                      "Polly - Prepare code for polly", false, false)
 
-char &polly::CodePreperationID = CodePreperation::ID;
-
-Pass *polly::createCodePreperationPass() {
-  return new CodePreperation();
+Pass *polly::createCodePreparationPass() {
+  return new CodePreparation();
 }
