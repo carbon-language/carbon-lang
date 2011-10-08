@@ -99,12 +99,6 @@
             ReferencedContainer = "container:lldb.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
-      <CommandLineArguments>
-         <CommandLineArgument
-            argument = "/Volumes/work/gclayton/Documents/src/WebCore-6530.1/build/Production/WebCore.framework/Versions/A/WebCore"
-            isEnabled = "YES">
-         </CommandLineArgument>
-      </CommandLineArguments>
       <EnvironmentVariables>
          <EnvironmentVariable
             key = "LLDB_LAUNCH_FLAG_DISABLE_ASLR"
