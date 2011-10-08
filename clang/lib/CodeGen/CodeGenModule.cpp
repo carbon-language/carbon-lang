@@ -117,6 +117,7 @@ CodeGenModule::~CodeGenModule() {
   delete ObjCRuntime;
   delete OpenCLRuntime;
   delete CUDARuntime;
+  delete TheTargetCodeGenInfo;
   delete &ABI;
   delete TBAA;
   delete DebugInfo;
