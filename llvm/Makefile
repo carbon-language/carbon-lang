@@ -28,7 +28,7 @@ ifneq ($(findstring llvmCore, $(RC_ProjectName)),llvmCore)  # Normal build (not 
 
 ifeq ($(BUILD_DIRS_ONLY),1)
   DIRS := lib/Support lib/TableGen utils
-  OPTIONAL_DIRS :=
+  OPTIONAL_DIRS := tools/clang/utils/TableGen
 else
   DIRS := lib/Support lib/TableGen utils lib/VMCore lib tools/llvm-shlib \
           tools/llvm-config tools runtime docs unittests
@@ -118,7 +118,8 @@ cross-compile-build-tools:
 	  unset CFLAGS ; \
 	  unset CXXFLAGS ; \
 	  $(PROJ_SRC_DIR)/configure --build=$(BUILD_TRIPLE) \
-		--host=$(BUILD_TRIPLE) --target=$(BUILD_TRIPLE); \
+		--host=$(BUILD_TRIPLE) --target=$(BUILD_TRIPLE) \
+	        --disable-polly ; \
 	  cd .. ; \
 	fi; \
 	(unset SDKROOT; \
