@@ -16,6 +16,7 @@
 #include "llvm/PassRegistry.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
+#include "llvm/Support/CommandLine.h"
 
 #include "polly/LinkAllPasses.h"
 
@@ -26,6 +27,29 @@
 #include "polly/TempScopInfo.h"
 
 using namespace llvm;
+
+static cl::opt<bool>
+PollyViewer("enable-polly-viewer",
+       cl::desc("Enable the Polly DOT viewer in -O3"), cl::Hidden,
+       cl::value_desc("Run the Polly DOT viewer at -O3"),
+       cl::init(false));
+static cl::opt<bool>
+PollyOnlyViewer("enable-polly-only-viewer",
+       cl::desc("Enable the Polly DOT viewer in -O3 (no BB content)"),
+       cl::Hidden,
+       cl::value_desc("Run the Polly DOT viewer at -O3 (no BB content"),
+       cl::init(false));
+static cl::opt<bool>
+PollyPrinter("enable-polly-printer",
+       cl::desc("Enable the Polly DOT printer in -O3"), cl::Hidden,
+       cl::value_desc("Run the Polly DOT printer at -O3"),
+       cl::init(false));
+static cl::opt<bool>
+PollyOnlyPrinter("enable-polly-only-printer",
+       cl::desc("Enable the Polly DOT printer in -O3 (no BB content)"),
+       cl::Hidden,
+       cl::value_desc("Run the Polly DOT printer at -O3 (no BB content"),
+       cl::init(false));
 
 void initializePollyPasses(PassRegistry &Registry) {
   initializeCloogInfoPass(Registry);
@@ -78,11 +102,20 @@ static void registerPollyPasses(const llvm::PassManagerBuilder &Builder,
 
   PM.add(polly::createCodePreparationPass());
   PM.add(polly::createRegionSimplifyPass());
-
   // FIXME: Needed as RegionSimplifyPass destroys the canonical form of
   //        induction variables (It changes the order of the operands in the
   //        PHI nodes).
   PM.add(llvm::createIndVarSimplifyPass());
+
+  if (PollyViewer)
+    PM.add(polly::createDOTViewerPass());
+  if (PollyOnlyViewer)
+    PM.add(polly::createDOTOnlyViewerPass());
+  if (PollyPrinter)
+    PM.add(polly::createDOTPrinterPass());
+  if (PollyOnlyPrinter)
+    PM.add(polly::createDOTOnlyPrinterPass());
+
   PM.add(polly::createIslScheduleOptimizerPass());
   PM.add(polly::createCodeGenerationPass());
 }
