@@ -13,6 +13,9 @@
 #include "lldb/lldb-private.h"
 #include <vector>
 
+// Uncomment to make sure all Range objects are sorted when needed
+//#define ASSERT_RANGEMAP_ARE_SORTED
+
 namespace lldb_private {
 
     //----------------------------------------------------------------------
@@ -190,9 +193,27 @@ namespace lldb_private {
                 std::stable_sort (m_entries.begin(), m_entries.end());
         }
         
+#ifdef ASSERT_RANGEMAP_ARE_SORTED
+        bool
+        IsSorted () const
+        {
+            typename std::vector<Entry>::const_iterator pos, end, prev;
+            // First we determine if we can combine any of the Entry objects so we
+            // don't end up allocating and making a new collection for no reason
+            for (pos = m_entries.begin(), end = m_entries.end(), prev = end; pos != end; prev = pos++)
+            {
+                if (prev != end && *pos < *prev)
+                    return false;
+            }
+            return true;
+        }
+#endif        
         void
         CombineConsecutiveRanges ()
         {
+#ifdef ASSERT_RANGEMAP_ARE_SORTED
+            assert (IsSorted());
+#endif
             // Can't combine if ranges if we have zero or one range
             if (m_entries.size() > 1)
             {
@@ -236,6 +257,9 @@ namespace lldb_private {
         BaseType
         GetMinRangeBase (BaseType fail_value) const
         {
+#ifdef ASSERT_RANGEMAP_ARE_SORTED
+            assert (IsSorted());
+#endif
             if (m_entries.empty())
                 return fail_value;
             // m_entries must be sorted, so if we aren't empty, we grab the
@@ -246,6 +270,9 @@ namespace lldb_private {
         BaseType
         GetMaxRangeEnd (BaseType fail_value) const
         {
+#ifdef ASSERT_RANGEMAP_ARE_SORTED
+            assert (IsSorted());
+#endif
             if (m_entries.empty())
                 return fail_value;
             // m_entries must be sorted, so if we aren't empty, we grab the
@@ -303,7 +330,10 @@ namespace lldb_private {
         uint32_t
         FindEntryIndexThatContains (B addr) const
         {
-            if ( !m_entries.empty() )
+#ifdef ASSERT_RANGEMAP_ARE_SORTED
+            assert (IsSorted());
+#endif
+            if (!m_entries.empty())
             {
                 Entry entry (addr, 1);
                 typename std::vector<Entry>::const_iterator begin = m_entries.begin();
@@ -327,7 +357,10 @@ namespace lldb_private {
         const Entry *
         FindEntryThatContains (B addr) const
         {
-            if ( !m_entries.empty() )
+#ifdef ASSERT_RANGEMAP_ARE_SORTED
+            assert (IsSorted());
+#endif
+            if (!m_entries.empty())
             {
                 Entry entry (addr, 1);
                 typename std::vector<Entry>::const_iterator begin = m_entries.begin();
@@ -353,7 +386,10 @@ namespace lldb_private {
         const Entry *
         FindEntryThatContains (const Entry &range) const
         {
-            if ( !m_entries.empty() )
+#ifdef ASSERT_RANGEMAP_ARE_SORTED
+            assert (IsSorted());
+#endif
+            if (!m_entries.empty())
             {
                 typename std::vector<Entry>::const_iterator begin = m_entries.begin();
                 typename std::vector<Entry>::const_iterator end = m_entries.end();
@@ -460,9 +496,28 @@ namespace lldb_private {
                 std::stable_sort (m_entries.begin(), m_entries.end());
         }
     
+#ifdef ASSERT_RANGEMAP_ARE_SORTED
+        bool
+        IsSorted () const
+        {
+            typename std::vector<Entry>::const_iterator pos, end, prev;
+            // First we determine if we can combine any of the Entry objects so we
+            // don't end up allocating and making a new collection for no reason
+            for (pos = m_entries.begin(), end = m_entries.end(), prev = end; pos != end; prev = pos++)
+            {
+                if (prev != end && *pos < *prev)
+                    return false;
+            }
+            return true;
+        }
+#endif
+
         void
         CombineConsecutiveEntriesWithEqualData ()
         {
+#ifdef ASSERT_RANGEMAP_ARE_SORTED
+            assert (IsSorted());
+#endif
             typename std::vector<Entry>::iterator pos;
             typename std::vector<Entry>::iterator end;
             typename std::vector<Entry>::iterator prev;
@@ -539,6 +594,9 @@ namespace lldb_private {
         uint32_t
         FindEntryIndexThatContains (B addr) const
         {
+#ifdef ASSERT_RANGEMAP_ARE_SORTED
+            assert (IsSorted());
+#endif
             if ( !m_entries.empty() )
             {
                 Entry entry (addr, 1);
@@ -563,6 +621,9 @@ namespace lldb_private {
         const Entry *
         FindEntryThatContains (B addr) const
         {
+#ifdef ASSERT_RANGEMAP_ARE_SORTED
+            assert (IsSorted());
+#endif
             if ( !m_entries.empty() )
             {
                 Entry entry;
@@ -591,6 +652,9 @@ namespace lldb_private {
         const Entry *
         FindEntryThatContains (const Entry &range) const
         {
+#ifdef ASSERT_RANGEMAP_ARE_SORTED
+            assert (IsSorted());
+#endif
             if ( !m_entries.empty() )
             {
                 typename std::vector<Entry>::const_iterator begin = m_entries.begin();
