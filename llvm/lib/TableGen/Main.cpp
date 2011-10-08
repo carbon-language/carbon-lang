@@ -16,7 +16,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "TGParser.h"
-#include "TGPreprocessor.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -44,12 +43,6 @@ namespace {
   cl::list<std::string>
   IncludeDirs("I", cl::desc("Directory of include files"),
               cl::value_desc("directory"), cl::Prefix);
-
-  cl::opt<bool>
-  PreprocessOnly("E",
-                 cl::desc("Stop after the preprocessing stage; "
-                          "This is work in progress and has no effect yet"),
-                 cl::init(false));
 }
 
 namespace llvm {
@@ -73,22 +66,6 @@ int TableGenMain(char *argv0, TableGenAction &Action) {
     // Record the location of the include directory so that the lexer can find
     // it later.
     SrcMgr.setIncludeDirs(IncludeDirs);
-
-    // TODO(clchiou): Integrate preprocessor into TGParser
-    if (PreprocessOnly) {
-      std::string Error;
-      tool_output_file Out(OutputFilename.c_str(), Error);
-      if (!Error.empty()) {
-        errs() << argv0 << ": error opening " << OutputFilename
-          << ":" << Error << "\n";
-        return 1;
-      }
-      TGPreprocessor Preprocessor(SrcMgr, Out);
-      if (Preprocessor.PreprocessFile())
-        return 1;
-      Out.keep();
-      return 0;
-    }
 
     TGParser Parser(SrcMgr, Records);
 
