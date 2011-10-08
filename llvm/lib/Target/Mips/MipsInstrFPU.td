@@ -163,10 +163,11 @@ let fd = 0 in {
                   [(set FGR32:$fs, (bitconvert CPURegs:$rt))]>;
 }
 
-def FMOV_S32 : FFR<0x11, 0b000110, 0x0, (outs FGR32:$fd), (ins FGR32:$fs),
-                   "mov.s\t$fd, $fs", []>;
-def FMOV_D32 : FFR<0x11, 0b000110, 0x1, (outs AFGR64:$fd), (ins AFGR64:$fs),
-                   "mov.d\t$fd, $fs", []>;
+def FMOV_S   : FFR1<0x6, 16, "mov", "s", FGR32, FGR32>;
+def FMOV_D32 : FFR1<0x6, 17, "mov", "d", AFGR64, AFGR64>,
+               Requires<[NotFP64bit]>;
+def FMOV_D64 : FFR1<0x6, 17, "mov", "d", FGR64, FGR64>,
+               Requires<[IsFP64bit]>;
 
 /// Floating Point Memory Instructions
 let Predicates = [IsNotSingleFloat] in {

@@ -119,7 +119,7 @@ copyPhysReg(MachineBasicBlock &MBB,
       Opc = Mips::MTLO, DestReg = 0;
   }
   else if (Mips::FGR32RegClass.contains(DestReg, SrcReg))
-    Opc = Mips::FMOV_S32;
+    Opc = Mips::FMOV_S;
   else if (Mips::AFGR64RegClass.contains(DestReg, SrcReg))
     Opc = Mips::FMOV_D32;
   else if (Mips::CCRRegClass.contains(DestReg, SrcReg))
