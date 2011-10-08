@@ -227,3 +227,21 @@ class FFCMOV<bits<5> _fmt, bits<1> _tf, dag outs, dag ins, string asmstr,
   let Inst{10-6}  = fd;
   let Inst{5-0}   = 17;
 }
+
+// FP unary instructions without patterns.
+class FFR1<bits<6> funct, bits<5> fmt, string opstr, string fmtstr,
+           RegisterClass DstRC, RegisterClass SrcRC> :
+  FFR<0x11, funct, fmt, (outs DstRC:$fd), (ins SrcRC:$fs),
+      !strconcat(opstr, ".", fmtstr, "\t$fd, $fs"), []> {
+  let ft = 0;
+}
+
+// FP unary instructions with patterns.
+class FFR1P<bits<6> funct, bits<5> fmt, string opstr, string fmtstr,
+            RegisterClass DstRC, RegisterClass SrcRC, SDNode OpNode> :
+  FFR<0x11, funct, fmt, (outs DstRC:$fd), (ins SrcRC:$fs),
+      !strconcat(opstr, ".", fmtstr, "\t$fd, $fs"),
+      [(set DstRC:$fd, (OpNode SrcRC:$fs))]> {
+  let ft = 0;
+}
+

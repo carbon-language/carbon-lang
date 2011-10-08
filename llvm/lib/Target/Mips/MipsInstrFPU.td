@@ -73,31 +73,28 @@ def IsNotSingleFloat : Predicate<"!Subtarget.isSingleFloat()">;
 // Only S32 and D32 are supported right now.
 //===----------------------------------------------------------------------===//
 
-multiclass FFR1_1<bits<6> funct, string asmstr>
-{
-  def _S32 : FFR<0x11, funct, 0x0, (outs FGR32:$fd), (ins FGR32:$fs),
-      !strconcat(asmstr, ".s\t$fd, $fs"), []>;
+// Instructions that convert an FP value to 32-bit fixed point.
+multiclass FFR1_W_M<bits<6> funct, string opstr> {
+  def _S   : FFR1<funct, 16, opstr, "w.s", FGR32, FGR32>;
+  def _D32 : FFR1<funct, 17, opstr, "w.d", FGR32, AFGR64>,
+             Requires<[NotFP64bit]>;
+  def _D64 : FFR1<funct, 17, opstr, "w.d", FGR32, FGR64>,
+             Requires<[IsFP64bit]>;
+}
 
-  def _D32  : FFR<0x11, funct, 0x1, (outs FGR32:$fd), (ins AFGR64:$fs),
-      !strconcat(asmstr, ".d\t$fd, $fs"), []>, Requires<[NotFP64bit]>;
+// Instructions that convert an FP value to 64-bit fixed point.
+let Predicates = [IsFP64bit] in
+multiclass FFR1_L_M<bits<6> funct, string opstr> {
+  def _S   : FFR1<funct, 16, opstr, "l.s", FGR64, FGR32>;
+  def _D64 : FFR1<funct, 17, opstr, "l.d", FGR64, FGR64>;
 }
 
 multiclass FFR1_2<bits<6> funct, string asmstr, SDNode FOp>
 {
-  def _S32 : FFR<0x11, funct, 0x0, (outs FGR32:$fd), (ins FGR32:$fs),
-                 !strconcat(asmstr, ".s\t$fd, $fs"),
-                 [(set FGR32:$fd, (FOp FGR32:$fs))]>;
-
-  def _D32  : FFR<0x11, funct, 0x1, (outs AFGR64:$fd), (ins AFGR64:$fs),
-                 !strconcat(asmstr, ".d\t$fd, $fs"),
-                 [(set AFGR64:$fd, (FOp AFGR64:$fs))]>, Requires<[NotFP64bit]>;
+  def _S32 : FFR1P<funct, 16, asmstr, "s", FGR32, FGR32, FOp>;
+  def _D32 : FFR1P<funct, 17, asmstr, "d", AFGR64, AFGR64, FOp>,
+                   Requires<[NotFP64bit]>;
 }
-
-class FFR1_3<bits<6> funct, bits<5> fmt, RegisterClass RcSrc,
-              RegisterClass RcDst, string asmstr>:
-  FFR<0x11, funct, fmt, (outs RcSrc:$fd), (ins RcDst:$fs),
-      !strconcat(asmstr, "\t$fd, $fs"), []>;
-
 
 multiclass FFR1_4<bits<6> funct, string asmstr, SDNode FOp, bit isComm = 0> {
   let isCommutable = isComm in {
@@ -117,51 +114,37 @@ multiclass FFR1_4<bits<6> funct, string asmstr, SDNode FOp, bit isComm = 0> {
 //===----------------------------------------------------------------------===//
 // Floating Point Instructions
 //===----------------------------------------------------------------------===//
+defm ROUND_W : FFR1_W_M<0xc, "round">;
+defm ROUND_L : FFR1_L_M<0x8, "round">;
+defm TRUNC_W : FFR1_W_M<0xd, "trunc">;
+defm TRUNC_L : FFR1_L_M<0x9, "trunc">;
+defm CEIL_W  : FFR1_W_M<0xe, "ceil">;
+defm CEIL_L  : FFR1_L_M<0xa, "ceil">;
+defm FLOOR_W : FFR1_W_M<0xf, "floor">;
+defm FLOOR_L : FFR1_L_M<0xb, "floor">;
+defm CVT_W   : FFR1_W_M<0x24, "cvt">;
+defm CVT_L   : FFR1_L_M<0x25, "cvt">;
+
+def CVT_S_W : FFR1<0x20, 20, "cvt", "s.w", FGR32, FGR32>;
+
+let Predicates = [NotFP64bit] in {
+  def CVT_S_D32 : FFR1<0x20, 17, "cvt", "s.d", FGR32, AFGR64>;
+  def CVT_D32_W : FFR1<0x21, 20, "cvt", "d.w", AFGR64, FGR32>;
+  def CVT_D32_S : FFR1<0x21, 16, "cvt", "d.s", AFGR64, FGR32>;
+}
+
+let Predicates = [IsFP64bit] in {
+ def CVT_S_D64 : FFR1<0x20, 17, "cvt", "s.d", FGR32, FGR64>;
+ def CVT_S_L   : FFR1<0x20, 21, "cvt", "s.l", FGR32, FGR64>;
+ def CVT_D64_W : FFR1<0x21, 20, "cvt", "d.w", FGR64, FGR32>;
+ def CVT_D64_S : FFR1<0x21, 16, "cvt", "d.s", FGR64, FGR32>;
+ def CVT_D64_L : FFR1<0x21, 21, "cvt", "d.l", FGR64, FGR64>;
+}
 
 let ft = 0 in {
-  defm FLOOR_W : FFR1_1<0b001111, "floor.w">;
-  defm CEIL_W  : FFR1_1<0b001110, "ceil.w">;
-  defm ROUND_W : FFR1_1<0b001100, "round.w">;
-  defm TRUNC_W : FFR1_1<0b001101, "trunc.w">;
-  defm CVTW    : FFR1_1<0b100100, "cvt.w">;
-
   defm FABS    : FFR1_2<0b000101, "abs",  fabs>;
   defm FNEG    : FFR1_2<0b000111, "neg",  fneg>;
   defm FSQRT   : FFR1_2<0b000100, "sqrt", fsqrt>;
-
-  /// Convert to Single Precison
-  def CVTS_W32 : FFR1_3<0b100000, 0x2, FGR32,  FGR32,  "cvt.s.w">;
-
-  let Predicates = [IsNotSingleFloat] in {
-    /// Ceil to long signed integer
-    def CEIL_LS   : FFR1_3<0b001010, 0x0, FGR32, FGR32, "ceil.l">;
-    def CEIL_LD   : FFR1_3<0b001010, 0x1, AFGR64, AFGR64, "ceil.l">;
-
-    /// Round to long signed integer
-    def ROUND_LS  : FFR1_3<0b001000, 0x0, FGR32, FGR32, "round.l">;
-    def ROUND_LD  : FFR1_3<0b001000, 0x1, AFGR64, AFGR64, "round.l">;
-
-    /// Floor to long signed integer
-    def FLOOR_LS  : FFR1_3<0b001011, 0x0, FGR32, FGR32, "floor.l">;
-    def FLOOR_LD  : FFR1_3<0b001011, 0x1, AFGR64, AFGR64, "floor.l">;
-
-    /// Trunc to long signed integer
-    def TRUNC_LS  : FFR1_3<0b001001, 0x0, FGR32, FGR32, "trunc.l">;
-    def TRUNC_LD  : FFR1_3<0b001001, 0x1, AFGR64, AFGR64, "trunc.l">;
-
-    /// Convert to long signed integer
-    def CVTL_S    : FFR1_3<0b100101, 0x0, FGR32, FGR32, "cvt.l">;
-    def CVTL_D    : FFR1_3<0b100101, 0x1, AFGR64, AFGR64, "cvt.l">;
-
-    /// Convert to Double Precison
-    def CVTD_S32 : FFR1_3<0b100001, 0x0, AFGR64, FGR32, "cvt.d.s">;
-    def CVTD_W32 : FFR1_3<0b100001, 0x2, AFGR64, FGR32, "cvt.d.w">;
-    def CVTD_L32 : FFR1_3<0b100001, 0x3, AFGR64, AFGR64, "cvt.d.l">;
-
-    /// Convert to Single Precison
-    def CVTS_D32 : FFR1_3<0b100000, 0x1, FGR32, AFGR64, "cvt.s.d">;
-    def CVTS_L32 : FFR1_3<0b100000, 0x3, FGR32, AFGR64, "cvt.s.l">;
-  }
 }
 
 // The odd-numbered registers are only referenced when doing loads,
@@ -352,14 +335,14 @@ def fpimm0neg : PatLeaf<(fpimm), [{
 def : Pat<(f32 fpimm0), (MTC1 ZERO)>;
 def : Pat<(f32 fpimm0neg), (FNEG_S32 (MTC1 ZERO))>;
 
-def : Pat<(f32 (sint_to_fp CPURegs:$src)), (CVTS_W32 (MTC1 CPURegs:$src))>;
-def : Pat<(f64 (sint_to_fp CPURegs:$src)), (CVTD_W32 (MTC1 CPURegs:$src))>;
+def : Pat<(f32 (sint_to_fp CPURegs:$src)), (CVT_S_W (MTC1 CPURegs:$src))>;
+def : Pat<(f64 (sint_to_fp CPURegs:$src)), (CVT_D32_W (MTC1 CPURegs:$src))>;
 
-def : Pat<(i32 (fp_to_sint FGR32:$src)), (MFC1 (TRUNC_W_S32 FGR32:$src))>;
+def : Pat<(i32 (fp_to_sint FGR32:$src)), (MFC1 (TRUNC_W_S FGR32:$src))>;
 def : Pat<(i32 (fp_to_sint AFGR64:$src)), (MFC1 (TRUNC_W_D32 AFGR64:$src))>;
 
 let Predicates = [NotFP64bit] in {
-  def : Pat<(f32 (fround AFGR64:$src)), (CVTS_D32 AFGR64:$src)>;
-  def : Pat<(f64 (fextend FGR32:$src)), (CVTD_S32 FGR32:$src)>;
+  def : Pat<(f32 (fround AFGR64:$src)), (CVT_S_D32 AFGR64:$src)>;
+  def : Pat<(f64 (fextend FGR32:$src)), (CVT_D32_S FGR32:$src)>;
 }
 
