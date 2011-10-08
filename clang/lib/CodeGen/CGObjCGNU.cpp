@@ -153,6 +153,8 @@ protected:
   llvm::IntegerType *LongTy;
   /// LLVM type for C size_t.  Used in various runtime data structures.
   llvm::IntegerType *SizeTy;
+  /// LLVM type for C intptr_t.  
+  llvm::IntegerType *IntPtrTy;
   /// LLVM type for C ptrdiff_t.  Mainly used in property accessor functions.
   llvm::IntegerType *PtrDiffTy;
   /// LLVM type for C int*.  Used for GCC-ABI-compatible non-fragile instance
@@ -716,6 +718,9 @@ CGObjCGNU::CGObjCGNU(CodeGenModule &cgm, unsigned runtimeABIVersion,
 
   Int32Ty = llvm::Type::getInt32Ty(VMContext);
   Int64Ty = llvm::Type::getInt64Ty(VMContext);
+
+  IntPtrTy =
+      TheModule.getPointerSize() == llvm::Module::Pointer32 ? Int32Ty : Int64Ty;
 
   // Object type
   QualType UnqualIdTy = CGM.getContext().getObjCIdType();
@@ -1742,7 +1747,10 @@ llvm::Constant *CGObjCGNU::MakeBitField(llvm::SmallVectorImpl<bool> &bits) {
       array };
   llvm::Constant *GS = MakeGlobal(llvm::StructType::get(Int32Ty, arrayTy,
         NULL), fields);
-  return llvm::ConstantExpr::getPtrToInt(GS, Int64Ty);
+  llvm::Constant *ptr = llvm::ConstantExpr::getPtrToInt(GS, IntPtrTy);
+  if (IntPtrTy != Int64Ty)
+    ptr = llvm::ConstantExpr::getZExt(ptr, Int64Ty);
+  return ptr;
 }
 
 void CGObjCGNU::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
@@ -2471,8 +2479,7 @@ llvm::GlobalVariable *CGObjCGNU::ObjCIvarOffsetVariable(
               const_cast<ObjCInterfaceDecl *>(ID)))
       Offset = ComputeIvarBaseOffset(CGM, ID, Ivar);
 
-    llvm::ConstantInt *OffsetGuess =
-      llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), Offset,
+    llvm::ConstantInt *OffsetGuess = llvm::ConstantInt::get(Int32Ty, Offset,
                              /*isSigned*/true);
     // Don't emit the guess in non-PIC code because the linker will not be able
     // to replace it with the real version for a library.  In non-PIC code you
