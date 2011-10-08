@@ -925,7 +925,7 @@ void LockFileManager::waitForUnlock() {
 #if LLVM_ON_WIN32
            Interval < MaxSeconds * 1000
 #else
-           Interval.tv_sec < MaxSeconds
+           Interval.tv_sec < (time_t)MaxSeconds
 #endif
            );
 
