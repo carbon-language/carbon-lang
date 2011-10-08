@@ -2672,16 +2672,15 @@ void Sema::InstantiateStaticDataMemberDefinition(
   }
 }
 
-static MultiInitializer CreateMultiInitializer(
-                        const SmallVectorImpl<Expr*> &Args,
-                        const CXXCtorInitializer *Init) {
+static MultiInitializer CreateMultiInitializer(SmallVectorImpl<Expr*> &Args,
+                                               const CXXCtorInitializer *Init) {
   // FIXME: This is a hack that will do slightly the wrong thing for an
   // initializer of the form foo({...}).
   // The right thing to do would be to modify InstantiateInitializer to create
   // the MultiInitializer.
   if (Args.size() == 1 && isa<InitListExpr>(Args[0]))
     return MultiInitializer(Args[0]);
-  return MultiInitializer(Init->getLParenLoc(), (Expr **)Args.data(),
+  return MultiInitializer(Init->getLParenLoc(), Args.data(),
                           Args.size(), Init->getRParenLoc());
 }
 
