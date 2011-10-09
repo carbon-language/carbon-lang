@@ -2885,6 +2885,10 @@ namespace {
     void VisitAtomicTypeLoc(AtomicTypeLoc TL) {
       TL.setKWLoc(DS.getTypeSpecTypeLoc());
       TL.setParensRange(DS.getTypeofParensRange());
+      
+      TypeSourceInfo *TInfo = 0;
+      Sema::GetTypeFromParser(DS.getRepAsType(), &TInfo);
+      TL.getValueLoc().initializeFullCopy(TInfo->getTypeLoc());
     }
 
     void VisitTypeLoc(TypeLoc TL) {
