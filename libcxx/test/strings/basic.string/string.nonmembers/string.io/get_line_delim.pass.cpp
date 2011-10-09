@@ -21,7 +21,7 @@
 int main()
 {
     {
-        std::istringstream in(" abc*  def*   ghij");
+        std::istringstream in(" abc*  def**   ghij");
         std::string s("initial text");
         getline(in, s, '*');
         assert(in.good());
@@ -30,11 +30,14 @@ int main()
         assert(in.good());
         assert(s == "  def");
         getline(in, s, '*');
+        assert(in.good());
+        assert(s == "");
+        getline(in, s, '*');
         assert(in.eof());
         assert(s == "   ghij");
     }
     {
-        std::wistringstream in(L" abc*  def*   ghij");
+        std::wistringstream in(L" abc*  def**   ghij");
         std::wstring s(L"initial text");
         getline(in, s, L'*');
         assert(in.good());
@@ -42,6 +45,9 @@ int main()
         getline(in, s, L'*');
         assert(in.good());
         assert(s == L"  def");
+        getline(in, s, L'*');
+        assert(in.good());
+        assert(s == L"");
         getline(in, s, L'*');
         assert(in.eof());
         assert(s == L"   ghij");

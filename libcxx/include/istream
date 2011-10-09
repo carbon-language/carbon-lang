@@ -1586,6 +1586,7 @@ getline(basic_istream<_CharT, _Traits>& __is,
         {
             __str.clear();
             ios_base::iostate __err = ios_base::goodbit;
+            streamsize __extr = 0;
             while (true)
             {
                 typename _Traits::int_type __i = __is.rdbuf()->sbumpc();
@@ -1594,6 +1595,7 @@ getline(basic_istream<_CharT, _Traits>& __is,
                    __err |= ios_base::eofbit;
                    break;
                 }
+                ++__extr;
                 _CharT __ch = _Traits::to_char_type(__i);
                 if (_Traits::eq(__ch, __dlm))
                     break;
@@ -1604,7 +1606,7 @@ getline(basic_istream<_CharT, _Traits>& __is,
                     break;
                 }
             }
-            if (__str.empty())
+            if (__extr == 0)
                __err |= ios_base::failbit;
             __is.setstate(__err);
         }
