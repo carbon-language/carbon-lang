@@ -55,6 +55,7 @@ TYPE("objective-c++",            ObjCXX,       PP_ObjCXX,       0,       "u")
 // C family input files to precompile.
 TYPE("c-header-cpp-output",      PP_CHeader,   INVALID,         "i",     "p")
 TYPE("c-header",                 CHeader,      PP_CHeader,      0,       "pu")
+TYPE("cl-header",                CLHeader,     PP_CHeader,      0,       "pu")
 TYPE("objective-c-header-cpp-output", PP_ObjCHeader, INVALID,   "mi",    "p")
 TYPE("objective-c-header",       ObjCHeader,   PP_ObjCHeader,   0,       "pu")
 TYPE("c++-header-cpp-output",    PP_CXXHeader, INVALID,         "ii",    "p")
