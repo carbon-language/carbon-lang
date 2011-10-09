@@ -2552,6 +2552,7 @@ void InitializationSequence::AddAddressOverloadResolutionStep(
   Step S;
   S.Kind = SK_ResolveAddressOfOverloadedFunction;
   S.Type = Function->getType();
+  S.Function.HadMultipleCandidates = false;
   S.Function.Function = Function;
   S.Function.FoundDecl = Found;
   Steps.push_back(S);
@@ -2591,6 +2592,7 @@ void InitializationSequence::AddUserConversionStep(FunctionDecl *Function,
   Step S;
   S.Kind = SK_UserConversion;
   S.Type = T;
+  S.Function.HadMultipleCandidates = false;
   S.Function.Function = Function;
   S.Function.FoundDecl = FoundDecl;
   Steps.push_back(S);
@@ -2640,6 +2642,7 @@ InitializationSequence::AddConstructorInitializationStep(
   Step S;
   S.Kind = SK_ConstructorInitialization;
   S.Type = T;
+  S.Function.HadMultipleCandidates = false;
   S.Function.Function = Constructor;
   S.Function.FoundDecl = DeclAccessPair::make(Constructor, Access);
   Steps.push_back(S);
