@@ -2286,7 +2286,21 @@ TemplateDeclInstantiator::InitFunctionInstantiation(FunctionDecl *New,
       EnterExpressionEvaluationContext Unevaluated(SemaRef, Sema::Unevaluated);
       ExprResult E = SemaRef.SubstExpr(OldNoexceptExpr, TemplateArgs);
       if (E.isUsable())
+        E = SemaRef.CheckBooleanCondition(E.get(), E.get()->getLocStart());
+    
+      if (E.isUsable()) {
+        SourceLocation ErrLoc;
+        llvm::APSInt NoexceptVal;
         NoexceptExpr = E.take();
+        if (!NoexceptExpr->isTypeDependent() &&
+            !NoexceptExpr->isValueDependent() &&
+            !NoexceptExpr->isIntegerConstantExpr(NoexceptVal, SemaRef.Context,
+                                                 &ErrLoc, /*evaluated=*/false)){
+          SemaRef.Diag(ErrLoc, diag::err_noexcept_needs_constant_expression)
+            << NoexceptExpr->getSourceRange();
+          NoexceptExpr = 0;
+        }
+      }
     }
 
     // Rebuild the function type
