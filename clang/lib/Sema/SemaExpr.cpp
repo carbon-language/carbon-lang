@@ -7348,8 +7348,15 @@ static QualType CheckAddressOfOperand(Sema &S, Expr *OrigOp,
                                       SourceLocation OpLoc) {
   if (OrigOp->isTypeDependent())
     return S.Context.DependentTy;
-  if (OrigOp->getType() == S.Context.OverloadTy)
+  if (OrigOp->getType() == S.Context.OverloadTy) {
+    if (!isa<OverloadExpr>(OrigOp->IgnoreParens())) {
+      S.Diag(OpLoc, diag::err_typecheck_invalid_lvalue_addrof)
+        << OrigOp->getSourceRange();
+      return QualType();
+    }
+                  
     return S.Context.OverloadTy;
+  }
   if (OrigOp->getType() == S.Context.UnknownAnyTy)
     return S.Context.UnknownAnyTy;
   if (OrigOp->getType() == S.Context.BoundMemberTy) {
