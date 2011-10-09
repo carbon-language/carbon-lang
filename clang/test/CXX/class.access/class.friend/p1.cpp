@@ -341,3 +341,16 @@ namespace test12 {
     void *var = static_cast<B*>(this)->mem;
   }
 }
+
+namespace PR9103 {
+  struct base {
+  protected:
+    static void foo(void) {}
+  };
+
+  struct cls: base {
+    friend void bar(void) {
+      base::foo();
+    }
+  };
+}

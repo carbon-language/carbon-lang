@@ -103,7 +103,11 @@ struct EffectiveContext {
       } else if (isa<FunctionDecl>(DC)) {
         FunctionDecl *Function = cast<FunctionDecl>(DC)->getCanonicalDecl();
         Functions.push_back(Function);
-        DC = Function->getDeclContext();
+        
+        if (Function->getFriendObjectKind())
+          DC = Function->getLexicalDeclContext();
+        else
+          DC = Function->getDeclContext();
       } else if (DC->isFileContext()) {
         break;
       } else {
