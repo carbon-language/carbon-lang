@@ -1045,6 +1045,13 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
 
   // Handle ivar access to Objective-C objects.
   if (const ObjCObjectType *OTy = BaseType->getAs<ObjCObjectType>()) {
+    if (!SS.isEmpty()) {
+      Diag(SS.getRange().getBegin(), diag::err_qualified_objc_access)
+        << 1 << SS.getScopeRep()
+        << FixItHint::CreateRemoval(SS.getRange());
+      SS.clear();
+    }
+    
     IdentifierInfo *Member = MemberName.getAsIdentifierInfo();
 
     // There are three cases for the base type:
@@ -1163,6 +1170,13 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
   // Objective-C property access.
   const ObjCObjectPointerType *OPT;
   if (!IsArrow && (OPT = BaseType->getAs<ObjCObjectPointerType>())) {
+    if (!SS.isEmpty()) {
+      Diag(SS.getRange().getBegin(), diag::err_qualified_objc_access)
+        << 0 << SS.getScopeRep()
+        << FixItHint::CreateRemoval(SS.getRange());
+      SS.clear();
+    }
+
     // This actually uses the base as an r-value.
     BaseExpr = DefaultLvalueConversion(BaseExpr.take());
     if (BaseExpr.isInvalid())

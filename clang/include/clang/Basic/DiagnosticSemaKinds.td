@@ -3472,7 +3472,9 @@ def error_nosetter_property_assignment : Error<
   "setter method is needed to assign to object using property" " assignment syntax">;
 def error_no_subobject_property_setting : Error<
   "expression is not assignable">;
-
+def err_qualified_objc_access : Error<
+  "%select{property|ivar}0 access cannot be qualified with '%1'">;
+  
 def ext_freestanding_complex : Extension<
   "complex numbers are an extension in a freestanding C99 implementation">;
 
