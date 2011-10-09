@@ -75,6 +75,8 @@ class PTXTargetLowering : public TargetLowering {
 
     virtual EVT getSetCCResultType(EVT VT) const;
 
+    virtual unsigned getNumRegisters(LLVMContext &Context, EVT VT);
+
   private:
     SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const;
 }; // class PTXTargetLowering

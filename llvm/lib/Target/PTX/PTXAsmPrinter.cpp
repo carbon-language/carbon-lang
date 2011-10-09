@@ -20,7 +20,9 @@
 #include "PTXParamManager.h"
 #include "PTXRegisterInfo.h"
 #include "PTXTargetMachine.h"
+#include "llvm/Argument.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Function.h"
 #include "llvm/Module.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
@@ -445,9 +447,11 @@ void PTXAsmPrinter::EmitFunctionEntryLabel() {
 
   decl += " (";
 
+  const Function *F = MF->getFunction();
+
   // Print parameters
   if (isKernel || ST.useParamSpaceForDeviceArgs()) {
-    for (PTXParamManager::param_iterator i = PM.arg_begin(), e = PM.arg_end(),
+    /*for (PTXParamManager::param_iterator i = PM.arg_begin(), e = PM.arg_end(),
          b = i; i != e; ++i) {
       if (i != b) {
         decl += ", ";
@@ -457,6 +461,38 @@ void PTXAsmPrinter::EmitFunctionEntryLabel() {
       decl += utostr(PM.getParamSize(*i));
       decl += " ";
       decl += PM.getParamName(*i);
+    }*/
+    int Counter = 1;
+    for (Function::const_arg_iterator i = F->arg_begin(), e = F->arg_end(),
+         b = i; i != e; ++i) {
+      if (i != b)
+        decl += ", ";
+      const Type *ArgType = (*i).getType();
+      decl += ".param .b";
+      if (ArgType->isPointerTy()) {
+        if (ST.is64Bit())
+          decl += "64";
+        else
+          decl += "32";
+      } else {
+        decl += utostr(ArgType->getPrimitiveSizeInBits());
+      }
+      if (ArgType->isPointerTy() && ST.emitPtrAttribute()) {
+        const PointerType *PtrType = dyn_cast<const PointerType>(ArgType);
+        decl += " .ptr";
+        switch (PtrType->getAddressSpace()) {
+        default:
+          llvm_unreachable("Unknown address space in argument");
+        case PTXStateSpace::Global:
+          decl += " .global";
+          break;
+        case PTXStateSpace::Shared:
+          decl += " .shared";
+          break;
+        }
+      }
+      decl += " __param_";
+      decl += utostr(Counter++);
     }
   } else {
     for (PTXMachineFunctionInfo::reg_iterator

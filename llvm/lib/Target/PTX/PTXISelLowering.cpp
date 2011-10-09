@@ -414,3 +414,9 @@ PTXTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
   return Chain;
 }
+
+unsigned PTXTargetLowering::getNumRegisters(LLVMContext &Context, EVT VT) {
+  // All arguments consist of one "register," regardless of the type.
+  return 1;
+}
+
