@@ -845,7 +845,9 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S, bool AddToContext) {
   // Out-of-line definitions shouldn't be pushed into scope in C++.
   // Out-of-line variable and function definitions shouldn't even in C.
   if ((getLangOptions().CPlusPlus || isa<VarDecl>(D) || isa<FunctionDecl>(D)) &&
-      D->isOutOfLine())
+      D->isOutOfLine() &&
+      !D->getDeclContext()->getRedeclContext()->Equals(
+        D->getLexicalDeclContext()->getRedeclContext()))
     return;
 
   // Template instantiations should also not be pushed into scope.
