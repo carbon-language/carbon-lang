@@ -1487,8 +1487,14 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
   Decl *Member;
   if (isInstField) {
     CXXScopeSpec &SS = D.getCXXScopeSpec();
+
+    // Data members must have identifiers for names.
+    if (Name.getNameKind() != DeclarationName::Identifier) {
+      Diag(Loc, diag::err_bad_variable_name)
+        << Name;
+      return 0;
+    }
     
-    // FIXME: Check that the name is an identifier!
     IdentifierInfo *II = Name.getAsIdentifierInfo();
 
     // Member field could not be with "template" keyword.

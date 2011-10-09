@@ -43,3 +43,8 @@ namespace PR6238 {
     void operator()();
   } plus;
 }
+
+struct PR10839 {
+  operator int; // expected-error{{'operator int' cannot be the name of a variable or data member}}
+  int operator+; // expected-error{{'operator+' cannot be the name of a variable or data member}}
+};
