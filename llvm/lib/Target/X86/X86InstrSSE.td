@@ -6753,9 +6753,39 @@ let Defs = [YMM0, YMM1, YMM2, YMM3, YMM4, YMM5, YMM6, YMM7,
             YMM8, YMM9, YMM10, YMM11, YMM12, YMM13, YMM14, YMM15] in {
   // Zero All YMM registers
   def VZEROALL : I<0x77, RawFrm, (outs), (ins), "vzeroall",
-                   [(int_x86_avx_vzeroall)]>, TB, VEX, VEX_L, Requires<[HasAVX]>;
+                  [(int_x86_avx_vzeroall)]>, TB, VEX, VEX_L, Requires<[HasAVX]>;
 
   // Zero Upper bits of YMM registers
   def VZEROUPPER : I<0x77, RawFrm, (outs), (ins), "vzeroupper",
                      [(int_x86_avx_vzeroupper)]>, TB, VEX, Requires<[HasAVX]>;
+}
+
+//===----------------------------------------------------------------------===//
+// Half precision conversion instructions
+//
+let Predicates = [HasF16C] in {
+  def VCVTPH2PSrm : I<0x13, MRMSrcMem, (outs VR128:$dst), (ins f64mem:$src),
+                     "vcvtph2ps\t{$src, $dst|$dst, $src}", []>, T8, OpSize, VEX;
+  def VCVTPH2PSrr : I<0x13, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
+                     "vcvtph2ps\t{$src, $dst|$dst, $src}", []>, T8, OpSize, VEX;
+  def VCVTPH2PSYrm : I<0x13, MRMSrcMem, (outs VR256:$dst), (ins f128mem:$src),
+                     "vcvtph2ps\t{$src, $dst|$dst, $src}", []>, T8, OpSize, VEX;
+  def VCVTPH2PSYrr : I<0x13, MRMSrcReg, (outs VR256:$dst), (ins VR128:$src),
+                     "vcvtph2ps\t{$src, $dst|$dst, $src}", []>, T8, OpSize, VEX;
+  def VCVTPS2PHmr : Ii8<0x1D, MRMDestMem, (outs f64mem:$dst),
+                      (ins VR128:$src1, i32i8imm:$src2),
+                      "vcvtps2ph\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>,
+                      TA, OpSize, VEX;
+  def VCVTPS2PHrr : Ii8<0x1D, MRMDestReg, (outs VR128:$dst),
+                      (ins VR128:$src1, i32i8imm:$src2),
+                      "vcvtps2ph\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>,
+                      TA, OpSize, VEX;
+  def VCVTPS2PHYmr : Ii8<0x1D, MRMDestMem, (outs f128mem:$dst),
+                      (ins VR256:$src1, i32i8imm:$src2),
+                      "vcvtps2ph\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>,
+                      TA, OpSize, VEX;
+  def VCVTPS2PHYrr : Ii8<0x1D, MRMDestReg, (outs VR128:$dst),
+                      (ins VR256:$src1, i32i8imm:$src2),
+                      "vcvtps2ph\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>,
+                      TA, OpSize, VEX;
 }

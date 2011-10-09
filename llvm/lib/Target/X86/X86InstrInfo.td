@@ -475,6 +475,7 @@ def HasFMA3      : Predicate<"Subtarget->hasFMA3()">;
 def HasFMA4      : Predicate<"Subtarget->hasFMA4()">;
 def HasMOVBE     : Predicate<"Subtarget->hasMOVBE()">;
 def HasRDRAND    : Predicate<"Subtarget->hasRDRAND()">;
+def HasF16C      : Predicate<"Subtarget->hasF16C()">;
 def FPStackf32   : Predicate<"!Subtarget->hasXMM()">;
 def FPStackf64   : Predicate<"!Subtarget->hasXMMInt()">;
 def HasCmpxchg16b: Predicate<"Subtarget->hasCmpxchg16b()">;

@@ -100,6 +100,8 @@ def FeatureMOVBE   : SubtargetFeature<"movbe", "HasMOVBE", "true",
                                       "Support MOVBE instruction">;
 def FeatureRDRAND  : SubtargetFeature<"rdrand", "HasRDRAND", "true",
                                       "Support RDRAND instruction">;
+def FeatureF16C    : SubtargetFeature<"f16c", "HasF16C", "true",
+                       "Support 16-bit floating point conversion instructions">;
 
 //===----------------------------------------------------------------------===//
 // X86 processors supported.

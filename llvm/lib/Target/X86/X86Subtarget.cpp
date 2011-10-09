@@ -206,6 +206,7 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
   HasMOVBE = IsIntel && ((ECX >> 22) & 0x1);  ToggleFeature(X86::FeatureMOVBE);
   HasPOPCNT = IsIntel && ((ECX >> 23) & 0x1); ToggleFeature(X86::FeaturePOPCNT);
   HasAES   = IsIntel && ((ECX >> 25) & 0x1);  ToggleFeature(X86::FeatureAES);
+  HasF16C  = IsIntel && ((ECX >> 29) & 0x1);  ToggleFeature(X86::FeatureF16C);
   HasRDRAND = IsIntel && ((ECX >> 30) & 0x1); ToggleFeature(X86::FeatureRDRAND);
   HasCmpxchg16b = ((ECX >> 13) & 0x1); ToggleFeature(X86::FeatureCMPXCHG16B);
 
@@ -258,6 +259,7 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
   , HasFMA4(false)
   , HasMOVBE(false)
   , HasRDRAND(false)
+  , HasF16C(false)
   , IsBTMemSlow(false)
   , IsUAMemFast(false)
   , HasVectorUAMem(false)
