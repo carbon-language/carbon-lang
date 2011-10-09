@@ -2969,16 +2969,19 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
                                                     TDF))
         continue;
 
+      // If we have nothing to deduce, we're done.
+      if (!hasDeducibleTemplateParameters(*this, FunctionTemplate, ParamType))
+        continue;
+
       // Keep track of the argument type and corresponding parameter index,
       // so we can check for compatibility between the deduced A and A.
-      if (hasDeducibleTemplateParameters(*this, FunctionTemplate, ParamType))
-        OriginalCallArgs.push_back(OriginalCallArg(OrigParamType, ArgIdx-1, 
-                                                   ArgType));
+      OriginalCallArgs.push_back(OriginalCallArg(OrigParamType, ArgIdx-1, 
+                                                 ArgType));
 
       if (TemplateDeductionResult Result
-          = ::DeduceTemplateArguments(*this, TemplateParams,
-                                      ParamType, ArgType, Info, Deduced,
-                                      TDF))
+            = ::DeduceTemplateArguments(*this, TemplateParams,
+                                        ParamType, ArgType, Info, Deduced,
+                                        TDF))
         return Result;
 
       continue;
