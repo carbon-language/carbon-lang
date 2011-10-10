@@ -453,7 +453,6 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::CXXBindTemporaryExprClass:
     case Stmt::CXXCatchStmtClass:
     case Stmt::CXXDependentScopeMemberExprClass:
-    case Stmt::CXXForRangeStmtClass:
     case Stmt::CXXPseudoDestructorExprClass:
     case Stmt::CXXThrowExprClass:
     case Stmt::CXXTryStmtClass:
@@ -500,6 +499,7 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::CaseStmtClass:
     case Stmt::CompoundStmtClass:
     case Stmt::ContinueStmtClass:
+    case Stmt::CXXForRangeStmtClass:
     case Stmt::DefaultStmtClass:
     case Stmt::DoStmtClass:
     case Stmt::ForStmtClass:

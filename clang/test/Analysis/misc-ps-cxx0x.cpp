@@ -45,3 +45,26 @@ int tempobj2()
 
   return j; // no-warning
 }
+
+
+// Test for correct handling of C++ ForRange statement.
+void test1() {
+  int array[2] = { 1, 2 };
+  int j = 0;
+  for ( int i : array )
+    j += i;
+  int *p = 0;
+  *p = 0xDEADBEEF;  // expected-warning {{null}}
+}
+
+void test2() {
+  int array[2] = { 1, 2 };
+  int j = 0;
+  for (int i : array)
+    j += i;
+  if (j == 3)
+    return;
+  int *p = 0;
+  *p = 0xDEADBEEF;  // no-warning
+}
+
