@@ -2140,10 +2140,15 @@ public:
   ExprResult RebuildSizeOfPackExpr(SourceLocation OperatorLoc, NamedDecl *Pack, 
                                    SourceLocation PackLoc, 
                                    SourceLocation RParenLoc,
-                                   unsigned Length) {
+                                   llvm::Optional<unsigned> Length) {
+    if (Length)
+      return new (SemaRef.Context) SizeOfPackExpr(SemaRef.Context.getSizeType(), 
+                                                  OperatorLoc, Pack, PackLoc, 
+                                                  RParenLoc, *Length);
+    
     return new (SemaRef.Context) SizeOfPackExpr(SemaRef.Context.getSizeType(), 
                                                 OperatorLoc, Pack, PackLoc, 
-                                                RParenLoc, Length);
+                                                RParenLoc);
   }
                                    
   /// \brief Build a new Objective-C @encode expression.
@@ -7709,14 +7714,23 @@ TreeTransform<Derived>::TransformSizeOfPackExpr(SizeOfPackExpr *E) {
                                            NumExpansions))
     return ExprError();
   
-  if (!ShouldExpand || RetainExpansion)
+  if (RetainExpansion)
     return SemaRef.Owned(E);
+    
+  NamedDecl *Pack = E->getPack();
+  if (!ShouldExpand) {
+    Pack = cast_or_null<NamedDecl>(getDerived().TransformDecl(E->getPackLoc(), 
+                                                              Pack));
+    if (!Pack)
+      return ExprError();
+  }
+
   
   // We now know the length of the parameter pack, so build a new expression
   // that stores that length.
-  return getDerived().RebuildSizeOfPackExpr(E->getOperatorLoc(), E->getPack(), 
+  return getDerived().RebuildSizeOfPackExpr(E->getOperatorLoc(), Pack, 
                                             E->getPackLoc(), E->getRParenLoc(), 
-                                            *NumExpansions);
+                                            NumExpansions);
 }
 
 template<typename Derived>

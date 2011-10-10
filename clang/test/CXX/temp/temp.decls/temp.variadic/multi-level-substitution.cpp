@@ -234,3 +234,18 @@ namespace ExpandingFunctionParameters {
     x1.f(17, 3.14159);
   }
 }
+
+namespace PR10230 {
+  template<typename>
+  struct s
+  {
+    template<typename... Args>
+    auto f() -> int(&)[sizeof...(Args)];
+  };
+
+  void main()
+  {
+    int (&ir1)[1] = s<int>().f<int>();
+    int (&ir3)[3] = s<int>().f<int, float, double>();
+  }
+}
