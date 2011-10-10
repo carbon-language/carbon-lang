@@ -2848,9 +2848,6 @@ def MOVr : AsI1<0b1101, (outs GPR:$Rd), (ins GPR:$Rm), DPFrm, IIC_iMOVr,
   let Inst{15-12} = Rd;
 }
 
-def : ARMInstAlias<"movs${p} $Rd, $Rm", 
-                   (MOVr GPR:$Rd, GPR:$Rm, pred:$p, CPSR)>;
-
 // A version for the smaller set of tail call registers.
 let neverHasSideEffects = 1 in
 def MOVr_TC : AsI1<0b1101, (outs tcGPR:$Rd), (ins tcGPR:$Rm), DPFrm,
@@ -4026,14 +4023,6 @@ def ISB : AInoP<(outs), (ins memb_opt:$opt), MiscFrm, NoItinerary,
   bits<4> opt;
   let Inst{31-4} = 0xf57ff06;
   let Inst{3-0} = opt;
-}
-
-// Pseudo isntruction that combines movs + predicated rsbmi
-// to implement integer ABS
-let usesCustomInserter = 1, Defs = [CPSR] in {
-def ABS : ARMPseudoInst<
-  (outs GPR:$dst), (ins GPR:$src),
-  8, NoItinerary, []>;
 }
 
 let usesCustomInserter = 1 in {
