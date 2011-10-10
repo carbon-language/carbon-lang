@@ -3929,9 +3929,11 @@ void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
       if (Args.hasArg(options::OPT_pg))
         CmdArgs.push_back(Args.MakeArgString(
                                 getToolChain().GetFilePath("gcrt1.o")));
-      else
+      else {
+        const char *crt = Args.hasArg(options::OPT_pie) ? "Scrt1.o" : "crt1.o";
         CmdArgs.push_back(Args.MakeArgString(
-                                getToolChain().GetFilePath("crt1.o")));
+                                getToolChain().GetFilePath(crt)));
+      }
       CmdArgs.push_back(Args.MakeArgString(
                               getToolChain().GetFilePath("crti.o")));
       CmdArgs.push_back(Args.MakeArgString(
