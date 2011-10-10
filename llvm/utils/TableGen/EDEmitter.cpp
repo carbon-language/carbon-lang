@@ -805,11 +805,6 @@ static void populateInstInfo(CompoundConstantEmitter &infoArray,
     CompoundConstantEmitter *infoStruct = new CompoundConstantEmitter;
     infoArray.addEntry(infoStruct);
 
-    // We don't need to do anything for pseudo-instructions, as we'll never
-    // see them here. We'll only see real instructions.
-    if (inst.isPseudo)
-      continue;
-
     LiteralConstantEmitter *instType = new LiteralConstantEmitter;
     infoStruct->addEntry(instType);
 
@@ -839,15 +834,20 @@ static void populateInstInfo(CompoundConstantEmitter &infoArray,
 
     unsigned numSyntaxes = 0;
 
-    if (target.getName() == "X86") {
-      X86PopulateOperands(operandTypes, inst);
-      X86ExtractSemantics(*instType, operandFlags, inst);
-      numSyntaxes = 2;
-    }
-    else if (target.getName() == "ARM") {
-      ARMPopulateOperands(operandTypes, inst);
-      ARMExtractSemantics(*instType, operandTypes, operandFlags, inst);
-      numSyntaxes = 1;
+    // We don't need to do anything for pseudo-instructions, as we'll never
+    // see them here. We'll only see real instructions.
+    // We still need to emit null initializers for everything.
+    if (!inst.isPseudo) {
+      if (target.getName() == "X86") {
+        X86PopulateOperands(operandTypes, inst);
+        X86ExtractSemantics(*instType, operandFlags, inst);
+        numSyntaxes = 2;
+      }
+      else if (target.getName() == "ARM") {
+        ARMPopulateOperands(operandTypes, inst);
+        ARMExtractSemantics(*instType, operandTypes, operandFlags, inst);
+        numSyntaxes = 1;
+      }
     }
 
     CompoundConstantEmitter *operandOrderArray = new CompoundConstantEmitter;
