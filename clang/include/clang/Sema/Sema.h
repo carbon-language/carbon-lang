@@ -1851,8 +1851,11 @@ public:
                            bool &IncompleteImpl, unsigned DiagID);
   void WarnConflictingTypedMethods(ObjCMethodDecl *Method,
                                    ObjCMethodDecl *MethodDecl,
-                                   bool IsProtocolMethodDecl,
-                                   bool IsDeclaration = false);
+                                   bool IsProtocolMethodDecl);
+  
+  void CheckConflictingOverridingMethod(ObjCMethodDecl *Method,
+                                   ObjCMethodDecl *Overridden,
+                                   bool IsProtocolMethodDecl);
 
   /// WarnExactTypedMethods - This routine issues a warning if method
   /// implementation declaration matches exactly that of its declaration.
