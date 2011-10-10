@@ -487,11 +487,11 @@ error_code MachOObjectFile::getSectionAlignment(DataRefImpl DRI,
   if (is64BitLoadCommand(MachOObj, DRI)) {
     InMemoryStruct<macho::Section64> Sect;
     getSection64(DRI, Sect);
-    Result = 1 << Sect->Align;
+    Result = uint64_t(1) << Sect->Align;
   } else {
     InMemoryStruct<macho::Section> Sect;
     getSection(DRI, Sect);
-    Result = 1 << Sect->Align;
+    Result = uint64_t(1) << Sect->Align;
   }
   return object_error::success;
 }
