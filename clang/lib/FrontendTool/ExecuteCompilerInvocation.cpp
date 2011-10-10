@@ -133,19 +133,6 @@ bool clang::ExecuteCompilerInvocation(CompilerInstance *Clang) {
     return 0;
   }
 
-  // Honor -mllvm.
-  //
-  // FIXME: Remove this, one day.
-  if (!Clang->getFrontendOpts().LLVMArgs.empty()) {
-    unsigned NumArgs = Clang->getFrontendOpts().LLVMArgs.size();
-    const char **Args = new const char*[NumArgs + 2];
-    Args[0] = "clang (LLVM option parsing)";
-    for (unsigned i = 0; i != NumArgs; ++i)
-      Args[i + 1] = Clang->getFrontendOpts().LLVMArgs[i].c_str();
-    Args[NumArgs + 1] = 0;
-    llvm::cl::ParseCommandLineOptions(NumArgs + 1, const_cast<char **>(Args));
-  }
-
   // Load any requested plugins.
   for (unsigned i = 0,
          e = Clang->getFrontendOpts().Plugins.size(); i != e; ++i) {
@@ -154,6 +141,20 @@ bool clang::ExecuteCompilerInvocation(CompilerInstance *Clang) {
     if (llvm::sys::DynamicLibrary::LoadLibraryPermanently(Path.c_str(), &Error))
       Clang->getDiagnostics().Report(diag::err_fe_unable_to_load_plugin)
         << Path << Error;
+  }
+
+  // Honor -mllvm.
+  //
+  // FIXME: Remove this, one day.
+  // This should happen AFTER plugins have been loaded!
+  if (!Clang->getFrontendOpts().LLVMArgs.empty()) {
+    unsigned NumArgs = Clang->getFrontendOpts().LLVMArgs.size();
+    const char **Args = new const char*[NumArgs + 2];
+    Args[0] = "clang (LLVM option parsing)";
+    for (unsigned i = 0; i != NumArgs; ++i)
+      Args[i + 1] = Clang->getFrontendOpts().LLVMArgs[i].c_str();
+    Args[NumArgs + 1] = 0;
+    llvm::cl::ParseCommandLineOptions(NumArgs + 1, const_cast<char **>(Args));
   }
 
   // Honor -analyzer-checker-help.
