@@ -35,15 +35,22 @@ Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, ParsingDeclarator &D,
 
   Decl *FnD;
   if (D.getDeclSpec().isFriendSpecified())
-    // FIXME: Friend templates
     FnD = Actions.ActOnFriendFunctionDecl(getCurScope(), D, true,
                                           move(TemplateParams));
-  else { // FIXME: pass template information through
+  else {
     FnD = Actions.ActOnCXXMemberDeclarator(getCurScope(), AS, D,
                                            move(TemplateParams), 0, 
-                                           VS, Init.release(),
-                                           /*HasInit=*/false,
+                                           VS, /*HasInit=*/false,
                                            /*IsDefinition*/true);
+    if (FnD) {
+      bool TypeSpecContainsAuto
+        = D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_auto;
+      if (Init.get())
+        Actions.AddInitializerToDecl(FnD, Init.get(), false, 
+                                     TypeSpecContainsAuto);
+      else
+        Actions.ActOnUninitializedDecl(FnD, TypeSpecContainsAuto);
+    }
   }
 
   HandleMemberFunctionDefaultArgs(D, FnD);

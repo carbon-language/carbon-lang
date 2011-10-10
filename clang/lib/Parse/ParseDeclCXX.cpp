@@ -1714,7 +1714,6 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
 
   ParsingDeclarator DeclaratorInfo(*this, DS, Declarator::MemberContext);
   VirtSpecifiers VS;
-  ExprResult Init;
 
   // Hold late-parsed attributes so we can attach a Decl to them later.
   LateParsedAttrList LateParsedAttrs;
@@ -1741,6 +1740,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
 
     // MSVC permits pure specifier on inline functions declared at class scope.
     // Hence check for =0 before checking for function definition.
+    ExprResult Init;
     if (getLang().MicrosoftExt && Tok.is(tok::equal) &&
         DeclaratorInfo.isFunctionDeclarator() && 
         NextToken().is(tok::numeric_constant)) {
@@ -1848,25 +1848,19 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     // goes before or after the GNU attributes and __asm__.
     ParseOptionalCXX0XVirtSpecifierSeq(VS);
 
+    bool HasInitializer = false;
     bool HasDeferredInitializer = false;
     if (Tok.is(tok::equal) || Tok.is(tok::l_brace)) {
       if (BitfieldSize.get()) {
         Diag(Tok, diag::err_bitfield_member_init);
         SkipUntil(tok::comma, true, true);
       } else {
+        HasInitializer = true;
         HasDeferredInitializer = !DeclaratorInfo.isDeclarationOfFunction() &&
           DeclaratorInfo.getDeclSpec().getStorageClassSpec()
             != DeclSpec::SCS_static &&
           DeclaratorInfo.getDeclSpec().getStorageClassSpec()
             != DeclSpec::SCS_typedef;
-
-        if (!HasDeferredInitializer) {
-          SourceLocation EqualLoc;
-          Init = ParseCXXMemberInitializer(
-            DeclaratorInfo.isDeclarationOfFunction(), EqualLoc);
-          if (Init.isInvalid())
-            SkipUntil(tok::comma, true, true);
-        }
       }
     }
 
@@ -1885,31 +1879,22 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
                                                   DeclaratorInfo,
                                                   move(TemplateParams),
                                                   BitfieldSize.release(),
-                                                  VS, Init.release(),
-                                                  HasDeferredInitializer,
+                                                  VS, HasDeferredInitializer,
                                                   /*IsDefinition*/ false);
     }
-    if (ThisDecl)
-      DeclsInGroup.push_back(ThisDecl);
-
-    if (DeclaratorInfo.isFunctionDeclarator() &&
-        DeclaratorInfo.getDeclSpec().getStorageClassSpec()
-          != DeclSpec::SCS_typedef) {
-      HandleMemberFunctionDefaultArgs(DeclaratorInfo, ThisDecl);
-    }
-
-    DeclaratorInfo.complete(ThisDecl);
-
+    
     // Set the Decl for any late parsed attributes
     for (unsigned i = 0, ni = LateParsedAttrs.size(); i < ni; ++i) {
       LateParsedAttrs[i]->setDecl(ThisDecl);
     }
     LateParsedAttrs.clear();
 
+    // Handle the initializer.
     if (HasDeferredInitializer) {
+      // The initializer was deferred; parse it and cache the tokens.
       if (!getLang().CPlusPlus0x)
         Diag(Tok, diag::warn_nonstatic_member_init_accepted_as_extension);
-
+      
       if (DeclaratorInfo.isArrayOfUnknownBound()) {
         // C++0x [dcl.array]p3: An array bound may also be omitted when the
         // declarator is followed by an initializer. 
@@ -1922,7 +1907,35 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
         ThisDecl->setInvalidDecl();
       } else
         ParseCXXNonStaticMemberInitializer(ThisDecl);
+    } else if (HasInitializer) {
+      // Normal initializer.
+      SourceLocation EqualLoc;
+      ExprResult Init
+        = ParseCXXMemberInitializer(DeclaratorInfo.isDeclarationOfFunction(), 
+                                    EqualLoc);
+      if (Init.isInvalid())
+        SkipUntil(tok::comma, true, true);
+      else if (ThisDecl)
+        Actions.AddInitializerToDecl(ThisDecl, Init.get(), false,
+                                   DS.getTypeSpecType() == DeclSpec::TST_auto);
+    } else if (ThisDecl && DS.getStorageClassSpec() == DeclSpec::SCS_static) {
+      // No initializer.
+      Actions.ActOnUninitializedDecl(ThisDecl, 
+                                   DS.getTypeSpecType() == DeclSpec::TST_auto);
     }
+    
+    if (ThisDecl) {
+      Actions.FinalizeDeclaration(ThisDecl);
+      DeclsInGroup.push_back(ThisDecl);
+    }
+    
+    if (DeclaratorInfo.isFunctionDeclarator() &&
+        DeclaratorInfo.getDeclSpec().getStorageClassSpec()
+          != DeclSpec::SCS_typedef) {
+      HandleMemberFunctionDefaultArgs(DeclaratorInfo, ThisDecl);
+    }
+
+    DeclaratorInfo.complete(ThisDecl);
 
     // If we don't have a comma, it is either the end of the list (a ';')
     // or an error, bail out.
@@ -1935,8 +1948,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     // Parse the next declarator.
     DeclaratorInfo.clear();
     VS.clear();
-    BitfieldSize = 0;
-    Init = 0;
+    BitfieldSize = true;
 
     // Attributes are only allowed on the second declarator.
     MaybeParseGNUAttributes(DeclaratorInfo);

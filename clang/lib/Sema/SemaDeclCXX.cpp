@@ -1428,7 +1428,7 @@ Decl *
 Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
                                MultiTemplateParamsArg TemplateParameterLists,
                                Expr *BW, const VirtSpecifiers &VS,
-                               Expr *InitExpr, bool HasDeferredInit,
+                               bool HasDeferredInit,
                                bool IsDefinition) {
   const DeclSpec &DS = D.getDeclSpec();
   DeclarationNameInfo NameInfo = GetNameForDeclarator(D);
@@ -1440,11 +1440,9 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
     Loc = D.getSourceRange().getBegin();
 
   Expr *BitWidth = static_cast<Expr*>(BW);
-  Expr *Init = static_cast<Expr*>(InitExpr);
 
   assert(isa<CXXRecordDecl>(CurContext));
   assert(!DS.isFriendSpecified());
-  assert(!Init || !HasDeferredInit);
 
   bool isFunc = D.isDeclarationOfFunction();
 
@@ -1608,14 +1606,6 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
   CheckOverrideControl(Member);
 
   assert((Name || isInstField) && "No identifier for non-field ?");
-
-  if (Init)
-    AddInitializerToDecl(Member, Init, false,
-                         DS.getTypeSpecType() == DeclSpec::TST_auto);
-  else if (DS.getStorageClassSpec() == DeclSpec::SCS_static)
-    ActOnUninitializedDecl(Member, DS.getTypeSpecType() == DeclSpec::TST_auto);
-
-  FinalizeDeclaration(Member);
 
   if (isInstField)
     FieldCollector->Add(cast<FieldDecl>(Member));

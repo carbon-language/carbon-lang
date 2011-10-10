@@ -189,3 +189,7 @@ void f() {
     S::c; // expected-error {{invalid use of nonstatic data member}}
 }
 }
+
+struct PR9989 { 
+  static int const PR9989_Member = sizeof PR9989_Member; 
+};
