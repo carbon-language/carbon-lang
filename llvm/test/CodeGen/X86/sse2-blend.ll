@@ -24,8 +24,8 @@ define void@vsel_i32(<4 x i32>* %v1, <4 x i32>* %v2) {
 ; CHECK: vsel_i64
 ; CHECK: pxor
 ; CHECK: pand
-; CHECK: pandn
-; CHECK: por
+; CHECK: andnps
+; CHECK: orps
 ; CHECK: ret
 
 define void@vsel_i64(<4 x i64>* %v1, <4 x i64>* %v2) {
@@ -39,8 +39,8 @@ define void@vsel_i64(<4 x i64>* %v1, <4 x i64>* %v2) {
 ; CHECK: vsel_double
 ; CHECK: pxor
 ; CHECK: pand
-; CHECK: pandn
-; CHECK: por
+; CHECK: andnps
+; CHECK: orps
 ; CHECK: ret
 
 

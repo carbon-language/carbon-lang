@@ -10125,11 +10125,6 @@ SDValue X86TargetLowering::LowerSIGN_EXTEND_INREG(SDValue Op, SelectionDAG &DAG)
     switch (VT.getSimpleVT().SimpleTy) {
       default:
         return SDValue();
-      case MVT::v2i64: {
-        SHLIntrinsicsID = Intrinsic::x86_sse2_pslli_q;
-        SRAIntrinsicsID = 0;
-        break;
-      }
       case MVT::v4i32: {
         SHLIntrinsicsID = Intrinsic::x86_sse2_pslli_d;
         SRAIntrinsicsID = Intrinsic::x86_sse2_psrai_d;
@@ -10149,12 +10144,9 @@ SDValue X86TargetLowering::LowerSIGN_EXTEND_INREG(SDValue Op, SelectionDAG &DAG)
     // In case of 1 bit sext, no need to shr
     if (ExtraVT.getScalarType().getSizeInBits() == 1) return Tmp1;
 
-    if (SRAIntrinsicsID) {
-      Tmp1 = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                         DAG.getConstant(SRAIntrinsicsID, MVT::i32),
-                         Tmp1, ShAmt);
-    }
-    return Tmp1;
+    return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
+                       DAG.getConstant(SRAIntrinsicsID, MVT::i32),
+                       Tmp1, ShAmt);
   }
 
   return SDValue();
