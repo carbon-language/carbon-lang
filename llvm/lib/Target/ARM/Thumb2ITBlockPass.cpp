@@ -124,6 +124,28 @@ Thumb2ITBlockPass::MoveCopyOutOfITBlock(MachineInstr *MI,
   if (Uses.count(DstReg) || Defs.count(SrcReg))
     return false;
 
+  // If the CPSR is defined by this copy, then we don't want to move it. E.g.,
+  // if we have:
+  //
+  //   movs  r1, r1
+  //   rsb   r1, 0
+  //   movs  r2, r2
+  //   rsb   r2, 0
+  //
+  // we don't want this to be converted to:
+  //
+  //   movs  r1, r1
+  //   movs  r2, r2
+  //   itt   mi
+  //   rsb   r1, 0
+  //   rsb   r2, 0
+  //
+  // 
+  for (unsigned I = 0, E = MI->getNumOperands(); I != E; ++I)
+    if (MI->getOperand(I).isReg() && MI->getOperand(I).getReg() == ARM::CPSR &&
+        MI->getOperand(I).isDef())
+      return false;
+
   // Then peek at the next instruction to see if it's predicated on CC or OCC.
   // If not, then there is nothing to be gained by moving the copy.
   MachineBasicBlock::iterator I = MI; ++I;
