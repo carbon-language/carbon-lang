@@ -3757,12 +3757,8 @@ static bool isVPERMILPDMask(const SmallVectorImpl<int> &Mask, EVT VT,
   if (!Subtarget->hasAVX())
     return false;
 
-  // Match any permutation of 128-bit vector with 64-bit types
-  if (NumLanes == 1 && NumElts != 2)
-    return false;
-
-  // Only match 256-bit with 32 types
-  if (VT.getSizeInBits() == 256 && NumElts != 4)
+  // Only match 256-bit with 64-bit types
+  if (VT.getSizeInBits() != 256 || NumElts != 4)
     return false;
 
   // The mask on the high lane is independent of the low. Both can match
@@ -3793,12 +3789,8 @@ static bool isVPERMILPSMask(const SmallVectorImpl<int> &Mask, EVT VT,
   if (!Subtarget->hasAVX())
     return false;
 
-  // Match any permutation of 128-bit vector with 32-bit types
-  if (NumLanes == 1 && NumElts != 4)
-    return false;
-
-  // Only match 256-bit with 32 types
-  if (VT.getSizeInBits() == 256 && NumElts != 8)
+  // Only match 256-bit with 32-bit types
+  if (VT.getSizeInBits() != 256 || NumElts != 8)
     return false;
 
   // The mask on the high lane should be the same as the low. Actually,
