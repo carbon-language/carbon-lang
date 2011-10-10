@@ -902,7 +902,8 @@ bool Sema::CheckConstexprFunctionBody(const FunctionDecl *Dcl, Stmt *Body) {
         Diag(Dcl->getLocation(), diag::err_constexpr_union_ctor_no_init);
         return false;
       }
-    } else if (!Constructor->isDelegatingConstructor()) {
+    } else if (!Constructor->isDependentContext() &&
+               !Constructor->isDelegatingConstructor()) {
       assert(RD->getNumVBases() == 0 && "constexpr ctor with virtual bases");
 
       // Skip detailed checking if we have enough initializers, and we would

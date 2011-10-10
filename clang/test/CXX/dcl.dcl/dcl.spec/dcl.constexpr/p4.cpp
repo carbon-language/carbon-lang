@@ -150,6 +150,44 @@ struct AnonMembers {
   constexpr AnonMembers(int(&)[6]) {} // expected-error {{constexpr constructor must initialize all members}}
 };
 
+template<typename T> using Int = int;
+template<typename T>
+struct TemplateInit {
+  T a;
+  int b; // desired-note {{not initialized}}
+  Int<T> c; // desired-note {{not initialized}}
+  struct {
+    T d;
+    int e; // desired-note {{not initialized}}
+    Int<T> f; // desired-note {{not initialized}}
+  };
+  struct {
+    Literal l;
+    Literal m;
+    Literal n[3];
+  };
+  union { // desired-note {{not initialized}}
+    T g;
+    T h;
+  };
+  // FIXME: This is ill-formed (no diagnostic required). We should diagnose it.
+  constexpr TemplateInit() {} // desired-error {{must initialize all members}}
+};
+template<typename T> struct TemplateInit2 {
+  Literal l;
+  constexpr TemplateInit2() {} // ok
+};
+
+template<typename T> struct weak_ptr {
+  constexpr weak_ptr() : p(0) {}
+  T *p;
+};
+template<typename T> struct enable_shared_from_this {
+  weak_ptr<T> weak_this;
+  constexpr enable_shared_from_this() {} // ok
+};
+constexpr int f(enable_shared_from_this<int>);
+
 // - every constructor involved in initializing non-static data members and base
 //   class sub-objects shall be a constexpr constructor.
 //
