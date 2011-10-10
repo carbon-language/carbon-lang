@@ -23,10 +23,6 @@ int n;
 // default constructor,
 union Deleted1a { UserProvidedDefCtor u; }; // expected-note {{deleted here}}
 Deleted1a d1a; // expected-error {{deleted constructor}}
-// FIXME: treating this as having a deleted default constructor is probably a
-// bug in the standard.
-union Deleted1b { UserProvidedDefCtor u = UserProvidedDefCtor(); }; // expected-note {{deleted here}}
-Deleted1b d1b; // expected-error {{deleted constructor}}
 union NotDeleted1a { DefaultedDefCtor1 nu; };
 NotDeleted1a nd1a;
 // FIXME: clang implements the pre-FDIS rule, under which DefaultedDefCtor2's

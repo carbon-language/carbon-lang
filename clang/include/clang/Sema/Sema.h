@@ -2830,9 +2830,9 @@ public:
   ImplicitExceptionSpecification
   ComputeDefaultedDtorExceptionSpec(CXXRecordDecl *ClassDecl);
 
-  /// \brief Determine if a defaulted default constructor ought to be
-  /// deleted.
-  bool ShouldDeleteDefaultConstructor(CXXConstructorDecl *CD);
+  /// \brief Determine if a special member function should have a deleted
+  /// definition when it is defaulted.
+  bool ShouldDeleteSpecialMember(CXXMethodDecl *MD, CXXSpecialMember CSM);
 
   /// \brief Determine if a defaulted copy constructor ought to be
   /// deleted.
