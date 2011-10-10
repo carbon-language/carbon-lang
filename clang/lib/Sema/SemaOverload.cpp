@@ -6375,7 +6375,11 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
 
   // Exit early when no non-record types have been added to the candidate set
   // for any of the arguments to the operator.
-  if (!HasNonRecordCandidateType)
+  //
+  // We can't exit early for !, ||, or &&, since there we have always have
+  // 'bool' overloads.
+  if (!HasNonRecordCandidateType && 
+      !(Op == OO_Exclaim || Op == OO_AmpAmp || Op == OO_PipePipe))
     return;
 
   // Setup an object to manage the common state for building overloads.
