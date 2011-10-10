@@ -9088,6 +9088,7 @@ void Sema::AddCXXDirectInitializerToDecl(Decl *RealDecl,
   // class type.
 
   if (!VDecl->getType()->isDependentType() &&
+      !VDecl->getType()->isIncompleteArrayType() && 
       RequireCompleteType(VDecl->getLocation(), VDecl->getType(),
                           diag::err_typecheck_decl_incomplete_type)) {
     VDecl->setInvalidDecl();
@@ -9163,14 +9164,19 @@ void Sema::AddCXXDirectInitializerToDecl(Decl *RealDecl,
     = InitializationKind::CreateDirect(VDecl->getLocation(),
                                        LParenLoc, RParenLoc);
   
+  QualType T = VDecl->getType();
   InitializationSequence InitSeq(*this, Entity, Kind, 
                                  Exprs.get(), Exprs.size());
-  ExprResult Result = InitSeq.Perform(*this, Entity, Kind, move(Exprs));
+  ExprResult Result = InitSeq.Perform(*this, Entity, Kind, move(Exprs), &T);
   if (Result.isInvalid()) {
     VDecl->setInvalidDecl();
     return;
+  } else if (T != VDecl->getType()) {
+    VDecl->setType(T);
+    Result.get()->setType(T);
   }
 
+  
   Expr *Init = Result.get();
   CheckImplicitConversions(Init, LParenLoc);
   
