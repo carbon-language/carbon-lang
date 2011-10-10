@@ -45,6 +45,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/Mutex.h"
 #include "llvm/Support/CrashRecoveryContext.h"
 #include <cstdlib>
 #include <cstdio>
@@ -99,7 +100,6 @@ ASTUnit::ASTUnit(bool _MainFileIsAST)
     TUKind(TU_Complete), WantTiming(getenv("LIBCLANG_TIMING")),
     OwnsRemappedFileBuffers(true),
     NumStoredDiagnosticsFromDriver(0),
-    ConcurrencyCheckValue(CheckUnlocked), 
     PreambleRebuildCounter(0), SavedMainFileBuffer(0), PreambleBuffer(0),
     ShouldCacheCodeCompletionResults(false),
     NestedMacroExpansions(true),
@@ -114,7 +114,6 @@ ASTUnit::ASTUnit(bool _MainFileIsAST)
 }
 
 ASTUnit::~ASTUnit() {
-  ConcurrencyCheckValue = CheckLocked;
   CleanTemporaryFiles();
   if (!PreambleFile.empty())
     llvm::sys::Path(PreambleFile).eraseFromDisk();
@@ -2414,3 +2413,30 @@ void ASTUnit::PreambleData::countLines() const {
   if (Buffer.back() != '\n')
     ++NumLines;
 }
+
+#ifndef NDEBUG
+ASTUnit::ConcurrencyState::ConcurrencyState() {
+  Mutex = new llvm::sys::MutexImpl(/*recursive=*/true);
+}
+
+ASTUnit::ConcurrencyState::~ConcurrencyState() {
+  delete static_cast<llvm::sys::MutexImpl *>(Mutex);
+}
+
+void ASTUnit::ConcurrencyState::start() {
+  bool acquired = static_cast<llvm::sys::MutexImpl *>(Mutex)->tryacquire();
+  assert(acquired && "Concurrent access to ASTUnit!");
+}
+
+void ASTUnit::ConcurrencyState::finish() {
+  static_cast<llvm::sys::MutexImpl *>(Mutex)->release();
+}
+
+#else // NDEBUG
+
+ASTUnit::ConcurrencyState::ConcurrencyState() {}
+ASTUnit::ConcurrencyState::~ConcurrencyState() {}
+void ASTUnit::ConcurrencyState::start() {}
+void ASTUnit::ConcurrencyState::finish() {}
+
+#endif

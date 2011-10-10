@@ -151,16 +151,6 @@ private:
   /// destroyed.
   SmallVector<llvm::sys::Path, 4> TemporaryFiles;
   
-  /// \brief Simple hack to allow us to assert that ASTUnit is not being
-  /// used concurrently, which is not supported.
-  ///
-  /// Clients should create instances of the ConcurrencyCheck class whenever
-  /// using the ASTUnit in a way that isn't intended to be concurrent, which is
-  /// just about any usage.
-  unsigned int ConcurrencyCheckValue;
-  static const unsigned int CheckLocked = 28573289;
-  static const unsigned int CheckUnlocked = 9803453;
-
   /// \brief Counter that determines when we want to try building a
   /// precompiled preamble.
   ///
@@ -406,21 +396,37 @@ private:
                                                         unsigned MaxLines = 0);
   void RealizeTopLevelDeclsFromPreamble();
   
+  /// \brief Allows us to assert that ASTUnit is not being used concurrently,
+  /// which is not supported.
+  ///
+  /// Clients should create instances of the ConcurrencyCheck class whenever
+  /// using the ASTUnit in a way that isn't intended to be concurrent, which is
+  /// just about any usage.
+  /// Becomes a noop in release mode; only useful for debug mode checking.
+  class ConcurrencyState {
+    void *Mutex; // a llvm::sys::MutexImpl in debug;
+
+  public:
+    ConcurrencyState();
+    ~ConcurrencyState();
+
+    void start();
+    void finish();
+  };
+  ConcurrencyState ConcurrencyCheckValue;
+
 public:
   class ConcurrencyCheck {
-    volatile ASTUnit &Self;
+    ASTUnit &Self;
     
   public:
     explicit ConcurrencyCheck(ASTUnit &Self)
       : Self(Self) 
     { 
-      assert(Self.ConcurrencyCheckValue == CheckUnlocked && 
-             "Concurrent access to ASTUnit!");
-      Self.ConcurrencyCheckValue = CheckLocked;
+      Self.ConcurrencyCheckValue.start();
     }
-    
     ~ConcurrencyCheck() {
-      Self.ConcurrencyCheckValue = CheckUnlocked;
+      Self.ConcurrencyCheckValue.finish();
     }
   };
   friend class ConcurrencyCheck;
