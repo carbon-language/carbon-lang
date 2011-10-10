@@ -103,6 +103,11 @@ delay = False
 # Dump the Python sys.path variable.  Use '-D' to dump sys.path.
 dumpSysPath = False
 
+# Full path of the benchmark executable, as specified by the '-e' option.
+bmExecutable = None
+# The breakpoint specification of bmExecutable, as specified by the '-x' option.
+bmBreakpointSpec = None
+
 # By default, failfast is False.  Use '-F' to overwrite it.
 failfast = False
 
@@ -174,6 +179,8 @@ where options:
        will override those specified via a config file
        (see also lldb-trunk/example/test/usage-config)
 -d   : delay startup for 10 seconds (in order for the debugger to attach)
+-e   : specify the full path of an executable used for benchmark purpose;
+       see also '-x', which provides the breakpoint sepcification
 -F   : failfast, stop the test suite on the first error/failure
 -f   : specify a filter, which consists of the test class name, a dot, followed by
        the test method, to only admit such test into the test suite
@@ -193,6 +200,8 @@ where options:
        timestamp as the session dir name
 -t   : turn on tracing of lldb command and other detailed test executions
 -v   : do verbose mode of unittest framework (print out each test case invocation)
+-x   : specify the breakpoint specification for the benchmark executable;
+       see also '-e', which provides the full path of the executable
 -w   : insert some wait time (currently 0.5 sec) between consecutive test cases
 -#   : Repeat the test suite for a specified number of times
 
@@ -302,6 +311,8 @@ def parseOptionsAndInitTestdirs():
     global count
     global delay
     global dumpSysPath
+    global bmExecutable
+    global bmBreakpointSpec
     global failfast
     global filters
     global fs4all
@@ -383,6 +394,15 @@ def parseOptionsAndInitTestdirs():
         elif sys.argv[index].startswith('-d'):
             delay = True
             index += 1
+        elif sys.argv[index].startswith('-e'):
+            # Increment by 1 to fetch the full path of the benchmark executable.
+            index += 1
+            if index >= len(sys.argv) or sys.argv[index].startswith('-'):
+                usage()
+            bmExecutable = sys.argv[index]
+            if not is_exe(bmExecutable):
+                usage()
+            index += 1
         elif sys.argv[index].startswith('-F'):
             failfast = True
             index += 1
@@ -434,6 +454,13 @@ def parseOptionsAndInitTestdirs():
             index += 1
         elif sys.argv[index].startswith('-w'):
             os.environ["LLDB_WAIT_BETWEEN_TEST_CASES"] = 'YES'
+            index += 1
+        elif sys.argv[index].startswith('-x'):
+            # Increment by 1 to fetch the breakpoint specification of the benchmark executable.
+            index += 1
+            if index >= len(sys.argv) or sys.argv[index].startswith('-'):
+                usage()
+            bmBreakpointSpec = sys.argv[index]
             index += 1
         elif sys.argv[index].startswith('-#'):
             # Increment by 1 to fetch the repeat count argument.
@@ -854,10 +881,14 @@ lldb.DBG = lldb.SBDebugger.Create()
 # Put the blacklist in the lldb namespace, to be used by lldb.TestBase.
 lldb.blacklist = blacklist
 
-# Put dont/just_do_python_api_test in the lldb namespace, too.
+# Put dont/just_do_python_api_test in the lldb namespace.
 lldb.dont_do_python_api_test = dont_do_python_api_test
 lldb.just_do_python_api_test = just_do_python_api_test
 lldb.just_do_benchmarks_test = just_do_benchmarks_test
+
+# Put bmExecutable and bmBreakpointSpec into the lldb namespace, too.
+lldb.bmExecutable = bmExecutable
+lldb.bmBreakpointSpec = bmBreakpointSpec
 
 # Turn on lldb loggings if necessary.
 lldbLoggings()
