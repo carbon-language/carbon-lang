@@ -454,6 +454,7 @@ rewriteFrameIndex(MachineBasicBlock::iterator II, unsigned FrameRegIdx,
       // r0 = add sp, 255*4
       // r0 = add r0, (imm - 255*4)
       if (Opcode == ARM::tADDi3) {
+        MI.setDesc(TII.get(Opcode));
         removeOperands(MI, FrameRegIdx);
         MachineInstrBuilder MIB(&MI);
         AddDefaultPred(AddDefaultT1CC(MIB).addReg(FrameReg).addImm(Mask));
