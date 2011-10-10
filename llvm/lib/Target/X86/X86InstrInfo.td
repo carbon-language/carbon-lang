@@ -1308,17 +1308,23 @@ def ARPL16mr : I<0x63, MRMSrcMem, (outs GR16:$src), (ins i16mem:$dst),
 //
 let Predicates = [HasMOVBE] in {
   def MOVBE16rm : I<0xF0, MRMSrcMem, (outs GR16:$dst), (ins i16mem:$src),
-                    "movbe{w}\t{$src, $dst|$dst, $src}", []>, OpSize, T8;
+                    "movbe{w}\t{$src, $dst|$dst, $src}",
+                    [(set GR16:$dst, (bswap (loadi16 addr:$src)))]>, OpSize, T8;
   def MOVBE32rm : I<0xF0, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
-                    "movbe{l}\t{$src, $dst|$dst, $src}", []>, T8;
+                    "movbe{l}\t{$src, $dst|$dst, $src}",
+                    [(set GR32:$dst, (bswap (loadi32 addr:$src)))]>, T8;
   def MOVBE64rm : RI<0xF0, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
-                     "movbe{q}\t{$src, $dst|$dst, $src}", []>, T8;
+                     "movbe{q}\t{$src, $dst|$dst, $src}",
+                     [(set GR64:$dst, (bswap (loadi64 addr:$src)))]>, T8;
   def MOVBE16mr : I<0xF1, MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src),
-                    "movbe{w}\t{$src, $dst|$dst, $src}", []>, OpSize, T8;
+                    "movbe{w}\t{$src, $dst|$dst, $src}",
+                    [(store (bswap GR16:$src), addr:$dst)]>, OpSize, T8;
   def MOVBE32mr : I<0xF1, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src),
-                    "movbe{l}\t{$src, $dst|$dst, $src}", []>, T8;
+                    "movbe{l}\t{$src, $dst|$dst, $src}",
+                    [(store (bswap GR32:$src), addr:$dst)]>, T8;
   def MOVBE64mr : RI<0xF1, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src),
-                     "movbe{q}\t{$src, $dst|$dst, $src}", []>, T8;
+                     "movbe{q}\t{$src, $dst|$dst, $src}",
+                     [(store (bswap GR64:$src), addr:$dst)]>, T8;
 }
 
 //===----------------------------------------------------------------------===//
