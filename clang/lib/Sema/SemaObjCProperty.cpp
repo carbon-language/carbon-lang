@@ -1744,6 +1744,13 @@ void Sema::CheckObjCPropertyAttributes(Decl *PDecl,
       Attributes &= ~ObjCDeclSpec::DQ_PR_weak;
   }
 
+  if ((Attributes & ObjCDeclSpec::DQ_PR_atomic) &&
+      (Attributes & ObjCDeclSpec::DQ_PR_nonatomic)) {
+      Diag(Loc, diag::err_objc_property_attr_mutually_exclusive)
+        << "atomic" << "nonatomic";
+      Attributes &= ~ObjCDeclSpec::DQ_PR_atomic;
+  }
+
   // Warn if user supplied no assignment attribute, property is
   // readwrite, and this is an object type.
   if (!(Attributes & (ObjCDeclSpec::DQ_PR_assign | ObjCDeclSpec::DQ_PR_copy |
