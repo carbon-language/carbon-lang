@@ -13,6 +13,24 @@
 
 using namespace llvm;
 
+void MCAtom::addInst(const MCInst &I, uint64_t Address, unsigned Size) {
+  assert(Type == TextAtom && "Trying to add MCInst to a non-text atom!");
+
+  assert(Address < End+Size &&
+         "Instruction not contiguous with end of atom!");
+  if (Address > End)
+    Parent->remap(this, Begin, End+Size);
+
+  Text.push_back(std::make_pair(Address, I));
+}
+
+void MCAtom::addData(const MCData &D) {
+  assert(Type == DataAtom && "Trying to add MCData to a non-data atom!");
+  Parent->remap(this, Begin, End+1);
+
+  Data.push_back(D);
+}
+
 MCAtom *MCAtom::split(uint64_t SplitPt) {
   assert((SplitPt > Begin && SplitPt <= End) &&
          "Splitting at point not contained in atom!");

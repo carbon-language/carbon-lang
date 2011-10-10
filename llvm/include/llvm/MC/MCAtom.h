@@ -49,15 +49,8 @@ public:
   bool isTextAtom() { return Type == TextAtom; }
   bool isDataAtom() { return Type == DataAtom; }
 
-  void addInst(const MCInst &I, uint64_t Address) {
-    assert(Type == TextAtom && "Trying to add MCInst to a non-text atom!");
-    Text.push_back(std::make_pair(Address, I));
-  }
-
-  void addData(const MCData &D) {
-    assert(Type == DataAtom && "Trying to add MCData to a non-data atom!");
-    Data.push_back(D);
-  }
+  void addInst(const MCInst &I, uint64_t Address, unsigned Size);
+  void addData(const MCData &D);
 
   /// split - Splits the atom in two at a given address, which must align with
   /// and instruction boundary if this is a TextAtom.  Returns the newly created
