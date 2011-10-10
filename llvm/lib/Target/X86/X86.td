@@ -145,11 +145,16 @@ def : Proc<"nehalem",         [FeatureSSE42,  FeatureCMPXCHG16B,
 def : Proc<"westmere",        [FeatureSSE42, FeatureCMPXCHG16B,
                                FeatureSlowBTMem, FeatureFastUAMem, FeatureAES,
                                FeatureCLMUL]>;
+// Sandy Bridge
 // SSE is not listed here since llvm treats AVX as a reimplementation of SSE,
 // rather than a superset.
 // FIXME: Disabling AVX for now since it's not ready.
 def : Proc<"corei7-avx",      [FeatureSSE42, FeatureCMPXCHG16B,
                                FeatureAES, FeatureCLMUL]>;
+// Ivy Bridge
+def : Proc<"core-avx-i",      [FeatureSSE42, FeatureCMPXCHG16B,
+                               FeatureAES, FeatureCLMUL,
+                               FeatureRDRAND, FeatureF16C]>;
 
 def : Proc<"k6",              [FeatureMMX]>;
 def : Proc<"k6-2",            [Feature3DNow]>;
