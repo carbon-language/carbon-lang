@@ -1,6 +1,7 @@
 // RUN llvm-tblgen %s | FileCheck %s
 
 // RUN: llvm-tblgen %s | grep {foo} | count 1
+// XFAIL: vg_leak
 
 class Base<string t> {
   string text = t;
