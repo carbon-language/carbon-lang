@@ -129,6 +129,10 @@ public:
     virtual uint32_t
     UpdateThreadListIfNeeded();
 
+    uint32_t
+    UpdateThreadList(lldb_private::ThreadList &old_thread_list, 
+                     lldb_private::ThreadList &new_thread_list);
+
     virtual lldb::ByteOrder
     GetByteOrder() const;
 

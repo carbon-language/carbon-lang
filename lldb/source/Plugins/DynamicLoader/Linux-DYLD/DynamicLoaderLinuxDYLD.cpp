@@ -112,7 +112,7 @@ DynamicLoaderLinuxDYLD::DidAttach()
     executable = m_process->GetTarget().GetExecutableModule();
     load_offset = ComputeLoadOffset();
 
-    if (!executable.empty() && load_offset != LLDB_INVALID_ADDRESS)
+    if (executable.get() && load_offset != LLDB_INVALID_ADDRESS)
     {
         ModuleList module_list;
         module_list.Append(executable);
@@ -132,7 +132,7 @@ DynamicLoaderLinuxDYLD::DidLaunch()
     executable = m_process->GetTarget().GetExecutableModule();
     load_offset = ComputeLoadOffset();
 
-    if (!executable.empty() && load_offset != LLDB_INVALID_ADDRESS)
+    if (executable.get() && load_offset != LLDB_INVALID_ADDRESS)
     {
         ModuleList module_list;
         module_list.Append(executable);
@@ -264,7 +264,7 @@ DynamicLoaderLinuxDYLD::RefreshModules()
         {
             FileSpec file(I->path.c_str(), true);
             ModuleSP module_sp = LoadModuleAtAddress(file, I->base_addr);
-            if (!module_sp.empty())
+            if (module_sp.get())
                 new_modules.Append(module_sp);
         }
         m_process->GetTarget().ModulesDidLoad(new_modules);
@@ -280,7 +280,7 @@ DynamicLoaderLinuxDYLD::RefreshModules()
             FileSpec file(I->path.c_str(), true);
             ModuleSP module_sp = 
                 loaded_modules.FindFirstModuleForFileSpec(file, NULL, NULL);
-            if (!module_sp.empty())
+            if (module_sp.get())
                 old_modules.Append(module_sp);
         }
         m_process->GetTarget().ModulesDidUnload(old_modules);
@@ -355,7 +355,7 @@ DynamicLoaderLinuxDYLD::LoadAllCurrentModules()
     {
         FileSpec file(I->path.c_str(), false);
         ModuleSP module_sp = LoadModuleAtAddress(file, I->base_addr);
-        if (!module_sp.empty())
+        if (module_sp.get())
             module_list.Append(module_sp);
     }
 

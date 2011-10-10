@@ -94,7 +94,9 @@ lldb_private::Initialize ()
         UnwindAssemblyInstEmulation::Initialize();
         UnwindAssembly_x86::Initialize();
         EmulateInstructionARM::Initialize ();
+#if !defined (__linux__)
         ObjectFilePECOFF::Initialize ();
+#endif
 #if defined (__APPLE__)
         //----------------------------------------------------------------------
         // Apple/Darwin hosted plugins
@@ -166,7 +168,9 @@ lldb_private::Terminate ()
     UnwindAssembly_x86::Terminate();
     UnwindAssemblyInstEmulation::Terminate();
     EmulateInstructionARM::Terminate ();
+#if !defined (__linux__)
     ObjectFilePECOFF::Terminate ();
+#endif
 
 #if defined (__APPLE__)
     DynamicLoaderMacOSXDYLD::Terminate();

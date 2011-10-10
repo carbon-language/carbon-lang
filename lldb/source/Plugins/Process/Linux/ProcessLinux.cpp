@@ -437,6 +437,13 @@ ProcessLinux::UpdateThreadListIfNeeded()
     return m_thread_list.GetSize(false);
 }
 
+uint32_t
+ProcessLinux::UpdateThreadList(ThreadList &old_thread_list, ThreadList &new_thread_list)
+{
+    // FIXME: Should this be implemented?
+    return 0;
+}
+
 ByteOrder
 ProcessLinux::GetByteOrder() const
 {

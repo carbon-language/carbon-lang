@@ -241,7 +241,7 @@ ReadRegOperation::Execute(ProcessMonitor *monitor)
 
     // Set errno to zero so that we can detect a failed peek.
     errno = 0;
-    unsigned long data = ptrace(PTRACE_PEEKUSER, pid, m_offset, NULL);
+    uint32_t data = ptrace(PTRACE_PEEKUSER, pid, m_offset, NULL);
 
     if (data == -1UL && errno)
         m_result = false;
