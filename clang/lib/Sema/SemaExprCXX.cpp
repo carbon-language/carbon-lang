@@ -2057,18 +2057,22 @@ static ExprResult BuildCXXCastArgument(Sema &S,
   switch (Kind) {
   default: llvm_unreachable("Unhandled cast kind!");
   case CK_ConstructorConversion: {
+    CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(Method);
     ASTOwningVector<Expr*> ConstructorArgs(S);
 
-    if (S.CompleteConstructorCall(cast<CXXConstructorDecl>(Method),
+    if (S.CompleteConstructorCall(Constructor,
                                   MultiExprArg(&From, 1),
                                   CastLoc, ConstructorArgs))
       return ExprError();
 
-    ExprResult Result =
-    S.BuildCXXConstructExpr(CastLoc, Ty, cast<CXXConstructorDecl>(Method),
-                            move_arg(ConstructorArgs), HadMultipleCandidates,
-                            /*ZeroInit*/ false, CXXConstructExpr::CK_Complete,
-                            SourceRange());
+    S.CheckConstructorAccess(CastLoc, Constructor, Constructor->getAccess(),
+                             S.PDiag(diag::err_access_ctor));
+    
+    ExprResult Result
+      = S.BuildCXXConstructExpr(CastLoc, Ty, cast<CXXConstructorDecl>(Method),
+                                move_arg(ConstructorArgs), 
+                                HadMultipleCandidates, /*ZeroInit*/ false, 
+                                CXXConstructExpr::CK_Complete, SourceRange());
     if (Result.isInvalid())
       return ExprError();
 

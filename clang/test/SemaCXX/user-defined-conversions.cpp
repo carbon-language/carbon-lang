@@ -82,3 +82,18 @@ float &f(...);
 void g(X2 b) {
   int &ir = f(b); // expected-error{{no viable constructor copying parameter of type 'X1'}}
 }
+
+namespace rdar10202900 {
+  class A {
+  public:
+    A();
+
+  private:
+    A(int i); // expected-note{{declared private here}}
+  };
+
+  void testA(A a) {
+    int b = 10;
+    a = b; // expected-error{{calling a private constructor of class 'rdar10202900::A'}}
+  }
+}

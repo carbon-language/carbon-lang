@@ -2,6 +2,7 @@
 
 // PR5775
 class Twine {
+public:
   Twine(const char *Str) { }
 };
 
