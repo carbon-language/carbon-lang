@@ -187,28 +187,53 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
 
   X86_MC::GetCpuIDAndInfo(0x1, &EAX, &EBX, &ECX, &EDX);
   
-  if ((EDX >> 15) & 1) HasCMov = true;      ToggleFeature(X86::FeatureCMOV);
-  if ((EDX >> 23) & 1) X86SSELevel = MMX;   ToggleFeature(X86::FeatureMMX);
-  if ((EDX >> 25) & 1) X86SSELevel = SSE1;  ToggleFeature(X86::FeatureSSE1);
-  if ((EDX >> 26) & 1) X86SSELevel = SSE2;  ToggleFeature(X86::FeatureSSE2);
-  if (ECX & 0x1)       X86SSELevel = SSE3;  ToggleFeature(X86::FeatureSSE3);
-  if ((ECX >> 9)  & 1) X86SSELevel = SSSE3; ToggleFeature(X86::FeatureSSSE3);
-  if ((ECX >> 19) & 1) X86SSELevel = SSE41; ToggleFeature(X86::FeatureSSE41);
-  if ((ECX >> 20) & 1) X86SSELevel = SSE42; ToggleFeature(X86::FeatureSSE42);
+  if ((EDX >> 15) & 1) { HasCMov = true;      ToggleFeature(X86::FeatureCMOV); }
+  if ((EDX >> 23) & 1) { X86SSELevel = MMX;   ToggleFeature(X86::FeatureMMX);  }
+  if ((EDX >> 25) & 1) { X86SSELevel = SSE1;  ToggleFeature(X86::FeatureSSE1); }
+  if ((EDX >> 26) & 1) { X86SSELevel = SSE2;  ToggleFeature(X86::FeatureSSE2); }
+  if (ECX & 0x1)       { X86SSELevel = SSE3;  ToggleFeature(X86::FeatureSSE3); }
+  if ((ECX >> 9)  & 1) { X86SSELevel = SSSE3; ToggleFeature(X86::FeatureSSSE3);}
+  if ((ECX >> 19) & 1) { X86SSELevel = SSE41; ToggleFeature(X86::FeatureSSE41);}
+  if ((ECX >> 20) & 1) { X86SSELevel = SSE42; ToggleFeature(X86::FeatureSSE42);}
   // FIXME: AVX codegen support is not ready.
-  //if ((ECX >> 28) & 1) { HasAVX = true; } ToggleFeature(X86::FeatureAVX);
+  //if ((ECX >> 28) & 1) { HasAVX = true;  ToggleFeature(X86::FeatureAVX); }
 
   bool IsIntel = memcmp(text.c, "GenuineIntel", 12) == 0;
   bool IsAMD   = !IsIntel && memcmp(text.c, "AuthenticAMD", 12) == 0;
 
-  HasCLMUL = IsIntel && ((ECX >> 1) & 0x1);   ToggleFeature(X86::FeatureCLMUL);
-  HasFMA3  = IsIntel && ((ECX >> 12) & 0x1);  ToggleFeature(X86::FeatureFMA3);
-  HasMOVBE = IsIntel && ((ECX >> 22) & 0x1);  ToggleFeature(X86::FeatureMOVBE);
-  HasPOPCNT = IsIntel && ((ECX >> 23) & 0x1); ToggleFeature(X86::FeaturePOPCNT);
-  HasAES   = IsIntel && ((ECX >> 25) & 0x1);  ToggleFeature(X86::FeatureAES);
-  HasF16C  = IsIntel && ((ECX >> 29) & 0x1);  ToggleFeature(X86::FeatureF16C);
-  HasRDRAND = IsIntel && ((ECX >> 30) & 0x1); ToggleFeature(X86::FeatureRDRAND);
-  HasCmpxchg16b = ((ECX >> 13) & 0x1); ToggleFeature(X86::FeatureCMPXCHG16B);
+  if (IsIntel && ((ECX >> 1) & 0x1)) {
+    HasCLMUL = true;
+    ToggleFeature(X86::FeatureCLMUL);
+  }
+  if (IsIntel && ((ECX >> 12) & 0x1)) {
+    HasFMA3 = true;
+    ToggleFeature(X86::FeatureFMA3);
+  }
+  if (IsIntel && ((ECX >> 22) & 0x1)) {
+    HasMOVBE = true;
+    ToggleFeature(X86::FeatureMOVBE);
+  }
+  if (IsIntel && ((ECX >> 23) & 0x1)) {
+    HasPOPCNT = true;
+    ToggleFeature(X86::FeaturePOPCNT);
+  }
+  if (IsIntel && ((ECX >> 25) & 0x1)) {
+    HasAES = true;
+    ToggleFeature(X86::FeatureAES);
+  }
+  if (IsIntel && ((ECX >> 29) & 0x1)) {
+    HasF16C = true;
+    ToggleFeature(X86::FeatureF16C);
+  }
+  if (IsIntel && ((ECX >> 30) & 0x1)) {
+    HasRDRAND = true;
+    ToggleFeature(X86::FeatureRDRAND);
+  }
+
+  if ((ECX >> 13) & 0x1) {
+    HasCmpxchg16b = true;
+    ToggleFeature(X86::FeatureCMPXCHG16B);
+  }
 
   if (IsIntel || IsAMD) {
     // Determine if bit test memory instructions are slow.
