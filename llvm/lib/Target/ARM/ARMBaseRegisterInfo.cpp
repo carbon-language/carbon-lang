@@ -1109,11 +1109,20 @@ bool ARMBaseRegisterInfo::isFrameOffsetLegal(const MachineInstr *MI,
   case ARMII::AddrMode3:
     NumBits = 8;
     break;
-  case ARMII::AddrModeT1_s:
-    NumBits = 5;
+  case ARMII::AddrModeT1_s: {
+    const MachineBasicBlock &MBB = *MI->getParent();
+    const MachineFunction &MF = *MBB.getParent();
+    unsigned FrameReg = ARM::SP;
+    if (MF.getFrameInfo()->hasVarSizedObjects())
+      // There are alloca()'s in this function, must reference off the frame
+      // pointer or base pointer instead.
+      FrameReg = (!hasBasePointer(MF) ?BasePtr : getFrameRegister(MF));
+
+    NumBits = (FrameReg == ARM::SP) ? 8 : 5;
     Scale = 4;
     isSigned = false;
     break;
+  }
   default:
     llvm_unreachable("Unsupported addressing mode!");
     break;
