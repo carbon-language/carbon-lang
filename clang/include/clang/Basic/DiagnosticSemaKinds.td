@@ -637,7 +637,11 @@ def err_no_matching_local_friend_suggest : Error<
   "no matching function %0 found in local scope; did you mean %2">;
 def err_partial_specialization_friend : Error<
   "partial specialization cannot be declared as a friend">;
-
+def err_qualified_friend_def : Error<
+  "friend function definition cannot be qualified with '%0'">;
+def err_friend_def_in_local_class : Error<
+  "friend function cannot be defined in a local class">;
+  
 def err_abstract_type_in_decl : Error<
   "%select{return|parameter|variable|field}0 type %1 is an abstract class">;
 def err_allocation_of_abstract_type : Error<

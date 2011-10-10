@@ -10196,6 +10196,14 @@ Decl *Sema::ActOnFriendFunctionDecl(Scope *S, Declarator &D, bool IsDefinition,
 
     DCScope = getScopeForDeclContext(S, DC);
 
+    // C++ [class.friend]p6:
+    //   A function can be defined in a friend declaration of a class if and 
+    //   only if the class is a non-local class (9.8), the function name is
+    //   unqualified, and the function has namespace scope.
+    if (isLocal && IsDefinition) {
+      Diag(NameInfo.getBeginLoc(), diag::err_friend_def_in_local_class);
+    }
+    
   //   - There's a non-dependent scope specifier, in which case we
   //     compute it and do a previous lookup there for a function
   //     or function template.
@@ -10229,6 +10237,20 @@ Decl *Sema::ActOnFriendFunctionDecl(Scope *S, Declarator &D, bool IsDefinition,
     //   class that is not a member of the class . . .
     if (DC->Equals(CurContext))
       Diag(DS.getFriendSpecLoc(), diag::err_friend_is_member);
+    
+    if (IsDefinition) {
+      // C++ [class.friend]p6:
+      //   A function can be defined in a friend declaration of a class if and 
+      //   only if the class is a non-local class (9.8), the function name is
+      //   unqualified, and the function has namespace scope.
+      SemaDiagnosticBuilder DB
+        = Diag(SS.getRange().getBegin(), diag::err_qualified_friend_def);
+      
+      DB << SS.getScopeRep();
+      if (DC->isFileContext())
+        DB << FixItHint::CreateRemoval(SS.getRange());
+      SS.clear();
+    }
 
   //   - There's a scope specifier that does not match any template
   //     parameter lists, in which case we use some arbitrary context,
@@ -10236,10 +10258,19 @@ Decl *Sema::ActOnFriendFunctionDecl(Scope *S, Declarator &D, bool IsDefinition,
   //   - There's a scope specifier that does match some template
   //     parameter lists, which we don't handle right now.
   } else {
+    if (IsDefinition) {
+      // C++ [class.friend]p6:
+      //   A function can be defined in a friend declaration of a class if and 
+      //   only if the class is a non-local class (9.8), the function name is
+      //   unqualified, and the function has namespace scope.
+      Diag(SS.getRange().getBegin(), diag::err_qualified_friend_def)
+        << SS.getScopeRep();
+    }
+    
     DC = CurContext;
     assert(isa<CXXRecordDecl>(DC) && "friend declaration not in class?");
   }
-
+  
   if (!DC->isRecord()) {
     // This implies that it has to be an operator or function.
     if (D.getName().getKind() == UnqualifiedId::IK_ConstructorName ||
@@ -10251,7 +10282,7 @@ Decl *Sema::ActOnFriendFunctionDecl(Scope *S, Declarator &D, bool IsDefinition,
       return 0;
     }
   }
-
+    
   bool Redeclaration = false;
   bool AddToScope = true;
   NamedDecl *ND = ActOnFunctionDeclarator(DCScope, D, DC, T, TInfo, Previous,
