@@ -662,13 +662,13 @@ public:
     return Kind == k_PostIndexRegister && PostIdxReg.ShiftTy == ARM_AM::no_shift;
   }
   bool isMemNoOffset() const {
-    if (Kind != k_Memory)
+    if (!isMemory())
       return false;
     // No offset of any kind.
     return Mem.OffsetRegNum == 0 && Mem.OffsetImm == 0;
   }
   bool isAddrMode2() const {
-    if (Kind != k_Memory)
+    if (!isMemory())
       return false;
     // Check for register offset.
     if (Mem.OffsetRegNum) return true;
@@ -687,7 +687,7 @@ public:
     return Val > -4096 && Val < 4096;
   }
   bool isAddrMode3() const {
-    if (Kind != k_Memory)
+    if (!isMemory())
       return false;
     // No shifts are legal for AM3.
     if (Mem.ShiftType != ARM_AM::no_shift) return false;
@@ -711,7 +711,7 @@ public:
     return (Val > -256 && Val < 256) || Val == INT32_MIN;
   }
   bool isAddrMode5() const {
-    if (Kind != k_Memory)
+    if (!isMemory())
       return false;
     // Check for register offset.
     if (Mem.OffsetRegNum) return false;
@@ -722,24 +722,24 @@ public:
            Val == INT32_MIN;
   }
   bool isMemTBB() const {
-    if (Kind != k_Memory || !Mem.OffsetRegNum || Mem.isNegative ||
+    if (!isMemory() || !Mem.OffsetRegNum || Mem.isNegative ||
         Mem.ShiftType != ARM_AM::no_shift)
       return false;
     return true;
   }
   bool isMemTBH() const {
-    if (Kind != k_Memory || !Mem.OffsetRegNum || Mem.isNegative ||
+    if (!isMemory() || !Mem.OffsetRegNum || Mem.isNegative ||
         Mem.ShiftType != ARM_AM::lsl || Mem.ShiftImm != 1)
       return false;
     return true;
   }
   bool isMemRegOffset() const {
-    if (Kind != k_Memory || !Mem.OffsetRegNum)
+    if (!isMemory() || !Mem.OffsetRegNum)
       return false;
     return true;
   }
   bool isT2MemRegOffset() const {
-    if (Kind != k_Memory || !Mem.OffsetRegNum || Mem.isNegative)
+    if (!isMemory() || !Mem.OffsetRegNum || Mem.isNegative)
       return false;
     // Only lsl #{0, 1, 2, 3} allowed.
     if (Mem.ShiftType == ARM_AM::no_shift)
@@ -751,14 +751,14 @@ public:
   bool isMemThumbRR() const {
     // Thumb reg+reg addressing is simple. Just two registers, a base and
     // an offset. No shifts, negations or any other complicating factors.
-    if (Kind != k_Memory || !Mem.OffsetRegNum || Mem.isNegative ||
+    if (!isMemory() || !Mem.OffsetRegNum || Mem.isNegative ||
         Mem.ShiftType != ARM_AM::no_shift)
       return false;
     return isARMLowRegister(Mem.BaseRegNum) &&
       (!Mem.OffsetRegNum || isARMLowRegister(Mem.OffsetRegNum));
   }
   bool isMemThumbRIs4() const {
-    if (Kind != k_Memory || Mem.OffsetRegNum != 0 ||
+    if (!isMemory() || Mem.OffsetRegNum != 0 ||
         !isARMLowRegister(Mem.BaseRegNum))
       return false;
     // Immediate offset, multiple of 4 in range [0, 124].
@@ -767,7 +767,7 @@ public:
     return Val >= 0 && Val <= 124 && (Val % 4) == 0;
   }
   bool isMemThumbRIs2() const {
-    if (Kind != k_Memory || Mem.OffsetRegNum != 0 ||
+    if (!isMemory() || Mem.OffsetRegNum != 0 ||
         !isARMLowRegister(Mem.BaseRegNum))
       return false;
     // Immediate offset, multiple of 4 in range [0, 62].
@@ -776,7 +776,7 @@ public:
     return Val >= 0 && Val <= 62 && (Val % 2) == 0;
   }
   bool isMemThumbRIs1() const {
-    if (Kind != k_Memory || Mem.OffsetRegNum != 0 ||
+    if (!isMemory() || Mem.OffsetRegNum != 0 ||
         !isARMLowRegister(Mem.BaseRegNum))
       return false;
     // Immediate offset in range [0, 31].
@@ -785,7 +785,7 @@ public:
     return Val >= 0 && Val <= 31;
   }
   bool isMemThumbSPI() const {
-    if (Kind != k_Memory || Mem.OffsetRegNum != 0 || Mem.BaseRegNum != ARM::SP)
+    if (!isMemory() || Mem.OffsetRegNum != 0 || Mem.BaseRegNum != ARM::SP)
       return false;
     // Immediate offset, multiple of 4 in range [0, 1020].
     if (!Mem.OffsetImm) return true;
@@ -793,7 +793,7 @@ public:
     return Val >= 0 && Val <= 1020 && (Val % 4) == 0;
   }
   bool isMemImm8s4Offset() const {
-    if (Kind != k_Memory || Mem.OffsetRegNum != 0)
+    if (!isMemory() || Mem.OffsetRegNum != 0)
       return false;
     // Immediate offset a multiple of 4 in range [-1020, 1020].
     if (!Mem.OffsetImm) return true;
@@ -801,7 +801,7 @@ public:
     return Val >= -1020 && Val <= 1020 && (Val & 3) == 0;
   }
   bool isMemImm0_1020s4Offset() const {
-    if (Kind != k_Memory || Mem.OffsetRegNum != 0)
+    if (!isMemory() || Mem.OffsetRegNum != 0)
       return false;
     // Immediate offset a multiple of 4 in range [0, 1020].
     if (!Mem.OffsetImm) return true;
@@ -809,7 +809,7 @@ public:
     return Val >= 0 && Val <= 1020 && (Val & 3) == 0;
   }
   bool isMemImm8Offset() const {
-    if (Kind != k_Memory || Mem.OffsetRegNum != 0)
+    if (!isMemory() || Mem.OffsetRegNum != 0)
       return false;
     // Immediate offset in range [-255, 255].
     if (!Mem.OffsetImm) return true;
@@ -817,7 +817,7 @@ public:
     return (Val == INT32_MIN) || (Val > -256 && Val < 256);
   }
   bool isMemPosImm8Offset() const {
-    if (Kind != k_Memory || Mem.OffsetRegNum != 0)
+    if (!isMemory() || Mem.OffsetRegNum != 0)
       return false;
     // Immediate offset in range [0, 255].
     if (!Mem.OffsetImm) return true;
@@ -825,7 +825,7 @@ public:
     return Val >= 0 && Val < 256;
   }
   bool isMemNegImm8Offset() const {
-    if (Kind != k_Memory || Mem.OffsetRegNum != 0)
+    if (!isMemory() || Mem.OffsetRegNum != 0)
       return false;
     // Immediate offset in range [-255, -1].
     if (!Mem.OffsetImm) return true;
@@ -839,7 +839,7 @@ public:
     if (Kind == k_Immediate && !isa<MCConstantExpr>(getImm()))
       return true;
 
-    if (Kind != k_Memory || Mem.OffsetRegNum != 0)
+    if (!isMemory() || Mem.OffsetRegNum != 0)
       return false;
     // Immediate offset in range [0, 4095].
     if (!Mem.OffsetImm) return true;
@@ -853,7 +853,7 @@ public:
     if (Kind == k_Immediate && !isa<MCConstantExpr>(getImm()))
       return true;
 
-    if (Kind != k_Memory || Mem.OffsetRegNum != 0)
+    if (!isMemory() || Mem.OffsetRegNum != 0)
       return false;
     // Immediate offset in range [-4095, 4095].
     if (!Mem.OffsetImm) return true;
