@@ -810,6 +810,9 @@ static void CheckConstexprCtorInitializer(Sema &SemaRef,
                                           FieldDecl *Field,
                                           llvm::SmallSet<Decl*, 16> &Inits,
                                           bool &Diagnosed) {
+  if (Field->isUnnamedBitfield())
+    return;
+  
   if (!Inits.count(Field)) {
     if (!Diagnosed) {
       SemaRef.Diag(Dcl->getLocation(), diag::err_constexpr_ctor_missing_init);
@@ -2816,6 +2819,13 @@ bool Sema::SetCtorInitializers(CXXConstructorDecl *Constructor,
                                MemEnd = ClassDecl->decls_end();
        Mem != MemEnd; ++Mem) {
     if (FieldDecl *F = dyn_cast<FieldDecl>(*Mem)) {
+      // C++ [class.bit]p2:
+      //   A declaration for a bit-field that omits the identifier declares an
+      //   unnamed bit-field. Unnamed bit-fields are not members and cannot be
+      //   initialized.
+      if (F->isUnnamedBitfield())
+        continue;
+      
       if (F->getType()->isIncompleteArrayType()) {
         assert(ClassDecl->hasFlexibleArrayMember() &&
                "Incomplete array type is not valid");
@@ -2956,9 +2966,13 @@ DiagnoseBaseOrMemInitializerOrder(Sema &SemaRef,
 
   // 3. Direct fields.
   for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
-       E = ClassDecl->field_end(); Field != E; ++Field)
+       E = ClassDecl->field_end(); Field != E; ++Field) {
+    if (Field->isUnnamedBitfield())
+      continue;
+    
     IdealInitKeys.push_back(GetKeyForTopLevelField(*Field));
-
+  }
+  
   unsigned NumIdealInits = IdealInitKeys.size();
   unsigned IdealIndex = 0;
 
@@ -3530,7 +3544,7 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
     for (RecordDecl::field_iterator F = Record->field_begin(), 
                                  FEnd = Record->field_end();
          F != FEnd; ++F) {
-      if (F->hasInClassInitializer())
+      if (F->hasInClassInitializer() || F->isUnnamedBitfield())
         continue;
 
       if (F->getType()->isReferenceType() ||
@@ -4202,7 +4216,7 @@ bool Sema::ShouldDeleteSpecialMember(CXXMethodDecl *MD, CXXSpecialMember CSM) {
   for (CXXRecordDecl::field_iterator FI = RD->field_begin(),
                                      FE = RD->field_end();
        FI != FE; ++FI) {
-    if (FI->isInvalidDecl())
+    if (FI->isInvalidDecl() || FI->isUnnamedBitfield())
       continue;
     
     QualType FieldType = Context.getBaseElementType(FI->getType());
@@ -4402,6 +4416,9 @@ bool Sema::ShouldDeleteCopyConstructor(CXXConstructorDecl *CD) {
   for (CXXRecordDecl::field_iterator FI = RD->field_begin(),
                                      FE = RD->field_end();
        FI != FE; ++FI) {
+    if (FI->isUnnamedBitfield())
+      continue;
+    
     QualType FieldType = Context.getBaseElementType(FI->getType());
     
     // -- for a copy constructor, a non-static data member of rvalue reference
@@ -4539,6 +4556,9 @@ bool Sema::ShouldDeleteCopyAssignmentOperator(CXXMethodDecl *MD) {
   for (CXXRecordDecl::field_iterator FI = RD->field_begin(),
                                      FE = RD->field_end();
        FI != FE; ++FI) {
+    if (FI->isUnnamedBitfield())
+      continue;
+    
     QualType FieldType = Context.getBaseElementType(FI->getType());
     
     // -- a non-static data member of reference type
@@ -4695,6 +4715,9 @@ bool Sema::ShouldDeleteMoveConstructor(CXXConstructorDecl *CD) {
   for (CXXRecordDecl::field_iterator FI = RD->field_begin(),
                                      FE = RD->field_end();
        FI != FE; ++FI) {
+    if (FI->isUnnamedBitfield())
+      continue;
+    
     QualType FieldType = Context.getBaseElementType(FI->getType());
 
     if (CXXRecordDecl *FieldRecord = FieldType->getAsCXXRecordDecl()) {
@@ -4815,6 +4838,9 @@ bool Sema::ShouldDeleteMoveAssignmentOperator(CXXMethodDecl *MD) {
   for (CXXRecordDecl::field_iterator FI = RD->field_begin(),
                                      FE = RD->field_end();
        FI != FE; ++FI) {
+    if (FI->isUnnamedBitfield())
+      continue;
+        
     QualType FieldType = Context.getBaseElementType(FI->getType());
     
     // -- a non-static data member of reference type
@@ -7922,6 +7948,9 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
   for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
                                   FieldEnd = ClassDecl->field_end(); 
        Field != FieldEnd; ++Field) {
+    if (Field->isUnnamedBitfield())
+      continue;
+    
     // Check for members of reference type; we can't copy those.
     if (Field->getType()->isReferenceType()) {
       Diag(ClassDecl->getLocation(), diag::err_uninitialized_member_for_assign)
@@ -8340,6 +8369,9 @@ void Sema::DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
   for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
                                   FieldEnd = ClassDecl->field_end(); 
        Field != FieldEnd; ++Field) {
+    if (Field->isUnnamedBitfield())
+      continue;
+
     // Check for members of reference type; we can't move those.
     if (Field->getType()->isReferenceType()) {
       Diag(ClassDecl->getLocation(), diag::err_uninitialized_member_for_assign)

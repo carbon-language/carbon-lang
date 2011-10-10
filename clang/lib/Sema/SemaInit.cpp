@@ -490,7 +490,7 @@ int InitListChecker::numStructUnionElements(QualType DeclType) {
          Field = structDecl->field_begin(),
          FieldEnd = structDecl->field_end();
        Field != FieldEnd; ++Field) {
-    if ((*Field)->getIdentifier() || !(*Field)->isBitField())
+    if (!Field->isUnnamedBitfield())
       ++InitializableMembers;
   }
   if (structDecl->isUnion())

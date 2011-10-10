@@ -653,6 +653,13 @@ NotASpecialMember:;
   
   // Handle non-static data members.
   if (FieldDecl *Field = dyn_cast<FieldDecl>(D)) {
+    // C++ [class.bit]p2:
+    //   A declaration for a bit-field that omits the identifier declares an 
+    //   unnamed bit-field. Unnamed bit-fields are not members and cannot be 
+    //   initialized.
+    if (Field->isUnnamedBitfield())
+      return;
+    
     // C++ [dcl.init.aggr]p1:
     //   An aggregate is an array or a class (clause 9) with [...] no
     //   private or protected non-static data members (clause 11).
