@@ -3472,6 +3472,9 @@ void AnalyzeImplicitConversions(Sema &S, Expr *OrigE, SourceLocation CC) {
   QualType T = OrigE->getType();
   Expr *E = OrigE->IgnoreParenImpCasts();
 
+  if (E->isTypeDependent() || E->isValueDependent())
+    return;
+
   // For conditional operators, we analyze the arguments as if they
   // were being fed directly into the output.
   if (isa<ConditionalOperator>(E)) {

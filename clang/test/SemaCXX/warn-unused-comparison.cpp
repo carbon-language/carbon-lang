@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -Wno-unused -Wunused-comparison %s
+// RUN: %clang_cc1 -fsyntax-only -fcxx-exceptions -verify -Wno-unused -Wunused-comparison %s
 
 struct A {
   bool operator==(const A&);
@@ -69,4 +69,26 @@ void test() {
 #define EQ(x,y) (x) == (y)
   EQ(x, 5);
 #undef EQ
+}
+
+namespace PR10291 {
+  template<typename T>
+  class X
+  {
+  public:
+
+    X() : i(0) { } 
+
+    void foo()
+    {   
+      throw 
+        i == 0u ?
+        5 : 6;
+    }   
+
+  private:
+    int i;
+  };
+
+  X<int> x;
 }
