@@ -772,7 +772,9 @@ void Preprocessor::HandleLineDirective(Token &Tok) {
 
   // Enforce C99 6.10.4p3: "The digit sequence shall not specify ... a
   // number greater than 2147483647".  C90 requires that the line # be <= 32767.
-  unsigned LineLimit = Features.C99 ? 2147483648U : 32768U;
+  unsigned LineLimit = 32768U;
+  if (Features.C99 || Features.CPlusPlus0x)
+    LineLimit = 2147483648U;
   if (LineNo >= LineLimit)
     Diag(DigitTok, diag::ext_pp_line_too_big) << LineLimit;
 
@@ -1490,7 +1492,7 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
 
     // Read the first token after the arg list for down below.
     LexUnexpandedToken(Tok);
-  } else if (Features.C99) {
+  } else if (Features.C99 || Features.CPlusPlus0x) {
     // C99 requires whitespace between the macro definition and the body.  Emit
     // a diagnostic for something like "#define X+".
     Diag(Tok, diag::ext_c99_whitespace_required_after_macro_name);
