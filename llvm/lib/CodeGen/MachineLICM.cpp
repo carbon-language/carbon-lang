@@ -168,6 +168,11 @@ namespace {
     /// 
     bool IsLoopInvariantInst(MachineInstr &I);
 
+    /// IsGuaranteedToExecute - check to make sure that the MI dominates
+    /// all of the exit blocks.  If it doesn't, then there is a path out of the
+    /// loop which does not execute this instruction, so we can't hoist it.
+    bool IsGuaranteedToExecute(MachineInstr *MI);
+
     /// HasAnyPHIUse - Return true if the specified register is used by any
     /// phi node.
     bool HasAnyPHIUse(unsigned Reg) const;
@@ -1129,6 +1134,29 @@ bool MachineLICM::EliminateCSE(MachineInstr *MI,
   return false;
 }
 
+/// IsGuaranteedToExecute - check to make sure that the instruction dominates
+/// all of the exit blocks.  If it doesn't, then there is a path out of the loop
+/// which does not execute this instruction, so we can't hoist it.
+bool MachineLICM::IsGuaranteedToExecute(MachineInstr *MI) {
+  // If the instruction is in the header block for the loop (which is very
+  // common), it is always guaranteed to dominate the exit blocks.  Since this
+  // is a common case, and can save some work, check it now.
+  if (MI->getParent() == CurLoop->getHeader())
+    return true;
+
+  // Get the exit blocks for the current loop.
+  SmallVector<MachineBasicBlock*, 8> ExitBlocks;
+  CurLoop->getExitingBlocks(ExitBlocks);
+
+  // Verify that the block dominates each of the exit blocks of the loop.
+  for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i)
+    if (ExitBlocks[i] != CurLoop->getHeader() &&
+	!DT->dominates(MI->getParent(), ExitBlocks[i]))
+      return false;
+
+  return true;
+}
+
 /// Hoist - When an instruction is found to use only loop invariant operands
 /// that are safe to hoist, this instruction is called to do the dirty work.
 ///
@@ -1139,6 +1167,8 @@ bool MachineLICM::Hoist(MachineInstr *MI, MachineBasicBlock *Preheader) {
     MI = ExtractHoistableLoad(MI);
     if (!MI) return false;
   }
+  if (!IsGuaranteedToExecute(MI))
+    return false;
 
   // Now move the instructions to the predecessor, inserting it before any
   // terminator instructions.
