@@ -1285,7 +1285,7 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
     // If evaluating the argument has side-effects we can't determine
     // the size of the object and lower it to unknown now.
     if (E->getArg(0)->HasSideEffects(Info.Ctx)) {
-      if (E->getArg(1)->EvaluateAsInt(Info.Ctx).getZExtValue() <= 1)
+      if (E->getArg(1)->EvaluateKnownConstInt(Info.Ctx).getZExtValue() <= 1)
         return Success(-1ULL, E);
       return Success(0, E);
     }
@@ -1302,7 +1302,7 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
     return Success(E->getArg(0)->isEvaluatable(Info.Ctx), E);
       
   case Builtin::BI__builtin_eh_return_data_regno: {
-    int Operand = E->getArg(0)->EvaluateAsInt(Info.Ctx).getZExtValue();
+    int Operand = E->getArg(0)->EvaluateKnownConstInt(Info.Ctx).getZExtValue();
     Operand = Info.Ctx.getTargetInfo().getEHDataRegisterNumber(Operand);
     return Success(Operand, E);
   }
@@ -2681,6 +2681,13 @@ bool Expr::EvaluateAsBooleanCondition(bool &Result,
   return HandleConversionToBool(this, Result, Info);
 }
 
+bool Expr::EvaluateAsInt(APSInt &Result, const ASTContext &Ctx) const {
+  EvalResult Scratch;
+  EvalInfo Info(Ctx, Scratch);
+
+  return EvaluateInteger(this, Result, Info) && !Scratch.HasSideEffects;
+}
+
 bool Expr::EvaluateAsLValue(EvalResult &Result, const ASTContext &Ctx) const {
   EvalInfo Info(Ctx, Result);
 
@@ -2719,7 +2726,7 @@ bool Expr::HasSideEffects(const ASTContext &Ctx) const {
   return HasSideEffect(Info).Visit(this);
 }
 
-APSInt Expr::EvaluateAsInt(const ASTContext &Ctx) const {
+APSInt Expr::EvaluateKnownConstInt(const ASTContext &Ctx) const {
   EvalResult EvalResult;
   bool Result = Evaluate(EvalResult, Ctx);
   (void)Result;
@@ -3021,11 +3028,11 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
         // Evaluate gives an error for undefined Div/Rem, so make sure
         // we don't evaluate one.
         if (LHSResult.Val == 0 && RHSResult.Val == 0) {
-          llvm::APSInt REval = Exp->getRHS()->EvaluateAsInt(Ctx);
+          llvm::APSInt REval = Exp->getRHS()->EvaluateKnownConstInt(Ctx);
           if (REval == 0)
             return ICEDiag(1, E->getLocStart());
           if (REval.isSigned() && REval.isAllOnesValue()) {
-            llvm::APSInt LEval = Exp->getLHS()->EvaluateAsInt(Ctx);
+            llvm::APSInt LEval = Exp->getLHS()->EvaluateKnownConstInt(Ctx);
             if (LEval.isMinSignedValue())
               return ICEDiag(1, E->getLocStart());
           }
@@ -3056,11 +3063,11 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
       //   evaluated are not considered.
       if (Ctx.getLangOptions().CPlusPlus0x && LHSResult.Val == 0) {
         if (Exp->getOpcode() == BO_LAnd && 
-            Exp->getLHS()->EvaluateAsInt(Ctx) == 0)
+            Exp->getLHS()->EvaluateKnownConstInt(Ctx) == 0)
           return LHSResult;
 
         if (Exp->getOpcode() == BO_LOr &&
-            Exp->getLHS()->EvaluateAsInt(Ctx) != 0)
+            Exp->getLHS()->EvaluateKnownConstInt(Ctx) != 0)
           return LHSResult;
       }
 
@@ -3070,7 +3077,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
         // to actually check the condition to see whether the side
         // with the comma is evaluated.
         if ((Exp->getOpcode() == BO_LAnd) !=
-            (Exp->getLHS()->EvaluateAsInt(Ctx) == 0))
+            (Exp->getLHS()->EvaluateKnownConstInt(Ctx) == 0))
           return RHSResult;
         return NoDiag();
       }
@@ -3109,7 +3116,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
     if (FalseResult.Val == 2) return FalseResult;
     if (CommonResult.Val == 1) return CommonResult;
     if (FalseResult.Val == 1 &&
-        Exp->getCommon()->EvaluateAsInt(Ctx) == 0) return NoDiag();
+        Exp->getCommon()->EvaluateKnownConstInt(Ctx) == 0) return NoDiag();
     return FalseResult;
   }
   case Expr::ConditionalOperatorClass: {
@@ -3136,7 +3143,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
     //   subexpressions of [...] conditional (5.16) operations that
     //   are not evaluated are not considered
     bool TrueBranch = Ctx.getLangOptions().CPlusPlus0x
-      ? Exp->getCond()->EvaluateAsInt(Ctx) != 0
+      ? Exp->getCond()->EvaluateKnownConstInt(Ctx) != 0
       : false;
     ICEDiag TrueResult = NoDiag();
     if (!Ctx.getLangOptions().CPlusPlus0x || TrueBranch)
@@ -3156,7 +3163,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
     // Rare case where the diagnostics depend on which side is evaluated
     // Note that if we get here, CondResult is 0, and at least one of
     // TrueResult and FalseResult is non-zero.
-    if (Exp->getCond()->EvaluateAsInt(Ctx) == 0) {
+    if (Exp->getCond()->EvaluateKnownConstInt(Ctx) == 0) {
       return FalseResult;
     }
     return TrueResult;

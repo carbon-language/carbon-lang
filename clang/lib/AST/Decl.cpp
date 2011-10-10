@@ -2187,6 +2187,12 @@ bool FieldDecl::isAnonymousStructOrUnion() const {
   return false;
 }
 
+unsigned FieldDecl::getBitWidthValue(const ASTContext &Ctx) const {
+  assert(isBitField() && "not a bitfield");
+  Expr *BitWidth = InitializerOrBitWidth.getPointer();
+  return BitWidth->EvaluateKnownConstInt(Ctx).getZExtValue();
+}
+
 unsigned FieldDecl::getFieldIndex() const {
   if (CachedFieldIndex) return CachedFieldIndex - 1;
 

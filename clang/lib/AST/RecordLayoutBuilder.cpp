@@ -1362,7 +1362,7 @@ void RecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
         if (TypeSizeLastFD != TypeSize) {
           if (RemainingInAlignment &&
               LastFD && LastFD->isBitField() &&
-              LastFD->getBitWidth()->EvaluateAsInt(Context).getZExtValue()) {
+              LastFD->getBitWidthValue(Context)) {
             // If previous field was a bitfield with some remaining unfilled
             // bits, pad the field so current field starts on its type boundary.
             uint64_t FieldOffset = 
@@ -1393,8 +1393,7 @@ void RecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
           setSize(std::max(getSizeInBits(), getDataSizeInBits()));
         }
         if (FD->isBitField()) {
-          uint64_t FieldSize = 
-            FD->getBitWidth()->EvaluateAsInt(Context).getZExtValue();
+          uint64_t FieldSize = FD->getBitWidthValue(Context);
           assert (FieldSize > 0 && "LayoutFields - ms_struct layout");
           if (RemainingInAlignment < FieldSize)
             RemainingInAlignment = TypeSize - FieldSize;
@@ -1403,8 +1402,7 @@ void RecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
         }
       }
       else if (FD->isBitField()) {
-        uint64_t FieldSize = 
-          FD->getBitWidth()->EvaluateAsInt(Context).getZExtValue();
+        uint64_t FieldSize = FD->getBitWidthValue(Context);
         std::pair<uint64_t, unsigned> FieldInfo = 
           Context.getTypeInfo(FD->getType());
         uint64_t TypeSize = FieldInfo.first;
@@ -1415,15 +1413,13 @@ void RecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
     else if (!Context.getTargetInfo().useBitFieldTypeAlignment() &&
              Context.getTargetInfo().useZeroLengthBitfieldAlignment()) {             
       FieldDecl *FD =  (*Field);
-      if (FD->isBitField() && 
-          FD->getBitWidth()->EvaluateAsInt(Context).getZExtValue() == 0)
+      if (FD->isBitField() && FD->getBitWidthValue(Context) == 0)
         ZeroLengthBitfield = FD;
     }
     LayoutField(*Field);
   }
   if (IsMsStruct && RemainingInAlignment &&
-      LastFD && LastFD->isBitField() &&
-      LastFD->getBitWidth()->EvaluateAsInt(Context).getZExtValue()) {
+      LastFD && LastFD->isBitField() && LastFD->getBitWidthValue(Context)) {
     // If we ended a bitfield before the full length of the type then
     // pad the struct out to the full length of the last type.
     uint64_t FieldOffset = 
@@ -1504,7 +1500,7 @@ void RecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
   bool FieldPacked = Packed || D->hasAttr<PackedAttr>();
   uint64_t UnpaddedFieldOffset = getDataSizeInBits() - UnfilledBitsInLastByte;
   uint64_t FieldOffset = IsUnion ? 0 : UnpaddedFieldOffset;
-  uint64_t FieldSize = D->getBitWidth()->EvaluateAsInt(Context).getZExtValue();
+  uint64_t FieldSize = D->getBitWidthValue(Context);
 
   std::pair<uint64_t, unsigned> FieldInfo = Context.getTypeInfo(D->getType());
   uint64_t TypeSize = FieldInfo.first;

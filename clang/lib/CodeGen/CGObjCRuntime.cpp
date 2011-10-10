@@ -119,8 +119,7 @@ LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
   uint64_t BitOffset = FieldBitOffset % CGF.CGM.getContext().getCharWidth();
   uint64_t ContainingTypeAlign = CGF.CGM.getContext().getTargetInfo().getCharAlign();
   uint64_t ContainingTypeSize = TypeSizeInBits - (FieldBitOffset - BitOffset);
-  uint64_t BitFieldSize =
-    Ivar->getBitWidth()->EvaluateAsInt(CGF.getContext()).getZExtValue();
+  uint64_t BitFieldSize = Ivar->getBitWidthValue(CGF.getContext());
 
   // Allocate a new CGBitFieldInfo object to describe this access.
   //

@@ -626,7 +626,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
         break;
       }
 
-      llvm::APSInt LoVal = Lo->EvaluateAsInt(Context);
+      llvm::APSInt LoVal = Lo->EvaluateKnownConstInt(Context);
 
       // Convert the value to the same width/sign as the condition.
       ConvertIntegerToTypeWarnOnOverflow(LoVal, CondWidth, CondIsSigned,
@@ -705,7 +705,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
         llvm::APSInt &LoVal = CaseRanges[i].first;
         CaseStmt *CR = CaseRanges[i].second;
         Expr *Hi = CR->getRHS();
-        llvm::APSInt HiVal = Hi->EvaluateAsInt(Context);
+        llvm::APSInt HiVal = Hi->EvaluateKnownConstInt(Context);
 
         // Convert the value to the same width/sign as the condition.
         ConvertIntegerToTypeWarnOnOverflow(HiVal, CondWidth, CondIsSigned,
@@ -845,7 +845,8 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
               << ED->getDeclName();
           }
 
-          llvm::APSInt Hi = RI->second->getRHS()->EvaluateAsInt(Context);
+          llvm::APSInt Hi = 
+            RI->second->getRHS()->EvaluateKnownConstInt(Context);
           AdjustAPSInt(Hi, CondWidth, CondIsSigned);
           while (EI != EIend && EI->first < Hi)
             EI++;
@@ -873,7 +874,8 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
 
         // Drop unneeded case ranges
         for (; RI != CaseRanges.end(); RI++) {
-          llvm::APSInt Hi = RI->second->getRHS()->EvaluateAsInt(Context);
+          llvm::APSInt Hi =
+            RI->second->getRHS()->EvaluateKnownConstInt(Context);
           AdjustAPSInt(Hi, CondWidth, CondIsSigned);
           if (EI->first <= Hi)
             break;

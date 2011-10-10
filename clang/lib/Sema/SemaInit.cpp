@@ -1850,15 +1850,15 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
   llvm::APSInt DesignatedStartIndex, DesignatedEndIndex;
   if (D->isArrayDesignator()) {
     IndexExpr = DIE->getArrayIndex(*D);
-    DesignatedStartIndex = IndexExpr->EvaluateAsInt(SemaRef.Context);
+    DesignatedStartIndex = IndexExpr->EvaluateKnownConstInt(SemaRef.Context);
     DesignatedEndIndex = DesignatedStartIndex;
   } else {
     assert(D->isArrayRangeDesignator() && "Need array-range designator");
 
     DesignatedStartIndex =
-      DIE->getArrayRangeStart(*D)->EvaluateAsInt(SemaRef.Context);
+      DIE->getArrayRangeStart(*D)->EvaluateKnownConstInt(SemaRef.Context);
     DesignatedEndIndex =
-      DIE->getArrayRangeEnd(*D)->EvaluateAsInt(SemaRef.Context);
+      DIE->getArrayRangeEnd(*D)->EvaluateKnownConstInt(SemaRef.Context);
     IndexExpr = DIE->getArrayRangeEnd(*D);
 
     // Codegen can't handle evaluating array range designators that have side

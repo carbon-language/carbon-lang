@@ -548,11 +548,10 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
       
   case Builtin::BI__builtin___memcpy_chk: {
     // fold __builtin_memcpy_chk(x, y, cst1, cst2) to memset iff cst1<=cst2.
-    if (!E->getArg(2)->isEvaluatable(CGM.getContext()) ||
-        !E->getArg(3)->isEvaluatable(CGM.getContext()))
+    llvm::APSInt Size, DstSize;
+    if (!E->getArg(2)->EvaluateAsInt(Size, CGM.getContext()) ||
+        !E->getArg(3)->EvaluateAsInt(DstSize, CGM.getContext()))
       break;
-    llvm::APSInt Size = E->getArg(2)->EvaluateAsInt(CGM.getContext());
-    llvm::APSInt DstSize = E->getArg(3)->EvaluateAsInt(CGM.getContext());
     if (Size.ugt(DstSize))
       break;
     Value *Dest = EmitScalarExpr(E->getArg(0));
@@ -573,11 +572,10 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
 
   case Builtin::BI__builtin___memmove_chk: {
     // fold __builtin_memmove_chk(x, y, cst1, cst2) to memset iff cst1<=cst2.
-    if (!E->getArg(2)->isEvaluatable(CGM.getContext()) ||
-        !E->getArg(3)->isEvaluatable(CGM.getContext()))
+    llvm::APSInt Size, DstSize;
+    if (!E->getArg(2)->EvaluateAsInt(Size, CGM.getContext()) ||
+        !E->getArg(3)->EvaluateAsInt(DstSize, CGM.getContext()))
       break;
-    llvm::APSInt Size = E->getArg(2)->EvaluateAsInt(CGM.getContext());
-    llvm::APSInt DstSize = E->getArg(3)->EvaluateAsInt(CGM.getContext());
     if (Size.ugt(DstSize))
       break;
     Value *Dest = EmitScalarExpr(E->getArg(0));
@@ -606,11 +604,10 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   }
   case Builtin::BI__builtin___memset_chk: {
     // fold __builtin_memset_chk(x, y, cst1, cst2) to memset iff cst1<=cst2.
-    if (!E->getArg(2)->isEvaluatable(CGM.getContext()) ||
-        !E->getArg(3)->isEvaluatable(CGM.getContext()))
+    llvm::APSInt Size, DstSize;
+    if (!E->getArg(2)->EvaluateAsInt(Size, CGM.getContext()) ||
+        !E->getArg(3)->EvaluateAsInt(DstSize, CGM.getContext()))
       break;
-    llvm::APSInt Size = E->getArg(2)->EvaluateAsInt(CGM.getContext());
-    llvm::APSInt DstSize = E->getArg(3)->EvaluateAsInt(CGM.getContext());
     if (Size.ugt(DstSize))
       break;
     Value *Address = EmitScalarExpr(E->getArg(0));

@@ -1008,21 +1008,18 @@ void Sema::CheckImplementationIvars(ObjCImplementationDecl *ImpDecl,
     assert (ClsIvar && "missing class ivar");
 
     // First, make sure the types match.
-    if (Context.getCanonicalType(ImplIvar->getType()) !=
-        Context.getCanonicalType(ClsIvar->getType())) {
+    if (!Context.hasSameType(ImplIvar->getType(), ClsIvar->getType())) {
       Diag(ImplIvar->getLocation(), diag::err_conflicting_ivar_type)
         << ImplIvar->getIdentifier()
         << ImplIvar->getType() << ClsIvar->getType();
       Diag(ClsIvar->getLocation(), diag::note_previous_definition);
-    } else if (ImplIvar->isBitField() && ClsIvar->isBitField()) {
-      Expr *ImplBitWidth = ImplIvar->getBitWidth();
-      Expr *ClsBitWidth = ClsIvar->getBitWidth();
-      if (ImplBitWidth->EvaluateAsInt(Context).getZExtValue() !=
-          ClsBitWidth->EvaluateAsInt(Context).getZExtValue()) {
-        Diag(ImplBitWidth->getLocStart(), diag::err_conflicting_ivar_bitwidth)
-          << ImplIvar->getIdentifier();
-        Diag(ClsBitWidth->getLocStart(), diag::note_previous_definition);
-      }
+    } else if (ImplIvar->isBitField() && ClsIvar->isBitField() &&
+               ImplIvar->getBitWidthValue(Context) !=
+               ClsIvar->getBitWidthValue(Context)) {
+      Diag(ImplIvar->getBitWidth()->getLocStart(),
+           diag::err_conflicting_ivar_bitwidth) << ImplIvar->getIdentifier();
+      Diag(ClsIvar->getBitWidth()->getLocStart(),
+           diag::note_previous_definition);
     }
     // Make sure the names are identical.
     if (ImplIvar->getIdentifier() != ClsIvar->getIdentifier()) {

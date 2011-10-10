@@ -139,7 +139,7 @@ class CGDebugInfo {
                            llvm::DIFile F);
 
   llvm::DIType createFieldType(StringRef name, QualType type,
-                               Expr *bitWidth, SourceLocation loc,
+                               uint64_t sizeInBitsOverride, SourceLocation loc,
                                AccessSpecifier AS, uint64_t offsetInBits,
                                llvm::DIFile tunit,
                                llvm::DIDescriptor scope);

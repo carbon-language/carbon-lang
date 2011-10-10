@@ -834,8 +834,8 @@ void CodeGenFunction::EmitContinueStmt(const ContinueStmt &S) {
 void CodeGenFunction::EmitCaseStmtRange(const CaseStmt &S) {
   assert(S.getRHS() && "Expected RHS value in CaseStmt");
 
-  llvm::APSInt LHS = S.getLHS()->EvaluateAsInt(getContext());
-  llvm::APSInt RHS = S.getRHS()->EvaluateAsInt(getContext());
+  llvm::APSInt LHS = S.getLHS()->EvaluateKnownConstInt(getContext());
+  llvm::APSInt RHS = S.getRHS()->EvaluateKnownConstInt(getContext());
 
   // Emit the code for this case. We do this first to make sure it is
   // properly chained from our predecessor before generating the
@@ -894,7 +894,7 @@ void CodeGenFunction::EmitCaseStmt(const CaseStmt &S) {
   }
 
   llvm::ConstantInt *CaseVal =
-    Builder.getInt(S.getLHS()->EvaluateAsInt(getContext()));
+    Builder.getInt(S.getLHS()->EvaluateKnownConstInt(getContext()));
 
   // If the body of the case is just a 'break', and if there was no fallthrough,
   // try to not emit an empty block.
@@ -935,7 +935,7 @@ void CodeGenFunction::EmitCaseStmt(const CaseStmt &S) {
   while (NextCase && NextCase->getRHS() == 0) {
     CurCase = NextCase;
     llvm::ConstantInt *CaseVal = 
-      Builder.getInt(CurCase->getLHS()->EvaluateAsInt(getContext()));
+      Builder.getInt(CurCase->getLHS()->EvaluateKnownConstInt(getContext()));
     SwitchInsn->addCase(CaseVal, CaseDest);
     NextCase = dyn_cast<CaseStmt>(CurCase->getSubStmt());
   }
@@ -1125,7 +1125,7 @@ static bool FindCaseStatementsForValue(const SwitchStmt &S,
     if (CS->getRHS()) return false;
     
     // If we found our case, remember it as 'case'.
-    if (CS->getLHS()->EvaluateAsInt(C) == ConstantCondValue)
+    if (CS->getLHS()->EvaluateKnownConstInt(C) == ConstantCondValue)
       break;
   }
   

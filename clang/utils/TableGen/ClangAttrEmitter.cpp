@@ -239,7 +239,7 @@ namespace {
       OS << "  assert(!is" << getUpperName() << "Dependent());\n";
       OS << "  if (is" << getLowerName() << "Expr)\n";
       OS << "    return (" << getLowerName() << "Expr ? " << getLowerName()
-         << "Expr->EvaluateAsInt(Ctx).getZExtValue() : 16)"
+         << "Expr->EvaluateKnownConstInt(Ctx).getZExtValue() : 16)"
          << "* Ctx.getCharWidth();\n";
       OS << "  else\n";
       OS << "    return 0; // FIXME\n";

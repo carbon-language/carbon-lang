@@ -956,43 +956,33 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
       Context.Diag2(D2->getLocation(), diag::warn_odr_tag_type_inconsistent)
         << Context.C2.getTypeDeclType(D2);
       if (Field1->isBitField()) {
-        llvm::APSInt Bits;
-        Field1->getBitWidth()->isIntegerConstantExpr(Bits, Context.C1);
         Context.Diag1(Field1->getLocation(), diag::note_odr_bit_field)
           << Field1->getDeclName() << Field1->getType()
-          << Bits.toString(10, false);
+          << Field1->getBitWidthValue(Context.C1);
         Context.Diag2(Field2->getLocation(), diag::note_odr_not_bit_field)
           << Field2->getDeclName();
       } else {
-        llvm::APSInt Bits;
-        Field2->getBitWidth()->isIntegerConstantExpr(Bits, Context.C2);
         Context.Diag2(Field2->getLocation(), diag::note_odr_bit_field)
           << Field2->getDeclName() << Field2->getType()
-          << Bits.toString(10, false);
-        Context.Diag1(Field1->getLocation(), 
-                          diag::note_odr_not_bit_field)
-        << Field1->getDeclName();
+          << Field2->getBitWidthValue(Context.C2);
+        Context.Diag1(Field1->getLocation(), diag::note_odr_not_bit_field)
+          << Field1->getDeclName();
       }
       return false;
     }
     
     if (Field1->isBitField()) {
       // Make sure that the bit-fields are the same length.
-      llvm::APSInt Bits1, Bits2;
-      if (!Field1->getBitWidth()->isIntegerConstantExpr(Bits1, Context.C1))
-        return false;
-      if (!Field2->getBitWidth()->isIntegerConstantExpr(Bits2, Context.C2))
-        return false;
+      unsigned Bits1 = Field1->getBitWidthValue(Context.C1);
+      unsigned Bits2 = Field2->getBitWidthValue(Context.C2);
       
-      if (!IsSameValue(Bits1, Bits2)) {
+      if (Bits1 != Bits2) {
         Context.Diag2(D2->getLocation(), diag::warn_odr_tag_type_inconsistent)
           << Context.C2.getTypeDeclType(D2);
         Context.Diag2(Field2->getLocation(), diag::note_odr_bit_field)
-          << Field2->getDeclName() << Field2->getType()
-          << Bits2.toString(10, false);
+          << Field2->getDeclName() << Field2->getType() << Bits2;
         Context.Diag1(Field1->getLocation(), diag::note_odr_bit_field)
-          << Field1->getDeclName() << Field1->getType()
-          << Bits1.toString(10, false);
+          << Field1->getDeclName() << Field1->getType() << Bits1;
         return false;
       }
     }

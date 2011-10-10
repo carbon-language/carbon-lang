@@ -363,8 +363,7 @@ CGBitFieldInfo CGBitFieldInfo::MakeInfo(CodeGenTypes &Types,
 
 void CGRecordLayoutBuilder::LayoutBitField(const FieldDecl *D,
                                            uint64_t fieldOffset) {
-  uint64_t fieldSize =
-    D->getBitWidth()->EvaluateAsInt(Types.getContext()).getZExtValue();
+  uint64_t fieldSize = D->getBitWidthValue(Types.getContext());
 
   if (fieldSize == 0)
     return;
@@ -492,8 +491,7 @@ llvm::Type *
 CGRecordLayoutBuilder::LayoutUnionField(const FieldDecl *Field,
                                         const ASTRecordLayout &Layout) {
   if (Field->isBitField()) {
-    uint64_t FieldSize =
-      Field->getBitWidth()->EvaluateAsInt(Types.getContext()).getZExtValue();
+    uint64_t FieldSize = Field->getBitWidthValue(Types.getContext());
 
     // Ignore zero sized bit fields.
     if (FieldSize == 0)

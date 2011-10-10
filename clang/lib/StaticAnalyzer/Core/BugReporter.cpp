@@ -599,7 +599,7 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
                 }
 
                 if (GetRawInt)
-                  os << LHS->EvaluateAsInt(PDB.getASTContext());
+                  os << LHS->EvaluateKnownConstInt(PDB.getASTContext());
 
                 os << ":'  at line "
                 << End.asLocation().getExpansionLineNumber();

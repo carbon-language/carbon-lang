@@ -453,8 +453,13 @@ public:
 
   /// EvaluateAsBooleanCondition - Return true if this is a constant
   /// which we we can fold and convert to a boolean condition using
-  /// any crazy technique that we want to.
+  /// any crazy technique that we want to, even if the expression has
+  /// side-effects.
   bool EvaluateAsBooleanCondition(bool &Result, const ASTContext &Ctx) const;
+
+  /// EvaluateAsInt - Return true if this is a constant which we can fold and
+  /// convert to an integer using any crazy technique that we want to.
+  bool EvaluateAsInt(llvm::APSInt &Result, const ASTContext &Ctx) const;
 
   /// isEvaluatable - Call Evaluate to see if this expression can be constant
   /// folded, but discard the result.
@@ -466,9 +471,9 @@ public:
   /// variable read.
   bool HasSideEffects(const ASTContext &Ctx) const;
   
-  /// EvaluateAsInt - Call Evaluate and return the folded integer. This
+  /// EvaluateKnownConstInt - Call Evaluate and return the folded integer. This
   /// must be called on an expression that constant folds to an integer.
-  llvm::APSInt EvaluateAsInt(const ASTContext &Ctx) const;
+  llvm::APSInt EvaluateKnownConstInt(const ASTContext &Ctx) const;
 
   /// EvaluateAsLValue - Evaluate an expression to see if it's a lvalue
   /// with link time known address.
@@ -3098,7 +3103,7 @@ public:
 
   unsigned getShuffleMaskIdx(ASTContext &Ctx, unsigned N) {
     assert((N < NumExprs - 2) && "Shuffle idx out of range!");
-    return getExpr(N+2)->EvaluateAsInt(Ctx).getZExtValue();
+    return getExpr(N+2)->EvaluateKnownConstInt(Ctx).getZExtValue();
   }
 
   // Iterators

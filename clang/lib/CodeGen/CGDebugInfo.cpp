@@ -603,7 +603,7 @@ llvm::DIType CGDebugInfo::CreateType(const FunctionType *Ty,
 
 llvm::DIType CGDebugInfo::createFieldType(StringRef name,
                                           QualType type,
-                                          Expr *bitWidth,
+                                          uint64_t sizeInBitsOverride,
                                           SourceLocation loc,
                                           AccessSpecifier AS,
                                           uint64_t offsetInBits,
@@ -620,8 +620,8 @@ llvm::DIType CGDebugInfo::createFieldType(StringRef name,
   if (!type->isIncompleteArrayType()) {
     llvm::tie(sizeInBits, alignInBits) = CGM.getContext().getTypeInfo(type);
 
-    if (bitWidth)
-      sizeInBits = bitWidth->EvaluateAsInt(CGM.getContext()).getZExtValue();
+    if (sizeInBitsOverride)
+      sizeInBits = sizeInBitsOverride;
   }
 
   unsigned flags = 0;
@@ -667,8 +667,14 @@ CollectRecordFields(const RecordDecl *record, llvm::DIFile tunit,
       continue;
     }
 
+    uint64_t SizeInBitsOverride = 0;
+    if (field->isBitField()) {
+      SizeInBitsOverride = field->getBitWidthValue(CGM.getContext());
+      assert(SizeInBitsOverride && "found named 0-width bitfield");
+    }
+
     llvm::DIType fieldType
-      = createFieldType(name, type, field->getBitWidth(),
+      = createFieldType(name, type, SizeInBitsOverride,
                         field->getLocation(), field->getAccess(),
                         layout.getFieldOffset(fieldNo), tunit, RecordTy);
 
@@ -1215,12 +1221,10 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
     if (!FType->isIncompleteArrayType()) {
 
       // Bit size, align and offset of the type.
-      FieldSize = CGM.getContext().getTypeSize(FType);
-      Expr *BitWidth = Field->getBitWidth();
-      if (BitWidth)
-        FieldSize = BitWidth->EvaluateAsInt(CGM.getContext()).getZExtValue();
-
-      FieldAlign =  CGM.getContext().getTypeAlign(FType);
+      FieldSize = Field->isBitField()
+        ? Field->getBitWidthValue(CGM.getContext())
+        : CGM.getContext().getTypeSize(FType);
+      FieldAlign = CGM.getContext().getTypeAlign(FType);
     }
 
     // We can't know the offset of our ivar in the structure if we're using

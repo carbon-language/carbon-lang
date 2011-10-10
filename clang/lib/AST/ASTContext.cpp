@@ -608,33 +608,33 @@ void ASTContext::setInstantiatedFromUnnamedFieldDecl(FieldDecl *Inst,
 bool ASTContext::ZeroBitfieldFollowsNonBitfield(const FieldDecl *FD, 
                                     const FieldDecl *LastFD) const {
   return (FD->isBitField() && LastFD && !LastFD->isBitField() &&
-          FD->getBitWidth()->EvaluateAsInt(*this).getZExtValue() == 0);
+          FD->getBitWidthValue(*this) == 0);
 }
 
 bool ASTContext::ZeroBitfieldFollowsBitfield(const FieldDecl *FD,
                                              const FieldDecl *LastFD) const {
   return (FD->isBitField() && LastFD && LastFD->isBitField() &&
-          FD->getBitWidth()->EvaluateAsInt(*this).getZExtValue() == 0 &&
-          LastFD->getBitWidth()->EvaluateAsInt(*this).getZExtValue() != 0);
+          FD->getBitWidthValue(*this) == 0 &&
+          LastFD->getBitWidthValue(*this) != 0);
 }
 
 bool ASTContext::BitfieldFollowsBitfield(const FieldDecl *FD,
                                          const FieldDecl *LastFD) const {
   return (FD->isBitField() && LastFD && LastFD->isBitField() &&
-          FD->getBitWidth()->EvaluateAsInt(*this).getZExtValue() &&
-          LastFD->getBitWidth()->EvaluateAsInt(*this).getZExtValue());
+          FD->getBitWidthValue(*this) &&
+          LastFD->getBitWidthValue(*this));
 }
 
 bool ASTContext::NonBitfieldFollowsBitfield(const FieldDecl *FD,
                                          const FieldDecl *LastFD) const {
   return (!FD->isBitField() && LastFD && LastFD->isBitField() &&
-          LastFD->getBitWidth()->EvaluateAsInt(*this).getZExtValue());  
+          LastFD->getBitWidthValue(*this));
 }
 
 bool ASTContext::BitfieldFollowsNonBitfield(const FieldDecl *FD,
                                              const FieldDecl *LastFD) const {
   return (FD->isBitField() && LastFD && !LastFD->isBitField() &&
-          FD->getBitWidth()->EvaluateAsInt(*this).getZExtValue());  
+          FD->getBitWidthValue(*this));
 }
 
 ASTContext::overridden_cxx_method_iterator
@@ -3577,8 +3577,7 @@ QualType ASTContext::isPromotableBitField(Expr *E) const {
 
   QualType FT = Field->getType();
 
-  llvm::APSInt BitWidthAP = Field->getBitWidth()->EvaluateAsInt(*this);
-  uint64_t BitWidth = BitWidthAP.getZExtValue();
+  uint64_t BitWidth = Field->getBitWidthValue(*this);
   uint64_t IntSize = getTypeSize(IntTy);
   // GCC extension compatibility: if the bit-field size is less than or equal
   // to the size of int, it gets promoted no matter what its type is.
@@ -4255,8 +4254,7 @@ static char ObjCEncodingForEnumType(const ASTContext *C, const EnumType *ET) {
 
 static void EncodeBitField(const ASTContext *Ctx, std::string& S,
                            QualType T, const FieldDecl *FD) {
-  const Expr *E = FD->getBitWidth();
-  assert(E && "bitfield width not there - getObjCEncodingForTypeImpl");
+  assert(FD->isBitField() && "not a bitfield - getObjCEncodingForTypeImpl");
   S += 'b';
   // The NeXT runtime encodes bit fields as b followed by the number of bits.
   // The GNU runtime requires more information; bitfields are encoded as b,
@@ -4282,8 +4280,7 @@ static void EncodeBitField(const ASTContext *Ctx, std::string& S,
     else
       S += ObjCEncodingForPrimitiveKind(Ctx, T);
   }
-  unsigned N = E->EvaluateAsInt(*Ctx).getZExtValue();
-  S += llvm::utostr(N);
+  S += llvm::utostr(FD->getBitWidthValue(*Ctx));
 }
 
 // FIXME: Use SmallString for accumulating string.
@@ -4699,7 +4696,7 @@ void ASTContext::getObjCEncodingForStructureImpl(RecordDecl *RDecl,
 
       if (field->isBitField()) {
         EncodeBitField(this, S, field->getType(), field);
-        CurOffs += field->getBitWidth()->EvaluateAsInt(*this).getZExtValue();
+        CurOffs += field->getBitWidthValue(*this);
       } else {
         QualType qt = field->getType();
         getLegacyIntegralTypeEncoding(qt);

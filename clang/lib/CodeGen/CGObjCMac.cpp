@@ -3710,9 +3710,8 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
   if (LastFieldBitfieldOrUnnamed) {
     if (LastFieldBitfieldOrUnnamed->isBitField()) {
       // Last field was a bitfield. Must update skip info.
-      Expr *BitWidth = LastFieldBitfieldOrUnnamed->getBitWidth();
-      uint64_t BitFieldSize =
-        BitWidth->EvaluateAsInt(CGM.getContext()).getZExtValue();
+      uint64_t BitFieldSize
+          = LastFieldBitfieldOrUnnamed->getBitWidthValue(CGM.getContext());
       GC_IVAR skivar;
       skivar.ivar_bytepos = BytePos + LastBitfieldOrUnnamedOffset;
       skivar.ivar_size = (BitFieldSize / ByteSizeInBits)

@@ -8757,11 +8757,7 @@ void Sema::ActOnLastBitfield(SourceLocation DeclLoc,
   Decl *ivarDecl = AllIvarDecls[AllIvarDecls.size()-1];
   ObjCIvarDecl *Ivar = cast<ObjCIvarDecl>(ivarDecl);
   
-  if (!Ivar->isBitField())
-    return;
-  uint64_t BitFieldSize =
-    Ivar->getBitWidth()->EvaluateAsInt(Context).getZExtValue();
-  if (BitFieldSize == 0)
+  if (!Ivar->isBitField() || Ivar->getBitWidthValue(Context) == 0)
     return;
   ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(CurContext);
   if (!ID) {

@@ -2413,9 +2413,8 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     QualType ParamType = Param->getType().getNonReferenceType();
 
     // Suppress copying zero-width bitfields.
-    if (const Expr *Width = Field->getBitWidth())
-      if (Width->EvaluateAsInt(SemaRef.Context) == 0)
-        return false;
+    if (Field->isBitField() && Field->getBitWidthValue(SemaRef.Context) == 0)
+      return false;
     
     Expr *MemberExprBase = 
       DeclRefExpr::Create(SemaRef.Context, NestedNameSpecifierLoc(), Param, 
@@ -7975,9 +7974,8 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
     }
 
     // Suppress assigning zero-width bitfields.
-    if (const Expr *Width = Field->getBitWidth())
-      if (Width->EvaluateAsInt(Context) == 0)
-        continue;
+    if (Field->isBitField() && Field->getBitWidthValue(Context) == 0)
+      continue;
     
     QualType FieldType = Field->getType().getNonReferenceType();
     if (FieldType->isIncompleteArrayType()) {
@@ -8396,9 +8394,8 @@ void Sema::DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
     }
 
     // Suppress assigning zero-width bitfields.
-    if (const Expr *Width = Field->getBitWidth())
-      if (Width->EvaluateAsInt(Context) == 0)
-        continue;
+    if (Field->isBitField() && Field->getBitWidthValue(Context) == 0)
+      continue;
     
     QualType FieldType = Field->getType().getNonReferenceType();
     if (FieldType->isIncompleteArrayType()) {

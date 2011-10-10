@@ -2084,6 +2084,7 @@ public:
   Expr *getBitWidth() const {
     return isBitField() ? InitializerOrBitWidth.getPointer() : 0;
   }
+  unsigned getBitWidthValue(const ASTContext &Ctx) const;
   void setBitWidth(Expr *BW) {
     assert(!InitializerOrBitWidth.getPointer() &&
            "bit width or initializer already set");

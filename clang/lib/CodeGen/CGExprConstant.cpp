@@ -143,8 +143,7 @@ void ConstStructBuilder::AppendBitField(const FieldDecl *Field,
     AppendPadding(PadSize);
   }
 
-  uint64_t FieldSize =
-    Field->getBitWidth()->EvaluateAsInt(Context).getZExtValue();
+  uint64_t FieldSize = Field->getBitWidthValue(Context);
 
   llvm::APInt FieldValue = CI->getValue();
 

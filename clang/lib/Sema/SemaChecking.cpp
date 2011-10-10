@@ -2897,14 +2897,9 @@ IntRange GetExprRange(ASTContext &C, Expr *E, unsigned MaxWidth) {
     IntRange::forValueOfType(C, E->getType());
   }
 
-  FieldDecl *BitField = E->getBitField();
-  if (BitField) {
-    llvm::APSInt BitWidthAP = BitField->getBitWidth()->EvaluateAsInt(C);
-    unsigned BitWidth = BitWidthAP.getZExtValue();
-
-    return IntRange(BitWidth, 
+  if (FieldDecl *BitField = E->getBitField())
+    return IntRange(BitField->getBitWidthValue(C),
                     BitField->getType()->isUnsignedIntegerOrEnumerationType());
-  }
 
   return IntRange::forValueOfType(C, E->getType());
 }
@@ -3106,16 +3101,14 @@ bool AnalyzeBitFieldAssignment(Sema &S, FieldDecl *Bitfield, Expr *Init,
 
   Expr *OriginalInit = Init->IgnoreParenImpCasts();
 
-  llvm::APSInt Width(32);
   Expr::EvalResult InitValue;
-  if (!Bitfield->getBitWidth()->isIntegerConstantExpr(Width, S.Context) ||
-      !OriginalInit->Evaluate(InitValue, S.Context) ||
+  if (!OriginalInit->Evaluate(InitValue, S.Context) ||
       !InitValue.Val.isInt())
     return false;
 
   const llvm::APSInt &Value = InitValue.Val.getInt();
   unsigned OriginalWidth = Value.getBitWidth();
-  unsigned FieldWidth = Width.getZExtValue();
+  unsigned FieldWidth = Bitfield->getBitWidthValue(S.Context);
 
   if (OriginalWidth <= FieldWidth)
     return false;

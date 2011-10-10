@@ -830,15 +830,11 @@ NotASpecialMember:;
 
     // If this is not a zero-length bit-field, then the class is not empty.
     if (data().Empty) {
-      if (!Field->getBitWidth())
+      if (!Field->isBitField() ||
+          (!Field->getBitWidth()->isTypeDependent() &&
+           !Field->getBitWidth()->isValueDependent() &&
+           Field->getBitWidthValue(Context) != 0))
         data().Empty = false;
-      else if (!Field->getBitWidth()->isTypeDependent() &&
-               !Field->getBitWidth()->isValueDependent()) {
-        llvm::APSInt Bits;
-        if (Field->getBitWidth()->isIntegerConstantExpr(Bits, Context))
-          if (!!Bits)
-            data().Empty = false;
-      } 
     }
   }
   

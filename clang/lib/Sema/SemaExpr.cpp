@@ -1405,7 +1405,8 @@ Sema::BuildDeclRefExpr(ValueDecl *D, QualType Ty, ExprValueKind VK,
                                 D, NameInfo, Ty, VK);
 
   // Just in case we're building an illegal pointer-to-member.
-  if (isa<FieldDecl>(D) && cast<FieldDecl>(D)->getBitWidth())
+  FieldDecl *FD = dyn_cast<FieldDecl>(D);
+  if (FD && FD->isBitField())
     E->setObjectKind(OK_BitField);
 
   return Owned(E);
@@ -8389,7 +8390,7 @@ ExprResult Sema::BuildBuiltinOffsetOf(SourceLocation BuiltinLoc,
     //   (If the specified member is a bit-field, the behavior is undefined.)
     //
     // We diagnose this as an error.
-    if (MemberDecl->getBitWidth()) {
+    if (MemberDecl->isBitField()) {
       Diag(OC.LocEnd, diag::err_offsetof_bitfield)
         << MemberDecl->getDeclName()
         << SourceRange(BuiltinLoc, RParenLoc);
