@@ -43,8 +43,8 @@ class Block :
     public SymbolContextScope
 {
 public:
-    typedef RangeArray<uint32_t, uint32_t, 1> RangeArray;
-    typedef RangeArray::Entry Range;
+    typedef RangeArray<uint32_t, uint32_t, 1> RangeList;
+    typedef RangeList::Entry Range;
 
     //------------------------------------------------------------------
     /// Construct with a User ID \a uid, \a depth.
@@ -459,7 +459,7 @@ protected:
     //------------------------------------------------------------------
     SymbolContextScope *m_parent_scope;
     collection m_children;
-    RangeArray m_ranges;
+    RangeList m_ranges;
     lldb::InlineFunctionInfoSP m_inlineInfoSP; ///< Inlined function information.
     lldb::VariableListSP m_variable_list_sp; ///< The variable list for all local, static and paramter variables scoped to this block.
     bool m_parsed_block_info:1,         ///< Set to true if this block and it's children have all been parsed
