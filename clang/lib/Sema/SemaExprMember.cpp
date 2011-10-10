@@ -1045,7 +1045,7 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
 
   // Handle ivar access to Objective-C objects.
   if (const ObjCObjectType *OTy = BaseType->getAs<ObjCObjectType>()) {
-    if (!SS.isEmpty()) {
+    if (!SS.isEmpty() && !SS.isInvalid()) {
       Diag(SS.getRange().getBegin(), diag::err_qualified_objc_access)
         << 1 << SS.getScopeRep()
         << FixItHint::CreateRemoval(SS.getRange());
@@ -1170,7 +1170,7 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
   // Objective-C property access.
   const ObjCObjectPointerType *OPT;
   if (!IsArrow && (OPT = BaseType->getAs<ObjCObjectPointerType>())) {
-    if (!SS.isEmpty()) {
+    if (!SS.isEmpty() && !SS.isInvalid()) {
       Diag(SS.getRange().getBegin(), diag::err_qualified_objc_access)
         << 0 << SS.getScopeRep()
         << FixItHint::CreateRemoval(SS.getRange());
