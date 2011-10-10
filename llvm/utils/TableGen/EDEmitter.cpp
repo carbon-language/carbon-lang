@@ -802,13 +802,13 @@ static void populateInstInfo(CompoundConstantEmitter &infoArray,
   for (index = 0; index < numInstructions; ++index) {
     const CodeGenInstruction& inst = *numberedInstructions[index];
 
+    CompoundConstantEmitter *infoStruct = new CompoundConstantEmitter;
+    infoArray.addEntry(infoStruct);
+
     // We don't need to do anything for pseudo-instructions, as we'll never
     // see them here. We'll only see real instructions.
     if (inst.isPseudo)
       continue;
-
-    CompoundConstantEmitter *infoStruct = new CompoundConstantEmitter;
-    infoArray.addEntry(infoStruct);
 
     LiteralConstantEmitter *instType = new LiteralConstantEmitter;
     infoStruct->addEntry(instType);

@@ -4,3 +4,7 @@
 0x0f 0x85 0xf6 0xff 0xff 0xff
 # CHECK: [o:movq][w:	][1-r:%gs=r63][1-p::][1-l:8=8][p:,][w: ][0-r:%rcx=r108] <mov> 0:[RCX/108]=0 1:[GS/63]=8
 0x65 0x48 0x8b 0x0c 0x25 0x08 0x00 0x00 0x00
+# CHECK: [o:xorps][w:	][2-r:%xmm1=r129][p:,][w: ][0-r:%xmm2=r130] 0:[XMM2/130]=0 1:[XMM2/130]=0 2:[XMM1/129]=0
+0x0f 0x57 0xd1
+# CHECK: [o:andps][w:	][2-r:%xmm1=r129][p:,][w: ][0-r:%xmm2=r130] 0:[XMM2/130]=0 1:[XMM2/130]=0 2:[XMM1/129]=0
+0x0f 0x54 0xd1
