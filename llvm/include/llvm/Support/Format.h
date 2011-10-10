@@ -126,6 +126,50 @@ public:
   }
 };
 
+/// format_object4 - This is a templated helper class used by the format
+/// function that captures the object to be formated and the format string. When
+/// actually printed, this synthesizes the string into a temporary buffer
+/// provided and returns whether or not it is big enough.
+template <typename T1, typename T2, typename T3, typename T4>
+class format_object4 : public format_object_base {
+  T1 Val1;
+  T2 Val2;
+  T3 Val3;
+  T4 Val4;
+public:
+  format_object4(const char *fmt, const T1 &val1, const T2 &val2,
+                 const T3 &val3, const T4 &val4)
+    : format_object_base(fmt), Val1(val1), Val2(val2), Val3(val3), Val4(val4) {
+  }
+
+  virtual int snprint(char *Buffer, unsigned BufferSize) const {
+    return snprintf(Buffer, BufferSize, Fmt, Val1, Val2, Val3, Val4);
+  }
+};
+
+/// format_object5 - This is a templated helper class used by the format
+/// function that captures the object to be formated and the format string. When
+/// actually printed, this synthesizes the string into a temporary buffer
+/// provided and returns whether or not it is big enough.
+template <typename T1, typename T2, typename T3, typename T4, typename T5>
+class format_object5 : public format_object_base {
+  T1 Val1;
+  T2 Val2;
+  T3 Val3;
+  T4 Val4;
+  T5 Val5;
+public:
+  format_object5(const char *fmt, const T1 &val1, const T2 &val2,
+                 const T3 &val3, const T4 &val4, const T5 &val5)
+    : format_object_base(fmt), Val1(val1), Val2(val2), Val3(val3), Val4(val4),
+      Val5(val5) {
+  }
+
+  virtual int snprint(char *Buffer, unsigned BufferSize) const {
+    return snprintf(Buffer, BufferSize, Fmt, Val1, Val2, Val3, Val4, Val5);
+  }
+};
+
 /// format - This is a helper function that is used to produce formatted output.
 /// This is typically used like:  OS << format("%0.4f", myfloat) << '\n';
 template <typename T>
@@ -147,6 +191,24 @@ template <typename T1, typename T2, typename T3>
   inline format_object3<T1, T2, T3> format(const char *Fmt, const T1 &Val1,
                                            const T2 &Val2, const T3 &Val3) {
   return format_object3<T1, T2, T3>(Fmt, Val1, Val2, Val3);
+}
+
+/// format - This is a helper function that is used to produce formatted output.
+/// This is typically used like:  OS << format("%0.4f", myfloat) << '\n';
+template <typename T1, typename T2, typename T3, typename T4>
+inline format_object4<T1, T2, T3, T4> format(const char *Fmt, const T1 &Val1,
+                                             const T2 &Val2, const T3 &Val3,
+                                             const T4 &Val4) {
+  return format_object4<T1, T2, T3, T4>(Fmt, Val1, Val2, Val3, Val4);
+}
+
+/// format - This is a helper function that is used to produce formatted output.
+/// This is typically used like:  OS << format("%0.4f", myfloat) << '\n';
+template <typename T1, typename T2, typename T3, typename T4, typename T5>
+inline format_object5<T1, T2, T3, T4, T5> format(const char *Fmt,const T1 &Val1,
+                                             const T2 &Val2, const T3 &Val3,
+                                             const T4 &Val4, const T5 &Val5) {
+  return format_object5<T1, T2, T3, T4, T5>(Fmt, Val1, Val2, Val3, Val4, Val5);
 }
 
 } // end namespace llvm

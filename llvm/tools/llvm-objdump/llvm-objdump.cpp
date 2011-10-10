@@ -73,6 +73,16 @@ cl::opt<std::string>
 llvm::ArchName("arch", cl::desc("Target arch to disassemble for, "
                                 "see -version for available targets"));
 
+static cl::opt<bool>
+SectionHeaders("section-headers", cl::desc("Display summaries of the headers "
+                                           "for each section."));
+static cl::alias
+SectionHeadersShort("headers", cl::desc("Alias for --section-headers"),
+                    cl::aliasopt(SectionHeaders));
+static cl::alias
+SectionHeadersShorter("h", cl::desc("Alias for --section-headers"),
+                      cl::aliasopt(SectionHeaders));
+
 static StringRef ToolName;
 
 static bool error(error_code ec) {
@@ -281,11 +291,39 @@ static void PrintRelocations(const ObjectFile *o) {
   }
 }
 
+static void PrintSectionHeaders(const ObjectFile *o) {
+  outs() << "Sections:\n"
+            "Idx Name          Size      Address          Type\n";
+  error_code ec;
+  unsigned i = 0;
+  for (section_iterator si = o->begin_sections(), se = o->end_sections();
+                                                  si != se; si.increment(ec)) {
+    if (error(ec)) return;
+    StringRef Name;
+    if (error(si->getName(Name))) return;
+    uint64_t Address;
+    if (error(si->getAddress(Address))) return;
+    uint64_t Size;
+    if (error(si->getSize(Size))) return;
+    bool Text, Data, BSS;
+    if (error(si->isText(Text))) return;
+    if (error(si->isData(Data))) return;
+    if (error(si->isBSS(BSS))) return;
+    std::string Type = (std::string(Text ? "TEXT " : "") +
+                        (Data ? "DATA " : "") + (BSS ? "BSS" : "")); 
+    outs() << format("%3d %-13s %09x %017x %s\n", i, Name.str().c_str(), Size,
+                     Address, Type.c_str());
+    ++i;
+  }
+}
+
 static void DumpObject(const ObjectFile *o) {
   if (Disassemble)
     DisassembleObject(o);
   if (Relocations)
     PrintRelocations(o);
+  if (SectionHeaders)
+    PrintSectionHeaders(o);
 }
 
 /// @brief Dump each object file in \a a;
@@ -356,7 +394,7 @@ int main(int argc, char **argv) {
   if (InputFilenames.size() == 0)
     InputFilenames.push_back("a.out");
 
-  if (!Disassemble && !Relocations) {
+  if (!Disassemble && !Relocations && !SectionHeaders) {
     cl::PrintHelpMessage();
     return 2;
   }
