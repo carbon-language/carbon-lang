@@ -205,6 +205,18 @@ bool ExpandPostRA::runOnMachineFunction(MachineFunction &MF) {
       MachineInstr *MI = mi;
       // Advance iterator here because MI may be erased.
       ++mi;
+
+      // Only expand pseudos.
+      if (!MI->getDesc().isPseudo())
+        continue;
+
+      // Give targets a chance to expand even standard pseudos.
+      if (TII->expandPostRAPseudo(MI)) {
+        MadeChange = true;
+        continue;
+      }
+
+      // Expand standard pseudos.
       switch (MI->getOpcode()) {
       case TargetOpcode::SUBREG_TO_REG:
         MadeChange |= LowerSubregToReg(MI);
@@ -217,10 +229,6 @@ bool ExpandPostRA::runOnMachineFunction(MachineFunction &MF) {
       case TargetOpcode::INSERT_SUBREG:
       case TargetOpcode::EXTRACT_SUBREG:
         llvm_unreachable("Sub-register pseudos should have been eliminated.");
-      default:
-        if (MI->getDesc().isPseudo())
-          MadeChange |= TII->expandPostRAPseudo(MI);
-        break;
       }
     }
   }
