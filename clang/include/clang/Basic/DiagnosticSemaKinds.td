@@ -3253,6 +3253,9 @@ def warn_member_extra_qualification : Warning<
 def err_member_qualification : Error<
   "non-friend class member %0 cannot have a qualified name">;  
 def note_member_def_close_match : Note<"member declaration nearly matches">;
+def note_member_def_close_const_match : Note<
+  "member declaration does not match because "
+  "it %select{is|is not}0 const qualified">;
 def note_member_def_close_param_match : Note<
   "type of %ordinal0 parameter of member declaration does not match "
   "definition (%1 vs %2)">;

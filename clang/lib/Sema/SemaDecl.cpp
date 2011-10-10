@@ -4365,10 +4365,17 @@ static void DiagnoseInvalidRedeclaration(Sema &S, FunctionDecl *NewFD,
   else
     S.Diag(NewFD->getLocation(), DiagMsg) << Name << DC << NewFD->getLocation();
 
+  bool NewFDisConst = false;
+  if (CXXMethodDecl *NewMD = dyn_cast<CXXMethodDecl>(NewFD))
+    NewFDisConst = NewMD->getTypeQualifiers() & Qualifiers::Const;
+
   for (llvm::SmallVector<std::pair<FunctionDecl*, unsigned>, 1>::iterator
        NearMatch = NearMatches.begin(), NearMatchEnd = NearMatches.end();
        NearMatch != NearMatchEnd; ++NearMatch) {
     FunctionDecl *FD = NearMatch->first;
+    bool FDisConst = false;
+    if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD))
+      FDisConst = MD->getTypeQualifiers() & Qualifiers::Const;
 
     if (unsigned Idx = NearMatch->second) {
       ParmVarDecl *FDParam = FD->getParamDecl(Idx-1);
@@ -4377,7 +4384,10 @@ static void DiagnoseInvalidRedeclaration(Sema &S, FunctionDecl *NewFD,
           << Idx << FDParam->getType() << NewFD->getParamDecl(Idx-1)->getType();
     } else if (Correction) {
       S.Diag(FD->getLocation(), diag::note_previous_decl)
-        << Correction.getQuoted(S.getLangOptions());
+          << Correction.getQuoted(S.getLangOptions());
+    } else if (FDisConst != NewFDisConst) {
+      S.Diag(FD->getLocation(), diag::note_member_def_close_const_match)
+          << NewFDisConst << FD->getSourceRange().getEnd();
     } else
       S.Diag(FD->getLocation(), diag::note_member_def_close_match);
   }
