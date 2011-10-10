@@ -35,7 +35,7 @@ then
   RC_ProjectSourceVersion=1
 fi
 
-EXTRA_FLAGS="-std=c++0x -Wglobal-constructors"
+EXTRA_FLAGS="-std=c++0x"
 
 case $TRIPLE in
   *-apple-*)
