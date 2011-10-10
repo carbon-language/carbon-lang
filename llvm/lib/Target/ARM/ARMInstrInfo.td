@@ -765,7 +765,7 @@ def addrmode5 : Operand<i32>,
 def addrmode6 : Operand<i32>,
                 ComplexPattern<i32, 2, "SelectAddrMode6", [], [SDNPWantParent]>{
   let PrintMethod = "printAddrMode6Operand";
-  let MIOperandInfo = (ops GPR:$addr, i32imm);
+  let MIOperandInfo = (ops GPR:$addr, i32imm:$align);
   let EncoderMethod = "getAddrMode6AddressOpValue";
   let DecoderMethod = "DecodeAddrMode6Operand";
 }
