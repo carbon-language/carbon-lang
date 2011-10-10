@@ -1319,6 +1319,12 @@ target datalayout = "<i>layout specification</i>"
       the bits with the least significance have the lowest address
       location.</dd>
 
+  <dt><tt>S<i>size</i></tt></dt>
+  <dd>Specifies the natural alignment of the stack in bits. Alignment promotion
+      of stack variables is limited to the natural stack alignment to avoid
+      dynamic stack realignment. The stack alignment must be a multiple of
+      8-bits, and currently defaults to 128 bits if unspecified.</dd>
+
   <dt><tt>p:<i>size</i>:<i>abi</i>:<i>pref</i></tt></dt>
   <dd>This specifies the <i>size</i> of a pointer and its <i>abi</i> and
       <i>preferred</i> alignments. All sizes are in bits. Specifying

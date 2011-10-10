@@ -70,6 +70,7 @@ private:
   unsigned      PointerMemSize;        ///< Pointer size in bytes
   unsigned      PointerABIAlign;       ///< Pointer ABI alignment
   unsigned      PointerPrefAlign;      ///< Pointer preferred alignment
+  unsigned      StackNaturalAlign;     ///< Stack natural alignment
 
   SmallVector<unsigned char, 8> LegalIntWidths; ///< Legal Integers.
   
@@ -161,6 +162,11 @@ public:
   
   bool isIllegalInteger(unsigned Width) const {
     return !isLegalInteger(Width);
+  }
+
+  /// Returns true if the given alignment exceeds the natural stack alignment.
+  bool exceedsNaturalStackAlignment(unsigned Align) const {
+    return (StackNaturalAlign != 0) && (Align > StackNaturalAlign);
   }
 
   /// fitsInLegalInteger - This function returns true if the specified type fits

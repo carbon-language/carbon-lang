@@ -139,6 +139,7 @@ void TargetData::init(StringRef Desc) {
   PointerMemSize = 8;
   PointerABIAlign = 8;
   PointerPrefAlign = PointerABIAlign;
+  StackNaturalAlign = 0;
 
   // Default alignments
   setAlignment(INTEGER_ALIGN,   1,  1, 1);   // i1
@@ -218,7 +219,12 @@ void TargetData::init(StringRef Desc) {
         Token = Split.second;
       } while (!Specifier.empty() || !Token.empty());
       break;
-
+    case 'S': // Stack natural alignment.
+      StackNaturalAlign = getInt(Specifier.substr(1));
+      StackNaturalAlign /= 8;
+      // FIXME: Should we really be truncating these alingments and
+      // sizes silently?
+      break;
     default:
       break;
     }
@@ -372,7 +378,9 @@ std::string TargetData::getStringRepresentation() const {
 
   OS << (LittleEndian ? "e" : "E")
      << "-p:" << PointerMemSize*8 << ':' << PointerABIAlign*8
-     << ':' << PointerPrefAlign*8;
+     << ':' << PointerPrefAlign*8
+     << "-S" << StackNaturalAlign*8;
+
   for (unsigned i = 0, e = Alignments.size(); i != e; ++i) {
     const TargetAlignElem &AI = Alignments[i];
     OS << '-' << (char)AI.AlignType << AI.TypeBitWidth << ':'

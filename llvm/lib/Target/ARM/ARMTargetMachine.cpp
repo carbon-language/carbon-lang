@@ -53,9 +53,12 @@ ARMTargetMachine::ARMTargetMachine(const Target &T, StringRef TT,
   : ARMBaseTargetMachine(T, TT, CPU, FS, RM, CM), InstrInfo(Subtarget),
     DataLayout(Subtarget.isAPCS_ABI() ?
                std::string("e-p:32:32-f64:32:64-i64:32:64-"
-                           "v128:32:128-v64:32:64-n32") :
+                           "v128:32:128-v64:32:64-n32-S32") :
+               Subtarget.isAAPCS_ABI() ?
                std::string("e-p:32:32-f64:64:64-i64:64:64-"
-                           "v128:64:128-v64:64:64-n32")),
+                           "v128:64:128-v64:64:64-n32-S64") :
+               std::string("e-p:32:32-f64:64:64-i64:64:64-"
+                           "v128:64:128-v64:64:64-n32-S32")),
     ELFWriterInfo(*this),
     TLInfo(*this),
     TSInfo(*this),
@@ -75,10 +78,14 @@ ThumbTargetMachine::ThumbTargetMachine(const Target &T, StringRef TT,
     DataLayout(Subtarget.isAPCS_ABI() ?
                std::string("e-p:32:32-f64:32:64-i64:32:64-"
                            "i16:16:32-i8:8:32-i1:8:32-"
-                           "v128:32:128-v64:32:64-a:0:32-n32") :
+                           "v128:32:128-v64:32:64-a:0:32-n32-S32") :
+               Subtarget.isAAPCS_ABI() ?
                std::string("e-p:32:32-f64:64:64-i64:64:64-"
                            "i16:16:32-i8:8:32-i1:8:32-"
-                           "v128:64:128-v64:64:64-a:0:32-n32")),
+                           "v128:64:128-v64:64:64-a:0:32-n32-S64") :
+               std::string("e-p:32:32-f64:64:64-i64:64:64-"
+                           "i16:16:32-i8:8:32-i1:8:32-"
+                           "v128:64:128-v64:64:64-a:0:32-n32-S32")),
     ELFWriterInfo(*this),
     TLInfo(*this),
     TSInfo(*this),
