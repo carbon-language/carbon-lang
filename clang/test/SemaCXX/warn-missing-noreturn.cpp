@@ -1,27 +1,27 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s -Wmissing-noreturn -Wreturn-type
 void f() __attribute__((noreturn));
 
-template<typename T> void g(T) { // expected-warning {{function 'g<int>' could be declared with attribute 'noreturn'}}
+template<typename T> void g(T) {
   f();
 }
 
-template void g<int>(int); // expected-note {{in instantiation of function template specialization 'g<int>' requested here}}
+template void g<int>(int);
 
 template<typename T> struct A {
-  void g() { // expected-warning {{function 'g' could be declared with attribute 'noreturn'}}
+  void g() {
     f();
   }
 };
 
-template struct A<int>; // expected-note {{in instantiation of member function 'A<int>::g' requested here}}
+template struct A<int>;
 
 struct B {
-  template<typename T> void g(T) { // expected-warning {{function 'g<int>' could be declared with attribute 'noreturn'}}
+  template<typename T> void g(T) {
     f();
   }
 };
 
-template void B::g<int>(int); // expected-note {{in instantiation of function template specialization 'B::g<int>' requested here}}
+template void B::g<int>(int);
 
 // We don't want a warning here.
 struct X {
@@ -103,3 +103,23 @@ rdar8875247_B test_rdar8875247_B() {
   return f;
 } // no-warning
 
+namespace PR10801 {
+  struct Foo {
+    void wibble() __attribute((__noreturn__));
+  };
+
+  struct Bar {
+    void wibble();
+  };
+
+  template <typename T> void thingy(T thing) {
+    thing.wibble();
+  }
+
+  void test() {
+    Foo f;
+    Bar b;
+    thingy(f);
+    thingy(b);
+  }
+}

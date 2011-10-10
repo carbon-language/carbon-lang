@@ -239,7 +239,23 @@ struct CheckFallThroughDiagnostics {
     if (const CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(Func))
       isVirtualMethod = Method->isVirtual();
     
-    if (!isVirtualMethod)
+    // Don't suggest that template instantiations be marked "noreturn"
+    bool isTemplateInstantiation = false;
+    if (const FunctionDecl *Function = dyn_cast<FunctionDecl>(Func)) {
+      switch (Function->getTemplateSpecializationKind()) {
+      case TSK_Undeclared:
+      case TSK_ExplicitSpecialization:
+        break;
+        
+      case TSK_ImplicitInstantiation:
+      case TSK_ExplicitInstantiationDeclaration:
+      case TSK_ExplicitInstantiationDefinition:
+        isTemplateInstantiation = true;
+        break;
+      }
+    }
+        
+    if (!isVirtualMethod && !isTemplateInstantiation)
       D.diag_NeverFallThroughOrReturn =
         diag::warn_suggest_noreturn_function;
     else
