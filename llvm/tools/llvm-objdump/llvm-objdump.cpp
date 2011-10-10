@@ -24,9 +24,6 @@
 #include "llvm/MC/MCDisassembler.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstPrinter.h"
-#include "llvm/MC/MCInstrAnalysis.h"
-#include "llvm/MC/MCInstrDesc.h"
-#include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
@@ -143,9 +140,6 @@ static void DisassembleObject(const ObjectFile *Obj) {
     // GetTarget prints out stuff.
     return;
   }
-  const MCInstrInfo *InstrInfo = TheTarget->createMCInstrInfo();
-  OwningPtr<MCInstrAnalysis>
-    InstrAnalysis(TheTarget->createMCInstrAnalysis(InstrInfo));
 
   outs() << '\n';
   outs() << Obj->getFileName()

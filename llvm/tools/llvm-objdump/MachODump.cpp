@@ -284,9 +284,9 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
     // GetTarget prints out stuff.
     return;
   }
-  const MCInstrInfo *InstrInfo = TheTarget->createMCInstrInfo();
+  OwningPtr<const MCInstrInfo> InstrInfo(TheTarget->createMCInstrInfo());
   OwningPtr<MCInstrAnalysis>
-    InstrAnalysis(TheTarget->createMCInstrAnalysis(InstrInfo));
+    InstrAnalysis(TheTarget->createMCInstrAnalysis(InstrInfo.get()));
 
   // Set up disassembler.
   OwningPtr<const MCAsmInfo> AsmInfo(TheTarget->createMCAsmInfo(TripleName));
