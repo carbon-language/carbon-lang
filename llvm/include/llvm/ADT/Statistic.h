@@ -54,7 +54,7 @@ public:
     Value = Val;
     return init();
   }
-  
+
   const Statistic &operator++() {
     // FIXME: This function and all those that follow carefully use an
     // atomic operation to update the value safely in the presence of
@@ -63,41 +63,41 @@ public:
     sys::AtomicIncrement(&Value);
     return init();
   }
-  
+
   unsigned operator++(int) {
     init();
     unsigned OldValue = Value;
     sys::AtomicIncrement(&Value);
     return OldValue;
   }
-  
+
   const Statistic &operator--() {
     sys::AtomicDecrement(&Value);
     return init();
   }
-  
+
   unsigned operator--(int) {
     init();
     unsigned OldValue = Value;
     sys::AtomicDecrement(&Value);
     return OldValue;
   }
-  
+
   const Statistic &operator+=(const unsigned &V) {
     sys::AtomicAdd(&Value, V);
     return init();
   }
-  
+
   const Statistic &operator-=(const unsigned &V) {
     sys::AtomicAdd(&Value, -V);
     return init();
   }
-  
+
   const Statistic &operator*=(const unsigned &V) {
     sys::AtomicMul(&Value, V);
     return init();
   }
-  
+
   const Statistic &operator/=(const unsigned &V) {
     sys::AtomicDiv(&Value, V);
     return init();
