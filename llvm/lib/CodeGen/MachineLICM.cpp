@@ -1145,13 +1145,12 @@ bool MachineLICM::IsGuaranteedToExecute(MachineInstr *MI) {
     return true;
 
   // Get the exit blocks for the current loop.
-  SmallVector<MachineBasicBlock*, 8> ExitBlocks;
-  CurLoop->getExitingBlocks(ExitBlocks);
+  SmallVector<MachineBasicBlock*, 8> ExitingBlocks;
+  CurLoop->getExitingBlocks(ExitingBlocks);
 
   // Verify that the block dominates each of the exit blocks of the loop.
-  for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i)
-    if (ExitBlocks[i] != CurLoop->getHeader() &&
-	!DT->dominates(MI->getParent(), ExitBlocks[i]))
+  for (unsigned i = 0, e = ExitingBlocks.size(); i != e; ++i)
+    if (!DT->dominates(MI->getParent(), ExitingBlocks[i]))
       return false;
 
   return true;

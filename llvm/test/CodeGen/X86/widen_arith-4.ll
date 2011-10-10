@@ -1,5 +1,6 @@
 ; RUN: llc < %s -march=x86-64 -mattr=+sse42 | FileCheck %s
 ; CHECK: psubw
+; CHECK-NEXT: movdqa
 ; CHECK-NEXT: pmullw
 
 ; Widen a v5i16 to v8i16 to do a vector sub and multiple
