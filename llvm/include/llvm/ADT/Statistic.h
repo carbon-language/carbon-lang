@@ -84,11 +84,13 @@ public:
   }
 
   const Statistic &operator+=(const unsigned &V) {
+    if (!V) return *this;
     sys::AtomicAdd(&Value, V);
     return init();
   }
 
   const Statistic &operator-=(const unsigned &V) {
+    if (!V) return *this;
     sys::AtomicAdd(&Value, -V);
     return init();
   }
