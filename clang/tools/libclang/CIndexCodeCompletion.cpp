@@ -274,7 +274,12 @@ AllocatedCXCodeCompleteResults::AllocatedCXCodeCompleteResults(
                    llvm::IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs))),
     FileSystemOpts(FileSystemOpts),
     FileMgr(new FileManager(FileSystemOpts)),
-    SourceMgr(new SourceManager(*Diag, *FileMgr)) { 
+    SourceMgr(new SourceManager(*Diag, *FileMgr)),
+    Contexts(CXCompletionContext_Unknown),
+    ContainerKind(CXCursor_InvalidCode),
+    ContainerUSR(createCXString("")),
+    ContainerIsIncomplete(1)
+{ 
   if (getenv("LIBCLANG_OBJTRACKING")) {
     llvm::sys::AtomicIncrement(&CodeCompletionResultObjects);
     fprintf(stderr, "+++ %d completion results\n", CodeCompletionResultObjects);
