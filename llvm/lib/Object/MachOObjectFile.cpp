@@ -60,6 +60,7 @@ protected:
   virtual error_code getSectionAddress(DataRefImpl Sec, uint64_t &Res) const;
   virtual error_code getSectionSize(DataRefImpl Sec, uint64_t &Res) const;
   virtual error_code getSectionContents(DataRefImpl Sec, StringRef &Res) const;
+  virtual error_code getSectionAlignment(DataRefImpl Sec, uint64_t &Res) const;
   virtual error_code isSectionText(DataRefImpl Sec, bool &Res) const;
   virtual error_code isSectionData(DataRefImpl Sec, bool &Res) const;
   virtual error_code isSectionBSS(DataRefImpl Sec, bool &Res) const;
@@ -477,6 +478,20 @@ error_code MachOObjectFile::getSectionContents(DataRefImpl DRI,
     InMemoryStruct<macho::Section> Sect;
     getSection(DRI, Sect);
     Result = MachOObj->getData(Sect->Offset, Sect->Size);
+  }
+  return object_error::success;
+}
+
+error_code MachOObjectFile::getSectionAlignment(DataRefImpl DRI,
+                                                uint64_t &Result) const {
+  if (is64BitLoadCommand(MachOObj, DRI)) {
+    InMemoryStruct<macho::Section64> Sect;
+    getSection64(DRI, Sect);
+    Result = 1 << Sect->Align;
+  } else {
+    InMemoryStruct<macho::Section> Sect;
+    getSection(DRI, Sect);
+    Result = 1 << Sect->Align;
   }
   return object_error::success;
 }

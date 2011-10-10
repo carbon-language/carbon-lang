@@ -336,6 +336,15 @@ error_code COFFObjectFile::getSectionContents(DataRefImpl Sec,
   return object_error::success;
 }
 
+error_code COFFObjectFile::getSectionAlignment(DataRefImpl Sec,
+                                               uint64_t &Res) const {
+  const coff_section *sec = toSec(Sec);
+  if (!sec)
+    return object_error::parse_failed;
+  Res = uint64_t(1) << (((sec->Characteristics & 0x00F00000) >> 20) - 1);
+  return object_error::success;
+}
+
 error_code COFFObjectFile::isSectionText(DataRefImpl Sec,
                                          bool &Result) const {
   const coff_section *sec = toSec(Sec);

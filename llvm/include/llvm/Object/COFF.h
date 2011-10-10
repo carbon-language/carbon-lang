@@ -107,6 +107,7 @@ protected:
   virtual error_code getSectionAddress(DataRefImpl Sec, uint64_t &Res) const;
   virtual error_code getSectionSize(DataRefImpl Sec, uint64_t &Res) const;
   virtual error_code getSectionContents(DataRefImpl Sec, StringRef &Res) const;
+  virtual error_code getSectionAlignment(DataRefImpl Sec, uint64_t &Res) const;
   virtual error_code isSectionText(DataRefImpl Sec, bool &Res) const;
   virtual error_code isSectionData(DataRefImpl Sec, bool &Res) const;
   virtual error_code isSectionBSS(DataRefImpl Sec, bool &Res) const;

@@ -181,6 +181,9 @@ public:
   error_code getSize(uint64_t &Result) const;
   error_code getContents(StringRef &Result) const;
 
+  /// @brief Get the alignment of this section as the actual value (not log 2).
+  error_code getAlignment(uint64_t &Result) const;
+
   // FIXME: Move to the normalization layer when it's created.
   error_code isText(bool &Result) const;
   error_code isData(bool &Result) const;
@@ -236,6 +239,7 @@ protected:
   virtual error_code getSectionAddress(DataRefImpl Sec, uint64_t &Res) const =0;
   virtual error_code getSectionSize(DataRefImpl Sec, uint64_t &Res) const = 0;
   virtual error_code getSectionContents(DataRefImpl Sec, StringRef &Res)const=0;
+  virtual error_code getSectionAlignment(DataRefImpl Sec, uint64_t &Res)const=0;
   virtual error_code isSectionText(DataRefImpl Sec, bool &Res) const = 0;
   virtual error_code isSectionData(DataRefImpl Sec, bool &Res) const = 0;
   virtual error_code isSectionBSS(DataRefImpl Sec, bool &Res) const = 0;
@@ -370,6 +374,10 @@ inline error_code SectionRef::getSize(uint64_t &Result) const {
 
 inline error_code SectionRef::getContents(StringRef &Result) const {
   return OwningObject->getSectionContents(SectionPimpl, Result);
+}
+
+inline error_code SectionRef::getAlignment(uint64_t &Result) const {
+  return OwningObject->getSectionAlignment(SectionPimpl, Result);
 }
 
 inline error_code SectionRef::isText(bool &Result) const {

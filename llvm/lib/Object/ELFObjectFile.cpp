@@ -337,6 +337,7 @@ protected:
   virtual error_code getSectionAddress(DataRefImpl Sec, uint64_t &Res) const;
   virtual error_code getSectionSize(DataRefImpl Sec, uint64_t &Res) const;
   virtual error_code getSectionContents(DataRefImpl Sec, StringRef &Res) const;
+  virtual error_code getSectionAlignment(DataRefImpl Sec, uint64_t &Res) const;
   virtual error_code isSectionText(DataRefImpl Sec, bool &Res) const;
   virtual error_code isSectionData(DataRefImpl Sec, bool &Res) const;
   virtual error_code isSectionBSS(DataRefImpl Sec, bool &Res) const;
@@ -668,6 +669,15 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
   const char *start = (const char*)base() + sec->sh_offset;
   Result = StringRef(start, sec->sh_size);
+  return object_error::success;
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+error_code ELFObjectFile<target_endianness, is64Bits>
+                        ::getSectionAlignment(DataRefImpl Sec,
+                                              uint64_t &Result) const {
+  const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
+  Result = sec->sh_addralign;
   return object_error::success;
 }
 
