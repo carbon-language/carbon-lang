@@ -274,7 +274,8 @@ DeclRefExpr::DeclRefExpr(NestedNameSpecifierLoc QualifierLoc,
     if (InstantiationDependent)
       setInstantiationDependent(true);
   }
-      
+  DeclRefExprBits.HadMultipleCandidates = 0;
+
   computeDependence();
 }
 
