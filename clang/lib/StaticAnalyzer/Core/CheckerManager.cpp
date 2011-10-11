@@ -445,9 +445,13 @@ void CheckerManager::runCheckersForEvalCall(ExplodedNodeSet &Dst,
       ProgramPoint::Kind K = ProgramPoint::PostStmtKind;
       const ProgramPoint &L = ProgramPoint::getProgramPoint(CE, K,
                                 Pred->getLocationContext(), EI->Checker);
-
-      CheckerContext C(checkDst, Eng.getBuilder(), Eng, Pred, L, 0);
-      bool evaluated = (*EI)(CE, C);
+      bool evaluated = false;
+      { // CheckerContext generates transitions(populates checkDest) on
+        // destruction, so introduce the scope to make sure it gets properly
+        // populated.
+        CheckerContext C(checkDst, Eng.getBuilder(), Eng, Pred, L, 0);
+        evaluated = (*EI)(CE, C);
+      }
       assert(!(evaluated && anyEvaluated)
              && "There are more than one checkers evaluating the call");
       if (evaluated) {
