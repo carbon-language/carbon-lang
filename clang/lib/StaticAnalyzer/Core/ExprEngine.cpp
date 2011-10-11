@@ -564,6 +564,7 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::CUDAKernelCallExprClass:
     case Stmt::OpaqueValueExprClass:
     case Stmt::AsTypeExprClass:
+    case Stmt::AtomicExprClass:
         // Fall through.
 
     // Cases we intentionally don't evaluate, since they don't need

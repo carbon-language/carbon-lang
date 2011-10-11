@@ -774,6 +774,25 @@ void ASTStmtReader::VisitGenericSelectionExpr(GenericSelectionExpr *E) {
   E->RParenLoc = ReadSourceLocation(Record, Idx);
 }
 
+void ASTStmtReader::VisitAtomicExpr(AtomicExpr *E) {
+  VisitExpr(E);
+  E->setOp(AtomicExpr::AtomicOp(Record[Idx++]));
+  E->setPtr(Reader.ReadSubExpr());
+  E->setOrder(Reader.ReadSubExpr());
+  E->setNumSubExprs(2);
+  if (E->getOp() != AtomicExpr::Load) {
+    E->setVal1(Reader.ReadSubExpr());
+    E->setNumSubExprs(3);
+  }
+  if (E->isCmpXChg()) {
+    E->setOrderFail(Reader.ReadSubExpr());
+    E->setVal2(Reader.ReadSubExpr());
+    E->setNumSubExprs(5);
+  }
+  E->setBuiltinLoc(ReadSourceLocation(Record, Idx));
+  E->setRParenLoc(ReadSourceLocation(Record, Idx));
+}
+
 //===----------------------------------------------------------------------===//
 // Objective-C Expressions and Statements
 
@@ -2009,6 +2028,10 @@ Stmt *ASTReader::ReadStmtFromStream(Module &F) {
         
     case EXPR_ASTYPE:
       S = new (Context) AsTypeExpr(Empty);
+      break;
+
+    case EXPR_ATOMIC:
+      S = new (Context) AtomicExpr(Empty);
       break;
     }
     

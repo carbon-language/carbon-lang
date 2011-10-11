@@ -8099,6 +8099,13 @@ ExprResult
 TreeTransform<Derived>::TransformAsTypeExpr(AsTypeExpr *E) {
   llvm_unreachable("Cannot transform asType expressions yet");
 }
+
+template<typename Derived>
+ExprResult
+TreeTransform<Derived>::TransformAtomicExpr(AtomicExpr *E) {
+  assert(false && "Cannot transform atomic expressions yet");
+  return SemaRef.Owned(E);
+}
   
 //===----------------------------------------------------------------------===//
 // Type reconstruction

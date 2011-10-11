@@ -513,6 +513,7 @@ public:
     return CGF.EmitObjCStringLiteral(E);
   }
   Value *VisitAsTypeExpr(AsTypeExpr *CE);
+  Value *VisitAtomicExpr(AtomicExpr *AE);
 };
 }  // end anonymous namespace.
 
@@ -2635,6 +2636,10 @@ Value *ScalarExprEmitter::VisitAsTypeExpr(AsTypeExpr *E) {
   }
   
   return Builder.CreateBitCast(Src, DstTy, "astype");
+}
+
+Value *ScalarExprEmitter::VisitAtomicExpr(AtomicExpr *E) {
+  return CGF.EmitAtomicExpr(E).getScalarVal();
 }
 
 //===----------------------------------------------------------------------===//

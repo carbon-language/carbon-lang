@@ -973,7 +973,9 @@ namespace clang {
       EXPR_BLOCK_DECL_REF,
       /// \brief A GenericSelectionExpr record.
       EXPR_GENERIC_SELECTION,
-      
+      /// \brief An AtomicExpr record.
+      EXPR_ATOMIC,
+
       // Objective-C
 
       /// \brief An ObjCStringLiteral record.

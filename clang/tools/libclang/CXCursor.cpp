@@ -201,6 +201,7 @@ CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent, CXTranslationUnit TU,
   
   case Stmt::ArrayTypeTraitExprClass:
   case Stmt::AsTypeExprClass:
+  case Stmt::AtomicExprClass:
   case Stmt::BinaryConditionalOperatorClass:
   case Stmt::BinaryTypeTraitExprClass:
   case Stmt::CXXBindTemporaryExprClass:

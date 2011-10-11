@@ -948,6 +948,72 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     return RValue::get(0);
   }
 
+  case Builtin::BI__atomic_thread_fence:
+  case Builtin::BI__atomic_signal_fence: {
+    llvm::SynchronizationScope Scope;
+    if (BuiltinID == Builtin::BI__atomic_signal_fence)
+      Scope = llvm::SingleThread;
+    else
+      Scope = llvm::CrossThread;
+    Value *Order = EmitScalarExpr(E->getArg(0));
+    if (isa<llvm::ConstantInt>(Order)) {
+      int ord = cast<llvm::ConstantInt>(Order)->getZExtValue();
+      switch (ord) {
+      case 0:  // memory_order_relaxed
+      default: // invalid order
+        break;
+      case 1:  // memory_order_consume
+      case 2:  // memory_order_acquire
+        Builder.CreateFence(llvm::Acquire, Scope);
+        break;
+      case 3:  // memory_order_release
+        Builder.CreateFence(llvm::Release, Scope);
+        break;
+      case 4:  // memory_order_acq_rel
+        Builder.CreateFence(llvm::AcquireRelease, Scope);
+        break;
+      case 5:  // memory_order_seq_cst
+        Builder.CreateFence(llvm::SequentiallyConsistent, Scope);
+        break;
+      }
+      return RValue::get(0);
+    }
+
+    llvm::BasicBlock *AcquireBB, *ReleaseBB, *AcqRelBB, *SeqCstBB;
+    AcquireBB = createBasicBlock("acquire", CurFn);
+    ReleaseBB = createBasicBlock("release", CurFn);
+    AcqRelBB = createBasicBlock("acqrel", CurFn);
+    SeqCstBB = createBasicBlock("seqcst", CurFn);
+    llvm::BasicBlock *ContBB = createBasicBlock("atomic.continue", CurFn);
+
+    Order = Builder.CreateIntCast(Order, Builder.getInt32Ty(), false);
+    llvm::SwitchInst *SI = Builder.CreateSwitch(Order, ContBB);
+
+    Builder.SetInsertPoint(AcquireBB);
+    Builder.CreateFence(llvm::Acquire, Scope);
+    Builder.CreateBr(ContBB);
+    SI->addCase(Builder.getInt32(1), AcquireBB);
+    SI->addCase(Builder.getInt32(2), AcquireBB);
+
+    Builder.SetInsertPoint(ReleaseBB);
+    Builder.CreateFence(llvm::Release, Scope);
+    Builder.CreateBr(ContBB);
+    SI->addCase(Builder.getInt32(3), ReleaseBB);
+
+    Builder.SetInsertPoint(AcqRelBB);
+    Builder.CreateFence(llvm::AcquireRelease, Scope);
+    Builder.CreateBr(ContBB);
+    SI->addCase(Builder.getInt32(4), AcqRelBB);
+
+    Builder.SetInsertPoint(SeqCstBB);
+    Builder.CreateFence(llvm::SequentiallyConsistent, Scope);
+    Builder.CreateBr(ContBB);
+    SI->addCase(Builder.getInt32(5), SeqCstBB);
+
+    Builder.SetInsertPoint(ContBB);
+    return RValue::get(0);
+  }
+
     // Library functions with special handling.
   case Builtin::BIsqrt:
   case Builtin::BIsqrtf:

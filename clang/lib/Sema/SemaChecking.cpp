@@ -15,6 +15,7 @@
 #include "clang/Sema/Initialization.h"
 #include "clang/Sema/Sema.h"
 #include "clang/Sema/SemaInternal.h"
+#include "clang/Sema/Initialization.h"
 #include "clang/Sema/ScopeInfo.h"
 #include "clang/Analysis/Analyses/FormatString.h"
 #include "clang/AST/ASTContext.h"
@@ -197,6 +198,28 @@ Sema::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   case Builtin::BI__sync_lock_release:
   case Builtin::BI__sync_swap:
     return SemaBuiltinAtomicOverloaded(move(TheCallResult));
+  case Builtin::BI__atomic_load:
+    return SemaAtomicOpsOverloaded(move(TheCallResult), AtomicExpr::Load);
+  case Builtin::BI__atomic_store:
+    return SemaAtomicOpsOverloaded(move(TheCallResult), AtomicExpr::Store);
+  case Builtin::BI__atomic_exchange:
+    return SemaAtomicOpsOverloaded(move(TheCallResult), AtomicExpr::Xchg);
+  case Builtin::BI__atomic_compare_exchange_strong:
+    return SemaAtomicOpsOverloaded(move(TheCallResult),
+                                   AtomicExpr::CmpXchgStrong);
+  case Builtin::BI__atomic_compare_exchange_weak:
+    return SemaAtomicOpsOverloaded(move(TheCallResult),
+                                   AtomicExpr::CmpXchgWeak);
+  case Builtin::BI__atomic_fetch_add:
+    return SemaAtomicOpsOverloaded(move(TheCallResult), AtomicExpr::Add);
+  case Builtin::BI__atomic_fetch_sub:
+    return SemaAtomicOpsOverloaded(move(TheCallResult), AtomicExpr::Sub);
+  case Builtin::BI__atomic_fetch_and:
+    return SemaAtomicOpsOverloaded(move(TheCallResult), AtomicExpr::And);
+  case Builtin::BI__atomic_fetch_or:
+    return SemaAtomicOpsOverloaded(move(TheCallResult), AtomicExpr::Or);
+  case Builtin::BI__atomic_fetch_xor:
+    return SemaAtomicOpsOverloaded(move(TheCallResult), AtomicExpr::Xor);
   case Builtin::BI__builtin_annotation:
     if (CheckBuiltinAnnotationString(*this, TheCall->getArg(1)))
       return ExprError();
@@ -413,6 +436,153 @@ bool Sema::CheckBlockCall(NamedDecl *NDecl, CallExpr *TheCall) {
 
   return false;
 }
+
+ExprResult
+Sema::SemaAtomicOpsOverloaded(ExprResult TheCallResult, AtomicExpr::AtomicOp Op) {
+  CallExpr *TheCall = cast<CallExpr>(TheCallResult.get());
+  DeclRefExpr *DRE =cast<DeclRefExpr>(TheCall->getCallee()->IgnoreParenCasts());
+  Expr *Ptr, *Order, *Val1, *Val2, *OrderFail;
+
+  // All these operations take one of the following four forms:
+  // T   __atomic_load(_Atomic(T)*, int)                              (loads)
+  // T*  __atomic_add(_Atomic(T*)*, ptrdiff_t, int)         (pointer add/sub)
+  // int __atomic_compare_exchange_strong(_Atomic(T)*, T*, T, int, int)
+  //                                                                (cmpxchg)
+  // T   __atomic_exchange(_Atomic(T)*, T, int)             (everything else)
+  // where T is an appropriate type, and the int paremeterss are for orderings.
+  unsigned NumVals = 1;
+  unsigned NumOrders = 1;
+  if (Op == AtomicExpr::Load) {
+    NumVals = 0;
+  } else if (Op == AtomicExpr::CmpXchgWeak || Op == AtomicExpr::CmpXchgStrong) {
+    NumVals = 2;
+    NumOrders = 2;
+  }
+
+  if (TheCall->getNumArgs() < NumVals+NumOrders+1) {
+    Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args)
+      << 0 << NumVals+NumOrders+1 << TheCall->getNumArgs()
+      << TheCall->getCallee()->getSourceRange();
+    return ExprError();
+  } else if (TheCall->getNumArgs() > NumVals+NumOrders+1) {
+    Diag(TheCall->getArg(NumVals+NumOrders+1)->getLocStart(),
+         diag::err_typecheck_call_too_many_args)
+      << 0 << NumVals+NumOrders+1 << TheCall->getNumArgs()
+      << TheCall->getCallee()->getSourceRange();
+    return ExprError();
+  }
+
+  // Inspect the first argument of the atomic operation.  This should always be
+  // a pointer to an _Atomic type.
+  Ptr = TheCall->getArg(0);
+  Ptr = DefaultFunctionArrayLvalueConversion(Ptr).get();
+  const PointerType *pointerType = Ptr->getType()->getAs<PointerType>();
+  if (!pointerType) {
+    Diag(DRE->getLocStart(), diag::err_atomic_op_needs_atomic)
+      << Ptr->getType() << Ptr->getSourceRange();
+    return ExprError();
+  }
+
+  QualType AtomTy = pointerType->getPointeeType();
+  if (!AtomTy->isAtomicType()) {
+    Diag(DRE->getLocStart(), diag::err_atomic_op_needs_atomic)
+      << Ptr->getType() << Ptr->getSourceRange();
+    return ExprError();
+  }
+  QualType ValType = AtomTy->getAs<AtomicType>()->getValueType();
+
+  if ((Op == AtomicExpr::Add || Op == AtomicExpr::Sub) &&
+      !ValType->isIntegerType() && !ValType->isPointerType()) {
+    Diag(DRE->getLocStart(), diag::err_atomic_op_needs_atomic_int_or_ptr)
+      << Ptr->getType() << Ptr->getSourceRange();
+    return ExprError();
+  }
+
+  if (!ValType->isIntegerType() &&
+      (Op == AtomicExpr::And || Op == AtomicExpr::Or || Op == AtomicExpr::Xor)){
+    Diag(DRE->getLocStart(), diag::err_atomic_op_logical_needs_atomic_int)
+      << Ptr->getType() << Ptr->getSourceRange();
+    return ExprError();
+  }
+
+  switch (ValType.getObjCLifetime()) {
+  case Qualifiers::OCL_None:
+  case Qualifiers::OCL_ExplicitNone:
+    // okay
+    break;
+
+  case Qualifiers::OCL_Weak:
+  case Qualifiers::OCL_Strong:
+  case Qualifiers::OCL_Autoreleasing:
+    Diag(DRE->getLocStart(), diag::err_arc_atomic_ownership)
+      << ValType << Ptr->getSourceRange();
+    return ExprError();
+  }
+
+  QualType ResultType = ValType;
+  if (Op == AtomicExpr::Store)
+    ResultType = Context.VoidTy;
+  else if (Op == AtomicExpr::CmpXchgWeak || Op == AtomicExpr::CmpXchgStrong)
+    ResultType = Context.BoolTy;
+
+  // The first argument --- the pointer --- has a fixed type; we
+  // deduce the types of the rest of the arguments accordingly.  Walk
+  // the remaining arguments, converting them to the deduced value type.
+  for (unsigned i = 1; i != NumVals+NumOrders+1; ++i) {
+    ExprResult Arg = TheCall->getArg(i);
+    QualType Ty;
+    if (i < NumVals+1) {
+      // The second argument to a cmpxchg is a pointer to the data which will
+      // be exchanged. The second argument to a pointer add/subtract is the
+      // amount to add/subtract, which must be a ptrdiff_t.  The third
+      // argument to a cmpxchg and the second argument in all other cases
+      // is the type of the value.
+      if (i == 1 && (Op == AtomicExpr::CmpXchgWeak ||
+                     Op == AtomicExpr::CmpXchgStrong))
+         Ty = Context.getPointerType(ValType.getUnqualifiedType());
+      else if (!ValType->isIntegerType() &&
+               (Op == AtomicExpr::Add || Op == AtomicExpr::Sub))
+        Ty = Context.getPointerDiffType();
+      else
+        Ty = ValType;
+    } else {
+      // The order(s) are always converted to int.
+      Ty = Context.IntTy;
+    }
+    InitializedEntity Entity =
+        InitializedEntity::InitializeParameter(Context, Ty, false);
+    Arg = PerformCopyInitialization(Entity, SourceLocation(), Arg);
+    if (Arg.isInvalid())
+      return true;
+    TheCall->setArg(i, Arg.get());
+  }
+
+  if (Op == AtomicExpr::Load) {
+    Order = TheCall->getArg(1);
+    return Owned(new (Context) AtomicExpr(TheCall->getCallee()->getLocStart(),
+                                          Ptr, Order, ResultType, Op,
+                                          TheCall->getRParenLoc(), false,
+                                          false));
+  } else if (Op != AtomicExpr::CmpXchgWeak && Op != AtomicExpr::CmpXchgStrong) {
+    Val1 = TheCall->getArg(1);
+    Order = TheCall->getArg(2);
+    return Owned(new (Context) AtomicExpr(TheCall->getCallee()->getLocStart(),
+                                          Ptr, Val1, Order, ResultType, Op,
+                                          TheCall->getRParenLoc(), false,
+                                          false));
+  } else {
+    Val1 = TheCall->getArg(1);
+    Val2 = TheCall->getArg(2);
+    Order = TheCall->getArg(3);
+    OrderFail = TheCall->getArg(4);
+    return Owned(new (Context) AtomicExpr(TheCall->getCallee()->getLocStart(),
+                                          Ptr, Val1, Val2, Order, OrderFail,
+                                          ResultType, Op, 
+                                          TheCall->getRParenLoc(), false,
+                                          false));
+  }
+}
+
 
 /// checkBuiltinArgument - Given a call to a builtin function, perform
 /// normal type-checking on the given argument, updating the call in

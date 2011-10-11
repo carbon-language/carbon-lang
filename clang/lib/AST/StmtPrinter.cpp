@@ -1011,6 +1011,59 @@ void StmtPrinter::VisitVAArgExpr(VAArgExpr *Node) {
   OS << ")";
 }
 
+void StmtPrinter::VisitAtomicExpr(AtomicExpr *Node) {
+  const char *Name;
+  switch (Node->getOp()) {
+    case AtomicExpr::Load:
+      Name = "__atomic_load(";
+      break;
+    case AtomicExpr::Store:
+      Name = "__atomic_store(";
+      break;
+    case AtomicExpr::CmpXchgStrong:
+      Name = "__atomic_compare_exchange_strong(";
+      break;
+    case AtomicExpr::CmpXchgWeak:
+      Name = "__atomic_compare_exchange_weak(";
+      break;
+    case AtomicExpr::Xchg:
+      Name = "__atomic_exchange(";
+      break;
+    case AtomicExpr::Add:
+      Name = "__atomic_fetch_add(";
+      break;
+    case AtomicExpr::Sub:
+      Name = "__atomic_fetch_sub(";
+      break;
+    case AtomicExpr::And:
+      Name = "__atomic_fetch_and(";
+      break;
+    case AtomicExpr::Or:
+      Name = "__atomic_fetch_or(";
+      break;
+    case AtomicExpr::Xor:
+      Name = "__atomic_fetch_xor(";
+      break;
+  }
+  OS << Name;
+  PrintExpr(Node->getPtr());
+  OS << ", ";
+  if (Node->getOp() != AtomicExpr::Load) {
+    PrintExpr(Node->getVal1());
+    OS << ", ";
+  }
+  if (Node->isCmpXChg()) {
+    PrintExpr(Node->getVal2());
+    OS << ", ";
+  }
+  PrintExpr(Node->getOrder());
+  if (Node->isCmpXChg()) {
+    OS << ", ";
+    PrintExpr(Node->getOrderFail());
+  }
+  OS << ")";
+}
+
 // C++
 void StmtPrinter::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *Node) {
   const char *OpStrings[NUM_OVERLOADED_OPERATORS] = {

@@ -736,6 +736,21 @@ void ASTStmtWriter::VisitGenericSelectionExpr(GenericSelectionExpr *E) {
   Code = serialization::EXPR_GENERIC_SELECTION;
 }
 
+void ASTStmtWriter::VisitAtomicExpr(AtomicExpr *E) {
+  VisitExpr(E);
+  Record.push_back(E->getOp());
+  Writer.AddStmt(E->getPtr());
+  Writer.AddStmt(E->getOrder());
+  if (E->getOp() != AtomicExpr::Load)
+    Writer.AddStmt(E->getVal1());
+  if (E->isCmpXChg()) {
+    Writer.AddStmt(E->getOrderFail());
+    Writer.AddStmt(E->getVal2());
+  }
+  Writer.AddSourceLocation(E->getBuiltinLoc(), Record);
+  Writer.AddSourceLocation(E->getRParenLoc(), Record);
+}
+
 //===----------------------------------------------------------------------===//
 // Objective-C Expressions and Statements.
 //===----------------------------------------------------------------------===//

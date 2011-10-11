@@ -1538,6 +1538,7 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
   }
   case CompoundAssignOperatorClass:
   case VAArgExprClass:
+  case AtomicExprClass:
     return false;
 
   case ConditionalOperatorClass: {

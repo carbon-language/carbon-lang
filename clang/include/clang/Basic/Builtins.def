@@ -585,7 +585,18 @@ BUILTIN(__sync_swap_4, "iiD*i.", "n")
 BUILTIN(__sync_swap_8, "LLiLLiD*LLi.", "n")
 BUILTIN(__sync_swap_16, "LLLiLLLiD*LLLi.", "n")
 
-
+BUILTIN(__atomic_load, "v.", "t")
+BUILTIN(__atomic_store, "v.", "t")
+BUILTIN(__atomic_exchange, "v.", "t")
+BUILTIN(__atomic_compare_exchange_strong, "v.", "t")
+BUILTIN(__atomic_compare_exchange_weak, "v.", "t")
+BUILTIN(__atomic_fetch_add, "v.", "t")
+BUILTIN(__atomic_fetch_sub, "v.", "t")
+BUILTIN(__atomic_fetch_and, "v.", "t")
+BUILTIN(__atomic_fetch_or, "v.", "t")
+BUILTIN(__atomic_fetch_xor, "v.", "t")
+BUILTIN(__atomic_thread_fence, "vi", "t")
+BUILTIN(__atomic_signal_fence, "vi", "t")
 
 // Non-overloaded atomic builtins.
 BUILTIN(__sync_synchronize, "v.", "n")

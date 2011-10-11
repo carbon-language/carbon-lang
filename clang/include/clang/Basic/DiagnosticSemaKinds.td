@@ -4012,6 +4012,15 @@ def err_atomic_builtin_must_be_pointer_intptr : Error<
 def err_atomic_builtin_pointer_size : Error<
   "first argument to atomic builtin must be a pointer to 1,2,4,8 or 16 byte "
   "type (%0 invalid)">;
+def err_atomic_op_needs_atomic : Error<
+  "first argument to atomic operation must be a pointer to _Atomic "
+  "type (%0 invalid)">;
+def err_atomic_op_needs_atomic_int_or_ptr : Error<
+  "first argument to atomic operation must be a pointer to atomic "
+  "integer or pointer (%0 invalid)">;
+def err_atomic_op_logical_needs_atomic_int : Error<
+  "first argument to logical atomic operation must be a pointer to atomic "
+  "integer (%0 invalid)">;
 
 def err_deleted_function_use : Error<"attempt to use a deleted function">;
 

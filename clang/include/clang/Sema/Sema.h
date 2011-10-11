@@ -6084,6 +6084,8 @@ private:
   bool SemaBuiltinObjectSize(CallExpr *TheCall);
   bool SemaBuiltinLongjmp(CallExpr *TheCall);
   ExprResult SemaBuiltinAtomicOverloaded(ExprResult TheCallResult);
+  ExprResult SemaAtomicOpsOverloaded(ExprResult TheCallResult,
+                                     AtomicExpr::AtomicOp Op);
   bool SemaBuiltinConstantArg(CallExpr *TheCall, int ArgNum,
                               llvm::APSInt &Result);
 

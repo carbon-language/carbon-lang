@@ -2283,6 +2283,8 @@ public:
 
   void EmitCXXThrowExpr(const CXXThrowExpr *E);
 
+  RValue EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest = 0);
+
   //===--------------------------------------------------------------------===//
   //                         Annotations Emission
   //===--------------------------------------------------------------------===//

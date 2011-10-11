@@ -2478,3 +2478,280 @@ EmitPointerToDataMemberBinaryExpr(const BinaryOperator *E) {
 
   return MakeAddrLValue(AddV, MPT->getPointeeType());
 }
+
+static void
+EmitAtomicOp(CodeGenFunction &CGF, AtomicExpr *E, llvm::Value *Dest,
+             llvm::Value *Ptr, llvm::Value *Val1, llvm::Value *Val2,
+             uint64_t Size, unsigned Align, llvm::AtomicOrdering Order) {
+  if (E->isCmpXChg()) {
+    // Note that cmpxchg only supports specifying one ordering and
+    // doesn't support weak cmpxchg, at least at the moment.
+    llvm::LoadInst *LoadVal1 = CGF.Builder.CreateLoad(Val1);
+    LoadVal1->setAlignment(Align);
+    llvm::LoadInst *LoadVal2 = CGF.Builder.CreateLoad(Val2);
+    LoadVal2->setAlignment(Align);
+    llvm::AtomicCmpXchgInst *CXI =
+        CGF.Builder.CreateAtomicCmpXchg(Ptr, LoadVal1, LoadVal2, Order);
+    CXI->setVolatile(E->isVolatile());
+    llvm::StoreInst *StoreVal1 = CGF.Builder.CreateStore(CXI, Val1);
+    StoreVal1->setAlignment(Align);
+    llvm::Value *Cmp = CGF.Builder.CreateICmpEQ(CXI, LoadVal1);
+    CGF.EmitStoreOfScalar(Cmp, CGF.MakeAddrLValue(Dest, E->getType()));
+    return;
+  }
+
+  if (E->getOp() == AtomicExpr::Load) {
+    llvm::LoadInst *Load = CGF.Builder.CreateLoad(Ptr);
+    Load->setAtomic(Order);
+    Load->setAlignment(Size);
+    Load->setVolatile(E->isVolatile());
+    llvm::StoreInst *StoreDest = CGF.Builder.CreateStore(Load, Dest);
+    StoreDest->setAlignment(Align);
+    return;
+  }
+
+  if (E->getOp() == AtomicExpr::Store) {
+    assert(!Dest && "Store does not return a value");
+    llvm::LoadInst *LoadVal1 = CGF.Builder.CreateLoad(Val1);
+    LoadVal1->setAlignment(Align);
+    llvm::StoreInst *Store = CGF.Builder.CreateStore(LoadVal1, Ptr);
+    Store->setAtomic(Order);
+    Store->setAlignment(Size);
+    Store->setVolatile(E->isVolatile());
+    return;
+  }
+
+  llvm::AtomicRMWInst::BinOp Op = llvm::AtomicRMWInst::Add;
+  switch (E->getOp()) {
+    case AtomicExpr::CmpXchgWeak:
+    case AtomicExpr::CmpXchgStrong:
+    case AtomicExpr::Store:
+    case AtomicExpr::Load:  assert(0 && "Already handled!");
+    case AtomicExpr::Add:   Op = llvm::AtomicRMWInst::Add;  break;
+    case AtomicExpr::Sub:   Op = llvm::AtomicRMWInst::Sub;  break;
+    case AtomicExpr::And:   Op = llvm::AtomicRMWInst::And;  break;
+    case AtomicExpr::Or:    Op = llvm::AtomicRMWInst::Or;   break;
+    case AtomicExpr::Xor:   Op = llvm::AtomicRMWInst::Xor;  break;
+    case AtomicExpr::Xchg:  Op = llvm::AtomicRMWInst::Xchg; break;
+  }
+  llvm::LoadInst *LoadVal1 = CGF.Builder.CreateLoad(Val1);
+  LoadVal1->setAlignment(Align);
+  llvm::AtomicRMWInst *RMWI =
+      CGF.Builder.CreateAtomicRMW(Op, Ptr, LoadVal1, Order);
+  RMWI->setVolatile(E->isVolatile());
+  llvm::StoreInst *StoreDest = CGF.Builder.CreateStore(RMWI, Dest);
+  StoreDest->setAlignment(Align);
+}
+
+// This function emits any expression (scalar, complex, or aggregate)
+// into a temporary alloca.
+static llvm::Value *
+EmitValToTemp(CodeGenFunction &CGF, Expr *E) {
+  llvm::Value *DeclPtr = CGF.CreateMemTemp(E->getType(), ".atomictmp");
+  CGF.EmitAnyExprToMem(E, DeclPtr, E->getType().getQualifiers(),
+                       /*Init*/ true);
+  return DeclPtr;
+}
+
+static RValue ConvertTempToRValue(CodeGenFunction &CGF, QualType Ty,
+                                  llvm::Value *Dest) {
+  if (Ty->isAnyComplexType())
+    return RValue::getComplex(CGF.LoadComplexFromAddr(Dest, false));
+  if (CGF.hasAggregateLLVMType(Ty))
+    return RValue::getAggregate(Dest);
+  return RValue::get(CGF.EmitLoadOfScalar(CGF.MakeAddrLValue(Dest, Ty)));
+}
+
+RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
+  QualType AtomicTy = E->getPtr()->getType()->getPointeeType();
+  QualType MemTy = AtomicTy->getAs<AtomicType>()->getValueType();
+  CharUnits sizeChars = getContext().getTypeSizeInChars(AtomicTy);
+  uint64_t Size = sizeChars.getQuantity();
+  CharUnits alignChars = getContext().getTypeAlignInChars(AtomicTy);
+  unsigned Align = alignChars.getQuantity();
+  // FIXME: Bound on Size should not be hardcoded.
+  bool UseLibcall = (sizeChars != alignChars || !llvm::isPowerOf2_64(Size) ||
+                     Size > 8);
+
+  llvm::Value *Ptr, *Order, *OrderFail = 0, *Val1 = 0, *Val2 = 0;
+  Ptr = EmitScalarExpr(E->getPtr());
+  Order = EmitScalarExpr(E->getOrder());
+  if (E->isCmpXChg()) {
+    Val1 = EmitScalarExpr(E->getVal1());
+    Val2 = EmitValToTemp(*this, E->getVal2());
+    OrderFail = EmitScalarExpr(E->getOrderFail());
+    (void)OrderFail; // OrderFail is unused at the moment
+  } else if ((E->getOp() == AtomicExpr::Add || E->getOp() == AtomicExpr::Sub) &&
+             MemTy->isPointerType()) {
+    // For pointers, we're required to do a bit of math: adding 1 to an int*
+    // is not the same as adding 1 to a uintptr_t.
+    QualType Val1Ty = E->getVal1()->getType();
+    llvm::Value *Val1Scalar = EmitScalarExpr(E->getVal1());
+    uint64_t PointeeIncAmt =
+        getContext().getTypeSizeInChars(MemTy->getPointeeType()).getQuantity();
+    llvm::Value *PointeeIncAmtVal =
+        llvm::ConstantInt::get(Val1Scalar->getType(), PointeeIncAmt);
+    Val1Scalar = Builder.CreateMul(Val1Scalar, PointeeIncAmtVal);
+    Val1 = CreateMemTemp(Val1Ty, ".atomictmp");
+    EmitStoreOfScalar(Val1Scalar, MakeAddrLValue(Val1, Val1Ty));
+  } else if (E->getOp() != AtomicExpr::Load) {
+    Val1 = EmitValToTemp(*this, E->getVal1());
+  }
+
+  if (E->getOp() != AtomicExpr::Store && !Dest)
+    Dest = CreateMemTemp(E->getType(), ".atomicdst");
+
+  if (UseLibcall) {
+    // FIXME: Finalize what the libcalls are actually supposed to look like.
+    // See also http://gcc.gnu.org/wiki/Atomic/GCCMM/LIbrary .
+    return EmitUnsupportedRValue(E, "atomic library call");
+  }
+#if 0
+  if (UseLibcall) {
+    const char* LibCallName;
+    switch (E->getOp()) {
+    case AtomicExpr::CmpXchgWeak:
+      LibCallName = "__atomic_compare_exchange_generic"; break;
+    case AtomicExpr::CmpXchgStrong:
+      LibCallName = "__atomic_compare_exchange_generic"; break;
+    case AtomicExpr::Add:   LibCallName = "__atomic_fetch_add_generic"; break;
+    case AtomicExpr::Sub:   LibCallName = "__atomic_fetch_sub_generic"; break;
+    case AtomicExpr::And:   LibCallName = "__atomic_fetch_and_generic"; break;
+    case AtomicExpr::Or:    LibCallName = "__atomic_fetch_or_generic"; break;
+    case AtomicExpr::Xor:   LibCallName = "__atomic_fetch_xor_generic"; break;
+    case AtomicExpr::Xchg:  LibCallName = "__atomic_exchange_generic"; break;
+    case AtomicExpr::Store: LibCallName = "__atomic_store_generic"; break;
+    case AtomicExpr::Load:  LibCallName = "__atomic_load_generic"; break;
+    }
+    llvm::SmallVector<QualType, 4> Params;
+    CallArgList Args;
+    QualType RetTy = getContext().VoidTy;
+    if (E->getOp() != AtomicExpr::Store && !E->isCmpXChg())
+      Args.add(RValue::get(EmitCastToVoidPtr(Dest)),
+               getContext().VoidPtrTy);
+    Args.add(RValue::get(EmitCastToVoidPtr(Ptr)),
+             getContext().VoidPtrTy);
+    if (E->getOp() != AtomicExpr::Load)
+      Args.add(RValue::get(EmitCastToVoidPtr(Val1)),
+               getContext().VoidPtrTy);
+    if (E->isCmpXChg()) {
+      Args.add(RValue::get(EmitCastToVoidPtr(Val2)),
+               getContext().VoidPtrTy);
+      RetTy = getContext().IntTy;
+    }
+    Args.add(RValue::get(llvm::ConstantInt::get(SizeTy, Size)),
+             getContext().getSizeType());
+    const CGFunctionInfo &FuncInfo =
+        CGM.getTypes().getFunctionInfo(RetTy, Args, FunctionType::ExtInfo());
+    llvm::FunctionType *FTy = CGM.getTypes().GetFunctionType(FuncInfo, false);
+    llvm::Constant *Func = CGM.CreateRuntimeFunction(FTy, LibCallName);
+    RValue Res = EmitCall(FuncInfo, Func, ReturnValueSlot(), Args);
+    if (E->isCmpXChg())
+      return Res;
+    if (E->getOp() == AtomicExpr::Store)
+      return RValue::get(0);
+    return ConvertTempToRValue(*this, E->getType(), Dest);
+  }
+#endif
+  llvm::Type *IPtrTy =
+      llvm::IntegerType::get(getLLVMContext(), Size * 8)->getPointerTo();
+  llvm::Value *OrigDest = Dest;
+  Ptr = Builder.CreateBitCast(Ptr, IPtrTy);
+  if (Val1) Val1 = Builder.CreateBitCast(Val1, IPtrTy);
+  if (Val2) Val2 = Builder.CreateBitCast(Val2, IPtrTy);
+  if (Dest && !E->isCmpXChg()) Dest = Builder.CreateBitCast(Dest, IPtrTy);
+
+  if (isa<llvm::ConstantInt>(Order)) {
+    int ord = cast<llvm::ConstantInt>(Order)->getZExtValue();
+    switch (ord) {
+    case 0:  // memory_order_relaxed
+      EmitAtomicOp(*this, E, Dest, Ptr, Val1, Val2, Size, Align,
+                   llvm::Monotonic);
+      break;
+    case 1:  // memory_order_consume
+    case 2:  // memory_order_acquire
+      EmitAtomicOp(*this, E, Dest, Ptr, Val1, Val2, Size, Align,
+                   llvm::Acquire);
+      break;
+    case 3:  // memory_order_release
+      EmitAtomicOp(*this, E, Dest, Ptr, Val1, Val2, Size, Align,
+                   llvm::Release);
+      break;
+    case 4:  // memory_order_acq_rel
+      EmitAtomicOp(*this, E, Dest, Ptr, Val1, Val2, Size, Align,
+                   llvm::AcquireRelease);
+      break;
+    case 5:  // memory_order_seq_cst
+      EmitAtomicOp(*this, E, Dest, Ptr, Val1, Val2, Size, Align,
+                   llvm::SequentiallyConsistent);
+      break;
+    default: // invalid order
+      // We should not ever get here normally, but it's hard to
+      // enforce that in general.
+      break; 
+    }
+    if (E->getOp() == AtomicExpr::Store)
+      return RValue::get(0);
+    return ConvertTempToRValue(*this, E->getType(), OrigDest);
+  }
+
+  // Long case, when Order isn't obviously constant.
+
+  // Create all the relevant BB's
+  llvm::BasicBlock *MonotonicBB, *AcquireBB, *ReleaseBB, *AcqRelBB, *SeqCstBB;
+  MonotonicBB = createBasicBlock("monotonic", CurFn);
+  if (E->getOp() != AtomicExpr::Store)
+    AcquireBB = createBasicBlock("acquire", CurFn);
+  if (E->getOp() != AtomicExpr::Load)
+    ReleaseBB = createBasicBlock("release", CurFn);
+  if (E->getOp() != AtomicExpr::Load && E->getOp() != AtomicExpr::Store)
+    AcqRelBB = createBasicBlock("acqrel", CurFn);
+  SeqCstBB = createBasicBlock("seqcst", CurFn);
+  llvm::BasicBlock *ContBB = createBasicBlock("atomic.continue", CurFn);
+
+  // Create the switch for the split
+  // MonotonicBB is arbitrarily chosen as the default case; in practice, this
+  // doesn't matter unless someone is crazy enough to use something that
+  // doesn't fold to a constant for the ordering.
+  Order = Builder.CreateIntCast(Order, Builder.getInt32Ty(), false);
+  llvm::SwitchInst *SI = Builder.CreateSwitch(Order, MonotonicBB);
+
+  // Emit all the different atomics
+  Builder.SetInsertPoint(MonotonicBB);
+  EmitAtomicOp(*this, E, Dest, Ptr, Val1, Val2, Size, Align,
+               llvm::Monotonic);
+  Builder.CreateBr(ContBB);
+  if (E->getOp() != AtomicExpr::Store) {
+    Builder.SetInsertPoint(AcquireBB);
+    EmitAtomicOp(*this, E, Dest, Ptr, Val1, Val2, Size, Align,
+                 llvm::Acquire);
+    Builder.CreateBr(ContBB);
+    SI->addCase(Builder.getInt32(1), AcquireBB);
+    SI->addCase(Builder.getInt32(2), AcquireBB);
+  }
+  if (E->getOp() != AtomicExpr::Load) {
+    Builder.SetInsertPoint(ReleaseBB);
+    EmitAtomicOp(*this, E, Dest, Ptr, Val1, Val2, Size, Align,
+                 llvm::Release);
+    Builder.CreateBr(ContBB);
+    SI->addCase(Builder.getInt32(3), ReleaseBB);
+  }
+  if (E->getOp() != AtomicExpr::Load && E->getOp() != AtomicExpr::Store) {
+    Builder.SetInsertPoint(AcqRelBB);
+    EmitAtomicOp(*this, E, Dest, Ptr, Val1, Val2, Size, Align,
+                 llvm::AcquireRelease);
+    Builder.CreateBr(ContBB);
+    SI->addCase(Builder.getInt32(4), AcqRelBB);
+  }
+  Builder.SetInsertPoint(SeqCstBB);
+  EmitAtomicOp(*this, E, Dest, Ptr, Val1, Val2, Size, Align,
+               llvm::SequentiallyConsistent);
+  Builder.CreateBr(ContBB);
+  SI->addCase(Builder.getInt32(5), SeqCstBB);
+
+  // Cleanup and return
+  Builder.SetInsertPoint(ContBB);
+  if (E->getOp() == AtomicExpr::Store)
+    return RValue::get(0);
+  return ConvertTempToRValue(*this, E->getType(), OrigDest);
+}

@@ -266,6 +266,10 @@ public:
   ComplexPairTy VisitInitListExpr(InitListExpr *E);
 
   ComplexPairTy VisitVAArgExpr(VAArgExpr *E);
+
+  ComplexPairTy VisitAtomicExpr(AtomicExpr *E) {
+    return CGF.EmitAtomicExpr(E).getComplexVal();
+  }
 };
 }  // end anonymous namespace.
 

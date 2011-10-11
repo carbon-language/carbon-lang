@@ -1992,6 +1992,7 @@ DEF_TRAVERSE_STMT(SizeOfPackExpr, { })
 DEF_TRAVERSE_STMT(SubstNonTypeTemplateParmPackExpr, { })
 DEF_TRAVERSE_STMT(SubstNonTypeTemplateParmExpr, { })
 DEF_TRAVERSE_STMT(MaterializeTemporaryExpr, { })
+DEF_TRAVERSE_STMT(AtomicExpr, { })
 
 // These literals (all of them) do not need any action.
 DEF_TRAVERSE_STMT(IntegerLiteral, { })
