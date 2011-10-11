@@ -989,6 +989,31 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
 #endif
     assert(0 && "Do not know how to legalize this operator!");
 
+  case ISD::SRA:
+  case ISD::SRL:
+  case ISD::SHL: {
+    // Scalarize vector SRA/SRL/SHL.
+    EVT VT = Node->getValueType(0);
+    assert(VT.isVector() && "Unable to legalize non-vector shift");
+    assert(TLI.isTypeLegal(VT.getScalarType())&& "Element type must be legal");
+    unsigned NumElem = VT.getVectorNumElements();
+
+    SmallVector<SDValue, 8> Scalars;
+    for (unsigned Idx = 0; Idx < NumElem; Idx++) {
+      SDValue Ex = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl,
+                               VT.getScalarType(),
+                               Node->getOperand(0), DAG.getIntPtrConstant(Idx));
+      SDValue Sh = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl,
+                               VT.getScalarType(),
+                               Node->getOperand(1), DAG.getIntPtrConstant(Idx));
+      Scalars.push_back(DAG.getNode(Node->getOpcode(), dl,
+                                    VT.getScalarType(), Ex, Sh));
+    }
+    Result = DAG.getNode(ISD::BUILD_VECTOR, dl, Node->getValueType(0),
+                         &Scalars[0], Scalars.size());
+    break;
+  }
+
   case ISD::BUILD_VECTOR:
     switch (TLI.getOperationAction(ISD::BUILD_VECTOR, Node->getValueType(0))) {
     default: assert(0 && "This action is not supported yet!");
