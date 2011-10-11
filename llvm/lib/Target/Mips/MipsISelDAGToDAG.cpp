@@ -111,17 +111,20 @@ SDNode *MipsDAGToDAGISel::getGlobalBaseReg() {
 /// Used on Mips Load/Store instructions
 bool MipsDAGToDAGISel::
 SelectAddr(SDValue Addr, SDValue &Base, SDValue &Offset) {
+  EVT ValTy = Addr.getValueType();
+  unsigned GPReg = ValTy == MVT::i32 ? Mips::GP : Mips::GP_64;
+
   // if Address is FI, get the TargetFrameIndex.
   if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Addr)) {
-    Base   = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
-    Offset = CurDAG->getTargetConstant(0, MVT::i32);
+    Base   = CurDAG->getTargetFrameIndex(FIN->getIndex(), ValTy);
+    Offset = CurDAG->getTargetConstant(0, ValTy);
     return true;
   }
 
   // on PIC code Load GA
   if (TM.getRelocationModel() == Reloc::PIC_) {
     if (Addr.getOpcode() == MipsISD::WrapperPIC) {
-      Base   = CurDAG->getRegister(Mips::GP, MVT::i32);
+      Base   = CurDAG->getRegister(GPReg, ValTy);
       Offset = Addr.getOperand(0);
       return true;
     }
@@ -130,7 +133,7 @@ SelectAddr(SDValue Addr, SDValue &Base, SDValue &Offset) {
         Addr.getOpcode() == ISD::TargetGlobalAddress))
       return false;
     else if (Addr.getOpcode() == ISD::TargetGlobalTLSAddress) {
-      Base   = CurDAG->getRegister(Mips::GP, MVT::i32);
+      Base   = CurDAG->getRegister(GPReg, ValTy);
       Offset = Addr;
       return true;
     }
@@ -144,11 +147,11 @@ SelectAddr(SDValue Addr, SDValue &Base, SDValue &Offset) {
       // If the first operand is a FI, get the TargetFI Node
       if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>
                                   (Addr.getOperand(0)))
-        Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
+        Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), ValTy);
       else
         Base = Addr.getOperand(0);
 
-      Offset = CurDAG->getTargetConstant(CN->getZExtValue(), MVT::i32);
+      Offset = CurDAG->getTargetConstant(CN->getZExtValue(), ValTy);
       return true;
     }
   }
@@ -177,7 +180,7 @@ SelectAddr(SDValue Addr, SDValue &Base, SDValue &Offset) {
   }
 
   Base   = Addr;
-  Offset = CurDAG->getTargetConstant(0, MVT::i32);
+  Offset = CurDAG->getTargetConstant(0, ValTy);
   return true;
 }
 
