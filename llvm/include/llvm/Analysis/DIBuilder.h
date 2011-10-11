@@ -37,6 +37,7 @@ namespace llvm {
   class DINameSpace;
   class DIVariable;
   class DISubrange;
+  class DILexicalBlockFile;
   class DILexicalBlock;
   class DISubprogram;
   class DITemplateTypeParameter;
@@ -463,6 +464,14 @@ namespace llvm {
                                 DIFile File, unsigned LineNo);
 
 
+    /// createLexicalBlockFile - This creates a descriptor for a lexical
+    /// block with a new file attached. This merely extends the existing
+    /// lexical block as it crosses a file.
+    /// @param Scope       Lexical block.
+    /// @param File        Source file.
+    DILexicalBlockFile createLexicalBlockFile(DIDescriptor Scope,
+					      DIFile File);
+    
     /// createLexicalBlock - This creates a descriptor for a lexical block
     /// with the specified parent context.
     /// @param Scope       Parent lexical scope.

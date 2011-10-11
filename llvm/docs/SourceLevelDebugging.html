@@ -472,9 +472,22 @@ global variables are collected by named metadata <tt>!llvm.dbg.gv</tt>.</p>
 </pre>
 </div>
 
-<p>These descriptors provide debug information about nested blocks within a
+<p>This descriptor provides debug information about nested blocks within a
    subprogram. The line number and column numbers are used to dinstinguish
    two lexical blocks at same depth. </p>
+
+<div class="doc_code">
+<pre>
+!3 = metadata !{
+  i32,     ;; Tag = 11 + <a href="#LLVMDebugVersion">LLVMDebugVersion</a> (DW_TAG_lexical_block)
+  metadata ;; Reference to the scope we're annotating with a file change
+  metadata,;; Reference to the file the scope is enclosed in.
+}
+</pre>
+</div>
+
+<p>This descriptor provides a wrapper around a lexical scope to handle file
+   changes in the middle of a lexical block.</p>
 
 </div>
 

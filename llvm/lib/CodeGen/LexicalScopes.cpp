@@ -118,9 +118,16 @@ LexicalScope *LexicalScopes::findLexicalScope(DebugLoc DL) {
   MDNode *IA = NULL;
   DL.getScopeAndInlinedAt(Scope, IA, MF->getFunction()->getContext());
   if (!Scope) return NULL;
+
+  // The scope that we were created with could have an extra file - which
+  // isn't what we care about in this case.
+  DIDescriptor D = DIDescriptor(Scope);
+  if (D.isLexicalBlockFile())
+    Scope = DILexicalBlockFile(Scope).getScope();
+  
   if (IA)
     return InlinedLexicalScopeMap.lookup(DebugLoc::getFromDILocation(IA));
-  return LexicalScopeMap.lookup(DL.getScope(Scope->getContext()));
+  return LexicalScopeMap.lookup(Scope);
 }
 
 /// getOrCreateLexicalScope - Find lexical scope for the given DebugLoc. If
@@ -129,6 +136,7 @@ LexicalScope *LexicalScopes::getOrCreateLexicalScope(DebugLoc DL) {
   MDNode *Scope = NULL;
   MDNode *InlinedAt = NULL;
   DL.getScopeAndInlinedAt(Scope, InlinedAt, MF->getFunction()->getContext());
+
   if (InlinedAt) {
     // Create an abstract scope for inlined function.
     getOrCreateAbstractScope(Scope);
@@ -141,12 +149,16 @@ LexicalScope *LexicalScopes::getOrCreateLexicalScope(DebugLoc DL) {
 
 /// getOrCreateRegularScope - Find or create a regular lexical scope.
 LexicalScope *LexicalScopes::getOrCreateRegularScope(MDNode *Scope) {
+  DIDescriptor D = DIDescriptor(Scope);
+  if (D.isLexicalBlockFile())
+    Scope = DILexicalBlockFile(Scope).getScope();
+ 
   LexicalScope *WScope = LexicalScopeMap.lookup(Scope);
   if (WScope)
     return WScope;
 
   LexicalScope *Parent = NULL;
-  if (DIDescriptor(Scope).isLexicalBlock())
+  if (D.isLexicalBlock())
     Parent = getOrCreateLexicalScope(DebugLoc::getFromDILexicalBlock(Scope));
   WScope = new LexicalScope(Parent, DIDescriptor(Scope), NULL, false);
   LexicalScopeMap.insert(std::make_pair(Scope, WScope));
@@ -176,12 +188,14 @@ LexicalScope *LexicalScopes::getOrCreateInlinedScope(MDNode *Scope,
 LexicalScope *LexicalScopes::getOrCreateAbstractScope(const MDNode *N) {
   assert(N && "Invalid Scope encoding!");
 
+  DIDescriptor Scope(N);
+  if (Scope.isLexicalBlockFile())
+    Scope = DILexicalBlockFile(Scope).getScope();
   LexicalScope *AScope = AbstractScopeMap.lookup(N);
   if (AScope)
     return AScope;
 
   LexicalScope *Parent = NULL;
-  DIDescriptor Scope(N);
   if (Scope.isLexicalBlock()) {
     DILexicalBlock DB(N);
     DIDescriptor ParentDesc = DB.getContext();

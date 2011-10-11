@@ -40,6 +40,7 @@ namespace llvm {
   class DIFile;
   class DISubprogram;
   class DILexicalBlock;
+  class DILexicalBlockFile;
   class DIVariable;
   class DIType;
 
@@ -84,6 +85,7 @@ namespace llvm {
     explicit DIDescriptor(const MDNode *N) : DbgNode(N) {}
     explicit DIDescriptor(const DIFile F);
     explicit DIDescriptor(const DISubprogram F);
+    explicit DIDescriptor(const DILexicalBlockFile F);
     explicit DIDescriptor(const DILexicalBlock F);
     explicit DIDescriptor(const DIVariable F);
     explicit DIDescriptor(const DIType F);
@@ -117,6 +119,7 @@ namespace llvm {
     bool isFile() const;
     bool isCompileUnit() const;
     bool isNameSpace() const;
+    bool isLexicalBlockFile() const;
     bool isLexicalBlock() const;
     bool isSubrange() const;
     bool isEnumerator() const;
@@ -697,6 +700,26 @@ namespace llvm {
       StringRef filename = getFieldAs<DIFile>(4).getFilename();
       return !filename.empty() ? filename : getContext().getFilename();
     }
+  };
+
+  /// DILexicalBlockFile - This is a wrapper for a lexical block with
+  /// a filename change.
+  class DILexicalBlockFile : public DIScope {
+  public:
+    explicit DILexicalBlockFile(const MDNode *N = 0) : DIScope(N) {}
+    DIScope getContext() const { return getScope().getFieldAs<DIScope>(1); }
+    unsigned getLineNumber() const { return getScope().getUnsignedField(2); }
+    unsigned getColumnNumber() const { return getScope().getUnsignedField(3); }
+    StringRef getDirectory() const {
+      StringRef dir = getFieldAs<DIFile>(2).getDirectory();
+      return !dir.empty() ? dir : getContext().getDirectory();
+    }
+    StringRef getFilename() const {
+      StringRef filename = getFieldAs<DIFile>(2).getFilename();
+      assert(!filename.empty() && "Why'd you create this then?");
+      return filename;
+    }
+    DILexicalBlock getScope() const { return getFieldAs<DILexicalBlock>(1); }
   };
 
   /// DINameSpace - A wrapper for a C++ style name space.

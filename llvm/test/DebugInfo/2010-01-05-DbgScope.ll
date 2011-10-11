@@ -9,7 +9,7 @@ entry:
 }
 
 !0 = metadata !{i32 571, i32 3, metadata !1, null}
-!1 = metadata !{i32 458763, metadata !2}; [DW_TAG_lexical_block ]
+!1 = metadata !{i32 458763, metadata !2, i32 1, i32 1}; [DW_TAG_lexical_block ]
 !2 = metadata !{i32 458798, i32 0, metadata !3, metadata !"foo", metadata !"foo", metadata !"foo", metadata !3, i32 561, metadata !4, i1 false, i1 true}; [DW_TAG_subprogram ]
 !3 = metadata !{i32 458769, i32 0, i32 12, metadata !"hashtab.c", metadata !"/usr/src/gnu/usr.bin/cc/cc_tools/../../../../contrib/gcclibs/libiberty", metadata !"clang 1.1", i1 true, i1 false, metadata !"", i32 0}; [DW_TAG_compile_unit ]
 !4 = metadata !{i32 458773, metadata !3, metadata !"", null, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !5, i32 0}; [DW_TAG_subroutine_type ]

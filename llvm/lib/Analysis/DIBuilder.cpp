@@ -851,6 +851,18 @@ DINameSpace DIBuilder::createNameSpace(DIDescriptor Scope, StringRef Name,
   return DINameSpace(MDNode::get(VMContext, Elts));
 }
 
+/// createLexicalBlockFile - This creates a new MDNode that encapsulates
+/// an existing scope with a new filename.
+DILexicalBlockFile DIBuilder::createLexicalBlockFile(DIDescriptor Scope,
+						     DIFile File) {
+  Value *Elts[] = {
+    GetTagConstant(VMContext, dwarf::DW_TAG_lexical_block),
+    Scope,
+    File
+  };
+  return DILexicalBlockFile(MDNode::get(VMContext, Elts));
+}
+
 DILexicalBlock DIBuilder::createLexicalBlock(DIDescriptor Scope, DIFile File,
                                              unsigned Line, unsigned Col) {
   // Defeat MDNode uniqing for lexical blocks by using unique id.

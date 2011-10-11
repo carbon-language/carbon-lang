@@ -1371,6 +1371,10 @@ void DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, const MDNode *S,
       DISubprogram SP(S);
       Fn = SP.getFilename();
       Dir = SP.getDirectory();
+    } else if (Scope.isLexicalBlockFile()) {
+      DILexicalBlockFile DBF(S);
+      Fn = DBF.getFilename();
+      Dir = DBF.getDirectory();
     } else if (Scope.isLexicalBlock()) {
       DILexicalBlock DB(S);
       Fn = DB.getFilename();
