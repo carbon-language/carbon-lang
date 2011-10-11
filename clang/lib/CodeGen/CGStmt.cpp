@@ -31,11 +31,12 @@ using namespace CodeGen;
 
 void CodeGenFunction::EmitStopPoint(const Stmt *S) {
   if (CGDebugInfo *DI = getDebugInfo()) {
+    SourceLocation Loc;
     if (isa<DeclStmt>(S))
-      DI->setLocation(S->getLocEnd());
+      Loc = S->getLocEnd();
     else
-      DI->setLocation(S->getLocStart());
-    DI->EmitLocation(Builder);
+      Loc = S->getLocStart();
+    DI->EmitLocation(Builder, Loc);
   }
 }
 
@@ -190,10 +191,8 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
                              "LLVM IR generation of compound statement ('{}')");
 
   CGDebugInfo *DI = getDebugInfo();
-  if (DI) {
-    DI->setLocation(S.getLBracLoc());
-    DI->EmitLexicalBlockStart(Builder);
-  }
+  if (DI)
+    DI->EmitLexicalBlockStart(Builder, S.getLBracLoc());
 
   // Keep track of the current cleanup stack depth.
   RunCleanupsScope Scope(*this);
@@ -202,10 +201,8 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
        E = S.body_end()-GetLast; I != E; ++I)
     EmitStmt(*I);
 
-  if (DI) {
-    DI->setLocation(S.getRBracLoc());
-    DI->EmitLexicalBlockEnd(Builder);
-  }
+  if (DI)
+    DI->EmitLexicalBlockEnd(Builder, S.getRBracLoc());
 
   RValue RV;
   if (!GetLast)
@@ -570,10 +567,8 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
   RunCleanupsScope ForScope(*this);
 
   CGDebugInfo *DI = getDebugInfo();
-  if (DI) {
-    DI->setLocation(S.getSourceRange().getBegin());
-    DI->EmitLexicalBlockStart(Builder);
-  }
+  if (DI)
+    DI->EmitLexicalBlockStart(Builder, S.getSourceRange().getBegin());
 
   // Evaluate the first part before the loop.
   if (S.getInit())
@@ -652,10 +647,8 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
 
   ForScope.ForceCleanup();
 
-  if (DI) {
-    DI->setLocation(S.getSourceRange().getEnd());
-    DI->EmitLexicalBlockEnd(Builder);
-  }
+  if (DI)
+    DI->EmitLexicalBlockEnd(Builder, S.getSourceRange().getEnd());
 
   // Emit the fall-through block.
   EmitBlock(LoopExit.getBlock(), true);
@@ -667,10 +660,8 @@ void CodeGenFunction::EmitCXXForRangeStmt(const CXXForRangeStmt &S) {
   RunCleanupsScope ForScope(*this);
 
   CGDebugInfo *DI = getDebugInfo();
-  if (DI) {
-    DI->setLocation(S.getSourceRange().getBegin());
-    DI->EmitLexicalBlockStart(Builder);
-  }
+  if (DI)
+    DI->EmitLexicalBlockStart(Builder, S.getSourceRange().getBegin());
 
   // Evaluate the first pieces before the loop.
   EmitStmt(S.getRangeStmt());
@@ -726,10 +717,8 @@ void CodeGenFunction::EmitCXXForRangeStmt(const CXXForRangeStmt &S) {
 
   ForScope.ForceCleanup();
 
-  if (DI) {
-    DI->setLocation(S.getSourceRange().getEnd());
-    DI->EmitLexicalBlockEnd(Builder);
-  }
+  if (DI)
+    DI->EmitLexicalBlockEnd(Builder, S.getSourceRange().getEnd());
 
   // Emit the fall-through block.
   EmitBlock(LoopExit.getBlock(), true);

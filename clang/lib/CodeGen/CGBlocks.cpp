@@ -996,7 +996,7 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
     for (BlockDecl::capture_const_iterator ci = blockDecl->capture_begin(),
            ce = blockDecl->capture_end(); ci != ce; ++ci) {
       const VarDecl *variable = ci->getVariable();
-      DI->setLocation(variable->getLocation());
+      DI->EmitLocation(Builder, variable->getLocation());
 
       const CGBlockInfo::Capture &capture = blockInfo.getCapture(variable);
       if (capture.isConstant()) {
