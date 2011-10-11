@@ -241,27 +241,8 @@ defm : BrcondPats<CPU64Regs, BEQ64, BNE64, SLT64, SLTu64, SLTi64, SLTiu64,
                   ZERO_64>;
 
 // setcc patterns
-def : Pat<(seteq CPU64Regs:$lhs, CPU64Regs:$rhs),
-          (SLTiu64 (DXOR CPU64Regs:$lhs, CPU64Regs:$rhs), 1)>;
-def : Pat<(setne CPU64Regs:$lhs, CPU64Regs:$rhs),
-          (SLTu64 ZERO_64, (DXOR CPU64Regs:$lhs, CPU64Regs:$rhs))>;
-
-def : Pat<(setle CPU64Regs:$lhs, CPU64Regs:$rhs),
-          (XORi (SLT64 CPU64Regs:$rhs, CPU64Regs:$lhs), 1)>;
-def : Pat<(setule CPU64Regs:$lhs, CPU64Regs:$rhs),
-          (XORi (SLTu64 CPU64Regs:$rhs, CPU64Regs:$lhs), 1)>;
-
-def : Pat<(setgt CPU64Regs:$lhs, CPU64Regs:$rhs),
-          (SLT64 CPU64Regs:$rhs, CPU64Regs:$lhs)>;
-def : Pat<(setugt CPU64Regs:$lhs, CPU64Regs:$rhs),
-          (SLTu64 CPU64Regs:$rhs, CPU64Regs:$lhs)>;
-
-def : Pat<(setge CPU64Regs:$lhs, CPU64Regs:$rhs),
-          (XORi (SLT64 CPU64Regs:$lhs, CPU64Regs:$rhs), 1)>;
-def : Pat<(setuge CPU64Regs:$lhs, CPU64Regs:$rhs),
-          (XORi (SLTu64 CPU64Regs:$lhs, CPU64Regs:$rhs), 1)>;
-
-def : Pat<(setge CPU64Regs:$lhs, immSExt16:$rhs),
-          (XORi (SLTi64 CPU64Regs:$lhs, immSExt16:$rhs), 1)>;
-def : Pat<(setuge CPU64Regs:$lhs, immSExt16:$rhs),
-          (XORi (SLTiu64 CPU64Regs:$lhs, immSExt16:$rhs), 1)>;
+defm : SeteqPats<CPU64Regs, SLTiu64, DXOR, SLTu64, ZERO_64>;
+defm : SetlePats<CPU64Regs, SLT64, SLTu64>;
+defm : SetgtPats<CPU64Regs, SLT64, SLTu64>;
+defm : SetgePats<CPU64Regs, SLT64, SLTu64>;
+defm : SetgeImmPats<CPU64Regs, SLTi64, SLTiu64>;

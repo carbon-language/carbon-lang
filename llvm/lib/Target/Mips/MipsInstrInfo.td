@@ -953,30 +953,48 @@ defm : MovzPats<CPURegs, MOVZ_I>;
 defm : MovnPats<CPURegs, MOVN_I>;
 
 // setcc patterns
-def : Pat<(seteq CPURegs:$lhs, CPURegs:$rhs),
-          (SLTiu (XOR CPURegs:$lhs, CPURegs:$rhs), 1)>;
-def : Pat<(setne CPURegs:$lhs, CPURegs:$rhs),
-          (SLTu ZERO, (XOR CPURegs:$lhs, CPURegs:$rhs))>;
+multiclass SeteqPats<RegisterClass RC, Instruction SLTiuOp, Instruction XOROp,
+                     Instruction SLTuOp, Register ZEROReg> {
+  def : Pat<(seteq RC:$lhs, RC:$rhs),
+            (SLTiuOp (XOROp RC:$lhs, RC:$rhs), 1)>;
+  def : Pat<(setne RC:$lhs, RC:$rhs),
+            (SLTuOp ZEROReg, (XOROp RC:$lhs, RC:$rhs))>;
+}
 
-def : Pat<(setle CPURegs:$lhs, CPURegs:$rhs),
-          (XORi (SLT CPURegs:$rhs, CPURegs:$lhs), 1)>;
-def : Pat<(setule CPURegs:$lhs, CPURegs:$rhs),
-          (XORi (SLTu CPURegs:$rhs, CPURegs:$lhs), 1)>;
+multiclass SetlePats<RegisterClass RC, Instruction SLTOp, Instruction SLTuOp> {
+  def : Pat<(setle RC:$lhs, RC:$rhs),
+            (XORi (SLTOp RC:$rhs, RC:$lhs), 1)>;
+  def : Pat<(setule RC:$lhs, RC:$rhs),
+            (XORi (SLTuOp RC:$rhs, RC:$lhs), 1)>;
+}
 
-def : Pat<(setgt CPURegs:$lhs, CPURegs:$rhs),
-          (SLT CPURegs:$rhs, CPURegs:$lhs)>;
-def : Pat<(setugt CPURegs:$lhs, CPURegs:$rhs),
-          (SLTu CPURegs:$rhs, CPURegs:$lhs)>;
+multiclass SetgtPats<RegisterClass RC, Instruction SLTOp, Instruction SLTuOp> {
+  def : Pat<(setgt RC:$lhs, RC:$rhs),
+            (SLTOp RC:$rhs, RC:$lhs)>;
+  def : Pat<(setugt RC:$lhs, RC:$rhs),
+            (SLTuOp RC:$rhs, RC:$lhs)>;
+}
 
-def : Pat<(setge CPURegs:$lhs, CPURegs:$rhs),
-          (XORi (SLT CPURegs:$lhs, CPURegs:$rhs), 1)>;
-def : Pat<(setuge CPURegs:$lhs, CPURegs:$rhs),
-          (XORi (SLTu CPURegs:$lhs, CPURegs:$rhs), 1)>;
+multiclass SetgePats<RegisterClass RC, Instruction SLTOp, Instruction SLTuOp> {
+  def : Pat<(setge RC:$lhs, RC:$rhs),
+            (XORi (SLTOp RC:$lhs, RC:$rhs), 1)>;
+  def : Pat<(setuge RC:$lhs, RC:$rhs),
+            (XORi (SLTuOp RC:$lhs, RC:$rhs), 1)>;
+}
 
-def : Pat<(setge CPURegs:$lhs, immSExt16:$rhs),
-          (XORi (SLTi CPURegs:$lhs, immSExt16:$rhs), 1)>;
-def : Pat<(setuge CPURegs:$lhs, immSExt16:$rhs),
-          (XORi (SLTiu CPURegs:$lhs, immSExt16:$rhs), 1)>;
+multiclass SetgeImmPats<RegisterClass RC, Instruction SLTiOp,
+                        Instruction SLTiuOp> {
+  def : Pat<(setge RC:$lhs, immSExt16:$rhs),
+            (XORi (SLTiOp RC:$lhs, immSExt16:$rhs), 1)>;
+  def : Pat<(setuge RC:$lhs, immSExt16:$rhs),
+            (XORi (SLTiuOp RC:$lhs, immSExt16:$rhs), 1)>;
+}
+
+defm : SeteqPats<CPURegs, SLTiu, XOR, SLTu, ZERO>;
+defm : SetlePats<CPURegs, SLT, SLTu>;
+defm : SetgtPats<CPURegs, SLT, SLTu>;
+defm : SetgePats<CPURegs, SLT, SLTu>;
+defm : SetgeImmPats<CPURegs, SLTi, SLTiu>;
 
 // select MipsDynAlloc
 def : Pat<(MipsDynAlloc addr:$f), (DynAlloc addr:$f)>;
