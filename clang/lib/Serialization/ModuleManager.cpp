@@ -16,6 +16,10 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
 
+#ifndef NDEBUG
+#include "llvm/Support/GraphWriter.h"
+#endif
+
 using namespace clang;
 using namespace serialization;
 
@@ -202,3 +206,48 @@ void ModuleManager::visitDepthFirst(bool (*Visitor)(Module &M, bool Preorder,
       return;
   }
 }
+
+#ifndef NDEBUG
+namespace llvm {
+  template<>
+  struct GraphTraits<ModuleManager> {
+    typedef Module NodeType;
+    typedef llvm::SetVector<Module *>::const_iterator ChildIteratorType;
+    typedef ModuleManager::ModuleConstIterator nodes_iterator;
+    
+    static ChildIteratorType child_begin(NodeType *Node) {
+      return Node->Imports.begin();
+    }
+
+    static ChildIteratorType child_end(NodeType *Node) {
+      return Node->Imports.end();
+    }
+    
+    static nodes_iterator nodes_begin(const ModuleManager &Manager) {
+      return Manager.begin();
+    }
+    
+    static nodes_iterator nodes_end(const ModuleManager &Manager) {
+      return Manager.end();
+    }
+  };
+  
+  template<>
+  struct DOTGraphTraits<ModuleManager> : public DefaultDOTGraphTraits {
+    explicit DOTGraphTraits(bool IsSimple = false)
+      : DefaultDOTGraphTraits(IsSimple) { }
+    
+    static bool renderGraphFromBottomUp() {
+      return true;
+    }
+
+    std::string getNodeLabel(Module *M, const ModuleManager&) {
+      return llvm::sys::path::stem(M->FileName);
+    }
+  };
+}
+
+void ModuleManager::viewGraph() {
+  llvm::ViewGraph(*this, "Modules");
+}
+#endif

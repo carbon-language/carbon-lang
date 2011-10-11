@@ -146,6 +146,9 @@ public:
   void visitDepthFirst(bool (*Visitor)(Module &M, bool Preorder, 
                                        void *UserData), 
                        void *UserData);
+  
+  /// \brief View the graphviz representation of the module graph.
+  void viewGraph();
 };
 
 } } // end namespace clang::serialization
