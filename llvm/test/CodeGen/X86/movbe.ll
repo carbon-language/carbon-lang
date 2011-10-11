@@ -1,4 +1,4 @@
-; RUN: llc -march=x86-64 -mcpu=atom < %s | FileCheck %s
+; RUN: llc -mtriple=x86_64-linux -mcpu=atom < %s | FileCheck %s
 
 declare i32 @llvm.bswap.i32(i32) nounwind readnone
 declare i64 @llvm.bswap.i64(i64) nounwind readnone
