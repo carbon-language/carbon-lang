@@ -240,7 +240,7 @@ int LLVMContextImpl::getOrAddScopeInlinedAtIdxEntry(MDNode *Scope, MDNode *IA,
 /// deleted - The MDNode this is pointing to got deleted, so this pointer needs
 /// to drop to null and we need remove our entry from the DenseMap.
 void DebugRecVH::deleted() {
-  // If this is a  non-canonical reference, just drop the value to null, we know
+  // If this is a non-canonical reference, just drop the value to null, we know
   // it doesn't have a map entry.
   if (Idx == 0) {
     setValPtr(0);
