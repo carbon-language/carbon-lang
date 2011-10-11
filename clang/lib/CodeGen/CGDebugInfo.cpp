@@ -50,8 +50,10 @@ CGDebugInfo::~CGDebugInfo() {
 }
 
 void CGDebugInfo::setLocation(SourceLocation Loc) {
-  if (Loc.isValid())
-    CurLoc = CGM.getContext().getSourceManager().getExpansionLoc(Loc);
+  // If the new location isn't valid return.
+  if (!Loc.isValid()) return;
+
+  CurLoc = CGM.getContext().getSourceManager().getExpansionLoc(Loc);
 }
 
 /// getContextDescriptor - Get context info for the decl.
