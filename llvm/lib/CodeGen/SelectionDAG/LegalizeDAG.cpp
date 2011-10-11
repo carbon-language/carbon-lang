@@ -1607,82 +1607,101 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
           EVT WideScalarVT = Tmp3.getValueType().getScalarType();
           EVT NarrowScalarVT = StVT.getScalarType();
 
-          // The Store type is illegal, must scalarize the vector store.
-          SmallVector<SDValue, 8> Stores;
-          bool ScalarLegal = TLI.isTypeLegal(WideScalarVT);
-          if (!TLI.isTypeLegal(StVT) && StVT.isVector() && ScalarLegal) {
+          if (StVT.isVector()) {
             unsigned NumElem = StVT.getVectorNumElements();
+            // The type of the data we want to save
+            EVT RegVT = Tmp3.getValueType();
+            EVT RegSclVT = RegVT.getScalarType();
+            // The type of data as saved in memory.
+            EVT MemSclVT = StVT.getScalarType();
 
-            unsigned ScalarSize = StVT.getScalarType().getSizeInBits();
-            EVT EltVT = EVT::getIntegerVT(*DAG.getContext(), ScalarSize);
-            assert(TLI.isTypeLegal(EltVT) && "Scalar store type must be legal");
+            bool RegScalarLegal = TLI.isTypeLegal(RegSclVT);
+            bool MemScalarLegal = TLI.isTypeLegal(MemSclVT);
 
-            // Round odd types to the next pow of two.
-            if (!isPowerOf2_32(ScalarSize))
-              ScalarSize = NextPowerOf2(ScalarSize);
-            // Types smaller than 8 bits are promoted to 8 bits.
-            ScalarSize = std::max<unsigned>(ScalarSize, 8);
-            // Store stride
-            unsigned Stride = ScalarSize/8;
-            assert(isPowerOf2_32(Stride) && "Stride must be a power of two");
+            // We need to expand this store. If both the reg-scalar and the
+            // memory-scalar are of legal types, then scalarize the vector.
+            if (RegScalarLegal && MemScalarLegal) {
+              // Cast floats into integers
+              unsigned ScalarSize = MemSclVT.getSizeInBits();
+              EVT EltVT = EVT::getIntegerVT(*DAG.getContext(), ScalarSize);
+              assert(TLI.isTypeLegal(EltVT) && "Saved scalars must be legal");
 
-            for (unsigned Idx=0; Idx<NumElem; Idx++) {
-              SDValue Ex = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl,
-                                WideScalarVT, Tmp3, DAG.getIntPtrConstant(Idx));
+              // Round odd types to the next pow of two.
+              if (!isPowerOf2_32(ScalarSize))
+                ScalarSize = NextPowerOf2(ScalarSize);
 
-              Ex = DAG.getNode(ISD::TRUNCATE, dl, EltVT, Ex);
-              Tmp2 = DAG.getNode(ISD::ADD, dl, Tmp2.getValueType(), Tmp2,
-                                 DAG.getIntPtrConstant(Stride));
-              SDValue Store = DAG.getStore(Tmp1, dl, Ex, Tmp2,
-                                 ST->getPointerInfo().getWithOffset(Idx*Stride),
-                                 isVolatile, isNonTemporal, Alignment);
-              Stores.push_back(Store);
-            }
-            Result = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
-                                 &Stores[0], Stores.size());
-            break;
-          }
+              // Store Stride in bytes
+              unsigned Stride = ScalarSize/8;
+              // Extract each of the elements from the original vector
+              // and save them into memory individually.
+              SmallVector<SDValue, 8> Stores;
+              for (unsigned Idx = 0; Idx < NumElem; Idx++) {
+                SDValue Ex = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl,
+                                RegSclVT, Tmp3, DAG.getIntPtrConstant(Idx));
 
-          // The Store type is illegal, must scalarize the vector store.
-          // However, the scalar type is illegal. Must bitcast the result
-          // and store it in smaller parts.
-          if (!TLI.isTypeLegal(StVT) && StVT.isVector()) {
-            unsigned WideNumElem = StVT.getVectorNumElements();
-            unsigned Stride = NarrowScalarVT.getSizeInBits()/8;
+                Ex = DAG.getNode(ISD::TRUNCATE, dl, EltVT, Ex);
+                Tmp2 = DAG.getNode(ISD::ADD, dl, Tmp2.getValueType(), Tmp2,
+                                   DAG.getIntPtrConstant(Stride));
 
-            unsigned SizeRatio =
-              (WideScalarVT.getSizeInBits() / NarrowScalarVT.getSizeInBits());
-
-            EVT CastValueVT = EVT::getVectorVT(*DAG.getContext(), NarrowScalarVT,
-                                               SizeRatio*WideNumElem);
-
-            // Cast the wide elem vector to wider vec with smaller elem type.
-            // Example <2 x i64> -> <4 x i32>
-            Tmp3 = DAG.getNode(ISD::BITCAST, dl, CastValueVT, Tmp3);
-
-            for (unsigned Idx=0; Idx<WideNumElem*SizeRatio; Idx++) {
-              // Extract elment i
-              SDValue Ex = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl,
-                               NarrowScalarVT, Tmp3, DAG.getIntPtrConstant(Idx));
-              // bump pointer.
-              Tmp2 = DAG.getNode(ISD::ADD, dl, Tmp2.getValueType(), Tmp2,
-                                 DAG.getIntPtrConstant(Stride));
-
-              // Store if, this element is:
-              //  - First element on big endian, or
-              //  - Last element on little endian
-              if (( TLI.isBigEndian() && (Idx%SizeRatio == 0)) ||
-                  ((!TLI.isBigEndian() && (Idx%SizeRatio == SizeRatio-1)))) {
                 SDValue Store = DAG.getStore(Tmp1, dl, Ex, Tmp2,
                                   ST->getPointerInfo().getWithOffset(Idx*Stride),
                                   isVolatile, isNonTemporal, Alignment);
                 Stores.push_back(Store);
               }
+
+              Result = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
+                                   &Stores[0], Stores.size());
+              break;
             }
-            Result = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
-                                 &Stores[0], Stores.size());
-            break;
-          }
+
+
+            // The scalar register type is illegal.
+            // For example saving <2 x i64> -> <2 x i32> on a x86.
+            // In here we bitcast the value into a vector of smaller parts and
+            // save it using smaller scalars.
+            if (!RegScalarLegal && MemScalarLegal) {
+              // Store Stride in bytes
+              unsigned Stride = MemSclVT.getSizeInBits()/8;
+
+              unsigned SizeRatio =
+                (RegSclVT.getSizeInBits() / MemSclVT.getSizeInBits());
+
+              EVT CastValueVT = EVT::getVectorVT(*DAG.getContext(),
+                                                 MemSclVT,
+                                                 SizeRatio * NumElem);
+
+              // Cast the wide elem vector to wider vec with smaller elem type.
+              // Example <2 x i64> -> <4 x i32>
+              Tmp3 = DAG.getNode(ISD::BITCAST, dl, CastValueVT, Tmp3);
+
+              SmallVector<SDValue, 8> Stores;
+              for (unsigned Idx=0; Idx < NumElem * SizeRatio; Idx++) {
+                // Extract the Ith element.
+                SDValue Ex = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl,
+                                         NarrowScalarVT, Tmp3, DAG.getIntPtrConstant(Idx));
+                // Bump pointer.
+                Tmp2 = DAG.getNode(ISD::ADD, dl, Tmp2.getValueType(), Tmp2,
+                                   DAG.getIntPtrConstant(Stride));
+
+                // Store if, this element is:
+                //  - First element on big endian, or
+                //  - Last element on little endian
+                if (( TLI.isBigEndian() && (Idx % SizeRatio == 0)) ||
+                    ((!TLI.isBigEndian() && (Idx % SizeRatio == SizeRatio-1)))) {
+                  SDValue Store = DAG.getStore(Tmp1, dl, Ex, Tmp2,
+                                               ST->getPointerInfo().getWithOffset(Idx*Stride),
+                                               isVolatile, isNonTemporal, Alignment);
+                  Stores.push_back(Store);
+                }
+              }
+              Result = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
+                                   &Stores[0], Stores.size());
+              break;
+            }
+
+
+            assert(false && "Unable to legalize the vector trunc store!");
+          }// is vector
 
 
           // TRUNCSTORE:i16 i32 -> STORE i16
