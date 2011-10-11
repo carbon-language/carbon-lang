@@ -126,12 +126,12 @@ public:
 };
 
 template <class T>
-void function_missing_typename()
+void function_missing_typename(const T::Type param)// expected-warning {{missing 'typename' prior to dependent type name}}
 {
     const T::Type var = 2; // expected-warning {{missing 'typename' prior to dependent type name}}
 }
 
-template void function_missing_typename<D>();
+template void function_missing_typename<D>(const D::Type param);
 
 }
 

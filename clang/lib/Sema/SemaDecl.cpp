@@ -317,7 +317,7 @@ DeclSpec::TST Sema::isTagName(IdentifierInfo &II, Scope *S) {
 ///   A<T>::TYPE a; // no typename required because A<T> is a base class.
 /// };
 /// @endcode
-bool Sema::isMicrosoftMissingTypename(const CXXScopeSpec *SS) {
+bool Sema::isMicrosoftMissingTypename(const CXXScopeSpec *SS, Scope *S) {
   if (CurContext->isRecord()) {
     const Type *Ty = SS->getScopeRep()->getAsType();
 
@@ -326,8 +326,9 @@ bool Sema::isMicrosoftMissingTypename(const CXXScopeSpec *SS) {
           BaseEnd = RD->bases_end(); Base != BaseEnd; ++Base)
       if (Context.hasSameUnqualifiedType(QualType(Ty, 1), Base->getType()))
         return true;
+    return S->isFunctionPrototypeScope();
   } 
-  return CurContext->isFunctionOrMethod();
+  return CurContext->isFunctionOrMethod() || S->isFunctionPrototypeScope();
 }
 
 bool Sema::DiagnoseUnknownTypeName(const IdentifierInfo &II, 
@@ -409,7 +410,7 @@ bool Sema::DiagnoseUnknownTypeName(const IdentifierInfo &II,
       << &II << DC << SS->getRange();
   else if (isDependentScopeSpecifier(*SS)) {
     unsigned DiagID = diag::err_typename_missing;
-    if (getLangOptions().MicrosoftMode && isMicrosoftMissingTypename(SS))
+    if (getLangOptions().MicrosoftMode && isMicrosoftMissingTypename(SS, S))
       DiagID = diag::warn_typename_missing;
 
     Diag(SS->getRange().getBegin(), DiagID)
