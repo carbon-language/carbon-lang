@@ -1406,6 +1406,22 @@ target datalayout = "<i>layout specification</i>"
       implemented in terms of 64 &lt;2 x double&gt;, for example.</li>
 </ol>
 
+<p>The function of the data layout string may not be what you expect.  Notably,
+   this is not a specification from the frontend of what alignment the code
+   generator should use.</p>
+
+<p>Instead, if specified, the target data layout is required to match what the 
+   ultimate <em>code generator</em> expects.  This string is used by the 
+   mid-level optimizers to
+   improve code, and this only works if it matches what the ultimate code 
+   generator uses.  If you would like to generate IR that does not embed this
+   target-specific detail into the IR, then you don't have to specify the 
+   string.  This will disable some optimizations that require precise layout
+   information, but this also prevents those optimizations from introducing
+   target specificity into the IR.</p>
+
+
+
 </div>
 
 <!-- ======================================================================= -->

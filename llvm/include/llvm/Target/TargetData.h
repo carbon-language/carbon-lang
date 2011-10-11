@@ -44,6 +44,7 @@ enum AlignTypeEnum {
   AGGREGATE_ALIGN = 'a',             ///< Aggregate alignment
   STACK_ALIGN = 's'                  ///< Stack objects alignment
 };
+  
 /// Target alignment element.
 ///
 /// Stores the alignment data associated with a given alignment type (pointer,
@@ -64,6 +65,12 @@ struct TargetAlignElem {
   bool operator==(const TargetAlignElem &rhs) const;
 };
 
+/// TargetData - This class holds a parsed version of the target data layout
+/// string in a module and provides methods for querying it.  The target data
+/// layout string is specified *by the target* - a frontend generating LLVM IR
+/// is required to generate the right target data for the target being codegen'd
+/// to.  If some measure of portability is desired, an empty string may be
+/// specified in the module.
 class TargetData : public ImmutablePass {
 private:
   bool          LittleEndian;          ///< Defaults to false
