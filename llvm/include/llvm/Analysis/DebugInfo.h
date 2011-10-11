@@ -708,8 +708,8 @@ namespace llvm {
   public:
     explicit DILexicalBlockFile(const MDNode *N = 0) : DIScope(N) {}
     DIScope getContext() const { return getScope().getFieldAs<DIScope>(1); }
-    unsigned getLineNumber() const { return getScope().getUnsignedField(2); }
-    unsigned getColumnNumber() const { return getScope().getUnsignedField(3); }
+    unsigned getLineNumber() const { return getScope().getLineNumber(); }
+    unsigned getColumnNumber() const { return getScope().getColumnNumber(); }
     StringRef getDirectory() const {
       StringRef dir = getFieldAs<DIFile>(2).getDirectory();
       return !dir.empty() ? dir : getContext().getDirectory();
