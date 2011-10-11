@@ -35,7 +35,7 @@
           <li><a href="#linkage_externweak">'<tt>extern_weak</tt>' Linkage</a></li>
           <li><a href="#linkage_linkonce_odr">'<tt>linkonce_odr</tt>' Linkage</a></li>
           <li><a href="#linkage_weak">'<tt>weak_odr</tt>' Linkage</a></li>
-          <li><a href="#linkage_external">'<tt>externally visible</tt>' Linkage</a></li>
+          <li><a href="#linkage_external">'<tt>external</tt>' Linkage</a></li>
           <li><a href="#linkage_dllimport">'<tt>dllimport</tt>' Linkage</a></li>
           <li><a href="#linkage_dllexport">'<tt>dllexport</tt>' Linkage</a></li>
         </ol>
@@ -647,7 +647,7 @@ define i32 @main() {   <i>; i32()* </i>&nbsp;
       be merged with equivalent globals.  These linkage types are otherwise the
       same as their non-<tt>odr</tt> versions.</dd>
 
-  <dt><tt><b><a name="linkage_external">externally visible</a></b></tt>:</dt>
+  <dt><tt><b><a name="linkage_external">external</a></b></tt>:</dt>
   <dd>If none of the above identifiers are used, the global is externally
       visible, meaning that it participates in linkage and can be used to
       resolve external symbol references.</dd>
@@ -680,8 +680,8 @@ define i32 @main() {   <i>; i32()* </i>&nbsp;
    declarations), they are accessible outside of the current module.</p>
 
 <p>It is illegal for a function <i>declaration</i> to have any linkage type
-   other than "externally visible", <tt>dllimport</tt>
-   or <tt>extern_weak</tt>.</p>
+   other than <tt>external</tt>, <tt>dllimport</tt>
+  or <tt>extern_weak</tt>.</p>
 
 <p>Aliases can have only <tt>external</tt>, <tt>internal</tt>, <tt>weak</tt>
    or <tt>weak_odr</tt> linkages.</p>
