@@ -624,6 +624,7 @@ def noprebind : Flag<"-noprebind">;
 def noseglinkedit : Flag<"-noseglinkedit">;
 def nostartfiles : Flag<"-nostartfiles">;
 def nostdinc : Flag<"-nostdinc">;
+def nostdlibinc : Flag<"-nostdlibinc">;
 def nostdincxx : Flag<"-nostdinc++">;
 def nostdlib : Flag<"-nostdlib">;
 def object : Flag<"-object">;

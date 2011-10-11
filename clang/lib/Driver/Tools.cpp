@@ -1486,6 +1486,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-nostdsysteminc");
     CmdArgs.push_back("-nobuiltininc");
   } else {
+    if (Args.hasArg(options::OPT_nostdlibinc))
+        CmdArgs.push_back("-nostdsysteminc");
     Args.AddLastArg(CmdArgs, options::OPT_nostdincxx);
     Args.AddLastArg(CmdArgs, options::OPT_nobuiltininc);
   }

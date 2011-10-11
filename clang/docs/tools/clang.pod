@@ -459,7 +459,13 @@ Add the specified directory to the search path for framework include files.
 
 =item B<-nostdinc>
 
-Do not search the standard system directories for include files.
+Do not search the standard system directories or compiler builtin directories
+for include files.
+
+=item B<-nostdlibinc>
+
+Do not search the standard system directories for include files, but do search
+compiler builting include directories.
 
 =item B<-nobuiltininc>
 
