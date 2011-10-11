@@ -2069,7 +2069,7 @@ in signal handlers).</p>
   alignment of the struct is one byte, and that there is no padding between
   the elements.  In non-packed structs, padding between field types is inserted
   as defined by the TargetData string in the module, which is required to match
-  what the underlying processor expects.</p>
+  what the underlying code generator expects.</p>
 
 <p>Structures can either be "literal" or "identified".  A literal structure is
   defined inline with other types (e.g. <tt>{i32, i32}*</tt>) whereas identified
