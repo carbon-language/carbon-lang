@@ -326,7 +326,7 @@ class ARMOperand : public MCParsedAsmOperand {
       ARM_AM::ShiftOpc ShiftType; // Shift type for OffsetReg
       unsigned ShiftImm;      // shift for OffsetReg.
       unsigned isNegative : 1;  // Negated OffsetReg? (~'U' bit)
-    } Mem;
+    } Memory;
 
     struct {
       unsigned RegNum;
@@ -398,7 +398,7 @@ public:
       MBOpt = o.MBOpt;
       break;
     case k_Memory:
-      Mem = o.Mem;
+      Memory = o.Memory;
       break;
     case k_PostIndexRegister:
       PostIdxReg = o.PostIdxReg;
@@ -665,16 +665,16 @@ public:
     if (!isMemory())
       return false;
     // No offset of any kind.
-    return Mem.OffsetRegNum == 0 && Mem.OffsetImm == 0;
+    return Memory.OffsetRegNum == 0 && Memory.OffsetImm == 0;
   }
   bool isAddrMode2() const {
     if (!isMemory())
       return false;
     // Check for register offset.
-    if (Mem.OffsetRegNum) return true;
+    if (Memory.OffsetRegNum) return true;
     // Immediate offset in range [-4095, 4095].
-    if (!Mem.OffsetImm) return true;
-    int64_t Val = Mem.OffsetImm->getValue();
+    if (!Memory.OffsetImm) return true;
+    int64_t Val = Memory.OffsetImm->getValue();
     return Val > -4096 && Val < 4096;
   }
   bool isAM2OffsetImm() const {
@@ -690,12 +690,12 @@ public:
     if (!isMemory())
       return false;
     // No shifts are legal for AM3.
-    if (Mem.ShiftType != ARM_AM::no_shift) return false;
+    if (Memory.ShiftType != ARM_AM::no_shift) return false;
     // Check for register offset.
-    if (Mem.OffsetRegNum) return true;
+    if (Memory.OffsetRegNum) return true;
     // Immediate offset in range [-255, 255].
-    if (!Mem.OffsetImm) return true;
-    int64_t Val = Mem.OffsetImm->getValue();
+    if (!Memory.OffsetImm) return true;
+    int64_t Val = Memory.OffsetImm->getValue();
     return Val > -256 && Val < 256;
   }
   bool isAM3Offset() const {
@@ -714,122 +714,122 @@ public:
     if (!isMemory())
       return false;
     // Check for register offset.
-    if (Mem.OffsetRegNum) return false;
+    if (Memory.OffsetRegNum) return false;
     // Immediate offset in range [-1020, 1020] and a multiple of 4.
-    if (!Mem.OffsetImm) return true;
-    int64_t Val = Mem.OffsetImm->getValue();
+    if (!Memory.OffsetImm) return true;
+    int64_t Val = Memory.OffsetImm->getValue();
     return (Val >= -1020 && Val <= 1020 && ((Val & 3) == 0)) ||
            Val == INT32_MIN;
   }
   bool isMemTBB() const {
-    if (!isMemory() || !Mem.OffsetRegNum || Mem.isNegative ||
-        Mem.ShiftType != ARM_AM::no_shift)
+    if (!isMemory() || !Memory.OffsetRegNum || Memory.isNegative ||
+        Memory.ShiftType != ARM_AM::no_shift)
       return false;
     return true;
   }
   bool isMemTBH() const {
-    if (!isMemory() || !Mem.OffsetRegNum || Mem.isNegative ||
-        Mem.ShiftType != ARM_AM::lsl || Mem.ShiftImm != 1)
+    if (!isMemory() || !Memory.OffsetRegNum || Memory.isNegative ||
+        Memory.ShiftType != ARM_AM::lsl || Memory.ShiftImm != 1)
       return false;
     return true;
   }
   bool isMemRegOffset() const {
-    if (!isMemory() || !Mem.OffsetRegNum)
+    if (!isMemory() || !Memory.OffsetRegNum)
       return false;
     return true;
   }
   bool isT2MemRegOffset() const {
-    if (!isMemory() || !Mem.OffsetRegNum || Mem.isNegative)
+    if (!isMemory() || !Memory.OffsetRegNum || Memory.isNegative)
       return false;
     // Only lsl #{0, 1, 2, 3} allowed.
-    if (Mem.ShiftType == ARM_AM::no_shift)
+    if (Memory.ShiftType == ARM_AM::no_shift)
       return true;
-    if (Mem.ShiftType != ARM_AM::lsl || Mem.ShiftImm > 3)
+    if (Memory.ShiftType != ARM_AM::lsl || Memory.ShiftImm > 3)
       return false;
     return true;
   }
   bool isMemThumbRR() const {
     // Thumb reg+reg addressing is simple. Just two registers, a base and
     // an offset. No shifts, negations or any other complicating factors.
-    if (!isMemory() || !Mem.OffsetRegNum || Mem.isNegative ||
-        Mem.ShiftType != ARM_AM::no_shift)
+    if (!isMemory() || !Memory.OffsetRegNum || Memory.isNegative ||
+        Memory.ShiftType != ARM_AM::no_shift)
       return false;
-    return isARMLowRegister(Mem.BaseRegNum) &&
-      (!Mem.OffsetRegNum || isARMLowRegister(Mem.OffsetRegNum));
+    return isARMLowRegister(Memory.BaseRegNum) &&
+      (!Memory.OffsetRegNum || isARMLowRegister(Memory.OffsetRegNum));
   }
   bool isMemThumbRIs4() const {
-    if (!isMemory() || Mem.OffsetRegNum != 0 ||
-        !isARMLowRegister(Mem.BaseRegNum))
+    if (!isMemory() || Memory.OffsetRegNum != 0 ||
+        !isARMLowRegister(Memory.BaseRegNum))
       return false;
     // Immediate offset, multiple of 4 in range [0, 124].
-    if (!Mem.OffsetImm) return true;
-    int64_t Val = Mem.OffsetImm->getValue();
+    if (!Memory.OffsetImm) return true;
+    int64_t Val = Memory.OffsetImm->getValue();
     return Val >= 0 && Val <= 124 && (Val % 4) == 0;
   }
   bool isMemThumbRIs2() const {
-    if (!isMemory() || Mem.OffsetRegNum != 0 ||
-        !isARMLowRegister(Mem.BaseRegNum))
+    if (!isMemory() || Memory.OffsetRegNum != 0 ||
+        !isARMLowRegister(Memory.BaseRegNum))
       return false;
     // Immediate offset, multiple of 4 in range [0, 62].
-    if (!Mem.OffsetImm) return true;
-    int64_t Val = Mem.OffsetImm->getValue();
+    if (!Memory.OffsetImm) return true;
+    int64_t Val = Memory.OffsetImm->getValue();
     return Val >= 0 && Val <= 62 && (Val % 2) == 0;
   }
   bool isMemThumbRIs1() const {
-    if (!isMemory() || Mem.OffsetRegNum != 0 ||
-        !isARMLowRegister(Mem.BaseRegNum))
+    if (!isMemory() || Memory.OffsetRegNum != 0 ||
+        !isARMLowRegister(Memory.BaseRegNum))
       return false;
     // Immediate offset in range [0, 31].
-    if (!Mem.OffsetImm) return true;
-    int64_t Val = Mem.OffsetImm->getValue();
+    if (!Memory.OffsetImm) return true;
+    int64_t Val = Memory.OffsetImm->getValue();
     return Val >= 0 && Val <= 31;
   }
   bool isMemThumbSPI() const {
-    if (!isMemory() || Mem.OffsetRegNum != 0 || Mem.BaseRegNum != ARM::SP)
+    if (!isMemory() || Memory.OffsetRegNum != 0 || Memory.BaseRegNum != ARM::SP)
       return false;
     // Immediate offset, multiple of 4 in range [0, 1020].
-    if (!Mem.OffsetImm) return true;
-    int64_t Val = Mem.OffsetImm->getValue();
+    if (!Memory.OffsetImm) return true;
+    int64_t Val = Memory.OffsetImm->getValue();
     return Val >= 0 && Val <= 1020 && (Val % 4) == 0;
   }
   bool isMemImm8s4Offset() const {
-    if (!isMemory() || Mem.OffsetRegNum != 0)
+    if (!isMemory() || Memory.OffsetRegNum != 0)
       return false;
     // Immediate offset a multiple of 4 in range [-1020, 1020].
-    if (!Mem.OffsetImm) return true;
-    int64_t Val = Mem.OffsetImm->getValue();
+    if (!Memory.OffsetImm) return true;
+    int64_t Val = Memory.OffsetImm->getValue();
     return Val >= -1020 && Val <= 1020 && (Val & 3) == 0;
   }
   bool isMemImm0_1020s4Offset() const {
-    if (!isMemory() || Mem.OffsetRegNum != 0)
+    if (!isMemory() || Memory.OffsetRegNum != 0)
       return false;
     // Immediate offset a multiple of 4 in range [0, 1020].
-    if (!Mem.OffsetImm) return true;
-    int64_t Val = Mem.OffsetImm->getValue();
+    if (!Memory.OffsetImm) return true;
+    int64_t Val = Memory.OffsetImm->getValue();
     return Val >= 0 && Val <= 1020 && (Val & 3) == 0;
   }
   bool isMemImm8Offset() const {
-    if (!isMemory() || Mem.OffsetRegNum != 0)
+    if (!isMemory() || Memory.OffsetRegNum != 0)
       return false;
     // Immediate offset in range [-255, 255].
-    if (!Mem.OffsetImm) return true;
-    int64_t Val = Mem.OffsetImm->getValue();
+    if (!Memory.OffsetImm) return true;
+    int64_t Val = Memory.OffsetImm->getValue();
     return (Val == INT32_MIN) || (Val > -256 && Val < 256);
   }
   bool isMemPosImm8Offset() const {
-    if (!isMemory() || Mem.OffsetRegNum != 0)
+    if (!isMemory() || Memory.OffsetRegNum != 0)
       return false;
     // Immediate offset in range [0, 255].
-    if (!Mem.OffsetImm) return true;
-    int64_t Val = Mem.OffsetImm->getValue();
+    if (!Memory.OffsetImm) return true;
+    int64_t Val = Memory.OffsetImm->getValue();
     return Val >= 0 && Val < 256;
   }
   bool isMemNegImm8Offset() const {
-    if (!isMemory() || Mem.OffsetRegNum != 0)
+    if (!isMemory() || Memory.OffsetRegNum != 0)
       return false;
     // Immediate offset in range [-255, -1].
-    if (!Mem.OffsetImm) return true;
-    int64_t Val = Mem.OffsetImm->getValue();
+    if (!Memory.OffsetImm) return true;
+    int64_t Val = Memory.OffsetImm->getValue();
     return Val > -256 && Val < 0;
   }
   bool isMemUImm12Offset() const {
@@ -839,11 +839,11 @@ public:
     if (Kind == k_Immediate && !isa<MCConstantExpr>(getImm()))
       return true;
 
-    if (!isMemory() || Mem.OffsetRegNum != 0)
+    if (!isMemory() || Memory.OffsetRegNum != 0)
       return false;
     // Immediate offset in range [0, 4095].
-    if (!Mem.OffsetImm) return true;
-    int64_t Val = Mem.OffsetImm->getValue();
+    if (!Memory.OffsetImm) return true;
+    int64_t Val = Memory.OffsetImm->getValue();
     return (Val >= 0 && Val < 4096);
   }
   bool isMemImm12Offset() const {
@@ -853,11 +853,11 @@ public:
     if (Kind == k_Immediate && !isa<MCConstantExpr>(getImm()))
       return true;
 
-    if (!isMemory() || Mem.OffsetRegNum != 0)
+    if (!isMemory() || Memory.OffsetRegNum != 0)
       return false;
     // Immediate offset in range [-4095, 4095].
-    if (!Mem.OffsetImm) return true;
-    int64_t Val = Mem.OffsetImm->getValue();
+    if (!Memory.OffsetImm) return true;
+    int64_t Val = Memory.OffsetImm->getValue();
     return (Val > -4096 && Val < 4096) || (Val == INT32_MIN);
   }
   bool isPostIdxImm8() const {
@@ -1120,13 +1120,13 @@ public:
 
   void addMemNoOffsetOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
+    Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
   }
 
   void addAddrMode2Operands(MCInst &Inst, unsigned N) const {
     assert(N == 3 && "Invalid number of operands!");
-    int32_t Val = Mem.OffsetImm ? Mem.OffsetImm->getValue() : 0;
-    if (!Mem.OffsetRegNum) {
+    int32_t Val = Memory.OffsetImm ? Memory.OffsetImm->getValue() : 0;
+    if (!Memory.OffsetRegNum) {
       ARM_AM::AddrOpc AddSub = Val < 0 ? ARM_AM::sub : ARM_AM::add;
       // Special case for #-0
       if (Val == INT32_MIN) Val = 0;
@@ -1135,11 +1135,11 @@ public:
     } else {
       // For register offset, we encode the shift type and negation flag
       // here.
-      Val = ARM_AM::getAM2Opc(Mem.isNegative ? ARM_AM::sub : ARM_AM::add,
-                              Mem.ShiftImm, Mem.ShiftType);
+      Val = ARM_AM::getAM2Opc(Memory.isNegative ? ARM_AM::sub : ARM_AM::add,
+                              Memory.ShiftImm, Memory.ShiftType);
     }
-    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
-    Inst.addOperand(MCOperand::CreateReg(Mem.OffsetRegNum));
+    Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
+    Inst.addOperand(MCOperand::CreateReg(Memory.OffsetRegNum));
     Inst.addOperand(MCOperand::CreateImm(Val));
   }
 
@@ -1159,8 +1159,8 @@ public:
 
   void addAddrMode3Operands(MCInst &Inst, unsigned N) const {
     assert(N == 3 && "Invalid number of operands!");
-    int32_t Val = Mem.OffsetImm ? Mem.OffsetImm->getValue() : 0;
-    if (!Mem.OffsetRegNum) {
+    int32_t Val = Memory.OffsetImm ? Memory.OffsetImm->getValue() : 0;
+    if (!Memory.OffsetRegNum) {
       ARM_AM::AddrOpc AddSub = Val < 0 ? ARM_AM::sub : ARM_AM::add;
       // Special case for #-0
       if (Val == INT32_MIN) Val = 0;
@@ -1169,10 +1169,10 @@ public:
     } else {
       // For register offset, we encode the shift type and negation flag
       // here.
-      Val = ARM_AM::getAM3Opc(Mem.isNegative ? ARM_AM::sub : ARM_AM::add, 0);
+      Val = ARM_AM::getAM3Opc(Memory.isNegative ? ARM_AM::sub : ARM_AM::add, 0);
     }
-    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
-    Inst.addOperand(MCOperand::CreateReg(Mem.OffsetRegNum));
+    Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
+    Inst.addOperand(MCOperand::CreateReg(Memory.OffsetRegNum));
     Inst.addOperand(MCOperand::CreateImm(Val));
   }
 
@@ -1201,35 +1201,35 @@ public:
   void addAddrMode5Operands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
     // The lower two bits are always zero and as such are not encoded.
-    int32_t Val = Mem.OffsetImm ? Mem.OffsetImm->getValue() / 4 : 0;
+    int32_t Val = Memory.OffsetImm ? Memory.OffsetImm->getValue() / 4 : 0;
     ARM_AM::AddrOpc AddSub = Val < 0 ? ARM_AM::sub : ARM_AM::add;
     // Special case for #-0
     if (Val == INT32_MIN) Val = 0;
     if (Val < 0) Val = -Val;
     Val = ARM_AM::getAM5Opc(AddSub, Val);
-    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
+    Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
     Inst.addOperand(MCOperand::CreateImm(Val));
   }
 
   void addMemImm8s4OffsetOperands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
-    int64_t Val = Mem.OffsetImm ? Mem.OffsetImm->getValue() : 0;
-    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
+    int64_t Val = Memory.OffsetImm ? Memory.OffsetImm->getValue() : 0;
+    Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
     Inst.addOperand(MCOperand::CreateImm(Val));
   }
 
   void addMemImm0_1020s4OffsetOperands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
     // The lower two bits are always zero and as such are not encoded.
-    int32_t Val = Mem.OffsetImm ? Mem.OffsetImm->getValue() / 4 : 0;
-    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
+    int32_t Val = Memory.OffsetImm ? Memory.OffsetImm->getValue() / 4 : 0;
+    Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
     Inst.addOperand(MCOperand::CreateImm(Val));
   }
 
   void addMemImm8OffsetOperands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
-    int64_t Val = Mem.OffsetImm ? Mem.OffsetImm->getValue() : 0;
-    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
+    int64_t Val = Memory.OffsetImm ? Memory.OffsetImm->getValue() : 0;
+    Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
     Inst.addOperand(MCOperand::CreateImm(Val));
   }
 
@@ -1251,8 +1251,8 @@ public:
     }
 
     // Otherwise, it's a normal memory reg+offset.
-    int64_t Val = Mem.OffsetImm ? Mem.OffsetImm->getValue() : 0;
-    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
+    int64_t Val = Memory.OffsetImm ? Memory.OffsetImm->getValue() : 0;
+    Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
     Inst.addOperand(MCOperand::CreateImm(Val));
   }
 
@@ -1266,70 +1266,70 @@ public:
     }
 
     // Otherwise, it's a normal memory reg+offset.
-    int64_t Val = Mem.OffsetImm ? Mem.OffsetImm->getValue() : 0;
-    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
+    int64_t Val = Memory.OffsetImm ? Memory.OffsetImm->getValue() : 0;
+    Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
     Inst.addOperand(MCOperand::CreateImm(Val));
   }
 
   void addMemTBBOperands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
-    Inst.addOperand(MCOperand::CreateReg(Mem.OffsetRegNum));
+    Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
+    Inst.addOperand(MCOperand::CreateReg(Memory.OffsetRegNum));
   }
 
   void addMemTBHOperands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
-    Inst.addOperand(MCOperand::CreateReg(Mem.OffsetRegNum));
+    Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
+    Inst.addOperand(MCOperand::CreateReg(Memory.OffsetRegNum));
   }
 
   void addMemRegOffsetOperands(MCInst &Inst, unsigned N) const {
     assert(N == 3 && "Invalid number of operands!");
-    unsigned Val = ARM_AM::getAM2Opc(Mem.isNegative ? ARM_AM::sub : ARM_AM::add,
-                                     Mem.ShiftImm, Mem.ShiftType);
-    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
-    Inst.addOperand(MCOperand::CreateReg(Mem.OffsetRegNum));
+    unsigned Val = ARM_AM::getAM2Opc(Memory.isNegative ? ARM_AM::sub : ARM_AM::add,
+                                     Memory.ShiftImm, Memory.ShiftType);
+    Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
+    Inst.addOperand(MCOperand::CreateReg(Memory.OffsetRegNum));
     Inst.addOperand(MCOperand::CreateImm(Val));
   }
 
   void addT2MemRegOffsetOperands(MCInst &Inst, unsigned N) const {
     assert(N == 3 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
-    Inst.addOperand(MCOperand::CreateReg(Mem.OffsetRegNum));
-    Inst.addOperand(MCOperand::CreateImm(Mem.ShiftImm));
+    Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
+    Inst.addOperand(MCOperand::CreateReg(Memory.OffsetRegNum));
+    Inst.addOperand(MCOperand::CreateImm(Memory.ShiftImm));
   }
 
   void addMemThumbRROperands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
-    Inst.addOperand(MCOperand::CreateReg(Mem.OffsetRegNum));
+    Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
+    Inst.addOperand(MCOperand::CreateReg(Memory.OffsetRegNum));
   }
 
   void addMemThumbRIs4Operands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
-    int64_t Val = Mem.OffsetImm ? (Mem.OffsetImm->getValue() / 4) : 0;
-    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
+    int64_t Val = Memory.OffsetImm ? (Memory.OffsetImm->getValue() / 4) : 0;
+    Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
     Inst.addOperand(MCOperand::CreateImm(Val));
   }
 
   void addMemThumbRIs2Operands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
-    int64_t Val = Mem.OffsetImm ? (Mem.OffsetImm->getValue() / 2) : 0;
-    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
+    int64_t Val = Memory.OffsetImm ? (Memory.OffsetImm->getValue() / 2) : 0;
+    Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
     Inst.addOperand(MCOperand::CreateImm(Val));
   }
 
   void addMemThumbRIs1Operands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
-    int64_t Val = Mem.OffsetImm ? (Mem.OffsetImm->getValue()) : 0;
-    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
+    int64_t Val = Memory.OffsetImm ? (Memory.OffsetImm->getValue()) : 0;
+    Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
     Inst.addOperand(MCOperand::CreateImm(Val));
   }
 
   void addMemThumbSPIOperands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
-    int64_t Val = Mem.OffsetImm ? (Mem.OffsetImm->getValue() / 4) : 0;
-    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
+    int64_t Val = Memory.OffsetImm ? (Memory.OffsetImm->getValue() / 4) : 0;
+    Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
     Inst.addOperand(MCOperand::CreateImm(Val));
   }
 
@@ -1555,12 +1555,12 @@ public:
                                bool isNegative,
                                SMLoc S, SMLoc E) {
     ARMOperand *Op = new ARMOperand(k_Memory);
-    Op->Mem.BaseRegNum = BaseRegNum;
-    Op->Mem.OffsetImm = OffsetImm;
-    Op->Mem.OffsetRegNum = OffsetRegNum;
-    Op->Mem.ShiftType = ShiftType;
-    Op->Mem.ShiftImm = ShiftImm;
-    Op->Mem.isNegative = isNegative;
+    Op->Memory.BaseRegNum = BaseRegNum;
+    Op->Memory.OffsetImm = OffsetImm;
+    Op->Memory.OffsetRegNum = OffsetRegNum;
+    Op->Memory.ShiftType = ShiftType;
+    Op->Memory.ShiftImm = ShiftImm;
+    Op->Memory.isNegative = isNegative;
     Op->StartLoc = S;
     Op->EndLoc = E;
     return Op;
@@ -1644,7 +1644,7 @@ void ARMOperand::print(raw_ostream &OS) const {
     break;
   case k_Memory:
     OS << "<memory "
-       << " base:" << Mem.BaseRegNum;
+       << " base:" << Memory.BaseRegNum;
     OS << ">";
     break;
   case k_PostIndexRegister:
