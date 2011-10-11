@@ -20,6 +20,7 @@
 #include "lldb/Target/Target.h"
 
 #include "ProcessLinux.h"
+#include "ProcessLinuxLog.h"
 #include "Plugins/Process/Utility/InferiorCallPOSIX.h"
 #include "ProcessMonitor.h"
 #include "LinuxThread.h"
@@ -43,10 +44,18 @@ ProcessLinux::Initialize()
 
     if (!g_initialized)
     {
+        g_initialized = true;
         PluginManager::RegisterPlugin(GetPluginNameStatic(),
                                       GetPluginDescriptionStatic(),
                                       CreateInstance);
-        g_initialized = true;
+
+        Log::Callbacks log_callbacks = {
+            ProcessLinuxLog::DisableLog,
+            ProcessLinuxLog::EnableLog,
+            ProcessLinuxLog::ListLogCategories
+        };
+        
+        Log::RegisterLogChannel (ProcessLinux::GetPluginNameStatic(), log_callbacks);
     }
 }
 
@@ -107,6 +116,10 @@ ProcessLinux::DoAttachToProcessWithID(lldb::pid_t pid)
 {
     Error error;
     assert(m_monitor == NULL);
+
+    LogSP log (ProcessLinuxLog::GetLogIfAllCategoriesSet (LINUX_LOG_PROCESS));
+    if (log && log->GetMask().Test(LINUX_LOG_VERBOSE))
+        log->Printf ("ProcessLinux::%s (pid = %i)", __FUNCTION__, GetID());
 
     m_monitor = new ProcessMonitor(this, pid, error);
 
@@ -441,6 +454,10 @@ uint32_t
 ProcessLinux::UpdateThreadList(ThreadList &old_thread_list, ThreadList &new_thread_list)
 {
     // FIXME: Should this be implemented?
+    LogSP log (ProcessLinuxLog::GetLogIfAllCategoriesSet (LINUX_LOG_THREAD));
+    if (log && log->GetMask().Test(LINUX_LOG_VERBOSE))
+        log->Printf ("ProcessLinux::%s (pid = %i)", __FUNCTION__, GetID());
+
     return 0;
 }
 
