@@ -281,6 +281,7 @@ return:
 ; CHECK-NOT: phi
 ; CHECK: add i32
 ; CHECK: add i32
+; CHECK: add i32
 ; CHECK-NOT: add
 ; CHECK: return:
 ;

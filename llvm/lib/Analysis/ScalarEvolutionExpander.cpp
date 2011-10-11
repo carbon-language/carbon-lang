@@ -1465,3 +1465,103 @@ SCEVExpander::getOrInsertCanonicalInductionVariable(const Loop *L,
 
   return V;
 }
+
+/// hoistStep - Attempt to hoist an IV increment above a potential use.
+///
+/// To successfully hoist, two criteria must be met:
+/// - IncV operands dominate InsertPos and
+/// - InsertPos dominates IncV
+///
+/// Meeting the second condition means that we don't need to check all of IncV's
+/// existing uses (it's moving up in the domtree).
+///
+/// This does not yet recursively hoist the operands, although that would
+/// not be difficult.
+///
+/// This does not require a SCEVExpander instance and could be replaced by a
+/// general code-insertion helper.
+bool SCEVExpander::hoistStep(Instruction *IncV, Instruction *InsertPos,
+                             const DominatorTree *DT) {
+  if (DT->dominates(IncV, InsertPos))
+    return true;
+
+  if (!DT->dominates(InsertPos->getParent(), IncV->getParent()))
+    return false;
+
+  if (IncV->mayHaveSideEffects())
+    return false;
+
+  // Attempt to hoist IncV
+  for (User::op_iterator OI = IncV->op_begin(), OE = IncV->op_end();
+       OI != OE; ++OI) {
+    Instruction *OInst = dyn_cast<Instruction>(OI);
+    if (OInst && !DT->dominates(OInst, InsertPos))
+      return false;
+  }
+  IncV->moveBefore(InsertPos);
+  return true;
+}
+
+/// replaceCongruentIVs - Check for congruent phis in this loop header and
+/// replace them with their most canonical representative. Return the number of
+/// phis eliminated.
+///
+/// This does not depend on any SCEVExpander state but should be used in
+/// the same context that SCEVExpander is used.
+unsigned SCEVExpander::replaceCongruentIVs(Loop *L, const DominatorTree *DT,
+                                           SmallVectorImpl<WeakVH> &DeadInsts) {
+  unsigned NumElim = 0;
+  DenseMap<const SCEV *, PHINode *> ExprToIVMap;
+  for (BasicBlock::iterator I = L->getHeader()->begin(); isa<PHINode>(I); ++I) {
+    PHINode *Phi = cast<PHINode>(I);
+    if (!SE.isSCEVable(Phi->getType()))
+      continue;
+
+    PHINode *&OrigPhiRef = ExprToIVMap[SE.getSCEV(Phi)];
+    if (!OrigPhiRef) {
+      OrigPhiRef = Phi;
+      continue;
+    }
+
+    // If one phi derives from the other via GEPs, types may differ.
+    // We could consider adding a bitcast here to handle it.
+    if (OrigPhiRef->getType() != Phi->getType())
+      continue;
+
+    if (BasicBlock *LatchBlock = L->getLoopLatch()) {
+      Instruction *OrigInc =
+        cast<Instruction>(OrigPhiRef->getIncomingValueForBlock(LatchBlock));
+      Instruction *IsomorphicInc =
+        cast<Instruction>(Phi->getIncomingValueForBlock(LatchBlock));
+
+      // If this phi is more canonical, swap it with the original.
+      if (!isExpandedAddRecExprPHI(OrigPhiRef, OrigInc, L,
+                                   OrigPhiRef->getType())
+          && isExpandedAddRecExprPHI(Phi, IsomorphicInc, L, Phi->getType())) {
+        std::swap(OrigPhiRef, Phi);
+        std::swap(OrigInc, IsomorphicInc);
+      }
+      // Replacing the congruent phi is sufficient because acyclic redundancy
+      // elimination, CSE/GVN, should handle the rest. However, once SCEV proves
+      // that a phi is congruent, it's often the head of an IV user cycle that
+      // is isomorphic with the original phi. So it's worth eagerly cleaning up
+      // the common case of a single IV increment.
+      if (OrigInc != IsomorphicInc &&
+          OrigInc->getType() == IsomorphicInc->getType() &&
+          SE.getSCEV(OrigInc) == SE.getSCEV(IsomorphicInc) &&
+          hoistStep(OrigInc, IsomorphicInc, DT)) {
+        DEBUG_WITH_TYPE(DebugType, dbgs()
+                        << "INDVARS: Eliminated congruent iv.inc: "
+                        << *IsomorphicInc << '\n');
+        IsomorphicInc->replaceAllUsesWith(OrigInc);
+        DeadInsts.push_back(IsomorphicInc);
+      }
+    }
+    DEBUG_WITH_TYPE(DebugType, dbgs()
+                    << "INDVARS: Eliminated congruent iv: " << *Phi << '\n');
+    ++NumElim;
+    Phi->replaceAllUsesWith(OrigPhiRef);
+    DeadInsts.push_back(Phi);
+  }
+  return NumElim;
+}

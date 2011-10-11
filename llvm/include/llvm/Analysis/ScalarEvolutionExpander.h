@@ -72,6 +72,10 @@ namespace llvm {
     typedef IRBuilder<true, TargetFolder> BuilderType;
     BuilderType Builder;
 
+#ifndef NDEBUG
+    const char *DebugType;
+#endif
+
     friend struct SCEVVisitor<SCEVExpander, Value*>;
 
   public:
@@ -79,7 +83,15 @@ namespace llvm {
     explicit SCEVExpander(ScalarEvolution &se, const char *name)
       : SE(se), IVName(name), IVIncInsertLoop(0), IVIncInsertPos(0),
         CanonicalMode(true), LSRMode(false),
-        Builder(se.getContext(), TargetFolder(se.TD)) {}
+        Builder(se.getContext(), TargetFolder(se.TD)) {
+#ifndef NDEBUG
+      DebugType = "";
+#endif
+    }
+
+#ifndef NDEBUG
+    void setDebugType(const char* s) { DebugType = s; }
+#endif
 
     /// clear - Erase the contents of the InsertedExpressions map so that users
     /// trying to expand the same expression into multiple BasicBlocks or
@@ -95,6 +107,15 @@ namespace llvm {
     /// loop (inserting one if there is none).  A canonical induction variable
     /// starts at zero and steps by one on each iteration.
     PHINode *getOrInsertCanonicalInductionVariable(const Loop *L, Type *Ty);
+
+    /// hoistStep - Utility for hoisting an IV increment.
+    static bool hoistStep(Instruction *IncV, Instruction *InsertPos,
+                          const DominatorTree *DT);
+
+    /// replaceCongruentIVs - replace congruent phis with their most canonical
+    /// representative. Return the number of phis eliminated.
+    unsigned replaceCongruentIVs(Loop *L, const DominatorTree *DT,
+                                 SmallVectorImpl<WeakVH> &DeadInsts);
 
     /// expandCodeFor - Insert code to directly compute the specified SCEV
     /// expression into the program.  The inserted code is inserted into the

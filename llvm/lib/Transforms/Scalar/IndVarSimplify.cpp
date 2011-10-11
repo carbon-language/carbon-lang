@@ -119,8 +119,6 @@ namespace {
 
     void SimplifyAndExtend(Loop *L, SCEVExpander &Rewriter, LPPassManager &LPM);
 
-    void SimplifyCongruentIVs(Loop *L);
-
     void RewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter);
 
     void RewriteIVExpressions(Loop *L, SCEVExpander &Rewriter);
@@ -920,40 +918,6 @@ Instruction *WidenIV::CloneIVUser(NarrowIVDefUse DU) {
   llvm_unreachable(0);
 }
 
-/// HoistStep - Attempt to hoist an IV increment above a potential use.
-///
-/// To successfully hoist, two criteria must be met:
-/// - IncV operands dominate InsertPos and
-/// - InsertPos dominates IncV
-///
-/// Meeting the second condition means that we don't need to check all of IncV's
-/// existing uses (it's moving up in the domtree).
-///
-/// This does not yet recursively hoist the operands, although that would
-/// not be difficult.
-static bool HoistStep(Instruction *IncV, Instruction *InsertPos,
-                      const DominatorTree *DT)
-{
-  if (DT->dominates(IncV, InsertPos))
-    return true;
-
-  if (!DT->dominates(InsertPos->getParent(), IncV->getParent()))
-    return false;
-
-  if (IncV->mayHaveSideEffects())
-    return false;
-
-  // Attempt to hoist IncV
-  for (User::op_iterator OI = IncV->op_begin(), OE = IncV->op_end();
-       OI != OE; ++OI) {
-    Instruction *OInst = dyn_cast<Instruction>(OI);
-    if (OInst && !DT->dominates(OInst, InsertPos))
-      return false;
-  }
-  IncV->moveBefore(InsertPos);
-  return true;
-}
-
 /// No-wrap operations can transfer sign extension of their result to their
 /// operands. Generate the SCEV value for the widened operation without
 /// actually modifying the IR yet. If the expression after extending the
@@ -1084,9 +1048,9 @@ Instruction *WidenIV::WidenIVUse(NarrowIVDefUse DU) {
   // Reuse the IV increment that SCEVExpander created as long as it dominates
   // NarrowUse.
   Instruction *WideUse = 0;
-  if (WideAddRec == WideIncExpr && HoistStep(WideInc, DU.NarrowUse, DT)) {
+  if (WideAddRec == WideIncExpr
+      && SCEVExpander::hoistStep(WideInc, DU.NarrowUse, DT))
     WideUse = WideInc;
-  }
   else {
     WideUse = CloneIVUser(DU);
     if (!WideUse)
@@ -1256,54 +1220,6 @@ void IndVarSimplify::SimplifyAndExtend(Loop *L,
       }
     }
     WideIVMap.clear();
-  }
-}
-
-/// SimplifyCongruentIVs - Check for congruent phis in this loop header and
-/// replace them with their chosen representative.
-///
-void IndVarSimplify::SimplifyCongruentIVs(Loop *L) {
-  DenseMap<const SCEV *, PHINode *> ExprToIVMap;
-  for (BasicBlock::iterator I = L->getHeader()->begin(); isa<PHINode>(I); ++I) {
-    PHINode *Phi = cast<PHINode>(I);
-    if (!SE->isSCEVable(Phi->getType()))
-      continue;
-
-    const SCEV *S = SE->getSCEV(Phi);
-    std::pair<DenseMap<const SCEV *, PHINode *>::const_iterator, bool> Tmp =
-      ExprToIVMap.insert(std::make_pair(S, Phi));
-    if (Tmp.second)
-      continue;
-    PHINode *OrigPhi = Tmp.first->second;
-
-    // If one phi derives from the other via GEPs, types may differ.
-    if (OrigPhi->getType() != Phi->getType())
-      continue;
-
-    // Replacing the congruent phi is sufficient because acyclic redundancy
-    // elimination, CSE/GVN, should handle the rest. However, once SCEV proves
-    // that a phi is congruent, it's almost certain to be the head of an IV
-    // user cycle that is isomorphic with the original phi. So it's worth
-    // eagerly cleaning up the common case of a single IV increment.
-    if (BasicBlock *LatchBlock = L->getLoopLatch()) {
-      Instruction *OrigInc =
-        cast<Instruction>(OrigPhi->getIncomingValueForBlock(LatchBlock));
-      Instruction *IsomorphicInc =
-        cast<Instruction>(Phi->getIncomingValueForBlock(LatchBlock));
-      if (OrigInc != IsomorphicInc &&
-          OrigInc->getType() == IsomorphicInc->getType() &&
-          SE->getSCEV(OrigInc) == SE->getSCEV(IsomorphicInc) &&
-          HoistStep(OrigInc, IsomorphicInc, DT)) {
-        DEBUG(dbgs() << "INDVARS: Eliminated congruent iv.inc: "
-              << *IsomorphicInc << '\n');
-        IsomorphicInc->replaceAllUsesWith(OrigInc);
-        DeadInsts.push_back(IsomorphicInc);
-      }
-    }
-    DEBUG(dbgs() << "INDVARS: Eliminated congruent iv: " << *Phi << '\n');
-    ++NumElimIV;
-    Phi->replaceAllUsesWith(OrigPhi);
-    DeadInsts.push_back(Phi);
   }
 }
 
@@ -1848,6 +1764,9 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   // Create a rewriter object which we'll use to transform the code with.
   SCEVExpander Rewriter(*SE, "indvars");
+#ifndef NDEBUG
+  Rewriter.setDebugType(DEBUG_TYPE);
+#endif
 
   // Eliminate redundant IV users.
   //
@@ -1875,7 +1794,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   // Eliminate redundant IV cycles.
   if (!EnableIVRewrite)
-    SimplifyCongruentIVs(L);
+    NumElimIV += Rewriter.replaceCongruentIVs(L, DT, DeadInsts);
 
   // Compute the type of the largest recurrence expression, and decide whether
   // a canonical induction variable should be inserted.
