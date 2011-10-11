@@ -34,14 +34,14 @@ Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, ParsingDeclarator &D,
           TemplateInfo.TemplateParams ? TemplateInfo.TemplateParams->size() : 0);
 
   Decl *FnD;
+  D.setFunctionDefinition(true);
   if (D.getDeclSpec().isFriendSpecified())
-    FnD = Actions.ActOnFriendFunctionDecl(getCurScope(), D, true,
+    FnD = Actions.ActOnFriendFunctionDecl(getCurScope(), D,
                                           move(TemplateParams));
   else {
     FnD = Actions.ActOnCXXMemberDeclarator(getCurScope(), AS, D,
                                            move(TemplateParams), 0, 
-                                           VS, /*HasInit=*/false,
-                                           /*IsDefinition*/true);
+                                           VS, /*HasInit=*/false);
     if (FnD) {
       bool TypeSpecContainsAuto
         = D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_auto;

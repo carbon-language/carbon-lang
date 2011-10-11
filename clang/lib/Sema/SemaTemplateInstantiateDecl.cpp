@@ -346,13 +346,12 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
 
   // FIXME: In theory, we could have a previous declaration for variables that
   // are not static data members.
-  bool Redeclaration = false;
   // FIXME: having to fake up a LookupResult is dumb.
   LookupResult Previous(SemaRef, Var->getDeclName(), Var->getLocation(),
                         Sema::LookupOrdinaryName, Sema::ForRedeclaration);
   if (D->isStaticDataMember())
     SemaRef.LookupQualifiedName(Previous, Owner, false);
-  SemaRef.CheckVariableDeclaration(Var, Previous, Redeclaration);
+  SemaRef.CheckVariableDeclaration(Var, Previous);
 
   if (D->isOutOfLine()) {
     if (!D->isStaticDataMember())
@@ -1160,7 +1159,6 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
   if (InitFunctionInstantiation(Function, D))
     Function->setInvalidDecl();
 
-  bool Redeclaration = false;
   bool isExplicitSpecialization = false;
 
   LookupResult Previous(SemaRef, Function->getDeclName(), SourceLocation(),
@@ -1212,7 +1210,7 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
   }
 
   SemaRef.CheckFunctionDeclaration(/*Scope*/ 0, Function, Previous,
-                                   isExplicitSpecialization, Redeclaration);
+                                   isExplicitSpecialization);
 
   NamedDecl *PrincipalDecl = (TemplateParams
                               ? cast<NamedDecl>(FunctionTemplate)
@@ -1496,9 +1494,8 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
       Previous.clear();
   }
 
-  bool Redeclaration = false;
   if (!IsClassScopeSpecialization)
-    SemaRef.CheckFunctionDeclaration(0, Method, Previous, false, Redeclaration);
+    SemaRef.CheckFunctionDeclaration(0, Method, Previous, false);
 
   if (D->isPure())
     SemaRef.CheckPureMethod(Method, SourceRange());

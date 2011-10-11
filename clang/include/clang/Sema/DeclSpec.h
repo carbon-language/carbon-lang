@@ -1411,6 +1411,12 @@ private:
   /// GroupingParens - Set by Parser::ParseParenDeclarator().
   bool GroupingParens : 1;
 
+  /// FunctionDefinition - Is this Declarator for a function or member defintion
+  bool FunctionDefinition : 1;
+
+  // Redeclaration - Is this Declarator is a redeclaration.
+  bool Redeclaration : 1;
+
   /// Attrs - Attributes.
   ParsedAttributes Attrs;
 
@@ -1436,8 +1442,9 @@ public:
   Declarator(const DeclSpec &ds, TheContext C)
     : DS(ds), Range(ds.getSourceRange()), Context(C),
       InvalidType(DS.getTypeSpecType() == DeclSpec::TST_error),
-      GroupingParens(false), Attrs(ds.getAttributePool().getFactory()),
-      AsmLabel(0), InlineParamsUsed(false), Extension(false) {
+      GroupingParens(false), FunctionDefinition(false), Redeclaration(false),
+      Attrs(ds.getAttributePool().getFactory()), AsmLabel(0),
+      InlineParamsUsed(false), Extension(false) {
   }
 
   ~Declarator() {
@@ -1796,6 +1803,12 @@ public:
   bool hasEllipsis() const { return EllipsisLoc.isValid(); }
   SourceLocation getEllipsisLoc() const { return EllipsisLoc; }
   void setEllipsisLoc(SourceLocation EL) { EllipsisLoc = EL; }
+
+  void setFunctionDefinition(bool Val) { FunctionDefinition = Val; }
+  bool isFunctionDefinition() const { return FunctionDefinition; }
+
+  void setRedeclaration(bool Val) { Redeclaration = Val; }
+  bool isRedeclaration() const { return Redeclaration; }
 };
 
 /// FieldDeclarator - This little struct is used to capture information about

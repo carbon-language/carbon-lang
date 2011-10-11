@@ -1872,15 +1872,13 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     if (DS.isFriendSpecified()) {
       // TODO: handle initializers, bitfields, 'delete'
       ThisDecl = Actions.ActOnFriendFunctionDecl(getCurScope(), DeclaratorInfo,
-                                                 /*IsDefinition*/ false,
                                                  move(TemplateParams));
     } else {
       ThisDecl = Actions.ActOnCXXMemberDeclarator(getCurScope(), AS,
                                                   DeclaratorInfo,
                                                   move(TemplateParams),
                                                   BitfieldSize.release(),
-                                                  VS, HasDeferredInitializer,
-                                                  /*IsDefinition*/ false);
+                                                  VS, HasDeferredInitializer);
     }
     
     // Set the Decl for any late parsed attributes

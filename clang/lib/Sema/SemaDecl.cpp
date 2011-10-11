@@ -3070,8 +3070,8 @@ static bool RebuildDeclaratorInCurrentInstantiation(Sema &S, Declarator &D,
 }
 
 Decl *Sema::ActOnDeclarator(Scope *S, Declarator &D) {
-  return HandleDeclarator(S, D, MultiTemplateParamsArg(*this),
-                          /*IsFunctionDefinition=*/false);
+  D.setFunctionDefinition(false);
+  return HandleDeclarator(S, D, MultiTemplateParamsArg(*this));
 }
 
 /// DiagnoseClassNameShadow - Implement C++ [class.mem]p13:
@@ -3095,8 +3095,7 @@ bool Sema::DiagnoseClassNameShadow(DeclContext *DC,
 }
   
 Decl *Sema::HandleDeclarator(Scope *S, Declarator &D,
-                             MultiTemplateParamsArg TemplateParamLists,
-                             bool IsFunctionDefinition) {
+                             MultiTemplateParamsArg TemplateParamLists) {
   // TODO: consider using NameInfo for diagnostic.
   DeclarationNameInfo NameInfo = GetNameForDeclarator(D);
   DeclarationName Name = NameInfo.getName();
@@ -3295,7 +3294,6 @@ Decl *Sema::HandleDeclarator(Scope *S, Declarator &D,
       D.getDeclSpec().getStorageClassSpec() != DeclSpec::SCS_typedef)
     Previous.clear();
 
-  bool Redeclaration = false;
   bool AddToScope = true;
   if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef) {
     if (TemplateParamLists.size()) {
@@ -3303,16 +3301,14 @@ Decl *Sema::HandleDeclarator(Scope *S, Declarator &D,
       return 0;
     }
 
-    New = ActOnTypedefDeclarator(S, D, DC, R, TInfo, Previous, Redeclaration);
+    New = ActOnTypedefDeclarator(S, D, DC, TInfo, Previous);
   } else if (R->isFunctionType()) {
-    New = ActOnFunctionDeclarator(S, D, DC, R, TInfo, Previous,
+    New = ActOnFunctionDeclarator(S, D, DC, TInfo, Previous,
                                   move(TemplateParamLists),
-                                  IsFunctionDefinition, Redeclaration,
                                   AddToScope);
   } else {
-    New = ActOnVariableDeclarator(S, D, DC, R, TInfo, Previous,
-                                  move(TemplateParamLists),
-                                  Redeclaration);
+    New = ActOnVariableDeclarator(S, D, DC, TInfo, Previous,
+                                  move(TemplateParamLists));
   }
 
   if (New == 0)
@@ -3321,7 +3317,7 @@ Decl *Sema::HandleDeclarator(Scope *S, Declarator &D,
   // If this has an identifier and is not an invalid redeclaration or 
   // function template specialization, add it to the scope stack.
   if (New->getDeclName() && AddToScope &&
-       !(Redeclaration && New->isInvalidDecl()))
+       !(D.isRedeclaration() && New->isInvalidDecl()))
     PushOnScopeChains(New, S);
 
   return New;
@@ -3476,8 +3472,7 @@ void Sema::DiagnoseFunctionSpecifiers(Declarator& D) {
 
 NamedDecl*
 Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
-                             QualType R,  TypeSourceInfo *TInfo,
-                             LookupResult &Previous, bool &Redeclaration) {
+                             TypeSourceInfo *TInfo, LookupResult &Previous) {
   // Typedef declarators cannot be qualified (C++ [dcl.meaning]p1).
   if (D.getCXXScopeSpec().isSet()) {
     Diag(D.getIdentifierLoc(), diag::err_qualified_typedef_declarator)
@@ -3507,7 +3502,7 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     return 0;
   }
 
-  TypedefDecl *NewTD = ParseTypedefDecl(S, D, R, TInfo);
+  TypedefDecl *NewTD = ParseTypedefDecl(S, D, TInfo->getType(), TInfo);
   if (!NewTD) return 0;
 
   // Handle attributes prior to checking for duplicates in MergeVarDecl
@@ -3515,7 +3510,10 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
   CheckTypedefForVariablyModifiedType(S, NewTD);
 
-  return ActOnTypedefNameDecl(S, DC, NewTD, Previous, Redeclaration);
+  bool Redeclaration = D.isRedeclaration();
+  NamedDecl *ND = ActOnTypedefNameDecl(S, DC, NewTD, Previous, Redeclaration);
+  D.setRedeclaration(Redeclaration);
+  return ND;
 }
 
 void
@@ -3695,10 +3693,9 @@ bool Sema::inferObjCARCLifetime(ValueDecl *decl) {
 
 NamedDecl*
 Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
-                              QualType R, TypeSourceInfo *TInfo,
-                              LookupResult &Previous,
-                              MultiTemplateParamsArg TemplateParamLists,
-                              bool &Redeclaration) {
+                              TypeSourceInfo *TInfo, LookupResult &Previous,
+                              MultiTemplateParamsArg TemplateParamLists) {
+  QualType R = TInfo->getType();
   DeclarationName Name = GetNameForDeclarator(D).getName();
 
   // Check that there are no default arguments (C++ only).
@@ -3947,9 +3944,9 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
   FilterLookupForScope(Previous, DC, S, NewVD->hasLinkage(),
                        isExplicitSpecialization);
   
-  if (!getLangOptions().CPlusPlus)
-    CheckVariableDeclaration(NewVD, Previous, Redeclaration);
-  else {
+  if (!getLangOptions().CPlusPlus) {
+    D.setRedeclaration(CheckVariableDeclaration(NewVD, Previous));
+  } else {
     // Merge the decl with the existing one if appropriate.
     if (!Previous.empty()) {
       if (Previous.isSingleResult() &&
@@ -3970,7 +3967,7 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       NewVD->setInvalidDecl();
     }
 
-    CheckVariableDeclaration(NewVD, Previous, Redeclaration);
+    D.setRedeclaration(CheckVariableDeclaration(NewVD, Previous));
 
     // This is an explicit specialization of a static data member. Check it.
     if (isExplicitSpecialization && !NewVD->isInvalidDecl() &&
@@ -4111,12 +4108,13 @@ void Sema::CheckShadow(Scope *S, VarDecl *D) {
 /// that have been instantiated from a template.
 ///
 /// Sets NewVD->isInvalidDecl() if an error was encountered.
-void Sema::CheckVariableDeclaration(VarDecl *NewVD,
-                                    LookupResult &Previous,
-                                    bool &Redeclaration) {
+///
+/// Returns true if the variable declaration is a redeclaration.
+bool Sema::CheckVariableDeclaration(VarDecl *NewVD,
+                                    LookupResult &Previous) {
   // If the decl is already known invalid, don't check it.
   if (NewVD->isInvalidDecl())
-    return;
+    return false;
 
   QualType T = NewVD->getType();
 
@@ -4133,7 +4131,8 @@ void Sema::CheckVariableDeclaration(VarDecl *NewVD,
   // ISO/IEC TR 18037 S5.1.2
   if (NewVD->hasLocalStorage() && T.getAddressSpace() != 0) {
     Diag(NewVD->getLocation(), diag::err_as_qualified_auto_decl);
-    return NewVD->setInvalidDecl();
+    NewVD->setInvalidDecl();
+    return false;
   }
 
   if (NewVD->hasLocalStorage() && T.isObjCGCWeak()
@@ -4172,7 +4171,8 @@ void Sema::CheckVariableDeclaration(VarDecl *NewVD,
       else
         Diag(NewVD->getLocation(), diag::err_vla_decl_has_extern_linkage)
         << SizeRange;
-      return NewVD->setInvalidDecl();
+      NewVD->setInvalidDecl();
+      return false;
     }
 
     if (FixedTy.isNull()) {
@@ -4180,7 +4180,8 @@ void Sema::CheckVariableDeclaration(VarDecl *NewVD,
         Diag(NewVD->getLocation(), diag::err_vm_decl_in_file_scope);
       else
         Diag(NewVD->getLocation(), diag::err_vm_decl_has_extern_linkage);
-      return NewVD->setInvalidDecl();
+      NewVD->setInvalidDecl();
+      return false;
     }
 
     Diag(NewVD->getLocation(), diag::warn_illegal_constant_array_size);
@@ -4200,17 +4201,20 @@ void Sema::CheckVariableDeclaration(VarDecl *NewVD,
   if (T->isVoidType() && !NewVD->hasExternalStorage()) {
     Diag(NewVD->getLocation(), diag::err_typecheck_decl_incomplete_type)
       << T;
-    return NewVD->setInvalidDecl();
+    NewVD->setInvalidDecl();
+    return false;
   }
 
   if (!NewVD->hasLocalStorage() && NewVD->hasAttr<BlocksAttr>()) {
     Diag(NewVD->getLocation(), diag::err_block_on_nonlocal);
-    return NewVD->setInvalidDecl();
+    NewVD->setInvalidDecl();
+    return false;
   }
 
   if (isVM && NewVD->hasAttr<BlocksAttr>()) {
     Diag(NewVD->getLocation(), diag::err_block_on_vm);
-    return NewVD->setInvalidDecl();
+    NewVD->setInvalidDecl();
+    return false;
   }
 
   // Function pointers and references cannot have qualified function type, only
@@ -4227,13 +4231,15 @@ void Sema::CheckVariableDeclaration(VarDecl *NewVD,
       Pointee->getAs<FunctionProtoType>()->getTypeQuals() != 0) {
     Diag(NewVD->getLocation(), diag::err_invalid_qualified_function_pointer)
         << PtrOrRef;
-    return NewVD->setInvalidDecl();
+    NewVD->setInvalidDecl();
+    return false;
   }
 
   if (!Previous.empty()) {
-    Redeclaration = true;
     MergeVarDecl(NewVD, Previous);
+    return true;
   }
+  return false;
 }
 
 /// \brief Data used with FindOverriddenMethod
@@ -4310,11 +4316,8 @@ namespace {
     Scope *S;
     Declarator &D;
     DeclContext *DC;
-    QualType R;
     TypeSourceInfo *TInfo;
     MultiTemplateParamsArg TemplateParamLists;
-    bool IsFunctionDefinition;
-    bool Redeclaration;
     bool AddToScope;
   };
 }
@@ -4379,19 +4382,19 @@ static NamedDecl* DiagnoseInvalidRedeclaration(
         Previous.addDecl(FD);
       }
     }
+    bool wasRedeclaration = ExtraArgs.D.isRedeclaration();
     // TODO: Refactor ActOnFunctionDeclarator so that we can call only the
     // pieces need to verify the typo-corrected C++ declaraction and hopefully
     // eliminate the need for the parameter pack ExtraArgs.
     Result = S.ActOnFunctionDeclarator(ExtraArgs.S, ExtraArgs.D, ExtraArgs.DC,
-                                       ExtraArgs.R, ExtraArgs.TInfo, Previous,
+                                       ExtraArgs.TInfo, Previous,
                                        ExtraArgs.TemplateParamLists,
-                                       ExtraArgs.IsFunctionDefinition,
-                                       ExtraArgs.Redeclaration,
                                        ExtraArgs.AddToScope);
     if (Trap.hasErrorOccurred()) {
       // Pretend the typo correction never occurred
       ExtraArgs.D.SetIdentifier(Name.getAsIdentifierInfo(),
                                 ExtraArgs.D.getIdentifierLoc());
+      ExtraArgs.D.setRedeclaration(wasRedeclaration);
       Previous.clear();
       Previous.setLookupName(Name);
       Result = NULL;
@@ -4451,11 +4454,11 @@ static NamedDecl* DiagnoseInvalidRedeclaration(
 
 NamedDecl*
 Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
-                              QualType R, TypeSourceInfo *TInfo,
-                              LookupResult &Previous,
+                              TypeSourceInfo *TInfo, LookupResult &Previous,
                               MultiTemplateParamsArg TemplateParamLists,
-                              bool IsFunctionDefinition, bool &Redeclaration,
                               bool &AddToScope) {
+  QualType R = TInfo->getType();
+
   assert(R.getTypePtr()->isFunctionType());
 
   // TODO: consider using NameInfo for diagnostic.
@@ -4675,7 +4678,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
                                    true/*HasPrototype*/, isConstexpr);
     }
 
-    if (isFriend && !isInline && IsFunctionDefinition) {
+    if (isFriend && !isInline && D.isFunctionDefinition()) {
       // C++ [class.friend]p5
       //   A function can be defined in a friend declaration of a
       //   class . . . . Such a function is implicitly inline.
@@ -4878,7 +4881,8 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       NewFD->setAccess(AS_public);
     }
 
-    if (isa<CXXMethodDecl>(NewFD) && DC == CurContext && IsFunctionDefinition) {
+    if (isa<CXXMethodDecl>(NewFD) && DC == CurContext &&
+        D.isFunctionDefinition()) {
       // A method is implicitly inline if it's defined in its class
       // definition.
       NewFD->setImplicitlyInline();
@@ -4990,11 +4994,11 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       } else {
         if (NewFD->isMain()) 
           CheckMain(NewFD, D.getDeclSpec());
-        CheckFunctionDeclaration(S, NewFD, Previous, isExplicitSpecialization,
-                                 Redeclaration);
+        D.setRedeclaration(CheckFunctionDeclaration(S, NewFD, Previous,
+                                                    isExplicitSpecialization));
       }
     }
-    assert((NewFD->isInvalidDecl() || !Redeclaration ||
+    assert((NewFD->isInvalidDecl() || !D.isRedeclaration() ||
             Previous.getResultKind() != LookupResult::FoundOverloaded) &&
            "previous declaration set still overloaded");
   } else {
@@ -5112,12 +5116,12 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       } else {
         if (NewFD->isMain()) 
           CheckMain(NewFD, D.getDeclSpec());
-        CheckFunctionDeclaration(S, NewFD, Previous, isExplicitSpecialization,
-                                 Redeclaration);
+        D.setRedeclaration(CheckFunctionDeclaration(S, NewFD, Previous,
+                                                    isExplicitSpecialization));
       }
     }
 
-    assert((NewFD->isInvalidDecl() || !Redeclaration ||
+    assert((NewFD->isInvalidDecl() || !D.isRedeclaration() ||
             Previous.getResultKind() != LookupResult::FoundOverloaded) &&
            "previous declaration set still overloaded");
 
@@ -5129,7 +5133,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
                                 ? cast<NamedDecl>(FunctionTemplate)
                                 : NewFD);
 
-    if (isFriend && Redeclaration) {
+    if (isFriend && D.isRedeclaration()) {
       AccessSpecifier Access = AS_public;
       if (!NewFD->isInvalidDecl())
         Access = NewFD->getPreviousDeclaration()->getAccess();
@@ -5151,7 +5155,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       CheckTemplateParameterList(FunctionTemplate->getTemplateParameters(),
                                  PrevTemplate? PrevTemplate->getTemplateParameters() : 0,
                             D.getDeclSpec().isFriendSpecified()
-                              ? (IsFunctionDefinition 
+                              ? (D.isFunctionDefinition()
                                    ? TPC_FriendFunctionTemplateDefinition
                                    : TPC_FriendFunctionTemplate)
                               : (D.getCXXScopeSpec().isSet() && 
@@ -5163,9 +5167,8 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
 
     if (NewFD->isInvalidDecl()) {
       // Ignore all the rest of this.
-    } else if (!Redeclaration) {
-      struct ActOnFDArgs ExtraArgs = { S, D, DC, R, TInfo, TemplateParamLists,
-                                       IsFunctionDefinition, Redeclaration,
+    } else if (!D.isRedeclaration()) {
+      struct ActOnFDArgs ExtraArgs = { S, D, DC, TInfo, TemplateParamLists,
                                        AddToScope };
       // Fake up an access specifier if it's supposed to be a class member.
       if (isa<CXXRecordDecl>(NewFD->getDeclContext()))
@@ -5206,7 +5209,6 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
           if (NamedDecl *Result = DiagnoseInvalidRedeclaration(*this, Previous,
                                                                NewFD, false,
                                                                ExtraArgs)) {
-            Redeclaration = ExtraArgs.Redeclaration;
             AddToScope = ExtraArgs.AddToScope;
             return Result;
           }
@@ -5218,13 +5220,12 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
         if (NamedDecl *Result = DiagnoseInvalidRedeclaration(*this, Previous,
                                                              NewFD, true,
                                                              ExtraArgs)) {
-          Redeclaration = ExtraArgs.Redeclaration;
           AddToScope = ExtraArgs.AddToScope;
           return Result;
         }
       }
 
-    } else if (!IsFunctionDefinition && D.getCXXScopeSpec().isSet() &&
+    } else if (!D.isFunctionDefinition() && D.getCXXScopeSpec().isSet() &&
                !isFriend && !isFunctionTemplateSpecialization &&
                !isExplicitSpecialization) {
       // An out-of-line member function declaration must also be a
@@ -5248,7 +5249,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
 
   // attributes declared post-definition are currently ignored
   // FIXME: This should happen during attribute merging
-  if (Redeclaration && Previous.isSingleResult()) {
+  if (D.isRedeclaration() && Previous.isSingleResult()) {
     const FunctionDecl *Def;
     FunctionDecl *PrevFD = dyn_cast<FunctionDecl>(Previous.getFoundDecl());
     if (PrevFD && PrevFD->isDefined(Def) && D.hasAttributes()) {
@@ -5344,10 +5345,11 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
 /// an explicit specialization of the previous declaration.
 ///
 /// This sets NewFD->isInvalidDecl() to true if there was an error.
-void Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
+///
+/// Returns true if the function declaration is a redeclaration.
+bool Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
                                     LookupResult &Previous,
-                                    bool IsExplicitSpecialization,
-                                    bool &Redeclaration) {
+                                    bool IsExplicitSpecialization) {
   assert(!NewFD->getResultType()->isVariablyModifiedType() 
          && "Variably modified return types are not handled here");
 
@@ -5361,6 +5363,8 @@ void Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
     if (Pos != LocallyScopedExternalDecls.end())
       Previous.addDecl(Pos->second);
   }
+
+  bool Redeclaration = false;
 
   // Merge or overload the declaration with an existing declaration of
   // the same name, if appropriate.
@@ -5411,8 +5415,10 @@ void Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
     if (Redeclaration) {
       // NewFD and OldDecl represent declarations that need to be
       // merged.
-      if (MergeFunctionDecl(NewFD, OldDecl))
-        return NewFD->setInvalidDecl();
+      if (MergeFunctionDecl(NewFD, OldDecl)) {
+        NewFD->setInvalidDecl();
+        return Redeclaration;
+      }
 
       Previous.clear();
       Previous.addDecl(OldDecl);
@@ -5466,7 +5472,8 @@ void Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
                                         Context.getCanonicalType(ClassType));
         if (NewFD->getDeclName() != Name) {
           Diag(NewFD->getLocation(), diag::err_destructor_name);
-          return NewFD->setInvalidDecl();
+          NewFD->setInvalidDecl();
+          return Redeclaration;
         }
       }
     } else if (CXXConversionDecl *Conversion
@@ -5498,13 +5505,17 @@ void Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
 
     // Extra checking for C++ overloaded operators (C++ [over.oper]).
     if (NewFD->isOverloadedOperator() &&
-        CheckOverloadedOperatorDeclaration(NewFD))
-      return NewFD->setInvalidDecl();
+        CheckOverloadedOperatorDeclaration(NewFD)) {
+      NewFD->setInvalidDecl();
+      return Redeclaration;
+    }
 
     // Extra checking for C++0x literal operators (C++0x [over.literal]).
     if (NewFD->getLiteralIdentifier() &&
-        CheckLiteralOperatorDeclaration(NewFD))
-      return NewFD->setInvalidDecl();
+        CheckLiteralOperatorDeclaration(NewFD)) {
+      NewFD->setInvalidDecl();
+      return Redeclaration;
+    }
 
     // In C++, check default arguments now that we have merged decls. Unless
     // the lexical context is the class, because in this case this is done
@@ -5524,6 +5535,7 @@ void Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
       }
     }
   }
+  return Redeclaration;
 }
 
 void Sema::CheckMain(FunctionDecl* FD, const DeclSpec& DS) {
@@ -6745,9 +6757,9 @@ Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope,
   assert(D.isFunctionDeclarator() && "Not a function declarator!");
   Scope *ParentScope = FnBodyScope->getParent();
 
+  D.setFunctionDefinition(true);
   Decl *DP = HandleDeclarator(ParentScope, D,
-                              MultiTemplateParamsArg(*this),
-                              /*IsFunctionDefinition=*/true);
+                              MultiTemplateParamsArg(*this));
   return ActOnStartOfFunctionDef(FnBodyScope, DP);
 }
 

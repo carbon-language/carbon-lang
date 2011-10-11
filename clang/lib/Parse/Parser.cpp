@@ -891,9 +891,9 @@ Decl *Parser::ParseFunctionDefinition(ParsingDeclarator &D,
     ParseScope BodyScope(this, Scope::FnScope|Scope::DeclScope);
     Scope *ParentScope = getCurScope()->getParent();
 
+    D.setFunctionDefinition(true);
     Decl *DP = Actions.HandleDeclarator(ParentScope, D,
-                                move(TemplateParameterLists),
-                                /*IsFunctionDefinition=*/true);
+                                        move(TemplateParameterLists));
     D.complete(DP);
     D.getMutableDeclSpec().abort();
 
