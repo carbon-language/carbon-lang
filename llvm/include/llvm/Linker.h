@@ -57,7 +57,12 @@ class Linker {
       QuietWarnings = 2, ///< Don't print warnings to stderr.
       QuietErrors   = 4  ///< Don't print errors to stderr.
     };
-
+  
+    enum LinkerMode {
+      DestroySource = 0, // Allow source module to be destroyed.
+      PreserveSource = 1 // Preserve the source module.
+    };
+  
   /// @}
   /// @name Constructors
   /// @{
@@ -245,7 +250,7 @@ class Linker {
       Module* Src,              ///< Module linked into \p Dest
       std::string* ErrorMsg = 0 /// Error/diagnostic string
     ) { 
-      return LinkModules(Composite, Src, ErrorMsg ); 
+      return LinkModules(Composite, Src, Linker::DestroySource, ErrorMsg ); 
     }
 
     /// This is the heart of the linker. This method will take unconditional
@@ -259,7 +264,8 @@ class Linker {
     /// error.
     /// @returns True if an error occurs, false otherwise.
     /// @brief Generically link two modules together.
-    static bool LinkModules(Module* Dest, Module* Src, std::string* ErrorMsg);
+    static bool LinkModules(Module* Dest, Module* Src, unsigned Mode,
+                            std::string* ErrorMsg);
 
     /// This function looks through the Linker's LibPaths to find a library with
     /// the name \p Filename. If the library cannot be found, the returned path
