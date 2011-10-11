@@ -873,7 +873,8 @@ public:
                          bool isClassName = false,
                          bool HasTrailingDot = false,
                          ParsedType ObjectType = ParsedType(),
-                         bool WantNontrivialTypeSourceInfo = false);
+                         bool WantNontrivialTypeSourceInfo = false,
+                         IdentifierInfo **CorrectedII = 0);
   TypeSpecifierType isTagName(IdentifierInfo &II, Scope *S);
   bool isMicrosoftMissingTypename(const CXXScopeSpec *SS);
   bool DiagnoseUnknownTypeName(const IdentifierInfo &II,

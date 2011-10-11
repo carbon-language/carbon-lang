@@ -436,7 +436,10 @@ private:
       Tok.setAnnotationValue(ER.get());
   }
 
-  bool TryAnnotateTypeOrScopeToken(bool EnteringContext = false);
+  // If NeedType is true, then TryAnnotateTypeOrScopeToken will try harder to
+  // find a type name by attempting typo correction.
+  bool TryAnnotateTypeOrScopeToken(bool EnteringContext = false,
+                                   bool NeedType = false);
   bool TryAnnotateCXXScopeToken(bool EnteringContext = false);
 
   /// TryAltiVecToken - Check for context-sensitive AltiVec identifier tokens,

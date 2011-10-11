@@ -1204,7 +1204,7 @@ TemplateIdAnnotation *Parser::takeTemplateIdAnnotation(const Token &tok) {
 ///
 /// Note that this routine emits an error if you call it with ::new or ::delete
 /// as the current tokens, so only call it in contexts where these are invalid.
-bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext) {
+bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext, bool NeedType) {
   assert((Tok.is(tok::identifier) || Tok.is(tok::coloncolon)
           || Tok.is(tok::kw_typename) || Tok.is(tok::annot_cxxscope)) &&
          "Cannot be a type or scope token!");
@@ -1278,13 +1278,18 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext) {
       return true;
 
   if (Tok.is(tok::identifier)) {
+    IdentifierInfo *CorrectedII = 0;
     // Determine whether the identifier is a type name.
     if (ParsedType Ty = Actions.getTypeName(*Tok.getIdentifierInfo(),
                                             Tok.getLocation(), getCurScope(),
                                             &SS, false, 
                                             NextToken().is(tok::period),
                                             ParsedType(),
-                                            /*NonTrivialTypeSourceInfo*/true)) {
+                                            /*NonTrivialTypeSourceInfo*/true,
+                                            NeedType ? &CorrectedII : NULL)) {
+      // A FixIt was applied as a result of typo correction
+      if (CorrectedII)
+        Tok.setIdentifierInfo(CorrectedII);
       // This is a typename. Replace the current token in-place with an
       // annotation type token.
       Tok.setKind(tok::annot_typename);

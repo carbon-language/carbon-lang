@@ -2303,7 +2303,8 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, bool& isInvalid,
   case tok::kw_typename:  // typename foo::bar
     // Annotate typenames and C++ scope specifiers.  If we get one, just
     // recurse to handle whatever we get.
-    if (TryAnnotateTypeOrScopeToken())
+    if (TryAnnotateTypeOrScopeToken(/*EnteringContext=*/false,
+                                    /*NeedType=*/true))
       return true;
     if (Tok.is(tok::identifier))
       return false;
@@ -2316,7 +2317,8 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, bool& isInvalid,
 
     // Annotate typenames and C++ scope specifiers.  If we get one, just
     // recurse to handle whatever we get.
-    if (TryAnnotateTypeOrScopeToken())
+    if (TryAnnotateTypeOrScopeToken(/*EnteringContext=*/false,
+                                    /*NeedType=*/true))
       return true;
     return ParseOptionalTypeSpecifier(DS, isInvalid, PrevSpec, DiagID,
                                       TemplateInfo, SuppressDeclarations);

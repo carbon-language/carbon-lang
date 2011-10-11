@@ -71,7 +71,8 @@ ParsedType Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
                              Scope *S, CXXScopeSpec *SS,
                              bool isClassName, bool HasTrailingDot,
                              ParsedType ObjectTypePtr,
-                             bool WantNontrivialTypeSourceInfo) {
+                             bool WantNontrivialTypeSourceInfo,
+                             IdentifierInfo **CorrectedII) {
   // Determine where we will perform name lookup.
   DeclContext *LookupCtx = 0;
   if (ObjectTypePtr) {
@@ -146,6 +147,51 @@ ParsedType Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
   switch (Result.getResultKind()) {
   case LookupResult::NotFound:
   case LookupResult::NotFoundInCurrentInstantiation:
+    if (CorrectedII) {
+      TypoCorrection Correction = CorrectTypo(Result.getLookupNameInfo(),
+                                              Kind, S, SS, 0, false,
+                                              Sema::CTC_Type);
+      IdentifierInfo *NewII = Correction.getCorrectionAsIdentifierInfo();
+      TemplateTy Template;
+      bool MemberOfUnknownSpecialization;
+      UnqualifiedId TemplateName;
+      TemplateName.setIdentifier(NewII, NameLoc);
+      NestedNameSpecifier *NNS = Correction.getCorrectionSpecifier();
+      CXXScopeSpec NewSS, *NewSSPtr = SS;
+      if (SS && NNS) {
+        NewSS.MakeTrivial(Context, NNS, SourceRange(NameLoc));
+        NewSSPtr = &NewSS;
+      }
+      if (Correction && (NNS || NewII != &II) &&
+          // Ignore a correction to a template type as the to-be-corrected
+          // identifier is not a template (typo correction for template names
+          // is handled elsewhere).
+          !(getLangOptions().CPlusPlus && NewSSPtr &&
+            isTemplateName(S, *NewSSPtr, false, TemplateName, ParsedType(),
+                           false, Template, MemberOfUnknownSpecialization))) {
+        ParsedType Ty = getTypeName(*NewII, NameLoc, S, NewSSPtr,
+                                    isClassName, HasTrailingDot, ObjectTypePtr,
+                                    WantNontrivialTypeSourceInfo);
+        if (Ty) {
+          std::string CorrectedStr(Correction.getAsString(getLangOptions()));
+          std::string CorrectedQuotedStr(
+              Correction.getQuoted(getLangOptions()));
+          Diag(NameLoc, diag::err_unknown_typename_suggest)
+              << Result.getLookupName() << CorrectedQuotedStr
+              << FixItHint::CreateReplacement(SourceRange(NameLoc),
+                                              CorrectedStr);
+          if (NamedDecl *FirstDecl = Correction.getCorrectionDecl())
+            Diag(FirstDecl->getLocation(), diag::note_previous_decl)
+              << CorrectedQuotedStr;
+
+          if (SS && NNS)
+            SS->MakeTrivial(Context, NNS, SourceRange(NameLoc));
+          *CorrectedII = NewII;
+          return Ty;
+        }
+      }
+    }
+    // If typo correction failed or was not performed, fall through
   case LookupResult::FoundOverloaded:
   case LookupResult::FoundUnresolvedValue:
     Result.suppressDiagnostics();
