@@ -37,15 +37,6 @@ def imm32_63 : ImmLeaf<i64,
 // Instructions specific format
 //===----------------------------------------------------------------------===//
 
-// Arithmetic 3 register operands
-class ArithR64<bits<6> op, bits<6> func, string instr_asm, SDNode OpNode,
-               InstrItinClass itin, bit isComm = 0>:
-  FR<op, func, (outs CPU64Regs:$dst), (ins CPU64Regs:$b, CPU64Regs:$c),
-     !strconcat(instr_asm, "\t$dst, $b, $c"),
-     [(set CPU64Regs:$dst, (OpNode CPU64Regs:$b, CPU64Regs:$c))], itin> {
-  let isCommutable = isComm;
-}
-
 // Arithmetic 2 register operands
 class ArithI64<bits<6> op, string instr_asm, SDNode OpNode,
                Operand Od, PatLeaf imm_type> :
@@ -54,12 +45,6 @@ class ArithI64<bits<6> op, string instr_asm, SDNode OpNode,
      [(set CPU64Regs:$dst, (OpNode CPU64Regs:$b, imm_type:$c))], IIAlu>;
 
 //  Logical
-let isCommutable = 1 in
-class LogicR64<bits<6> func, string instr_asm, SDNode OpNode>:
-  FR<0x00, func, (outs CPU64Regs:$dst), (ins CPU64Regs:$b, CPU64Regs:$c),
-     !strconcat(instr_asm, "\t$dst, $b, $c"),
-     [(set CPU64Regs:$dst, (OpNode CPU64Regs:$b, CPU64Regs:$c))], IIAlu>;
-
 class LogicI64<bits<6> op, string instr_asm, SDNode OpNode>:
   FI<op, (outs CPU64Regs:$dst), (ins CPU64Regs:$b, uimm16_64:$c),
      !strconcat(instr_asm, "\t$dst, $b, $c"),
@@ -137,13 +122,13 @@ def ORi64    : LogicI64<0x0d, "ori",  or>;
 def XORi64   : LogicI64<0x0e, "xori",  xor>;
 
 /// Arithmetic Instructions (3-Operand, R-Type)
-def DADDu    : ArithR64<0x00, 0x2d, "daddu", add, IIAlu, 1>;
-def DSUBu    : ArithR64<0x00, 0x2f, "dsubu", sub, IIAlu>;
+def DADDu    : ArithLogicR<0x00, 0x2d, "daddu", add, IIAlu, CPU64Regs, 1>;
+def DSUBu    : ArithLogicR<0x00, 0x2f, "dsubu", sub, IIAlu, CPU64Regs>;
 def SLT64    : SetCC_R<0x00, 0x2a, "slt", setlt, CPU64Regs>;
 def SLTu64   : SetCC_R<0x00, 0x2b, "sltu", setult, CPU64Regs>;
-def AND64    : LogicR64<0x24, "and", and>;
-def OR64     : LogicR64<0x25, "or", or>;
-def XOR64    : LogicR64<0x26, "xor", xor>;
+def AND64    : ArithLogicR<0x00, 0x24, "and", and, IIAlu, CPU64Regs, 1>;
+def OR64     : ArithLogicR<0x00, 0x25, "or", or, IIAlu, CPU64Regs, 1>;
+def XOR64    : ArithLogicR<0x00, 0x26, "xor", xor, IIAlu, CPU64Regs, 1>;
 def NOR64    : LogicNOR64<0x00, 0x27, "nor">;
 
 /// Shift Instructions
