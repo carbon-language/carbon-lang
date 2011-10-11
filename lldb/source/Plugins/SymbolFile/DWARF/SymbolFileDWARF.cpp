@@ -2265,10 +2265,7 @@ SymbolFileDWARF::FunctionDieMatchesPartialName (const DWARFDebugInfoEntry* die,
             {
                 std::string name_no_parens(partial_name, base_name_end - partial_name);
                 if (strstr (demangled, name_no_parens.c_str()) == NULL)
-                {
-                    printf ("name: \"%s\" didn't match full name: \"%s\".\n", partial_name, demangled);
                     return false;
-                }
             }
         }
     }
