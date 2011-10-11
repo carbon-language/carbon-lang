@@ -255,6 +255,10 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
       HasX86_64 = true;
       ToggleFeature(X86::Feature64Bit);
     }
+    if ((ECX >> 5) & 0x1) {
+      HasLZCNT = true;
+      ToggleFeature(X86::FeatureLZCNT);
+    }
     if (IsAMD && ((ECX >> 6) & 0x1)) {
       HasSSE4A = true;
       ToggleFeature(X86::FeatureSSE4A);
@@ -285,6 +289,7 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
   , HasMOVBE(false)
   , HasRDRAND(false)
   , HasF16C(false)
+  , HasLZCNT(false)
   , IsBTMemSlow(false)
   , IsUAMemFast(false)
   , HasVectorUAMem(false)

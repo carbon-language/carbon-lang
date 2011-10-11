@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This is a target description file for the Intel i386 architecture, referred to
-// here as the "X86" architecture.
+// This is a target description file for the Intel i386 architecture, referred
+// to here as the "X86" architecture.
 //
 //===----------------------------------------------------------------------===//
 
@@ -102,6 +102,8 @@ def FeatureRDRAND  : SubtargetFeature<"rdrand", "HasRDRAND", "true",
                                       "Support RDRAND instruction">;
 def FeatureF16C    : SubtargetFeature<"f16c", "HasF16C", "true",
                        "Support 16-bit floating point conversion instructions">;
+def FeatureLZCNT   : SubtargetFeature<"lzcnt", "HasLZCNT", "true",
+                                      "Support LZCNT instruction">;
 
 //===----------------------------------------------------------------------===//
 // X86 processors supported.

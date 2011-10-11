@@ -99,6 +99,9 @@ protected:
   /// HasF16C - Processor has 16-bit floating point conversion instructions.
   bool HasF16C;
 
+  /// HasLZCNT - Processor has LZCNT instruction.
+  bool HasLZCNT;
+
   /// IsBTMemSlow - True if BT (bit test) of memory instructions are slow.
   bool IsBTMemSlow;
 
@@ -184,6 +187,7 @@ public:
   bool hasMOVBE() const { return HasMOVBE; }
   bool hasRDRAND() const { return HasRDRAND; }
   bool hasF16C() const { return HasF16C; }
+  bool hasLZCNT() const { return HasLZCNT; }
   bool isBTMemSlow() const { return IsBTMemSlow; }
   bool isUnalignedMemAccessFast() const { return IsUAMemFast; }
   bool hasVectorUAMem() const { return HasVectorUAMem; }
