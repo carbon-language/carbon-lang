@@ -140,11 +140,10 @@ Thumb2ITBlockPass::MoveCopyOutOfITBlock(MachineInstr *MI,
   //   rsb   r1, 0
   //   rsb   r2, 0
   //
-  // 
-  for (unsigned I = 0, E = MI->getNumOperands(); I != E; ++I)
-    if (MI->getOperand(I).isReg() && MI->getOperand(I).getReg() == ARM::CPSR &&
-        MI->getOperand(I).isDef())
-      return false;
+  const MCInstrDesc &MCID = MI->getDesc();
+  if (MCID.hasOptionalDef() &&
+      MI->getOperand(MCID.getNumOperands() - 1).getReg() == ARM::CPSR)
+    return false;
 
   // Then peek at the next instruction to see if it's predicated on CC or OCC.
   // If not, then there is nothing to be gained by moving the copy.
