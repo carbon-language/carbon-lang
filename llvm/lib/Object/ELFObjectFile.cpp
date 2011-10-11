@@ -315,10 +315,10 @@ class ELFObjectFile : public ObjectFile {
   const T        *getEntry(const Elf_Shdr *Section, uint32_t Entry) const;
   const Elf_Sym  *getSymbol(DataRefImpl Symb) const;
   const Elf_Shdr *getSection(DataRefImpl index) const;
-  const Elf_Shdr *getSection(uint16_t index) const;
+  const Elf_Shdr *getSection(uint32_t index) const;
   const Elf_Rel  *getRel(DataRefImpl Rel) const;
   const Elf_Rela *getRela(DataRefImpl Rela) const;
-  const char     *getString(uint16_t section, uint32_t offset) const;
+  const char     *getString(uint32_t section, uint32_t offset) const;
   const char     *getString(const Elf_Shdr *section, uint32_t offset) const;
   error_code      getSymbolName(const Elf_Sym *Symb, StringRef &Res) const;
 
@@ -373,7 +373,10 @@ public:
   virtual StringRef getFileFormatName() const;
   virtual unsigned getArch() const;
 
+  uint64_t getNumSections() const;
+  uint64_t getStringTableIndex() const;
   uint64_t getSymbolTableIndex(const Elf_Sym *symb) const;
+  const Elf_Shdr *getSection(const Elf_Sym *symb) const;
 };
 } // end namespace
 
@@ -438,6 +441,17 @@ uint64_t ELFObjectFile<target_endianness, is64Bits>
 }
 
 template<support::endianness target_endianness, bool is64Bits>
+const typename ELFObjectFile<target_endianness, is64Bits>::Elf_Shdr *
+ELFObjectFile<target_endianness, is64Bits>
+                             ::getSection(const Elf_Sym *symb) const {
+  if (symb->st_shndx == ELF::SHN_XINDEX)
+    return getSection(ExtendedSymbolTable.lookup(symb));
+  if (symb->st_shndx >= ELF::SHN_LORESERVE)
+    return 0;
+  return getSection(symb->st_shndx);
+}
+
+template<support::endianness target_endianness, bool is64Bits>
 error_code ELFObjectFile<target_endianness, is64Bits>
                         ::getSymbolOffset(DataRefImpl Symb,
                                           uint64_t &Result) const {
@@ -453,7 +467,7 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   case ELF::SHN_ABS:
     Result = symb->st_value;
     return object_error::success;
-  default: Section = getSection(symb->st_shndx);
+  default: Section = getSection(symb);
   }
 
   switch (symb->getType()) {
@@ -487,7 +501,7 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   case ELF::SHN_ABS:
     Result = reinterpret_cast<uintptr_t>(base()+symb->st_value);
     return object_error::success;
-  default: Section = getSection(getSymbolTableIndex(symb));
+  default: Section = getSection(symb);
   }
   const uint8_t* addr = base();
   if (Section)
@@ -526,7 +540,7 @@ error_code ELFObjectFile<target_endianness, is64Bits>
                                               char &Result) const {
   validateSymbol(Symb);
   const Elf_Sym  *symb = getSymbol(Symb);
-  const Elf_Shdr *Section = getSection(getSymbolTableIndex(symb));
+  const Elf_Shdr *Section = getSection(symb);
 
   char ret = '?';
 
@@ -549,7 +563,7 @@ error_code ELFObjectFile<target_endianness, is64Bits>
     }
   }
 
-  switch (symb->st_shndx) {
+  switch (getSymbolTableIndex(symb)) {
   case ELF::SHN_UNDEF:
     if (ret == '?')
       ret = 'U';
@@ -561,7 +575,7 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   switch (symb->getBinding()) {
   case ELF::STB_GLOBAL: ret = ::toupper(ret); break;
   case ELF::STB_WEAK:
-    if (symb->st_shndx == ELF::SHN_UNDEF)
+    if (getSymbolTableIndex(symb) == ELF::SHN_UNDEF)
       ret = 'w';
     else
       if (symb->getType() == ELF::STT_OBJECT)
@@ -1078,7 +1092,7 @@ ELFObjectFile<target_endianness, is64Bits>::ELFObjectFile(MemoryBuffer *Object
 
   SectionHeaderTable =
     reinterpret_cast<const Elf_Shdr *>(base() + Header->e_shoff);
-  uint32_t SectionTableSize = Header->e_shnum * Header->e_shentsize;
+  uint64_t SectionTableSize = getNumSections() * Header->e_shentsize;
   if (!(  (const uint8_t *)SectionHeaderTable + SectionTableSize
          <= base() + Data->getBufferSize()))
     // FIXME: Proper error handling.
@@ -1088,7 +1102,7 @@ ELFObjectFile<target_endianness, is64Bits>::ELFObjectFile(MemoryBuffer *Object
   // To find the symbol tables we walk the section table to find SHT_SYMTAB.
   const Elf_Shdr* SymbolTableSectionHeaderIndex = 0;
   const Elf_Shdr* sh = reinterpret_cast<const Elf_Shdr*>(SectionHeaderTable);
-  for (unsigned i = 0; i < Header->e_shnum; ++i) {
+  for (uint64_t i = 0, e = getNumSections(); i != e; ++i) {
     if (sh->sh_type == ELF::SHT_SYMTAB_SHNDX) {
       if (SymbolTableSectionHeaderIndex)
         // FIXME: Proper error handling.
@@ -1112,7 +1126,7 @@ ELFObjectFile<target_endianness, is64Bits>::ELFObjectFile(MemoryBuffer *Object
   }
 
   // Get string table sections.
-  dot_shstrtab_sec = getSection(Header->e_shstrndx);
+  dot_shstrtab_sec = getSection(getStringTableIndex());
   if (dot_shstrtab_sec) {
     // Verify that the last byte in the string table in a null.
     if (((const char*)base() + dot_shstrtab_sec->sh_offset)
@@ -1123,7 +1137,7 @@ ELFObjectFile<target_endianness, is64Bits>::ELFObjectFile(MemoryBuffer *Object
 
   // Merge this into the above loop.
   for (const char *i = reinterpret_cast<const char *>(SectionHeaderTable),
-                  *e = i + Header->e_shnum * Header->e_shentsize;
+                  *e = i + getNumSections() * Header->e_shentsize;
                    i != e; i += Header->e_shentsize) {
     const Elf_Shdr *sh = reinterpret_cast<const Elf_Shdr*>(i);
     if (sh->sh_type == ELF::SHT_STRTAB) {
@@ -1198,7 +1212,7 @@ section_iterator ELFObjectFile<target_endianness, is64Bits>
   memset(&ret, 0, sizeof(DataRefImpl));
   ret.p = reinterpret_cast<intptr_t>(base()
                                      + Header->e_shoff
-                                     + (Header->e_shentsize * Header->e_shnum));
+                                     + (Header->e_shentsize*getNumSections()));
   return section_iterator(SectionRef(ret, this));
 }
 
@@ -1251,6 +1265,25 @@ unsigned ELFObjectFile<target_endianness, is64Bits>::getArch() const {
   }
 }
 
+template<support::endianness target_endianness, bool is64Bits>
+uint64_t ELFObjectFile<target_endianness, is64Bits>::getNumSections() const {
+  if (Header->e_shnum == ELF::SHN_UNDEF)
+    return SectionHeaderTable->sh_size;
+  return Header->e_shnum;
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+uint64_t
+ELFObjectFile<target_endianness, is64Bits>::getStringTableIndex() const {
+  if (Header->e_shnum == ELF::SHN_UNDEF) {
+    if (Header->e_shstrndx == ELF::SHN_HIRESERVE)
+      return SectionHeaderTable->sh_link;
+    if (Header->e_shstrndx >= getNumSections())
+      return 0;
+  }
+  return Header->e_shstrndx;
+}
+
 
 template<support::endianness target_endianness, bool is64Bits>
 template<typename T>
@@ -1301,10 +1334,10 @@ ELFObjectFile<target_endianness, is64Bits>::getSection(DataRefImpl Symb) const {
 
 template<support::endianness target_endianness, bool is64Bits>
 const typename ELFObjectFile<target_endianness, is64Bits>::Elf_Shdr *
-ELFObjectFile<target_endianness, is64Bits>::getSection(uint16_t index) const {
-  if (index == 0 || index >= ELF::SHN_LORESERVE)
+ELFObjectFile<target_endianness, is64Bits>::getSection(uint32_t index) const {
+  if (index == 0)
     return 0;
-  if (!SectionHeaderTable || index >= Header->e_shnum)
+  if (!SectionHeaderTable || index >= getNumSections())
     // FIXME: Proper error handling.
     report_fatal_error("Invalid section index!");
 
@@ -1315,7 +1348,7 @@ ELFObjectFile<target_endianness, is64Bits>::getSection(uint16_t index) const {
 
 template<support::endianness target_endianness, bool is64Bits>
 const char *ELFObjectFile<target_endianness, is64Bits>
-                         ::getString(uint16_t section,
+                         ::getString(uint32_t section,
                                      ELF::Elf32_Word offset) const {
   return getString(getSection(section), offset);
 }
@@ -1336,7 +1369,7 @@ error_code ELFObjectFile<target_endianness, is64Bits>
                         ::getSymbolName(const Elf_Sym *symb,
                                         StringRef &Result) const {
   if (symb->st_name == 0) {
-    const Elf_Shdr *section = getSection(getSymbolTableIndex(symb));
+    const Elf_Shdr *section = getSection(symb);
     if (!section)
       Result = "";
     else
