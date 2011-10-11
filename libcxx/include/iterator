@@ -1035,7 +1035,7 @@ operator-(const __wrap_iter<_Iter1>&, const __wrap_iter<_Iter2>&) _NOEXCEPT;
 
 template <class _Iter>
 __wrap_iter<_Iter>
-operator+(typename __wrap_iter<_Iter>::difference_type, const __wrap_iter<_Iter>&) _NOEXCEPT;
+operator+(typename __wrap_iter<_Iter>::difference_type, __wrap_iter<_Iter>) _NOEXCEPT;
 
 template <class _I, class _O> _O copy(_I, _I, _O);
 template <class _B1, class _B2> _B2 copy_backward(_B1, _B1, _B2);
@@ -1208,7 +1208,7 @@ private:
     template <class _Iter1>
     friend
     __wrap_iter<_Iter1>
-    operator+(typename __wrap_iter<_Iter1>::difference_type, const __wrap_iter<_Iter1>&) _NOEXCEPT;
+    operator+(typename __wrap_iter<_Iter1>::difference_type, __wrap_iter<_Iter1>) _NOEXCEPT;
 
     template <class _I, class _O> friend _O copy(_I, _I, _O);
     template <class _B1, class _B2> friend _B2 copy_backward(_B1, _B1, _B2);
