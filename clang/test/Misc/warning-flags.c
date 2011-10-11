@@ -17,7 +17,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (300):
+CHECK: Warnings without flags (299):
 CHECK-NEXT:   backslash_newline_space
 CHECK-NEXT:   charize_microsoft_ext
 CHECK-NEXT:   ext_anon_param_requires_type_specifier
@@ -99,7 +99,6 @@ CHECK-NEXT:   ext_typecheck_cond_one_void
 CHECK-NEXT:   ext_typecheck_convert_int_pointer
 CHECK-NEXT:   ext_typecheck_convert_pointer_int
 CHECK-NEXT:   ext_typecheck_convert_pointer_void_func
-CHECK-NEXT:   ext_typecheck_decl_incomplete_type
 CHECK-NEXT:   ext_typecheck_ordered_comparison_of_function_pointers
 CHECK-NEXT:   ext_typecheck_ordered_comparison_of_pointer_and_zero
 CHECK-NEXT:   ext_typecheck_ordered_comparison_of_pointer_integer
