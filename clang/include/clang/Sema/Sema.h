@@ -2838,9 +2838,6 @@ public:
   /// deleted.
   bool ShouldDeleteCopyAssignmentOperator(CXXMethodDecl *MD);
 
-  /// \brief Determine if a defaulted move constructor ought to be deleted.
-  bool ShouldDeleteMoveConstructor(CXXConstructorDecl *CD);
-
   /// \brief Determine if a defaulted move assignment operator ought to be
   /// deleted.
   bool ShouldDeleteMoveAssignmentOperator(CXXMethodDecl *MD);
