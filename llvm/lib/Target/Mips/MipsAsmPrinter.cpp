@@ -45,8 +45,10 @@
 using namespace llvm;
 
 static bool isUnalignedLoadStore(unsigned Opc) {
-  return Opc == Mips::ULW || Opc == Mips::ULH || Opc == Mips::ULHu ||
-         Opc == Mips::USW || Opc == Mips::USH;
+  return Opc == Mips::ULW    || Opc == Mips::ULH    || Opc == Mips::ULHu ||
+         Opc == Mips::USW    || Opc == Mips::USH    ||
+         Opc == Mips::ULW_P8 || Opc == Mips::ULH_P8 || Opc == Mips::ULHu_P8 ||
+         Opc == Mips::USW_P8 || Opc == Mips::USH_P8;
 }
 
 void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
