@@ -268,17 +268,17 @@ class ArithLogicOfR<bits<6> op, bits<6> func, string instr_asm,
   let isCommutable = isComm;
 }
 
-// Arithmetic 2 register operands
-class ArithI<bits<6> op, string instr_asm, SDNode OpNode,
-             Operand Od, PatLeaf imm_type> :
-  FI<op, (outs CPURegs:$dst), (ins CPURegs:$b, Od:$c),
-     !strconcat(instr_asm, "\t$dst, $b, $c"),
-     [(set CPURegs:$dst, (OpNode CPURegs:$b, imm_type:$c))], IIAlu>;
+// Arithmetic and logical instructions with 2 register operands.
+class ArithLogicI<bits<6> op, string instr_asm, SDNode OpNode,
+                  Operand Od, PatLeaf imm_type, RegisterClass RC> :
+  FI<op, (outs RC:$rt), (ins RC:$rs, Od:$i),
+     !strconcat(instr_asm, "\t$rt, $rs, $i"),
+     [(set RC:$rt, (OpNode RC:$rs, imm_type:$i))], IIAlu>;
 
 class ArithOverflowI<bits<6> op, string instr_asm, SDNode OpNode,
-             Operand Od, PatLeaf imm_type> :
-  FI<op, (outs CPURegs:$dst), (ins CPURegs:$b, Od:$c),
-     !strconcat(instr_asm, "\t$dst, $b, $c"), [], IIAlu>;
+                     Operand Od, PatLeaf imm_type, RegisterClass RC> :
+  FI<op, (outs RC:$rt), (ins RC:$rs, Od:$i),
+     !strconcat(instr_asm, "\t$rt, $rs, $i"), [], IIAlu>;
 
 // Arithmetic Multiply ADD/SUB
 let rd = 0, shamt = 0, Defs = [HI, LO], Uses = [HI, LO] in
@@ -290,11 +290,6 @@ class MArithR<bits<6> func, string instr_asm, SDNode op, bit isComm = 0> :
 }
 
 //  Logical
-class LogicI<bits<6> op, string instr_asm, SDNode OpNode>:
-  FI<op, (outs CPURegs:$dst), (ins CPURegs:$b, uimm16:$c),
-     !strconcat(instr_asm, "\t$dst, $b, $c"),
-     [(set CPURegs:$dst, (OpNode CPURegs:$b, immZExt16:$c))], IIAlu>;
-
 let isCommutable = 1 in
 class LogicNOR<bits<6> op, bits<6> func, string instr_asm>:
   FR<op, func, (outs CPURegs:$dst), (ins CPURegs:$b, CPURegs:$c),
@@ -609,13 +604,13 @@ let usesCustomInserter = 1 in {
 //===----------------------------------------------------------------------===//
 
 /// Arithmetic Instructions (ALU Immediate)
-def ADDiu   : ArithI<0x09, "addiu", add, simm16, immSExt16>;
-def ADDi    : ArithOverflowI<0x08, "addi",  add, simm16, immSExt16>;
+def ADDiu   : ArithLogicI<0x09, "addiu", add, simm16, immSExt16, CPURegs>;
+def ADDi    : ArithOverflowI<0x08, "addi", add, simm16, immSExt16, CPURegs>;
 def SLTi    : SetCC_I<0x0a, "slti", setlt, simm16, immSExt16, CPURegs>;
 def SLTiu   : SetCC_I<0x0b, "sltiu", setult, simm16, immSExt16, CPURegs>;
-def ANDi    : LogicI<0x0c, "andi", and>;
-def ORi     : LogicI<0x0d, "ori",  or>;
-def XORi    : LogicI<0x0e, "xori",  xor>;
+def ANDi    : ArithLogicI<0x0c, "andi", and, uimm16, immZExt16, CPURegs>;
+def ORi     : ArithLogicI<0x0d, "ori", or, uimm16, immZExt16, CPURegs>;
+def XORi    : ArithLogicI<0x0e, "xori", xor, uimm16, immZExt16, CPURegs>;
 def LUi     : LoadUpper<0x0f, "lui">;
 
 /// Arithmetic Instructions (3-Operand, R-Type)

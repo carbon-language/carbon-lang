@@ -37,19 +37,7 @@ def imm32_63 : ImmLeaf<i64,
 // Instructions specific format
 //===----------------------------------------------------------------------===//
 
-// Arithmetic 2 register operands
-class ArithI64<bits<6> op, string instr_asm, SDNode OpNode,
-               Operand Od, PatLeaf imm_type> :
-  FI<op, (outs CPU64Regs:$dst), (ins CPU64Regs:$b, Od:$c),
-     !strconcat(instr_asm, "\t$dst, $b, $c"),
-     [(set CPU64Regs:$dst, (OpNode CPU64Regs:$b, imm_type:$c))], IIAlu>;
-
 //  Logical
-class LogicI64<bits<6> op, string instr_asm, SDNode OpNode>:
-  FI<op, (outs CPU64Regs:$dst), (ins CPU64Regs:$b, uimm16_64:$c),
-     !strconcat(instr_asm, "\t$dst, $b, $c"),
-     [(set CPU64Regs:$dst, (OpNode CPU64Regs:$b, immZExt16:$c))], IIAlu>;
-
 let isCommutable = 1 in
 class LogicNOR64<bits<6> op, bits<6> func, string instr_asm>:
   FR<op, func, (outs CPU64Regs:$dst), (ins CPU64Regs:$b, CPU64Regs:$c),
@@ -114,12 +102,13 @@ class CountLeading64<bits<6> func, string instr_asm, list<dag> pattern>:
 //===----------------------------------------------------------------------===//
 
 /// Arithmetic Instructions (ALU Immediate)
-def DADDiu   : ArithI64<0x19, "daddiu", add, simm16_64, immSExt16>;
-def DANDi    : LogicI64<0x0c, "andi", and>;
+def DADDiu   : ArithLogicI<0x19, "daddiu", add, simm16_64, immSExt16,
+                           CPU64Regs>;
+def DANDi    : ArithLogicI<0x0c, "andi", and, uimm16_64, immZExt16, CPU64Regs>;
 def SLTi64   : SetCC_I<0x0a, "slti", setlt, simm16_64, immSExt16, CPU64Regs>;
 def SLTiu64  : SetCC_I<0x0b, "sltiu", setult, simm16_64, immSExt16, CPU64Regs>;
-def ORi64    : LogicI64<0x0d, "ori",  or>;
-def XORi64   : LogicI64<0x0e, "xori",  xor>;
+def ORi64    : ArithLogicI<0x0d, "ori", or, uimm16_64, immZExt16, CPU64Regs>;
+def XORi64   : ArithLogicI<0x0e, "xori", xor, uimm16_64, immZExt16, CPU64Regs>;
 
 /// Arithmetic Instructions (3-Operand, R-Type)
 def DADDu    : ArithLogicR<0x00, 0x2d, "daddu", add, IIAlu, CPU64Regs, 1>;
