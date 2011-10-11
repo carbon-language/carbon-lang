@@ -4315,8 +4315,6 @@ namespace {
   struct ActOnFDArgs {
     Scope *S;
     Declarator &D;
-    DeclContext *DC;
-    TypeSourceInfo *TInfo;
     MultiTemplateParamsArg TemplateParamLists;
     bool AddToScope;
   };
@@ -4332,29 +4330,31 @@ namespace {
 /// Returns a NamedDecl iff typo correction was performed and substituting in
 /// the new declaration name does not cause new errors.
 static NamedDecl* DiagnoseInvalidRedeclaration(
-    Sema &S, LookupResult &Previous, FunctionDecl *NewFD, bool isFriendDecl,
+    Sema &SemaRef, LookupResult &Previous, FunctionDecl *NewFD,
     ActOnFDArgs &ExtraArgs) {
-  assert(NewFD->getDeclContext() == ExtraArgs.DC && "NewFD has different DeclContext!");
   NamedDecl *Result = NULL;
   DeclarationName Name = NewFD->getDeclName();
   DeclContext *NewDC = NewFD->getDeclContext();
-  LookupResult Prev(S, Name, NewFD->getLocation(),
+  LookupResult Prev(SemaRef, Name, NewFD->getLocation(),
                     Sema::LookupOrdinaryName, Sema::ForRedeclaration);
   llvm::SmallVector<unsigned, 1> MismatchedParams;
   llvm::SmallVector<std::pair<FunctionDecl*, unsigned>, 1> NearMatches;
   TypoCorrection Correction;
+  bool isFriendDecl = (SemaRef.getLangOptions().CPlusPlus &&
+                       ExtraArgs.D.getDeclSpec().isFriendSpecified());
   unsigned DiagMsg = isFriendDecl ? diag::err_no_matching_local_friend
                                   : diag::err_member_def_does_not_match;
 
   NewFD->setInvalidDecl();
-  S.LookupQualifiedName(Prev, NewDC);
+  SemaRef.LookupQualifiedName(Prev, NewDC);
   assert(!Prev.isAmbiguous() &&
          "Cannot have an ambiguity in previous-declaration lookup");
   if (!Prev.empty()) {
     for (LookupResult::iterator Func = Prev.begin(), FuncEnd = Prev.end();
          Func != FuncEnd; ++Func) {
       FunctionDecl *FD = dyn_cast<FunctionDecl>(*Func);
-      if (FD && hasSimilarParameters(S.Context, FD, NewFD, MismatchedParams)) {
+      if (FD &&
+          hasSimilarParameters(SemaRef.Context, FD, NewFD, MismatchedParams)) {
         // Add 1 to the index so that 0 can mean the mismatch didn't
         // involve a parameter
         unsigned ParamNum =
@@ -4363,11 +4363,11 @@ static NamedDecl* DiagnoseInvalidRedeclaration(
       }
     }
   // If the qualified name lookup yielded nothing, try typo correction
-  } else if ((Correction = S.CorrectTypo(Prev.getLookupNameInfo(),
+  } else if ((Correction = SemaRef.CorrectTypo(Prev.getLookupNameInfo(),
                                          Prev.getLookupKind(), 0, 0, NewDC)) &&
              Correction.getCorrection() != Name) {
     // Trap errors.
-    Sema::SFINAETrap Trap(S);
+    Sema::SFINAETrap Trap(SemaRef);
 
     // Set up everything for the call to ActOnFunctionDeclarator
     ExtraArgs.D.SetIdentifier(Correction.getCorrectionAsIdentifierInfo(),
@@ -4378,7 +4378,8 @@ static NamedDecl* DiagnoseInvalidRedeclaration(
                                     CDeclEnd = Correction.end();
          CDecl != CDeclEnd; ++CDecl) {
       FunctionDecl *FD = dyn_cast<FunctionDecl>(*CDecl);
-      if (FD && hasSimilarParameters(S.Context, FD, NewFD, MismatchedParams)) {
+      if (FD && hasSimilarParameters(SemaRef.Context, FD, NewFD,
+                                     MismatchedParams)) {
         Previous.addDecl(FD);
       }
     }
@@ -4386,10 +4387,12 @@ static NamedDecl* DiagnoseInvalidRedeclaration(
     // TODO: Refactor ActOnFunctionDeclarator so that we can call only the
     // pieces need to verify the typo-corrected C++ declaraction and hopefully
     // eliminate the need for the parameter pack ExtraArgs.
-    Result = S.ActOnFunctionDeclarator(ExtraArgs.S, ExtraArgs.D, ExtraArgs.DC,
-                                       ExtraArgs.TInfo, Previous,
-                                       ExtraArgs.TemplateParamLists,
-                                       ExtraArgs.AddToScope);
+    Result = SemaRef.ActOnFunctionDeclarator(ExtraArgs.S, ExtraArgs.D,
+                                             NewFD->getDeclContext(),
+                                             NewFD->getTypeSourceInfo(),
+                                             Previous,
+                                             ExtraArgs.TemplateParamLists,
+                                             ExtraArgs.AddToScope);
     if (Trap.hasErrorOccurred()) {
       // Pretend the typo correction never occurred
       ExtraArgs.D.SetIdentifier(Name.getAsIdentifierInfo(),
@@ -4416,12 +4419,14 @@ static NamedDecl* DiagnoseInvalidRedeclaration(
   }
 
   if (Correction)
-    S.Diag(NewFD->getLocation(), DiagMsg)
-        << Name << NewDC << Correction.getQuoted(S.getLangOptions())
+    SemaRef.Diag(NewFD->getLocation(), DiagMsg)
+        << Name << NewDC << Correction.getQuoted(SemaRef.getLangOptions())
         << FixItHint::CreateReplacement(
-            NewFD->getLocation(), Correction.getAsString(S.getLangOptions()));
+            NewFD->getLocation(),
+            Correction.getAsString(SemaRef.getLangOptions()));
   else
-    S.Diag(NewFD->getLocation(), DiagMsg) << Name << NewDC << NewFD->getLocation();
+    SemaRef.Diag(NewFD->getLocation(), DiagMsg)
+        << Name << NewDC << NewFD->getLocation();
 
   bool NewFDisConst = false;
   if (CXXMethodDecl *NewMD = dyn_cast<CXXMethodDecl>(NewFD))
@@ -4437,17 +4442,17 @@ static NamedDecl* DiagnoseInvalidRedeclaration(
 
     if (unsigned Idx = NearMatch->second) {
       ParmVarDecl *FDParam = FD->getParamDecl(Idx-1);
-      S.Diag(FDParam->getTypeSpecStartLoc(),
+      SemaRef.Diag(FDParam->getTypeSpecStartLoc(),
              diag::note_member_def_close_param_match)
           << Idx << FDParam->getType() << NewFD->getParamDecl(Idx-1)->getType();
     } else if (Correction) {
-      S.Diag(FD->getLocation(), diag::note_previous_decl)
-          << Correction.getQuoted(S.getLangOptions());
+      SemaRef.Diag(FD->getLocation(), diag::note_previous_decl)
+          << Correction.getQuoted(SemaRef.getLangOptions());
     } else if (FDisConst != NewFDisConst) {
-      S.Diag(FD->getLocation(), diag::note_member_def_close_const_match)
+      SemaRef.Diag(FD->getLocation(), diag::note_member_def_close_const_match)
           << NewFDisConst << FD->getSourceRange().getEnd();
     } else
-      S.Diag(FD->getLocation(), diag::note_member_def_close_match);
+      SemaRef.Diag(FD->getLocation(), diag::note_member_def_close_match);
   }
   return Result;
 }
@@ -5184,7 +5189,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     if (NewFD->isInvalidDecl()) {
       // Ignore all the rest of this.
     } else if (!D.isRedeclaration()) {
-      struct ActOnFDArgs ExtraArgs = { S, D, DC, TInfo, TemplateParamLists,
+      struct ActOnFDArgs ExtraArgs = { S, D, TemplateParamLists,
                                        AddToScope };
       // Fake up an access specifier if it's supposed to be a class member.
       if (isa<CXXRecordDecl>(NewFD->getDeclContext()))
@@ -5223,7 +5228,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
           // whether the parameter types are references).
 
           if (NamedDecl *Result = DiagnoseInvalidRedeclaration(*this, Previous,
-                                                               NewFD, false,
+                                                               NewFD,
                                                                ExtraArgs)) {
             AddToScope = ExtraArgs.AddToScope;
             return Result;
@@ -5234,7 +5239,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
         // to something.
       } else if (isFriend && cast<CXXRecordDecl>(CurContext)->isLocalClass()) {
         if (NamedDecl *Result = DiagnoseInvalidRedeclaration(*this, Previous,
-                                                             NewFD, true,
+                                                             NewFD,
                                                              ExtraArgs)) {
           AddToScope = ExtraArgs.AddToScope;
           return Result;
