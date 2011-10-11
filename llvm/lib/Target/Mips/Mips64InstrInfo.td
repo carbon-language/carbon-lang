@@ -133,18 +133,18 @@ def DADDiu   : ArithI64<0x19, "daddiu", add, simm16_64, immSExt16>;
 def DANDi    : LogicI64<0x0c, "andi", and>;
 def SLTi64   : SetCC_I<0x0a, "slti", setlt, simm16_64, immSExt16, CPU64Regs>;
 def SLTiu64  : SetCC_I<0x0b, "sltiu", setult, simm16_64, immSExt16, CPU64Regs>;
-def DORi     : LogicI64<0x0d, "ori",  or>;
-def DXORi    : LogicI64<0x0e, "xori",  xor>;
+def ORi64    : LogicI64<0x0d, "ori",  or>;
+def XORi64   : LogicI64<0x0e, "xori",  xor>;
 
 /// Arithmetic Instructions (3-Operand, R-Type)
 def DADDu    : ArithR64<0x00, 0x2d, "daddu", add, IIAlu, 1>;
 def DSUBu    : ArithR64<0x00, 0x2f, "dsubu", sub, IIAlu>;
 def SLT64    : SetCC_R<0x00, 0x2a, "slt", setlt, CPU64Regs>;
 def SLTu64   : SetCC_R<0x00, 0x2b, "sltu", setult, CPU64Regs>;
-def DAND     : LogicR64<0x24, "and", and>;
-def DOR      : LogicR64<0x25, "or", or>;
-def DXOR     : LogicR64<0x26, "xor", xor>;
-def DNOR     : LogicNOR64<0x00, 0x27, "nor">;
+def AND64    : LogicR64<0x24, "and", and>;
+def OR64     : LogicR64<0x25, "or", or>;
+def XOR64    : LogicR64<0x26, "xor", xor>;
+def NOR64    : LogicNOR64<0x00, 0x27, "nor">;
 
 /// Shift Instructions
 def DSLL     : LogicR_shift_rotate_imm64<0x38, 0x00, "dsll", shl, immZExt5>;
@@ -226,7 +226,7 @@ def DCLO : CountLeading64<0x25, "dclo",
 def : Pat<(i64 immSExt16:$in),
           (DADDiu ZERO_64, imm:$in)>;
 def : Pat<(i64 immZExt16:$in),
-          (DORi ZERO_64, imm:$in)>;
+          (ORi64 ZERO_64, imm:$in)>;
 
 // zextloadi32_u
 def : Pat<(zextloadi32_u addr:$a), (DSRL (DSLL (ULW64_P8 addr:$a), 32), 32)>,
@@ -241,7 +241,7 @@ defm : BrcondPats<CPU64Regs, BEQ64, BNE64, SLT64, SLTu64, SLTi64, SLTiu64,
                   ZERO_64>;
 
 // setcc patterns
-defm : SeteqPats<CPU64Regs, SLTiu64, DXOR, SLTu64, ZERO_64>;
+defm : SeteqPats<CPU64Regs, SLTiu64, XOR64, SLTu64, ZERO_64>;
 defm : SetlePats<CPU64Regs, SLT64, SLTu64>;
 defm : SetgtPats<CPU64Regs, SLT64, SLTu64>;
 defm : SetgePats<CPU64Regs, SLT64, SLTu64>;
