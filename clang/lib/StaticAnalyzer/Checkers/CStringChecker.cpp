@@ -1,4 +1,4 @@
-//= CStringChecker.h - Checks calls to C string functions ----------*- C++ -*-//
+//= CStringChecker.cpp - Checks calls to C string functions --------*- C++ -*-//
 //
 //                     The LLVM Compiler Infrastructure
 //
