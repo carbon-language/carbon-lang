@@ -970,6 +970,15 @@ static bool ShouldTryAgainWithRedefinitionType(Sema &S, ExprResult &base) {
   return true;
 }
 
+static bool isRecordType(QualType T) {
+  return T->isRecordType();
+}
+static bool isPointerToRecordType(QualType T) {
+  if (const PointerType *PT = T->getAs<PointerType>())
+    return PT->getPointeeType()->isRecordType();
+  return false;
+}
+
 /// Look up the given member of the given non-type-dependent
 /// expression.  This can return in one of two ways:
 ///  * If it returns a sentinel null-but-valid result, the caller will
@@ -989,6 +998,8 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
 
   // Perform default conversions.
   BaseExpr = DefaultFunctionArrayConversion(BaseExpr.take());
+  if (BaseExpr.isInvalid())
+    return ExprError();
 
   if (IsArrow) {
     BaseExpr = DefaultLvalueConversion(BaseExpr.take());
@@ -1370,50 +1381,15 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
 
   // If the user is trying to apply -> or . to a function name, it's probably
   // because they forgot parentheses to call that function.
-  QualType ZeroArgCallTy;
-  UnresolvedSet<4> Overloads;
-  if (isExprCallable(*BaseExpr.get(), ZeroArgCallTy, Overloads)) {
-    if (ZeroArgCallTy.isNull()) {
-      Diag(BaseExpr.get()->getExprLoc(), diag::err_member_reference_needs_call)
-          << (Overloads.size() > 1) << 0 << BaseExpr.get()->getSourceRange();
-      UnresolvedSet<2> PlausibleOverloads;
-      for (OverloadExpr::decls_iterator It = Overloads.begin(),
-           DeclsEnd = Overloads.end(); It != DeclsEnd; ++It) {
-        const FunctionDecl *OverloadDecl = cast<FunctionDecl>(*It);
-        QualType OverloadResultTy = OverloadDecl->getResultType();
-        if ((!IsArrow && OverloadResultTy->isRecordType()) ||
-            (IsArrow && OverloadResultTy->isPointerType() &&
-             OverloadResultTy->getPointeeType()->isRecordType()))
-          PlausibleOverloads.addDecl(It.getDecl());
-      }
-      NoteOverloads(PlausibleOverloads, BaseExpr.get()->getExprLoc());
+  if (tryToRecoverWithCall(BaseExpr,
+                           PDiag(diag::err_member_reference_needs_call),
+                           /*complain*/ false,
+                           IsArrow ? &isRecordType : &isPointerToRecordType)) {
+    if (BaseExpr.isInvalid())
       return ExprError();
-    }
-    if ((!IsArrow && ZeroArgCallTy->isRecordType()) ||
-        (IsArrow && ZeroArgCallTy->isPointerType() &&
-         ZeroArgCallTy->getPointeeType()->isRecordType())) {
-      // At this point, we know BaseExpr looks like it's potentially callable
-      // with 0 arguments, and that it returns something of a reasonable type,
-      // so we can emit a fixit and carry on pretending that BaseExpr was
-      // actually a CallExpr.
-      SourceLocation ParenInsertionLoc =
-          PP.getLocForEndOfToken(BaseExpr.get()->getLocEnd());
-      Diag(BaseExpr.get()->getExprLoc(), diag::err_member_reference_needs_call)
-          << (Overloads.size() > 1) << 1 << BaseExpr.get()->getSourceRange()
-          << FixItHint::CreateInsertion(ParenInsertionLoc, "()");
-      // FIXME: Try this before emitting the fixit, and suppress diagnostics
-      // while doing so.
-      ExprResult NewBase =
-          ActOnCallExpr(0, BaseExpr.take(), ParenInsertionLoc,
-                        MultiExprArg(*this, 0, 0),
-                        ParenInsertionLoc.getLocWithOffset(1));
-      if (NewBase.isInvalid())
-        return ExprError();
-      BaseExpr = NewBase;
-      BaseExpr = DefaultFunctionArrayConversion(BaseExpr.take());
-      return LookupMemberExpr(R, BaseExpr, IsArrow, OpLoc, SS,
-                              ObjCImpDecl, HasTemplateArgs);
-    }
+    BaseExpr = DefaultFunctionArrayConversion(BaseExpr.take());
+    return LookupMemberExpr(R, BaseExpr, IsArrow, OpLoc, SS,
+                            ObjCImpDecl, HasTemplateArgs);
   }
 
   Diag(MemberLoc, diag::err_typecheck_member_reference_struct_union)

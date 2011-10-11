@@ -1554,8 +1554,9 @@ public:
                                                    bool Complain = false,
                                                    DeclAccessPair* Found = 0);
 
-  ExprResult ResolveAndFixSingleFunctionTemplateSpecialization(
-                      Expr *SrcExpr, bool DoFunctionPointerConverion = false, 
+  bool ResolveAndFixSingleFunctionTemplateSpecialization(
+                      ExprResult &SrcExpr,
+                      bool DoFunctionPointerConverion = false,
                       bool Complain = false, 
                       const SourceRange& OpRangeForComplaining = SourceRange(), 
                       QualType DestTypeForComplaining = QualType(), 
@@ -2274,12 +2275,16 @@ public:
   void MarkDeclarationsReferencedInType(SourceLocation Loc, QualType T);
   void MarkDeclarationsReferencedInExpr(Expr *E);
 
+  /// \brief Try to recover by turning the given expression into a
+  /// call.  Returns true if recovery was attempted or an error was
+  /// emitted; this may also leave the ExprResult invalid.
+  bool tryToRecoverWithCall(ExprResult &E, const PartialDiagnostic &PD,
+                            bool ForceComplain = false,
+                            bool (*IsPlausibleResult)(QualType) = 0);
+
   /// \brief Figure out if an expression could be turned into a call.
   bool isExprCallable(const Expr &E, QualType &ZeroArgCallReturnTy,
                       UnresolvedSetImpl &NonTemplateOverloads);
-  /// \brief Give notes for a set of overloads.
-  void NoteOverloads(const UnresolvedSetImpl &Overloads,
-                     const SourceLocation FinalNoteLoc);
 
   /// \brief Conditionally issue a diagnostic based on the current
   /// evaluation context.

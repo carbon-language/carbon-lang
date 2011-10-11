@@ -28,7 +28,7 @@ struct B {
  A *f0();
 };
 int f0(B *b) {
-  return b->f0->f0; // expected-error{{perhaps you meant to call it with no arguments}}
+  return b->f0->f0; // expected-error{{did you mean to call it with no arguments}}
 }
 
 int i;
@@ -118,32 +118,32 @@ namespace rdar8231724 {
 
 namespace PR9025 {
   struct S { int x; };
-  S fun();
-  int fun(int i);
+  S fun(); // expected-note{{possible target for call}}
+  int fun(int i); // expected-note{{possible target for call}}
   int g() {
-    return fun.x; // expected-error{{base of member reference is an overloaded function; perhaps you meant to call it with no arguments?}}
+    return fun.x; // expected-error{{reference to overloaded function could not be resolved; did you mean to call it with no arguments?}}
   }
 
-  S fun2();
-  S fun2(int i);
+  S fun2(); // expected-note{{possible target for call}}
+  S fun2(int i); // expected-note{{possible target for call}}
   int g2() {
-    return fun2.x; // expected-error{{base of member reference is an overloaded function; perhaps you meant to call it with no arguments?}}
+    return fun2.x; // expected-error{{reference to overloaded function could not be resolved; did you mean to call it with no arguments?}}
   }
 
-  S fun3(int i=0);
-  int fun3(int i, int j);
+  S fun3(int i=0); // expected-note{{possible target for call}}
+  int fun3(int i, int j); // expected-note{{possible target for call}}
   int g3() {
-    return fun3.x; // expected-error{{base of member reference is an overloaded function; perhaps you meant to call it with no arguments?}}
+    return fun3.x; // expected-error{{reference to overloaded function could not be resolved; did you mean to call it with no arguments?}}
   }
 
-  template <typename T> S fun4();
+  template <typename T> S fun4(); // expected-note{{possible target for call}}
   int g4() {
-    return fun4.x; // expected-error{{base of member reference is a function; perhaps you meant to call it?}}
+    return fun4.x; // expected-error{{reference to overloaded function could not be resolved; did you mean to call it?}}
   }
 
-  S fun5(int i); // expected-note{{possibly valid overload here}}
-  S fun5(float f); // expected-note{{possibly valid overload here}}
+  S fun5(int i); // expected-note{{possible target for call}}
+  S fun5(float f); // expected-note{{possible target for call}}
   int g5() {
-    return fun5.x; // expected-error{{base of member reference is an overloaded function; perhaps you meant to call it?}}
+    return fun5.x; // expected-error{{reference to overloaded function could not be resolved; did you mean to call it?}}
   }
 }

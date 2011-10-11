@@ -29,8 +29,8 @@ bool b8 = !S(); //expected-error {{invalid argument type 'S'}}
 
 namespace PR8181
 {
-  void f() { } // expected-note{{candidate function}}
-  void f(char) { } // expected-note{{candidate function}}
-  bool b = !&f;  //expected-error {{cannot resolve overloaded function 'f' from context}}
+  void f() { } // expected-note{{possible target for call}}
+  void f(char) { } // expected-note{{possible target for call}}
+  bool b = !&f;  //expected-error {{reference to overloaded function could not be resolved; did you mean to call it?}}
 
 }

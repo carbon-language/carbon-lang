@@ -295,6 +295,12 @@ ExprResult Sema::BuildCXXTypeId(QualType TypeInfoType,
                                 SourceLocation RParenLoc) {
   bool isUnevaluatedOperand = true;
   if (E && !E->isTypeDependent()) {
+    if (E->getType()->isPlaceholderType()) {
+      ExprResult result = CheckPlaceholderExpr(E);
+      if (result.isInvalid()) return ExprError();
+      E = result.take();
+    }
+
     QualType T = E->getType();
     if (const RecordType *RecordT = T->getAs<RecordType>()) {
       CXXRecordDecl *RecordD = cast<CXXRecordDecl>(RecordT->getDecl());

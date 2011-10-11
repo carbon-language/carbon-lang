@@ -870,27 +870,40 @@ void PrettyDeclStackTraceEntry::print(raw_ostream &OS) const {
 /// \param ZeroArgCallReturnTy - If the expression can be turned into a call
 ///  with no arguments, this parameter is set to the type returned by such a
 ///  call; otherwise, it is set to an empty QualType.
-/// \param NonTemplateOverloads - If the expression is an overloaded function
+/// \param OverloadSet - If the expression is an overloaded function
 ///  name, this parameter is populated with the decls of the various overloads.
 bool Sema::isExprCallable(const Expr &E, QualType &ZeroArgCallReturnTy,
-                          UnresolvedSetImpl &NonTemplateOverloads) {
+                          UnresolvedSetImpl &OverloadSet) {
   ZeroArgCallReturnTy = QualType();
-  NonTemplateOverloads.clear();
-  if (const OverloadExpr *Overloads = dyn_cast<OverloadExpr>(&E)) {
+  OverloadSet.clear();
+
+  if (E.getType() == Context.OverloadTy) {
+    OverloadExpr::FindResult FR = OverloadExpr::find(const_cast<Expr*>(&E));
+    const OverloadExpr *Overloads = FR.Expression;
+
     for (OverloadExpr::decls_iterator it = Overloads->decls_begin(),
          DeclsEnd = Overloads->decls_end(); it != DeclsEnd; ++it) {
-      // Our overload set may include TemplateDecls, which we'll ignore for our
-      // present purpose.
-      if (const FunctionDecl *OverloadDecl = dyn_cast<FunctionDecl>(*it)) {
-        NonTemplateOverloads.addDecl(*it);
+      OverloadSet.addDecl(*it);
+
+      // Check whether the function is a non-template which takes no
+      // arguments.
+      if (const FunctionDecl *OverloadDecl
+            = dyn_cast<FunctionDecl>((*it)->getUnderlyingDecl())) {
         if (OverloadDecl->getMinRequiredArguments() == 0)
           ZeroArgCallReturnTy = OverloadDecl->getResultType();
       }
     }
+
+    // Ignore overloads where the address is taken, because apparently
+    // overload resolution doesn't apply in these cases.  In theory,
+    // this can make us miss a few cases, but whatever.
+    if (FR.IsAddressOfOperand)
+      return false;
+
     return true;
   }
 
-  if (const DeclRefExpr *DeclRef = dyn_cast<DeclRefExpr>(&E)) {
+  if (const DeclRefExpr *DeclRef = dyn_cast<DeclRefExpr>(E.IgnoreParens())) {
     if (const FunctionDecl *Fun = dyn_cast<FunctionDecl>(DeclRef->getDecl())) {
       if (Fun->getMinRequiredArguments() == 0)
         ZeroArgCallReturnTy = Fun->getResultType();
@@ -937,8 +950,8 @@ bool Sema::isExprCallable(const Expr &E, QualType &ZeroArgCallReturnTy,
 ///  -fshow-overloads=best, this is the location to attach to the note about too
 ///  many candidates. Typically this will be the location of the original
 ///  ill-formed expression.
-void Sema::NoteOverloads(const UnresolvedSetImpl &Overloads,
-                         const SourceLocation FinalNoteLoc) {
+static void noteOverloads(Sema &S, const UnresolvedSetImpl &Overloads,
+                          const SourceLocation FinalNoteLoc) {
   int ShownOverloads = 0;
   int SuppressedOverloads = 0;
   for (UnresolvedSetImpl::iterator It = Overloads.begin(),
@@ -946,15 +959,86 @@ void Sema::NoteOverloads(const UnresolvedSetImpl &Overloads,
     // FIXME: Magic number for max shown overloads stolen from
     // OverloadCandidateSet::NoteCandidates.
     if (ShownOverloads >= 4 &&
-        Diags.getShowOverloads() == DiagnosticsEngine::Ovl_Best) {
+        S.Diags.getShowOverloads() == DiagnosticsEngine::Ovl_Best) {
       ++SuppressedOverloads;
       continue;
     }
-    Diag(cast<FunctionDecl>(*It)->getSourceRange().getBegin(),
-         diag::note_member_ref_possible_intended_overload);
+
+    NamedDecl *Fn = (*It)->getUnderlyingDecl();
+    S.Diag(Fn->getLocStart(), diag::note_possible_target_of_call);
     ++ShownOverloads;
   }
+
   if (SuppressedOverloads)
-    Diag(FinalNoteLoc, diag::note_ovl_too_many_candidates)
-        << SuppressedOverloads;
+    S.Diag(FinalNoteLoc, diag::note_ovl_too_many_candidates)
+      << SuppressedOverloads;
+}
+
+static void notePlausibleOverloads(Sema &S, SourceLocation Loc,
+                                   const UnresolvedSetImpl &Overloads,
+                                   bool (*IsPlausibleResult)(QualType)) {
+  if (!IsPlausibleResult)
+    return noteOverloads(S, Overloads, Loc);
+
+  UnresolvedSet<2> PlausibleOverloads;
+  for (OverloadExpr::decls_iterator It = Overloads.begin(),
+         DeclsEnd = Overloads.end(); It != DeclsEnd; ++It) {
+    const FunctionDecl *OverloadDecl = cast<FunctionDecl>(*It);
+    QualType OverloadResultTy = OverloadDecl->getResultType();
+    if (IsPlausibleResult(OverloadResultTy))
+      PlausibleOverloads.addDecl(It.getDecl());
+  }
+  noteOverloads(S, PlausibleOverloads, Loc);
+}
+
+/// Determine whether the given expression can be called by just
+/// putting parentheses after it.  Notably, expressions with unary
+/// operators can't be because the unary operator will start parsing
+/// outside the call.
+static bool IsCallableWithAppend(Expr *E) {
+  E = E->IgnoreImplicit();
+  return (!isa<CStyleCastExpr>(E) &&
+          !isa<UnaryOperator>(E) &&
+          !isa<BinaryOperator>(E) &&
+          !isa<CXXOperatorCallExpr>(E));
+}
+
+bool Sema::tryToRecoverWithCall(ExprResult &E, const PartialDiagnostic &PD,
+                                bool ForceComplain,
+                                bool (*IsPlausibleResult)(QualType)) {
+  SourceLocation Loc = E.get()->getExprLoc();
+  SourceRange Range = E.get()->getSourceRange();
+
+  QualType ZeroArgCallTy;
+  UnresolvedSet<4> Overloads;
+  if (isExprCallable(*E.get(), ZeroArgCallTy, Overloads) &&
+      !ZeroArgCallTy.isNull() &&
+      (!IsPlausibleResult || IsPlausibleResult(ZeroArgCallTy))) {
+    // At this point, we know E is potentially callable with 0
+    // arguments and that it returns something of a reasonable type,
+    // so we can emit a fixit and carry on pretending that E was
+    // actually a CallExpr.
+    SourceLocation ParenInsertionLoc =
+      PP.getLocForEndOfToken(Range.getEnd());
+    Diag(Loc, PD) 
+      << /*zero-arg*/ 1 << Range
+      << (IsCallableWithAppend(E.get())
+          ? FixItHint::CreateInsertion(ParenInsertionLoc, "()")
+          : FixItHint());
+    notePlausibleOverloads(*this, Loc, Overloads, IsPlausibleResult);
+
+    // FIXME: Try this before emitting the fixit, and suppress diagnostics
+    // while doing so.
+    E = ActOnCallExpr(0, E.take(), ParenInsertionLoc,
+                      MultiExprArg(*this, 0, 0),
+                      ParenInsertionLoc.getLocWithOffset(1));
+    return true;
+  }
+
+  if (!ForceComplain) return false;
+
+  Diag(Loc, PD) << /*not zero-arg*/ 0 << Range;
+  notePlausibleOverloads(*this, Loc, Overloads, IsPlausibleResult);
+  E = ExprError();
+  return true;
 }

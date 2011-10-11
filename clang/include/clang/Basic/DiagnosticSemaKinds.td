@@ -1977,9 +1977,13 @@ def err_ovl_no_viable_subscript :
     Error<"no viable overloaded operator[] for type %0">;
 def err_ovl_no_oper :
     Error<"type %0 does not provide a %select{subscript|call}1 operator">;
-def err_ovl_unresolvable :
-    Error<"cannot resolve overloaded function %0 from context">;
-  
+def err_ovl_unresolvable : Error<
+  "reference to overloaded function could not be resolved; "
+  "did you mean to call it%select{| with no arguments}0?">;
+def err_bound_member_function : Error<
+  "reference to non-static member function must be called"
+  "%select{|; did you mean to call it with no arguments?}0">;
+def note_possible_target_of_call : Note<"possible target for call">;
 
 def err_ovl_no_viable_object_call : Error<
   "no matching function for call to object of type %0">;
@@ -3211,10 +3215,8 @@ def err_typecheck_member_reference_type : Error<
 def err_typecheck_member_reference_unknown : Error<
   "cannot refer to member %0 in %1 with '%select{.|->}2'">;
 def err_member_reference_needs_call : Error<
-  "base of member reference is %select{a function|an overloaded function}0; "
-  "perhaps you meant to call it%select{| with no arguments}1?">;
-def note_member_ref_possible_intended_overload : Note<
-  "possibly valid overload here">;
+  "base of member reference is a function; perhaps you meant to call "
+  "it%select{| with no arguments}?">;
 def warn_subscript_is_char : Warning<"array subscript is of type 'char'">,
   InGroup<CharSubscript>, DefaultIgnore;
 
@@ -3804,8 +3806,6 @@ def err_not_tag_in_scope : Error<
 
 def err_cannot_form_pointer_to_member_of_reference_type : Error<
   "cannot form a pointer-to-member to member %0 of reference type %1">;
-def err_invalid_use_of_bound_member_func : Error<
-  "a bound member function may only be called">;
 def err_incomplete_object_call : Error<
   "incomplete type in call to object of type %0">;
 def err_incomplete_pointer_to_member_return : Error<

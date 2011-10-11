@@ -49,7 +49,7 @@ namespace {
       : Self(S), SrcExpr(src), DestType(destType),
         ResultType(destType.getNonLValueExprType(S.Context)),
         ValueKind(Expr::getValueKindForType(destType)),
-        Kind(CK_Dependent), IsARCUnbridgedCast(false) {
+        Kind(CK_Dependent) {
 
       if (const BuiltinType *placeholder =
             src.get()->getType()->getAsPlaceholderType()) {
@@ -65,7 +65,6 @@ namespace {
     QualType ResultType;
     ExprValueKind ValueKind;
     CastKind Kind;
-    bool IsARCUnbridgedCast;
     BuiltinType::Kind PlaceholderKind;
     CXXCastPath BasePath;
 
@@ -639,7 +638,7 @@ void CastOperation::CheckDynamicCast() {
 /// const char *str = "literal";
 /// legacy_function(const_cast\<char*\>(str));
 void CastOperation::CheckConstCast() {
-  if (ValueKind == VK_RValue) {
+  if (ValueKind == VK_RValue && !isPlaceholder(BuiltinType::Overload)) {
     SrcExpr = Self.DefaultFunctionArrayLvalueConversion(SrcExpr.take());
     if (SrcExpr.isInvalid()) // if conversion failed, don't report another error
       return;
@@ -658,7 +657,7 @@ void CastOperation::CheckConstCast() {
 /// like this:
 /// char *bytes = reinterpret_cast\<char*\>(int_ptr);
 void CastOperation::CheckReinterpretCast() {
-  if (ValueKind == VK_RValue) {
+  if (ValueKind == VK_RValue && !isPlaceholder(BuiltinType::Overload)) {
     SrcExpr = Self.DefaultFunctionArrayLvalueConversion(SrcExpr.take());
     if (SrcExpr.isInvalid()) // if conversion failed, don't report another error
       return;
@@ -705,20 +704,20 @@ void CastOperation::CheckStaticCast() {
     Kind = CK_ToVoid;
 
     if (claimPlaceholder(BuiltinType::Overload)) {
-      ExprResult SingleFunctionExpression = 
-        Self.ResolveAndFixSingleFunctionTemplateSpecialization(SrcExpr.get(), 
+      Self.ResolveAndFixSingleFunctionTemplateSpecialization(SrcExpr, 
                 false, // Decay Function to ptr 
                 true, // Complain
                 OpRange, DestType, diag::err_bad_static_cast_overload);
-      if (SingleFunctionExpression.isUsable())
-        SrcExpr = SingleFunctionExpression;
+      if (SrcExpr.isInvalid())
+        return;
     }
 
     SrcExpr = Self.IgnoredValueConversions(SrcExpr.take());
     return;
   }
 
-  if (ValueKind == VK_RValue && !DestType->isRecordType()) {
+  if (ValueKind == VK_RValue && !DestType->isRecordType() &&
+      !isPlaceholder(BuiltinType::Overload)) {
     SrcExpr = Self.DefaultFunctionArrayLvalueConversion(SrcExpr.take());
     if (SrcExpr.isInvalid()) // if conversion failed, don't report another error
       return;
@@ -1458,17 +1457,19 @@ static TryCastResult TryReinterpretCast(Sema &Self, ExprResult &SrcExpr,
   // Is the source an overloaded name? (i.e. &foo)
   // If so, reinterpret_cast can not help us here (13.4, p1, bullet 5) ...
   if (SrcType == Self.Context.OverloadTy) {
-    // ... unless foo<int> resolves to an lvalue unambiguously
-    ExprResult SingleFunctionExpr = 
-        Self.ResolveAndFixSingleFunctionTemplateSpecialization(SrcExpr.get(), 
+    // ... unless foo<int> resolves to an lvalue unambiguously.
+    // TODO: what if this fails because of DiagnoseUseOfDecl or something
+    // like it?
+    ExprResult SingleFunctionExpr = SrcExpr;
+    if (Self.ResolveAndFixSingleFunctionTemplateSpecialization(
+          SingleFunctionExpr,
           Expr::getValueKindForType(DestType) == VK_RValue // Convert Fun to Ptr 
-        );
-    if (SingleFunctionExpr.isUsable()) {
+        ) && SingleFunctionExpr.isUsable()) {
       SrcExpr = move(SingleFunctionExpr);
       SrcType = SrcExpr.get()->getType();
-    }      
-    else  
+    } else {
       return TC_NotApplicable;
+    }
   }
 
   if (const ReferenceType *DestTypeTmp = DestType->getAs<ReferenceType>()) {
@@ -1736,8 +1737,8 @@ void CastOperation::CheckCXXCStyleCast(bool FunctionalStyle) {
     Kind = CK_ToVoid;
 
     if (claimPlaceholder(BuiltinType::Overload)) {
-      SrcExpr = Self.ResolveAndFixSingleFunctionTemplateSpecialization(
-                  SrcExpr.take(), /* Decay Function to ptr */ false, 
+      Self.ResolveAndFixSingleFunctionTemplateSpecialization(
+                  SrcExpr, /* Decay Function to ptr */ false, 
                   /* Complain */ true, DestRange, DestType,
                   diag::err_bad_cstyle_cast_overload);
       if (SrcExpr.isInvalid())
@@ -1757,7 +1758,8 @@ void CastOperation::CheckCXXCStyleCast(bool FunctionalStyle) {
     return;
   }
 
-  if (ValueKind == VK_RValue && !DestType->isRecordType()) {
+  if (ValueKind == VK_RValue && !DestType->isRecordType() &&
+      !isPlaceholder(BuiltinType::Overload)) {
     SrcExpr = Self.DefaultFunctionArrayLvalueConversion(SrcExpr.take());
     if (SrcExpr.isInvalid())
       return;
@@ -1849,7 +1851,9 @@ void CastOperation::CheckCStyleCast() {
       return;
     }
 
-    checkNonOverloadPlaceholders();
+    // We allow overloads in C, but we don't allow them to be resolved
+    // by anything except calls.
+    SrcExpr = Self.CheckPlaceholderExpr(SrcExpr.take());
     if (SrcExpr.isInvalid())
       return;
   }  

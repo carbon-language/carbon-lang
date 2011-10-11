@@ -289,6 +289,13 @@ SourceRange Sema::getExprRange(Expr *E) const {
 
 /// DefaultFunctionArrayConversion (C99 6.3.2.1p3, C99 6.3.2.1p4).
 ExprResult Sema::DefaultFunctionArrayConversion(Expr *E) {
+  // Handle any placeholder expressions which made it here.
+  if (E->getType()->isPlaceholderType()) {
+    ExprResult result = CheckPlaceholderExpr(E);
+    if (result.isInvalid()) return ExprError();
+    E = result.take();
+  }
+  
   QualType Ty = E->getType();
   assert(!Ty.isNull() && "DefaultFunctionArrayConversion - missing type");
 
@@ -334,6 +341,13 @@ static void CheckForNullPointerDereference(Sema &S, Expr *E) {
 }
 
 ExprResult Sema::DefaultLvalueConversion(Expr *E) {
+  // Handle any placeholder expressions which made it here.
+  if (E->getType()->isPlaceholderType()) {
+    ExprResult result = CheckPlaceholderExpr(E);
+    if (result.isInvalid()) return ExprError();
+    E = result.take();
+  }
+  
   // C++ [conv.lval]p1:
   //   A glvalue of a non-function, non-array type T can be
   //   converted to a prvalue.
@@ -9976,17 +9990,27 @@ ExprResult Sema::CheckPlaceholderExpr(Expr *E) {
   QualType type = E->getType();
 
   // Overloaded expressions.
-  if (type == Context.OverloadTy)
-    return ResolveAndFixSingleFunctionTemplateSpecialization(E, false, true,
-                                                           E->getSourceRange(),
-                                                             QualType(),
-                                                   diag::err_ovl_unresolvable);
+  if (type == Context.OverloadTy) {
+    // Try to resolve a single function template specialization.
+    // This is obligatory.
+    ExprResult result = Owned(E);
+    if (ResolveAndFixSingleFunctionTemplateSpecialization(result, false)) {
+      return result;
+
+    // If that failed, try to recover with a call.
+    } else {
+      tryToRecoverWithCall(result, PDiag(diag::err_ovl_unresolvable),
+                           /*complain*/ true);
+      return result;
+    }
+  }
 
   // Bound member functions.
   if (type == Context.BoundMemberTy) {
-    Diag(E->getLocStart(), diag::err_invalid_use_of_bound_member_func)
-      << E->getSourceRange();
-    return ExprError();
+    ExprResult result = Owned(E);
+    tryToRecoverWithCall(result, PDiag(diag::err_bound_member_function),
+                         /*complain*/ true);
+    return result;
   }    
 
   // Expressions of unknown type.

@@ -8119,25 +8119,31 @@ Sema::ResolveSingleFunctionTemplateSpecialization(OverloadExpr *ovl,
 
 
 
-// Resolve and fix an overloaded expression that
-// can be resolved because it identifies a single function
-// template specialization
+// Resolve and fix an overloaded expression that can be resolved
+// because it identifies a single function template specialization.
+//
 // Last three arguments should only be supplied if Complain = true
-ExprResult Sema::ResolveAndFixSingleFunctionTemplateSpecialization(
-             Expr *SrcExpr, bool doFunctionPointerConverion, bool complain,
-                                  const SourceRange& OpRangeForComplaining, 
+//
+// Return true if it was logically possible to so resolve the
+// expression, regardless of whether or not it succeeded.  Always
+// returns true if 'complain' is set.
+bool Sema::ResolveAndFixSingleFunctionTemplateSpecialization(
+                      ExprResult &SrcExpr, bool doFunctionPointerConverion,
+                   bool complain, const SourceRange& OpRangeForComplaining, 
                                            QualType DestTypeForComplaining, 
                                             unsigned DiagIDForComplaining) {
-  assert(SrcExpr->getType() == Context.OverloadTy);
+  assert(SrcExpr.get()->getType() == Context.OverloadTy);
 
-  OverloadExpr::FindResult ovl = OverloadExpr::find(SrcExpr);
+  OverloadExpr::FindResult ovl = OverloadExpr::find(SrcExpr.get());
 
   DeclAccessPair found;
   ExprResult SingleFunctionExpression;
   if (FunctionDecl *fn = ResolveSingleFunctionTemplateSpecialization(
                            ovl.Expression, /*complain*/ false, &found)) {
-    if (DiagnoseUseOfDecl(fn, SrcExpr->getSourceRange().getBegin()))
-      return ExprError();
+    if (DiagnoseUseOfDecl(fn, SrcExpr.get()->getSourceRange().getBegin())) {
+      SrcExpr = ExprError();
+      return true;
+    }
 
     // It is only correct to resolve to an instance method if we're
     // resolving a form that's permitted to be a pointer to member.
@@ -8146,28 +8152,34 @@ ExprResult Sema::ResolveAndFixSingleFunctionTemplateSpecialization(
     if (!ovl.HasFormOfMemberPointer &&
         isa<CXXMethodDecl>(fn) &&
         cast<CXXMethodDecl>(fn)->isInstance()) {
-      if (complain) {
-        Diag(ovl.Expression->getExprLoc(),
-             diag::err_invalid_use_of_bound_member_func)
-          << ovl.Expression->getSourceRange();
-        // TODO: I believe we only end up here if there's a mix of
-        // static and non-static candidates (otherwise the expression
-        // would have 'bound member' type, not 'overload' type).
-        // Ideally we would note which candidate was chosen and why
-        // the static candidates were rejected.
-      }
-      
-      return ExprError();
+      if (!complain) return false;
+
+      Diag(ovl.Expression->getExprLoc(),
+           diag::err_bound_member_function)
+        << 0 << ovl.Expression->getSourceRange();
+
+      // TODO: I believe we only end up here if there's a mix of
+      // static and non-static candidates (otherwise the expression
+      // would have 'bound member' type, not 'overload' type).
+      // Ideally we would note which candidate was chosen and why
+      // the static candidates were rejected.
+      SrcExpr = ExprError();
+      return true;
     }
 
     // Fix the expresion to refer to 'fn'.
     SingleFunctionExpression =
-      Owned(FixOverloadedFunctionReference(SrcExpr, found, fn));
+      Owned(FixOverloadedFunctionReference(SrcExpr.take(), found, fn));
 
     // If desired, do function-to-pointer decay.
-    if (doFunctionPointerConverion)
+    if (doFunctionPointerConverion) {
       SingleFunctionExpression =
         DefaultFunctionArrayLvalueConversion(SingleFunctionExpression.take());
+      if (SingleFunctionExpression.isInvalid()) {
+        SrcExpr = ExprError();
+        return true;
+      }
+    }
   }
 
   if (!SingleFunctionExpression.isUsable()) {
@@ -8177,12 +8189,17 @@ ExprResult Sema::ResolveAndFixSingleFunctionTemplateSpecialization(
         << DestTypeForComplaining
         << OpRangeForComplaining 
         << ovl.Expression->getQualifierLoc().getSourceRange();
-      NoteAllOverloadCandidates(SrcExpr);
-    }      
-    return ExprError();
+      NoteAllOverloadCandidates(SrcExpr.get());
+
+      SrcExpr = ExprError();
+      return true;
+    }
+
+    return false;
   }
 
-  return SingleFunctionExpression;
+  SrcExpr = SingleFunctionExpression;
+  return true;
 }
 
 /// \brief Add a single candidate to the overload set.

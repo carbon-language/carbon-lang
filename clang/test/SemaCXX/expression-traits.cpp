@@ -185,8 +185,8 @@ struct Class : BaseClass
     template <class T>
     struct NestedClassTemplate {};
 
-    template <class T>
-    static int& NestedFuncTemplate() { return variable; } // expected-note{{candidate function}}
+    template <class T>  // expected-note{{possible target for call}}
+    static int& NestedFuncTemplate() { return variable; }
 
     template <class T>
     int& NestedMemfunTemplate() { return variable; }
@@ -234,13 +234,13 @@ struct Class : BaseClass
         // doesn't come up in legal pure C++ programs). This language
         // extension simply rejects them as requiring additional context
         __is_lvalue_expr(::Class::NestedFuncTemplate);    // qualified-id: template \
-        // expected-error{{cannot resolve overloaded function 'NestedFuncTemplate' from context}}
+        // expected-error{{reference to overloaded function could not be resolved; did you mean to call it?}}
         
         __is_lvalue_expr(::Class::NestedMemfunTemplate);  // qualified-id: template \
-        // expected-error{{a bound member function may only be called}}
+        // expected-error{{reference to non-static member function must be called}}
         
         __is_lvalue_expr(::Class::operator+);             // operator-function-id: template \
-        // expected-error{{a bound member function may only be called}}
+        // expected-error{{reference to non-static member function must be called}}
 
         //ASSERT_RVALUE(::Class::operator*);         // operator-function-id: member function
     }

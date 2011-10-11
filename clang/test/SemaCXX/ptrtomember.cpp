@@ -22,12 +22,12 @@ struct S3 {
 };
 
 void f3(S3* p, void (S3::*m)()) {
-    p->*m; // expected-error {{a bound member function may only be called}}
-    (void)(p->*m); // expected-error {{a bound member function may only be called}}
-    (void)(void*)(p->*m); // expected-error {{a bound member function may only be called}}
-    (void)reinterpret_cast<void*>(p->*m); // expected-error {{a bound member function may only be called}}
-    if (p->*m) {} // expected-error {{a bound member function may only be called}}
-    if (!(p->*m)) {} // expected-error {{a bound member function may only be called}}
-    if (p->m) {}; // expected-error {{a bound member function may only be called}}
-    if (!p->m) {}; // expected-error {{a bound member function may only be called}}
+    p->*m; // expected-error {{reference to non-static member function must be called}}
+    (void)(p->*m); // expected-error {{reference to non-static member function must be called}}
+    (void)(void*)(p->*m); // expected-error {{reference to non-static member function must be called}} expected-error {{cannot cast from type 'void' to pointer type 'void *'}}
+    (void)reinterpret_cast<void*>(p->*m); // expected-error {{reference to non-static member function must be called}} expected-error {{reinterpret_cast from 'void' to 'void *' is not allowed}}
+    if (p->*m) {} // expected-error {{reference to non-static member function must be called}} expected-error {{value of type 'void' is not contextually convertible to 'bool'}}
+    if (!(p->*m)) {} // expected-error {{reference to non-static member function must be called}} expected-error {{invalid argument type 'void' to unary expression}}
+    if (p->m) {}; // expected-error {{reference to non-static member function must be called}} expected-error {{value of type 'void' is not contextually convertible to 'bool'}}
+    if (!p->m) {}; // expected-error {{reference to non-static member function must be called}} expected-error {{invalid argument type 'void' to unary expression}}
 }

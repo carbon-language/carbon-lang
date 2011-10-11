@@ -8,5 +8,5 @@ struct A { B* b() { return new B; } };
 
 void g() {
   A a;
-  MACRO(a.b->f());  // expected-error{{base of member reference is a function}}
+  MACRO(a.b->f());  // expected-error{{reference to non-static member function must be called; did you mean to call it with no arguments?}}
 }

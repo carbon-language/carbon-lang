@@ -5,11 +5,11 @@ namespace std {
 }
 
 void one() { }
-void two() { } // expected-note 3{{candidate}}
-void two(int) { } // expected-note 3{{candidate}}
+void two() { } // expected-note 4{{possible target for call}}
+void two(int) { } // expected-note 4{{possible target for call}}
 
-template<class T> void twoT() { } // expected-note 5{{candidate}}
-template<class T> void twoT(int) { } // expected-note 5{{candidate}}
+template<class T> void twoT() { } // expected-note 5{{possible target for call}}
+template<class T> void twoT(int) { } // expected-note 5{{possible target for call}}
 
 template<class T> void oneT() { }
 template<class T, class U> void oneT(U) { }
@@ -29,18 +29,18 @@ template<void (*p)(int)> struct test { };
 int main()
 {
    one;         // expected-warning {{expression result unused}}
-   two;         // expected-error {{cannot resolve overloaded function 'two' from context}}
+   two;         // expected-error {{reference to overloaded function could not be resolved; did you mean to call it with no arguments?}}
    oneT<int>;  // expected-warning {{expression result unused}}
-   twoT<int>;  // expected-error {{cannot resolve overloaded function 'twoT' from context}}
+   twoT<int>;  // expected-error {{reference to overloaded function could not be resolved; did you mean to call it?}}
    typeid(oneT<int>); // expected-warning{{expression result unused}}
   sizeof(oneT<int>); // expected-warning {{expression result unused}}
-  sizeof(twoT<int>); //expected-error {{cannot resolve overloaded function 'twoT' from context}}
+  sizeof(twoT<int>); //expected-error {{reference to overloaded function could not be resolved; did you mean to call it?}}
   decltype(oneT<int>)* fun = 0;
   
   *one;    // expected-warning {{expression result unused}}
   *oneT<int>;   // expected-warning {{expression result unused}}
-  *two;  //expected-error {{cannot resolve overloaded function 'two' from context}}
-  *twoT<int>; //expected-error {{cannot resolve overloaded function 'twoT' from context}}
+  *two;  //expected-error {{reference to overloaded function could not be resolved; did you mean to call it with no arguments?}} expected-error {{indirection requires pointer operand}}
+  *twoT<int>; //expected-error {{reference to overloaded function could not be resolved; did you mean to call it?}}
   !oneT<int>;  // expected-warning {{expression result unused}}
   +oneT<int>;  // expected-warning {{expression result unused}}
   -oneT<int>;  //expected-error {{invalid argument type}}
@@ -52,7 +52,7 @@ int main()
   void (*p1)(int); p1 = oneT<int>;
   
   int i = (int) (false ? (void (*)(int))twoT<int> : oneT<int>); //expected-error {{incompatible operand}}
-  (twoT<int>) == oneT<int>; //expected-error {{cannot resolve overloaded function 'twoT' from context}}
+  (twoT<int>) == oneT<int>; //expected-error {{reference to overloaded function could not be resolved; did you mean to call it?}} {{cannot resolve overloaded function 'twoT' from context}}
   bool b = oneT<int>;
   void (*p)() = oneT<int>;
   test<oneT<int> > ti;
@@ -66,8 +66,8 @@ int main()
   oneT<int> < oneT<int>;  //expected-warning {{self-comparison always evaluates to false}} \
                           //expected-warning {{expression result unused}}
 
-  two < two; //expected-error {{cannot resolve overloaded function 'two' from context}}
-  twoT<int> < twoT<int>; //expected-error {{cannot resolve overloaded function 'twoT' from context}}
+  two < two; //expected-error 2 {{reference to overloaded function could not be resolved; did you mean to call it with no arguments?}} expected-error {{invalid operands to binary expression ('void' and 'void')}}
+  twoT<int> < twoT<int>; //expected-error {{reference to overloaded function could not be resolved; did you mean to call it?}} {{cannot resolve overloaded function 'twoT' from context}}
   oneT<int> == 0;   // expected-warning {{equality comparison result unused}} \
                     // expected-note {{use '=' to turn this equality comparison into an assignment}}
 
@@ -78,5 +78,5 @@ struct rdar9108698 {
 };
 
 void test_rdar9108698(rdar9108698 x) {
-  x.f<int>; // expected-error{{a bound member function may only be called}}
+  x.f<int>; // expected-error{{reference to non-static member function must be called}}
 }
