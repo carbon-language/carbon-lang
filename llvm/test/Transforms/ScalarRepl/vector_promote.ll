@@ -96,3 +96,18 @@ define i64 @test6(<2 x float> %X) {
 ; CHECK: bitcast <2 x float> %X to i64
 ; CHECK: ret i64
 }
+
+%struct.test7 = type { [6 x i32] }
+
+define void @test7() {
+entry:
+  %memtmp = alloca %struct.test7, align 16
+  %0 = bitcast %struct.test7* %memtmp to <4 x i32>*
+  store <4 x i32> zeroinitializer, <4 x i32>* %0, align 16
+  %1 = getelementptr inbounds %struct.test7* %memtmp, i64 0, i32 0, i64 5
+  store i32 0, i32* %1, align 4
+  ret void
+; CHECK: @test7
+; CHECK-NOT: alloca
+; CHECK: and i192
+}
