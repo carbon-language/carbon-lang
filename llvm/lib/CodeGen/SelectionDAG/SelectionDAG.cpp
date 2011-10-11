@@ -6351,8 +6351,7 @@ void SDNode::print(raw_ostream &OS, const SelectionDAG *G) const {
 
 static void printrWithDepthHelper(raw_ostream &OS, const SDNode *N,
                                   const SelectionDAG *G, unsigned depth,
-                                  unsigned indent)
-{
+                                  unsigned indent) {
   if (depth == 0)
     return;
 
