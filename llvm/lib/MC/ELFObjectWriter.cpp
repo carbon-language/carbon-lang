@@ -666,6 +666,9 @@ void ELFObjectWriter::ComputeSymbolTable(MCAssembler &Asm,
     ExternalSymbolData[i].SymbolData->setIndex(Index++);
   for (unsigned i = 0, e = UndefinedSymbolData.size(); i != e; ++i)
     UndefinedSymbolData[i].SymbolData->setIndex(Index++);
+
+  if (NumRegularSections > ELF::SHN_LORESERVE)
+    NeedsSymtabShndx = true;
 }
 
 void ELFObjectWriter::CreateRelocationSections(MCAssembler &Asm,
