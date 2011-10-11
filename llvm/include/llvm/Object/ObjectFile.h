@@ -120,6 +120,8 @@ public:
   /// Returns true for symbols that can be used in another objects,
   /// such as library functions
   error_code isGlobal(bool &Result) const;
+
+  DataRefImpl getRawDataRefImpl() const;
 };
 typedef content_iterator<SymbolRef> symbol_iterator;
 
@@ -343,6 +345,10 @@ inline error_code SymbolRef::isGlobal(bool &Result) const {
 
 inline error_code SymbolRef::getSymbolType(SymbolRef::SymbolType &Result) const {
   return OwningObject->getSymbolType(SymbolPimpl, Result);
+}
+
+inline DataRefImpl SymbolRef::getRawDataRefImpl() const {
+  return SymbolPimpl;
 }
 
 

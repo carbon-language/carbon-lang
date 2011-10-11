@@ -296,6 +296,7 @@ class ELFObjectFile : public ObjectFile {
   const Elf_Shdr *dot_strtab_sec;   // Symbol header string table.
   Sections_t SymbolTableSections;
   IndexMap_t SymbolTableSectionsIndexMap;
+  DenseMap<const Elf_Sym*, Elf_Word> ExtendedSymbolTable;
 
   /// @brief Map sections to an array of relocation sections that reference
   ///        them sorted by section index.
@@ -371,6 +372,8 @@ public:
   virtual uint8_t getBytesInAddress() const;
   virtual StringRef getFileFormatName() const;
   virtual unsigned getArch() const;
+
+  uint64_t getSymbolTableIndex(const Elf_Sym *symb) const;
 };
 } // end namespace
 
@@ -422,18 +425,26 @@ error_code ELFObjectFile<target_endianness, is64Bits>
                         ::getSymbolName(DataRefImpl Symb,
                                         StringRef &Result) const {
   validateSymbol(Symb);
-  const Elf_Sym  *symb = getSymbol(Symb);
+  const Elf_Sym *symb = getSymbol(Symb);
   return getSymbolName(symb, Result);
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+uint64_t ELFObjectFile<target_endianness, is64Bits>
+                      ::getSymbolTableIndex(const Elf_Sym *symb) const {
+  if (symb->st_shndx == ELF::SHN_XINDEX)
+    return ExtendedSymbolTable.lookup(symb);
+  return symb->st_shndx;
 }
 
 template<support::endianness target_endianness, bool is64Bits>
 error_code ELFObjectFile<target_endianness, is64Bits>
                         ::getSymbolOffset(DataRefImpl Symb,
-                                           uint64_t &Result) const {
+                                          uint64_t &Result) const {
   validateSymbol(Symb);
   const Elf_Sym  *symb = getSymbol(Symb);
   const Elf_Shdr *Section;
-  switch (symb->st_shndx) {
+  switch (getSymbolTableIndex(symb)) {
   case ELF::SHN_COMMON:
    // Undefined symbols have no address yet.
   case ELF::SHN_UNDEF:
@@ -467,7 +478,7 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   validateSymbol(Symb);
   const Elf_Sym  *symb = getSymbol(Symb);
   const Elf_Shdr *Section;
-  switch (symb->st_shndx) {
+  switch (getSymbolTableIndex(symb)) {
   case ELF::SHN_COMMON: // Fall through.
    // Undefined symbols have no address yet.
   case ELF::SHN_UNDEF:
@@ -476,7 +487,7 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   case ELF::SHN_ABS:
     Result = reinterpret_cast<uintptr_t>(base()+symb->st_value);
     return object_error::success;
-  default: Section = getSection(symb->st_shndx);
+  default: Section = getSection(getSymbolTableIndex(symb));
   }
   const uint8_t* addr = base();
   if (Section)
@@ -515,7 +526,7 @@ error_code ELFObjectFile<target_endianness, is64Bits>
                                               char &Result) const {
   validateSymbol(Symb);
   const Elf_Sym  *symb = getSymbol(Symb);
-  const Elf_Shdr *Section = getSection(symb->st_shndx);
+  const Elf_Shdr *Section = getSection(getSymbolTableIndex(symb));
 
   char ret = '?';
 
@@ -581,7 +592,7 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   validateSymbol(Symb);
   const Elf_Sym  *symb = getSymbol(Symb);
 
-  if (symb->st_shndx == ELF::SHN_UNDEF) {
+  if (getSymbolTableIndex(symb) == ELF::SHN_UNDEF) {
     Result = SymbolRef::ST_External;
     return object_error::success;
   }
@@ -1074,9 +1085,16 @@ ELFObjectFile<target_endianness, is64Bits>::ELFObjectFile(MemoryBuffer *Object
     report_fatal_error("Section table goes past end of file!");
 
 
-  // To find the symbol tables we walk the section table to find SHT_STMTAB.
+  // To find the symbol tables we walk the section table to find SHT_SYMTAB.
+  const Elf_Shdr* SymbolTableSectionHeaderIndex = 0;
   const Elf_Shdr* sh = reinterpret_cast<const Elf_Shdr*>(SectionHeaderTable);
   for (unsigned i = 0; i < Header->e_shnum; ++i) {
+    if (sh->sh_type == ELF::SHT_SYMTAB_SHNDX) {
+      if (SymbolTableSectionHeaderIndex)
+        // FIXME: Proper error handling.
+        report_fatal_error("More than one .symtab_shndx!");
+      SymbolTableSectionHeaderIndex = sh;
+    }
     if (sh->sh_type == ELF::SHT_SYMTAB) {
       SymbolTableSectionsIndexMap[i] = SymbolTableSections.size();
       SymbolTableSections.push_back(sh);
@@ -1120,6 +1138,21 @@ ELFObjectFile<target_endianness, is64Bits>::ELFObjectFile(MemoryBuffer *Object
             // FIXME: Proper error handling.
             report_fatal_error("String table must end with a null terminator!");
       }
+    }
+  }
+
+  // Build symbol name side-mapping if there is one.
+  if (SymbolTableSectionHeaderIndex) {
+    const Elf_Word *ShndxTable = reinterpret_cast<const Elf_Word*>(base() +
+                                      SymbolTableSectionHeaderIndex->sh_offset);
+    error_code ec;
+    for (symbol_iterator si = begin_symbols(),
+                         se = end_symbols(); si != se; si.increment(ec)) {
+      if (ec)
+        report_fatal_error("Fewer extended symbol table entries than symbols!");
+      if (*ShndxTable != ELF::SHN_UNDEF)
+        ExtendedSymbolTable[getSymbol(si->getRawDataRefImpl())] = *ShndxTable;
+      ++ShndxTable;
     }
   }
 }
@@ -1303,7 +1336,7 @@ error_code ELFObjectFile<target_endianness, is64Bits>
                         ::getSymbolName(const Elf_Sym *symb,
                                         StringRef &Result) const {
   if (symb->st_name == 0) {
-    const Elf_Shdr *section = getSection(symb->st_shndx);
+    const Elf_Shdr *section = getSection(getSymbolTableIndex(symb));
     if (!section)
       Result = "";
     else
