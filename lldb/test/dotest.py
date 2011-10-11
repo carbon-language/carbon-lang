@@ -114,6 +114,10 @@ failfast = False
 # The filters (testclass.testmethod) used to admit tests into our test suite.
 filters = []
 
+# The runhooks is a list of lldb commands specifically for the debugger.
+# Use '-k' to specify a runhook.
+runHooks = []
+
 # If '-g' is specified, the filterspec is not exclusive.  If a test module does
 # not contain testclass.testmethod which matches the filterspec, the whole test
 # module is still admitted into our test suite.  fs4all flag defaults to True.
@@ -190,6 +194,10 @@ where options:
        still admitted to the test suite
 -i   : ignore (don't bailout) if 'lldb.py' module cannot be located in the build
        tree relative to this script; use PYTHONPATH to locate the module
+-k   : specify a runhook, which is an lldb command to be executed by the debugger;
+       '-k' option can occur multiple times, the commands are executed one after the
+       other to bring the debugger to a desired state, so that, for example, further
+       benchmarking can be done
 -l   : don't skip long running test
 -p   : specify a regexp filename pattern for inclusion in the test suite
 -r   : specify a dir to relocate the tests and their intermediate files to;
@@ -317,6 +325,7 @@ def parseOptionsAndInitTestdirs():
     global filters
     global fs4all
     global ignore
+    global runHooks
     global skipLongRunningTest
     global regexp
     global rdir
@@ -418,6 +427,13 @@ def parseOptionsAndInitTestdirs():
             index += 1
         elif sys.argv[index].startswith('-i'):
             ignore = True
+            index += 1
+        elif sys.argv[index].startswith('-k'):
+            # Increment by 1 to fetch the runhook lldb command.
+            index += 1
+            if index >= len(sys.argv) or sys.argv[index].startswith('-'):
+                usage()
+            runHooks.append(sys.argv[index])
             index += 1
         elif sys.argv[index].startswith('-l'):
             skipLongRunningTest = False
@@ -889,6 +905,9 @@ lldb.just_do_benchmarks_test = just_do_benchmarks_test
 # Put bmExecutable and bmBreakpointSpec into the lldb namespace, too.
 lldb.bmExecutable = bmExecutable
 lldb.bmBreakpointSpec = bmBreakpointSpec
+
+# And don't forget the runHooks!
+lldb.runHooks = runHooks
 
 # Turn on lldb loggings if necessary.
 lldbLoggings()
