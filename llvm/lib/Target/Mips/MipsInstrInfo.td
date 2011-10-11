@@ -260,7 +260,7 @@ class ArithLogicR<bits<6> op, bits<6> func, string instr_asm, SDNode OpNode,
   let isCommutable = isComm;
 }
 
-class ArithLogicOfR<bits<6> op, bits<6> func, string instr_asm,
+class ArithOverflowR<bits<6> op, bits<6> func, string instr_asm,
                     InstrItinClass itin, RegisterClass RC, bit isComm = 0>:
   FR<op, func, (outs RC:$rd), (ins RC:$rs, RC:$rt),
      !strconcat(instr_asm, "\t$rd, $rs, $rt"), [], itin> {
@@ -616,8 +616,8 @@ def LUi     : LoadUpper<0x0f, "lui">;
 /// Arithmetic Instructions (3-Operand, R-Type)
 def ADDu    : ArithLogicR<0x00, 0x21, "addu", add, IIAlu, CPURegs, 1>;
 def SUBu    : ArithLogicR<0x00, 0x23, "subu", sub, IIAlu, CPURegs>;
-def ADD     : ArithLogicOfR<0x00, 0x20, "add", IIAlu, CPURegs, 1>;
-def SUB     : ArithLogicOfR<0x00, 0x22, "sub", IIAlu, CPURegs>;
+def ADD     : ArithOverflowR<0x00, 0x20, "add", IIAlu, CPURegs, 1>;
+def SUB     : ArithOverflowR<0x00, 0x22, "sub", IIAlu, CPURegs>;
 def SLT     : SetCC_R<0x00, 0x2a, "slt", setlt, CPURegs>;
 def SLTu    : SetCC_R<0x00, 0x2b, "sltu", setult, CPURegs>;
 def AND     : ArithLogicR<0x00, 0x24, "and", and, IIAlu, CPURegs, 1>;
