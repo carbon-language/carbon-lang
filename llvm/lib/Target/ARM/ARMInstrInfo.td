@@ -4253,8 +4253,8 @@ class ACI<dag oops, dag iops, string opc, string asm,
 
 multiclass LdStCop<bits<4> op31_28, bit load, dag ops, string opc, string cond>{
   def _OFFSET : ACI<(outs),
-      !con((ins nohash_imm:$cop, nohash_imm:$CRd, addrmode2:$addr), ops),
-      !strconcat(opc, cond), "\tp$cop, cr$CRd, $addr"> {
+      !con((ins p_imm:$cop, c_imm:$CRd, addrmode5:$addr), ops),
+      !strconcat(opc, cond), "\t$cop, $CRd, $addr"> {
     let Inst{31-28} = op31_28;
     let Inst{24} = 1; // P = 1
     let Inst{21} = 0; // W = 0
@@ -4264,8 +4264,8 @@ multiclass LdStCop<bits<4> op31_28, bit load, dag ops, string opc, string cond>{
   }
 
   def _PRE : ACI<(outs),
-      !con((ins nohash_imm:$cop, nohash_imm:$CRd, addrmode2:$addr), ops),
-      !strconcat(opc, cond), "\tp$cop, cr$CRd, $addr!", IndexModePre> {
+      !con((ins p_imm:$cop, c_imm:$CRd, addrmode5:$addr), ops),
+      !strconcat(opc, cond), "\t$cop, $CRd, $addr!", IndexModePre> {
     let Inst{31-28} = op31_28;
     let Inst{24} = 1; // P = 1
     let Inst{21} = 1; // W = 1
@@ -4275,8 +4275,10 @@ multiclass LdStCop<bits<4> op31_28, bit load, dag ops, string opc, string cond>{
   }
 
   def _POST : ACI<(outs),
-      !con((ins nohash_imm:$cop, nohash_imm:$CRd, addrmode2:$addr), ops),
-      !strconcat(opc, cond), "\tp$cop, cr$CRd, $addr", IndexModePost> {
+      !con((ins p_imm:$cop, c_imm:$CRd, addr_offset_none:$addr,
+            postidx_imm8s4:$offset), ops),
+      !strconcat(opc, cond), "\t$cop, $CRd, $addr, $offset",
+      IndexModePost> {
     let Inst{31-28} = op31_28;
     let Inst{24} = 0; // P = 0
     let Inst{21} = 1; // W = 1
@@ -4286,9 +4288,10 @@ multiclass LdStCop<bits<4> op31_28, bit load, dag ops, string opc, string cond>{
   }
 
   def _OPTION : ACI<(outs),
-      !con((ins nohash_imm:$cop,nohash_imm:$CRd,GPR:$base, nohash_imm:$option),
+      !con((ins p_imm:$cop, c_imm:$CRd, addr_offset_none:$base,
+                nohash_imm:$option),
             ops),
-      !strconcat(opc, cond), "\tp$cop, cr$CRd, [$base], \\{$option\\}"> {
+      !strconcat(opc, cond), "\t$cop, $CRd, $base, \\{$option\\}"> {
     let Inst{31-28} = op31_28;
     let Inst{24} = 0; // P = 0
     let Inst{23} = 1; // U = 1
@@ -4299,8 +4302,8 @@ multiclass LdStCop<bits<4> op31_28, bit load, dag ops, string opc, string cond>{
   }
 
   def L_OFFSET : ACI<(outs),
-      !con((ins nohash_imm:$cop, nohash_imm:$CRd, addrmode2:$addr), ops),
-      !strconcat(!strconcat(opc, "l"), cond), "\tp$cop, cr$CRd, $addr"> {
+      !con((ins p_imm:$cop, c_imm:$CRd, addrmode5:$addr), ops),
+      !strconcat(!strconcat(opc, "l"), cond), "\t$cop, $CRd, $addr"> {
     let Inst{31-28} = op31_28;
     let Inst{24} = 1; // P = 1
     let Inst{21} = 0; // W = 0
@@ -4310,8 +4313,8 @@ multiclass LdStCop<bits<4> op31_28, bit load, dag ops, string opc, string cond>{
   }
 
   def L_PRE : ACI<(outs),
-      !con((ins nohash_imm:$cop, nohash_imm:$CRd, addrmode2:$addr), ops),
-      !strconcat(!strconcat(opc, "l"), cond), "\tp$cop, cr$CRd, $addr!",
+      !con((ins p_imm:$cop, c_imm:$CRd, addrmode5:$addr), ops),
+      !strconcat(!strconcat(opc, "l"), cond), "\t$cop, $CRd, $addr!",
       IndexModePre> {
     let Inst{31-28} = op31_28;
     let Inst{24} = 1; // P = 1
@@ -4322,9 +4325,9 @@ multiclass LdStCop<bits<4> op31_28, bit load, dag ops, string opc, string cond>{
   }
 
   def L_POST : ACI<(outs),
-      !con((ins nohash_imm:$cop, nohash_imm:$CRd, addr_offset_none:$addr,
+      !con((ins p_imm:$cop, c_imm:$CRd, addr_offset_none:$addr,
             postidx_imm8s4:$offset), ops),
-      !strconcat(!strconcat(opc, "l"), cond), "\tp$cop, cr$CRd, $addr, $offset",
+      !strconcat(!strconcat(opc, "l"), cond), "\t$cop, $CRd, $addr, $offset",
       IndexModePost> {
     let Inst{31-28} = op31_28;
     let Inst{24} = 0; // P = 0
@@ -4335,10 +4338,11 @@ multiclass LdStCop<bits<4> op31_28, bit load, dag ops, string opc, string cond>{
   }
 
   def L_OPTION : ACI<(outs),
-      !con((ins nohash_imm:$cop, nohash_imm:$CRd,GPR:$base,nohash_imm:$option),
+      !con((ins p_imm:$cop, c_imm:$CRd, addr_offset_none:$base,
+                nohash_imm:$option),
             ops),
       !strconcat(!strconcat(opc, "l"), cond),
-      "\tp$cop, cr$CRd, [$base], \\{$option\\}"> {
+      "\t$cop, $CRd, $base, \\{$option\\}"> {
     let Inst{31-28} = op31_28;
     let Inst{24} = 0; // P = 0
     let Inst{23} = 1; // U = 1
