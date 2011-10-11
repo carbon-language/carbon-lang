@@ -704,34 +704,6 @@ static BOOL is16BitEquvalent(const char* orig, const char* equiv) {
 }
 
 /*
- * is64BitEquivalent - Determines whether two instruction names refer to
- * equivalent instructions but one is 64-bit whereas the other is not.
- *
- * @param orig  - The instruction that is not 64-bit
- * @param equiv - The instruction that is 64-bit
- */
-static BOOL is64BitEquivalent(const char* orig, const char* equiv) {
-  off_t i;
-  
-  for (i = 0;; i++) {
-    if (orig[i] == '\0' && equiv[i] == '\0')
-      return TRUE;
-    if (orig[i] == '\0' || equiv[i] == '\0')
-      return FALSE;
-    if (orig[i] != equiv[i]) {
-      if ((orig[i] == 'W' || orig[i] == 'L') && equiv[i] == 'Q')
-        continue;
-      if ((orig[i] == '1' || orig[i] == '3') && equiv[i] == '6')
-        continue;
-      if ((orig[i] == '6' || orig[i] == '2') && equiv[i] == '4')
-        continue;
-      return FALSE;
-    }
-  }
-}
-
-
-/*
  * getID - Determines the ID of an instruction, consuming the ModR/M byte as 
  *   appropriate for extended and escape opcodes.  Determines the attributes and 
  *   context for the instruction before doing so.
@@ -840,46 +812,6 @@ static int getID(struct InternalInstruction* insn) {
     return 0;
   }
 
-  if ((attrMask & ATTR_XD) && (attrMask & ATTR_REXW)) {
-    /*
-     * Although for SSE instructions it is usually necessary to treat REX.W+F2
-     * as F2 for decode (in the absence of a 64BIT_REXW_XD category) there is
-     * an occasional instruction where F2 is incidental and REX.W is the more
-     * significant.  If the decoded instruction is 32-bit and adding REX.W
-     * instead of F2 changes a 32 to a 64, we adopt the new encoding.
-     */
-    
-    const struct InstructionSpecifier *spec;
-    uint16_t instructionIDWithREXw;
-    const struct InstructionSpecifier *specWithREXw;
-    
-    spec = specifierForUID(instructionID);
-    
-    if (getIDWithAttrMask(&instructionIDWithREXw,
-                          insn,
-                          attrMask & (~ATTR_XD))) {
-      /*
-       * Decoding with REX.w would yield nothing; give up and return original
-       * decode.
-       */
-      
-      insn->instructionID = instructionID;
-      insn->spec = spec;
-      return 0;
-    }
-    
-    specWithREXw = specifierForUID(instructionIDWithREXw);
-    
-    if (is64BitEquivalent(spec->name, specWithREXw->name)) {
-      insn->instructionID = instructionIDWithREXw;
-      insn->spec = specWithREXw;
-    } else {
-      insn->instructionID = instructionID;
-      insn->spec = spec;
-    }
-    return 0;
-  }
-  
   if (insn->prefixPresent[0x66] && !(attrMask & ATTR_OPSIZE)) {
     /*
      * The instruction tables make no distinction between instructions that

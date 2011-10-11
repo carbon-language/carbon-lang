@@ -314,13 +314,17 @@ InstructionContext RecognizableInstr::insnContext() const {
   } else if (Is64Bit || HasREX_WPrefix) {
     if (HasREX_WPrefix && HasOpSizePrefix)
       insnContext = IC_64BIT_REXW_OPSIZE;
-    else if (HasOpSizePrefix && (Prefix == X86Local::XD || Prefix == X86Local::TF))
+    else if (HasOpSizePrefix &&
+             (Prefix == X86Local::XD || Prefix == X86Local::TF))
       insnContext = IC_64BIT_XD_OPSIZE;
+    else if (HasOpSizePrefix && Prefix == X86Local::XS)
+      insnContext = IC_64BIT_XS_OPSIZE;
     else if (HasOpSizePrefix)
       insnContext = IC_64BIT_OPSIZE;
     else if (HasREX_WPrefix && Prefix == X86Local::XS)
       insnContext = IC_64BIT_REXW_XS;
-    else if (HasREX_WPrefix && (Prefix == X86Local::XD || Prefix == X86Local::TF))
+    else if (HasREX_WPrefix &&
+             (Prefix == X86Local::XD || Prefix == X86Local::TF))
       insnContext = IC_64BIT_REXW_XD;
     else if (Prefix == X86Local::XD || Prefix == X86Local::TF)
       insnContext = IC_64BIT_XD;
@@ -334,6 +338,8 @@ InstructionContext RecognizableInstr::insnContext() const {
     if (HasOpSizePrefix &&
         (Prefix == X86Local::XD || Prefix == X86Local::TF))
       insnContext = IC_XD_OPSIZE;
+    else if (HasOpSizePrefix && Prefix == X86Local::XS)
+      insnContext = IC_XS_OPSIZE;
     else if (HasOpSizePrefix)
       insnContext = IC_OPSIZE;
     else if (Prefix == X86Local::XD || Prefix == X86Local::TF)
