@@ -166,7 +166,7 @@ class StmtNodeBuilder {
   const CFGBlock &B;
   const unsigned Idx;
   ExplodedNode *Pred;
-  ProgramStateManager& Mgr;
+
 
 public:
   bool PurgingDeadSymbols;
@@ -184,8 +184,7 @@ public:
   StmtNodeBuilder(const CFGBlock *b,
                   unsigned idx,
                   ExplodedNode *N,
-                  CoreEngine* e,
-                  ProgramStateManager &mgr);
+                  CoreEngine* e);
 
   ~StmtNodeBuilder();
 

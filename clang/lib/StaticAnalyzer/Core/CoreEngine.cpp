@@ -314,8 +314,7 @@ void CoreEngine::HandleBlockEntrance(const BlockEntrance &L,
 
   // Process the entrance of the block.
   if (CFGElement E = L.getFirstElement()) {
-    StmtNodeBuilder Builder(L.getBlock(), 0, Pred, this,
-                              SubEng.getStateManager());
+    StmtNodeBuilder Builder(L.getBlock(), 0, Pred, this);
     SubEng.processCFGElement(E, Builder);
   }
   else
@@ -430,8 +429,7 @@ void CoreEngine::HandlePostStmt(const CFGBlock *B, unsigned StmtIdx,
   if (StmtIdx == B->size())
     HandleBlockExit(B, Pred);
   else {
-    StmtNodeBuilder Builder(B, StmtIdx, Pred, this,
-                              SubEng.getStateManager());
+    StmtNodeBuilder Builder(B, StmtIdx, Pred, this);
     SubEng.processCFGElement((*B)[StmtIdx], Builder);
   }
 }
@@ -480,9 +478,8 @@ GenericNodeBuilderImpl::generateNodeImpl(const ProgramState *state,
 StmtNodeBuilder::StmtNodeBuilder(const CFGBlock *b,
                                  unsigned idx,
                                  ExplodedNode *N,
-                                 CoreEngine* e,
-                                 ProgramStateManager &mgr)
-  : Eng(*e), B(*b), Idx(idx), Pred(N), Mgr(mgr),
+                                 CoreEngine* e)
+  : Eng(*e), B(*b), Idx(idx), Pred(N),
     PurgingDeadSymbols(false), BuildSinks(false), hasGeneratedNode(false),
     PointKind(ProgramPoint::PostStmtKind), Tag(0) {
   Deferred.insert(N);
