@@ -84,7 +84,7 @@ MipsTargetLowering::
 MipsTargetLowering(MipsTargetMachine &TM)
   : TargetLowering(TM, new MipsTargetObjectFile()),
     Subtarget(&TM.getSubtarget<MipsSubtarget>()),
-    HasMips64(Subtarget->hasMips64()) {
+    HasMips64(Subtarget->hasMips64()), IsN64(Subtarget->isABI_N64()) {
 
   // Mips does not have i1 type, so use i32 for
   // setcc operations results (slt, sgt, ...).
@@ -123,6 +123,7 @@ MipsTargetLowering(MipsTargetMachine &TM)
 
   // Mips Custom Operations
   setOperationAction(ISD::GlobalAddress,      MVT::i32,   Custom);
+  setOperationAction(ISD::GlobalAddress,      MVT::i64,   Custom);
   setOperationAction(ISD::BlockAddress,       MVT::i32,   Custom);
   setOperationAction(ISD::GlobalTLSAddress,   MVT::i32,   Custom);
   setOperationAction(ISD::JumpTable,          MVT::i32,   Custom);
@@ -1384,9 +1385,9 @@ SDValue MipsTargetLowering::LowerGlobalAddress(SDValue Op,
                                                SelectionDAG &DAG) const {
   // FIXME there isn't actually debug info here
   DebugLoc dl = Op.getDebugLoc();
-  const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
+  const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal(); 	
 
-  if (getTargetMachine().getRelocationModel() != Reloc::PIC_) {
+  if (getTargetMachine().getRelocationModel() != Reloc::PIC_ && !IsN64) {
     SDVTList VTs = DAG.getVTList(MVT::i32);
 
     MipsTargetObjectFile &TLOF = (MipsTargetObjectFile&)getObjFileLowering();
@@ -1409,21 +1410,26 @@ SDValue MipsTargetLowering::LowerGlobalAddress(SDValue Op,
     return DAG.getNode(ISD::ADD, dl, MVT::i32, HiPart, Lo);
   }
 
-  SDValue GA = DAG.getTargetGlobalAddress(GV, dl, MVT::i32, 0,
-                                          MipsII::MO_GOT);
-  GA = DAG.getNode(MipsISD::WrapperPIC, dl, MVT::i32, GA);
-  SDValue ResNode = DAG.getLoad(MVT::i32, dl,
+  EVT ValTy = Op.getValueType();
+  bool HasGotOfst = (GV->hasInternalLinkage() ||
+                     (GV->hasLocalLinkage() && !isa<Function>(GV)));
+  unsigned GotFlag = IsN64 ?
+                     (HasGotOfst ? MipsII::MO_GOT_PAGE : MipsII::MO_GOT_DISP) :
+                     MipsII::MO_GOT;
+  SDValue GA = DAG.getTargetGlobalAddress(GV, dl, ValTy, 0, GotFlag);
+  GA = DAG.getNode(MipsISD::WrapperPIC, dl, ValTy, GA);
+  SDValue ResNode = DAG.getLoad(ValTy, dl,
                                 DAG.getEntryNode(), GA, MachinePointerInfo(),
                                 false, false, 0);
   // On functions and global targets not internal linked only
   // a load from got/GP is necessary for PIC to work.
-  if (!GV->hasInternalLinkage() &&
-      (!GV->hasLocalLinkage() || isa<Function>(GV)))
+  if (!HasGotOfst)
     return ResNode;
-  SDValue GALo = DAG.getTargetGlobalAddress(GV, dl, MVT::i32, 0,
-                                            MipsII::MO_ABS_LO);
-  SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, GALo);
-  return DAG.getNode(ISD::ADD, dl, MVT::i32, ResNode, Lo);
+  SDValue GALo = DAG.getTargetGlobalAddress(GV, dl, ValTy, 0,
+                                            IsN64 ? MipsII::MO_GOT_OFST :
+                                                    MipsII::MO_ABS_LO);
+  SDValue Lo = DAG.getNode(MipsISD::Lo, dl, ValTy, GALo);
+  return DAG.getNode(ISD::ADD, dl, ValTy, ResNode, Lo);
 }
 
 SDValue MipsTargetLowering::LowerBlockAddress(SDValue Op,
