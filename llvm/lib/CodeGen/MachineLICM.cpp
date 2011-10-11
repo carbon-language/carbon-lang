@@ -336,6 +336,11 @@ bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
       continue;
     }
 
+    // If the header is a landing pad, then we don't want to hoist instructions
+    // out of it. This can happen with SjLj exception handling which has a
+    // dispatch table as the landing pad.
+    if (CurLoop->getHeader()->isLandingPad()) continue;
+
     if (!PreRegAlloc)
       HoistRegionPostRA();
     else {
