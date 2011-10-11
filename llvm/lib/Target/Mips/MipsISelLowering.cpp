@@ -232,7 +232,7 @@ MipsTargetLowering(MipsTargetMachine &TM)
 
 bool MipsTargetLowering::allowsUnalignedMemoryAccesses(EVT VT) const {
   MVT::SimpleValueType SVT = VT.getSimpleVT().SimpleTy;
-  return SVT == MVT::i32 || SVT == MVT::i16; 
+  return SVT == MVT::i64 || SVT == MVT::i32 || SVT == MVT::i16; 
 }
 
 EVT MipsTargetLowering::getSetCCResultType(EVT VT) const {

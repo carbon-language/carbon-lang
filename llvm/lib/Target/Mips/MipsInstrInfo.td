@@ -226,14 +226,22 @@ def sextloadi16_a   : AlignedLoad<sextloadi16>;
 def zextloadi16_a   : AlignedLoad<zextloadi16>;
 def extloadi16_a    : AlignedLoad<extloadi16>;
 def load_a          : AlignedLoad<load>;
+def sextloadi32_a   : AlignedLoad<sextloadi32>;
+def zextloadi32_a   : AlignedLoad<zextloadi32>;
+def extloadi32_a    : AlignedLoad<extloadi32>;
 def truncstorei16_a : AlignedStore<truncstorei16>;
 def store_a         : AlignedStore<store>;
+def truncstorei32_a : AlignedStore<truncstorei32>;
 def sextloadi16_u   : UnalignedLoad<sextloadi16>;
 def zextloadi16_u   : UnalignedLoad<zextloadi16>;
 def extloadi16_u    : UnalignedLoad<extloadi16>;
 def load_u          : UnalignedLoad<load>;
+def sextloadi32_u   : UnalignedLoad<sextloadi32>;
+def zextloadi32_u   : UnalignedLoad<zextloadi32>;
+def extloadi32_u    : UnalignedLoad<extloadi32>;
 def truncstorei16_u : UnalignedStore<truncstorei16>;
 def store_u         : UnalignedStore<store>;
+def truncstorei32_u : UnalignedStore<truncstorei32>;
 
 //===----------------------------------------------------------------------===//
 // Instructions specific format

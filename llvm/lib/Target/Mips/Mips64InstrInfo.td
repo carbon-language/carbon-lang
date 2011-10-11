@@ -167,6 +167,29 @@ let Predicates = [HasMips64r2] in {
   def DROTRV   : LogicR_shift_rotate_reg64<0x16, 0x01, "drotrv", rotr>;
 }
 
+/// Load and Store Instructions
+///  aligned 
+defm LB64    : LoadM64<0x20, "lb",  sextloadi8>;
+defm LBu64   : LoadM64<0x24, "lbu", zextloadi8>;
+defm LH64    : LoadM64<0x21, "lh",  sextloadi16_a>;
+defm LHu64   : LoadM64<0x25, "lhu", zextloadi16_a>;
+defm LW64    : LoadM64<0x23, "lw",  sextloadi32_a>;
+defm LWu64   : LoadM64<0x27, "lwu", zextloadi32_a>;
+defm SB64    : StoreM64<0x28, "sb", truncstorei8>;
+defm SH64    : StoreM64<0x29, "sh", truncstorei16_a>;
+defm SW64    : StoreM64<0x2b, "sw", truncstorei32_a>;
+defm LD      : LoadM64<0x37, "ld",  load_a>;
+defm SD      : StoreM64<0x3f, "sd", store_a>;
+
+///  unaligned
+defm ULH64     : LoadM64<0x21, "ulh",  sextloadi16_u, 1>;
+defm ULHu64    : LoadM64<0x25, "ulhu", zextloadi16_u, 1>;
+defm ULW64     : LoadM64<0x23, "ulw",  sextloadi32_u, 1>;
+defm USH64     : StoreM64<0x29, "ush", truncstorei16_u, 1>;
+defm USW64     : StoreM64<0x2b, "usw", truncstorei32_u, 1>;
+defm ULD       : LoadM64<0x37, "uld",  load_u, 1>;
+defm USD       : StoreM64<0x3f, "usd", store_u, 1>;
+
 /// Multiply and Divide Instructions.
 def DMULT    : Mul64<0x1c, "dmult", IIImul>;
 def DMULTu   : Mul64<0x1d, "dmultu", IIImul>;
@@ -198,3 +221,9 @@ def : Pat<(i64 immSExt16:$in),
           (DADDiu ZERO_64, imm:$in)>;
 def : Pat<(i64 immZExt16:$in),
           (DORi ZERO_64, imm:$in)>;
+
+// zextloadi32_u
+def : Pat<(zextloadi32_u addr:$a), (DSRL (DSLL (ULW64_P8 addr:$a), 32), 32)>,
+      Requires<[IsN64]>;
+def : Pat<(zextloadi32_u addr:$a), (DSRL (DSLL (ULW64 addr:$a), 32), 32)>,
+      Requires<[NotN64]>;
