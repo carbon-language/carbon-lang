@@ -28,3 +28,7 @@ D: FreeBSD port and libcxxrt support.
 N: Ruben Van Boxem
 E: vanboxem dot ruben at gmail dot com
 D: Initial Windows patches.
+
+N: Arvid Picciani
+E: aep at exys dot org
+D: Minor patches and musl port.

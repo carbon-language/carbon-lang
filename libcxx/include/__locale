@@ -21,9 +21,9 @@
 #include <locale.h>
 #if _WIN32
 # include <support/win32/locale_win32.h>
-#else  // _WIN32
+#elif (__GLIBC__ || __APPLE__ || __FreeBSD__)
 # include <xlocale.h>
-#endif  // _WIN32
+#endif  // _WIN32 || __GLIBC__ || __APPLE__ || __FreeBSD_
 
 #pragma GCC system_header
 
@@ -231,18 +231,18 @@ collate<_CharT>::do_compare(const char_type* __lo1, const char_type* __hi1,
 
 template <class _CharT>
 long
-collate<_CharT>::do_hash(const char_type* lo, const char_type* hi) const
+collate<_CharT>::do_hash(const char_type* __lo, const char_type* __hi) const
 {
-    size_t h = 0;
-    const size_t sr = __CHAR_BIT__ * sizeof(size_t) - 8;
-    const size_t mask = size_t(0xF) << (sr + 4);
-    for(const char_type* p = lo; p != hi; ++p)
+    size_t __h = 0;
+    const size_t __sr = __CHAR_BIT__ * sizeof(size_t) - 8;
+    const size_t __mask = size_t(0xF) << (__sr + 4);
+    for(const char_type* __p = __lo; __p != __hi; ++__p)
     {
-        h = (h << 4) + *p;
-        size_t g = h & mask;
-        h ^= g | (g >> sr);
+        __h = (__h << 4) + *__p;
+        size_t __g = __h & __mask;
+        __h ^= __g | (__g >> __sr);
     }
-    return static_cast<long>(h);
+    return static_cast<long>(__h);
 }
 
 extern template class _LIBCPP_VISIBLE collate<char>;
@@ -330,7 +330,7 @@ public:
     static const mask punct  = _PUNCT;
     static const mask xdigit = _HEX;
     static const mask blank  = _BLANK;
-#else  // __GLIBC__ || _WIN32
+#elif (__APPLE__ || __FreeBSD__)
 #if __APPLE__
     typedef __uint32_t mask;
 #elif __FreeBSD__
@@ -346,7 +346,19 @@ public:
     static const mask punct  = _CTYPE_P;
     static const mask xdigit = _CTYPE_X;
     static const mask blank  = _CTYPE_B;
-#endif  // __GLIBC__ || _WIN32
+#else  // __GLIBC__ || _WIN32 || __APPLE__ || __FreeBSD__
+    typedef unsigned long mask;
+    static const mask space  = 1<<0;
+    static const mask print  = 1<<1;
+    static const mask cntrl  = 1<<2;
+    static const mask upper  = 1<<3;
+    static const mask lower  = 1<<4;
+    static const mask alpha  = 1<<5;
+    static const mask digit  = 1<<6;
+    static const mask punct  = 1<<7;
+    static const mask xdigit = 1<<8;
+    static const mask blank  = 1<<9;
+#endif  // __GLIBC__ || _WIN32 || __APPLE__ || __FreeBSD__
     static const mask alnum  = alpha | digit;
     static const mask graph  = alnum | punct;
 
