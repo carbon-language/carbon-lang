@@ -123,6 +123,8 @@ public:
                                     const TargetRegisterClass *RC,
                                     const TargetRegisterInfo *TRI) const;
 
+  virtual bool expandPostRAPseudo(MachineBasicBlock::iterator MI) const;
+
   virtual MachineInstr *emitFrameIndexDebugValue(MachineFunction &MF,
                                                  int FrameIx,
                                                  uint64_t Offset,

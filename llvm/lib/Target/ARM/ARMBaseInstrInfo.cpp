@@ -640,37 +640,9 @@ void ARMBaseInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   bool SPRSrc  = ARM::SPRRegClass.contains(SrcReg);
 
   unsigned Opc = 0;
-  if (SPRDest && SPRSrc) {
+  if (SPRDest && SPRSrc)
     Opc = ARM::VMOVS;
-
-    // An even S-S copy may be feeding a NEON v2f32 instruction being used for
-    // f32 operations.  In that case, it is better to copy the full D-regs with
-    // a VMOVD since that can be converted to a NEON-domain move by
-    // NEONMoveFix.cpp.  Check that MI is the original COPY instruction, and
-    // that it really defines the whole D-register.
-    if (WidenVMOVS &&
-        (DestReg - ARM::S0) % 2 == 0 && (SrcReg - ARM::S0) % 2 == 0 &&
-        I != MBB.end() && I->isCopy() &&
-        I->getOperand(0).getReg() == DestReg &&
-        I->getOperand(1).getReg() == SrcReg) {
-      // I is pointing to the ortiginal COPY instruction.
-      // Find the parent D-registers.
-      const TargetRegisterInfo *TRI = &getRegisterInfo();
-      unsigned SrcD = TRI->getMatchingSuperReg(SrcReg, ARM::ssub_0,
-                                               &ARM::DPRRegClass);
-      unsigned DestD = TRI->getMatchingSuperReg(DestReg, ARM::ssub_0,
-                                                &ARM::DPRRegClass);
-      // Be careful to not clobber an INSERT_SUBREG that reads and redefines a
-      // D-register.  There must be an <imp-def> of destD, and no <imp-use>.
-      if (I->definesRegister(DestD, TRI) && !I->readsRegister(DestD, TRI)) {
-        Opc = ARM::VMOVD;
-        SrcReg = SrcD;
-        DestReg = DestD;
-        if (KillSrc)
-          KillSrc = I->killsRegister(SrcReg, TRI);
-      }
-    }
-  } else if (GPRDest && SPRSrc)
+  else if (GPRDest && SPRSrc)
     Opc = ARM::VMOVRS;
   else if (SPRDest && GPRSrc)
     Opc = ARM::VMOVSR;
@@ -1022,6 +994,46 @@ unsigned ARMBaseInstrInfo::isLoadFromStackSlotPostFE(const MachineInstr *MI,
                                              int &FrameIndex) const {
   const MachineMemOperand *Dummy;
   return MI->getDesc().mayLoad() && hasLoadFromStackSlot(MI, Dummy, FrameIndex);
+}
+
+bool ARMBaseInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const{
+  // This hook gets to expand COPY instructions before they become
+  // copyPhysReg() calls.  Look for VMOVS instructions that can legally be
+  // widened to VMOVD.  We prefer the VMOVD when possible because it may be
+  // changed into a VORR that can go down the NEON pipeline.
+  if (!WidenVMOVS || !MI->isCopy())
+    return false;
+
+  // Look for a copy between even S-registers.  That is where we keep floats
+  // when using NEON v2f32 instructions for f32 arithmetic.
+  unsigned DstRegS = MI->getOperand(0).getReg();
+  unsigned SrcRegS = MI->getOperand(1).getReg();
+  if (!ARM::SPRRegClass.contains(DstRegS, SrcRegS))
+    return false;
+
+  const TargetRegisterInfo *TRI = &getRegisterInfo();
+  unsigned DstRegD = TRI->getMatchingSuperReg(DstRegS, ARM::ssub_0,
+                                              &ARM::DPRRegClass);
+  unsigned SrcRegD = TRI->getMatchingSuperReg(SrcRegS, ARM::ssub_0,
+                                              &ARM::DPRRegClass);
+  if (!DstRegD || !SrcRegD)
+    return false;
+
+  // We want to widen this into a DstRegD = VMOVD SrcRegD copy.  This is only
+  // legal if the COPY already defines the full DstRegD, and it isn't a
+  // sub-register insertion.
+  if (!MI->definesRegister(DstRegD, TRI) || MI->readsRegister(DstRegD, TRI))
+    return false;
+
+  // All clear, widen the COPY.  Preserve the implicit operands, even if they
+  // may be superfluous now.
+  DEBUG(dbgs() << "widening:    " << *MI);
+  MI->setDesc(get(ARM::VMOVD));
+  MI->getOperand(0).setReg(DstRegD);
+  MI->getOperand(1).setReg(SrcRegD);
+  AddDefaultPred(MachineInstrBuilder(MI));
+  DEBUG(dbgs() << "replaced by: " << *MI);
+  return true;
 }
 
 MachineInstr*
