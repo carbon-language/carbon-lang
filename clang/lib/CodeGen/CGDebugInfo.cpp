@@ -46,7 +46,8 @@ CGDebugInfo::CGDebugInfo(CodeGenModule &CGM)
 }
 
 CGDebugInfo::~CGDebugInfo() {
-  assert(LexicalBlockStack.empty() && "Region stack mismatch, stack not empty!");
+  assert(LexicalBlockStack.empty() &&
+         "Region stack mismatch, stack not empty!");
 }
 
 void CGDebugInfo::setLocation(SourceLocation Loc) {
@@ -914,9 +915,11 @@ CollectTemplateParams(const TemplateParameterList *TPList,
 /// info for function template parameters.
 llvm::DIArray CGDebugInfo::
 CollectFunctionTemplateParams(const FunctionDecl *FD, llvm::DIFile Unit) {
-  if (FD->getTemplatedKind() == FunctionDecl::TK_FunctionTemplateSpecialization){
+  if (FD->getTemplatedKind() ==
+      FunctionDecl::TK_FunctionTemplateSpecialization) {
     const TemplateParameterList *TList =
-      FD->getTemplateSpecializationInfo()->getTemplate()->getTemplateParameters();
+      FD->getTemplateSpecializationInfo()->getTemplate()
+      ->getTemplateParameters();
     return 
       CollectTemplateParams(TList, *FD->getTemplateSpecializationArgs(), Unit);
   }
@@ -1249,8 +1252,8 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
     ObjCPropertyDecl *PD = NULL;
     if (ImpD)
       if (ObjCPropertyImplDecl *PImpD = 
-	  ImpD->FindPropertyImplIvarDecl(Field->getIdentifier()))
-	PD = PImpD->getPropertyDecl();
+          ImpD->FindPropertyImplIvarDecl(Field->getIdentifier()))
+        PD = PImpD->getPropertyDecl();
     if (PD) {
       PropertyName = PD->getName();
       PropertyGetter = getSelectorName(PD->getGetterName());
@@ -1368,7 +1371,8 @@ llvm::DIType CGDebugInfo::CreateType(const ArrayType *Ty,
         LowerBound = 1;
 
       // FIXME: Verify this is right for VLAs.
-      Subscripts.push_back(DBuilder.getOrCreateSubrange(LowerBound, UpperBound));
+      Subscripts.push_back(DBuilder.getOrCreateSubrange(LowerBound,
+                                                        UpperBound));
       EltTy = Ty->getElementType();
     }
   }
@@ -1666,7 +1670,8 @@ llvm::DISubprogram CGDebugInfo::getFunctionDeclaration(const Decl *D) {
 
 // getOrCreateFunctionType - Construct DIType. If it is a c++ method, include
 // implicit parameter "this".
-llvm::DIType CGDebugInfo::getOrCreateFunctionType(const Decl * D, QualType FnType,
+llvm::DIType CGDebugInfo::getOrCreateFunctionType(const Decl * D,
+                                                  QualType FnType,
                                                   llvm::DIFile F) {
   if (const CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D))
     return getOrCreateMethodType(Method, F);
@@ -1794,12 +1799,12 @@ void CGDebugInfo::UpdateLineDirectiveRegion(CGBuilderTy &Builder) {
   }
 
   assert (LexicalBlockStack.size() >= LineDirectiveFiles.size()
-	  && "error handling #line regions!");
+          && "error handling #line regions!");
 
   bool SeenThisFile = false;
   // Chek if current file is already seen earlier.
   for(std::vector<const char *>::iterator I = LineDirectiveFiles.begin(),
-	E = LineDirectiveFiles.end(); I != E; ++I)
+        E = LineDirectiveFiles.end(); I != E; ++I)
     if (!strcmp(PCLoc.getFilename(), *I)) {
       SeenThisFile = true;
       break;
@@ -1812,7 +1817,7 @@ void CGDebugInfo::UpdateLineDirectiveRegion(CGBuilderTy &Builder) {
       LexicalBlockStack.pop_back();
       LineDirectiveFiles.pop_back();
       if (!strcmp(PPLoc.getFilename(), LastFile))
-	break;
+        break;
     }
     return;
   }
@@ -1983,7 +1988,8 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
       // If an aggregate variable has non trivial destructor or non trivial copy
       // constructor than it is pass indirectly. Let debug info know about this
       // by using reference of the aggregate type as a argument type.
-      if (!Record->hasTrivialCopyConstructor() || !Record->hasTrivialDestructor())
+      if (!Record->hasTrivialCopyConstructor() ||
+          !Record->hasTrivialDestructor())
         Ty = DBuilder.createReferenceType(Ty);
     }
   }
@@ -2016,7 +2022,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
       // Create the descriptor for the variable.
       llvm::DIVariable D =
         DBuilder.createComplexVariable(Tag, 
-                                       llvm::DIDescriptor(LexicalBlockStack.back()),
+                                       llvm::DIDescriptor(Scope),
                                        VD->getName(), Unit, Line, Ty,
                                        addr, ArgNo);
       
@@ -2116,7 +2122,8 @@ void CGDebugInfo::EmitDeclareOfBlockDeclRefVariable(
     addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIBuilder::OpDeref));
     addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIBuilder::OpPlus));
     // offset of __forwarding field
-    offset = CGM.getContext().toCharUnitsFromBits(target.getPointerSizeInBits());
+    offset = CGM.getContext()
+                .toCharUnitsFromBits(target.getPointerSizeInBits());
     addr.push_back(llvm::ConstantInt::get(Int64Ty, offset.getQuantity()));
     addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIBuilder::OpDeref));
     addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIBuilder::OpPlus));
