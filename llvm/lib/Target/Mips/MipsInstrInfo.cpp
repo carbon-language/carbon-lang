@@ -226,9 +226,12 @@ MipsInstrInfo::emitFrameIndexDebugValue(MachineFunction &MF, int FrameIx,
 //===----------------------------------------------------------------------===//
 
 static unsigned GetAnalyzableBrOpc(unsigned Opc) {
-  return (Opc == Mips::BEQ  || Opc == Mips::BNE  || Opc == Mips::BGTZ ||
-          Opc == Mips::BGEZ || Opc == Mips::BLTZ || Opc == Mips::BLEZ ||
-          Opc == Mips::BC1T || Opc == Mips::BC1F || Opc == Mips::J) ? Opc : 0;
+  return (Opc == Mips::BEQ    || Opc == Mips::BNE    || Opc == Mips::BGTZ   ||
+          Opc == Mips::BGEZ   || Opc == Mips::BLTZ   || Opc == Mips::BLEZ   ||
+          Opc == Mips::BEQ64  || Opc == Mips::BNE64  || Opc == Mips::BGTZ64 ||
+          Opc == Mips::BGEZ64 || Opc == Mips::BLTZ64 || Opc == Mips::BLEZ64 ||
+          Opc == Mips::BC1T   || Opc == Mips::BC1F   || Opc == Mips::J) ?
+         Opc : 0;
 }
 
 /// GetOppositeBranchOpc - Return the inverse of the specified
@@ -237,14 +240,20 @@ unsigned Mips::GetOppositeBranchOpc(unsigned Opc)
 {
   switch (Opc) {
   default: llvm_unreachable("Illegal opcode!");
-  case Mips::BEQ  : return Mips::BNE;
-  case Mips::BNE  : return Mips::BEQ;
-  case Mips::BGTZ : return Mips::BLEZ;
-  case Mips::BGEZ : return Mips::BLTZ;
-  case Mips::BLTZ : return Mips::BGEZ;
-  case Mips::BLEZ : return Mips::BGTZ;
-  case Mips::BC1T : return Mips::BC1F;
-  case Mips::BC1F : return Mips::BC1T;
+  case Mips::BEQ    : return Mips::BNE;
+  case Mips::BNE    : return Mips::BEQ;
+  case Mips::BGTZ   : return Mips::BLEZ;
+  case Mips::BGEZ   : return Mips::BLTZ;
+  case Mips::BLTZ   : return Mips::BGEZ;
+  case Mips::BLEZ   : return Mips::BGTZ;
+  case Mips::BEQ64  : return Mips::BNE64;
+  case Mips::BNE64  : return Mips::BEQ64;
+  case Mips::BGTZ64 : return Mips::BLEZ64;
+  case Mips::BGEZ64 : return Mips::BLTZ64;
+  case Mips::BLTZ64 : return Mips::BGEZ64;
+  case Mips::BLEZ64 : return Mips::BGTZ64;
+  case Mips::BC1T   : return Mips::BC1F;
+  case Mips::BC1F   : return Mips::BC1T;
   }
 }
 

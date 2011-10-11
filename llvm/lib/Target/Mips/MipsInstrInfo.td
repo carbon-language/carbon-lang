@@ -385,18 +385,24 @@ multiclass StoreM64<bits<6> op, string instr_asm, PatFrag OpNode,
 }
 
 // Conditional Branch
-let isBranch = 1, isTerminator=1, hasDelaySlot = 1 in {
-class CBranch<bits<6> op, string instr_asm, PatFrag cond_op>:
-  FI<op, (outs), (ins CPURegs:$a, CPURegs:$b, brtarget:$offset),
-     !strconcat(instr_asm, "\t$a, $b, $offset"),
-     [(brcond (i32 (cond_op CPURegs:$a, CPURegs:$b)), bb:$offset)],
-     IIBranch>;
+class CBranch<bits<6> op, string instr_asm, PatFrag cond_op, RegisterClass RC>:
+  CBranchBase<op, (outs), (ins RC:$rs, RC:$rt, brtarget:$offset),
+              !strconcat(instr_asm, "\t$rs, $rt, $offset"),
+              [(brcond (i32 (cond_op RC:$rs, RC:$rt)), bb:$offset)], IIBranch> {
+  let isBranch = 1;
+  let isTerminator = 1;
+  let hasDelaySlot = 1;
+}
 
-class CBranchZero<bits<6> op, string instr_asm, PatFrag cond_op>:
-  FI<op, (outs), (ins CPURegs:$src, brtarget:$offset),
-     !strconcat(instr_asm, "\t$src, $offset"),
-     [(brcond (i32 (cond_op CPURegs:$src, 0)), bb:$offset)],
-     IIBranch>;
+class CBranchZero<bits<6> op, bits<5> _rt, string instr_asm, PatFrag cond_op,
+                  RegisterClass RC>:
+  CBranchBase<op, (outs), (ins RC:$rs, brtarget:$offset),
+              !strconcat(instr_asm, "\t$rs, $offset"),
+              [(brcond (i32 (cond_op RC:$rs, 0)), bb:$offset)], IIBranch> {
+  let rt = _rt;
+  let isBranch = 1;
+  let isTerminator = 1;
+  let hasDelaySlot = 1;
 }
 
 // SetCC
@@ -683,17 +689,12 @@ let isIndirectBranch = 1 in
   def JR      : JumpFR<0x00, 0x08, "jr">;
 def JAL     : JumpLink<0x03, "jal">;
 def JALR    : JumpLinkReg<0x00, 0x09, "jalr">;
-def BEQ     : CBranch<0x04, "beq", seteq>;
-def BNE     : CBranch<0x05, "bne", setne>;
-
-let rt=1 in
-  def BGEZ  : CBranchZero<0x01, "bgez", setge>;
-
-let rt=0 in {
-  def BGTZ  : CBranchZero<0x07, "bgtz", setgt>;
-  def BLEZ  : CBranchZero<0x07, "blez", setle>;
-  def BLTZ  : CBranchZero<0x01, "bltz", setlt>;
-}
+def BEQ     : CBranch<0x04, "beq", seteq, CPURegs>;
+def BNE     : CBranch<0x05, "bne", setne, CPURegs>;
+def BGEZ    : CBranchZero<0x01, 1, "bgez", setge, CPURegs>;
+def BGTZ    : CBranchZero<0x07, 0, "bgtz", setgt, CPURegs>;
+def BLEZ    : CBranchZero<0x07, 0, "blez", setle, CPURegs>;
+def BLTZ    : CBranchZero<0x01, 0, "bltz", setlt, CPURegs>;
 
 def BGEZAL  : BranchLink<"bgezal">;
 def BLTZAL  : BranchLink<"bltzal">;

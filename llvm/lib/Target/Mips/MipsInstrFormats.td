@@ -90,6 +90,21 @@ class FI<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern,
   let Inst{15-0}  = imm16;
 }
 
+class CBranchBase<bits<6> op, dag outs, dag ins, string asmstr,
+                  list<dag> pattern, InstrItinClass itin>:
+  MipsInst<outs, ins, asmstr, pattern, itin>
+{
+  bits<5>  rs;
+  bits<5>  rt;
+  bits<16> imm16;
+
+  let opcode = op;
+
+  let Inst{25-21} = rs;
+  let Inst{20-16} = rt;
+  let Inst{15-0}  = imm16;
+}
+
 //===----------------------------------------------------------------------===//
 // Format J instruction class in Mips : <|opcode|address|>
 //===----------------------------------------------------------------------===//

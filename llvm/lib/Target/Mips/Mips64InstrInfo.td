@@ -184,6 +184,14 @@ defm USW64     : StoreM64<0x2b, "usw", truncstorei32_u, 1>;
 defm ULD       : LoadM64<0x37, "uld",  load_u, 1>;
 defm USD       : StoreM64<0x3f, "usd", store_u, 1>;
 
+/// Jump and Branch Instructions
+def BEQ64  : CBranch<0x04, "beq", seteq, CPU64Regs>;
+def BNE64  : CBranch<0x05, "bne", setne, CPU64Regs>;
+def BGEZ64 : CBranchZero<0x01, 1, "bgez", setge, CPU64Regs>;
+def BGTZ64 : CBranchZero<0x07, 0, "bgtz", setgt, CPU64Regs>;
+def BLEZ64 : CBranchZero<0x07, 0, "blez", setle, CPU64Regs>;
+def BLTZ64 : CBranchZero<0x01, 0, "bltz", setlt, CPU64Regs>;
+
 /// Multiply and Divide Instructions.
 def DMULT    : Mul64<0x1c, "dmult", IIImul>;
 def DMULTu   : Mul64<0x1d, "dmultu", IIImul>;
