@@ -1,4 +1,4 @@
-//===--- SemaCXXCast.cpp - Semantic Analysis for Casts --------------------===//
+//===--- SemaCast.cpp - Semantic Analysis for Casts -----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file implements semantic analysis for casts.
+//  This file implements semantic analysis for cast expressions, including
+//  1) C-style casts like '(int) x'
+//  2) C++ functional casts like 'int(x)'
+//  3) C++ named casts like 'static_cast<int>(x)'
 //
 //===----------------------------------------------------------------------===//
 
