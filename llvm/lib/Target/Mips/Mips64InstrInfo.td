@@ -131,12 +131,16 @@ class CountLeading64<bits<6> func, string instr_asm, list<dag> pattern>:
 /// Arithmetic Instructions (ALU Immediate)
 def DADDiu   : ArithI64<0x19, "daddiu", add, simm16_64, immSExt16>;
 def DANDi    : LogicI64<0x0c, "andi", and>;
+def SLTi64   : SetCC_I<0x0a, "slti", setlt, simm16_64, immSExt16, CPU64Regs>;
+def SLTiu64  : SetCC_I<0x0b, "sltiu", setult, simm16_64, immSExt16, CPU64Regs>;
 def DORi     : LogicI64<0x0d, "ori",  or>;
 def DXORi    : LogicI64<0x0e, "xori",  xor>;
 
 /// Arithmetic Instructions (3-Operand, R-Type)
 def DADDu    : ArithR64<0x00, 0x2d, "daddu", add, IIAlu, 1>;
 def DSUBu    : ArithR64<0x00, 0x2f, "dsubu", sub, IIAlu>;
+def SLT64    : SetCC_R<0x00, 0x2a, "slt", setlt, CPU64Regs>;
+def SLTu64   : SetCC_R<0x00, 0x2b, "sltu", setult, CPU64Regs>;
 def DAND     : LogicR64<0x24, "and", and>;
 def DOR      : LogicR64<0x25, "or", or>;
 def DXOR     : LogicR64<0x26, "xor", xor>;
@@ -232,3 +236,29 @@ def : Pat<(zextloadi32_u addr:$a), (DSRL (DSLL (ULW64 addr:$a), 32), 32)>,
 
 // hi/lo relocs
 def : Pat<(i64 (MipsLo tglobaladdr:$in)), (DADDiu ZERO_64, tglobaladdr:$in)>;
+
+// setcc patterns
+def : Pat<(seteq CPU64Regs:$lhs, CPU64Regs:$rhs),
+          (SLTu64 (DXOR CPU64Regs:$lhs, CPU64Regs:$rhs), 1)>;
+def : Pat<(setne CPU64Regs:$lhs, CPU64Regs:$rhs),
+          (SLTu64 ZERO_64, (DXOR CPU64Regs:$lhs, CPU64Regs:$rhs))>;
+
+def : Pat<(setle CPU64Regs:$lhs, CPU64Regs:$rhs),
+          (XORi (SLT64 CPU64Regs:$rhs, CPU64Regs:$lhs), 1)>;
+def : Pat<(setule CPU64Regs:$lhs, CPU64Regs:$rhs),
+          (XORi (SLTu64 CPU64Regs:$rhs, CPU64Regs:$lhs), 1)>;
+
+def : Pat<(setgt CPU64Regs:$lhs, CPU64Regs:$rhs),
+          (SLT64 CPU64Regs:$rhs, CPU64Regs:$lhs)>;
+def : Pat<(setugt CPU64Regs:$lhs, CPU64Regs:$rhs),
+          (SLTu64 CPU64Regs:$rhs, CPU64Regs:$lhs)>;
+
+def : Pat<(setge CPU64Regs:$lhs, CPU64Regs:$rhs),
+          (XORi (SLT64 CPU64Regs:$lhs, CPU64Regs:$rhs), 1)>;
+def : Pat<(setuge CPU64Regs:$lhs, CPU64Regs:$rhs),
+          (XORi (SLTu64 CPU64Regs:$lhs, CPU64Regs:$rhs), 1)>;
+
+def : Pat<(setge CPU64Regs:$lhs, immSExt16:$rhs),
+          (XORi (SLTi64 CPU64Regs:$lhs, immSExt16:$rhs), 1)>;
+def : Pat<(setuge CPU64Regs:$lhs, immSExt16:$rhs),
+          (XORi (SLTiu64 CPU64Regs:$lhs, immSExt16:$rhs), 1)>;

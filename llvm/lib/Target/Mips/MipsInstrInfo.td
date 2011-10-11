@@ -406,18 +406,18 @@ class CBranchZero<bits<6> op, bits<5> _rt, string instr_asm, PatFrag cond_op,
 }
 
 // SetCC
-class SetCC_R<bits<6> op, bits<6> func, string instr_asm,
-      PatFrag cond_op>:
-  FR<op, func, (outs CPURegs:$dst), (ins CPURegs:$b, CPURegs:$c),
-     !strconcat(instr_asm, "\t$dst, $b, $c"),
-     [(set CPURegs:$dst, (cond_op CPURegs:$b, CPURegs:$c))],
+class SetCC_R<bits<6> op, bits<6> func, string instr_asm, PatFrag cond_op,
+              RegisterClass RC>:
+  FR<op, func, (outs CPURegs:$rd), (ins RC:$rs, RC:$rt),
+     !strconcat(instr_asm, "\t$rd, $rs, $rt"),
+     [(set CPURegs:$rd, (cond_op RC:$rs, RC:$rt))],
      IIAlu>;
 
-class SetCC_I<bits<6> op, string instr_asm, PatFrag cond_op,
-      Operand Od, PatLeaf imm_type>:
-  FI<op, (outs CPURegs:$dst), (ins CPURegs:$b, Od:$c),
-     !strconcat(instr_asm, "\t$dst, $b, $c"),
-     [(set CPURegs:$dst, (cond_op CPURegs:$b, imm_type:$c))],
+class SetCC_I<bits<6> op, string instr_asm, PatFrag cond_op, Operand Od,
+              PatLeaf imm_type, RegisterClass RC>:
+  FI<op, (outs CPURegs:$rd), (ins RC:$rs, Od:$i),
+     !strconcat(instr_asm, "\t$rd, $rs, $i"),
+     [(set CPURegs:$rd, (cond_op RC:$rs, imm_type:$i))],
      IIAlu>;
 
 // Unconditional branch
@@ -615,8 +615,8 @@ let usesCustomInserter = 1 in {
 /// Arithmetic Instructions (ALU Immediate)
 def ADDiu   : ArithI<0x09, "addiu", add, simm16, immSExt16>;
 def ADDi    : ArithOverflowI<0x08, "addi",  add, simm16, immSExt16>;
-def SLTi    : SetCC_I<0x0a, "slti", setlt, simm16, immSExt16>;
-def SLTiu   : SetCC_I<0x0b, "sltiu", setult, simm16, immSExt16>;
+def SLTi    : SetCC_I<0x0a, "slti", setlt, simm16, immSExt16, CPURegs>;
+def SLTiu   : SetCC_I<0x0b, "sltiu", setult, simm16, immSExt16, CPURegs>;
 def ANDi    : LogicI<0x0c, "andi", and>;
 def ORi     : LogicI<0x0d, "ori",  or>;
 def XORi    : LogicI<0x0e, "xori",  xor>;
@@ -627,8 +627,8 @@ def ADDu    : ArithR<0x00, 0x21, "addu", add, IIAlu, 1>;
 def SUBu    : ArithR<0x00, 0x23, "subu", sub, IIAlu>;
 def ADD     : ArithOverflowR<0x00, 0x20, "add", 1>;
 def SUB     : ArithOverflowR<0x00, 0x22, "sub">;
-def SLT     : SetCC_R<0x00, 0x2a, "slt", setlt>;
-def SLTu    : SetCC_R<0x00, 0x2b, "sltu", setult>;
+def SLT     : SetCC_R<0x00, 0x2a, "slt", setlt, CPURegs>;
+def SLTu    : SetCC_R<0x00, 0x2b, "sltu", setult, CPURegs>;
 def AND     : LogicR<0x24, "and", and>;
 def OR      : LogicR<0x25, "or",  or>;
 def XOR     : LogicR<0x26, "xor", xor>;
