@@ -112,6 +112,7 @@ namespace MipsII {
 
 class MipsInstrInfo : public MipsGenInstrInfo {
   MipsTargetMachine &TM;
+  bool IsN64;
   const MipsRegisterInfo RI;
 public:
   explicit MipsInstrInfo(MipsTargetMachine &TM);

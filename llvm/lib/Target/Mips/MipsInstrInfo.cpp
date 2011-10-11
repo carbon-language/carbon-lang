@@ -28,7 +28,8 @@ using namespace llvm;
 
 MipsInstrInfo::MipsInstrInfo(MipsTargetMachine &tm)
   : MipsGenInstrInfo(Mips::ADJCALLSTACKDOWN, Mips::ADJCALLSTACKUP),
-    TM(tm), RI(*TM.getSubtargetImpl(), *this) {}
+    TM(tm), IsN64(TM.getSubtarget<MipsSubtarget>().isABI_N64()),
+    RI(*TM.getSubtargetImpl(), *this) {}
 
 
 const MipsRegisterInfo &MipsInstrInfo::getRegisterInfo() const { 
@@ -160,19 +161,20 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                     const TargetRegisterInfo *TRI) const {
   DebugLoc DL;
   if (I != MBB.end()) DL = I->getDebugLoc();
+  unsigned Opc = 0;
 
   if (RC == Mips::CPURegsRegisterClass)
-    BuildMI(MBB, I, DL, get(Mips::SW)).addReg(SrcReg, getKillRegState(isKill))
-                                      .addFrameIndex(FI).addImm(0);
+    Opc = IsN64 ? Mips::SW_P8 : Mips::SW;
+  else if (RC == Mips::CPU64RegsRegisterClass)
+    Opc = IsN64 ? Mips::SD_P8 : Mips::SD;
   else if (RC == Mips::FGR32RegisterClass)
-    BuildMI(MBB, I, DL, get(Mips::SWC1)).addReg(SrcReg, getKillRegState(isKill))
-                                        .addFrameIndex(FI).addImm(0);
-  else if (RC == Mips::AFGR64RegisterClass) {
-    BuildMI(MBB, I, DL, get(Mips::SDC1))
-      .addReg(SrcReg, getKillRegState(isKill))
-      .addFrameIndex(FI).addImm(0);
-  } else
-    llvm_unreachable("Register class not handled!");
+    Opc = Mips::SWC1;
+  else if (RC == Mips::AFGR64RegisterClass)
+    Opc = Mips::SDC1;
+
+  assert(Opc && "Register class not handled!");
+  BuildMI(MBB, I, DL, get(Opc)).addReg(SrcReg, getKillRegState(isKill))
+    .addFrameIndex(FI).addImm(0);
 }
 
 void MipsInstrInfo::
@@ -183,15 +185,19 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
 {
   DebugLoc DL;
   if (I != MBB.end()) DL = I->getDebugLoc();
+  unsigned Opc = 0;
 
   if (RC == Mips::CPURegsRegisterClass)
-    BuildMI(MBB, I, DL, get(Mips::LW), DestReg).addFrameIndex(FI).addImm(0);
+    Opc = IsN64 ? Mips::LW_P8 : Mips::LW;
+  else if (RC == Mips::CPU64RegsRegisterClass)
+    Opc = IsN64 ? Mips::LD_P8 : Mips::LD;
   else if (RC == Mips::FGR32RegisterClass)
-    BuildMI(MBB, I, DL, get(Mips::LWC1), DestReg).addFrameIndex(FI).addImm(0);
-  else if (RC == Mips::AFGR64RegisterClass) {
-    BuildMI(MBB, I, DL, get(Mips::LDC1), DestReg).addFrameIndex(FI).addImm(0);
-  } else
-    llvm_unreachable("Register class not handled!");
+    Opc = Mips::LWC1;
+  else if (RC == Mips::AFGR64RegisterClass)
+    Opc = Mips::LDC1;
+
+  assert(Opc && "Register class not handled!");
+  BuildMI(MBB, I, DL, get(Opc), DestReg).addFrameIndex(FI).addImm(0);
 }
 
 MachineInstr*
