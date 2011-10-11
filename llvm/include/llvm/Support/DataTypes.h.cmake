@@ -164,6 +164,11 @@ typedef signed int ssize_t;
 #ifndef UINT64_C
 # define UINT64_C(C) C##ui64
 #endif
+
+#ifndef PRIx64
+# define PRIx64 "I64x"
+#endif
+
 #endif /* _MSC_VER */
 
 /* Set defaults for constants which we cannot find. */
