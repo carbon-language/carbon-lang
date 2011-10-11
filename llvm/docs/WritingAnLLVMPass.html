@@ -227,11 +227,13 @@ the pass itself.</p>
 <p>Now that we have a way to compile our new pass, we just have to write it.
 Start out with:</p>
 
-<div class="doc_code"><pre>
+<div class="doc_code">
+<pre>
 <b>#include</b> "<a href="http://llvm.org/doxygen/Pass_8h-source.html">llvm/Pass.h</a>"
 <b>#include</b> "<a href="http://llvm.org/doxygen/Function_8h-source.html">llvm/Function.h</a>"
 <b>#include</b> "<a href="http://llvm.org/doxygen/raw__ostream_8h.html">llvm/Support/raw_ostream.h</a>"
-</pre></div>
+</pre>
+</div>
 
 <p>Which are needed because we are writing a <tt><a
 href="http://llvm.org/doxygen/classllvm_1_1Pass.html">Pass</a></tt>,
@@ -240,53 +242,66 @@ href="http://llvm.org/doxygen/classllvm_1_1Function.html">Function</a></tt>'s,
 and we will be doing some printing.</p>
 
 <p>Next we have:</p>
-<div class="doc_code"><pre>
+
+<div class="doc_code">
+<pre>
 <b>using namespace llvm;</b>
-</pre></div>
+</pre>
+</div>
+
 <p>... which is required because the functions from the include files 
-live in the llvm namespace.
-</p>
+live in the llvm namespace.</p>
 
 <p>Next we have:</p>
 
-<div class="doc_code"><pre>
+<div class="doc_code">
+<pre>
 <b>namespace</b> {
-</pre></div>
+</pre>
+</div>
 
 <p>... which starts out an anonymous namespace.  Anonymous namespaces are to C++
 what the "<tt>static</tt>" keyword is to C (at global scope).  It makes the
-things declared inside of the anonymous namespace only visible to the current
+things declared inside of the anonymous namespace visible only to the current
 file.  If you're not familiar with them, consult a decent C++ book for more
 information.</p>
 
 <p>Next, we declare our pass itself:</p>
 
-<div class="doc_code"><pre>
+<div class="doc_code">
+<pre>
   <b>struct</b> Hello : <b>public</b> <a href="#FunctionPass">FunctionPass</a> {
-</pre></div><p>
+</pre>
+</div>
 
 <p>This declares a "<tt>Hello</tt>" class that is a subclass of <tt><a
 href="http://llvm.org/doxygen/classllvm_1_1FunctionPass.html">FunctionPass</a></tt>.
 The different builtin pass subclasses are described in detail <a
 href="#passtype">later</a>, but for now, know that <a
-href="#FunctionPass"><tt>FunctionPass</tt></a>'s operate a function at a
+href="#FunctionPass"><tt>FunctionPass</tt></a>'s operate on a function at a
 time.</p>
 
-<div class="doc_code"><pre>
-     static char ID;
-     Hello() : FunctionPass(ID) {}
-</pre></div><p>
+<div class="doc_code">
+<pre>
+    static char ID;
+    Hello() : FunctionPass(ID) {}
+</pre>
+</div>
 
-<p> This declares pass identifier used by LLVM to identify pass. This allows LLVM to
-avoid using expensive C++ runtime information.</p>
+<p>This declares pass identifier used by LLVM to identify pass. This allows LLVM
+to avoid using expensive C++ runtime information.</p>
 
-<div class="doc_code"><pre>
+<div class="doc_code">
+<pre>
     <b>virtual bool</b> <a href="#runOnFunction">runOnFunction</a>(Function &amp;F) {
-      errs() &lt;&lt; "<i>Hello: </i>" &lt;&lt; F.getName() &lt;&lt; "\n";
+      errs() &lt;&lt; "<i>Hello: </i>";
+      errs().write_escaped(F.getName()) &lt;&lt; "\n";
       <b>return false</b>;
     }
   };  <i>// end of struct Hello</i>
-</pre></div>
+}  <i>// end of anonymous namespace</i>
+</pre>
+</div>
 
 <p>We declare a "<a href="#runOnFunction"><tt>runOnFunction</tt></a>" method,
 which overloads an abstract virtual method inherited from <a
@@ -294,31 +309,34 @@ href="#FunctionPass"><tt>FunctionPass</tt></a>.  This is where we are supposed
 to do our thing, so we just print out our message with the name of each
 function.</p>
 
-<div class="doc_code"><pre>
-  char Hello::ID = 0;
-</pre></div>
+<div class="doc_code">
+<pre>
+char Hello::ID = 0;
+</pre>
+</div>
 
-<p> We initialize pass ID here. LLVM uses ID's address to identify pass so 
+<p>We initialize pass ID here. LLVM uses ID's address to identify a pass, so
 initialization value is not important.</p>
 
-<div class="doc_code"><pre>
-  static RegisterPass&lt;Hello&gt; X("<i>hello</i>", "<i>Hello World Pass</i>",
-                        false /* Only looks at CFG */,
-                        false /* Analysis Pass */);
-}  <i>// end of anonymous namespace</i>
-</pre></div>
+<div class="doc_code">
+<pre>
+static RegisterPass&lt;Hello&gt; X("<i>hello</i>", "<i>Hello World Pass</i>",
+                             false /* Only looks at CFG */,
+                             false /* Analysis Pass */);
+</pre>
+</div>
 
-<p>Lastly, we <a href="#registration">register our class</a> <tt>Hello</tt>, 
-giving it a command line
-argument "<tt>hello</tt>", and a name "<tt>Hello World Pass</tt>".
-Last two arguments describe its behavior.
-If a pass walks CFG without modifying it then third argument is set to true. 
-If  a pass is an analysis pass, for example dominator tree pass, then true 
-is supplied as fourth argument. </p>
+<p>Lastly, we <a href="#registration">register our class</a> <tt>Hello</tt>,
+giving it a command line argument "<tt>hello</tt>", and a name "<tt>Hello World
+Pass</tt>". The last two arguments describe its behavior: if a pass walks CFG
+without modifying it then the third argument is set to <tt>true</tt>; if a pass
+is an analysis pass, for example dominator tree pass, then <tt>true</tt> is
+supplied as the fourth argument.</p>
 
 <p>As a whole, the <tt>.cpp</tt> file looks like:</p>
 
-<div class="doc_code"><pre>
+<div class="doc_code">
+<pre>
 <b>#include</b> "<a href="http://llvm.org/doxygen/Pass_8h-source.html">llvm/Pass.h</a>"
 <b>#include</b> "<a href="http://llvm.org/doxygen/Function_8h-source.html">llvm/Function.h</a>"
 <b>#include</b> "<a href="http://llvm.org/doxygen/raw__ostream_8h.html">llvm/Support/raw_ostream.h</a>"
@@ -332,24 +350,26 @@ is supplied as fourth argument. </p>
     Hello() : FunctionPass(ID) {}
 
     <b>virtual bool</b> <a href="#runOnFunction">runOnFunction</a>(Function &amp;F) {
-      errs() &lt;&lt; "<i>Hello: </i>" &lt;&lt; F.getName() &lt;&lt; "\n";
+      errs() &lt;&lt; "<i>Hello: </i>";
+      errs().write_escaped(F.getName()) &lt;&lt; '\n';
       <b>return false</b>;
     }
-  };
-  
-  char Hello::ID = 0;
-  static RegisterPass&lt;Hello&gt; X("hello", "Hello World Pass", false, false);
-}
 
-</pre></div>
+  };
+}
+  
+char Hello::ID = 0;
+static RegisterPass&lt;Hello&gt; X("hello", "Hello World Pass", false, false);
+</pre>
+</div>
 
 <p>Now that it's all together, compile the file with a simple "<tt>gmake</tt>"
 command in the local directory and you should get a new file
 "<tt>Debug+Asserts/lib/Hello.so</tt>" under the top level directory of the LLVM
 source tree (not in the local directory).  Note that everything in this file is
-contained in an anonymous namespace: this reflects the fact that passes are self
-contained units that do not need external interfaces (although they can have
-them) to be useful.</p>
+contained in an anonymous namespace &mdash; this reflects the fact that passes
+are self contained units that do not need external interfaces (although they can
+have them) to be useful.</p>
 
 </div>
 
