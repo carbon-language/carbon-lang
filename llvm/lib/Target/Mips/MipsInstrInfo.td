@@ -741,10 +741,6 @@ let Predicates = [HasSwap] in {
     def WSBW : ByteSwap<0x20, "wsbw">;
 }
 
-/// Conditional Move
-def MIPS_CMOV_ZERO  : PatLeaf<(i32 0)>;
-def MIPS_CMOV_NZERO : PatLeaf<(i32 1)>;
-
 // Conditional moves:
 // These instructions are expanded in
 // MipsISelLowering::EmitInstrWithCustomInserter if target does not have
