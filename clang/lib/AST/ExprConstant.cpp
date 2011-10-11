@@ -59,6 +59,8 @@ namespace {
 
     EvalInfo(const ASTContext &ctx, Expr::EvalResult &evalresult)
       : Ctx(ctx), EvalResult(evalresult) {}
+
+    const LangOptions &getLangOpts() { return Ctx.getLangOptions(); }
   };
 
   struct ComplexValue {
@@ -378,11 +380,16 @@ private:
   RetTy DerivedError(const Expr *E) {
     return static_cast<Derived*>(this)->Error(E);
   }
+  RetTy DerivedValueInitialization(const Expr *E) {
+    return static_cast<Derived*>(this)->ValueInitialization(E);
+  }
 
 protected:
   EvalInfo &Info;
   typedef ConstStmtVisitor<Derived, RetTy> StmtVisitorTy;
   typedef ExprEvaluatorBase ExprEvaluatorBaseTy;
+
+  RetTy ValueInitialization(const Expr *E) { return DerivedError(E); }
 
 public:
   ExprEvaluatorBase(EvalInfo &Info) : Info(Info) {}
@@ -435,6 +442,23 @@ public:
                                  : DerivedError(E));
     return DerivedSuccess(*value, E);
   }
+
+  RetTy VisitInitListExpr(const InitListExpr *E) {
+    if (Info.getLangOpts().CPlusPlus0x) {
+      if (E->getNumInits() == 0)
+        return DerivedValueInitialization(E);
+      if (E->getNumInits() == 1)
+        return StmtVisitorTy::Visit(E->getInit(0));
+    }
+    return DerivedError(E);
+  }
+  RetTy VisitImplicitValueInitExpr(const ImplicitValueInitExpr *E) {
+    return DerivedValueInitialization(E);
+  }
+  RetTy VisitCXXScalarValueInitExpr(const CXXScalarValueInitExpr *E) {
+    return DerivedValueInitialization(E);
+  }
+
 };
 
 }
@@ -486,12 +510,6 @@ public:
 
     // FIXME: Support CK_DerivedToBase and friends.
     }
-  }
-
-  bool VisitInitListExpr(const InitListExpr *E) {
-    if (Info.Ctx.getLangOptions().CPlusPlus0x && E->getNumInits() == 1)
-      return Visit(E->getInit(0));
-    return Error(E);
   }
 
   // FIXME: Missing: __real__, __imag__
@@ -601,6 +619,9 @@ public:
   bool Error(const Stmt *S) {
     return false;
   }
+  bool ValueInitialization(const Expr *E) {
+    return Success((Expr*)0);
+  }
 
   bool VisitBinaryOperator(const BinaryOperator *E);
   bool VisitCastExpr(const CastExpr* E);
@@ -615,12 +636,8 @@ public:
       return Success(E);
     return false;
   }
-  bool VisitImplicitValueInitExpr(const ImplicitValueInitExpr *E)
-      { return Success((Expr*)0); }
   bool VisitCXXNullPtrLiteralExpr(const CXXNullPtrLiteralExpr *E)
-      { return Success((Expr*)0); }
-  bool VisitCXXScalarValueInitExpr(const CXXScalarValueInitExpr *E)
-      { return Success((Expr*)0); }
+      { return ValueInitialization(E); }
 
   // FIXME: Missing: @protocol, @selector
 };
@@ -780,11 +797,11 @@ namespace {
 
     APValue Success(const APValue &V, const Expr *E) { return V; }
     APValue Error(const Expr *E) { return APValue(); }
+    APValue ValueInitialization(const Expr *E)
+      { return GetZeroVector(E->getType()); }
 
     APValue VisitUnaryReal(const UnaryOperator *E)
       { return Visit(E->getSubExpr()); }
-    APValue VisitImplicitValueInitExpr(const ImplicitValueInitExpr *E)
-      { return GetZeroVector(E->getType()); }
     APValue VisitCastExpr(const CastExpr* E);
     APValue VisitCompoundLiteralExpr(const CompoundLiteralExpr *E);
     APValue VisitInitListExpr(const InitListExpr *E);
@@ -1018,6 +1035,8 @@ public:
     return Error(E->getLocStart(), diag::note_invalid_subexpr_in_ice, E);
   }
 
+  bool ValueInitialization(const Expr *E) { return Success(0, E); }
+
   //===--------------------------------------------------------------------===//
   //                            Visitor Methods
   //===--------------------------------------------------------------------===//
@@ -1058,16 +1077,9 @@ public:
     return Success(E->getValue(), E);
   }
 
+  // Note, GNU defines __null as an integer, not a pointer.
   bool VisitGNUNullExpr(const GNUNullExpr *E) {
-    return Success(0, E);
-  }
-
-  bool VisitCXXScalarValueInitExpr(const CXXScalarValueInitExpr *E) {
-    return Success(0, E);
-  }
-
-  bool VisitImplicitValueInitExpr(const ImplicitValueInitExpr *E) {
-    return Success(0, E);
+    return ValueInitialization(E);
   }
 
   bool VisitUnaryTypeTraitExpr(const UnaryTypeTraitExpr *E) {
@@ -1091,8 +1103,6 @@ public:
 
   bool VisitCXXNoexceptExpr(const CXXNoexceptExpr *E);
   bool VisitSizeOfPackExpr(const SizeOfPackExpr *E);
-
-  bool VisitInitListExpr(const InitListExpr *E);
 
 private:
   CharUnits GetAlignOfExpr(const Expr *E);
@@ -1946,17 +1956,6 @@ bool IntExprEvaluator::VisitCXXNoexceptExpr(const CXXNoexceptExpr *E) {
   return Success(E->getValue(), E);
 }
 
-bool IntExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
-  if (!Info.Ctx.getLangOptions().CPlusPlus0x)
-    return Error(E);
-
-  if (E->getNumInits() == 0)
-    return Success(0, E);
-
-  assert(E->getNumInits() == 1 && "Excess initializers for integer in C++11.");
-  return Visit(E->getInit(0));
-}
-
 //===----------------------------------------------------------------------===//
 // Float Evaluation
 //===----------------------------------------------------------------------===//
@@ -1977,20 +1976,22 @@ public:
     return false;
   }
 
+  bool ValueInitialization(const Expr *E) {
+    Result = APFloat::getZero(Info.Ctx.getFloatTypeSemantics(E->getType()));
+    return true;
+  }
+
   bool VisitCallExpr(const CallExpr *E);
 
   bool VisitUnaryOperator(const UnaryOperator *E);
   bool VisitBinaryOperator(const BinaryOperator *E);
   bool VisitFloatingLiteral(const FloatingLiteral *E);
   bool VisitCastExpr(const CastExpr *E);
-  bool VisitCXXScalarValueInitExpr(const CXXScalarValueInitExpr *E);
 
   bool VisitUnaryReal(const UnaryOperator *E);
   bool VisitUnaryImag(const UnaryOperator *E);
 
   bool VisitDeclRefExpr(const DeclRefExpr *E);
-
-  bool VisitInitListExpr(const InitListExpr *E);
 
   // FIXME: Missing: array subscript of vector, member of vector,
   //                 ImplicitValueInitExpr
@@ -2253,24 +2254,6 @@ bool FloatExprEvaluator::VisitCastExpr(const CastExpr *E) {
   }
 
   return false;
-}
-
-bool FloatExprEvaluator::VisitCXXScalarValueInitExpr(const CXXScalarValueInitExpr *E) {
-  Result = APFloat::getZero(Info.Ctx.getFloatTypeSemantics(E->getType()));
-  return true;
-}
-
-bool FloatExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
-  if (!Info.Ctx.getLangOptions().CPlusPlus0x)
-    return Error(E);
-
-  if (E->getNumInits() == 0) {
-    Result = APFloat::getZero(Info.Ctx.getFloatTypeSemantics(E->getType()));
-    return true;
-  }
-
-  assert(E->getNumInits() == 1 && "Excess initializers for integer in C++11.");
-  return Visit(E->getInit(0));
 }
 
 //===----------------------------------------------------------------------===//
