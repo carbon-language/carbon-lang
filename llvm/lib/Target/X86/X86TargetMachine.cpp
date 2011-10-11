@@ -38,7 +38,7 @@ X86_32TargetMachine::X86_32TargetMachine(const Target &T, StringRef TT,
                (getSubtargetImpl()->isTargetCygMing() ||
                 getSubtargetImpl()->isTargetWindows()) ?
                "e-p:32:32-f64:64:64-i64:64:64-f80:32:32-f128:128:128-n8:16:32-S32" :
-               "e-p:32:32-f64:32:64-i64:32:64-f80:32:32-f128:128:128-n8:16:32-S32"),
+               "e-p:32:32-f64:32:64-i64:32:64-f80:32:32-f128:128:128-n8:16:32-S128"),
     InstrInfo(*this),
     TSInfo(*this),
     TLInfo(*this),
