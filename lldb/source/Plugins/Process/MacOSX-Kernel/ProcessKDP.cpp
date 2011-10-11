@@ -266,7 +266,7 @@ ProcessKDP::DidAttach ()
 {
     LogSP log (ProcessKDPLog::GetLogIfAllCategoriesSet (KDP_LOG_PROCESS));
     if (log)
-        log->Printf ("ProcessKDP::DidLaunch()");
+        log->Printf ("ProcessKDP::DidAttach()");
     if (GetID() != LLDB_INVALID_PROCESS_ID)
     {
         // TODO: figure out the register context that we will use
