@@ -186,7 +186,7 @@ elseif( LLVM_COMPILER_IS_GCC_COMPATIBLE )
   endif (LLVM_ENABLE_WERROR)
 endif( MSVC )
 
-add_llvm_definitions( -D__STDC_LIMIT_MACROS )
 add_llvm_definitions( -D__STDC_CONSTANT_MACROS )
+add_llvm_definitions( -D__STDC_LIMIT_MACROS )
 
 option(LLVM_INCLUDE_TESTS "Generate build targets for the LLVM unit tests." ON)
