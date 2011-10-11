@@ -1,4 +1,6 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -Wconversion -nostdinc -isystem %S/Inputs -triple x86_64-apple-darwin %s -Wno-unreachable-code
+// RUN: %clang_cc1 -fsyntax-only -verify -Wconversion \
+// RUN:   -nostdsysteminc -nobuiltininc -isystem %S/Inputs \
+// RUN:   -triple x86_64-apple-darwin %s -Wno-unreachable-code
 
 #include <conversion.h>
 

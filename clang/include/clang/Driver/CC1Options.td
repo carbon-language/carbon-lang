@@ -602,8 +602,8 @@ def fno_deprecated_macro : Flag<"-fno-deprecated-macro">,
 // Header Search Options
 //===----------------------------------------------------------------------===//
 
-def nostdinc : Flag<"-nostdinc">,
-  HelpText<"Disable standard #include directories">;
+def nostdsysteminc : Flag<"-nostdsysteminc">,
+  HelpText<"Disable standard system #include directories">;
 def nostdincxx : Flag<"-nostdinc++">,
   HelpText<"Disable standard #include directories for the C++ standard library">;
 def nobuiltininc : Flag<"-nobuiltininc">,

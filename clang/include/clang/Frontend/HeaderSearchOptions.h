@@ -79,7 +79,7 @@ public:
   unsigned UseBuiltinIncludes : 1;
 
   /// Include the system standard include search directories.
-  unsigned UseStandardIncludes : 1;
+  unsigned UseStandardSystemIncludes : 1;
 
   /// Include the system standard C++ library include search directories.
   unsigned UseStandardCXXIncludes : 1;
@@ -93,8 +93,8 @@ public:
 public:
   HeaderSearchOptions(StringRef _Sysroot = "/")
     : Sysroot(_Sysroot), DisableModuleHash(0), UseBuiltinIncludes(true),
-      UseStandardIncludes(true), UseStandardCXXIncludes(true), UseLibcxx(false),
-      Verbose(false) {}
+      UseStandardSystemIncludes(true), UseStandardCXXIncludes(true),
+      UseLibcxx(false), Verbose(false) {}
 
   /// AddPath - Add the \arg Path path to the specified \arg Group list.
   void AddPath(StringRef Path, frontend::IncludeDirGroup Group,
