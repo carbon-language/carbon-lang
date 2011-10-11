@@ -4,10 +4,9 @@
 ; register pressure and therefore spilling. There is more room for improvement
 ; here.
 
-; CHECK: sub sp, #{{32|28|24}}
+; CHECK: sub sp, #{{40|32|28|24}}
 
 ; CHECK: %for.inc
-; CHECK: ldr{{(.w)?}} r{{.*}}, [sp, #
 ; CHECK: ldr{{(.w)?}} r{{.*}}, [sp, #
 ; CHECK: ldr{{(.w)?}} r{{.*}}, [sp, #
 ; CHECK: add

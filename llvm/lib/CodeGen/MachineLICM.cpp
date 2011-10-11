@@ -91,6 +91,11 @@ namespace {
     // For each opcode, keep a list of potential CSE instructions.
     DenseMap<unsigned, std::vector<const MachineInstr*> > CSEMap;
 
+    // If a MBB does not dominate loop exiting blocks then it may not safe
+    // to hoist loads from this block.
+    bool CurrentMBBDominatesLoopExitingBlocks;
+    bool NeedToCheckMBBDominance;
+
   public:
     static char ID; // Pass identification, replacement for typeid
     MachineLICM() :
@@ -194,6 +199,10 @@ namespace {
     /// hoist the given loop invariant.
     bool IsProfitableToHoist(MachineInstr &MI);
 
+    /// IsGuaranteedToExecute - Check if this mbb is guaranteed to execute.
+    /// If not then a load from this mbb may not be safe to hoist.
+    bool IsGuaranteedToExecute(MachineBasicBlock *BB);
+
     /// HoistRegion - Walk the specified region of the CFG (defined by all
     /// blocks dominated by the specified block, and that are in the current
     /// loop) in depth first order w.r.t the DominatorTree. This allows us to
@@ -295,6 +304,9 @@ bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
   MRI = &MF.getRegInfo();
   InstrItins = TM->getInstrItineraryData();
   AllocatableSet = TRI->getAllocatableSet(MF);
+  // Stay conservative.
+  CurrentMBBDominatesLoopExitingBlocks = false;
+  NeedToCheckMBBDominance = true;
 
   if (PreRegAlloc) {
     // Estimate register pressure during pre-regalloc pass.
@@ -459,6 +471,7 @@ void MachineLICM::HoistRegionPostRA() {
         ++PhysRegDefs[*AS];
     }
 
+    NeedToCheckMBBDominance = true;
     for (MachineBasicBlock::iterator
            MII = BB->begin(), E = BB->end(); MII != E; ++MII) {
       MachineInstr *MI = &*MII;
@@ -552,6 +565,30 @@ void MachineLICM::HoistPostRA(MachineInstr *MI, unsigned Def) {
   Changed = true;
 }
 
+// IsGuaranteedToExecute - Check if this mbb is guaranteed to execute.
+// If not then a load from this mbb may not be safe to hoist.
+bool MachineLICM::IsGuaranteedToExecute(MachineBasicBlock *BB) {
+  // Do not check if we already have checked it once.
+  if (NeedToCheckMBBDominance == false)
+    return CurrentMBBDominatesLoopExitingBlocks;
+
+  NeedToCheckMBBDominance = false;
+
+  if (BB != CurLoop->getHeader()) {
+    // Check loop exiting blocks.
+    SmallVector<MachineBasicBlock*, 8> CurrentLoopExitingBlocks;
+    CurLoop->getExitingBlocks(CurrentLoopExitingBlocks);
+    for (unsigned i = 0, e = CurrentLoopExitingBlocks.size(); i != e; ++i)
+      if (!DT->dominates(BB, CurrentLoopExitingBlocks[i])) {
+	CurrentMBBDominatesLoopExitingBlocks = false;
+	return CurrentMBBDominatesLoopExitingBlocks;
+      }
+  }
+
+  CurrentMBBDominatesLoopExitingBlocks = true;
+  return CurrentMBBDominatesLoopExitingBlocks;
+}
+
 /// HoistRegion - Walk the specified region of the CFG (defined by all blocks
 /// dominated by the specified block, and that are in the current loop) in depth
 /// first order w.r.t the DominatorTree. This allows us to visit definitions
@@ -578,6 +615,7 @@ void MachineLICM::HoistRegion(MachineDomTreeNode *N, bool IsHeader) {
   // Remember livein register pressure.
   BackTrace.push_back(RegPressure);
 
+  NeedToCheckMBBDominance = true;
   for (MachineBasicBlock::iterator
          MII = BB->begin(), E = BB->end(); MII != E; ) {
     MachineBasicBlock::iterator NextMII = MII; ++NextMII;
@@ -711,7 +749,14 @@ bool MachineLICM::IsLICMCandidate(MachineInstr &I) {
   bool DontMoveAcrossStore = true;
   if (!I.isSafeToMove(TII, AA, DontMoveAcrossStore))
     return false;
-  
+
+  // If it is load then check if it is guaranteed to execute by making sure that
+  // it dominates all exiting blocks. If it doesn't, then there is a path out of
+  // the loop which does not execute this load, so we can't hoist it.
+  // Stores and side effects are already checked by isSafeToMove.
+  if (I.getDesc().mayLoad() && !IsGuaranteedToExecute(I.getParent()))
+    return false;
+
   return true;
 }
 
