@@ -91,10 +91,16 @@ namespace {
     // For each opcode, keep a list of potential CSE instructions.
     DenseMap<unsigned, std::vector<const MachineInstr*> > CSEMap;
 
+    enum {
+      SpeculateFalse   = 0,
+      SpeculateTrue    = 1,
+      SpeculateUnknown = 2
+    };
+
     // If a MBB does not dominate loop exiting blocks then it may not safe
     // to hoist loads from this block.
-    bool CurrentMBBDominatesLoopExitingBlocks;
-    bool NeedToCheckMBBDominance;
+    // Tri-state: 0 - false, 1 - true, 2 - unknown
+    unsigned SpeculationState;
 
   public:
     static char ID; // Pass identification, replacement for typeid
@@ -304,9 +310,6 @@ bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
   MRI = &MF.getRegInfo();
   InstrItins = TM->getInstrItineraryData();
   AllocatableSet = TRI->getAllocatableSet(MF);
-  // Stay conservative.
-  CurrentMBBDominatesLoopExitingBlocks = false;
-  NeedToCheckMBBDominance = true;
 
   if (PreRegAlloc) {
     // Estimate register pressure during pre-regalloc pass.
@@ -476,7 +479,7 @@ void MachineLICM::HoistRegionPostRA() {
         ++PhysRegDefs[*AS];
     }
 
-    NeedToCheckMBBDominance = true;
+    SpeculationState = SpeculateUnknown;
     for (MachineBasicBlock::iterator
            MII = BB->begin(), E = BB->end(); MII != E; ++MII) {
       MachineInstr *MI = &*MII;
@@ -573,25 +576,22 @@ void MachineLICM::HoistPostRA(MachineInstr *MI, unsigned Def) {
 // IsGuaranteedToExecute - Check if this mbb is guaranteed to execute.
 // If not then a load from this mbb may not be safe to hoist.
 bool MachineLICM::IsGuaranteedToExecute(MachineBasicBlock *BB) {
-  // Do not check if we already have checked it once.
-  if (NeedToCheckMBBDominance == false)
-    return CurrentMBBDominatesLoopExitingBlocks;
-
-  NeedToCheckMBBDominance = false;
-
+  if (SpeculationState != SpeculateUnknown)
+    return SpeculationState == SpeculateFalse;
+    
   if (BB != CurLoop->getHeader()) {
     // Check loop exiting blocks.
     SmallVector<MachineBasicBlock*, 8> CurrentLoopExitingBlocks;
     CurLoop->getExitingBlocks(CurrentLoopExitingBlocks);
     for (unsigned i = 0, e = CurrentLoopExitingBlocks.size(); i != e; ++i)
       if (!DT->dominates(BB, CurrentLoopExitingBlocks[i])) {
-	CurrentMBBDominatesLoopExitingBlocks = false;
-	return CurrentMBBDominatesLoopExitingBlocks;
+	SpeculationState = SpeculateTrue;
+	return false;
       }
   }
 
-  CurrentMBBDominatesLoopExitingBlocks = true;
-  return CurrentMBBDominatesLoopExitingBlocks;
+  SpeculationState = SpeculateFalse;
+  return true;
 }
 
 /// HoistRegion - Walk the specified region of the CFG (defined by all blocks
@@ -620,7 +620,7 @@ void MachineLICM::HoistRegion(MachineDomTreeNode *N, bool IsHeader) {
   // Remember livein register pressure.
   BackTrace.push_back(RegPressure);
 
-  NeedToCheckMBBDominance = true;
+  SpeculationState = SpeculateUnknown;
   for (MachineBasicBlock::iterator
          MII = BB->begin(), E = BB->end(); MII != E; ) {
     MachineBasicBlock::iterator NextMII = MII; ++NextMII;
@@ -1044,8 +1044,12 @@ bool MachineLICM::IsProfitableToHoist(MachineInstr &MI) {
 
     // High register pressure situation, only hoist if the instruction is going to
     // be remat'ed.
-    if (!TII->isTriviallyReMaterializable(&MI, AA) &&
-        !MI.isInvariantLoad(AA))
+    // Also, do not "speculate" in high register pressure situation. If an
+    // instruction is not guaranteed to be executed in the loop, it's best to be
+    // conservative.
+    if (SpeculationState == SpeculateTrue ||
+        (!TII->isTriviallyReMaterializable(&MI, AA) &&
+         !MI.isInvariantLoad(AA)))
       return false;
   }
 
