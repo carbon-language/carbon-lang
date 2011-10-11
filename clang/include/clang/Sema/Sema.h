@@ -2834,10 +2834,6 @@ public:
   /// definition when it is defaulted.
   bool ShouldDeleteSpecialMember(CXXMethodDecl *MD, CXXSpecialMember CSM);
 
-  /// \brief Determine if a defaulted copy constructor ought to be
-  /// deleted.
-  bool ShouldDeleteCopyConstructor(CXXConstructorDecl *CD);
-
   /// \brief Determine if a defaulted copy assignment operator ought to be
   /// deleted.
   bool ShouldDeleteCopyAssignmentOperator(CXXMethodDecl *MD);
