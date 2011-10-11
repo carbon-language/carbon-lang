@@ -242,7 +242,7 @@ defm : BrcondPats<CPU64Regs, BEQ64, BNE64, SLT64, SLTu64, SLTi64, SLTiu64,
 
 // setcc patterns
 def : Pat<(seteq CPU64Regs:$lhs, CPU64Regs:$rhs),
-          (SLTu64 (DXOR CPU64Regs:$lhs, CPU64Regs:$rhs), 1)>;
+          (SLTiu64 (DXOR CPU64Regs:$lhs, CPU64Regs:$rhs), 1)>;
 def : Pat<(setne CPU64Regs:$lhs, CPU64Regs:$rhs),
           (SLTu64 ZERO_64, (DXOR CPU64Regs:$lhs, CPU64Regs:$rhs))>;
 

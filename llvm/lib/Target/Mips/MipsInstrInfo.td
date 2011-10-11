@@ -954,7 +954,7 @@ defm : MovnPats<CPURegs, MOVN_I>;
 
 // setcc patterns
 def : Pat<(seteq CPURegs:$lhs, CPURegs:$rhs),
-          (SLTu (XOR CPURegs:$lhs, CPURegs:$rhs), 1)>;
+          (SLTiu (XOR CPURegs:$lhs, CPURegs:$rhs), 1)>;
 def : Pat<(setne CPURegs:$lhs, CPURegs:$rhs),
           (SLTu ZERO, (XOR CPURegs:$lhs, CPURegs:$rhs))>;
 
