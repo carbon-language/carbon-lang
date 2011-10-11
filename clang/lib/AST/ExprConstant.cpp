@@ -481,7 +481,10 @@ public:
       return false;
 
     case CK_NoOp:
+    case CK_LValueBitCast:
       return Visit(E->getSubExpr());
+
+    // FIXME: Support CK_DerivedToBase and friends.
     }
   }
 

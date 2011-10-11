@@ -57,3 +57,7 @@ int foo() { return A::B; }
 // PR11040
 const int x = 10;
 int* y = reinterpret_cast<const char&>(x); // expected-error {{cannot initialize}}
+
+// This isn't an integral constant expression, but make sure it folds anyway.
+struct PR8836 { char _; long long a; };
+int PR8836test[(__typeof(sizeof(int)))&reinterpret_cast<const volatile char&>((((PR8836*)0)->a))];
