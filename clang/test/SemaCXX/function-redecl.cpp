@@ -44,7 +44,7 @@ namespace test0 {
 
 
 class B {
- void typocorrection(const int); // expected-note {{type of 1st parameter of member declaration does not match definition}}
+ void typocorrection(const int); // expected-note {{'typocorrection' declared here}}
  void typocorrection(double);
 };
 
@@ -92,3 +92,6 @@ int TestConst::getit() { // expected-error {{out-of-line definition of 'getit' d
 
 void TestConst::setit(int) const { // expected-error {{out-of-line definition of 'setit' does not match any declaration in 'TestConst'}}
 }
+
+struct J { int typo() const; };
+int J::typo_() { return 3; } // expected-error {{out-of-line definition of 'typo_' does not match any declaration in 'J'}}
