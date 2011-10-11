@@ -164,3 +164,14 @@ void test_strcat() {
 
   strcat(x, y); //expected-warning{{Call to function 'strcat' is insecure as it does not provide bounding of the memory buffer. Replace unbounded copy functions with analogous functions that support length arguments such as 'strncat'. CWE-119.}}
 }
+
+//===----------------------------------------------------------------------===
+// vfork()
+//===----------------------------------------------------------------------===
+typedef int __int32_t;
+typedef __int32_t pid_t;
+pid_t vfork(void);
+
+void test_vfork() {
+  vfork(); //expected-warning{{Call to function 'vfork' is insecure as it can lead to denial of service situations in the parent process.}}
+}

@@ -70,6 +70,7 @@ public:
   void checkCall_strcat(const CallExpr *CE, const FunctionDecl *FD);
   void checkCall_rand(const CallExpr *CE, const FunctionDecl *FD);
   void checkCall_random(const CallExpr *CE, const FunctionDecl *FD);
+  void checkCall_vfork(const CallExpr *CE, const FunctionDecl *FD);
   void checkUncheckedReturnValue(CallExpr *CE);
 };
 } // end anonymous namespace
@@ -116,6 +117,7 @@ void WalkAST::VisitCallExpr(CallExpr *CE) {
     .Case("rand", &WalkAST::checkCall_rand)
     .Case("rand_r", &WalkAST::checkCall_rand)
     .Case("random", &WalkAST::checkCall_random)
+    .Case("vfork", &WalkAST::checkCall_vfork)
     .Default(NULL);
 
   // If the callee isn't defined, it is not of security concern.
@@ -516,6 +518,26 @@ void WalkAST::checkCall_random(const CallExpr *CE, const FunctionDecl *FD) {
                      "The 'random' function produces a sequence of values that "
                      "an adversary may be able to predict.  Use 'arc4random' "
                      "instead", CELoc, &R, 1);
+}
+
+//===----------------------------------------------------------------------===//
+// Check: 'vfork' should not be used.
+// POS33-C: Do not use vfork().
+//===----------------------------------------------------------------------===//
+
+void WalkAST::checkCall_vfork(const CallExpr *CE, const FunctionDecl *FD) {
+  // All calls to vfork() are insecure, issue a warning.
+  SourceRange R = CE->getCallee()->getSourceRange();
+  PathDiagnosticLocation CELoc =
+    PathDiagnosticLocation::createBegin(CE, BR.getSourceManager(), AC);
+  BR.EmitBasicReport("Potential insecure implementation-specific behavior in "
+                     "call 'vfork'",
+                     "Security",
+                     "Call to function 'vfork' is insecure as it can lead to "
+                     "denial of service situations in the parent process. "
+                     "Replace calls to vfork with calls to the safer "
+                     "'posix_spawn' function",
+                     CELoc, &R, 1);
 }
 
 //===----------------------------------------------------------------------===//
