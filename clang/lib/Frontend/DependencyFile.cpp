@@ -52,7 +52,8 @@ public:
       AddMissingHeaderDeps(Opts.AddMissingHeaderDeps) {}
 
   virtual void FileChanged(SourceLocation Loc, FileChangeReason Reason,
-                           SrcMgr::CharacteristicKind FileType);
+                           SrcMgr::CharacteristicKind FileType,
+                           FileID PrevFID);
   virtual void InclusionDirective(SourceLocation HashLoc,
                                   const Token &IncludeTok,
                                   StringRef FileName,
@@ -107,7 +108,8 @@ bool DependencyFileCallback::FileMatchesDepCriteria(const char *Filename,
 
 void DependencyFileCallback::FileChanged(SourceLocation Loc,
                                          FileChangeReason Reason,
-                                         SrcMgr::CharacteristicKind FileType) {
+                                         SrcMgr::CharacteristicKind FileType,
+                                         FileID PrevFID) {
   if (Reason != PPCallbacks::EnterFile)
     return;
 

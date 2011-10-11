@@ -42,8 +42,11 @@ public:
   /// EnteringFile indicates whether this is because we are entering a new
   /// #include'd file (when true) or whether we're exiting one because we ran
   /// off the end (when false).
+  ///
+  /// \param PrevFID the file that was exited if \arg Reason is ExitFile. 
   virtual void FileChanged(SourceLocation Loc, FileChangeReason Reason,
-                           SrcMgr::CharacteristicKind FileType) {
+                           SrcMgr::CharacteristicKind FileType,
+                           FileID PrevFID = FileID()) {
   }
 
   /// FileSkipped - This callback is invoked whenever a source file is
@@ -211,9 +214,10 @@ public:
   }
 
   virtual void FileChanged(SourceLocation Loc, FileChangeReason Reason,
-                           SrcMgr::CharacteristicKind FileType) {
-    First->FileChanged(Loc, Reason, FileType);
-    Second->FileChanged(Loc, Reason, FileType);
+                           SrcMgr::CharacteristicKind FileType,
+                           FileID PrevFID) {
+    First->FileChanged(Loc, Reason, FileType, PrevFID);
+    Second->FileChanged(Loc, Reason, FileType, PrevFID);
   }
 
   virtual void FileSkipped(const FileEntry &ParentFile,

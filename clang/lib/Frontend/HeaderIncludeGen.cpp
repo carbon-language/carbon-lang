@@ -39,7 +39,8 @@ public:
   }
 
   virtual void FileChanged(SourceLocation Loc, FileChangeReason Reason,
-                           SrcMgr::CharacteristicKind FileType);
+                           SrcMgr::CharacteristicKind FileType,
+                           FileID PrevFID);
 };
 }
 
@@ -72,7 +73,8 @@ void clang::AttachHeaderIncludeGen(Preprocessor &PP, bool ShowAllHeaders,
 
 void HeaderIncludesCallback::FileChanged(SourceLocation Loc,
                                          FileChangeReason Reason,
-                                       SrcMgr::CharacteristicKind NewFileType) {
+                                       SrcMgr::CharacteristicKind NewFileType,
+                                       FileID PrevFID) {
   // Unless we are exiting a #include, make sure to skip ahead to the line the
   // #include directive was at.
   PresumedLoc UserLoc = SM.getPresumedLoc(Loc);

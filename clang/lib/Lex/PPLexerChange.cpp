@@ -256,6 +256,10 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
       SourceMgr.setNumCreatedFIDsForFileID(CurPPLexer->getFileID(), NumFIDs);
     }
 
+    FileID ExitedFID;
+    if (Callbacks && !isEndOfMacro && CurPPLexer)
+      ExitedFID = CurPPLexer->getFileID();
+    
     // We're done with the #included file.
     RemoveTopOfLexerStack();
 
@@ -264,7 +268,7 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
       SrcMgr::CharacteristicKind FileType =
         SourceMgr.getFileCharacteristic(CurPPLexer->getSourceLocation());
       Callbacks->FileChanged(CurPPLexer->getSourceLocation(),
-                             PPCallbacks::ExitFile, FileType);
+                             PPCallbacks::ExitFile, FileType, ExitedFID);
     }
 
     // Client should lex another token.
