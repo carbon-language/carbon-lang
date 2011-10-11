@@ -58,6 +58,7 @@ class IdentifierInfo {
   unsigned ObjCOrBuiltinID    :11;
   bool HasMacro               : 1; // True if there is a #define for this.
   bool IsExtension            : 1; // True if identifier is a lang extension.
+  bool IsCXX11CompatKeyword   : 1; // True if identifier is a keyword in C++11.
   bool IsPoisoned             : 1; // True if identifier is poisoned.
   bool IsCPPOperatorKeyword   : 1; // True if ident is a C++ operator keyword.
   bool NeedsHandleIdentifier  : 1; // See "RecomputeNeedsHandleIdentifier".
@@ -199,6 +200,19 @@ public:
       RecomputeNeedsHandleIdentifier();
   }
 
+  /// is/setIsCXX11CompatKeyword - Initialize information about whether or not
+  /// this language token is a keyword in C++11. This controls compatibility
+  /// warnings, and is only true when not parsing C++11. Once a compatibility
+  /// problem has been diagnosed with this keyword, the flag will be cleared.
+  bool isCXX11CompatKeyword() const { return IsCXX11CompatKeyword; }
+  void setIsCXX11CompatKeyword(bool Val) {
+    IsCXX11CompatKeyword = Val;
+    if (Val)
+      NeedsHandleIdentifier = 1;
+    else
+      RecomputeNeedsHandleIdentifier();
+  }
+
   /// setIsPoisoned - Mark this identifier as poisoned.  After poisoning, the
   /// Preprocessor will emit an error every time this token is used.
   void setIsPoisoned(bool Value = true) {
@@ -252,7 +266,8 @@ private:
   void RecomputeNeedsHandleIdentifier() {
     NeedsHandleIdentifier =
       (isPoisoned() | hasMacroDefinition() | isCPlusPlusOperatorKeyword() |
-       isExtensionToken() || (getTokenID() == tok::kw___import_module__));
+       isExtensionToken() | isCXX11CompatKeyword() ||
+       (getTokenID() == tok::kw___import_module__));
   }
 };
 

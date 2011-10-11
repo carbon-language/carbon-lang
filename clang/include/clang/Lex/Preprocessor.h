@@ -752,11 +752,11 @@ public:
   /// Diag - Forwarding function for diagnostics.  This emits a diagnostic at
   /// the specified Token's location, translating the token's start
   /// position in the current buffer into a SourcePosition object for rendering.
-  DiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID) {
+  DiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID) const {
     return Diags->Report(Loc, DiagID);
   }
 
-  DiagnosticBuilder Diag(const Token &Tok, unsigned DiagID) {
+  DiagnosticBuilder Diag(const Token &Tok, unsigned DiagID) const {
     return Diags->Report(Tok.getLocation(), DiagID);
   }
 

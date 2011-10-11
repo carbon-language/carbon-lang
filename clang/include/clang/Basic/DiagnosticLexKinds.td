@@ -46,6 +46,9 @@ def charize_microsoft_ext : Extension<"@# is a microsoft extension">;
 def ext_token_used : Extension<"extension used">,
   InGroup<DiagGroup<"language-extension-token">>;
 
+def warn_cxx11_keyword : Warning<"'%0' is a keyword in C++11">,
+  InGroup<CXX0xCompat>;
+
 def warn_unterminated_string : ExtWarn<"missing terminating '\"' character">;
 def warn_unterminated_char : ExtWarn<"missing terminating ' character">;
 def err_empty_character : Error<"empty character constant">;

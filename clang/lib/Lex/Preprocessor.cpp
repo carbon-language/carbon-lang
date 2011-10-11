@@ -513,6 +513,17 @@ void Preprocessor::HandleIdentifier(Token &Identifier) {
     }
   }
 
+  // If this identifier is a keyword in C++11, produce a warning. Don't warn if
+  // we're not considering macro expansion, since this identifier might be the
+  // name of a macro.
+  // FIXME: This warning is disabled in cases where it shouldn't be, like
+  //   "#define constexpr constexpr", "int constexpr;"
+  if (II.isCXX11CompatKeyword() & !DisableMacroExpansion) {
+    Diag(Identifier, diag::warn_cxx11_keyword) << II.getName();
+    // Don't diagnose this keyword again in this translation unit.
+    II.setIsCXX11CompatKeyword(false);
+  }
+
   // C++ 2.11p2: If this is an alternative representation of a C++ operator,
   // then we act as if it is the actual operator and not the textual
   // representation of it.
