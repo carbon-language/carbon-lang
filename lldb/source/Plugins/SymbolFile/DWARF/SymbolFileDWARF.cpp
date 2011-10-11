@@ -2467,7 +2467,7 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
             die_offsets.clear();
         }
         
-        if (name_type_mask & eFunctionNameTypeMethod)
+        if (effective_name_type_mask & eFunctionNameTypeMethod)
         {
             uint32_t num_base = m_function_method_index.Find(base_name_const, die_offsets);
             {
@@ -2491,7 +2491,7 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
             die_offsets.clear();
         }
 
-        if (name_type_mask & eFunctionNameTypeSelector)
+        if (effective_name_type_mask & eFunctionNameTypeSelector)
         {
             FindFunctions (name, m_function_selector_index, sc_list);
         }
