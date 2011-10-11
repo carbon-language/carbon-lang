@@ -20,6 +20,7 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
+#include "llvm/Analysis/DebugInfo.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -51,6 +52,7 @@ static cl::opt<unsigned> MaxThreads("xcore-max-threads", cl::Optional,
 namespace {
   class XCoreAsmPrinter : public AsmPrinter {
     const XCoreSubtarget &Subtarget;
+    void PrintDebugValueComment(const MachineInstr *MI, raw_ostream &OS);
   public:
     explicit XCoreAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
       : AsmPrinter(TM, Streamer), Subtarget(TM.getSubtarget<XCoreSubtarget>()){}
@@ -79,6 +81,7 @@ namespace {
     void EmitFunctionEntryLabel();
     void EmitInstruction(const MachineInstr *MI);
     void EmitFunctionBodyEnd();
+    virtual MachineLocation getDebugValueLocation(const MachineInstr *MI) const;
   };
 } // end of anonymous namespace
 
@@ -261,16 +264,57 @@ bool XCoreAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
   return false;
 }
 
+void XCoreAsmPrinter::PrintDebugValueComment(const MachineInstr *MI,
+                                             raw_ostream &OS) {
+  unsigned NOps = MI->getNumOperands();
+  assert(NOps == 4);
+  OS << '\t' << MAI->getCommentString() << "DEBUG_VALUE: ";
+  // cast away const; DIetc do not take const operands for some reason.
+  DIVariable V(const_cast<MDNode *>(MI->getOperand(NOps-1).getMetadata()));
+  OS << V.getName();
+  OS << " <- ";
+  // Frame address.  Currently handles register +- offset only.
+  assert(MI->getOperand(0).isReg() && MI->getOperand(1).isImm());
+  OS << '['; printOperand(MI, 0, OS); OS << '+'; printOperand(MI, 1, OS);
+  OS << ']';
+  OS << "+";
+  printOperand(MI, NOps-2, OS);
+}
+
+MachineLocation XCoreAsmPrinter::
+getDebugValueLocation(const MachineInstr *MI) const {
+  // Handles frame addresses emitted in XCoreInstrInfo::emitFrameIndexDebugValue.
+  assert(MI->getNumOperands() == 4 && "Invalid no. of machine operands!");
+  assert(MI->getOperand(0).isReg() && MI->getOperand(1).isImm() &&
+         "Unexpected MachineOperand types");
+  return MachineLocation(MI->getOperand(0).getReg(),
+                         MI->getOperand(1).getImm());
+}
+
 void XCoreAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   SmallString<128> Str;
   raw_svector_ostream O(Str);
 
-  // Check for mov mnemonic
-  if (MI->getOpcode() == XCore::ADD_2rus && !MI->getOperand(2).getImm())
-    O << "\tmov " << getRegisterName(MI->getOperand(0).getReg()) << ", "
-      << getRegisterName(MI->getOperand(1).getReg());
-  else
-    printInstruction(MI, O);
+  switch (MI->getOpcode()) {
+  case XCore::DBG_VALUE: {
+    if (isVerbose() && OutStreamer.hasRawTextSupport()) {
+      SmallString<128> TmpStr;
+      raw_svector_ostream OS(TmpStr);
+      PrintDebugValueComment(MI, OS);
+      OutStreamer.EmitRawText(StringRef(OS.str()));
+    }
+    return;
+  }
+  case XCore::ADD_2rus:
+    if (MI->getOperand(2).getImm() == 0) {
+      O << "\tmov " << getRegisterName(MI->getOperand(0).getReg()) << ", "
+        << getRegisterName(MI->getOperand(1).getReg());
+      OutStreamer.EmitRawText(O.str());
+      return;
+    }
+    break;
+  }
+  printInstruction(MI, O);
   OutStreamer.EmitRawText(O.str());
 }
 
