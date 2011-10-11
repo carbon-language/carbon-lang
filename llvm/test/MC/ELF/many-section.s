@@ -1,9 +1,8 @@
 // RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o %t
 // RUN: llvm-nm %t | FileCheck %s
 
-// CHECK: U
-// CHECK-NOT: U
 // CHECK: s000a
+// CHECK-NOT: U
 // CHECK: szzzb
 
 .section saaaa
