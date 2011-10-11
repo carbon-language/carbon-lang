@@ -1323,7 +1323,8 @@ target datalayout = "<i>layout specification</i>"
   <dd>Specifies the natural alignment of the stack in bits. Alignment promotion
       of stack variables is limited to the natural stack alignment to avoid
       dynamic stack realignment. The stack alignment must be a multiple of
-      8-bits, and currently defaults to 128 bits if unspecified.</dd>
+      8-bits. If omitted, the natural stack alignment defaults to "unspecified",
+      which does not prevent any alignment promotions.</dd>
 
   <dt><tt>p:<i>size</i>:<i>abi</i>:<i>pref</i></tt></dt>
   <dd>This specifies the <i>size</i> of a pointer and its <i>abi</i> and
