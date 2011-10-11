@@ -397,8 +397,15 @@ public:
     lldb::SBBreakpoint
     BreakpointCreateByName (const char *symbol_name, const char *module_name = NULL);
 
+    // This version uses name_type_mask = eFunctionNameTypeAuto
     lldb::SBBreakpoint
     BreakpointCreateByName (const char *symbol_name, 
+                            const SBFileSpecList &module_list, 
+                            const SBFileSpecList &comp_unit_list);
+
+    lldb::SBBreakpoint
+    BreakpointCreateByName (const char *symbol_name,
+                            uint32_t name_type_mask,           // Logical OR one or more FunctionNameType enum bits
                             const SBFileSpecList &module_list, 
                             const SBFileSpecList &comp_unit_list);
 

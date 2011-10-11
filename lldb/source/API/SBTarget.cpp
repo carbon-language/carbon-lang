@@ -610,6 +610,16 @@ SBTarget::BreakpointCreateByName (const char *symbol_name,
                             const SBFileSpecList &module_list, 
                             const SBFileSpecList &comp_unit_list)
 {
+    uint32_t name_type_mask = eFunctionNameTypeAuto;
+    return BreakpointCreateByName (symbol_name, name_type_mask, module_list, comp_unit_list);
+}
+
+lldb::SBBreakpoint
+SBTarget::BreakpointCreateByName (const char *symbol_name,
+                            uint32_t name_type_mask,
+                            const SBFileSpecList &module_list, 
+                            const SBFileSpecList &comp_unit_list)
+{
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBBreakpoint sb_bp;
@@ -619,14 +629,14 @@ SBTarget::BreakpointCreateByName (const char *symbol_name,
         *sb_bp = m_opaque_sp->CreateBreakpoint (module_list.get(), 
                                                 comp_unit_list.get(), 
                                                 symbol_name, 
-                                                eFunctionNameTypeFull | eFunctionNameTypeBase, 
+                                                name_type_mask, 
                                                 false);
     }
     
     if (log)
     {
-        log->Printf ("SBTarget(%p)::BreakpointCreateByName (symbol=\"%s\") => SBBreakpoint(%p)", 
-                     m_opaque_sp.get(), symbol_name, sb_bp.get());
+        log->Printf ("SBTarget(%p)::BreakpointCreateByName (symbol=\"%s\", name_type: %d) => SBBreakpoint(%p)", 
+                     m_opaque_sp.get(), symbol_name, name_type_mask, sb_bp.get());
     }
 
     return sb_bp;

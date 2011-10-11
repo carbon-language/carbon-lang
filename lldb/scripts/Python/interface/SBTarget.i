@@ -406,6 +406,12 @@ public:
     BreakpointCreateByName (const char *symbol_name, const char *module_name = NULL);
 
     lldb::SBBreakpoint
+    BreakpointCreateByName (const char *symbol_name,
+                            uint32_t func_name_type,           // Logical OR one or more FunctionNameType enum bits
+                            const SBFileSpecList &module_list, 
+                            const SBFileSpecList &comp_unit_list);
+
+    lldb::SBBreakpoint
     BreakpointCreateByRegex (const char *symbol_name_regex, const char *module_name = NULL);
 
     lldb::SBBreakpoint
