@@ -127,6 +127,9 @@ def HasSwap     : Predicate<"Subtarget.hasSwap()">;
 def HasCondMov  : Predicate<"Subtarget.hasCondMov()">;
 def HasMips32    : Predicate<"Subtarget.hasMips32()">;
 def HasMips32r2  : Predicate<"Subtarget.hasMips32r2()">;
+def HasMips64    : Predicate<"Subtarget.hasMips64()">;
+def NotMips64    : Predicate<"!Subtarget.hasMips64()">;
+def HasMips64r2  : Predicate<"Subtarget.hasMips64r2()">;
 def IsN64       : Predicate<"Subtarget.isABI_N64()">;
 def NotN64      : Predicate<"!Subtarget.isABI_N64()">;
 

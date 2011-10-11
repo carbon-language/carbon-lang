@@ -73,6 +73,18 @@ def IsNotSingleFloat : Predicate<"!Subtarget.isSingleFloat()">;
 // Only S32 and D32 are supported right now.
 //===----------------------------------------------------------------------===//
 
+// FP load.
+class FPLoad<bits<6> op, string opstr, PatFrag FOp, RegisterClass RC,
+             Operand MemOpnd>:
+  FFI<op, (outs RC:$ft), (ins MemOpnd:$base),
+      !strconcat(opstr, "\t$ft, $base"), [(set RC:$ft, (FOp addr:$base))]>;
+
+// FP store.
+class FPStore<bits<6> op, string opstr, PatFrag FOp, RegisterClass RC,
+              Operand MemOpnd>:
+  FFI<op, (outs), (ins RC:$ft, MemOpnd:$base),
+      !strconcat(opstr, "\t$ft, $base"), [(store RC:$ft, addr:$base)]>;
+
 // Instructions that convert an FP value to 32-bit fixed point.
 multiclass FFR1_W_M<bits<6> funct, string opstr> {
   def _S   : FFR1<funct, 16, opstr, "w.s", FGR32, FGR32>;
@@ -170,19 +182,25 @@ def FMOV_D64 : FFR1<0x6, 17, "mov", "d", FGR64, FGR64>,
                Requires<[IsFP64bit]>;
 
 /// Floating Point Memory Instructions
-let Predicates = [IsNotSingleFloat] in {
-  def LDC1 : FFI<0b110101, (outs AFGR64:$ft), (ins mem:$addr),
-                 "ldc1\t$ft, $addr", [(set AFGR64:$ft, (load addr:$addr))]>;
-
-  def SDC1 : FFI<0b111101, (outs), (ins AFGR64:$ft, mem:$addr),
-                 "sdc1\t$ft, $addr", [(store AFGR64:$ft, addr:$addr)]>;
+let Predicates = [IsN64] in {
+  def LWC1_P8   : FPLoad<0x31, "lwc1", load, FGR32, mem64>;
+  def SWC1_P8   : FPStore<0x39, "swc1", store, FGR32, mem64>;
+  def LDC164_P8 : FPLoad<0x35, "ldc1", load, FGR64, mem64>;
+  def SDC164_P8 : FPStore<0x3d, "sdc1", store, FGR64, mem64>;
 }
 
-// LWC1 and SWC1 can always be emitted with odd registers.
-def LWC1  : FFI<0b110001, (outs FGR32:$ft), (ins mem:$addr), "lwc1\t$ft, $addr",
-               [(set FGR32:$ft, (load addr:$addr))]>;
-def SWC1  : FFI<0b111001, (outs), (ins FGR32:$ft, mem:$addr),
-               "swc1\t$ft, $addr", [(store FGR32:$ft, addr:$addr)]>;
+let Predicates = [NotN64] in {
+  def LWC1   : FPLoad<0x31, "lwc1", load, FGR32, mem>;
+  def SWC1   : FPStore<0x39, "swc1", store, FGR32, mem>;
+  let Predicates = [HasMips64] in {
+    def LDC164 : FPLoad<0x35, "ldc1", load, FGR64, mem>;
+    def SDC164 : FPStore<0x3d, "sdc1", store, FGR64, mem>;
+  }
+  let Predicates = [NotMips64] in {
+    def LDC1   : FPLoad<0x35, "ldc1", load, AFGR64, mem>;
+    def SDC1   : FPStore<0x3d, "sdc1", store, AFGR64, mem>;
+  }
+}
 
 /// Floating-point Aritmetic
 defm FADD : FFR2P_M<0x10, "add", fadd, 1>;

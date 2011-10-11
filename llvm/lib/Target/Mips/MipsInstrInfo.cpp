@@ -48,8 +48,12 @@ static bool isZeroImm(const MachineOperand &op) {
 unsigned MipsInstrInfo::
 isLoadFromStackSlot(const MachineInstr *MI, int &FrameIndex) const
 {
-  if ((MI->getOpcode() == Mips::LW) || (MI->getOpcode() == Mips::LWC1) ||
-      (MI->getOpcode() == Mips::LDC1)) {
+  unsigned Opc = MI->getOpcode();
+
+  if ((Opc == Mips::LW)    || (Opc == Mips::LW_P8)  || (Opc == Mips::LD) ||
+      (Opc == Mips::LD_P8) || (Opc == Mips::LWC1)   || (Opc == Mips::LWC1_P8) ||
+      (Opc == Mips::LDC1)  || (Opc == Mips::LDC164) ||
+      (Opc == Mips::LDC164_P8)) {
     if ((MI->getOperand(1).isFI()) && // is a stack slot
         (MI->getOperand(2).isImm()) &&  // the imm is zero
         (isZeroImm(MI->getOperand(2)))) {
@@ -69,8 +73,12 @@ isLoadFromStackSlot(const MachineInstr *MI, int &FrameIndex) const
 unsigned MipsInstrInfo::
 isStoreToStackSlot(const MachineInstr *MI, int &FrameIndex) const
 {
-  if ((MI->getOpcode() == Mips::SW) || (MI->getOpcode() == Mips::SWC1) ||
-      (MI->getOpcode() == Mips::SDC1)) {
+  unsigned Opc = MI->getOpcode();
+
+  if ((Opc == Mips::SW)    || (Opc == Mips::SW_P8)  || (Opc == Mips::SD) ||
+      (Opc == Mips::SD_P8) || (Opc == Mips::SWC1)   || (Opc == Mips::SWC1_P8) ||
+      (Opc == Mips::SDC1)  || (Opc == Mips::SDC164) ||
+      (Opc == Mips::SDC164_P8)) {
     if ((MI->getOperand(1).isFI()) && // is a stack slot
         (MI->getOperand(2).isImm()) &&  // the imm is zero
         (isZeroImm(MI->getOperand(2)))) {
@@ -168,9 +176,11 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   else if (RC == Mips::CPU64RegsRegisterClass)
     Opc = IsN64 ? Mips::SD_P8 : Mips::SD;
   else if (RC == Mips::FGR32RegisterClass)
-    Opc = Mips::SWC1;
+    Opc = IsN64 ? Mips::SWC1_P8 : Mips::SWC1;
   else if (RC == Mips::AFGR64RegisterClass)
     Opc = Mips::SDC1;
+  else if (RC == Mips::FGR64RegisterClass)
+    Opc = IsN64 ? Mips::SDC164_P8 : Mips::SDC164;
 
   assert(Opc && "Register class not handled!");
   BuildMI(MBB, I, DL, get(Opc)).addReg(SrcReg, getKillRegState(isKill))
@@ -192,9 +202,11 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   else if (RC == Mips::CPU64RegsRegisterClass)
     Opc = IsN64 ? Mips::LD_P8 : Mips::LD;
   else if (RC == Mips::FGR32RegisterClass)
-    Opc = Mips::LWC1;
+    Opc = IsN64 ? Mips::LWC1_P8 : Mips::LWC1;
   else if (RC == Mips::AFGR64RegisterClass)
     Opc = Mips::LDC1;
+  else if (RC == Mips::FGR64RegisterClass)
+    Opc = IsN64 ? Mips::LDC164_P8 : Mips::LDC164;
 
   assert(Opc && "Register class not handled!");
   BuildMI(MBB, I, DL, get(Opc), DestReg).addFrameIndex(FI).addImm(0);
