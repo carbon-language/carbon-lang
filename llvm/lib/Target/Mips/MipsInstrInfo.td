@@ -892,27 +892,33 @@ def : Pat<(extloadi16_u addr:$src), (ULHu addr:$src)>;
 def : Pat<(store (i32 0), addr:$dst), (SW ZERO, addr:$dst)>;
 
 // brcond patterns
-def : Pat<(brcond (i32 (setne CPURegs:$lhs, 0)), bb:$dst),
-          (BNE CPURegs:$lhs, ZERO, bb:$dst)>;
-def : Pat<(brcond (i32 (seteq CPURegs:$lhs, 0)), bb:$dst),
-          (BEQ CPURegs:$lhs, ZERO, bb:$dst)>;
+multiclass BrcondPats<RegisterClass RC, Instruction BEQOp, Instruction BNEOp,
+                      Instruction SLTOp, Instruction SLTuOp, Instruction SLTiOp,
+                      Instruction SLTiuOp, Register ZEROReg> {
+def : Pat<(brcond (i32 (setne RC:$lhs, 0)), bb:$dst),
+          (BNEOp RC:$lhs, ZEROReg, bb:$dst)>;
+def : Pat<(brcond (i32 (seteq RC:$lhs, 0)), bb:$dst),
+          (BEQOp RC:$lhs, ZEROReg, bb:$dst)>;
 
-def : Pat<(brcond (i32 (setge CPURegs:$lhs, CPURegs:$rhs)), bb:$dst),
-          (BEQ (SLT CPURegs:$lhs, CPURegs:$rhs), ZERO, bb:$dst)>;
-def : Pat<(brcond (i32 (setuge CPURegs:$lhs, CPURegs:$rhs)), bb:$dst),
-          (BEQ (SLTu CPURegs:$lhs, CPURegs:$rhs), ZERO, bb:$dst)>;
-def : Pat<(brcond (i32 (setge CPURegs:$lhs, immSExt16:$rhs)), bb:$dst),
-          (BEQ (SLTi CPURegs:$lhs, immSExt16:$rhs), ZERO, bb:$dst)>;
-def : Pat<(brcond (i32 (setuge CPURegs:$lhs, immSExt16:$rhs)), bb:$dst),
-          (BEQ (SLTiu CPURegs:$lhs, immSExt16:$rhs), ZERO, bb:$dst)>;
+def : Pat<(brcond (i32 (setge RC:$lhs, RC:$rhs)), bb:$dst),
+          (BEQ (SLTOp RC:$lhs, RC:$rhs), ZERO, bb:$dst)>;
+def : Pat<(brcond (i32 (setuge RC:$lhs, RC:$rhs)), bb:$dst),
+          (BEQ (SLTuOp RC:$lhs, RC:$rhs), ZERO, bb:$dst)>;
+def : Pat<(brcond (i32 (setge RC:$lhs, immSExt16:$rhs)), bb:$dst),
+          (BEQ (SLTiOp RC:$lhs, immSExt16:$rhs), ZERO, bb:$dst)>;
+def : Pat<(brcond (i32 (setuge RC:$lhs, immSExt16:$rhs)), bb:$dst),
+          (BEQ (SLTiuOp RC:$lhs, immSExt16:$rhs), ZERO, bb:$dst)>;
 
-def : Pat<(brcond (i32 (setle CPURegs:$lhs, CPURegs:$rhs)), bb:$dst),
-          (BEQ (SLT CPURegs:$rhs, CPURegs:$lhs), ZERO, bb:$dst)>;
-def : Pat<(brcond (i32 (setule CPURegs:$lhs, CPURegs:$rhs)), bb:$dst),
-          (BEQ (SLTu CPURegs:$rhs, CPURegs:$lhs), ZERO, bb:$dst)>;
+def : Pat<(brcond (i32 (setle RC:$lhs, RC:$rhs)), bb:$dst),
+          (BEQ (SLTOp RC:$rhs, RC:$lhs), ZERO, bb:$dst)>;
+def : Pat<(brcond (i32 (setule RC:$lhs, RC:$rhs)), bb:$dst),
+          (BEQ (SLTuOp RC:$rhs, RC:$lhs), ZERO, bb:$dst)>;
 
-def : Pat<(brcond CPURegs:$cond, bb:$dst),
-          (BNE CPURegs:$cond, ZERO, bb:$dst)>;
+def : Pat<(brcond RC:$cond, bb:$dst),
+          (BNEOp RC:$cond, ZEROReg, bb:$dst)>;
+}
+
+defm : BrcondPats<CPURegs, BEQ, BNE, SLT, SLTu, SLTi, SLTiu, ZERO>;
 
 // select patterns
 multiclass MovzPats<RegisterClass RC, Instruction MOVZInst> {

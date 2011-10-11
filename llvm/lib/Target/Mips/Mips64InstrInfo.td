@@ -237,6 +237,9 @@ def : Pat<(zextloadi32_u addr:$a), (DSRL (DSLL (ULW64 addr:$a), 32), 32)>,
 // hi/lo relocs
 def : Pat<(i64 (MipsLo tglobaladdr:$in)), (DADDiu ZERO_64, tglobaladdr:$in)>;
 
+defm : BrcondPats<CPU64Regs, BEQ64, BNE64, SLT64, SLTu64, SLTi64, SLTiu64,
+                  ZERO_64>;
+
 // setcc patterns
 def : Pat<(seteq CPU64Regs:$lhs, CPU64Regs:$rhs),
           (SLTu64 (DXOR CPU64Regs:$lhs, CPU64Regs:$rhs), 1)>;
