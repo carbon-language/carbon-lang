@@ -290,6 +290,8 @@ static void removeHBR( MachineBasicBlock &MBB) {
     if (I->getOpcode() == SPU::HBRA ||
         I->getOpcode() == SPU::HBR_LABEL){
       I=MBB.erase(I);
+      if (I == MBB.end())
+        break;
     }
   }
 }
