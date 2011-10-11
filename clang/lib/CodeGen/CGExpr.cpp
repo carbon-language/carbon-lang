@@ -2698,7 +2698,8 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
   // Long case, when Order isn't obviously constant.
 
   // Create all the relevant BB's
-  llvm::BasicBlock *MonotonicBB, *AcquireBB, *ReleaseBB, *AcqRelBB, *SeqCstBB;
+  llvm::BasicBlock *MonotonicBB = 0, *AcquireBB = 0, *ReleaseBB = 0,
+                   *AcqRelBB = 0, *SeqCstBB = 0;
   MonotonicBB = createBasicBlock("monotonic", CurFn);
   if (E->getOp() != AtomicExpr::Store)
     AcquireBB = createBasicBlock("acquire", CurFn);

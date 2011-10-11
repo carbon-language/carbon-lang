@@ -1012,7 +1012,7 @@ void StmtPrinter::VisitVAArgExpr(VAArgExpr *Node) {
 }
 
 void StmtPrinter::VisitAtomicExpr(AtomicExpr *Node) {
-  const char *Name;
+  const char *Name = 0;
   switch (Node->getOp()) {
     case AtomicExpr::Load:
       Name = "__atomic_load(";
