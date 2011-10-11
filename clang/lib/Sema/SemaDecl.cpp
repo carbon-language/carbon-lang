@@ -4452,6 +4452,196 @@ static NamedDecl* DiagnoseInvalidRedeclaration(
   return Result;
 }
 
+static FunctionDecl::StorageClass getFunctionStorageClass(Sema &SemaRef, Declarator &D) {
+  switch (D.getDeclSpec().getStorageClassSpec()) {
+  default: llvm_unreachable("Unknown storage class!");
+  case DeclSpec::SCS_auto:
+  case DeclSpec::SCS_register:
+  case DeclSpec::SCS_mutable:
+    SemaRef.Diag(D.getDeclSpec().getStorageClassSpecLoc(),
+                 diag::err_typecheck_sclass_func);
+    D.setInvalidType();
+    break;
+  case DeclSpec::SCS_unspecified: break;
+  case DeclSpec::SCS_extern: return SC_Extern;
+  case DeclSpec::SCS_static: {
+    if (SemaRef.CurContext->getRedeclContext()->isFunctionOrMethod()) {
+      // C99 6.7.1p5:
+      //   The declaration of an identifier for a function that has
+      //   block scope shall have no explicit storage-class specifier
+      //   other than extern
+      // See also (C++ [dcl.stc]p4).
+      SemaRef.Diag(D.getDeclSpec().getStorageClassSpecLoc(),
+                   diag::err_static_block_func);
+      break;
+    } else
+      return SC_Static;
+  }
+  case DeclSpec::SCS_private_extern: return SC_PrivateExtern;
+  }
+
+  // No explicit storage class has already been returned
+  return SC_None;
+}
+
+static FunctionDecl* CreateNewFunctionDecl(Sema &SemaRef, Declarator &D,
+                                           DeclContext *DC, QualType &R,
+                                           TypeSourceInfo *TInfo,
+                                           FunctionDecl::StorageClass SC,
+                                           bool &IsVirtualOkay) {
+  DeclarationNameInfo NameInfo = SemaRef.GetNameForDeclarator(D);
+  DeclarationName Name = NameInfo.getName();
+
+  FunctionDecl *NewFD = 0;
+  bool isInline = D.getDeclSpec().isInlineSpecified();
+  DeclSpec::SCS SCSpec = D.getDeclSpec().getStorageClassSpecAsWritten();
+  FunctionDecl::StorageClass SCAsWritten
+    = StorageClassSpecToFunctionDeclStorageClass(SCSpec);
+
+  if (!SemaRef.getLangOptions().CPlusPlus) {
+    // Determine whether the function was written with a
+    // prototype. This true when:
+    //   - there is a prototype in the declarator, or
+    //   - the type R of the function is some kind of typedef or other reference
+    //     to a type name (which eventually refers to a function type).
+    bool HasPrototype =
+      (D.isFunctionDeclarator() && D.getFunctionTypeInfo().hasPrototype) ||
+      (!isa<FunctionType>(R.getTypePtr()) && R->isFunctionProtoType());
+
+    NewFD = FunctionDecl::Create(SemaRef.Context, DC, D.getSourceRange().getBegin(),
+                                 NameInfo, R, TInfo, SC, SCAsWritten, isInline,
+                                 HasPrototype);
+    if (D.isInvalidType())
+      NewFD->setInvalidDecl();
+
+    // Set the lexical context.
+    NewFD->setLexicalDeclContext(SemaRef.CurContext);
+
+    return NewFD;
+  }
+
+  bool isExplicit = D.getDeclSpec().isExplicitSpecified();
+  bool isConstexpr = D.getDeclSpec().isConstexprSpecified();
+
+  // Check that the return type is not an abstract class type.
+  // For record types, this is done by the AbstractClassUsageDiagnoser once
+  // the class has been completely parsed.
+  if (!DC->isRecord() &&
+      SemaRef.RequireNonAbstractType(D.getIdentifierLoc(),
+                                     R->getAs<FunctionType>()->getResultType(),
+                                     diag::err_abstract_type_in_decl,
+                                     SemaRef.AbstractReturnType))
+    D.setInvalidType();
+
+  if (Name.getNameKind() == DeclarationName::CXXConstructorName) {
+    // This is a C++ constructor declaration.
+    assert(DC->isRecord() &&
+           "Constructors can only be declared in a member context");
+
+    R = SemaRef.CheckConstructorDeclarator(D, R, SC);
+    return CXXConstructorDecl::Create(SemaRef.Context, cast<CXXRecordDecl>(DC),
+                                      D.getSourceRange().getBegin(), NameInfo,
+                                      R, TInfo, isExplicit, isInline,
+                                      /*isImplicitlyDeclared=*/false,
+                                      isConstexpr);
+
+  } else if (Name.getNameKind() == DeclarationName::CXXDestructorName) {
+    // This is a C++ destructor declaration.
+    if (DC->isRecord()) {
+      R = SemaRef.CheckDestructorDeclarator(D, R, SC);
+      CXXRecordDecl *Record = cast<CXXRecordDecl>(DC);
+      CXXDestructorDecl *NewDD = CXXDestructorDecl::Create(
+                                        SemaRef.Context, Record,
+                                        D.getSourceRange().getBegin(),
+                                        NameInfo, R, TInfo, isInline,
+                                        /*isImplicitlyDeclared=*/false);
+
+      // If the class is complete, then we now create the implicit exception
+      // specification. If the class is incomplete or dependent, we can't do
+      // it yet.
+      if (SemaRef.getLangOptions().CPlusPlus0x && !Record->isDependentType() &&
+          Record->getDefinition() && !Record->isBeingDefined() &&
+          R->getAs<FunctionProtoType>()->getExceptionSpecType() == EST_None) {
+        SemaRef.AdjustDestructorExceptionSpec(Record, NewDD);
+      }
+
+      IsVirtualOkay = true;
+      return NewDD;
+
+    } else {
+      SemaRef.Diag(D.getIdentifierLoc(), diag::err_destructor_not_member);
+      D.setInvalidType();
+
+      // Create a FunctionDecl to satisfy the function definition parsing
+      // code path.
+      return FunctionDecl::Create(SemaRef.Context, DC,
+                                  D.getSourceRange().getBegin(),
+                                  D.getIdentifierLoc(), Name, R, TInfo,
+                                  SC, SCAsWritten, isInline,
+                                  /*hasPrototype=*/true, isConstexpr);
+    }
+
+  } else if (Name.getNameKind() == DeclarationName::CXXConversionFunctionName) {
+    if (!DC->isRecord()) {
+      SemaRef.Diag(D.getIdentifierLoc(),
+           diag::err_conv_function_not_member);
+      return 0;
+    }
+
+    SemaRef.CheckConversionDeclarator(D, R, SC);
+    IsVirtualOkay = true;
+    return CXXConversionDecl::Create(SemaRef.Context, cast<CXXRecordDecl>(DC),
+                                     D.getSourceRange().getBegin(), NameInfo,
+                                     R, TInfo, isInline, isExplicit,
+                                     isConstexpr, SourceLocation());
+
+  } else if (DC->isRecord()) {
+    // If the name of the function is the same as the name of the record,
+    // then this must be an invalid constructor that has a return type.
+    // (The parser checks for a return type and makes the declarator a
+    // constructor if it has no return type).
+    if (Name.getAsIdentifierInfo() &&
+        Name.getAsIdentifierInfo() == cast<CXXRecordDecl>(DC)->getIdentifier()){
+      SemaRef.Diag(D.getIdentifierLoc(), diag::err_constructor_return_type)
+        << SourceRange(D.getDeclSpec().getTypeSpecTypeLoc())
+        << SourceRange(D.getIdentifierLoc());
+      return 0;
+    }
+
+    bool isStatic = SC == SC_Static;
+
+    // [class.free]p1:
+    // Any allocation function for a class T is a static member
+    // (even if not explicitly declared static).
+    if (Name.getCXXOverloadedOperator() == OO_New ||
+        Name.getCXXOverloadedOperator() == OO_Array_New)
+      isStatic = true;
+
+    // [class.free]p6 Any deallocation function for a class X is a static member
+    // (even if not explicitly declared static).
+    if (Name.getCXXOverloadedOperator() == OO_Delete ||
+        Name.getCXXOverloadedOperator() == OO_Array_Delete)
+      isStatic = true;
+
+    IsVirtualOkay = !isStatic;
+
+    // This is a C++ method declaration.
+    return CXXMethodDecl::Create(SemaRef.Context, cast<CXXRecordDecl>(DC),
+                                 D.getSourceRange().getBegin(), NameInfo, R,
+                                 TInfo, isStatic, SCAsWritten, isInline,
+                                 isConstexpr, SourceLocation());
+
+  } else {
+    // Determine whether the function was written with a
+    // prototype. This true when:
+    //   - we're in C++ (where every function has a prototype),
+    return FunctionDecl::Create(SemaRef.Context, DC,
+                                D.getSourceRange().getBegin(),
+                                NameInfo, R, TInfo, SC, SCAsWritten, isInline,
+                                true/*HasPrototype*/, isConstexpr);
+  }
+}
+
 NamedDecl*
 Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
                               TypeSourceInfo *TInfo, LookupResult &Previous,
@@ -4464,34 +4654,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
   // TODO: consider using NameInfo for diagnostic.
   DeclarationNameInfo NameInfo = GetNameForDeclarator(D);
   DeclarationName Name = NameInfo.getName();
-  FunctionDecl::StorageClass SC = SC_None;
-  switch (D.getDeclSpec().getStorageClassSpec()) {
-  default: llvm_unreachable("Unknown storage class!");
-  case DeclSpec::SCS_auto:
-  case DeclSpec::SCS_register:
-  case DeclSpec::SCS_mutable:
-    Diag(D.getDeclSpec().getStorageClassSpecLoc(),
-         diag::err_typecheck_sclass_func);
-    D.setInvalidType();
-    break;
-  case DeclSpec::SCS_unspecified: SC = SC_None; break;
-  case DeclSpec::SCS_extern:      SC = SC_Extern; break;
-  case DeclSpec::SCS_static: {
-    if (CurContext->getRedeclContext()->isFunctionOrMethod()) {
-      // C99 6.7.1p5:
-      //   The declaration of an identifier for a function that has
-      //   block scope shall have no explicit storage-class specifier
-      //   other than extern
-      // See also (C++ [dcl.stc]p4).
-      Diag(D.getDeclSpec().getStorageClassSpecLoc(),
-           diag::err_static_block_func);
-      SC = SC_None;
-    } else
-      SC = SC_Static;
-    break;
-  }
-  case DeclSpec::SCS_private_extern: SC = SC_PrivateExtern; break;
-  }
+  FunctionDecl::StorageClass SC = getFunctionStorageClass(*this, D);
 
   if (D.getDeclSpec().isThreadSpecified())
     Diag(D.getDeclSpec().getThreadSpecLoc(), diag::err_invalid_thread);
@@ -4514,170 +4677,23 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       R = Context.getFunctionNoProtoType(T);
   }
   
-  FunctionDecl *NewFD;
-  bool isInline = D.getDeclSpec().isInlineSpecified();
   bool isFriend = false;
-  DeclSpec::SCS SCSpec = D.getDeclSpec().getStorageClassSpecAsWritten();
-  FunctionDecl::StorageClass SCAsWritten
-    = StorageClassSpecToFunctionDeclStorageClass(SCSpec);
   FunctionTemplateDecl *FunctionTemplate = 0;
   bool isExplicitSpecialization = false;
   bool isFunctionTemplateSpecialization = false;
   bool isDependentClassScopeExplicitSpecialization = false;
+  bool isVirtualOkay = false;
 
-  if (!getLangOptions().CPlusPlus) {
-    // Determine whether the function was written with a
-    // prototype. This true when:
-    //   - there is a prototype in the declarator, or
-    //   - the type R of the function is some kind of typedef or other reference
-    //     to a type name (which eventually refers to a function type).
-    bool HasPrototype =
-    (D.isFunctionDeclarator() && D.getFunctionTypeInfo().hasPrototype) ||
-    (!isa<FunctionType>(R.getTypePtr()) && R->isFunctionProtoType());
-  
-    NewFD = FunctionDecl::Create(Context, DC, D.getSourceRange().getBegin(),
-                                 NameInfo, R, TInfo, SC, SCAsWritten, isInline,
-                                 HasPrototype);
-    if (D.isInvalidType())
-      NewFD->setInvalidDecl();
-    
-    // Set the lexical context.
-    NewFD->setLexicalDeclContext(CurContext);
-    // Filter out previous declarations that don't match the scope.
-    FilterLookupForScope(Previous, DC, S, NewFD->hasLinkage(),
-                         /*ExplicitInstantiationOrSpecialization=*/false);
-  } else {
-    isFriend = D.getDeclSpec().isFriendSpecified();
+  FunctionDecl *NewFD = CreateNewFunctionDecl(*this, D, DC, R, TInfo, SC,
+                                              isVirtualOkay);
+  if (!NewFD) return 0;
+
+  if (getLangOptions().CPlusPlus) {
+    bool isInline = D.getDeclSpec().isInlineSpecified();
     bool isVirtual = D.getDeclSpec().isVirtualSpecified();
     bool isExplicit = D.getDeclSpec().isExplicitSpecified();
     bool isConstexpr = D.getDeclSpec().isConstexprSpecified();
-    bool isVirtualOkay = false;
-
-    // Check that the return type is not an abstract class type.
-    // For record types, this is done by the AbstractClassUsageDiagnoser once
-    // the class has been completely parsed.
-    if (!DC->isRecord() &&
-      RequireNonAbstractType(D.getIdentifierLoc(),
-                             R->getAs<FunctionType>()->getResultType(),
-                             diag::err_abstract_type_in_decl,
-                             AbstractReturnType))
-      D.setInvalidType();
-
-    if (Name.getNameKind() == DeclarationName::CXXConstructorName) {
-      // This is a C++ constructor declaration.
-      assert(DC->isRecord() &&
-             "Constructors can only be declared in a member context");
-
-      R = CheckConstructorDeclarator(D, R, SC);
-
-      // Create the new declaration
-      CXXConstructorDecl *NewCD = CXXConstructorDecl::Create(
-                                         Context,
-                                         cast<CXXRecordDecl>(DC),
-                                         D.getSourceRange().getBegin(),
-                                         NameInfo, R, TInfo,
-                                         isExplicit, isInline,
-                                         /*isImplicitlyDeclared=*/false,
-                                         isConstexpr);
-
-      NewFD = NewCD;
-    } else if (Name.getNameKind() == DeclarationName::CXXDestructorName) {
-      // This is a C++ destructor declaration.
-      if (DC->isRecord()) {
-        R = CheckDestructorDeclarator(D, R, SC);
-        CXXRecordDecl *Record = cast<CXXRecordDecl>(DC);
-
-        CXXDestructorDecl *NewDD = CXXDestructorDecl::Create(Context, Record,
-                                          D.getSourceRange().getBegin(),
-                                          NameInfo, R, TInfo,
-                                          isInline,
-                                          /*isImplicitlyDeclared=*/false);
-        NewFD = NewDD;
-        isVirtualOkay = true;
-
-        // If the class is complete, then we now create the implicit exception
-        // specification. If the class is incomplete or dependent, we can't do
-        // it yet.
-        if (getLangOptions().CPlusPlus0x && !Record->isDependentType() &&
-            Record->getDefinition() && !Record->isBeingDefined() &&
-            R->getAs<FunctionProtoType>()->getExceptionSpecType() == EST_None) {
-          AdjustDestructorExceptionSpec(Record, NewDD);
-        }
-
-      } else {
-        Diag(D.getIdentifierLoc(), diag::err_destructor_not_member);
-
-        // Create a FunctionDecl to satisfy the function definition parsing
-        // code path.
-        NewFD = FunctionDecl::Create(Context, DC, D.getSourceRange().getBegin(),
-                                     D.getIdentifierLoc(), Name, R, TInfo,
-                                     SC, SCAsWritten, isInline,
-                                     /*hasPrototype=*/true, isConstexpr);
-        D.setInvalidType();
-      }
-    } else if (Name.getNameKind() == DeclarationName::CXXConversionFunctionName) {
-      if (!DC->isRecord()) {
-        Diag(D.getIdentifierLoc(),
-             diag::err_conv_function_not_member);
-        return 0;
-      }
-
-      CheckConversionDeclarator(D, R, SC);
-      NewFD = CXXConversionDecl::Create(Context, cast<CXXRecordDecl>(DC),
-                                        D.getSourceRange().getBegin(),
-                                        NameInfo, R, TInfo,
-                                        isInline, isExplicit, isConstexpr,
-                                        SourceLocation());
-
-      isVirtualOkay = true;
-    } else if (DC->isRecord()) {
-      // If the name of the function is the same as the name of the record,
-      // then this must be an invalid constructor that has a return type.
-      // (The parser checks for a return type and makes the declarator a
-      // constructor if it has no return type).
-      if (Name.getAsIdentifierInfo() &&
-          Name.getAsIdentifierInfo() == cast<CXXRecordDecl>(DC)->getIdentifier()){
-        Diag(D.getIdentifierLoc(), diag::err_constructor_return_type)
-          << SourceRange(D.getDeclSpec().getTypeSpecTypeLoc())
-          << SourceRange(D.getIdentifierLoc());
-        return 0;
-      }
-
-      bool isStatic = SC == SC_Static;
-
-      // [class.free]p1:
-      // Any allocation function for a class T is a static member
-      // (even if not explicitly declared static).
-      if (Name.getCXXOverloadedOperator() == OO_New ||
-          Name.getCXXOverloadedOperator() == OO_Array_New)
-        isStatic = true;
-
-      // [class.free]p6 Any deallocation function for a class X is a static member
-      // (even if not explicitly declared static).
-      if (Name.getCXXOverloadedOperator() == OO_Delete ||
-          Name.getCXXOverloadedOperator() == OO_Array_Delete)
-        isStatic = true;
-
-      // This is a C++ method declaration.
-      CXXMethodDecl *NewMD = CXXMethodDecl::Create(
-                                               Context, cast<CXXRecordDecl>(DC),
-                                               D.getSourceRange().getBegin(),
-                                               NameInfo, R, TInfo,
-                                               isStatic, SCAsWritten, isInline,
-                                               isConstexpr,
-                                               SourceLocation());
-      NewFD = NewMD;
-
-      isVirtualOkay = !isStatic;
-    } else {
-      // Determine whether the function was written with a
-      // prototype. This true when:
-      //   - we're in C++ (where every function has a prototype),
-      NewFD = FunctionDecl::Create(Context, DC, D.getSourceRange().getBegin(),
-                                   NameInfo, R, TInfo, SC, SCAsWritten, isInline,
-                                   true/*HasPrototype*/, isConstexpr);
-    }
-
+    isFriend = D.getDeclSpec().isFriendSpecified();
     if (isFriend && !isInline && D.isFunctionDefinition()) {
       // C++ [class.friend]p5
       //   A function can be defined in a friend declaration of a
@@ -4781,7 +4797,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       if (FunctionTemplate)
         FunctionTemplate->setInvalidDecl();
     }
-  
+
     // C++ [dcl.fct.spec]p5:
     //   The virtual specifier shall only be used in declarations of
     //   nonstatic class member functions that appear within a
@@ -4818,7 +4834,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
           << FixItHint::CreateRemoval(D.getDeclSpec().getInlineSpecLoc());
       }
     }
- 
+
     // C++ [dcl.fct.spec]p6:
     //  The explicit specifier shall be used only in the declaration of a
     //  constructor or conversion function within its class definition; see 12.3.1
@@ -4866,11 +4882,6 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       }
     }
 
-    // Filter out previous declarations that don't match the scope.
-    FilterLookupForScope(Previous, DC, S, NewFD->hasLinkage(),
-                         isExplicitSpecialization || 
-                         isFunctionTemplateSpecialization);
-
     if (isFriend) {
       // For now, claim that the objects have no previous declaration.
       if (FunctionTemplate) {
@@ -4902,6 +4913,11 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
         << FixItHint::CreateRemoval(D.getDeclSpec().getStorageClassSpecLoc());
     }
   }
+
+  // Filter out previous declarations that don't match the scope.
+  FilterLookupForScope(Previous, DC, S, NewFD->hasLinkage(),
+                       isExplicitSpecialization ||
+                       isFunctionTemplateSpecialization);
   
   // Handle GNU asm-label extension (encoded as an attribute).
   if (Expr *E = (Expr*) D.getAsmLabel()) {
