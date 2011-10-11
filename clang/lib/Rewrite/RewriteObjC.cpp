@@ -610,9 +610,9 @@ void RewriteObjC::Initialize(ASTContext &context) {
   Preamble += "(struct objc_object *, struct objc_selector *, ...);\n";
   Preamble += "__OBJC_RW_DLLIMPORT struct objc_object *objc_msgSendSuper";
   Preamble += "(struct objc_super *, struct objc_selector *, ...);\n";
-  Preamble += "__OBJC_RW_DLLIMPORT void objc_msgSend_stret";
+  Preamble += "__OBJC_RW_DLLIMPORT struct objc_object* objc_msgSend_stret";
   Preamble += "(struct objc_object *, struct objc_selector *, ...);\n";
-  Preamble += "__OBJC_RW_DLLIMPORT void objc_msgSendSuper_stret";
+  Preamble += "__OBJC_RW_DLLIMPORT struct objc_object* objc_msgSendSuper_stret";
   Preamble += "(struct objc_super *, struct objc_selector *, ...);\n";
   Preamble += "__OBJC_RW_DLLIMPORT double objc_msgSend_fpret";
   Preamble += "(struct objc_object *, struct objc_selector *, ...);\n";
@@ -2566,7 +2566,7 @@ void RewriteObjC::SynthMsgSendSuperFunctionDecl() {
                                               SC_None, false);
 }
 
-// SynthMsgSendStretFunctionDecl - void objc_msgSend_stret(id self, SEL op, ...);
+// SynthMsgSendStretFunctionDecl - id objc_msgSend_stret(id self, SEL op, ...);
 void RewriteObjC::SynthMsgSendStretFunctionDecl() {
   IdentifierInfo *msgSendIdent = &Context->Idents.get("objc_msgSend_stret");
   SmallVector<QualType, 16> ArgTys;
@@ -2576,7 +2576,7 @@ void RewriteObjC::SynthMsgSendStretFunctionDecl() {
   argT = Context->getObjCSelType();
   assert(!argT.isNull() && "Can't find 'SEL' type");
   ArgTys.push_back(argT);
-  QualType msgSendType = getSimpleFunctionType(Context->VoidTy,
+  QualType msgSendType = getSimpleFunctionType(Context->getObjCIdType(),
                                                &ArgTys[0], ArgTys.size(),
                                                true /*isVariadic*/);
   MsgSendStretFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
@@ -2588,7 +2588,7 @@ void RewriteObjC::SynthMsgSendStretFunctionDecl() {
 }
 
 // SynthMsgSendSuperStretFunctionDecl -
-// void objc_msgSendSuper_stret(struct objc_super *, SEL op, ...);
+// id objc_msgSendSuper_stret(struct objc_super *, SEL op, ...);
 void RewriteObjC::SynthMsgSendSuperStretFunctionDecl() {
   IdentifierInfo *msgSendIdent =
     &Context->Idents.get("objc_msgSendSuper_stret");
@@ -2602,7 +2602,7 @@ void RewriteObjC::SynthMsgSendSuperStretFunctionDecl() {
   argT = Context->getObjCSelType();
   assert(!argT.isNull() && "Can't find 'SEL' type");
   ArgTys.push_back(argT);
-  QualType msgSendType = getSimpleFunctionType(Context->VoidTy,
+  QualType msgSendType = getSimpleFunctionType(Context->getObjCIdType(),
                                                &ArgTys[0], ArgTys.size(),
                                                true /*isVariadic*/);
   MsgSendSuperStretFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
