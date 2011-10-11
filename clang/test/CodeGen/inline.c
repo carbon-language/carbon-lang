@@ -15,7 +15,7 @@
 // RUN: grep "define i32 @test6" %t
 
 // RUN: echo "\nC99 tests:"
-// RUN: %clang %s -O1 -emit-llvm -S -o %t -std=c99
+// RUN: %clang %s -O1 -emit-llvm -S -o %t -std=gnu99
 // RUN: grep "define i32 @ei()" %t
 // RUN: grep "define available_externally i32 @foo()" %t
 // RUN: grep "define i32 @bar()" %t
@@ -29,6 +29,7 @@
 // RUN: grep "define available_externally i32 @test4" %t
 // RUN: grep "define available_externally i32 @test5" %t
 // RUN: grep "define i32 @test6" %t
+// RUN: grep "define available_externally i.. @strlcpy" %t
 
 // RUN: echo "\nC++ tests:"
 // RUN: %clang -x c++ %s -O1 -emit-llvm -S -o %t -std=c++98
@@ -97,3 +98,7 @@ extern int test6();
 // redeclaration detection.
 void test7() { }
 void test7();
+
+// PR11062; the fact that the function is named strlcpy matters here.
+inline __typeof(sizeof(int)) strlcpy(char *dest, const char *src, __typeof(sizeof(int)) size) { return 3; }
+void test8() { strlcpy(0,0,0); }

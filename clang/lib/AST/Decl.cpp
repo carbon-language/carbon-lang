@@ -1856,7 +1856,12 @@ bool FunctionDecl::isInlineDefinitionExternallyVisible() const {
     // Only consider file-scope declarations in this test.
     if (!Redecl->getLexicalDeclContext()->isTranslationUnit())
       continue;
-    
+
+    // Only consider explicit declarations; the presence of a builtin for a
+    // libcall shouldn't affect whether a definition is externally visible.
+    if (Redecl->isImplicit())
+      continue;
+
     if (!Redecl->isInlineSpecified() || Redecl->getStorageClass() == SC_Extern) 
       return true; // Not an inline definition
   }
