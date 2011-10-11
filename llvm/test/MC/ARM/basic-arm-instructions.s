@@ -642,6 +642,87 @@ Lforward:
 @ CHECK: isb sy                         @ encoding: [0x6f,0xf0,0x7f,0xf5]
 
 
+@------------------------------------------------------------------------------
+@ LDC{L}/LDC2{L}
+@------------------------------------------------------------------------------
+        ldc2 p0, c8, [r1, #4]
+        ldc2 p1, c7, [r2]
+        ldc2 p2, c6, [r3, #-224]
+        ldc2 p3, c5, [r4, #-120]!
+        ldc2 p4, c4, [r5], #16
+        ldc2 p5, c3, [r6], #-72
+        ldc2l p6, c2, [r7, #4]
+        ldc2l p7, c1, [r8]
+        ldc2l p8, c0, [r9, #-224]
+        ldc2l p9, c1, [r10, #-120]!
+        ldc2l p10, c2, [r11], #16
+        ldc2l p11, c3, [r12], #-72
+
+        ldc p12, c4, [r0, #4]
+        ldc p13, c5, [r1]
+        ldc p14, c6, [r2, #-224]
+        ldc p15, c7, [r3, #-120]!
+        ldc p5, c8, [r4], #16
+        ldc p4, c9, [r5], #-72
+        ldcl p3, c10, [r6, #4]
+        ldcl p2, c11, [r7]
+        ldcl p1, c12, [r8, #-224]
+        ldcl p0, c13, [r9, #-120]!
+        ldcl p6, c14, [r10], #16
+        ldcl p7, c15, [r11], #-72
+
+        ldclo p12, c4, [r0, #4]
+        ldchi p13, c5, [r1]
+        ldccs p14, c6, [r2, #-224]
+        ldccc p15, c7, [r3, #-120]!
+        ldceq p5, c8, [r4], #16
+        ldcgt p4, c9, [r5], #-72
+        ldcllt p3, c10, [r6, #4]
+        ldclge p2, c11, [r7]
+        ldclle p1, c12, [r8, #-224]
+        ldclne p0, c13, [r9, #-120]!
+        ldcleq p6, c14, [r10], #16
+        ldclhi p7, c15, [r11], #-72
+
+@ CHECK: ldc2	p0, c8, [r1, #4]        @ encoding: [0x01,0x80,0x91,0xfd]
+@ CHECK: ldc2	p1, c7, [r2]            @ encoding: [0x00,0x71,0x92,0xfd]
+@ CHECK: ldc2	p2, c6, [r3, #-224]     @ encoding: [0x38,0x62,0x13,0xfd]
+@ CHECK: ldc2	p3, c5, [r4, #-120]!    @ encoding: [0x1e,0x53,0x34,0xfd]
+@ CHECK: ldc2	p4, c4, [r5], #16       @ encoding: [0x04,0x44,0xb5,0xfc]
+@ CHECK: ldc2	p5, c3, [r6], #-72      @ encoding: [0x12,0x35,0x36,0xfc]
+@ CHECK: ldc2l	p6, c2, [r7, #4]        @ encoding: [0x01,0x26,0xd7,0xfd]
+@ CHECK: ldc2l	p7, c1, [r8]            @ encoding: [0x00,0x17,0xd8,0xfd]
+@ CHECK: ldc2l	p8, c0, [r9, #-224]     @ encoding: [0x38,0x08,0x59,0xfd]
+@ CHECK: ldc2l	p9, c1, [r10, #-120]!   @ encoding: [0x1e,0x19,0x7a,0xfd]
+@ CHECK: ldc2l	p10, c2, [r11], #16     @ encoding: [0x04,0x2a,0xfb,0xfc]
+@ CHECK: ldc2l	p11, c3, [r12], #-72    @ encoding: [0x12,0x3b,0x7c,0xfc]
+
+@ CHECK: ldc	p12, c4, [r0, #4]       @ encoding: [0x01,0x4c,0x90,0xed]
+@ CHECK: ldc	p13, c5, [r1]           @ encoding: [0x00,0x5d,0x91,0xed]
+@ CHECK: ldc	p14, c6, [r2, #-224]    @ encoding: [0x38,0x6e,0x12,0xed]
+@ CHECK: ldc	p15, c7, [r3, #-120]!   @ encoding: [0x1e,0x7f,0x33,0xed]
+@ CHECK: ldc	p5, c8, [r4], #16       @ encoding: [0x04,0x85,0xb4,0xec]
+@ CHECK: ldc	p4, c9, [r5], #-72      @ encoding: [0x12,0x94,0x35,0xec]
+@ CHECK: ldcl	p3, c10, [r6, #4]       @ encoding: [0x01,0xa3,0xd6,0xed]
+@ CHECK: ldcl	p2, c11, [r7]           @ encoding: [0x00,0xb2,0xd7,0xed]
+@ CHECK: ldcl	p1, c12, [r8, #-224]    @ encoding: [0x38,0xc1,0x58,0xed]
+@ CHECK: ldcl	p0, c13, [r9, #-120]!   @ encoding: [0x1e,0xd0,0x79,0xed]
+@ CHECK: ldcl	p6, c14, [r10], #16     @ encoding: [0x04,0xe6,0xfa,0xec]
+@ CHECK: ldcl	p7, c15, [r11], #-72    @ encoding: [0x12,0xf7,0x7b,0xec]
+
+@ CHECK: ldclo	p12, c4, [r0, #4]       @ encoding: [0x01,0x4c,0x90,0x3d]
+@ CHECK: ldchi	p13, c5, [r1]           @ encoding: [0x00,0x5d,0x91,0x8d]
+@ CHECK: ldchs	p14, c6, [r2, #-224]    @ encoding: [0x38,0x6e,0x12,0x2d]
+@ CHECK: ldclo	p15, c7, [r3, #-120]!   @ encoding: [0x1e,0x7f,0x33,0x3d]
+@ CHECK: ldceq	p5, c8, [r4], #16       @ encoding: [0x04,0x85,0xb4,0x0c]
+@ CHECK: ldcgt	p4, c9, [r5], #-72      @ encoding: [0x12,0x94,0x35,0xcc]
+@ CHECK: ldcllt	p3, c10, [r6, #4]       @ encoding: [0x01,0xa3,0xd6,0xbd]
+@ CHECK: ldclge	p2, c11, [r7]           @ encoding: [0x00,0xb2,0xd7,0xad]
+@ CHECK: ldclle	p1, c12, [r8, #-224]    @ encoding: [0x38,0xc1,0x58,0xdd]
+@ CHECK: ldclne	p0, c13, [r9, #-120]!   @ encoding: [0x1e,0xd0,0x79,0x1d]
+@ CHECK: ldcleq	p6, c14, [r10], #16     @ encoding: [0x04,0xe6,0xfa,0x0c]
+@ CHECK: ldclhi	p7, c15, [r11], #-72    @ encoding: [0x12,0xf7,0x7b,0x8c]
+
 
 @------------------------------------------------------------------------------
 @ LDM*

@@ -651,8 +651,10 @@ def postidx_imm8 : Operand<i32> {
 // 9 bit value:
 //  {8}       1 is imm8 is non-negative. 0 otherwise.
 //  {7-0}     [0,255] imm8 value, scaled by 4.
+def PostIdxImm8s4AsmOperand : AsmOperandClass { let Name = "PostIdxImm8s4"; }
 def postidx_imm8s4 : Operand<i32> {
   let PrintMethod = "printPostIdxImm8s4Operand";
+  let ParserMatchClass = PostIdxImm8s4AsmOperand;
   let MIOperandInfo = (ops i32imm);
 }
 
@@ -4246,117 +4248,168 @@ def CDP2 : ABXI<0b1110, (outs), (ins p_imm:$cop, imm0_15:$opc1,
 
 class ACI<dag oops, dag iops, string opc, string asm,
           IndexMode im = IndexModeNone>
-  : InoP<oops, iops, AddrModeNone, 4, im, BrFrm, NoItinerary,
-         opc, asm, "", []> {
+  : I<oops, iops, AddrModeNone, 4, im, BrFrm, NoItinerary,
+      opc, asm, "", []> {
   let Inst{27-25} = 0b110;
 }
-
-multiclass LdStCop<bits<4> op31_28, bit load, dag ops, string opc, string cond>{
-  def _OFFSET : ACI<(outs),
-      !con((ins p_imm:$cop, c_imm:$CRd, addrmode5:$addr), ops),
-      !strconcat(opc, cond), "\t$cop, $CRd, $addr"> {
-    let Inst{31-28} = op31_28;
+class ACInoP<dag oops, dag iops, string opc, string asm,
+          IndexMode im = IndexModeNone>
+  : InoP<oops, iops, AddrModeNone, 4, im, BrFrm, NoItinerary,
+         opc, asm, "", []> {
+  let Inst{31-28} = 0b1111;
+  let Inst{27-25} = 0b110;
+}
+multiclass LdStCop<bit load, bit Dbit, string asm> {
+  def _OFFSET : ACI<(outs), (ins p_imm:$cop, c_imm:$CRd, addrmode5:$addr),
+                    asm, "\t$cop, $CRd, $addr"> {
+    bits<13> addr;
+    bits<4> cop;
+    bits<4> CRd;
     let Inst{24} = 1; // P = 1
+    let Inst{23} = addr{8};
+    let Inst{22} = Dbit;
     let Inst{21} = 0; // W = 0
-    let Inst{22} = 0; // D = 0
     let Inst{20} = load;
+    let Inst{19-16} = addr{12-9};
+    let Inst{15-12} = CRd;
+    let Inst{11-8} = cop;
+    let Inst{7-0} = addr{7-0};
     let DecoderMethod = "DecodeCopMemInstruction";
   }
-
-  def _PRE : ACI<(outs),
-      !con((ins p_imm:$cop, c_imm:$CRd, addrmode5:$addr), ops),
-      !strconcat(opc, cond), "\t$cop, $CRd, $addr!", IndexModePre> {
-    let Inst{31-28} = op31_28;
+  def _PRE : ACI<(outs), (ins p_imm:$cop, c_imm:$CRd, addrmode5:$addr),
+                 asm, "\t$cop, $CRd, $addr!", IndexModePre> {
+    bits<13> addr;
+    bits<4> cop;
+    bits<4> CRd;
     let Inst{24} = 1; // P = 1
+    let Inst{23} = addr{8};
+    let Inst{22} = Dbit;
     let Inst{21} = 1; // W = 1
-    let Inst{22} = 0; // D = 0
     let Inst{20} = load;
+    let Inst{19-16} = addr{12-9};
+    let Inst{15-12} = CRd;
+    let Inst{11-8} = cop;
+    let Inst{7-0} = addr{7-0};
     let DecoderMethod = "DecodeCopMemInstruction";
   }
-
-  def _POST : ACI<(outs),
-      !con((ins p_imm:$cop, c_imm:$CRd, addr_offset_none:$addr,
-            postidx_imm8s4:$offset), ops),
-      !strconcat(opc, cond), "\t$cop, $CRd, $addr, $offset",
-      IndexModePost> {
-    let Inst{31-28} = op31_28;
+  def _POST: ACI<(outs), (ins p_imm:$cop, c_imm:$CRd, addr_offset_none:$addr,
+                              postidx_imm8s4:$offset),
+                 asm, "\t$cop, $CRd, $addr, $offset", IndexModePost> {
+    bits<9> offset;
+    bits<4> addr;
+    bits<4> cop;
+    bits<4> CRd;
     let Inst{24} = 0; // P = 0
+    let Inst{23} = offset{8};
+    let Inst{22} = Dbit;
     let Inst{21} = 1; // W = 1
-    let Inst{22} = 0; // D = 0
     let Inst{20} = load;
+    let Inst{19-16} = addr;
+    let Inst{15-12} = CRd;
+    let Inst{11-8} = cop;
+    let Inst{7-0} = offset{7-0};
     let DecoderMethod = "DecodeCopMemInstruction";
   }
-
   def _OPTION : ACI<(outs),
-      !con((ins p_imm:$cop, c_imm:$CRd, addr_offset_none:$base,
-                nohash_imm:$option),
-            ops),
-      !strconcat(opc, cond), "\t$cop, $CRd, $base, \\{$option\\}"> {
-    let Inst{31-28} = op31_28;
+                    (ins p_imm:$cop, c_imm:$CRd, addr_offset_none:$addr,
+                         nohash_imm:$option),
+      asm, "\t$cop, $CRd, $addr, \\{$option\\}"> {
+    bits<8> option;
+    bits<4> addr;
+    bits<4> cop;
+    bits<4> CRd;
     let Inst{24} = 0; // P = 0
     let Inst{23} = 1; // U = 1
+    let Inst{22} = Dbit;
     let Inst{21} = 0; // W = 0
-    let Inst{22} = 0; // D = 0
     let Inst{20} = load;
+    let Inst{19-16} = addr;
+    let Inst{15-12} = CRd;
+    let Inst{11-8} = cop;
+    let Inst{7-0} = option;
     let DecoderMethod = "DecodeCopMemInstruction";
   }
-
-  def L_OFFSET : ACI<(outs),
-      !con((ins p_imm:$cop, c_imm:$CRd, addrmode5:$addr), ops),
-      !strconcat(!strconcat(opc, "l"), cond), "\t$cop, $CRd, $addr"> {
-    let Inst{31-28} = op31_28;
+}
+multiclass LdSt2Cop<bit load, bit Dbit, string asm> {
+  def _OFFSET : ACInoP<(outs), (ins p_imm:$cop, c_imm:$CRd, addrmode5:$addr),
+                       asm, "\t$cop, $CRd, $addr"> {
+    bits<13> addr;
+    bits<4> cop;
+    bits<4> CRd;
     let Inst{24} = 1; // P = 1
+    let Inst{23} = addr{8};
+    let Inst{22} = Dbit;
     let Inst{21} = 0; // W = 0
-    let Inst{22} = 1; // D = 1
     let Inst{20} = load;
+    let Inst{19-16} = addr{12-9};
+    let Inst{15-12} = CRd;
+    let Inst{11-8} = cop;
+    let Inst{7-0} = addr{7-0};
     let DecoderMethod = "DecodeCopMemInstruction";
   }
-
-  def L_PRE : ACI<(outs),
-      !con((ins p_imm:$cop, c_imm:$CRd, addrmode5:$addr), ops),
-      !strconcat(!strconcat(opc, "l"), cond), "\t$cop, $CRd, $addr!",
-      IndexModePre> {
-    let Inst{31-28} = op31_28;
+  def _PRE : ACInoP<(outs), (ins p_imm:$cop, c_imm:$CRd, addrmode5:$addr),
+                    asm, "\t$cop, $CRd, $addr!", IndexModePre> {
+    bits<13> addr;
+    bits<4> cop;
+    bits<4> CRd;
     let Inst{24} = 1; // P = 1
+    let Inst{23} = addr{8};
+    let Inst{22} = Dbit;
     let Inst{21} = 1; // W = 1
-    let Inst{22} = 1; // D = 1
     let Inst{20} = load;
+    let Inst{19-16} = addr{12-9};
+    let Inst{15-12} = CRd;
+    let Inst{11-8} = cop;
+    let Inst{7-0} = addr{7-0};
     let DecoderMethod = "DecodeCopMemInstruction";
   }
-
-  def L_POST : ACI<(outs),
-      !con((ins p_imm:$cop, c_imm:$CRd, addr_offset_none:$addr,
-            postidx_imm8s4:$offset), ops),
-      !strconcat(!strconcat(opc, "l"), cond), "\t$cop, $CRd, $addr, $offset",
-      IndexModePost> {
-    let Inst{31-28} = op31_28;
+  def _POST: ACInoP<(outs), (ins p_imm:$cop, c_imm:$CRd, addr_offset_none:$addr,
+                                 postidx_imm8s4:$offset),
+                 asm, "\t$cop, $CRd, $addr, $offset", IndexModePost> {
+    bits<9> offset;
+    bits<4> addr;
+    bits<4> cop;
+    bits<4> CRd;
     let Inst{24} = 0; // P = 0
+    let Inst{23} = offset{8};
+    let Inst{22} = Dbit;
     let Inst{21} = 1; // W = 1
-    let Inst{22} = 1; // D = 1
     let Inst{20} = load;
+    let Inst{19-16} = addr;
+    let Inst{15-12} = CRd;
+    let Inst{11-8} = cop;
+    let Inst{7-0} = offset{7-0};
     let DecoderMethod = "DecodeCopMemInstruction";
   }
-
-  def L_OPTION : ACI<(outs),
-      !con((ins p_imm:$cop, c_imm:$CRd, addr_offset_none:$base,
-                nohash_imm:$option),
-            ops),
-      !strconcat(!strconcat(opc, "l"), cond),
-      "\t$cop, $CRd, $base, \\{$option\\}"> {
-    let Inst{31-28} = op31_28;
+  def _OPTION : ACInoP<(outs),
+                       (ins p_imm:$cop, c_imm:$CRd, addr_offset_none:$addr,
+                            nohash_imm:$option),
+      asm, "\t$cop, $CRd, $addr, \\{$option\\}"> {
+    bits<8> option;
+    bits<4> addr;
+    bits<4> cop;
+    bits<4> CRd;
     let Inst{24} = 0; // P = 0
     let Inst{23} = 1; // U = 1
+    let Inst{22} = Dbit;
     let Inst{21} = 0; // W = 0
-    let Inst{22} = 1; // D = 1
     let Inst{20} = load;
+    let Inst{19-16} = addr;
+    let Inst{15-12} = CRd;
+    let Inst{11-8} = cop;
+    let Inst{7-0} = option;
     let DecoderMethod = "DecodeCopMemInstruction";
   }
 }
 
-defm LDC  : LdStCop<{?,?,?,?}, 1, (ins pred:$p), "ldc",  "${p}">;
-defm LDC2 : LdStCop<0b1111,    1, (ins),         "ldc2", "">;
-defm STC  : LdStCop<{?,?,?,?}, 0, (ins pred:$p), "stc",  "${p}">;
-defm STC2 : LdStCop<0b1111,    0, (ins),         "stc2", "">;
+defm LDC   : LdStCop <1, 0, "ldc">;
+defm LDCL  : LdStCop <1, 1, "ldcl">;
+defm STC   : LdStCop <0, 0, "stc">;
+defm STCL  : LdStCop <0, 1, "stcl">;
+defm LDC2  : LdSt2Cop<1, 0, "ldc2">;
+defm LDC2L : LdSt2Cop<1, 1, "ldc2l">;
+defm STC2  : LdSt2Cop<0, 0, "stc2">;
+defm STC2L : LdSt2Cop<0, 1, "stc2l">;
 
 //===----------------------------------------------------------------------===//
 // Move between coprocessor and ARM core register.

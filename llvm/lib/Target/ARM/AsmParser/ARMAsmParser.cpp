@@ -874,6 +874,15 @@ public:
     int64_t Val = CE->getValue();
     return (Val > -256 && Val < 256) || (Val == INT32_MIN);
   }
+  bool isPostIdxImm8s4() const {
+    if (Kind != k_Immediate)
+      return false;
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    if (!CE) return false;
+    int64_t Val = CE->getValue();
+    return ((Val & 3) == 0 && Val >= -1020 && Val <= 1020) ||
+      (Val == INT32_MIN);
+  }
 
   bool isMSRMask() const { return Kind == k_MSRMask; }
   bool isProcIFlags() const { return Kind == k_ProcIFlags; }
@@ -1353,6 +1362,18 @@ public:
     bool isAdd = Imm >= 0;
     if (Imm == INT32_MIN) Imm = 0;
     Imm = (Imm < 0 ? -Imm : Imm) | (int)isAdd << 8;
+    Inst.addOperand(MCOperand::CreateImm(Imm));
+  }
+
+  void addPostIdxImm8s4Operands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    assert(CE && "non-constant post-idx-imm8s4 operand!");
+    int Imm = CE->getValue();
+    bool isAdd = Imm >= 0;
+    if (Imm == INT32_MIN) Imm = 0;
+    // Immediate is scaled by 4.
+    Imm = ((Imm < 0 ? -Imm : Imm) / 4) | (int)isAdd << 8;
     Inst.addOperand(MCOperand::CreateImm(Imm));
   }
 
@@ -3539,8 +3560,9 @@ getMnemonicAcceptInfo(StringRef Mnemonic, bool &CanAcceptCarrySet,
       Mnemonic == "dsb" || Mnemonic == "isb" || Mnemonic == "setend" ||
       (Mnemonic == "clrex" && !isThumb()) ||
       (Mnemonic == "nop" && isThumbOne()) ||
-      ((Mnemonic == "pld" || Mnemonic == "pli" || Mnemonic == "pldw") &&
-       !isThumb()) ||
+      ((Mnemonic == "pld" || Mnemonic == "pli" || Mnemonic == "pldw" ||
+        Mnemonic == "ldc2" || Mnemonic == "ldc2l" ||
+        Mnemonic == "stc2" || Mnemonic == "stc2l") && !isThumb()) ||
       ((Mnemonic.startswith("rfe") || Mnemonic.startswith("srs")) &&
        !isThumb()) ||
       Mnemonic.startswith("cps") || (Mnemonic == "movs" && isThumbOne())) {
