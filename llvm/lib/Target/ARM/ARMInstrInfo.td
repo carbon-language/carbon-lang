@@ -762,12 +762,14 @@ def addrmode5 : Operand<i32>,
 
 // addrmode6 := reg with optional alignment
 //
+def AddrMode6AsmOperand : AsmOperandClass { let Name = "AlignedMemory"; }
 def addrmode6 : Operand<i32>,
                 ComplexPattern<i32, 2, "SelectAddrMode6", [], [SDNPWantParent]>{
   let PrintMethod = "printAddrMode6Operand";
   let MIOperandInfo = (ops GPR:$addr, i32imm:$align);
   let EncoderMethod = "getAddrMode6AddressOpValue";
   let DecoderMethod = "DecodeAddrMode6Operand";
+  let ParserMatchClass = AddrMode6AsmOperand;
 }
 
 def am6offset : Operand<i32>,

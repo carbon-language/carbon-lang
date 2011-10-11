@@ -324,7 +324,9 @@ class ARMOperand : public MCParsedAsmOperand {
       const MCConstantExpr *OffsetImm;  // Offset immediate value
       unsigned OffsetRegNum;    // Offset register num, when OffsetImm == NULL
       ARM_AM::ShiftOpc ShiftType; // Shift type for OffsetReg
-      unsigned ShiftImm;      // shift for OffsetReg.
+      unsigned ShiftImm;        // shift for OffsetReg.
+      unsigned Alignment;       // 0 = no alignment specified
+                                // n = alignment in bytes (8, 16, or 32)
       unsigned isNegative : 1;  // Negated OffsetReg? (~'U' bit)
     } Memory;
 
@@ -661,15 +663,18 @@ public:
   bool isPostIdxReg() const {
     return Kind == k_PostIndexRegister && PostIdxReg.ShiftTy == ARM_AM::no_shift;
   }
-  bool isMemNoOffset() const {
+  bool isMemNoOffset(bool alignOK = false) const {
     if (!isMemory())
       return false;
     // No offset of any kind.
-    return Memory.OffsetRegNum == 0 && Memory.OffsetImm == 0;
+    return Memory.OffsetRegNum == 0 && Memory.OffsetImm == 0 &&
+     (alignOK || Memory.Alignment == 0);
+  }
+  bool isAlignedMemory() const {
+    return isMemNoOffset(true);
   }
   bool isAddrMode2() const {
-    if (!isMemory())
-      return false;
+    if (!isMemory() || Memory.Alignment != 0) return false;
     // Check for register offset.
     if (Memory.OffsetRegNum) return true;
     // Immediate offset in range [-4095, 4095].
@@ -687,8 +692,7 @@ public:
     return Val > -4096 && Val < 4096;
   }
   bool isAddrMode3() const {
-    if (!isMemory())
-      return false;
+    if (!isMemory() || Memory.Alignment != 0) return false;
     // No shifts are legal for AM3.
     if (Memory.ShiftType != ARM_AM::no_shift) return false;
     // Check for register offset.
@@ -711,8 +715,7 @@ public:
     return (Val > -256 && Val < 256) || Val == INT32_MIN;
   }
   bool isAddrMode5() const {
-    if (!isMemory())
-      return false;
+    if (!isMemory() || Memory.Alignment != 0) return false;
     // Check for register offset.
     if (Memory.OffsetRegNum) return false;
     // Immediate offset in range [-1020, 1020] and a multiple of 4.
@@ -723,23 +726,25 @@ public:
   }
   bool isMemTBB() const {
     if (!isMemory() || !Memory.OffsetRegNum || Memory.isNegative ||
-        Memory.ShiftType != ARM_AM::no_shift)
+        Memory.ShiftType != ARM_AM::no_shift || Memory.Alignment != 0)
       return false;
     return true;
   }
   bool isMemTBH() const {
     if (!isMemory() || !Memory.OffsetRegNum || Memory.isNegative ||
-        Memory.ShiftType != ARM_AM::lsl || Memory.ShiftImm != 1)
+        Memory.ShiftType != ARM_AM::lsl || Memory.ShiftImm != 1 ||
+        Memory.Alignment != 0 )
       return false;
     return true;
   }
   bool isMemRegOffset() const {
-    if (!isMemory() || !Memory.OffsetRegNum)
+    if (!isMemory() || !Memory.OffsetRegNum || Memory.Alignment != 0)
       return false;
     return true;
   }
   bool isT2MemRegOffset() const {
-    if (!isMemory() || !Memory.OffsetRegNum || Memory.isNegative)
+    if (!isMemory() || !Memory.OffsetRegNum || Memory.isNegative ||
+        Memory.Alignment != 0)
       return false;
     // Only lsl #{0, 1, 2, 3} allowed.
     if (Memory.ShiftType == ARM_AM::no_shift)
@@ -752,14 +757,14 @@ public:
     // Thumb reg+reg addressing is simple. Just two registers, a base and
     // an offset. No shifts, negations or any other complicating factors.
     if (!isMemory() || !Memory.OffsetRegNum || Memory.isNegative ||
-        Memory.ShiftType != ARM_AM::no_shift)
+        Memory.ShiftType != ARM_AM::no_shift || Memory.Alignment != 0)
       return false;
     return isARMLowRegister(Memory.BaseRegNum) &&
       (!Memory.OffsetRegNum || isARMLowRegister(Memory.OffsetRegNum));
   }
   bool isMemThumbRIs4() const {
     if (!isMemory() || Memory.OffsetRegNum != 0 ||
-        !isARMLowRegister(Memory.BaseRegNum))
+        !isARMLowRegister(Memory.BaseRegNum) || Memory.Alignment != 0)
       return false;
     // Immediate offset, multiple of 4 in range [0, 124].
     if (!Memory.OffsetImm) return true;
@@ -768,7 +773,7 @@ public:
   }
   bool isMemThumbRIs2() const {
     if (!isMemory() || Memory.OffsetRegNum != 0 ||
-        !isARMLowRegister(Memory.BaseRegNum))
+        !isARMLowRegister(Memory.BaseRegNum) || Memory.Alignment != 0)
       return false;
     // Immediate offset, multiple of 4 in range [0, 62].
     if (!Memory.OffsetImm) return true;
@@ -777,7 +782,7 @@ public:
   }
   bool isMemThumbRIs1() const {
     if (!isMemory() || Memory.OffsetRegNum != 0 ||
-        !isARMLowRegister(Memory.BaseRegNum))
+        !isARMLowRegister(Memory.BaseRegNum) || Memory.Alignment != 0)
       return false;
     // Immediate offset in range [0, 31].
     if (!Memory.OffsetImm) return true;
@@ -785,7 +790,8 @@ public:
     return Val >= 0 && Val <= 31;
   }
   bool isMemThumbSPI() const {
-    if (!isMemory() || Memory.OffsetRegNum != 0 || Memory.BaseRegNum != ARM::SP)
+    if (!isMemory() || Memory.OffsetRegNum != 0 ||
+        Memory.BaseRegNum != ARM::SP || Memory.Alignment != 0)
       return false;
     // Immediate offset, multiple of 4 in range [0, 1020].
     if (!Memory.OffsetImm) return true;
@@ -793,7 +799,7 @@ public:
     return Val >= 0 && Val <= 1020 && (Val % 4) == 0;
   }
   bool isMemImm8s4Offset() const {
-    if (!isMemory() || Memory.OffsetRegNum != 0)
+    if (!isMemory() || Memory.OffsetRegNum != 0 || Memory.Alignment != 0)
       return false;
     // Immediate offset a multiple of 4 in range [-1020, 1020].
     if (!Memory.OffsetImm) return true;
@@ -801,7 +807,7 @@ public:
     return Val >= -1020 && Val <= 1020 && (Val & 3) == 0;
   }
   bool isMemImm0_1020s4Offset() const {
-    if (!isMemory() || Memory.OffsetRegNum != 0)
+    if (!isMemory() || Memory.OffsetRegNum != 0 || Memory.Alignment != 0)
       return false;
     // Immediate offset a multiple of 4 in range [0, 1020].
     if (!Memory.OffsetImm) return true;
@@ -809,7 +815,7 @@ public:
     return Val >= 0 && Val <= 1020 && (Val & 3) == 0;
   }
   bool isMemImm8Offset() const {
-    if (!isMemory() || Memory.OffsetRegNum != 0)
+    if (!isMemory() || Memory.OffsetRegNum != 0 || Memory.Alignment != 0)
       return false;
     // Immediate offset in range [-255, 255].
     if (!Memory.OffsetImm) return true;
@@ -817,7 +823,7 @@ public:
     return (Val == INT32_MIN) || (Val > -256 && Val < 256);
   }
   bool isMemPosImm8Offset() const {
-    if (!isMemory() || Memory.OffsetRegNum != 0)
+    if (!isMemory() || Memory.OffsetRegNum != 0 || Memory.Alignment != 0)
       return false;
     // Immediate offset in range [0, 255].
     if (!Memory.OffsetImm) return true;
@@ -825,7 +831,7 @@ public:
     return Val >= 0 && Val < 256;
   }
   bool isMemNegImm8Offset() const {
-    if (!isMemory() || Memory.OffsetRegNum != 0)
+    if (!isMemory() || Memory.OffsetRegNum != 0 || Memory.Alignment != 0)
       return false;
     // Immediate offset in range [-255, -1].
     if (!Memory.OffsetImm) return true;
@@ -839,7 +845,7 @@ public:
     if (Kind == k_Immediate && !isa<MCConstantExpr>(getImm()))
       return true;
 
-    if (!isMemory() || Memory.OffsetRegNum != 0)
+    if (!isMemory() || Memory.OffsetRegNum != 0 || Memory.Alignment != 0)
       return false;
     // Immediate offset in range [0, 4095].
     if (!Memory.OffsetImm) return true;
@@ -853,7 +859,7 @@ public:
     if (Kind == k_Immediate && !isa<MCConstantExpr>(getImm()))
       return true;
 
-    if (!isMemory() || Memory.OffsetRegNum != 0)
+    if (!isMemory() || Memory.OffsetRegNum != 0 || Memory.Alignment != 0)
       return false;
     // Immediate offset in range [-4095, 4095].
     if (!Memory.OffsetImm) return true;
@@ -1121,6 +1127,12 @@ public:
   void addMemNoOffsetOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
+  }
+
+  void addAlignedMemoryOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 2 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
+    Inst.addOperand(MCOperand::CreateImm(Memory.Alignment));
   }
 
   void addAddrMode2Operands(MCInst &Inst, unsigned N) const {
@@ -1552,6 +1564,7 @@ public:
                                unsigned OffsetRegNum,
                                ARM_AM::ShiftOpc ShiftType,
                                unsigned ShiftImm,
+                               unsigned Alignment,
                                bool isNegative,
                                SMLoc S, SMLoc E) {
     ARMOperand *Op = new ARMOperand(k_Memory);
@@ -1560,6 +1573,7 @@ public:
     Op->Memory.OffsetRegNum = OffsetRegNum;
     Op->Memory.ShiftType = ShiftType;
     Op->Memory.ShiftImm = ShiftImm;
+    Op->Memory.Alignment = Alignment;
     Op->Memory.isNegative = isNegative;
     Op->StartLoc = S;
     Op->EndLoc = E;
@@ -3021,7 +3035,7 @@ parseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     Parser.Lex(); // Eat right bracket token.
 
     Operands.push_back(ARMOperand::CreateMem(BaseRegNum, 0, 0, ARM_AM::no_shift,
-                                             0, false, S, E));
+                                             0, 0, false, S, E));
 
     // If there's a pre-indexing writeback marker, '!', just add it as a token
     // operand. It's rather odd, but syntactically valid.
@@ -3036,7 +3050,54 @@ parseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   assert(Tok.is(AsmToken::Comma) && "Lost comma in memory operand?!");
   Parser.Lex(); // Eat the comma.
 
-  // If we have a '#' it's an immediate offset, else assume it's a register
+  // If we have a ':', it's an alignment specifier.
+  if (Parser.getTok().is(AsmToken::Colon)) {
+    Parser.Lex(); // Eat the ':'.
+    E = Parser.getTok().getLoc();
+
+    const MCExpr *Expr;
+    if (getParser().ParseExpression(Expr))
+     return true;
+
+    // The expression has to be a constant. Memory references with relocations
+    // don't come through here, as they use the <label> forms of the relevant
+    // instructions.
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Expr);
+    if (!CE)
+      return Error (E, "constant expression expected");
+
+    unsigned Align = 0;
+    switch (CE->getValue()) {
+    default:
+      return Error(E, "alignment specifier must be 64, 128, or 256 bits");
+    case 64:  Align = 8; break;
+    case 128: Align = 16; break;
+    case 256: Align = 32; break;
+    }
+
+    // Now we should have the closing ']'
+    E = Parser.getTok().getLoc();
+    if (Parser.getTok().isNot(AsmToken::RBrac))
+      return Error(E, "']' expected");
+    Parser.Lex(); // Eat right bracket token.
+
+    // Don't worry about range checking the value here. That's handled by
+    // the is*() predicates.
+    Operands.push_back(ARMOperand::CreateMem(BaseRegNum, 0, 0,
+                                             ARM_AM::no_shift, 0, Align,
+                                             false, S, E));
+
+    // If there's a pre-indexing writeback marker, '!', just add it as a token
+    // operand.
+    if (Parser.getTok().is(AsmToken::Exclaim)) {
+      Operands.push_back(ARMOperand::CreateToken("!",Parser.getTok().getLoc()));
+      Parser.Lex(); // Eat the '!'.
+    }
+
+    return false;
+  }
+
+  // If we have a '#', it's an immediate offset, else assume it's a register
   // offset.
   if (Parser.getTok().is(AsmToken::Hash)) {
     Parser.Lex(); // Eat the '#'.
@@ -3068,7 +3129,8 @@ parseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     // Don't worry about range checking the value here. That's handled by
     // the is*() predicates.
     Operands.push_back(ARMOperand::CreateMem(BaseRegNum, CE, 0,
-                                             ARM_AM::no_shift, 0, false, S,E));
+                                             ARM_AM::no_shift, 0, 0,
+                                             false, S, E));
 
     // If there's a pre-indexing writeback marker, '!', just add it as a token
     // operand.
@@ -3111,7 +3173,7 @@ parseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   Parser.Lex(); // Eat right bracket token.
 
   Operands.push_back(ARMOperand::CreateMem(BaseRegNum, 0, OffsetRegNum,
-                                           ShiftType, ShiftImm, isNegative,
+                                           ShiftType, ShiftImm, 0, isNegative,
                                            S, E));
 
   // If there's a pre-indexing writeback marker, '!', just add it as a token
