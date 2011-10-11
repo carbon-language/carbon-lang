@@ -127,6 +127,8 @@ def HasSwap     : Predicate<"Subtarget.hasSwap()">;
 def HasCondMov  : Predicate<"Subtarget.hasCondMov()">;
 def HasMips32    : Predicate<"Subtarget.hasMips32()">;
 def HasMips32r2  : Predicate<"Subtarget.hasMips32r2()">;
+def IsN64       : Predicate<"Subtarget.isABI_N64()">;
+def NotN64      : Predicate<"!Subtarget.isABI_N64()">;
 
 //===----------------------------------------------------------------------===//
 // Mips Operand, Complex Patterns and Transformations Definitions.
@@ -136,6 +138,7 @@ def HasMips32r2  : Predicate<"Subtarget.hasMips32r2()">;
 def brtarget    : Operand<OtherVT>;
 def calltarget  : Operand<i32>;
 def simm16      : Operand<i32>;
+def simm16_64   : Operand<i64>;
 def shamt       : Operand<i32>;
 
 // Unsigned Operand
@@ -147,6 +150,11 @@ def uimm16      : Operand<i32> {
 def mem : Operand<i32> {
   let PrintMethod = "printMemOperand";
   let MIOperandInfo = (ops CPURegs, simm16);
+}
+
+def mem64 : Operand<i64> {
+  let PrintMethod = "printMemOperand";
+  let MIOperandInfo = (ops CPU64Regs, simm16_64);
 }
 
 def mem_ea : Operand<i32> {
@@ -313,18 +321,56 @@ class LoadUpper<bits<6> op, string instr_asm>:
 
 // Memory Load/Store
 let canFoldAsLoad = 1 in
-class LoadM<bits<6> op, string instr_asm, PatFrag OpNode, bit Pseudo = 0>:
-  FI<op, (outs CPURegs:$dst), (ins mem:$addr),
+class LoadM<bits<6> op, string instr_asm, PatFrag OpNode, RegisterClass RC,
+            Operand MemOpnd, bit Pseudo>:
+  FI<op, (outs RC:$dst), (ins MemOpnd:$addr),
      !strconcat(instr_asm, "\t$dst, $addr"),
-     [(set CPURegs:$dst, (OpNode addr:$addr))], IILoad> {
+     [(set RC:$dst, (OpNode addr:$addr))], IILoad> {
   let isPseudo = Pseudo;
 }
 
-class StoreM<bits<6> op, string instr_asm, PatFrag OpNode, bit Pseudo = 0>:
-  FI<op, (outs), (ins CPURegs:$dst, mem:$addr),
+class StoreM<bits<6> op, string instr_asm, PatFrag OpNode, RegisterClass RC,
+             Operand MemOpnd, bit Pseudo>:
+  FI<op, (outs), (ins RC:$dst, MemOpnd:$addr),
      !strconcat(instr_asm, "\t$dst, $addr"),
-     [(OpNode CPURegs:$dst, addr:$addr)], IIStore> {
+     [(OpNode RC:$dst, addr:$addr)], IIStore> {
   let isPseudo = Pseudo;
+}
+
+// 32-bit load.
+multiclass LoadM32<bits<6> op, string instr_asm, PatFrag OpNode,
+                   bit Pseudo = 0> {
+  def #NAME# : LoadM<op, instr_asm, OpNode, CPURegs, mem, Pseudo>,
+               Requires<[NotN64]>;
+  def _P8    : LoadM<op, instr_asm, OpNode, CPURegs, mem64, Pseudo>,
+               Requires<[IsN64]>;
+} 
+
+// 64-bit load.
+multiclass LoadM64<bits<6> op, string instr_asm, PatFrag OpNode,
+                   bit Pseudo = 0> {
+  def #NAME# : LoadM<op, instr_asm, OpNode, CPU64Regs, mem, Pseudo>,
+               Requires<[NotN64]>;
+  def _P8    : LoadM<op, instr_asm, OpNode, CPU64Regs, mem64, Pseudo>,
+               Requires<[IsN64]>;
+} 
+
+// 32-bit store.
+multiclass StoreM32<bits<6> op, string instr_asm, PatFrag OpNode,
+                    bit Pseudo = 0> {
+  def #NAME# : StoreM<op, instr_asm, OpNode, CPURegs, mem, Pseudo>,
+               Requires<[NotN64]>;
+  def _P8    : StoreM<op, instr_asm, OpNode, CPURegs, mem64, Pseudo>,
+               Requires<[IsN64]>;
+}
+
+// 64-bit store.
+multiclass StoreM64<bits<6> op, string instr_asm, PatFrag OpNode,
+                    bit Pseudo = 0> {
+  def #NAME# : StoreM<op, instr_asm, OpNode, CPU64Regs, mem, Pseudo>,
+               Requires<[NotN64]>;
+  def _P8    : StoreM<op, instr_asm, OpNode, CPU64Regs, mem64, Pseudo>,
+               Requires<[IsN64]>;
 }
 
 // Conditional Branch
@@ -587,21 +633,21 @@ let Predicates = [HasMips32r2] in {
 
 /// Load and Store Instructions
 ///  aligned
-def LB      : LoadM<0x20, "lb",  sextloadi8>;
-def LBu     : LoadM<0x24, "lbu", zextloadi8>;
-def LH      : LoadM<0x21, "lh",  sextloadi16_a>;
-def LHu     : LoadM<0x25, "lhu", zextloadi16_a>;
-def LW      : LoadM<0x23, "lw",  load_a>;
-def SB      : StoreM<0x28, "sb", truncstorei8>;
-def SH      : StoreM<0x29, "sh", truncstorei16_a>;
-def SW      : StoreM<0x2b, "sw", store_a>;
+defm LB      : LoadM32<0x20, "lb",  sextloadi8>;
+defm LBu     : LoadM32<0x24, "lbu", zextloadi8>;
+defm LH      : LoadM32<0x21, "lh",  sextloadi16_a>;
+defm LHu     : LoadM32<0x25, "lhu", zextloadi16_a>;
+defm LW      : LoadM32<0x23, "lw",  load_a>;
+defm SB      : StoreM32<0x28, "sb", truncstorei8>;
+defm SH      : StoreM32<0x29, "sh", truncstorei16_a>;
+defm SW      : StoreM32<0x2b, "sw", store_a>;
 
 ///  unaligned
-def ULH     : LoadM<0x21, "ulh",  sextloadi16_u, 1>;
-def ULHu    : LoadM<0x25, "ulhu", zextloadi16_u, 1>;
-def ULW     : LoadM<0x23, "ulw",  load_u, 1>;
-def USH     : StoreM<0x29, "ush", truncstorei16_u, 1>;
-def USW     : StoreM<0x2b, "usw", store_u, 1>;
+defm ULH     : LoadM32<0x21, "ulh",  sextloadi16_u, 1>;
+defm ULHu    : LoadM32<0x25, "ulhu", zextloadi16_u, 1>;
+defm ULW     : LoadM32<0x23, "ulw",  load_u, 1>;
+defm USH     : StoreM32<0x29, "ush", truncstorei16_u, 1>;
+defm USW     : StoreM32<0x2b, "usw", store_u, 1>;
 
 let hasSideEffects = 1 in
 def SYNC : MipsInst<(outs), (ins i32imm:$stype), "sync $stype",

@@ -22,7 +22,6 @@ def HasMips64r2  : Predicate<"Subtarget.hasMips64r2()">;
 //===----------------------------------------------------------------------===//
 
 // Instruction operand types
-def simm16_64      : Operand<i64>;
 def shamt_64       : Operand<i64>;
 
 // Unsigned Operand
