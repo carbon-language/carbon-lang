@@ -38,6 +38,7 @@ USEDLIBS = lldbAPI.a \
 	lldbPluginLanguageRuntimeObjCAppleObjCRuntime.a \
 	lldbPluginObjectContainerBSDArchive.a \
 	lldbPluginObjectFileELF.a \
+	lldbPluginObjectFilePECOFF.a \
 	lldbPluginPlatformGDBServer.a \
 	lldbPluginProcessGDBRemote.a \
 	lldbPluginSymbolFileDWARF.a \

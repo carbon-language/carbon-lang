@@ -13,9 +13,9 @@ include $(LLDB_LEVEL)/../../Makefile.config
 
 
 DIRS := ABI/MacOSX-arm ABI/MacOSX-i386 ABI/SysV-x86_64 Disassembler/llvm \
-	ObjectContainer/BSD-Archive ObjectFile/ELF SymbolFile/DWARF \
-	SymbolFile/Symtab Process/Utility DynamicLoader/Static \
-	Platform Process/gdb-remote Instruction/ARM \
+	ObjectContainer/BSD-Archive ObjectFile/ELF ObjectFile/PECOFF \
+	SymbolFile/DWARF SymbolFile/Symtab Process/Utility \
+	DynamicLoader/Static Platform Process/gdb-remote Instruction/ARM \
 	UnwindAssembly/InstEmulation UnwindAssembly/x86 \
 	LanguageRuntime/CPlusPlus/ItaniumABI \
 	LanguageRuntime/ObjC/AppleObjCRuntime
