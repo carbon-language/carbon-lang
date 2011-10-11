@@ -431,3 +431,20 @@ Finally, the results of the expressions are stored in persistent variables
 
 (lldb) expr self = $0
 $4 = (SKTGraphicView *) 0x0000000100135430
+
+f) Miscellaneous:
+
+You can use the embedded Python interprter to add the following 'pwd' and 'cd' commands
+for your lldb session:
+
+(lldb) script import os
+(lldb) command alias pwd script print os.getcwd()
+(lldb) command regex cd "s/^(.*)$/script os.chdir(os.path.expanduser('%1'))/"
+
+...
+
+(lldb) cd /tmp
+script os.chdir(os.path.expanduser('/tmp'))
+(lldb) pwd
+/private/tmp
+(lldb) 
