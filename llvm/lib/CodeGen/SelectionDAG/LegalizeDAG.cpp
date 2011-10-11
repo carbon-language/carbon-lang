@@ -1618,13 +1618,13 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
             bool RegScalarLegal = TLI.isTypeLegal(RegSclVT);
             bool MemScalarLegal = TLI.isTypeLegal(MemSclVT);
 
-            // We need to expand this store. If both the reg-scalar and the
-            // memory-scalar are of legal types, then scalarize the vector.
-            if (RegScalarLegal && MemScalarLegal) {
+            // We need to expand this store. If the register element type
+            // is legal then we can scalarize the vector and use
+            // truncating stores.
+            if (RegScalarLegal) {
               // Cast floats into integers
               unsigned ScalarSize = MemSclVT.getSizeInBits();
               EVT EltVT = EVT::getIntegerVT(*DAG.getContext(), ScalarSize);
-              assert(TLI.isTypeLegal(EltVT) && "Saved scalars must be legal");
 
               // Round odd types to the next pow of two.
               if (!isPowerOf2_32(ScalarSize))
@@ -1639,13 +1639,15 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
                 SDValue Ex = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl,
                                 RegSclVT, Tmp3, DAG.getIntPtrConstant(Idx));
 
-                Ex = DAG.getNode(ISD::TRUNCATE, dl, EltVT, Ex);
                 Tmp2 = DAG.getNode(ISD::ADD, dl, Tmp2.getValueType(), Tmp2,
                                    DAG.getIntPtrConstant(Stride));
 
-                SDValue Store = DAG.getStore(Tmp1, dl, Ex, Tmp2,
-                                  ST->getPointerInfo().getWithOffset(Idx*Stride),
-                                  isVolatile, isNonTemporal, Alignment);
+                // This scalar TruncStore may be illegal, but we lehalize it
+                // later.
+                SDValue Store = DAG.getTruncStore(Tmp1, dl, Ex, Tmp2,
+                      ST->getPointerInfo().getWithOffset(Idx*Stride), MemSclVT,
+                      isVolatile, isNonTemporal, Alignment);
+
                 Stores.push_back(Store);
               }
 
@@ -1653,7 +1655,6 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
                                    &Stores[0], Stores.size());
               break;
             }
-
 
             // The scalar register type is illegal.
             // For example saving <2 x i64> -> <2 x i32> on a x86.
@@ -1678,7 +1679,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
               for (unsigned Idx=0; Idx < NumElem * SizeRatio; Idx++) {
                 // Extract the Ith element.
                 SDValue Ex = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl,
-                                         NarrowScalarVT, Tmp3, DAG.getIntPtrConstant(Idx));
+                               NarrowScalarVT, Tmp3, DAG.getIntPtrConstant(Idx));
                 // Bump pointer.
                 Tmp2 = DAG.getNode(ISD::ADD, dl, Tmp2.getValueType(), Tmp2,
                                    DAG.getIntPtrConstant(Stride));
@@ -1689,8 +1690,8 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
                 if (( TLI.isBigEndian() && (Idx % SizeRatio == 0)) ||
                     ((!TLI.isBigEndian() && (Idx % SizeRatio == SizeRatio-1)))) {
                   SDValue Store = DAG.getStore(Tmp1, dl, Ex, Tmp2,
-                                               ST->getPointerInfo().getWithOffset(Idx*Stride),
-                                               isVolatile, isNonTemporal, Alignment);
+                                  ST->getPointerInfo().getWithOffset(Idx*Stride),
+                                           isVolatile, isNonTemporal, Alignment);
                   Stores.push_back(Store);
                 }
               }
@@ -1698,7 +1699,6 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
                                    &Stores[0], Stores.size());
               break;
             }
-
 
             assert(false && "Unable to legalize the vector trunc store!");
           }// is vector
