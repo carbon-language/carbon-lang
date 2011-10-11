@@ -1582,12 +1582,13 @@ elements out of (linear time), unless you use it's "pop_back" method, which is
 faster.
 </p>
 
-<p>SetVector is an adapter class that defaults to using std::vector and std::set
-for the underlying containers, so it is quite expensive.  However,
-<tt>"llvm/ADT/SetVector.h"</tt> also provides a SmallSetVector class, which
-defaults to using a SmallVector and SmallSet of a specified size.  If you use
-this, and if your sets are dynamically smaller than N, you will save a lot of 
-heap traffic.</p>
+<p><tt>SetVector</tt> is an adapter class that defaults to
+   using <tt>std::vector</tt> and a size 16 <tt>SmallSet</tt> for the underlying
+   containers, so it is quite expensive. However,
+   <tt>"llvm/ADT/SetVector.h"</tt> also provides a <tt>SmallSetVector</tt>
+   class, which defaults to using a <tt>SmallVector</tt> and <tt>SmallSet</tt>
+   of a specified size. If you use this, and if your sets are dynamically
+   smaller than <tt>N</tt>, you will save a lot of heap traffic.</p>
 
 </div>
 
