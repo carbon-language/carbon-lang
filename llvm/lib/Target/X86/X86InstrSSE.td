@@ -6763,7 +6763,7 @@ let Defs = [YMM0, YMM1, YMM2, YMM3, YMM4, YMM5, YMM6, YMM7,
 //===----------------------------------------------------------------------===//
 // Half precision conversion instructions
 //
-let Predicates = [HasF16C] in {
+let Predicates = [HasAVX, HasF16C] in {
   def VCVTPH2PSrm : I<0x13, MRMSrcMem, (outs VR128:$dst), (ins f64mem:$src),
                      "vcvtph2ps\t{$src, $dst|$dst, $src}", []>, T8, OpSize, VEX;
   def VCVTPH2PSrr : I<0x13, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
