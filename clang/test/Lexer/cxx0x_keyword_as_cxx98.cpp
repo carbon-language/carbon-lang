@@ -1,8 +1,8 @@
 // RUN: %clang_cc1 %s -verify -fsyntax-only
 
-#define thread_local __thread
-thread_local int x;
-#undef thread_local
+#define constexpr const
+constexpr int x = 0;
+#undef constexpr
 
 namespace lib {
   struct nullptr_t;
