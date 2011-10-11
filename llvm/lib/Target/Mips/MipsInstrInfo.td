@@ -250,7 +250,7 @@ def truncstorei32_u : UnalignedStore<truncstorei32>;
 // Instructions specific format
 //===----------------------------------------------------------------------===//
 
-// Arithmetic 3 register operands
+// Arithmetic and logical instructions with 3 register operands.
 class ArithLogicR<bits<6> op, bits<6> func, string instr_asm, SDNode OpNode,
                   InstrItinClass itin, RegisterClass RC, bit isComm = 0>:
   FR<op, func, (outs RC:$rd), (ins RC:$rs, RC:$rt),
