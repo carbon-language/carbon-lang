@@ -1244,34 +1244,60 @@ static DecodeStatus DecodeCopMemInstruction(llvm::MCInst &Inst, unsigned Insn,
     idx_mode = ARMII::IndexModePost;
 
   switch (Inst.getOpcode()) {
-    case ARM::LDCL_POST:
-    case ARM::STCL_POST:
-    case ARM::t2LDCL_POST:
-    case ARM::t2STCL_POST:
+    case ARM::t2LDC2_OFFSET:
+    case ARM::t2LDC2L_OFFSET:
+    case ARM::t2LDC2_PRE:
+    case ARM::t2LDC2L_PRE:
+    case ARM::t2LDC2_POST:
+    case ARM::t2LDC2L_POST:
+    case ARM::t2STC2_OFFSET:
+    case ARM::t2STC2L_OFFSET:
+    case ARM::t2STC2_PRE:
+    case ARM::t2STC2L_PRE:
+    case ARM::t2STC2_POST:
+    case ARM::t2STC2L_POST:
+    case ARM::LDC2_OFFSET:
+    case ARM::LDC2L_OFFSET:
+    case ARM::LDC2_PRE:
+    case ARM::LDC2L_PRE:
+    case ARM::LDC2_POST:
     case ARM::LDC2L_POST:
+    case ARM::STC2_OFFSET:
+    case ARM::STC2L_OFFSET:
+    case ARM::STC2_PRE:
+    case ARM::STC2L_PRE:
+    case ARM::STC2_POST:
     case ARM::STC2L_POST:
+    case ARM::t2LDC_OFFSET:
+    case ARM::t2LDCL_OFFSET:
+    case ARM::t2LDC_PRE:
+    case ARM::t2LDCL_PRE:
+    case ARM::t2LDC_POST:
+    case ARM::t2LDCL_POST:
+    case ARM::t2STC_OFFSET:
+    case ARM::t2STCL_OFFSET:
+    case ARM::t2STC_PRE:
+    case ARM::t2STCL_PRE:
+    case ARM::t2STC_POST:
+    case ARM::t2STCL_POST:
+    case ARM::LDC_OFFSET:
+    case ARM::LDCL_OFFSET:
+    case ARM::LDC_PRE:
+    case ARM::LDCL_PRE:
+    case ARM::LDC_POST:
+    case ARM::LDCL_POST:
+    case ARM::STC_OFFSET:
+    case ARM::STCL_OFFSET:
+    case ARM::STC_PRE:
+    case ARM::STCL_PRE:
+    case ARM::STC_POST:
+    case ARM::STCL_POST:
       imm |= U << 8;
-    case ARM::LDC_OPTION:
-    case ARM::LDCL_OPTION:
-    case ARM::LDC2_OPTION:
-    case ARM::LDC2L_OPTION:
-    case ARM::STC_OPTION:
-    case ARM::STCL_OPTION:
-    case ARM::STC2_OPTION:
-    case ARM::STC2L_OPTION:
-    case ARM::t2LDC_OPTION:
-    case ARM::t2LDCL_OPTION:
-    case ARM::t2STC_OPTION:
-    case ARM::t2STCL_OPTION:
-      Inst.addOperand(MCOperand::CreateImm(imm));
-      break;
+      // fall through.
     default:
-      if (U)
-        Inst.addOperand(MCOperand::CreateImm(
-            ARM_AM::getAM2Opc(ARM_AM::add, imm, ARM_AM::lsl, idx_mode)));
-      else
-        Inst.addOperand(MCOperand::CreateImm(
-            ARM_AM::getAM2Opc(ARM_AM::sub, imm, ARM_AM::lsl, idx_mode)));
+      // The 'option' variant doesn't encode 'U' in the immediate since
+      // the immediate is unsigned [0,255].
+      Inst.addOperand(MCOperand::CreateImm(imm));
       break;
   }
 

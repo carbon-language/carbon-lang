@@ -495,6 +495,66 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ LDC{L}/LDC2{L}
+@------------------------------------------------------------------------------
+        ldc2 p0, c8, [r1, #4]
+        ldc2 p1, c7, [r2]
+        ldc2 p2, c6, [r3, #-224]
+        ldc2 p3, c5, [r4, #-120]!
+        ldc2 p4, c4, [r5], #16
+        ldc2 p5, c3, [r6], #-72
+        ldc2l p6, c2, [r7, #4]
+        ldc2l p7, c1, [r8]
+        ldc2l p8, c0, [r9, #-224]
+        ldc2l p9, c1, [r10, #-120]!
+        ldc2l p10, c2, [r11], #16
+        ldc2l p11, c3, [r12], #-72
+
+        ldc p12, c4, [r0, #4]
+        ldc p13, c5, [r1]
+        ldc p14, c6, [r2, #-224]
+        ldc p15, c7, [r3, #-120]!
+        ldc p5, c8, [r4], #16
+        ldc p4, c9, [r5], #-72
+        ldcl p3, c10, [r6, #4]
+        ldcl p2, c11, [r7]
+        ldcl p1, c12, [r8, #-224]
+        ldcl p0, c13, [r9, #-120]!
+        ldcl p6, c14, [r10], #16
+        ldcl p7, c15, [r11], #-72
+
+        ldc2 p2, c8, [r1], { 25 }
+
+@ CHECK: ldc2	p0, c8, [r1, #4]        @ encoding: [0x91,0xfd,0x01,0x80]
+@ CHECK: ldc2	p1, c7, [r2]            @ encoding: [0x92,0xfd,0x00,0x71]
+@ CHECK: ldc2	p2, c6, [r3, #-224]     @ encoding: [0x13,0xfd,0x38,0x62]
+@ CHECK: ldc2	p3, c5, [r4, #-120]!    @ encoding: [0x34,0xfd,0x1e,0x53]
+@ CHECK: ldc2	p4, c4, [r5], #16       @ encoding: [0xb5,0xfc,0x04,0x44]
+@ CHECK: ldc2	p5, c3, [r6], #-72      @ encoding: [0x36,0xfc,0x12,0x35]
+@ CHECK: ldc2l	p6, c2, [r7, #4]        @ encoding: [0xd7,0xfd,0x01,0x26]
+@ CHECK: ldc2l	p7, c1, [r8]            @ encoding: [0xd8,0xfd,0x00,0x17]
+@ CHECK: ldc2l	p8, c0, [r9, #-224]     @ encoding: [0x59,0xfd,0x38,0x08]
+@ CHECK: ldc2l	p9, c1, [r10, #-120]!   @ encoding: [0x7a,0xfd,0x1e,0x19]
+@ CHECK: ldc2l	p10, c2, [r11], #16     @ encoding: [0xfb,0xfc,0x04,0x2a]
+@ CHECK: ldc2l	p11, c3, [r12], #-72    @ encoding: [0x7c,0xfc,0x12,0x3b]
+
+@ CHECK: ldc	p12, c4, [r0, #4]       @ encoding: [0x90,0xed,0x01,0x4c]
+@ CHECK: ldc	p13, c5, [r1]           @ encoding: [0x91,0xed,0x00,0x5d]
+@ CHECK: ldc	p14, c6, [r2, #-224]    @ encoding: [0x12,0xed,0x38,0x6e]
+@ CHECK: ldc	p15, c7, [r3, #-120]!   @ encoding: [0x33,0xed,0x1e,0x7f]
+@ CHECK: ldc	p5, c8, [r4], #16       @ encoding: [0xb4,0xec,0x04,0x85]
+@ CHECK: ldc	p4, c9, [r5], #-72      @ encoding: [0x35,0xec,0x12,0x94]
+@ CHECK: ldcl	p3, c10, [r6, #4]       @ encoding: [0xd6,0xed,0x01,0xa3]
+@ CHECK: ldcl	p2, c11, [r7]           @ encoding: [0xd7,0xed,0x00,0xb2]
+@ CHECK: ldcl	p1, c12, [r8, #-224]    @ encoding: [0x58,0xed,0x38,0xc1]
+@ CHECK: ldcl	p0, c13, [r9, #-120]!   @ encoding: [0x79,0xed,0x1e,0xd0]
+@ CHECK: ldcl	p6, c14, [r10], #16     @ encoding: [0xfa,0xec,0x04,0xe6]
+@ CHECK: ldcl	p7, c15, [r11], #-72    @ encoding: [0x7b,0xec,0x12,0xf7]
+
+@ CHECK: ldc2	p2, c8, [r1], {25}      @ encoding: [0x91,0xfc,0x19,0x82]
+
+
+@------------------------------------------------------------------------------
 @ LDMIA
 @------------------------------------------------------------------------------
         ldmia.w r4, {r4, r5, r8, r9}
@@ -2120,6 +2180,66 @@ _func:
 @ CHECK: ite	ne                      @ encoding: [0x14,0xbf]
 @ CHECK: ssub16ne	r5, r3, r2      @ encoding: [0xd3,0xfa,0x02,0xf5]
 @ CHECK: ssub8eq	r5, r1, r2      @ encoding: [0xc1,0xfa,0x02,0xf5]
+
+
+@------------------------------------------------------------------------------
+@ STC{L}/STC2{L}
+@------------------------------------------------------------------------------
+        stc2 p0, c8, [r1, #4]
+        stc2 p1, c7, [r2]
+        stc2 p2, c6, [r3, #-224]
+        stc2 p3, c5, [r4, #-120]!
+        stc2 p4, c4, [r5], #16
+        stc2 p5, c3, [r6], #-72
+        stc2l p6, c2, [r7, #4]
+        stc2l p7, c1, [r8]
+        stc2l p8, c0, [r9, #-224]
+        stc2l p9, c1, [r10, #-120]!
+        stc2l p10, c2, [r11], #16
+        stc2l p11, c3, [r12], #-72
+
+        stc p12, c4, [r0, #4]
+        stc p13, c5, [r1]
+        stc p14, c6, [r2, #-224]
+        stc p15, c7, [r3, #-120]!
+        stc p5, c8, [r4], #16
+        stc p4, c9, [r5], #-72
+        stcl p3, c10, [r6, #4]
+        stcl p2, c11, [r7]
+        stcl p1, c12, [r8, #-224]
+        stcl p0, c13, [r9, #-120]!
+        stcl p6, c14, [r10], #16
+        stcl p7, c15, [r11], #-72
+
+        stc2 p2, c8, [r1], { 25 }
+
+@ CHECK: stc2	p0, c8, [r1, #4]        @ encoding: [0x81,0xfd,0x01,0x80]
+@ CHECK: stc2	p1, c7, [r2]            @ encoding: [0x82,0xfd,0x00,0x71]
+@ CHECK: stc2	p2, c6, [r3, #-224]     @ encoding: [0x03,0xfd,0x38,0x62]
+@ CHECK: stc2	p3, c5, [r4, #-120]!    @ encoding: [0x24,0xfd,0x1e,0x53]
+@ CHECK: stc2	p4, c4, [r5], #16       @ encoding: [0xa5,0xfc,0x04,0x44]
+@ CHECK: stc2	p5, c3, [r6], #-72      @ encoding: [0x26,0xfc,0x12,0x35]
+@ CHECK: stc2l	p6, c2, [r7, #4]        @ encoding: [0xc7,0xfd,0x01,0x26]
+@ CHECK: stc2l	p7, c1, [r8]            @ encoding: [0xc8,0xfd,0x00,0x17]
+@ CHECK: stc2l	p8, c0, [r9, #-224]     @ encoding: [0x49,0xfd,0x38,0x08]
+@ CHECK: stc2l	p9, c1, [r10, #-120]!   @ encoding: [0x6a,0xfd,0x1e,0x19]
+@ CHECK: stc2l	p10, c2, [r11], #16     @ encoding: [0xeb,0xfc,0x04,0x2a]
+@ CHECK: stc2l	p11, c3, [r12], #-72    @ encoding: [0x6c,0xfc,0x12,0x3b]
+
+@ CHECK: stc	p12, c4, [r0, #4]       @ encoding: [0x80,0xed,0x01,0x4c]
+@ CHECK: stc	p13, c5, [r1]           @ encoding: [0x81,0xed,0x00,0x5d]
+@ CHECK: stc	p14, c6, [r2, #-224]    @ encoding: [0x02,0xed,0x38,0x6e]
+@ CHECK: stc	p15, c7, [r3, #-120]!   @ encoding: [0x23,0xed,0x1e,0x7f]
+@ CHECK: stc	p5, c8, [r4], #16       @ encoding: [0xa4,0xec,0x04,0x85]
+@ CHECK: stc	p4, c9, [r5], #-72      @ encoding: [0x25,0xec,0x12,0x94]
+@ CHECK: stcl	p3, c10, [r6, #4]       @ encoding: [0xc6,0xed,0x01,0xa3]
+@ CHECK: stcl	p2, c11, [r7]           @ encoding: [0xc7,0xed,0x00,0xb2]
+@ CHECK: stcl	p1, c12, [r8, #-224]    @ encoding: [0x48,0xed,0x38,0xc1]
+@ CHECK: stcl	p0, c13, [r9, #-120]!   @ encoding: [0x69,0xed,0x1e,0xd0]
+@ CHECK: stcl	p6, c14, [r10], #16     @ encoding: [0xea,0xec,0x04,0xe6]
+@ CHECK: stcl	p7, c15, [r11], #-72    @ encoding: [0x6b,0xec,0x12,0xf7]
+
+@ CHECK: stc2	p2, c8, [r1], {25}      @ encoding: [0x81,0xfc,0x19,0x82]
 
 
 @------------------------------------------------------------------------------

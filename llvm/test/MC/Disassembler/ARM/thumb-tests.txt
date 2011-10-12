@@ -218,7 +218,7 @@
 # CHECK:	pld	[r5, #30]
 0x95 0xf8 0x1e 0xf0
 
-# CHECK:	stc	p12, cr15, [r9], {137}
+# CHECK:	stc2	p12, c15, [r9], {137}
 0x89 0xfc 0x89 0xfc
 
 # CHECK:	vmov	r1, r0, d11

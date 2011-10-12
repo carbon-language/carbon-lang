@@ -2086,7 +2086,8 @@ ARMAsmParser::OperandMatchResultTy ARMAsmParser::
 parseCoprocNumOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   SMLoc S = Parser.getTok().getLoc();
   const AsmToken &Tok = Parser.getTok();
-  assert(Tok.is(AsmToken::Identifier) && "Token is not an Identifier");
+  if (Tok.isNot(AsmToken::Identifier))
+    return MatchOperand_NoMatch;
 
   int Num = MatchCoprocessorOperandName(Tok.getString(), 'p');
   if (Num == -1)
@@ -2104,7 +2105,8 @@ ARMAsmParser::OperandMatchResultTy ARMAsmParser::
 parseCoprocRegOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   SMLoc S = Parser.getTok().getLoc();
   const AsmToken &Tok = Parser.getTok();
-  assert(Tok.is(AsmToken::Identifier) && "Token is not an Identifier");
+  if (Tok.isNot(AsmToken::Identifier))
+    return MatchOperand_NoMatch;
 
   int Reg = MatchCoprocessorOperandName(Tok.getString(), 'c');
   if (Reg == -1)
