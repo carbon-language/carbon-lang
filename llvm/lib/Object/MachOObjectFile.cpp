@@ -241,6 +241,11 @@ error_code MachOObjectFile::getSymbolType(DataRefImpl Symb,
     n_type = Entry->Type;
   }
   Res = SymbolRef::ST_Other;
+
+  // If this is a STAB debugging symbol, we can do nothing more.
+  if (n_type & MachO::NlistMaskStab)
+    return object_error::success;
+
   switch (n_type & MachO::NlistMaskType) {
     case MachO::NListTypeUndefined :
       Res = SymbolRef::ST_External;
