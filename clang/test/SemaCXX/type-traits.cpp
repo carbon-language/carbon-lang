@@ -89,6 +89,13 @@ struct HasVirtDest { virtual ~HasVirtDest(); };
 struct DerivedVirtDest : HasVirtDest {};
 typedef HasVirtDest VirtDestAr[1];
 
+class AllPrivate {
+  AllPrivate() throw();
+  AllPrivate(const AllPrivate&) throw();
+  AllPrivate &operator=(const AllPrivate &) throw();
+  ~AllPrivate() throw();
+};
+
 void is_pod()
 {
   { int arr[T(__is_pod(int))]; }
@@ -1102,6 +1109,7 @@ void has_trivial_default_constructor() {
   { int arr[F(__has_trivial_constructor(void))]; }
   { int arr[F(__has_trivial_constructor(cvoid))]; }
   { int arr[F(__has_trivial_constructor(HasTemplateCons))]; }
+  { int arr[F(__has_trivial_constructor(AllPrivate))]; }
 }
 
 void has_trivial_copy_constructor() {
@@ -1129,6 +1137,7 @@ void has_trivial_copy_constructor() {
   { int arr[F(__has_trivial_copy(VirtAr))]; }
   { int arr[F(__has_trivial_copy(void))]; }
   { int arr[F(__has_trivial_copy(cvoid))]; }
+  { int arr[F(__has_trivial_copy(AllPrivate))]; }
 }
 
 void has_trivial_copy_assignment() {
@@ -1155,6 +1164,7 @@ void has_trivial_copy_assignment() {
   { int arr[F(__has_trivial_assign(VirtAr))]; }
   { int arr[F(__has_trivial_assign(void))]; }
   { int arr[F(__has_trivial_assign(cvoid))]; }
+  { int arr[F(__has_trivial_assign(AllPrivate))]; }
 }
 
 void has_trivial_destructor() {
@@ -1181,6 +1191,7 @@ void has_trivial_destructor() {
   { int arr[F(__has_trivial_destructor(HasDest))]; }
   { int arr[F(__has_trivial_destructor(void))]; }
   { int arr[F(__has_trivial_destructor(cvoid))]; }
+  { int arr[F(__has_trivial_destructor(AllPrivate))]; }
 }
 
 struct A { ~A() {} };
@@ -1190,6 +1201,23 @@ void f() {
   { int arr[F(__has_trivial_destructor(A))]; }
   { int arr[F(__has_trivial_destructor(B<int>))]; }
 }
+
+class PR11110 {
+  template <int> int operator=( int );
+  int operator=(PR11110);
+};
+
+class UsingAssign;
+
+class UsingAssignBase {
+protected:
+  UsingAssign &operator=(const UsingAssign&) throw();
+};
+
+class UsingAssign : public UsingAssignBase {
+public:
+  using UsingAssignBase::operator=;
+};
 
 void has_nothrow_assign() {
   { int arr[T(__has_nothrow_assign(Int))]; }
@@ -1208,6 +1236,8 @@ void has_nothrow_assign() {
   { int arr[T(__has_nothrow_assign(HasNoThrowCopyAssign))]; }
   { int arr[T(__has_nothrow_assign(HasMultipleNoThrowCopyAssign))]; }
   { int arr[T(__has_nothrow_assign(HasVirtDest))]; }
+  { int arr[T(__has_nothrow_assign(AllPrivate))]; }
+  { int arr[T(__has_nothrow_assign(UsingAssign))]; }
 
   { int arr[F(__has_nothrow_assign(IntRef))]; }
   { int arr[F(__has_nothrow_assign(HasCopyAssign))]; }
@@ -1219,6 +1249,7 @@ void has_nothrow_assign() {
   { int arr[F(__has_nothrow_assign(VirtAr))]; }
   { int arr[F(__has_nothrow_assign(void))]; }
   { int arr[F(__has_nothrow_assign(cvoid))]; }
+  { int arr[F(__has_nothrow_assign(PR11110))]; }
 }
 
 void has_nothrow_copy() {
@@ -1243,6 +1274,7 @@ void has_nothrow_copy() {
   { int arr[T(__has_nothrow_copy(HasMultipleNoThrowCopy))]; }
   { int arr[T(__has_nothrow_copy(HasVirtDest))]; }
   { int arr[T(__has_nothrow_copy(HasTemplateCons))]; }
+  { int arr[T(__has_nothrow_copy(AllPrivate))]; }
 
   { int arr[F(__has_nothrow_copy(HasCopy))]; }
   { int arr[F(__has_nothrow_copy(HasMultipleCopy))]; }
@@ -1272,6 +1304,7 @@ void has_nothrow_constructor() {
   { int arr[T(__has_nothrow_constructor(HasNoThrowConstructor))]; }
   { int arr[T(__has_nothrow_constructor(HasVirtDest))]; }
   // { int arr[T(__has_nothrow_constructor(VirtAr))]; } // not implemented
+  { int arr[T(__has_nothrow_constructor(AllPrivate))]; }
 
   { int arr[F(__has_nothrow_constructor(HasCons))]; }
   { int arr[F(__has_nothrow_constructor(HasRef))]; }
@@ -1316,6 +1349,7 @@ void has_virtual_destructor() {
   { int arr[F(__has_virtual_destructor(VirtDestAr))]; }
   { int arr[F(__has_virtual_destructor(void))]; }
   { int arr[F(__has_virtual_destructor(cvoid))]; }
+  { int arr[F(__has_virtual_destructor(AllPrivate))]; }
 }
 
 

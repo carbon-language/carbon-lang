@@ -2863,8 +2863,12 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
       LookupResult Res(Self, DeclarationNameInfo(Name, KeyLoc),
                        Sema::LookupOrdinaryName);
       if (Self.LookupQualifiedName(Res, RD)) {
+        Res.suppressDiagnostics();
         for (LookupResult::iterator Op = Res.begin(), OpEnd = Res.end();
              Op != OpEnd; ++Op) {
+          if (isa<FunctionTemplateDecl>(*Op))
+            continue;
+          
           CXXMethodDecl *Operator = cast<CXXMethodDecl>(*Op);
           if (Operator->isCopyAssignmentOperator()) {
             FoundAssign = true;
@@ -2877,7 +2881,7 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
           }
         }
       }
-
+      
       return FoundAssign;
     }
     return false;
