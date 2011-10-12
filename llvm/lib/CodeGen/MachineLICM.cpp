@@ -251,6 +251,10 @@ namespace {
     bool EliminateCSE(MachineInstr *MI,
            DenseMap<unsigned, std::vector<const MachineInstr*> >::iterator &CI);
 
+    /// MayCSE - Return true if the given instruction will be CSE'd if it's
+    /// hoisted out of the loop.
+    bool MayCSE(MachineInstr *MI);
+
     /// Hoist - When an instruction is found to only use loop invariant operands
     /// that is safe to hoist, this instruction is called to do the dirty work.
     /// It returns true if the instruction is hoisted.
@@ -1047,7 +1051,7 @@ bool MachineLICM::IsProfitableToHoist(MachineInstr &MI) {
     // Also, do not "speculate" in high register pressure situation. If an
     // instruction is not guaranteed to be executed in the loop, it's best to be
     // conservative.
-    if (SpeculationState == SpeculateTrue ||
+    if ((!IsGuaranteedToExecute(MI.getParent()) && !MayCSE(&MI)) ||
         (!TII->isTriviallyReMaterializable(&MI, AA) &&
          !MI.isInvariantLoad(AA)))
       return false;
@@ -1181,6 +1185,20 @@ bool MachineLICM::EliminateCSE(MachineInstr *MI,
     return true;
   }
   return false;
+}
+
+/// MayCSE - Return true if the given instruction will be CSE'd if it's
+/// hoisted out of the loop.
+bool MachineLICM::MayCSE(MachineInstr *MI) {
+  unsigned Opcode = MI->getOpcode();
+  DenseMap<unsigned, std::vector<const MachineInstr*> >::iterator
+    CI = CSEMap.find(Opcode);
+  // Do not CSE implicit_def so ProcessImplicitDefs can properly propagate
+  // the undef property onto uses.
+  if (CI == CSEMap.end() || MI->isImplicitDef())
+    return false;
+
+  return LookForDuplicate(MI, CI->second) != 0;
 }
 
 /// Hoist - When an instruction is found to use only loop invariant operands
