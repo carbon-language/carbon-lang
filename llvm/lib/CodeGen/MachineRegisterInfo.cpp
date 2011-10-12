@@ -79,11 +79,8 @@ MachineRegisterInfo::recomputeRegClass(unsigned Reg, const TargetMachine &TM) {
     // TRI doesn't have accurate enough information to model this yet.
     if (I.getOperand().getSubReg())
       return false;
-    // Inline asm instuctions don't remember their constraints.
-    if (I->isInlineAsm())
-      return false;
     const TargetRegisterClass *OpRC =
-      TII->getRegClass(I->getDesc(), I.getOperandNo(), TRI);
+      I->getRegClassConstraint(I.getOperandNo(), TII, TRI);
     if (OpRC)
       NewRC = TRI->getCommonSubClass(NewRC, OpRC);
     if (!NewRC || NewRC == OldRC)
