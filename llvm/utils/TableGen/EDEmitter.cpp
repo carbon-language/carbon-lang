@@ -581,6 +581,7 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
   IMM("nohash_imm");
   IMM("p_imm");
   IMM("c_imm");
+  IMM("coproc_option_imm");
   IMM("imod_op");
   IMM("iflags_op");
   IMM("cpinst_operand");

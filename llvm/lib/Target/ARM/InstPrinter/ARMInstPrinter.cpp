@@ -719,6 +719,11 @@ void ARMInstPrinter::printCImmediate(const MCInst *MI, unsigned OpNum,
   O << "c" << MI->getOperand(OpNum).getImm();
 }
 
+void ARMInstPrinter::printCoprocOptionImm(const MCInst *MI, unsigned OpNum,
+                                          raw_ostream &O) {
+  O << "{" << MI->getOperand(OpNum).getImm() << "}";
+}
+
 void ARMInstPrinter::printPCLabel(const MCInst *MI, unsigned OpNum,
                                   raw_ostream &O) {
   llvm_unreachable("Unhandled PC-relative pseudo-instruction!");

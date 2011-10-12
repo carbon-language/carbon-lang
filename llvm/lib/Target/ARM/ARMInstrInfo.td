@@ -842,6 +842,14 @@ def c_imm : Operand<i32> {
   let PrintMethod = "printCImmediate";
   let ParserMatchClass = CoprocRegAsmOperand;
 }
+def CoprocOptionAsmOperand : AsmOperandClass {
+  let Name = "CoprocOption";
+  let ParserMethod = "parseCoprocOptionOperand";
+}
+def coproc_option_imm : Operand<i32> {
+  let PrintMethod = "printCoprocOptionImm";
+  let ParserMatchClass = CoprocOptionAsmOperand;
+}
 
 //===----------------------------------------------------------------------===//
 
@@ -4312,8 +4320,8 @@ multiclass LdStCop<bit load, bit Dbit, string asm> {
   }
   def _OPTION : ACI<(outs),
                     (ins p_imm:$cop, c_imm:$CRd, addr_offset_none:$addr,
-                         nohash_imm:$option),
-      asm, "\t$cop, $CRd, $addr, \\{$option\\}"> {
+                         coproc_option_imm:$option),
+      asm, "\t$cop, $CRd, $addr, $option"> {
     bits<8> option;
     bits<4> addr;
     bits<4> cop;
@@ -4383,8 +4391,8 @@ multiclass LdSt2Cop<bit load, bit Dbit, string asm> {
   }
   def _OPTION : ACInoP<(outs),
                        (ins p_imm:$cop, c_imm:$CRd, addr_offset_none:$addr,
-                            nohash_imm:$option),
-      asm, "\t$cop, $CRd, $addr, \\{$option\\}"> {
+                            coproc_option_imm:$option),
+      asm, "\t$cop, $CRd, $addr, $option"> {
     bits<8> option;
     bits<4> addr;
     bits<4> cop;

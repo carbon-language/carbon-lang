@@ -138,6 +138,8 @@ class ARMAsmParser : public MCTargetAsmParser {
     SmallVectorImpl<MCParsedAsmOperand*>&);
   OperandMatchResultTy parseCoprocRegOperand(
     SmallVectorImpl<MCParsedAsmOperand*>&);
+  OperandMatchResultTy parseCoprocOptionOperand(
+    SmallVectorImpl<MCParsedAsmOperand*>&);
   OperandMatchResultTy parseMemBarrierOptOperand(
     SmallVectorImpl<MCParsedAsmOperand*>&);
   OperandMatchResultTy parseProcIFlagsOperand(
@@ -247,6 +249,7 @@ class ARMOperand : public MCParsedAsmOperand {
     k_ITCondMask,
     k_CoprocNum,
     k_CoprocReg,
+    k_CoprocOption,
     k_Immediate,
     k_FPImmediate,
     k_MemBarrierOpt,
@@ -278,6 +281,10 @@ class ARMOperand : public MCParsedAsmOperand {
     struct {
       unsigned Val;
     } Cop;
+
+    struct {
+      unsigned Val;
+    } CoprocOption;
 
     struct {
       unsigned Mask:4;
@@ -390,6 +397,9 @@ public:
     case k_CoprocReg:
       Cop = o.Cop;
       break;
+    case k_CoprocOption:
+      CoprocOption = o.CoprocOption;
+      break;
     case k_Immediate:
       Imm = o.Imm;
       break;
@@ -495,6 +505,7 @@ public:
 
   bool isCoprocNum() const { return Kind == k_CoprocNum; }
   bool isCoprocReg() const { return Kind == k_CoprocReg; }
+  bool isCoprocOption() const { return Kind == k_CoprocOption; }
   bool isCondCode() const { return Kind == k_CondCode; }
   bool isCCOut() const { return Kind == k_CCOut; }
   bool isITMask() const { return Kind == k_ITCondMask; }
@@ -924,6 +935,16 @@ public:
     Inst.addOperand(MCOperand::CreateImm(getCoproc()));
   }
 
+  void addCoprocRegOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateImm(getCoproc()));
+  }
+
+  void addCoprocOptionOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateImm(CoprocOption.Val));
+  }
+
   void addITMaskOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     Inst.addOperand(MCOperand::CreateImm(ITMask.Mask));
@@ -932,11 +953,6 @@ public:
   void addITCondCodeOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     Inst.addOperand(MCOperand::CreateImm(unsigned(getCondCode())));
-  }
-
-  void addCoprocRegOperands(MCInst &Inst, unsigned N) const {
-    assert(N == 1 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateImm(getCoproc()));
   }
 
   void addCCOutOperands(MCInst &Inst, unsigned N) const {
@@ -1453,6 +1469,14 @@ public:
     return Op;
   }
 
+  static ARMOperand *CreateCoprocOption(unsigned Val, SMLoc S, SMLoc E) {
+    ARMOperand *Op = new ARMOperand(k_CoprocOption);
+    Op->Cop.Val = Val;
+    Op->StartLoc = S;
+    Op->EndLoc = E;
+    return Op;
+  }
+
   static ARMOperand *CreateCCOut(unsigned RegNum, SMLoc S) {
     ARMOperand *Op = new ARMOperand(k_CCOut);
     Op->Reg.RegNum = RegNum;
@@ -1667,6 +1691,9 @@ void ARMOperand::print(raw_ostream &OS) const {
     break;
   case k_CoprocReg:
     OS << "<coprocessor register: " << getCoproc() << ">";
+    break;
+  case k_CoprocOption:
+    OS << "<coprocessor option: " << CoprocOption.Val << ">";
     break;
   case k_MSRMask:
     OS << "<mask: " << getMSRMask() << ">";
@@ -2085,6 +2112,40 @@ parseCoprocRegOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
   Parser.Lex(); // Eat identifier token.
   Operands.push_back(ARMOperand::CreateCoprocReg(Reg, S));
+  return MatchOperand_Success;
+}
+
+/// parseCoprocOptionOperand - Try to parse an coprocessor option operand.
+/// coproc_option : '{' imm0_255 '}'
+ARMAsmParser::OperandMatchResultTy ARMAsmParser::
+parseCoprocOptionOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  SMLoc S = Parser.getTok().getLoc();
+
+  // If this isn't a '{', this isn't a coprocessor immediate operand.
+  if (Parser.getTok().isNot(AsmToken::LCurly))
+    return MatchOperand_NoMatch;
+  Parser.Lex(); // Eat the '{'
+
+  const MCExpr *Expr;
+  SMLoc Loc = Parser.getTok().getLoc();
+  if (getParser().ParseExpression(Expr)) {
+    Error(Loc, "illegal expression");
+    return MatchOperand_ParseFail;
+  }
+  const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Expr);
+  if (!CE || CE->getValue() < 0 || CE->getValue() > 255) {
+    Error(Loc, "coprocessor option must be an immediate in range [0, 255]");
+    return MatchOperand_ParseFail;
+  }
+  int Val = CE->getValue();
+
+  // Check for and consume the closing '}'
+  if (Parser.getTok().isNot(AsmToken::RCurly))
+    return MatchOperand_ParseFail;
+  SMLoc E = Parser.getTok().getLoc();
+  Parser.Lex(); // Eat the '}'
+
+  Operands.push_back(ARMOperand::CreateCoprocOption(Val, S, E));
   return MatchOperand_Success;
 }
 

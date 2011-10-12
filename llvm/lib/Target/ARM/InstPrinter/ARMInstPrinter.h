@@ -120,6 +120,7 @@ public:
   void printNoHashImmediate(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printPImmediate(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printCImmediate(const MCInst *MI, unsigned OpNum, raw_ostream &O);
+  void printCoprocOptionImm(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printFPImmOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printNEONModImmOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printImmPlusOneOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);

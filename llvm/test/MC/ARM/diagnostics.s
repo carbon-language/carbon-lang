@@ -305,3 +305,13 @@
 @ CHECK-ERRORS:         vpush {s0, s3}
 @ CHECK-ERRORS:                    ^
 
+        @ Out of range coprocessor option immediate.
+        ldc2 p2, c8, [r1], { 256 }
+        ldc2 p2, c8, [r1], { -1 }
+
+@ CHECK-ERRORS: error: coprocessor option must be an immediate in range [0, 255]
+@ CHECK-ERRORS:         ldc2 p2, c8, [r1], { 256 }
+@ CHECK-ERRORS:                              ^
+@ CHECK-ERRORS: error: coprocessor option must be an immediate in range [0, 255]
+@ CHECK-ERRORS:         ldc2 p2, c8, [r1], { -1 }
+@ CHECK-ERRORS:                              ^

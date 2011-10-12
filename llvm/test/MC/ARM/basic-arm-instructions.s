@@ -684,6 +684,8 @@ Lforward:
         ldcleq p6, c14, [r10], #16
         ldclhi p7, c15, [r11], #-72
 
+        ldc2 p2, c8, [r1], { 25 }
+
 @ CHECK: ldc2	p0, c8, [r1, #4]        @ encoding: [0x01,0x80,0x91,0xfd]
 @ CHECK: ldc2	p1, c7, [r2]            @ encoding: [0x00,0x71,0x92,0xfd]
 @ CHECK: ldc2	p2, c6, [r3, #-224]     @ encoding: [0x38,0x62,0x13,0xfd]
@@ -722,6 +724,8 @@ Lforward:
 @ CHECK: ldclne	p0, c13, [r9, #-120]!   @ encoding: [0x1e,0xd0,0x79,0x1d]
 @ CHECK: ldcleq	p6, c14, [r10], #16     @ encoding: [0x04,0xe6,0xfa,0x0c]
 @ CHECK: ldclhi	p7, c15, [r11], #-72    @ encoding: [0x12,0xf7,0x7b,0x8c]
+
+@ CHECK: ldc2	p2, c8, [r1], {25}      @ encoding: [0x19,0x82,0x91,0xfc]
 
 
 @------------------------------------------------------------------------------
