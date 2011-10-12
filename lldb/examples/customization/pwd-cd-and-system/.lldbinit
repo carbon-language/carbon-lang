@@ -1,0 +1,6 @@
+script import os, sys
+script sys.path.append(os.path.expanduser('~'))
+script import utils
+command alias pwd script print os.getcwd()
+command script add -f utils.chdir cd
+command script add -f utils.system system
