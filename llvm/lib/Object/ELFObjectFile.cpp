@@ -444,8 +444,11 @@ template<support::endianness target_endianness, bool is64Bits>
 const typename ELFObjectFile<target_endianness, is64Bits>::Elf_Shdr *
 ELFObjectFile<target_endianness, is64Bits>
                              ::getSection(const Elf_Sym *symb) const {
-  if (symb->st_shndx == ELF::SHN_XINDEX)
+  if (symb->st_shndx == ELF::SHN_XINDEX) {
+    if (!ExtendedSymbolTable.count(symb))
+      return 0;
     return getSection(ExtendedSymbolTable.lookup(symb));
+  }
   if (symb->st_shndx >= ELF::SHN_LORESERVE)
     return 0;
   return getSection(symb->st_shndx);
