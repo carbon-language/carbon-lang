@@ -21,4 +21,13 @@ struct CXTranslationUnitImpl {
 };
 }
 
+namespace clang {
+  class ASTUnit;
+
+namespace cxtu {
+
+CXTranslationUnitImpl *MakeCXTranslationUnit(ASTUnit *TU);
+
+}} // end namespace clang::cxtu
+
 #endif
