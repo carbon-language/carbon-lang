@@ -2,7 +2,7 @@
 ; RUN: opt < %s -loop-reduce -S | \
 ; RUN:   not grep {getelementptr.*%outer.*%INDVAR}
 
-target datalayout = "e-p:32:32:32-n:32"
+target datalayout = "e-p:32:32:32-n32"
 declare i1 @pred()
 
 define void @test([10000 x i32]* %P, i32 %outer) {

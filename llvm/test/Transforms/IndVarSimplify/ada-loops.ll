@@ -14,7 +14,7 @@
 ; CHECK-NOT: {{sext|zext|add i8}}
 
 ; ModuleID = 'ada.bc'
-target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-n:8:16:32"
+target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-n8:16:32"
 target triple = "i686-pc-linux-gnu"
 
 define void @kinds__sbytezero([256 x i32]* nocapture %a) nounwind {

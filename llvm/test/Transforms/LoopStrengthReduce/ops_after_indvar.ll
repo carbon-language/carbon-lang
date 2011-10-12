@@ -3,7 +3,7 @@
 
 ; RUN: opt < %s -loop-reduce -S | not grep INDVAR
 
-target datalayout = "e-p:32:32:32-n:32"
+target datalayout = "e-p:32:32:32-n32"
 
 declare i1 @pred()
 

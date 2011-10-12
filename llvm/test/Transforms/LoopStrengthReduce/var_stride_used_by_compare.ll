@@ -9,7 +9,7 @@
 
 ; mul uint %i, 3
 
-target datalayout = "e-p:32:32-n:32"
+target datalayout = "e-p:32:32-n32"
 target triple = "i686-apple-darwin8"
 @flags2 = external global [8193 x i8], align 32		; <[8193 x i8]*> [#uses=1]
 

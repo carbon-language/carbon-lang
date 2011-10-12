@@ -3,7 +3,7 @@
 ; CHECK-NOT: and
 ; CHECK-NOT: zext
 
-target datalayout = "-p:64:64:64-n:32:64"
+target datalayout = "-p:64:64:64-n32:64"
 
 define void @foo(double* %d, i64 %n) nounwind {
 entry:
