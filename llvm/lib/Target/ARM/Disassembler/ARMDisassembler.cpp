@@ -1232,30 +1232,6 @@ static DecodeStatus DecodeCopMemInstruction(llvm::MCInst &Inst, unsigned Insn,
   Inst.addOperand(MCOperand::CreateImm(CRd));
   if (!Check(S, DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)))
     return MCDisassembler::Fail;
-  switch (Inst.getOpcode()) {
-    case ARM::LDC_OPTION:
-    case ARM::LDCL_OPTION:
-    case ARM::LDC2_OPTION:
-    case ARM::LDC2L_OPTION:
-    case ARM::STC_OPTION:
-    case ARM::STCL_OPTION:
-    case ARM::STC2_OPTION:
-    case ARM::STC2L_OPTION:
-    case ARM::LDCL_POST:
-    case ARM::STCL_POST:
-    case ARM::LDC2L_POST:
-    case ARM::STC2L_POST:
-    case ARM::t2LDC_OPTION:
-    case ARM::t2LDCL_OPTION:
-    case ARM::t2STC_OPTION:
-    case ARM::t2STCL_OPTION:
-    case ARM::t2LDCL_POST:
-    case ARM::t2STCL_POST:
-      break;
-    default:
-      Inst.addOperand(MCOperand::CreateReg(0));
-      break;
-  }
 
   unsigned P = fieldFromInstruction32(Insn, 24, 1);
   unsigned W = fieldFromInstruction32(Insn, 21, 1);
