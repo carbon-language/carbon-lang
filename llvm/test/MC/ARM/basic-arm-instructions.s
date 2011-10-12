@@ -1926,6 +1926,91 @@ Lforward:
 @ CHECK: ssub8	r9, r2, r4              @ encoding: [0xf4,0x9f,0x12,0xe6]
 @ CHECK: ssub8eq	r5, r1, r2      @ encoding: [0xf2,0x5f,0x11,0x06]
 
+@------------------------------------------------------------------------------
+@ STC{L}/STC2{L}
+@------------------------------------------------------------------------------
+        stc2 p0, c8, [r1, #4]
+        stc2 p1, c7, [r2]
+        stc2 p2, c6, [r3, #-224]
+        stc2 p3, c5, [r4, #-120]!
+        stc2 p4, c4, [r5], #16
+        stc2 p5, c3, [r6], #-72
+        stc2l p6, c2, [r7, #4]
+        stc2l p7, c1, [r8]
+        stc2l p8, c0, [r9, #-224]
+        stc2l p9, c1, [r10, #-120]!
+        stc2l p10, c2, [r11], #16
+        stc2l p11, c3, [r12], #-72
+
+        stc p12, c4, [r0, #4]
+        stc p13, c5, [r1]
+        stc p14, c6, [r2, #-224]
+        stc p15, c7, [r3, #-120]!
+        stc p5, c8, [r4], #16
+        stc p4, c9, [r5], #-72
+        stcl p3, c10, [r6, #4]
+        stcl p2, c11, [r7]
+        stcl p1, c12, [r8, #-224]
+        stcl p0, c13, [r9, #-120]!
+        stcl p6, c14, [r10], #16
+        stcl p7, c15, [r11], #-72
+
+        stclo p12, c4, [r0, #4]
+        stchi p13, c5, [r1]
+        stccs p14, c6, [r2, #-224]
+        stccc p15, c7, [r3, #-120]!
+        stceq p5, c8, [r4], #16
+        stcgt p4, c9, [r5], #-72
+        stcllt p3, c10, [r6, #4]
+        stclge p2, c11, [r7]
+        stclle p1, c12, [r8, #-224]
+        stclne p0, c13, [r9, #-120]!
+        stcleq p6, c14, [r10], #16
+        stclhi p7, c15, [r11], #-72
+
+        stc2 p2, c8, [r1], { 25 }
+
+@ CHECK: stc2	p0, c8, [r1, #4]        @ encoding: [0x01,0x80,0x81,0xfd]
+@ CHECK: stc2	p1, c7, [r2]            @ encoding: [0x00,0x71,0x82,0xfd]
+@ CHECK: stc2	p2, c6, [r3, #-224]     @ encoding: [0x38,0x62,0x03,0xfd]
+@ CHECK: stc2	p3, c5, [r4, #-120]!    @ encoding: [0x1e,0x53,0x24,0xfd]
+@ CHECK: stc2	p4, c4, [r5], #16       @ encoding: [0x04,0x44,0xa5,0xfc]
+@ CHECK: stc2	p5, c3, [r6], #-72      @ encoding: [0x12,0x35,0x26,0xfc]
+@ CHECK: stc2l	p6, c2, [r7, #4]        @ encoding: [0x01,0x26,0xc7,0xfd]
+@ CHECK: stc2l	p7, c1, [r8]            @ encoding: [0x00,0x17,0xc8,0xfd]
+@ CHECK: stc2l	p8, c0, [r9, #-224]     @ encoding: [0x38,0x08,0x49,0xfd]
+@ CHECK: stc2l	p9, c1, [r10, #-120]!   @ encoding: [0x1e,0x19,0x6a,0xfd]
+@ CHECK: stc2l	p10, c2, [r11], #16     @ encoding: [0x04,0x2a,0xeb,0xfc]
+@ CHECK: stc2l	p11, c3, [r12], #-72    @ encoding: [0x12,0x3b,0x6c,0xfc]
+
+@ CHECK: stc	p12, c4, [r0, #4]       @ encoding: [0x01,0x4c,0x80,0xed]
+@ CHECK: stc	p13, c5, [r1]           @ encoding: [0x00,0x5d,0x81,0xed]
+@ CHECK: stc	p14, c6, [r2, #-224]    @ encoding: [0x38,0x6e,0x02,0xed]
+@ CHECK: stc	p15, c7, [r3, #-120]!   @ encoding: [0x1e,0x7f,0x23,0xed]
+@ CHECK: stc	p5, c8, [r4], #16       @ encoding: [0x04,0x85,0xa4,0xec]
+@ CHECK: stc	p4, c9, [r5], #-72      @ encoding: [0x12,0x94,0x25,0xec]
+@ CHECK: stcl	p3, c10, [r6, #4]       @ encoding: [0x01,0xa3,0xc6,0xed]
+@ CHECK: stcl	p2, c11, [r7]           @ encoding: [0x00,0xb2,0xc7,0xed]
+@ CHECK: stcl	p1, c12, [r8, #-224]    @ encoding: [0x38,0xc1,0x48,0xed]
+@ CHECK: stcl	p0, c13, [r9, #-120]!   @ encoding: [0x1e,0xd0,0x69,0xed]
+@ CHECK: stcl	p6, c14, [r10], #16     @ encoding: [0x04,0xe6,0xea,0xec]
+@ CHECK: stcl	p7, c15, [r11], #-72    @ encoding: [0x12,0xf7,0x6b,0xec]
+
+@ CHECK: stclo	p12, c4, [r0, #4]       @ encoding: [0x01,0x4c,0x80,0x3d]
+@ CHECK: stchi	p13, c5, [r1]           @ encoding: [0x00,0x5d,0x81,0x8d]
+@ CHECK: stchs	p14, c6, [r2, #-224]    @ encoding: [0x38,0x6e,0x02,0x2d]
+@ CHECK: stclo	p15, c7, [r3, #-120]!   @ encoding: [0x1e,0x7f,0x23,0x3d]
+@ CHECK: stceq	p5, c8, [r4], #16       @ encoding: [0x04,0x85,0xa4,0x0c]
+@ CHECK: stcgt	p4, c9, [r5], #-72      @ encoding: [0x12,0x94,0x25,0xcc]
+@ CHECK: stcllt	p3, c10, [r6, #4]       @ encoding: [0x01,0xa3,0xc6,0xbd]
+@ CHECK: stclge	p2, c11, [r7]           @ encoding: [0x00,0xb2,0xc7,0xad]
+@ CHECK: stclle	p1, c12, [r8, #-224]    @ encoding: [0x38,0xc1,0x48,0xdd]
+@ CHECK: stclne	p0, c13, [r9, #-120]!   @ encoding: [0x1e,0xd0,0x69,0x1d]
+@ CHECK: stcleq	p6, c14, [r10], #16     @ encoding: [0x04,0xe6,0xea,0x0c]
+@ CHECK: stclhi	p7, c15, [r11], #-72    @ encoding: [0x12,0xf7,0x6b,0x8c]
+
+@ CHECK: stc2	p2, c8, [r1], {25}      @ encoding: [0x19,0x82,0x81,0xfc]
+
 
 @------------------------------------------------------------------------------
 @ STM*
