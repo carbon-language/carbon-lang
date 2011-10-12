@@ -719,7 +719,11 @@ NotASpecialMember:;
     }
 
     // Record if this field is the first non-literal field or base.
-    if (!hasNonLiteralTypeFieldsOrBases() && !T->isLiteralType())
+    // As a slight variation on the standard, we regard mutable members as being
+    // non-literal, since mutating a constexpr variable would break C++11
+    // constant expression semantics.
+    if ((!hasNonLiteralTypeFieldsOrBases() && !T->isLiteralType()) ||
+        Field->isMutable())
       data().HasNonLiteralTypeFieldsOrBases = true;
 
     if (Field->hasInClassInitializer()) {

@@ -106,3 +106,22 @@ struct ArrBad {
   S s[3]; // expected-note {{data member 's' of non-literal type 'S [3]'}}
 };
 constexpr int f(ArrBad); // expected-error {{1st parameter type 'ArrBad' is not a literal type}}
+
+
+// As a non-conforming tweak to the standard, we do not allow a literal type to
+// have any mutable data members.
+namespace MutableMembers {
+  struct MM {
+    mutable int n; // expected-note {{'MM' is not literal because it has a mutable data member}}
+  };
+  constexpr int f(MM); // expected-error {{not a literal type}}
+
+  // Here's one reason why allowing this would be a disaster...
+  template<int n> struct Id { int k = n; };
+  int f() {
+    // FIXME: correctly check whether the initializer is a constant expression.
+    constexpr MM m = { 0 }; // desired-error {{must be a constant expression}}
+    ++m.n;
+    return Id<m.n>().k; // expected-error {{not an integral constant expression}}
+  }
+}

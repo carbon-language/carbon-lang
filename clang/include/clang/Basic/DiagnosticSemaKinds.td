@@ -1266,6 +1266,8 @@ def note_non_literal_user_provided_dtor : Note<
   "%0 is not literal because it has a user-provided destructor">;
 def note_non_literal_nontrivial_dtor : Note<
   "%0 is not literal because it has a non-trivial destructor">;
+def note_non_literal_mutable_field : Note<
+  "%0 is not literal because it has a mutable data member">;
  
 // Objective-C++
 def err_objc_decls_may_only_appear_in_global_scope : Error<
