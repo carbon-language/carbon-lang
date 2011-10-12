@@ -300,6 +300,23 @@ and will issue a warning if used in the top-level compilation
 file.  A warning will also be issued if an absolute path
 is used in the file argument.</p>
 
+
+<!-- ======================================================================= -->
+<h3><a name="__has_warning">__has_warning</a></h3>
+<!-- ======================================================================= -->
+
+<p>This function-like macro takes a string literal that represents a command
+  line option for a warning and returns true if that is a valid warning
+  option.</p>
+  
+<blockquote>
+<pre>
+#if __has_warning("-Wformat")
+...
+#endif
+</pre>
+</blockquote>
+
 <!-- ======================================================================= -->
 <h2 id="builtinmacros">Builtin Macros</h2>
 <!-- ======================================================================= -->

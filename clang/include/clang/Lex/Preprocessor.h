@@ -93,6 +93,7 @@ class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
   IdentifierInfo *Ident__has_attribute;            // __has_attribute
   IdentifierInfo *Ident__has_include;              // __has_include
   IdentifierInfo *Ident__has_include_next;         // __has_include_next
+  IdentifierInfo *Ident__has_warning;              // __has_warning
 
   SourceLocation DATELoc, TIMELoc;
   unsigned CounterValue;  // Next __COUNTER__ value.

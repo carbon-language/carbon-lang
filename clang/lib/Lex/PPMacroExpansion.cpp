@@ -21,6 +21,7 @@
 #include "clang/Lex/LexDiagnostic.h"
 #include "clang/Lex/CodeCompletionHandler.h"
 #include "clang/Lex/ExternalPreprocessorSource.h"
+#include "clang/Lex/LiteralSupport.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Config/config.h"
@@ -92,6 +93,7 @@ void Preprocessor::RegisterBuiltinMacros() {
   Ident__has_attribute    = RegisterBuiltinMacro(*this, "__has_attribute");
   Ident__has_include      = RegisterBuiltinMacro(*this, "__has_include");
   Ident__has_include_next = RegisterBuiltinMacro(*this, "__has_include_next");
+  Ident__has_warning      = RegisterBuiltinMacro(*this, "__has_warning");
 
   // Microsoft Extensions.
   if (Features.MicrosoftExt) 
@@ -1014,6 +1016,73 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
       Value = EvaluateHasInclude(Tok, II, *this);
     else
       Value = EvaluateHasIncludeNext(Tok, II, *this);
+    OS << (int)Value;
+    Tok.setKind(tok::numeric_constant);
+  } else if (II == Ident__has_warning) {
+    // The argument should be a parenthesized string literal.
+    // The argument to these builtins should be a parenthesized identifier.
+    SourceLocation StartLoc = Tok.getLocation();    
+    bool IsValid = false;
+    bool Value = false;
+    // Read the '('.
+    Lex(Tok);
+    do {
+      if (Tok.is(tok::l_paren)) {      
+        // Read the string.
+        Lex(Tok);
+      
+        // We need at least one string literal.
+        if (!Tok.is(tok::string_literal)) {
+          StartLoc = Tok.getLocation();
+          IsValid = false;
+          // Eat tokens until ')'.
+          do Lex(Tok); while (!(Tok.is(tok::r_paren) || Tok.is(tok::eod)));
+          break;
+        }
+        
+        // String concatenation allows multiple strings, which can even come
+        // from macro expansion.
+        SmallVector<Token, 4> StrToks;
+        while (Tok.is(tok::string_literal)) {
+          StrToks.push_back(Tok);
+          LexUnexpandedToken(Tok);
+        }
+        
+        // Is the end a ')'?
+        if (!(IsValid = Tok.is(tok::r_paren)))
+          break;
+        
+        // Concatenate and parse the strings.
+        StringLiteralParser Literal(&StrToks[0], StrToks.size(), *this);
+        assert(Literal.isAscii() && "Didn't allow wide strings in");
+        if (Literal.hadError)
+          break;
+        if (Literal.Pascal) {
+          Diag(Tok, diag::warn_pragma_diagnostic_invalid);
+          break;
+        }
+        
+        StringRef WarningName(Literal.GetString());
+        
+        if (WarningName.size() < 3 || WarningName[0] != '-' ||
+            WarningName[1] != 'W') {
+          Diag(StrToks[0].getLocation(), diag::warn_has_warning_invalid_option);
+          break;
+        }
+        
+        // Finally, check if the warning flags maps to a diagnostic group.
+        // We construct a SmallVector here to talk to getDiagnosticIDs().
+        // Although we don't use the result, this isn't a hot path, and not
+        // worth special casing.
+        llvm::SmallVector<diag::kind, 10> Diags;
+        Value = !getDiagnostics().getDiagnosticIDs()->
+          getDiagnosticsInGroup(WarningName.substr(2), Diags);
+      }
+    } while (false);
+    
+    if (!IsValid)
+      Diag(StartLoc, diag::err_warning_check_malformed);
+
     OS << (int)Value;
     Tok.setKind(tok::numeric_constant);
   } else {
