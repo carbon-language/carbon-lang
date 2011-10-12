@@ -61,6 +61,11 @@ ClangExpressionDeclMap::ClangExpressionDeclMap (bool keep_result_in_memory) :
 
 ClangExpressionDeclMap::~ClangExpressionDeclMap()
 {
+    // Note: The model is now that the parser's AST context and all associated
+    //   data does not vanish until the expression has been executed.  This means
+    //   that valuable lookup data (like namespaces) doesn't vanish, but 
+    
+    DidParse();
     DidDematerialize();
     DisableStructVars();
 }
@@ -933,6 +938,9 @@ ClangExpressionDeclMap::LookupDecl (clang::NamedDecl *decl)
 
     if (expr_var_sp)
     {
+        if (!expr_var_sp->m_parser_vars.get())
+            return Value();
+        
         const ConstString &name(expr_var_sp->GetName());
         TypeFromUser type(expr_var_sp->GetTypeFromUser());
         
@@ -1621,7 +1629,7 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
     Process *process = exe_ctx.GetProcessPtr();
     StackFrame *frame = exe_ctx.GetFramePtr();
 
-    if (!frame || !process || !target)
+    if (!frame || !process || !target || !m_parser_vars.get() || !expr_var->m_parser_vars.get())
         return false;
     
     // Vital information about the value

@@ -276,9 +276,7 @@ ClangUserExpression::Parse (Stream &error_stream,
         
         log->Printf("Data buffer contents:\n%s", dump_string.GetString().c_str());
     }
-    
-    m_expr_decl_map->DidParse();
-    
+        
     if (jit_error.Success())
     {
         if (process && m_jit_alloc != LLDB_INVALID_ADDRESS)
@@ -449,6 +447,7 @@ ClangUserExpression::FinalizeJITExecution (Stream &error_stream,
         error_stream.Printf ("Couldn't dematerialize struct : %s\n", expr_error.AsCString("unknown error"));
         return false;
     }
+    
     return true;
 }        
 
