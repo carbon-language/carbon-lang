@@ -93,6 +93,24 @@ ClangASTImporter::CompleteObjCInterfaceDecl (clang::ObjCInterfaceDecl *interface
     return;
 }
 
+void 
+ClangASTImporter::RegisterNamespaceMap(const clang::NamespaceDecl *decl, 
+                                       NamespaceMapSP &namespace_map)
+{
+    m_namespace_maps[decl] = namespace_map;
+}
+
+ClangASTImporter::NamespaceMapSP 
+ClangASTImporter::GetNamespaceMap(const clang::NamespaceDecl *decl)
+{
+    NamespaceMetaMap::iterator iter = m_namespace_maps.find(decl);
+    
+    if (iter != m_namespace_maps.end())
+        return iter->second;
+    else
+        return NamespaceMapSP();
+}
+
 clang::Decl 
 *ClangASTImporter::Minion::Imported (clang::Decl *from, clang::Decl *to)
 {

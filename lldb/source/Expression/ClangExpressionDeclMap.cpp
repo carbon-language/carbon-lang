@@ -32,6 +32,7 @@
 #include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/SymbolContext.h"
+#include "lldb/Symbol/SymbolVendor.h"
 #include "lldb/Symbol/Type.h"
 #include "lldb/Symbol/TypeList.h"
 #include "lldb/Symbol/Variable.h"
@@ -2055,16 +2056,10 @@ ClangExpressionDeclMap::FindGlobalVariable
 
 // Interface for ClangASTSource
 
-void 
-ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString &name)
+void
+ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context, const ConstString &name)
 {
-    assert (m_struct_vars.get());
-    assert (m_parser_vars.get());
-    
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
-        
-    if (log)
-        log->Printf("Hunting for a definition for '%s'", name.GetCString());
     
     if (m_parser_vars->m_ignore_lookups)
     {
@@ -2072,6 +2067,65 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
             log->Printf("Ignoring a query during an import");
         return;
     }
+    
+    if (log)
+    {
+        if (!context.m_decl_context)
+            log->Printf("FindExternalVisibleDecls for '%s' in a NULL DeclContext", name.GetCString());
+        else if (const NamedDecl *context_named_decl = dyn_cast<NamedDecl>(context.m_decl_context))
+            log->Printf("FindExternalVisibleDecls for '%s' in '%s'", name.GetCString(), context_named_decl->getNameAsString().c_str());
+        else
+            log->Printf("FindExternalVisibleDecls for '%s' in a '%s'", name.GetCString(), context.m_decl_context->getDeclKindName());
+    }
+        
+    if (const NamespaceDecl *namespace_context = dyn_cast<NamespaceDecl>(context.m_decl_context))
+    {
+        ClangASTImporter::NamespaceMapSP namespace_map = m_parser_vars->m_ast_importer->GetNamespaceMap(namespace_context);
+                
+        for (ClangASTImporter::NamespaceMap::iterator i = namespace_map->begin(), e = namespace_map->end();
+             i != e;
+             ++i)
+        {
+            if (log)
+                log->Printf("  Searching namespace '%s' in file '%s'",
+                            i->second.GetNamespaceDecl()->getNameAsString().c_str(),
+                            i->first->GetFileSpec().GetFilename().GetCString());
+                
+            //FindExternalVisibleDecls(context,
+            //                         i->first,
+            //                         i->second,
+            //                         name);
+        }
+    }
+    else if (!isa<TranslationUnitDecl>(context.m_decl_context))
+    {
+        // we shouldn't be getting FindExternalVisibleDecls calls for these
+        return;
+    }
+    else
+    {
+        ClangNamespaceDecl namespace_decl;
+        
+        if (log)
+            log->Printf("  Searching without a namespace");
+        
+        FindExternalVisibleDecls(context,
+                                 lldb::ModuleSP(),
+                                 namespace_decl,
+                                 name);
+    }
+}
+
+void 
+ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context, 
+                                                  lldb::ModuleSP module,
+                                                  ClangNamespaceDecl &decl,
+                                                  const ConstString &name)
+{
+    assert (m_struct_vars.get());
+    assert (m_parser_vars.get());
+    
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     do
     {
@@ -2153,10 +2207,10 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
         if (frame)
         {
             valobj = frame->GetValueForVariableExpressionPath(name_unique_cstr, 
-                                                                                        eNoDynamicValues, 
-                                                                                        StackFrame::eExpressionPathOptionCheckPtrVsMember,
-                                                                                        var,
-                                                                                        err);
+                                                              eNoDynamicValues, 
+                                                              StackFrame::eExpressionPathOptionCheckPtrVsMember,
+                                                              var,
+                                                              err);
             
             // If we found a variable in scope, no need to pull up function names
             if (err.Success() && var != NULL)
@@ -2249,25 +2303,53 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
             }
         }
         
-        ClangNamespaceDecl namespace_decl (m_parser_vars->m_sym_ctx.FindNamespace(name));
+        ModuleList &images = m_parser_vars->m_sym_ctx.target_sp->GetImages();
         
-        if (namespace_decl)
+        ClangASTImporter::NamespaceMapSP namespace_decls(new ClangASTImporter::NamespaceMap);
+        
+        for (uint32_t i = 0, e = images.GetSize();
+             i != e;
+             ++i)
         {
-            if (log)
-            {                
-                std::string s;
-                llvm::raw_string_ostream os(s);
-                namespace_decl.GetNamespaceDecl()->print(os);
-                os.flush();
-                
-                log->Printf("Added namespace decl:");
-                log->Printf("%s", s.c_str());
-            }
+            ModuleSP image = images.GetModuleAtIndex(i);
             
-            NamespaceDecl *clang_namespace_decl = AddNamespace(context, namespace_decl);
+            if (!image)
+                continue;
+            
+            ClangNamespaceDecl namespace_decl;
+            
+            SymbolVendor *symbol_vendor = image->GetSymbolVendor();
+                
+            if (!symbol_vendor)
+                continue;
+            
+            SymbolContext null_sc;
+            
+            namespace_decl = symbol_vendor->FindNamespace(null_sc, name);
+
+            if (namespace_decl)
+            {
+                (*namespace_decls)[image] = namespace_decl;
+                
+                if (log)
+                {                
+                    std::string s;
+                    llvm::raw_string_ostream os(s);
+                    namespace_decl.GetNamespaceDecl()->print(os);
+                    os.flush();
+                    
+                    log->Printf("Found namespace %s in file %s", s.c_str(), image->GetFileSpec().GetFilename().GetCString());
+                }
+            }
+        }
+        
+        if (!namespace_decls->empty())
+        {
+            NamespaceDecl *clang_namespace_decl = AddNamespace(context, namespace_decls);
+            
             if (clang_namespace_decl)
-                clang_namespace_decl->setHasExternalLexicalStorage();
-        }        
+                clang_namespace_decl->setHasExternalVisibleStorage();
+        }
     }
     else
     {
@@ -2485,7 +2567,20 @@ ClangExpressionDeclMap::FindExternalLexicalDecls (const DeclContext *decl_contex
     ASTContext *ast_context = &context_decl->getASTContext();
     
     if (log)
-        log->Printf("Finding lexical decls in a '%s' with %s predicate", context_decl->getDeclKindName(), (predicate ? "non-null" : "null"));
+    {
+        if (const NamedDecl *context_named_decl = dyn_cast<NamedDecl>(context_decl))
+            log->Printf("FindExternalLexicalDecls in '%s' (a %s) with %s predicate", 
+                        context_named_decl->getNameAsString().c_str(),
+                        context_decl->getDeclKindName(), 
+                        (predicate ? "non-null" : "null"));
+        else if(context_decl)
+            log->Printf("FindExternalLexicalDecls in a %s with %s predicate",
+                        context_decl->getDeclKindName(), 
+                        (predicate ? "non-null" : "null"));
+        else
+            log->Printf("FindExternalLexicalDecls in a NULL context with %s predicate",
+                        (predicate ? "non-null" : "null"));
+    }
     
     Decl *original_decl = NULL;
     ASTContext *original_ctx = NULL;
@@ -2933,15 +3028,24 @@ ClangExpressionDeclMap::AddOneRegister (NameSearchContext &context,
 }
 
 NamespaceDecl *
-ClangExpressionDeclMap::AddNamespace (NameSearchContext &context, const ClangNamespaceDecl &namespace_decl)
+ClangExpressionDeclMap::AddNamespace (NameSearchContext &context, ClangASTImporter::NamespaceMapSP &namespace_decls)
 {
+    if (namespace_decls.empty())
+        return NULL;
+    
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     assert (m_parser_vars.get());
     
+    const ClangNamespaceDecl &namespace_decl = namespace_decls->begin()->second;
+    
     Decl *copied_decl = m_parser_vars->GetASTImporter(context.GetASTContext())->CopyDecl(namespace_decl.GetASTContext(), 
-                                                                                                namespace_decl.GetNamespaceDecl());
-
+                                                                                         namespace_decl.GetNamespaceDecl());
+    
+    NamespaceDecl *copied_namespace_decl = dyn_cast<NamespaceDecl>(copied_decl);
+    
+    m_parser_vars->GetASTImporter(context.GetASTContext())->RegisterNamespaceMap(copied_namespace_decl, namespace_decls);
+    
     return dyn_cast<NamespaceDecl>(copied_decl);
 }
 

@@ -117,7 +117,7 @@ public:
     
     clang::NamespaceDecl *
     AddNamespace (NameSearchContext &context, 
-                  const ClangNamespaceDecl &namespace_decl);
+                  ClangASTImporter::NamespaceMapSP &namespace_decls);
 
     //------------------------------------------------------------------
     /// [Used by IRForTarget] Get a constant variable given a name,
@@ -601,8 +601,8 @@ public:
     ///     True on success; false otherwise.
     //------------------------------------------------------------------
     void 
-    GetDecls (NameSearchContext &context,
-              const ConstString &name);
+    FindExternalVisibleDecls (NameSearchContext &context,
+                              const ConstString &name);
     
     //------------------------------------------------------------------
     /// [Used by ClangASTSource] Find all Decls in a context that match
@@ -829,6 +829,34 @@ private:
     {
         m_material_vars.reset();
     }
+    
+    //------------------------------------------------------------------
+    /// [Used by ClangASTSource] Find all entities matching a given name,
+    /// using a NameSearchContext to make Decls for them.
+    ///
+    /// @param[in] context
+    ///     The NameSearchContext that can construct Decls for this name.
+    ///
+    /// @param[in] module
+    ///     If non-NULL, the module to query.
+    ///
+    /// @param[in] decl
+    ///     If non-NULL and module is non-NULL, the parent namespace.
+    ///
+    /// @param[in] name
+    ///     The name as a plain C string.  The NameSearchContext contains 
+    ///     a DeclarationName for the name so at first the name may seem
+    ///     redundant, but ClangExpressionDeclMap operates in RTTI land so 
+    ///     it can't access DeclarationName.
+    ///
+    /// @return
+    ///     True on success; false otherwise.
+    //------------------------------------------------------------------
+    void 
+    FindExternalVisibleDecls (NameSearchContext &context, 
+                              lldb::ModuleSP module,
+                              ClangNamespaceDecl &decl,
+                              const ConstString &name);
     
     //------------------------------------------------------------------
     /// Given a stack frame, find a variable that matches the given name and 

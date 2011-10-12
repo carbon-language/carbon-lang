@@ -556,7 +556,7 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
         .setOptLevel(CodeGenOpt::Less)
         .setAllocateGVsWithCode(true)
         .setCodeModel(CodeModel::Small)
-    .setUseMCJIT(true);
+        .setUseMCJIT(true);
     m_execution_engine.reset(builder.create());
 #endif
         

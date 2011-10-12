@@ -63,6 +63,13 @@ public:
         return origin.Valid();
     }
     
+    typedef std::map<lldb::ModuleSP, ClangNamespaceDecl> NamespaceMap;
+    typedef lldb::SharedPtr<NamespaceMap>::Type NamespaceMapSP;
+    
+    void RegisterNamespaceMap(const clang::NamespaceDecl *decl, 
+                              NamespaceMapSP &namespace_map);
+    
+    NamespaceMapSP GetNamespaceMap(const clang::NamespaceDecl *decl);
 private:
     
     struct DeclOrigin 
@@ -152,7 +159,10 @@ private:
             return DeclOrigin();
     }
     
-    clang::FileManager m_file_manager;
+    typedef std::map <const clang::NamespaceDecl *, NamespaceMapSP> NamespaceMetaMap;
+    
+    NamespaceMetaMap    m_namespace_maps;
+    clang::FileManager  m_file_manager;
     clang::ASTContext  *m_target_ctx;
     MinionMap           m_minions;
     MinionMap           m_minimal_minions;
