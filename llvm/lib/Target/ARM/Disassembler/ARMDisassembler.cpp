@@ -1248,48 +1248,51 @@ static DecodeStatus DecodeCopMemInstruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::t2LDC2L_OFFSET:
     case ARM::t2LDC2_PRE:
     case ARM::t2LDC2L_PRE:
-    case ARM::t2LDC2_POST:
-    case ARM::t2LDC2L_POST:
     case ARM::t2STC2_OFFSET:
     case ARM::t2STC2L_OFFSET:
     case ARM::t2STC2_PRE:
     case ARM::t2STC2L_PRE:
-    case ARM::t2STC2_POST:
-    case ARM::t2STC2L_POST:
     case ARM::LDC2_OFFSET:
     case ARM::LDC2L_OFFSET:
     case ARM::LDC2_PRE:
     case ARM::LDC2L_PRE:
-    case ARM::LDC2_POST:
-    case ARM::LDC2L_POST:
     case ARM::STC2_OFFSET:
     case ARM::STC2L_OFFSET:
     case ARM::STC2_PRE:
     case ARM::STC2L_PRE:
-    case ARM::STC2_POST:
-    case ARM::STC2L_POST:
     case ARM::t2LDC_OFFSET:
     case ARM::t2LDCL_OFFSET:
     case ARM::t2LDC_PRE:
     case ARM::t2LDCL_PRE:
-    case ARM::t2LDC_POST:
-    case ARM::t2LDCL_POST:
     case ARM::t2STC_OFFSET:
     case ARM::t2STCL_OFFSET:
     case ARM::t2STC_PRE:
     case ARM::t2STCL_PRE:
-    case ARM::t2STC_POST:
-    case ARM::t2STCL_POST:
     case ARM::LDC_OFFSET:
     case ARM::LDCL_OFFSET:
     case ARM::LDC_PRE:
     case ARM::LDCL_PRE:
-    case ARM::LDC_POST:
-    case ARM::LDCL_POST:
     case ARM::STC_OFFSET:
     case ARM::STCL_OFFSET:
     case ARM::STC_PRE:
     case ARM::STCL_PRE:
+      imm = ARM_AM::getAM5Opc(U ? ARM_AM::add : ARM_AM::sub, imm);
+      Inst.addOperand(MCOperand::CreateImm(imm));
+      break;
+    case ARM::t2LDC2_POST:
+    case ARM::t2LDC2L_POST:
+    case ARM::t2STC2_POST:
+    case ARM::t2STC2L_POST:
+    case ARM::LDC2_POST:
+    case ARM::LDC2L_POST:
+    case ARM::STC2_POST:
+    case ARM::STC2L_POST:
+    case ARM::t2LDC_POST:
+    case ARM::t2LDCL_POST:
+    case ARM::t2STC_POST:
+    case ARM::t2STCL_POST:
+    case ARM::LDC_POST:
+    case ARM::LDCL_POST:
     case ARM::STC_POST:
     case ARM::STCL_POST:
       imm |= U << 8;
