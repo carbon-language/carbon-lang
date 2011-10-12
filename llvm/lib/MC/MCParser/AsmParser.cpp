@@ -115,6 +115,11 @@ private:
   /// Flag tracking whether any errors have been encountered.
   unsigned HadError : 1;
 
+  /// The values from the last parsed cpp hash file line comment if any.
+  StringRef CppHashFilename;
+  int64_t CppHashLineNumber;
+  SMLoc CppHashLoc;
+
 public:
   AsmParser(SourceMgr &SM, MCContext &Ctx, MCStreamer &Out,
             const MCAsmInfo &MAI);
@@ -168,6 +173,7 @@ private:
                     bool ShowLine = true) const {
     SrcMgr.PrintMessage(Loc, Msg, Type, ShowLine);
   }
+  static void DiagHandler(const SMDiagnostic &Diag, void *Context);
 
   /// EnterIncludeFile - Enter the specified file. This returns true on failure.
   bool EnterIncludeFile(const std::string &Filename);
@@ -344,7 +350,8 @@ AsmParser::AsmParser(SourceMgr &_SM, MCContext &_Ctx,
                      MCStreamer &_Out, const MCAsmInfo &_MAI)
   : Lexer(_MAI), Ctx(_Ctx), Out(_Out), MAI(_MAI), SrcMgr(_SM),
     GenericParser(new GenericAsmParser), PlatformParser(0),
-    CurBuffer(0), MacrosEnabled(true) {
+    CurBuffer(0), MacrosEnabled(true), CppHashLineNumber(0) {
+  SrcMgr.setDiagHandler(DiagHandler, this);
   Lexer.setBuffer(SrcMgr.getMemoryBuffer(CurBuffer));
 
   // Initialize the generic parser.
@@ -1231,8 +1238,6 @@ bool AsmParser::ParseCppHashLineFilenameComment(const SMLoc &L) {
   }
 
   int64_t LineNumber = getTok().getIntVal();
-  // FIXME: remember to remove this line that is silencing a warning for now.
-  (void) LineNumber;
   Lex();
 
   if (getLexer().isNot(AsmToken::String)) {
@@ -1244,12 +1249,66 @@ bool AsmParser::ParseCppHashLineFilenameComment(const SMLoc &L) {
   // Get rid of the enclosing quotes.
   Filename = Filename.substr(1, Filename.size()-2);
 
-  // TODO: Now with the Filename, LineNumber set up a mapping to the SMLoc for
-  // later use by diagnostics.
+  // Save the SMLoc, Filename and LineNumber for later use by diagnostics.
+  CppHashLoc = L;
+  CppHashFilename = Filename;
+  CppHashLineNumber = LineNumber;
 
   // Ignore any trailing characters, they're just comment.
   EatToEndOfLine();
   return false;
+}
+
+/// DiagHandler - will use the the last parsed cpp hash line filename comment
+/// for the Filename and LineNo if any in the diagnostic.
+void AsmParser::DiagHandler(const SMDiagnostic &Diag, void *Context) {
+  const AsmParser *Parser = static_cast<const AsmParser*>(Context);
+  raw_ostream &OS = errs();
+
+  const SourceMgr &DiagSrcMgr = *Diag.getSourceMgr();
+  const SMLoc &DiagLoc = Diag.getLoc();
+  int DiagBuf = DiagSrcMgr.FindBufferContainingLoc(DiagLoc);
+  int CppHashBuf = Parser->SrcMgr.FindBufferContainingLoc(Parser->CppHashLoc);
+
+  // Like SourceMgr::PrintMessage() we need to print the include stack if any
+  // before printing the message.
+  int DiagCurBuffer = DiagSrcMgr.FindBufferContainingLoc(DiagLoc);
+  if (DiagCurBuffer > 0) {
+     SMLoc ParentIncludeLoc = DiagSrcMgr.getParentIncludeLoc(DiagCurBuffer);
+     DiagSrcMgr.PrintIncludeStack(ParentIncludeLoc, OS);
+  }
+
+  // If we have not parsed a cpp hash line filename comment or the source 
+  // manager changed or buffer changed (like in a nested include) then just
+  // print the normal diagnostic using its Filename and LineNo.
+  if (!Parser->CppHashLineNumber ||
+      &DiagSrcMgr != &Parser->SrcMgr ||
+      DiagBuf != CppHashBuf) {
+    Diag.Print(0, OS);
+    return;
+  }
+
+  // Use the CppHashFilename and calculate a line number based on the 
+  // CppHashLoc and CppHashLineNumber relative to this Diag's SMLoc for
+  // the diagnostic.
+  const std::string Filename = Parser->CppHashFilename;
+
+  int DiagLocLineNo = DiagSrcMgr.FindLineNumber(DiagLoc, DiagBuf);
+  int CppHashLocLineNo =
+      Parser->SrcMgr.FindLineNumber(Parser->CppHashLoc, CppHashBuf);
+  int LineNo = Parser->CppHashLineNumber - 1 +
+               (DiagLocLineNo - CppHashLocLineNo);
+
+  SMDiagnostic NewDiag(*Diag.getSourceMgr(),
+                       Diag.getLoc(),
+                       Filename,
+                       LineNo,
+                       Diag.getColumnNo(),
+                       Diag.getMessage(),
+                       Diag.getLineContents(),
+                       Diag.getShowLine());
+
+  NewDiag.Print(0, OS);
 }
 
 bool AsmParser::expandMacro(SmallString<256> &Buf, StringRef Body,

@@ -10,3 +10,8 @@ cmp $0, 0(%eax)
 
 // 32: error: register %rax is only available in 64-bit mode
 addl $0, 0(%rax)
+
+// 32: test.s:8:2: error: invalid instruction mnemonic 'movi'
+
+# 8 "test.s"
+ movi $8,%eax
