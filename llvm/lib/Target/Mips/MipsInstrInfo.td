@@ -286,56 +286,59 @@ class MArithR<bits<6> func, string instr_asm, SDNode op, bit isComm = 0> :
   FR<0x1c, func, (outs), (ins CPURegs:$rs, CPURegs:$rt),
      !strconcat(instr_asm, "\t$rs, $rt"),
      [(op CPURegs:$rs, CPURegs:$rt, LO, HI)], IIImul> {
+  let rd = 0;
+  let shamt = 0;
   let isCommutable = isComm;
 }
 
 //  Logical
-let isCommutable = 1 in
 class LogicNOR<bits<6> op, bits<6> func, string instr_asm>:
-  FR<op, func, (outs CPURegs:$dst), (ins CPURegs:$b, CPURegs:$c),
-     !strconcat(instr_asm, "\t$dst, $b, $c"),
-     [(set CPURegs:$dst, (not (or CPURegs:$b, CPURegs:$c)))], IIAlu>;
+  FR<op, func, (outs CPURegs:$rd), (ins CPURegs:$rs, CPURegs:$rt),
+     !strconcat(instr_asm, "\t$rd, $rs, $rt"),
+     [(set CPURegs:$rd, (not (or CPURegs:$rs, CPURegs:$rt)))], IIAlu> {
+  let shamt = 0;
+  let isCommutable = 1;
+}
 
 // Shifts
 class LogicR_shift_rotate_imm<bits<6> func, bits<5> _rs, string instr_asm,
                               SDNode OpNode>:
-  FR<0x00, func, (outs CPURegs:$dst), (ins CPURegs:$b, shamt:$c),
-     !strconcat(instr_asm, "\t$dst, $b, $c"),
-     [(set CPURegs:$dst, (OpNode CPURegs:$b, (i32 immZExt5:$c)))], IIAlu> {
+  FR<0x00, func, (outs CPURegs:$rd), (ins CPURegs:$rt, shamt:$shamt),
+     !strconcat(instr_asm, "\t$rd, $rt, $shamt"),
+     [(set CPURegs:$rd, (OpNode CPURegs:$rt, (i32 immZExt5:$shamt)))], IIAlu> {
   let rs = _rs;
 }
 
-class LogicR_shift_rotate_reg<bits<6> func, bits<5> _shamt, string instr_asm,
+class LogicR_shift_rotate_reg<bits<6> func, bits<5> isRotate, string instr_asm,
                               SDNode OpNode>:
-  FR<0x00, func, (outs CPURegs:$dst), (ins CPURegs:$c, CPURegs:$b),
-     !strconcat(instr_asm, "\t$dst, $b, $c"),
-     [(set CPURegs:$dst, (OpNode CPURegs:$b, CPURegs:$c))], IIAlu> {
-  let shamt = _shamt;
+  FR<0x00, func, (outs CPURegs:$rd), (ins CPURegs:$rs, CPURegs:$rt),
+     !strconcat(instr_asm, "\t$rd, $rt, $rs"),
+     [(set CPURegs:$rd, (OpNode CPURegs:$rt, CPURegs:$rs))], IIAlu> {
+  let shamt = isRotate;
 }
 
 // Load Upper Imediate
 class LoadUpper<bits<6> op, string instr_asm>:
-  FI< op,
-      (outs CPURegs:$dst),
-      (ins uimm16:$imm),
-      !strconcat(instr_asm, "\t$dst, $imm"),
-      [], IIAlu>;
+  FI<op, (outs CPURegs:$rt), (ins uimm16:$imm),
+     !strconcat(instr_asm, "\t$rt, $imm"), [], IIAlu> {
+  let rs = 0;
+}
 
 // Memory Load/Store
 let canFoldAsLoad = 1 in
 class LoadM<bits<6> op, string instr_asm, PatFrag OpNode, RegisterClass RC,
             Operand MemOpnd, bit Pseudo>:
-  FI<op, (outs RC:$dst), (ins MemOpnd:$addr),
-     !strconcat(instr_asm, "\t$dst, $addr"),
-     [(set RC:$dst, (OpNode addr:$addr))], IILoad> {
+  FI<op, (outs RC:$rt), (ins MemOpnd:$addr),
+     !strconcat(instr_asm, "\t$rt, $addr"),
+     [(set RC:$rt, (OpNode addr:$addr))], IILoad> {
   let isPseudo = Pseudo;
 }
 
 class StoreM<bits<6> op, string instr_asm, PatFrag OpNode, RegisterClass RC,
              Operand MemOpnd, bit Pseudo>:
-  FI<op, (outs), (ins RC:$dst, MemOpnd:$addr),
-     !strconcat(instr_asm, "\t$dst, $addr"),
-     [(OpNode RC:$dst, addr:$addr)], IIStore> {
+  FI<op, (outs), (ins RC:$rt, MemOpnd:$addr),
+     !strconcat(instr_asm, "\t$rt, $addr"),
+     [(OpNode RC:$rt, addr:$addr)], IIStore> {
   let isPseudo = Pseudo;
 }
 
@@ -402,7 +405,9 @@ class SetCC_R<bits<6> op, bits<6> func, string instr_asm, PatFrag cond_op,
   FR<op, func, (outs CPURegs:$rd), (ins RC:$rs, RC:$rt),
      !strconcat(instr_asm, "\t$rd, $rs, $rt"),
      [(set CPURegs:$rd, (cond_op RC:$rs, RC:$rt))],
-     IIAlu>;
+     IIAlu> {
+  let shamt = 0;
+}
 
 class SetCC_I<bits<6> op, string instr_asm, PatFrag cond_op, Operand Od,
               PatLeaf imm_type, RegisterClass RC>:
@@ -419,8 +424,12 @@ class JumpFJ<bits<6> op, string instr_asm>:
 
 let isBranch=1, isTerminator=1, isBarrier=1, rd=0, hasDelaySlot = 1 in
 class JumpFR<bits<6> op, bits<6> func, string instr_asm>:
-  FR<op, func, (outs), (ins CPURegs:$target),
-     !strconcat(instr_asm, "\t$target"), [(brind CPURegs:$target)], IIBranch>;
+  FR<op, func, (outs), (ins CPURegs:$rs),
+     !strconcat(instr_asm, "\t$rs"), [(brind CPURegs:$rs)], IIBranch> {
+  let rt = 0;
+  let rd = 0;
+  let shamt = 0;
+}
 
 // Jump and Link (Call)
 let isCall=1, hasDelaySlot=1,
@@ -432,76 +441,93 @@ let isCall=1, hasDelaySlot=1,
        !strconcat(instr_asm, "\t$target"), [(MipsJmpLink imm:$target)],
        IIBranch>;
 
-  let rd=31 in
   class JumpLinkReg<bits<6> op, bits<6> func, string instr_asm>:
     FR<op, func, (outs), (ins CPURegs:$rs, variable_ops),
-       !strconcat(instr_asm, "\t$rs"), [(MipsJmpLink CPURegs:$rs)], IIBranch>;
+       !strconcat(instr_asm, "\t$rs"), [(MipsJmpLink CPURegs:$rs)], IIBranch> {
+    let rt = 0;
+    let rd = 31;
+    let shamt = 0;
+  }
 
   class BranchLink<string instr_asm>:
     FI<0x1, (outs), (ins CPURegs:$rs, brtarget:$target, variable_ops),
-       !strconcat(instr_asm, "\t$rs, $target"), [], IIBranch>;
+       !strconcat(instr_asm, "\t$rs, $target"), [], IIBranch> {
+    let rt = 0;
+  }
 }
 
 // Mul, Div
-let Defs = [HI, LO] in {
-  let isCommutable = 1 in
-  class Mul<bits<6> func, string instr_asm, InstrItinClass itin>:
-    FR<0x00, func, (outs), (ins CPURegs:$a, CPURegs:$b),
-       !strconcat(instr_asm, "\t$a, $b"), [], itin>;
+class Mul<bits<6> func, string instr_asm, InstrItinClass itin>:
+  FR<0x00, func, (outs), (ins CPURegs:$rs, CPURegs:$rt),
+     !strconcat(instr_asm, "\t$rs, $rt"), [], itin> {
+  let rd = 0;
+  let shamt = 0;
+  let isCommutable = 1;
+  let Defs = [HI, LO];
+}
 
-  class Div<SDNode op, bits<6> func, string instr_asm, InstrItinClass itin>:
-            FR<0x00, func, (outs), (ins CPURegs:$a, CPURegs:$b),
-            !strconcat(instr_asm, "\t$$zero, $a, $b"),
-            [(op CPURegs:$a, CPURegs:$b)], itin>;
+class Div<SDNode op, bits<6> func, string instr_asm, InstrItinClass itin>:
+          FR<0x00, func, (outs), (ins CPURegs:$rs, CPURegs:$rt),
+          !strconcat(instr_asm, "\t$$zero, $rs, $rt"),
+          [(op CPURegs:$rs, CPURegs:$rt)], itin> {
+  let rd = 0;
+  let shamt = 0;
+  let Defs = [HI, LO];
 }
 
 // Move from Hi/Lo
-let shamt = 0 in {
-let rs = 0, rt = 0 in
 class MoveFromLOHI<bits<6> func, string instr_asm>:
-  FR<0x00, func, (outs CPURegs:$dst), (ins),
-     !strconcat(instr_asm, "\t$dst"), [], IIHiLo>;
+  FR<0x00, func, (outs CPURegs:$rd), (ins),
+     !strconcat(instr_asm, "\t$rd"), [], IIHiLo> {
+  let rs = 0;
+  let rt = 0;
+  let shamt = 0;
+}
 
-let rt = 0, rd = 0 in
 class MoveToLOHI<bits<6> func, string instr_asm>:
-  FR<0x00, func, (outs), (ins CPURegs:$src),
-     !strconcat(instr_asm, "\t$src"), [], IIHiLo>;
+  FR<0x00, func, (outs), (ins CPURegs:$rs),
+     !strconcat(instr_asm, "\t$rs"), [], IIHiLo> {
+  let rt = 0;
+  let rd = 0;
+  let shamt = 0;
 }
 
 class EffectiveAddress<string instr_asm> :
-  FI<0x09, (outs CPURegs:$dst), (ins mem_ea:$addr),
-     instr_asm, [(set CPURegs:$dst, addr:$addr)], IIAlu>;
+  FI<0x09, (outs CPURegs:$rt), (ins mem_ea:$addr),
+     instr_asm, [(set CPURegs:$rt, addr:$addr)], IIAlu>;
 
 // Count Leading Ones/Zeros in Word
 class CountLeading<bits<6> func, string instr_asm, list<dag> pattern>:
-  FR<0x1c, func, (outs CPURegs:$dst), (ins CPURegs:$src),
-     !strconcat(instr_asm, "\t$dst, $src"), pattern, IIAlu>,
+  FR<0x1c, func, (outs CPURegs:$rd), (ins CPURegs:$rs),
+     !strconcat(instr_asm, "\t$rd, $rs"), pattern, IIAlu>,
      Requires<[HasBitCount]> {
   let shamt = 0;
   let rt = rd;
 }
 
 // Sign Extend in Register.
-class SignExtInReg<bits<6> func, string instr_asm, ValueType vt>:
-  FR<0x3f, func, (outs CPURegs:$dst), (ins CPURegs:$src),
-     !strconcat(instr_asm, "\t$dst, $src"),
-     [(set CPURegs:$dst, (sext_inreg CPURegs:$src, vt))], NoItinerary>;
+class SignExtInReg<bits<5> sa, string instr_asm, ValueType vt>:
+  FR<0x3f, 0x20, (outs CPURegs:$rd), (ins CPURegs:$rt),
+     !strconcat(instr_asm, "\t$rd, $rt"),
+     [(set CPURegs:$rd, (sext_inreg CPURegs:$rt, vt))], NoItinerary> {
+  let rs = 0;
+  let shamt = sa;
+  let Predicates = [HasSEInReg];
+}
 
 // Byte Swap
-class ByteSwap<bits<6> func, string instr_asm>:
-  FR<0x1f, func, (outs CPURegs:$dst), (ins CPURegs:$src),
-     !strconcat(instr_asm, "\t$dst, $src"),
-     [(set CPURegs:$dst, (bswap CPURegs:$src))], NoItinerary>;
-
-// Conditional Move
-class CondMov<bits<6> func, string instr_asm, PatLeaf MovCode>:
-  FR<0x00, func, (outs CPURegs:$dst), (ins CPURegs:$F, CPURegs:$T,
-     CPURegs:$cond), !strconcat(instr_asm, "\t$dst, $T, $cond"),
-     [], NoItinerary>;
+class ByteSwap<bits<6> func, bits<5> sa, string instr_asm>:
+  FR<0x1f, func, (outs CPURegs:$rd), (ins CPURegs:$rt),
+     !strconcat(instr_asm, "\t$rd, $rt"),
+     [(set CPURegs:$rd, (bswap CPURegs:$rt))], NoItinerary> {
+  let rs = 0;
+  let shamt = sa;
+  let Predicates = [HasSwap];
+}
 
 // Read Hardware
-class ReadHardware: FR<0x1f, 0x3b, (outs CPURegs:$dst), (ins HWRegs:$src),
-    "rdhwr\t$dst, $src", [], IIAlu> {
+class ReadHardware: FR<0x1f, 0x3b, (outs CPURegs:$rt), (ins HWRegs:$rd),
+    "rdhwr\t$rt, $rd", [], IIAlu> {
   let rs = 0;
   let shamt = 0;
 }
@@ -712,36 +738,31 @@ let Uses = [LO] in
   def MFLO  : MoveFromLOHI<0x12, "mflo">;
 
 /// Sign Ext In Register Instructions.
-let Predicates = [HasSEInReg] in {
-  let shamt = 0x10, rs = 0 in
-    def SEB : SignExtInReg<0x21, "seb", i8>;
-
-  let shamt = 0x18, rs = 0 in
-    def SEH : SignExtInReg<0x20, "seh", i16>;
-}
+def SEB : SignExtInReg<0x10, "seb", i8>;
+def SEH : SignExtInReg<0x18, "seh", i16>;
 
 /// Count Leading
-def CLZ : CountLeading<0b100000, "clz",
-                       [(set CPURegs:$dst, (ctlz CPURegs:$src))]>;
-def CLO : CountLeading<0b100001, "clo",
-                       [(set CPURegs:$dst, (ctlz (not CPURegs:$src)))]>;
+def CLZ : CountLeading<0x20, "clz",
+                       [(set CPURegs:$rd, (ctlz CPURegs:$rs))]>;
+def CLO : CountLeading<0x21, "clo",
+                       [(set CPURegs:$rd, (ctlz (not CPURegs:$rs)))]>;
 
 /// Byte Swap
-let Predicates = [HasSwap] in {
-  let shamt = 0x3, rs = 0 in
-    def WSBW : ByteSwap<0x20, "wsbw">;
-}
+def WSBW : ByteSwap<0x20, 0x2, "wsbw">;
 
 // Conditional moves:
 // These instructions are expanded in
 // MipsISelLowering::EmitInstrWithCustomInserter if target does not have
 // conditional move instructions.
 // flag:int, data:int
-let usesCustomInserter = 1, shamt = 0, Constraints = "$F = $dst" in
-  class CondMovIntInt<bits<6> funct, string instr_asm> :
-    FR<0, funct, (outs CPURegs:$dst),
-       (ins CPURegs:$T, CPURegs:$cond, CPURegs:$F),
-       !strconcat(instr_asm, "\t$dst, $T, $cond"), [], NoItinerary>;
+class CondMovIntInt<bits<6> funct, string instr_asm> :
+  FR<0, funct, (outs CPURegs:$rd),
+     (ins CPURegs:$rs, CPURegs:$rt, CPURegs:$F),
+     !strconcat(instr_asm, "\t$rd, $rs, $rt"), [], NoItinerary> {
+  let shamt = 0;
+  let usesCustomInserter = 1;
+  let Constraints = "$F = $rd";
+}
 
 def MOVZ_I : CondMovIntInt<0x0a, "movz">;
 def MOVN_I : CondMovIntInt<0x0b, "movn">;
@@ -754,13 +775,13 @@ let addr=0 in
 // instructions. The same not happens for stack address copies, so an
 // add op with mem ComplexPattern is used and the stack address copy
 // can be matched. It's similar to Sparc LEA_ADDRi
-def LEA_ADDiu : EffectiveAddress<"addiu\t$dst, $addr">;
+def LEA_ADDiu : EffectiveAddress<"addiu\t$rt, $addr">;
 
 // DynAlloc node points to dynamically allocated stack space.
 // $sp is added to the list of implicitly used registers to prevent dead code
 // elimination from removing instructions that modify $sp.
 let Uses = [SP] in
-def DynAlloc : EffectiveAddress<"addiu\t$dst, $addr">;
+def DynAlloc : EffectiveAddress<"addiu\t$rt, $addr">;
 
 // MADD*/MSUB*
 def MADD  : MArithR<0, "madd", MipsMAdd, 1>;
