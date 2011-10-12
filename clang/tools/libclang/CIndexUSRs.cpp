@@ -34,18 +34,18 @@ class USRGenerator : public DeclVisitor<USRGenerator> {
   SmallVectorImpl<char> &Buf;
   llvm::raw_svector_ostream Out;
   bool IgnoreResults;
-  ASTUnit *AU;
+  ASTContext *Context;
   bool generatedLoc;
   
   llvm::DenseMap<const Type *, unsigned> TypeSubstitutions;
   
 public:
-  USRGenerator(const CXCursor *C = 0, SmallVectorImpl<char> *extBuf = 0)
+  explicit USRGenerator(ASTContext *Ctx = 0, SmallVectorImpl<char> *extBuf = 0)
   : OwnedBuf(extBuf ? 0 : new llvm::SmallString<128>()),
     Buf(extBuf ? *extBuf : *OwnedBuf.get()),
     Out(Buf),
     IgnoreResults(false),
-    AU(C ? cxcursor::getCursorASTUnit(*C) : 0),
+    Context(Ctx),
     generatedLoc(false)
   {
     // Add the USR space prefix.
@@ -190,7 +190,7 @@ void USRGenerator::VisitFunctionDecl(FunctionDecl *D) {
     Out << "@F@";
   D->printName(Out);
 
-  ASTContext &Ctx = AU->getASTContext();
+  ASTContext &Ctx = *Context;
   if (!Ctx.getLangOptions().CPlusPlus || D->isExternC())
     return;
 
@@ -480,7 +480,7 @@ bool USRGenerator::GenLoc(const Decl *D) {
   // Use the location of canonical decl.
   D = D->getCanonicalDecl();
 
-  const SourceManager &SM = AU->getSourceManager();
+  const SourceManager &SM = Context->getSourceManager();
   SourceLocation L = D->getLocStart();
   if (L.isInvalid()) {
     IgnoreResults = true;
@@ -508,7 +508,7 @@ void USRGenerator::VisitType(QualType T) {
   // This method mangles in USR information for types.  It can possibly
   // just reuse the naming-mangling logic used by codegen, although the
   // requirements for USRs might not be the same.
-  ASTContext &Ctx = AU->getASTContext();
+  ASTContext &Ctx = *Context;
 
   do {
     T = Ctx.getCanonicalType(T);
@@ -787,12 +787,10 @@ static inline StringRef extractUSRSuffix(StringRef s) {
   return s.startswith("c:") ? s.substr(2) : "";
 }
 
-static CXString getDeclCursorUSR(const CXCursor &C) {
-  Decl *D = cxcursor::getCursorDecl(C);
-
+bool cxcursor::getDeclCursorUSR(Decl *D, SmallVectorImpl<char> &Buf) {
   // Don't generate USRs for things with invalid locations.
   if (!D || D->getLocStart().isInvalid())
-    return createCXString("");
+    return true;
 
   // Check if the cursor has 'NoLinkage'.
   if (const NamedDecl *ND = dyn_cast<NamedDecl>(D))
@@ -817,27 +815,15 @@ static CXString getDeclCursorUSR(const CXCursor &C) {
           break;
     }
 
-  CXTranslationUnit TU = cxcursor::getCursorTU(C);
-  if (!TU)
-    return createCXString("");
-
-  CXStringBuf *buf = cxstring::getCXStringBuf(TU);
-  if (!buf)
-    return createCXString("");
-  
   {
-    USRGenerator UG(&C, &buf->Data);
+    USRGenerator UG(&D->getASTContext(), &Buf);
     UG->Visit(D);
 
-    if (UG->ignoreResults()) {
-      disposeCXStringBuf(buf);
-      return createCXString("");
-    }
+    if (UG->ignoreResults())
+      return true;
   }
-  // Return the C-string, but don't make a copy since it is already in
-  // the string buffer.
-  buf->Data.push_back('\0');
-  return createCXString(buf);
+
+  return false;
 }
 
 extern "C" {
@@ -845,8 +831,27 @@ extern "C" {
 CXString clang_getCursorUSR(CXCursor C) {
   const CXCursorKind &K = clang_getCursorKind(C);
 
-  if (clang_isDeclaration(K))
-      return getDeclCursorUSR(C);
+  if (clang_isDeclaration(K)) {
+    Decl *D = cxcursor::getCursorDecl(C);
+    CXTranslationUnit TU = cxcursor::getCursorTU(C);
+    if (!TU)
+      return createCXString("");
+
+    CXStringBuf *buf = cxstring::getCXStringBuf(TU);
+    if (!buf)
+      return createCXString("");
+
+    bool Ignore = cxcursor::getDeclCursorUSR(D, buf->Data);
+    if (Ignore) {
+      disposeCXStringBuf(buf);
+      return createCXString("");
+    }
+
+    // Return the C-string, but don't make a copy since it is already in
+    // the string buffer.
+    buf->Data.push_back('\0');
+    return createCXString(buf);
+  }
 
   if (K == CXCursor_MacroDefinition) {
     CXTranslationUnit TU = cxcursor::getCursorTU(C);
@@ -858,7 +863,8 @@ CXString clang_getCursorUSR(CXCursor C) {
       return createCXString("");
 
     {
-      USRGenerator UG(&C, &buf->Data);
+      USRGenerator UG(&cxcursor::getCursorASTUnit(C)->getASTContext(),
+                      &buf->Data);
       UG << "macro@"
         << cxcursor::getCursorMacroDefinition(C)->getName()->getNameStart();
     }
