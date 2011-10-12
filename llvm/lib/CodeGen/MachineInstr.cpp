@@ -826,6 +826,34 @@ bool MachineInstr::isStackAligningInlineAsm() const {
   return false;
 }
 
+int MachineInstr::findInlineAsmFlagIdx(unsigned OpIdx,
+                                       unsigned *GroupNo) const {
+  assert(isInlineAsm() && "Expected an inline asm instruction");
+  assert(OpIdx < getNumOperands() && "OpIdx out of range");
+
+  // Ignore queries about the initial operands.
+  if (OpIdx < InlineAsm::MIOp_FirstOperand)
+    return -1;
+
+  unsigned Group = 0;
+  unsigned NumOps;
+  for (unsigned i = InlineAsm::MIOp_FirstOperand, e = getNumOperands(); i < e;
+       i += NumOps) {
+    const MachineOperand &FlagMO = getOperand(i);
+    // If we reach the implicit register operands, stop looking.
+    if (!FlagMO.isImm())
+      return -1;
+    NumOps = 1 + InlineAsm::getNumOperandRegisters(FlagMO.getImm());
+    if (i + NumOps > OpIdx) {
+      if (GroupNo)
+        *GroupNo = Group;
+      return i;
+    }
+    ++Group;
+  }
+  return -1;
+}
+
 /// findRegisterUseOperandIdx() - Returns the MachineOperand that is a use of
 /// the specific register or -1 if it is not found. It further tightens
 /// the search criteria to a use that kills the register if isKill is true.
@@ -935,23 +963,13 @@ isRegTiedToUseOperand(unsigned DefOpIdx, unsigned *UseOpIdx) const {
       return false;
     // Determine the actual operand index that corresponds to this index.
     unsigned DefNo = 0;
-    unsigned DefPart = 0;
-    for (unsigned i = InlineAsm::MIOp_FirstOperand, e = getNumOperands();
-         i < e; ) {
-      const MachineOperand &FMO = getOperand(i);
-      // After the normal asm operands there may be additional imp-def regs.
-      if (!FMO.isImm())
-        return false;
-      // Skip over this def.
-      unsigned NumOps = InlineAsm::getNumOperandRegisters(FMO.getImm());
-      unsigned PrevDef = i + 1;
-      i = PrevDef + NumOps;
-      if (i > DefOpIdx) {
-        DefPart = DefOpIdx - PrevDef;
-        break;
-      }
-      ++DefNo;
-    }
+    int FlagIdx = findInlineAsmFlagIdx(DefOpIdx, &DefNo);
+    if (FlagIdx < 0)
+      return false;
+
+    // Which part of the group is DefOpIdx?
+    unsigned DefPart = DefOpIdx - (FlagIdx + 1);
+
     for (unsigned i = InlineAsm::MIOp_FirstOperand, e = getNumOperands();
          i != e; ++i) {
       const MachineOperand &FMO = getOperand(i);
@@ -995,20 +1013,10 @@ isRegTiedToDefOperand(unsigned UseOpIdx, unsigned *DefOpIdx) const {
       return false;
 
     // Find the flag operand corresponding to UseOpIdx
-    unsigned FlagIdx, NumOps=0;
-    for (FlagIdx = InlineAsm::MIOp_FirstOperand;
-         FlagIdx < UseOpIdx; FlagIdx += NumOps+1) {
-      const MachineOperand &UFMO = getOperand(FlagIdx);
-      // After the normal asm operands there may be additional imp-def regs.
-      if (!UFMO.isImm())
-        return false;
-      NumOps = InlineAsm::getNumOperandRegisters(UFMO.getImm());
-      assert(NumOps < getNumOperands() && "Invalid inline asm flag");
-      if (UseOpIdx < FlagIdx+NumOps+1)
-        break;
-    }
-    if (FlagIdx >= UseOpIdx)
+    int FlagIdx = findInlineAsmFlagIdx(UseOpIdx);
+    if (FlagIdx < 0)
       return false;
+
     const MachineOperand &UFMO = getOperand(FlagIdx);
     unsigned DefNo;
     if (InlineAsm::isUseOperandTiedToDef(UFMO.getImm(), DefNo)) {

@@ -388,6 +388,18 @@ public:
   /// none is found.
   int findFirstPredOperandIdx() const;
 
+  /// findInlineAsmFlagIdx() - Find the index of the flag word operand that
+  /// corresponds to operand OpIdx on an inline asm instruction.  Returns -1 if
+  /// getOperand(OpIdx) does not belong to an inline asm operand group.
+  ///
+  /// If GroupNo is not NULL, it will receive the number of the operand group
+  /// containing OpIdx.
+  ///
+  /// The flag operand is an immediate that can be decoded with methods like
+  /// InlineAsm::hasRegClassConstraint().
+  ///
+  int findInlineAsmFlagIdx(unsigned OpIdx, unsigned *GroupNo = 0) const;
+
   /// isRegTiedToUseOperand - Given the index of a register def operand,
   /// check if the register def is tied to a source operand, due to either
   /// two-address elimination or inline assembly constraints. Returns the
