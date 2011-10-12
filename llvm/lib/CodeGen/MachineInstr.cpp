@@ -854,6 +854,39 @@ int MachineInstr::findInlineAsmFlagIdx(unsigned OpIdx,
   return -1;
 }
 
+const TargetRegisterClass*
+MachineInstr::getRegClassConstraint(unsigned OpIdx,
+                                    const TargetInstrInfo *TII,
+                                    const TargetRegisterInfo *TRI) const {
+  // Most opcodes have fixed constraints in their MCInstrDesc.
+  if (!isInlineAsm())
+    return TII->getRegClass(getDesc(), OpIdx, TRI);
+
+  if (!getOperand(OpIdx).isReg())
+    return NULL;
+
+  // For tied uses on inline asm, get the constraint from the def.
+  unsigned DefIdx;
+  if (getOperand(OpIdx).isUse() && isRegTiedToDefOperand(OpIdx, &DefIdx))
+    OpIdx = DefIdx;
+
+  // Inline asm stores register class constraints in the flag word.
+  int FlagIdx = findInlineAsmFlagIdx(OpIdx);
+  if (FlagIdx < 0)
+    return NULL;
+
+  unsigned Flag = getOperand(FlagIdx).getImm();
+  unsigned RCID;
+  if (InlineAsm::hasRegClassConstraint(Flag, RCID))
+    return TRI->getRegClass(RCID);
+
+  // Assume that all registers in a memory operand are pointers.
+  if (InlineAsm::getKind(Flag) == InlineAsm::Kind_Mem)
+    return TRI->getPointerRegClass();
+
+  return NULL;
+}
+
 /// findRegisterUseOperandIdx() - Returns the MachineOperand that is a use of
 /// the specific register or -1 if it is not found. It further tightens
 /// the search criteria to a use that kills the register if isKill is true.
