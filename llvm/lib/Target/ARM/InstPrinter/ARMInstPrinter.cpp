@@ -711,12 +711,12 @@ void ARMInstPrinter::printNoHashImmediate(const MCInst *MI, unsigned OpNum,
 }
 
 void ARMInstPrinter::printPImmediate(const MCInst *MI, unsigned OpNum,
-                                          raw_ostream &O) {
+                                     raw_ostream &O) {
   O << "p" << MI->getOperand(OpNum).getImm();
 }
 
 void ARMInstPrinter::printCImmediate(const MCInst *MI, unsigned OpNum,
-                                          raw_ostream &O) {
+                                     raw_ostream &O) {
   O << "c" << MI->getOperand(OpNum).getImm();
 }
 
