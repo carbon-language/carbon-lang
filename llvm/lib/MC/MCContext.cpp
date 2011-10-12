@@ -279,7 +279,8 @@ unsigned MCContext::GetDwarfFile(StringRef FileName, unsigned FileNumber) {
   } else {
     StringRef Directory = Slash.first;
     Name = Slash.second;
-    for (DirIndex = 0; DirIndex < MCDwarfDirs.size(); DirIndex++) {
+    DirIndex = 0;
+    for (unsigned End = MCDwarfDirs.size(); DirIndex < End; DirIndex++) {
       if (Directory == MCDwarfDirs[DirIndex])
         break;
     }
