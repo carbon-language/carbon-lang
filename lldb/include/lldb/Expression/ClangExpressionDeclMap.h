@@ -889,15 +889,23 @@ private:
     /// @param[in] target
     ///     The target to use as the basis for the search.
     ///
+    /// @param[in] module
+    ///     If non-NULL, the module to query.
+    ///
     /// @param[in] name
     ///     The name as a plain C string.
+    ///
+    /// @param[in] namespace_decl
+    ///     If valid and module is non-NULL, the parent namespace.
     ///
     /// @return
     ///     The LLDB Symbol found, or NULL if none was found.
     //---------------------------------------------------------
     Symbol *
     FindGlobalDataSymbol (Target &target,
-                          const ConstString &name);
+                          lldb::ModuleSP &module,
+                          const ConstString &name,
+                          ClangNamespaceDecl *namespace_decl);
     
     //------------------------------------------------------------------
     /// Given a target, find a variable that matches the given name and 

@@ -1630,7 +1630,10 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
     TypeFromUser type(expr_var->GetTypeFromUser());
     
     VariableSP var = FindVariableInScope (*frame, name, &type);
-    Symbol *sym = FindGlobalDataSymbol(*target, name);
+    
+    ModuleSP module;
+    
+    Symbol *sym = FindGlobalDataSymbol(*target, module, name, NULL);
     
     std::auto_ptr<lldb_private::Value> location_value;
     
@@ -1977,14 +1980,22 @@ Symbol *
 ClangExpressionDeclMap::FindGlobalDataSymbol
 (
     Target &target,
-    const ConstString &name
+    ModuleSP &module,
+    const ConstString &name,
+    ClangNamespaceDecl *namespace_decl
 )
 {
     SymbolContextList sc_list;
     
-    target.GetImages().FindSymbolsWithNameAndType(name, 
-                                                  eSymbolTypeData, 
-                                                  sc_list);
+    if (module && namespace_decl)
+        module->FindSymbolsWithNameAndType(name, 
+                                           namespace_decl, 
+                                           eSymbolTypeData, 
+                                           sc_list);
+    else
+        target.GetImages().FindSymbolsWithNameAndType(name, 
+                                                      eSymbolTypeData, 
+                                                      sc_list);
     
     if (sc_list.GetSize())
     {
@@ -2430,7 +2441,17 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                 // We couldn't find a variable or function for this.  Now we'll hunt for a generic 
                 // data symbol, and -- if it is found -- treat it as a variable.
                 
-                Symbol *data_symbol = FindGlobalDataSymbol(*target, name);
+                Symbol *data_symbol;
+                
+                if (namespace_decl && module)
+                {
+                    data_symbol = FindGlobalDataSymbol(*target, module, name, &namespace_decl);
+                }
+                else
+                {
+                    ModuleSP module;
+                    data_symbol = FindGlobalDataSymbol(*target, module, name, NULL);
+                }
                 
                 if (data_symbol)
                 {
