@@ -2,6 +2,6 @@
 
 void f() {
   int arr[] = { 1, 2, 3 };
-  for (auto &i : arr) { // expected-warning {{'auto' type specifier is a C++0x extension}} expected-warning {{range-based for loop is a C++0x extension}}
+  for (auto &i : arr) { // expected-warning {{'auto' type specifier is a C++11 extension}} expected-warning {{range-based for loop is a C++11 extension}}
   }
 }

@@ -52,7 +52,7 @@ def err_invalid_storage_class_in_func_decl : Error<
   "invalid storage class specifier in function declarator">;
 def err_expected_namespace_name : Error<"expected namespace name">;
 def ext_variadic_templates : ExtWarn<
-  "variadic templates are a C++0x extension">, InGroup<CXX0x>;
+  "variadic templates are a C++11 extension">, InGroup<CXX0x>;
 def err_default_special_members : Error<
   "only special member functions may be defaulted">;
 def err_friends_define_only_namespace_scope : Error<

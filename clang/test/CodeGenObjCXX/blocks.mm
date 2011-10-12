@@ -30,7 +30,7 @@ void foo(id <NSObject>(^objectCreationBlock)(void)) {
 
 // Test4
 struct S {
-  S *(^a)() = ^{ // expected-warning {{C++0x}}
+  S *(^a)() = ^{ // expected-warning {{C++11}}
     return this;
   };
 };
@@ -40,7 +40,7 @@ S s;
 struct X {
   void f() {
     ^ {
-      struct Nested { Nested *ptr = this; }; // expected-warning {{C++0x}}
+      struct Nested { Nested *ptr = this; }; // expected-warning {{C++11}}
     } ();
   };
 };

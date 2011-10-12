@@ -3,7 +3,7 @@ class Base {
   virtual ~Base(); // expected-note {{implicitly declared private here}}
 };
 struct Foo : public Base { // expected-error {{base class 'Base' has private destructor}}
-  const int kBlah = 3; // expected-warning {{accepted as a C++0x extension}}
+  const int kBlah = 3; // expected-warning {{accepted as a C++11 extension}}
   Foo();
 };
 struct Bar : public Foo {

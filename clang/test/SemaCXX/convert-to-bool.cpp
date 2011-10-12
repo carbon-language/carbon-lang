@@ -8,7 +8,7 @@ struct ConvToInt {
 };
 
 struct ExplicitConvToBool {
-  explicit operator bool(); // expected-warning{{explicit conversion functions are a C++0x extension}}
+  explicit operator bool(); // expected-warning{{explicit conversion functions are a C++11 extension}}
 };
 
 void test_conv_to_bool(ConvToBool ctb, ConvToInt cti, ExplicitConvToBool ecb) {
@@ -39,7 +39,7 @@ void test_conv_to_bool(ConvToBool ctb, ConvToInt cti, ExplicitConvToBool ecb) {
 void accepts_bool(bool) { } // expected-note{{candidate function}}
 
 struct ExplicitConvToRef {
-  explicit operator int&(); // expected-warning{{explicit conversion functions are a C++0x extension}}
+  explicit operator int&(); // expected-warning{{explicit conversion functions are a C++11 extension}}
 };
 
 void test_explicit_bool(ExplicitConvToBool ecb) {
@@ -56,7 +56,7 @@ void test_explicit_conv_to_ref(ExplicitConvToRef ecr) {
 struct A { };
 struct B { };
 struct C {
-  explicit operator A&(); // expected-warning{{explicit conversion functions are a C++0x extension}}
+  explicit operator A&(); // expected-warning{{explicit conversion functions are a C++11 extension}}
   operator B&(); // expected-note{{candidate}}
 };
 

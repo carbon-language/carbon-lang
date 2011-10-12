@@ -19,8 +19,8 @@ struct IndirectValueInt : ValueInt { };
 struct TwoValueInts : ValueInt, IndirectValueInt { };
 
 void test() {
-  (void)new int[ValueInt(10)]; // expected-warning{{implicit conversion from array size expression of type 'ValueInt' to integral type 'int' is a C++0x extension}}
-  (void)new int[ValueEnum()]; // expected-warning{{implicit conversion from array size expression of type 'ValueEnum' to enumeration type 'E' is a C++0x extension}}
+  (void)new int[ValueInt(10)]; // expected-warning{{implicit conversion from array size expression of type 'ValueInt' to integral type 'int' is a C++11 extension}}
+  (void)new int[ValueEnum()]; // expected-warning{{implicit conversion from array size expression of type 'ValueEnum' to enumeration type 'E' is a C++11 extension}}
   (void)new int[ValueBoth()]; // expected-error{{ambiguous conversion of array size expression of type 'ValueBoth' to an integral or enumeration type}}
 
   (void)new int[TwoValueInts()]; // expected-error{{ambiguous conversion of array size expression of type 'TwoValueInts' to an integral or enumeration type}}

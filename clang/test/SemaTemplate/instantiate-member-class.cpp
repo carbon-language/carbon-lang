@@ -108,7 +108,7 @@ namespace test2 {
 namespace AliasTagDef {
   template<typename T>
   struct F {
-    using S = struct U { // expected-warning {{C++0x}}
+    using S = struct U { // expected-warning {{C++11}}
       T g() {
         return T();
       }

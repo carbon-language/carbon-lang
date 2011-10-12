@@ -46,7 +46,7 @@ namespace PR9654 {
 namespace AliasTagDef {
   template<typename T>
   T f() {
-    using S = struct { // expected-warning {{C++0x}}
+    using S = struct { // expected-warning {{C++11}}
       T g() {
         return T();
       }

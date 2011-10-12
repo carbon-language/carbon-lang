@@ -53,7 +53,7 @@ def ext_c99_variable_decl_in_for_loop : Extension<
 def ext_c99_compound_literal : Extension<
   "compound literals are a C99-specific feature">;
 def ext_enumerator_list_comma : Extension<
-  "commas at the end of enumerator lists are a %select{C99|C++0x}0-specific "
+  "commas at the end of enumerator lists are a %select{C99|C++11}0-specific "
   "feature">;
 def err_enumerator_list_missing_comma : Error<
   "missing ',' between enumerators">;
@@ -187,26 +187,26 @@ def err_invalid_reference_qualifier_application : Error<
 def err_illegal_decl_reference_to_reference : Error<
   "%0 declared as a reference to a reference">;
 def ext_rvalue_reference : ExtWarn<
-  "rvalue references are a C++0x extension">, InGroup<CXX0x>;
+  "rvalue references are a C++11 extension">, InGroup<CXX0x>;
 def ext_ref_qualifier : ExtWarn<
-  "reference qualifiers on functions are a C++0x extension">, InGroup<CXX0x>;
+  "reference qualifiers on functions are a C++11 extension">, InGroup<CXX0x>;
 def ext_inline_namespace : ExtWarn<
-  "inline namespaces are a C++0x feature">, InGroup<CXX0x>;
+  "inline namespaces are a C++11 feature">, InGroup<CXX0x>;
 def err_generalized_initializer_lists : Error<
-  "generalized initializer lists are a C++0x extension unsupported in Clang">;
+  "generalized initializer lists are a C++11 extension unsupported in Clang">;
 def ext_generalized_initializer_lists : ExtWarn<
-  "generalized initializer lists are a C++0x extension unsupported in Clang">,
+  "generalized initializer lists are a C++11 extension unsupported in Clang">,
   InGroup<CXX0x>;
 def ext_auto_type_specifier : ExtWarn<
-  "'auto' type specifier is a C++0x extension">, InGroup<CXX0x>;
+  "'auto' type specifier is a C++11 extension">, InGroup<CXX0x>;
 def warn_auto_storage_class : Warning<
-  "'auto' storage class specifier is redundant and incompatible with C++0x">,
+  "'auto' storage class specifier is redundant and incompatible with C++11">,
   InGroup<CXX0xCompat>;
 def ext_auto_storage_class : ExtWarn<
-  "'auto' storage class specifier is not permitted in C++0x, and will not "
+  "'auto' storage class specifier is not permitted in C++11, and will not "
   "be supported in future releases">;
 def ext_for_range : ExtWarn<
-  "range-based for loop is a C++0x extension">, InGroup<CXX0x>;
+  "range-based for loop is a C++11 extension">, InGroup<CXX0x>;
 def err_argument_required_after_attribute : Error<
   "argument required after attribute">;
 def err_missing_param : Error<"expected parameter declarator">;
@@ -372,9 +372,9 @@ def err_default_delete_in_multiple_declaration : Error<
   "standalone declaration">;
 
 def err_cxx0x_attribute_forbids_arguments : Error<
-  "C++0x attribute '%0' cannot have an argument list">;
+  "C++11 attribute '%0' cannot have an argument list">;
 def err_cxx0x_attribute_requires_arguments : Error<
-  "C++0x attribute '%0' must have an argument list">;
+  "C++1 attribute '%0' must have an argument list">;
 def err_attributes_not_allowed : Error<"an attribute list cannot appear here">;
 
 /// C++ Templates
@@ -399,7 +399,7 @@ def err_two_right_angle_brackets_need_space : Error<
   "a space is required between consecutive right angle brackets (use '> >')">;
 def warn_cxx0x_right_shift_in_template_arg : Warning<
   "use of right-shift operator ('>>') in template argument will require "
-  "parentheses in C++0x">;
+  "parentheses in C++11">;
 def err_multiple_template_declarators : Error<
     "%select{|a template declaration|an explicit template specialization|"
     "an explicit template instantiation}0 can "
@@ -460,31 +460,31 @@ def err_missing_whitespace_digraph : Error<
   " which forms the digraph '<:' (aka '[') and a ':', did you mean '< ::'?">;
 
 def warn_deleted_function_accepted_as_extension: ExtWarn<
-  "deleted function definition accepted as a C++0x extension">, InGroup<CXX0x>;
+  "deleted function definition accepted as a C++11 extension">, InGroup<CXX0x>;
 def warn_defaulted_function_accepted_as_extension: ExtWarn<
-  "defaulted function definition accepted as a C++0x extension">,
+  "defaulted function definition accepted as a C++11 extension">,
   InGroup<CXX0x>;
 
-// C++0x in-class member initialization
+// C++11 in-class member initialization
 def warn_nonstatic_member_init_accepted_as_extension: ExtWarn<
-  "in-class initialization of non-static data member accepted as a C++0x extension">,
+  "in-class initialization of non-static data member accepted as a C++11 extension">,
   InGroup<CXX0x>;
 def err_bitfield_member_init: Error<
   "bitfield member cannot have an in-class initializer">;
 def err_incomplete_array_member_init: Error<
   "array bound cannot be deduced from an in-class initializer">;
 
-// C++0x alias-declaration
+// C++11 alias-declaration
 def ext_alias_declaration : ExtWarn<
-  "alias declarations accepted as a C++0x extension">, InGroup<CXX0x>;
+  "alias declarations accepted as a C++11 extension">, InGroup<CXX0x>;
 def err_alias_declaration_not_identifier : Error<
   "name defined in alias declaration must be an identifier">;
 def err_alias_declaration_specialization : Error<
   "%select{partial specialization|explicit specialization|explicit instantiation}0 of alias templates is not permitted">;
     
-// C++0x override control
+// C++11 override control
 def ext_override_control_keyword : Extension<
-  "'%0' keyword accepted as a C++0x extension">, InGroup<CXX0x>;
+  "'%0' keyword accepted as a C++11 extension">, InGroup<CXX0x>;
 
 def err_duplicate_virt_specifier : Error<
   "class member already marked '%0'">;
@@ -501,7 +501,7 @@ def err_paren_sizeof_parameter_pack : Error<
 def err_sizeof_parameter_pack : Error<
   "expected parenthesized parameter pack name in 'sizeof...' expression">;
 
-// C++0x lambda expressions
+// C++11 lambda expressions
 def err_expected_comma_or_rsquare : Error<
   "expected ',' or ']' in lambda capture list">;
 def err_this_captured_by_reference : Error<
