@@ -343,11 +343,6 @@ bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
       continue;
     }
 
-    // If the header is a landing pad, then we don't want to hoist instructions
-    // out of it. This can happen with SjLj exception handling which has a
-    // dispatch table as the landing pad.
-    if (CurLoop->getHeader()->isLandingPad()) continue;
-
     if (!PreRegAlloc)
       HoistRegionPostRA();
     else {
@@ -472,6 +467,12 @@ void MachineLICM::HoistRegionPostRA() {
   const std::vector<MachineBasicBlock*> Blocks = CurLoop->getBlocks();
   for (unsigned i = 0, e = Blocks.size(); i != e; ++i) {
     MachineBasicBlock *BB = Blocks[i];
+
+    // If the header of the loop containing this basic block is a landing pad,
+    // then don't try to hoist instructions out of this loop.
+    const MachineLoop *ML = MLI->getLoopFor(BB);
+    if (ML && ML->getHeader()->isLandingPad()) continue;
+
     // Conservatively treat live-in's as an external def.
     // FIXME: That means a reload that're reused in successor block(s) will not
     // be LICM'ed.
@@ -606,6 +607,11 @@ bool MachineLICM::IsGuaranteedToExecute(MachineBasicBlock *BB) {
 void MachineLICM::HoistRegion(MachineDomTreeNode *N, bool IsHeader) {
   assert(N != 0 && "Null dominator tree node?");
   MachineBasicBlock *BB = N->getBlock();
+
+  // If the header of the loop containing this basic block is a landing pad,
+  // then don't try to hoist instructions out of this loop.
+  const MachineLoop *ML = MLI->getLoopFor(BB);
+  if (ML && ML->getHeader()->isLandingPad()) return;
 
   // If this subregion is not in the top level loop at all, exit.
   if (!CurLoop->contains(BB)) return;
