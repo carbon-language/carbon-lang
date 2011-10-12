@@ -430,13 +430,24 @@ bool MachineCSE::ProcessBlock(MachineBasicBlock *MBB) {
       unsigned NewReg = CSMI->getOperand(i).getReg();
       if (OldReg == NewReg)
         continue;
+
       assert(TargetRegisterInfo::isVirtualRegister(OldReg) &&
              TargetRegisterInfo::isVirtualRegister(NewReg) &&
              "Do not CSE physical register defs!");
+
       if (!isProfitableToCSE(NewReg, OldReg, CSMI, MI)) {
         DoCSE = false;
         break;
       }
+
+      // Don't perform CSE if the result of the old instruction cannot exist
+      // within the register class of the new instruction.
+      const TargetRegisterClass *OldRC = MRI->getRegClass(OldReg);
+      if (!MRI->constrainRegClass(NewReg, OldRC)) {
+        DoCSE = false;
+        break;
+      }
+
       CSEPairs.push_back(std::make_pair(OldReg, NewReg));
       --NumDefs;
     }
