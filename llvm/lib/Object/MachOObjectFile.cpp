@@ -126,36 +126,36 @@ error_code MachOObjectFile::getSymbolName(DataRefImpl DRI,
 
 error_code MachOObjectFile::getSymbolOffset(DataRefImpl DRI,
                                              uint64_t &Result) const {
+  uint64_t SectionOffset;
+  uint8_t SectionIndex;
   if (MachOObj->is64Bit()) {
     InMemoryStruct<macho::Symbol64TableEntry> Entry;
     getSymbol64TableEntry(DRI, Entry);
     Result = Entry->Value;
+    SectionIndex = Entry->SectionIndex;
   } else {
     InMemoryStruct<macho::SymbolTableEntry> Entry;
     getSymbolTableEntry(DRI, Entry);
     Result = Entry->Value;
+    SectionIndex = Entry->SectionIndex;
   }
+  getSectionAddress(Sections[SectionIndex-1], SectionOffset);
+  Result -= SectionOffset;
+
   return object_error::success;
 }
 
 error_code MachOObjectFile::getSymbolAddress(DataRefImpl DRI,
                                              uint64_t &Result) const {
-  uint64_t SymbolOffset;
-  uint8_t SectionIndex;
   if (MachOObj->is64Bit()) {
     InMemoryStruct<macho::Symbol64TableEntry> Entry;
     getSymbol64TableEntry(DRI, Entry);
-    SymbolOffset = Entry->Value;
-    SectionIndex = Entry->SectionIndex;
+    Result = Entry->Value;
   } else {
     InMemoryStruct<macho::SymbolTableEntry> Entry;
     getSymbolTableEntry(DRI, Entry);
-    SymbolOffset = Entry->Value;
-    SectionIndex = Entry->SectionIndex;
+    Result = Entry->Value;
   }
-  getSectionAddress(Sections[SectionIndex-1], Result);
-  Result += SymbolOffset;
-
   return object_error::success;
 }
 
