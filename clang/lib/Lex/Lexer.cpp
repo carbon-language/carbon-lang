@@ -1358,8 +1358,7 @@ void Lexer::LexNumericConstant(Token &Result, const char *CurPtr) {
   }
 
   // If we have a hex FP constant, continue.
-  if ((C == '-' || C == '+') && (PrevCh == 'P' || PrevCh == 'p') &&
-      !Features.CPlusPlus0x)
+  if ((C == '-' || C == '+') && (PrevCh == 'P' || PrevCh == 'p'))
     return LexNumericConstant(Result, ConsumeChar(CurPtr, Size, Result));
 
   // Update the location of token as well as BufferPtr.

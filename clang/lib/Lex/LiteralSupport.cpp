@@ -562,9 +562,6 @@ void NumericLiteralParser::ParseNumberStartingWithZero(SourceLocation TokLoc) {
       }
       s = first_non_digit;
 
-      // In C++0x, we cannot support hexadecmial floating literals because
-      // they conflict with user-defined literals, so we warn in previous
-      // versions of C++ by default.
       if (!PP.getLangOptions().HexFloats)
         PP.Diag(TokLoc, diag::ext_hexconstant_invalid);
     } else if (saw_period) {
