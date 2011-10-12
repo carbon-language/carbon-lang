@@ -2131,7 +2131,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context, co
 
 void 
 ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context, 
-                                                  lldb::ModuleSP module,
+                                                  lldb::ModuleSP module_sp,
                                                   ClangNamespaceDecl &namespace_decl,
                                                   const ConstString &name)
 {
@@ -2355,7 +2355,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
         else if (target)
         {
             var = FindGlobalVariable (*target,
-                                      module,
+                                      module_sp,
                                       name,
                                       &namespace_decl,
                                       NULL);
@@ -2372,14 +2372,14 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             const bool include_symbols = true;
             const bool append = false;
             
-            if (namespace_decl && module)
+            if (namespace_decl && module_sp)
             {
-                module->FindFunctions(name,
-                                      &namespace_decl,
-                                      eFunctionNameTypeBase, 
-                                      include_symbols,
-                                      append,
-                                      sc_list);
+                module_sp->FindFunctions(name,
+                                         &namespace_decl,
+                                         eFunctionNameTypeBase, 
+                                         include_symbols,
+                                         append,
+                                         sc_list);
             }
             else
             {
@@ -2441,17 +2441,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                 // We couldn't find a variable or function for this.  Now we'll hunt for a generic 
                 // data symbol, and -- if it is found -- treat it as a variable.
                 
-                Symbol *data_symbol;
-                
-                if (namespace_decl && module)
-                {
-                    data_symbol = FindGlobalDataSymbol(*target, module, name, &namespace_decl);
-                }
-                else
-                {
-                    ModuleSP module;
-                    data_symbol = FindGlobalDataSymbol(*target, module, name, NULL);
-                }
+                Symbol *data_symbol = FindGlobalDataSymbol(*target, module_sp, name, &namespace_decl);
                 
                 if (data_symbol)
                 {
@@ -2510,20 +2500,28 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
         }
     }    
     
-    lldb::TypeSP type_sp (m_parser_vars->m_sym_ctx.FindTypeByName (name));
-        
-    if (type_sp)
+    TypeList types;
+    SymbolContext null_sc;
+    
+    if (module_sp && namespace_decl)
+        module_sp->FindTypes(null_sc, name, &namespace_decl, true, 1, types);
+    else
+        target->GetImages().FindTypes (null_sc, name, true, 1, types);
+    
+    if (types.GetSize())
     {
+        TypeSP type_sp = types.GetTypeAtIndex(0);
+        
         if (log)
         {
-            log->Printf ("Matching type found for \"%s\": ", name.GetCString());
+            log->Printf("Matching type found for \"%s\": ", name.GetCString());
             StreamString strm;
             type_sp->Dump(&strm, true);
             log->PutCString (strm.GetData());
         }
 
-        TypeFromUser user_type (type_sp->GetClangFullType(),
-                                type_sp->GetClangAST());
+        TypeFromUser user_type(type_sp->GetClangFullType(),
+                               type_sp->GetClangAST());
             
         AddOneType(context, user_type, false);
     }
