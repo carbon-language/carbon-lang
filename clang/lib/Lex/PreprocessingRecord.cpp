@@ -170,11 +170,31 @@ unsigned PreprocessingRecord::findEndLocalPreprocessedEntity(
 
 void PreprocessingRecord::addPreprocessedEntity(PreprocessedEntity *Entity) {
   assert(Entity);
-  assert((PreprocessedEntities.empty() ||
-       !SourceMgr.isBeforeInTranslationUnit(Entity->getSourceRange().getBegin(),
-                   PreprocessedEntities.back()->getSourceRange().getBegin())) &&
-         "Adding a preprocessed entity that is before the previous one in TU");
-  PreprocessedEntities.push_back(Entity);
+  SourceLocation BeginLoc = Entity->getSourceRange().getBegin();
+  
+  // Check normal case, this entity begin location is after the previous one.
+  if (PreprocessedEntities.empty() ||
+      !SourceMgr.isBeforeInTranslationUnit(BeginLoc,
+                   PreprocessedEntities.back()->getSourceRange().getBegin())) {
+    PreprocessedEntities.push_back(Entity);
+    return;
+  }
+
+  // The entity's location is not after the previous one; this can happen rarely
+  // e.g. with "#include MACRO".
+  // Iterate the entities vector in reverse until we find the right place to
+  // insert the new entity.
+  for (std::vector<PreprocessedEntity *>::iterator
+         RI = PreprocessedEntities.end(), Begin = PreprocessedEntities.begin();
+       RI != Begin; --RI) {
+    std::vector<PreprocessedEntity *>::iterator I = RI;
+    --I;
+    if (!SourceMgr.isBeforeInTranslationUnit(BeginLoc,
+                                           (*I)->getSourceRange().getBegin())) {
+      PreprocessedEntities.insert(RI, Entity);
+      return;
+    }
+  }
 }
 
 void PreprocessingRecord::SetExternalSource(
