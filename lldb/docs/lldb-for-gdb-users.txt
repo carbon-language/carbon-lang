@@ -432,7 +432,7 @@ Finally, the results of the expressions are stored in persistent variables
 (lldb) expr self = $0
 $4 = (SKTGraphicView *) 0x0000000100135430
 
-f) Miscellaneous:
+f) Customization:
 
 You can use the embedded Python interprter to add the following 'pwd' and 'cd' commands
 for your lldb session:
@@ -483,3 +483,6 @@ Current working directory: /private/tmp
 (lldb) pwd
 /private/tmp
 (lldb) 
+
+For more examples of customization, look under the ToT/examples/customization
+directory.
