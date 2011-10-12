@@ -649,8 +649,8 @@ TEST(APFloatTest, exactInverse) {
 }
 
 TEST(APFloatTest, getLargest) {
-  EXPECT_EQ(3.40282347e+38f, APFloat::getLargest(APFloat::IEEEsingle).convertToFloat());
-  EXPECT_EQ(1.7976931348623157e+308, APFloat::getLargest(APFloat::IEEEdouble).convertToDouble());
+  EXPECT_EQ(3.402823466e+38f, APFloat::getLargest(APFloat::IEEEsingle).convertToFloat());
+  EXPECT_EQ(1.7976931348623158e+308, APFloat::getLargest(APFloat::IEEEdouble).convertToDouble());
 }
 
 }
