@@ -2303,6 +2303,8 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
   llvm::DIFile Unit = getOrCreateFile(D->getLocation());
   unsigned LineNo = getLineNumber(D->getLocation());
 
+  setLocation(D->getLocation());
+
   QualType T = D->getType();
   if (T->isIncompleteArrayType()) {
 
