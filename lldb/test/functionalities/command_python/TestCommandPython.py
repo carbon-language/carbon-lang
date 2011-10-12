@@ -27,6 +27,16 @@ class CmdPythonTestCase(TestBase):
 
         self.runCmd("command source py_import")
 
+        # This is the function to remove the custom commands in order to have a
+        # clean slate for the next test case.
+        def cleanup():
+            self.runCmd('command script delete welcome', check=False)
+            self.runCmd('command script delete targetname', check=False)
+            self.runCmd('command script delete longwait', check=False)
+
+        # Execute the cleanup function during test case tear down.
+        self.addTearDownHook(cleanup)
+
         # We don't want to display the stdout if not in TraceOn() mode.
         if not self.TraceOn():
             self.HideStdout()
