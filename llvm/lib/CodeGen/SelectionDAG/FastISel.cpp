@@ -494,7 +494,7 @@ bool FastISel::SelectCall(const User *I) {
   const CallInst *Call = cast<CallInst>(I);
 
   // Handle simple inline asms.
-  if (const InlineAsm *IA = dyn_cast<InlineAsm>(Call->getArgOperand(0))) {
+  if (const InlineAsm *IA = dyn_cast<InlineAsm>(Call->getCalledValue())) {
     // Don't attempt to handle constraints.
     if (!IA->getConstraintString().empty())
       return false;
