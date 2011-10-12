@@ -21,7 +21,7 @@
   id _delegate;
 }
 @property(nonatomic, assign) id<FooDelegate> delegate;
-@property(nonatomic, assign) id<BarDelegate> delegate2;
+@property(nonatomic, assign) id<BarDelegate> delegate2; // expected-note {{property declared here}}
 @end
 @interface Bar : Foo {
 }
@@ -36,7 +36,7 @@
 @interface Base : NSData 
 @property(assign) id ref;
 @property(assign) Base *p_base;
-@property(assign) NSMutableData *p_data;	
+@property(assign) NSMutableData *p_data;	 // expected-note {{property declared here}}
 @end
 
 @interface Data : Base 

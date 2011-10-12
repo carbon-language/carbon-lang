@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
 @protocol P
-  @property(readonly) int X;
+  @property(readonly) int X; // expected-note {{property declared here}}
 @end
 
 @protocol P1<P>

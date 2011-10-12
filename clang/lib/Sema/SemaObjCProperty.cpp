@@ -936,9 +936,11 @@ Sema::DiagnosePropertyMismatch(ObjCPropertyDecl *Property,
     QualType ConvertedType;
     if (!isObjCPointerConversion(RHSType, LHSType, 
                                  ConvertedType, IncompatibleObjC) ||
-        IncompatibleObjC)
+        IncompatibleObjC) {
         Diag(Property->getLocation(), diag::warn_property_types_are_incompatible)
         << Property->getType() << SuperProperty->getType() << inheritedName;
+      Diag(SuperProperty->getLocation(), diag::note_property_declare);
+    }
   }
 }
 
