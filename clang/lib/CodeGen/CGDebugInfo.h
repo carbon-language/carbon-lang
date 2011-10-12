@@ -64,6 +64,10 @@ class CGDebugInfo {
   // the end of a function.
   std::vector<unsigned> FnBeginRegionCount;
 
+  /// LineDirectiveFiles - This stack is used to keep track of 
+  /// scopes introduced by #line directives.
+  std::vector<const char *> LineDirectiveFiles;
+
   /// DebugInfoNames - This is a storage for names that are
   /// constructed on demand. For example, C++ destructors, C++ operators etc..
   llvm::BumpPtrAllocator DebugInfoNames;
@@ -147,10 +151,10 @@ class CGDebugInfo {
                          llvm::DIFile F,
                          SmallVectorImpl<llvm::Value *> &EltTys);
 
-  // CreateLexicalBlock - Create a new lexical block node and push it on
-  // the stack.
-  void CreateLexicalBlock(SourceLocation Loc);
-  
+  // UpdateLineDirectiveRegion - Update region stack only if #line directive
+  // has introduced scope change.
+  void UpdateLineDirectiveRegion(CGBuilderTy &Builder);
+
 public:
   CGDebugInfo(CodeGenModule &CGM);
   ~CGDebugInfo();
@@ -162,7 +166,7 @@ public:
 
   /// EmitLocation - Emit metadata to indicate a change in line/column
   /// information in the source file.
-  void EmitLocation(CGBuilderTy &Builder, SourceLocation Loc);
+  void EmitLocation(CGBuilderTy &Builder);
 
   /// EmitFunctionStart - Emit a call to llvm.dbg.function.start to indicate
   /// start of a new function.
@@ -178,11 +182,11 @@ public:
 
   /// EmitLexicalBlockStart - Emit metadata to indicate the beginning of a
   /// new lexical block and push the block onto the stack.
-  void EmitLexicalBlockStart(CGBuilderTy &Builder, SourceLocation Loc);
+  void EmitLexicalBlockStart(CGBuilderTy &Builder);
 
   /// EmitLexicalBlockEnd - Emit metadata to indicate the end of a new lexical
   /// block and pop the current block.
-  void EmitLexicalBlockEnd(CGBuilderTy &Builder, SourceLocation Loc);
+  void EmitLexicalBlockEnd(CGBuilderTy &Builder);
 
   /// EmitDeclareOfAutoVariable - Emit call to llvm.dbg.declare for an automatic
   /// variable declaration.

@@ -1392,8 +1392,10 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     EmitCXXGlobalVarDeclInitFunc(D, GV);
 
   // Emit global variable debug information.
-  if (CGDebugInfo *DI = getModuleDebugInfo())
+  if (CGDebugInfo *DI = getModuleDebugInfo()) {
+    DI->setLocation(D->getLocation());
     DI->EmitGlobalVariable(GV, D);
+  }
 }
 
 llvm::GlobalValue::LinkageTypes

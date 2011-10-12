@@ -1208,8 +1208,10 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   }
 
   CGDebugInfo *DI = getDebugInfo();
-  if (DI)
-    DI->EmitLexicalBlockStart(Builder, S.getSourceRange().getBegin());
+  if (DI) {
+    DI->setLocation(S.getSourceRange().getBegin());
+    DI->EmitLexicalBlockStart(Builder);
+  }
 
   // The local variable comes into scope immediately.
   AutoVarEmission variable = AutoVarEmission::invalid();
@@ -1463,8 +1465,10 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
     EmitStoreThroughLValue(RValue::get(null), elementLValue);
   }
 
-  if (DI)
-    DI->EmitLexicalBlockEnd(Builder, S.getSourceRange().getEnd());
+  if (DI) {
+    DI->setLocation(S.getSourceRange().getEnd());
+    DI->EmitLexicalBlockEnd(Builder);
+  }
 
   // Leave the cleanup we entered in ARC.
   if (getLangOptions().ObjCAutoRefCount)
@@ -2500,8 +2504,10 @@ void CodeGenFunction::EmitObjCAutoreleasePoolStmt(
   const CompoundStmt &S = cast<CompoundStmt>(*subStmt);
 
   CGDebugInfo *DI = getDebugInfo();
-  if (DI)
-    DI->EmitLexicalBlockStart(Builder, S.getLBracLoc());
+  if (DI) {
+    DI->setLocation(S.getLBracLoc());
+    DI->EmitLexicalBlockStart(Builder);
+  }
 
   // Keep track of the current cleanup stack depth.
   RunCleanupsScope Scope(*this);
@@ -2517,8 +2523,10 @@ void CodeGenFunction::EmitObjCAutoreleasePoolStmt(
        E = S.body_end(); I != E; ++I)
     EmitStmt(*I);
 
-  if (DI)
-    DI->EmitLexicalBlockEnd(Builder, S.getRBracLoc());
+  if (DI) {
+    DI->setLocation(S.getRBracLoc());
+    DI->EmitLexicalBlockEnd(Builder);
+  }
 }
 
 /// EmitExtendGCLifetime - Given a pointer to an Objective-C object,

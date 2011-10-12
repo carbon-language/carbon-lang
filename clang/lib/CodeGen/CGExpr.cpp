@@ -2180,8 +2180,10 @@ LValue CodeGenFunction::EmitMaterializeTemporaryExpr(
 
 RValue CodeGenFunction::EmitCallExpr(const CallExpr *E, 
                                      ReturnValueSlot ReturnValue) {
-  if (CGDebugInfo *DI = getDebugInfo())
-    DI->EmitLocation(Builder, E->getLocStart());
+  if (CGDebugInfo *DI = getDebugInfo()) {
+    DI->setLocation(E->getLocStart());
+    DI->EmitLocation(Builder);
+  }
 
   // Builtins never have block type.
   if (E->getCallee()->getType()->isBlockPointerType())
