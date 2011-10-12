@@ -1025,13 +1025,39 @@ bool ARMBaseInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const{
   if (!MI->definesRegister(DstRegD, TRI) || MI->readsRegister(DstRegD, TRI))
     return false;
 
-  // All clear, widen the COPY.  Preserve the implicit operands, even if they
-  // may be superfluous now.
+  // A dead copy shouldn't show up here, but reject it just in case.
+  if (MI->getOperand(0).isDead())
+    return false;
+
+  // All clear, widen the COPY.
   DEBUG(dbgs() << "widening:    " << *MI);
+
+  // Get rid of the old <imp-def> of DstRegD.  Leave it if it defines a Q-reg
+  // or some other super-register.
+  int ImpDefIdx = MI->findRegisterDefOperandIdx(DstRegD);
+  if (ImpDefIdx != -1)
+    MI->RemoveOperand(ImpDefIdx);
+
+  // Change the opcode and operands.
   MI->setDesc(get(ARM::VMOVD));
   MI->getOperand(0).setReg(DstRegD);
   MI->getOperand(1).setReg(SrcRegD);
   AddDefaultPred(MachineInstrBuilder(MI));
+
+  // We are now reading SrcRegD instead of SrcRegS.  This may upset the
+  // register scavenger and machine verifier, so we need to indicate that we
+  // are reading an undefined value from SrcRegD, but a proper value from
+  // SrcRegS.
+  MI->getOperand(1).setIsUndef();
+  MachineInstrBuilder(MI).addReg(SrcRegS, RegState::Implicit);
+
+  // SrcRegD may actually contain an unrelated value in the ssub_1
+  // sub-register.  Don't kill it.  Only kill the ssub_0 sub-register.
+  if (MI->getOperand(1).isKill()) {
+    MI->getOperand(1).setIsKill(false);
+    MI->addRegisterKilled(SrcRegS, TRI, true);
+  }
+
   DEBUG(dbgs() << "replaced by: " << *MI);
   return true;
 }
@@ -2800,5 +2826,5 @@ ARMBaseInstrInfo::setExecutionDomain(MachineInstr *MI, unsigned Domain) const {
 
   // Add the extra source operand and new predicates.
   // This will go before any implicit ops.
-  AddDefaultPred(MachineInstrBuilder(MI).addReg(MI->getOperand(1).getReg()));
+  AddDefaultPred(MachineInstrBuilder(MI).addOperand(MI->getOperand(1)));
 }
