@@ -449,15 +449,30 @@ error_code MachOObjectFile::isSectionBSS(DataRefImpl DRI,
 error_code MachOObjectFile::sectionContainsSymbol(DataRefImpl Sec,
                                                   DataRefImpl Symb,
                                                   bool &Result) const {
+  SymbolRef::SymbolType ST;
+  getSymbolType(Symb, ST);
+  if (ST == SymbolRef::ST_External) {
+    Result = false;
+    return object_error::success;
+  }
+
+  uint64_t SectBegin, SectEnd;
+  getSectionAddress(Sec, SectBegin);
+  getSectionSize(Sec, SectEnd);
+  SectEnd += SectBegin;
+
   if (MachOObj->is64Bit()) {
     InMemoryStruct<macho::Symbol64TableEntry> Entry;
     getSymbol64TableEntry(Symb, Entry);
-    Result = Entry->SectionIndex == 1 + Sec.d.a + Sec.d.b;
+    uint64_t SymAddr= Entry->Value;
+    Result = (SymAddr >= SectBegin) && (SymAddr < SectEnd);
   } else {
     InMemoryStruct<macho::SymbolTableEntry> Entry;
     getSymbolTableEntry(Symb, Entry);
-    Result = Entry->SectionIndex == 1 + Sec.d.a + Sec.d.b;
+    uint64_t SymAddr= Entry->Value;
+    Result = (SymAddr >= SectBegin) && (SymAddr < SectEnd);
   }
+
   return object_error::success;
 }
 
