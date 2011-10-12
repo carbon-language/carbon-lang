@@ -27,8 +27,7 @@ using namespace llvm;
 
 /// translateShiftImm - Convert shift immediate from 0-31 to 1-32 for printing.
 ///
-/// getSORegOffset returns an integer from 0-31, but '0' should actually be printed
-/// 32 as the immediate shouldbe within the range 1-32.
+/// getSORegOffset returns an integer from 0-31, representing '32' as 0.
 static unsigned translateShiftImm(unsigned imm) {
   if (imm == 0)
     return 32;
