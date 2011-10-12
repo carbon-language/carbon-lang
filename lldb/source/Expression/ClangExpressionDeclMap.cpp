@@ -2335,7 +2335,6 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
         ValueObjectSP valobj;
         VariableSP var;
         Error err;
-        bool found = false;
         
         if (frame && !namespace_decl)
         {
@@ -2349,7 +2348,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             if (err.Success() && var != NULL)
             {
                 AddOneVariable(context, var);
-                found = true;
+                context.m_found.variable = true;
             }
         }
         else if (target)
@@ -2363,11 +2362,11 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             if (var)
             {
                 AddOneVariable(context, var);
-                found = true;
+                context.m_found.variable = true;
             }
         }
         
-        if (!found)
+        if (!context.m_found.variable)
         {
             const bool include_symbols = true;
             const bool append = false;
@@ -2392,7 +2391,6 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             
             if (sc_list.GetSize())
             {
-                bool found_specific = false;
                 Symbol *generic_symbol = NULL;
                 Symbol *non_extern_symbol = NULL;
                 
@@ -2407,10 +2405,10 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                     {
                         // TODO only do this if it's a C function; C++ functions may be
                         // overloaded
-                        if (!found_specific)
+                        if (!context.m_found.function_with_type_info)
                             AddOneFunction(context, sym_ctx.function, NULL);
-                        found_specific = true;
-                        found = true;
+                        context.m_found.function_with_type_info = true;
+                        context.m_found.function = true;
                     }
                     else if (sym_ctx.symbol)
                     {
@@ -2421,24 +2419,24 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                     }
                 }
                 
-                if (!found_specific)
+                if (!context.m_found.function_with_type_info)
                 {
                     if (generic_symbol)
                     {
                         AddOneFunction (context, NULL, generic_symbol);
-                        found = true;
+                        context.m_found.function = true;
                     }
                     else if (non_extern_symbol)
                     {
                         AddOneFunction (context, NULL, non_extern_symbol);
-                        found = true;
+                        context.m_found.function = true;
                     }
                 }
             }
             
-            if (!found)
+            if (!context.m_found.variable)
             {
-                // We couldn't find a variable or function for this.  Now we'll hunt for a generic 
+                // We couldn't find a non-symbol variable for this.  Now we'll hunt for a generic 
                 // data symbol, and -- if it is found -- treat it as a variable.
                 
                 Symbol *data_symbol = FindGlobalDataSymbol(*target, module_sp, name, &namespace_decl);
@@ -2446,7 +2444,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                 if (data_symbol)
                 {
                     AddOneGenericVariable(context, *data_symbol);
-                    found = true;
+                    context.m_found.variable = true;
                 }
             }
         }

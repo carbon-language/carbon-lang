@@ -185,6 +185,12 @@ struct NameSearchContext {
     const clang::DeclarationName &m_decl_name;          ///< The name being looked for
     const clang::DeclContext *m_decl_context;           ///< The DeclContext to put declarations into
     
+    struct {
+        bool variable                   : 1;
+        bool function_with_type_info    : 1;
+        bool function                   : 1;
+    } m_found;
+    
     //------------------------------------------------------------------
     /// Constructor
     ///
