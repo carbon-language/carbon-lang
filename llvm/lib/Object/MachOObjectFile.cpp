@@ -153,7 +153,7 @@ error_code MachOObjectFile::getSymbolAddress(DataRefImpl DRI,
     SymbolOffset = Entry->Value;
     SectionIndex = Entry->SectionIndex;
   }
-  getSectionAddress(Sections[SectionIndex], Result);
+  getSectionAddress(Sections[SectionIndex-1], Result);
   Result += SymbolOffset;
 
   return object_error::success;
