@@ -840,8 +840,8 @@ private:
     /// @param[in] module
     ///     If non-NULL, the module to query.
     ///
-    /// @param[in] decl
-    ///     If non-NULL and module is non-NULL, the parent namespace.
+    /// @param[in] namespace_decl
+    ///     If valid and module is non-NULL, the parent namespace.
     ///
     /// @param[in] name
     ///     The name as a plain C string.  The NameSearchContext contains 
@@ -906,8 +906,14 @@ private:
     /// @param[in] target
     ///     The target to use as a basis for finding the variable.
     ///
+    /// @param[in] module
+    ///     If non-NULL, the module to search.
+    ///
     /// @param[in] name
     ///     The name as a plain C string.
+    ///
+    /// @param[in] namespace_decl
+    ///     If non-NULL and module is non-NULL, the parent namespace.
     ///
     /// @param[in] type
     ///     The required type for the variable.  This function may be called
@@ -919,7 +925,9 @@ private:
     //------------------------------------------------------------------
     lldb::VariableSP
     FindGlobalVariable (Target &target,
-                        const char *name,
+                        lldb::ModuleSP &module,
+                        const ConstString &name,
+                        ClangNamespaceDecl *namespace_decl,
                         TypeFromUser *type = NULL);
     
     //------------------------------------------------------------------

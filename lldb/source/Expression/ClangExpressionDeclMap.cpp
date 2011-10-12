@@ -949,7 +949,9 @@ ClangExpressionDeclMap::LookupDecl (clang::NamedDecl *decl)
 
         if (target)
         {
-            VariableSP global(FindGlobalVariable (*target, name.GetCString(), &type));
+            lldb::ModuleSP module;
+            
+            VariableSP global(FindGlobalVariable (*target, module, name, NULL, &type));
             
             if (global)
                 return *GetVariableValue(exe_ctx, global, NULL);
@@ -2016,19 +2018,19 @@ lldb::VariableSP
 ClangExpressionDeclMap::FindGlobalVariable
 (
     Target &target,
-    const char *name,
+    ModuleSP &module,
+    const ConstString &name,
+    ClangNamespaceDecl *namespace_decl,
     TypeFromUser *type
 )
 {
     VariableList vars;
     ValueObjectList valobjs;
     
-    Error error (Variable::GetValuesForVariableExpressionPath (name,
-                                                               &target,
-                                                               GetVariableCallback,
-                                                               &target,
-                                                               vars,
-                                                               valobjs));
+    if (module && namespace_decl)
+        module->FindGlobalVariables (name, namespace_decl, true, -1, vars);
+    else
+        target.GetImages().FindGlobalVariables(name, true, -1, vars);
     
     if (vars.GetSize())
     {
@@ -2107,7 +2109,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context, co
         ClangNamespaceDecl namespace_decl;
         
         if (log)
-            log->Printf("  Searching without a namespace");
+            log->Printf("  Searching the root namespace");
         
         FindExternalVisibleDecls(context,
                                  lldb::ModuleSP(),
@@ -2341,8 +2343,10 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
         }
         else if (target)
         {
-            var = FindGlobalVariable (*target, 
-                                      name_unique_cstr,
+            var = FindGlobalVariable (*target,
+                                      module,
+                                      name,
+                                      &namespace_decl,
                                       NULL);
             
             if (var)
