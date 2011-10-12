@@ -855,7 +855,7 @@ private:
     void 
     FindExternalVisibleDecls (NameSearchContext &context, 
                               lldb::ModuleSP module,
-                              ClangNamespaceDecl &decl,
+                              ClangNamespaceDecl &namespace_decl,
                               const ConstString &name);
     
     //------------------------------------------------------------------

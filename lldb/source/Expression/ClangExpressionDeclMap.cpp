@@ -2119,73 +2119,14 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context, co
 void 
 ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context, 
                                                   lldb::ModuleSP module,
-                                                  ClangNamespaceDecl &decl,
+                                                  ClangNamespaceDecl &namespace_decl,
                                                   const ConstString &name)
 {
     assert (m_struct_vars.get());
     assert (m_parser_vars.get());
     
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
-    
-    do
-    {
-        if (isa<TranslationUnitDecl>(context.m_decl_context))
-            break;
-        
-        if (!isa<NamespaceDecl>(context.m_decl_context))
-            return;
-        
-        const Decl *context_decl = dyn_cast<Decl>(context.m_decl_context);
-        
-        if (log)
-            log->Printf("Searching for '%s' in a '%s'", name.GetCString(), context_decl->getDeclKindName());
-        
-        Decl *original_decl = NULL;
-        ASTContext *original_ctx = NULL;
-        
-        if (!m_parser_vars->GetASTImporter(context.GetASTContext())->ResolveDeclOrigin(context_decl, &original_decl, &original_ctx))
-            break;
-        
-        if (TagDecl *original_tag_decl = dyn_cast<TagDecl>(original_decl))
-        {
-            ExternalASTSource *external_source = original_ctx->getExternalSource();
             
-            if (!external_source)
-                break;
-                        
-            if (!original_tag_decl)
-                break;
-            
-            external_source->CompleteType (original_tag_decl);
-        }
-        
-        DeclContext *original_decl_context = dyn_cast<DeclContext>(original_decl);
-        
-        if (!original_decl_context)
-            break;
-                
-        for (TagDecl::decl_iterator iter = original_decl_context->decls_begin();
-             iter != original_decl_context->decls_end();
-             ++iter)
-        {
-            NamedDecl *named_decl = dyn_cast<NamedDecl>(*iter);
-            
-            if (named_decl && named_decl->getName().equals(name.GetCString()))
-            {
-                Decl *copied_decl = m_parser_vars->GetASTImporter(context.GetASTContext())->CopyDecl(original_ctx, named_decl);
-                NamedDecl *copied_named_decl = dyn_cast<NamedDecl>(copied_decl);
-                
-                if (!copied_named_decl)
-                    continue;
-                
-                context.AddNamedDecl (copied_named_decl);
-            }
-        }
-        
-        return;
-    }
-    while (0);
-        
     SymbolContextList sc_list;
     
     const char *name_unique_cstr = name.GetCString();
@@ -2197,14 +2138,193 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
     // doesn't start with our phony prefix of '$'
     Target *target = m_parser_vars->m_exe_ctx->GetTargetPtr();
     StackFrame *frame = m_parser_vars->m_exe_ctx->GetFramePtr();
-    if (name_unique_cstr[0] != '$')
+    if (name_unique_cstr[0] == '$' && !namespace_decl)
+    {
+        static ConstString g_lldb_class_name ("$__lldb_class");
+        
+        if (name == g_lldb_class_name)
+        {
+            // Clang is looking for the type of "this"
+            
+            if (!frame)
+                return;
+            
+            VariableList *vars = frame->GetVariableList(false);
+            
+            if (!vars)
+                return;
+            
+            lldb::VariableSP this_var = vars->FindVariable(ConstString("this"));
+            
+            if (!this_var ||
+                !this_var->IsInScope(frame) || 
+                !this_var->LocationIsValidForFrame (frame))
+                return;
+            
+            Type *this_type = this_var->GetType();
+            
+            if (!this_type)
+                return;
+            
+            if (log)
+            {
+                log->PutCString ("Type for \"this\" is: ");
+                StreamString strm;
+                this_type->Dump(&strm, true);
+                log->PutCString (strm.GetData());
+            }
+            
+            TypeFromUser this_user_type(this_type->GetClangFullType(),
+                                        this_type->GetClangAST());
+            
+            m_struct_vars->m_object_pointer_type = this_user_type;
+            
+            void *pointer_target_type = NULL;
+            
+            if (!ClangASTContext::IsPointerType(this_user_type.GetOpaqueQualType(),
+                                                &pointer_target_type))
+                return;
+            
+            clang::QualType pointer_target_qual_type = QualType::getFromOpaquePtr(pointer_target_type);
+            
+            if (pointer_target_qual_type.isConstQualified())
+                pointer_target_qual_type.removeLocalConst();
+            
+            TypeFromUser class_user_type(pointer_target_qual_type.getAsOpaquePtr(),
+                                         this_type->GetClangAST());
+            
+            if (log)
+            {
+                StreamString type_stream;
+                class_user_type.DumpTypeCode(&type_stream);
+                type_stream.Flush();
+                log->Printf("Adding type for $__lldb_class: %s", type_stream.GetString().c_str());
+            }
+            
+            AddOneType(context, class_user_type, true);
+            
+            return;
+        }
+        
+        static ConstString g_lldb_objc_class_name ("$__lldb_objc_class");
+        if (name == g_lldb_objc_class_name)
+        {
+            // Clang is looking for the type of "*self"
+            
+            if (!frame)
+                return;
+            
+            VariableList *vars = frame->GetVariableList(false);
+            
+            if (!vars)
+                return;
+            
+            lldb::VariableSP self_var = vars->FindVariable(ConstString("self"));
+            
+            if (!self_var || 
+                !self_var->IsInScope(frame) || 
+                !self_var->LocationIsValidForFrame (frame))
+                return;
+            
+            Type *self_type = self_var->GetType();
+            
+            if (!self_type)
+                return;
+            
+            TypeFromUser self_user_type(self_type->GetClangFullType(),
+                                        self_type->GetClangAST());
+            
+            m_struct_vars->m_object_pointer_type = self_user_type;
+            
+            void *pointer_target_type = NULL;
+            
+            if (!ClangASTContext::IsPointerType(self_user_type.GetOpaqueQualType(),
+                                                &pointer_target_type)
+                || pointer_target_type == NULL)
+                return;
+            
+            TypeFromUser class_user_type(pointer_target_type,
+                                         self_type->GetClangAST());
+            
+            if (log)
+            {
+                StreamString type_stream;
+                class_user_type.DumpTypeCode(&type_stream);
+                type_stream.Flush();
+                log->Printf("Adding type for $__lldb_objc_class: %s", type_stream.GetString().c_str());
+            }
+            
+            AddOneType(context, class_user_type, false);
+            
+            return;
+        }
+        
+        // any other $__lldb names should be weeded out now
+        if (!::strncmp(name_unique_cstr, "$__lldb", sizeof("$__lldb") - 1))
+            return;
+        
+        do
+        {
+            if (!target)
+                break;
+            
+            ClangASTContext *scratch_clang_ast_context = target->GetScratchClangASTContext();
+            
+            if (!scratch_clang_ast_context)
+                break;
+            
+            ASTContext *scratch_ast_context = scratch_clang_ast_context->getASTContext();
+            
+            if (!scratch_ast_context)
+                break;
+            
+            TypeDecl *ptype_type_decl = m_parser_vars->m_persistent_vars->GetPersistentType(name);
+            
+            if (!ptype_type_decl)
+                break;
+            
+            Decl *parser_ptype_decl = ClangASTContext::CopyDecl(context.GetASTContext(), scratch_ast_context, ptype_type_decl);
+            
+            if (!parser_ptype_decl)
+                break;
+            
+            TypeDecl *parser_ptype_type_decl = dyn_cast<TypeDecl>(parser_ptype_decl);
+            
+            if (!parser_ptype_type_decl)
+                break;
+            
+            if (log)
+                log->Printf("Found persistent type %s", name.GetCString());
+            
+            context.AddNamedDecl(parser_ptype_type_decl);
+        } while (0);
+        
+        ClangExpressionVariableSP pvar_sp(m_parser_vars->m_persistent_vars->GetVariable(name));
+        
+        if (pvar_sp)
+        {
+            AddOneVariable(context, pvar_sp);
+            return;
+        }
+        
+        const char *reg_name(&name.GetCString()[1]);
+        
+        if (m_parser_vars->m_exe_ctx->GetRegisterContext())
+        {
+            const RegisterInfo *reg_info(m_parser_vars->m_exe_ctx->GetRegisterContext()->GetRegisterInfoByName(reg_name));
+            
+            if (reg_info)
+                AddOneRegister(context, reg_info);
+        }
+    }
+    else
     {
         ValueObjectSP valobj;
         VariableSP var;
         Error err;
         bool found = false;
         
-        if (frame)
+        if (frame && !namespace_decl)
         {
             valobj = frame->GetValueForVariableExpressionPath(name_unique_cstr, 
                                                               eNoDynamicValues, 
@@ -2350,186 +2470,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             if (clang_namespace_decl)
                 clang_namespace_decl->setHasExternalVisibleStorage();
         }
-    }
-    else
-    {
-        static ConstString g_lldb_class_name ("$__lldb_class");
-        
-        if (name == g_lldb_class_name)
-        {
-            // Clang is looking for the type of "this"
-            
-            if (!frame)
-                return;
-            
-            VariableList *vars = frame->GetVariableList(false);
-            
-            if (!vars)
-                return;
-            
-            lldb::VariableSP this_var = vars->FindVariable(ConstString("this"));
-            
-            if (!this_var ||
-                !this_var->IsInScope(frame) || 
-                !this_var->LocationIsValidForFrame (frame))
-                return;
-            
-            Type *this_type = this_var->GetType();
-            
-            if (!this_type)
-                return;
-            
-            if (log)
-            {
-                log->PutCString ("Type for \"this\" is: ");
-                StreamString strm;
-                this_type->Dump(&strm, true);
-                log->PutCString (strm.GetData());
-            }
-
-            TypeFromUser this_user_type(this_type->GetClangFullType(),
-                                        this_type->GetClangAST());
-            
-            m_struct_vars->m_object_pointer_type = this_user_type;
-            
-            void *pointer_target_type = NULL;
-            
-            if (!ClangASTContext::IsPointerType(this_user_type.GetOpaqueQualType(),
-                                                &pointer_target_type))
-                return;
-            
-            clang::QualType pointer_target_qual_type = QualType::getFromOpaquePtr(pointer_target_type);
-            
-            if (pointer_target_qual_type.isConstQualified())
-                pointer_target_qual_type.removeLocalConst();
-            
-            TypeFromUser class_user_type(pointer_target_qual_type.getAsOpaquePtr(),
-                                         this_type->GetClangAST());
-
-            if (log)
-            {
-                StreamString type_stream;
-                class_user_type.DumpTypeCode(&type_stream);
-                type_stream.Flush();
-                log->Printf("Adding type for $__lldb_class: %s", type_stream.GetString().c_str());
-            }
-            
-            AddOneType(context, class_user_type, true);
-            
-            return;
-        }
-        
-        static ConstString g_lldb_objc_class_name ("$__lldb_objc_class");
-        if (name == g_lldb_objc_class_name)
-        {
-            // Clang is looking for the type of "*self"
-            
-            if (!frame)
-                return;
-            
-            VariableList *vars = frame->GetVariableList(false);
-
-            if (!vars)
-                return;
-        
-            lldb::VariableSP self_var = vars->FindVariable(ConstString("self"));
-        
-            if (!self_var || 
-                !self_var->IsInScope(frame) || 
-                !self_var->LocationIsValidForFrame (frame))
-                return;
-        
-            Type *self_type = self_var->GetType();
-            
-            if (!self_type)
-                return;
-        
-            TypeFromUser self_user_type(self_type->GetClangFullType(),
-                                        self_type->GetClangAST());
-            
-            m_struct_vars->m_object_pointer_type = self_user_type;
-
-            void *pointer_target_type = NULL;
-        
-            if (!ClangASTContext::IsPointerType(self_user_type.GetOpaqueQualType(),
-                                                &pointer_target_type)
-                || pointer_target_type == NULL)
-                return;
-        
-            TypeFromUser class_user_type(pointer_target_type,
-                                         self_type->GetClangAST());
-            
-            if (log)
-            {
-                StreamString type_stream;
-                class_user_type.DumpTypeCode(&type_stream);
-                type_stream.Flush();
-                log->Printf("Adding type for $__lldb_objc_class: %s", type_stream.GetString().c_str());
-            }
-            
-            AddOneType(context, class_user_type, false);
-            
-            return;
-        }
-        
-        // any other $__lldb names should be weeded out now
-        if (!::strncmp(name_unique_cstr, "$__lldb", sizeof("$__lldb") - 1))
-            return;
-
-        do
-        {
-            if (!target)
-                break;
-            
-            ClangASTContext *scratch_clang_ast_context = target->GetScratchClangASTContext();
-            
-            if (!scratch_clang_ast_context)
-                break;
-            
-            ASTContext *scratch_ast_context = scratch_clang_ast_context->getASTContext();
-            
-            if (!scratch_ast_context)
-                break;
-            
-            TypeDecl *ptype_type_decl = m_parser_vars->m_persistent_vars->GetPersistentType(name);
-
-            if (!ptype_type_decl)
-                break;
-            
-            Decl *parser_ptype_decl = ClangASTContext::CopyDecl(context.GetASTContext(), scratch_ast_context, ptype_type_decl);
-            
-            if (!parser_ptype_decl)
-                break;
-            
-            TypeDecl *parser_ptype_type_decl = dyn_cast<TypeDecl>(parser_ptype_decl);
-            
-            if (!parser_ptype_type_decl)
-                break;
-            
-            if (log)
-                log->Printf("Found persistent type %s", name.GetCString());
-            
-            context.AddNamedDecl(parser_ptype_type_decl);
-        } while (0);
-        
-        ClangExpressionVariableSP pvar_sp(m_parser_vars->m_persistent_vars->GetVariable(name));
-    
-        if (pvar_sp)
-        {
-            AddOneVariable(context, pvar_sp);
-            return;
-        }
-        
-        const char *reg_name(&name.GetCString()[1]);
-        
-        if (m_parser_vars->m_exe_ctx->GetRegisterContext())
-        {
-            const RegisterInfo *reg_info(m_parser_vars->m_exe_ctx->GetRegisterContext()->GetRegisterInfoByName(reg_name));
-            
-            if (reg_info)
-                AddOneRegister(context, reg_info);
-        }
-    }
+    }    
     
     lldb::TypeSP type_sp (m_parser_vars->m_sym_ctx.FindTypeByName (name));
         
