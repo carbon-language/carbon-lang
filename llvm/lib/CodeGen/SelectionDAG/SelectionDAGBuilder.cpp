@@ -788,6 +788,18 @@ void RegsForValue::AddInlineAsmOperands(unsigned Code, bool HasMatching,
   unsigned Flag = InlineAsm::getFlagWord(Code, Regs.size());
   if (HasMatching)
     Flag = InlineAsm::getFlagWordForMatchingOp(Flag, MatchingIdx);
+  else if (!Regs.empty() &&
+           TargetRegisterInfo::isVirtualRegister(Regs.front())) {
+    // Put the register class of the virtual registers in the flag word.  That
+    // way, later passes can recompute register class constraints for inline
+    // assembly as well as normal instructions.
+    // Don't do this for tied operands that can use the regclass information
+    // from the def.
+    const MachineRegisterInfo &MRI = DAG.getMachineFunction().getRegInfo();
+    const TargetRegisterClass *RC = MRI.getRegClass(Regs.front());
+    Flag = InlineAsm::getFlagWordForRegClass(Flag, RC->getID());
+  }
+
   SDValue Res = DAG.getTargetConstant(Flag, MVT::i32);
   Ops.push_back(Res);
 

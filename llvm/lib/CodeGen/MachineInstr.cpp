@@ -1422,18 +1422,27 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
       OS << '$' << AsmOpCount++;
       unsigned Flag = MO.getImm();
       switch (InlineAsm::getKind(Flag)) {
-      case InlineAsm::Kind_RegUse:             OS << ":[reguse]"; break;
-      case InlineAsm::Kind_RegDef:             OS << ":[regdef]"; break;
-      case InlineAsm::Kind_RegDefEarlyClobber: OS << ":[regdef-ec]"; break;
-      case InlineAsm::Kind_Clobber:            OS << ":[clobber]"; break;
-      case InlineAsm::Kind_Imm:                OS << ":[imm]"; break;
-      case InlineAsm::Kind_Mem:                OS << ":[mem]"; break;
-      default: OS << ":[??" << InlineAsm::getKind(Flag) << ']'; break;
+      case InlineAsm::Kind_RegUse:             OS << ":[reguse"; break;
+      case InlineAsm::Kind_RegDef:             OS << ":[regdef"; break;
+      case InlineAsm::Kind_RegDefEarlyClobber: OS << ":[regdef-ec"; break;
+      case InlineAsm::Kind_Clobber:            OS << ":[clobber"; break;
+      case InlineAsm::Kind_Imm:                OS << ":[imm"; break;
+      case InlineAsm::Kind_Mem:                OS << ":[mem"; break;
+      default: OS << ":[??" << InlineAsm::getKind(Flag); break;
       }
+
+      unsigned RCID = 0;
+      if (InlineAsm::hasRegClassConstraint(Flag, RCID))
+        if (TM)
+          OS << ':' << TM->getRegisterInfo()->getRegClass(RCID)->getName();
+        else
+          OS << ":RC" << RCID;
 
       unsigned TiedTo = 0;
       if (InlineAsm::isUseOperandTiedToDef(Flag, TiedTo))
-        OS << " [tiedto:$" << TiedTo << ']';
+        OS << " tiedto:$" << TiedTo;
+
+      OS << ']';
 
       // Compute the index of the next operand descriptor.
       AsmDescOp += 1 + InlineAsm::getNumOperandRegisters(Flag);
