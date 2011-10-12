@@ -2360,12 +2360,25 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
         {
             const bool include_symbols = true;
             const bool append = false;
-            m_parser_vars->m_sym_ctx.FindFunctionsByName (name,
-                                                          eFunctionNameTypeBase,
-                                                          include_symbols, 
-                                                          append, 
-                                                          sc_list);
-        
+            
+            if (namespace_decl && module)
+            {
+                module->FindFunctions(name,
+                                      &namespace_decl,
+                                      eFunctionNameTypeBase, 
+                                      include_symbols,
+                                      append,
+                                      sc_list);
+            }
+            else
+            {
+                target->GetImages().FindFunctions(name,
+                                                  eFunctionNameTypeBase,
+                                                  include_symbols,
+                                                  append, 
+                                                  sc_list);
+            }
+            
             if (sc_list.GetSize())
             {
                 bool found_specific = false;
