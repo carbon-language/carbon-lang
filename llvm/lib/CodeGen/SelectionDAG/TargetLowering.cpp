@@ -2760,16 +2760,8 @@ getRegForInlineAsmConstraint(const std::string &Constraint,
 
     // If none of the value types for this register class are valid, we
     // can't use it.  For example, 64-bit reg classes on 32-bit targets.
-    bool isLegal = false;
-    for (TargetRegisterClass::vt_iterator I = RC->vt_begin(), E = RC->vt_end();
-         I != E; ++I) {
-      if (isTypeLegal(*I)) {
-        isLegal = true;
-        break;
-      }
-    }
-
-    if (!isLegal) continue;
+    if (!isLegalRC(RC))
+      continue;
 
     for (TargetRegisterClass::iterator I = RC->begin(), E = RC->end();
          I != E; ++I) {
