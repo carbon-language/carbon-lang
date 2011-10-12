@@ -1738,7 +1738,7 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
         assert(Res && "memcpy length already checked!"); (void)Res;
       } else if (isa<ConstantInt>(ArgVal) || isa<ConstantPointerNull>(ArgVal)) {
         // If this is a really simple value, emit this with the Value* version
-        //of X86FastEmitStore.  If it isn't simple, we don't want to do this,
+        // of X86FastEmitStore.  If it isn't simple, we don't want to do this,
         // as it can cause us to reevaluate the argument.
         X86FastEmitStore(ArgVT, ArgVal, AM);
       } else {
