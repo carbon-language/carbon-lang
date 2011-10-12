@@ -37,9 +37,15 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
+
+static cl::opt<bool>
+AvoidSpeculation("avoid-speculation",
+                 cl::desc("MachineLICM should avoid speculation"),
+                 cl::init(false), cl::Hidden);
 
 STATISTIC(NumHoisted,
           "Number of machine instructions hoisted out of loops");
@@ -1052,14 +1058,17 @@ bool MachineLICM::IsProfitableToHoist(MachineInstr &MI) {
       return true;
     }
 
-    // High register pressure situation, only hoist if the instruction is going to
-    // be remat'ed.
-    // Also, do not "speculate" in high register pressure situation. If an
+    // Do not "speculate" in high register pressure situation. If an
     // instruction is not guaranteed to be executed in the loop, it's best to be
     // conservative.
-    if ((!IsGuaranteedToExecute(MI.getParent()) && !MayCSE(&MI)) ||
-        (!TII->isTriviallyReMaterializable(&MI, AA) &&
-         !MI.isInvariantLoad(AA)))
+    if (AvoidSpeculation &&
+        (!IsGuaranteedToExecute(MI.getParent()) && !MayCSE(&MI)))
+      return false;
+
+    // High register pressure situation, only hoist if the instruction is going to
+    // be remat'ed.
+    if (!TII->isTriviallyReMaterializable(&MI, AA) &&
+        !MI.isInvariantLoad(AA))
       return false;
   }
 
