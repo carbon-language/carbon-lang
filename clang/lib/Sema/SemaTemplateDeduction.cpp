@@ -2589,7 +2589,7 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
   Specialization = cast_or_null<FunctionDecl>(
                       SubstDecl(FunctionTemplate->getTemplatedDecl(), Owner,
                          MultiLevelTemplateArgumentList(*DeducedArgumentList)));
-  if (!Specialization)
+  if (!Specialization || Specialization->isInvalidDecl())
     return TDK_SubstitutionFailure;
 
   assert(Specialization->getPrimaryTemplate()->getCanonicalDecl() ==
@@ -2600,6 +2600,14 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
   if (Specialization->getTemplateSpecializationArgs() == DeducedArgumentList &&
       !Trap.hasErrorOccurred())
     Info.take();
+
+  // There may have been an error that did not prevent us from constructing a
+  // declaration. Mark the declaration invalid and return with a substitution
+  // failure.
+  if (Trap.hasErrorOccurred()) {
+    Specialization->setInvalidDecl(true);
+    return TDK_SubstitutionFailure;
+  }
 
   if (OriginalCallArgs) {
     // C++ [temp.deduct.call]p4:
@@ -2619,14 +2627,6 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
     }
   }
   
-  // There may have been an error that did not prevent us from constructing a
-  // declaration. Mark the declaration invalid and return with a substitution
-  // failure.
-  if (Trap.hasErrorOccurred()) {
-    Specialization->setInvalidDecl(true);
-    return TDK_SubstitutionFailure;
-  }
-
   // If we suppressed any diagnostics while performing template argument
   // deduction, and if we haven't already instantiated this declaration,
   // keep track of these diagnostics. They'll be emitted if this specialization

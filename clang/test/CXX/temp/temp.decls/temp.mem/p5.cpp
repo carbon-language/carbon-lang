@@ -63,7 +63,8 @@ struct X0 {
   
   template<typename T> operator const T*() const {
     T x = T();
-    return x; // expected-error{{cannot initialize return object of type 'const char *' with an lvalue of type 'char'}}
+    return x; // expected-error{{cannot initialize return object of type 'const char *' with an lvalue of type 'char'}} \
+    // expected-error{{cannot initialize return object of type 'const int *' with an lvalue of type 'int'}}
   }
 };
 
@@ -72,7 +73,7 @@ template X0::operator const int*(); // expected-note{{'X0::operator const int *<
 template X0::operator float*() const; // expected-error{{explicit instantiation of undefined function template}}
 
 void test_X0(X0 x0, const X0 &x0c) {
-  x0.operator const int*();
+  x0.operator const int*(); // expected-note{{in instantiation of function template specialization}}
   x0.operator float *();
   x0c.operator const char*();
 }
