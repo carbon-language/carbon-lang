@@ -36,14 +36,6 @@ def imm32_63 : ImmLeaf<i64,
 //===----------------------------------------------------------------------===//
 // Instructions specific format
 //===----------------------------------------------------------------------===//
-
-//  Logical
-let isCommutable = 1 in
-class LogicNOR64<bits<6> op, bits<6> func, string instr_asm>:
-  FR<op, func, (outs CPU64Regs:$dst), (ins CPU64Regs:$b, CPU64Regs:$c),
-     !strconcat(instr_asm, "\t$dst, $b, $c"),
-     [(set CPU64Regs:$dst, (not (or CPU64Regs:$b, CPU64Regs:$c)))], IIAlu>;
-
 // Shifts
 class LogicR_shift_rotate_imm64<bits<6> func, bits<5> _rs, string instr_asm,
                                 SDNode OpNode, PatFrag PF>:
@@ -118,7 +110,7 @@ def SLTu64   : SetCC_R<0x00, 0x2b, "sltu", setult, CPU64Regs>;
 def AND64    : ArithLogicR<0x00, 0x24, "and", and, IIAlu, CPU64Regs, 1>;
 def OR64     : ArithLogicR<0x00, 0x25, "or", or, IIAlu, CPU64Regs, 1>;
 def XOR64    : ArithLogicR<0x00, 0x26, "xor", xor, IIAlu, CPU64Regs, 1>;
-def NOR64    : LogicNOR64<0x00, 0x27, "nor">;
+def NOR64    : LogicNOR<0x00, 0x27, "nor", CPU64Regs>;
 
 /// Shift Instructions
 def DSLL     : LogicR_shift_rotate_imm64<0x38, 0x00, "dsll", shl, immZExt5>;
