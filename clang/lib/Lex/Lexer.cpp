@@ -86,7 +86,7 @@ void Lexer::InitLexer(const char *BufStart, const char *BufPtr,
   }
 
   Is_PragmaLexer = false;
-  IsInConflictMarker = false;
+  CurrentConflictMarkerState = CMK_None;
 
   // Start of the file is a start of line.
   IsAtStartOfLine = true;
@@ -2149,15 +2149,18 @@ unsigned Lexer::isNextPPTokenLParen() {
 }
 
 /// FindConflictEnd - Find the end of a version control conflict marker.
-static const char *FindConflictEnd(const char *CurPtr, const char *BufferEnd) {
-  StringRef RestOfBuffer(CurPtr+7, BufferEnd-CurPtr-7);
-  size_t Pos = RestOfBuffer.find(">>>>>>>");
+static const char *FindConflictEnd(const char *CurPtr, const char *BufferEnd,
+                                   ConflictMarkerKind CMK) {
+  const char *Terminator = CMK == CMK_Perforce ? "<<<<\n" : ">>>>>>>";
+  size_t TermLen = CMK == CMK_Perforce ? 5 : 7;
+  StringRef RestOfBuffer(CurPtr+TermLen, BufferEnd-CurPtr-TermLen);
+  size_t Pos = RestOfBuffer.find(Terminator);
   while (Pos != StringRef::npos) {
     // Must occur at start of line.
     if (RestOfBuffer[Pos-1] != '\r' &&
         RestOfBuffer[Pos-1] != '\n') {
-      RestOfBuffer = RestOfBuffer.substr(Pos+7);
-      Pos = RestOfBuffer.find(">>>>>>>");
+      RestOfBuffer = RestOfBuffer.substr(Pos+TermLen);
+      Pos = RestOfBuffer.find(Terminator);
       continue;
     }
     return RestOfBuffer.data()+Pos;
@@ -2175,23 +2178,25 @@ bool Lexer::IsStartOfConflictMarker(const char *CurPtr) {
       CurPtr[-1] != '\n' && CurPtr[-1] != '\r')
     return false;
   
-  // Check to see if we have <<<<<<<.
-  if (BufferEnd-CurPtr < 8 ||
-      StringRef(CurPtr, 7) != "<<<<<<<")
+  // Check to see if we have <<<<<<< or >>>>.
+  if ((BufferEnd-CurPtr < 8 || StringRef(CurPtr, 7) != "<<<<<<<") &&
+      (BufferEnd-CurPtr < 6 || StringRef(CurPtr, 5) != ">>>> "))
     return false;
 
   // If we have a situation where we don't care about conflict markers, ignore
   // it.
-  if (IsInConflictMarker || isLexingRawMode())
+  if (CurrentConflictMarkerState || isLexingRawMode())
     return false;
   
-  // Check to see if there is a >>>>>>> somewhere in the buffer at the start of
-  // a line to terminate this conflict marker.
-  if (FindConflictEnd(CurPtr, BufferEnd)) {
+  ConflictMarkerKind Kind = *CurPtr == '<' ? CMK_Normal : CMK_Perforce;
+
+  // Check to see if there is an ending marker somewhere in the buffer at the
+  // start of a line to terminate this conflict marker.
+  if (FindConflictEnd(CurPtr, BufferEnd, Kind)) {
     // We found a match.  We are really in a conflict marker.
     // Diagnose this, and ignore to the end of line.
     Diag(CurPtr, diag::err_conflict_marker);
-    IsInConflictMarker = true;
+    CurrentConflictMarkerState = Kind;
     
     // Skip ahead to the end of line.  We know this exists because the
     // end-of-conflict marker starts with \r or \n.
@@ -2208,10 +2213,10 @@ bool Lexer::IsStartOfConflictMarker(const char *CurPtr) {
 }
 
 
-/// HandleEndOfConflictMarker - If this is a '=======' or '|||||||' or '>>>>>>>'
-/// marker, then it is the end of a conflict marker.  Handle it by ignoring up
-/// until the end of the line.  This returns true if it is a conflict marker and
-/// false if not.
+/// HandleEndOfConflictMarker - If this is a '====' or '||||' or '>>>>', or if
+/// it is '<<<<' and the conflict marker started with a '>>>>' marker, then it
+/// is the end of a conflict marker.  Handle it by ignoring up until the end of
+/// the line.  This returns true if it is a conflict marker and false if not.
 bool Lexer::HandleEndOfConflictMarker(const char *CurPtr) {
   // Only a conflict marker if it starts at the beginning of a line.
   if (CurPtr != BufferStart &&
@@ -2220,18 +2225,19 @@ bool Lexer::HandleEndOfConflictMarker(const char *CurPtr) {
   
   // If we have a situation where we don't care about conflict markers, ignore
   // it.
-  if (!IsInConflictMarker || isLexingRawMode())
+  if (!CurrentConflictMarkerState || isLexingRawMode())
     return false;
   
-  // Check to see if we have the marker (7 characters in a row).
-  for (unsigned i = 1; i != 7; ++i)
+  // Check to see if we have the marker (4 characters in a row).
+  for (unsigned i = 1; i != 4; ++i)
     if (CurPtr[i] != CurPtr[0])
       return false;
   
   // If we do have it, search for the end of the conflict marker.  This could
   // fail if it got skipped with a '#if 0' or something.  Note that CurPtr might
   // be the end of conflict marker.
-  if (const char *End = FindConflictEnd(CurPtr, BufferEnd)) {
+  if (const char *End = FindConflictEnd(CurPtr, BufferEnd,
+                                        CurrentConflictMarkerState)) {
     CurPtr = End;
     
     // Skip ahead to the end of line.
@@ -2241,7 +2247,7 @@ bool Lexer::HandleEndOfConflictMarker(const char *CurPtr) {
     BufferPtr = CurPtr;
     
     // No longer in the conflict marker.
-    IsInConflictMarker = false;
+    CurrentConflictMarkerState = CMK_None;
     return true;
   }
   
@@ -2767,6 +2773,10 @@ LexNextToken:
         // If this is actually a '<<<<<<<' version control conflict marker,
         // recognize it as such and recover nicely.
         goto LexNextToken;
+      } else if (After == '<' && HandleEndOfConflictMarker(CurPtr-1)) {
+        // If this is '<<<<' and we're in a Perforce-style conflict marker,
+        // ignore it.
+        goto LexNextToken;
       } else if (Features.CUDA && After == '<') {
         Kind = tok::lesslessless;
         CurPtr = ConsumeChar(ConsumeChar(CurPtr, SizeTmp, Result),
@@ -2814,6 +2824,10 @@ LexNextToken:
         CurPtr = ConsumeChar(ConsumeChar(CurPtr, SizeTmp, Result),
                              SizeTmp2, Result);
         Kind = tok::greatergreaterequal;
+      } else if (After == '>' && IsStartOfConflictMarker(CurPtr-1)) {
+        // If this is actually a '>>>>' conflict marker, recognize it as such
+        // and recover nicely.
+        goto LexNextToken;
       } else if (After == '>' && HandleEndOfConflictMarker(CurPtr-1)) {
         // If this is '>>>>>>>' and we're in a conflict marker, ignore it.
         goto LexNextToken;
@@ -2872,7 +2886,7 @@ LexNextToken:
   case '=':
     Char = getCharAndSize(CurPtr, SizeTmp);
     if (Char == '=') {
-      // If this is '=======' and we're in a conflict marker, ignore it.
+      // If this is '====' and we're in a conflict marker, ignore it.
       if (CurPtr[1] == '=' && HandleEndOfConflictMarker(CurPtr-1))
         goto LexNextToken;
       

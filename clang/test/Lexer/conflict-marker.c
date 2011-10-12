@@ -19,12 +19,20 @@ typedef int y;
 typedef struct foo *y;
 >>>>>>> .r91107
 
+// Perforce style.
+>>>> ORIGINAL conflict-marker.c#6 // expected-error {{version control conflict marker in file}}
+int z = 1;
+==== THEIRS conflict-marker.c#7
+int z = 0;
+==== YOURS conflict-marker.c
+int z = 2;
+<<<<
+
 ;
 y b;
 
 
 int foo() {
   y a = x;
-  return x + a;
+  return x + a - z;
 }
-
