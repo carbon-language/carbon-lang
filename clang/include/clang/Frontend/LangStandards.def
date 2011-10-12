@@ -80,10 +80,16 @@ LANGSTANDARD(gnucxx98, "gnu++98",
              BCPLComment | CPlusPlus | Digraphs | GNUMode)
 
 LANGSTANDARD(cxx0x, "c++0x",
-             "Upcoming ISO C++ 200x with amendments",
+             "ISO C++ 2011 with amendments",
+             BCPLComment | CPlusPlus | CPlusPlus0x | Digraphs)
+LANGSTANDARD(cxx11, "c++11",
+             "ISO C++ 2011 with amendments",
              BCPLComment | CPlusPlus | CPlusPlus0x | Digraphs)
 LANGSTANDARD(gnucxx0x, "gnu++0x",
-             "Upcoming ISO C++ 200x with amendments and GNU extensions",
+             "ISO C++ 2011 with amendments and GNU extensions",
+             BCPLComment | CPlusPlus | CPlusPlus0x | Digraphs | GNUMode)
+LANGSTANDARD(gnucxx11, "gnu++11",
+             "ISO C++ 2011 with amendments and GNU extensions",
              BCPLComment | CPlusPlus | CPlusPlus0x | Digraphs | GNUMode)
 
 // OpenCL
