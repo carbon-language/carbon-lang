@@ -506,7 +506,7 @@ def note_atomic_property_fixup_suggest : Note<"setter and getter must both be "
 def warn_atomic_property_nontrivial_assign_op : Warning<
   "atomic property of type %0 synthesizing setter using non-trivial assignment"
   " operator">, InGroup<DiagGroup<"objc-property-atomic-setter-synthesis">>;
-def warn_ownin_getter_rule : Warning<
+def warn_owning_getter_rule : Warning<
   "property's synthesized getter follows Cocoa naming"
   " convention for returning 'owned' objects">,
   InGroup<DiagGroup<"objc-property-matches-cocoa-ownership-rule">>;
