@@ -1810,7 +1810,7 @@ focus on expressions, but statements are similar.</p>
    <li>Write tests for all of the "bad" parsing cases, to make sure
     your recovery is good. If you have matched delimiters (e.g.,
     parentheses, square brackets, etc.), use
-    <tt>Parser::MatchRHSPunctuation</tt> to give nice diagnostics when
+    <tt>Parser::BalancedDelimiterTracker</tt> to give nice diagnostics when
     things go wrong.</li>
   </ul>
   </li>

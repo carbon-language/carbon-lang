@@ -95,7 +95,8 @@ Decl *Parser::ParseNamespace(unsigned Context,
   }
 
 
-  if (Tok.isNot(tok::l_brace)) {
+  BalancedDelimiterTracker T(*this, tok::l_brace);
+  if (T.consumeOpen()) {
     if (!ExtraIdent.empty()) {
       Diag(ExtraNamespaceLoc[0], diag::err_nested_namespaces_with_double_colon)
           << SourceRange(ExtraNamespaceLoc.front(), ExtraIdentLoc.back());
@@ -105,8 +106,6 @@ Decl *Parser::ParseNamespace(unsigned Context,
     return 0;
   }
 
-  SourceLocation LBrace = ConsumeBrace();
-
   if (getCurScope()->isClassScope() || getCurScope()->isTemplateParamScope() || 
       getCurScope()->isInObjcMethodScope() || getCurScope()->getBlockParent() || 
       getCurScope()->getFnParent()) {
@@ -114,7 +113,7 @@ Decl *Parser::ParseNamespace(unsigned Context,
       Diag(ExtraNamespaceLoc[0], diag::err_nested_namespaces_with_double_colon)
           << SourceRange(ExtraNamespaceLoc.front(), ExtraIdentLoc.back());
     }
-    Diag(LBrace, diag::err_namespace_nonnamespace_scope);
+    Diag(T.getOpenLocation(), diag::err_namespace_nonnamespace_scope);
     SkipUntil(tok::r_brace, false);
     return 0;
   }
@@ -157,23 +156,23 @@ Decl *Parser::ParseNamespace(unsigned Context,
 
   Decl *NamespcDecl =
     Actions.ActOnStartNamespaceDef(getCurScope(), InlineLoc, NamespaceLoc,
-                                   IdentLoc, Ident, LBrace, attrs.getList());
+                                   IdentLoc, Ident, T.getOpenLocation(), 
+                                   attrs.getList());
 
   PrettyDeclStackTraceEntry CrashInfo(Actions, NamespcDecl, NamespaceLoc,
                                       "parsing namespace");
 
-  SourceLocation RBraceLoc;
   // Parse the contents of the namespace.  This includes parsing recovery on 
   // any improperly nested namespaces.
   ParseInnerNamespace(ExtraIdentLoc, ExtraIdent, ExtraNamespaceLoc, 0,
-                      InlineLoc, LBrace, attrs, RBraceLoc);
+                      InlineLoc, attrs, T);
 
   // Leave the namespace scope.
   NamespaceScope.Exit();
 
-  Actions.ActOnFinishNamespaceDef(NamespcDecl, RBraceLoc);
+  DeclEnd = T.getCloseLocation();
+  Actions.ActOnFinishNamespaceDef(NamespcDecl, DeclEnd);
 
-  DeclEnd = RBraceLoc;
   return NamespcDecl;
 }
 
@@ -182,9 +181,8 @@ void Parser::ParseInnerNamespace(std::vector<SourceLocation>& IdentLoc,
                                  std::vector<IdentifierInfo*>& Ident,
                                  std::vector<SourceLocation>& NamespaceLoc,
                                  unsigned int index, SourceLocation& InlineLoc,
-                                 SourceLocation& LBrace,
                                  ParsedAttributes& attrs,
-                                 SourceLocation& RBraceLoc) {
+                                 BalancedDelimiterTracker &Tracker) {
   if (index == Ident.size()) {
     while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
       ParsedAttributesWithRange attrs(AttrFactory);
@@ -192,7 +190,10 @@ void Parser::ParseInnerNamespace(std::vector<SourceLocation>& IdentLoc,
       MaybeParseMicrosoftAttributes(attrs);
       ParseExternalDeclaration(attrs);
     }
-    RBraceLoc = MatchRHSPunctuation(tok::r_brace, LBrace);
+
+    // The caller is what called check -- we are simply calling
+    // the close for it.
+    Tracker.consumeClose();
 
     return;
   }
@@ -202,14 +203,15 @@ void Parser::ParseInnerNamespace(std::vector<SourceLocation>& IdentLoc,
   Decl *NamespcDecl =
     Actions.ActOnStartNamespaceDef(getCurScope(), SourceLocation(),
                                    NamespaceLoc[index], IdentLoc[index],
-                                   Ident[index], LBrace, attrs.getList());
+                                   Ident[index], Tracker.getOpenLocation(), 
+                                   attrs.getList());
 
   ParseInnerNamespace(IdentLoc, Ident, NamespaceLoc, ++index, InlineLoc,
-                      LBrace, attrs, RBraceLoc);
+                      attrs, Tracker);
 
   NamespaceScope.Exit();
 
-  Actions.ActOnFinishNamespaceDef(NamespcDecl, RBraceLoc);
+  Actions.ActOnFinishNamespaceDef(NamespcDecl, Tracker.getCloseLocation());
 }
 
 /// ParseNamespaceAlias - Parse the part after the '=' in a namespace
@@ -298,7 +300,8 @@ Decl *Parser::ParseLinkage(ParsingDeclSpec &DS, unsigned Context) {
 
   ProhibitAttributes(attrs);
 
-  SourceLocation LBrace = ConsumeBrace();
+  BalancedDelimiterTracker T(*this, tok::l_brace);
+  T.consumeOpen();
   while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
     ParsedAttributesWithRange attrs(AttrFactory);
     MaybeParseCXX0XAttributes(attrs);
@@ -306,9 +309,9 @@ Decl *Parser::ParseLinkage(ParsingDeclSpec &DS, unsigned Context) {
     ParseExternalDeclaration(attrs);
   }
 
-  SourceLocation RBrace = MatchRHSPunctuation(tok::r_brace, LBrace);
+  T.consumeClose();
   return Actions.ActOnFinishLinkageSpecification(getCurScope(), LinkageSpec,
-                                                 RBrace);
+                                                 T.getCloseLocation());
 }
 
 /// ParseUsingDirectiveOrDeclaration - Parse C++ using using-declaration or
@@ -585,12 +588,11 @@ Decl *Parser::ParseStaticAssertDeclaration(SourceLocation &DeclEnd){
 
   SourceLocation StaticAssertLoc = ConsumeToken();
 
-  if (Tok.isNot(tok::l_paren)) {
+  BalancedDelimiterTracker T(*this, tok::l_paren);
+  if (T.consumeOpen()) {
     Diag(Tok, diag::err_expected_lparen);
     return 0;
   }
-
-  SourceLocation LParenLoc = ConsumeParen();
 
   ExprResult AssertExpr(ParseConstantExpression());
   if (AssertExpr.isInvalid()) {
@@ -611,7 +613,7 @@ Decl *Parser::ParseStaticAssertDeclaration(SourceLocation &DeclEnd){
   if (AssertMessage.isInvalid())
     return 0;
 
-  SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
+  T.consumeClose();
 
   DeclEnd = Tok.getLocation();
   ExpectAndConsumeSemi(diag::err_expected_semi_after_static_assert);
@@ -619,7 +621,7 @@ Decl *Parser::ParseStaticAssertDeclaration(SourceLocation &DeclEnd){
   return Actions.ActOnStaticAssertDeclaration(StaticAssertLoc,
                                               AssertExpr.take(),
                                               AssertMessage.take(),
-                                              RParenLoc);
+                                              T.getCloseLocation());
 }
 
 /// ParseDecltypeSpecifier - Parse a C++0x decltype specifier.
@@ -630,11 +632,9 @@ void Parser::ParseDecltypeSpecifier(DeclSpec &DS) {
   assert(Tok.is(tok::kw_decltype) && "Not a decltype specifier");
 
   SourceLocation StartLoc = ConsumeToken();
-  SourceLocation LParenLoc = Tok.getLocation();
-
-  if (ExpectAndConsume(tok::l_paren, diag::err_expected_lparen_after,
-                       "decltype")) {
-    SkipUntil(tok::r_paren);
+  BalancedDelimiterTracker T(*this, tok::l_paren);
+  if (T.expectAndConsume(diag::err_expected_lparen_after,
+                       "decltype", tok::r_paren)) {
     return;
   }
 
@@ -651,13 +651,8 @@ void Parser::ParseDecltypeSpecifier(DeclSpec &DS) {
   }
 
   // Match the ')'
-  SourceLocation RParenLoc;
-  if (Tok.is(tok::r_paren))
-    RParenLoc = ConsumeParen();
-  else
-    MatchRHSPunctuation(tok::r_paren, LParenLoc);
-
-  if (RParenLoc.isInvalid())
+  T.consumeClose();
+  if (T.getCloseLocation().isInvalid())
     return;
 
   const char *PrevSpec = 0;
@@ -673,11 +668,9 @@ void Parser::ParseUnderlyingTypeSpecifier(DeclSpec &DS) {
          "Not an underlying type specifier");
 
   SourceLocation StartLoc = ConsumeToken();
-  SourceLocation LParenLoc = Tok.getLocation();
-
-  if (ExpectAndConsume(tok::l_paren, diag::err_expected_lparen_after,
-                       "__underlying_type")) {
-    SkipUntil(tok::r_paren);
+  BalancedDelimiterTracker T(*this, tok::l_paren);
+  if (T.expectAndConsume(diag::err_expected_lparen_after,
+                       "__underlying_type", tok::r_paren)) {
     return;
   }
 
@@ -688,13 +681,8 @@ void Parser::ParseUnderlyingTypeSpecifier(DeclSpec &DS) {
   }
 
   // Match the ')'
-  SourceLocation RParenLoc;
-  if (Tok.is(tok::r_paren))
-    RParenLoc = ConsumeParen();
-  else
-    MatchRHSPunctuation(tok::r_paren, LParenLoc);
-
-  if (RParenLoc.isInvalid())
+  T.consumeClose();
+  if (T.getCloseLocation().isInvalid())
     return;
 
   const char *PrevSpec = 0;
@@ -2106,12 +2094,12 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
   }
 
   assert(Tok.is(tok::l_brace));
-
-  SourceLocation LBraceLoc = ConsumeBrace();
+  BalancedDelimiterTracker T(*this, tok::l_brace);
+  T.consumeOpen();
 
   if (TagDecl)
     Actions.ActOnStartCXXMemberDeclarations(getCurScope(), TagDecl, FinalLoc,
-                                            LBraceLoc);
+                                            T.getOpenLocation());
 
   // C++ 11p3: Members of a class defined with the keyword class are private
   // by default. Members of a class defined with the keywords struct or union
@@ -2122,7 +2110,6 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
   else
     CurAS = AS_public;
 
-  SourceLocation RBraceLoc;
   if (TagDecl) {
     // While we still have something to read, read the member-declarations.
     while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
@@ -2163,7 +2150,7 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
       ParseCXXClassMemberDeclaration(CurAS);
     }
 
-    RBraceLoc = MatchRHSPunctuation(tok::r_brace, LBraceLoc);
+    T.consumeClose();
   } else {
     SkipUntil(tok::r_brace, false, false);
   }
@@ -2174,7 +2161,8 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
 
   if (TagDecl)
     Actions.ActOnFinishCXXMemberSpecification(getCurScope(), RecordLoc, TagDecl,
-                                              LBraceLoc, RBraceLoc,
+                                              T.getOpenLocation(), 
+                                              T.getCloseLocation(),
                                               attrs.getList());
 
   // C++0x [class.mem]p2: Within the class member-specification, the class is
@@ -2198,7 +2186,8 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
   }
 
   if (TagDecl)
-    Actions.ActOnTagFinishDefinition(getCurScope(), TagDecl, RBraceLoc);
+    Actions.ActOnTagFinishDefinition(getCurScope(), TagDecl, 
+                                     T.getCloseLocation());
 
   // Leave the class scope.
   ParsingDef.Pop();
@@ -2323,7 +2312,8 @@ Parser::MemInitResult Parser::ParseMemInitializer(Decl *ConstructorDecl) {
                                        TemplateTypeTy, IdLoc, InitList.take(),
                                        EllipsisLoc);
   } else if(Tok.is(tok::l_paren)) {
-    SourceLocation LParenLoc = ConsumeParen();
+    BalancedDelimiterTracker T(*this, tok::l_paren);
+    T.consumeOpen();
 
     // Parse the optional expression-list.
     ExprVector ArgExprs(Actions);
@@ -2333,7 +2323,7 @@ Parser::MemInitResult Parser::ParseMemInitializer(Decl *ConstructorDecl) {
       return true;
     }
 
-    SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
+    T.consumeClose();
 
     SourceLocation EllipsisLoc;
     if (Tok.is(tok::ellipsis))
@@ -2341,8 +2331,8 @@ Parser::MemInitResult Parser::ParseMemInitializer(Decl *ConstructorDecl) {
 
     return Actions.ActOnMemInitializer(ConstructorDecl, getCurScope(), SS, II,
                                        TemplateTypeTy, IdLoc,
-                                       LParenLoc, ArgExprs.take(),
-                                       ArgExprs.size(), RParenLoc,
+                                       T.getOpenLocation(), ArgExprs.take(),
+                                       ArgExprs.size(), T.getCloseLocation(),
                                        EllipsisLoc);
   }
 
@@ -2388,7 +2378,8 @@ Parser::MaybeParseExceptionSpecification(SourceRange &SpecificationRange,
   SourceLocation KeywordLoc = ConsumeToken();
   if (Tok.is(tok::l_paren)) {
     // There is an argument.
-    SourceLocation LParenLoc = ConsumeParen();
+    BalancedDelimiterTracker T(*this, tok::l_paren);
+    T.consumeOpen();
     NoexceptType = EST_ComputedNoexcept;
     NoexceptExpr = ParseConstantExpression();
     // The argument must be contextually convertible to bool. We use
@@ -2396,8 +2387,8 @@ Parser::MaybeParseExceptionSpecification(SourceRange &SpecificationRange,
     if (!NoexceptExpr.isInvalid())
       NoexceptExpr = Actions.ActOnBooleanCondition(getCurScope(), KeywordLoc,
                                                    NoexceptExpr.get());
-    SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
-    NoexceptRange = SourceRange(KeywordLoc, RParenLoc);
+    T.consumeClose();
+    NoexceptRange = SourceRange(KeywordLoc, T.getCloseLocation());
   } else {
     // There is no argument.
     NoexceptType = EST_BasicNoexcept;
@@ -2440,13 +2431,12 @@ ExceptionSpecificationType Parser::ParseDynamicExceptionSpecification(
   assert(Tok.is(tok::kw_throw) && "expected throw");
 
   SpecificationRange.setBegin(ConsumeToken());
-
-  if (!Tok.is(tok::l_paren)) {
+  BalancedDelimiterTracker T(*this, tok::l_paren);
+  if (T.consumeOpen()) {
     Diag(Tok, diag::err_expected_lparen_after) << "throw";
     SpecificationRange.setEnd(SpecificationRange.getBegin());
     return EST_DynamicNone;
   }
-  SourceLocation LParenLoc = ConsumeParen();
 
   // Parse throw(...), a Microsoft extension that means "this function
   // can throw anything".
@@ -2454,8 +2444,8 @@ ExceptionSpecificationType Parser::ParseDynamicExceptionSpecification(
     SourceLocation EllipsisLoc = ConsumeToken();
     if (!getLang().MicrosoftExt)
       Diag(EllipsisLoc, diag::ext_ellipsis_exception_spec);
-    SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
-    SpecificationRange.setEnd(RParenLoc);
+    T.consumeClose();
+    SpecificationRange.setEnd(T.getCloseLocation());
     return EST_MSAny;
   }
 
@@ -2485,7 +2475,8 @@ ExceptionSpecificationType Parser::ParseDynamicExceptionSpecification(
       break;
   }
 
-  SpecificationRange.setEnd(MatchRHSPunctuation(tok::r_paren, LParenLoc));
+  T.consumeClose();
+  SpecificationRange.setEnd(T.getCloseLocation());
   return Exceptions.empty() ? EST_DynamicNone : EST_Dynamic;
 }
 

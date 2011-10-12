@@ -409,6 +409,84 @@ private:
     return PP.LookAhead(0);
   }
 
+  /// \brief Tracks information about the current nesting depth of 
+  /// opening delimiters of each kind.
+  class DelimiterTracker {
+  private:
+    friend class Parser;
+
+    unsigned Paren, Brace, Square, Less, LLLess;
+    unsigned& get(tok::TokenKind t) {
+      switch (t) {
+      default: llvm_unreachable("Unexpected balanced token");
+      case tok::l_brace:  return Brace;
+      case tok::l_paren:  return Paren;
+      case tok::l_square: return Square;
+      case tok::less:  return Less;
+      case tok::lesslessless:  return LLLess;
+      }
+    }
+
+    void push(tok::TokenKind t) {
+      get(t)++;
+    }
+
+    void pop(tok::TokenKind t) {
+      get(t)--;
+    }
+
+    unsigned getDepth(tok::TokenKind t) {
+      return get(t);
+    }
+
+  public:
+    DelimiterTracker() : Paren(0), Brace(0), Square(0), Less(0), LLLess(0) { }
+  };
+
+  /// \brief RAII class that helps handle the parsing of an open/close delimiter
+  /// pair, such as braces { ... } or parentheses ( ... ).
+  class BalancedDelimiterTracker {
+    tok::TokenKind Kind, Close;
+    Parser& P;
+    bool Cleanup;
+    const unsigned MaxDepth;
+    SourceLocation LOpen, LClose;
+  
+    void assignClosingDelimiter() {
+      switch (Kind) {
+      default: llvm_unreachable("Unexpected balanced token");
+      case tok::l_brace:  Close = tok::r_brace; break;
+      case tok::l_paren:  Close = tok::r_paren; break;
+      case tok::l_square: Close = tok::r_square; break;
+      case tok::less:  Close = tok::greater; break;
+      case tok::lesslessless:  Close = tok::greatergreatergreater; break;
+      }
+    }
+
+  public:
+    BalancedDelimiterTracker(Parser& p, tok::TokenKind k) 
+      : Kind(k), P(p), Cleanup(false), MaxDepth(256) {
+      assignClosingDelimiter();
+    }
+
+    ~BalancedDelimiterTracker() {
+      if (Cleanup)
+        P.QuantityTracker.pop(Kind);
+    }
+
+    SourceLocation getOpenLocation() const { return LOpen; }
+    SourceLocation getCloseLocation() const { return LClose; }
+    SourceRange getRange() const { return SourceRange(LOpen, LClose); }
+
+    bool consumeOpen();
+    bool expectAndConsume(unsigned DiagID, 
+                          const char *Msg = "", 
+                          tok::TokenKind SkipToTok = tok::unknown);
+    bool consumeClose();
+  };
+
+  DelimiterTracker QuantityTracker;
+
   /// getTypeAnnotation - Read a parsed type out of an annotation token.
   static ParsedType getTypeAnnotation(Token &Tok) {
     return ParsedType::getFromOpaquePtr(Tok.getAnnotationValue());
@@ -530,9 +608,6 @@ private:
         P.Actions.ActOnObjCReenterContainerContext();
     }
   };
-
-  SourceLocation MatchRHSPunctuation(tok::TokenKind RHSTok,
-                                     SourceLocation LHSLoc);
 
   /// ExpectAndConsume - The parser expects that 'ExpectedTok' is next in the
   /// input.  If so, it is consumed and false is returned.
@@ -1220,10 +1295,8 @@ private:
                                         SourceLocation &RParenLoc);
 
   ExprResult ParseCXXAmbiguousParenExpression(ParenParseOption &ExprType,
-                                                    ParsedType &CastTy,
-                                                    SourceLocation LParenLoc,
-                                                    SourceLocation &RParenLoc);
-
+                                            ParsedType &CastTy,
+                                            BalancedDelimiterTracker &Tracker);
   ExprResult ParseCompoundLiteralExpression(ParsedType Ty,
                                                   SourceLocation LParenLoc,
                                                   SourceLocation RParenLoc);
@@ -1826,8 +1899,9 @@ private:
                                  bool CXX0XAttributesAllowed = true);
   void ParseDirectDeclarator(Declarator &D);
   void ParseParenDeclarator(Declarator &D);
-  void ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
+  void ParseFunctionDeclarator(Declarator &D,
                                ParsedAttributes &attrs,
+                               BalancedDelimiterTracker &Tracker,
                                bool RequiresArg = false);
   bool isFunctionDeclaratorIdentifierList();
   void ParseFunctionDeclaratorIdentifierList(
@@ -1852,8 +1926,8 @@ private:
                            std::vector<IdentifierInfo*>& Ident,
                            std::vector<SourceLocation>& NamespaceLoc,
                            unsigned int index, SourceLocation& InlineLoc,
-                           SourceLocation& LBrace, ParsedAttributes& attrs,
-                           SourceLocation& RBraceLoc);
+                           ParsedAttributes& attrs,
+                           BalancedDelimiterTracker &Tracker);
   Decl *ParseLinkage(ParsingDeclSpec &DS, unsigned Context);
   Decl *ParseUsingDirectiveOrDeclaration(unsigned Context,
                                          const ParsedTemplateInfo &TemplateInfo,

@@ -164,8 +164,11 @@ Decl *Parser::ParseObjCAtInterfaceDeclaration(SourceLocation atLoc,
   SourceLocation nameLoc = ConsumeToken();
   if (Tok.is(tok::l_paren) && 
       !isKnownToBeTypeSpecifier(GetLookAheadToken(1))) { // we have a category.
-    SourceLocation LParenLoc = ConsumeParen();
-    SourceLocation categoryLoc, rparenLoc;
+    
+    BalancedDelimiterTracker T(*this, tok::l_paren);
+    T.consumeOpen();
+
+    SourceLocation categoryLoc;
     IdentifierInfo *categoryId = 0;
     if (Tok.is(tok::code_completion)) {
       Actions.CodeCompleteObjCInterfaceCategory(getCurScope(), nameId, nameLoc);
@@ -182,9 +185,9 @@ Decl *Parser::ParseObjCAtInterfaceDeclaration(SourceLocation atLoc,
       Diag(Tok, diag::err_expected_ident); // missing category name.
       return 0;
     }
-    
-    rparenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
-    if (rparenLoc.isInvalid())
+   
+    T.consumeClose();
+    if (T.getCloseLocation().isInvalid())
       return 0;
     
     if (!attrs.empty()) { // categories don't support attributes.
@@ -497,7 +500,8 @@ void Parser::ParseObjCInterfaceDeclList(tok::ObjCKeywordKind contextKey,
 ///
 void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS) {
   assert(Tok.getKind() == tok::l_paren);
-  SourceLocation LHSLoc = ConsumeParen(); // consume '('
+  BalancedDelimiterTracker T(*this, tok::l_paren);
+  T.consumeOpen();
 
   while (1) {
     if (Tok.is(tok::code_completion)) {
@@ -508,7 +512,7 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS) {
 
     // If this is not an identifier at all, bail out early.
     if (II == 0) {
-      MatchRHSPunctuation(tok::r_paren, LHSLoc);
+      T.consumeClose();
       return;
     }
 
@@ -587,7 +591,7 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS) {
     ConsumeToken();
   }
 
-  MatchRHSPunctuation(tok::r_paren, LHSLoc);
+  T.consumeClose();
 }
 
 ///   objc-method-proto:
@@ -828,7 +832,9 @@ ParsedType Parser::ParseObjCTypeName(ObjCDeclSpec &DS,
 
   assert(Tok.is(tok::l_paren) && "expected (");
 
-  SourceLocation LParenLoc = ConsumeParen();
+  BalancedDelimiterTracker T(*this, tok::l_paren);
+  T.consumeOpen();
+
   SourceLocation TypeStartLoc = Tok.getLocation();
   ObjCDeclContextSwitch ObjCDC(*this);
 
@@ -867,7 +873,7 @@ ParsedType Parser::ParseObjCTypeName(ObjCDeclSpec &DS,
   }
 
   if (Tok.is(tok::r_paren))
-    ConsumeParen();
+    T.consumeClose();
   else if (Tok.getLocation() == TypeStartLoc) {
     // If we didn't eat any tokens, then this isn't a type.
     Diag(Tok, diag::err_expected_type);
@@ -875,7 +881,7 @@ ParsedType Parser::ParseObjCTypeName(ObjCDeclSpec &DS,
   } else {
     // Otherwise, we found *something*, but didn't get a ')' in the right
     // place.  Emit an error then return what we have as the type.
-    MatchRHSPunctuation(tok::r_paren, LParenLoc);
+    T.consumeClose();
   }
   return Ty;
 }
@@ -1196,7 +1202,8 @@ void Parser::ParseObjCClassInstanceVariables(Decl *interfaceDecl,
   ParseScope ClassScope(this, Scope::DeclScope|Scope::ClassScope);
   ObjCDeclContextSwitch ObjCDC(*this);
 
-  SourceLocation LBraceLoc = ConsumeBrace(); // the "{"
+  BalancedDelimiterTracker T(*this, tok::l_brace);
+  T.consumeOpen();
 
   // While we still have something to read, read the instance variables.
   while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
@@ -1276,15 +1283,16 @@ void Parser::ParseObjCClassInstanceVariables(Decl *interfaceDecl,
       SkipUntil(tok::r_brace, true, true);
     }
   }
-  SourceLocation RBraceLoc = MatchRHSPunctuation(tok::r_brace, LBraceLoc);
+  T.consumeClose();
+
   Actions.ActOnObjCContainerStartDefinition(interfaceDecl);
-  Actions.ActOnLastBitfield(RBraceLoc, AllIvarDecls);
+  Actions.ActOnLastBitfield(T.getCloseLocation(), AllIvarDecls);
   Actions.ActOnObjCContainerFinishDefinition();
   // Call ActOnFields() even if we don't have any decls. This is useful
   // for code rewriting tools that need to be aware of the empty list.
   Actions.ActOnFields(getCurScope(), atLoc, interfaceDecl,
                       AllIvarDecls,
-                      LBraceLoc, RBraceLoc, 0);
+                      T.getOpenLocation(), T.getCloseLocation(), 0);
   return;
 }
 
@@ -2407,17 +2415,19 @@ Parser::ParseObjCEncodeExpression(SourceLocation AtLoc) {
   if (Tok.isNot(tok::l_paren))
     return ExprError(Diag(Tok, diag::err_expected_lparen_after) << "@encode");
 
-  SourceLocation LParenLoc = ConsumeParen();
+  BalancedDelimiterTracker T(*this, tok::l_paren);
+  T.consumeOpen();
 
   TypeResult Ty = ParseTypeName();
 
-  SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
+  T.consumeClose();
 
   if (Ty.isInvalid())
     return ExprError();
 
-  return Owned(Actions.ParseObjCEncodeExpression(AtLoc, EncLoc, LParenLoc,
-                                                 Ty.get(), RParenLoc));
+  return Owned(Actions.ParseObjCEncodeExpression(AtLoc, EncLoc,
+                                                 T.getOpenLocation(), Ty.get(),
+                                                 T.getCloseLocation()));
 }
 
 ///     objc-protocol-expression
@@ -2429,7 +2439,8 @@ Parser::ParseObjCProtocolExpression(SourceLocation AtLoc) {
   if (Tok.isNot(tok::l_paren))
     return ExprError(Diag(Tok, diag::err_expected_lparen_after) << "@protocol");
 
-  SourceLocation LParenLoc = ConsumeParen();
+  BalancedDelimiterTracker T(*this, tok::l_paren);
+  T.consumeOpen();
 
   if (Tok.isNot(tok::identifier))
     return ExprError(Diag(Tok, diag::err_expected_ident));
@@ -2437,10 +2448,11 @@ Parser::ParseObjCProtocolExpression(SourceLocation AtLoc) {
   IdentifierInfo *protocolId = Tok.getIdentifierInfo();
   ConsumeToken();
 
-  SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
+  T.consumeClose();
 
   return Owned(Actions.ParseObjCProtocolExpression(protocolId, AtLoc, ProtoLoc,
-                                                   LParenLoc, RParenLoc));
+                                                   T.getOpenLocation(),
+                                                   T.getCloseLocation()));
 }
 
 ///     objc-selector-expression
@@ -2452,9 +2464,11 @@ ExprResult Parser::ParseObjCSelectorExpression(SourceLocation AtLoc) {
     return ExprError(Diag(Tok, diag::err_expected_lparen_after) << "@selector");
 
   SmallVector<IdentifierInfo *, 12> KeyIdents;
-  SourceLocation LParenLoc = ConsumeParen();
   SourceLocation sLoc;
   
+  BalancedDelimiterTracker T(*this, tok::l_paren);
+  T.consumeOpen();
+
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteObjCSelector(getCurScope(), KeyIdents.data(),
                                      KeyIdents.size());
@@ -2497,10 +2511,11 @@ ExprResult Parser::ParseObjCSelectorExpression(SourceLocation AtLoc) {
         break;
     }
   }
-  SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
+  T.consumeClose();
   Selector Sel = PP.getSelectorTable().getSelector(nColons, &KeyIdents[0]);
   return Owned(Actions.ParseObjCSelectorExpression(Sel, AtLoc, SelectorLoc,
-                                                   LParenLoc, RParenLoc));
+                                                   T.getOpenLocation(),
+                                                   T.getCloseLocation()));
  }
 
 Decl *Parser::ParseLexedObjCMethodDefs(LexedMethod &LM) {

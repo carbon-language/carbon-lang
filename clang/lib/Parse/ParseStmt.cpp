@@ -708,8 +708,9 @@ StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
                                 Tok.getLocation(),
                                 "in compound statement ('{}')");
   InMessageExpressionRAIIObject InMessage(*this, false);
-
-  SourceLocation LBraceLoc = ConsumeBrace();  // eat the '{'.
+  BalancedDelimiterTracker T(*this, tok::l_brace);
+  if (T.consumeOpen())
+    return StmtError();
 
   StmtVector Stmts(Actions);
 
@@ -807,13 +808,15 @@ StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
   // We broke out of the while loop because we found a '}' or EOF.
   if (Tok.isNot(tok::r_brace)) {
     Diag(Tok, diag::err_expected_rbrace);
-    Diag(LBraceLoc, diag::note_matching) << "{";
+    Diag(T.getOpenLocation(), diag::note_matching) << "{";
     return StmtError();
   }
 
-  SourceLocation RBraceLoc = ConsumeBrace();
-  return Actions.ActOnCompoundStmt(LBraceLoc, RBraceLoc, move_arg(Stmts),
-                                   isStmtExpr);
+  if (T.consumeClose())
+    return StmtError();
+
+  return Actions.ActOnCompoundStmt(T.getOpenLocation(), T.getCloseLocation(),
+                                   move_arg(Stmts), isStmtExpr);
 }
 
 /// ParseParenExprOrCondition:
@@ -831,7 +834,9 @@ bool Parser::ParseParenExprOrCondition(ExprResult &ExprResult,
                                        Decl *&DeclResult,
                                        SourceLocation Loc,
                                        bool ConvertToBoolean) {
-  SourceLocation LParenLoc = ConsumeParen();
+  BalancedDelimiterTracker T(*this, tok::l_paren);
+  T.consumeOpen();
+
   if (getLang().CPlusPlus)
     ParseCXXCondition(ExprResult, DeclResult, Loc, ConvertToBoolean);
   else {
@@ -856,7 +861,7 @@ bool Parser::ParseParenExprOrCondition(ExprResult &ExprResult,
   }
 
   // Otherwise the condition is valid or the rparen is present.
-  MatchRHSPunctuation(tok::r_paren, LParenLoc);
+  T.consumeClose();
   return false;
 }
 
@@ -1204,16 +1209,17 @@ StmtResult Parser::ParseDoStatement(ParsedAttributes &attrs) {
   }
 
   // Parse the parenthesized condition.
-  SourceLocation LPLoc = ConsumeParen();
+  BalancedDelimiterTracker T(*this, tok::l_paren);
+  T.consumeOpen();
   ExprResult Cond = ParseExpression();
-  SourceLocation RPLoc = MatchRHSPunctuation(tok::r_paren, LPLoc);
+  T.consumeClose();
   DoScope.Exit();
 
   if (Cond.isInvalid() || Body.isInvalid())
     return StmtError();
 
-  return Actions.ActOnDoStmt(DoLoc, Body.get(), WhileLoc, LPLoc,
-                             Cond.get(), RPLoc);
+  return Actions.ActOnDoStmt(DoLoc, Body.get(), WhileLoc, T.getOpenLocation(),
+                             Cond.get(), T.getCloseLocation());
 }
 
 /// ParseForStatement
@@ -1273,7 +1279,9 @@ StmtResult Parser::ParseForStatement(ParsedAttributes &attrs) {
 
   ParseScope ForScope(this, ScopeFlags);
 
-  SourceLocation LParenLoc = ConsumeParen();
+  BalancedDelimiterTracker T(*this, tok::l_paren);
+  T.consumeOpen();
+
   ExprResult Value;
 
   bool ForEach = false, ForRange = false;
@@ -1413,18 +1421,18 @@ StmtResult Parser::ParseForStatement(ParsedAttributes &attrs) {
     }
   }
   // Match the ')'.
-  SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
+  T.consumeClose();
 
   // We need to perform most of the semantic analysis for a C++0x for-range
   // statememt before parsing the body, in order to be able to deduce the type
   // of an auto-typed loop variable.
   StmtResult ForRangeStmt;
   if (ForRange) {
-    ForRangeStmt = Actions.ActOnCXXForRangeStmt(ForLoc, LParenLoc,
+    ForRangeStmt = Actions.ActOnCXXForRangeStmt(ForLoc, T.getOpenLocation(),
                                                 FirstPart.take(),
                                                 ForRangeInit.ColonLoc,
                                                 ForRangeInit.RangeExpr.get(),
-                                                RParenLoc);
+                                                T.getCloseLocation());
 
 
   // Similarly, we need to do the semantic analysis for a for-range
@@ -1462,16 +1470,18 @@ StmtResult Parser::ParseForStatement(ParsedAttributes &attrs) {
     return StmtError();
 
   if (ForEach)
-    return Actions.ActOnObjCForCollectionStmt(ForLoc, LParenLoc,
-                                              FirstPart.take(),
-                                              Collection.take(), RParenLoc,
-                                              Body.take());
+   return Actions.ActOnObjCForCollectionStmt(ForLoc, T.getOpenLocation(),
+                                             FirstPart.take(),
+                                             Collection.take(), 
+                                             T.getCloseLocation(),
+                                             Body.take());
 
   if (ForRange)
     return Actions.FinishCXXForRangeStmt(ForRangeStmt.take(), Body.take());
 
-  return Actions.ActOnForStmt(ForLoc, LParenLoc, FirstPart.take(), SecondPart,
-                              SecondVar, ThirdPart, RParenLoc, Body.take());
+  return Actions.ActOnForStmt(ForLoc, T.getOpenLocation(), FirstPart.take(),
+                              SecondPart, SecondVar, ThirdPart,
+                              T.getCloseLocation(), Body.take());
 }
 
 /// ParseGotoStatement
@@ -1742,7 +1752,8 @@ StmtResult Parser::ParseAsmStatement(bool &msAsm) {
     SkipUntil(tok::r_paren);
     return StmtError();
   }
-  Loc = ConsumeParen();
+  BalancedDelimiterTracker T(*this, tok::l_paren);
+  T.consumeOpen();
 
   ExprResult AsmString(ParseAsmStringLiteral());
   if (AsmString.isInvalid())
@@ -1755,12 +1766,12 @@ StmtResult Parser::ParseAsmStatement(bool &msAsm) {
 
   if (Tok.is(tok::r_paren)) {
     // We have a simple asm expression like 'asm("foo")'.
-    SourceLocation RParenLoc = ConsumeParen();
+    T.consumeClose();
     return Actions.ActOnAsmStmt(AsmLoc, /*isSimple*/ true, isVolatile,
                                 /*NumOutputs*/ 0, /*NumInputs*/ 0, 0,
                                 move_arg(Constraints), move_arg(Exprs),
                                 AsmString.take(), move_arg(Clobbers),
-                                RParenLoc);
+                                T.getCloseLocation());
   }
 
   // Parse Outputs, if present.
@@ -1820,12 +1831,12 @@ StmtResult Parser::ParseAsmStatement(bool &msAsm) {
     }
   }
 
-  SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, Loc);
+  T.consumeClose();
   return Actions.ActOnAsmStmt(AsmLoc, false, isVolatile,
                               NumOutputs, NumInputs, Names.data(),
                               move_arg(Constraints), move_arg(Exprs),
                               AsmString.take(), move_arg(Clobbers),
-                              RParenLoc);
+                              T.getCloseLocation());
 }
 
 /// ParseAsmOperands - Parse the asm-operands production as used by
@@ -1851,7 +1862,8 @@ bool Parser::ParseAsmOperandsOpt(SmallVectorImpl<IdentifierInfo *> &Names,
   while (1) {
     // Read the [id] if present.
     if (Tok.is(tok::l_square)) {
-      SourceLocation Loc = ConsumeBracket();
+      BalancedDelimiterTracker T(*this, tok::l_square);
+      T.consumeOpen();
 
       if (Tok.isNot(tok::identifier)) {
         Diag(Tok, diag::err_expected_ident);
@@ -1863,7 +1875,7 @@ bool Parser::ParseAsmOperandsOpt(SmallVectorImpl<IdentifierInfo *> &Names,
       ConsumeToken();
 
       Names.push_back(II);
-      MatchRHSPunctuation(tok::r_square, Loc);
+      T.consumeClose();
     } else
       Names.push_back(0);
 
@@ -1881,9 +1893,10 @@ bool Parser::ParseAsmOperandsOpt(SmallVectorImpl<IdentifierInfo *> &Names,
     }
 
     // Read the parenthesized expression.
-    SourceLocation OpenLoc = ConsumeParen();
+    BalancedDelimiterTracker T(*this, tok::l_paren);
+    T.consumeOpen();
     ExprResult Res(ParseExpression());
-    MatchRHSPunctuation(tok::r_paren, OpenLoc);
+    T.consumeClose();
     if (Res.isInvalid()) {
       SkipUntil(tok::r_paren);
       return true;
@@ -2078,8 +2091,8 @@ StmtResult Parser::ParseCXXCatchBlock() {
 
   SourceLocation CatchLoc = ConsumeToken();
 
-  SourceLocation LParenLoc = Tok.getLocation();
-  if (ExpectAndConsume(tok::l_paren, diag::err_expected_lparen))
+  BalancedDelimiterTracker T(*this, tok::l_paren);
+  if (T.expectAndConsume(diag::err_expected_lparen))
     return StmtError();
 
   // C++ 3.3.2p3:
@@ -2100,7 +2113,8 @@ StmtResult Parser::ParseCXXCatchBlock() {
   } else
     ConsumeToken();
 
-  if (MatchRHSPunctuation(tok::r_paren, LParenLoc).isInvalid())
+  T.consumeClose();
+  if (T.getCloseLocation().isInvalid())
     return StmtError();
 
   if (Tok.isNot(tok::l_brace))

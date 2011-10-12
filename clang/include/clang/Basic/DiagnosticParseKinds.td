@@ -354,6 +354,8 @@ def err_destructor_template_id : Error<
   "destructor name %0 does not refer to a template">;
 def err_default_arg_unparsed : Error<
   "unexpected end of default argument expression">;
+def err_parser_impl_limit_overflow : Error<
+  "parser recursion limit reached, program too complex">, DefaultFatal;
 
 // C++ derived classes
 def err_dup_virtual : Error<"duplicate 'virtual' in base specifier">;

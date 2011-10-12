@@ -139,7 +139,10 @@ ExprResult Parser::ParseInitializerWithPotentialDesignator() {
     //
     InMessageExpressionRAIIObject InMessage(*this, true);
     
-    SourceLocation StartLoc = ConsumeBracket();
+    BalancedDelimiterTracker T(*this, tok::l_square);
+    T.consumeOpen();
+    SourceLocation StartLoc = T.getOpenLocation();
+
     ExprResult Idx;
 
     // If Objective-C is enabled and this is a typename (class message
@@ -266,8 +269,9 @@ ExprResult Parser::ParseInitializerWithPotentialDesignator() {
                                                     StartLoc, EllipsisLoc));
     }
 
-    SourceLocation EndLoc = MatchRHSPunctuation(tok::r_square, StartLoc);
-    Desig.getDesignator(Desig.getNumDesignators() - 1).setRBracketLoc(EndLoc);
+    T.consumeClose();
+    Desig.getDesignator(Desig.getNumDesignators() - 1).setRBracketLoc(
+                                                        T.getCloseLocation());
   }
 
   // Okay, we're done with the designator sequence.  We know that there must be
@@ -316,7 +320,9 @@ ExprResult Parser::ParseInitializerWithPotentialDesignator() {
 ExprResult Parser::ParseBraceInitializer() {
   InMessageExpressionRAIIObject InMessage(*this, false);
   
-  SourceLocation LBraceLoc = ConsumeBrace();
+  BalancedDelimiterTracker T(*this, tok::l_brace);
+  T.consumeOpen();
+  SourceLocation LBraceLoc = T.getOpenLocation();
 
   /// InitExprs - This is the actual list of expressions contained in the
   /// initializer.
@@ -376,12 +382,13 @@ ExprResult Parser::ParseBraceInitializer() {
     // Handle trailing comma.
     if (Tok.is(tok::r_brace)) break;
   }
-  if (InitExprsOk && Tok.is(tok::r_brace))
-    return Actions.ActOnInitList(LBraceLoc, move_arg(InitExprs),
-                                 ConsumeBrace());
 
-  // Match the '}'.
-  MatchRHSPunctuation(tok::r_brace, LBraceLoc);
+  bool closed = !T.consumeClose();
+
+  if (InitExprsOk && closed)
+    return Actions.ActOnInitList(LBraceLoc, move_arg(InitExprs),
+                                 T.getCloseLocation());
+
   return ExprError(); // an error occurred.
 }
 
