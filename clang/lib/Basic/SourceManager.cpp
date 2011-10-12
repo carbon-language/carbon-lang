@@ -815,6 +815,16 @@ SourceLocation SourceManager::getSpellingLocSlowCase(SourceLocation Loc) const {
   return Loc;
 }
 
+SourceLocation SourceManager::getFileLocSlowCase(SourceLocation Loc) const {
+  do {
+    if (isMacroArgExpansion(Loc))
+      Loc = getImmediateSpellingLoc(Loc);
+    else
+      Loc = getImmediateExpansionRange(Loc).first;
+  } while (!Loc.isFileID());
+  return Loc;
+}
+
 
 std::pair<FileID, unsigned>
 SourceManager::getDecomposedExpansionLocSlowCase(

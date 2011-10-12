@@ -828,6 +828,14 @@ public:
     return getExpansionLocSlowCase(Loc);
   }
 
+  /// \brief Given \arg Loc, if it is a macro location return the expansion
+  /// location or the spelling location, depending on if it comes from a
+  /// macro argument or not.
+  SourceLocation getFileLoc(SourceLocation Loc) const {
+    if (Loc.isFileID()) return Loc;
+    return getFileLocSlowCase(Loc);
+  }
+
   /// getImmediateExpansionRange - Loc is required to be an expansion location.
   /// Return the start/end of the expansion information.
   std::pair<SourceLocation,SourceLocation>
@@ -1301,6 +1309,7 @@ private:
 
   SourceLocation getExpansionLocSlowCase(SourceLocation Loc) const;
   SourceLocation getSpellingLocSlowCase(SourceLocation Loc) const;
+  SourceLocation getFileLocSlowCase(SourceLocation Loc) const;
 
   std::pair<FileID, unsigned>
   getDecomposedExpansionLocSlowCase(const SrcMgr::SLocEntry *E) const;
