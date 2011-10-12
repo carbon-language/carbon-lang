@@ -16,6 +16,7 @@
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Symbol/ClangNamespaceDecl.h"
 #include "lldb/Target/Target.h"
 
 using namespace lldb;
@@ -128,17 +129,18 @@ BreakpointResolverName::SearchCallback
             if (context.module_sp)
             {
                 uint32_t num_functions = context.module_sp->FindFunctions (m_func_name, 
-                                                      m_func_name_type_mask, 
-                                                      include_symbols, 
-                                                      append, 
-                                                      func_list);
+                                                                           NULL,
+                                                                           m_func_name_type_mask, 
+                                                                           include_symbols, 
+                                                                           append, 
+                                                                           func_list);
                 // If the search filter specifies a Compilation Unit, then we don't need to bother to look in plain
                 // symbols, since all the ones from a set compilation unit will have been found above already.
                 
                 if (num_functions == 0 && !filter_by_cu)
                 {
                     if (m_func_name_type_mask & (eFunctionNameTypeBase | eFunctionNameTypeFull | eFunctionNameTypeAuto))
-                        context.module_sp->FindSymbolsWithNameAndType (m_func_name, eSymbolTypeCode, sym_list);
+                        context.module_sp->FindSymbolsWithNameAndType (m_func_name, NULL, eSymbolTypeCode, sym_list);
                 }
             }
             break;

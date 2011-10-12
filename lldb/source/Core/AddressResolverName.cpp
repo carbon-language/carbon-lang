@@ -12,6 +12,7 @@
 // Project includes
 #include "lldb/Core/Log.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Symbol/ClangNamespaceDecl.h"
 #include "lldb/lldb-private-log.h"
 
 using namespace lldb;
@@ -109,10 +110,12 @@ AddressResolverName::SearchCallback
     case AddressResolver::Exact:
         if (context.module_sp)
         {
-            context.module_sp->FindSymbolsWithNameAndType (m_func_name, 
+            context.module_sp->FindSymbolsWithNameAndType (m_func_name,
+                                                           NULL,
                                                            eSymbolTypeCode, 
                                                            sym_list);
-            context.module_sp->FindFunctions (m_func_name, 
+            context.module_sp->FindFunctions (m_func_name,
+                                              NULL,
                                               eFunctionNameTypeBase | eFunctionNameTypeFull | eFunctionNameTypeMethod | eFunctionNameTypeSelector,
                                               include_symbols,
                                               append, 

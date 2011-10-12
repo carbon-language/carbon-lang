@@ -25,6 +25,7 @@
 #include "lldb/Interpreter/OptionGroupFormat.h"
 #include "lldb/Interpreter/OptionGroupOutputFile.h"
 #include "lldb/Interpreter/OptionGroupValueObjectDisplay.h"
+#include "lldb/Symbol/ClangNamespaceDecl.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/StackFrame.h"
 
@@ -447,8 +448,9 @@ public:
                 sc = frame->GetSymbolContext (eSymbolContextModule);
                 if (sc.module_sp)
                 {
-                    sc.module_sp->FindTypes (sc, 
-                                             lookup_type_name, 
+                    sc.module_sp->FindTypes (sc,
+                                             lookup_type_name,
+                                             NULL,
                                              append, 
                                              1, 
                                              type_list);

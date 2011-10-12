@@ -1498,7 +1498,8 @@ LookupFunctionInModule (CommandInterpreter &interpreter, Stream &strm, Module *m
         else
         {
             ConstString function_name (name);
-            num_matches = module->FindFunctions (function_name, 
+            num_matches = module->FindFunctions (function_name,
+                                                 NULL,
                                                  eFunctionNameTypeBase | eFunctionNameTypeFull | eFunctionNameTypeMethod | eFunctionNameTypeSelector, 
                                                  include_symbols,
                                                  append, 
@@ -1543,7 +1544,7 @@ LookupTypeInModule (CommandInterpreter &interpreter,
             //            else
             //            {
             ConstString name(name_cstr);
-            num_matches = module->FindTypes(sc, name, true, UINT32_MAX, type_list);
+            num_matches = module->FindTypes(sc, name, NULL, true, UINT32_MAX, type_list);
             //            }
             
             if (num_matches)

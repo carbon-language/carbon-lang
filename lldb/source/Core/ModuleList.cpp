@@ -16,6 +16,7 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Host/Symbols.h"
+#include "lldb/Symbol/ClangNamespaceDecl.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/VariableList.h"
 
@@ -186,7 +187,7 @@ ModuleList::FindFunctions (const ConstString &name,
     collection::const_iterator pos, end = m_modules.end();
     for (pos = m_modules.begin(); pos != end; ++pos)
     {
-        (*pos)->FindFunctions (name, name_type_mask, include_symbols, true, sc_list);
+        (*pos)->FindFunctions (name, NULL, name_type_mask, include_symbols, true, sc_list);
     }
     
     return sc_list.GetSize();
@@ -221,7 +222,7 @@ ModuleList::FindGlobalVariables (const ConstString &name,
     collection::iterator pos, end = m_modules.end();
     for (pos = m_modules.begin(); pos != end; ++pos)
     {
-        (*pos)->FindGlobalVariables (name, append, max_matches, variable_list);
+        (*pos)->FindGlobalVariables (name, NULL, append, max_matches, variable_list);
     }
     return variable_list.GetSize() - initial_size;
 }
@@ -253,7 +254,7 @@ ModuleList::FindSymbolsWithNameAndType (const ConstString &name,
     sc_list.Clear();
     collection::iterator pos, end = m_modules.end();
     for (pos = m_modules.begin(); pos != end; ++pos)
-        (*pos)->FindSymbolsWithNameAndType (name, symbol_type, sc_list);
+        (*pos)->FindSymbolsWithNameAndType (name, NULL, symbol_type, sc_list);
     return sc_list.GetSize();
 }
 
@@ -423,7 +424,7 @@ ModuleList::FindTypes_Impl (const SymbolContext& sc, const ConstString &name, bo
     for (pos = m_modules.begin(); pos != end; ++pos)
     {
         if (sc.module_sp.get() == NULL || sc.module_sp.get() == (*pos).get())
-            total_matches += (*pos)->FindTypes (sc, name, true, max_matches, types);
+            total_matches += (*pos)->FindTypes (sc, name, NULL, true, max_matches, types);
 
         if (total_matches >= max_matches)
             break;

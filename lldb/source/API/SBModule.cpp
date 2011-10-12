@@ -344,7 +344,8 @@ SBModule::FindFunctions (const char *name,
     if (m_opaque_sp)
     {
         const bool symbols_ok = true;
-        return m_opaque_sp->FindFunctions (ConstString(name), 
+        return m_opaque_sp->FindFunctions (ConstString(name),
+                                           NULL,
                                            name_type_mask, 
                                            symbols_ok, 
                                            append, 
@@ -361,7 +362,8 @@ SBModule::FindGlobalVariables (SBTarget &target, const char *name, uint32_t max_
     if (m_opaque_sp)
     {
         VariableList variable_list;
-        const uint32_t match_count = m_opaque_sp->FindGlobalVariables (ConstString (name), 
+        const uint32_t match_count = m_opaque_sp->FindGlobalVariables (ConstString (name),
+                                                                       NULL,
                                                                        false, 
                                                                        max_matches,
                                                                        variable_list);
@@ -398,6 +400,7 @@ SBModule::FindFirstType (const char* name_cstr)
 
         num_matches = m_opaque_sp->FindTypes(sc,
                                              name,
+                                             NULL,
                                              false,
                                              1,
                                              type_list);
@@ -423,6 +426,7 @@ SBModule::FindTypes (const char* type)
         
         num_matches = m_opaque_sp->FindTypes(sc,
                                              name,
+                                             NULL,
                                              false,
                                              UINT32_MAX,
                                              type_list);

@@ -24,6 +24,7 @@
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Interpreter/NamedOptionValue.h"
+#include "lldb/Symbol/ClangNamespaceDecl.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
@@ -166,7 +167,8 @@ Disassembler::Disassemble
         const bool include_symbols = true;
         if (module)
         {
-            module->FindFunctions (name, 
+            module->FindFunctions (name,
+                                   NULL,
                                    eFunctionNameTypeBase | 
                                    eFunctionNameTypeFull | 
                                    eFunctionNameTypeMethod | 

@@ -22,6 +22,7 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/UUID.h"
+#include "lldb/Symbol/ClangNamespaceDecl.h"
 #include "lldb/Symbol/ObjectFile.h"
 
 
@@ -1695,7 +1696,7 @@ ObjectFileMachO::GetEntryPointAddress ()
         
         SymbolContextList contexts;
         SymbolContext context;
-        if (!m_module->FindSymbolsWithNameAndType(ConstString ("start"), eSymbolTypeCode, contexts))
+        if (!m_module->FindSymbolsWithNameAndType(ConstString ("start"), NULL, eSymbolTypeCode, contexts))
             return m_entry_point_address;
         
         contexts.GetContextAtIndex(0, context);

@@ -350,7 +350,7 @@ Module::ResolveSymbolContextsForFileSpec (const FileSpec &file_spec, uint32_t li
 
 
 uint32_t
-Module::FindGlobalVariables(const ConstString &name, bool append, uint32_t max_matches, VariableList& variables)
+Module::FindGlobalVariables(const ConstString &name, const ClangNamespaceDecl *namespace_decl, bool append, uint32_t max_matches, VariableList& variables)
 {
     SymbolVendor *symbols = GetSymbolVendor ();
     if (symbols)
@@ -389,7 +389,8 @@ Module::FindCompileUnits (const FileSpec &path,
 }
 
 uint32_t
-Module::FindFunctions (const ConstString &name, 
+Module::FindFunctions (const ConstString &name,
+                       const ClangNamespaceDecl *namespace_decl,
                        uint32_t name_type_mask, 
                        bool include_symbols, 
                        bool append, 
@@ -509,7 +510,7 @@ StripTypeName(const char* name_cstr)
 }
 
 uint32_t
-Module::FindTypes (const SymbolContext& sc, const ConstString &name, bool append, uint32_t max_matches, TypeList& types)
+Module::FindTypes (const SymbolContext& sc,  const ConstString &name, const ClangNamespaceDecl *namespace_decl, bool append, uint32_t max_matches, TypeList& types)
 {
     uint32_t retval = FindTypes_Impl(sc, name, append, max_matches, types);
     
@@ -686,7 +687,7 @@ Module::SymbolIndicesToSymbolContextList (Symtab *symtab, std::vector<uint32_t> 
 }
 
 size_t
-Module::FindSymbolsWithNameAndType (const ConstString &name, SymbolType symbol_type, SymbolContextList &sc_list)
+Module::FindSymbolsWithNameAndType (const ConstString &name, const ClangNamespaceDecl *namespace_decl, SymbolType symbol_type, SymbolContextList &sc_list)
 {
     // No need to protect this call using m_mutex all other method calls are
     // already thread safe.

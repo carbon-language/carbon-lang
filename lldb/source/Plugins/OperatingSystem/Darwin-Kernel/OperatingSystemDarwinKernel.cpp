@@ -19,6 +19,7 @@
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/ValueObjectVariable.h"
+#include "lldb/Symbol/ClangNamespaceDecl.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/VariableList.h"
 #include "lldb/Target/Process.h"
@@ -131,7 +132,8 @@ OperatingSystemDarwinKernel::GetThreadListValueObject ()
         Module *exe_module = m_process->GetTarget().GetExecutableModulePointer();
         if (exe_module)
         {
-            if (exe_module->FindGlobalVariables (g_thread_list_name, 
+            if (exe_module->FindGlobalVariables (g_thread_list_name,
+                                                 NULL,
                                                  append, 
                                                  max_matches,
                                                  variable_list))

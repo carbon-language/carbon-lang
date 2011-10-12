@@ -479,7 +479,7 @@ SymbolContext::FindFunctionsByName (const ConstString &name,
     }
 
     if (module_sp)
-        module_sp->FindFunctions (name, name_type_mask, include_symbols, true, sc_list);
+        module_sp->FindFunctions (name, NULL, name_type_mask, include_symbols, true, sc_list);
 
     if (target_sp)
     {
@@ -495,7 +495,7 @@ SymbolContext::FindFunctionsByName (const ConstString &name,
             {
                 ModuleSP iter_module_sp = modules.GetModuleAtIndex(i);
                 if (module_sp != iter_module_sp)
-                    iter_module_sp->FindFunctions (name, name_type_mask, include_symbols, true, sc_list);
+                    iter_module_sp->FindFunctions (name, NULL, name_type_mask, include_symbols, true, sc_list);
             }
         }
     }
@@ -516,7 +516,7 @@ SymbolContext::FindTypeByName (const ConstString &name) const
         
     TypeList types;
     
-    if (module_sp && module_sp->FindTypes (*this, name, false, 1, types))
+    if (module_sp && module_sp->FindTypes (*this, name, NULL, false, 1, types))
         return types.GetTypeAtIndex(0);
     
     SymbolContext sc_for_global_search;

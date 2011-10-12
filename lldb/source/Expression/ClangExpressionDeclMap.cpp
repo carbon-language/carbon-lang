@@ -626,7 +626,7 @@ FindCodeSymbolInContext
 )
 {
     if (sym_ctx.module_sp)
-       sym_ctx.module_sp->FindSymbolsWithNameAndType(name, eSymbolTypeCode, sc_list);
+       sym_ctx.module_sp->FindSymbolsWithNameAndType(name, NULL, eSymbolTypeCode, sc_list);
     
     if (!sc_list.GetSize())
         sym_ctx.target_sp->GetImages().FindSymbolsWithNameAndType(name, eSymbolTypeCode, sc_list);

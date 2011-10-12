@@ -16,6 +16,7 @@
 #include "lldb/Core/DataBuffer.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Stream.h"
+#include "lldb/Symbol/ClangNamespaceDecl.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Target/Target.h"
 
@@ -244,7 +245,7 @@ SourceManager::GetDefaultFileAndLine (FileSpec &file_spec, uint32_t &line)
             ConstString main_name("main");
             bool symbols_okay = false;  // Force it to be a debug symbol.
             bool append = false;
-            num_matches = executable_ptr->FindFunctions (main_name, lldb::eFunctionNameTypeBase, symbols_okay, append, sc_list);
+            num_matches = executable_ptr->FindFunctions (main_name, NULL, lldb::eFunctionNameTypeBase, symbols_okay, append, sc_list);
             for (uint32_t idx = 0; idx < num_matches; idx++)
             {
                 SymbolContext sc;

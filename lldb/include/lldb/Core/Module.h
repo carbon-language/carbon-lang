@@ -160,7 +160,8 @@ public:
                                     lldb::SymbolType symbol_type = lldb::eSymbolTypeAny);
 
     size_t
-    FindSymbolsWithNameAndType (const ConstString &name, 
+    FindSymbolsWithNameAndType (const ConstString &name,
+                                const ClangNamespaceDecl *namespace_decl,
                                 lldb::SymbolType symbol_type, 
                                 SymbolContextList &sc_list);
 
@@ -207,6 +208,9 @@ public:
     /// @param[in] name
     ///     The name of the compile unit we are looking for.
     ///
+    /// @param[in] namespace_decl
+    ///     If valid, a namespace to search in.
+    ///
     /// @param[in] name_type_mask
     ///     A bit mask of bits that indicate what kind of names should
     ///     be used when doing the lookup. Bits include fully qualified
@@ -225,7 +229,8 @@ public:
     ///     The number of matches added to \a sc_list.
     //------------------------------------------------------------------
     uint32_t
-    FindFunctions (const ConstString &name, 
+    FindFunctions (const ConstString &name,
+                   const ClangNamespaceDecl *namespace_decl,
                    uint32_t name_type_mask, 
                    bool symbols_ok, 
                    bool append, 
@@ -266,6 +271,9 @@ public:
     ///     The name of the global or static variable we are looking
     ///     for.
     ///
+    /// @param[in] namespace_decl
+    ///     If valid, a namespace to search in.
+    ///
     /// @param[in] append
     ///     If \b true, any matches will be appended to \a
     ///     variable_list, else matches replace the contents of
@@ -283,7 +291,8 @@ public:
     ///     The number of matches added to \a variable_list.
     //------------------------------------------------------------------
     uint32_t
-    FindGlobalVariables (const ConstString &name, 
+    FindGlobalVariables (const ConstString &name,
+                         const ClangNamespaceDecl *namespace_decl,
                          bool append, 
                          uint32_t max_matches, 
                          VariableList& variable_list);
@@ -326,6 +335,9 @@ public:
     /// @param[in] name
     ///     The name of the type we are looking for.
     ///
+    /// @param[in] namespace_decl
+    ///     If valid, a namespace to search in.
+    ///
     /// @param[in] append
     ///     If \b true, any matches will be appended to \a
     ///     variable_list, else matches replace the contents of
@@ -350,8 +362,9 @@ public:
     ///     The number of matches added to \a type_list.
     //------------------------------------------------------------------
     uint32_t
-    FindTypes (const SymbolContext& sc, 
-               const ConstString &name, 
+    FindTypes (const SymbolContext& sc,
+               const ConstString &name,
+               const ClangNamespaceDecl *namespace_decl,
                bool append, 
                uint32_t max_matches, 
                TypeList& types);
