@@ -249,6 +249,10 @@ protected:
         flagsGotDebugNamesData      = (1 << 11),
         flagsGotDebugTypesData      = (1 << 12)
     };
+    
+    bool                    DIEIsInNamespace (const lldb_private::ClangNamespaceDecl *namespace_decl, 
+                                              DWARFCompileUnit* cu, 
+                                              const DWARFDebugInfoEntry* die);
 
     DISALLOW_COPY_AND_ASSIGN (SymbolFileDWARF);
     bool                    ParseCompileUnit (DWARFCompileUnit* cu, lldb::CompUnitSP& compile_unit_sp);

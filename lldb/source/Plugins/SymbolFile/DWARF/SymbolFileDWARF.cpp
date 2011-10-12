@@ -1944,7 +1944,43 @@ SymbolFileDWARF::Index ()
 #endif
     }
 }
+bool
+SymbolFileDWARF::DIEIsInNamespace (const ClangNamespaceDecl *namespace_decl, 
+                                   DWARFCompileUnit* cu, 
+                                   const DWARFDebugInfoEntry* die)
+{
+    // No namespace specified, so the answesr i
+    if (namespace_decl == NULL)
+        return true;
+    
+    const DWARFDebugInfoEntry *decl_ctx_die = GetDeclContextDIEContainingDIE (cu, die);
+    if (decl_ctx_die)
+    {
+        clang::NamespaceDecl *clang_namespace_decl = namespace_decl->GetNamespaceDecl();
+        if (clang_namespace_decl)
+        {
+            if (decl_ctx_die->Tag() != DW_TAG_namespace)
+                return false;
 
+            DeclContextToDIEMap::iterator pos = m_decl_ctx_to_die.find(clang_namespace_decl);
+            
+            if (pos == m_decl_ctx_to_die.end())
+                return false;
+            
+            return decl_ctx_die == pos->second;
+        }
+        else
+        {
+            // We have a namespace_decl that was not NULL but it contained
+            // a NULL "clang::NamespaceDecl", so this means the global namespace
+            // So as long the the contained decl context DIE isn't a namespace
+            // we should be ok.
+            if (decl_ctx_die->Tag() != DW_TAG_namespace)
+                return true;
+        }
+    }
+    return false;
+}
 uint32_t
 SymbolFileDWARF::FindGlobalVariables (const ConstString &name, bool append, uint32_t max_matches, VariableList& variables)
 {
