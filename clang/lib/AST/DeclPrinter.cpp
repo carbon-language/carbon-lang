@@ -468,6 +468,10 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
 
     if (D->hasAttr<NoReturnAttr>())
       Proto += " __attribute((noreturn))";
+
+    if (D->hasAttr<ReturnsTwiceAttr>())
+      Proto += " __attribute((returns_twice))";
+
     if (CXXConstructorDecl *CDecl = dyn_cast<CXXConstructorDecl>(D)) {
       bool HasInitializerList = false;
       for (CXXConstructorDecl::init_const_iterator B = CDecl->init_begin(),

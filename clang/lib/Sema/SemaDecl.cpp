@@ -7263,6 +7263,9 @@ void Sema::AddKnownFunctionAttributes(FunctionDecl *FD) {
         FD->addAttr(::new (Context) ConstAttr(FD->getLocation(), Context));
     }
 
+    if (Context.BuiltinInfo.isReturnsTwice(BuiltinID) &&
+        !FD->getAttr<ReturnsTwiceAttr>())
+      FD->addAttr(::new (Context) ReturnsTwiceAttr(FD->getLocation(), Context));
     if (Context.BuiltinInfo.isNoThrow(BuiltinID) && !FD->getAttr<NoThrowAttr>())
       FD->addAttr(::new (Context) NoThrowAttr(FD->getLocation(), Context));
     if (Context.BuiltinInfo.isConst(BuiltinID) && !FD->getAttr<ConstAttr>())

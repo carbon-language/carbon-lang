@@ -103,6 +103,11 @@ public:
     return strchr(GetRecord(ID).Attributes, 'r') != 0;
   }
 
+  /// isReturnsTwice - Return true if we know this builtin can return twice.
+  bool isReturnsTwice(unsigned ID) const {
+    return strchr(GetRecord(ID).Attributes, 'j') != 0;
+  }
+
   /// isLibFunction - Return true if this is a builtin for a libc/libm function,
   /// with a "__builtin_" prefix (e.g. __builtin_abs).
   bool isLibFunction(unsigned ID) const {
