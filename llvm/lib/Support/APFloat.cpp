@@ -3275,7 +3275,7 @@ APFloat APFloat::getSmallestNormalized(const fltSemantics &Sem, bool Negative) {
   Val.exponent = Sem.minExponent;
   Val.zeroSignificand();
   Val.significandParts()[partCountForBits(Sem.precision)-1] |=
-    (((integerPart) 1) << ((Sem.precision % integerPartWidth) - 1));
+    (((integerPart) 1) << ((Sem.precision - 1) % integerPartWidth));
 
   return Val;
 }
