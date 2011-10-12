@@ -448,3 +448,38 @@ script os.chdir(os.path.expanduser('/tmp'))
 (lldb) pwd
 /private/tmp
 (lldb) 
+
+Or for a more capable 'cd' command, create ~/utils.py like this:
+
+import os
+
+def chdir(debugger, args, result, dict):
+    """Change the working directory, or cd to ${HOME}."""
+    dir = args.strip()
+    if dir:
+        os.chdir(args)
+    else:
+        os.chdir(os.path.expanduser('~'))
+    print "Current working directory: %s" % os.getcwd()
+
+and, have the following in your ~/.lldbinit file:
+
+script import os, sys
+script sys.path.append(os.path.expanduser('~'))
+script import utils
+command alias pwd script print os.getcwd()
+command script add -f utils.chdir cd
+
+and, then in your lldb session, you can have:
+
+(lldb) help cd
+
+Change the working directory, or cd to ${HOME}.
+Syntax: cd
+(lldb) cd
+Current working directory: /Volumes/data/Users/johnny
+(lldb) cd /tmp
+Current working directory: /private/tmp
+(lldb) pwd
+/private/tmp
+(lldb) 
