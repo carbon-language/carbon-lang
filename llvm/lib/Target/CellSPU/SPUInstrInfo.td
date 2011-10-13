@@ -3467,8 +3467,10 @@ let isBranch = 1, isTerminator = 1, hasCtrlDep = 1 in {
         [/* no pattern */]>;
 
     // Indirect branch
-    def BI:
-      BIForm<0b00010101100, "bi\t$func", [(brind R32C:$func)]>;
+    let isIndirectBranch = 1 in {
+      def BI:
+        BIForm<0b00010101100, "bi\t$func", [(brind R32C:$func)]>;
+    }
   }
 
   // Conditional branches:
