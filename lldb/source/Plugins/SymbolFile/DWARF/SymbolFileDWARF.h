@@ -20,6 +20,7 @@
 // Other libraries and framework includes
 #include "clang/AST/ExternalASTSource.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallPtrSet.h"
 
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Core/ConstString.h"
@@ -204,7 +205,9 @@ public:
     GetClangDeclContextForDIEOffset (const lldb_private::SymbolContext &sc, dw_offset_t die_offset);
     
     clang::DeclContext *
-    GetClangDeclContextContainingDIE (DWARFCompileUnit *cu, const DWARFDebugInfoEntry *die);
+    GetClangDeclContextContainingDIE (DWARFCompileUnit *cu, 
+                                      const DWARFDebugInfoEntry *die,
+                                      const DWARFDebugInfoEntry **decl_ctx_die);
 
     clang::DeclContext *
     GetClangDeclContextContainingDIEOffset (dw_offset_t die_offset);
@@ -403,7 +406,8 @@ protected:
                                                   const DWARFDebugInfoEntry *die)
                             {
                                 m_die_to_decl_ctx[die] = decl_ctx;
-                                m_decl_ctx_to_die[decl_ctx] = die;
+                                // There can be many DIEs for a single decl context
+                                m_decl_ctx_to_die[decl_ctx].insert(die);
                             }
     
     void
@@ -448,8 +452,9 @@ protected:
 
     std::auto_ptr<DWARFDebugRanges>     m_ranges;
     UniqueDWARFASTTypeMap m_unique_ast_type_map;
+    typedef llvm::SmallPtrSet<const DWARFDebugInfoEntry *, 4> DIEPointerSet;
     typedef llvm::DenseMap<const DWARFDebugInfoEntry *, clang::DeclContext *> DIEToDeclContextMap;
-    typedef llvm::DenseMap<const clang::DeclContext *, const DWARFDebugInfoEntry *> DeclContextToDIEMap;
+    typedef llvm::DenseMap<const clang::DeclContext *, DIEPointerSet> DeclContextToDIEMap;
     typedef llvm::DenseMap<const DWARFDebugInfoEntry *, lldb_private::Type *> DIEToTypePtr;
     typedef llvm::DenseMap<const DWARFDebugInfoEntry *, lldb::VariableSP> DIEToVariableSP;
     typedef llvm::DenseMap<const DWARFDebugInfoEntry *, lldb::clang_type_t> DIEToClangType;
