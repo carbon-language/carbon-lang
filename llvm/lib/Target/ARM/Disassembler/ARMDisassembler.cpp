@@ -1011,7 +1011,7 @@ static DecodeStatus DecodeSOImmOperand(llvm::MCInst &Inst, unsigned Val,
                                uint64_t Address, const void *Decoder) {
   uint32_t imm = Val & 0xFF;
   uint32_t rot = (Val & 0xF00) >> 7;
-  uint32_t rot_imm = (imm >> rot) | (imm << (32-rot));
+  uint32_t rot_imm = (imm >> rot) | (imm << ((32-rot) & 0x1F));
   Inst.addOperand(MCOperand::CreateImm(rot_imm));
   return MCDisassembler::Success;
 }
