@@ -144,7 +144,14 @@ void llvm::DumpBytes(StringRef bytes) {
   outs() << output;
 }
 
-static void DisassembleObject(const ObjectFile *Obj) {
+static bool RelocAddressLess(RelocationRef a, RelocationRef b) {
+  uint64_t a_addr, b_addr;
+  if (error(a.getAddress(a_addr))) return false;
+  if (error(b.getAddress(b_addr))) return false;
+  return a_addr < b_addr;
+}
+
+static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
   const Target *TheTarget = GetTarget(Obj);
   if (!TheTarget) {
     // GetTarget prints out stuff.
@@ -164,6 +171,9 @@ static void DisassembleObject(const ObjectFile *Obj) {
     if (error(i->isText(text))) break;
     if (!text) continue;
 
+    uint64_t SectionAddr;
+    if (error(i->getAddress(SectionAddr))) break;
+
     // Make a list of all the symbols in this section.
     std::vector<std::pair<uint64_t, StringRef> > Symbols;
     for (symbol_iterator si = Obj->begin_symbols(),
@@ -181,6 +191,20 @@ static void DisassembleObject(const ObjectFile *Obj) {
 
     // Sort the symbols by address, just in case they didn't come in that way.
     array_pod_sort(Symbols.begin(), Symbols.end());
+
+    // Make a list of all the relocations for this section.
+    std::vector<RelocationRef> Rels;
+    if (InlineRelocs) {
+      for (relocation_iterator ri = i->begin_relocations(),
+                               re = i->end_relocations();
+                              ri != re; ri.increment(ec)) {
+        if (error(ec)) break;
+        Rels.push_back(*ri);
+      }
+    }
+
+    // Sort relocations by address.
+    std::sort(Rels.begin(), Rels.end(), RelocAddressLess);
 
     StringRef name;
     if (error(i->getName(name))) break;
@@ -231,6 +255,8 @@ static void DisassembleObject(const ObjectFile *Obj) {
     uint64_t SectSize;
     if (error(i->getSize(SectSize))) break;
 
+    std::vector<RelocationRef>::const_iterator rel_cur = Rels.begin();
+    std::vector<RelocationRef>::const_iterator rel_end = Rels.end();
     // Disassemble symbol by symbol.
     for (unsigned si = 0, se = Symbols.size(); si != se; ++si) {
       uint64_t Start = Symbols[si].first;
@@ -259,9 +285,7 @@ static void DisassembleObject(const ObjectFile *Obj) {
 
         if (DisAsm->getInstruction(Inst, Size, memoryObject, Index,
                                    DebugOut, nulls())) {
-          uint64_t addr;
-          if (error(i->getAddress(addr))) break;
-          outs() << format("%8x:\t", addr + Index);
+          outs() << format("%8x:\t", SectionAddr + Index);
           DumpBytes(StringRef(Bytes.data() + Index, Size));
           IP->printInst(&Inst, outs(), "");
           outs() << "\n";
@@ -269,6 +293,24 @@ static void DisassembleObject(const ObjectFile *Obj) {
           errs() << ToolName << ": warning: invalid instruction encoding\n";
           if (Size == 0)
             Size = 1; // skip illegible bytes
+        }
+
+        // Print relocation for instruction.
+        while (rel_cur != rel_end) {
+          uint64_t addr;
+          SmallString<16> name;
+          SmallString<32> val;
+          if (error(rel_cur->getAddress(addr))) goto skip_print_rel;
+          // Stop when rel_cur's address is past the current instruction.
+          if (addr > Index + Size) break;
+          if (error(rel_cur->getTypeName(name))) goto skip_print_rel;
+          if (error(rel_cur->getValueString(val))) goto skip_print_rel;
+
+          outs() << format("\t\t\t%8x: ", SectionAddr + addr) << name << "\t"
+                 << val << "\n";
+
+        skip_print_rel:
+          ++rel_cur;
         }
       }
     }
@@ -330,8 +372,8 @@ static void PrintSectionHeaders(const ObjectFile *o) {
 
 static void DumpObject(const ObjectFile *o) {
   if (Disassemble)
-    DisassembleObject(o);
-  if (Relocations)
+    DisassembleObject(o, Relocations);
+  if (Relocations && !Disassemble)
     PrintRelocations(o);
   if (SectionHeaders)
     PrintSectionHeaders(o);
