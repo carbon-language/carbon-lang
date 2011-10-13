@@ -525,3 +525,12 @@ namespace PR9507 {
     f(n); // expected-error{{call to 'f' is ambiguous}}
   }
 }
+
+namespace rdar9803316 {
+  void foo(float);
+  int &foo(int);
+
+  void bar() {
+    int &ir = (&foo)(0);
+  }
+}
