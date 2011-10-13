@@ -351,6 +351,9 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
     if (Ty->isVariablyModifiedType())
       EmitVariablyModifiedType(Ty);
   }
+  // Emit a location at the end of the prologue.
+  if (CGDebugInfo *DI = getDebugInfo())
+    DI->EmitLocation(Builder, StartLoc);
 }
 
 void CodeGenFunction::EmitFunctionBody(FunctionArgList &Args) {

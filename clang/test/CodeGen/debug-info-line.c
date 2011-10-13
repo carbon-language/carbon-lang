@@ -1,8 +1,9 @@
-// RUN: %clang -emit-llvm -S -g %s -o %t
-// RUN: grep DW_TAG_lexical_block %t | count 3
+// RUN: %clang -emit-llvm -S -g %s -o - | FileCheck %s
 
 // Radar 8396182
-// There are three lexical blocks in this test case.
+// There is only one lexical block, but we need a DILexicalBlock and two
+// DILexicalBlockFile to correctly represent file info. This means we have
+// two lexical blocks shown as the latter is also tagged as a lexical block.
 
 int foo() {
   int i = 1;
@@ -13,3 +14,10 @@ int foo() {
 # 5 "m.c" 2
   return i + j;
 }
+
+// CHECK: DW_TAG_lexical_block
+// CHECK: DW_TAG_lexical_block
+// CHECK: !"m.h"
+// CHECK: DW_TAG_lexical_block
+// CHECK: !"m.c"
+// CHECK-NOT: DW_TAG_lexical_block

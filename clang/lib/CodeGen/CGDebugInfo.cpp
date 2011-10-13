@@ -55,6 +55,37 @@ void CGDebugInfo::setLocation(SourceLocation Loc) {
   if (!Loc.isValid()) return;
 
   CurLoc = CGM.getContext().getSourceManager().getExpansionLoc(Loc);
+
+  // If we've changed files in the middle of a lexical scope go ahead
+  // and create a new lexical scope with file node if it's different
+  // from the one in the scope.
+  if (LexicalBlockStack.empty()) return;
+
+  SourceManager &SM = CGM.getContext().getSourceManager();
+  PresumedLoc PCLoc = SM.getPresumedLoc(CurLoc);
+  PresumedLoc PPLoc = SM.getPresumedLoc(PrevLoc);
+
+  if (PCLoc.isInvalid() || PPLoc.isInvalid() ||
+      !strcmp(PPLoc.getFilename(), PCLoc.getFilename()))
+    return;
+
+  llvm::MDNode *LB = LexicalBlockStack.back();
+  llvm::DIScope Scope = llvm::DIScope(LB);
+  if (Scope.isLexicalBlockFile()) {
+    llvm::DILexicalBlockFile LBF = llvm::DILexicalBlockFile(LB);
+    llvm::DIDescriptor D
+      = DBuilder.createLexicalBlockFile(LBF.getScope(),
+					getOrCreateFile(CurLoc));
+    llvm::MDNode *N = D;
+    LexicalBlockStack.pop_back();
+    LexicalBlockStack.push_back(N);
+  } else if (Scope.isLexicalBlock()) {
+    llvm::DIDescriptor D
+      = DBuilder.createLexicalBlockFile(Scope, getOrCreateFile(CurLoc));
+    llvm::MDNode *N = D;
+    LexicalBlockStack.pop_back();
+    LexicalBlockStack.push_back(N);
+  }
 }
 
 /// getContextDescriptor - Get context info for the decl.
@@ -205,7 +236,7 @@ llvm::DIFile CGDebugInfo::getOrCreateMainFile() {
 /// getLineNumber - Get line number for the location. If location is invalid
 /// then use current location.
 unsigned CGDebugInfo::getLineNumber(SourceLocation Loc) {
-  assert (CurLoc.isValid() && "Invalid current location!");
+  assert (Loc.isValid() || CurLoc.isValid() && "Invalid current location!");
   SourceManager &SM = CGM.getContext().getSourceManager();
   PresumedLoc PLoc = SM.getPresumedLoc(Loc.isValid() ? Loc : CurLoc);
   return PLoc.isValid()? PLoc.getLine() : 0;
@@ -214,7 +245,7 @@ unsigned CGDebugInfo::getLineNumber(SourceLocation Loc) {
 /// getColumnNumber - Get column number for the location. If location is 
 /// invalid then use current location.
 unsigned CGDebugInfo::getColumnNumber(SourceLocation Loc) {
-  assert (CurLoc.isValid() && "Invalid current location!");
+  assert (Loc.isValid() || CurLoc.isValid() && "Invalid current location!");
   SourceManager &SM = CGM.getContext().getSourceManager();
   PresumedLoc PLoc = SM.getPresumedLoc(Loc.isValid() ? Loc : CurLoc);
   return PLoc.isValid()? PLoc.getColumn() : 0;
@@ -1708,7 +1739,7 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
   FnBeginRegionCount.push_back(LexicalBlockStack.size());
 
   const Decl *D = GD.getDecl();
-
+  
   unsigned Flags = 0;
   llvm::DIFile Unit = getOrCreateFile(CurLoc);
   llvm::DIDescriptor FDContext(Unit);
@@ -1772,79 +1803,24 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
   llvm::MDNode *SPN = SP;
   LexicalBlockStack.push_back(SPN);
   RegionMap[D] = llvm::WeakVH(SP);
-
-  // Clear stack used to keep track of #line directives.
-  LineDirectiveFiles.clear();
-}
-
-// UpdateLineDirectiveRegion - Update region stack only if #line directive
-// has introduced scope change.
-void CGDebugInfo::UpdateLineDirectiveRegion(CGBuilderTy &Builder) {
-  if (CurLoc.isInvalid() || CurLoc.isMacroID() ||
-      PrevLoc.isInvalid() || PrevLoc.isMacroID())
-    return;
-  SourceManager &SM = CGM.getContext().getSourceManager();
-  PresumedLoc PCLoc = SM.getPresumedLoc(CurLoc);
-  PresumedLoc PPLoc = SM.getPresumedLoc(PrevLoc);
-
-  if (PCLoc.isInvalid() || PPLoc.isInvalid() ||
-      !strcmp(PPLoc.getFilename(), PCLoc.getFilename()))
-    return;
-
-  // If #line directive stack is empty then we are entering a new scope.
-  if (LineDirectiveFiles.empty()) {
-    EmitLexicalBlockStart(Builder);
-    LineDirectiveFiles.push_back(PCLoc.getFilename());
-    return;
-  }
-
-  assert (LexicalBlockStack.size() >= LineDirectiveFiles.size()
-          && "error handling #line regions!");
-
-  bool SeenThisFile = false;
-  // Chek if current file is already seen earlier.
-  for(std::vector<const char *>::iterator I = LineDirectiveFiles.begin(),
-        E = LineDirectiveFiles.end(); I != E; ++I)
-    if (!strcmp(PCLoc.getFilename(), *I)) {
-      SeenThisFile = true;
-      break;
-    }
-
-  // If #line for this file is seen earlier then pop out #line regions.
-  if (SeenThisFile) {
-    while (!LineDirectiveFiles.empty()) {
-      const char *LastFile = LineDirectiveFiles.back();
-      LexicalBlockStack.pop_back();
-      LineDirectiveFiles.pop_back();
-      if (!strcmp(PPLoc.getFilename(), LastFile))
-        break;
-    }
-    return;
-  }
-
-  // .. otherwise insert new #line region.
-  EmitLexicalBlockStart(Builder);
-  LineDirectiveFiles.push_back(PCLoc.getFilename());
-
-  return;
 }
 
 /// EmitLocation - Emit metadata to indicate a change in line/column
 /// information in the source file.
-void CGDebugInfo::EmitLocation(CGBuilderTy &Builder) {
+void CGDebugInfo::EmitLocation(CGBuilderTy &Builder, SourceLocation Loc) {
+  
+  // Update our current location
+  setLocation(Loc);
+
   if (CurLoc.isInvalid() || CurLoc.isMacroID()) return;
 
   // Don't bother if things are the same as last time.
   SourceManager &SM = CGM.getContext().getSourceManager();
-  if (CurLoc == PrevLoc || 
+  if (CurLoc == PrevLoc ||
       SM.getExpansionLoc(CurLoc) == SM.getExpansionLoc(PrevLoc))
     // New Builder may not be in sync with CGDebugInfo.
     if (!Builder.getCurrentDebugLocation().isUnknown())
       return;
-
-  // The file may have had a line directive change. Process any of
-  // those before updating the state.
-  UpdateLineDirectiveRegion(Builder);
   
   // Update last state.
   PrevLoc = CurLoc;
@@ -1855,27 +1831,42 @@ void CGDebugInfo::EmitLocation(CGBuilderTy &Builder) {
                                                       Scope));
 }
 
-/// EmitLexicalBlockStart - Constructs the debug code for entering a declarative
-/// region - beginning of a DW_TAG_lexical_block.
-void CGDebugInfo::EmitLexicalBlockStart(CGBuilderTy &Builder) {
+/// CreateLexicalBlock - Creates a new lexical block node and pushes it on
+/// the stack.
+void CGDebugInfo::CreateLexicalBlock(SourceLocation Loc) {
   llvm::DIDescriptor D =
-    DBuilder.createLexicalBlock(LexicalBlockStack.empty() ? 
-                                llvm::DIDescriptor() : 
-                                llvm::DIDescriptor(LexicalBlockStack.back()),
-                                getOrCreateFile(CurLoc),
-                                getLineNumber(CurLoc), 
-                                getColumnNumber(CurLoc));
+    DBuilder.createLexicalBlock(LexicalBlockStack.empty() ?
+				llvm::DIDescriptor() :
+				llvm::DIDescriptor(LexicalBlockStack.back()),
+				getOrCreateFile(CurLoc),
+				getLineNumber(CurLoc),
+				getColumnNumber(CurLoc));
   llvm::MDNode *DN = D;
   LexicalBlockStack.push_back(DN);
 }
 
+/// EmitLexicalBlockStart - Constructs the debug code for entering a declarative
+/// region - beginning of a DW_TAG_lexical_block.
+void CGDebugInfo::EmitLexicalBlockStart(CGBuilderTy &Builder, SourceLocation Loc) {
+  // Set our current location.
+  setLocation(Loc);
+
+  // Create a new lexical block and push it on the stack.
+  CreateLexicalBlock(Loc);
+
+  // Emit a line table change for the current location inside the new scope.
+  Builder.SetCurrentDebugLocation(llvm::DebugLoc::get(getLineNumber(Loc),
+  					      getColumnNumber(Loc),
+  					      LexicalBlockStack.back()));
+}
+
 /// EmitLexicalBlockEnd - Constructs the debug code for exiting a declarative
 /// region - end of a DW_TAG_lexical_block.
-void CGDebugInfo::EmitLexicalBlockEnd(CGBuilderTy &Builder) {
+void CGDebugInfo::EmitLexicalBlockEnd(CGBuilderTy &Builder, SourceLocation Loc) {
   assert(!LexicalBlockStack.empty() && "Region stack mismatch, stack empty!");
 
-  // Provide a region stop point.
-  EmitLocation(Builder);
+  // Provide an entry in the line table for the end of the block.
+  EmitLocation(Builder, Loc);
 
   LexicalBlockStack.pop_back();
 }
@@ -1888,7 +1879,7 @@ void CGDebugInfo::EmitFunctionEnd(CGBuilderTy &Builder) {
 
   // Pop all regions for this function.
   while (LexicalBlockStack.size() != RCount)
-    EmitLexicalBlockEnd(Builder);
+    EmitLexicalBlockEnd(Builder, CurLoc);
   FnBeginRegionCount.pop_back();
 }
 
@@ -2027,9 +2018,9 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
                                        addr, ArgNo);
       
       // Insert an llvm.dbg.declare into the current block.
+      // Insert an llvm.dbg.declare into the current block.
       llvm::Instruction *Call =
         DBuilder.insertDeclare(Storage, D, Builder.GetInsertBlock());
-      
       Call->setDebugLoc(llvm::DebugLoc::get(Line, Column, Scope));
       return;
     } 
@@ -2042,7 +2033,6 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
     // Insert an llvm.dbg.declare into the current block.
     llvm::Instruction *Call =
       DBuilder.insertDeclare(Storage, D, Builder.GetInsertBlock());
-    
     Call->setDebugLoc(llvm::DebugLoc::get(Line, Column, Scope));
     return;
   }
@@ -2073,7 +2063,6 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
         // Insert an llvm.dbg.declare into the current block.
         llvm::Instruction *Call =
           DBuilder.insertDeclare(Storage, D, Builder.GetInsertBlock());
-          
         Call->setDebugLoc(llvm::DebugLoc::get(Line, Column, Scope));
       }
     }
@@ -2138,11 +2127,10 @@ void CGDebugInfo::EmitDeclareOfBlockDeclRefVariable(
                                    llvm::DIDescriptor(LexicalBlockStack.back()),
                                    VD->getName(), Unit, Line, Ty, addr);
   // Insert an llvm.dbg.declare into the current block.
-  llvm::Instruction *Call = 
+  llvm::Instruction *Call =
     DBuilder.insertDeclare(Storage, D, Builder.GetInsertPoint());
-  
-  llvm::MDNode *Scope = LexicalBlockStack.back();
-  Call->setDebugLoc(llvm::DebugLoc::get(Line, Column, Scope));
+  Call->setDebugLoc(llvm::DebugLoc::get(Line, Column,
+                                        LexicalBlockStack.back()));
 }
 
 /// EmitDeclareOfArgVariable - Emit call to llvm.dbg.declare for an argument
@@ -2314,6 +2302,8 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
   // Create global variable debug descriptor.
   llvm::DIFile Unit = getOrCreateFile(D->getLocation());
   unsigned LineNo = getLineNumber(D->getLocation());
+
+  setLocation(D->getLocation());
 
   QualType T = D->getType();
   if (T->isIncompleteArrayType()) {

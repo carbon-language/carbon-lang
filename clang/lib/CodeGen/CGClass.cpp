@@ -693,7 +693,7 @@ void CodeGenFunction::EmitConstructorBody(FunctionArgList &Args) {
   // delegation optimization.
   if (CtorType == Ctor_Complete && IsConstructorDelegationValid(Ctor)) {
     if (CGDebugInfo *DI = getDebugInfo()) 
-      DI->EmitLocation(Builder);
+      DI->EmitLocation(Builder, Ctor->getLocEnd());
     EmitDelegateCXXConstructorCall(Ctor, Ctor_Base, Args);
     return;
   }
