@@ -1120,6 +1120,14 @@ Value *SCEVExpander::expandAddRecExprLiterally(const SCEVAddRecExpr *S) {
     BasicBlock *LatchBlock = L->getLoopLatch();
     assert(LatchBlock && "PostInc mode requires a unique loop latch!");
     Result = PN->getIncomingValueForBlock(LatchBlock);
+
+    // For an expansion to use the postinc form, the client must call
+    // expandCodeFor with an InsertPoint that is either outside the PostIncLoop
+    // or dominated by IVIncInsertPos.
+    assert((!isa<Instruction>(Result) ||
+            SE.DT->dominates(cast<Instruction>(Result),
+                             Builder.GetInsertPoint())) &&
+           "postinc expansion does not dominate use");
   }
 
   // Re-apply any non-loop-dominating scale.
@@ -1410,8 +1418,12 @@ Value *SCEVExpander::expand(const SCEV *S) {
   Value *V = visit(S);
 
   // Remember the expanded value for this SCEV at this location.
-  if (PostIncLoops.empty())
-    InsertedExpressions[std::make_pair(S, InsertPt)] = V;
+  //
+  // This is independent of PostIncLoops. The mapped value simply materializes
+  // the expression at this insertion point. If the mapped value happened to be
+  // a postinc expansion, it could be reused by a non postinc user, but only if
+  // its insertion point was already at the head of the loop.
+  InsertedExpressions[std::make_pair(S, InsertPt)] = V;
 
   restoreInsertPoint(SaveInsertBB, SaveInsertPt);
   return V;
