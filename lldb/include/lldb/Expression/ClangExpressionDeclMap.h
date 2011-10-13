@@ -969,7 +969,7 @@ private:
     //------------------------------------------------------------------
     Value *
     GetVariableValue (ExecutionContext &exe_ctx,
-                      lldb::VariableSP var,
+                      lldb::VariableSP &var,
                       clang::ASTContext *parser_ast_context,
                       TypeFromUser *found_type = NULL,
                       TypeFromParser *parser_type = NULL);

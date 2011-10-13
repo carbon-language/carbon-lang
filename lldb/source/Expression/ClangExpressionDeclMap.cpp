@@ -938,45 +938,10 @@ ClangExpressionDeclMap::LookupDecl (clang::NamedDecl *decl)
 
     if (expr_var_sp)
     {
-        if (!expr_var_sp->m_parser_vars.get())
+        if (!expr_var_sp->m_parser_vars.get() || !expr_var_sp->m_parser_vars->m_lldb_var)
             return Value();
         
-        const ConstString &name(expr_var_sp->GetName());
-        TypeFromUser type(expr_var_sp->GetTypeFromUser());
-        
-        StackFrame *frame = m_parser_vars->m_exe_ctx->GetFramePtr();
-        if (frame)
-        {
-            VariableSP var(FindVariableInScope (*frame, name, &type));
-            
-            if (var)
-                return *GetVariableValue(exe_ctx, var, NULL);
-        }
-
-        Target *target = m_parser_vars->m_exe_ctx->GetTargetPtr();
-
-        if (target)
-        {
-            lldb::ModuleSP module;
-            
-            VariableSP global(FindGlobalVariable (*target, module, name, NULL, &type));
-            
-            if (global)
-                return *GetVariableValue(exe_ctx, global, NULL);
-            
-            lldb::addr_t location_load_addr = GetSymbolAddress(*target, name);
-            
-            if (location_load_addr != LLDB_INVALID_ADDRESS)
-            {
-                lldb_private::Value ret;
-                ret.SetValueType(Value::eValueTypeLoadAddress);
-                ret.SetContext(Value::eContextTypeInvalid, NULL);
-                ret.GetScalar() = location_load_addr;
-                return ret;
-            }
-        }
-        
-        return Value();
+        return *GetVariableValue(exe_ctx, expr_var_sp->m_parser_vars->m_lldb_var, NULL);
     }
     else if (persistent_var_sp)
     {
@@ -1637,14 +1602,11 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
     const ConstString &name(expr_var->GetName());
     TypeFromUser type(expr_var->GetTypeFromUser());
     
-    VariableSP var = FindVariableInScope (*frame, name, &type);
-    
-    ModuleSP module;
-    
-    Symbol *sym = FindGlobalDataSymbol(*target, module, name, NULL);
+    VariableSP &var(expr_var->m_parser_vars->m_lldb_var);
+    lldb_private::Symbol *sym(expr_var->m_parser_vars->m_lldb_sym);
     
     std::auto_ptr<lldb_private::Value> location_value;
-    
+
     if (var)
     {
         location_value.reset(GetVariableValue(exe_ctx,
@@ -1652,9 +1614,7 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
                                               NULL));
     }
     else if (sym)
-    {        
-        location_value.reset(new Value);
-        
+    {
         addr_t location_load_addr = GetSymbolAddress(*target, name);
         
         if (location_load_addr == LLDB_INVALID_ADDRESS)
@@ -1663,6 +1623,8 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
                 err.SetErrorStringWithFormat ("Couldn't find value for global symbol %s", 
                                               name.GetCString());
         }
+        
+        location_value.reset(new Value);
         
         location_value->SetValueType(Value::eValueTypeLoadAddress);
         location_value->GetScalar() = location_load_addr;
@@ -2044,7 +2006,6 @@ ClangExpressionDeclMap::FindGlobalVariable
 )
 {
     VariableList vars;
-    ValueObjectList valobjs;
     
     if (module && namespace_decl)
         module->FindGlobalVariables (name, namespace_decl, true, -1, vars);
@@ -2644,7 +2605,7 @@ Value *
 ClangExpressionDeclMap::GetVariableValue
 (
     ExecutionContext &exe_ctx,
-    VariableSP var,
+    VariableSP &var,
     ASTContext *parser_ast_context,
     TypeFromUser *user_type,
     TypeFromParser *parser_type
