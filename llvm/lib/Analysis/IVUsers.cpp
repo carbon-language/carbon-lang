@@ -146,7 +146,8 @@ bool IVUsers::AddUsersIfInteresting(Instruction *I) {
                                    ISE, User, I,
                                    NewUse.PostIncLoops,
                                    *SE, *DT);
-      DEBUG(dbgs() << "   NORMALIZED TO: " << *ISE << '\n');
+      DEBUG(if (SE->getSCEV(I) != ISE)
+              dbgs() << "   NORMALIZED TO: " << *ISE << '\n');
     }
   }
   return true;
