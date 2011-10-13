@@ -1473,11 +1473,12 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
       }
 
       unsigned RCID = 0;
-      if (InlineAsm::hasRegClassConstraint(Flag, RCID))
+      if (InlineAsm::hasRegClassConstraint(Flag, RCID)) {
         if (TM)
           OS << ':' << TM->getRegisterInfo()->getRegClass(RCID)->getName();
         else
           OS << ":RC" << RCID;
+      }
 
       unsigned TiedTo = 0;
       if (InlineAsm::isUseOperandTiedToDef(Flag, TiedTo))
