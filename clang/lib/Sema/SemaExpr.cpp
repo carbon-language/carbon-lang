@@ -3550,7 +3550,7 @@ Sema::ActOnCallExpr(Scope *S, Expr *Fn, SourceLocation LParenLoc,
     OverloadExpr::FindResult find = OverloadExpr::find(Fn);
 
     // We aren't supposed to apply this logic for if there's an '&' involved.
-    if (!(find.IsAddressOfOperand && find.HasFormOfMemberPointer)) {
+    if (!find.HasFormOfMemberPointer) {
       OverloadExpr *ovl = find.Expression;
       if (isa<UnresolvedLookupExpr>(ovl)) {
         UnresolvedLookupExpr *ULE = cast<UnresolvedLookupExpr>(ovl);

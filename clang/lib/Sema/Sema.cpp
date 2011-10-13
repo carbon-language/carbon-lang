@@ -894,8 +894,8 @@ bool Sema::isExprCallable(const Expr &E, QualType &ZeroArgCallReturnTy,
       }
     }
 
-    // Ignore overloads that are the pointer-to-member.
-    if (FR.IsAddressOfOperand && FR.HasFormOfMemberPointer)
+    // Ignore overloads that are pointer-to-member constants.
+    if (FR.HasFormOfMemberPointer)
       return false;
 
     return true;
