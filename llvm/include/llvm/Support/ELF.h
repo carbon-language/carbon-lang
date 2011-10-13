@@ -28,20 +28,18 @@ namespace llvm {
 namespace ELF {
 
 typedef uint32_t Elf32_Addr; // Program address
-typedef uint16_t Elf32_Half;
 typedef uint32_t Elf32_Off;  // File offset
-typedef int32_t  Elf32_Sword;
+typedef uint16_t Elf32_Half;
 typedef uint32_t Elf32_Word;
+typedef int32_t  Elf32_Sword;
 
 typedef uint64_t Elf64_Addr;
 typedef uint64_t Elf64_Off;
-typedef int32_t  Elf64_Shalf;
-typedef int32_t  Elf64_Sword;
+typedef uint16_t Elf64_Half;
 typedef uint32_t Elf64_Word;
-typedef int64_t  Elf64_Sxword;
+typedef int32_t  Elf64_Sword;
 typedef uint64_t Elf64_Xword;
-typedef uint32_t Elf64_Half;
-typedef uint16_t Elf64_Quarter;
+typedef int64_t  Elf64_Sxword;
 
 // Object file magic string.
 static const char ElfMagic[] = { 0x7f, 'E', 'L', 'F', '\0' };
@@ -87,19 +85,19 @@ struct Elf32_Ehdr {
 // types (see above).
 struct Elf64_Ehdr {
   unsigned char e_ident[EI_NIDENT];
-  Elf64_Quarter e_type;
-  Elf64_Quarter e_machine;
-  Elf64_Half    e_version;
+  Elf64_Half    e_type;
+  Elf64_Half    e_machine;
+  Elf64_Word    e_version;
   Elf64_Addr    e_entry;
   Elf64_Off     e_phoff;
   Elf64_Off     e_shoff;
-  Elf64_Half    e_flags;
-  Elf64_Quarter e_ehsize;
-  Elf64_Quarter e_phentsize;
-  Elf64_Quarter e_phnum;
-  Elf64_Quarter e_shentsize;
-  Elf64_Quarter e_shnum;
-  Elf64_Quarter e_shstrndx;
+  Elf64_Word    e_flags;
+  Elf64_Half    e_ehsize;
+  Elf64_Half    e_phentsize;
+  Elf64_Half    e_phnum;
+  Elf64_Half    e_shentsize;
+  Elf64_Half    e_shnum;
+  Elf64_Half    e_shstrndx;
   bool checkMagic() const {
     return (memcmp(e_ident, ElfMagic, strlen(ElfMagic))) == 0;
   }
@@ -619,14 +617,14 @@ struct Elf32_Shdr {
 
 // Section header for ELF64 - same fields as ELF32, different types.
 struct Elf64_Shdr {
-  Elf64_Half  sh_name;
-  Elf64_Half  sh_type;
+  Elf64_Word  sh_name;
+  Elf64_Word  sh_type;
   Elf64_Xword sh_flags;
   Elf64_Addr  sh_addr;
   Elf64_Off   sh_offset;
   Elf64_Xword sh_size;
-  Elf64_Half  sh_link;
-  Elf64_Half  sh_info;
+  Elf64_Word  sh_link;
+  Elf64_Word  sh_info;
   Elf64_Xword sh_addralign;
   Elf64_Xword sh_entsize;
 };
