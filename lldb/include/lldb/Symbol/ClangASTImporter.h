@@ -63,7 +63,7 @@ public:
         return origin.Valid();
     }
     
-    typedef std::map<lldb::ModuleSP, ClangNamespaceDecl> NamespaceMap;
+    typedef std::vector < std::pair<lldb::ModuleSP, ClangNamespaceDecl> > NamespaceMap;
     typedef lldb::SharedPtr<NamespaceMap>::Type NamespaceMapSP;
     
     void RegisterNamespaceMap(const clang::NamespaceDecl *decl, 

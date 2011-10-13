@@ -2051,17 +2051,22 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context, co
         else
             log->Printf("FindExternalVisibleDecls for '%s' in a '%s'", name.GetCString(), context.m_decl_context->getDeclKindName());
     }
+    
+    context.m_namespace_map.reset(new ClangASTImporter::NamespaceMap);
         
     if (const NamespaceDecl *namespace_context = dyn_cast<NamespaceDecl>(context.m_decl_context))
     {
         ClangASTImporter::NamespaceMapSP namespace_map = m_parser_vars->m_ast_importer->GetNamespaceMap(namespace_context);
-                
+        
+        if (log)
+            log->Printf("Inspecting namespace map %p (%d entries)", namespace_map.get(), (int)namespace_map->size());
+        
         for (ClangASTImporter::NamespaceMap::iterator i = namespace_map->begin(), e = namespace_map->end();
              i != e;
              ++i)
         {
             if (log)
-                log->Printf("  Searching namespace '%s' in file '%s'",
+                log->Printf("  Searching namespace %s in module %s",
                             i->second.GetNamespaceDecl()->getNameAsString().c_str(),
                             i->first->GetFileSpec().GetFilename().GetCString());
                 
@@ -2087,6 +2092,17 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context, co
                                  lldb::ModuleSP(),
                                  namespace_decl,
                                  name);
+    }
+    
+    if (!context.m_namespace_map->empty())
+    {
+        if (log)
+            log->Printf("Registering namespace map %p (%d entries)", context.m_namespace_map.get(), (int)context.m_namespace_map->size());
+        
+        NamespaceDecl *clang_namespace_decl = AddNamespace(context, context.m_namespace_map);
+        
+        if (clang_namespace_decl)
+            clang_namespace_decl->setHasExternalVisibleStorage();
     }
 }
 
@@ -2410,52 +2426,63 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             }
         }
         
-        ModuleList &images = m_parser_vars->m_sym_ctx.target_sp->GetImages();
-        
-        ClangASTImporter::NamespaceMapSP namespace_decls(new ClangASTImporter::NamespaceMap);
-        
-        for (uint32_t i = 0, e = images.GetSize();
-             i != e;
-             ++i)
+        if (module_sp && namespace_decl)
         {
-            ModuleSP image = images.GetModuleAtIndex(i);
+            ClangNamespaceDecl found_namespace_decl;
             
-            if (!image)
-                continue;
+            SymbolVendor *symbol_vendor = module_sp->GetSymbolVendor();
             
-            ClangNamespaceDecl namespace_decl;
-            
-            SymbolVendor *symbol_vendor = image->GetSymbolVendor();
-                
-            if (!symbol_vendor)
-                continue;
-            
-            SymbolContext null_sc;
-            
-            namespace_decl = symbol_vendor->FindNamespace(null_sc, name, &namespace_decl);
-
-            if (namespace_decl)
+            if (symbol_vendor)
             {
-                (*namespace_decls)[image] = namespace_decl;
+                SymbolContext null_sc;
                 
-                if (log)
-                {                
-                    std::string s;
-                    llvm::raw_string_ostream os(s);
-                    namespace_decl.GetNamespaceDecl()->print(os);
-                    os.flush();
+                found_namespace_decl = symbol_vendor->FindNamespace(null_sc, name, &namespace_decl);
+                
+                if (found_namespace_decl)
+                {
+                    context.m_namespace_map->push_back(std::pair<ModuleSP, ClangNamespaceDecl>(module_sp, found_namespace_decl));
                     
-                    log->Printf("Found namespace %s in file %s", s.c_str(), image->GetFileSpec().GetFilename().GetCString());
+                    if (log)
+                        log->Printf("Found namespace %s in module %s", 
+                                    name.GetCString(), 
+                                    module_sp->GetFileSpec().GetFilename().GetCString());
                 }
             }
         }
-        
-        if (!namespace_decls->empty())
+        else 
         {
-            NamespaceDecl *clang_namespace_decl = AddNamespace(context, namespace_decls);
-            
-            if (clang_namespace_decl)
-                clang_namespace_decl->setHasExternalVisibleStorage();
+            ModuleList &images = m_parser_vars->m_sym_ctx.target_sp->GetImages();
+                        
+            for (uint32_t i = 0, e = images.GetSize();
+                 i != e;
+                 ++i)
+            {
+                ModuleSP image = images.GetModuleAtIndex(i);
+                
+                if (!image)
+                    continue;
+                
+                ClangNamespaceDecl found_namespace_decl;
+                
+                SymbolVendor *symbol_vendor = image->GetSymbolVendor();
+                
+                if (!symbol_vendor)
+                    continue;
+                
+                SymbolContext null_sc;
+                
+                found_namespace_decl = symbol_vendor->FindNamespace(null_sc, name, &namespace_decl);
+                
+                if (found_namespace_decl)
+                {
+                    context.m_namespace_map->push_back(std::pair<ModuleSP, ClangNamespaceDecl>(image, found_namespace_decl));
+                    
+                    if (log)
+                        log->Printf("Found namespace %s in module %s", 
+                                    name.GetCString(), 
+                                    image->GetFileSpec().GetFilename().GetCString());
+                }
+            }
         }
     }    
     

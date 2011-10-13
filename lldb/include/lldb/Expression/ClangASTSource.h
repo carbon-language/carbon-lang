@@ -14,6 +14,7 @@
 
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/AST/ExternalASTSource.h"
+#include "lldb/Symbol/ClangASTImporter.h"
 
 namespace lldb_private {
     
@@ -182,6 +183,7 @@ protected:
 struct NameSearchContext {
     ClangASTSource &m_ast_source;                       ///< The AST source making the request
     llvm::SmallVectorImpl<clang::NamedDecl*> &m_decls;  ///< The list of declarations already constructed
+    ClangASTImporter::NamespaceMapSP m_namespace_map;   ///< The mapping of all namespaces found for this request back to their modules
     const clang::DeclarationName &m_decl_name;          ///< The name being looked for
     const clang::DeclContext *m_decl_context;           ///< The DeclContext to put declarations into
     

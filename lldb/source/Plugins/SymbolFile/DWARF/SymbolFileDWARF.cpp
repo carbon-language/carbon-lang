@@ -1966,6 +1966,11 @@ SymbolFileDWARF::NamespaceDeclMatchesThisSymbolFile (const ClangNamespaceDecl *n
         return true;    // The ASTs match, return true
     
     // The namespace AST was valid, and it does not match...
+    LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_LOOKUPS));
+
+    if (log)
+        log->Printf("Valid namespace does not match symbol file");
+    
     return false;
 }
 
@@ -2693,7 +2698,7 @@ SymbolFileDWARF::FindTypes(const SymbolContext& sc, const ConstString &name, con
     
     if (log)
     {
-        log->Printf ("SymbolFileDWARF::FindFunctions (file=\"%s/%s\", sc, name=\"%s\", append=%u, max_matches=%u, type_list)", 
+        log->Printf ("SymbolFileDWARF::FindTypes (file=\"%s/%s\", sc, name=\"%s\", append=%u, max_matches=%u, type_list)", 
                      m_obj_file->GetFileSpec().GetDirectory().GetCString(),
                      m_obj_file->GetFileSpec().GetFilename().GetCString(),
                      name.GetCString(), append, max_matches);
