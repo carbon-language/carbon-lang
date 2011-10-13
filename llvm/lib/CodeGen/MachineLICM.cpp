@@ -596,8 +596,8 @@ bool MachineLICM::IsGuaranteedToExecute(MachineBasicBlock *BB) {
     CurLoop->getExitingBlocks(CurrentLoopExitingBlocks);
     for (unsigned i = 0, e = CurrentLoopExitingBlocks.size(); i != e; ++i)
       if (!DT->dominates(BB, CurrentLoopExitingBlocks[i])) {
-	SpeculationState = SpeculateTrue;
-	return false;
+        SpeculationState = SpeculateTrue;
+        return false;
       }
   }
 
