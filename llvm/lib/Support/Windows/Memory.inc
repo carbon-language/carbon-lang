@@ -54,20 +54,62 @@ bool Memory::ReleaseRWX(MemoryBlock &M, std::string *ErrMsg) {
   return false;
 }
 
+static DWORD getProtection(const void *addr) {
+  MEMORY_BASIC_INFORMATION info;
+  if (sizeof(info) == ::VirtualQuery(addr, &info, sizeof(info))) {
+    return info.Protect;
+  }
+  return 0;
+}
+
 bool Memory::setWritable(MemoryBlock &M, std::string *ErrMsg) {
+  if (!setRangeWritable(M.Address, M.Size)) {
+    return MakeErrMsg(ErrMsg, "Cannot set memory to writeable: ");
+  }
   return true;
 }
 
 bool Memory::setExecutable(MemoryBlock &M, std::string *ErrMsg) {
-  return false;
-}
-
-bool Memory::setRangeWritable(const void *Addr, size_t Size) {
+  if (!setRangeExecutable(M.Address, M.Size)) {
+    return MakeErrMsg(ErrMsg, "Cannot set memory to executable: ");
+  }
   return true;
 }
 
+bool Memory::setRangeWritable(const void *Addr, size_t Size) {
+  DWORD prot = getProtection(Addr);
+  if (!prot)
+    return false;
+
+  if (prot == PAGE_EXECUTE || prot == PAGE_EXECUTE_READ) {
+    prot = PAGE_EXECUTE_READWRITE;
+  } else if (prot == PAGE_NOACCESS || prot == PAGE_READONLY) {
+    prot = PAGE_READWRITE;
+  }
+
+  DWORD oldProt;
+  sys::Memory::InvalidateInstructionCache(Addr, Size);
+  return ::VirtualProtect(const_cast<LPVOID>(Addr), Size, prot, &oldProt)
+            == TRUE;
+}
+
 bool Memory::setRangeExecutable(const void *Addr, size_t Size) {
-  return false;
+  DWORD prot = getProtection(Addr);
+  if (!prot)
+    return false;
+
+  if (prot == PAGE_NOACCESS) {
+    prot = PAGE_EXECUTE;
+  } else if (prot == PAGE_READONLY) {
+    prot = PAGE_EXECUTE_READ;
+  } else if (prot == PAGE_READWRITE) {
+    prot = PAGE_EXECUTE_READWRITE;
+  }
+
+  DWORD oldProt;
+  sys::Memory::InvalidateInstructionCache(Addr, Size);
+  return ::VirtualProtect(const_cast<LPVOID>(Addr), Size, prot, &oldProt)
+            == TRUE;
 }
 
 }
