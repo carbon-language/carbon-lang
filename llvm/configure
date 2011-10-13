@@ -1409,7 +1409,7 @@ Optional Features:
   --enable-shared         Build a shared library and link tools against it
                           (default is NO)
   --enable-embed-stdcxx   Build a shared library with embedded libstdc++ for
-                          Win32 DLL (default is YES)
+                          Win32 DLL (default is NO)
   --enable-timestamps     Enable embedding timestamp information in build
                           (default is YES)
   --enable-targets        Build specific host targets: all or
@@ -5232,7 +5232,7 @@ case "$enableval" in
  ;;
   no)  ENABLE_EMBED_STDCXX=0
  ;;
-  default) ENABLE_EMBED_STDCXX=1
+  default) ENABLE_EMBED_STDCXX=0
  ;;
   *) { { echo "$as_me:$LINENO: error: Invalid setting for --enable-embed-stdcxx. Use \"yes\" or \"no\"" >&5
 echo "$as_me: error: Invalid setting for --enable-embed-stdcxx. Use \"yes\" or \"no\"" >&2;}

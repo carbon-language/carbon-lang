@@ -580,12 +580,12 @@ esac
 dnl Allow libstdc++ is embedded in LLVM.dll.
 AC_ARG_ENABLE(embed-stdcxx,
   AS_HELP_STRING([--enable-embed-stdcxx],
-                 [Build a shared library with embedded libstdc++ for Win32 DLL (default is YES)]),,
+                 [Build a shared library with embedded libstdc++ for Win32 DLL (default is NO)]),,
                  enableval=default)
 case "$enableval" in
   yes) AC_SUBST(ENABLE_EMBED_STDCXX,[1]) ;;
   no)  AC_SUBST(ENABLE_EMBED_STDCXX,[0]) ;;
-  default) AC_SUBST(ENABLE_EMBED_STDCXX,[1]) ;;
+  default) AC_SUBST(ENABLE_EMBED_STDCXX,[0]) ;;
   *) AC_MSG_ERROR([Invalid setting for --enable-embed-stdcxx. Use "yes" or "no"]) ;;
 esac
 
