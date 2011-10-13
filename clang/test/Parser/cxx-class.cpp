@@ -40,3 +40,20 @@ typedef union {
   } y;
 } bug3177;
 
+// check that we don't consume the token after the access specifier 
+// when it's not a colon
+class D {
+public // expected-error{{expected ':'}}
+  int i;
+};
+
+// consume the token after the access specifier if it's a semicolon 
+// that was meant to be a colon
+class E {
+public; // expected-error{{expected ':'}}
+  int i;
+};
+
+// PR11109 must appear at the end of the source file
+class pr11109r3 { // expected-note{{to match this '{'}}
+  public // expected-error{{expected ':'}} expected-error{{expected '}'}} expected-error{{expected ';' after class}}

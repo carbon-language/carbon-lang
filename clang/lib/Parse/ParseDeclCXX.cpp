@@ -2135,12 +2135,23 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
         // Current token is a C++ access specifier.
         CurAS = AS;
         SourceLocation ASLoc = Tok.getLocation();
+        unsigned TokLength = Tok.getLength();
         ConsumeToken();
-        if (Tok.is(tok::colon))
-          Actions.ActOnAccessSpecifier(AS, ASLoc, Tok.getLocation());
-        else
-          Diag(Tok, diag::err_expected_colon);
-        ConsumeToken();
+        SourceLocation EndLoc;
+        if (Tok.is(tok::colon)) {
+          EndLoc = Tok.getLocation();
+          ConsumeToken();
+        } else if (Tok.is(tok::semi)) {
+          EndLoc = Tok.getLocation();
+          ConsumeToken();
+          Diag(EndLoc, diag::err_expected_colon) 
+            << FixItHint::CreateReplacement(EndLoc, ":");
+        } else {
+          EndLoc = ASLoc.getLocWithOffset(TokLength);
+          Diag(EndLoc, diag::err_expected_colon) 
+            << FixItHint::CreateInsertion(EndLoc, ":");
+        }
+        Actions.ActOnAccessSpecifier(AS, ASLoc, EndLoc);
         continue;
       }
 
