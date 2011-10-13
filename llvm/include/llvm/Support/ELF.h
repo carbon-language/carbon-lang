@@ -126,22 +126,170 @@ enum {
 
 // Machine architectures
 enum {
-  EM_NONE = 0,      // No machine
-  EM_M32 = 1,       // AT&T WE 32100
-  EM_SPARC = 2,     // SPARC
-  EM_386 = 3,       // Intel 386
-  EM_68K = 4,       // Motorola 68000
-  EM_88K = 5,       // Motorola 88000
-  EM_486 = 6,       // Intel 486 (deprecated)
-  EM_860 = 7,       // Intel 80860
-  EM_MIPS = 8,      // MIPS R3000
-  EM_PPC = 20,      // PowerPC
-  EM_PPC64 = 21,    // PowerPC64
-  EM_ARM = 40,      // ARM
-  EM_ALPHA = 41,    // DEC Alpha
-  EM_SPARCV9 = 43,  // SPARC V9
-  EM_X86_64 = 62,   // AMD64
-  EM_MBLAZE = 47787 // Xilinx MicroBlaze
+  EM_NONE          = 0, // No machine
+  EM_M32           = 1, // AT&T WE 32100
+  EM_SPARC         = 2, // SPARC
+  EM_386           = 3, // Intel 386
+  EM_68K           = 4, // Motorola 68000
+  EM_88K           = 5, // Motorola 88000
+  EM_486           = 6, // Intel 486 (deprecated)
+  EM_860           = 7, // Intel 80860
+  EM_MIPS          = 8, // MIPS R3000
+  EM_S370          = 9, // IBM System/370
+  EM_MIPS_RS3_LE   = 10, // MIPS RS3000 Little-endian
+  EM_PARISC        = 15, // Hewlett-Packard PA-RISC
+  EM_VPP500        = 17, // Fujitsu VPP500
+  EM_SPARC32PLUS   = 18, // Enhanced instruction set SPARC
+  EM_960           = 19, // Intel 80960
+  EM_PPC           = 20, // PowerPC
+  EM_PPC64         = 21, // PowerPC64
+  EM_S390          = 22, // IBM System/390
+  EM_SPU           = 23, // IBM SPU/SPC
+  EM_V800          = 36, // NEC V800
+  EM_FR20          = 37, // Fujitsu FR20
+  EM_RH32          = 38, // TRW RH-32
+  EM_RCE           = 39, // Motorola RCE
+  EM_ARM           = 40, // ARM
+  EM_ALPHA         = 41, // DEC Alpha
+  EM_SH            = 42, // Hitachi SH
+  EM_SPARCV9       = 43, // SPARC V9
+  EM_TRICORE       = 44, // Siemens TriCore
+  EM_ARC           = 45, // Argonaut RISC Core
+  EM_H8_300        = 46, // Hitachi H8/300
+  EM_H8_300H       = 47, // Hitachi H8/300H
+  EM_H8S           = 48, // Hitachi H8S
+  EM_H8_500        = 49, // Hitachi H8/500
+  EM_IA_64         = 50, // Intel IA-64 processor architecture
+  EM_MIPS_X        = 51, // Stanford MIPS-X
+  EM_COLDFIRE      = 52, // Motorola ColdFire
+  EM_68HC12        = 53, // Motorola M68HC12
+  EM_MMA           = 54, // Fujitsu MMA Multimedia Accelerator
+  EM_PCP           = 55, // Siemens PCP
+  EM_NCPU          = 56, // Sony nCPU embedded RISC processor
+  EM_NDR1          = 57, // Denso NDR1 microprocessor
+  EM_STARCORE      = 58, // Motorola Star*Core processor
+  EM_ME16          = 59, // Toyota ME16 processor
+  EM_ST100         = 60, // STMicroelectronics ST100 processor
+  EM_TINYJ         = 61, // Advanced Logic Corp. TinyJ embedded processor family
+  EM_X86_64        = 62, // AMD x86-64 architecture
+  EM_PDSP          = 63, // Sony DSP Processor
+  EM_PDP10         = 64, // Digital Equipment Corp. PDP-10
+  EM_PDP11         = 65, // Digital Equipment Corp. PDP-11
+  EM_FX66          = 66, // Siemens FX66 microcontroller
+  EM_ST9PLUS       = 67, // STMicroelectronics ST9+ 8/16 bit microcontroller
+  EM_ST7           = 68, // STMicroelectronics ST7 8-bit microcontroller
+  EM_68HC16        = 69, // Motorola MC68HC16 Microcontroller
+  EM_68HC11        = 70, // Motorola MC68HC11 Microcontroller
+  EM_68HC08        = 71, // Motorola MC68HC08 Microcontroller
+  EM_68HC05        = 72, // Motorola MC68HC05 Microcontroller
+  EM_SVX           = 73, // Silicon Graphics SVx
+  EM_ST19          = 74, // STMicroelectronics ST19 8-bit microcontroller
+  EM_VAX           = 75, // Digital VAX
+  EM_CRIS          = 76, // Axis Communications 32-bit embedded processor
+  EM_JAVELIN       = 77, // Infineon Technologies 32-bit embedded processor
+  EM_FIREPATH      = 78, // Element 14 64-bit DSP Processor
+  EM_ZSP           = 79, // LSI Logic 16-bit DSP Processor
+  EM_MMIX          = 80, // Donald Knuth's educational 64-bit processor
+  EM_HUANY         = 81, // Harvard University machine-independent object files
+  EM_PRISM         = 82, // SiTera Prism
+  EM_AVR           = 83, // Atmel AVR 8-bit microcontroller
+  EM_FR30          = 84, // Fujitsu FR30
+  EM_D10V          = 85, // Mitsubishi D10V
+  EM_D30V          = 86, // Mitsubishi D30V
+  EM_V850          = 87, // NEC v850
+  EM_M32R          = 88, // Mitsubishi M32R
+  EM_MN10300       = 89, // Matsushita MN10300
+  EM_MN10200       = 90, // Matsushita MN10200
+  EM_PJ            = 91, // picoJava
+  EM_OPENRISC      = 92, // OpenRISC 32-bit embedded processor
+  EM_ARC_COMPACT   = 93, // ARC International ARCompact processor (old
+                         // spelling/synonym: EM_ARC_A5)
+  EM_XTENSA        = 94, // Tensilica Xtensa Architecture
+  EM_VIDEOCORE     = 95, // Alphamosaic VideoCore processor
+  EM_TMM_GPP       = 96, // Thompson Multimedia General Purpose Processor
+  EM_NS32K         = 97, // National Semiconductor 32000 series
+  EM_TPC           = 98, // Tenor Network TPC processor
+  EM_SNP1K         = 99, // Trebia SNP 1000 processor
+  EM_ST200         = 100, // STMicroelectronics (www.st.com) ST200
+  EM_IP2K          = 101, // Ubicom IP2xxx microcontroller family
+  EM_MAX           = 102, // MAX Processor
+  EM_CR            = 103, // National Semiconductor CompactRISC microprocessor
+  EM_F2MC16        = 104, // Fujitsu F2MC16
+  EM_MSP430        = 105, // Texas Instruments embedded microcontroller msp430
+  EM_BLACKFIN      = 106, // Analog Devices Blackfin (DSP) processor
+  EM_SE_C33        = 107, // S1C33 Family of Seiko Epson processors
+  EM_SEP           = 108, // Sharp embedded microprocessor
+  EM_ARCA          = 109, // Arca RISC Microprocessor
+  EM_UNICORE       = 110, // Microprocessor series from PKU-Unity Ltd. and MPRC
+                          // of Peking University
+  EM_EXCESS        = 111, // eXcess: 16/32/64-bit configurable embedded CPU
+  EM_DXP           = 112, // Icera Semiconductor Inc. Deep Execution Processor
+  EM_ALTERA_NIOS2  = 113, // Altera Nios II soft-core processor
+  EM_CRX           = 114, // National Semiconductor CompactRISC CRX
+  EM_XGATE         = 115, // Motorola XGATE embedded processor
+  EM_C166          = 116, // Infineon C16x/XC16x processor
+  EM_M16C          = 117, // Renesas M16C series microprocessors
+  EM_DSPIC30F      = 118, // Microchip Technology dsPIC30F Digital Signal
+                          // Controller
+  EM_CE            = 119, // Freescale Communication Engine RISC core
+  EM_M32C          = 120, // Renesas M32C series microprocessors
+  EM_TSK3000       = 131, // Altium TSK3000 core
+  EM_RS08          = 132, // Freescale RS08 embedded processor
+  EM_SHARC         = 133, // Analog Devices SHARC family of 32-bit DSP
+                          // processors
+  EM_ECOG2         = 134, // Cyan Technology eCOG2 microprocessor
+  EM_SCORE7        = 135, // Sunplus S+core7 RISC processor
+  EM_DSP24         = 136, // New Japan Radio (NJR) 24-bit DSP Processor
+  EM_VIDEOCORE3    = 137, // Broadcom VideoCore III processor
+  EM_LATTICEMICO32 = 138, // RISC processor for Lattice FPGA architecture
+  EM_SE_C17        = 139, // Seiko Epson C17 family
+  EM_TI_C6000      = 140, // The Texas Instruments TMS320C6000 DSP family
+  EM_TI_C2000      = 141, // The Texas Instruments TMS320C2000 DSP family
+  EM_TI_C5500      = 142, // The Texas Instruments TMS320C55x DSP family
+  EM_MMDSP_PLUS    = 160, // STMicroelectronics 64bit VLIW Data Signal Processor
+  EM_CYPRESS_M8C   = 161, // Cypress M8C microprocessor
+  EM_R32C          = 162, // Renesas R32C series microprocessors
+  EM_TRIMEDIA      = 163, // NXP Semiconductors TriMedia architecture family
+  EM_QDSP6         = 164, // QUALCOMM DSP6 Processor
+  EM_8051          = 165, // Intel 8051 and variants
+  EM_STXP7X        = 166, // STMicroelectronics STxP7x family of configurable
+                          // and extensible RISC processors
+  EM_NDS32         = 167, // Andes Technology compact code size embedded RISC
+                          // processor family
+  EM_ECOG1         = 168, // Cyan Technology eCOG1X family
+  EM_ECOG1X        = 168, // Cyan Technology eCOG1X family
+  EM_MAXQ30        = 169, // Dallas Semiconductor MAXQ30 Core Micro-controllers
+  EM_XIMO16        = 170, // New Japan Radio (NJR) 16-bit DSP Processor
+  EM_MANIK         = 171, // M2000 Reconfigurable RISC Microprocessor
+  EM_CRAYNV2       = 172, // Cray Inc. NV2 vector architecture
+  EM_RX            = 173, // Renesas RX family
+  EM_METAG         = 174, // Imagination Technologies META processor
+                          // architecture
+  EM_MCST_ELBRUS   = 175, // MCST Elbrus general purpose hardware architecture
+  EM_ECOG16        = 176, // Cyan Technology eCOG16 family
+  EM_CR16          = 177, // National Semiconductor CompactRISC CR16 16-bit
+                          // microprocessor
+  EM_ETPU          = 178, // Freescale Extended Time Processing Unit
+  EM_SLE9X         = 179, // Infineon Technologies SLE9X core
+  EM_L10M          = 180, // Intel L10M
+  EM_K10M          = 181, // Intel K10M
+  EM_AVR32         = 185, // Atmel Corporation 32-bit microprocessor family
+  EM_STM8          = 186, // STMicroeletronics STM8 8-bit microcontroller
+  EM_TILE64        = 187, // Tilera TILE64 multicore architecture family
+  EM_TILEPRO       = 188, // Tilera TILEPro multicore architecture family
+  EM_MICROBLAZE    = 189, // Xilinx MicroBlaze 32-bit RISC soft processor core
+  EM_CUDA          = 190, // NVIDIA CUDA architecture
+  EM_TILEGX        = 191, // Tilera TILE-Gx multicore architecture family
+  EM_CLOUDSHIELD   = 192, // CloudShield architecture family
+  EM_COREA_1ST     = 193, // KIPO-KAIST Core-A 1st generation processor family
+  EM_COREA_2ND     = 194, // KIPO-KAIST Core-A 2nd generation processor family
+  EM_ARC_COMPACT2  = 195, // Synopsys ARCompact V2
+  EM_OPEN8         = 196, // Open8 8-bit RISC soft processor core
+  EM_RL78          = 197, // Renesas RL78 family
+  EM_VIDEOCORE5    = 198, // Broadcom VideoCore V processor
+  EM_78KOR         = 199, // Renesas 78KOR family
+  EM_56800EX       = 200, // Freescale 56800EX Digital Signal Controller (DSC)
+  EM_MBLAZE        = 47787 // Xilinx MicroBlaze
 };
 
 // Object file classes.
@@ -211,6 +359,11 @@ enum {
   R_X86_64_PC64       = 24,
   R_X86_64_GOTOFF64   = 25,
   R_X86_64_GOTPC32    = 26,
+  R_X86_64_GOT64      = 27,
+  R_X86_64_GOTPCREL64 = 28,
+  R_X86_64_GOTPC64    = 29,
+  R_X86_64_GOTPLT64   = 30,
+  R_X86_64_PLTOFF64   = 31,
   R_X86_64_SIZE32     = 32,
   R_X86_64_SIZE64     = 33,
   R_X86_64_GOTPC32_TLSDESC = 34,
@@ -484,6 +637,8 @@ enum {
   SHN_LORESERVE = 0xff00, // Lowest reserved index
   SHN_LOPROC    = 0xff00, // Lowest processor-specific index
   SHN_HIPROC    = 0xff1f, // Highest processor-specific index
+  SHN_LOOS      = 0xff20, // Lowest operating system-specific index
+  SHN_HIOS      = 0xff3f, // Highest operating system-specific index
   SHN_ABS       = 0xfff1, // Symbol has absolute value; does not need relocation
   SHN_COMMON    = 0xfff2, // FORTRAN COMMON or C external global variables
   SHN_XINDEX    = 0xffff, // Mark that the index is >= SHN_LORESERVE
@@ -574,8 +729,19 @@ enum {
   /// set to the start of the section by the boot code.
   XCORE_SHF_DP_SECTION = 0x1000U,
 
+  SHF_MASKOS   = 0x0ff00000,
+
   // Bits indicating processor-specific flags.
-  SHF_MASKPROC = 0xf0000000
+  SHF_MASKPROC = 0xf0000000,
+
+  // If an object file section does not have this flag set, then it may not hold
+  // more than 2GB and can be freely referred to in objects using smaller code
+  // models. Otherwise, only objects using larger code models can refer to them.
+  // For example, a medium code model object can refer to data in a section that
+  // sets this flag besides being able to refer to data in a section that does
+  // not set it; likewise, a small code model object can refer only to code in a
+  // section that does not set this flag.
+  SHF_X86_64_LARGE = 0x10000000
 };
 
 // Section Group Flags
@@ -636,6 +802,8 @@ enum {
   STB_LOCAL = 0,   // Local symbol, not visible outside obj file containing def
   STB_GLOBAL = 1,  // Global symbol, visible to all object files being combined
   STB_WEAK = 2,    // Weak symbol, like global but lower-precedence
+  STB_LOOS   = 10, // Lowest operating system-specific binding type
+  STB_HIOS   = 12, // Highest operating system-specific binding type
   STB_LOPROC = 13, // Lowest processor-specific binding type
   STB_HIPROC = 15  // Highest processor-specific binding type
 };
@@ -649,6 +817,8 @@ enum {
   STT_FILE    = 4,   // Local, absolute symbol that refers to a file
   STT_COMMON  = 5,   // An uninitialized common block
   STT_TLS     = 6,   // Thread local data object
+  STT_LOOS    = 7,   // Lowest operating system-specific symbol type
+  STT_HIOS    = 8,   // Highest operating system-specific symbol type
   STT_LOPROC  = 13,  // Lowest processor-specific symbol type
   STT_HIPROC  = 15   // Highest processor-specific symbol type
 };
@@ -763,6 +933,16 @@ enum {
   PT_NOTE    = 4, // Auxiliary information.
   PT_SHLIB   = 5, // Reserved.
   PT_PHDR    = 6, // The program header table itself.
+  PT_TLS     = 7, // The thread-local storage template.
+  PT_LOOS    = 0x60000000, // Lowest operating system-specific pt entry type.
+
+  // x86-64 program header types.
+  // These all contain stack unwind tables.
+  PT_GNU_EH_FRAME  = 0x6474e550,
+  PT_SUNW_EH_FRAME = 0x6474e550,
+  PT_SUNW_UNWIND   = 0x6464e550,
+
+  PT_HIOS    = 0x6fffffff, // Highest operating system-specific pt entry type.
   PT_LOPROC  = 0x70000000, // Lowest processor-specific program hdr entry type.
   PT_HIPROC  = 0x7fffffff  // Highest processor-specific program hdr entry type.
 };
@@ -772,7 +952,8 @@ enum {
   PF_X        = 1,         // Execute
   PF_W        = 2,         // Write
   PF_R        = 4,         // Read
-  PF_MASKPROC = 0xf0000000 // Unspecified
+  PF_MASKOS   = 0x0ff00000,// Bits for operating system-specific semantics.
+  PF_MASKPROC = 0xf0000000 // Bits for processor-specific semantics.
 };
 
 // Dynamic table entry for ELF32.
@@ -828,10 +1009,27 @@ enum {
   DT_FINI_ARRAY   = 26,       // Pointer to array of termination functions.
   DT_INIT_ARRAYSZ = 27,       // Size of DT_INIT_ARRAY.
   DT_FINI_ARRAYSZ = 28,       // Size of DT_FINI_ARRAY.
+  DT_RUNPATH      = 29,       // String table offset of lib search path.
+  DT_FLAGS        = 30,       // Flags.
+  DT_ENCODING     = 32,       // Values from here to DT_LOOS follow the rules
+                              // for the interpretation of the d_un union.
+
+  DT_PREINIT_ARRAY = 32,      // Pointer to array of preinit functions.
+  DT_PREINIT_ARRAYSZ = 33,    // Size of the DT_PREINIT_ARRAY array.
+
   DT_LOOS         = 0x60000000, // Start of environment specific tags.
   DT_HIOS         = 0x6FFFFFFF, // End of environment specific tags.
   DT_LOPROC       = 0x70000000, // Start of processor specific tags.
   DT_HIPROC       = 0x7FFFFFFF  // End of processor specific tags.
+};
+
+// DT_FLAGS values.
+enum {
+  DF_ORIGIN     = 0x01, // The object may reference $ORIGIN.
+  DF_SYMBOLIC   = 0x02, // Search the shared lib before searching the exe.
+  DF_TEXTREL    = 0x04, // Relocations may modify a non-writable segment.
+  DF_BIND_NOW   = 0x08, // Process all relocations on load.
+  DF_STATIC_TLS = 0x10  // Reject attempts to load dynamically.
 };
 
 } // end namespace ELF
