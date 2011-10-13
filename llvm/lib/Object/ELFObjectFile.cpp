@@ -296,7 +296,7 @@ class ELFObjectFile : public ObjectFile {
   const Elf_Shdr *dot_strtab_sec;   // Symbol header string table.
   Sections_t SymbolTableSections;
   IndexMap_t SymbolTableSectionsIndexMap;
-  DenseMap<const Elf_Sym*, Elf_Word> ExtendedSymbolTable;
+  DenseMap<const Elf_Sym*, ELF::Elf64_Word> ExtendedSymbolTable;
 
   /// @brief Map sections to an array of relocation sections that reference
   ///        them sorted by section index.
@@ -375,7 +375,7 @@ public:
 
   uint64_t getNumSections() const;
   uint64_t getStringTableIndex() const;
-  uint64_t getSymbolTableIndex(const Elf_Sym *symb) const;
+  ELF::Elf64_Word getSymbolTableIndex(const Elf_Sym *symb) const;
   const Elf_Shdr *getSection(const Elf_Sym *symb) const;
 };
 } // end namespace
@@ -433,7 +433,7 @@ error_code ELFObjectFile<target_endianness, is64Bits>
 }
 
 template<support::endianness target_endianness, bool is64Bits>
-uint64_t ELFObjectFile<target_endianness, is64Bits>
+ELF::Elf64_Word ELFObjectFile<target_endianness, is64Bits>
                       ::getSymbolTableIndex(const Elf_Sym *symb) const {
   if (symb->st_shndx == ELF::SHN_XINDEX)
     return ExtendedSymbolTable.lookup(symb);
@@ -444,11 +444,8 @@ template<support::endianness target_endianness, bool is64Bits>
 const typename ELFObjectFile<target_endianness, is64Bits>::Elf_Shdr *
 ELFObjectFile<target_endianness, is64Bits>
                              ::getSection(const Elf_Sym *symb) const {
-  if (symb->st_shndx == ELF::SHN_XINDEX) {
-    if (!ExtendedSymbolTable.count(symb))
-      return 0;
+  if (symb->st_shndx == ELF::SHN_XINDEX)
     return getSection(ExtendedSymbolTable.lookup(symb));
-  }
   if (symb->st_shndx >= ELF::SHN_LORESERVE)
     return 0;
   return getSection(symb->st_shndx);
