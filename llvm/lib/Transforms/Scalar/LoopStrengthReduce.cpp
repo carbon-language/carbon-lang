@@ -1205,7 +1205,7 @@ static bool isLegalUse(const TargetLowering::AddrMode &AM,
     // If we have low-level target information, ask the target if it can fold an
     // integer immediate on an icmp.
     if (AM.BaseOffs != 0) {
-      if (TLI) return TLI->isLegalICmpImmediate(-AM.BaseOffs);
+      if (TLI) return TLI->isLegalICmpImmediate(-(uint64_t)AM.BaseOffs);
       return false;
     }
 
@@ -3593,7 +3593,7 @@ Value *LSRInstance::Expand(const LSRFixup &LF,
       // The other interesting way of "folding" with an ICmpZero is to use a
       // negated immediate.
       if (!ICmpScaledV)
-        ICmpScaledV = ConstantInt::get(IntTy, -Offset);
+        ICmpScaledV = ConstantInt::get(IntTy, -(uint64_t)Offset);
       else {
         Ops.push_back(SE.getUnknown(ICmpScaledV));
         ICmpScaledV = ConstantInt::get(IntTy, Offset);
