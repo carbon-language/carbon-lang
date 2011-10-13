@@ -3944,8 +3944,7 @@ SDValue ARMTargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
       }
 
       // Try an immediate VMVN.
-      uint64_t NegatedImm = (SplatBits.getZExtValue() ^
-                             ((1LL << SplatBitSize) - 1));
+      uint64_t NegatedImm = (~SplatBits).getZExtValue();
       Val = isNEONModifiedImm(NegatedImm,
                                       SplatUndef.getZExtValue(), SplatBitSize,
                                       DAG, VmovVT, VT.is128BitVector(),
