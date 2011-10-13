@@ -34,6 +34,8 @@
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/Value.h"
 
+#include "lldb/Host/Host.h"
+
 #include "lldb/Symbol/Block.h"
 #include "lldb/Symbol/ClangExternalASTSourceCallbacks.h"
 #include "lldb/Symbol/CompileUnit.h"
@@ -4275,32 +4277,67 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                         clang_type_t class_opaque_type = class_type->GetClangForwardType();
                                         if (ClangASTContext::IsCXXClassType (class_opaque_type))
                                         {
-                                            // Neither GCC 4.2 nor clang++ currently set a valid accessibility
-                                            // in the DWARF for C++ methods... Default to public for now...
-                                            if (accessibility == eAccessNone)
-                                                accessibility = eAccessPublic;
-                                            
-                                            if (!is_static && !die->HasChildren())
+                                            if (ClangASTContext::IsBeingDefined (class_opaque_type))
                                             {
-                                                // We have a C++ member function with no children (this pointer!)
-                                                // and clang will get mad if we try and make a function that isn't
-                                                // well formed in the DWARF, so we will just skip it...
-                                                type_handled = true;
+                                                // Neither GCC 4.2 nor clang++ currently set a valid accessibility
+                                                // in the DWARF for C++ methods... Default to public for now...
+                                                if (accessibility == eAccessNone)
+                                                    accessibility = eAccessPublic;
+                                                
+                                                if (!is_static && !die->HasChildren())
+                                                {
+                                                    // We have a C++ member function with no children (this pointer!)
+                                                    // and clang will get mad if we try and make a function that isn't
+                                                    // well formed in the DWARF, so we will just skip it...
+                                                    type_handled = true;
+                                                }
+                                                else
+                                                {
+                                                    clang::CXXMethodDecl *cxx_method_decl;
+                                                    // REMOVE THE CRASH DESCRIPTION BELOW
+                                                    Host::SetCrashDescriptionWithFormat ("SymbolFileDWARF::ParseType() is adding a method %s to class %s in DIE 0x%8.8x from %s/%s", 
+                                                                                         type_name_cstr, 
+                                                                                         class_type->GetName().GetCString(),
+                                                                                         die->GetOffset(),
+                                                                                         m_obj_file->GetFileSpec().GetDirectory().GetCString(),
+                                                                                         m_obj_file->GetFileSpec().GetFilename().GetCString());
+
+                                                    cxx_method_decl = ast.AddMethodToCXXRecordType (class_opaque_type, 
+                                                                                                    type_name_cstr,
+                                                                                                    clang_type,
+                                                                                                    accessibility,
+                                                                                                    is_virtual,
+                                                                                                    is_static,
+                                                                                                    is_inline,
+                                                                                                    is_explicit);
+                                                    LinkDeclContextToDIE(ClangASTContext::GetAsDeclContext(cxx_method_decl), die);
+
+                                                    type_handled = cxx_method_decl != NULL;
+                                                }
                                             }
                                             else
                                             {
-                                                clang::CXXMethodDecl *cxx_method_decl;
-                                                cxx_method_decl = ast.AddMethodToCXXRecordType (class_opaque_type, 
-                                                                                                type_name_cstr,
-                                                                                                clang_type,
-                                                                                                accessibility,
-                                                                                                is_virtual,
-                                                                                                is_static,
-                                                                                                is_inline,
-                                                                                                is_explicit);
-                                                LinkDeclContextToDIE(ClangASTContext::GetAsDeclContext(cxx_method_decl), die);
+                                                // We were asked to parse the type for a method in a class, yet the
+                                                // class hasn't been asked to complete itself through the 
+                                                // clang::ExternalASTSource protocol, so we need to just have the
+                                                // class complete itself and do things the right way, then our 
+                                                // DIE should then have an entry in the m_die_to_type map. First 
+                                                // we need to modify the m_die_to_type so it doesn't think we are 
+                                                // trying to parse this DIE anymore...
+                                                m_die_to_type[die] = NULL;
+                                                
+                                                // Now we get the full type to force our class type to complete itself 
+                                                // using the clang::ExternalASTSource protocol which will parse all 
+                                                // base classes and all methods (including the method for this DIE).
+                                                class_type->GetClangFullType();
 
-                                                type_handled = cxx_method_decl != NULL;
+                                                // The type for this DIE should have been filled in the function call above
+                                                type_ptr = m_die_to_type[die];
+                                                if (type_ptr)
+                                                {
+                                                    type_sp = type_list->FindType(type_ptr->GetID());
+                                                    break;
+                                                }
                                             }
                                         }
                                     }

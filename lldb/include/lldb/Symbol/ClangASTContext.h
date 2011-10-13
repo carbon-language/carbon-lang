@@ -722,6 +722,9 @@ public:
     IsCXXClassType (lldb::clang_type_t clang_type);
     
     static bool
+    IsBeingDefined (lldb::clang_type_t clang_type);
+    
+    static bool
     IsObjCClassType (lldb::clang_type_t clang_type);
 
     static bool

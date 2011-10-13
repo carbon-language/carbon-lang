@@ -658,11 +658,6 @@ public:
                                                                                    target,
                                                                                    variable_list,
                                                                                    valobj_list));
-                        
-//                        matches = target->GetImages().FindGlobalVariables (ConstString(arg),
-//                                                                                   true, 
-//                                                                                   UINT32_MAX, 
-//                                                                                   variable_list);
                         matches = variable_list.GetSize();
                     }
                     

@@ -4998,6 +4998,19 @@ ClangASTContext::IsCXXClassType (clang_type_t clang_type)
     return false;
 }
 
+bool
+ClangASTContext::IsBeingDefined (lldb::clang_type_t clang_type)
+{
+    if (clang_type)
+    {
+        QualType qual_type (QualType::getFromOpaquePtr(clang_type));
+        const clang::TagType *tag_type = dyn_cast<clang::TagType>(qual_type);
+        if (tag_type)
+            return tag_type->isBeingDefined();
+    }
+    return false;
+}
+
 bool 
 ClangASTContext::IsObjCClassType (clang_type_t clang_type)
 {
