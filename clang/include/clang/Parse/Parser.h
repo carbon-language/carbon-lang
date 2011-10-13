@@ -1125,7 +1125,8 @@ private:
   void DeallocateParsedClasses(ParsingClass *Class);
   void PopParsingClass(Sema::ParsingClassState);
 
-  Decl *ParseCXXInlineMethodDef(AccessSpecifier AS, ParsingDeclarator &D,
+  Decl *ParseCXXInlineMethodDef(AccessSpecifier AS, AttributeList *AccessAttrs,
+                                ParsingDeclarator &D,
                                 const ParsedTemplateInfo &TemplateInfo,
                                 const VirtSpecifiers& VS, ExprResult& Init);
   void ParseCXXNonStaticMemberInitializer(Decl *VarD);
@@ -1961,7 +1962,7 @@ private:
                                    Decl *TagDecl);
   ExprResult ParseCXXMemberInitializer(bool IsFunction,
                                        SourceLocation &EqualLoc);
-  void ParseCXXClassMemberDeclaration(AccessSpecifier AS,
+  void ParseCXXClassMemberDeclaration(AccessSpecifier AS, AttributeList *Attr,
                 const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo(),
                                  ParsingDeclRAIIObject *DiagsFromTParams = 0);
   void ParseConstructorInitializer(Decl *ConstructorDecl);
@@ -1997,17 +1998,20 @@ private:
 
   // C++ 14.1: Template Parameters [temp.param]
   Decl *ParseDeclarationStartingWithTemplate(unsigned Context,
-                                                 SourceLocation &DeclEnd,
-                                                 AccessSpecifier AS = AS_none);
+                                             SourceLocation &DeclEnd,
+                                             AccessSpecifier AS = AS_none,
+                                             AttributeList *AccessAttrs = 0);
   Decl *ParseTemplateDeclarationOrSpecialization(unsigned Context,
-                                                     SourceLocation &DeclEnd,
-                                                     AccessSpecifier AS);
+                                                 SourceLocation &DeclEnd,
+                                                 AccessSpecifier AS,
+                                                 AttributeList *AccessAttrs);
   Decl *ParseSingleDeclarationAfterTemplate(
                                        unsigned Context,
                                        const ParsedTemplateInfo &TemplateInfo,
                                        ParsingDeclRAIIObject &DiagsFromParams,
                                        SourceLocation &DeclEnd,
-                                       AccessSpecifier AS=AS_none);
+                                       AccessSpecifier AS=AS_none,
+                                       AttributeList *AccessAttrs = 0);
   bool ParseTemplateParameters(unsigned Depth,
                                SmallVectorImpl<Decl*> &TemplateParams,
                                SourceLocation &LAngleLoc,

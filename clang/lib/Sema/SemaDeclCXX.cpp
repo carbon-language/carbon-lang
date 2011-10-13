@@ -1376,14 +1376,15 @@ std::string Sema::getAmbiguousPathsDisplayString(CXXBasePaths &Paths) {
 //===----------------------------------------------------------------------===//
 
 /// ActOnAccessSpecifier - Parsed an access specifier followed by a colon.
-Decl *Sema::ActOnAccessSpecifier(AccessSpecifier Access,
-                                 SourceLocation ASLoc,
-                                 SourceLocation ColonLoc) {
+bool Sema::ActOnAccessSpecifier(AccessSpecifier Access,
+                                SourceLocation ASLoc,
+                                SourceLocation ColonLoc,
+                                AttributeList *Attrs) {
   assert(Access != AS_none && "Invalid kind for syntactic access specifier!");
   AccessSpecDecl *ASDecl = AccessSpecDecl::Create(Context, Access, CurContext,
                                                   ASLoc, ColonLoc);
   CurContext->addHiddenDecl(ASDecl);
-  return ASDecl;
+  return ProcessAccessDeclAttributeList(ASDecl, Attrs);
 }
 
 /// CheckOverrideControl - Check C++0x override control semantics.

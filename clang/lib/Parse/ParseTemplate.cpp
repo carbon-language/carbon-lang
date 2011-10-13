@@ -26,14 +26,16 @@ using namespace clang;
 Decl *
 Parser::ParseDeclarationStartingWithTemplate(unsigned Context,
                                              SourceLocation &DeclEnd,
-                                             AccessSpecifier AS) {
+                                             AccessSpecifier AS,
+                                             AttributeList *AccessAttrs) {
   ObjCDeclContextSwitch ObjCDC(*this);
   
   if (Tok.is(tok::kw_template) && NextToken().isNot(tok::less)) {
     return ParseExplicitInstantiation(SourceLocation(), ConsumeToken(),
                                            DeclEnd);
   }
-  return ParseTemplateDeclarationOrSpecialization(Context, DeclEnd, AS);
+  return ParseTemplateDeclarationOrSpecialization(Context, DeclEnd, AS,
+                                                  AccessAttrs);
 }
 
 /// \brief RAII class that manages the template parameter depth.
@@ -77,7 +79,8 @@ namespace {
 Decl *
 Parser::ParseTemplateDeclarationOrSpecialization(unsigned Context,
                                                  SourceLocation &DeclEnd,
-                                                 AccessSpecifier AS) {
+                                                 AccessSpecifier AS,
+                                                 AttributeList *AccessAttrs) {
   assert((Tok.is(tok::kw_export) || Tok.is(tok::kw_template)) &&
          "Token does not start a template declaration.");
 
@@ -161,7 +164,7 @@ Parser::ParseTemplateDeclarationOrSpecialization(unsigned Context,
                                                              isSpecialization,
                                                          LastParamListWasEmpty),
                                              ParsingTemplateParams,
-                                             DeclEnd, AS);
+                                             DeclEnd, AS, AccessAttrs);
 }
 
 /// \brief Parse a single declaration that declares a template,
@@ -190,13 +193,15 @@ Parser::ParseSingleDeclarationAfterTemplate(
                                        const ParsedTemplateInfo &TemplateInfo,
                                        ParsingDeclRAIIObject &DiagsFromTParams,
                                        SourceLocation &DeclEnd,
-                                       AccessSpecifier AS) {
+                                       AccessSpecifier AS,
+                                       AttributeList *AccessAttrs) {
   assert(TemplateInfo.Kind != ParsedTemplateInfo::NonTemplate &&
          "Template information required");
 
   if (Context == Declarator::MemberContext) {
     // We are parsing a member template.
-    ParseCXXClassMemberDeclaration(AS, TemplateInfo, &DiagsFromTParams);
+    ParseCXXClassMemberDeclaration(AS, AccessAttrs, TemplateInfo,
+                                   &DiagsFromTParams);
     return 0;
   }
 

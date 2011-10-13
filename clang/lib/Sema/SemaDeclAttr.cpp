@@ -3743,6 +3743,22 @@ void Sema::ProcessDeclAttributeList(Scope *S, Decl *D,
   }
 }
 
+// Annotation attributes are the only attributes allowed after an access
+// specifier.
+bool Sema::ProcessAccessDeclAttributeList(AccessSpecDecl *ASDecl,
+                                          const AttributeList *AttrList) {
+  for (const AttributeList* l = AttrList; l; l = l->getNext()) {
+    if (l->getKind() == AttributeList::AT_annotate) {
+      handleAnnotateAttr(*this, ASDecl, *l);
+    } else {
+      Diag(l->getLoc(), diag::err_only_annotate_after_access_spec);
+      return true;
+    }
+  }
+
+  return false;
+}
+
 /// checkUnusedDeclAttributes - Check a list of attributes to see if it
 /// contains any decl attributes that we should warn about.
 static void checkUnusedDeclAttributes(Sema &S, const AttributeList *A) {

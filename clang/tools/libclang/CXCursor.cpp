@@ -45,6 +45,7 @@ static CXCursorKind GetCursorKind(const Attr *A) {
     case attr::IBOutletCollection: return CXCursor_IBOutletCollectionAttr;
     case attr::Final: return CXCursor_CXXFinalAttr;
     case attr::Override: return CXCursor_CXXOverrideAttr;
+    case attr::Annotate: return CXCursor_AnnotateAttr;
   }
 
   return CXCursor_UnexposedAttr;

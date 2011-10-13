@@ -1577,6 +1577,7 @@ bool Parser::isCXX0XFinalKeyword() const {
 ///         '=' constant-expression
 ///
 void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
+                                            AttributeList *AccessAttrs,
                                        const ParsedTemplateInfo &TemplateInfo,
                                        ParsingDeclRAIIObject *TemplateDiags) {
   if (Tok.is(tok::at)) {
@@ -1643,7 +1644,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
            "Nested template improperly parsed?");
     SourceLocation DeclEnd;
     ParseDeclarationStartingWithTemplate(Declarator::MemberContext, DeclEnd,
-                                         AS);
+                                         AS, AccessAttrs);
     return;
   }
 
@@ -1652,7 +1653,8 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     // __extension__ silences extension warnings in the subexpression.
     ExtensionRAIIObject O(Diags);  // Use RAII to do this.
     ConsumeToken();
-    return ParseCXXClassMemberDeclaration(AS, TemplateInfo, TemplateDiags);
+    return ParseCXXClassMemberDeclaration(AS, AccessAttrs,
+                                          TemplateInfo, TemplateDiags);
   }
 
   // Don't parse FOO:BAR as if it were a typo for FOO::BAR, in this context it
@@ -1783,7 +1785,8 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
       }
 
       Decl *FunDecl =
-        ParseCXXInlineMethodDef(AS, DeclaratorInfo, TemplateInfo, VS, Init);
+        ParseCXXInlineMethodDef(AS, AccessAttrs, DeclaratorInfo, TemplateInfo,
+                                VS, Init);
 
       for (unsigned i = 0, ni = LateParsedAttrs.size(); i < ni; ++i) {
         LateParsedAttrs[i]->setDecl(FunDecl);
@@ -1867,6 +1870,9 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
                                                   move(TemplateParams),
                                                   BitfieldSize.release(),
                                                   VS, HasDeferredInitializer);
+      if (AccessAttrs)
+        Actions.ProcessDeclAttributeList(getCurScope(), ThisDecl, AccessAttrs,
+                                         false, true);
     }
     
     // Set the Decl for any late parsed attributes
@@ -2109,6 +2115,7 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
     CurAS = AS_private;
   else
     CurAS = AS_public;
+  ParsedAttributes AccessAttrs(AttrFactory);
 
   if (TagDecl) {
     // While we still have something to read, read the member-declarations.
@@ -2137,9 +2144,17 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
         SourceLocation ASLoc = Tok.getLocation();
         unsigned TokLength = Tok.getLength();
         ConsumeToken();
+        AccessAttrs.clear();
+        MaybeParseGNUAttributes(AccessAttrs);
+
         SourceLocation EndLoc;
         if (Tok.is(tok::colon)) {
           EndLoc = Tok.getLocation();
+          if (Actions.ActOnAccessSpecifier(AS, ASLoc, EndLoc,
+                                           AccessAttrs.getList())) {
+            // found another attribute than only annotations
+            AccessAttrs.clear();
+          }
           ConsumeToken();
         } else if (Tok.is(tok::semi)) {
           EndLoc = Tok.getLocation();
@@ -2158,7 +2173,7 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
       // FIXME: Make sure we don't have a template here.
 
       // Parse all the comma separated declarators.
-      ParseCXXClassMemberDeclaration(CurAS);
+      ParseCXXClassMemberDeclaration(CurAS, AccessAttrs.getList());
     }
 
     T.consumeClose();
@@ -2779,7 +2794,7 @@ void Parser::ParseMicrosoftIfExistsClassDeclaration(DeclSpec::TST TagType,
     }
 
     // Parse all the comma separated declarators.
-    ParseCXXClassMemberDeclaration(CurAS);
+    ParseCXXClassMemberDeclaration(CurAS, 0);
   }
 
   if (Tok.isNot(tok::r_brace)) {

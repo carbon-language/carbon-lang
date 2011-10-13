@@ -21,7 +21,9 @@ using namespace clang;
 /// ParseCXXInlineMethodDef - We parsed and verified that the specified
 /// Declarator is a well formed C++ inline method definition. Now lex its body
 /// and store its tokens for parsing after the C++ class is complete.
-Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, ParsingDeclarator &D,
+Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS,
+                                      AttributeList *AccessAttrs,
+                                      ParsingDeclarator &D,
                                 const ParsedTemplateInfo &TemplateInfo,
                                 const VirtSpecifiers& VS, ExprResult& Init) {
   assert(D.isFunctionDeclarator() && "This isn't a function declarator!");
@@ -43,6 +45,8 @@ Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, ParsingDeclarator &D,
                                            move(TemplateParams), 0, 
                                            VS, /*HasInit=*/false);
     if (FnD) {
+      Actions.ProcessDeclAttributeList(getCurScope(), FnD, AccessAttrs,
+                                       false, true);
       bool TypeSpecContainsAuto
         = D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_auto;
       if (Init.get())
