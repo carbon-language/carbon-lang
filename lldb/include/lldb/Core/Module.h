@@ -161,7 +161,6 @@ public:
 
     size_t
     FindSymbolsWithNameAndType (const ConstString &name,
-                                const ClangNamespaceDecl *namespace_decl,
                                 lldb::SymbolType symbol_type, 
                                 SymbolContextList &sc_list);
 

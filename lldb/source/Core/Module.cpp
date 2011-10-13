@@ -687,7 +687,7 @@ Module::SymbolIndicesToSymbolContextList (Symtab *symtab, std::vector<uint32_t> 
 }
 
 size_t
-Module::FindSymbolsWithNameAndType (const ConstString &name, const ClangNamespaceDecl *namespace_decl, SymbolType symbol_type, SymbolContextList &sc_list)
+Module::FindSymbolsWithNameAndType (const ConstString &name, SymbolType symbol_type, SymbolContextList &sc_list)
 {
     // No need to protect this call using m_mutex all other method calls are
     // already thread safe.

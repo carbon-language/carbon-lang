@@ -631,7 +631,7 @@ FindCodeSymbolInContext
 )
 {
     if (sym_ctx.module_sp)
-       sym_ctx.module_sp->FindSymbolsWithNameAndType(name, NULL, eSymbolTypeCode, sc_list);
+       sym_ctx.module_sp->FindSymbolsWithNameAndType(name, eSymbolTypeCode, sc_list);
     
     if (!sc_list.GetSize())
         sym_ctx.target_sp->GetImages().FindSymbolsWithNameAndType(name, eSymbolTypeCode, sc_list);
@@ -1950,22 +1950,14 @@ Symbol *
 ClangExpressionDeclMap::FindGlobalDataSymbol
 (
     Target &target,
-    ModuleSP &module,
-    const ConstString &name,
-    ClangNamespaceDecl *namespace_decl
+    const ConstString &name
 )
 {
     SymbolContextList sc_list;
     
-    if (module && namespace_decl)
-        module->FindSymbolsWithNameAndType(name, 
-                                           namespace_decl, 
-                                           eSymbolTypeData, 
-                                           sc_list);
-    else
-        target.GetImages().FindSymbolsWithNameAndType(name, 
-                                                      eSymbolTypeData, 
-                                                      sc_list);
+    target.GetImages().FindSymbolsWithNameAndType(name, 
+                                                  eSymbolTypeData, 
+                                                  sc_list);
     
     if (sc_list.GetSize())
     {
@@ -2408,7 +2400,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                 // We couldn't find a non-symbol variable for this.  Now we'll hunt for a generic 
                 // data symbol, and -- if it is found -- treat it as a variable.
                 
-                Symbol *data_symbol = FindGlobalDataSymbol(*target, module_sp, name, &namespace_decl);
+                Symbol *data_symbol = FindGlobalDataSymbol(*target, name);
                 
                 if (data_symbol)
                 {

@@ -111,7 +111,6 @@ AddressResolverName::SearchCallback
         if (context.module_sp)
         {
             context.module_sp->FindSymbolsWithNameAndType (m_func_name,
-                                                           NULL,
                                                            eSymbolTypeCode, 
                                                            sym_list);
             context.module_sp->FindFunctions (m_func_name,

@@ -254,7 +254,7 @@ ModuleList::FindSymbolsWithNameAndType (const ConstString &name,
     sc_list.Clear();
     collection::iterator pos, end = m_modules.end();
     for (pos = m_modules.begin(); pos != end; ++pos)
-        (*pos)->FindSymbolsWithNameAndType (name, NULL, symbol_type, sc_list);
+        (*pos)->FindSymbolsWithNameAndType (name, symbol_type, sc_list);
     return sc_list.GetSize();
 }
 

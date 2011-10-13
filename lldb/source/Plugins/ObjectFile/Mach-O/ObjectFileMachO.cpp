@@ -1696,7 +1696,7 @@ ObjectFileMachO::GetEntryPointAddress ()
         
         SymbolContextList contexts;
         SymbolContext context;
-        if (!m_module->FindSymbolsWithNameAndType(ConstString ("start"), NULL, eSymbolTypeCode, contexts))
+        if (!m_module->FindSymbolsWithNameAndType(ConstString ("start"), eSymbolTypeCode, contexts))
             return m_entry_point_address;
         
         contexts.GetContextAtIndex(0, context);
