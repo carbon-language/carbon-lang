@@ -684,7 +684,7 @@ public:
                                     valobj_sp = ValueObjectVariable::Create (exe_ctx.GetBestExecutionContextScope(), var_sp);
                                 
                                 if (valobj_sp)
-                                    DumpValueObject (s, var_sp, valobj_sp, use_var_name ? var_sp->GetName().GetCString() : arg);
+                                    DumpValueObject (s, var_sp, valobj_sp, var_sp->GetName().GetCString());
                             }
                         }
                     }
