@@ -80,7 +80,7 @@ namespace {
             // Otherwise we don't know that the it's okay to zapnot this entire
             // byte.  Only do this iff we can prove that the missing bits are
             // already null, so the bytezap doesn't need to really null them.
-            BitsToCheck |= ~Constant & (0xFF << 8*i);
+            BitsToCheck |= ~Constant & (0xFFULL << 8*i);
           }
         }
       }
@@ -114,9 +114,8 @@ namespace {
       if (!x) return 0;
       unsigned at = CountLeadingZeros_64(x);
       uint64_t complow = 1ULL << (63 - at);
-      uint64_t comphigh = 1ULL << (64 - at);
-      //cerr << x << ":" << complow << ":" << comphigh << "\n";
-      if (abs64(complow - x) <= abs64(comphigh - x))
+      uint64_t comphigh = complow << 1;
+      if (x - complow <= comphigh - x)
         return complow;
       else
         return comphigh;
