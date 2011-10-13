@@ -707,6 +707,10 @@ merged with other structures, even if their layout is identical.
 <li>It is mandatory to initialize all out-of-tree passes too and their dependencies now with
 <code>INITIALIZE_PASS{BEGIN,END,}</code> and <code>INITIALIZE_{PASS,AG}_DEPENDENCY</code>.</li>
 
+<li>The interface for MemDepResult in MemoryDependenceAnalysis has been enhanced
+    with new return types Unknown and NonFuncLocal, in addition to the existing
+    types Clobber, Def, and NonLocal.</li>
+
 </ul>
 </div>
 

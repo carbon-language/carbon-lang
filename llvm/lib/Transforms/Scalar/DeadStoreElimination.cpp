@@ -441,7 +441,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
 
     // Ignore any store where we can't find a local dependence.
     // FIXME: cross-block DSE would be fun. :)
-    if (InstDep.isNonLocal() || InstDep.isUnknown())
+    if (!InstDep.isDef() && !InstDep.isClobber())
       continue;
 
     // If we're storing the same value back to a pointer that we just
@@ -477,7 +477,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
     if (Loc.Ptr == 0)
       continue;
 
-    while (!InstDep.isNonLocal() && !InstDep.isUnknown()) {
+    while (InstDep.isDef() || InstDep.isClobber()) {
       // Get the memory clobbered by the instruction we depend on.  MemDep will
       // skip any instructions that 'Loc' clearly doesn't interact with.  If we
       // end up depending on a may- or must-aliased load, then we can't optimize
@@ -545,7 +545,7 @@ bool DSE::HandleFree(CallInst *F) {
 
   MemDepResult Dep = MD->getDependency(F);
 
-  while (!Dep.isNonLocal() && !Dep.isUnknown()) {
+  while (Dep.isDef() || Dep.isClobber()) {
     Instruction *Dependency = Dep.getInst();
     if (!hasMemoryWrite(Dependency) || !isRemovable(Dependency))
       return MadeChange;

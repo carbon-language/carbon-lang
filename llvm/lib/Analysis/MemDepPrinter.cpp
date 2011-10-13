@@ -25,8 +25,17 @@ namespace {
   struct MemDepPrinter : public FunctionPass {
     const Function *F;
 
-    typedef PointerIntPair<const Instruction *, 1> InstAndClobberFlag;
-    typedef std::pair<InstAndClobberFlag, const BasicBlock *> Dep;
+    enum DepType {
+      Clobber = 0,
+      Def,
+      NonFuncLocal,
+      Unknown
+    };
+
+    static const char* DepTypeStr[];
+
+    typedef PointerIntPair<const Instruction *, 2, DepType> InstTypePair;
+    typedef std::pair<InstTypePair, const BasicBlock *> Dep;
     typedef SmallSetVector<Dep, 4> DepSet;
     typedef DenseMap<const Instruction *, DepSet> DepSetMap;
     DepSetMap Deps;
@@ -50,6 +59,21 @@ namespace {
       Deps.clear();
       F = 0;
     }
+
+  private:
+    static InstTypePair getInstTypePair(MemDepResult dep) {
+      if (dep.isClobber())
+        return InstTypePair(dep.getInst(), Clobber);
+      if (dep.isDef())
+        return InstTypePair(dep.getInst(), Def);
+      if (dep.isNonFuncLocal())
+        return InstTypePair(dep.getInst(), NonFuncLocal);
+      assert(dep.isUnknown() && "unexptected dependence type");
+      return InstTypePair(dep.getInst(), Unknown);
+    }
+    static InstTypePair getInstTypePair(const Instruction* inst, DepType type) {
+      return InstTypePair(inst, type);
+    }
   };
 }
 
@@ -63,6 +87,9 @@ INITIALIZE_PASS_END(MemDepPrinter, "print-memdeps",
 FunctionPass *llvm::createMemDepPrinter() {
   return new MemDepPrinter();
 }
+
+const char* MemDepPrinter::DepTypeStr[]
+  = {"Clobber", "Def", "NonFuncLocal", "Unknown"};
 
 bool MemDepPrinter::runOnFunction(Function &F) {
   this->F = &F;
@@ -79,10 +106,7 @@ bool MemDepPrinter::runOnFunction(Function &F) {
 
     MemDepResult Res = MDA.getDependency(Inst);
     if (!Res.isNonLocal()) {
-      assert((Res.isUnknown() || Res.isClobber() || Res.isDef()) &&
-              "Local dep should be unknown, def or clobber!");
-      Deps[Inst].insert(std::make_pair(InstAndClobberFlag(Res.getInst(),
-                                                          Res.isClobber()),
+      Deps[Inst].insert(std::make_pair(getInstTypePair(Res),
                                        static_cast<BasicBlock *>(0)));
     } else if (CallSite CS = cast<Value>(Inst)) {
       const MemoryDependenceAnalysis::NonLocalDepInfo &NLDI =
@@ -92,19 +116,14 @@ bool MemDepPrinter::runOnFunction(Function &F) {
       for (MemoryDependenceAnalysis::NonLocalDepInfo::const_iterator
            I = NLDI.begin(), E = NLDI.end(); I != E; ++I) {
         const MemDepResult &Res = I->getResult();
-        assert((Res.isUnknown() || Res.isClobber() || Res.isDef()) &&
-                "Resolved non-local call dep should be unknown, def or "
-                "clobber!");
-        InstDeps.insert(std::make_pair(InstAndClobberFlag(Res.getInst(),
-                                                          Res.isClobber()),
-                                       I->getBB()));
+        InstDeps.insert(std::make_pair(getInstTypePair(Res), I->getBB()));
       }
     } else {
       SmallVector<NonLocalDepResult, 4> NLDI;
       if (LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
         if (!LI->isUnordered()) {
           // FIXME: Handle atomic/volatile loads.
-          Deps[Inst].insert(std::make_pair(InstAndClobberFlag(0, false),
+          Deps[Inst].insert(std::make_pair(getInstTypePair(0, Unknown),
                                            static_cast<BasicBlock *>(0)));
           continue;
         }
@@ -113,7 +132,7 @@ bool MemDepPrinter::runOnFunction(Function &F) {
       } else if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
         if (!LI->isUnordered()) {
           // FIXME: Handle atomic/volatile stores.
-          Deps[Inst].insert(std::make_pair(InstAndClobberFlag(0, false),
+          Deps[Inst].insert(std::make_pair(getInstTypePair(0, Unknown),
                                            static_cast<BasicBlock *>(0)));
           continue;
         }
@@ -130,11 +149,7 @@ bool MemDepPrinter::runOnFunction(Function &F) {
       for (SmallVectorImpl<NonLocalDepResult>::const_iterator
            I = NLDI.begin(), E = NLDI.end(); I != E; ++I) {
         const MemDepResult &Res = I->getResult();
-        assert(Res.isClobber() != Res.isDef() &&
-               "Resolved non-local pointer dep should be def or clobber!");
-        InstDeps.insert(std::make_pair(InstAndClobberFlag(Res.getInst(),
-                                                          Res.isClobber()),
-                                       I->getBB()));
+        InstDeps.insert(std::make_pair(getInstTypePair(Res), I->getBB()));
       }
     }
   }
@@ -155,26 +170,18 @@ void MemDepPrinter::print(raw_ostream &OS, const Module *M) const {
     for (DepSet::const_iterator I = InstDeps.begin(), E = InstDeps.end();
          I != E; ++I) {
       const Instruction *DepInst = I->first.getPointer();
-      bool isClobber = I->first.getInt();
+      DepType type = I->first.getInt();
       const BasicBlock *DepBB = I->second;
 
       OS << "    ";
-      if (!DepInst)
-        OS << "Unknown";
-      else if (isClobber)
-        OS << "Clobber";
-      else
-        OS << "    Def";
+      OS << DepTypeStr[type];
       if (DepBB) {
         OS << " in block ";
         WriteAsOperand(OS, DepBB, /*PrintType=*/false, M);
       }
       if (DepInst) {
         OS << " from: ";
-        if (DepInst == Inst)
-          OS << "<unspecified>";
-        else
-          DepInst->print(OS);
+        DepInst->print(OS);
       }
       OS << "\n";
     }

@@ -238,7 +238,7 @@ getCallSiteDependencyFrom(CallSite CS, bool isReadOnlyCall,
   // unknown, otherwise it is non-local.
   if (BB != &BB->getParent()->getEntryBlock())
     return MemDepResult::getNonLocal();
-  return MemDepResult::getUnknown();
+  return MemDepResult::getNonFuncLocal();
 }
 
 /// isLoadLoadClobberIfExtendedToFullWidth - Return true if LI is a load that
@@ -499,7 +499,7 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
   // unknown, otherwise it is non-local.
   if (BB != &BB->getParent()->getEntryBlock())
     return MemDepResult::getNonLocal();
-  return MemDepResult::getUnknown();
+  return MemDepResult::getNonFuncLocal();
 }
 
 /// getDependency - Return the instruction on which a memory operation
@@ -532,7 +532,7 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *QueryInst) {
     if (QueryParent != &QueryParent->getParent()->getEntryBlock())
       LocalCache = MemDepResult::getNonLocal();
     else
-      LocalCache = MemDepResult::getUnknown();
+      LocalCache = MemDepResult::getNonFuncLocal();
   } else {
     AliasAnalysis::Location MemLoc;
     AliasAnalysis::ModRefResult MR = GetLocation(QueryInst, MemLoc, AA);
@@ -688,7 +688,7 @@ MemoryDependenceAnalysis::getNonLocalCallDependency(CallSite QueryCS) {
       // a clobber, otherwise it is unknown.
       Dep = MemDepResult::getNonLocal();
     } else {
-      Dep = MemDepResult::getUnknown();
+      Dep = MemDepResult::getNonFuncLocal();
     }
     
     // If we had a dirty entry for the block, update it.  Otherwise, just add
@@ -806,7 +806,7 @@ GetNonLocalInfoForBlock(const AliasAnalysis::Location &Loc,
   // If the block has a dependency (i.e. it isn't completely transparent to
   // the value), remember the reverse association because we just added it
   // to Cache!
-  if (Dep.isNonLocal() || Dep.isUnknown())
+  if (!Dep.isDef() && !Dep.isClobber())
     return Dep;
   
   // Keep the ReverseNonLocalPtrDeps map up to date so we can efficiently
