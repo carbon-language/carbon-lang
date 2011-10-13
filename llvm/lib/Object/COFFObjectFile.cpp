@@ -369,8 +369,14 @@ error_code COFFObjectFile::isSectionBSS(DataRefImpl Sec,
 error_code COFFObjectFile::sectionContainsSymbol(DataRefImpl Sec,
                                                  DataRefImpl Symb,
                                                  bool &Result) const {
-  // FIXME: Unimplemented.
-  Result = false;
+  const coff_section *sec = toSec(Sec);
+  const coff_symbol *symb = toSymb(Symb);
+  const coff_section *symb_sec;
+  if (error_code ec = getSection(symb->SectionNumber, symb_sec)) return ec;
+  if (symb_sec == sec)
+    Result = true;
+  else
+    Result = false;
   return object_error::success;
 }
 
