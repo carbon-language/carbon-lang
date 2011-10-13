@@ -762,7 +762,7 @@ relocation_iterator ELFObjectFile<target_endianness, is64Bits>
   const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
   typename RelocMap_t::const_iterator ittr = SectionRelocMap.find(sec);
   if (sec != 0 && ittr != SectionRelocMap.end()) {
-    RelData.w.a = getSection(ittr->second[0])->sh_link;
+    RelData.w.a = getSection(ittr->second[0])->sh_info;
     RelData.w.b = ittr->second[0];
     RelData.w.c = 0;
   }
@@ -780,7 +780,7 @@ relocation_iterator ELFObjectFile<target_endianness, is64Bits>
     // Get the index of the last relocation section for this section.
     std::size_t relocsecindex = ittr->second[ittr->second.size() - 1];
     const Elf_Shdr *relocsec = getSection(relocsecindex);
-    RelData.w.a = relocsec->sh_link;
+    RelData.w.a = relocsec->sh_info;
     RelData.w.b = relocsecindex;
     RelData.w.c = relocsec->sh_size / relocsec->sh_entsize;
   }
@@ -1114,7 +1114,7 @@ ELFObjectFile<target_endianness, is64Bits>::ELFObjectFile(MemoryBuffer *Object
       SymbolTableSections.push_back(sh);
     }
     if (sh->sh_type == ELF::SHT_REL || sh->sh_type == ELF::SHT_RELA) {
-      SectionRelocMap[getSection(sh->sh_link)].push_back(i);
+      SectionRelocMap[getSection(sh->sh_info)].push_back(i);
     }
     ++sh;
   }
