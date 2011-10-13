@@ -98,14 +98,7 @@ public:
     // Specifically ignore overflow/underflow as long as the leakage is
     // limited to the lower bits. This is to remain compatible with
     // other assemblers.
-
-    const uint64_t Mask = ~0ULL;
-    const uint64_t UpperV = (Value >> (Size * 8));
-    const uint64_t MaskF = (Mask >> (Size * 8));
-    (void)UpperV;
-    (void)MaskF;
-    assert(((Size == 8) ||
-            ((UpperV & MaskF) == 0ULL) || ((UpperV & MaskF) == MaskF)) &&
+    assert(isIntN(Size * 8 + 1, Value) &&
            "Value does not fit in the Fixup field");
 
     for (unsigned i = 0; i != Size; ++i)
