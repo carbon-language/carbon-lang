@@ -1347,24 +1347,29 @@ let Predicates = [HasRDRAND], Defs = [EFLAGS] in {
 let Predicates = [HasLZCNT], Defs = [EFLAGS] in {
   def LZCNT16rr : I<0xBD, MRMSrcReg, (outs GR16:$dst), (ins GR16:$src),
                     "lzcnt{w}\t{$src, $dst|$dst, $src}",
-                    [(set GR16:$dst, (ctlz GR16:$src))]>, XS, OpSize;
+                    [(set GR16:$dst, (ctlz GR16:$src)), (implicit EFLAGS)]>, XS,
+                    OpSize;
   def LZCNT16rm : I<0xBD, MRMSrcMem, (outs GR16:$dst), (ins i16mem:$src),
                     "lzcnt{w}\t{$src, $dst|$dst, $src}",
-                    [(set GR16:$dst, (ctlz (loadi16 addr:$src)))]>, XS, OpSize;
+                    [(set GR16:$dst, (ctlz (loadi16 addr:$src))),
+                     (implicit EFLAGS)]>, XS, OpSize;
 
   def LZCNT32rr : I<0xBD, MRMSrcReg, (outs GR32:$dst), (ins GR32:$src),
                     "lzcnt{l}\t{$src, $dst|$dst, $src}",
-                    [(set GR32:$dst, (ctlz GR32:$src))]>, XS;
+                    [(set GR32:$dst, (ctlz GR32:$src)), (implicit EFLAGS)]>, XS;
   def LZCNT32rm : I<0xBD, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
                     "lzcnt{l}\t{$src, $dst|$dst, $src}",
-                    [(set GR32:$dst, (ctlz (loadi32 addr:$src)))]>, XS;
+                    [(set GR32:$dst, (ctlz (loadi32 addr:$src))),
+                     (implicit EFLAGS)]>, XS;
 
   def LZCNT64rr : RI<0xBD, MRMSrcReg, (outs GR64:$dst), (ins GR64:$src),
                      "lzcnt{q}\t{$src, $dst|$dst, $src}",
-                     [(set GR64:$dst, (ctlz GR64:$src))]>, XS;
+                     [(set GR64:$dst, (ctlz GR64:$src)), (implicit EFLAGS)]>,
+                     XS;
   def LZCNT64rm : RI<0xBD, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
                      "lzcnt{q}\t{$src, $dst|$dst, $src}",
-                     [(set GR64:$dst, (ctlz (loadi64 addr:$src)))]>, XS;
+                     [(set GR64:$dst, (ctlz (loadi64 addr:$src))),
+                      (implicit EFLAGS)]>, XS;
 }
 
 //===----------------------------------------------------------------------===//
