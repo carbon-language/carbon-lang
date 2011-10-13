@@ -2742,8 +2742,8 @@ public:
   PTXTargetCodeGenInfo(CodeGenTypes &CGT)
     : TargetCodeGenInfo(new PTXABIInfo(CGT)) {}
     
-  virtual void 	SetTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
-                                    CodeGen::CodeGenModule &M) const;
+  virtual void SetTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
+                                   CodeGen::CodeGenModule &M) const;
 };
 
 ABIArgInfo PTXABIInfo::classifyReturnType(QualType RetTy) const {
@@ -3211,6 +3211,74 @@ MIPSTargetCodeGenInfo::initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
   return false;
 }
 
+//===----------------------------------------------------------------------===//
+// TCE ABI Implementation (see http://tce.cs.tut.fi). Uses mostly the defaults.
+// Currently subclassed only to implement custom OpenCL C function attribute 
+// handling.
+//===----------------------------------------------------------------------===//
+
+namespace {
+
+class TCETargetCodeGenInfo : public DefaultTargetCodeGenInfo {
+public:
+  TCETargetCodeGenInfo(CodeGenTypes &CGT)
+    : DefaultTargetCodeGenInfo(CGT) {}
+
+  virtual void SetTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
+                                   CodeGen::CodeGenModule &M) const;
+};
+
+void TCETargetCodeGenInfo::SetTargetAttributes(const Decl *D,
+                                               llvm::GlobalValue *GV,
+                                               CodeGen::CodeGenModule &M) const {
+  const FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
+  if (!FD) return;
+
+  llvm::Function *F = cast<llvm::Function>(GV);
+  
+  if (M.getLangOptions().OpenCL) {
+    if (FD->hasAttr<OpenCLKernelAttr>()) {
+      // OpenCL C Kernel functions are not subject to inlining
+      F->addFnAttr(llvm::Attribute::NoInline);
+          
+      if (FD->hasAttr<ReqdWorkGroupSizeAttr>()) {
+
+        // Convert the reqd_work_group_size() attributes to metadata.
+        llvm::LLVMContext &Context = F->getContext();
+        llvm::NamedMDNode *OpenCLMetadata = 
+            M.getModule().getOrInsertNamedMetadata("opencl.kernel_wg_size_info");
+
+        SmallVector<llvm::Value*, 5> Operands;
+        Operands.push_back(F);
+
+        Operands.push_back(llvm::Constant::getIntegerValue(
+                             llvm::Type::getInt32Ty(Context), 
+                             llvm::APInt(
+                               32, 
+                               FD->getAttr<ReqdWorkGroupSizeAttr>()->getXDim())));
+        Operands.push_back(llvm::Constant::getIntegerValue(
+                             llvm::Type::getInt32Ty(Context), 
+                             llvm::APInt(
+                               32,
+                               FD->getAttr<ReqdWorkGroupSizeAttr>()->getYDim())));
+        Operands.push_back(llvm::Constant::getIntegerValue(
+                             llvm::Type::getInt32Ty(Context), 
+                             llvm::APInt(
+                               32, 
+                               FD->getAttr<ReqdWorkGroupSizeAttr>()->getZDim())));
+
+        // Add a boolean constant operand for "required" (true) or "hint" (false)
+        // for implementing the work_group_size_hint attr later. Currently 
+        // always true as the hint is not yet implemented.
+        Operands.push_back(llvm::ConstantInt::getTrue(llvm::Type::getInt1Ty(Context)));
+
+        OpenCLMetadata->addOperand(llvm::MDNode::get(Context, Operands));
+      }
+    }
+  }
+}
+
+}
 
 const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
   if (TheTargetCodeGenInfo)
@@ -3257,6 +3325,9 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
 
   case llvm::Triple::msp430:
     return *(TheTargetCodeGenInfo = new MSP430TargetCodeGenInfo(Types));
+
+  case llvm::Triple::tce:
+    return *(TheTargetCodeGenInfo = new TCETargetCodeGenInfo(Types));
 
   case llvm::Triple::x86: {
     bool DisableMMX = strcmp(getContext().getTargetInfo().getABI(), "no-mmx") == 0;
