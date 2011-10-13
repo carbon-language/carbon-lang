@@ -2008,7 +2008,7 @@ SymbolFileDWARF::DIEIsInNamespace (const ClangNamespaceDecl *namespace_decl,
     return false;
 }
 uint32_t
-SymbolFileDWARF::FindGlobalVariables (const ConstString &name, bool append, uint32_t max_matches, VariableList& variables)
+SymbolFileDWARF::FindGlobalVariables (const ConstString &name, const lldb_private::ClangNamespaceDecl *namespace_decl, bool append, uint32_t max_matches, VariableList& variables)
 {
     LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_LOOKUPS));
 
@@ -2019,6 +2019,10 @@ SymbolFileDWARF::FindGlobalVariables (const ConstString &name, bool append, uint
                      m_obj_file->GetFileSpec().GetFilename().GetCString(),
                      name.GetCString(), append, max_matches);
     }
+    
+    if (!NamespaceDeclMatchesThisSymbolFile(namespace_decl))
+		return 0;
+    
     DWARFDebugInfo* info = DebugInfo();
     if (info == NULL)
         return 0;
@@ -2070,6 +2074,9 @@ SymbolFileDWARF::FindGlobalVariables (const ConstString &name, bool append, uint
 
             sc.comp_unit = GetCompUnitForDWARFCompUnit(dwarf_cu, UINT32_MAX);
             assert(sc.comp_unit != NULL);
+            
+            if (namespace_decl && !DIEIsInNamespace (namespace_decl, dwarf_cu, die))
+                continue;
 
             ParseVariables(sc, dwarf_cu, LLDB_INVALID_ADDRESS, die, false, false, &variables);
 
@@ -2343,6 +2350,7 @@ SymbolFileDWARF::FunctionDieMatchesPartialName (const DWARFDebugInfoEntry* die,
 
 uint32_t
 SymbolFileDWARF::FindFunctions (const ConstString &name, 
+                                const lldb_private::ClangNamespaceDecl *namespace_decl, 
                                 uint32_t name_type_mask, 
                                 bool append, 
                                 SymbolContextList& sc_list)
@@ -2364,6 +2372,9 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
     // If we aren't appending the results to this list, then clear the list
     if (!append)
         sc_list.Clear();
+    
+    if (!NamespaceDeclMatchesThisSymbolFile(namespace_decl))
+		return 0;
         
     // If name is empty then we won't find anything.
     if (name.IsEmpty())
@@ -2442,6 +2453,9 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                 const DWARFDebugInfoEntry *die = info->GetDIEPtrWithCompileUnitHint (die_offsets[i], &dwarf_cu);
                 if (die)
                 {
+                    if (namespace_decl && !DIEIsInNamespace (namespace_decl, dwarf_cu, die))
+                        continue;
+                    
                     ResolveFunction (dwarf_cu, die, sc_list);
                 }
             }
@@ -2450,6 +2464,9 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
         {                
             if (effective_name_type_mask & eFunctionNameTypeSelector)
             {
+                if (namespace_decl && *namespace_decl)
+                    return 0; // no selectors in namespaces
+                    
                 num_matches = m_apple_names_ap->FindByName (name_cstr, die_offsets);
                 // Now make sure these are actually ObjC methods.  In this case we can simply look up the name,
                 // and if it is an ObjC method name, we're good.
@@ -2470,6 +2487,10 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
             if (effective_name_type_mask & eFunctionNameTypeMethod
                 || effective_name_type_mask & eFunctionNameTypeBase)
             {
+                if ((effective_name_type_mask & eFunctionNameTypeMethod) &&
+                    (namespace_decl && *namespace_decl))
+                    return 0; // no methods in namespaces
+                
                 // The apple_names table stores just the "base name" of C++ methods in the table.  So we have to 
                 // extract the base name, look that up, and if there is any other information in the name we were
                 // passed in we have to post-filter based on that.
@@ -2483,6 +2504,9 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                     const DWARFDebugInfoEntry* die = info->GetDIEPtrWithCompileUnitHint (die_offsets[i], &dwarf_cu);
                     if (die)
                     {
+                        if (namespace_decl && !DIEIsInNamespace (namespace_decl, dwarf_cu, die))
+                            continue;
+                        
                         if (!FunctionDieMatchesPartialName(die, 
                                                            dwarf_cu, 
                                                            effective_name_type_mask, 
@@ -2522,6 +2546,9 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                 const DWARFDebugInfoEntry* die = info->GetDIEPtrWithCompileUnitHint (die_offsets[i], &dwarf_cu);
                 if (die)
                 {
+                    if (namespace_decl && !DIEIsInNamespace (namespace_decl, dwarf_cu, die))
+                        continue;
+                    
                     if (!FunctionDieMatchesPartialName(die, 
                                                        dwarf_cu, 
                                                        effective_name_type_mask, 
@@ -2539,6 +2566,9 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
         
         if (effective_name_type_mask & eFunctionNameTypeMethod)
         {
+            if (namespace_decl && *namespace_decl)
+                return 0; // no methods in namespaces
+
             uint32_t num_base = m_function_method_index.Find(base_name_const, die_offsets);
             {
                 for (uint32_t i = 0; i < num_base; i++)
@@ -2562,7 +2592,7 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
             die_offsets.clear();
         }
 
-        if (effective_name_type_mask & eFunctionNameTypeSelector)
+        if ((effective_name_type_mask & eFunctionNameTypeSelector) && (!namespace_decl || !*namespace_decl))
         {
             FindFunctions (name, m_function_selector_index, sc_list);
         }
@@ -2653,7 +2683,7 @@ SymbolFileDWARF::ReportWarning (const char *format, ...)
 }
 
 uint32_t
-SymbolFileDWARF::FindTypes(const SymbolContext& sc, const ConstString &name, bool append, uint32_t max_matches, TypeList& types)
+SymbolFileDWARF::FindTypes(const SymbolContext& sc, const ConstString &name, const lldb_private::ClangNamespaceDecl *namespace_decl, bool append, uint32_t max_matches, TypeList& types)
 {
     DWARFDebugInfo* info = DebugInfo();
     if (info == NULL)
@@ -2672,6 +2702,9 @@ SymbolFileDWARF::FindTypes(const SymbolContext& sc, const ConstString &name, boo
     // If we aren't appending the results to this list, then clear the list
     if (!append)
         types.Clear();
+    
+    if (!NamespaceDeclMatchesThisSymbolFile(namespace_decl))
+		return 0;
 
     DIEArray die_offsets;
     
@@ -2702,6 +2735,9 @@ SymbolFileDWARF::FindTypes(const SymbolContext& sc, const ConstString &name, boo
             const dw_offset_t die_offset = die_offsets[i];
             die = debug_info->GetDIEPtrWithCompileUnitHint (die_offset, &dwarf_cu);
 
+            if (namespace_decl && !DIEIsInNamespace (namespace_decl, dwarf_cu, die))
+                continue;
+            
             Type *matching_type = ResolveType (dwarf_cu, die);
             if (matching_type)
             {
@@ -2727,7 +2763,8 @@ SymbolFileDWARF::FindTypes(const SymbolContext& sc, const ConstString &name, boo
 
 ClangNamespaceDecl
 SymbolFileDWARF::FindNamespace (const SymbolContext& sc, 
-                                const ConstString &name)
+                                const ConstString &name,
+                                const lldb_private::ClangNamespaceDecl *parent_namespace_decl)
 {
     LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_LOOKUPS));
     
@@ -2738,6 +2775,9 @@ SymbolFileDWARF::FindNamespace (const SymbolContext& sc,
                      m_obj_file->GetFileSpec().GetFilename().GetCString(),
                      name.GetCString());
     }
+    
+    if (!NamespaceDeclMatchesThisSymbolFile(parent_namespace_decl))
+		return ClangNamespaceDecl();
 
     ClangNamespaceDecl namespace_decl;
     DWARFDebugInfo* info = DebugInfo();
@@ -2770,6 +2810,9 @@ SymbolFileDWARF::FindNamespace (const SymbolContext& sc,
             {
                 const dw_offset_t die_offset = die_offsets[i];
                 die = debug_info->GetDIEPtrWithCompileUnitHint (die_offset, &dwarf_cu);
+                
+                if (parent_namespace_decl && !DIEIsInNamespace (parent_namespace_decl, dwarf_cu, die))
+                    continue;
 
                 clang::NamespaceDecl *clang_namespace_decl = ResolveNamespaceDIE (dwarf_cu, die);
                 if (clang_namespace_decl)
@@ -4120,7 +4163,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                 {
                                     ConstString class_name (class_name_start, class_name_end - class_name_start);
                                     TypeList types;
-                                    const uint32_t match_count = FindTypes (empty_sc, class_name, true, UINT32_MAX, types);
+                                    const uint32_t match_count = FindTypes (empty_sc, class_name, NULL, true, UINT32_MAX, types);
                                     if (match_count > 0)
                                     {
                                         for (uint32_t i=0; i<match_count; ++i)

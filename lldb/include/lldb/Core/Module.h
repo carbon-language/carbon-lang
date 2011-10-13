@@ -739,7 +739,8 @@ private:
 
     uint32_t
     FindTypes_Impl (const SymbolContext& sc, 
-                    const ConstString &name, 
+                    const ConstString &name,
+                    const ClangNamespaceDecl *namespace_decl,
                     bool append, 
                     uint32_t max_matches, 
                     TypeList& types);

@@ -702,6 +702,7 @@ uint32_t
 SymbolFileDWARFDebugMap::PrivateFindGlobalVariables
 (
     const ConstString &name,
+    const ClangNamespaceDecl *namespace_decl,
     const std::vector<uint32_t> &indexes,   // Indexes into the symbol table that match "name"
     uint32_t max_matches,
     VariableList& variables
@@ -718,7 +719,7 @@ SymbolFileDWARFDebugMap::PrivateFindGlobalVariables
             SymbolFileDWARF *oso_dwarf = GetSymbolFileByOSOIndex (oso_idx);
             if (oso_dwarf)
             {
-                if (oso_dwarf->FindGlobalVariables(name, true, max_matches, variables))
+                if (oso_dwarf->FindGlobalVariables(name, namespace_decl, true, max_matches, variables))
                     if (variables.GetSize() > max_matches)
                         break;
             }
@@ -728,7 +729,7 @@ SymbolFileDWARFDebugMap::PrivateFindGlobalVariables
 }
 
 uint32_t
-SymbolFileDWARFDebugMap::FindGlobalVariables (const ConstString &name, bool append, uint32_t max_matches, VariableList& variables)
+SymbolFileDWARFDebugMap::FindGlobalVariables (const ConstString &name, const ClangNamespaceDecl *namespace_decl, bool append, uint32_t max_matches, VariableList& variables)
 {
 
     // If we aren't appending the results to this list, then clear the list
@@ -743,7 +744,8 @@ SymbolFileDWARFDebugMap::FindGlobalVariables (const ConstString &name, bool appe
     SymbolFileDWARF *oso_dwarf;
     for (uint32_t oso_idx = 0; ((oso_dwarf = GetSymbolFileByOSOIndex (oso_idx)) != NULL); ++oso_idx)
     {
-        const uint32_t oso_matches = oso_dwarf->FindGlobalVariables (name, 
+        const uint32_t oso_matches = oso_dwarf->FindGlobalVariables (name,
+                                                                     namespace_decl,
                                                                      true, 
                                                                      max_matches, 
                                                                      variables);
@@ -917,7 +919,7 @@ RemoveFunctionsWithModuleNotEqualTo (Module *module, SymbolContextList &sc_list,
 }
 
 uint32_t
-SymbolFileDWARFDebugMap::FindFunctions(const ConstString &name, uint32_t name_type_mask, bool append, SymbolContextList& sc_list)
+SymbolFileDWARFDebugMap::FindFunctions(const ConstString &name, const ClangNamespaceDecl *namespace_decl, uint32_t name_type_mask, bool append, SymbolContextList& sc_list)
 {
     Timer scoped_timer (__PRETTY_FUNCTION__,
                         "SymbolFileDWARFDebugMap::FindFunctions (name = %s)",
@@ -934,7 +936,7 @@ SymbolFileDWARFDebugMap::FindFunctions(const ConstString &name, uint32_t name_ty
     while ((oso_dwarf = GetSymbolFileByOSOIndex (oso_idx++)) != NULL)
     {
         uint32_t sc_idx = sc_list.GetSize();
-        if (oso_dwarf->FindFunctions(name, name_type_mask, true, sc_list))
+        if (oso_dwarf->FindFunctions(name, namespace_decl, name_type_mask, true, sc_list))
         {
             RemoveFunctionsWithModuleNotEqualTo (m_obj_file->GetModule(), sc_list, sc_idx);
         }
@@ -994,7 +996,8 @@ uint32_t
 SymbolFileDWARFDebugMap::FindTypes 
 (
     const SymbolContext& sc, 
-    const ConstString &name, 
+    const ConstString &name,
+    const ClangNamespaceDecl *namespace_decl,
     bool append, 
     uint32_t max_matches, 
     TypeList& types
@@ -1010,13 +1013,13 @@ SymbolFileDWARFDebugMap::FindTypes
     {
         oso_dwarf = GetSymbolFile (sc);
         if (oso_dwarf)
-            return oso_dwarf->FindTypes (sc, name, append, max_matches, types);
+            return oso_dwarf->FindTypes (sc, name, namespace_decl, append, max_matches, types);
     }
     else
     {
         uint32_t oso_idx = 0;
         while ((oso_dwarf = GetSymbolFileByOSOIndex (oso_idx++)) != NULL)
-            oso_dwarf->FindTypes (sc, name, append, max_matches, types);
+            oso_dwarf->FindTypes (sc, name, namespace_decl, append, max_matches, types);
     }
 
     return types.GetSize() - initial_types_size;
@@ -1035,7 +1038,8 @@ SymbolFileDWARFDebugMap::FindTypes
 
 ClangNamespaceDecl
 SymbolFileDWARFDebugMap::FindNamespace (const lldb_private::SymbolContext& sc, 
-                                        const lldb_private::ConstString &name)
+                                        const lldb_private::ConstString &name,
+                                        const ClangNamespaceDecl *parent_namespace_decl)
 {
     ClangNamespaceDecl matching_namespace;
     SymbolFileDWARF *oso_dwarf;
@@ -1044,7 +1048,7 @@ SymbolFileDWARFDebugMap::FindNamespace (const lldb_private::SymbolContext& sc,
     {
         oso_dwarf = GetSymbolFile (sc);
         if (oso_dwarf)
-            matching_namespace = oso_dwarf->FindNamespace (sc, name);
+            matching_namespace = oso_dwarf->FindNamespace (sc, name, parent_namespace_decl);
     }
     else
     {
@@ -1052,7 +1056,7 @@ SymbolFileDWARFDebugMap::FindNamespace (const lldb_private::SymbolContext& sc,
              ((oso_dwarf = GetSymbolFileByOSOIndex (oso_idx)) != NULL); 
              ++oso_idx)
         {
-            matching_namespace = oso_dwarf->FindNamespace (sc, name);
+            matching_namespace = oso_dwarf->FindNamespace (sc, name, parent_namespace_decl);
 
             if (matching_namespace)
                 break;

@@ -280,7 +280,7 @@ SymbolFileSymtab::ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_Typ
 }
 
 ClangNamespaceDecl 
-SymbolFileSymtab::FindNamespace (const SymbolContext& sc, const ConstString &name)
+SymbolFileSymtab::FindNamespace (const SymbolContext& sc, const ConstString &name, const ClangNamespaceDecl *namespace_decl)
 {
     return ClangNamespaceDecl();
 }
@@ -308,7 +308,7 @@ SymbolFileSymtab::ResolveSymbolContext (const FileSpec& file_spec, uint32_t line
 }
 
 uint32_t
-SymbolFileSymtab::FindGlobalVariables(const ConstString &name, bool append, uint32_t max_matches, VariableList& variables)
+SymbolFileSymtab::FindGlobalVariables(const ConstString &name, const ClangNamespaceDecl *namespace_decl, bool append, uint32_t max_matches, VariableList& variables)
 {
     return 0;
 }
@@ -320,7 +320,7 @@ SymbolFileSymtab::FindGlobalVariables(const RegularExpression& regex, bool appen
 }
 
 uint32_t
-SymbolFileSymtab::FindFunctions(const ConstString &name, uint32_t name_type_mask, bool append, SymbolContextList& sc_list)
+SymbolFileSymtab::FindFunctions(const ConstString &name, const ClangNamespaceDecl *namespace_decl, uint32_t name_type_mask, bool append, SymbolContextList& sc_list)
 {
     Timer scoped_timer (__PRETTY_FUNCTION__,
                         "SymbolFileSymtab::FindFunctions (name = '%s')",
@@ -348,7 +348,7 @@ SymbolFileSymtab::FindFunctions(const RegularExpression& regex, bool append, Sym
 }
 
 uint32_t
-SymbolFileSymtab::FindTypes (const lldb_private::SymbolContext& sc, const lldb_private::ConstString &name, bool append, uint32_t max_matches, lldb_private::TypeList& types)
+SymbolFileSymtab::FindTypes (const lldb_private::SymbolContext& sc, const lldb_private::ConstString &name, const ClangNamespaceDecl *namespace_decl, bool append, uint32_t max_matches, lldb_private::TypeList& types)
 {
     if (!append)
         types.Clear();

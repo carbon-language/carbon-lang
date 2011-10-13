@@ -457,7 +457,7 @@ SymbolContext::FindNamespace (const ConstString &name) const
 {
     ClangNamespaceDecl namespace_decl;
     if (module_sp)
-        namespace_decl = module_sp->GetSymbolVendor()->FindNamespace (*this, name);
+        namespace_decl = module_sp->GetSymbolVendor()->FindNamespace (*this, name, NULL);
     return namespace_decl;
 }
 

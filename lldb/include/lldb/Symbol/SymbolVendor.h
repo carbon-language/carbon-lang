@@ -99,6 +99,7 @@ public:
 
     virtual uint32_t
     FindGlobalVariables (const ConstString &name,
+                         const ClangNamespaceDecl *namespace_decl,
                          bool append,
                          uint32_t max_matches,
                          VariableList& variables);
@@ -111,6 +112,7 @@ public:
 
     virtual uint32_t
     FindFunctions (const ConstString &name,
+                   const ClangNamespaceDecl *namespace_decl,
                    uint32_t name_type_mask, 
                    bool append,
                    SymbolContextList& sc_list);
@@ -122,14 +124,16 @@ public:
 
     virtual uint32_t
     FindTypes (const SymbolContext& sc, 
-               const ConstString &name, 
+               const ConstString &name,
+               const ClangNamespaceDecl *namespace_decl, 
                bool append, 
                uint32_t max_matches, 
                TypeList& types);
 
     virtual lldb_private::ClangNamespaceDecl
     FindNamespace (const SymbolContext& sc, 
-                   const ConstString &name);
+                   const ConstString &name,
+                   const ClangNamespaceDecl *parent_namespace_decl);
     
     virtual uint32_t
     GetNumCompileUnits();

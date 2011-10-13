@@ -2440,7 +2440,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             
             SymbolContext null_sc;
             
-            namespace_decl = symbol_vendor->FindNamespace(null_sc, name);
+            namespace_decl = symbol_vendor->FindNamespace(null_sc, name, &namespace_decl);
 
             if (namespace_decl)
             {

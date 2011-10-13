@@ -354,7 +354,7 @@ Module::FindGlobalVariables(const ConstString &name, const ClangNamespaceDecl *n
 {
     SymbolVendor *symbols = GetSymbolVendor ();
     if (symbols)
-        return symbols->FindGlobalVariables(name, append, max_matches, variables);
+        return symbols->FindGlobalVariables(name, namespace_decl, append, max_matches, variables);
     return 0;
 }
 uint32_t
@@ -404,7 +404,7 @@ Module::FindFunctions (const ConstString &name,
     // Find all the functions (not symbols, but debug information functions...
     SymbolVendor *symbols = GetSymbolVendor ();
     if (symbols)
-        symbols->FindFunctions(name, name_type_mask, append, sc_list);
+        symbols->FindFunctions(name, namespace_decl, name_type_mask, append, sc_list);
 
     // Now check our symbol table for symbols that are code symbols if requested
     if (include_symbols)
@@ -477,14 +477,14 @@ Module::FindFunctions (const RegularExpression& regex,
 }
 
 uint32_t
-Module::FindTypes_Impl (const SymbolContext& sc, const ConstString &name, bool append, uint32_t max_matches, TypeList& types)
+Module::FindTypes_Impl (const SymbolContext& sc, const ConstString &name, const ClangNamespaceDecl *namespace_decl, bool append, uint32_t max_matches, TypeList& types)
 {
     Timer scoped_timer(__PRETTY_FUNCTION__, __PRETTY_FUNCTION__);
     if (sc.module_sp.get() == NULL || sc.module_sp.get() == this)
     {
         SymbolVendor *symbols = GetSymbolVendor ();
         if (symbols)
-            return symbols->FindTypes(sc, name, append, max_matches, types);
+            return symbols->FindTypes(sc, name, namespace_decl, append, max_matches, types);
     }
     return 0;
 }
@@ -512,12 +512,12 @@ StripTypeName(const char* name_cstr)
 uint32_t
 Module::FindTypes (const SymbolContext& sc,  const ConstString &name, const ClangNamespaceDecl *namespace_decl, bool append, uint32_t max_matches, TypeList& types)
 {
-    uint32_t retval = FindTypes_Impl(sc, name, append, max_matches, types);
+    uint32_t retval = FindTypes_Impl(sc, name, namespace_decl, append, max_matches, types);
     
     if (retval == 0)
     {
         const char *stripped = StripTypeName(name.GetCString());
-        return FindTypes_Impl(sc, ConstString(stripped), append, max_matches, types);
+        return FindTypes_Impl(sc, ConstString(stripped), namespace_decl, append, max_matches, types);
     }
     else
         return retval;
