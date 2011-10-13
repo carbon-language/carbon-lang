@@ -52,7 +52,7 @@ def err_invalid_storage_class_in_func_decl : Error<
   "invalid storage class specifier in function declarator">;
 def err_expected_namespace_name : Error<"expected namespace name">;
 def ext_variadic_templates : ExtWarn<
-  "variadic templates are a C++11 extension">, InGroup<CXX0x>;
+  "variadic templates are a C++11 extension">, InGroup<CXX11>;
 def warn_cxx98_compat_variadic_templates :
   Warning<"variadic templates are incompatible with C++98">,
   InGroup<CXX98CompatVariadicTemplates>, DefaultIgnore;

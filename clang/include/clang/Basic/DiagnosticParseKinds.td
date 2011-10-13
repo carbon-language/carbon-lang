@@ -187,26 +187,26 @@ def err_invalid_reference_qualifier_application : Error<
 def err_illegal_decl_reference_to_reference : Error<
   "%0 declared as a reference to a reference">;
 def ext_rvalue_reference : ExtWarn<
-  "rvalue references are a C++11 extension">, InGroup<CXX0x>;
+  "rvalue references are a C++11 extension">, InGroup<CXX11>;
 def ext_ref_qualifier : ExtWarn<
-  "reference qualifiers on functions are a C++11 extension">, InGroup<CXX0x>;
+  "reference qualifiers on functions are a C++11 extension">, InGroup<CXX11>;
 def ext_inline_namespace : ExtWarn<
-  "inline namespaces are a C++11 feature">, InGroup<CXX0x>;
+  "inline namespaces are a C++11 feature">, InGroup<CXX11>;
 def err_generalized_initializer_lists : Error<
   "generalized initializer lists are a C++11 extension unsupported in Clang">;
 def ext_generalized_initializer_lists : ExtWarn<
   "generalized initializer lists are a C++11 extension unsupported in Clang">,
-  InGroup<CXX0x>;
+  InGroup<CXX11>;
 def ext_auto_type_specifier : ExtWarn<
-  "'auto' type specifier is a C++11 extension">, InGroup<CXX0x>;
+  "'auto' type specifier is a C++11 extension">, InGroup<CXX11>;
 def warn_auto_storage_class : Warning<
   "'auto' storage class specifier is redundant and incompatible with C++11">,
-  InGroup<CXX0xCompat>;
+  InGroup<CXX11Compat>;
 def ext_auto_storage_class : ExtWarn<
   "'auto' storage class specifier is not permitted in C++11, and will not "
   "be supported in future releases">;
 def ext_for_range : ExtWarn<
-  "range-based for loop is a C++11 extension">, InGroup<CXX0x>;
+  "range-based for loop is a C++11 extension">, InGroup<CXX11>;
 def err_argument_required_after_attribute : Error<
   "argument required after attribute">;
 def err_missing_param : Error<"expected parameter declarator">;
@@ -460,15 +460,15 @@ def err_missing_whitespace_digraph : Error<
   " which forms the digraph '<:' (aka '[') and a ':', did you mean '< ::'?">;
 
 def warn_deleted_function_accepted_as_extension: ExtWarn<
-  "deleted function definition accepted as a C++11 extension">, InGroup<CXX0x>;
+  "deleted function definition accepted as a C++11 extension">, InGroup<CXX11>;
 def warn_defaulted_function_accepted_as_extension: ExtWarn<
   "defaulted function definition accepted as a C++11 extension">,
-  InGroup<CXX0x>;
+  InGroup<CXX11>;
 
 // C++11 in-class member initialization
 def warn_nonstatic_member_init_accepted_as_extension: ExtWarn<
   "in-class initialization of non-static data member accepted as a C++11 extension">,
-  InGroup<CXX0x>;
+  InGroup<CXX11>;
 def err_bitfield_member_init: Error<
   "bitfield member cannot have an in-class initializer">;
 def err_incomplete_array_member_init: Error<
@@ -476,7 +476,7 @@ def err_incomplete_array_member_init: Error<
 
 // C++11 alias-declaration
 def ext_alias_declaration : ExtWarn<
-  "alias declarations accepted as a C++11 extension">, InGroup<CXX0x>;
+  "alias declarations accepted as a C++11 extension">, InGroup<CXX11>;
 def err_alias_declaration_not_identifier : Error<
   "name defined in alias declaration must be an identifier">;
 def err_alias_declaration_specialization : Error<
@@ -484,7 +484,7 @@ def err_alias_declaration_specialization : Error<
     
 // C++11 override control
 def ext_override_control_keyword : Extension<
-  "'%0' keyword accepted as a C++11 extension">, InGroup<CXX0x>;
+  "'%0' keyword accepted as a C++11 extension">, InGroup<CXX11>;
 
 def err_duplicate_virt_specifier : Error<
   "class member already marked '%0'">;
