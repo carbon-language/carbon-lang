@@ -63,7 +63,7 @@ class SBType;
 class SBTypeList;
 class SBValue;
 class SBValueList;
-class SBWatchpointLocation;
+class SBWatchpoint;
 
 }
 

@@ -278,6 +278,12 @@ public:
     lldb::SBFrame
     GetFrame();
     
+    lldb::SBWatchpoint
+    Watch (bool resolve_location, bool read, bool write);
+
+    lldb::SBWatchpoint
+    WatchPointee (bool resolve_location, bool read, bool write);
+
     bool
     GetDescription (lldb::SBStream &description);
 

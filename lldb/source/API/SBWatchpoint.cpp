@@ -1,4 +1,4 @@
-//===-- SBWatchpointLocation.cpp --------------------------------*- C++ -*-===//
+//===-- SBWatchpoint.cpp --------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/API/SBWatchpointLocation.h"
+#include "lldb/API/SBWatchpoint.h"
 #include "lldb/API/SBDefines.h"
 #include "lldb/API/SBAddress.h"
 #include "lldb/API/SBDebugger.h"
@@ -26,12 +26,12 @@ using namespace lldb;
 using namespace lldb_private;
 
 
-SBWatchpointLocation::SBWatchpointLocation () :
+SBWatchpoint::SBWatchpoint () :
     m_opaque_sp ()
 {
 }
 
-SBWatchpointLocation::SBWatchpointLocation (const lldb::WatchpointLocationSP &watch_loc_sp) :
+SBWatchpoint::SBWatchpoint (const lldb::WatchpointLocationSP &watch_loc_sp) :
     m_opaque_sp (watch_loc_sp)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
@@ -40,18 +40,18 @@ SBWatchpointLocation::SBWatchpointLocation (const lldb::WatchpointLocationSP &wa
     {
         SBStream sstr;
         GetDescription (sstr, lldb::eDescriptionLevelBrief);
-        log->Printf ("SBWatchpointLocation::SBWatchpointLocation (const lldb::WatchpointLocationsSP &watch_loc_sp"
+        log->Printf ("SBWatchpoint::SBWatchpoint (const lldb::WatchpointLocationsSP &watch_loc_sp"
                      "=%p)  => this.sp = %p (%s)", watch_loc_sp.get(), m_opaque_sp.get(), sstr.GetData());
     }
 }
 
-SBWatchpointLocation::SBWatchpointLocation(const SBWatchpointLocation &rhs) :
+SBWatchpoint::SBWatchpoint(const SBWatchpoint &rhs) :
     m_opaque_sp (rhs.m_opaque_sp)
 {
 }
 
-const SBWatchpointLocation &
-SBWatchpointLocation::operator = (const SBWatchpointLocation &rhs)
+const SBWatchpoint &
+SBWatchpoint::operator = (const SBWatchpoint &rhs)
 {
     if (this != &rhs)
         m_opaque_sp = rhs.m_opaque_sp;
@@ -59,12 +59,12 @@ SBWatchpointLocation::operator = (const SBWatchpointLocation &rhs)
 }
 
 
-SBWatchpointLocation::~SBWatchpointLocation ()
+SBWatchpoint::~SBWatchpoint ()
 {
 }
 
 watch_id_t
-SBWatchpointLocation::GetID () const
+SBWatchpoint::GetID ()
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
@@ -75,22 +75,41 @@ SBWatchpointLocation::GetID () const
     if (log)
     {
         if (watch_id == LLDB_INVALID_WATCH_ID)
-            log->Printf ("SBWatchpointLocation(%p)::GetID () => LLDB_INVALID_WATCH_ID", m_opaque_sp.get());
+            log->Printf ("SBWatchpoint(%p)::GetID () => LLDB_INVALID_WATCH_ID", m_opaque_sp.get());
         else
-            log->Printf ("SBWatchpointLocation(%p)::GetID () => %u", m_opaque_sp.get(), watch_id);
+            log->Printf ("SBWatchpoint(%p)::GetID () => %u", m_opaque_sp.get(), watch_id);
     }
 
     return watch_id;
 }
 
 bool
-SBWatchpointLocation::IsValid() const
+SBWatchpoint::IsValid() const
 {
     return m_opaque_sp.get() != NULL;
+#if 0
+    if (m_opaque_sp)
+        return m_opaque_sp->GetError().Success();
+    return false;
+#endif
+}
+
+SBError
+SBWatchpoint::GetError ()
+{
+    SBError sb_error;
+#if 0
+    if (m_opaque_sp)
+    {
+        // TODO: Johnny fill this in
+        sb_error.ref() = m_opaque_sp->GetError();
+    }
+#endif
+    return sb_error;
 }
 
 int32_t
-SBWatchpointLocation::GetHardwareIndex () const
+SBWatchpoint::GetHardwareIndex ()
 {
     int32_t hw_index = -1;
 
@@ -104,7 +123,7 @@ SBWatchpointLocation::GetHardwareIndex () const
 }
 
 addr_t
-SBWatchpointLocation::GetWatchAddress () const
+SBWatchpoint::GetWatchAddress ()
 {
     addr_t ret_addr = LLDB_INVALID_ADDRESS;
 
@@ -118,7 +137,7 @@ SBWatchpointLocation::GetWatchAddress () const
 }
 
 size_t
-SBWatchpointLocation::GetWatchSize () const
+SBWatchpoint::GetWatchSize ()
 {
     size_t watch_size = 0;
 
@@ -132,7 +151,7 @@ SBWatchpointLocation::GetWatchSize () const
 }
 
 void
-SBWatchpointLocation::SetEnabled (bool enabled)
+SBWatchpoint::SetEnabled (bool enabled)
 {
     if (m_opaque_sp)
     {
@@ -142,7 +161,7 @@ SBWatchpointLocation::SetEnabled (bool enabled)
 }
 
 bool
-SBWatchpointLocation::IsEnabled ()
+SBWatchpoint::IsEnabled ()
 {
     if (m_opaque_sp)
     {
@@ -154,7 +173,7 @@ SBWatchpointLocation::IsEnabled ()
 }
 
 uint32_t
-SBWatchpointLocation::GetHitCount () const
+SBWatchpoint::GetHitCount ()
 {
     uint32_t count = 0;
     if (m_opaque_sp)
@@ -165,13 +184,13 @@ SBWatchpointLocation::GetHitCount () const
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf ("SBWatchpointLocation(%p)::GetHitCount () => %u", m_opaque_sp.get(), count);
+        log->Printf ("SBWatchpoint(%p)::GetHitCount () => %u", m_opaque_sp.get(), count);
 
     return count;
 }
 
 uint32_t
-SBWatchpointLocation::GetIgnoreCount ()
+SBWatchpoint::GetIgnoreCount ()
 {
     if (m_opaque_sp)
     {
@@ -183,7 +202,7 @@ SBWatchpointLocation::GetIgnoreCount ()
 }
 
 void
-SBWatchpointLocation::SetIgnoreCount (uint32_t n)
+SBWatchpoint::SetIgnoreCount (uint32_t n)
 {
     if (m_opaque_sp)
     {
@@ -193,7 +212,7 @@ SBWatchpointLocation::SetIgnoreCount (uint32_t n)
 }
 
 bool
-SBWatchpointLocation::GetDescription (SBStream &description, DescriptionLevel level)
+SBWatchpoint::GetDescription (SBStream &description, DescriptionLevel level)
 {
     if (m_opaque_sp)
     {
@@ -209,26 +228,19 @@ SBWatchpointLocation::GetDescription (SBStream &description, DescriptionLevel le
 }
 
 lldb_private::WatchpointLocation *
-SBWatchpointLocation::operator->() const
+SBWatchpoint::operator->()
 {
     return m_opaque_sp.get();
 }
 
 lldb_private::WatchpointLocation *
-SBWatchpointLocation::get() const
+SBWatchpoint::get()
 {
     return m_opaque_sp.get();
 }
 
 lldb::WatchpointLocationSP &
-SBWatchpointLocation::operator *()
+SBWatchpoint::operator *()
 {
     return m_opaque_sp;
 }
-
-const lldb::WatchpointLocationSP &
-SBWatchpointLocation::operator *() const
-{
-    return m_opaque_sp;
-}
-

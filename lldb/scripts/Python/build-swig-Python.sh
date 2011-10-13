@@ -72,7 +72,7 @@ HEADER_FILES="${SRC_ROOT}/include/lldb/lldb.h"\
 " ${SRC_ROOT}/include/lldb/API/SBType.h"\
 " ${SRC_ROOT}/include/lldb/API/SBValue.h"\
 " ${SRC_ROOT}/include/lldb/API/SBValueList.h"\
-" ${SRC_ROOT}/include/lldb/API/SBWatchpointLocation.h"\
+" ${SRC_ROOT}/include/lldb/API/SBWatchpoint.h"\
 
 INTERFACE_FILES="${SRC_ROOT}/scripts/Python/interface/SBAddress.i"\
 " ${SRC_ROOT}/scripts/Python/interface/SBBlock.i"\
@@ -108,7 +108,7 @@ INTERFACE_FILES="${SRC_ROOT}/scripts/Python/interface/SBAddress.i"\
 " ${SRC_ROOT}/scripts/Python/interface/SBType.i"\
 " ${SRC_ROOT}/scripts/Python/interface/SBValue.i"\
 " ${SRC_ROOT}/scripts/Python/interface/SBValueList.i"\
-" ${SRC_ROOT}/scripts/Python/interface/SBWatchpointLocation.i"
+" ${SRC_ROOT}/scripts/Python/interface/SBWatchpoint.i"
 
 if [ $Debug == 1 ]
 then

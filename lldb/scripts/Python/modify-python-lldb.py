@@ -236,7 +236,7 @@ d = { 'SBBreakpoint':  ('GetNumLocations',   'GetLocationAtIndex'),
 #
 e = { 'SBAddress':            ['GetFileAddress', 'GetModule'],
       'SBBreakpoint':         ['GetID'],
-      'SBWatchpointLocation': ['GetID'],
+      'SBWatchpoint':         ['GetID'],
       'SBFileSpec':           ['GetFilename', 'GetDirectory'],
       'SBModule':             ['GetFileSpec', 'GetUUIDString'],
       'SBType':               ['GetByteSize', 'GetName']

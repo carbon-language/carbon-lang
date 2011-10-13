@@ -1,4 +1,4 @@
-//===-- SBWatchpointLocation.h ----------------------------------*- C++ -*-===//
+//===-- SBWatchpoint.h ----------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,43 +7,46 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLDB_SBWatchpointLocation_h_
-#define LLDB_SBWatchpointLocation_h_
+#ifndef LLDB_SBWatchpoint_h_
+#define LLDB_SBWatchpoint_h_
 
 #include "lldb/API/SBDefines.h"
 
 namespace lldb {
 
-class SBWatchpointLocation
+class SBWatchpoint
 {
 public:
 
-    SBWatchpointLocation ();
+    SBWatchpoint ();
 
-    SBWatchpointLocation (const lldb::SBWatchpointLocation &rhs);
+    SBWatchpoint (const lldb::SBWatchpoint &rhs);
 
-    ~SBWatchpointLocation ();
+    ~SBWatchpoint ();
 
 #ifndef SWIG
-    const lldb::SBWatchpointLocation &
-    operator = (const lldb::SBWatchpointLocation &rhs);
+    const lldb::SBWatchpoint &
+    operator = (const lldb::SBWatchpoint &rhs);
 #endif
 
+    lldb::SBError
+    GetError ();
+
     watch_id_t
-    GetID () const;
+    GetID ();
 
     bool
     IsValid() const;
 
     /// With -1 representing an invalid hardware index.
     int32_t
-    GetHardwareIndex () const;
+    GetHardwareIndex ();
 
     lldb::addr_t
-    GetWatchAddress () const;
+    GetWatchAddress ();
 
     size_t
-    GetWatchSize() const;
+    GetWatchSize();
 
     void
     SetEnabled(bool enabled);
@@ -52,7 +55,7 @@ public:
     IsEnabled ();
 
     uint32_t
-    GetHitCount () const;
+    GetHitCount ();
 
     uint32_t
     GetIgnoreCount ();
@@ -64,7 +67,7 @@ public:
     GetDescription (lldb::SBStream &description, DescriptionLevel level);
 
 #ifndef SWIG
-    SBWatchpointLocation (const lldb::WatchpointLocationSP &watch_loc_sp);
+    SBWatchpoint (const lldb::WatchpointLocationSP &watch_loc_sp);
 #endif
 
 private:
@@ -73,16 +76,13 @@ private:
 #ifndef SWIG
 
     lldb_private::WatchpointLocation *
-    operator->() const;
+    operator->();
 
     lldb_private::WatchpointLocation *
-    get() const;
+    get();
 
     lldb::WatchpointLocationSP &
     operator *();
-
-    const lldb::WatchpointLocationSP &
-    operator *() const;
 
 #endif
 
@@ -92,4 +92,4 @@ private:
 
 } // namespace lldb
 
-#endif  // LLDB_SBWatchpointLocation_h_
+#endif  // LLDB_SBWatchpoint_h_

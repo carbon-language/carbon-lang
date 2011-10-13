@@ -275,6 +275,58 @@ public:
 
     SBValue (const lldb::ValueObjectSP &value_sp);
 
+    //------------------------------------------------------------------
+    /// Watch this value if it resides in memory.
+    ///
+    /// Sets a watchpoint on the value.
+    ///
+    /// @param[in] resolve_location
+    ///     Resolve the location of this value once and watch its address.
+    ///     This value must currently be set to \b true as watching all
+    ///     locations of a variable or a variable path is not yet supported,
+    ///     though we plan to support it in the future.
+    ///
+    /// @param[in] read
+    ///     Stop when this value is accessed.
+    ///
+    /// @param[in] write
+    ///     Stop when this value is modified
+    ///
+    /// @return
+    ///     An SBWatchpoint object. This object might not be valid upon
+    ///     return due to a value not being contained in memory, too 
+    ///     large, or watchpoint resources are not available or all in
+    ///     use.
+    //------------------------------------------------------------------
+    lldb::SBWatchpoint
+    Watch (bool resolve_location, bool read, bool write);
+
+    //------------------------------------------------------------------
+    /// Watch this value that this value points to in memory
+    ///
+    /// Sets a watchpoint on the value.
+    ///
+    /// @param[in] resolve_location
+    ///     Resolve the location of this value once and watch its address.
+    ///     This value must currently be set to \b true as watching all
+    ///     locations of a variable or a variable path is not yet supported,
+    ///     though we plan to support it in the future.
+    ///
+    /// @param[in] read
+    ///     Stop when this value is accessed.
+    ///
+    /// @param[in] write
+    ///     Stop when this value is modified
+    ///
+    /// @return
+    ///     An SBWatchpoint object. This object might not be valid upon
+    ///     return due to a value not being contained in memory, too 
+    ///     large, or watchpoint resources are not available or all in
+    ///     use.
+    //------------------------------------------------------------------
+    lldb::SBWatchpoint
+    WatchPointee (bool resolve_location, bool read, bool write);
+
 #ifndef SWIG
     // this must be defined in the .h file because synthetic children as implemented in the core
     // currently rely on being able to extract the SharedPointer out of an SBValue. if the implementation

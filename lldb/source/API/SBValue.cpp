@@ -1097,3 +1097,31 @@ SBValue::GetData ()
     
     return sb_data;
 }
+
+lldb::SBWatchpoint
+SBValue::Watch (bool resolve_location, bool read, bool write)
+{
+    lldb::SBWatchpoint sb_watchpoint;
+    Target* target = m_opaque_sp->GetUpdatePoint().GetTargetSP().get();
+    if (target)
+    {
+        Mutex::Locker api_locker (target->GetAPIMutex());
+        // TODO: Johnny fill this in
+    }
+    return sb_watchpoint;
+}
+
+lldb::SBWatchpoint
+SBValue::WatchPointee (bool resolve_location, bool read, bool write)
+{
+    lldb::SBWatchpoint sb_watchpoint;
+    Target* target = m_opaque_sp->GetUpdatePoint().GetTargetSP().get();
+    if (target)
+    {
+        Mutex::Locker api_locker (target->GetAPIMutex());
+        // TODO: Johnny fill this in
+    }
+    return sb_watchpoint;
+}
+
+

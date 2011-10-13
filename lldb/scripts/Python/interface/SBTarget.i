@@ -442,28 +442,32 @@ public:
     DeleteAllBreakpoints ();
 
     uint32_t
-    GetNumWatchpointLocations () const;
-
-    lldb::SBWatchpointLocation
-    GetLastCreatedWatchpointLocation ();
-
-    lldb::SBWatchpointLocation
-    GetWatchpointLocationAtIndex (uint32_t idx) const;
-
+    GetNumWatchpoints () const;
+    
+    lldb::SBWatchpoint
+    GetWatchpointAtIndex (uint32_t idx) const;
+    
     bool
-    WatchpointLocationDelete (watch_id_t watch_id);
-
-    lldb::SBWatchpointLocation
-    FindWatchpointLocationByID (watch_id_t watch_id);
-
+    DeleteWatchpoint (lldb::watch_id_t watch_id);
+    
+    lldb::SBWatchpoint
+    FindWatchpointByID (lldb::watch_id_t watch_id);
+    
     bool
-    EnableAllWatchpointLocations ();
-
+    EnableAllWatchpoints ();
+    
     bool
-    DisableAllWatchpointLocations ();
-
+    DisableAllWatchpoints ();
+    
     bool
-    DeleteAllWatchpointLocations ();
+    DeleteAllWatchpoints ();
+
+    lldb::SBWatchpoint
+    WatchAddress (lldb::addr_t addr, 
+                  size_t size, 
+                  bool read, 
+                  bool write);
+             
 
     lldb::SBBroadcaster
     GetBroadcaster () const;

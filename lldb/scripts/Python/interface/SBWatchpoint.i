@@ -1,4 +1,4 @@
-//===-- SWIG Interface for SBWatchpointLocation -----------------*- C++ -*-===//
+//===-- SWIG Interface for SBWatchpoint -----------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -18,22 +18,22 @@ settable options.
 
 See also SBTarget.watchpoint_location_iter() for for example usage of iterating
 through the watchpoint locations of the target."
-) SBWatchpointLocation;
-class SBWatchpointLocation
+) SBWatchpoint;
+class SBWatchpoint
 {
 public:
 
-    SBWatchpointLocation ();
+    SBWatchpoint ();
 
-    SBWatchpointLocation (const lldb::SBWatchpointLocation &rhs);
+    SBWatchpoint (const lldb::SBWatchpoint &rhs);
 
-    ~SBWatchpointLocation ();
+    ~SBWatchpoint ();
 
     watch_id_t
-    GetID () const;
+    GetID ();
 
     bool
-    IsValid() const;
+    IsValid();
 
     %feature("docstring", "
     //------------------------------------------------------------------
@@ -41,13 +41,13 @@ public:
     //------------------------------------------------------------------
     ") GetHardwareIndex;
     int32_t
-    GetHardwareIndex () const;
+    GetHardwareIndex ();
 
     lldb::addr_t
-    GetWatchAddress () const;
+    GetWatchAddress ();
 
     size_t
-    GetWatchSize() const;
+    GetWatchSize();
 
     void
     SetEnabled(bool enabled);
@@ -56,7 +56,7 @@ public:
     IsEnabled ();
 
     uint32_t
-    GetHitCount () const;
+    GetHitCount ();
 
     uint32_t
     GetIgnoreCount ();

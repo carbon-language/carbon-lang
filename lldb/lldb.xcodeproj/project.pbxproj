@@ -452,8 +452,8 @@
 		B271B11413D6139300C3FEDB /* FormatClasses.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94A9112D13D5DF210046D8A6 /* FormatClasses.cpp */; };
 		B27318421416AC12006039C8 /* WatchpointLocationList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B27318411416AC12006039C8 /* WatchpointLocationList.cpp */; };
 		B28058A1139988B0002D96D0 /* InferiorCallPOSIX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B28058A0139988B0002D96D0 /* InferiorCallPOSIX.cpp */; };
-		B2A58722143119810092BFBA /* SBWatchpointLocation.h in Headers */ = {isa = PBXBuildFile; fileRef = B2A58721143119810092BFBA /* SBWatchpointLocation.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		B2A58724143119D50092BFBA /* SBWatchpointLocation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B2A58723143119D50092BFBA /* SBWatchpointLocation.cpp */; };
+		B2A58722143119810092BFBA /* SBWatchpoint.h in Headers */ = {isa = PBXBuildFile; fileRef = B2A58721143119810092BFBA /* SBWatchpoint.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		B2A58724143119D50092BFBA /* SBWatchpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B2A58723143119D50092BFBA /* SBWatchpoint.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -1368,9 +1368,9 @@
 		B287E63E12EFAE2C00C9BEFE /* ARMDefines.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ARMDefines.h; path = Utility/ARMDefines.h; sourceTree = "<group>"; };
 		B296983412C2FB2B002D92C3 /* CommandObjectVersion.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectVersion.cpp; path = source/Commands/CommandObjectVersion.cpp; sourceTree = "<group>"; };
 		B296983512C2FB2B002D92C3 /* CommandObjectVersion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectVersion.h; path = source/Commands/CommandObjectVersion.h; sourceTree = "<group>"; };
-		B2A58721143119810092BFBA /* SBWatchpointLocation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBWatchpointLocation.h; path = include/lldb/API/SBWatchpointLocation.h; sourceTree = "<group>"; };
-		B2A58723143119D50092BFBA /* SBWatchpointLocation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBWatchpointLocation.cpp; path = source/API/SBWatchpointLocation.cpp; sourceTree = "<group>"; };
-		B2A5872514313B480092BFBA /* SBWatchpointLocation.i */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.h; path = SBWatchpointLocation.i; sourceTree = "<group>"; };
+		B2A58721143119810092BFBA /* SBWatchpoint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBWatchpoint.h; path = include/lldb/API/SBWatchpoint.h; sourceTree = "<group>"; };
+		B2A58723143119D50092BFBA /* SBWatchpoint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBWatchpoint.cpp; path = source/API/SBWatchpoint.cpp; sourceTree = "<group>"; };
+		B2A5872514313B480092BFBA /* SBWatchpoint.i */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.h; path = SBWatchpoint.i; sourceTree = "<group>"; };
 		B2D3033612EFA5C500F84EB3 /* InstructionUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = InstructionUtils.h; path = Utility/InstructionUtils.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -1732,7 +1732,7 @@
 				2611FF11142D83060017FEA3 /* SBType.i */,
 				2611FF12142D83060017FEA3 /* SBValue.i */,
 				2611FF13142D83060017FEA3 /* SBValueList.i */,
-				B2A5872514313B480092BFBA /* SBWatchpointLocation.i */,
+				B2A5872514313B480092BFBA /* SBWatchpoint.i */,
 			);
 			name = interface;
 			path = scripts/Python/interface;
@@ -1842,8 +1842,8 @@
 				9A19A6AD1163BB9800E0D453 /* SBValue.cpp */,
 				9A357582116CFDEE00E8ED2F /* SBValueList.h */,
 				9A35758D116CFE0F00E8ED2F /* SBValueList.cpp */,
-				B2A58723143119D50092BFBA /* SBWatchpointLocation.cpp */,
-				B2A58721143119810092BFBA /* SBWatchpointLocation.h */,
+				B2A58723143119D50092BFBA /* SBWatchpoint.cpp */,
+				B2A58721143119810092BFBA /* SBWatchpoint.h */,
 			);
 			name = API;
 			sourceTree = "<group>";
@@ -2882,7 +2882,7 @@
 				4CF52AF51428291E0051E832 /* SBFileSpecList.h in Headers */,
 				4CAA56131422D96A001FFA01 /* BreakpointResolverFileRegex.h in Headers */,
 				26B8283D142D01E9002DBC64 /* SBSection.h in Headers */,
-				B2A58722143119810092BFBA /* SBWatchpointLocation.h in Headers */,
+				B2A58722143119810092BFBA /* SBWatchpoint.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3171,7 +3171,7 @@
 				4CAA56151422D986001FFA01 /* BreakpointResolverFileRegex.cpp in Sources */,
 				4CF52AF8142829390051E832 /* SBFileSpecList.cpp in Sources */,
 				26B82840142D020F002DBC64 /* SBSection.cpp in Sources */,
-				B2A58724143119D50092BFBA /* SBWatchpointLocation.cpp in Sources */,
+				B2A58724143119D50092BFBA /* SBWatchpoint.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3577,6 +3577,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				DEBUG_INFORMATION_FORMAT = dwarf;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -3613,6 +3614,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					__STDC_CONSTANT_MACROS,
@@ -3646,7 +3648,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = dwarf;
 				FRAMEWORK_SEARCH_PATHS = /System/Library/PrivateFrameworks;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -3661,7 +3662,6 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				COPY_PHASE_STRIP = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				FRAMEWORK_SEARCH_PATHS = /System/Library/PrivateFrameworks;
 				INSTALL_PATH = /Developer/usr/bin;
 				ONLY_ACTIVE_ARCH = NO;
@@ -3673,7 +3673,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				FRAMEWORK_SEARCH_PATHS = /System/Library/PrivateFrameworks;
 				INSTALL_PATH = /Developer/usr/bin;
 				ONLY_ACTIVE_ARCH = NO;
@@ -3687,7 +3686,6 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 80;
-				DEBUG_INFORMATION_FORMAT = dwarf;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 80;
 				EXPORTED_SYMBOLS_FILE = "resources/lldb-framework-exports";
@@ -3739,7 +3737,6 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 80;
 				DEAD_CODE_STRIPPING = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 80;
 				EXPORTED_SYMBOLS_FILE = "resources/lldb-framework-exports";
@@ -3826,7 +3823,6 @@
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 80;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DYLIB_CURRENT_VERSION = 80;
 				EXECUTABLE_EXTENSION = a;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -3865,7 +3861,6 @@
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 80;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DYLIB_CURRENT_VERSION = 80;
 				EXECUTABLE_EXTENSION = a;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -3904,6 +3899,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					__STDC_CONSTANT_MACROS,
@@ -3938,7 +3934,6 @@
 			buildSettings = {
 				COPY_PHASE_STRIP = YES;
 				CURRENT_PROJECT_VERSION = 80;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
@@ -3969,7 +3964,6 @@
 				COPY_PHASE_STRIP = YES;
 				CURRENT_PROJECT_VERSION = 80;
 				DEAD_CODE_STRIPPING = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 80;
 				EXPORTED_SYMBOLS_FILE = "resources/lldb-framework-exports";
@@ -4047,7 +4041,6 @@
 				CODE_SIGN_IDENTITY = lldb_codesign;
 				COPY_PHASE_STRIP = YES;
 				DEAD_CODE_STRIPPING = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
@@ -4096,7 +4089,6 @@
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 80;
-				DEBUG_INFORMATION_FORMAT = dwarf;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
@@ -4127,7 +4119,6 @@
 			buildSettings = {
 				COPY_PHASE_STRIP = YES;
 				CURRENT_PROJECT_VERSION = 80;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",

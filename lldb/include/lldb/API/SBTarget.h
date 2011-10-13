@@ -16,7 +16,7 @@
 #include "lldb/API/SBFileSpec.h"
 #include "lldb/API/SBFileSpecList.h"
 #include "lldb/API/SBType.h"
-#include "lldb/API/SBWatchpointLocation.h"
+#include "lldb/API/SBWatchpoint.h"
 
 namespace lldb {
 
@@ -452,28 +452,28 @@ public:
     DeleteAllBreakpoints ();
 
     uint32_t
-    GetNumWatchpointLocations () const;
+    GetNumWatchpoints () const;
 
-    lldb::SBWatchpointLocation
-    GetLastCreatedWatchpointLocation ();
-
-    lldb::SBWatchpointLocation
-    GetWatchpointLocationAtIndex (uint32_t idx) const;
+    lldb::SBWatchpoint
+    GetWatchpointAtIndex (uint32_t idx) const;
 
     bool
-    WatchpointLocationDelete (watch_id_t watch_id);
+    DeleteWatchpoint (lldb::watch_id_t watch_id);
 
-    lldb::SBWatchpointLocation
-    FindWatchpointLocationByID (watch_id_t watch_id);
+    lldb::SBWatchpoint
+    FindWatchpointByID (lldb::watch_id_t watch_id);
 
-    bool
-    EnableAllWatchpointLocations ();
-
-    bool
-    DisableAllWatchpointLocations ();
+    lldb::SBWatchpoint
+    WatchAddress (lldb::addr_t addr, size_t size, bool read, bool write);
 
     bool
-    DeleteAllWatchpointLocations ();
+    EnableAllWatchpoints ();
+
+    bool
+    DisableAllWatchpoints ();
+
+    bool
+    DeleteAllWatchpoints ();
 
     lldb::SBBroadcaster
     GetBroadcaster () const;

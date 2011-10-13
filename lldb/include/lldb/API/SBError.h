@@ -81,6 +81,7 @@ protected:
     friend class SBThread;
     friend class SBTarget;
     friend class SBValue;
+    friend class SBWatchpoint;
 
     lldb_private::Error *
     get();
