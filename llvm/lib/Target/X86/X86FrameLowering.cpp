@@ -1414,10 +1414,11 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
   if (!Is64Bit)
     BuildMI(allocMBB, DL, TII.get(X86::ADD32ri), X86::ESP).addReg(X86::ESP)
       .addImm(8);
-  BuildMI(allocMBB, DL, TII.get(X86::RET));
 
   if (Is64Bit && IsNested)
     BuildMI(allocMBB, DL, TII.get(X86::MOV64rr), X86::R10).addReg(X86::RAX);
+
+  BuildMI(allocMBB, DL, TII.get(X86::RET));
 
   allocMBB->addSuccessor(&prologueMBB);
   checkMBB->addSuccessor(allocMBB);
