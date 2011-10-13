@@ -433,6 +433,7 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
       if (MCID.isBitcast()) {
         if (OptimizeBitcastInstr(MI, MBB)) {
           // MI is deleted.
+          LocalMIs.erase(MI);
           Changed = true;
           MII = First ? I->begin() : llvm::next(PMII);
           continue;
@@ -440,6 +441,7 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
       } else if (MCID.isCompare()) {
         if (OptimizeCmpInstr(MI, MBB)) {
           // MI is deleted.
+          LocalMIs.erase(MI);
           Changed = true;
           MII = First ? I->begin() : llvm::next(PMII);
           continue;
