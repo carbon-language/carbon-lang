@@ -18,39 +18,115 @@
 
 #include "Windows.h"
 
-// FIXME: Windows does not have reader-writer locks pre-Vista.  If you want
-// real reader-writer locks, you a threads implementation for Windows.
-
 namespace llvm {
 using namespace sys;
 
+// Windows has slim read-writer lock support on Vista and higher, so we
+// will attempt to load the APIs.  If they exist, we will use them, and
+// if not, we will fall back on critical sections.  When we drop support
+// for XP, we can stop lazy-loading these APIs and just use them directly.
+#if defined(__MINGW32__)
+  // Taken from WinNT.h
+  typedef struct _RTL_SRWLOCK {
+    PVOID Ptr;
+  } RTL_SRWLOCK, *PRTL_SRWLOCK;
+
+  // Taken from WinBase.h
+  typedef RTL_SRWLOCK SRWLOCK, *PSRWLOCK;
+#endif
+
+static VOID (WINAPI *fpInitializeSRWLock)(PSRWLOCK lock) = NULL;
+static VOID (WINAPI *fpAcquireSRWLockExclusive)(PSRWLOCK lock) = NULL;
+static VOID (WINAPI *fpAcquireSRWLockShared)(PSRWLOCK lock) = NULL;
+static VOID (WINAPI *fpReleaseSRWLockExclusive)(PSRWLOCK lock) = NULL;
+static VOID (WINAPI *fpReleaseSRWLockShared)(PSRWLOCK lock) = NULL;
+
+static bool sHasSRW = false;
+
+static bool loadSRW() {
+  static bool sChecked = false;
+  if (!sChecked) {
+    sChecked = true;
+
+    HMODULE hLib = ::LoadLibrary(TEXT("Kernel32"));
+    if (hLib) {
+      fpInitializeSRWLock =
+        (VOID (WINAPI *)(PSRWLOCK))::GetProcAddress(hLib,
+                                               "InitializeSRWLock");
+      fpAcquireSRWLockExclusive =
+        (VOID (WINAPI *)(PSRWLOCK))::GetProcAddress(hLib,
+                                               "AcquireSRWLockExclusive");
+      fpAcquireSRWLockShared =
+        (VOID (WINAPI *)(PSRWLOCK))::GetProcAddress(hLib,
+                                               "AcquireSRWLockShared");
+      fpReleaseSRWLockExclusive =
+        (VOID (WINAPI *)(PSRWLOCK))::GetProcAddress(hLib,
+                                               "ReleaseSRWLockExclusive");
+      fpReleaseSRWLockShared =
+        (VOID (WINAPI *)(PSRWLOCK))::GetProcAddress(hLib,
+                                               "ReleaseSRWLockShared");
+      ::FreeLibrary(hLib);
+
+	  if (fpInitializeSRWLock != NULL) {
+	    sHasSRW = true;
+	  }
+    }
+  }
+  return sHasSRW;
+}
+
 RWMutexImpl::RWMutexImpl() {
-  data_ = calloc(1, sizeof(CRITICAL_SECTION));
-  InitializeCriticalSection(static_cast<LPCRITICAL_SECTION>(data_));
+  if (loadSRW()) {
+    data_ = calloc(1, sizeof(SRWLOCK));
+    fpInitializeSRWLock(static_cast<PSRWLOCK>(data_));
+  } else {
+    data_ = calloc(1, sizeof(CRITICAL_SECTION));
+    InitializeCriticalSection(static_cast<LPCRITICAL_SECTION>(data_));
+  }
 }
 
 RWMutexImpl::~RWMutexImpl() {
-  DeleteCriticalSection(static_cast<LPCRITICAL_SECTION>(data_));
-  free(data_);
+  if (sHasSRW) {
+    // Nothing to do in the case of slim reader/writers
+  } else {
+    DeleteCriticalSection(static_cast<LPCRITICAL_SECTION>(data_));
+    free(data_);
+  }
 }
 
 bool RWMutexImpl::reader_acquire() {
-  EnterCriticalSection(static_cast<LPCRITICAL_SECTION>(data_));
+  if (sHasSRW) {
+    fpAcquireSRWLockShared(static_cast<PSRWLOCK>(data_));
+  } else {
+    EnterCriticalSection(static_cast<LPCRITICAL_SECTION>(data_));
+  }
   return true;
 }
 
 bool RWMutexImpl::reader_release() {
-  LeaveCriticalSection(static_cast<LPCRITICAL_SECTION>(data_));
+  if (sHasSRW) {
+    fpReleaseSRWLockShared(static_cast<PSRWLOCK>(data_));
+  } else {
+    LeaveCriticalSection(static_cast<LPCRITICAL_SECTION>(data_));
+  }
   return true;
 }
 
 bool RWMutexImpl::writer_acquire() {
-  EnterCriticalSection(static_cast<LPCRITICAL_SECTION>(data_));
+  if (sHasSRW) {
+    fpAcquireSRWLockExclusive(static_cast<PSRWLOCK>(data_));
+  } else {
+    EnterCriticalSection(static_cast<LPCRITICAL_SECTION>(data_));
+  }
   return true;
 }
 
 bool RWMutexImpl::writer_release() {
-  LeaveCriticalSection(static_cast<LPCRITICAL_SECTION>(data_));
+  if (sHasSRW) {
+    fpReleaseSRWLockExclusive(static_cast<PSRWLOCK>(data_));
+  } else {
+    LeaveCriticalSection(static_cast<LPCRITICAL_SECTION>(data_));
+  }
   return true;
 }
 
