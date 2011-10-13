@@ -1336,15 +1336,28 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
   if (Is64Bit)
     IsNested = HasNestArgument(&MF);
 
+  // The MOV R10, RAX needs to be in a different block, since the RET we emit in
+  // allocMBB needs to be last (terminating) instruction.
+  MachineBasicBlock *restoreR10MBB = NULL;
+  if (IsNested)
+    restoreR10MBB = MF.CreateMachineBasicBlock();
+
   for (MachineBasicBlock::livein_iterator i = prologueMBB.livein_begin(),
          e = prologueMBB.livein_end(); i != e; i++) {
     allocMBB->addLiveIn(*i);
     checkMBB->addLiveIn(*i);
+
+    if (IsNested)
+      restoreR10MBB->addLiveIn(*i);
+  }
+
+  if (IsNested) {
+    allocMBB->addLiveIn(X86::R10);
+    restoreR10MBB->addLiveIn(X86::RAX);
   }
 
   if (IsNested)
-    allocMBB->addLiveIn(X86::R10);
-
+    MF.push_front(restoreR10MBB);
   MF.push_front(allocMBB);
   MF.push_front(checkMBB);
 
@@ -1414,13 +1427,19 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
   if (!Is64Bit)
     BuildMI(allocMBB, DL, TII.get(X86::ADD32ri), X86::ESP).addReg(X86::ESP)
       .addImm(8);
-
-  if (Is64Bit && IsNested)
-    BuildMI(allocMBB, DL, TII.get(X86::MOV64rr), X86::R10).addReg(X86::RAX);
-
   BuildMI(allocMBB, DL, TII.get(X86::RET));
 
-  allocMBB->addSuccessor(&prologueMBB);
+  if (IsNested)
+    BuildMI(restoreR10MBB, DL, TII.get(X86::MOV64rr), X86::R10)
+      .addReg(X86::RAX);
+
+  if (IsNested) {
+    allocMBB->addSuccessor(restoreR10MBB);
+    restoreR10MBB->addSuccessor(&prologueMBB);
+  } else {
+    allocMBB->addSuccessor(&prologueMBB);
+  }
+
   checkMBB->addSuccessor(allocMBB);
   checkMBB->addSuccessor(&prologueMBB);
 
