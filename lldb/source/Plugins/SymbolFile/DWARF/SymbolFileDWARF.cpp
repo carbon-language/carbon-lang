@@ -1944,6 +1944,31 @@ SymbolFileDWARF::Index ()
 #endif
     }
 }
+
+bool
+SymbolFileDWARF::NamespaceDeclMatchesThisSymbolFile (const ClangNamespaceDecl *namespace_decl)
+{
+    if (namespace_decl == NULL)
+    {
+        // Invalid namespace decl which means we aren't matching only things
+        // in this symbol file, so return true to indicate it matches this
+        // symbol file.
+        return true;
+    }
+    
+    clang::ASTContext *namespace_ast = namespace_decl->GetASTContext();
+
+    if (namespace_ast == NULL)
+        return true;    // No AST in the "namespace_decl", return true since it 
+                        // could then match any symbol file, including this one
+
+    if (namespace_ast == GetClangASTContext().getASTContext())
+        return true;    // The ASTs match, return true
+    
+    // The namespace AST was valid, and it does not match...
+    return false;
+}
+
 bool
 SymbolFileDWARF::DIEIsInNamespace (const ClangNamespaceDecl *namespace_decl, 
                                    DWARFCompileUnit* cu, 
@@ -1952,10 +1977,11 @@ SymbolFileDWARF::DIEIsInNamespace (const ClangNamespaceDecl *namespace_decl,
     // No namespace specified, so the answesr i
     if (namespace_decl == NULL)
         return true;
-    
+
     const DWARFDebugInfoEntry *decl_ctx_die = GetDeclContextDIEContainingDIE (cu, die);
     if (decl_ctx_die)
     {
+
         clang::NamespaceDecl *clang_namespace_decl = namespace_decl->GetNamespaceDecl();
         if (clang_namespace_decl)
         {

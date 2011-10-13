@@ -250,6 +250,8 @@ protected:
         flagsGotDebugTypesData      = (1 << 12)
     };
     
+    bool                    NamespaceDeclMatchesThisSymbolFile (const lldb_private::ClangNamespaceDecl *namespace_decl);
+
     bool                    DIEIsInNamespace (const lldb_private::ClangNamespaceDecl *namespace_decl, 
                                               DWARFCompileUnit* cu, 
                                               const DWARFDebugInfoEntry* die);
