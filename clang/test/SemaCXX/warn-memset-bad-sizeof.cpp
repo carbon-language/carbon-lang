@@ -112,3 +112,28 @@ void f(int* i) {
   memset(i, 0, sizeof(i));
 }
 }
+
+extern "C" int strncmp(const char *s1, const char *s2, unsigned n);
+extern "C" int strncasecmp(const char *s1, const char *s2, unsigned n);
+extern "C" char *strncpy(char *det, const char *src, unsigned n);
+extern "C" char *strncat(char *dst, const char *src, unsigned n);
+extern "C" char *strndup(const  char *src, unsigned n);
+
+void strcpy_and_friends() {
+  const char* FOO = "<- should be an array instead";
+  const char* BAR = "<- this, too";
+
+  strncmp(FOO, BAR, sizeof(FOO)); // \
+      // expected-warning {{argument to 'sizeof' in 'strncmp' call is the same expression as the destination}}
+  strncasecmp(FOO, BAR, sizeof(FOO));  // \
+      // expected-warning {{argument to 'sizeof' in 'strncasecmp' call is the same expression as the destination}}
+
+  char buff[80];
+
+  strncpy(buff, BAR, sizeof(BAR)); // \
+      // expected-warning {{argument to 'sizeof' in 'strncpy' call is the same expression as the source}}
+  strncat(buff, BAR, sizeof(BAR)); // \
+      // expected-warning {{argument to 'sizeof' in 'strncat' call is the same expression as the source}}
+  strndup(FOO, sizeof(FOO)); // \
+      // expected-warning {{argument to 'sizeof' in 'strndup' call is the same expression as the source}}
+}

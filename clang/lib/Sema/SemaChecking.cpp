@@ -390,6 +390,30 @@ bool Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
     CMF = CMF_Memcmp;
     break;
     
+  case Builtin::BI__builtin_strncpy:
+  case Builtin::BI__builtin___strncpy_chk:
+  case Builtin::BIstrncpy:
+    CMF = CMF_Strncpy;
+    break;
+
+  case Builtin::BI__builtin_strncmp:
+    CMF = CMF_Strncmp;
+    break;
+
+  case Builtin::BI__builtin_strncasecmp:
+    CMF = CMF_Strncasecmp;
+    break;
+
+  case Builtin::BI__builtin_strncat:
+  case Builtin::BIstrncat:
+    CMF = CMF_Strncat;
+    break;
+
+  case Builtin::BI__builtin_strndup:
+  case Builtin::BIstrndup:
+    CMF = CMF_Strndup;
+    break;
+
   default:
     if (FDecl->getLinkage() == ExternalLinkage &&
         (!getLangOptions().CPlusPlus || FDecl->isExternC())) {
@@ -401,6 +425,16 @@ bool Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
         CMF = CMF_Memmove;
       else if (FnInfo->isStr("memcmp"))
         CMF = CMF_Memcmp;
+      else if (FnInfo->isStr("strncpy"))
+        CMF = CMF_Strncpy;
+      else if (FnInfo->isStr("strncmp"))
+        CMF = CMF_Strncmp;
+      else if (FnInfo->isStr("strncasecmp"))
+        CMF = CMF_Strncasecmp;
+      else if (FnInfo->isStr("strncat"))
+        CMF = CMF_Strncat;
+      else if (FnInfo->isStr("strndup"))
+        CMF = CMF_Strndup;
     }
     break;
   }
@@ -2124,11 +2158,13 @@ void Sema::CheckMemaccessArguments(const CallExpr *Call,
                                    IdentifierInfo *FnName) {
   // It is possible to have a non-standard definition of memset.  Validate
   // we have enough arguments, and if not, abort further checking.
-  if (Call->getNumArgs() < 3)
+  unsigned ExpectedNumArgs = (CMF == CMF_Strndup ? 2 : 3);
+  if (Call->getNumArgs() < ExpectedNumArgs)
     return;
 
-  unsigned LastArg = (CMF == CMF_Memset? 1 : 2);
-  const Expr *LenExpr = Call->getArg(2)->IgnoreParenImpCasts();
+  unsigned LastArg = (CMF == CMF_Memset || CMF == CMF_Strndup ? 1 : 2);
+  unsigned LenArg = (CMF == CMF_Strndup ? 1 : 2);
+  const Expr *LenExpr = Call->getArg(LenArg)->IgnoreParenImpCasts();
 
   // We have special checking when the length is a sizeof expression.
   QualType SizeOfArgTy = getSizeOfArgType(LenExpr);
@@ -2162,6 +2198,8 @@ void Sema::CheckMemaccessArguments(const CallExpr *Call,
         llvm::FoldingSetNodeID DestID;
         Dest->Profile(DestID, Context, true);
         if (DestID == SizeOfArgID) {
+          // TODO: For strncpy() and friends, this could suggest sizeof(dst)
+          //       over sizeof(src) as well.
           unsigned ActionIdx = 0; // Default is to suggest dereferencing.
           if (const UnaryOperator *UnaryOp = dyn_cast<UnaryOperator>(Dest))
             if (UnaryOp->getOpcode() == UO_AddrOf)
@@ -2169,9 +2207,10 @@ void Sema::CheckMemaccessArguments(const CallExpr *Call,
           if (Context.getTypeSize(PointeeTy) == Context.getCharWidth())
             ActionIdx = 2; // If the pointee's size is sizeof(char),
                            // suggest an explicit length.
+          unsigned DestSrcSelect = (CMF == CMF_Strndup ? 1 : ArgIdx);
           DiagRuntimeBehavior(SizeOfArg->getExprLoc(), Dest,
                               PDiag(diag::warn_sizeof_pointer_expr_memaccess)
-                                << FnName << ArgIdx << ActionIdx
+                                << FnName << DestSrcSelect << ActionIdx
                                 << Dest->getSourceRange()
                                 << SizeOfArg->getSourceRange());
           break;

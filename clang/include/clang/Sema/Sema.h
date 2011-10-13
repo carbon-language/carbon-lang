@@ -6113,7 +6113,12 @@ private:
     CMF_Memset,
     CMF_Memcpy,
     CMF_Memmove,
-    CMF_Memcmp
+    CMF_Memcmp,
+    CMF_Strncpy,
+    CMF_Strncmp,
+    CMF_Strncasecmp,
+    CMF_Strncat,
+    CMF_Strndup
   };
   
   void CheckMemaccessArguments(const CallExpr *Call, CheckedMemoryFunction CMF,
