@@ -674,7 +674,7 @@ void StrongPHIElimination::InsertCopiesForPHI(MachineInstr *PHI,
     if (PHIColor && SrcColor == PHIColor) {
       LiveInterval &SrcInterval = LI->getInterval(SrcReg);
       SlotIndex PredIndex = LI->getMBBEndIdx(PredBB);
-      VNInfo *SrcVNI = SrcInterval.getVNInfoAt(PredIndex.getPrevSlot());
+      VNInfo *SrcVNI = SrcInterval.getVNInfoBefore(PredIndex);
       assert(SrcVNI);
       SrcVNI->setHasPHIKill(true);
       continue;
