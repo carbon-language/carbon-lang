@@ -220,54 +220,6 @@ public:
     uint32_t
     GetResolvedMask () const;
 
-
-    //------------------------------------------------------------------
-    /// Find a function matching the given name, working out from this
-    /// symbol context.
-    ///
-    /// @return
-    ///     The number of symbol contexts found.
-    //------------------------------------------------------------------
-    size_t
-    FindFunctionsByName (const ConstString &name,
-                         uint32_t name_type_mask,
-                         bool include_symbols,
-                         bool append, 
-                         SymbolContextList &sc_list) const;
-
-
-    ClangNamespaceDecl
-    FindNamespace (const ConstString &name) const;
-
-    //------------------------------------------------------------------
-    /// Find a variable matching the given name, working out from this
-    /// symbol context.
-    ///
-    /// @return
-    ///     A shared pointer to the variable found.
-    //------------------------------------------------------------------
-    //lldb::VariableSP
-    //FindVariableByName (const char *name) const;
-
-    //------------------------------------------------------------------
-    /// Find a type matching the given name, working out from this
-    /// symbol context.
-    ///
-    /// @return
-    ///     A shared pointer to the variable found.
-    //------------------------------------------------------------------
-    lldb::TypeSP
-    FindTypeByName (const ConstString &name) const;
-    
-//    static SymbolContext
-//    CreateSymbolContextFromDescription (lldb::TargetSP &target,
-//                                        const char *module,
-//                                        const char *comp_unit,
-//                                        const char *function,
-//                                        const char *block_spec
-//                                        const char *line_number,
-//                                        const char *symbol);
-
     //------------------------------------------------------------------
     /// Find a name of the innermost function for the symbol context.
     ///

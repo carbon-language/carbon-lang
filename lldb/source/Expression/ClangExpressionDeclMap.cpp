@@ -1970,23 +1970,6 @@ ClangExpressionDeclMap::FindGlobalDataSymbol
     return NULL;
 }
 
-// This is a callback used with Variable::GetValuesForVariableExpressionPath
-
-static uint32_t GetVariableCallback (void *baton, 
-                                     const char *name,
-                                     VariableList &variable_list)
-{
-    Target *target = static_cast<Target *>(baton);
-    if (target)
-    {
-        return target->GetImages().FindGlobalVariables (ConstString(name),
-                                                        true, 
-                                                        UINT32_MAX, 
-                                                        variable_list);
-    }
-    return 0;
-}
-
 lldb::VariableSP
 ClangExpressionDeclMap::FindGlobalVariable
 (
