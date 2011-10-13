@@ -150,8 +150,10 @@ LexicalScope *LexicalScopes::getOrCreateLexicalScope(DebugLoc DL) {
 /// getOrCreateRegularScope - Find or create a regular lexical scope.
 LexicalScope *LexicalScopes::getOrCreateRegularScope(MDNode *Scope) {
   DIDescriptor D = DIDescriptor(Scope);
-  if (D.isLexicalBlockFile())
+  if (D.isLexicalBlockFile()) {
     Scope = DILexicalBlockFile(Scope).getScope();
+    D = DIDescriptor(Scope);
+  }
  
   LexicalScope *WScope = LexicalScopeMap.lookup(Scope);
   if (WScope)
