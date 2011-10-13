@@ -2070,10 +2070,10 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context, co
                             i->second.GetNamespaceDecl()->getNameAsString().c_str(),
                             i->first->GetFileSpec().GetFilename().GetCString());
                 
-            //FindExternalVisibleDecls(context,
-            //                         i->first,
-            //                         i->second,
-            //                         name);
+            FindExternalVisibleDecls(context,
+                                     i->first,
+                                     i->second,
+                                     name);
         }
     }
     else if (!isa<TranslationUnitDecl>(context.m_decl_context))

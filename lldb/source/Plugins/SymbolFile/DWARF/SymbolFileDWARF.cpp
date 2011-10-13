@@ -1982,6 +1982,8 @@ SymbolFileDWARF::DIEIsInNamespace (const ClangNamespaceDecl *namespace_decl,
     // No namespace specified, so the answesr i
     if (namespace_decl == NULL)
         return true;
+    
+    LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_LOOKUPS));
 
     const DWARFDebugInfoEntry *decl_ctx_die = GetDeclContextDIEContainingDIE (cu, die);
     if (decl_ctx_die)
@@ -1991,12 +1993,21 @@ SymbolFileDWARF::DIEIsInNamespace (const ClangNamespaceDecl *namespace_decl,
         if (clang_namespace_decl)
         {
             if (decl_ctx_die->Tag() != DW_TAG_namespace)
+            {
+                if (log)
+                    log->Printf("Found a match, but its parent is not a namespace");
                 return false;
-
+            }
+                
             DeclContextToDIEMap::iterator pos = m_decl_ctx_to_die.find(clang_namespace_decl);
             
             if (pos == m_decl_ctx_to_die.end())
+            {
+                if (log)
+                    log->Printf("Found a match in a namespace, but its parent is not the requested namespace");
+                
                 return false;
+            }
             
             return decl_ctx_die == pos->second;
         }
@@ -2010,6 +2021,10 @@ SymbolFileDWARF::DIEIsInNamespace (const ClangNamespaceDecl *namespace_decl,
                 return true;
         }
     }
+    
+    if (log)
+        log->Printf("Found a match, but its parent doesn't exist");
+    
     return false;
 }
 uint32_t
