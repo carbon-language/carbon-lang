@@ -2149,21 +2149,27 @@ SymbolFileDWARF::FindGlobalVariables(const RegularExpression& regex, bool append
     return variables.GetSize() - original_size;
 }
 
+
 bool
 SymbolFileDWARF::ResolveFunction (dw_offset_t die_offset,
                                   DWARFCompileUnit *&dwarf_cu,
                                   SymbolContextList& sc_list)
 {
+    const DWARFDebugInfoEntry *die = DebugInfo()->GetDIEPtrWithCompileUnitHint (die_offset, &dwarf_cu);
+    return ResolveFunction (dwarf_cu, die, sc_list);
+}
+    
+
+bool
+SymbolFileDWARF::ResolveFunction (DWARFCompileUnit *cu,
+                                  const DWARFDebugInfoEntry *die,
+                                  SymbolContextList& sc_list)
+{
     SymbolContext sc;
-    
-    DWARFDebugInfo* info = DebugInfo();
-    bool resolved_it = false;
-    
-    if (info == NULL)
-        return resolved_it;
-        
-    DWARFDebugInfoEntry *die = info->GetDIEPtrWithCompileUnitHint (die_offset, &dwarf_cu);
-    
+
+    if (die == NULL)
+        return false;
+
     // If we were passed a die that is not a function, just return false...
     if (die->Tag() != DW_TAG_subprogram && die->Tag() != DW_TAG_inlined_subroutine)
         return false;
@@ -2180,7 +2186,7 @@ SymbolFileDWARF::ResolveFunction (dw_offset_t die_offset,
         }
     }
     assert (die->Tag() == DW_TAG_subprogram);
-    if (GetFunction (dwarf_cu, die, sc))
+    if (GetFunction (cu, die, sc))
     {
         Address addr;
         // Parse all blocks if needed
@@ -2212,11 +2218,11 @@ SymbolFileDWARF::ResolveFunction (dw_offset_t die_offset,
                 line_table->FindLineEntryByAddress (addr, sc.line_entry);
 
             sc_list.Append(sc);
-            resolved_it = true;
+            return true;
         }
     }
     
-    return resolved_it;
+    return false;
 }
 
 void
@@ -2418,6 +2424,7 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
     if (info == NULL)
         return 0;
 
+    DWARFCompileUnit *dwarf_cu = NULL;
     if (m_apple_names_ap.get())
     {
         DIEArray die_offsets;
@@ -2429,15 +2436,18 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
             // If they asked for the full name, match what they typed.  At some point we may
             // want to canonicalize this (strip double spaces, etc.  For now, we just add all the
             // dies that we find by exact match.
-            DWARFCompileUnit *dwarf_cu = NULL;
             num_matches = m_apple_names_ap->FindByName (name_cstr, die_offsets);
             for (uint32_t i = 0; i < num_matches; i++)
-                ResolveFunction (die_offsets[i], dwarf_cu, sc_list);
+            {
+                const DWARFDebugInfoEntry *die = info->GetDIEPtrWithCompileUnitHint (die_offsets[i], &dwarf_cu);
+                if (die)
+                {
+                    ResolveFunction (dwarf_cu, die, sc_list);
+                }
+            }
         }
         else
         {                
-            DWARFCompileUnit* dwarf_cu = NULL;
-            
             if (effective_name_type_mask & eFunctionNameTypeSelector)
             {
                 num_matches = m_apple_names_ap->FindByName (name_cstr, die_offsets);
@@ -2447,11 +2457,12 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                 for (uint32_t i = 0; i < num_matches; i++)
                 {
                     const DWARFDebugInfoEntry* die = info->GetDIEPtrWithCompileUnitHint (die_offsets[i], &dwarf_cu);
-                    assert (die);
-                    
-                    const char *die_name = die->GetName(this, dwarf_cu);
-                    if (ObjCLanguageRuntime::IsPossibleObjCMethodName(die_name))
-                        ResolveFunction (die_offsets[i], dwarf_cu, sc_list);
+                    if (die)
+                    {
+                        const char *die_name = die->GetName(this, dwarf_cu);
+                        if (ObjCLanguageRuntime::IsPossibleObjCMethodName(die_name))
+                            ResolveFunction (dwarf_cu, die, sc_list);
+                    }
                 }
                 die_offsets.clear();
             }
@@ -2469,19 +2480,20 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                 
                 for (uint32_t i = 0; i < num_matches; i++)
                 {
-                    dw_offset_t offset = die_offsets[i];
-                    const DWARFDebugInfoEntry* die = info->GetDIEPtrWithCompileUnitHint (offset, &dwarf_cu);
-                    assert (die);
-                    if (!FunctionDieMatchesPartialName(die, 
-                                                       dwarf_cu, 
-                                                       effective_name_type_mask, 
-                                                       name_cstr, 
-                                                       base_name_start, 
-                                                       base_name_end))
-                        continue;
-                        
-                    // If we get to here, the die is good, and we should add it:
-                    ResolveFunction (offset, dwarf_cu, sc_list);
+                    const DWARFDebugInfoEntry* die = info->GetDIEPtrWithCompileUnitHint (die_offsets[i], &dwarf_cu);
+                    if (die)
+                    {
+                        if (!FunctionDieMatchesPartialName(die, 
+                                                           dwarf_cu, 
+                                                           effective_name_type_mask, 
+                                                           name_cstr, 
+                                                           base_name_start, 
+                                                           base_name_end))
+                            continue;
+                            
+                        // If we get to here, the die is good, and we should add it:
+                        ResolveFunction (dwarf_cu, die, sc_list);
+                    }
                 }
                 die_offsets.clear();
             }
@@ -2505,23 +2517,22 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
         if (effective_name_type_mask & eFunctionNameTypeBase)
         {
             uint32_t num_base = m_function_basename_index.Find(base_name_const, die_offsets);
+            for (uint32_t i = 0; i < num_base; i++)
             {
-              for (uint32_t i = 0; i < num_base; i++)
-              {
-                dw_offset_t offset = die_offsets[i];
-                const DWARFDebugInfoEntry* die = info->GetDIEPtrWithCompileUnitHint (offset, &dwarf_cu);
-                assert (die);
-                if (!FunctionDieMatchesPartialName(die, 
-                                                   dwarf_cu, 
-                                                   effective_name_type_mask, 
-                                                   name_cstr, 
-                                                   base_name_start, 
-                                                   base_name_end))
-                    continue;
+                const DWARFDebugInfoEntry* die = info->GetDIEPtrWithCompileUnitHint (die_offsets[i], &dwarf_cu);
+                if (die)
+                {
+                    if (!FunctionDieMatchesPartialName(die, 
+                                                       dwarf_cu, 
+                                                       effective_name_type_mask, 
+                                                       name_cstr, 
+                                                       base_name_start, 
+                                                       base_name_end))
+                        continue;
                     
-                // If we get to here, the die is good, and we should add it:
-                ResolveFunction (offset, dwarf_cu, sc_list);
-              }
+                    // If we get to here, the die is good, and we should add it:
+                    ResolveFunction (dwarf_cu, die, sc_list);
+                }
             }
             die_offsets.clear();
         }
@@ -2530,22 +2541,23 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
         {
             uint32_t num_base = m_function_method_index.Find(base_name_const, die_offsets);
             {
-              for (uint32_t i = 0; i < num_base; i++)
-              {
-                dw_offset_t offset = die_offsets[i];
-                const DWARFDebugInfoEntry* die = info->GetDIEPtrWithCompileUnitHint (offset, &dwarf_cu);
-                assert (die);
-                if (!FunctionDieMatchesPartialName(die, 
-                                                   dwarf_cu, 
-                                                   effective_name_type_mask, 
-                                                   name_cstr, 
-                                                   base_name_start, 
-                                                   base_name_end))
-                    continue;
-                    
-                // If we get to here, the die is good, and we should add it:
-                ResolveFunction (offset, dwarf_cu, sc_list);
-              }
+                for (uint32_t i = 0; i < num_base; i++)
+                {
+                    const DWARFDebugInfoEntry* die = info->GetDIEPtrWithCompileUnitHint (die_offsets[i], &dwarf_cu);
+                    if (die)
+                    {
+                        if (!FunctionDieMatchesPartialName(die, 
+                                                           dwarf_cu, 
+                                                           effective_name_type_mask, 
+                                                           name_cstr, 
+                                                           base_name_start, 
+                                                           base_name_end))
+                            continue;
+                        
+                        // If we get to here, the die is good, and we should add it:
+                        ResolveFunction (dwarf_cu, die, sc_list);
+                    }
+                }
             }
             die_offsets.clear();
         }

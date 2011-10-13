@@ -329,11 +329,14 @@ protected:
                                 uint32_t& bit_stride);
 
                             // Given a die_offset, figure out the symbol context representing that die.
-    bool                    ResolveFunction (
-                                dw_offset_t offset,
-                                DWARFCompileUnit *&dwarf_cu,
-                                lldb_private::SymbolContextList& sc_list);
-                                
+    bool                    ResolveFunction (dw_offset_t offset,
+                                             DWARFCompileUnit *&dwarf_cu,
+                                             lldb_private::SymbolContextList& sc_list);
+                            
+    bool                    ResolveFunction (DWARFCompileUnit *cu,
+                                             const DWARFDebugInfoEntry *die,
+                                             lldb_private::SymbolContextList& sc_list);
+
     bool                    FunctionDieMatchesPartialName (
                                 const DWARFDebugInfoEntry* die,
                                 const DWARFCompileUnit *dwarf_cu,
