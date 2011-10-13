@@ -202,12 +202,13 @@ TransformSubExpr(const SCEV *S, Instruction *User, Value *OperandValToReplace) {
   if (isa<SCEVConstant>(S) || isa<SCEVUnknown>(S))
     return S;
 
-  const SCEV *&ExprRef = Transformed[S];
-  if (ExprRef)
-    return ExprRef;
+  const SCEV *Result = Transformed.lookup(S);
+  if (Result)
+    return Result;
 
-  ExprRef = TransformImpl(S, User, OperandValToReplace);
-  return ExprRef;
+  Result = TransformImpl(S, User, OperandValToReplace);
+  Transformed[S] = Result;
+  return Result;
 }
 
 /// Top level driver for transforming an expression DAG into its requested
