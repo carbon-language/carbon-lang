@@ -1664,6 +1664,7 @@ private:
         "i686-pc-linux-gnu",
         "i486-linux-gnu",
         "i686-redhat-linux",
+        "i386-redhat-linux",
         "i586-suse-linux",
         "i486-slackware-linux"
       };
