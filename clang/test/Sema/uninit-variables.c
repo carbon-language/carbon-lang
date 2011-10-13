@@ -94,10 +94,15 @@ void test14() {
   for (;;) {}
 }
 
-int test15() {
-  int x = x; // no-warning: signals intended lack of initialization. \
-             // expected-note{{variable 'x' is declared here}}
-  return x; // expected-warning{{variable 'x' is uninitialized when used here}}
+void test15() {
+  int x = x; // no-warning: signals intended lack of initialization.
+}
+
+int test15b() {
+  // Warn here with the self-init, since it does result in a use of
+  // an unintialized variable and this is the root cause.
+  int x = x; // expected-warning {{variable 'x' is uninitialized when used within its own initialization}}
+  return x;
 }
 
 // Don't warn in the following example; shows dataflow confluence.

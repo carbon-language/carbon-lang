@@ -484,11 +484,17 @@ void TransferFunctions::VisitDeclStmt(DeclStmt *ds) {
               vals[vd] = Uninitialized;
               lastLoad = 0;
               lastDR = 0;
+              if (handler)
+                handler->handleSelfInit(vd);
               return;
             }
           }
 
           // All other cases: treat the new variable as initialized.
+          // This is a minor optimization to reduce the propagation
+          // of the analysis, since we will have already reported
+          // the use of the uninitialized value (which visiting the
+          // initializer).
           vals[vd] = Initialized;
         }
       }

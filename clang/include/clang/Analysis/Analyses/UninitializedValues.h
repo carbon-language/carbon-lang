@@ -27,10 +27,16 @@ class UninitVariablesHandler {
 public:
   UninitVariablesHandler() {}
   virtual ~UninitVariablesHandler();
-  
+
+  /// Called when the uninitialized variable is used at the given expression.
   virtual void handleUseOfUninitVariable(const Expr *ex,
                                          const VarDecl *vd,
                                          bool isAlwaysUninit) {}
+  
+  /// Called when the uninitialized variable analysis detects the
+  /// idiom 'int x = x'.  All other uses of 'x' within the initializer
+  /// are handled by handleUseOfUninitVariable.
+  virtual void handleSelfInit(const VarDecl *vd) {}
 };
 
 struct UninitVariablesAnalysisStats {
