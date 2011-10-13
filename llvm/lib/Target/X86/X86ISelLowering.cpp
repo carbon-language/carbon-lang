@@ -379,15 +379,11 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setOperationAction(ISD::FREM             , MVT::f80  , Expand);
   setOperationAction(ISD::FLT_ROUNDS_      , MVT::i32  , Custom);
 
-  if (Subtarget->hasBMI()) {
-    setOperationAction(ISD::CTTZ           , MVT::i8   , Promote);
-  } else {
-    setOperationAction(ISD::CTTZ           , MVT::i8   , Custom);
-    setOperationAction(ISD::CTTZ           , MVT::i16  , Custom);
-    setOperationAction(ISD::CTTZ           , MVT::i32  , Custom);
-    if (Subtarget->is64Bit())
-      setOperationAction(ISD::CTTZ         , MVT::i64  , Custom);
-  }
+  setOperationAction(ISD::CTTZ             , MVT::i8   , Custom);
+  setOperationAction(ISD::CTTZ             , MVT::i16  , Custom);
+  setOperationAction(ISD::CTTZ             , MVT::i32  , Custom);
+  if (Subtarget->is64Bit())
+    setOperationAction(ISD::CTTZ           , MVT::i64  , Custom);
 
   if (Subtarget->hasLZCNT()) {
     setOperationAction(ISD::CTLZ           , MVT::i8   , Promote);
