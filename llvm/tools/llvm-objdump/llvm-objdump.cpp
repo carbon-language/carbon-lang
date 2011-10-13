@@ -321,7 +321,7 @@ static void PrintSectionHeaders(const ObjectFile *o) {
     if (error(si->isData(Data))) return;
     if (error(si->isBSS(BSS))) return;
     std::string Type = (std::string(Text ? "TEXT " : "") +
-                        (Data ? "DATA " : "") + (BSS ? "BSS" : "")); 
+                        (Data ? "DATA " : "") + (BSS ? "BSS" : ""));
     outs() << format("%3d %-13s %09"PRIx64" %017"PRIx64" %s\n", i, Name.str().c_str(), Size,
                      Address, Type.c_str());
     ++i;
