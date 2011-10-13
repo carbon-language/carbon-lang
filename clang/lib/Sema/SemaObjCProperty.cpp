@@ -39,7 +39,7 @@ static Qualifiers::ObjCLifetime getImpliedARCOwnership(
   if (attrs & (ObjCPropertyDecl::OBJC_PR_retain |
                ObjCPropertyDecl::OBJC_PR_strong |
                ObjCPropertyDecl::OBJC_PR_copy)) {
-    return Qualifiers::OCL_Strong;
+    return type->getObjCARCImplicitLifetime();
   } else if (attrs & ObjCPropertyDecl::OBJC_PR_weak) {
     return Qualifiers::OCL_Weak;
   } else if (attrs & ObjCPropertyDecl::OBJC_PR_unsafe_unretained) {

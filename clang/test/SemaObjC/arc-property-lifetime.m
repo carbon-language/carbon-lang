@@ -110,3 +110,18 @@
 @synthesize isAutosaving = _isAutosaving;
 @end
 
+// rdar://10239594
+// Test for 'Class' properties being unretained.
+@interface MyClass {
+@private
+    Class _controllerClass;
+    id _controllerId;
+}
+@property (copy) Class controllerClass;
+@property (copy) id controllerId;
+@end
+
+@implementation MyClass
+@synthesize controllerClass = _controllerClass;
+@synthesize controllerId = _controllerId;
+@end
