@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -std=c++0x %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s
 
 template<template<typename> class D> using C = D<int>;
 

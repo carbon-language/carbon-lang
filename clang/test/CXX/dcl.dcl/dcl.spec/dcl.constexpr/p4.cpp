@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -verify -std=c++0x -fcxx-exceptions %s
+// RUN: %clang_cc1 -verify -std=c++11 -fcxx-exceptions %s
 
 namespace N {
   typedef char C;

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -std=c++0x -verify %s
+// RUN: %clang_cc1 -fsyntax-only -std=c++11 -verify %s
 
 struct Variant {
   template <typename T> operator T();

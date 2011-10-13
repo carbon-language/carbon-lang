@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -std=c++0x %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s
 
 static_assert(__is_literal(int), "fail");
 static_assert(__is_literal_type(int), "fail"); // alternate spelling for GCC

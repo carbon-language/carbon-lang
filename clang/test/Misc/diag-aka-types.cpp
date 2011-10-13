@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -fsyntax-only -verify -std=c++0x
+// RUN: %clang_cc1 %s -fsyntax-only -verify -std=c++11
 
 struct X {};
 typedef X foo_t;

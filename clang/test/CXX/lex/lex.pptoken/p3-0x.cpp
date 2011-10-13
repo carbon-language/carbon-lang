@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -std=c++0x -verify %s
+// RUN: %clang_cc1 -fsyntax-only -std=c++11 -verify %s
 
 int a<::> = { 1, 2, 3 };
 int b = a<:::a<:0:>:>;

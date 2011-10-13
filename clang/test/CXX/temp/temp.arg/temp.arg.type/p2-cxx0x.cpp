@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -std=c++0x -verify %s
+// RUN: %clang_cc1 -fsyntax-only -std=c++11 -verify %s
 
 // C++03 imposed restrictions in this paragraph that were lifted with 0x, so we
 // just test that the example given now parses cleanly.

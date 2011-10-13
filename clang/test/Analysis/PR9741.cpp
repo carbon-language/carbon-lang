@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -cc1 -std=c++0x -Wuninitialized -verify %s
+// RUN: %clang_cc1 -cc1 -std=c++11 -Wuninitialized -verify %s
 
 void f() {
   int a[] = { 1, 2, 3 };

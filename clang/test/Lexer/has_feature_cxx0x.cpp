@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -E -std=c++0x %s -o - | FileCheck --check-prefix=CHECK-0X %s
+// RUN: %clang_cc1 -E -std=c++11 %s -o - | FileCheck --check-prefix=CHECK-0X %s
 // RUN: %clang_cc1 -E %s -o - | FileCheck --check-prefix=CHECK-NO-0X %s
 
 #if __has_feature(cxx_lambdas)

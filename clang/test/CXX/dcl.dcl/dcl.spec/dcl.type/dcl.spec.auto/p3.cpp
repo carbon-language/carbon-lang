@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++0x
+// RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++11
 // RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++98 -Wno-c++0x-extensions
 void f() {
   auto a = a; // expected-error{{variable 'a' declared with 'auto' type cannot appear in its own initializer}}

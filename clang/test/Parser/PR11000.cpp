@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++0x %s 2>&1 | FileCheck %s
+// RUN: %clang_cc1 -std=c++11 %s 2>&1 | FileCheck %s
 
 // PR11000: Don't crash.
 class tuple<>

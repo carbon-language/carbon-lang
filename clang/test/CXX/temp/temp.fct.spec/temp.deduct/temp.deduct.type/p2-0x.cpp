@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++0x -fsyntax-only -verify %s
+// RUN: %clang_cc1 -std=c++11 -fsyntax-only -verify %s
 
 // If type deduction cannot be done for any P/A pair, or if for any
 // pair the deduction leads to more than one possible set of deduced

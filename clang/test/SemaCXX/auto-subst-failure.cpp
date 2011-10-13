@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++0x
+// RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++11
 
 void f() {
   auto a = f(); // expected-error {{variable has incomplete type 'void'}}

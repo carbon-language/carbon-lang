@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++0x -fsyntax-only -fcxx-exceptions -fexceptions -verify %s
+// RUN: %clang_cc1 -std=c++11 -fsyntax-only -fcxx-exceptions -fexceptions -verify %s
 
 // When it is part of a parameter-declaration-clause, the parameter
 // pack is a function parameter pack.

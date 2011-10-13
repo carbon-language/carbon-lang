@@ -1,9 +1,9 @@
 // Test this without pch.
-// RUN: %clang_cc1 -include %s -std=c++0x -fsyntax-only -verify %s
+// RUN: %clang_cc1 -include %s -std=c++11 -fsyntax-only -verify %s
 
 // Test with pch.
-// RUN: %clang_cc1 -x c++-header -std=c++0x -emit-pch -o %t %s
-// RUN: %clang_cc1 -std=c++0x -include-pch %t -fsyntax-only -verify %s 
+// RUN: %clang_cc1 -x c++-header -std=c++11 -emit-pch -o %t %s
+// RUN: %clang_cc1 -std=c++11 -include-pch %t -fsyntax-only -verify %s 
 
 #ifndef PASS1
 #define PASS1

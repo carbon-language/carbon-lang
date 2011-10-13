@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++0x -verify %s
+// RUN: %clang_cc1 -std=c++11 -verify %s
 
 // If the name declared in the explicit instantiation is an
 // unqualified name, the explicit instantiation shall appear in the

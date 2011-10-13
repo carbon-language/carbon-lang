@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++0x -fsyntax-only -Wunused -verify %s
+// RUN: %clang_cc1 -std=c++11 -fsyntax-only -Wunused -verify %s
 
 static int foo(int x) { return x; }
 

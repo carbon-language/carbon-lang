@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++0x -fsyntax-only -verify %s
+// RUN: %clang_cc1 -std=c++11 -fsyntax-only -verify %s
 
 void f0() &; // expected-error{{ref-qualifier '&' is only allowed on non-static member functions, member function pointers, and typedefs of function types}}
 void f1() &&; // expected-error{{ref-qualifier '&&' is only allowed on non-static member functions, member function pointers, and typedefs of function types}}

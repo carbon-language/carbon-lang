@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -fshow-overloads=best -std=c++0x -verify %s 
+// RUN: %clang_cc1 -fsyntax-only -fshow-overloads=best -std=c++11 -verify %s 
 
 template <class T>
 struct X

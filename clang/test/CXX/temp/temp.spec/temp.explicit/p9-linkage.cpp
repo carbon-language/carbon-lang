@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -O1 -emit-llvm -std=c++0x -o - %s | FileCheck %s
+// RUN: %clang_cc1 -O1 -emit-llvm -std=c++11 -o - %s | FileCheck %s
 
 template<typename T>
 struct X0 {

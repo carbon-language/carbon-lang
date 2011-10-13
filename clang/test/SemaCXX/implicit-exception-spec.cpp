@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -fcxx-exceptions -verify -std=c++0x -Wall %s
+// RUN: %clang_cc1 -fsyntax-only -fcxx-exceptions -verify -std=c++11 -Wall %s
 
 template<bool b> struct ExceptionIf { static int f(); };
 template<> struct ExceptionIf<false> { typedef int f; };

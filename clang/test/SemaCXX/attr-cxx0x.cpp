@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -std=c++0x %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s
 
 int align_illegal alignas(3); //expected-error {{requested alignment is not a power of 2}}
 char align_big alignas(int);

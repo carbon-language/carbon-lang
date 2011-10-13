@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++0x -analyze -analyzer-checker=core -analyzer-store region -verify %s
+// RUN: %clang_cc1 -std=c++11 -analyze -analyzer-checker=core -analyzer-store region -verify %s
 
 // test to see if nullptr is detected as a null pointer
 void foo1(void) {

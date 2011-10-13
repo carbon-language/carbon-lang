@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -std=c++0x %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s
 
 // This test creates cases where implicit instantiations of various entities
 // would cause a diagnostic, but provides expliict specializations for those

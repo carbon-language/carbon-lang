@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++0x -Wunused
+// RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++11 -Wunused
 
 // PR9968: We used to warn that __range is unused in a dependent for-range.
 

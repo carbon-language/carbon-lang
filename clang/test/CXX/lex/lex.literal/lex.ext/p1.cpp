@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -std=c++0x -verify %s
+// RUN: %clang_cc1 -fsyntax-only -std=c++11 -verify %s
 
 int * operator "" p31(long double); // expected-warning{{user-defined literal with suffix 'p31' is preempted by C99 hexfloat extension}}
 long double operator "" _p31(long double);

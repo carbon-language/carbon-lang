@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++0x -fexceptions -fcxx-exceptions -fsyntax-only -verify %s
+// RUN: %clang_cc1 -std=c++11 -fexceptions -fcxx-exceptions -fsyntax-only -verify %s
 
 // We use pointer assignment compatibility to test instantiation.
 

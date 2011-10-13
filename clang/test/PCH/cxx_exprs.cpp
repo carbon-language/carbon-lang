@@ -1,9 +1,9 @@
 // Test this without pch.
-// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -include %S/cxx_exprs.h -std=c++0x -fsyntax-only -verify %s -ast-dump
+// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -include %S/cxx_exprs.h -std=c++11 -fsyntax-only -verify %s -ast-dump
 
 // Test with pch. Use '-ast-dump' to force deserialization of function bodies.
-// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -x c++-header -std=c++0x -emit-pch -o %t %S/cxx_exprs.h
-// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -std=c++0x -include-pch %t -fsyntax-only -verify %s -ast-dump
+// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -x c++-header -std=c++11 -emit-pch -o %t %S/cxx_exprs.h
+// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -std=c++11 -include-pch %t -fsyntax-only -verify %s -ast-dump
 
 int integer;
 double floating;

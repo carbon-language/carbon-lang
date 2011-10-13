@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++0x -fsyntax-only -verify %s
+// RUN: %clang_cc1 -std=c++11 -fsyntax-only -verify %s
 
 // A glvalue of type "cv1 T1" can be cast to type "rvalue reference to
 // cv2 T2" if "cv2 T2" is reference-compatible with "cv1 T1" (8.5.3).

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -ffreestanding -fsyntax-only -verify -std=c++0x %s
+// RUN: %clang_cc1 -ffreestanding -fsyntax-only -verify -std=c++11 %s
 
 #include "limits.h"
 

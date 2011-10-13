@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -std=c++0x %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s
 
 auto f() -> int[32]; // expected-error{{function cannot return array}}
 auto g() -> int(int); // expected-error{{function cannot return function}}

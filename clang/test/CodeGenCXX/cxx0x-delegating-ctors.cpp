@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -fexceptions -fcxx-exceptions -std=c++0x -o - %s | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -fexceptions -fcxx-exceptions -std=c++11 -o - %s | FileCheck %s
 
 struct non_trivial {
   non_trivial();

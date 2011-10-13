@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++0x
+// RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++11
 
 struct A { //expected-note {{marked deleted here}} \
      // expected-warning {{does not declare any constructor to initialize}}

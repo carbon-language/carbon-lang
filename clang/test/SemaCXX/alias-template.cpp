@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -verify -std=c++0x %s
+// RUN: %clang_cc1 -verify -std=c++11 %s
 
 namespace RedeclAliasTypedef {
   template<typename U> using T = int;

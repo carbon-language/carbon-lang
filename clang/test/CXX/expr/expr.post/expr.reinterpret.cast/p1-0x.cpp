@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++0x -fsyntax-only -verify %s
+// RUN: %clang_cc1 -std=c++11 -fsyntax-only -verify %s
 
 // If T is an lvalue reference type or an rvalue reference to function
 // type, the result is an lvalue; if T is an rvalue reference to

@@ -1,6 +1,6 @@
-// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -triple x86_64-apple-darwin10 -S -emit-llvm -std=c++0x -include %S/ser.h %s -o - | FileCheck %s
-// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -triple x86_64-apple-darwin10 -emit-pch -o %t-ser.pch -std=c++0x -x c++ %S/ser.h
-// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -triple x86_64-apple-darwin10 -S -emit-llvm -std=c++0x -include-pch %t-ser.pch %s -o - | FileCheck %s
+// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -triple x86_64-apple-darwin10 -S -emit-llvm -std=c++11 -include %S/ser.h %s -o - | FileCheck %s
+// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -triple x86_64-apple-darwin10 -emit-pch -o %t-ser.pch -std=c++11 -x c++ %S/ser.h
+// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -triple x86_64-apple-darwin10 -S -emit-llvm -std=c++11 -include-pch %t-ser.pch %s -o - | FileCheck %s
 
 struct D {
   ~D() throw();

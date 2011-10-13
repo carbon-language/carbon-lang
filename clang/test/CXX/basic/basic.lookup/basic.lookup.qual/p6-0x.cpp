@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++0x -fsyntax-only -verify %s
+// RUN: %clang_cc1 -std=c++11 -fsyntax-only -verify %s
 // XFAIL: *
 // Our C++0x doesn't currently have specialized destructor name handling,
 // since the specification is still in flux.

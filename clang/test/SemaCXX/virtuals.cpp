@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -fcxx-exceptions -verify -std=c++0x %s
+// RUN: %clang_cc1 -fsyntax-only -fcxx-exceptions -verify -std=c++11 %s
 
 class A {
   virtual void f();

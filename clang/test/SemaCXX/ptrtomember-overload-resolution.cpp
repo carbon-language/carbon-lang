@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++0x
+// RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++11
 
 // 13.3.3.2 Ranking implicit conversion sequences
 // conversion of A::* to B::* is better than conversion of A::* to C::*,

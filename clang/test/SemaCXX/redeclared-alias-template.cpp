@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -std=c++0x %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s
 
 template<typename T> using A = int; // expected-note 2{{previous}}
 template<typename T> using A = char; // expected-error {{type alias template redefinition with different types ('char' vs 'int')}}

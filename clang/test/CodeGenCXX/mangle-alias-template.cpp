@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++0x -triple x86_64-apple-darwin10 -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -std=c++11 -triple x86_64-apple-darwin10 -emit-llvm -o - %s | FileCheck %s
 
 template<typename T> struct alloc {};
 template<typename T> using Alloc = alloc<T>;

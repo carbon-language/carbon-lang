@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++0x -fblocks -fsyntax-only -verify %s
+// RUN: %clang_cc1 -std=c++11 -fblocks -fsyntax-only -verify %s
 
 // Tests the use of blocks with variadic templates.
 template<typename ...Args>

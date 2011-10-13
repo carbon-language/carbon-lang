@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -fblocks %s -Wno-unreachable-code
-// RUN: %clang_cc1 -fsyntax-only -verify -fblocks -std=gnu++0x %s -Wno-unreachable-code
+// RUN: %clang_cc1 -fsyntax-only -verify -fblocks -std=gnu++11 %s -Wno-unreachable-code
 
 namespace test0 {
   struct D { ~D(); };

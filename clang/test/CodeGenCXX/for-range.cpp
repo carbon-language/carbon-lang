@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -std=c++0x -emit-llvm -o - %s | opt -instnamer -S | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -std=c++11 -emit-llvm -o - %s | opt -instnamer -S | FileCheck %s
 
 struct A {
   A();

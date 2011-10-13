@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++0x -fsyntax-only -verify %s
+// RUN: %clang_cc1 -std=c++11 -fsyntax-only -verify %s
 
 template<typename T> using A = int;
 template<typename T> using A<T*> = char; // expected-error {{partial specialization of alias templates is not permitted}}

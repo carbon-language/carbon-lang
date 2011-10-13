@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -emit-llvm -o - -std=c++0x -verify
+// RUN: %clang_cc1 %s -emit-llvm -o - -std=c++11 -verify
 
 static_assert(true, "");
 

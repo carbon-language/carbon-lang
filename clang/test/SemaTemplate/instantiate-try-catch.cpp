@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -fsyntax-only -std=c++0x -verify %s
+// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -fsyntax-only -std=c++11 -verify %s
 
 template<typename T> struct TryCatch0 {
   void f() {

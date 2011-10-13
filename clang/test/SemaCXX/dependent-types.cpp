@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -pedantic -verify -std=c++0x %s
+// RUN: %clang_cc1 -fsyntax-only -pedantic -verify -std=c++11 %s
 
 template<typename T> using U = int &;
 

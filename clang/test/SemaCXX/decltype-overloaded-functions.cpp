@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++0x
+// RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++11
 
 void f(); // expected-note{{possible target for call}}
 void f(int); // expected-note{{possible target for call}}

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-pc-linux-gnu -std=c++0x %s -O1 -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-pc-linux-gnu -std=c++11 %s -O1 -emit-llvm -o - | FileCheck %s
 
 struct S {
   int n = 10;

@@ -1,6 +1,6 @@
 // Test with PCH
-// RUN: %clang_cc1 -std=c++0x -x c++-header -emit-pch -o %t %s
-// RUN: %clang_cc1 -std=c++0x -include-pch %t -verify %s
+// RUN: %clang_cc1 -std=c++11 -x c++-header -emit-pch -o %t %s
+// RUN: %clang_cc1 -std=c++11 -include-pch %t -verify %s
 
 // PR10847
 #ifndef HEADER

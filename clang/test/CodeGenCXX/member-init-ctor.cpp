@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -std=c++0x -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -std=c++11 -emit-llvm -o - | FileCheck %s
 
 bool b();
 struct S {

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++0x -fsyntax-only -verify %s
+// RUN: %clang_cc1 -std=c++11 -fsyntax-only -verify %s
 
 // If a template-parameter of a class template or alias template has a default
 // template-argument, each subsequent template-parameter shall either have a

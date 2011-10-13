@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -std=c++0x %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s
 
 #if !__has_feature(cxx_access_control_sfinae)
 #  error No support for access control as part of SFINAE?

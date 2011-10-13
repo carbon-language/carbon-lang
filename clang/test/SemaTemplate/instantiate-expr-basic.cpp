@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -Wno-unused-value -std=c++0x %s
+// RUN: %clang_cc1 -fsyntax-only -Wno-unused-value -std=c++11 %s
 
 template <typename T>
 struct S {

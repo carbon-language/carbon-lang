@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++0x -emit-llvm -o - %s
+// RUN: %clang_cc1 -std=c++11 -emit-llvm -o - %s
 
 // PR9923
 enum class Color { red, blue, green };

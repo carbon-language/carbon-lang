@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -std=c++0x -fblocks -fms-extensions -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -std=c++11 -fblocks -fms-extensions -fsyntax-only -verify %s
 
 template<typename T, typename U> struct pair;
 template<typename ...> struct tuple;

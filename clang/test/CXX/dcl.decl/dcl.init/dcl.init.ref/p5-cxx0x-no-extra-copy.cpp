@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -std=c++0x %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s
 
 // C++03 requires that we check for a copy constructor when binding a
 // reference to a reference-compatible rvalue, since we are allowed to

@@ -1,8 +1,8 @@
 // Without PCH
-// RUN: %clang_cc1 -std=c++0x -fsyntax-only -verify -include %s %s
+// RUN: %clang_cc1 -std=c++11 -fsyntax-only -verify -include %s %s
 // With PCH
-// RUN: %clang_cc1 -x c++-header -std=c++0x -emit-pch -o %t %s
-// RUN: %clang_cc1 -std=c++0x -fsyntax-only -verify -include-pch %t %s
+// RUN: %clang_cc1 -x c++-header -std=c++11 -emit-pch -o %t %s
+// RUN: %clang_cc1 -std=c++11 -fsyntax-only -verify -include-pch %t %s
 
 #ifndef PASS1
 #define PASS1
