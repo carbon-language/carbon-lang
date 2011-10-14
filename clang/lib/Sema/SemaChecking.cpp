@@ -475,7 +475,6 @@ ExprResult
 Sema::SemaAtomicOpsOverloaded(ExprResult TheCallResult, AtomicExpr::AtomicOp Op) {
   CallExpr *TheCall = cast<CallExpr>(TheCallResult.get());
   DeclRefExpr *DRE =cast<DeclRefExpr>(TheCall->getCallee()->IgnoreParenCasts());
-  Expr *Ptr, *Order, *Val1, *Val2, *OrderFail;
 
   // All these operations take one of the following four forms:
   // T   __atomic_load(_Atomic(T)*, int)                              (loads)
@@ -508,7 +507,7 @@ Sema::SemaAtomicOpsOverloaded(ExprResult TheCallResult, AtomicExpr::AtomicOp Op)
 
   // Inspect the first argument of the atomic operation.  This should always be
   // a pointer to an _Atomic type.
-  Ptr = TheCall->getArg(0);
+  Expr *Ptr = TheCall->getArg(0);
   Ptr = DefaultFunctionArrayLvalueConversion(Ptr).get();
   const PointerType *pointerType = Ptr->getType()->getAs<PointerType>();
   if (!pointerType) {
@@ -591,30 +590,24 @@ Sema::SemaAtomicOpsOverloaded(ExprResult TheCallResult, AtomicExpr::AtomicOp Op)
     TheCall->setArg(i, Arg.get());
   }
 
+  SmallVector<Expr*, 5> SubExprs;
+  SubExprs.push_back(Ptr);
   if (Op == AtomicExpr::Load) {
-    Order = TheCall->getArg(1);
-    return Owned(new (Context) AtomicExpr(TheCall->getCallee()->getLocStart(),
-                                          Ptr, Order, ResultType, Op,
-                                          TheCall->getRParenLoc(), false,
-                                          false));
+    SubExprs.push_back(TheCall->getArg(1)); // Order
   } else if (Op != AtomicExpr::CmpXchgWeak && Op != AtomicExpr::CmpXchgStrong) {
-    Val1 = TheCall->getArg(1);
-    Order = TheCall->getArg(2);
-    return Owned(new (Context) AtomicExpr(TheCall->getCallee()->getLocStart(),
-                                          Ptr, Val1, Order, ResultType, Op,
-                                          TheCall->getRParenLoc(), false,
-                                          false));
+    SubExprs.push_back(TheCall->getArg(2)); // Order
+    SubExprs.push_back(TheCall->getArg(1)); // Val1
   } else {
-    Val1 = TheCall->getArg(1);
-    Val2 = TheCall->getArg(2);
-    Order = TheCall->getArg(3);
-    OrderFail = TheCall->getArg(4);
-    return Owned(new (Context) AtomicExpr(TheCall->getCallee()->getLocStart(),
-                                          Ptr, Val1, Val2, Order, OrderFail,
-                                          ResultType, Op, 
-                                          TheCall->getRParenLoc(), false,
-                                          false));
+    SubExprs.push_back(TheCall->getArg(3)); // Order
+    SubExprs.push_back(TheCall->getArg(1)); // Val1
+    SubExprs.push_back(TheCall->getArg(2)); // Val2
+    SubExprs.push_back(TheCall->getArg(4)); // OrderFail
   }
+
+  return Owned(new (Context) AtomicExpr(TheCall->getCallee()->getLocStart(),
+                                        SubExprs.data(), SubExprs.size(),
+                                        ResultType, Op,
+                                        TheCall->getRParenLoc()));
 }
 
 

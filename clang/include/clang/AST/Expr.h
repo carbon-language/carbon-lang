@@ -4179,61 +4179,8 @@ private:
   AtomicOp Op;
 
 public:
-  // Constructor for Load
-  AtomicExpr(SourceLocation BLoc, Expr *ptr, Expr *order, QualType t,
-             AtomicOp op, SourceLocation RP,
-             bool TypeDependent, bool ValueDependent)
-    : Expr(AtomicExprClass, t, VK_RValue, OK_Ordinary,
-           TypeDependent, ValueDependent,
-           ptr->isInstantiationDependent(),
-           ptr->containsUnexpandedParameterPack()),
-      BuiltinLoc(BLoc), RParenLoc(RP), Op(op) {
-      assert(op == Load && "single-argument atomic must be load");
-      SubExprs[PTR] = ptr;
-      SubExprs[ORDER] = order;
-      NumSubExprs = 2;
-    }
-
-  // Constructor for Store, Xchg, Add, Sub, And, Or, Xor
-  AtomicExpr(SourceLocation BLoc, Expr *ptr, Expr *val, Expr *order,
-             QualType t, AtomicOp op, SourceLocation RP,
-             bool TypeDependent, bool ValueDependent)
-      : Expr(AtomicExprClass, t, VK_RValue, OK_Ordinary,
-             TypeDependent, ValueDependent,
-             (ptr->isInstantiationDependent() ||
-              val->isInstantiationDependent()),
-             (ptr->containsUnexpandedParameterPack() ||
-              val->containsUnexpandedParameterPack())),
-        BuiltinLoc(BLoc), RParenLoc(RP), Op(op) {
-        assert(!isCmpXChg() && op != Load &&
-               "two-argument atomic store or binop");
-        SubExprs[PTR] = ptr;
-        SubExprs[ORDER] = order;
-        SubExprs[VAL1] = val;
-        NumSubExprs = 3;
-      }
-
-  // Constructor for CmpXchgStrong, CmpXchgWeak
-  AtomicExpr(SourceLocation BLoc, Expr *ptr, Expr *val1, Expr *val2,
-             Expr *order, Expr *order_fail, QualType t, AtomicOp op,
-             SourceLocation RP, bool TypeDependent, bool ValueDependent)
-    : Expr(AtomicExprClass, t, VK_RValue, OK_Ordinary,
-           TypeDependent, ValueDependent,
-           (ptr->isInstantiationDependent() ||
-            val1->isInstantiationDependent() ||
-            val2->isInstantiationDependent()),
-           (ptr->containsUnexpandedParameterPack() ||
-            val1->containsUnexpandedParameterPack() ||
-            val2->containsUnexpandedParameterPack())),
-      BuiltinLoc(BLoc), RParenLoc(RP), Op(op) {
-      assert(isCmpXChg() && "three-argument atomic must be cmpxchg");
-      SubExprs[PTR] = ptr;
-      SubExprs[ORDER] = order;
-      SubExprs[VAL1] = val1;
-      SubExprs[VAL2] = val2;
-      SubExprs[ORDER_FAIL] = order_fail;
-      NumSubExprs = 5;
-    }
+  AtomicExpr(SourceLocation BLoc, Expr **args, unsigned nexpr, QualType t,
+             AtomicOp op, SourceLocation RP);
 
   /// \brief Build an empty AtomicExpr.
   explicit AtomicExpr(EmptyShell Empty) : Expr(AtomicExprClass, Empty) { }
@@ -4279,6 +4226,8 @@ public:
   void setOp(AtomicOp op) { Op = op; }
   unsigned getNumSubExprs() { return NumSubExprs; }
   void setNumSubExprs(unsigned num) { NumSubExprs = num; }
+
+  Expr **getSubExprs() { return reinterpret_cast<Expr **>(SubExprs); }
 
   bool isVolatile() const {
     return getPtr()->getType()->getPointeeType().isVolatileQualified();

@@ -2385,7 +2385,26 @@ public:
                                   llvm::Optional<unsigned> NumExpansions) {
     return getSema().CheckPackExpansion(Pattern, EllipsisLoc, NumExpansions);
   }
-  
+
+  /// \brief Build a new atomic operation expression.
+  ///
+  /// By default, performs semantic analysis to build the new expression.
+  /// Subclasses may override this routine to provide different behavior.
+  ExprResult RebuildAtomicExpr(SourceLocation BuiltinLoc,
+                               MultiExprArg SubExprs,
+                               QualType RetTy,
+                               AtomicExpr::AtomicOp Op,
+                               SourceLocation RParenLoc) {
+    // Just create the expression; there is not any interesting semantic
+    // analysis here because we can't actually build an AtomicExpr until
+    // we are sure it is semantically sound.
+    unsigned NumSubExprs = SubExprs.size();
+    Expr **Subs = (Expr **)SubExprs.release();
+    return new (SemaRef.Context) AtomicExpr(BuiltinLoc, Subs,
+                                            NumSubExprs, RetTy, Op,
+                                            RParenLoc);
+  }
+
 private:
   TypeLoc TransformTypeInObjectScope(TypeLoc TL,
                                      QualType ObjectType,
@@ -8103,8 +8122,20 @@ TreeTransform<Derived>::TransformAsTypeExpr(AsTypeExpr *E) {
 template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformAtomicExpr(AtomicExpr *E) {
-  assert(false && "Cannot transform atomic expressions yet");
-  return SemaRef.Owned(E);
+  QualType RetTy = getDerived().TransformType(E->getType());
+  bool ArgumentChanged = false;
+  ASTOwningVector<Expr*> SubExprs(SemaRef);
+  SubExprs.reserve(E->getNumSubExprs());
+  if (getDerived().TransformExprs(E->getSubExprs(), E->getNumSubExprs(), false,
+                                  SubExprs, &ArgumentChanged))
+    return ExprError();
+
+  if (!getDerived().AlwaysRebuild() &&
+      !ArgumentChanged)
+    return SemaRef.Owned(E);
+
+  return getDerived().RebuildAtomicExpr(E->getBuiltinLoc(), move_arg(SubExprs),
+                                        RetTy, E->getOp(), E->getRParenLoc());
 }
   
 //===----------------------------------------------------------------------===//

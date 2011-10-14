@@ -146,6 +146,7 @@ protected:
     friend class CXXUnresolvedConstructExpr; // ctor
     friend class CXXDependentScopeMemberExpr; // ctor
     friend class OverloadExpr; // ctor
+    friend class AtomicExpr; // ctor
     unsigned : NumStmtBits;
 
     unsigned ValueKind : 2;

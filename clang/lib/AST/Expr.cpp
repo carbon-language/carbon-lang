@@ -3315,3 +3315,24 @@ BlockDeclRefExpr::BlockDeclRefExpr(VarDecl *d, QualType t, ExprValueKind VK,
   ExprBits.ValueDependent = ValueDependent;
   ExprBits.InstantiationDependent = InstantiationDependent;
 }
+
+
+AtomicExpr::AtomicExpr(SourceLocation BLoc, Expr **args, unsigned nexpr,
+                       QualType t, AtomicOp op, SourceLocation RP)
+  : Expr(AtomicExprClass, t, VK_RValue, OK_Ordinary,
+         false, false, false, false),
+    NumSubExprs(nexpr), BuiltinLoc(BLoc), RParenLoc(RP), Op(op)
+{
+  for (unsigned i = 0; i < nexpr; i++) {
+    if (args[i]->isTypeDependent())
+      ExprBits.TypeDependent = true;
+    if (args[i]->isValueDependent())
+      ExprBits.ValueDependent = true;
+    if (args[i]->isInstantiationDependent())
+      ExprBits.InstantiationDependent = true;
+    if (args[i]->containsUnexpandedParameterPack())
+      ExprBits.ContainsUnexpandedParameterPack = true;
+
+    SubExprs[i] = args[i];
+  }
+}
