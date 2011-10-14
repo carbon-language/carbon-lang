@@ -4368,7 +4368,8 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         if (!type_handled)
                         {
                             // We just have a function that isn't part of a class
-                            clang::FunctionDecl *function_decl = ast.CreateFunctionDeclaration (type_name_cstr, 
+                            clang::FunctionDecl *function_decl = ast.CreateFunctionDeclaration (containing_decl_ctx,
+                                                                                                type_name_cstr, 
                                                                                                 clang_type, 
                                                                                                 storage, 
                                                                                                 is_inline);

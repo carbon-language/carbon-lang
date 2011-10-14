@@ -4145,41 +4145,42 @@ ClangASTContext::GetUniqueNamespaceDeclaration (const char *name, DeclContext *d
 #pragma mark Function Types
 
 FunctionDecl *
-ClangASTContext::CreateFunctionDeclaration (const char *name, clang_type_t function_clang_type, int storage, bool is_inline)
+ClangASTContext::CreateFunctionDeclaration (DeclContext *decl_ctx, const char *name, clang_type_t function_clang_type, int storage, bool is_inline)
 {
-    if (name)
-    {
-        ASTContext *ast = getASTContext();
-        assert (ast != NULL);
+    FunctionDecl *func_decl = NULL;
+    ASTContext *ast = getASTContext();
+    if (decl_ctx == NULL)
+        decl_ctx = ast->getTranslationUnitDecl();
 
-        if (name && name[0])
-        {
-            return FunctionDecl::Create(*ast,
-                                        ast->getTranslationUnitDecl(),
-                                        SourceLocation(),
-                                        SourceLocation(),
-                                        DeclarationName (&ast->Idents.get(name)),
-                                        QualType::getFromOpaquePtr(function_clang_type),
-                                        NULL,
-                                        (FunctionDecl::StorageClass)storage,
-                                        (FunctionDecl::StorageClass)storage,
-                                        is_inline);
-        }
-        else
-        {
-            return FunctionDecl::Create(*ast,
-                                        ast->getTranslationUnitDecl(),
-                                        SourceLocation(),
-                                        SourceLocation(),
-                                        DeclarationName (),
-                                        QualType::getFromOpaquePtr(function_clang_type),
-                                        NULL,
-                                        (FunctionDecl::StorageClass)storage,
-                                        (FunctionDecl::StorageClass)storage,
-                                        is_inline);
-        }
+    if (name && name[0])
+    {
+        func_decl = FunctionDecl::Create (*ast,
+                                          decl_ctx,
+                                          SourceLocation(),
+                                          SourceLocation(),
+                                          DeclarationName (&ast->Idents.get(name)),
+                                          QualType::getFromOpaquePtr(function_clang_type),
+                                          NULL,
+                                          (FunctionDecl::StorageClass)storage,
+                                          (FunctionDecl::StorageClass)storage,
+                                          is_inline);
     }
-    return NULL;
+    else
+    {
+        func_decl = FunctionDecl::Create (*ast,
+                                          decl_ctx,
+                                          SourceLocation(),
+                                          SourceLocation(),
+                                          DeclarationName (),
+                                          QualType::getFromOpaquePtr(function_clang_type),
+                                          NULL,
+                                          (FunctionDecl::StorageClass)storage,
+                                          (FunctionDecl::StorageClass)storage,
+                                          is_inline);
+    }
+    if (func_decl)
+        decl_ctx->addDecl (func_decl);
+    return func_decl;
 }
 
 clang_type_t
@@ -4204,10 +4205,10 @@ ClangASTContext::CreateFunctionType (ASTContext *ast,
     proto_info.NumExceptions = 0;
     proto_info.Exceptions = NULL;
     
-    return ast->getFunctionType(QualType::getFromOpaquePtr(result_type),
-                                        qual_type_args.empty() ? NULL : &qual_type_args.front(),
-                                        qual_type_args.size(),
-                                        proto_info).getAsOpaquePtr();    // NoReturn);
+    return ast->getFunctionType (QualType::getFromOpaquePtr(result_type),
+                                 qual_type_args.empty() ? NULL : &qual_type_args.front(),
+                                 qual_type_args.size(),
+                                 proto_info).getAsOpaquePtr();    // NoReturn);
 }
 
 ParmVarDecl *
@@ -5218,6 +5219,8 @@ ClangASTContext::CreateTypedefType (const char *name, clang_type_t clang_type, D
                                                  name ? &identifier_table->get(name) : NULL, // Identifier
                                                  ast->CreateTypeSourceInfo(qual_type));
         
+        //decl_ctx->addDecl (decl);
+
         decl->setAccess(AS_public); // TODO respect proper access specifier
 
         // Get a uniqued QualType for the typedef decl type

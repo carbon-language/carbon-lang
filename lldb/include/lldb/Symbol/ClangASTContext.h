@@ -547,7 +547,8 @@ public:
     //------------------------------------------------------------------
 
     clang::FunctionDecl *
-    CreateFunctionDeclaration (const char *name,
+    CreateFunctionDeclaration (clang::DeclContext *decl_ctx,
+                               const char *name,
                                lldb::clang_type_t  function_Type,
                                int storage,
                                bool is_inline);
