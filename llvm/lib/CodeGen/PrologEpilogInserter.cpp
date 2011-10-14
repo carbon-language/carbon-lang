@@ -55,7 +55,8 @@ INITIALIZE_PASS_END(PEI, "prologepilog",
 
 STATISTIC(NumVirtualFrameRegs, "Number of virtual frame regs encountered");
 STATISTIC(NumScavengedRegs, "Number of frame index regs scavenged");
-STATISTIC(NumBytesStackSpace, "Number of bytes used for stack in all functions");
+STATISTIC(NumBytesStackSpace,
+          "Number of bytes used for stack in all functions");
 
 /// createPrologEpilogCodeInserter - This function returns a pass that inserts
 /// prolog and epilog code, and eliminates abstract frame references.
