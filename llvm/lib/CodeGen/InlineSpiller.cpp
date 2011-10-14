@@ -1187,8 +1187,16 @@ void InlineSpiller::spillAroundUses(unsigned Reg) {
     DEBUG(dbgs() << "\trewrite: " << Idx << '\t' << *MI);
 
     // FIXME: Use a second vreg if instruction has no tied ops.
-    if (Writes && hasLiveDef)
+    if (Writes) {
+     if (hasLiveDef)
       insertSpill(NewLI, OldLI, Idx, MI);
+     else {
+       // This instruction defines a dead value.  We don't need to spill it,
+       // but do create a live range for the dead value.
+       VNInfo *VNI = NewLI.getNextValue(Idx, 0, LIS.getVNInfoAllocator());
+       NewLI.addRange(LiveRange(Idx, Idx.getNextSlot(), VNI));
+     }
+    }
 
     DEBUG(dbgs() << "\tinterval: " << NewLI << '\n');
   }
