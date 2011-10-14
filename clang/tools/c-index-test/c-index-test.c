@@ -1033,6 +1033,7 @@ void print_completion_result(CXCompletionResult *completion_result,
                              CXClientData client_data) {
   FILE *file = (FILE *)client_data;
   CXString ks = clang_getCursorKindSpelling(completion_result->CursorKind);
+  unsigned annotationCount;
 
   fprintf(file, "%s:", clang_getCString(ks));
   clang_disposeString(ks);
@@ -1056,6 +1057,22 @@ void print_completion_result(CXCompletionResult *completion_result,
     fprintf(file, " (inaccessible)");
     break;
   }
+
+  annotationCount = clang_getCompletionNumAnnotations(
+        completion_result->CompletionString);
+  if (annotationCount) {
+    unsigned i;
+    fprintf(file, " (");
+    for (i = 0; i < annotationCount; ++i) {
+      if (i != 0)
+        fprintf(file, ", ");
+      fprintf(file, "\"%s\"",
+              clang_getCString(clang_getCompletionAnnotation(
+                                 completion_result->CompletionString, i)));
+    }
+    fprintf(file, ")");
+  }
+
   fprintf(file, "\n");
 }
 

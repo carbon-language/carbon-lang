@@ -203,6 +203,20 @@ clang_getCompletionAvailability(CXCompletionString completion_string) {
               : CXAvailability_Available;
 }
 
+unsigned clang_getCompletionNumAnnotations(CXCompletionString completion_string)
+{
+  CodeCompletionString *CCStr = (CodeCompletionString *)completion_string;
+  return CCStr ? CCStr->getAnnotationCount() : 0;
+}
+
+CXString clang_getCompletionAnnotation(CXCompletionString completion_string,
+                                       unsigned annotation_number) {
+  CodeCompletionString *CCStr = (CodeCompletionString *)completion_string;
+  return CCStr ? createCXString(CCStr->getAnnotation(annotation_number))
+               : createCXString((const char *) 0);
+}
+
+
 /// \brief The CXCodeCompleteResults structure we allocate internally;
 /// the client only sees the initial CXCodeCompleteResults structure.
 struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {

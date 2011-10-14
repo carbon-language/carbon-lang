@@ -3281,8 +3281,7 @@ clang_getCompletionChunkText(CXCompletionString completion_string,
  * \param chunk_number the 0-based index of the chunk in the completion string.
  *
  * \returns the completion string associated with the chunk at index
- * \c chunk_number, or NULL if that chunk is not represented by a completion
- * string.
+ * \c chunk_number.
  */
 CINDEX_LINKAGE CXCompletionString
 clang_getCompletionChunkCompletionString(CXCompletionString completion_string,
@@ -3319,6 +3318,33 @@ clang_getCompletionPriority(CXCompletionString completion_string);
  */
 CINDEX_LINKAGE enum CXAvailabilityKind 
 clang_getCompletionAvailability(CXCompletionString completion_string);
+
+/**
+ * \brief Retrieve the number of annotations associated with the given
+ * completion string.
+ *
+ * \param completion_string the completion string to query.
+ *
+ * \returns the number of annotations associated with the given completion
+ * string.
+ */
+CINDEX_LINKAGE unsigned
+clang_getCompletionNumAnnotations(CXCompletionString completion_string);
+
+/**
+ * \brief Retrieve the annotation associated with the given completion string.
+ *
+ * \param completion_string the completion string to query.
+ *
+ * \param annotation_number the 0-based index of the annotation of the
+ * completion string.
+ *
+ * \returns annotation string associated with the completion at index
+ * \c annotation_number, or a NULL string if that annotation is not available.
+ */
+CINDEX_LINKAGE CXString
+clang_getCompletionAnnotation(CXCompletionString completion_string,
+                              unsigned annotation_number);
 
 /**
  * \brief Retrieve a completion string for an arbitrary declaration or macro

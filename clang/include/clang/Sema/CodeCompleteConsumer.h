@@ -428,19 +428,23 @@ public:
   
 private:
   /// \brief The number of chunks stored in this string.
-  unsigned NumChunks;
+  unsigned NumChunks : 16;
   
+  /// \brief The number of annotations for this code-completion result.
+  unsigned NumAnnotations : 16;
+
   /// \brief The priority of this code-completion string.
   unsigned Priority : 30;
   
   /// \brief The availability of this code-completion result.
   unsigned Availability : 2;
-  
+
   CodeCompletionString(const CodeCompletionString &); // DO NOT IMPLEMENT
   CodeCompletionString &operator=(const CodeCompletionString &); // DITTO
   
   CodeCompletionString(const Chunk *Chunks, unsigned NumChunks,
-                       unsigned Priority, CXAvailabilityKind Availability);
+                       unsigned Priority, CXAvailabilityKind Availability,
+                       const char **Annotations, unsigned NumAnnotations);
   ~CodeCompletionString() { }
   
   friend class CodeCompletionBuilder;
@@ -464,8 +468,14 @@ public:
   /// \brief Retrieve the priority of this code completion result.
   unsigned getPriority() const { return Priority; }
   
-  /// \brief Reteirve the availability of this code completion result.
+  /// \brief Retrieve the availability of this code completion result.
   unsigned getAvailability() const { return Availability; }
+
+  /// \brief Retrieve the number of annotations for this code completion result.
+  unsigned getAnnotationCount() const;
+
+  /// \brief Retrieve the annotation string specified by \c AnnotationNr.
+  const char *getAnnotation(unsigned AnnotationNr) const;
   
   /// \brief Retrieve a string representation of the code completion string,
   /// which is mainly useful for debugging.
@@ -504,6 +514,8 @@ private:
   
   /// \brief The chunks stored in this string.
   SmallVector<Chunk, 4> Chunks;
+
+  SmallVector<const char *, 2> Annotations;
   
 public:
   CodeCompletionBuilder(CodeCompletionAllocator &Allocator) 
@@ -560,6 +572,8 @@ public:
   
   /// \brief Add a new chunk.
   void AddChunk(Chunk C) { Chunks.push_back(C); }
+
+  void AddAnnotation(const char *A) { Annotations.push_back(A); }
 };
   
 /// \brief Captures a result of code completion.

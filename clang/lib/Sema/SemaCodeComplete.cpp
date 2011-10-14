@@ -2424,6 +2424,12 @@ CodeCompletionResult::CreateCodeCompletionString(Sema &S,
     Result.AddTextChunk("::");
     return Result.TakeString();
   }
+
+  for (Decl::attr_iterator i = ND->attr_begin(); i != ND->attr_end(); ++i) {
+    if (AnnotateAttr *Attr = dyn_cast_or_null<AnnotateAttr>(*i)) {
+      Result.AddAnnotation(Result.getAllocator().CopyString(Attr->getAnnotation()));
+    }
+  }
   
   AddResultTypeChunk(S.Context, Policy, ND, Result);
   

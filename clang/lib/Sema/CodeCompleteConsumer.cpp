@@ -190,13 +190,35 @@ CodeCompletionString::Chunk::CreateCurrentParameter(
 CodeCompletionString::CodeCompletionString(const Chunk *Chunks, 
                                            unsigned NumChunks,
                                            unsigned Priority, 
-                                           CXAvailabilityKind Availability) 
-  : NumChunks(NumChunks), Priority(Priority), Availability(Availability) 
+                                           CXAvailabilityKind Availability,
+                                           const char **Annotations,
+                                           unsigned NumAnnotations)
+  : NumChunks(NumChunks), NumAnnotations(NumAnnotations)
+  , Priority(Priority), Availability(Availability)
 { 
+  assert(NumChunks <= 0xffff);
+  assert(NumAnnotations <= 0xffff);
+
   Chunk *StoredChunks = reinterpret_cast<Chunk *>(this + 1);
   for (unsigned I = 0; I != NumChunks; ++I)
     StoredChunks[I] = Chunks[I];
+
+  const char **StoredAnnotations = reinterpret_cast<const char **>(StoredChunks + NumChunks);
+  for (unsigned I = 0; I != NumAnnotations; ++I)
+    StoredAnnotations[I] = Annotations[I];
 }
+
+unsigned CodeCompletionString::getAnnotationCount() const {
+  return NumAnnotations;
+}
+
+const char *CodeCompletionString::getAnnotation(unsigned AnnotationNr) const {
+  if (AnnotationNr < NumAnnotations)
+    return reinterpret_cast<const char * const*>(end())[AnnotationNr];
+  else
+    return 0;
+}
+
 
 std::string CodeCompletionString::getAsString() const {
   std::string Result;
@@ -244,11 +266,13 @@ const char *CodeCompletionAllocator::CopyString(Twine String) {
 
 CodeCompletionString *CodeCompletionBuilder::TakeString() {
   void *Mem = Allocator.Allocate(
-                  sizeof(CodeCompletionString) + sizeof(Chunk) * Chunks.size(), 
+                  sizeof(CodeCompletionString) + sizeof(Chunk) * Chunks.size()
+                                    + sizeof(const char *) * Annotations.size(),
                                  llvm::alignOf<CodeCompletionString>());
   CodeCompletionString *Result 
     = new (Mem) CodeCompletionString(Chunks.data(), Chunks.size(),
-                               Priority, Availability);
+                                     Priority, Availability,
+                                     Annotations.data(), Annotations.size());
   Chunks.clear();
   return Result;
 }
