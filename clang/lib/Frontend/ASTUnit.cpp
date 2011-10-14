@@ -1511,30 +1511,33 @@ ASTUnit *ASTUnit::create(CompilerInvocation *CI,
   AST->Invocation = CI;
   AST->FileSystemOpts = CI->getFileSystemOpts();
   AST->FileMgr = new FileManager(AST->FileSystemOpts);
-  AST->SourceMgr = new SourceManager(*Diags, *AST->FileMgr);
+  AST->SourceMgr = new SourceManager(AST->getDiagnostics(), *AST->FileMgr);
 
   return AST.take();
 }
 
 ASTUnit *ASTUnit::LoadFromCompilerInvocationAction(CompilerInvocation *CI,
                               llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
-                                             ASTFrontendAction *Action) {
+                                             ASTFrontendAction *Action,
+                                             ASTUnit *Unit) {
   assert(CI && "A CompilerInvocation is required");
 
-  // Create the AST unit.
-  llvm::OwningPtr<ASTUnit> AST;
-  AST.reset(new ASTUnit(false));
-  ConfigureDiags(Diags, 0, 0, *AST, /*CaptureDiagnostics*/false);
-  AST->Diagnostics = Diags;
+  llvm::OwningPtr<ASTUnit> OwnAST;
+  ASTUnit *AST = Unit;
+  if (!AST) {
+    // Create the AST unit.
+    OwnAST.reset(create(CI, Diags));
+    AST = OwnAST.get();
+  }
+  
   AST->OnlyLocalDecls = false;
   AST->CaptureDiagnostics = false;
   AST->TUKind = Action ? Action->getTranslationUnitKind() : TU_Complete;
   AST->ShouldCacheCodeCompletionResults = false;
-  AST->Invocation = CI;
 
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<ASTUnit>
-    ASTUnitCleanup(AST.get());
+    ASTUnitCleanup(OwnAST.get());
   llvm::CrashRecoveryContextCleanupRegistrar<DiagnosticsEngine,
     llvm::CrashRecoveryContextReleaseRefCleanup<DiagnosticsEngine> >
     DiagCleanup(Diags.getPtr());
@@ -1582,9 +1585,6 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocationAction(CompilerInvocation *CI,
          "IR inputs not supported here!");
 
   // Configure the various subsystems.
-  AST->FileSystemOpts = Clang->getFileSystemOpts();
-  AST->FileMgr = new FileManager(AST->FileSystemOpts);
-  AST->SourceMgr = new SourceManager(AST->getDiagnostics(), *AST->FileMgr);
   AST->TheSema.reset();
   AST->Ctx = 0;
   AST->PP = 0;
@@ -1625,7 +1625,10 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocationAction(CompilerInvocation *CI,
   
   Act->EndSourceFile();
 
-  return AST.take();
+  if (OwnAST)
+    return OwnAST.take();
+  else
+    return AST;
 }
 
 bool ASTUnit::LoadFromCompilerInvocation(bool PrecompilePreamble) {

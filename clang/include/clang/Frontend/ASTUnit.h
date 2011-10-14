@@ -450,6 +450,8 @@ public:
   const ASTContext &getASTContext() const { return *Ctx; }
         ASTContext &getASTContext()       { return *Ctx; }
 
+  void setASTContext(ASTContext *ctx) { Ctx = ctx; }
+
   bool hasSema() const { return TheSema; }
   Sema &getSema() const { 
     assert(TheSema && "ASTUnit does not have a Sema object!");
@@ -641,9 +643,13 @@ public:
   ///
   /// \param Action - The ASTFrontendAction to invoke. Its ownership is not
   /// transfered.
+  ///
+  /// \param Unit - optionally an already created ASTUnit. Its ownership is not
+  /// transfered.
   static ASTUnit *LoadFromCompilerInvocationAction(CompilerInvocation *CI,
                               llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
-                                             ASTFrontendAction *Action = 0);
+                                             ASTFrontendAction *Action = 0,
+                                             ASTUnit *Unit = 0);
 
   /// LoadFromCompilerInvocation - Create an ASTUnit from a source file, via a
   /// CompilerInvocation object.
