@@ -309,10 +309,10 @@ LLVMTypeRef LLVMStructCreateNamed(LLVMContextRef C, const char *Name)
 
 const char *LLVMGetStructName(LLVMTypeRef Ty)
 {
-    StructType *Type = unwrap<StructType>(Ty);
-    if (!Type->hasName())
-	return 0;
-    return Type->getName().data();
+  StructType *Type = unwrap<StructType>(Ty);
+  if (!Type->hasName())
+    return 0;
+  return Type->getName().data();
 }
 
 void LLVMStructSetBody(LLVMTypeRef StructTy, LLVMTypeRef *ElementTypes,
@@ -533,29 +533,29 @@ LLVMValueRef LLVMMDNode(LLVMValueRef *Vals, unsigned Count) {
 }
 
 const char *LLVMGetMDString(LLVMValueRef V, unsigned* Len) {
-    if (const MDString *S = dyn_cast<MDString>(unwrap(V))) {
-	*Len = S->getString().size();
-	return S->getString().data();
-    }
-    *Len = 0;
-    return 0;
+  if (const MDString *S = dyn_cast<MDString>(unwrap(V))) {
+    *Len = S->getString().size();
+    return S->getString().data();
+  }
+  *Len = 0;
+  return 0;
 }
 
 unsigned LLVMGetNamedMetadataNumOperands(LLVMModuleRef M, const char* name)
 {
-    if (NamedMDNode *N = unwrap(M)->getNamedMetadata(name)) {
-	return N->getNumOperands();
-    }
-    return 0;
+  if (NamedMDNode *N = unwrap(M)->getNamedMetadata(name)) {
+    return N->getNumOperands();
+  }
+  return 0;
 }
 
 void LLVMGetNamedMetadataOperands(LLVMModuleRef M, const char* name, LLVMValueRef *Dest)
 {
-    NamedMDNode *N = unwrap(M)->getNamedMetadata(name);
-    if (!N)
-	return;
-    for (unsigned i=0;i<N->getNumOperands();i++)
-	Dest[i] = wrap(N->getOperand(i));
+  NamedMDNode *N = unwrap(M)->getNamedMetadata(name);
+  if (!N)
+    return;
+  for (unsigned i=0;i<N->getNumOperands();i++)
+    Dest[i] = wrap(N->getOperand(i));
 }
 
 /*--.. Operations on scalar constants ......................................--*/
@@ -1583,12 +1583,12 @@ void LLVMInstructionEraseFromParent(LLVMValueRef Inst) {
 }
 
 LLVMIntPredicate LLVMGetICmpPredicate(LLVMValueRef Inst) {
-    if (ICmpInst *I = dyn_cast<ICmpInst>(unwrap(Inst)))
-	return (LLVMIntPredicate)I->getPredicate();
-    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(unwrap(Inst)))
-	if (CE->getOpcode() == Instruction::ICmp)
-	    return (LLVMIntPredicate)CE->getPredicate();
-    return (LLVMIntPredicate)0;
+  if (ICmpInst *I = dyn_cast<ICmpInst>(unwrap(Inst)))
+    return (LLVMIntPredicate)I->getPredicate();
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(unwrap(Inst)))
+    if (CE->getOpcode() == Instruction::ICmp)
+      return (LLVMIntPredicate)CE->getPredicate();
+  return (LLVMIntPredicate)0;
 }
 
 /*--.. Call and invoke instructions ........................................--*/

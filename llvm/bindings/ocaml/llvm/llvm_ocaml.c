@@ -295,15 +295,15 @@ CAMLprim LLVMTypeRef llvm_packed_struct_type(LLVMContextRef C,
 /* lltype -> string option */
 CAMLprim value llvm_struct_name(LLVMTypeRef Ty)
 {
-    CAMLparam0();
-    const char *C = LLVMGetStructName(Ty);
-    if (C) {
-	CAMLlocal1(result);
-	result = caml_alloc_small(1, 0);
-	Store_field(result, 0, caml_copy_string(C));
-	CAMLreturn(result);
-    }
-    CAMLreturn(Val_int(0));
+  CAMLparam0();
+  const char *C = LLVMGetStructName(Ty);
+  if (C) {
+    CAMLlocal1(result);
+    result = caml_alloc_small(1, 0);
+    Store_field(result, 0, caml_copy_string(C));
+    CAMLreturn(result);
+  }
+  CAMLreturn(Val_int(0));
 }
 
 /* lltype -> lltype array */
@@ -475,20 +475,20 @@ CAMLprim LLVMValueRef llvm_mdnode(LLVMContextRef C, value ElementVals) {
 
 /* llvalue -> string option */
 CAMLprim value llvm_get_mdstring(LLVMValueRef V) {
-    CAMLparam0();
-    const char *S;
-    unsigned Len;
+  CAMLparam0();
+  const char *S;
+  unsigned Len;
 
-    if ((S = LLVMGetMDString(V, &Len))) {
-	CAMLlocal2(Option, Str);
+  if ((S = LLVMGetMDString(V, &Len))) {
+    CAMLlocal2(Option, Str);
 
-	Str = caml_alloc_string(Len);
-	memcpy(String_val(Str), S, Len);
-	Option = alloc(1,0);
-	Store_field(Option, 0, Str);
-	CAMLreturn(Option);
-    }
-    CAMLreturn(Val_int(0));
+    Str = caml_alloc_string(Len);
+    memcpy(String_val(Str), S, Len);
+    Option = alloc(1,0);
+    Store_field(Option, 0, Str);
+    CAMLreturn(Option);
+  }
+  CAMLreturn(Val_int(0));
 }
 
 CAMLprim value llvm_get_namedmd(LLVMModuleRef M, value name)
@@ -1016,14 +1016,14 @@ DEFINE_ITERATORS(instr, Instruction, LLVMBasicBlockRef, LLVMValueRef,
 
 /* llvalue -> ICmp.t */
 CAMLprim value llvm_instr_icmp_predicate(LLVMValueRef Val) {
-    CAMLparam0();
-    int x = LLVMGetICmpPredicate(Val);
-    if (x) {
-	value Option = alloc(1, 0);
-	Field(Option, 0) = Val_int(x - LLVMIntEQ);
-	CAMLreturn(Option);
-    }
-    CAMLreturn(Val_int(0));
+  CAMLparam0();
+  int x = LLVMGetICmpPredicate(Val);
+  if (x) {
+    value Option = alloc(1, 0);
+    Field(Option, 0) = Val_int(x - LLVMIntEQ);
+    CAMLreturn(Option);
+  }
+  CAMLreturn(Val_int(0));
 }
 
 
