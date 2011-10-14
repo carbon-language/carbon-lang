@@ -236,7 +236,7 @@ llvm::DIFile CGDebugInfo::getOrCreateMainFile() {
 /// getLineNumber - Get line number for the location. If location is invalid
 /// then use current location.
 unsigned CGDebugInfo::getLineNumber(SourceLocation Loc) {
-  assert (Loc.isValid() || CurLoc.isValid() && "Invalid current location!");
+  assert((Loc.isValid() || CurLoc.isValid()) && "Invalid current location!");
   SourceManager &SM = CGM.getContext().getSourceManager();
   PresumedLoc PLoc = SM.getPresumedLoc(Loc.isValid() ? Loc : CurLoc);
   return PLoc.isValid()? PLoc.getLine() : 0;
@@ -245,7 +245,7 @@ unsigned CGDebugInfo::getLineNumber(SourceLocation Loc) {
 /// getColumnNumber - Get column number for the location. If location is 
 /// invalid then use current location.
 unsigned CGDebugInfo::getColumnNumber(SourceLocation Loc) {
-  assert (Loc.isValid() || CurLoc.isValid() && "Invalid current location!");
+  assert((Loc.isValid() || CurLoc.isValid()) && "Invalid current location!");
   SourceManager &SM = CGM.getContext().getSourceManager();
   PresumedLoc PLoc = SM.getPresumedLoc(Loc.isValid() ? Loc : CurLoc);
   return PLoc.isValid()? PLoc.getColumn() : 0;
