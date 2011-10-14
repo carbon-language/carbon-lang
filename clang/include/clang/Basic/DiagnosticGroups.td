@@ -60,14 +60,6 @@ def : DiagGroup<"c++0x-narrowing", [CXX11Narrowing]>;
 def CXX11Compat : DiagGroup<"c++11-compat", [CXX11Narrowing]>;
 def : DiagGroup<"c++0x-compat", [CXX11Compat]>;
 
-// These groups warn in C++0x mode about non-C++98 constructs, and
-// constructs with different behavior between the two versions of the
-// language.  Each particular warning should be in a specific group as
-// well as the general -Wc++98-compat group.
-// FIXME: This is highly incomplete.
-def CXX98CompatVariadicTemplates : DiagGroup<"c++98-compat-variadic-templates">;
-def CXX98Compat : DiagGroup<"c++98-compat", [CXX98CompatVariadicTemplates]>;
-
 def : DiagGroup<"effc++">;
 def ExitTimeDestructors : DiagGroup<"exit-time-destructors">;
 def FourByteMultiChar : DiagGroup<"four-char-constants">;

@@ -2488,11 +2488,8 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
       // it expands those parameter packs.
       if (T->containsUnexpandedParameterPack())
         T = Context.getPackExpansionType(T, llvm::Optional<unsigned>());
-      else
-        S.Diag(D.getEllipsisLoc(),
-               LangOpts.CPlusPlus0x
-                 ? diag::warn_cxx98_compat_variadic_templates
-                 : diag::ext_variadic_templates);
+      else if (!LangOpts.CPlusPlus0x)
+        S.Diag(D.getEllipsisLoc(), diag::ext_variadic_templates);
       break;
     
     case Declarator::FileContext:
