@@ -417,7 +417,7 @@ bool Function::hasAddressTaken(const User* *PutOffender) const {
 /// FIXME: Remove after <rdar://problem/8031714> is fixed.
 /// FIXME: Is the above FIXME valid?
 bool Function::callsFunctionThatReturnsTwice() const {
-  static const char *ReturnsTwiceFns[] = {
+  static const char *const ReturnsTwiceFns[] = {
     "_setjmp",
     "setjmp",
     "sigsetjmp",
@@ -442,7 +442,7 @@ bool Function::callsFunctionThatReturnsTwice() const {
     if (!F)
       continue;
     StringRef Name = F->getName();
-    for (unsigned J = 0; J < array_lengthof(ReturnsTwiceFns); ++J) {
+    for (unsigned J = 0, e = array_lengthof(ReturnsTwiceFns); J != e; ++J) {
       if (Name == ReturnsTwiceFns[J])
         return true;
     }
