@@ -523,7 +523,10 @@ ExprResult Sema::DefaultVariadicArgumentPromotion(Expr *E, VariadicCallType CT,
                           << E->getType() << CT))
     return ExprError();
 
-  if (!E->getType().isPODType(Context)) {
+  // Complain about passing non-POD types through varargs. However, don't
+  // perform this check for incomplete types, which we can get here when we're
+  // in an unevaluated context.
+  if (!E->getType()->isIncompleteType() && !E->getType().isPODType(Context)) {
     // C++0x [expr.call]p7:
     //   Passing a potentially-evaluated argument of class type (Clause 9) 
     //   having a non-trivial copy constructor, a non-trivial move constructor,
