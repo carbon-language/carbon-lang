@@ -2167,6 +2167,8 @@ void Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd,
           Diag(PrevMethod->getLocation(), diag::note_previous_declaration);
         Method->setInvalidDecl();
       } else {
+        if (PrevMethod)
+          Context.setObjCMethodRedeclaration(PrevMethod, Method);
         InsMap[Method->getSelector()] = Method;
         /// The following allows us to typecheck messages to "id".
         AddInstanceMethodToGlobalPool(Method);
@@ -2186,6 +2188,8 @@ void Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd,
         Diag(PrevMethod->getLocation(), diag::note_previous_declaration);
         Method->setInvalidDecl();
       } else {
+        if (PrevMethod)
+          Context.setObjCMethodRedeclaration(PrevMethod, Method);
         ClsMap[Method->getSelector()] = Method;
         /// The following allows us to typecheck messages to "Class".
         AddFactoryMethodToGlobalPool(Method);

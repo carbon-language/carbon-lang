@@ -392,7 +392,11 @@ void ObjCMethodDecl::setMethodParams(ASTContext &C,
 /// Otherwise it will return itself.
 ObjCMethodDecl *ObjCMethodDecl::getNextRedeclaration() {
   ASTContext &Ctx = getASTContext();
-  ObjCMethodDecl *Redecl = 0;
+  ObjCMethodDecl *Redecl =
+      const_cast<ObjCMethodDecl*>(Ctx.getObjCMethodRedeclaration(this));
+  if (Redecl)
+    return Redecl;
+
   Decl *CtxD = cast<Decl>(getDeclContext());
 
   if (ObjCInterfaceDecl *IFD = dyn_cast<ObjCInterfaceDecl>(CtxD)) {

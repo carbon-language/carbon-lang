@@ -150,6 +150,10 @@ class ASTContext : public llvm::RefCountedBase<ASTContext> {
   
   /// \brief Mapping from ObjCContainers to their ObjCImplementations.
   llvm::DenseMap<ObjCContainerDecl*, ObjCImplDecl*> ObjCImpls;
+  
+  /// \brief Mapping from ObjCMethod to its duplicate declaration in the same
+  /// interface.
+  llvm::DenseMap<const ObjCMethodDecl*,const ObjCMethodDecl*> ObjCMethodRedecls;
 
   /// \brief Mapping from __block VarDecls to their copy initialization expr.
   llvm::DenseMap<const VarDecl*, Expr*> BlockVarCopyInits;
@@ -1585,6 +1589,21 @@ public:
   /// \brief Set the implementation of ObjCCategoryDecl.
   void setObjCImplementation(ObjCCategoryDecl *CatD,
                              ObjCCategoryImplDecl *ImplD);
+
+  /// \brief Get the duplicate declaration of a ObjCMethod in the same
+  /// interface, or null if non exists.
+  const ObjCMethodDecl *getObjCMethodRedeclaration(ObjCMethodDecl *MD) const {
+    llvm::DenseMap<const ObjCMethodDecl*, const ObjCMethodDecl*>::const_iterator
+      I = ObjCMethodRedecls.find(MD);
+    if (I == ObjCMethodRedecls.end())
+      return 0;
+    return I->second;
+  }
+
+  void setObjCMethodRedeclaration(const ObjCMethodDecl *MD,
+                                  const ObjCMethodDecl *Redecl) {
+    ObjCMethodRedecls[MD] = Redecl;
+  }
   
   /// \brief Set the copy inialization expression of a block var decl.
   void setBlockVarCopyInits(VarDecl*VD, Expr* Init);
