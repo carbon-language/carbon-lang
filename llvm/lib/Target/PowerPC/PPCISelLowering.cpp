@@ -3416,6 +3416,17 @@ PPCTargetLowering::LowerCall_Darwin(SDValue Chain, SDValue Callee,
                     Ins, InVals);
 }
 
+bool
+PPCTargetLowering::CanLowerReturn(CallingConv::ID CallConv,
+                                  MachineFunction &MF, bool isVarArg,
+                                  const SmallVectorImpl<ISD::OutputArg> &Outs,
+                                  LLVMContext &Context) const {
+  SmallVector<CCValAssign, 16> RVLocs;
+  CCState CCInfo(CallConv, isVarArg, MF, getTargetMachine(),
+                 RVLocs, Context);
+  return CCInfo.CheckReturn(Outs, RetCC_PPC);
+}
+
 SDValue
 PPCTargetLowering::LowerReturn(SDValue Chain,
                                CallingConv::ID CallConv, bool isVarArg,
