@@ -442,17 +442,19 @@ let Predicates=[HasMul] in {
 //===----------------------------------------------------------------------===//
 
 let canFoldAsLoad = 1, isReMaterializable = 1 in {
-  def LBU  :  LoadM<0x30, 0x000, "lbu    ">;
-  def LBUR :  LoadM<0x30, 0x200, "lbur   ">;
+  let neverHasSideEffects = 1 in {
+    def LBU  :  LoadM<0x30, 0x000, "lbu    ">;
+    def LBUR :  LoadM<0x30, 0x200, "lbur   ">;
 
-  def LHU  :  LoadM<0x31, 0x000, "lhu    ">;
-  def LHUR :  LoadM<0x31, 0x200, "lhur   ">;
+    def LHU  :  LoadM<0x31, 0x000, "lhu    ">;
+    def LHUR :  LoadM<0x31, 0x200, "lhur   ">;
 
-  def LW   :  LoadM<0x32, 0x000, "lw     ">;
-  def LWR  :  LoadM<0x32, 0x200, "lwr    ">;
+    def LW   :  LoadM<0x32, 0x000, "lw     ">;
+    def LWR  :  LoadM<0x32, 0x200, "lwr    ">;
 
-  let Defs = [CARRY] in {
-    def LWX  :  LoadM<0x32, 0x400, "lwx    ">;
+    let Defs = [CARRY] in {
+      def LWX  :  LoadM<0x32, 0x400, "lwx    ">;
+    }
   }
 
   def LBUI : LoadMI<0x38, "lbui   ", zextloadi8>;

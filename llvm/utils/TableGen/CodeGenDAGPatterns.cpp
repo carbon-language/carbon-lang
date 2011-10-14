@@ -2829,6 +2829,12 @@ void CodeGenDAGPatterns::InferInstructionFlags() {
     InstInfo.isBitcast = IsBitcast;
     InstInfo.hasSideEffects = HasSideEffects;
     InstInfo.Operands.isVariadic = IsVariadic;
+
+    // Sanity checks.
+    if (InstInfo.isReMaterializable && InstInfo.hasSideEffects)
+      throw TGError(InstInfo.TheDef->getLoc(), "The instruction " +
+                    InstInfo.TheDef->getName() +
+                    " is rematerializable AND has unmodeled side effects?");
   }
 }
 

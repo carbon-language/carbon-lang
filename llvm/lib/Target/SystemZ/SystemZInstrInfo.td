@@ -478,7 +478,7 @@ def MOV64rmm  : RSYI<0x04EB,
                      "lmg\t{$from, $to, $dst}",
                      []>;
 
-let isReMaterializable = 1, isAsCheapAsAMove = 1,
+let isReMaterializable = 1, neverHasSideEffects = 1, isAsCheapAsAMove = 1,
     Constraints = "$src = $dst" in {
 def MOV64Pr0_even : Pseudo<(outs GR64P:$dst), (ins GR64P:$src),
                            "lhi\t${dst:subreg_even}, 0",
