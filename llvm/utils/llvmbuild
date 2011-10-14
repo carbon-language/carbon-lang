@@ -191,6 +191,8 @@ def add_options(parser):
                       help=("Force reconfigure of all components"))
     parser.add_option("--no-gcc", default=False, action="store_true",
                       help=("Do not build dragonegg and gcc"))
+    parser.add_option("--no-install", default=False, action="store_true",
+                      help=("Do not do installs"))
     return
 
 def check_options(parser, options, valid_builds):
@@ -655,10 +657,11 @@ class Builder(threading.Thread):
                       make_flags[comp_key][build],
                       make_env[comp_key][build])
 
-            self.logger.info("Installing " + component + " in " + installdir)
-            self.make(component, srcdir, builddir,
-                      make_install_flags[comp_key][build],
-                      make_install_env[comp_key][build])
+            if (not self.options.no_install):
+                self.logger.info("Installing " + component + " in " + installdir)
+                self.make(component, srcdir, builddir,
+                          make_install_flags[comp_key][build],
+                          make_install_env[comp_key][build])
 
             self.logger.info("Testing " + component + " in " + builddir)
             self.make(component, srcdir, builddir,
