@@ -42,11 +42,14 @@ let test_transforms () =
   
   ignore (PassManager.create_function m
            ++ TargetData.add td
+           ++ add_verifier
            ++ add_constant_propagation
            ++ add_sccp
            ++ add_dead_store_elimination
            ++ add_aggressive_dce
            ++ add_scalar_repl_aggregation
+           ++ add_scalar_repl_aggregation_ssa
+           ++ add_scalar_repl_aggregation_with_threshold 4
            ++ add_ind_var_simplification
            ++ add_instruction_combination
            ++ add_licm
@@ -62,7 +65,14 @@ let test_transforms () =
            ++ add_gvn
            ++ add_memcpy_opt
            ++ add_loop_deletion
+           ++ add_loop_idiom
            ++ add_lib_call_simplification
+           ++ add_correlated_value_propagation
+           ++ add_early_cse
+           ++ add_lower_expect_intrinsic
+           ++ add_type_based_alias_analysis
+           ++ add_basic_alias_analysis
+           ++ add_verifier
            ++ PassManager.initialize
            ++ PassManager.run_function fn
            ++ PassManager.finalize

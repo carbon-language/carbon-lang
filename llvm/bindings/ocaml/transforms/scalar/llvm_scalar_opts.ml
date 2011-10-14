@@ -20,6 +20,15 @@ external add_aggressive_dce : [<Llvm.PassManager.any] Llvm.PassManager.t -> unit
 external
 add_scalar_repl_aggregation : [<Llvm.PassManager.any] Llvm.PassManager.t -> unit
                             = "llvm_add_scalar_repl_aggregation"
+
+external
+add_scalar_repl_aggregation_ssa : [<Llvm.PassManager.any] Llvm.PassManager.t -> unit
+                            = "llvm_add_scalar_repl_aggregation_ssa"
+
+external
+add_scalar_repl_aggregation_with_threshold : int -> [<Llvm.PassManager.any] Llvm.PassManager.t
+                                             -> unit
+                            = "llvm_add_scalar_repl_aggregation_with_threshold"
 external add_ind_var_simplification : [<Llvm.PassManager.any] Llvm.PassManager.t
                                       -> unit
                                     = "llvm_add_ind_var_simplification"
@@ -67,6 +76,36 @@ external add_memcpy_opt : [<Llvm.PassManager.any] Llvm.PassManager.t
 external add_loop_deletion : [<Llvm.PassManager.any] Llvm.PassManager.t
                              -> unit
                            = "llvm_add_loop_deletion"
+
+external add_loop_idiom : [<Llvm.PassManager.any] Llvm.PassManager.t
+                             -> unit
+                           = "llvm_add_loop_idiom"
+
 external
 add_lib_call_simplification : [<Llvm.PassManager.any] Llvm.PassManager.t -> unit
                             = "llvm_add_lib_call_simplification"
+
+external
+add_verifier : [<Llvm.PassManager.any] Llvm.PassManager.t -> unit
+        = "llvm_add_verifier"
+
+external
+add_correlated_value_propagation : [<Llvm.PassManager.any] Llvm.PassManager.t -> unit
+        = "llvm_add_correlated_value_propagation"
+
+external
+add_early_cse : [<Llvm.PassManager.any] Llvm.PassManager.t -> unit
+        = "llvm_add_early_cse"
+
+external
+add_lower_expect_intrinsic : [<Llvm.PassManager.any] Llvm.PassManager.t -> unit
+        = "llvm_add_lower_expect_intrinsic"
+
+external
+add_type_based_alias_analysis : [<Llvm.PassManager.any] Llvm.PassManager.t -> unit
+        = "llvm_add_type_based_alias_analysis"
+
+external
+add_basic_alias_analysis : [<Llvm.PassManager.any] Llvm.PassManager.t -> unit
+        = "llvm_add_basic_alias_analysis"
+

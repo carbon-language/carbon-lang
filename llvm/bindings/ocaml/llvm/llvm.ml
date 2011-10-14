@@ -261,6 +261,7 @@ external set_data_layout: string -> llmodule -> unit
 external dump_module : llmodule -> unit = "llvm_dump_module"
 external set_module_inline_asm : llmodule -> string -> unit
                                = "llvm_set_module_inline_asm"
+external module_context : llmodule -> llcontext = "LLVMGetModuleContext"
 
 (*===-- Types -------------------------------------------------------------===*)
 external classify_type : lltype -> TypeKind.t = "llvm_classify_type"
@@ -321,6 +322,7 @@ external vector_size : lltype -> int = "llvm_vector_size"
 (*--... Operations on other types ..........................................--*)
 external void_type : llcontext -> lltype = "llvm_void_type"
 external label_type : llcontext -> lltype = "llvm_label_type"
+external type_by_name : llmodule -> string -> lltype option = "llvm_type_by_name"
 
 external classify_value : llvalue -> ValueKind.t = "llvm_classify_value"
 (*===-- Values ------------------------------------------------------------===*)
@@ -812,6 +814,8 @@ external block_end : llvalue -> (llvalue, llbasicblock) llrev_pos
                    = "llvm_block_end"
 external block_pred : llbasicblock -> (llvalue, llbasicblock) llrev_pos
                     = "llvm_block_pred"
+external block_terminator : llbasicblock -> llvalue option =
+    "llvm_block_terminator"
 
 let rec iter_block_range f i e =
   if i = e then () else
@@ -936,6 +940,7 @@ external add_incoming : (llvalue * llbasicblock) -> llvalue -> unit
                       = "llvm_add_incoming"
 external incoming : llvalue -> (llvalue * llbasicblock) list = "llvm_incoming"
 
+external delete_instruction : llvalue -> unit = "llvm_delete_instruction"
 
 (*===-- Instruction builders ----------------------------------------------===*)
 external builder : llcontext -> llbuilder = "llvm_builder"
@@ -978,8 +983,15 @@ external build_cond_br : llvalue -> llbasicblock -> llbasicblock -> llbuilder ->
                          llvalue = "llvm_build_cond_br"
 external build_switch : llvalue -> llbasicblock -> int -> llbuilder -> llvalue
                       = "llvm_build_switch"
+external build_malloc : lltype -> string -> llbuilder -> llvalue =
+    "llvm_build_malloc"
+external build_array_malloc : lltype -> llvalue -> string -> llbuilder ->
+    llvalue = "llvm_build_array_malloc"
+external build_free : llvalue -> llbuilder -> llvalue = "llvm_build_free"
 external add_case : llvalue -> llvalue -> llbasicblock -> unit
                   = "llvm_add_case"
+external switch_default_dest : llvalue -> llbasicblock =
+    "LLVMGetSwitchDefaultDest"
 external build_indirect_br : llvalue -> int -> llbuilder -> llvalue
                            = "llvm_build_indirect_br"
 external add_destination : llvalue -> llbasicblock -> unit
@@ -990,6 +1002,8 @@ external build_invoke : llvalue -> llvalue array -> llbasicblock ->
 external build_landingpad : lltype -> llvalue -> int -> string -> llbuilder ->
                             llvalue = "llvm_build_landingpad"
 external set_cleanup : llvalue -> bool -> unit = "llvm_set_cleanup"
+external add_clause : llvalue -> llvalue -> unit = "llvm_add_clause"
+external build_resume : llvalue -> llbuilder -> llvalue = "llvm_build_resume"
 external build_unreachable : llbuilder -> llvalue = "llvm_build_unreachable"
 
 (*--... Arithmetic .........................................................--*)

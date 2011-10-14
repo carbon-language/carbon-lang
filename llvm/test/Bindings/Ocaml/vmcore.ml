@@ -857,6 +857,14 @@ let test_builder () =
   let bb00 = append_block context "Bb00" fn in
   ignore (build_unreachable (builder_at_end context bb00));
 
+  group "function attribute";
+  begin
+      ignore (add_function_attr fn Attribute.UWTable);
+      (* RUN: grep "X7.*uwtable" < %t.ll
+       *)
+      insist ([Attribute.UWTable] = function_attr fn);
+  end;
+
   (* see test/Feature/exception.ll *)
   let bblpad = append_block context "Bblpad" fn in
   let rt = struct_type context [| pointer_type i8_type; i32_type |] in
@@ -872,10 +880,17 @@ let test_builder () =
       let lp = build_landingpad rt personality 0 "lpad"
        (builder_at_end context bblpad) in begin
            set_cleanup lp true;
-           ignore (build_unreachable (builder_at_end context bblpad));
+           add_clause lp ztic;
+           insist((pointer_type (pointer_type i8_type)) = type_of ztid);
+           let ety = pointer_type (pointer_type i8_type) in
+           add_clause lp (const_array ety [| ztipkc; ztid |]);
+           ignore (build_resume lp (builder_at_end context bblpad));
       end;
       (* RUN: grep "landingpad.*personality.*__gxx_personality_v0" < %t.ll
        * RUN: grep "cleanup" < %t.ll
+       * RUN: grep "catch.*i8\*\*.*@_ZTIc" < %t.ll
+       * RUN: grep "filter.*@_ZTIPKc.*@_ZTId" < %t.ll
+       * RUN: grep "resume " < %t.ll
        * *)
   end;
 
@@ -914,7 +929,21 @@ let test_builder () =
     ignore (build_unreachable (builder_at_end context bb3));
     let si = build_switch p1 bb3 1 (builder_at_end context bb1) in begin
         ignore (add_case si (const_int i32_type 2) bb2);
+        insist (switch_default_dest si = bb3);
     end;
+  end;
+
+  group "malloc/free"; begin
+      (* RUN: grep {call.*@malloc(i32 ptrtoint} < %t.ll
+       * RUN: grep {call.*@free(i8\*} < %t.ll
+       * RUN: grep {call.*@malloc(i32 %} < %t.ll
+       *)
+      let bb1 = append_block context "MallocBlock1" fn in
+      let m1 = (build_malloc (pointer_type i32_type) "m1"
+      (builder_at_end context bb1)) in
+      ignore (build_free m1 (builder_at_end context bb1));
+      ignore (build_array_malloc i32_type p1 "m2" (builder_at_end context bb1));
+      ignore (build_unreachable (builder_at_end context bb1));
   end;
 
   group "indirectbr"; begin

@@ -363,7 +363,9 @@ val dump_module : llmodule -> unit
     the method [llvm::Module::setModuleInlineAsm]. *)
 val set_module_inline_asm : llmodule -> string -> unit
 
-
+(** [module_context m] returns the context of the specified module.
+ * See the method [llvm::Module::getContext] *)
+val module_context : llmodule -> llcontext
 
 (** {6 Types} *)
 
@@ -551,6 +553,11 @@ val void_type : llcontext -> lltype
 (** [label_type c] creates a type of a basic block in the context [c]. See
     [llvm::Type::LabelTy]. *)
 val label_type : llcontext -> lltype
+
+(** [type_by_name m name] returns the specified type from the current module
+ * if it exists.
+ * See the method [llvm::Module::getTypeByName] *)
+val type_by_name : llmodule -> string -> lltype option
 
 (* {6 Values} *)
 
@@ -1508,6 +1515,7 @@ val block_end : llvalue -> (llvalue, llbasicblock) llrev_pos
     See the method [llvm::Function::iterator::operator--]. *)
 val block_pred : llbasicblock -> (llvalue, llbasicblock) llrev_pos
 
+val block_terminator : llbasicblock -> llvalue option
 
 (** [rev_iter_blocks f fn] applies function [f] to each of the basic blocks
     of function [fn] in reverse order. Tail recursive. *)
@@ -1625,7 +1633,9 @@ val add_incoming : (llvalue * llbasicblock) -> llvalue -> unit
     See the method [llvm::PHINode::getIncomingValue]. *)
 val incoming : llvalue -> (llvalue * llbasicblock) list
 
-
+(** [delete_instruction i] deletes the instruction [i].
+ * See the method [llvm::Instruction::eraseFromParent]. *)
+val delete_instruction : llvalue -> unit
 
 (** {6 Instruction builders} *)
 
@@ -1739,12 +1749,30 @@ val build_cond_br : llvalue -> llbasicblock -> llbasicblock -> llbuilder ->
     See the method [llvm::LLVMBuilder::CreateSwitch]. *)
 val build_switch : llvalue -> llbasicblock -> int -> llbuilder -> llvalue
 
+(** [build_malloc ty name b] creates an [malloc]
+    instruction at the position specified by the instruction builder [b].
+    See the method [llvm::CallInst::CreateMalloc]. *)
+val build_malloc : lltype -> string -> llbuilder -> llvalue
+
+(** [build_array_malloc ty val name b] creates an [array malloc]
+    instruction at the position specified by the instruction builder [b].
+    See the method [llvm::CallInst::CreateArrayMalloc]. *)
+val build_array_malloc : lltype -> llvalue -> string -> llbuilder -> llvalue
+
+(** [build_free p b] creates a [free]
+    instruction at the position specified by the instruction builder [b].
+    See the method [llvm::LLVMBuilder::CreateFree]. *)
+val build_free : llvalue -> llbuilder -> llvalue
 
 (** [add_case sw onval bb] causes switch instruction [sw] to branch to [bb]
     when its input matches the constant [onval].
     See the method [llvm::SwitchInst::addCase]. **)
 val add_case : llvalue -> llvalue -> llbasicblock -> unit
 
+(** [switch_default_dest sw] returns the default destination of the [switch]
+ * instruction.
+ * See the method [llvm:;SwitchInst::getDefaultDest]. **)
+val switch_default_dest : llvalue -> llbasicblock
 
 (** [build_indirect_br addr count b] creates a
     [indirectbr %addr]
@@ -1777,6 +1805,15 @@ val build_landingpad : lltype -> llvalue -> int -> string -> llbuilder ->
 (** [set_cleanup lp] sets the cleanup flag in the [landingpad]instruction.
     See the method [llvm::LandingPadInst::setCleanup]. *)
 val set_cleanup : llvalue -> bool -> unit
+
+(** [add_clause lp clause] adds the clause to the [landingpad]instruction.
+    See the method [llvm::LandingPadInst::addClause]. *)
+val add_clause : llvalue -> llvalue -> unit
+
+(* [build_resume exn b] builds a [resume exn] instruction
+ * at the position specified by the instruction builder [b].
+ * See the method [llvm::LLVMBuilder::CreateResume] *)
+val build_resume : llvalue -> llbuilder -> llvalue
 
 (** [build_unreachable b] creates an
     [unreachable]

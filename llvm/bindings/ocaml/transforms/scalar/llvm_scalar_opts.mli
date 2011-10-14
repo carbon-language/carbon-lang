@@ -35,6 +35,17 @@ external
 add_scalar_repl_aggregation : [<Llvm.PassManager.any] Llvm.PassManager.t -> unit
                             = "llvm_add_scalar_repl_aggregation"
 
+(** See the [llvm::createScalarReplAggregatesPassSSA] function. *)
+external
+add_scalar_repl_aggregation_ssa : [<Llvm.PassManager.any] Llvm.PassManager.t -> unit
+                            = "llvm_add_scalar_repl_aggregation_ssa"
+
+(** See the [llvm::createScalarReplAggregatesWithThreshold] function. *)
+external
+add_scalar_repl_aggregation_with_threshold : int -> [<Llvm.PassManager.any] Llvm.PassManager.t
+                                             -> unit
+                            = "llvm_add_scalar_repl_aggregation_with_threshold"
+
 (** See the [llvm::createIndVarSimplifyPass] function. *)
 external add_ind_var_simplification : [<Llvm.PassManager.any] Llvm.PassManager.t
                                       -> unit
@@ -112,7 +123,42 @@ external add_loop_deletion : [<Llvm.PassManager.any] Llvm.PassManager.t
                              -> unit
                            = "llvm_add_loop_deletion"
 
+external add_loop_idiom : [<Llvm.PassManager.any] Llvm.PassManager.t
+                             -> unit
+                           = "llvm_add_loop_idiom"
+
 (** See the [llvm::createSimplifyLibCallsPass] function. *)
 external
 add_lib_call_simplification : [<Llvm.PassManager.any] Llvm.PassManager.t -> unit
                             = "llvm_add_lib_call_simplification"
+
+(** See the [llvm::createVerifierPass] function. *)
+external
+add_verifier : [<Llvm.PassManager.any] Llvm.PassManager.t -> unit
+        = "llvm_add_verifier"
+
+(** See the [llvm::createCorrelatedValuePropagationPass] function. *)
+external
+add_correlated_value_propagation : [<Llvm.PassManager.any] Llvm.PassManager.t -> unit
+        = "llvm_add_correlated_value_propagation"
+
+(** See the [llvm::createEarlyCSE] function. *)
+external
+add_early_cse : [<Llvm.PassManager.any] Llvm.PassManager.t -> unit
+        = "llvm_add_early_cse"
+
+(** See the [llvm::createLowerExpectIntrinsicPass] function. *)
+external
+add_lower_expect_intrinsic : [<Llvm.PassManager.any] Llvm.PassManager.t -> unit
+        = "llvm_add_lower_expect_intrinsic"
+
+(** See the [llvm::createTypeBasedAliasAnalysisPass] function. *)
+external
+add_type_based_alias_analysis : [<Llvm.PassManager.any] Llvm.PassManager.t -> unit
+        = "llvm_add_type_based_alias_analysis"
+
+(** See the [llvm::createBasicAliasAnalysisPass] function. *)
+external
+add_basic_alias_analysis : [<Llvm.PassManager.any] Llvm.PassManager.t -> unit
+        = "llvm_add_basic_alias_analysis"
+
