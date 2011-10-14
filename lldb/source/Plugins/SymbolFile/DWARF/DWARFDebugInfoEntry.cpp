@@ -1145,11 +1145,12 @@ DWARFDebugInfoEntry::DumpLocation
     if (obj_file)
         obj_file_name = obj_file->GetFileSpec().GetFilename().AsCString();
     const char *die_name = GetName (dwarf2Data, cu);
-    s.Printf ("CU: %s OBJFILE: %s DIE: %s (0x%x).", 
-                cu_name ? cu_name : "<UNKNOWN>",
-                obj_file_name ? obj_file_name : "<UNKNOWN>",
-                die_name ? die_name : "<NO NAME>", 
-                GetOffset());
+    s.Printf ("0x%8.8x/0x%8.8x: %-30s (from %s in %s)", 
+              cu->GetOffset(),
+              GetOffset(),
+              die_name ? die_name : "", 
+              cu_name ? cu_name : "<NULL>",
+              obj_file_name ? obj_file_name : "<NULL>");
 }
 
 //----------------------------------------------------------------------

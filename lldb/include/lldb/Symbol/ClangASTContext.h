@@ -540,7 +540,6 @@ public:
 
     clang::NamespaceDecl *
     GetUniqueNamespaceDeclaration (const char *name,
-                                   const Declaration &decl,
                                    clang::DeclContext *decl_ctx);
 
     //------------------------------------------------------------------

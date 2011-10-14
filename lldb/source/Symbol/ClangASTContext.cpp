@@ -4115,18 +4115,30 @@ ClangASTContext::GetDeclContextForType (clang_type_t clang_type)
 #pragma mark Namespace Declarations
 
 NamespaceDecl *
-ClangASTContext::GetUniqueNamespaceDeclaration (const char *name, const Declaration &decl, DeclContext *decl_ctx)
+ClangASTContext::GetUniqueNamespaceDeclaration (const char *name, DeclContext *decl_ctx)
 {
-    // TODO: Do something intelligent with the Declaration object passed in
-    // like maybe filling in the SourceLocation with it...
+    NamespaceDecl *namespace_decl = NULL;
     if (name)
     {
         ASTContext *ast = getASTContext();
         if (decl_ctx == NULL)
             decl_ctx = ast->getTranslationUnitDecl();
-        return NamespaceDecl::Create(*ast, decl_ctx, SourceLocation(), SourceLocation(), &ast->Idents.get(name));
+        
+        IdentifierInfo &identifier_info = ast->Idents.get(name);
+        DeclarationName decl_name (&identifier_info);
+        clang::DeclContext::lookup_result result = decl_ctx->lookup(decl_name);
+        for (clang::DeclContext::lookup_iterator pos = result.first, end = result.second; pos != end; ++pos) 
+        {
+            namespace_decl = dyn_cast<clang::NamespaceDecl>(*pos);
+            if (namespace_decl)
+                return namespace_decl;
+        }
+
+        namespace_decl = NamespaceDecl::Create(*ast, decl_ctx, SourceLocation(), SourceLocation(), &identifier_info);
+        
+        decl_ctx->addDecl (namespace_decl);
     }
-    return NULL;
+    return namespace_decl;
 }
 
 
