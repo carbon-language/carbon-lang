@@ -1165,7 +1165,7 @@ void NeonEmitter::run(raw_ostream &OS) {
     }
   }
 
-  OS << "#define __ai static __attribute__((__always_inline__))\n\n";
+  OS<<"#define __ai static __attribute__((__always_inline__, __nodebug__))\n\n";
 
   std::vector<Record*> RV = Records.getAllDerivedDefinitions("Inst");
 
