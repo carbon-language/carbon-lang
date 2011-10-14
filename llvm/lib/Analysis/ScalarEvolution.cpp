@@ -4764,7 +4764,8 @@ static Constant *EvaluateExpression(Value *V, const Loop *L,
   for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
     Instruction *Operand = dyn_cast<Instruction>(I->getOperand(i));
     if (!Operand) {
-      Operands[i] = cast<Constant>(I->getOperand(i));
+      Operands[i] = dyn_cast<Constant>(I->getOperand(i));
+      if (!Operands[i]) return 0;
       continue;
     }
     Constant *C = EvaluateExpression(Operand, L, Vals, TD);
