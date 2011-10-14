@@ -66,7 +66,6 @@ class TargetWatchAddressAPITestCase(TestBase):
                                                value.GetType().GetPointeeType())
         # Watch for write to *g_char_ptr.
         watchpoint = target.WatchAddress(value.GetValueAsUnsigned(), 1, False, True)
-        print watchpoint
         self.assertTrue(value and watchpoint,
                         "Successfully found the pointer and set a watchpoint")
         self.DebugSBValue(value)
