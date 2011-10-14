@@ -266,7 +266,7 @@ let isReMaterializable = 1, isAsCheapAsAMove = 1, isCodeGenOnly = 1,
 // We set canFoldAsLoad because this can be converted to a constant-pool
 // load of an all-zeros value if folding it would be beneficial.
 let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
-    isPseudo = 1 in {
+    isPseudo = 1, neverHasSideEffects = 1 in {
 def V_SET0 : I<0, Pseudo, (outs VR128:$dst), (ins), "", []>;
 }
 
