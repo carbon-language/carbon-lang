@@ -7205,15 +7205,15 @@ ExprResult Sema::ConvertPropertyForRValue(Expr *E) {
       VK = Expr::getValueKindForType(GetterMethod->getResultType());
     }
     else {
-      // lvalue-ness of an explicit property is determined by
-      // getter type.
       Diag(PRE->getLocation(), diag::err_getter_not_found)
             << PRE->getBase()->getType();
     }
   }
   else {
+    // lvalue-ness of an explicit property is determined by
+    // getter type.
     QualType ResT = PRE->getGetterResultType();
-     VK = Expr::getValueKindForType(ResT);
+    VK = Expr::getValueKindForType(ResT);
   }
     
   E = ImplicitCastExpr::Create(Context, T, CK_GetObjCProperty,
