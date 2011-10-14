@@ -3,7 +3,7 @@
 <html>
 <head>
   <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-  <title>Clang - C++ and C++'0x Status</title>
+  <title>Clang - C++ and C++'11 Status</title>
   <link type="text/css" rel="stylesheet" href="menu.css">
   <link type="text/css" rel="stylesheet" href="content.css">
   <style type="text/css">
@@ -23,23 +23,23 @@
 <div id="content">
 
 <!--*************************************************************************-->
-<h1>C++ and C++'0x Support in Clang</h1>
+<h1>C++ and C++'11 Support in Clang</h1>
 <!--*************************************************************************-->
 <p>Last updated: $Date$</p>
 
 <p>Clang currently implements all of the ISO C++ 1998 standard
   (including the defects addressed in the ISO C++ 2003 standard)
-  except for 'export' (which has been removed from the C++'0x draft)
+  except for 'export' (which has been removed in C++'11)
   and is considered a production-quality C++ compiler.  The <a
    href="http://llvm.org/bugs/">LLVM bug tracker</a> contains a Clang
   C++ component that tracks known Clang C++ bugs.</p>
 
-<h2 id="cxx0x">C++0x Implementation status</h2>
+<h2 id="cxx11">C++11 Implementation status</h2>
 
-  <p>Clang provides support for a number of features included in the upcoming ISO C++ Standard, C++0x. This section tracks the status of various C++0x
-features, and a number of other C++0x features are under active development.</p>
+  <p>Clang provides support for a number of features included in the new ISO C++ Standard, ISO/IEC 14882:2011. This section tracks the status of various C++11
+features, and a number of other C++11 features are under active development.</p>
 
-<p>You can use Clang in C++0x mode either
+<p>You can use Clang in C++11 mode either
 with <a href="http://libcxx.llvm.org/">libc++</a> or with gcc's libstdc++.
 libstdc++-4.4 requires <a href="libstdc++4.4-clang0x.patch">a patch</a> to work
 with clang; other versions have not been tested.</p>
@@ -57,7 +57,7 @@ of support for a given section:
   -->
 
 <p>The following table is used to help track our implementation
-  progress toward implementing the complete C++'0x standard. We use a
+  progress toward implementing the complete C++'11 standard. We use a
   simple, somewhat arbitrary color-coding scheme to describe the
   relative completeness of features:</p>
 
@@ -95,7 +95,7 @@ of support for a given section:
 
 <p>A feature is "complete" when the appropriate Clang component (Parse, AST,
 Sema, CodeGen) implements the behavior described in all of the
-paragraphs in the relevant C++'0x draft standard.  The major
+paragraphs in the C++'11 standard.  The major
 components are:</p>
 
 <dl>
@@ -124,7 +124,7 @@ components are:</p>
 welcome!</p>
 
 <table width="689" border="1" cellspacing="0">
-<tr><td colspan="7" align="center" bgcolor="#ffddaa">C++0x Features (current draft report <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2011/n3291.pdf">here</a>)</td>
+<tr><td colspan="7" align="center" bgcolor="#ffddaa">C++11 Features (standard available <a href="http://www.iso.org/iso/iso_catalogue/catalogue_tc/catalogue_detail.htm?csnumber=50372">here</a>)</td>
 </tr>
   <tr>
     <th>Feature</th>
