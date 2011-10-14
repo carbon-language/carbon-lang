@@ -294,9 +294,14 @@ external struct_type : llcontext -> lltype array -> lltype = "llvm_struct_type"
 external packed_struct_type : llcontext -> lltype array -> lltype
                             = "llvm_packed_struct_type"
 external struct_name : lltype -> string option = "llvm_struct_name"
+external named_struct_type : llcontext -> string -> lltype =
+    "llvm_named_struct_type"
+external struct_set_body : lltype -> lltype array -> bool -> unit =
+    "llvm_struct_set_body"
 external struct_element_types : lltype -> lltype array
                               = "llvm_struct_element_types"
 external is_packed : lltype -> bool = "llvm_is_packed"
+external is_opaque : lltype -> bool = "llvm_is_opaque"
 
 (*--... Operations on pointer, vector, and array types .....................--*)
 external array_type : lltype -> int -> lltype = "llvm_array_type"
@@ -400,6 +405,8 @@ external const_stringz : llcontext -> string -> llvalue = "llvm_const_stringz"
 external const_array : lltype -> llvalue array -> llvalue = "llvm_const_array"
 external const_struct : llcontext -> llvalue array -> llvalue
                       = "llvm_const_struct"
+external const_named_struct : lltype -> llvalue array -> llvalue
+                      = "llvm_const_named_struct"
 external const_packed_struct : llcontext -> llvalue array -> llvalue
                              = "llvm_const_packed_struct"
 external const_vector : llvalue array -> llvalue = "llvm_const_vector"

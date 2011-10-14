@@ -292,6 +292,20 @@ CAMLprim LLVMTypeRef llvm_packed_struct_type(LLVMContextRef C,
                                  Wosize_val(ElementTypes), 1);
 }
 
+/* llcontext -> string -> lltype */
+CAMLprim LLVMTypeRef llvm_named_struct_type(LLVMContextRef C,
+                                            value Name) {
+  return LLVMStructCreateNamed(C, String_val(Name));
+}
+
+CAMLprim value llvm_struct_set_body(LLVMTypeRef Ty,
+                                    value ElementTypes,
+                                    value Packed) {
+  LLVMStructSetBody(Ty, (LLVMTypeRef *) ElementTypes,
+                    Wosize_val(ElementTypes), Bool_val(Packed));
+  return Val_unit;
+}
+
 /* lltype -> string option */
 CAMLprim value llvm_struct_name(LLVMTypeRef Ty)
 {
@@ -316,6 +330,11 @@ CAMLprim value llvm_struct_element_types(LLVMTypeRef StructTy) {
 /* lltype -> bool */
 CAMLprim value llvm_is_packed(LLVMTypeRef StructTy) {
   return Val_bool(LLVMIsPackedStruct(StructTy));
+}
+
+/* lltype -> bool */
+CAMLprim value llvm_is_opaque(LLVMTypeRef StructTy) {
+  return Val_bool(LLVMIsOpaqueStruct(StructTy));
 }
 
 /*--... Operations on array, pointer, and vector types .....................--*/
@@ -639,6 +658,11 @@ CAMLprim LLVMValueRef llvm_const_array(LLVMTypeRef ElementTy,
 CAMLprim LLVMValueRef llvm_const_struct(LLVMContextRef C, value ElementVals) {
   return LLVMConstStructInContext(C, (LLVMValueRef *) Op_val(ElementVals),
                                   Wosize_val(ElementVals), 0);
+}
+
+/* lltype -> llvalue array -> llvalue */
+CAMLprim LLVMValueRef llvm_const_named_struct(LLVMTypeRef Ty, value ElementVals) {
+    return LLVMConstNamedStruct(Ty, (LLVMValueRef *) Op_val(ElementVals),  Wosize_val(ElementVals));
 }
 
 /* llcontext -> llvalue array -> llvalue */

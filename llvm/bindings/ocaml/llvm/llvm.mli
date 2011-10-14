@@ -478,6 +478,15 @@ val packed_struct_type : llcontext -> lltype array -> lltype
  * or None if the structure type is not named *)
 val struct_name : lltype -> string option
 
+(** [named_struct_type context name] returns the named structure type [name]
+ * in the context [context].
+ * See the method [llvm::StructType::get]. *)
+val named_struct_type : llcontext -> string -> lltype
+
+(** [struct_set_body ty elts ispacked] sets the body of the named struct [ty]
+ * to the [elts] elements.
+ * See the moethd [llvm::StructType::setBody]. *)
+val struct_set_body : lltype -> lltype array -> bool -> unit
 
 (** [struct_element_types sty] returns the constituent types of the struct type
     [sty]. See the method [llvm::StructType::getElementType]. *)
@@ -488,6 +497,9 @@ val struct_element_types : lltype -> lltype array
     [false] otherwise. See the method [llvm::StructType::isPacked]. *)
 val is_packed : lltype -> bool
 
+(** [is_opaque sty] returns [true] if the structure type [sty] is opaque.
+    [false] otherwise. See the method [llvm::StructType::isOpaque]. *)
+val is_opaque : lltype -> bool
 
 (** {7 Operations on pointer, vector, and array types} *)
 
@@ -738,9 +750,14 @@ val const_array : lltype -> llvalue array -> llvalue
 (** [const_struct context elts] returns the structured constant of type
     [struct_type (Array.map type_of elts)] and containing the values [elts]
     in the context [context]. This value can in turn be used as the initializer
-    for a global variable. See the method [llvm::ConstantStruct::get]. *)
+    for a global variable. See the method [llvm::ConstantStruct::getAnon]. *)
 val const_struct : llcontext -> llvalue array -> llvalue
 
+(** [const_named_struct namedty elts] returns the structured constant of type
+    [namedty] (which must be a named structure type) and containing the values [elts].
+    This value can in turn be used as the initializer
+    for a global variable. See the method [llvm::ConstantStruct::get]. *)
+val const_named_struct : lltype -> llvalue array -> llvalue
 
 (** [const_packed_struct context elts] returns the structured constant of
     type {!packed_struct_type} [(Array.map type_of elts)] and containing the
