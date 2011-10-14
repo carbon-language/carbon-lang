@@ -54,6 +54,8 @@ def ExtraTokens : DiagGroup<"extra-tokens">;
 def FormatExtraArgs : DiagGroup<"format-extra-args">;
 def FormatZeroLength : DiagGroup<"format-zero-length">;
 
+def CXX98Compat : DiagGroup<"c++98-compat">;
+
 def CXX11Narrowing : DiagGroup<"c++11-narrowing">;
 def : DiagGroup<"c++0x-narrowing", [CXX11Narrowing]>;
 
