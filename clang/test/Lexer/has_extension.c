@@ -28,3 +28,11 @@ int has_c_generic_selections();
 int no_c_generic_selections();
 #endif
 
+// CHECK-PED-NONE: has_c_alignas
+// CHECK-PED-ERR: no_c_alignas
+#if __has_extension(c_alignas)
+int has_c_alignas();
+#else
+int no_c_alignas();
+#endif
+

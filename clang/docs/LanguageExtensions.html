@@ -40,6 +40,7 @@
     <ul>
    <li><a href="#cxx_access_control_sfinae">C++0x SFINAE includes access control</a></li>
     <li><a href="#cxx_alias_templates">C++0x alias templates</a></li>
+    <li><a href="#cxx_alignas">C++0x alignment specifiers</a></li>
     <li><a href="#cxx_attributes">C++0x attributes</a></li>
     <li><a href="#cxx_constexpr">C++0x generalized constant expressions</a></li>
     <li><a href="#cxx_decltype">C++0x <tt>decltype()</tt></a></li>
@@ -71,6 +72,7 @@
    </ul></li>
   <li><a href="#c1x">C1X</a>
     <ul>
+    <li><a href="#c_alignas">C1X alignment specifiers</a></li>
     <li><a href="#c_generic_selections">C1X generic selections</a></li>
     <li><a href="#c_static_assert">C1X <tt>_Static_assert()</tt></a></li>
     </ul></li>
@@ -476,6 +478,12 @@ with the <tt>-std=c++0x</tt> option when compiling C++ code.</p>
 <tt>__has_extension(cxx_alias_templates)</tt> to determine if support for
 C++0x's alias declarations and alias templates is enabled.</p>
 
+<h4 id="cxx_alignas">C++0x alignment specifiers</h4>
+
+<p>Use <tt>__has_feature(cxx_alignas)</tt> or
+<tt>__has_extension(cxx_alignas)</tt> to determine if support for alignment
+specifiers using <tt>alignas</tt> is enabled.</p>
+
 <h4 id="cxx_attributes">C++0x attributes</h4>
 
 <p>Use <tt>__has_feature(cxx_attributes)</tt> or
@@ -634,6 +642,12 @@ for variadic templates is enabled.</p>
 <p>The features listed below are slated for inclusion in the upcoming
 C1X standard. As a result, all these features are enabled
 with the <tt>-std=c1x</tt> option when compiling C code.</p>
+
+<h4 id="c_alignas">C1X alignment specifiers</h4>
+
+<p>Use <tt>__has_feature(c_alignas)</tt> or <tt>__has_extension(c_alignas)</tt>
+to determine if support for alignment specifiers using <tt>_Alignas</tt>
+is enabled.</p>
 
 <h4 id="c_generic_selections">C1X generic selections</h4>
 

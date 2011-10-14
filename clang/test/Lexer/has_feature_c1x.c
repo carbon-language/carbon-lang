@@ -18,3 +18,12 @@ int no_generic_selections();
 
 // CHECK-1X: has_generic_selections
 // CHECK-NO-1X: no_generic_selections
+
+#if __has_feature(c_alignas)
+int has_alignas();
+#else
+int no_alignas();
+#endif
+
+// CHECK-1X: has_alignas
+// CHECK-NO-1X: no_alignas

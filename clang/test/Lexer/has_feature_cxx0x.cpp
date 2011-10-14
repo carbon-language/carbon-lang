@@ -173,3 +173,12 @@ int no_implicit_moves();
 
 // CHECK-0X: has_implicit_moves
 // CHECK-NO-0X: no_implicit_moves
+
+#if __has_feature(cxx_alignas)
+int has_alignas();
+#else
+int no_alignas();
+#endif
+
+// CHECK-0X: has_alignas
+// CHECK-NO-0X: no_alignas
