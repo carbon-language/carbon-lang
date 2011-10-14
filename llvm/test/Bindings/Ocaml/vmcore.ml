@@ -337,6 +337,16 @@ let test_constants () =
       "{cx},{ax},{di},~{dirflag},~{fpsr},~{flags},~{edi},~{ecx}"
       true
       false)
+  end;
+
+  group "recursive struct"; begin
+      let nsty = named_struct_type context "rec" in
+      let pty = pointer_type nsty in
+      struct_set_body nsty [| i32_type; pty |] false;
+      let elts = [| const_int i32_type 4; const_pointer_null pty |] in
+      let grec_init = const_named_struct nsty elts in
+      ignore (define_global "grec" grec_init m);
+      ignore (string_of_lltype nsty);
   end
 
 

@@ -1137,7 +1137,14 @@ let rec string_of_lltype ty =
   (* FIXME: stop infinite recursion! :) *)
   match classify_type ty with
     TypeKind.Integer -> "i" ^ string_of_int (integer_bitwidth ty)
-  | TypeKind.Pointer -> (string_of_lltype (element_type ty)) ^ "*"
+  | TypeKind.Pointer ->
+      (let ety = element_type ty in
+      match classify_type ety with
+      | TypeKind.Struct ->
+          (match struct_name ety with
+          | None -> (string_of_lltype ety)
+          | Some s -> s) ^ "*"
+      | _ -> (string_of_lltype (element_type ty)) ^ "*")
   | TypeKind.Struct ->
       let s = "{ " ^ (concat2 ", " (
                 Array.map string_of_lltype (struct_element_types ty)
