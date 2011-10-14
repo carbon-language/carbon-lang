@@ -7,4 +7,4 @@ void test() {
   printf("Hello World\n");
 }
 
-// CHECK: test/CodeGen
+// CHECK: test{{[\\/]}}CodeGen
