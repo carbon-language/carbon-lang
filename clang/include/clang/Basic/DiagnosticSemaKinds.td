@@ -3125,8 +3125,10 @@ def warn_floatingpoint_eq : Warning<
 
 def warn_division_by_zero : Warning<"division by zero is undefined">;
 def warn_remainder_by_zero : Warning<"remainder by zero is undefined">;
-def warn_shift_negative : Warning<"shift count is negative">;
-def warn_shift_gt_typewidth : Warning<"shift count >= width of type">;
+def warn_shift_negative : Warning<"shift count is negative">,
+  InGroup<DiagGroup<"shift-count-negative">>;
+def warn_shift_gt_typewidth : Warning<"shift count >= width of type">,
+  InGroup<DiagGroup<"shift-count-overflow">>;
 def warn_shift_result_gt_typewidth : Warning<
   "signed shift result (%0) requires %1 bits to represent, but %2 only has "
   "%3 bits">, InGroup<DiagGroup<"shift-overflow">>;

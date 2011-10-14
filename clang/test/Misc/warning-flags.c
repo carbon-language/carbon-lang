@@ -17,7 +17,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (299):
+CHECK: Warnings without flags (297):
 CHECK-NEXT:   backslash_newline_space
 CHECK-NEXT:   charize_microsoft_ext
 CHECK-NEXT:   ext_anon_param_requires_type_specifier
@@ -288,8 +288,6 @@ CHECK-NEXT:   warn_second_parameter_of_va_start_not_last_named_argument
 CHECK-NEXT:   warn_second_parameter_to_va_arg_never_compatible
 CHECK-NEXT:   warn_setter_getter_impl_required
 CHECK-NEXT:   warn_setter_getter_impl_required_in_category
-CHECK-NEXT:   warn_shift_gt_typewidth
-CHECK-NEXT:   warn_shift_negative
 CHECK-NEXT:   warn_standalone_specifier
 CHECK-NEXT:   warn_static_inline_explicit_inst_ignored
 CHECK-NEXT:   warn_static_non_static
