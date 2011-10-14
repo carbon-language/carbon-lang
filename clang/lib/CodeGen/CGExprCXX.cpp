@@ -353,6 +353,49 @@ RValue CodeGenFunction::EmitCUDAKernelCallExpr(const CUDAKernelCallExpr *E,
   return CGM.getCUDARuntime().EmitCUDAKernelCallExpr(*this, E, ReturnValue);
 }
 
+static void EmitNullBaseClassInitialization(CodeGenFunction &CGF,
+                                            llvm::Value *DestPtr,
+                                            const CXXRecordDecl *Base) {
+  if (Base->isEmpty())
+    return;
+
+  DestPtr = CGF.EmitCastToVoidPtr(DestPtr);
+
+  const ASTRecordLayout &Layout = CGF.getContext().getASTRecordLayout(Base);
+  CharUnits Size = Layout.getNonVirtualSize();
+  CharUnits Align = Layout.getNonVirtualAlign();
+
+  llvm::Value *SizeVal = CGF.CGM.getSize(Size);
+
+  // If the type contains a pointer to data member we can't memset it to zero.
+  // Instead, create a null constant and copy it to the destination.
+  // TODO: there are other patterns besides zero that we can usefully memset,
+  // like -1, which happens to be the pattern used by member-pointers.
+  // TODO: isZeroInitializable can be over-conservative in the case where a
+  // virtual base contains a member pointer.
+  if (!CGF.CGM.getTypes().isZeroInitializable(Base)) {
+    llvm::Constant *NullConstant = CGF.CGM.EmitNullConstantForBase(Base);
+
+    llvm::GlobalVariable *NullVariable = 
+      new llvm::GlobalVariable(CGF.CGM.getModule(), NullConstant->getType(),
+                               /*isConstant=*/true, 
+                               llvm::GlobalVariable::PrivateLinkage,
+                               NullConstant, Twine());
+    NullVariable->setAlignment(Align.getQuantity());
+    llvm::Value *SrcPtr = CGF.EmitCastToVoidPtr(NullVariable);
+
+    // Get and call the appropriate llvm.memcpy overload.
+    CGF.Builder.CreateMemCpy(DestPtr, SrcPtr, SizeVal, Align.getQuantity());
+    return;
+  } 
+  
+  // Otherwise, just memset the whole thing to zero.  This is legal
+  // because in LLVM, all default initializers (other than the ones we just
+  // handled above) are guaranteed to have a bit pattern of all zeros.
+  CGF.Builder.CreateMemSet(DestPtr, CGF.Builder.getInt8(0), SizeVal,
+                           Align.getQuantity());
+}
+
 void
 CodeGenFunction::EmitCXXConstructExpr(const CXXConstructExpr *E,
                                       AggValueSlot Dest) {
@@ -363,8 +406,19 @@ CodeGenFunction::EmitCXXConstructExpr(const CXXConstructExpr *E,
   // constructor, as can be the case with a non-user-provided default
   // constructor, emit the zero initialization now, unless destination is
   // already zeroed.
-  if (E->requiresZeroInitialization() && !Dest.isZeroed())
-    EmitNullInitialization(Dest.getAddr(), E->getType());
+  if (E->requiresZeroInitialization() && !Dest.isZeroed()) {
+    switch (E->getConstructionKind()) {
+    case CXXConstructExpr::CK_Delegating:
+      assert(0 && "Delegating constructor should not need zeroing");
+    case CXXConstructExpr::CK_Complete:
+      EmitNullInitialization(Dest.getAddr(), E->getType());
+      break;
+    case CXXConstructExpr::CK_VirtualBase:
+    case CXXConstructExpr::CK_NonVirtualBase:
+      EmitNullBaseClassInitialization(*this, Dest.getAddr(), CD->getParent());
+      break;
+    }
+  }
   
   // If this is a call to a trivial default constructor, do nothing.
   if (CD->isTrivial() && CD->isDefaultConstructor())

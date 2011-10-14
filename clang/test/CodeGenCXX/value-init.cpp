@@ -238,6 +238,25 @@ namespace test6 {
   // CHECK:      ret void
 }
 
+namespace PR11124 {
+  // Make sure C::C doesn't overwrite parts of A while it is zero-initializing B
+  struct A { int a; A(); A(int); };
+  struct B : virtual A { int b; };
+  struct C : B { C(); };      
+  C::C() : A(3), B() {}
+  // CHECK: define void @_ZN7PR111241CC1Ev
+  // CHECK: call void @llvm.memset.p0i8.i64(i8* {{.*}}, i8 0, i64 12, i32 8, i1 false)
+  // CHECK-NEXT: call void @_ZN7PR111241BC2Ev
+  // Make sure C::C doesn't overwrite parts of A while it is zero-initializing B
+
+  struct B2 : virtual A { int B::*b; };
+  struct C2 : B2 { C2(); };      
+  C2::C2() : A(3), B2() {}
+  // CHECK: define void @_ZN7PR111242C2C1Ev
+  // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(i8* %{{.*}}, i8* {{.*}}, i64 16, i32 8, i1 false)
+  // CHECK-NEXT: call void @_ZN7PR111242B2C2Ev
+}
+
 // CHECK: define linkonce_odr void @_ZN8zeroinit2X3IiEC2Ev(%"struct.zeroinit::X3"* %this) unnamed_addr
 // CHECK: call void @llvm.memset.p0i8.i64
 // CHECK-NEXT: call void @_ZN8zeroinit2X2IiEC2Ev

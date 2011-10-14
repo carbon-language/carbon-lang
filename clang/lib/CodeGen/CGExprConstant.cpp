@@ -1343,3 +1343,8 @@ llvm::Constant *CodeGenModule::EmitNullConstant(QualType T) {
   //   A NULL pointer is represented as -1.
   return getCXXABI().EmitNullMemberPointer(T->castAs<MemberPointerType>());
 }
+
+llvm::Constant *
+CodeGenModule::EmitNullConstantForBase(const CXXRecordDecl *Record) {
+  return ::EmitNullConstant(*this, Record, false);
+}

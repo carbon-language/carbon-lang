@@ -670,6 +670,11 @@ public:
   /// but not always, an LLVM null constant.
   llvm::Constant *EmitNullConstant(QualType T);
 
+  /// EmitNullConstantForBase - Return a null constant appropriate for 
+  /// zero-initializing a base class with the given type.  This is usually,
+  /// but not always, an LLVM null constant.
+  llvm::Constant *EmitNullConstantForBase(const CXXRecordDecl *Record);
+
   /// Error - Emit a general error that something can't be done.
   void Error(SourceLocation loc, StringRef error);
 
