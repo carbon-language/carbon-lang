@@ -57,6 +57,10 @@ def note_odr_number_of_bases : Note<
 def note_odr_enumerator : Note<"enumerator %0 with value %1 here">;
 def note_odr_missing_enumerator : Note<"no corresponding enumerator here">;
 
+def err_odr_field_type_inconsistent : Error<
+  "field %0 declared with incompatible types in different "
+  "translation units (%1 vs. %2)">;
+
 // Importing Objective-C ASTs
 def err_odr_ivar_type_inconsistent : Error<
   "instance variable %0 declared with incompatible types in different "

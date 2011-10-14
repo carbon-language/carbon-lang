@@ -824,6 +824,60 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
   return true;
 }
 
+/// \brief Determine structural equivalence of two fields.
+static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
+                                     FieldDecl *Field1, FieldDecl *Field2) {
+  RecordDecl *Owner2 = cast<RecordDecl>(Field2->getDeclContext());
+  
+  if (!IsStructurallyEquivalent(Context, 
+                                Field1->getType(), Field2->getType())) {
+    Context.Diag2(Owner2->getLocation(), diag::warn_odr_tag_type_inconsistent)
+    << Context.C2.getTypeDeclType(Owner2);
+    Context.Diag2(Field2->getLocation(), diag::note_odr_field)
+    << Field2->getDeclName() << Field2->getType();
+    Context.Diag1(Field1->getLocation(), diag::note_odr_field)
+    << Field1->getDeclName() << Field1->getType();
+    return false;
+  }
+  
+  if (Field1->isBitField() != Field2->isBitField()) {
+    Context.Diag2(Owner2->getLocation(), diag::warn_odr_tag_type_inconsistent)
+    << Context.C2.getTypeDeclType(Owner2);
+    if (Field1->isBitField()) {
+      Context.Diag1(Field1->getLocation(), diag::note_odr_bit_field)
+      << Field1->getDeclName() << Field1->getType()
+      << Field1->getBitWidthValue(Context.C1);
+      Context.Diag2(Field2->getLocation(), diag::note_odr_not_bit_field)
+      << Field2->getDeclName();
+    } else {
+      Context.Diag2(Field2->getLocation(), diag::note_odr_bit_field)
+      << Field2->getDeclName() << Field2->getType()
+      << Field2->getBitWidthValue(Context.C2);
+      Context.Diag1(Field1->getLocation(), diag::note_odr_not_bit_field)
+      << Field1->getDeclName();
+    }
+    return false;
+  }
+  
+  if (Field1->isBitField()) {
+    // Make sure that the bit-fields are the same length.
+    unsigned Bits1 = Field1->getBitWidthValue(Context.C1);
+    unsigned Bits2 = Field2->getBitWidthValue(Context.C2);
+    
+    if (Bits1 != Bits2) {
+      Context.Diag2(Owner2->getLocation(), diag::warn_odr_tag_type_inconsistent)
+      << Context.C2.getTypeDeclType(Owner2);
+      Context.Diag2(Field2->getLocation(), diag::note_odr_bit_field)
+      << Field2->getDeclName() << Field2->getType() << Bits2;
+      Context.Diag1(Field1->getLocation(), diag::note_odr_bit_field)
+      << Field1->getDeclName() << Field1->getType() << Bits1;
+      return false;
+    }
+  }
+
+  return true;
+}
+
 /// \brief Determine structural equivalence of two records.
 static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
                                      RecordDecl *D1, RecordDecl *D2) {
@@ -941,51 +995,8 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
       return false;
     }
     
-    if (!IsStructurallyEquivalent(Context, 
-                                  Field1->getType(), Field2->getType())) {
-      Context.Diag2(D2->getLocation(), diag::warn_odr_tag_type_inconsistent)
-        << Context.C2.getTypeDeclType(D2);
-      Context.Diag2(Field2->getLocation(), diag::note_odr_field)
-        << Field2->getDeclName() << Field2->getType();
-      Context.Diag1(Field1->getLocation(), diag::note_odr_field)
-        << Field1->getDeclName() << Field1->getType();
-      return false;
-    }
-    
-    if (Field1->isBitField() != Field2->isBitField()) {
-      Context.Diag2(D2->getLocation(), diag::warn_odr_tag_type_inconsistent)
-        << Context.C2.getTypeDeclType(D2);
-      if (Field1->isBitField()) {
-        Context.Diag1(Field1->getLocation(), diag::note_odr_bit_field)
-          << Field1->getDeclName() << Field1->getType()
-          << Field1->getBitWidthValue(Context.C1);
-        Context.Diag2(Field2->getLocation(), diag::note_odr_not_bit_field)
-          << Field2->getDeclName();
-      } else {
-        Context.Diag2(Field2->getLocation(), diag::note_odr_bit_field)
-          << Field2->getDeclName() << Field2->getType()
-          << Field2->getBitWidthValue(Context.C2);
-        Context.Diag1(Field1->getLocation(), diag::note_odr_not_bit_field)
-          << Field1->getDeclName();
-      }
-      return false;
-    }
-    
-    if (Field1->isBitField()) {
-      // Make sure that the bit-fields are the same length.
-      unsigned Bits1 = Field1->getBitWidthValue(Context.C1);
-      unsigned Bits2 = Field2->getBitWidthValue(Context.C2);
-      
-      if (Bits1 != Bits2) {
-        Context.Diag2(D2->getLocation(), diag::warn_odr_tag_type_inconsistent)
-          << Context.C2.getTypeDeclType(D2);
-        Context.Diag2(Field2->getLocation(), diag::note_odr_bit_field)
-          << Field2->getDeclName() << Field2->getType() << Bits2;
-        Context.Diag1(Field1->getLocation(), diag::note_odr_bit_field)
-          << Field1->getDeclName() << Field1->getType() << Bits1;
-        return false;
-      }
-    }
+    if (!IsStructurallyEquivalent(Context, *Field1, *Field2))
+      return false;    
   }
   
   if (Field2 != Field2End) {
@@ -2131,15 +2142,16 @@ Decl *ASTNodeImporter::VisitTypedefNameDecl(TypedefNameDecl *D, bool IsAlias) {
   SourceLocation StartL = Importer.Import(D->getLocStart());
   TypedefNameDecl *ToTypedef;
   if (IsAlias)
+    ToTypedef = TypeAliasDecl::Create(Importer.getToContext(), DC,
+                                      StartL, Loc,
+                                      Name.getAsIdentifierInfo(),
+                                      TInfo);
+  else
     ToTypedef = TypedefDecl::Create(Importer.getToContext(), DC,
                                     StartL, Loc,
                                     Name.getAsIdentifierInfo(),
                                     TInfo);
-  else
-    ToTypedef = TypeAliasDecl::Create(Importer.getToContext(), DC,
-                                  StartL, Loc,
-                                  Name.getAsIdentifierInfo(),
-                                  TInfo);
+  
   ToTypedef->setAccess(D->getAccess());
   ToTypedef->setLexicalDeclContext(LexicalDC);
   Importer.Imported(D, ToTypedef);
@@ -2553,6 +2565,25 @@ Decl *ASTNodeImporter::VisitFieldDecl(FieldDecl *D) {
   if (ImportDeclParts(D, DC, LexicalDC, Name, Loc))
     return 0;
   
+  // Determine whether we've already imported this field. 
+  for (DeclContext::lookup_result Lookup = DC->lookup(Name);
+       Lookup.first != Lookup.second; 
+       ++Lookup.first) {
+    if (FieldDecl *FoundField = dyn_cast<FieldDecl>(*Lookup.first)) {
+      if (Importer.IsStructurallyEquivalent(D->getType(), 
+                                            FoundField->getType())) {
+        Importer.Imported(D, FoundField);
+        return FoundField;
+      }
+      
+      Importer.ToDiag(Loc, diag::err_odr_field_type_inconsistent)
+        << Name << D->getType() << FoundField->getType();
+      Importer.ToDiag(FoundField->getLocation(), diag::note_odr_value_here)
+        << FoundField->getType();
+      return 0;
+    }
+  }
+
   // Import the type.
   QualType T = Importer.Import(D->getType());
   if (T.isNull())
@@ -2584,6 +2615,26 @@ Decl *ASTNodeImporter::VisitIndirectFieldDecl(IndirectFieldDecl *D) {
   SourceLocation Loc;
   if (ImportDeclParts(D, DC, LexicalDC, Name, Loc))
     return 0;
+
+  // Determine whether we've already imported this field. 
+  for (DeclContext::lookup_result Lookup = DC->lookup(Name);
+       Lookup.first != Lookup.second; 
+       ++Lookup.first) {
+    if (IndirectFieldDecl *FoundField 
+                                = dyn_cast<IndirectFieldDecl>(*Lookup.first)) {
+      if (Importer.IsStructurallyEquivalent(D->getType(), 
+                                            FoundField->getType())) {
+        Importer.Imported(D, FoundField);
+        return FoundField;
+      }
+      
+      Importer.ToDiag(Loc, diag::err_odr_field_type_inconsistent)
+        << Name << D->getType() << FoundField->getType();
+      Importer.ToDiag(FoundField->getLocation(), diag::note_odr_value_here)
+        << FoundField->getType();
+      return 0;
+    }
+  }
 
   // Import the type.
   QualType T = Importer.Import(D->getType());
