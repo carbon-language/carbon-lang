@@ -33,7 +33,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Dwarf.h"
-#include "llvm/Support/Path.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 using namespace clang;
@@ -254,10 +254,10 @@ unsigned CGDebugInfo::getColumnNumber(SourceLocation Loc) {
 StringRef CGDebugInfo::getCurrentDirname() {
   if (!CWDName.empty())
     return CWDName;
-  char *CompDirnamePtr = NULL;
-  llvm::sys::Path CWD = llvm::sys::Path::GetCurrentDirectory();
-  CompDirnamePtr = DebugInfoNames.Allocate<char>(CWD.size());
-  memcpy(CompDirnamePtr, CWD.c_str(), CWD.size());
+  llvm::SmallString<256> CWD;
+  llvm::sys::fs::current_path(CWD);
+  char *CompDirnamePtr = DebugInfoNames.Allocate<char>(CWD.size());
+  memcpy(CompDirnamePtr, CWD.data(), CWD.size());
   return CWDName = StringRef(CompDirnamePtr, CWD.size());
 }
 
