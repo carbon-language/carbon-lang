@@ -117,6 +117,10 @@ static bool EvaluateDefined(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
     PP.markMacroAsUsed(Macro);
   }
 
+  // Invoke the 'defined' callback.
+  if (PPCallbacks *Callbacks = PP.getPPCallbacks())
+    Callbacks->Defined(PeekTok);
+
   // If we are in parens, ensure we have a trailing ).
   if (LParenLoc.isValid()) {
     // Consume identifier.
