@@ -192,3 +192,11 @@ void f9790531_2(char * inClientData); // expected-note {{candidate function not 
     f9790531_2(self); // expected-error {{no matching function for call to 'f9790531_2'}}
 }
 @end
+
+class rdar10142572 {
+  id f() __attribute__((ns_returns_retained));
+  id g(); // expected-note{{previous declaration}}
+};
+
+id rdar10142572::f() { return 0; } // okay: merged down
+id __attribute__((ns_returns_retained)) rdar10142572::g() { return 0; } // expected-error{{function declared with the ns_returns_retained attribute was previously declared without the ns_returns_retained attribute}}

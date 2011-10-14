@@ -1752,6 +1752,18 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
     RequiresAdjustment = true;
   }
 
+  // Merge ns_returns_retained attribute.
+  if (OldTypeInfo.getProducesResult() != NewTypeInfo.getProducesResult()) {
+    if (NewTypeInfo.getProducesResult()) {
+      Diag(New->getLocation(), diag::err_returns_retained_mismatch);
+      Diag(Old->getLocation(), diag::note_previous_declaration);      
+      return true;
+    }
+    
+    NewTypeInfo = NewTypeInfo.withProducesResult(true);
+    RequiresAdjustment = true;
+  }
+  
   if (RequiresAdjustment) {
     NewType = Context.adjustFunctionType(NewType, NewTypeInfo);
     New->setType(QualType(NewType, 0));
