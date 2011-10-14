@@ -24,19 +24,19 @@ class SetWatchlocationAPITestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
-    def test_watch_val_with_dsym(self):
-        """Exercise SBFrame.WatchLocation() API to set a watchpoint."""
+    def test_watch_location_with_dsym(self):
+        """Exercise SBValue.WatchPointee() API to set a watchpoint."""
         self.buildDsym()
         self.do_set_watchlocation()
 
     @python_api_test
-    def test_watch_val_with_dwarf(self):
-        """Exercise SBFrame.WatchLocation() API to set a watchpoint."""
+    def test_watch_location_with_dwarf(self):
+        """Exercise SBValue.WatchPointee() API to set a watchpoint."""
         self.buildDwarf()
         self.do_set_watchlocation()
 
     def do_set_watchlocation(self):
-        """Use SBFrame.WatchLocation() to set a watchpoint and verify that the program stops later due to the watchpoint."""
+        """Use SBValue.WatchPointee() to set a watchpoint and verify that the program stops later due to the watchpoint."""
         exe = os.path.join(os.getcwd(), "a.out")
 
         # Create a target by the debugger.
