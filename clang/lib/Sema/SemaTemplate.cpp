@@ -846,6 +846,15 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
     if (RequireCompleteDeclContext(SS, SemanticContext))
       return true;
 
+    // If we're adding a template to a dependent context, we may need to 
+    // rebuilding some of the types used within the template parameter list, 
+    // now that we know what the current instantiation is.
+    if (SemanticContext->isDependentContext()) {
+      ContextRAII SavedContext(*this, SemanticContext);
+      if (RebuildTemplateParamsInCurrentInstantiation(TemplateParams))
+        Invalid = true;
+    }
+        
     LookupQualifiedName(Previous, SemanticContext);
   } else {
     SemanticContext = CurContext;
@@ -6696,6 +6705,45 @@ bool Sema::RebuildNestedNameSpecifierInCurrentInstantiation(CXXScopeSpec &SS) {
     return true;
 
   SS.Adopt(Rebuilt);
+  return false;
+}
+
+/// \brief Rebuild the template parameters now that we know we're in a current
+/// instantiation.
+bool Sema::RebuildTemplateParamsInCurrentInstantiation(
+                                               TemplateParameterList *Params) {
+  for (unsigned I = 0, N = Params->size(); I != N; ++I) {
+    Decl *Param = Params->getParam(I);
+    
+    // There is nothing to rebuild in a type parameter.
+    if (isa<TemplateTypeParmDecl>(Param))
+      continue;
+    
+    // Rebuild the template parameter list of a template template parameter.
+    if (TemplateTemplateParmDecl *TTP 
+        = dyn_cast<TemplateTemplateParmDecl>(Param)) {
+      if (RebuildTemplateParamsInCurrentInstantiation(
+            TTP->getTemplateParameters()))
+        return true;
+      
+      continue;
+    }
+    
+    // Rebuild the type of a non-type template parameter.
+    NonTypeTemplateParmDecl *NTTP = cast<NonTypeTemplateParmDecl>(Param);
+    TypeSourceInfo *NewTSI 
+      = RebuildTypeInCurrentInstantiation(NTTP->getTypeSourceInfo(), 
+                                          NTTP->getLocation(), 
+                                          NTTP->getDeclName());
+    if (!NewTSI)
+      return true;
+    
+    if (NewTSI != NTTP->getTypeSourceInfo()) {
+      NTTP->setTypeSourceInfo(NewTSI);
+      NTTP->setType(NewTSI->getType());
+    }
+  }
+  
   return false;
 }
 

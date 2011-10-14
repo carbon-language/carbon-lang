@@ -215,3 +215,23 @@ namespace PR9255 {
     };
   };
 }
+
+namespace rdar10194295 {
+  template<typename XT>
+  class X {
+  public:
+    enum Enum { Yes, No };
+    template<Enum> void foo();
+    template<Enum> class Inner;
+  };
+
+  template<typename XT>
+  template<typename X<XT>::Enum>
+  void X<XT>::foo()
+  {
+  }
+
+  template<typename XT>
+  template<typename X<XT>::Enum>
+  class X<XT>::Inner { };
+}

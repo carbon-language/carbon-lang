@@ -4789,6 +4789,16 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
           Diag(NewFD->getLocation(), diag::err_destructor_template);
           return 0;
         }
+        
+        // If we're adding a template to a dependent context, we may need to 
+        // rebuilding some of the types used within the template parameter list, 
+        // now that we know what the current instantiation is.
+        if (DC->isDependentContext()) {
+          ContextRAII SavedContext(*this, DC);
+          if (RebuildTemplateParamsInCurrentInstantiation(TemplateParams))
+            Invalid = true;
+        }
+        
 
         FunctionTemplate = FunctionTemplateDecl::Create(Context, DC,
                                                         NewFD->getLocation(),

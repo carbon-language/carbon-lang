@@ -4134,7 +4134,9 @@ public:
   bool RebuildNestedNameSpecifierInCurrentInstantiation(CXXScopeSpec &SS);
 
   ExprResult RebuildExprInCurrentInstantiation(Expr *E);
-
+  bool RebuildTemplateParamsInCurrentInstantiation(
+                                                TemplateParameterList *Params);
+  
   std::string
   getTemplateArgumentBindingsText(const TemplateParameterList *Params,
                                   const TemplateArgumentList &Args);
