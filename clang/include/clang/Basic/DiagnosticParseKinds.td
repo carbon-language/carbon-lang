@@ -371,6 +371,11 @@ def err_default_delete_in_multiple_declaration : Error<
   "'= %select{default|delete}0' is a function definition and must occur in a "
   "standalone declaration">;
 
+def warn_cxx98_compat_alignas : Warning<"'alignas' is incompatible with C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
+def warn_cxx98_compat_attribute : Warning<
+  "attributes are incompatible with C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
 def err_cxx0x_attribute_forbids_arguments : Error<
   "C++11 attribute '%0' cannot have an argument list">;
 def err_cxx0x_attribute_requires_arguments : Error<

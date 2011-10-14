@@ -2622,12 +2622,15 @@ void Parser::PopParsingClass(Sema::ParsingClassState state) {
 void Parser::ParseCXX0XAttributeSpecifier(ParsedAttributes &attrs,
                                           SourceLocation *endLoc) {
   if (Tok.is(tok::kw_alignas)) {
+    Diag(Tok.getLocation(), diag::warn_cxx98_compat_alignas);
     ParseAlignmentSpecifier(attrs, endLoc);
     return;
   }
 
   assert(Tok.is(tok::l_square) && NextToken().is(tok::l_square)
       && "Not a C++0x attribute list");
+
+  Diag(Tok.getLocation(), diag::warn_cxx98_compat_attribute);
 
   ConsumeBracket();
   ConsumeBracket();
