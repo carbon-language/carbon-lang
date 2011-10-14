@@ -668,3 +668,20 @@ void test38() {
 void _NSCalc(NSColor* color, NSColor* bezelColors[]) __attribute__((unavailable("not available in automatic reference counting mode")));
 
 void _NSCalcBeze(NSColor* color, NSColor* bezelColors[]); // expected-error {{must explicitly describe intended ownership of an object array parameter}}
+
+// rdar://9970739
+@interface RestaurantTableViewCell
+- (void) restaurantLocation;
+@end
+
+@interface Radar9970739
+- (void) Meth;
+@end
+
+@implementation Radar9970739
+- (void) Meth { 
+  RestaurantTableViewCell *cell;
+  [cell restaurantLocatoin]; // expected-error {{no visible @interface for 'RestaurantTableViewCell' declares the selector 'restaurantLocatoin'}}
+}
+@end
+

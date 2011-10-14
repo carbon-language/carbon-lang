@@ -2998,8 +2998,7 @@ def err_arc_method_not_found : Error<
 def err_arc_receiver_forward_class : Error<
   "receiver %0 for class message is a forward declaration">;
 def err_arc_may_not_respond : Error<
-  "receiver type %0 for instance message does not declare a method with "
-  "selector %1">;
+  "no visible @interface for %0 declares the selector %1">;
 def err_arc_receiver_forward_instance : Error<
   "receiver type %0 for instance message is a forward declaration">;
 def err_arc_collection_forward : Error<
