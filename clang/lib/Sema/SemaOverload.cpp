@@ -7510,7 +7510,7 @@ struct CompareOverloadCandidatesForDisplay {
 
         if (L->DeductionFailure.Result != R->DeductionFailure.Result)
           return RankDeductionFailure(L->DeductionFailure)
-              <= RankDeductionFailure(R->DeductionFailure);
+               < RankDeductionFailure(R->DeductionFailure);
       } else if (R->FailureKind == ovl_fail_bad_deduction)
         return false;
 
