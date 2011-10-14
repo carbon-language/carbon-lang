@@ -571,6 +571,11 @@ MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
       if (i->getOperand(ni+1).getMBB() == this)
         i->getOperand(ni+1).setMBB(NMBB);
 
+  // Inherit live-ins from the successor
+  for (MachineBasicBlock::livein_iterator I = Succ->livein_begin(),
+	 E = Succ->livein_end(); I != E; ++I)
+    NMBB->addLiveIn(*I);
+
   // Update LiveVariables.
   if (LV) {
     // Restore kills of virtual registers that were killed by the terminators.
