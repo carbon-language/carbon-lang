@@ -5883,11 +5883,15 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
     PrevMBB = CurMBB;
   }
 
-  // Remove the landing pad successor from the invoke block and replace it with
-  // the new dispatch block.
+  const ARMBaseInstrInfo *AII = static_cast<const ARMBaseInstrInfo*>(TII);
+  const ARMBaseRegisterInfo &RI = AII->getRegisterInfo();
+  const unsigned *SavedRegs = RI.getCalleeSavedRegs(MF);
   for (SmallPtrSet<MachineBasicBlock*, 64>::iterator
          I = InvokeBBs.begin(), E = InvokeBBs.end(); I != E; ++I) {
     MachineBasicBlock *BB = *I;
+
+    // Remove the landing pad successor from the invoke block and replace it
+    // with the new dispatch block.
     for (MachineBasicBlock::succ_iterator
            SI = BB->succ_begin(), SE = BB->succ_end(); SI != SE; ++SI) {
       MachineBasicBlock *SMBB = *SI;
@@ -5898,6 +5902,31 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
     }
 
     BB->addSuccessor(DispatchBB);
+
+    // Find the invoke call and mark all of the callee-saved registers as
+    // 'implicit defined' so that they're spilled. This prevents code from
+    // moving instructions to before the EH block, where they will never be
+    // executed.
+    for (MachineBasicBlock::reverse_iterator
+           II = BB->rbegin(), IE = BB->rend(); II != IE; ++II) {
+      if (!II->getDesc().isCall()) continue;
+
+      DenseMap<unsigned, bool> DefRegs;
+      for (MachineInstr::mop_iterator
+             OI = II->operands_begin(), OE = II->operands_end();
+           OI != OE; ++OI) {
+        if (!OI->isReg()) continue;
+        DefRegs[OI->getReg()] = true;
+      }
+
+      MachineInstrBuilder MIB(&*II);
+
+      for (unsigned i = 0; SavedRegs[i] != 0; ++i)
+        if (!DefRegs[SavedRegs[i]])
+          MIB.addReg(SavedRegs[i], RegState::Implicit | RegState::Define);
+
+      break;
+    }
   }
 
   // The instruction is gone now.
