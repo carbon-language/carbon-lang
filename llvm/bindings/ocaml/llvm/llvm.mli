@@ -251,6 +251,31 @@ module Opcode : sig
   | Unwind
 end
 
+(** The kind of an [llvalue], the result of [classify_value v].
+ * See the various [LLVMIsA*] functions. *)
+module ValueKind : sig
+  type t =
+  | NullValue
+  | Argument
+  | BasicBlock
+  | InlineAsm
+  | MDNode
+  | MDString
+  | BlockAddress
+  | ConstantAggregateZero
+  | ConstantArray
+  | ConstantExpr
+  | ConstantFP
+  | ConstantInt
+  | ConstantPointerNull
+  | ConstantStruct
+  | ConstantVector
+  | Function
+  | GlobalAlias
+  | GlobalVariable
+  | UndefValue
+  | Instruction of Opcode.t
+end
 
 (** {6 Iteration} *)
 
@@ -517,6 +542,8 @@ val label_type : llcontext -> lltype
 (** [type_of v] returns the type of the value [v].
     See the method [llvm::Value::getType]. *)
 val type_of : llvalue -> lltype
+
+val classify_value : llvalue -> ValueKind.t
 
 (** [value_name v] returns the name of the value [v]. For global values, this is
     the symbol name. For instructions and basic blocks, it is the SSA register

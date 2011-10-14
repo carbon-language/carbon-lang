@@ -449,8 +449,11 @@ LLVMTypeRef LLVMX86MMXType(void);
   macro(Argument)                           \
   macro(BasicBlock)                         \
   macro(InlineAsm)                          \
+  macro(MDNode)                             \
+  macro(MDString)                           \
   macro(User)                               \
     macro(Constant)                         \
+      macro(BlockAddress)                   \
       macro(ConstantAggregateZero)          \
       macro(ConstantArray)                  \
       macro(ConstantExpr)                   \
@@ -470,14 +473,15 @@ LLVMTypeRef LLVMX86MMXType(void);
         macro(IntrinsicInst)                \
           macro(DbgInfoIntrinsic)           \
             macro(DbgDeclareInst)           \
+          macro(EHExceptionInst)            \
           macro(EHSelectorInst)             \
           macro(MemIntrinsic)               \
             macro(MemCpyInst)               \
             macro(MemMoveInst)              \
             macro(MemSetInst)               \
       macro(CmpInst)                        \
-      macro(FCmpInst)                       \
-      macro(ICmpInst)                       \
+        macro(FCmpInst)                     \
+        macro(ICmpInst)                     \
       macro(ExtractElementInst)             \
       macro(GetElementPtrInst)              \
       macro(InsertElementInst)              \
@@ -489,6 +493,7 @@ LLVMTypeRef LLVMX86MMXType(void);
       macro(StoreInst)                      \
       macro(TerminatorInst)                 \
         macro(BranchInst)                   \
+        macro(IndirectBrInst)               \
         macro(InvokeInst)                   \
         macro(ReturnInst)                   \
         macro(SwitchInst)                   \

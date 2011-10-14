@@ -201,6 +201,30 @@ module Opcode  = struct
   | Unwind
 end
 
+module ValueKind = struct
+  type t =
+  | NullValue
+  | Argument
+  | BasicBlock
+  | InlineAsm
+  | MDNode
+  | MDString
+  | BlockAddress
+  | ConstantAggregateZero
+  | ConstantArray
+  | ConstantExpr
+  | ConstantFP
+  | ConstantInt
+  | ConstantPointerNull
+  | ConstantStruct
+  | ConstantVector
+  | Function
+  | GlobalAlias
+  | GlobalVariable
+  | UndefValue
+  | Instruction of Opcode.t
+end
+
 exception IoError of string
 
 external register_exns : exn -> unit = "llvm_register_core_exns"
@@ -290,6 +314,7 @@ external vector_size : lltype -> int = "llvm_vector_size"
 external void_type : llcontext -> lltype = "llvm_void_type"
 external label_type : llcontext -> lltype = "llvm_label_type"
 
+external classify_value : llvalue -> ValueKind.t = "llvm_classify_value"
 (*===-- Values ------------------------------------------------------------===*)
 external type_of : llvalue -> lltype = "llvm_type_of"
 external value_name : llvalue -> string = "llvm_value_name"
