@@ -2512,19 +2512,25 @@ ClangExpressionDeclMap::FindExternalLexicalDecls (const DeclContext *decl_contex
     
     ASTContext *ast_context = &context_decl->getASTContext();
     
+    static unsigned int invocation_id = 0;
+    unsigned int current_id = invocation_id++;
+    
     if (log)
     {
         if (const NamedDecl *context_named_decl = dyn_cast<NamedDecl>(context_decl))
-            log->Printf("FindExternalLexicalDecls in '%s' (a %s) with %s predicate", 
+            log->Printf("FindExternalLexicalDecls[%u] in '%s' (a %s) with %s predicate",
+                        current_id,
                         context_named_decl->getNameAsString().c_str(),
                         context_decl->getDeclKindName(), 
                         (predicate ? "non-null" : "null"));
         else if(context_decl)
-            log->Printf("FindExternalLexicalDecls in a %s with %s predicate",
+            log->Printf("FindExternalLexicalDecls[%u] in a %s with %s predicate",
+                        current_id,
                         context_decl->getDeclKindName(), 
                         (predicate ? "non-null" : "null"));
         else
-            log->Printf("FindExternalLexicalDecls in a NULL context with %s predicate",
+            log->Printf("FindExternalLexicalDecls[%u] in a NULL context with %s predicate",
+                        current_id,
                         (predicate ? "non-null" : "null"));
     }
     
@@ -2575,7 +2581,11 @@ ClangExpressionDeclMap::FindExternalLexicalDecls (const DeclContext *decl_contex
                 llvm::raw_string_ostream decl_print_stream(decl_print_string);
                 decl->print(decl_print_stream);
                 decl_print_stream.flush();
-                log->Printf("  Adding lexical decl %s", decl_print_string.c_str());
+                
+                if (const NamedDecl *context_named_decl = dyn_cast<NamedDecl>(context_decl))
+                    log->Printf("  [%d] Adding [to %s] lexical decl %s", current_id, context_named_decl->getNameAsString().c_str(), decl_print_string.c_str());
+                else
+                    log->Printf("  [%d] Adding lexical decl %s", current_id, decl_print_string.c_str());
             }
                         
             Decl *copied_decl = ast_importer->CopyDecl(original_ctx, decl);
