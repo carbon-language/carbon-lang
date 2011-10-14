@@ -755,9 +755,10 @@ if jobs == 0:
     jobs = 1
 
 numthreads = options.threads
-if jobs < numthreads:
-    numthreads = jobs
-    jobs = 1
+
+logging.getLogger().info("Building with " + str(options.jobs) + " jobs and "
+                         + str(numthreads) + " threads using " + str(jobs)
+                         + " make jobs")
 
 for t in range(numthreads):
     builder = Builder(work_queue, jobs,
