@@ -50,7 +50,7 @@ unsigned ASTContext::NumImplicitDestructors;
 unsigned ASTContext::NumImplicitDestructorsDeclared;
 
 enum FloatingRank {
-  FloatRank, DoubleRank, LongDoubleRank
+  HalfRank, FloatRank, DoubleRank, LongDoubleRank
 };
 
 void 
@@ -483,6 +483,9 @@ void ASTContext::InitBuiltinTypes(const TargetInfo &Target) {
 
   // nullptr type (C++0x 2.14.7)
   InitBuiltinType(NullPtrTy,           BuiltinType::NullPtr);
+
+  // half type (OpenCL 6.1.1.1) / ARM NEON __fp16
+  InitBuiltinType(HalfTy, BuiltinType::Half);
 }
 
 DiagnosticsEngine &ASTContext::getDiagnostics() const {
@@ -683,6 +686,7 @@ const llvm::fltSemantics &ASTContext::getFloatTypeSemantics(QualType T) const {
   assert(BT && "Not a floating point type!");
   switch (BT->getKind()) {
   default: llvm_unreachable("Not a floating point type!");
+  case BuiltinType::Half:       return Target->getHalfFormat();
   case BuiltinType::Float:      return Target->getFloatFormat();
   case BuiltinType::Double:     return Target->getDoubleFormat();
   case BuiltinType::LongDouble: return Target->getLongDoubleFormat();
@@ -904,6 +908,10 @@ ASTContext::getTypeInfo(const Type *T) const {
     case BuiltinType::UInt128:
       Width = 128;
       Align = 128; // int128_t is 128-bit aligned on all targets.
+      break;
+    case BuiltinType::Half:
+      Width = Target->getHalfWidth();
+      Align = Target->getHalfAlign();
       break;
     case BuiltinType::Float:
       Width = Target->getFloatWidth();
@@ -3483,6 +3491,7 @@ static FloatingRank getFloatingRank(QualType T) {
   assert(T->getAs<BuiltinType>() && "getFloatingRank(): not a floating type");
   switch (T->getAs<BuiltinType>()->getKind()) {
   default: llvm_unreachable("getFloatingRank(): not a floating type");
+  case BuiltinType::Half:       return HalfRank;
   case BuiltinType::Float:      return FloatRank;
   case BuiltinType::Double:     return DoubleRank;
   case BuiltinType::LongDouble: return LongDoubleRank;

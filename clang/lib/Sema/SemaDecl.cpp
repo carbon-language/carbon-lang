@@ -4729,7 +4729,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
          diag::err_object_cannot_be_passed_returned_by_value) << 0
     << R->getAs<FunctionType>()->getResultType()
     << FixItHint::CreateInsertion(D.getIdentifierLoc(), "*");
-    
+
     QualType T = R->getAs<FunctionType>()->getResultType();
     T = Context.getObjCObjectPointerType(T);
     if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(R)) {
@@ -4740,7 +4740,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     else if (isa<FunctionNoProtoType>(R))
       R = Context.getFunctionNoProtoType(T);
   }
-  
+
   bool isFriend = false;
   FunctionTemplateDecl *FunctionTemplate = 0;
   bool isExplicitSpecialization = false;
@@ -5065,6 +5065,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     assert(R->isFunctionNoProtoType() && NewFD->getNumParams() == 0 &&
            "Should not need args for typedef of non-prototype fn");
   }
+
   // Finally, we know we have the right number of parameters, install them.
   NewFD->setParams(Params);
 

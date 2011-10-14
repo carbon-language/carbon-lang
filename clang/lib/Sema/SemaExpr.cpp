@@ -396,12 +396,14 @@ ExprResult Sema::DefaultLvalueConversion(Expr *E) {
   // C99 6.3.2.1p2:
   //   If the lvalue has qualified type, the value has the unqualified
   //   version of the type of the lvalue; otherwise, the value has the
-  //   type of the lvalue.    
+  //   type of the lvalue.
   if (T.hasQualifiers())
     T = T.getUnqualifiedType();
-  
-  return Owned(ImplicitCastExpr::Create(Context, T, CK_LValueToRValue,
-                                        E, 0, VK_RValue));
+
+  ExprResult Res = Owned(ImplicitCastExpr::Create(Context, T, CK_LValueToRValue,
+                                                  E, 0, VK_RValue));
+
+  return Res;
 }
 
 ExprResult Sema::DefaultFunctionArrayLvalueConversion(Expr *E) {
@@ -426,10 +428,15 @@ ExprResult Sema::UsualUnaryConversions(Expr *E) {
   if (Res.isInvalid())
     return Owned(E);
   E = Res.take();
-  
+
   QualType Ty = E->getType();
   assert(!Ty.isNull() && "UsualUnaryConversions - missing type");
-  
+
+  // Half FP is a bit different: it's a storage-only type, meaning that any
+  // "use" of it should be promoted to float.
+  if (Ty->isHalfType())
+    return ImpCastExprToType(Res.take(), Context.FloatTy, CK_FloatingCast);
+
   // Try to perform integral promotions if the object has a theoretically
   // promotable type.
   if (Ty->isIntegralOrUnscopedEnumerationType()) {
@@ -446,7 +453,7 @@ ExprResult Sema::UsualUnaryConversions(Expr *E) {
     //   value is converted to an int; otherwise, it is converted to an
     //   unsigned int. These are called the integer promotions. All
     //   other types are unchanged by the integer promotions.
-  
+
     QualType PTy = Context.isPromotableBitField(E);
     if (!PTy.isNull()) {
       E = ImpCastExprToType(E, PTy, CK_IntegralCast).take();
@@ -8103,6 +8110,13 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
     Input = DefaultFunctionArrayLvalueConversion(Input.take());
     if (Input.isInvalid()) return ExprError();
     resultType = Input.get()->getType();
+
+    // Though we still have to promote half FP to float...
+    if (resultType->isHalfType()) {
+      Input = ImpCastExprToType(Input.take(), Context.FloatTy, CK_FloatingCast).take();
+      resultType = Context.FloatTy;
+    }
+
     if (resultType->isDependentType())
       break;
     if (resultType->isScalarType()) {

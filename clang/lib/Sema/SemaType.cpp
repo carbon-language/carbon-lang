@@ -711,6 +711,7 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
     }
     break;
   }
+  case DeclSpec::TST_half: Result = Context.HalfTy; break;
   case DeclSpec::TST_float: Result = Context.FloatTy; break;
   case DeclSpec::TST_double:
     if (DS.getTypeSpecWidth() == DeclSpec::TSW_long)
@@ -1434,12 +1435,25 @@ QualType Sema::BuildFunctionType(QualType T,
       << T->isFunctionType() << T;
     return QualType();
   }
-       
+
+  // Functions cannot return half FP.
+  if (T->isHalfType()) {
+    Diag(Loc, diag::err_parameters_retval_cannot_have_fp16_type) << 1 <<
+      FixItHint::CreateInsertion(Loc, "*");
+    return QualType();
+  }
+
   bool Invalid = false;
   for (unsigned Idx = 0; Idx < NumParamTypes; ++Idx) {
+    // FIXME: Loc is too inprecise here, should use proper locations for args.
     QualType ParamType = Context.getAdjustedParameterType(ParamTypes[Idx]);
     if (ParamType->isVoidType()) {
       Diag(Loc, diag::err_param_with_void_type);
+      Invalid = true;
+    } else if (ParamType->isHalfType()) {
+      // Disallow half FP arguments.
+      Diag(Loc, diag::err_parameters_retval_cannot_have_fp16_type) << 0 <<
+        FixItHint::CreateInsertion(Loc, "*");
       Invalid = true;
     }
 
@@ -2062,6 +2076,15 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
         D.setInvalidType(true);
       }
 
+      // Do not allow returning half FP value.
+      // FIXME: This really should be in BuildFunctionType.
+      if (T->isHalfType()) {
+        S.Diag(D.getIdentifierLoc(),
+             diag::err_parameters_retval_cannot_have_fp16_type) << 1
+          << FixItHint::CreateInsertion(D.getIdentifierLoc(), "*");
+        D.setInvalidType(true);
+      }
+
       // cv-qualifiers on return types are pointless except when the type is a
       // class type in C++.
       if (isa<PointerType>(T) && T.getLocalCVRQualifiers() &&
@@ -2185,6 +2208,13 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
               // Do not add 'void' to the ArgTys list.
               break;
             }
+          } else if (ArgTy->isHalfType()) {
+            // Disallow half FP arguments.
+            // FIXME: This really should be in BuildFunctionType.
+            S.Diag(Param->getLocation(),
+               diag::err_parameters_retval_cannot_have_fp16_type) << 0
+            << FixItHint::CreateInsertion(Param->getLocation(), "*");
+            D.setInvalidType();
           } else if (!FTI.hasPrototype) {
             if (ArgTy->isPromotableIntegerType()) {
               ArgTy = Context.getPromotedIntegerType(ArgTy);

@@ -69,6 +69,7 @@ protected:
   unsigned char PointerWidth, PointerAlign;
   unsigned char BoolWidth, BoolAlign;
   unsigned char IntWidth, IntAlign;
+  unsigned char HalfWidth, HalfAlign;
   unsigned char FloatWidth, FloatAlign;
   unsigned char DoubleWidth, DoubleAlign;
   unsigned char LongDoubleWidth, LongDoubleAlign;
@@ -79,7 +80,8 @@ protected:
   const char *DescriptionString;
   const char *UserLabelPrefix;
   const char *MCountName;
-  const llvm::fltSemantics *FloatFormat, *DoubleFormat, *LongDoubleFormat;
+  const llvm::fltSemantics *HalfFormat, *FloatFormat, *DoubleFormat,
+    *LongDoubleFormat;
   unsigned char RegParmMax, SSERegParmMax;
   TargetCXXABI CXXABI;
   const LangAS::Map *AddrSpaceMap;
@@ -223,6 +225,11 @@ public:
   /// bits.
   unsigned getChar32Width() const { return getTypeWidth(Char32Type); }
   unsigned getChar32Align() const { return getTypeAlign(Char32Type); }
+
+  /// getHalfWidth/Align/Format - Return the size/align/format of 'half'.
+  unsigned getHalfWidth() const { return HalfWidth; }
+  unsigned getHalfAlign() const { return HalfAlign; }
+  const llvm::fltSemantics &getHalfFormat() const { return *HalfFormat; }
 
   /// getFloatWidth/Align/Format - Return the size/align/format of 'float'.
   unsigned getFloatWidth() const { return FloatWidth; }

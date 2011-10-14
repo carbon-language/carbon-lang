@@ -552,7 +552,9 @@ namespace clang {
       /// \brief The "auto" deduction type.
       PREDEF_TYPE_AUTO_DEDUCT   = 31,
       /// \brief The "auto &&" deduction type.
-      PREDEF_TYPE_AUTO_RREF_DEDUCT = 32
+      PREDEF_TYPE_AUTO_RREF_DEDUCT = 32,
+      /// \brief The OpenCL 'half' / ARM NEON __fp16 type.
+      PREDEF_TYPE_HALF_ID       = 33
     };
 
     /// \brief The number of predefined type IDs that are reserved for

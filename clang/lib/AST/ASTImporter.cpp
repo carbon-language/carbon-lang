@@ -1374,6 +1374,7 @@ QualType ASTNodeImporter::VisitBuiltinType(const BuiltinType *T) {
   case BuiltinType::Long : return Importer.getToContext().LongTy;
   case BuiltinType::LongLong : return Importer.getToContext().LongLongTy;
   case BuiltinType::Int128 : return Importer.getToContext().Int128Ty;
+  case BuiltinType::Half: return Importer.getToContext().HalfTy;
   case BuiltinType::Float: return Importer.getToContext().FloatTy;
   case BuiltinType::Double: return Importer.getToContext().DoubleTy;
   case BuiltinType::LongDouble: return Importer.getToContext().LongDoubleTy;

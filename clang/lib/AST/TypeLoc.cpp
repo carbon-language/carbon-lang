@@ -206,7 +206,7 @@ TypeSpecifierType BuiltinTypeLoc::getWrittenTypeSpec() const {
     case BuiltinType::Char_S:
       return TST_char;
     case BuiltinType::Char16:
-      return TST_char16;        
+      return TST_char16;
     case BuiltinType::Char32:
       return TST_char32;
     case BuiltinType::WChar_S:
@@ -225,6 +225,7 @@ TypeSpecifierType BuiltinTypeLoc::getWrittenTypeSpec() const {
     case BuiltinType::Long:
     case BuiltinType::LongLong:
     case BuiltinType::Int128:
+    case BuiltinType::Half:
     case BuiltinType::Float:
     case BuiltinType::Double:
     case BuiltinType::LongDouble:

@@ -1239,6 +1239,7 @@ bool Parser::isCXXSimpleTypeSpecifier() const {
   case tok::kw_void:
   case tok::kw_char:
   case tok::kw_int:
+  case tok::kw_half:
   case tok::kw_float:
   case tok::kw_double:
   case tok::kw_wchar_t:
@@ -1342,6 +1343,9 @@ void Parser::ParseCXXSimpleTypeSpecifier(DeclSpec &DS) {
     break;
   case tok::kw_int:
     DS.SetTypeSpecType(DeclSpec::TST_int, Loc, PrevSpec, DiagID);
+    break;
+  case tok::kw_half:
+    DS.SetTypeSpecType(DeclSpec::TST_half, Loc, PrevSpec, DiagID);
     break;
   case tok::kw_float:
     DS.SetTypeSpecType(DeclSpec::TST_float, Loc, PrevSpec, DiagID);

@@ -312,6 +312,8 @@ def err_statically_allocated_object : Error<
 def err_object_cannot_be_passed_returned_by_value : Error<
   "interface type %1 cannot be %select{returned|passed}0 by value"
   "; did you forget * in %1">;
+def err_parameters_retval_cannot_have_fp16_type : Error<
+  "%select{parameters|function return value}0 cannot have __fp16 type; did you forget * ?">;
 def warn_enum_value_overflow : Warning<"overflow in enumeration value">;
 def warn_pragma_options_align_unsupported_option : Warning<
   "unsupported alignment option in '#pragma options align'">;

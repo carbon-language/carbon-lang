@@ -43,6 +43,7 @@ serialization::TypeIdxFromBuiltin(const BuiltinType *BT) {
   case BuiltinType::Long:       ID = PREDEF_TYPE_LONG_ID;       break;
   case BuiltinType::LongLong:   ID = PREDEF_TYPE_LONGLONG_ID;   break;
   case BuiltinType::Int128:     ID = PREDEF_TYPE_INT128_ID;     break;
+  case BuiltinType::Half:       ID = PREDEF_TYPE_HALF_ID;       break;
   case BuiltinType::Float:      ID = PREDEF_TYPE_FLOAT_ID;      break;
   case BuiltinType::Double:     ID = PREDEF_TYPE_DOUBLE_ID;     break;
   case BuiltinType::LongDouble: ID = PREDEF_TYPE_LONGDOUBLE_ID; break;

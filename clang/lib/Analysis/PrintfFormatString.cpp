@@ -387,6 +387,7 @@ bool PrintfSpecifier::fixType(QualType QT) {
   case BuiltinType::Char32:
   case BuiltinType::UInt128:
   case BuiltinType::Int128:
+  case BuiltinType::Half:
     // Integral types which are non-trivial to correct.
     return false;
 

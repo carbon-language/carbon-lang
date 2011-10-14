@@ -1026,8 +1026,13 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
                                                     NULL);
       return llvm::ConstantStruct::get(STy, Complex);
     }
-    case APValue::Float:
-      return llvm::ConstantFP::get(VMContext, Result.Val.getFloat());
+    case APValue::Float: {
+      const llvm::APFloat &Init = Result.Val.getFloat();
+      if (&Init.getSemantics() == &llvm::APFloat::IEEEhalf)
+        return llvm::ConstantInt::get(VMContext, Init.bitcastToAPInt());
+      else
+        return llvm::ConstantFP::get(VMContext, Init);
+    }
     case APValue::ComplexFloat: {
       llvm::Constant *Complex[2];
 

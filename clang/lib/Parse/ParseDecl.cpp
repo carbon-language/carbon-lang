@@ -2075,6 +2075,10 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       isInvalid = DS.SetTypeSpecType(DeclSpec::TST_int, Loc, PrevSpec,
                                      DiagID);
       break;
+     case tok::kw_half:
+       isInvalid = DS.SetTypeSpecType(DeclSpec::TST_half, Loc, PrevSpec,
+                                      DiagID);
+       break;
     case tok::kw_float:
       isInvalid = DS.SetTypeSpecType(DeclSpec::TST_float, Loc, PrevSpec,
                                      DiagID);
@@ -2382,6 +2386,9 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, bool& isInvalid,
     break;
   case tok::kw_int:
     isInvalid = DS.SetTypeSpecType(DeclSpec::TST_int, Loc, PrevSpec, DiagID);
+    break;
+  case tok::kw_half:
+    isInvalid = DS.SetTypeSpecType(DeclSpec::TST_half, Loc, PrevSpec, DiagID);
     break;
   case tok::kw_float:
     isInvalid = DS.SetTypeSpecType(DeclSpec::TST_float, Loc, PrevSpec, DiagID);
@@ -3116,6 +3123,7 @@ bool Parser::isKnownToBeTypeSpecifier(const Token &Tok) const {
   case tok::kw_char16_t:
   case tok::kw_char32_t:
   case tok::kw_int:
+  case tok::kw_half:
   case tok::kw_float:
   case tok::kw_double:
   case tok::kw_bool:
@@ -3185,6 +3193,7 @@ bool Parser::isTypeSpecifierQualifier() {
   case tok::kw_char16_t:
   case tok::kw_char32_t:
   case tok::kw_int:
+  case tok::kw_half:
   case tok::kw_float:
   case tok::kw_double:
   case tok::kw_bool:
@@ -3319,6 +3328,7 @@ bool Parser::isDeclarationSpecifier(bool DisambiguatingWithExpression) {
   case tok::kw_char32_t:
 
   case tok::kw_int:
+  case tok::kw_half:
   case tok::kw_float:
   case tok::kw_double:
   case tok::kw_bool:

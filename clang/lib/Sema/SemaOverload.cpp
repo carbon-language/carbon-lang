@@ -1469,10 +1469,10 @@ bool Sema::IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType) {
 /// FromType to ToType is a floating point promotion (C++ 4.6). If so,
 /// returns true and sets PromotedType to the promoted type.
 bool Sema::IsFloatingPointPromotion(QualType FromType, QualType ToType) {
-  /// An rvalue of type float can be converted to an rvalue of type
-  /// double. (C++ 4.6p1).
   if (const BuiltinType *FromBuiltin = FromType->getAs<BuiltinType>())
     if (const BuiltinType *ToBuiltin = ToType->getAs<BuiltinType>()) {
+      /// An rvalue of type float can be converted to an rvalue of type
+      /// double. (C++ 4.6p1).
       if (FromBuiltin->getKind() == BuiltinType::Float &&
           ToBuiltin->getKind() == BuiltinType::Double)
         return true;
@@ -1484,6 +1484,11 @@ bool Sema::IsFloatingPointPromotion(QualType FromType, QualType ToType) {
           (FromBuiltin->getKind() == BuiltinType::Float ||
            FromBuiltin->getKind() == BuiltinType::Double) &&
           (ToBuiltin->getKind() == BuiltinType::LongDouble))
+        return true;
+
+      // Half can be promoted to float.
+      if (FromBuiltin->getKind() == BuiltinType::Half &&
+          ToBuiltin->getKind() == BuiltinType::Float)
         return true;
     }
 

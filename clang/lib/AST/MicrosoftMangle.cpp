@@ -713,6 +713,7 @@ void MicrosoftCXXNameMangler::mangleType(const BuiltinType *T) {
 
   case BuiltinType::Char16:
   case BuiltinType::Char32:
+  case BuiltinType::Half:
   case BuiltinType::NullPtr:
     llvm_unreachable("Don't know how to mangle this type");
   }

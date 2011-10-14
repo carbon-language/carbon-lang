@@ -685,6 +685,7 @@ Parser::isExpressionOrTypeSpecifierSimple(tok::TokenKind Kind) {
   case tok::kw_const:
   case tok::kw_double:
   case tok::kw_enum:
+  case tok::kw_half:
   case tok::kw_float:
   case tok::kw_int:
   case tok::kw_long:
@@ -994,6 +995,7 @@ Parser::TPResult Parser::isCXXDeclarationSpecifier() {
   case tok::kw___int64:
   case tok::kw_signed:
   case tok::kw_unsigned:
+  case tok::kw_half:
   case tok::kw_float:
   case tok::kw_double:
   case tok::kw_void:

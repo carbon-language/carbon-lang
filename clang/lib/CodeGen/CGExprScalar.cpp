@@ -552,6 +552,16 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
 
   if (DstType->isVoidType()) return 0;
 
+  llvm::Type *SrcTy = Src->getType();
+
+  // Floating casts might be a bit special: if we're doing casts to / from half
+  // FP, we should go via special intrinsics.
+  if (SrcType->isHalfType()) {
+    Src = Builder.CreateCall(CGF.CGM.getIntrinsic(llvm::Intrinsic::convert_from_fp16), Src);
+    SrcType = CGF.getContext().FloatTy;
+    SrcTy = llvm::Type::getFloatTy(VMContext);
+  }
+
   // Handle conversions to bool first, they are special: comparisons against 0.
   if (DstType->isBooleanType())
     return EmitConversionToBool(Src, SrcType);
@@ -559,7 +569,7 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
   llvm::Type *DstTy = ConvertType(DstType);
 
   // Ignore conversions like int -> uint.
-  if (Src->getType() == DstTy)
+  if (SrcTy == DstTy)
     return Src;
 
   // Handle pointer conversions next: pointers can only be converted to/from
@@ -567,7 +577,7 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
   // some native types (like Obj-C id) may map to a pointer type.
   if (isa<llvm::PointerType>(DstTy)) {
     // The source value may be an integer, or a pointer.
-    if (isa<llvm::PointerType>(Src->getType()))
+    if (isa<llvm::PointerType>(SrcTy))
       return Builder.CreateBitCast(Src, DstTy, "conv");
 
     assert(SrcType->isIntegerType() && "Not ptr->ptr or int->ptr conversion?");
@@ -581,7 +591,7 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
     return Builder.CreateIntToPtr(IntResult, DstTy, "conv");
   }
 
-  if (isa<llvm::PointerType>(Src->getType())) {
+  if (isa<llvm::PointerType>(SrcTy)) {
     // Must be an ptr to int cast.
     assert(isa<llvm::IntegerType>(DstTy) && "not ptr->int?");
     return Builder.CreatePtrToInt(Src, DstTy, "conv");
@@ -610,34 +620,47 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
   }
 
   // Allow bitcast from vector to integer/fp of the same size.
-  if (isa<llvm::VectorType>(Src->getType()) ||
+  if (isa<llvm::VectorType>(SrcTy) ||
       isa<llvm::VectorType>(DstTy))
     return Builder.CreateBitCast(Src, DstTy, "conv");
 
   // Finally, we have the arithmetic types: real int/float.
-  if (isa<llvm::IntegerType>(Src->getType())) {
+  Value *Res = NULL;
+  llvm::Type *ResTy = DstTy;
+
+  // Cast to half via float
+  if (DstType->isHalfType())
+    DstTy = llvm::Type::getFloatTy(VMContext);
+
+  if (isa<llvm::IntegerType>(SrcTy)) {
     bool InputSigned = SrcType->isSignedIntegerOrEnumerationType();
     if (isa<llvm::IntegerType>(DstTy))
-      return Builder.CreateIntCast(Src, DstTy, InputSigned, "conv");
+      Res = Builder.CreateIntCast(Src, DstTy, InputSigned, "conv");
     else if (InputSigned)
-      return Builder.CreateSIToFP(Src, DstTy, "conv");
+      Res = Builder.CreateSIToFP(Src, DstTy, "conv");
     else
-      return Builder.CreateUIToFP(Src, DstTy, "conv");
-  }
-
-  assert(Src->getType()->isFloatingPointTy() && "Unknown real conversion");
-  if (isa<llvm::IntegerType>(DstTy)) {
+      Res = Builder.CreateUIToFP(Src, DstTy, "conv");
+  } else if (isa<llvm::IntegerType>(DstTy)) {
+    assert(SrcTy->isFloatingPointTy() && "Unknown real conversion");
     if (DstType->isSignedIntegerOrEnumerationType())
-      return Builder.CreateFPToSI(Src, DstTy, "conv");
+      Res = Builder.CreateFPToSI(Src, DstTy, "conv");
     else
-      return Builder.CreateFPToUI(Src, DstTy, "conv");
+      Res = Builder.CreateFPToUI(Src, DstTy, "conv");
+  } else {
+    assert(SrcTy->isFloatingPointTy() && DstTy->isFloatingPointTy() &&
+           "Unknown real conversion");
+    if (DstTy->getTypeID() < SrcTy->getTypeID())
+      Res = Builder.CreateFPTrunc(Src, DstTy, "conv");
+    else
+      Res = Builder.CreateFPExt(Src, DstTy, "conv");
   }
 
-  assert(DstTy->isFloatingPointTy() && "Unknown real conversion");
-  if (DstTy->getTypeID() < Src->getType()->getTypeID())
-    return Builder.CreateFPTrunc(Src, DstTy, "conv");
-  else
-    return Builder.CreateFPExt(Src, DstTy, "conv");
+  if (DstTy != ResTy) {
+    assert(ResTy->isIntegerTy(16) && "Only half FP requires extra conversion");
+    Res = Builder.CreateCall(CGF.CGM.getIntrinsic(llvm::Intrinsic::convert_to_fp16), Res);
+  }
+
+  return Res;
 }
 
 /// EmitComplexToScalarConversion - Emit a conversion from the specified complex
@@ -1202,7 +1225,6 @@ Value *ScalarExprEmitter::VisitCastExpr(CastExpr *CE) {
   case CK_FloatingToIntegral:
   case CK_FloatingCast:
     return EmitScalarConversion(Visit(E), E->getType(), DestTy);
-
   case CK_IntegralToBoolean:
     return EmitIntToBoolConversion(Visit(E));
   case CK_PointerToBoolean:
@@ -1356,6 +1378,14 @@ ScalarExprEmitter::EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
   } else if (type->isRealFloatingType()) {
     // Add the inc/dec to the real part.
     llvm::Value *amt;
+
+    if (type->isHalfType()) {
+      // Another special case: half FP increment should be done via float
+      value =
+    Builder.CreateCall(CGF.CGM.getIntrinsic(llvm::Intrinsic::convert_from_fp16),
+                       input);
+    }
+
     if (value->getType()->isFloatTy())
       amt = llvm::ConstantFP::get(VMContext,
                                   llvm::APFloat(static_cast<float>(amount)));
@@ -1370,6 +1400,11 @@ ScalarExprEmitter::EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
       amt = llvm::ConstantFP::get(VMContext, F);
     }
     value = Builder.CreateFAdd(value, amt, isInc ? "inc" : "dec");
+
+    if (type->isHalfType())
+      value =
+       Builder.CreateCall(CGF.CGM.getIntrinsic(llvm::Intrinsic::convert_to_fp16),
+                          value);
 
   // Objective-C pointer types.
   } else {
@@ -1387,13 +1422,13 @@ ScalarExprEmitter::EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
       value = Builder.CreateInBoundsGEP(value, sizeValue, "incdec.objptr");
     value = Builder.CreateBitCast(value, input->getType());
   }
-  
+
   // Store the updated result through the lvalue.
   if (LV.isBitField())
     CGF.EmitStoreThroughBitfieldLValue(RValue::get(value), LV, &value);
   else
     CGF.EmitStoreThroughLValue(RValue::get(value), LV);
-  
+
   // If this is a postinc, return the value read from memory, otherwise use the
   // updated value.
   return isPre ? value : input;

@@ -391,6 +391,7 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT) {
   case BuiltinType::WChar_S:
   case BuiltinType::LongLong:  Encoding = llvm::dwarf::DW_ATE_signed; break;
   case BuiltinType::Bool:      Encoding = llvm::dwarf::DW_ATE_boolean; break;
+  case BuiltinType::Half:
   case BuiltinType::Float:
   case BuiltinType::LongDouble:
   case BuiltinType::Double:    Encoding = llvm::dwarf::DW_ATE_float; break;

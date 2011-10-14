@@ -1392,6 +1392,7 @@ public:
   bool isComplexType() const;      // C99 6.2.5p11 (complex)
   bool isAnyComplexType() const;   // C99 6.2.5p11 (complex) + Complex Int.
   bool isFloatingType() const;     // C99 6.2.5p11 (real floating + complex)
+  bool isHalfType() const;         // OpenCL 6.1.1.1, NEON (IEEE 754-2008 half)
   bool isRealType() const;         // C99 6.2.5p17 (real floating + integer)
   bool isArithmeticType() const;   // C99 6.2.5p18 (integer + floating)
   bool isVoidType() const;         // C99 6.2.5p19
@@ -1699,6 +1700,8 @@ public:
     LongLong,
     Int128,   // __int128_t
 
+    Half,     // This is the 'half' type in OpenCL,
+              // __fp16 in case of ARM NEON.
     Float, Double, LongDouble,
 
     NullPtr,  // This is the type of C++0x 'nullptr'.
@@ -1779,7 +1782,7 @@ public:
   }
 
   bool isFloatingPoint() const {
-    return getKind() >= Float && getKind() <= LongDouble;
+    return getKind() >= Half && getKind() <= LongDouble;
   }
 
   /// Determines whether this type is a placeholder type, i.e. a type

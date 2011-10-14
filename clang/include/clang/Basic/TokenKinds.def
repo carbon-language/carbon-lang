@@ -441,6 +441,12 @@ KEYWORD(__pascal                    , KEYALL)
 KEYWORD(__vector                    , KEYALTIVEC)
 KEYWORD(__pixel                     , KEYALTIVEC)
 
+// ARM NEON extensions.
+ALIAS("__fp16", half                , KEYALL)
+
+// OpenCL Extension.
+KEYWORD(half                        , KEYOPENCL)
+
 // Objective-C ARC keywords.
 KEYWORD(__bridge                     , KEYARC)
 KEYWORD(__bridge_transfer            , KEYARC)

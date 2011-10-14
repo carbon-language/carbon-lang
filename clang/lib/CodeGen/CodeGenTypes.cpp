@@ -263,6 +263,8 @@ void CodeGenTypes::UpdateCompletedType(const TagDecl *TD) {
 
 static llvm::Type *getTypeForFormat(llvm::LLVMContext &VMContext,
                                     const llvm::fltSemantics &format) {
+  if (&format == &llvm::APFloat::IEEEhalf)
+    return llvm::Type::getInt16Ty(VMContext);
   if (&format == &llvm::APFloat::IEEEsingle)
     return llvm::Type::getFloatTy(VMContext);
   if (&format == &llvm::APFloat::IEEEdouble)
@@ -341,6 +343,14 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
                                  static_cast<unsigned>(Context.getTypeSize(T)));
       break;
 
+    case BuiltinType::Half:
+      // Half is special: it might be lowered to i16 (and will be storage-only
+      // type),. or can be represented as a set of native operations.
+
+      // FIXME: Ask target which kind of half FP it prefers (storage only vs
+      // native).
+      ResultType = llvm::Type::getInt16Ty(getLLVMContext());
+      break;
     case BuiltinType::Float:
     case BuiltinType::Double:
     case BuiltinType::LongDouble:

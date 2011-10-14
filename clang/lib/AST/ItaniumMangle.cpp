@@ -1704,7 +1704,7 @@ void CXXNameMangler::mangleType(const BuiltinType *T) {
   // UNSUPPORTED:    ::= Dd # IEEE 754r decimal floating point (64 bits)
   // UNSUPPORTED:    ::= De # IEEE 754r decimal floating point (128 bits)
   // UNSUPPORTED:    ::= Df # IEEE 754r decimal floating point (32 bits)
-  // UNSUPPORTED:    ::= Dh # IEEE 754r half-precision floating point (16 bits)
+  //                 ::= Dh # IEEE 754r half-precision floating point (16 bits)
   //                 ::= Di # char32_t
   //                 ::= Ds # char16_t
   //                 ::= Dn # std::nullptr_t (i.e., decltype(nullptr))
@@ -1729,6 +1729,7 @@ void CXXNameMangler::mangleType(const BuiltinType *T) {
   case BuiltinType::Long: Out << 'l'; break;
   case BuiltinType::LongLong: Out << 'x'; break;
   case BuiltinType::Int128: Out << 'n'; break;
+  case BuiltinType::Half: Out << "Dh"; break;
   case BuiltinType::Float: Out << 'f'; break;
   case BuiltinType::Double: Out << 'd'; break;
   case BuiltinType::LongDouble: Out << 'e'; break;
