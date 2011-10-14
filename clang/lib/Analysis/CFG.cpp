@@ -437,20 +437,12 @@ private:
   /// tryEvaluateBool - Try and evaluate the Stmt and return 0 or 1
   /// if we can evaluate to a known value, otherwise return -1.
   TryResult tryEvaluateBool(Expr *S) {
-    Expr::EvalResult Result;
-    if (!tryEvaluate(S, Result))
+    bool Result;
+    if (!BuildOpts.PruneTriviallyFalseEdges ||
+        S->isTypeDependent() || S->isValueDependent() ||
+        !S->EvaluateAsBooleanCondition(Result, *Context))
       return TryResult();
-    
-    if (Result.Val.isInt())
-      return Result.Val.getInt().getBoolValue();
-
-    if (Result.Val.isLValue()) {
-      const Expr *e = Result.Val.getLValueBase();
-      const CharUnits &c = Result.Val.getLValueOffset();        
-      if (!e && c.isZero())
-        return false;        
-    }
-    return TryResult();
+    return Result;
   }
   
 };
@@ -2343,11 +2335,8 @@ static bool shouldAddCase(bool &switchExclusivelyCovered,
   if (!switchExclusivelyCovered) {
     if (switchCond->Val.isInt()) {
       // Evaluate the LHS of the case value.
-      Expr::EvalResult V1;
-      CS->getLHS()->Evaluate(V1, Ctx);
-      assert(V1.Val.isInt());
+      const llvm::APSInt &lhsInt = CS->getLHS()->EvaluateKnownConstInt(Ctx);
       const llvm::APSInt &condInt = switchCond->Val.getInt();
-      const llvm::APSInt &lhsInt = V1.Val.getInt();
       
       if (condInt == lhsInt) {
         addCase = true;
@@ -2356,10 +2345,8 @@ static bool shouldAddCase(bool &switchExclusivelyCovered,
       else if (condInt < lhsInt) {
         if (const Expr *RHS = CS->getRHS()) {
           // Evaluate the RHS of the case value.
-          Expr::EvalResult V2;
-          RHS->Evaluate(V2, Ctx);
-          assert(V2.Val.isInt());
-          if (V2.Val.getInt() <= condInt) {
+          const llvm::APSInt &V2 = RHS->EvaluateKnownConstInt(Ctx);
+          if (V2 <= condInt) {
             addCase = true;
             switchExclusivelyCovered = true;
           }
