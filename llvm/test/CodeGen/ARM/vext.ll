@@ -133,3 +133,20 @@ define <8 x i16> @test_illegal(<8 x i16>* %A, <8 x i16>* %B) nounwind {
        %tmp3 = shufflevector <8 x i16> %tmp1, <8 x i16> %tmp2, <8 x i32> <i32 0, i32 7, i32 5, i32 13, i32 3, i32 2, i32 2, i32 9>
        ret <8 x i16> %tmp3
 }
+
+; PR11129
+; Make sure this doesn't crash
+define arm_aapcscc void @test_elem_mismatch(<2 x i64>* nocapture %src, <4 x i16>* nocapture %dest) nounwind {
+; CHECK: test_elem_mismatch:
+; CHECK: vstr.64
+  %tmp0 = load <2 x i64>* %src, align 16
+  %tmp1 = bitcast <2 x i64> %tmp0 to <4 x i32>
+  %tmp2 = extractelement <4 x i32> %tmp1, i32 0
+  %tmp3 = extractelement <4 x i32> %tmp1, i32 2
+  %tmp4 = trunc i32 %tmp2 to i16
+  %tmp5 = trunc i32 %tmp3 to i16
+  %tmp6 = insertelement <4 x i16> undef, i16 %tmp4, i32 0
+  %tmp7 = insertelement <4 x i16> %tmp6, i16 %tmp5, i32 1
+  store <4 x i16> %tmp7, <4 x i16>* %dest, align 4
+  ret void
+}

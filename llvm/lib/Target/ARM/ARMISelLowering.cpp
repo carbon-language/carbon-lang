@@ -4057,6 +4057,14 @@ SDValue ARMTargetLowering::ReconstructShuffle(SDValue Op,
       // A shuffle can only come from building a vector from various
       // elements of other vectors.
       return SDValue();
+    } else if (V.getOperand(0).getValueType().getVectorElementType() !=
+               VT.getVectorElementType()) {
+      // This code doesn't know how to handle shuffles where the vector
+      // element types do not match (this happens because type legalization
+      // promotes the return type of EXTRACT_VECTOR_ELT).
+      // FIXME: It might be appropriate to extend this code to handle
+      // mismatched types.
+      return SDValue();
     }
 
     // Record this extraction against the appropriate vector if possible...
