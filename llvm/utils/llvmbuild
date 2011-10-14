@@ -653,6 +653,7 @@ class Builder(threading.Thread):
                            configure_env[comp_key][build])
 
             self.logger.info("Building " + component + " in " + builddir)
+            self.logger.info("Build: make " + str(make_flags[comp_key][build]))
             self.make(component, srcdir, builddir,
                       make_flags[comp_key][build],
                       make_env[comp_key][build])
@@ -664,6 +665,8 @@ class Builder(threading.Thread):
                           make_install_env[comp_key][build])
 
             self.logger.info("Testing " + component + " in " + builddir)
+            self.logger.info("Test: make "
+                             + str(make_check_flags[comp_key][build]))
             self.make(component, srcdir, builddir,
                       make_check_flags[comp_key][build],
                       make_check_env[comp_key][build])
