@@ -53,7 +53,9 @@ namespace llvm {
       reloc_mips_gottprel   = 22, // R_MIPS_TLS_GOTTPREL
       reloc_mips_tprel_hi   = 23, // R_MIPS_TLS_TPREL_HI16
       reloc_mips_tprel_lo   = 24, // R_MIPS_TLS_TPREL_LO16
-      reloc_mips_branch_pcrel = 25 // This should become R_MIPS_PC16
+      reloc_mips_branch_pcrel = 25, // This should become R_MIPS_PC16
+      reloc_mips_pcrel      =  26, // R_MIPS_PC16
+      reloc_mips_j_jal      =  27 // R_MIPS_26
     };
   }
 }
