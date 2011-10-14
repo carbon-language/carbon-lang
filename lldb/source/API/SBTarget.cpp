@@ -957,7 +957,7 @@ SBTarget::WatchAddress (lldb::addr_t addr, size_t size, bool read, bool write)
         Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
         uint32_t watch_type = (read ? LLDB_WATCH_TYPE_READ : 0) |
             (write ? LLDB_WATCH_TYPE_WRITE : 0);
-        WatchpointSP wp_sp = m_opaque_sp->CreateWatchpoint(addr, size, watch_type);
+        sb_watchpoint = m_opaque_sp->CreateWatchpoint(addr, size, watch_type);
     }
     
     if (log)
