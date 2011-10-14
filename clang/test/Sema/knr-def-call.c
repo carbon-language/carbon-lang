@@ -36,8 +36,6 @@ void proto(x)
 }
 
 void use_proto() {
-  proto(42.0); // expected-warning{{implicit conversion turns literal floating-point number into integer}} \
-               // expected-note {{this can be rewritten as an integer literal with the exact same value}}
-  (&proto)(42.0); // expected-warning{{implicit conversion turns literal floating-point number into integer}} \
-                  // expected-note {{this can be rewritten as an integer literal with the exact same value}}
+  proto(42.1); // expected-warning{{implicit conversion turns literal floating-point number into integer}}
+  (&proto)(42.1); // expected-warning{{implicit conversion turns literal floating-point number into integer}}
 }
