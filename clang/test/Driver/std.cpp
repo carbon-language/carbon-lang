@@ -1,5 +1,6 @@
 // RUN: %clang -std=c++98 %s -Wno-c++0x-compat -fsyntax-only 2>&1 | FileCheck -check-prefix=CXX98 %s
 // RUN: %clang -std=gnu++98 %s -Wno-c++0x-compat -fsyntax-only 2>&1 | FileCheck -check-prefix=GNUXX98 %s
+// RUN: %clang -std=c++03 %s -Wno-c++0x-compat -fsyntax-only 2>&1 | FileCheck -check-prefix=CXX98 %s
 // RUN: %clang -std=c++0x %s -fsyntax-only 2>&1 | FileCheck -check-prefix=CXX11 %s
 // RUN: %clang -std=gnu++0x %s -fsyntax-only 2>&1 | FileCheck -check-prefix=GNUXX11 %s
 // RUN: %clang -std=c++11 %s -fsyntax-only 2>&1 | FileCheck -check-prefix=CXX11 %s

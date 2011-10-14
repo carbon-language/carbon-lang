@@ -37,6 +37,9 @@ LANGSTANDARD(c94, "iso9899:199409",
 LANGSTANDARD(gnu89, "gnu89",
              "ISO C 1990 with GNU extensions",
              BCPLComment | C89 | Digraphs | GNUMode | ImplicitInt)
+LANGSTANDARD(gnu90, "gnu90",
+             "ISO C 1990 with GNU extensions",
+             BCPLComment | C89 | Digraphs | GNUMode | ImplicitInt)
 
 // C99-ish modes
 LANGSTANDARD(c99, "c99",
@@ -75,8 +78,11 @@ LANGSTANDARD(gnu1x, "gnu1x",
 LANGSTANDARD(cxx98, "c++98",
              "ISO C++ 1998 with amendments",
              BCPLComment | CPlusPlus | Digraphs)
+LANGSTANDARD(cxx03, "c++03",
+             "ISO C++ 1998 with amendments",
+             BCPLComment | CPlusPlus | Digraphs)
 LANGSTANDARD(gnucxx98, "gnu++98",
-             "ISO C++ 1998 with " "amendments and GNU extensions",
+             "ISO C++ 1998 with amendments and GNU extensions",
              BCPLComment | CPlusPlus | Digraphs | GNUMode)
 
 LANGSTANDARD(cxx0x, "c++0x",
