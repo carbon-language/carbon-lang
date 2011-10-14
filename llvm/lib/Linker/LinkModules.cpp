@@ -951,8 +951,17 @@ bool ModuleLinker::run() {
   // Link in the function bodies that are defined in the source module into
   // DstM.
   for (Module::iterator SF = SrcM->begin(), E = SrcM->end(); SF != E; ++SF) {
-    // Skip if no body (function is external) or marked to skip.
-    if (SF->isDeclaration() || DoNotLinkFromSource.count(SF)) continue;
+    
+    // Skip if not linking from source.
+    if (DoNotLinkFromSource.count(SF)) continue;
+    
+    // Skip if no body (function is external) or materialize.
+    if (SF->isDeclaration()) {
+      if (!SF->isMaterializable())
+        continue;
+      if (SF->Materialize(&ErrorMsg))
+        return true;
+    }
     
     linkFunctionBody(cast<Function>(ValueMap[SF]), SF);
   }
