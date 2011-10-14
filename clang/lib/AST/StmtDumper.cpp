@@ -235,9 +235,9 @@ void StmtDumper::DumpDeclarator(Decl *D) {
   // nodes are where they need to be.
   if (TypedefDecl *localType = dyn_cast<TypedefDecl>(D)) {
     OS << "\"typedef " << localType->getUnderlyingType().getAsString()
-       << ' ' << localType << '"';
+       << ' ' << *localType << '"';
   } else if (TypeAliasDecl *localType = dyn_cast<TypeAliasDecl>(D)) {
-    OS << "\"using " << localType << " = "
+    OS << "\"using " << *localType << " = "
        << localType->getUnderlyingType().getAsString() << '"';
   } else if (ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
     OS << "\"";
@@ -407,7 +407,7 @@ void StmtDumper::VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node) {
   DumpExpr(Node);
 
   OS << " " << Node->getDecl()->getDeclKindName()
-     << "Decl='" << Node->getDecl()
+     << "Decl='" << *Node->getDecl()
      << "' " << (void*)Node->getDecl();
   if (Node->isFreeIvar())
     OS << " isFreeIvar";
@@ -480,7 +480,7 @@ void StmtDumper::VisitUnaryExprOrTypeTraitExpr(UnaryExprOrTypeTraitExpr *Node) {
 void StmtDumper::VisitMemberExpr(MemberExpr *Node) {
   DumpExpr(Node);
   OS << " " << (Node->isArrow() ? "->" : ".")
-     << Node->getMemberDecl() << ' '
+     << *Node->getMemberDecl() << ' '
      << (void*)Node->getMemberDecl();
 }
 void StmtDumper::VisitExtVectorElementExpr(ExtVectorElementExpr *Node) {
@@ -643,7 +643,7 @@ void StmtDumper::VisitObjCSelectorExpr(ObjCSelectorExpr *Node) {
 void StmtDumper::VisitObjCProtocolExpr(ObjCProtocolExpr *Node) {
   DumpExpr(Node);
 
-  OS << ' ' << Node->getProtocol();
+  OS << ' ' <<* Node->getProtocol();
 }
 
 void StmtDumper::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node) {
@@ -662,7 +662,7 @@ void StmtDumper::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node) {
       OS << "(null)";
     OS << "\"";
   } else {
-    OS << " Kind=PropertyRef Property=\"" << Node->getExplicitProperty() << '"';
+    OS << " Kind=PropertyRef Property=\"" << *Node->getExplicitProperty() <<'"';
   }
 
   if (Node->isSuperReceiver())

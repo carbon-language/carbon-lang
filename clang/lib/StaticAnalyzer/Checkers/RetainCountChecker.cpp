@@ -1855,7 +1855,7 @@ PathDiagnosticPiece *CFRefReportVisitor::VisitNode(const ExplodedNode *N,
       // Get the name of the callee (if it is available).
       SVal X = CurrSt->getSValAsScalarOrLoc(CE->getCallee());
       if (const FunctionDecl *FD = X.getAsFunctionDecl())
-        os << "Call to function '" << FD << '\'';
+        os << "Call to function '" << *FD << '\'';
       else
         os << "function call";
     }
@@ -1956,7 +1956,7 @@ PathDiagnosticPiece *CFRefReportVisitor::VisitNode(const ExplodedNode *N,
         // Determine if the object's reference count was pushed to zero.
         assert(!(PrevV == CurrV) && "The typestate *must* have changed.");
 
-        os << "In GC mode a call to '" << FD
+        os << "In GC mode a call to '" << *FD
         <<  "' decrements an object's retain count and registers the "
         "object with the garbage collector. ";
 
@@ -1971,7 +1971,7 @@ PathDiagnosticPiece *CFRefReportVisitor::VisitNode(const ExplodedNode *N,
           << '.';
       }
       else
-        os << "When GC is not enabled a call to '" << FD
+        os << "When GC is not enabled a call to '" << *FD
         << "' has no effect on its argument.";
 
       // Nothing more to say.

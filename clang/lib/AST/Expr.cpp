@@ -413,7 +413,7 @@ std::string PredefinedExpr::ComputeName(IdentType IT, const Decl *CurrentDecl) {
     // For incorrect code, there might not be an ObjCInterfaceDecl.  Do
     // a null check to avoid a crash.
     if (const ObjCInterfaceDecl *ID = MD->getClassInterface())
-      Out << ID;
+      Out << *ID;
 
     if (const ObjCCategoryImplDecl *CID =
         dyn_cast<ObjCCategoryImplDecl>(MD->getDeclContext()))

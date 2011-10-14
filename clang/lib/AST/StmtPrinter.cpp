@@ -564,7 +564,7 @@ void StmtPrinter::VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node) {
     PrintExpr(Node->getBase());
     OS << (Node->isArrow() ? "->" : ".");
   }
-  OS << Node->getDecl();
+  OS << *Node->getDecl();
 }
 
 void StmtPrinter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node) {
@@ -1504,7 +1504,7 @@ void StmtPrinter::VisitObjCSelectorExpr(ObjCSelectorExpr *Node) {
 }
 
 void StmtPrinter::VisitObjCProtocolExpr(ObjCProtocolExpr *Node) {
-  OS << "@protocol(" << Node->getProtocol() << ')';
+  OS << "@protocol(" << *Node->getProtocol() << ')';
 }
 
 void StmtPrinter::VisitObjCMessageExpr(ObjCMessageExpr *Mess) {
@@ -1586,7 +1586,7 @@ void StmtPrinter::VisitBlockExpr(BlockExpr *Node) {
 }
 
 void StmtPrinter::VisitBlockDeclRefExpr(BlockDeclRefExpr *Node) {
-  OS << Node->getDecl();
+  OS << *Node->getDecl();
 }
 
 void StmtPrinter::VisitOpaqueValueExpr(OpaqueValueExpr *Node) {}

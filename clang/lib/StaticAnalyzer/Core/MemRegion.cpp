@@ -442,7 +442,7 @@ void ElementRegion::dumpToStream(raw_ostream &os) const {
 }
 
 void FieldRegion::dumpToStream(raw_ostream &os) const {
-  os << superRegion << "->" << getDecl();
+  os << superRegion << "->" << *getDecl();
 }
 
 void NonStaticGlobalSpaceRegion::dumpToStream(raw_ostream &os) const {
@@ -450,7 +450,7 @@ void NonStaticGlobalSpaceRegion::dumpToStream(raw_ostream &os) const {
 }
 
 void ObjCIvarRegion::dumpToStream(raw_ostream &os) const {
-  os << "ivar{" << superRegion << ',' << getDecl() << '}';
+  os << "ivar{" << superRegion << ',' << *getDecl() << '}';
 }
 
 void StringRegion::dumpToStream(raw_ostream &os) const {
@@ -462,7 +462,7 @@ void SymbolicRegion::dumpToStream(raw_ostream &os) const {
 }
 
 void VarRegion::dumpToStream(raw_ostream &os) const {
-  os << cast<VarDecl>(D);
+  os << *cast<VarDecl>(D);
 }
 
 void RegionRawOffset::dump() const {

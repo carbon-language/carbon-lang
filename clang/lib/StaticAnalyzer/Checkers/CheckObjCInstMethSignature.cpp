@@ -51,16 +51,16 @@ static void CompareReturnTypes(const ObjCMethodDecl *MethDerived,
     llvm::raw_string_ostream os(sbuf);
 
     os << "The Objective-C class '"
-       << MethDerived->getClassInterface()
+       << *MethDerived->getClassInterface()
        << "', which is derived from class '"
-       << MethAncestor->getClassInterface()
+       << *MethAncestor->getClassInterface()
        << "', defines the instance method '"
        << MethDerived->getSelector().getAsString()
        << "' whose return type is '"
        << ResDerived.getAsString()
        << "'.  A method with the same name (same selector) is also defined in "
           "class '"
-       << MethAncestor->getClassInterface()
+       << *MethAncestor->getClassInterface()
        << "' and has a return type of '"
        << ResAncestor.getAsString()
        << "'.  These two types are incompatible, and may result in undefined "

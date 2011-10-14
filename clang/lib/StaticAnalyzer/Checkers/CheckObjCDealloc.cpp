@@ -230,7 +230,7 @@ static void checkObjCDealloc(const ObjCImplementationDecl *D,
 
     // ivars cannot be set via read-only properties, so we'll skip them
     if (PD->isReadOnly())
-       continue;
+      continue;
 
     // ivar must be released if and only if the kind of setter was not 'assign'
     bool requiresRelease = PD->getSetterKind() != ObjCPropertyDecl::Assign;
@@ -247,7 +247,7 @@ static void checkObjCDealloc(const ObjCImplementationDecl *D,
                ? "missing ivar release (leak)"
                : "missing ivar release (Hybrid MM, non-GC)";
 
-        os << "The '" << ID
+        os << "The '" << *ID
            << "' instance variable was retained by a synthesized property but "
               "wasn't released in 'dealloc'";
       } else {
@@ -255,7 +255,7 @@ static void checkObjCDealloc(const ObjCImplementationDecl *D,
                ? "extra ivar release (use-after-release)"
                : "extra ivar release (Hybrid MM, non-GC)";
 
-        os << "The '" << ID
+        os << "The '" << *ID
            << "' instance variable was not retained by a synthesized property "
               "but was released in 'dealloc'";
       }

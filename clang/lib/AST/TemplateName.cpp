@@ -128,13 +128,13 @@ void
 TemplateName::print(raw_ostream &OS, const PrintingPolicy &Policy,
                     bool SuppressNNS) const {
   if (TemplateDecl *Template = Storage.dyn_cast<TemplateDecl *>())
-    OS << Template;
+    OS << *Template;
   else if (QualifiedTemplateName *QTN = getAsQualifiedTemplateName()) {
     if (!SuppressNNS)
       QTN->getQualifier()->print(OS, Policy);
     if (QTN->hasTemplateKeyword())
       OS << "template ";
-    OS << QTN->getDecl();
+    OS << *QTN->getDecl();
   } else if (DependentTemplateName *DTN = getAsDependentTemplateName()) {
     if (!SuppressNNS && DTN->getQualifier())
       DTN->getQualifier()->print(OS, Policy);

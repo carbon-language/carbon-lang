@@ -352,7 +352,7 @@ PrintingCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &SemaRef,
     OS << "COMPLETION: ";
     switch (Results[I].Kind) {
     case CodeCompletionResult::RK_Declaration:
-      OS << Results[I].Declaration;
+      OS << *Results[I].Declaration;
       if (Results[I].Hidden)
         OS << " (Hidden)";
       if (CodeCompletionString *CCS 

@@ -847,18 +847,18 @@ std::string NamedDecl::getQualifiedNameAsString(const PrintingPolicy &P) const {
       if (ND->isAnonymousNamespace())
         OS << "<anonymous namespace>";
       else
-        OS << ND;
+        OS << *ND;
     } else if (const RecordDecl *RD = dyn_cast<RecordDecl>(*I)) {
       if (!RD->getIdentifier())
         OS << "<anonymous " << RD->getKindName() << '>';
       else
-        OS << RD;
+        OS << *RD;
     } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(*I)) {
       const FunctionProtoType *FT = 0;
       if (FD->hasWrittenPrototype())
         FT = dyn_cast<FunctionProtoType>(FD->getType()->getAs<FunctionType>());
 
-      OS << FD << '(';
+      OS << *FD << '(';
       if (FT) {
         unsigned NumParams = FD->getNumParams();
         for (unsigned i = 0; i < NumParams; ++i) {
@@ -877,13 +877,13 @@ std::string NamedDecl::getQualifiedNameAsString(const PrintingPolicy &P) const {
       }
       OS << ')';
     } else {
-      OS << cast<NamedDecl>(*I);
+      OS << *cast<NamedDecl>(*I);
     }
     OS << "::";
   }
 
   if (getDeclName())
-    OS << this;
+    OS << *this;
   else
     OS << "<anonymous>";
 

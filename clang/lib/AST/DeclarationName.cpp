@@ -224,7 +224,7 @@ void DeclarationName::printName(raw_ostream &OS) const {
   case CXXConstructorName: {
     QualType ClassType = getCXXNameType();
     if (const RecordType *ClassRec = ClassType->getAs<RecordType>())
-      OS << ClassRec->getDecl();
+      OS << *ClassRec->getDecl();
     else
       OS << ClassType.getAsString();
     return;
@@ -234,7 +234,7 @@ void DeclarationName::printName(raw_ostream &OS) const {
     OS << '~';
     QualType Type = getCXXNameType();
     if (const RecordType *Rec = Type->getAs<RecordType>())
-      OS << Rec->getDecl();
+      OS << *Rec->getDecl();
     else
       OS << Type.getAsString();
     return;
@@ -265,7 +265,7 @@ void DeclarationName::printName(raw_ostream &OS) const {
     OS << "operator ";
     QualType Type = getCXXNameType();
     if (const RecordType *Rec = Type->getAs<RecordType>())
-      OS << Rec->getDecl();
+      OS << *Rec->getDecl();
     else
       OS << Type.getAsString();
     return;

@@ -337,7 +337,7 @@ void DeclPrinter::VisitEnumDecl(EnumDecl *D) {
     else
       Out << "struct ";
   }
-  Out << D;
+  Out << *D;
 
   if (D->isFixed()) {
     std::string Underlying;
@@ -357,7 +357,7 @@ void DeclPrinter::VisitRecordDecl(RecordDecl *D) {
     Out << "__module_private__ ";
   Out << D->getKindName();
   if (D->getIdentifier())
-    Out << ' ' << D;
+    Out << ' ' << *D;
 
   if (D->isCompleteDefinition()) {
     Out << " {\n";
@@ -367,7 +367,7 @@ void DeclPrinter::VisitRecordDecl(RecordDecl *D) {
 }
 
 void DeclPrinter::VisitEnumConstantDecl(EnumConstantDecl *D) {
-  Out << D;
+  Out << *D;
   if (Expr *Init = D->getInitExpr()) {
     Out << " = ";
     Init->printPretty(Out, Context, 0, Policy, Indentation);
@@ -491,10 +491,9 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
 
         if (BMInitializer->isAnyMemberInitializer()) {
           FieldDecl *FD = BMInitializer->getAnyMember();
-          Out << FD;
+          Out << *FD;
         } else {
-          Out << QualType(BMInitializer->getBaseClass(),
-                          0).getAsString(Policy);
+          Out << QualType(BMInitializer->getBaseClass(), 0).getAsString(Policy);
         }
         
         Out << "(";
@@ -648,7 +647,7 @@ void DeclPrinter::VisitStaticAssertDecl(StaticAssertDecl *D) {
 // C++ declarations
 //----------------------------------------------------------------------------
 void DeclPrinter::VisitNamespaceDecl(NamespaceDecl *D) {
-  Out << "namespace " << D << " {\n";
+  Out << "namespace " << *D << " {\n";
   VisitDeclContext(D);
   Indent() << "}";
 }
@@ -657,14 +656,14 @@ void DeclPrinter::VisitUsingDirectiveDecl(UsingDirectiveDecl *D) {
   Out << "using namespace ";
   if (D->getQualifier())
     D->getQualifier()->print(Out, Policy);
-  Out << D->getNominatedNamespaceAsWritten();
+  Out << *D->getNominatedNamespaceAsWritten();
 }
 
 void DeclPrinter::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
-  Out << "namespace " << D << " = ";
+  Out << "namespace " << *D << " = ";
   if (D->getQualifier())
     D->getQualifier()->print(Out, Policy);
-  Out << D->getAliasedNamespace();
+  Out << *D->getAliasedNamespace();
 }
 
 void DeclPrinter::VisitCXXRecordDecl(CXXRecordDecl *D) {
@@ -672,7 +671,7 @@ void DeclPrinter::VisitCXXRecordDecl(CXXRecordDecl *D) {
     Out << "__module_private__ ";
   Out << D->getKindName();
   if (D->getIdentifier())
-    Out << ' ' << D;
+    Out << ' ' << *D;
 
   if (D->isCompleteDefinition()) {
     // Print the base classes
@@ -831,8 +830,7 @@ void DeclPrinter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
 //----------------------------------------------------------------------------
 
 void DeclPrinter::VisitObjCClassDecl(ObjCClassDecl *D) {
-  Out << "@class ";
-  Out << D->getForwardInterfaceDecl();
+  Out << "@class " << *D->getForwardInterfaceDecl();
 }
 
 void DeclPrinter::VisitObjCMethodDecl(ObjCMethodDecl *OMD) {
@@ -848,9 +846,9 @@ void DeclPrinter::VisitObjCMethodDecl(ObjCMethodDecl *OMD) {
   for (ObjCMethodDecl::param_iterator PI = OMD->param_begin(),
        E = OMD->param_end(); PI != E; ++PI) {
     // FIXME: selector is missing here!
-    pos = name.find_first_of(":", lastPos);
+    pos = name.find_first_of(':', lastPos);
     Out << " " << name.substr(lastPos, pos - lastPos);
-    Out << ":(" << (*PI)->getType().getAsString(Policy) << ')' << *PI;
+    Out << ":(" << (*PI)->getType().getAsString(Policy) << ')' << **PI;
     lastPos = pos + 1;
   }
 
@@ -872,7 +870,7 @@ void DeclPrinter::VisitObjCImplementationDecl(ObjCImplementationDecl *OID) {
   ObjCInterfaceDecl *SID = OID->getSuperClass();
 
   if (SID)
-    Out << "@implementation " << I << " : " << SID;
+    Out << "@implementation " << I << " : " << *SID;
   else
     Out << "@implementation " << I;
   Out << "\n";
@@ -885,7 +883,7 @@ void DeclPrinter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *OID) {
   ObjCInterfaceDecl *SID = OID->getSuperClass();
 
   if (SID)
-    Out << "@interface " << I << " : " << SID;
+    Out << "@interface " << I << " : " << *SID;
   else
     Out << "@interface " << I;
 
@@ -894,7 +892,7 @@ void DeclPrinter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *OID) {
   if (!Protocols.empty()) {
     for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
          E = Protocols.end(); I != E; ++I)
-      Out << (I == Protocols.begin() ? '<' : ',') << *I;
+      Out << (I == Protocols.begin() ? '<' : ',') << **I;
   }
 
   if (!Protocols.empty())
@@ -905,7 +903,7 @@ void DeclPrinter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *OID) {
     Indentation += Policy.Indentation;
     for (ObjCInterfaceDecl::ivar_iterator I = OID->ivar_begin(),
          E = OID->ivar_end(); I != E; ++I) {
-      Indent() << (*I)->getType().getAsString(Policy) << ' ' << *I << ";\n";
+      Indent() << (*I)->getType().getAsString(Policy) << ' ' << **I << ";\n";
     }
     Indentation -= Policy.Indentation;
     Out << "}\n";
@@ -922,18 +920,18 @@ void DeclPrinter::VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *D) {
          E = D->protocol_end();
        I != E; ++I) {
     if (I != D->protocol_begin()) Out << ", ";
-    Out << *I;
+    Out << **I;
   }
 }
 
 void DeclPrinter::VisitObjCProtocolDecl(ObjCProtocolDecl *PID) {
-  Out << "@protocol " << PID << '\n';
+  Out << "@protocol " << *PID << '\n';
   VisitDeclContext(PID, false);
   Out << "@end";
 }
 
 void DeclPrinter::VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *PID) {
-  Out << "@implementation " << PID->getClassInterface() << '(' << PID << ")\n";
+  Out << "@implementation " << *PID->getClassInterface() << '(' << *PID <<")\n";
 
   VisitDeclContext(PID, false);
   Out << "@end";
@@ -941,7 +939,7 @@ void DeclPrinter::VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *PID) {
 }
 
 void DeclPrinter::VisitObjCCategoryDecl(ObjCCategoryDecl *PID) {
-  Out << "@interface " << PID->getClassInterface() << '(' << PID << ")\n";
+  Out << "@interface " << *PID->getClassInterface() << '(' << *PID << ")\n";
   VisitDeclContext(PID, false);
   Out << "@end";
 
@@ -949,8 +947,8 @@ void DeclPrinter::VisitObjCCategoryDecl(ObjCCategoryDecl *PID) {
 }
 
 void DeclPrinter::VisitObjCCompatibleAliasDecl(ObjCCompatibleAliasDecl *AID) {
-  Out << "@compatibility_alias " << AID
-      << ' ' << AID->getClassInterface() << ";\n";
+  Out << "@compatibility_alias " << *AID
+      << ' ' << *AID->getClassInterface() << ";\n";
 }
 
 /// PrintObjCPropertyDecl - print a property declaration.
@@ -1022,7 +1020,7 @@ void DeclPrinter::VisitObjCPropertyDecl(ObjCPropertyDecl *PDecl) {
     (void) first; // Silence dead store warning due to idiomatic code.
     Out << " )";
   }
-  Out << ' ' << PDecl->getType().getAsString(Policy) << ' ' << PDecl;
+  Out << ' ' << PDecl->getType().getAsString(Policy) << ' ' << *PDecl;
 }
 
 void DeclPrinter::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *PID) {
@@ -1030,15 +1028,15 @@ void DeclPrinter::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *PID) {
     Out << "@synthesize ";
   else
     Out << "@dynamic ";
-  Out << PID->getPropertyDecl();
+  Out << *PID->getPropertyDecl();
   if (PID->getPropertyIvarDecl())
-    Out << '=' << PID->getPropertyIvarDecl();
+    Out << '=' << *PID->getPropertyIvarDecl();
 }
 
 void DeclPrinter::VisitUsingDecl(UsingDecl *D) {
   Out << "using ";
   D->getQualifier()->print(Out, Policy);
-  Out << D;
+  Out << *D;
 }
 
 void

@@ -128,7 +128,7 @@ public:
 
       if (isa<FunctionDecl>(D) || isa<ObjCMethodDecl>(D)) {
         const NamedDecl *ND = cast<NamedDecl>(D);
-        llvm::errs() << ' ' << ND << '\n';
+        llvm::errs() << ' ' << *ND << '\n';
       }
       else if (isa<BlockDecl>(D)) {
         llvm::errs() << ' ' << "block(line:" << Loc.getLine() << ",col:"

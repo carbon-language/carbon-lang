@@ -2185,12 +2185,12 @@ static void DumpCXXRecordLayout(raw_ostream &OS,
   // Vtable pointer.
   if (RD->isDynamicClass() && !PrimaryBase) {
     PrintOffset(OS, Offset, IndentLevel);
-    OS << '(' << RD << " vtable pointer)\n";
+    OS << '(' << *RD << " vtable pointer)\n";
   }
   
   if (HasVbptr && !PrimaryBase) {
     PrintOffset(OS, Offset + Layout.getVBPtrOffset(), IndentLevel);
-    OS << '(' << RD << " vbtable pointer)\n";
+    OS << '(' << *RD << " vbtable pointer)\n";
 
     // one vbtable per class
     HasVbptr = false;
@@ -2216,7 +2216,7 @@ static void DumpCXXRecordLayout(raw_ostream &OS,
   // vbptr
   if (HasVbptr) {
     PrintOffset(OS, Offset + Layout.getVBPtrOffset(), IndentLevel);
-    OS << '(' << RD << " vbtable pointer)\n";
+    OS << '(' << *RD << " vbtable pointer)\n";
   }
 
   // Dump fields.
@@ -2237,7 +2237,7 @@ static void DumpCXXRecordLayout(raw_ostream &OS,
     }
 
     PrintOffset(OS, FieldOffset, IndentLevel);
-    OS << Field->getType().getAsString() << ' ' << Field << '\n';
+    OS << Field->getType().getAsString() << ' ' << *Field << '\n';
   }
 
   if (!IncludeVirtualBases)

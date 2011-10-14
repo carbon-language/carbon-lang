@@ -803,7 +803,7 @@ bool CStringChecker::SummarizeRegion(raw_ostream &os, ASTContext &Ctx,
   case MemRegion::FunctionTextRegionKind: {
     const FunctionDecl *FD = cast<FunctionTextRegion>(MR)->getDecl();
     if (FD)
-      os << "the address of the function '" << FD << "'";
+      os << "the address of the function '" << *FD << '\'';
     else
       os << "the address of a function";
     return true;

@@ -5286,7 +5286,7 @@ void InitializationSequence::dump(raw_ostream &OS) const {
       break;
 
     case SK_UserConversion:
-      OS << "user-defined conversion via " << S->Function.Function;
+      OS << "user-defined conversion via " << *S->Function.Function;
       break;
 
     case SK_QualificationConversionRValue:
@@ -5385,7 +5385,7 @@ static void DiagnoseNarrowingInInitList(
     //
     // FIXME: This will break if the typedef requires qualification.  But
     // getQualifiedNameAsString() includes non-machine-parsable components.
-    OS << TT->getDecl();
+    OS << *TT->getDecl();
   } else if (const BuiltinType *BT = EntityType->getAs<BuiltinType>())
     OS << BT->getName(S.getLangOptions());
   else {

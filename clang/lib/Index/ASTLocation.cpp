@@ -86,7 +86,7 @@ void ASTLocation::print(raw_ostream &OS) const {
   case N_Decl:
     OS << "[Decl: " << AsDecl()->getDeclKindName() << " ";
     if (const NamedDecl *ND = dyn_cast<NamedDecl>(AsDecl()))
-      OS << ND;
+      OS << *ND;
     break;
 
   case N_Stmt:
@@ -96,7 +96,7 @@ void ASTLocation::print(raw_ostream &OS) const {
     
   case N_NamedRef:
     OS << "[NamedRef: " << AsNamedRef().ND->getDeclKindName() << " ";
-    OS << AsNamedRef().ND;
+    OS << *AsNamedRef().ND;
     break;
     
   case N_Type: {

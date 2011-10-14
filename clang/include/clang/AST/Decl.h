@@ -306,9 +306,8 @@ public:
   static bool classofKind(Kind K) { return K >= firstNamed && K <= lastNamed; }
 };
 
-inline raw_ostream &operator<<(raw_ostream &OS,
-                                     const NamedDecl *ND) {
-  ND->getDeclName().printName(OS);
+inline raw_ostream &operator<<(raw_ostream &OS, const NamedDecl &ND) {
+  ND.printName(OS);
   return OS;
 }
 

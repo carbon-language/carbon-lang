@@ -155,7 +155,7 @@ static void checkObjCUnusedIvar(const ObjCImplementationDecl *D,
     if (I->second == Unused) {
       std::string sbuf;
       llvm::raw_string_ostream os(sbuf);
-      os << "Instance variable '" << I->first << "' in class '" << ID
+      os << "Instance variable '" << *I->first << "' in class '" << *ID
          << "' is never used by the methods in its @implementation "
             "(although it may be used by category methods).";
 

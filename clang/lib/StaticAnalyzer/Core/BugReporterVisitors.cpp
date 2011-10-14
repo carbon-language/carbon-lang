@@ -172,7 +172,7 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *N,
     if (const DeclStmt *DS = PS->getStmtAs<DeclStmt>()) {
 
       if (const VarRegion *VR = dyn_cast<VarRegion>(R)) {
-        os << "Variable '" << VR->getDecl() << "' ";
+        os << "Variable '" << *VR->getDecl() << "' ";
       }
       else
         return NULL;
@@ -232,7 +232,7 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *N,
       return NULL;
 
     if (const VarRegion *VR = dyn_cast<VarRegion>(R)) {
-      os << '\'' << VR->getDecl() << '\'';
+      os << '\'' << *VR->getDecl() << '\'';
     }
     else
       return NULL;
