@@ -128,8 +128,11 @@ private:
   // Method has a definition.
   unsigned IsDefined : 1;
 
-  // Method redeclaration in the same interface.
+  /// \brief Method redeclaration in the same interface.
   unsigned IsRedeclaration : 1;
+
+  /// \brief Is redeclared in the same interface.
+  mutable unsigned HasRedeclaration : 1;
 
   // NOTE: VC++ treats enums as signed, avoid using ImplementationControl enum
   /// @required/@optional
@@ -223,7 +226,7 @@ private:
     DeclContext(ObjCMethod), Family(InvalidObjCMethodFamily),
     IsInstance(isInstance), IsVariadic(isVariadic),
     IsSynthesized(isSynthesized),
-    IsDefined(isDefined), IsRedeclaration(0),
+    IsDefined(isDefined), IsRedeclaration(0), HasRedeclaration(0),
     DeclImplementation(impControl), objcDeclQualifier(OBJC_TQ_None),
     RelatedResultType(HasRelatedResultType),
     SelLocsKind(SelLoc_StandardNoSpace),

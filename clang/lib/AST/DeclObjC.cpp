@@ -355,6 +355,7 @@ void ObjCMethodDecl::setAsRedeclaration(const ObjCMethodDecl *PrevMethod) {
   assert(PrevMethod);
   getASTContext().setObjCMethodRedeclaration(PrevMethod, this);
   IsRedeclaration = true;
+  PrevMethod->HasRedeclaration = true;
 }
 
 void ObjCMethodDecl::setParamsAndSelLocs(ASTContext &C,
@@ -398,8 +399,9 @@ void ObjCMethodDecl::setMethodParams(ASTContext &C,
 /// Otherwise it will return itself.
 ObjCMethodDecl *ObjCMethodDecl::getNextRedeclaration() {
   ASTContext &Ctx = getASTContext();
-  ObjCMethodDecl *Redecl =
-      const_cast<ObjCMethodDecl*>(Ctx.getObjCMethodRedeclaration(this));
+  ObjCMethodDecl *Redecl = 0;
+  if (HasRedeclaration)
+    Redecl = const_cast<ObjCMethodDecl*>(Ctx.getObjCMethodRedeclaration(this));
   if (Redecl)
     return Redecl;
 

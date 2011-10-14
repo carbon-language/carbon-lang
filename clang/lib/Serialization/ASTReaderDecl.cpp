@@ -482,6 +482,13 @@ void ASTDeclReader::VisitObjCMethodDecl(ObjCMethodDecl *MD) {
   MD->setVariadic(Record[Idx++]);
   MD->setSynthesized(Record[Idx++]);
   MD->setDefined(Record[Idx++]);
+
+  MD->IsRedeclaration = Record[Idx++];
+  MD->HasRedeclaration = Record[Idx++];
+  if (MD->HasRedeclaration)
+    Reader.getContext().setObjCMethodRedeclaration(MD,
+                                       ReadDeclAs<ObjCMethodDecl>(Record, Idx));
+
   MD->setDeclImplementation((ObjCMethodDecl::ImplementationControl)Record[Idx++]);
   MD->setObjCDeclQualifier((Decl::ObjCDeclQualifier)Record[Idx++]);
   MD->SetRelatedResultType(Record[Idx++]);

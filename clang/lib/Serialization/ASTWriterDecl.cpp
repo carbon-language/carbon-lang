@@ -402,6 +402,14 @@ void ASTDeclWriter::VisitObjCMethodDecl(ObjCMethodDecl *D) {
   Record.push_back(D->isVariadic());
   Record.push_back(D->isSynthesized());
   Record.push_back(D->isDefined());
+
+  Record.push_back(D->IsRedeclaration);
+  Record.push_back(D->HasRedeclaration);
+  if (D->HasRedeclaration) {
+    assert(Context.getObjCMethodRedeclaration(D));
+    Writer.AddDeclRef(Context.getObjCMethodRedeclaration(D), Record);
+  }
+
   // FIXME: stable encoding for @required/@optional
   Record.push_back(D->getImplementationControl());
   // FIXME: stable encoding for in/out/inout/bycopy/byref/oneway
