@@ -43,9 +43,9 @@ def FeatureAltivec   : SubtargetFeature<"altivec","HasAltivec", "true",
 def FeatureGPUL      : SubtargetFeature<"gpul","IsGigaProcessor", "true",
                                         "Enable GPUL instructions">;
 def FeatureFSqrt     : SubtargetFeature<"fsqrt","HasFSQRT", "true",
-                                        "Enable the fsqrt instruction">; 
+                                        "Enable the fsqrt instruction">;
 def FeatureSTFIWX    : SubtargetFeature<"stfiwx","HasSTFIWX", "true",
-                                        "Enable the stfiwx instruction">; 
+                                        "Enable the stfiwx instruction">;
 
 //===----------------------------------------------------------------------===//
 // Register File Description
