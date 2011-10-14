@@ -317,7 +317,7 @@ static void InitLibcallNames(const char **Names) {
   Names[RTLIB::SYNC_FETCH_AND_OR_8] = "__sync_fetch_and_or_8";
   Names[RTLIB::SYNC_FETCH_AND_XOR_1] = "__sync_fetch_and_xor_1";
   Names[RTLIB::SYNC_FETCH_AND_XOR_2] = "__sync_fetch_and_xor_2";
-  Names[RTLIB::SYNC_FETCH_AND_XOR_4] = "__sync_fetch_and-xor_4";
+  Names[RTLIB::SYNC_FETCH_AND_XOR_4] = "__sync_fetch_and_xor_4";
   Names[RTLIB::SYNC_FETCH_AND_XOR_8] = "__sync_fetch_and_xor_8";
   Names[RTLIB::SYNC_FETCH_AND_NAND_1] = "__sync_fetch_and_nand_1";
   Names[RTLIB::SYNC_FETCH_AND_NAND_2] = "__sync_fetch_and_nand_2";
