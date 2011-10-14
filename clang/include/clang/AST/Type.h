@@ -2702,8 +2702,17 @@ public:
     unsigned char TypeQuals;
     RefQualifierKind RefQualifier;
     unsigned NumExceptions;
+
+    /// Exceptions - A variable size array after that holds the exception types.
     const QualType *Exceptions;
+
+    /// NoexceptExpr - Instead of Exceptions, there may be a single Expr*
+    /// pointing to the expression in the noexcept() specifier.
     Expr *NoexceptExpr;
+    
+    /// ConsumedArgs - A variable size array, following Exceptions
+    /// and of length NumArgs, holding flags indicating which arguments
+    /// are consumed.  This only appears if HasAnyConsumedArgs is true.
     const bool *ConsumedArguments;
   };
 
@@ -2733,19 +2742,6 @@ private:
 
   /// HasAnyConsumedArgs - Whether this function has any consumed arguments.
   unsigned HasAnyConsumedArgs : 1;
-
-  /// ArgInfo - There is an variable size array after the class in memory that
-  /// holds the argument types.
-
-  /// Exceptions - There is another variable size array after ArgInfo that
-  /// holds the exception types.
-
-  /// NoexceptExpr - Instead of Exceptions, there may be a single Expr* pointing
-  /// to the expression in the noexcept() specifier.
-
-  /// ConsumedArgs - A variable size array, following Exceptions
-  /// and of length NumArgs, holding flags indicating which arguments
-  /// are consumed.  This only appears if HasAnyConsumedArgs is true.
 
   friend class ASTContext;  // ASTContext creates these.
 
