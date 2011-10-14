@@ -599,7 +599,61 @@ enum {
   R_ARM_THM_TLS_DESCSEQ32     = 0x82
 };
 
-
+// ELF Relocation types for Mips
+enum {
+  R_MIPS_NONE              =  0,
+  R_MIPS_16                =  1,
+  R_MIPS_32                =  2,
+  R_MIPS_REL32             =  3,
+  R_MIPS_26                =  4,
+  R_MIPS_HI16              =  5,
+  R_MIPS_LO16              =  6,
+  R_MIPS_GPREL16           =  7,
+  R_MIPS_LITERAL           =  8,
+  R_MIPS_GOT16             =  9,
+  R_MIPS_PC16              = 10,
+  R_MIPS_CALL16            = 11,
+  R_MIPS_GPREL32           = 12,
+  R_MIPS_SHIFT5            = 16,
+  R_MIPS_SHIFT6            = 17,
+  R_MIPS_64                = 18,
+  R_MIPS_GOT_DISP          = 19,
+  R_MIPS_GOT_PAGE          = 20,
+  R_MIPS_GOT_OFST          = 21,
+  R_MIPS_GOT_HI16          = 22,
+  R_MIPS_GOT_LO16          = 23,
+  R_MIPS_SUB               = 24,
+  R_MIPS_INSERT_A          = 25,
+  R_MIPS_INSERT_B          = 26,
+  R_MIPS_DELETE            = 27,
+  R_MIPS_HIGHER            = 28,
+  R_MIPS_HIGHEST           = 29,
+  R_MIPS_CALL_HI16         = 30,
+  R_MIPS_CALL_LO16         = 31,
+  R_MIPS_SCN_DISP          = 32,
+  R_MIPS_REL16             = 33,
+  R_MIPS_ADD_IMMEDIATE     = 34,
+  R_MIPS_PJUMP             = 35,
+  R_MIPS_RELGOT            = 36,
+  R_MIPS_JALR              = 37,
+  R_MIPS_TLS_DTPMOD32      = 38,
+  R_MIPS_TLS_DTPREL32      = 39,
+  R_MIPS_TLS_DTPMOD64      = 40,
+  R_MIPS_TLS_DTPREL64      = 41,
+  R_MIPS_TLS_GD            = 42,
+  R_MIPS_TLS_LDM           = 43,
+  R_MIPS_TLS_DTPREL_HI16   = 44,
+  R_MIPS_TLS_DTPREL_LO16   = 45,
+  R_MIPS_TLS_GOTTPREL      = 46,
+  R_MIPS_TLS_TPREL32       = 47,
+  R_MIPS_TLS_TPREL64       = 48,
+  R_MIPS_TLS_TPREL_HI16    = 49,
+  R_MIPS_TLS_TPREL_LO16    = 50,
+  R_MIPS_GLOB_DAT          = 51,
+  R_MIPS_COPY              = 126,
+  R_MIPS_JUMP_SLOT         = 127,
+  R_MIPS_NUM               = 218
+};
 
 // Section header.
 struct Elf32_Shdr {
