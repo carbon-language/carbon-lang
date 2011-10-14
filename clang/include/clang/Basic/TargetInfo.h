@@ -75,6 +75,7 @@ protected:
   unsigned char LargeArrayMinWidth, LargeArrayAlign;
   unsigned char LongWidth, LongAlign;
   unsigned char LongLongWidth, LongLongAlign;
+  unsigned char MaxAtomicPromoteWidth, MaxAtomicInlineWidth;
   const char *DescriptionString;
   const char *UserLabelPrefix;
   const char *MCountName;
@@ -245,6 +246,14 @@ public:
   // 'large' and its alignment.
   unsigned getLargeArrayMinWidth() const { return LargeArrayMinWidth; }
   unsigned getLargeArrayAlign() const { return LargeArrayAlign; }
+
+  /// getMaxAtomicPromoteWidth - Return the maximum width lock-free atomic
+  /// operation which will ever be supported for the given target
+  unsigned getMaxAtomicPromoteWidth() const { return MaxAtomicPromoteWidth; }
+  /// getMaxAtomicInlineWidth - Return the maximum width lock-free atomic
+  /// operation which can be inlined given the supported features of the
+  /// given target.
+  unsigned getMaxAtomicInlineWidth() const { return MaxAtomicInlineWidth; }
 
   /// getIntMaxTWidth - Return the size of intmax_t and uintmax_t for this
   /// target, in bits.

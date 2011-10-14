@@ -1984,6 +1984,11 @@ public:
     RealTypeUsesObjCFPRet = ((1 << TargetInfo::Float) |
                              (1 << TargetInfo::Double) |
                              (1 << TargetInfo::LongDouble));
+
+    // x86-32 has atomics up to 8 bytes
+    // FIXME: Check that we actually have cmpxchg8b before setting
+    // MaxAtomicInlineWidth. (cmpxchg8b is an i586 instruction.)
+    MaxAtomicPromoteWidth = MaxAtomicInlineWidth = 64;
   }
   virtual const char *getVAListDeclaration() const {
     return "typedef char* __builtin_va_list;";
@@ -2219,6 +2224,12 @@ public:
 
     // Use fpret only for long double.
     RealTypeUsesObjCFPRet = (1 << TargetInfo::LongDouble);
+
+    // x86-64 has atomics up to 16 bytes.
+    // FIXME: Once the backend is fixed, increase MaxAtomicInlineWidth to 128
+    // on CPUs with cmpxchg16b
+    MaxAtomicPromoteWidth = 128;
+    MaxAtomicInlineWidth = 64;
   }
   virtual const char *getVAListDeclaration() const {
     return "typedef struct __va_list_tag {"
@@ -2391,6 +2402,10 @@ public:
 
     // ARM targets default to using the ARM C++ ABI.
     CXXABI = CXXABI_ARM;
+
+    // ARM has atomics up to 8 bytes
+    // FIXME: Set MaxAtomicInlineWidth if we have the feature v6e
+    MaxAtomicPromoteWidth = 64;
   }
   virtual const char *getABI() const { return ABI.c_str(); }
   virtual bool setABI(const std::string &Name) {
@@ -2708,6 +2723,9 @@ public:
   DarwinARMTargetInfo(const std::string& triple)
     : DarwinTargetInfo<ARMTargetInfo>(triple) {
     HasAlignMac68kSupport = true;
+    // iOS always has 64-bit atomic instructions.
+    // FIXME: This should be based off of the target features in ARMTargetInfo.
+    MaxAtomicInlineWidth = 64;
   }
 };
 } // end anonymous namespace.

@@ -63,9 +63,7 @@ int* fp2(_Atomic(int*) *p) {
   return __atomic_fetch_add(p, 1, memory_order_relaxed);
 }
 
-// FIXME: Alignment specification shouldn't be necessary
-typedef _Complex float ComplexAligned __attribute((aligned(8)));
-_Complex float fc(_Atomic(ComplexAligned) *c) {
+_Complex float fc(_Atomic(_Complex float) *c) {
   // CHECK: @fc
   // CHECK: atomicrmw xchg i64*
   return __atomic_exchange(c, 2, memory_order_seq_cst);

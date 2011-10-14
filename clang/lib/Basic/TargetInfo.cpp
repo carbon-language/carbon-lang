@@ -42,6 +42,7 @@ TargetInfo::TargetInfo(const std::string &T) : Triple(T) {
   LongDoubleAlign = 64;
   LargeArrayMinWidth = 0;
   LargeArrayAlign = 0;
+  MaxAtomicPromoteWidth = MaxAtomicInlineWidth = 0;
   SizeType = UnsignedLong;
   PtrDiffType = SignedLong;
   IntMaxType = SignedLongLong;

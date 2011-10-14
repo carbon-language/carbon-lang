@@ -1064,13 +1064,25 @@ ASTContext::getTypeInfo(const Type *T) const {
   }
 
   case Type::Atomic: {
-    // FIXME: The alignment needs to be "fixed".
-    return getTypeInfo(cast<AtomicType>(T)->getValueType());
+    std::pair<uint64_t, unsigned> Info
+      = getTypeInfo(cast<AtomicType>(T)->getValueType());
+    Width = Info.first;
+    Align = Info.second;
+    if (Width != 0 && Width <= Target->getMaxAtomicPromoteWidth() &&
+        llvm::isPowerOf2_64(Width)) {
+      // We can potentially perform lock-free atomic operations for this
+      // type; promote the alignment appropriately.
+      // FIXME: We could potentially promote the width here as well...
+      // is that worthwhile?  (Non-struct atomic types generally have
+      // power-of-two size anyway, but structs might not.  Requires a bit
+      // of implementation work to make sure we zero out the extra bits.)
+      Align = static_cast<unsigned>(Width);
+    }
   }
 
   }
 
-  assert(Align && (Align & (Align-1)) == 0 && "Alignment must be power of 2");
+  assert(llvm::isPowerOf2_32(Align) && "Alignment must be power of 2");
   return std::make_pair(Width, Align);
 }
 

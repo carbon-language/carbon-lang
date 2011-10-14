@@ -2567,9 +2567,9 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
   uint64_t Size = sizeChars.getQuantity();
   CharUnits alignChars = getContext().getTypeAlignInChars(AtomicTy);
   unsigned Align = alignChars.getQuantity();
-  // FIXME: Bound on Size should not be hardcoded.
-  bool UseLibcall = (sizeChars != alignChars || !llvm::isPowerOf2_64(Size) ||
-                     Size > 8);
+  unsigned MaxInlineWidth =
+      getContext().getTargetInfo().getMaxAtomicInlineWidth();
+  bool UseLibcall = (Size != Align || Size > MaxInlineWidth);
 
   llvm::Value *Ptr, *Order, *OrderFail = 0, *Val1 = 0, *Val2 = 0;
   Ptr = EmitScalarExpr(E->getPtr());
@@ -2585,11 +2585,9 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
     // is not the same as adding 1 to a uintptr_t.
     QualType Val1Ty = E->getVal1()->getType();
     llvm::Value *Val1Scalar = EmitScalarExpr(E->getVal1());
-    uint64_t PointeeIncAmt =
-        getContext().getTypeSizeInChars(MemTy->getPointeeType()).getQuantity();
-    llvm::Value *PointeeIncAmtVal =
-        llvm::ConstantInt::get(Val1Scalar->getType(), PointeeIncAmt);
-    Val1Scalar = Builder.CreateMul(Val1Scalar, PointeeIncAmtVal);
+    CharUnits PointeeIncAmt =
+        getContext().getTypeSizeInChars(MemTy->getPointeeType());
+    Val1Scalar = Builder.CreateMul(Val1Scalar, CGM.getSize(PointeeIncAmt));
     Val1 = CreateMemTemp(Val1Ty, ".atomictmp");
     EmitStoreOfScalar(Val1Scalar, MakeAddrLValue(Val1, Val1Ty));
   } else if (E->getOp() != AtomicExpr::Load) {
