@@ -160,7 +160,7 @@ static void addProfileRT(const ToolChain &TC, const ArgList &Args,
   Twine ProfileRT =
     Twine(TC.getDriver().Dir) + "/../lib/" + "libprofile_rt.a";
 
-  if (Triple.getOS() == llvm::Triple::Darwin) {
+  if (Triple.isOSDarwin()) {
     // On Darwin, if the static library doesn't exist try the dylib.
     bool Exists;
     if (llvm::sys::fs::exists(ProfileRT.str(), Exists) || !Exists)
@@ -504,7 +504,7 @@ static bool isSignedCharDefault(const llvm::Triple &Triple) {
   case llvm::Triple::arm:
   case llvm::Triple::ppc:
   case llvm::Triple::ppc64:
-    if (Triple.getOS() == llvm::Triple::Darwin)
+    if (Triple.isOSDarwin())
       return true;
     return false;
 
@@ -569,7 +569,9 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
   if (FloatABI.empty()) {
     const llvm::Triple &Triple = getToolChain().getTriple();
     switch (Triple.getOS()) {
-    case llvm::Triple::Darwin: {
+    case llvm::Triple::Darwin:
+    case llvm::Triple::MacOSX:
+    case llvm::Triple::IOS: {
       // Darwin defaults to "softfp" for v6 and v7.
       //
       // FIXME: Factor out an ARM class so we can cache the arch somewhere.
@@ -869,7 +871,7 @@ void Clang::AddX86TargetArgs(const ArgList &Args,
   // Select the default CPU if none was given (or detection failed).
   if (!CPUName) {
     // FIXME: Need target hooks.
-    if (getToolChain().getOS().startswith("darwin")) {
+    if (getToolChain().getTriple().isOSDarwin()) {
       if (getToolChain().getArch() == llvm::Triple::x86_64)
         CPUName = "core2";
       else if (getToolChain().getArch() == llvm::Triple::x86)
@@ -952,7 +954,7 @@ shouldUseExceptionTablesForObjCExceptions(unsigned objcABIVersion,
   if (objcABIVersion >= 2)
     return true;
 
-  if (Triple.getOS() != llvm::Triple::Darwin)
+  if (!Triple.isOSDarwin())
     return false;
 
   return (!Triple.isMacOSXVersionLT(10,5) &&
@@ -1034,7 +1036,7 @@ static void addExceptionArgs(const ArgList &Args, types::ID InputType,
 
 static bool ShouldDisableCFI(const ArgList &Args,
                              const ToolChain &TC) {
-  if (TC.getTriple().getOS() == llvm::Triple::Darwin) {
+  if (TC.getTriple().isOSDarwin()) {
     // The native darwin assembler doesn't support cfi directives, so
     // we disable them if we think the .s file will be passed to it.
 
@@ -1336,13 +1338,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // Enable -mconstructor-aliases except on darwin, where we have to
   // work around a linker bug;  see <rdar://problem/7651567>.
-  if (getToolChain().getTriple().getOS() != llvm::Triple::Darwin)
+  if (!getToolChain().getTriple().isOSDarwin())
     CmdArgs.push_back("-mconstructor-aliases");
 
   // Darwin's kernel doesn't support guard variables; just die if we
   // try to use them.
-  if (KernelOrKext &&
-      getToolChain().getTriple().getOS() == llvm::Triple::Darwin)
+  if (KernelOrKext && getToolChain().getTriple().isOSDarwin())
     CmdArgs.push_back("-fforbid-guard-variables");
 
   if (Args.hasArg(options::OPT_mms_bitfields)) {
@@ -1410,7 +1411,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // -mno-omit-leaf-frame-pointer is the default on Darwin.
   if (Args.hasFlag(options::OPT_momit_leaf_frame_pointer,
                    options::OPT_mno_omit_leaf_frame_pointer,
-                   getToolChain().getTriple().getOS() != llvm::Triple::Darwin))
+                   !getToolChain().getTriple().isOSDarwin()))
     CmdArgs.push_back("-momit-leaf-frame-pointer");
 
   // -fno-math-errno is default.
@@ -1429,7 +1430,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
         << Unsupported->getOption().getName();
 
     if (types::isCXX(InputType) &&
-        getToolChain().getTriple().getOS() == llvm::Triple::Darwin &&
+        getToolChain().getTriple().isOSDarwin() &&
         getToolChain().getTriple().getArch() == llvm::Triple::x86) {
       if ((Unsupported = Args.getLastArg(options::OPT_fapple_kext)) ||
           (Unsupported = Args.getLastArg(options::OPT_mkernel)))
@@ -2159,7 +2160,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   //
   // FIXME: This is disabled until clang -cc1 supports -fno-builtin-foo. PR4941.
 #if 0
-  if (getToolChain().getTriple().getOS() == llvm::Triple::Darwin &&
+  if (getToolChain().getTriple().isOSDarwin() &&
       (getToolChain().getTriple().getArch() == llvm::Triple::arm ||
        getToolChain().getTriple().getArch() == llvm::Triple::thumb)) {
     if (!Args.hasArg(options::OPT_fbuiltin_strcat))
@@ -2350,7 +2351,7 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
 
   // If using a driver driver, force the arch.
   const std::string &Arch = getToolChain().getArchName();
-  if (getToolChain().getTriple().getOS() == llvm::Triple::Darwin) {
+  if (getToolChain().getTriple().isOSDarwin()) {
     CmdArgs.push_back("-arch");
 
     // FIXME: Remove these special cases.

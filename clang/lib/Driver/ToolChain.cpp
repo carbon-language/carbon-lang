@@ -185,8 +185,7 @@ std::string ToolChain::ComputeLLVMTriple(const ArgList &Args,
     // FIXME: Thumb should just be another -target-feaure, not in the triple.
     StringRef Suffix =
       getLLVMArchSuffixForARM(getARMTargetCPU(Args, Triple));
-    bool ThumbDefault =
-      (Suffix == "v7" && getTriple().getOS() == llvm::Triple::Darwin);
+    bool ThumbDefault = (Suffix == "v7" && getTriple().isOSDarwin());
     std::string ArchName = "arm";
 
     // Assembly files should start in ARM mode.

@@ -1230,7 +1230,7 @@ static const Tool &SelectToolForJob(Compilation &C, const ToolChain *TC,
   bool HasStatic = (C.getArgs().hasArg(options::OPT_mkernel) ||
                     C.getArgs().hasArg(options::OPT_static) ||
                     C.getArgs().hasArg(options::OPT_fapple_kext));
-  bool IsDarwin = TC->getTriple().getOS() == llvm::Triple::Darwin;
+  bool IsDarwin = TC->getTriple().isOSDarwin();
   bool IsIADefault = TC->IsIntegratedAssemblerDefault() &&
     !(HasStatic && IsDarwin);
   if (C.getArgs().hasFlag(options::OPT_integrated_as,
@@ -1557,6 +1557,8 @@ const HostInfo *Driver::GetHostInfo(const char *TripleStr) const {
   case llvm::Triple::AuroraUX:
     return createAuroraUXHostInfo(*this, Triple);
   case llvm::Triple::Darwin:
+  case llvm::Triple::MacOSX:
+  case llvm::Triple::IOS:
     return createDarwinHostInfo(*this, Triple);
   case llvm::Triple::DragonFly:
     return createDragonFlyHostInfo(*this, Triple);
