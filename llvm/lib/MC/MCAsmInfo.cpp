@@ -62,7 +62,7 @@ MCAsmInfo::MCAsmInfo() {
   JT8Begin = "$d.";
   JT16Begin = "$d.";
   JT32Begin = "$d.";
-  SupportsDataRegions = true;
+  SupportsDataRegions = false;
   SunStyleELFSectionSwitchSyntax = false;
   UsesELFSectionDirectiveForBSS = false;
   AlignDirective = "\t.align\t";
