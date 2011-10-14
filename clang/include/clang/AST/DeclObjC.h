@@ -128,6 +128,9 @@ private:
   // Method has a definition.
   unsigned IsDefined : 1;
 
+  // Method redeclaration in the same interface.
+  unsigned IsRedeclaration : 1;
+
   // NOTE: VC++ treats enums as signed, avoid using ImplementationControl enum
   /// @required/@optional
   unsigned DeclImplementation : 2;
@@ -220,7 +223,7 @@ private:
     DeclContext(ObjCMethod), Family(InvalidObjCMethodFamily),
     IsInstance(isInstance), IsVariadic(isVariadic),
     IsSynthesized(isSynthesized),
-    IsDefined(isDefined),
+    IsDefined(isDefined), IsRedeclaration(0),
     DeclImplementation(impControl), objcDeclQualifier(OBJC_TQ_None),
     RelatedResultType(HasRelatedResultType),
     SelLocsKind(SelLoc_StandardNoSpace),
@@ -267,6 +270,10 @@ public:
   
   /// \brief Note whether this method has a related result type.
   void SetRelatedResultType(bool RRT = true) { RelatedResultType = RRT; }
+
+  /// \brief True if this is a method redeclaration in the same interface.
+  bool isRedeclaration() const { return IsRedeclaration; }
+  void setAsRedeclaration(const ObjCMethodDecl *PrevMethod);
   
   // Location information, modeled after the Stmt API.
   SourceLocation getLocStart() const { return getLocation(); }

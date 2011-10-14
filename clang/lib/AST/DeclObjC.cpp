@@ -351,6 +351,12 @@ ObjCMethodDecl *ObjCMethodDecl::Create(ASTContext &C,
                                 HasRelatedResultType);
 }
 
+void ObjCMethodDecl::setAsRedeclaration(const ObjCMethodDecl *PrevMethod) {
+  assert(PrevMethod);
+  getASTContext().setObjCMethodRedeclaration(PrevMethod, this);
+  IsRedeclaration = true;
+}
+
 void ObjCMethodDecl::setParamsAndSelLocs(ASTContext &C,
                                          ArrayRef<ParmVarDecl*> Params,
                                          ArrayRef<SourceLocation> SelLocs) {
@@ -416,6 +422,12 @@ ObjCMethodDecl *ObjCMethodDecl::getNextRedeclaration() {
                dyn_cast<ObjCCategoryImplDecl>(CtxD)) {
     if (ObjCCategoryDecl *CatD = CImplD->getCategoryDecl())
       Redecl = CatD->getMethod(getSelector(), isInstanceMethod());
+  }
+
+  if (!Redecl && isRedeclaration()) {
+    // This is the last redeclaration, go back to the first method.
+    return cast<ObjCContainerDecl>(CtxD)->getMethod(getSelector(),
+                                                    isInstanceMethod());
   }
 
   return Redecl ? Redecl : this;
