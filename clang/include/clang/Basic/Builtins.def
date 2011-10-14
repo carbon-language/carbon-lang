@@ -672,6 +672,7 @@ LIBBUILTIN(rindex, "c*cC*i",      "f",     "strings.h", ALL_LANGUAGES)
 LIBBUILTIN(bzero, "vv*z",         "f",     "strings.h", ALL_LANGUAGES)
 // POSIX unistd.h
 LIBBUILTIN(_exit, "vi",           "fr",    "unistd.h", ALL_LANGUAGES)
+LIBBUILTIN(vfork, "iJ",           "fj",    "unistd.h", ALL_LANGUAGES)
 // POSIX setjmp.h
 
 // In some systems setjmp is a macro that expands to _setjmp. We undefine
@@ -684,7 +685,6 @@ LIBBUILTIN(sigsetjmp, "iJ",       "fj",   "setjmp.h", ALL_LANGUAGES)
 LIBBUILTIN(setjmp_syscall, "iJ",  "fj",   "setjmp.h", ALL_LANGUAGES)
 LIBBUILTIN(savectx, "iJ",         "fj",   "setjmp.h", ALL_LANGUAGES)
 LIBBUILTIN(qsetjmp, "iJ",         "fj",   "setjmp.h", ALL_LANGUAGES)
-LIBBUILTIN(vfork, "iJ",           "fj",   "setjmp.h", ALL_LANGUAGES)
 LIBBUILTIN(getcontext, "iJ",      "fj",   "setjmp.h", ALL_LANGUAGES)
 
 LIBBUILTIN(_longjmp, "vJi",       "fr",    "setjmp.h", ALL_LANGUAGES)
