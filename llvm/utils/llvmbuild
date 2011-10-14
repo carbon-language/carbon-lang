@@ -189,6 +189,8 @@ def add_options(parser):
                       help=("Extra flags to pass to gcc configure [default: %default]"))
     parser.add_option("--force-configure", default=False, action="store_true",
                       help=("Force reconfigure of all components"))
+    parser.add_option("--no-gcc", default=False, action="store_true",
+                      help=("Do not build dragonegg and gcc"))
     return
 
 def check_options(parser, options, valid_builds):
@@ -622,6 +624,12 @@ class Builder(threading.Thread):
 
         for component in components:
             comp = component[:]
+            
+            if (self.options.no_gcc):
+                if (comp == 'gcc' or comp == 'dragonegg' or comp == 'llvm2'):
+                    self.logger.info("Skipping " + component + " in "
+                                     + builddir)
+                    continue
 
             srcdir = source + "/" + comp.rstrip("2")
             builddir = self.build_prefix + "/" + comp + "/" + build_suffix
