@@ -1563,6 +1563,9 @@ fi
 dnl Do the first stage of configuration for llvm-config.in.
 AC_CONFIG_FILES([tools/llvm-config/llvm-config.in])
 
+dnl OCaml findlib META file
+AC_CONFIG_FILES([bindings/ocaml/llvm/META.llvm])
+
 dnl Do special configuration of Makefiles
 AC_CONFIG_COMMANDS([setup],,[llvm_src="${srcdir}"])
 AC_CONFIG_MAKEFILE(Makefile)
