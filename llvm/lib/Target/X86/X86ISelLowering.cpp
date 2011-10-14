@@ -10702,6 +10702,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::OR:                 return "X86ISD::OR";
   case X86ISD::XOR:                return "X86ISD::XOR";
   case X86ISD::AND:                return "X86ISD::AND";
+  case X86ISD::ANDN:               return "X86ISD::ANDN";
   case X86ISD::MUL_IMM:            return "X86ISD::MUL_IMM";
   case X86ISD::PTEST:              return "X86ISD::PTEST";
   case X86ISD::TESTP:              return "X86ISD::TESTP";
@@ -13295,11 +13296,28 @@ static SDValue PerformAndCombine(SDNode *N, SelectionDAG &DAG,
   if (R.getNode())
     return R;
 
+  EVT VT = N->getValueType(0);
+
+  // Create ANDN instructions
+  if (Subtarget->hasBMI() && (VT == MVT::i32 || VT == MVT::i64)) {
+    SDValue N0 = N->getOperand(0);
+    SDValue N1 = N->getOperand(1);
+    DebugLoc DL = N->getDebugLoc();
+
+    // Check LHS for not
+    if (N0.getOpcode() == ISD::XOR && isAllOnes(N0.getOperand(1)))
+      return DAG.getNode(X86ISD::ANDN, DL, VT, N0.getOperand(0), N1);
+    // Check RHS for not
+    if (N1.getOpcode() == ISD::XOR && isAllOnes(N1.getOperand(1)))
+      return DAG.getNode(X86ISD::ANDN, DL, VT, N1.getOperand(0), N0);
+
+    return SDValue();
+  }
+
   // Want to form ANDNP nodes:
   // 1) In the hopes of then easily combining them with OR and AND nodes
   //    to form PBLEND/PSIGN.
   // 2) To match ANDN packed intrinsics
-  EVT VT = N->getValueType(0);
   if (VT != MVT::v2i64 && VT != MVT::v4i64)
     return SDValue();
 

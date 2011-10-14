@@ -36,3 +36,18 @@ define i8 @t4(i8 %x) nounwind  {
 
 declare i8 @llvm.cttz.i8(i8) nounwind readnone
 
+define i32 @andn32(i32 %x, i32 %y) nounwind readnone {
+  %tmp1 = xor i32 %x, -1
+  %tmp2 = and i32 %y, %tmp1
+  ret i32 %tmp2
+; CHECK: andn32:
+; CHECK: andnl
+}
+
+define i64 @andn64(i64 %x, i64 %y) nounwind readnone {
+  %tmp1 = xor i64 %x, -1
+  %tmp2 = and i64 %tmp1, %y
+  ret i64 %tmp2
+; CHECK: andn64:
+; CHECK: andnq
+}

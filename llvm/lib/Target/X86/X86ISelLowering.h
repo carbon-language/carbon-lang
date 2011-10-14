@@ -228,6 +228,8 @@ namespace llvm {
       ADD, SUB, ADC, SBB, SMUL,
       INC, DEC, OR, XOR, AND,
 
+      ANDN, // ANDN - Bitwise AND NOT with FLAGS results.
+
       UMUL, // LOW, HI, FLAGS = umul LHS, RHS
 
       // MUL_IMM - X86 specific multiply by immediate.

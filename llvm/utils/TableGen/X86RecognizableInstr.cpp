@@ -1142,6 +1142,8 @@ OperandEncoding RecognizableInstr::roRegisterEncodingFromString
 OperandEncoding RecognizableInstr::vvvvRegisterEncodingFromString
   (const std::string &s,
    bool hasOpSizePrefix) {
+  ENCODING("GR32",            ENCODING_VVVV)
+  ENCODING("GR64",            ENCODING_VVVV)
   ENCODING("FR32",            ENCODING_VVVV)
   ENCODING("FR64",            ENCODING_VVVV)
   ENCODING("VR128",           ENCODING_VVVV)
