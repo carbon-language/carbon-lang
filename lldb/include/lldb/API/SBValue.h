@@ -360,6 +360,10 @@ protected:
 #endif
 
 private:
+    // Helper function for SBValue::Watch() and SBValue::WatchPointee().
+    lldb::SBWatchpoint
+    WatchValue(bool read, bool write, bool watch_pointee);
+
     lldb::ValueObjectSP m_opaque_sp;
 };
 

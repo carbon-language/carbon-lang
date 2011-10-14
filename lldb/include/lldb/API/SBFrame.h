@@ -12,6 +12,7 @@
 
 #include "lldb/API/SBDefines.h"
 #include "lldb/API/SBValueList.h"
+#include "lldb/API/SBWatchpoint.h"
 
 namespace lldb {
 
@@ -219,7 +220,6 @@ private:
     get_sp();
     
 #endif
-
 
     void
     SetFrame (const lldb::StackFrameSP &lldb_object_sp);

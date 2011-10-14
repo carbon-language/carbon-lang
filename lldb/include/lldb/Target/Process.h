@@ -2480,10 +2480,10 @@ public:
     // Process Watchpoints (optional)
     //----------------------------------------------------------------------
     virtual Error
-    EnableWatchpoint (WatchpointLocation *bp_loc);
+    EnableWatchpoint (Watchpoint *wp);
 
     virtual Error
-    DisableWatchpoint (WatchpointLocation *bp_loc);
+    DisableWatchpoint (Watchpoint *wp);
 
     //------------------------------------------------------------------
     // Thread Queries

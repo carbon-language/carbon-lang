@@ -278,9 +278,17 @@ public:
     lldb::SBFrame
     GetFrame();
     
+    %feature("docstring", "
+    /// Find and watch a variable.
+    /// It returns an SBWatchpoint, which may be invalid.
+    ") Watch;
     lldb::SBWatchpoint
     Watch (bool resolve_location, bool read, bool write);
 
+    %feature("docstring", "
+    /// Find and watch the location pointed to by a variable.
+    /// It returns an SBWatchpoint, which may be invalid.
+    ") WatchPointee;
     lldb::SBWatchpoint
     WatchPointee (bool resolve_location, bool read, bool write);
 

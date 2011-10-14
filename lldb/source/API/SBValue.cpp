@@ -10,6 +10,7 @@
 #include "lldb/API/SBValue.h"
 #include "lldb/API/SBStream.h"
 
+#include "lldb/Breakpoint/Watchpoint.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
@@ -22,6 +23,7 @@
 #include "lldb/Symbol/Block.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/Variable.h"
+#include "lldb/Symbol/VariableList.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/StackFrame.h"
@@ -1102,12 +1104,19 @@ lldb::SBWatchpoint
 SBValue::Watch (bool resolve_location, bool read, bool write)
 {
     lldb::SBWatchpoint sb_watchpoint;
+    if (!m_opaque_sp)
+        return sb_watchpoint;
+
     Target* target = m_opaque_sp->GetUpdatePoint().GetTargetSP().get();
     if (target)
     {
         Mutex::Locker api_locker (target->GetAPIMutex());
-        // TODO: Johnny fill this in
+        sb_watchpoint = WatchValue(read, write, false);
     }
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    if (log)
+        log->Printf ("SBValue(%p)::Watch (resolve_location=%i, read=%i, write=%i) => wp(%p)", 
+                     m_opaque_sp.get(), resolve_location, read, write, sb_watchpoint.get());
     return sb_watchpoint;
 }
 
@@ -1115,13 +1124,70 @@ lldb::SBWatchpoint
 SBValue::WatchPointee (bool resolve_location, bool read, bool write)
 {
     lldb::SBWatchpoint sb_watchpoint;
+    if (!m_opaque_sp)
+        return sb_watchpoint;
+
     Target* target = m_opaque_sp->GetUpdatePoint().GetTargetSP().get();
     if (target)
     {
         Mutex::Locker api_locker (target->GetAPIMutex());
-        // TODO: Johnny fill this in
+        sb_watchpoint = WatchValue(read, write, true);
     }
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    if (log)
+        log->Printf ("SBValue(%p)::WatchPointee (resolve_location=%i, read=%i, write=%i) => wp(%p)", 
+                     m_opaque_sp.get(), resolve_location, read, write, sb_watchpoint.get());
     return sb_watchpoint;
 }
 
+// Helper function for SBValue::Watch() and SBValue::WatchPointee().
+SBWatchpoint
+SBValue::WatchValue(bool read, bool write, bool watch_pointee)
+{
+    SBWatchpoint sb_wp_empty;
+
+    // If the SBValue is not valid, there's no point in even trying to watch it.
+    if (!IsValid() || !GetFrame().IsValid())
+        return sb_wp_empty;
+
+    // Read and Write cannot both be false.
+    if (!read && !write)
+        return sb_wp_empty;
+
+    // If we are watching the pointee, check that the SBValue is a pointer type.
+    if (watch_pointee && !GetType().IsPointerType())
+        return sb_wp_empty;
+
+    addr_t addr;
+    size_t size;
+    if (watch_pointee) {
+        addr = GetValueAsUnsigned(LLDB_INVALID_ADDRESS);
+        size = GetType().GetPointeeType().GetByteSize();
+    } else {
+        addr = GetLoadAddress();
+        size = GetByteSize();
+    }
+
+    // Sanity check the address and the size before calling Target::CreateWatchpoint().
+    if (addr == LLDB_INVALID_ADDRESS || size == 0)
+        return sb_wp_empty;
+
+    uint32_t watch_type = (read ? LLDB_WATCH_TYPE_READ : 0) |
+        (write ? LLDB_WATCH_TYPE_WRITE : 0);
+    WatchpointSP wp_sp = GetFrame().m_opaque_sp->GetThread().GetProcess().GetTarget().
+        CreateWatchpoint(addr, size, watch_type);
+
+    if (wp_sp) {
+        // StackFrame::GetInScopeVariableList(true) to get file globals as well.
+        VariableListSP var_list_sp(GetFrame().m_opaque_sp->GetInScopeVariableList(true));
+        VariableSP var_sp = var_list_sp->FindVariable(ConstString(GetName()));
+        if (var_sp && var_sp->GetDeclaration().GetFile()) {
+            StreamString ss;
+            // True to show fullpath for declaration file.
+            var_sp->GetDeclaration().DumpStopContext(&ss, true);
+            wp_sp->SetDeclInfo(ss.GetString());
+        }
+    }
+    return wp_sp;
+}
 

@@ -19,7 +19,7 @@
 #include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Unwind.h"
-#include "lldb/Breakpoint/WatchpointLocation.h"
+#include "lldb/Breakpoint/Watchpoint.h"
 
 #include "ProcessGDBRemote.h"
 #include "ProcessGDBRemoteLog.h"

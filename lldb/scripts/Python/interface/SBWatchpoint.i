@@ -10,14 +10,13 @@
 namespace lldb {
 
 %feature("docstring",
-"Represents an instance of watchpoint location for a specific target program.
+"Represents an instance of watchpoint for a specific target program.
 
-A watchpoint location is determined by the address and the byte size that
-resulted in this particular instantiation.  Each watchpoint location has its
-settable options.
+A watchpoint is determined by the address and the byte size that resulted in
+this particular instantiation.  Each watchpoint has its settable options.
 
-See also SBTarget.watchpoint_location_iter() for for example usage of iterating
-through the watchpoint locations of the target."
+See also SBTarget.watchpoint_iter() for for example usage of iterating through
+the watchpoints of the target."
 ) SBWatchpoint;
 class SBWatchpoint
 {

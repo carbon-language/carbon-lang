@@ -1,5 +1,5 @@
 """
-Use lldb Python SBWatchpointLocation API to set the ignore count.
+Use lldb Python SBWatchpoint API to set the ignore count.
 """
 
 import os, time
@@ -22,19 +22,19 @@ class WatchpointIgnoreCountTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
-    def test_set_watch_loc_ignore_count_with_dsym(self):
-        """Test SBWatchpointLocation.SetIgnoreCount() API."""
+    def test_set_watch_ignore_count_with_dsym(self):
+        """Test SBWatchpoint.SetIgnoreCount() API."""
         self.buildDsym()
-        self.do_watchpoint_location_ignore_count()
+        self.do_watchpoint_ignore_count()
 
     @python_api_test
-    def test_set_watch_loc_ignore_count_with_dwarf(self):
-        """Test SBWatchpointLocation.SetIgnoreCount() API."""
+    def test_set_watch_ignore_count_with_dwarf(self):
+        """Test SBWatchpoint.SetIgnoreCount() API."""
         self.buildDwarf()
-        self.do_watchpoint_location_ignore_count()
+        self.do_watchpoint_ignore_count()
 
-    def do_watchpoint_location_ignore_count(self):
-        """Test SBWatchpointLocation.SetIgnoreCount() API."""
+    def do_watchpoint_ignore_count(self):
+        """Test SBWatchpoint.SetIgnoreCount() API."""
         exe = os.path.join(os.getcwd(), "a.out")
 
         # Create a target by the debugger.
@@ -58,10 +58,10 @@ class WatchpointIgnoreCountTestCase(TestBase):
         frame0 = thread.GetFrameAtIndex(0)
 
         # Watch 'global' for read and write.
-        value = frame0.WatchValue('global',
-                                  lldb.eValueTypeVariableGlobal,
-                                  lldb.LLDB_WATCH_TYPE_READ|lldb.LLDB_WATCH_TYPE_WRITE)
-        self.assertTrue(value, "Successfully found the variable and set a watchpoint")
+        value = frame0.FindValue('global', lldb.eValueTypeVariableGlobal)
+        watchpoint = value.Watch(True, True, True)
+        self.assertTrue(value and watchpoint,
+                        "Successfully found the variable and set a watchpoint")
         self.DebugSBValue(value)
 
         # Hide stdout if not running with '-t' option.
@@ -69,30 +69,28 @@ class WatchpointIgnoreCountTestCase(TestBase):
             self.HideStdout()
 
         # There should be only 1 watchpoint location under the target.
-        self.assertTrue(target.GetNumWatchpointLocations() == 1)
-        wp_loc = target.GetWatchpointLocationAtIndex(0)
-        last_created = target.GetLastCreatedWatchpointLocation()
-        self.assertTrue(wp_loc == last_created)
-        self.assertTrue(wp_loc.IsEnabled())
-        self.assertTrue(wp_loc.GetIgnoreCount() == 0)
-        watch_id = wp_loc.GetID()
+        self.assertTrue(target.GetNumWatchpoints() == 1)
+        watchpoint = target.GetWatchpointAtIndex(0)
+        self.assertTrue(watchpoint.IsEnabled())
+        self.assertTrue(watchpoint.GetIgnoreCount() == 0)
+        watch_id = watchpoint.GetID()
         self.assertTrue(watch_id != 0)
-        print wp_loc
+        print watchpoint
 
         # Now immediately set the ignore count to 2.  When we continue, expect the
         # inferior to run to its completion without stopping due to watchpoint.
-        wp_loc.SetIgnoreCount(2)
-        print wp_loc
+        watchpoint.SetIgnoreCount(2)
+        print watchpoint
         process.Continue()
 
         # At this point, the inferior process should have exited.
         self.assertTrue(process.GetState() == lldb.eStateExited, PROCESS_EXITED)
 
         # Verify some vital statistics.
-        self.assertTrue(wp_loc)
-        self.assertTrue(wp_loc.GetWatchSize() == 4)
-        self.assertTrue(wp_loc.GetHitCount() == 2)
-        print wp_loc
+        self.assertTrue(watchpoint)
+        self.assertTrue(watchpoint.GetWatchSize() == 4)
+        self.assertTrue(watchpoint.GetHitCount() == 2)
+        print watchpoint
 
 
 if __name__ == '__main__':

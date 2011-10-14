@@ -1,5 +1,5 @@
 """
-Use lldb Python SBFrame API to create a watchpoint for read_write of 'globl' var.
+Use lldb Python SBValue API to create a watchpoint for read_write of 'globl' var.
 """
 
 import os, time
@@ -23,13 +23,13 @@ class SetWatchpointAPITestCase(TestBase):
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
     def test_watch_val_with_dsym(self):
-        """Exercise SBFrame.WatchValue() API to set a watchpoint."""
+        """Exercise SBValue.Watch() API to set a watchpoint."""
         self.buildDsym()
         self.do_set_watchpoint()
 
     @python_api_test
     def test_watch_val_with_dwarf(self):
-        """Exercise SBFrame.WatchValue() API to set a watchpoint."""
+        """Exercise SBValue.Watch() API to set a watchpoint."""
         self.buildDwarf()
         self.do_set_watchpoint()
 
@@ -57,11 +57,18 @@ class SetWatchpointAPITestCase(TestBase):
         thread = lldbutil.get_stopped_thread(process, lldb.eStopReasonBreakpoint)
         frame0 = thread.GetFrameAtIndex(0)
 
-        value = frame0.WatchValue('global',
-                                  lldb.eValueTypeVariableGlobal,
-                                  lldb.LLDB_WATCH_TYPE_READ|lldb.LLDB_WATCH_TYPE_WRITE)
-        self.assertTrue(value, "Successfully found the variable and set a watchpoint")
+        # Watch 'global' for read and write.
+        value = frame0.FindValue('global', lldb.eValueTypeVariableGlobal)
+        watchpoint = value.Watch(True, True, True)
+        self.assertTrue(value and watchpoint,
+                        "Successfully found the variable and set a watchpoint")
         self.DebugSBValue(value)
+
+        # Hide stdout if not running with '-t' option.
+        if not self.TraceOn():
+            self.HideStdout()
+
+        print watchpoint
 
         # Continue.  Expect the program to stop due to the variable being written to.
         process.Continue()

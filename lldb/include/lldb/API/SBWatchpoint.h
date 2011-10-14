@@ -67,26 +67,27 @@ public:
     GetDescription (lldb::SBStream &description, DescriptionLevel level);
 
 #ifndef SWIG
-    SBWatchpoint (const lldb::WatchpointLocationSP &watch_loc_sp);
+    SBWatchpoint (const lldb::WatchpointSP &wp_sp);
 #endif
 
 private:
     friend class SBTarget;
+    friend class SBValue;
 
 #ifndef SWIG
 
-    lldb_private::WatchpointLocation *
+    lldb_private::Watchpoint *
     operator->();
 
-    lldb_private::WatchpointLocation *
+    lldb_private::Watchpoint *
     get();
 
-    lldb::WatchpointLocationSP &
+    lldb::WatchpointSP &
     operator *();
 
 #endif
 
-    lldb::WatchpointLocationSP m_opaque_sp;
+    lldb::WatchpointSP m_opaque_sp;
 
 };
 

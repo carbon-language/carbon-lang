@@ -14,7 +14,7 @@
 #include <string>
 // Other libraries and framework includes
 // Project includes
-#include "lldb/Breakpoint/WatchpointLocation.h"
+#include "lldb/Breakpoint/Watchpoint.h"
 #include "lldb/Core/DataVisualization.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Module.h"
@@ -550,19 +550,19 @@ public:
                                     size = m_option_watchpoint.watch_size;
                                 }
                                 uint32_t watch_type = m_option_watchpoint.watch_type;
-                                WatchpointLocation *wp_loc = exe_ctx.GetTargetRef().CreateWatchpointLocation(addr, size, watch_type).get();
-                                if (wp_loc)
+                                Watchpoint *wp = exe_ctx.GetTargetRef().CreateWatchpoint(addr, size, watch_type).get();
+                                if (wp)
                                 {
                                     if (var_sp && var_sp->GetDeclaration().GetFile())
                                     {
                                         StreamString ss;
                                         // True to show fullpath for declaration file.
                                         var_sp->GetDeclaration().DumpStopContext(&ss, true);
-                                        wp_loc->SetDeclInfo(ss.GetString());
+                                        wp->SetDeclInfo(ss.GetString());
                                     }
                                     StreamString ss;
                                     output_stream.Printf("Watchpoint created: ");
-                                    wp_loc->GetDescription(&output_stream, lldb::eDescriptionLevelFull);
+                                    wp->GetDescription(&output_stream, lldb::eDescriptionLevelFull);
                                     output_stream.EOL();
                                     result.SetStatus(eReturnStatusSuccessFinishResult);
                                 }
@@ -571,7 +571,7 @@ public:
                                     result.AppendErrorWithFormat("Watchpoint creation failed.\n");
                                     result.SetStatus(eReturnStatusFailed);
                                 }
-                                return (wp_loc != NULL);
+                                return (wp != NULL);
                             }
                         }
                         else

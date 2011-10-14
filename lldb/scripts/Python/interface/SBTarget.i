@@ -12,8 +12,7 @@ namespace lldb {
 %feature("docstring",
 "Represents the target program running under the debugger.
 
-SBTarget supports module, breakpoint, and watchpoint_location iterations. For
-example,
+SBTarget supports module, breakpoint, and watchpoint iterations. For example,
 
     for m in target.module_iter():
         print m
@@ -39,14 +38,14 @@ SBBreakpoint: id = 2, file ='main.cpp', line = 85, locations = 1
 
 and,
 
-    for wp_loc in target.watchpoint_location_iter():
+    for wp_loc in target.watchpoint_iter():
         print wp_loc
 
 produces:
 
-WatchpointLocation 1: addr = 0x1034ca048 size = 4 state = enabled type = rw
+Watchpoint 1: addr = 0x1034ca048 size = 4 state = enabled type = rw
     declare @ '/Volumes/data/lldb/svn/trunk/test/python_api/watchpoint/main.c:12'
-    hw_index = 0  hit_count = 2     ignore_count = 0     callback =      0x0 baton =      0x0"
+    hw_index = 0  hit_count = 2     ignore_count = 0"
 ) SBTarget;
 class SBTarget
 {

@@ -15,8 +15,8 @@
 
 #include "lldb/lldb-types.h"
 #include "lldb/lldb-defines.h"
-#include "lldb/Breakpoint/WatchpointLocation.h"
-#include "lldb/Breakpoint/WatchpointLocationList.h"
+#include "lldb/Breakpoint/Watchpoint.h"
+#include "lldb/Breakpoint/WatchpointList.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamFile.h"
@@ -31,8 +31,8 @@ SBWatchpoint::SBWatchpoint () :
 {
 }
 
-SBWatchpoint::SBWatchpoint (const lldb::WatchpointLocationSP &watch_loc_sp) :
-    m_opaque_sp (watch_loc_sp)
+SBWatchpoint::SBWatchpoint (const lldb::WatchpointSP &wp_sp) :
+    m_opaque_sp (wp_sp)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
@@ -40,8 +40,8 @@ SBWatchpoint::SBWatchpoint (const lldb::WatchpointLocationSP &watch_loc_sp) :
     {
         SBStream sstr;
         GetDescription (sstr, lldb::eDescriptionLevelBrief);
-        log->Printf ("SBWatchpoint::SBWatchpoint (const lldb::WatchpointLocationsSP &watch_loc_sp"
-                     "=%p)  => this.sp = %p (%s)", watch_loc_sp.get(), m_opaque_sp.get(), sstr.GetData());
+        log->Printf ("SBWatchpoint::SBWatchpoint (const lldb::WatchpointSP &wp_sp"
+                     "=%p)  => this.sp = %p (%s)", wp_sp.get(), m_opaque_sp.get(), sstr.GetData());
     }
 }
 
@@ -156,7 +156,7 @@ SBWatchpoint::SetEnabled (bool enabled)
     if (m_opaque_sp)
     {
         Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        m_opaque_sp->GetTarget().DisableWatchpointLocationByID(m_opaque_sp->GetID());
+        m_opaque_sp->GetTarget().DisableWatchpointByID(m_opaque_sp->GetID());
     }
 }
 
@@ -227,19 +227,19 @@ SBWatchpoint::GetDescription (SBStream &description, DescriptionLevel level)
     return true;
 }
 
-lldb_private::WatchpointLocation *
+lldb_private::Watchpoint *
 SBWatchpoint::operator->()
 {
     return m_opaque_sp.get();
 }
 
-lldb_private::WatchpointLocation *
+lldb_private::Watchpoint *
 SBWatchpoint::get()
 {
     return m_opaque_sp.get();
 }
 
-lldb::WatchpointLocationSP &
+lldb::WatchpointSP &
 SBWatchpoint::operator *()
 {
     return m_opaque_sp;

@@ -14,7 +14,6 @@
 
 #include "lldb/lldb-types.h"
 
-#include "lldb/Breakpoint/WatchpointLocation.h"
 #include "lldb/Core/Address.h"
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/Log.h"
@@ -404,119 +403,6 @@ SBFrame::FindValue (const char *name, ValueType value_type)
         value = FindValue (name, value_type, use_dynamic);
     }
     return value;
-}
-
-/// Find and watch a variable using the frame as the scope.
-/// You can use LLDB_WATCH_TYPE_READ | LLDB_WATCH_TYPE_WRITE for 'rw' watch.
-SBValue
-SBFrame::WatchValue (const char *name, ValueType value_type, uint32_t watch_type)
-{
-    SBValue sb_value_empty;
-
-    if (!IsValid())
-        return sb_value_empty;
-
-    // Acquire the API locker, to be released at the end of the method call.
-    Mutex::Locker api_locker (m_opaque_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
-
-    switch (value_type) {
-    case eValueTypeVariableGlobal:      // global variable
-    case eValueTypeVariableStatic:      // static variable
-    case eValueTypeVariableArgument:    // function argument variables
-    case eValueTypeVariableLocal:       // function local variables
-        break;
-    default:
-        return sb_value_empty;          // these are not eligible for watching
-    }
-
-    SBValue sb_value = FindValue(name, value_type);
-    // If the SBValue is not valid, there's no point in even trying to watch it.
-    if (!sb_value.IsValid())
-        return sb_value;
-
-    addr_t addr = sb_value.GetLoadAddress();
-    size_t size = sb_value.GetByteSize();
-
-    WatchpointLocationSP wp_loc_sp = m_opaque_sp->GetThread().GetProcess().GetTarget().
-        CreateWatchpointLocation(addr, size, watch_type);
-
-    if (wp_loc_sp) {
-        // StackFrame::GetInScopeVariableList(true) to get file globals as well.
-        VariableListSP var_list_sp(m_opaque_sp->GetInScopeVariableList(true));
-        VariableSP var_sp = var_list_sp->FindVariable(ConstString(name));
-        if (var_sp && var_sp->GetDeclaration().GetFile()) {
-            StreamString ss;
-            // True to show fullpath for declaration file.
-            var_sp->GetDeclaration().DumpStopContext(&ss, true);
-            wp_loc_sp->SetDeclInfo(ss.GetString());
-        }
-    }
-
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
-    if (log)
-        log->Printf ("SBFrame(%p)::WatchValue (name=\"%s\", value_type=%i, watch_type=%i) => SBValue(%p) & wp_loc(%p)", 
-                     m_opaque_sp.get(), name, value_type, watch_type, sb_value.get(), wp_loc_sp.get());
-
-    return wp_loc_sp ? sb_value : sb_value_empty;
-}
-
-/// Find and watch the location pointed to by a variable using the frame as
-/// the scope.
-/// It returns an SBValue, similar to FindValue() method, if find-and-watch
-/// operation succeeds.  Otherwise, an invalid SBValue is returned.
-/// You can use LLDB_WATCH_TYPE_READ | LLDB_WATCH_TYPE_WRITE for 'rw' watch.
-SBValue
-SBFrame::WatchLocation (const char *name, ValueType value_type, uint32_t watch_type, size_t size)
-{
-    SBValue sb_value_empty;
-
-    if (!IsValid())
-        return sb_value_empty;
-
-    // Acquire the API locker, to be released at the end of the method call.
-    Mutex::Locker api_locker (m_opaque_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
-
-    switch (value_type) {
-    case eValueTypeVariableGlobal:      // global variable
-    case eValueTypeVariableStatic:      // static variable
-    case eValueTypeVariableArgument:    // function argument variables
-    case eValueTypeVariableLocal:       // function local variables
-        break;
-    default:
-        return sb_value_empty;          // these are not eligible for watching
-    }
-
-    SBValue sb_pointer = FindValue(name, value_type);
-    // If the sb_pointer is not valid, there's no point in even trying to watch it.
-    if (!sb_pointer.IsValid() || !sb_pointer.GetType().IsPointerType())
-        return sb_value_empty;
-
-    addr_t addr = sb_pointer.GetValueAsUnsigned(0);
-    if (!addr)
-        return sb_value_empty;
-
-    SBValue sb_value = sb_pointer.CreateValueFromAddress("pointee", addr, sb_pointer.GetType().GetPointeeType());
-    WatchpointLocationSP wp_loc_sp = m_opaque_sp->GetThread().GetProcess().GetTarget().
-        CreateWatchpointLocation(addr, size, watch_type);
-
-    if (wp_loc_sp) {
-        // StackFrame::GetInScopeVariableList(true) to get file globals as well.
-        VariableListSP var_list_sp(m_opaque_sp->GetInScopeVariableList(true));
-        VariableSP var_sp = var_list_sp->FindVariable(ConstString(name));
-        if (var_sp && var_sp->GetDeclaration().GetFile()) {
-            StreamString ss;
-            // True to show fullpath for declaration file.
-            var_sp->GetDeclaration().DumpStopContext(&ss, true);
-            wp_loc_sp->SetDeclInfo(ss.GetString());
-        }
-    }
-
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
-    if (log)
-        log->Printf ("SBFrame(%p)::WatchLocation (name=\"%s\", value_type=%i, watch_type=%i, size=%lu) => SBValue(%p) & wp_loc(%p)", 
-                     m_opaque_sp.get(), name, value_type, watch_type, size, sb_value.get(), wp_loc_sp.get());
-
-    return wp_loc_sp ? sb_value : sb_value_empty;
 }
 
 SBValue

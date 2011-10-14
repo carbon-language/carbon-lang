@@ -105,8 +105,9 @@ def bytearray_to_int(bytes, bytesize):
 def get_description(obj, option=None):
     """Calls lldb_obj.GetDescription() and returns a string, or None.
 
-    For SBTarget and SBBreakpointLocation lldb objects, an extra option can be
-    passed in to describe the detailed level of description desired:
+    For SBTarget, SBBreakpointLocation, and SBWatchpoint lldb objects, an extra
+    option can be passed in to describe the detailed level of description
+    desired:
         o lldb.eDescriptionLevelBrief
         o lldb.eDescriptionLevelFull
         o lldb.eDescriptionLevelVerbose
@@ -114,7 +115,7 @@ def get_description(obj, option=None):
     method = getattr(obj, 'GetDescription')
     if not method:
         return None
-    tuple = (lldb.SBTarget, lldb.SBBreakpointLocation, lldb.SBWatchpointLocation)
+    tuple = (lldb.SBTarget, lldb.SBBreakpointLocation, lldb.SBWatchpoint)
     if isinstance(obj, tuple):
         if option is None:
             option = lldb.eDescriptionLevelBrief

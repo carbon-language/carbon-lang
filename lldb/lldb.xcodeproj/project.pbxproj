@@ -92,7 +92,7 @@
 		2689000B13353DB600698AC0 /* Stoppoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E1610F1B83100F91463 /* Stoppoint.cpp */; };
 		2689000D13353DB600698AC0 /* StoppointCallbackContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E0910F1B83100F91463 /* StoppointCallbackContext.cpp */; };
 		2689000F13353DB600698AC0 /* StoppointLocation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E1710F1B83100F91463 /* StoppointLocation.cpp */; };
-		2689001113353DB600698AC0 /* WatchpointLocation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E1810F1B83100F91463 /* WatchpointLocation.cpp */; };
+		2689001113353DB600698AC0 /* Watchpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E1810F1B83100F91463 /* Watchpoint.cpp */; };
 		2689001213353DDE00698AC0 /* CommandObjectApropos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CA9637911B6E99A00780E28 /* CommandObjectApropos.cpp */; };
 		2689001313353DDE00698AC0 /* CommandObjectArgs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 499F381F11A5B3F300F5CE02 /* CommandObjectArgs.cpp */; };
 		2689001413353DDE00698AC0 /* CommandObjectBreakpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E2D10F1B84700F91463 /* CommandObjectBreakpoint.cpp */; };
@@ -450,7 +450,7 @@
 		B207C4931429607D00F36E4E /* CommandObjectWatchpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B207C4921429607D00F36E4E /* CommandObjectWatchpoint.cpp */; };
 		B2462247141AD37D00F3D409 /* OptionGroupWatchpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B2462246141AD37D00F3D409 /* OptionGroupWatchpoint.cpp */; };
 		B271B11413D6139300C3FEDB /* FormatClasses.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94A9112D13D5DF210046D8A6 /* FormatClasses.cpp */; };
-		B27318421416AC12006039C8 /* WatchpointLocationList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B27318411416AC12006039C8 /* WatchpointLocationList.cpp */; };
+		B27318421416AC12006039C8 /* WatchpointList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B27318411416AC12006039C8 /* WatchpointList.cpp */; };
 		B28058A1139988B0002D96D0 /* InferiorCallPOSIX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B28058A0139988B0002D96D0 /* InferiorCallPOSIX.cpp */; };
 		B2A58722143119810092BFBA /* SBWatchpoint.h in Headers */ = {isa = PBXBuildFile; fileRef = B2A58721143119810092BFBA /* SBWatchpoint.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B2A58724143119D50092BFBA /* SBWatchpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B2A58723143119D50092BFBA /* SBWatchpoint.cpp */; };
@@ -843,7 +843,7 @@
 		26BC7CF910F1B71400F91463 /* SearchFilter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SearchFilter.h; path = include/lldb/Core/SearchFilter.h; sourceTree = "<group>"; };
 		26BC7CFA10F1B71400F91463 /* Stoppoint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Stoppoint.h; path = include/lldb/Breakpoint/Stoppoint.h; sourceTree = "<group>"; };
 		26BC7CFB10F1B71400F91463 /* StoppointLocation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StoppointLocation.h; path = include/lldb/Breakpoint/StoppointLocation.h; sourceTree = "<group>"; };
-		26BC7CFC10F1B71400F91463 /* WatchpointLocation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = WatchpointLocation.h; path = include/lldb/Breakpoint/WatchpointLocation.h; sourceTree = "<group>"; };
+		26BC7CFC10F1B71400F91463 /* Watchpoint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Watchpoint.h; path = include/lldb/Breakpoint/Watchpoint.h; sourceTree = "<group>"; };
 		26BC7D1410F1B76300F91463 /* CommandObjectBreakpoint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectBreakpoint.h; path = source/Commands/CommandObjectBreakpoint.h; sourceTree = "<group>"; };
 		26BC7D1710F1B76300F91463 /* CommandObjectDisassemble.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectDisassemble.h; path = source/Commands/CommandObjectDisassemble.h; sourceTree = "<group>"; };
 		26BC7D1810F1B76300F91463 /* CommandObjectExpression.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectExpression.h; path = source/Commands/CommandObjectExpression.h; sourceTree = "<group>"; };
@@ -946,7 +946,7 @@
 		26BC7E1510F1B83100F91463 /* SearchFilter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SearchFilter.cpp; path = source/Core/SearchFilter.cpp; sourceTree = "<group>"; };
 		26BC7E1610F1B83100F91463 /* Stoppoint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Stoppoint.cpp; path = source/Breakpoint/Stoppoint.cpp; sourceTree = "<group>"; };
 		26BC7E1710F1B83100F91463 /* StoppointLocation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StoppointLocation.cpp; path = source/Breakpoint/StoppointLocation.cpp; sourceTree = "<group>"; };
-		26BC7E1810F1B83100F91463 /* WatchpointLocation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = WatchpointLocation.cpp; path = source/Breakpoint/WatchpointLocation.cpp; sourceTree = "<group>"; };
+		26BC7E1810F1B83100F91463 /* Watchpoint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Watchpoint.cpp; path = source/Breakpoint/Watchpoint.cpp; sourceTree = "<group>"; };
 		26BC7E2D10F1B84700F91463 /* CommandObjectBreakpoint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectBreakpoint.cpp; path = source/Commands/CommandObjectBreakpoint.cpp; sourceTree = "<group>"; };
 		26BC7E3010F1B84700F91463 /* CommandObjectDisassemble.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectDisassemble.cpp; path = source/Commands/CommandObjectDisassemble.cpp; sourceTree = "<group>"; };
 		26BC7E3110F1B84700F91463 /* CommandObjectExpression.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectExpression.cpp; path = source/Commands/CommandObjectExpression.cpp; sourceTree = "<group>"; };
@@ -1361,8 +1361,8 @@
 		B2462246141AD37D00F3D409 /* OptionGroupWatchpoint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionGroupWatchpoint.cpp; path = source/Interpreter/OptionGroupWatchpoint.cpp; sourceTree = "<group>"; };
 		B2462248141AD39B00F3D409 /* OptionGroupWatchpoint.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OptionGroupWatchpoint.h; path = include/lldb/Interpreter/OptionGroupWatchpoint.h; sourceTree = "<group>"; };
 		B2462249141AE62200F3D409 /* Utils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Utils.h; path = include/lldb/Utility/Utils.h; sourceTree = "<group>"; };
-		B27318411416AC12006039C8 /* WatchpointLocationList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = WatchpointLocationList.cpp; path = source/Breakpoint/WatchpointLocationList.cpp; sourceTree = "<group>"; };
-		B27318431416AC43006039C8 /* WatchpointLocationList.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = WatchpointLocationList.h; path = include/lldb/Breakpoint/WatchpointLocationList.h; sourceTree = "<group>"; };
+		B27318411416AC12006039C8 /* WatchpointList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = WatchpointList.cpp; path = source/Breakpoint/WatchpointList.cpp; sourceTree = "<group>"; };
+		B27318431416AC43006039C8 /* WatchpointList.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = WatchpointList.h; path = include/lldb/Breakpoint/WatchpointList.h; sourceTree = "<group>"; };
 		B28058A0139988B0002D96D0 /* InferiorCallPOSIX.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = InferiorCallPOSIX.cpp; path = Utility/InferiorCallPOSIX.cpp; sourceTree = "<group>"; };
 		B28058A2139988C6002D96D0 /* InferiorCallPOSIX.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = InferiorCallPOSIX.h; path = Utility/InferiorCallPOSIX.h; sourceTree = "<group>"; };
 		B287E63E12EFAE2C00C9BEFE /* ARMDefines.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ARMDefines.h; path = Utility/ARMDefines.h; sourceTree = "<group>"; };
@@ -2309,10 +2309,10 @@
 				26BC7E0910F1B83100F91463 /* StoppointCallbackContext.cpp */,
 				26BC7CFB10F1B71400F91463 /* StoppointLocation.h */,
 				26BC7E1710F1B83100F91463 /* StoppointLocation.cpp */,
-				26BC7CFC10F1B71400F91463 /* WatchpointLocation.h */,
-				B27318431416AC43006039C8 /* WatchpointLocationList.h */,
-				26BC7E1810F1B83100F91463 /* WatchpointLocation.cpp */,
-				B27318411416AC12006039C8 /* WatchpointLocationList.cpp */,
+				26BC7CFC10F1B71400F91463 /* Watchpoint.h */,
+				B27318431416AC43006039C8 /* WatchpointList.h */,
+				26BC7E1810F1B83100F91463 /* Watchpoint.cpp */,
+				B27318411416AC12006039C8 /* WatchpointList.cpp */,
 			);
 			name = Breakpoint;
 			sourceTree = "<group>";
@@ -3199,7 +3199,7 @@
 				2689000B13353DB600698AC0 /* Stoppoint.cpp in Sources */,
 				2689000D13353DB600698AC0 /* StoppointCallbackContext.cpp in Sources */,
 				2689000F13353DB600698AC0 /* StoppointLocation.cpp in Sources */,
-				2689001113353DB600698AC0 /* WatchpointLocation.cpp in Sources */,
+				2689001113353DB600698AC0 /* Watchpoint.cpp in Sources */,
 				2689001213353DDE00698AC0 /* CommandObjectApropos.cpp in Sources */,
 				2689001313353DDE00698AC0 /* CommandObjectArgs.cpp in Sources */,
 				2689001413353DDE00698AC0 /* CommandObjectBreakpoint.cpp in Sources */,
@@ -3498,7 +3498,7 @@
 				94FA3DE01405D50400833217 /* ValueObjectConstResultChild.cpp in Sources */,
 				949ADF031406F648004833E1 /* ValueObjectConstResultImpl.cpp in Sources */,
 				26A0DA4E140F7226006DA411 /* HashedNameToDIE.cpp in Sources */,
-				B27318421416AC12006039C8 /* WatchpointLocationList.cpp in Sources */,
+				B27318421416AC12006039C8 /* WatchpointList.cpp in Sources */,
 				26E152261419CAD4007967D0 /* ObjectFilePECOFF.cpp in Sources */,
 				B2462247141AD37D00F3D409 /* OptionGroupWatchpoint.cpp in Sources */,
 				49A71FE7141FFA5C00D59478 /* IRInterpreter.cpp in Sources */,

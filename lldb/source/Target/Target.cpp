@@ -18,7 +18,7 @@
 #include "lldb/Breakpoint/BreakpointResolverFileLine.h"
 #include "lldb/Breakpoint/BreakpointResolverFileRegex.h"
 #include "lldb/Breakpoint/BreakpointResolverName.h"
-#include "lldb/Breakpoint/WatchpointLocation.h"
+#include "lldb/Breakpoint/Watchpoint.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Event.h"
 #include "lldb/Core/Log.h"
@@ -55,7 +55,7 @@ Target::Target(Debugger &debugger, const ArchSpec &target_arch, const lldb::Plat
     m_section_load_list (),
     m_breakpoint_list (false),
     m_internal_breakpoint_list (true),
-    m_watchpoint_location_list (),
+    m_watchpoint_list (),
     m_process_sp (),
     m_search_filter_sp (),
     m_image_search_paths (ImageSearchPathsChanged, this),
@@ -126,8 +126,8 @@ Target::DeleteCurrentProcess ()
         // clean up needs some help from the process.
         m_breakpoint_list.ClearAllBreakpointSites();
         m_internal_breakpoint_list.ClearAllBreakpointSites();
-        // Disable watchpoint locations just on the debugger side.
-        DisableAllWatchpointLocations(false);
+        // Disable watchpoints just on the debugger side.
+        DisableAllWatchpoints(false);
         m_process_sp.reset();
     }
 }
@@ -167,7 +167,7 @@ Target::Destroy()
     m_breakpoint_list.RemoveAll(notify);
     m_internal_breakpoint_list.RemoveAll(notify);
     m_last_created_breakpoint.reset();
-    m_last_created_watchpoint_location.reset();
+    m_last_created_watchpoint.reset();
     m_search_filter_sp.reset();
     m_image_search_paths.Clear(notify);
     m_scratch_ast_context_ap.reset();
@@ -397,67 +397,66 @@ Target::ProcessIsValid()
     return (m_process_sp && m_process_sp->IsAlive());
 }
 
-// See also WatchpointLocation::SetWatchpointType(uint32_t type) and
+// See also Watchpoint::SetWatchpointType(uint32_t type) and
 // the OptionGroupWatchpoint::WatchType enum type.
-WatchpointLocationSP
-Target::CreateWatchpointLocation(lldb::addr_t addr, size_t size, uint32_t type)
+WatchpointSP
+Target::CreateWatchpoint(lldb::addr_t addr, size_t size, uint32_t type)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
     if (log)
         log->Printf("Target::%s (addr = 0x%8.8llx size = %zu type = %u)\n",
                     __FUNCTION__, addr, size, type);
 
-    WatchpointLocationSP wp_loc_sp;
+    WatchpointSP wp_sp;
     if (!ProcessIsValid())
-        return wp_loc_sp;
+        return wp_sp;
     if (addr == LLDB_INVALID_ADDRESS || size == 0)
-        return wp_loc_sp;
+        return wp_sp;
 
-    // Currently we only support one watchpoint location per address, with total
-    // number of watchpoint locations limited by the hardware which the inferior
-    // is running on.
-    WatchpointLocationSP matched_sp = m_watchpoint_location_list.FindByAddress(addr);
+    // Currently we only support one watchpoint per address, with total number
+    // of watchpoints limited by the hardware which the inferior is running on.
+    WatchpointSP matched_sp = m_watchpoint_list.FindByAddress(addr);
     if (matched_sp)
     {
         size_t old_size = matched_sp->GetByteSize();
         uint32_t old_type =
             (matched_sp->WatchpointRead() ? LLDB_WATCH_TYPE_READ : 0) |
             (matched_sp->WatchpointWrite() ? LLDB_WATCH_TYPE_WRITE : 0);
-        // Return the existing watchpoint location if both size and type match.
+        // Return the existing watchpoint if both size and type match.
         if (size == old_size && type == old_type) {
-            wp_loc_sp = matched_sp;
-            wp_loc_sp->SetEnabled(false);
+            wp_sp = matched_sp;
+            wp_sp->SetEnabled(false);
         } else {
-            // Nil the matched watchpoint location; we will be creating a new one.
+            // Nil the matched watchpoint; we will be creating a new one.
             m_process_sp->DisableWatchpoint(matched_sp.get());
-            m_watchpoint_location_list.Remove(matched_sp->GetID());
+            m_watchpoint_list.Remove(matched_sp->GetID());
         }
     }
 
-    if (!wp_loc_sp) {
-        WatchpointLocation *new_loc = new WatchpointLocation(addr, size);
-        if (!new_loc) {
-            printf("WatchpointLocation ctor failed, out of memory?\n");
-            return wp_loc_sp;
+    if (!wp_sp) {
+        Watchpoint *new_wp = new Watchpoint(addr, size);
+        if (!new_wp) {
+            printf("Watchpoint ctor failed, out of memory?\n");
+            return wp_sp;
         }
-        new_loc->SetWatchpointType(type);
-        new_loc->SetTarget(this);
-        wp_loc_sp.reset(new_loc);
-        m_watchpoint_location_list.Add(wp_loc_sp);
+        new_wp->SetWatchpointType(type);
+        new_wp->SetTarget(this);
+        wp_sp.reset(new_wp);
+        m_watchpoint_list.Add(wp_sp);
     }
 
-    Error rc = m_process_sp->EnableWatchpoint(wp_loc_sp.get());
+    Error rc = m_process_sp->EnableWatchpoint(wp_sp.get());
     if (log)
             log->Printf("Target::%s (creation of watchpoint %s with id = %u)\n",
                         __FUNCTION__,
                         rc.Success() ? "succeeded" : "failed",
-                        wp_loc_sp->GetID());
+                        wp_sp->GetID());
 
     if (rc.Fail())
-        wp_loc_sp.reset();
+        wp_sp.reset();
     else
-        m_last_created_watchpoint_location = wp_loc_sp;
-    return wp_loc_sp;
+        m_last_created_watchpoint = wp_sp;
+    return wp_sp;
 }
 
 void
@@ -572,17 +571,17 @@ Target::EnableBreakpointByID (break_id_t break_id)
 // The flag 'end_to_end', default to true, signifies that the operation is
 // performed end to end, for both the debugger and the debuggee.
 
-// Assumption: Caller holds the list mutex lock for m_watchpoint_location_list
-// for end to end operations.
+// Assumption: Caller holds the list mutex lock for m_watchpoint_list for end
+// to end operations.
 bool
-Target::RemoveAllWatchpointLocations (bool end_to_end)
+Target::RemoveAllWatchpoints (bool end_to_end)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
     if (log)
         log->Printf ("Target::%s\n", __FUNCTION__);
 
     if (!end_to_end) {
-        m_watchpoint_location_list.RemoveAll();
+        m_watchpoint_list.RemoveAll();
         return true;
     }
 
@@ -591,32 +590,32 @@ Target::RemoveAllWatchpointLocations (bool end_to_end)
     if (!ProcessIsValid())
         return false;
 
-    size_t num_watchpoints = m_watchpoint_location_list.GetSize();
+    size_t num_watchpoints = m_watchpoint_list.GetSize();
     for (size_t i = 0; i < num_watchpoints; ++i)
     {
-        WatchpointLocationSP wp_loc_sp = m_watchpoint_location_list.GetByIndex(i);
-        if (!wp_loc_sp)
+        WatchpointSP wp_sp = m_watchpoint_list.GetByIndex(i);
+        if (!wp_sp)
             return false;
 
-        Error rc = m_process_sp->DisableWatchpoint(wp_loc_sp.get());
+        Error rc = m_process_sp->DisableWatchpoint(wp_sp.get());
         if (rc.Fail())
             return false;
     }
-    m_watchpoint_location_list.RemoveAll ();
+    m_watchpoint_list.RemoveAll ();
     return true; // Success!
 }
 
-// Assumption: Caller holds the list mutex lock for m_watchpoint_location_list
-// for end to end operations.
+// Assumption: Caller holds the list mutex lock for m_watchpoint_list for end to
+// end operations.
 bool
-Target::DisableAllWatchpointLocations (bool end_to_end)
+Target::DisableAllWatchpoints (bool end_to_end)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
     if (log)
         log->Printf ("Target::%s\n", __FUNCTION__);
 
     if (!end_to_end) {
-        m_watchpoint_location_list.SetEnabledAll(false);
+        m_watchpoint_list.SetEnabledAll(false);
         return true;
     }
 
@@ -625,31 +624,31 @@ Target::DisableAllWatchpointLocations (bool end_to_end)
     if (!ProcessIsValid())
         return false;
 
-    size_t num_watchpoints = m_watchpoint_location_list.GetSize();
+    size_t num_watchpoints = m_watchpoint_list.GetSize();
     for (size_t i = 0; i < num_watchpoints; ++i)
     {
-        WatchpointLocationSP wp_loc_sp = m_watchpoint_location_list.GetByIndex(i);
-        if (!wp_loc_sp)
+        WatchpointSP wp_sp = m_watchpoint_list.GetByIndex(i);
+        if (!wp_sp)
             return false;
 
-        Error rc = m_process_sp->DisableWatchpoint(wp_loc_sp.get());
+        Error rc = m_process_sp->DisableWatchpoint(wp_sp.get());
         if (rc.Fail())
             return false;
     }
     return true; // Success!
 }
 
-// Assumption: Caller holds the list mutex lock for m_watchpoint_location_list
-// for end to end operations.
+// Assumption: Caller holds the list mutex lock for m_watchpoint_list for end to
+// end operations.
 bool
-Target::EnableAllWatchpointLocations (bool end_to_end)
+Target::EnableAllWatchpoints (bool end_to_end)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
     if (log)
         log->Printf ("Target::%s\n", __FUNCTION__);
 
     if (!end_to_end) {
-        m_watchpoint_location_list.SetEnabledAll(true);
+        m_watchpoint_list.SetEnabledAll(true);
         return true;
     }
 
@@ -658,24 +657,24 @@ Target::EnableAllWatchpointLocations (bool end_to_end)
     if (!ProcessIsValid())
         return false;
 
-    size_t num_watchpoints = m_watchpoint_location_list.GetSize();
+    size_t num_watchpoints = m_watchpoint_list.GetSize();
     for (size_t i = 0; i < num_watchpoints; ++i)
     {
-        WatchpointLocationSP wp_loc_sp = m_watchpoint_location_list.GetByIndex(i);
-        if (!wp_loc_sp)
+        WatchpointSP wp_sp = m_watchpoint_list.GetByIndex(i);
+        if (!wp_sp)
             return false;
 
-        Error rc = m_process_sp->EnableWatchpoint(wp_loc_sp.get());
+        Error rc = m_process_sp->EnableWatchpoint(wp_sp.get());
         if (rc.Fail())
             return false;
     }
     return true; // Success!
 }
 
-// Assumption: Caller holds the list mutex lock for m_watchpoint_location_list
+// Assumption: Caller holds the list mutex lock for m_watchpoint_list
 // during these operations.
 bool
-Target::IgnoreAllWatchpointLocations (uint32_t ignore_count)
+Target::IgnoreAllWatchpoints (uint32_t ignore_count)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
     if (log)
@@ -684,21 +683,21 @@ Target::IgnoreAllWatchpointLocations (uint32_t ignore_count)
     if (!ProcessIsValid())
         return false;
 
-    size_t num_watchpoints = m_watchpoint_location_list.GetSize();
+    size_t num_watchpoints = m_watchpoint_list.GetSize();
     for (size_t i = 0; i < num_watchpoints; ++i)
     {
-        WatchpointLocationSP wp_loc_sp = m_watchpoint_location_list.GetByIndex(i);
-        if (!wp_loc_sp)
+        WatchpointSP wp_sp = m_watchpoint_list.GetByIndex(i);
+        if (!wp_sp)
             return false;
 
-        wp_loc_sp->SetIgnoreCount(ignore_count);
+        wp_sp->SetIgnoreCount(ignore_count);
     }
     return true; // Success!
 }
 
-// Assumption: Caller holds the list mutex lock for m_watchpoint_location_list.
+// Assumption: Caller holds the list mutex lock for m_watchpoint_list.
 bool
-Target::DisableWatchpointLocationByID (lldb::watch_id_t watch_id)
+Target::DisableWatchpointByID (lldb::watch_id_t watch_id)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
     if (log)
@@ -707,10 +706,10 @@ Target::DisableWatchpointLocationByID (lldb::watch_id_t watch_id)
     if (!ProcessIsValid())
         return false;
 
-    WatchpointLocationSP wp_loc_sp = m_watchpoint_location_list.FindByID (watch_id);
-    if (wp_loc_sp)
+    WatchpointSP wp_sp = m_watchpoint_list.FindByID (watch_id);
+    if (wp_sp)
     {
-        Error rc = m_process_sp->DisableWatchpoint(wp_loc_sp.get());
+        Error rc = m_process_sp->DisableWatchpoint(wp_sp.get());
         if (rc.Success())
             return true;
 
@@ -719,9 +718,9 @@ Target::DisableWatchpointLocationByID (lldb::watch_id_t watch_id)
     return false;
 }
 
-// Assumption: Caller holds the list mutex lock for m_watchpoint_location_list.
+// Assumption: Caller holds the list mutex lock for m_watchpoint_list.
 bool
-Target::EnableWatchpointLocationByID (lldb::watch_id_t watch_id)
+Target::EnableWatchpointByID (lldb::watch_id_t watch_id)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
     if (log)
@@ -730,10 +729,10 @@ Target::EnableWatchpointLocationByID (lldb::watch_id_t watch_id)
     if (!ProcessIsValid())
         return false;
 
-    WatchpointLocationSP wp_loc_sp = m_watchpoint_location_list.FindByID (watch_id);
-    if (wp_loc_sp)
+    WatchpointSP wp_sp = m_watchpoint_list.FindByID (watch_id);
+    if (wp_sp)
     {
-        Error rc = m_process_sp->EnableWatchpoint(wp_loc_sp.get());
+        Error rc = m_process_sp->EnableWatchpoint(wp_sp.get());
         if (rc.Success())
             return true;
 
@@ -742,25 +741,25 @@ Target::EnableWatchpointLocationByID (lldb::watch_id_t watch_id)
     return false;
 }
 
-// Assumption: Caller holds the list mutex lock for m_watchpoint_location_list.
+// Assumption: Caller holds the list mutex lock for m_watchpoint_list.
 bool
-Target::RemoveWatchpointLocationByID (lldb::watch_id_t watch_id)
+Target::RemoveWatchpointByID (lldb::watch_id_t watch_id)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
     if (log)
         log->Printf ("Target::%s (watch_id = %i)\n", __FUNCTION__, watch_id);
 
-    if (DisableWatchpointLocationByID (watch_id))
+    if (DisableWatchpointByID (watch_id))
     {
-        m_watchpoint_location_list.Remove(watch_id);
+        m_watchpoint_list.Remove(watch_id);
         return true;
     }
     return false;
 }
 
-// Assumption: Caller holds the list mutex lock for m_watchpoint_location_list.
+// Assumption: Caller holds the list mutex lock for m_watchpoint_list.
 bool
-Target::IgnoreWatchpointLocationByID (lldb::watch_id_t watch_id, uint32_t ignore_count)
+Target::IgnoreWatchpointByID (lldb::watch_id_t watch_id, uint32_t ignore_count)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
     if (log)
@@ -769,10 +768,10 @@ Target::IgnoreWatchpointLocationByID (lldb::watch_id_t watch_id, uint32_t ignore
     if (!ProcessIsValid())
         return false;
 
-    WatchpointLocationSP wp_loc_sp = m_watchpoint_location_list.FindByID (watch_id);
-    if (wp_loc_sp)
+    WatchpointSP wp_sp = m_watchpoint_list.FindByID (watch_id);
+    if (wp_sp)
     {
-        wp_loc_sp->SetIgnoreCount(ignore_count);
+        wp_sp->SetIgnoreCount(ignore_count);
         return true;
     }
     return false;

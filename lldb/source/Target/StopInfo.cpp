@@ -19,7 +19,7 @@
 #include "lldb/Breakpoint/Breakpoint.h"
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Breakpoint/StoppointCallbackContext.h"
-#include "lldb/Breakpoint/WatchpointLocation.h"
+#include "lldb/Breakpoint/Watchpoint.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Expression/ClangUserExpression.h"
@@ -349,9 +349,9 @@ public:
         if (m_should_stop_is_valid)
             return m_should_stop;
 
-        WatchpointLocationSP wp_loc_sp =
-            m_thread.GetProcess().GetTarget().GetWatchpointLocationList().FindByID(GetValue());
-        if (wp_loc_sp)
+        WatchpointSP wp_sp =
+            m_thread.GetProcess().GetTarget().GetWatchpointList().FindByID(GetValue());
+        if (wp_sp)
         {
             // Check if we should stop at a watchpoint.
             StoppointCallbackContext context (event_ptr, 
@@ -360,7 +360,7 @@ public:
                                               m_thread.GetStackFrameAtIndex(0).get(),
                                               true);
                 
-            m_should_stop = wp_loc_sp->ShouldStop (&context);
+            m_should_stop = wp_sp->ShouldStop (&context);
         }
         else
         {

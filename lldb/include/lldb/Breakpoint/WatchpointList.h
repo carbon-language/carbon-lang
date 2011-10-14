@@ -1,4 +1,4 @@
-//===-- WatchpointLocationList.h --------------------------------*- C++ -*-===//
+//===-- WatchpointList.h ----------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_WatchpointLocationList_h_
-#define liblldb_WatchpointLocationList_h_
+#ifndef liblldb_WatchpointList_h_
+#define liblldb_WatchpointList_h_
 
 // C Includes
 // C++ Includes
@@ -23,41 +23,41 @@
 namespace lldb_private {
 
 //----------------------------------------------------------------------
-/// @class WatchpointLocationList WatchpointLocationList.h "lldb/Breakpoint/WatchpointLocationList.h"
-/// @brief This class is used by Watchpoint to manage a list of watchpoint locations,
-//  each watchpoint location in the list
-/// has a unique ID, and is unique by Address as well.
+/// @class WatchpointList WatchpointList.h "lldb/Breakpoint/WatchpointList.h"
+/// @brief This class is used by Watchpoint to manage a list of watchpoints,
+//  each watchpoint in the list has a unique ID, and is unique by Address as
+//  well.
 //----------------------------------------------------------------------
 
-class WatchpointLocationList
+class WatchpointList
 {
-// Only Target can make the location list, or add elements to it.
-// This is not just some random collection of locations.  Rather, the act of adding the location
-// to this list sets its ID.
-friend class WatchpointLocation;
+// Only Target can make the watchpoint list, or add elements to it.
+// This is not just some random collection of watchpoints.  Rather, the act of
+// adding the watchpoint to this list sets its ID.
+friend class Watchpoint;
 
 public:
     //------------------------------------------------------------------
     /// Default constructor makes an empty list.
     //------------------------------------------------------------------
-    WatchpointLocationList();
+    WatchpointList();
 
     //------------------------------------------------------------------
     /// Destructor, currently does nothing.
     //------------------------------------------------------------------
-    ~WatchpointLocationList();
+    ~WatchpointList();
 
     //------------------------------------------------------------------
-    /// Add a WatchpointLocation to the list.
+    /// Add a Watchpoint to the list.
     ///
-    /// @param[in] wp_loc_sp
-    ///    A shared pointer to a watchpoint location being added to the list.
+    /// @param[in] wp_sp
+    ///    A shared pointer to a watchpoint being added to the list.
     ///
     /// @return
-    ///    The ID of the WatchpointLocation in the list.
+    ///    The ID of the Watchpoint in the list.
     //------------------------------------------------------------------
     lldb::watch_id_t
-    Add (const lldb::WatchpointLocationSP& wp_loc_sp);
+    Add (const lldb::WatchpointSP& wp_sp);
 
     //------------------------------------------------------------------
     /// Standard "Dump" method.
@@ -72,8 +72,8 @@ public:
     DumpWithLevel (Stream *s, lldb::DescriptionLevel description_level) const;
 
     //------------------------------------------------------------------
-    /// Returns a shared pointer to the watchpoint location at address
-    /// \a addr - const version.
+    /// Returns a shared pointer to the watchpoint at address /// \a addr -
+    /// const version.
     ///
     /// @param[in] addr
     ///     The address to look for.
@@ -82,12 +82,12 @@ public:
     ///     A shared pointer to the watchpoint.  May contain a NULL
     ///     pointer if the watchpoint doesn't exist.
     //------------------------------------------------------------------
-    const lldb::WatchpointLocationSP
+    const lldb::WatchpointSP
     FindByAddress (lldb::addr_t addr) const;
 
     //------------------------------------------------------------------
-    /// Returns a shared pointer to the watchpoint location with id
-    /// \a breakID, const version.
+    /// Returns a shared pointer to the watchpoint with id /// \a breakID, const
+    /// version.
     ///
     /// @param[in] breakID
     ///     The watchpoint location ID to seek for.
@@ -96,74 +96,72 @@ public:
     ///     A shared pointer to the watchpoint.  May contain a NULL
     ///     pointer if the watchpoint doesn't exist.
     //------------------------------------------------------------------
-    lldb::WatchpointLocationSP
+    lldb::WatchpointSP
     FindByID (lldb::watch_id_t watchID) const;
 
     //------------------------------------------------------------------
-    /// Returns the watchpoint location id to the watchpoint location
-    /// at address \a addr.
+    /// Returns the watchpoint id to the watchpoint /// at address \a addr.
     ///
     /// @param[in] addr
     ///     The address to match.
     ///
     /// @result
-    ///     The ID of the watchpoint location, or LLDB_INVALID_WATCH_ID.
+    ///     The ID of the watchpoint, or LLDB_INVALID_WATCH_ID.
     //------------------------------------------------------------------
     lldb::watch_id_t
     FindIDByAddress (lldb::addr_t addr);
 
     //------------------------------------------------------------------
-    /// Returns a shared pointer to the watchpoint location with
-    /// index \a i.
+    /// Returns a shared pointer to the watchpoint with index \a i.
     ///
     /// @param[in] i
-    ///     The watchpoint location index to seek for.
+    ///     The watchpoint index to seek for.
     ///
     /// @result
-    ///     A shared pointer to the watchpoint location.  May contain a NULL
-    ///     pointer if the watchpoint location doesn't exist.
+    ///     A shared pointer to the watchpoint.  May contain a NULL pointer if
+    ///     the watchpoint doesn't exist.
     //------------------------------------------------------------------
-    lldb::WatchpointLocationSP
+    lldb::WatchpointSP
     GetByIndex (uint32_t i);
 
     //------------------------------------------------------------------
-    /// Returns a shared pointer to the watchpoint location with index
-    /// \a i, const version.
+    /// Returns a shared pointer to the watchpoint with index \a i, const
+    /// version.
     ///
     /// @param[in] i
-    ///     The watchpoint location index to seek for.
+    ///     The watchpoint index to seek for.
     ///
     /// @result
-    ///     A shared pointer to the watchpoint location.  May contain a NULL
-    ///     pointer if the watchpoint location doesn't exist.
+    ///     A shared pointer to the watchpoint.  May contain a NULL pointer if
+    ///     the watchpoint location doesn't exist.
     //------------------------------------------------------------------
-    const lldb::WatchpointLocationSP
+    const lldb::WatchpointSP
     GetByIndex (uint32_t i) const;
 
     //------------------------------------------------------------------
-    /// Removes the watchpoint location given by \b watchID from this list.
+    /// Removes the watchpoint given by \b watchID from this list.
     ///
     /// @param[in] watchID
-    ///   The watchpoint location ID to remove.
+    ///   The watchpoint ID to remove.
     ///
     /// @result
-    ///   \b true if the watchpoint location \a watchID was in the list.
+    ///   \b true if the watchpoint \a watchID was in the list.
     //------------------------------------------------------------------
     bool
     Remove (lldb::watch_id_t watchID);
 
     //------------------------------------------------------------------
-    /// Returns the number hit count of all locations in this list.
+    /// Returns the number hit count of all watchpoints in this list.
     ///
     /// @result
-    ///     Hit count of all locations in this list.
+    ///     Hit count of all watchpoints in this list.
     //------------------------------------------------------------------
     uint32_t
     GetHitCount () const;
 
     //------------------------------------------------------------------
-    /// Enquires of the watchpoint location in this list with ID \a
-    /// watchID whether we should stop.
+    /// Enquires of the watchpoint in this list with ID \a watchID whether we
+    /// should stop.
     ///
     /// @param[in] context
     ///     This contains the information about this stop.
@@ -179,7 +177,7 @@ public:
                 lldb::watch_id_t watchID);
 
     //------------------------------------------------------------------
-    /// Returns the number of elements in this watchpoint location list.
+    /// Returns the number of elements in this watchpoint list.
     ///
     /// @result
     ///     The number of elements.
@@ -188,12 +186,11 @@ public:
     GetSize() const
     {
         Mutex::Locker locker(m_mutex);
-        return m_address_to_location.size();
+        return m_address_to_watchpoint.size();
     }
 
     //------------------------------------------------------------------
-    /// Print a description of the watchpoint locations in this list to
-    /// the stream \a s.
+    /// Print a description of the watchpoints in this list to the stream \a s.
     ///
     /// @param[in] s
     ///     The stream to which to print the description.
@@ -215,7 +212,7 @@ public:
     RemoveAll ();
     
     //------------------------------------------------------------------
-    /// Sets the passed in Locker to hold the Watchpoint Location List mutex.
+    /// Sets the passed in Locker to hold the Watchpoint List mutex.
     ///
     /// @param[in] locker
     ///   The locker object that is set.
@@ -224,7 +221,7 @@ public:
     GetListMutex (lldb_private::Mutex::Locker &locker);
 
 protected:
-    typedef std::map<lldb::addr_t, lldb::WatchpointLocationSP> addr_map;
+    typedef std::map<lldb::addr_t, lldb::WatchpointSP> addr_map;
 
     addr_map::iterator
     GetIDIterator(lldb::watch_id_t watchID);
@@ -232,10 +229,10 @@ protected:
     addr_map::const_iterator
     GetIDConstIterator(lldb::watch_id_t watchID) const;
 
-    addr_map m_address_to_location;
+    addr_map m_address_to_watchpoint;
     mutable Mutex m_mutex;
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_WatchpointLocationList_h_
+#endif  // liblldb_WatchpointList_h_

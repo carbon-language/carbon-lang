@@ -178,10 +178,10 @@ public:
     // Process Watchpoints
     //----------------------------------------------------------------------
     virtual lldb_private::Error
-    EnableWatchpoint (lldb_private::WatchpointLocation *wp_loc);
+    EnableWatchpoint (lldb_private::Watchpoint *wp);
     
     virtual lldb_private::Error
-    DisableWatchpoint (lldb_private::WatchpointLocation *wp_loc);
+    DisableWatchpoint (lldb_private::Watchpoint *wp);
     
     CommunicationKDP &
     GetCommunication()

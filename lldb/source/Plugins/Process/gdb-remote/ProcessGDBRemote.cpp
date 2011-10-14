@@ -22,7 +22,7 @@
 
 // Other libraries and framework includes
 
-#include "lldb/Breakpoint/WatchpointLocation.h"
+#include "lldb/Breakpoint/Watchpoint.h"
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/Debugger.h"
@@ -1900,7 +1900,7 @@ ProcessGDBRemote::DisableBreakpoint (BreakpointSite *bp_site)
 
 // Pre-requisite: wp != NULL.
 static GDBStoppointType
-GetGDBStoppointType (WatchpointLocation *wp)
+GetGDBStoppointType (Watchpoint *wp)
 {
     assert(wp);
     bool watch_read = wp->WatchpointRead();
@@ -1917,7 +1917,7 @@ GetGDBStoppointType (WatchpointLocation *wp)
 }
 
 Error
-ProcessGDBRemote::EnableWatchpoint (WatchpointLocation *wp)
+ProcessGDBRemote::EnableWatchpoint (Watchpoint *wp)
 {
     Error error;
     if (wp)
@@ -1951,7 +1951,7 @@ ProcessGDBRemote::EnableWatchpoint (WatchpointLocation *wp)
     }
     else
     {
-        error.SetErrorString("Watchpoint location argument was NULL.");
+        error.SetErrorString("Watchpoint argument was NULL.");
     }
     if (error.Success())
         error.SetErrorToGenericError();
@@ -1959,7 +1959,7 @@ ProcessGDBRemote::EnableWatchpoint (WatchpointLocation *wp)
 }
 
 Error
-ProcessGDBRemote::DisableWatchpoint (WatchpointLocation *wp)
+ProcessGDBRemote::DisableWatchpoint (Watchpoint *wp)
 {
     Error error;
     if (wp)
@@ -1995,7 +1995,7 @@ ProcessGDBRemote::DisableWatchpoint (WatchpointLocation *wp)
     }
     else
     {
-        error.SetErrorString("Watchpoint location argument was NULL.");
+        error.SetErrorString("Watchpoint argument was NULL.");
     }
     if (error.Success())
         error.SetErrorToGenericError();

@@ -18,7 +18,7 @@
 #include "lldb/lldb-public.h"
 #include "lldb/Breakpoint/BreakpointList.h"
 #include "lldb/Breakpoint/BreakpointLocationCollection.h"
-#include "lldb/Breakpoint/WatchpointLocationList.h"
+#include "lldb/Breakpoint/WatchpointList.h"
 #include "lldb/Core/Broadcaster.h"
 #include "lldb/Core/Event.h"
 #include "lldb/Core/ModuleList.h"
@@ -292,22 +292,22 @@ public:
                       lldb::BreakpointResolverSP &resolver_sp,
                       bool internal = false);
 
-    // Use this to create a watchpoint location:
-    lldb::WatchpointLocationSP
-    CreateWatchpointLocation (lldb::addr_t addr,
-                              size_t size,
-                              uint32_t type);
+    // Use this to create a watchpoint:
+    lldb::WatchpointSP
+    CreateWatchpoint (lldb::addr_t addr,
+                      size_t size,
+                      uint32_t type);
 
-    lldb::WatchpointLocationSP
-    GetLastCreatedWatchpointLocation ()
+    lldb::WatchpointSP
+    GetLastCreatedWatchpoint ()
     {
-        return m_last_created_watchpoint_location;
+        return m_last_created_watchpoint;
     }
 
-    WatchpointLocationList &
-    GetWatchpointLocationList()
+    WatchpointList &
+    GetWatchpointList()
     {
-        return m_watchpoint_location_list;
+        return m_watchpoint_list;
     }
 
     void
@@ -332,28 +332,28 @@ public:
     // performed end to end, for both the debugger and the debuggee.
 
     bool
-    RemoveAllWatchpointLocations (bool end_to_end = true);
+    RemoveAllWatchpoints (bool end_to_end = true);
 
     bool
-    DisableAllWatchpointLocations (bool end_to_end = true);
+    DisableAllWatchpoints (bool end_to_end = true);
 
     bool
-    EnableAllWatchpointLocations (bool end_to_end = true);
+    EnableAllWatchpoints (bool end_to_end = true);
 
     bool
-    IgnoreAllWatchpointLocations (uint32_t ignore_count);
+    IgnoreAllWatchpoints (uint32_t ignore_count);
 
     bool
-    DisableWatchpointLocationByID (lldb::watch_id_t watch_id);
+    DisableWatchpointByID (lldb::watch_id_t watch_id);
 
     bool
-    EnableWatchpointLocationByID (lldb::watch_id_t watch_id);
+    EnableWatchpointByID (lldb::watch_id_t watch_id);
 
     bool
-    RemoveWatchpointLocationByID (lldb::watch_id_t watch_id);
+    RemoveWatchpointByID (lldb::watch_id_t watch_id);
 
     bool
-    IgnoreWatchpointLocationByID (lldb::watch_id_t watch_id, uint32_t ignore_count);
+    IgnoreWatchpointByID (lldb::watch_id_t watch_id, uint32_t ignore_count);
 
     void
     ModulesDidLoad (ModuleList &module_list);
@@ -877,8 +877,8 @@ protected:
     BreakpointList  m_breakpoint_list;
     BreakpointList  m_internal_breakpoint_list;
     lldb::BreakpointSP m_last_created_breakpoint;
-    WatchpointLocationList  m_watchpoint_location_list;
-    lldb::WatchpointLocationSP m_last_created_watchpoint_location;
+    WatchpointList  m_watchpoint_list;
+    lldb::WatchpointSP m_last_created_watchpoint;
     // We want to tightly control the process destruction process so
     // we can correctly tear down everything that we need to, so the only
     // class that knows about the process lifespan is this target class.

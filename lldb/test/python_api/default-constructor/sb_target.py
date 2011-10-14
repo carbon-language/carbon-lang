@@ -40,14 +40,13 @@ def fuzz_obj(obj):
     obj.EnableAllBreakpoints()
     obj.DisableAllBreakpoints()
     obj.DeleteAllBreakpoints()
-    obj.GetNumWatchpointLocations()
-    obj.GetLastCreatedWatchpointLocation()
-    obj.GetWatchpointLocationAtIndex(0)
-    obj.WatchpointLocationDelete(0)
-    obj.FindWatchpointLocationByID(0)
-    obj.EnableAllWatchpointLocations()
-    obj.DisableAllWatchpointLocations()
-    obj.DeleteAllWatchpointLocations()
+    obj.GetNumWatchpoints()
+    obj.GetWatchpointAtIndex(0)
+    obj.DeleteWatchpoint(0)
+    obj.FindWatchpointByID(0)
+    obj.EnableAllWatchpoints()
+    obj.DisableAllWatchpoints()
+    obj.DeleteAllWatchpoints()
     obj.GetBroadcaster()
     obj.GetDescription(lldb.SBStream(), lldb.eDescriptionLevelBrief)
     obj.Clear()
@@ -55,5 +54,5 @@ def fuzz_obj(obj):
         print module
     for bp in obj.breakpoint_iter():
         print bp
-    for wp_loc in obj.watchpoint_location_iter():
+    for wp_loc in obj.watchpoint_iter():
         print wp_loc

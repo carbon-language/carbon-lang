@@ -1997,7 +1997,7 @@ Process::DeallocateMemory (addr_t ptr)
 
 
 Error
-Process::EnableWatchpoint (WatchpointLocation *watchpoint)
+Process::EnableWatchpoint (Watchpoint *watchpoint)
 {
     Error error;
     error.SetErrorString("watchpoints are not supported");
@@ -2005,7 +2005,7 @@ Process::EnableWatchpoint (WatchpointLocation *watchpoint)
 }
 
 Error
-Process::DisableWatchpoint (WatchpointLocation *watchpoint)
+Process::DisableWatchpoint (Watchpoint *watchpoint)
 {
     Error error;
     error.SetErrorString("watchpoints are not supported");

@@ -607,7 +607,7 @@ ProcessKDP::DisableBreakpoint (BreakpointSite *bp_site)
 }
 
 Error
-ProcessKDP::EnableWatchpoint (WatchpointLocation *wp)
+ProcessKDP::EnableWatchpoint (Watchpoint *wp)
 {
     Error error;
     error.SetErrorString ("watchpoints are not suppported in kdp remote debugging");
@@ -615,7 +615,7 @@ ProcessKDP::EnableWatchpoint (WatchpointLocation *wp)
 }
 
 Error
-ProcessKDP::DisableWatchpoint (WatchpointLocation *wp)
+ProcessKDP::DisableWatchpoint (Watchpoint *wp)
 {
     Error error;
     error.SetErrorString ("watchpoints are not suppported in kdp remote debugging");

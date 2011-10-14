@@ -1,4 +1,4 @@
-//===-- WatchpointLocation.cpp ----------------------------------*- C++ -*-===//
+//===-- Watchpoint.cpp ------------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/Breakpoint/WatchpointLocation.h"
+#include "lldb/Breakpoint/Watchpoint.h"
 
 // C Includes
 // C++ Includes
@@ -18,7 +18,7 @@
 using namespace lldb;
 using namespace lldb_private;
 
-WatchpointLocation::WatchpointLocation (lldb::addr_t addr, size_t size, bool hardware) :
+Watchpoint::Watchpoint (lldb::addr_t addr, size_t size, bool hardware) :
     StoppointLocation (GetNextID(), addr, size, hardware),
     m_target(NULL),
     m_enabled(0),
@@ -33,19 +33,19 @@ WatchpointLocation::WatchpointLocation (lldb::addr_t addr, size_t size, bool har
 {
 }
 
-WatchpointLocation::~WatchpointLocation()
+Watchpoint::~Watchpoint()
 {
 }
 
 break_id_t
-WatchpointLocation::GetNextID()
+Watchpoint::GetNextID()
 {
     static break_id_t g_next_ID = 0;
     return ++g_next_ID;
 }
 
 bool
-WatchpointLocation::SetCallback (WatchpointHitCallback callback, void *callback_baton)
+Watchpoint::SetCallback (WatchpointHitCallback callback, void *callback_baton)
 {
     m_callback = callback;
     m_callback_baton = callback_baton;
@@ -53,7 +53,7 @@ WatchpointLocation::SetCallback (WatchpointHitCallback callback, void *callback_
 }
 
 void
-WatchpointLocation::SetDeclInfo (std::string &str)
+Watchpoint::SetDeclInfo (std::string &str)
 {
     m_decl_str = str;
     return;
@@ -61,7 +61,7 @@ WatchpointLocation::SetDeclInfo (std::string &str)
 
 
 bool
-WatchpointLocation::IsHardware () const
+Watchpoint::IsHardware () const
 {
     return m_is_hardware;
 }
@@ -70,7 +70,7 @@ WatchpointLocation::IsHardware () const
 // should continue.
 
 bool
-WatchpointLocation::ShouldStop (StoppointCallbackContext *context)
+Watchpoint::ShouldStop (StoppointCallbackContext *context)
 {
     ++m_hit_count;
 
@@ -93,20 +93,20 @@ WatchpointLocation::ShouldStop (StoppointCallbackContext *context)
 }
 
 void
-WatchpointLocation::GetDescription (Stream *s, lldb::DescriptionLevel level)
+Watchpoint::GetDescription (Stream *s, lldb::DescriptionLevel level)
 {
     DumpWithLevel(s, level);
     return;
 }
 
 void
-WatchpointLocation::Dump(Stream *s) const
+Watchpoint::Dump(Stream *s) const
 {
     DumpWithLevel(s, lldb::eDescriptionLevelBrief);
 }
 
 void
-WatchpointLocation::DumpWithLevel(Stream *s, lldb::DescriptionLevel description_level) const
+Watchpoint::DumpWithLevel(Stream *s, lldb::DescriptionLevel description_level) const
 {
     if (s == NULL)
         return;
@@ -114,7 +114,7 @@ WatchpointLocation::DumpWithLevel(Stream *s, lldb::DescriptionLevel description_
     assert(description_level >= lldb::eDescriptionLevelBrief &&
            description_level <= lldb::eDescriptionLevelVerbose);
 
-    s->Printf("WatchpointLocation %u: addr = 0x%8.8llx size = %zu state = %s type = %s%s",
+    s->Printf("Watchpoint %u: addr = 0x%8.8llx size = %zu state = %s type = %s%s",
               GetID(),
               (uint64_t)m_addr,
               m_byte_size,
@@ -141,13 +141,13 @@ WatchpointLocation::DumpWithLevel(Stream *s, lldb::DescriptionLevel description_
 }
 
 bool
-WatchpointLocation::IsEnabled() const
+Watchpoint::IsEnabled() const
 {
     return m_enabled;
 }
 
 void
-WatchpointLocation::SetEnabled(bool enabled)
+Watchpoint::SetEnabled(bool enabled)
 {
     if (!enabled)
         SetHardwareIndex(LLDB_INVALID_INDEX32);
@@ -155,30 +155,30 @@ WatchpointLocation::SetEnabled(bool enabled)
 }
 
 void
-WatchpointLocation::SetWatchpointType (uint32_t type)
+Watchpoint::SetWatchpointType (uint32_t type)
 {
     m_watch_read = (type & LLDB_WATCH_TYPE_READ) != 0;
     m_watch_write = (type & LLDB_WATCH_TYPE_WRITE) != 0;
 }
 
 bool
-WatchpointLocation::WatchpointRead () const
+Watchpoint::WatchpointRead () const
 {
     return m_watch_read != 0;
 }
 bool
-WatchpointLocation::WatchpointWrite () const
+Watchpoint::WatchpointWrite () const
 {
     return m_watch_write != 0;
 }
 uint32_t
-WatchpointLocation::GetIgnoreCount () const
+Watchpoint::GetIgnoreCount () const
 {
     return m_ignore_count;
 }
 
 void
-WatchpointLocation::SetIgnoreCount (uint32_t n)
+Watchpoint::SetIgnoreCount (uint32_t n)
 {
     m_ignore_count = n;
 }

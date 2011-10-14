@@ -215,25 +215,6 @@ public:
     lldb::SBValue
     FindValue (const char *name, ValueType value_type, lldb::DynamicValueType use_dynamic);
 
-    %feature("docstring", "
-    /// Find and watch a variable using the frame as the scope.
-    /// It returns an SBValue, similar to FindValue() method, if find-and-watch
-    /// operation succeeds.  Otherwise, an invalid SBValue is returned.
-    /// You can use LLDB_WATCH_TYPE_READ | LLDB_WATCH_TYPE_WRITE for 'rw' watch.
-    ") WatchValue;
-    lldb::SBValue
-    WatchValue (const char *name, ValueType value_type, uint32_t watch_type);
-
-    %feature("docstring", "
-    /// Find and watch the location pointed to by a variable using the frame as
-    /// the scope.
-    /// It returns an SBValue, similar to FindValue() method, if find-and-watch
-    /// operation succeeds.  Otherwise, an invalid SBValue is returned.
-    /// You can use LLDB_WATCH_TYPE_READ | LLDB_WATCH_TYPE_WRITE for 'rw' watch.
-    ") WatchLocation;
-    lldb::SBValue
-    WatchLocation (const char *name, ValueType value_type, uint32_t watch_type, size_t size);
-
     bool
     GetDescription (lldb::SBStream &description);
 

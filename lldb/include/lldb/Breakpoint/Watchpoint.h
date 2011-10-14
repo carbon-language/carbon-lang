@@ -1,4 +1,4 @@
-//===-- WatchpointLocation.h ------------------------------------*- C++ -*-===//
+//===-- Watchpoint.h --------------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_WatchpointLocation_h_
-#define liblldb_WatchpointLocation_h_
+#ifndef liblldb_Watchpoint_h_
+#define liblldb_Watchpoint_h_
 
 // C Includes
 
@@ -26,14 +26,14 @@
 
 namespace lldb_private {
 
-class WatchpointLocation :
+class Watchpoint :
     public StoppointLocation
 {
 public:
 
-    WatchpointLocation (lldb::addr_t addr, size_t size, bool hardware = true);
+    Watchpoint (lldb::addr_t addr, size_t size, bool hardware = true);
 
-    ~WatchpointLocation ();
+    ~Watchpoint ();
 
     bool
     IsEnabled () const;
@@ -79,9 +79,9 @@ private:
     static lldb::break_id_t
     GetNextID();
 
-    DISALLOW_COPY_AND_ASSIGN (WatchpointLocation);
+    DISALLOW_COPY_AND_ASSIGN (Watchpoint);
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_WatchpointLocation_h_
+#endif  // liblldb_Watchpoint_h_

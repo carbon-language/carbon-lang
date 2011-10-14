@@ -33,6 +33,5 @@ def fuzz_obj(obj):
     obj.FindVariable("my_var", lldb.eDynamicCanRunTarget)
     obj.FindValue("your_var", lldb.eValueTypeVariableGlobal)
     obj.FindValue("your_var", lldb.eValueTypeVariableStatic, lldb.eDynamicCanRunTarget)
-    obj.WatchValue("global_var", lldb.eValueTypeVariableGlobal, lldb.LLDB_WATCH_TYPE_READ)
     obj.GetDescription(lldb.SBStream())
     obj.Clear()

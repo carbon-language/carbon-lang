@@ -13,8 +13,8 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
-#include "lldb/Breakpoint/WatchpointLocation.h"
-#include "lldb/Breakpoint/WatchpointLocationList.h"
+#include "lldb/Breakpoint/Watchpoint.h"
+#include "lldb/Breakpoint/WatchpointList.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
@@ -27,10 +27,10 @@ using namespace lldb;
 using namespace lldb_private;
 
 static void
-AddWatchpointDescription(Stream *s, WatchpointLocation *wp_loc, lldb::DescriptionLevel level)
+AddWatchpointDescription(Stream *s, Watchpoint *wp, lldb::DescriptionLevel level)
 {
     s->IndentMore();
-    wp_loc->GetDescription(s, level);
+    wp->GetDescription(s, level);
     s->IndentLess();
     s->EOL();
 }
@@ -280,9 +280,9 @@ CommandObjectWatchpointList::Execute(Args& args, CommandReturnObject &result)
         return true;
     }
 
-    const WatchpointLocationList &watchpoints = target->GetWatchpointLocationList();
+    const WatchpointList &watchpoints = target->GetWatchpointList();
     Mutex::Locker locker;
-    target->GetWatchpointLocationList().GetListMutex(locker);
+    target->GetWatchpointList().GetListMutex(locker);
 
     size_t num_watchpoints = watchpoints.GetSize();
 
@@ -301,8 +301,8 @@ CommandObjectWatchpointList::Execute(Args& args, CommandReturnObject &result)
         result.AppendMessage ("Current watchpoints:");
         for (size_t i = 0; i < num_watchpoints; ++i)
         {
-            WatchpointLocation *wp_loc = watchpoints.GetByIndex(i).get();
-            AddWatchpointDescription(&output_stream, wp_loc, m_options.m_level);
+            Watchpoint *wp = watchpoints.GetByIndex(i).get();
+            AddWatchpointDescription(&output_stream, wp, m_options.m_level);
         }
         result.SetStatus(eReturnStatusSuccessFinishNoResult);
     }
@@ -320,9 +320,9 @@ CommandObjectWatchpointList::Execute(Args& args, CommandReturnObject &result)
         const size_t size = wp_ids.size();
         for (size_t i = 0; i < size; ++i)
         {
-            WatchpointLocation *wp_loc = watchpoints.FindByID(wp_ids[i]).get();
-            if (wp_loc)
-                AddWatchpointDescription(&output_stream, wp_loc, m_options.m_level);
+            Watchpoint *wp = watchpoints.FindByID(wp_ids[i]).get();
+            if (wp)
+                AddWatchpointDescription(&output_stream, wp, m_options.m_level);
             result.SetStatus(eReturnStatusSuccessFinishNoResult);
         }
     }
@@ -359,9 +359,9 @@ CommandObjectWatchpointEnable::Execute(Args& args, CommandReturnObject &result)
         return false;
 
     Mutex::Locker locker;
-    target->GetWatchpointLocationList().GetListMutex(locker);
+    target->GetWatchpointList().GetListMutex(locker);
 
-    const WatchpointLocationList &watchpoints = target->GetWatchpointLocationList();
+    const WatchpointList &watchpoints = target->GetWatchpointList();
 
     size_t num_watchpoints = watchpoints.GetSize();
 
@@ -375,7 +375,7 @@ CommandObjectWatchpointEnable::Execute(Args& args, CommandReturnObject &result)
     if (args.GetArgumentCount() == 0)
     {
         // No watchpoint selected; enable all currently set watchpoints.
-        target->EnableAllWatchpointLocations();
+        target->EnableAllWatchpoints();
         result.AppendMessageWithFormat("All watchpoints enabled. (%lu watchpoints)\n", num_watchpoints);
         result.SetStatus(eReturnStatusSuccessFinishNoResult);
     }
@@ -393,7 +393,7 @@ CommandObjectWatchpointEnable::Execute(Args& args, CommandReturnObject &result)
         int count = 0;
         const size_t size = wp_ids.size();
         for (size_t i = 0; i < size; ++i)
-            if (target->EnableWatchpointLocationByID(wp_ids[i]))
+            if (target->EnableWatchpointByID(wp_ids[i]))
                 ++count;
         result.AppendMessageWithFormat("%d watchpoints enabled.\n", count);
         result.SetStatus(eReturnStatusSuccessFinishNoResult);
@@ -431,9 +431,9 @@ CommandObjectWatchpointDisable::Execute(Args& args, CommandReturnObject &result)
         return false;
 
     Mutex::Locker locker;
-    target->GetWatchpointLocationList().GetListMutex(locker);
+    target->GetWatchpointList().GetListMutex(locker);
 
-    const WatchpointLocationList &watchpoints = target->GetWatchpointLocationList();
+    const WatchpointList &watchpoints = target->GetWatchpointList();
     size_t num_watchpoints = watchpoints.GetSize();
 
     if (num_watchpoints == 0)
@@ -446,7 +446,7 @@ CommandObjectWatchpointDisable::Execute(Args& args, CommandReturnObject &result)
     if (args.GetArgumentCount() == 0)
     {
         // No watchpoint selected; disable all currently set watchpoints.
-        if (target->DisableAllWatchpointLocations())
+        if (target->DisableAllWatchpoints())
         {
             result.AppendMessageWithFormat("All watchpoints disabled. (%lu watchpoints)\n", num_watchpoints);
             result.SetStatus(eReturnStatusSuccessFinishNoResult);
@@ -471,7 +471,7 @@ CommandObjectWatchpointDisable::Execute(Args& args, CommandReturnObject &result)
         int count = 0;
         const size_t size = wp_ids.size();
         for (size_t i = 0; i < size; ++i)
-            if (target->DisableWatchpointLocationByID(wp_ids[i]))
+            if (target->DisableWatchpointByID(wp_ids[i]))
                 ++count;
         result.AppendMessageWithFormat("%d watchpoints disabled.\n", count);
         result.SetStatus(eReturnStatusSuccessFinishNoResult);
@@ -509,9 +509,9 @@ CommandObjectWatchpointDelete::Execute(Args& args, CommandReturnObject &result)
         return false;
 
     Mutex::Locker locker;
-    target->GetWatchpointLocationList().GetListMutex(locker);
+    target->GetWatchpointList().GetListMutex(locker);
     
-    const WatchpointLocationList &watchpoints = target->GetWatchpointLocationList();
+    const WatchpointList &watchpoints = target->GetWatchpointList();
 
     size_t num_watchpoints = watchpoints.GetSize();
 
@@ -530,7 +530,7 @@ CommandObjectWatchpointDelete::Execute(Args& args, CommandReturnObject &result)
         }
         else
         {
-            target->RemoveAllWatchpointLocations();
+            target->RemoveAllWatchpoints();
             result.AppendMessageWithFormat("All watchpoints removed. (%lu watchpoints)\n", num_watchpoints);
         }
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
@@ -549,7 +549,7 @@ CommandObjectWatchpointDelete::Execute(Args& args, CommandReturnObject &result)
         int count = 0;
         const size_t size = wp_ids.size();
         for (size_t i = 0; i < size; ++i)
-            if (target->RemoveWatchpointLocationByID(wp_ids[i]))
+            if (target->RemoveWatchpointByID(wp_ids[i]))
                 ++count;
         result.AppendMessageWithFormat("%d watchpoints deleted.\n",count);
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
@@ -651,9 +651,9 @@ CommandObjectWatchpointIgnore::Execute(Args& args, CommandReturnObject &result)
         return false;
 
     Mutex::Locker locker;
-    target->GetWatchpointLocationList().GetListMutex(locker);
+    target->GetWatchpointList().GetListMutex(locker);
     
-    const WatchpointLocationList &watchpoints = target->GetWatchpointLocationList();
+    const WatchpointList &watchpoints = target->GetWatchpointList();
 
     size_t num_watchpoints = watchpoints.GetSize();
 
@@ -666,7 +666,7 @@ CommandObjectWatchpointIgnore::Execute(Args& args, CommandReturnObject &result)
 
     if (args.GetArgumentCount() == 0)
     {
-        target->IgnoreAllWatchpointLocations(m_options.m_ignore_count);
+        target->IgnoreAllWatchpoints(m_options.m_ignore_count);
         result.AppendMessageWithFormat("All watchpoints ignored. (%lu watchpoints)\n", num_watchpoints);
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
     }
@@ -684,7 +684,7 @@ CommandObjectWatchpointIgnore::Execute(Args& args, CommandReturnObject &result)
         int count = 0;
         const size_t size = wp_ids.size();
         for (size_t i = 0; i < size; ++i)
-            if (target->IgnoreWatchpointLocationByID(wp_ids[i], m_options.m_ignore_count))
+            if (target->IgnoreWatchpointByID(wp_ids[i], m_options.m_ignore_count))
                 ++count;
         result.AppendMessageWithFormat("%d watchpoints ignored.\n",count);
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
