@@ -139,6 +139,9 @@ module Attribute : sig
   | Naked
   | Inlinehint
   | Stackalignment of int
+  | ReturnsTwice
+  | UWTable
+  | NonLazyBind
 end
 
 (** The predicate for an integer comparison ([icmp]) instruction.
@@ -1368,6 +1371,10 @@ val set_gc : string option -> llvalue -> unit
     [f]. *)
 val add_function_attr : llvalue -> Attribute.t -> unit
 
+(** [function_attr f] returns the function attribute for the function [f].
+ * See the method [llvm::Function::getAttributes] *)
+val function_attr : llvalue -> Attribute.t list
+
 (** [remove_function_attr f a] removes attribute [a] from the return type of
     function [f]. *)
 val remove_function_attr : llvalue -> Attribute.t -> unit
@@ -1381,6 +1388,11 @@ val params : llvalue -> llvalue array
 (** [param f n] returns the [n]th parameter of function [f].
     See the method [llvm::Function::getArgumentList]. *)
 val param : llvalue -> int -> llvalue
+
+(** [param_attr p] returns the attributes of parameter [p].
+ * See the methods [llvm::Function::getAttributes] and
+ * [llvm::Attributes::getParamAttributes] *)
+val param_attr : llvalue -> Attribute.t list
 
 (** [param_parent p] returns the parent function that owns the parameter.
     See the method [llvm::Argument::getParent]. *)

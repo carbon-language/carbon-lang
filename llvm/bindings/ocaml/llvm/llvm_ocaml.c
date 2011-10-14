@@ -1034,15 +1034,22 @@ CAMLprim value llvm_set_gc(value GC, LLVMValueRef Fn) {
   return Val_unit;
 }
 
-/* llvalue -> Attribute.t -> unit */
+/* llvalue -> int32 -> unit */
 CAMLprim value llvm_add_function_attr(LLVMValueRef Arg, value PA) {
-  LLVMAddFunctionAttr(Arg, Int_val(PA));
+  LLVMAddFunctionAttr(Arg, Int32_val(PA));
   return Val_unit;
 }
 
-/* llvalue -> Attribute.t -> unit */
+/* llvalue -> int32 */
+CAMLprim value llvm_function_attr(LLVMValueRef Fn)
+{
+    CAMLparam0();
+    CAMLreturn(caml_copy_int32(LLVMGetFunctionAttr(Fn)));
+}
+
+/* llvalue -> int32 -> unit */
 CAMLprim value llvm_remove_function_attr(LLVMValueRef Arg, value PA) {
-  LLVMRemoveFunctionAttr(Arg, Int_val(PA));
+  LLVMRemoveFunctionAttr(Arg, Int32_val(PA));
   return Val_unit;
 }
 /*--... Operations on parameters ...........................................--*/
@@ -1054,6 +1061,13 @@ CAMLprim LLVMValueRef llvm_param(LLVMValueRef Fn, value Index) {
   return LLVMGetParam(Fn, Int_val(Index));
 }
 
+/* llvalue -> int */
+CAMLprim value llvm_param_attr(LLVMValueRef Param)
+{
+    CAMLparam0();
+    CAMLreturn(caml_copy_int32(LLVMGetAttribute(Param)));
+}
+
 /* llvalue -> llvalue */
 CAMLprim value llvm_params(LLVMValueRef Fn) {
   value Params = alloc(LLVMCountParams(Fn), 0);
@@ -1061,15 +1075,15 @@ CAMLprim value llvm_params(LLVMValueRef Fn) {
   return Params;
 }
 
-/* llvalue -> Attribute.t -> unit */
+/* llvalue -> int32 -> unit */
 CAMLprim value llvm_add_param_attr(LLVMValueRef Arg, value PA) {
-  LLVMAddAttribute(Arg, Int_val(PA));
+  LLVMAddAttribute(Arg, Int32_val(PA));
   return Val_unit;
 }
 
-/* llvalue -> Attribute.t -> unit */
+/* llvalue -> int32 -> unit */
 CAMLprim value llvm_remove_param_attr(LLVMValueRef Arg, value PA) {
-  LLVMRemoveAttribute(Arg, Int_val(PA));
+  LLVMRemoveAttribute(Arg, Int32_val(PA));
   return Val_unit;
 }
 
@@ -1155,19 +1169,19 @@ CAMLprim value llvm_set_instruction_call_conv(value CC, LLVMValueRef Inst) {
   return Val_unit;
 }
 
-/* llvalue -> int -> Attribute.t -> unit */
+/* llvalue -> int -> int32 -> unit */
 CAMLprim value llvm_add_instruction_param_attr(LLVMValueRef Instr,
                                                value index,
                                                value PA) {
-  LLVMAddInstrAttribute(Instr, Int_val(index), Int_val(PA));
+  LLVMAddInstrAttribute(Instr, Int_val(index), Int32_val(PA));
   return Val_unit;
 }
 
-/* llvalue -> int -> Attribute.t -> unit */
+/* llvalue -> int -> int32 -> unit */
 CAMLprim value llvm_remove_instruction_param_attr(LLVMValueRef Instr,
                                                   value index,
                                                   value PA) {
-  LLVMRemoveInstrAttribute(Instr, Int_val(index), Int_val(PA));
+  LLVMRemoveInstrAttribute(Instr, Int_val(index), Int32_val(PA));
   return Val_unit;
 }
 

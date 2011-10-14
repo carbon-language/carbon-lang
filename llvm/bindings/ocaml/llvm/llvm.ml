@@ -94,6 +94,9 @@ module Attribute = struct
   | Naked
   | Inlinehint
   | Stackalignment of int
+  | ReturnsTwice
+  | UWTable
+  | NonLazyBind
 end
 
 module Icmp = struct
@@ -640,36 +643,81 @@ let rec fold_right_function_range f i e init =
 let fold_right_functions f m init =
   fold_right_function_range f (function_end m) (At_start m) init
 
-external llvm_add_function_attr : llvalue -> int -> unit
+external llvm_add_function_attr : llvalue -> int32 -> unit
                                 = "llvm_add_function_attr"
-external llvm_remove_function_attr : llvalue -> int -> unit
+external llvm_remove_function_attr : llvalue -> int32 -> unit
                                    = "llvm_remove_function_attr"
+external llvm_function_attr : llvalue -> int32 = "llvm_function_attr"
 
-let pack_attr (attr:Attribute.t) : int =
+let pack_attr (attr:Attribute.t) : int32 =
   match attr with
-      Attribute.Zext              -> 1 lsl 0
-    | Attribute.Sext              -> 1 lsl 1
-    | Attribute.Noreturn          -> 1 lsl 2
-    | Attribute.Inreg             -> 1 lsl 3
-    | Attribute.Structret         -> 1 lsl 4
-    | Attribute.Nounwind          -> 1 lsl 5
-    | Attribute.Noalias           -> 1 lsl 6
-    | Attribute.Byval             -> 1 lsl 7
-    | Attribute.Nest              -> 1 lsl 8
-    | Attribute.Readnone          -> 1 lsl 9
-    | Attribute.Readonly          -> 1 lsl 10
-    | Attribute.Noinline          -> 1 lsl 11
-    | Attribute.Alwaysinline      -> 1 lsl 12
-    | Attribute.Optsize           -> 1 lsl 13
-    | Attribute.Ssp               -> 1 lsl 14
-    | Attribute.Sspreq            -> 1 lsl 15
-    | Attribute.Alignment n       -> n lsl 16
-    | Attribute.Nocapture         -> 1 lsl 21
-    | Attribute.Noredzone         -> 1 lsl 22
-    | Attribute.Noimplicitfloat   -> 1 lsl 23
-    | Attribute.Naked             -> 1 lsl 24
-    | Attribute.Inlinehint        -> 1 lsl 25
-    | Attribute.Stackalignment n  -> n lsl 26
+  Attribute.Zext                  -> Int32.shift_left 1l 0
+    | Attribute.Sext              -> Int32.shift_left 1l 1
+    | Attribute.Noreturn          -> Int32.shift_left 1l 2
+    | Attribute.Inreg             -> Int32.shift_left 1l 3
+    | Attribute.Structret         -> Int32.shift_left 1l 4
+    | Attribute.Nounwind          -> Int32.shift_left 1l 5
+    | Attribute.Noalias           -> Int32.shift_left 1l 6
+    | Attribute.Byval             -> Int32.shift_left 1l 7
+    | Attribute.Nest              -> Int32.shift_left 1l 8
+    | Attribute.Readnone          -> Int32.shift_left 1l 9
+    | Attribute.Readonly          -> Int32.shift_left 1l 10
+    | Attribute.Noinline          -> Int32.shift_left 1l 11
+    | Attribute.Alwaysinline      -> Int32.shift_left 1l 12
+    | Attribute.Optsize           -> Int32.shift_left 1l 13
+    | Attribute.Ssp               -> Int32.shift_left 1l 14
+    | Attribute.Sspreq            -> Int32.shift_left 1l 15
+    | Attribute.Alignment n       -> Int32.shift_left (Int32.of_int n) 16
+    | Attribute.Nocapture         -> Int32.shift_left 1l 21
+    | Attribute.Noredzone         -> Int32.shift_left 1l 22
+    | Attribute.Noimplicitfloat   -> Int32.shift_left 1l 23
+    | Attribute.Naked             -> Int32.shift_left 1l 24
+    | Attribute.Inlinehint        -> Int32.shift_left 1l 25
+    | Attribute.Stackalignment n  -> Int32.shift_left (Int32.of_int n) 26
+    | Attribute.ReturnsTwice      -> Int32.shift_left 1l 29
+    | Attribute.UWTable           -> Int32.shift_left 1l 30
+    | Attribute.NonLazyBind       -> Int32.shift_left 1l 31
+
+let unpack_attr (a : int32) : Attribute.t list =
+  let l = ref [] in
+  let check attr =
+      Int32.logand (pack_attr attr) a in
+  let checkattr attr =
+      if (check attr) <> 0l then begin
+          l := attr :: !l
+      end
+  in
+  checkattr Attribute.Zext;
+  checkattr Attribute.Sext;
+  checkattr Attribute.Noreturn;
+  checkattr Attribute.Inreg;
+  checkattr Attribute.Structret;
+  checkattr Attribute.Nounwind;
+  checkattr Attribute.Noalias;
+  checkattr Attribute.Byval;
+  checkattr Attribute.Nest;
+  checkattr Attribute.Readnone;
+  checkattr Attribute.Readonly;
+  checkattr Attribute.Noinline;
+  checkattr Attribute.Alwaysinline;
+  checkattr Attribute.Optsize;
+  checkattr Attribute.Ssp;
+  checkattr Attribute.Sspreq;
+  let align = Int32.logand (Int32.shift_right_logical a 16) 31l in
+  if align <> 0l then
+      l := Attribute.Alignment (Int32.to_int align) :: !l;
+  checkattr Attribute.Nocapture;
+  checkattr Attribute.Noredzone;
+  checkattr Attribute.Noimplicitfloat;
+  checkattr Attribute.Naked;
+  checkattr Attribute.Inlinehint;
+  let stackalign = Int32.logand (Int32.shift_right_logical a 26) 7l in
+  if stackalign <> 0l then
+      l := Attribute.Stackalignment (Int32.to_int stackalign) :: !l;
+  checkattr Attribute.ReturnsTwice;
+  checkattr Attribute.UWTable;
+  checkattr Attribute.NonLazyBind;
+  !l;;
 
 let add_function_attr llval attr =
   llvm_add_function_attr llval (pack_attr attr)
@@ -677,9 +725,13 @@ let add_function_attr llval attr =
 let remove_function_attr llval attr =
   llvm_remove_function_attr llval (pack_attr attr)
 
+let function_attr f = unpack_attr (llvm_function_attr f)
+
 (*--... Operations on params ...............................................--*)
 external params : llvalue -> llvalue array = "llvm_params"
 external param : llvalue -> int -> llvalue = "llvm_param"
+external llvm_param_attr : llvalue -> int32 = "llvm_param_attr"
+let param_attr p = unpack_attr (llvm_param_attr p)
 external param_parent : llvalue -> llvalue = "LLVMGetParamParent"
 external param_begin : llvalue -> (llvalue, llvalue) llpos = "llvm_param_begin"
 external param_succ : llvalue -> (llvalue, llvalue) llpos = "llvm_param_succ"
@@ -726,9 +778,9 @@ let rec fold_right_param_range f init i e =
 let fold_right_params f fn init =
   fold_right_param_range f init (param_end fn) (At_start fn)
 
-external llvm_add_param_attr : llvalue -> int -> unit
+external llvm_add_param_attr : llvalue -> int32 -> unit
                                 = "llvm_add_param_attr"
-external llvm_remove_param_attr : llvalue -> int -> unit
+external llvm_remove_param_attr : llvalue -> int32 -> unit
                                 = "llvm_remove_param_attr"
 
 let add_param_attr llval attr =
@@ -864,9 +916,9 @@ external instruction_call_conv: llvalue -> int
 external set_instruction_call_conv: int -> llvalue -> unit
                                   = "llvm_set_instruction_call_conv"
 
-external llvm_add_instruction_param_attr : llvalue -> int -> int -> unit
+external llvm_add_instruction_param_attr : llvalue -> int -> int32 -> unit
                                          = "llvm_add_instruction_param_attr"
-external llvm_remove_instruction_param_attr : llvalue -> int -> int -> unit
+external llvm_remove_instruction_param_attr : llvalue -> int -> int32 -> unit
                                          = "llvm_remove_instruction_param_attr"
 
 let add_instruction_param_attr llval i attr =
