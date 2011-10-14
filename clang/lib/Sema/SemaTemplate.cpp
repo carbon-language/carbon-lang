@@ -6164,9 +6164,12 @@ DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
   if (D.getDeclSpec().isInlineSpecified() && getLangOptions().CPlusPlus0x)
     Diag(D.getDeclSpec().getInlineSpecLoc(),
          diag::err_explicit_instantiation_inline)
-      <<FixItHint::CreateRemoval(D.getDeclSpec().getInlineSpecLoc());
-
-  // FIXME: check for constexpr specifier.
+      << FixItHint::CreateRemoval(D.getDeclSpec().getInlineSpecLoc());
+  if (D.getDeclSpec().isConstexprSpecified())
+    // FIXME: Add a fix-it to remove the 'constexpr' and add a 'const' if one is
+    // not already specified.
+    Diag(D.getDeclSpec().getConstexprSpecLoc(),
+         diag::err_explicit_instantiation_constexpr);
 
   // C++0x [temp.explicit]p2:
   //   There are two forms of explicit instantiation: an explicit instantiation
