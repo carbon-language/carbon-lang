@@ -29,14 +29,14 @@ public:
     operator = (const lldb::SBWatchpoint &rhs);
 #endif
 
-    lldb::SBError
-    GetError ();
+    bool
+    IsValid() const;
+
+    SBError
+    GetError();
 
     watch_id_t
     GetID ();
-
-    bool
-    IsValid() const;
 
     /// With -1 representing an invalid hardware index.
     int32_t

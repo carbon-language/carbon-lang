@@ -86,25 +86,19 @@ SBWatchpoint::GetID ()
 bool
 SBWatchpoint::IsValid() const
 {
-    return m_opaque_sp.get() != NULL;
-#if 0
-    if (m_opaque_sp)
-        return m_opaque_sp->GetError().Success();
+    if (m_opaque_sp && m_opaque_sp->GetError().Success())
+        return true;
     return false;
-#endif
 }
 
 SBError
 SBWatchpoint::GetError ()
 {
     SBError sb_error;
-#if 0
     if (m_opaque_sp)
     {
-        // TODO: Johnny fill this in
-        sb_error.ref() = m_opaque_sp->GetError();
+        sb_error.SetError(m_opaque_sp->GetError());
     }
-#endif
     return sb_error;
 }
 

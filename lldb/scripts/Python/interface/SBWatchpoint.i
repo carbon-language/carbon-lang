@@ -28,11 +28,14 @@ public:
 
     ~SBWatchpoint ();
 
-    watch_id_t
-    GetID ();
-
     bool
     IsValid();
+
+    SBError
+    GetError();
+
+    watch_id_t
+    GetID ();
 
     %feature("docstring", "
     //------------------------------------------------------------------

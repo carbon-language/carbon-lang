@@ -29,7 +29,9 @@ Watchpoint::Watchpoint (lldb::addr_t addr, size_t size, bool hardware) :
     m_watch_was_written(0),
     m_ignore_count(0),
     m_callback(NULL),
-    m_callback_baton(NULL)
+    m_callback_baton(NULL),
+    m_decl_str(),
+    m_error()
 {
 }
 
