@@ -156,12 +156,10 @@ StringRef CGDebugInfo::getObjCMethodName(const ObjCMethodDecl *OMD) {
 /// getSelectorName - Return selector name. This is used for debugging
 /// info.
 StringRef CGDebugInfo::getSelectorName(Selector S) {
-  llvm::SmallString<256> SName;
-  llvm::raw_svector_ostream OS(SName);
-  OS << S.getAsString();
-  char *StrPtr = DebugInfoNames.Allocate<char>(OS.tell());
-  memcpy(StrPtr, SName.begin(), OS.tell());
-  return StringRef(StrPtr, OS.tell());
+  const std::string &SName = S.getAsString();
+  char *StrPtr = DebugInfoNames.Allocate<char>(SName.size());
+  memcpy(StrPtr, SName.data(), SName.size());
+  return StringRef(StrPtr, SName.size());
 }
 
 /// getClassName - Get class name including template argument list.
