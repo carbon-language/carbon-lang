@@ -358,6 +358,7 @@
 		26BD407F135D2AE000237D80 /* FileLineResolver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BD407E135D2ADF00237D80 /* FileLineResolver.cpp */; };
 		26C72C94124322890068DC16 /* SBStream.h in Headers */ = {isa = PBXBuildFile; fileRef = 26C72C93124322890068DC16 /* SBStream.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26C72C961243229A0068DC16 /* SBStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26C72C951243229A0068DC16 /* SBStream.cpp */; };
+		26CF992514428766001E4138 /* AnsiTerminal.h in Headers */ = {isa = PBXBuildFile; fileRef = 26CF992414428766001E4138 /* AnsiTerminal.h */; };
 		26D265A2136B40EE002EEE45 /* SharingPtr.h in Headers */ = {isa = PBXBuildFile; fileRef = 261B5A5311C3F2AD00AABD0A /* SharingPtr.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26D265BC136B4269002EEE45 /* lldb-public.h in Headers */ = {isa = PBXBuildFile; fileRef = 26651A14133BEC76005B64B7 /* lldb-public.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26D5E15F135BAEA2006EA0A7 /* OptionGroupArchitecture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D5E15E135BAEA2006EA0A7 /* OptionGroupArchitecture.cpp */; };
@@ -1067,6 +1068,7 @@
 		26C72C951243229A0068DC16 /* SBStream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBStream.cpp; path = source/API/SBStream.cpp; sourceTree = "<group>"; };
 		26C81CA411335651004BDC5A /* UUID.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UUID.h; path = include/lldb/Core/UUID.h; sourceTree = "<group>"; };
 		26C81CA511335651004BDC5A /* UUID.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UUID.cpp; path = source/Core/UUID.cpp; sourceTree = "<group>"; };
+		26CF992414428766001E4138 /* AnsiTerminal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AnsiTerminal.h; path = include/lldb/Utility/AnsiTerminal.h; sourceTree = "<group>"; };
 		26D0DD5010FE554D00271C65 /* BreakpointResolverAddress.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BreakpointResolverAddress.h; path = include/lldb/Breakpoint/BreakpointResolverAddress.h; sourceTree = "<group>"; };
 		26D0DD5110FE554D00271C65 /* BreakpointResolverFileLine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BreakpointResolverFileLine.h; path = include/lldb/Breakpoint/BreakpointResolverFileLine.h; sourceTree = "<group>"; };
 		26D0DD5210FE554D00271C65 /* BreakpointResolverName.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BreakpointResolverName.h; path = include/lldb/Breakpoint/BreakpointResolverName.h; sourceTree = "<group>"; };
@@ -1943,6 +1945,7 @@
 		2682F168115ED9C800CCFF99 /* Utility */ = {
 			isa = PBXGroup;
 			children = (
+				26CF992414428766001E4138 /* AnsiTerminal.h */,
 				264723A511FA076E00DE380C /* CleanUp.h */,
 				94611EAF13CCA363003A22AF /* RefCounter.h */,
 				94611EB113CCA4A4003A22AF /* RefCounter.cpp */,
@@ -2893,6 +2896,7 @@
 				496B015B1406DEB100F830D5 /* IRInterpreter.h in Headers */,
 				2682100D143A59AE004BCF2D /* MappedHash.h in Headers */,
 				2626B6AE143E1BEA00EF935C /* RangeMap.h in Headers */,
+				26CF992514428766001E4138 /* AnsiTerminal.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

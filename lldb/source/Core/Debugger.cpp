@@ -31,7 +31,7 @@
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Thread.h"
-
+#include "lldb/Utility/AnsiTerminal.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -1301,6 +1301,214 @@ Debugger::FormatPrompt
                                 {
                                     var_success = true;
                                     format_addr = *addr;
+                                }
+                            }
+                            else if (::strncmp (var_name_begin, "ansi.", strlen("ansi.")) == 0)
+                            {
+                                var_success = true;
+                                var_name_begin += strlen("ansi."); // Skip the "ansi."
+                                if (::strncmp (var_name_begin, "fg.", strlen("fg.")) == 0)
+                                {
+                                    var_name_begin += strlen("fg."); // Skip the "fg."
+                                    if (::strncmp (var_name_begin, "black}", strlen("black}")) == 0)
+                                    {
+                                        s.Printf ("%s%s%s", 
+                                                  lldb_utility::ansi::k_escape_start, 
+                                                  lldb_utility::ansi::k_fg_black,
+                                                  lldb_utility::ansi::k_escape_end);
+                                    }
+                                    else if (::strncmp (var_name_begin, "red}", strlen("red}")) == 0)
+                                    {
+                                        s.Printf ("%s%s%s", 
+                                                  lldb_utility::ansi::k_escape_start, 
+                                                  lldb_utility::ansi::k_fg_red,
+                                                  lldb_utility::ansi::k_escape_end);
+                                    }
+                                    else if (::strncmp (var_name_begin, "green}", strlen("green}")) == 0)
+                                    {
+                                        s.Printf ("%s%s%s", 
+                                                  lldb_utility::ansi::k_escape_start, 
+                                                  lldb_utility::ansi::k_fg_green,
+                                                  lldb_utility::ansi::k_escape_end);
+                                    }
+                                    else if (::strncmp (var_name_begin, "yellow}", strlen("yellow}")) == 0)
+                                    {
+                                        s.Printf ("%s%s%s", 
+                                                  lldb_utility::ansi::k_escape_start, 
+                                                  lldb_utility::ansi::k_fg_yellow,
+                                                  lldb_utility::ansi::k_escape_end);
+                                    }
+                                    else if (::strncmp (var_name_begin, "blue}", strlen("blue}")) == 0)
+                                    {
+                                        s.Printf ("%s%s%s", 
+                                                  lldb_utility::ansi::k_escape_start, 
+                                                  lldb_utility::ansi::k_fg_blue,
+                                                  lldb_utility::ansi::k_escape_end);
+                                    }
+                                    else if (::strncmp (var_name_begin, "purple}", strlen("purple}")) == 0)
+                                    {
+                                        s.Printf ("%s%s%s", 
+                                                  lldb_utility::ansi::k_escape_start, 
+                                                  lldb_utility::ansi::k_fg_purple,
+                                                  lldb_utility::ansi::k_escape_end);
+                                    }
+                                    else if (::strncmp (var_name_begin, "cyan}", strlen("cyan}")) == 0)
+                                    {
+                                        s.Printf ("%s%s%s", 
+                                                  lldb_utility::ansi::k_escape_start, 
+                                                  lldb_utility::ansi::k_fg_cyan,
+                                                  lldb_utility::ansi::k_escape_end);
+                                    }
+                                    else if (::strncmp (var_name_begin, "white}", strlen("white}")) == 0)
+                                    {
+                                        s.Printf ("%s%s%s", 
+                                                  lldb_utility::ansi::k_escape_start, 
+                                                  lldb_utility::ansi::k_fg_white,
+                                                  lldb_utility::ansi::k_escape_end);
+                                    }
+                                    else
+                                    {
+                                        var_success = false;
+                                    }
+                                }
+                                else if (::strncmp (var_name_begin, "bg.", strlen("bg.")) == 0)
+                                {
+                                    var_name_begin += strlen("bg."); // Skip the "bg."
+                                    if (::strncmp (var_name_begin, "black}", strlen("black}")) == 0)
+                                    {
+                                        s.Printf ("%s%s%s", 
+                                                  lldb_utility::ansi::k_escape_start, 
+                                                  lldb_utility::ansi::k_bg_black,
+                                                  lldb_utility::ansi::k_escape_end);
+                                    }
+                                    else if (::strncmp (var_name_begin, "red}", strlen("red}")) == 0)
+                                    {
+                                        s.Printf ("%s%s%s", 
+                                                  lldb_utility::ansi::k_escape_start, 
+                                                  lldb_utility::ansi::k_bg_red,
+                                                  lldb_utility::ansi::k_escape_end);
+                                    }
+                                    else if (::strncmp (var_name_begin, "green}", strlen("green}")) == 0)
+                                    {
+                                        s.Printf ("%s%s%s", 
+                                                  lldb_utility::ansi::k_escape_start, 
+                                                  lldb_utility::ansi::k_bg_green,
+                                                  lldb_utility::ansi::k_escape_end);
+                                    }
+                                    else if (::strncmp (var_name_begin, "yellow}", strlen("yellow}")) == 0)
+                                    {
+                                        s.Printf ("%s%s%s", 
+                                                  lldb_utility::ansi::k_escape_start, 
+                                                  lldb_utility::ansi::k_bg_yellow,
+                                                  lldb_utility::ansi::k_escape_end);
+                                    }
+                                    else if (::strncmp (var_name_begin, "blue}", strlen("blue}")) == 0)
+                                    {
+                                        s.Printf ("%s%s%s", 
+                                                  lldb_utility::ansi::k_escape_start, 
+                                                  lldb_utility::ansi::k_bg_blue,
+                                                  lldb_utility::ansi::k_escape_end);
+                                    }
+                                    else if (::strncmp (var_name_begin, "purple}", strlen("purple}")) == 0)
+                                    {
+                                        s.Printf ("%s%s%s", 
+                                                  lldb_utility::ansi::k_escape_start, 
+                                                  lldb_utility::ansi::k_bg_purple,
+                                                  lldb_utility::ansi::k_escape_end);
+                                    }
+                                    else if (::strncmp (var_name_begin, "cyan}", strlen("cyan}")) == 0)
+                                    {
+                                        s.Printf ("%s%s%s", 
+                                                  lldb_utility::ansi::k_escape_start, 
+                                                  lldb_utility::ansi::k_bg_cyan,
+                                                  lldb_utility::ansi::k_escape_end);
+                                    }
+                                    else if (::strncmp (var_name_begin, "white}", strlen("white}")) == 0)
+                                    {
+                                        s.Printf ("%s%s%s", 
+                                                  lldb_utility::ansi::k_escape_start, 
+                                                  lldb_utility::ansi::k_bg_white,
+                                                  lldb_utility::ansi::k_escape_end);
+                                    }
+                                    else
+                                    {
+                                        var_success = false;
+                                    }
+                                }
+                                else if (::strncmp (var_name_begin, "normal}", strlen ("normal}")) == 0)
+                                {
+                                    s.Printf ("%s%s%s", 
+                                              lldb_utility::ansi::k_escape_start, 
+                                              lldb_utility::ansi::k_ctrl_normal,
+                                              lldb_utility::ansi::k_escape_end);
+                                }
+                                else if (::strncmp (var_name_begin, "bold}", strlen("bold}")) == 0)
+                                {
+                                    s.Printf ("%s%s%s", 
+                                              lldb_utility::ansi::k_escape_start, 
+                                              lldb_utility::ansi::k_ctrl_bold,
+                                              lldb_utility::ansi::k_escape_end);
+                                }
+                                else if (::strncmp (var_name_begin, "faint}", strlen("faint}")) == 0)
+                                {
+                                    s.Printf ("%s%s%s", 
+                                              lldb_utility::ansi::k_escape_start, 
+                                              lldb_utility::ansi::k_ctrl_faint,
+                                              lldb_utility::ansi::k_escape_end);
+                                }
+                                else if (::strncmp (var_name_begin, "italic}", strlen("italic}")) == 0)
+                                {
+                                    s.Printf ("%s%s%s", 
+                                              lldb_utility::ansi::k_escape_start, 
+                                              lldb_utility::ansi::k_ctrl_italic,
+                                              lldb_utility::ansi::k_escape_end);
+                                }
+                                else if (::strncmp (var_name_begin, "underline}", strlen("underline}")) == 0)
+                                {
+                                    s.Printf ("%s%s%s", 
+                                              lldb_utility::ansi::k_escape_start, 
+                                              lldb_utility::ansi::k_ctrl_underline,
+                                              lldb_utility::ansi::k_escape_end);
+                                }
+                                else if (::strncmp (var_name_begin, "slow-blink}", strlen("slow-blink}")) == 0)
+                                {
+                                    s.Printf ("%s%s%s", 
+                                              lldb_utility::ansi::k_escape_start, 
+                                              lldb_utility::ansi::k_ctrl_slow_blink,
+                                              lldb_utility::ansi::k_escape_end);
+                                }
+                                else if (::strncmp (var_name_begin, "fast-blink}", strlen("fast-blink}")) == 0)
+                                {
+                                    s.Printf ("%s%s%s", 
+                                              lldb_utility::ansi::k_escape_start, 
+                                              lldb_utility::ansi::k_ctrl_fast_blink,
+                                              lldb_utility::ansi::k_escape_end);
+                                }
+                                else if (::strncmp (var_name_begin, "negative}", strlen("negative}")) == 0)
+                                {
+                                    s.Printf ("%s%s%s", 
+                                              lldb_utility::ansi::k_escape_start, 
+                                              lldb_utility::ansi::k_ctrl_negative,
+                                              lldb_utility::ansi::k_escape_end);
+                                }
+                                else if (::strncmp (var_name_begin, "conceal}", strlen("conceal}")) == 0)
+                                {
+                                    s.Printf ("%s%s%s", 
+                                              lldb_utility::ansi::k_escape_start, 
+                                              lldb_utility::ansi::k_ctrl_conceal,
+                                              lldb_utility::ansi::k_escape_end);
+
+                                }
+                                else if (::strncmp (var_name_begin, "crossed-out}", strlen("crossed-out}")) == 0)
+                                {
+                                    s.Printf ("%s%s%s", 
+                                              lldb_utility::ansi::k_escape_start, 
+                                              lldb_utility::ansi::k_ctrl_crossed_out,
+                                              lldb_utility::ansi::k_escape_end);
+                                }
+                                else
+                                {
+                                    var_success = false;
                                 }
                             }
                             break;

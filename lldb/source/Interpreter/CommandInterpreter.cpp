@@ -947,6 +947,118 @@ CommandInterpreter::BuildAliasResult (const char *alias_name, std::string &raw_i
     }
 }
 
+Error
+CommandInterpreter::PreprocessCommand (std::string &command)
+{
+    // The command preprocessor needs to do things to the command 
+    // line before any parsing of arguments or anything else is done.
+    // The only current stuff that gets proprocessed is anyting enclosed
+    // in backtick ('`') characters is evaluated as an expression and
+    // the result of the expression must be a scalar that can be substituted
+    // into the command. An example would be:
+    // (lldb) memory read `$rsp + 20`
+    Error error; // Error for any expressions that might not evaluate
+    size_t start_backtick;
+    size_t pos = 0;
+    while ((start_backtick = command.find ('`', pos)) != std::string::npos)
+    {
+        if (start_backtick > 0 && command[start_backtick-1] == '\\')
+        {
+            // The backtick was preceeded by a '\' character, remove the slash
+            // and don't treat the backtick as the start of an expression
+            command.erase(start_backtick-1, 1);
+            // No need to add one to start_backtick since we just deleted a char
+            pos = start_backtick; 
+        }
+        else
+        {
+            const size_t expr_content_start = start_backtick + 1;
+            const size_t end_backtick = command.find ('`', expr_content_start);
+            if (end_backtick == std::string::npos)
+                return error;
+            else if (end_backtick == expr_content_start)
+            {
+                // Empty expression (two backticks in a row)
+                command.erase (start_backtick, 2);
+            }
+            else
+            {
+                std::string expr_str (command, expr_content_start, end_backtick - expr_content_start);
+                
+                Target *target = m_exe_ctx.GetTargetPtr();
+                if (target)
+                {
+                    const bool unwind_on_error = true;
+                    const bool keep_in_memory = false;
+                    ValueObjectSP expr_result_valobj_sp;
+                    ExecutionResults expr_result = target->EvaluateExpression (expr_str.c_str(), 
+                                                                               m_exe_ctx.GetFramePtr(), 
+                                                                               eExecutionPolicyOnlyWhenNeeded,
+                                                                               unwind_on_error, keep_in_memory, 
+                                                                               eNoDynamicValues, 
+                                                                               expr_result_valobj_sp);
+                    if (expr_result == eExecutionCompleted)
+                    {
+                        Scalar scalar;
+                        if (expr_result_valobj_sp->ResolveValue (scalar))
+                        {
+                            command.erase (start_backtick, end_backtick - start_backtick + 1);
+                            StreamString value_strm;
+                            const bool show_type = false;
+                            scalar.GetValue (&value_strm, show_type);
+                            size_t value_string_size = value_strm.GetSize();
+                            if (value_string_size)
+                            {
+                                command.insert (start_backtick, value_strm.GetData(), value_string_size);
+                                pos = start_backtick + value_string_size;
+                                continue;
+                            }
+                            else
+                            {
+                                error.SetErrorStringWithFormat("expression value didn't result in a scalar value for the expression '%s'", expr_str.c_str());
+                            }
+                        }
+                        else
+                        {
+                            error.SetErrorStringWithFormat("expression value didn't result in a scalar value for the expression '%s'", expr_str.c_str());
+                        }
+                    }
+                    else
+                    {
+                        if (expr_result_valobj_sp)
+                            error = expr_result_valobj_sp->GetError();
+                        if (error.Success())
+                        {
+
+                            switch (expr_result)
+                            {
+                                case eExecutionSetupError: 
+                                    error.SetErrorStringWithFormat("expression setup error for the expression '%s'", expr_str.c_str());
+                                    break;
+                                case eExecutionCompleted:
+                                    break;
+                                case eExecutionDiscarded:
+                                    error.SetErrorStringWithFormat("expression discarded for the expression '%s'", expr_str.c_str());
+                                    break;
+                                case eExecutionInterrupted:
+                                    error.SetErrorStringWithFormat("expression interrupted for the expression '%s'", expr_str.c_str());
+                                    break;
+                                case eExecutionTimedOut:
+                                    error.SetErrorStringWithFormat("expression timed out for the expression '%s'", expr_str.c_str());
+                                    break;
+                            }
+                        }
+                    }
+                }
+            }
+            if (error.Fail())
+                break;
+        }
+    }
+    return error;
+}
+
+
 bool
 CommandInterpreter::HandleCommand (const char *command_line, 
                                    bool add_to_history,
@@ -1045,6 +1157,15 @@ CommandInterpreter::HandleCommand (const char *command_line,
         return true;
     }
     
+    
+    Error error (PreprocessCommand (command_string));
+    
+    if (error.Fail())
+    {
+        result.AppendError (error.AsCString());
+        result.SetStatus(eReturnStatusFailed);
+        return false;
+    }
     // Phase 1.
     
     // Before we do ANY kind of argument processing, etc. we need to figure out what the real/final command object

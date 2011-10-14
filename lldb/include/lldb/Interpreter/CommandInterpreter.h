@@ -455,6 +455,9 @@ protected:
     GetCommandSP (const char *cmd, bool include_aliases = true, bool exact = true, StringList *matches = NULL);
 
 private:
+    
+    Error
+    PreprocessCommand (std::string &command);
 
     Debugger &m_debugger;                       // The debugger session that this interpreter is associated with
     ExecutionContext m_exe_ctx;                 // The current execution context to use when handling commands
