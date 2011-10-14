@@ -130,6 +130,77 @@ module Fcmp = struct
   | True
 end
 
+module Opcode  = struct
+  type t =
+  | Invalid (* not an instruction *)
+  (* Terminator Instructions *)
+  | Ret
+  | Br
+  | Switch
+  | IndirectBr
+  | Invoke
+  | Invalid2
+  | Unreachable
+  (* Standard Binary Operators *)
+  | Add
+  | FAdd
+  | Sub
+  | FSub
+  | Mul
+  | FMul
+  | UDiv
+  | SDiv
+  | FDiv
+  | URem
+  | SRem
+  | FRem
+  (* Logical Operators *)
+  | Shl
+  | LShr
+  | AShr
+  | And
+  | Or
+  | Xor
+  (* Memory Operators *)
+  | Alloca
+  | Load
+  | Store
+  | GetElementPtr
+  (* Cast Operators *)
+  | Trunc
+  | ZExt
+  | SExt
+  | FPToUI
+  | FPToSI
+  | UIToFP
+  | SIToFP
+  | FPTrunc
+  | FPExt
+  | PtrToInt
+  | IntToPtr
+  | BitCast
+  (* Other Operators *)
+  | ICmp
+  | FCmp
+  | PHI
+  | Call
+  | Select
+  | UserOp1
+  | UserOp2
+  | VAArg
+  | ExtractElement
+  | InsertElement
+  | ShuffleVector
+  | ExtractValue
+  | InsertValue
+  | Fence
+  | AtomicCmpXchg
+  | AtomicRMW
+  | Resume
+  | LandingPad
+  | Unwind
+end
+
 exception IoError of string
 
 external register_exns : exn -> unit = "llvm_register_core_exns"
@@ -272,6 +343,7 @@ external const_pointer_null : lltype -> llvalue = "LLVMConstPointerNull"
 external undef : lltype -> llvalue = "LLVMGetUndef"
 external is_null : llvalue -> bool = "llvm_is_null"
 external is_undef : llvalue -> bool = "llvm_is_undef"
+external constexpr_opcode : llvalue -> Opcode.t = "llvm_constexpr_get_opcode"
 
 (*--... Operations on instructions .........................................--*)
 external has_metadata : llvalue -> bool = "llvm_has_metadata"
@@ -289,6 +361,8 @@ external get_named_metadata : llmodule -> string -> llvalue array = "llvm_get_na
 external const_int : lltype -> int -> llvalue = "llvm_const_int"
 external const_of_int64 : lltype -> Int64.t -> bool -> llvalue
                         = "llvm_const_of_int64"
+external int64_of_const : llvalue -> Int64.t option
+                        = "llvm_int64_of_const"
 external const_int_of_string : lltype -> string -> int -> llvalue
                              = "llvm_const_int_of_string"
 external const_float : lltype -> float -> llvalue = "llvm_const_float"
@@ -706,6 +780,7 @@ external instr_end : llbasicblock -> (llbasicblock, llvalue) llrev_pos
 external instr_pred : llvalue -> (llbasicblock, llvalue) llrev_pos
                      = "llvm_instr_pred"
 
+external instr_opcode : llvalue -> Opcode.t = "llvm_instr_get_opcode"
 external icmp_predicate : llvalue -> Icmp.t option = "llvm_instr_icmp_predicate"
 
 let rec iter_instrs_range f i e =

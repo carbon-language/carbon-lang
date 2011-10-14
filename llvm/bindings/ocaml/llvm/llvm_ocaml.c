@@ -427,6 +427,12 @@ CAMLprim value llvm_is_undef(LLVMValueRef Val) {
   return Val_bool(LLVMIsUndef(Val));
 }
 
+/* llvalue -> Opcode.t */
+CAMLprim value llvm_constexpr_get_opcode(LLVMValueRef Val) {
+  return LLVMIsAConstantExpr(Val) ?
+      Val_int(LLVMGetConstOpcode(Val)) : Val_int(0);
+}
+
 /*--... Operations on instructions .........................................--*/
 
 /* llvalue -> bool */
@@ -510,6 +516,19 @@ CAMLprim LLVMValueRef llvm_const_int(LLVMTypeRef IntTy, value N) {
 CAMLprim LLVMValueRef llvm_const_of_int64(LLVMTypeRef IntTy, value N,
                                           value SExt) {
   return LLVMConstInt(IntTy, Int64_val(N), Bool_val(SExt));
+}
+
+/* llvalue -> Int64.t */
+CAMLprim value llvm_int64_of_const(LLVMValueRef Const)
+{
+  CAMLparam0();
+  if (LLVMIsAConstantInt(Const) &&
+      LLVMGetIntTypeWidth(LLVMTypeOf(Const)) <= 64) {
+    value Option = alloc(1, 0);
+    Field(Option, 0) = caml_copy_int64(LLVMConstIntGetSExtValue(Const));
+    CAMLreturn(Option);
+  }
+  CAMLreturn(Val_int(0));
 }
 
 /* lltype -> string -> int -> llvalue */
@@ -1013,6 +1032,12 @@ CAMLprim value llvm_value_is_block(LLVMValueRef Val) {
 DEFINE_ITERATORS(instr, Instruction, LLVMBasicBlockRef, LLVMValueRef,
                  LLVMGetInstructionParent)
 
+/* llvalue -> Opcode.t */
+CAMLprim value llvm_instr_get_opcode(LLVMValueRef Inst) {
+  LLVMOpcode o = LLVMGetInstructionOpcode(Inst);
+  assert (o <= LLVMUnwind );
+  return Val_int(o);
+}
 
 /* llvalue -> ICmp.t */
 CAMLprim value llvm_instr_icmp_predicate(LLVMValueRef Val) {
