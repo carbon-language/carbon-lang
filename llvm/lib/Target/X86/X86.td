@@ -104,6 +104,8 @@ def FeatureF16C    : SubtargetFeature<"f16c", "HasF16C", "true",
                        "Support 16-bit floating point conversion instructions">;
 def FeatureLZCNT   : SubtargetFeature<"lzcnt", "HasLZCNT", "true",
                                       "Support LZCNT instruction">;
+def FeatureBMI     : SubtargetFeature<"bmi", "HasBMI", "true",
+                                      "Support BMI instructions">;
 
 //===----------------------------------------------------------------------===//
 // X86 processors supported.
@@ -157,6 +159,12 @@ def : Proc<"corei7-avx",      [FeatureSSE42, FeatureCMPXCHG16B,
 def : Proc<"core-avx-i",      [FeatureSSE42, FeatureCMPXCHG16B,
                                FeatureAES, FeatureCLMUL,
                                FeatureRDRAND, FeatureF16C]>;
+
+// Haswell
+def : Proc<"core-avx2",       [FeatureSSE42, FeatureCMPXCHG16B, FeatureAES,
+                               FeatureCLMUL, FeatureRDRAND, FeatureF16C,
+                               FeatureFMA3, FeatureMOVBE, FeatureLZCNT,
+                               FeatureBMI]>;
 
 def : Proc<"k6",              [FeatureMMX]>;
 def : Proc<"k6-2",            [Feature3DNow]>;

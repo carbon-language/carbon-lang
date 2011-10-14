@@ -290,6 +290,7 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
   , HasRDRAND(false)
   , HasF16C(false)
   , HasLZCNT(false)
+  , HasBMI(false)
   , IsBTMemSlow(false)
   , IsUAMemFast(false)
   , HasVectorUAMem(false)

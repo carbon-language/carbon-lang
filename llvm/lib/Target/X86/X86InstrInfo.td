@@ -478,6 +478,7 @@ def HasMOVBE     : Predicate<"Subtarget->hasMOVBE()">;
 def HasRDRAND    : Predicate<"Subtarget->hasRDRAND()">;
 def HasF16C      : Predicate<"Subtarget->hasF16C()">;
 def HasLZCNT     : Predicate<"Subtarget->hasLZCNT()">;
+def HasBMI       : Predicate<"Subtarget->hasBMI()">;
 def FPStackf32   : Predicate<"!Subtarget->hasXMM()">;
 def FPStackf64   : Predicate<"!Subtarget->hasXMMInt()">;
 def HasCmpxchg16b: Predicate<"Subtarget->hasCmpxchg16b()">;
@@ -1369,6 +1370,37 @@ let Predicates = [HasLZCNT], Defs = [EFLAGS] in {
   def LZCNT64rm : RI<0xBD, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
                      "lzcnt{q}\t{$src, $dst|$dst, $src}",
                      [(set GR64:$dst, (ctlz (loadi64 addr:$src))),
+                      (implicit EFLAGS)]>, XS;
+}
+
+//===----------------------------------------------------------------------===//
+// TZCNT Instruction
+//
+let Predicates = [HasBMI], Defs = [EFLAGS] in {
+  def TZCNT16rr : I<0xBC, MRMSrcReg, (outs GR16:$dst), (ins GR16:$src),
+                    "tzcnt{w}\t{$src, $dst|$dst, $src}",
+                    [(set GR16:$dst, (cttz GR16:$src)), (implicit EFLAGS)]>, XS,
+                    OpSize;
+  def TZCNT16rm : I<0xBC, MRMSrcMem, (outs GR16:$dst), (ins i16mem:$src),
+                    "tzcnt{w}\t{$src, $dst|$dst, $src}",
+                    [(set GR16:$dst, (cttz (loadi16 addr:$src))),
+                     (implicit EFLAGS)]>, XS, OpSize;
+
+  def TZCNT32rr : I<0xBC, MRMSrcReg, (outs GR32:$dst), (ins GR32:$src),
+                    "tzcnt{l}\t{$src, $dst|$dst, $src}",
+                    [(set GR32:$dst, (cttz GR32:$src)), (implicit EFLAGS)]>, XS;
+  def TZCNT32rm : I<0xBC, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
+                    "tzcnt{l}\t{$src, $dst|$dst, $src}",
+                    [(set GR32:$dst, (cttz (loadi32 addr:$src))),
+                     (implicit EFLAGS)]>, XS;
+
+  def TZCNT64rr : RI<0xBC, MRMSrcReg, (outs GR64:$dst), (ins GR64:$src),
+                     "tzcnt{q}\t{$src, $dst|$dst, $src}",
+                     [(set GR64:$dst, (cttz GR64:$src)), (implicit EFLAGS)]>,
+                     XS;
+  def TZCNT64rm : RI<0xBC, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
+                     "tzcnt{q}\t{$src, $dst|$dst, $src}",
+                     [(set GR64:$dst, (cttz (loadi64 addr:$src))),
                       (implicit EFLAGS)]>, XS;
 }
 
