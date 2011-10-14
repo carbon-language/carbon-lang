@@ -1575,7 +1575,7 @@ public:
       GccInstallPath.append(CXX_INCLUDE_ARCH);
       GccInstallPath.append("/");
       GccInstallPath.append(Version);
-      GccParentLibPath = GccInstallPath + "/../../../..";
+      GccParentLibPath = GccInstallPath + "/../../..";
       IsValid = true;
       return;
     }
