@@ -2020,19 +2020,22 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context, co
     
     if (m_parser_vars->m_ignore_lookups)
     {
-        if (log)
+        if (log && log->GetVerbose())
             log->Printf("Ignoring a query during an import");
         return;
     }
     
+    static unsigned int invocation_id = 0;
+    unsigned int current_id = invocation_id++;
+    
     if (log)
     {
         if (!context.m_decl_context)
-            log->Printf("FindExternalVisibleDecls for '%s' in a NULL DeclContext", name.GetCString());
+            log->Printf("FindExternalVisibleDecls[%u] for '%s' in a NULL DeclContext", current_id, name.GetCString());
         else if (const NamedDecl *context_named_decl = dyn_cast<NamedDecl>(context.m_decl_context))
-            log->Printf("FindExternalVisibleDecls for '%s' in '%s'", name.GetCString(), context_named_decl->getNameAsString().c_str());
+            log->Printf("FindExternalVisibleDecls[%u] for '%s' in '%s'", current_id, name.GetCString(), context_named_decl->getNameAsString().c_str());
         else
-            log->Printf("FindExternalVisibleDecls for '%s' in a '%s'", name.GetCString(), context.m_decl_context->getDeclKindName());
+            log->Printf("FindExternalVisibleDecls[%u] for '%s' in a '%s'", current_id, name.GetCString(), context.m_decl_context->getDeclKindName());
     }
     
     context.m_namespace_map.reset(new ClangASTImporter::NamespaceMap);
@@ -2041,22 +2044,27 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context, co
     {
         ClangASTImporter::NamespaceMapSP namespace_map = m_parser_vars->m_ast_importer->GetNamespaceMap(namespace_context);
         
-        if (log)
-            log->Printf("Inspecting namespace map %p (%d entries)", namespace_map.get(), (int)namespace_map->size());
+        if (log && log->GetVerbose())
+            log->Printf("  FEVD[%u] Inspecting namespace map %p (%d entries)", 
+                        current_id, 
+                        namespace_map.get(), 
+                        (int)namespace_map->size());
         
         for (ClangASTImporter::NamespaceMap::iterator i = namespace_map->begin(), e = namespace_map->end();
              i != e;
              ++i)
         {
             if (log)
-                log->Printf("  Searching namespace %s in module %s",
+                log->Printf("  FEVD[%u] Searching namespace %s in module %s",
+                            current_id,
                             i->second.GetNamespaceDecl()->getNameAsString().c_str(),
                             i->first->GetFileSpec().GetFilename().GetCString());
                 
             FindExternalVisibleDecls(context,
                                      i->first,
                                      i->second,
-                                     name);
+                                     name,
+                                     current_id);
         }
     }
     else if (!isa<TranslationUnitDecl>(context.m_decl_context))
@@ -2069,18 +2077,22 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context, co
         ClangNamespaceDecl namespace_decl;
         
         if (log)
-            log->Printf("  Searching the root namespace");
+            log->Printf("  FEVD[%u] Searching the root namespace", current_id);
         
         FindExternalVisibleDecls(context,
                                  lldb::ModuleSP(),
                                  namespace_decl,
-                                 name);
+                                 name,
+                                 current_id);
     }
     
     if (!context.m_namespace_map->empty())
     {
-        if (log)
-            log->Printf("Registering namespace map %p (%d entries)", context.m_namespace_map.get(), (int)context.m_namespace_map->size());
+        if (log && log->GetVerbose())
+            log->Printf("  FEVD[%u] Registering namespace map %p (%d entries)", 
+                        current_id,
+                        context.m_namespace_map.get(), 
+                        (int)context.m_namespace_map->size());
         
         NamespaceDecl *clang_namespace_decl = AddNamespace(context, context.m_namespace_map);
         
@@ -2093,7 +2105,8 @@ void
 ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context, 
                                                   lldb::ModuleSP module_sp,
                                                   ClangNamespaceDecl &namespace_decl,
-                                                  const ConstString &name)
+                                                  const ConstString &name,
+                                                  unsigned int current_id)
 {
     assert (m_struct_vars.get());
     assert (m_parser_vars.get());
@@ -2139,9 +2152,9 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             if (!this_type)
                 return;
             
-            if (log)
+            if (log && log->GetVerbose())
             {
-                log->PutCString ("Type for \"this\" is: ");
+                log->Printf ("  FEVD[%u] Type for \"this\" is: ", current_id);
                 StreamString strm;
                 this_type->Dump(&strm, true);
                 log->PutCString (strm.GetData());
@@ -2171,7 +2184,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                 StreamString type_stream;
                 class_user_type.DumpTypeCode(&type_stream);
                 type_stream.Flush();
-                log->Printf("Adding type for $__lldb_class: %s", type_stream.GetString().c_str());
+                log->Printf("  FEVD[%u] Adding type for $__lldb_class: %s", current_id, type_stream.GetString().c_str());
             }
             
             AddOneType(context, class_user_type, true);
@@ -2224,7 +2237,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                 StreamString type_stream;
                 class_user_type.DumpTypeCode(&type_stream);
                 type_stream.Flush();
-                log->Printf("Adding type for $__lldb_objc_class: %s", type_stream.GetString().c_str());
+                log->Printf("  FEVD[%u] Adding type for $__lldb_objc_class: %s", current_id, type_stream.GetString().c_str());
             }
             
             AddOneType(context, class_user_type, false);
@@ -2267,7 +2280,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                 break;
             
             if (log)
-                log->Printf("Found persistent type %s", name.GetCString());
+                log->Printf("  FEVD[%u] Found persistent type %s", current_id, name.GetCString());
             
             context.AddNamedDecl(parser_ptype_type_decl);
         } while (0);
@@ -2276,7 +2289,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
         
         if (pvar_sp)
         {
-            AddOneVariable(context, pvar_sp);
+            AddOneVariable(context, pvar_sp, current_id);
             return;
         }
         
@@ -2286,8 +2299,11 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
         {
             const RegisterInfo *reg_info(m_parser_vars->m_exe_ctx->GetRegisterContext()->GetRegisterInfoByName(reg_name));
             
+            if (log)
+                log->Printf("  FEVD[%u] Found register %s", current_id, reg_info->name);
+            
             if (reg_info)
-                AddOneRegister(context, reg_info);
+                AddOneRegister(context, reg_info, current_id);
         }
     }
     else
@@ -2307,7 +2323,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             // If we found a variable in scope, no need to pull up function names
             if (err.Success() && var != NULL)
             {
-                AddOneVariable(context, var);
+                AddOneVariable(context, var, current_id);
                 context.m_found.variable = true;
             }
         }
@@ -2321,7 +2337,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             
             if (var)
             {
-                AddOneVariable(context, var);
+                AddOneVariable(context, var, current_id);
                 context.m_found.variable = true;
             }
         }
@@ -2366,7 +2382,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                         // TODO only do this if it's a C function; C++ functions may be
                         // overloaded
                         if (!context.m_found.function_with_type_info)
-                            AddOneFunction(context, sym_ctx.function, NULL);
+                            AddOneFunction(context, sym_ctx.function, NULL, current_id);
                         context.m_found.function_with_type_info = true;
                         context.m_found.function = true;
                     }
@@ -2383,12 +2399,12 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                 {
                     if (generic_symbol)
                     {
-                        AddOneFunction (context, NULL, generic_symbol);
+                        AddOneFunction (context, NULL, generic_symbol, current_id);
                         context.m_found.function = true;
                     }
                     else if (non_extern_symbol)
                     {
-                        AddOneFunction (context, NULL, non_extern_symbol);
+                        AddOneFunction (context, NULL, non_extern_symbol, current_id);
                         context.m_found.function = true;
                     }
                 }
@@ -2403,7 +2419,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                 
                 if (data_symbol)
                 {
-                    AddOneGenericVariable(context, *data_symbol);
+                    AddOneGenericVariable(context, *data_symbol, current_id);
                     context.m_found.variable = true;
                 }
             }
@@ -2426,7 +2442,8 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                     context.m_namespace_map->push_back(std::pair<ModuleSP, ClangNamespaceDecl>(module_sp, found_namespace_decl));
                     
                     if (log)
-                        log->Printf("Found namespace %s in module %s", 
+                        log->Printf("  FEVD[%u] Found namespace %s in module %s",
+                                    current_id,
                                     name.GetCString(), 
                                     module_sp->GetFileSpec().GetFilename().GetCString());
                 }
@@ -2461,7 +2478,8 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                     context.m_namespace_map->push_back(std::pair<ModuleSP, ClangNamespaceDecl>(image, found_namespace_decl));
                     
                     if (log)
-                        log->Printf("Found namespace %s in module %s", 
+                        log->Printf("  FEVD[%u] Found namespace %s in module %s",
+                                    current_id,
                                     name.GetCString(), 
                                     image->GetFileSpec().GetFilename().GetCString());
                 }
@@ -2483,10 +2501,12 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
         
         if (log)
         {
-            log->Printf("Matching type found for \"%s\": ", name.GetCString());
-            StreamString strm;
-            type_sp->Dump(&strm, true);
-            log->PutCString (strm.GetData());
+            const char *name_string = type_sp->GetName().GetCString();
+            
+            log->Printf("  FEVD[%u] Matching type found for \"%s\": %s", 
+                        current_id, 
+                        name.GetCString(), 
+                        (name_string ? name_string : "<anonymous>"));
         }
 
         TypeFromUser user_type(type_sp->GetClangFullType(),
@@ -2551,7 +2571,7 @@ ClangExpressionDeclMap::FindExternalLexicalDecls (const DeclContext *decl_contex
         llvm::raw_string_ostream decl_print_stream(decl_print_string);
         original_decl->print(decl_print_stream);
         decl_print_stream.flush();
-        log->Printf("Original decl:\n%s", decl_print_string.c_str());
+        log->Printf("  FELD[%u] Original decl:\n%s", current_id, decl_print_string.c_str());
     }
     
     if (TagDecl *original_tag_decl = dyn_cast<TagDecl>(original_decl))
@@ -2583,9 +2603,9 @@ ClangExpressionDeclMap::FindExternalLexicalDecls (const DeclContext *decl_contex
                 decl_print_stream.flush();
                 
                 if (const NamedDecl *context_named_decl = dyn_cast<NamedDecl>(context_decl))
-                    log->Printf("  [%d] Adding [to %s] lexical decl %s", current_id, context_named_decl->getNameAsString().c_str(), decl_print_string.c_str());
+                    log->Printf("  FELD[%d] Adding [to %s] lexical decl %s", current_id, context_named_decl->getNameAsString().c_str(), decl_print_string.c_str());
                 else
-                    log->Printf("  [%d] Adding lexical decl %s", current_id, decl_print_string.c_str());
+                    log->Printf("  FELD[%d] Adding lexical decl %s", current_id, decl_print_string.c_str());
             }
                         
             Decl *copied_decl = ast_importer->CopyDecl(original_ctx, decl);
@@ -2729,7 +2749,7 @@ ClangExpressionDeclMap::GetVariableValue
 }
 
 void
-ClangExpressionDeclMap::AddOneVariable (NameSearchContext &context, VariableSP var)
+ClangExpressionDeclMap::AddOneVariable (NameSearchContext &context, VariableSP var, unsigned int current_id)
 {
     assert (m_parser_vars.get());
     
@@ -2770,7 +2790,7 @@ ClangExpressionDeclMap::AddOneVariable (NameSearchContext &context, VariableSP v
         var_decl->print(var_decl_print_stream);
         var_decl_print_stream.flush();
         
-        log->Printf("Found variable %s, returned %s", decl_name.c_str(), var_decl_print_string.c_str());
+        log->Printf("  FEVD[%u] Found variable %s, returned %s", current_id, decl_name.c_str(), var_decl_print_string.c_str());
 
         //if (log->GetVerbose())
         //{
@@ -2783,7 +2803,8 @@ ClangExpressionDeclMap::AddOneVariable (NameSearchContext &context, VariableSP v
 
 void
 ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
-                                       ClangExpressionVariableSP &pvar_sp)
+                                       ClangExpressionVariableSP &pvar_sp, 
+                                       unsigned int current_id)
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
@@ -2809,13 +2830,14 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
         var_decl->print(var_decl_print_stream);
         var_decl_print_stream.flush();
         
-        log->Printf("Added pvar %s, returned %s", pvar_sp->GetName().GetCString(), var_decl_print_string.c_str());
+        log->Printf("  FEVD[%u] Added pvar %s, returned %s", current_id, pvar_sp->GetName().GetCString(), var_decl_print_string.c_str());
     }
 }
 
 void
 ClangExpressionDeclMap::AddOneGenericVariable(NameSearchContext &context, 
-                                              Symbol &symbol)
+                                              Symbol &symbol, 
+                                              unsigned int current_id)
 {
     assert(m_parser_vars.get());
     
@@ -2870,7 +2892,7 @@ ClangExpressionDeclMap::AddOneGenericVariable(NameSearchContext &context,
         var_decl->print(var_decl_print_stream);
         var_decl_print_stream.flush();
         
-        log->Printf("Found variable %s, returned %s", decl_name.c_str(), var_decl_print_string.c_str());
+        log->Printf("  FEVD[%u] Found variable %s, returned %s", current_id, decl_name.c_str(), var_decl_print_string.c_str());
         
         //if (log->GetVerbose())
         //{
@@ -2939,7 +2961,8 @@ ClangExpressionDeclMap::ResolveUnknownTypes()
 
 void
 ClangExpressionDeclMap::AddOneRegister (NameSearchContext &context,
-                                        const RegisterInfo *reg_info)
+                                        const RegisterInfo *reg_info, 
+                                        unsigned int current_id)
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
@@ -2950,7 +2973,7 @@ ClangExpressionDeclMap::AddOneRegister (NameSearchContext &context,
     if (!ast_type)
     {
         if (log)
-            log->Printf("Tried to add a type for %s, but couldn't get one", context.m_decl_name.getAsString().c_str());
+            log->Printf("  Tried to add a type for %s, but couldn't get one", context.m_decl_name.getAsString().c_str());
         return;
     }
     
@@ -2972,14 +2995,14 @@ ClangExpressionDeclMap::AddOneRegister (NameSearchContext &context,
     entity->m_parser_vars->m_llvm_value  = NULL;
     entity->m_parser_vars->m_lldb_value  = NULL;
     
-    if (log)
+    if (log && log->GetVerbose())
     {
         std::string var_decl_print_string;
         llvm::raw_string_ostream var_decl_print_stream(var_decl_print_string);
         var_decl->print(var_decl_print_stream);
         var_decl_print_stream.flush();
         
-        log->Printf("Added register %s, returned %s", context.m_decl_name.getAsString().c_str(), var_decl_print_string.c_str());
+        log->Printf("  FEVD[%d] Added register %s, returned %s", current_id, context.m_decl_name.getAsString().c_str(), var_decl_print_string.c_str());
     }
 }
 
@@ -3008,7 +3031,8 @@ ClangExpressionDeclMap::AddNamespace (NameSearchContext &context, ClangASTImport
 void
 ClangExpressionDeclMap::AddOneFunction (NameSearchContext &context,
                                         Function* fun,
-                                        Symbol* symbol)
+                                        Symbol* symbol,
+                                        unsigned int current_id)
 {
     assert (m_parser_vars.get());
     
@@ -3029,7 +3053,7 @@ ClangExpressionDeclMap::AddOneFunction (NameSearchContext &context,
         if (!fun_type) 
         {
             if (log)
-                log->PutCString("Skipped a function because it has no type");
+                log->PutCString("  Skipped a function because it has no type");
             return;
         }
         
@@ -3038,7 +3062,7 @@ ClangExpressionDeclMap::AddOneFunction (NameSearchContext &context,
         if (!fun_opaque_type)
         {
             if (log)
-                log->PutCString("Skipped a function because it has no Clang type");
+                log->PutCString("  Skipped a function because it has no Clang type");
             return;
         }
         
@@ -3058,7 +3082,7 @@ ClangExpressionDeclMap::AddOneFunction (NameSearchContext &context,
     else
     {
         if (log)
-            log->PutCString("AddOneFunction called with no function and no symbol");
+            log->PutCString("  AddOneFunction called with no function and no symbol");
         return;
     }
     
@@ -3089,13 +3113,18 @@ ClangExpressionDeclMap::AddOneFunction (NameSearchContext &context,
         fun_decl->print(fun_decl_print_stream);
         fun_decl_print_stream.flush();
         
-        log->Printf("Found %s function %s, returned %s", (fun ? "specific" : "generic"), decl_name.c_str(), fun_decl_print_string.c_str());
+        log->Printf("  FEVD[%u] Found %s function %s, returned %s", 
+                    current_id,
+                    (fun ? "specific" : "generic"), 
+                    decl_name.c_str(), 
+                    fun_decl_print_string.c_str());
     }
 }
 
 void 
 ClangExpressionDeclMap::AddOneType(NameSearchContext &context, 
                                    TypeFromUser &ut,
+                                   unsigned int current_id,
                                    bool add_method)
 {
     ASTContext *parser_ast_context = context.GetASTContext();

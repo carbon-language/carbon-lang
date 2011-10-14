@@ -849,6 +849,10 @@ private:
     ///     redundant, but ClangExpressionDeclMap operates in RTTI land so 
     ///     it can't access DeclarationName.
     ///
+    /// @param[in] current_id
+    ///     The ID for the current FindExternalVisibleDecls invocation,
+    ///     for logging purposes.
+    ///
     /// @return
     ///     True on success; false otherwise.
     //------------------------------------------------------------------
@@ -856,7 +860,8 @@ private:
     FindExternalVisibleDecls (NameSearchContext &context, 
                               lldb::ModuleSP module,
                               ClangNamespaceDecl &namespace_decl,
-                              const ConstString &name);
+                              const ConstString &name,
+                              unsigned int current_id);
     
     //------------------------------------------------------------------
     /// Given a stack frame, find a variable that matches the given name and 
@@ -978,7 +983,8 @@ private:
     //------------------------------------------------------------------
     void 
     AddOneVariable (NameSearchContext &context, 
-                    lldb::VariableSP var);
+                    lldb::VariableSP var,
+                    unsigned int current_id);
     
     //------------------------------------------------------------------
     /// Use the NameSearchContext to generate a Decl for the given
@@ -989,10 +995,15 @@ private:
     ///
     /// @param[in] pvar
     ///     The persistent variable that needs a Decl.
+    ///
+    /// @param[in] current_id
+    ///     The ID of the current invocation of FindExternalVisibleDecls
+    ///     for logging purposes.
     //------------------------------------------------------------------
     void 
     AddOneVariable (NameSearchContext &context, 
-                    lldb::ClangExpressionVariableSP &pvar_sp);
+                    lldb::ClangExpressionVariableSP &pvar_sp,
+                    unsigned int current_id);
     
     //------------------------------------------------------------------
     /// Use the NameSearchContext to generate a Decl for the given LLDB
@@ -1007,7 +1018,8 @@ private:
     //------------------------------------------------------------------
     void
     AddOneGenericVariable (NameSearchContext &context,
-                           Symbol &symbol);
+                           Symbol &symbol,
+                           unsigned int current_id);
     
     //------------------------------------------------------------------
     /// Use the NameSearchContext to generate a Decl for the given
@@ -1028,7 +1040,8 @@ private:
     void
     AddOneFunction (NameSearchContext &context, 
                     Function *fun, 
-                    Symbol *sym);
+                    Symbol *sym,
+                    unsigned int current_id);
     
     //------------------------------------------------------------------
     /// Use the NameSearchContext to generate a Decl for the given
@@ -1042,7 +1055,8 @@ private:
     //------------------------------------------------------------------
     void 
     AddOneRegister (NameSearchContext &context, 
-                    const RegisterInfo *reg_info);
+                    const RegisterInfo *reg_info,
+                    unsigned int current_id);
     
     //------------------------------------------------------------------
     /// Use the NameSearchContext to generate a Decl for the given
@@ -1060,7 +1074,8 @@ private:
     //------------------------------------------------------------------
     void 
     AddOneType (NameSearchContext &context, 
-                TypeFromUser &type, 
+                TypeFromUser &type,
+                unsigned int current_id,
                 bool add_method = false);
     
     //------------------------------------------------------------------

@@ -65,7 +65,7 @@ ASTResultSynthesizer::TransformTopLevelDecl(Decl* D)
 
     if (NamedDecl *named_decl = dyn_cast<NamedDecl>(D))
     {
-        if (log)
+        if (log && log->GetVerbose())
         {
             if (named_decl->getIdentifier())
                 log->Printf("TransformTopLevelDecl(%s)", named_decl->getIdentifier()->getNameStart());

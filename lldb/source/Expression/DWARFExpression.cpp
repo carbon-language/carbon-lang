@@ -1038,7 +1038,7 @@ DWARFExpression::Evaluate
         const uint32_t op_offset = offset;
         const uint8_t op = opcodes.GetU8(&offset);
 
-        if (log)
+        if (log && log->GetVerbose())
         {
             size_t count = stack.size();
             log->Printf("Stack before operation has %lu values:", count);
@@ -2875,7 +2875,7 @@ DWARFExpression::Evaluate
             error_ptr->SetErrorString ("Stack empty after evaluation.");
         return false;
     }
-    else if (log)
+    else if (log && log->GetVerbose())
     {
         size_t count = stack.size();
         log->Printf("Stack after operation has %lu values:", count);
