@@ -27,6 +27,7 @@ add_clang_library(clangFrontend
   LogDiagnosticPrinter.cpp
   MultiplexConsumer.cpp
   PrintPreprocessedOutput.cpp
+  TextDiagnostic.cpp
   TextDiagnosticBuffer.cpp
   TextDiagnosticPrinter.cpp
   VerifyDiagnosticConsumer.cpp
