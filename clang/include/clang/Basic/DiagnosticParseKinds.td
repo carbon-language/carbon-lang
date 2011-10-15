@@ -471,7 +471,7 @@ def warn_defaulted_function_accepted_as_extension: ExtWarn<
   InGroup<CXX11>;
 
 // C++11 in-class member initialization
-def warn_nonstatic_member_init_accepted_as_extension: ExtWarn<
+def ext_nonstatic_member_init : ExtWarn<
   "in-class initialization of non-static data member accepted as a C++11 extension">,
   InGroup<CXX11>;
 def err_bitfield_member_init: Error<

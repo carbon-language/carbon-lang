@@ -1885,7 +1885,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     if (HasDeferredInitializer) {
       // The initializer was deferred; parse it and cache the tokens.
       if (!getLang().CPlusPlus0x)
-        Diag(Tok, diag::warn_nonstatic_member_init_accepted_as_extension);
+        Diag(Tok, diag::ext_nonstatic_member_init);
       
       if (DeclaratorInfo.isArrayOfUnknownBound()) {
         // C++0x [dcl.array]p3: An array bound may also be omitted when the
