@@ -43,8 +43,7 @@ const unsigned WordWrapIndentation = 6;
 TextDiagnosticPrinter::TextDiagnosticPrinter(raw_ostream &os,
                                              const DiagnosticOptions &diags,
                                              bool _OwnsOutputStream)
-  : OS(os), LangOpts(0), DiagOpts(&diags),
-    LastCaretDiagnosticWasNote(0),
+  : OS(os), LangOpts(0), DiagOpts(&diags), LastLevel(),
     OwnsOutputStream(_OwnsOutputStream) {
 }
 
@@ -498,15 +497,23 @@ class TextDiagnostic {
   /// root locations rather than diagnostic locations.
   SourceLocation LastIncludeLoc;
 
+  /// \brief The level of the last diagnostic emitted.
+  ///
+  /// The level of the last diagnostic emitted. Used to detect level changes
+  /// which change the amount of information displayed.
+  DiagnosticsEngine::Level LastLevel;
+
 public:
   TextDiagnostic(raw_ostream &OS,
                  const SourceManager &SM,
                  const LangOptions &LangOpts,
                  const DiagnosticOptions &DiagOpts,
                  FullSourceLoc LastLoc = FullSourceLoc(),
-                 FullSourceLoc LastIncludeLoc = FullSourceLoc())
+                 FullSourceLoc LastIncludeLoc = FullSourceLoc(),
+                 DiagnosticsEngine::Level LastLevel
+                   = DiagnosticsEngine::Level())
     : OS(OS), SM(SM), LangOpts(LangOpts), DiagOpts(DiagOpts),
-      LastLoc(LastLoc), LastIncludeLoc(LastIncludeLoc) {
+      LastLoc(LastLoc), LastIncludeLoc(LastIncludeLoc), LastLevel(LastLevel) {
     if (LastLoc.isValid() && &SM != &LastLoc.getManager())
       this->LastLoc = SourceLocation();
     if (LastIncludeLoc.isValid() && &SM != &LastIncludeLoc.getManager())
@@ -518,6 +525,9 @@ public:
 
   /// \brief Get the last emitted include stack location.
   SourceLocation getLastIncludeLoc() const { return LastIncludeLoc; }
+
+  /// \brief Get the last diagnostic level.
+  DiagnosticsEngine::Level getLastLevel() const { return LastLevel; }
 
   void Emit(SourceLocation Loc, DiagnosticsEngine::Level Level,
             StringRef Message, ArrayRef<CharSourceRange> Ranges,
@@ -550,7 +560,7 @@ public:
     // multiple times if one loc has multiple diagnostics.
     if (DiagOpts.ShowCarets &&
         (Loc != LastLoc || !Ranges.empty() || !FixItHints.empty() ||
-         (LastCaretDiagnosticWasNote && Level != DiagnosticsEngine::Note))) {
+         (LastLevel == DiagnosticsEngine::Note && Level != LastLevel))) {
       // Get the ranges into a local array we can hack on.
       SmallVector<CharSourceRange, 20> MutableRanges(Ranges.begin(),
                                                      Ranges.end());
@@ -566,6 +576,7 @@ public:
     }
 
     LastLoc = Loc;
+    LastLevel = Level;
   }
 
   /// \brief Emit the caret and underlining text.
@@ -1279,18 +1290,21 @@ void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
          "Unexpected diagnostic with no source manager");
   const SourceManager &SM = Info.getSourceManager();
   TextDiagnostic TextDiag(OS, SM, *LangOpts, *DiagOpts,
-                          LastLoc, LastIncludeLoc);
+                          LastLoc, LastIncludeLoc, LastLevel);
 
   TextDiag.Emit(Info.getLocation(), Level, DiagMessageStream.str(),
                 Info.getRanges(),
                 llvm::makeArrayRef(Info.getFixItHints(),
-                                   Info.getNumFixItHints()),
-                LastCaretDiagnosticWasNote);
+                                   Info.getNumFixItHints()));
 
   // Cache the LastLoc from the TextDiagnostic printing.
+  // FIXME: Rather than this, we should persist a TextDiagnostic object across
+  // diagnostics until the SourceManager changes. That will allow the
+  // TextDiagnostic object to form a 'session' of output where we can
+  // reasonably collapse redundant information.
   LastLoc = FullSourceLoc(TextDiag.getLastLoc(), SM);
   LastIncludeLoc = FullSourceLoc(TextDiag.getLastIncludeLoc(), SM);
-  LastCaretDiagnosticWasNote = (Level == DiagnosticsEngine::Note);
+  LastLevel = TextDiag.getLastLevel();
 
   OS.flush();
 }

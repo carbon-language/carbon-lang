@@ -29,7 +29,7 @@ class TextDiagnosticPrinter : public DiagnosticConsumer {
 
   FullSourceLoc LastLoc;
   FullSourceLoc LastIncludeLoc;
-  unsigned LastCaretDiagnosticWasNote : 1;
+  DiagnosticsEngine::Level LastLevel;
   unsigned OwnsOutputStream : 1;
 
   /// A string to prefix to error messages.
