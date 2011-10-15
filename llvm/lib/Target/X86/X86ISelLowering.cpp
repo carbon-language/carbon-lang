@@ -5438,11 +5438,11 @@ X86TargetLowering::LowerVECTOR_SHUFFLEv8i16(SDValue Op,
   // Determine if more than 1 of the words in each of the low and high quadwords
   // of the result come from the same quadword of one of the two inputs.  Undef
   // mask values count as coming from any quadword, for better codegen.
-  SmallVector<unsigned, 4> LoQuad(4);
-  SmallVector<unsigned, 4> HiQuad(4);
+  unsigned LoQuad[] = { 0, 0, 0, 0 };
+  unsigned HiQuad[] = { 0, 0, 0, 0 };
   BitVector InputQuads(4);
   for (unsigned i = 0; i < 8; ++i) {
-    SmallVectorImpl<unsigned> &Quad = i < 4 ? LoQuad : HiQuad;
+    unsigned *Quad = i < 4 ? LoQuad : HiQuad;
     int EltIdx = SVOp->getMaskElt(i);
     MaskVals.push_back(EltIdx);
     if (EltIdx < 0) {
