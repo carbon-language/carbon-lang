@@ -28,7 +28,7 @@ class TextDiagnosticPrinter : public DiagnosticConsumer {
   const DiagnosticOptions *DiagOpts;
 
   FullSourceLoc LastLoc;
-  FullSourceLoc LastNonNoteLoc;
+  FullSourceLoc LastIncludeLoc;
   unsigned LastCaretDiagnosticWasNote : 1;
   unsigned OwnsOutputStream : 1;
 

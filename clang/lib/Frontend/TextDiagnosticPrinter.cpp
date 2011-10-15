@@ -492,10 +492,11 @@ class TextDiagnostic {
   /// a different source manager than SM.
   SourceLocation LastLoc;
 
-  /// \brief The location of the previous non-note diagnostic if known.
+  /// \brief The location of the last include whose stack was printed if known.
   ///
-  /// Same restriction as \see LastLoc but tracks the last non-note location.
-  SourceLocation LastNonNoteLoc;
+  /// Same restriction as \see LastLoc essentially, but tracking include stack
+  /// root locations rather than diagnostic locations.
+  SourceLocation LastIncludeLoc;
 
 public:
   TextDiagnostic(raw_ostream &OS,
@@ -503,20 +504,20 @@ public:
                  const LangOptions &LangOpts,
                  const DiagnosticOptions &DiagOpts,
                  FullSourceLoc LastLoc = FullSourceLoc(),
-                 FullSourceLoc LastNonNoteLoc = FullSourceLoc())
+                 FullSourceLoc LastIncludeLoc = FullSourceLoc())
     : OS(OS), SM(SM), LangOpts(LangOpts), DiagOpts(DiagOpts),
-      LastLoc(LastLoc), LastNonNoteLoc(LastNonNoteLoc) {
+      LastLoc(LastLoc), LastIncludeLoc(LastIncludeLoc) {
     if (LastLoc.isValid() && &SM != &LastLoc.getManager())
       this->LastLoc = SourceLocation();
-    if (LastNonNoteLoc.isValid() && &SM != &LastNonNoteLoc.getManager())
-      this->LastNonNoteLoc = SourceLocation();
+    if (LastIncludeLoc.isValid() && &SM != &LastIncludeLoc.getManager())
+      this->LastIncludeLoc = SourceLocation();
   }
 
   /// \brief Get the last diagnostic location emitted.
   SourceLocation getLastLoc() const { return LastLoc; }
 
-  /// \brief Get the last non-note diagnostic location emitted.
-  SourceLocation getLastNonNoteLoc() const { return LastNonNoteLoc; }
+  /// \brief Get the last emitted include stack location.
+  SourceLocation getLastIncludeLoc() const { return LastIncludeLoc; }
 
   void Emit(SourceLocation Loc, DiagnosticsEngine::Level Level,
             StringRef Message, ArrayRef<CharSourceRange> Ranges,
@@ -795,9 +796,9 @@ private:
   ///              location).
   void emitIncludeStack(SourceLocation Loc, DiagnosticsEngine::Level Level) {
     // Skip redundant include stacks altogether.
-    if (LastNonNoteLoc == Loc)
+    if (LastIncludeLoc == Loc)
       return;
-    LastNonNoteLoc = Loc;
+    LastIncludeLoc = Loc;
 
     if (!DiagOpts.ShowNoteIncludeStack && Level == DiagnosticsEngine::Note)
       return;
@@ -1278,7 +1279,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
          "Unexpected diagnostic with no source manager");
   const SourceManager &SM = Info.getSourceManager();
   TextDiagnostic TextDiag(OS, SM, *LangOpts, *DiagOpts,
-                          LastLoc, LastNonNoteLoc);
+                          LastLoc, LastIncludeLoc);
 
   TextDiag.Emit(Info.getLocation(), Level, DiagMessageStream.str(),
                 Info.getRanges(),
@@ -1288,7 +1289,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
 
   // Cache the LastLoc from the TextDiagnostic printing.
   LastLoc = FullSourceLoc(TextDiag.getLastLoc(), SM);
-  LastNonNoteLoc = FullSourceLoc(TextDiag.getLastNonNoteLoc(), SM);
+  LastIncludeLoc = FullSourceLoc(TextDiag.getLastIncludeLoc(), SM);
   LastCaretDiagnosticWasNote = (Level == DiagnosticsEngine::Note);
 
   OS.flush();
