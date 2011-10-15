@@ -488,7 +488,7 @@ def err_alias_declaration_specialization : Error<
   "%select{partial specialization|explicit specialization|explicit instantiation}0 of alias templates is not permitted">;
     
 // C++11 override control
-def ext_override_control_keyword : Extension<
+def ext_override_control_keyword : ExtWarn<
   "'%0' keyword accepted as a C++11 extension">, InGroup<CXX11>;
 
 def err_duplicate_virt_specifier : Error<
