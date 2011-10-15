@@ -262,9 +262,11 @@ Thread::ShouldStop (Event* event_ptr)
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     if (log)
     {
+        log->Printf ("^^^^^^^^ Thread::ShouldStop Begin ^^^^^^^^");
         StreamString s;
+        s.IndentMore();
         DumpThreadPlans(&s);
-        log->PutCString (s.GetData());
+        log->Printf ("Plan stack initial state:\n%s", s.GetData());
     }
     
     // The top most plan always gets to do the trace log...
@@ -274,6 +276,9 @@ Thread::ShouldStop (Event* event_ptr)
     {
         bool over_ride_stop = current_plan->ShouldAutoContinue(event_ptr);
         
+        if (log)
+            log->Printf("Plan %s explains stop, auto-continue %i.", current_plan->GetName(), over_ride_stop);
+            
         // We're starting from the base plan, so just let it decide;
         if (PlanIsBasePlan(current_plan))
         {
@@ -330,7 +335,7 @@ Thread::ShouldStop (Event* event_ptr)
     }
     else if (current_plan->TracerExplainsStop())
     {
-        return false;
+        should_stop = false;
     }
     else
     {
@@ -348,6 +353,14 @@ Thread::ShouldStop (Event* event_ptr)
         }
     }
 
+    if (log)
+    {
+        StreamString s;
+        s.IndentMore();
+        DumpThreadPlans(&s);
+        log->Printf ("Plan stack final state:\n%s", s.GetData());
+        log->Printf ("vvvvvvvv Thread::ShouldStop End (returning %i) vvvvvvvv", should_stop);
+    }
     return should_stop;
 }
 
@@ -850,36 +863,48 @@ Thread::DumpThreadPlans (lldb_private::Stream *s) const
 {
     uint32_t stack_size = m_plan_stack.size();
     int i;
+    s->Indent();
     s->Printf ("Plan Stack for thread #%u: tid = 0x%4.4x, stack_size = %d\n", GetIndexID(), GetID(), stack_size);
     for (i = stack_size - 1; i >= 0; i--)
     {
-        s->Printf ("Element %d: ", i);
         s->IndentMore();
+        s->Indent();
+        s->Printf ("Element %d: ", i);
         m_plan_stack[i]->GetDescription (s, eDescriptionLevelFull);
-        s->IndentLess();
         s->EOL();
+        s->IndentLess();
     }
 
     stack_size = m_completed_plan_stack.size();
-    s->Printf ("Completed Plan Stack: %d elements.\n", stack_size);
-    for (i = stack_size - 1; i >= 0; i--)
+    if (stack_size > 0)
     {
-        s->Printf ("Element %d: ", i);
-        s->IndentMore();
-        m_completed_plan_stack[i]->GetDescription (s, eDescriptionLevelFull);
-        s->IndentLess();
-        s->EOL();
+        s->Indent();
+        s->Printf ("Completed Plan Stack: %d elements.\n", stack_size);
+        for (i = stack_size - 1; i >= 0; i--)
+        {
+            s->IndentMore();
+            s->Indent();
+            s->Printf ("Element %d: ", i);
+            m_completed_plan_stack[i]->GetDescription (s, eDescriptionLevelFull);
+            s->EOL();
+            s->IndentLess();
+        }
     }
 
     stack_size = m_discarded_plan_stack.size();
-    s->Printf ("Discarded Plan Stack: %d elements.\n", stack_size);
-    for (i = stack_size - 1; i >= 0; i--)
+    if (stack_size > 0)
     {
-        s->Printf ("Element %d: ", i);
-        s->IndentMore();
-        m_discarded_plan_stack[i]->GetDescription (s, eDescriptionLevelFull);
-        s->IndentLess();
-        s->EOL();
+        s->Indent();
+        s->Printf ("Discarded Plan Stack: %d elements.\n", stack_size);
+        for (i = stack_size - 1; i >= 0; i--)
+        {
+            s->IndentMore();
+            s->Indent();
+            s->Printf ("Element %d: ", i);
+            m_discarded_plan_stack[i]->GetDescription (s, eDescriptionLevelFull);
+            s->EOL();
+            s->IndentLess();
+        }
     }
 
 }

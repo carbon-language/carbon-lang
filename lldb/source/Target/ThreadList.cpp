@@ -187,7 +187,10 @@ ThreadList::ShouldStop (Event *event_ptr)
     collection::iterator pos, end = m_threads.end();
 
     if (log)
-        log->Printf ("%s %zu threads", __FUNCTION__, m_threads.size());
+    {
+        log->PutCString("");
+        log->Printf ("ThreadList::%s: %zu threads", __FUNCTION__, m_threads.size());
+    }
 
     // Run through the threads and ask whether we should stop.  Don't ask
     // suspended threads, however, it makes more sense for them to preserve their
@@ -199,7 +202,7 @@ ThreadList::ShouldStop (Event *event_ptr)
         if (thread_sp->GetResumeState () == eStateSuspended)
         {
             if (log)
-                log->Printf ("%s tid = 0x%4.4x, pc = 0x%16.16llx, should_stop = 0 (ignore since thread was suspended)", 
+                log->Printf ("ThreadList::%s for tid = 0x%4.4x, pc = 0x%16.16llx, should_stop = 0 (ignore since thread was suspended)", 
                              __FUNCTION__, 
                              thread_sp->GetID (), 
                              thread_sp->GetRegisterContext()->GetPC());
@@ -209,26 +212,25 @@ ThreadList::ShouldStop (Event *event_ptr)
         if (thread_sp->ThreadStoppedForAReason() == false)
         {
             if (log)
-                log->Printf ("%s tid = 0x%4.4x, pc = 0x%16.16llx, should_stop = 0 (ignore since no stop reason)", 
+                log->Printf ("ThreadList::%s for tid = 0x%4.4x, pc = 0x%16.16llx, should_stop = 0 (ignore since no stop reason)", 
                              __FUNCTION__, 
                              thread_sp->GetID (), 
                              thread_sp->GetRegisterContext()->GetPC());
             continue;
         }
 
-        const bool thread_should_stop = thread_sp->ShouldStop(event_ptr);
         if (log)
-            log->Printf ("%s tid = 0x%4.4x, pc = 0x%16.16llx, should_stop = %i", 
+            log->Printf ("ThreadList::%s for tid = 0x%4.4x, pc = 0x%16.16llx", 
                          __FUNCTION__, 
                          thread_sp->GetID (), 
-                         thread_sp->GetRegisterContext()->GetPC(), 
-                         thread_should_stop);
+                         thread_sp->GetRegisterContext()->GetPC());
+        const bool thread_should_stop = thread_sp->ShouldStop(event_ptr);
         if (thread_should_stop)
             should_stop |= true;
     }
 
     if (log)
-        log->Printf ("%s overall should_stop = %i", __FUNCTION__, should_stop);
+        log->Printf ("ThreadList::%s overall should_stop = %i", __FUNCTION__, should_stop);
 
     if (should_stop)
     {
@@ -254,7 +256,7 @@ ThreadList::ShouldReportStop (Event *event_ptr)
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
 
     if (log)
-        log->Printf ("%s %zu threads", __FUNCTION__, m_threads.size());
+        log->Printf ("ThreadList::%s %zu threads", __FUNCTION__, m_threads.size());
 
     // Run through the threads and ask whether we should report this event.
     // For stopping, a YES vote wins over everything.  A NO vote wins over NO opinion.
@@ -265,7 +267,7 @@ ThreadList::ShouldReportStop (Event *event_ptr)
         {
             const Vote vote = thread_sp->ShouldReportStop (event_ptr);
             if (log)
-                log->Printf  ("%s thread 0x%4.4x: pc = 0x%16.16llx, vote = %s", 
+                log->Printf  ("ThreadList::%s thread 0x%4.4x: pc = 0x%16.16llx, vote = %s", 
                               __FUNCTION__,
                               thread_sp->GetID (), 
                               thread_sp->GetRegisterContext()->GetPC(),
@@ -287,7 +289,7 @@ ThreadList::ShouldReportStop (Event *event_ptr)
                 else
                 {
                     if (log)
-                        log->Printf ("%s thread 0x%4.4x: pc = 0x%16.16llx voted %s, but lost out because result was %s", 
+                        log->Printf ("ThreadList::%s thread 0x%4.4x: pc = 0x%16.16llx voted %s, but lost out because result was %s", 
                                      __FUNCTION__,
                                      thread_sp->GetID (), 
                                      thread_sp->GetRegisterContext()->GetPC(),
@@ -299,7 +301,7 @@ ThreadList::ShouldReportStop (Event *event_ptr)
         }
     }
     if (log)
-        log->Printf ("%s returning %s", __FUNCTION__, GetVoteAsCString (result));
+        log->Printf ("ThreadList::%s returning %s", __FUNCTION__, GetVoteAsCString (result));
     return result;
 }
 
@@ -360,7 +362,7 @@ ThreadList::RefreshStateAfterStop ()
     m_process->UpdateThreadListIfNeeded();
     
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
-    if (log)
+    if (log && log->GetVerbose())
         log->Printf ("Turning off notification of new threads while single stepping a thread.");
 
     collection::iterator pos, end = m_threads.end();
@@ -416,14 +418,14 @@ ThreadList::WillResume ()
     if (wants_solo_run)
     {
         LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
-        if (log)
+        if (log && log->GetVerbose())
             log->Printf ("Turning on notification of new threads while single stepping a thread.");
         m_process->StartNoticingNewThreads();
     }
     else
     {
         LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
-        if (log)
+        if (log && log->GetVerbose())
             log->Printf ("Turning off notification of new threads while single stepping a thread.");
         m_process->StopNoticingNewThreads();
     }
