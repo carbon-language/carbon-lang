@@ -64,6 +64,8 @@ class VectorLegalizer {
   // Implement vselect in terms of XOR, AND, OR when blend is not supported
   // by the target.
   SDValue ExpandVSELECT(SDValue Op);
+  SDValue ExpandLoad(SDValue Op);
+  SDValue ExpandStore(SDValue Op);
   SDValue ExpandFNEG(SDValue Op);
   // Implements vector promotion; this is essentially just bitcasting the
   // operands to a different type and bitcasting the result back to the
@@ -123,6 +125,33 @@ SDValue VectorLegalizer::LegalizeOp(SDValue Op) {
 
   SDValue Result =
     SDValue(DAG.UpdateNodeOperands(Op.getNode(), Ops.data(), Ops.size()), 0);
+
+  if (Op.getOpcode() == ISD::LOAD) {
+    LoadSDNode *LD = cast<LoadSDNode>(Op.getNode());
+    ISD::LoadExtType ExtType = LD->getExtensionType();
+    if (LD->getMemoryVT().isVector() && ExtType != ISD::NON_EXTLOAD) {
+      if (TLI.isLoadExtLegal(LD->getExtensionType(), LD->getMemoryVT()))
+        return TranslateLegalizeResults(Op, Result);
+      Changed = true;
+      return LegalizeOp(ExpandLoad(Op));
+    }
+  } else if (Op.getOpcode() == ISD::STORE) {
+    StoreSDNode *ST = cast<StoreSDNode>(Op.getNode());
+    EVT StVT = ST->getMemoryVT();
+    EVT ValVT = ST->getValue().getValueType();
+    if (StVT.isVector() && ST->isTruncatingStore())
+      switch (TLI.getTruncStoreAction(ValVT, StVT)) {
+      default: assert(0 && "This action is not supported yet!");
+      case TargetLowering::Legal:
+        return TranslateLegalizeResults(Op, Result);
+      case TargetLowering::Custom:
+        Changed = true;
+        return LegalizeOp(TLI.LowerOperation(Result, DAG));
+      case TargetLowering::Expand:
+        Changed = true;
+        return LegalizeOp(ExpandStore(Op));
+      }
+  }
 
   bool HasVectorValue = false;
   for (SDNode::value_iterator J = Node->value_begin(), E = Node->value_end();
@@ -260,6 +289,96 @@ SDValue VectorLegalizer::PromoteVectorOp(SDValue Op) {
   Op = DAG.getNode(Op.getOpcode(), dl, NVT, &Operands[0], Operands.size());
 
   return DAG.getNode(ISD::BITCAST, dl, VT, Op);
+}
+
+
+SDValue VectorLegalizer::ExpandLoad(SDValue Op) {
+  DebugLoc dl = Op.getDebugLoc();
+  LoadSDNode *LD = cast<LoadSDNode>(Op.getNode());
+  SDValue Chain = LD->getChain();
+  SDValue BasePTR = LD->getBasePtr();
+  EVT SrcVT = LD->getMemoryVT();
+
+  SmallVector<SDValue, 8> LoadVals;
+  SmallVector<SDValue, 8> LoadChains;
+  unsigned NumElem = SrcVT.getVectorNumElements();
+  unsigned Stride = SrcVT.getScalarType().getSizeInBits()/8;
+
+  for (unsigned Idx=0; Idx<NumElem; Idx++) {
+    BasePTR = DAG.getNode(ISD::ADD, dl, BasePTR.getValueType(), BasePTR,
+                       DAG.getIntPtrConstant(Stride));
+    SDValue ScalarLoad = DAG.getExtLoad(ISD::EXTLOAD, dl,
+              Op.getNode()->getValueType(0).getScalarType(),
+              Chain, BasePTR, LD->getPointerInfo().getWithOffset(Idx * Stride),
+              SrcVT.getScalarType(),
+              LD->isVolatile(), LD->isNonTemporal(),
+              LD->getAlignment());
+
+     LoadVals.push_back(ScalarLoad.getValue(0));
+     LoadChains.push_back(ScalarLoad.getValue(1));
+  }
+  
+  SDValue NewChain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
+            &LoadChains[0], LoadChains.size());
+  SDValue Value = DAG.getNode(ISD::BUILD_VECTOR, dl,
+            Op.getNode()->getValueType(0), &LoadVals[0], LoadVals.size());
+
+  AddLegalizedOperand(Op.getValue(0), Value);
+  AddLegalizedOperand(Op.getValue(1), NewChain);
+
+  return (Op.getResNo() ? NewChain : Value);
+}
+
+SDValue VectorLegalizer::ExpandStore(SDValue Op) {
+  DebugLoc dl = Op.getDebugLoc();
+  StoreSDNode *ST = cast<StoreSDNode>(Op.getNode());
+  SDValue Chain = ST->getChain();
+  SDValue BasePTR = ST->getBasePtr();
+  SDValue Value = ST->getValue();
+  EVT StVT = ST->getMemoryVT();
+
+  unsigned Alignment = ST->getAlignment();
+  bool isVolatile = ST->isVolatile();
+  bool isNonTemporal = ST->isNonTemporal();
+
+  unsigned NumElem = StVT.getVectorNumElements();
+  // The type of the data we want to save
+  EVT RegVT = Value.getValueType();
+  EVT RegSclVT = RegVT.getScalarType();
+  // The type of data as saved in memory.
+  EVT MemSclVT = StVT.getScalarType();
+
+  // Cast floats into integers
+  unsigned ScalarSize = MemSclVT.getSizeInBits();
+  EVT EltVT = EVT::getIntegerVT(*DAG.getContext(), ScalarSize);
+
+  // Round odd types to the next pow of two.
+  if (!isPowerOf2_32(ScalarSize))
+    ScalarSize = NextPowerOf2(ScalarSize);
+
+  // Store Stride in bytes
+  unsigned Stride = ScalarSize/8;
+  // Extract each of the elements from the original vector
+  // and save them into memory individually.
+  SmallVector<SDValue, 8> Stores;
+  for (unsigned Idx = 0; Idx < NumElem; Idx++) {
+    SDValue Ex = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl,
+               RegSclVT, Value, DAG.getIntPtrConstant(Idx));
+
+    BasePTR = DAG.getNode(ISD::ADD, dl, BasePTR.getValueType(), BasePTR,
+                                DAG.getIntPtrConstant(Stride));
+
+    // This scalar TruncStore may be illegal, but we legalize it later.
+    SDValue Store = DAG.getTruncStore(Chain, dl, Ex, BasePTR,
+               ST->getPointerInfo().getWithOffset(Idx*Stride), MemSclVT,
+               isVolatile, isNonTemporal, Alignment);
+
+    Stores.push_back(Store);
+  }
+  SDValue TF =  DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
+                            &Stores[0], Stores.size());
+  AddLegalizedOperand(Op, TF);
+  return TF;
 }
 
 SDValue VectorLegalizer::ExpandVSELECT(SDValue Op) {
