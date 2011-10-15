@@ -310,9 +310,9 @@ def tPICADD : TIt<(outs GPR:$dst), (ins GPR:$lhs, pclabel:$cp), IIC_iALUr, "",
 }
 
 // ADD <Rd>, sp, #<imm8>
-// This is rematerializable, which is particularly useful for taking the
-// address of locals.
-let isReMaterializable = 1, neverHasSideEffects = 1 in
+// FIXME: This should not be marked as having side effects, and it should be
+// rematerializable. Clearing the side effect bit causes miscompilations,
+// probably because the instruction can be moved around.
 def tADDrSPi : T1pI<(outs tGPR:$dst), (ins GPRsp:$sp, t_imm0_1020s4:$imm),
                     IIC_iALUi, "add", "\t$dst, $sp, $imm", []>,
                T1Encoding<{1,0,1,0,1,?}> {
