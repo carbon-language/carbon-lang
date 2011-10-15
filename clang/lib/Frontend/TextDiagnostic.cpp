@@ -454,6 +454,212 @@ void TextDiagnostic::Emit(SourceLocation Loc, DiagnosticsEngine::Level Level,
   LastLevel = Level;
 }
 
+/*static*/ void
+TextDiagnostic::printDiagnosticLevel(raw_ostream &OS,
+                                     DiagnosticsEngine::Level Level,
+                                     bool ShowColors) {
+  if (ShowColors) {
+    // Print diagnostic category in bold and color
+    switch (Level) {
+    case DiagnosticsEngine::Ignored:
+      llvm_unreachable("Invalid diagnostic type");
+    case DiagnosticsEngine::Note:    OS.changeColor(noteColor, true); break;
+    case DiagnosticsEngine::Warning: OS.changeColor(warningColor, true); break;
+    case DiagnosticsEngine::Error:   OS.changeColor(errorColor, true); break;
+    case DiagnosticsEngine::Fatal:   OS.changeColor(fatalColor, true); break;
+    }
+  }
+
+  switch (Level) {
+  case DiagnosticsEngine::Ignored:
+    llvm_unreachable("Invalid diagnostic type");
+  case DiagnosticsEngine::Note:    OS << "note: "; break;
+  case DiagnosticsEngine::Warning: OS << "warning: "; break;
+  case DiagnosticsEngine::Error:   OS << "error: "; break;
+  case DiagnosticsEngine::Fatal:   OS << "fatal error: "; break;
+  }
+
+  if (ShowColors)
+    OS.resetColor();
+}
+
+/*static*/ void
+TextDiagnostic::printDiagnosticMessage(raw_ostream &OS,
+                                       DiagnosticsEngine::Level Level,
+                                       StringRef Message,
+                                       unsigned CurrentColumn, unsigned Columns,
+                                       bool ShowColors) {
+  if (ShowColors) {
+    // Print warnings, errors and fatal errors in bold, no color
+    switch (Level) {
+    case DiagnosticsEngine::Warning: OS.changeColor(savedColor, true); break;
+    case DiagnosticsEngine::Error:   OS.changeColor(savedColor, true); break;
+    case DiagnosticsEngine::Fatal:   OS.changeColor(savedColor, true); break;
+    default: break; //don't bold notes
+    }
+  }
+
+  if (Columns)
+    printWordWrapped(OS, Message, Columns, CurrentColumn);
+  else
+    OS << Message;
+
+  if (ShowColors)
+    OS.resetColor();
+  OS << '\n';
+}
+
+/// \brief Prints an include stack when appropriate for a particular
+/// diagnostic level and location.
+///
+/// This routine handles all the logic of suppressing particular include
+/// stacks (such as those for notes) and duplicate include stacks when
+/// repeated warnings occur within the same file. It also handles the logic
+/// of customizing the formatting and display of the include stack.
+///
+/// \param Level The diagnostic level of the message this stack pertains to.
+/// \param Loc   The include location of the current file (not the diagnostic
+///              location).
+void TextDiagnostic::emitIncludeStack(SourceLocation Loc,
+                                      DiagnosticsEngine::Level Level) {
+  // Skip redundant include stacks altogether.
+  if (LastIncludeLoc == Loc)
+    return;
+  LastIncludeLoc = Loc;
+
+  if (!DiagOpts.ShowNoteIncludeStack && Level == DiagnosticsEngine::Note)
+    return;
+
+  emitIncludeStackRecursively(Loc);
+}
+
+/// \brief Helper to recursivly walk up the include stack and print each layer
+/// on the way back down.
+void TextDiagnostic::emitIncludeStackRecursively(SourceLocation Loc) {
+  if (Loc.isInvalid())
+    return;
+
+  PresumedLoc PLoc = SM.getPresumedLoc(Loc);
+  if (PLoc.isInvalid())
+    return;
+
+  // Emit the other include frames first.
+  emitIncludeStackRecursively(PLoc.getIncludeLoc());
+
+  if (DiagOpts.ShowLocation)
+    OS << "In file included from " << PLoc.getFilename()
+       << ':' << PLoc.getLine() << ":\n";
+  else
+    OS << "In included file:\n";
+}
+
+/// \brief Print out the file/line/column information and include trace.
+///
+/// This method handlen the emission of the diagnostic location information.
+/// This includes extracting as much location information as is present for
+/// the diagnostic and printing it, as well as any include stack or source
+/// ranges necessary.
+void TextDiagnostic::EmitDiagnosticLoc(SourceLocation Loc, PresumedLoc PLoc,
+                                       DiagnosticsEngine::Level Level,
+                                       ArrayRef<CharSourceRange> Ranges) {
+  if (PLoc.isInvalid()) {
+    // At least print the file name if available:
+    FileID FID = SM.getFileID(Loc);
+    if (!FID.isInvalid()) {
+      const FileEntry* FE = SM.getFileEntryForID(FID);
+      if (FE && FE->getName()) {
+        OS << FE->getName();
+        if (FE->getDevice() == 0 && FE->getInode() == 0
+            && FE->getFileMode() == 0) {
+          // in PCH is a guess, but a good one:
+          OS << " (in PCH)";
+        }
+        OS << ": ";
+      }
+    }
+    return;
+  }
+  unsigned LineNo = PLoc.getLine();
+
+  if (!DiagOpts.ShowLocation)
+    return;
+
+  if (DiagOpts.ShowColors)
+    OS.changeColor(savedColor, true);
+
+  OS << PLoc.getFilename();
+  switch (DiagOpts.Format) {
+  case DiagnosticOptions::Clang: OS << ':'  << LineNo; break;
+  case DiagnosticOptions::Msvc:  OS << '('  << LineNo; break;
+  case DiagnosticOptions::Vi:    OS << " +" << LineNo; break;
+  }
+
+  if (DiagOpts.ShowColumn)
+    // Compute the column number.
+    if (unsigned ColNo = PLoc.getColumn()) {
+      if (DiagOpts.Format == DiagnosticOptions::Msvc) {
+        OS << ',';
+        ColNo--;
+      } else
+        OS << ':';
+      OS << ColNo;
+    }
+  switch (DiagOpts.Format) {
+  case DiagnosticOptions::Clang:
+  case DiagnosticOptions::Vi:    OS << ':';    break;
+  case DiagnosticOptions::Msvc:  OS << ") : "; break;
+  }
+
+  if (DiagOpts.ShowSourceRanges && !Ranges.empty()) {
+    FileID CaretFileID =
+      SM.getFileID(SM.getExpansionLoc(Loc));
+    bool PrintedRange = false;
+
+    for (ArrayRef<CharSourceRange>::const_iterator RI = Ranges.begin(),
+         RE = Ranges.end();
+         RI != RE; ++RI) {
+      // Ignore invalid ranges.
+      if (!RI->isValid()) continue;
+
+      SourceLocation B = SM.getExpansionLoc(RI->getBegin());
+      SourceLocation E = SM.getExpansionLoc(RI->getEnd());
+
+      // If the End location and the start location are the same and are a
+      // macro location, then the range was something that came from a
+      // macro expansion or _Pragma.  If this is an object-like macro, the
+      // best we can do is to highlight the range.  If this is a
+      // function-like macro, we'd also like to highlight the arguments.
+      if (B == E && RI->getEnd().isMacroID())
+        E = SM.getExpansionRange(RI->getEnd()).second;
+
+      std::pair<FileID, unsigned> BInfo = SM.getDecomposedLoc(B);
+      std::pair<FileID, unsigned> EInfo = SM.getDecomposedLoc(E);
+
+      // If the start or end of the range is in another file, just discard
+      // it.
+      if (BInfo.first != CaretFileID || EInfo.first != CaretFileID)
+        continue;
+
+      // Add in the length of the token, so that we cover multi-char
+      // tokens.
+      unsigned TokSize = 0;
+      if (RI->isTokenRange())
+        TokSize = Lexer::MeasureTokenLength(E, SM, LangOpts);
+
+      OS << '{' << SM.getLineNumber(BInfo.first, BInfo.second) << ':'
+        << SM.getColumnNumber(BInfo.first, BInfo.second) << '-'
+        << SM.getLineNumber(EInfo.first, EInfo.second) << ':'
+        << (SM.getColumnNumber(EInfo.first, EInfo.second)+TokSize)
+        << '}';
+      PrintedRange = true;
+    }
+
+    if (PrintedRange)
+      OS << ':';
+  }
+  OS << ' ';
+}
+
 /// \brief Emit the caret and underlining text.
 ///
 /// Walks up the macro expansion stack printing the code snippet, caret,
@@ -667,212 +873,6 @@ void TextDiagnostic::EmitSnippetAndCaret(
 
   // Print out any parseable fixit information requested by the options.
   EmitParseableFixits(Hints);
-}
-
-/*static*/ void
-TextDiagnostic::printDiagnosticLevel(raw_ostream &OS,
-                                     DiagnosticsEngine::Level Level,
-                                     bool ShowColors) {
-  if (ShowColors) {
-    // Print diagnostic category in bold and color
-    switch (Level) {
-    case DiagnosticsEngine::Ignored:
-      llvm_unreachable("Invalid diagnostic type");
-    case DiagnosticsEngine::Note:    OS.changeColor(noteColor, true); break;
-    case DiagnosticsEngine::Warning: OS.changeColor(warningColor, true); break;
-    case DiagnosticsEngine::Error:   OS.changeColor(errorColor, true); break;
-    case DiagnosticsEngine::Fatal:   OS.changeColor(fatalColor, true); break;
-    }
-  }
-
-  switch (Level) {
-  case DiagnosticsEngine::Ignored:
-    llvm_unreachable("Invalid diagnostic type");
-  case DiagnosticsEngine::Note:    OS << "note: "; break;
-  case DiagnosticsEngine::Warning: OS << "warning: "; break;
-  case DiagnosticsEngine::Error:   OS << "error: "; break;
-  case DiagnosticsEngine::Fatal:   OS << "fatal error: "; break;
-  }
-
-  if (ShowColors)
-    OS.resetColor();
-}
-
-/*static*/ void
-TextDiagnostic::printDiagnosticMessage(raw_ostream &OS,
-                                       DiagnosticsEngine::Level Level,
-                                       StringRef Message,
-                                       unsigned CurrentColumn, unsigned Columns,
-                                       bool ShowColors) {
-  if (ShowColors) {
-    // Print warnings, errors and fatal errors in bold, no color
-    switch (Level) {
-    case DiagnosticsEngine::Warning: OS.changeColor(savedColor, true); break;
-    case DiagnosticsEngine::Error:   OS.changeColor(savedColor, true); break;
-    case DiagnosticsEngine::Fatal:   OS.changeColor(savedColor, true); break;
-    default: break; //don't bold notes
-    }
-  }
-
-  if (Columns)
-    printWordWrapped(OS, Message, Columns, CurrentColumn);
-  else
-    OS << Message;
-
-  if (ShowColors)
-    OS.resetColor();
-  OS << '\n';
-}
-
-/// \brief Prints an include stack when appropriate for a particular
-/// diagnostic level and location.
-///
-/// This routine handles all the logic of suppressing particular include
-/// stacks (such as those for notes) and duplicate include stacks when
-/// repeated warnings occur within the same file. It also handles the logic
-/// of customizing the formatting and display of the include stack.
-///
-/// \param Level The diagnostic level of the message this stack pertains to.
-/// \param Loc   The include location of the current file (not the diagnostic
-///              location).
-void TextDiagnostic::emitIncludeStack(SourceLocation Loc,
-                                      DiagnosticsEngine::Level Level) {
-  // Skip redundant include stacks altogether.
-  if (LastIncludeLoc == Loc)
-    return;
-  LastIncludeLoc = Loc;
-
-  if (!DiagOpts.ShowNoteIncludeStack && Level == DiagnosticsEngine::Note)
-    return;
-
-  emitIncludeStackRecursively(Loc);
-}
-
-/// \brief Helper to recursivly walk up the include stack and print each layer
-/// on the way back down.
-void TextDiagnostic::emitIncludeStackRecursively(SourceLocation Loc) {
-  if (Loc.isInvalid())
-    return;
-
-  PresumedLoc PLoc = SM.getPresumedLoc(Loc);
-  if (PLoc.isInvalid())
-    return;
-
-  // Emit the other include frames first.
-  emitIncludeStackRecursively(PLoc.getIncludeLoc());
-
-  if (DiagOpts.ShowLocation)
-    OS << "In file included from " << PLoc.getFilename()
-       << ':' << PLoc.getLine() << ":\n";
-  else
-    OS << "In included file:\n";
-}
-
-/// \brief Print out the file/line/column information and include trace.
-///
-/// This method handlen the emission of the diagnostic location information.
-/// This includes extracting as much location information as is present for
-/// the diagnostic and printing it, as well as any include stack or source
-/// ranges necessary.
-void TextDiagnostic::EmitDiagnosticLoc(SourceLocation Loc, PresumedLoc PLoc,
-                                       DiagnosticsEngine::Level Level,
-                                       ArrayRef<CharSourceRange> Ranges) {
-  if (PLoc.isInvalid()) {
-    // At least print the file name if available:
-    FileID FID = SM.getFileID(Loc);
-    if (!FID.isInvalid()) {
-      const FileEntry* FE = SM.getFileEntryForID(FID);
-      if (FE && FE->getName()) {
-        OS << FE->getName();
-        if (FE->getDevice() == 0 && FE->getInode() == 0
-            && FE->getFileMode() == 0) {
-          // in PCH is a guess, but a good one:
-          OS << " (in PCH)";
-        }
-        OS << ": ";
-      }
-    }
-    return;
-  }
-  unsigned LineNo = PLoc.getLine();
-
-  if (!DiagOpts.ShowLocation)
-    return;
-
-  if (DiagOpts.ShowColors)
-    OS.changeColor(savedColor, true);
-
-  OS << PLoc.getFilename();
-  switch (DiagOpts.Format) {
-  case DiagnosticOptions::Clang: OS << ':'  << LineNo; break;
-  case DiagnosticOptions::Msvc:  OS << '('  << LineNo; break;
-  case DiagnosticOptions::Vi:    OS << " +" << LineNo; break;
-  }
-
-  if (DiagOpts.ShowColumn)
-    // Compute the column number.
-    if (unsigned ColNo = PLoc.getColumn()) {
-      if (DiagOpts.Format == DiagnosticOptions::Msvc) {
-        OS << ',';
-        ColNo--;
-      } else
-        OS << ':';
-      OS << ColNo;
-    }
-  switch (DiagOpts.Format) {
-  case DiagnosticOptions::Clang:
-  case DiagnosticOptions::Vi:    OS << ':';    break;
-  case DiagnosticOptions::Msvc:  OS << ") : "; break;
-  }
-
-  if (DiagOpts.ShowSourceRanges && !Ranges.empty()) {
-    FileID CaretFileID =
-      SM.getFileID(SM.getExpansionLoc(Loc));
-    bool PrintedRange = false;
-
-    for (ArrayRef<CharSourceRange>::const_iterator RI = Ranges.begin(),
-         RE = Ranges.end();
-         RI != RE; ++RI) {
-      // Ignore invalid ranges.
-      if (!RI->isValid()) continue;
-
-      SourceLocation B = SM.getExpansionLoc(RI->getBegin());
-      SourceLocation E = SM.getExpansionLoc(RI->getEnd());
-
-      // If the End location and the start location are the same and are a
-      // macro location, then the range was something that came from a
-      // macro expansion or _Pragma.  If this is an object-like macro, the
-      // best we can do is to highlight the range.  If this is a
-      // function-like macro, we'd also like to highlight the arguments.
-      if (B == E && RI->getEnd().isMacroID())
-        E = SM.getExpansionRange(RI->getEnd()).second;
-
-      std::pair<FileID, unsigned> BInfo = SM.getDecomposedLoc(B);
-      std::pair<FileID, unsigned> EInfo = SM.getDecomposedLoc(E);
-
-      // If the start or end of the range is in another file, just discard
-      // it.
-      if (BInfo.first != CaretFileID || EInfo.first != CaretFileID)
-        continue;
-
-      // Add in the length of the token, so that we cover multi-char
-      // tokens.
-      unsigned TokSize = 0;
-      if (RI->isTokenRange())
-        TokSize = Lexer::MeasureTokenLength(E, SM, LangOpts);
-
-      OS << '{' << SM.getLineNumber(BInfo.first, BInfo.second) << ':'
-        << SM.getColumnNumber(BInfo.first, BInfo.second) << '-'
-        << SM.getLineNumber(EInfo.first, EInfo.second) << ':'
-        << (SM.getColumnNumber(EInfo.first, EInfo.second)+TokSize)
-        << '}';
-      PrintedRange = true;
-    }
-
-    if (PrintedRange)
-      OS << ':';
-  }
-  OS << ' ';
 }
 
 /// \brief Highlight a SourceRange (with ~'s) for any characters on LineNo.

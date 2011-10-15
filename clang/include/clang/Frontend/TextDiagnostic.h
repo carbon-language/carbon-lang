@@ -90,38 +90,6 @@ public:
             ArrayRef<FixItHint> FixItHints,
             bool LastCaretDiagnosticWasNote = false);
 
-  /// \brief Emit the caret and underlining text.
-  ///
-  /// Walks up the macro expansion stack printing the code snippet, caret,
-  /// underlines and FixItHint display as appropriate at each level. Walk is
-  /// accomplished by calling itself recursively.
-  ///
-  /// FIXME: Remove macro expansion from this routine, it shouldn't be tied to
-  /// caret diagnostics.
-  /// FIXME: Break up massive function into logical units.
-  ///
-  /// \param Loc The location for this caret.
-  /// \param Ranges The underlined ranges for this code snippet.
-  /// \param Hints The FixIt hints active for this diagnostic.
-  /// \param MacroSkipEnd The depth to stop skipping macro expansions.
-  /// \param OnMacroInst The current depth of the macro expansion stack.
-  void EmitCaret(SourceLocation Loc,
-                 SmallVectorImpl<CharSourceRange>& Ranges,
-                 ArrayRef<FixItHint> Hints,
-                 unsigned &MacroDepth,
-                 unsigned OnMacroInst = 0);
-
-  /// \brief Emit a code snippet and caret line.
-  ///
-  /// This routine emits a single line's code snippet and caret line..
-  ///
-  /// \param Loc The location for the caret.
-  /// \param Ranges The underlined ranges for this code snippet.
-  /// \param Hints The FixIt hints active for this diagnostic.
-  void EmitSnippetAndCaret(SourceLocation Loc,
-                           SmallVectorImpl<CharSourceRange>& Ranges,
-                           ArrayRef<FixItHint> Hints);
-
   /// \brief Print the diagonstic level to a raw_ostream.
   ///
   /// This is a static helper that handles colorizing the level and formatting
@@ -161,6 +129,15 @@ private:
   void EmitDiagnosticLoc(SourceLocation Loc, PresumedLoc PLoc,
                          DiagnosticsEngine::Level Level,
                          ArrayRef<CharSourceRange> Ranges);
+  void EmitCaret(SourceLocation Loc,
+                 SmallVectorImpl<CharSourceRange>& Ranges,
+                 ArrayRef<FixItHint> Hints,
+                 unsigned &MacroDepth,
+                 unsigned OnMacroInst = 0);
+  void EmitSnippetAndCaret(SourceLocation Loc,
+                           SmallVectorImpl<CharSourceRange>& Ranges,
+                           ArrayRef<FixItHint> Hints);
+
   void HighlightRange(const CharSourceRange &R,
                       unsigned LineNo, FileID FID,
                       const std::string &SourceLine,
