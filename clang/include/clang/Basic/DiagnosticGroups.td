@@ -55,6 +55,8 @@ def FormatExtraArgs : DiagGroup<"format-extra-args">;
 def FormatZeroLength : DiagGroup<"format-zero-length">;
 
 def CXX98Compat : DiagGroup<"c++98-compat">;
+// Warnings for C++11 features which are Extensions in C++98 mode.
+def CXX98CompatPedantic : DiagGroup<"c++98-compat-pedantic", [CXX98Compat]>;
 
 def CXX11Narrowing : DiagGroup<"c++11-narrowing">;
 def : DiagGroup<"c++0x-narrowing", [CXX11Narrowing]>;

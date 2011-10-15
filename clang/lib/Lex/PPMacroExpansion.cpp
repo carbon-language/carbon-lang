@@ -421,8 +421,10 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
 
     // Empty arguments are standard in C99 and C++0x, and are supported as an extension in
     // other modes.
-    if (ArgTokens.size() == ArgTokenStart && !Features.C99 && !Features.CPlusPlus0x)
-      Diag(Tok, diag::ext_empty_fnmacro_arg);
+    if (ArgTokens.size() == ArgTokenStart && !Features.C99)
+      Diag(Tok, Features.CPlusPlus0x ?
+           diag::warn_cxx98_compat_empty_fnmacro_arg :
+           diag::ext_empty_fnmacro_arg);
 
     // Add a marker EOF token to the end of the token list for this argument.
     Token EOFTok;

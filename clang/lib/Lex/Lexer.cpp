@@ -1373,6 +1373,12 @@ void Lexer::LexStringLiteral(Token &Result, const char *CurPtr,
                              tok::TokenKind Kind) {
   const char *NulCharacter = 0; // Does this string contain the \0 character?
 
+  if (!isLexingRawMode() &&
+      (Kind == tok::utf8_string_literal ||
+       Kind == tok::utf16_string_literal ||
+       Kind == tok::utf32_string_literal))
+    Diag(BufferPtr, diag::warn_cxx98_compat_unicode_literal);
+
   char C = getAndAdvanceChar(CurPtr, Result);
   while (C != '"') {
     // Skip escaped characters.  Escaped newlines will already be processed by
@@ -1418,6 +1424,9 @@ void Lexer::LexRawStringLiteral(Token &Result, const char *CurPtr,
   //  Between the initial and final double quote characters of the raw string,
   //  any transformations performed in phases 1 and 2 (trigraphs,
   //  universal-character-names, and line splicing) are reverted.
+
+  if (!isLexingRawMode())
+    Diag(BufferPtr, diag::warn_cxx98_compat_raw_string_literal);
 
   unsigned PrefixLen = 0;
 
@@ -1522,6 +1531,10 @@ void Lexer::LexAngledStringLiteral(Token &Result, const char *CurPtr) {
 void Lexer::LexCharConstant(Token &Result, const char *CurPtr,
                             tok::TokenKind Kind) {
   const char *NulCharacter = 0; // Does this character contain the \0 character?
+
+  if (!isLexingRawMode() &&
+      (Kind == tok::utf16_char_constant || Kind == tok::utf32_char_constant))
+    Diag(BufferPtr, diag::warn_cxx98_compat_unicode_literal);
 
   char C = getAndAdvanceChar(CurPtr, Result);
   if (C == '\'') {
@@ -2799,6 +2812,8 @@ LexNextToken:
         char After = getCharAndSize(CurPtr + SizeTmp + SizeTmp2, SizeTmp3);
         if (After != ':' && After != '>') {
           Kind = tok::less;
+          if (!isLexingRawMode())
+            Diag(BufferPtr, diag::warn_cxx98_compat_less_colon_colon);
           break;
         }
       }

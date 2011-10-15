@@ -777,6 +777,8 @@ void Preprocessor::HandleLineDirective(Token &Tok) {
     LineLimit = 2147483648U;
   if (LineNo >= LineLimit)
     Diag(DigitTok, diag::ext_pp_line_too_big) << LineLimit;
+  else if (Features.CPlusPlus0x && LineNo >= 32768U)
+    Diag(DigitTok, diag::warn_cxx98_compat_pp_line_too_big);
 
   int FilenameID = -1;
   Token StrTok;
@@ -1367,8 +1369,10 @@ bool Preprocessor::ReadMacroDefinitionArgList(MacroInfo *MI) {
       Diag(Tok, diag::err_pp_expected_ident_in_arg_list);
       return true;
     case tok::ellipsis:  // #define X(... -> C99 varargs
-      if (!Features.C99 && !Features.CPlusPlus0x)
-        Diag(Tok, diag::ext_variadic_macro);
+      if (!Features.C99)
+        Diag(Tok, Features.CPlusPlus0x ? 
+             diag::warn_cxx98_compat_variadic_macro :
+             diag::ext_variadic_macro);
 
       // Lex the token after the identifier.
       LexUnexpandedToken(Tok);

@@ -74,6 +74,9 @@ def note_pragma_entered_here : Note<"#pragma entered here">;
 def ext_longlong : Extension<
   "'long long' is an extension when C99 mode is not enabled">,
   InGroup<LongLong>;
+def warn_cxx98_compat_longlong : Warning<
+  "'long long' is incompatible with C++98">,
+  InGroup<CXX98CompatPedantic>, DefaultIgnore;
 def warn_integer_too_large : Warning<
   "integer constant is too large for its type">;
 def warn_integer_too_large_for_signed : Warning<
