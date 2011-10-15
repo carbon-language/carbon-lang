@@ -16,3 +16,8 @@ struct D final : B { // expected-warning {{'final' keyword accepted as a C++11 e
   virtual void f() override; // expected-warning {{'override' keyword accepted as a C++11 extension}}
   virtual void g() final; // expected-warning {{'final' keyword accepted as a C++11 extension}}
 };
+
+void NewBracedInitList() {
+  // A warning on this would be sufficient once we can handle it correctly.
+  new int {}; // expected-error {{}}
+}
