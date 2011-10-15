@@ -327,7 +327,7 @@ public:
   }
 
   /// doesAccessArgPointees - Return true if functions with the specified
-  /// behavior are known to potentially read or write  from objects pointed
+  /// behavior are known to potentially read or write from objects pointed
   /// to be their pointer-typed arguments (with arbitrary offsets).
   ///
   static bool doesAccessArgPointees(ModRefBehavior MRB) {
