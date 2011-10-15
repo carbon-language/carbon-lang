@@ -254,36 +254,6 @@ static PresumedLoc getDiagnosticPresumedLoc(const SourceManager &SM,
   return SM.getPresumedLoc(Loc);
 }
 
-/// \brief Print the diagonstic level to a raw_ostream.
-///
-/// Handles colorizing the level and formatting.
-static void printDiagnosticLevel(raw_ostream &OS,
-                                 DiagnosticsEngine::Level Level,
-                                 bool ShowColors) {
-  if (ShowColors) {
-    // Print diagnostic category in bold and color
-    switch (Level) {
-    case DiagnosticsEngine::Ignored:
-      llvm_unreachable("Invalid diagnostic type");
-    case DiagnosticsEngine::Note:    OS.changeColor(noteColor, true); break;
-    case DiagnosticsEngine::Warning: OS.changeColor(warningColor, true); break;
-    case DiagnosticsEngine::Error:   OS.changeColor(errorColor, true); break;
-    case DiagnosticsEngine::Fatal:   OS.changeColor(fatalColor, true); break;
-    }
-  }
-
-  switch (Level) {
-  case DiagnosticsEngine::Ignored: llvm_unreachable("Invalid diagnostic type");
-  case DiagnosticsEngine::Note:    OS << "note: "; break;
-  case DiagnosticsEngine::Warning: OS << "warning: "; break;
-  case DiagnosticsEngine::Error:   OS << "error: "; break;
-  case DiagnosticsEngine::Fatal:   OS << "fatal error: "; break;
-  }
-
-  if (ShowColors)
-    OS.resetColor();
-}
-
 /// \brief Skip over whitespace in the string, starting at the given
 /// index.
 ///
@@ -793,6 +763,43 @@ public:
     EmitParseableFixits(Hints);
   }
 
+  /// \brief Print the diagonstic level to a raw_ostream.
+  ///
+  /// This is a static helper that handles colorizing the level and formatting
+  /// it into an arbitrary output stream. This is used internally by the
+  /// TextDiagnostic emission code, but it can also be used directly by
+  /// consumers that don't have a source manager or other state that the full
+  /// TextDiagnostic logic requires.
+  static void printDiagnosticLevel(raw_ostream &OS,
+                                   DiagnosticsEngine::Level Level,
+                                   bool ShowColors) {
+    if (ShowColors) {
+      // Print diagnostic category in bold and color
+      switch (Level) {
+      case DiagnosticsEngine::Ignored:
+        llvm_unreachable("Invalid diagnostic type");
+      case DiagnosticsEngine::Note:    OS.changeColor(noteColor, true); break;
+      case DiagnosticsEngine::Warning:
+        OS.changeColor(warningColor, true);
+        break;
+      case DiagnosticsEngine::Error:   OS.changeColor(errorColor, true); break;
+      case DiagnosticsEngine::Fatal:   OS.changeColor(fatalColor, true); break;
+      }
+    }
+
+    switch (Level) {
+    case DiagnosticsEngine::Ignored:
+      llvm_unreachable("Invalid diagnostic type");
+    case DiagnosticsEngine::Note:    OS << "note: "; break;
+    case DiagnosticsEngine::Warning: OS << "warning: "; break;
+    case DiagnosticsEngine::Error:   OS << "error: "; break;
+    case DiagnosticsEngine::Fatal:   OS << "fatal error: "; break;
+    }
+
+    if (ShowColors)
+      OS.resetColor();
+  }
+
 private:
   /// \brief Prints an include stack when appropriate for a particular
   /// diagnostic level and location.
@@ -1275,7 +1282,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
   // diagnostics in a context that lacks language options, a source manager, or
   // other infrastructure necessary when emitting more rich diagnostics.
   if (!Info.getLocation().isValid()) {
-    printDiagnosticLevel(OS, Level, DiagOpts->ShowColors);
+    TextDiagnostic::printDiagnosticLevel(OS, Level, DiagOpts->ShowColors);
     printDiagnosticMessage(OS, Level, DiagMessageStream.str(),
                            OS.tell() - StartOfLocationInfo,
                            DiagOpts->MessageLength, DiagOpts->ShowColors);
