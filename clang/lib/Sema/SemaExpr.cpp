@@ -7264,13 +7264,14 @@ void Sema::ConvertPropertyForLValue(ExprResult &LHS, ExprResult &RHS,
         return;
       }
     }
-  } else if (getLangOptions().ObjCAutoRefCount) {
+  } else {
     const ObjCMethodDecl *setter
       = PropRef->getExplicitProperty()->getSetterMethodDecl();
     if (setter) {
       ObjCMethodDecl::param_const_iterator P = setter->param_begin();
       LHSTy = (*P)->getType();
-      Consumed = (*P)->hasAttr<NSConsumedAttr>();
+      if (getLangOptions().ObjCAutoRefCount)
+        Consumed = (*P)->hasAttr<NSConsumedAttr>();
     }
   }
 
@@ -7285,6 +7286,7 @@ void Sema::ConvertPropertyForLValue(ExprResult &LHS, ExprResult &RHS,
         checkRetainCycles(const_cast<Expr*>(PropRef->getBase()), RHS.get());
     }
   }
+  LHSTy = LHSTy.getNonReferenceType();
 }
   
 

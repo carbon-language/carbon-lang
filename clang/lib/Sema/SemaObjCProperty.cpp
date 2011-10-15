@@ -948,7 +948,8 @@ bool Sema::DiagnosePropertyAccessorMismatch(ObjCPropertyDecl *property,
                                             ObjCMethodDecl *GetterMethod,
                                             SourceLocation Loc) {
   if (GetterMethod &&
-      GetterMethod->getResultType() != property->getType()) {
+      GetterMethod->getResultType().getNonReferenceType() 
+      != property->getType().getNonReferenceType()) {
     AssignConvertType result = Incompatible;
     if (property->getType()->isObjCObjectPointerType())
       result = CheckAssignmentConstraints(Loc, GetterMethod->getResultType(),
@@ -1510,7 +1511,8 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
       Diag(SetterMethod->getLocation(), diag::err_setter_type_void);
     if (SetterMethod->param_size() != 1 ||
         !Context.hasSameUnqualifiedType(
-          (*SetterMethod->param_begin())->getType(), property->getType())) {
+          (*SetterMethod->param_begin())->getType().getNonReferenceType(), 
+          property->getType().getNonReferenceType())) {
       Diag(property->getLocation(),
            diag::warn_accessor_property_type_mismatch)
         << property->getDeclName()
