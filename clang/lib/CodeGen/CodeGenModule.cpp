@@ -1766,7 +1766,7 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
   llvm::StructType *STy =
     cast<llvm::StructType>(getTypes().ConvertType(CFTy));
 
-  std::vector<llvm::Constant*> Fields(4);
+  llvm::Constant *Fields[4];
 
   // Class pointer.
   Fields[0] = CFConstantStringClassRef;
@@ -1907,7 +1907,7 @@ CodeGenModule::GetAddrOfConstantString(const StringLiteral *Literal) {
     NSConstantStringType = cast<llvm::StructType>(getTypes().ConvertType(NSTy));
   }
   
-  std::vector<llvm::Constant*> Fields(3);
+  llvm::Constant *Fields[3];
   
   // Class pointer.
   Fields[0] = ConstantStringClassRef;

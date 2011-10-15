@@ -1604,9 +1604,7 @@ static llvm::Value *emitARCStoreOperation(CodeGenFunction &CGF,
            == value->getType());
 
   if (!fn) {
-    std::vector<llvm::Type*> argTypes(2);
-    argTypes[0] = CGF.Int8PtrPtrTy;
-    argTypes[1] = CGF.Int8PtrTy;
+    llvm::Type *argTypes[] = { CGF.Int8PtrPtrTy, CGF.Int8PtrTy };
 
     llvm::FunctionType *fnType
       = llvm::FunctionType::get(CGF.Int8PtrTy, argTypes, false);
