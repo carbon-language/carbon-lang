@@ -75,7 +75,7 @@ ThreadGDBRemote::WillResume (StateType resume_state)
     Thread::WillResume(resume_state);
 
     int signo = GetResumeSignal();
-    lldb::LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STEP));
+    lldb::LogSP log(lldb_private::GetLogIfAnyCategoriesSet (GDBR_LOG_THREAD));
     if (log)
         log->Printf ("Resuming thread: %4.4x with state: %s.", GetID(), StateAsCString(resume_state));
 

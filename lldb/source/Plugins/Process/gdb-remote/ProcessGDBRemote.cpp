@@ -2539,7 +2539,7 @@ ProcessGDBRemote::StartNoticingNewThreads()
             lldb::BreakpointSP break_sp = m_target.GetBreakpointByID(m_thread_observation_bps[i]);
             if (break_sp)
             {
-                if (log)
+                if (log && log->GetVerbose())
                     log->Printf("Enabled noticing new thread breakpoint.");
                 break_sp->SetEnabled(true);
             }
@@ -2552,7 +2552,7 @@ ProcessGDBRemote::StartNoticingNewThreads()
             Breakpoint *breakpoint = m_target.CreateBreakpoint (NULL, NULL, bp_names[i], eFunctionNameTypeFull, true).get();
             if (breakpoint)
             {
-                if (log)
+                if (log && log->GetVerbose())
                      log->Printf("Successfully created new thread notification breakpoint at \"%s\".", bp_names[i]);
                 m_thread_observation_bps.push_back(breakpoint->GetID());
                 breakpoint->SetCallback (ProcessGDBRemote::NewThreadNotifyBreakpointHit, this, true);
@@ -2573,7 +2573,7 @@ bool
 ProcessGDBRemote::StopNoticingNewThreads()
 {   
     LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
-    if (log)
+    if (log && log->GetVerbose())
         log->Printf ("Disabling new thread notification breakpoint.");
     size_t num_bps = m_thread_observation_bps.size();
     if (num_bps != 0)
