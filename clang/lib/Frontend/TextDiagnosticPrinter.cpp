@@ -53,54 +53,6 @@ TextDiagnosticPrinter::~TextDiagnosticPrinter() {
     delete &OS;
 }
 
-/// \brief Helper to recursivly walk up the include stack and print each layer
-/// on the way back down.
-static void PrintIncludeStackRecursively(raw_ostream &OS,
-                                         const SourceManager &SM,
-                                         SourceLocation Loc,
-                                         bool ShowLocation) {
-  if (Loc.isInvalid())
-    return;
-
-  PresumedLoc PLoc = SM.getPresumedLoc(Loc);
-  if (PLoc.isInvalid())
-    return;
-
-  // Print out the other include frames first.
-  PrintIncludeStackRecursively(OS, SM, PLoc.getIncludeLoc(), ShowLocation);
-
-  if (ShowLocation)
-    OS << "In file included from " << PLoc.getFilename()
-       << ':' << PLoc.getLine() << ":\n";
-  else
-    OS << "In included file:\n";
-}
-
-/// \brief Prints an include stack when appropriate for a particular diagnostic
-/// level and location.
-///
-/// This routine handles all the logic of suppressing particular include stacks
-/// (such as those for notes) and duplicate include stacks when repeated
-/// warnings occur within the same file. It also handles the logic of
-/// customizing the formatting and display of the include stack.
-///
-/// \param Level The diagnostic level of the message this stack pertains to.
-/// \param Loc   The include location of the current file (not the diagnostic
-///              location).
-void TextDiagnosticPrinter::PrintIncludeStack(DiagnosticsEngine::Level Level,
-                                              SourceLocation Loc,
-                                              const SourceManager &SM) {
-  // Skip redundant include stacks altogether.
-  if (LastNonNoteLoc == Loc)
-    return;
-  LastNonNoteLoc = FullSourceLoc(Loc, SM);
-
-  if (!DiagOpts->ShowNoteIncludeStack && Level == DiagnosticsEngine::Note)
-    return;
-
-  PrintIncludeStackRecursively(OS, SM, Loc, DiagOpts->ShowLocation);
-}
-
 /// \brief When the source code line we want to print is too long for
 /// the terminal, select the "interesting" region.
 static void SelectInterestingSourceRegion(std::string &SourceLine,
@@ -568,6 +520,9 @@ public:
   /// \brief Get the last diagnostic location emitted.
   SourceLocation getLastLoc() const { return LastLoc; }
 
+  /// \brief Get the last non-note diagnostic location emitted.
+  SourceLocation getLastNonNoteLoc() const { return LastNonNoteLoc; }
+
   void Emit(SourceLocation Loc, DiagnosticsEngine::Level Level,
             StringRef Message, ArrayRef<CharSourceRange> Ranges,
             ArrayRef<FixItHint> FixItHints,
@@ -576,7 +531,7 @@ public:
 
     // First, if this diagnostic is not in the main file, print out the
     // "included from" lines.
-    Printer.PrintIncludeStack(Level, PLoc.getIncludeLoc(), SM);
+    emitIncludeStack(PLoc.getIncludeLoc(), Level);
 
     uint64_t StartOfLocationInfo = OS.tell();
 
@@ -694,8 +649,7 @@ public:
 
       // If this diagnostic is not in the main file, print out the
       // "included from" lines.
-      Printer.PrintIncludeStack(DiagnosticsEngine::Note, PLoc.getIncludeLoc(), 
-                                SM);
+      emitIncludeStack(PLoc.getIncludeLoc(), DiagnosticsEngine::Note);
 
       if (DiagOpts.ShowLocation) {
         // Emit the file/line/column that this expansion came from.
@@ -833,6 +787,49 @@ public:
   }
 
 private:
+  /// \brief Prints an include stack when appropriate for a particular
+  /// diagnostic level and location.
+  ///
+  /// This routine handles all the logic of suppressing particular include
+  /// stacks (such as those for notes) and duplicate include stacks when
+  /// repeated warnings occur within the same file. It also handles the logic
+  /// of customizing the formatting and display of the include stack.
+  ///
+  /// \param Level The diagnostic level of the message this stack pertains to.
+  /// \param Loc   The include location of the current file (not the diagnostic
+  ///              location).
+  void emitIncludeStack(SourceLocation Loc, DiagnosticsEngine::Level Level) {
+    // Skip redundant include stacks altogether.
+    if (LastNonNoteLoc == Loc)
+      return;
+    LastNonNoteLoc = Loc;
+
+    if (!DiagOpts.ShowNoteIncludeStack && Level == DiagnosticsEngine::Note)
+      return;
+
+    emitIncludeStackRecursively(Loc);
+  }
+
+  /// \brief Helper to recursivly walk up the include stack and print each layer
+  /// on the way back down.
+  void emitIncludeStackRecursively(SourceLocation Loc) {
+    if (Loc.isInvalid())
+      return;
+
+    PresumedLoc PLoc = SM.getPresumedLoc(Loc);
+    if (PLoc.isInvalid())
+      return;
+
+    // Emit the other include frames first.
+    emitIncludeStackRecursively(PLoc.getIncludeLoc());
+
+    if (DiagOpts.ShowLocation)
+      OS << "In file included from " << PLoc.getFilename()
+         << ':' << PLoc.getLine() << ":\n";
+    else
+      OS << "In included file:\n";
+  }
+
   /// \brief Print out the file/line/column information and include trace.
   ///
   /// This method handlen the emission of the diagnostic location information.
@@ -1286,7 +1283,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
          "Unexpected diagnostic with no source manager");
   const SourceManager &SM = Info.getSourceManager();
   TextDiagnostic TextDiag(*this, OS, SM, *LangOpts, *DiagOpts,
-                          LastNonNoteLoc, LastLoc);
+                          LastLoc, LastNonNoteLoc);
 
   TextDiag.Emit(Info.getLocation(), Level, DiagMessageStream.str(),
                 Info.getRanges(),
@@ -1296,6 +1293,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
 
   // Cache the LastLoc from the TextDiagnostic printing.
   LastLoc = FullSourceLoc(TextDiag.getLastLoc(), SM);
+  LastNonNoteLoc = FullSourceLoc(TextDiag.getLastNonNoteLoc(), SM);
   LastCaretDiagnosticWasNote = (Level == DiagnosticsEngine::Note);
 
   OS.flush();

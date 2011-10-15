@@ -53,9 +53,6 @@ public:
     LangOpts = 0;
   }
 
-  void PrintIncludeStack(DiagnosticsEngine::Level Level, SourceLocation Loc,
-                         const SourceManager &SM);
-
   virtual void HandleDiagnostic(DiagnosticsEngine::Level Level,
                                 const Diagnostic &Info);
 
