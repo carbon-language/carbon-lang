@@ -38,7 +38,7 @@ const unsigned WordWrapIndentation = 6;
 
 /// \brief When the source code line we want to print is too long for
 /// the terminal, select the "interesting" region.
-static void SelectInterestingSourceRegion(std::string &SourceLine,
+static void selectInterestingSourceRegion(std::string &SourceLine,
                                           std::string &CaretLine,
                                           std::string &FixItInsertionLine,
                                           unsigned EndOfCaretToken,
@@ -228,7 +228,7 @@ static SourceLocation getImmediateMacroCalleeLoc(const SourceManager &SM,
 /// presumed location for the top of any macro backtrace when present.
 static PresumedLoc getDiagnosticPresumedLoc(const SourceManager &SM,
                                             SourceLocation Loc) {
-  // This is a condensed form of the algorithm used by EmitCaretDiagnostic to
+  // This is a condensed form of the algorithm used by emitCaretDiagnostic to
   // walk to the top of the macro call stack.
   while (Loc.isMacroID()) {
     Loc = skipToMacroArgExpansion(SM, Loc);
@@ -404,10 +404,12 @@ TextDiagnostic::TextDiagnostic(raw_ostream &OS,
     this->LastIncludeLoc = SourceLocation();
     }
 
-void TextDiagnostic::Emit(SourceLocation Loc, DiagnosticsEngine::Level Level,
-                          StringRef Message, ArrayRef<CharSourceRange> Ranges,
-                          ArrayRef<FixItHint> FixItHints,
-                          bool LastCaretDiagnosticWasNote) {
+void TextDiagnostic::emitDiagnostic(SourceLocation Loc,
+                                    DiagnosticsEngine::Level Level,
+                                    StringRef Message,
+                                    ArrayRef<CharSourceRange> Ranges,
+                                    ArrayRef<FixItHint> FixItHints,
+                                    bool LastCaretDiagnosticWasNote) {
   PresumedLoc PLoc = getDiagnosticPresumedLoc(SM, Loc);
 
   // First, if this diagnostic is not in the main file, print out the
@@ -417,7 +419,7 @@ void TextDiagnostic::Emit(SourceLocation Loc, DiagnosticsEngine::Level Level,
   uint64_t StartOfLocationInfo = OS.tell();
 
   // Next emit the location of this particular diagnostic.
-  EmitDiagnosticLoc(Loc, PLoc, Level, Ranges);
+  emitDiagnosticLoc(Loc, PLoc, Level, Ranges);
 
   if (DiagOpts.ShowColors)
     OS.resetColor();
@@ -447,7 +449,7 @@ void TextDiagnostic::Emit(SourceLocation Loc, DiagnosticsEngine::Level Level,
         MutableRanges.push_back(I->RemoveRange);
 
     unsigned MacroDepth = 0;
-    EmitCaret(Loc, MutableRanges, FixItHints, MacroDepth);
+    emitCaret(Loc, MutableRanges, FixItHints, MacroDepth);
   }
 
   LastLoc = Loc;
@@ -559,7 +561,7 @@ void TextDiagnostic::emitIncludeStackRecursively(SourceLocation Loc) {
 /// This includes extracting as much location information as is present for
 /// the diagnostic and printing it, as well as any include stack or source
 /// ranges necessary.
-void TextDiagnostic::EmitDiagnosticLoc(SourceLocation Loc, PresumedLoc PLoc,
+void TextDiagnostic::emitDiagnosticLoc(SourceLocation Loc, PresumedLoc PLoc,
                                        DiagnosticsEngine::Level Level,
                                        ArrayRef<CharSourceRange> Ranges) {
   if (PLoc.isInvalid()) {
@@ -675,7 +677,7 @@ void TextDiagnostic::EmitDiagnosticLoc(SourceLocation Loc, PresumedLoc PLoc,
 /// \param Hints The FixIt hints active for this diagnostic.
 /// \param MacroSkipEnd The depth to stop skipping macro expansions.
 /// \param OnMacroInst The current depth of the macro expansion stack.
-void TextDiagnostic::EmitCaret(SourceLocation Loc,
+void TextDiagnostic::emitCaret(SourceLocation Loc,
                                SmallVectorImpl<CharSourceRange>& Ranges,
                                ArrayRef<FixItHint> Hints,
                                unsigned &MacroDepth,
@@ -687,7 +689,7 @@ void TextDiagnostic::EmitCaret(SourceLocation Loc,
   if (Loc.isFileID()) {
     assert(MacroDepth == 0 && "We shouldn't hit a leaf node twice!");
     MacroDepth = OnMacroInst;
-    EmitSnippetAndCaret(Loc, Ranges, Hints);
+    emitSnippetAndCaret(Loc, Ranges, Hints);
     return;
   }
   // Otherwise recurse through each macro expansion layer.
@@ -699,7 +701,7 @@ void TextDiagnostic::EmitCaret(SourceLocation Loc,
   SourceLocation OneLevelUp = getImmediateMacroCallerLoc(SM, Loc);
 
   // FIXME: Map ranges?
-  EmitCaret(OneLevelUp, Ranges, Hints, MacroDepth, OnMacroInst + 1);
+  emitCaret(OneLevelUp, Ranges, Hints, MacroDepth, OnMacroInst + 1);
 
   // Map the location.
   Loc = getImmediateMacroCalleeLoc(SM, Loc);
@@ -748,7 +750,7 @@ void TextDiagnostic::EmitCaret(SourceLocation Loc,
     }
     OS << "note: expanded from:\n";
 
-    EmitSnippetAndCaret(Loc, Ranges, ArrayRef<FixItHint>());
+    emitSnippetAndCaret(Loc, Ranges, ArrayRef<FixItHint>());
     return;
   }
 
@@ -767,7 +769,7 @@ void TextDiagnostic::EmitCaret(SourceLocation Loc,
 /// \param Loc The location for the caret.
 /// \param Ranges The underlined ranges for this code snippet.
 /// \param Hints The FixIt hints active for this diagnostic.
-void TextDiagnostic::EmitSnippetAndCaret(
+void TextDiagnostic::emitSnippetAndCaret(
     SourceLocation Loc,
     SmallVectorImpl<CharSourceRange>& Ranges,
     ArrayRef<FixItHint> Hints) {
@@ -817,7 +819,7 @@ void TextDiagnostic::EmitSnippetAndCaret(
   for (SmallVectorImpl<CharSourceRange>::iterator I = Ranges.begin(),
                                                   E = Ranges.end();
        I != E; ++I)
-    HighlightRange(*I, LineNo, FID, SourceLine, CaretLine);
+    highlightRange(*I, LineNo, FID, SourceLine, CaretLine);
 
   // Next, insert the caret itself.
   if (ColNo-1 < CaretLine.size())
@@ -825,7 +827,7 @@ void TextDiagnostic::EmitSnippetAndCaret(
   else
     CaretLine.push_back('^');
 
-  ExpandTabs(SourceLine, CaretLine);
+  expandTabs(SourceLine, CaretLine);
 
   // If we are in -fdiagnostics-print-source-range-info mode, we are trying
   // to produce easily machine parsable output.  Add a space before the
@@ -836,7 +838,7 @@ void TextDiagnostic::EmitSnippetAndCaret(
     CaretLine = ' ' + CaretLine;
   }
 
-  std::string FixItInsertionLine = BuildFixItInsertionLine(LineNo,
+  std::string FixItInsertionLine = buildFixItInsertionLine(LineNo,
                                                            LineStart, LineEnd,
                                                            Hints);
 
@@ -844,7 +846,7 @@ void TextDiagnostic::EmitSnippetAndCaret(
   // "interesting" source region within that line.
   unsigned Columns = DiagOpts.MessageLength;
   if (Columns && SourceLine.size() > Columns)
-    SelectInterestingSourceRegion(SourceLine, CaretLine, FixItInsertionLine,
+    selectInterestingSourceRegion(SourceLine, CaretLine, FixItInsertionLine,
                                   CaretEndColNo, Columns);
 
   // Finally, remove any blank spaces from the end of CaretLine.
@@ -872,11 +874,11 @@ void TextDiagnostic::EmitSnippetAndCaret(
   }
 
   // Print out any parseable fixit information requested by the options.
-  EmitParseableFixits(Hints);
+  emitParseableFixits(Hints);
 }
 
 /// \brief Highlight a SourceRange (with ~'s) for any characters on LineNo.
-void TextDiagnostic::HighlightRange(const CharSourceRange &R,
+void TextDiagnostic::highlightRange(const CharSourceRange &R,
                                     unsigned LineNo, FileID FID,
                                     const std::string &SourceLine,
                                     std::string &CaretLine) {
@@ -953,7 +955,7 @@ void TextDiagnostic::HighlightRange(const CharSourceRange &R,
     CaretLine[i] = '~';
 }
 
-std::string TextDiagnostic::BuildFixItInsertionLine(unsigned LineNo,
+std::string TextDiagnostic::buildFixItInsertionLine(unsigned LineNo,
                                                     const char *LineStart,
                                                     const char *LineEnd,
                                                     ArrayRef<FixItHint> Hints) {
@@ -1027,7 +1029,7 @@ std::string TextDiagnostic::BuildFixItInsertionLine(unsigned LineNo,
   return FixItInsertionLine;
 }
 
-void TextDiagnostic::ExpandTabs(std::string &SourceLine,
+void TextDiagnostic::expandTabs(std::string &SourceLine,
                                 std::string &CaretLine) {
   // Scan the source line, looking for tabs.  If we find any, manually expand
   // them to spaces and update the CaretLine to match.
@@ -1052,7 +1054,7 @@ void TextDiagnostic::ExpandTabs(std::string &SourceLine,
   }
 }
 
-void TextDiagnostic::EmitParseableFixits(ArrayRef<FixItHint> Hints) {
+void TextDiagnostic::emitParseableFixits(ArrayRef<FixItHint> Hints) {
   if (!DiagOpts.ShowParseableFixits)
     return;
 

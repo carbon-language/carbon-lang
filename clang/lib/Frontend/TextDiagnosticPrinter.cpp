@@ -162,10 +162,10 @@ void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
   TextDiagnostic TextDiag(OS, SM, *LangOpts, *DiagOpts,
                           LastLoc, LastIncludeLoc, LastLevel);
 
-  TextDiag.Emit(Info.getLocation(), Level, DiagMessageStream.str(),
-                Info.getRanges(),
-                llvm::makeArrayRef(Info.getFixItHints(),
-                                   Info.getNumFixItHints()));
+  TextDiag.emitDiagnostic(Info.getLocation(), Level, DiagMessageStream.str(),
+                          Info.getRanges(),
+                          llvm::makeArrayRef(Info.getFixItHints(),
+                                             Info.getNumFixItHints()));
 
   // Cache the LastLoc from the TextDiagnostic printing.
   // FIXME: Rather than this, we should persist a TextDiagnostic object across

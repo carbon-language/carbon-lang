@@ -85,10 +85,10 @@ public:
   /// \brief Get the last diagnostic level.
   DiagnosticsEngine::Level getLastLevel() const { return LastLevel; }
 
-  void Emit(SourceLocation Loc, DiagnosticsEngine::Level Level,
-            StringRef Message, ArrayRef<CharSourceRange> Ranges,
-            ArrayRef<FixItHint> FixItHints,
-            bool LastCaretDiagnosticWasNote = false);
+  void emitDiagnostic(SourceLocation Loc, DiagnosticsEngine::Level Level,
+                      StringRef Message, ArrayRef<CharSourceRange> Ranges,
+                      ArrayRef<FixItHint> FixItHints,
+                      bool LastCaretDiagnosticWasNote = false);
 
   /// \brief Print the diagonstic level to a raw_ostream.
   ///
@@ -126,28 +126,28 @@ public:
 private:
   void emitIncludeStack(SourceLocation Loc, DiagnosticsEngine::Level Level);
   void emitIncludeStackRecursively(SourceLocation Loc);
-  void EmitDiagnosticLoc(SourceLocation Loc, PresumedLoc PLoc,
+  void emitDiagnosticLoc(SourceLocation Loc, PresumedLoc PLoc,
                          DiagnosticsEngine::Level Level,
                          ArrayRef<CharSourceRange> Ranges);
-  void EmitCaret(SourceLocation Loc,
+  void emitCaret(SourceLocation Loc,
                  SmallVectorImpl<CharSourceRange>& Ranges,
                  ArrayRef<FixItHint> Hints,
                  unsigned &MacroDepth,
                  unsigned OnMacroInst = 0);
-  void EmitSnippetAndCaret(SourceLocation Loc,
+  void emitSnippetAndCaret(SourceLocation Loc,
                            SmallVectorImpl<CharSourceRange>& Ranges,
                            ArrayRef<FixItHint> Hints);
 
-  void HighlightRange(const CharSourceRange &R,
+  void highlightRange(const CharSourceRange &R,
                       unsigned LineNo, FileID FID,
                       const std::string &SourceLine,
                       std::string &CaretLine);
-  std::string BuildFixItInsertionLine(unsigned LineNo,
+  std::string buildFixItInsertionLine(unsigned LineNo,
                                       const char *LineStart,
                                       const char *LineEnd,
                                       ArrayRef<FixItHint> Hints);
-  void ExpandTabs(std::string &SourceLine, std::string &CaretLine);
-  void EmitParseableFixits(ArrayRef<FixItHint> Hints);
+  void expandTabs(std::string &SourceLine, std::string &CaretLine);
+  void emitParseableFixits(ArrayRef<FixItHint> Hints);
 };
 
 } // end namespace clang
