@@ -5932,7 +5932,7 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
       for (unsigned i = 0; SavedRegs[i] != 0; ++i) {
         if (!TRC->contains(SavedRegs[i])) continue;
         if (!DefRegs[SavedRegs[i]])
-          MIB.addReg(SavedRegs[i], RegState::Implicit | RegState::Define);
+          MIB.addReg(SavedRegs[i], RegState::ImplicitDefine | RegState::Dead);
       }
 
       break;
