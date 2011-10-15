@@ -63,7 +63,7 @@ ThreadPlanStepInRange::GetDescription (Stream *s, lldb::DescriptionLevel level)
     else
     {
         s->Printf ("Stepping through range (stepping into functions): ");
-        m_address_range.Dump (s, &m_thread.GetProcess().GetTarget(), Address::DumpStyleLoadAddress);
+        DumpRanges(s);
     }
 }
 

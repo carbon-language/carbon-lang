@@ -25,6 +25,13 @@ namespace lldb_private {
 class ThreadPlanStepRange : public ThreadPlan
 {
 public:
+    ThreadPlanStepRange (ThreadPlanKind kind,
+                         const char *name,
+                         Thread &thread,
+                         const AddressRange &range,
+                         const SymbolContext &addr_context,
+                         lldb::RunMode stop_others);
+
     virtual ~ThreadPlanStepRange ();
 
     virtual void GetDescription (Stream *s, lldb::DescriptionLevel level) = 0;
@@ -37,22 +44,18 @@ public:
     virtual bool WillStop ();
     virtual bool MischiefManaged ();
 
-protected:
+    void AddRange(const AddressRange &new_range);
 
-    ThreadPlanStepRange (ThreadPlanKind kind,
-                         const char *name,
-                         Thread &thread,
-                         const AddressRange &range,
-                         const SymbolContext &addr_context,
-                         lldb::RunMode stop_others);
+protected:
 
     bool InRange();
     bool FrameIsYounger();
     bool FrameIsOlder();
     bool InSymbol();
+    void DumpRanges (Stream *s);
     
     SymbolContext m_addr_context;
-    AddressRange m_address_range;
+    std::vector<AddressRange> m_address_ranges;
     lldb::RunMode m_stop_others;
     uint32_t m_stack_depth;
     StackID m_stack_id;    // Use the stack ID so we can tell step out from step in.
