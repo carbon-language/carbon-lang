@@ -560,7 +560,7 @@ public:
     uint64_t StartOfLocationInfo = OS.tell();
 
     // Next emit the location of this particular diagnostic.
-    Printer.EmitDiagnosticLoc(Loc, PLoc, Level, Ranges, SM);
+    EmitDiagnosticLoc(Loc, PLoc, Level, Ranges);
 
     if (DiagOpts.ShowColors)
       OS.resetColor();
@@ -810,6 +810,113 @@ public:
   }
 
 private:
+  /// \brief Print out the file/line/column information and include trace.
+  ///
+  /// This method handlen the emission of the diagnostic location information.
+  /// This includes extracting as much location information as is present for
+  /// the diagnostic and printing it, as well as any include stack or source
+  /// ranges necessary.
+  void EmitDiagnosticLoc(SourceLocation Loc, PresumedLoc PLoc,
+                         DiagnosticsEngine::Level Level,
+                         ArrayRef<CharSourceRange> Ranges) {
+    if (PLoc.isInvalid()) {
+      // At least print the file name if available:
+      FileID FID = SM.getFileID(Loc);
+      if (!FID.isInvalid()) {
+        const FileEntry* FE = SM.getFileEntryForID(FID);
+        if (FE && FE->getName()) {
+          OS << FE->getName();
+          if (FE->getDevice() == 0 && FE->getInode() == 0
+              && FE->getFileMode() == 0) {
+            // in PCH is a guess, but a good one:
+            OS << " (in PCH)";
+          }
+          OS << ": ";
+        }
+      }
+      return;
+    }
+    unsigned LineNo = PLoc.getLine();
+
+    if (!DiagOpts.ShowLocation)
+      return;
+
+    if (DiagOpts.ShowColors)
+      OS.changeColor(savedColor, true);
+
+    OS << PLoc.getFilename();
+    switch (DiagOpts.Format) {
+    case DiagnosticOptions::Clang: OS << ':'  << LineNo; break;
+    case DiagnosticOptions::Msvc:  OS << '('  << LineNo; break;
+    case DiagnosticOptions::Vi:    OS << " +" << LineNo; break;
+    }
+
+    if (DiagOpts.ShowColumn)
+      // Compute the column number.
+      if (unsigned ColNo = PLoc.getColumn()) {
+        if (DiagOpts.Format == DiagnosticOptions::Msvc) {
+          OS << ',';
+          ColNo--;
+        } else
+          OS << ':';
+        OS << ColNo;
+      }
+    switch (DiagOpts.Format) {
+    case DiagnosticOptions::Clang:
+    case DiagnosticOptions::Vi:    OS << ':';    break;
+    case DiagnosticOptions::Msvc:  OS << ") : "; break;
+    }
+
+    if (DiagOpts.ShowSourceRanges && !Ranges.empty()) {
+      FileID CaretFileID =
+        SM.getFileID(SM.getExpansionLoc(Loc));
+      bool PrintedRange = false;
+
+      for (ArrayRef<CharSourceRange>::const_iterator RI = Ranges.begin(),
+           RE = Ranges.end();
+           RI != RE; ++RI) {
+        // Ignore invalid ranges.
+        if (!RI->isValid()) continue;
+
+        SourceLocation B = SM.getExpansionLoc(RI->getBegin());
+        SourceLocation E = SM.getExpansionLoc(RI->getEnd());
+
+        // If the End location and the start location are the same and are a
+        // macro location, then the range was something that came from a
+        // macro expansion or _Pragma.  If this is an object-like macro, the
+        // best we can do is to highlight the range.  If this is a
+        // function-like macro, we'd also like to highlight the arguments.
+        if (B == E && RI->getEnd().isMacroID())
+          E = SM.getExpansionRange(RI->getEnd()).second;
+
+        std::pair<FileID, unsigned> BInfo = SM.getDecomposedLoc(B);
+        std::pair<FileID, unsigned> EInfo = SM.getDecomposedLoc(E);
+
+        // If the start or end of the range is in another file, just discard
+        // it.
+        if (BInfo.first != CaretFileID || EInfo.first != CaretFileID)
+          continue;
+
+        // Add in the length of the token, so that we cover multi-char
+        // tokens.
+        unsigned TokSize = 0;
+        if (RI->isTokenRange())
+          TokSize = Lexer::MeasureTokenLength(E, SM, LangOpts);
+
+        OS << '{' << SM.getLineNumber(BInfo.first, BInfo.second) << ':'
+          << SM.getColumnNumber(BInfo.first, BInfo.second) << '-'
+          << SM.getLineNumber(EInfo.first, EInfo.second) << ':'
+          << (SM.getColumnNumber(EInfo.first, EInfo.second)+TokSize)
+          << '}';
+        PrintedRange = true;
+      }
+
+      if (PrintedRange)
+        OS << ':';
+    }
+    OS << ' ';
+  }
+
   /// \brief Highlight a SourceRange (with ~'s) for any characters on LineNo.
   void HighlightRange(const CharSourceRange &R,
                       unsigned LineNo, FileID FID,
@@ -1032,115 +1139,6 @@ private:
 };
 
 } // end namespace
-
-/// \brief Print out the file/line/column information and include trace.
-///
-/// This method handlen the emission of the diagnostic location information.
-/// This includes extracting as much location information as is present for the
-/// diagnostic and printing it, as well as any include stack or source ranges
-/// necessary.
-void TextDiagnosticPrinter::EmitDiagnosticLoc(SourceLocation Loc,
-                                              PresumedLoc PLoc,
-                                              DiagnosticsEngine::Level Level,
-                                              ArrayRef<CharSourceRange> Ranges,
-                                              const SourceManager &SM) {
-  if (PLoc.isInvalid()) {
-    // At least print the file name if available:
-    FileID FID = SM.getFileID(Loc);
-    if (!FID.isInvalid()) {
-      const FileEntry* FE = SM.getFileEntryForID(FID);
-      if (FE && FE->getName()) {
-        OS << FE->getName();
-        if (FE->getDevice() == 0 && FE->getInode() == 0
-            && FE->getFileMode() == 0) {
-          // in PCH is a guess, but a good one:
-          OS << " (in PCH)";
-        }
-        OS << ": ";
-      }
-    }
-    return;
-  }
-  unsigned LineNo = PLoc.getLine();
-
-  if (!DiagOpts->ShowLocation)
-    return;
-
-  if (DiagOpts->ShowColors)
-    OS.changeColor(savedColor, true);
-
-  OS << PLoc.getFilename();
-  switch (DiagOpts->Format) {
-  case DiagnosticOptions::Clang: OS << ':'  << LineNo; break;
-  case DiagnosticOptions::Msvc:  OS << '('  << LineNo; break;
-  case DiagnosticOptions::Vi:    OS << " +" << LineNo; break;
-  }
-
-  if (DiagOpts->ShowColumn)
-    // Compute the column number.
-    if (unsigned ColNo = PLoc.getColumn()) {
-      if (DiagOpts->Format == DiagnosticOptions::Msvc) {
-        OS << ',';
-        ColNo--;
-      } else 
-        OS << ':';
-      OS << ColNo;
-    }
-  switch (DiagOpts->Format) {
-  case DiagnosticOptions::Clang: 
-  case DiagnosticOptions::Vi:    OS << ':';    break;
-  case DiagnosticOptions::Msvc:  OS << ") : "; break;
-  }
-
-  if (DiagOpts->ShowSourceRanges && !Ranges.empty()) {
-    FileID CaretFileID =
-      SM.getFileID(SM.getExpansionLoc(Loc));
-    bool PrintedRange = false;
-
-    for (ArrayRef<CharSourceRange>::const_iterator RI = Ranges.begin(),
-                                                   RE = Ranges.end();
-         RI != RE; ++RI) {
-      // Ignore invalid ranges.
-      if (!RI->isValid()) continue;
-
-      SourceLocation B = SM.getExpansionLoc(RI->getBegin());
-      SourceLocation E = SM.getExpansionLoc(RI->getEnd());
-
-      // If the End location and the start location are the same and are a
-      // macro location, then the range was something that came from a
-      // macro expansion or _Pragma.  If this is an object-like macro, the
-      // best we can do is to highlight the range.  If this is a
-      // function-like macro, we'd also like to highlight the arguments.
-      if (B == E && RI->getEnd().isMacroID())
-        E = SM.getExpansionRange(RI->getEnd()).second;
-
-      std::pair<FileID, unsigned> BInfo = SM.getDecomposedLoc(B);
-      std::pair<FileID, unsigned> EInfo = SM.getDecomposedLoc(E);
-
-      // If the start or end of the range is in another file, just discard
-      // it.
-      if (BInfo.first != CaretFileID || EInfo.first != CaretFileID)
-        continue;
-
-      // Add in the length of the token, so that we cover multi-char
-      // tokens.
-      unsigned TokSize = 0;
-      if (RI->isTokenRange())
-        TokSize = Lexer::MeasureTokenLength(E, SM, *LangOpts);
-
-      OS << '{' << SM.getLineNumber(BInfo.first, BInfo.second) << ':'
-        << SM.getColumnNumber(BInfo.first, BInfo.second) << '-'
-        << SM.getLineNumber(EInfo.first, EInfo.second) << ':'
-        << (SM.getColumnNumber(EInfo.first, EInfo.second)+TokSize)
-        << '}';
-      PrintedRange = true;
-    }
-
-    if (PrintedRange)
-      OS << ':';
-  }
-  OS << ' ';
-}
 
 /// \brief Print the diagnostic name to a raw_ostream.
 ///

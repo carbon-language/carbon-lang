@@ -56,11 +56,6 @@ public:
   void PrintIncludeStack(DiagnosticsEngine::Level Level, SourceLocation Loc,
                          const SourceManager &SM);
 
-  void EmitDiagnosticLoc(SourceLocation Loc, PresumedLoc PLoc,
-                         DiagnosticsEngine::Level Level,
-                         ArrayRef<CharSourceRange> Ranges,
-                         const SourceManager &SM);
-
   virtual void HandleDiagnostic(DiagnosticsEngine::Level Level,
                                 const Diagnostic &Info);
 
