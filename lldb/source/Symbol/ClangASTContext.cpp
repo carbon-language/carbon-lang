@@ -1378,20 +1378,25 @@ IsOperator (const char *name, OverloadedOperatorKind &op_kind)
 }
 
 static inline bool
-check_op_param (bool unary, bool binary, uint32_t num_params)
+check_op_param (uint32_t op_kind, bool unary, bool binary, uint32_t num_params)
 {
+    // Special-case call since it can take any number of operands
+    if(op_kind == OO_Call)
+        return true;
+    
     // The parameter count doens't include "this"
     if (num_params == 0)
         return unary;
     if (num_params == 1)
         return binary;
+    else 
     return false;
 }
-
+;
 bool
 ClangASTContext::CheckOverloadedOperatorKindParameterCount (uint32_t op_kind, uint32_t num_params)
 {
-#define OVERLOADED_OPERATOR(Name,Spelling,Token,Unary,Binary,MemberOnly) case OO_##Name: return check_op_param (Unary, Binary, num_params);
+#define OVERLOADED_OPERATOR(Name,Spelling,Token,Unary,Binary,MemberOnly) case OO_##Name: return check_op_param (op_kind, Unary, Binary, num_params);
     switch (op_kind)
     {
 #include "clang/Basic/OperatorKinds.def"
