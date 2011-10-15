@@ -87,3 +87,6 @@ template<typename T> using AliasTemplate = T; // expected-warning {{alias declar
 
 inline namespace N { // expected-warning {{inline namespaces are incompatible with C++98}}
 }
+
+auto auto_deduction = 0; // expected-warning {{'auto' type specifier is incompatible with C++98}}
+int *p = new auto(0); // expected-warning {{'auto' type specifier is incompatible with C++98}}

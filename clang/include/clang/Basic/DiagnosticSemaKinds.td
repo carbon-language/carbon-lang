@@ -1083,6 +1083,9 @@ def err_cannot_determine_declared_type_of_overloaded_function : Error<
     "cannot determine the type of an overloaded function">;
     
 // C++11 auto
+def warn_cxx98_compat_auto_type_specifier : Warning<
+  "'auto' type specifier is incompatible with C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
 def err_auto_variable_cannot_appear_in_own_initializer : Error<
   "variable %0 declared with 'auto' type cannot appear in its own initializer">;
 def err_illegal_decl_array_of_auto : Error<

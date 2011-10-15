@@ -1851,7 +1851,9 @@ static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,
         << Error;
       T = SemaRef.Context.IntTy;
       D.setInvalidType(true);
-    }
+    } else
+      SemaRef.Diag(D.getDeclSpec().getTypeSpecTypeLoc(),
+                   diag::warn_cxx98_compat_auto_type_specifier);
   }
 
   if (SemaRef.getLangOptions().CPlusPlus &&
