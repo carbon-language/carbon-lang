@@ -2080,11 +2080,12 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
       Ident_override = &PP.getIdentifierTable().get("override");
     }
       
-    if (II == Ident_final)
+    if (II == Ident_final) {
       FinalLoc = ConsumeToken();
 
-    if (!getLang().CPlusPlus0x) 
-      Diag(FinalLoc, diag::ext_override_control_keyword) << "final";
+      if (!getLang().CPlusPlus0x) 
+        Diag(FinalLoc, diag::ext_override_control_keyword) << "final";
+    }
   }
 
   if (Tok.is(tok::colon)) {

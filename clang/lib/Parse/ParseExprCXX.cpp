@@ -2103,7 +2103,7 @@ Parser::ParseCXXNewExpression(bool UseGlobal, SourceLocation Start) {
       SkipUntil(tok::semi, /*StopAtSemi=*/true, /*DontConsume=*/true);
       return ExprError();
     }
-  } else if (Tok.is(tok::l_brace)) {
+  } else if (Tok.is(tok::l_brace) && getLang().CPlusPlus0x) {
     // FIXME: Have to communicate the init-list to ActOnCXXNew.
     ParseBraceInitializer();
   }
