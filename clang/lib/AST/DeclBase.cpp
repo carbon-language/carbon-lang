@@ -1081,6 +1081,38 @@ DeclContext::lookup(DeclarationName Name) const {
   return const_cast<DeclContext*>(this)->lookup(Name);
 }
 
+void DeclContext::localUncachedLookup(DeclarationName Name, 
+                                  llvm::SmallVectorImpl<NamedDecl *> &Results) {
+  Results.clear();
+  
+  // If there's no external storage, just perform a normal lookup and copy
+  // the results.
+  if (!hasExternalVisibleStorage() && !hasExternalLexicalStorage()) {
+    lookup_result LookupResults = lookup(Name);
+    Results.insert(Results.end(), LookupResults.first, LookupResults.second);
+    return;
+  }
+
+  // If we have a lookup table, check there first. Maybe we'll get lucky.
+  if (LookupPtr) {
+    StoredDeclsMap::iterator Pos = LookupPtr->find(Name);
+    if (Pos != LookupPtr->end()) {
+      Results.insert(Results.end(), 
+                     Pos->second.getLookupResult().first,
+                     Pos->second.getLookupResult().second);
+      return;
+    }
+  }
+  
+  // Slow case: grovel through the declarations in our chain looking for 
+  // matches.
+  for (Decl *D = FirstDecl; D; D = D->getNextDeclInContext()) {
+    if (NamedDecl *ND = dyn_cast<NamedDecl>(D))
+      if (ND->getDeclName() == Name)
+        Results.push_back(ND);
+  }
+}
+
 DeclContext *DeclContext::getRedeclContext() {
   DeclContext *Ctx = this;
   // Skip through transparent contexts.

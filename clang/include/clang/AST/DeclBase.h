@@ -1262,6 +1262,15 @@ public:
   lookup_result lookup(DeclarationName Name);
   lookup_const_result lookup(DeclarationName Name) const;
 
+  /// \brief A simplistic name lookup mechanism that performs name lookup
+  /// into this declaration context without consulting the external source.
+  ///
+  /// This function should almost never be used, because it subverts the 
+  /// usual relationship between a DeclContext and the external source.
+  /// See the ASTImporter for the (few, but important) use cases.
+  void localUncachedLookup(DeclarationName Name, 
+                           llvm::SmallVectorImpl<NamedDecl *> &Results);
+  
   /// @brief Makes a declaration visible within this context.
   ///
   /// This routine makes the declaration D visible to name lookup
