@@ -155,6 +155,11 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
   AFI->setGPRCalleeSavedArea2Size(GPRCS2Size);
   AFI->setDPRCalleeSavedAreaSize(DPRCSSize);
 
+  // Thumb1 does not currently support dynamic stack realignment.  Report a
+  // fatal error rather then silently generate bad code.
+  if (RegInfo->needsStackRealignment(MF))
+      report_fatal_error("Dynamic stack realignment not supported for thumb1.");
+
   // If we need a base pointer, set it up here. It's whatever the value
   // of the stack pointer is at this point. Any variable size objects
   // will be allocated after this, so we can still use the base pointer
