@@ -1935,10 +1935,15 @@ bool GVN::propagateEquality(Value *LHS, Value *RHS, BasicBlock *Root) {
   // to 'LHS' then ensure it will be turned into 'RHS'.
   addToLeaderTable(VN.lookup_or_add(LHS), RHS, Root);
 
-  // Replace all occurrences of 'LHS' with 'RHS' everywhere in the scope.
-  unsigned NumReplacements = replaceAllDominatedUsesWith(LHS, RHS, Root);
-  bool Changed = NumReplacements > 0;
-  NumGVNEqProp += NumReplacements;
+  // Replace all occurrences of 'LHS' with 'RHS' everywhere in the scope.  As
+  // LHS always has at least one use that is not dominated by Root, this will
+  // never do anything if LHS has only one use.
+  bool Changed = false;
+  if (!LHS->hasOneUse()) {
+    unsigned NumReplacements = replaceAllDominatedUsesWith(LHS, RHS, Root);
+    Changed |= NumReplacements > 0;
+    NumGVNEqProp += NumReplacements;
+  }
 
   // Now try to deduce additional equalities from this one.  For example, if the
   // known equality was "(A != B)" == "false" then it follows that A and B are
