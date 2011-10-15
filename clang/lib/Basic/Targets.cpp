@@ -328,6 +328,10 @@ public:
     this->UserLabelPrefix = "";
     this->WIntType = TargetInfo::UnsignedInt;
   }
+
+  virtual const char *getStaticInitSectionSpecifier() const {
+    return ".text.startup";
+  }
 };
 
 // NetBSD Target
