@@ -13,3 +13,8 @@ int test2() {
 void test3() {
   throw false;
 }
+
+// PR10582
+int test4() {
+  return 1 ? throw val : val;
+}

@@ -2503,11 +2503,18 @@ VisitAbstractConditionalOperator(const AbstractConditionalOperator *E) {
     Expr *live = lhsExpr, *dead = rhsExpr;
     if (!CondExprBool) std::swap(live, dead);
 
-    // If the dead side doesn't have labels we need, and if the Live side isn't
-    // the gnu missing ?: extension (which we could handle, but don't bother
-    // to), just emit the Live part.
-    if (!CGF.ContainsLabel(dead))
-      return Visit(live);
+    // If the dead side doesn't have labels we need, just emit the Live part.
+    if (!CGF.ContainsLabel(dead)) {
+      Value *Result = Visit(live);
+
+      // If the live part is a throw expression, it acts like it has a void
+      // type, so evaluating it returns a null Value*.  However, a conditional
+      // with non-void type must return a non-null Value*.
+      if (!Result && !E->getType()->isVoidType())
+        Result = llvm::UndefValue::get(CGF.ConvertType(E->getType()));
+
+      return Result;
+    }
   }
 
   // OpenCL: If the condition is a vector, we can treat this condition like
