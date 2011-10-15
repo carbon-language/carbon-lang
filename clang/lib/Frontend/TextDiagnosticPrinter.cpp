@@ -477,13 +477,9 @@ namespace {
 /// printing coming out of libclang.
 ///
 /// A brief worklist:
-/// FIXME: Sink the printing of the diagnostic message itself into this class.
-/// FIXME: Sink the printing of the include stack into this class.
-/// FIXME: Remove the TextDiagnosticPrinter as an input.
 /// FIXME: Sink the recursive printing of template instantiations into this
 /// class.
 class TextDiagnostic {
-  TextDiagnosticPrinter &Printer;
   raw_ostream &OS;
   const SourceManager &SM;
   const LangOptions &LangOpts;
@@ -502,14 +498,13 @@ class TextDiagnostic {
   SourceLocation LastNonNoteLoc;
 
 public:
-  TextDiagnostic(TextDiagnosticPrinter &Printer,
-                 raw_ostream &OS,
+  TextDiagnostic(raw_ostream &OS,
                  const SourceManager &SM,
                  const LangOptions &LangOpts,
                  const DiagnosticOptions &DiagOpts,
                  FullSourceLoc LastLoc = FullSourceLoc(),
                  FullSourceLoc LastNonNoteLoc = FullSourceLoc())
-    : Printer(Printer), OS(OS), SM(SM), LangOpts(LangOpts), DiagOpts(DiagOpts),
+    : OS(OS), SM(SM), LangOpts(LangOpts), DiagOpts(DiagOpts),
       LastLoc(LastLoc), LastNonNoteLoc(LastNonNoteLoc) {
     if (LastLoc.isValid() && &SM != &LastLoc.getManager())
       this->LastLoc = SourceLocation();
@@ -1282,7 +1277,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
   assert(Info.hasSourceManager() &&
          "Unexpected diagnostic with no source manager");
   const SourceManager &SM = Info.getSourceManager();
-  TextDiagnostic TextDiag(*this, OS, SM, *LangOpts, *DiagOpts,
+  TextDiagnostic TextDiag(OS, SM, *LangOpts, *DiagOpts,
                           LastLoc, LastNonNoteLoc);
 
   TextDiag.Emit(Info.getLocation(), Level, DiagMessageStream.str(),
