@@ -709,15 +709,15 @@ Parser::ParseTemplateIdAfterTemplateName(TemplateTy Template,
   RAngleLoc = Tok.getLocation();
 
   if (Tok.is(tok::greatergreater)) {
-    if (!getLang().CPlusPlus0x) {
-      const char *ReplaceStr = "> >";
-      if (NextToken().is(tok::greater) || NextToken().is(tok::greatergreater))
-        ReplaceStr = "> > ";
+    const char *ReplaceStr = "> >";
+    if (NextToken().is(tok::greater) || NextToken().is(tok::greatergreater))
+      ReplaceStr = "> > ";
 
-      Diag(Tok.getLocation(), diag::err_two_right_angle_brackets_need_space)
-        << FixItHint::CreateReplacement(
-                                 SourceRange(Tok.getLocation()), ReplaceStr);
-    }
+    Diag(Tok.getLocation(), getLang().CPlusPlus0x ?
+         diag::warn_cxx98_compat_two_right_angle_brackets :
+         diag::err_two_right_angle_brackets_need_space)
+      << FixItHint::CreateReplacement(SourceRange(Tok.getLocation()),
+                                      ReplaceStr);
 
     Tok.setKind(tok::greater);
     if (!ConsumeLastToken) {

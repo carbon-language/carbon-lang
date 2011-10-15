@@ -148,8 +148,9 @@ Decl *Parser::ParseNamespace(unsigned Context,
   }
 
   // If we're still good, complain about inline namespaces in non-C++0x now.
-  if (!getLang().CPlusPlus0x && InlineLoc.isValid())
-    Diag(InlineLoc, diag::ext_inline_namespace);
+  if (InlineLoc.isValid())
+    Diag(InlineLoc, getLang().CPlusPlus0x ?
+         diag::warn_cxx98_compat_inline_namespace : diag::ext_inline_namespace);
 
   // Enter a scope for the namespace.
   ParseScope NamespaceScope(this, Scope::DeclScope);
@@ -481,8 +482,9 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
     // Where can GNU attributes appear?
     ConsumeToken();
 
-    if (!getLang().CPlusPlus0x)
-      Diag(Tok.getLocation(), diag::ext_alias_declaration);
+    Diag(Tok.getLocation(), getLang().CPlusPlus0x ?
+         diag::warn_cxx98_compat_alias_declaration :
+         diag::ext_alias_declaration);
 
     // Type alias templates cannot be specialized.
     int SpecKind = -1;
@@ -1516,9 +1518,10 @@ void Parser::ParseOptionalCXX0XVirtSpecifierSeq(VirtSpecifiers &VS) {
         << PrevSpec
         << FixItHint::CreateRemoval(Tok.getLocation());
 
-    if (!getLang().CPlusPlus0x)
-      Diag(Tok.getLocation(), diag::ext_override_control_keyword)
-        << VirtSpecifiers::getSpecifierName(Specifier);
+    Diag(Tok.getLocation(), getLang().CPlusPlus0x ?
+         diag::warn_cxx98_compat_override_control_keyword :
+         diag::ext_override_control_keyword)
+      << VirtSpecifiers::getSpecifierName(Specifier);
     ConsumeToken();
   }
 }
@@ -1884,9 +1887,10 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     // Handle the initializer.
     if (HasDeferredInitializer) {
       // The initializer was deferred; parse it and cache the tokens.
-      if (!getLang().CPlusPlus0x)
-        Diag(Tok, diag::ext_nonstatic_member_init);
-      
+      Diag(Tok, getLang().CPlusPlus0x ?
+           diag::warn_cxx98_compat_nonstatic_member_init :
+           diag::ext_nonstatic_member_init);
+
       if (DeclaratorInfo.isArrayOfUnknownBound()) {
         // C++0x [dcl.array]p3: An array bound may also be omitted when the
         // declarator is followed by an initializer. 
@@ -2075,8 +2079,9 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
     assert(isCXX0XFinalKeyword() && "not a class definition");
     FinalLoc = ConsumeToken();
 
-    if (!getLang().CPlusPlus0x)
-      Diag(FinalLoc, diag::ext_override_control_keyword) << "final";
+    Diag(FinalLoc, getLang().CPlusPlus0x ?
+         diag::warn_cxx98_compat_override_control_keyword :
+         diag::ext_override_control_keyword) << "final";
   }
 
   if (Tok.is(tok::colon)) {
@@ -2318,6 +2323,8 @@ Parser::MemInitResult Parser::ParseMemInitializer(Decl *ConstructorDecl) {
 
   // Parse the '('.
   if (getLang().CPlusPlus0x && Tok.is(tok::l_brace)) {
+    Diag(Tok, diag::warn_cxx98_compat_generalized_initializer_lists);
+
     ExprResult InitList = ParseBraceInitializer();
     if (InitList.isInvalid())
       return true;

@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -std=c++11 -Wc++98-compat-pedantic -verify %s
+// RUN: %clang_cc1 -fsyntax-only -std=c++11 -Wc++98-compat -Werror %s
 // RUN: %clang_cc1 -fsyntax-only -std=c++98 -Werror %s
 
 // -Wc++98-compat-pedantic warns on C++11 features which we accept without a
@@ -9,3 +10,9 @@
 
 #define VA_MACRO(x, ...) x // expected-warning {{variadic macros are incompatible with C++98}}
 VA_MACRO(,x) // expected-warning {{empty macro argument list is incompatible with C++98}}
+
+; // expected-warning {{extra ';' outside of a function is incompatible with C++98}}
+
+enum Enum {
+  Enum_value, // expected-warning {{commas at the end of enumerator lists are incompatible with C++98}}
+};

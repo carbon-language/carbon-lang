@@ -1326,8 +1326,8 @@ StmtResult Parser::ParseForStatement(ParsedAttributes &attrs) {
     FirstPart = Actions.ActOnDeclStmt(DG, DeclStart, Tok.getLocation());
 
     if (ForRangeInit.ParsedForRangeDecl()) {
-      if (!getLang().CPlusPlus0x)
-        Diag(ForRangeInit.ColonLoc, diag::ext_for_range);
+      Diag(ForRangeInit.ColonLoc, getLang().CPlusPlus0x ?
+           diag::warn_cxx98_compat_for_range : diag::ext_for_range);
 
       ForRange = true;
     } else if (Tok.is(tok::semi)) {  // for (int x = 4;
@@ -1569,8 +1569,10 @@ StmtResult Parser::ParseReturnStatement(ParsedAttributes &attrs) {
     // parse libstdc++ 4.5's headers.
     if (Tok.is(tok::l_brace) && getLang().CPlusPlus) {
       R = ParseInitializer();
-      if (R.isUsable() && !getLang().CPlusPlus0x)
-        Diag(R.get()->getLocStart(), diag::ext_generalized_initializer_lists)
+      if (R.isUsable())
+        Diag(R.get()->getLocStart(), getLang().CPlusPlus0x ?
+             diag::warn_cxx98_compat_generalized_initializer_lists :
+             diag::ext_generalized_initializer_lists)
           << R.get()->getSourceRange();
     } else
         R = ParseExpression();

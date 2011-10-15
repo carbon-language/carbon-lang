@@ -535,9 +535,9 @@ Parser::ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
   Decl *SingleDecl = 0;
   switch (Tok.getKind()) {
   case tok::semi:
-    if (!getLang().CPlusPlus0x)
-      Diag(Tok, diag::ext_top_level_semi)
-        << FixItHint::CreateRemoval(Tok.getLocation());
+    Diag(Tok, getLang().CPlusPlus0x ?
+         diag::warn_cxx98_compat_top_level_semi : diag::ext_top_level_semi)
+      << FixItHint::CreateRemoval(Tok.getLocation());
 
     ConsumeToken();
     // TODO: Invoke action for top-level semicolon.
@@ -918,15 +918,17 @@ Decl *Parser::ParseFunctionDefinition(ParsingDeclarator &D,
     bool Delete = false;
     SourceLocation KWLoc;
     if (Tok.is(tok::kw_delete)) {
-      if (!getLang().CPlusPlus0x)
-        Diag(Tok, diag::warn_deleted_function_accepted_as_extension);
+      Diag(Tok, getLang().CPlusPlus0x ?
+           diag::warn_cxx98_compat_deleted_function :
+           diag::warn_deleted_function_accepted_as_extension);
 
       KWLoc = ConsumeToken();
       Actions.SetDeclDeleted(Res, KWLoc);
       Delete = true;
     } else if (Tok.is(tok::kw_default)) {
-      if (!getLang().CPlusPlus0x)
-        Diag(Tok, diag::warn_defaulted_function_accepted_as_extension);
+      Diag(Tok, getLang().CPlusPlus0x ?
+           diag::warn_cxx98_compat_defaulted_function :
+           diag::warn_defaulted_function_accepted_as_extension);
 
       KWLoc = ConsumeToken();
       Actions.SetDeclDefaulted(Res, KWLoc);

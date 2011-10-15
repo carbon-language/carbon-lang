@@ -1276,6 +1276,8 @@ Decl *Parser::ParseDeclarationAfterDeclaratorAndAttributes(Declarator &D,
     }
   } else if (getLang().CPlusPlus0x && Tok.is(tok::l_brace)) {
     // Parse C++0x braced-init-list.
+    Diag(Tok, diag::warn_cxx98_compat_generalized_initializer_lists);
+
     if (D.getCXXScopeSpec().isSet()) {
       EnterScope(0);
       Actions.ActOnCXXEnterDeclInitializer(getCurScope(), ThisDecl);
@@ -2778,6 +2780,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
 
   if (getLang().CPlusPlus0x &&
       (Tok.is(tok::kw_class) || Tok.is(tok::kw_struct))) {
+    Diag(Tok, diag::warn_cxx98_compat_scoped_enum);
     IsScopedEnum = true;
     IsScopedUsingClassTag = Tok.is(tok::kw_class);
     ConsumeToken();
@@ -2894,6 +2897,8 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
       if (!getLang().CPlusPlus0x && !getLang().ObjC2)
         Diag(StartLoc, diag::ext_ms_enum_fixed_underlying_type)
           << Range;
+      if (getLang().CPlusPlus0x)
+        Diag(StartLoc, diag::warn_cxx98_compat_enum_fixed_underlying_type);
     }
   }
 
@@ -3054,11 +3059,15 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, Decl *EnumDecl) {
       break;
     SourceLocation CommaLoc = ConsumeToken();
 
-    if (Tok.isNot(tok::identifier) &&
-        !(getLang().C99 || getLang().CPlusPlus0x))
-      Diag(CommaLoc, diag::ext_enumerator_list_comma)
-        << getLang().CPlusPlus
-        << FixItHint::CreateRemoval(CommaLoc);
+    if (Tok.isNot(tok::identifier)) {
+      if (!getLang().C99 && !getLang().CPlusPlus0x)
+        Diag(CommaLoc, diag::ext_enumerator_list_comma)
+          << getLang().CPlusPlus
+          << FixItHint::CreateRemoval(CommaLoc);
+      else if (getLang().CPlusPlus0x)
+        Diag(CommaLoc, diag::warn_cxx98_compat_enumerator_list_comma)
+          << FixItHint::CreateRemoval(CommaLoc);
+    }
   }
 
   // Eat the }.
@@ -3682,8 +3691,10 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
 
     // Complain about rvalue references in C++03, but then go on and build
     // the declarator.
-    if (Kind == tok::ampamp && !getLang().CPlusPlus0x)
-      Diag(Loc, diag::ext_rvalue_reference);
+    if (Kind == tok::ampamp)
+      Diag(Loc, getLang().CPlusPlus0x ?
+           diag::warn_cxx98_compat_rvalue_reference :
+           diag::ext_rvalue_reference);
 
     // C++ 8.3.2p1: cv-qualified references are ill-formed except when the
     // cv-qualifiers are introduced through the use of a typedef or of a
@@ -4080,8 +4091,9 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
 
       // Parse ref-qualifier[opt].
       if (Tok.is(tok::amp) || Tok.is(tok::ampamp)) {
-        if (!getLang().CPlusPlus0x)
-          Diag(Tok, diag::ext_ref_qualifier);
+        Diag(Tok, getLang().CPlusPlus0x ?
+             diag::warn_cxx98_compat_ref_qualifier :
+             diag::ext_ref_qualifier);
         
         RefQualifierIsLValueRef = Tok.is(tok::amp);
         RefQualifierLoc = ConsumeToken();
@@ -4098,6 +4110,7 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
 
       // Parse trailing-return-type[opt].
       if (getLang().CPlusPlus0x && Tok.is(tok::arrow)) {
+        Diag(Tok, diag::warn_cxx98_compat_trailing_return_type);
         SourceRange Range;
         TrailingReturnType = ParseTrailingReturnType(Range).get();
         if (Range.getEnd().isValid())

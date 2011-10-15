@@ -679,6 +679,8 @@ bool Parser::TryParseLambdaIntroducer(LambdaIntroducer &Intro) {
 /// expression.
 ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
                      LambdaIntroducer &Intro) {
+  Diag(Intro.Range.getBegin(), diag::warn_cxx98_compat_lambda);
+
   // Parse lambda-declarator[opt].
   DeclSpec DS(AttrFactory);
   Declarator D(DS, Declarator::PrototypeContext);
@@ -1743,6 +1745,7 @@ bool Parser::ParseUnqualifiedIdOperator(CXXScopeSpec &SS, bool EnteringContext,
   //     operator "" identifier
 
   if (getLang().CPlusPlus0x && Tok.is(tok::string_literal)) {
+    Diag(Tok.getLocation(), diag::warn_cxx98_compat_literal_operator);
     if (Tok.getLength() != 2)
       Diag(Tok.getLocation(), diag::err_operator_string_not_empty);
     ConsumeStringToken();
@@ -2104,6 +2107,8 @@ Parser::ParseCXXNewExpression(bool UseGlobal, SourceLocation Start) {
       return ExprError();
     }
   } else if (Tok.is(tok::l_brace) && getLang().CPlusPlus0x) {
+    Diag(Tok.getLocation(),
+         diag::warn_cxx98_compat_generalized_initializer_lists);
     // FIXME: Have to communicate the init-list to ActOnCXXNew.
     ParseBraceInitializer();
   }

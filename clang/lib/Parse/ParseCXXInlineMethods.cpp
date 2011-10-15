@@ -67,15 +67,17 @@ Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS,
     bool Delete = false;
     SourceLocation KWLoc;
     if (Tok.is(tok::kw_delete)) {
-      if (!getLang().CPlusPlus0x)
-        Diag(Tok, diag::warn_deleted_function_accepted_as_extension);
+      Diag(Tok, getLang().CPlusPlus0x ?
+           diag::warn_cxx98_compat_deleted_function :
+           diag::warn_deleted_function_accepted_as_extension);
 
       KWLoc = ConsumeToken();
       Actions.SetDeclDeleted(FnD, KWLoc);
       Delete = true;
     } else if (Tok.is(tok::kw_default)) {
-      if (!getLang().CPlusPlus0x)
-        Diag(Tok, diag::warn_defaulted_function_accepted_as_extension);
+      Diag(Tok, getLang().CPlusPlus0x ?
+           diag::warn_cxx98_compat_defaulted_function :
+           diag::warn_defaulted_function_accepted_as_extension);
 
       KWLoc = ConsumeToken();
       Actions.SetDeclDefaulted(FnD, KWLoc);

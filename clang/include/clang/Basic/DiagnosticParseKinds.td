@@ -23,6 +23,9 @@ let CategoryName = "Parse Issue" in {
 def ext_empty_source_file : Extension<"ISO C forbids an empty source file">;
 def ext_top_level_semi : Extension<
   "extra ';' outside of a function">;
+def warn_cxx98_compat_top_level_semi : Warning<
+  "extra ';' outside of a function is incompatible with C++98">,
+  InGroup<CXX98CompatPedantic>, DefaultIgnore;
 def ext_extra_struct_semi : Extension<
   "extra ';' inside a %0">;
 def ext_extra_ivar_semi : Extension<
@@ -55,6 +58,9 @@ def ext_c99_compound_literal : Extension<
 def ext_enumerator_list_comma : Extension<
   "commas at the end of enumerator lists are a %select{C99|C++11}0-specific "
   "feature">;
+def warn_cxx98_compat_enumerator_list_comma : Warning<
+  "commas at the end of enumerator lists are incompatible with C++98">,
+  InGroup<CXX98CompatPedantic>, DefaultIgnore;
 def err_enumerator_list_missing_comma : Error<
   "missing ',' between enumerators">;
 def err_enumerator_unnamed_no_def : Error<
@@ -62,6 +68,9 @@ def err_enumerator_unnamed_no_def : Error<
 def ext_ms_enum_fixed_underlying_type : Extension<
   "enumeration types with a fixed underlying type are a Microsoft extension">, 
   InGroup<Microsoft>;
+def warn_cxx98_compat_enum_fixed_underlying_type : Warning<
+  "enumeration types with a fixed underlying type are incompatible with C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
 
 def ext_c1x_generic_selection : Extension<
   "generic selections are a C1X-specific feature">, InGroup<C1X>;
@@ -188,15 +197,30 @@ def err_illegal_decl_reference_to_reference : Error<
   "%0 declared as a reference to a reference">;
 def ext_rvalue_reference : ExtWarn<
   "rvalue references are a C++11 extension">, InGroup<CXX11>;
+def warn_cxx98_compat_rvalue_reference : Warning<
+  "rvalue references are incompatible with C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
 def ext_ref_qualifier : ExtWarn<
   "reference qualifiers on functions are a C++11 extension">, InGroup<CXX11>;
+def warn_cxx98_compat_ref_qualifier : Warning<
+  "reference qualifiers on functions are incompatible with C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
 def ext_inline_namespace : ExtWarn<
   "inline namespaces are a C++11 feature">, InGroup<CXX11>;
+def warn_cxx98_compat_inline_namespace : Warning<
+  "inline namespaces are incompatible with C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
 def err_generalized_initializer_lists : Error<
   "generalized initializer lists are a C++11 extension unsupported in Clang">;
 def ext_generalized_initializer_lists : ExtWarn<
   "generalized initializer lists are a C++11 extension unsupported in Clang">,
   InGroup<CXX11>;
+def warn_cxx98_compat_generalized_initializer_lists : Warning<
+  "generalized initializer lists are incompatible with C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
+def warn_cxx98_compat_trailing_return_type : Warning<
+  "trailing return types are incompatible with C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
 def ext_auto_type_specifier : ExtWarn<
   "'auto' type specifier is a C++11 extension">, InGroup<CXX11>;
 def warn_auto_storage_class : Warning<
@@ -207,6 +231,9 @@ def ext_auto_storage_class : ExtWarn<
   "be supported in future releases">;
 def ext_for_range : ExtWarn<
   "range-based for loop is a C++11 extension">, InGroup<CXX11>;
+def warn_cxx98_compat_for_range : Warning<
+  "range-based for loop is incompatible with C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
 def err_argument_required_after_attribute : Error<
   "argument required after attribute">;
 def err_missing_param : Error<"expected parameter declarator">;
@@ -363,6 +390,9 @@ def err_dup_virtual : Error<"duplicate 'virtual' in base specifier">;
 // C++ operator overloading
 def err_operator_string_not_empty : Error<
   "string literal after 'operator' must be '\"\"'">;
+def warn_cxx98_compat_literal_operator : Warning<
+  "literal operators are incompatible with C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
 
 // Classes.
 def err_anon_type_definition : Error<
@@ -405,6 +435,9 @@ def err_two_right_angle_brackets_need_space : Error<
 def warn_cxx0x_right_shift_in_template_arg : Warning<
   "use of right-shift operator ('>>') in template argument will require "
   "parentheses in C++11">;
+def warn_cxx98_compat_two_right_angle_brackets : Warning<
+  "consecutive right angle brackets are incompatible with C++98 (use '> >')">,
+  InGroup<CXX98Compat>, DefaultIgnore;
 def err_multiple_template_declarators : Error<
     "%select{|a template declaration|an explicit template specialization|"
     "an explicit template instantiation}0 can "
@@ -466,14 +499,23 @@ def err_missing_whitespace_digraph : Error<
 
 def warn_deleted_function_accepted_as_extension: ExtWarn<
   "deleted function definition accepted as a C++11 extension">, InGroup<CXX11>;
+def warn_cxx98_compat_deleted_function : Warning<
+  "deleted function definitions are incompatible with C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
 def warn_defaulted_function_accepted_as_extension: ExtWarn<
   "defaulted function definition accepted as a C++11 extension">,
   InGroup<CXX11>;
+def warn_cxx98_compat_defaulted_function : Warning<
+  "defaulted function definitions are incompatible with C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
 
 // C++11 in-class member initialization
 def ext_nonstatic_member_init : ExtWarn<
   "in-class initialization of non-static data member accepted as a C++11 extension">,
   InGroup<CXX11>;
+def warn_cxx98_compat_nonstatic_member_init : Warning<
+  "in-class initialization of non-static data members is incompatible with C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
 def err_bitfield_member_init: Error<
   "bitfield member cannot have an in-class initializer">;
 def err_incomplete_array_member_init: Error<
@@ -482,6 +524,9 @@ def err_incomplete_array_member_init: Error<
 // C++11 alias-declaration
 def ext_alias_declaration : ExtWarn<
   "alias declarations accepted as a C++11 extension">, InGroup<CXX11>;
+def warn_cxx98_compat_alias_declaration : Warning<
+  "alias declarations are incompatible with C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
 def err_alias_declaration_not_identifier : Error<
   "name defined in alias declaration must be an identifier">;
 def err_alias_declaration_specialization : Error<
@@ -490,6 +535,9 @@ def err_alias_declaration_specialization : Error<
 // C++11 override control
 def ext_override_control_keyword : ExtWarn<
   "'%0' keyword accepted as a C++11 extension">, InGroup<CXX11>;
+def warn_cxx98_compat_override_control_keyword : Warning<
+  "'%0' keyword is incompatible with C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
 
 def err_duplicate_virt_specifier : Error<
   "class member already marked '%0'">;
@@ -498,6 +546,9 @@ def err_duplicate_class_virt_specifier : Error<
 
 def err_scoped_enum_missing_identifier : Error<
   "scoped enumeration requires a name">;
+def warn_cxx98_compat_scoped_enum : Warning<
+  "scoped enumerations are incompatible with C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
 
 def err_expected_parameter_pack : Error<
   "expected the name of a parameter pack">;
@@ -514,6 +565,9 @@ def err_this_captured_by_reference : Error<
 def err_expected_capture : Error<
   "expected variable name or 'this' in lambda capture list">;
 def err_expected_lambda_body : Error<"expected body of lambda expression">;
+def warn_cxx98_compat_lambda : Warning<
+  "lambda expressions are incompatible with C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
 
 // Availability attribute
 def err_expected_version : Error<
