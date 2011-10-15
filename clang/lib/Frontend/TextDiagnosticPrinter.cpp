@@ -326,12 +326,14 @@ public:
     : Printer(Printer), OS(OS), SM(SM), LangOpts(LangOpts), DiagOpts(DiagOpts) {
   }
 
-  /// \brief Emit the caret diagnostic text.
+  /// \brief Emit the caret and underlining text.
   ///
   /// Walks up the macro expansion stack printing the code snippet, caret,
   /// underlines and FixItHint display as appropriate at each level. Walk is
   /// accomplished by calling itself recursively.
   ///
+  /// FIXME: Remove macro expansion from this routine, it shouldn't be tied to
+  /// caret diagnostics.
   /// FIXME: Break up massive function into logical units.
   ///
   /// \param Loc The location for this caret.
@@ -339,7 +341,7 @@ public:
   /// \param Hints The FixIt hints active for this diagnostic.
   /// \param MacroSkipEnd The depth to stop skipping macro expansions.
   /// \param OnMacroInst The current depth of the macro expansion stack.
-  void Emit(SourceLocation Loc,
+  void EmitCaret(SourceLocation Loc,
             SmallVectorImpl<CharSourceRange>& Ranges,
             ArrayRef<FixItHint> Hints,
             unsigned &MacroDepth,
@@ -363,7 +365,7 @@ public:
     SourceLocation OneLevelUp = getImmediateMacroCallerLoc(SM, Loc);
 
     // FIXME: Map ranges?
-    Emit(OneLevelUp, Ranges, Hints, MacroDepth, OnMacroInst + 1);
+    EmitCaret(OneLevelUp, Ranges, Hints, MacroDepth, OnMacroInst + 1);
 
     // Map the location.
     Loc = getImmediateMacroCalleeLoc(SM, Loc);
@@ -1261,9 +1263,10 @@ void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
     }
 
     unsigned MacroDepth = 0;
-    TextDiag.Emit(LastLoc, Ranges, llvm::makeArrayRef(Info.getFixItHints(),
-                                                      Info.getNumFixItHints()),
-                  MacroDepth);
+    TextDiag.EmitCaret(LastLoc, Ranges,
+                       llvm::makeArrayRef(Info.getFixItHints(),
+                                          Info.getNumFixItHints()),
+                       MacroDepth);
   }
 
   OS.flush();
