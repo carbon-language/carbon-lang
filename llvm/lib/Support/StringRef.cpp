@@ -144,9 +144,32 @@ size_t StringRef::find(StringRef Str, size_t From) const {
   size_t N = Str.size();
   if (N > Length)
     return npos;
-  for (size_t e = Length - N + 1, i = min(From, e); i != e; ++i)
-    if (substr(i, N).equals(Str))
-      return i;
+
+  // For short haystacks or unsupported needles fall back to the naive algorithm
+  if (Length < 16 || N > 255 || N == 0) {
+    for (size_t e = Length - N + 1, i = min(From, e); i != e; ++i)
+      if (substr(i, N).equals(Str))
+        return i;
+    return npos;
+  }
+
+  // Build the bad char heuristic table, with uint8_t to reduce cache thrashing.
+  uint8_t BadCharSkip[256];
+  std::memset(BadCharSkip, N, 256);
+  for (unsigned i = 0; i != N-1; ++i)
+    BadCharSkip[(uint8_t)Str[i]] = N-1-i;
+
+  unsigned Len = Length, Pos = min(From, Length);
+  while (Len >= N) {
+    if (substr(Pos, N).equals(Str)) // See if this is the correct substring.
+      return Pos;
+
+    // Otherwise skip the appropriate number of bytes.
+    uint8_t Skip = BadCharSkip[(uint8_t)Data[Pos+N-1]];
+    Len -= Skip;
+    Pos += Skip;
+  }
+
   return npos;
 }
 
