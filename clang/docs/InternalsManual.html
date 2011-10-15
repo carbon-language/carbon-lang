@@ -19,7 +19,7 @@ td {
 
 <ul>
 <li><a href="#intro">Introduction</a></li>
-<li><a href="#libsystem">LLVM System and Support Libraries</a></li>
+<li><a href="#libsupport">LLVM Support Library</a></li>
 <li><a href="#libbasic">The Clang 'Basic' Library</a>
   <ul>
   <li><a href="#Diagnostics">The Diagnostics Subsystem</a></li>
@@ -89,15 +89,13 @@ Clang, not for end-users.  The description below is categorized by
 libraries, and does not describe any of the clients of the libraries.</p>
 
 <!-- ======================================================================= -->
-<h2 id="libsystem">LLVM System and Support Libraries</h2>
+<h2 id="libsupport">LLVM Support Library</h2>
 <!-- ======================================================================= -->
 
-<p>The LLVM libsystem library provides the basic Clang system abstraction layer,
-which is used for file system access.  The LLVM libsupport library provides many
-underlying libraries and <a 
-href="http://llvm.org/docs/ProgrammersManual.html">data-structures</a>,
- including command line option
-processing and various containers.</p>
+<p>The LLVM libsupport library provides many underlying libraries and
+<a href="http://llvm.org/docs/ProgrammersManual.html">data-structures</a>,
+including command line option processing, various containers and a system
+abstraction layer, which is used for file system access.</p>
 
 <!-- ======================================================================= -->
 <h2 id="libbasic">The Clang 'Basic' Library</h2>
