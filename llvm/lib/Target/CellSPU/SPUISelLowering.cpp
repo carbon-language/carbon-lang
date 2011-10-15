@@ -424,6 +424,13 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
     setOperationAction(ISD::UDIV,    VT, Expand);
     setOperationAction(ISD::UREM,    VT, Expand);
 
+    // Expand all trunc stores
+    for (unsigned j = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
+         j <= (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++j) {
+      MVT::SimpleValueType TargetVT = (MVT::SimpleValueType)j;
+    setTruncStoreAction(VT, TargetVT, Expand);
+    }
+
     // Custom lower build_vector, constant pool spills, insert and
     // extract vector elements:
     setOperationAction(ISD::BUILD_VECTOR, VT, Custom);
@@ -433,6 +440,8 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
     setOperationAction(ISD::INSERT_VECTOR_ELT, VT, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE, VT, Custom);
   }
+
+  setOperationAction(ISD::SHL, MVT::v2i64, Expand);
 
   setOperationAction(ISD::AND, MVT::v16i8, Custom);
   setOperationAction(ISD::OR,  MVT::v16i8, Custom);
