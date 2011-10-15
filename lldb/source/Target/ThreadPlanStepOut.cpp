@@ -20,6 +20,7 @@
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Target.h"
+#include "lldb/Target/ThreadPlanStepOverRange.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -44,18 +45,43 @@ ThreadPlanStepOut::ThreadPlanStepOut
     m_return_bp_id (LLDB_INVALID_BREAK_ID),
     m_return_addr (LLDB_INVALID_ADDRESS),
     m_first_insn (first_insn),
-    m_stop_others (stop_others)
+    m_stop_others (stop_others),
+    m_step_through_inline_plan_sp(),
+    m_step_out_plan_sp ()
+
 {
     m_step_from_insn = m_thread.GetRegisterContext()->GetPC(0);
 
-    // Find the return address and set a breakpoint there:
-    // FIXME - can we do this more securely if we know first_insn?
-
     StackFrameSP return_frame_sp (m_thread.GetStackFrameAtIndex(frame_idx + 1));
-    if (return_frame_sp)
+    StackFrameSP immediate_return_from_sp (m_thread.GetStackFrameAtIndex (frame_idx));
+    
+    m_stack_depth = m_thread.GetStackFrameCount() - frame_idx;
+
+    // If the frame directly below the one we are returning to is inlined, we have to be
+    // a little more careful.  It is non-trivial to determine the real "return code address" for
+    // an inlined frame, so we have to work our way to that frame and then step out.
+    if (immediate_return_from_sp && immediate_return_from_sp->IsInlined())
     {
-        // TODO: check for inlined frames and do the right thing...
-        m_return_addr = return_frame_sp->GetRegisterContext()->GetPC();
+        if (frame_idx > 0)
+        {
+            // First queue a plan that gets us to this inlined frame, and when we get there we'll queue a second
+            // plan that walks us out of this frame.
+            m_step_out_plan_sp.reset (new ThreadPlanStepOut(m_thread, NULL, false, stop_others, eVoteNoOpinion, eVoteNoOpinion, frame_idx - 1));
+            m_step_out_plan_sp->SetOkayToDiscard(true);
+        }
+        else
+        {
+            // If we're already at the inlined frame we're stepping through, then just do that now.
+            QueueInlinedStepPlan(false);
+        }
+        
+    }
+    else if (return_frame_sp)
+    {
+        // Find the return address and set a breakpoint there:
+        // FIXME - can we do this more securely if we know first_insn?
+
+        m_return_addr = return_frame_sp->GetFrameCodeAddress().GetLoadAddress(&m_thread.GetProcess().GetTarget());
         Breakpoint *return_bp = m_thread.GetProcess().GetTarget().CreateBreakpoint (m_return_addr, true).get();
         if (return_bp != NULL)
         {
@@ -64,7 +90,15 @@ ThreadPlanStepOut::ThreadPlanStepOut
         }
     }
 
-    m_stack_depth = m_thread.GetStackFrameCount() - frame_idx;
+}
+
+void
+ThreadPlanStepOut::DidPush()
+{
+    if (m_step_out_plan_sp)
+        m_thread.QueueThreadPlan(m_step_out_plan_sp, false);
+    else if (m_step_through_inline_plan_sp)
+        m_thread.QueueThreadPlan(m_step_through_inline_plan_sp, false);
 }
 
 ThreadPlanStepOut::~ThreadPlanStepOut ()
@@ -80,18 +114,31 @@ ThreadPlanStepOut::GetDescription (Stream *s, lldb::DescriptionLevel level)
         s->Printf ("step out");
     else
     {
-        s->Printf ("Stepping out from address 0x%llx to return address 0x%llx using breakpoint site %d",
-                   (uint64_t)m_step_from_insn,
-                   (uint64_t)m_return_addr,
-                   m_return_bp_id);
+        if (m_step_out_plan_sp)
+            s->Printf ("Stepping out to inlined frame at depth: %d so we can walk through it.", m_stack_depth);
+        else if (m_step_through_inline_plan_sp)
+            s->Printf ("Stepping out by stepping through inlined function.");
+        else
+            s->Printf ("Stepping out from address 0x%llx to return address 0x%llx at depth: %d using breakpoint site %d",
+                       (uint64_t)m_step_from_insn,
+                       (uint64_t)m_return_addr,
+                       m_stack_depth,
+                       m_return_bp_id);
     }
 }
 
 bool
 ThreadPlanStepOut::ValidatePlan (Stream *error)
 {
-    if (m_return_bp_id == LLDB_INVALID_BREAK_ID)
+    if (m_step_out_plan_sp)
+        return m_step_out_plan_sp->ValidatePlan (error);
+    else if (m_step_through_inline_plan_sp)
+        return m_step_through_inline_plan_sp->ValidatePlan (error);
+    else if (m_return_bp_id == LLDB_INVALID_BREAK_ID)
+    {
+        error->PutCString("Could not create return address breakpoint.");
         return false;
+    }
     else
         return true;
 }
@@ -99,8 +146,29 @@ ThreadPlanStepOut::ValidatePlan (Stream *error)
 bool
 ThreadPlanStepOut::PlanExplainsStop ()
 {
+    // If one of our child plans just finished, then we do explain the stop.
+    if (m_step_out_plan_sp)
+    {
+        if (m_step_out_plan_sp->MischiefManaged())
+        {
+            // If this one is done, then we are all done.
+            SetPlanComplete();
+            return true;
+        }
+        else
+            return false;
+    }
+    else if (m_step_through_inline_plan_sp)
+    {
+        if (m_step_through_inline_plan_sp->MischiefManaged())
+            return true;
+        else
+            return false;
+    }
+        
     // We don't explain signals or breakpoints (breakpoints that handle stepping in or
     // out will be handled by a child plan.
+    
     StopInfoSP stop_info_sp = GetPrivateStopReason();
     if (stop_info_sp)
     {
@@ -143,13 +211,48 @@ ThreadPlanStepOut::PlanExplainsStop ()
 bool
 ThreadPlanStepOut::ShouldStop (Event *event_ptr)
 {
-    if (IsPlanComplete() || m_stack_depth > m_thread.GetStackFrameCount())
-    {
-        SetPlanComplete();
-        return true;
-    }
-    else
-        return false;
+        if (IsPlanComplete())
+        {
+            return true;
+        }
+        else if (m_stack_depth > m_thread.GetStackFrameCount())
+        {
+            SetPlanComplete();
+            return true;
+        }
+        else
+        {
+            if (m_step_out_plan_sp)
+            {
+                if (m_step_out_plan_sp->MischiefManaged())
+                {
+                    // Now step through the inlined stack we are in:
+                    if (QueueInlinedStepPlan(true))
+                    {
+                        return false;
+                    }
+                    else
+                    {
+                        SetPlanComplete ();
+                        return true;
+                    }
+                }
+                else
+                    return m_step_out_plan_sp->ShouldStop(event_ptr);
+            }
+            else if (m_step_through_inline_plan_sp)
+            {
+                if (m_step_through_inline_plan_sp->MischiefManaged())
+                {
+                    SetPlanComplete();
+                    return true;
+                }
+                else
+                    return m_step_through_inline_plan_sp->ShouldStop(event_ptr);
+            }
+            else
+                return false;
+        }
 }
 
 bool
@@ -168,6 +271,9 @@ bool
 ThreadPlanStepOut::WillResume (StateType resume_state, bool current_plan)
 {
     ThreadPlan::WillResume (resume_state, current_plan);
+    if (m_step_out_plan_sp || m_step_through_inline_plan_sp)
+        return true;
+        
     if (m_return_bp_id == LLDB_INVALID_BREAK_ID)
         return false;
 
@@ -183,21 +289,20 @@ ThreadPlanStepOut::WillResume (StateType resume_state, bool current_plan)
 bool
 ThreadPlanStepOut::WillStop ()
 {
-    Breakpoint *return_bp = m_thread.GetProcess().GetTarget().GetBreakpointByID(m_return_bp_id).get();
-    if (return_bp != NULL)
-        return_bp->SetEnabled (false);
+    if (m_return_bp_id != LLDB_INVALID_BREAK_ID)
+    {
+        Breakpoint *return_bp = m_thread.GetProcess().GetTarget().GetBreakpointByID(m_return_bp_id).get();
+        if (return_bp != NULL)
+            return_bp->SetEnabled (false);
+    }
+    
     return true;
 }
 
 bool
 ThreadPlanStepOut::MischiefManaged ()
 {
-    if (m_return_bp_id == LLDB_INVALID_BREAK_ID)
-    {
-        // If I couldn't set this breakpoint, then I'm just going to jettison myself.
-        return true;
-    }
-    else if (IsPlanComplete())
+    if (IsPlanComplete())
     {
         // Did I reach my breakpoint?  If so I'm done.
         //
@@ -208,8 +313,12 @@ ThreadPlanStepOut::MischiefManaged ()
         LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
         if (log)
             log->Printf("Completed step out plan.");
-        m_thread.GetProcess().GetTarget().RemoveBreakpointByID (m_return_bp_id);
-        m_return_bp_id = LLDB_INVALID_BREAK_ID;
+        if (m_return_bp_id != LLDB_INVALID_BREAK_ID)
+        {
+            m_thread.GetProcess().GetTarget().RemoveBreakpointByID (m_return_bp_id);
+            m_return_bp_id = LLDB_INVALID_BREAK_ID;
+        }
+        
         ThreadPlan::MischiefManaged ();
         return true;
     }
@@ -219,3 +328,62 @@ ThreadPlanStepOut::MischiefManaged ()
     }
 }
 
+bool
+ThreadPlanStepOut::QueueInlinedStepPlan (bool queue_now)
+{
+    // Now figure out the range of this inlined block, and set up a "step through range"
+    // plan for that.  If we've been provided with a context, then use the block in that
+    // context.  
+    StackFrameSP immediate_return_from_sp (m_thread.GetStackFrameAtIndex (0));
+    if (!immediate_return_from_sp)
+        return false;
+        
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    if (log)
+    {   
+        StreamString s;
+        immediate_return_from_sp->Dump(&s, true, false);
+        log->Printf("Queuing inlined frame to step past: %s.", s.GetData());
+    }
+        
+    Block *from_block = immediate_return_from_sp->GetFrameBlock();
+    if (from_block)
+    {
+        Block *inlined_block = from_block->GetContainingInlinedBlock();
+        if (inlined_block)
+        {
+            size_t num_ranges = inlined_block->GetNumRanges();
+            AddressRange inline_range;
+            if (inlined_block->GetRangeAtIndex(0, inline_range))
+            {
+                SymbolContext inlined_sc;
+                inlined_block->CalculateSymbolContext(&inlined_sc);
+                RunMode run_mode = m_stop_others ? lldb::eOnlyThisThread : lldb::eAllThreads;
+                ThreadPlanStepOverRange *step_through_inline_plan_ptr = new ThreadPlanStepOverRange(m_thread, 
+                                                                                                    inline_range, 
+                                                                                                    inlined_sc, 
+                                                                                                    run_mode);
+                step_through_inline_plan_ptr->SetOkayToDiscard(true);                                                                                    
+                StreamString errors;
+                if (!step_through_inline_plan_ptr->ValidatePlan(&errors))
+                {
+                    //FIXME: Log this failure.
+                    delete step_through_inline_plan_ptr;
+                    return false;
+                }
+                
+                for (size_t i = 1; i < num_ranges; i++)
+                {
+                    if (inlined_block->GetRangeAtIndex (i, inline_range))
+                        step_through_inline_plan_ptr->AddRange (inline_range);
+                }
+                m_step_through_inline_plan_sp.reset (step_through_inline_plan_ptr);
+                if (queue_now)
+                    m_thread.QueueThreadPlan (m_step_through_inline_plan_sp, false);
+                return true;
+            }
+        }
+    }
+        
+    return false;
+}
