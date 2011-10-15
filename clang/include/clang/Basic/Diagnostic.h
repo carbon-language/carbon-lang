@@ -951,6 +951,11 @@ public:
     return DiagObj->DiagRanges[Idx];
   }
 
+  /// \brief Return an array reference for this diagnostic's ranges.
+  ArrayRef<CharSourceRange> getRanges() const {
+    return llvm::makeArrayRef(DiagObj->DiagRanges, DiagObj->NumDiagRanges);
+  }
+
   unsigned getNumFixItHints() const {
     return DiagObj->NumFixItHints;
   }
