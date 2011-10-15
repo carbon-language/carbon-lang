@@ -91,9 +91,9 @@ void TextDiagnosticPrinter::PrintIncludeStack(DiagnosticsEngine::Level Level,
                                               SourceLocation Loc,
                                               const SourceManager &SM) {
   // Skip redundant include stacks altogether.
-  if (LastWarningLoc == Loc)
+  if (LastNonNoteLoc == Loc)
     return;
-  LastWarningLoc = Loc;
+  LastNonNoteLoc = FullSourceLoc(Loc, SM);
 
   if (!DiagOpts->ShowNoteIncludeStack && Level == DiagnosticsEngine::Note)
     return;
@@ -537,19 +537,40 @@ class TextDiagnostic {
   const LangOptions &LangOpts;
   const DiagnosticOptions &DiagOpts;
 
+  /// \brief The location of the previous diagnostic if known.
+  ///
+  /// This will be invalid in cases where there is no (known) previous
+  /// diagnostic location, or that location itself is invalid or comes from
+  /// a different source manager than SM.
+  SourceLocation LastLoc;
+
+  /// \brief The location of the previous non-note diagnostic if known.
+  ///
+  /// Same restriction as \see LastLoc but tracks the last non-note location.
+  SourceLocation LastNonNoteLoc;
+
 public:
   TextDiagnostic(TextDiagnosticPrinter &Printer,
-                  raw_ostream &OS,
-                  const SourceManager &SM,
-                  const LangOptions &LangOpts,
-                  const DiagnosticOptions &DiagOpts)
-    : Printer(Printer), OS(OS), SM(SM), LangOpts(LangOpts), DiagOpts(DiagOpts) {
+                 raw_ostream &OS,
+                 const SourceManager &SM,
+                 const LangOptions &LangOpts,
+                 const DiagnosticOptions &DiagOpts,
+                 FullSourceLoc LastLoc = FullSourceLoc(),
+                 FullSourceLoc LastNonNoteLoc = FullSourceLoc())
+    : Printer(Printer), OS(OS), SM(SM), LangOpts(LangOpts), DiagOpts(DiagOpts),
+      LastLoc(LastLoc), LastNonNoteLoc(LastNonNoteLoc) {
+    if (LastLoc.isValid() && &SM != &LastLoc.getManager())
+      this->LastLoc = SourceLocation();
+    if (LastNonNoteLoc.isValid() && &SM != &LastNonNoteLoc.getManager())
+      this->LastNonNoteLoc = SourceLocation();
   }
+
+  /// \brief Get the last diagnostic location emitted.
+  SourceLocation getLastLoc() const { return LastLoc; }
 
   void Emit(SourceLocation Loc, DiagnosticsEngine::Level Level,
             StringRef Message, ArrayRef<CharSourceRange> Ranges,
             ArrayRef<FixItHint> FixItHints,
-            FullSourceLoc LastLoc = FullSourceLoc(),
             bool LastCaretDiagnosticWasNote = false) {
     PresumedLoc PLoc = getDiagnosticPresumedLoc(SM, Loc);
 
@@ -592,6 +613,8 @@ public:
       unsigned MacroDepth = 0;
       EmitCaret(Loc, MutableRanges, FixItHints, MacroDepth);
     }
+
+    LastLoc = Loc;
   }
 
   /// \brief Emit the caret and underlining text.
@@ -1262,16 +1285,17 @@ void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
   assert(Info.hasSourceManager() &&
          "Unexpected diagnostic with no source manager");
   const SourceManager &SM = Info.getSourceManager();
-  TextDiagnostic TextDiag(*this, OS, SM, *LangOpts, *DiagOpts);
+  TextDiagnostic TextDiag(*this, OS, SM, *LangOpts, *DiagOpts,
+                          LastNonNoteLoc, LastLoc);
 
   TextDiag.Emit(Info.getLocation(), Level, DiagMessageStream.str(),
                 Info.getRanges(),
                 llvm::makeArrayRef(Info.getFixItHints(),
                                    Info.getNumFixItHints()),
-                LastLoc, LastCaretDiagnosticWasNote);
+                LastCaretDiagnosticWasNote);
 
-  // Cache the LastLoc, it allows us to omit duplicate source/caret spewage.
-  LastLoc = FullSourceLoc(Info.getLocation(), Info.getSourceManager());
+  // Cache the LastLoc from the TextDiagnostic printing.
+  LastLoc = FullSourceLoc(TextDiag.getLastLoc(), SM);
   LastCaretDiagnosticWasNote = (Level == DiagnosticsEngine::Note);
 
   OS.flush();

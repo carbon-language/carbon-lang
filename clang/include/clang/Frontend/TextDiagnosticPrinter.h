@@ -27,8 +27,8 @@ class TextDiagnosticPrinter : public DiagnosticConsumer {
   const LangOptions *LangOpts;
   const DiagnosticOptions *DiagOpts;
 
-  SourceLocation LastWarningLoc;
   FullSourceLoc LastLoc;
+  FullSourceLoc LastNonNoteLoc;
   unsigned LastCaretDiagnosticWasNote : 1;
   unsigned OwnsOutputStream : 1;
 
