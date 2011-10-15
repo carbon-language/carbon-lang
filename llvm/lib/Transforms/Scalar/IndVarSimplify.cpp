@@ -721,10 +721,11 @@ namespace {
   // extend operations. This information is recorded by CollectExtend and
   // provides the input to WidenIV.
   struct WideIVInfo {
+    PHINode *NarrowIV;
     Type *WidestNativeType; // Widest integer type created [sz]ext
     bool IsSigned;          // Was an sext user seen before a zext?
 
-    WideIVInfo() : WidestNativeType(0), IsSigned(false) {}
+    WideIVInfo() : NarrowIV(0), WidestNativeType(0), IsSigned(false) {}
   };
 
   class WideIVVisitor : public IVVisitor {
@@ -734,8 +735,9 @@ namespace {
   public:
     WideIVInfo WI;
 
-    WideIVVisitor(ScalarEvolution *SCEV, const TargetData *TData) :
-      SE(SCEV), TD(TData) {}
+    WideIVVisitor(PHINode *NarrowIV, ScalarEvolution *SCEV,
+                  const TargetData *TData) :
+      SE(SCEV), TD(TData) { WI.NarrowIV = NarrowIV; }
 
     // Implement the interface used by simplifyUsersOfIV.
     virtual void visitCast(CastInst *Cast);
@@ -812,10 +814,10 @@ class WidenIV {
   SmallVector<NarrowIVDefUse, 8> NarrowIVUsers;
 
 public:
-  WidenIV(PHINode *PN, const WideIVInfo &WI, LoopInfo *LInfo,
+  WidenIV(const WideIVInfo &WI, LoopInfo *LInfo,
           ScalarEvolution *SEv, DominatorTree *DTree,
           SmallVectorImpl<WeakVH> &DI) :
-    OrigPhi(PN),
+    OrigPhi(WI.NarrowIV),
     WideType(WI.WidestNativeType),
     IsSigned(WI.IsSigned),
     LI(LInfo),
@@ -1181,7 +1183,7 @@ PHINode *WidenIV::CreateWideIV(SCEVExpander &Rewriter) {
 void IndVarSimplify::SimplifyAndExtend(Loop *L,
                                        SCEVExpander &Rewriter,
                                        LPPassManager &LPM) {
-  std::map<PHINode *, WideIVInfo> WideIVMap;
+  SmallVector<WideIVInfo, 8> WideIVs;
 
   SmallVector<PHINode*, 8> LoopPhis;
   for (BasicBlock::iterator I = L->getHeader()->begin(); isa<PHINode>(I); ++I) {
@@ -1202,24 +1204,22 @@ void IndVarSimplify::SimplifyAndExtend(Loop *L,
       PHINode *CurrIV = LoopPhis.pop_back_val();
 
       // Information about sign/zero extensions of CurrIV.
-      WideIVVisitor WIV(SE, TD);
+      WideIVVisitor WIV(CurrIV, SE, TD);
 
       Changed |= simplifyUsersOfIV(CurrIV, SE, &LPM, DeadInsts, &WIV);
 
       if (WIV.WI.WidestNativeType) {
-        WideIVMap[CurrIV] = WIV.WI;
+        WideIVs.push_back(WIV.WI);
       }
     } while(!LoopPhis.empty());
 
-    for (std::map<PHINode *, WideIVInfo>::const_iterator I = WideIVMap.begin(),
-           E = WideIVMap.end(); I != E; ++I) {
-      WidenIV Widener(I->first, I->second, LI, SE, DT, DeadInsts);
+    for (; !WideIVs.empty(); WideIVs.pop_back()) {
+      WidenIV Widener(WideIVs.back(), LI, SE, DT, DeadInsts);
       if (PHINode *WidePhi = Widener.CreateWideIV(Rewriter)) {
         Changed = true;
         LoopPhis.push_back(WidePhi);
       }
     }
-    WideIVMap.clear();
   }
 }
 
