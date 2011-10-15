@@ -405,31 +405,6 @@ static bool printWordWrapped(raw_ostream &OS, StringRef Str,
   return Wrapped;
 }
 
-static void printDiagnosticMessage(raw_ostream &OS,
-                                   DiagnosticsEngine::Level Level,
-                                   StringRef Message,
-                                   unsigned CurrentColumn, unsigned Columns,
-                                   bool ShowColors) {
-  if (ShowColors) {
-    // Print warnings, errors and fatal errors in bold, no color
-    switch (Level) {
-    case DiagnosticsEngine::Warning: OS.changeColor(savedColor, true); break;
-    case DiagnosticsEngine::Error:   OS.changeColor(savedColor, true); break;
-    case DiagnosticsEngine::Fatal:   OS.changeColor(savedColor, true); break;
-    default: break; //don't bold notes
-    }
-  }
-
-  if (Columns)
-    printWordWrapped(OS, Message, Columns, CurrentColumn);
-  else
-    OS << Message;
-
-  if (ShowColors)
-    OS.resetColor();
-  OS << '\n';
-}
-
 namespace {
 
 /// \brief Class to encapsulate the logic for formatting and printing a textual
@@ -798,6 +773,47 @@ public:
 
     if (ShowColors)
       OS.resetColor();
+  }
+
+  /// \brief Pretty-print a diagnostic message to a raw_ostream.
+  ///
+  /// This is a static helper to handle the line wrapping, colorizing, and
+  /// rendering of a diagnostic message to a particular ostream. It is
+  /// publically visible so that clients which do not have sufficient state to
+  /// build a complete TextDiagnostic object can still get consistent
+  /// formatting of their diagnostic messages.
+  ///
+  /// \param OS Where the message is printed
+  /// \param Level Used to colorizing the message
+  /// \param Message The text actually printed
+  /// \param CurrentColumn The starting column of the first line, accounting
+  ///                      for any prefix.
+  /// \param Columns The number of columns to use in line-wrapping, 0 disables
+  ///                all line-wrapping.
+  /// \param ShowColors Enable colorizing of the message.
+  static void printDiagnosticMessage(raw_ostream &OS,
+                                     DiagnosticsEngine::Level Level,
+                                     StringRef Message,
+                                     unsigned CurrentColumn, unsigned Columns,
+                                     bool ShowColors) {
+    if (ShowColors) {
+      // Print warnings, errors and fatal errors in bold, no color
+      switch (Level) {
+      case DiagnosticsEngine::Warning: OS.changeColor(savedColor, true); break;
+      case DiagnosticsEngine::Error:   OS.changeColor(savedColor, true); break;
+      case DiagnosticsEngine::Fatal:   OS.changeColor(savedColor, true); break;
+      default: break; //don't bold notes
+      }
+    }
+
+    if (Columns)
+      printWordWrapped(OS, Message, Columns, CurrentColumn);
+    else
+      OS << Message;
+
+    if (ShowColors)
+      OS.resetColor();
+    OS << '\n';
   }
 
 private:
@@ -1283,9 +1299,10 @@ void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
   // other infrastructure necessary when emitting more rich diagnostics.
   if (!Info.getLocation().isValid()) {
     TextDiagnostic::printDiagnosticLevel(OS, Level, DiagOpts->ShowColors);
-    printDiagnosticMessage(OS, Level, DiagMessageStream.str(),
-                           OS.tell() - StartOfLocationInfo,
-                           DiagOpts->MessageLength, DiagOpts->ShowColors);
+    TextDiagnostic::printDiagnosticMessage(OS, Level, DiagMessageStream.str(),
+                                           OS.tell() - StartOfLocationInfo,
+                                           DiagOpts->MessageLength,
+                                           DiagOpts->ShowColors);
     OS.flush();
     return;
   }
