@@ -1375,7 +1375,7 @@ let Predicates = [HasLZCNT], Defs = [EFLAGS] in {
 }
 
 //===----------------------------------------------------------------------===//
-// TZCNT Instruction
+// BMI Instructions
 //
 let Predicates = [HasBMI], Defs = [EFLAGS] in {
   def TZCNT16rr : I<0xBC, MRMSrcReg, (outs GR16:$dst), (ins GR16:$src),
@@ -1403,6 +1403,26 @@ let Predicates = [HasBMI], Defs = [EFLAGS] in {
                      "tzcnt{q}\t{$src, $dst|$dst, $src}",
                      [(set GR64:$dst, (cttz (loadi64 addr:$src))),
                       (implicit EFLAGS)]>, XS;
+}
+
+multiclass bmi_bls<string mnemonic, Format RegMRM, Format MemMRM,
+                   RegisterClass RC, X86MemOperand x86memop> {
+  def rr : I<0xF3, RegMRM, (outs RC:$dst), (ins RC:$src),
+             !strconcat(mnemonic, "\t{$src, $dst|$dst, $src}"), []>;
+  def rm : I<0xF3, MemMRM, (outs RC:$dst), (ins x86memop:$src),
+             !strconcat(mnemonic, "\t{$src, $dst|$dst, $src}"), []>;
+}
+
+let Predicates = [HasBMI], Defs = [EFLAGS] in {
+  defm BLSR32 : bmi_bls<"blsr{l}", MRM1r, MRM1m, GR32, i32mem>, T8, VEX_4V;
+  defm BLSR64 : bmi_bls<"blsr{q}", MRM1r, MRM1m, GR64, i64mem>, T8, VEX_4V,
+                          VEX_W;
+  defm BLSMSK32 : bmi_bls<"blsmsk{l}", MRM2r, MRM2m, GR32, i32mem>, T8, VEX_4V;
+  defm BLSMSK64 : bmi_bls<"blsmsk{q}", MRM2r, MRM2m, GR64, i64mem>, T8, VEX_4V,
+                          VEX_W;
+  defm BLSI32 : bmi_bls<"blsi{l}", MRM3r, MRM3m, GR32, i32mem>, T8, VEX_4V;
+  defm BLSI64 : bmi_bls<"blsi{q}", MRM3r, MRM3m, GR64, i64mem>, T8, VEX_4V,
+                        VEX_W;
 }
 
 //===----------------------------------------------------------------------===//

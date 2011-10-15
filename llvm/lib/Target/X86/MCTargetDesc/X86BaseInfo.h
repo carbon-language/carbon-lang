@@ -495,8 +495,13 @@ namespace X86II {
     case X86II::MRM0m: case X86II::MRM1m:
     case X86II::MRM2m: case X86II::MRM3m:
     case X86II::MRM4m: case X86II::MRM5m:
-    case X86II::MRM6m: case X86II::MRM7m:
-      return 0;
+    case X86II::MRM6m: case X86II::MRM7m: {
+      bool HasVEX_4V = (TSFlags >> X86II::VEXShift) & X86II::VEX_4V;
+      unsigned FirstMemOp = 0;
+      if (HasVEX_4V)
+        ++FirstMemOp;// Skip the register dest (which is encoded in VEX_VVVV).
+      return FirstMemOp;
+    }
     case X86II::MRM_C1:
     case X86II::MRM_C2:
     case X86II::MRM_C3:

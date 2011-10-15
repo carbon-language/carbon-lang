@@ -119,6 +119,9 @@ namespace X86Local {
   EXTENSION_TABLE(ba)             \
   EXTENSION_TABLE(c7)
 
+#define THREE_BYTE_38_EXTENSION_TABLES \
+  EXTENSION_TABLE(F3)
+
 using namespace X86Disassembler;
 
 /// needsModRMForDecode - Indicates whether a particular instruction requires a
@@ -736,12 +739,12 @@ void RecognizableInstr::emitInstructionSpecifier(DisassemblerTables &tables) {
     // Operand 2 (optional) is an immediate or relocation.
     if (HasVEX_4VPrefix)
       assert(numPhysicalOperands <= 3 &&
-             "Unexpected number of operands for MRMSrcMemFrm with VEX_4V");
+             "Unexpected number of operands for MRMnRFrm with VEX_4V");
     else
       assert(numPhysicalOperands <= 2 &&
              "Unexpected number of operands for MRMnRFrm");
     if (HasVEX_4VPrefix)
-      HANDLE_OPERAND(vvvvRegister);
+      HANDLE_OPERAND(vvvvRegister)
     HANDLE_OPTIONAL(rmRegister)
     HANDLE_OPTIONAL(relocation)
     break;
@@ -755,8 +758,14 @@ void RecognizableInstr::emitInstructionSpecifier(DisassemblerTables &tables) {
   case X86Local::MRM7m:
     // Operand 1 is a memory operand (possibly SIB-extended)
     // Operand 2 (optional) is an immediate or relocation.
-    assert(numPhysicalOperands >= 1 && numPhysicalOperands <= 2 &&
-           "Unexpected number of operands for MRMnMFrm");
+    if (HasVEX_4VPrefix)
+      assert(numPhysicalOperands >= 2 && numPhysicalOperands <= 3 &&
+             "Unexpected number of operands for MRMnMFrm");
+    else
+      assert(numPhysicalOperands >= 1 && numPhysicalOperands <= 2 &&
+             "Unexpected number of operands for MRMnMFrm");
+    if (HasVEX_4VPrefix)
+      HANDLE_OPERAND(vvvvRegister)
     HANDLE_OPERAND(memory)
     HANDLE_OPTIONAL(relocation)
     break;
@@ -845,10 +854,43 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
   case X86Local::T8:
   case X86Local::TF:
     opcodeType = THREEBYTE_38;
-    if (needsModRMForDecode(Form))
-      filter = new ModFilter(isRegFormat(Form));
-    else
-      filter = new DumbFilter();
+    switch (Opcode) {
+    default:
+      if (needsModRMForDecode(Form))
+        filter = new ModFilter(isRegFormat(Form));
+      else
+        filter = new DumbFilter();
+      break;
+#define EXTENSION_TABLE(n) case 0x##n:
+    THREE_BYTE_38_EXTENSION_TABLES
+#undef EXTENSION_TABLE
+      switch (Form) {
+      default:
+        llvm_unreachable("Unhandled two-byte extended opcode");
+      case X86Local::MRM0r:
+      case X86Local::MRM1r:
+      case X86Local::MRM2r:
+      case X86Local::MRM3r:
+      case X86Local::MRM4r:
+      case X86Local::MRM5r:
+      case X86Local::MRM6r:
+      case X86Local::MRM7r:
+        filter = new ExtendedFilter(true, Form - X86Local::MRM0r);
+        break;
+      case X86Local::MRM0m:
+      case X86Local::MRM1m:
+      case X86Local::MRM2m:
+      case X86Local::MRM3m:
+      case X86Local::MRM4m:
+      case X86Local::MRM5m:
+      case X86Local::MRM6m:
+      case X86Local::MRM7m:
+        filter = new ExtendedFilter(false, Form - X86Local::MRM0m);
+        break;
+      MRM_MAPPING
+      } // switch (Form)
+      break;
+    } // switch (Opcode)
     opcodeToSet = Opcode;
     break;
   case X86Local::P_TA:
