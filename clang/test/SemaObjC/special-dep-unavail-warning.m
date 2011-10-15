@@ -43,3 +43,13 @@ void test(C *c) {
 
 }
 
+// rdar://10268422
+__attribute ((deprecated))
+@interface DEPRECATED
++(id)new;
+@end
+
+void foo() {
+  [DEPRECATED new]; // expected-warning {{warning: 'DEPRECATED' is deprecated}}
+}
+

@@ -1078,7 +1078,9 @@ ExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
     return ExprError();
   }
   assert(Class && "We don't know which class we're messaging?");
-  (void)DiagnoseUseOfDecl(Class, Loc);
+  // objc++ diagnoses during typename annotation.
+  if (!getLangOptions().CPlusPlus)
+    (void)DiagnoseUseOfDecl(Class, Loc);
   // Find the method we are messaging.
   if (!Method) {
     if (Class->isForwardDecl()) {
