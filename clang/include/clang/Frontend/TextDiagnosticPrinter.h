@@ -62,10 +62,10 @@ public:
   DiagnosticConsumer *clone(DiagnosticsEngine &Diags) const;
 
 private:
-  void EmitDiagnosticLoc(DiagnosticsEngine::Level Level,
-                         const Diagnostic &Info,
-                         const SourceManager &SM,
-                         PresumedLoc PLoc);
+  void EmitDiagnosticLoc(SourceLocation Loc, PresumedLoc PLoc,
+                         DiagnosticsEngine::Level Level,
+                         ArrayRef<CharSourceRange> Ranges,
+                         const SourceManager &SM);
 };
 
 } // end namespace clang

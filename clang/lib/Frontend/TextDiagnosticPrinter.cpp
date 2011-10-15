@@ -785,13 +785,14 @@ static PresumedLoc getDiagnosticPresumedLoc(const SourceManager &SM,
 /// This includes extracting as much location information as is present for the
 /// diagnostic and printing it, as well as any include stack or source ranges
 /// necessary.
-void TextDiagnosticPrinter::EmitDiagnosticLoc(DiagnosticsEngine::Level Level,
-                                              const Diagnostic &Info,
-                                              const SourceManager &SM,
-                                              PresumedLoc PLoc) {
+void TextDiagnosticPrinter::EmitDiagnosticLoc(SourceLocation Loc,
+                                              PresumedLoc PLoc,
+                                              DiagnosticsEngine::Level Level,
+                                              ArrayRef<CharSourceRange> Ranges,
+                                              const SourceManager &SM) {
   if (PLoc.isInvalid()) {
     // At least print the file name if available:
-    FileID FID = SM.getFileID(Info.getLocation());
+    FileID FID = SM.getFileID(Loc);
     if (!FID.isInvalid()) {
       const FileEntry* FE = SM.getFileEntryForID(FID);
       if (FE && FE->getName()) {
@@ -837,27 +838,27 @@ void TextDiagnosticPrinter::EmitDiagnosticLoc(DiagnosticsEngine::Level Level,
   case DiagnosticOptions::Msvc:  OS << ") : "; break;
   }
 
-  if (DiagOpts->ShowSourceRanges && Info.getNumRanges()) {
+  if (DiagOpts->ShowSourceRanges && !Ranges.empty()) {
     FileID CaretFileID =
-      SM.getFileID(SM.getExpansionLoc(Info.getLocation()));
+      SM.getFileID(SM.getExpansionLoc(Loc));
     bool PrintedRange = false;
 
-    for (unsigned i = 0, e = Info.getNumRanges(); i != e; ++i) {
+    for (ArrayRef<CharSourceRange>::const_iterator RI = Ranges.begin(),
+                                                   RE = Ranges.end();
+         RI != RE; ++RI) {
       // Ignore invalid ranges.
-      if (!Info.getRange(i).isValid()) continue;
+      if (!RI->isValid()) continue;
 
-      SourceLocation B = Info.getRange(i).getBegin();
-      SourceLocation E = Info.getRange(i).getEnd();
-      B = SM.getExpansionLoc(B);
-      E = SM.getExpansionLoc(E);
+      SourceLocation B = SM.getExpansionLoc(RI->getBegin());
+      SourceLocation E = SM.getExpansionLoc(RI->getEnd());
 
       // If the End location and the start location are the same and are a
       // macro location, then the range was something that came from a
       // macro expansion or _Pragma.  If this is an object-like macro, the
       // best we can do is to highlight the range.  If this is a
       // function-like macro, we'd also like to highlight the arguments.
-      if (B == E && Info.getRange(i).getEnd().isMacroID())
-        E = SM.getExpansionRange(Info.getRange(i).getEnd()).second;
+      if (B == E && RI->getEnd().isMacroID())
+        E = SM.getExpansionRange(RI->getEnd()).second;
 
       std::pair<FileID, unsigned> BInfo = SM.getDecomposedLoc(B);
       std::pair<FileID, unsigned> EInfo = SM.getDecomposedLoc(E);
@@ -870,7 +871,7 @@ void TextDiagnosticPrinter::EmitDiagnosticLoc(DiagnosticsEngine::Level Level,
       // Add in the length of the token, so that we cover multi-char
       // tokens.
       unsigned TokSize = 0;
-      if (Info.getRange(i).isTokenRange())
+      if (RI->isTokenRange())
         TokSize = Lexer::MeasureTokenLength(E, SM, *LangOpts);
 
       OS << '{' << SM.getLineNumber(BInfo.first, BInfo.second) << ':'
@@ -1226,7 +1227,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
   StartOfLocationInfo = OS.tell();
 
   // Next emit the location of this particular diagnostic.
-  EmitDiagnosticLoc(Level, Info, SM, PLoc);
+  EmitDiagnosticLoc(Info.getLocation(), PLoc, Level, Info.getRanges(), SM);
 
   if (DiagOpts->ShowColors)
     OS.resetColor();
