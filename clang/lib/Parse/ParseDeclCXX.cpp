@@ -2072,20 +2072,11 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
 
   // Parse the optional 'final' keyword.
   if (getLang().CPlusPlus && Tok.is(tok::identifier)) {
-    IdentifierInfo *II = Tok.getIdentifierInfo();
-    
-    // Initialize the contextual keywords.
-    if (!Ident_final) {
-      Ident_final = &PP.getIdentifierTable().get("final");
-      Ident_override = &PP.getIdentifierTable().get("override");
-    }
-      
-    if (II == Ident_final) {
-      FinalLoc = ConsumeToken();
+    assert(isCXX0XFinalKeyword() && "not a class definition");
+    FinalLoc = ConsumeToken();
 
-      if (!getLang().CPlusPlus0x) 
-        Diag(FinalLoc, diag::ext_override_control_keyword) << "final";
-    }
+    if (!getLang().CPlusPlus0x)
+      Diag(FinalLoc, diag::ext_override_control_keyword) << "final";
   }
 
   if (Tok.is(tok::colon)) {
