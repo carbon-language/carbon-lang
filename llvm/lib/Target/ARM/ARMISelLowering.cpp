@@ -519,6 +519,8 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setTargetDAGCombine(ISD::FP_TO_SINT);
     setTargetDAGCombine(ISD::FP_TO_UINT);
     setTargetDAGCombine(ISD::FDIV);
+
+    setLoadExtAction(ISD::EXTLOAD, MVT::v4i8, Expand);
   }
 
   computeRegisterProperties();
