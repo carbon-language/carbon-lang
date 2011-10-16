@@ -2691,7 +2691,7 @@ static MultiInitializer CreateMultiInitializer(SmallVectorImpl<Expr*> &Args,
   // the MultiInitializer.
   if (Args.size() == 1 && isa<InitListExpr>(Args[0]))
     return MultiInitializer(Args[0]);
-  return MultiInitializer(Init->getLParenLoc(), Args.data(),
+  return MultiInitializer(Init->getLParenLoc(), const_cast<Expr**>(Args.data()),
                           Args.size(), Init->getRParenLoc());
 }
 
