@@ -15,18 +15,18 @@
 #define M12(A, B) M11(A, B)
 
 void f(int *ip, float *fp) {
-  // CHECK: macro-backtrace-limit.c:31:7: warning: comparison of distinct pointer types ('int *' and 'float *')
+  // CHECK: macro-backtrace.c:31:7: warning: comparison of distinct pointer types ('int *' and 'float *')
   // CHECK: if (M12(ip, fp)) { }
-  // CHECK: macro-backtrace-limit.c:15:19: note: expanded from:
+  // CHECK: macro-backtrace.c:15:19: note: expanded from:
   // CHECK: #define M12(A, B) M11(A, B)
-  // CHECK: macro-backtrace-limit.c:14:19: note: expanded from:
+  // CHECK: macro-backtrace.c:14:19: note: expanded from:
   // CHECK: #define M11(A, B) M10(A, B)
   // CHECK: note: (skipping 7 expansions in backtrace; use -fmacro-backtrace-limit=0 to see all)
-  // CHECK: macro-backtrace-limit.c:6:18: note: expanded from:
+  // CHECK: macro-backtrace.c:6:18: note: expanded from:
   // CHECK: #define M3(A, B) M2(A, B)
-  // CHECK: macro-backtrace-limit.c:5:18: note: expanded from:
+  // CHECK: macro-backtrace.c:5:18: note: expanded from:
   // CHECK: #define M2(A, B) M1(A, B)
-  // CHECK: macro-backtrace-limit.c:4:23: note: expanded from:
+  // CHECK: macro-backtrace.c:4:23: note: expanded from:
   // CHECK: #define M1(A, B) ((A) < (B))
   if (M12(ip, fp)) { }
 }
