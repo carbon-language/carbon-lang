@@ -46,11 +46,19 @@ realpath = $(shell cd $(1); $(PWD))
 PROJ_OBJ_DIR  := $(call realpath, .)
 PROJ_OBJ_ROOT := $(call realpath, $(PROJ_OBJ_DIR)/$(LEVEL))
 
+CLANG_SRC_ROOT  := @CLANG_SRC_ROOT@
+
 ifeq ($(PROJECT_NAME),llvm)
 LLVM_SRC_ROOT   := $(call realpath, @abs_top_srcdir@)
 LLVM_OBJ_ROOT   := $(call realpath, @abs_top_builddir@)
 PROJ_SRC_ROOT   := $(LLVM_SRC_ROOT)
-PROJ_SRC_DIR    := $(call realpath, $(LLVM_SRC_ROOT)/$(patsubst $(PROJ_OBJ_ROOT)%,%,$(PROJ_OBJ_DIR)))
+PROJ_SRC_DIR    := $(LLVM_SRC_ROOT)$(patsubst $(PROJ_OBJ_ROOT)%,%,$(PROJ_OBJ_DIR))
+
+ifneq ($(CLANG_SRC_ROOT),)
+  CLANG_SRC_ROOT:= $(call realpath, $(CLANG_SRC_ROOT))
+  PROJ_SRC_DIR  := $(patsubst $(LLVM_SRC_ROOT)/tools/clang%,$(CLANG_SRC_ROOT)%,$(PROJ_SRC_DIR))
+endif
+
 prefix          := @prefix@
 PROJ_prefix     := $(prefix)
 PROJ_VERSION    := $(LLVMVersion)

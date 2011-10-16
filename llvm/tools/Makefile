@@ -9,8 +9,15 @@
 
 LEVEL := ..
 
+include $(LEVEL)/Makefile.config
+
 # Build clang if present.
-OPTIONAL_PARALLEL_DIRS := clang
+
+ifneq ($(CLANG_SRC_ROOT),)
+  OPTIONAL_PARALLEL_DIRS := $(CLANG_SRC_ROOT)
+else
+  OPTIONAL_PARALLEL_DIRS := clang
+endif
 
 # Build LLDB if present. Note LLDB must be built last as it depends on the
 # wider LLVM infrastructure (including Clang).
@@ -35,9 +42,6 @@ ifdef ONLY_TOOLS
   OPTIONAL_DIRS := $(findstring lldb,$(ONLY_TOOLS))
   PARALLEL_DIRS := $(filter-out lldb,$(ONLY_TOOLS))
 endif
-
-include $(LEVEL)/Makefile.config
-
 
 # These libraries build as dynamic libraries (.dylib /.so), they can only be
 # built if ENABLE_PIC is set.

@@ -795,6 +795,17 @@ case "$withval" in
   *) AC_MSG_ERROR([Invalid path for --with-ocaml-libdir. Provide full path]) ;;
 esac
 
+AC_ARG_WITH(clang-srcdir,
+  AS_HELP_STRING([--with-clang-srcdir],
+    [Directory to the out-of-tree Clang source]),,
+    withval="-")
+case "$withval" in
+  -) clang_src_root="" ;;
+  /* | [[A-Za-z]]:[[\\/]]*) clang_src_root="$withval" ;;
+  *) clang_src_root="$ac_pwd/$withval" ;;
+esac
+AC_SUBST(CLANG_SRC_ROOT,[$clang_src_root])
+
 AC_ARG_WITH(clang-resource-dir,
   AS_HELP_STRING([--with-clang-resource-dir],
     [Relative directory from the Clang binary for resource files]),,
