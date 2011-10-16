@@ -72,10 +72,21 @@ public:
                  const LangOptions &LangOpts,
                  const DiagnosticOptions &DiagOpts);
 
+  /// \brief Emit a textual diagnostic.
+  ///
+  /// This is the primary entry point for emitting textual diagnostic messages.
+  /// It handles formatting and printing the message as well as any ancillary
+  /// information needed based on macros whose expansions impact the
+  /// diagnostic.
+  ///
+  /// \param Loc The location for this caret.
+  /// \param Level The level of the diagnostic to be emitted.
+  /// \param Message The diagnostic message to emit.
+  /// \param Ranges The underlined ranges for this code snippet.
+  /// \param FixItHints The FixIt hints active for this diagnostic.
   void emitDiagnostic(SourceLocation Loc, DiagnosticsEngine::Level Level,
                       StringRef Message, ArrayRef<CharSourceRange> Ranges,
-                      ArrayRef<FixItHint> FixItHints,
-                      bool LastCaretDiagnosticWasNote = false);
+                      ArrayRef<FixItHint> FixItHints);
 
   /// \brief Print the diagonstic level to a raw_ostream.
   ///

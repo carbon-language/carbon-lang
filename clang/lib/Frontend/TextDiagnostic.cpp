@@ -400,8 +400,7 @@ void TextDiagnostic::emitDiagnostic(SourceLocation Loc,
                                     DiagnosticsEngine::Level Level,
                                     StringRef Message,
                                     ArrayRef<CharSourceRange> Ranges,
-                                    ArrayRef<FixItHint> FixItHints,
-                                    bool LastCaretDiagnosticWasNote) {
+                                    ArrayRef<FixItHint> FixItHints) {
   PresumedLoc PLoc = getDiagnosticPresumedLoc(SM, Loc);
 
   // First, if this diagnostic is not in the main file, print out the
