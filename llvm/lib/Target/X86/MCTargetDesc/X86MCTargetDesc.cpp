@@ -107,6 +107,74 @@ bool X86_MC::GetCpuIDAndInfo(unsigned value, unsigned *rEAX,
   return true;
 }
 
+/// GetCpuIDAndInfoEx - Execute the specified cpuid with subleaf and return the
+/// 4 values in the specified arguments.  If we can't run cpuid on the host,
+/// return true.
+bool X86_MC::GetCpuIDAndInfoEx(unsigned value, unsigned subleaf, unsigned *rEAX,
+                               unsigned *rEBX, unsigned *rECX, unsigned *rEDX) {
+#if defined(__x86_64__) || defined(_M_AMD64) || defined (_M_X64)
+  #if defined(__GNUC__)
+    // gcc desn't know cpuid would clobber ebx/rbx. Preseve it manually.
+    asm ("movq\t%%rbx, %%rsi\n\t"
+         "cpuid\n\t"
+         "xchgq\t%%rbx, %%rsi\n\t"
+         : "=a" (*rEAX),
+           "=S" (*rEBX),
+           "=c" (*rECX),
+           "=d" (*rEDX)
+         :  "a" (value),
+            "c" (subleaf));
+    return false;
+  #elif defined(_MSC_VER)
+    // can't use __cpuidex because it isn't available in all supported versions
+    // of MSC
+    __asm {
+      mov   eax,value
+      mov   ecx,subleaf
+      cpuid
+      mov   rsi,rEAX
+      mov   dword ptr [rsi],eax
+      mov   rsi,rEBX
+      mov   dword ptr [rsi],ebx
+      mov   rsi,rECX
+      mov   dword ptr [rsi],ecx
+      mov   rsi,rEDX
+      mov   dword ptr [rsi],edx
+    }
+    return false;
+  #endif
+#elif defined(i386) || defined(__i386__) || defined(__x86__) || defined(_M_IX86)
+  #if defined(__GNUC__)
+    asm ("movl\t%%ebx, %%esi\n\t"
+         "cpuid\n\t"
+         "xchgl\t%%ebx, %%esi\n\t"
+         : "=a" (*rEAX),
+           "=S" (*rEBX),
+           "=c" (*rECX),
+           "=d" (*rEDX)
+         :  "a" (value),
+            "c" (subleaf));
+    return false;
+  #elif defined(_MSC_VER)
+    __asm {
+      mov   eax,value
+      mov   ecx,subleaf
+      cpuid
+      mov   esi,rEAX
+      mov   dword ptr [esi],eax
+      mov   esi,rEBX
+      mov   dword ptr [esi],ebx
+      mov   esi,rECX
+      mov   dword ptr [esi],ecx
+      mov   esi,rEDX
+      mov   dword ptr [esi],edx
+    }
+    return false;
+  #endif
+#endif
+  return true;
+}
+
 void X86_MC::DetectFamilyModel(unsigned EAX, unsigned &Family,
                                unsigned &Model) {
   Family = (EAX >> 8) & 0xf; // Bits 8 - 11

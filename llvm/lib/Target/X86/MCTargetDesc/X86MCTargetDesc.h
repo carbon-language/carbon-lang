@@ -54,6 +54,11 @@ namespace X86_MC {
   /// the specified arguments.  If we can't run cpuid on the host, return true.
   bool GetCpuIDAndInfo(unsigned value, unsigned *rEAX,
                        unsigned *rEBX, unsigned *rECX, unsigned *rEDX);
+  /// GetCpuIDAndInfoEx - Execute the specified cpuid with subleaf and return
+  /// the 4 values in the specified arguments.  If we can't run cpuid on the
+  /// host, return true.
+  bool GetCpuIDAndInfoEx(unsigned value, unsigned subleaf, unsigned *rEAX,
+                       unsigned *rEBX, unsigned *rECX, unsigned *rEDX);
 
   void DetectFamilyModel(unsigned EAX, unsigned &Family, unsigned &Model);
 

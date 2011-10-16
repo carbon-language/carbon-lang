@@ -177,16 +177,18 @@ unsigned X86Subtarget::getSpecialAddressLatency() const {
 
 void X86Subtarget::AutoDetectSubtargetFeatures() {
   unsigned EAX = 0, EBX = 0, ECX = 0, EDX = 0;
+  unsigned MaxLevel;
   union {
     unsigned u[3];
     char     c[12];
   } text;
-  
-  if (X86_MC::GetCpuIDAndInfo(0, &EAX, text.u+0, text.u+2, text.u+1))
+
+  if (X86_MC::GetCpuIDAndInfo(0, &MaxLevel, text.u+0, text.u+2, text.u+1) ||
+      MaxLevel < 1)
     return;
 
   X86_MC::GetCpuIDAndInfo(0x1, &EAX, &EBX, &ECX, &EDX);
-  
+
   if ((EDX >> 15) & 1) { HasCMov = true;      ToggleFeature(X86::FeatureCMOV); }
   if ((EDX >> 23) & 1) { X86SSELevel = MMX;   ToggleFeature(X86::FeatureMMX);  }
   if ((EDX >> 25) & 1) { X86SSELevel = SSE1;  ToggleFeature(X86::FeatureSSE1); }
@@ -245,27 +247,41 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
       ToggleFeature(X86::FeatureSlowBTMem);
     }
     // If it's Nehalem, unaligned memory access is fast.
+    // FIXME: Nehalem is family 6. Also include Westmere and later processors?
     if (Family == 15 && Model == 26) {
       IsUAMemFast = true;
       ToggleFeature(X86::FeatureFastUAMem);
     }
 
-    X86_MC::GetCpuIDAndInfo(0x80000001, &EAX, &EBX, &ECX, &EDX);
-    if ((EDX >> 29) & 0x1) {
-      HasX86_64 = true;
-      ToggleFeature(X86::Feature64Bit);
+    unsigned MaxExtLevel;
+    X86_MC::GetCpuIDAndInfo(0x80000000, &MaxExtLevel, &EBX, &ECX, &EDX);
+
+    if (MaxExtLevel >= 0x80000001) {
+      X86_MC::GetCpuIDAndInfo(0x80000001, &EAX, &EBX, &ECX, &EDX);
+      if ((EDX >> 29) & 0x1) {
+        HasX86_64 = true;
+        ToggleFeature(X86::Feature64Bit);
+      }
+      if ((ECX >> 5) & 0x1) {
+        HasLZCNT = true;
+        ToggleFeature(X86::FeatureLZCNT);
+      }
+      if (IsAMD && ((ECX >> 6) & 0x1)) {
+        HasSSE4A = true;
+        ToggleFeature(X86::FeatureSSE4A);
+      }
+      if (IsAMD && ((ECX >> 16) & 0x1)) {
+        HasFMA4 = true;
+        ToggleFeature(X86::FeatureFMA4);
+      }
     }
-    if ((ECX >> 5) & 0x1) {
-      HasLZCNT = true;
-      ToggleFeature(X86::FeatureLZCNT);
-    }
-    if (IsAMD && ((ECX >> 6) & 0x1)) {
-      HasSSE4A = true;
-      ToggleFeature(X86::FeatureSSE4A);
-    }
-    if (IsAMD && ((ECX >> 16) & 0x1)) {
-      HasFMA4 = true;
-      ToggleFeature(X86::FeatureFMA4);
+  }
+
+  if (IsIntel && MaxLevel >= 7) {
+    X86_MC::GetCpuIDAndInfoEx(0x7, 0x0, &EAX, &EBX, &ECX, &EDX);
+    if ((EBX >> 3) & 0x1) {
+      HasBMI = true;
+      ToggleFeature(X86::FeatureBMI);
     }
   }
 }
