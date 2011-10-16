@@ -31,4 +31,17 @@ void f(int *ip, float *fp) {
   // CHECK-LIMIT: #define M2(A, B) M1(A, B)
   // CHECK-LIMIT: macro-backtrace.c:4:23: note: expanded from:
   // CHECK-LIMIT: #define M1(A, B) ((A) < (B))
+
+  // FIXME: We should have higher quality messages, especially when caret
+  // diagnostics are off.
+  // RUN: %clang_cc1 -fsyntax-only -fno-caret-diagnostics %s 2>&1 \
+  // RUN:   | FileCheck %s -check-prefix=CHECK-NO-CARETS
+  // CHECK-NO-CARETS: macro-backtrace.c:18:7: warning: comparison of distinct pointer types ('int *' and 'float *')
+  // CHECK-NO-CARETS-NEXT: macro-backtrace.c:15:19: note: expanded from:
+  // CHECK-NO-CARETS-NEXT: macro-backtrace.c:14:19: note: expanded from:
+  // CHECK-NO-CARETS-NEXT: macro-backtrace.c:13:19: note: expanded from:
+  // CHECK-NO-CARETS-NEXT: note: (skipping 6 expansions in backtrace; use -fmacro-backtrace-limit=0 to see all)
+  // CHECK-NO-CARETS-NEXT: macro-backtrace.c:6:18: note: expanded from:
+  // CHECK-NO-CARETS-NEXT: macro-backtrace.c:5:18: note: expanded from:
+  // CHECK-NO-CARETS-NEXT: macro-backtrace.c:4:23: note: expanded from:
 }

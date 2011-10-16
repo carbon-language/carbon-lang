@@ -127,12 +127,13 @@ private:
   void emitDiagnosticLoc(SourceLocation Loc, PresumedLoc PLoc,
                          DiagnosticsEngine::Level Level,
                          ArrayRef<CharSourceRange> Ranges);
-  void emitCaret(SourceLocation Loc,
-                 SmallVectorImpl<CharSourceRange>& Ranges,
-                 ArrayRef<FixItHint> Hints,
-                 unsigned &MacroDepth,
-                 unsigned OnMacroInst = 0);
-  void emitSnippetAndCaret(SourceLocation Loc,
+  void emitMacroExpansionsAndCarets(SourceLocation Loc,
+                                    DiagnosticsEngine::Level Level,
+                                    SmallVectorImpl<CharSourceRange>& Ranges,
+                                    ArrayRef<FixItHint> Hints,
+                                    unsigned &MacroDepth,
+                                    unsigned OnMacroInst = 0);
+  void emitSnippetAndCaret(SourceLocation Loc, DiagnosticsEngine::Level Level,
                            SmallVectorImpl<CharSourceRange>& Ranges,
                            ArrayRef<FixItHint> Hints);
 
