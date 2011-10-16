@@ -53,6 +53,12 @@ bool Sema::CanUseDecl(NamedDecl *D) {
     if (FD->isDeleted())
       return false;
   }
+
+  // See if this function is unavailable.
+  if (D->getAvailability() == AR_Unavailable &&
+      cast<Decl>(CurContext)->getAvailability() != AR_Unavailable)
+    return false;
+
   return true;
 }
 
