@@ -412,11 +412,8 @@ public:
   /// initializer, which can be emitted at compile-time.
   bool isConstantInitializer(ASTContext &Ctx, bool ForRef) const;
 
-  /// EvalResult is a struct with detailed info about an evaluated expression.
-  struct EvalResult {
-    /// Val - This is the value the expression can be folded to.
-    APValue Val;
-
+  /// EvalStatus is a struct with detailed info about an evaluation in progress.
+  struct EvalStatus {
     /// HasSideEffects - Whether the evaluated expression has side effects.
     /// For example, (f() && 0) can be folded, but it still has side effects.
     bool HasSideEffects;
@@ -433,16 +430,23 @@ public:
     const Expr *DiagExpr;
     SourceLocation DiagLoc;
 
-    EvalResult() : HasSideEffects(false), Diag(0), DiagExpr(0) {}
+    EvalStatus() : HasSideEffects(false), Diag(0), DiagExpr(0) {}
 
-    // isGlobalLValue - Return true if the evaluated lvalue expression
-    // is global.
-    bool isGlobalLValue() const;
     // hasSideEffects - Return true if the evaluated expression has
     // side effects.
     bool hasSideEffects() const {
       return HasSideEffects;
     }
+  };
+
+  /// EvalResult is a struct with detailed info about an evaluated expression.
+  struct EvalResult : EvalStatus {
+    /// Val - This is the value the expression can be folded to.
+    APValue Val;
+
+    // isGlobalLValue - Return true if the evaluated lvalue expression
+    // is global.
+    bool isGlobalLValue() const;
   };
 
   /// Evaluate - Return true if this is a constant which we can fold using
