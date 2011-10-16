@@ -36,8 +36,6 @@ class BranchProbabilityAnalysis {
 
   typedef std::pair<const BasicBlock *, const BasicBlock *> Edge;
 
-  DenseMap<Edge, uint32_t> *Weights;
-
   BranchProbabilityInfo *BP;
 
   LoopInfo *LI;
@@ -115,9 +113,8 @@ class BranchProbabilityAnalysis {
   }
 
 public:
-  BranchProbabilityAnalysis(DenseMap<Edge, uint32_t> *W,
-                            BranchProbabilityInfo *BP, LoopInfo *LI)
-    : Weights(W), BP(BP), LI(LI) {
+  BranchProbabilityAnalysis(BranchProbabilityInfo *BP, LoopInfo *LI)
+    : BP(BP), LI(LI) {
   }
 
   // Return Heuristics
@@ -366,7 +363,7 @@ void BranchProbabilityInfo::getAnalysisUsage(AnalysisUsage &AU) const {
 
 bool BranchProbabilityInfo::runOnFunction(Function &F) {
   LoopInfo &LI = getAnalysis<LoopInfo>();
-  BranchProbabilityAnalysis BPA(&Weights, this, &LI);
+  BranchProbabilityAnalysis BPA(this, &LI);
   return BPA.runOnFunction(F);
 }
 
