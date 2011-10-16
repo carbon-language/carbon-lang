@@ -31,10 +31,16 @@ namespace llvm {
 /// and handles diagnostic wrangling.
 class SourceMgr {
 public:
+  enum DiagKind {
+    DK_Error,
+    DK_Warning,
+    DK_Note
+  };
+  
   /// DiagHandlerTy - Clients that want to handle their own diagnostics in a
   /// custom way can register a function pointer+context as a diagnostic
   /// handler.  It gets called each time PrintMessage is invoked.
-  typedef void (*DiagHandlerTy)(const SMDiagnostic&, void *Context);
+  typedef void (*DiagHandlerTy)(const SMDiagnostic &, void *Context);
 private:
   struct SrcBuffer {
     /// Buffer - The memory buffer for the file.
@@ -119,10 +125,7 @@ public:
   /// PrintMessage - Emit a message about the specified location with the
   /// specified string.
   ///
-  /// @param Type - If non-null, the kind of message (e.g., "error") which is
-  /// prefixed to the message.
-  /// @param ShowLine - Should the diagnostic show the source line.
-  void PrintMessage(SMLoc Loc, const Twine &Msg, const char *Type,
+  void PrintMessage(SMLoc Loc, DiagKind Kind, const Twine &Msg,
                     ArrayRef<SMRange> Ranges = ArrayRef<SMRange>(),
                     bool ShowLine = true) const;
 
@@ -133,8 +136,7 @@ public:
   /// @param Type - If non-null, the kind of message (e.g., "error") which is
   /// prefixed to the message.
   /// @param ShowLine - Should the diagnostic show the source line.
-  SMDiagnostic GetMessage(SMLoc Loc,
-                          const Twine &Msg, const char *Type,
+  SMDiagnostic GetMessage(SMLoc Loc, DiagKind Kind, const Twine &Msg, 
                           ArrayRef<SMRange> Ranges = ArrayRef<SMRange>(),
                           bool ShowLine = true) const;
 
@@ -155,21 +157,24 @@ class SMDiagnostic {
   SMLoc Loc;
   std::string Filename;
   int LineNo, ColumnNo;
+  SourceMgr::DiagKind Kind;
   std::string Message, LineContents;
   unsigned ShowLine : 1;
   std::vector<std::pair<unsigned, unsigned> > Ranges;
 
 public:
   // Null diagnostic.
-  SMDiagnostic() : SM(0), LineNo(0), ColumnNo(0), ShowLine(0) {}
+  SMDiagnostic()
+    : SM(0), LineNo(0), ColumnNo(0), Kind(SourceMgr::DK_Error), ShowLine(0) {}
   // Diagnostic with no location (e.g. file not found, command line arg error).
-  SMDiagnostic(const std::string &filename, const std::string &Msg)
-    : SM(0), Filename(filename), LineNo(-1), ColumnNo(-1),
+  SMDiagnostic(const std::string &filename, SourceMgr::DiagKind Kind,
+               const std::string &Msg)
+    : SM(0), Filename(filename), LineNo(-1), ColumnNo(-1), Kind(Kind),
       Message(Msg), ShowLine(false) {}
   
   // Diagnostic with a location.
   SMDiagnostic(const SourceMgr &sm, SMLoc L, const std::string &FN,
-               int Line, int Col,
+               int Line, int Col, SourceMgr::DiagKind Kind,
                const std::string &Msg, const std::string &LineStr,
                ArrayRef<std::pair<unsigned,unsigned> > Ranges, bool showline);
 
@@ -178,6 +183,7 @@ public:
   const std::string &getFilename() const { return Filename; }
   int getLineNo() const { return LineNo; }
   int getColumnNo() const { return ColumnNo; }
+  SourceMgr::DiagKind getKind() const { return Kind; }
   const std::string &getMessage() const { return Message; }
   const std::string &getLineContents() const { return LineContents; }
   bool getShowLine() const { return ShowLine; }

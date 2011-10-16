@@ -117,8 +117,9 @@ bool Pattern::ParsePattern(StringRef PatternStr, SourceMgr &SM) {
 
   // Check that there is something on the line.
   if (PatternStr.empty()) {
-    SM.PrintMessage(PatternLoc, "found empty check string with prefix '" +
-                    CheckPrefix+":'", "error");
+    SM.PrintMessage(PatternLoc, SourceMgr::DK_Error,
+                    "found empty check string with prefix '" +
+                    CheckPrefix+":'");
     return true;
   }
 
@@ -144,7 +145,8 @@ bool Pattern::ParsePattern(StringRef PatternStr, SourceMgr &SM) {
       size_t End = PatternStr.find("}}");
       if (End == StringRef::npos) {
         SM.PrintMessage(SMLoc::getFromPointer(PatternStr.data()),
-                        "found start of regex string with no end '}}'","error");
+                        SourceMgr::DK_Error,
+                        "found start of regex string with no end '}}'");
         return true;
       }
 
@@ -173,7 +175,8 @@ bool Pattern::ParsePattern(StringRef PatternStr, SourceMgr &SM) {
       size_t End = PatternStr.find("]]");
       if (End == StringRef::npos) {
         SM.PrintMessage(SMLoc::getFromPointer(PatternStr.data()),
-                        "invalid named regex reference, no ]] found", "error");
+                        SourceMgr::DK_Error,
+                        "invalid named regex reference, no ]] found");
         return true;
       }
 
@@ -185,8 +188,8 @@ bool Pattern::ParsePattern(StringRef PatternStr, SourceMgr &SM) {
       StringRef Name = MatchStr.substr(0, NameEnd);
 
       if (Name.empty()) {
-        SM.PrintMessage(SMLoc::getFromPointer(Name.data()),
-                        "invalid name in named regex: empty name", "error");
+        SM.PrintMessage(SMLoc::getFromPointer(Name.data()), SourceMgr::DK_Error,
+                        "invalid name in named regex: empty name");
         return true;
       }
 
@@ -194,14 +197,14 @@ bool Pattern::ParsePattern(StringRef PatternStr, SourceMgr &SM) {
       for (unsigned i = 0, e = Name.size(); i != e; ++i)
         if (Name[i] != '_' && !isalnum(Name[i])) {
           SM.PrintMessage(SMLoc::getFromPointer(Name.data()+i),
-                          "invalid name in named regex", "error");
+                          SourceMgr::DK_Error, "invalid name in named regex");
           return true;
         }
 
       // Name can't start with a digit.
       if (isdigit(Name[0])) {
-        SM.PrintMessage(SMLoc::getFromPointer(Name.data()),
-                        "invalid name in named regex", "error");
+        SM.PrintMessage(SMLoc::getFromPointer(Name.data()), SourceMgr::DK_Error,
+                        "invalid name in named regex");
         return true;
       }
 
@@ -266,8 +269,8 @@ bool Pattern::AddRegExToRegEx(StringRef RegexStr, unsigned &CurParen,
   Regex R(RegexStr);
   std::string Error;
   if (!R.isValid(Error)) {
-    SM.PrintMessage(SMLoc::getFromPointer(RegexStr.data()),
-                    "invalid regex: " + Error, "error");
+    SM.PrintMessage(SMLoc::getFromPointer(RegexStr.data()), SourceMgr::DK_Error,
+                    "invalid regex: " + Error);
     return true;
   }
 
@@ -383,8 +386,8 @@ void Pattern::PrintFailureInfo(const SourceMgr &SM, StringRef Buffer,
         OS.write_escaped(it->second) << "\"";
       }
 
-      SM.PrintMessage(SMLoc::getFromPointer(Buffer.data()), OS.str(), "note",
-                      ArrayRef<SMRange>(), /*ShowLine=*/false);
+      SM.PrintMessage(SMLoc::getFromPointer(Buffer.data()), SourceMgr::DK_Note,
+                      OS.str());
     }
   }
 
@@ -422,7 +425,7 @@ void Pattern::PrintFailureInfo(const SourceMgr &SM, StringRef Buffer,
   // line.
   if (Best && Best != StringRef::npos && BestQuality < 50) {
       SM.PrintMessage(SMLoc::getFromPointer(Buffer.data() + Best),
-                      "possible intended match here", "note");
+                      SourceMgr::DK_Note, "possible intended match here");
 
     // FIXME: If we wanted to be really friendly we would show why the match
     // failed, as it can be hard to spot simple one character differences.
@@ -566,8 +569,9 @@ static bool ReadCheckFile(SourceMgr &SM,
     // Verify that CHECK-NEXT lines have at least one CHECK line before them.
     if (IsCheckNext && CheckStrings.empty()) {
       SM.PrintMessage(SMLoc::getFromPointer(CheckPrefixStart),
+                      SourceMgr::DK_Error,
                       "found '"+CheckPrefix+"-NEXT:' without previous '"+
-                      CheckPrefix+ ": line", "error");
+                      CheckPrefix+ ": line");
       return true;
     }
 
@@ -607,15 +611,15 @@ static void PrintCheckFailed(const SourceMgr &SM, const CheckString &CheckStr,
                              StringRef Buffer,
                              StringMap<StringRef> &VariableTable) {
   // Otherwise, we have an error, emit an error message.
-  SM.PrintMessage(CheckStr.Loc, "expected string not found in input",
-                  "error");
+  SM.PrintMessage(CheckStr.Loc, SourceMgr::DK_Error,
+                  "expected string not found in input");
 
   // Print the "scanning from here" line.  If the current position is at the
   // end of a line, advance to the start of the next line.
   Buffer = Buffer.substr(Buffer.find_first_not_of(" \t\n\r"));
 
-  SM.PrintMessage(SMLoc::getFromPointer(Buffer.data()), "scanning from here",
-                  "note");
+  SM.PrintMessage(SMLoc::getFromPointer(Buffer.data()), SourceMgr::DK_Note,
+                  "scanning from here");
 
   // Allow the pattern to print additional information if desired.
   CheckStr.Pat.PrintFailureInfo(SM, Buffer, VariableTable);
@@ -710,25 +714,22 @@ int main(int argc, char **argv) {
 
       unsigned NumNewLines = CountNumNewlinesBetween(SkippedRegion);
       if (NumNewLines == 0) {
-        SM.PrintMessage(CheckStr.Loc,
-                    CheckPrefix+"-NEXT: is on the same line as previous match",
-                        "error");
+        SM.PrintMessage(CheckStr.Loc, SourceMgr::DK_Error,
+                    CheckPrefix+"-NEXT: is on the same line as previous match");
         SM.PrintMessage(SMLoc::getFromPointer(Buffer.data()),
-                        "'next' match was here", "note");
-        SM.PrintMessage(SMLoc::getFromPointer(LastMatch),
-                        "previous match was here", "note");
+                        SourceMgr::DK_Note, "'next' match was here");
+        SM.PrintMessage(SMLoc::getFromPointer(LastMatch), SourceMgr::DK_Note,
+                        "previous match was here");
         return 1;
       }
 
       if (NumNewLines != 1) {
-        SM.PrintMessage(CheckStr.Loc,
-                        CheckPrefix+
-                        "-NEXT: is not on the line after the previous match",
-                        "error");
+        SM.PrintMessage(CheckStr.Loc, SourceMgr::DK_Error, CheckPrefix+
+                        "-NEXT: is not on the line after the previous match");
         SM.PrintMessage(SMLoc::getFromPointer(Buffer.data()),
-                        "'next' match was here", "note");
-        SM.PrintMessage(SMLoc::getFromPointer(LastMatch),
-                        "previous match was here", "note");
+                        SourceMgr::DK_Note, "'next' match was here");
+        SM.PrintMessage(SMLoc::getFromPointer(LastMatch), SourceMgr::DK_Note,
+                        "previous match was here");
         return 1;
       }
     }
@@ -743,10 +744,10 @@ int main(int argc, char **argv) {
                                                              VariableTable);
       if (Pos == StringRef::npos) continue;
 
-      SM.PrintMessage(SMLoc::getFromPointer(LastMatch+Pos),
-                      CheckPrefix+"-NOT: string occurred!", "error");
-      SM.PrintMessage(CheckStr.NotStrings[ChunkNo].first,
-                      CheckPrefix+"-NOT: pattern specified here", "note");
+      SM.PrintMessage(SMLoc::getFromPointer(LastMatch+Pos), SourceMgr::DK_Error,
+                      CheckPrefix+"-NOT: string occurred!");
+      SM.PrintMessage(CheckStr.NotStrings[ChunkNo].first, SourceMgr::DK_Note,
+                      CheckPrefix+"-NOT: pattern specified here");
       return 1;
     }
 

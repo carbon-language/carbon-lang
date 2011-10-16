@@ -100,7 +100,7 @@ void LLVMContext::emitError(unsigned LocCookie, StringRef ErrorStr) {
   }
 
   // If we do have an error handler, we can report the error and keep going.
-  SMDiagnostic Diag("", "error: " + ErrorStr.str());
+  SMDiagnostic Diag("", SourceMgr::DK_Error, ErrorStr.str());
 
   pImpl->InlineAsmDiagHandler(Diag, pImpl->InlineAsmDiagContext, LocCookie);
 }

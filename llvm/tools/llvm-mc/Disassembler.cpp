@@ -72,14 +72,16 @@ static bool PrintInsts(const MCDisassembler &DisAsm,
     switch (S) {
     case MCDisassembler::Fail:
       SM.PrintMessage(SMLoc::getFromPointer(Bytes[Index].second),
-                      "invalid instruction encoding", "warning");
+                      SourceMgr::DK_Warning,
+                      "invalid instruction encoding");
       if (Size == 0)
         Size = 1; // skip illegible bytes
       break;
 
     case MCDisassembler::SoftFail:
       SM.PrintMessage(SMLoc::getFromPointer(Bytes[Index].second),
-                      "potentially undefined instruction encoding", "warning");
+                      SourceMgr::DK_Warning,
+                      "potentially undefined instruction encoding");
       // Fall through
 
     case MCDisassembler::Success:
@@ -125,8 +127,8 @@ static bool ByteArrayFromString(ByteArrayTy &ByteArray,
     unsigned ByteVal;
     if (Value.getAsInteger(0, ByteVal) || ByteVal > 255) {
       // If we have an error, print it and skip to the end of line.
-      SM.PrintMessage(SMLoc::getFromPointer(Value.data()),
-                      "invalid input token", "error");
+      SM.PrintMessage(SMLoc::getFromPointer(Value.data()), SourceMgr::DK_Error,
+                      "invalid input token");
       Str = Str.substr(Str.find('\n'));
       ByteArray.clear();
       continue;

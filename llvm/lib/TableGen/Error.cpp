@@ -21,11 +21,11 @@ namespace llvm {
 SourceMgr SrcMgr;
 
 void PrintError(SMLoc ErrorLoc, const Twine &Msg) {
-  SrcMgr.PrintMessage(ErrorLoc, Msg, "error");
+  SrcMgr.PrintMessage(ErrorLoc, SourceMgr::DK_Error, Msg);
 }
 
 void PrintError(const char *Loc, const Twine &Msg) {
-  SrcMgr.PrintMessage(SMLoc::getFromPointer(Loc), Msg, "error");
+  SrcMgr.PrintMessage(SMLoc::getFromPointer(Loc), SourceMgr::DK_Error, Msg);
 }
 
 void PrintError(const Twine &Msg) {

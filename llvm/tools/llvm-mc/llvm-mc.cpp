@@ -267,7 +267,8 @@ static int AsLexInput(const char *ProgName) {
 
     switch (Tok.getKind()) {
     default:
-      SrcMgr.PrintMessage(Lexer.getLoc(), "unknown token", "warning");
+      SrcMgr.PrintMessage(Lexer.getLoc(), SourceMgr::DK_Warning,
+                          "unknown token");
       Error = true;
       break;
     case AsmToken::Error:

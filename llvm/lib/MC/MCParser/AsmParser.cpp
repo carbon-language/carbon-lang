@@ -171,10 +171,10 @@ private:
   void HandleMacroExit();
 
   void PrintMacroInstantiations();
-  void PrintMessage(SMLoc Loc, const Twine &Msg, const char *Type,
+  void PrintMessage(SMLoc Loc, SourceMgr::DiagKind Kind, const Twine &Msg,
                     ArrayRef<SMRange> Ranges = ArrayRef<SMRange>(),
                     bool ShowLine = true) const {
-    SrcMgr.PrintMessage(Loc, Msg, Type, Ranges, ShowLine);
+    SrcMgr.PrintMessage(Loc, Kind, Msg, Ranges, ShowLine);
   }
   static void DiagHandler(const SMDiagnostic &Diag, void *Context);
 
@@ -392,21 +392,21 @@ void AsmParser::PrintMacroInstantiations() {
   // Print the active macro instantiation stack.
   for (std::vector<MacroInstantiation*>::const_reverse_iterator
          it = ActiveMacros.rbegin(), ie = ActiveMacros.rend(); it != ie; ++it)
-    PrintMessage((*it)->InstantiationLoc, "while in macro instantiation",
-                 "note");
+    PrintMessage((*it)->InstantiationLoc, SourceMgr::DK_Note,
+                 "while in macro instantiation");
 }
 
 bool AsmParser::Warning(SMLoc L, const Twine &Msg, ArrayRef<SMRange> Ranges) {
   if (FatalAssemblerWarnings)
     return Error(L, Msg, Ranges);
-  PrintMessage(L, Msg, "warning", Ranges);
+  PrintMessage(L, SourceMgr::DK_Warning, Msg, Ranges);
   PrintMacroInstantiations();
   return false;
 }
 
 bool AsmParser::Error(SMLoc L, const Twine &Msg, ArrayRef<SMRange> Ranges) {
   HadError = true;
-  PrintMessage(L, Msg, "error", Ranges);
+  PrintMessage(L, SourceMgr::DK_Error, Msg, Ranges);
   PrintMacroInstantiations();
   return true;
 }
@@ -498,9 +498,9 @@ bool AsmParser::Run(bool NoInitialTextSection, bool NoFinalize) {
         // FIXME: We would really like to refer back to where the symbol was
         // first referenced for a source location. We need to add something
         // to track that. Currently, we just point to the end of the file.
-        PrintMessage(getLexer().getLoc(), "assembler local symbol '" +
-                     Sym->getName() + "' not defined", "error",
-                     ArrayRef<SMRange>(), false);
+        PrintMessage(getLexer().getLoc(), SourceMgr::DK_Error,
+                     "assembler local symbol '" + Sym->getName() +
+                     "' not defined");
     }
   }
 
@@ -1203,7 +1203,7 @@ bool AsmParser::ParseStatement() {
     }
     OS << "]";
 
-    PrintMessage(IDLoc, OS.str(), "note");
+    PrintMessage(IDLoc, SourceMgr::DK_Note, OS.str());
   }
 
   // If parsing succeeded, match the instruction.
@@ -1305,7 +1305,8 @@ void AsmParser::DiagHandler(const SMDiagnostic &Diag, void *Context) {
 
   SMDiagnostic NewDiag(*Diag.getSourceMgr(), Diag.getLoc(),
                        Filename, LineNo, Diag.getColumnNo(),
-                       Diag.getMessage(), Diag.getLineContents(),
+                       Diag.getKind(), Diag.getMessage(),
+                       Diag.getLineContents(),
                        Diag.getRanges(), Diag.getShowLine());
 
   NewDiag.print(0, OS);

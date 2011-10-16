@@ -40,7 +40,8 @@ namespace llvm {
       std::string ErrMsg;
       Module *M = getLazyBitcodeModule(Buffer, Context, &ErrMsg);
       if (M == 0) {
-        Err = SMDiagnostic(Buffer->getBufferIdentifier(), ErrMsg);
+        Err = SMDiagnostic(Buffer->getBufferIdentifier(), SourceMgr::DK_Error,
+                           ErrMsg);
         // ParseBitcodeFile does not take ownership of the Buffer in the
         // case of an error.
         delete Buffer;
@@ -60,7 +61,7 @@ namespace llvm {
                                      LLVMContext &Context) {
     OwningPtr<MemoryBuffer> File;
     if (error_code ec = MemoryBuffer::getFileOrSTDIN(Filename.c_str(), File)) {
-      Err = SMDiagnostic(Filename,
+      Err = SMDiagnostic(Filename, SourceMgr::DK_Error,
                          "Could not open input file: " + ec.message());
       return 0;
     }
@@ -80,7 +81,8 @@ namespace llvm {
       std::string ErrMsg;
       Module *M = ParseBitcodeFile(Buffer, Context, &ErrMsg);
       if (M == 0)
-        Err = SMDiagnostic(Buffer->getBufferIdentifier(), ErrMsg);
+        Err = SMDiagnostic(Buffer->getBufferIdentifier(), SourceMgr::DK_Error,
+                           ErrMsg);
       // ParseBitcodeFile does not take ownership of the Buffer.
       delete Buffer;
       return M;
@@ -97,7 +99,7 @@ namespace llvm {
                              LLVMContext &Context) {
     OwningPtr<MemoryBuffer> File;
     if (error_code ec = MemoryBuffer::getFileOrSTDIN(Filename.c_str(), File)) {
-      Err = SMDiagnostic(Filename,
+      Err = SMDiagnostic(Filename, SourceMgr::DK_Error,
                          "Could not open input file: " + ec.message());
       return 0;
     }

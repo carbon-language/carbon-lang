@@ -140,8 +140,8 @@ void SourceMgr::PrintIncludeStack(SMLoc IncludeLoc, raw_ostream &OS) const {
 ///
 /// @param Type - If non-null, the kind of message (e.g., "error") which is
 /// prefixed to the message.
-SMDiagnostic SourceMgr::GetMessage(SMLoc Loc, const Twine &Msg,
-                                   const char *Type, ArrayRef<SMRange> Ranges,
+SMDiagnostic SourceMgr::GetMessage(SMLoc Loc, SourceMgr::DiagKind Kind,
+                                   const Twine &Msg, ArrayRef<SMRange> Ranges,
                                    bool ShowLine) const {
 
   // First thing to do: find the current buffer containing the specified
@@ -163,12 +163,6 @@ SMDiagnostic SourceMgr::GetMessage(SMLoc Loc, const Twine &Msg,
          LineEnd[0] != '\n' && LineEnd[0] != '\r')
     ++LineEnd;
   std::string LineStr(LineStart, LineEnd);
-
-  std::string PrintedMsg;
-  raw_string_ostream OS(PrintedMsg);
-  if (Type)
-    OS << Type << ": ";
-  OS << Msg;
 
   // Convert any ranges to column ranges that only intersect the line of the
   // location.
@@ -194,16 +188,18 @@ SMDiagnostic SourceMgr::GetMessage(SMLoc Loc, const Twine &Msg,
   
   return SMDiagnostic(*this, Loc,
                       CurMB->getBufferIdentifier(), FindLineNumber(Loc, CurBuf),
-                      Loc.getPointer()-LineStart, OS.str(),
+                      Loc.getPointer()-LineStart, Kind, Msg.str(),
                       LineStr, ColRanges, ShowLine);
 }
 
-void SourceMgr::PrintMessage(SMLoc Loc, const Twine &Msg,
-                             const char *Type, ArrayRef<SMRange> Ranges,
+void SourceMgr::PrintMessage(SMLoc Loc, SourceMgr::DiagKind Kind,
+                             const Twine &Msg, ArrayRef<SMRange> Ranges,
                              bool ShowLine) const {
+  SMDiagnostic Diagnostic = GetMessage(Loc, Kind, Msg, Ranges, ShowLine);
+  
   // Report the message with the diagnostic handler if present.
   if (DiagHandler) {
-    DiagHandler(GetMessage(Loc, Msg, Type, Ranges, ShowLine), DiagContext);
+    DiagHandler(Diagnostic, DiagContext);
     return;
   }
 
@@ -213,7 +209,7 @@ void SourceMgr::PrintMessage(SMLoc Loc, const Twine &Msg,
   assert(CurBuf != -1 && "Invalid or unspecified location!");
   PrintIncludeStack(getBufferInfo(CurBuf).IncludeLoc, OS);
 
-  GetMessage(Loc, Msg, Type, Ranges, ShowLine).print(0, OS);
+  Diagnostic.print(0, OS);
 }
 
 //===----------------------------------------------------------------------===//
@@ -221,12 +217,15 @@ void SourceMgr::PrintMessage(SMLoc Loc, const Twine &Msg,
 //===----------------------------------------------------------------------===//
 
 SMDiagnostic::SMDiagnostic(const SourceMgr &sm, SMLoc L, const std::string &FN,
-                           int Line, int Col, const std::string &Msg,
+                           int Line, int Col, SourceMgr::DiagKind Kind,
+                           const std::string &Msg,
                            const std::string &LineStr,
                            ArrayRef<std::pair<unsigned,unsigned> > Ranges,
                            bool showline)
-  : SM(&sm), Loc(L), Filename(FN), LineNo(Line), ColumnNo(Col), Message(Msg),
-    LineContents(LineStr), ShowLine(showline), Ranges(Ranges.vec()) {}
+  : SM(&sm), Loc(L), Filename(FN), LineNo(Line), ColumnNo(Col), Kind(Kind),
+    Message(Msg), LineContents(LineStr), ShowLine(showline),
+    Ranges(Ranges.vec()) {
+}
 
 
 void SMDiagnostic::print(const char *ProgName, raw_ostream &S) const {
@@ -247,6 +246,13 @@ void SMDiagnostic::print(const char *ProgName, raw_ostream &S) const {
     S << ": ";
   }
 
+  switch (Kind) {
+  default: assert(0 && "Unknown diagnostic kind");
+  case SourceMgr::DK_Error: S << "error: "; break;
+  case SourceMgr::DK_Warning: S << "warning: "; break;
+  case SourceMgr::DK_Note: S << "note: "; break;
+  }
+  
   S << Message << '\n';
 
   if (LineNo == -1 || ColumnNo == -1 || !ShowLine)

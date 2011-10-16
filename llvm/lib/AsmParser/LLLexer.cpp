@@ -29,7 +29,7 @@
 using namespace llvm;
 
 bool LLLexer::Error(LocTy ErrorLoc, const Twine &Msg) const {
-  ErrorInfo = SM.GetMessage(ErrorLoc, Msg, "error");
+  ErrorInfo = SM.GetMessage(ErrorLoc, SourceMgr::DK_Error, Msg);
   return true;
 }
 
