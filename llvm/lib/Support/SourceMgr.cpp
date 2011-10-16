@@ -141,8 +141,8 @@ void SourceMgr::PrintIncludeStack(SMLoc IncludeLoc, raw_ostream &OS) const {
 /// @param Type - If non-null, the kind of message (e.g., "error") which is
 /// prefixed to the message.
 SMDiagnostic SourceMgr::GetMessage(SMLoc Loc, SourceMgr::DiagKind Kind,
-                                   const Twine &Msg, ArrayRef<SMRange> Ranges,
-                                   bool ShowLine) const {
+                                   const Twine &Msg,
+                                   ArrayRef<SMRange> Ranges) const {
 
   // First thing to do: find the current buffer containing the specified
   // location.
@@ -189,13 +189,12 @@ SMDiagnostic SourceMgr::GetMessage(SMLoc Loc, SourceMgr::DiagKind Kind,
   return SMDiagnostic(*this, Loc,
                       CurMB->getBufferIdentifier(), FindLineNumber(Loc, CurBuf),
                       Loc.getPointer()-LineStart, Kind, Msg.str(),
-                      LineStr, ColRanges, ShowLine);
+                      LineStr, ColRanges);
 }
 
 void SourceMgr::PrintMessage(SMLoc Loc, SourceMgr::DiagKind Kind,
-                             const Twine &Msg, ArrayRef<SMRange> Ranges,
-                             bool ShowLine) const {
-  SMDiagnostic Diagnostic = GetMessage(Loc, Kind, Msg, Ranges, ShowLine);
+                             const Twine &Msg, ArrayRef<SMRange> Ranges) const {
+  SMDiagnostic Diagnostic = GetMessage(Loc, Kind, Msg, Ranges);
   
   // Report the message with the diagnostic handler if present.
   if (DiagHandler) {
@@ -220,11 +219,9 @@ SMDiagnostic::SMDiagnostic(const SourceMgr &sm, SMLoc L, const std::string &FN,
                            int Line, int Col, SourceMgr::DiagKind Kind,
                            const std::string &Msg,
                            const std::string &LineStr,
-                           ArrayRef<std::pair<unsigned,unsigned> > Ranges,
-                           bool showline)
+                           ArrayRef<std::pair<unsigned,unsigned> > Ranges)
   : SM(&sm), Loc(L), Filename(FN), LineNo(Line), ColumnNo(Col), Kind(Kind),
-    Message(Msg), LineContents(LineStr), ShowLine(showline),
-    Ranges(Ranges.vec()) {
+    Message(Msg), LineContents(LineStr), Ranges(Ranges.vec()) {
 }
 
 
@@ -255,7 +252,7 @@ void SMDiagnostic::print(const char *ProgName, raw_ostream &S) const {
   
   S << Message << '\n';
 
-  if (LineNo == -1 || ColumnNo == -1 || !ShowLine)
+  if (LineNo == -1 || ColumnNo == -1)
     return;
 
   // Build the line with the caret and ranges.

@@ -172,9 +172,8 @@ private:
 
   void PrintMacroInstantiations();
   void PrintMessage(SMLoc Loc, SourceMgr::DiagKind Kind, const Twine &Msg,
-                    ArrayRef<SMRange> Ranges = ArrayRef<SMRange>(),
-                    bool ShowLine = true) const {
-    SrcMgr.PrintMessage(Loc, Kind, Msg, Ranges, ShowLine);
+                    ArrayRef<SMRange> Ranges = ArrayRef<SMRange>()) const {
+    SrcMgr.PrintMessage(Loc, Kind, Msg, Ranges);
   }
   static void DiagHandler(const SMDiagnostic &Diag, void *Context);
 
@@ -1306,8 +1305,7 @@ void AsmParser::DiagHandler(const SMDiagnostic &Diag, void *Context) {
   SMDiagnostic NewDiag(*Diag.getSourceMgr(), Diag.getLoc(),
                        Filename, LineNo, Diag.getColumnNo(),
                        Diag.getKind(), Diag.getMessage(),
-                       Diag.getLineContents(),
-                       Diag.getRanges(), Diag.getShowLine());
+                       Diag.getLineContents(), Diag.getRanges());
 
   NewDiag.print(0, OS);
 }
