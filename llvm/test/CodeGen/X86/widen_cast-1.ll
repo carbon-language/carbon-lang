@@ -1,5 +1,5 @@
 ; RUN: llc -march=x86 -mattr=+sse42 < %s | FileCheck %s
-; CHECK: paddw
+; CHECK: paddd
 ; CHECK: pextrd
 ; CHECK: movd
 

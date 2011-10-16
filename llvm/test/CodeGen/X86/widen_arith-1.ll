@@ -1,12 +1,10 @@
 ; RUN: llc < %s -march=x86 -mattr=+sse42 |  FileCheck %s
 
-; Widen a v3i8 to v16i8 to use a vector add
-
 define void @update(<3 x i8>* %dst, <3 x i8>* %src, i32 %n) nounwind {
 entry:
 ; CHECK-NOT: pextrw
-; CHECK: paddb
-; CHECK: pextrb
+; CHECK: add
+
 	%dst.addr = alloca <3 x i8>*		; <<3 x i8>**> [#uses=2]
 	%src.addr = alloca <3 x i8>*		; <<3 x i8>**> [#uses=2]
 	%n.addr = alloca i32		; <i32*> [#uses=2]

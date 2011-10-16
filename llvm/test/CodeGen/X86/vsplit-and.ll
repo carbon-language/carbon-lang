@@ -2,7 +2,7 @@
 
 
 define void @t(<2 x i64>* %dst, <2 x i64> %src1, <2 x i64> %src2) nounwind readonly {
-; CHECK: andb
+; CHECK: pandn
   %cmp1 = icmp ne <2 x i64> %src1, zeroinitializer
   %cmp2 = icmp ne <2 x i64> %src2, zeroinitializer
   %t1 = and <2 x i1> %cmp1, %cmp2
@@ -12,7 +12,7 @@ define void @t(<2 x i64>* %dst, <2 x i64> %src1, <2 x i64> %src2) nounwind reado
 }
 
 define void @t2(<3 x i64>* %dst, <3 x i64> %src1, <3 x i64> %src2) nounwind readonly {
-; CHECK: andb
+; CHECK-NOT: pandn
   %cmp1 = icmp ne <3 x i64> %src1, zeroinitializer
   %cmp2 = icmp ne <3 x i64> %src2, zeroinitializer
   %t1 = and <3 x i1> %cmp1, %cmp2

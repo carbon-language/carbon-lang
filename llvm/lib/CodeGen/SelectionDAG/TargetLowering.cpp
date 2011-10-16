@@ -36,7 +36,7 @@ using namespace llvm;
 /// - the promotion of vector elements. This feature is disabled by default
 /// and only enabled using this flag.
 static cl::opt<bool>
-AllowPromoteIntElem("promote-elements", cl::Hidden,
+AllowPromoteIntElem("promote-elements", cl::Hidden, cl::init(true),
   cl::desc("Allow promotion of integer vector element types"));
 
 namespace llvm {

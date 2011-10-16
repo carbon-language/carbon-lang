@@ -50,7 +50,7 @@ entry:
 ; PR10421: make sure we correctly handle extreme widening with CONCAT_VECTORS
 define <8 x i8> @shuf4(<4 x i8> %a, <4 x i8> %b) nounwind readnone {
 ; CHECK: shuf4:
-; CHECK: punpckldq
+; CHECK-NOT: punpckldq
   %vshuf = shufflevector <4 x i8> %a, <4 x i8> %b, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
   ret <8 x i8> %vshuf
 }

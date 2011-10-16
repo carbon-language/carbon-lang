@@ -124,7 +124,7 @@ entry:
 define <2 x i32> @shl2_other(<2 x i32> %A) nounwind {
 entry:
 ; CHECK: shl2_other
-; CHECK-not:      psllq
+; CHECK: psllq
   %B = shl <2 x i32> %A,  < i32 2, i32 2>
   %C = shl <2 x i32> %A,  < i32 9, i32 9>
   %K = xor <2 x i32> %B, %C
@@ -134,7 +134,7 @@ entry:
 define <2 x i32> @shr2_other(<2 x i32> %A) nounwind {
 entry:
 ; CHECK: shr2_other
-; CHECK-NOT:      psrlq
+; CHECK: psrlq
   %B = lshr <2 x i32> %A,  < i32 8, i32 8>
   %C = lshr <2 x i32> %A,  < i32 1, i32 1>
   %K = xor <2 x i32> %B, %C

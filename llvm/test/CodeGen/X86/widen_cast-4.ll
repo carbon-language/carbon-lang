@@ -1,16 +1,6 @@
 ; RUN: llc < %s -march=x86 -mattr=+sse42 | FileCheck %s
-; CHECK: sarb
-; CHECK: sarb
-; CHECK: sarb
-; CHECK: sarb
-; CHECK: sarb
-; CHECK: sarb
-; CHECK: sarb
-; CHECK: sarb
-
-; v8i8 that is widen to v16i8 then split
-; FIXME: This is widen to v16i8 and split to 16 and we then rebuild the vector.
-; Unfortunately, we don't split the store so we don't get the code we want.
+; CHECK: psraw
+; CHECK: psraw
 
 define void @update(i64* %dst_i, i64* %src_i, i32 %n) nounwind {
 entry:

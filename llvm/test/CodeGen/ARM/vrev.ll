@@ -150,9 +150,6 @@ define void @test_with_vcombine(<4 x float>* %v) nounwind {
 
 ; vrev <4 x i16> should use VREV32 and not VREV64
 define void @test_vrev64(<4 x i16>* nocapture %source, <2 x i16>* nocapture %dst) nounwind ssp {
-; CHECK: test_vrev64:
-; CHECK: vext.16
-; CHECK: vrev32.16
 entry:
   %0 = bitcast <4 x i16>* %source to <8 x i16>*
   %tmp2 = load <8 x i16>* %0, align 4
