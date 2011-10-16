@@ -42,4 +42,16 @@ void f(int *ip, float *fp) {
   // CHECK-NO-CARETS-NEXT: macro-backtrace.c:6:18: note: expanded from macro: M3
   // CHECK-NO-CARETS-NEXT: macro-backtrace.c:5:18: note: expanded from macro: M2
   // CHECK-NO-CARETS-NEXT: macro-backtrace.c:4:23: note: expanded from macro: M1
+
+  // Check that the expansion notes respect the same formatting options as
+  // other diagnostics.
+  // RUN: %clang_cc1 -fsyntax-only -fdiagnostics-format vi %s 2>&1 \
+  // RUN:   | FileCheck %s -check-prefix=CHECK-NOTE-FORMAT
+  // CHECK-NOTE-FORMAT: macro-backtrace.c +18:7: warning:
+  // CHECK-NOTE-FORMAT: macro-backtrace.c +15:19: note:
+  // CHECK-NOTE-FORMAT: macro-backtrace.c +14:19: note:
+  // CHECK-NOTE-FORMAT: note:
+  // CHECK-NOTE-FORMAT: macro-backtrace.c +6:18: note:
+  // CHECK-NOTE-FORMAT: macro-backtrace.c +5:18: note:
+  // CHECK-NOTE-FORMAT: macro-backtrace.c +4:23: note:
 }
