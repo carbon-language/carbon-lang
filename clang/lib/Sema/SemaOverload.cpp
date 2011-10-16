@@ -3687,6 +3687,88 @@ TryReferenceInit(Sema &S, Expr *&Init, QualType DeclType,
   return ICS;
 }
 
+static ImplicitConversionSequence
+TryCopyInitialization(Sema &S, Expr *From, QualType ToType,
+                      bool SuppressUserConversions,
+                      bool InOverloadResolution,
+                      bool AllowObjCWritebackConversion);
+
+/// TryListConversion - Try to copy-initialize a value of type ToType from the
+/// initializer list From.
+static ImplicitConversionSequence
+TryListConversion(Sema &S, InitListExpr *From, QualType ToType,
+                  bool SuppressUserConversions,
+                  bool InOverloadResolution,
+                  bool AllowObjCWritebackConversion) {
+  // C++11 [over.ics.list]p1:
+  //   When an argument is an initializer list, it is not an expression and
+  //   special rules apply for converting it to a parameter type.
+
+  ImplicitConversionSequence Result;
+  Result.setBad(BadConversionSequence::no_conversion, From, ToType);
+
+  // C++11 [over.ics.list]p2:
+  //   If the parameter type is std::initializer_list<X> or "array of X" and
+  //   all the elements can be implicitly converted to X, the implicit
+  //   conversion sequence is the worst conversion necessary to convert an
+  //   element of the list to X.
+  // FIXME: Recognize std::initializer_list.
+  // FIXME: Arrays don't make sense until we can deal with references.
+  if (ToType->isArrayType())
+    return Result;
+
+  // C++11 [over.ics.list]p3:
+  //   Otherwise, if the parameter is a non-aggregate class X and overload
+  //   resolution chooses a single best constructor [...] the implicit
+  //   conversion sequence is a user-defined conversion sequence. If multiple
+  //   constructors are viable but none is better than the others, the
+  //   implicit conversion sequence is a user-defined conversion sequence.
+  // FIXME: Implement this.
+  if (ToType->isRecordType() && !ToType->isAggregateType())
+    return Result;
+
+  // C++11 [over.ics.list]p4:
+  //   Otherwise, if the parameter has an aggregate type which can be
+  //   initialized from the initializer list [...] the implicit conversion
+  //   sequence is a user-defined conversion sequence.
+  // FIXME: Implement this.
+  if (ToType->isAggregateType()) {
+    return Result;
+  }
+
+  // C++11 [over.ics.list]p5:
+  //   Otherwise, if the parameter is a reference, see 13.3.3.1.4.
+  // FIXME: Implement this.
+  if (ToType->isReferenceType())
+    return Result;
+
+  // C++11 [over.ics.list]p6:
+  //   Otherwise, if the parameter type is not a class:
+  if (!ToType->isRecordType()) {
+    //    - if the initializer list has one element, the implicit conversion
+    //      sequence is the one required to convert the element to the
+    //      parameter type.
+    // FIXME: Catch narrowing here?
+    unsigned NumInits = From->getNumInits();
+    if (NumInits == 1)
+      Result = TryCopyInitialization(S, From->getInit(0), ToType,
+                                     SuppressUserConversions,
+                                     InOverloadResolution,
+                                     AllowObjCWritebackConversion);
+    //    - if the initializer list has no elements, the implicit conversion
+    //      sequence is the identity conversion.
+    else if (NumInits == 0) {
+      Result.setStandard();
+      Result.Standard.setAsIdentityConversion();
+    }
+    return Result;
+  }
+
+  // C++11 [over.ics.list]p7:
+  //   In all cases other than those enumerated above, no conversion is possible
+  return Result;
+}
+
 /// TryCopyInitialization - Try to copy-initialize a value of type
 /// ToType from the expression From. Return the implicit conversion
 /// sequence required to pass this argument, which may be a bad
@@ -3698,6 +3780,10 @@ TryCopyInitialization(Sema &S, Expr *From, QualType ToType,
                       bool SuppressUserConversions,
                       bool InOverloadResolution,
                       bool AllowObjCWritebackConversion) {
+  if (InitListExpr *FromInitList = dyn_cast<InitListExpr>(From))
+    return TryListConversion(S, FromInitList, ToType, SuppressUserConversions,
+                             InOverloadResolution,AllowObjCWritebackConversion);
+
   if (ToType->isReferenceType())
     return TryReferenceInit(S, From, ToType,
                             /*FIXME:*/From->getLocStart(),
