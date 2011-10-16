@@ -32,7 +32,6 @@ void f(int *ip, float *fp) {
   // CHECK-LIMIT: macro-backtrace.c:4:23: note: expanded from macro: M1
   // CHECK-LIMIT: #define M1(A, B) ((A) < (B))
 
-  // diagnostics are off.
   // RUN: %clang_cc1 -fsyntax-only -fno-caret-diagnostics %s 2>&1 \
   // RUN:   | FileCheck %s -check-prefix=CHECK-NO-CARETS
   // CHECK-NO-CARETS: macro-backtrace.c:18:7: warning: comparison of distinct pointer types ('int *' and 'float *')
