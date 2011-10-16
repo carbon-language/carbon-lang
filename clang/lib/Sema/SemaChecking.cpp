@@ -360,6 +360,9 @@ bool Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
                           TheCall->getCallee()->getLocStart());
   }
 
+  CheckStaticArrayArguments(FDecl, TheCall->getArgs(),
+                            TheCall->getCallee()->getLocStart());
+
   // Builtin handling
   int CMF = -1;
   switch (FDecl->getBuiltinID()) {
@@ -1359,6 +1362,64 @@ Sema::CheckNonNullArguments(const NonNullAttr *NonNull,
     if (ArgExpr->isNullPointerConstant(Context,
                                        Expr::NPC_ValueDependentIsNotNull))
       Diag(CallSiteLoc, diag::warn_null_arg) << ArgExpr->getSourceRange();
+  }
+}
+
+static void DiagnoseCalleeStaticArrayParam(Sema &S, ParmVarDecl *PVD) {
+  TypeLoc TL = PVD->getTypeSourceInfo()->getTypeLoc();
+  if (ArrayTypeLoc *ATL = dyn_cast<ArrayTypeLoc>(&TL))
+    S.Diag(PVD->getLocation(), diag::note_callee_static_array)
+      << ATL->getLocalSourceRange();
+}
+
+/// CheckStaticArrayArguments - Check that each argument corresponding to a
+/// static array parameter is non-null, and that if it is formed by
+/// array-to-pointer decay, the underlying array is sufficiently large.
+///
+/// C99 6.7.5.3p7: If the keyword static also appears within the [ and ] of the
+/// array type derivation, then for each call to the function, the value of the
+/// corresponding actual argument shall provide access to the first element of
+/// an array with at least as many elements as specified by the size expression.
+void
+Sema::CheckStaticArrayArguments(const FunctionDecl *FDecl,
+                                const Expr * const *ExprArgs,
+                                SourceLocation CallSiteLoc) {
+  // Static array parameters are not supported in C++.
+  if (getLangOptions().CPlusPlus)
+    return;
+
+  for (FunctionDecl::param_const_iterator i = FDecl->param_begin(),
+       e = FDecl->param_end(); i != e; ++i, ++ExprArgs) {
+    const Expr *ArgExpr = *ExprArgs;
+    QualType OrigTy = (*i)->getOriginalType();
+
+    const ArrayType *AT = Context.getAsArrayType(OrigTy);
+    if (!AT || AT->getSizeModifier() != ArrayType::Static)
+      continue;
+
+    if (ArgExpr->isNullPointerConstant(Context,
+                                       Expr::NPC_NeverValueDependent)) {
+      Diag(CallSiteLoc, diag::warn_null_arg) << ArgExpr->getSourceRange();
+      DiagnoseCalleeStaticArrayParam(*this, *i);
+      continue;
+    }
+
+    const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(AT);
+    if (!CAT)
+      continue;
+
+    const ConstantArrayType *ArgCAT =
+      Context.getAsConstantArrayType(ArgExpr->IgnoreParenImpCasts()->getType());
+    if (!ArgCAT)
+      continue;
+
+    if (ArgCAT->getSize().ult(CAT->getSize())) {
+      Diag(CallSiteLoc, diag::warn_static_array_too_small)
+        << ArgExpr->getSourceRange()
+        << (unsigned) ArgCAT->getSize().getZExtValue()
+        << (unsigned) CAT->getSize().getZExtValue();
+      DiagnoseCalleeStaticArrayParam(*this, *i);
+    }
   }
 }
 

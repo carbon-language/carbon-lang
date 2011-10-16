@@ -6103,6 +6103,10 @@ private:
                              const Expr * const *ExprArgs,
                              SourceLocation CallSiteLoc);
 
+  void CheckStaticArrayArguments(const FunctionDecl *FDecl,
+                                 const Expr * const *ExprArgs,
+                                 SourceLocation CallSiteLoc);
+
   void CheckPrintfScanfArguments(const CallExpr *TheCall, bool HasVAListArg,
                                  unsigned format_idx, unsigned firstDataArg,
                                  bool isPrintf);

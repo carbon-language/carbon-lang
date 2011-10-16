@@ -1315,6 +1315,13 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
            isSFINAEContext()? diag::err_typecheck_zero_array_size
                             : diag::ext_typecheck_zero_array_size)
         << ArraySize->getSourceRange();
+
+      if (ASM == ArrayType::Static) {
+        Diag(ArraySize->getLocStart(),
+             diag::warn_typecheck_zero_static_array_size)
+          << ArraySize->getSourceRange();
+        ASM = ArrayType::Normal;
+      }
     } else if (!T->isDependentType() && !T->isVariablyModifiedType() && 
                !T->isIncompleteType()) {
       // Is the array too large?      

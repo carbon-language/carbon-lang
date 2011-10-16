@@ -2716,6 +2716,9 @@ def ext_typecheck_zero_array_size : Extension<
   "zero size arrays are an extension">;
 def err_typecheck_zero_array_size : Error<
   "zero-length arrays are not permitted in C++">;
+def warn_typecheck_zero_static_array_size : Warning<
+  "'static' has no effect on zero-length arrays">,
+  InGroup<DiagGroup<"array-bounds">>;
 def err_at_least_one_initializer_needed_to_size_array : Error<
   "at least one initializer value required to size array">;
 def err_array_size_non_int : Error<"size of array has non-integer type %0">;
@@ -4509,6 +4512,11 @@ def warn_format_mix_positional_nonpositional_args : Warning<
 def warn_null_arg : Warning<
   "null passed to a callee which requires a non-null argument">,
   InGroup<NonNull>;
+def warn_static_array_too_small : Warning<
+  "array argument is too small; contains %0 elements, callee requires at least %1">,
+  InGroup<DiagGroup<"array-bounds">>;
+def note_callee_static_array : Note<
+  "callee declares array parameter as static here">;
 def warn_empty_format_string : Warning<
   "format string is empty">, InGroup<FormatZeroLength>;
 def warn_format_string_is_wide_literal : Warning<
