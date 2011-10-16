@@ -31,4 +31,9 @@ namespace integral {
     A() : i{1} {}
   };
 
+  int function_call() {
+    void takes_int(int);
+    takes_int({1});
+  }
+
 }
