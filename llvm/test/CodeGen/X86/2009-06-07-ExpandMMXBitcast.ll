@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mattr=+mmx | grep movl | count 2
+; RUN: llc < %s -mtriple=x86_64-linux -mattr=+mmx | grep movd | count 3
 
 define i64 @a(i32 %a, i32 %b) nounwind readnone {
 entry:

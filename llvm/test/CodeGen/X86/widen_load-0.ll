@@ -4,15 +4,15 @@
 
 ; Both loads should happen before either store.
 
-; CHECK: movd  (%rsi), {{.*}}
-; CHECK: movd  (%rdi), {{.*}}
-; CHECK: movd  {{.*}}, (%rdi)
-; CHECK: movd  {{.*}}, (%rsi)
+; CHECK: movd  ({{.*}}), {{.*}}
+; CHECK: movd  ({{.*}}), {{.*}}
+; CHECK: movd  {{.*}}, ({{.*}})
+; CHECK: movd  {{.*}}, ({{.*}})
 
-; WIN64: movd  (%rdx), {{.*}}
-; WIN64: movd  (%rcx), {{.*}}
-; WIN64: movd  {{.*}}, (%rcx)
-; WIN64: movd  {{.*}}, (%rdx)
+; WIN64: movd  ({{.*}}), {{.*}}
+; WIN64: movd  ({{.*}}), {{.*}}
+; WIN64: movd  {{.*}}, ({{.*}})
+; WIN64: movd  {{.*}}, ({{.*}})
 
 define void @short2_int_swap(<2 x i16>* nocapture %b, i32* nocapture %c) nounwind {
 entry:

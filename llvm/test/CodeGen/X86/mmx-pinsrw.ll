@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mattr=+mmx,+sse2 | grep pinsr 
+; RUN: llc < %s  -mtriple=x86_64-linux -mattr=+mmx,+sse2 | grep pinsr 
 ; PR2562
 
 external global i16		; <i16*>:0 [#uses=1]

@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 |  FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-linux -march=x86 |  FileCheck %s
 
 
 define void @t(<2 x i64>* %dst, <2 x i64> %src1, <2 x i64> %src2) nounwind readonly {
