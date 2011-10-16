@@ -13,6 +13,7 @@
 
 #include "llvm/MC/SubtargetFeature.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/StringExtras.h"
 #include <algorithm>
@@ -154,21 +155,19 @@ static void Help(const SubtargetFeatureKV *CPUTable, size_t CPUTableSize,
   // Print the CPU table.
   errs() << "Available CPUs for this target:\n\n";
   for (size_t i = 0; i != CPUTableSize; i++)
-    errs() << "  " << CPUTable[i].Key
-         << std::string(MaxCPULen - std::strlen(CPUTable[i].Key), ' ')
-         << " - " << CPUTable[i].Desc << ".\n";
-  errs() << "\n";
-  
+    errs() << format("  %-*s - %s.\n",
+                     MaxCPULen, CPUTable[i].Key, CPUTable[i].Desc);
+  errs() << '\n';
+
   // Print the Feature table.
   errs() << "Available features for this target:\n\n";
   for (size_t i = 0; i != FeatTableSize; i++)
-    errs() << "  " << FeatTable[i].Key
-         << std::string(MaxFeatLen - std::strlen(FeatTable[i].Key), ' ')
-         << " - " << FeatTable[i].Desc << ".\n";
-  errs() << "\n";
-  
+    errs() << format("  %-*s - %s.\n",
+                     MaxFeatLen, FeatTable[i].Key, FeatTable[i].Desc);
+  errs() << '\n';
+
   errs() << "Use +feature to enable a feature, or -feature to disable it.\n"
-       << "For example, llc -mcpu=mycpu -mattr=+feature1,-feature2\n";
+            "For example, llc -mcpu=mycpu -mattr=+feature1,-feature2\n";
   std::exit(1);
 }
 

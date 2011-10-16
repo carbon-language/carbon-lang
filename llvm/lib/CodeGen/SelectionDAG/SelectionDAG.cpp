@@ -6592,7 +6592,7 @@ static void DumpNodesr(raw_ostream &OS, const SDNode *N, unsigned indent,
     return;
 
   // Dump the current SDNode, but don't end the line yet.
-  OS << std::string(indent, ' ');
+  OS.indent(indent);
   N->printr(OS, G);
 
   // Having printed this SDNode, walk the children:
