@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 -mattr=+mmx,+sse2 | grep movq | count 2
+; RUN: llc < %s -mtriple=x86_64-linux  -mattr=+mmx,+sse2 | grep movq | count 2
 ; There are no MMX operations here; this is promoted to XMM.
 
 define void @foo(<1 x i64>* %a, <1 x i64>* %b) nounwind {

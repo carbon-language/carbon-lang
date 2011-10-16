@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=x86-64 -mattr=+mmx,+sse2 | grep pxor | count 1
-; RUN: llc < %s -march=x86-64 -mattr=+mmx,+sse2 | grep punpcklqdq | count 1
+; RUN: llc < %s -mtriple=x86_64-linux -mattr=+mmx,+sse2 | grep pxor | count 1
+; RUN: llc < %s -mtriple=x86_64-linux -mattr=+mmx,+sse2 | grep punpcklqdq | count 1
 	%struct.vS1024 = type { [8 x <4 x i32>] }
 	%struct.vS512 = type { [4 x <4 x i32>] }
 
