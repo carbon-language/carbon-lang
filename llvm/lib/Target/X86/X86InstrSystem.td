@@ -465,3 +465,12 @@ let Predicates = [In64BitMode] in {
   def WRGSBASE64 : RI<0xAE, MRM3r, (outs), (ins GR64:$dst),
                     "wrgsbase{q}\t$dst", []>, TB, XS;
 }
+
+//===----------------------------------------------------------------------===//
+// INVPCID Instruction
+def INVPCID32 : I<0x82, MRMSrcMem, (outs), (ins GR32:$src1, i128mem:$src2),
+                "invpcid {$src2, $src1|$src1, $src2}", []>, OpSize, T8,
+                Requires<[In32BitMode]>;
+def INVPCID64 : I<0x82, MRMSrcMem, (outs), (ins GR64:$src1, i128mem:$src2),
+                "invpcid {$src2, $src1|$src1, $src2}", []>, OpSize, T8,
+                Requires<[In64BitMode]>;
