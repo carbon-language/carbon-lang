@@ -1752,9 +1752,11 @@ SPU::LowerV2I64Splat(EVT OpVT, SelectionDAG& DAG, uint64_t SplatVal,
 
     // Both upper and lower are special, lower to a constant pool load:
     if (lower_special && upper_special) {
-      SDValue SplatValCN = DAG.getConstant(SplatVal, MVT::i64);
-      return DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v2i64,
-                         SplatValCN, SplatValCN);
+      SDValue UpperVal = DAG.getConstant(upper, MVT::i32);
+      SDValue LowerVal = DAG.getConstant(lower, MVT::i32);
+      SDValue BV = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32,
+                         UpperVal, LowerVal, UpperVal, LowerVal);
+      return DAG.getNode(ISD::BITCAST, dl, OpVT, BV);
     }
 
     SDValue LO32;

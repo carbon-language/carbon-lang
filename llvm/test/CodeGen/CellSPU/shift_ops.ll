@@ -342,3 +342,7 @@ define <8 x i16> @ashr_v8i16(<8 x i16> %val, <8 x i16> %sh) {
 	%rv = ashr <8 x i16> %val, %sh
 	ret <8 x i16> %rv
 }
+
+define <2 x i64> @special_const() {
+  ret <2 x i64> <i64 4294967295, i64 4294967295>
+}
