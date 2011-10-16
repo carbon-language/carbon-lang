@@ -6802,10 +6802,10 @@ inline QualType Sema::CheckLogicalOperands( // C99 6.5.[13,14]
     // that isn't 0 or 1 (which indicate a potential logical operation that
     // happened to fold to true/false) then warn.
     // Parens on the RHS are ignored.
-    Expr::EvalResult Result;
-    if (RHS.get()->Evaluate(Result, Context) && !Result.HasSideEffects)
+    llvm::APSInt Result;
+    if (RHS.get()->EvaluateAsInt(Result, Context))
       if ((getLangOptions().Bool && !RHS.get()->getType()->isBooleanType()) ||
-          (Result.Val.getInt() != 0 && Result.Val.getInt() != 1)) {
+          (Result != 0 && Result != 1)) {
         Diag(Loc, diag::warn_logical_instead_of_bitwise)
           << RHS.get()->getSourceRange()
           << (Opc == BO_LAnd ? "&&" : "||");
