@@ -806,7 +806,7 @@ endif
 # Handle the OPTIONAL_PARALLEL_DIRS options for optional parallel construction
 #-----------------------------------------------------------
 ifdef OPTIONAL_PARALLEL_DIRS
-  PARALLEL_DIRS += $(foreach T,$(OPTIONAL_PARALLEL_DIRS),$(shell test -d $(PROJ_SRC_DIR)/$(T) && echo "$(T)"))
+  PARALLEL_DIRS += $(foreach T,$(OPTIONAL_PARALLEL_DIRS),$(shell test -d $(PROJ_SRC_DIR)/$(T) -o -f $(T)/Makefile && echo "$(T)"))
 endif
 
 #-----------------------------------------------------------
@@ -828,13 +828,20 @@ unitcheck:: $(addsuffix /.makeunitcheck,$(PARALLEL_DIRS))
 ParallelTargets := $(foreach T,$(RecursiveTargets),%/.make$(T))
 
 $(ParallelTargets) :
-	$(Verb) if ([ ! -f $(@D)/Makefile ] || \
-	            command test $(@D)/Makefile -ot \
-                      $(PROJ_SRC_DIR)/$(@D)/Makefile ); then \
-	  $(MKDIR) $(@D); \
-	  $(CP) $(PROJ_SRC_DIR)/$(@D)/Makefile $(@D)/Makefile; \
+	$(Verb) \
+	  SD=$(PROJ_SRC_DIR)/$(@D); \
+	  DD=$(@D); \
+	  if [ ! -f $$SD/Makefile ]; then \
+	    SD=$(@D); \
+	    DD=$(notdir $(@D)); \
+	  fi; \
+	  if ([ ! -f $$DD/Makefile ] || \
+	            command test $$DD/Makefile -ot \
+                      $$SD/Makefile ); then \
+	  $(MKDIR) $$DD; \
+	  $(CP) $$SD/Makefile $$DD/Makefile; \
 	fi; \
-	$(MAKE) -C $(@D) $(subst $(@D)/.make,,$@)
+	$(MAKE) -C $$DD $(subst $(@D)/.make,,$@)
 endif
 
 #---------------------------------------------------------
