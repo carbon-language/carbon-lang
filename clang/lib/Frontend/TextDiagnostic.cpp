@@ -714,39 +714,22 @@ void TextDiagnostic::emitMacroExpansionsAndCarets(
       I->setEnd(getImmediateMacroCalleeLoc(SM, End));
   }
 
-  if (!Suppressed) {
-    // Don't print recursive expansion notes from an expansion note.
-    Loc = SM.getSpellingLoc(Loc);
-
-    // Get the pretty name, according to #line directives etc.
-    PresumedLoc PLoc = SM.getPresumedLoc(Loc);
-    if (PLoc.isInvalid())
-      return;
-
-    // If this diagnostic is not in the main file, print out the
-    // "included from" lines.
-    emitIncludeStack(PLoc.getIncludeLoc(), DiagnosticsEngine::Note);
-
-    if (DiagOpts.ShowLocation) {
-      // Emit the file/line/column that this expansion came from.
-      OS << PLoc.getFilename() << ':' << PLoc.getLine() << ':';
-      if (DiagOpts.ShowColumn)
-        OS << PLoc.getColumn() << ':';
-      OS << ' ';
+  if (Suppressed) {
+    // Tell the user that we've skipped contexts.
+    if (OnMacroInst == MacroSkipStart) {
+      // FIXME: Emit this as a real note diagnostic.
+      // FIXME: Format an actual diagnostic rather than a hard coded string.
+      OS << "note: (skipping " << (MacroSkipEnd - MacroSkipStart)
+         << " expansions in backtrace; use -fmacro-backtrace-limit=0 to see "
+            "all)\n";
     }
-    OS << "note: expanded from:\n";
-
-    emitSnippetAndCaret(Loc, DiagnosticsEngine::Note, Ranges,
-                        ArrayRef<FixItHint>());
     return;
   }
 
-  if (OnMacroInst == MacroSkipStart) {
-    // Tell the user that we've skipped contexts.
-    OS << "note: (skipping " << (MacroSkipEnd - MacroSkipStart) 
-    << " expansions in backtrace; use -fmacro-backtrace-limit=0 to see "
-    "all)\n";
-  }
+  // FIXME: Format an actual diagnostic rather than a hard coded string.
+  emitDiagnostic(SM.getSpellingLoc(Loc), DiagnosticsEngine::Note,
+                 "expanded from:",
+                 Ranges, ArrayRef<FixItHint>());
 }
 
 /// \brief Emit a code snippet and caret line.
