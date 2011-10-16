@@ -215,8 +215,17 @@ void BackendConsumer::InlineAsmDiagHandler2(const llvm::SMDiagnostic &D,
   if (LocCookie.isValid()) {
     Diags.Report(LocCookie, diag::err_fe_inline_asm).AddString(Message);
     
-    if (D.getLoc().isValid())
-      Diags.Report(Loc, diag::note_fe_inline_asm_here);
+    if (D.getLoc().isValid()) {
+      DiagnosticBuilder B = Diags.Report(Loc, diag::note_fe_inline_asm_here);
+      // Convert the SMDiagnostic ranges into SourceRange and attach them
+      // to the diagnostic.
+      for (unsigned i = 0, e = D.getRanges().size(); i != e; ++i) {
+        std::pair<unsigned, unsigned> Range = D.getRanges()[i];
+        unsigned Column = D.getColumnNo();
+        B << SourceRange(Loc.getLocWithOffset(Range.first - Column),
+                         Loc.getLocWithOffset(Range.second - Column));
+      }
+    }
     return;
   }
   
