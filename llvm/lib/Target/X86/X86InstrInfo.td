@@ -1443,6 +1443,23 @@ let Predicates = [HasBMI2], Defs = [EFLAGS] in {
   defm BZHI64 : bmi_bextr_bzhi<0xF5, "bzhi{q}", GR64, i64mem>, VEX_W;
 }
 
+multiclass bmi_pdep_pextr<string mnemonic, RegisterClass RC,
+                          X86MemOperand x86memop> {
+  def rr : I<0xF5, MRMSrcReg, (outs RC:$dst), (ins RC:$src1, RC:$src2),
+             !strconcat(mnemonic, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+             []>, VEX_4V;
+  def rm : I<0xF5, MRMSrcMem, (outs RC:$dst), (ins RC:$src1, x86memop:$src2),
+             !strconcat(mnemonic, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+             []>, VEX_4V;
+}
+
+let Predicates = [HasBMI2] in {
+  defm PDEP32 : bmi_pdep_pextr<"pdep{l}", GR32, i32mem>, T8XD;
+  defm PDEP64 : bmi_pdep_pextr<"pdep{q}", GR64, i64mem>, T8XD, VEX_W;
+  defm PEXTR32 : bmi_pdep_pextr<"pextr{l}", GR32, i32mem>, T8XS;
+  defm PEXTR64 : bmi_pdep_pextr<"pextr{q}", GR64, i64mem>, T8XS, VEX_W;
+}
+
 //===----------------------------------------------------------------------===//
 // Subsystems.
 //===----------------------------------------------------------------------===//

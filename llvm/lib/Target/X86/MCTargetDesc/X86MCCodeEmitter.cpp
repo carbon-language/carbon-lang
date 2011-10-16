@@ -464,7 +464,11 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   case X86II::TA:  // 0F 3A
     VEX_5M = 0x3;
     break;
-  case X86II::TF:  // F2 0F 38
+  case X86II::T8XS: // F3 0F 38
+    VEX_PP = 0x2;
+    VEX_5M = 0x2;
+    break;
+  case X86II::T8XD: // F2 0F 38
     VEX_PP = 0x3;
     VEX_5M = 0x2;
     break;
@@ -790,7 +794,11 @@ void X86MCCodeEmitter::EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   case X86II::A7:  // 0F A7
     Need0FPrefix = true;
     break;
-  case X86II::TF: // F2 0F 38
+  case X86II::T8XS: // F3 0F 38
+    EmitByte(0xF3, CurByte, OS);
+    Need0FPrefix = true;
+    break;
+  case X86II::T8XD: // F2 0F 38
     EmitByte(0xF2, CurByte, OS);
     Need0FPrefix = true;
     break;
@@ -825,7 +833,8 @@ void X86MCCodeEmitter::EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
 
   // FIXME: Pull this up into previous switch if REX can be moved earlier.
   switch (TSFlags & X86II::Op0Mask) {
-  case X86II::TF:    // F2 0F 38
+  case X86II::T8XS:  // F3 0F 38
+  case X86II::T8XD:  // F2 0F 38
   case X86II::T8:    // 0F 38
     EmitByte(0x38, CurByte, OS);
     break;

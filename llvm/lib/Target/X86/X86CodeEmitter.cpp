@@ -649,15 +649,13 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
   case X86II::A7:  // 0F A7
     Need0FPrefix = true;
     break;
-  case X86II::TF: // F2 0F 38
-    MCE.emitByte(0xF2);
-    Need0FPrefix = true;
-    break;
   case X86II::REP: break; // already handled.
+  case X86II::T8XS: // F3 0F 38
   case X86II::XS:   // F3 0F
     MCE.emitByte(0xF3);
     Need0FPrefix = true;
     break;
+  case X86II::T8XD: // F2 0F 38
   case X86II::XD:   // F2 0F
     MCE.emitByte(0xF2);
     Need0FPrefix = true;
@@ -683,7 +681,8 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
     MCE.emitByte(0x0F);
 
   switch (Desc->TSFlags & X86II::Op0Mask) {
-  case X86II::TF:    // F2 0F 38
+  case X86II::T8XD:  // F2 0F 38
+  case X86II::T8XS:  // F3 0F 38
   case X86II::T8:    // 0F 38
     MCE.emitByte(0x38);
     break;

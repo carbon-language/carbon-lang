@@ -68,7 +68,7 @@ namespace X86Local {
     DC = 7, DD = 8, DE = 9, DF = 10,
     XD = 11,  XS = 12,
     T8 = 13,  P_TA = 14,
-    A6 = 15,  A7 = 16, TF = 17
+    A6 = 15,  A7 = 16, T8XD = 17, T8XS = 18
   };
 }
 
@@ -293,21 +293,25 @@ InstructionContext RecognizableInstr::insnContext() const {
       insnContext = IC_VEX_W_OPSIZE;
     else if (HasOpSizePrefix)
       insnContext = IC_VEX_OPSIZE;
-    else if (HasVEX_LPrefix && Prefix == X86Local::XS)
+    else if (HasVEX_LPrefix &&
+             (Prefix == X86Local::XS || Prefix == X86Local::T8XS))
       insnContext = IC_VEX_L_XS;
-    else if (HasVEX_LPrefix && Prefix == X86Local::XD)
+    else if (HasVEX_LPrefix &&
+             (Prefix == X86Local::XD || Prefix == X86Local::T8XD))
       insnContext = IC_VEX_L_XD;
-    else if (HasVEX_WPrefix && Prefix == X86Local::XS)
+    else if (HasVEX_WPrefix &&
+             (Prefix == X86Local::XS || Prefix == X86Local::T8XS))
       insnContext = IC_VEX_W_XS;
-    else if (HasVEX_WPrefix && Prefix == X86Local::XD)
+    else if (HasVEX_WPrefix &&
+             (Prefix == X86Local::XD || Prefix == X86Local::T8XD))
       insnContext = IC_VEX_W_XD;
     else if (HasVEX_WPrefix)
       insnContext = IC_VEX_W;
     else if (HasVEX_LPrefix)
       insnContext = IC_VEX_L;
-    else if (Prefix == X86Local::XD)
+    else if (Prefix == X86Local::XD || Prefix == X86Local::T8XD)
       insnContext = IC_VEX_XD;
-    else if (Prefix == X86Local::XS)
+    else if (Prefix == X86Local::XS || Prefix == X86Local::T8XS)
       insnContext = IC_VEX_XS;
     else
       insnContext = IC_VEX;
@@ -315,20 +319,22 @@ InstructionContext RecognizableInstr::insnContext() const {
     if (HasREX_WPrefix && HasOpSizePrefix)
       insnContext = IC_64BIT_REXW_OPSIZE;
     else if (HasOpSizePrefix &&
-             (Prefix == X86Local::XD || Prefix == X86Local::TF))
+             (Prefix == X86Local::XD || Prefix == X86Local::T8XD))
       insnContext = IC_64BIT_XD_OPSIZE;
-    else if (HasOpSizePrefix && Prefix == X86Local::XS)
+    else if (HasOpSizePrefix &&
+             (Prefix == X86Local::XS || Prefix == X86Local::T8XS))
       insnContext = IC_64BIT_XS_OPSIZE;
     else if (HasOpSizePrefix)
       insnContext = IC_64BIT_OPSIZE;
-    else if (HasREX_WPrefix && Prefix == X86Local::XS)
+    else if (HasREX_WPrefix &&
+             (Prefix == X86Local::XS || Prefix == X86Local::T8XS))
       insnContext = IC_64BIT_REXW_XS;
     else if (HasREX_WPrefix &&
-             (Prefix == X86Local::XD || Prefix == X86Local::TF))
+             (Prefix == X86Local::XD || Prefix == X86Local::T8XD))
       insnContext = IC_64BIT_REXW_XD;
-    else if (Prefix == X86Local::XD || Prefix == X86Local::TF)
+    else if (Prefix == X86Local::XD || Prefix == X86Local::T8XD)
       insnContext = IC_64BIT_XD;
-    else if (Prefix == X86Local::XS)
+    else if (Prefix == X86Local::XS || Prefix == X86Local::T8XS)
       insnContext = IC_64BIT_XS;
     else if (HasREX_WPrefix)
       insnContext = IC_64BIT_REXW;
@@ -336,15 +342,17 @@ InstructionContext RecognizableInstr::insnContext() const {
       insnContext = IC_64BIT;
   } else {
     if (HasOpSizePrefix &&
-        (Prefix == X86Local::XD || Prefix == X86Local::TF))
+        (Prefix == X86Local::XD || Prefix == X86Local::T8XD))
       insnContext = IC_XD_OPSIZE;
-    else if (HasOpSizePrefix && Prefix == X86Local::XS)
+    else if (HasOpSizePrefix &&
+             (Prefix == X86Local::XS || Prefix == X86Local::T8XS))
       insnContext = IC_XS_OPSIZE;
     else if (HasOpSizePrefix)
       insnContext = IC_OPSIZE;
-    else if (Prefix == X86Local::XD || Prefix == X86Local::TF)
+    else if (Prefix == X86Local::XD || Prefix == X86Local::T8XD)
       insnContext = IC_XD;
-    else if (Prefix == X86Local::XS || Prefix == X86Local::REP)
+    else if (Prefix == X86Local::XS || Prefix == X86Local::T8XS ||
+             Prefix == X86Local::REP)
       insnContext = IC_XS;
     else
       insnContext = IC;
@@ -857,7 +865,8 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
     opcodeToSet = Opcode;
     break;
   case X86Local::T8:
-  case X86Local::TF:
+  case X86Local::T8XD:
+  case X86Local::T8XS:
     opcodeType = THREEBYTE_38;
     switch (Opcode) {
     default:

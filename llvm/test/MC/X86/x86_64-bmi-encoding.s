@@ -87,3 +87,35 @@
 // CHECK: bzhiq %r12, %r11, %r10
 // CHECK: encoding: [0xc4,0x42,0x98,0xf5,0xd3]
           bzhiq %r12, %r11, %r10
+
+// CHECK: pextrl %r12d, %r11d, %r10d
+// CHECK: encoding: [0xc4,0x42,0x22,0xf5,0xd4]
+          pextrl %r12d, %r11d, %r10d
+
+// CHECK: pextrl (%rax), %r11d, %r10d
+// CHECK: encoding: [0xc4,0x62,0x22,0xf5,0x10]
+          pextrl (%rax), %r11d, %r10d
+
+// CHECK: pextrq %r12, %r11, %r10
+// CHECK: encoding: [0xc4,0x42,0xa2,0xf5,0xd4]
+          pextrq %r12, %r11, %r10
+
+// CHECK: pextrq (%rax), %r11, %r10
+// CHECK: encoding: [0xc4,0x62,0xa2,0xf5,0x10]
+          pextrq (%rax), %r11, %r10
+
+// CHECK: pdepl %r12d, %r11d, %r10d
+// CHECK: encoding: [0xc4,0x42,0x23,0xf5,0xd4]
+          pdepl %r12d, %r11d, %r10d
+
+// CHECK: pdepl (%rax), %r11d, %r10d
+// CHECK: encoding: [0xc4,0x62,0x23,0xf5,0x10]
+          pdepl (%rax), %r11d, %r10d
+
+// CHECK: pdepq %r12, %r11, %r10
+// CHECK: encoding: [0xc4,0x42,0xa3,0xf5,0xd4]
+          pdepq %r12, %r11, %r10
+
+// CHECK: pdepq (%rax), %r11, %r10
+// CHECK: encoding: [0xc4,0x62,0xa3,0xf5,0x10]
+          pdepq (%rax), %r11, %r10

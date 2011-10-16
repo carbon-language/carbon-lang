@@ -107,7 +107,8 @@ class T8     { bits<5> Prefix = 13; }
 class TA     { bits<5> Prefix = 14; }
 class A6     { bits<5> Prefix = 15; }
 class A7     { bits<5> Prefix = 16; }
-class TF     { bits<5> Prefix = 17; }
+class T8XD   { bits<5> Prefix = 17; }
+class T8XS   { bits<5> Prefix = 18; }
 class VEX    { bit hasVEXPrefix = 1; }
 class VEX_W  { bit hasVEX_WPrefix = 1; }
 class VEX_4V : VEX { bit hasVEX_4VPrefix = 1; }
@@ -424,10 +425,10 @@ class SS428I<bits<8> o, Format F, dag outs, dag ins, string asm,
       : I<o, F, outs, ins, asm, pattern, SSEPackedInt>, T8,
         Requires<[HasSSE42]>;
 
-//   SS42FI - SSE 4.2 instructions with TF prefix.
+//   SS42FI - SSE 4.2 instructions with T8XD prefix.
 class SS42FI<bits<8> o, Format F, dag outs, dag ins, string asm,
               list<dag> pattern>
-      : I<o, F, outs, ins, asm, pattern>, TF, Requires<[HasSSE42]>;
+      : I<o, F, outs, ins, asm, pattern>, T8XD, Requires<[HasSSE42]>;
       
 //   SS42AI = SSE 4.2 instructions with TA prefix
 class SS42AI<bits<8> o, Format F, dag outs, dag ins, string asm,
