@@ -322,7 +322,8 @@ struct X86Operand : public MCParsedAsmOperand {
   }
 
   static X86Operand *CreateToken(StringRef Str, SMLoc Loc) {
-    X86Operand *Res = new X86Operand(Token, Loc, Loc);
+    SMLoc EndLoc = SMLoc::getFromPointer(Loc.getPointer() + Str.size() - 1);
+    X86Operand *Res = new X86Operand(Token, Loc, EndLoc);
     Res->Tok.Data = Str.data();
     Res->Tok.Length = Str.size();
     return Res;
@@ -1083,8 +1084,8 @@ MatchAndEmitInstruction(SMLoc IDLoc,
   if ((Match1 == Match_MnemonicFail) && (Match2 == Match_MnemonicFail) &&
       (Match3 == Match_MnemonicFail) && (Match4 == Match_MnemonicFail)) {
     if (!WasOriginallyInvalidOperand) {
-      Error(IDLoc, "invalid instruction mnemonic '" + Base + "'");
-      return true;
+      return Error(IDLoc, "invalid instruction mnemonic '" + Base + "'",
+                   Op->getLocRange());
     }
 
     // Recover location info for the operand if we know which was the problem.
