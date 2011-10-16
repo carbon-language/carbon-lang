@@ -529,10 +529,8 @@ void DwarfException::EmitExceptionTable() {
       // Offset of the landing pad, counted in 16-byte bundles relative to the
       // @LPStart address.
       if (VerboseAsm) {
-        Asm->OutStreamer.AddComment(Twine(">> Call Site ") +
-                                    llvm::utostr(idx) + " <<");
-        Asm->OutStreamer.AddComment(Twine("  On exception at call site ") +
-                                    llvm::utostr(idx));
+        Asm->OutStreamer.AddComment(">> Call Site " + Twine(idx) + " <<");
+        Asm->OutStreamer.AddComment("  On exception at call site "+Twine(idx));
       }
       Asm->EmitULEB128(idx);
 
@@ -543,8 +541,8 @@ void DwarfException::EmitExceptionTable() {
         if (S.Action == 0)
           Asm->OutStreamer.AddComment("  Action: cleanup");
         else
-          Asm->OutStreamer.AddComment(Twine("  Action: ") +
-                                      llvm::utostr((S.Action - 1) / 2 + 1));
+          Asm->OutStreamer.AddComment("  Action: " +
+                                      Twine((S.Action - 1) / 2 + 1));
       }
       Asm->EmitULEB128(S.Action);
     }
@@ -596,8 +594,7 @@ void DwarfException::EmitExceptionTable() {
       // number of 16-byte bundles. The first call site is counted relative to
       // the start of the procedure fragment.
       if (VerboseAsm)
-        Asm->OutStreamer.AddComment(Twine(">> Call Site ") +
-                                    llvm::utostr(++Entry) + " <<");
+        Asm->OutStreamer.AddComment(">> Call Site " + Twine(++Entry) + " <<");
       Asm->EmitLabelDifference(BeginLabel, EHFuncBeginSym, 4);
       if (VerboseAsm)
         Asm->OutStreamer.AddComment(Twine("  Call between ") +
@@ -625,8 +622,8 @@ void DwarfException::EmitExceptionTable() {
         if (S.Action == 0)
           Asm->OutStreamer.AddComment("  On action: cleanup");
         else
-          Asm->OutStreamer.AddComment(Twine("  On action: ") +
-                                      llvm::utostr((S.Action - 1) / 2 + 1));
+          Asm->OutStreamer.AddComment("  On action: " +
+                                      Twine((S.Action - 1) / 2 + 1));
       }
       Asm->EmitULEB128(S.Action);
     }
@@ -640,8 +637,7 @@ void DwarfException::EmitExceptionTable() {
 
     if (VerboseAsm) {
       // Emit comments that decode the action table.
-      Asm->OutStreamer.AddComment(Twine(">> Action Record ") +
-                                  llvm::utostr(++Entry) + " <<");
+      Asm->OutStreamer.AddComment(">> Action Record " + Twine(++Entry) + " <<");
     }
 
     // Type Filter
@@ -650,11 +646,11 @@ void DwarfException::EmitExceptionTable() {
     //   type of the catch clauses or the types in the exception specification.
     if (VerboseAsm) {
       if (Action.ValueForTypeID > 0)
-        Asm->OutStreamer.AddComment(Twine("  Catch TypeInfo ") +
-                                    llvm::itostr(Action.ValueForTypeID));
+        Asm->OutStreamer.AddComment("  Catch TypeInfo " +
+                                    Twine(Action.ValueForTypeID));
       else if (Action.ValueForTypeID < 0)
-        Asm->OutStreamer.AddComment(Twine("  Filter TypeInfo ") +
-                                    llvm::itostr(Action.ValueForTypeID));
+        Asm->OutStreamer.AddComment("  Filter TypeInfo " +
+                                    Twine(Action.ValueForTypeID));
       else
         Asm->OutStreamer.AddComment("  Cleanup");
     }
@@ -669,8 +665,7 @@ void DwarfException::EmitExceptionTable() {
         Asm->OutStreamer.AddComment("  No further actions");
       } else {
         unsigned NextAction = Entry + (Action.NextAction + 1) / 2;
-        Asm->OutStreamer.AddComment(Twine("  Continue to action ") +
-                                    llvm::utostr(NextAction));
+        Asm->OutStreamer.AddComment("  Continue to action "+Twine(NextAction));
       }
     }
     Asm->EmitSLEB128(Action.NextAction);
@@ -687,7 +682,7 @@ void DwarfException::EmitExceptionTable() {
          I = TypeInfos.rbegin(), E = TypeInfos.rend(); I != E; ++I) {
     const GlobalVariable *GV = *I;
     if (VerboseAsm)
-      Asm->OutStreamer.AddComment(Twine("TypeInfo ") + llvm::utostr(Entry--));
+      Asm->OutStreamer.AddComment("TypeInfo " + Twine(Entry--));
     if (GV)
       Asm->EmitReference(GV, TTypeEncoding);
     else
@@ -707,7 +702,7 @@ void DwarfException::EmitExceptionTable() {
     if (VerboseAsm) {
       --Entry;
       if (TypeID != 0)
-        Asm->OutStreamer.AddComment(Twine("FilterInfo ") + llvm::itostr(Entry));
+        Asm->OutStreamer.AddComment("FilterInfo " + Twine(Entry));
     }
 
     Asm->EmitULEB128(TypeID);
