@@ -44,7 +44,7 @@ define <3 x i8> @test_char_div(<3 x i8> %num, <3 x i8> %div) {
   ret <3 x i8>  %div.r
 }
 
-; CHECK: test_char_div
+; CHECK: test_uchar_div
 define <3 x i8> @test_uchar_div(<3 x i8> %num, <3 x i8> %div) {
 ; CHECK: divb
 ; CHECK: divb
