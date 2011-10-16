@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -fsyntax-only -fmacro-backtrace-limit 5 %s > %t 2>&1 
-// RUN: FileCheck %s < %t
+// Tests for macro expansion backtraces. The RUN and CHECK lines are grouped
+// below the test code to reduce noise when updating them.
 
 #define M1(A, B) ((A) < (B))
 #define M2(A, B) M1(A, B)
@@ -15,7 +15,9 @@
 #define M12(A, B) M11(A, B)
 
 void f(int *ip, float *fp) {
-  // CHECK: macro-backtrace.c:31:7: warning: comparison of distinct pointer types ('int *' and 'float *')
+  if (M12(ip, fp)) { }
+  // RUN: %clang_cc1 -fsyntax-only -fmacro-backtrace-limit 5 %s 2>&1 | FileCheck %s
+  // CHECK: macro-backtrace.c:18:7: warning: comparison of distinct pointer types ('int *' and 'float *')
   // CHECK: if (M12(ip, fp)) { }
   // CHECK: macro-backtrace.c:15:19: note: expanded from:
   // CHECK: #define M12(A, B) M11(A, B)
@@ -28,5 +30,4 @@ void f(int *ip, float *fp) {
   // CHECK: #define M2(A, B) M1(A, B)
   // CHECK: macro-backtrace.c:4:23: note: expanded from:
   // CHECK: #define M1(A, B) ((A) < (B))
-  if (M12(ip, fp)) { }
 }
