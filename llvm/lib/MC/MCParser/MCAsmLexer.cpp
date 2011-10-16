@@ -25,3 +25,7 @@ SMLoc MCAsmLexer::getLoc() const {
 SMLoc AsmToken::getLoc() const {
   return SMLoc::getFromPointer(Str.data());
 }
+
+SMLoc AsmToken::getEndLoc() const {
+  return SMLoc::getFromPointer(Str.data() + Str.size() - 1);
+}

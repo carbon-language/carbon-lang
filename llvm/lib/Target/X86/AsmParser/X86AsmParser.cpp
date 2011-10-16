@@ -405,7 +405,8 @@ bool X86ATTAsmParser::ParseRegister(unsigned &RegNo,
 
   const AsmToken &Tok = Parser.getTok();
   if (Tok.isNot(AsmToken::Identifier))
-    return Error(Tok.getLoc(), "invalid register name");
+    return Error(StartLoc, "invalid register name",
+                 SMRange(StartLoc, Tok.getEndLoc()));
 
   RegNo = MatchRegisterName(Tok.getString());
 
@@ -423,8 +424,9 @@ bool X86ATTAsmParser::ParseRegister(unsigned &RegNo,
         X86MCRegisterClasses[X86::GR64RegClassID].contains(RegNo) ||
         X86II::isX86_64NonExtLowByteReg(RegNo) ||
         X86II::isX86_64ExtendedReg(RegNo))
-      return Error(Tok.getLoc(), "register %"
-                   + Tok.getString() + " is only available in 64-bit mode");
+      return Error(StartLoc, "register %"
+                   + Tok.getString() + " is only available in 64-bit mode",
+                   SMRange(StartLoc, Tok.getEndLoc()));
   }
 
   // Parse "%st" as "%st(0)" and "%st(1)", which is multiple tokens.
@@ -485,9 +487,10 @@ bool X86ATTAsmParser::ParseRegister(unsigned &RegNo,
   }
 
   if (RegNo == 0)
-    return Error(Tok.getLoc(), "invalid register name");
+    return Error(StartLoc, "invalid register name",
+                 SMRange(StartLoc, Tok.getEndLoc()));
 
-  EndLoc = Tok.getLoc();
+  EndLoc = Tok.getEndLoc();
   Parser.Lex(); // Eat identifier token.
   return false;
 }
@@ -503,7 +506,8 @@ X86Operand *X86ATTAsmParser::ParseOperand() {
     SMLoc Start, End;
     if (ParseRegister(RegNo, Start, End)) return 0;
     if (RegNo == X86::EIZ || RegNo == X86::RIZ) {
-      Error(Start, "%eiz and %riz can only be used as index registers");
+      Error(Start, "%eiz and %riz can only be used as index registers",
+            SMRange(Start, End));
       return 0;
     }
 
@@ -587,10 +591,11 @@ X86Operand *X86ATTAsmParser::ParseMemOperand(unsigned SegReg, SMLoc MemStart) {
   unsigned BaseReg = 0, IndexReg = 0, Scale = 1;
 
   if (getLexer().is(AsmToken::Percent)) {
-    SMLoc L;
-    if (ParseRegister(BaseReg, L, L)) return 0;
+    SMLoc StartLoc, EndLoc;
+    if (ParseRegister(BaseReg, StartLoc, EndLoc)) return 0;
     if (BaseReg == X86::EIZ || BaseReg == X86::RIZ) {
-      Error(L, "eiz and riz can only be used as index registers");
+      Error(StartLoc, "eiz and riz can only be used as index registers",
+            SMRange(StartLoc, EndLoc));
       return 0;
     }
   }

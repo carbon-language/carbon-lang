@@ -71,6 +71,7 @@ public:
   bool isNot(TokenKind K) const { return Kind != K; }
 
   SMLoc getLoc() const;
+  SMLoc getEndLoc() const;
 
   /// getStringContents - Get the contents of a string token (without quotes).
   StringRef getStringContents() const {
