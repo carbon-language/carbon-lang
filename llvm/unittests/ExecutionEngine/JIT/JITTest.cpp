@@ -184,7 +184,7 @@ bool LoadAssemblyInto(Module *M, const char *assembly) {
     NULL != ParseAssemblyString(assembly, M, Error, M->getContext());
   std::string errMsg;
   raw_string_ostream os(errMsg);
-  Error.Print("", os);
+  Error.print("", os);
   EXPECT_TRUE(success) << os.str();
   return success;
 }

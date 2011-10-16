@@ -15,3 +15,6 @@ addl $0, 0(%rax)
 
 # 8 "test.s"
  movi $8,%eax
+
+movl 0(%rax), 0(%edx)  // error: invalid operand for instruction
+

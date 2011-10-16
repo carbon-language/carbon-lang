@@ -337,13 +337,9 @@ int EDDisassembler::printInst(std::string &str, MCInst &inst) {
   return 0;
 }
 
-static void diag_handler(const SMDiagnostic &diag,
-                         void *context)
-{
-  if (context) {
-    EDDisassembler *disassembler = static_cast<EDDisassembler*>(context);
-    diag.Print("", disassembler->ErrorStream);
-  }
+static void diag_handler(const SMDiagnostic &diag, void *context) {
+  if (context)
+    diag.print("", static_cast<EDDisassembler*>(context)->ErrorStream);
 }
 
 int EDDisassembler::parseInst(SmallVectorImpl<MCParsedAsmOperand*> &operands,

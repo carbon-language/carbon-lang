@@ -38,7 +38,7 @@ static Module *ReadModule(LLVMContext &Context, StringRef Name) {
   SMDiagnostic Diag;
   Module *M = ParseIRFile(Name, Diag, Context);
   if (!M)
-    Diag.Print("llvmdiff", errs());
+    Diag.print("llvm-diff", errs());
   return M;
 }
 

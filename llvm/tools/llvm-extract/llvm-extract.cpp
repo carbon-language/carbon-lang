@@ -90,7 +90,7 @@ int main(int argc, char **argv) {
   M.reset(getLazyIRFileModule(InputFilename, Err, Context));
 
   if (M.get() == 0) {
-    Err.Print(argv[0], errs());
+    Err.print(argv[0], errs());
     return 1;
   }
 

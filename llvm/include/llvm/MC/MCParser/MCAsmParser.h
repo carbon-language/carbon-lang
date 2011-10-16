@@ -11,6 +11,7 @@
 #define LLVM_MC_MCASMPARSER_H
 
 #include "llvm/Support/DataTypes.h"
+#include "llvm/ADT/ArrayRef.h"
 
 namespace llvm {
 class AsmToken;
@@ -22,6 +23,7 @@ class MCExpr;
 class MCStreamer;
 class MCTargetAsmParser;
 class SMLoc;
+class SMRange;
 class SourceMgr;
 class StringRef;
 class Twine;
@@ -72,14 +74,16 @@ public:
   /// Msg.
   ///
   /// \return The return value is true, if warnings are fatal.
-  virtual bool Warning(SMLoc L, const Twine &Msg) = 0;
+  virtual bool Warning(SMLoc L, const Twine &Msg,
+                       ArrayRef<SMRange> Ranges = ArrayRef<SMRange>()) = 0;
 
   /// Error - Emit an error at the location \arg L, with the message \arg
   /// Msg.
   ///
   /// \return The return value is always true, as an idiomatic convenience to
   /// clients.
-  virtual bool Error(SMLoc L, const Twine &Msg) = 0;
+  virtual bool Error(SMLoc L, const Twine &Msg,
+                     ArrayRef<SMRange> Ranges = ArrayRef<SMRange>()) = 0;
 
   /// Lex - Get the next AsmToken in the stream, possibly handling file
   /// inclusion first.
@@ -89,7 +93,8 @@ public:
   const AsmToken &getTok();
 
   /// \brief Report an error at the current lexer location.
-  bool TokError(const Twine &Msg);
+  bool TokError(const Twine &Msg,
+                ArrayRef<SMRange> Ranges = ArrayRef<SMRange>());
 
   /// ParseIdentifier - Parse an identifier or string (as a quoted identifier)
   /// and set \arg Res to the identifier contents.

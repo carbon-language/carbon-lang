@@ -142,8 +142,10 @@ public:
   virtual MCContext &getContext() { return Ctx; }
   virtual MCStreamer &getStreamer() { return Out; }
 
-  virtual bool Warning(SMLoc L, const Twine &Msg);
-  virtual bool Error(SMLoc L, const Twine &Msg);
+  virtual bool Warning(SMLoc L, const Twine &Msg,
+                       ArrayRef<SMRange> Ranges = ArrayRef<SMRange>());
+  virtual bool Error(SMLoc L, const Twine &Msg,
+                     ArrayRef<SMRange> Ranges = ArrayRef<SMRange>());
 
   const AsmToken &Lex();
 
@@ -170,8 +172,9 @@ private:
 
   void PrintMacroInstantiations();
   void PrintMessage(SMLoc Loc, const Twine &Msg, const char *Type,
+                    ArrayRef<SMRange> Ranges = ArrayRef<SMRange>(),
                     bool ShowLine = true) const {
-    SrcMgr.PrintMessage(Loc, Msg, Type, ShowLine);
+    SrcMgr.PrintMessage(Loc, Msg, Type, Ranges, ShowLine);
   }
   static void DiagHandler(const SMDiagnostic &Diag, void *Context);
 
@@ -393,17 +396,17 @@ void AsmParser::PrintMacroInstantiations() {
                  "note");
 }
 
-bool AsmParser::Warning(SMLoc L, const Twine &Msg) {
+bool AsmParser::Warning(SMLoc L, const Twine &Msg, ArrayRef<SMRange> Ranges) {
   if (FatalAssemblerWarnings)
-    return Error(L, Msg);
-  PrintMessage(L, Msg, "warning");
+    return Error(L, Msg, Ranges);
+  PrintMessage(L, Msg, "warning", Ranges);
   PrintMacroInstantiations();
   return false;
 }
 
-bool AsmParser::Error(SMLoc L, const Twine &Msg) {
+bool AsmParser::Error(SMLoc L, const Twine &Msg, ArrayRef<SMRange> Ranges) {
   HadError = true;
-  PrintMessage(L, Msg, "error");
+  PrintMessage(L, Msg, "error", Ranges);
   PrintMacroInstantiations();
   return true;
 }
@@ -496,7 +499,8 @@ bool AsmParser::Run(bool NoInitialTextSection, bool NoFinalize) {
         // first referenced for a source location. We need to add something
         // to track that. Currently, we just point to the end of the file.
         PrintMessage(getLexer().getLoc(), "assembler local symbol '" +
-                     Sym->getName() + "' not defined", "error", false);
+                     Sym->getName() + "' not defined", "error",
+                     ArrayRef<SMRange>(), false);
     }
   }
 
@@ -1284,7 +1288,7 @@ void AsmParser::DiagHandler(const SMDiagnostic &Diag, void *Context) {
   if (!Parser->CppHashLineNumber ||
       &DiagSrcMgr != &Parser->SrcMgr ||
       DiagBuf != CppHashBuf) {
-    Diag.Print(0, OS);
+    Diag.print(0, OS);
     return;
   }
 
@@ -1299,16 +1303,12 @@ void AsmParser::DiagHandler(const SMDiagnostic &Diag, void *Context) {
   int LineNo = Parser->CppHashLineNumber - 1 +
                (DiagLocLineNo - CppHashLocLineNo);
 
-  SMDiagnostic NewDiag(*Diag.getSourceMgr(),
-                       Diag.getLoc(),
-                       Filename,
-                       LineNo,
-                       Diag.getColumnNo(),
-                       Diag.getMessage(),
-                       Diag.getLineContents(),
-                       Diag.getShowLine());
+  SMDiagnostic NewDiag(*Diag.getSourceMgr(), Diag.getLoc(),
+                       Filename, LineNo, Diag.getColumnNo(),
+                       Diag.getMessage(), Diag.getLineContents(),
+                       Diag.getRanges(), Diag.getShowLine());
 
-  NewDiag.Print(0, OS);
+  NewDiag.print(0, OS);
 }
 
 bool AsmParser::expandMacro(SmallString<256> &Buf, StringRef Body,

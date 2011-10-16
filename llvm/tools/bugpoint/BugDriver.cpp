@@ -87,7 +87,7 @@ Module *llvm::ParseInputFile(const std::string &Filename,
   SMDiagnostic Err;
   Module *Result = ParseIRFile(Filename, Err, Ctxt);
   if (!Result)
-    Err.Print("bugpoint", errs());
+    Err.print("bugpoint", errs());
 
   // If we don't have an override triple, use the first one to configure
   // bugpoint, or use the host triple if none provided.

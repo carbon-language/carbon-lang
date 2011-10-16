@@ -41,7 +41,10 @@ private:
 
   MCAsmLexer &getLexer() const { return Parser.getLexer(); }
 
-  bool Error(SMLoc L, const Twine &Msg) { return Parser.Error(L, Msg); }
+  bool Error(SMLoc L, const Twine &Msg,
+             ArrayRef<SMRange> Ranges = ArrayRef<SMRange>()) {
+    return Parser.Error(L, Msg, Ranges);
+  }
 
   X86Operand *ParseOperand();
   X86Operand *ParseMemOperand(unsigned SegReg, SMLoc StartLoc);
@@ -145,6 +148,8 @@ struct X86Operand : public MCParsedAsmOperand {
   SMLoc getStartLoc() const { return StartLoc; }
   /// getEndLoc - Get the location of the last token of this operand.
   SMLoc getEndLoc() const { return EndLoc; }
+  
+  SMRange getLocRange() const { return SMRange(StartLoc, EndLoc); }
 
   virtual void print(raw_ostream &OS) const {}
 
@@ -1083,16 +1088,19 @@ MatchAndEmitInstruction(SMLoc IDLoc,
     }
 
     // Recover location info for the operand if we know which was the problem.
-    SMLoc ErrorLoc = IDLoc;
     if (OrigErrorInfo != ~0U) {
       if (OrigErrorInfo >= Operands.size())
         return Error(IDLoc, "too few operands for instruction");
 
-      ErrorLoc = ((X86Operand*)Operands[OrigErrorInfo])->getStartLoc();
-      if (ErrorLoc == SMLoc()) ErrorLoc = IDLoc;
+      X86Operand *Operand = (X86Operand*)Operands[OrigErrorInfo];
+      if (Operand->getStartLoc().isValid()) {
+        SMRange OperandRange = Operand->getLocRange();
+        return Error(Operand->getStartLoc(), "invalid operand for instruction",
+                     OperandRange);
+      }
     }
 
-    return Error(ErrorLoc, "invalid operand for instruction");
+    return Error(IDLoc, "invalid operand for instruction");
   }
 
   // If one instruction matched with a missing feature, report this as a
@@ -1112,7 +1120,6 @@ MatchAndEmitInstruction(SMLoc IDLoc,
   }
 
   // If all of these were an outright failure, report it in a useless way.
-  // FIXME: We should give nicer diagnostics about the exact failure.
   Error(IDLoc, "unknown use of instruction mnemonic without a size suffix");
   return true;
 }

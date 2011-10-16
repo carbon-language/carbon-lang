@@ -17,10 +17,8 @@
 #define SUPPORT_SOURCEMGR_H
 
 #include "llvm/Support/SMLoc.h"
-
+#include "llvm/ADT/ArrayRef.h"
 #include <string>
-#include <vector>
-#include <cassert>
 
 namespace llvm {
   class MemoryBuffer;
@@ -125,6 +123,7 @@ public:
   /// prefixed to the message.
   /// @param ShowLine - Should the diagnostic show the source line.
   void PrintMessage(SMLoc Loc, const Twine &Msg, const char *Type,
+                    ArrayRef<SMRange> Ranges = ArrayRef<SMRange>(),
                     bool ShowLine = true) const;
 
 
@@ -136,6 +135,7 @@ public:
   /// @param ShowLine - Should the diagnostic show the source line.
   SMDiagnostic GetMessage(SMLoc Loc,
                           const Twine &Msg, const char *Type,
+                          ArrayRef<SMRange> Ranges = ArrayRef<SMRange>(),
                           bool ShowLine = true) const;
 
   /// PrintIncludeStack - Prints the names of included files and the line of the
@@ -157,6 +157,7 @@ class SMDiagnostic {
   int LineNo, ColumnNo;
   std::string Message, LineContents;
   unsigned ShowLine : 1;
+  std::vector<std::pair<unsigned, unsigned> > Ranges;
 
 public:
   // Null diagnostic.
@@ -170,9 +171,7 @@ public:
   SMDiagnostic(const SourceMgr &sm, SMLoc L, const std::string &FN,
                int Line, int Col,
                const std::string &Msg, const std::string &LineStr,
-               bool showline = true)
-    : SM(&sm), Loc(L), Filename(FN), LineNo(Line), ColumnNo(Col), Message(Msg),
-      LineContents(LineStr), ShowLine(showline) {}
+               ArrayRef<std::pair<unsigned,unsigned> > Ranges, bool showline);
 
   const SourceMgr *getSourceMgr() const { return SM; }
   SMLoc getLoc() const { return Loc; }
@@ -182,8 +181,10 @@ public:
   const std::string &getMessage() const { return Message; }
   const std::string &getLineContents() const { return LineContents; }
   bool getShowLine() const { return ShowLine; }
-  
-  void Print(const char *ProgName, raw_ostream &S) const;
+  const std::vector<std::pair<unsigned, unsigned> > &getRanges() const {
+    return Ranges;
+  }
+  void print(const char *ProgName, raw_ostream &S) const;
 };
 
 }  // end llvm namespace

@@ -384,7 +384,7 @@ void Pattern::PrintFailureInfo(const SourceMgr &SM, StringRef Buffer,
       }
 
       SM.PrintMessage(SMLoc::getFromPointer(Buffer.data()), OS.str(), "note",
-                      /*ShowLine=*/false);
+                      ArrayRef<SMRange>(), /*ShowLine=*/false);
     }
   }
 

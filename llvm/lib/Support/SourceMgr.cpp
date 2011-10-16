@@ -141,7 +141,8 @@ void SourceMgr::PrintIncludeStack(SMLoc IncludeLoc, raw_ostream &OS) const {
 /// @param Type - If non-null, the kind of message (e.g., "error") which is
 /// prefixed to the message.
 SMDiagnostic SourceMgr::GetMessage(SMLoc Loc, const Twine &Msg,
-                                   const char *Type, bool ShowLine) const {
+                                   const char *Type, ArrayRef<SMRange> Ranges,
+                                   bool ShowLine) const {
 
   // First thing to do: find the current buffer containing the specified
   // location.
@@ -156,15 +157,12 @@ SMDiagnostic SourceMgr::GetMessage(SMLoc Loc, const Twine &Msg,
          LineStart[-1] != '\n' && LineStart[-1] != '\r')
     --LineStart;
 
-  std::string LineStr;
-  if (ShowLine) {
-    // Get the end of the line.
-    const char *LineEnd = Loc.getPointer();
-    while (LineEnd != CurMB->getBufferEnd() &&
-           LineEnd[0] != '\n' && LineEnd[0] != '\r')
-      ++LineEnd;
-    LineStr = std::string(LineStart, LineEnd);
-  }
+  // Get the end of the line.
+  const char *LineEnd = Loc.getPointer();
+  while (LineEnd != CurMB->getBufferEnd() &&
+         LineEnd[0] != '\n' && LineEnd[0] != '\r')
+    ++LineEnd;
+  std::string LineStr(LineStart, LineEnd);
 
   std::string PrintedMsg;
   raw_string_ostream OS(PrintedMsg);
@@ -172,17 +170,40 @@ SMDiagnostic SourceMgr::GetMessage(SMLoc Loc, const Twine &Msg,
     OS << Type << ": ";
   OS << Msg;
 
+  // Convert any ranges to column ranges that only intersect the line of the
+  // location.
+  SmallVector<std::pair<unsigned, unsigned>, 4> ColRanges;
+  for (unsigned i = 0, e = Ranges.size(); i != e; ++i) {
+    SMRange R = Ranges[i];
+    if (!R.isValid()) continue;
+    
+    // If the line doesn't contain any part of the range, then ignore it.
+    if (R.Start.getPointer() > LineEnd || R.End.getPointer() < LineStart)
+      continue;
+   
+    // Ignore pieces of the range that go onto other lines.
+    if (R.Start.getPointer() < LineStart)
+      R.Start = SMLoc::getFromPointer(LineStart);
+    if (R.End.getPointer() > LineEnd)
+      R.End = SMLoc::getFromPointer(LineEnd);
+    
+    // Translate from SMLoc ranges to column ranges.
+    ColRanges.push_back(std::make_pair(R.Start.getPointer()-LineStart,
+                                       R.End.getPointer()-LineStart));
+  }
+  
   return SMDiagnostic(*this, Loc,
                       CurMB->getBufferIdentifier(), FindLineNumber(Loc, CurBuf),
                       Loc.getPointer()-LineStart, OS.str(),
-                      LineStr, ShowLine);
+                      LineStr, ColRanges, ShowLine);
 }
 
 void SourceMgr::PrintMessage(SMLoc Loc, const Twine &Msg,
-                             const char *Type, bool ShowLine) const {
+                             const char *Type, ArrayRef<SMRange> Ranges,
+                             bool ShowLine) const {
   // Report the message with the diagnostic handler if present.
   if (DiagHandler) {
-    DiagHandler(GetMessage(Loc, Msg, Type, ShowLine), DiagContext);
+    DiagHandler(GetMessage(Loc, Msg, Type, Ranges, ShowLine), DiagContext);
     return;
   }
 
@@ -192,14 +213,23 @@ void SourceMgr::PrintMessage(SMLoc Loc, const Twine &Msg,
   assert(CurBuf != -1 && "Invalid or unspecified location!");
   PrintIncludeStack(getBufferInfo(CurBuf).IncludeLoc, OS);
 
-  GetMessage(Loc, Msg, Type, ShowLine).Print(0, OS);
+  GetMessage(Loc, Msg, Type, Ranges, ShowLine).print(0, OS);
 }
 
 //===----------------------------------------------------------------------===//
 // SMDiagnostic Implementation
 //===----------------------------------------------------------------------===//
 
-void SMDiagnostic::Print(const char *ProgName, raw_ostream &S) const {
+SMDiagnostic::SMDiagnostic(const SourceMgr &sm, SMLoc L, const std::string &FN,
+                           int Line, int Col, const std::string &Msg,
+                           const std::string &LineStr,
+                           ArrayRef<std::pair<unsigned,unsigned> > Ranges,
+                           bool showline)
+  : SM(&sm), Loc(L), Filename(FN), LineNo(Line), ColumnNo(Col), Message(Msg),
+    LineContents(LineStr), ShowLine(showline), Ranges(Ranges.vec()) {}
+
+
+void SMDiagnostic::print(const char *ProgName, raw_ostream &S) const {
   if (ProgName && ProgName[0])
     S << ProgName << ": ";
 
@@ -219,14 +249,63 @@ void SMDiagnostic::Print(const char *ProgName, raw_ostream &S) const {
 
   S << Message << '\n';
 
-  if (LineNo != -1 && ColumnNo != -1 && ShowLine) {
-    S << LineContents << '\n';
+  if (LineNo == -1 || ColumnNo == -1 || !ShowLine)
+    return;
 
-    // Print out spaces/tabs before the caret.
-    for (unsigned i = 0; i != unsigned(ColumnNo); ++i)
-      S << (LineContents[i] == '\t' ? '\t' : ' ');
-    S << "^\n";
+  // Build the line with the caret and ranges.
+  std::string CaretLine(LineContents.size()+1, ' ');
+  
+  // Expand any ranges.
+  for (unsigned r = 0, e = Ranges.size(); r != e; ++r) {
+    std::pair<unsigned, unsigned> R = Ranges[r];
+    for (unsigned i = R.first,
+         e = std::min(R.second, (unsigned)LineContents.size())+1; i != e; ++i)
+      CaretLine[i] = '~';
   }
+    
+  // Finally, plop on the caret.
+  if (unsigned(ColumnNo) <= LineContents.size())
+    CaretLine[ColumnNo] = '^';
+  else 
+    CaretLine[LineContents.size()] = '^';
+  
+  // ... and remove trailing whitespace so the output doesn't wrap for it.  We
+  // know that the line isn't completely empty because it has the caret in it at
+  // least.
+  CaretLine.erase(CaretLine.find_last_not_of(' ')+1);
+  
+  // Print out the source line one character at a time, so we can expand tabs.
+  for (unsigned i = 0, e = LineContents.size(), OutCol = 0; i != e; ++i) {
+    if (LineContents[i] != '\t') {
+      S << LineContents[i];
+      ++OutCol;
+      continue;
+    }
+    
+    // If we have a tab, emit at least one space, then round up to 8 columns.
+    do {
+      S << ' ';
+      ++OutCol;
+    } while (OutCol & 7);
+  }
+  S << '\n';
+
+  // Print out the caret line, matching tabs in the source line.
+  for (unsigned i = 0, e = CaretLine.size(), OutCol = 0; i != e; ++i) {
+    if (i >= LineContents.size() || LineContents[i] != '\t') {
+      S << CaretLine[i];
+      ++OutCol;
+      continue;
+    }
+    
+    // Okay, we have a tab.  Insert the appropriate number of characters.
+    do {
+      S << CaretLine[i];
+      ++OutCol;
+    } while (OutCol & 7);
+  }
+  
+  S << '\n';
 }
 
 

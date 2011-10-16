@@ -69,7 +69,7 @@ static inline std::auto_ptr<Module> LoadFile(const char *argv0,
   Result = ParseIRFile(FNStr, Err, Context);
   if (Result) return std::auto_ptr<Module>(Result);   // Load successful!
 
-  Err.Print(argv0, errs());
+  Err.print(argv0, errs());
   return std::auto_ptr<Module>();
 }
 
