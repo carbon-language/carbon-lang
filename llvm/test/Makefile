@@ -59,7 +59,7 @@ extra-lit-site-cfgs::
 
 ifneq ($(strip $(filter check-local-all,$(MAKECMDGOALS))),)
 ifndef TESTSUITE
-ifeq ($(shell test -d $(PROJ_SRC_DIR)/../tools/clang && echo OK), OK)
+ifeq ($(shell test -f $(PROJ_OBJ_DIR)/../tools/clang/Makefile && echo OK), OK)
 LIT_ALL_TESTSUITES += $(PROJ_OBJ_DIR)/../tools/clang/test
 
 # Force creation of Clang's lit.site.cfg.
