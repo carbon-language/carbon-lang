@@ -1,3 +1,16 @@
+//===- LowerExpectIntrinsic.cpp - Lower expect intrinsic ------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This pass lowers the 'expect' intrinsic to LLVM metadata.
+//
+//===----------------------------------------------------------------------===//
+
 #define DEBUG_TYPE "lower-expect-intrinsic"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
