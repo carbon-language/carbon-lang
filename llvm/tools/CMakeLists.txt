@@ -65,7 +65,7 @@ if (NOT ${LLVM_CLANG_SOURCE_DIR} STREQUAL ""
     AND EXISTS ${LLVM_CLANG_SOURCE_DIR}/CMakeLists.txt)
   option(LLVM_BUILD_CLANG "Whether to build Clang as part of LLVM" ON)
   if (${LLVM_BUILD_CLANG})
-    add_subdirectory( ${CMAKE_CURRENT_SOURCE_DIR}/clang )
+    add_subdirectory(${LLVM_CLANG_SOURCE_DIR} clang)
   endif()
 endif ()
 
