@@ -1321,6 +1321,8 @@ def t2STRDi8 : T2Ii8s4<1, 0, 0, (outs),
                IIC_iStore_d_r, "strd", "\t$Rt, $Rt2, $addr", "", []>;
 
 // Indexed stores
+
+let mayStore = 1, neverHasSideEffects = 1 in {
 def t2STR_PRE  : T2Ipreldst<0, 0b10, 0, 1, (outs GPRnopc:$Rn_wb),
                             (ins rGPR:$Rt, t2addrmode_imm8:$addr),
                             AddrModeT2_i8, IndexModePre, IIC_iStore_iu,
@@ -1397,7 +1399,7 @@ def t2STRH_preidx: t2PseudoInst<(outs GPRnopc:$Rn_wb),
       [(set GPRnopc:$Rn_wb,
             (pre_truncsti16 rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$offset))]>;
 }
-
+} // mayStore = 1, neverHasSideEffects = 1
 
 // STRT, STRBT, STRHT all have offset mode (PUW=0b110) and are for disassembly
 // only.
