@@ -462,7 +462,7 @@ namespace X86II {
   /// is duplicated in the MCInst (e.g. "EAX = addl EAX, [mem]") it is only
   /// counted as one operand.
   ///
-  static inline int getMemoryOperandNo(uint64_t TSFlags) {
+  static inline int getMemoryOperandNo(uint64_t TSFlags, unsigned Opcode) {
     switch (TSFlags & X86II::FormMask) {
     case X86II::MRMInitReg:  assert(0 && "FIXME: Remove this form");
     default: assert(0 && "Unknown FormMask value in getMemoryOperandNo!");
@@ -477,9 +477,12 @@ namespace X86II {
     case X86II::MRMDestMem:
       return 0;
     case X86II::MRMSrcMem: {
+      // FIXME: BEXTR uses VEX.vvvv for Operand 3
+      bool IsBEXTR = (Opcode == X86::BEXTR32rr || Opcode == X86::BEXTR32rm ||
+                      Opcode == X86::BEXTR64rr || Opcode == X86::BEXTR64rm);
       bool HasVEX_4V = (TSFlags >> X86II::VEXShift) & X86II::VEX_4V;
       unsigned FirstMemOp = 1;
-      if (HasVEX_4V)
+      if (HasVEX_4V && !IsBEXTR)
         ++FirstMemOp;// Skip the register source (which is encoded in VEX_VVVV).
 
       // FIXME: Maybe lea should have its own form?  This is a horrible hack.

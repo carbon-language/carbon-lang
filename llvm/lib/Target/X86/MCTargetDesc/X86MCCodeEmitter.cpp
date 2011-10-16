@@ -447,6 +447,11 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   //
   unsigned char VEX_PP = 0;
 
+  // FIXME: BEXTR uses VEX.vvvv for Operand 3 instead of Operand 2
+  unsigned Opcode = MI.getOpcode();
+  bool IsBEXTR = (Opcode == X86::BEXTR32rr || Opcode == X86::BEXTR32rm ||
+                  Opcode == X86::BEXTR64rr || Opcode == X86::BEXTR64rm);
+
   // Encode the operand size opcode prefix as needed.
   if (TSFlags & X86II::OpSize)
     VEX_PP = 0x01;
@@ -525,7 +530,8 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
     if (X86II::isX86_64ExtendedReg(MI.getOperand(0).getReg()))
       VEX_R = 0x0;
 
-    if (HasVEX_4V)
+    // FIXME: BEXTR uses VEX.vvvv for Operand 3
+    if (HasVEX_4V && !IsBEXTR)
       VEX_4V = getVEXRegisterEncoding(MI, 1);
 
     if (X86II::isX86_64ExtendedReg(
@@ -534,6 +540,9 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
     if (X86II::isX86_64ExtendedReg(
                MI.getOperand(MemOperand+X86::AddrIndexReg).getReg()))
       VEX_X = 0x0;
+
+    if (IsBEXTR)
+      VEX_4V = getVEXRegisterEncoding(MI, X86::AddrNumOperands+1);
     break;
   case X86II::MRM0m: case X86II::MRM1m:
   case X86II::MRM2m: case X86II::MRM3m:
@@ -563,10 +572,14 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
       VEX_R = 0x0;
     CurOp++;
 
-    if (HasVEX_4V)
+    // FIXME: BEXTR uses VEX.vvvv for Operand 3
+    if (HasVEX_4V && !IsBEXTR)
       VEX_4V = getVEXRegisterEncoding(MI, CurOp++);
     if (X86II::isX86_64ExtendedReg(MI.getOperand(CurOp).getReg()))
       VEX_B = 0x0;
+    CurOp++;
+    if (IsBEXTR)
+      VEX_4V = getVEXRegisterEncoding(MI, CurOp);
     break;
   case X86II::MRMDestReg:
     // MRMDestReg instructions forms:
@@ -872,7 +885,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     HasVEX_4V = true;
 
   // Determine where the memory operand starts, if present.
-  int MemoryOperand = X86II::getMemoryOperandNo(TSFlags);
+  int MemoryOperand = X86II::getMemoryOperandNo(TSFlags, Opcode);
   if (MemoryOperand != -1) MemoryOperand += CurOp;
 
   if (!HasVEXPrefix)
@@ -884,6 +897,10 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
 
   if ((TSFlags >> X86II::VEXShift) & X86II::Has3DNow0F0FOpcode)
     BaseOpcode = 0x0F;   // Weird 3DNow! encoding.
+
+  // FIXME: BEXTR uses VEX.vvvv for Operand 3 instead of Operand 2
+  bool IsBEXTR = (Opcode == X86::BEXTR32rr || Opcode == X86::BEXTR32rm ||
+                  Opcode == X86::BEXTR64rr || Opcode == X86::BEXTR64rm);
 
   unsigned SrcRegNum = 0;
   switch (TSFlags & X86II::FormMask) {
@@ -939,18 +956,20 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     EmitByte(BaseOpcode, CurByte, OS);
     SrcRegNum = CurOp + 1;
 
-    if (HasVEX_4V) // Skip 1st src (which is encoded in VEX_VVVV)
+    if (HasVEX_4V && !IsBEXTR) // Skip 1st src (which is encoded in VEX_VVVV)
       SrcRegNum++;
 
     EmitRegModRMByte(MI.getOperand(SrcRegNum),
                      GetX86RegNum(MI.getOperand(CurOp)), CurByte, OS);
     CurOp = SrcRegNum + 1;
+    if (IsBEXTR)
+      ++CurOp;
     break;
 
   case X86II::MRMSrcMem: {
     int AddrOperands = X86::AddrNumOperands;
     unsigned FirstMemOp = CurOp+1;
-    if (HasVEX_4V) {
+    if (HasVEX_4V && !IsBEXTR) {
       ++AddrOperands;
       ++FirstMemOp;  // Skip the register source (which is encoded in VEX_VVVV).
     }
@@ -960,6 +979,8 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     EmitMemModRMByte(MI, FirstMemOp, GetX86RegNum(MI.getOperand(CurOp)),
                      TSFlags, CurByte, OS, Fixups);
     CurOp += AddrOperands + 1;
+    if (IsBEXTR)
+      ++CurOp;
     break;
   }
 

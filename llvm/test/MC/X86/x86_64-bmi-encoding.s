@@ -55,3 +55,19 @@
 // CHECK: andnq  (%rax), %r11, %r10
 // CHECK: encoding: [0xc4,0x62,0xa0,0xf2,0x10]
           andnq  (%rax), %r11, %r10
+
+// CHECK: bextrl %r12d, (%rax), %r10d
+// CHECK: encoding: [0xc4,0x62,0x18,0xf7,0x10]
+          bextrl %r12d, (%rax), %r10d
+
+// CHECK: bextrl %r12d, %r11d, %r10d
+// CHECK: encoding: [0xc4,0x42,0x18,0xf7,0xd3]
+          bextrl %r12d, %r11d, %r10d
+
+// CHECK: bextrq %r12, (%rax), %r10
+// CHECK: encoding: [0xc4,0x62,0x98,0xf7,0x10]
+          bextrq %r12, (%rax), %r10
+
+// CHECK: bextrq %r12, %r11, %r10
+// CHECK: encoding: [0xc4,0x42,0x98,0xf7,0xd3]
+          bextrq %r12, %r11, %r10

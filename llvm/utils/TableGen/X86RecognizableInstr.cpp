@@ -233,7 +233,7 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
                      (Name.find("CRC32") != Name.npos);
   HasFROperands    = hasFROperands();
   HasVEX_LPrefix   = has256BitOperands() || Rec->getValueAsBit("hasVEX_L");
-  
+
   // Check for 64-bit inst which does not require REX
   Is32Bit = false;
   Is64Bit = false;
@@ -264,6 +264,9 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
              Rec->getName().find("MOV64") != Name.npos || 
              Rec->getName().find("PUSH64") != Name.npos ||
              Rec->getName().find("POP64") != Name.npos;
+
+  // FIXME: BEXTR uses VEX.vvvv to encode its third operand
+  IsBEXTR = Rec->getName().find("BEXTR") != Name.npos;
 
   ShouldBeEmitted  = true;
 }
@@ -695,13 +698,18 @@ void RecognizableInstr::emitInstructionSpecifier(DisassemblerTables &tables) {
              "Unexpected number of operands for MRMSrcRegFrm");
   
     HANDLE_OPERAND(roRegister)
-       
-    if (HasVEX_4VPrefix)
+
+    if (HasVEX_4VPrefix && !IsBEXTR)
       // FIXME: In AVX, the register below becomes the one encoded
       // in ModRMVEX and the one above the one in the VEX.VVVV field
       HANDLE_OPERAND(vvvvRegister)
-          
+
     HANDLE_OPERAND(rmRegister)
+
+    // FIXME: BEXTR uses VEX.vvvv for Operand 3
+    if (IsBEXTR)
+      HANDLE_OPERAND(vvvvRegister)
+
     HANDLE_OPTIONAL(immediate)
     break;
   case X86Local::MRMSrcMem:
@@ -719,12 +727,17 @@ void RecognizableInstr::emitInstructionSpecifier(DisassemblerTables &tables) {
     
     HANDLE_OPERAND(roRegister)
 
-    if (HasVEX_4VPrefix)
+    if (HasVEX_4VPrefix && !IsBEXTR)
       // FIXME: In AVX, the register below becomes the one encoded
       // in ModRMVEX and the one above the one in the VEX.VVVV field
       HANDLE_OPERAND(vvvvRegister)
 
     HANDLE_OPERAND(memory)
+
+    // FIXME: BEXTR uses VEX.vvvv for Operand 3
+    if (IsBEXTR)
+      HANDLE_OPERAND(vvvvRegister)
+
     HANDLE_OPTIONAL(immediate)
     break;
   case X86Local::MRM0r:

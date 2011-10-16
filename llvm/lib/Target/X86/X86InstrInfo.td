@@ -1408,21 +1408,33 @@ let Predicates = [HasBMI], Defs = [EFLAGS] in {
 multiclass bmi_bls<string mnemonic, Format RegMRM, Format MemMRM,
                    RegisterClass RC, X86MemOperand x86memop> {
   def rr : I<0xF3, RegMRM, (outs RC:$dst), (ins RC:$src),
-             !strconcat(mnemonic, "\t{$src, $dst|$dst, $src}"), []>;
+             !strconcat(mnemonic, "\t{$src, $dst|$dst, $src}"), []>, T8, VEX_4V;
   def rm : I<0xF3, MemMRM, (outs RC:$dst), (ins x86memop:$src),
-             !strconcat(mnemonic, "\t{$src, $dst|$dst, $src}"), []>;
+             !strconcat(mnemonic, "\t{$src, $dst|$dst, $src}"), []>, T8, VEX_4V;
 }
 
 let Predicates = [HasBMI], Defs = [EFLAGS] in {
-  defm BLSR32 : bmi_bls<"blsr{l}", MRM1r, MRM1m, GR32, i32mem>, T8, VEX_4V;
-  defm BLSR64 : bmi_bls<"blsr{q}", MRM1r, MRM1m, GR64, i64mem>, T8, VEX_4V,
-                          VEX_W;
-  defm BLSMSK32 : bmi_bls<"blsmsk{l}", MRM2r, MRM2m, GR32, i32mem>, T8, VEX_4V;
-  defm BLSMSK64 : bmi_bls<"blsmsk{q}", MRM2r, MRM2m, GR64, i64mem>, T8, VEX_4V,
-                          VEX_W;
-  defm BLSI32 : bmi_bls<"blsi{l}", MRM3r, MRM3m, GR32, i32mem>, T8, VEX_4V;
-  defm BLSI64 : bmi_bls<"blsi{q}", MRM3r, MRM3m, GR64, i64mem>, T8, VEX_4V,
-                        VEX_W;
+  defm BLSR32 : bmi_bls<"blsr{l}", MRM1r, MRM1m, GR32, i32mem>;
+  defm BLSR64 : bmi_bls<"blsr{q}", MRM1r, MRM1m, GR64, i64mem>, VEX_W;
+  defm BLSMSK32 : bmi_bls<"blsmsk{l}", MRM2r, MRM2m, GR32, i32mem>;
+  defm BLSMSK64 : bmi_bls<"blsmsk{q}", MRM2r, MRM2m, GR64, i64mem>, VEX_W;
+  defm BLSI32 : bmi_bls<"blsi{l}", MRM3r, MRM3m, GR32, i32mem>;
+  defm BLSI64 : bmi_bls<"blsi{q}", MRM3r, MRM3m, GR64, i64mem>, VEX_W;
+}
+
+multiclass bmi_bextr<string mnemonic, RegisterClass RC,
+                     X86MemOperand x86memop> {
+  def rr : I<0xF7, MRMSrcReg, (outs RC:$dst), (ins RC:$src1, RC:$src2),
+             !strconcat(mnemonic, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+             []>, T8, VEX_4V;
+  def rm : I<0xF7, MRMSrcMem, (outs RC:$dst), (ins x86memop:$src1, RC:$src2),
+             !strconcat(mnemonic, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+             []>, T8, VEX_4V;
+}
+
+let Predicates = [HasBMI], Defs = [EFLAGS] in {
+  defm BEXTR32 : bmi_bextr<"bextr{l}", GR32, i32mem>;
+  defm BEXTR64 : bmi_bextr<"bextr{q}", GR64, i64mem>, VEX_W;
 }
 
 //===----------------------------------------------------------------------===//

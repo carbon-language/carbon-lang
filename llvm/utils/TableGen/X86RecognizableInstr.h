@@ -70,7 +70,9 @@ private:
   bool Is64Bit;
   // Whether the instruction has the predicate "In32BitMode"
   bool Is32Bit;
-  
+  // Whether the instruction is BEXTR
+  bool IsBEXTR;
+
   /// The instruction name as listed in the tables
   std::string Name;
   /// The AT&T AsmString for the instruction
