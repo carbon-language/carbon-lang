@@ -387,20 +387,24 @@ namespace X86II {
     /// and the additional register is encoded in VEX_VVVV prefix.
     VEX_4V      = 1U << 2,
 
+    /// VEX_4VOp3 - Similar to VEX_4V, but used on instructions that encode
+    /// operand 3 with VEX.vvvv.
+    VEX_4VOp3   = 1U << 3,
+
     /// VEX_I8IMM - Specifies that the last register used in a AVX instruction,
     /// must be encoded in the i8 immediate field. This usually happens in
     /// instructions with 4 operands.
-    VEX_I8IMM   = 1U << 3,
+    VEX_I8IMM   = 1U << 4,
 
     /// VEX_L - Stands for a bit in the VEX opcode prefix meaning the current
     /// instruction uses 256-bit wide registers. This is usually auto detected
     /// if a VR256 register is used, but some AVX instructions also have this
     /// field marked when using a f256 memory references.
-    VEX_L       = 1U << 4,
+    VEX_L       = 1U << 5,
 
     // VEX_LIG - Specifies that this instruction ignores the L-bit in the VEX
     // prefix. Usually used for scalar instructions. Needed by disassembler.
-    VEX_LIG     = 1U << 5,
+    VEX_LIG     = 1U << 6,
 
     /// Has3DNow0F0FOpcode - This flag indicates that the instruction uses the
     /// wacky 0x0F 0x0F prefix for 3DNow! instructions.  The manual documents
@@ -408,7 +412,7 @@ namespace X86II {
     /// storing a classifier in the imm8 field.  To simplify our implementation,
     /// we handle this by storeing the classifier in the opcode field and using
     /// this flag to indicate that the encoder should do the wacky 3DNow! thing.
-    Has3DNow0F0FOpcode = 1U << 6
+    Has3DNow0F0FOpcode = 1U << 7
   };
 
   // getBaseOpcodeFor - This function returns the "base" X86 opcode for the
@@ -477,12 +481,9 @@ namespace X86II {
     case X86II::MRMDestMem:
       return 0;
     case X86II::MRMSrcMem: {
-      // FIXME: BEXTR uses VEX.vvvv for Operand 3
-      bool IsBEXTR = (Opcode == X86::BEXTR32rr || Opcode == X86::BEXTR32rm ||
-                      Opcode == X86::BEXTR64rr || Opcode == X86::BEXTR64rm);
       bool HasVEX_4V = (TSFlags >> X86II::VEXShift) & X86II::VEX_4V;
       unsigned FirstMemOp = 1;
-      if (HasVEX_4V && !IsBEXTR)
+      if (HasVEX_4V)
         ++FirstMemOp;// Skip the register source (which is encoded in VEX_VVVV).
 
       // FIXME: Maybe lea should have its own form?  This is a horrible hack.

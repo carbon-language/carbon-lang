@@ -111,6 +111,7 @@ class TF     { bits<5> Prefix = 17; }
 class VEX    { bit hasVEXPrefix = 1; }
 class VEX_W  { bit hasVEX_WPrefix = 1; }
 class VEX_4V : VEX { bit hasVEX_4VPrefix = 1; }
+class VEX_4VOp3 : VEX { bit hasVEX_4VOp3Prefix = 1; }
 class VEX_I8IMM { bit hasVEX_i8ImmReg = 1; }
 class VEX_L  { bit hasVEX_L = 1; }
 class VEX_LIG { bit ignoresVEX_L = 1; }
@@ -148,6 +149,8 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
   bit hasVEXPrefix = 0;     // Does this inst require a VEX prefix?
   bit hasVEX_WPrefix = 0;   // Does this inst set the VEX_W field?
   bit hasVEX_4VPrefix = 0;  // Does this inst require the VEX.VVVV field?
+  bit hasVEX_4VOp3Prefix = 0;  // Does this inst require the VEX.VVVV field to
+                               // encode the third operand?
   bit hasVEX_i8ImmReg = 0;  // Does this inst require the last source register
                             // to be encoded in a immediate field?
   bit hasVEX_L = 0;         // Does this inst use large (256-bit) registers?
@@ -169,10 +172,11 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
   let TSFlags{33}    = hasVEXPrefix;
   let TSFlags{34}    = hasVEX_WPrefix;
   let TSFlags{35}    = hasVEX_4VPrefix;
-  let TSFlags{36}    = hasVEX_i8ImmReg;
-  let TSFlags{37}    = hasVEX_L;
-  let TSFlags{38}    = ignoresVEX_L;
-  let TSFlags{39}    = has3DNow0F0FOpcode;
+  let TSFlags{36}    = hasVEX_4VOp3Prefix;
+  let TSFlags{37}    = hasVEX_i8ImmReg;
+  let TSFlags{38}    = hasVEX_L;
+  let TSFlags{39}    = ignoresVEX_L;
+  let TSFlags{40}    = has3DNow0F0FOpcode;
 }
 
 class PseudoI<dag oops, dag iops, list<dag> pattern>

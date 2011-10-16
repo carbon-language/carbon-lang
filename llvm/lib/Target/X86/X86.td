@@ -106,6 +106,8 @@ def FeatureLZCNT   : SubtargetFeature<"lzcnt", "HasLZCNT", "true",
                                       "Support LZCNT instruction">;
 def FeatureBMI     : SubtargetFeature<"bmi", "HasBMI", "true",
                                       "Support BMI instructions">;
+def FeatureBMI2    : SubtargetFeature<"bmi2", "HasBMI2", "true",
+                                      "Support BMI2 instructions">;
 
 //===----------------------------------------------------------------------===//
 // X86 processors supported.
@@ -164,7 +166,7 @@ def : Proc<"core-avx-i",      [FeatureSSE42, FeatureCMPXCHG16B,
 def : Proc<"core-avx2",       [FeatureSSE42, FeatureCMPXCHG16B, FeatureAES,
                                FeatureCLMUL, FeatureRDRAND, FeatureF16C,
                                FeatureFMA3, FeatureMOVBE, FeatureLZCNT,
-                               FeatureBMI]>;
+                               FeatureBMI, FeatureBMI2]>;
 
 def : Proc<"k6",              [FeatureMMX]>;
 def : Proc<"k6-2",            [Feature3DNow]>;

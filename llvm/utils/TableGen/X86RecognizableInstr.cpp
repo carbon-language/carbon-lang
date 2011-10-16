@@ -219,6 +219,7 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
   HasREX_WPrefix   = Rec->getValueAsBit("hasREX_WPrefix");
   HasVEXPrefix     = Rec->getValueAsBit("hasVEXPrefix");
   HasVEX_4VPrefix  = Rec->getValueAsBit("hasVEX_4VPrefix");
+  HasVEX_4VOp3Prefix = Rec->getValueAsBit("hasVEX_4VOp3Prefix");
   HasVEX_WPrefix   = Rec->getValueAsBit("hasVEX_WPrefix");
   IgnoresVEX_L     = Rec->getValueAsBit("ignoresVEX_L");
   HasLockPrefix    = Rec->getValueAsBit("hasLockPrefix");
@@ -261,9 +262,6 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
              Rec->getName().find("PUSH64") != Name.npos ||
              Rec->getName().find("POP64") != Name.npos;
 
-  // FIXME: BEXTR uses VEX.vvvv to encode its third operand
-  IsBEXTR = Rec->getName().find("BEXTR") != Name.npos;
-
   ShouldBeEmitted  = true;
 }
   
@@ -286,7 +284,7 @@ void RecognizableInstr::processInstr(DisassemblerTables &tables,
 InstructionContext RecognizableInstr::insnContext() const {
   InstructionContext insnContext;
 
-  if (HasVEX_4VPrefix || HasVEXPrefix) {
+  if (HasVEX_4VPrefix || HasVEX_4VOp3Prefix|| HasVEXPrefix) {
     if (HasVEX_LPrefix && HasVEX_WPrefix)
       llvm_unreachable("Don't support VEX.L and VEX.W together");
     else if (HasOpSizePrefix && HasVEX_LPrefix)
@@ -686,7 +684,7 @@ void RecognizableInstr::emitInstructionSpecifier(DisassemblerTables &tables) {
     // - In AVX, there is a register operand in the VEX.vvvv field here -
     // Operand 3 (optional) is an immediate.
 
-    if (HasVEX_4VPrefix)
+    if (HasVEX_4VPrefix || HasVEX_4VOp3Prefix)
       assert(numPhysicalOperands >= 3 && numPhysicalOperands <= 4 &&
              "Unexpected number of operands for MRMSrcRegFrm with VEX_4V"); 
     else
@@ -695,15 +693,14 @@ void RecognizableInstr::emitInstructionSpecifier(DisassemblerTables &tables) {
   
     HANDLE_OPERAND(roRegister)
 
-    if (HasVEX_4VPrefix && !IsBEXTR)
+    if (HasVEX_4VPrefix)
       // FIXME: In AVX, the register below becomes the one encoded
       // in ModRMVEX and the one above the one in the VEX.VVVV field
       HANDLE_OPERAND(vvvvRegister)
 
     HANDLE_OPERAND(rmRegister)
 
-    // FIXME: BEXTR uses VEX.vvvv for Operand 3
-    if (IsBEXTR)
+    if (HasVEX_4VOp3Prefix)
       HANDLE_OPERAND(vvvvRegister)
 
     HANDLE_OPTIONAL(immediate)
@@ -713,8 +710,8 @@ void RecognizableInstr::emitInstructionSpecifier(DisassemblerTables &tables) {
     // Operand 2 is a memory operand (possibly SIB-extended)
     // - In AVX, there is a register operand in the VEX.vvvv field here -
     // Operand 3 (optional) is an immediate.
-    
-    if (HasVEX_4VPrefix)
+
+    if (HasVEX_4VPrefix || HasVEX_4VOp3Prefix)
       assert(numPhysicalOperands >= 3 && numPhysicalOperands <= 4 &&
              "Unexpected number of operands for MRMSrcMemFrm with VEX_4V"); 
     else
@@ -723,15 +720,14 @@ void RecognizableInstr::emitInstructionSpecifier(DisassemblerTables &tables) {
     
     HANDLE_OPERAND(roRegister)
 
-    if (HasVEX_4VPrefix && !IsBEXTR)
+    if (HasVEX_4VPrefix)
       // FIXME: In AVX, the register below becomes the one encoded
       // in ModRMVEX and the one above the one in the VEX.VVVV field
       HANDLE_OPERAND(vvvvRegister)
 
     HANDLE_OPERAND(memory)
 
-    // FIXME: BEXTR uses VEX.vvvv for Operand 3
-    if (IsBEXTR)
+    if (HasVEX_4VOp3Prefix)
       HANDLE_OPERAND(vvvvRegister)
 
     HANDLE_OPTIONAL(immediate)

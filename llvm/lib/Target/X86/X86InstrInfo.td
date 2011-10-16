@@ -480,6 +480,7 @@ def HasRDRAND    : Predicate<"Subtarget->hasRDRAND()">;
 def HasF16C      : Predicate<"Subtarget->hasF16C()">;
 def HasLZCNT     : Predicate<"Subtarget->hasLZCNT()">;
 def HasBMI       : Predicate<"Subtarget->hasBMI()">;
+def HasBMI2      : Predicate<"Subtarget->hasBMI2()">;
 def FPStackf32   : Predicate<"!Subtarget->hasXMM()">;
 def FPStackf64   : Predicate<"!Subtarget->hasXMMInt()">;
 def HasCmpxchg16b: Predicate<"Subtarget->hasCmpxchg16b()">;
@@ -1422,19 +1423,24 @@ let Predicates = [HasBMI], Defs = [EFLAGS] in {
   defm BLSI64 : bmi_bls<"blsi{q}", MRM3r, MRM3m, GR64, i64mem>, VEX_W;
 }
 
-multiclass bmi_bextr<string mnemonic, RegisterClass RC,
-                     X86MemOperand x86memop> {
-  def rr : I<0xF7, MRMSrcReg, (outs RC:$dst), (ins RC:$src1, RC:$src2),
+multiclass bmi_bextr_bzhi<bits<8> opc, string mnemonic, RegisterClass RC,
+                          X86MemOperand x86memop> {
+  def rr : I<opc, MRMSrcReg, (outs RC:$dst), (ins RC:$src1, RC:$src2),
              !strconcat(mnemonic, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-             []>, T8, VEX_4V;
-  def rm : I<0xF7, MRMSrcMem, (outs RC:$dst), (ins x86memop:$src1, RC:$src2),
+             []>, T8, VEX_4VOp3;
+  def rm : I<opc, MRMSrcMem, (outs RC:$dst), (ins x86memop:$src1, RC:$src2),
              !strconcat(mnemonic, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-             []>, T8, VEX_4V;
+             []>, T8, VEX_4VOp3;
 }
 
 let Predicates = [HasBMI], Defs = [EFLAGS] in {
-  defm BEXTR32 : bmi_bextr<"bextr{l}", GR32, i32mem>;
-  defm BEXTR64 : bmi_bextr<"bextr{q}", GR64, i64mem>, VEX_W;
+  defm BEXTR32 : bmi_bextr_bzhi<0xF7, "bextr{l}", GR32, i32mem>;
+  defm BEXTR64 : bmi_bextr_bzhi<0xF7, "bextr{q}", GR64, i64mem>, VEX_W;
+}
+
+let Predicates = [HasBMI2], Defs = [EFLAGS] in {
+  defm BZHI32 : bmi_bextr_bzhi<0xF5, "bzhi{l}", GR32, i32mem>;
+  defm BZHI64 : bmi_bextr_bzhi<0xF5, "bzhi{q}", GR64, i64mem>, VEX_W;
 }
 
 //===----------------------------------------------------------------------===//

@@ -71,3 +71,19 @@
 // CHECK: bextrq %r12, %r11, %r10
 // CHECK: encoding: [0xc4,0x42,0x98,0xf7,0xd3]
           bextrq %r12, %r11, %r10
+
+// CHECK: bzhil %r12d, (%rax), %r10d
+// CHECK: encoding: [0xc4,0x62,0x18,0xf5,0x10]
+          bzhil %r12d, (%rax), %r10d
+
+// CHECK: bzhil %r12d, %r11d, %r10d
+// CHECK: encoding: [0xc4,0x42,0x18,0xf5,0xd3]
+          bzhil %r12d, %r11d, %r10d
+
+// CHECK: bzhiq %r12, (%rax), %r10
+// CHECK: encoding: [0xc4,0x62,0x98,0xf5,0x10]
+          bzhiq %r12, (%rax), %r10
+
+// CHECK: bzhiq %r12, %r11, %r10
+// CHECK: encoding: [0xc4,0x42,0x98,0xf5,0xd3]
+          bzhiq %r12, %r11, %r10

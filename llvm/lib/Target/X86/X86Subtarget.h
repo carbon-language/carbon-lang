@@ -105,6 +105,9 @@ protected:
   /// HasBMI - Processor has BMI1 instructions.
   bool HasBMI;
 
+  /// HasBMI2 - Processor has BMI2 instructions.
+  bool HasBMI2;
+
   /// IsBTMemSlow - True if BT (bit test) of memory instructions are slow.
   bool IsBTMemSlow;
 
@@ -192,6 +195,7 @@ public:
   bool hasF16C() const { return HasF16C; }
   bool hasLZCNT() const { return HasLZCNT; }
   bool hasBMI() const { return HasBMI; }
+  bool hasBMI2() const { return HasBMI2; }
   bool isBTMemSlow() const { return IsBTMemSlow; }
   bool isUnalignedMemAccessFast() const { return IsUAMemFast; }
   bool hasVectorUAMem() const { return HasVectorUAMem; }
