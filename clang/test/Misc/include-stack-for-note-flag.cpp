@@ -18,11 +18,11 @@ bool macro(int x, int y) {
 // STACK: note: candidate function not viable
 // STACK: error: comparison between pointer and integer
 // STACK:  In file included from
-// STACK: note: expanded from:
+// STACK: note: expanded from macro:
 
 // STACKLESS: error: no matching function for call to 'foo'
 // STACKLESS-NOT:  In file included from
 // STACKLESS: note: candidate function not viable
 // STACKLESS: error: comparison between pointer and integer
 // STACKLESS-NOT:  In file included from
-// STACKLESS: note: expanded from:
+// STACKLESS: note: expanded from macro:

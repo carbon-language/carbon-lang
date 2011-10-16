@@ -689,6 +689,9 @@ void TextDiagnostic::emitMacroExpansionsAndCarets(
   emitMacroExpansionsAndCarets(OneLevelUp, Level, Ranges, Hints, MacroDepth,
                                OnMacroInst + 1);
 
+  // Save the original location so we can find the spelling of the macro call.
+  SourceLocation MacroLoc = Loc;
+
   // Map the location.
   Loc = getImmediateMacroCalleeLoc(SM, Loc);
 
@@ -726,9 +729,27 @@ void TextDiagnostic::emitMacroExpansionsAndCarets(
     return;
   }
 
-  // FIXME: Format an actual diagnostic rather than a hard coded string.
+  // Walk past macro argument expanions.
+  while (SM.isMacroArgExpansion(MacroLoc))
+    MacroLoc = SM.getImmediateExpansionRange(MacroLoc).first;
+
+  // Find the spelling location of the start of the non-argument expansion
+  // range. This is where the macro name was spelled in order to begin
+  // expanding this macro.
+  MacroLoc = SM.getSpellingLoc(SM.getImmediateExpansionRange(MacroLoc).first);
+
+  // Dig out the buffer where the macro name was spelled and the extents of the
+  // name so that we can render it into the expansion note.
+  std::pair<FileID, unsigned> ExpansionInfo = SM.getDecomposedLoc(MacroLoc);
+  unsigned MacroTokenLength = Lexer::MeasureTokenLength(MacroLoc, SM, LangOpts);
+  StringRef ExpansionBuffer = SM.getBufferData(ExpansionInfo.first);
+
+  llvm::SmallString<100> MessageStorage;
+  llvm::raw_svector_ostream Message(MessageStorage);
+  Message << "expanded from macro: "
+          << ExpansionBuffer.substr(ExpansionInfo.second, MacroTokenLength);
   emitDiagnostic(SM.getSpellingLoc(Loc), DiagnosticsEngine::Note,
-                 "expanded from:",
+                 Message.str(),
                  Ranges, ArrayRef<FixItHint>());
 }
 

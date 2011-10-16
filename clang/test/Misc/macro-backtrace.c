@@ -20,16 +20,16 @@ void f(int *ip, float *fp) {
   // RUN:   | FileCheck %s -check-prefix=CHECK-LIMIT
   // CHECK-LIMIT: macro-backtrace.c:18:7: warning: comparison of distinct pointer types ('int *' and 'float *')
   // CHECK-LIMIT: if (M12(ip, fp)) { }
-  // CHECK-LIMIT: macro-backtrace.c:15:19: note: expanded from:
+  // CHECK-LIMIT: macro-backtrace.c:15:19: note: expanded from macro: M12
   // CHECK-LIMIT: #define M12(A, B) M11(A, B)
-  // CHECK-LIMIT: macro-backtrace.c:14:19: note: expanded from:
+  // CHECK-LIMIT: macro-backtrace.c:14:19: note: expanded from macro: M11
   // CHECK-LIMIT: #define M11(A, B) M10(A, B)
   // CHECK-LIMIT: note: (skipping 7 expansions in backtrace; use -fmacro-backtrace-limit=0 to see all)
-  // CHECK-LIMIT: macro-backtrace.c:6:18: note: expanded from:
+  // CHECK-LIMIT: macro-backtrace.c:6:18: note: expanded from macro: M3
   // CHECK-LIMIT: #define M3(A, B) M2(A, B)
-  // CHECK-LIMIT: macro-backtrace.c:5:18: note: expanded from:
+  // CHECK-LIMIT: macro-backtrace.c:5:18: note: expanded from macro: M2
   // CHECK-LIMIT: #define M2(A, B) M1(A, B)
-  // CHECK-LIMIT: macro-backtrace.c:4:23: note: expanded from:
+  // CHECK-LIMIT: macro-backtrace.c:4:23: note: expanded from macro: M1
   // CHECK-LIMIT: #define M1(A, B) ((A) < (B))
 
   // FIXME: We should have higher quality messages, especially when caret
@@ -37,11 +37,11 @@ void f(int *ip, float *fp) {
   // RUN: %clang_cc1 -fsyntax-only -fno-caret-diagnostics %s 2>&1 \
   // RUN:   | FileCheck %s -check-prefix=CHECK-NO-CARETS
   // CHECK-NO-CARETS: macro-backtrace.c:18:7: warning: comparison of distinct pointer types ('int *' and 'float *')
-  // CHECK-NO-CARETS-NEXT: macro-backtrace.c:15:19: note: expanded from:
-  // CHECK-NO-CARETS-NEXT: macro-backtrace.c:14:19: note: expanded from:
-  // CHECK-NO-CARETS-NEXT: macro-backtrace.c:13:19: note: expanded from:
+  // CHECK-NO-CARETS-NEXT: macro-backtrace.c:15:19: note: expanded from macro: M12
+  // CHECK-NO-CARETS-NEXT: macro-backtrace.c:14:19: note: expanded from macro: M11
+  // CHECK-NO-CARETS-NEXT: macro-backtrace.c:13:19: note: expanded from macro: M10
   // CHECK-NO-CARETS-NEXT: note: (skipping 6 expansions in backtrace; use -fmacro-backtrace-limit=0 to see all)
-  // CHECK-NO-CARETS-NEXT: macro-backtrace.c:6:18: note: expanded from:
-  // CHECK-NO-CARETS-NEXT: macro-backtrace.c:5:18: note: expanded from:
-  // CHECK-NO-CARETS-NEXT: macro-backtrace.c:4:23: note: expanded from:
+  // CHECK-NO-CARETS-NEXT: macro-backtrace.c:6:18: note: expanded from macro: M3
+  // CHECK-NO-CARETS-NEXT: macro-backtrace.c:5:18: note: expanded from macro: M2
+  // CHECK-NO-CARETS-NEXT: macro-backtrace.c:4:23: note: expanded from macro: M1
 }
