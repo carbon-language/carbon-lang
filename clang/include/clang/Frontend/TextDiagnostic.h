@@ -70,20 +70,7 @@ public:
   TextDiagnostic(raw_ostream &OS,
                  const SourceManager &SM,
                  const LangOptions &LangOpts,
-                 const DiagnosticOptions &DiagOpts,
-                 FullSourceLoc LastLoc = FullSourceLoc(),
-                 FullSourceLoc LastIncludeLoc = FullSourceLoc(),
-                 DiagnosticsEngine::Level LastLevel
-                   = DiagnosticsEngine::Level());
-
-  /// \brief Get the last diagnostic location emitted.
-  SourceLocation getLastLoc() const { return LastLoc; }
-
-  /// \brief Get the last emitted include stack location.
-  SourceLocation getLastIncludeLoc() const { return LastIncludeLoc; }
-
-  /// \brief Get the last diagnostic level.
-  DiagnosticsEngine::Level getLastLevel() const { return LastLevel; }
+                 const DiagnosticOptions &DiagOpts);
 
   void emitDiagnostic(SourceLocation Loc, DiagnosticsEngine::Level Level,
                       StringRef Message, ArrayRef<CharSourceRange> Ranges,

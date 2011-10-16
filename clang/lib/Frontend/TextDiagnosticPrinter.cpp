@@ -27,13 +27,23 @@ using namespace clang;
 TextDiagnosticPrinter::TextDiagnosticPrinter(raw_ostream &os,
                                              const DiagnosticOptions &diags,
                                              bool _OwnsOutputStream)
-  : OS(os), LangOpts(0), DiagOpts(&diags), LastLevel(),
+  : OS(os), LangOpts(0), DiagOpts(&diags), SM(0),
     OwnsOutputStream(_OwnsOutputStream) {
 }
 
 TextDiagnosticPrinter::~TextDiagnosticPrinter() {
   if (OwnsOutputStream)
     delete &OS;
+}
+
+void TextDiagnosticPrinter::BeginSourceFile(const LangOptions &LO,
+                                            const Preprocessor *PP) {
+  LangOpts = &LO;
+}
+
+void TextDiagnosticPrinter::EndSourceFile() {
+  LangOpts = 0;
+  TextDiag.reset(0);
 }
 
 /// \brief Print the diagnostic name to a raw_ostream.
@@ -158,23 +168,18 @@ void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
   assert(DiagOpts && "Unexpected diagnostic without options set");
   assert(Info.hasSourceManager() &&
          "Unexpected diagnostic with no source manager");
-  const SourceManager &SM = Info.getSourceManager();
-  TextDiagnostic TextDiag(OS, SM, *LangOpts, *DiagOpts,
-                          LastLoc, LastIncludeLoc, LastLevel);
 
-  TextDiag.emitDiagnostic(Info.getLocation(), Level, DiagMessageStream.str(),
-                          Info.getRanges(),
-                          llvm::makeArrayRef(Info.getFixItHints(),
-                                             Info.getNumFixItHints()));
+  // Rebuild the TextDiagnostic utility if missing or the source manager has
+  // changed.
+  if (!TextDiag || SM != &Info.getSourceManager()) {
+    SM = &Info.getSourceManager();
+    TextDiag.reset(new TextDiagnostic(OS, *SM, *LangOpts, *DiagOpts));
+  }
 
-  // Cache the LastLoc from the TextDiagnostic printing.
-  // FIXME: Rather than this, we should persist a TextDiagnostic object across
-  // diagnostics until the SourceManager changes. That will allow the
-  // TextDiagnostic object to form a 'session' of output where we can
-  // reasonably collapse redundant information.
-  LastLoc = FullSourceLoc(TextDiag.getLastLoc(), SM);
-  LastIncludeLoc = FullSourceLoc(TextDiag.getLastIncludeLoc(), SM);
-  LastLevel = TextDiag.getLastLevel();
+  TextDiag->emitDiagnostic(Info.getLocation(), Level, DiagMessageStream.str(),
+                           Info.getRanges(),
+                           llvm::makeArrayRef(Info.getFixItHints(),
+                                              Info.getNumFixItHints()));
 
   OS.flush();
 }

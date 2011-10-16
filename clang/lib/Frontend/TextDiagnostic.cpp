@@ -392,17 +392,9 @@ static bool printWordWrapped(raw_ostream &OS, StringRef Str,
 TextDiagnostic::TextDiagnostic(raw_ostream &OS,
                                const SourceManager &SM,
                                const LangOptions &LangOpts,
-                               const DiagnosticOptions &DiagOpts,
-                               FullSourceLoc LastLoc,
-                               FullSourceLoc LastIncludeLoc,
-                               DiagnosticsEngine::Level LastLevel)
-  : OS(OS), SM(SM), LangOpts(LangOpts), DiagOpts(DiagOpts),
-    LastLoc(LastLoc), LastIncludeLoc(LastIncludeLoc), LastLevel(LastLevel) {
-  if (LastLoc.isValid() && &SM != &LastLoc.getManager())
-    this->LastLoc = SourceLocation();
-  if (LastIncludeLoc.isValid() && &SM != &LastIncludeLoc.getManager())
-    this->LastIncludeLoc = SourceLocation();
-    }
+                               const DiagnosticOptions &DiagOpts)
+  : OS(OS), SM(SM), LangOpts(LangOpts), DiagOpts(DiagOpts), LastLevel() {
+}
 
 void TextDiagnostic::emitDiagnostic(SourceLocation Loc,
                                     DiagnosticsEngine::Level Level,
