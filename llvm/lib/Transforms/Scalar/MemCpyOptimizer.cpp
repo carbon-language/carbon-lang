@@ -806,21 +806,26 @@ bool MemCpyOpt::processMemCpy(MemCpyInst *M) {
   //   a) memcpy-memcpy xform which exposes redundance for DSE.
   //   b) call-memcpy xform for return slot optimization.
   MemDepResult DepInfo = MD->getDependency(M);
-  if (!DepInfo.isClobber())
-    return false;
-  
-  if (MemCpyInst *MDep = dyn_cast<MemCpyInst>(DepInfo.getInst()))
-    return processMemCpyMemCpyDependence(M, MDep, CopySize->getZExtValue());
-    
-  if (CallInst *C = dyn_cast<CallInst>(DepInfo.getInst())) {
-    if (performCallSlotOptzn(M, M->getDest(), M->getSource(),
-                             CopySize->getZExtValue(), C)) {
-      MD->removeInstruction(M);
-      M->eraseFromParent();
-      return true;
+  if (DepInfo.isClobber()) {
+    if (CallInst *C = dyn_cast<CallInst>(DepInfo.getInst())) {
+      if (performCallSlotOptzn(M, M->getDest(), M->getSource(),
+                               CopySize->getZExtValue(), C)) {
+        MD->removeInstruction(M);
+        M->eraseFromParent();
+        return true;
+      }
     }
   }
   
+  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
+  AliasAnalysis::Location SrcLoc = AA.getLocationForSource(M);
+  MemDepResult SrcDepInfo = MD->getPointerDependencyFrom(SrcLoc, true,
+                                                         M, M->getParent());
+  if (SrcDepInfo.isClobber()) {
+    if (MemCpyInst *MDep = dyn_cast<MemCpyInst>(SrcDepInfo.getInst()))
+      return processMemCpyMemCpyDependence(M, MDep, CopySize->getZExtValue());
+  }
+
   return false;
 }
 
