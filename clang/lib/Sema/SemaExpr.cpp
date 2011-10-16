@@ -5540,9 +5540,23 @@ Sema::CheckSingleAssignmentConstraints(QualType LHSType, ExprResult &RHS,
       // C++ 5.17p3: If the left operand is not of class type, the
       // expression is implicitly converted (C++ 4) to the
       // cv-unqualified type of the left operand.
-      ExprResult Res = PerformImplicitConversion(RHS.get(),
-                                                 LHSType.getUnqualifiedType(),
-                                                 AA_Assigning, Diagnose);
+      ExprResult Res;
+      if (Diagnose) {
+        Res = PerformImplicitConversion(RHS.get(), LHSType.getUnqualifiedType(),
+                                        AA_Assigning);
+      } else {
+        ImplicitConversionSequence ICS =
+            TryImplicitConversion(RHS.get(), LHSType.getUnqualifiedType(),
+                                  /*SuppressUserConversions=*/false,
+                                  /*AllowExplicit=*/false,
+                                  /*InOverloadResolution=*/false,
+                                  /*CStyle=*/false,
+                                  /*AllowObjCWritebackConversion=*/false);
+        if (ICS.isFailure())
+          return Incompatible;
+        Res = PerformImplicitConversion(RHS.get(), LHSType.getUnqualifiedType(),
+                                        ICS, AA_Assigning);
+      }
       if (Res.isInvalid())
         return Incompatible;
       Sema::AssignConvertType result = Compatible;
