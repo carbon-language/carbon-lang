@@ -256,6 +256,8 @@ class InitListChecker {
   bool CheckFlexibleArrayInit(const InitializedEntity &Entity,
                               Expr *InitExpr, FieldDecl *Field,
                               bool TopLevelObject);
+  void CheckValueInitializable(const InitializedEntity &Entity);
+
 public:
   InitListChecker(Sema &S, const InitializedEntity &Entity,
                   InitListExpr *IL, QualType &T, bool VerifyOnly);
@@ -266,6 +268,18 @@ public:
   InitListExpr *getFullyStructuredList() const { return FullyStructuredList; }
 };
 } // end anonymous namespace
+
+void InitListChecker::CheckValueInitializable(const InitializedEntity &Entity) {
+  assert(VerifyOnly &&
+         "CheckValueInitializable is only inteded for verification mode.");
+
+  SourceLocation Loc;
+  InitializationKind Kind = InitializationKind::CreateValue(Loc, Loc, Loc,
+                                                            true);
+  InitializationSequence InitSeq(SemaRef, Entity, Kind, 0, 0);
+  if (InitSeq.Failed())
+    hadError = true;
+}
 
 void InitListChecker::FillInValueInitForField(unsigned Init, FieldDecl *Field,
                                         const InitializedEntity &ParentEntity,
@@ -1005,13 +1019,18 @@ void InitListChecker::CheckVectorType(const InitializedEntity &Entity,
                                       unsigned &Index,
                                       InitListExpr *StructuredList,
                                       unsigned &StructuredIndex) {
-  if (Index >= IList->getNumInits())
-    return;
-
   const VectorType *VT = DeclType->getAs<VectorType>();
   unsigned maxElements = VT->getNumElements();
   unsigned numEltsInit = 0;
   QualType elementType = VT->getElementType();
+
+  if (Index >= IList->getNumInits()) {
+    // Make sure the element type can be value-initialized.
+    if (VerifyOnly)
+      CheckValueInitializable(
+          InitializedEntity::InitializeElement(SemaRef.Context, 0, Entity));
+    return;
+  }
 
   if (!SemaRef.getLangOptions().OpenCL) {
     // If the initializing element is a vector, try to copy-initialize
@@ -1055,8 +1074,11 @@ void InitListChecker::CheckVectorType(const InitializedEntity &Entity,
 
     for (unsigned i = 0; i < maxElements; ++i, ++numEltsInit) {
       // Don't attempt to go past the end of the init list
-      if (Index >= IList->getNumInits())
+      if (Index >= IList->getNumInits()) {
+        if (VerifyOnly)
+          CheckValueInitializable(ElementEntity);
         break;
+      }
 
       ElementEntity.setElementIndex(Index);
       CheckSubElementType(ElementEntity, IList, elementType, Index,
@@ -1098,11 +1120,13 @@ void InitListChecker::CheckVectorType(const InitializedEntity &Entity,
   }
 
   // OpenCL requires all elements to be initialized.
-  // FIXME: Shouldn't this set hadError to true then?
-  if (numEltsInit != maxElements && !VerifyOnly)
-    SemaRef.Diag(IList->getSourceRange().getBegin(),
-                 diag::err_vector_incorrect_num_initializers)
-      << (numEltsInit < maxElements) << maxElements << numEltsInit;
+  if (numEltsInit != maxElements) {
+    if (!VerifyOnly)
+      SemaRef.Diag(IList->getSourceRange().getBegin(),
+                   diag::err_vector_incorrect_num_initializers)
+        << (numEltsInit < maxElements) << maxElements << numEltsInit;
+    hadError = true;
+  }
 }
 
 void InitListChecker::CheckArrayType(const InitializedEntity &Entity,
@@ -1223,6 +1247,14 @@ void InitListChecker::CheckArrayType(const InitializedEntity &Entity,
     DeclType = SemaRef.Context.getConstantArrayType(elementType, maxElements,
                                                      ArrayType::Normal, 0);
   }
+  if (!hadError && VerifyOnly) {
+    // Check if there are any members of the array that get value-initialized.
+    // If so, check if doing that is possible.
+    // FIXME: This needs to detect holes left by designated initializers too.
+    if (maxElementsKnown && elementIndex < maxElements)
+      CheckValueInitializable(InitializedEntity::InitializeElement(
+                                                  SemaRef.Context, 0, Entity));
+  }
 }
 
 bool InitListChecker::CheckFlexibleArrayInit(const InitializedEntity &Entity,
@@ -1283,15 +1315,17 @@ void InitListChecker::CheckStructUnionTypes(const InitializedEntity &Entity,
   }
 
   if (DeclType->isUnionType() && IList->getNumInits() == 0) {
-    if (!VerifyOnly) {
-      // Value-initialize the first named member of the union.
-      RecordDecl *RD = DeclType->getAs<RecordType>()->getDecl();
-      for (RecordDecl::field_iterator FieldEnd = RD->field_end();
-           Field != FieldEnd; ++Field) {
-        if (Field->getDeclName()) {
+    // Value-initialize the first named member of the union.
+    RecordDecl *RD = DeclType->getAs<RecordType>()->getDecl();
+    for (RecordDecl::field_iterator FieldEnd = RD->field_end();
+         Field != FieldEnd; ++Field) {
+      if (Field->getDeclName()) {
+        if (VerifyOnly)
+          CheckValueInitializable(
+              InitializedEntity::InitializeMember(*Field, &Entity));
+        else
           StructuredList->setInitializedFieldInUnion(*Field);
-          break;
-        }
+        break;
       }
     }
     return;
@@ -1391,6 +1425,17 @@ void InitListChecker::CheckStructUnionTypes(const InitializedEntity &Entity,
                      diag::warn_missing_field_initializers) << it->getName();
         break;
       }
+    }
+  }
+
+  // Check that any remaining fields can be value-initialized.
+  if (VerifyOnly && Field != FieldEnd && !DeclType->isUnionType() &&
+      !Field->getType()->isIncompleteArrayType()) {
+    // FIXME: Should check for holes left by designated initializers too.
+    for (; Field != FieldEnd && !hadError; ++Field) {
+      if (!Field->isUnnamedBitfield())
+        CheckValueInitializable(
+            InitializedEntity::InitializeMember(*Field, &Entity));
     }
   }
 
