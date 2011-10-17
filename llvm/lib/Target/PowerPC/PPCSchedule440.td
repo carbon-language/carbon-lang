@@ -1,4 +1,4 @@
-//===- PPCSchedule440.td - PPC 440 Scheduling Definitions ----*- tablegen -*-===//
+//===- PPCSchedule440.td - PPC 440 Scheduling Definitions --*- tablegen -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 // Primary reference:
-// PowerPC 440x6 Embedded Processor Core User’s Manual.
+// PowerPC 440x6 Embedded Processor Core User's Manual.
 // IBM (as updated in) 2010.
 
 // The basic PPC 440 does not include a floating-point unit; the pipeline
