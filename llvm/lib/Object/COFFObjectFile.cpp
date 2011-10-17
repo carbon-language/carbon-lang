@@ -268,6 +268,28 @@ error_code COFFObjectFile::isSymbolInternal(DataRefImpl Symb,
   return object_error::success;
 }
 
+error_code COFFObjectFile::isSymbolAbsolute(DataRefImpl Symb,
+                                            bool &Result) const {
+  const coff_symbol *symb = toSymb(Symb);
+  Result = symb->SectionNumber == COFF::IMAGE_SYM_ABSOLUTE;
+  return object_error::success;
+}
+
+error_code COFFObjectFile::getSymbolSection(DataRefImpl Symb,
+                                            section_iterator &Result) const {
+  const coff_symbol *symb = toSymb(Symb);
+  if (symb->SectionNumber <= COFF::IMAGE_SYM_UNDEFINED)
+    Result = end_sections();
+  else {
+    const coff_section *sec;
+    if (error_code ec = getSection(symb->SectionNumber, sec)) return ec;
+    DataRefImpl Sec;
+    Sec.p = reinterpret_cast<uintptr_t>(sec);
+    Result = section_iterator(SectionRef(Sec, this));
+  }
+  return object_error::success;
+}
+
 error_code COFFObjectFile::getSectionNext(DataRefImpl Sec,
                                           SectionRef &Result) const {
   const coff_section *sec = toSec(Sec);

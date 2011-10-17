@@ -242,6 +242,43 @@ error_code MachOObjectFile::isSymbolWeak(DataRefImpl Symb, bool &Res) const {
   return object_error::success;
 }
 
+error_code MachOObjectFile::isSymbolAbsolute(DataRefImpl Symb, bool &Res) const{
+  uint8_t n_type;
+  if (MachOObj->is64Bit()) {
+    InMemoryStruct<macho::Symbol64TableEntry> Entry;
+    getSymbol64TableEntry(Symb, Entry);
+    n_type = Entry->Type;
+  } else {
+    InMemoryStruct<macho::SymbolTableEntry> Entry;
+    getSymbolTableEntry(Symb, Entry);
+    n_type = Entry->Type;
+  }
+
+  Res = (n_type & MachO::NlistMaskType) == MachO::NListTypeAbsolute;
+  return object_error::success;
+}
+
+error_code MachOObjectFile::getSymbolSection(DataRefImpl Symb,
+                                             section_iterator &Res) const {
+  uint8_t index;
+  if (MachOObj->is64Bit()) {
+    InMemoryStruct<macho::Symbol64TableEntry> Entry;
+    getSymbol64TableEntry(Symb, Entry);
+    index = Entry->SectionIndex;
+  } else {
+    InMemoryStruct<macho::SymbolTableEntry> Entry;
+    getSymbolTableEntry(Symb, Entry);
+    index = Entry->SectionIndex;
+  }
+
+  if (index == 0)
+    Res = end_sections();
+  else
+    Res = section_iterator(SectionRef(Sections[index], this));
+
+  return object_error::success;
+}
+
 error_code MachOObjectFile::getSymbolType(DataRefImpl Symb,
                                           SymbolRef::Type &Res) const {
   uint8_t n_type;

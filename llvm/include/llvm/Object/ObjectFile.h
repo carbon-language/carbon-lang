@@ -78,55 +78,7 @@ static bool operator ==(const DataRefImpl &a, const DataRefImpl &b) {
   return std::memcmp(&a, &b, sizeof(DataRefImpl)) == 0;
 }
 
-/// SymbolRef - This is a value type class that represents a single symbol in
-/// the list of symbols in the object file.
-class SymbolRef {
-  friend class SectionRef;
-  DataRefImpl SymbolPimpl;
-  const ObjectFile *OwningObject;
-
-public:
-  SymbolRef() : OwningObject(NULL) {
-    std::memset(&SymbolPimpl, 0, sizeof(SymbolPimpl));
-  }
-
-  enum Type {
-    ST_Function,
-    ST_Data,
-    ST_External,    // Defined in another object file
-    ST_Other
-  };
-
-  SymbolRef(DataRefImpl SymbolP, const ObjectFile *Owner);
-
-  bool operator==(const SymbolRef &Other) const;
-
-  error_code getNext(SymbolRef &Result) const;
-
-  error_code getName(StringRef &Result) const;
-  error_code getAddress(uint64_t &Result) const;
-  error_code getOffset(uint64_t &Result) const;
-  error_code getSize(uint64_t &Result) const;
-  error_code getType(SymbolRef::Type &Result) const;
-
-  /// Returns the ascii char that should be displayed in a symbol table dump via
-  /// nm for this symbol.
-  error_code getNMTypeChar(char &Result) const;
-
-  /// Returns true for symbols that are internal to the object file format such
-  /// as section symbols.
-  error_code isInternal(bool &Result) const;
-
-  /// Returns true for symbols that can be used in another objects,
-  /// such as library functions
-  error_code isGlobal(bool &Result) const;
-
-  /// Returns true for weak symbols.
-  error_code isWeak(bool &Result) const;
-
-  DataRefImpl getRawDataRefImpl() const;
-};
-typedef content_iterator<SymbolRef> symbol_iterator;
+class SymbolRef;
 
 /// RelocationRef - This is a value type class that represents a single
 /// relocation in the list of relocations in the object file.
@@ -201,6 +153,63 @@ public:
 };
 typedef content_iterator<SectionRef> section_iterator;
 
+/// SymbolRef - This is a value type class that represents a single symbol in
+/// the list of symbols in the object file.
+class SymbolRef {
+  friend class SectionRef;
+  DataRefImpl SymbolPimpl;
+  const ObjectFile *OwningObject;
+
+public:
+  SymbolRef() : OwningObject(NULL) {
+    std::memset(&SymbolPimpl, 0, sizeof(SymbolPimpl));
+  }
+
+  enum Type {
+    ST_Function,
+    ST_Data,
+    ST_External,    // Defined in another object file
+    ST_Other
+  };
+
+  SymbolRef(DataRefImpl SymbolP, const ObjectFile *Owner);
+
+  bool operator==(const SymbolRef &Other) const;
+
+  error_code getNext(SymbolRef &Result) const;
+
+  error_code getName(StringRef &Result) const;
+  error_code getAddress(uint64_t &Result) const;
+  error_code getOffset(uint64_t &Result) const;
+  error_code getSize(uint64_t &Result) const;
+  error_code getType(SymbolRef::Type &Result) const;
+
+  /// Returns the ascii char that should be displayed in a symbol table dump via
+  /// nm for this symbol.
+  error_code getNMTypeChar(char &Result) const;
+
+  /// Returns true for symbols that are internal to the object file format such
+  /// as section symbols.
+  error_code isInternal(bool &Result) const;
+
+  /// Returns true for symbols that can be used in another objects,
+  /// such as library functions
+  error_code isGlobal(bool &Result) const;
+
+  /// Returns true for weak symbols.
+  error_code isWeak(bool &Result) const;
+
+  /// @brief Return true for absolute symbols.
+  error_code isAbsolute(bool &Result) const;
+
+  /// @brief Get section this symbol is defined in reference to. Result is
+  /// end_sections() if it is undefined or is an absolute symbol.
+  error_code getSection(section_iterator &Result) const;
+
+  DataRefImpl getRawDataRefImpl() const;
+};
+typedef content_iterator<SymbolRef> symbol_iterator;
+
 const uint64_t UnknownAddressOrSize = ~0ULL;
 
 /// ObjectFile - This class is the base class for all object file types.
@@ -238,6 +247,9 @@ protected:
   virtual error_code isSymbolInternal(DataRefImpl Symb, bool &Res) const = 0;
   virtual error_code isSymbolGlobal(DataRefImpl Symb, bool &Res) const = 0;
   virtual error_code isSymbolWeak(DataRefImpl Symb, bool &Res) const = 0;
+  virtual error_code isSymbolAbsolute(DataRefImpl Symb, bool &Res) const = 0;
+  virtual error_code getSymbolSection(DataRefImpl Symb,
+                                      section_iterator &Res) const = 0;
 
   // Same as above for SectionRef.
   friend class SectionRef;
@@ -350,6 +362,14 @@ inline error_code SymbolRef::isGlobal(bool &Result) const {
 
 inline error_code SymbolRef::isWeak(bool &Result) const {
   return OwningObject->isSymbolWeak(SymbolPimpl, Result);
+}
+
+inline error_code SymbolRef::isAbsolute(bool &Result) const {
+  return OwningObject->isSymbolAbsolute(SymbolPimpl, Result);
+}
+
+inline error_code SymbolRef::getSection(section_iterator &Result) const {
+  return OwningObject->getSymbolSection(SymbolPimpl, Result);
 }
 
 inline error_code SymbolRef::getType(SymbolRef::Type &Result) const {

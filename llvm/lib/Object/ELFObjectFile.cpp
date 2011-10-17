@@ -333,6 +333,9 @@ protected:
   virtual error_code isSymbolGlobal(DataRefImpl Symb, bool &Res) const;
   virtual error_code isSymbolWeak(DataRefImpl Symb, bool &Res) const;
   virtual error_code getSymbolType(DataRefImpl Symb, SymbolRef::Type &Res) const;
+  virtual error_code isSymbolAbsolute(DataRefImpl Symb, bool &Res) const;
+  virtual error_code getSymbolSection(DataRefImpl Symb,
+                                      section_iterator &Res) const;
 
   virtual error_code getSectionNext(DataRefImpl Sec, SectionRef &Res) const;
   virtual error_code getSectionName(DataRefImpl Sec, StringRef &Res) const;
@@ -650,6 +653,32 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   const Elf_Sym  *symb = getSymbol(Symb);
 
   Result = symb->getBinding() == ELF::STB_WEAK;
+  return object_error::success;
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+error_code ELFObjectFile<target_endianness, is64Bits>
+                        ::isSymbolAbsolute(DataRefImpl Symb, bool &Res) const {
+  validateSymbol(Symb);
+  const Elf_Sym  *symb = getSymbol(Symb);
+  Res = symb->st_shndx == ELF::SHN_ABS;
+  return object_error::success;
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+error_code ELFObjectFile<target_endianness, is64Bits>
+                        ::getSymbolSection(DataRefImpl Symb,
+                                           section_iterator &Res) const {
+  validateSymbol(Symb);
+  const Elf_Sym  *symb = getSymbol(Symb);
+  const Elf_Shdr *sec = getSection(symb);
+  if (!sec)
+    Res = end_sections();
+  else {
+    DataRefImpl Sec;
+    Sec.p = reinterpret_cast<intptr_t>(sec);
+    Res = section_iterator(SectionRef(Sec, this));
+  }
   return object_error::success;
 }
 
