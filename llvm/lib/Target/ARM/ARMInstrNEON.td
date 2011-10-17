@@ -19,6 +19,12 @@ def nModImm : Operand<i32> {
   let PrintMethod = "printNEONModImmOperand";
 }
 
+def nImmSplatI8AsmOperand : AsmOperandClass { let Name = "NEONi8splat"; }
+def nImmSplatI8 : Operand<i32> {
+  let PrintMethod = "printNEONModImmOperand";
+  let ParserMatchClass = nImmSplatI8AsmOperand;
+}
+
 def VectorIndex8Operand  : AsmOperandClass { let Name = "VectorIndex8"; }
 def VectorIndex16Operand : AsmOperandClass { let Name = "VectorIndex16"; }
 def VectorIndex32Operand : AsmOperandClass { let Name = "VectorIndex32"; }
@@ -4314,11 +4320,11 @@ def : InstAlias<"vmov${p} $Vd, $Vm",
 
 let isReMaterializable = 1 in {
 def VMOVv8i8  : N1ModImm<1, 0b000, 0b1110, 0, 0, 0, 1, (outs DPR:$Vd),
-                         (ins nModImm:$SIMM), IIC_VMOVImm,
+                         (ins nImmSplatI8:$SIMM), IIC_VMOVImm,
                          "vmov", "i8", "$Vd, $SIMM", "",
                          [(set DPR:$Vd, (v8i8 (NEONvmovImm timm:$SIMM)))]>;
 def VMOVv16i8 : N1ModImm<1, 0b000, 0b1110, 0, 1, 0, 1, (outs QPR:$Vd),
-                         (ins nModImm:$SIMM), IIC_VMOVImm,
+                         (ins nImmSplatI8:$SIMM), IIC_VMOVImm,
                          "vmov", "i8", "$Vd, $SIMM", "",
                          [(set QPR:$Vd, (v16i8 (NEONvmovImm timm:$SIMM)))]>;
 

@@ -898,6 +898,7 @@ public:
   bool isMSRMask() const { return Kind == k_MSRMask; }
   bool isProcIFlags() const { return Kind == k_ProcIFlags; }
 
+  // NEON operands.
   bool isVectorIndex8() const {
     if (Kind != k_VectorIndex) return false;
     return VectorIndex.Val < 8;
@@ -911,7 +912,18 @@ public:
     return VectorIndex.Val < 2;
   }
 
-
+  bool isNEONi8splat() const {
+    if (Kind != k_Immediate)
+      return false;
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    // Must be a constant.
+    if (!CE) return false;
+    int64_t Value = CE->getValue();
+    // i8 value splatted across 8 bytes. The immediate is just the 8 byte
+    // value.
+//    return ((Value << 8) | (Value & 0xff)) == Value;
+    return Value >= 0 && Value < 256;
+  }
 
   void addExpr(MCInst &Inst, const MCExpr *Expr) const {
     // Add as immediates when possible.  Null MCExpr = 0.
@@ -1433,6 +1445,14 @@ public:
   void addVectorIndex32Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     Inst.addOperand(MCOperand::CreateImm(getVectorIndex()));
+  }
+
+  void addNEONi8splatOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    // The immediate encodes the type of constant as well as the value.
+    // Mask in that this is an i8 splat.
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    Inst.addOperand(MCOperand::CreateImm(CE->getValue() | 0xe00));
   }
 
   virtual void print(raw_ostream &OS) const;
@@ -3330,6 +3350,22 @@ parseFPImm(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
   if (Parser.getTok().isNot(AsmToken::Hash))
     return MatchOperand_NoMatch;
+
+  // Disambiguate the VMOV forms that can accept an FP immediate.
+  // vmov.f32 <sreg>, #imm
+  // vmov.f64 <dreg>, #imm
+  // vmov.f32 <dreg>, #imm  @ vector f32x2
+  // vmov.f32 <qreg>, #imm  @ vector f32x4
+  //
+  // There are also the NEON VMOV instructions which expect an
+  // integer constant. Make sure we don't try to parse an FPImm
+  // for these:
+  // vmov.i{8|16|32|64} <dreg|qreg>, #imm
+  ARMOperand *TyOp = static_cast<ARMOperand*>(Operands[2]);
+  if (!TyOp->isToken() || (TyOp->getToken() != ".f32" &&
+                           TyOp->getToken() != ".f64"))
+    return MatchOperand_NoMatch;
+
   Parser.Lex(); // Eat the '#'.
 
   // Handle negation, as that still comes through as a separate token.
