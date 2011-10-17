@@ -425,10 +425,6 @@ public:
   ///
   bool hasAddressTaken(const User** = 0) const;
 
-  /// callsFunctionThatReturnsTwice - Return true if the function has a call to
-  /// setjmp or other function that gcc recognizes as "returning twice".
-  bool callsFunctionThatReturnsTwice() const;
-
 private:
   // Shadow Value::setValueSubclassData with a private forwarding method so that
   // subclasses cannot accidentally use it.

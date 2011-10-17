@@ -374,7 +374,7 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   }
 
   // Determine if there is a call to setjmp in the machine function.
-  MF->setCallsSetJmp(Fn.callsFunctionThatReturnsTwice());
+  MF->setCallsSetJmp(Fn.hasFnAttr(Attribute::ReturnsTwice));
 
   // Replace forward-declared registers with the registers containing
   // the desired value.

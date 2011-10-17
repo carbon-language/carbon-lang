@@ -225,12 +225,11 @@ unsigned CodeMetrics::CountCodeReductionForAlloca(Value *V) {
 /// analyzeFunction - Fill in the current structure with information gleaned
 /// from the specified function.
 void CodeMetrics::analyzeFunction(Function *F, const TargetData *TD) {
-  // If this function contains a call to setjmp or _setjmp, never inline
-  // it.  This is a hack because we depend on the user marking their local
-  // variables as volatile if they are live across a setjmp call, and they
-  // probably won't do this in callers.
-  if (F->callsFunctionThatReturnsTwice())
-    callsSetJmp = true;
+  // If this function contains a call that "returns twice" (e.g., setjmp or
+  // _setjmp), never inline it. This is a hack because we depend on the user
+  // marking their local variables as volatile if they are live across a setjmp
+  // call, and they probably won't do this in callers.
+  callsSetJmp = F->hasFnAttr(Attribute::ReturnsTwice);
 
   // Look at the size of the callee.
   for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
