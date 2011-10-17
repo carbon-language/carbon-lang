@@ -57,15 +57,6 @@ class Mult64<bits<6> func, string instr_asm, InstrItinClass itin>:
 class Div64<SDNode op, bits<6> func, string instr_asm, InstrItinClass itin>:
   Div<op, func, instr_asm, itin, CPU64Regs, [HI64, LO64]>;
 
-// Count Leading Ones/Zeros in Word
-class CountLeading64<bits<6> func, string instr_asm, list<dag> pattern>:
-  FR<0x1c, func, (outs CPU64Regs:$dst), (ins CPU64Regs:$src),
-     !strconcat(instr_asm, "\t$dst, $src"), pattern, IIAlu>,
-     Requires<[HasBitCount]> {
-  let shamt = 0;
-  let rt = rd;
-}
-
 //===----------------------------------------------------------------------===//
 // Instruction definition
 //===----------------------------------------------------------------------===//
@@ -150,10 +141,8 @@ def MFHI64 : MoveFromLOHI<0x10, "mfhi", CPU64Regs, [HI64]>;
 def MFLO64 : MoveFromLOHI<0x12, "mflo", CPU64Regs, [LO64]>;
 
 /// Count Leading
-def DCLZ : CountLeading64<0x24, "dclz",
-                          [(set CPU64Regs:$dst, (ctlz CPU64Regs:$src))]>;
-def DCLO : CountLeading64<0x25, "dclo",
-                          [(set CPU64Regs:$dst, (ctlz (not CPU64Regs:$src)))]>;
+def DCLZ : CountLeading0<0x24, "dclz", CPU64Regs>;
+def DCLO : CountLeading1<0x25, "dclo", CPU64Regs>;
 
 //===----------------------------------------------------------------------===//
 //  Arbitrary patterns that map to one or more instructions

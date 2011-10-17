@@ -513,9 +513,19 @@ class EffectiveAddress<string instr_asm> :
      instr_asm, [(set CPURegs:$rt, addr:$addr)], IIAlu>;
 
 // Count Leading Ones/Zeros in Word
-class CountLeading<bits<6> func, string instr_asm, list<dag> pattern>:
-  FR<0x1c, func, (outs CPURegs:$rd), (ins CPURegs:$rs),
-     !strconcat(instr_asm, "\t$rd, $rs"), pattern, IIAlu>,
+class CountLeading0<bits<6> func, string instr_asm, RegisterClass RC>:
+  FR<0x1c, func, (outs RC:$rd), (ins RC:$rs),
+     !strconcat(instr_asm, "\t$rd, $rs"),
+     [(set RC:$rd, (ctlz RC:$rs))], IIAlu>,
+     Requires<[HasBitCount]> {
+  let shamt = 0;
+  let rt = rd;
+}
+
+class CountLeading1<bits<6> func, string instr_asm, RegisterClass RC>:
+  FR<0x1c, func, (outs RC:$rd), (ins RC:$rs),
+     !strconcat(instr_asm, "\t$rd, $rs"),
+     [(set RC:$rd, (ctlz (not RC:$rs)))], IIAlu>,
      Requires<[HasBitCount]> {
   let shamt = 0;
   let rt = rd;
@@ -753,10 +763,8 @@ def SEB : SignExtInReg<0x10, "seb", i8>;
 def SEH : SignExtInReg<0x18, "seh", i16>;
 
 /// Count Leading
-def CLZ : CountLeading<0x20, "clz",
-                       [(set CPURegs:$rd, (ctlz CPURegs:$rs))]>;
-def CLO : CountLeading<0x21, "clo",
-                       [(set CPURegs:$rd, (ctlz (not CPURegs:$rs)))]>;
+def CLZ : CountLeading0<0x20, "clz", CPURegs>;
+def CLO : CountLeading1<0x21, "clo", CPURegs>;
 
 /// Byte Swap
 def WSBW : ByteSwap<0x20, 0x2, "wsbw">;
