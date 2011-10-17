@@ -141,6 +141,12 @@ public:
   virtual uint8_t getBytesInAddress() const;
   virtual StringRef getFileFormatName() const;
   virtual unsigned getArch() const;
+
+
+  static inline bool classof(const Binary *v) {
+    return v->getType() == isCOFF;
+  }
+  static inline bool classof(const COFFObjectFile *v) { return true; }
 };
 
 }

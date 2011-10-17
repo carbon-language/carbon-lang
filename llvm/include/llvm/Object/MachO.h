@@ -40,6 +40,11 @@ public:
 
   MachOObject *getObject() { return MachOObj; }
 
+  static inline bool classof(const Binary *v) {
+    return v->getType() == isMachO;
+  }
+  static inline bool classof(const MachOObjectFile *v) { return true; }
+
 protected:
   virtual error_code getSymbolNext(DataRefImpl Symb, SymbolRef &Res) const;
   virtual error_code getSymbolName(DataRefImpl Symb, StringRef &Res) const;

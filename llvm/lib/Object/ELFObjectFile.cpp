@@ -377,6 +377,11 @@ public:
   uint64_t getStringTableIndex() const;
   ELF::Elf64_Word getSymbolTableIndex(const Elf_Sym *symb) const;
   const Elf_Shdr *getSection(const Elf_Sym *symb) const;
+
+  static inline bool classof(const Binary *v) {
+    return v->getType() == isELF;
+  }
+  static inline bool classof(const ELFObjectFile *v) { return true; }
 };
 } // end namespace
 
