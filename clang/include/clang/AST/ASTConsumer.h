@@ -65,6 +65,11 @@ public:
   /// can be defined in declspecs).
   virtual void HandleTagDeclDefinition(TagDecl *D) {}
 
+  /// \brief Handle the specified top-level declaration that occurred inside
+  /// and ObjC container.
+  /// The default implementation ignored them.
+  virtual void HandleTopLevelDeclInObjCContainer(DeclGroupRef D);
+
   /// CompleteTentativeDefinition - Callback invoked at the end of a translation
   /// unit to notify the consumer that the given tentative definition should be
   /// completed.
