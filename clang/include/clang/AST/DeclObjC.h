@@ -566,6 +566,11 @@ class ObjCInterfaceDecl : public ObjCContainerDecl {
   /// extensions and implementation. This list is built lazily.
   ObjCIvarDecl *IvarList;
 
+  /// \brief True if it was initially declared with @class.
+  /// Differs with \see ForwardDecl in that \see ForwardDecl will change to
+  /// false when we see the @interface, but InitiallyForwardDecl will remain
+  /// true.
+  bool InitiallyForwardDecl : 1;
   bool ForwardDecl:1; // declared with @class.
   bool InternalInterface:1; // true - no @interface for @implementation
   
@@ -692,6 +697,11 @@ public:
   void mergeClassExtensionProtocolList(ObjCProtocolDecl *const* List, 
                                        unsigned Num,
                                        ASTContext &C);
+
+  /// \brief True if it was initially declared with @class.
+  /// Differs with \see isForwardDecl in that \see isForwardDecl will change to
+  /// false when we see the @interface, but this will remain true.
+  bool isInitiallyForwardDecl() const { return InitiallyForwardDecl; }
 
   bool isForwardDecl() const { return ForwardDecl; }
   void setForwardDecl(bool val) { ForwardDecl = val; }
@@ -924,21 +934,25 @@ class ObjCProtocolDecl : public ObjCContainerDecl {
   /// Referenced protocols
   ObjCProtocolList ReferencedProtocols;
 
-  bool isForwardProtoDecl; // declared with @protocol.
+  bool InitiallyForwardDecl : 1;
+  bool isForwardProtoDecl : 1; // declared with @protocol.
 
   SourceLocation EndLoc; // marks the '>' or identifier.
 
   ObjCProtocolDecl(DeclContext *DC, IdentifierInfo *Id,
-                   SourceLocation nameLoc, SourceLocation atStartLoc)
+                   SourceLocation nameLoc, SourceLocation atStartLoc,
+                   bool isForwardDecl)
     : ObjCContainerDecl(ObjCProtocol, DC, Id, nameLoc, atStartLoc),
-      isForwardProtoDecl(true) {
+      InitiallyForwardDecl(isForwardDecl),
+      isForwardProtoDecl(isForwardDecl) {
   }
 
 public:
   static ObjCProtocolDecl *Create(ASTContext &C, DeclContext *DC,
                                   IdentifierInfo *Id,
                                   SourceLocation nameLoc,
-                                  SourceLocation atStartLoc);
+                                  SourceLocation atStartLoc,
+                                  bool isForwardDecl);
 
   const ObjCProtocolList &getReferencedProtocols() const {
     return ReferencedProtocols;
@@ -973,6 +987,11 @@ public:
   ObjCMethodDecl *lookupClassMethod(Selector Sel) const {
     return lookupMethod(Sel, false/*isInstance*/);
   }
+
+  /// \brief True if it was initially a forward reference.
+  /// Differs with \see isForwardDecl in that \see isForwardDecl will change to
+  /// false when we see the definition, but this will remain true.
+  bool isInitiallyForwardDecl() const { return InitiallyForwardDecl; }
   
   bool isForwardDecl() const { return isForwardProtoDecl; }
   void setForwardDecl(bool val) { isForwardProtoDecl = val; }
@@ -985,6 +1004,9 @@ public:
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const ObjCProtocolDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == ObjCProtocol; }
+
+  friend class ASTDeclReader;
+  friend class ASTDeclWriter;
 };
 
 /// ObjCClassDecl - Specifies a list of forward class declarations. For example:

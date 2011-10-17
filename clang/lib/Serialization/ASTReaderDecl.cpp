@@ -554,6 +554,7 @@ void ASTDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
   
   // We will rebuild this list lazily.
   ID->setIvarList(0);
+  ID->InitiallyForwardDecl = Record[Idx++];
   ID->setForwardDecl(Record[Idx++]);
   ID->setImplicitInterfaceDecl(Record[Idx++]);
   ID->setSuperClassLoc(ReadSourceLocation(Record, Idx));
@@ -571,6 +572,7 @@ void ASTDeclReader::VisitObjCIvarDecl(ObjCIvarDecl *IVD) {
 
 void ASTDeclReader::VisitObjCProtocolDecl(ObjCProtocolDecl *PD) {
   VisitObjCContainerDecl(PD);
+  PD->InitiallyForwardDecl = Record[Idx++];
   PD->setForwardDecl(Record[Idx++]);
   PD->setLocEnd(ReadSourceLocation(Record, Idx));
   unsigned NumProtoRefs = Record[Idx++];
@@ -1637,7 +1639,7 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
     break;
   case DECL_OBJC_PROTOCOL:
     D = ObjCProtocolDecl::Create(Context, 0, 0, SourceLocation(),
-                                 SourceLocation());
+                                 SourceLocation(), 0);
     break;
   case DECL_OBJC_AT_DEFS_FIELD:
     D = ObjCAtDefsFieldDecl::Create(Context, 0, SourceLocation(),

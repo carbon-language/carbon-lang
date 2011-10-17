@@ -470,6 +470,7 @@ void ASTDeclWriter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
                                      IEnd = D->ivar_end(); I != IEnd; ++I)
     Writer.AddDeclRef(*I, Record);
   Writer.AddDeclRef(D->getCategoryList(), Record);
+  Record.push_back(D->isInitiallyForwardDecl());
   Record.push_back(D->isForwardDecl());
   Record.push_back(D->isImplicitInterfaceDecl());
   Writer.AddSourceLocation(D->getSuperClassLoc(), Record);
@@ -499,6 +500,7 @@ void ASTDeclWriter::VisitObjCIvarDecl(ObjCIvarDecl *D) {
 
 void ASTDeclWriter::VisitObjCProtocolDecl(ObjCProtocolDecl *D) {
   VisitObjCContainerDecl(D);
+  Record.push_back(D->isInitiallyForwardDecl());
   Record.push_back(D->isForwardDecl());
   Writer.AddSourceLocation(D->getLocEnd(), Record);
   Record.push_back(D->protocol_size());
