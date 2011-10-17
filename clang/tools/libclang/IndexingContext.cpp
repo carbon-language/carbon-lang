@@ -297,7 +297,7 @@ void IndexingContext::defineObjCInterface(const ObjCInterfaceDecl *D) {
                                     getIndexContainerForDC(D),
                                     D->getSuperClass() ? &BaseClass : 0,
                                     Prots.data(),
-                                    Prots.size() };
+                                    static_cast<unsigned>(Prots.size()) };
   CB.defineObjCClass(ClientData, &Info);
 }
 
