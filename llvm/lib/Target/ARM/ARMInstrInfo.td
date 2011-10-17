@@ -4635,7 +4635,8 @@ let isCall = 1,
 // no encoding information is necessary.
 let Defs =
   [ R0,  R1,  R2,  R3,  R4,  R5,  R6,  R7,  R8,  R9,  R10, R11, R12, LR, CPSR,
-    QQQQ0, QQQQ1, QQQQ2, QQQQ3 ], hasSideEffects = 1, isBarrier = 1 in {
+    QQQQ0, QQQQ1, QQQQ2, QQQQ3 ], hasSideEffects = 1, isBarrier = 1,
+  usesCustomInserter = 1 in {
   def Int_eh_sjlj_setjmp : PseudoInst<(outs), (ins GPR:$src, GPR:$val),
                                NoItinerary,
                          [(set R0, (ARMeh_sjlj_setjmp GPR:$src, GPR:$val))]>,

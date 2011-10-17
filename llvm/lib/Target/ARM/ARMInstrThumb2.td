@@ -3088,7 +3088,8 @@ def t2CLREX : T2I<(outs), (ins), NoItinerary, "clrex", "", []>,
 let Defs =
   [ R0,  R1,  R2,  R3,  R4,  R5,  R6,  R7,  R8,  R9,  R10, R11, R12, LR, CPSR,
     QQQQ0, QQQQ1, QQQQ2, QQQQ3 ],
-  hasSideEffects = 1, isBarrier = 1, isCodeGenOnly = 1 in {
+  hasSideEffects = 1, isBarrier = 1, isCodeGenOnly = 1,
+  usesCustomInserter = 1 in {
   def t2Int_eh_sjlj_setjmp : Thumb2XI<(outs), (ins tGPR:$src, tGPR:$val),
                                AddrModeNone, 0, NoItinerary, "", "",
                           [(set R0, (ARMeh_sjlj_setjmp tGPR:$src, tGPR:$val))]>,
@@ -3097,7 +3098,8 @@ let Defs =
 
 let Defs =
   [ R0,  R1,  R2,  R3,  R4,  R5,  R6,  R7,  R8,  R9,  R10, R11, R12, LR, CPSR ],
-  hasSideEffects = 1, isBarrier = 1, isCodeGenOnly = 1 in {
+  hasSideEffects = 1, isBarrier = 1, isCodeGenOnly = 1,
+  usesCustomInserter = 1 in {
   def t2Int_eh_sjlj_setjmp_nofp : Thumb2XI<(outs), (ins tGPR:$src, tGPR:$val),
                                AddrModeNone, 0, NoItinerary, "", "",
                           [(set R0, (ARMeh_sjlj_setjmp tGPR:$src, tGPR:$val))]>,

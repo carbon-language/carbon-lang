@@ -36,6 +36,7 @@
 using namespace llvm;
 
 static cl::opt<bool> DisableOldSjLjEH("disable-old-sjlj-eh", cl::Hidden,
+                                      cl::init(true),
     cl::desc("Disable the old SjLj EH preparation pass"));
 
 STATISTIC(NumInvokes, "Number of invokes replaced");
