@@ -686,6 +686,7 @@ def single__module : Flag<"-single_module">;
 def specs_EQ : Joined<"-specs=">;
 def specs : Separate<"-specs">, Flags<[Unsupported]>;
 def static_libgcc : Flag<"-static-libgcc">;
+def static_libstdcxx : Flag<"-static-libstdc++">;
 def static : Flag<"-static">, Flags<[NoArgumentUnused]>;
 def std_default_EQ : Joined<"-std-default=">;
 def std_EQ : Joined<"-std=">;
