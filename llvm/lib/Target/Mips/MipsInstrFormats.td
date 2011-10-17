@@ -205,14 +205,14 @@ class FCMOV<bits<1> _tf, dag outs, dag ins, string asmstr,
 {
   bits<5>  rd;
   bits<5>  rs;
-  bits<3>  N;
+  bits<3>  cc;
   bits<1>  tf;
 
   let opcode = 0;
   let tf = _tf;
 
   let Inst{25-21} = rs;
-  let Inst{20-18} = N;
+  let Inst{20-18} = cc;
   let Inst{17} = 0;
   let Inst{16} = tf;
   let Inst{15-11} = rd;
@@ -226,7 +226,7 @@ class FFCMOV<bits<5> _fmt, bits<1> _tf, dag outs, dag ins, string asmstr,
 {
   bits<5>  fd;
   bits<5>  fs;
-  bits<3>  N;
+  bits<3>  cc;
   bits<5>  fmt;
   bits<1>  tf;
 
@@ -235,7 +235,7 @@ class FFCMOV<bits<5> _fmt, bits<1> _tf, dag outs, dag ins, string asmstr,
   let tf = _tf;
 
   let Inst{25-21} = fmt;
-  let Inst{20-18} = N;
+  let Inst{20-18} = cc;
   let Inst{17} = 0;
   let Inst{16} = tf;
   let Inst{15-11} = fs;

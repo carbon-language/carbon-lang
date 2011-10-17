@@ -259,59 +259,6 @@ let Defs=[FCR31] in {
                      Requires<[NotFP64bit]>;
 }
 
-
-// Conditional moves:
-// These instructions are expanded in
-// MipsISelLowering::EmitInstrWithCustomInserter if target does not have
-// conditional move instructions.
-// flag:int, data:float
-let usesCustomInserter = 1, Constraints = "$F = $dst" in
-class CondMovIntFP<RegisterClass RC, bits<5> fmt, bits<6> func,
-                   string instr_asm> :
-  FFR<0x11, func, fmt, (outs RC:$dst), (ins RC:$T, CPURegs:$cond, RC:$F),
-      !strconcat(instr_asm, "\t$dst, $T, $cond"), []>;
-
-def MOVZ_S : CondMovIntFP<FGR32, 16, 18, "movz.s">;
-def MOVN_S : CondMovIntFP<FGR32, 16, 19, "movn.s">;
-
-let Predicates = [NotFP64bit] in {
-  def MOVZ_D : CondMovIntFP<AFGR64, 17, 18, "movz.d">;
-  def MOVN_D : CondMovIntFP<AFGR64, 17, 19, "movn.d">;
-}
-
-defm : MovzPats<FGR32, MOVZ_S>;
-defm : MovnPats<FGR32, MOVN_S>;
-
-let Predicates = [NotFP64bit] in {
-  defm : MovzPats<AFGR64, MOVZ_D>;
-  defm : MovnPats<AFGR64, MOVN_D>;
-}
-
-let usesCustomInserter = 1, Uses = [FCR31], Constraints = "$F = $dst" in {
-// flag:float, data:int
-class CondMovFPInt<SDNode cmov, bits<1> tf, string instr_asm> :
-  FCMOV<tf, (outs CPURegs:$dst), (ins CPURegs:$T, CPURegs:$F),
-        !strconcat(instr_asm, "\t$dst, $T, $$fcc0"),
-        [(set CPURegs:$dst, (cmov CPURegs:$T, CPURegs:$F))]>;
-
-// flag:float, data:float
-class CondMovFPFP<RegisterClass RC, SDNode cmov, bits<5> fmt, bits<1> tf,
-                  string instr_asm> :
-  FFCMOV<fmt, tf, (outs RC:$dst), (ins RC:$T, RC:$F),
-         !strconcat(instr_asm, "\t$dst, $T, $$fcc0"),
-         [(set RC:$dst, (cmov RC:$T, RC:$F))]>;
-}
-
-def MOVT : CondMovFPInt<MipsCMovFP_T, 1, "movt">;
-def MOVF : CondMovFPInt<MipsCMovFP_F, 0, "movf">;
-def MOVT_S : CondMovFPFP<FGR32, MipsCMovFP_T, 16, 1, "movt.s">;
-def MOVF_S : CondMovFPFP<FGR32, MipsCMovFP_F, 16, 0, "movf.s">;
-
-let Predicates = [NotFP64bit] in {
-  def MOVT_D : CondMovFPFP<AFGR64, MipsCMovFP_T, 17, 1, "movt.d">;
-  def MOVF_D : CondMovFPFP<AFGR64, MipsCMovFP_F, 17, 0, "movf.d">;
-}
-
 //===----------------------------------------------------------------------===//
 // Floating Point Pseudo-Instructions
 //===----------------------------------------------------------------------===//

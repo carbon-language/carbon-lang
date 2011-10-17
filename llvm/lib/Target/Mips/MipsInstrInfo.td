@@ -769,23 +769,6 @@ def CLO : CountLeading1<0x21, "clo", CPURegs>;
 /// Byte Swap
 def WSBW : ByteSwap<0x20, 0x2, "wsbw">;
 
-// Conditional moves:
-// These instructions are expanded in
-// MipsISelLowering::EmitInstrWithCustomInserter if target does not have
-// conditional move instructions.
-// flag:int, data:int
-class CondMovIntInt<bits<6> funct, string instr_asm> :
-  FR<0, funct, (outs CPURegs:$rd),
-     (ins CPURegs:$rs, CPURegs:$rt, CPURegs:$F),
-     !strconcat(instr_asm, "\t$rd, $rs, $rt"), [], NoItinerary> {
-  let shamt = 0;
-  let usesCustomInserter = 1;
-  let Constraints = "$F = $rd";
-}
-
-def MOVZ_I : CondMovIntInt<0x0a, "movz">;
-def MOVN_I : CondMovIntInt<0x0b, "movn">;
-
 /// No operation
 let addr=0 in
   def NOP   : FJ<0, (outs), (ins), "nop", [], IIAlu>;
@@ -948,38 +931,6 @@ def : Pat<(brcond RC:$cond, bb:$dst),
 
 defm : BrcondPats<CPURegs, BEQ, BNE, SLT, SLTu, SLTi, SLTiu, ZERO>;
 
-// select patterns
-multiclass MovzPats<RegisterClass RC, Instruction MOVZInst> {
-  def : Pat<(select (i32 (setge CPURegs:$lhs, CPURegs:$rhs)), RC:$T, RC:$F),
-            (MOVZInst RC:$T, (SLT CPURegs:$lhs, CPURegs:$rhs), RC:$F)>;
-  def : Pat<(select (i32 (setuge CPURegs:$lhs, CPURegs:$rhs)), RC:$T, RC:$F),
-            (MOVZInst RC:$T, (SLTu CPURegs:$lhs, CPURegs:$rhs), RC:$F)>;
-  def : Pat<(select (i32 (setge CPURegs:$lhs, immSExt16:$rhs)), RC:$T, RC:$F),
-            (MOVZInst RC:$T, (SLTi CPURegs:$lhs, immSExt16:$rhs), RC:$F)>;
-  def : Pat<(select (i32 (setuge CPURegs:$lh, immSExt16:$rh)), RC:$T, RC:$F),
-            (MOVZInst RC:$T, (SLTiu CPURegs:$lh, immSExt16:$rh), RC:$F)>;
-  def : Pat<(select (i32 (setle CPURegs:$lhs, CPURegs:$rhs)), RC:$T, RC:$F),
-            (MOVZInst RC:$T, (SLT CPURegs:$rhs, CPURegs:$lhs), RC:$F)>;
-  def : Pat<(select (i32 (setule CPURegs:$lhs, CPURegs:$rhs)), RC:$T, RC:$F),
-            (MOVZInst RC:$T, (SLTu CPURegs:$rhs, CPURegs:$lhs), RC:$F)>;
-  def : Pat<(select (i32 (seteq CPURegs:$lhs, CPURegs:$rhs)), RC:$T, RC:$F),
-            (MOVZInst RC:$T, (XOR CPURegs:$lhs, CPURegs:$rhs), RC:$F)>;
-  def : Pat<(select (i32 (seteq CPURegs:$lhs, 0)), RC:$T, RC:$F),
-            (MOVZInst RC:$T, CPURegs:$lhs, RC:$F)>;
-}
-
-multiclass MovnPats<RegisterClass RC, Instruction MOVNInst> {
-  def : Pat<(select (i32 (setne CPURegs:$lhs, CPURegs:$rhs)), RC:$T, RC:$F),
-            (MOVNInst RC:$T, (XOR CPURegs:$lhs, CPURegs:$rhs), RC:$F)>;
-  def : Pat<(select CPURegs:$cond, RC:$T, RC:$F),
-            (MOVNInst RC:$T, CPURegs:$cond, RC:$F)>;
-  def : Pat<(select (i32 (setne CPURegs:$lhs, 0)), RC:$T, RC:$F),
-            (MOVNInst RC:$T, CPURegs:$lhs, RC:$F)>;
-}
-
-defm : MovzPats<CPURegs, MOVZ_I>;
-defm : MovnPats<CPURegs, MOVN_I>;
-
 // setcc patterns
 multiclass SeteqPats<RegisterClass RC, Instruction SLTiuOp, Instruction XOROp,
                      Instruction SLTuOp, Register ZEROReg> {
@@ -1032,5 +983,6 @@ def : Pat<(MipsDynAlloc addr:$f), (DynAlloc addr:$f)>;
 //===----------------------------------------------------------------------===//
 
 include "MipsInstrFPU.td"
+include "MipsCondMov.td"
 include "Mips64InstrInfo.td"
 
