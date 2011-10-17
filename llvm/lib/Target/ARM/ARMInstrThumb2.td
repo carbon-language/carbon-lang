@@ -614,19 +614,19 @@ multiclass T2I_bin_s_irs<bits<4> opcod, string opc,
                          PatFrag opnode, bit Commutable = 0> {
    // shifted imm
    def ri : T2sTwoRegImm<
-                (outs rGPR:$Rd), (ins GPR:$Rn, t2_so_imm:$imm), iii,
+                (outs rGPR:$Rd), (ins GPRnopc:$Rn, t2_so_imm:$imm), iii,
                 opc, ".w\t$Rd, $Rn, $imm",
-                [(set rGPR:$Rd, CPSR, (opnode GPR:$Rn, t2_so_imm:$imm))]>;
+                [(set rGPR:$Rd, CPSR, (opnode GPRnopc:$Rn, t2_so_imm:$imm))]>;
    // register
    def rr : T2sThreeReg<
-                (outs rGPR:$Rd), (ins GPR:$Rn, rGPR:$Rm), iir,
+                (outs rGPR:$Rd), (ins GPRnopc:$Rn, rGPR:$Rm), iir,
                 opc, ".w\t$Rd, $Rn, $Rm",
-                [(set rGPR:$Rd, CPSR, (opnode GPR:$Rn, rGPR:$Rm))]>;
+                [(set rGPR:$Rd, CPSR, (opnode GPRnopc:$Rn, rGPR:$Rm))]>;
    // shifted register
    def rs : T2sTwoRegShiftedReg<
-                (outs rGPR:$Rd), (ins GPR:$Rn, t2_so_reg:$ShiftedRm), iis,
+                (outs rGPR:$Rd), (ins GPRnopc:$Rn, t2_so_reg:$ShiftedRm), iis,
                 opc, ".w\t$Rd, $Rn, $ShiftedRm",
-               [(set rGPR:$Rd, CPSR, (opnode GPR:$Rn, t2_so_reg:$ShiftedRm))]>;
+               [(set rGPR:$Rd, CPSR, (opnode GPRnopc:$Rn, t2_so_reg:$ShiftedRm))]>;
 }
 }
 
