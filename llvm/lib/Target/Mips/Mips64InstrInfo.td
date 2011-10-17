@@ -52,17 +52,10 @@ class shift_rotate_imm64_32<bits<6> func, bits<5> isRotate, string instr_asm,
                    CPU64Regs>;
 
 // Mul, Div
-let Defs = [HI64, LO64] in {
-  let isCommutable = 1 in
-  class Mul64<bits<6> func, string instr_asm, InstrItinClass itin>:
-    FR<0x00, func, (outs), (ins CPU64Regs:$a, CPU64Regs:$b),
-       !strconcat(instr_asm, "\t$a, $b"), [], itin>;
-
-  class Div64<SDNode op, bits<6> func, string instr_asm, InstrItinClass itin>:
-              FR<0x00, func, (outs), (ins CPU64Regs:$a, CPU64Regs:$b),
-              !strconcat(instr_asm, "\t$$zero, $a, $b"),
-              [(op CPU64Regs:$a, CPU64Regs:$b)], itin>;
-}
+class Mult64<bits<6> func, string instr_asm, InstrItinClass itin>:
+  Mult<func, instr_asm, itin, CPU64Regs, [HI64, LO64]>;
+class Div64<SDNode op, bits<6> func, string instr_asm, InstrItinClass itin>:
+  Div<op, func, instr_asm, itin, CPU64Regs, [HI64, LO64]>;
 
 // Move from Hi/Lo
 let shamt = 0 in {
@@ -159,8 +152,8 @@ def BLEZ64 : CBranchZero<0x07, 0, "blez", setle, CPU64Regs>;
 def BLTZ64 : CBranchZero<0x01, 0, "bltz", setlt, CPU64Regs>;
 
 /// Multiply and Divide Instructions.
-def DMULT    : Mul64<0x1c, "dmult", IIImul>;
-def DMULTu   : Mul64<0x1d, "dmultu", IIImul>;
+def DMULT    : Mult64<0x1c, "dmult", IIImul>;
+def DMULTu   : Mult64<0x1d, "dmultu", IIImul>;
 def DSDIV    : Div64<MipsDivRem, 0x1e, "ddiv", IIIdiv>;
 def DUDIV    : Div64<MipsDivRemU, 0x1f, "ddivu", IIIdiv>;
 

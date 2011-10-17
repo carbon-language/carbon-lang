@@ -461,23 +461,31 @@ let isCall=1, hasDelaySlot=1,
 }
 
 // Mul, Div
-class Mul<bits<6> func, string instr_asm, InstrItinClass itin>:
-  FR<0x00, func, (outs), (ins CPURegs:$rs, CPURegs:$rt),
+class Mult<bits<6> func, string instr_asm, InstrItinClass itin,
+           RegisterClass RC, list<Register> DefRegs>:
+  FR<0x00, func, (outs), (ins RC:$rs, RC:$rt),
      !strconcat(instr_asm, "\t$rs, $rt"), [], itin> {
   let rd = 0;
   let shamt = 0;
   let isCommutable = 1;
-  let Defs = [HI, LO];
+  let Defs = DefRegs;
 }
 
-class Div<SDNode op, bits<6> func, string instr_asm, InstrItinClass itin>:
-          FR<0x00, func, (outs), (ins CPURegs:$rs, CPURegs:$rt),
-          !strconcat(instr_asm, "\t$$zero, $rs, $rt"),
-          [(op CPURegs:$rs, CPURegs:$rt)], itin> {
+class Mult32<bits<6> func, string instr_asm, InstrItinClass itin>:
+  Mult<func, instr_asm, itin, CPURegs, [HI, LO]>;
+
+class Div<SDNode op, bits<6> func, string instr_asm, InstrItinClass itin,
+          RegisterClass RC, list<Register> DefRegs>:
+  FR<0x00, func, (outs), (ins RC:$rs, RC:$rt),
+     !strconcat(instr_asm, "\t$$zero, $rs, $rt"),
+     [(op RC:$rs, RC:$rt)], itin> {
   let rd = 0;
   let shamt = 0;
-  let Defs = [HI, LO];
+  let Defs = DefRegs;
 }
+
+class Div32<SDNode op, bits<6> func, string instr_asm, InstrItinClass itin>:
+  Div<op, func, instr_asm, itin, CPURegs, [HI, LO]>;
 
 // Move from Hi/Lo
 class MoveFromLOHI<bits<6> func, string instr_asm>:
@@ -726,10 +734,10 @@ let isReturn=1, isTerminator=1, hasDelaySlot=1,
                 "jr\t$target", [(MipsRet CPURegs:$target)], IIBranch>;
 
 /// Multiply and Divide Instructions.
-def MULT    : Mul<0x18, "mult", IIImul>;
-def MULTu   : Mul<0x19, "multu", IIImul>;
-def SDIV    : Div<MipsDivRem, 0x1a, "div", IIIdiv>;
-def UDIV    : Div<MipsDivRemU, 0x1b, "divu", IIIdiv>;
+def MULT    : Mult32<0x18, "mult", IIImul>;
+def MULTu   : Mult32<0x19, "multu", IIImul>;
+def SDIV    : Div32<MipsDivRem, 0x1a, "div", IIIdiv>;
+def UDIV    : Div32<MipsDivRemU, 0x1b, "divu", IIIdiv>;
 
 let Defs = [HI] in
   def MTHI  : MoveToLOHI<0x11, "mthi">;
