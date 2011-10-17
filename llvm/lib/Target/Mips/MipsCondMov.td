@@ -3,30 +3,29 @@
 // MipsISelLowering::EmitInstrWithCustomInserter if target does not have
 // conditional move instructions.
 // cond:int, data:int
-class CondMovIntInt<bits<6> funct, string instr_asm> :
-  FR<0, funct, (outs CPURegs:$rd), (ins CPURegs:$rs, CPURegs:$rt, CPURegs:$F),
+class CondMovIntInt<RegisterClass CRC, RegisterClass DRC, bits<6> funct,
+                    string instr_asm> :
+  FR<0, funct, (outs DRC:$rd), (ins DRC:$rs, CRC:$rt, DRC:$F),
      !strconcat(instr_asm, "\t$rd, $rs, $rt"), [], NoItinerary> {
   let shamt = 0;
-  let usesCustomInserter = 1;
   let Constraints = "$F = $rd";
 }
 
 // cond:int, data:float
-class CondMovIntFP<RegisterClass RC, bits<5> fmt, bits<6> func,
-                   string instr_asm> :
-  FFR<0x11, func, fmt, (outs RC:$fd), (ins RC:$fs, CPURegs:$rt, RC:$F),
+class CondMovIntFP<RegisterClass CRC, RegisterClass DRC, bits<5> fmt,
+                   bits<6> func, string instr_asm> :
+  FFR<0x11, func, fmt, (outs DRC:$fd), (ins DRC:$fs, CRC:$rt, DRC:$F),
       !strconcat(instr_asm, "\t$fd, $fs, $rt"), []> {
-  let usesCustomInserter = 1;
   let Constraints = "$F = $fd";
 }
 
 // cond:float, data:int
-class CondMovFPInt<SDNode cmov, bits<1> tf, string instr_asm> :
-  FCMOV<tf, (outs CPURegs:$rd), (ins CPURegs:$rs, CPURegs:$F),
+class CondMovFPInt<RegisterClass RC, SDNode cmov, bits<1> tf,
+                   string instr_asm> :
+  FCMOV<tf, (outs RC:$rd), (ins RC:$rs, RC:$F),
         !strconcat(instr_asm, "\t$rd, $rs, $$fcc0"),
-        [(set CPURegs:$rd, (cmov CPURegs:$rs, CPURegs:$F))]> {
+        [(set RC:$rd, (cmov RC:$rs, RC:$F))]> {
   let cc = 0;
-  let usesCustomInserter = 1;
   let Uses = [FCR31];
   let Constraints = "$F = $rd";
 }
@@ -38,70 +37,143 @@ class CondMovFPFP<RegisterClass RC, SDNode cmov, bits<5> fmt, bits<1> tf,
          !strconcat(instr_asm, "\t$fd, $fs, $$fcc0"),
          [(set RC:$fd, (cmov RC:$fs, RC:$F))]> {
   let cc = 0;
-  let usesCustomInserter = 1;
   let Uses = [FCR31];
   let Constraints = "$F = $fd";
 }
 
 // select patterns
-multiclass MovzPats<RegisterClass RC, Instruction MOVZInst> {
-  def : Pat<(select (i32 (setge CPURegs:$lhs, CPURegs:$rhs)), RC:$T, RC:$F),
-            (MOVZInst RC:$T, (SLT CPURegs:$lhs, CPURegs:$rhs), RC:$F)>;
-  def : Pat<(select (i32 (setuge CPURegs:$lhs, CPURegs:$rhs)), RC:$T, RC:$F),
-            (MOVZInst RC:$T, (SLTu CPURegs:$lhs, CPURegs:$rhs), RC:$F)>;
-  def : Pat<(select (i32 (setge CPURegs:$lhs, immSExt16:$rhs)), RC:$T, RC:$F),
-            (MOVZInst RC:$T, (SLTi CPURegs:$lhs, immSExt16:$rhs), RC:$F)>;
-  def : Pat<(select (i32 (setuge CPURegs:$lh, immSExt16:$rh)), RC:$T, RC:$F),
-            (MOVZInst RC:$T, (SLTiu CPURegs:$lh, immSExt16:$rh), RC:$F)>;
-  def : Pat<(select (i32 (setle CPURegs:$lhs, CPURegs:$rhs)), RC:$T, RC:$F),
-            (MOVZInst RC:$T, (SLT CPURegs:$rhs, CPURegs:$lhs), RC:$F)>;
-  def : Pat<(select (i32 (setule CPURegs:$lhs, CPURegs:$rhs)), RC:$T, RC:$F),
-            (MOVZInst RC:$T, (SLTu CPURegs:$rhs, CPURegs:$lhs), RC:$F)>;
-  def : Pat<(select (i32 (seteq CPURegs:$lhs, CPURegs:$rhs)), RC:$T, RC:$F),
-            (MOVZInst RC:$T, (XOR CPURegs:$lhs, CPURegs:$rhs), RC:$F)>;
-  def : Pat<(select (i32 (seteq CPURegs:$lhs, 0)), RC:$T, RC:$F),
-            (MOVZInst RC:$T, CPURegs:$lhs, RC:$F)>;
+multiclass MovzPats0<RegisterClass CRC, RegisterClass DRC,
+                     Instruction MOVZInst, Instruction SLTOp,
+                     Instruction SLTuOp, Instruction SLTiOp,
+                     Instruction SLTiuOp> {
+  def : Pat<(select (i32 (setge CRC:$lhs, CRC:$rhs)), DRC:$T, DRC:$F),
+            (MOVZInst DRC:$T, (SLTOp CRC:$lhs, CRC:$rhs), DRC:$F)>;
+  def : Pat<(select (i32 (setuge CRC:$lhs, CRC:$rhs)), DRC:$T, DRC:$F),
+            (MOVZInst DRC:$T, (SLTuOp CRC:$lhs, CRC:$rhs), DRC:$F)>;
+  def : Pat<(select (i32 (setge CRC:$lhs, immSExt16:$rhs)), DRC:$T, DRC:$F),
+            (MOVZInst DRC:$T, (SLTiOp CRC:$lhs, immSExt16:$rhs), DRC:$F)>;
+  def : Pat<(select (i32 (setuge CRC:$lh, immSExt16:$rh)), DRC:$T, DRC:$F),
+            (MOVZInst DRC:$T, (SLTiuOp CRC:$lh, immSExt16:$rh), DRC:$F)>;
+  def : Pat<(select (i32 (setle CRC:$lhs, CRC:$rhs)), DRC:$T, DRC:$F),
+            (MOVZInst DRC:$T, (SLTOp CRC:$rhs, CRC:$lhs), DRC:$F)>;
+  def : Pat<(select (i32 (setule CRC:$lhs, CRC:$rhs)), DRC:$T, DRC:$F),
+            (MOVZInst DRC:$T, (SLTuOp CRC:$rhs, CRC:$lhs), DRC:$F)>;
 }
 
-multiclass MovnPats<RegisterClass RC, Instruction MOVNInst> {
-  def : Pat<(select (i32 (setne CPURegs:$lhs, CPURegs:$rhs)), RC:$T, RC:$F),
-            (MOVNInst RC:$T, (XOR CPURegs:$lhs, CPURegs:$rhs), RC:$F)>;
-  def : Pat<(select CPURegs:$cond, RC:$T, RC:$F),
-            (MOVNInst RC:$T, CPURegs:$cond, RC:$F)>;
-  def : Pat<(select (i32 (setne CPURegs:$lhs, 0)), RC:$T, RC:$F),
-            (MOVNInst RC:$T, CPURegs:$lhs, RC:$F)>;
+multiclass MovzPats1<RegisterClass CRC, RegisterClass DRC,
+                     Instruction MOVZInst, Instruction XOROp> {
+  def : Pat<(select (i32 (seteq CRC:$lhs, CRC:$rhs)), DRC:$T, DRC:$F),
+            (MOVZInst DRC:$T, (XOROp CRC:$lhs, CRC:$rhs), DRC:$F)>;
+  def : Pat<(select (i32 (seteq CRC:$lhs, 0)), DRC:$T, DRC:$F),
+            (MOVZInst DRC:$T, CRC:$lhs, DRC:$F)>;
+}
+
+multiclass MovnPats<RegisterClass CRC, RegisterClass DRC, Instruction MOVNInst,
+                    Instruction XOROp> {
+  def : Pat<(select (i32 (setne CRC:$lhs, CRC:$rhs)), DRC:$T, DRC:$F),
+            (MOVNInst DRC:$T, (XOROp CRC:$lhs, CRC:$rhs), DRC:$F)>;
+  def : Pat<(select CRC:$cond, DRC:$T, DRC:$F),
+            (MOVNInst DRC:$T, CRC:$cond, DRC:$F)>;
+  def : Pat<(select (i32 (setne CRC:$lhs, 0)),DRC:$T, DRC:$F),
+            (MOVNInst DRC:$T, CRC:$lhs, DRC:$F)>;
 }
 
 // Instantiation of instructions.
-def MOVZ_I : CondMovIntInt<0x0a, "movz">;
-def MOVN_I : CondMovIntInt<0x0b, "movn">;
-
-def MOVZ_S : CondMovIntFP<FGR32, 16, 18, "movz.s">;
-def MOVN_S : CondMovIntFP<FGR32, 16, 19, "movn.s">;
-let Predicates = [NotFP64bit] in {
-  def MOVZ_D : CondMovIntFP<AFGR64, 17, 18, "movz.d">;
-  def MOVN_D : CondMovIntFP<AFGR64, 17, 19, "movn.d">;
+def MOVZ_I_I     : CondMovIntInt<CPURegs, CPURegs, 0x0a, "movz">;
+let Predicates = [HasMips64] in {
+  def MOVZ_I_I64   : CondMovIntInt<CPURegs, CPU64Regs, 0x0a, "movz">;
+  def MOVZ_I64_I   : CondMovIntInt<CPU64Regs, CPURegs, 0x0a, "movz">;
+  def MOVZ_I64_I64 : CondMovIntInt<CPU64Regs, CPU64Regs, 0x0a, "movz">;
 }
 
-def MOVT : CondMovFPInt<MipsCMovFP_T, 1, "movt">;
-def MOVF : CondMovFPInt<MipsCMovFP_F, 0, "movf">;
+def MOVN_I_I     : CondMovIntInt<CPURegs, CPURegs, 0x0b, "movn">;
+let Predicates = [HasMips64] in {
+  def MOVN_I_I64   : CondMovIntInt<CPURegs, CPU64Regs, 0x0b, "movn">;
+  def MOVN_I64_I   : CondMovIntInt<CPU64Regs, CPURegs, 0x0b, "movn">;
+  def MOVN_I64_I64 : CondMovIntInt<CPU64Regs, CPU64Regs, 0x0b, "movn">;
+}
+
+def MOVZ_I_S   : CondMovIntFP<CPURegs, FGR32, 16, 18, "movz.s">;
+def MOVZ_I64_S : CondMovIntFP<CPU64Regs, FGR32, 16, 18, "movz.s">,
+                 Requires<[HasMips64]>;
+
+def MOVN_I_S   : CondMovIntFP<CPURegs, FGR32, 16, 19, "movn.s">;
+def MOVN_I64_S : CondMovIntFP<CPU64Regs, FGR32, 16, 19, "movn.s">,
+                 Requires<[HasMips64]>;
+
+let Predicates = [NotFP64bit] in {
+  def MOVZ_I_D32   : CondMovIntFP<CPURegs, AFGR64, 17, 18, "movz.d">;
+  def MOVN_I_D32   : CondMovIntFP<CPURegs, AFGR64, 17, 19, "movn.d">;
+}
+let Predicates = [IsFP64bit] in {
+  def MOVZ_I_D64   : CondMovIntFP<CPURegs, FGR64, 17, 18, "movz.d">;
+  def MOVZ_I64_D64 : CondMovIntFP<CPU64Regs, FGR64, 17, 18, "movz.d">;
+  def MOVN_I_D64   : CondMovIntFP<CPURegs, FGR64, 17, 19, "movn.d">;
+  def MOVN_I64_D64 : CondMovIntFP<CPU64Regs, FGR64, 17, 19, "movn.d">;
+}
+
+def MOVT_I   : CondMovFPInt<CPURegs, MipsCMovFP_T, 1, "movt">;
+def MOVT_I64 : CondMovFPInt<CPU64Regs, MipsCMovFP_T, 1, "movt">,
+               Requires<[HasMips64]>;
+
+def MOVF_I   : CondMovFPInt<CPURegs, MipsCMovFP_F, 1, "movf">;
+def MOVF_I64 : CondMovFPInt<CPU64Regs, MipsCMovFP_F, 1, "movf">,
+               Requires<[HasMips64]>;
 
 def MOVT_S : CondMovFPFP<FGR32, MipsCMovFP_T, 16, 1, "movt.s">;
 def MOVF_S : CondMovFPFP<FGR32, MipsCMovFP_F, 16, 0, "movf.s">;
+
 let Predicates = [NotFP64bit] in {
-  def MOVT_D : CondMovFPFP<AFGR64, MipsCMovFP_T, 17, 1, "movt.d">;
-  def MOVF_D : CondMovFPFP<AFGR64, MipsCMovFP_F, 17, 0, "movf.d">;
+  def MOVT_D32 : CondMovFPFP<AFGR64, MipsCMovFP_T, 17, 1, "movt.d">;
+  def MOVF_D32 : CondMovFPFP<AFGR64, MipsCMovFP_F, 17, 0, "movf.d">;
+}
+let Predicates = [IsFP64bit] in {
+  def MOVT_D64 : CondMovFPFP<FGR64, MipsCMovFP_T, 17, 1, "movt.d">;
+  def MOVF_D64 : CondMovFPFP<FGR64, MipsCMovFP_F, 17, 0, "movf.d">;
 }
 
 // Instantiation of conditional move patterns.
-defm : MovzPats<CPURegs, MOVZ_I>;
-defm : MovnPats<CPURegs, MOVN_I>;
-
-defm : MovzPats<FGR32, MOVZ_S>;
-defm : MovnPats<FGR32, MOVN_S>;
-
-let Predicates = [NotFP64bit] in {
-  defm : MovzPats<AFGR64, MOVZ_D>;
-  defm : MovnPats<AFGR64, MOVN_D>;
+defm : MovzPats0<CPURegs, CPURegs, MOVZ_I_I, SLT, SLTu, SLTi, SLTiu>;
+defm : MovzPats1<CPURegs, CPURegs, MOVZ_I_I, XOR>;
+let Predicates = [HasMips64] in {
+  defm : MovzPats0<CPURegs, CPU64Regs, MOVZ_I_I64, SLT, SLTu, SLTi, SLTiu>;
+  defm : MovzPats0<CPU64Regs, CPURegs, MOVZ_I_I, SLT64, SLTu64, SLTi64,
+                   SLTiu64>;
+  defm : MovzPats0<CPU64Regs, CPU64Regs, MOVZ_I_I64, SLT64, SLTu64, SLTi64,
+                   SLTiu64>;
+  defm : MovzPats1<CPURegs, CPU64Regs, MOVZ_I_I64, XOR>;
+  defm : MovzPats1<CPU64Regs, CPURegs, MOVZ_I64_I, XOR64>;
+  defm : MovzPats1<CPU64Regs, CPU64Regs, MOVZ_I64_I64, XOR64>;
 }
 
+defm : MovnPats<CPURegs, CPURegs, MOVN_I_I, XOR>;
+let Predicates = [HasMips64] in {
+  defm : MovnPats<CPURegs, CPU64Regs, MOVN_I_I64, XOR>;
+  defm : MovnPats<CPU64Regs, CPURegs, MOVN_I64_I, XOR64>;
+  defm : MovnPats<CPU64Regs, CPU64Regs, MOVN_I64_I64, XOR64>;
+}
+
+defm : MovzPats0<CPURegs, FGR32, MOVZ_I_S, SLT, SLTu, SLTi, SLTiu>;
+defm : MovzPats1<CPURegs, FGR32, MOVZ_I_S, XOR>;
+defm : MovnPats<CPURegs, FGR32, MOVN_I_S, XOR>;
+let Predicates = [HasMips64] in {
+  defm : MovzPats0<CPU64Regs, FGR32, MOVZ_I_S, SLT64, SLTu64, SLTi64,
+                   SLTiu64>;
+  defm : MovzPats1<CPU64Regs, FGR32, MOVZ_I64_S, XOR64>;
+  defm : MovnPats<CPU64Regs, FGR32, MOVN_I64_S, XOR64>;
+}
+
+let Predicates = [NotFP64bit] in {
+  defm : MovzPats0<CPURegs, AFGR64, MOVZ_I_D32, SLT, SLTu, SLTi, SLTiu>;
+  defm : MovzPats1<CPURegs, AFGR64, MOVZ_I_D32, XOR>;
+  defm : MovnPats<CPURegs, AFGR64, MOVN_I_D32, XOR>;
+}
+let Predicates = [IsFP64bit] in {
+  defm : MovzPats0<CPURegs, FGR64, MOVZ_I_D64, SLT, SLTu, SLTi, SLTiu>;
+  defm : MovzPats0<CPU64Regs, FGR64, MOVZ_I_D64, SLT64, SLTu64, SLTi64,
+                   SLTiu64>;
+  defm : MovzPats1<CPURegs, FGR64, MOVZ_I_D64, XOR>;
+  defm : MovzPats1<CPU64Regs, FGR64, MOVZ_I64_D64, XOR64>;
+  defm : MovnPats<CPURegs, FGR64, MOVN_I_D64, XOR>;
+  defm : MovnPats<CPU64Regs, FGR64, MOVN_I64_D64, XOR64>;
+}

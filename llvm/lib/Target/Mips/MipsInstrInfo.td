@@ -983,6 +983,6 @@ def : Pat<(MipsDynAlloc addr:$f), (DynAlloc addr:$f)>;
 //===----------------------------------------------------------------------===//
 
 include "MipsInstrFPU.td"
-include "MipsCondMov.td"
 include "Mips64InstrInfo.td"
+include "MipsCondMov.td"
 

@@ -708,6 +708,7 @@ static Mips::FPBranchCode GetFPBranchCodeFromCond(Mips::CondCode CC) {
   return Mips::BRANCH_INVALID;
 }
 
+/*
 static MachineBasicBlock* ExpandCondMov(MachineInstr *MI, MachineBasicBlock *BB,
                                         DebugLoc dl,
                                         const MipsSubtarget* Subtarget,
@@ -783,34 +784,16 @@ static MachineBasicBlock* ExpandCondMov(MachineInstr *MI, MachineBasicBlock *BB,
   MI->eraseFromParent();   // The pseudo instruction is gone now.
   return BB;
 }
-
+*/
 MachineBasicBlock *
 MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                 MachineBasicBlock *BB) const {
-  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
   DebugLoc dl = MI->getDebugLoc();
 
   switch (MI->getOpcode()) {
   default:
     assert(false && "Unexpected instr type to insert");
     return NULL;
-  case Mips::MOVT:
-  case Mips::MOVT_S:
-  case Mips::MOVT_D:
-    return ExpandCondMov(MI, BB, dl, Subtarget, TII, true, Mips::BC1F);
-  case Mips::MOVF:
-  case Mips::MOVF_S:
-  case Mips::MOVF_D:
-    return ExpandCondMov(MI, BB, dl, Subtarget, TII, true, Mips::BC1T);
-  case Mips::MOVZ_I:
-  case Mips::MOVZ_S:
-  case Mips::MOVZ_D:
-    return ExpandCondMov(MI, BB, dl, Subtarget, TII, false, Mips::BNE);
-  case Mips::MOVN_I:
-  case Mips::MOVN_S:
-  case Mips::MOVN_D:
-    return ExpandCondMov(MI, BB, dl, Subtarget, TII, false, Mips::BEQ);
-
   case Mips::ATOMIC_LOAD_ADD_I8:
     return EmitAtomicBinaryPartword(MI, BB, 1, Mips::ADDu);
   case Mips::ATOMIC_LOAD_ADD_I16:
