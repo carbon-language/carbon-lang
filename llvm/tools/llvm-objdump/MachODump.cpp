@@ -14,7 +14,7 @@
 #include "llvm-objdump.h"
 #include "MCFunction.h"
 #include "llvm/Support/MachO.h"
-#include "llvm/Object/MachOObject.h"
+#include "llvm/Object/MachO.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/ADT/STLExtras.h"
@@ -85,57 +85,43 @@ static const Target *GetTarget(const MachOObject *MachOObj) {
   return 0;
 }
 
-struct Section {
-  char Name[16];
-  uint64_t Address;
-  uint64_t Size;
-  uint32_t Offset;
-  uint32_t NumRelocs;
-  uint64_t RelocTableOffset;
+struct SymbolSorter {
+  bool operator()(const SymbolRef &A, const SymbolRef &B) {
+    SymbolRef::Type AType, BType;
+    A.getType(AType);
+    B.getType(BType);
+
+    uint64_t AAddr, BAddr;
+    if (AType != SymbolRef::ST_Function)
+      AAddr = 0;
+    else
+      A.getAddress(AAddr);
+    if (BType != SymbolRef::ST_Function)
+      BAddr = 0;
+    else
+      B.getAddress(BAddr);
+    return AAddr < BAddr;
+  }
 };
-
-struct Symbol {
-  uint64_t Value;
-  uint32_t StringIndex;
-  uint8_t SectionIndex;
-  bool operator<(const Symbol &RHS) const { return Value < RHS.Value; }
-};
-
-template <typename T>
-static Section copySection(const T &Sect) {
-  Section S;
-  memcpy(S.Name, Sect->Name, 16);
-  S.Address = Sect->Address;
-  S.Size = Sect->Size;
-  S.Offset = Sect->Offset;
-  S.NumRelocs = Sect->NumRelocationTableEntries;
-  S.RelocTableOffset = Sect->RelocationTableOffset;
-  return S;
-}
-
-template <typename T>
-static Symbol copySymbol(const T &STE) {
-  Symbol S;
-  S.StringIndex = STE->StringIndex;
-  S.SectionIndex = STE->SectionIndex;
-  S.Value = STE->Value;
-  return S;
-}
 
 // Print additional information about an address, if available.
-static void DumpAddress(uint64_t Address, ArrayRef<Section> Sections,
+static void DumpAddress(uint64_t Address, ArrayRef<SectionRef> Sections,
                         MachOObject *MachOObj, raw_ostream &OS) {
   for (unsigned i = 0; i != Sections.size(); ++i) {
-    uint64_t addr = Address-Sections[i].Address;
-    if (Sections[i].Address <= Address &&
-        Sections[i].Address + Sections[i].Size > Address) {
-      StringRef bytes = MachOObj->getData(Sections[i].Offset,
-                                          Sections[i].Size);
+    uint64_t SectAddr = 0, SectSize = 0;
+    Sections[i].getAddress(SectAddr);
+    Sections[i].getSize(SectSize);
+    uint64_t addr = SectAddr;
+    if (SectAddr <= Address &&
+        SectAddr + SectSize > Address) {
+      StringRef bytes, name;
+      Sections[i].getContents(bytes);
+      Sections[i].getName(name);
       // Print constant strings.
-      if (!strcmp(Sections[i].Name, "__cstring"))
+      if (!name.compare("__cstring"))
         OS << '"' << bytes.substr(addr, bytes.find('\0', addr)) << '"';
       // Print constant CFStrings.
-      if (!strcmp(Sections[i].Name, "__cfstring"))
+      if (!name.compare("__cfstring"))
         OS << "@\"" << bytes.substr(addr, bytes.find('\0', addr)) << '"';
     }
   }
@@ -212,59 +198,34 @@ static void emitDOTFile(const char *FileName, const MCFunction &f,
 }
 
 static void getSectionsAndSymbols(const macho::Header &Header,
-                                  MachOObject *MachOObj,
+                                  MachOObjectFile *MachOObj,
                              InMemoryStruct<macho::SymtabLoadCommand> *SymtabLC,
-                                  std::vector<Section> &Sections,
-                                  std::vector<Symbol> &Symbols,
+                                  std::vector<SectionRef> &Sections,
+                                  std::vector<SymbolRef> &Symbols,
                                   SmallVectorImpl<uint64_t> &FoundFns) {
-  // Make a list of all symbols in the object file.
+  error_code ec;
+  for (symbol_iterator SI = MachOObj->begin_symbols(),
+       SE = MachOObj->end_symbols(); SI != SE; SI.increment(ec))
+    Symbols.push_back(*SI);
+
+  for (section_iterator SI = MachOObj->begin_sections(),
+       SE = MachOObj->end_sections(); SI != SE; SI.increment(ec)) {
+    SectionRef SR = *SI;
+    StringRef SectName;
+    SR.getName(SectName);
+    Sections.push_back(*SI);
+  }
+
   for (unsigned i = 0; i != Header.NumLoadCommands; ++i) {
-    const MachOObject::LoadCommandInfo &LCI = MachOObj->getLoadCommandInfo(i);
-    if (LCI.Command.Type == macho::LCT_Segment) {
-      InMemoryStruct<macho::SegmentLoadCommand> SegmentLC;
-      MachOObj->ReadSegmentLoadCommand(LCI, SegmentLC);
-
-      // Store the sections in this segment.
-      for (unsigned SectNum = 0; SectNum != SegmentLC->NumSections; ++SectNum) {
-        InMemoryStruct<macho::Section> Sect;
-        MachOObj->ReadSection(LCI, SectNum, Sect);
-        Sections.push_back(copySection(Sect));
-
-      }
-    } else if (LCI.Command.Type == macho::LCT_Segment64) {
-      InMemoryStruct<macho::Segment64LoadCommand> Segment64LC;
-      MachOObj->ReadSegment64LoadCommand(LCI, Segment64LC);
-
-      // Store the sections in this segment.
-      for (unsigned SectNum = 0; SectNum != Segment64LC->NumSections;
-          ++SectNum) {
-        InMemoryStruct<macho::Section64> Sect64;
-        MachOObj->ReadSection64(LCI, SectNum, Sect64);
-        Sections.push_back(copySection(Sect64));
-      }
-    } else if (LCI.Command.Type == macho::LCT_FunctionStarts) {
+    const MachOObject::LoadCommandInfo &LCI =
+       MachOObj->getObject()->getLoadCommandInfo(i);
+    if (LCI.Command.Type == macho::LCT_FunctionStarts) {
       // We found a function starts segment, parse the addresses for later
       // consumption.
       InMemoryStruct<macho::LinkeditDataLoadCommand> LLC;
-      MachOObj->ReadLinkeditDataLoadCommand(LCI, LLC);
+      MachOObj->getObject()->ReadLinkeditDataLoadCommand(LCI, LLC);
 
-      MachOObj->ReadULEB128s(LLC->DataOffset, FoundFns);
-    }
-  }
-  // Store the symbols.
-  if (SymtabLC) {
-    for (unsigned i = 0; i != (*SymtabLC)->NumSymbolTableEntries; ++i) {
-      if (MachOObj->is64Bit()) {
-        InMemoryStruct<macho::Symbol64TableEntry> STE;
-        MachOObj->ReadSymbol64TableEntry((*SymtabLC)->SymbolTableOffset, i,
-                                         STE);
-        Symbols.push_back(copySymbol(STE));
-      } else {
-        InMemoryStruct<macho::SymbolTableEntry> STE;
-        MachOObj->ReadSymbolTableEntry((*SymtabLC)->SymbolTableOffset, i,
-                                       STE);
-        Symbols.push_back(copySymbol(STE));
-      }
+      MachOObj->getObject()->ReadULEB128s(LLC->DataOffset, FoundFns);
     }
   }
 }
@@ -277,9 +238,11 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
     return;
   }
 
-  OwningPtr<MachOObject> MachOObj(MachOObject::LoadFromBuffer(Buff.take()));
+  OwningPtr<MachOObjectFile> MachOOF(static_cast<MachOObjectFile*>(
+        ObjectFile::createMachOObjectFile(Buff.take())));
+  MachOObject *MachOObj = MachOOF->getObject();
 
-  const Target *TheTarget = GetTarget(MachOObj.get());
+  const Target *TheTarget = GetTarget(MachOObj);
   if (!TheTarget) {
     // GetTarget prints out stuff.
     return;
@@ -322,17 +285,17 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
   MachOObj->ReadSymtabLoadCommand(*SymtabLCI, SymtabLC);
   MachOObj->RegisterStringTable(*SymtabLC);
 
-  std::vector<Section> Sections;
-  std::vector<Symbol> Symbols;
+  std::vector<SectionRef> Sections;
+  std::vector<SymbolRef> Symbols;
   SmallVector<uint64_t, 8> FoundFns;
 
-  getSectionsAndSymbols(Header, MachOObj.get(), &SymtabLC, Sections, Symbols,
+  getSectionsAndSymbols(Header, MachOOF.get(), &SymtabLC, Sections, Symbols,
                         FoundFns);
 
   // Make a copy of the unsorted symbol list. FIXME: duplication
-  std::vector<Symbol> UnsortedSymbols(Symbols);
+  std::vector<SymbolRef> UnsortedSymbols(Symbols);
   // Sort the symbols by address, just in case they didn't come in that way.
-  array_pod_sort(Symbols.begin(), Symbols.end());
+  std::sort(Symbols.begin(), Symbols.end(), SymbolSorter());
 
 #ifndef NDEBUG
   raw_ostream &DebugOut = DebugFlag ? dbgs() : nulls();
@@ -343,12 +306,12 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
   StringRef DebugAbbrevSection, DebugInfoSection, DebugArangesSection,
             DebugLineSection, DebugStrSection;
   OwningPtr<DIContext> diContext;
-  OwningPtr<MachOObject> DSYMObj;
-  MachOObject *DbgInfoObj = MachOObj.get();
+  OwningPtr<MachOObjectFile> DSYMObj;
+  MachOObject *DbgInfoObj = MachOObj;
   // Try to find debug info and set up the DIContext for it.
   if (UseDbg) {
-    ArrayRef<Section> DebugSections = Sections;
-    std::vector<Section> DSYMSections;
+    ArrayRef<SectionRef> DebugSections = Sections;
+    std::vector<SectionRef> DSYMSections;
 
     // A separate DSym file path was specified, parse it as a macho file,
     // get the sections and supply it to the section name parsing machinery.
@@ -358,34 +321,33 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
         errs() << "llvm-objdump: " << Filename << ": " << ec.message() << '\n';
         return;
       }
-      DSYMObj.reset(MachOObject::LoadFromBuffer(Buf.take()));
-      const macho::Header &Header = DSYMObj->getHeader();
+      DSYMObj.reset(static_cast<MachOObjectFile*>(
+            ObjectFile::createMachOObjectFile(Buf.take())));
+      const macho::Header &Header = DSYMObj->getObject()->getHeader();
 
-      std::vector<Symbol> Symbols;
+      std::vector<SymbolRef> Symbols;
       SmallVector<uint64_t, 8> FoundFns;
       getSectionsAndSymbols(Header, DSYMObj.get(), 0, DSYMSections, Symbols,
                             FoundFns);
       DebugSections = DSYMSections;
-      DbgInfoObj = DSYMObj.get();
+      DbgInfoObj = DSYMObj.get()->getObject();
     }
 
     // Find the named debug info sections.
     for (unsigned SectIdx = 0; SectIdx != DebugSections.size(); SectIdx++) {
-      if (!strcmp(DebugSections[SectIdx].Name, "__debug_abbrev"))
-        DebugAbbrevSection = DbgInfoObj->getData(DebugSections[SectIdx].Offset,
-                                                 DebugSections[SectIdx].Size);
-      else if (!strcmp(DebugSections[SectIdx].Name, "__debug_info"))
-        DebugInfoSection = DbgInfoObj->getData(DebugSections[SectIdx].Offset,
-                                               DebugSections[SectIdx].Size);
-      else if (!strcmp(DebugSections[SectIdx].Name, "__debug_aranges"))
-        DebugArangesSection = DbgInfoObj->getData(DebugSections[SectIdx].Offset,
-                                                  DebugSections[SectIdx].Size);
-      else if (!strcmp(DebugSections[SectIdx].Name, "__debug_line"))
-        DebugLineSection = DbgInfoObj->getData(DebugSections[SectIdx].Offset,
-                                               DebugSections[SectIdx].Size);
-      else if (!strcmp(DebugSections[SectIdx].Name, "__debug_str"))
-        DebugStrSection = DbgInfoObj->getData(DebugSections[SectIdx].Offset,
-                                              DebugSections[SectIdx].Size);
+      StringRef SectName;
+      if (!DebugSections[SectIdx].getName(SectName)) {
+        if (SectName.equals("__DWARF,__debug_abbrev"))
+          DebugSections[SectIdx].getContents(DebugAbbrevSection);
+        else if (SectName.equals("__DWARF,__debug_info"))
+          DebugSections[SectIdx].getContents(DebugInfoSection);
+        else if (SectName.equals("__DWARF,__debug_aranges"))
+          DebugSections[SectIdx].getContents(DebugArangesSection);
+        else if (SectName.equals("__DWARF,__debug_line"))
+          DebugSections[SectIdx].getContents(DebugLineSection);
+        else if (SectName.equals("__DWARF,__debug_str"))
+          DebugSections[SectIdx].getContents(DebugStrSection);
+      }
     }
 
     // Setup the DIContext.
@@ -401,68 +363,111 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
   FunctionListTy Functions;
 
   for (unsigned SectIdx = 0; SectIdx != Sections.size(); SectIdx++) {
-    if (strcmp(Sections[SectIdx].Name, "__text"))
+    StringRef SectName;
+    if (Sections[SectIdx].getName(SectName) ||
+        SectName.compare("__TEXT,__text"))
       continue; // Skip non-text sections
 
     // Insert the functions from the function starts segment into our map.
-    uint64_t VMAddr = Sections[SectIdx].Address - Sections[SectIdx].Offset;
-    for (unsigned i = 0, e = FoundFns.size(); i != e; ++i)
-      FunctionMap.insert(std::make_pair(FoundFns[i]+VMAddr, (MCFunction*)0));
+    uint64_t VMAddr;
+    Sections[SectIdx].getAddress(VMAddr);
+    for (unsigned i = 0, e = FoundFns.size(); i != e; ++i) {
+      StringRef SectBegin;
+      Sections[SectIdx].getContents(SectBegin);
+      uint64_t Offset = (uint64_t)SectBegin.data();
+      FunctionMap.insert(std::make_pair(VMAddr + FoundFns[i]-Offset,
+                                        (MCFunction*)0));
+    }
 
-    StringRef Bytes = MachOObj->getData(Sections[SectIdx].Offset,
-                                        Sections[SectIdx].Size);
+    StringRef Bytes;
+    Sections[SectIdx].getContents(Bytes);
     StringRefMemoryObject memoryObject(Bytes);
     bool symbolTableWorked = false;
 
     // Parse relocations.
     std::vector<std::pair<uint64_t, uint32_t> > Relocs;
-    for (unsigned j = 0; j != Sections[SectIdx].NumRelocs; ++j) {
-      InMemoryStruct<macho::RelocationEntry> RE;
-      MachOObj->ReadRelocationEntry(Sections[SectIdx].RelocTableOffset, j, RE);
-      Relocs.push_back(std::make_pair(RE->Word0, RE->Word1 & 0xffffff));
+    error_code ec;
+    for (relocation_iterator RI = Sections[SectIdx].begin_relocations(),
+         RE = Sections[SectIdx].end_relocations(); RI != RE; RI.increment(ec)) {
+      uint64_t RelocOffset, SectionAddress;
+      RI->getAddress(RelocOffset);
+      Sections[SectIdx].getAddress(SectionAddress);
+      RelocOffset -= SectionAddress;
+
+      uint32_t RelocInfo;
+      RI->getType(RelocInfo);
+
+      Relocs.push_back(std::make_pair(RelocOffset, RelocInfo));
     }
     array_pod_sort(Relocs.begin(), Relocs.end());
 
     // Disassemble symbol by symbol.
     for (unsigned SymIdx = 0; SymIdx != Symbols.size(); SymIdx++) {
+      StringRef SymName;
+      Symbols[SymIdx].getName(SymName);
+
+      SymbolRef::Type ST;
+      Symbols[SymIdx].getType(ST);
+      if (ST != SymbolRef::ST_Function)
+        continue;
+
       // Make sure the symbol is defined in this section.
-      if ((unsigned)Symbols[SymIdx].SectionIndex - 1 != SectIdx)
+      bool containsSym = false;
+      Sections[SectIdx].containsSymbol(Symbols[SymIdx], containsSym);
+      if (!containsSym)
         continue;
 
       // Start at the address of the symbol relative to the section's address.
-      uint64_t Start = Symbols[SymIdx].Value - Sections[SectIdx].Address;
+      uint64_t Start = 0;
+      Symbols[SymIdx].getOffset(Start);
+
       // Stop disassembling either at the beginning of the next symbol or at
       // the end of the section.
-      uint64_t End = (SymIdx+1 == Symbols.size() ||
-          Symbols[SymIdx].SectionIndex != Symbols[SymIdx+1].SectionIndex) ?
-          Sections[SectIdx].Size :
-          Symbols[SymIdx+1].Value - Sections[SectIdx].Address;
-      uint64_t Size;
+      bool containsNextSym = true;
+      uint64_t NextSym = 0;
+      uint64_t NextSymIdx = SymIdx+1;
+      while (Symbols.size() > NextSymIdx) {
+        SymbolRef::Type NextSymType;
+        Symbols[NextSymIdx].getType(NextSymType);
+        if (NextSymType == SymbolRef::ST_Function) {
+          Sections[SectIdx].containsSymbol(Symbols[NextSymIdx],
+                                           containsNextSym);
+          Symbols[NextSymIdx].getOffset(NextSym);
+          break;
+        }
+        ++NextSymIdx;
+      }
 
-      if (Start >= End)
-        continue;
+      uint64_t SectSize;
+      Sections[SectIdx].getSize(SectSize);
+      uint64_t End = containsNextSym ?  NextSym : SectSize;
+      uint64_t Size;
 
       symbolTableWorked = true;
 
       if (!CFG) {
         // Normal disassembly, print addresses, bytes and mnemonic form.
-        outs() << MachOObj->getStringAtIndex(Symbols[SymIdx].StringIndex)
-          << ":\n";
+        StringRef SymName;
+        Symbols[SymIdx].getName(SymName);
+
+        outs() << SymName << ":\n";
         DILineInfo lastLine;
         for (uint64_t Index = Start; Index < End; Index += Size) {
           MCInst Inst;
 
           if (DisAsm->getInstruction(Inst, Size, memoryObject, Index,
                                      DebugOut, nulls())) {
-            outs() << format("%8llx:\t", Sections[SectIdx].Address + Index);
+            uint64_t SectAddress = 0;
+            Sections[SectIdx].getAddress(SectAddress);
+            outs() << format("%8llx:\t", SectAddress + Index);
+
             DumpBytes(StringRef(Bytes.data() + Index, Size));
             IP->printInst(&Inst, outs(), "");
 
             // Print debug info.
             if (diContext) {
               DILineInfo dli =
-                diContext->getLineInfoForAddress(Sections[SectIdx].Address +
-                                                 Index);
+                diContext->getLineInfoForAddress(SectAddress + Index);
               // Print valid line info if it changed.
               if (dli != lastLine && dli.getLine() != 0)
                 outs() << "\t## " << dli.getFileName() << ':'
@@ -478,20 +483,24 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
         }
       } else {
         // Create CFG and use it for disassembly.
+        StringRef SymName;
+        Symbols[SymIdx].getName(SymName);
         createMCFunctionAndSaveCalls(
-            MachOObj->getStringAtIndex(Symbols[SymIdx].StringIndex),
-            DisAsm.get(), memoryObject, Start, End, InstrAnalysis.get(),
-            Start, DebugOut, FunctionMap, Functions);
+            SymName, DisAsm.get(), memoryObject, Start, End,
+            InstrAnalysis.get(), Start, DebugOut, FunctionMap, Functions);
       }
     }
 
     if (CFG) {
       if (!symbolTableWorked) {
         // Reading the symbol table didn't work, create a big __TEXT symbol.
+        uint64_t SectSize = 0, SectAddress = 0;
+        Sections[SectIdx].getSize(SectSize);
+        Sections[SectIdx].getAddress(SectAddress);
         createMCFunctionAndSaveCalls("__TEXT", DisAsm.get(), memoryObject,
-                                     0, Sections[SectIdx].Size,
+                                     0, SectSize,
                                      InstrAnalysis.get(),
-                                     Sections[SectIdx].Offset, DebugOut,
+                                     SectAddress, DebugOut,
                                      FunctionMap, Functions);
       }
       for (std::map<uint64_t, MCFunction*>::iterator mi = FunctionMap.begin(),
@@ -499,11 +508,14 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
         if (mi->second == 0) {
           // Create functions for the remaining callees we have gathered,
           // but we didn't find a name for them.
+          uint64_t SectSize = 0;
+          Sections[SectIdx].getSize(SectSize);
+
           SmallVector<uint64_t, 16> Calls;
           MCFunction f =
             MCFunction::createFunctionFromMC("unknown", DisAsm.get(),
                                              memoryObject, mi->first,
-                                             Sections[SectIdx].Size,
+                                             SectSize,
                                              InstrAnalysis.get(), DebugOut,
                                              Calls);
           Functions.push_back(f);
@@ -535,13 +547,17 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
               break;
             }
 
+          uint64_t SectSize = 0, SectAddress;
+          Sections[SectIdx].getSize(SectSize);
+          Sections[SectIdx].getAddress(SectAddress);
+
           // No predecessors, this is a data block. Print as .byte directives.
           if (!hasPreds) {
-            uint64_t End = llvm::next(fi) == fe ? Sections[SectIdx].Size :
+            uint64_t End = llvm::next(fi) == fe ? SectSize :
                                                   llvm::next(fi)->first;
             outs() << "# " << End-fi->first << " bytes of data:\n";
             for (unsigned pos = fi->first; pos != End; ++pos) {
-              outs() << format("%8x:\t", Sections[SectIdx].Address + pos);
+              outs() << format("%8x:\t", SectAddress + pos);
               DumpBytes(StringRef(Bytes.data() + pos, 1));
               outs() << format("\t.byte 0x%02x\n", (uint8_t)Bytes[pos]);
             }
@@ -558,13 +574,12 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
             const MCDecodedInst &Inst = fi->second.getInsts()[ii];
 
             // If there's a symbol at this address, print its name.
-            if (FunctionMap.find(Sections[SectIdx].Address + Inst.Address) !=
+            if (FunctionMap.find(SectAddress + Inst.Address) !=
                 FunctionMap.end())
-              outs() << FunctionMap[Sections[SectIdx].Address + Inst.Address]->
-                                                             getName() << ":\n";
+              outs() << FunctionMap[SectAddress + Inst.Address]-> getName()
+                     << ":\n";
 
-            outs() << format("%8llx:\t", Sections[SectIdx].Address +
-                                         Inst.Address);
+            outs() << format("%8llx:\t", SectAddress + Inst.Address);
             DumpBytes(StringRef(Bytes.data() + Inst.Address, Inst.Size));
 
             if (fi->second.contains(fi->first)) // Indent simple loops.
@@ -575,15 +590,15 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
             // Look for relocations inside this instructions, if there is one
             // print its target and additional information if available.
             for (unsigned j = 0; j != Relocs.size(); ++j)
-              if (Relocs[j].first >= Sections[SectIdx].Address + Inst.Address &&
-                  Relocs[j].first < Sections[SectIdx].Address + Inst.Address +
-                                    Inst.Size) {
-                outs() << "\t# "
-                   << MachOObj->getStringAtIndex(
-                                  UnsortedSymbols[Relocs[j].second].StringIndex)
-                   << ' ';
-                DumpAddress(UnsortedSymbols[Relocs[j].second].Value, Sections,
-                            MachOObj.get(), outs());
+              if (Relocs[j].first >= SectAddress + Inst.Address &&
+                  Relocs[j].first < SectAddress + Inst.Address + Inst.Size) {
+                StringRef SymName;
+                uint64_t Addr;
+                UnsortedSymbols[Relocs[j].second].getName(SymName);
+                UnsortedSymbols[Relocs[j].second].getAddress(Addr);
+
+                outs() << "\t# " << SymName << ' ';
+                DumpAddress(Addr, Sections, MachOObj, outs());
               }
 
             // If this instructions contains an address, see if we can evaluate
@@ -592,13 +607,12 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
                                                           Inst.Address,
                                                           Inst.Size);
             if (targ != -1ULL)
-              DumpAddress(targ, Sections, MachOObj.get(), outs());
+              DumpAddress(targ, Sections, MachOObj, outs());
 
             // Print debug info.
             if (diContext) {
               DILineInfo dli =
-                diContext->getLineInfoForAddress(Sections[SectIdx].Address +
-                                                 Inst.Address);
+                diContext->getLineInfoForAddress(SectAddress + Inst.Address);
               // Print valid line info if it changed.
               if (dli != lastLine && dli.getLine() != 0)
                 outs() << "\t## " << dli.getFileName() << ':'
