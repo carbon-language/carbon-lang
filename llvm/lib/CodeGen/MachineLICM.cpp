@@ -762,6 +762,21 @@ void MachineLICM::UpdateRegPressure(const MachineInstr *MI) {
   }
 }
 
+/// isLoadFromGOT - Return true if this machine instruction loads from
+/// global offset table.
+static bool isLoadFromGOT(MachineInstr &MI) {
+  assert (MI.getDesc().mayLoad() && "Expected MI that loads!");
+  for (MachineInstr::mmo_iterator I = MI.memoperands_begin(),
+	 E = MI.memoperands_end(); I != E; ++I) {
+    if (const Value *V = (*I)->getValue()) {
+      if (const PseudoSourceValue *PSV = dyn_cast<PseudoSourceValue>(V))
+        if (PSV == PSV->getGOT())
+	  return true;
+    }
+  }
+  return false;
+}
+
 /// IsLICMCandidate - Returns true if the instruction may be a suitable
 /// candidate for LICM. e.g. If the instruction is a call, then it's obviously
 /// not safe to hoist it.
@@ -775,7 +790,8 @@ bool MachineLICM::IsLICMCandidate(MachineInstr &I) {
   // it dominates all exiting blocks. If it doesn't, then there is a path out of
   // the loop which does not execute this load, so we can't hoist it.
   // Stores and side effects are already checked by isSafeToMove.
-  if (I.getDesc().mayLoad() && !IsGuaranteedToExecute(I.getParent()))
+  if (I.getDesc().mayLoad() && !isLoadFromGOT(I) && 
+      !IsGuaranteedToExecute(I.getParent()))
     return false;
 
   return true;
