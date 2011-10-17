@@ -18,3 +18,5 @@ def fuzz_obj(obj):
     obj.GetIgnoreCount()
     obj.SetIgnoreCount(5)
     obj.GetDescription(lldb.SBStream(), lldb.eDescriptionLevelVerbose)
+    obj.SetCondition("shouldWeStop()")
+    obj.GetCondition()
