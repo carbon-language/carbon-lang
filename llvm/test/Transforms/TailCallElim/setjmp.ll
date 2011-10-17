@@ -1,5 +1,4 @@
 ; RUN: opt < %s -tailcallelim -S | FileCheck %s
-; XFAIL: *
 
 ; Test that we don't tail call in a functions that calls returns_twice
 ; functions.

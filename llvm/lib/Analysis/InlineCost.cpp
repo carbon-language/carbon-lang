@@ -229,7 +229,7 @@ void CodeMetrics::analyzeFunction(Function *F, const TargetData *TD) {
   // _setjmp), never inline it. This is a hack because we depend on the user
   // marking their local variables as volatile if they are live across a setjmp
   // call, and they probably won't do this in callers.
-  callsSetJmp = F->hasFnAttr(Attribute::ReturnsTwice);
+  callsSetJmp = F->callsFunctionThatReturnsTwice();
 
   // Look at the size of the callee.
   for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E; ++BB)

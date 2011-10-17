@@ -411,4 +411,19 @@ bool Function::hasAddressTaken(const User* *PutOffender) const {
   return false;
 }
 
+/// callsFunctionThatReturnsTwice - Return true if the function has a call to
+/// setjmp or other function that gcc recognizes as "returning twice".
+bool Function::callsFunctionThatReturnsTwice() const {
+  for (const_inst_iterator
+         I = inst_begin(this), E = inst_end(this); I != E; ++I) {
+    const CallInst* callInst = dyn_cast<CallInst>(&*I);
+    if (!callInst)
+      continue;
+    if (callInst->canReturnTwice())
+      return true;
+  }
+
+  return false;
+}
+
 // vim: sw=2 ai

@@ -213,7 +213,7 @@ bool TailCallElim::runOnFunction(Function &F) {
   // Finally, if this function contains no non-escaping allocas, or calls
   // setjmp, mark all calls in the function as eligible for tail calls
   //(there is no stack memory for them to access).
-  if (!FunctionContainsEscapingAllocas && !F.hasFnAttr(Attribute::ReturnsTwice))
+  if (!FunctionContainsEscapingAllocas && !F.callsFunctionThatReturnsTwice())
     for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
       for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
         if (CallInst *CI = dyn_cast<CallInst>(I)) {
