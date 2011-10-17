@@ -126,22 +126,16 @@ bool X86_MC::GetCpuIDAndInfoEx(unsigned value, unsigned subleaf, unsigned *rEAX,
             "c" (subleaf));
     return false;
   #elif defined(_MSC_VER)
-    // can't use __cpuidex because it isn't available in all supported versions
-    // of MSC
-    __asm {
-      mov   eax,value
-      mov   ecx,subleaf
-      cpuid
-      mov   rsi,rEAX
-      mov   dword ptr [rsi],eax
-      mov   rsi,rEBX
-      mov   dword ptr [rsi],ebx
-      mov   rsi,rECX
-      mov   dword ptr [rsi],ecx
-      mov   rsi,rEDX
-      mov   dword ptr [rsi],edx
-    }
-    return false;
+    // __cpuidex was added in MSVC++ 9.0 SP1
+    #if (_MSC_VER > 1500) || (_MSC_VER == 1500 && _MSC_FULL_VER >= 150030729)
+      int registers[4];
+      __cpuidex(registers, value, subleaf);
+      *rEAX = registers[0];
+      *rEBX = registers[1];
+      *rECX = registers[2];
+      *rEDX = registers[3];
+      return false;
+    #endif
   #endif
 #elif defined(i386) || defined(__i386__) || defined(__x86__) || defined(_M_IX86)
   #if defined(__GNUC__)

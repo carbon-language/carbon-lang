@@ -278,14 +278,15 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
   }
 
   if (IsIntel && MaxLevel >= 7) {
-    X86_MC::GetCpuIDAndInfoEx(0x7, 0x0, &EAX, &EBX, &ECX, &EDX);
-    if ((EBX >> 3) & 0x1) {
-      HasBMI = true;
-      ToggleFeature(X86::FeatureBMI);
-    }
-    if ((EBX >> 8) & 0x1) {
-      HasBMI2 = true;
-      ToggleFeature(X86::FeatureBMI2);
+    if (!X86_MC::GetCpuIDAndInfoEx(0x7, 0x0, &EAX, &EBX, &ECX, &EDX)) {
+      if ((EBX >> 3) & 0x1) {
+        HasBMI = true;
+        ToggleFeature(X86::FeatureBMI);
+      }
+      if ((EBX >> 8) & 0x1) {
+        HasBMI2 = true;
+        ToggleFeature(X86::FeatureBMI2);
+      }
     }
   }
 }
