@@ -1234,16 +1234,6 @@ static DecodeStatus DecodeCopMemInstruction(llvm::MCInst &Inst, unsigned Insn,
   if (!Check(S, DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)))
     return MCDisassembler::Fail;
 
-  unsigned P = fieldFromInstruction32(Insn, 24, 1);
-  unsigned W = fieldFromInstruction32(Insn, 21, 1);
-
-  bool writeback = (P == 0) || (W == 1);
-  unsigned idx_mode = 0;
-  if (P && writeback)
-    idx_mode = ARMII::IndexModePre;
-  else if (!P && writeback)
-    idx_mode = ARMII::IndexModePost;
-
   switch (Inst.getOpcode()) {
     case ARM::t2LDC2_OFFSET:
     case ARM::t2LDC2L_OFFSET:

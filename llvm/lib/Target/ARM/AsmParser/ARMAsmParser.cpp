@@ -1827,7 +1827,6 @@ int ARMAsmParser::tryParseRegister() {
     Parser.Lex(); // Eat left bracket token.
 
     const MCExpr *ImmVal;
-    SMLoc ExprLoc = Parser.getTok().getLoc();
     if (getParser().ParseExpression(ImmVal))
       return MatchOperand_ParseFail;
     const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(ImmVal);
@@ -1976,7 +1975,6 @@ tryParseRegisterWithWriteBack(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     Parser.Lex(); // Eat left bracket token.
 
     const MCExpr *ImmVal;
-    SMLoc ExprLoc = Parser.getTok().getLoc();
     if (getParser().ParseExpression(ImmVal))
       return MatchOperand_ParseFail;
     const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(ImmVal);
