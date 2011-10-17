@@ -123,6 +123,7 @@ public:
   void dump() const;
 };
 
+template <> struct isPodLike<MCOperand> { static const bool value = true; };
 
 /// MCInst - Instances of this class represent a single low-level machine
 /// instruction.
