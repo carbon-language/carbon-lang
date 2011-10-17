@@ -14,7 +14,7 @@
 
 set -e                          # Exit if any command fails
 
-projects="llvm cfe dragonegg test-suite compiler-rt libcxx libcxxabi"
+projects="llvm cfe dragonegg test-suite"
 
 # Base SVN URL for the sources.
 Base_url="http://llvm.org/svn/llvm-project"
@@ -268,7 +268,7 @@ function test_llvmCore() {
     make check-all \
         2>&1 | tee $LogDir/llvm.check-Phase$Phase-$Flavor.log
     make unittests \
-        2>&1 | tee $LogDir/llvm.unittests--Phase$Phase-$Flavor.log
+        2>&1 | tee $LogDir/llvm.unittests-Phase$Phase-$Flavor.log
     cd $BuildDir
 }
 
