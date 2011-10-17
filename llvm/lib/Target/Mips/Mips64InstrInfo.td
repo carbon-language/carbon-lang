@@ -57,19 +57,6 @@ class Mult64<bits<6> func, string instr_asm, InstrItinClass itin>:
 class Div64<SDNode op, bits<6> func, string instr_asm, InstrItinClass itin>:
   Div<op, func, instr_asm, itin, CPU64Regs, [HI64, LO64]>;
 
-// Move from Hi/Lo
-let shamt = 0 in {
-let rs = 0, rt = 0 in
-class MoveFromLOHI64<bits<6> func, string instr_asm>:
-  FR<0x00, func, (outs CPU64Regs:$dst), (ins),
-     !strconcat(instr_asm, "\t$dst"), [], IIHiLo>;
-
-let rt = 0, rd = 0 in
-class MoveToLOHI64<bits<6> func, string instr_asm>:
-  FR<0x00, func, (outs), (ins CPU64Regs:$src),
-     !strconcat(instr_asm, "\t$src"), [], IIHiLo>;
-}
-
 // Count Leading Ones/Zeros in Word
 class CountLeading64<bits<6> func, string instr_asm, list<dag> pattern>:
   FR<0x1c, func, (outs CPU64Regs:$dst), (ins CPU64Regs:$src),
@@ -157,15 +144,10 @@ def DMULTu   : Mult64<0x1d, "dmultu", IIImul>;
 def DSDIV    : Div64<MipsDivRem, 0x1e, "ddiv", IIIdiv>;
 def DUDIV    : Div64<MipsDivRemU, 0x1f, "ddivu", IIIdiv>;
 
-let Defs = [HI64] in
-  def MTHI64  : MoveToLOHI64<0x11, "mthi">;
-let Defs = [LO64] in
-  def MTLO64  : MoveToLOHI64<0x13, "mtlo">;
-
-let Uses = [HI64] in
-  def MFHI64  : MoveFromLOHI64<0x10, "mfhi">;
-let Uses = [LO64] in
-  def MFLO64  : MoveFromLOHI64<0x12, "mflo">;
+def MTHI64 : MoveToLOHI<0x11, "mthi", CPU64Regs, [HI64]>;
+def MTLO64 : MoveToLOHI<0x13, "mtlo", CPU64Regs, [LO64]>;
+def MFHI64 : MoveFromLOHI<0x10, "mfhi", CPU64Regs, [HI64]>;
+def MFLO64 : MoveFromLOHI<0x12, "mflo", CPU64Regs, [LO64]>;
 
 /// Count Leading
 def DCLZ : CountLeading64<0x24, "dclz",

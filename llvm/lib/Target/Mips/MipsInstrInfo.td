@@ -488,20 +488,24 @@ class Div32<SDNode op, bits<6> func, string instr_asm, InstrItinClass itin>:
   Div<op, func, instr_asm, itin, CPURegs, [HI, LO]>;
 
 // Move from Hi/Lo
-class MoveFromLOHI<bits<6> func, string instr_asm>:
-  FR<0x00, func, (outs CPURegs:$rd), (ins),
+class MoveFromLOHI<bits<6> func, string instr_asm, RegisterClass RC,
+                   list<Register> UseRegs>:
+  FR<0x00, func, (outs RC:$rd), (ins),
      !strconcat(instr_asm, "\t$rd"), [], IIHiLo> {
   let rs = 0;
   let rt = 0;
   let shamt = 0;
+  let Uses = UseRegs;
 }
 
-class MoveToLOHI<bits<6> func, string instr_asm>:
-  FR<0x00, func, (outs), (ins CPURegs:$rs),
+class MoveToLOHI<bits<6> func, string instr_asm, RegisterClass RC,
+                 list<Register> DefRegs>:
+  FR<0x00, func, (outs), (ins RC:$rs),
      !strconcat(instr_asm, "\t$rs"), [], IIHiLo> {
   let rt = 0;
   let rd = 0;
   let shamt = 0;
+  let Defs = DefRegs;
 }
 
 class EffectiveAddress<string instr_asm> :
@@ -739,15 +743,10 @@ def MULTu   : Mult32<0x19, "multu", IIImul>;
 def SDIV    : Div32<MipsDivRem, 0x1a, "div", IIIdiv>;
 def UDIV    : Div32<MipsDivRemU, 0x1b, "divu", IIIdiv>;
 
-let Defs = [HI] in
-  def MTHI  : MoveToLOHI<0x11, "mthi">;
-let Defs = [LO] in
-  def MTLO  : MoveToLOHI<0x13, "mtlo">;
-
-let Uses = [HI] in
-  def MFHI  : MoveFromLOHI<0x10, "mfhi">;
-let Uses = [LO] in
-  def MFLO  : MoveFromLOHI<0x12, "mflo">;
+def MTHI : MoveToLOHI<0x11, "mthi", CPURegs, [HI]>;
+def MTLO : MoveToLOHI<0x13, "mtlo", CPURegs, [LO]>;
+def MFHI : MoveFromLOHI<0x10, "mfhi", CPURegs, [HI]>;
+def MFLO : MoveFromLOHI<0x12, "mflo", CPURegs, [LO]>;
 
 /// Sign Ext In Register Instructions.
 def SEB : SignExtInReg<0x10, "seb", i8>;
