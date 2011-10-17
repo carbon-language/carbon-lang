@@ -18,6 +18,7 @@
 #include "llvm/Object/Archive.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -59,6 +60,9 @@ Disassembled("d", cl::desc("Alias for --disassemble"),
 
 static cl::opt<bool>
 Relocations("r", cl::desc("Display the relocation entries in the file"));
+
+static cl::opt<bool>
+SectionContents("s", cl::desc("Display the content of each section"));
 
 static cl::opt<bool>
 MachO("macho", cl::desc("Use MachO specific object file parser"));
@@ -157,10 +161,6 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
     // GetTarget prints out stuff.
     return;
   }
-
-  outs() << '\n';
-  outs() << Obj->getFileName()
-         << ":\tfile format " << Obj->getFileFormatName() << "\n\n";
 
   error_code ec;
   for (section_iterator i = Obj->begin_sections(),
@@ -370,13 +370,60 @@ static void PrintSectionHeaders(const ObjectFile *o) {
   }
 }
 
+static void PrintSectionContents(const ObjectFile *o) {
+  error_code ec;
+  for (section_iterator si = o->begin_sections(),
+                        se = o->end_sections();
+                        si != se; si.increment(ec)) {
+    if (error(ec)) return;
+    StringRef Name;
+    StringRef Contents;
+    uint64_t BaseAddr;
+    if (error(si->getName(Name))) continue;
+    if (error(si->getContents(Contents))) continue;
+    if (error(si->getAddress(BaseAddr))) continue;
+
+    outs() << "Contents of section " << Name << ":\n";
+
+    // Dump out the content as hex and printable ascii characters.
+    for (std::size_t addr = 0, end = Contents.size(); addr < end; addr += 16) {
+      outs() << format(" %04x ", BaseAddr + addr);
+      // Dump line of hex.
+      for (std::size_t i = 0; i < 16; ++i) {
+        if (i != 0 && i % 4 == 0)
+          outs() << ' ';
+        if (addr + i < end)
+          outs() << hexdigit((Contents[addr + i] >> 4) & 0xF, true)
+                 << hexdigit(Contents[addr + i] & 0xF, true);
+        else
+          outs() << "  ";
+      }
+      // Print ascii.
+      outs() << "  ";
+      for (std::size_t i = 0; i < 16 && addr + i < end; ++i) {
+        if (std::isprint(Contents[addr + i] & 0xFF))
+          outs() << Contents[addr + i];
+        else
+          outs() << ".";
+      }
+      outs() << "\n";
+    }
+  }
+}
+
 static void DumpObject(const ObjectFile *o) {
+  outs() << '\n';
+  outs() << o->getFileName()
+         << ":\tfile format " << o->getFileFormatName() << "\n\n";
+
   if (Disassemble)
     DisassembleObject(o, Relocations);
   if (Relocations && !Disassemble)
     PrintRelocations(o);
   if (SectionHeaders)
     PrintSectionHeaders(o);
+  if (SectionContents)
+    PrintSectionContents(o);
 }
 
 /// @brief Dump each object file in \a a;
@@ -447,7 +494,7 @@ int main(int argc, char **argv) {
   if (InputFilenames.size() == 0)
     InputFilenames.push_back("a.out");
 
-  if (!Disassemble && !Relocations && !SectionHeaders) {
+  if (!Disassemble && !Relocations && !SectionHeaders && !SectionContents) {
     cl::PrintHelpMessage();
     return 2;
   }
