@@ -400,6 +400,7 @@ bool PrintfSpecifier::fixType(QualType QT) {
   case BuiltinType::Overload:
   case BuiltinType::BoundMember:
   case BuiltinType::UnknownAny:
+  case BuiltinType::ARCUnbridgedCast:
     // Misc other stuff which doesn't make sense here.
     return false;
 

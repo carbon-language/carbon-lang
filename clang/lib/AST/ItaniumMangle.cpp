@@ -1739,6 +1739,7 @@ void CXXNameMangler::mangleType(const BuiltinType *T) {
   case BuiltinType::Dependent:
   case BuiltinType::BoundMember:
   case BuiltinType::UnknownAny:
+  case BuiltinType::ARCUnbridgedCast:
     llvm_unreachable("mangling a placeholder type");
     break;
   case BuiltinType::ObjCId: Out << "11objc_object"; break;

@@ -372,6 +372,7 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     case BuiltinType::Dependent:
     case BuiltinType::BoundMember:
     case BuiltinType::UnknownAny:
+    case BuiltinType::ARCUnbridgedCast:
       llvm_unreachable("Unexpected placeholder builtin type!");
       break;
     }

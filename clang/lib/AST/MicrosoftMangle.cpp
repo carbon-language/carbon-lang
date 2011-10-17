@@ -705,6 +705,7 @@ void MicrosoftCXXNameMangler::mangleType(const BuiltinType *T) {
   case BuiltinType::Dependent:
   case BuiltinType::UnknownAny:
   case BuiltinType::BoundMember:
+  case BuiltinType::ARCUnbridgedCast:
     llvm_unreachable(
            "Overloaded and dependent types shouldn't get to name mangling");
   case BuiltinType::ObjCId: Out << "PAUobjc_object@@"; break;

@@ -464,6 +464,9 @@ void ASTContext::InitBuiltinTypes(const TargetInfo &Target) {
   // "any" type; useful for debugger-like clients.
   InitBuiltinType(UnknownAnyTy,        BuiltinType::UnknownAny);
 
+  // Placeholder type for unbridged ARC casts.
+  InitBuiltinType(ARCUnbridgedCastTy,  BuiltinType::ARCUnbridgedCast);
+
   // C99 6.2.5p11.
   FloatComplexTy      = getComplexType(FloatTy);
   DoubleComplexTy     = getComplexType(DoubleTy);

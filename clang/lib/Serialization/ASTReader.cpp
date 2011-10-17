@@ -3839,6 +3839,11 @@ QualType ASTReader::GetType(TypeID ID) {
     case PREDEF_TYPE_AUTO_RREF_DEDUCT: 
       T = Context.getAutoRRefDeductType(); 
       break;
+
+    case PREDEF_TYPE_ARC_UNBRIDGED_CAST:
+      T = Context.ARCUnbridgedCastTy;
+      break;
+
     }
 
     assert(!T.isNull() && "Unknown predefined type");

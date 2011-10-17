@@ -554,7 +554,9 @@ namespace clang {
       /// \brief The "auto &&" deduction type.
       PREDEF_TYPE_AUTO_RREF_DEDUCT = 32,
       /// \brief The OpenCL 'half' / ARM NEON __fp16 type.
-      PREDEF_TYPE_HALF_ID       = 33
+      PREDEF_TYPE_HALF_ID       = 33,
+      /// \brief ARC's unbridged-cast placeholder type.
+      PREDEF_TYPE_ARC_UNBRIDGED_CAST = 34
     };
 
     /// \brief The number of predefined type IDs that are reserved for

@@ -1751,7 +1751,12 @@ public:
     /// like debuggers that don't know what type to give something.
     /// Only a small number of operations are valid on expressions of
     /// unknown type, most notably explicit casts.
-    UnknownAny
+    UnknownAny,
+
+    /// The type of a cast which, in ARC, would normally require a
+    /// __bridge, but which might be okay depending on the immediate
+    /// context.
+    ARCUnbridgedCast
   };
 
 public:

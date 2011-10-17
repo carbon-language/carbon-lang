@@ -1368,6 +1368,7 @@ bool CursorVisitor::VisitBuiltinTypeLoc(BuiltinTypeLoc TL) {
   case BuiltinType::BoundMember:
   case BuiltinType::Dependent:
   case BuiltinType::UnknownAny:
+  case BuiltinType::ARCUnbridgedCast:
     break;
 
   case BuiltinType::ObjCId:

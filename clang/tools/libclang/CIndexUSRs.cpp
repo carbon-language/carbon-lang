@@ -584,6 +584,7 @@ void USRGenerator::VisitType(QualType T) {
         case BuiltinType::BoundMember:
         case BuiltinType::Dependent:
         case BuiltinType::UnknownAny:
+        case BuiltinType::ARCUnbridgedCast:
           IgnoreResults = true;
           return;
         case BuiltinType::ObjCId:

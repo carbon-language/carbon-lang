@@ -329,6 +329,8 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT) {
     llvm_unreachable("Unexpected builtin type BoundMember");
   case BuiltinType::UnknownAny:
     llvm_unreachable("Unexpected builtin type UnknownAny");
+  case BuiltinType::ARCUnbridgedCast:
+    llvm_unreachable("Unexpected builtin type ARCUnbridgedCast");
   case BuiltinType::NullPtr:
     return DBuilder.
       createNullPtrType(BT->getName(CGM.getContext().getLangOptions()));

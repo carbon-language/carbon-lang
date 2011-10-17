@@ -1495,6 +1495,7 @@ const char *BuiltinType::getName(const PrintingPolicy &Policy) const {
   case BoundMember:       return "<bound member function type>";
   case Dependent:         return "<dependent type>";
   case UnknownAny:        return "<unknown type>";
+  case ARCUnbridgedCast:  return "<ARC unbridged cast type>";
   case ObjCId:            return "id";
   case ObjCClass:         return "Class";
   case ObjCSel:           return "SEL";
