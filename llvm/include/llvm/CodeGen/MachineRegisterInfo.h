@@ -171,6 +171,14 @@ public:
   /// replaceRegWith - Replace all instances of FromReg with ToReg in the
   /// machine function.  This is like llvm-level X->replaceAllUsesWith(Y),
   /// except that it also changes any definitions of the register as well.
+  ///
+  /// Note that it is usually necessary to first constrain ToReg's register
+  /// class to match the FromReg constraints using:
+  ///
+  ///   constrainRegClass(ToReg, getRegClass(FromReg))
+  ///
+  /// That function will return NULL if the virtual registers have incompatible
+  /// constraints.
   void replaceRegWith(unsigned FromReg, unsigned ToReg);
   
   /// getRegUseDefListHead - Return the head pointer for the register use/def
