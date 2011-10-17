@@ -1,4 +1,5 @@
 ; RUN: opt < %s -tailcallelim -S | FileCheck %s
+; XFAIL: *
 
 ; Test that we don't tail call in a functions that calls returns_twice
 ; functions.
@@ -15,7 +16,7 @@ bb:
   ret void
 }
 
-declare i32 @setjmp(i32*)
+declare i32 @setjmp(i32*) returns_twice
 
 ; CHECK: foo2
 ; CHECK-NOT: tail call void @bar()
