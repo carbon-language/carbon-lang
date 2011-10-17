@@ -8393,22 +8393,22 @@ ExprResult Sema::BuildBuiltinOffsetOf(SourceLocation BuiltinLoc,
       } else
         CurrentType = Context.DependentTy;
       
+      ExprResult IdxRval = DefaultLvalueConversion(static_cast<Expr*>(OC.U.E));
+      if (IdxRval.isInvalid())
+        return ExprError();
+      Expr *Idx = IdxRval.take();
+
       // The expression must be an integral expression.
       // FIXME: An integral constant expression?
-      Expr *Idx = static_cast<Expr*>(OC.U.E);
       if (!Idx->isTypeDependent() && !Idx->isValueDependent() &&
           !Idx->getType()->isIntegerType())
         return ExprError(Diag(Idx->getLocStart(),
                               diag::err_typecheck_subscript_not_integer)
                          << Idx->getSourceRange());
 
-      ExprResult IdxRvalue = DefaultLvalueConversion(Idx);
-      if (IdxRvalue.isInvalid())
-        return ExprError();
-      
       // Record this array index.
       Comps.push_back(OffsetOfNode(OC.LocStart, Exprs.size(), OC.LocEnd));
-      Exprs.push_back(IdxRvalue.take());
+      Exprs.push_back(Idx);
       continue;
     }
     

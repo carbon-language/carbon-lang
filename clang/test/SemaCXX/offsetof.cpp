@@ -66,3 +66,10 @@ struct bar : public foo  {
 };
 
 int anonstruct[__builtin_offsetof(bar, x) == 0 ? 1 : -1];
+
+struct LtoRCheck {
+  int a[10];
+  int f();
+};
+int ltor = __builtin_offsetof(struct LtoRCheck, a[LtoRCheck().f]); // \
+  expected-error {{reference to non-static member function must be called}}
