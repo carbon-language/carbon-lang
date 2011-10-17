@@ -924,6 +924,17 @@ public:
     return Value >= 0 && Value < 256;
   }
 
+  bool isNEONi16splat() const {
+    if (Kind != k_Immediate)
+      return false;
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    // Must be a constant.
+    if (!CE) return false;
+    int64_t Value = CE->getValue();
+    // i16 value in the range [0,255] or [0x0100, 0xff00]
+    return (Value >= 0 && Value < 256) || (Value >= 0x0100 && Value <= 0xff00);
+  }
+
   void addExpr(MCInst &Inst, const MCExpr *Expr) const {
     // Add as immediates when possible.  Null MCExpr = 0.
     if (Expr == 0)
@@ -1452,6 +1463,18 @@ public:
     // Mask in that this is an i8 splat.
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     Inst.addOperand(MCOperand::CreateImm(CE->getValue() | 0xe00));
+  }
+
+  void addNEONi16splatOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    // The immediate encodes the type of constant as well as the value.
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    unsigned Value = CE->getValue();
+    if (Value >= 256)
+      Value = (Value >> 8) | 0xa00;
+    else
+      Value |= 0x800;
+    Inst.addOperand(MCOperand::CreateImm(Value));
   }
 
   virtual void print(raw_ostream &OS) const;
