@@ -137,40 +137,40 @@ template <class _Tp>
 void
 __thread_specific_ptr<_Tp>::__at_thread_exit(void* __p)
 {
-	delete static_cast<pointer>(__p);
+    delete static_cast<pointer>(__p);
 }
 
 template <class _Tp>
 __thread_specific_ptr<_Tp>::__thread_specific_ptr()
 {
     int __ec = pthread_key_create(&__key_, &__thread_specific_ptr::__at_thread_exit);
-	if (__ec)
-		throw system_error(error_code(__ec, system_category()),
-		                   "__thread_specific_ptr construction failed");
+    if (__ec)
+        throw system_error(error_code(__ec, system_category()),
+                           "__thread_specific_ptr construction failed");
 }
 
 template <class _Tp>
 __thread_specific_ptr<_Tp>::~__thread_specific_ptr()
 {
-	pthread_key_delete(__key_);
+    pthread_key_delete(__key_);
 }
 
 template <class _Tp>
 typename __thread_specific_ptr<_Tp>::pointer
 __thread_specific_ptr<_Tp>::release()
 {
-	pointer __p = get();
-	pthread_setspecific(__key_, 0);
-	return __p;
+    pointer __p = get();
+    pthread_setspecific(__key_, 0);
+    return __p;
 }
 
 template <class _Tp>
 void
 __thread_specific_ptr<_Tp>::reset(pointer __p)
 {
-	pointer __p_old = get();
-	pthread_setspecific(__key_, __p);
-	delete __p_old;
+    pointer __p_old = get();
+    pthread_setspecific(__key_, __p);
+    delete __p_old;
 }
 
 class thread;

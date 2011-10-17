@@ -1032,7 +1032,7 @@ ctype_byname<wchar_t>::do_is(mask m, char_type c) const
 #ifdef _LIBCPP_WCTYPE_IS_MASK
     return static_cast<bool>(iswctype_l(c, m, __l));
 #else
-	bool result = true;
+    bool result = true;
     if (m & space && !iswspace_l(c, __l)) result = false;
     if (m & print && !iswprint_l(c, __l)) result = false;
     if (m & cntrl && !iswcntrl_l(c, __l)) result = false;

@@ -22,10 +22,10 @@ locale_t uselocale( locale_t newloc )
     locale_t old_locale = _get_current_locale();
     // uselocale sets the thread's locale by definition, so unconditionally use thread-local locale
     _configthreadlocale( _ENABLE_PER_THREAD_LOCALE );
-	// uselocale sets all categories
-	setlocale( LC_ALL, newloc->locinfo->lc_category[LC_ALL].locale );
-	// uselocale returns the old locale_t
-	return old_locale;
+    // uselocale sets all categories
+    setlocale( LC_ALL, newloc->locinfo->lc_category[LC_ALL].locale );
+    // uselocale returns the old locale_t
+    return old_locale;
 }
 lconv *localeconv_l( locale_t loc )
 {

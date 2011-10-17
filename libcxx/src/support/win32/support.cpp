@@ -21,7 +21,7 @@ int asprintf(char **sptr, const char *__restrict__ fmt, ...)
     va_start(ap, fmt);
     int result = vasprintf(sptr, fmt, ap);
     va_end(ap);
-	return result;
+    return result;
 }
 int vasprintf( char **sptr, const char *__restrict__ fmt, va_list ap )
 {
