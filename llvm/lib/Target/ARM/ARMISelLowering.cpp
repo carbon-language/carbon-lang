@@ -5741,12 +5741,10 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
   MachineBasicBlock *DispContBB = MF->CreateMachineBasicBlock();
   DispatchBB->addSuccessor(DispContBB);
 
-  // Insert and renumber MBBs.
-  MachineBasicBlock *Last = &MF->back();
+  // Insert and MBBs.
   MF->insert(MF->end(), DispatchBB);
   MF->insert(MF->end(), DispContBB);
   MF->insert(MF->end(), TrapBB);
-  MF->RenumberBlocks(Last);
 
   // Insert code into the entry block that creates and registers the function
   // context.
