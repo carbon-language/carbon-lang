@@ -17,25 +17,15 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (297):
-CHECK-NEXT:   backslash_newline_space
-CHECK-NEXT:   charize_microsoft_ext
+CHECK: Warnings without flags (279):
 CHECK-NEXT:   ext_anon_param_requires_type_specifier
 CHECK-NEXT:   ext_anonymous_struct_union_qualified
 CHECK-NEXT:   ext_array_init_copy
-CHECK-NEXT:   ext_auto_storage_class
 CHECK-NEXT:   ext_binary_literal
-CHECK-NEXT:   ext_c99_array_usage
-CHECK-NEXT:   ext_c99_compound_literal
-CHECK-NEXT:   ext_c99_variable_decl_in_for_loop
-CHECK-NEXT:   ext_c99_whitespace_required_after_macro_name
 CHECK-NEXT:   ext_cast_fn_obj
-CHECK-NEXT:   ext_catch_incomplete_ptr
-CHECK-NEXT:   ext_catch_incomplete_ref
 CHECK-NEXT:   ext_delete_void_ptr_operand
 CHECK-NEXT:   ext_designated_init
 CHECK-NEXT:   ext_designated_init_cxx
-CHECK-NEXT:   ext_dollar_in_identifier
 CHECK-NEXT:   ext_duplicate_declspec
 CHECK-NEXT:   ext_ellipsis_exception_spec
 CHECK-NEXT:   ext_embedded_directive
@@ -50,8 +40,6 @@ CHECK-NEXT:   ext_explicit_specialization_storage_class
 CHECK-NEXT:   ext_expr_not_ice
 CHECK-NEXT:   ext_extra_ivar_semi
 CHECK-NEXT:   ext_extra_struct_semi
-CHECK-NEXT:   ext_flexible_array_in_array
-CHECK-NEXT:   ext_flexible_array_in_struct
 CHECK-NEXT:   ext_forward_ref_enum
 CHECK-NEXT:   ext_freestanding_complex
 CHECK-NEXT:   ext_hexconstant_invalid
@@ -106,9 +94,6 @@ CHECK-NEXT:   ext_typecheck_zero_array_size
 CHECK-NEXT:   ext_unknown_escape
 CHECK-NEXT:   ext_using_undefined_std
 CHECK-NEXT:   ext_vla_folded_to_constant
-CHECK-NEXT:   null_in_char
-CHECK-NEXT:   null_in_file
-CHECK-NEXT:   null_in_string
 CHECK-NEXT:   pp_include_next_absolute_path
 CHECK-NEXT:   pp_include_next_in_primary
 CHECK-NEXT:   pp_invalid_string_literal
@@ -163,7 +148,6 @@ CHECK-NEXT:   warn_conv_to_void_not_used
 CHECK-NEXT:   warn_cxx0x_right_shift_in_template_arg
 CHECK-NEXT:   warn_decl_in_param_list
 CHECK-NEXT:   warn_delete_array_type
-CHECK-NEXT:   warn_delete_incomplete
 CHECK-NEXT:   warn_division_by_zero
 CHECK-NEXT:   warn_double_const_requires_fp64
 CHECK-NEXT:   warn_drv_assuming_mfloat_abi_is
@@ -300,8 +284,6 @@ CHECK-NEXT:   warn_transparent_union_attribute_not_definition
 CHECK-NEXT:   warn_transparent_union_attribute_zero_fields
 CHECK-NEXT:   warn_transparent_union_nonpointer
 CHECK-NEXT:   warn_typecheck_function_qualifiers
-CHECK-NEXT:   warn_ucn_escape_too_large
-CHECK-NEXT:   warn_ucn_not_valid_in_c89
 CHECK-NEXT:   warn_unavailable_fwdclass_message
 CHECK-NEXT:   warn_undef_interface
 CHECK-NEXT:   warn_undef_interface_suggest

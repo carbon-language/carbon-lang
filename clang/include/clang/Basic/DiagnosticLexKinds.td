@@ -13,16 +13,19 @@
 
 let Component = "Lex", CategoryName = "Lexical or Preprocessor Issue" in {
 
-def null_in_string : Warning<"null character(s) preserved in string literal">;
-def null_in_char : Warning<"null character(s) preserved in character literal">;
-def null_in_file : Warning<"null character ignored">;
+def null_in_string : Warning<"null character(s) preserved in string literal">,
+  InGroup<NullCharacter>;
+def null_in_char : Warning<"null character(s) preserved in character literal">,
+  InGroup<NullCharacter>;
+def null_in_file : Warning<"null character ignored">, InGroup<NullCharacter>;
 def warn_nested_block_comment : Warning<"'/*' within block comment">,
   InGroup<Comment>;
 def escaped_newline_block_comment_end : Warning<
   "escaped newline between */ characters at block comment end">,
   InGroup<Comment>;
 def backslash_newline_space : Warning<
-  "backslash and newline separated by space">;
+  "backslash and newline separated by space">,
+  InGroup<DiagGroup<"backslash-newline-escape">>;
 
 // Digraphs.
 def warn_cxx98_compat_less_colon_colon : Warning<
@@ -45,8 +48,10 @@ def ext_bcpl_comment : Extension<
   InGroup<Comment>;
 def ext_no_newline_eof : Extension<"no newline at end of file">, 
   InGroup<DiagGroup<"newline-eof">>;
-def ext_dollar_in_identifier : Extension<"'$' in identifier">;
-def charize_microsoft_ext : Extension<"@# is a microsoft extension">;
+def ext_dollar_in_identifier : Extension<"'$' in identifier">,
+  InGroup<DiagGroup<"dollar-in-identifier-extension">>;
+def ext_charize_microsoft : Extension<"@# is a microsoft extension">,
+  InGroup<Microsoft>;
 
 def ext_token_used : Extension<"extension used">,
   InGroup<DiagGroup<"language-extension-token">>;
@@ -117,9 +122,9 @@ def ext_string_too_long : Extension<"string literal of length %0 exceeds "
   "maximum length %1 that %select{C90|ISO C99|C++}2 compilers are required to "
   "support">, InGroup<OverlengthStrings>;
 def warn_ucn_escape_too_large : ExtWarn<
-  "character unicode escape sequence too long for its type">;
+  "character unicode escape sequence too long for its type">, InGroup<Unicode>;
 def warn_ucn_not_valid_in_c89 : ExtWarn<
-  "unicode escape sequences are only valid in C99 or C++">;
+  "unicode escape sequences are only valid in C99 or C++">, InGroup<Unicode>;
 def warn_cxx98_compat_unicode_literal : Warning<
   "unicode literals are incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;
@@ -145,7 +150,7 @@ def pp_include_macros_out_of_predefines : Error<
   "the #__include_macros directive is only for internal use by -imacros">;
 def pp_include_next_absolute_path : Warning<"#include_next with absolute path">;
 def ext_c99_whitespace_required_after_macro_name : ExtWarn<
-  "ISO C99 requires whitespace after the macro name">;
+  "ISO C99 requires whitespace after the macro name">, InGroup<C99>;
 def ext_missing_whitespace_after_macro_name : ExtWarn<
   "whitespace required after macro name">;
 def warn_missing_whitespace_after_macro_name : Warning<

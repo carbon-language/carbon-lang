@@ -52,9 +52,9 @@ def err_friend_storage_spec : Error<"'%0' is invalid in friend declarations">;
 def ext_ident_list_in_param : Extension<
   "type-less parameter names in function declaration">;
 def ext_c99_variable_decl_in_for_loop : Extension<
-  "variable declaration in for loop is a C99-specific feature">;
+  "variable declaration in for loop is a C99-specific feature">, InGroup<C99>;
 def ext_c99_compound_literal : Extension<
-  "compound literals are a C99-specific feature">;
+  "compound literals are a C99-specific feature">, InGroup<C99>;
 def ext_enumerator_list_comma : Extension<
   "commas at the end of enumerator lists are a %select{C99|C++11}0-specific "
   "feature">;
@@ -228,7 +228,7 @@ def warn_auto_storage_class : Warning<
   InGroup<CXX11Compat>;
 def ext_auto_storage_class : ExtWarn<
   "'auto' storage class specifier is not permitted in C++11, and will not "
-  "be supported in future releases">;
+  "be supported in future releases">, InGroup<DiagGroup<"auto-storage-class">>;
 def ext_for_range : ExtWarn<
   "range-based for loop is a C++11 extension">, InGroup<CXX11>;
 def warn_cxx98_compat_for_range : Warning<

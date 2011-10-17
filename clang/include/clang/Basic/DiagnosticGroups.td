@@ -29,6 +29,7 @@ def BoolConversions : DiagGroup<"bool-conversions">;
 def CXXCompat: DiagGroup<"c++-compat">;
 def CastAlign : DiagGroup<"cast-align">;
 def : DiagGroup<"cast-qual">;
+def CatchIncompleteExtension : DiagGroup<"catch-incomplete-type-extensions">;
 def : DiagGroup<"char-align">;
 def Comment : DiagGroup<"comment">;
 def : DiagGroup<"ctor-dtor-privacy">;
@@ -66,6 +67,7 @@ def : DiagGroup<"c++0x-compat", [CXX11Compat]>;
 
 def : DiagGroup<"effc++">;
 def ExitTimeDestructors : DiagGroup<"exit-time-destructors">;
+def FlexibleArrayExtensions : DiagGroup<"flexible-array-extensions">;
 def FourByteMultiChar : DiagGroup<"four-char-constants">;
 def GlobalConstructors : DiagGroup<"global-constructors">;
 def : DiagGroup<"idiomatic-parentheses">;
@@ -94,6 +96,7 @@ def LongLong : DiagGroup<"long-long">;
 def MismatchedTags : DiagGroup<"mismatched-tags">;
 def MissingFieldInitializers : DiagGroup<"missing-field-initializers">;
 def ModuleBuild : DiagGroup<"module-build">;
+def NullCharacter : DiagGroup<"null-character">;
 def NullDereference : DiagGroup<"null-dereference">;
 def InitializerOverrides : DiagGroup<"initializer-overrides">;
 def NonNull : DiagGroup<"nonnull">;
@@ -161,6 +164,7 @@ def Switch         : DiagGroup<"switch", [SwitchEnum]>;
 def Trigraphs      : DiagGroup<"trigraphs">;
 
 def : DiagGroup<"type-limits">;
+def Unicode  : DiagGroup<"unicode">;
 def Uninitialized  : DiagGroup<"uninitialized">;
 def UninitializedMaybe : DiagGroup<"conditional-uninitialized">;
 def UnknownPragmas : DiagGroup<"unknown-pragmas">;
@@ -319,6 +323,9 @@ def DelegatingCtorCycles :
 
 // A warning group for warnings about using C1X features as extensions.
 def C1X : DiagGroup<"c1x-extensions">;
+
+// A warning group for warnings about using C99 features as extensions.
+def C99 : DiagGroup<"c99-extensions">;
 
 // A warning group for warnings about GCC extensions.
 def GNU : DiagGroup<"gnu", [GNUDesignator, VLA]>;

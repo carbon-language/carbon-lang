@@ -2737,7 +2737,7 @@ LexNextToken:
       } else if (Char == '@' && Features.MicrosoftExt) {// %:@ -> #@ -> Charize
         CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
         if (!isLexingRawMode())
-          Diag(BufferPtr, diag::charize_microsoft_ext);
+          Diag(BufferPtr, diag::ext_charize_microsoft);
         Kind = tok::hashat;
       } else {                                         // '%:' -> '#'
         // We parsed a # character.  If this occurs at the start of the line,
@@ -2921,7 +2921,7 @@ LexNextToken:
     } else if (Char == '@' && Features.MicrosoftExt) {  // #@ -> Charize
       Kind = tok::hashat;
       if (!isLexingRawMode())
-        Diag(BufferPtr, diag::charize_microsoft_ext);
+        Diag(BufferPtr, diag::ext_charize_microsoft);
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
     } else {
       // We parsed a # character.  If this occurs at the start of the line,

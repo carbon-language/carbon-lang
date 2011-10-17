@@ -2899,9 +2899,11 @@ def err_flexible_array_empty_struct : Error<
 def err_flexible_array_has_nonpod_type : Error<
   "flexible array member %0 of non-POD element type %1">;
 def ext_flexible_array_in_struct : Extension<
-  "%0 may not be nested in a struct due to flexible array member">;
+  "%0 may not be nested in a struct due to flexible array member">,
+  InGroup<FlexibleArrayExtensions>;
 def ext_flexible_array_in_array : Extension<
-  "%0 may not be used as an array element due to flexible array member">;
+  "%0 may not be used as an array element due to flexible array member">,
+  InGroup<FlexibleArrayExtensions>;
 def err_flexible_array_init : Error<
   "initialization of flexible array member is not allowed">;
 def ext_flexible_array_empty_aggregate_ms : Extension<
@@ -3707,7 +3709,8 @@ def ext_delete_void_ptr_operand : ExtWarn<
 def err_ambiguous_delete_operand : Error<"ambiguous conversion of delete "
                                          "expression of type %0 to a pointer">;
 def warn_delete_incomplete : Warning<
-  "deleting pointer to incomplete type %0 may cause undefined behaviour">;
+  "deleting pointer to incomplete type %0 may cause undefined behaviour">,
+  InGroup<DiagGroup<"delete-incomplete">>;
 def err_delete_incomplete_class_type : Error<
   "deleting incomplete class type %0; no conversions to pointer type">;
 def warn_delete_array_type : Warning<
@@ -3722,9 +3725,11 @@ def err_decrement_bool : Error<"cannot decrement expression of type bool">;
 def warn_increment_bool : Warning<
   "incrementing expression of type bool is deprecated">, InGroup<Deprecated>;
 def ext_catch_incomplete_ptr : ExtWarn<
-  "ISO C++ forbids catching a pointer to incomplete type %0">;
+  "ISO C++ forbids catching a pointer to incomplete type %0">,
+  InGroup<CatchIncompleteExtension>;
 def ext_catch_incomplete_ref : ExtWarn<
-  "ISO C++ forbids catching a reference to incomplete type %0">;
+  "ISO C++ forbids catching a reference to incomplete type %0">,
+  InGroup<CatchIncompleteExtension>;
 def err_catch_incomplete : Error<"cannot catch incomplete type %0">;
 def err_catch_rvalue_ref : Error<"cannot catch exceptions by rvalue reference">;
 def err_qualified_catch_declarator : Error<
@@ -4789,7 +4794,7 @@ def err_missing_param_declspec : Error<
 def err_objc_array_of_interfaces : Error<
   "array of interface %0 is invalid (probably should be an array of pointers)">;
 def ext_c99_array_usage : Extension<
-  "use of C99-specific array features, accepted as an extension">;
+  "use of C99-specific array features, accepted as an extension">, InGroup<C99>;
 def err_c99_array_usage_cxx : Error<
   "C99-specific array features are not permitted in C++">;
 def err_double_requires_fp64 : Error<
