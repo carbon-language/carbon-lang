@@ -229,10 +229,12 @@ protected:
   virtual error_code getSymbolAddress(DataRefImpl Symb, uint64_t &Res) const =0;
   virtual error_code getSymbolOffset(DataRefImpl Symb, uint64_t &Res) const =0;
   virtual error_code getSymbolSize(DataRefImpl Symb, uint64_t &Res) const = 0;
+  virtual error_code getSymbolType(DataRefImpl Symb,
+                                   SymbolRef::Type &Res) const = 0;
   virtual error_code getSymbolNMTypeChar(DataRefImpl Symb, char &Res) const = 0;
   virtual error_code isSymbolInternal(DataRefImpl Symb, bool &Res) const = 0;
   virtual error_code isSymbolGlobal(DataRefImpl Symb, bool &Res) const = 0;
-  virtual error_code getSymbolType(DataRefImpl Symb, SymbolRef::Type &Res) const = 0;
+
 
   // Same as above for SectionRef.
   friend class SectionRef;
