@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=ppc32 -mcpu=440 | grep fmadd
+; RUN: llc < %s -march=ppc32 -mcpu=440 | FileCheck %s
 
 %0 = type { double, double }
 
@@ -29,4 +29,5 @@ entry:
   store double %add.r, double* %real
   store double %add.i, double* %imag
   ret void
+; CHECK: fmadd
 }
