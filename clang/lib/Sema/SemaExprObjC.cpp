@@ -673,7 +673,7 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
       PType = getMessageSendResultType(QualType(OPT, 0), Getter, false, Super);
     else {
       ParmVarDecl *ArgDecl = *Setter->param_begin();
-      PType = ArgDecl->getType();
+      PType = ArgDecl->getType().getUnqualifiedType(); // can't be an array
     }
     
     ExprValueKind VK = VK_LValue;
