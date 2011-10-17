@@ -65,3 +65,7 @@ int test3 = __builtin_offsetof(struct has_bitfields, j); // expected-error{{cann
 
 typedef struct Array { int array[1]; } Array;
 int test4 = __builtin_offsetof(Array, array);
+
+int test5() {
+  return __builtin_offsetof(Array, array[*(int*)0]); // expected-warning{{indirection of non-volatile null pointer}} expected-note{{__builtin_trap}}
+}

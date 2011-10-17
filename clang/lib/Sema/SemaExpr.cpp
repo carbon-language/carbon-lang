@@ -8383,10 +8383,14 @@ ExprResult Sema::BuildBuiltinOffsetOf(SourceLocation BuiltinLoc,
         return ExprError(Diag(Idx->getLocStart(),
                               diag::err_typecheck_subscript_not_integer)
                          << Idx->getSourceRange());
+
+      ExprResult IdxRvalue = DefaultLvalueConversion(Idx);
+      if (IdxRvalue.isInvalid())
+        return ExprError();
       
       // Record this array index.
       Comps.push_back(OffsetOfNode(OC.LocStart, Exprs.size(), OC.LocEnd));
-      Exprs.push_back(Idx);
+      Exprs.push_back(IdxRvalue.take());
       continue;
     }
     
