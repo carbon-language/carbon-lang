@@ -71,6 +71,8 @@ public:
   unsigned MergeAllConstants : 1; /// Merge identical constants.
   unsigned NoCommon          : 1; /// Set when -fno-common or C++ is enabled.
   unsigned NoDwarf2CFIAsm    : 1; /// Set when -fno-dwarf2-cfi-asm is enabled.
+  unsigned NoDwarfDirectoryAsm : 1; /// Set when -fno-dwarf-directory-asm is
+                                    /// enabled.
   unsigned NoExecStack       : 1; /// Set when -Wa,--noexecstack is enabled.
   unsigned NoGlobalMerge     : 1; /// Set when -mno-global-merge is enabled.
   unsigned NoImplicitFloat   : 1; /// Set when -mno-implicit-float is enabled.

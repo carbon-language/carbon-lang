@@ -1060,6 +1060,18 @@ static bool ShouldDisableCFI(const ArgList &Args,
   return false;
 }
 
+static bool ShouldDisableDwarfDirectory(const ArgList &Args,
+                                        const ToolChain &TC) {
+  bool IsIADefault = TC.IsIntegratedAssemblerDefault();
+  bool UseIntegratedAs = Args.hasFlag(options::OPT_integrated_as,
+                                      options::OPT_no_integrated_as,
+                                      IsIADefault);
+  bool UseDwarfDirectory = Args.hasFlag(options::OPT_fdwarf_directory_asm,
+                                        options::OPT_fno_dwarf_directory_asm,
+                                        UseIntegratedAs);
+  return !UseDwarfDirectory;
+}
+
 /// \brief Check whether the given input tree contains any compilation actions.
 static bool ContainsCompileAction(const Action *A) {
   if (isa<CompileJobAction>(A))
@@ -1613,6 +1625,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   if (ShouldDisableCFI(Args, getToolChain()))
     CmdArgs.push_back("-fno-dwarf2-cfi-asm");
+
+  if (ShouldDisableDwarfDirectory(Args, getToolChain()))
+    CmdArgs.push_back("-fno-dwarf-directory-asm");
 
   if (Arg *A = Args.getLastArg(options::OPT_ftemplate_depth_)) {
     CmdArgs.push_back("-ftemplate-depth");

@@ -305,6 +305,8 @@ bool EmitAssemblyHelper::AddEmitPasses(BackendAction Action,
     TM->setMCSaveTempLabels(true);
   if (CodeGenOpts.NoDwarf2CFIAsm)
     TM->setMCUseCFI(false);
+  if (CodeGenOpts.NoDwarfDirectoryAsm)
+    TM->setMCUseDwarfDirectory(false);
   if (CodeGenOpts.NoExecStack)
     TM->setMCNoExecStack(true);
 

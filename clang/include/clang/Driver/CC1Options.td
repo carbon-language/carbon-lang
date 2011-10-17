@@ -117,6 +117,8 @@ def fforbid_guard_variables : Flag<"-fforbid-guard-variables">,
 def g : Flag<"-g">, HelpText<"Generate source level debug information">;
 def fno_dwarf2_cfi_asm : Flag<"-fno-dwarf2-cfi-asm">,
   HelpText<"Don't use the cfi directives">;
+def fno_dwarf_directory_asm : Flag<"-fno-dwarf-directory-asm">,
+  HelpText<"Don't separate directory and filename in .file directives">;
 def fcatch_undefined_behavior : Flag<"-fcatch-undefined-behavior">,
   HelpText<"Generate runtime checks for undefined behavior.">;
 def flimit_debug_info : Flag<"-flimit-debug-info">,
