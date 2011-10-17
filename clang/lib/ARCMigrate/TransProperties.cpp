@@ -132,7 +132,10 @@ private:
       return;
 
     if (propAttrs & ObjCPropertyDecl::OBJC_PR_retain) {
-      rewriteAttribute("retain", "strong", atLoc);
+      if (propAttrs & ObjCPropertyDecl::OBJC_PR_readonly)
+        rewriteAttribute("retain", "strong", atLoc);
+      else
+        removeAttribute("retain", atLoc); // strong is the default.
       return;
     }
 
@@ -215,6 +218,10 @@ private:
     }
   }
 
+  bool removeAttribute(StringRef fromAttr, SourceLocation atLoc) const {
+    return rewriteAttribute(fromAttr, StringRef(), atLoc);
+  }
+
   bool rewriteAttribute(StringRef fromAttr, StringRef toAttr,
                         SourceLocation atLoc) const {
     if (atLoc.isMacroID())
@@ -248,6 +255,11 @@ private:
     lexer.LexFromRawLexer(tok);
     if (tok.isNot(tok::l_paren)) return false;
     
+    Token BeforeTok = tok;
+    Token AfterTok;
+    AfterTok.startToken();
+    SourceLocation AttrLoc;
+    
     lexer.LexFromRawLexer(tok);
     if (tok.is(tok::r_paren))
       return false;
@@ -256,18 +268,40 @@ private:
       if (tok.isNot(tok::raw_identifier)) return false;
       StringRef ident(tok.getRawIdentifierData(), tok.getLength());
       if (ident == fromAttr) {
-        Pass.TA.replaceText(tok.getLocation(), fromAttr, toAttr);
-        return true;
+        if (!toAttr.empty()) {
+          Pass.TA.replaceText(tok.getLocation(), fromAttr, toAttr);
+          return true;
+        }
+        // We want to remove the attribute.
+        AttrLoc = tok.getLocation();
       }
 
       do {
         lexer.LexFromRawLexer(tok);
+        if (AttrLoc.isValid() && AfterTok.is(tok::unknown))
+          AfterTok = tok;
       } while (tok.isNot(tok::comma) && tok.isNot(tok::r_paren));
       if (tok.is(tok::r_paren))
         break;
+      if (AttrLoc.isInvalid())
+        BeforeTok = tok;
       lexer.LexFromRawLexer(tok);
     }
 
+    if (toAttr.empty() && AttrLoc.isValid() && AfterTok.isNot(tok::unknown)) {
+      // We want to remove the attribute.
+      if (BeforeTok.is(tok::l_paren) && AfterTok.is(tok::r_paren)) {
+        Pass.TA.remove(SourceRange(BeforeTok.getLocation(),
+                                   AfterTok.getLocation()));
+      } else if (BeforeTok.is(tok::l_paren) && AfterTok.is(tok::comma)) {
+        Pass.TA.remove(SourceRange(AttrLoc, AfterTok.getLocation()));
+      } else {
+        Pass.TA.remove(SourceRange(BeforeTok.getLocation(), AttrLoc));
+      }
+
+      return true;
+    }
+    
     return false;
   }
 

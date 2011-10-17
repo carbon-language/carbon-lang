@@ -3,10 +3,10 @@
 // RUN: diff %t %s.result
 
 @interface Foo 
-@property (strong) id x;
-@property (strong) id y;
-@property (strong) id w;
-@property (strong) id z;
+@property  id x;
+@property  id y;
+@property  id w;
+@property  id z;
 @property (strong) id q;
 @end
 
@@ -23,7 +23,7 @@
 @end
 
 @interface Bar
-@property (strong) Foo *a;
+@property  Foo *a;
 - (void) setA:(Foo*) val;
 - (id) a;
 @end

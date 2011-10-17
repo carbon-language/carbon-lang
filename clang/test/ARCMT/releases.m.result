@@ -20,7 +20,7 @@ id IhaveSideEffect();
 @interface Foo : NSObject {
   id bar;
 }
-@property (strong) id bar;
+@property  id bar;
 -(void)test:(id)obj;
 @end
 
