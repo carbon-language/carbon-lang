@@ -22,6 +22,19 @@
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
+// PowerPC 440 Hazard Recognizer
+void PPCHazardRecognizer440::EmitInstruction(SUnit *SU) {
+  const MCInstrDesc *MCID = DAG->getInstrDesc(SU);
+  if (!MCID) {
+    // This is a PPC pseudo-instruction.
+    // FIXME: Should something else be done?
+    return;
+  }
+
+  ScoreboardHazardRecognizer::EmitInstruction(SU);
+}
+
+//===----------------------------------------------------------------------===//
 // PowerPC 970 Hazard Recognizer
 //
 // This models the dispatch group formation of the PPC970 processor.  Dispatch

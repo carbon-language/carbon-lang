@@ -33,6 +33,7 @@ namespace PPC {
   enum {
     DIR_NONE,
     DIR_32,
+    DIR_440, 
     DIR_601, 
     DIR_602, 
     DIR_603, 
@@ -66,6 +67,7 @@ protected:
   bool HasAltivec;
   bool HasFSQRT;
   bool HasSTFIWX;
+  bool IsBookE;
   bool HasLazyResolverStubs;
   bool IsJITCodeModel;
   
@@ -136,6 +138,7 @@ public:
   bool hasSTFIWX() const { return HasSTFIWX; }
   bool hasAltivec() const { return HasAltivec; }
   bool isGigaProcessor() const { return IsGigaProcessor; }
+  bool isBookE() const { return IsBookE; }
 
   const Triple &getTargetTriple() const { return TargetTriple; }
 

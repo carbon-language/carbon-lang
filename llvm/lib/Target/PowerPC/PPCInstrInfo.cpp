@@ -53,7 +53,15 @@ ScheduleHazardRecognizer *PPCInstrInfo::CreateTargetHazardRecognizer(
   // now, always return a PPC970 recognizer.
   const TargetInstrInfo *TII = TM->getInstrInfo();
   assert(TII && "No InstrInfo?");
-  return new PPCHazardRecognizer970(*TII);
+
+  unsigned Directive = TM->getSubtarget<PPCSubtarget>().getDarwinDirective();
+  if (Directive == PPC::DIR_440) {
+    const InstrItineraryData *II = TM->getInstrItineraryData();
+    return new PPCHazardRecognizer440(II, DAG);
+  }
+  else {
+    return new PPCHazardRecognizer970(*TII);
+  }
 }
 
 unsigned PPCInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,

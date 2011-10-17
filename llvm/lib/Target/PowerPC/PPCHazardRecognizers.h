@@ -15,10 +15,23 @@
 #define PPCHAZRECS_H
 
 #include "llvm/CodeGen/ScheduleHazardRecognizer.h"
+#include "llvm/CodeGen/ScoreboardHazardRecognizer.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "PPCInstrInfo.h"
 
 namespace llvm {
+
+/// PPCHazardRecognizer440 - This class implements a scoreboard-based
+/// hazard recognizer for the PPC 440 and friends.
+class PPCHazardRecognizer440 : public ScoreboardHazardRecognizer {
+  const ScheduleDAG *DAG;
+public:
+  PPCHazardRecognizer440(const InstrItineraryData *ItinData,
+                         const ScheduleDAG *DAG_) :
+    ScoreboardHazardRecognizer(ItinData, DAG_), DAG(DAG_) {}
+
+  virtual void EmitInstruction(SUnit *SU);
+};
 
 /// PPCHazardRecognizer970 - This class defines a finite state automata that
 /// models the dispatch logic on the PowerPC 970 (aka G5) processor.  This

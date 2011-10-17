@@ -103,6 +103,7 @@ def VecVSR       : InstrItinClass;
 // Processor instruction itineraries.
 
 include "PPCScheduleG3.td"
+include "PPCSchedule440.td"
 include "PPCScheduleG4.td"
 include "PPCScheduleG4Plus.td"
 include "PPCScheduleG5.td"

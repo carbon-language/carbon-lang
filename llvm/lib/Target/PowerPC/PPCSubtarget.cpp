@@ -74,6 +74,7 @@ PPCSubtarget::PPCSubtarget(const std::string &TT, const std::string &CPU,
   , HasAltivec(false)
   , HasFSQRT(false)
   , HasSTFIWX(false)
+  , IsBookE(false)
   , HasLazyResolverStubs(false)
   , IsJITCodeModel(false)
   , TargetTriple(TT) {

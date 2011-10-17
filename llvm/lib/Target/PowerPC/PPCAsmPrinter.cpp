@@ -374,6 +374,12 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
     OutStreamer.EmitInstruction(TmpInst);
     return;
+  case PPC::SYNC:
+    // In Book E sync is called msync, handle this special case here...
+    if (Subtarget.isBookE()) {
+      OutStreamer.EmitRawText(StringRef("\tmsync"));
+      return;
+    }
   }
 
   LowerPPCMachineInstrToMCInst(MI, TmpInst, *this, Subtarget.isDarwin());
@@ -421,6 +427,7 @@ void PPCDarwinAsmPrinter::EmitStartOfAsmFile(Module &M) {
   static const char *const CPUDirectives[] = {
     "",
     "ppc",
+    "ppc440",
     "ppc601",
     "ppc602",
     "ppc603",

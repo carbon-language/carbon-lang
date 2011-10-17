@@ -23,6 +23,7 @@ include "llvm/Target/Target.td"
 // CPU Directives                                                             //
 //===----------------------------------------------------------------------===//
 
+def Directive440 : SubtargetFeature<"", "DarwinDirective", "PPC::DIR_440", "">;
 def Directive601 : SubtargetFeature<"", "DarwinDirective", "PPC::DIR_601", "">;
 def Directive602 : SubtargetFeature<"", "DarwinDirective", "PPC::DIR_602", "">;
 def Directive603 : SubtargetFeature<"", "DarwinDirective", "PPC::DIR_603", "">;
@@ -46,6 +47,8 @@ def FeatureFSqrt     : SubtargetFeature<"fsqrt","HasFSQRT", "true",
                                         "Enable the fsqrt instruction">;
 def FeatureSTFIWX    : SubtargetFeature<"stfiwx","HasSTFIWX", "true",
                                         "Enable the stfiwx instruction">;
+def FeatureBookE     : SubtargetFeature<"booke", "IsBookE", "true",
+                                        "Enable Book E instructions">;
 
 //===----------------------------------------------------------------------===//
 // Register File Description
@@ -60,6 +63,8 @@ include "PPCInstrInfo.td"
 //
 
 def : Processor<"generic", G3Itineraries, [Directive32]>;
+def : Processor<"440", PPC440Itineraries, [Directive440, FeatureBookE]>;
+def : Processor<"450", PPC440Itineraries, [Directive440, FeatureBookE]>;
 def : Processor<"601", G3Itineraries, [Directive601]>;
 def : Processor<"602", G3Itineraries, [Directive602]>;
 def : Processor<"603", G3Itineraries, [Directive603]>;
