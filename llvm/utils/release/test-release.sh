@@ -28,6 +28,7 @@ do_objc="yes"
 do_fortran="no"
 do_64bit="yes"
 do_debug="no"
+do_asserts="no"
 BuildDir="`pwd`"
 
 function usage() {
@@ -43,6 +44,7 @@ function usage() {
     echo " -enable-fortran   Enable Fortran build. [default: disable]"
     echo " -disable-objc     Disable ObjC build. [default: enable]"
     echo " -test-debug       Test the debug build. [default: no]"
+    echo " -test-asserts     Test with asserts on. [default: no]"
 }
 
 while [ $# -gt 0 ]; do
@@ -84,6 +86,9 @@ while [ $# -gt 0 ]; do
             ;;
         -test-debug | --test-debug )
             do_debug="yes"
+            ;;
+        -test-asserts | --test-asserts )
+            do_asserts="yes"
             ;;
         -help | --help | -h | --h | -\? )
             usage
@@ -272,9 +277,12 @@ if [ "$do_checkout" = "yes" ]; then
 fi
 
 (
-Flavors="Release Release+Asserts"
+Flavors="Release"
 if [ "$do_debug" = "yes" ]; then
     Flavors="Debug $Flavors"
+fi
+if [ "$do_asserts" = "yes" ]; then
+    Flavors="$Flavors Release+Asserts"
 fi
 if [ "$do_64bit" = "yes" ]; then
     Flavors="$Flavors Release-64"
@@ -297,15 +305,22 @@ for Flavor in $Flavors ; do
     llvmCore_phase2_objdir=$BuildDir/Phase2/$Flavor/llvmCore-$Release-rc$RC.obj
     llvmCore_phase2_installdir=$BuildDir/Phase2/$Flavor/llvmCore-$Release-rc$RC.install
 
+    llvmCore_phase3_objdir=$BuildDir/Phase3/$Flavor/llvmCore-$Release-rc$RC.obj
+    llvmCore_phase3_installdir=$BuildDir/Phase3/$Flavor/llvmCore-$Release-rc$RC.install
+
     rm -rf $llvmCore_phase1_objdir
     rm -rf $llvmCore_phase1_installdir
     rm -rf $llvmCore_phase2_objdir
     rm -rf $llvmCore_phase2_installdir
+    rm -rf $llvmCore_phase3_objdir
+    rm -rf $llvmCore_phase3_installdir
 
     mkdir -p $llvmCore_phase1_objdir
     mkdir -p $llvmCore_phase1_installdir
     mkdir -p $llvmCore_phase2_objdir
     mkdir -p $llvmCore_phase2_installdir
+    mkdir -p $llvmCore_phase3_objdir
+    mkdir -p $llvmCore_phase3_installdir
 
     ############################################################################
     # Phase 1: Build llvmCore and llvmgcc42
@@ -325,8 +340,31 @@ for Flavor in $Flavors ; do
     build_llvmCore 2 $Flavor \
         $llvmCore_phase2_objdir
 
+    ############################################################################
+    # Phase 3: Build llvmCore with newly built clang from phase 2.
+    c_compiler=$llvmCore_phase2_installdir/bin/clang
+    cxx_compiler=$llvmCore_phase2_installdir/bin/clang++
+    echo "# Phase 3: Building llvmCore"
+    configure_llvmCore 3 $Flavor \
+        $llvmCore_phase3_objdir $llvmCore_phase3_installdir
+    build_llvmCore 3 $Flavor \
+        $llvmCore_phase3_objdir
+
+    ############################################################################
+    # Testing: Test phase 3
     echo "# Testing - built with clang"
-    test_llvmCore 2 $Flavor $llvmCore_phase2_objdir
+    test_llvmCore 3 $Flavor $llvmCore_phase3_objdir
+
+    ############################################################################
+    # Compare .o files between Phase2 and Phase3 and report which ones differ.
+    echo
+    echo "# Comparing Phase 2 and Phase 3 files"
+    for o in `find $llvmCore_phase2_objdir -name '*.o'` ; do
+        p3=`echo $o | sed -e 's,Phase2,Phase3,'`
+        if ! cmp --ignore-initial=16 $o $p3 > /dev/null 2>&1 ; then
+            echo "file `basename $o` differs between phase 2 and phase 3"
+        fi
+    done
 done
 ) 2>&1 | tee $LogDir/testing.$Release-rc$RC.log
 
