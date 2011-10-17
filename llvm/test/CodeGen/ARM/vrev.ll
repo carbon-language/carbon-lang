@@ -148,8 +148,13 @@ define void @test_with_vcombine(<4 x float>* %v) nounwind {
   ret void
 }
 
-; vrev <4 x i16> should use VREV32 and not VREV64
+; The type <2 x i16> is legalized to <2 x i32> and need to be trunc-stored
+; to <2 x i16> when stored to memory. Currently ARM scalarizes these stores.
+; See PR 11158
 define void @test_vrev64(<4 x i16>* nocapture %source, <2 x i16>* nocapture %dst) nounwind ssp {
+; CHECK: test_vrev64:
+; CHECK: vst1.16
+; CHECK: vst1.16
 entry:
   %0 = bitcast <4 x i16>* %source to <8 x i16>*
   %tmp2 = load <8 x i16>* %0, align 4
