@@ -153,19 +153,22 @@ size_t StringRef::find(StringRef Str, size_t From) const {
     return npos;
   }
 
+  if (From >= Length)
+    return npos;
+
   // Build the bad char heuristic table, with uint8_t to reduce cache thrashing.
   uint8_t BadCharSkip[256];
   std::memset(BadCharSkip, N, 256);
   for (unsigned i = 0; i != N-1; ++i)
     BadCharSkip[(uint8_t)Str[i]] = N-1-i;
 
-  unsigned Len = Length, Pos = min(From, Length);
+  unsigned Len = Length-From, Pos = From;
   while (Len >= N) {
     if (substr(Pos, N).equals(Str)) // See if this is the correct substring.
       return Pos;
 
     // Otherwise skip the appropriate number of bytes.
-    uint8_t Skip = BadCharSkip[(uint8_t)Data[Pos+N-1]];
+    uint8_t Skip = BadCharSkip[(uint8_t)(*this)[Pos+N-1]];
     Len -= Skip;
     Pos += Skip;
   }
