@@ -927,9 +927,30 @@ DIVariable llvm::cleanseInlinedVariable(MDNode *DV, LLVMContext &VMContext) {
 
 /// processModule - Process entire module and collect debug info.
 void DebugInfoFinder::processModule(Module &M) {
-  if (NamedMDNode *CU_Nodes = M.getNamedMetadata("llvm.dbg.cu"))
-    for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i)
-      addCompileUnit(DICompileUnit(CU_Nodes->getOperand(i)));
+  if (NamedMDNode *CU_Nodes = M.getNamedMetadata("llvm.dbg.cu")) {
+    for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i) {
+      DICompileUnit CU(CU_Nodes->getOperand(i));
+      addCompileUnit(CU);
+      if (CU.getVersion() > LLVMDebugVersion10) {
+	DIArray GVs = CU.getGlobalVariables();
+	for (unsigned i = 0, e = GVs.getNumElements(); i != e; ++i) {
+	  DIGlobalVariable DIG(GVs.getElement(i));
+	  if (addGlobalVariable(DIG))
+	    processType(DIG.getType());
+	}
+	DIArray SPs = CU.getSubprograms();
+	for (unsigned i = 0, e = SPs.getNumElements(); i != e; ++i)
+	  processSubprogram(DISubprogram(SPs.getElement(i)));
+	DIArray EnumTypes = CU.getEnumTypes();
+	for (unsigned i = 0, e = EnumTypes.getNumElements(); i != e; ++i)
+	  processType(DIType(EnumTypes.getElement(i)));
+	DIArray RetainedTypes = CU.getRetainedTypes();
+	for (unsigned i = 0, e = RetainedTypes.getNumElements(); i != e; ++i)
+	  processType(DIType(RetainedTypes.getElement(i)));
+	return;
+      }
+    }
+  }
 
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     for (Function::iterator FI = (*I).begin(), FE = (*I).end(); FI != FE; ++FI)
