@@ -38,6 +38,8 @@ public:
   virtual StringRef getFileFormatName() const;
   virtual unsigned getArch() const;
 
+  MachOObject *getObject() { return MachOObj; }
+
 protected:
   virtual error_code getSymbolNext(DataRefImpl Symb, SymbolRef &Res) const;
   virtual error_code getSymbolName(DataRefImpl Symb, StringRef &Res) const;
