@@ -156,18 +156,21 @@ CommandObjectMultiwordWatchpoint::CommandObjectMultiwordWatchpoint(CommandInterp
     CommandObjectSP disable_command_object (new CommandObjectWatchpointDisable (interpreter));
     CommandObjectSP delete_command_object (new CommandObjectWatchpointDelete (interpreter));
     CommandObjectSP ignore_command_object (new CommandObjectWatchpointIgnore (interpreter));
+    CommandObjectSP modify_command_object (new CommandObjectWatchpointModify (interpreter));
 
     list_command_object->SetCommandName ("watchpoint list");
     enable_command_object->SetCommandName("watchpoint enable");
     disable_command_object->SetCommandName("watchpoint disable");
     delete_command_object->SetCommandName("watchpoint delete");
     ignore_command_object->SetCommandName("watchpoint ignore");
+    modify_command_object->SetCommandName("watchpoint modify");
 
     status = LoadSubCommand ("list",       list_command_object);
     status = LoadSubCommand ("enable",     enable_command_object);
     status = LoadSubCommand ("disable",    disable_command_object);
     status = LoadSubCommand ("delete",     delete_command_object);
     status = LoadSubCommand ("ignore",     ignore_command_object);
+    status = LoadSubCommand ("modify",     modify_command_object);
 }
 
 CommandObjectMultiwordWatchpoint::~CommandObjectMultiwordWatchpoint()
@@ -693,3 +696,151 @@ CommandObjectWatchpointIgnore::Execute(Args& args, CommandReturnObject &result)
     return result.Succeeded();
 }
 
+//-------------------------------------------------------------------------
+// CommandObjectWatchpointModify::CommandOptions
+//-------------------------------------------------------------------------
+#pragma mark Modify::CommandOptions
+
+CommandObjectWatchpointModify::CommandOptions::CommandOptions(CommandInterpreter &interpreter) :
+    Options (interpreter),
+    m_condition (),
+    m_condition_passed (false)
+{
+}
+
+CommandObjectWatchpointModify::CommandOptions::~CommandOptions ()
+{
+}
+
+OptionDefinition
+CommandObjectWatchpointModify::CommandOptions::g_option_table[] =
+{
+{ LLDB_OPT_SET_ALL, false, "condition",    'c', required_argument, NULL, NULL, eArgTypeExpression, "The watchpoint stops only if this condition expression evaluates to true."},
+{ 0,                false, NULL,            0 , 0,                 NULL, 0,    eArgTypeNone, NULL }
+};
+
+const OptionDefinition*
+CommandObjectWatchpointModify::CommandOptions::GetDefinitions ()
+{
+    return g_option_table;
+}
+
+Error
+CommandObjectWatchpointModify::CommandOptions::SetOptionValue (uint32_t option_idx, const char *option_arg)
+{
+    Error error;
+    char short_option = (char) m_getopt_table[option_idx].val;
+
+    switch (short_option)
+    {
+        case 'c':
+            if (option_arg != NULL)
+                m_condition.assign (option_arg);
+            else
+                m_condition.clear();
+            m_condition_passed = true;
+            break;
+        default:
+            error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
+            break;
+    }
+
+    return error;
+}
+
+void
+CommandObjectWatchpointModify::CommandOptions::OptionParsingStarting ()
+{
+    m_condition.clear();
+    m_condition_passed = false;
+}
+
+//-------------------------------------------------------------------------
+// CommandObjectWatchpointModify
+//-------------------------------------------------------------------------
+#pragma mark Modify
+
+CommandObjectWatchpointModify::CommandObjectWatchpointModify (CommandInterpreter &interpreter) :
+    CommandObject (interpreter,
+                   "watchpoint modify", 
+                   "Modify the options on a watchpoint or set of watchpoints in the executable.  "
+                   "If no watchpoint is specified, act on the last created watchpoint.  "
+                   "Passing an empty argument clears the modification.", 
+                   NULL),
+    m_options (interpreter)
+{
+    CommandArgumentEntry arg;
+    CommandObject::AddIDsArgumentData(arg, eArgTypeWatchpointID, eArgTypeWatchpointIDRange);
+    // Add the entry for the first argument for this command to the object's arguments vector.
+    m_arguments.push_back (arg);   
+}
+
+CommandObjectWatchpointModify::~CommandObjectWatchpointModify ()
+{
+}
+
+Options *
+CommandObjectWatchpointModify::GetOptions ()
+{
+    return &m_options;
+}
+
+bool
+CommandObjectWatchpointModify::Execute
+(
+    Args& args,
+    CommandReturnObject &result
+)
+{
+    Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
+    if (!CheckTargetForWatchpointOperations(target, result))
+        return false;
+
+    Mutex::Locker locker;
+    target->GetWatchpointList().GetListMutex(locker);
+    
+    const WatchpointList &watchpoints = target->GetWatchpointList();
+
+    size_t num_watchpoints = watchpoints.GetSize();
+
+    if (num_watchpoints == 0)
+    {
+        result.AppendError("No watchpoints exist to be modified.");
+        result.SetStatus(eReturnStatusFailed);
+        return false;
+    }
+
+    if (args.GetArgumentCount() == 0)
+    {
+        WatchpointSP wp_sp = target->GetLastCreatedWatchpoint();
+        wp_sp->SetCondition(m_options.m_condition.c_str());
+        result.SetStatus (eReturnStatusSuccessFinishNoResult);
+    }
+    else
+    {
+        // Particular watchpoints selected; set condition on them.
+        std::vector<uint32_t> wp_ids;
+        if (!VerifyWatchpointIDs(args, wp_ids))
+        {
+            result.AppendError("Invalid watchpoints specification.");
+            result.SetStatus(eReturnStatusFailed);
+            return false;
+        }
+
+        int count = 0;
+        const size_t size = wp_ids.size();
+        for (size_t i = 0; i < size; ++i)
+        {
+            WatchpointSP wp_sp = watchpoints.FindByID(wp_ids[i]);
+            if (wp_sp)
+            {
+                wp_sp->SetCondition(m_options.m_condition.c_str());
+                ++count;
+            }
+        }
+        result.AppendMessageWithFormat("%d watchpoints modified.\n",count);
+        result.SetStatus (eReturnStatusSuccessFinishNoResult);
+    }
+
+    return result.Succeeded();
+}

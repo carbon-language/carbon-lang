@@ -63,6 +63,12 @@ public:
     void
     SetIgnoreCount (uint32_t n);
 
+    const char *
+    GetCondition ();
+
+    void 
+    SetCondition (const char *condition);
+    
     bool
     GetDescription (lldb::SBStream &description, DescriptionLevel level);
 

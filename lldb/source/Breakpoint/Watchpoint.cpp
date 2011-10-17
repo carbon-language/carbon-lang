@@ -13,7 +13,12 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Breakpoint/StoppointCallbackContext.h"
 #include "lldb/Core/Stream.h"
+#include "lldb/Target/Process.h"
+#include "lldb/Target/Target.h"
+#include "lldb/Target/ThreadSpec.h"
+#include "lldb/Target/ThreadPlanTestCondition.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -82,16 +87,7 @@ Watchpoint::ShouldStop (StoppointCallbackContext *context)
     if (m_hit_count <= GetIgnoreCount())
         return false;
 
-    uint32_t access = 0;
-    if (m_watch_was_read)
-        access |= LLDB_WATCH_TYPE_READ;
-    if (m_watch_was_written)
-        access |= LLDB_WATCH_TYPE_WRITE;
-
-    if (m_callback)
-        return m_callback(m_callback_baton, context, GetID(), access);
-    else
-        return true;
+    return true;
 }
 
 void
@@ -124,8 +120,12 @@ Watchpoint::DumpWithLevel(Stream *s, lldb::DescriptionLevel description_level) c
               m_watch_read ? "r" : "",
               m_watch_write ? "w" : "");
 
-    if (description_level >= lldb::eDescriptionLevelFull)
-        s->Printf("\n    declare @ '%s'", m_decl_str.c_str());
+    if (description_level >= lldb::eDescriptionLevelFull) {
+        if (m_decl_str.c_str())
+            s->Printf("\n    declare @ '%s'", m_decl_str.c_str());
+        if (GetConditionText())
+            s->Printf("\n    condition = '%s'", GetConditionText());
+    }
 
     if (description_level >= lldb::eDescriptionLevelVerbose)
         if (m_callback)
@@ -184,3 +184,44 @@ Watchpoint::SetIgnoreCount (uint32_t n)
 {
     m_ignore_count = n;
 }
+
+bool
+Watchpoint::InvokeCallback (StoppointCallbackContext *context)
+{
+    if (m_callback && context->is_synchronous)
+    {
+        uint32_t access = 0;
+        if (m_watch_was_read)
+            access |= LLDB_WATCH_TYPE_READ;
+        if (m_watch_was_written)
+            access |= LLDB_WATCH_TYPE_WRITE;
+        return m_callback(m_callback_baton, context, GetID(), access);
+    }
+    else
+        return true;
+}
+
+void 
+Watchpoint::SetCondition (const char *condition)
+{
+    if (condition == NULL || condition[0] == '\0')
+    {
+        if (m_condition_ap.get())
+            m_condition_ap.reset();
+    }
+    else
+    {
+        // Pass NULL for expr_prefix (no translation-unit level definitions).
+        m_condition_ap.reset(new ClangUserExpression (condition, NULL));
+    }
+}
+
+const char *
+Watchpoint::GetConditionText () const
+{
+    if (m_condition_ap.get())
+        return m_condition_ap->GetUserText();
+    else
+        return NULL;
+}
+

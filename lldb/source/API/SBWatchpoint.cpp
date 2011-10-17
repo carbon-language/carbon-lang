@@ -205,6 +205,27 @@ SBWatchpoint::SetIgnoreCount (uint32_t n)
     }
 }
 
+const char *
+SBWatchpoint::GetCondition ()
+{
+    if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
+        return m_opaque_sp->GetConditionText ();
+    }
+    return NULL;
+}
+
+void
+SBWatchpoint::SetCondition (const char *condition)
+{
+    if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
+        m_opaque_sp->SetCondition (condition);
+    }
+}
+
 bool
 SBWatchpoint::GetDescription (SBStream &description, DescriptionLevel level)
 {

@@ -30,8 +30,10 @@ access_pool (uint32_t flag)
         ::pthread_mutex_lock (&g_access_mutex);
 
     uint32_t old_val = g_val;
-    if (flag != 0)
+    if (flag != 0) {
+        printf("changing g_val to %d...\n", (old_val + 1));
         g_val = old_val + 1;
+    }
 
     if (flag == 0)
         ::pthread_mutex_unlock (&g_access_mutex);

@@ -53,12 +53,46 @@ public:
     void        SetIgnoreCount (uint32_t n);
     void        SetWatchpointType (uint32_t type);
     bool        SetCallback (WatchpointHitCallback callback, void *callback_baton);
+    void        ClearCallback();
     void        SetDeclInfo (std::string &str);
     void        GetDescription (Stream *s, lldb::DescriptionLevel level);
     void        Dump (Stream *s) const;
     void        DumpWithLevel (Stream *s, lldb::DescriptionLevel description_level) const;
     Target      &GetTarget() { return *m_target; }
     const Error &GetError() { return m_error; }
+
+    //------------------------------------------------------------------
+    /// Invoke the callback action when the watchpoint is hit.
+    ///
+    /// @param[in] context
+    ///     Described the watchpoint event.
+    ///
+    /// @return
+    ///     \b true if the target should stop at this watchpoint and \b false not.
+    //------------------------------------------------------------------
+    bool
+    InvokeCallback (StoppointCallbackContext *context);
+
+    //------------------------------------------------------------------
+    // Condition
+    //------------------------------------------------------------------
+    //------------------------------------------------------------------
+    /// Set the breakpoint's condition.
+    ///
+    /// @param[in] condition
+    ///    The condition expression to evaluate when the breakpoint is hit.
+    ///    Pass in NULL to clear the condition.
+    //------------------------------------------------------------------
+    void SetCondition (const char *condition);
+    
+    //------------------------------------------------------------------
+    /// Return a pointer to the text of the condition expression.
+    ///
+    /// @return
+    ///    A pointer to the condition expression text, or NULL if no
+    //     condition has been set.
+    //------------------------------------------------------------------
+    const char *GetConditionText () const;
 
 private:
     friend class Target;
@@ -78,6 +112,7 @@ private:
     std::string m_decl_str;            // Declaration information, if any.
     Error       m_error;               // An error object describing errors creating watchpoint.
 
+    std::auto_ptr<ClangUserExpression> m_condition_ap;  // The condition to test.
 
     static lldb::break_id_t
     GetNextID();

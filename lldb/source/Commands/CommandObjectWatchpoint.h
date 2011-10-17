@@ -190,6 +190,58 @@ private:
     CommandOptions m_options;
 };
 
+//-------------------------------------------------------------------------
+// CommandObjectWatchpointModify
+//-------------------------------------------------------------------------
+
+class CommandObjectWatchpointModify : public CommandObject
+{
+public:
+
+    CommandObjectWatchpointModify (CommandInterpreter &interpreter);
+
+    virtual
+    ~CommandObjectWatchpointModify ();
+
+    virtual bool
+    Execute (Args& command,
+             CommandReturnObject &result);
+
+    virtual Options *
+    GetOptions ();
+
+    class CommandOptions : public Options
+    {
+    public:
+
+        CommandOptions (CommandInterpreter &interpreter);
+
+        virtual
+        ~CommandOptions ();
+
+        virtual Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg);
+
+        void
+        OptionParsingStarting ();
+
+        const OptionDefinition*
+        GetDefinitions ();
+
+        // Options table: Required for subclasses of Options.
+
+        static OptionDefinition g_option_table[];
+
+        // Instance variables to hold the values for command options.
+
+        std::string m_condition;
+        bool m_condition_passed;
+    };
+
+private:
+    CommandOptions m_options;
+};
+
 } // namespace lldb_private
 
 #endif  // liblldb_CommandObjectWatchpoint_h_
