@@ -8,4 +8,5 @@ add_llvm_library(LLVMAsmParser
 add_llvm_library_dependencies(LLVMAsmParser
   LLVMCore
   LLVMSupport
+  LLVMTarget
   )
