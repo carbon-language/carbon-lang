@@ -921,7 +921,6 @@ public:
     int64_t Value = CE->getValue();
     // i8 value splatted across 8 bytes. The immediate is just the 8 byte
     // value.
-//    return ((Value << 8) | (Value & 0xff)) == Value;
     return Value >= 0 && Value < 256;
   }
 
