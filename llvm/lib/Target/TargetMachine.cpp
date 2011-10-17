@@ -197,7 +197,8 @@ TargetMachine::TargetMachine(const Target &T,
     MCNoExecStack(false),
     MCSaveTempLabels(false),
     MCUseLoc(true),
-    MCUseCFI(true) {
+    MCUseCFI(true),
+    MCUseDwarfDirectory(true) {
   // Typically it will be subtargets that will adjust FloatABIType from Default
   // to Soft or Hard.
   if (UseSoftFloat)

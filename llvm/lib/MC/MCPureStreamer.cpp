@@ -93,7 +93,8 @@ public:
   virtual void EmitFileDirective(StringRef Filename) {
     report_fatal_error("unsupported directive in pure streamer");
   }
-  virtual bool EmitDwarfFileDirective(unsigned FileNo, StringRef Filename) {
+  virtual bool EmitDwarfFileDirective(unsigned FileNo, StringRef Directory,
+                                      StringRef Filename) {
     report_fatal_error("unsupported directive in pure streamer");
     return false;
   }

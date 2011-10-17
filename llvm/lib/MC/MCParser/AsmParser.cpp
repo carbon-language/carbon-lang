@@ -2303,7 +2303,8 @@ bool AsmParser::ParseDirectiveEndIf(SMLoc DirectiveLoc) {
 }
 
 /// ParseDirectiveFile
-/// ::= .file [number] string
+/// ::= .file [number] filename
+/// ::= .file number directory filename
 bool GenericAsmParser::ParseDirectiveFile(StringRef, SMLoc DirectiveLoc) {
   // FIXME: I'm not sure what this is.
   int64_t FileNumber = -1;
@@ -2319,9 +2320,23 @@ bool GenericAsmParser::ParseDirectiveFile(StringRef, SMLoc DirectiveLoc) {
   if (getLexer().isNot(AsmToken::String))
     return TokError("unexpected token in '.file' directive");
 
-  StringRef Filename = getTok().getString();
-  Filename = Filename.substr(1, Filename.size()-2);
+  // Usually the directory and filename together, otherwise just the directory.
+  StringRef Path = getTok().getString();
+  Path = Path.substr(1, Path.size()-2);
   Lex();
+
+  StringRef Directory;
+  StringRef Filename;
+  if (getLexer().is(AsmToken::String)) {
+    if (FileNumber == -1)
+      return TokError("explicit path specified, but no file number");
+    Filename = getTok().getString();
+    Filename = Filename.substr(1, Filename.size()-2);
+    Directory = Path;
+    Lex();
+  } else {
+    Filename = Path;
+  }
 
   if (getLexer().isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in '.file' directive");
@@ -2329,7 +2344,7 @@ bool GenericAsmParser::ParseDirectiveFile(StringRef, SMLoc DirectiveLoc) {
   if (FileNumber == -1)
     getStreamer().EmitFileDirective(Filename);
   else {
-    if (getStreamer().EmitDwarfFileDirective(FileNumber, Filename))
+    if (getStreamer().EmitDwarfFileDirective(FileNumber, Directory, Filename))
       Error(FileNumberLoc, "file number already allocated");
   }
 

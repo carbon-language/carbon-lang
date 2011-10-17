@@ -505,7 +505,8 @@ namespace llvm {
     /// EmitDwarfFileDirective - Associate a filename with a specified logical
     /// file number.  This implements the DWARF2 '.file 4 "foo.c"' assembler
     /// directive.
-    virtual bool EmitDwarfFileDirective(unsigned FileNo,StringRef Filename);
+    virtual bool EmitDwarfFileDirective(unsigned FileNo, StringRef Directory,
+                                        StringRef Filename);
 
     /// EmitDwarfLocDirective - This implements the DWARF2
     // '.loc fileno lineno ...' assembler directive.
@@ -613,6 +614,7 @@ namespace llvm {
                                 bool isVerboseAsm,
                                 bool useLoc,
                                 bool useCFI,
+                                bool useDwarfDirectory,
                                 MCInstPrinter *InstPrint = 0,
                                 MCCodeEmitter *CE = 0,
                                 MCAsmBackend *TAB = 0,

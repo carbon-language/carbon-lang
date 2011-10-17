@@ -442,23 +442,21 @@ unsigned DwarfDebug::GetOrCreateSourceID(StringRef FileName,
   if (FileName.empty())
     return GetOrCreateSourceID("<stdin>", StringRef());
 
-  // MCStream expects full path name as filename.
-  if (!DirName.empty() && !sys::path::is_absolute(FileName)) {
-    SmallString<128> FullPathName = DirName;
-    sys::path::append(FullPathName, FileName);
-    // Here FullPathName will be copied into StringMap by GetOrCreateSourceID.
-    return GetOrCreateSourceID(StringRef(FullPathName), StringRef());
-  }
+  unsigned SrcId = SourceIdMap.size()+1;
+  std::pair<std::string, std::string> SourceName =
+      std::make_pair(FileName, DirName);
+  std::pair<std::pair<std::string, std::string>, unsigned> Entry =
+      make_pair(SourceName, SrcId);
 
-  StringMapEntry<unsigned> &Entry = SourceIdMap.GetOrCreateValue(FileName);
-  if (Entry.getValue())
-    return Entry.getValue();
-
-  unsigned SrcId = SourceIdMap.size();
-  Entry.setValue(SrcId);
+  std::map<std::pair<std::string, std::string>, unsigned>::iterator I;
+  bool NewlyInserted;
+  tie(I, NewlyInserted) = SourceIdMap.insert(Entry);
+  if (!NewlyInserted)
+    return I->second;
 
   // Print out a .file directive to specify files for .loc directives.
-  Asm->OutStreamer.EmitDwarfFileDirective(SrcId, Entry.getKey());
+  Asm->OutStreamer.EmitDwarfFileDirective(SrcId, Entry.first.second,
+                                          Entry.first.first);
 
   return SrcId;
 }

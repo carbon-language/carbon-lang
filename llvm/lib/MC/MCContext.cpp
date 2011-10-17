@@ -248,7 +248,8 @@ const MCSection *MCContext::getCOFFSection(StringRef Section,
 /// directory tables.  If the file number has already been allocated it is an
 /// error and zero is returned and the client reports the error, else the
 /// allocated file number is returned.  The file numbers may be in any order.
-unsigned MCContext::GetDwarfFile(StringRef FileName, unsigned FileNumber) {
+unsigned MCContext::GetDwarfFile(StringRef Directory, StringRef FileName,
+                                 unsigned FileNumber) {
   // TODO: a FileNumber of zero says to use the next available file number.
   // Note: in GenericAsmParser::ParseDirectiveFile() FileNumber was checked
   // to not be less than one.  This needs to be change to be not less than zero.
@@ -266,19 +267,21 @@ unsigned MCContext::GetDwarfFile(StringRef FileName, unsigned FileNumber) {
   // Get the new MCDwarfFile slot for this FileNumber.
   MCDwarfFile *&File = MCDwarfFiles[FileNumber];
 
-  // Separate the directory part from the basename of the FileName.
-  std::pair<StringRef, StringRef> Slash = FileName.rsplit('/');
+  if (Directory.empty()) {
+    // Separate the directory part from the basename of the FileName.
+    std::pair<StringRef, StringRef> Slash = FileName.rsplit('/');
+    Directory = Slash.second;
+    if (!Directory.empty())
+      FileName = Slash.first;
+  }
 
   // Find or make a entry in the MCDwarfDirs vector for this Directory.
-  StringRef Name;
-  unsigned DirIndex;
   // Capture directory name.
-  if (Slash.second.empty()) {
-    Name = Slash.first;
-    DirIndex = 0; // For FileNames with no directories a DirIndex of 0 is used.
+  unsigned DirIndex;
+  if (Directory.empty()) {
+    // For FileNames with no directories a DirIndex of 0 is used.
+    DirIndex = 0;
   } else {
-    StringRef Directory = Slash.first;
-    Name = Slash.second;
     DirIndex = 0;
     for (unsigned End = MCDwarfDirs.size(); DirIndex < End; DirIndex++) {
       if (Directory == MCDwarfDirs[DirIndex])
@@ -291,16 +294,16 @@ unsigned MCContext::GetDwarfFile(StringRef FileName, unsigned FileNumber) {
     }
     // The DirIndex is one based, as DirIndex of 0 is used for FileNames with
     // no directories.  MCDwarfDirs[] is unlike MCDwarfFiles[] in that the
-    // directory names are stored at MCDwarfDirs[DirIndex-1] where FileNames are
-    // stored at MCDwarfFiles[FileNumber].Name .
+    // directory names are stored at MCDwarfDirs[DirIndex-1] where FileNames
+    // are stored at MCDwarfFiles[FileNumber].Name .
     DirIndex++;
   }
 
   // Now make the MCDwarfFile entry and place it in the slot in the MCDwarfFiles
   // vector.
-  char *Buf = static_cast<char *>(Allocate(Name.size()));
-  memcpy(Buf, Name.data(), Name.size());
-  File = new (*this) MCDwarfFile(StringRef(Buf, Name.size()), DirIndex);
+  char *Buf = static_cast<char *>(Allocate(FileName.size()));
+  memcpy(Buf, FileName.data(), FileName.size());
+  File = new (*this) MCDwarfFile(StringRef(Buf, FileName.size()), DirIndex);
 
   // return the allocated FileNumber.
   return FileNumber;

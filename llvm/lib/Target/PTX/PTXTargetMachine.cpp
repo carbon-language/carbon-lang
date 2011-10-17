@@ -46,7 +46,7 @@ using namespace llvm;
 namespace llvm {
   MCStreamer *createPTXAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
                                    bool isVerboseAsm, bool useLoc,
-                                   bool useCFI,
+                                   bool useCFI, bool useDwarfDirectory,
                                    MCInstPrinter *InstPrint,
                                    MCCodeEmitter *CE,
                                    MCAsmBackend *MAB,
@@ -157,6 +157,7 @@ bool PTXTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
                                                   true, /* verbose asm */
                                                   hasMCUseLoc(),
                                                   hasMCUseCFI(),
+                                                  hasMCUseDwarfDirectory(),
                                                   InstPrinter,
                                                   MCE, MAB,
                                                   false /* show MC encoding */);

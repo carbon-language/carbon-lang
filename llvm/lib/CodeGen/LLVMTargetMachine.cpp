@@ -159,6 +159,7 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
                                                   getVerboseAsm(),
                                                   hasMCUseLoc(),
                                                   hasMCUseCFI(),
+                                                  hasMCUseDwarfDirectory(),
                                                   InstPrinter,
                                                   MCE, MAB,
                                                   ShowMCInst);

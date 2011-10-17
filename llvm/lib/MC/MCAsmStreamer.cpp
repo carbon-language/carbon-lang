@@ -29,6 +29,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/FormattedStream.h"
+#include "llvm/Support/PathV2.h"
 #include <cctype>
 using namespace llvm;
 
@@ -50,6 +51,7 @@ private:
   unsigned ShowInst : 1;
   unsigned UseLoc : 1;
   unsigned UseCFI : 1;
+  unsigned UseDwarfDirectory : 1;
 
   enum EHSymbolFlags { EHGlobal         = 1,
                        EHWeakDefinition = 1 << 1,
@@ -63,13 +65,15 @@ private:
 public:
   MCAsmStreamer(MCContext &Context, formatted_raw_ostream &os,
                 bool isVerboseAsm, bool useLoc, bool useCFI,
+                bool useDwarfDirectory,
                 MCInstPrinter *printer, MCCodeEmitter *emitter,
                 MCAsmBackend *asmbackend,
                 bool showInst)
     : MCStreamer(Context), OS(os), MAI(Context.getAsmInfo()),
       InstPrinter(printer), Emitter(emitter), AsmBackend(asmbackend),
       CommentStream(CommentToEmit), IsVerboseAsm(isVerboseAsm),
-      ShowInst(showInst), UseLoc(useLoc), UseCFI(useCFI) {
+      ShowInst(showInst), UseLoc(useLoc), UseCFI(useCFI),
+      UseDwarfDirectory(useDwarfDirectory) {
     if (InstPrinter && IsVerboseAsm)
       InstPrinter->setCommentStream(CommentStream);
   }
@@ -196,7 +200,8 @@ public:
                                  unsigned char Value = 0);
 
   virtual void EmitFileDirective(StringRef Filename);
-  virtual bool EmitDwarfFileDirective(unsigned FileNo, StringRef Filename);
+  virtual bool EmitDwarfFileDirective(unsigned FileNo, StringRef Directory,
+                                      StringRef Filename);
   virtual void EmitDwarfLocDirective(unsigned FileNo, unsigned Line,
                                      unsigned Column, unsigned Flags,
                                      unsigned Isa, unsigned Discriminator,
@@ -748,13 +753,27 @@ void MCAsmStreamer::EmitFileDirective(StringRef Filename) {
   EmitEOL();
 }
 
-bool MCAsmStreamer::EmitDwarfFileDirective(unsigned FileNo, StringRef Filename){
+bool MCAsmStreamer::EmitDwarfFileDirective(unsigned FileNo, StringRef Directory,
+                                           StringRef Filename) {
+  if (!UseDwarfDirectory && !Directory.empty()) {
+    if (sys::path::is_absolute(Filename))
+      return EmitDwarfFileDirective(FileNo, "", Filename);
+
+    SmallString<128> FullPathName = Directory;
+    sys::path::append(FullPathName, Filename);
+    return EmitDwarfFileDirective(FileNo, "", FullPathName);
+  }
+
   if (UseLoc) {
     OS << "\t.file\t" << FileNo << ' ';
+    if (!Directory.empty()) {
+      PrintQuotedString(Directory, OS);
+      OS << ' ';
+    }
     PrintQuotedString(Filename, OS);
     EmitEOL();
   }
-  return this->MCStreamer::EmitDwarfFileDirective(FileNo, Filename);
+  return this->MCStreamer::EmitDwarfFileDirective(FileNo, Directory, Filename);
 }
 
 void MCAsmStreamer::EmitDwarfLocDirective(unsigned FileNo, unsigned Line,
@@ -1271,9 +1290,9 @@ void MCAsmStreamer::Finish() {
 MCStreamer *llvm::createAsmStreamer(MCContext &Context,
                                     formatted_raw_ostream &OS,
                                     bool isVerboseAsm, bool useLoc,
-                                    bool useCFI, MCInstPrinter *IP,
-                                    MCCodeEmitter *CE, MCAsmBackend *MAB,
-                                    bool ShowInst) {
+                                    bool useCFI, bool useDwarfDirectory,
+                                    MCInstPrinter *IP, MCCodeEmitter *CE,
+                                    MCAsmBackend *MAB, bool ShowInst) {
   return new MCAsmStreamer(Context, OS, isVerboseAsm, useLoc, useCFI,
-                           IP, CE, MAB, ShowInst);
+                           useDwarfDirectory, IP, CE, MAB, ShowInst);
 }

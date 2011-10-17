@@ -26,6 +26,7 @@
 #include "llvm/ADT/UniqueVector.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/DebugLoc.h"
+#include <map>
 
 namespace llvm {
 
@@ -207,9 +208,9 @@ class DwarfDebug {
   ///
   std::vector<DIEAbbrev *> Abbreviations;
 
-  /// SourceIdMap - Source id map, i.e. pair of directory id and source file
-  /// id mapped to a unique id.
-  StringMap<unsigned> SourceIdMap;
+  /// SourceIdMap - Source id map, i.e. pair of source filename and directory
+  /// mapped to a unique id.
+  std::map<std::pair<std::string, std::string>, unsigned> SourceIdMap;
 
   /// StringPool - A String->Symbol mapping of strings used by indirect
   /// references.

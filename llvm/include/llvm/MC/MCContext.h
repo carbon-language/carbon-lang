@@ -204,7 +204,8 @@ namespace llvm {
     /// @{
 
     /// GetDwarfFile - creates an entry in the dwarf file and directory tables.
-    unsigned GetDwarfFile(StringRef FileName, unsigned FileNumber);
+    unsigned GetDwarfFile(StringRef Directory, StringRef FileName,
+                          unsigned FileNumber);
 
     bool isValidDwarfFileNumber(unsigned FileNumber);
 

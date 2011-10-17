@@ -409,8 +409,10 @@ static int AssembleInput(const char *ProgName) {
     }
     Str.reset(TheTarget->createAsmStreamer(Ctx, FOS, /*asmverbose*/true,
                                            /*useLoc*/ true,
-                                           /*useCFI*/ true, IP, CE, MAB,
-                                           ShowInst));
+                                           /*useCFI*/ true,
+                                           /*useDwarfDirectory*/ true,
+                                           IP, CE, MAB, ShowInst));
+                                           
   } else if (FileType == OFT_Null) {
     Str.reset(createNullStreamer(Ctx));
   } else {
@@ -515,4 +517,3 @@ int main(int argc, char **argv) {
 
   return 0;
 }
-

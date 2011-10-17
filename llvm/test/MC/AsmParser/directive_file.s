@@ -2,7 +2,8 @@
 
         .file "hello"
         .file 1 "world"
+        .file 2 "directory" "file"
 
 # CHECK: .file "hello"
 # CHECK: .file 1 "world"
-
+# CHECK: .file 2 "directory" "file"

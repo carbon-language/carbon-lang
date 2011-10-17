@@ -535,7 +535,7 @@ unsigned PTXAsmPrinter::GetOrCreateSourceID(StringRef FileName,
   Entry.setValue(SrcId);
 
   // Print out a .file directive to specify files for .loc directives.
-  OutStreamer.EmitDwarfFileDirective(SrcId, Entry.getKey());
+  OutStreamer.EmitDwarfFileDirective(SrcId, "", Entry.getKey());
 
   return SrcId;
 }
@@ -594,4 +594,3 @@ extern "C" void LLVMInitializePTXAsmPrinter() {
   RegisterAsmPrinter<PTXAsmPrinter> X(ThePTX32Target);
   RegisterAsmPrinter<PTXAsmPrinter> Y(ThePTX64Target);
 }
-
