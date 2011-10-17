@@ -402,9 +402,16 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
     setLibcallName(RTLIB::EXP2_PPCF128, "exp2l$LDBL128");
   }
 
-  setMinFunctionAlignment(2);
-  if (PPCSubTarget.isDarwin())
-    setPrefFunctionAlignment(4);
+  if (PPCSubTarget.isBookE()) {
+    // Book E: Instructions are always four bytes long and word-aligned.
+    setMinFunctionAlignment(4);
+    setPrefFunctionAlignment(8);
+  }
+  else {
+    setMinFunctionAlignment(2);
+    if (PPCSubTarget.isDarwin())
+      setPrefFunctionAlignment(4);
+  }
 
   setInsertFencesForAtomic(true);
 
