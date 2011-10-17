@@ -6223,6 +6223,14 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     return BB;
   }
 
+  case ARM::Int_eh_sjlj_setjmp:
+  case ARM::Int_eh_sjlj_setjmp_nofp:
+  case ARM::tInt_eh_sjlj_setjmp:
+  case ARM::t2Int_eh_sjlj_setjmp:
+  case ARM::t2Int_eh_sjlj_setjmp_nofp:
+    EmitSjLjDispatchBlock(MI, BB);
+    return BB;
+
   case ARM::ABS:
   case ARM::t2ABS: {
     // To insert an ABS instruction, we have to insert the
