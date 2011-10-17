@@ -2147,11 +2147,6 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
         SourceLocation EndLoc;
         if (Tok.is(tok::colon)) {
           EndLoc = Tok.getLocation();
-          if (Actions.ActOnAccessSpecifier(AS, ASLoc, EndLoc,
-                                           AccessAttrs.getList())) {
-            // found another attribute than only annotations
-            AccessAttrs.clear();
-          }
           ConsumeToken();
         } else if (Tok.is(tok::semi)) {
           EndLoc = Tok.getLocation();
@@ -2163,7 +2158,13 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
           Diag(EndLoc, diag::err_expected_colon) 
             << FixItHint::CreateInsertion(EndLoc, ":");
         }
-        Actions.ActOnAccessSpecifier(AS, ASLoc, EndLoc);
+
+        if (Actions.ActOnAccessSpecifier(AS, ASLoc, EndLoc,
+                                         AccessAttrs.getList())) {
+          // found another attribute than only annotations
+          AccessAttrs.clear();
+        }
+
         continue;
       }
 
