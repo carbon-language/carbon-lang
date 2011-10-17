@@ -813,6 +813,15 @@ Sema::BuildMemberReferenceExpr(Expr *BaseExpr, QualType BaseExprType,
       !SuppressQualifierCheck &&
       CheckQualifiedMemberReference(BaseExpr, BaseType, SS, R))
     return ExprError();
+  
+  // Perform a property load on the base regardless of whether we
+  // actually need it for the declaration.
+  if (BaseExpr && BaseExpr->getObjectKind() == OK_ObjCProperty) {
+    ExprResult Result = ConvertPropertyForRValue(BaseExpr);
+    if (Result.isInvalid())
+      return ExprError();
+    BaseExpr = Result.take();
+  }
 
   // Construct an unresolved result if we in fact got an unresolved
   // result.
@@ -868,15 +877,6 @@ Sema::BuildMemberReferenceExpr(Expr *BaseExpr, QualType BaseExprType,
   if (ShouldCheckUse && DiagnoseUseOfDecl(MemberDecl, MemberLoc)) {
     Owned(BaseExpr);
     return ExprError();
-  }
-
-  // Perform a property load on the base regardless of whether we
-  // actually need it for the declaration.
-  if (BaseExpr->getObjectKind() == OK_ObjCProperty) {
-    ExprResult Result = ConvertPropertyForRValue(BaseExpr);
-    if (Result.isInvalid())
-      return ExprError();
-    BaseExpr = Result.take();
   }
 
   if (FieldDecl *FD = dyn_cast<FieldDecl>(MemberDecl))
