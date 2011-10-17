@@ -398,6 +398,7 @@ public:
 
   /// \brief Returns whether this expression has a specific placeholder type.
   bool hasPlaceholderType(BuiltinType::Kind K) const {
+    assert(BuiltinType::isPlaceholderTypeKind(K));
     if (const BuiltinType *BT = dyn_cast<BuiltinType>(getType()))
       return BT->getKind() == K;
     return false;

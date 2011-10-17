@@ -1790,11 +1790,16 @@ public:
     return getKind() >= Half && getKind() <= LongDouble;
   }
 
+  /// Determines whether the given kind corresponds to a placeholder type.
+  static bool isPlaceholderTypeKind(Kind K) {
+    return K >= Overload;
+  }
+
   /// Determines whether this type is a placeholder type, i.e. a type
   /// which cannot appear in arbitrary positions in a fully-formed
   /// expression.
   bool isPlaceholderType() const {
-    return getKind() >= Overload;
+    return isPlaceholderTypeKind(getKind());
   }
 
   static bool classof(const Type *T) { return T->getTypeClass() == Builtin; }
@@ -4775,6 +4780,7 @@ inline const BuiltinType *Type::getAsPlaceholderType() const {
 }
 
 inline bool Type::isSpecificPlaceholderType(unsigned K) const {
+  assert(BuiltinType::isPlaceholderTypeKind((BuiltinType::Kind) K));
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(this))
     return (BT->getKind() == (BuiltinType::Kind) K);
   return false;
