@@ -359,7 +359,7 @@ std::string Intrinsic::getName(ID id, ArrayRef<Type*> Tys) {
 FunctionType *Intrinsic::getType(LLVMContext &Context,
                                        ID id, ArrayRef<Type*> Tys) {
   Type *ResultTy = NULL;
-  std::vector<Type*> ArgTys;
+  SmallVector<Type*, 8> ArgTys;
   bool IsVarArg = false;
   
 #define GET_INTRINSIC_GENERATOR
