@@ -14,9 +14,9 @@ namespace test1 {
     // making sure that these locations check for placeholder types
     // properly.
 
-    int x = foo; // expected-error {{cannot initialize}}
+    int x = foo; // expected-error {{'foo' has unknown type}}
     int y = 0 + foo; // expected-error {{'foo' has unknown type}}
-    return foo; // expected-error {{cannot initialize}}
+    return foo; // expected-error {{'foo' has unknown type}}
   }
 }
 

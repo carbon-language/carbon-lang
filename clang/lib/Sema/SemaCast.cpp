@@ -49,7 +49,7 @@ namespace {
       : Self(S), SrcExpr(src), DestType(destType),
         ResultType(destType.getNonLValueExprType(S.Context)),
         ValueKind(Expr::getValueKindForType(destType)),
-        Kind(CK_Dependent) {
+        Kind(CK_Dependent), IsARCUnbridgedCast(false) {
 
       if (const BuiltinType *placeholder =
             src.get()->getType()->getAsPlaceholderType()) {
@@ -67,6 +67,7 @@ namespace {
     CastKind Kind;
     BuiltinType::Kind PlaceholderKind;
     CXXCastPath BasePath;
+    bool IsARCUnbridgedCast;
 
     SourceRange OpRange;
     SourceRange DestRange;
@@ -78,6 +79,20 @@ namespace {
     void CheckDynamicCast();
     void CheckCXXCStyleCast(bool FunctionalCast);
     void CheckCStyleCast();
+
+    /// Complete an apparently-successful cast operation that yields
+    /// the given expression.
+    ExprResult complete(CastExpr *castExpr) {
+      // If this is an unbridged cast, wrap the result in an implicit
+      // cast that yields the unbridged-cast placeholder type.
+      if (IsARCUnbridgedCast) {
+        castExpr = ImplicitCastExpr::Create(Self.Context,
+                                            Self.Context.ARCUnbridgedCastTy,
+                                            CK_Dependent, castExpr, 0,
+                                            castExpr->getValueKind());
+      }
+      return Self.Owned(castExpr);
+    }
 
     // Internal convenience methods.
 
@@ -103,8 +118,12 @@ namespace {
     }
 
     void checkObjCARCConversion(Sema::CheckedConversionKind CCK) {
+      assert(Self.getLangOptions().ObjCAutoRefCount);
+
       Expr *src = SrcExpr.get();
-      Self.CheckObjCARCConversion(OpRange, DestType, src, CCK);
+      if (Self.CheckObjCARCConversion(OpRange, DestType, src, CCK) ==
+            Sema::ACR_unbridged)
+        IsARCUnbridgedCast = true;
       SrcExpr = src;
     }
 
@@ -237,9 +256,9 @@ Sema::BuildCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
       if (Op.SrcExpr.isInvalid())
         return ExprError();
     }
-    return Owned(CXXConstCastExpr::Create(Context, Op.ResultType, Op.ValueKind,
-                                          Op.SrcExpr.take(), DestTInfo, OpLoc,
-                                          Parens.getEnd()));
+    return Op.complete(CXXConstCastExpr::Create(Context, Op.ResultType,
+                                  Op.ValueKind, Op.SrcExpr.take(), DestTInfo,
+                                                OpLoc, Parens.getEnd()));
 
   case tok::kw_dynamic_cast: {
     if (!TypeDependent) {
@@ -247,10 +266,10 @@ Sema::BuildCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
       if (Op.SrcExpr.isInvalid())
         return ExprError();
     }
-    return Owned(CXXDynamicCastExpr::Create(Context, Op.ResultType,
-                                            Op.ValueKind, Op.Kind,
-                                            Op.SrcExpr.take(), &Op.BasePath,
-                                            DestTInfo, OpLoc, Parens.getEnd()));
+    return Op.complete(CXXDynamicCastExpr::Create(Context, Op.ResultType,
+                                    Op.ValueKind, Op.Kind, Op.SrcExpr.take(),
+                                                  &Op.BasePath, DestTInfo,
+                                                  OpLoc, Parens.getEnd()));
   }
   case tok::kw_reinterpret_cast: {
     if (!TypeDependent) {
@@ -258,11 +277,10 @@ Sema::BuildCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
       if (Op.SrcExpr.isInvalid())
         return ExprError();
     }
-    return Owned(CXXReinterpretCastExpr::Create(Context, Op.ResultType,
-                                                Op.ValueKind, Op.Kind,
-                                                Op.SrcExpr.take(), 0,
-                                                DestTInfo, OpLoc,
-                                                Parens.getEnd()));
+    return Op.complete(CXXReinterpretCastExpr::Create(Context, Op.ResultType,
+                                    Op.ValueKind, Op.Kind, Op.SrcExpr.take(),
+                                                      0, DestTInfo, OpLoc,
+                                                      Parens.getEnd()));
   }
   case tok::kw_static_cast: {
     if (!TypeDependent) {
@@ -271,10 +289,10 @@ Sema::BuildCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
         return ExprError();
     }
     
-    return Owned(CXXStaticCastExpr::Create(Context, Op.ResultType, Op.ValueKind,
-                                           Op.Kind, Op.SrcExpr.take(),
-                                           &Op.BasePath, DestTInfo, OpLoc,
-                                           Parens.getEnd()));
+    return Op.complete(CXXStaticCastExpr::Create(Context, Op.ResultType,
+                                   Op.ValueKind, Op.Kind, Op.SrcExpr.take(),
+                                                 &Op.BasePath, DestTInfo,
+                                                 OpLoc, Parens.getEnd()));
   }
   }
 
@@ -1841,24 +1859,13 @@ void CastOperation::CheckCXXCStyleCast(bool FunctionalStyle) {
 void CastOperation::CheckCStyleCast() {
   assert(!Self.getLangOptions().CPlusPlus);
 
-  // Handle placeholders.
-  if (isPlaceholder()) {
-    // C-style casts can resolve __unknown_any types.
-    if (claimPlaceholder(BuiltinType::UnknownAny)) {
-      SrcExpr = Self.checkUnknownAnyCast(DestRange, DestType,
-                                         SrcExpr.get(), Kind,
-                                         ValueKind, BasePath);
-      return;
-    }
-
-    // We allow overloads in C, but we don't allow them to be resolved
-    // by anything except calls.
-    SrcExpr = Self.CheckPlaceholderExpr(SrcExpr.take());
-    if (SrcExpr.isInvalid())
-      return;
-  }  
-
-  assert(!isPlaceholder());
+  // C-style casts can resolve __unknown_any types.
+  if (claimPlaceholder(BuiltinType::UnknownAny)) {
+    SrcExpr = Self.checkUnknownAnyCast(DestRange, DestType,
+                                       SrcExpr.get(), Kind,
+                                       ValueKind, BasePath);
+    return;
+  }
 
   // C99 6.5.4p2: the cast type needs to be void or scalar and the expression
   // type needs to be scalar.
@@ -1877,6 +1884,7 @@ void CastOperation::CheckCStyleCast() {
   if (SrcExpr.isInvalid())
     return;
   QualType SrcType = SrcExpr.get()->getType();
+  assert(!SrcType->isPlaceholderType());
 
   if (Self.RequireCompleteType(OpRange.getBegin(), DestType,
                                diag::err_typecheck_cast_to_incomplete)) {
@@ -2044,9 +2052,9 @@ ExprResult Sema::BuildCStyleCastExpr(SourceLocation LPLoc,
   if (Op.SrcExpr.isInvalid())
     return ExprError();
 
-  return Owned(CStyleCastExpr::Create(Context, Op.ResultType, Op.ValueKind,
-                                      Op.Kind, Op.SrcExpr.take(), &Op.BasePath,
-                                      CastTypeInfo, LPLoc, RPLoc));
+  return Op.complete(CStyleCastExpr::Create(Context, Op.ResultType,
+                              Op.ValueKind, Op.Kind, Op.SrcExpr.take(),
+                              &Op.BasePath, CastTypeInfo, LPLoc, RPLoc));
 }
 
 ExprResult Sema::BuildCXXFunctionalCastExpr(TypeSourceInfo *CastTypeInfo,
@@ -2061,9 +2069,7 @@ ExprResult Sema::BuildCXXFunctionalCastExpr(TypeSourceInfo *CastTypeInfo,
   if (Op.SrcExpr.isInvalid())
     return ExprError();
 
-  return Owned(CXXFunctionalCastExpr::Create(Context, Op.ResultType,
-                                             Op.ValueKind, CastTypeInfo,
-                                             Op.DestRange.getBegin(),
-                                             Op.Kind, Op.SrcExpr.take(),
-                                             &Op.BasePath, RPLoc));
+  return Op.complete(CXXFunctionalCastExpr::Create(Context, Op.ResultType,
+                         Op.ValueKind, CastTypeInfo, Op.DestRange.getBegin(),
+                         Op.Kind, Op.SrcExpr.take(), &Op.BasePath, RPLoc));
 }

@@ -2427,6 +2427,7 @@ bool InitializationSequence::isAmbiguous() const {
   case FK_ArrayTypeMismatch:
   case FK_NonConstantArrayInit:
   case FK_ListInitializationFailed:
+  case FK_PlaceholderType:
     return false;
 
   case FK_ReferenceInitOverloadFailed:
@@ -3793,7 +3794,19 @@ InitializationSequence::InitializationSequence(Sema &S,
         return;
       }
       Args[I] = Result.take();
+    } else if (const BuiltinType *PlaceholderTy
+                 = Args[I]->getType()->getAsPlaceholderType()) {
+      // FIXME: should we be doing this here?
+      if (PlaceholderTy->getKind() != BuiltinType::Overload) {
+        ExprResult result = S.CheckPlaceholderExpr(Args[I]);
+        if (result.isInvalid()) {
+          SetFailed(FK_PlaceholderType);
+          return;
+        }
+        Args[I] = result.take();
+      }
     }
+
 
   QualType SourceType;
   Expr *Initializer = 0;
@@ -5200,6 +5213,11 @@ bool InitializationSequence::Diagnose(Sema &S,
            "Inconsistent init list check result.");
     break;
   }
+
+  case FK_PlaceholderType: {
+    // FIXME: Already diagnosed!
+    break;
+  }
   }
 
   PrintInitLocationNote(S, Entity);
@@ -5297,6 +5315,11 @@ void InitializationSequence::dump(raw_ostream &OS) const {
 
     case FK_ListInitializationFailed:
       OS << "list initialization checker failure";
+      break;
+
+    case FK_PlaceholderType:
+      OS << "initializer expression isn't contextually valid";
+      break;
     }
     OS << '\n';
     return;

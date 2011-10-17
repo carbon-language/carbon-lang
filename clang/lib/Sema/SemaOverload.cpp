@@ -542,6 +542,88 @@ void OverloadCandidateSet::clear() {
   Functions.clear();
 }
 
+namespace {
+  class UnbridgedCastsSet {
+    struct Entry {
+      Expr **Addr;
+      Expr *Saved;
+    };
+    SmallVector<Entry, 2> Entries;
+    
+  public:
+    void save(Sema &S, Expr *&E) {
+      assert(E->hasPlaceholderType(BuiltinType::ARCUnbridgedCast));
+      Entry entry = { &E, E };
+      Entries.push_back(entry);
+      E = S.stripARCUnbridgedCast(E);
+    }
+
+    void restore() {
+      for (SmallVectorImpl<Entry>::iterator
+             i = Entries.begin(), e = Entries.end(); i != e; ++i) 
+        *i->Addr = i->Saved;
+    }
+  };
+}
+
+/// checkPlaceholderForOverload - Do any interesting placeholder-like
+/// preprocessing on the given expression.
+///
+/// \param unbridgedCasts a collection to which to add unbridged casts;
+///   without this, they will be immediately diagnosed as errors
+///
+/// Return true on unrecoverable error.
+static bool checkPlaceholderForOverload(Sema &S, Expr *&E,
+                                        UnbridgedCastsSet *unbridgedCasts = 0) {
+  // ObjCProperty l-values are placeholder-like.
+  if (E->getObjectKind() == OK_ObjCProperty) {
+    ExprResult result = S.ConvertPropertyForRValue(E);
+    if (result.isInvalid())
+      return true;
+
+    E = result.take();
+    return false;
+  }
+
+  // Handle true placeholders.
+  if (const BuiltinType *placeholder =  E->getType()->getAsPlaceholderType()) {
+    // We can't handle overloaded expressions here because overload
+    // resolution might reasonably tweak them.
+    if (placeholder->getKind() == BuiltinType::Overload) return false;
+
+    // If the context potentially accepts unbridged ARC casts, strip
+    // the unbridged cast and add it to the collection for later restoration.
+    if (placeholder->getKind() == BuiltinType::ARCUnbridgedCast &&
+        unbridgedCasts) {
+      unbridgedCasts->save(S, E);
+      return false;
+    }
+
+    // Go ahead and check everything else.
+    ExprResult result = S.CheckPlaceholderExpr(E);
+    if (result.isInvalid())
+      return true;
+
+    E = result.take();
+    return false;
+  }
+
+  // Nothing to do.
+  return false;
+}
+
+/// checkArgPlaceholdersForOverload - Check a set of call operands for
+/// placeholders.
+static bool checkArgPlaceholdersForOverload(Sema &S, Expr **args,
+                                            unsigned numArgs,
+                                            UnbridgedCastsSet &unbridged) {
+  for (unsigned i = 0; i != numArgs; ++i)
+    if (checkPlaceholderForOverload(S, args[i], &unbridged))
+      return true;
+
+  return false;
+}
+
 // IsOverload - Determine whether the given New declaration is an
 // overload of the declarations in Old. This routine returns false if
 // New and Old cannot be overloaded, e.g., if New has the same
@@ -8574,6 +8656,10 @@ Sema::BuildOverloadedCallExpr(Scope *S, Expr *Fn, UnresolvedLookupExpr *ULE,
            "std is associated namespace but not doing ADL");
 #endif
 
+  UnbridgedCastsSet UnbridgedCasts;
+  if (checkArgPlaceholdersForOverload(*this, Args, NumArgs, UnbridgedCasts))
+    return ExprError();
+
   OverloadCandidateSet CandidateSet(Fn->getExprLoc());
 
   // Add the functions denoted by the callee to the set of candidate
@@ -8600,14 +8686,15 @@ Sema::BuildOverloadedCallExpr(Scope *S, Expr *Fn, UnresolvedLookupExpr *ULE,
                                  RParenLoc, /*EmptyLookup=*/true);
   }
 
+  UnbridgedCasts.restore();
+
   OverloadCandidateSet::iterator Best;
   switch (CandidateSet.BestViableFunction(*this, Fn->getLocStart(), Best)) {
   case OR_Success: {
     FunctionDecl *FDecl = Best->Function;
     MarkDeclarationReferenced(Fn->getExprLoc(), FDecl);
     CheckUnresolvedLookupAccess(ULE, Best->FoundDecl);
-    DiagnoseUseOfDecl(FDecl? FDecl : Best->FoundDecl.getDecl(),
-                      ULE->getNameLoc());
+    DiagnoseUseOfDecl(FDecl, ULE->getNameLoc());
     Fn = FixOverloadedFunctionReference(Fn, Best->FoundDecl, FDecl);
     return BuildResolvedCallExpr(Fn, FDecl, LParenLoc, Args, NumArgs, RParenLoc,
                                  ExecConfig);
@@ -8684,12 +8771,8 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
   // TODO: provide better source location info.
   DeclarationNameInfo OpNameInfo(OpName, OpLoc);
 
-  if (Input->getObjectKind() == OK_ObjCProperty) {
-    ExprResult Result = ConvertPropertyForRValue(Input);
-    if (Result.isInvalid())
-      return ExprError();
-    Input = Result.take();
-  }
+  if (checkPlaceholderForOverload(*this, Input))
+    return ExprError();
 
   Expr *Args[2] = { Input, 0 };
   unsigned NumArgs = 1;
@@ -8922,13 +9005,9 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
                                                    OpLoc));
   }
 
-  // Always do property rvalue conversions on the RHS.
-  if (Args[1]->getObjectKind() == OK_ObjCProperty) {
-    ExprResult Result = ConvertPropertyForRValue(Args[1]);
-    if (Result.isInvalid())
-      return ExprError();
-    Args[1] = Result.take();
-  }
+  // Always do placeholder-like conversions on the RHS.
+  if (checkPlaceholderForOverload(*this, Args[1]))
+    return ExprError();
 
   // The LHS is more complicated.
   if (Args[0]->getObjectKind() == OK_ObjCProperty) {
@@ -8961,6 +9040,10 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
       return ExprError();
     Args[0] = Result.take();
   }
+
+  // Handle all the other placeholders.
+  if (checkPlaceholderForOverload(*this, Args[0]))
+    return ExprError();
 
   // If this is the assignment operator, we only perform overload resolution
   // if the left-hand side is a class or enumeration type. This is actually
@@ -9184,18 +9267,11 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
                                                    RLoc));
   }
 
-  if (Args[0]->getObjectKind() == OK_ObjCProperty) {
-    ExprResult Result = ConvertPropertyForRValue(Args[0]);
-    if (Result.isInvalid())
-      return ExprError();
-    Args[0] = Result.take();
-  }
-  if (Args[1]->getObjectKind() == OK_ObjCProperty) {
-    ExprResult Result = ConvertPropertyForRValue(Args[1]);
-    if (Result.isInvalid())
-      return ExprError();
-    Args[1] = Result.take();
-  }
+  // Handle placeholders on both operands.
+  if (checkPlaceholderForOverload(*this, Args[0]))
+    return ExprError();
+  if (checkPlaceholderForOverload(*this, Args[1]))
+    return ExprError();
 
   // Build an empty overload set.
   OverloadCandidateSet CandidateSet(LLoc);
@@ -9396,6 +9472,10 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
     return MaybeBindToTemporary(call);
   }
 
+  UnbridgedCastsSet UnbridgedCasts;
+  if (checkArgPlaceholdersForOverload(*this, Args, NumArgs, UnbridgedCasts))
+    return ExprError();
+
   MemberExpr *MemExpr;
   CXXMethodDecl *Method = 0;
   DeclAccessPair FoundDecl = DeclAccessPair::make(0, AS_public);
@@ -9405,6 +9485,7 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
     Method = cast<CXXMethodDecl>(MemExpr->getMemberDecl());
     FoundDecl = MemExpr->getFoundDecl();
     Qualifier = MemExpr->getQualifier();
+    UnbridgedCasts.restore();
   } else {
     UnresolvedMemberExpr *UnresExpr = cast<UnresolvedMemberExpr>(NakedMemExpr);
     Qualifier = UnresExpr->getQualifier();
@@ -9457,6 +9538,8 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
     }
 
     DeclarationName DeclName = UnresExpr->getMemberName();
+
+    UnbridgedCasts.restore();
 
     OverloadCandidateSet::iterator Best;
     switch (CandidateSet.BestViableFunction(*this, UnresExpr->getLocStart(),
@@ -9569,12 +9652,13 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
                                    SourceLocation LParenLoc,
                                    Expr **Args, unsigned NumArgs,
                                    SourceLocation RParenLoc) {
+  if (checkPlaceholderForOverload(*this, Obj))
+    return ExprError();
   ExprResult Object = Owned(Obj);
-  if (Object.get()->getObjectKind() == OK_ObjCProperty) {
-    Object = ConvertPropertyForRValue(Object.take());
-    if (Object.isInvalid())
-      return ExprError();
-  }
+
+  UnbridgedCastsSet UnbridgedCasts;
+  if (checkArgPlaceholdersForOverload(*this, Args, NumArgs, UnbridgedCasts))
+    return ExprError();
 
   assert(Object.get()->getType()->isRecordType() && "Requires object type argument");
   const RecordType *Record = Object.get()->getType()->getAs<RecordType>();
@@ -9695,6 +9779,8 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
 
   if (Best == CandidateSet.end())
     return true;
+
+  UnbridgedCasts.restore();
 
   if (Best->Function == 0) {
     // Since there is no function declaration, this is one of the
@@ -9845,12 +9931,8 @@ Sema::BuildOverloadedArrowExpr(Scope *S, Expr *Base, SourceLocation OpLoc) {
   assert(Base->getType()->isRecordType() &&
          "left-hand side must have class type");
 
-  if (Base->getObjectKind() == OK_ObjCProperty) {
-    ExprResult Result = ConvertPropertyForRValue(Base);
-    if (Result.isInvalid())
-      return ExprError();
-    Base = Result.take();
-  }
+  if (checkPlaceholderForOverload(*this, Base))
+    return ExprError();
 
   SourceLocation Loc = Base->getExprLoc();
 

@@ -642,7 +642,10 @@ public:
     /// \brief Initialization of an incomplete type.
     FK_Incomplete,
     /// \brief List initialization failed at some point.
-    FK_ListInitializationFailed
+    FK_ListInitializationFailed,
+    /// \brief Initializer has a placeholder type which cannot be
+    /// resolved by initialization.
+    FK_PlaceholderType
   };
   
 private:

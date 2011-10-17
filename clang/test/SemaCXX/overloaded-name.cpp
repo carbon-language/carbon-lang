@@ -21,11 +21,10 @@ namespace rdar9623945 {
   public:
     const char* text(void);
     void g(void) {
-      // FIXME: why 2x?
       f(text());
-      f(text); // expected-error 2{{reference to non-static member function must be called; did you mean to call it with no arguments?}}
+      f(text); // expected-error {{reference to non-static member function must be called; did you mean to call it with no arguments?}}
       f(text());
-      f(text); // expected-error 2{{reference to non-static member function must be called; did you mean to call it with no arguments?}}
+      f(text); // expected-error {{reference to non-static member function must be called; did you mean to call it with no arguments?}}
     }
   };
 }

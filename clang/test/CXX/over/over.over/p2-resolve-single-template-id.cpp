@@ -165,8 +165,8 @@ namespace member_pointers {
     { bool b = &S::f<char>; }
     { bool b = &S::f<int>; }
     // These next two errors are terrible.
-    { bool b = s.f<char>; } // expected-error {{cannot initialize}}
-    { bool b = s.f<int>; } // expected-error {{cannot initialize}}
+    { bool b = s.f<char>; } // expected-error {{reference to non-static member function must be called}}
+    { bool b = s.f<int>; } // expected-error {{reference to non-static member function must be called}}
     { bool b = &s.f<char>; } // expected-error {{cannot create a non-constant pointer to member function}}
     { bool b = &s.f<int>; } // expected-error {{cannot create a non-constant pointer to member function}}
 

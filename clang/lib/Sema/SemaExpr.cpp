@@ -520,11 +520,23 @@ ExprResult Sema::DefaultArgumentPromotion(Expr *E) {
 /// interfaces passed by value.
 ExprResult Sema::DefaultVariadicArgumentPromotion(Expr *E, VariadicCallType CT,
                                                   FunctionDecl *FDecl) {
-  ExprResult ExprRes = CheckPlaceholderExpr(E);
-  if (ExprRes.isInvalid())
-    return ExprError();
+  if (const BuiltinType *PlaceholderTy = E->getType()->getAsPlaceholderType()) {
+    // Strip the unbridged-cast placeholder expression off, if applicable.
+    if (PlaceholderTy->getKind() == BuiltinType::ARCUnbridgedCast &&
+        (CT == VariadicMethod ||
+         (FDecl && FDecl->hasAttr<CFAuditedTransferAttr>()))) {
+      E = stripARCUnbridgedCast(E);
+
+    // Otherwise, do normal placeholder checking.
+    } else {
+      ExprResult ExprRes = CheckPlaceholderExpr(E);
+      if (ExprRes.isInvalid())
+        return ExprError();
+      E = ExprRes.take();
+    }
+  }
   
-  ExprRes = DefaultArgumentPromotion(E);
+  ExprResult ExprRes = DefaultArgumentPromotion(E);
   if (ExprRes.isInvalid())
     return ExprError();
   E = ExprRes.take();
@@ -3420,6 +3432,12 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc,
       ParmVarDecl *Param = 0;
       if (FDecl && i < FDecl->getNumParams())
         Param = FDecl->getParamDecl(i);
+
+      // Strip the unbridged-cast placeholder expression off, if applicable.
+      if (Arg->getType() == Context.ARCUnbridgedCastTy &&
+          FDecl && FDecl->hasAttr<CFAuditedTransferAttr>() &&
+          (!Param || !Param->hasAttr<CFConsumedAttr>()))
+        Arg = stripARCUnbridgedCast(Arg);
 
       InitializedEntity Entity =
         Param? InitializedEntity::InitializeParameter(Context, Param)
@@ -10029,11 +10047,13 @@ static ExprResult diagnoseUnknownAnyExpr(Sema &S, Expr *E) {
 /// Check for operands with placeholder types and complain if found.
 /// Returns true if there was an error and no recovery was possible.
 ExprResult Sema::CheckPlaceholderExpr(Expr *E) {
-  // Placeholder types are always *exactly* the appropriate builtin type.
-  QualType type = E->getType();
+  const BuiltinType *placeholderType = E->getType()->getAsPlaceholderType();
+  if (!placeholderType) return Owned(E);
+
+  switch (placeholderType->getKind()) {
 
   // Overloaded expressions.
-  if (type == Context.OverloadTy) {
+  case BuiltinType::Overload: {
     // Try to resolve a single function template specialization.
     // This is obligatory.
     ExprResult result = Owned(E);
@@ -10049,19 +10069,57 @@ ExprResult Sema::CheckPlaceholderExpr(Expr *E) {
   }
 
   // Bound member functions.
-  if (type == Context.BoundMemberTy) {
+  case BuiltinType::BoundMember: {
     ExprResult result = Owned(E);
     tryToRecoverWithCall(result, PDiag(diag::err_bound_member_function),
                          /*complain*/ true);
     return result;
-  }    
+  }
+
+  // ARC unbridged casts.
+  case BuiltinType::ARCUnbridgedCast: {
+    Expr *realCast = stripARCUnbridgedCast(E);
+    diagnoseARCUnbridgedCast(realCast);
+    return Owned(realCast);
+  }
 
   // Expressions of unknown type.
-  if (type == Context.UnknownAnyTy)
+  case BuiltinType::UnknownAny:
     return diagnoseUnknownAnyExpr(*this, E);
 
-  assert(!type->isPlaceholderType());
-  return Owned(E);
+  // Everything else should be impossible.  TODO: metaprogram this.
+  case BuiltinType::Void:
+  case BuiltinType::Bool:
+  case BuiltinType::Char_U:
+  case BuiltinType::UChar:
+  case BuiltinType::WChar_U:
+  case BuiltinType::Char16:
+  case BuiltinType::Char32:
+  case BuiltinType::UShort:
+  case BuiltinType::UInt:
+  case BuiltinType::ULong:
+  case BuiltinType::ULongLong:
+  case BuiltinType::UInt128:
+  case BuiltinType::Char_S:
+  case BuiltinType::SChar:
+  case BuiltinType::WChar_S:
+  case BuiltinType::Short:
+  case BuiltinType::Int:
+  case BuiltinType::Long:
+  case BuiltinType::LongLong:
+  case BuiltinType::Int128:
+  case BuiltinType::Float:
+  case BuiltinType::Double:
+  case BuiltinType::LongDouble:
+  case BuiltinType::NullPtr:
+  case BuiltinType::ObjCId:
+  case BuiltinType::ObjCClass:
+  case BuiltinType::ObjCSel:
+  case BuiltinType::Dependent:
+    break;
+  }
+
+  llvm_unreachable("invalid placeholder type!");
 }
 
 bool Sema::CheckCaseExpression(Expr *E) {

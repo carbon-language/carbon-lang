@@ -12,10 +12,7 @@ void * cvt(id arg) // expected-note{{candidate function not viable: cannot conve
   (void)(__autoreleasing id**)voidp_val;
   (void)(void*)voidp_val;
   (void)(void**)arg; // expected-error {{cast of an Objective-C pointer to 'void **' is disallowed}}
-  cvt((void*)arg); // expected-error {{cast of Objective-C pointer type 'id' to C pointer type 'void *' requires a bridged cast}} \
-                   // expected-error {{no matching function for call to 'cvt'}} \
-  // expected-note{{use __bridge to convert directly (no change in ownership)}} \
-  // expected-note{{use __bridge_retained to make an ARC object available as a +1 'void *'}}
+  cvt((void*)arg); // expected-error {{no matching function for call to 'cvt'}}
   cvt(0);
   (void)(__strong id**)(0);
 

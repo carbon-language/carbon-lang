@@ -57,8 +57,7 @@ struct B
 
 struct C {
   C &getC() {
-    // FIXME: this error message is terrible
-    return makeAC; // expected-error{{cannot bind to a value of unrelated type}}
+    return makeAC; // expected-error{{reference to non-static member function must be called}}
   }
 
   C &makeAC();

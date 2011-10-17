@@ -3053,8 +3053,9 @@ def err_arc_bridge_cast_wrong_kind : Error<
   "%select{Objective-C|block|C}2 pointer type %3 cannot use %select{__bridge|"
   "__bridge_transfer|__bridge_retained}4">;
 def err_arc_cast_requires_bridge : Error<
-  "cast of %select{Objective-C|block|C}0 pointer type %1 to "
-  "%select{Objective-C|block|C}2 pointer type %3 requires a bridged cast">;
+  "%select{cast|implicit conversion}0 of %select{Objective-C|block|C}1 "
+  "pointer type %2 to %select{Objective-C|block|C}3 pointer type %4 "
+  "requires a bridged cast">;
 def note_arc_bridge : Note<
   "use __bridge to convert directly (no change in ownership)">;
 def note_arc_bridge_transfer : Note<

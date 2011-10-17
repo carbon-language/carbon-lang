@@ -263,8 +263,8 @@ void test11(id op, void *vp) {
   b = (vp == nil);
   b = (nil == vp);
 
-  b = (vp == op); // expected-error {{implicit conversion of an Objective-C pointer to 'void *'}}
-  b = (op == vp); // expected-error {{implicit conversion of a non-Objective-C pointer type 'void *' to 'id'}}
+  b = (vp == op); // expected-error {{implicit conversion of Objective-C pointer type 'id' to C pointer type 'void *' requires a bridged cast}} expected-note {{use __bridge}} expected-note {{use __bridge_retained}}
+  b = (op == vp); // expected-error {{implicit conversion of C pointer type 'void *' to Objective-C pointer type 'id' requires a bridged cast}} expected-note {{use __bridge}} expected-note {{use __bridge_transfer}}
 }
 
 void test12(id collection) {

@@ -14,7 +14,7 @@ void f(BOOL b) {
   NSString *str = (NSString *)cfstr; // expected-error {{cast of C pointer type 'CFStringRef' (aka 'const struct __CFString *') to Objective-C pointer type 'NSString *' requires a bridged cast}} \
     // expected-note{{use __bridge to convert directly (no change in ownership)}} \
     // expected-note{{use __bridge_transfer to transfer ownership of a +1 'CFStringRef' (aka 'const struct __CFString *') into ARC}}
-  void *vp = str;  // expected-error {{disallowed}}
+  void *vp = str;  // expected-error {{requires a bridged cast}} expected-note {{use __bridge}} expected-note {{use __bridge}}
 }
 
 void f2(NSString *s) {

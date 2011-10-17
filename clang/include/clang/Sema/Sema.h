@@ -5794,10 +5794,16 @@ public:
                                         Expr *CastExpr,
                                         SourceLocation RParenLoc);
 
+  enum ARCConversionResult { ACR_okay, ACR_unbridged };
+
   /// \brief Checks for invalid conversions and casts between
   /// retainable pointers and other pointer kinds.
-  void CheckObjCARCConversion(SourceRange castRange, QualType castType, 
-                              Expr *&op, CheckedConversionKind CCK);
+  ARCConversionResult CheckObjCARCConversion(SourceRange castRange,
+                                             QualType castType, Expr *&op,
+                                             CheckedConversionKind CCK);
+
+  Expr *stripARCUnbridgedCast(Expr *e);
+  void diagnoseARCUnbridgedCast(Expr *e);
     
   bool CheckObjCARCUnavailableWeakConversion(QualType castType,
                                              QualType ExprType);

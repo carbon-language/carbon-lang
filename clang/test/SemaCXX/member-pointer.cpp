@@ -278,7 +278,7 @@ namespace PR9973 {
     typedef R T::*F;
     F f_;
     template<class U> int & call(U u)
-    { return u->*f_; } // expected-error{{non-const lvalue reference to type 'int' cannot bind to a temporary of type '<bound member function type>'}}
+    { return u->*f_; } // expected-error{{reference to non-static member function must be called; did you mean to call it with no arguments?}} expected-error {{non-const lvalue reference to type 'int' cannot bind to a temporary of type 'int'}}
 
     template<class U> int operator()(U u)
     { call(u); } // expected-note{{in instantiation of}}

@@ -392,7 +392,7 @@ namespace rdar9136502 {
   };
 
   struct Y {
-    Y &operator<<(int); // expected-note{{candidate function not viable: no known conversion from '<bound member function type>' to 'int'}}
+    Y &operator<<(int);
   };
 
   void f(X x, Y y) {

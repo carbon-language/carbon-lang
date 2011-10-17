@@ -409,17 +409,23 @@ bool Sema::CheckMessageArgumentTypes(QualType ReceiverType,
 
     Expr *argExpr = Args[i];
 
-    ParmVarDecl *Param = Method->param_begin()[i];
+    ParmVarDecl *param = Method->param_begin()[i];
     assert(argExpr && "CheckMessageArgumentTypes(): missing expression");
 
+    // Strip the unbridged-cast placeholder expression off unless it's
+    // a consumed argument.
+    if (argExpr->hasPlaceholderType(BuiltinType::ARCUnbridgedCast) &&
+        !param->hasAttr<CFConsumedAttr>())
+      argExpr = stripARCUnbridgedCast(argExpr);
+
     if (RequireCompleteType(argExpr->getSourceRange().getBegin(),
-                            Param->getType(),
+                            param->getType(),
                             PDiag(diag::err_call_incomplete_argument)
                               << argExpr->getSourceRange()))
       return true;
 
     InitializedEntity Entity = InitializedEntity::InitializeParameter(Context,
-                                                                      Param);
+                                                                      param);
     ExprResult ArgE = PerformCopyInitialization(Entity, lbrac, Owned(argExpr));
     if (ArgE.isInvalid())
       IsError = true;
@@ -1213,6 +1219,12 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
   // If we have a receiver expression, perform appropriate promotions
   // and determine receiver type.
   if (Receiver) {
+    if (Receiver->hasPlaceholderType()) {
+      ExprResult result = CheckPlaceholderExpr(Receiver);
+      if (result.isInvalid()) return ExprError();
+      Receiver = result.take();
+    }
+
     if (Receiver->isTypeDependent()) {
       // If the receiver is type-dependent, we can't type-check anything
       // at this point. Build a dependent expression.
@@ -1836,61 +1848,19 @@ namespace {
   };
 }
 
-void 
-Sema::CheckObjCARCConversion(SourceRange castRange, QualType castType,
-                             Expr *&castExpr, CheckedConversionKind CCK) {
-  QualType castExprType = castExpr->getType();
-
-  // For the purposes of the classification, we assume reference types
-  // will bind to temporaries.
-  QualType effCastType = castType;
-  if (const ReferenceType *ref = castType->getAs<ReferenceType>())
-    effCastType = ref->getPointeeType();
-  
-  ARCConversionTypeClass exprACTC = classifyTypeForARCConversion(castExprType);
-  ARCConversionTypeClass castACTC = classifyTypeForARCConversion(effCastType);
-  if (exprACTC == castACTC) return;
-  if (isAnyCLike(exprACTC) && isAnyCLike(castACTC)) return;
-
-  // Allow all of these types to be cast to integer types (but not
-  // vice-versa).
-  if (castACTC == ACTC_none && castType->isIntegralType(Context))
-    return;
-  
-  // Allow casts between pointers to lifetime types (e.g., __strong id*)
-  // and pointers to void (e.g., cv void *). Casting from void* to lifetime*
-  // must be explicit.
-  if (exprACTC == ACTC_indirectRetainable && castACTC == ACTC_voidPtr)
-    return;
-  if (castACTC == ACTC_indirectRetainable && exprACTC == ACTC_voidPtr &&
-      CCK != CCK_ImplicitConversion)
-    return;
-
-  switch (ARCCastChecker(Context, exprACTC, castACTC).Visit(castExpr)) {
-  // For invalid casts, fall through.
-  case ACC_invalid:
-    break;
-
-  // Do nothing for both bottom and +0.
-  case ACC_bottom:
-  case ACC_plusZero:
-    return;
-
-  // If the result is +1, consume it here.
-  case ACC_plusOne:
-    castExpr = ImplicitCastExpr::Create(Context, castExpr->getType(),
-                                        CK_ARCConsumeObject, castExpr,
-                                        0, VK_RValue);
-    ExprNeedsCleanups = true;
-    return;
-  }
-  
+static void
+diagnoseObjCARCConversion(Sema &S, SourceRange castRange,
+                          QualType castType, ARCConversionTypeClass castACTC,
+                          Expr *castExpr, ARCConversionTypeClass exprACTC,
+                          Sema::CheckedConversionKind CCK) {
   SourceLocation loc =
     (castRange.isValid() ? castRange.getBegin() : castExpr->getExprLoc());
   
-  if (makeUnavailableInSystemHeader(loc,
+  if (S.makeUnavailableInSystemHeader(loc,
                 "converts between Objective-C and C pointers in -fobjc-arc"))
     return;
+
+  QualType castExprType = castExpr->getType();
   
   unsigned srcKind = 0;
   switch (exprACTC) {
@@ -1907,49 +1877,194 @@ Sema::CheckObjCARCConversion(SourceRange castRange, QualType castType,
     break;
   }
   
-  if (CCK == CCK_CStyleCast) {
-    // Check whether this could be fixed with a bridge cast.
-    SourceLocation AfterLParen = PP.getLocForEndOfToken(castRange.getBegin());
-    SourceLocation NoteLoc = AfterLParen.isValid()? AfterLParen : loc;
-    
-    if (castACTC == ACTC_retainable && isAnyRetainable(exprACTC)) {
-      Diag(loc, diag::err_arc_cast_requires_bridge)
-        << 2
-        << castExprType
-        << (castType->isBlockPointerType()? 1 : 0)
-        << castType
-        << castRange
-        << castExpr->getSourceRange();
-      Diag(NoteLoc, diag::note_arc_bridge)
-        << FixItHint::CreateInsertion(AfterLParen, "__bridge ");
-      Diag(NoteLoc, diag::note_arc_bridge_transfer)
-        << castExprType
-        << FixItHint::CreateInsertion(AfterLParen, "__bridge_transfer ");
-      
-      return;
-    }
-    
-    if (exprACTC == ACTC_retainable && isAnyRetainable(castACTC)) {
-      Diag(loc, diag::err_arc_cast_requires_bridge)
-        << (castExprType->isBlockPointerType()? 1 : 0)
-        << castExprType
-        << 2
-        << castType
-        << castRange
-        << castExpr->getSourceRange();
+  // Check whether this could be fixed with a bridge cast.
+  SourceLocation afterLParen = S.PP.getLocForEndOfToken(castRange.getBegin());
+  SourceLocation noteLoc = afterLParen.isValid() ? afterLParen : loc;
 
-      Diag(NoteLoc, diag::note_arc_bridge)
-        << FixItHint::CreateInsertion(AfterLParen, "__bridge ");
-      Diag(NoteLoc, diag::note_arc_bridge_retained)
-        << castType
-        << FixItHint::CreateInsertion(AfterLParen, "__bridge_retained ");
-      return;
-    }
+  // Bridge from an ARC type to a CF type.
+  if (castACTC == ACTC_retainable && isAnyRetainable(exprACTC)) {
+    S.Diag(loc, diag::err_arc_cast_requires_bridge)
+      << unsigned(CCK == Sema::CCK_ImplicitConversion) // cast|implicit
+      << 2 // of C pointer type
+      << castExprType
+      << unsigned(castType->isBlockPointerType()) // to ObjC|block type
+      << castType
+      << castRange
+      << castExpr->getSourceRange();
+
+    S.Diag(noteLoc, diag::note_arc_bridge)
+      << (CCK != Sema::CCK_CStyleCast ? FixItHint() :
+            FixItHint::CreateInsertion(afterLParen, "__bridge "));
+    S.Diag(noteLoc, diag::note_arc_bridge_transfer)
+      << castExprType
+      << (CCK != Sema::CCK_CStyleCast ? FixItHint() :
+            FixItHint::CreateInsertion(afterLParen, "__bridge_transfer "));
+
+    return;
+  }
+    
+  // Bridge from a CF type to an ARC type.
+  if (exprACTC == ACTC_retainable && isAnyRetainable(castACTC)) {
+    S.Diag(loc, diag::err_arc_cast_requires_bridge)
+      << unsigned(CCK == Sema::CCK_ImplicitConversion) // cast|implicit
+      << unsigned(castExprType->isBlockPointerType()) // of ObjC|block type
+      << castExprType
+      << 2 // to C pointer type
+      << castType
+      << castRange
+      << castExpr->getSourceRange();
+
+    S.Diag(noteLoc, diag::note_arc_bridge)
+      << (CCK != Sema::CCK_CStyleCast ? FixItHint() :
+            FixItHint::CreateInsertion(afterLParen, "__bridge "));
+    S.Diag(noteLoc, diag::note_arc_bridge_retained)
+      << castType
+      << (CCK != Sema::CCK_CStyleCast ? FixItHint() :
+            FixItHint::CreateInsertion(afterLParen, "__bridge_retained "));
+
+    return;
   }
   
-  Diag(loc, diag::err_arc_mismatched_cast)
-    << (CCK != CCK_ImplicitConversion) << srcKind << castExprType << castType
+  S.Diag(loc, diag::err_arc_mismatched_cast)
+    << (CCK != Sema::CCK_ImplicitConversion)
+    << srcKind << castExprType << castType
     << castRange << castExpr->getSourceRange();
+}
+
+Sema::ARCConversionResult
+Sema::CheckObjCARCConversion(SourceRange castRange, QualType castType,
+                             Expr *&castExpr, CheckedConversionKind CCK) {
+  QualType castExprType = castExpr->getType();
+
+  // For the purposes of the classification, we assume reference types
+  // will bind to temporaries.
+  QualType effCastType = castType;
+  if (const ReferenceType *ref = castType->getAs<ReferenceType>())
+    effCastType = ref->getPointeeType();
+  
+  ARCConversionTypeClass exprACTC = classifyTypeForARCConversion(castExprType);
+  ARCConversionTypeClass castACTC = classifyTypeForARCConversion(effCastType);
+  if (exprACTC == castACTC) return ACR_okay;
+  if (isAnyCLike(exprACTC) && isAnyCLike(castACTC)) return ACR_okay;
+
+  // Allow all of these types to be cast to integer types (but not
+  // vice-versa).
+  if (castACTC == ACTC_none && castType->isIntegralType(Context))
+    return ACR_okay;
+  
+  // Allow casts between pointers to lifetime types (e.g., __strong id*)
+  // and pointers to void (e.g., cv void *). Casting from void* to lifetime*
+  // must be explicit.
+  if (exprACTC == ACTC_indirectRetainable && castACTC == ACTC_voidPtr)
+    return ACR_okay;
+  if (castACTC == ACTC_indirectRetainable && exprACTC == ACTC_voidPtr &&
+      CCK != CCK_ImplicitConversion)
+    return ACR_okay;
+
+  switch (ARCCastChecker(Context, exprACTC, castACTC).Visit(castExpr)) {
+  // For invalid casts, fall through.
+  case ACC_invalid:
+    break;
+
+  // Do nothing for both bottom and +0.
+  case ACC_bottom:
+  case ACC_plusZero:
+    return ACR_okay;
+
+  // If the result is +1, consume it here.
+  case ACC_plusOne:
+    castExpr = ImplicitCastExpr::Create(Context, castExpr->getType(),
+                                        CK_ARCConsumeObject, castExpr,
+                                        0, VK_RValue);
+    ExprNeedsCleanups = true;
+    return ACR_okay;
+  }
+
+  // If this is a non-implicit cast from id or block type to a
+  // CoreFoundation type, delay complaining in case the cast is used
+  // in an acceptable context.
+  if (exprACTC == ACTC_retainable && isAnyRetainable(castACTC) &&
+      CCK != CCK_ImplicitConversion)
+    return ACR_unbridged;
+
+  diagnoseObjCARCConversion(*this, castRange, castType, castACTC,
+                            castExpr, exprACTC, CCK);
+  return ACR_okay;
+}
+
+/// Given that we saw an expression with the ARCUnbridgedCastTy
+/// placeholder type, complain bitterly.
+void Sema::diagnoseARCUnbridgedCast(Expr *e) {
+  // We expect the spurious ImplicitCastExpr to already have been stripped.
+  assert(!e->hasPlaceholderType(BuiltinType::ARCUnbridgedCast));
+  CastExpr *realCast = cast<CastExpr>(e->IgnoreParens());
+
+  SourceRange castRange;
+  QualType castType;
+  CheckedConversionKind CCK;
+
+  if (CStyleCastExpr *cast = dyn_cast<CStyleCastExpr>(realCast)) {
+    castRange = SourceRange(cast->getLParenLoc(), cast->getRParenLoc());
+    castType = cast->getTypeAsWritten();
+    CCK = CCK_CStyleCast;
+  } else if (ExplicitCastExpr *cast = dyn_cast<ExplicitCastExpr>(realCast)) {
+    castRange = cast->getTypeInfoAsWritten()->getTypeLoc().getSourceRange();
+    castType = cast->getTypeAsWritten();
+    CCK = CCK_OtherCast;
+  } else {
+    castType = cast->getType();
+    CCK = CCK_ImplicitConversion;
+  }
+
+  ARCConversionTypeClass castACTC =
+    classifyTypeForARCConversion(castType.getNonReferenceType());
+
+  Expr *castExpr = realCast->getSubExpr();
+  assert(classifyTypeForARCConversion(castExpr->getType()) == ACTC_retainable);
+
+  diagnoseObjCARCConversion(*this, castRange, castType, castACTC,
+                            castExpr, ACTC_retainable, CCK);
+}
+
+/// stripARCUnbridgedCast - Given an expression of ARCUnbridgedCast
+/// type, remove the placeholder cast.
+Expr *Sema::stripARCUnbridgedCast(Expr *e) {
+  assert(e->hasPlaceholderType(BuiltinType::ARCUnbridgedCast));
+
+  if (ParenExpr *pe = dyn_cast<ParenExpr>(e)) {
+    Expr *sub = stripARCUnbridgedCast(pe->getSubExpr());
+    return new (Context) ParenExpr(pe->getLParen(), pe->getRParen(), sub);
+  } else if (UnaryOperator *uo = dyn_cast<UnaryOperator>(e)) {
+    assert(uo->getOpcode() == UO_Extension);
+    Expr *sub = stripARCUnbridgedCast(uo->getSubExpr());
+    return new (Context) UnaryOperator(sub, UO_Extension, sub->getType(),
+                                   sub->getValueKind(), sub->getObjectKind(),
+                                       uo->getOperatorLoc());
+  } else if (GenericSelectionExpr *gse = dyn_cast<GenericSelectionExpr>(e)) {
+    assert(!gse->isResultDependent());
+
+    unsigned n = gse->getNumAssocs();
+    SmallVector<Expr*, 4> subExprs(n);
+    SmallVector<TypeSourceInfo*, 4> subTypes(n);
+    for (unsigned i = 0; i != n; ++i) {
+      subTypes[i] = gse->getAssocTypeSourceInfo(i);
+      Expr *sub = gse->getAssocExpr(i);
+      if (i == gse->getResultIndex())
+        sub = stripARCUnbridgedCast(sub);
+      subExprs[i] = sub;
+    }
+
+    return new (Context) GenericSelectionExpr(Context, gse->getGenericLoc(),
+                                              gse->getControllingExpr(),
+                                              subTypes.data(), subExprs.data(),
+                                              n, gse->getDefaultLoc(),
+                                              gse->getRParenLoc(),
+                                       gse->containsUnexpandedParameterPack(),
+                                              gse->getResultIndex());
+  } else {
+    assert(isa<ImplicitCastExpr>(e) && "bad form of unbridged cast!");
+    return cast<ImplicitCastExpr>(e)->getSubExpr();
+  }
 }
 
 bool Sema::CheckObjCARCUnavailableWeakConversion(QualType castType,
