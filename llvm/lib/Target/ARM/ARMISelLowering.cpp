@@ -5893,6 +5893,7 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
     PrevMBB = CurMBB;
   }
 
+  // N.B. the order the invoke BBs are processed in doesn't matter here.
   const ARMBaseInstrInfo *AII = static_cast<const ARMBaseInstrInfo*>(TII);
   const ARMBaseRegisterInfo &RI = AII->getRegisterInfo();
   const unsigned *SavedRegs = RI.getCalleeSavedRegs(MF);
