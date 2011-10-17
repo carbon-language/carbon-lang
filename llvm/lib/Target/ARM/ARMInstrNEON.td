@@ -15,6 +15,10 @@
 //===----------------------------------------------------------------------===//
 // NEON-specific Operands.
 //===----------------------------------------------------------------------===//
+def nModImm : Operand<i32> {
+  let PrintMethod = "printNEONModImmOperand";
+}
+
 def VectorIndex8Operand  : AsmOperandClass { let Name = "VectorIndex8"; }
 def VectorIndex16Operand : AsmOperandClass { let Name = "VectorIndex16"; }
 def VectorIndex32Operand : AsmOperandClass { let Name = "VectorIndex32"; }
@@ -162,14 +166,6 @@ def NEONimmAllOnesV: PatLeaf<(NEONvmovImm (i32 timm)), [{
   uint64_t EltVal = ARM_AM::decodeNEONModImm(ConstVal->getZExtValue(), EltBits);
   return (EltBits == 8 && EltVal == 0xff);
 }]>;
-
-//===----------------------------------------------------------------------===//
-// NEON operand definitions
-//===----------------------------------------------------------------------===//
-
-def nModImm : Operand<i32> {
-  let PrintMethod = "printNEONModImmOperand";
-}
 
 //===----------------------------------------------------------------------===//
 // NEON load / store instructions
