@@ -94,6 +94,8 @@ static bool isAttributeLateParsed(const IdentifierInfo &II) {
 /// which is followed by a comma or close parenthesis, then the arguments
 /// start with that identifier; otherwise they are an expression list."
 ///
+/// GCC does not require the ',' between attribs in an attribute-list.
+///
 /// At the moment, I am not doing 2 token lookahead. I am also unaware of
 /// any attributes that don't work (based on my limited testing). Most
 /// attributes are very simple in practice. Until we find a bug, I don't see
@@ -187,106 +189,70 @@ void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
 
   ConsumeParen(); // ignore the left paren loc for now
 
-  if (Tok.is(tok::identifier)) {
-    IdentifierInfo *ParmName = Tok.getIdentifierInfo();
-    SourceLocation ParmLoc = ConsumeToken();
+  IdentifierInfo *ParmName = 0;
+  SourceLocation ParmLoc;
+  bool BuiltinType = false;
 
-    if (Tok.is(tok::r_paren)) {
-      // __attribute__(( mode(byte) ))
-      SourceLocation RParen = ConsumeParen();
-      Attrs.addNew(AttrName, SourceRange(AttrNameLoc, RParen), 0, AttrNameLoc,
-                   ParmName, ParmLoc, 0, 0);
-    } else if (Tok.is(tok::comma)) {
+  switch (Tok.getKind()) {
+  case tok::kw_char:
+  case tok::kw_wchar_t:
+  case tok::kw_char16_t:
+  case tok::kw_char32_t:
+  case tok::kw_bool:
+  case tok::kw_short:
+  case tok::kw_int:
+  case tok::kw_long:
+  case tok::kw___int64:
+  case tok::kw_signed:
+  case tok::kw_unsigned:
+  case tok::kw_float:
+  case tok::kw_double:
+  case tok::kw_void:
+  case tok::kw_typeof:
+    // __attribute__(( vec_type_hint(char) ))
+    // FIXME: Don't just discard the builtin type token.
+    ConsumeToken();
+    BuiltinType = true;
+    break;
+
+  case tok::identifier:
+    ParmName = Tok.getIdentifierInfo();
+    ParmLoc = ConsumeToken();
+    break;
+
+  default:
+    break;
+  }
+
+  ExprVector ArgExprs(Actions);
+
+  if (!BuiltinType &&
+      (ParmLoc.isValid() ? Tok.is(tok::comma) : Tok.isNot(tok::r_paren))) {
+    // Eat the comma.
+    if (ParmLoc.isValid())
       ConsumeToken();
-      // __attribute__(( format(printf, 1, 2) ))
-      ExprVector ArgExprs(Actions);
-      bool ArgExprsOk = true;
 
-      // now parse the non-empty comma separated list of expressions
-      while (1) {
-        ExprResult ArgExpr(ParseAssignmentExpression());
-        if (ArgExpr.isInvalid()) {
-          ArgExprsOk = false;
-          SkipUntil(tok::r_paren);
-          break;
-        } else {
-          ArgExprs.push_back(ArgExpr.release());
-        }
-        if (Tok.isNot(tok::comma))
-          break;
-        ConsumeToken(); // Eat the comma, move to the next argument
+    // Parse the non-empty comma-separated list of expressions.
+    while (1) {
+      ExprResult ArgExpr(ParseAssignmentExpression());
+      if (ArgExpr.isInvalid()) {
+        SkipUntil(tok::r_paren);
+        return;
       }
-      if (ArgExprsOk && Tok.is(tok::r_paren)) {
-        SourceLocation RParen = ConsumeParen();
-        Attrs.addNew(AttrName, SourceRange(AttrNameLoc, RParen), 0, AttrNameLoc,
-                     ParmName, ParmLoc, ArgExprs.take(), ArgExprs.size());
-      }
+      ArgExprs.push_back(ArgExpr.release());
+      if (Tok.isNot(tok::comma))
+        break;
+      ConsumeToken(); // Eat the comma, move to the next argument
     }
-  } else { // not an identifier
-    switch (Tok.getKind()) {
-    case tok::r_paren: {
-    // parse a possibly empty comma separated list of expressions
-      // __attribute__(( nonnull() ))
-      SourceLocation RParen = ConsumeParen();
+  }
+
+  SourceLocation RParen = Tok.getLocation();
+  if (!ExpectAndConsume(tok::r_paren, diag::err_expected_rparen)) {
+    AttributeList *attr =
       Attrs.addNew(AttrName, SourceRange(AttrNameLoc, RParen), 0, AttrNameLoc,
-                   0, SourceLocation(), 0, 0);
-      break;
-    }
-    case tok::kw_char:
-    case tok::kw_wchar_t:
-    case tok::kw_char16_t:
-    case tok::kw_char32_t:
-    case tok::kw_bool:
-    case tok::kw_short:
-    case tok::kw_int:
-    case tok::kw_long:
-    case tok::kw___int64:
-    case tok::kw_signed:
-    case tok::kw_unsigned:
-    case tok::kw_float:
-    case tok::kw_double:
-    case tok::kw_void:
-    case tok::kw_typeof: {
-      // If it's a builtin type name, eat it and expect a rparen
-      // __attribute__(( vec_type_hint(char) ))
-      SourceLocation EndLoc = ConsumeToken();
-      if (Tok.is(tok::r_paren))
-        EndLoc = ConsumeParen();
-      AttributeList *attr
-        = Attrs.addNew(AttrName, SourceRange(AttrNameLoc, EndLoc), 0,
-                       AttrNameLoc, 0, SourceLocation(), 0, 0);
-      if (attr->getKind() == AttributeList::AT_IBOutletCollection)
-        Diag(Tok, diag::err_iboutletcollection_builtintype);
-      break;
-    }
-    default:
-      // __attribute__(( aligned(16) ))
-      ExprVector ArgExprs(Actions);
-      bool ArgExprsOk = true;
-
-      // now parse the list of expressions
-      while (1) {
-        ExprResult ArgExpr(ParseAssignmentExpression());
-        if (ArgExpr.isInvalid()) {
-          ArgExprsOk = false;
-          SkipUntil(tok::r_paren);
-          break;
-        } else {
-          ArgExprs.push_back(ArgExpr.release());
-        }
-        if (Tok.isNot(tok::comma))
-          break;
-        ConsumeToken(); // Eat the comma, move to the next argument
-      }
-      // Match the ')'.
-      if (ArgExprsOk && Tok.is(tok::r_paren)) {
-        SourceLocation RParen = ConsumeParen();
-        Attrs.addNew(AttrName, SourceRange(AttrNameLoc, RParen), 0,
-                     AttrNameLoc, 0, SourceLocation(),
-                     ArgExprs.take(), ArgExprs.size());
-      }
-      break;
-    }
+                   ParmName, ParmLoc, ArgExprs.take(), ArgExprs.size());
+    if (BuiltinType && attr->getKind() == AttributeList::AT_IBOutletCollection)
+      Diag(Tok, diag::err_iboutletcollection_builtintype);
   }
 }
 
