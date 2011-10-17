@@ -387,7 +387,7 @@ void MemoryAccess::dump() const {
 //
 static isl_map *getEqualAndLarger(isl_space *setDomain) {
   isl_space *mapDomain = isl_space_map_from_set(setDomain);
-  isl_basic_map *bmap = isl_basic_map_universe(mapDomain);
+  isl_basic_map *bmap = isl_basic_map_universe(isl_space_copy(mapDomain));
   isl_local_space *MapLocalSpace = isl_local_space_from_space(mapDomain);
 
   // Set all but the last dimension to be equal for the input and output
@@ -428,6 +428,7 @@ static isl_map *getEqualAndLarger(isl_space *setDomain) {
 
   bmap = isl_basic_map_add_constraint(bmap, c);
 
+  isl_local_space_free(MapLocalSpace);
   return isl_map_from_basic_map(bmap);
 }
 
