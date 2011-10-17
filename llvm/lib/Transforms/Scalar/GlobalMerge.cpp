@@ -1,4 +1,4 @@
-//===-- ARMGlobalMerge.cpp - Internal globals merging  --------------------===//
+//===-- GlobalMerge.cpp - Internal globals merging  -----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -51,9 +51,8 @@
 //  note that we saved 2 registers here almostly "for free".
 // ===---------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "arm-global-merge"
-#include "ARM.h"
-#include "llvm/CodeGen/Passes.h"
+#define DEBUG_TYPE "global-merge"
+#include "llvm/Transforms/Scalar.h"
 #include "llvm/Attributes.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -66,10 +65,12 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
+#include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
+STATISTIC(NumMerged      , "Number of globals merged");
 namespace {
-  class ARMGlobalMerge : public FunctionPass {
+  class GlobalMerge : public FunctionPass {
     /// TLI - Keep a pointer of a TargetLowering to consult for determining
     /// target type sizes.
     const TargetLowering *TLI;
@@ -79,8 +80,10 @@ namespace {
 
   public:
     static char ID;             // Pass identification, replacement for typeid.
-    explicit ARMGlobalMerge(const TargetLowering *tli)
-      : FunctionPass(ID), TLI(tli) {}
+    explicit GlobalMerge(const TargetLowering *tli = 0)
+      : FunctionPass(ID), TLI(tli) {
+      initializeGlobalMergePass(*PassRegistry::getPassRegistry());
+    }
 
     virtual bool doInitialization(Module &M);
     virtual bool runOnFunction(Function &F);
@@ -109,9 +112,12 @@ namespace {
   };
 } // end anonymous namespace
 
-char ARMGlobalMerge::ID = 0;
+char GlobalMerge::ID = 0;
+INITIALIZE_PASS(GlobalMerge, "global-merge",
+                "Global Merge", false, false)
 
-bool ARMGlobalMerge::doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
+
+bool GlobalMerge::doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
                              Module &M, bool isConst) const {
   const TargetData *TD = TLI->getTargetData();
 
@@ -153,6 +159,7 @@ bool ARMGlobalMerge::doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
       Constant *GEP = ConstantExpr::getInBoundsGetElementPtr(MergedGV, Idx);
       Globals[k]->replaceAllUsesWith(GEP);
       Globals[k]->eraseFromParent();
+      NumMerged++;
     }
     i = j;
   }
@@ -161,7 +168,7 @@ bool ARMGlobalMerge::doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
 }
 
 
-bool ARMGlobalMerge::doInitialization(Module &M) {
+bool GlobalMerge::doInitialization(Module &M) {
   SmallVector<GlobalVariable*, 16> Globals, ConstGlobals, BSSGlobals;
   const TargetData *TD = TLI->getTargetData();
   unsigned MaxOffset = TLI->getMaximalGlobalOffset();
@@ -210,10 +217,10 @@ bool ARMGlobalMerge::doInitialization(Module &M) {
   return Changed;
 }
 
-bool ARMGlobalMerge::runOnFunction(Function &F) {
+bool GlobalMerge::runOnFunction(Function &F) {
   return false;
 }
 
-FunctionPass *llvm::createARMGlobalMergePass(const TargetLowering *tli) {
-  return new ARMGlobalMerge(tli);
+Pass *llvm::createGlobalMergePass(const TargetLowering *tli) {
+  return new GlobalMerge(tli);
 }

@@ -20,6 +20,7 @@
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Transforms/Scalar.h"
 using namespace llvm;
 
 static cl::opt<bool>
@@ -97,7 +98,7 @@ ThumbTargetMachine::ThumbTargetMachine(const Target &T, StringRef TT,
 bool ARMBaseTargetMachine::addPreISel(PassManagerBase &PM,
                                       CodeGenOpt::Level OptLevel) {
   if (OptLevel != CodeGenOpt::None && EnableGlobalMerge)
-    PM.add(createARMGlobalMergePass(getTargetLowering()));
+    PM.add(createGlobalMergePass(getTargetLowering()));
 
   return false;
 }

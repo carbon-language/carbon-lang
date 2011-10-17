@@ -112,6 +112,8 @@ Pass *createLICMPass();
 //
 Pass *createLoopStrengthReducePass(const TargetLowering *TLI = 0);
 
+Pass *createGlobalMergePass(const TargetLowering *TLI = 0);
+
 //===----------------------------------------------------------------------===//
 //
 // LoopUnswitch - This pass is a simple loop unswitching pass.
