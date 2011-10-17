@@ -740,6 +740,7 @@ void es_bad_7() {
   sls_mu.Unlock();
 }
 
+
 //-----------------------------------------------//
 // Unparseable lock expressions
 // ----------------------------------------------//
@@ -1419,4 +1420,58 @@ void main()
 }
 } // end namespace thread_annot_lock_67_modified
 
+
+namespace substitution_test {
+  class MyData  {
+  public:
+    Mutex mu;
+
+    void lockData()    __attribute__((exclusive_lock_function(mu)))   { }
+    void unlockData()  __attribute__((unlock_function(mu)))           { }
+
+    void doSomething() __attribute__((exclusive_locks_required(mu)))  { }
+  };
+
+
+  class DataLocker {
+  public:
+    void lockData  (MyData *d) __attribute__((exclusive_lock_function(d->mu))) { }
+    void unlockData(MyData *d) __attribute__((unlock_function(d->mu)))         { }
+  };
+
+
+  class Foo {
+  public:
+    void foo(MyData* d) __attribute__((exclusive_locks_required(d->mu))) { }
+
+    void bar1(MyData* d) {
+      d->lockData();
+      foo(d);
+      d->unlockData();
+    }
+
+    void bar2(MyData* d) {
+      DataLocker dlr;
+      dlr.lockData(d);
+      foo(d);
+      dlr.unlockData(d);
+    }
+
+    void bar3(MyData* d1, MyData* d2) {
+      DataLocker dlr;
+      dlr.lockData(d1);   // \
+        // expected-warning {{mutex 'mu' is still locked at the end of function}}
+      dlr.unlockData(d2); // \
+        // expected-warning {{unlocking 'mu' that was not locked}}
+    }
+
+    void bar4(MyData* d1, MyData* d2) {
+      DataLocker dlr;
+      dlr.lockData(d1);
+      foo(d2); // \
+        // expected-warning {{calling function 'foo' requires exclusive lock on 'mu'}}
+      dlr.unlockData(d1);
+    }
+  };
+} // end namespace substituation_test
 

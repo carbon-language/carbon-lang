@@ -156,23 +156,31 @@ class MutexID {
 
   /// Build a Decl sequence representing the lock from the given expression.
   /// Recursive function that bottoms out when the final DeclRefExpr is reached.
-  // FIXME: Lock expressions that involve array indices or function calls.
-  // FIXME: Deal with LockReturned attribute.
-  void buildMutexID(Expr *Exp, Expr *Parent) {
+  void buildMutexID(Expr *Exp, Expr *Parent, int NumArgs,
+                    const NamedDecl **FunArgDecls, Expr **FunArgs) {
     if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Exp)) {
+      if (FunArgDecls) {
+        // Substitute call arguments for references to function parameters
+        for (int i = 0; i < NumArgs; ++i) {
+          if (DRE->getDecl() == FunArgDecls[i]) {
+            buildMutexID(FunArgs[i], 0, 0, 0, 0);
+            return;
+          }
+        }
+      }
       NamedDecl *ND = cast<NamedDecl>(DRE->getDecl()->getCanonicalDecl());
       DeclSeq.push_back(ND);
     } else if (MemberExpr *ME = dyn_cast<MemberExpr>(Exp)) {
       NamedDecl *ND = ME->getMemberDecl();
       DeclSeq.push_back(ND);
-      buildMutexID(ME->getBase(), Parent);
+      buildMutexID(ME->getBase(), Parent, NumArgs, FunArgDecls, FunArgs);
     } else if (isa<CXXThisExpr>(Exp)) {
       if (Parent)
-        buildMutexID(Parent, 0);
+        buildMutexID(Parent, 0, 0, 0, 0);
       else
         return;  // mutexID is still valid in this case
     } else if (CastExpr *CE = dyn_cast<CastExpr>(Exp))
-      buildMutexID(CE->getSubExpr(), Parent);
+      buildMutexID(CE->getSubExpr(), Parent, NumArgs, FunArgDecls, FunArgs);
     else
       DeclSeq.clear(); // Mark as invalid lock expression.
   }
@@ -184,23 +192,36 @@ class MutexID {
   /// \param D  The declaration to which the lock/unlock attribute is attached.
   void buildMutexIDFromExp(Expr *MutexExp, Expr *DeclExp, const NamedDecl *D) {
     Expr *Parent = 0;
+    unsigned NumArgs = 0;
+    Expr **FunArgs = 0;
+    SmallVector<const NamedDecl*, 8> FunArgDecls;
 
     if (DeclExp == 0) {
-      buildMutexID(MutexExp, 0);
+      buildMutexID(MutexExp, 0, 0, 0, 0);
       return;
     }
 
-    if (MemberExpr *ME = dyn_cast<MemberExpr>(DeclExp))
+    if (MemberExpr *ME = dyn_cast<MemberExpr>(DeclExp)) {
       Parent = ME->getBase();
-    else if (CXXMemberCallExpr *CE = dyn_cast<CXXMemberCallExpr>(DeclExp))
+    } else if (CXXMemberCallExpr *CE = dyn_cast<CXXMemberCallExpr>(DeclExp)) {
       Parent = CE->getImplicitObjectArgument();
+      NumArgs = CE->getNumArgs();
+      FunArgs = CE->getArgs();
+    }
 
     // If the attribute has no arguments, then assume the argument is "this".
     if (MutexExp == 0) {
-      buildMutexID(Parent, 0);
+      buildMutexID(Parent, 0, 0, 0, 0);
       return;
     }
-    buildMutexID(MutexExp, Parent);
+
+    // FIXME: handle default arguments
+    if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(D)) {
+      for (unsigned i = 0, ni = FD->getNumParams(); i < ni && i < NumArgs; ++i) {
+        FunArgDecls.push_back(FD->getParamDecl(i));
+      }
+    }
+    buildMutexID(MutexExp, Parent, NumArgs, &FunArgDecls.front(), FunArgs);
   }
 
 public:
