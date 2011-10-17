@@ -17,6 +17,11 @@
 #include "clang/AST/ASTImporter.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/FileSystemOptions.h"
+#if defined(__GNUC__) && !defined(__clang__)
+// Gcc complains about ClangNamespaceDecl being an incomplete type
+// without this.
+#include "lldb/Symbol/ClangNamespaceDecl.h"
+#endif
 
 namespace lldb_private {
 
