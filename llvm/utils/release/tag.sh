@@ -43,7 +43,7 @@ function tag_release_candidate() {
     set -x
     for proj in llvm cfe dragonegg test-suite compiler-rt libcxx libcxxabi ; do
         if ! svn ls $base_url/$proj/tags/RELEASE_$release > /dev/null 2>&1 ; then
-            svn mkdir $base_url/$proj/tags/RELEASE_$release
+            svn mkdir -m "Creating release directory for release_$release." $base_url/$proj/tags/RELEASE_$release
         fi
         if ! svn ls $base_url/$proj/tags/RELEASE_$release/rc$rc > /dev/null 2>&1 ; then
             svn copy -m "Creating release candidate $rc from release_$release branch" \
