@@ -331,7 +331,7 @@ protected:
   virtual error_code getSymbolNMTypeChar(DataRefImpl Symb, char &Res) const;
   virtual error_code isSymbolInternal(DataRefImpl Symb, bool &Res) const;
   virtual error_code isSymbolGlobal(DataRefImpl Symb, bool &Res) const;
-  virtual error_code getSymbolType(DataRefImpl Symb, SymbolRef::SymbolType &Res) const;
+  virtual error_code getSymbolType(DataRefImpl Symb, SymbolRef::Type &Res) const;
 
   virtual error_code getSectionNext(DataRefImpl Sec, SectionRef &Res) const;
   virtual error_code getSectionName(DataRefImpl Sec, StringRef &Res) const;
@@ -602,7 +602,7 @@ error_code ELFObjectFile<target_endianness, is64Bits>
 template<support::endianness target_endianness, bool is64Bits>
 error_code ELFObjectFile<target_endianness, is64Bits>
                         ::getSymbolType(DataRefImpl Symb,
-                                        SymbolRef::SymbolType &Result) const {
+                                        SymbolRef::Type &Result) const {
   validateSymbol(Symb);
   const Elf_Sym  *symb = getSymbol(Symb);
 

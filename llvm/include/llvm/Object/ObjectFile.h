@@ -90,7 +90,7 @@ public:
     std::memset(&SymbolPimpl, 0, sizeof(SymbolPimpl));
   }
 
-  enum SymbolType {
+  enum Type {
     ST_Function,
     ST_Data,
     ST_External,    // Defined in another object file
@@ -107,7 +107,7 @@ public:
   error_code getAddress(uint64_t &Result) const;
   error_code getOffset(uint64_t &Result) const;
   error_code getSize(uint64_t &Result) const;
-  error_code getSymbolType(SymbolRef::SymbolType &Result) const;
+  error_code getType(SymbolRef::Type &Result) const;
 
   /// Returns the ascii char that should be displayed in a symbol table dump via
   /// nm for this symbol.
@@ -232,7 +232,7 @@ protected:
   virtual error_code getSymbolNMTypeChar(DataRefImpl Symb, char &Res) const = 0;
   virtual error_code isSymbolInternal(DataRefImpl Symb, bool &Res) const = 0;
   virtual error_code isSymbolGlobal(DataRefImpl Symb, bool &Res) const = 0;
-  virtual error_code getSymbolType(DataRefImpl Symb, SymbolRef::SymbolType &Res) const = 0;
+  virtual error_code getSymbolType(DataRefImpl Symb, SymbolRef::Type &Res) const = 0;
 
   // Same as above for SectionRef.
   friend class SectionRef;
@@ -343,7 +343,7 @@ inline error_code SymbolRef::isGlobal(bool &Result) const {
   return OwningObject->isSymbolGlobal(SymbolPimpl, Result);
 }
 
-inline error_code SymbolRef::getSymbolType(SymbolRef::SymbolType &Result) const {
+inline error_code SymbolRef::getType(SymbolRef::Type &Result) const {
   return OwningObject->getSymbolType(SymbolPimpl, Result);
 }
 

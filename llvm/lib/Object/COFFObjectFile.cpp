@@ -154,7 +154,7 @@ error_code COFFObjectFile::getSymbolAddress(DataRefImpl Symb,
 }
 
 error_code COFFObjectFile::getSymbolType(DataRefImpl Symb,
-                                         SymbolRef::SymbolType &Result) const {
+                                         SymbolRef::Type &Result) const {
   const coff_symbol *symb = toSymb(Symb);
   Result = SymbolRef::ST_Other;
   if (symb->StorageClass == COFF::IMAGE_SYM_CLASS_EXTERNAL &&

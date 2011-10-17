@@ -229,7 +229,7 @@ error_code MachOObjectFile::isSymbolGlobal(DataRefImpl Symb, bool &Res) const {
 }
 
 error_code MachOObjectFile::getSymbolType(DataRefImpl Symb,
-                                          SymbolRef::SymbolType &Res) const {
+                                          SymbolRef::Type &Res) const {
   uint8_t n_type;
   if (MachOObj->is64Bit()) {
     InMemoryStruct<macho::Symbol64TableEntry> Entry;
@@ -454,7 +454,7 @@ error_code MachOObjectFile::isSectionBSS(DataRefImpl DRI,
 error_code MachOObjectFile::sectionContainsSymbol(DataRefImpl Sec,
                                                   DataRefImpl Symb,
                                                   bool &Result) const {
-  SymbolRef::SymbolType ST;
+  SymbolRef::Type ST;
   getSymbolType(Symb, ST);
   if (ST == SymbolRef::ST_External) {
     Result = false;
