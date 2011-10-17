@@ -125,15 +125,15 @@ const TargetAlignElem TargetData::InvalidAlignmentElem =
 //===----------------------------------------------------------------------===//
 
 /// getInt - Get an integer ignoring errors.
-static int getInt(StringRef R) {
-  int Result = 0;
+static unsigned getInt(StringRef R) {
+  unsigned Result = 0;
   R.getAsInteger(10, Result);
   return Result;
 }
 
-void TargetData::init() {
+void TargetData::init(StringRef Desc) {
   initializeTargetDataPass(*PassRegistry::getPassRegistry());
-
+  
   LayoutMap = 0;
   LittleEndian = false;
   PointerMemSize = 8;
@@ -152,12 +152,6 @@ void TargetData::init() {
   setAlignment(VECTOR_ALIGN,    8,  8, 64);  // v2i32, v1i64, ...
   setAlignment(VECTOR_ALIGN,   16, 16, 128); // v16i8, v8i16, v4i32, ...
   setAlignment(AGGREGATE_ALIGN, 0,  8,  0);  // struct
-}
-
-std::string TargetData::parseSpecifier(StringRef Desc, TargetData *td) {
-
-  if (td)
-    td->init();
 
   while (!Desc.empty()) {
     std::pair<StringRef, StringRef> Split = Desc.split('-');
@@ -175,54 +169,28 @@ std::string TargetData::parseSpecifier(StringRef Desc, TargetData *td) {
 
     switch (Specifier[0]) {
     case 'E':
-      if (td)
-        td->LittleEndian = false;
+      LittleEndian = false;
       break;
     case 'e':
-      if (td)
-        td->LittleEndian = true;
+      LittleEndian = true;
       break;
-    case 'p': {
-      // Pointer size.
+    case 'p':
       Split = Token.split(':');
-      int PointerMemSizeBits = getInt(Split.first);
-      if (PointerMemSizeBits < 0 || PointerMemSizeBits % 8 != 0)
-        return "invalid pointer size, must be a positive 8-bit multiple";
-      if (td)
-        td->PointerMemSize = PointerMemSizeBits / 8;
-
-      // Pointer ABI alignment.
+      PointerMemSize = getInt(Split.first) / 8;
       Split = Split.second.split(':');
-      int PointerABIAlignBits = getInt(Split.first);
-      if (PointerABIAlignBits < 0 || PointerABIAlignBits % 8 != 0) {
-        return "invalid pointer ABI alignment, "
-               "must be a positive 8-bit multiple";
-      }
-      if (td)
-        td->PointerABIAlign = PointerABIAlignBits / 8;
-
-      // Pointer preferred alignment.
+      PointerABIAlign = getInt(Split.first) / 8;
       Split = Split.second.split(':');
-      int PointerPrefAlignBits = getInt(Split.first);
-      if (PointerPrefAlignBits < 0 || PointerPrefAlignBits % 8 != 0) {
-        return "invalid pointer preferred alignment, "
-               "must be a positive 8-bit multiple";
-      }
-      if (td) {
-        td->PointerPrefAlign = PointerPrefAlignBits / 8;
-        if (td->PointerPrefAlign == 0)
-          td->PointerPrefAlign = td->PointerABIAlign;
-      }
+      PointerPrefAlign = getInt(Split.first) / 8;
+      if (PointerPrefAlign == 0)
+        PointerPrefAlign = PointerABIAlign;
       break;
-    }
     case 'i':
     case 'v':
     case 'f':
     case 'a':
     case 's': {
       AlignTypeEnum AlignType;
-      char field = Specifier[0];
-      switch (field) {
+      switch (Specifier[0]) {
       default:
       case 'i': AlignType = INTEGER_ALIGN; break;
       case 'v': AlignType = VECTOR_ALIGN; break;
@@ -230,66 +198,37 @@ std::string TargetData::parseSpecifier(StringRef Desc, TargetData *td) {
       case 'a': AlignType = AGGREGATE_ALIGN; break;
       case 's': AlignType = STACK_ALIGN; break;
       }
-      int Size = getInt(Specifier.substr(1));
-      if (Size < 0) {
-        return std::string("invalid ") + field + "-size field, "
-               "must be positive";
-      }
-
+      unsigned Size = getInt(Specifier.substr(1));
       Split = Token.split(':');
-      int ABIAlignBits = getInt(Split.first);
-      if (ABIAlignBits < 0 || ABIAlignBits % 8 != 0) {
-        return std::string("invalid ") + field +"-abi-alignment field, "
-               "must be a positive 8-bit multiple";
-      }
-      unsigned ABIAlign = ABIAlignBits / 8;
+      unsigned ABIAlign = getInt(Split.first) / 8;
 
       Split = Split.second.split(':');
-
-      int PrefAlignBits = getInt(Split.first);
-      if (PrefAlignBits < 0 || PrefAlignBits % 8 != 0) {
-        return std::string("invalid ") + field +"-preferred-alignment field, "
-               "must be a positive 8-bit multiple";
-      }
-      unsigned PrefAlign = PrefAlignBits / 8;
+      unsigned PrefAlign = getInt(Split.first) / 8;
       if (PrefAlign == 0)
         PrefAlign = ABIAlign;
-      
-      if (td)
-        td->setAlignment(AlignType, ABIAlign, PrefAlign, Size);
+      setAlignment(AlignType, ABIAlign, PrefAlign, Size);
       break;
     }
     case 'n':  // Native integer types.
       Specifier = Specifier.substr(1);
       do {
-        int Width = getInt(Specifier);
-        if (Width <= 0) {
-          return std::string("invalid native integer size \'") + Specifier.str() +
-                 "\', must be a positive integer.";
-        }
-        if (td && Width != 0)
-          td->LegalIntWidths.push_back(Width);
+        if (unsigned Width = getInt(Specifier))
+          LegalIntWidths.push_back(Width);
         Split = Token.split(':');
         Specifier = Split.first;
         Token = Split.second;
       } while (!Specifier.empty() || !Token.empty());
       break;
-    case 'S': { // Stack natural alignment.
-      int StackNaturalAlignBits = getInt(Specifier.substr(1));
-      if (StackNaturalAlignBits < 0 || StackNaturalAlignBits % 8 != 0) {
-        return "invalid natural stack alignment (S-field), "
-               "must be a positive 8-bit multiple";
-      }
-      if (td)
-        td->StackNaturalAlign = StackNaturalAlignBits / 8;
+    case 'S': // Stack natural alignment.
+      StackNaturalAlign = getInt(Specifier.substr(1));
+      StackNaturalAlign /= 8;
+      // FIXME: Should we really be truncating these alingments and
+      // sizes silently?
       break;
-    }
     default:
       break;
     }
   }
-
-  return "";
 }
 
 /// Default ctor.
@@ -303,9 +242,7 @@ TargetData::TargetData() : ImmutablePass(ID) {
 
 TargetData::TargetData(const Module *M)
   : ImmutablePass(ID) {
-  std::string errMsg = parseSpecifier(M->getDataLayout(), this);
-  assert(errMsg == "" && "Module M has malformed target data layout string.");
-  (void)errMsg;
+  init(M->getDataLayout());
 }
 
 void
