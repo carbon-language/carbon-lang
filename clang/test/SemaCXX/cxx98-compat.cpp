@@ -90,3 +90,13 @@ inline namespace N { // expected-warning {{inline namespaces are incompatible wi
 
 auto auto_deduction = 0; // expected-warning {{'auto' type specifier is incompatible with C++98}}
 int *p = new auto(0); // expected-warning {{'auto' type specifier is incompatible with C++98}}
+
+const int align_of = alignof(int); // expected-warning {{alignof expressions are incompatible with C++98}}
+char16_t c16 = 0; // expected-warning {{'char16_t' type specifier is incompatible with C++98}}
+char32_t c32 = 0; // expected-warning {{'char32_t' type specifier is incompatible with C++98}}
+constexpr int const_expr = 0; // expected-warning {{'constexpr' specifier is incompatible with C++98}}
+decltype(const_expr) decl_type = 0; // expected-warning {{'decltype' type specifier is incompatible with C++98}}
+void no_except() noexcept; // expected-warning {{noexcept specifications are incompatible with C++98}}
+bool no_except_expr = noexcept(1 + 1); // expected-warning {{noexcept expressions are incompatible with C++98}}
+void *null = nullptr; // expected-warning {{'nullptr' is incompatible with C++98}}
+static_assert(true, "!"); // expected-warning {{static_assert declarations are incompatible with C++98}}

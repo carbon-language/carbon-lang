@@ -1081,6 +1081,9 @@ def err_temp_copy_incomplete : Error<
 // C++11 decltype
 def err_cannot_determine_declared_type_of_overloaded_function : Error<
     "cannot determine the type of an overloaded function">;
+def warn_cxx98_compat_decltype : Warning<
+  "'decltype' type specifier is incompatible with C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
     
 // C++11 auto
 def warn_cxx98_compat_auto_type_specifier : Warning<
@@ -1194,6 +1197,9 @@ def note_for_range_begin_end : Note<
   "selected '%select{begin|end}0' %select{function|template }1%2 with iterator type %3">;
 
 // C++11 constexpr
+def warn_cxx98_compat_constexpr : Warning<
+  "'constexpr' specifier is incompatible with C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
 def err_invalid_constexpr : Error<
   "%select{function parameter|typedef|non-static data member}0 "
   "cannot be constexpr">;
@@ -1273,6 +1279,11 @@ def note_non_literal_nontrivial_dtor : Note<
   "%0 is not literal because it has a non-trivial destructor">;
 def note_non_literal_mutable_field : Note<
   "%0 is not literal because it has a mutable data member">;
+
+// C++11 char16_t/char32_t
+def warn_cxx98_compat_unicode_type : Warning<
+  "'%0' type specifier is incompatible with C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
  
 // Objective-C++
 def err_objc_decls_may_only_appear_in_global_scope : Error<

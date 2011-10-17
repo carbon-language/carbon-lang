@@ -587,6 +587,8 @@ Decl *Parser::ParseStaticAssertDeclaration(SourceLocation &DeclEnd){
 
   if (Tok.is(tok::kw__Static_assert) && !getLang().C1X)
     Diag(Tok, diag::ext_c1x_static_assert);
+  if (Tok.is(tok::kw_static_assert))
+    Diag(Tok, diag::warn_cxx98_compat_static_assert);
 
   SourceLocation StaticAssertLoc = ConsumeToken();
 
@@ -2400,6 +2402,8 @@ Parser::MaybeParseExceptionSpecification(SourceRange &SpecificationRange,
   // If there's no noexcept specification, we're done.
   if (Tok.isNot(tok::kw_noexcept))
     return Result;
+
+  Diag(Tok, diag::warn_cxx98_compat_noexcept_decl);
 
   // If we already had a dynamic specification, parse the noexcept for,
   // recovery, but emit a diagnostic and don't store the results.

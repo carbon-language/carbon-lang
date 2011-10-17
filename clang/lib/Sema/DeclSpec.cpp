@@ -15,6 +15,7 @@
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/LocInfoType.h"
 #include "clang/Sema/ParsedTemplate.h"
+#include "clang/Sema/SemaDiagnostic.h"
 #include "clang/Sema/Sema.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Expr.h"
@@ -889,6 +890,13 @@ void DeclSpec::Finish(DiagnosticsEngine &D, Preprocessor &PP) {
       StorageClassSpec == SCS_auto)
     Diag(D, StorageClassSpecLoc, diag::warn_auto_storage_class)
       << FixItHint::CreateRemoval(StorageClassSpecLoc);
+  if (TypeSpecType == TST_char16 || TypeSpecType == TST_char32)
+    Diag(D, TSTLoc, diag::warn_cxx98_compat_unicode_type)
+      << (TypeSpecType == TST_char16 ? "char16_t" : "char32_t");
+  if (TypeSpecType == TST_decltype)
+    Diag(D, TSTLoc, diag::warn_cxx98_compat_decltype);
+  if (Constexpr_specified)
+    Diag(D, ConstexprLoc, diag::warn_cxx98_compat_constexpr);
 
   // C++ [class.friend]p6:
   //   No storage-class-specifier shall appear in the decl-specifier-seq

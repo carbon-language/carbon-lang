@@ -71,6 +71,9 @@ def ext_ms_enum_fixed_underlying_type : Extension<
 def warn_cxx98_compat_enum_fixed_underlying_type : Warning<
   "enumeration types with a fixed underlying type are incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;
+def warn_cxx98_compat_alignof : Warning<
+  "alignof expressions are incompatible with C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
 
 def ext_c1x_generic_selection : Extension<
   "generic selections are a C1X-specific feature">, InGroup<C1X>;
@@ -290,6 +293,9 @@ def err_bool_redeclaration : Error<
   "redeclaration of C++ built-in type 'bool'">;
 def ext_c1x_static_assert : Extension<
   "_Static_assert is a C1X-specific feature">, InGroup<C1X>;
+def warn_cxx98_compat_static_assert : Warning<
+  "static_assert declarations are incompatible with C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
 
 /// Objective-C parser diagnostics
 def err_expected_minus_or_plus : Error<
@@ -371,6 +377,9 @@ def ext_ellipsis_exception_spec : Extension<
   "exception specification of '...' is a Microsoft extension">;
 def err_dynamic_and_noexcept_specification : Error<
   "cannot have both throw() and noexcept() clause on the same function">;
+def warn_cxx98_compat_noexcept_decl : Warning<
+  "noexcept specifications are incompatible with C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
 def err_expected_catch : Error<"expected catch">;
 def err_expected_lbrace_or_comma : Error<"expected '{' or ','">;
 def err_using_namespace_in_class : Error<
@@ -400,6 +409,12 @@ def err_anon_type_definition : Error<
 def err_default_delete_in_multiple_declaration : Error<
   "'= %select{default|delete}0' is a function definition and must occur in a "
   "standalone declaration">;
+
+def warn_cxx98_compat_noexcept_expr : Warning<
+  "noexcept expressions are incompatible with C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
+def warn_cxx98_compat_nullptr : Warning<
+  "'nullptr' is incompatible with C++98">, InGroup<CXX98Compat>, DefaultIgnore;
 
 def warn_cxx98_compat_alignas : Warning<"'alignas' is incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;

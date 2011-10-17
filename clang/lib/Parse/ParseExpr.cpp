@@ -654,6 +654,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     return ParseCXXBoolLiteral();
 
   case tok::kw_nullptr:
+    Diag(Tok, diag::warn_cxx98_compat_nullptr);
     return Actions.ActOnCXXNullPtrLiteral(ConsumeToken());
 
   case tok::annot_primary_expr:
@@ -1031,6 +1032,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     return ParseCXXDeleteExpression(false, Tok.getLocation());
 
   case tok::kw_noexcept: { // [C++0x] 'noexcept' '(' expression ')'
+    Diag(Tok, diag::warn_cxx98_compat_noexcept_expr);
     SourceLocation KeyLoc = ConsumeToken();
     BalancedDelimiterTracker T(*this, tok::l_paren);
 
@@ -1537,7 +1539,10 @@ ExprResult Parser::ParseUnaryExprOrTypeTraitExpression() {
                                                 *Name, NameLoc,
                                                 RParenLoc);
   }
-  
+
+  if (OpTok.is(tok::kw_alignof))
+    Diag(OpTok, diag::warn_cxx98_compat_alignof);
+
   bool isCastExpr;
   ParsedType CastTy;
   SourceRange CastRange;
