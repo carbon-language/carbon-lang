@@ -86,6 +86,37 @@ alt_return:
   ret void
 }
 
+; Don't do partial elimination into two different CFG diamonds.
+
+; CHECK: define void @test1b(
+; CHECK: entry:
+; CHECK:   tail call i8* @objc_retain(i8* %x) nounwind
+; CHECK-NOT: @objc_
+; CHECK: if.end5:
+; CHECK:   tail call void @objc_release(i8* %x) nounwind, !clang.imprecise_release !0
+; CHECK-NOT: @objc_
+; CHECK: }
+define void @test1b(i8* %x, i1 %p, i1 %q) {
+entry:
+  tail call i8* @objc_retain(i8* %x) nounwind
+  br i1 %p, label %if.then, label %if.end
+
+if.then:                                          ; preds = %entry
+  tail call void @callee()
+  br label %if.end
+
+if.end:                                           ; preds = %if.then, %entry
+  br i1 %q, label %if.then3, label %if.end5
+
+if.then3:                                         ; preds = %if.end
+  tail call void @use_pointer(i8* %x)
+  br label %if.end5
+
+if.end5:                                          ; preds = %if.then3, %if.end
+  tail call void @objc_release(i8* %x) nounwind, !clang.imprecise_release !0
+  ret void
+}
+
 ; Like test0 but the pointer is passed to an intervening call,
 ; so the optimization is not safe.
 
