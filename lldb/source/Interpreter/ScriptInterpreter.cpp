@@ -100,7 +100,8 @@ ScriptInterpreter::InitializeInterpreter (SWIGInitCallback python_swig_init_call
                                           SWIGPythonGetIndexOfChildWithName python_swig_get_index_child,
                                           SWIGPythonCastPyObjectToSBValue python_swig_cast_to_sbvalue,
                                           SWIGPythonUpdateSynthProviderInstance python_swig_update_provider,
-                                          SWIGPythonCallCommand python_swig_call_command)
+                                          SWIGPythonCallCommand python_swig_call_command,
+                                          SWIGPythonCallModuleInit python_swig_call_mod_init)
 {
     ScriptInterpreterPython::InitializeInterpreter (python_swig_init_callback, 
                                                     python_swig_breakpoint_callback,
@@ -111,7 +112,8 @@ ScriptInterpreter::InitializeInterpreter (SWIGInitCallback python_swig_init_call
                                                     python_swig_get_index_child,
                                                     python_swig_cast_to_sbvalue,
                                                     python_swig_update_provider,
-                                                    python_swig_call_command);
+                                                    python_swig_call_command,
+                                                    python_swig_call_mod_init);
 }
 
 void

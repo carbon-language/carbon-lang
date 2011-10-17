@@ -699,8 +699,37 @@ FileSpec::GetPath(char *path, size_t path_max_len) const
             return ::snprintf (path, path_max_len, "%s", filename);
         }
     }
-    path[0] = '\0';
+    if (path)
+        path[0] = '\0';
     return 0;
+}
+
+ConstString
+FileSpec::GetFileNameExtension () const
+{
+    const char *filename = m_filename.GetCString();
+    if (filename == NULL)
+        return ConstString();
+    
+    char* dot_pos = strrchr(filename, '.');
+    if (dot_pos == NULL)
+        return ConstString();
+    
+    return ConstString(dot_pos+1);
+}
+
+ConstString
+FileSpec::GetFileNameStrippingExtension () const
+{
+    const char *filename = m_filename.GetCString();
+    if (filename == NULL)
+        return ConstString();
+    
+    char* dot_pos = strrchr(filename, '.');
+    if (dot_pos == NULL)
+        return m_filename;
+    
+    return ConstString(filename, dot_pos-filename);
 }
 
 //------------------------------------------------------------------

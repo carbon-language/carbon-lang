@@ -40,7 +40,7 @@ public:
 
     bool
     ExecuteOneLineWithReturn (const char *in_string, 
-                              ScriptInterpreter::ReturnType return_type,
+                              ScriptInterpreter::ScriptReturnType return_type,
                               void *ret_value);
 
     bool
@@ -108,7 +108,11 @@ public:
                               lldb::ValueObjectSP valobj);
     
     virtual std::string
-    GetDocumentationForItem(const char* item);
+    GetDocumentationForItem (const char* item);
+    
+    virtual bool
+    LoadScriptingModule (const char* filename,
+                         lldb_private::Error& error);
 
     void
     CollectDataForBreakpointCommandCallback (BreakpointOptions *bp_options,
@@ -141,7 +145,8 @@ public:
                            SWIGPythonGetIndexOfChildWithName python_swig_get_index_child,
                            SWIGPythonCastPyObjectToSBValue python_swig_cast_to_sbvalue,
                            SWIGPythonUpdateSynthProviderInstance python_swig_update_provider,
-                           SWIGPythonCallCommand python_swig_call_command);
+                           SWIGPythonCallCommand python_swig_call_command,
+                           SWIGPythonCallModuleInit python_swig_call_mod_init);
 
 protected:
 

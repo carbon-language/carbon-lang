@@ -11,7 +11,10 @@
 #define liblldb_ScriptInterpreter_h_
 
 #include "lldb/lldb-private.h"
+
 #include "lldb/Core/Broadcaster.h"
+#include "lldb/Core/Error.h"
+
 #include "lldb/Utility/PseudoTerminal.h"
 
 
@@ -48,24 +51,28 @@ public:
                                                                      const char* args,
                                                                      std::string& err_msg,
                                                                      lldb_private::CommandReturnObject& cmd_retobj);
+    
+    typedef bool           (*SWIGPythonCallModuleInit)              (const std::string python_module_name,
+                                                                     const char *session_dictionary_name,
+                                                                     lldb::DebuggerSP& debugger);
 
     typedef enum
     {
-        eCharPtr,
-        eBool,
-        eShortInt,
-        eShortIntUnsigned,
-        eInt,
-        eIntUnsigned,
-        eLongInt,
-        eLongIntUnsigned,
-        eLongLong,
-        eLongLongUnsigned,
-        eFloat,
-        eDouble,
-        eChar,
-        eCharStrOrNone
-    } ReturnType;
+        eScriptReturnTypeCharPtr,
+        eScriptReturnTypeBool,
+        eScriptReturnTypeShortInt,
+        eScriptReturnTypeShortIntUnsigned,
+        eScriptReturnTypeInt,
+        eScriptReturnTypeIntUnsigned,
+        eScriptReturnTypeLongInt,
+        eScriptReturnTypeLongIntUnsigned,
+        eScriptReturnTypeLongLong,
+        eScriptReturnTypeLongLongUnsigned,
+        eScriptReturnTypeFloat,
+        eScriptReturnTypeDouble,
+        eScriptReturnTypeChar,
+        eScriptReturnTypeCharStrOrNone
+    } ScriptReturnType;
 
 
     ScriptInterpreter (CommandInterpreter &interpreter, lldb::ScriptLanguage script_lang);
@@ -79,7 +86,7 @@ public:
     ExecuteInterpreterLoop () = 0;
 
     virtual bool
-    ExecuteOneLineWithReturn (const char *in_string, ReturnType return_type, void *ret_value)
+    ExecuteOneLineWithReturn (const char *in_string, ScriptReturnType return_type, void *ret_value)
     {
         return true;
     }
@@ -176,18 +183,26 @@ public:
     }
         
     virtual bool
-    RunScriptBasedCommand(const char* impl_function,
-                          const char* args,
-                          lldb_private::CommandReturnObject& cmd_retobj,
-                          Error& error)
+    RunScriptBasedCommand (const char* impl_function,
+                           const char* args,
+                           lldb_private::CommandReturnObject& cmd_retobj,
+                           Error& error)
     {
         return false;
     }
     
     virtual std::string
-    GetDocumentationForItem(const char* item)
+    GetDocumentationForItem (const char* item)
     {
         return std::string("");
+    }
+
+    virtual bool
+    LoadScriptingModule (const char* filename,
+                         lldb_private::Error& error)
+    {
+        error.SetErrorString("loading unimplemented");
+        return false;
     }
 
     const char *
@@ -212,7 +227,8 @@ public:
                            SWIGPythonGetIndexOfChildWithName python_swig_get_index_child,
                            SWIGPythonCastPyObjectToSBValue python_swig_cast_to_sbvalue,
                            SWIGPythonUpdateSynthProviderInstance python_swig_update_provider,
-                           SWIGPythonCallCommand python_swig_call_command);
+                           SWIGPythonCallCommand python_swig_call_command,
+                           SWIGPythonCallModuleInit python_swig_call_mod_init);
 
     static void
     TerminateInterpreter ();

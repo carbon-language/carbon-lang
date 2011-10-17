@@ -42,6 +42,7 @@ static ScriptInterpreter::SWIGPythonGetIndexOfChildWithName g_swig_get_index_chi
 static ScriptInterpreter::SWIGPythonCastPyObjectToSBValue g_swig_cast_to_sbvalue  = NULL;
 static ScriptInterpreter::SWIGPythonUpdateSynthProviderInstance g_swig_update_provider = NULL;
 static ScriptInterpreter::SWIGPythonCallCommand g_swig_call_command = NULL;
+static ScriptInterpreter::SWIGPythonCallModuleInit g_swig_call_module_init = NULL;
 
 static int
 _check_and_flush (FILE *stream)
@@ -198,6 +199,10 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
     run_string.Printf ("run_one_line (%s, 'import copy')", m_dictionary_name.c_str());
     PyRun_SimpleString (run_string.GetData());
 
+    run_string.Clear();
+    run_string.Printf ("run_one_line (%s, 'import os')", m_dictionary_name.c_str());
+    PyRun_SimpleString (run_string.GetData());
+    
     run_string.Clear();
     run_string.Printf ("run_one_line (%s, 'lldb.debugger_unique_id = %d')", m_dictionary_name.c_str(),
                        interpreter.GetDebugger().GetID());
@@ -702,7 +707,7 @@ ScriptInterpreterPython::ExecuteInterpreterLoop ()
 
 bool
 ScriptInterpreterPython::ExecuteOneLineWithReturn (const char *in_string,
-                                                   ScriptInterpreter::ReturnType return_type,
+                                                   ScriptInterpreter::ScriptReturnType return_type,
                                                    void *ret_value)
 {
 
@@ -783,85 +788,85 @@ ScriptInterpreterPython::ExecuteOneLineWithReturn (const char *in_string,
         {
             switch (return_type)
             {
-                case eCharPtr: // "char *"
+                case eScriptReturnTypeCharPtr: // "char *"
                 {
                     const char format[3] = "s#";
                     success = PyArg_Parse (py_return, format, (char **) ret_value);
                     break;
                 }
-                case eCharStrOrNone: // char* or NULL if py_return == Py_None
+                case eScriptReturnTypeCharStrOrNone: // char* or NULL if py_return == Py_None
                 {
                     const char format[3] = "z";
                     success = PyArg_Parse (py_return, format, (char **) ret_value);
                     break;
                 }
-                case eBool:
+                case eScriptReturnTypeBool:
                 {
                     const char format[2] = "b";
                     success = PyArg_Parse (py_return, format, (bool *) ret_value);
                     break;
                 }
-                case eShortInt:
+                case eScriptReturnTypeShortInt:
                 {
                     const char format[2] = "h";
                     success = PyArg_Parse (py_return, format, (short *) ret_value);
                     break;
                 }
-                case eShortIntUnsigned:
+                case eScriptReturnTypeShortIntUnsigned:
                 {
                     const char format[2] = "H";
                     success = PyArg_Parse (py_return, format, (unsigned short *) ret_value);
                     break;
                 }
-                case eInt:
+                case eScriptReturnTypeInt:
                 {
                     const char format[2] = "i";
                     success = PyArg_Parse (py_return, format, (int *) ret_value);
                     break;
                 }
-                case eIntUnsigned:
+                case eScriptReturnTypeIntUnsigned:
                 {
                     const char format[2] = "I";
                     success = PyArg_Parse (py_return, format, (unsigned int *) ret_value);
                     break;
                 }
-                case eLongInt:
+                case eScriptReturnTypeLongInt:
                 {
                     const char format[2] = "l";
                     success = PyArg_Parse (py_return, format, (long *) ret_value);
                     break;
                 }
-                case eLongIntUnsigned:
+                case eScriptReturnTypeLongIntUnsigned:
                 {
                     const char format[2] = "k";
                     success = PyArg_Parse (py_return, format, (unsigned long *) ret_value);
                     break;
                 }
-                case eLongLong:
+                case eScriptReturnTypeLongLong:
                 {
                     const char format[2] = "L";
                     success = PyArg_Parse (py_return, format, (long long *) ret_value);
                     break;
                 }
-                case eLongLongUnsigned:
+                case eScriptReturnTypeLongLongUnsigned:
                 {
                     const char format[2] = "K";
                     success = PyArg_Parse (py_return, format, (unsigned long long *) ret_value);
                     break;
                 }
-                case eFloat:
+                case eScriptReturnTypeFloat:
                 {
                     const char format[2] = "f";
                     success = PyArg_Parse (py_return, format, (float *) ret_value);
                     break;
                 }
-                case eDouble:
+                case eScriptReturnTypeDouble:
                 {
                     const char format[2] = "d";
                     success = PyArg_Parse (py_return, format, (double *) ret_value);
                     break;
                 }
-                case eChar:
+                case eScriptReturnTypeChar:
                 {
                     const char format[2] = "c";
                     success = PyArg_Parse (py_return, format, (char *) ret_value);
@@ -1825,6 +1830,98 @@ ScriptInterpreterPython::UpdateSynthProviderInstance (void* implementor)
 }
 
 bool
+ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
+                                              lldb_private::Error& error)
+{
+    if (!pathname || !pathname[0])
+    {
+        error.SetErrorString("invalid pathname");
+        return false;
+    }
+    
+    if (!g_swig_call_module_init)
+    {
+        error.SetErrorString("internal helper function missing");
+        return false;
+    }
+    
+    ScriptInterpreterPython *python_interpreter = this;
+    
+    lldb::DebuggerSP debugger_sp = m_interpreter.GetDebugger().GetSP();
+    
+    FILE *tmp_fh = (python_interpreter->m_dbg_stdout ? python_interpreter->m_dbg_stdout : stdout);
+    
+    {
+        Locker py_lock(python_interpreter, tmp_fh);
+        
+        FileSpec target_file(pathname, true);
+        
+        // TODO: would we want to reject any other value?
+        if (target_file.GetFileType() == FileSpec::eFileTypeInvalid ||
+            target_file.GetFileType() == FileSpec::eFileTypeUnknown)
+        {
+            error.SetErrorString("invalid pathname");
+            return false;
+        }
+        
+        const char* directory = target_file.GetDirectory().GetCString();
+        std::string basename(target_file.GetFilename().GetCString());
+        
+        // now make sure that Python has "directory" in the search path
+        StreamString command_stream;
+        command_stream.Printf("if not (sys.path.__contains__('%s')):\n    sys.path.append('%s');\n\n",
+                              directory,
+                              directory);
+        bool syspath_retval = python_interpreter->ExecuteMultipleLines(command_stream.GetData());
+        if (!syspath_retval)
+        {
+            error.SetErrorString("Python sys.path handling failed");
+            return false;
+        }
+        
+        // strip .py or .pyc extension
+        ConstString extension = target_file.GetFileNameExtension();
+        if (::strcmp(extension.GetCString(), "py") == 0)
+            basename.resize(basename.length()-3);
+        else if(::strcmp(extension.GetCString(), "pyc") == 0)
+            basename.resize(basename.length()-4);
+        
+        // check if the module is already import-ed
+        command_stream.Clear();
+        command_stream.Printf("sys.getrefcount(%s)",basename.c_str());
+        int refcount = 0;
+        // this call will fail if the module does not exist (because the parameter to it is not a string
+        // but an actual Python module object, which is non-existant if the module was not imported before)
+        if (python_interpreter->ExecuteOneLineWithReturn(command_stream.GetData(),
+                                                         ScriptInterpreterPython::eScriptReturnTypeInt, &refcount) && refcount > 0)
+        {
+            error.SetErrorString("module already imported");
+            return false;
+        }
+
+        // now actually do the import
+        command_stream.Clear();
+        command_stream.Printf("import %s",basename.c_str());
+        bool import_retval = python_interpreter->ExecuteOneLine(command_stream.GetData(), NULL);
+        if (!import_retval)
+        {
+            error.SetErrorString("Python import statement failed");
+            return false;
+        }
+        
+        // call __lldb_module_init(debugger,dict)
+        if (!g_swig_call_module_init (basename,
+                                        python_interpreter->m_dictionary_name.c_str(),
+                                        debugger_sp))
+        {
+            error.SetErrorString("calling __lldb_module_init failed");
+            return false;
+        }
+        return true;
+    }
+}
+
+bool
 ScriptInterpreterPython::RunScriptBasedCommand(const char* impl_function,
                                                const char* args,
                                                lldb_private::CommandReturnObject& cmd_retobj,
@@ -1886,7 +1983,7 @@ ScriptInterpreterPython::GetDocumentationForItem(const char* item)
     char* result_ptr = NULL; // Python is going to point this to valid data if ExecuteOneLineWithReturn returns successfully
     
     if (ExecuteOneLineWithReturn (command.c_str(),
-                                 ScriptInterpreter::eCharStrOrNone,
+                                 ScriptInterpreter::eScriptReturnTypeCharStrOrNone,
                                  &result_ptr) && result_ptr)
     {
         return std::string(result_ptr);
@@ -1905,7 +2002,8 @@ ScriptInterpreterPython::InitializeInterpreter (SWIGInitCallback python_swig_ini
                                                 SWIGPythonGetIndexOfChildWithName python_swig_get_index_child,
                                                 SWIGPythonCastPyObjectToSBValue python_swig_cast_to_sbvalue,
                                                 SWIGPythonUpdateSynthProviderInstance python_swig_update_provider,
-                                                SWIGPythonCallCommand python_swig_call_command)
+                                                SWIGPythonCallCommand python_swig_call_command,
+                                                SWIGPythonCallModuleInit python_swig_call_mod_init)
 {
     g_swig_init_callback = python_swig_init_callback;
     g_swig_breakpoint_callback = python_swig_breakpoint_callback;
@@ -1917,6 +2015,7 @@ ScriptInterpreterPython::InitializeInterpreter (SWIGInitCallback python_swig_ini
     g_swig_cast_to_sbvalue = python_swig_cast_to_sbvalue;
     g_swig_update_provider = python_swig_update_provider;
     g_swig_call_command = python_swig_call_command;
+    g_swig_call_module_init = python_swig_call_mod_init;
 }
 
 void

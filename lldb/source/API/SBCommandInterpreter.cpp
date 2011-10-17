@@ -358,6 +358,13 @@ extern "C" bool           LLDBSwigPythonCallCommand
     lldb_private::CommandReturnObject& cmd_retobj
 );
 
+extern "C" bool           LLDBSwigPythonCallModuleInit 
+(
+    const std::string python_module_name,
+    const char *session_dictionary_name,
+    lldb::DebuggerSP& debugger
+);
+
 
 extern "C" void init_lldb(void);
 
@@ -377,6 +384,7 @@ SBCommandInterpreter::InitializeSWIG ()
                                                   LLDBSwigPython_GetIndexOfChildWithName,
                                                   LLDBSWIGPython_CastPyObjectToSBValue,
                                                   LLDBSwigPython_UpdateSynthProviderInstance,
-                                                  LLDBSwigPythonCallCommand);
+                                                  LLDBSwigPythonCallCommand,
+                                                  LLDBSwigPythonCallModuleInit);
     }
 }

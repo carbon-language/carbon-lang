@@ -1220,6 +1220,78 @@ public:
     
 };
 
+//-------------------------------------------------------------------------
+// CommandObjectCommandsScriptImport
+//-------------------------------------------------------------------------
+
+class CommandObjectCommandsScriptImport : public CommandObject
+{
+public:
+    CommandObjectCommandsScriptImport (CommandInterpreter &interpreter) :
+    CommandObject (interpreter,
+                   "command script import",
+                   "Import a scripting module in LLDB.",
+                   NULL)
+    {
+        CommandArgumentEntry arg1;
+        CommandArgumentData cmd_arg;
+        
+        // Define the first (and only) variant of this arg.
+        cmd_arg.arg_type = eArgTypePath;
+        cmd_arg.arg_repetition = eArgRepeatPlain;
+        
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg1.push_back (cmd_arg);
+        
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg1);
+    }
+    
+    ~CommandObjectCommandsScriptImport ()
+    {
+    }
+    
+    bool
+    Execute
+    (
+     Args& args,
+     CommandReturnObject &result
+     )
+    {
+        
+        if (m_interpreter.GetDebugger().GetScriptLanguage() != lldb::eScriptLanguagePython)
+        {
+            result.AppendError ("only scripting language supported for module importing is currently Python");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+        
+        size_t argc = args.GetArgumentCount();
+        
+        if (argc != 1)
+        {
+            result.AppendError ("'command script import' requires one argument");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+        
+        std::string path = args.GetArgumentAtIndex(0);
+        Error error;
+        
+        if (m_interpreter.GetScriptInterpreter()->LoadScriptingModule(path.c_str(),
+                                                                      error))
+        {
+            result.SetStatus (eReturnStatusSuccessFinishNoResult);
+        }
+        else
+        {
+            result.AppendErrorWithFormat("module importing failed: %s", error.AsCString());
+            result.SetStatus (eReturnStatusFailed);
+        }
+        
+        return result.Succeeded();
+    }
+};
 
 //-------------------------------------------------------------------------
 // CommandObjectCommandsScriptAdd
@@ -1684,6 +1756,7 @@ public:
         LoadSubCommand ("delete",   CommandObjectSP (new CommandObjectCommandsScriptDelete (interpreter)));
         LoadSubCommand ("clear", CommandObjectSP (new CommandObjectCommandsScriptClear (interpreter)));
         LoadSubCommand ("list",   CommandObjectSP (new CommandObjectCommandsScriptList (interpreter)));
+        LoadSubCommand ("import",   CommandObjectSP (new CommandObjectCommandsScriptImport (interpreter)));
     }
 
     ~CommandObjectMultiwordCommandsScript ()

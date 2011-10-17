@@ -676,7 +676,89 @@ LLDBSwigPythonCallCommand
         PyErr_Print();
         PyErr_Clear ();
     }
-return retval;
+    return retval;
+}
+
+SWIGEXPORT bool
+LLDBSwigPythonCallModuleInit 
+(
+    const std::string python_module_name,
+    const char *session_dictionary_name,
+    lldb::DebuggerSP& debugger
+)
+{
+
+    lldb::SBDebugger debugger_sb(debugger);
+
+    bool retval = false;
+
+    PyObject *DebuggerObj_PyObj = SWIG_NewPointerObj((void *) &debugger_sb, SWIGTYPE_p_lldb__SBDebugger, 0);
+
+    if (DebuggerObj_PyObj == NULL)
+        return retval;
+        
+    if (!(python_module_name.length()) || !session_dictionary_name)
+        return retval;
+
+    PyObject *session_dict, *pfunc;
+    PyObject *pargs, *pvalue;
+    
+    session_dict = FindSessionDictionary (session_dictionary_name);
+    
+    std::string python_function_name_string = python_module_name + (".__lldb_init_module");
+    const char* python_function_name = python_function_name_string.c_str();
+    
+    if (session_dict != NULL)
+    {
+        pfunc = ResolvePythonName (python_function_name, session_dict);
+        
+        if (PyErr_Occurred()) // this might not exist.. let's make sure we handle that
+        {
+            PyErr_Clear();
+            return true;
+        }
+
+        if (pfunc == NULL)
+            return true;
+        else
+        {
+            // Set up the arguments and call the function.
+                
+            if (PyCallable_Check (pfunc))
+            {
+                pargs = PyTuple_New (2);
+                if (pargs == NULL)
+                {
+                    if (PyErr_Occurred())
+                        PyErr_Clear();
+                    return retval;
+                }
+                
+                PyTuple_SetItem (pargs, 0, DebuggerObj_PyObj);  // This "steals" a reference to DebuggerObj_PyObj
+                PyTuple_SetItem (pargs, 1, session_dict); // This "steals" a reference to session_dict
+                pvalue = PyObject_CallObject (pfunc, pargs);
+                Py_DECREF (pargs);
+                
+                if (PyErr_Occurred ())
+                {
+                    PyErr_Print();
+                    PyErr_Clear();
+                }
+                else
+                {
+                    retval = true;
+                    Py_XDECREF (pvalue);
+                }
+                Py_INCREF (session_dict);
+            }
+            else if (PyErr_Occurred())
+            {
+                PyErr_Print();
+                PyErr_Clear();
+            }
+        }
+    }
+    return retval;
 }
 
 %}
