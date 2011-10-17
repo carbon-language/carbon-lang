@@ -501,7 +501,17 @@ public:
     return CopyString(StringRef(String));
   }
 };
-  
+
+} // end namespace clang
+
+namespace llvm {
+  template <> struct isPodLike<clang::CodeCompletionString::Chunk> {
+    static const bool value = true;
+  };
+}
+
+namespace clang {
+
 /// \brief A builder class used to construct new code-completion strings.
 class CodeCompletionBuilder {
 public:  
