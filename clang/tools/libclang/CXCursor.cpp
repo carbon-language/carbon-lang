@@ -468,12 +468,12 @@ cxcursor::getCursorObjCSuperClassRef(CXCursor C) {
                                       reinterpret_cast<uintptr_t>(C.data[1])));
 }
 
-CXCursor cxcursor::MakeCursorObjCProtocolRef(ObjCProtocolDecl *Super, 
+CXCursor cxcursor::MakeCursorObjCProtocolRef(const ObjCProtocolDecl *Proto, 
                                              SourceLocation Loc, 
                                              CXTranslationUnit TU) {
-  assert(Super && TU && "Invalid arguments!");
+  assert(Proto && TU && "Invalid arguments!");
   void *RawLoc = reinterpret_cast<void *>(Loc.getRawEncoding());
-  CXCursor C = { CXCursor_ObjCProtocolRef, 0, { Super, RawLoc, TU } };
+  CXCursor C = { CXCursor_ObjCProtocolRef, 0, { (void*)Proto, RawLoc, TU } };
   return C;    
 }
 
@@ -485,7 +485,7 @@ cxcursor::getCursorObjCProtocolRef(CXCursor C) {
                                       reinterpret_cast<uintptr_t>(C.data[1])));
 }
 
-CXCursor cxcursor::MakeCursorObjCClassRef(ObjCInterfaceDecl *Class, 
+CXCursor cxcursor::MakeCursorObjCClassRef(const ObjCInterfaceDecl *Class, 
                                           SourceLocation Loc, 
                                           CXTranslationUnit TU) {
   // 'Class' can be null for invalid code.
@@ -493,7 +493,7 @@ CXCursor cxcursor::MakeCursorObjCClassRef(ObjCInterfaceDecl *Class,
     return MakeCXCursorInvalid(CXCursor_InvalidCode);
   assert(TU && "Invalid arguments!");
   void *RawLoc = reinterpret_cast<void *>(Loc.getRawEncoding());
-  CXCursor C = { CXCursor_ObjCClassRef, 0, { Class, RawLoc, TU } };
+  CXCursor C = { CXCursor_ObjCClassRef, 0, { (void*)Class, RawLoc, TU } };
   return C;    
 }
 
@@ -505,11 +505,11 @@ cxcursor::getCursorObjCClassRef(CXCursor C) {
                                       reinterpret_cast<uintptr_t>(C.data[1])));
 }
 
-CXCursor cxcursor::MakeCursorTypeRef(TypeDecl *Type, SourceLocation Loc, 
+CXCursor cxcursor::MakeCursorTypeRef(const TypeDecl *Type, SourceLocation Loc, 
                                      CXTranslationUnit TU) {
   assert(Type && TU && "Invalid arguments!");
   void *RawLoc = reinterpret_cast<void *>(Loc.getRawEncoding());
-  CXCursor C = { CXCursor_TypeRef, 0, { Type, RawLoc, TU } };
+  CXCursor C = { CXCursor_TypeRef, 0, { (void*)Type, RawLoc, TU } };
   return C;    
 }
 

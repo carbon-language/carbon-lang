@@ -28,6 +28,11 @@ set(SOURCES
   CXCursor.cpp
   CXString.cpp
   CXType.cpp
+  IndexBody.cpp
+  IndexDecl.cpp
+  IndexTypeSourceInfo.cpp
+  Indexing.cpp
+  IndexingContext.cpp
   ../../include/clang-c/Index.h
   )
 

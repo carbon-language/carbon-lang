@@ -3855,6 +3855,329 @@ void clang_findReferencesInFileWithBlock(CXCursor, CXFile,
 #  endif
 #endif
 
+typedef void *CXIdxFile;
+typedef void *CXIdxEntity;
+typedef void *CXIdxContainer;
+typedef void *CXIdxMacro;
+typedef void *CXIdxASTFile;
+
+typedef struct {
+  void *ptr_data[2];
+  unsigned int_data;
+} CXIdxLoc;
+
+typedef struct {
+  CXIdxLoc hashLoc;
+  const char *filename;
+  CXIdxFile file;
+  int isImport;
+  int isAngled;
+} CXIdxIncludedFileInfo;
+
+typedef struct {
+  CXFile file;
+  CXIdxLoc loc;
+  int isModule;
+} CXIdxImportedASTFileInfo;
+
+typedef struct {
+  CXIdxLoc loc;
+  const char *name;
+} CXIdxMacroInfo;
+
+typedef struct {
+  CXIdxMacroInfo *macroInfo;
+  CXIdxLoc defBegin;
+  unsigned defLength;
+} CXIdxMacroDefinedInfo;
+
+typedef struct {
+  CXIdxLoc loc;
+  const char *name;
+  CXIdxMacro macro;
+} CXIdxMacroUndefinedInfo;
+
+typedef struct {
+  CXIdxLoc loc;
+  const char *name;
+  CXIdxMacro macro;
+} CXIdxMacroExpandedInfo;
+
+typedef struct {
+  const char *name;
+  const char *USR;
+} CXIdxEntityInfo;
+
+typedef struct {
+  CXCursor cursor;
+  CXIdxLoc loc;
+  CXIdxContainer container;
+} CXIdxIndexedDeclInfo;
+
+typedef struct {
+  CXIdxEntityInfo *entityInfo;
+  CXCursor cursor;
+  CXIdxLoc loc;
+  CXIdxASTFile ASTFile;
+} CXIdxImportedEntityInfo;
+
+typedef struct {
+  CXIdxMacroInfo *macroInfo;
+  CXIdxASTFile ASTFile;
+} CXIdxImportedMacroInfo;
+
+typedef struct {
+  CXIdxEntityInfo *entityInfo;
+  CXIdxIndexedDeclInfo *declInfo;
+} CXIdxIndexedEntityInfo;
+
+typedef struct {
+  CXIdxIndexedDeclInfo *declInfo;
+  CXIdxEntity entity;
+} CXIdxIndexedRedeclInfo;
+
+typedef struct {
+  CXCursor cursor;
+  CXIdxLoc loc;
+  CXIdxEntity entity;
+} CXIdxContainerInfo;
+
+typedef struct {
+  CXIdxIndexedEntityInfo *indexedEntityInfo;
+} CXIdxTypedefInfo;
+
+typedef struct {
+  CXIdxIndexedEntityInfo *indexedEntityInfo;
+  int isDefinition;
+} CXIdxFunctionInfo;
+
+typedef struct {
+  CXIdxIndexedRedeclInfo *indexedRedeclInfo;
+  int isDefinition;
+} CXIdxFunctionRedeclInfo;
+
+typedef struct {
+  CXIdxIndexedEntityInfo *indexedEntityInfo;
+  int isDefinition;
+} CXIdxVariableInfo;
+
+typedef struct {
+  CXIdxIndexedRedeclInfo *indexedRedeclInfo;
+  int isDefinition;
+} CXIdxVariableRedeclInfo;
+
+typedef struct {
+  CXIdxIndexedEntityInfo *indexedEntityInfo;
+  int isDefinition;
+  int isAnonymous;
+} CXIdxTagTypeInfo;
+
+typedef struct {
+  CXIdxIndexedRedeclInfo *indexedRedeclInfo;
+  int isDefinition;
+} CXIdxTagTypeRedeclInfo;
+
+typedef struct {
+  CXIdxContainerInfo *containerInfo;
+} CXIdxTagTypeDefinitionInfo;
+
+typedef struct {
+  CXIdxIndexedEntityInfo *indexedEntityInfo;
+} CXIdxFieldInfo;
+
+typedef struct {
+  CXIdxIndexedEntityInfo *indexedEntityInfo;
+} CXIdxEnumeratorInfo;
+
+typedef struct {
+  CXIdxIndexedEntityInfo *indexedEntityInfo;
+  int isForwardRef;
+} CXIdxObjCClassInfo;
+
+typedef struct {
+  CXIdxIndexedEntityInfo *indexedEntityInfo;
+  int isForwardRef;
+} CXIdxObjCProtocolInfo;
+
+typedef struct {
+  CXIdxIndexedEntityInfo *indexedEntityInfo;
+  CXIdxEntity objcClass;
+} CXIdxObjCCategoryInfo;
+
+typedef struct {
+  CXIdxIndexedEntityInfo *indexedEntityInfo;
+  int isDefinition;
+} CXIdxObjCMethodInfo;
+
+typedef struct {
+  CXIdxIndexedEntityInfo *indexedEntityInfo;
+} CXIdxObjCPropertyInfo;
+
+typedef struct {
+  CXIdxIndexedRedeclInfo *indexedRedeclInfo;
+  int isDefinition;
+} CXIdxObjCMethodRedeclInfo;
+
+typedef struct {
+  CXIdxContainerInfo *containerInfo;
+  CXIdxLoc bodyBegin;
+} CXIdxStmtBodyInfo;
+
+typedef struct {
+  CXIdxContainerInfo *containerInfo;
+} CXIdxObjCContainerInfo;
+
+typedef struct {
+  CXIdxEntity objcClass;
+  CXIdxLoc loc;
+} CXIdxObjCBaseClassInfo;
+
+typedef struct {
+  CXIdxEntity protocol;
+  CXIdxLoc loc;
+} CXIdxObjCProtocolRefInfo;
+
+typedef struct {
+  CXCursor cursor;
+  CXIdxEntity objcClass;
+  CXIdxContainer container;
+  CXIdxObjCBaseClassInfo *baseInfo;
+  CXIdxObjCProtocolRefInfo **protocols;
+  unsigned numProtocols;
+} CXIdxObjCClassDefineInfo;
+
+typedef struct {
+  CXIdxContainer container;
+  CXIdxLoc endLoc;
+} CXIdxEndContainerInfo;
+
+typedef struct {
+  CXCursor cursor;
+  CXIdxLoc loc;
+  CXIdxEntity referencedEntity;
+  CXIdxEntity parentEntity;
+  CXIdxContainer container;
+} CXIdxEntityRefInfo;
+
+typedef struct {
+  void (*diagnostic)(CXClientData client_data,
+                     CXDiagnostic, void *reserved);
+
+  CXIdxFile (*recordFile)(CXClientData client_data,
+                          CXFile file, void *reserved);
+
+  void (*ppIncludedFile)(CXClientData client_data,
+                         CXIdxIncludedFileInfo *);
+
+  CXIdxMacro (*ppMacroDefined)(CXClientData client_data,
+                               CXIdxMacroDefinedInfo *);
+
+  void (*ppMacroUndefined)(CXClientData client_data,
+                           CXIdxMacroUndefinedInfo *);
+
+  void (*ppMacroExpanded)(CXClientData client_data,
+                          CXIdxMacroExpandedInfo *);
+  
+  CXIdxASTFile (*importedASTFile)(CXClientData client_data,
+                                  CXIdxImportedASTFileInfo *);
+
+  CXIdxEntity (*importedEntity)(CXClientData client_data,
+                                CXIdxImportedEntityInfo *);
+
+  CXIdxEntity (*importedMacro)(CXClientData client_data,
+                               CXIdxImportedMacroInfo *);
+
+  CXIdxContainer (*startedTranslationUnit)(CXClientData client_data,
+                                           void *reserved);
+
+  CXIdxEntity (*indexTypedef)(CXClientData client_data,
+                              CXIdxTypedefInfo *);
+
+  CXIdxEntity (*indexFunction)(CXClientData client_data,
+                               CXIdxFunctionInfo *);
+
+  void (*indexFunctionRedeclaration)(CXClientData client_data,
+                                     CXIdxFunctionRedeclInfo *);
+
+  CXIdxEntity (*indexVariable)(CXClientData client_data,
+                               CXIdxVariableInfo *);
+
+  void (*indexVariableRedeclaration)(CXClientData client_data,
+                                     CXIdxVariableRedeclInfo *);
+
+  CXIdxEntity (*indexTagType)(CXClientData client_data,
+                              CXIdxTagTypeInfo *);
+
+  void (*indexTagTypeRedeclaration)(CXClientData client_data,
+                                    CXIdxTagTypeRedeclInfo *);
+
+  CXIdxEntity (*indexField)(CXClientData client_data,
+                            CXIdxFieldInfo *);
+
+  CXIdxEntity (*indexEnumerator)(CXClientData client_data,
+                                 CXIdxEnumeratorInfo *);
+
+  CXIdxContainer (*startedTagTypeDefinition)(CXClientData client_data,
+                                            CXIdxTagTypeDefinitionInfo *);
+
+  CXIdxEntity (*indexObjCClass)(CXClientData client_data,
+                                CXIdxObjCClassInfo *);
+
+  CXIdxEntity (*indexObjCProtocol)(CXClientData client_data,
+                                   CXIdxObjCProtocolInfo *);
+
+  CXIdxEntity (*indexObjCCategory)(CXClientData client_data,
+                                   CXIdxObjCCategoryInfo *);
+
+  CXIdxEntity (*indexObjCMethod)(CXClientData client_data,
+                                 CXIdxObjCMethodInfo *);
+
+  CXIdxEntity (*indexObjCProperty)(CXClientData client_data,
+                                   CXIdxObjCPropertyInfo *);
+
+  void (*indexObjCMethodRedeclaration)(CXClientData client_data,
+                                       CXIdxObjCMethodRedeclInfo *);
+
+  CXIdxContainer (*startedStatementBody)(CXClientData client_data,
+                                         CXIdxStmtBodyInfo *);
+
+  CXIdxContainer (*startedObjCContainer)(CXClientData client_data,
+                                         CXIdxObjCContainerInfo *);
+
+  void (*defineObjCClass)(CXClientData client_data,
+                          CXIdxObjCClassDefineInfo *);
+
+  void (*endedContainer)(CXClientData client_data,
+                         CXIdxEndContainerInfo *);
+
+  void (*indexEntityReference)(CXClientData client_data,
+                               CXIdxEntityRefInfo *);
+
+} IndexerCallbacks;
+
+CINDEX_LINKAGE int clang_indexTranslationUnit(CXIndex CIdx,
+                                         CXClientData client_data,
+                                         IndexerCallbacks *index_callbacks,
+                                         unsigned index_callbacks_size,
+                                         unsigned index_options,
+                                         const char *source_filename,
+                                         const char * const *command_line_args,
+                                         int num_command_line_args,
+                                         struct CXUnsavedFile *unsaved_files,
+                                         unsigned num_unsaved_files,
+                                         CXTranslationUnit *out_TU,
+                                         unsigned TU_options);
+
+CINDEX_LINKAGE void clang_indexLoc_getFileLocation(CXIdxLoc loc,
+                                                   CXIdxFile *indexFile,
+                                                   CXFile *file,
+                                                   unsigned *line,
+                                                   unsigned *column,
+                                                   unsigned *offset);
+
+CINDEX_LINKAGE
+CXSourceLocation clang_indexLoc_getCXSourceLocation(CXIdxLoc loc);
+
 /**
  * @}
  */

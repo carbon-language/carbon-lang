@@ -62,6 +62,11 @@ CXTranslationUnit cxtu::MakeCXTranslationUnit(ASTUnit *TU) {
   return D;
 }
 
+cxtu::CXTUOwner::~CXTUOwner() {
+  if (TU)
+    clang_disposeTranslationUnit(TU);
+}
+
 /// \brief The result of comparing two source ranges.
 enum RangeComparisonResult {
   /// \brief Either the ranges overlap or one of the ranges is invalid.

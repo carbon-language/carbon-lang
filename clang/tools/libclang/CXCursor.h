@@ -67,7 +67,8 @@ std::pair<ObjCInterfaceDecl *, SourceLocation>
   getCursorObjCSuperClassRef(CXCursor C);
 
 /// \brief Create an Objective-C protocol reference at the given location.
-CXCursor MakeCursorObjCProtocolRef(ObjCProtocolDecl *Proto, SourceLocation Loc, 
+CXCursor MakeCursorObjCProtocolRef(const ObjCProtocolDecl *Proto,
+                                   SourceLocation Loc, 
                                    CXTranslationUnit TU);
 
 /// \brief Unpack an ObjCProtocolRef cursor into the protocol it references
@@ -76,7 +77,8 @@ std::pair<ObjCProtocolDecl *, SourceLocation>
   getCursorObjCProtocolRef(CXCursor C);
 
 /// \brief Create an Objective-C class reference at the given location.
-CXCursor MakeCursorObjCClassRef(ObjCInterfaceDecl *Class, SourceLocation Loc, 
+CXCursor MakeCursorObjCClassRef(const ObjCInterfaceDecl *Class,
+                                SourceLocation Loc, 
                                 CXTranslationUnit TU);
 
 /// \brief Unpack an ObjCClassRef cursor into the class it references
@@ -85,7 +87,7 @@ std::pair<ObjCInterfaceDecl *, SourceLocation>
   getCursorObjCClassRef(CXCursor C);
 
 /// \brief Create a type reference at the given location.
-CXCursor MakeCursorTypeRef(TypeDecl *Type, SourceLocation Loc,
+CXCursor MakeCursorTypeRef(const TypeDecl *Type, SourceLocation Loc,
                            CXTranslationUnit TU);
                                
 /// \brief Unpack a TypeRef cursor into the class it references
@@ -221,7 +223,7 @@ CXCursor getTypeRefCursor(CXCursor cursor);
 /// \brief Generate a USR for \arg D and put it in \arg Buf.
 /// \returns true if no USR was computed or the result should be ignored,
 /// false otherwise.
-bool getDeclCursorUSR(Decl *D, SmallVectorImpl<char> &Buf);
+bool getDeclCursorUSR(const Decl *D, SmallVectorImpl<char> &Buf);
 
 bool operator==(CXCursor X, CXCursor Y);
   

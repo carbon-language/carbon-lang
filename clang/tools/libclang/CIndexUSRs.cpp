@@ -790,7 +790,7 @@ static inline StringRef extractUSRSuffix(StringRef s) {
   return s.startswith("c:") ? s.substr(2) : "";
 }
 
-bool cxcursor::getDeclCursorUSR(Decl *D, SmallVectorImpl<char> &Buf) {
+bool cxcursor::getDeclCursorUSR(const Decl *D, SmallVectorImpl<char> &Buf) {
   // Don't generate USRs for things with invalid locations.
   if (!D || D->getLocStart().isInvalid())
     return true;
@@ -820,7 +820,7 @@ bool cxcursor::getDeclCursorUSR(Decl *D, SmallVectorImpl<char> &Buf) {
 
   {
     USRGenerator UG(&D->getASTContext(), &Buf);
-    UG->Visit(D);
+    UG->Visit((Decl*)D);
 
     if (UG->ignoreResults())
       return true;
