@@ -1711,6 +1711,9 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
   // Hold late-parsed attributes so we can attach a Decl to them later.
   LateParsedAttrList LateParsedAttrs;
 
+  SourceLocation EqualLoc;
+  bool HasInitializer = false;
+  ExprResult Init;
   if (Tok.isNot(tok::colon)) {
     // Don't parse FOO:BAR as if it were a typo for FOO::BAR.
     ColonProtectionRAIIObject X(*this);
@@ -1733,14 +1736,15 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
 
     // MSVC permits pure specifier on inline functions declared at class scope.
     // Hence check for =0 before checking for function definition.
-    ExprResult Init;
     if (getLang().MicrosoftExt && Tok.is(tok::equal) &&
         DeclaratorInfo.isFunctionDeclarator() && 
         NextToken().is(tok::numeric_constant)) {
-      ConsumeToken();
+      EqualLoc = ConsumeToken();
       Init = ParseInitializer();
       if (Init.isInvalid())
         SkipUntil(tok::comma, true, true);
+      else
+        HasInitializer = true;
     }
 
     bool IsDefinition = false;
@@ -1842,9 +1846,8 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     // goes before or after the GNU attributes and __asm__.
     ParseOptionalCXX0XVirtSpecifierSeq(VS);
 
-    bool HasInitializer = false;
     bool HasDeferredInitializer = false;
-    if (Tok.is(tok::equal) || Tok.is(tok::l_brace)) {
+    if ((Tok.is(tok::equal) || Tok.is(tok::l_brace)) && !HasInitializer) {
       if (BitfieldSize.get()) {
         Diag(Tok, diag::err_bitfield_member_init);
         SkipUntil(tok::comma, true, true);
@@ -1905,15 +1908,15 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
         ParseCXXNonStaticMemberInitializer(ThisDecl);
     } else if (HasInitializer) {
       // Normal initializer.
-      SourceLocation EqualLoc;
-      ExprResult Init
-        = ParseCXXMemberInitializer(DeclaratorInfo.isDeclarationOfFunction(), 
-                                    EqualLoc);
+      if (!Init.isUsable())
+        Init = ParseCXXMemberInitializer(
+                 DeclaratorInfo.isDeclarationOfFunction(), EqualLoc);
+      
       if (Init.isInvalid())
         SkipUntil(tok::comma, true, true);
       else if (ThisDecl)
         Actions.AddInitializerToDecl(ThisDecl, Init.get(), false,
-                                   DS.getTypeSpecType() == DeclSpec::TST_auto);
+                                   DS.getTypeSpecType() == DeclSpec::TST_auto);      
     } else if (ThisDecl && DS.getStorageClassSpec() == DeclSpec::SCS_static) {
       // No initializer.
       Actions.ActOnUninitializedDecl(ThisDecl, 
@@ -1945,6 +1948,8 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     DeclaratorInfo.clear();
     VS.clear();
     BitfieldSize = true;
+    Init = true;
+    HasInitializer = false;
 
     // Attributes are only allowed on the second declarator.
     MaybeParseGNUAttributes(DeclaratorInfo);

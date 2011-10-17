@@ -203,3 +203,10 @@ void f()
 
 }
 
+struct PR11150 {
+  class X {
+    virtual void f() = 0;
+  };
+
+  int array[__is_abstract(X)? 1 : -1];
+};

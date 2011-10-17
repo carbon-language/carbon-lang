@@ -43,13 +43,13 @@ Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS,
   else {
     FnD = Actions.ActOnCXXMemberDeclarator(getCurScope(), AS, D,
                                            move(TemplateParams), 0, 
-                                           VS, /*HasInit=*/false);
+                                           VS, /*HasDeferredInit=*/false);
     if (FnD) {
       Actions.ProcessDeclAttributeList(getCurScope(), FnD, AccessAttrs,
                                        false, true);
       bool TypeSpecContainsAuto
         = D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_auto;
-      if (Init.get())
+      if (Init.isUsable())
         Actions.AddInitializerToDecl(FnD, Init.get(), false, 
                                      TypeSpecContainsAuto);
       else
