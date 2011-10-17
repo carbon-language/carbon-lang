@@ -1507,6 +1507,7 @@ static void printCXIndexLoc(CXIdxLoc loc) {
   const char *cname, *end;
   CXIdxFile file;
   unsigned line, column;
+  int isHeader;
   
   clang_indexLoc_getFileLocation(loc, &file, 0, &line, &column, 0);
   if (line == 0) {
@@ -1516,7 +1517,7 @@ static void printCXIndexLoc(CXIdxLoc loc) {
   filename = clang_getFileName((CXFile)file);
   cname = clang_getCString(filename);
   end = cname + strlen(cname);
-  int isHeader = (end[-2] == '.' && end[-1] == 'h');
+  isHeader = (end[-2] == '.' && end[-1] == 'h');
   
   if (isHeader) {
     printCXIndexFile(file);
@@ -1685,9 +1686,14 @@ static void index_ppMacroExpanded(CXClientData client_data,
 static CXIdxEntity index_importedEntity(CXClientData client_data,
                                         CXIdxImportedEntityInfo *info) {
   IndexData *index_data;
-  CXIdxIndexedDeclInfo DeclInfo = { info->cursor, info->loc, 0 };
-  CXIdxIndexedEntityInfo EntityInfo = { info->entityInfo, &DeclInfo };
+  CXIdxIndexedDeclInfo DeclInfo;
+  CXIdxIndexedEntityInfo EntityInfo;
   const char *name;
+  DeclInfo.cursor = info->cursor;
+  DeclInfo.loc = info->loc;
+  DeclInfo.container = 0;
+  EntityInfo.entityInfo = info->entityInfo;
+  EntityInfo.declInfo = &DeclInfo;
   index_data = (IndexData *)client_data;
   printCheck(index_data);
 
