@@ -28,6 +28,8 @@
 
 #endif  // __cplusplus
 
+#if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
+#endif
 
 #endif  // _LIBCPP_COMPLEX_H

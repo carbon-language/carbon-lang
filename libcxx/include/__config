@@ -11,7 +11,9 @@
 #ifndef _LIBCPP_CONFIG
 #define _LIBCPP_CONFIG
 
+#if !_MSC_VER // explicit macro necessary because it is only defined below in this file
 #pragma GCC system_header
+#endif
 
 #define _LIBCPP_VERSION 1001
 
@@ -69,17 +71,45 @@
 # endif
 #endif  // !defined(_LIBCPP_LITTLE_ENDIAN) || !defined(_LIBCPP_BIG_ENDIAN)
 
-#ifndef _LIBCPP_VISIBILITY_TAG
-#define _LIBCPP_VISIBILITY_TAG 1
+#if _WIN32
+
+// only really useful for a DLL
+#ifdef _LIBCPP_DLL // this should be a compiler builtin define ideally...
+# ifdef cxx_EXPORTS
+#  define _LIBCPP_HIDDEN
+#  define _LIBCPP_VISIBLE __declspec(dllexport)
+# else
+#  define _LIBCPP_HIDDEN
+#  define _LIBCPP_VISIBLE __declspec(dllimport)
+# endif
+#else
+# define _LIBCPP_HIDDEN
+# define _LIBCPP_VISIBLE
 #endif
 
-#if _LIBCPP_VISIBILITY_TAG
+#ifndef _LIBCPP_INLINE_VISIBILITY
+#define _LIBCPP_INLINE_VISIBILITY __forceinline
+#endif
+
+#ifndef _LIBCPP_EXCEPTION_ABI
+#define _LIBCPP_EXCEPTION_ABI _LIBCPP_VISIBLE
+#endif
+
+#ifndef _LIBCPP_ALWAYS_INLINE
+# if _MSC_VER
+# define _LIBCPP_ALWAYS_INLINE __forceinline
+# endif
+#endif
+
+#endif // _WIN32
+
+#ifndef _LIBCPP_HIDDEN
 #define _LIBCPP_HIDDEN __attribute__ ((__visibility__("hidden")))
+#endif
+
+#ifndef _LIBCPP_VISIBLE
 #define _LIBCPP_VISIBLE __attribute__ ((__visibility__("default")))
-#else  // _LIBCPP_VISIBILITY_TAG
-#define _LIBCPP_HIDDEN
-#define _LIBCPP_VISIBLE
-#endif  // _LIBCPP_VISIBILITY_TAG
+#endif
 
 #ifndef _LIBCPP_INLINE_VISIBILITY
 #define _LIBCPP_INLINE_VISIBILITY __attribute__ ((__visibility__("hidden"), __always_inline__))
@@ -89,11 +119,21 @@
 #define _LIBCPP_EXCEPTION_ABI __attribute__ ((__visibility__("default")))
 #endif
 
+#ifndef _LIBCPP_CANTTHROW
 #define _LIBCPP_CANTTHROW __attribute__ ((__nothrow__))
+#endif
 
+#ifndef _LIBCPP_ALWAYS_INLINE
 #define _LIBCPP_ALWAYS_INLINE  __attribute__ ((__visibility__("hidden"), __always_inline__))
+#endif
 
 #if defined(__clang__)
+
+#if __has_feature(cxx_alignas)
+#  define _ALIGNAS(x) alignas(x)
+#else
+#  define _ALIGNAS(x) __attribute__((__aligned__(x)))
+#endif
 
 #if !__has_feature(cxx_alias_templates)
 #define _LIBCPP_HAS_NO_TEMPLATE_ALIASES
@@ -181,16 +221,6 @@ typedef __char32_t char32_t;
 #define _LIBCPP_HAS_OBJC_ARC_WEAK
 #endif
 
-// Inline namespaces are available in Clang regardless of C++ dialect.
-#define _LIBCPP_BEGIN_NAMESPACE_STD namespace std {inline namespace _LIBCPP_NAMESPACE {
-#define _LIBCPP_END_NAMESPACE_STD  } }
-#define _VSTD std::_LIBCPP_NAMESPACE
-
-namespace std {
-  inline namespace _LIBCPP_NAMESPACE {
-  }
-}
-
 #if !(__has_feature(cxx_constexpr))
 #define _LIBCPP_HAS_NO_CONSTEXPR
 #endif
@@ -207,9 +237,19 @@ namespace std {
 #  define _LIBCXX_UNDERLYING_TYPE(T) __underlying_type(T)
 #endif
 
-// end defined(__clang__)
+// Inline namespaces are available in Clang regardless of C++ dialect.
+#define _LIBCPP_BEGIN_NAMESPACE_STD namespace std {inline namespace _LIBCPP_NAMESPACE {
+#define _LIBCPP_END_NAMESPACE_STD  } }
+#define _VSTD std::_LIBCPP_NAMESPACE
+
+namespace std {
+  inline namespace _LIBCPP_NAMESPACE {
+  }
+}
 
 #elif defined(__GNUC__)
+
+#define _ALIGNAS(x) __attribute__((__aligned__(x)))
 
 #define _ATTRIBUTE(x) __attribute__((x))
 
@@ -275,7 +315,28 @@ namespace _LIBCPP_NAMESPACE {
 using namespace _LIBCPP_NAMESPACE __attribute__((__strong__));
 }
 
-#endif  // defined(__GNUC__)
+#elif defined(_MSC_VER)
+
+#define _LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER
+#define _LIBCPP_HAS_NO_CONSTEXPR
+#define _LIBCPP_HAS_NO_UNICODE_CHARS
+#define _LIBCPP_HAS_NO_DELETED_FUNCTIONS
+#define __alignof__ __alignof
+#define _ATTRIBUTE __declspec
+#define _ALIGNAS(x) __declspec(align(x))
+#define _LIBCPP_HAS_NO_VARIADICS
+
+#define _NOEXCEPT throw()
+#define _NOEXCEPT_(x)
+
+#define _LIBCPP_BEGIN_NAMESPACE_STD namespace std {
+#define _LIBCPP_END_NAMESPACE_STD  }
+#define _VSTD std
+
+namespace std {
+}
+
+#endif // __clang__ || __GNUC___ || _MSC_VER
 
 #ifdef _LIBCPP_HAS_NO_UNICODE_CHARS
 typedef unsigned short char16_t;

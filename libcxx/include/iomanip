@@ -33,7 +33,9 @@ template <class charT> T10 put_time(const struct tm* tmb, const charT* fmt);
 #include <__config>
 #include <istream>
 
+#if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
+#endif
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 

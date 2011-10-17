@@ -301,7 +301,9 @@ long double    truncl(long double x);
 #include <math.h>
 #include <type_traits>
 
+#if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
+#endif
 
 // signbit
 

@@ -133,7 +133,9 @@ template <class charT, class traits, class T>
 #include <iterator>
 #include <bitset>
 
+#if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
+#endif
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 

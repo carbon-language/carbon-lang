@@ -100,7 +100,9 @@ void sleep_for(const chrono::duration<Rep, Period>& rel_time);
 #endif
 #include <pthread.h>
 
+#if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
+#endif
 
 #define __STDCPP_THREADS__ __cplusplus
 

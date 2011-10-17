@@ -113,7 +113,9 @@ template <size_t N> struct hash<std::bitset<N>>;
 
 */
 
+#if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
+#endif
 
 #include <__config>
 #include <__bit_reference>

@@ -82,7 +82,9 @@ size_t wcstombs(char* restrict s, const wchar_t* restrict pwcs, size_t n);
 #include <__config>
 #include <stdlib.h>
 
+#if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
+#endif
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
