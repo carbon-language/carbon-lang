@@ -33,7 +33,7 @@ public:
   }
 
   virtual bool isConditionalBranch(const MCInst &Inst) const {
-    return Info->get(Inst.getOpcode()).isBranch();
+    return Info->get(Inst.getOpcode()).isConditionalBranch();
   }
 
   virtual bool isUnconditionalBranch(const MCInst &Inst) const {
