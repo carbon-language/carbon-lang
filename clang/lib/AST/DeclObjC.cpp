@@ -452,6 +452,10 @@ ObjCMethodDecl *ObjCMethodDecl::getCanonicalDecl() {
         return MD;
   }
 
+  if (isRedeclaration())
+    return cast<ObjCContainerDecl>(CtxD)->getMethod(getSelector(),
+                                                    isInstanceMethod());
+
   return this;
 }
 
