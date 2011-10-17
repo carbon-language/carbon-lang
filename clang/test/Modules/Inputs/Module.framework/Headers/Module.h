@@ -1,3 +1,5 @@
+#ifndef MODULE_H
+#define MODULE_H
 const char *getModuleVersion(void);
 
 #ifdef FOO
@@ -10,3 +12,6 @@ const char *getModuleVersion(void);
 @end
 
 #define MODULE_H_MACRO 1
+#__private_macro__ MODULE_H_MACRO
+
+#endif // MODULE_H

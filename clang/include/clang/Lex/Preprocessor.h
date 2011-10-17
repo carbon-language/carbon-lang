@@ -1183,6 +1183,7 @@ private:
   void HandleUserDiagnosticDirective(Token &Tok, bool isWarning);
   void HandleIdentSCCSDirective(Token &Tok);
   void HandleMacroExportDirective(Token &Tok);
+  void HandleMacroPrivateDirective(Token &Tok);
   
   // File inclusion.
   void HandleIncludeDirective(SourceLocation HashLoc,

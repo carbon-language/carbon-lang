@@ -222,6 +222,8 @@ tok::PPKeywordKind IdentifierInfo::getPPKeywordID() const {
 
   CASE(16, '_', 'i', __include_macros);
   CASE(16, '_', 'e', __export_macro__);
+      
+  CASE(17, '_', 'p', __private_macro__);
 #undef CASE
 #undef HASH
   }

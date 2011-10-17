@@ -355,7 +355,7 @@ def warn_cxx98_compat_pp_line_too_big : Warning<
   "#line number greater than 32767 is incompatible with C++98">,
   InGroup<CXX98CompatPedantic>, DefaultIgnore;
 
-def err_pp_export_non_macro : Error<"no macro named %0 to export">;
+def err_pp_visibility_non_macro : Error<"no macro named %0">;
 
 def err_pp_arc_cf_code_audited_syntax : Error<"expected 'begin' or 'end'">;
 def err_pp_double_begin_of_arc_cf_code_audited : Error<

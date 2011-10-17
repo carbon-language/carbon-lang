@@ -6,6 +6,8 @@
 __import_module__ Module;
 @interface OtherClass
 @end
+
+
 // in module: expected-note{{class method 'alloc' is assumed to return an instance of its receiver type ('Module *')}}
 void test_getModuleVersion() {
   const char *version = getModuleVersion();
@@ -14,4 +16,7 @@ void test_getModuleVersion() {
   OtherClass *other = [Module alloc]; // expected-error{{init}}
 }
 
+#ifdef MODULE_H
+#  error MODULE_H should not be hidden
+#endif
 

@@ -8,7 +8,8 @@
 #define DOUBLE double
 
 #__export_macro__ INTEGER
-#__export_macro__ DOUBLE
+#__private_macro__ FLOAT
+#__private_macro__ MODULE
 
 int (INTEGER);
 

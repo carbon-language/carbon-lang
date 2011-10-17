@@ -1629,7 +1629,7 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP, bool IsModule) {
   for (Preprocessor::macro_iterator I = PP.macro_begin(Chain == 0), 
                                     E = PP.macro_end(Chain == 0);
        I != E; ++I) {
-    if (!IsModule || I->second->isExported()) {
+    if (!IsModule || I->second->isPublic()) {
       MacroDefinitionsSeen.insert(I->first);
       MacrosToEmit.push_back(std::make_pair(I->first, I->second));
     }
@@ -1672,7 +1672,8 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP, bool IsModule) {
     MacroOffsets[Name] = Stream.GetCurrentBitNo();
     Record.push_back(MI->getDefinitionLoc().getRawEncoding());
     Record.push_back(MI->isUsed());
-    AddSourceLocation(MI->getExportLocation(), Record);
+    Record.push_back(MI->isPublic());
+    AddSourceLocation(MI->getVisibilityLocation(), Record);
     unsigned Code;
     if (MI->isObjectLike()) {
       Code = PP_MACRO_OBJECT_LIKE;
@@ -2210,7 +2211,7 @@ class ASTIdentifierTableTrait {
       return false;
     
     if (Macro || (Macro = PP.getMacroInfo(II)))
-      return !Macro->isBuiltinMacro() && (!IsModule || Macro->isExported());
+      return !Macro->isBuiltinMacro() && (!IsModule || Macro->isPublic());
     
     return false;    
   }

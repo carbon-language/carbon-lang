@@ -91,6 +91,7 @@ PPKEYWORD(unassert)
 
 // Clang extensions
 PPKEYWORD(__export_macro__)
+PPKEYWORD(__private_macro__)
 
 //===----------------------------------------------------------------------===//
 // Language keywords.

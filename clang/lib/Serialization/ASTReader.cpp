@@ -1283,8 +1283,9 @@ void ASTReader::ReadMacroRecord(Module &F, uint64_t Offset) {
       MI->setIsUsed(isUsed);
       MI->setIsFromAST();
 
-      unsigned NextIndex = 3;
-      MI->setExportLocation(ReadSourceLocation(F, Record, NextIndex));
+      bool IsPublic = Record[3];
+      unsigned NextIndex = 4;
+      MI->setVisibility(IsPublic, ReadSourceLocation(F, Record, NextIndex));
       
       if (RecType == PP_MACRO_FUNCTION_LIKE) {
         // Decode function-like macro info.
