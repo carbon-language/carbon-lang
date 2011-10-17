@@ -106,6 +106,7 @@ protected:
   virtual error_code getSymbolNMTypeChar(DataRefImpl Symb, char &Res) const;
   virtual error_code isSymbolInternal(DataRefImpl Symb, bool &Res) const;
   virtual error_code isSymbolGlobal(DataRefImpl Symb, bool &Res) const;
+  virtual error_code isSymbolWeak(DataRefImpl Symb, bool &Res) const;
   virtual error_code getSymbolType(DataRefImpl Symb, SymbolRef::Type &Res) const;
 
   virtual error_code getSectionNext(DataRefImpl Sec, SectionRef &Res) const;

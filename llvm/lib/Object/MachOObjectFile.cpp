@@ -228,6 +228,20 @@ error_code MachOObjectFile::isSymbolGlobal(DataRefImpl Symb, bool &Res) const {
   return object_error::success;
 }
 
+error_code MachOObjectFile::isSymbolWeak(DataRefImpl Symb, bool &Res) const {
+
+  if (MachOObj->is64Bit()) {
+    InMemoryStruct<macho::Symbol64TableEntry> Entry;
+    getSymbol64TableEntry(Symb, Entry);
+    Res = Entry->Flags & (MachO::NListDescWeakRef | MachO::NListDescWeakDef);
+  } else {
+    InMemoryStruct<macho::SymbolTableEntry> Entry;
+    getSymbolTableEntry(Symb, Entry);
+    Res = Entry->Flags & (MachO::NListDescWeakRef | MachO::NListDescWeakDef);
+  }
+  return object_error::success;
+}
+
 error_code MachOObjectFile::getSymbolType(DataRefImpl Symb,
                                           SymbolRef::Type &Res) const {
   uint8_t n_type;

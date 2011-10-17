@@ -121,6 +121,9 @@ public:
   /// such as library functions
   error_code isGlobal(bool &Result) const;
 
+  /// Returns true for weak symbols.
+  error_code isWeak(bool &Result) const;
+
   DataRefImpl getRawDataRefImpl() const;
 };
 typedef content_iterator<SymbolRef> symbol_iterator;
@@ -234,7 +237,7 @@ protected:
   virtual error_code getSymbolNMTypeChar(DataRefImpl Symb, char &Res) const = 0;
   virtual error_code isSymbolInternal(DataRefImpl Symb, bool &Res) const = 0;
   virtual error_code isSymbolGlobal(DataRefImpl Symb, bool &Res) const = 0;
-
+  virtual error_code isSymbolWeak(DataRefImpl Symb, bool &Res) const = 0;
 
   // Same as above for SectionRef.
   friend class SectionRef;
@@ -343,6 +346,10 @@ inline error_code SymbolRef::isInternal(bool &Result) const {
 
 inline error_code SymbolRef::isGlobal(bool &Result) const {
   return OwningObject->isSymbolGlobal(SymbolPimpl, Result);
+}
+
+inline error_code SymbolRef::isWeak(bool &Result) const {
+  return OwningObject->isSymbolWeak(SymbolPimpl, Result);
 }
 
 inline error_code SymbolRef::getType(SymbolRef::Type &Result) const {

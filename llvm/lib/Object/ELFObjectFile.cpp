@@ -331,6 +331,7 @@ protected:
   virtual error_code getSymbolNMTypeChar(DataRefImpl Symb, char &Res) const;
   virtual error_code isSymbolInternal(DataRefImpl Symb, bool &Res) const;
   virtual error_code isSymbolGlobal(DataRefImpl Symb, bool &Res) const;
+  virtual error_code isSymbolWeak(DataRefImpl Symb, bool &Res) const;
   virtual error_code getSymbolType(DataRefImpl Symb, SymbolRef::Type &Res) const;
 
   virtual error_code getSectionNext(DataRefImpl Sec, SectionRef &Res) const;
@@ -638,6 +639,17 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   const Elf_Sym  *symb = getSymbol(Symb);
 
   Result = symb->getBinding() == ELF::STB_GLOBAL;
+  return object_error::success;
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+error_code ELFObjectFile<target_endianness, is64Bits>
+                        ::isSymbolWeak(DataRefImpl Symb,
+                                       bool &Result) const {
+  validateSymbol(Symb);
+  const Elf_Sym  *symb = getSymbol(Symb);
+
+  Result = symb->getBinding() == ELF::STB_WEAK;
   return object_error::success;
 }
 

@@ -168,6 +168,13 @@ error_code COFFObjectFile::isSymbolGlobal(DataRefImpl Symb,
   return object_error::success;
 }
 
+error_code COFFObjectFile::isSymbolWeak(DataRefImpl Symb,
+                                          bool &Result) const {
+  const coff_symbol *symb = toSymb(Symb);
+  Result = (symb->StorageClass == COFF::IMAGE_SYM_CLASS_WEAK_EXTERNAL);
+  return object_error::success;
+}
+
 error_code COFFObjectFile::getSymbolSize(DataRefImpl Symb,
                                          uint64_t &Result) const {
   // FIXME: Return the correct size. This requires looking at all the symbols

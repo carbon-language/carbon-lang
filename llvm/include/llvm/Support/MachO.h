@@ -240,6 +240,9 @@ namespace llvm {
       NListSectionNoSection     = 0u, // NO_SECT
       NListSectionMaxSection    = 0xffu, // MAX_SECT
 
+      NListDescWeakRef          = 0x40u,
+      NListDescWeakDef          = 0x80u,
+
       // Constant values for the "n_type" field in llvm::MachO::nlist and
       // llvm::MachO::nlist_64 when "(n_type & NlistMaskStab) != 0"
       StabGlobalSymbol          = 0x20u,  // N_GSYM	
