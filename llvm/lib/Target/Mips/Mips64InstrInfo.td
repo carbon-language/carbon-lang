@@ -51,14 +51,6 @@ class shift_rotate_imm64_32<bits<6> func, bits<5> isRotate, string instr_asm,
   shift_rotate_imm<func, isRotate, instr_asm, OpNode, imm32_63, shamt_64,
                    CPU64Regs>;
 
-class LogicR_shift_rotate_reg64<bits<6> func, bits<5> _shamt, string instr_asm,
-                                SDNode OpNode>:
-  FR<0x00, func, (outs CPU64Regs:$dst), (ins CPU64Regs:$c, CPU64Regs:$b),
-     !strconcat(instr_asm, "\t$dst, $b, $c"),
-     [(set CPU64Regs:$dst, (OpNode CPU64Regs:$b, CPU64Regs:$c))], IIAlu> {
-  let shamt = _shamt;
-}
-
 // Mul, Div
 let Defs = [HI64, LO64] in {
   let isCommutable = 1 in
@@ -124,15 +116,15 @@ def DSRA     : shift_rotate_imm64<0x3b, 0x00, "dsra", sra>;
 def DSLL32   : shift_rotate_imm64_32<0x3c, 0x00, "dsll32", shl>;
 def DSRL32   : shift_rotate_imm64_32<0x3e, 0x00, "dsrl32", srl>;
 def DSRA32   : shift_rotate_imm64_32<0x3f, 0x00, "dsra32", sra>;
-def DSLLV    : LogicR_shift_rotate_reg64<0x24, 0x00, "dsllv", shl>;
-def DSRLV    : LogicR_shift_rotate_reg64<0x26, 0x00, "dsrlv", srl>;
-def DSRAV    : LogicR_shift_rotate_reg64<0x27, 0x00, "dsrav", sra>;
+def DSLLV    : shift_rotate_reg<0x24, 0x00, "dsllv", shl, CPU64Regs>;
+def DSRLV    : shift_rotate_reg<0x26, 0x00, "dsrlv", srl, CPU64Regs>;
+def DSRAV    : shift_rotate_reg<0x27, 0x00, "dsrav", sra, CPU64Regs>;
 
 // Rotate Instructions
 let Predicates = [HasMips64r2] in {
   def DROTR    : shift_rotate_imm64<0x3a, 0x01, "drotr", rotr>;
   def DROTR32  : shift_rotate_imm64_32<0x3e, 0x01, "drotr32", rotr>;
-  def DROTRV   : LogicR_shift_rotate_reg64<0x16, 0x01, "drotrv", rotr>;
+  def DROTRV   : shift_rotate_reg<0x16, 0x01, "drotrv", rotr, CPU64Regs>;
 }
 
 /// Load and Store Instructions
