@@ -1743,6 +1743,7 @@ bool ARMFastISel::SelectRet(const Instruction *I) {
     CCValAssign &VA = ValLocs[0];
 
     // Don't bother handling odd stuff for now.
+    // FIXME: Should be able to handle i1, i8, and/or i16 return types.
     if (VA.getLocInfo() != CCValAssign::Full)
       return false;
     // Only handle register returns for now.
@@ -1934,6 +1935,7 @@ bool ARMFastISel::SelectCall(const Instruction *I) {
 
     Type *ArgTy = (*i)->getType();
     MVT ArgVT;
+    // FIXME: Should be able to handle i1, i8, and/or i16 parameters.
     if (!isTypeLegal(ArgTy, ArgVT))
       return false;
     unsigned OriginalAlignment = TD.getABITypeAlignment(ArgTy);
