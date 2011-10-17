@@ -299,13 +299,19 @@ class LogicNOR<bits<6> op, bits<6> func, string instr_asm, RegisterClass RC>:
 }
 
 // Shifts
-class LogicR_shift_rotate_imm<bits<6> func, bits<5> _rs, string instr_asm,
-                              SDNode OpNode>:
-  FR<0x00, func, (outs CPURegs:$rd), (ins CPURegs:$rt, shamt:$shamt),
+class shift_rotate_imm<bits<6> func, bits<5> isRotate, string instr_asm,
+                       SDNode OpNode, PatFrag PF, Operand ImmOpnd,
+                       RegisterClass RC>:
+  FR<0x00, func, (outs RC:$rd), (ins RC:$rt, ImmOpnd:$shamt),
      !strconcat(instr_asm, "\t$rd, $rt, $shamt"),
-     [(set CPURegs:$rd, (OpNode CPURegs:$rt, (i32 immZExt5:$shamt)))], IIAlu> {
-  let rs = _rs;
+     [(set RC:$rd, (OpNode RC:$rt, PF:$shamt))], IIAlu> {
+  let rs = isRotate;
 }
+
+// 32-bit shift instructions.
+class shift_rotate_imm32<bits<6> func, bits<5> isRotate, string instr_asm,
+                         SDNode OpNode>:
+  shift_rotate_imm<func, isRotate, instr_asm, OpNode, immZExt5, shamt, CPURegs>;
 
 class LogicR_shift_rotate_reg<bits<6> func, bits<5> isRotate, string instr_asm,
                               SDNode OpNode>:
@@ -650,16 +656,16 @@ def XOR     : ArithLogicR<0x00, 0x26, "xor", xor, IIAlu, CPURegs, 1>;
 def NOR     : LogicNOR<0x00, 0x27, "nor", CPURegs>;
 
 /// Shift Instructions
-def SLL     : LogicR_shift_rotate_imm<0x00, 0x00, "sll", shl>;
-def SRL     : LogicR_shift_rotate_imm<0x02, 0x00, "srl", srl>;
-def SRA     : LogicR_shift_rotate_imm<0x03, 0x00, "sra", sra>;
+def SLL     : shift_rotate_imm32<0x00, 0x00, "sll", shl>;
+def SRL     : shift_rotate_imm32<0x02, 0x00, "srl", srl>;
+def SRA     : shift_rotate_imm32<0x03, 0x00, "sra", sra>;
 def SLLV    : LogicR_shift_rotate_reg<0x04, 0x00, "sllv", shl>;
 def SRLV    : LogicR_shift_rotate_reg<0x06, 0x00, "srlv", srl>;
 def SRAV    : LogicR_shift_rotate_reg<0x07, 0x00, "srav", sra>;
 
 // Rotate Instructions
 let Predicates = [HasMips32r2] in {
-    def ROTR    : LogicR_shift_rotate_imm<0x02, 0x01, "rotr", rotr>;
+    def ROTR    : shift_rotate_imm32<0x02, 0x01, "rotr", rotr>;
     def ROTRV   : LogicR_shift_rotate_reg<0x06, 0x01, "rotrv", rotr>;
 }
 
