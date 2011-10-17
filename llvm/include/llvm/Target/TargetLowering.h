@@ -1138,26 +1138,28 @@ protected:
     JumpBufAlignment = Align;
   }
 
-  /// setMinFunctionAlignment - Set the target's minimum function alignment.
+  /// setMinFunctionAlignment - Set the target's minimum function alignment (in
+  /// log2(bytes))
   void setMinFunctionAlignment(unsigned Align) {
     MinFunctionAlignment = Align;
   }
 
   /// setPrefFunctionAlignment - Set the target's preferred function alignment.
   /// This should be set if there is a performance benefit to
-  /// higher-than-minimum alignment
+  /// higher-than-minimum alignment (in log2(bytes))
   void setPrefFunctionAlignment(unsigned Align) {
     PrefFunctionAlignment = Align;
   }
 
   /// setPrefLoopAlignment - Set the target's preferred loop alignment. Default
   /// alignment is zero, it means the target does not care about loop alignment.
+  /// The alignment is specified in log2(bytes).
   void setPrefLoopAlignment(unsigned Align) {
     PrefLoopAlignment = Align;
   }
 
   /// setMinStackArgumentAlignment - Set the minimum stack alignment of an
-  /// argument.
+  /// argument (in log2(bytes)).
   void setMinStackArgumentAlignment(unsigned Align) {
     MinStackArgumentAlignment = Align;
   }
