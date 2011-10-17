@@ -1196,6 +1196,7 @@ bool MachineLICM::EliminateCSE(MachineInstr *MI,
 
     // Replace virtual registers defined by MI by their counterparts defined
     // by Dup.
+    SmallVector<unsigned, 2> Defs;
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       const MachineOperand &MO = MI->getOperand(i);
 
@@ -1206,11 +1207,33 @@ bool MachineLICM::EliminateCSE(MachineInstr *MI,
              "Instructions with different phys regs are not identical!");
 
       if (MO.isReg() && MO.isDef() &&
-          !TargetRegisterInfo::isPhysicalRegister(MO.getReg())) {
-        MRI->replaceRegWith(MO.getReg(), Dup->getOperand(i).getReg());
-        MRI->clearKillFlags(Dup->getOperand(i).getReg());
+          !TargetRegisterInfo::isPhysicalRegister(MO.getReg()))
+        Defs.push_back(i);
+    }
+
+    SmallVector<const TargetRegisterClass*, 2> OrigRCs;
+    for (unsigned i = 0, e = Defs.size(); i != e; ++i) {
+      unsigned Idx = Defs[i];
+      unsigned Reg = MI->getOperand(Idx).getReg();
+      unsigned DupReg = Dup->getOperand(Idx).getReg();
+      OrigRCs.push_back(MRI->getRegClass(DupReg));
+
+      if (!MRI->constrainRegClass(DupReg, MRI->getRegClass(Reg))) {
+        // Restore old RCs if more than one defs.
+        for (unsigned j = 0; j != i; ++j)
+          MRI->setRegClass(Dup->getOperand(Defs[j]).getReg(), OrigRCs[j]);
+        return false;
       }
     }
+
+    for (unsigned i = 0, e = Defs.size(); i != e; ++i) {
+      unsigned Idx = Defs[i];
+      unsigned Reg = MI->getOperand(Idx).getReg();
+      unsigned DupReg = Dup->getOperand(Idx).getReg();
+      MRI->replaceRegWith(Reg, DupReg);
+      MRI->clearKillFlags(DupReg);
+    }
+
     MI->eraseFromParent();
     ++NumCSEed;
     return true;
