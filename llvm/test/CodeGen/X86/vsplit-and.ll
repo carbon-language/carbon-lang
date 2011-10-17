@@ -1,8 +1,9 @@
-; RUN: llc < %s -mtriple=x86_64-linux -march=x86 |  FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-linux |  FileCheck %s
 
-
-define void @t(<2 x i64>* %dst, <2 x i64> %src1, <2 x i64> %src2) nounwind readonly {
-; CHECK: pandn
+define void @t0(<2 x i64>* %dst, <2 x i64> %src1, <2 x i64> %src2) nounwind readonly {
+; CHECK: t0
+; CHECK: pand
+; CHECK: ret
   %cmp1 = icmp ne <2 x i64> %src1, zeroinitializer
   %cmp2 = icmp ne <2 x i64> %src2, zeroinitializer
   %t1 = and <2 x i1> %cmp1, %cmp2
@@ -12,7 +13,9 @@ define void @t(<2 x i64>* %dst, <2 x i64> %src1, <2 x i64> %src2) nounwind reado
 }
 
 define void @t2(<3 x i64>* %dst, <3 x i64> %src1, <3 x i64> %src2) nounwind readonly {
-; CHECK-NOT: pandn
+; CHECK: t2
+; CHECK-NOT: pand
+; CHECK: ret
   %cmp1 = icmp ne <3 x i64> %src1, zeroinitializer
   %cmp2 = icmp ne <3 x i64> %src2, zeroinitializer
   %t1 = and <3 x i1> %cmp1, %cmp2
