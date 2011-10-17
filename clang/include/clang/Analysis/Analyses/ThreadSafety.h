@@ -67,7 +67,7 @@ enum LockErrorKind {
 class ThreadSafetyHandler {
 public:
   typedef llvm::StringRef Name;
-  virtual ~ThreadSafetyHandler() = 0;
+  virtual ~ThreadSafetyHandler();
 
   /// Warn about lock expressions which fail to resolve to lockable objects.
   /// \param Loc -- the SourceLocation of the unresolved expression.
