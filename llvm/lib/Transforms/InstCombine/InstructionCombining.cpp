@@ -1414,7 +1414,8 @@ Instruction *InstCombiner::visitExtractValueInst(ExtractValueInst &EV) {
 enum Personality_Type {
   Unknown_Personality,
   GNU_Ada_Personality,
-  GNU_CXX_Personality
+  GNU_CXX_Personality,
+  GNU_ObjC_Personality
 };
 
 /// RecognizePersonality - See if the given exception handling personality
@@ -1426,7 +1427,8 @@ static Personality_Type RecognizePersonality(Value *Pers) {
     return Unknown_Personality;
   return StringSwitch<Personality_Type>(F->getName())
     .Case("__gnat_eh_personality", GNU_Ada_Personality)
-    .Case("__gxx_personality_v0", GNU_CXX_Personality)
+    .Case("__gxx_personality_v0",  GNU_CXX_Personality)
+    .Case("__objc_personality_v0", GNU_ObjC_Personality)
     .Default(Unknown_Personality);
 }
 
@@ -1440,6 +1442,7 @@ static bool isCatchAll(Personality_Type Personality, Constant *TypeInfo) {
     // match foreign exceptions (or didn't, before gcc-4.7).
     return false;
   case GNU_CXX_Personality:
+  case GNU_ObjC_Personality:
     return TypeInfo->isNullValue();
   }
   llvm_unreachable("Unknown personality!");
