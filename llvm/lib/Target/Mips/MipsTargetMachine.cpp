@@ -41,10 +41,10 @@ MipsTargetMachine(const Target &T, StringRef TT,
   Subtarget(TT, CPU, FS, isLittle),
   DataLayout(isLittle ?
              (Subtarget.isABI_N64() ?
-              "e-p:64:64:64-i8:8:32-i16:16:32-i64:64:64-n32" :
+              "e-p:64:64:64-i8:8:32-i16:16:32-i64:64:64-f128:128:128-n32" :
               "e-p:32:32:32-i8:8:32-i16:16:32-i64:64:64-n32") :
              (Subtarget.isABI_N64() ?
-              "E-p:64:64:64-i8:8:32-i16:16:32-i64:64:64-n32" :
+              "E-p:64:64:64-i8:8:32-i16:16:32-i64:64:64-f128:128:128-n32" :
               "E-p:32:32:32-i8:8:32-i16:16:32-i64:64:64-n32")),
   InstrInfo(*this),
   FrameLowering(Subtarget),
