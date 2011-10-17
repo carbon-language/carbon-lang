@@ -1,5 +1,5 @@
-; RUN: llc < %s -o - -mtriple=x86_64-linux | FileCheck %s
-; RUN: llc < %s -o - -mtriple=x86_64-win32 | FileCheck %s -check-prefix=WIN64
+; RUN: llc < %s -o - -mtriple=x86_64-linux -mcpu=corei7 | FileCheck %s
+; RUN: llc < %s -o - -mtriple=x86_64-win32 -mcpu=corei7 | FileCheck %s -check-prefix=WIN64
 ; PR4891
 
 ; Both loads should happen before either store.
