@@ -7,6 +7,7 @@ add_llvm_library(LLVMScalarOpts
   DCE.cpp
   DeadStoreElimination.cpp
   EarlyCSE.cpp
+  GlobalMerge.cpp
   GVN.cpp
   IndVarSimplify.cpp
   JumpThreading.cpp

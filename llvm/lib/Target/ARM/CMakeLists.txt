@@ -26,7 +26,6 @@ add_llvm_target(ARMCodeGen
   ARMExpandPseudoInsts.cpp
   ARMFastISel.cpp
   ARMFrameLowering.cpp
-  ARMGlobalMerge.cpp
   ARMHazardRecognizer.cpp
   ARMISelDAGToDAG.cpp
   ARMISelLowering.cpp
