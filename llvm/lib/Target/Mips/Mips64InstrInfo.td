@@ -28,6 +28,9 @@ def Subtract32 : SDNodeXForm<imm, [{
   return getI32Imm((unsigned)N->getZExtValue() - 32);
 }]>;
 
+// shamt field must fit in 5 bits.
+def immZExt5_64 : ImmLeaf<i64, [{return Imm == (Imm & 0x1f);}]>;
+
 // imm32_63 predicate - True if imm is in range [32, 63].
 def imm32_63 : ImmLeaf<i64,
                        [{return (int32_t)Imm >= 32 && (int32_t)Imm < 64;}],
@@ -113,9 +116,9 @@ def XOR64    : ArithLogicR<0x00, 0x26, "xor", xor, IIAlu, CPU64Regs, 1>;
 def NOR64    : LogicNOR<0x00, 0x27, "nor", CPU64Regs>;
 
 /// Shift Instructions
-def DSLL     : LogicR_shift_rotate_imm64<0x38, 0x00, "dsll", shl, immZExt5>;
-def DSRL     : LogicR_shift_rotate_imm64<0x3a, 0x00, "dsrl", srl, immZExt5>;
-def DSRA     : LogicR_shift_rotate_imm64<0x3b, 0x00, "dsra", sra, immZExt5>;
+def DSLL     : LogicR_shift_rotate_imm64<0x38, 0x00, "dsll", shl, immZExt5_64>;
+def DSRL     : LogicR_shift_rotate_imm64<0x3a, 0x00, "dsrl", srl, immZExt5_64>;
+def DSRA     : LogicR_shift_rotate_imm64<0x3b, 0x00, "dsra", sra, immZExt5_64>;
 def DSLL32   : LogicR_shift_rotate_imm64<0x3c, 0x00, "dsll32", shl, imm32_63>;
 def DSRL32   : LogicR_shift_rotate_imm64<0x3e, 0x00, "dsrl32", srl, imm32_63>;
 def DSRA32   : LogicR_shift_rotate_imm64<0x3f, 0x00, "dsra32", sra, imm32_63>;
@@ -125,7 +128,8 @@ def DSRAV    : LogicR_shift_rotate_reg64<0x27, 0x00, "dsrav", sra>;
 
 // Rotate Instructions
 let Predicates = [HasMips64r2] in {
-  def DROTR    : LogicR_shift_rotate_imm64<0x3a, 0x01, "drotr", rotr, immZExt5>;
+  def DROTR    : LogicR_shift_rotate_imm64<0x3a, 0x01, "drotr", rotr,
+                                           immZExt5_64>;
   def DROTR32  : LogicR_shift_rotate_imm64<0x3e, 0x01, "drotr32", rotr,
                                            imm32_63>;
   def DROTRV   : LogicR_shift_rotate_reg64<0x16, 0x01, "drotrv", rotr>;

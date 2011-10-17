@@ -191,9 +191,7 @@ def immZExt16  : PatLeaf<(imm), [{
 }], LO16>;
 
 // shamt field must fit in 5 bits.
-def immZExt5 : PatLeaf<(imm), [{
-  return N->getZExtValue() == ((N->getZExtValue()) & 0x1f) ;
-}]>;
+def immZExt5 : ImmLeaf<i32, [{return Imm == (Imm & 0x1f);}]>;
 
 // Mips Address Mode! SDNode frameindex could possibily be a match
 // since load and store instructions from stack used it.
