@@ -1728,7 +1728,7 @@ void CastOperation::CheckCXXCStyleCast(bool FunctionalStyle) {
     checkNonOverloadPlaceholders();
     if (SrcExpr.isInvalid())
       return;
-  }  
+  }
 
   // C++ 5.2.9p4: Any expression can be explicitly converted to type "cv void".
   // This test is outside everything else because it's the only case where

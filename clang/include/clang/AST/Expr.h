@@ -390,6 +390,18 @@ public:
 
   /// \brief Returns whether this expression refers to a vector element.
   bool refersToVectorElement() const;
+
+  /// \brief Returns whether this expression has a placeholder type.
+  bool hasPlaceholderType() const {
+    return getType()->isPlaceholderType();
+  }
+
+  /// \brief Returns whether this expression has a specific placeholder type.
+  bool hasPlaceholderType(BuiltinType::Kind K) const {
+    if (const BuiltinType *BT = dyn_cast<BuiltinType>(getType()))
+      return BT->getKind() == K;
+    return false;
+  }
   
   /// isKnownToHaveBooleanValue - Return true if this is an integer expression
   /// that is known to return 0 or 1.  This happens for _Bool/bool expressions
