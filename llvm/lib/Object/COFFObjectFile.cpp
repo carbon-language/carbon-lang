@@ -98,21 +98,7 @@ error_code COFFObjectFile::getSymbolNext(DataRefImpl Symb,
  error_code COFFObjectFile::getSymbolName(DataRefImpl Symb,
                                           StringRef &Result) const {
   const coff_symbol *symb = toSymb(Symb);
-  // Check for string table entry. First 4 bytes are 0.
-  if (symb->Name.Offset.Zeroes == 0) {
-    uint32_t Offset = symb->Name.Offset.Offset;
-    if (error_code ec = getString(Offset, Result))
-      return ec;
-    return object_error::success;
-  }
-
-  if (symb->Name.ShortName[7] == 0)
-    // Null terminated, let ::strlen figure out the length.
-    Result = StringRef(symb->Name.ShortName);
-  else
-    // Not null terminated, use all 8 bytes.
-    Result = StringRef(symb->Name.ShortName, 8);
-  return object_error::success;
+  return getSymbolName(symb, Result);
 }
 
 error_code COFFObjectFile::getSymbolOffset(DataRefImpl Symb,
@@ -525,6 +511,11 @@ unsigned COFFObjectFile::getArch() const {
   }
 }
 
+error_code COFFObjectFile::getHeader(const coff_file_header *&Res) const {
+  Res = Header;
+  return object_error::success;
+}
+
 error_code COFFObjectFile::getSection(int32_t index,
                                       const coff_section *&Result) const {
   // Check for special index values.
@@ -553,10 +544,29 @@ error_code COFFObjectFile::getString(uint32_t offset,
 
 error_code COFFObjectFile::getSymbol(uint32_t index,
                                      const coff_symbol *&Result) const {
-  if (index > 0 && index < Header->NumberOfSymbols)
+  if (index >= 0 && index < Header->NumberOfSymbols)
     Result = SymbolTable + index;
   else
     return object_error::parse_failed;
+  return object_error::success;
+}
+
+error_code COFFObjectFile::getSymbolName(const coff_symbol *symbol,
+                                         StringRef &Res) const {
+  // Check for string table entry. First 4 bytes are 0.
+  if (symbol->Name.Offset.Zeroes == 0) {
+    uint32_t Offset = symbol->Name.Offset.Offset;
+    if (error_code ec = getString(Offset, Res))
+      return ec;
+    return object_error::success;
+  }
+
+  if (symbol->Name.ShortName[7] == 0)
+    // Null terminated, let ::strlen figure out the length.
+    Res = StringRef(symbol->Name.ShortName);
+  else
+    // Not null terminated, use all 8 bytes.
+    Res = StringRef(symbol->Name.ShortName, 8);
   return object_error::success;
 }
 

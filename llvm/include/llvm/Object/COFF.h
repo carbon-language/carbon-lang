@@ -73,6 +73,16 @@ struct coff_relocation {
   support::ulittle16_t Type;
 };
 
+struct coff_aux_section_definition {
+  support::ulittle32_t Length;
+  support::ulittle16_t NumberOfRelocations;
+  support::ulittle16_t NumberOfLinenumbers;
+  support::ulittle32_t CheckSum;
+  support::ulittle16_t Number;
+  support::ulittle8_t Selection;
+  char Unused[3];
+};
+
 class COFFObjectFile : public ObjectFile {
 private:
   const coff_file_header *Header;
@@ -81,11 +91,7 @@ private:
   const char             *StringTable;
         uint32_t          StringTableSize;
 
-        error_code        getSection(int32_t index,
-                                     const coff_section *&Res) const;
         error_code        getString(uint32_t offset, StringRef &Res) const;
-        error_code        getSymbol(uint32_t index,
-                                    const coff_symbol *&Res) const;
 
   const coff_symbol      *toSymb(DataRefImpl Symb) const;
   const coff_section     *toSec(DataRefImpl Sec) const;
@@ -142,6 +148,17 @@ public:
   virtual StringRef getFileFormatName() const;
   virtual unsigned getArch() const;
 
+  error_code getHeader(const coff_file_header *&Res) const;
+  error_code getSection(int32_t index, const coff_section *&Res) const;
+  error_code getSymbol(uint32_t index, const coff_symbol *&Res) const;
+  template <typename T>
+  error_code getAuxSymbol(uint32_t index, const T *&Res) const {
+    const coff_symbol *s;
+    error_code ec = getSymbol(index, s);
+    Res = reinterpret_cast<const T*>(s);
+    return ec;
+  }
+  error_code getSymbolName(const coff_symbol *symbol, StringRef &Res) const;
 
   static inline bool classof(const Binary *v) {
     return v->getType() == isCOFF;
