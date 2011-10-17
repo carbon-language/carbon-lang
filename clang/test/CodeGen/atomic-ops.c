@@ -75,3 +75,9 @@ X fs(_Atomic(X) *c) {
   // CHECK: atomicrmw xchg i32*
   return __atomic_exchange(c, (X){2}, memory_order_seq_cst);
 }
+
+int lock_free() {
+  // CHECK: @lock_free
+  // CHECK: ret i32 1
+  return __atomic_is_lock_free(sizeof(_Atomic(int)));
+}

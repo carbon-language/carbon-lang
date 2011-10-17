@@ -1344,6 +1344,50 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
     }
       
     return Error(E->getLocStart(), diag::note_invalid_subexpr_in_ice, E);
+
+  case Builtin::BI__atomic_is_lock_free: {
+    APSInt SizeVal;
+    if (!EvaluateInteger(E->getArg(0), SizeVal, Info))
+      return false;
+
+    // For __atomic_is_lock_free(sizeof(_Atomic(T))), if the size is a power
+    // of two less than the maximum inline atomic width, we know it is
+    // lock-free.  If the size isn't a power of two, or greater than the
+    // maximum alignment where we promote atomics, we know it is not lock-free
+    // (at least not in the sense of atomic_is_lock_free).  Otherwise,
+    // the answer can only be determined at runtime; for example, 16-byte
+    // atomics have lock-free implementations on some, but not all,
+    // x86-64 processors.
+
+    // Check power-of-two.
+    CharUnits Size = CharUnits::fromQuantity(SizeVal.getZExtValue());
+    if (!Size.isPowerOfTwo())
+#if 0
+      // FIXME: Suppress this folding until the ABI for the promotion width
+      // settles.
+      return Success(0, E);
+#else
+      return Error(E->getLocStart(), diag::note_invalid_subexpr_in_ice, E);
+#endif
+
+#if 0
+    // Check against promotion width.
+    // FIXME: Suppress this folding until the ABI for the promotion width
+    // settles.
+    unsigned PromoteWidthBits =
+        Info.Ctx.getTargetInfo().getMaxAtomicPromoteWidth();
+    if (Size > Info.Ctx.toCharUnitsFromBits(PromoteWidthBits))
+      return Success(0, E);
+#endif
+
+    // Check against inlining width.
+    unsigned InlineWidthBits =
+        Info.Ctx.getTargetInfo().getMaxAtomicInlineWidth();
+    if (Size <= Info.Ctx.toCharUnitsFromBits(InlineWidthBits))
+      return Success(1, E);
+
+    return Error(E->getLocStart(), diag::note_invalid_subexpr_in_ice, E);
+  }
   }
 }
 
