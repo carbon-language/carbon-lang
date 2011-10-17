@@ -1975,6 +1975,15 @@ static bool EmitMnemonicAliases(raw_ostream &OS, const AsmMatcherInfo &Info) {
   return true;
 }
 
+static const char *getMinimalTypeForRange(uint64_t Range) {
+  assert(Range < 0xFFFFFFFFULL && "Enum too large");
+  if (Range > 0xFFFF)
+    return "uint32_t";
+  if (Range > 0xFF)
+    return "uint16_t";
+  return "uint8_t";
+}
+
 static void EmitCustomOperandParsing(raw_ostream &OS, CodeGenTarget &Target,
                               const AsmMatcherInfo &Info, StringRef ClassName) {
   // Emit the static custom operand parsing table;
@@ -2262,9 +2271,12 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "  struct MatchEntry {\n";
   OS << "    unsigned Opcode;\n";
   OS << "    const char *Mnemonic;\n";
-  OS << "    ConversionKind ConvertFn;\n";
-  OS << "    MatchClassKind Classes[" << MaxNumOperands << "];\n";
-  OS << "    unsigned RequiredFeatures;\n";
+  OS << "    " << getMinimalTypeForRange(Info.Matchables.size())
+               << " ConvertFn;\n";
+  OS << "    " << getMinimalTypeForRange(Info.Classes.size())
+               << " Classes[" << MaxNumOperands << "];\n";
+  OS << "    " << getMinimalTypeForRange(1ULL << Info.SubtargetFeatures.size())
+               << " RequiredFeatures;\n";
   OS << "  };\n\n";
 
   OS << "  // Predicate for searching for an opcode.\n";
@@ -2384,7 +2396,8 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "        OperandsValid = (it->Classes[i] == " <<"InvalidMatchClass);\n";
   OS << "        break;\n";
   OS << "      }\n";
-  OS << "      if (ValidateOperandClass(Operands[i+1], it->Classes[i]))\n";
+  OS << "      if (ValidateOperandClass(Operands[i+1], "
+                                       "(MatchClassKind)it->Classes[i]))\n";
   OS << "        continue;\n";
   OS << "      // If this operand is broken for all of the instances of this\n";
   OS << "      // mnemonic, keep track of it so we can report loc info.\n";
