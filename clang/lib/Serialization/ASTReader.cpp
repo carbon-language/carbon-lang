@@ -1400,7 +1400,8 @@ HeaderFileInfoTrait::ReadData(const internal_key_type, const unsigned char *d,
   HFI.Resolved = (Flags >> 1) & 0x01;
   HFI.IndexHeaderMapHeader = Flags & 0x01;
   HFI.NumIncludes = ReadUnalignedLE16(d);
-  HFI.ControllingMacroID = Reader.getGlobalDeclID(M, ReadUnalignedLE32(d));
+  HFI.ControllingMacroID = Reader.getGlobalIdentifierID(M, 
+                                                        ReadUnalignedLE32(d));
   if (unsigned FrameworkOffset = ReadUnalignedLE32(d)) {
     // The framework offset is 1 greater than the actual offset, 
     // since 0 is used as an indicator for "no framework name".
