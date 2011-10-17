@@ -166,9 +166,11 @@ public:
   }
 
   enum Type {
-    ST_Function,
     ST_Data,
+    ST_Debug,
     ST_External,    // Defined in another object file
+    ST_File,
+    ST_Function,
     ST_Other
   };
 

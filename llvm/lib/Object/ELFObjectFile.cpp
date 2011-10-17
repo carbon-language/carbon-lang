@@ -621,6 +621,12 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   }
 
   switch (symb->getType()) {
+  case ELF::STT_SECTION:
+    Result = SymbolRef::ST_Debug;
+    break;
+  case ELF::STT_FILE:
+    Result = SymbolRef::ST_File;
+    break;
   case ELF::STT_FUNC:
     Result = SymbolRef::ST_Function;
     break;
