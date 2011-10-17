@@ -6760,19 +6760,19 @@ QualType Sema::CheckVectorCompareOperands(ExprResult &LHS, ExprResult &RHS,
     CheckFloatComparison(Loc, LHS.get(), RHS.get());
   }
 
-  // Return the type for the comparison, which is the same as vector type for
-  // integer vectors, or an integer type of identical size and number of
-  // elements for floating point vectors.
-  if (LHSType->hasIntegerRepresentation())
-    return LHSType;
-
+  // Return a signed type that is of identical size and number of elements.
+  // For floating point vectors, return an integer type of identical size 
+  // and number of elements.
   const VectorType *VTy = LHSType->getAs<VectorType>();
   unsigned TypeSize = Context.getTypeSize(VTy->getElementType());
-  if (TypeSize == Context.getTypeSize(Context.IntTy))
+  if (TypeSize == Context.getTypeSize(Context.CharTy))
+    return Context.getExtVectorType(Context.CharTy, VTy->getNumElements());
+  else if (TypeSize == Context.getTypeSize(Context.ShortTy))
+    return Context.getExtVectorType(Context.ShortTy, VTy->getNumElements());
+  else if (TypeSize == Context.getTypeSize(Context.IntTy))
     return Context.getExtVectorType(Context.IntTy, VTy->getNumElements());
-  if (TypeSize == Context.getTypeSize(Context.LongTy))
+  else if (TypeSize == Context.getTypeSize(Context.LongTy))
     return Context.getExtVectorType(Context.LongTy, VTy->getNumElements());
-
   assert(TypeSize == Context.getTypeSize(Context.LongLongTy) &&
          "Unhandled vector element size in vector compare");
   return Context.getExtVectorType(Context.LongLongTy, VTy->getNumElements());
