@@ -350,7 +350,6 @@ SDValue VectorLegalizer::ExpandStore(SDValue Op) {
 
   // Cast floats into integers
   unsigned ScalarSize = MemSclVT.getSizeInBits();
-  EVT EltVT = EVT::getIntegerVT(*DAG.getContext(), ScalarSize);
 
   // Round odd types to the next pow of two.
   if (!isPowerOf2_32(ScalarSize))
