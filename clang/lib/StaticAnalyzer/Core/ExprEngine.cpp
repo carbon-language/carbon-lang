@@ -949,7 +949,7 @@ void ExprEngine::processBranch(const Stmt *Condition, const Stmt *Term,
 
   // Check for NULL conditions; e.g. "for(;;)"
   if (!Condition) {
-    BranchNodeBuilder NullCondBldr(Pred, BldCtx, DstT, DstF);
+    BranchNodeBuilder NullCondBldr(BldCtx, DstT, DstF);
     NullCondBldr.markInfeasible(false);
     NullCondBldr.generateNode(Pred->getState(), true, Pred);
     Engine.enqueue(NullCondBldr);
@@ -960,7 +960,7 @@ void ExprEngine::processBranch(const Stmt *Condition, const Stmt *Term,
                                 Condition->getLocStart(),
                                 "Error evaluating branch");
 
-  NodeBuilder CheckerBldr(Pred, BldCtx);
+  NodeBuilder CheckerBldr(BldCtx);
   getCheckerManager().runCheckersForBranchCondition(Condition, CheckerBldr,
                                                     Pred, *this);
 
@@ -971,7 +971,7 @@ void ExprEngine::processBranch(const Stmt *Condition, const Stmt *Term,
     if (PredI->isSink())
       continue;
 
-    BranchNodeBuilder builder(PredI, BldCtx, DstT, DstF);
+    BranchNodeBuilder builder(BldCtx, DstT, DstF);
     const ProgramState *PrevState = Pred->getState();
     SVal X = PrevState->getSVal(Condition);
 

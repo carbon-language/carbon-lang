@@ -314,7 +314,7 @@ void CoreEngine::HandleBlockEntrance(const BlockEntrance &L,
 
   // Process the entrance of the block.
   if (CFGElement E = L.getFirstElement()) {
-    NodeBuilderContext Ctx(*this, L.getBlock());
+    NodeBuilderContext Ctx(*this, L.getBlock(), Pred);
     StmtNodeBuilder Builder(Pred, 0, Ctx);
     SubEng.processCFGElement(E, Builder, Pred);
   }
@@ -418,7 +418,7 @@ void CoreEngine::HandleBlockExit(const CFGBlock * B, ExplodedNode *Pred) {
 void CoreEngine::HandleBranch(const Stmt *Cond, const Stmt *Term, 
                                 const CFGBlock * B, ExplodedNode *Pred) {
   assert(B->succ_size() == 2);
-  NodeBuilderContext Ctx(*this, B);
+  NodeBuilderContext Ctx(*this, B, Pred);
   SubEng.processBranch(Cond, Term, Ctx, Pred,
                        *(B->succ_begin()), *(B->succ_begin()+1));
 }
@@ -431,7 +431,7 @@ void CoreEngine::HandlePostStmt(const CFGBlock *B, unsigned StmtIdx,
   if (StmtIdx == B->size())
     HandleBlockExit(B, Pred);
   else {
-    NodeBuilderContext Ctx(*this, B);
+    NodeBuilderContext Ctx(*this, B, Pred);
     StmtNodeBuilder Builder(Pred, StmtIdx, Ctx);
     SubEng.processCFGElement((*B)[StmtIdx], Builder, Pred);
   }
@@ -508,7 +508,7 @@ ExplodedNode* NodeBuilder::generateNodeImpl(const ProgramPoint &Loc,
 
 StmtNodeBuilder::StmtNodeBuilder(ExplodedNode *N, unsigned idx,
                                  NodeBuilderContext &Ctx)
-  : NodeBuilder(N, Ctx), Idx(idx),
+  : NodeBuilder(Ctx), Idx(idx),
     PurgingDeadSymbols(false), BuildSinks(false), hasGeneratedNode(false),
     PointKind(ProgramPoint::PostStmtKind), Tag(0) {
   Deferred.insert(N);
@@ -573,8 +573,6 @@ ExplodedNode *BranchNodeBuilder::generateNode(const ProgramState *State,
   if (!isFeasible(branch))
     return NULL;
 
-  if (!NodePred)
-    NodePred = BuilderPred;
   ProgramPoint Loc = BlockEdge(C.Block, branch ? DstT:DstF,
                                NodePred->getLocationContext());
   ExplodedNode *Succ = generateNodeImpl(Loc, State, NodePred);

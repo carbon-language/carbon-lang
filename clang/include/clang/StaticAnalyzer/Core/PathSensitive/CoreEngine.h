@@ -171,8 +171,9 @@ public:
 struct NodeBuilderContext {
   CoreEngine &Eng;
   const CFGBlock *Block;
-  NodeBuilderContext(CoreEngine &E, const CFGBlock *B)
-    : Eng(E), Block(B) { assert(B); }
+  ExplodedNode *ContextPred;
+  NodeBuilderContext(CoreEngine &E, const CFGBlock *B, ExplodedNode *N)
+    : Eng(E), Block(B), ContextPred(N) { assert(B); assert(!N->isSink()); }
 };
 
 /// This is the simplest builder which generates nodes in the ExplodedGraph.
@@ -219,17 +220,15 @@ protected:
                                  bool MarkAsSink = false);
 
 public:
-  NodeBuilder(ExplodedNode *N, NodeBuilderContext &Ctx, bool F = true)
-    : BuilderPred(N), C(Ctx), Finalized(F), HasGeneratedNodes(false) {
-    assert(!N->isSink());
-    Deferred.insert(N);
+  NodeBuilder(NodeBuilderContext &Ctx, bool F = true)
+    : C(Ctx), Finalized(F), HasGeneratedNodes(false) {
+    Deferred.insert(C.ContextPred);
   }
 
   /// Create a new builder using the parent builder's context.
-  NodeBuilder(ExplodedNode *N, const NodeBuilder &ParentBldr, bool F = true)
-    : BuilderPred(N), C(ParentBldr.C), Finalized(F), HasGeneratedNodes(false) {
-    assert(!N->isSink());
-    Deferred.insert(N);
+  NodeBuilder(const NodeBuilder &ParentBldr, bool F = true)
+    : C(ParentBldr.C), Finalized(F), HasGeneratedNodes(false) {
+    Deferred.insert(C.ContextPred);
   }
 
   virtual ~NodeBuilder() {}
@@ -269,8 +268,8 @@ public:
   /// visited on the exploded graph path.
   unsigned getCurrentBlockCount() const {
     return getBlockCounter().getNumVisited(
-                      BuilderPred->getLocationContext()->getCurrentStackFrame(),
-                      C.Block->getBlockID());
+                    C.ContextPred->getLocationContext()->getCurrentStackFrame(),
+                    C.Block->getBlockID());
   }
 };
 
@@ -363,7 +362,7 @@ public:
   }
 
   void importNodesFromBuilder(const NodeBuilder &NB) {
-    ExplodedNode *NBPred = const_cast<ExplodedNode*>(NB.BuilderPred);
+    ExplodedNode *NBPred = const_cast<ExplodedNode*>(NB.C.ContextPred);
     if (NB.hasGeneratedNodes()) {
       Deferred.erase(NBPred);
       Deferred.insert(NB.Deferred.begin(), NB.Deferred.end());
@@ -379,19 +378,19 @@ class BranchNodeBuilder: public NodeBuilder {
   bool InFeasibleFalse;
 
 public:
-  BranchNodeBuilder(ExplodedNode *Pred, NodeBuilderContext &C,
+  BranchNodeBuilder(NodeBuilderContext &C,
                     const CFGBlock *dstT, const CFGBlock *dstF)
-  : NodeBuilder(Pred, C), DstT(dstT), DstF(dstF),
+  : NodeBuilder(C), DstT(dstT), DstF(dstF),
     InFeasibleTrue(!DstT), InFeasibleFalse(!DstF) {}
 
   /// Create a new builder using the parent builder's context.
-  BranchNodeBuilder(ExplodedNode *Pred, BranchNodeBuilder &ParentBldr)
-  : NodeBuilder(Pred, ParentBldr), DstT(ParentBldr.DstT),
+  BranchNodeBuilder(BranchNodeBuilder &ParentBldr)
+  : NodeBuilder(ParentBldr), DstT(ParentBldr.DstT),
     DstF(ParentBldr.DstF),
     InFeasibleTrue(!DstT), InFeasibleFalse(!DstF) {}
 
   ExplodedNode *generateNode(const ProgramState *State, bool branch,
-                             ExplodedNode *Pred = 0);
+                             ExplodedNode *Pred);
 
   const CFGBlock *getTargetBlock(bool branch) const {
     return branch ? DstT : DstF;
