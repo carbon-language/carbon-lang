@@ -5760,29 +5760,34 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
                    .addFrameIndex(FI)
                    .addImm(4)
                    .addMemOperand(FIMMOLd));
-    AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::t2CMPri))
-                   .addReg(NewVReg1)
+
+    unsigned NewVReg2 = MRI->createVirtualRegister(TRC);
+    AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::t2MOVi16), NewVReg2)
                    .addImm(LPadList.size()));
+
+    AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::t2CMPrr))
+                   .addReg(NewVReg1)
+                   .addReg(NewVReg2));
     BuildMI(DispatchBB, dl, TII->get(ARM::t2Bcc))
       .addMBB(TrapBB)
       .addImm(ARMCC::HI)
       .addReg(ARM::CPSR);
 
-    unsigned NewVReg2 = MRI->createVirtualRegister(TRC);
-    AddDefaultPred(BuildMI(DispContBB, dl, TII->get(ARM::t2LEApcrelJT),NewVReg2)
+    unsigned NewVReg3 = MRI->createVirtualRegister(TRC);
+    AddDefaultPred(BuildMI(DispContBB, dl, TII->get(ARM::t2LEApcrelJT),NewVReg3)
                    .addJumpTableIndex(MJTI)
                    .addImm(UId));
 
-    unsigned NewVReg3 = MRI->createVirtualRegister(TRC);
+    unsigned NewVReg4 = MRI->createVirtualRegister(TRC);
     AddDefaultCC(
       AddDefaultPred(
-        BuildMI(DispContBB, dl, TII->get(ARM::t2ADDrs), NewVReg3)
-        .addReg(NewVReg2, RegState::Kill)
+        BuildMI(DispContBB, dl, TII->get(ARM::t2ADDrs), NewVReg4)
+        .addReg(NewVReg3, RegState::Kill)
         .addReg(NewVReg1)
         .addImm(ARM_AM::getSORegOpc(ARM_AM::lsl, 2))));
 
     BuildMI(DispContBB, dl, TII->get(ARM::t2BR_JT))
-      .addReg(NewVReg3, RegState::Kill)
+      .addReg(NewVReg4, RegState::Kill)
       .addReg(NewVReg1)
       .addJumpTableIndex(MJTI)
       .addImm(UId);
