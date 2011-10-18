@@ -105,26 +105,26 @@
 @ CHECK: vqmovun.s32	d16, q8         @ encoding: [0x60,0x02,0xf6,0xf3]
 @ CHECK: vqmovun.s64	d16, q8         @ encoding: [0x60,0x02,0xfa,0xf3]
 
-@	vmov.s8 	r0, d16[1]
-@	vmov.s16	r0, d16[1]
-@	vmov.u8		r0, d16[1]
-@	vmov.u16	r0, d16[1]
-@	vmov.32		r0, d16[1]
-@	vmov.8	d16[1], r1
-@	vmov.16	d16[1], r1
-@	vmov.32	d16[1], r1
-@	vmov.8	d18[1], r1
-@	vmov.16	d18[1], r1
-@	vmov.32	d18[1], r1
+	vmov.s8 	r0, d16[1]
+	vmov.s16	r0, d16[1]
+	vmov.u8		r0, d16[1]
+	vmov.u16	r0, d16[1]
+	vmov.32		r0, d16[1]
+	vmov.8	d16[1], r1
+	vmov.16	d16[1], r1
+	vmov.32	d16[1], r1
+	vmov.8	d18[1], r1
+	vmov.16	d18[1], r1
+	vmov.32	d18[1], r1
 
-@ FIXME: vmov.s8	r0, d16[1]      @ encoding: [0xb0,0x0b,0x50,0xee]
-@ FIXME: vmov.s16	r0, d16[1]      @ encoding: [0xf0,0x0b,0x10,0xee]
-@ FIXME: vmov.u8	r0, d16[1]      @ encoding: [0xb0,0x0b,0xd0,0xee]
-@ FIXME: vmov.u16	r0, d16[1]      @ encoding: [0xf0,0x0b,0x90,0xee]
-@ FIXME: vmov.32	r0, d16[1]      @ encoding: [0x90,0x0b,0x30,0xee]
-@ FIXME: vmov.8	d16[1], r1              @ encoding: [0xb0,0x1b,0x40,0xee]
-@ FIXME: vmov.16	d16[1], r1      @ encoding: [0xf0,0x1b,0x00,0xee]
-@ FIXME: vmov.32	d16[1], r1      @ encoding: [0x90,0x1b,0x20,0xee]
-@ FIXME: vmov.8	d18[1], r1              @ encoding: [0xb0,0x1b,0x42,0xee]
-@ FIXME: vmov.16	d18[1], r1      @ encoding: [0xf0,0x1b,0x02,0xee]
-@ FIXME: vmov.32	d18[1], r1      @ encoding: [0x90,0x1b,0x22,0xee]
+@ CHECK: vmov.s8	r0, d16[1]      @ encoding: [0xb0,0x0b,0x50,0xee]
+@ CHECK: vmov.s16	r0, d16[1]      @ encoding: [0xf0,0x0b,0x10,0xee]
+@ CHECK: vmov.u8	r0, d16[1]      @ encoding: [0xb0,0x0b,0xd0,0xee]
+@ CHECK: vmov.u16	r0, d16[1]      @ encoding: [0xf0,0x0b,0x90,0xee]
+@ CHECK: vmov.32	r0, d16[1]      @ encoding: [0x90,0x0b,0x30,0xee]
+@ CHECK: vmov.8	d16[1], r1              @ encoding: [0xb0,0x1b,0x40,0xee]
+@ CHECK: vmov.16	d16[1], r1      @ encoding: [0xf0,0x1b,0x00,0xee]
+@ CHECK: vmov.32	d16[1], r1      @ encoding: [0x90,0x1b,0x20,0xee]
+@ CHECK: vmov.8	d18[1], r1              @ encoding: [0xb0,0x1b,0x42,0xee]
+@ CHECK: vmov.16	d18[1], r1      @ encoding: [0xf0,0x1b,0x02,0xee]
+@ CHECK: vmov.32	d18[1], r1      @ encoding: [0x90,0x1b,0x22,0xee]
