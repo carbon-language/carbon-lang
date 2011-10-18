@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++11
-// RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++98 -Wno-c++0x-extensions
+// RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++98 -Wno-c++11-extensions
 void f() {
   auto a = 0, b = 0, c = 0;
   auto d = 0, e = 0.0; // expected-error {{'int' in declaration of 'd' and deduced as 'double' in declaration of 'e'}}

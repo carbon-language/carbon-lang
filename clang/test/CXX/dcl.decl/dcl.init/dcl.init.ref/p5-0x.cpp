@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -std=c++11 -fsyntax-only -verify -pedantic %s
 
-// Test the C++0x-specific reference initialization rules, e.g., the
+// Test the c++0x-specific reference initialization rules, e.g., the
 // rules for rvalue references.
 template<typename T> T prvalue();
 template<typename T> T&& xvalue();

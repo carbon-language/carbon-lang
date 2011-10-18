@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -Wno-c++0x-extensions %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wno-c++11-extensions %s
 
 struct errc {
   int v_;

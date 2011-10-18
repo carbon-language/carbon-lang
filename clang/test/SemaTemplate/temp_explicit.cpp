@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -pedantic -Wc++0x-compat %s
+// RUN: %clang_cc1 -fsyntax-only -verify -pedantic -Wc++11-compat %s
 //
 // Tests explicit instantiation of templates.
 template<typename T, typename U = T> class X0 { };

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -Wno-c++0x-extensions %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wno-c++11-extensions %s
 
 namespace fizbin { class Foobar {}; } // expected-note 2 {{'fizbin::Foobar' declared here}} \
                                       // expected-note {{'Foobar' declared here}}
