@@ -1,7 +1,4 @@
-#ifndef LLVM_Mips_MipsFIXUPKINDS_H
-#define LLVM_Mips_MipsFIXUPKINDS_H
-
-//===-- Mips/MipsFixupKinds.h - Mips Specific Fixup Entries --------*- C++ -*-===//
+//===-- Mips/MipsFixupKinds.h - Mips Specific Fixup Entries -----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -10,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef LLVM_Mips_MipsFIXUPKINDS_H
+#define LLVM_Mips_MipsFIXUPKINDS_H
 
 #include "llvm/MC/MCFixup.h"
 
@@ -83,8 +82,8 @@ namespace Mips {
         LastTargetFixupKind,
         NumTargetFixupKinds = LastTargetFixupKind - FirstTargetFixupKind
     };
-} // namespace llvm
 } // namespace Mips
+} // namespace llvm
 
 
-#endif /* LLVM_Mips_MipsFIXUPKINDS_H */
+#endif // LLVM_Mips_MipsFIXUPKINDS_H
