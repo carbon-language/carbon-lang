@@ -55,5 +55,5 @@ void g() {
 // CHECK-CC3: CXXConstructor:{TypedText vector}{LeftAngle <}{Placeholder typename T}{RightAngle >}{LeftParen (}{Placeholder const T &}{Comma , }{Placeholder unsigned int n}{RightParen )} (50)
 // CHECK-CC3: FunctionTemplate:{ResultType void}{TypedText vector}{LeftAngle <}{Placeholder typename T}{RightAngle >}{LeftParen (}{Placeholder InputIterator first}{Comma , }{Placeholder InputIterator last}{RightParen )} (50)
 
-// RUN: c-index-test -code-completion-at=%s:18:60 %s -std=c++0x | FileCheck -check-prefix=CHECK-CC4 %s
+// RUN: c-index-test -code-completion-at=%s:18:59 %s -std=c++0x | FileCheck -check-prefix=CHECK-CC4 %s
 // CHECK-CC4: NotImplemented:{ResultType vector<T> *}{TypedText this} (40)
