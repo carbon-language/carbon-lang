@@ -22,6 +22,10 @@
 	vmul.p8	d16, d16, d17
 @ CHECK: vmul.p8	q8, q8, q9              @ encoding: [0x40,0xff,0xf2,0x09]
 	vmul.p8	q8, q8, q9
+
+	vmul.i16	d18, d8, d0[3]
+@ CHECK: vmul.i16	d18, d8, d0[3]    @ encoding: [0xd8,0xef,0x68,0x28]
+
 @ CHECK: vqdmulh.s16	d16, d16, d17   @ encoding: [0x50,0xef,0xa1,0x0b]
 	vqdmulh.s16	d16, d16, d17
 @ CHECK: vqdmulh.s32	d16, d16, d17   @ encoding: [0x60,0xef,0xa1,0x0b]
@@ -57,11 +61,7 @@
 @ CHECK: vqdmull.s32	q8, d16, d17    @ encoding: [0xe0,0xef,0xa1,0x0d]
 	vqdmull.s32	q8, d16, d17
 
+@	vmla.i32	q12, q8, d3[0]
+@	vqdmulh.s16	d11, d2, d3[0]
 @ FIXME: vmla.i32	q12, q8, d3[0]    @ encoding: [0xe0,0xff,0xc3,0x80]
-@  vmla.i32	q12, q8, d3[0]
 @ FIXME: vqdmulh.s16	d11, d2, d3[0]    @ encoding: [0x92,0xef,0x43,0xbc]
-@  vqdmulh.s16	d11, d2, d3[0]
-@ FIXME: vmul.i16	d18, d8, d0[3]    @ encoding: [0xd8,0xef,0x68,0x28]
-@  vmul.i16	d18, d8, d0[3]
-
-

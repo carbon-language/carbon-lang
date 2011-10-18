@@ -1936,8 +1936,8 @@ class N3VDSL<bits<2> op21_20, bits<4> op11_8,
              InstrItinClass itin, string OpcodeStr, string Dt,
              ValueType Ty, SDNode ShOp>
   : N3VLane32<0, 1, op21_20, op11_8, 1, 0,
-        (outs DPR:$Vd), (ins DPR:$Vn, DPR_VFP2:$Vm, nohash_imm:$lane),
-        NVMulSLFrm, itin, OpcodeStr, Dt, "$Vd, $Vn, $Vm[$lane]", "",
+        (outs DPR:$Vd), (ins DPR:$Vn, DPR_VFP2:$Vm, VectorIndex32:$lane),
+        NVMulSLFrm, itin, OpcodeStr, Dt, "$Vd, $Vn, $Vm$lane", "",
         [(set (Ty DPR:$Vd),
               (Ty (ShOp (Ty DPR:$Vn),
                         (Ty (NEONvduplane (Ty DPR_VFP2:$Vm),imm:$lane)))))]> {
@@ -1946,8 +1946,8 @@ class N3VDSL<bits<2> op21_20, bits<4> op11_8,
 class N3VDSL16<bits<2> op21_20, bits<4> op11_8,
                string OpcodeStr, string Dt, ValueType Ty, SDNode ShOp>
   : N3VLane16<0, 1, op21_20, op11_8, 1, 0,
-        (outs DPR:$Vd), (ins DPR:$Vn, DPR_8:$Vm, nohash_imm:$lane),
-        NVMulSLFrm, IIC_VMULi16D, OpcodeStr, Dt,"$Vd, $Vn, $Vm[$lane]","",
+        (outs DPR:$Vd), (ins DPR:$Vn, DPR_8:$Vm, VectorIndex16:$lane),
+        NVMulSLFrm, IIC_VMULi16D, OpcodeStr, Dt,"$Vd, $Vn, $Vm$lane","",
         [(set (Ty DPR:$Vd),
               (Ty (ShOp (Ty DPR:$Vn),
                         (Ty (NEONvduplane (Ty DPR_8:$Vm), imm:$lane)))))]> {
