@@ -5769,11 +5769,16 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
     } else {
       unsigned VReg1 = MRI->createVirtualRegister(TRC);
       AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::t2MOVi16), VReg1)
-                     .addImm(NumLPads & 0xFF));
-      unsigned VReg2 = MRI->createVirtualRegister(TRC);
-      AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::t2MOVTi16), VReg2)
-                     .addReg(VReg1)
-                     .addImm(NumLPads >> 16));
+                     .addImm(NumLPads & 0xFFFF));
+
+      unsigned VReg2 = VReg1;
+      if ((NumLPads & 0xFFFF0000) != 0) {
+        VReg2 = MRI->createVirtualRegister(TRC);
+        AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::t2MOVTi16), VReg2)
+                       .addReg(VReg1)
+                       .addImm(NumLPads >> 16));
+      }
+
       AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::t2CMPrr))
                      .addReg(NewVReg1)
                      .addReg(VReg2));
@@ -5885,11 +5890,16 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
     } else {
       unsigned VReg1 = MRI->createVirtualRegister(TRC);
       AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::MOVi16), VReg1)
-                     .addImm(NumLPads & 0xFF));
-      unsigned VReg2 = MRI->createVirtualRegister(TRC);
-      AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::MOVTi16), VReg2)
-                     .addReg(VReg1)
-                     .addImm(NumLPads >> 16));
+                     .addImm(NumLPads & 0xFFFF));
+
+      unsigned VReg2 = VReg1;
+      if ((NumLPads & 0xFFFF0000) != 0) {
+        VReg2 = MRI->createVirtualRegister(TRC);
+        AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::MOVTi16), VReg2)
+                       .addReg(VReg1)
+                       .addImm(NumLPads >> 16));
+      }
+
       AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::CMPrr))
                      .addReg(NewVReg1)
                      .addReg(VReg2));
