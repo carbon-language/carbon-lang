@@ -4526,11 +4526,10 @@ static bool isExtendedBUILD_VECTOR(SDNode *N, SelectionDAG &DAG,
       unsigned EltSize = VT.getVectorElementType().getSizeInBits();
       unsigned HalfSize = EltSize / 2;
       if (isSigned) {
-        int64_t SExtVal = C->getSExtValue();
-        if (SExtVal != SExtVal << (64 - HalfSize) >> (64 - HalfSize))
+        if (!isIntN(HalfSize, C->getSExtValue()))
           return false;
       } else {
-        if ((C->getZExtValue() >> HalfSize) != 0)
+        if (!isUIntN(HalfSize, C->getZExtValue()))
           return false;
       }
       continue;
