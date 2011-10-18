@@ -463,7 +463,7 @@ public:
     /// Changes the specifier and length according to a QualType, retaining any
     /// flags or options. Returns true on success, or false when a conversion
     /// was not successful.
-  bool fixType(QualType QT);
+  bool fixType(QualType QT, const LangOptions &LangOpt);
 
   void toString(raw_ostream &os) const;
 

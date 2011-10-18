@@ -1966,7 +1966,7 @@ CheckPrintfHandler::HandlePrintfSpecifier(const analyze_printf::PrintfSpecifier
 
     // We may be able to offer a FixItHint if it is a supported type.
     PrintfSpecifier fixedFS = FS;
-    bool success = fixedFS.fixType(Ex->getType());
+    bool success = fixedFS.fixType(Ex->getType(), S.getLangOptions());
 
     if (success) {
       // Get the fix string from the fixed format specifier

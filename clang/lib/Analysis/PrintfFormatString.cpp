@@ -355,7 +355,7 @@ ArgTypeResult PrintfSpecifier::getArgType(ASTContext &Ctx) const {
   return ArgTypeResult();
 }
 
-bool PrintfSpecifier::fixType(QualType QT) {
+bool PrintfSpecifier::fixType(QualType QT, const LangOptions &LangOpt) {
   // Handle strings first (char *, wchar_t *)
   if (QT->isPointerType() && (QT->getPointeeType()->isAnyCharacterType())) {
     CS.setKind(ConversionSpecifier::sArg);
@@ -436,6 +436,23 @@ bool PrintfSpecifier::fixType(QualType QT) {
   case BuiltinType::LongDouble:
     LM.setKind(LengthModifier::AsLongDouble);
     break;
+  }
+
+  // Handle size_t, ptrdiff_t, etc. that have dedicated length modifiers in C99.
+  if (isa<TypedefType>(QT) && (LangOpt.C99 || LangOpt.CPlusPlus0x)) {
+    const IdentifierInfo *Identifier = QT.getBaseTypeIdentifier();
+    if (Identifier->getName() == "size_t") {
+      LM.setKind(LengthModifier::AsSizeT);
+    } else if (Identifier->getName() == "ssize_t") {
+      // Not C99, but common in Unix.
+      LM.setKind(LengthModifier::AsSizeT);
+    } else if (Identifier->getName() == "intmax_t") {
+      LM.setKind(LengthModifier::AsIntMax);
+    } else if (Identifier->getName() == "uintmax_t") {
+      LM.setKind(LengthModifier::AsIntMax);
+    } else if (Identifier->getName() == "ptrdiff_t") {
+      LM.setKind(LengthModifier::AsPtrDiff);
+    }
   }
 
   // Set conversion specifier and disable any flags which do not apply to it.
