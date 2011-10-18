@@ -258,6 +258,18 @@ X86FastISel::X86FastEmitStore(EVT VT, unsigned Val, const X86AddressMode &AM) {
     Opc = X86ScalarSSEf64 ?
           (Subtarget->hasAVX() ? X86::VMOVSDmr : X86::MOVSDmr) : X86::ST_Fp64m;
     break;
+  case MVT::v4f32:
+    Opc = X86::MOVAPSmr;
+    break;
+  case MVT::v2f64:
+    Opc = X86::MOVAPDmr;
+    break;
+  case MVT::v4i32:
+  case MVT::v2i64:
+  case MVT::v8i16:
+  case MVT::v16i8:
+    Opc = X86::MOVDQAmr;
+    break;
   }
 
   addFullAddress(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt,
@@ -671,7 +683,14 @@ bool X86FastISel::X86SelectCallAddress(const Value *V, X86AddressMode &AM) {
 /// X86SelectStore - Select and emit code to implement store instructions.
 bool X86FastISel::X86SelectStore(const Instruction *I) {
   // Atomic stores need special handling.
-  if (cast<StoreInst>(I)->isAtomic())
+  const StoreInst *S = cast<StoreInst>(I);
+
+  if (S->isAtomic())
+    return false;
+
+  unsigned SABIAlignment =
+    TD.getABITypeAlignment(S->getValueOperand()->getType());
+  if (S->getAlignment() != 0 && S->getAlignment() < SABIAlignment)
     return false;
 
   MVT VT;
@@ -1740,9 +1759,11 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
         // If this is a really simple value, emit this with the Value* version
         // of X86FastEmitStore.  If it isn't simple, we don't want to do this,
         // as it can cause us to reevaluate the argument.
-        X86FastEmitStore(ArgVT, ArgVal, AM);
+        if (!X86FastEmitStore(ArgVT, ArgVal, AM))
+          return false;
       } else {
-        X86FastEmitStore(ArgVT, Arg, AM);
+        if (!X86FastEmitStore(ArgVT, Arg, AM))
+          return false;
       }
     }
   }
