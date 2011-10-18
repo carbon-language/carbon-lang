@@ -28,9 +28,9 @@ void g() {
 
 // RUN: c-index-test -code-completion-at=%s:20:2 %s -std=c++0x | FileCheck -check-prefix=CHECK-CC1 %s
 // RUN: env CINDEXTEST_EDITING=1 CINDEXTEST_COMPLETION_CACHING=1 c-index-test -code-completion-at=%s:20:2 -std=c++0x %s | FileCheck -check-prefix=CHECK-CC1 %s
-// CHECK-CC1: NotImplemented:{TypedText alignof}{LeftParen (}{Placeholder type}{RightParen )} (40)
-// CHECK-CC1: NotImplemented:{TypedText noexcept}{LeftParen (}{Placeholder expression}{RightParen )} (40)
-// CHECK-CC1: NotImplemented:{TypedText nullptr} (40)
+// CHECK-CC1: NotImplemented:{ResultType size_t}{TypedText alignof}{LeftParen (}{Placeholder type}{RightParen )} (40)
+// CHECK-CC1: NotImplemented:{ResultType bool}{TypedText noexcept}{LeftParen (}{Placeholder expression}{RightParen )} (40)
+// CHECK-CC1: NotImplemented:{ResultType std::nullptr_t}{TypedText nullptr} (40)
 // CHECK-CC1: NotImplemented:{TypedText operator} (40)
 // CHECK-CC1-NOT: push_back
 // CHECK-CC1: ClassDecl:{TypedText string} (50)
@@ -54,3 +54,6 @@ void g() {
 // CHECK-CC3: ClassTemplate:{TypedText vector}{LeftAngle <}{Placeholder typename T}{RightAngle >} (50)
 // CHECK-CC3: CXXConstructor:{TypedText vector}{LeftAngle <}{Placeholder typename T}{RightAngle >}{LeftParen (}{Placeholder const T &}{Comma , }{Placeholder unsigned int n}{RightParen )} (50)
 // CHECK-CC3: FunctionTemplate:{ResultType void}{TypedText vector}{LeftAngle <}{Placeholder typename T}{RightAngle >}{LeftParen (}{Placeholder InputIterator first}{Comma , }{Placeholder InputIterator last}{RightParen )} (50)
+
+// RUN: c-index-test -code-completion-at=%s:18:60 %s -std=c++0x | FileCheck -check-prefix=CHECK-CC4 %s
+// CHECK-CC4: NotImplemented:{ResultType vector<T> *}{TypedText this} (40)

@@ -1376,12 +1376,55 @@ static bool WantTypesInContext(Sema::ParserCompletionContext CCC,
   return false;
 }
 
+/// \brief Retrieve a printing policy suitable for code completion.
+static PrintingPolicy getCompletionPrintingPolicy(Sema &S) {
+  PrintingPolicy Policy = S.getPrintingPolicy();
+  Policy.AnonymousTagLocations = false;
+  Policy.SuppressStrongLifetime = true;
+  return Policy;
+}
+
+/// \brief Retrieve the string representation of the given type as a string
+/// that has the appropriate lifetime for code completion.
+///
+/// This routine provides a fast path where we provide constant strings for
+/// common type names.
+static const char *GetCompletionTypeString(QualType T,
+                                           ASTContext &Context,
+                                           const PrintingPolicy &Policy,
+                                           CodeCompletionAllocator &Allocator) {
+  if (!T.getLocalQualifiers()) {
+    // Built-in type names are constant strings.
+    if (const BuiltinType *BT = dyn_cast<BuiltinType>(T))
+      return BT->getName(Policy);
+    
+    // Anonymous tag types are constant strings.
+    if (const TagType *TagT = dyn_cast<TagType>(T))
+      if (TagDecl *Tag = TagT->getDecl())
+        if (!Tag->getIdentifier() && !Tag->getTypedefNameForAnonDecl()) {
+          switch (Tag->getTagKind()) {
+          case TTK_Struct: return "struct <anonymous>";
+          case TTK_Class:  return "class <anonymous>";            
+          case TTK_Union:  return "union <anonymous>";
+          case TTK_Enum:   return "enum <anonymous>";
+          }
+        }
+  }
+  
+  // Slow path: format the type as a string.
+  std::string Result;
+  T.getAsStringInternal(Result, Policy);
+  return Allocator.CopyString(Result);
+}
+
 /// \brief Add language constructs that show up for "ordinary" names.
 static void AddOrdinaryNameResults(Sema::ParserCompletionContext CCC,
                                    Scope *S,
                                    Sema &SemaRef,
                                    ResultBuilder &Results) {
-  CodeCompletionBuilder Builder(Results.getAllocator());
+  CodeCompletionAllocator &Allocator = Results.getAllocator();
+  CodeCompletionBuilder Builder(Allocator);
+  PrintingPolicy Policy = getCompletionPrintingPolicy(SemaRef);
   
   typedef CodeCompletionResult Result;
   switch (CCC) {
@@ -1709,13 +1752,25 @@ static void AddOrdinaryNameResults(Sema::ParserCompletionContext CCC,
   case Sema::PCC_Expression: {
     if (SemaRef.getLangOptions().CPlusPlus) {
       // 'this', if we're in a non-static member function.
-      if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(SemaRef.CurContext))
-        if (!Method->isStatic())
-          Results.AddResult(Result("this"));
+      QualType ThisTy = SemaRef.getCurrentThisType(false);
+      if (!ThisTy.isNull()) {
+        Builder.AddResultTypeChunk(GetCompletionTypeString(ThisTy, 
+                                                           SemaRef.Context, 
+                                                           Policy,
+                                                           Allocator));
+        Builder.AddTypedTextChunk("this");
+        Results.AddResult(Result(Builder.TakeString()));      
+      }
       
-      // true, false
-      Results.AddResult(Result("true"));
-      Results.AddResult(Result("false"));
+      // true
+      Builder.AddResultTypeChunk("bool");
+      Builder.AddTypedTextChunk("true");
+      Results.AddResult(Result(Builder.TakeString()));
+      
+      // false
+      Builder.AddResultTypeChunk("bool");
+      Builder.AddTypedTextChunk("false");
+      Results.AddResult(Result(Builder.TakeString()));
 
       if (SemaRef.getLangOptions().RTTI) {
         // dynamic_cast < type-id > ( expression )
@@ -1761,6 +1816,7 @@ static void AddOrdinaryNameResults(Sema::ParserCompletionContext CCC,
 
       if (SemaRef.getLangOptions().RTTI) {
         // typeid ( expression-or-type )
+        Builder.AddResultTypeChunk("std::type_info");
         Builder.AddTypedTextChunk("typeid");
         Builder.AddChunk(CodeCompletionString::CK_LeftParen);
         Builder.AddPlaceholderChunk("expression-or-type");
@@ -1790,12 +1846,14 @@ static void AddOrdinaryNameResults(Sema::ParserCompletionContext CCC,
       Results.AddResult(Result(Builder.TakeString()));      
 
       // delete expression
+      Builder.AddResultTypeChunk("void");
       Builder.AddTypedTextChunk("delete");
       Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
       Builder.AddPlaceholderChunk("expression");
       Results.AddResult(Result(Builder.TakeString()));      
 
       // delete [] expression
+      Builder.AddResultTypeChunk("void");
       Builder.AddTypedTextChunk("delete");
       Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
       Builder.AddChunk(CodeCompletionString::CK_LeftBracket);
@@ -1806,6 +1864,7 @@ static void AddOrdinaryNameResults(Sema::ParserCompletionContext CCC,
 
       if (SemaRef.getLangOptions().CXXExceptions) {
         // throw expression
+        Builder.AddResultTypeChunk("void");
         Builder.AddTypedTextChunk("throw");
         Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
         Builder.AddPlaceholderChunk("expression");
@@ -1816,10 +1875,12 @@ static void AddOrdinaryNameResults(Sema::ParserCompletionContext CCC,
 
       if (SemaRef.getLangOptions().CPlusPlus0x) {
         // nullptr
+        Builder.AddResultTypeChunk("std::nullptr_t");
         Builder.AddTypedTextChunk("nullptr");
         Results.AddResult(Result(Builder.TakeString()));
 
         // alignof
+        Builder.AddResultTypeChunk("size_t");
         Builder.AddTypedTextChunk("alignof");
         Builder.AddChunk(CodeCompletionString::CK_LeftParen);
         Builder.AddPlaceholderChunk("type");
@@ -1827,6 +1888,7 @@ static void AddOrdinaryNameResults(Sema::ParserCompletionContext CCC,
         Results.AddResult(Result(Builder.TakeString()));
 
         // noexcept
+        Builder.AddResultTypeChunk("bool");
         Builder.AddTypedTextChunk("noexcept");
         Builder.AddChunk(CodeCompletionString::CK_LeftParen);
         Builder.AddPlaceholderChunk("expression");
@@ -1834,6 +1896,7 @@ static void AddOrdinaryNameResults(Sema::ParserCompletionContext CCC,
         Results.AddResult(Result(Builder.TakeString()));
 
         // sizeof... expression
+        Builder.AddResultTypeChunk("size_t");
         Builder.AddTypedTextChunk("sizeof...");
         Builder.AddChunk(CodeCompletionString::CK_LeftParen);
         Builder.AddPlaceholderChunk("parameter-pack");
@@ -1847,14 +1910,23 @@ static void AddOrdinaryNameResults(Sema::ParserCompletionContext CCC,
       if (ObjCMethodDecl *Method = SemaRef.getCurMethodDecl()) {
         // The interface can be NULL.
         if (ObjCInterfaceDecl *ID = Method->getClassInterface())
-          if (ID->getSuperClass())
-            Results.AddResult(Result("super"));
+          if (ID->getSuperClass()) {
+            std::string SuperType;
+            SuperType = ID->getSuperClass()->getNameAsString();
+            if (Method->isInstanceMethod())
+              SuperType += " *";
+            
+            Builder.AddResultTypeChunk(Allocator.CopyString(SuperType));
+            Builder.AddTypedTextChunk("super");
+            Results.AddResult(Result(Builder.TakeString()));
+          }
       }
 
       AddObjCExpressionResults(Results, true);
     }
 
     // sizeof expression
+    Builder.AddResultTypeChunk("size_t");
     Builder.AddTypedTextChunk("sizeof");
     Builder.AddChunk(CodeCompletionString::CK_LeftParen);
     Builder.AddPlaceholderChunk("expression-or-type");
@@ -1873,47 +1945,6 @@ static void AddOrdinaryNameResults(Sema::ParserCompletionContext CCC,
 
   if (SemaRef.getLangOptions().CPlusPlus && CCC != Sema::PCC_Type)
     Results.AddResult(Result("operator"));
-}
-
-/// \brief Retrieve a printing policy suitable for code completion.
-static PrintingPolicy getCompletionPrintingPolicy(Sema &S) {
-  PrintingPolicy Policy = S.getPrintingPolicy();
-  Policy.AnonymousTagLocations = false;
-  Policy.SuppressStrongLifetime = true;
-  return Policy;
-}
-
-/// \brief Retrieve the string representation of the given type as a string
-/// that has the appropriate lifetime for code completion.
-///
-/// This routine provides a fast path where we provide constant strings for
-/// common type names.
-static const char *GetCompletionTypeString(QualType T,
-                                           ASTContext &Context,
-                                           const PrintingPolicy &Policy,
-                                           CodeCompletionAllocator &Allocator) {
-  if (!T.getLocalQualifiers()) {
-    // Built-in type names are constant strings.
-    if (const BuiltinType *BT = dyn_cast<BuiltinType>(T))
-      return BT->getName(Policy);
-    
-    // Anonymous tag types are constant strings.
-    if (const TagType *TagT = dyn_cast<TagType>(T))
-      if (TagDecl *Tag = TagT->getDecl())
-        if (!Tag->getIdentifier() && !Tag->getTypedefNameForAnonDecl()) {
-          switch (Tag->getTagKind()) {
-          case TTK_Struct: return "struct <anonymous>";
-          case TTK_Class:  return "class <anonymous>";            
-          case TTK_Union:  return "union <anonymous>";
-          case TTK_Enum:   return "enum <anonymous>";
-          }
-        }
-  }
-  
-  // Slow path: format the type as a string.
-  std::string Result;
-  T.getAsStringInternal(Result, Policy);
-  return Allocator.CopyString(Result);
 }
 
 /// \brief If the given declaration has an associated type, add it as a result 
@@ -4218,6 +4249,11 @@ static void AddObjCExpressionResults(ResultBuilder &Results, bool NeedAt) {
   CodeCompletionBuilder Builder(Results.getAllocator());
 
   // @encode ( type-name )
+  const char *EncodeType = "char[]";
+  if (Results.getSema().getLangOptions().CPlusPlus ||
+      Results.getSema().getLangOptions().ConstStrings)
+    EncodeType = " const char[]";
+  Builder.AddResultTypeChunk(EncodeType);
   Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,encode));
   Builder.AddChunk(CodeCompletionString::CK_LeftParen);
   Builder.AddPlaceholderChunk("type-name");
@@ -4225,6 +4261,7 @@ static void AddObjCExpressionResults(ResultBuilder &Results, bool NeedAt) {
   Results.AddResult(Result(Builder.TakeString()));
   
   // @protocol ( protocol-name )
+  Builder.AddResultTypeChunk("Protocol *");
   Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,protocol));
   Builder.AddChunk(CodeCompletionString::CK_LeftParen);
   Builder.AddPlaceholderChunk("protocol-name");
@@ -4232,6 +4269,7 @@ static void AddObjCExpressionResults(ResultBuilder &Results, bool NeedAt) {
   Results.AddResult(Result(Builder.TakeString()));
 
   // @selector ( selector )
+  Builder.AddResultTypeChunk("SEL");
   Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,selector));
   Builder.AddChunk(CodeCompletionString::CK_LeftParen);
   Builder.AddPlaceholderChunk("selector");

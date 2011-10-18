@@ -39,12 +39,12 @@
 // CHECK-CC3-NOT: VarDecl:{ResultType int}{TypedText q2}
 // CHECK-CC3-NOT: VarDecl:{ResultType id}{TypedText q}
 // CHECK-CC3: NotImplemented:{ResultType A *}{TypedText self} (34)
-// CHECK-CC3: NotImplemented:{TypedText sizeof}{LeftParen (}{Placeholder expression-or-type}{RightParen )} (40)
+// CHECK-CC3: NotImplemented:{ResultType size_t}{TypedText sizeof}{LeftParen (}{Placeholder expression-or-type}{RightParen )} (40)
 // RUN: c-index-test -code-completion-at=%s:15:15 %s | FileCheck -check-prefix=CHECK-CC4 %s
 // CHECK-CC4: ParmDecl:{ResultType id}{TypedText param1} (34)
 // CHECK-CC4-NOT: VarDecl:{ResultType int}{TypedText q2}
 // CHECK-CC4: NotImplemented:{ResultType A *}{TypedText self} (34)
-// CHECK-CC4: NotImplemented:{TypedText sizeof}{LeftParen (}{Placeholder expression-or-type}{RightParen )} (40)
+// CHECK-CC4: NotImplemented:{ResultType size_t}{TypedText sizeof}{LeftParen (}{Placeholder expression-or-type}{RightParen )} (40)
 // RUN: c-index-test -code-completion-at=%s:23:10 %s | FileCheck -check-prefix=CHECK-CC5 %s
 // CHECK-CC5: NotImplemented:{TypedText _Bool} (50)
 // CHECK-CC5: NotImplemented:{TypedText _Complex} (50)

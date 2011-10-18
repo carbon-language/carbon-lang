@@ -18,16 +18,16 @@
 
 // RUN: env CINDEXTEST_CODE_COMPLETE_PATTERNS=1 c-index-test -code-completion-at=%s:9:20 %s 2>%t | FileCheck -check-prefix=CHECK-CC1 %s
 // RUN: not grep error %t
-// CHECK-CC1: NotImplemented:{TypedText @encode}{LeftParen (}{Placeholder type-name}{RightParen )}
+// CHECK-CC1: NotImplemented:{ResultType char[]}{TypedText @encode}{LeftParen (}{Placeholder type-name}{RightParen )}
 // CHECK-CC1-NOT: NotImplemented:{TypedText _Bool}
 // CHECK-CC1: VarDecl:{ResultType A *}{TypedText a}
-// CHECK-CC1: NotImplemented:{TypedText sizeof}{LeftParen (}{Placeholder expression-or-type}{RightParen )}
+// CHECK-CC1: NotImplemented:{ResultType size_t}{TypedText sizeof}{LeftParen (}{Placeholder expression-or-type}{RightParen )}
 
 // RUN: env CINDEXTEST_CODE_COMPLETE_PATTERNS=1 c-index-test -code-completion-at=%s:10:24 %s | FileCheck -check-prefix=CHECK-CC2 %s
-// CHECK-CC2: NotImplemented:{TypedText @encode}{LeftParen (}{Placeholder type-name}{RightParen )}
+// CHECK-CC2: NotImplemented:{ResultType char[]}{TypedText @encode}{LeftParen (}{Placeholder type-name}{RightParen )}
 // CHECK-CC2: NotImplemented:{TypedText _Bool}
 // CHECK-CC2: VarDecl:{ResultType A *}{TypedText a}
-// CHECK-CC2: NotImplemented:{TypedText sizeof}{LeftParen (}{Placeholder expression-or-type}{RightParen )}
+// CHECK-CC2: NotImplemented:{ResultType size_t}{TypedText sizeof}{LeftParen (}{Placeholder expression-or-type}{RightParen )}
 // RUN: env CINDEXTEST_CODE_COMPLETE_PATTERNS=1 c-index-test -code-completion-at=%s:12:11 %s | FileCheck -check-prefix=CHECK-CC3 %s
 // CHECK-CC3: ObjCInstanceMethodDecl:{ResultType void}{TypedText method:}{Placeholder (int)} (32)
 // RUN: env CINDEXTEST_CODE_COMPLETE_PATTERNS=1 c-index-test -code-completion-at=%s:13:22 %s | FileCheck -check-prefix=CHECK-CC3 %s

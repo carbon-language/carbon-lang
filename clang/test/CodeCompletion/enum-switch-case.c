@@ -40,6 +40,6 @@ void test(enum Color color) {
   // CHECK-CC2-NEXT: COMPLETION: Indigo : [#enum Color#]Indigo
   // CHECK-CC2-NEXT: COMPLETION: Orange : [#enum Color#]Orange
   // CHECK-CC2-NEXT: COMPLETION: Red : [#enum Color#]Red
-  // CHECK-CC2-NEXT: COMPLETION: Pattern : sizeof(<#expression-or-type#>)
+  // CHECK-CC2-NEXT: COMPLETION: Pattern : [#size_t#]sizeof(<#expression-or-type#>)
   // CHECK-CC2-NEXT: COMPLETION: Violet : [#enum Color#]Violet
   // CHECK-CC2-NEXT: COMPLETION: Yellow : [#enum Color#]Yellow

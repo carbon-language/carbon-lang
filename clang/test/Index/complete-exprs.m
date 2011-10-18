@@ -26,7 +26,7 @@ __strong id global;
 // RUN: env CINDEXTEST_EDITING=1 CINDEXTEST_COMPLETION_CACHING=1 c-index-test -code-completion-at=%s:14:7 %s | FileCheck -check-prefix=CHECK-CC2 %s
 // CHECK-CC2: TypedefDecl:{TypedText BOOL} (50)
 // CHECK-CC2: NotImplemented:{TypedText char} (50)
-// CHECK-CC2: NotImplemented:{TypedText sizeof}{LeftParen (}{Placeholder expression-or-type}{RightParen )} (40)
+// CHECK-CC2: NotImplemented:{ResultType size_t}{TypedText sizeof}{LeftParen (}{Placeholder expression-or-type}{RightParen )} (40)
 // RUN: c-index-test -code-completion-at=%s:15:1 -fobjc-arc -fobjc-nonfragile-abi  %s | FileCheck -check-prefix=CHECK-CC3 %s
 // RUN: env CINDEXTEST_EDITING=1 CINDEXTEST_COMPLETION_CACHING=1 c-index-test -code-completion-at=%s:15:1 -fobjc-arc -fobjc-nonfragile-abi %s | FileCheck -check-prefix=CHECK-CC3 %s
 // CHECK-CC3: FunctionDecl:{ResultType void}{TypedText foo}{LeftParen (}{Placeholder ^bool(id x, A *y)block}{RightParen )} (34)
