@@ -599,6 +599,8 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
   IMM("nModImm");
   IMM("nImmSplatI8");
   IMM("nImmSplatI16");
+  IMM("nImmSplatI32");
+  IMM("nImmVMOVI32");
   IMM("imm0_7");
   IMM("imm0_15");
   IMM("imm0_255");

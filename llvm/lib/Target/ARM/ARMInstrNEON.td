@@ -29,6 +29,16 @@ def nImmSplatI16 : Operand<i32> {
   let PrintMethod = "printNEONModImmOperand";
   let ParserMatchClass = nImmSplatI16AsmOperand;
 }
+def nImmSplatI32AsmOperand : AsmOperandClass { let Name = "NEONi32splat"; }
+def nImmSplatI32 : Operand<i32> {
+  let PrintMethod = "printNEONModImmOperand";
+  let ParserMatchClass = nImmSplatI32AsmOperand;
+}
+def nImmVMOVI32AsmOperand : AsmOperandClass { let Name = "NEONi32vmov"; }
+def nImmVMOVI32 : Operand<i32> {
+  let PrintMethod = "printNEONModImmOperand";
+  let ParserMatchClass = nImmVMOVI32AsmOperand;
+}
 
 def VectorIndex8Operand  : AsmOperandClass { let Name = "VectorIndex8"; }
 def VectorIndex16Operand : AsmOperandClass { let Name = "VectorIndex16"; }
@@ -3757,7 +3767,7 @@ def VORRiv4i16 : N1ModImm<1, 0b000, {1,0,?,1}, 0, 0, 0, 1,
 }
 
 def VORRiv2i32 : N1ModImm<1, 0b000, {0,?,?,1}, 0, 0, 0, 1,
-                          (outs DPR:$Vd), (ins nModImm:$SIMM, DPR:$src),
+                          (outs DPR:$Vd), (ins nImmSplatI32:$SIMM, DPR:$src),
                           IIC_VMOVImm,
                           "vorr", "i32", "$Vd, $SIMM", "$src = $Vd",
                           [(set DPR:$Vd,
@@ -3775,7 +3785,7 @@ def VORRiv8i16 : N1ModImm<1, 0b000, {1,0,?,1}, 0, 1, 0, 1,
 }
 
 def VORRiv4i32 : N1ModImm<1, 0b000, {0,?,?,1}, 0, 1, 0, 1,
-                          (outs QPR:$Vd), (ins nModImm:$SIMM, QPR:$src),
+                          (outs QPR:$Vd), (ins nImmSplatI32:$SIMM, QPR:$src),
                           IIC_VMOVImm,
                           "vorr", "i32", "$Vd, $SIMM", "$src = $Vd",
                           [(set QPR:$Vd,
@@ -3806,7 +3816,7 @@ def VBICiv4i16 : N1ModImm<1, 0b000, {1,0,?,1}, 0, 0, 1, 1,
 }
 
 def VBICiv2i32 : N1ModImm<1, 0b000, {0,?,?,1}, 0, 0, 1, 1,
-                          (outs DPR:$Vd), (ins nModImm:$SIMM, DPR:$src),
+                          (outs DPR:$Vd), (ins nImmSplatI32:$SIMM, DPR:$src),
                           IIC_VMOVImm,
                           "vbic", "i32", "$Vd, $SIMM", "$src = $Vd",
                           [(set DPR:$Vd,
@@ -3824,7 +3834,7 @@ def VBICiv8i16 : N1ModImm<1, 0b000, {1,0,?,1}, 0, 1, 1, 1,
 }
 
 def VBICiv4i32 : N1ModImm<1, 0b000, {0,?,?,1}, 0, 1, 1, 1,
-                          (outs QPR:$Vd), (ins nModImm:$SIMM, QPR:$src),
+                          (outs QPR:$Vd), (ins nImmSplatI32:$SIMM, QPR:$src),
                           IIC_VMOVImm,
                           "vbic", "i32", "$Vd, $SIMM", "$src = $Vd",
                           [(set QPR:$Vd,
@@ -3863,14 +3873,14 @@ def VMVNv8i16 : N1ModImm<1, 0b000, {1,0,?,0}, 0, 1, 1, 1, (outs QPR:$Vd),
 }
 
 def VMVNv2i32 : N1ModImm<1, 0b000, {?,?,?,?}, 0, 0, 1, 1, (outs DPR:$Vd),
-                         (ins nModImm:$SIMM), IIC_VMOVImm,
+                         (ins nImmVMOVI32:$SIMM), IIC_VMOVImm,
                          "vmvn", "i32", "$Vd, $SIMM", "",
                          [(set DPR:$Vd, (v2i32 (NEONvmvnImm timm:$SIMM)))]> {
   let Inst{11-8} = SIMM{11-8};
 }
 
 def VMVNv4i32 : N1ModImm<1, 0b000, {?,?,?,?}, 0, 1, 1, 1, (outs QPR:$Vd),
-                         (ins nModImm:$SIMM), IIC_VMOVImm,
+                         (ins nImmVMOVI32:$SIMM), IIC_VMOVImm,
                          "vmvn", "i32", "$Vd, $SIMM", "",
                          [(set QPR:$Vd, (v4i32 (NEONvmvnImm timm:$SIMM)))]> {
   let Inst{11-8} = SIMM{11-8};
@@ -4348,14 +4358,14 @@ def VMOVv8i16 : N1ModImm<1, 0b000, {1,0,?,0}, 0, 1, 0, 1, (outs QPR:$Vd),
 }
 
 def VMOVv2i32 : N1ModImm<1, 0b000, {?,?,?,?}, 0, 0, 0, 1, (outs DPR:$Vd),
-                         (ins nModImm:$SIMM), IIC_VMOVImm,
+                         (ins nImmVMOVI32:$SIMM), IIC_VMOVImm,
                          "vmov", "i32", "$Vd, $SIMM", "",
                          [(set DPR:$Vd, (v2i32 (NEONvmovImm timm:$SIMM)))]> {
   let Inst{11-8} = SIMM{11-8};
 }
 
 def VMOVv4i32 : N1ModImm<1, 0b000, {?,?,?,?}, 0, 1, 0, 1, (outs QPR:$Vd),
-                         (ins nModImm:$SIMM), IIC_VMOVImm,
+                         (ins nImmVMOVI32:$SIMM), IIC_VMOVImm,
                          "vmov", "i32", "$Vd, $SIMM", "",
                          [(set QPR:$Vd, (v4i32 (NEONvmovImm timm:$SIMM)))]> {
   let Inst{11-8} = SIMM{11-8};
