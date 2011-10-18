@@ -514,3 +514,14 @@ entry:
   store <8 x i8> %10, <8 x i8>* %11, align 8
   ret void
 }
+
+; If one operand has a zero-extend and the other a sign-extend, vmull
+; cannot be used.
+define i16 @vmullWithInconsistentExtensions(<8 x i8> %vec) {
+; CHECK: vmullWithInconsistentExtensions
+; CHECK-NOT: vmull.s8
+  %1 = sext <8 x i8> %vec to <8 x i16>
+  %2 = mul <8 x i16> %1, <i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255>
+  %3 = extractelement <8 x i16> %2, i32 0
+  ret i16 %3
+}

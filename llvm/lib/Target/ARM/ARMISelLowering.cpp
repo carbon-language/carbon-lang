@@ -4527,7 +4527,7 @@ static bool isExtendedBUILD_VECTOR(SDNode *N, SelectionDAG &DAG,
       unsigned HalfSize = EltSize / 2;
       if (isSigned) {
         int64_t SExtVal = C->getSExtValue();
-        if ((SExtVal >> HalfSize) != (SExtVal >> EltSize))
+        if (SExtVal != SExtVal << (64 - HalfSize) >> (64 - HalfSize))
           return false;
       } else {
         if ((C->getZExtValue() >> HalfSize) != 0)
