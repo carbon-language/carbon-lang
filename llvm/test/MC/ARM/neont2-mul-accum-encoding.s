@@ -95,3 +95,8 @@
 @ FIXME: vmla.i32	q12, q8, d3[0]    @ encoding: [0xe0,0xff,0xc3,0x80]
 @  vmlal.s32	q0, d5, d10[0]
 @ FIXME: vmlal.s32	q0, d5, d10[0]    @ encoding: [0xa5,0xef,0x4a,0x02]
+@   vmls.i16	q4, q12, d6[2]
+@ FIXME: vmls.i16	q4, q12, d6[2]    @ encoding: [0x98,0xff,0xe6,0x94]
+@   vmlsl.u16	q11, d25, d1[3]
+@ FIXME: vmlsl.u16	q11, d25, d1[3]    @ encoding: [0xd9,0xff,0xe9,0x66]
+
