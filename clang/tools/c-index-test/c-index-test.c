@@ -1620,7 +1620,7 @@ static void index_diagnostic(CXClientData client_data,
 
   str = clang_formatDiagnostic(diag, clang_defaultDiagnosticDisplayOptions());
   cstr = clang_getCString(str);
-  printf("diagnostic: %s", cstr);
+  printf("diagnostic: %s\n", cstr);
   clang_disposeString(str);  
 }
 
