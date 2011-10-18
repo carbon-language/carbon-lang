@@ -106,26 +106,26 @@
 @ CHECK: vqmovun.s64	d16, q8         @ encoding: [0xfa,0xff,0x60,0x02]
 
 
-@	vmov.s8	r0, d16[1]
-@	vmov.s16	r0, d16[1]
-@	vmov.u8	r0, d16[1]
-@	vmov.u16	r0, d16[1]
-@	vmov.32	r0, d16[1]
-@	vmov.8	d16[1], r1
-@	vmov.16	d16[1], r1
-@	vmov.32	d16[1], r1
-@	vmov.8	d18[1], r1
-@	vmov.16	d18[1], r1
-@	vmov.32	d18[1], r1
+	vmov.s8	r0, d16[1]
+	vmov.s16	r0, d16[1]
+	vmov.u8	r0, d16[1]
+	vmov.u16	r0, d16[1]
+	vmov.32	r0, d16[1]
+	vmov.8	d16[1], r1
+	vmov.16	d16[1], r1
+	vmov.32	d16[1], r1
+	vmov.8	d18[1], r1
+	vmov.16	d18[1], r1
+	vmov.32	d18[1], r1
 
-@ FIXME: vmov.s8	r0, d16[1]      @ encoding: [0x50,0xee,0xb0,0x0b]
-@ FIXME: vmov.s16	r0, d16[1]      @ encoding: [0x10,0xee,0xf0,0x0b]
-@ FIXME: vmov.u8	r0, d16[1]      @ encoding: [0xd0,0xee,0xb0,0x0b]
-@ FIXME: vmov.u16	r0, d16[1]      @ encoding: [0x90,0xee,0xf0,0x0b]
-@ FIXME: vmov.32	r0, d16[1]      @ encoding: [0x30,0xee,0x90,0x0b]
-@ FIXME: vmov.8	d16[1], r1              @ encoding: [0x40,0xee,0xb0,0x1b]
-@ FIXME: vmov.16	d16[1], r1      @ encoding: [0x00,0xee,0xf0,0x1b]
-@ FIXME: vmov.32	d16[1], r1      @ encoding: [0x20,0xee,0x90,0x1b]
-@ FIXME: vmov.8	d18[1], r1              @ encoding: [0x42,0xee,0xb0,0x1b]
-@ FIXME: vmov.16	d18[1], r1      @ encoding: [0x02,0xee,0xf0,0x1b]
-@ FIXME: vmov.32	d18[1], r1      @ encoding: [0x22,0xee,0x90,0x1b]
+@ CHECK: vmov.s8	r0, d16[1]      @ encoding: [0x50,0xee,0xb0,0x0b]
+@ CHECK: vmov.s16	r0, d16[1]      @ encoding: [0x10,0xee,0xf0,0x0b]
+@ CHECK: vmov.u8	r0, d16[1]      @ encoding: [0xd0,0xee,0xb0,0x0b]
+@ CHECK: vmov.u16	r0, d16[1]      @ encoding: [0x90,0xee,0xf0,0x0b]
+@ CHECK: vmov.32	r0, d16[1]      @ encoding: [0x30,0xee,0x90,0x0b]
+@ CHECK: vmov.8	d16[1], r1              @ encoding: [0x40,0xee,0xb0,0x1b]
+@ CHECK: vmov.16	d16[1], r1      @ encoding: [0x00,0xee,0xf0,0x1b]
+@ CHECK: vmov.32	d16[1], r1      @ encoding: [0x20,0xee,0x90,0x1b]
+@ CHECK: vmov.8	d18[1], r1              @ encoding: [0x42,0xee,0xb0,0x1b]
+@ CHECK: vmov.16	d18[1], r1      @ encoding: [0x02,0xee,0xf0,0x1b]
+@ CHECK: vmov.32	d18[1], r1      @ encoding: [0x22,0xee,0x90,0x1b]
