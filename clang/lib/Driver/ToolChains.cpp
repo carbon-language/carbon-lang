@@ -371,9 +371,11 @@ void DarwinClang::AddLinkARCArgs(const ArgList &Args,
   P.appendComponent("libarclite_");
   std::string s = P.str();
   // Mash in the platform.
-  if (isTargetIPhoneOS())
+  if (isTargetIOSSimulator())
+    s += "iphonesimulator";
+  else if (isTargetIPhoneOS())
     s += "iphoneos";
-  // FIXME: isTargetIphoneOSSimulator() is not returning true.
+  // FIXME: Remove this once we depend fully on -mios-simulator-version-min.
   else if (ARCRuntimeForSimulator != ARCSimulator_None)
     s += "iphonesimulator";
   else
@@ -495,7 +497,7 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
   // '-miphoneos-version-min' to help us know whether there is an ARC runtime
   // or not; try to parse a __IPHONE_OS_VERSION_MIN_REQUIRED
   // define passed in command-line.
-  if (!iOSVersion) {
+  if (!iOSVersion && !iOSSimVersion) {
     for (arg_iterator it = Args.filtered_begin(options::OPT_D),
            ie = Args.filtered_end(); it != ie; ++it) {
       StringRef define = (*it)->getValue(Args);
