@@ -39,5 +39,5 @@ typedef void *PV;
 
 @interface RDar10296078  : ParentRDar10296078
 @property (nonatomic, strong) 
-  __attribute__((iboutletcollection(RDar10296078_OtherClass<RDar10296078_Protocol>))) NSArray *stuff; // expected-error {{invalid argument of iboutletcollection attribute}}
+  __attribute__((iboutletcollection(RDar10296078_OtherClass<RDar10296078_Protocol>))) NSArray *stuff; 
 @end

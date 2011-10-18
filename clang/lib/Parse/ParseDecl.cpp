@@ -248,7 +248,17 @@ void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
   else if (Tok.is(tok::less) && AttrName->isStr("iboutletcollection")) {
     if (!ExpectAndConsume(tok::less, diag::err_expected_less_after, "<",
                           tok::greater)) {
-      Diag(Tok, diag::err_iboutletcollection_with_protocol);
+      while (Tok.is(tok::identifier)) {
+        ConsumeToken();
+        if (Tok.is(tok::greater))
+          break;
+        if (Tok.is(tok::comma)) {
+          ConsumeToken();
+          continue;
+        }
+      }
+      if (Tok.isNot(tok::greater))
+        Diag(Tok, diag::err_iboutletcollection_with_protocol);
       SkipUntil(tok::r_paren, false, true); // skip until ')'
     }
   }
