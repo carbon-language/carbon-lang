@@ -53,9 +53,12 @@ struct DerivedStruct : public BaseStruct {
 
 struct G
 {
-    virtual ~G(){}
-    int a;
-    double b;
+    int g_field;
+};
+
+struct H : public G, 
+           public virtual D
+{
 };
 
 #pragma pack(pop)
@@ -67,7 +70,7 @@ int main() {
   C* c;
   c->foo();
   DerivedStruct* v;
-  G* g;
+  H* g;
   BaseStruct* u;
   return 0;
 }
@@ -174,3 +177,20 @@ int main() {
 // CHECK: 96 |   int x
 // CHECK-NEXT: sizeof=104, dsize=104, align=8
 // CHECK-NEXT: nvsize=104, nvalign=8
+
+// CHECK:      0 | struct G
+// CHECK-NEXT: 0 |   int g_field
+// CHECK-NEXT: sizeof=4, dsize=4, align=4
+// CHECK-NEXT: nvsize=4, nvalign=4
+
+// FIXME: Dump should not be showing vfptr, and vbptr is in the wrong order.
+// CHECK:       0 | struct H
+// CHECK-NEXT:  0 |   (H vtable pointer)
+// CHECK-NEXT:  4 |   (H vbtable pointer)
+// CHECK-NEXT:  0 |   struct G (base)
+// CHECK-NEXT:  0 |     int g_field
+// CHECK-NEXT:  8 |   class D (virtual base)
+// CHECK-NEXT:  8 |     (D vtable pointer)
+// CHECK-NEXT: 16 |     double a
+// CHECK-NEXT: sizeof=24, dsize=24, align=8
+// CHECK-NEXT: nvsize=24, nvalign=8

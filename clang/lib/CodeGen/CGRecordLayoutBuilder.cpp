@@ -669,7 +669,13 @@ CGRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD,
 
   // Check if we need to add a vtable pointer.
   if (RD->isDynamicClass()) {
-    if (!PrimaryBase) {
+    if (PrimaryBase) {
+      if (!Layout.isPrimaryBaseVirtual())
+        LayoutNonVirtualBase(PrimaryBase, CharUnits::Zero());
+      else
+        LayoutVirtualBase(PrimaryBase, CharUnits::Zero());
+    } else if (Types.getContext().getTargetInfo().getCXXABI() !=
+               CXXABI_Microsoft) {
       llvm::Type *FunctionType =
         llvm::FunctionType::get(llvm::Type::getInt32Ty(Types.getLLVMContext()),
                                 /*isVarArg=*/true);
@@ -678,11 +684,7 @@ CGRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD,
       assert(NextFieldOffset.isZero() &&
              "VTable pointer must come first!");
       AppendField(CharUnits::Zero(), VTableTy->getPointerTo());
-    } else {
-      if (!Layout.isPrimaryBaseVirtual())
-        LayoutNonVirtualBase(PrimaryBase, CharUnits::Zero());
-      else
-        LayoutVirtualBase(PrimaryBase, CharUnits::Zero());
+      
     }
   }
 
