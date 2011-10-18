@@ -711,7 +711,7 @@ FileSpec::GetFileNameExtension () const
     if (filename == NULL)
         return ConstString();
     
-    char* dot_pos = strrchr(filename, '.');
+    const char* dot_pos = strrchr(filename, '.');
     if (dot_pos == NULL)
         return ConstString();
     
@@ -725,7 +725,7 @@ FileSpec::GetFileNameStrippingExtension () const
     if (filename == NULL)
         return ConstString();
     
-    char* dot_pos = strrchr(filename, '.');
+    const char* dot_pos = strrchr(filename, '.');
     if (dot_pos == NULL)
         return m_filename;
     
