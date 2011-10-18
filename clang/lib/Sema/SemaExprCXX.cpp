@@ -636,7 +636,7 @@ ExprResult Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *E,
   return Owned(E);
 }
 
-QualType Sema::getAndCaptureCurrentThisType() {
+QualType Sema::getCurrentThisType(bool Capture) {
   // Ignore block scopes: we can capture through them.
   // Ignore nested enum scopes: we'll diagnose non-constant expressions
   // where they're invalid, and other uses are legitimate.
@@ -666,11 +666,13 @@ QualType Sema::getAndCaptureCurrentThisType() {
       ThisTy = Context.getPointerType(Context.getRecordType(RD));
   }
 
+  if (!Capture || ThisTy.isNull())
+    return ThisTy;
+  
   // Mark that we're closing on 'this' in all the block scopes we ignored.
-  if (!ThisTy.isNull())
-    for (unsigned idx = FunctionScopes.size() - 1;
-         NumBlocks; --idx, --NumBlocks)
-      cast<BlockScopeInfo>(FunctionScopes[idx])->CapturesCXXThis = true;
+  for (unsigned idx = FunctionScopes.size() - 1;
+       NumBlocks; --idx, --NumBlocks)
+    cast<BlockScopeInfo>(FunctionScopes[idx])->CapturesCXXThis = true;
 
   return ThisTy;
 }
@@ -680,7 +682,7 @@ ExprResult Sema::ActOnCXXThis(SourceLocation Loc) {
   /// is a non-lvalue expression whose value is the address of the object for
   /// which the function is called.
 
-  QualType ThisTy = getAndCaptureCurrentThisType();
+  QualType ThisTy = getCurrentThisType();
   if (ThisTy.isNull()) return Diag(Loc, diag::err_invalid_this_use);
 
   return Owned(new (Context) CXXThisExpr(Loc, ThisTy, /*isImplicit=*/false));

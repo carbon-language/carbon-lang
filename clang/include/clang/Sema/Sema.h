@@ -3019,9 +3019,12 @@ public:
   //// ActOnCXXThis -  Parse 'this' pointer.
   ExprResult ActOnCXXThis(SourceLocation loc);
 
-  /// getAndCaptureCurrentThisType - Try to capture a 'this' pointer.  Returns
-  /// the type of the 'this' pointer, or a null type if this is not possible.
-  QualType getAndCaptureCurrentThisType();
+  /// \brief Try to retrieve the type of the 'this' pointer.
+  ///
+  /// \param Capture If true, capture 'this' in this context.
+  ///
+  /// \returns The type of 'this', if possible. Otherwise, returns a NULL type.
+  QualType getCurrentThisType(bool Capture = true);
 
   /// ActOnCXXBoolLiteral - Parse {true,false} literals.
   ExprResult ActOnCXXBoolLiteral(SourceLocation OpLoc, tok::TokenKind Kind);

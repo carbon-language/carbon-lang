@@ -697,7 +697,7 @@ Sema::BuildAnonymousStructUnionMemberReference(const CXXScopeSpec &SS,
     // We've found a member of an anonymous struct/union that is
     // inside a non-anonymous struct/union, so in a well-formed
     // program our base object expression is "this".
-    QualType ThisTy = getAndCaptureCurrentThisType();
+    QualType ThisTy = getCurrentThisType();
     if (ThisTy.isNull()) {
       Diag(loc, diag::err_invalid_member_use_in_static_method)
         << indirectField->getDeclName();
@@ -1569,7 +1569,7 @@ Sema::BuildImplicitMemberExpr(const CXXScopeSpec &SS,
   // If this is known to be an instance access, go ahead and build an
   // implicit 'this' expression now.
   // 'this' expression now.
-  QualType ThisTy = getAndCaptureCurrentThisType();
+  QualType ThisTy = getCurrentThisType();
   assert(!ThisTy.isNull() && "didn't correctly pre-flight capture of 'this'");
   
   Expr *baseExpr = 0; // null signifies implicit access
