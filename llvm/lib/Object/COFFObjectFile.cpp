@@ -573,7 +573,7 @@ error_code COFFObjectFile::getString(uint32_t offset,
 
 error_code COFFObjectFile::getSymbol(uint32_t index,
                                      const coff_symbol *&Result) const {
-  if (index >= 0 && index < Header->NumberOfSymbols)
+  if (index < Header->NumberOfSymbols)
     Result = SymbolTable + index;
   else
     return object_error::parse_failed;
