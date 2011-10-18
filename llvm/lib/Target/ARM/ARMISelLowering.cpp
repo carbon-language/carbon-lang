@@ -5849,38 +5849,42 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
                    .addFrameIndex(FI)
                    .addImm(4)
                    .addMemOperand(FIMMOLd));
-    AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::CMPri))
-                   .addReg(NewVReg1)
+
+    unsigned NewVReg2 = MRI->createVirtualRegister(TRC);
+    AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::MOVi16), NewVReg2)
                    .addImm(LPadList.size()));
+    AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::CMPrr))
+                   .addReg(NewVReg1)
+                   .addReg(NewVReg2));
     BuildMI(DispatchBB, dl, TII->get(ARM::Bcc))
       .addMBB(TrapBB)
       .addImm(ARMCC::HI)
       .addReg(ARM::CPSR);
 
-    unsigned NewVReg2 = MRI->createVirtualRegister(TRC);
+    unsigned NewVReg3 = MRI->createVirtualRegister(TRC);
     AddDefaultCC(
-      AddDefaultPred(BuildMI(DispContBB, dl, TII->get(ARM::MOVsi), NewVReg2)
+      AddDefaultPred(BuildMI(DispContBB, dl, TII->get(ARM::MOVsi), NewVReg3)
                      .addReg(NewVReg1)
                      .addImm(ARM_AM::getSORegOpc(ARM_AM::lsl, 2))));
-    unsigned NewVReg3 = MRI->createVirtualRegister(TRC);
-    AddDefaultPred(BuildMI(DispContBB, dl, TII->get(ARM::LEApcrelJT), NewVReg3)
+    unsigned NewVReg4 = MRI->createVirtualRegister(TRC);
+    AddDefaultPred(BuildMI(DispContBB, dl, TII->get(ARM::LEApcrelJT), NewVReg4)
                    .addJumpTableIndex(MJTI)
                    .addImm(UId));
 
     MachineMemOperand *JTMMOLd =
       MF->getMachineMemOperand(MachinePointerInfo::getJumpTable(),
                                MachineMemOperand::MOLoad, 4, 4);
-    unsigned NewVReg4 = MRI->createVirtualRegister(TRC);
+    unsigned NewVReg5 = MRI->createVirtualRegister(TRC);
     AddDefaultPred(
-      BuildMI(DispContBB, dl, TII->get(ARM::LDRrs), NewVReg4)
-      .addReg(NewVReg2, RegState::Kill)
-      .addReg(NewVReg3)
+      BuildMI(DispContBB, dl, TII->get(ARM::LDRrs), NewVReg5)
+      .addReg(NewVReg3, RegState::Kill)
+      .addReg(NewVReg4)
       .addImm(0)
       .addMemOperand(JTMMOLd));
 
     BuildMI(DispContBB, dl, TII->get(ARM::BR_JTadd))
-      .addReg(NewVReg4, RegState::Kill)
-      .addReg(NewVReg3)
+      .addReg(NewVReg5, RegState::Kill)
+      .addReg(NewVReg4)
       .addJumpTableIndex(MJTI)
       .addImm(UId);
   }
