@@ -40,8 +40,8 @@ void Lambda() {
 int InitList() {
   (void)new int {}; // expected-warning {{generalized initializer lists are incompatible with C++98}}
   (void)int{}; // expected-warning {{generalized initializer lists are incompatible with C++98}}
-  int x {}; // expected-warning {{generalized initializer lists are incompatible with C++98}}
-  return {}; // expected-warning {{generalized initializer lists are incompatible with C++98}}
+  int x { 0 }; // expected-warning {{generalized initializer lists are incompatible with C++98}}
+  return { 0 }; // expected-warning {{generalized initializer lists are incompatible with C++98}}
 }
 
 int operator""_hello(const char *); // expected-warning {{literal operators are incompatible with C++98}}
@@ -160,3 +160,13 @@ void TrivialButNonPODThroughEllipsis() {
 struct HasExplicitConversion {
   explicit operator bool(); // expected-warning {{explicit conversion functions are incompatible with C++98}}
 };
+
+struct Struct {};
+enum Enum { enum_val = 0 };
+struct BadFriends {
+  friend enum ::Enum; // expected-warning {{befriending enumeration type 'enum ::Enum' is incompatible with C++98}}
+  friend int; // expected-warning {{non-class friend type 'int' is incompatible with C++98}}
+  friend Struct; // expected-warning {{befriending 'Struct' without 'struct' keyword is incompatible with C++98}}
+};
+
+int n = {}; // expected-warning {{scalar initialized from empty initializer list is incompatible with C++98}}

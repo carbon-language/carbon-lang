@@ -622,8 +622,14 @@ def err_unexpected_friend : Error<
   "friends can only be classes or functions">;
 def ext_enum_friend : ExtWarn<
   "enumeration type %0 cannot be a friend">;
+def warn_cxx98_compat_enum_friend : Warning<
+  "befriending enumeration type %0 is incompatible with C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
 def ext_nonclass_type_friend : ExtWarn<
   "non-class friend type %0 is a C++11 extension">, InGroup<CXX11>;
+def warn_cxx98_compat_nonclass_type_friend : Warning<
+  "non-class friend type %0 is incompatible with C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
 def err_friend_is_member : Error<
   "friends cannot be members of the declaring class">;
 def warn_cxx98_compat_friend_is_member : Warning<
@@ -632,6 +638,9 @@ def warn_cxx98_compat_friend_is_member : Warning<
 def ext_unelaborated_friend_type : ExtWarn<
   "specify '%select{struct|union|class|enum}0' to befriend %1; accepted "
   "as a C++11 extension">, InGroup<CXX11>;
+def warn_cxx98_compat_unelaborated_friend_type : Warning<
+  "befriending %1 without '%select{struct|union|class|enum}0' keyword is "
+  "incompatible with C++98">, InGroup<CXX98Compat>, DefaultIgnore;
 def err_qualified_friend_not_found : Error<
   "no function named %0 with type %1 was found in the specified scope">;
 def err_introducing_special_friend : Error<
@@ -2800,6 +2809,9 @@ def ext_complex_component_init : Extension<
   "complex initialization specifying real and imaginary components "
   "is an extension">, InGroup<DiagGroup<"complex-component-init">>;
 def err_empty_scalar_initializer : Error<"scalar initializer cannot be empty">;
+def warn_cxx98_compat_empty_scalar_initializer : Warning<
+  "scalar initialized from empty initializer list is incompatible with C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
 def err_illegal_initializer : Error<
   "illegal initializer (only variables can be initialized)">;
 def err_illegal_initializer_type : Error<"illegal initializer type %0">;

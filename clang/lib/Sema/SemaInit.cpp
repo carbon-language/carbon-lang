@@ -902,12 +902,13 @@ void InitListChecker::CheckScalarType(const InitializedEntity &Entity,
                                       InitListExpr *StructuredList,
                                       unsigned &StructuredIndex) {
   if (Index >= IList->getNumInits()) {
-    if (!SemaRef.getLangOptions().CPlusPlus0x) {
-      if (!VerifyOnly)
-        SemaRef.Diag(IList->getLocStart(), diag::err_empty_scalar_initializer)
-          << IList->getSourceRange();
-      hadError = true;
-    }
+    if (!VerifyOnly)
+      SemaRef.Diag(IList->getLocStart(),
+                   SemaRef.getLangOptions().CPlusPlus0x ?
+                     diag::warn_cxx98_compat_empty_scalar_initializer :
+                     diag::err_empty_scalar_initializer)
+        << IList->getSourceRange();
+    hadError = !SemaRef.getLangOptions().CPlusPlus0x;
     ++Index;
     ++StructuredIndex;
     return;

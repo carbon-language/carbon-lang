@@ -9652,39 +9652,46 @@ FriendDecl *Sema::CheckFriendTypeDecl(SourceLocation FriendLoc,
   QualType T = TSInfo->getType();
   SourceRange TypeRange = TSInfo->getTypeLoc().getLocalSourceRange();
   
-  if (!getLangOptions().CPlusPlus0x) {
-    // C++03 [class.friend]p2:
-    //   An elaborated-type-specifier shall be used in a friend declaration
-    //   for a class.*
-    //
-    //   * The class-key of the elaborated-type-specifier is required.
-    if (!ActiveTemplateInstantiations.empty()) {
-      // Do not complain about the form of friend template types during
-      // template instantiation; we will already have complained when the
-      // template was declared.
-    } else if (!T->isElaboratedTypeSpecifier()) {
-      // If we evaluated the type to a record type, suggest putting
-      // a tag in front.
-      if (const RecordType *RT = T->getAs<RecordType>()) {
-        RecordDecl *RD = RT->getDecl();
-        
-        std::string InsertionText = std::string(" ") + RD->getKindName();
-        
-        Diag(TypeRange.getBegin(), diag::ext_unelaborated_friend_type)
-          << (unsigned) RD->getTagKind()
-          << T
-          << FixItHint::CreateInsertion(PP.getLocForEndOfToken(FriendLoc),
-                                        InsertionText);
-      } else {
-        Diag(FriendLoc, diag::ext_nonclass_type_friend)
-          << T
-          << SourceRange(FriendLoc, TypeRange.getEnd());
-      }
-    } else if (T->getAs<EnumType>()) {
-      Diag(FriendLoc, diag::ext_enum_friend)
+  // C++03 [class.friend]p2:
+  //   An elaborated-type-specifier shall be used in a friend declaration
+  //   for a class.*
+  //
+  //   * The class-key of the elaborated-type-specifier is required.
+  if (!ActiveTemplateInstantiations.empty()) {
+    // Do not complain about the form of friend template types during
+    // template instantiation; we will already have complained when the
+    // template was declared.
+  } else if (!T->isElaboratedTypeSpecifier()) {
+    // If we evaluated the type to a record type, suggest putting
+    // a tag in front.
+    if (const RecordType *RT = T->getAs<RecordType>()) {
+      RecordDecl *RD = RT->getDecl();
+      
+      std::string InsertionText = std::string(" ") + RD->getKindName();
+      
+      Diag(TypeRange.getBegin(),
+           getLangOptions().CPlusPlus0x ?
+             diag::warn_cxx98_compat_unelaborated_friend_type :
+             diag::ext_unelaborated_friend_type)
+        << (unsigned) RD->getTagKind()
+        << T
+        << FixItHint::CreateInsertion(PP.getLocForEndOfToken(FriendLoc),
+                                      InsertionText);
+    } else {
+      Diag(FriendLoc,
+           getLangOptions().CPlusPlus0x ?
+             diag::warn_cxx98_compat_nonclass_type_friend :
+             diag::ext_nonclass_type_friend)
         << T
         << SourceRange(FriendLoc, TypeRange.getEnd());
     }
+  } else if (T->getAs<EnumType>()) {
+    Diag(FriendLoc,
+         getLangOptions().CPlusPlus0x ?
+           diag::warn_cxx98_compat_enum_friend :
+           diag::ext_enum_friend)
+      << T
+      << SourceRange(FriendLoc, TypeRange.getEnd());
   }
   
   // C++0x [class.friend]p3:
