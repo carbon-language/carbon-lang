@@ -24,7 +24,6 @@ namespace ento {
 
 class CheckerContext {
   ExplodedNodeSet &Dst;
-  StmtNodeBuilder &B;
   ExprEngine &Eng;
   ExplodedNode *Pred;
   const ProgramPoint Location;
@@ -32,26 +31,25 @@ class CheckerContext {
   const unsigned size;
   // TODO: Use global context.
   NodeBuilderContext Ctx;
-  NodeBuilder NB;
+  NodeBuilder &NB;
 public:
   bool *respondsToCallback;
 public:
   CheckerContext(ExplodedNodeSet &dst,
-                 StmtNodeBuilder &builder,
+                 NodeBuilder &builder,
                  ExprEngine &eng,
                  ExplodedNode *pred,
                  const ProgramPoint &loc,
                  bool *respondsToCB = 0,
                  const ProgramState *st = 0)
     : Dst(dst),
-      B(builder),
       Eng(eng),
       Pred(pred),
       Location(loc),
       ST(st),
       size(Dst.size()),
       Ctx(builder.C.Eng, builder.getBlock()),
-      NB(pred, Ctx),
+      NB(builder),
       respondsToCallback(respondsToCB) {
     assert(!(ST && ST != Pred->getState()));
   }

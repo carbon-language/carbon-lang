@@ -22,8 +22,4 @@ CheckerContext::~CheckerContext() {
                              E = NB.results_end(); I != E; ++I) {
     Dst.Add(*I);
   }
-
-  // Copy the results  into the StmtNodeBuilder.
-  //TODO: This will be removed after we completely migrate NodeBuilder.
-  B.importNodesFromBuilder(NB);
 }

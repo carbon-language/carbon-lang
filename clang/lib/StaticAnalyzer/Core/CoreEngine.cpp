@@ -489,9 +489,6 @@ ExplodedNode* NodeBuilder::generateNodeImpl(const ProgramPoint &Loc,
                                             const ProgramState *State,
                                             ExplodedNode *FromN,
                                             bool MarkAsSink) {
-  assert(Finalized == false &&
-         "We cannot create new nodes after the results have been finalized.");
-
   bool IsNew;
   ExplodedNode *N = C.Eng.G->getNode(Loc, State, &IsNew);
   N->addPredecessor(FromN, *C.Eng.G);
@@ -570,6 +567,8 @@ ExplodedNode *StmtNodeBuilder::MakeNode(ExplodedNodeSet &Dst,
 ExplodedNode *BranchNodeBuilder::generateNode(const ProgramState *State,
                                               bool branch,
                                               ExplodedNode *NodePred) {
+  assert(Finalized == false &&
+         "We cannot create new nodes after the results have been finalized.");
 
   // If the branch has been marked infeasible we should not generate a node.
   if (!isFeasible(branch))

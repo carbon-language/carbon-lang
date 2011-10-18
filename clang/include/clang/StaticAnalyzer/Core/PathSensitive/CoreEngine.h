@@ -187,6 +187,8 @@ public:
   const NodeBuilderContext &C;
 protected:
 
+  /// Specifies if the builder results have been finalized. For example, if it
+  /// is set to false, autotransitions are yet to be generated.
   bool Finalized;
 
   /// \brief The frontier set - a set of nodes which need to be propagated after
@@ -196,7 +198,8 @@ protected:
 
   BlockCounter getBlockCounter() const { return C.Eng.WList->getBlockCounter();}
 
-  bool checkResults() {
+  /// Checkes if the results are ready.
+  virtual bool checkResults() {
     if (!Finalized)
       return false;
     for (DeferredTy::iterator I=Deferred.begin(), E=Deferred.end(); I!=E; ++I)
@@ -205,11 +208,8 @@ protected:
     return true;
   }
 
-  virtual void finalizeResults() {
-    if (!Finalized) {
-      Finalized = true;
-    }
-  }
+  /// Allow subclasses to finalize results before result_begin() is executed.
+  virtual void finalizeResults() {}
   
   ExplodedNode *generateNodeImpl(const ProgramPoint &PP,
                                  const ProgramState *State,
@@ -217,15 +217,15 @@ protected:
                                  bool MarkAsSink = false);
 
 public:
-  NodeBuilder(ExplodedNode *N, NodeBuilderContext &Ctx)
-    : BuilderPred(N), C(Ctx), Finalized(false) {
+  NodeBuilder(ExplodedNode *N, NodeBuilderContext &Ctx, bool F = true)
+    : BuilderPred(N), C(Ctx), Finalized(F) {
     assert(!N->isSink());
     Deferred.insert(N);
   }
 
   /// Create a new builder using the parent builder's context.
-  NodeBuilder(ExplodedNode *N, const NodeBuilder &ParentBldr)
-    : BuilderPred(N), C(ParentBldr.C), Finalized(false) {
+  NodeBuilder(ExplodedNode *N, const NodeBuilder &ParentBldr, bool F = true)
+    : BuilderPred(N), C(ParentBldr.C), Finalized(F) {
     assert(!N->isSink());
     Deferred.insert(N);
   }
@@ -383,6 +383,8 @@ class BranchNodeBuilder: public NodeBuilder {
   bool InFeasibleTrue;
   bool InFeasibleFalse;
 
+  /// Generate default branching transitions of none were generated or
+  /// suppressed.
   void finalizeResults() {
     if (Finalized)
       return;
@@ -394,15 +396,15 @@ class BranchNodeBuilder: public NodeBuilder {
 public:
   BranchNodeBuilder(ExplodedNode *Pred, NodeBuilderContext &C,
                     const CFGBlock *dstT, const CFGBlock *dstF)
-  : NodeBuilder(Pred, C), DstT(dstT), DstF(dstF),
+  : NodeBuilder(Pred, C, false), DstT(dstT), DstF(dstF),
     GeneratedTrue(false), GeneratedFalse(false),
     InFeasibleTrue(!DstT), InFeasibleFalse(!DstF) {
   }
 
   /// Create a new builder using the parent builder's context.
   BranchNodeBuilder(ExplodedNode *Pred, BranchNodeBuilder &ParentBldr)
-  : NodeBuilder(Pred, ParentBldr), DstT(ParentBldr.DstT), DstF(ParentBldr.DstF),
-    GeneratedTrue(false), GeneratedFalse(false),
+  : NodeBuilder(Pred, ParentBldr, false), DstT(ParentBldr.DstT),
+    DstF(ParentBldr.DstF), GeneratedTrue(false), GeneratedFalse(false),
     InFeasibleTrue(!DstT), InFeasibleFalse(!DstF) {
   }
 
