@@ -54,11 +54,11 @@ void test() {
   typedef __PTRDIFF_TYPE__ ptrdiff_t;
 
   // size_t, etc.
-  printf("%c", (size_t) 42);
-  //printf("%c", (ssize_t) 42);
-  printf("%c", (intmax_t) 42);
-  printf("%c", (uintmax_t) 42);
-  printf("%c", (ptrdiff_t) 42);
+  printf("%f", (size_t) 42);
+  //printf("%f", (ssize_t) 42);
+  printf("%f", (intmax_t) 42);
+  printf("%f", (uintmax_t) 42);
+  printf("%f", (ptrdiff_t) 42);
 }
 
 // Validate the fixes...
