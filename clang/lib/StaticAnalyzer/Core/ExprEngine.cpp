@@ -196,26 +196,29 @@ void ExprEngine::processEndWorklist(bool hasWorkRemaining) {
 }
 
 void ExprEngine::processCFGElement(const CFGElement E, 
-                                  StmtNodeBuilder& builder) {
+                                  StmtNodeBuilder& Bldr,
+                                  ExplodedNode *Pred) {
   switch (E.getKind()) {
     case CFGElement::Invalid:
       llvm_unreachable("Unexpected CFGElement kind.");
     case CFGElement::Statement:
-      ProcessStmt(const_cast<Stmt*>(E.getAs<CFGStmt>()->getStmt()), builder);
+      ProcessStmt(const_cast<Stmt*>(E.getAs<CFGStmt>()->getStmt()), Bldr, Pred);
       return;
     case CFGElement::Initializer:
-      ProcessInitializer(E.getAs<CFGInitializer>()->getInitializer(), builder);
+      ProcessInitializer(E.getAs<CFGInitializer>()->getInitializer(),
+                         Bldr, Pred);
       return;
     case CFGElement::AutomaticObjectDtor:
     case CFGElement::BaseDtor:
     case CFGElement::MemberDtor:
     case CFGElement::TemporaryDtor:
-      ProcessImplicitDtor(*E.getAs<CFGImplicitDtor>(), builder);
+      ProcessImplicitDtor(*E.getAs<CFGImplicitDtor>(), Bldr, Pred);
       return;
   }
 }
 
-void ExprEngine::ProcessStmt(const CFGStmt S, StmtNodeBuilder& builder) {
+void ExprEngine::ProcessStmt(const CFGStmt S, StmtNodeBuilder& builder,
+                             ExplodedNode *Pred) {
   // TODO: Use RAII to remove the unnecessary, tagged nodes.
   //RegisterCreatedNodes registerCreatedNodes(getGraph());
 
@@ -232,7 +235,7 @@ void ExprEngine::ProcessStmt(const CFGStmt S, StmtNodeBuilder& builder) {
   // A tag to track convenience transitions, which can be removed at cleanup.
   static SimpleProgramPointTag cleanupTag("ExprEngine : Clean Node");
   Builder = &builder;
-  EntryNode = builder.getPredecessor();
+  EntryNode = Pred;
 
   const ProgramState *EntryState = EntryNode->getState();
   CleanedState = EntryState;
@@ -320,12 +323,10 @@ void ExprEngine::ProcessStmt(const CFGStmt S, StmtNodeBuilder& builder) {
 }
 
 void ExprEngine::ProcessInitializer(const CFGInitializer Init,
-                                    StmtNodeBuilder &builder) {
+                                    StmtNodeBuilder &builder,
+                                    ExplodedNode *pred) {
   // We don't set EntryNode and currentStmt. And we don't clean up state.
   const CXXCtorInitializer *BMI = Init.getInitializer();
-
-  ExplodedNode *pred = builder.getPredecessor();
-
   const StackFrameContext *stackFrame = cast<StackFrameContext>(pred->getLocationContext());
   const CXXConstructorDecl *decl = cast<CXXConstructorDecl>(stackFrame->getDecl());
   const CXXThisRegion *thisReg = getCXXThisRegion(decl, stackFrame);
@@ -373,12 +374,13 @@ void ExprEngine::ProcessInitializer(const CFGInitializer Init,
 }
 
 void ExprEngine::ProcessImplicitDtor(const CFGImplicitDtor D,
-                                       StmtNodeBuilder &builder) {
+                                       StmtNodeBuilder &builder,
+                                       ExplodedNode *Pred) {
   Builder = &builder;
 
   switch (D.getKind()) {
   case CFGElement::AutomaticObjectDtor:
-    ProcessAutomaticObjDtor(cast<CFGAutomaticObjDtor>(D), builder);
+    ProcessAutomaticObjDtor(cast<CFGAutomaticObjDtor>(D), builder, Pred);
     break;
   case CFGElement::BaseDtor:
     ProcessBaseDtor(cast<CFGBaseDtor>(D), builder);
@@ -395,8 +397,8 @@ void ExprEngine::ProcessImplicitDtor(const CFGImplicitDtor D,
 }
 
 void ExprEngine::ProcessAutomaticObjDtor(const CFGAutomaticObjDtor dtor,
-                                           StmtNodeBuilder &builder) {
-  ExplodedNode *pred = builder.getPredecessor();
+                                         StmtNodeBuilder &builder,
+                                         ExplodedNode *pred) {
   const ProgramState *state = pred->getState();
   const VarDecl *varDecl = dtor.getVarDecl();
 
@@ -949,6 +951,7 @@ void ExprEngine::processBranch(const Stmt *Condition, const Stmt *Term,
   if (!Condition) {
     BranchNodeBuilder NullCondBldr(Pred, BldCtx, DstT, DstF);
     NullCondBldr.markInfeasible(false);
+    NullCondBldr.generateNode(Pred->getState(), true, Pred);
     Engine.enqueue(NullCondBldr);
     return;
   }
@@ -959,7 +962,7 @@ void ExprEngine::processBranch(const Stmt *Condition, const Stmt *Term,
 
   NodeBuilder CheckerBldr(Pred, BldCtx);
   getCheckerManager().runCheckersForBranchCondition(Condition, CheckerBldr,
-                                                    *this);
+                                                    Pred, *this);
 
   for (NodeBuilder::iterator I = CheckerBldr.results_begin(),
                              E = CheckerBldr.results_end(); E != I; ++I) {
@@ -969,7 +972,7 @@ void ExprEngine::processBranch(const Stmt *Condition, const Stmt *Term,
       continue;
 
     BranchNodeBuilder builder(PredI, BldCtx, DstT, DstF);
-    const ProgramState *PrevState = builder.getState();
+    const ProgramState *PrevState = Pred->getState();
     SVal X = PrevState->getSVal(Condition);
 
     if (X.isUnknownOrUndef()) {
@@ -992,8 +995,8 @@ void ExprEngine::processBranch(const Stmt *Condition, const Stmt *Term,
     }
     // If the condition is still unknown, give up.
     if (X.isUnknownOrUndef()) {
-      builder.generateNode(MarkBranch(PrevState, Term, true), true);
-      builder.generateNode(MarkBranch(PrevState, Term, false), false);
+      builder.generateNode(MarkBranch(PrevState, Term, true), true, PredI);
+      builder.generateNode(MarkBranch(PrevState, Term, false), false, PredI);
       // Enqueue the results into the work list.
       Engine.enqueue(builder);
       continue;
@@ -1004,7 +1007,7 @@ void ExprEngine::processBranch(const Stmt *Condition, const Stmt *Term,
     // Process the true branch.
     if (builder.isFeasible(true)) {
       if (const ProgramState *state = PrevState->assume(V, true))
-        builder.generateNode(MarkBranch(state, Term, true), true);
+        builder.generateNode(MarkBranch(state, Term, true), true, PredI);
       else
         builder.markInfeasible(true);
     }
@@ -1012,7 +1015,7 @@ void ExprEngine::processBranch(const Stmt *Condition, const Stmt *Term,
     // Process the false branch.
     if (builder.isFeasible(false)) {
       if (const ProgramState *state = PrevState->assume(V, false))
-        builder.generateNode(MarkBranch(state, Term, false), false);
+        builder.generateNode(MarkBranch(state, Term, false), false, PredI);
       else
         builder.markInfeasible(false);
     }

@@ -316,7 +316,7 @@ void CoreEngine::HandleBlockEntrance(const BlockEntrance &L,
   if (CFGElement E = L.getFirstElement()) {
     NodeBuilderContext Ctx(*this, L.getBlock());
     StmtNodeBuilder Builder(Pred, 0, Ctx);
-    SubEng.processCFGElement(E, Builder);
+    SubEng.processCFGElement(E, Builder, Pred);
   }
   else
     HandleBlockExit(L.getBlock(), Pred);
@@ -433,7 +433,7 @@ void CoreEngine::HandlePostStmt(const CFGBlock *B, unsigned StmtIdx,
   else {
     NodeBuilderContext Ctx(*this, B);
     StmtNodeBuilder Builder(Pred, StmtIdx, Ctx);
-    SubEng.processCFGElement((*B)[StmtIdx], Builder);
+    SubEng.processCFGElement((*B)[StmtIdx], Builder, Pred);
   }
 }
 
@@ -489,6 +489,8 @@ ExplodedNode* NodeBuilder::generateNodeImpl(const ProgramPoint &Loc,
                                             const ProgramState *State,
                                             ExplodedNode *FromN,
                                             bool MarkAsSink) {
+  HasGeneratedNodes = true;
+
   bool IsNew;
   ExplodedNode *N = C.Eng.G->getNode(Loc, State, &IsNew);
   N->addPredecessor(FromN, *C.Eng.G);
@@ -567,9 +569,6 @@ ExplodedNode *StmtNodeBuilder::MakeNode(ExplodedNodeSet &Dst,
 ExplodedNode *BranchNodeBuilder::generateNode(const ProgramState *State,
                                               bool branch,
                                               ExplodedNode *NodePred) {
-  assert(Finalized == false &&
-         "We cannot create new nodes after the results have been finalized.");
-
   // If the branch has been marked infeasible we should not generate a node.
   if (!isFeasible(branch))
     return NULL;
@@ -579,12 +578,6 @@ ExplodedNode *BranchNodeBuilder::generateNode(const ProgramState *State,
   ProgramPoint Loc = BlockEdge(C.Block, branch ? DstT:DstF,
                                NodePred->getLocationContext());
   ExplodedNode *Succ = generateNodeImpl(Loc, State, NodePred);
-
-  if (branch)
-    GeneratedTrue = true;
-  else
-    GeneratedFalse = true;
-
   return Succ;
 }
 

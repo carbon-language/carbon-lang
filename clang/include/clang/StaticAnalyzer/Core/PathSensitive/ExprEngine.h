@@ -132,16 +132,20 @@ public:
 
   /// processCFGElement - Called by CoreEngine. Used to generate new successor
   ///  nodes by processing the 'effects' of a CFG element.
-  void processCFGElement(const CFGElement E, StmtNodeBuilder& builder);
+  void processCFGElement(const CFGElement E, StmtNodeBuilder& Bldr,
+                         ExplodedNode *Pred);
 
-  void ProcessStmt(const CFGStmt S, StmtNodeBuilder &builder);
+  void ProcessStmt(const CFGStmt S, StmtNodeBuilder &builder,
+                   ExplodedNode *Pred);
 
-  void ProcessInitializer(const CFGInitializer I, StmtNodeBuilder &builder);
+  void ProcessInitializer(const CFGInitializer I, StmtNodeBuilder &Bldr,
+                          ExplodedNode *Pred);
 
-  void ProcessImplicitDtor(const CFGImplicitDtor D, StmtNodeBuilder &builder);
+  void ProcessImplicitDtor(const CFGImplicitDtor D, StmtNodeBuilder &builder,
+                           ExplodedNode *Pred);
 
   void ProcessAutomaticObjDtor(const CFGAutomaticObjDtor D, 
-                            StmtNodeBuilder &builder);
+                               StmtNodeBuilder &builder, ExplodedNode *Pred);
   void ProcessBaseDtor(const CFGBaseDtor D, StmtNodeBuilder &builder);
   void ProcessMemberDtor(const CFGMemberDtor D, StmtNodeBuilder &builder);
   void ProcessTemporaryDtor(const CFGTemporaryDtor D, 

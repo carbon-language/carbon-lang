@@ -191,6 +191,8 @@ protected:
   /// is set to false, autotransitions are yet to be generated.
   bool Finalized;
 
+  bool HasGeneratedNodes;
+
   /// \brief The frontier set - a set of nodes which need to be propagated after
   /// the builder dies.
   typedef llvm::SmallPtrSet<ExplodedNode*,5> DeferredTy;
@@ -218,14 +220,14 @@ protected:
 
 public:
   NodeBuilder(ExplodedNode *N, NodeBuilderContext &Ctx, bool F = true)
-    : BuilderPred(N), C(Ctx), Finalized(F) {
+    : BuilderPred(N), C(Ctx), Finalized(F), HasGeneratedNodes(false) {
     assert(!N->isSink());
     Deferred.insert(N);
   }
 
   /// Create a new builder using the parent builder's context.
   NodeBuilder(ExplodedNode *N, const NodeBuilder &ParentBldr, bool F = true)
-    : BuilderPred(N), C(ParentBldr.C), Finalized(F) {
+    : BuilderPred(N), C(ParentBldr.C), Finalized(F), HasGeneratedNodes(false) {
     assert(!N->isSink());
     Deferred.insert(N);
   }
@@ -243,8 +245,9 @@ public:
     return generateNodeImpl(PP, State, Pred, MarkAsSink);
   }
 
+  // TODO: will get removed.
   bool hasGeneratedNodes() const {
-    return (!Deferred.count(BuilderPred));
+    return HasGeneratedNodes;
   }
 
   typedef DeferredTy::iterator iterator;
@@ -269,12 +272,6 @@ public:
                       BuilderPred->getLocationContext()->getCurrentStackFrame(),
                       C.Block->getBlockID());
   }
-
-  // \brief Get the builder's predecessor - the parent to all the other nodes.
-  ExplodedNode *getPredecessor() const { return BuilderPred; }
-
-  // \brief Returns state of the predecessor.
-  const ProgramState *getState() const { return BuilderPred->getState(); }
 };
 
 class CommonNodeBuilder {
@@ -366,7 +363,7 @@ public:
   }
 
   void importNodesFromBuilder(const NodeBuilder &NB) {
-    ExplodedNode *NBPred = const_cast<ExplodedNode*>(NB.getPredecessor());
+    ExplodedNode *NBPred = const_cast<ExplodedNode*>(NB.BuilderPred);
     if (NB.hasGeneratedNodes()) {
       Deferred.erase(NBPred);
       Deferred.insert(NB.Deferred.begin(), NB.Deferred.end());
@@ -378,35 +375,20 @@ class BranchNodeBuilder: public NodeBuilder {
   const CFGBlock *DstT;
   const CFGBlock *DstF;
 
-  bool GeneratedTrue;
-  bool GeneratedFalse;
   bool InFeasibleTrue;
   bool InFeasibleFalse;
-
-  /// Generate default branching transitions of none were generated or
-  /// suppressed.
-  void finalizeResults() {
-    if (Finalized)
-      return;
-    if (!GeneratedTrue) generateNode(BuilderPred->State, true);
-    if (!GeneratedFalse) generateNode(BuilderPred->State, false);
-    Finalized = true;
-  }
 
 public:
   BranchNodeBuilder(ExplodedNode *Pred, NodeBuilderContext &C,
                     const CFGBlock *dstT, const CFGBlock *dstF)
-  : NodeBuilder(Pred, C, false), DstT(dstT), DstF(dstF),
-    GeneratedTrue(false), GeneratedFalse(false),
-    InFeasibleTrue(!DstT), InFeasibleFalse(!DstF) {
-  }
+  : NodeBuilder(Pred, C), DstT(dstT), DstF(dstF),
+    InFeasibleTrue(!DstT), InFeasibleFalse(!DstF) {}
 
   /// Create a new builder using the parent builder's context.
   BranchNodeBuilder(ExplodedNode *Pred, BranchNodeBuilder &ParentBldr)
-  : NodeBuilder(Pred, ParentBldr, false), DstT(ParentBldr.DstT),
-    DstF(ParentBldr.DstF), GeneratedTrue(false), GeneratedFalse(false),
-    InFeasibleTrue(!DstT), InFeasibleFalse(!DstF) {
-  }
+  : NodeBuilder(Pred, ParentBldr), DstT(ParentBldr.DstT),
+    DstF(ParentBldr.DstF),
+    InFeasibleTrue(!DstT), InFeasibleFalse(!DstF) {}
 
   ExplodedNode *generateNode(const ProgramState *State, bool branch,
                              ExplodedNode *Pred = 0);
@@ -417,9 +399,9 @@ public:
 
   void markInfeasible(bool branch) {
     if (branch)
-      InFeasibleTrue = GeneratedTrue = true;
+      InFeasibleTrue = true;
     else
-      InFeasibleFalse = GeneratedFalse = true;
+      InFeasibleFalse = true;
   }
 
   bool isFeasible(bool branch) {
