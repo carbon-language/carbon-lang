@@ -16,6 +16,8 @@ class CondMovIntFP<RegisterClass CRC, RegisterClass DRC, bits<5> fmt,
                    bits<6> func, string instr_asm> :
   FFR<0x11, func, fmt, (outs DRC:$fd), (ins DRC:$fs, CRC:$rt, DRC:$F),
       !strconcat(instr_asm, "\t$fd, $fs, $rt"), []> {
+  bits<5> rt;
+  let ft = rt;
   let Constraints = "$F = $fd";
 }
 
@@ -116,8 +118,8 @@ def MOVT_I   : CondMovFPInt<CPURegs, MipsCMovFP_T, 1, "movt">;
 def MOVT_I64 : CondMovFPInt<CPU64Regs, MipsCMovFP_T, 1, "movt">,
                Requires<[HasMips64]>;
 
-def MOVF_I   : CondMovFPInt<CPURegs, MipsCMovFP_F, 1, "movf">;
-def MOVF_I64 : CondMovFPInt<CPU64Regs, MipsCMovFP_F, 1, "movf">,
+def MOVF_I   : CondMovFPInt<CPURegs, MipsCMovFP_F, 0, "movf">;
+def MOVF_I64 : CondMovFPInt<CPU64Regs, MipsCMovFP_F, 0, "movf">,
                Requires<[HasMips64]>;
 
 def MOVT_S : CondMovFPFP<FGR32, MipsCMovFP_T, 16, 1, "movt.s">;
