@@ -20,7 +20,9 @@
 
 namespace lldb_private {
     
-class Type : public UserID
+class Type :
+    public ReferenceCountedBaseVirtual<Type>,
+    public UserID
 {
 public:
     typedef enum EncodingDataTypeTag

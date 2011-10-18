@@ -51,7 +51,7 @@ TypeList::~TypeList()
 }
 
 void
-TypeList::Insert (TypeSP& type_sp)
+TypeList::Insert (const TypeSP& type_sp)
 {
     // Just push each type on the back for now. We will worry about uniquing later
     if (type_sp)
@@ -60,7 +60,7 @@ TypeList::Insert (TypeSP& type_sp)
 
 
 bool
-TypeList::InsertUnique (TypeSP& type_sp)
+TypeList::InsertUnique (const TypeSP& type_sp)
 {
     if (type_sp)
     {
@@ -80,14 +80,14 @@ TypeList::InsertUnique (TypeSP& type_sp)
 //----------------------------------------------------------------------
 // Find a base type by its unique ID.
 //----------------------------------------------------------------------
-TypeSP
-TypeList::FindType(lldb::user_id_t uid)
-{
-    iterator pos = m_types.find(uid);
-    if (pos != m_types.end())
-        return pos->second;
-    return TypeSP();
-}
+//TypeSP
+//TypeList::FindType(lldb::user_id_t uid)
+//{
+//    iterator pos = m_types.find(uid);
+//    if (pos != m_types.end())
+//        return pos->second;
+//    return TypeSP();
+//}
 
 //----------------------------------------------------------------------
 // Find a type by name.

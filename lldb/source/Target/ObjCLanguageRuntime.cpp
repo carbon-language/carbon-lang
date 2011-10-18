@@ -63,7 +63,7 @@ ObjCLanguageRuntime::AddToClassNameCache (lldb::addr_t class_addr, const char *n
     
     TypeAndOrName class_type_or_name;
     
-    if (type_sp != NULL)
+    if (type_sp)
         class_type_or_name.SetTypeSP (type_sp);
     else if (name && *name != '\0')
         class_type_or_name.SetName (name);

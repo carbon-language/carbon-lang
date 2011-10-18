@@ -496,7 +496,7 @@ SymbolFileDWARF::get_apple_types_data()
 const DataExtractor&
 SymbolFileDWARF::get_apple_namespaces_data()
 {
-    return GetCachedSectionData (flagsGotDebugTypesData, eSectionTypeDWARFAppleNamespaces, m_data_apple_namespaces);
+    return GetCachedSectionData (flagsGotDebugNamespacesData, eSectionTypeDWARFAppleNamespaces, m_data_apple_namespaces);
 }
 
 
@@ -1435,12 +1435,6 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_type
     const DWARFDebugInfoEntry* die = m_forward_decl_clang_type_to_die.lookup (clang_type_no_qualifiers);
     if (die == NULL)
     {
-//        if (m_debug_map_symfile)
-//        {
-//            Type *type = m_die_to_type[die];
-//            if (type && type->GetSymbolFile() != this)
-//                return type->GetClangType();
-//        }
         // We have already resolved this type...
         return clang_type;
     }
@@ -1450,6 +1444,10 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_type
     // are done.
     m_forward_decl_clang_type_to_die.erase (clang_type_no_qualifiers);
     
+
+    // Disable external storage for this type so we don't get anymore 
+    // clang::ExternalASTSource queries for this type.
+    ClangASTContext::SetHasExternalStorage (clang_type, false);
 
     DWARFDebugInfo* debug_info = DebugInfo();
 
@@ -2764,17 +2762,9 @@ SymbolFileDWARF::FindTypes(const SymbolContext& sc, const ConstString &name, con
             if (matching_type)
             {
                 // We found a type pointer, now find the shared pointer form our type list
-                TypeSP type_sp (GetTypeList()->FindType(matching_type->GetID()));
-                if (type_sp)
-                {
-                    types.InsertUnique (type_sp);
-                    if (types.GetSize() >= max_matches)
-                        break;
-                }
-                else
-                {
-                    ReportError ("error: can't find shared pointer for type 0x%8.8x.\n", matching_type->GetID());
-                }
+                types.InsertUnique (TypeSP (matching_type));
+                if (types.GetSize() >= max_matches)
+                    break;
             }
         }
         return types.GetSize() - initial_types_size;
@@ -2865,9 +2855,7 @@ SymbolFileDWARF::FindTypes(std::vector<dw_offset_t> die_offsets, uint32_t max_ma
         if (matching_type)
         {
             // We found a type pointer, now find the shared pointer form our type list
-            TypeSP type_sp (GetTypeList()->FindType(matching_type->GetID()));
-            assert (type_sp.get() != NULL);
-            types.InsertUnique (type_sp);
+            types.InsertUnique (TypeSP (matching_type));
             ++num_matches;
             if (num_matches >= max_matches)
                 break;
@@ -3274,7 +3262,7 @@ SymbolFileDWARF::GetTypeForDIE (DWARFCompileUnit *curr_cu, const DWARFDebugInfoE
         else if (type_ptr != DIE_IS_BEING_PARSED)
         {
             // Grab the existing type from the master types lists
-            type_sp = GetTypeList()->FindType(type_ptr->GetID());
+            type_sp = type_ptr;
         }
 
     }
@@ -3549,11 +3537,7 @@ SymbolFileDWARF::FindDefinitionTypeForDIE (DWARFCompileUnit* cu,
                                       type_cu->GetOffset());
                         
                         m_die_to_type[die] = resolved_type;
-                        type_sp = GetTypeList()->FindType(resolved_type->GetID());
-                        if (!type_sp)
-                        {
-                            DEBUG_PRINTF("unable to resolve type '%s' from DIE 0x%8.8x\n", type_name.GetCString(), die->GetOffset());
-                        }
+                        type_sp = resolved_type;
                         break;
                     }
                 }
@@ -4014,16 +3998,6 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                                  clang_type, 
                                                  Type::eResolveStateForward));
 
-#if LEAVE_ENUMS_FORWARD_DECLARED
-                        // Leave this as a forward declaration until we need
-                        // to know the details of the type. lldb_private::Type
-                        // will automatically call the SymbolFile virtual function
-                        // "SymbolFileDWARF::ResolveClangOpaqueTypeDefinition(Type *)"
-                        // When the definition needs to be defined.
-                        m_forward_decl_die_to_clang_type[die] = clang_type;
-                        m_forward_decl_clang_type_to_die[ClangASTType::RemoveFastQualifiers (clang_type)] = die;
-                        ClangASTContext::SetHasExternalStorage (clang_type, true);
-#else
                         ast.StartTagDeclarationDefinition (clang_type);
                         if (die->HasChildren())
                         {
@@ -4031,7 +4005,6 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                             ParseChildEnumerators(cu_sc, clang_type, type_sp->GetByteSize(), dwarf_cu, die);
                         }
                         ast.CompleteTagDeclarationDefinition (clang_type);
-#endif
                     }
                 }
                 break;
@@ -4355,7 +4328,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                                 type_ptr = m_die_to_type[die];
                                                 if (type_ptr)
                                                 {
-                                                    type_sp = type_list->FindType(type_ptr->GetID());
+                                                    type_sp = type_ptr;
                                                     break;
                                                 }
                                             }
@@ -4578,7 +4551,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
         }
         else if (type_ptr != DIE_IS_BEING_PARSED)
         {
-            type_sp = type_list->FindType(type_ptr->GetID());
+            type_sp = type_ptr;
         }
     }
     return type_sp;
@@ -5242,11 +5215,21 @@ SymbolFileDWARF::SearchDeclContext (const clang::DeclContext *decl_context,
 
 void
 SymbolFileDWARF::FindExternalVisibleDeclsByName (void *baton,
-                                                 const clang::DeclContext *DC,
-                                                 clang::DeclarationName Name,
+                                                 const clang::DeclContext *decl_context,
+                                                 clang::DeclarationName decl_name,
                                                  llvm::SmallVectorImpl <clang::NamedDecl *> *results)
 {
-    SymbolFileDWARF *symbol_file_dwarf = (SymbolFileDWARF *)baton;
-                
-    symbol_file_dwarf->SearchDeclContext (DC, Name.getAsString().c_str(), results);
+    
+    switch (decl_context->getDeclKind())
+    {
+    case clang::Decl::Namespace:
+    case clang::Decl::TranslationUnit:
+        {
+            SymbolFileDWARF *symbol_file_dwarf = (SymbolFileDWARF *)baton;
+            symbol_file_dwarf->SearchDeclContext (decl_context, decl_name.getAsString().c_str(), results);
+        }
+        break;
+    default:
+        break;
+    }
 }

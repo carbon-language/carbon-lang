@@ -296,7 +296,7 @@ AppleObjCRuntimeV2::GetDynamicTypeAndAddress (ValueObject &in_value,
         
         if (!class_type_or_name.IsEmpty())
         {
-            if (class_type_or_name.GetTypeSP() != NULL)
+            if (class_type_or_name.GetTypeSP())
                 return true;
             else
                 return false;

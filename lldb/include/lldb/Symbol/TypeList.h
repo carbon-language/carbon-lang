@@ -33,17 +33,17 @@ public:
     void
     Dump(Stream *s, bool show_context);
 
-    lldb::TypeSP
-    FindType(lldb::user_id_t uid);
+//    lldb::TypeSP
+//    FindType(lldb::user_id_t uid);
 
     TypeList
     FindTypes(const ConstString &name);
 
     void
-    Insert (lldb::TypeSP& type);
+    Insert (const lldb::TypeSP& type);
 
     bool
-    InsertUnique (lldb::TypeSP& type);
+    InsertUnique (const lldb::TypeSP& type);
 
     uint32_t
     GetSize() const;

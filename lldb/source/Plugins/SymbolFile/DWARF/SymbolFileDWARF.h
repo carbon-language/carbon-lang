@@ -251,7 +251,8 @@ protected:
         flagsGotDebugRangesData     = (1 << 9),
         flagsGotDebugStrData        = (1 << 10),
         flagsGotDebugNamesData      = (1 << 11),
-        flagsGotDebugTypesData      = (1 << 12)
+        flagsGotDebugTypesData      = (1 << 12),
+        flagsGotDebugNamespacesData = (1 << 13)
     };
     
     bool                    NamespaceDeclMatchesThisSymbolFile (const lldb_private::ClangNamespaceDecl *namespace_decl);
