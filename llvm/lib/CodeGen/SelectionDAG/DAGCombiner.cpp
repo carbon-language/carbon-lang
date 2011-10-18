@@ -7261,8 +7261,19 @@ SDValue DAGCombiner::SimplifyVBinOp(SDNode *N) {
       }
 
       EVT VT = LHSOp.getValueType();
-      assert(RHSOp.getValueType() == VT &&
-             "SimplifyVBinOp with different BUILD_VECTOR element types");
+      EVT RVT = RHSOp.getValueType();
+      if (RVT != VT) {
+        // Integer BUILD_VECTOR operands may have types larger than the element
+        // size (e.g., when the element type is not legal).  Prior to type
+        // legalization, the types may not match between the two BUILD_VECTORS.
+        // Truncate one of the operands to make them match.
+        if (RVT.getSizeInBits() > VT.getSizeInBits()) {
+          RHSOp = DAG.getNode(ISD::TRUNCATE, N->getDebugLoc(), VT, RHSOp);
+        } else {
+          LHSOp = DAG.getNode(ISD::TRUNCATE, N->getDebugLoc(), RVT, LHSOp);
+          VT = RVT;
+        }
+      }
       SDValue FoldOp = DAG.getNode(N->getOpcode(), LHS.getDebugLoc(), VT,
                                    LHSOp, RHSOp);
       if (FoldOp.getOpcode() != ISD::UNDEF &&

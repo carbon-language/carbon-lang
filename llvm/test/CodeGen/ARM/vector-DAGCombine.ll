@@ -123,3 +123,13 @@ define void @orVec(<3 x i8>* %A) nounwind {
   ret void
 }
 
+; The following test was hitting an assertion in the DAG combiner when
+; constant folding the multiply because the "sext undef" was translated to
+; a BUILD_VECTOR with i32 0 operands, which did not match the i16 operands
+; of the other BUILD_VECTOR.
+define i16 @foldBuildVectors() {
+  %1 = sext <8 x i8> undef to <8 x i16>
+  %2 = mul <8 x i16> %1, <i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255>
+  %3 = extractelement <8 x i16> %2, i32 0
+  ret i16 %3
+}
