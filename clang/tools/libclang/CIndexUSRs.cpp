@@ -336,11 +336,9 @@ void USRGenerator::VisitObjCContainerDecl(ObjCContainerDecl *D) {
         IgnoreResults = true;
         return;
       }
-      // Specially handle class extensions, which are anonymous categories.
-      // We want to mangle in the location to uniquely distinguish them.
       if (CD->IsClassExtension()) {
-        Out << "objc(ext)" << ID->getName() << '@';
-        GenLoc(CD);
+        // An extension semantically continues the interface of the class.
+        GenObjCClass(ID->getName());
       }
       else
         GenObjCCategory(ID->getName(), CD->getName());
