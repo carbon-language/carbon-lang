@@ -63,6 +63,12 @@ public:
     IndexCtx.handleReference(D, E->getLocation(), 0, ParentDC, E);
     return true;
   }
+
+  bool VisitObjCMessageExpr(ObjCMessageExpr *E) {
+    if (ObjCMethodDecl *MD = E->getMethodDecl())
+      IndexCtx.handleReference(MD, E->getSelectorStartLoc(), 0, ParentDC, E);
+    return true;
+  }
 };
 
 } // anonymous namespace
