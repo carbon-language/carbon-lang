@@ -1345,6 +1345,7 @@ def t2STRB_PRE  : T2Ipreldst<0, 0b00, 0, 1, (outs GPRnopc:$Rn_wb),
                         "$addr.base = $Rn_wb,@earlyclobber $Rn_wb", []> {
   let AsmMatchConverter = "cvtStWriteBackRegT2AddrModeImm8";
 }
+} // mayStore = 1, neverHasSideEffects = 1
 
 def t2STR_POST : T2Ipostldst<0, 0b10, 0, 0, (outs GPRnopc:$Rn_wb),
                             (ins rGPR:$Rt, addr_offset_none:$Rn,
@@ -1399,7 +1400,6 @@ def t2STRH_preidx: t2PseudoInst<(outs GPRnopc:$Rn_wb),
       [(set GPRnopc:$Rn_wb,
             (pre_truncsti16 rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$offset))]>;
 }
-} // mayStore = 1, neverHasSideEffects = 1
 
 // STRT, STRBT, STRHT all have offset mode (PUW=0b110) and are for disassembly
 // only.

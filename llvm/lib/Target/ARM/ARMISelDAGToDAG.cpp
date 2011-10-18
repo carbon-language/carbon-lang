@@ -2316,7 +2316,6 @@ SDNode *ARMDAGToDAGISel::SelectCMOVOp(SDNode *N) {
 SDNode *ARMDAGToDAGISel::SelectABSOp(SDNode *N){
   SDValue XORSrc0 = N->getOperand(0);
   SDValue XORSrc1 = N->getOperand(1);
-  DebugLoc DL = N->getDebugLoc();
   EVT VT = N->getValueType(0);
 
   if (DisableARMIntABS)

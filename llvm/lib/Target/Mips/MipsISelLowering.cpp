@@ -788,8 +788,6 @@ static MachineBasicBlock* ExpandCondMov(MachineInstr *MI, MachineBasicBlock *BB,
 MachineBasicBlock *
 MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                 MachineBasicBlock *BB) const {
-  DebugLoc dl = MI->getDebugLoc();
-
   switch (MI->getOpcode()) {
   default:
     assert(false && "Unexpected instr type to insert");
