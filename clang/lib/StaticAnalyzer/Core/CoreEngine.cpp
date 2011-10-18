@@ -475,11 +475,39 @@ GenericNodeBuilderImpl::generateNodeImpl(const ProgramState *state,
   return 0;
 }
 
+NodeBuilder::NodeBuilder(CoreEngine& e, ExplodedNode *N)
+  : Eng(e), Pred(N), Finalized(false) {
+  assert(!N->isSink());
+  Deferred.insert(N);
+}
+
+ExplodedNode* NodeBuilder::generateNodeImpl(const ProgramPoint &Loc,
+                                            const ProgramState *State,
+                                            ExplodedNode *Pred,
+                                            bool MarkAsSink) {
+  assert(Finalized == false &&
+         "We cannot create new nodes after the results have been finalized.");
+                                              
+  bool IsNew;
+  ExplodedNode *N = Eng.G->getNode(Loc, State, &IsNew);
+  N->addPredecessor(Pred, *Eng.G);
+  Deferred.erase(Pred);
+
+  if (MarkAsSink)
+    N->markAsSink();
+
+  if (IsNew && !N->isSink())
+    Deferred.insert(N);
+
+  return (IsNew ? N : 0);
+}
+
+
 StmtNodeBuilder::StmtNodeBuilder(const CFGBlock *b,
                                  unsigned idx,
                                  ExplodedNode *N,
                                  CoreEngine* e)
-  : Eng(*e), B(*b), Idx(idx), Pred(N),
+  : CommonNodeBuilder(e, N), B(*b), Idx(idx),
     PurgingDeadSymbols(false), BuildSinks(false), hasGeneratedNode(false),
     PointKind(ProgramPoint::PostStmtKind), Tag(0) {
   Deferred.insert(N);
@@ -574,12 +602,12 @@ StmtNodeBuilder::generateNodeInternal(const ProgramPoint &Loc,
 
 // This function generate a new ExplodedNode but not a new branch(block edge).
 ExplodedNode *BranchNodeBuilder::generateNode(const Stmt *Condition,
-                                              const ProgramState *State) {
+                                              const ProgramState *State,
+                                              const ProgramPointTag *Tag) {
   bool IsNew;
-  
   ExplodedNode *Succ 
-    = Eng.G->getNode(PostCondition(Condition, Pred->getLocationContext()), State,
-                     &IsNew);
+    = Eng.G->getNode(PostCondition(Condition, Pred->getLocationContext(), Tag),
+                     State, &IsNew);
   
   Succ->addPredecessor(Pred, *Eng.G);
   

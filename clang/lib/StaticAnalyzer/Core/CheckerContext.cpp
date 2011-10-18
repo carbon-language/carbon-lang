@@ -17,17 +17,13 @@ using namespace clang;
 using namespace ento;
 
 CheckerContext::~CheckerContext() {
-  // Do we need to autotransition?  'Dst' can get populated in a variety of
-  // ways, including 'addTransition()' adding the predecessor node to Dst
-  // without actually generated a new node.  We also shouldn't autotransition
-  // if we are building sinks or we generated a node and decided to not
-  // add it as a transition.
-  if (Dst.size() == size && !B.BuildSinks && !B.hasGeneratedNode) {
-    if (ST && ST != Pred->getState()) {
-      static SimpleProgramPointTag autoTransitionTag("CheckerContext : auto");
-      addTransition(ST, &autoTransitionTag);
-    }
-    else
-      Dst.Add(Pred);
+  // Copy the results into the Dst set.
+  for (NodeBuilder::iterator I = NB.results_begin(),
+                             E = NB.results_end(); I != E; ++I) {
+    Dst.Add(*I);
   }
+
+  // Copy the results  into the StmtNodeBuilder.
+  //TODO: This will be removed after we completely migrate NodeBuilder.
+  B.importNodesFromBuilder(NB);
 }
