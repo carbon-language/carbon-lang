@@ -16,7 +16,6 @@
 #include "llvm-objdump.h"
 #include "MCFunction.h"
 #include "llvm/Object/Archive.h"
-#include "llvm/Object/COFF.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringExtras.h"
@@ -64,9 +63,6 @@ Relocations("r", cl::desc("Display the relocation entries in the file"));
 
 static cl::opt<bool>
 SectionContents("s", cl::desc("Display the content of each section"));
-
-static cl::opt<bool>
-SymbolTable("t", cl::desc("Display the symbol table"));
 
 static cl::opt<bool>
 MachO("macho", cl::desc("Use MachO specific object file parser"));
@@ -415,113 +411,6 @@ static void PrintSectionContents(const ObjectFile *o) {
   }
 }
 
-static void PrintCOFFSymbolTable(const COFFObjectFile *coff) {
-  const coff_file_header *header;
-  if (error(coff->getHeader(header))) return;
-  int aux_count = 0;
-  const coff_symbol *symbol = 0;
-  for (int i = 0, e = header->NumberOfSymbols; i != e; ++i) {
-    if (aux_count--) {
-      // Figure out which type of aux this is.
-      if (symbol->StorageClass == COFF::IMAGE_SYM_CLASS_STATIC
-          && symbol->Value == 0) { // Section definition.
-        const coff_aux_section_definition *asd;
-        if (error(coff->getAuxSymbol<coff_aux_section_definition>(i, asd)))
-          return;
-        outs() << "AUX "
-               << format("scnlen 0x%x nreloc %d nlnno %d checksum 0x%x "
-                         , asd->Length
-                         , asd->NumberOfRelocations
-                         , asd->NumberOfLinenumbers
-                         , asd->CheckSum)
-               << format("assoc %d comdat %d\n", asd->Number, asd->Selection);
-      } else {
-        outs() << "AUX Unknown\n";
-      }
-    } else {
-      StringRef name;
-      if (error(coff->getSymbol(i, symbol))) return;
-      if (error(coff->getSymbolName(symbol, name))) return;
-      outs() << "[" << format("%2d", i) << "]"
-             << "(sec " << format("%2d", int16_t(symbol->SectionNumber)) << ")"
-             << "(fl 0x" << format("%02x", symbol->Type.BaseType) << ")"
-             << "(ty " << format("%3x", symbol->Type) << ")"
-             << "(scl " << format("%3x", symbol->StorageClass) << ") "
-             << "(nx " << unsigned(symbol->NumberOfAuxSymbols) << ") "
-             << "0x" << format("%08x", symbol->Value) << " "
-             << name << "\n";
-      aux_count = symbol->NumberOfAuxSymbols;
-    }
-  }
-}
-
-static void PrintSymbolTable(const ObjectFile *o) {
-  outs() << "SYMBOL TABLE:\n";
-
-  if (const COFFObjectFile *coff = dyn_cast<const COFFObjectFile>(o))
-    PrintCOFFSymbolTable(coff);
-  else {
-    error_code ec;
-    for (symbol_iterator si = o->begin_symbols(),
-                         se = o->end_symbols(); si != se; si.increment(ec)) {
-      if (error(ec)) return;
-      StringRef Name;
-      uint64_t Offset;
-      bool Global;
-      SymbolRef::Type Type;
-      bool Weak;
-      bool Absolute;
-      uint64_t Size;
-      section_iterator Section = o->end_sections();
-      if (error(si->getName(Name))) continue;
-      if (error(si->getOffset(Offset))) continue;
-      if (error(si->isGlobal(Global))) continue;
-      if (error(si->getType(Type))) continue;
-      if (error(si->isWeak(Weak))) continue;
-      if (error(si->isAbsolute(Absolute))) continue;
-      if (error(si->getSize(Size))) continue;
-      if (error(si->getSection(Section))) continue;
-
-      if (Offset == UnknownAddressOrSize)
-        Offset = 0;
-      char GlobLoc = ' ';
-      if (Type != SymbolRef::ST_External)
-        GlobLoc = Global ? 'g' : 'l';
-      char Debug = (Type == SymbolRef::ST_Debug || Type == SymbolRef::ST_File)
-                   ? 'd' : ' ';
-      char FileFunc = ' ';
-      if (Type == SymbolRef::ST_File)
-        FileFunc = 'f';
-      else if (Type == SymbolRef::ST_Function)
-        FileFunc = 'F';
-
-      outs() << format("%08x", Offset) << " "
-             << GlobLoc // Local -> 'l', Global -> 'g', Neither -> ' '
-             << (Weak ? 'w' : ' ') // Weak?
-             << ' ' // Constructor. Not supported yet.
-             << ' ' // Warning. Not supported yet.
-             << ' ' // Indirect reference to another symbol.
-             << Debug // Debugging (d) or dynamic (D) symbol.
-             << FileFunc // Name of function (F), file (f) or object (O).
-             << ' ';
-      if (Absolute)
-        outs() << "*ABS*";
-      else if (Section == o->end_sections())
-        outs() << "*UND*";
-      else {
-        StringRef SectionName;
-        if (error(Section->getName(SectionName)))
-          SectionName = "";
-        outs() << SectionName;
-      }
-      outs() << '\t'
-             << format("%08x ", Size)
-             << Name
-             << '\n';
-    }
-  }
-}
-
 static void DumpObject(const ObjectFile *o) {
   outs() << '\n';
   outs() << o->getFileName()
@@ -535,8 +424,6 @@ static void DumpObject(const ObjectFile *o) {
     PrintSectionHeaders(o);
   if (SectionContents)
     PrintSectionContents(o);
-  if (SymbolTable)
-    PrintSymbolTable(o);
 }
 
 /// @brief Dump each object file in \a a;
@@ -607,11 +494,7 @@ int main(int argc, char **argv) {
   if (InputFilenames.size() == 0)
     InputFilenames.push_back("a.out");
 
-  if (!Disassemble
-      && !Relocations
-      && !SectionHeaders
-      && !SectionContents
-      && !SymbolTable) {
+  if (!Disassemble && !Relocations && !SectionHeaders && !SectionContents) {
     cl::PrintHelpMessage();
     return 2;
   }
