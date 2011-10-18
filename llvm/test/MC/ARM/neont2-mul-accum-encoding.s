@@ -29,7 +29,7 @@
 	vmlal.u8	q8, d19, d18
 	vmlal.u16	q8, d19, d18
 	vmlal.u32	q8, d19, d18
-@	vmlal.s32	q0, d5, d10[0]
+	vmlal.s32	q0, d5, d10[0]
 
 @ CHECK: vmlal.s8	q8, d19, d18    @ encoding: [0xc3,0xef,0xa2,0x08]
 @ CHECK: vmlal.s16	q8, d19, d18    @ encoding: [0xd3,0xef,0xa2,0x08]
@@ -37,7 +37,7 @@
 @ CHECK: vmlal.u8	q8, d19, d18    @ encoding: [0xc3,0xff,0xa2,0x08]
 @ CHECK: vmlal.u16	q8, d19, d18    @ encoding: [0xd3,0xff,0xa2,0x08]
 @ CHECK: vmlal.u32	q8, d19, d18    @ encoding: [0xe3,0xff,0xa2,0x08]
-@ FIXME: vmlal.s32	q0, d5, d10[0]    @ encoding: [0xa5,0xef,0x4a,0x02]
+@ CHECK: vmlal.s32	q0, d5, d10[0]    @ encoding: [0xa5,0xef,0x4a,0x02]
 
 
 	vqdmlal.s16	q8, d19, d18
@@ -82,7 +82,7 @@
 	vmlsl.u8	q8, d19, d18
 	vmlsl.u16	q8, d19, d18
 	vmlsl.u32	q8, d19, d18
-@	vmlsl.u16	q11, d25, d1[3]
+	vmlsl.u16	q11, d25, d1[3]
 
 @ CHECK: vmlsl.s8	q8, d19, d18    @ encoding: [0xc3,0xef,0xa2,0x0a]
 @ CHECK: vmlsl.s16	q8, d19, d18    @ encoding: [0xd3,0xef,0xa2,0x0a]
@@ -90,7 +90,7 @@
 @ CHECK: vmlsl.u8	q8, d19, d18    @ encoding: [0xc3,0xff,0xa2,0x0a]
 @ CHECK: vmlsl.u16	q8, d19, d18    @ encoding: [0xd3,0xff,0xa2,0x0a]
 @ CHECK: vmlsl.u32	q8, d19, d18    @ encoding: [0xe3,0xff,0xa2,0x0a]
-@ FIXME: vmlsl.u16	q11, d25, d1[3]    @ encoding: [0xd9,0xff,0xe9,0x66]
+@ CHECK: vmlsl.u16	q11, d25, d1[3]    @ encoding: [0xd9,0xff,0xe9,0x66]
 
 
 	vqdmlsl.s16	q8, d19, d18
