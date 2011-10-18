@@ -43,7 +43,6 @@
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
-#include "llvm/Support/raw_ostream.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -2181,13 +2180,11 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             
             if (log)
             {
-                StreamString type_stream;
-                class_user_type.DumpTypeCode(&type_stream);
-                type_stream.Flush();
-                log->Printf("  FEVD[%u] Adding type for $__lldb_class: %s", current_id, type_stream.GetString().c_str());
+                std::string type_string = ASTDumper(pointer_target_qual_type).AsString();
+                log->Printf("  FEVD[%u] Adding type for $__lldb_class: %s", current_id, type_string.c_str());
             }
             
-            AddOneType(context, class_user_type, true);
+            AddOneType(context, class_user_type, current_id, true);
             
             return;
         }
@@ -2234,13 +2231,11 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             
             if (log)
             {
-                StreamString type_stream;
-                class_user_type.DumpTypeCode(&type_stream);
-                type_stream.Flush();
-                log->Printf("  FEVD[%u] Adding type for $__lldb_objc_class: %s", current_id, type_stream.GetString().c_str());
+                std::string type_string = ASTDumper(pointer_target_type).AsString();
+                log->Printf("  FEVD[%u] Adding type for $__lldb_objc_class: %s", current_id, type_string.c_str());
             }
             
-            AddOneType(context, class_user_type, false);
+            AddOneType(context, class_user_type, current_id, false);
             
             return;
         }
@@ -2298,12 +2293,14 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
         if (m_parser_vars->m_exe_ctx->GetRegisterContext())
         {
             const RegisterInfo *reg_info(m_parser_vars->m_exe_ctx->GetRegisterContext()->GetRegisterInfoByName(reg_name));
-            
-            if (log)
-                log->Printf("  FEVD[%u] Found register %s", current_id, reg_info->name);
-            
+                        
             if (reg_info)
+            {
+                if (log)
+                    log->Printf("  FEVD[%u] Found register %s", current_id, reg_info->name);
+                
                 AddOneRegister(context, reg_info, current_id);
+            }
         }
     }
     else
@@ -2512,7 +2509,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
         TypeFromUser user_type(type_sp->GetClangFullType(),
                                type_sp->GetClangAST());
             
-        AddOneType(context, user_type, false);
+        AddOneType(context, user_type, current_id, false);
     }
 }
 
@@ -2534,6 +2531,9 @@ ClangExpressionDeclMap::FindExternalLexicalDecls (const DeclContext *decl_contex
     
     static unsigned int invocation_id = 0;
     unsigned int current_id = invocation_id++;
+    
+    if (current_id == 1686)
+        fprintf(stderr, "here\n");
     
     if (log)
     {
@@ -2566,12 +2566,9 @@ ClangExpressionDeclMap::FindExternalLexicalDecls (const DeclContext *decl_contex
         return ELR_Failure;
     
     if (log)
-    {
-        std::string decl_print_string;
-        llvm::raw_string_ostream decl_print_stream(decl_print_string);
-        original_decl->print(decl_print_stream);
-        decl_print_stream.flush();
-        log->Printf("  FELD[%u] Original decl:\n%s", current_id, decl_print_string.c_str());
+    {       
+        log->Printf("  FELD[%u] Original decl:", current_id);
+        ASTDumper(original_decl).ToLog(log, "    ");
     }
     
     if (TagDecl *original_tag_decl = dyn_cast<TagDecl>(original_decl))
@@ -2597,10 +2594,7 @@ ClangExpressionDeclMap::FindExternalLexicalDecls (const DeclContext *decl_contex
         {
             if (log)
             {
-                std::string decl_print_string;
-                llvm::raw_string_ostream decl_print_stream(decl_print_string);
-                decl->print(decl_print_stream);
-                decl_print_stream.flush();
+                std::string decl_print_string = ASTDumper(decl).AsString();
                 
                 if (const NamedDecl *context_named_decl = dyn_cast<NamedDecl>(context_decl))
                     log->Printf("  FELD[%d] Adding [to %s] lexical decl %s", current_id, context_named_decl->getNameAsString().c_str(), decl_print_string.c_str());
@@ -2785,19 +2779,9 @@ ClangExpressionDeclMap::AddOneVariable (NameSearchContext &context, VariableSP v
     
     if (log)
     {
-        std::string var_decl_print_string;
-        llvm::raw_string_ostream var_decl_print_stream(var_decl_print_string);
-        var_decl->print(var_decl_print_stream);
-        var_decl_print_stream.flush();
+        std::string var_decl_print_string = ASTDumper(var_decl).AsString();
         
         log->Printf("  FEVD[%u] Found variable %s, returned %s", current_id, decl_name.c_str(), var_decl_print_string.c_str());
-
-        //if (log->GetVerbose())
-        //{
-        //    StreamString var_decl_dump_string;
-        //    ASTDumper::DumpDecl(var_decl_dump_string, var_decl);
-        //    log->Printf("%s\n", var_decl_dump_string.GetData());
-        //}
     }
 }
 
@@ -2825,10 +2809,7 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
     
     if (log)
     {
-        std::string var_decl_print_string;
-        llvm::raw_string_ostream var_decl_print_stream(var_decl_print_string);
-        var_decl->print(var_decl_print_stream);
-        var_decl_print_stream.flush();
+        std::string var_decl_print_string = ASTDumper(var_decl).AsString();
         
         log->Printf("  FEVD[%u] Added pvar %s, returned %s", current_id, pvar_sp->GetName().GetCString(), var_decl_print_string.c_str());
     }
@@ -2887,19 +2868,9 @@ ClangExpressionDeclMap::AddOneGenericVariable(NameSearchContext &context,
     
     if (log)
     {
-        std::string var_decl_print_string;
-        llvm::raw_string_ostream var_decl_print_stream(var_decl_print_string);
-        var_decl->print(var_decl_print_stream);
-        var_decl_print_stream.flush();
+        std::string var_decl_print_string = ASTDumper(var_decl).AsString();
         
         log->Printf("  FEVD[%u] Found variable %s, returned %s", current_id, decl_name.c_str(), var_decl_print_string.c_str());
-        
-        //if (log->GetVerbose())
-        //{
-        //    StreamString var_decl_dump_string;
-        //    ASTDumper::DumpDecl(var_decl_dump_string, var_decl);
-        //    log->Printf("%s\n", var_decl_dump_string.GetData());
-        //}
     }
 }
 
@@ -2931,10 +2902,7 @@ ClangExpressionDeclMap::ResolveUnknownTypes()
             
             if (log)
             {
-                std::string var_decl_print_string;
-                llvm::raw_string_ostream var_decl_print_stream(var_decl_print_string);
-                var_decl->print(var_decl_print_stream);
-                var_decl_print_stream.flush();
+                std::string var_decl_print_string = ASTDumper((clang::Decl*)var_decl).AsString();
             
                 log->Printf("Variable of unknown type now has Decl %s", var_decl_print_string.c_str());
             }
@@ -2997,10 +2965,7 @@ ClangExpressionDeclMap::AddOneRegister (NameSearchContext &context,
     
     if (log && log->GetVerbose())
     {
-        std::string var_decl_print_string;
-        llvm::raw_string_ostream var_decl_print_stream(var_decl_print_string);
-        var_decl->print(var_decl_print_stream);
-        var_decl_print_stream.flush();
+        std::string var_decl_print_string = ASTDumper(var_decl).AsString();
         
         log->Printf("  FEVD[%d] Added register %s, returned %s", current_id, context.m_decl_name.getAsString().c_str(), var_decl_print_string.c_str());
     }
@@ -3108,10 +3073,7 @@ ClangExpressionDeclMap::AddOneFunction (NameSearchContext &context,
         
     if (log)
     {
-        std::string fun_decl_print_string;
-        llvm::raw_string_ostream fun_decl_print_stream(fun_decl_print_string);
-        fun_decl->print(fun_decl_print_stream);
-        fun_decl_print_stream.flush();
+        std::string fun_decl_print_string = ASTDumper(fun_decl).AsString();
         
         log->Printf("  FEVD[%u] Found %s function %s, returned %s", 
                     current_id,

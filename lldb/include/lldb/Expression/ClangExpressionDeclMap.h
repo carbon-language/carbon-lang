@@ -1076,7 +1076,7 @@ private:
     AddOneType (NameSearchContext &context, 
                 TypeFromUser &type,
                 unsigned int current_id,
-                bool add_method = false);
+                bool add_method);
     
     //------------------------------------------------------------------
     /// Actually do the task of materializing or dematerializing the struct.
