@@ -1766,7 +1766,7 @@ bool Expr::isBoundMemberFunction(ASTContext &Ctx) const {
 }
 
 QualType Expr::findBoundMemberType(const Expr *expr) {
-  assert(expr->getType()->isSpecificPlaceholderType(BuiltinType::BoundMember));
+  assert(expr->hasPlaceholderType(BuiltinType::BoundMember));
 
   // Bound member expressions are always one of these possibilities:
   //   x->m      x.m      x->*y      x.*y

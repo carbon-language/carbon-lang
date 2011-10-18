@@ -701,13 +701,13 @@ void MicrosoftCXXNameMangler::mangleType(const BuiltinType *T) {
   case BuiltinType::WChar_S:
   case BuiltinType::WChar_U: Out << "_W"; break;
 
-  case BuiltinType::Overload:
+#define BUILTIN_TYPE(Id, SingletonId)
+#define PLACEHOLDER_TYPE(Id, SingletonId) \
+  case BuiltinType::Id:
+#include "clang/AST/BuiltinTypes.def"
   case BuiltinType::Dependent:
-  case BuiltinType::UnknownAny:
-  case BuiltinType::BoundMember:
-  case BuiltinType::ARCUnbridgedCast:
-    llvm_unreachable(
-           "Overloaded and dependent types shouldn't get to name mangling");
+    llvm_unreachable("placeholder types shouldn't get to name mangling");
+
   case BuiltinType::ObjCId: Out << "PAUobjc_object@@"; break;
   case BuiltinType::ObjCClass: Out << "PAUobjc_class@@"; break;
   case BuiltinType::ObjCSel: Out << "PAUobjc_selector@@"; break;
@@ -716,7 +716,7 @@ void MicrosoftCXXNameMangler::mangleType(const BuiltinType *T) {
   case BuiltinType::Char32:
   case BuiltinType::Half:
   case BuiltinType::NullPtr:
-    llvm_unreachable("Don't know how to mangle this type");
+    assert(0 && "Don't know how to mangle this type yet");
   }
 }
 

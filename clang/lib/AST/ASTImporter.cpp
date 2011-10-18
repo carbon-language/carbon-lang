@@ -1324,9 +1324,17 @@ QualType ASTNodeImporter::VisitType(const Type *T) {
 
 QualType ASTNodeImporter::VisitBuiltinType(const BuiltinType *T) {
   switch (T->getKind()) {
-  case BuiltinType::Void: return Importer.getToContext().VoidTy;
-  case BuiltinType::Bool: return Importer.getToContext().BoolTy;
-    
+#define SHARED_SINGLETON_TYPE(Expansion)
+#define BUILTIN_TYPE(Id, SingletonId) \
+  case BuiltinType::Id: return Importer.getToContext().SingletonId;
+#include "clang/AST/BuiltinTypes.def"
+
+  // FIXME: for Char16, Char32, and NullPtr, make sure that the "to"
+  // context supports C++.
+
+  // FIXME: for ObjCId, ObjCClass, and ObjCSel, make sure that the "to"
+  // context supports ObjC.
+
   case BuiltinType::Char_U:
     // The context we're importing from has an unsigned 'char'. If we're 
     // importing into a context with a signed 'char', translate to 
@@ -1336,23 +1344,6 @@ QualType ASTNodeImporter::VisitBuiltinType(const BuiltinType *T) {
     
     return Importer.getToContext().CharTy;
 
-  case BuiltinType::UChar: return Importer.getToContext().UnsignedCharTy;
-    
-  case BuiltinType::Char16:
-    // FIXME: Make sure that the "to" context supports C++!
-    return Importer.getToContext().Char16Ty;
-    
-  case BuiltinType::Char32: 
-    // FIXME: Make sure that the "to" context supports C++!
-    return Importer.getToContext().Char32Ty;
-
-  case BuiltinType::UShort: return Importer.getToContext().UnsignedShortTy;
-  case BuiltinType::UInt: return Importer.getToContext().UnsignedIntTy;
-  case BuiltinType::ULong: return Importer.getToContext().UnsignedLongTy;
-  case BuiltinType::ULongLong: 
-    return Importer.getToContext().UnsignedLongLongTy;
-  case BuiltinType::UInt128: return Importer.getToContext().UnsignedInt128Ty;
-    
   case BuiltinType::Char_S:
     // The context we're importing from has an unsigned 'char'. If we're 
     // importing into a context with a signed 'char', translate to 
@@ -1362,43 +1353,11 @@ QualType ASTNodeImporter::VisitBuiltinType(const BuiltinType *T) {
     
     return Importer.getToContext().CharTy;
 
-  case BuiltinType::SChar: return Importer.getToContext().SignedCharTy;
   case BuiltinType::WChar_S:
   case BuiltinType::WChar_U:
     // FIXME: If not in C++, shall we translate to the C equivalent of
     // wchar_t?
     return Importer.getToContext().WCharTy;
-    
-  case BuiltinType::Short : return Importer.getToContext().ShortTy;
-  case BuiltinType::Int : return Importer.getToContext().IntTy;
-  case BuiltinType::Long : return Importer.getToContext().LongTy;
-  case BuiltinType::LongLong : return Importer.getToContext().LongLongTy;
-  case BuiltinType::Int128 : return Importer.getToContext().Int128Ty;
-  case BuiltinType::Half: return Importer.getToContext().HalfTy;
-  case BuiltinType::Float: return Importer.getToContext().FloatTy;
-  case BuiltinType::Double: return Importer.getToContext().DoubleTy;
-  case BuiltinType::LongDouble: return Importer.getToContext().LongDoubleTy;
-
-  case BuiltinType::NullPtr:
-    // FIXME: Make sure that the "to" context supports C++0x!
-    return Importer.getToContext().NullPtrTy;
-    
-  case BuiltinType::Overload: return Importer.getToContext().OverloadTy;
-  case BuiltinType::Dependent: return Importer.getToContext().DependentTy;
-  case BuiltinType::UnknownAny: return Importer.getToContext().UnknownAnyTy;
-  case BuiltinType::BoundMember: return Importer.getToContext().BoundMemberTy;
-  case BuiltinType::ARCUnbridgedCast:
-    return Importer.getToContext().ARCUnbridgedCastTy;
-
-  case BuiltinType::ObjCId:
-    // FIXME: Make sure that the "to" context supports Objective-C!
-    return Importer.getToContext().ObjCBuiltinIdTy;
-    
-  case BuiltinType::ObjCClass:
-    return Importer.getToContext().ObjCBuiltinClassTy;
-
-  case BuiltinType::ObjCSel:
-    return Importer.getToContext().ObjCBuiltinSelTy;
   }
   
   return QualType();

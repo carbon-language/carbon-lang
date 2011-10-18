@@ -1677,86 +1677,9 @@ template <> inline const Class##Type *Type::castAs() const { \
 class BuiltinType : public Type {
 public:
   enum Kind {
-    Void,
-
-    Bool,     // This is bool and/or _Bool.
-    Char_U,   // This is 'char' for targets where char is unsigned.
-    UChar,    // This is explicitly qualified unsigned char.
-    WChar_U,  // This is 'wchar_t' for C++, when unsigned.
-    Char16,   // This is 'char16_t' for C++.
-    Char32,   // This is 'char32_t' for C++.
-    UShort,
-    UInt,
-    ULong,
-    ULongLong,
-    UInt128,  // __uint128_t
-
-    Char_S,   // This is 'char' for targets where char is signed.
-    SChar,    // This is explicitly qualified signed char.
-    WChar_S,  // This is 'wchar_t' for C++, when signed.
-    Short,
-    Int,
-    Long,
-    LongLong,
-    Int128,   // __int128_t
-
-    Half,     // This is the 'half' type in OpenCL,
-              // __fp16 in case of ARM NEON.
-    Float, Double, LongDouble,
-
-    NullPtr,  // This is the type of C++0x 'nullptr'.
-
-    /// The primitive Objective C 'id' type.  The user-visible 'id'
-    /// type is a typedef of an ObjCObjectPointerType to an
-    /// ObjCObjectType with this as its base.  In fact, this only ever
-    /// shows up in an AST as the base type of an ObjCObjectType.
-    ObjCId,
-
-    /// The primitive Objective C 'Class' type.  The user-visible
-    /// 'Class' type is a typedef of an ObjCObjectPointerType to an
-    /// ObjCObjectType with this as its base.  In fact, this only ever
-    /// shows up in an AST as the base type of an ObjCObjectType.
-    ObjCClass,
-
-    /// The primitive Objective C 'SEL' type.  The user-visible 'SEL'
-    /// type is a typedef of a PointerType to this.
-    ObjCSel,
-
-    /// This represents the type of an expression whose type is
-    /// totally unknown, e.g. 'T::foo'.  It is permitted for this to
-    /// appear in situations where the structure of the type is
-    /// theoretically deducible.
-    Dependent,
-
-    /// The type of an unresolved overload set.  A placeholder type.
-    /// Expressions with this type have one of the following basic
-    /// forms, with parentheses generally permitted:
-    ///   foo          # possibly qualified, not if an implicit access
-    ///   foo          # possibly qualified, not if an implicit access
-    ///   &foo         # possibly qualified, not if an implicit access
-    ///   x->foo       # only if might be a static member function
-    ///   &x->foo      # only if might be a static member function
-    ///   &Class::foo  # when a pointer-to-member; sub-expr also has this type
-    /// OverloadExpr::find can be used to analyze the expression.
-    Overload,
-
-    /// The type of a bound C++ non-static member function.
-    /// A placeholder type.  Expressions with this type have one of the
-    /// following basic forms:
-    ///   foo          # if an implicit access
-    ///   x->foo       # if only contains non-static members
-    BoundMember,
-
-    /// __builtin_any_type.  A placeholder type.  Useful for clients
-    /// like debuggers that don't know what type to give something.
-    /// Only a small number of operations are valid on expressions of
-    /// unknown type, most notably explicit casts.
-    UnknownAny,
-
-    /// The type of a cast which, in ARC, would normally require a
-    /// __bridge, but which might be okay depending on the immediate
-    /// context.
-    ARCUnbridgedCast
+#define BUILTIN_TYPE(Id, SingletonId) Id,
+#define LAST_BUILTIN_TYPE(Id) LastKind = Id
+#include "clang/AST/BuiltinTypes.def"
   };
 
 public:

@@ -1343,7 +1343,7 @@ bool CursorVisitor::VisitBuiltinTypeLoc(BuiltinTypeLoc TL) {
   // Some builtin types (such as Objective-C's "id", "sel", and
   // "Class") have associated declarations. Create cursors for those.
   QualType VisitType;
-  switch (TL.getType()->getAs<BuiltinType>()->getKind()) {
+  switch (TL.getTypePtr()->getKind()) {
   case BuiltinType::Void:
   case BuiltinType::Bool:
   case BuiltinType::Char_U:

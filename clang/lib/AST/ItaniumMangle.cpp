@@ -1735,11 +1735,11 @@ void CXXNameMangler::mangleType(const BuiltinType *T) {
   case BuiltinType::LongDouble: Out << 'e'; break;
   case BuiltinType::NullPtr: Out << "Dn"; break;
 
-  case BuiltinType::Overload:
+#define BUILTIN_TYPE(Id, SingletonId)
+#define PLACEHOLDER_TYPE(Id, SingletonId) \
+  case BuiltinType::Id:
+#include "clang/AST/BuiltinTypes.def"
   case BuiltinType::Dependent:
-  case BuiltinType::BoundMember:
-  case BuiltinType::UnknownAny:
-  case BuiltinType::ARCUnbridgedCast:
     llvm_unreachable("mangling a placeholder type");
     break;
   case BuiltinType::ObjCId: Out << "11objc_object"; break;

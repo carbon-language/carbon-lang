@@ -321,16 +321,12 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT) {
   unsigned Encoding = 0;
   const char *BTName = NULL;
   switch (BT->getKind()) {
+#define BUILTIN_TYPE(Id, SingletonId)
+#define PLACEHOLDER_TYPE(Id, SingletonId) \
+  case BuiltinType::Id:
+#include "clang/AST/BuiltinTypes.def"
   case BuiltinType::Dependent:
-    llvm_unreachable("Unexpected builtin type Dependent");
-  case BuiltinType::Overload:
-    llvm_unreachable("Unexpected builtin type Overload");
-  case BuiltinType::BoundMember:
-    llvm_unreachable("Unexpected builtin type BoundMember");
-  case BuiltinType::UnknownAny:
-    llvm_unreachable("Unexpected builtin type UnknownAny");
-  case BuiltinType::ARCUnbridgedCast:
-    llvm_unreachable("Unexpected builtin type ARCUnbridgedCast");
+    llvm_unreachable("Unexpected builtin type");
   case BuiltinType::NullPtr:
     return DBuilder.
       createNullPtrType(BT->getName(CGM.getContext().getLangOptions()));

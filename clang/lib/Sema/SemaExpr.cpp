@@ -10092,36 +10092,11 @@ ExprResult Sema::CheckPlaceholderExpr(Expr *E) {
   case BuiltinType::UnknownAny:
     return diagnoseUnknownAnyExpr(*this, E);
 
-  // Everything else should be impossible.  TODO: metaprogram this.
-  case BuiltinType::Void:
-  case BuiltinType::Bool:
-  case BuiltinType::Char_U:
-  case BuiltinType::UChar:
-  case BuiltinType::WChar_U:
-  case BuiltinType::Char16:
-  case BuiltinType::Char32:
-  case BuiltinType::UShort:
-  case BuiltinType::UInt:
-  case BuiltinType::ULong:
-  case BuiltinType::ULongLong:
-  case BuiltinType::UInt128:
-  case BuiltinType::Char_S:
-  case BuiltinType::SChar:
-  case BuiltinType::WChar_S:
-  case BuiltinType::Short:
-  case BuiltinType::Int:
-  case BuiltinType::Long:
-  case BuiltinType::LongLong:
-  case BuiltinType::Int128:
-  case BuiltinType::Half:
-  case BuiltinType::Float:
-  case BuiltinType::Double:
-  case BuiltinType::LongDouble:
-  case BuiltinType::NullPtr:
-  case BuiltinType::ObjCId:
-  case BuiltinType::ObjCClass:
-  case BuiltinType::ObjCSel:
-  case BuiltinType::Dependent:
+  // Everything else should be impossible.
+#define BUILTIN_TYPE(Id, SingletonId) \
+  case BuiltinType::Id:
+#define PLACEHOLDER_TYPE(Id, SingletonId)
+#include "clang/AST/BuiltinTypes.def"
     break;
   }
 
