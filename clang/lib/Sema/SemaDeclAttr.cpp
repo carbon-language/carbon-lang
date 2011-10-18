@@ -805,7 +805,7 @@ static void handleIBOutletCollection(Sema &S, Decl *D,
 
   IdentifierInfo *II = Attr.getParameterName();
   if (!II)
-    II = &S.Context.Idents.get("id");
+    II = &S.Context.Idents.get("NSObject");
   
   ParsedType TypeRep = S.getTypeName(*II, Attr.getLoc(), 
                         S.getScopeForContext(D->getDeclContext()->getParent()));
@@ -818,8 +818,7 @@ static void handleIBOutletCollection(Sema &S, Decl *D,
   // FIXME. Gnu attribute extension ignores use of builtin types in
   // attributes. So, __attribute__((iboutletcollection(char))) will be
   // treated as __attribute__((iboutletcollection())).
-  if (!QT->isObjCIdType() && !QT->isObjCClassType() &&
-      !QT->isObjCObjectType()) {
+  if (!QT->isObjCIdType() && !QT->isObjCObjectType()) {
     S.Diag(Attr.getLoc(), diag::err_iboutletcollection_type) << II;
     return;
   }

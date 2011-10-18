@@ -2,6 +2,8 @@
 // RUN: %clang_cc1 -x objective-c++ -fsyntax-only -verify %s
 // rdar://8308053
 
+@class NSObject;
+
 @interface I {
     __attribute__((iboutletcollection(I))) id ivar1;
     __attribute__((iboutletcollection(id))) id ivar2;
