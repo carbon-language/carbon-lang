@@ -203,7 +203,6 @@ class ASTContext : public llvm::RefCountedBase<ASTContext> {
   mutable TypedefDecl *ObjCSelDecl;
 
   QualType ObjCProtoType;
-  const RecordType *ProtoStructType;
 
   /// \brief The typedef for the predefined 'Class' type.
   mutable TypedefDecl *ObjCClassDecl;
