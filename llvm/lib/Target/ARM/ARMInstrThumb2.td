@@ -3440,7 +3440,7 @@ def t2LDRpci_pic : PseudoInst<(outs rGPR:$dst), (ins i32imm:$addr, pclabel:$cp),
                                            imm:$cp))]>,
                Requires<[IsThumb2]>;
 
-// Pseudo isntruction that combines movs + predicated rsbmi 
+// Pseudo isntruction that combines movs + predicated rsbmi
 // to implement integer ABS
 let usesCustomInserter = 1, Defs = [CPSR] in {
 def t2ABS : PseudoInst<(outs rGPR:$dst), (ins rGPR:$src),

@@ -6242,14 +6242,14 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     // diamond control-flow pattern.  The incoming instruction knows the
     // source vreg to test against 0, the destination vreg to set,
     // the condition code register to branch on, the
-    // true/false values to select between, and a branch opcode to use. 
+    // true/false values to select between, and a branch opcode to use.
     // It transforms
     //     V1 = ABS V0
     // into
     //     V2 = MOVS V0
     //     BCC                      (branch to SinkBB if V0 >= 0)
     //     RSBBB: V3 = RSBri V2, 0  (compute ABS if V2 < 0)
-    //     SinkBB: V1 = PHI(V2, V3)     
+    //     SinkBB: V1 = PHI(V2, V3)
     const BasicBlock *LLVM_BB = BB->getBasicBlock();
     MachineFunction::iterator BBI = BB;
     ++BBI;
@@ -6290,19 +6290,19 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
       .addReg(ARM::CPSR, RegState::Define);
 
     // insert a bcc with opposite CC to ARMCC::MI at the end of BB
-    BuildMI(BB, dl, 
+    BuildMI(BB, dl,
       TII->get(isThumb2 ? ARM::t2Bcc : ARM::Bcc)).addMBB(SinkBB)
       .addImm(ARMCC::getOppositeCondition(ARMCC::MI)).addReg(ARM::CPSR);
 
     // insert rsbri in RSBBB
     // Note: BCC and rsbri will be converted into predicated rsbmi
     // by if-conversion pass
-    BuildMI(*RSBBB, RSBBB->begin(), dl, 
+    BuildMI(*RSBBB, RSBBB->begin(), dl,
       TII->get(isThumb2 ? ARM::t2RSBri : ARM::RSBri), NewRsbDstReg)
       .addReg(NewMovDstReg, RegState::Kill)
       .addImm(0).addImm((unsigned)ARMCC::AL).addReg(0).addReg(0);
 
-    // insert PHI in SinkBB, 
+    // insert PHI in SinkBB,
     // reuse ABSDstReg to not change uses of ABS instruction
     BuildMI(*SinkBB, SinkBB->begin(), dl,
       TII->get(ARM::PHI), ABSDstReg)
@@ -6310,7 +6310,7 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
       .addReg(NewMovDstReg).addMBB(BB);
 
     // remove ABS instruction
-    MI->eraseFromParent(); 
+    MI->eraseFromParent();
 
     // return last added BB
     return SinkBB;

@@ -83,7 +83,7 @@ class Register<string n, list<string> altNames = []> {
   // CostPerUse - Additional cost of instructions using this register compared
   // to other registers in its class. The register allocator will try to
   // minimize the number of instructions using a register with a CostPerUse.
-  // This is used by the x86-64 and ARM Thumb targets where some registers 
+  // This is used by the x86-64 and ARM Thumb targets where some registers
   // require larger instruction encodings.
   int CostPerUse = 0;
 }
