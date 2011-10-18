@@ -12,6 +12,7 @@
 #include "lldb/Host/Endian.h"
 
 #include "ProcessLinux.h"
+#include "ProcessLinuxLog.h"
 #include "ProcessMonitor.h"
 #include "RegisterContextLinux_i386.h"
 
@@ -31,7 +32,6 @@ enum
     gpr_esp,
     gpr_ss,
     gpr_eflags,
-    gpr_orig_ax,
     gpr_eip,
     gpr_cs,
     gpr_ds,
@@ -189,7 +189,6 @@ uint32_t g_gpr_regnums[k_num_gpr_registers] =
     gpr_esp,
     gpr_ss,
     gpr_eflags,
-    gpr_orig_ax,
     gpr_eip,
     gpr_cs,
     gpr_ds,
@@ -330,12 +329,17 @@ g_register_infos[k_num_registers] =
 
 };
 
+#ifndef NDEBUG
+static size_t k_num_register_infos = (sizeof(g_register_infos)/sizeof(RegisterInfo));
+#endif
+
 static unsigned GetRegOffset(unsigned reg)
 {
     assert(reg < k_num_registers && "Invalid register number.");
     return g_register_infos[reg].byte_offset;
 }
 
+#if 0 // These functions are currently not in use.
 static unsigned GetRegSize(unsigned reg)
 {
     assert(reg < k_num_registers && "Invalid register number.");
@@ -351,6 +355,7 @@ static bool IsFPR(unsigned reg)
 {
     return (k_first_fpr <= reg && reg <= k_last_fpr);
 }
+#endif
 
 
 RegisterContextLinux_i386::RegisterContextLinux_i386(Thread &thread,
@@ -383,12 +388,14 @@ RegisterContextLinux_i386::InvalidateAllRegisters()
 size_t
 RegisterContextLinux_i386::GetRegisterCount()
 {
+    assert(k_num_register_infos == k_num_registers);
     return k_num_registers;
 }
 
 const RegisterInfo *
 RegisterContextLinux_i386::GetRegisterInfoAtIndex(uint32_t reg)
 {
+    assert(k_num_register_infos == k_num_registers);
     if (reg < k_num_registers)
         return &g_register_infos[reg];
     else
@@ -408,6 +415,26 @@ RegisterContextLinux_i386::GetRegisterSet(uint32_t set)
         return &g_reg_sets[set];
     else
         return NULL;
+}
+
+unsigned
+RegisterContextLinux_i386::GetRegisterIndexFromOffset(unsigned offset)
+{
+    unsigned reg;
+    for (reg = 0; reg < k_num_registers; reg++)
+    {
+        if (g_register_infos[reg].byte_offset == offset)
+            break;
+    }
+    assert(reg < k_num_registers && "Invalid register offset.");
+    return reg;
+}
+
+const char *
+RegisterContextLinux_i386::GetRegisterName(unsigned reg)
+{
+    assert(reg < k_num_registers && "Invalid register offset.");
+    return g_register_infos[reg].name;
 }
 
 bool
@@ -588,11 +615,31 @@ RegisterContextLinux_i386::HardwareSingleStep(bool enable)
     return WriteRegisterFromUnsigned(gpr_eflags, eflags);
 }
 
+void
+RegisterContextLinux_i386::LogGPR(const char *title)
+{
+    LogSP log (ProcessLinuxLog::GetLogIfAllCategoriesSet (LINUX_LOG_REGISTERS));
+    if (log)
+    {
+        if (title)
+            log->Printf ("%s", title);
+        for (uint32_t i=0; i<k_num_gpr_registers; i++)
+        {
+            uint32_t reg = gpr_eax + i;
+            log->Printf("%12s = 0x%8.8x", g_register_infos[reg].name, (&user.regs)[reg]);
+        }
+    }
+}
+
 bool
 RegisterContextLinux_i386::ReadGPR()
 {
-     ProcessMonitor &monitor = GetMonitor();
-     return monitor.ReadGPR(&user.regs);
+    bool result;
+
+    ProcessMonitor &monitor = GetMonitor();
+    result = monitor.ReadGPR(&user.regs);
+    LogGPR("RegisterContextLinux_i386::ReadGPR()");
+    return result;
 }
 
 bool

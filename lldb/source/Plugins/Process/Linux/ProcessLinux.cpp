@@ -119,7 +119,7 @@ ProcessLinux::DoAttachToProcessWithID(lldb::pid_t pid)
 
     LogSP log (ProcessLinuxLog::GetLogIfAllCategoriesSet (LINUX_LOG_PROCESS));
     if (log && log->GetMask().Test(LINUX_LOG_VERBOSE))
-        log->Printf ("ProcessLinux::%s (pid = %i)", __FUNCTION__, GetID());
+        log->Printf ("ProcessLinux::%s(pid = %i)", __FUNCTION__, GetID());
 
     m_monitor = new ProcessMonitor(this, pid, error);
 
@@ -328,6 +328,10 @@ ProcessLinux::SendMessage(const ProcessMessage &message)
 void
 ProcessLinux::RefreshStateAfterStop()
 {
+    LogSP log (ProcessLinuxLog::GetLogIfAllCategoriesSet (LINUX_LOG_PROCESS));
+    if (log && log->GetMask().Test(LINUX_LOG_VERBOSE))
+        log->Printf ("ProcessLinux::%s()", __FUNCTION__);
+
     Mutex::Locker lock(m_message_mutex);
     if (m_message_queue.empty())
         return;
@@ -335,10 +339,15 @@ ProcessLinux::RefreshStateAfterStop()
     ProcessMessage &message = m_message_queue.front();
 
     // Resolve the thread this message corresponds to and pass it along.
+    // FIXME: we're really dealing with the pid here.  This should get
+    // fixed when this code is fixed to handle multiple threads.
     lldb::tid_t tid = message.GetTID();
+    if (log)
+        log->Printf ("ProcessLinux::%s() pid = %i", __FUNCTION__, tid);
     LinuxThread *thread = static_cast<LinuxThread*>(
         GetThreadList().FindThreadByID(tid, false).get());
 
+    assert(thread);
     thread->Notify(message);
 
     m_message_queue.pop();
@@ -355,6 +364,7 @@ size_t
 ProcessLinux::DoReadMemory(addr_t vm_addr,
                            void *buf, size_t size, Error &error)
 {
+    assert(m_monitor);
     return m_monitor->ReadMemory(vm_addr, buf, size, error);
 }
 
@@ -362,6 +372,7 @@ size_t
 ProcessLinux::DoWriteMemory(addr_t vm_addr, const void *buf, size_t size,
                             Error &error)
 {
+    assert(m_monitor);
     return m_monitor->WriteMemory(vm_addr, buf, size, error);
 }
 
@@ -453,12 +464,22 @@ ProcessLinux::UpdateThreadListIfNeeded()
 uint32_t
 ProcessLinux::UpdateThreadList(ThreadList &old_thread_list, ThreadList &new_thread_list)
 {
-    // FIXME: Should this be implemented?
     LogSP log (ProcessLinuxLog::GetLogIfAllCategoriesSet (LINUX_LOG_THREAD));
     if (log && log->GetMask().Test(LINUX_LOG_VERBOSE))
-        log->Printf ("ProcessLinux::%s (pid = %i)", __FUNCTION__, GetID());
+        log->Printf ("ProcessLinux::%s() (pid = %i)", __FUNCTION__, GetID());
 
-    return 0;
+    // Update the process thread list with this new thread.
+    // FIXME: We should be using tid, not pid.
+    assert(m_monitor);
+    ThreadSP thread_sp (old_thread_list.FindThreadByID (GetID(), false));
+    if (!thread_sp)
+        thread_sp.reset(new LinuxThread(*this, GetID()));
+
+    if (log && log->GetMask().Test(LINUX_LOG_VERBOSE))
+        log->Printf ("ProcessLinux::%s() updated pid = %i", __FUNCTION__, GetID());
+    new_thread_list.AddThread(thread_sp);
+
+    return new_thread_list.GetSize(false);
 }
 
 ByteOrder

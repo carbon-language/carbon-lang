@@ -140,6 +140,18 @@ public:
     static const char *
     GetCrashReasonString(CrashReason reason);
 
+    const char *
+    PrintCrashReason() const;
+
+    static const char *
+    PrintCrashReason(CrashReason reason);
+
+    const char *
+    PrintKind() const;
+
+    static const char *
+    PrintKind(Kind);
+
 private:
     ProcessMessage(lldb::tid_t tid, Kind kind, 
                    int status = 0, lldb::addr_t addr = 0)

@@ -89,3 +89,157 @@ ProcessMessage::GetCrashReasonString(CrashReason reason)
 
     return str;
 }
+
+const char *
+ProcessMessage::PrintCrashReason(CrashReason reason)
+{
+#ifdef LLDB_CONFIGURATION_BUILDANDINTEGRATION
+    // Just return the code in asci for integration builds.
+    chcar str[8];
+    sprintf(str, "%d", reason);
+#else
+    const char *str = NULL;
+
+    switch (reason)
+    {
+    default:
+        assert(false && "invalid CrashReason");
+        break;
+
+        case eInvalidCrashReason:
+            str = "eInvalidCrashReason";
+            break;
+
+        // SIGSEGV crash rcase easons.
+        case eInvalidAddress:
+            str = "eInvalidAddress";
+            break;
+        case ePrivilegedAddress:
+            str = "ePrivilegedAddress";
+            break;
+
+        // SIGILL crash rcase easons.
+        case eIllegalOpcode:
+            str = "eIllegalOpcode";
+            break;
+        case eIllegalOperand:
+            str = "eIllegalOperand";
+            break;
+        case eIllegalAddressingMode:
+            str = "eIllegalAddressingMode";
+            break;
+        case eIllegalTrap:
+            str = "eIllegalTrap";
+            break;
+        case ePrivilegedOpcode:
+            str = "ePrivilegedOpcode";
+            break;
+        case ePrivilegedRegister:
+            str = "ePrivilegedRegister";
+            break;
+        case eCoprocessorError:
+            str = "eCoprocessorError";
+            break;
+        case eInternalStackError:
+            str = "eInternalStackError";
+            break;
+
+        // SIGBUS crash rcase easons:
+        case eIllegalAlignment:
+            str = "eIllegalAlignment";
+            break;
+        case eIllegalAddress:
+            str = "eIllegalAddress";
+            break;
+        case eHardwareError:
+            str = "eHardwareError";
+            break;
+
+        // SIGFPE crash rcase easons:
+        case eIntegerDivideByZero:
+            str = "eIntegerDivideByZero";
+            break;
+        case eIntegerOverflow:
+            str = "eIntegerOverflow";
+            break;
+        case eFloatDivideByZero:
+            str = "eFloatDivideByZero";
+            break;
+        case eFloatOverflow:
+            str = "eFloatOverflow";
+            break;
+        case eFloatUnderflow:
+            str = "eFloatUnderflow";
+            break;
+        case eFloatInexactResult:
+            str = "eFloatInexactResult";
+            break;
+        case eFloatInvalidOperation:
+            str = "eFloatInvalidOperation";
+            break;
+        case eFloatSubscriptRange:
+            str = "eFloatSubscriptRange";
+            break;
+    }
+#endif
+
+    return str;
+}
+
+const char *
+ProcessMessage::PrintCrashReason() const
+{
+    return PrintCrashReason(m_crash_reason);
+}
+
+const char *
+ProcessMessage::PrintKind(Kind kind)
+{
+#ifdef LLDB_CONFIGURATION_BUILDANDINTEGRATION
+    // Just return the code in asci for integration builds.
+    chcar str[8];
+    sprintf(str, "%d", reason);
+#else
+    const char *str = NULL;
+
+    switch (kind)
+    {
+    default:
+        assert(false && "invalid Kind");
+        break;
+
+    case eInvalidMessage:
+        str = "eInvalidMessage";
+        break;
+    case eExitMessage:
+        str = "eExitMessage";
+        break;
+    case eLimboMessage:
+        str = "eLimboMessage";
+        break;
+    case eSignalMessage:
+        str = "eSignalMessage";
+        break;
+    case eSignalDeliveredMessage:
+        str = "eSignalDeliveredMessage";
+        break;
+    case eTraceMessage:
+        str = "eTraceMessage";
+        break;
+    case eBreakpointMessage:
+        str = "eBreakpointMessage";
+        break;
+    case eCrashMessage:
+        str = "eCrashMessage";
+        break;
+    }
+#endif
+
+    return str;
+}
+
+const char *
+ProcessMessage::PrintKind() const
+{
+    return PrintKind(m_kind);
+}

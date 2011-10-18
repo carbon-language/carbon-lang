@@ -13,14 +13,15 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Core/Debugger.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Target.h"
-
 #include "LinuxStopInfo.h"
 #include "LinuxThread.h"
 #include "ProcessLinux.h"
+#include "ProcessLinuxLog.h"
 #include "ProcessMonitor.h"
 #include "RegisterContextLinux_i386.h"
 #include "RegisterContextLinux_x86_64.h"
@@ -33,6 +34,9 @@ LinuxThread::LinuxThread(Process &process, lldb::tid_t tid)
     : Thread(process, tid),
       m_frame_ap(0)
 {
+    LogSP log (ProcessLinuxLog::GetLogIfAllCategoriesSet (LINUX_LOG_THREAD));
+    if (log && log->GetMask().Test(LINUX_LOG_VERBOSE))
+        log->Printf ("LinuxThread::%s (tid = %i)", __FUNCTION__, tid);
 }
 
 LinuxThread::~LinuxThread()
@@ -50,6 +54,14 @@ LinuxThread::GetMonitor()
 void
 LinuxThread::RefreshStateAfterStop()
 {
+    LogSP log (ProcessLinuxLog::GetLogIfAllCategoriesSet (LINUX_LOG_THREAD));
+    if (log && log->GetMask().Test(LINUX_LOG_VERBOSE))
+        log->Printf ("LinuxThread::%s ()", __FUNCTION__);
+
+    // Let all threads recover from stopping and do any clean up based
+    // on the previous thread state (if any).
+    ProcessLinux &process = static_cast<ProcessLinux&>(GetProcess());
+    process.GetThreadList().RefreshStateAfterStop();
 }
 
 const char *
@@ -91,13 +103,20 @@ LinuxThread::CreateRegisterContextForFrame(lldb_private::StackFrame *frame)
     lldb::RegisterContextSP reg_ctx_sp;
     uint32_t concrete_frame_idx = 0;
 
+    LogSP log (ProcessLinuxLog::GetLogIfAllCategoriesSet (LINUX_LOG_THREAD));
+    if (log && log->GetMask().Test(LINUX_LOG_VERBOSE))
+        log->Printf ("LinuxThread::%s ()", __FUNCTION__);
+
     if (frame)
         concrete_frame_idx = frame->GetConcreteFrameIndex();
 
     if (concrete_frame_idx == 0)
         reg_ctx_sp = GetRegisterContext();
     else
+    {
+        assert(GetUnwinder());
         reg_ctx_sp = GetUnwinder()->CreateRegisterContextForFrame(frame);
+    }
 
     return reg_ctx_sp;
 }
@@ -136,6 +155,10 @@ LinuxThread::Resume()
     ProcessMonitor &monitor = GetMonitor();
     bool status;
 
+    LogSP log (ProcessLinuxLog::GetLogIfAllCategoriesSet (LINUX_LOG_THREAD));
+    if (log && log->GetMask().Test(LINUX_LOG_VERBOSE))
+        log->Printf ("LinuxThread::%s ()", __FUNCTION__);
+
     switch (resume_state)
     {
     default:
@@ -160,6 +183,10 @@ LinuxThread::Resume()
 void
 LinuxThread::Notify(const ProcessMessage &message)
 {
+    LogSP log (ProcessLinuxLog::GetLogIfAllCategoriesSet (LINUX_LOG_THREAD));
+    if (log)
+        log->Printf ("LinuxThread::%s () message kind = '%s'", __FUNCTION__, message.PrintKind());
+
     switch (message.GetKind())
     {
     default:
@@ -196,14 +223,20 @@ void
 LinuxThread::BreakNotify(const ProcessMessage &message)
 {
     bool status;
+    LogSP log (ProcessLinuxLog::GetLogIfAllCategoriesSet (LINUX_LOG_THREAD));
 
+    assert(GetRegisterContextLinux());
     status = GetRegisterContextLinux()->UpdateAfterBreakpoint();
     assert(status && "Breakpoint update failed!");
 
     // With our register state restored, resolve the breakpoint object
     // corresponding to our current PC.
+    assert(GetRegisterContext());
     lldb::addr_t pc = GetRegisterContext()->GetPC();
+    if (log)
+        log->Printf ("LinuxThread::%s () PC=0x%8.8llx", __FUNCTION__, pc);
     lldb::BreakpointSiteSP bp_site(GetProcess().GetBreakpointSiteList().FindByAddress(pc));
+    assert(bp_site);
     lldb::break_id_t bp_id = bp_site->GetID();
     assert(bp_site && bp_site->ValidForThisThread(this));
 
@@ -250,7 +283,68 @@ LinuxThread::CrashNotify(const ProcessMessage &message)
 
     assert(message.GetKind() == ProcessMessage::eCrashMessage);
 
+    LogSP log (ProcessLinuxLog::GetLogIfAllCategoriesSet (LINUX_LOG_THREAD));
+    if (log)
+        log->Printf ("LinuxThread::%s () signo = %i, reason = '%s'", __FUNCTION__, signo, message.PrintCrashReason());
+
     m_stop_info = lldb::StopInfoSP(new LinuxCrashStopInfo(
                                        *this, signo, message.GetCrashReason()));
     SetResumeSignal(signo);
 }
+
+unsigned
+LinuxThread::GetRegisterIndexFromOffset(unsigned offset)
+{
+    unsigned reg;
+    ArchSpec arch = Host::GetArchitecture();
+
+    switch (arch.GetCore())
+    {
+    default:
+        assert(false && "CPU type not supported!");
+        break;
+
+    case ArchSpec::eCore_x86_32_i386:
+    case ArchSpec::eCore_x86_32_i486:
+    case ArchSpec::eCore_x86_32_i486sx:
+        reg = RegisterContextLinux_i386::GetRegisterIndexFromOffset(offset);
+        break;
+
+    case ArchSpec::eCore_x86_64_x86_64:
+        reg = RegisterContextLinux_x86_64::GetRegisterIndexFromOffset(offset);
+        break;
+    }
+    return reg;
+}
+
+const char *
+LinuxThread::GetRegisterName(unsigned reg)
+{
+    const char * name;
+    ArchSpec arch = Host::GetArchitecture();
+
+    switch (arch.GetCore())
+    {
+    default:
+        assert(false && "CPU type not supported!");
+        break;
+
+    case ArchSpec::eCore_x86_32_i386:
+    case ArchSpec::eCore_x86_32_i486:
+    case ArchSpec::eCore_x86_32_i486sx:
+        name = RegisterContextLinux_i386::GetRegisterName(reg);
+        break;
+
+    case ArchSpec::eCore_x86_64_x86_64:
+        name = RegisterContextLinux_x86_64::GetRegisterName(reg);
+        break;
+    }
+    return name;
+}
+
+const char *
+LinuxThread::GetRegisterNameFromOffset(unsigned offset)
+{
+    return GetRegisterName(GetRegisterIndexFromOffset(offset));
+}
+

@@ -405,6 +405,7 @@ static unsigned GetRegOffset(unsigned reg)
     return g_register_infos[reg].byte_offset;
 }
 
+#if 0 // These functions are currently not being used.
 static unsigned GetRegSize(unsigned reg)
 {
     assert(reg < k_num_registers && "Invalid register number.");
@@ -420,6 +421,7 @@ static bool IsFPR(unsigned reg)
 {
     return (k_first_fpr <= reg && reg <= k_last_fpr);
 }
+#endif
 
 RegisterContextLinux_x86_64::RegisterContextLinux_x86_64(Thread &thread,
                                                          uint32_t concrete_frame_idx)
@@ -476,6 +478,26 @@ RegisterContextLinux_x86_64::GetRegisterSet(uint32_t set)
         return &g_reg_sets[set];
     else
         return NULL;
+}
+
+unsigned
+RegisterContextLinux_x86_64::GetRegisterIndexFromOffset(unsigned offset)
+{
+    unsigned reg;
+    for (reg = 0; reg < k_num_registers; reg++)
+    {
+        if (g_register_infos[reg].byte_offset == offset)
+            break;
+    }
+    assert(reg < k_num_registers && "Invalid register offset.");
+    return reg;
+}
+
+const char *
+RegisterContextLinux_x86_64::GetRegisterName(unsigned reg)
+{
+    assert(reg < k_num_registers && "Invalid register offset.");
+    return g_register_infos[reg].name;
 }
 
 bool

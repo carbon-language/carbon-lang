@@ -177,7 +177,8 @@ public:
     /// Registers the given message with this process.
     void SendMessage(const ProcessMessage &message);
 
-    ProcessMonitor &GetMonitor() { return *m_monitor; }
+    ProcessMonitor &
+    GetMonitor() { assert(m_monitor); return *m_monitor; }
 
     lldb_private::UnixSignals &
     GetUnixSignals();

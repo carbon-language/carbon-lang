@@ -14,6 +14,7 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Core/Log.h"
 #include "RegisterContextLinux.h"
 
 class RegisterContextLinux_i386 : public RegisterContextLinux
@@ -41,6 +42,12 @@ public:
 
     const lldb_private::RegisterSet *
     GetRegisterSet(uint32_t set);
+
+    static unsigned
+    GetRegisterIndexFromOffset(unsigned offset);
+
+    static const char *
+    GetRegisterName(unsigned reg);
 
 #if 0
     bool
@@ -152,6 +159,8 @@ private:
     UserArea user;
 
     ProcessMonitor &GetMonitor();
+
+    void LogGPR(const char *title);
 
     bool ReadGPR();
     bool ReadFPR();

@@ -19,6 +19,7 @@
 
 // C++ Includes
 // Other libraries and framework includes
+#include "lldb/Core/Debugger.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/Scalar.h"
@@ -29,10 +30,59 @@
 
 #include "LinuxThread.h"
 #include "ProcessLinux.h"
+#include "ProcessLinuxLog.h"
 #include "ProcessMonitor.h"
 
 
 using namespace lldb_private;
+
+// FIXME: this code is host-dependent with respect to types and
+// endianness and needs to be fixed.  For example, lldb::addr_t is
+// hard-coded to uint64_t, but on a 32-bit Linux host, ptrace requires
+// 32-bit pointer arguments.  This code uses casts to work around the
+// problem.
+
+// We disable the tracing of ptrace calls for integration builds to
+// avoid the additional indirection and checks.
+#ifndef LLDB_CONFIGURATION_BUILDANDINTEGRATION
+
+// Wrapper for ptrace to catch errors and log calls.
+extern long
+PtraceWrapper(__ptrace_request req, pid_t pid, void *addr, void *data,
+              const char* reqName, const char* file, int line)
+{
+    int result;
+
+    LogSP log (ProcessLinuxLog::GetLogIfAllCategoriesSet (LINUX_LOG_PTRACE));
+    if (log)
+        log->Printf("ptrace(%s, %u, %p, %p) called from file %s line %d",
+                    reqName, pid, addr, data, file, line);
+
+    errno = 0;
+    result = ptrace(req, pid, addr, data);
+
+    if (log && (result == -1 || errno != 0))
+    {
+        const char* str;
+        switch (errno)
+        {
+        case ESRCH:  str = "ESRCH"; break;
+        case EINVAL: str = "EINVAL"; break;
+        case EBUSY:  str = "EBUSY"; break;
+        case EPERM:  str = "EPERM"; break;
+        default:     str = "<unknown>";
+        }
+        log->Printf("ptrace() failed; errno=%d (%s)", errno, str);
+    }
+
+    return result;
+}
+
+#define PTRACE(req, pid, addr, data) \
+    PtraceWrapper((req), (pid), (addr), (data), #req, __FILE__, __LINE__)
+#else
+#define PTRACE ptrace
+#endif
 
 //------------------------------------------------------------------------------
 // Static implementations of ProcessMonitor::ReadMemory and
@@ -48,25 +98,49 @@ DoReadMemory(lldb::pid_t pid, unsigned word_size,
     size_t remainder;
     long data;
 
+    LogSP log (ProcessLinuxLog::GetLogIfAllCategoriesSet (LINUX_LOG_ALL));
+    if (log)
+        ProcessLinuxLog::IncNestLevel();
+    if (log && ProcessLinuxLog::AtTopNestLevel() && log->GetMask().Test(LINUX_LOG_MEMORY))
+        log->Printf ("ProcessMonitor::%s(%d, %d, %p, %p, %d, _)", __FUNCTION__,
+                     pid, word_size, (void*)vm_addr, buf, size);
+
+    assert(sizeof(data) >= word_size);
+    assert(sizeof(void*) == word_size);
     for (bytes_read = 0; bytes_read < size; bytes_read += remainder)
     {
         errno = 0;
-        data = ptrace(PTRACE_PEEKDATA, pid, vm_addr, NULL);
-
+        data = PTRACE(PTRACE_PEEKDATA, pid, (void*)vm_addr, NULL);
         if (data == -1L && errno)
         {
             error.SetErrorToErrno();
+            if (log)
+                ProcessLinuxLog::DecNestLevel();
             return bytes_read;
         }
 
         remainder = size - bytes_read;
         remainder = remainder > word_size ? word_size : remainder;
+
+        // Copy the data into our buffer
+        if (log)
+            memset(dst, 0, sizeof(dst));
         for (unsigned i = 0; i < remainder; ++i)
             dst[i] = ((data >> i*8) & 0xFF);
+
+        if (log && ProcessLinuxLog::AtTopNestLevel() &&
+            (log->GetMask().Test(LINUX_LOG_MEMORY_DATA_LONG) ||
+             (log->GetMask().Test(LINUX_LOG_MEMORY_DATA_SHORT) &&
+              size <= LINUX_LOG_MEMORY_SHORT_BYTES)))
+            log->Printf ("ProcessMonitor::%s() [%p]:0x%lx (0x%lx)", __FUNCTION__,
+                         (void*)vm_addr, *(unsigned long*)dst, (unsigned long)data);
+
         vm_addr += word_size;
         dst += word_size;
     }
 
+    if (log)
+        ProcessLinuxLog::DecNestLevel();
     return bytes_read;
 }
 
@@ -78,6 +152,14 @@ DoWriteMemory(lldb::pid_t pid, unsigned word_size,
     size_t bytes_written = 0;
     size_t remainder;
 
+    LogSP log (ProcessLinuxLog::GetLogIfAllCategoriesSet (LINUX_LOG_ALL));
+    if (log)
+        ProcessLinuxLog::IncNestLevel();
+    if (log && ProcessLinuxLog::AtTopNestLevel() && log->GetMask().Test(LINUX_LOG_MEMORY))
+        log->Printf ("ProcessMonitor::%s(%d, %d, %p, %p, %d, _)", __FUNCTION__,
+                     pid, word_size, (void*)vm_addr, buf, size);
+
+    assert(sizeof(void*) == word_size);
     for (bytes_written = 0; bytes_written < size; bytes_written += remainder)
     {
         remainder = size - bytes_written;
@@ -86,12 +168,22 @@ DoWriteMemory(lldb::pid_t pid, unsigned word_size,
         if (remainder == word_size)
         {
             unsigned long data = 0;
+            assert(sizeof(data) >= word_size);
             for (unsigned i = 0; i < word_size; ++i)
                 data |= (unsigned long)src[i] << i*8;
 
-            if (ptrace(PTRACE_POKEDATA, pid, vm_addr, data))
+            if (log && ProcessLinuxLog::AtTopNestLevel() &&
+                (log->GetMask().Test(LINUX_LOG_MEMORY_DATA_LONG) ||
+                 (log->GetMask().Test(LINUX_LOG_MEMORY_DATA_SHORT) &&
+                  size <= LINUX_LOG_MEMORY_SHORT_BYTES)))
+                 log->Printf ("ProcessMonitor::%s() [%p]:0x%lx (0x%lx)", __FUNCTION__,
+                              (void*)vm_addr, *(unsigned long*)src, data);
+
+            if (PTRACE(PTRACE_POKEDATA, pid, (void*)vm_addr, (void*)data))
             {
                 error.SetErrorToErrno();
+                if (log)
+                    ProcessLinuxLog::DecNestLevel();
                 return bytes_written;
             }
         }
@@ -100,18 +192,35 @@ DoWriteMemory(lldb::pid_t pid, unsigned word_size,
             unsigned char buff[8];
             if (DoReadMemory(pid, word_size, vm_addr,
                              buff, word_size, error) != word_size)
+            {
+                if (log)
+                    ProcessLinuxLog::DecNestLevel();
                 return bytes_written;
+            }
 
             memcpy(buff, src, remainder);
 
             if (DoWriteMemory(pid, word_size, vm_addr,
                               buff, word_size, error) != word_size)
+            {
+                if (log)
+                    ProcessLinuxLog::DecNestLevel();
                 return bytes_written;
+            }
+
+            if (log && ProcessLinuxLog::AtTopNestLevel() &&
+                (log->GetMask().Test(LINUX_LOG_MEMORY_DATA_LONG) ||
+                 (log->GetMask().Test(LINUX_LOG_MEMORY_DATA_SHORT) &&
+                  size <= LINUX_LOG_MEMORY_SHORT_BYTES)))
+                 log->Printf ("ProcessMonitor::%s() [%p]:0x%lx (0x%lx)", __FUNCTION__,
+                              (void*)vm_addr, *(unsigned long*)src, *(unsigned long*)buff);
         }
 
         vm_addr += word_size;
         src += word_size;
     }
+    if (log)
+        ProcessLinuxLog::DecNestLevel();
     return bytes_written;
 }
 
@@ -216,6 +325,7 @@ WriteOperation::Execute(ProcessMonitor *monitor)
     m_result = DoWriteMemory(pid, word_size, m_addr, m_buff, m_size, m_error);
 }
 
+
 //------------------------------------------------------------------------------
 /// @class ReadRegOperation
 /// @brief Implements ProcessMonitor::ReadRegisterValue.
@@ -238,11 +348,11 @@ void
 ReadRegOperation::Execute(ProcessMonitor *monitor)
 {
     lldb::pid_t pid = monitor->GetPID();
+    LogSP log (ProcessLinuxLog::GetLogIfAllCategoriesSet (LINUX_LOG_REGISTERS));
 
     // Set errno to zero so that we can detect a failed peek.
     errno = 0;
-    uint32_t data = ptrace(PTRACE_PEEKUSER, pid, m_offset, NULL);
-
+    uint32_t data = PTRACE(PTRACE_PEEKUSER, pid, (void*)m_offset, NULL);
     if (data == -1UL && errno)
         m_result = false;
     else
@@ -250,6 +360,9 @@ ReadRegOperation::Execute(ProcessMonitor *monitor)
         m_value = data;
         m_result = true;
     }
+    if (log)
+        log->Printf ("ProcessMonitor::%s() reg %s: 0x%x", __FUNCTION__,
+                     LinuxThread::GetRegisterNameFromOffset(m_offset), data);
 }
 
 //------------------------------------------------------------------------------
@@ -273,9 +386,22 @@ private:
 void
 WriteRegOperation::Execute(ProcessMonitor *monitor)
 {
+    void* buf;
     lldb::pid_t pid = monitor->GetPID();
+    LogSP log (ProcessLinuxLog::GetLogIfAllCategoriesSet (LINUX_LOG_REGISTERS));
 
-    if (ptrace(PTRACE_POKEUSER, pid, m_offset, m_value.GetAsUInt64()))
+    if (sizeof(void*) == sizeof(uint64_t))
+        buf = (void*) m_value.GetAsUInt64();
+    else
+    {
+        assert(sizeof(void*) == sizeof(uint32_t));
+        buf = (void*) m_value.GetAsUInt32();
+    }
+
+    if (log)
+        log->Printf ("ProcessMonitor::%s() reg %s: %p", __FUNCTION__,
+                     LinuxThread::GetRegisterNameFromOffset(m_offset), buf);
+    if (PTRACE(PTRACE_POKEUSER, pid, (void*)m_offset, buf))
         m_result = false;
     else
         m_result = true;
@@ -301,7 +427,7 @@ private:
 void
 ReadGPROperation::Execute(ProcessMonitor *monitor)
 {
-    if (ptrace(PTRACE_GETREGS, monitor->GetPID(), NULL, m_buf) < 0)
+    if (PTRACE(PTRACE_GETREGS, monitor->GetPID(), NULL, m_buf) < 0)
         m_result = false;
     else
         m_result = true;
@@ -327,7 +453,7 @@ private:
 void
 ReadFPROperation::Execute(ProcessMonitor *monitor)
 {
-    if (ptrace(PTRACE_GETFPREGS, monitor->GetPID(), NULL, m_buf) < 0)
+    if (PTRACE(PTRACE_GETFPREGS, monitor->GetPID(), NULL, m_buf) < 0)
         m_result = false;
     else
         m_result = true;
@@ -353,7 +479,7 @@ private:
 void
 WriteGPROperation::Execute(ProcessMonitor *monitor)
 {
-    if (ptrace(PTRACE_SETREGS, monitor->GetPID(), NULL, m_buf) < 0)
+    if (PTRACE(PTRACE_SETREGS, monitor->GetPID(), NULL, m_buf) < 0)
         m_result = false;
     else
         m_result = true;
@@ -379,7 +505,7 @@ private:
 void
 WriteFPROperation::Execute(ProcessMonitor *monitor)
 {
-    if (ptrace(PTRACE_SETFPREGS, monitor->GetPID(), NULL, m_buf) < 0)
+    if (PTRACE(PTRACE_SETFPREGS, monitor->GetPID(), NULL, m_buf) < 0)
         m_result = false;
     else
         m_result = true;
@@ -410,7 +536,7 @@ ResumeOperation::Execute(ProcessMonitor *monitor)
     if (m_signo != LLDB_INVALID_SIGNAL_NUMBER)
         data = m_signo;
 
-    if (ptrace(PTRACE_CONT, m_tid, NULL, data))
+    if (PTRACE(PTRACE_CONT, m_tid, NULL, (void*)data))
         m_result = false;
     else
         m_result = true;
@@ -441,7 +567,7 @@ SingleStepOperation::Execute(ProcessMonitor *monitor)
     if (m_signo != LLDB_INVALID_SIGNAL_NUMBER)
         data = m_signo;
 
-    if (ptrace(PTRACE_SINGLESTEP, m_tid, NULL, data))
+    if (PTRACE(PTRACE_SINGLESTEP, m_tid, NULL, (void*)data))
         m_result = false;
     else
         m_result = true;
@@ -467,7 +593,7 @@ private:
 void
 SiginfoOperation::Execute(ProcessMonitor *monitor)
 {
-    if (ptrace(PTRACE_GETSIGINFO, m_tid, NULL, m_info))
+    if (PTRACE(PTRACE_GETSIGINFO, m_tid, NULL, m_info))
         m_result = false;
     else
         m_result = true;
@@ -493,7 +619,7 @@ private:
 void
 EventMessageOperation::Execute(ProcessMonitor *monitor)
 {
-    if (ptrace(PTRACE_GETEVENTMSG, m_tid, NULL, m_message))
+    if (PTRACE(PTRACE_GETEVENTMSG, m_tid, NULL, m_message))
         m_result = false;
     else
         m_result = true;
@@ -518,7 +644,7 @@ KillOperation::Execute(ProcessMonitor *monitor)
 {
     lldb::pid_t pid = monitor->GetPID();
 
-    if (ptrace(PTRACE_KILL, pid, NULL, NULL))
+    if (PTRACE(PTRACE_KILL, pid, NULL, NULL))
         m_result = false;
     else
         m_result = true;
@@ -756,6 +882,7 @@ ProcessMonitor::Launch(LaunchArgs *args)
     lldb::pid_t pid;
 
     lldb::ThreadSP inferior;
+    LogSP log (ProcessLinuxLog::GetLogIfAllCategoriesSet (LINUX_LOG_PROCESS));
 
     // Propagate the environment if one is not supplied.
     if (envp == NULL || envp[0] == NULL)
@@ -789,7 +916,7 @@ ProcessMonitor::Launch(LaunchArgs *args)
     if (pid == 0)
     {
         // Trace this process.
-        if (ptrace(PTRACE_TRACEME, 0, NULL, NULL) < 0)
+        if (PTRACE(PTRACE_TRACEME, 0, NULL, NULL) < 0)
             exit(ePtraceFailed);
 
         // Do not inherit setgid powers.
@@ -861,7 +988,7 @@ ProcessMonitor::Launch(LaunchArgs *args)
 
     // Have the child raise an event on exit.  This is used to keep the child in
     // limbo until it is destroyed.
-    if (ptrace(PTRACE_SETOPTIONS, pid, NULL, PTRACE_O_TRACEEXIT) < 0)
+    if (PTRACE(PTRACE_SETOPTIONS, pid, NULL, (void*)PTRACE_O_TRACEEXIT) < 0)
     {
         args->m_error.SetErrorToErrno();
         goto FINISH;
@@ -880,9 +1007,12 @@ ProcessMonitor::Launch(LaunchArgs *args)
 
     // Update the process thread list with this new thread and mark it as
     // current.
+    // FIXME: should we be letting UpdateThreadList handle this?
+    // FIXME: by using pids instead of tids, we can only support one thread.
     inferior.reset(new LinuxThread(process, pid));
+    if (log)
+        log->Printf ("ProcessMonitor::%s() adding pid = %i", __FUNCTION__, pid);
     process.GetThreadList().AddThread(inferior);
-    process.GetThreadList().SetSelectedThreadByID(pid);
 
     // Let our process instance know the thread has stopped.
     process.SendMessage(ProcessMessage::Trace(pid));
@@ -943,6 +1073,7 @@ ProcessMonitor::Attach(AttachArgs *args)
     ProcessLinux &process = monitor->GetProcess();
 
     lldb::ThreadSP inferior;
+    LogSP log (ProcessLinuxLog::GetLogIfAllCategoriesSet (LINUX_LOG_PROCESS));
 
     if (pid <= 1)
     {
@@ -952,7 +1083,7 @@ ProcessMonitor::Attach(AttachArgs *args)
     }
 
     // Attach to the requested process.
-    if (ptrace(PTRACE_ATTACH, pid, NULL, NULL) < 0)
+    if (PTRACE(PTRACE_ATTACH, pid, NULL, NULL) < 0)
     {
         args->m_error.SetErrorToErrno();
         goto FINISH;
@@ -968,6 +1099,8 @@ ProcessMonitor::Attach(AttachArgs *args)
     // Update the process thread list with the attached thread and
     // mark it as current.
     inferior.reset(new LinuxThread(process, pid));
+    if (log)
+        log->Printf ("ProcessMonitor::%s() adding tid = %i", __FUNCTION__, pid);
     process.GetThreadList().AddThread(inferior);
     process.GetThreadList().SetSelectedThreadByID(pid);
 
@@ -987,6 +1120,7 @@ ProcessMonitor::MonitorCallback(void *callback_baton,
     ProcessMessage message;
     ProcessMonitor *monitor = static_cast<ProcessMonitor*>(callback_baton);
     ProcessLinux *process = monitor->m_process;
+    assert(process);
     bool stop_monitoring;
     siginfo_t info;
 
@@ -1017,7 +1151,8 @@ ProcessMonitor::MonitorSIGTRAP(ProcessMonitor *monitor,
 {
     ProcessMessage message;
 
-    assert(info->si_signo == SIGTRAP && "Unexpected child signal!");
+    assert(monitor);
+    assert(info && info->si_signo == SIGTRAP && "Unexpected child signal!");
 
     switch (info->si_code)
     {

@@ -69,6 +69,8 @@ ProcessLinuxLog::DisableLog (Args &args, Stream *feedback_strm)
                 else if (::strcasecmp (arg, "data-short") == 0 ) flag_bits &= ~LINUX_LOG_MEMORY_DATA_SHORT;
                 else if (::strcasecmp (arg, "data-long")  == 0 ) flag_bits &= ~LINUX_LOG_MEMORY_DATA_LONG;
                 else if (::strcasecmp (arg, "process")    == 0 ) flag_bits &= ~LINUX_LOG_PROCESS;
+                else if (::strcasecmp (arg, "ptrace")     == 0 ) flag_bits &= ~LINUX_LOG_PTRACE;
+                else if (::strcasecmp (arg, "registers")  == 0 ) flag_bits &= ~LINUX_LOG_REGISTERS;
                 else if (::strcasecmp (arg, "step")       == 0 ) flag_bits &= ~LINUX_LOG_STEP;
                 else if (::strcasecmp (arg, "thread")     == 0 ) flag_bits &= ~LINUX_LOG_THREAD;
                 else if (::strcasecmp (arg, "verbose")    == 0 ) flag_bits &= ~LINUX_LOG_VERBOSE;
@@ -126,6 +128,8 @@ ProcessLinuxLog::EnableLog (StreamSP &log_stream_sp, uint32_t log_options, Args 
             else if (::strcasecmp (arg, "data-short") == 0 ) flag_bits |= LINUX_LOG_MEMORY_DATA_SHORT;
             else if (::strcasecmp (arg, "data-long")  == 0 ) flag_bits |= LINUX_LOG_MEMORY_DATA_LONG;
             else if (::strcasecmp (arg, "process")    == 0 ) flag_bits |= LINUX_LOG_PROCESS;
+            else if (::strcasecmp (arg, "ptrace")     == 0 ) flag_bits |= LINUX_LOG_PTRACE;
+            else if (::strcasecmp (arg, "registers")  == 0 ) flag_bits |= LINUX_LOG_REGISTERS;
             else if (::strcasecmp (arg, "step")       == 0 ) flag_bits |= LINUX_LOG_STEP;
             else if (::strcasecmp (arg, "thread")     == 0 ) flag_bits |= LINUX_LOG_THREAD;
             else if (::strcasecmp (arg, "verbose")    == 0 ) flag_bits |= LINUX_LOG_VERBOSE;
@@ -162,6 +166,10 @@ ProcessLinuxLog::ListLogCategories (Stream *strm)
                   "  data-short - log memory bytes for memory reads and writes for short transactions only\n"
                   "  data-long - log memory bytes for memory reads and writes for all transactions\n"
                   "  process - log process events and activities\n"
+#ifndef LLDB_CONFIGURATION_BUILDANDINTEGRATION
+                  "  ptrace - log all calls to ptrace\n"
+#endif
+                  "  registers - log register read/writes\n"
                   "  thread - log thread events and activities\n"
                   "  step - log step related activities\n"
                   "  verbose - enable verbose logging\n"
@@ -181,3 +189,5 @@ ProcessLinuxLog::LogIf (uint32_t mask, const char *format, ...)
         va_end (args);
     }
 }
+
+int ProcessLinuxLog::m_nestinglevel;

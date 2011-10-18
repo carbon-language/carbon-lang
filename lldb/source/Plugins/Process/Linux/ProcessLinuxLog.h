@@ -29,11 +29,18 @@
 #define LINUX_LOG_STEP                     (1u << 9)
 #define LINUX_LOG_COMM                     (1u << 10)
 #define LINUX_LOG_ASYNC                    (1u << 11)
+#define LINUX_LOG_PTRACE                   (1u << 12)
+#define LINUX_LOG_REGISTERS                (1u << 13)
 #define LINUX_LOG_ALL                      (UINT32_MAX)
 #define LINUX_LOG_DEFAULT                  LINUX_LOG_PACKETS
 
+// The size which determines "short memory reads/writes".
+#define LINUX_LOG_MEMORY_SHORT_BYTES       (4 * sizeof(ptrdiff_t))
+
 class ProcessLinuxLog
 {
+    static int m_nestinglevel;
+
 public:
     static lldb::LogSP
     GetLogIfAllCategoriesSet(uint32_t mask = 0);
@@ -42,13 +49,50 @@ public:
     DisableLog (lldb_private::Args &args, lldb_private::Stream *feedback_strm);
 
     static lldb::LogSP
-    EnableLog (lldb::StreamSP &log_stream_sp, uint32_t log_options, lldb_private::Args &args, lldb_private::Stream *feedback_strm);
+    EnableLog (lldb::StreamSP &log_stream_sp, uint32_t log_options,
+               lldb_private::Args &args, lldb_private::Stream *feedback_strm);
 
     static void
     ListLogCategories (lldb_private::Stream *strm);
 
     static void
     LogIf (uint32_t mask, const char *format, ...);
+
+    // The following functions can be used to enable the client to limit
+    // logging to only the top level function calls.  This is useful for
+    // recursive functions.  FIXME: not thread safe!
+    //     Example:
+    //     void NestingFunc() {
+    //         LogSP log (ProcessLinuxLog::GetLogIfAllCategoriesSet(LINUX_LOG_ALL));
+    //         if (log)
+    //         {
+    //             ProcessLinuxLog::IncNestLevel();
+    //             if (ProcessLinuxLog::AtTopNestLevel())
+    //                 log->Print(msg);
+    //         }
+    //         NestingFunc();
+    //         if (log)
+    //             ProcessLinuxLog::DecNestLevel();
+    //     }
+
+    static bool
+    AtTopNestLevel()
+    {
+        return m_nestinglevel == 1;
+    }
+
+    static void
+    IncNestLevel()
+    {
+        ++m_nestinglevel;
+    }
+
+    static void
+    DecNestLevel()
+    {
+        --m_nestinglevel;
+        assert(m_nestinglevel >= 0);
+    }
 };
 
 #endif  // liblldb_ProcessLinuxLog_h_

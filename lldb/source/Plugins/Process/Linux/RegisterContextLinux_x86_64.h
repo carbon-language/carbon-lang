@@ -41,6 +41,12 @@ public:
     const lldb_private::RegisterSet *
     GetRegisterSet(uint32_t set);
 
+    static unsigned
+    GetRegisterIndexFromOffset(unsigned offset);
+
+    static const char *
+    GetRegisterName(unsigned reg);
+
     virtual bool
     ReadRegister(const lldb_private::RegisterInfo *reg_info,
                  lldb_private::RegisterValue &value);
