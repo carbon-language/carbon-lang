@@ -27,6 +27,8 @@ class MCJITMemoryManager : public RTDyldMemoryManager {
   Module *M;
 public:
   MCJITMemoryManager(JITMemoryManager *jmm, Module *m) : JMM(jmm), M(m) {}
+  // We own the JMM, so make sure to delete it.
+  ~MCJITMemoryManager() { delete JMM; }
 
   // Allocate ActualSize bytes, or more, for the named function. Return
   // a pointer to the allocated memory and update Size to reflect how much
