@@ -37,7 +37,6 @@ static OptionEnumValueElement g_watch_size[] =
     { 0, NULL, NULL }
 };
 
-// if you add any options here, remember to update the counters in OptionGroupWatchpoint::GetNumDefinitions()
 static OptionDefinition
 g_option_table[] =
 {
