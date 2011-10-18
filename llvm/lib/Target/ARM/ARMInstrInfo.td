@@ -2145,7 +2145,7 @@ def RFEIB_UPD : RFEI<1, "rfeib\t$Rn!"> {
 }
 
 //===----------------------------------------------------------------------===//
-//  Load / store Instructions.
+//  Load / Store Instructions.
 //
 
 // Load
