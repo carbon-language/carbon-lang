@@ -77,14 +77,19 @@ void
 CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
                         unsigned NumBases) {
   ASTContext &C = getASTContext();
-  
-  // C++ [dcl.init.aggr]p1:
-  //   An aggregate is an array or a class (clause 9) with [...]
-  //   no base classes [...].
-  data().Aggregate = false;
 
   if (!data().Bases.isOffset() && data().NumBases > 0)
     C.Deallocate(data().getBases());
+
+  if (NumBases) {
+    // C++ [dcl.init.aggr]p1:
+    //   An aggregate is [...] a class with [...] no base classes [...].
+    data().Aggregate = false;
+
+    // C++ [class]p4:
+    //   A POD-struct is an aggregate class...
+    data().PlainOldData = false;
+  }
 
   // The set of seen virtual base types.
   llvm::SmallPtrSet<CanQualType, 8> SeenVBaseTypes;
@@ -105,14 +110,6 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
     CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(BaseType->getAs<RecordType>()->getDecl());
 
-    // C++ [dcl.init.aggr]p1:
-    //   An aggregate is [...] a class with [...] no base classes [...].
-    data().Aggregate = false;    
-    
-    // C++ [class]p4:
-    //   A POD-struct is an aggregate class...
-    data().PlainOldData = false;
-    
     // A class with a non-empty base class is not empty.
     // FIXME: Standard ref?
     if (!BaseClassDecl->isEmpty()) {

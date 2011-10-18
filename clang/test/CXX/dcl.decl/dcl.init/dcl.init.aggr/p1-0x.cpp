@@ -53,6 +53,10 @@ NonAggr4 na4 = { 42 }; // expected-error {{non-aggregate type 'NonAggr4'}}
 struct NonAggr5 : Aggr {
 };
 NonAggr5 na5 = { b }; // expected-error {{non-aggregate type 'NonAggr5'}}
+template<typename...BaseList>
+struct MaybeAggr5a : BaseList... {};
+MaybeAggr5a<> ma5a0 = {}; // ok
+MaybeAggr5a<Aggr> ma5a1 = {}; // expected-error {{non-aggregate type 'MaybeAggr5a<Aggr>'}}
 
 // and no virtual functions.
 struct NonAggr6 {
