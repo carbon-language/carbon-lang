@@ -6319,8 +6319,8 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 
 void ARMTargetLowering::AdjustInstrPostInstrSelection(MachineInstr *MI,
                                                       SDNode *Node) const {
-  const MCInstrDesc &MCID = MI->getDesc();
-  if (!MCID.hasPostISelHook()) {
+  const MCInstrDesc *MCID = &MI->getDesc();
+  if (!MCID->hasPostISelHook()) {
     assert(!convertAddSubFlagsOpcode(MI->getOpcode()) &&
            "Pseudo flag-setting opcodes must be marked with 'hasPostISelHook'");
     return;
@@ -6331,20 +6331,28 @@ void ARMTargetLowering::AdjustInstrPostInstrSelection(MachineInstr *MI,
   // operand is still set to noreg. If needed, set the optional operand's
   // register to CPSR, and remove the redundant implicit def.
   //
-  // e.g. ADCS (...opt:%noreg, CPSR<imp-def>) -> ADC (... opt:CPSR<def>).
+  // e.g. ADCS (..., CPSR<imp-def>) -> ADC (... opt:CPSR<def>).
 
   // Rename pseudo opcodes.
   unsigned NewOpc = convertAddSubFlagsOpcode(MI->getOpcode());
   if (NewOpc) {
     const ARMBaseInstrInfo *TII =
       static_cast<const ARMBaseInstrInfo*>(getTargetMachine().getInstrInfo());
-    MI->setDesc(TII->get(NewOpc));
+    MCID = &TII->get(NewOpc);
+
+    assert(MCID->getNumOperands() == MI->getDesc().getNumOperands() + 1 &&
+           "converted opcode should be the same except for cc_out");
+
+    MI->setDesc(*MCID);
+
+    // Add the optional cc_out operand
+    MI->addOperand(MachineOperand::CreateReg(0, /*isDef=*/true));
   }
-  unsigned ccOutIdx = MCID.getNumOperands() - 1;
+  unsigned ccOutIdx = MCID->getNumOperands() - 1;
 
   // Any ARM instruction that sets the 's' bit should specify an optional
   // "cc_out" operand in the last operand position.
-  if (!MCID.hasOptionalDef() || !MCID.OpInfo[ccOutIdx].isOptionalDef()) {
+  if (!MCID->hasOptionalDef() || !MCID->OpInfo[ccOutIdx].isOptionalDef()) {
     assert(!NewOpc && "Optional cc_out operand required");
     return;
   }
@@ -6352,7 +6360,7 @@ void ARMTargetLowering::AdjustInstrPostInstrSelection(MachineInstr *MI,
   // since we already have an optional CPSR def.
   bool definesCPSR = false;
   bool deadCPSR = false;
-  for (unsigned i = MCID.getNumOperands(), e = MI->getNumOperands();
+  for (unsigned i = MCID->getNumOperands(), e = MI->getNumOperands();
        i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
     if (MO.isReg() && MO.isDef() && MO.getReg() == ARM::CPSR) {

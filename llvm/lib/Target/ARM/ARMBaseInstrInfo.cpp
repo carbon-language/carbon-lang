@@ -1478,7 +1478,6 @@ static AddSubFlagsOpcodePair AddSubFlagsOpcodeMap[] = {
   {ARM::SUBSrsr, ARM::SUBrsr},
 
   {ARM::RSBSri, ARM::RSBri},
-  {ARM::RSBSrr, ARM::RSBrr},
   {ARM::RSBSrsi, ARM::RSBrsi},
   {ARM::RSBSrsr, ARM::RSBrsr},
 

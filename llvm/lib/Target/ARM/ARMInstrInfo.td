@@ -1040,69 +1040,58 @@ multiclass AsI1_rbin_irs<bits<4> opcod, string opc,
 
 }
 
-/// AsI1_rbin_s_is - Same as AsI1_rbin_s_is except it sets 's' bit by default.
-///
-/// These opcodes will be converted to the real non-S opcodes by
-/// AdjustInstrPostInstrSelection after giving then an optional CPSR operand.
-let hasPostISelHook = 1, isCodeGenOnly = 1, isPseudo = 1, Defs = [CPSR] in {
-multiclass AsI1_rbin_s_is<bits<4> opcod, string opc,
-                     InstrItinClass iii, InstrItinClass iir, InstrItinClass iis,
-                        PatFrag opnode, bit Commutable = 0> {
-  def ri : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm), DPFrm,
-               iii, opc, "\t$Rd, $Rn, $imm",
-               [(set GPR:$Rd, CPSR, (opnode so_imm:$imm, GPR:$Rn))]>;
-
-  def rr : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm), DPFrm,
-               iir, opc, "\t$Rd, $Rn, $Rm",
-               [/* pattern left blank */]>;
-
-  def rsi : AsI1<opcod, (outs GPR:$Rd),
-               (ins GPR:$Rn, so_reg_imm:$shift), DPSoRegImmFrm,
-               iis, opc, "\t$Rd, $Rn, $shift",
-               [(set GPR:$Rd, CPSR, (opnode so_reg_imm:$shift, GPR:$Rn))]>;
-
-  def rsr : AsI1<opcod, (outs GPR:$Rd),
-               (ins GPR:$Rn, so_reg_reg:$shift), DPSoRegRegFrm,
-               iis, opc, "\t$Rd, $Rn, $shift",
-               [(set GPR:$Rd, CPSR, (opnode so_reg_reg:$shift, GPR:$Rn))]> {
-    bits<4> Rd;
-    bits<4> Rn;
-    bits<12> shift;
-    let Inst{25} = 0;
-    let Inst{19-16} = Rn;
-    let Inst{15-12} = Rd;
-    let Inst{11-8} = shift{11-8};
-    let Inst{7} = 0;
-    let Inst{6-5} = shift{6-5};
-    let Inst{4} = 1;
-    let Inst{3-0} = shift{3-0};
-  }
-}
-}
-
 /// AsI1_bin_s_irs - Same as AsI1_bin_irs except it sets the 's' bit by default.
 ///
 /// These opcodes will be converted to the real non-S opcodes by
-/// AdjustInstrPostInstrSelection after giving then an optional CPSR operand.
-let hasPostISelHook = 1, isCodeGenOnly = 1, isPseudo = 1, Defs = [CPSR] in {
-multiclass AsI1_bin_s_irs<bits<4> opcod, string opc,
-                     InstrItinClass iii, InstrItinClass iir, InstrItinClass iis,
-                         PatFrag opnode, bit Commutable = 0> {
-  def ri : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm), DPFrm,
-               iii, opc, "\t$Rd, $Rn, $imm",
-               [(set GPR:$Rd, CPSR, (opnode GPR:$Rn, so_imm:$imm))]>;
-  def rr : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm), DPFrm,
-               iir, opc, "\t$Rd, $Rn, $Rm",
-               [(set GPR:$Rd, CPSR, (opnode GPR:$Rn, GPR:$Rm))]>;
-  def rsi : AsI1<opcod, (outs GPR:$Rd),
-               (ins GPR:$Rn, so_reg_imm:$shift), DPSoRegImmFrm,
-               iis, opc, "\t$Rd, $Rn, $shift",
-               [(set GPR:$Rd, CPSR, (opnode GPR:$Rn, so_reg_imm:$shift))]>;
+/// AdjustInstrPostInstrSelection after giving them an optional CPSR operand.
+let hasPostISelHook = 1, Defs = [CPSR] in {
+multiclass AsI1_bin_s_irs<InstrItinClass iii, InstrItinClass iir,
+                          InstrItinClass iis, PatFrag opnode,
+                          bit Commutable = 0> {
+  def ri : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm, pred:$p),
+                         4, iii,
+                         [(set GPR:$Rd, CPSR, (opnode GPR:$Rn, so_imm:$imm))]>;
 
-  def rsr : AsI1<opcod, (outs GPR:$Rd),
-               (ins GPR:$Rn, so_reg_reg:$shift), DPSoRegRegFrm,
-               iis, opc, "\t$Rd, $Rn, $shift",
-               [(set GPR:$Rd, CPSR, (opnode GPR:$Rn, so_reg_reg:$shift))]>;
+  def rr : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm, pred:$p),
+                         4, iir,
+                         [(set GPR:$Rd, CPSR, (opnode GPR:$Rn, GPR:$Rm))]> {
+    let isCommutable = Commutable;
+  }
+  def rsi : ARMPseudoInst<(outs GPR:$Rd),
+                          (ins GPR:$Rn, so_reg_imm:$shift, pred:$p),
+                          4, iis,
+                          [(set GPR:$Rd, CPSR, (opnode GPR:$Rn,
+                                                so_reg_imm:$shift))]>;
+
+  def rsr : ARMPseudoInst<(outs GPR:$Rd),
+                          (ins GPR:$Rn, so_reg_reg:$shift, pred:$p),
+                          4, iis,
+                          [(set GPR:$Rd, CPSR, (opnode GPR:$Rn,
+                                                so_reg_reg:$shift))]>;
+}
+}
+
+/// AsI1_rbin_s_is - Same as AsI1_bin_s_irs, except selection DAG
+/// operands are reversed.
+let hasPostISelHook = 1, Defs = [CPSR] in {
+multiclass AsI1_rbin_s_is<InstrItinClass iii, InstrItinClass iir,
+                          InstrItinClass iis, PatFrag opnode,
+                          bit Commutable = 0> {
+  def ri : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm, pred:$p),
+                         4, iii,
+                         [(set GPR:$Rd, CPSR, (opnode so_imm:$imm, GPR:$Rn))]>;
+
+  def rsi : ARMPseudoInst<(outs GPR:$Rd),
+                          (ins GPR:$Rn, so_reg_imm:$shift, pred:$p),
+                          4, iis,
+                          [(set GPR:$Rd, CPSR, (opnode so_reg_imm:$shift,
+                                             GPR:$Rn))]>;
+
+  def rsr : ARMPseudoInst<(outs GPR:$Rd),
+                          (ins GPR:$Rn, so_reg_reg:$shift, pred:$p),
+                          4, iis,
+                          [(set GPR:$Rd, CPSR, (opnode so_reg_reg:$shift,
+                                             GPR:$Rn))]>;
 }
 }
 
@@ -2859,7 +2848,7 @@ def MOVr : AsI1<0b1101, (outs GPR:$Rd), (ins GPR:$Rm), DPFrm, IIC_iMOVr,
   let Inst{15-12} = Rd;
 }
 
-def : ARMInstAlias<"movs${p} $Rd, $Rm", 
+def : ARMInstAlias<"movs${p} $Rd, $Rm",
                    (MOVr GPR:$Rd, GPR:$Rm, pred:$p, CPSR)>;
 
 // A version for the smaller set of tail call registers.
@@ -3079,20 +3068,18 @@ defm SUB  : AsI1_bin_irs<0b0010, "sub",
 
 // ADD and SUB with 's' bit set.
 //
-// Currently, t2ADDS/t2SUBS are pseudo opcodes that exist only in the
-// selection DAG. They are "lowered" to real t2ADD/t2SUB opcodes by
+// Currently, ADDS/SUBS are pseudo opcodes that exist only in the
+// selection DAG. They are "lowered" to real ADD/SUB opcodes by
 // AdjustInstrPostInstrSelection where we determine whether or not to
 // set the "s" bit based on CPSR liveness.
 //
-// FIXME: Eliminate t2ADDS/t2SUBS pseudo opcodes after adding tablegen
+// FIXME: Eliminate ADDS/SUBS pseudo opcodes after adding tablegen
 // support for an optional CPSR definition that corresponds to the DAG
 // node's second value. We can then eliminate the implicit def of CPSR.
-defm ADDS : AsI1_bin_s_irs<0b0100, "add",
-                          IIC_iALUi, IIC_iALUr, IIC_iALUsr,
-                          BinOpFrag<(ARMaddc node:$LHS, node:$RHS)>, 1>;
-defm SUBS : AsI1_bin_s_irs<0b0010, "sub",
-                          IIC_iALUi, IIC_iALUr, IIC_iALUsr,
-                          BinOpFrag<(ARMsubc node:$LHS, node:$RHS)>>;
+defm ADDS : AsI1_bin_s_irs<IIC_iALUi, IIC_iALUr, IIC_iALUsr,
+                           BinOpFrag<(ARMaddc node:$LHS, node:$RHS)>, 1>;
+defm SUBS : AsI1_bin_s_irs<IIC_iALUi, IIC_iALUr, IIC_iALUsr,
+                           BinOpFrag<(ARMsubc node:$LHS, node:$RHS)>>;
 
 defm ADC : AI1_adde_sube_irs<0b0101, "adc",
                   BinOpWithFlagFrag<(ARMadde node:$LHS, node:$RHS, node:$FLAG)>,
@@ -3107,9 +3094,8 @@ defm RSB  : AsI1_rbin_irs <0b0011, "rsb",
 
 // FIXME: Eliminate them if we can write def : Pat patterns which defines
 // CPSR and the implicit def of CPSR is not needed.
-defm RSBS : AsI1_rbin_s_is<0b0011, "rsb",
-                         IIC_iALUi, IIC_iALUr, IIC_iALUsr,
-                         BinOpFrag<(ARMsubc node:$LHS, node:$RHS)>>;
+defm RSBS : AsI1_rbin_s_is<IIC_iALUi, IIC_iALUr, IIC_iALUsr,
+                           BinOpFrag<(ARMsubc node:$LHS, node:$RHS)>>;
 
 defm RSC : AI1_rsc_irs<0b0111, "rsc",
                   BinOpWithFlagFrag<(ARMsube node:$LHS, node:$RHS, node:$FLAG)>,

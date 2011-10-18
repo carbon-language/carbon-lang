@@ -356,6 +356,15 @@ class Instruction {
   // associated with them. Once we've migrated all of them over to true
   // pseudo-instructions that are lowered to real instructions prior to
   // the printer/emitter, we can remove this attribute and just use isPseudo.
+  //
+  // The intended use is:
+  // isPseudo: Does not have encoding information and should be expanded,
+  //   at the latest, during lowering to MCInst.
+  //
+  // isCodeGenOnly: Does have encoding information and can go through to the
+  //   CodeEmitter unchanged, but duplicates a canonical instruction
+  //   definition's encoding and should be ignored when constructing the
+  //   assembler match tables.
   bit isCodeGenOnly = 0;
 
   // Is this instruction a pseudo instruction for use by the assembler parser.

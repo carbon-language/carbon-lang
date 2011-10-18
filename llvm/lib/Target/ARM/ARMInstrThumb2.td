@@ -608,25 +608,48 @@ multiclass T2I_rbin_irs<bits<4> opcod, string opc, PatFrag opnode> {
 ///
 /// These opcodes will be converted to the real non-S opcodes by
 /// AdjustInstrPostInstrSelection after giving then an optional CPSR operand.
-let hasPostISelHook = 1, isCodeGenOnly = 1, isPseudo = 1, Defs = [CPSR] in {
-multiclass T2I_bin_s_irs<bits<4> opcod, string opc,
-                     InstrItinClass iii, InstrItinClass iir, InstrItinClass iis,
-                         PatFrag opnode, bit Commutable = 0> {
+let hasPostISelHook = 1, Defs = [CPSR] in {
+multiclass T2I_bin_s_irs<InstrItinClass iii, InstrItinClass iir,
+                         InstrItinClass iis, PatFrag opnode,
+                         bit Commutable = 0> {
    // shifted imm
-   def ri : T2sTwoRegImm<
-                (outs rGPR:$Rd), (ins GPRnopc:$Rn, t2_so_imm:$imm), iii,
-                opc, ".w\t$Rd, $Rn, $imm",
-                [(set rGPR:$Rd, CPSR, (opnode GPRnopc:$Rn, t2_so_imm:$imm))]>;
+   def ri : t2PseudoInst<(outs rGPR:$Rd),
+                         (ins GPRnopc:$Rn, t2_so_imm:$imm, pred:$p),
+                         4, iii,
+                         [(set rGPR:$Rd, CPSR, (opnode GPRnopc:$Rn,
+                                                t2_so_imm:$imm))]>;
    // register
-   def rr : T2sThreeReg<
-                (outs rGPR:$Rd), (ins GPRnopc:$Rn, rGPR:$Rm), iir,
-                opc, ".w\t$Rd, $Rn, $Rm",
-                [(set rGPR:$Rd, CPSR, (opnode GPRnopc:$Rn, rGPR:$Rm))]>;
+   def rr : t2PseudoInst<(outs rGPR:$Rd), (ins GPRnopc:$Rn, rGPR:$Rm, pred:$p),
+                         4, iir,
+                         [(set rGPR:$Rd, CPSR, (opnode GPRnopc:$Rn,
+                                                rGPR:$Rm))]> {
+     let isCommutable = Commutable;
+   }
    // shifted register
-   def rs : T2sTwoRegShiftedReg<
-                (outs rGPR:$Rd), (ins GPRnopc:$Rn, t2_so_reg:$ShiftedRm), iis,
-                opc, ".w\t$Rd, $Rn, $ShiftedRm",
-               [(set rGPR:$Rd, CPSR, (opnode GPRnopc:$Rn, t2_so_reg:$ShiftedRm))]>;
+   def rs : t2PseudoInst<(outs rGPR:$Rd),
+                         (ins GPRnopc:$Rn, t2_so_reg:$ShiftedRm, pred:$p),
+                         4, iis,
+                         [(set rGPR:$Rd, CPSR, (opnode GPRnopc:$Rn,
+                                                t2_so_reg:$ShiftedRm))]>;
+}
+}
+
+/// T2I_rbin_s_is -  Same as T2I_bin_s_irs, except selection DAG
+/// operands are reversed.
+let hasPostISelHook = 1, Defs = [CPSR] in {
+multiclass T2I_rbin_s_is<PatFrag opnode> {
+   // shifted imm
+   def ri : t2PseudoInst<(outs rGPR:$Rd),
+                         (ins GPRnopc:$Rn, t2_so_imm:$imm, pred:$p),
+                         4, IIC_iALUi,
+                         [(set rGPR:$Rd, CPSR, (opnode t2_so_imm:$imm,
+                                                GPRnopc:$Rn))]>;
+   // shifted register
+   def rs : t2PseudoInst<(outs rGPR:$Rd),
+                         (ins GPRnopc:$Rn, t2_so_reg:$ShiftedRm, pred:$p),
+                         4, IIC_iALUsi,
+                         [(set rGPR:$Rd, CPSR, (opnode t2_so_reg:$ShiftedRm,
+                                                GPRnopc:$Rn))]>;
 }
 }
 
@@ -732,26 +755,6 @@ multiclass T2I_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
      let Inst{26-25} = 0b01;
      let Inst{24-21} = opcod;
    }
-}
-}
-
-/// T2I_rbin_s_is - Same as T2I_rbin_irs except sets 's' bit and the register
-/// version is not needed since this is only for codegen.
-///
-/// These opcodes will be converted to the real non-S opcodes by
-/// AdjustInstrPostInstrSelection after giving then an optional CPSR operand.
-let hasPostISelHook = 1, isCodeGenOnly = 1, isPseudo = 1, Defs = [CPSR] in {
-multiclass T2I_rbin_s_is<bits<4> opcod, string opc, PatFrag opnode> {
-   // shifted imm
-   def ri : T2sTwoRegImm<
-                (outs rGPR:$Rd), (ins rGPR:$Rn, t2_so_imm:$imm), IIC_iALUi,
-                opc, ".w\t$Rd, $Rn, $imm",
-                [(set rGPR:$Rd, CPSR, (opnode t2_so_imm:$imm, rGPR:$Rn))]>;
-   // shifted register
-   def rs : T2sTwoRegShiftedReg<
-                (outs rGPR:$Rd), (ins rGPR:$Rn, t2_so_reg:$ShiftedRm),
-                IIC_iALUsi, opc, "\t$Rd, $Rn, $ShiftedRm",
-              [(set rGPR:$Rd, CPSR, (opnode t2_so_reg:$ShiftedRm, rGPR:$Rn))]>;
 }
 }
 
@@ -1845,11 +1848,9 @@ defm t2SUB  : T2I_bin_ii12rs<0b101, "sub",
 // FIXME: Eliminate t2ADDS/t2SUBS pseudo opcodes after adding tablegen
 // support for an optional CPSR definition that corresponds to the DAG
 // node's second value. We can then eliminate the implicit def of CPSR.
-defm t2ADDS : T2I_bin_s_irs <0b1000, "add",
-                             IIC_iALUi, IIC_iALUr, IIC_iALUsi,
+defm t2ADDS : T2I_bin_s_irs <IIC_iALUi, IIC_iALUr, IIC_iALUsi,
                              BinOpFrag<(ARMaddc node:$LHS, node:$RHS)>, 1>;
-defm t2SUBS : T2I_bin_s_irs <0b1101, "sub",
-                             IIC_iALUi, IIC_iALUr, IIC_iALUsi,
+defm t2SUBS : T2I_bin_s_irs <IIC_iALUi, IIC_iALUr, IIC_iALUsi,
                              BinOpFrag<(ARMsubc node:$LHS, node:$RHS)>>;
 
 let hasPostISelHook = 1 in {
@@ -1865,8 +1866,7 @@ defm t2RSB  : T2I_rbin_irs  <0b1110, "rsb",
 
 // FIXME: Eliminate them if we can write def : Pat patterns which defines
 // CPSR and the implicit def of CPSR is not needed.
-defm t2RSBS : T2I_rbin_s_is <0b1110, "rsb",
-                             BinOpFrag<(ARMsubc node:$LHS, node:$RHS)>>;
+defm t2RSBS : T2I_rbin_s_is <BinOpFrag<(ARMsubc node:$LHS, node:$RHS)>>;
 
 // (sub X, imm) gets canonicalized to (add X, -imm).  Match this form.
 // The assume-no-carry-in form uses the negation of the input since add/sub
