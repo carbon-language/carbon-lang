@@ -1966,7 +1966,8 @@ static std::string formatObjCParamQualifiers(unsigned ObjCQuals) {
 static std::string FormatFunctionParameter(ASTContext &Context,
                                            const PrintingPolicy &Policy,
                                            ParmVarDecl *Param,
-                                           bool SuppressName = false) {
+                                           bool SuppressName = false,
+                                           bool SuppressBlock = false) {
   bool ObjCMethodParam = isa<ObjCMethodDecl>(Param->getDeclContext());
   if (Param->getType()->isDependentType() ||
       !Param->getType()->isBlockPointerType()) {
@@ -1997,18 +1998,20 @@ static std::string FormatFunctionParameter(ASTContext &Context,
     TL = TSInfo->getTypeLoc().getUnqualifiedLoc();
     while (true) {
       // Look through typedefs.
-      if (TypedefTypeLoc *TypedefTL = dyn_cast<TypedefTypeLoc>(&TL)) {
-        if (TypeSourceInfo *InnerTSInfo
-            = TypedefTL->getTypedefNameDecl()->getTypeSourceInfo()) {
-          TL = InnerTSInfo->getTypeLoc().getUnqualifiedLoc();
+      if (!SuppressBlock) {
+        if (TypedefTypeLoc *TypedefTL = dyn_cast<TypedefTypeLoc>(&TL)) {
+          if (TypeSourceInfo *InnerTSInfo
+              = TypedefTL->getTypedefNameDecl()->getTypeSourceInfo()) {
+            TL = InnerTSInfo->getTypeLoc().getUnqualifiedLoc();
+            continue;
+          }
+        }
+        
+        // Look through qualified types
+        if (QualifiedTypeLoc *QualifiedTL = dyn_cast<QualifiedTypeLoc>(&TL)) {
+          TL = QualifiedTL->getUnqualifiedLoc();
           continue;
         }
-      }
-      
-      // Look through qualified types
-      if (QualifiedTypeLoc *QualifiedTL = dyn_cast<QualifiedTypeLoc>(&TL)) {
-        TL = QualifiedTL->getUnqualifiedLoc();
-        continue;
       }
       
       // Try to get the function prototype behind the block pointer type,
@@ -2027,6 +2030,9 @@ static std::string FormatFunctionParameter(ASTContext &Context,
     // We were unable to find a FunctionProtoTypeLoc with parameter names
     // for the block; just use the parameter type as a placeholder.
     std::string Result;
+    if (!ObjCMethodParam && Param->getIdentifier())
+      Result = Param->getIdentifier()->getName();
+
     Param->getType().getUnqualifiedType().getAsStringInternal(Result, Policy);
     
     if (ObjCMethodParam) {
@@ -2038,36 +2044,52 @@ static std::string FormatFunctionParameter(ASTContext &Context,
       
     return Result;
   }
-  
+    
   // We have the function prototype behind the block pointer type, as it was
   // written in the source.
   std::string Result;
   QualType ResultType = Block->getTypePtr()->getResultType();
-  if (!ResultType->isVoidType())
+  if (!ResultType->isVoidType() || SuppressBlock)
     ResultType.getAsStringInternal(Result, Policy);
-  
-  Result = '^' + Result;
+
+  // Format the parameter list.
+  std::string Params;
   if (!BlockProto || Block->getNumArgs() == 0) {
     if (BlockProto && BlockProto->getTypePtr()->isVariadic())
-      Result += "(...)";
+      Params = "(...)";
     else
-      Result += "(void)";
+      Params = "(void)";
   } else {
-    Result += "(";
+    Params += "(";
     for (unsigned I = 0, N = Block->getNumArgs(); I != N; ++I) {
       if (I)
-        Result += ", ";
-      Result += FormatFunctionParameter(Context, Policy, Block->getArg(I));
+        Params += ", ";
+      Params += FormatFunctionParameter(Context, Policy, Block->getArg(I),
+                                        /*SuppressName=*/false, 
+                                        /*SuppressBlock=*/true);
       
       if (I == N - 1 && BlockProto->getTypePtr()->isVariadic())
-        Result += ", ...";
+        Params += ", ...";
     }
-    Result += ")";
+    Params += ")";
   }
   
-  if (Param->getIdentifier())
-    Result += Param->getIdentifier()->getName();
-
+  if (SuppressBlock) {
+    // Format as a parameter.
+    Result = Result + " (^";
+    if (Param->getIdentifier())
+      Result += Param->getIdentifier()->getName();
+    Result += ")";
+    Result += Params;
+  } else {
+    // Format as a block literal argument.
+    Result = '^' + Result;
+    Result += Params;
+    
+    if (Param->getIdentifier())
+      Result += Param->getIdentifier()->getName();
+  }
+  
   return Result;
 }
 

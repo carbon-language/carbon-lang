@@ -26,12 +26,20 @@ void test_B(B *b) {
 }
 
 @interface C
-- method4:(void(^)(void))arg { };
-- method5:(void(^)())arg5 { };
+- method4:(void(^)(void))arg;
+- method5:(void(^)())arg5;
 @end
 
 void test_C(C *c) {
   [c method4:^{}];
+}
+
+@interface D
+- method6:(void(^)(block_t block))arg;
+@end
+
+void test_D(D *d) {
+  [d method6:0];
 }
 
 // RUN: c-index-test -code-completion-at=%s:8:1 %s | FileCheck -check-prefix=CHECK-CC1 %s
@@ -50,4 +58,7 @@ void test_C(C *c) {
 // CHECK-CC5: TypedefDecl:{TypedText Class} (50)
 // CHECK-CC5-NOT: test_A
 // CHECK-CC5: {TypedText union} (50)
+
+// RUN: c-index-test -code-completion-at=%s:42:6 %s | FileCheck -check-prefix=CHECK-CC6 %s
+// CHECK-CC6: ObjCInstanceMethodDecl:{ResultType id}{TypedText method6:}{Placeholder ^(block_t block)arg} (35)
 
