@@ -578,11 +578,10 @@ void USRGenerator::VisitType(QualType T) {
           c = 'D'; break;
         case BuiltinType::NullPtr:
           c = 'n'; break;
-        case BuiltinType::Overload:
-        case BuiltinType::BoundMember:
+#define BUILTIN_TYPE(Id, SingletonId)
+#define PLACEHOLDER_TYPE(Id, SingletonId) case BuiltinType::Id:
+#include "clang/AST/BuiltinTypes.def"
         case BuiltinType::Dependent:
-        case BuiltinType::UnknownAny:
-        case BuiltinType::ARCUnbridgedCast:
           IgnoreResults = true;
           return;
         case BuiltinType::ObjCId:

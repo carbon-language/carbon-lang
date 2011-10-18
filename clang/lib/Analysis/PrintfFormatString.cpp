@@ -372,11 +372,9 @@ bool PrintfSpecifier::fixType(QualType QT, const LangOptions &LangOpt) {
   }
 
   // We can only work with builtin types.
-  if (!QT->isBuiltinType())
-    return false;
-
-  // Everything else should be a base type
   const BuiltinType *BT = QT->getAs<BuiltinType>();
+  if (!BT)
+    return false;
 
   // Set length modifier
   switch (BT->getKind()) {
@@ -388,19 +386,15 @@ bool PrintfSpecifier::fixType(QualType QT, const LangOptions &LangOpt) {
   case BuiltinType::UInt128:
   case BuiltinType::Int128:
   case BuiltinType::Half:
-    // Integral types which are non-trivial to correct.
+    // Various types which are non-trivial to correct.
     return false;
 
-  case BuiltinType::Void:
-  case BuiltinType::NullPtr:
-  case BuiltinType::ObjCId:
-  case BuiltinType::ObjCClass:
-  case BuiltinType::ObjCSel:
-  case BuiltinType::Dependent:
-  case BuiltinType::Overload:
-  case BuiltinType::BoundMember:
-  case BuiltinType::UnknownAny:
-  case BuiltinType::ARCUnbridgedCast:
+#define SIGNED_TYPE(Id, SingletonId)
+#define UNSIGNED_TYPE(Id, SingletonId)
+#define FLOATING_TYPE(Id, SingletonId)
+#define BUILTIN_TYPE(Id, SingletonId) \
+  case BuiltinType::Id:
+#include "clang/AST/BuiltinTypes.def"
     // Misc other stuff which doesn't make sense here.
     return false;
 
