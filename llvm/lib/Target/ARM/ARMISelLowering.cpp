@@ -5672,9 +5672,7 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
   MachineRegisterInfo *MRI = &MF->getRegInfo();
   ARMFunctionInfo *AFI = MF->getInfo<ARMFunctionInfo>();
   MachineFrameInfo *MFI = MF->getFrameInfo();
-  MachineConstantPool *MCP = MF->getConstantPool();
   int FI = MFI->getFunctionContextIndex();
-  const Function *F = MF->getFunction();
 
   const TargetRegisterClass *TRC =
     Subtarget->isThumb() ? ARM::tGPRRegisterClass : ARM::GPRRegisterClass;
@@ -5862,6 +5860,23 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
                    .addFrameIndex(FI)
                    .addImm(4)
                    .addMemOperand(FIMMOLd));
+
+    if (NumLPads < 256) {
+      AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::CMPri))
+                     .addReg(NewVReg1)
+                     .addImm(NumLPads));
+    } else {
+      unsigned VReg1 = MRI->createVirtualRegister(TRC);
+      AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::MOVi16), VReg1)
+                     .addImm(NumLPads & 0xFF));
+      unsigned VReg2 = MRI->createVirtualRegister(TRC);
+      AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::MOVTi16), VReg2)
+                     .addReg(VReg1)
+                     .addImm(NumLPads >> 16));
+      AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::CMPrr))
+                     .addReg(NewVReg1)
+                     .addReg(VReg2));
+    }
 
     unsigned NewVReg2 = MRI->createVirtualRegister(TRC);
     AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::MOVi16), NewVReg2)
