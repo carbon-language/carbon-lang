@@ -2686,7 +2686,7 @@ void SelectionDAGBuilder::visitFPTrunc(const User &I) {
 }
 
 void SelectionDAGBuilder::visitFPExt(const User &I){
-  // FPTrunc is never a no-op cast, no need to check
+  // FPExt is never a no-op cast, no need to check
   SDValue N = getValue(I.getOperand(0));
   EVT DestVT = TLI.getValueType(I.getType());
   setValue(&I, DAG.getNode(ISD::FP_EXTEND, getCurDebugLoc(), DestVT, N));
