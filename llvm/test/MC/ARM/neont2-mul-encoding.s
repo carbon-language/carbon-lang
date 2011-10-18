@@ -73,6 +73,3 @@
 
 @ CHECK: vqdmull.s16	q8, d16, d17    @ encoding: [0xd0,0xef,0xa1,0x0d]
 @ CHECK: vqdmull.s32	q8, d16, d17    @ encoding: [0xe0,0xef,0xa1,0x0d]
-
-@	vmla.i32	q12, q8, d3[0]
-@ FIXME: vmla.i32	q12, q8, d3[0]  @ encoding: [0xe0,0xff,0xc3,0x80]
