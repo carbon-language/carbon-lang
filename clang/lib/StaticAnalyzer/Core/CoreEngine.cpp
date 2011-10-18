@@ -314,7 +314,8 @@ void CoreEngine::HandleBlockEntrance(const BlockEntrance &L,
 
   // Process the entrance of the block.
   if (CFGElement E = L.getFirstElement()) {
-    StmtNodeBuilder Builder(L.getBlock(), 0, Pred, this);
+    NodeBuilderContext Ctx(*this, L.getBlock());
+    StmtNodeBuilder Builder(Pred, 0, Ctx);
     SubEng.processCFGElement(E, Builder);
   }
   else
@@ -430,7 +431,8 @@ void CoreEngine::HandlePostStmt(const CFGBlock *B, unsigned StmtIdx,
   if (StmtIdx == B->size())
     HandleBlockExit(B, Pred);
   else {
-    StmtNodeBuilder Builder(B, StmtIdx, Pred, this);
+    NodeBuilderContext Ctx(*this, B);
+    StmtNodeBuilder Builder(Pred, StmtIdx, Ctx);
     SubEng.processCFGElement((*B)[StmtIdx], Builder);
   }
 }
@@ -484,9 +486,9 @@ GenericNodeBuilderImpl::generateNodeImpl(const ProgramState *state,
 }
 
 ExplodedNode* NodeBuilder::generateNodeImpl(const ProgramPoint &Loc,
-                                              const ProgramState *State,
-                                              ExplodedNode *FromN,
-                                              bool MarkAsSink) {
+                                            const ProgramState *State,
+                                            ExplodedNode *FromN,
+                                            bool MarkAsSink) {
   assert(Finalized == false &&
          "We cannot create new nodes after the results have been finalized.");
 
@@ -505,11 +507,9 @@ ExplodedNode* NodeBuilder::generateNodeImpl(const ProgramPoint &Loc,
 }
 
 
-StmtNodeBuilder::StmtNodeBuilder(const CFGBlock *b,
-                                 unsigned idx,
-                                 ExplodedNode *N,
-                                 CoreEngine* e)
-  : CommonNodeBuilder(e, N), B(*b), Idx(idx),
+StmtNodeBuilder::StmtNodeBuilder(ExplodedNode *N, unsigned idx,
+                                 NodeBuilderContext &Ctx)
+  : NodeBuilder(N, Ctx), Idx(idx),
     PurgingDeadSymbols(false), BuildSinks(false), hasGeneratedNode(false),
     PointKind(ProgramPoint::PostStmtKind), Tag(0) {
   Deferred.insert(N);
@@ -528,13 +528,13 @@ void StmtNodeBuilder::GenerateAutoTransition(ExplodedNode *N) {
   if (isa<CallEnter>(N->getLocation())) {
     // Still use the index of the CallExpr. It's needed to create the callee
     // StackFrameContext.
-    Eng.WList->enqueue(N, &B, Idx);
+    C.Eng.WList->enqueue(N, C.Block, Idx);
     return;
   }
 
   // Do not create extra nodes. Move to the next CFG element.
   if (isa<PostInitializer>(N->getLocation())) {
-    Eng.WList->enqueue(N, &B, Idx+1);
+    C.Eng.WList->enqueue(N, C.Block, Idx+1);
     return;
   }
 
@@ -543,16 +543,16 @@ void StmtNodeBuilder::GenerateAutoTransition(ExplodedNode *N) {
   if (Loc == N->getLocation()) {
     // Note: 'N' should be a fresh node because otherwise it shouldn't be
     // a member of Deferred.
-    Eng.WList->enqueue(N, &B, Idx+1);
+    C.Eng.WList->enqueue(N, C.Block, Idx+1);
     return;
   }
 
   bool IsNew;
-  ExplodedNode *Succ = Eng.G->getNode(Loc, N->State, &IsNew);
-  Succ->addPredecessor(N, *Eng.G);
+  ExplodedNode *Succ = C.Eng.G->getNode(Loc, N->State, &IsNew);
+  Succ->addPredecessor(N, *C.Eng.G);
 
   if (IsNew)
-    Eng.WList->enqueue(Succ, &B, Idx+1);
+    C.Eng.WList->enqueue(Succ, C.Block, Idx+1);
 }
 
 ExplodedNode *StmtNodeBuilder::MakeNode(ExplodedNodeSet &Dst,
@@ -560,46 +560,11 @@ ExplodedNode *StmtNodeBuilder::MakeNode(ExplodedNodeSet &Dst,
                                         ExplodedNode *Pred,
                                         const ProgramState *St,
                                         ProgramPoint::Kind K) {
-
-  ExplodedNode *N = generateNode(S, St, Pred, K);
-
-  if (N) {
-    if (BuildSinks)
-      N->markAsSink();
-    else
+  ExplodedNode *N = generateNode(S, St, Pred, K, 0, BuildSinks);
+  if (N && !BuildSinks){
       Dst.Add(N);
   }
-  
   return N;
-}
-
-ExplodedNode*
-StmtNodeBuilder::generateNodeInternal(const Stmt *S,
-                                      const ProgramState *state,
-                                      ExplodedNode *Pred,
-                                      ProgramPoint::Kind K,
-                                      const ProgramPointTag *tag) {
-  
-  const ProgramPoint &L = ProgramPoint::getProgramPoint(S, K,
-                                        Pred->getLocationContext(), tag);
-  return generateNodeInternal(L, state, Pred);
-}
-
-ExplodedNode*
-StmtNodeBuilder::generateNodeInternal(const ProgramPoint &Loc,
-                                      const ProgramState *State,
-                                      ExplodedNode *Pred) {
-  bool IsNew;
-  ExplodedNode *N = Eng.G->getNode(Loc, State, &IsNew);
-  N->addPredecessor(Pred, *Eng.G);
-  Deferred.erase(Pred);
-
-  if (IsNew) {
-    Deferred.insert(N);
-    return N;
-  }
-
-  return NULL;
 }
 
 ExplodedNode *BranchNodeBuilder::generateNode(const ProgramState *State,

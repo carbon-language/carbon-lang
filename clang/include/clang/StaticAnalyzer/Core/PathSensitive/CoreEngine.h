@@ -181,7 +181,12 @@ protected:
   friend class StmtNodeBuilder;
 
   ExplodedNode *BuilderPred;
+
+// TODO: Context should become protected after refactoring is done.
+public:
   const NodeBuilderContext &C;
+protected:
+
   bool Finalized;
 
   /// \brief The frontier set - a set of nodes which need to be propagated after
@@ -254,6 +259,9 @@ public:
     return Deferred.end();
   }
 
+  /// \brief Return the CFGBlock associated with this builder.
+  const CFGBlock *getBlock() const { return C.Block; }
+
   /// \brief Returns the number of times the current basic block has been
   /// visited on the exploded graph path.
   unsigned getCurrentBlockCount() const {
@@ -272,8 +280,6 @@ public:
 class CommonNodeBuilder {
 protected:
   ExplodedNode *Pred;
-public:
-  // TODO: make protected.
   CoreEngine& Eng;
 
   CommonNodeBuilder(CoreEngine* E, ExplodedNode *P) : Pred(P), Eng(*E) {}
@@ -281,49 +287,36 @@ public:
 };
 
 
-class StmtNodeBuilder: public CommonNodeBuilder {
-  const CFGBlock &B;
+class StmtNodeBuilder: public NodeBuilder {
   const unsigned Idx;
 
 public:
   bool PurgingDeadSymbols;
   bool BuildSinks;
+  // TODO: Remove the flag. We should be able to use the method in the parent.
   bool hasGeneratedNode;
   ProgramPoint::Kind PointKind;
   const ProgramPointTag *Tag;
 
-  typedef llvm::SmallPtrSet<ExplodedNode*,5> DeferredTy;
-  DeferredTy Deferred;
-
   void GenerateAutoTransition(ExplodedNode *N);
 
 public:
-  StmtNodeBuilder(const CFGBlock *b,
-                  unsigned idx,
-                  ExplodedNode *N,
-                  CoreEngine* e);
+  StmtNodeBuilder(ExplodedNode *N, unsigned idx, NodeBuilderContext &Ctx);
 
   ~StmtNodeBuilder();
-
-  ExplodedNode *getPredecessor() const { return Pred; }
   
-  unsigned getCurrentBlockCount() const {
-    return getBlockCounter().getNumVisited(
-                            Pred->getLocationContext()->getCurrentStackFrame(),
-                                           B.getBlockID());
-  }
-
   ExplodedNode *generateNode(const Stmt *S,
                              const ProgramState *St,
                              ExplodedNode *Pred,
                              ProgramPoint::Kind K,
-                             const ProgramPointTag *tag = 0) {
-    hasGeneratedNode = true;
-
+                             const ProgramPointTag *tag = 0,
+                             bool MarkAsSink = false) {
     if (PurgingDeadSymbols)
       K = ProgramPoint::PostPurgeDeadSymbolsKind;
 
-    return generateNodeInternal(S, St, Pred, K, tag ? tag : Tag);
+    const ProgramPoint &L = ProgramPoint::getProgramPoint(S, K,
+                                  Pred->getLocationContext(), tag ? tag : Tag);
+    return generateNodeImpl(L, St, Pred, MarkAsSink);
   }
 
   ExplodedNode *generateNode(const Stmt *S,
@@ -336,32 +329,15 @@ public:
   ExplodedNode *generateNode(const ProgramPoint &PP,
                              const ProgramState *State,
                              ExplodedNode *Pred) {
-    hasGeneratedNode = true;
-    return generateNodeInternal(PP, State, Pred);
+    return generateNodeImpl(PP, State, Pred, false);
   }
-
-  ExplodedNode*
-  generateNodeInternal(const ProgramPoint &PP,
-                       const ProgramState *State,
-                       ExplodedNode *Pred);
-
-  ExplodedNode*
-  generateNodeInternal(const Stmt *S,
-                       const ProgramState *State,
-                       ExplodedNode *Pred,
-                       ProgramPoint::Kind K,
-                       const ProgramPointTag *tag = 0);
 
   /// getStmt - Return the current block-level expression associated with
   ///  this builder.
   const Stmt *getStmt() const { 
-    const CFGStmt *CS = B[Idx].getAs<CFGStmt>();
+    const CFGStmt *CS = (*C.Block)[Idx].getAs<CFGStmt>();
     return CS ? CS->getStmt() : 0;
   }
-
-  /// getBlock - Return the CFGBlock associated with the block-level expression
-  ///  of this builder.
-  const CFGBlock *getBlock() const { return &B; }
 
   unsigned getIndex() const { return Idx; }
 
@@ -394,7 +370,6 @@ public:
     if (NB.hasGeneratedNodes()) {
       Deferred.erase(NBPred);
       Deferred.insert(NB.Deferred.begin(), NB.Deferred.end());
-      hasGeneratedNode = true;
     }
   }
 };

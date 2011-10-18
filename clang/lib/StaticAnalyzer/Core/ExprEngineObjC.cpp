@@ -226,7 +226,7 @@ void ExprEngine::VisitObjCMessage(const ObjCMessage &msg,
       evalObjCMessage(dstEval, msg, Pred, Pred->getState());
     }
 
-    assert(Builder->BuildSinks || Builder->hasGeneratedNode);
+    assert(Builder->BuildSinks || Builder->hasGeneratedNodes());
   }
   
   // Finally, perform the post-condition check of the ObjCMessageExpr and store
