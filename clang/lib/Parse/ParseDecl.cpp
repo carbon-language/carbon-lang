@@ -245,6 +245,13 @@ void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
       ConsumeToken(); // Eat the comma, move to the next argument
     }
   }
+  else if (Tok.is(tok::less) && AttrName->isStr("iboutletcollection")) {
+    if (!ExpectAndConsume(tok::less, diag::err_expected_less_after, "<",
+                          tok::greater)) {
+      Diag(Tok, diag::err_iboutletcollection_with_protocol);
+      SkipUntil(tok::r_paren, false, true); // skip until ')'
+    }
+  }
 
   SourceLocation RParen = Tok.getLocation();
   if (!ExpectAndConsume(tok::r_paren, diag::err_expected_rparen)) {
