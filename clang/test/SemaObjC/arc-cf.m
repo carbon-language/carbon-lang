@@ -1,5 +1,9 @@
 // RUN: %clang_cc1 -fsyntax-only -fobjc-arc -verify %s
 
+#if __has_feature(arc_cf_code_audited)
+char _global[-1]; // expected-error {{declared as an array with a negative size}}
+#endif
+
 typedef const void *CFTypeRef;
 typedef const struct __CFString *CFStringRef;
 
