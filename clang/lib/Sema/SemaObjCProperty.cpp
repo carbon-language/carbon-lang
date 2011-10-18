@@ -163,6 +163,37 @@ Decl *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
   return Res;
 }
 
+static ObjCPropertyDecl::PropertyAttributeKind
+makePropertyAttributesAsWritten(unsigned Attributes) {
+  unsigned attributesAsWritten = 0;
+  if (Attributes & ObjCDeclSpec::DQ_PR_readonly)
+    attributesAsWritten |= ObjCPropertyDecl::OBJC_PR_readonly;
+  if (Attributes & ObjCDeclSpec::DQ_PR_readwrite)
+    attributesAsWritten |= ObjCPropertyDecl::OBJC_PR_readwrite;
+  if (Attributes & ObjCDeclSpec::DQ_PR_getter)
+    attributesAsWritten |= ObjCPropertyDecl::OBJC_PR_getter;
+  if (Attributes & ObjCDeclSpec::DQ_PR_setter)
+    attributesAsWritten |= ObjCPropertyDecl::OBJC_PR_setter;
+  if (Attributes & ObjCDeclSpec::DQ_PR_assign)
+    attributesAsWritten |= ObjCPropertyDecl::OBJC_PR_assign;
+  if (Attributes & ObjCDeclSpec::DQ_PR_retain)
+    attributesAsWritten |= ObjCPropertyDecl::OBJC_PR_retain;
+  if (Attributes & ObjCDeclSpec::DQ_PR_strong)
+    attributesAsWritten |= ObjCPropertyDecl::OBJC_PR_strong;
+  if (Attributes & ObjCDeclSpec::DQ_PR_weak)
+    attributesAsWritten |= ObjCPropertyDecl::OBJC_PR_weak;
+  if (Attributes & ObjCDeclSpec::DQ_PR_copy)
+    attributesAsWritten |= ObjCPropertyDecl::OBJC_PR_copy;
+  if (Attributes & ObjCDeclSpec::DQ_PR_unsafe_unretained)
+    attributesAsWritten |= ObjCPropertyDecl::OBJC_PR_unsafe_unretained;
+  if (Attributes & ObjCDeclSpec::DQ_PR_nonatomic)
+    attributesAsWritten |= ObjCPropertyDecl::OBJC_PR_nonatomic;
+  if (Attributes & ObjCDeclSpec::DQ_PR_atomic)
+    attributesAsWritten |= ObjCPropertyDecl::OBJC_PR_atomic;
+  
+  return (ObjCPropertyDecl::PropertyAttributeKind)attributesAsWritten;
+}
+
 Decl *
 Sema::HandlePropertyInClassExtension(Scope *S,
                                      SourceLocation AtLoc, FieldDeclarator &FD,
@@ -199,6 +230,8 @@ Sema::HandlePropertyInClassExtension(Scope *S,
   ObjCPropertyDecl *PDecl =
     ObjCPropertyDecl::Create(Context, DC, FD.D.getIdentifierLoc(),
                              PropertyId, AtLoc, T);
+  PDecl->setPropertyAttributesAsWritten(
+                                   makePropertyAttributesAsWritten(Attributes));
   if (Attributes & ObjCDeclSpec::DQ_PR_readonly)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_readonly);
   if (Attributes & ObjCDeclSpec::DQ_PR_readwrite)
@@ -368,35 +401,8 @@ ObjCPropertyDecl *Sema::CreatePropertyDecl(Scope *S,
   // selector names in anticipation of declaration of setter/getter methods.
   PDecl->setGetterName(GetterSel);
   PDecl->setSetterName(SetterSel);
-
-  unsigned attributesAsWritten = 0;
-  if (Attributes & ObjCDeclSpec::DQ_PR_readonly)
-    attributesAsWritten |= ObjCPropertyDecl::OBJC_PR_readonly;
-  if (Attributes & ObjCDeclSpec::DQ_PR_readwrite)
-    attributesAsWritten |= ObjCPropertyDecl::OBJC_PR_readwrite;
-  if (Attributes & ObjCDeclSpec::DQ_PR_getter)
-    attributesAsWritten |= ObjCPropertyDecl::OBJC_PR_getter;
-  if (Attributes & ObjCDeclSpec::DQ_PR_setter)
-    attributesAsWritten |= ObjCPropertyDecl::OBJC_PR_setter;
-  if (Attributes & ObjCDeclSpec::DQ_PR_assign)
-    attributesAsWritten |= ObjCPropertyDecl::OBJC_PR_assign;
-  if (Attributes & ObjCDeclSpec::DQ_PR_retain)
-    attributesAsWritten |= ObjCPropertyDecl::OBJC_PR_retain;
-  if (Attributes & ObjCDeclSpec::DQ_PR_strong)
-    attributesAsWritten |= ObjCPropertyDecl::OBJC_PR_strong;
-  if (Attributes & ObjCDeclSpec::DQ_PR_weak)
-    attributesAsWritten |= ObjCPropertyDecl::OBJC_PR_weak;
-  if (Attributes & ObjCDeclSpec::DQ_PR_copy)
-    attributesAsWritten |= ObjCPropertyDecl::OBJC_PR_copy;
-  if (Attributes & ObjCDeclSpec::DQ_PR_unsafe_unretained)
-    attributesAsWritten |= ObjCPropertyDecl::OBJC_PR_unsafe_unretained;
-  if (Attributes & ObjCDeclSpec::DQ_PR_nonatomic)
-    attributesAsWritten |= ObjCPropertyDecl::OBJC_PR_nonatomic;
-  if (Attributes & ObjCDeclSpec::DQ_PR_atomic)
-    attributesAsWritten |= ObjCPropertyDecl::OBJC_PR_atomic;
-
   PDecl->setPropertyAttributesAsWritten(
-                  (ObjCPropertyDecl::PropertyAttributeKind)attributesAsWritten);
+                                   makePropertyAttributesAsWritten(Attributes));
 
   if (Attributes & ObjCDeclSpec::DQ_PR_readonly)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_readonly);
