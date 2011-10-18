@@ -66,9 +66,19 @@ public:
     void
     SetIgnoreCount (uint32_t n);
 
+    %feature("docstring", "
+    //------------------------------------------------------------------
+    /// Get the condition expression for the watchpoint.
+    //------------------------------------------------------------------
+    ") GetCondition;
     const char *
     GetCondition ();
 
+    %feature("docstring", "
+    //--------------------------------------------------------------------------
+    /// The watchpoint stops only if the condition expression evaluates to true.
+    //--------------------------------------------------------------------------
+    ") SetCondition;
     void 
     SetCondition (const char *condition);
     

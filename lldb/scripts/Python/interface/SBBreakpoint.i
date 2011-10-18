@@ -128,9 +128,19 @@ public:
     uint32_t
     GetIgnoreCount () const;
     
+    %feature("docstring", "
+    //--------------------------------------------------------------------------
+    /// The breakpoint stops only if the condition expression evaluates to true.
+    //--------------------------------------------------------------------------
+    ") SetCondition;
     void 
     SetCondition (const char *condition);
     
+    %feature("docstring", "
+    //------------------------------------------------------------------
+    /// Get the condition expression for the breakpoint.
+    //------------------------------------------------------------------
+    ") GetCondition;
     const char *
     GetCondition ();
 
