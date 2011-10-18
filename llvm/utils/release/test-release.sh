@@ -12,8 +12,6 @@
 #
 #===------------------------------------------------------------------------===#
 
-set -e                          # Exit if any command fails
-
 projects="llvm cfe dragonegg test-suite"
 
 # Base SVN URL for the sources.
@@ -265,12 +263,14 @@ function test_llvmCore() {
     ObjDir="$3"
 
     cd $ObjDir
-    make check-all \
+    make -k check-all \
         2>&1 | tee $LogDir/llvm.check-Phase$Phase-$Flavor.log
-    make unittests \
+    make -k unittests \
         2>&1 | tee $LogDir/llvm.unittests-Phase$Phase-$Flavor.log
     cd $BuildDir
 }
+
+set -e                          # Exit if any command fails
 
 if [ "$do_checkout" = "yes" ]; then
     export_sources
@@ -367,6 +367,8 @@ for Flavor in $Flavors ; do
     done
 done
 ) 2>&1 | tee $LogDir/testing.$Release-rc$RC.log
+
+set +e
 
 # Woo hoo!
 echo "### Testing Finished ###"
