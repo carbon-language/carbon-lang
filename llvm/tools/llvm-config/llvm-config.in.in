@@ -314,6 +314,7 @@ sub build_name_map {
     }
 
     # Add target-specific entries
+    my @all_targets;
     foreach my $target (@TARGETS_BUILT) {
         # FIXME: Temporary, until we don't switch all targets
         if (defined $NAME_MAP{$target.'asmprinter'}) {
@@ -321,8 +322,8 @@ sub build_name_map {
                                   $target.'asmprinter', 
                                   $target.'codegen']
         } elsif (defined $NAME_MAP{$target.'codegen'}) {
-          $NAME_MAP{$target} = [$target.'info',
-                                $target.'codegen']
+            $NAME_MAP{$target} = [$target.'info',
+                                  $target.'codegen']
         } else {
             $NAME_MAP{$target} = [$target.'info',
                                   $NAME_MAP{$target}[0]]
@@ -335,6 +336,8 @@ sub build_name_map {
         if (defined $NAME_MAP{$target.'disassembler'}) {
             push @{$NAME_MAP{$target}},$target.'disassembler'
         }
+
+        push @all_targets, $target;
     }
 
     # Add virtual entries.
@@ -342,6 +345,7 @@ sub build_name_map {
     $NAME_MAP{'nativecodegen'} = have_native_backend() ? [$ARCH.'codegen'] : [];
     $NAME_MAP{'backend'} = have_native_backend() ? ['native'] : ['cbackend'];
     $NAME_MAP{'engine'}  = find_best_engine;
+    $NAME_MAP{'all-targets'}     = \@all_targets;
     $NAME_MAP{'all'}     = [name_map_entries];   # Must be last.
 }
 
