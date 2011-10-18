@@ -238,9 +238,6 @@ public:
     return generateNodeImpl(PP, State, Pred, MarkAsSink);
   }
 
-  // \brief Get the builder's predecessor - the parent to all the other nodes.
-  const ExplodedNode *getPred() const { return BuilderPred; }
-
   bool hasGeneratedNodes() const {
     return (!Deferred.count(BuilderPred));
   }
@@ -261,8 +258,8 @@ public:
   /// visited on the exploded graph path.
   unsigned getCurrentBlockCount() const {
     return getBlockCounter().getNumVisited(
-                         BuilderPred->getLocationContext()->getCurrentStackFrame(),
-                         C.Block->getBlockID());
+                      BuilderPred->getLocationContext()->getCurrentStackFrame(),
+                      C.Block->getBlockID());
   }
 
   // \brief Get the builder's predecessor - the parent to all the other nodes.
@@ -393,7 +390,7 @@ public:
   }
 
   void importNodesFromBuilder(const NodeBuilder &NB) {
-    ExplodedNode *NBPred = const_cast<ExplodedNode*>(NB.getPred());
+    ExplodedNode *NBPred = const_cast<ExplodedNode*>(NB.getPredecessor());
     if (NB.hasGeneratedNodes()) {
       Deferred.erase(NBPred);
       Deferred.insert(NB.Deferred.begin(), NB.Deferred.end());
