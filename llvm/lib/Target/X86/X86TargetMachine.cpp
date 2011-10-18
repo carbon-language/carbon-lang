@@ -102,7 +102,7 @@ X86TargetMachine::X86TargetMachine(const Target &T, StringRef TT,
 static cl::opt<bool>
 UseVZeroUpper("x86-use-vzeroupper",
   cl::desc("Minimize AVX to SSE transition penalty"),
-  cl::init(true));
+  cl::init(false));
 
 //===----------------------------------------------------------------------===//
 // Pass Pipeline Configuration
