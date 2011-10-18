@@ -38,9 +38,17 @@
 
 	vqdmlal.s16	q8, d19, d18
 	vqdmlal.s32	q8, d19, d18
+        vqdmlal.s16 q11, d11, d7[0]
+        vqdmlal.s16 q11, d11, d7[1]
+        vqdmlal.s16 q11, d11, d7[2]
+        vqdmlal.s16 q11, d11, d7[3]
 
 @ CHECK: vqdmlal.s16	q8, d19, d18    @ encoding: [0xd3,0xef,0xa2,0x09]
 @ CHECK: vqdmlal.s32	q8, d19, d18    @ encoding: [0xe3,0xef,0xa2,0x09]
+@ CHECK: vqdmlal.s16	q11, d11, d7[0] @ encoding: [0xdb,0xef,0x47,0x63]
+@ CHECK: vqdmlal.s16	q11, d11, d7[1] @ encoding: [0xdb,0xef,0x4f,0x63]
+@ CHECK: vqdmlal.s16	q11, d11, d7[2] @ encoding: [0xdb,0xef,0x67,0x63]
+@ CHECK: vqdmlal.s16	q11, d11, d7[3] @ encoding: [0xdb,0xef,0x6f,0x63]
 
 
 	vmls.i8	d16, d18, d17
