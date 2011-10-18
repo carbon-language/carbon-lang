@@ -161,6 +161,7 @@ class ARMAsmParser : public MCTargetAsmParser {
   OperandMatchResultTy parsePostIdxReg(SmallVectorImpl<MCParsedAsmOperand*>&);
   OperandMatchResultTy parseAM3Offset(SmallVectorImpl<MCParsedAsmOperand*>&);
   OperandMatchResultTy parseFPImm(SmallVectorImpl<MCParsedAsmOperand*>&);
+  OperandMatchResultTy parseVectorList(SmallVectorImpl<MCParsedAsmOperand*>&);
 
   // Asm Match Converter Methods
   bool cvtT2LdrdPre(MCInst &Inst, unsigned Opcode,
@@ -262,6 +263,7 @@ class ARMOperand : public MCParsedAsmOperand {
     k_RegisterList,
     k_DPRRegisterList,
     k_SPRRegisterList,
+    k_VectorList,
     k_ShiftedRegister,
     k_ShiftedImmediate,
     k_ShifterImmediate,
@@ -310,6 +312,12 @@ class ARMOperand : public MCParsedAsmOperand {
     struct {
       unsigned RegNum;
     } Reg;
+
+    // A vector register list is a sequential list of 1 to 4 registers.
+    struct {
+      unsigned RegNum;
+      unsigned Count;
+    } VectorList;
 
     struct {
       unsigned Val;
@@ -392,6 +400,9 @@ public:
     case k_DPRRegisterList:
     case k_SPRRegisterList:
       Registers = o.Registers;
+      break;
+    case k_VectorList:
+      VectorList = o.VectorList;
       break;
     case k_CoprocNum:
     case k_CoprocReg:
@@ -899,6 +910,11 @@ public:
   bool isProcIFlags() const { return Kind == k_ProcIFlags; }
 
   // NEON operands.
+  bool isVecListOneD() const {
+    if (Kind != k_VectorList) return false;
+    return VectorList.Count == 1;
+  }
+
   bool isVectorIndex8() const {
     if (Kind != k_VectorIndex) return false;
     return VectorIndex.Val < 8;
@@ -1486,6 +1502,11 @@ public:
     Inst.addOperand(MCOperand::CreateImm(unsigned(getProcIFlags())));
   }
 
+  void addVecListOneDOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateReg(VectorList.RegNum));
+  }
+
   void addVectorIndex8Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     Inst.addOperand(MCOperand::CreateImm(getVectorIndex()));
@@ -1705,6 +1726,16 @@ public:
     return Op;
   }
 
+  static ARMOperand *CreateVectorList(unsigned RegNum, unsigned Count,
+                                      SMLoc S, SMLoc E) {
+    ARMOperand *Op = new ARMOperand(k_VectorList);
+    Op->VectorList.RegNum = RegNum;
+    Op->VectorList.Count = Count;
+    Op->StartLoc = S;
+    Op->EndLoc = E;
+    return Op;
+  }
+
   static ARMOperand *CreateVectorIndex(unsigned Idx, SMLoc S, SMLoc E,
                                        MCContext &Ctx) {
     ARMOperand *Op = new ARMOperand(k_VectorIndex);
@@ -1896,6 +1927,10 @@ void ARMOperand::print(raw_ostream &OS) const {
     OS << ">";
     break;
   }
+  case k_VectorList:
+    OS << "<vector_list " << VectorList.Count << " * "
+       << VectorList.RegNum << ">";
+    break;
   case k_Token:
     OS << "'" << getToken() << "'";
     break;
@@ -2385,6 +2420,55 @@ parseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
   Operands.push_back(ARMOperand::CreateRegList(Registers, S, E));
   return false;
+}
+
+// parse a vector register list
+ARMAsmParser::OperandMatchResultTy ARMAsmParser::
+parseVectorList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  if(Parser.getTok().isNot(AsmToken::LCurly))
+    return MatchOperand_NoMatch;
+
+  SMLoc S = Parser.getTok().getLoc();
+  Parser.Lex(); // Eat '{' token.
+  SMLoc RegLoc = Parser.getTok().getLoc();
+
+  int Reg = tryParseRegister();
+  if (Reg == -1) {
+    Error(RegLoc, "register expected");
+    return MatchOperand_ParseFail;
+  }
+
+  unsigned FirstReg = Reg;
+  unsigned Count = 1;
+  while (Parser.getTok().is(AsmToken::Comma)) {
+    Parser.Lex(); // Eat the comma.
+    RegLoc = Parser.getTok().getLoc();
+    int OldReg = Reg;
+    Reg = tryParseRegister();
+    if (Reg == -1) {
+      Error(RegLoc, "register expected");
+      return MatchOperand_ParseFail;
+    }
+    // vector register lists must also be contiguous.
+    // It's OK to use the enumeration values directly here rather, as the
+    // VFP register classes have the enum sorted properly.
+    if (Reg != OldReg + 1) {
+      Error(RegLoc, "non-contiguous register range");
+      return MatchOperand_ParseFail;
+    }
+
+    ++Count;
+  }
+
+  SMLoc E = Parser.getTok().getLoc();
+  if (Parser.getTok().isNot(AsmToken::RCurly)) {
+    Error(E, "'}' expected");
+    return MatchOperand_ParseFail;
+  }
+  Parser.Lex(); // Eat '}' token.
+
+  Operands.push_back(ARMOperand::CreateVectorList(FirstReg, Count, S, E));
+  return MatchOperand_Success;
 }
 
 /// parseMemBarrierOptOperand - Try to parse DSB/DMB data barrier options.

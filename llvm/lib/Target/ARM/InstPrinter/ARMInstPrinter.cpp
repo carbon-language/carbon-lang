@@ -990,3 +990,8 @@ void ARMInstPrinter::printVectorIndex(const MCInst *MI, unsigned OpNum,
                                       raw_ostream &O) {
   O << "[" << MI->getOperand(OpNum).getImm() << "]";
 }
+
+void ARMInstPrinter::printVectorListOne(const MCInst *MI, unsigned OpNum,
+                                        raw_ostream &O) {
+  O << "{" << getRegisterName(MI->getOperand(OpNum).getReg()) << "}";
+}

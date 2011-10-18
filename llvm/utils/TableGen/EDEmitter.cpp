@@ -571,6 +571,7 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
   REG("QPR");
   REG("QQPR");
   REG("QQQQPR");
+  REG("VecListOneD");
 
   IMM("i32imm");
   IMM("i32imm_hilo16");

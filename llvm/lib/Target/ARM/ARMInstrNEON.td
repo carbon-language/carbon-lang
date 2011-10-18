@@ -70,6 +70,14 @@ def VectorIndex32 : Operand<i32>, ImmLeaf<i32, [{
   let MIOperandInfo = (ops i32imm);
 }
 
+def VecListOneDAsmOperand : AsmOperandClass {
+  let Name = "VecListOneD";
+  let ParserMethod = "parseVectorList";
+}
+def VecListOneD : RegisterOperand<DPR, "printVectorListOne"> {
+  let ParserMatchClass = VecListOneDAsmOperand;
+}
+
 //===----------------------------------------------------------------------===//
 // NEON-specific DAG Nodes.
 //===----------------------------------------------------------------------===//
@@ -4869,9 +4877,9 @@ def  VZIPq32  : N2VQShuffle<0b10, 0b00011, IIC_VPERMQ3, "vzip", "32">;
 let DecoderMethod = "DecodeTBLInstruction" in {
 def  VTBL1
   : N3V<1,1,0b11,0b1000,0,0, (outs DPR:$Vd),
-        (ins DPR:$Vn, DPR:$Vm), NVTBLFrm, IIC_VTB1,
-        "vtbl", "8", "$Vd, \\{$Vn\\}, $Vm", "",
-        [(set DPR:$Vd, (v8i8 (int_arm_neon_vtbl1 DPR:$Vn, DPR:$Vm)))]>;
+        (ins VecListOneD:$Vn, DPR:$Vm), NVTBLFrm, IIC_VTB1,
+        "vtbl", "8", "$Vd, $Vn, $Vm", "",
+        [(set DPR:$Vd, (v8i8 (int_arm_neon_vtbl1 VecListOneD:$Vn, DPR:$Vm)))]>;
 let hasExtraSrcRegAllocReq = 1 in {
 def  VTBL2
   : N3V<1,1,0b11,0b1001,0,0, (outs DPR:$Vd),
