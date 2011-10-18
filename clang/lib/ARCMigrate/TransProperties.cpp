@@ -46,6 +46,16 @@ namespace {
 class PropertiesRewriter {
   MigrationPass &Pass;
   ObjCImplementationDecl *CurImplD;
+  
+  enum PropActionKind {
+    PropAction_None,
+    PropAction_RetainToStrong,
+    PropAction_RetainRemoved,
+    PropAction_AssignToStrong,
+    PropAction_AssignRewritten,
+    PropAction_MaybeAddStrong,
+    PropAction_MaybeAddWeakOrUnsafe
+  };
 
   struct PropData {
     ObjCPropertyDecl *PropD;
@@ -58,9 +68,21 @@ class PropertiesRewriter {
   typedef SmallVector<PropData, 2> PropsTy;
   typedef std::map<unsigned, PropsTy> AtPropDeclsTy;
   AtPropDeclsTy AtProps;
+  llvm::DenseMap<IdentifierInfo *, PropActionKind> ActionOnProp;
 
 public:
   PropertiesRewriter(MigrationPass &pass) : Pass(pass) { }
+
+  static void collectProperties(ObjCContainerDecl *D, AtPropDeclsTy &AtProps) {
+    for (ObjCInterfaceDecl::prop_iterator
+           propI = D->prop_begin(),
+           propE = D->prop_end(); propI != propE; ++propI) {
+      if (propI->getAtLoc().isInvalid())
+        continue;
+      PropsTy &props = AtProps[propI->getAtLoc().getRawEncoding()];
+      props.push_back(*propI);
+    }
+  }
 
   void doTransform(ObjCImplementationDecl *D) {
     CurImplD = D;
@@ -68,14 +90,7 @@ public:
     if (!iface)
       return;
 
-    for (ObjCInterfaceDecl::prop_iterator
-           propI = iface->prop_begin(),
-           propE = iface->prop_end(); propI != propE; ++propI) {
-      if (propI->getAtLoc().isInvalid())
-        continue;
-      PropsTy &props = AtProps[propI->getAtLoc().getRawEncoding()];
-      props.push_back(*propI);
-    }
+    collectProperties(iface, AtProps);
 
     typedef DeclContext::specific_decl_iterator<ObjCPropertyImplDecl>
         prop_impl_iterator;
@@ -119,10 +134,62 @@ public:
       Transaction Trans(Pass.TA);
       rewriteProperty(props, atLoc);
     }
+
+    AtPropDeclsTy AtExtProps;
+    // Look through extensions.
+    for (ObjCCategoryDecl *Cat = iface->getCategoryList();
+           Cat; Cat = Cat->getNextClassCategory())
+      if (Cat->IsClassExtension())
+        collectProperties(Cat, AtExtProps);
+
+    for (AtPropDeclsTy::iterator
+           I = AtExtProps.begin(), E = AtExtProps.end(); I != E; ++I) {
+      SourceLocation atLoc = SourceLocation::getFromRawEncoding(I->first);
+      PropsTy &props = I->second;
+      Transaction Trans(Pass.TA);
+      doActionForExtensionProp(props, atLoc);
+    }
   }
 
 private:
-  void rewriteProperty(PropsTy &props, SourceLocation atLoc) const {
+  void doPropAction(PropActionKind kind,
+                    PropsTy &props, SourceLocation atLoc,
+                    bool markAction = true) {
+    if (markAction)
+      for (PropsTy::iterator I = props.begin(), E = props.end(); I != E; ++I)
+        ActionOnProp[I->PropD->getIdentifier()] = kind;
+
+    switch (kind) {
+    case PropAction_None:
+      return;
+    case PropAction_RetainToStrong:
+      rewriteAttribute("retain", "strong", atLoc);
+      return;
+    case PropAction_RetainRemoved:
+      removeAttribute("retain", atLoc);
+      return;
+    case PropAction_AssignToStrong:
+      rewriteAttribute("assign", "strong", atLoc);
+      return;
+    case PropAction_AssignRewritten:
+      return rewriteAssign(props, atLoc);
+    case PropAction_MaybeAddStrong:
+      return maybeAddStrongAttr(props, atLoc);
+    case PropAction_MaybeAddWeakOrUnsafe:
+      return maybeAddWeakOrUnsafeUnretainedAttr(props, atLoc);
+    }
+  }
+
+  void doActionForExtensionProp(PropsTy &props, SourceLocation atLoc) {
+    llvm::DenseMap<IdentifierInfo *, PropActionKind>::iterator I;
+    I = ActionOnProp.find(props[0].PropD->getIdentifier());
+    if (I == ActionOnProp.end())
+      return;
+
+    doPropAction(I->second, props, atLoc, false);
+  }
+
+  void rewriteProperty(PropsTy &props, SourceLocation atLoc) {
     ObjCPropertyDecl::PropertyAttributeKind propAttrs = getPropertyAttrs(props);
     
     if (propAttrs & (ObjCPropertyDecl::OBJC_PR_copy |
@@ -133,24 +200,23 @@ private:
 
     if (propAttrs & ObjCPropertyDecl::OBJC_PR_retain) {
       if (propAttrs & ObjCPropertyDecl::OBJC_PR_readonly)
-        rewriteAttribute("retain", "strong", atLoc);
+        return doPropAction(PropAction_RetainToStrong, props, atLoc);
       else
-        removeAttribute("retain", atLoc); // strong is the default.
-      return;
+        // strong is the default.
+        return doPropAction(PropAction_RetainRemoved, props, atLoc);
     }
 
     if (propAttrs & ObjCPropertyDecl::OBJC_PR_assign) {
       if (hasIvarAssignedAPlusOneObject(props)) {
-        rewriteAttribute("assign", "strong", atLoc);
-        return;
+        return doPropAction(PropAction_AssignToStrong, props, atLoc);
       }
-      return rewriteAssign(props, atLoc);
+      return doPropAction(PropAction_AssignRewritten, props, atLoc);
     }
 
     if (hasIvarAssignedAPlusOneObject(props))
-      return maybeAddStrongAttr(props, atLoc);
+      return doPropAction(PropAction_MaybeAddStrong, props, atLoc);
 
-    return maybeAddWeakOrUnsafeUnretainedAttr(props, atLoc);
+    return doPropAction(PropAction_MaybeAddWeakOrUnsafe, props, atLoc);
   }
 
   void rewriteAssign(PropsTy &props, SourceLocation atLoc) const {

@@ -55,3 +55,17 @@ typedef _NSCachedAttributedString *BadClassForWeak;
   assign_plus3 = [parm retain];
 }
 @end
+
+@interface TestExt
+@property (retain,readonly) TestExt *x1;
+@property (readonly) TestExt *x2;
+@end
+
+@interface TestExt()
+@property (retain,readwrite) TestExt *x1;
+@property (readwrite) TestExt *x2;
+@end
+
+@implementation TestExt
+@synthesize x1, x2;
+@end
