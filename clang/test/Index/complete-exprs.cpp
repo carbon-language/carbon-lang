@@ -26,8 +26,11 @@ void g() {
   vector<int>(foo(), foo());
 }
 
-// RUN: c-index-test -code-completion-at=%s:20:2 %s | FileCheck -check-prefix=CHECK-CC1 %s
-// RUN: env CINDEXTEST_EDITING=1 CINDEXTEST_COMPLETION_CACHING=1 c-index-test -code-completion-at=%s:20:2 %s | FileCheck -check-prefix=CHECK-CC1 %s
+// RUN: c-index-test -code-completion-at=%s:20:2 %s -std=c++0x | FileCheck -check-prefix=CHECK-CC1 %s
+// RUN: env CINDEXTEST_EDITING=1 CINDEXTEST_COMPLETION_CACHING=1 c-index-test -code-completion-at=%s:20:2 -std=c++0x %s | FileCheck -check-prefix=CHECK-CC1 %s
+// CHECK-CC1: NotImplemented:{TypedText alignof}{LeftParen (}{Placeholder type}{RightParen )} (40)
+// CHECK-CC1: NotImplemented:{TypedText noexcept}{LeftParen (}{Placeholder expression}{RightParen )} (40)
+// CHECK-CC1: NotImplemented:{TypedText nullptr} (40)
 // CHECK-CC1: NotImplemented:{TypedText operator} (40)
 // CHECK-CC1-NOT: push_back
 // CHECK-CC1: ClassDecl:{TypedText string} (50)

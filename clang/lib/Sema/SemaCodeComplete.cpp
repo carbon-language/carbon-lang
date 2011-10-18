@@ -1811,8 +1811,35 @@ static void AddOrdinaryNameResults(Sema::ParserCompletionContext CCC,
         Builder.AddPlaceholderChunk("expression");
         Results.AddResult(Result(Builder.TakeString()));
       }
-      
+     
       // FIXME: Rethrow?
+
+      if (SemaRef.getLangOptions().CPlusPlus0x) {
+        // nullptr
+        Builder.AddTypedTextChunk("nullptr");
+        Results.AddResult(Result(Builder.TakeString()));
+
+        // alignof
+        Builder.AddTypedTextChunk("alignof");
+        Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+        Builder.AddPlaceholderChunk("type");
+        Builder.AddChunk(CodeCompletionString::CK_RightParen);
+        Results.AddResult(Result(Builder.TakeString()));
+
+        // noexcept
+        Builder.AddTypedTextChunk("noexcept");
+        Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+        Builder.AddPlaceholderChunk("expression");
+        Builder.AddChunk(CodeCompletionString::CK_RightParen);
+        Results.AddResult(Result(Builder.TakeString()));
+
+        // sizeof... expression
+        Builder.AddTypedTextChunk("sizeof...");
+        Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+        Builder.AddPlaceholderChunk("parameter-pack");
+        Builder.AddChunk(CodeCompletionString::CK_RightParen);
+        Results.AddResult(Result(Builder.TakeString()));
+      }
     }
 
     if (SemaRef.getLangOptions().ObjC1) {
