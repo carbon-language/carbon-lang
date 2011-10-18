@@ -621,7 +621,7 @@ namespace llvm {
 
     DIScope getContext() const          { return getFieldAs<DIScope>(1); }
     StringRef getName() const           { return getStringField(2);     }
-    DICompileUnit getCompileUnit() const{ 
+    DICompileUnit getCompileUnit() const { 
       assert (getVersion() <= LLVMDebugVersion10 && "Invalid getCompileUnit!");
       if (getVersion() == llvm::LLVMDebugVersion7)
         return getFieldAs<DICompileUnit>(3);
