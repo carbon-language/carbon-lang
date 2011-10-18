@@ -6,10 +6,10 @@
 # License. See LICENSE.TXT for details.
 # 
 ##===----------------------------------------------------------------------===##
-LEVEL = ../..
 
-TOOLNAME = llvm-prof
-LINK_COMPONENTS = bitreader analysis
+LEVEL := ../..
+TOOLNAME := llvm-prof
+LINK_COMPONENTS := bitreader analysis
 
 # This tool has no plugins, optimize startup time.
 TOOL_NO_EXPORTS = 1

@@ -7,9 +7,9 @@
 # 
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ../..
-LIBRARYNAME = EnhancedDisassembly
-LINK_LIBS_IN_SHARED = 1
+LEVEL := ../..
+LIBRARYNAME := EnhancedDisassembly
+LINK_LIBS_IN_SHARED := 1
 
 EXPORTED_SYMBOL_FILE = $(PROJ_SRC_DIR)/EnhancedDisassembly.exports
 

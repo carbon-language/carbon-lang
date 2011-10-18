@@ -6,13 +6,12 @@
 # License. See LICENSE.TXT for details.
 #
 ##===----------------------------------------------------------------------===##
-LEVEL = ../..
 
-TOOLNAME = llvm-objdump
-LINK_COMPONENTS = $(TARGETS_TO_BUILD) DebugInfo MC MCParser MCDisassembler \
-                  Object
+LEVEL := ../..
+TOOLNAME := llvm-objdump
+LINK_COMPONENTS := all-targets DebugInfo MC MCParser MCDisassembler Object
 
 # This tool has no plugins, optimize startup time.
-TOOL_NO_EXPORTS = 1
+TOOL_NO_EXPORTS := 1
 
 include $(LEVEL)/Makefile.common

@@ -7,11 +7,11 @@
 # 
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ../..
-TOOLNAME = llvm-as
+LEVEL := ../..
+TOOLNAME := llvm-as
 LINK_COMPONENTS := asmparser bitwriter
 
 # This tool has no plugins, optimize startup time.
-TOOL_NO_EXPORTS = 1
+TOOL_NO_EXPORTS := 1
 
 include $(LEVEL)/Makefile.common

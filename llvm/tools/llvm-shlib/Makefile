@@ -7,13 +7,13 @@
 # 
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ../..
+LEVEL := ../..
 
 LIBRARYNAME = LLVM-$(LLVMVersion)
 
-NO_BUILD_ARCHIVE = 1
-LINK_LIBS_IN_SHARED = 1
-SHARED_LIBRARY = 1
+NO_BUILD_ARCHIVE := 1
+LINK_LIBS_IN_SHARED := 1
+SHARED_LIBRARY := 1
 
 include $(LEVEL)/Makefile.config
 

@@ -7,7 +7,9 @@
 # 
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ../..
-TOOLNAME = llvm-stub
+LEVEL := ../..
+TOOLNAME := llvm-stub
+LINK_COMPONENTS := object
+
 include $(LEVEL)/Makefile.common
 

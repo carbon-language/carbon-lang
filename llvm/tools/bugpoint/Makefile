@@ -6,11 +6,10 @@
 # License. See LICENSE.TXT for details.
 # 
 ##===----------------------------------------------------------------------===##
-LEVEL = ../..
 
-TOOLNAME = bugpoint
-
-LINK_COMPONENTS := asmparser instrumentation scalaropts ipo \
-                   linker bitreader bitwriter
+LEVEL := ../..
+TOOLNAME := bugpoint
+LINK_COMPONENTS := asmparser instrumentation scalaropts ipo linker bitreader \
+                   bitwriter
 
 include $(LEVEL)/Makefile.common

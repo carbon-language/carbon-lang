@@ -7,10 +7,10 @@
 #
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ../..
-LIBRARYNAME = BugpointPasses
-LOADABLE_MODULE = 1
-USEDLIBS =
+LEVEL := ../..
+LIBRARYNAME := BugpointPasses
+LOADABLE_MODULE := 1
+USEDLIBS :=
 
 # If we don't need RTTI or EH, there's no reason to export anything
 # from this plugin.

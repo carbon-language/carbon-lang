@@ -7,21 +7,14 @@
 # 
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ../..
-LIBRARYNAME = LTO
+LEVEL := ../..
+LIBRARYNAME := LTO
+LINK_COMPONENTS := all-targets ipo scalaropts linker bitreader bitwriter \
+                   mcdisassembler
+LINK_LIBS_IN_SHARED := 1
+SHARED_LIBRARY := 1
 
 EXPORTED_SYMBOL_FILE = $(PROJ_SRC_DIR)/lto.exports
-
-# Include this here so we can get the configuration of the targets
-# that have been configured for construction. We have to do this 
-# early so we can set up LINK_COMPONENTS before including Makefile.rules
-include $(LEVEL)/Makefile.config
-
-LINK_LIBS_IN_SHARED = 1
-SHARED_LIBRARY = 1
-
-LINK_COMPONENTS := $(TARGETS_TO_BUILD) ipo scalaropts linker bitreader \
-	bitwriter mcdisassembler
 
 include $(LEVEL)/Makefile.common
 

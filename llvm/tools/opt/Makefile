@@ -6,9 +6,9 @@
 # License. See LICENSE.TXT for details.
 #
 ##===----------------------------------------------------------------------===##
-LEVEL = ../..
-TOOLNAME = opt
 
+LEVEL := ../..
+TOOLNAME := opt
 LINK_COMPONENTS := bitreader bitwriter asmparser instrumentation scalaropts ipo
 
 include $(LEVEL)/Makefile.common

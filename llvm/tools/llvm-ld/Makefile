@@ -7,9 +7,8 @@
 # 
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ../..
-
-TOOLNAME = llvm-ld
-LINK_COMPONENTS = ipo scalaropts linker archive bitwriter
+LEVEL := ../..
+TOOLNAME := llvm-ld
+LINK_COMPONENTS := ipo scalaropts linker archive bitwriter
 
 include $(LEVEL)/Makefile.common

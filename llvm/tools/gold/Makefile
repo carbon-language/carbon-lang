@@ -7,8 +7,12 @@
 # 
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ../..
-LIBRARYNAME = LLVMgold
+LEVEL := ../..
+LIBRARYNAME := LLVMgold
+LINK_COMPONENTS := support
+LINK_LIBS_IN_SHARED := 1
+SHARED_LIBRARY := 1
+LOADABLE_MODULE := 1
 
 EXPORTED_SYMBOL_FILE = $(PROJ_SRC_DIR)/gold.exports
 
@@ -17,15 +21,9 @@ EXPORTED_SYMBOL_FILE = $(PROJ_SRC_DIR)/gold.exports
 # early so we can set up LINK_COMPONENTS before including Makefile.rules
 include $(LEVEL)/Makefile.config
 
-LINK_LIBS_IN_SHARED=1
-SHARED_LIBRARY = 1
-LOADABLE_MODULE = 1
-
-LINK_COMPONENTS := support
-
 # Because off_t is used in the public API, the largefile parts are required for
 # ABI compatibility.
-CXXFLAGS+=-I$(BINUTILS_INCDIR) -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
-CXXFLAGS+=$(SharedLibDir)/$(SharedPrefix)LTO$(SHLIBEXT)
+CXXFLAGS += -I$(BINUTILS_INCDIR) -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
+CXXFLAGS += $(SharedLibDir)/$(SharedPrefix)LTO$(SHLIBEXT)
 
 include $(LEVEL)/Makefile.common

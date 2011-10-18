@@ -7,18 +7,11 @@
 # 
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ../..
-TOOLNAME = llvm-mc
+LEVEL := ../..
+TOOLNAME := llvm-mc
+LINK_COMPONENTS := all-targets MCDisassembler MCParser MC support
 
 # This tool has no plugins, optimize startup time.
-TOOL_NO_EXPORTS = 1
+TOOL_NO_EXPORTS := 1
 
-# Include this here so we can get the configuration of the targets
-# that have been configured for construction. We have to do this 
-# early so we can set up LINK_COMPONENTS before including Makefile.rules
-include $(LEVEL)/Makefile.config
-
-LINK_COMPONENTS := $(TARGETS_TO_BUILD) MCDisassembler MCParser MC support
-
-include $(LLVM_SRC_ROOT)/Makefile.rules
-
+include $(LEVEL)/Makefile.common

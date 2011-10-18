@@ -6,10 +6,10 @@
 # License. See LICENSE.TXT for details.
 #
 ##===----------------------------------------------------------------------===##
-LEVEL = ../..
 
-TOOLNAME = llvm-size
-LINK_COMPONENTS = object
+LEVEL := ../..
+TOOLNAME := llvm-size
+LINK_COMPONENTS := object
 
 # This tool has no plugins, optimize startup time.
 TOOL_NO_EXPORTS = 1

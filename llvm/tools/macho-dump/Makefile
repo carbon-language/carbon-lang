@@ -7,17 +7,11 @@
 #
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ../..
-TOOLNAME = macho-dump
-
-# This tool has no plugins, optimize startup time.
-TOOL_NO_EXPORTS = 1
-
-# Include this here so we can get the configuration of the targets
-# that have been configured for construction. We have to do this
-# early so we can set up LINK_COMPONENTS before including Makefile.rules
-include $(LEVEL)/Makefile.config
-
+LEVEL := ../..
+TOOLNAME := macho-dump
 LINK_COMPONENTS := support object
 
-include $(LLVM_SRC_ROOT)/Makefile.rules
+# This tool has no plugins, optimize startup time.
+TOOL_NO_EXPORTS := 1
+
+include $(LEVEL)/Makefile.common
