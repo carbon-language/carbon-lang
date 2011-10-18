@@ -140,7 +140,7 @@ namespace llvm {
   public:
     explicit DIE(unsigned Tag)
       : Abbrev(Tag, dwarf::DW_CHILDREN_no), Offset(0),
-        Size(0), Parent (0), IndentCount(0) {}
+        Size(0), Parent(0), IndentCount(0) {}
     virtual ~DIE();
 
     // Accessors.
@@ -359,7 +359,7 @@ namespace llvm {
   };
 
   //===--------------------------------------------------------------------===//
-  /// DIEntry - A pointer to another debug information entry.  An instance of
+  /// DIEEntry - A pointer to another debug information entry.  An instance of
   /// this class can also be used as a proxy for a debug information entry not
   /// yet defined (ie. types.)
   class DIEEntry : public DIEValue {

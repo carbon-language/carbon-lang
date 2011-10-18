@@ -240,7 +240,7 @@ class DwarfDebug {
   /// DotDebugLocEntries - Collection of DotDebugLocEntry.
   SmallVector<DotDebugLocEntry, 4> DotDebugLocEntries;
 
-  /// InliendSubprogramDIEs - Collection of subprgram DIEs that are marked
+  /// InlinedSubprogramDIEs - Collection of subprgram DIEs that are marked
   /// (at the end of the module) as DW_AT_inline.
   SmallPtrSet<DIE *, 4> InlinedSubprogramDIEs;
 
@@ -341,7 +341,7 @@ private:
   /// the start of each one.
   void EmitSectionLabels();
 
-  /// emitDIE - Recusively Emits a debug information entry.
+  /// emitDIE - Recursively Emits a debug information entry.
   ///
   void emitDIE(DIE *Die);
 
@@ -408,10 +408,10 @@ private:
   /// 3. an unsigned LEB128 number indicating the number of distinct inlining 
   /// instances for the function.
   /// 
-  /// The rest of the entry consists of a {die_offset, low_pc}  pair for each 
+  /// The rest of the entry consists of a {die_offset, low_pc} pair for each 
   /// inlined instance; the die_offset points to the inlined_subroutine die in
-  /// the __debug_info section, and the low_pc is the starting address  for the
-  ///  inlining instance.
+  /// the __debug_info section, and the low_pc is the starting address for the
+  /// inlining instance.
   void emitDebugInlineInfo();
 
   /// constructCompileUnit - Create new CompileUnit for the given 
@@ -427,8 +427,8 @@ private:
   void recordSourceLine(unsigned Line, unsigned Col, const MDNode *Scope,
                         unsigned Flags);
   
-  /// identifyScopeMarkers() - Indentify instructions that are marking
-  /// beginning of or end of a scope.
+  /// identifyScopeMarkers() - Indentify instructions that are marking the
+  /// beginning of or ending of a scope.
   void identifyScopeMarkers();
 
   /// addCurrentFnArgument - If Var is an current function argument that add
@@ -473,7 +473,7 @@ public:
   void collectInfoFromNamedMDNodes(Module *M);
 
   /// collectLegacyDebugInfo - Collect debug info using DebugInfoFinder.
-  /// FIXME - Remove this when dragon-egg and llvm-gcc switch to DIBuilder.
+  /// FIXME - Remove this when DragonEgg switches to DIBuilder.
   bool collectLegacyDebugInfo(Module *M);
 
   /// beginModule - Emit all Dwarf sections that should come prior to the
