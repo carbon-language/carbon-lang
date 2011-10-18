@@ -80,7 +80,7 @@ struct X5 {
     void f(T&);
   };
 
-  struct Inner2 {
+  struct Inner2 { // expected-note {{here}}
     struct VeryInner {
       void g(T*); // expected-error 2{{pointer to a reference}}
     };
@@ -98,7 +98,7 @@ void f4(X5<float&>::Inner2);
 template struct X5<float&>::Inner2; // expected-note{{instantiation}}
 
 namespace N3 {
-  template struct N2::X5<int>::Inner2;
+  template struct N2::X5<int>::Inner2; // expected-warning {{explicit instantiation of 'Inner2' not in a namespace enclosing 'N2'}}
 }
 
 struct X6 {
@@ -147,5 +147,5 @@ namespace N2 {
 
   template struct X7<double>; // expected-warning{{must occur in namespace}}
 
-  template struct X9<float>; // expected-warning{{must occur in the global}}
+  template struct X9<float>; // expected-warning{{must occur at global scope}}
 }

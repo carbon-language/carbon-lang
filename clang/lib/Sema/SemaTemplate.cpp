@@ -5728,45 +5728,41 @@ static bool CheckExplicitInstantiationScope(Sema &S, NamedDecl *D,
     return true;
   }
 
-  // C++0x [temp.explicit]p2:
+  // C++11 [temp.explicit]p3:
   //   An explicit instantiation shall appear in an enclosing namespace of its
-  //   template.
+  //   template. If the name declared in the explicit instantiation is an
+  //   unqualified name, the explicit instantiation shall appear in the
+  //   namespace where its template is declared or, if that namespace is inline
+  //   (7.3.1), any namespace from its enclosing namespace set.
   //
   // This is DR275, which we do not retroactively apply to C++98/03.
-  if (S.getLangOptions().CPlusPlus0x &&
-      !CurContext->Encloses(OrigContext)) {
-    if (NamespaceDecl *NS = dyn_cast<NamespaceDecl>(OrigContext))
+  if (WasQualifiedName) {
+    if (CurContext->Encloses(OrigContext))
+      return false;
+  } else {
+    if (CurContext->InEnclosingNamespaceSetOf(OrigContext))
+      return false;
+  }
+
+  if (NamespaceDecl *NS = dyn_cast<NamespaceDecl>(OrigContext)) {
+    if (WasQualifiedName)
       S.Diag(InstLoc,
              S.getLangOptions().CPlusPlus0x?
-                 diag::err_explicit_instantiation_out_of_scope
-               : diag::warn_explicit_instantiation_out_of_scope_0x)
+               diag::err_explicit_instantiation_out_of_scope :
+               diag::warn_explicit_instantiation_out_of_scope_0x)
         << D << NS;
     else
       S.Diag(InstLoc,
              S.getLangOptions().CPlusPlus0x?
-                 diag::err_explicit_instantiation_must_be_global
-               : diag::warn_explicit_instantiation_out_of_scope_0x)
-        << D;
-    S.Diag(D->getLocation(), diag::note_explicit_instantiation_here);
-    return false;
-  }
-
-  // C++0x [temp.explicit]p2:
-  //   If the name declared in the explicit instantiation is an unqualified
-  //   name, the explicit instantiation shall appear in the namespace where
-  //   its template is declared or, if that namespace is inline (7.3.1), any
-  //   namespace from its enclosing namespace set.
-  if (WasQualifiedName)
-    return false;
-
-  if (CurContext->InEnclosingNamespaceSetOf(OrigContext))
-    return false;
-
-  S.Diag(InstLoc,
-         S.getLangOptions().CPlusPlus0x?
-             diag::err_explicit_instantiation_unqualified_wrong_namespace
-           : diag::warn_explicit_instantiation_unqualified_wrong_namespace_0x)
-    << D << OrigContext;
+               diag::err_explicit_instantiation_unqualified_wrong_namespace :
+               diag::warn_explicit_instantiation_unqualified_wrong_namespace_0x)
+        << D << NS;
+  } else
+    S.Diag(InstLoc,
+           S.getLangOptions().CPlusPlus0x?
+             diag::err_explicit_instantiation_must_be_global :
+             diag::warn_explicit_instantiation_must_be_global_0x)
+      << D;
   S.Diag(D->getLocation(), diag::note_explicit_instantiation_here);
   return false;
 }
@@ -5776,7 +5772,7 @@ static bool ScopeSpecifierHasTemplateId(const CXXScopeSpec &SS) {
   if (!SS.isSet())
     return false;
 
-  // C++0x [temp.explicit]p2:
+  // C++11 [temp.explicit]p3:
   //   If the explicit instantiation is for a member function, a member class
   //   or a static data member of a class template specialization, the name of
   //   the class template specialization in the qualified-id for the member

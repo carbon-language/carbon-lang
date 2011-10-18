@@ -1,18 +1,21 @@
 // RUN: %clang_cc1 -fsyntax-only -std=c++98 -Wc++0x-compat -verify %s
 
 namespace N {
-  template<typename T> void f(T) {} // expected-note {{here}}
+  template<typename T> void f(T) {} // expected-note 2{{here}}
   namespace M {
-    template void f<int>(int); // expected-warning {{explicit instantiation of 'N::f' must occur in namespace 'N'}}
+    template void ::N::f<int>(int); // expected-warning {{explicit instantiation of 'f' not in a namespace enclosing 'N'}}
   }
 }
+using namespace N;
+template void f<char>(char); // expected-warning {{explicit instantiation of 'N::f' must occur in namespace 'N'}}
 
-template<typename T> void f(T) {} // expected-note {{here}}
+template<typename T> void g(T) {} // expected-note 2{{here}}
 namespace M {
-  template void f<int>(int); // expected-warning {{explicit instantiation of 'f' must occur in the global namespace}}
+  template void g<int>(int); // expected-warning {{explicit instantiation of 'g' must occur at global scope}}
+  template void ::g<char>(char); // expected-warning {{explicit instantiation of 'g' must occur at global scope}}
 }
 
-void f() {
+void g() {
   auto int n = 0; // expected-warning {{'auto' storage class specifier is redundant and incompatible with C++11}}
 }
 

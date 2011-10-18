@@ -2434,9 +2434,9 @@ def ext_explicit_instantiation_without_qualified_id : Extension<
   "qualifier in explicit instantiation of %q0 requires a template-id "
   "(a typedef is not permitted)">;
 def err_explicit_instantiation_unqualified_wrong_namespace : Error<
-  "explicit instantiation of %q0 must occur in %1">;
+  "explicit instantiation of %q0 must occur in namespace %1">;
 def warn_explicit_instantiation_unqualified_wrong_namespace_0x : Warning<
-  "explicit instantiation of %q0 must occur in %1">, 
+  "explicit instantiation of %q0 must occur in namespace %1">,
   InGroup<CXX11Compat>;
 def err_explicit_instantiation_undefined_member : Error<
   "explicit instantiation of undefined %select{member class|member function|"

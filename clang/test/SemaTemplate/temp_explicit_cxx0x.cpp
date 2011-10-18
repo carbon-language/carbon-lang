@@ -18,7 +18,7 @@ template struct ::N1::Inner::X1<float>;
 namespace N2 {
   using namespace N1;
 
-  template struct X0<double>; // expected-error{{not in a namespace enclosing}}
+  template struct X0<double>; // expected-error{{must occur in namespace 'N1'}}
 
   template struct X2<float>; // expected-error{{at global scope}}
 }
