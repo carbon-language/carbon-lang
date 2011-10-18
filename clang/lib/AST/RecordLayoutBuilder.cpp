@@ -1262,8 +1262,8 @@ void RecordLayoutBuilder::Layout(const RecordDecl *D) {
 
 void RecordLayoutBuilder::Layout(const CXXRecordDecl *RD) {
   if (Context.getTargetInfo().getCXXABI() == CXXABI_Microsoft) {
-    //MSLayout(RD);
-    //return ;
+    MSLayout(RD);
+    return;
   }
 
   InitializeLayout(RD);
