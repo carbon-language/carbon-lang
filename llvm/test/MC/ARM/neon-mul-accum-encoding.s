@@ -8,6 +8,7 @@
 	vmla.i16	q9, q8, q10
 	vmla.i32	q9, q8, q10
 	vmla.f32	q9, q8, q10
+	vmla.i32	q12, q8, d3[0]
 
 @ CHECK: vmla.i8	d16, d18, d17   @ encoding: [0xa1,0x09,0x42,0xf2]
 @ CHECK: vmla.i16	d16, d18, d17   @ encoding: [0xa1,0x09,0x52,0xf2]
@@ -17,6 +18,7 @@
 @ CHECK: vmla.i16	q9, q8, q10     @ encoding: [0xe4,0x29,0x50,0xf2]
 @ CHECK: vmla.i32	q9, q8, q10     @ encoding: [0xe4,0x29,0x60,0xf2]
 @ CHECK: vmla.f32	q9, q8, q10     @ encoding: [0xf4,0x2d,0x40,0xf2]
+@ CHECK: vmla.i32	q12, q8, d3[0]  @ encoding: [0xc3,0x80,0xe0,0xf3]
 
 
 	vmlal.s8	q8, d19, d18
@@ -57,6 +59,7 @@
 	vmls.i16	q9, q8, q10
 	vmls.i32	q9, q8, q10
 	vmls.f32	q9, q8, q10
+	vmls.i16	q4, q12, d6[2]
 
 @ CHECK: vmls.i8	d16, d18, d17   @ encoding: [0xa1,0x09,0x42,0xf3]
 @ CHECK: vmls.i16	d16, d18, d17   @ encoding: [0xa1,0x09,0x52,0xf3]
@@ -66,6 +69,7 @@
 @ CHECK: vmls.i16	q9, q8, q10     @ encoding: [0xe4,0x29,0x50,0xf3]
 @ CHECK: vmls.i32	q9, q8, q10     @ encoding: [0xe4,0x29,0x60,0xf3]
 @ CHECK: vmls.f32	q9, q8, q10     @ encoding: [0xf4,0x2d,0x60,0xf2]
+@ CHECK: vmls.i16	q4, q12, d6[2]  @ encoding: [0xe6,0x84,0x98,0xf3]
 
 
 	vmlsl.s8	q8, d19, d18
