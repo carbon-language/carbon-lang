@@ -41,8 +41,8 @@ static OptionEnumValueElement g_watch_size[] =
 static OptionDefinition
 g_option_table[] =
 {
-    { LLDB_OPT_SET_1, false, "watch", 'w', required_argument, g_watch_type, 0, eArgTypeWatchType, "Determine how to watch a variable (read, write, or read/write)."},
-    { LLDB_OPT_SET_1, false, "xsize", 'x', required_argument, g_watch_size, 0, eArgTypeByteSize, "Number of bytes to use to watch a location (1, 2, 4, or 8)."}
+    { LLDB_OPT_SET_1, false, "watch", 'w', required_argument, g_watch_type, 0, eArgTypeWatchType, "Determine how to watch a variable; or, with -x option, its pointee."},
+    { LLDB_OPT_SET_1, false, "xsize", 'x', required_argument, g_watch_size, 0, eArgTypeByteSize, "Number of bytes to use to watch the pointee."}
 };
 
 
