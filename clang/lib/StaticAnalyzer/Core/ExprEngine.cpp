@@ -945,11 +945,9 @@ void ExprEngine::processBranch(const Stmt *Condition, const Stmt *Term,
                                const CFGBlock *DstT,
                                const CFGBlock *DstF) {
 
-  BranchNodeBuilder builder(BldCtx, Pred, DstT, DstF);
-
   // Check for NULL conditions; e.g. "for(;;)"
   if (!Condition) {
-    BranchNodeBuilder NullCondBldr(BldCtx, Pred, DstT, DstF);
+    BranchNodeBuilder NullCondBldr(Pred, BldCtx, DstT, DstF);
     NullCondBldr.markInfeasible(false);
     Engine.enqueue(NullCondBldr);
     return;
@@ -959,27 +957,36 @@ void ExprEngine::processBranch(const Stmt *Condition, const Stmt *Term,
                                 Condition->getLocStart(),
                                 "Error evaluating branch");
 
-  //TODO: This should take the NodeBuiolder.
-  getCheckerManager().runCheckersForBranchCondition(Condition, builder,
+  NodeBuilder CheckerBldr(Pred, BldCtx);
+  getCheckerManager().runCheckersForBranchCondition(Condition, CheckerBldr,
                                                     *this);
 
-  const ProgramState *PrevState = builder.getState();
-  SVal X = PrevState->getSVal(Condition);
+  for (NodeBuilder::iterator I = CheckerBldr.results_begin(),
+                             E = CheckerBldr.results_end(); E != I; ++I) {
+    ExplodedNode *PredI = *I;
 
-  if (X.isUnknownOrUndef()) {
-    // Give it a chance to recover from unknown.
-    if (const Expr *Ex = dyn_cast<Expr>(Condition)) {
-      if (Ex->getType()->isIntegerType()) {
-        // Try to recover some path-sensitivity.  Right now casts of symbolic
-        // integers that promote their values are currently not tracked well.
-        // If 'Condition' is such an expression, try and recover the
-        // underlying value and use that instead.
-        SVal recovered = RecoverCastedSymbol(getStateManager(),
-                                             builder.getState(), Condition,
-                                             getContext());
+    if (PredI->isSink())
+      continue;
 
-        if (!recovered.isUnknown()) {
-          X = recovered;
+    BranchNodeBuilder builder(PredI, BldCtx, DstT, DstF);
+    const ProgramState *PrevState = builder.getState();
+    SVal X = PrevState->getSVal(Condition);
+
+    if (X.isUnknownOrUndef()) {
+      // Give it a chance to recover from unknown.
+      if (const Expr *Ex = dyn_cast<Expr>(Condition)) {
+        if (Ex->getType()->isIntegerType()) {
+          // Try to recover some path-sensitivity.  Right now casts of symbolic
+          // integers that promote their values are currently not tracked well.
+          // If 'Condition' is such an expression, try and recover the
+          // underlying value and use that instead.
+          SVal recovered = RecoverCastedSymbol(getStateManager(),
+                                               PrevState, Condition,
+                                               getContext());
+
+          if (!recovered.isUnknown()) {
+            X = recovered;
+          }
         }
       }
     }
@@ -989,30 +996,30 @@ void ExprEngine::processBranch(const Stmt *Condition, const Stmt *Term,
       builder.generateNode(MarkBranch(PrevState, Term, false), false);
       // Enqueue the results into the work list.
       Engine.enqueue(builder);
-      return;
+      continue;
     }
+
+    DefinedSVal V = cast<DefinedSVal>(X);
+
+    // Process the true branch.
+    if (builder.isFeasible(true)) {
+      if (const ProgramState *state = PrevState->assume(V, true))
+        builder.generateNode(MarkBranch(state, Term, true), true);
+      else
+        builder.markInfeasible(true);
+    }
+
+    // Process the false branch.
+    if (builder.isFeasible(false)) {
+      if (const ProgramState *state = PrevState->assume(V, false))
+        builder.generateNode(MarkBranch(state, Term, false), false);
+      else
+        builder.markInfeasible(false);
+    }
+
+    // Enqueue the results into the work list.
+    Engine.enqueue(builder);
   }
-
-  DefinedSVal V = cast<DefinedSVal>(X);
-
-  // Process the true branch.
-  if (builder.isFeasible(true)) {
-    if (const ProgramState *state = PrevState->assume(V, true))
-      builder.generateNode(MarkBranch(state, Term, true), true);
-    else
-      builder.markInfeasible(true);
-  }
-
-  // Process the false branch.
-  if (builder.isFeasible(false)) {
-    if (const ProgramState *state = PrevState->assume(V, false))
-      builder.generateNode(MarkBranch(state, Term, false), false);
-    else
-      builder.markInfeasible(false);
-  }
-
-  // Enqueue the results into the work list.
-  Engine.enqueue(builder);
 }
 
 /// processIndirectGoto - Called by CoreEngine.  Used to generate successor

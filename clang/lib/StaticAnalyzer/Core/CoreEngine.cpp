@@ -602,21 +602,6 @@ StmtNodeBuilder::generateNodeInternal(const ProgramPoint &Loc,
   return NULL;
 }
 
-// This function generate a new ExplodedNode but not a new branch(block edge).
-// Creates a transition from the Builder's top predecessor.
-ExplodedNode *BranchNodeBuilder::generateNode(const Stmt *Condition,
-                                              const ProgramState *State,
-                                              const ProgramPointTag *Tag,
-                                              bool MarkAsSink) {
-  ProgramPoint PP = PostCondition(Condition,
-                                  BuilderPred->getLocationContext(), Tag);
-  ExplodedNode *N = generateNodeImpl(PP, State, BuilderPred, MarkAsSink);
-  assert(N);
-  // TODO: This needs to go - we should not change Pred!!!
-  BuilderPred = N;
-  return N;
-}
-
 ExplodedNode *BranchNodeBuilder::generateNode(const ProgramState *State,
                                               bool branch,
                                               ExplodedNode *NodePred) {

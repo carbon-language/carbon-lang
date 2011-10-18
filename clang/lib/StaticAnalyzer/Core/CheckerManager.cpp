@@ -297,7 +297,7 @@ void CheckerManager::runCheckersForEndPath(EndOfFunctionNodeBuilder &B,
 
 /// \brief Run checkers for branch condition.
 void CheckerManager::runCheckersForBranchCondition(const Stmt *condition,
-                                                   BranchNodeBuilder &B,
+                                                   NodeBuilder &B,
                                                    ExprEngine &Eng) {
   for (unsigned i = 0, e = BranchConditionCheckers.size(); i != e; ++i) {
     CheckBranchConditionFunc fn = BranchConditionCheckers[i];

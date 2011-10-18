@@ -181,7 +181,7 @@ protected:
   friend class StmtNodeBuilder;
 
   ExplodedNode *BuilderPred;
-  NodeBuilderContext &C;
+  const NodeBuilderContext &C;
   bool Finalized;
 
   /// \brief The frontier set - a set of nodes which need to be propagated after
@@ -212,8 +212,15 @@ protected:
                                  bool MarkAsSink = false);
 
 public:
-  NodeBuilder(NodeBuilderContext &Ctx, ExplodedNode *N)
+  NodeBuilder(ExplodedNode *N, NodeBuilderContext &Ctx)
     : BuilderPred(N), C(Ctx), Finalized(false) {
+    assert(!N->isSink());
+    Deferred.insert(N);
+  }
+
+  /// Create a new builder using the parent builder's context.
+  NodeBuilder(ExplodedNode *N, const NodeBuilder &ParentBldr)
+    : BuilderPred(N), C(ParentBldr.C), Finalized(false) {
     assert(!N->isSink());
     Deferred.insert(N);
   }
@@ -258,7 +265,11 @@ public:
                          C.Block->getBlockID());
   }
 
+  // \brief Get the builder's predecessor - the parent to all the other nodes.
   ExplodedNode *getPredecessor() const { return BuilderPred; }
+
+  // \brief Returns state of the predecessor.
+  const ProgramState *getState() const { return BuilderPred->getState(); }
 };
 
 class CommonNodeBuilder {
@@ -409,19 +420,19 @@ class BranchNodeBuilder: public NodeBuilder {
   }
 
 public:
-  BranchNodeBuilder(NodeBuilderContext &C, ExplodedNode *Pred,
+  BranchNodeBuilder(ExplodedNode *Pred, NodeBuilderContext &C,
                     const CFGBlock *dstT, const CFGBlock *dstF)
-  : NodeBuilder(C, Pred), DstT(dstT), DstF(dstF),
+  : NodeBuilder(Pred, C), DstT(dstT), DstF(dstF),
     GeneratedTrue(false), GeneratedFalse(false),
     InFeasibleTrue(!DstT), InFeasibleFalse(!DstF) {
   }
 
-  /// This function generate a new ExplodedNode but not a new
-  /// branch(block edge). Creates a transition from the Builder's top
-  /// predecessor.
-  ExplodedNode *generateNode(const Stmt *Condition, const ProgramState *State,
-                             const ProgramPointTag *Tag = 0,
-                             bool MarkAsSink = false);
+  /// Create a new builder using the parent builder's context.
+  BranchNodeBuilder(ExplodedNode *Pred, BranchNodeBuilder &ParentBldr)
+  : NodeBuilder(Pred, ParentBldr), DstT(ParentBldr.DstT), DstF(ParentBldr.DstF),
+    GeneratedTrue(false), GeneratedFalse(false),
+    InFeasibleTrue(!DstT), InFeasibleFalse(!DstF) {
+  }
 
   ExplodedNode *generateNode(const ProgramState *State, bool branch,
                              ExplodedNode *Pred = 0);
@@ -439,10 +450,6 @@ public:
 
   bool isFeasible(bool branch) {
     return branch ? !InFeasibleTrue : !InFeasibleFalse;
-  }
-
-  const ProgramState *getState() const {
-    return getPredecessor()->getState();
   }
 };
 

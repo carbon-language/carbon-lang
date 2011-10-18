@@ -51,7 +51,7 @@ public:
       ST(st),
       size(Dst.size()),
       Ctx(builder.Eng, builder.getBlock()),
-      NB(Ctx, pred),
+      NB(pred, Ctx),
       respondsToCallback(respondsToCB) {
     assert(!(ST && ST != Pred->getState()));
   }

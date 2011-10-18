@@ -215,7 +215,7 @@ public:
 class BranchCondition {
   template <typename CHECKER>
   static void _checkBranchCondition(void *checker, const Stmt *condition,
-                                    BranchNodeBuilder &B, ExprEngine &Eng) {
+                                    NodeBuilder &B, ExprEngine &Eng) {
     ((const CHECKER *)checker)->checkBranchCondition(condition, B, Eng);
   }
 
