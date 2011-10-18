@@ -10045,7 +10045,7 @@ Decl *Sema::ActOnFriendFunctionDecl(Scope *S, Declarator &D,
 
     // C++ [class.friend]p1: A friend of a class is a function or
     //   class that is not a member of the class . . .
-    if (DC->Equals(CurContext))
+    if (DC->Equals(CurContext) && !getLangOptions().CPlusPlus0x)
       Diag(DS.getFriendSpecLoc(), diag::err_friend_is_member);
     
     if (D.isFunctionDefinition()) {
