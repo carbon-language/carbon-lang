@@ -298,6 +298,7 @@ SDValue VectorLegalizer::ExpandLoad(SDValue Op) {
   SDValue Chain = LD->getChain();
   SDValue BasePTR = LD->getBasePtr();
   EVT SrcVT = LD->getMemoryVT();
+  ISD::LoadExtType ExtType = LD->getExtensionType();
 
   SmallVector<SDValue, 8> LoadVals;
   SmallVector<SDValue, 8> LoadChains;
@@ -305,19 +306,20 @@ SDValue VectorLegalizer::ExpandLoad(SDValue Op) {
   unsigned Stride = SrcVT.getScalarType().getSizeInBits()/8;
 
   for (unsigned Idx=0; Idx<NumElem; Idx++) {
-    BasePTR = DAG.getNode(ISD::ADD, dl, BasePTR.getValueType(), BasePTR,
-                       DAG.getIntPtrConstant(Stride));
-    SDValue ScalarLoad = DAG.getExtLoad(ISD::EXTLOAD, dl,
+    SDValue ScalarLoad = DAG.getExtLoad(ExtType, dl,
               Op.getNode()->getValueType(0).getScalarType(),
               Chain, BasePTR, LD->getPointerInfo().getWithOffset(Idx * Stride),
               SrcVT.getScalarType(),
               LD->isVolatile(), LD->isNonTemporal(),
               LD->getAlignment());
 
+    BasePTR = DAG.getNode(ISD::ADD, dl, BasePTR.getValueType(), BasePTR,
+                       DAG.getIntPtrConstant(Stride));
+
      LoadVals.push_back(ScalarLoad.getValue(0));
      LoadChains.push_back(ScalarLoad.getValue(1));
   }
-  
+
   SDValue NewChain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
             &LoadChains[0], LoadChains.size());
   SDValue Value = DAG.getNode(ISD::BUILD_VECTOR, dl,
@@ -364,13 +366,13 @@ SDValue VectorLegalizer::ExpandStore(SDValue Op) {
     SDValue Ex = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl,
                RegSclVT, Value, DAG.getIntPtrConstant(Idx));
 
-    BasePTR = DAG.getNode(ISD::ADD, dl, BasePTR.getValueType(), BasePTR,
-                                DAG.getIntPtrConstant(Stride));
-
     // This scalar TruncStore may be illegal, but we legalize it later.
     SDValue Store = DAG.getTruncStore(Chain, dl, Ex, BasePTR,
                ST->getPointerInfo().getWithOffset(Idx*Stride), MemSclVT,
                isVolatile, isNonTemporal, Alignment);
+
+    BasePTR = DAG.getNode(ISD::ADD, dl, BasePTR.getValueType(), BasePTR,
+                                DAG.getIntPtrConstant(Stride));
 
     Stores.push_back(Store);
   }
