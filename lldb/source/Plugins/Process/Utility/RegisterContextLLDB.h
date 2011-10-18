@@ -122,6 +122,9 @@ private:
     void 
     InitializeNonZerothFrame();
 
+    SharedPtr
+    GetNextFrame ();
+
     // Provide a location for where THIS function saved the CALLER's register value
     // Or a frame "below" this one saved it, i.e. a function called by this one, preserved a register that this
     // function didn't modify/use.

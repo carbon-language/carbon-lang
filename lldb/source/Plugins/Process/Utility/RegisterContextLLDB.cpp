@@ -448,6 +448,38 @@ RegisterContextLLDB::InitializeNonZerothFrame()
         return;
     }
 
+    // If we have a bad stack setup, we can get the same CFA value multiple times -- or even
+    // more devious, we can actually oscillate between two CFA values.  Detect that here and
+    // break out to avoid a possible infinite loop in lldb trying to unwind the stack.
+    addr_t next_frame_cfa;
+    addr_t next_next_frame_cfa = LLDB_INVALID_ADDRESS;
+    if (m_next_frame.get() && m_next_frame->GetCFA(next_frame_cfa))
+    {
+        bool repeating_frames = false;
+        if (next_frame_cfa == m_cfa)
+        {
+            repeating_frames = true;
+        }
+        else
+        {
+            if (m_next_frame->GetNextFrame() && m_next_frame->GetNextFrame()->GetCFA(next_next_frame_cfa)
+                && next_next_frame_cfa == m_cfa)
+            {
+                repeating_frames = true;
+            }
+        }
+        if (repeating_frames)
+        {
+            if (log)
+            {
+                log->Printf("%*sFrame %u same CFA address as next frame, assuming the unwind is looping - stopping",
+                            m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number);
+            }
+            m_frame_type = eNotAValidFrame;
+            return;
+        }
+    }
+
     if (log)
     {
         log->Printf("%*sFrame %u initialized frame current pc is 0x%llx cfa is 0x%llx", 
@@ -1217,6 +1249,13 @@ RegisterContextLLDB::GetCFA (addr_t& cfa)
     }
     cfa = m_cfa;
     return true;
+}
+
+
+RegisterContextLLDB::SharedPtr
+RegisterContextLLDB::GetNextFrame ()
+{
+    return m_next_frame;
 }
 
 // Retrieve the address of the start of the function of THIS frame
