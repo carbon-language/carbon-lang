@@ -137,9 +137,6 @@ private:
   /// In64BitMode - True if compiling for 64-bit, false for 32-bit.
   bool In64BitMode;
 
-  /// InNaClMode - True if compiling for Native Client target.
-  bool InNaClMode;
-
 public:
 
   /// This constructor initializes the data members to match that

@@ -53,7 +53,6 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
   , HasVMLxForwarding(false)
   , SlowFPBrcc(false)
   , InThumbMode(false)
-  , InNaClMode(false)
   , HasThumb2(false)
   , IsMClass(false)
   , NoARM(false)

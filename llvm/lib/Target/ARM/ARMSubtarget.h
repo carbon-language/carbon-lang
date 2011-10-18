@@ -70,9 +70,6 @@ protected:
   /// InThumbMode - True if compiling for Thumb, false for ARM.
   bool InThumbMode;
 
-  /// InNaClMode - True if targeting Native Client
-  bool InNaClMode;
-
   /// HasThumb2 - True if Thumb2 instructions are supported.
   bool HasThumb2;
 

@@ -89,14 +89,6 @@ std::string ARM_MC::ParseARMTriple(StringRef TT) {
       ARMArchFeature += ",+thumb-mode";
   }
 
-  Triple TheTriple(TT);
-  if (TheTriple.getOS() == Triple::NativeClient) {
-    if (ARMArchFeature.empty())
-      ARMArchFeature = "+nacl-mode";
-    else
-      ARMArchFeature += ",+nacl-mode";
-  }
-
   return ARMArchFeature;
 }
 

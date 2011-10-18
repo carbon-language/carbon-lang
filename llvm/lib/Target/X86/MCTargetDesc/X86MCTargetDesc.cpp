@@ -45,10 +45,6 @@ std::string X86_MC::ParseX86Triple(StringRef TT) {
     FS = "+64bit-mode";
   else
     FS = "-64bit-mode";
-  if (TheTriple.getOS() == Triple::NativeClient)
-    FS += ",+nacl-mode";
-  else
-    FS += ",-nacl-mode";
   return FS;
 }
 
