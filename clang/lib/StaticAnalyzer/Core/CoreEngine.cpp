@@ -417,8 +417,8 @@ void CoreEngine::HandleBlockExit(const CFGBlock * B, ExplodedNode *Pred) {
 void CoreEngine::HandleBranch(const Stmt *Cond, const Stmt *Term, 
                                 const CFGBlock * B, ExplodedNode *Pred) {
   assert(B->succ_size() == 2);
-  NodeBuilderContext Ctx(*this, Pred, B);
-  SubEng.processBranch(Cond, Term, Ctx,
+  NodeBuilderContext Ctx(*this, B);
+  SubEng.processBranch(Cond, Term, Ctx, Pred,
                        *(B->succ_begin()), *(B->succ_begin()+1));
 }
 
@@ -608,11 +608,12 @@ ExplodedNode *BranchNodeBuilder::generateNode(const Stmt *Condition,
                                               const ProgramState *State,
                                               const ProgramPointTag *Tag,
                                               bool MarkAsSink) {
-  ProgramPoint PP = PostCondition(Condition, C.Pred->getLocationContext(), Tag);
-  ExplodedNode *N = generateNodeImpl(PP, State, C.Pred, MarkAsSink);
+  ProgramPoint PP = PostCondition(Condition,
+                                  BuilderPred->getLocationContext(), Tag);
+  ExplodedNode *N = generateNodeImpl(PP, State, BuilderPred, MarkAsSink);
   assert(N);
   // TODO: This needs to go - we should not change Pred!!!
-  C.Pred = N;
+  BuilderPred = N;
   return N;
 }
 
@@ -625,7 +626,7 @@ ExplodedNode *BranchNodeBuilder::generateNode(const ProgramState *State,
     return NULL;
 
   if (!NodePred)
-    NodePred = C.Pred;
+    NodePred = BuilderPred;
   ProgramPoint Loc = BlockEdge(C.Block, branch ? DstT:DstF,
                                NodePred->getLocationContext());
   ExplodedNode *Succ = generateNodeImpl(Loc, State, NodePred);

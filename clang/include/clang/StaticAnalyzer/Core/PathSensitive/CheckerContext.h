@@ -50,8 +50,8 @@ public:
       Location(loc),
       ST(st),
       size(Dst.size()),
-      Ctx(builder.Eng, pred, builder.getBlock()),
-      NB(Ctx),
+      Ctx(builder.Eng, builder.getBlock()),
+      NB(Ctx, pred),
       respondsToCallback(respondsToCB) {
     assert(!(ST && ST != Pred->getState()));
   }

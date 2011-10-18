@@ -67,6 +67,7 @@ public:
   ///  nodes by processing the 'effects' of a branch condition.
   virtual void processBranch(const Stmt *Condition, const Stmt *Term,
                              NodeBuilderContext& BuilderCtx,
+                             ExplodedNode *Pred,
                              const CFGBlock *DstT,
                              const CFGBlock *DstF) = 0;
 

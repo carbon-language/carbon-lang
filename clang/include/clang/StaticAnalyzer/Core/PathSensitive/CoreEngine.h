@@ -170,10 +170,9 @@ public:
 
 struct NodeBuilderContext {
   CoreEngine &Eng;
-  ExplodedNode *Pred;
   const CFGBlock *Block;
-  NodeBuilderContext(CoreEngine &E, ExplodedNode *N, const CFGBlock *B)
-    : Eng(E), Pred(N), Block(B) { assert(B); assert(!N->isSink()); }
+  NodeBuilderContext(CoreEngine &E, const CFGBlock *B)
+    : Eng(E), Block(B) { assert(B); }
 };
 
 /// This is the simplest builder which generates nodes in the ExplodedGraph.
@@ -181,6 +180,7 @@ class NodeBuilder {
 protected:
   friend class StmtNodeBuilder;
 
+  ExplodedNode *BuilderPred;
   NodeBuilderContext &C;
   bool Finalized;
 
@@ -212,8 +212,11 @@ protected:
                                  bool MarkAsSink = false);
 
 public:
-  NodeBuilder(NodeBuilderContext &Ctx)
-    : C(Ctx), Finalized(false) { Deferred.insert(C.Pred); }
+  NodeBuilder(NodeBuilderContext &Ctx, ExplodedNode *N)
+    : BuilderPred(N), C(Ctx), Finalized(false) {
+    assert(!N->isSink());
+    Deferred.insert(N);
+  }
 
   virtual ~NodeBuilder() {}
 
@@ -229,10 +232,10 @@ public:
   }
 
   // \brief Get the builder's predecessor - the parent to all the other nodes.
-  const ExplodedNode *getPred() const { return C.Pred; }
+  const ExplodedNode *getPred() const { return BuilderPred; }
 
   bool hasGeneratedNodes() const {
-    return (!Deferred.count(C.Pred));
+    return (!Deferred.count(BuilderPred));
   }
 
   typedef DeferredTy::iterator iterator;
@@ -251,11 +254,11 @@ public:
   /// visited on the exploded graph path.
   unsigned getCurrentBlockCount() const {
     return getBlockCounter().getNumVisited(
-                         C.Pred->getLocationContext()->getCurrentStackFrame(),
+                         BuilderPred->getLocationContext()->getCurrentStackFrame(),
                          C.Block->getBlockID());
   }
 
-  ExplodedNode *getPredecessor() const { return C.Pred; }
+  ExplodedNode *getPredecessor() const { return BuilderPred; }
 };
 
 class CommonNodeBuilder {
@@ -400,15 +403,15 @@ class BranchNodeBuilder: public NodeBuilder {
   void finalizeResults() {
     if (Finalized)
       return;
-    if (!GeneratedTrue) generateNode(C.Pred->State, true);
-    if (!GeneratedFalse) generateNode(C.Pred->State, false);
+    if (!GeneratedTrue) generateNode(BuilderPred->State, true);
+    if (!GeneratedFalse) generateNode(BuilderPred->State, false);
     Finalized = true;
   }
 
 public:
-  BranchNodeBuilder(NodeBuilderContext &C, const CFGBlock *dstT,
-                    const CFGBlock *dstF)
-  : NodeBuilder(C), DstT(dstT), DstF(dstF),
+  BranchNodeBuilder(NodeBuilderContext &C, ExplodedNode *Pred,
+                    const CFGBlock *dstT, const CFGBlock *dstF)
+  : NodeBuilder(C, Pred), DstT(dstT), DstF(dstF),
     GeneratedTrue(false), GeneratedFalse(false),
     InFeasibleTrue(!DstT), InFeasibleFalse(!DstF) {
   }

@@ -941,14 +941,15 @@ static SVal RecoverCastedSymbol(ProgramStateManager& StateMgr,
 
 void ExprEngine::processBranch(const Stmt *Condition, const Stmt *Term,
                                NodeBuilderContext& BldCtx,
+                               ExplodedNode *Pred,
                                const CFGBlock *DstT,
                                const CFGBlock *DstF) {
 
-  BranchNodeBuilder builder(BldCtx, DstT, DstF);
+  BranchNodeBuilder builder(BldCtx, Pred, DstT, DstF);
 
   // Check for NULL conditions; e.g. "for(;;)"
   if (!Condition) {
-    BranchNodeBuilder NullCondBldr(BldCtx, DstT, DstF);
+    BranchNodeBuilder NullCondBldr(BldCtx, Pred, DstT, DstF);
     NullCondBldr.markInfeasible(false);
     Engine.enqueue(NullCondBldr);
     return;
