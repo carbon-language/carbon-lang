@@ -427,10 +427,10 @@ the problem. For example, it might add the missing semicolon at the
 end of the statement or rewrite the use of a deprecated construct
 into something more palatable. Here is one such example from the C++
 front end, where we warn about the right-shift operator changing
-meaning from C++98 to C++0x:</p>
+meaning from C++98 to C++11:</p>
 
 <pre>
-test.cpp:3:7: warning: use of right-shift operator ('&gt;&gt;') in template argument will require parentheses in C++0x
+test.cpp:3:7: warning: use of right-shift operator ('&gt;&gt;') in template argument will require parentheses in C++11
 A&lt;100 &gt;&gt; 2&gt; *a;
       ^
   (       )
@@ -1323,7 +1323,7 @@ extern "C" {
 
 <p>The transparent <code>DeclContexts</code> are:</p>
 <ul>
-  <li>Enumerations (but not C++0x "scoped enumerations"):
+  <li>Enumerations (but not C++11 "scoped enumerations"):
     <pre>
 enum Color { 
   Red, 
@@ -1354,7 +1354,7 @@ LookupTable LT;
 LT.Vector = 0; // Okay: finds Vector inside the unnamed union
     </pre>
   </li>
-  <li>C++0x inline namespaces:
+  <li>C++11 inline namespaces:
 <pre>
 namespace mylib {
   inline namespace debug {
@@ -1736,7 +1736,7 @@ to subsequent declarations of the same name.</p>
 
 <p><tt>Spellings</tt> lists the strings that can appear in
 <tt>__attribute__((here))</tt> or <tt>[[here]]</tt>.  All such strings
-will be synonymous.  If you want to allow the <tt>[[]]</tt> C++0x
+will be synonymous.  If you want to allow the <tt>[[]]</tt> C++11
 syntax, you have to define a list of <tt>Namespaces</tt>, which will
 let users write <tt>[[namespace:spelling]]</tt>. Using the empty
 string for a namespace will allow users to write just the spelling

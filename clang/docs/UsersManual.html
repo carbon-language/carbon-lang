@@ -480,7 +480,7 @@ constructor.  For example:
   };
   void foo(const NonCopyable&);
   void bar() {
-    foo(NonCopyable());  // Disallowed in C++98; allowed in C++0x.
+    foo(NonCopyable());  // Disallowed in C++98; allowed in C++11.
   }
 </pre>
 <pre>
@@ -490,7 +490,7 @@ constructor.  For example:
   };
   void foo(const NonCopyable2&);
   void bar() {
-    foo(NonCopyable2());  // Disallowed in C++98; allowed in C++0x.
+    foo(NonCopyable2());  // Disallowed in C++98; allowed in C++11.
   }
 </pre>
 

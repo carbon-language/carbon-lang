@@ -36,39 +36,40 @@
   </ul></li>
 <li><a href="#checking_upcoming_features">Checks for Upcoming Standard Language Features</a>
   <ul>
-  <li><a href="#cxx0x">C++0x</a>
+  <li><a href="#cxx0x">C++11</a>
     <ul>
-   <li><a href="#cxx_access_control_sfinae">C++0x SFINAE includes access control</a></li>
-    <li><a href="#cxx_alias_templates">C++0x alias templates</a></li>
-    <li><a href="#cxx_alignas">C++0x alignment specifiers</a></li>
-    <li><a href="#cxx_attributes">C++0x attributes</a></li>
-    <li><a href="#cxx_constexpr">C++0x generalized constant expressions</a></li>
-    <li><a href="#cxx_decltype">C++0x <tt>decltype()</tt></a></li>
-    <li><a href="#cxx_default_function_template_args">C++0x default template arguments in function templates</a></li>
-    <li><a href="#cxx_delegating_constructor">C++0x delegating constructors</a></li>
-    <li><a href="#cxx_deleted_functions">C++0x deleted functions</a></li>
-    <li><a href="#cxx_explicit_conversions">C++0x explicit conversion functions</a></li>
-    <li><a href="#cxx_generalized_initializers">C++0x generalized initializers</a></li>
-    <li><a href="#cxx_implicit_moves">C++0x implicit move constructors/assignment operators</a></li>
-    <li><a href="#cxx_inheriting_constructors">C++0x inheriting constructors</a></li>
-    <li><a href="#cxx_inline_namespaces">C++0x inline namespaces</a></li>
-    <li><a href="#cxx_lambdas">C++0x lambdas</a></li>
-    <li><a href="#cxx_noexcept">C++0x noexcept specification</a></li>
-    <li><a href="#cxx_nonstatic_member_init">C++0x in-class non-static data member initialization</a></li>
-    <li><a href="#cxx_nullptr">C++0x nullptr</a></li>
-    <li><a href="#cxx_override_control">C++0x override control</a></li>
-    <li><a href="#cxx_range_for">C++0x range-based for loop</a></li>
-    <li><a href="#cxx_raw_string_literals">C++0x raw string literals</a></li>
-    <li><a href="#cxx_rvalue_references">C++0x rvalue references</a></li>
-    <li><a href="#cxx_reference_qualified_functions">C++0x reference-qualified functions</a></li>
-    <li><a href="#cxx_static_assert">C++0x <tt>static_assert()</tt></a></li>
-    <li><a href="#cxx_auto_type">C++0x type inference</a></li>
-   <li><a href="#cxx_strong_enums">C++0x strongly-typed enumerations</a></li>
-    <li><a href="#cxx_trailing_return">C++0x trailing return type</a></li>
-    <li><a href="#cxx_unicode_literals">C++0x Unicode string literals</a></li>
-    <li><a href="#cxx_unrestricted_unions">C++0x unrestricted unions</a></li>
-    <li><a href="#cxx_user_literals">C++0x user-defined literals</a></li>
-    <li><a href="#cxx_variadic_templates">C++0x variadic templates</a></li>
+   <li><a href="#cxx_access_control_sfinae">C++11 SFINAE includes
+   access control</a></li>
+    <li><a href="#cxx_alias_templates">C++11 alias templates</a></li>
+    <li><a href="#cxx_alignas">C++11 alignment specifiers</a></li>
+    <li><a href="#cxx_attributes">C++11 attributes</a></li>
+    <li><a href="#cxx_constexpr">C++11 generalized constant expressions</a></li>
+    <li><a href="#cxx_decltype">C++11 <tt>decltype()</tt></a></li>
+    <li><a href="#cxx_default_function_template_args">C++11 default template arguments in function templates</a></li>
+    <li><a href="#cxx_delegating_constructor">C++11 delegating constructors</a></li>
+    <li><a href="#cxx_deleted_functions">C++11 deleted functions</a></li>
+    <li><a href="#cxx_explicit_conversions">C++11 explicit conversion functions</a></li>
+    <li><a href="#cxx_generalized_initializers">C++11 generalized initializers</a></li>
+    <li><a href="#cxx_implicit_moves">C++11 implicit move constructors/assignment operators</a></li>
+    <li><a href="#cxx_inheriting_constructors">C++11 inheriting constructors</a></li>
+    <li><a href="#cxx_inline_namespaces">C++11 inline namespaces</a></li>
+    <li><a href="#cxx_lambdas">C++11 lambdas</a></li>
+    <li><a href="#cxx_noexcept">C++11 noexcept specification</a></li>
+    <li><a href="#cxx_nonstatic_member_init">C++11 in-class non-static data member initialization</a></li>
+    <li><a href="#cxx_nullptr">C++11 nullptr</a></li>
+    <li><a href="#cxx_override_control">C++11 override control</a></li>
+    <li><a href="#cxx_range_for">C++11 range-based for loop</a></li>
+    <li><a href="#cxx_raw_string_literals">C++11 raw string literals</a></li>
+    <li><a href="#cxx_rvalue_references">C++11 rvalue references</a></li>
+    <li><a href="#cxx_reference_qualified_functions">C++11 reference-qualified functions</a></li>
+    <li><a href="#cxx_static_assert">C++11 <tt>static_assert()</tt></a></li>
+    <li><a href="#cxx_auto_type">C++11 type inference</a></li>
+   <li><a href="#cxx_strong_enums">C++11 strongly-typed enumerations</a></li>
+    <li><a href="#cxx_trailing_return">C++11 trailing return type</a></li>
+    <li><a href="#cxx_unicode_literals">C++11 Unicode string literals</a></li>
+    <li><a href="#cxx_unrestricted_unions">C++11 unrestricted unions</a></li>
+    <li><a href="#cxx_user_literals">C++11 user-defined literals</a></li>
+    <li><a href="#cxx_variadic_templates">C++11 variadic templates</a></li>
    </ul></li>
   <li><a href="#c1x">C1X</a>
     <ul>
@@ -192,12 +193,12 @@ language feature) or 0 if not.  They can be used like this:</p>
 
 ...
 #if __has_feature(cxx_rvalue_references)
-// This code will only be compiled with the -std=c++0x and -std=gnu++0x
-// options, because rvalue references are only standardized in C++0x.
+// This code will only be compiled with the -std=c++11 and -std=gnu++11
+// options, because rvalue references are only standardized in C++11.
 #endif
 
 #if __has_extension(cxx_rvalue_references)
-// This code will be compiled with the -std=c++0x, -std=gnu++0x, -std=c++98
+// This code will be compiled with the -std=c++11, -std=gnu++11, -std=c++98
 // and -std=gnu++98 options, because rvalue references are supported as a
 // language extension in C++98.
 #endif
@@ -462,176 +463,176 @@ to query if certain upcoming standard language features are enabled.  Those
 features are listed here.  Features that are not yet implemented will be
 noted.</p>
 
-<h3 id="cxx0x">C++0x</h3>
+<h3 id="cxx0x">C++11</h3>
 
 <p>The features listed below are slated for inclusion in the upcoming
-C++0x standard. As a result, all these features are enabled
-with the <tt>-std=c++0x</tt> option when compiling C++ code.</p>
+C++11 standard. As a result, all these features are enabled
+with the <tt>-std=c++11</tt> option when compiling C++ code.</p>
 
-<h4 id="cxx_access_control_sfinae">C++0x SFINAE includes access control</h4>
+<h4 id="cxx_access_control_sfinae">C++11 SFINAE includes access control</h4>
 
 <p>Use <tt>__has_feature(cxx_access_control_sfinae)</tt> or <tt>__has_extension(cxx_access_control_sfinae)</tt> to determine whether access-control errors (e.g., calling a private constructor) are considered to be template argument deduction errors (aka SFINAE errors), per <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/cwg_defects.html#1170">C++ DR1170</a>.</p>
 
-<h4 id="cxx_alias_templates">C++0x alias templates</h4>
+<h4 id="cxx_alias_templates">C++11 alias templates</h4>
 
 <p>Use <tt>__has_feature(cxx_alias_templates)</tt> or
 <tt>__has_extension(cxx_alias_templates)</tt> to determine if support for
-C++0x's alias declarations and alias templates is enabled.</p>
+C++11's alias declarations and alias templates is enabled.</p>
 
-<h4 id="cxx_alignas">C++0x alignment specifiers</h4>
+<h4 id="cxx_alignas">C++11 alignment specifiers</h4>
 
 <p>Use <tt>__has_feature(cxx_alignas)</tt> or
 <tt>__has_extension(cxx_alignas)</tt> to determine if support for alignment
 specifiers using <tt>alignas</tt> is enabled.</p>
 
-<h4 id="cxx_attributes">C++0x attributes</h4>
+<h4 id="cxx_attributes">C++11 attributes</h4>
 
 <p>Use <tt>__has_feature(cxx_attributes)</tt> or
 <tt>__has_extension(cxx_attributes)</tt> to determine if support for attribute
-parsing with C++0x's square bracket notation is enabled.</p>
+parsing with C++11's square bracket notation is enabled.</p>
 
-<h4 id="cxx_constexpr">C++0x generalized constant expressions</h4>
+<h4 id="cxx_constexpr">C++11 generalized constant expressions</h4>
 
 <p>Use <tt>__has_feature(cxx_constexpr)</tt> to determine if support
 for generalized constant expressions (e.g., <tt>constexpr</tt>) is
 enabled. Clang does not currently implement this feature.</p> 
 
-<h4 id="cxx_decltype">C++0x <tt>decltype()</tt></h4>
+<h4 id="cxx_decltype">C++11 <tt>decltype()</tt></h4>
 
 <p>Use <tt>__has_feature(cxx_decltype)</tt> or
 <tt>__has_extension(cxx_decltype)</tt> to determine if support for the
 <tt>decltype()</tt> specifier is enabled.</p>
 
-<h4 id="cxx_default_function_template_args">C++0x default template arguments in function templates</h4>
+<h4 id="cxx_default_function_template_args">C++11 default template arguments in function templates</h4>
 
 <p>Use <tt>__has_feature(cxx_default_function_template_args)</tt> or
 <tt>__has_extension(cxx_default_function_template_args)</tt> to determine
 if support for default template arguments in function templates is enabled.</p>
 
-<h4 id="cxx_delegating_constructors">C++0x delegating constructors</h4>
+<h4 id="cxx_delegating_constructors">C++11 delegating constructors</h4>
 
 <p>Use <tt>__has_feature(cxx_delegating_constructors)</tt> to determine if
 support for delegating constructors is enabled.</p>
 
-<h4 id="cxx_deleted_functions">C++0x <tt>delete</tt>d functions</h4>
+<h4 id="cxx_deleted_functions">C++11 <tt>delete</tt>d functions</h4>
 
 <p>Use <tt>__has_feature(cxx_deleted_functions)</tt> or
 <tt>__has_extension(cxx_deleted_functions)</tt> to determine if support for
 deleted function definitions (with <tt>= delete</tt>) is enabled.</p>
 
-<h4 id="cxx_explicit_conversions">C++0x explicit conversion functions</h3>
+<h4 id="cxx_explicit_conversions">C++11 explicit conversion functions</h3>
 <p>Use <tt>__has_feature(cxx_explicit_conversions)</tt> to determine if support for <tt>explicit</tt> conversion functions is enabled.</p>
 
-<h4 id="cxx_generalized_initializers">C++0x generalized initializers</h4>
+<h4 id="cxx_generalized_initializers">C++11 generalized initializers</h4>
 
 <p>Use <tt>__has_feature(cxx_generalized_initializers)</tt> to determine if
 support for generalized initializers (using braced lists and
 <tt>std::initializer_list</tt>) is enabled. Clang does not currently implement
 this feature.</p>
 
-<h4 id="cxx_implicit_moves">C++0x implicit move constructors/assignment operators</h4>
+<h4 id="cxx_implicit_moves">C++11 implicit move constructors/assignment operators</h4>
 
 <p>Use <tt>__has_feature(cxx_implicit_moves)</tt> to determine if Clang will
 implicitly generate move constructors and move assignment operators where needed.</p>
 
-<h4 id="cxx_inheriting_constructors">C++0x inheriting constructors</h4>
+<h4 id="cxx_inheriting_constructors">C++11 inheriting constructors</h4>
 
 <p>Use <tt>__has_feature(cxx_inheriting_constructors)</tt> to determine if support for inheriting constructors is enabled. Clang does not currently implement this feature.</p>
 
-<h4 id="cxx_inline_namespaces">C++0x inline namespaces</h4>
+<h4 id="cxx_inline_namespaces">C++11 inline namespaces</h4>
 
 <p>Use <tt>__has_feature(cxx_inline_namespaces)</tt> or
 <tt>__has_extension(cxx_inline_namespaces)</tt> to determine if support for
 inline namespaces is enabled.</p>
 
-<h4 id="cxx_lambdas">C++0x lambdas</h4>
+<h4 id="cxx_lambdas">C++11 lambdas</h4>
 
 <p>Use <tt>__has_feature(cxx_lambdas)</tt> or
 <tt>__has_extension(cxx_lambdas)</tt> to determine if support for lambdas
 is enabled. Clang does not currently implement this feature.</p>
 
-<h4 id="cxx_noexcept">C++0x noexcept</h4>
+<h4 id="cxx_noexcept">C++11 noexcept</h4>
 
 <p>Use <tt>__has_feature(cxx_noexcept)</tt> or
 <tt>__has_extension(cxx_noexcept)</tt> to determine if support for noexcept
 exception specifications is enabled.</p>
 
-<h4 id="cxx_nonstatic_member_init">C++0x in-class non-static data member initialization</h4>
+<h4 id="cxx_nonstatic_member_init">C++11 in-class non-static data member initialization</h4>
 
 <p>Use <tt>__has_feature(cxx_nonstatic_member_init)</tt> to determine whether in-class initialization of non-static data members is enabled.</p>
 
-<h4 id="cxx_nullptr">C++0x <tt>nullptr</tt></h4>
+<h4 id="cxx_nullptr">C++11 <tt>nullptr</tt></h4>
 
 <p>Use <tt>__has_feature(cxx_nullptr)</tt> or
 <tt>__has_extension(cxx_nullptr)</tt> to determine if support for
 <tt>nullptr</tt> is enabled.</p>
 
-<h4 id="cxx_override_control">C++0x <tt>override control</tt></h4>
+<h4 id="cxx_override_control">C++11 <tt>override control</tt></h4>
 
 <p>Use <tt>__has_feature(cxx_override_control)</tt> or
 <tt>__has_extension(cxx_override_control)</tt> to determine if support for
 the override control keywords is enabled.</p>
 
-<h4 id="cxx_reference_qualified_functions">C++0x reference-qualified functions</h4>
+<h4 id="cxx_reference_qualified_functions">C++11 reference-qualified functions</h4>
 <p>Use <tt>__has_feature(cxx_reference_qualified_functions)</tt> or
 <tt>__has_extension(cxx_reference_qualified_functions)</tt> to determine
 if support for reference-qualified functions (e.g., member functions with
 <code>&amp;</code> or <code>&amp;&amp;</code> applied to <code>*this</code>)
 is enabled.</p>
 
-<h4 id="cxx_range_for">C++0x range-based <tt>for</tt> loop</h4>
+<h4 id="cxx_range_for">C++11 range-based <tt>for</tt> loop</h4>
 
 <p>Use <tt>__has_feature(cxx_range_for)</tt> or
 <tt>__has_extension(cxx_range_for)</tt> to determine if support for the
 range-based for loop is enabled. </p>
 
-<h4 id="cxx_raw_string_literals">C++0x raw string literals</h4>
+<h4 id="cxx_raw_string_literals">C++11 raw string literals</h4>
 <p>Use <tt>__has_feature(cxx_raw_string_literals)</tt> to determine if support for raw string literals (e.g., <tt>R"foo\bar"</tt>) is enabled.</p>
 
-<h4 id="cxx_rvalue_references">C++0x rvalue references</h4>
+<h4 id="cxx_rvalue_references">C++11 rvalue references</h4>
 
 <p>Use <tt>__has_feature(cxx_rvalue_references)</tt> or
 <tt>__has_extension(cxx_rvalue_references)</tt> to determine if support for
 rvalue references is enabled. </p>
 
-<h4 id="cxx_static_assert">C++0x <tt>static_assert()</tt></h4>
+<h4 id="cxx_static_assert">C++11 <tt>static_assert()</tt></h4>
 
 <p>Use <tt>__has_feature(cxx_static_assert)</tt> or
 <tt>__has_extension(cxx_static_assert)</tt> to determine if support for
 compile-time assertions using <tt>static_assert</tt> is enabled.</p>
 
-<h4 id="cxx_auto_type">C++0x type inference</h4>
+<h4 id="cxx_auto_type">C++11 type inference</h4>
 
 <p>Use <tt>__has_feature(cxx_auto_type)</tt> or
-<tt>__has_extension(cxx_auto_type)</tt> to determine C++0x type inference is
+<tt>__has_extension(cxx_auto_type)</tt> to determine C++11 type inference is
 supported using the <tt>auto</tt> specifier. If this is disabled, <tt>auto</tt>
 will instead be a storage class specifier, as in C or C++98.</p>
 
-<h4 id="cxx_strong_enums">C++0x strongly typed enumerations</h4>
+<h4 id="cxx_strong_enums">C++11 strongly typed enumerations</h4>
 
 <p>Use <tt>__has_feature(cxx_strong_enums)</tt> or
 <tt>__has_extension(cxx_strong_enums)</tt> to determine if support for
 strongly typed, scoped enumerations is enabled.</p>
 
-<h4 id="cxx_trailing_return">C++0x trailing return type</h4>
+<h4 id="cxx_trailing_return">C++11 trailing return type</h4>
 
 <p>Use <tt>__has_feature(cxx_trailing_return)</tt> or
 <tt>__has_extension(cxx_trailing_return)</tt> to determine if support for the
 alternate function declaration syntax with trailing return type is enabled.</p>
 
-<h4 id="cxx_unicode_literals">C++0x Unicode string literals</h4>
+<h4 id="cxx_unicode_literals">C++11 Unicode string literals</h4>
 <p>Use <tt>__has_feature(cxx_unicode_literals)</tt> to determine if
 support for Unicode string literals is enabled.</p>
 
-<h4 id="cxx_unrestricted_unions">C++0x unrestricted unions</h4>
+<h4 id="cxx_unrestricted_unions">C++11 unrestricted unions</h4>
 
 <p>Use <tt>__has_feature(cxx_unrestricted_unions)</tt> to determine if support for unrestricted unions is enabled. Clang does not currently support this feature.</p>
 
-<h4 id="cxx_user_literals">C++0x user-defined literals</h4>
+<h4 id="cxx_user_literals">C++11 user-defined literals</h4>
 
 <p>Use <tt>__has_feature(cxx_user_literals)</tt> to determine if support for user-defined literals is enabled. Clang does not currently support this feature.</p>
 
-<h4 id="cxx_variadic_templates">C++0x variadic templates</h4>
+<h4 id="cxx_variadic_templates">C++11 variadic templates</h4>
 
 <p>Use <tt>__has_feature(cxx_variadic_templates)</tt> or
 <tt>__has_extension(cxx_variadic_templates)</tt> to determine if support
@@ -707,7 +708,7 @@ struct is_convertible_to {
   <li><code>__is_polymorphic</code> (GNU, Microsoft)</li>
   <li><code>__is_union</code> (GNU, Microsoft)</li>
   <li><code>__is_literal(type)</code>: Determines whether the given type is a literal type</li>
-  <li><code>__underlying_type(type)</code>: Retrieves the underlying type for a given <code>enum</code> type. This trait is required to implement the C++0x standard library.</li>
+  <li><code>__underlying_type(type)</code>: Retrieves the underlying type for a given <code>enum</code> type. This trait is required to implement the C++11 standard library.</li>
 </ul>
 
 <!-- ======================================================================= -->
@@ -814,7 +815,7 @@ the <tt>instancetype</tt> contextual keyword is available.</p>
 <h2 id="objc_fixed_enum">Enumerations with a fixed underlying type</h2>
 <!-- ======================================================================= -->
 
-<p>Clang provides support for C++0x enumerations with a fixed
+<p>Clang provides support for C++11 enumerations with a fixed
 underlying type within Objective-C. For example, one can write an
 enumeration type as:</p>
 
