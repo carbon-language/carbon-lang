@@ -517,7 +517,7 @@ def g_Joined : Joined<"-g">, Group<g_Group>;
 def headerpad__max__install__names : Joined<"-headerpad_max_install_names">;
 def index_header_map : Flag<"-index-header-map">;
 def idirafter : JoinedOrSeparate<"-idirafter">, Group<clang_i_Group>;
-def iframework : JoinedOrSeparate<"-iframework">, Group<clang_i_Group>;
+def iframework : Joined<"-iframework">, Group<clang_i_Group>;
 def imacros : JoinedOrSeparate<"-imacros">, Group<clang_i_Group>;
 def image__base : Separate<"-image_base">;
 def include_ : JoinedOrSeparate<"-include">, Group<clang_i_Group>, EnumName<"include">;

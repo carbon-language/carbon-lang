@@ -639,6 +639,8 @@ def objc_isystem : JoinedOrSeparate<"-objc-isystem">,
 def objcxx_isystem : JoinedOrSeparate<"-objcxx-isystem">,
   MetaVarName<"<directory>">,
   HelpText<"Add directory to the ObjC++ SYSTEM include search path">;
+def iframework : JoinedOrSeparate<"-iframework">, MetaVarName<"<directory>">,
+  HelpText<"Add directory to SYSTEM framework search path">;
 def isystem : JoinedOrSeparate<"-isystem">, MetaVarName<"<directory>">,
   HelpText<"Add directory to SYSTEM include search path">;
 def iwithsysroot : JoinedOrSeparate<"-iwithsysroot">,MetaVarName<"<directory>">,
