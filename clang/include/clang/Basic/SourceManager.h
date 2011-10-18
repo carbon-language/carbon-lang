@@ -1213,6 +1213,10 @@ public:
   }
 
   const SrcMgr::SLocEntry &getSLocEntry(FileID FID, bool *Invalid = 0) const {
+    if (FID.ID == 0 || FID.ID == -1) {
+      if (Invalid) *Invalid = true;
+      return LocalSLocEntryTable[0];
+    }
     return getSLocEntryByID(FID.ID);
   }
 
