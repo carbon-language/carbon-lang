@@ -27,6 +27,7 @@ class Stmt;
 namespace ento {
   
 template <typename PP> class GenericNodeBuilder;
+struct NodeBuilderContext;
 class AnalysisManager;
 class ExplodedNodeSet;
 class ExplodedNode;
@@ -65,7 +66,9 @@ public:
   /// Called by CoreEngine.  Used to generate successor
   ///  nodes by processing the 'effects' of a branch condition.
   virtual void processBranch(const Stmt *Condition, const Stmt *Term,
-                             BranchNodeBuilder& builder) = 0;
+                             NodeBuilderContext& BuilderCtx,
+                             const CFGBlock *DstT,
+                             const CFGBlock *DstF) = 0;
 
   /// Called by CoreEngine.  Used to generate successor
   /// nodes by processing the 'effects' of a computed goto jump.

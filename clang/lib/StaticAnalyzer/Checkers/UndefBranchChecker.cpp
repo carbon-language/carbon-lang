@@ -61,9 +61,9 @@ void UndefBranchChecker::checkBranchCondition(const Stmt *Condition,
   const ProgramState *state = Builder.getState();
   SVal X = state->getSVal(Condition);
   if (X.isUndef()) {
-    ExplodedNode *N = Builder.generateNode(Condition, state);
+    // Generate a sink node.
+    ExplodedNode *N = Builder.generateNode(Condition, state, 0, true);
     if (N) {
-      N->markAsSink();
       if (!BT)
         BT.reset(
                new BuiltinBug("Branch condition evaluates to a garbage value"));

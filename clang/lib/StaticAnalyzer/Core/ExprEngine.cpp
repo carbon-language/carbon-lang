@@ -940,11 +940,17 @@ static SVal RecoverCastedSymbol(ProgramStateManager& StateMgr,
 }
 
 void ExprEngine::processBranch(const Stmt *Condition, const Stmt *Term,
-                                 BranchNodeBuilder& builder) {
+                               NodeBuilderContext& BldCtx,
+                               const CFGBlock *DstT,
+                               const CFGBlock *DstF) {
+
+  BranchNodeBuilder builder(BldCtx, DstT, DstF);
 
   // Check for NULL conditions; e.g. "for(;;)"
   if (!Condition) {
-    builder.markInfeasible(false);
+    BranchNodeBuilder NullCondBldr(BldCtx, DstT, DstF);
+    NullCondBldr.markInfeasible(false);
+    Engine.enqueue(NullCondBldr);
     return;
   }
 
@@ -952,11 +958,9 @@ void ExprEngine::processBranch(const Stmt *Condition, const Stmt *Term,
                                 Condition->getLocStart(),
                                 "Error evaluating branch");
 
-  getCheckerManager().runCheckersForBranchCondition(Condition, builder, *this);
-
-  // If the branch condition is undefined, return;
-  if (!builder.isFeasible(true) && !builder.isFeasible(false))
-    return;
+  //TODO: This should take the NodeBuiolder.
+  getCheckerManager().runCheckersForBranchCondition(Condition, builder,
+                                                    *this);
 
   const ProgramState *PrevState = builder.getState();
   SVal X = PrevState->getSVal(Condition);
@@ -982,6 +986,8 @@ void ExprEngine::processBranch(const Stmt *Condition, const Stmt *Term,
     if (X.isUnknownOrUndef()) {
       builder.generateNode(MarkBranch(PrevState, Term, true), true);
       builder.generateNode(MarkBranch(PrevState, Term, false), false);
+      // Enqueue the results into the work list.
+      Engine.enqueue(builder);
       return;
     }
   }
@@ -1003,6 +1009,9 @@ void ExprEngine::processBranch(const Stmt *Condition, const Stmt *Term,
     else
       builder.markInfeasible(false);
   }
+
+  // Enqueue the results into the work list.
+  Engine.enqueue(builder);
 }
 
 /// processIndirectGoto - Called by CoreEngine.  Used to generate successor

@@ -154,7 +154,9 @@ public:
   /// ProcessBranch - Called by CoreEngine.  Used to generate successor
   ///  nodes by processing the 'effects' of a branch condition.
   void processBranch(const Stmt *Condition, const Stmt *Term, 
-                     BranchNodeBuilder& builder);
+                     NodeBuilderContext& BuilderCtx,
+                     const CFGBlock *DstT,
+                     const CFGBlock *DstF);
 
   /// processIndirectGoto - Called by CoreEngine.  Used to generate successor
   ///  nodes by processing the 'effects' of a computed goto jump.

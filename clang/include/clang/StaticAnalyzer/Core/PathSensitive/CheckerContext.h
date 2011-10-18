@@ -30,6 +30,8 @@ class CheckerContext {
   const ProgramPoint Location;
   const ProgramState *ST;
   const unsigned size;
+  // TODO: Use global context.
+  NodeBuilderContext Ctx;
   NodeBuilder NB;
 public:
   bool *respondsToCallback;
@@ -48,7 +50,8 @@ public:
       Location(loc),
       ST(st),
       size(Dst.size()),
-      NB(builder.Eng, pred),
+      Ctx(builder.Eng, pred, builder.getBlock()),
+      NB(Ctx),
       respondsToCallback(respondsToCB) {
     assert(!(ST && ST != Pred->getState()));
   }

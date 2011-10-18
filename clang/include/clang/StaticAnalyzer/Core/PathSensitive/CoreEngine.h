@@ -27,6 +27,8 @@ class ProgramPointTag;
   
 namespace ento {
 
+class NodeBuilder;
+
 //===----------------------------------------------------------------------===//
 /// CoreEngine - Implements the core logic of the graph-reachability
 ///   analysis. It traverses the CFG and generates the ExplodedGraph.
@@ -161,14 +163,25 @@ public:
   BlocksAborted::const_iterator blocks_aborted_end() const {
     return blocksAborted.end();
   }
+
+  /// Enqueue the results of the node builder onto the work list.
+  void enqueue(NodeBuilder &NB);
+};
+
+struct NodeBuilderContext {
+  CoreEngine &Eng;
+  ExplodedNode *Pred;
+  const CFGBlock *Block;
+  NodeBuilderContext(CoreEngine &E, ExplodedNode *N, const CFGBlock *B)
+    : Eng(E), Pred(N), Block(B) { assert(B); assert(!N->isSink()); }
 };
 
 /// This is the simplest builder which generates nodes in the ExplodedGraph.
 class NodeBuilder {
+protected:
   friend class StmtNodeBuilder;
 
-  CoreEngine& Eng;
-  ExplodedNode *Pred;
+  NodeBuilderContext &C;
   bool Finalized;
 
   /// \brief The frontier set - a set of nodes which need to be propagated after
@@ -176,13 +189,19 @@ class NodeBuilder {
   typedef llvm::SmallPtrSet<ExplodedNode*,5> DeferredTy;
   DeferredTy Deferred;
 
-  BlockCounter getBlockCounter() const { return Eng.WList->getBlockCounter(); }
+  BlockCounter getBlockCounter() const { return C.Eng.WList->getBlockCounter();}
+
+  bool checkResults() {
+    if (!Finalized)
+      return false;
+    for (DeferredTy::iterator I=Deferred.begin(), E=Deferred.end(); I!=E; ++I)
+      if ((*I)->isSink())
+        return false;
+    return true;
+  }
 
   virtual void finalizeResults() {
     if (!Finalized) {
-      // TODO: Remove assert after refactoring is complete?
-      for (DeferredTy::iterator I=Deferred.begin(), E=Deferred.end(); I!=E; ++I)
-        assert(!(*I)->isSink());
       Finalized = true;
     }
   }
@@ -193,8 +212,10 @@ class NodeBuilder {
                                  bool MarkAsSink = false);
 
 public:
-  NodeBuilder(CoreEngine& e, ExplodedNode *pred);
-  ~NodeBuilder() {}
+  NodeBuilder(NodeBuilderContext &Ctx)
+    : C(Ctx), Finalized(false) { Deferred.insert(C.Pred); }
+
+  virtual ~NodeBuilder() {}
 
   /// \brief Generates a node in the ExplodedGraph.
   ///
@@ -208,17 +229,33 @@ public:
   }
 
   // \brief Get the builder's predecessor - the parent to all the other nodes.
-  const ExplodedNode* getPred() const { return Pred; }
+  const ExplodedNode *getPred() const { return C.Pred; }
 
   bool hasGeneratedNodes() const {
-    return (!Deferred.count(Pred));
+    return (!Deferred.count(C.Pred));
   }
 
   typedef DeferredTy::iterator iterator;
   /// \brief Iterators through the results frontier.
-  inline iterator results_begin() { finalizeResults(); return Deferred.begin();}
-  inline iterator results_end() { finalizeResults(); return Deferred.end(); }
+  inline iterator results_begin() {
+    finalizeResults();
+    assert(checkResults());
+    return Deferred.begin();
+  }
+  inline iterator results_end() {
+    finalizeResults();
+    return Deferred.end();
+  }
 
+  /// \brief Returns the number of times the current basic block has been
+  /// visited on the exploded graph path.
+  unsigned getCurrentBlockCount() const {
+    return getBlockCounter().getNumVisited(
+                         C.Pred->getLocationContext()->getCurrentStackFrame(),
+                         C.Block->getBlockID());
+  }
+
+  ExplodedNode *getPredecessor() const { return C.Pred; }
 };
 
 class CommonNodeBuilder {
@@ -351,38 +388,40 @@ public:
   }
 };
 
-class BranchNodeBuilder: public CommonNodeBuilder {
-  const CFGBlock *Src;
+class BranchNodeBuilder: public NodeBuilder {
   const CFGBlock *DstT;
   const CFGBlock *DstF;
-
-  typedef SmallVector<ExplodedNode*,3> DeferredTy;
-  DeferredTy Deferred;
 
   bool GeneratedTrue;
   bool GeneratedFalse;
   bool InFeasibleTrue;
   bool InFeasibleFalse;
 
+  void finalizeResults() {
+    if (Finalized)
+      return;
+    if (!GeneratedTrue) generateNode(C.Pred->State, true);
+    if (!GeneratedFalse) generateNode(C.Pred->State, false);
+    Finalized = true;
+  }
+
 public:
-  BranchNodeBuilder(const CFGBlock *src, const CFGBlock *dstT, 
-                      const CFGBlock *dstF, ExplodedNode *pred, CoreEngine* e)
-  : CommonNodeBuilder(e, pred), Src(src), DstT(dstT), DstF(dstF),
+  BranchNodeBuilder(NodeBuilderContext &C, const CFGBlock *dstT,
+                    const CFGBlock *dstF)
+  : NodeBuilder(C), DstT(dstT), DstF(dstF),
     GeneratedTrue(false), GeneratedFalse(false),
-    InFeasibleTrue(!DstT), InFeasibleFalse(!DstF) {}
+    InFeasibleTrue(!DstT), InFeasibleFalse(!DstF) {
+  }
 
-  ~BranchNodeBuilder();
-
-  ExplodedNode *getPredecessor() const { return Pred; }
-
-  const ExplodedGraph& getGraph() const { return *Eng.G; }
-
-  /// This function generates a new ExplodedNode but not a new
-  /// branch(block edge).
+  /// This function generate a new ExplodedNode but not a new
+  /// branch(block edge). Creates a transition from the Builder's top
+  /// predecessor.
   ExplodedNode *generateNode(const Stmt *Condition, const ProgramState *State,
-                             const ProgramPointTag *Tag = 0);
+                             const ProgramPointTag *Tag = 0,
+                             bool MarkAsSink = false);
 
-  ExplodedNode *generateNode(const ProgramState *State, bool branch);
+  ExplodedNode *generateNode(const ProgramState *State, bool branch,
+                             ExplodedNode *Pred = 0);
 
   const CFGBlock *getTargetBlock(bool branch) const {
     return branch ? DstT : DstF;

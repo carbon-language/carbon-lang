@@ -417,14 +417,15 @@ void CoreEngine::HandleBlockExit(const CFGBlock * B, ExplodedNode *Pred) {
 void CoreEngine::HandleBranch(const Stmt *Cond, const Stmt *Term, 
                                 const CFGBlock * B, ExplodedNode *Pred) {
   assert(B->succ_size() == 2);
-  BranchNodeBuilder Builder(B, *(B->succ_begin()), *(B->succ_begin()+1),
-                            Pred, this);
-  SubEng.processBranch(Cond, Term, Builder);
+  NodeBuilderContext Ctx(*this, Pred, B);
+  SubEng.processBranch(Cond, Term, Ctx,
+                       *(B->succ_begin()), *(B->succ_begin()+1));
 }
 
 void CoreEngine::HandlePostStmt(const CFGBlock *B, unsigned StmtIdx, 
                                   ExplodedNode *Pred) {
-  assert (!B->empty());
+  assert(B);
+  assert(!B->empty());
 
   if (StmtIdx == B->size())
     HandleBlockExit(B, Pred);
@@ -454,6 +455,13 @@ void CoreEngine::generateNode(const ProgramPoint &Loc,
   if (IsNew) WList->enqueue(Node);
 }
 
+void CoreEngine::enqueue(NodeBuilder &NB) {
+  for (NodeBuilder::iterator I = NB.results_begin(),
+                               E = NB.results_end(); I != E; ++I) {
+    WList->enqueue(*I);
+  }
+}
+
 ExplodedNode *
 GenericNodeBuilderImpl::generateNodeImpl(const ProgramState *state,
                                          ExplodedNode *pred,
@@ -475,23 +483,17 @@ GenericNodeBuilderImpl::generateNodeImpl(const ProgramState *state,
   return 0;
 }
 
-NodeBuilder::NodeBuilder(CoreEngine& e, ExplodedNode *N)
-  : Eng(e), Pred(N), Finalized(false) {
-  assert(!N->isSink());
-  Deferred.insert(N);
-}
-
 ExplodedNode* NodeBuilder::generateNodeImpl(const ProgramPoint &Loc,
-                                            const ProgramState *State,
-                                            ExplodedNode *Pred,
-                                            bool MarkAsSink) {
+                                              const ProgramState *State,
+                                              ExplodedNode *FromN,
+                                              bool MarkAsSink) {
   assert(Finalized == false &&
          "We cannot create new nodes after the results have been finalized.");
-                                              
+
   bool IsNew;
-  ExplodedNode *N = Eng.G->getNode(Loc, State, &IsNew);
-  N->addPredecessor(Pred, *Eng.G);
-  Deferred.erase(Pred);
+  ExplodedNode *N = C.Eng.G->getNode(Loc, State, &IsNew);
+  N->addPredecessor(FromN, *C.Eng.G);
+  Deferred.erase(FromN);
 
   if (MarkAsSink)
     N->markAsSink();
@@ -601,60 +603,40 @@ StmtNodeBuilder::generateNodeInternal(const ProgramPoint &Loc,
 }
 
 // This function generate a new ExplodedNode but not a new branch(block edge).
+// Creates a transition from the Builder's top predecessor.
 ExplodedNode *BranchNodeBuilder::generateNode(const Stmt *Condition,
                                               const ProgramState *State,
-                                              const ProgramPointTag *Tag) {
-  bool IsNew;
-  ExplodedNode *Succ 
-    = Eng.G->getNode(PostCondition(Condition, Pred->getLocationContext(), Tag),
-                     State, &IsNew);
-  
-  Succ->addPredecessor(Pred, *Eng.G);
-  
-  Pred = Succ;
-  
-  if (IsNew) 
-    return Succ;
-  
-  return NULL;
+                                              const ProgramPointTag *Tag,
+                                              bool MarkAsSink) {
+  ProgramPoint PP = PostCondition(Condition, C.Pred->getLocationContext(), Tag);
+  ExplodedNode *N = generateNodeImpl(PP, State, C.Pred, MarkAsSink);
+  assert(N);
+  // TODO: This needs to go - we should not change Pred!!!
+  C.Pred = N;
+  return N;
 }
 
 ExplodedNode *BranchNodeBuilder::generateNode(const ProgramState *State,
-                                              bool branch) {
+                                              bool branch,
+                                              ExplodedNode *NodePred) {
 
   // If the branch has been marked infeasible we should not generate a node.
   if (!isFeasible(branch))
     return NULL;
 
-  bool IsNew;
-
-  ExplodedNode *Succ =
-    Eng.G->getNode(BlockEdge(Src,branch ? DstT:DstF,Pred->getLocationContext()),
-                   State, &IsNew);
-
-  Succ->addPredecessor(Pred, *Eng.G);
+  if (!NodePred)
+    NodePred = C.Pred;
+  ProgramPoint Loc = BlockEdge(C.Block, branch ? DstT:DstF,
+                               NodePred->getLocationContext());
+  ExplodedNode *Succ = generateNodeImpl(Loc, State, NodePred);
 
   if (branch)
     GeneratedTrue = true;
   else
     GeneratedFalse = true;
 
-  if (IsNew) {
-    Deferred.push_back(Succ);
-    return Succ;
-  }
-
-  return NULL;
+  return Succ;
 }
-
-BranchNodeBuilder::~BranchNodeBuilder() {
-  if (!GeneratedTrue) generateNode(Pred->State, true);
-  if (!GeneratedFalse) generateNode(Pred->State, false);
-
-  for (DeferredTy::iterator I=Deferred.begin(), E=Deferred.end(); I!=E; ++I)
-    if (!(*I)->isSink()) Eng.WList->enqueue(*I);
-}
-
 
 ExplodedNode*
 IndirectGotoNodeBuilder::generateNode(const iterator &I,
