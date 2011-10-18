@@ -5672,7 +5672,9 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
   MachineRegisterInfo *MRI = &MF->getRegInfo();
   ARMFunctionInfo *AFI = MF->getInfo<ARMFunctionInfo>();
   MachineFrameInfo *MFI = MF->getFrameInfo();
+  MachineConstantPool *MCP = MF->getConstantPool();
   int FI = MFI->getFunctionContextIndex();
+  const Function *F = MF->getFunction();
 
   const TargetRegisterClass *TRC =
     Subtarget->isThumb() ? ARM::tGPRRegisterClass : ARM::GPRRegisterClass;
@@ -5754,6 +5756,7 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
                              MachineMemOperand::MOLoad |
                              MachineMemOperand::MOVolatile, 4, 4);
 
+  unsigned NumLPads = LPadList.size();
   if (Subtarget->isThumb2()) {
     unsigned NewVReg1 = MRI->createVirtualRegister(TRC);
     AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::t2LDRi12), NewVReg1)
@@ -5761,13 +5764,23 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
                    .addImm(4)
                    .addMemOperand(FIMMOLd));
 
-    unsigned NewVReg2 = MRI->createVirtualRegister(TRC);
-    AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::t2MOVi16), NewVReg2)
-                   .addImm(LPadList.size()));
+    if (NumLPads < 256) {
+      AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::t2CMPri))
+                     .addReg(NewVReg1)
+                     .addImm(LPadList.size()));
+    } else {
+      unsigned VReg1 = MRI->createVirtualRegister(TRC);
+      AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::t2MOVi16), VReg1)
+                     .addImm(NumLPads & 0xFF));
+      unsigned VReg2 = MRI->createVirtualRegister(TRC);
+      AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::t2MOVTi16), VReg2)
+                     .addReg(VReg1)
+                     .addImm(NumLPads >> 16));
+      AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::t2CMPrr))
+                     .addReg(NewVReg1)
+                     .addReg(VReg2));
+    }
 
-    AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::t2CMPrr))
-                   .addReg(NewVReg1)
-                   .addReg(NewVReg2));
     BuildMI(DispatchBB, dl, TII->get(ARM::t2Bcc))
       .addMBB(TrapBB)
       .addImm(ARMCC::HI)
