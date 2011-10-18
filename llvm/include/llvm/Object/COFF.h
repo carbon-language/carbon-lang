@@ -45,13 +45,18 @@ struct coff_symbol {
   support::ulittle32_t Value;
   support::little16_t SectionNumber;
 
-  struct {
-    support::ulittle8_t BaseType;
-    support::ulittle8_t ComplexType;
-  } Type;
+  support::ulittle16_t Type;
 
   support::ulittle8_t  StorageClass;
   support::ulittle8_t  NumberOfAuxSymbols;
+
+  uint8_t getBaseType() const {
+    return Type & 0x0F;
+  }
+
+  uint8_t getComplexType() const {
+    return (Type & 0xF0) >> 4;
+  }
 };
 
 struct coff_section {

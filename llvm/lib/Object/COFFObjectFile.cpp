@@ -147,7 +147,7 @@ error_code COFFObjectFile::getSymbolType(DataRefImpl Symb,
       symb->SectionNumber == COFF::IMAGE_SYM_UNDEFINED) {
     Result = SymbolRef::ST_External;
   } else {
-    if (symb->Type.ComplexType == COFF::IMAGE_SYM_DTYPE_FUNCTION) {
+    if (symb->getComplexType() == COFF::IMAGE_SYM_DTYPE_FUNCTION) {
       Result = SymbolRef::ST_Function;
     } else {
       char Type;
