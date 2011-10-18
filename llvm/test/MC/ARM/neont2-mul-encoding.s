@@ -31,13 +31,13 @@
 	vqdmulh.s32	d16, d16, d17
 	vqdmulh.s16	q8, q8, q9
 	vqdmulh.s32	q8, q8, q9
-@	vqdmulh.s16	d11, d2, d3[0]
+	vqdmulh.s16	d11, d2, d3[0]
 
 @ CHECK: vqdmulh.s16	d16, d16, d17   @ encoding: [0x50,0xef,0xa1,0x0b]
 @ CHECK: vqdmulh.s32	d16, d16, d17   @ encoding: [0x60,0xef,0xa1,0x0b]
 @ CHECK: vqdmulh.s16	q8, q8, q9      @ encoding: [0x50,0xef,0xe2,0x0b]
 @ CHECK: vqdmulh.s32	q8, q8, q9      @ encoding: [0x60,0xef,0xe2,0x0b]
-@ FIXME: vqdmulh.s16	d11, d2, d3[0]  @ encoding: [0x92,0xef,0x43,0xbc]
+@ CHECK: vqdmulh.s16	d11, d2, d3[0]  @ encoding: [0x92,0xef,0x43,0xbc]
 
 
 	vqrdmulh.s16	d16, d16, d17
