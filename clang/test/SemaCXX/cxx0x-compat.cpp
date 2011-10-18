@@ -15,6 +15,8 @@ namespace M {
   template void ::g<char>(char); // expected-warning {{explicit instantiation of 'g' must occur at global scope}}
 }
 
+template inline void g<double>(double); // expected-warning {{explicit instantiation cannot be 'inline'}}
+
 void g() {
   auto int n = 0; // expected-warning {{'auto' storage class specifier is redundant and incompatible with C++11}}
 }

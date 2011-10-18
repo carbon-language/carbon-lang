@@ -6157,9 +6157,11 @@ DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
   //   inline or constexpr specifiers.
   // Presumably, this also applies to member functions of class templates as
   // well.
-  if (D.getDeclSpec().isInlineSpecified() && getLangOptions().CPlusPlus0x)
+  if (D.getDeclSpec().isInlineSpecified())
     Diag(D.getDeclSpec().getInlineSpecLoc(),
-         diag::err_explicit_instantiation_inline)
+         getLangOptions().CPlusPlus0x ?
+           diag::err_explicit_instantiation_inline :
+           diag::warn_explicit_instantiation_inline_0x)
       << FixItHint::CreateRemoval(D.getDeclSpec().getInlineSpecLoc());
   if (D.getDeclSpec().isConstexprSpecified())
     // FIXME: Add a fix-it to remove the 'constexpr' and add a 'const' if one is

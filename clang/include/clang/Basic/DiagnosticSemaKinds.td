@@ -2428,6 +2428,8 @@ def note_explicit_instantiation_candidate : Note<
   "explicit instantiation candidate function template here %0">;
 def err_explicit_instantiation_inline : Error<
   "explicit instantiation cannot be 'inline'">;
+def warn_explicit_instantiation_inline_0x : Warning<
+  "explicit instantiation cannot be 'inline'">, InGroup<CXX11Compat>;
 def err_explicit_instantiation_constexpr : Error<
   "explicit instantiation cannot be 'constexpr'">;
 def ext_explicit_instantiation_without_qualified_id : Extension<
