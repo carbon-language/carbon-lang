@@ -1712,15 +1712,19 @@ static TryCastResult TryReinterpretCast(Sema &Self, ExprResult &SrcExpr,
     // casting the return value of dlsym() and GetProcAddress().
     // FIXME: Conditionally-supported behavior should be configurable in the
     // TargetInfo or similar.
-    if (!Self.getLangOptions().CPlusPlus0x)
-      Self.Diag(OpRange.getBegin(), diag::ext_cast_fn_obj) << OpRange;
+    Self.Diag(OpRange.getBegin(),
+              Self.getLangOptions().CPlusPlus0x ?
+                diag::warn_cxx98_compat_cast_fn_obj : diag::ext_cast_fn_obj)
+      << OpRange;
     return TC_Success;
   }
 
   if (DestType->isFunctionPointerType()) {
     // See above.
-    if (!Self.getLangOptions().CPlusPlus0x)
-      Self.Diag(OpRange.getBegin(), diag::ext_cast_fn_obj) << OpRange;
+    Self.Diag(OpRange.getBegin(),
+              Self.getLangOptions().CPlusPlus0x ?
+                diag::warn_cxx98_compat_cast_fn_obj : diag::ext_cast_fn_obj)
+      << OpRange;
     return TC_Success;
   }
   

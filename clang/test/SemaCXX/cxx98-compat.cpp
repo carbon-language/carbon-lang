@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -std=c++11 -Wc++98-compat -verify %s
+// RUN: %clang_cc1 -fsyntax-only -std=c++11 %s
 
 template<typename ...T>  // expected-warning {{variadic templates are incompatible with C++98}}
 class Variadic1 {};
@@ -85,7 +86,7 @@ struct OverrideControl final : OverrideControlBase { // expected-warning {{'fina
 using AliasDecl = int; // expected-warning {{alias declarations are incompatible with C++98}}
 template<typename T> using AliasTemplate = T; // expected-warning {{alias declarations are incompatible with C++98}}
 
-inline namespace N { // expected-warning {{inline namespaces are incompatible with C++98}}
+inline namespace InlineNS { // expected-warning {{inline namespaces are incompatible with C++98}}
 }
 
 auto auto_deduction = 0; // expected-warning {{'auto' type specifier is incompatible with C++98}}
@@ -100,3 +101,62 @@ void no_except() noexcept; // expected-warning {{noexcept specifications are inc
 bool no_except_expr = noexcept(1 + 1); // expected-warning {{noexcept expressions are incompatible with C++98}}
 void *null = nullptr; // expected-warning {{'nullptr' is incompatible with C++98}}
 static_assert(true, "!"); // expected-warning {{static_assert declarations are incompatible with C++98}}
+
+struct InhCtorBase {
+  InhCtorBase(int);
+};
+struct InhCtorDerived : InhCtorBase {
+  using InhCtorBase::InhCtorBase; // expected-warning {{inherited constructors are incompatible with C++98}}
+};
+
+struct FriendMember {
+  static void MemberFn();
+  friend void FriendMember::MemberFn(); // expected-warning {{friend declaration naming a member of the declaring class is incompatible with C++98}}
+};
+
+struct DelegCtor {
+  DelegCtor(int) : DelegCtor() {} // expected-warning {{delegating constructors are incompatible with C++98}}
+  DelegCtor();
+};
+
+template<int n = 0> void DefaultFuncTemplateArg(); // expected-warning {{default template arguments for a function template are incompatible with C++98}}
+
+template<typename T> int TemplateFn(T) { return 0; }
+void LocalTemplateArg() {
+  struct S {};
+  TemplateFn(S()); // expected-warning {{local type 'S' as template argument is incompatible with C++98}}
+}
+struct {} obj_of_unnamed_type; // expected-note {{here}}
+int UnnamedTemplateArg = TemplateFn(obj_of_unnamed_type); // expected-warning {{unnamed type as template argument is incompatible with C++98}}
+
+namespace RedundantParensInAddressTemplateParam {
+  int n;
+  template<int*p> struct S {};
+  S<(&n)> s; // expected-warning {{redundant parentheses surrounding address non-type template argument are incompatible with C++98}}
+  S<(((&n)))> t; // expected-warning {{redundant parentheses surrounding address non-type template argument are incompatible with C++98}}
+}
+
+namespace TemplateSpecOutOfScopeNs {
+  template<typename T> struct S {}; // expected-note {{here}}
+}
+template<> struct TemplateSpecOutOfScopeNs::S<char> {}; // expected-warning {{class template specialization of 'S' outside namespace 'TemplateSpecOutOfScopeNs' is incompatible with C++98}}
+
+struct Typename {
+  template<typename T> struct Inner {};
+};
+typename ::Typename TypenameOutsideTemplate(); // expected-warning {{use of 'typename' outside of a template is incompatible with C++98}}
+Typename::template Inner<int> TemplateOutsideTemplate(); // expected-warning {{use of 'template' keyword outside of a template is incompatible with C++98}}
+
+struct TrivialButNonPOD {
+  int f(int);
+private:
+  int k;
+};
+void Ellipsis(int n, ...);
+void TrivialButNonPODThroughEllipsis() {
+  Ellipsis(1, TrivialButNonPOD()); // expected-warning {{passing object of trivial but non-POD type 'TrivialButNonPOD' through variadic function is incompatible with C++98}}
+}
+
+struct HasExplicitConversion {
+  explicit operator bool(); // expected-warning {{explicit conversion functions are incompatible with C++98}}
+};

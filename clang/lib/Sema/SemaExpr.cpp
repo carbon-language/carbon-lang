@@ -562,8 +562,12 @@ ExprResult Sema::DefaultVariadicArgumentPromotion(Expr *E, VariadicCallType CT,
       if (CXXRecordDecl *Record = E->getType()->getAsCXXRecordDecl()) {
         if (Record->hasTrivialCopyConstructor() &&
             Record->hasTrivialMoveConstructor() &&
-            Record->hasTrivialDestructor())
+            Record->hasTrivialDestructor()) {
+          DiagRuntimeBehavior(E->getLocStart(), 0,
+            PDiag(diag::warn_cxx98_compat_pass_non_pod_arg_to_vararg)
+              << E->getType() << CT);
           TrivialEnough = true;
+        }
       }
     }
 
@@ -2643,9 +2647,10 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
     QualType Ty;
 
     // long long is a C99 feature.
-    if (!getLangOptions().C99 && !getLangOptions().CPlusPlus0x &&
-        Literal.isLongLong)
-      Diag(Tok.getLocation(), diag::ext_longlong);
+    if (!getLangOptions().C99 && Literal.isLongLong)
+      Diag(Tok.getLocation(),
+           getLangOptions().CPlusPlus0x ?
+             diag::warn_cxx98_compat_longlong : diag::ext_longlong);
 
     // Get the value in the widest-possible width.
     llvm::APInt ResultVal(Context.getTargetInfo().getIntMaxTWidth(), 0);

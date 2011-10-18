@@ -689,9 +689,10 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
         Result = Context.LongLongTy;
           
         // long long is a C99 feature.
-        if (!S.getLangOptions().C99 &&
-            !S.getLangOptions().CPlusPlus0x)
-          S.Diag(DS.getTypeSpecWidthLoc(), diag::ext_longlong);
+        if (!S.getLangOptions().C99)
+          S.Diag(DS.getTypeSpecWidthLoc(),
+                 S.getLangOptions().CPlusPlus0x ?
+                   diag::warn_cxx98_compat_longlong : diag::ext_longlong);
         break;
       }
     } else {
@@ -703,9 +704,10 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
         Result = Context.UnsignedLongLongTy;
           
         // long long is a C99 feature.
-        if (!S.getLangOptions().C99 &&
-            !S.getLangOptions().CPlusPlus0x)
-          S.Diag(DS.getTypeSpecWidthLoc(), diag::ext_longlong);
+        if (!S.getLangOptions().C99)
+          S.Diag(DS.getTypeSpecWidthLoc(),
+                 S.getLangOptions().CPlusPlus0x ?
+                   diag::warn_cxx98_compat_longlong : diag::ext_longlong);
         break;
       }
     }

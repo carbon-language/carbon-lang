@@ -1103,10 +1103,10 @@ static bool DiagnoseDefaultTemplateArgument(Sema &S,
     //   template-argument, that declaration shall be a definition and shall be
     //   the only declaration of the function template in the translation unit.
     // (C++98/03 doesn't have this wording; see DR226).
-    if (!S.getLangOptions().CPlusPlus0x)
-      S.Diag(ParamLoc,
-             diag::ext_template_parameter_default_in_function_template)
-        << DefArgRange;
+    S.Diag(ParamLoc, S.getLangOptions().CPlusPlus0x ?
+         diag::warn_cxx98_compat_template_parameter_default_in_function_template
+           : diag::ext_template_parameter_default_in_function_template)
+      << DefArgRange;
     return false;
 
   case Sema::TPC_ClassTemplateMember:
@@ -2268,9 +2268,11 @@ TemplateNameKind Sema::ActOnDependentTemplateName(Scope *S,
                                                   ParsedType ObjectType,
                                                   bool EnteringContext,
                                                   TemplateTy &Result) {
-  if (TemplateKWLoc.isValid() && S && !S->getTemplateParamParent() &&
-      !getLangOptions().CPlusPlus0x)
-    Diag(TemplateKWLoc, diag::ext_template_outside_of_template)
+  if (TemplateKWLoc.isValid() && S && !S->getTemplateParamParent())
+    Diag(TemplateKWLoc,
+         getLangOptions().CPlusPlus0x ?
+           diag::warn_cxx98_compat_template_outside_of_template :
+           diag::ext_template_outside_of_template)
       << FixItHint::CreateRemoval(TemplateKWLoc);
 
   DeclContext *LookupCtx = 0;
@@ -3261,13 +3263,19 @@ bool UnnamedLocalNoLinkageFinder::VisitAtomicType(const AtomicType* T) {
 
 bool UnnamedLocalNoLinkageFinder::VisitTagDecl(const TagDecl *Tag) {
   if (Tag->getDeclContext()->isFunctionOrMethod()) {
-    S.Diag(SR.getBegin(), diag::ext_template_arg_local_type)
+    S.Diag(SR.getBegin(),
+           S.getLangOptions().CPlusPlus0x ?
+             diag::warn_cxx98_compat_template_arg_local_type :
+             diag::ext_template_arg_local_type)
       << S.Context.getTypeDeclType(Tag) << SR;
     return true;
   }
 
   if (!Tag->getDeclName() && !Tag->getTypedefNameForAnonDecl()) {
-    S.Diag(SR.getBegin(), diag::ext_template_arg_unnamed_type) << SR;
+    S.Diag(SR.getBegin(),
+           S.getLangOptions().CPlusPlus0x ?
+             diag::warn_cxx98_compat_template_arg_unnamed_type :
+             diag::ext_template_arg_unnamed_type) << SR;
     S.Diag(Tag->getLocation(), diag::note_template_unnamed_type_here);
     return true;
   }
@@ -3317,9 +3325,14 @@ bool Sema::CheckTemplateArgument(TemplateTypeParmDecl *Param,
   //   compounded from any of these types shall not be used as a
   //   template-argument for a template type-parameter.
   //
-  // C++0x allows these, and even in C++03 we allow them as an extension with
+  // C++11 allows these, and even in C++03 we allow them as an extension with
   // a warning.
-  if (!LangOpts.CPlusPlus0x && Arg->hasUnnamedOrLocalType()) {
+  if (LangOpts.CPlusPlus0x ?
+     Diags.getDiagnosticLevel(diag::warn_cxx98_compat_template_arg_unnamed_type,
+                              SR.getBegin()) != DiagnosticsEngine::Ignored ||
+      Diags.getDiagnosticLevel(diag::warn_cxx98_compat_template_arg_local_type,
+                               SR.getBegin()) != DiagnosticsEngine::Ignored :
+      Arg->hasUnnamedOrLocalType()) {
     UnnamedLocalNoLinkageFinder Finder(*this, SR);
     (void)Finder.Visit(Context.getCanonicalType(Arg));
   }
@@ -3358,9 +3371,11 @@ CheckTemplateArgumentAddressOfObjectOrFunction(Sema &S,
   // See http://www.open-std.org/jtc1/sc22/wg21/docs/cwg_defects.html#773
   bool ExtraParens = false;
   while (ParenExpr *Parens = dyn_cast<ParenExpr>(Arg)) {
-    if (!Invalid && !ExtraParens && !S.getLangOptions().CPlusPlus0x) {
+    if (!Invalid && !ExtraParens) {
       S.Diag(Arg->getSourceRange().getBegin(),
-             diag::ext_template_arg_extra_parens)
+             S.getLangOptions().CPlusPlus0x ?
+               diag::warn_cxx98_compat_template_arg_extra_parens :
+               diag::ext_template_arg_extra_parens)
         << Arg->getSourceRange();
       ExtraParens = true;
     }
@@ -3623,9 +3638,11 @@ bool Sema::CheckTemplateArgumentPointerToMember(Expr *Arg,
   // See http://www.open-std.org/jtc1/sc22/wg21/docs/cwg_defects.html#773
   bool ExtraParens = false;
   while (ParenExpr *Parens = dyn_cast<ParenExpr>(Arg)) {
-    if (!Invalid && !ExtraParens && !getLangOptions().CPlusPlus0x) {
+    if (!Invalid && !ExtraParens) {
       Diag(Arg->getSourceRange().getBegin(),
-           diag::ext_template_arg_extra_parens)
+           getLangOptions().CPlusPlus0x ?
+             diag::warn_cxx98_compat_template_arg_extra_parens :
+             diag::ext_template_arg_extra_parens)
         << Arg->getSourceRange();
       ExtraParens = true;
     }
@@ -4571,24 +4588,28 @@ static bool CheckTemplateSpecializationScope(Sema &S,
     // C++0x [temp.expl.spec]p2:
     //   An explicit specialization shall be declared in a namespace enclosing
     //   the specialized template.
-    if (!DC->InEnclosingNamespaceSetOf(SpecializedContext) &&
-        !(S.getLangOptions().CPlusPlus0x && DC->Encloses(SpecializedContext))) {
-      bool IsCPlusPlus0xExtension
-        = !S.getLangOptions().CPlusPlus0x && DC->Encloses(SpecializedContext);
-      if (isa<TranslationUnitDecl>(SpecializedContext))
-        S.Diag(Loc, IsCPlusPlus0xExtension
-                      ? diag::ext_template_spec_decl_out_of_scope_global
-                      : diag::err_template_spec_decl_out_of_scope_global)
+    if (!DC->InEnclosingNamespaceSetOf(SpecializedContext)) {
+      bool IsCPlusPlus0xExtension = DC->Encloses(SpecializedContext);
+      if (isa<TranslationUnitDecl>(SpecializedContext)) {
+        assert(!IsCPlusPlus0xExtension &&
+               "DC encloses TU but isn't in enclosing namespace set");
+        S.Diag(Loc, diag::err_template_spec_decl_out_of_scope_global)
           << EntityKind << Specialized;
-      else if (isa<NamespaceDecl>(SpecializedContext))
-        S.Diag(Loc, IsCPlusPlus0xExtension
-                      ? diag::ext_template_spec_decl_out_of_scope
-                      : diag::err_template_spec_decl_out_of_scope)
-          << EntityKind << Specialized
-          << cast<NamedDecl>(SpecializedContext);
+      } else if (isa<NamespaceDecl>(SpecializedContext)) {
+        int Diag;
+        if (!IsCPlusPlus0xExtension)
+          Diag = diag::err_template_spec_decl_out_of_scope;
+        else if (!S.getLangOptions().CPlusPlus0x)
+          Diag = diag::ext_template_spec_decl_out_of_scope;
+        else
+          Diag = diag::warn_cxx98_compat_template_spec_decl_out_of_scope;
+        S.Diag(Loc, Diag)
+          << EntityKind << Specialized << cast<NamedDecl>(SpecializedContext);
+      }
 
       S.Diag(Specialized->getLocation(), diag::note_specialized_entity);
-      ComplainedAboutScope = true;
+      ComplainedAboutScope =
+        !(IsCPlusPlus0xExtension && S.getLangOptions().CPlusPlus0x);
     }
   }
 
@@ -5333,12 +5354,12 @@ Sema::CheckSpecializationInstantiationRedecl(SourceLocation NewLoc,
       // In C++98/03 mode, we only give an extension warning here, because it
       // is not harmful to try to explicitly instantiate something that
       // has been explicitly specialized.
-      if (!getLangOptions().CPlusPlus0x) {
-        Diag(NewLoc, diag::ext_explicit_instantiation_after_specialization)
-          << PrevDecl;
-        Diag(PrevDecl->getLocation(),
-             diag::note_previous_template_specialization);
-      }
+      Diag(NewLoc, getLangOptions().CPlusPlus0x ?
+           diag::warn_cxx98_compat_explicit_instantiation_after_specialization :
+           diag::ext_explicit_instantiation_after_specialization)
+        << PrevDecl;
+      Diag(PrevDecl->getLocation(),
+           diag::note_previous_template_specialization);
       HasNoEffect = true;
       return false;
 
@@ -6413,9 +6434,11 @@ Sema::ActOnTypenameType(Scope *S, SourceLocation TypenameLoc,
   if (SS.isInvalid())
     return true;
   
-  if (TypenameLoc.isValid() && S && !S->getTemplateParamParent() &&
-      !getLangOptions().CPlusPlus0x)
-    Diag(TypenameLoc, diag::ext_typename_outside_of_template)
+  if (TypenameLoc.isValid() && S && !S->getTemplateParamParent())
+    Diag(TypenameLoc,
+         getLangOptions().CPlusPlus0x ?
+           diag::warn_cxx98_compat_typename_outside_of_template :
+           diag::ext_typename_outside_of_template)
       << FixItHint::CreateRemoval(TypenameLoc);
 
   NestedNameSpecifierLoc QualifierLoc = SS.getWithLocInContext(Context);
@@ -6449,10 +6472,12 @@ Sema::ActOnTypenameType(Scope *S, SourceLocation TypenameLoc,
                         SourceLocation LAngleLoc,
                         ASTTemplateArgsPtr TemplateArgsIn,
                         SourceLocation RAngleLoc) {
-  if (TypenameLoc.isValid() && S && !S->getTemplateParamParent() &&
-      !getLangOptions().CPlusPlus0x)
-    Diag(TypenameLoc, diag::ext_typename_outside_of_template)
-    << FixItHint::CreateRemoval(TypenameLoc);
+  if (TypenameLoc.isValid() && S && !S->getTemplateParamParent())
+    Diag(TypenameLoc,
+         getLangOptions().CPlusPlus0x ?
+           diag::warn_cxx98_compat_typename_outside_of_template :
+           diag::ext_typename_outside_of_template)
+      << FixItHint::CreateRemoval(TypenameLoc);
   
   // Translate the parser's template argument list in our AST format.
   TemplateArgumentListInfo TemplateArgs(LAngleLoc, RAngleLoc);

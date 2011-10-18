@@ -16,3 +16,16 @@ VA_MACRO(,x) // expected-warning {{empty macro argument list is incompatible wit
 enum Enum {
   Enum_value, // expected-warning {{commas at the end of enumerator lists are incompatible with C++98}}
 };
+
+template<typename T> struct InstantiationAfterSpecialization {};
+template<> struct InstantiationAfterSpecialization<int> {}; // expected-note {{here}}
+template struct InstantiationAfterSpecialization<int>; // expected-warning {{explicit instantiation of 'InstantiationAfterSpecialization<int>' that occurs after an explicit specialization is incompatible with C++98}}
+
+void *dlsym();
+void (*FnPtr)() = (void(*)())dlsym(); // expected-warning {{cast between pointer-to-function and pointer-to-object is incompatible with C++98}}
+void *FnVoidPtr = (void*)&dlsym; // expected-warning {{cast between pointer-to-function and pointer-to-object is incompatible with C++98}}
+
+struct ConvertToInt {
+  operator int();
+};
+int *ArraySizeConversion = new int[ConvertToInt()]; // expected-warning {{implicit conversion from array size expression of type 'ConvertToInt' to integral type 'int' is incompatible with C++98}}
