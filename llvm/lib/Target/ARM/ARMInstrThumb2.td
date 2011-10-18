@@ -1695,6 +1695,8 @@ def t2MOVr : T2sTwoReg<(outs GPRnopc:$Rd), (ins GPR:$Rm), IIC_iMOVr,
   let Inst{14-12} = 0b000;
   let Inst{7-4} = 0b0000;
 }
+def : t2InstAlias<"mov${p}.w $Rd, $Rm", (t2MOVr GPRnopc:$Rd, GPR:$Rm,
+                                                pred:$p, zero_reg)>;
 def : t2InstAlias<"movs${p}.w $Rd, $Rm", (t2MOVr GPRnopc:$Rd, GPR:$Rm,
                                                  pred:$p, CPSR)>;
 def : t2InstAlias<"movs${p} $Rd, $Rm", (t2MOVr GPRnopc:$Rd, GPR:$Rm,
