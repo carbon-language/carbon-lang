@@ -5809,9 +5809,26 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
                    .addImm(1)
                    .addMemOperand(FIMMOLd));
 
-    AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::tCMPi8))
-                   .addReg(NewVReg1)
-                   .addImm(LPadList.size()));
+    if (NumLPads < 256) {
+      AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::tCMPi8))
+                     .addReg(NewVReg1)
+                     .addImm(NumLPads));
+    } else {
+      MachineConstantPool *ConstantPool = MF->getConstantPool();
+      const Constant *C =
+        ConstantInt::get(Type::getInt32Ty(MF->getFunction()->getContext()),
+                         NumLPads);
+      unsigned Idx = ConstantPool->getConstantPoolIndex(C, 4);
+
+      unsigned VReg1 = MRI->createVirtualRegister(TRC);
+      AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::tLDRpci))
+                     .addReg(VReg1, RegState::Define)
+                     .addConstantPoolIndex(Idx));
+      AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::tCMPr))
+                     .addReg(NewVReg1)
+                     .addReg(VReg1));
+    }
+
     BuildMI(DispatchBB, dl, TII->get(ARM::tBcc))
       .addMBB(TrapBB)
       .addImm(ARMCC::HI)
