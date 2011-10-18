@@ -2532,9 +2532,6 @@ ClangExpressionDeclMap::FindExternalLexicalDecls (const DeclContext *decl_contex
     static unsigned int invocation_id = 0;
     unsigned int current_id = invocation_id++;
     
-    if (current_id == 1686)
-        fprintf(stderr, "here\n");
-    
     if (log)
     {
         if (const NamedDecl *context_named_decl = dyn_cast<NamedDecl>(context_decl))
