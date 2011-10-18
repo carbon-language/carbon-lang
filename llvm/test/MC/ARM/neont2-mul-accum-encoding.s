@@ -90,3 +90,8 @@
 
 @ CHECK: vqdmlsl.s16	q8, d19, d18    @ encoding: [0xd3,0xef,0xa2,0x0b]
 @ CHECK: vqdmlsl.s32	q8, d19, d18    @ encoding: [0xe3,0xef,0xa2,0x0b]
+
+@  vmla.i32	q12, q8, d3[0]
+@ FIXME: vmla.i32	q12, q8, d3[0]    @ encoding: [0xe0,0xff,0xc3,0x80]
+@  vmlal.s32	q0, d5, d10[0]
+@ FIXME: vmlal.s32	q0, d5, d10[0]    @ encoding: [0xa5,0xef,0x4a,0x02]

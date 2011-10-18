@@ -56,3 +56,12 @@
 	vqdmull.s16	q8, d16, d17
 @ CHECK: vqdmull.s32	q8, d16, d17    @ encoding: [0xe0,0xef,0xa1,0x0d]
 	vqdmull.s32	q8, d16, d17
+
+@ FIXME: vmla.i32	q12, q8, d3[0]    @ encoding: [0xe0,0xff,0xc3,0x80]
+@  vmla.i32	q12, q8, d3[0]
+@ FIXME: vqdmulh.s16	d11, d2, d3[0]    @ encoding: [0x92,0xef,0x43,0xbc]
+@  vqdmulh.s16	d11, d2, d3[0]
+@ FIXME: vmul.i16	d18, d8, d0[3]    @ encoding: [0xd8,0xef,0x68,0x28]
+@  vmul.i16	d18, d8, d0[3]
+
+
