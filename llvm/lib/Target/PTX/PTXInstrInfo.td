@@ -885,19 +885,26 @@ def : Pat<(f64 (fdiv RegF64:$a, fpimm:$b)),
 
 // FMUL+FADD
 def : Pat<(f32 (fadd (fmul RegF32:$a, RegF32:$b), RegF32:$c)),
-          (FMADrrr32 RndDefault, RegF32:$a, RegF32:$b, RegF32:$c)>;
+          (FMADrrr32 RndDefault, RegF32:$a, RegF32:$b, RegF32:$c)>,
+          Requires<[SupportsFMA]>;
 def : Pat<(f32 (fadd (fmul RegF32:$a, RegF32:$b), fpimm:$c)),
-          (FMADrri32 RndDefault, RegF32:$a, RegF32:$b, fpimm:$c)>;
+          (FMADrri32 RndDefault, RegF32:$a, RegF32:$b, fpimm:$c)>,
+          Requires<[SupportsFMA]>;
 def : Pat<(f32 (fadd (fmul RegF32:$a, fpimm:$b), fpimm:$c)),
-          (FMADrrr32 RndDefault, RegF32:$a, fpimm:$b, fpimm:$c)>;
+          (FMADrrr32 RndDefault, RegF32:$a, fpimm:$b, fpimm:$c)>,
+          Requires<[SupportsFMA]>;
 def : Pat<(f32 (fadd (fmul RegF32:$a, RegF32:$b), fpimm:$c)),
-          (FMADrri32 RndDefault, RegF32:$a, RegF32:$b, fpimm:$c)>;
+          (FMADrri32 RndDefault, RegF32:$a, RegF32:$b, fpimm:$c)>,
+          Requires<[SupportsFMA]>;
 def : Pat<(f64 (fadd (fmul RegF64:$a, RegF64:$b), RegF64:$c)),
-          (FMADrrr64 RndDefault, RegF64:$a, RegF64:$b, RegF64:$c)>;
+          (FMADrrr64 RndDefault, RegF64:$a, RegF64:$b, RegF64:$c)>,
+          Requires<[SupportsFMA]>;
 def : Pat<(f64 (fadd (fmul RegF64:$a, RegF64:$b), fpimm:$c)),
-          (FMADrri64 RndDefault, RegF64:$a, RegF64:$b, fpimm:$c)>;
+          (FMADrri64 RndDefault, RegF64:$a, RegF64:$b, fpimm:$c)>,
+          Requires<[SupportsFMA]>;
 def : Pat<(f64 (fadd (fmul RegF64:$a, fpimm:$b), fpimm:$c)),
-          (FMADrri64 RndDefault, RegF64:$a, fpimm:$b, fpimm:$c)>;
+          (FMADrri64 RndDefault, RegF64:$a, fpimm:$b, fpimm:$c)>,
+          Requires<[SupportsFMA]>;
 
 // FNEG
 def : Pat<(f32 (fneg RegF32:$a)), (FNEGrr32 RndDefault, RegF32:$a)>;
