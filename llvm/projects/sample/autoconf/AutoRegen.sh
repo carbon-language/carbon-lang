@@ -12,15 +12,13 @@ fi
 cwd=`pwd`
 if test -d ../../../autoconf/m4 ; then
   cd ../../../autoconf/m4
-  llvm_m4=`pwd`
   llvm_src_root=../..
   llvm_obj_root=../..
   cd $cwd
 elif test -d ../../llvm/autoconf/m4 ; then
   cd ../../llvm/autoconf/m4
-  llvm_m4=`pwd`
-  llvm_src_root=..
-  llvm_obj_root=..
+  llvm_src_root=../..
+  llvm_obj_root=../..
   cd $cwd
 else
   while true ; do
@@ -28,7 +26,6 @@ else
     read -p "Enter full path to LLVM source:" REPLY
     if test -d "$REPLY/autoconf/m4" ; then
       llvm_src_root="$REPLY"
-      llvm_m4="$REPLY/autoconf/m4"
       read -p "Enter full path to LLVM objects (empty for same as source):" REPLY
       if test -d "$REPLY" ; then
         llvm_obj_root="$REPLY"
@@ -39,13 +36,9 @@ else
     fi
   done
 fi
-# Patch the LLVM_ROOT in configure.ac, if it needs it
-cp configure.ac configure.bak
-sed -e "s#^LLVM_SRC_ROOT=.*#LLVM_SRC_ROOT=\"$llvm_src_root\"#" \
-    -e "s#^LLVM_OBJ_ROOT=.*#LLVM_OBJ_ROOT=\"$llvm_obj_root\"#" configure.bak > configure.ac
 echo "Regenerating aclocal.m4 with aclocal"
 rm -f aclocal.m4
-aclocal -I $llvm_m4 -I "$llvm_m4/.." || die "aclocal failed"
+aclocal -I $cwd/m4 || die "aclocal failed"
 echo "Regenerating configure with autoconf"
 autoconf --warnings=all -o ../configure configure.ac || die "autoconf failed"
 cd ..
