@@ -6927,9 +6927,14 @@ TreeTransform<Derived>::TransformCXXNewExpr(CXXNewExpr *E) {
                                   PlacementArgs, &ArgumentChanged))
     return ExprError();  
 
-  // transform the constructor arguments (if any).
+  // Transform the constructor arguments (if any).
+  // As an annoying corner case, we may have introduced an implicit value-
+  // initialization expression when allocating a new array, which we implicitly
+  // drop. It will be re-created during type checking.
   ASTOwningVector<Expr*> ConstructorArgs(SemaRef);
-  if (TransformExprs(E->getConstructorArgs(), E->getNumConstructorArgs(), true,
+  if (!(E->isArray() && E->getNumConstructorArgs() == 1 &&
+        isa<ImplicitValueInitExpr>(E->getConstructorArgs()[0])) &&
+      TransformExprs(E->getConstructorArgs(), E->getNumConstructorArgs(), true,
                      ConstructorArgs, &ArgumentChanged))
     return ExprError();  
 
@@ -7028,13 +7033,9 @@ TreeTransform<Derived>::TransformCXXNewExpr(CXXNewExpr *E) {
                                         AllocType,
                                         AllocTypeInfo,
                                         ArraySize.get(),
-                                        /*FIXME:*/E->hasInitializer()
-                                          ? E->getLocStart()
-                                          : SourceLocation(),
+                                        E->getConstructorLParen(),
                                         move_arg(ConstructorArgs),
-                                        /*FIXME:*/E->hasInitializer()
-                                          ? E->getLocEnd()
-                                          : SourceLocation());
+                                        E->getConstructorRParen());
 }
 
 template<typename Derived>

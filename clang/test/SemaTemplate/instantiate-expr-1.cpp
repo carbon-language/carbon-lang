@@ -167,8 +167,15 @@ namespace PR6424 {
       new X(); // expected-note{{instantiation of}}
     }
   };
-
+  
   template void Y2<3>::f();
+
+  template<typename T>
+  void rdar10283928(int count) {
+    (void)new char[count]();
+  }
+
+  template void rdar10283928<int>(int);
 }
 
 namespace PR10864 {
