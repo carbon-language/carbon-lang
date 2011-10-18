@@ -241,7 +241,7 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
   // We don't want to complain about reaching the end of a macro
   // instantiation or a _Pragma.
   if (PragmaARCCFCodeAuditedLoc.isValid() &&
-      !isEndOfMacro && CurLexer && !CurLexer->Is_PragmaLexer) {
+      !isEndOfMacro && !(CurLexer && CurLexer->Is_PragmaLexer)) {
     Diag(PragmaARCCFCodeAuditedLoc, diag::err_pp_eof_in_arc_cf_code_audited);
 
     // Recover by leaving immediately.
