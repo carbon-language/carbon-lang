@@ -5895,6 +5895,7 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
   const ARMBaseInstrInfo *AII = static_cast<const ARMBaseInstrInfo*>(TII);
   const ARMBaseRegisterInfo &RI = AII->getRegisterInfo();
   const unsigned *SavedRegs = RI.getCalleeSavedRegs(MF);
+  SmallVector<MachineBasicBlock*, 64> MBBLPads;
   for (SmallPtrSet<MachineBasicBlock*, 64>::iterator
          I = InvokeBBs.begin(), E = InvokeBBs.end(); I != E; ++I) {
     MachineBasicBlock *BB = *I;
@@ -5906,7 +5907,7 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
       MachineBasicBlock *SMBB = *SI;
       if (SMBB->isLandingPad()) {
         BB->removeSuccessor(SMBB);
-        SMBB->setIsLandingPad(false);
+        MBBLPads.push_back(SMBB);
       }
     }
 
@@ -5939,6 +5940,12 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
       break;
     }
   }
+
+  // Mark all former landing pads as non-landing pads. The dispatch is the only
+  // landing pad now.
+  for (SmallVectorImpl<MachineBasicBlock*>::iterator
+         I = MBBLPads.begin(), E = MBBLPads.end(); I != E; ++I)
+    (*I)->setIsLandingPad(false);
 
   // The instruction is gone now.
   MI->eraseFromParent();
