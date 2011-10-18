@@ -39,6 +39,11 @@ def nImmVMOVI32 : Operand<i32> {
   let PrintMethod = "printNEONModImmOperand";
   let ParserMatchClass = nImmVMOVI32AsmOperand;
 }
+def nImmSplatI64AsmOperand : AsmOperandClass { let Name = "NEONi64splat"; }
+def nImmSplatI64 : Operand<i32> {
+  let PrintMethod = "printNEONModImmOperand";
+  let ParserMatchClass = nImmSplatI64AsmOperand;
+}
 
 def VectorIndex8Operand  : AsmOperandClass { let Name = "VectorIndex8"; }
 def VectorIndex16Operand : AsmOperandClass { let Name = "VectorIndex16"; }
@@ -4372,11 +4377,11 @@ def VMOVv4i32 : N1ModImm<1, 0b000, {?,?,?,?}, 0, 1, 0, 1, (outs QPR:$Vd),
 }
 
 def VMOVv1i64 : N1ModImm<1, 0b000, 0b1110, 0, 0, 1, 1, (outs DPR:$Vd),
-                         (ins nModImm:$SIMM), IIC_VMOVImm,
+                         (ins nImmSplatI64:$SIMM), IIC_VMOVImm,
                          "vmov", "i64", "$Vd, $SIMM", "",
                          [(set DPR:$Vd, (v1i64 (NEONvmovImm timm:$SIMM)))]>;
 def VMOVv2i64 : N1ModImm<1, 0b000, 0b1110, 0, 1, 1, 1, (outs QPR:$Vd),
-                         (ins nModImm:$SIMM), IIC_VMOVImm,
+                         (ins nImmSplatI64:$SIMM), IIC_VMOVImm,
                          "vmov", "i64", "$Vd, $SIMM", "",
                          [(set QPR:$Vd, (v2i64 (NEONvmovImm timm:$SIMM)))]>;
 } // isReMaterializable

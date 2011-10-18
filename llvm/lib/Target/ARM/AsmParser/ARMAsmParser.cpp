@@ -966,6 +966,19 @@ public:
       (Value >= 0x01ffff && Value <= 0xffffff && (Value & 0xffff) == 0xffff);
   }
 
+  bool isNEONi64splat() const {
+    if (Kind != k_Immediate)
+      return false;
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    // Must be a constant.
+    if (!CE) return false;
+    uint64_t Value = CE->getValue();
+    // i64 value with each byte being either 0 or 0xff.
+    for (unsigned i = 0; i < 8; ++i)
+      if ((Value & 0xff) != 0 && (Value & 0xff) != 0xff) return false;
+    return true;
+  }
+
   void addExpr(MCInst &Inst, const MCExpr *Expr) const {
     // Add as immediates when possible.  Null MCExpr = 0.
     if (Expr == 0)
@@ -1534,6 +1547,18 @@ public:
     else if (Value > 0xffffff)
       Value = (Value >> 24) | 0x600;
     Inst.addOperand(MCOperand::CreateImm(Value));
+  }
+
+  void addNEONi64splatOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    // The immediate encodes the type of constant as well as the value.
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    uint64_t Value = CE->getValue();
+    unsigned Imm = 0;
+    for (unsigned i = 0; i < 8; ++i, Value >>= 8) {
+      Imm |= (Value & 1) << i;
+    }
+    Inst.addOperand(MCOperand::CreateImm(Imm | 0x1e00));
   }
 
   virtual void print(raw_ostream &OS) const;
