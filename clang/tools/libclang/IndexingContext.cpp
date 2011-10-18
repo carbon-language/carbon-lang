@@ -388,7 +388,8 @@ void IndexingContext::handleObjCProperty(const ObjCPropertyDecl *D) {
 void IndexingContext::handleReference(const NamedDecl *D, SourceLocation Loc,
                                       const NamedDecl *Parent,
                                       const DeclContext *DC,
-                                      const Expr *E) {
+                                      const Expr *E,
+                                      CXIdxEntityRefKind Kind) {
   if (Loc.isInvalid())
     return;
   if (!CB.indexEntityReference)
@@ -402,7 +403,8 @@ void IndexingContext::handleReference(const NamedDecl *D, SourceLocation Loc,
                               getIndexLoc(Loc),
                               getIndexEntity(D),
                               getIndexEntity(Parent),
-                              getIndexContainerForDC(DC) };
+                              getIndexContainerForDC(DC),
+                              Kind };
   CB.indexEntityReference(ClientData, &Info);
 }
 

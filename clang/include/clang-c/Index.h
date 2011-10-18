@@ -4051,12 +4051,18 @@ typedef struct {
   CXIdxLoc endLoc;
 } CXIdxEndContainerInfo;
 
+typedef enum {
+  CXIdxEntityRef_Direct = 1,
+  CXIdxEntityRef_ImplicitProperty = 2
+} CXIdxEntityRefKind;
+
 typedef struct {
   CXCursor cursor;
   CXIdxLoc loc;
   CXIdxEntity referencedEntity;
   CXIdxEntity parentEntity;
   CXIdxContainer container;
+  CXIdxEntityRefKind kind;
 } CXIdxEntityRefInfo;
 
 typedef struct {

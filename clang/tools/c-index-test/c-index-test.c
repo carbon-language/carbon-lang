@@ -1920,6 +1920,11 @@ static void index_indexEntityReference(CXClientData client_data,
   printCXIndexEntity(info->parentEntity);
   printf(" | container: ");
   printCXIndexContainer(info->container);
+  printf(" | kind: ");
+  switch (info->kind) {
+  case CXIdxEntityRef_Direct: printf("direct"); break;
+  case CXIdxEntityRef_ImplicitProperty: printf("implicit prop"); break;
+  }
   printf("\n");
 }
 

@@ -132,7 +132,8 @@ public:
   void handleReference(const NamedDecl *D, SourceLocation Loc,
                        const NamedDecl *Parent,
                        const DeclContext *DC,
-                       const Expr *E = 0);
+                       const Expr *E = 0,
+                       CXIdxEntityRefKind Kind = CXIdxEntityRef_Direct);
   
   void invokeStartedTagTypeDefinition(const TagDecl *D);
 
