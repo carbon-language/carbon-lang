@@ -24,7 +24,6 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetData.h"
 using namespace llvm;
 
 static std::string getTypeString(Type *T) {
@@ -261,14 +260,9 @@ bool LLParser::ParseTargetDefinition() {
     return false;
   case lltok::kw_datalayout:
     Lex.Lex();
-    LocTy SpecifierLoc = Lex.getLoc();
     if (ParseToken(lltok::equal, "expected '=' after target datalayout") ||
         ParseStringConstant(Str))
       return true;
-    std::string errMsg = TargetData::parseSpecifier(Str);
-    if (errMsg != "") {
-      return Error(SpecifierLoc, errMsg);
-    }
     M->setDataLayout(Str);
     return false;
   }
