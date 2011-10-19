@@ -2021,8 +2021,9 @@ bool TGParser::ResolveMulticlassDef(MultiClass &MC,
   if (CurMultiClass) {
     for (unsigned i = 0, e = CurMultiClass->DefPrototypes.size();
          i != e; ++i)
-      if (CurMultiClass->DefPrototypes[i]->getName() == CurRec->getName())
-        return Error(DefmPrefixLoc, "defm '" + CurRec->getName() +
+      if (CurMultiClass->DefPrototypes[i]->getNameInit()
+          == CurRec->getNameInit())
+        return Error(DefmPrefixLoc, "defm '" + CurRec->getNameInitAsString() +
                      "' already defined in this multiclass!");
     CurMultiClass->DefPrototypes.push_back(CurRec);
 
