@@ -44,6 +44,15 @@ int test7(int y) {
   return x; // expected-warning{{variable 'x' may be uninitialized when used here}}
 }
 
+int test7b(int y) {
+  int x = x; // expected-note{{variable 'x' is declared here}}
+  if (y)
+    x = 1;
+  // Warn with "may be uninitialized" here (not "is uninitialized"), since the
+  // self-initialization is intended to suppress a -Wuninitialized warning.
+  return x; // expected-warning{{variable 'x' may be uninitialized when used here}}
+}
+
 int test8(int y) {
   int x;
   if (y)
@@ -415,4 +424,3 @@ void rdar9432305(float *P) {
   for (; i < 10000; ++i) // expected-warning {{variable 'i' is uninitialized when used here}}
     P[i] = 0.0f;
 }
-

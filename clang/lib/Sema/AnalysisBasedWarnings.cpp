@@ -586,9 +586,10 @@ public:
       // Specially handle the case where we have uses of an uninitialized 
       // variable, but the root cause is an idiomatic self-init.  We want
       // to report the diagnostic at the self-init since that is the root cause.
-      if (!vec->empty() && hasSelfInit)
+      if (!vec->empty() && hasSelfInit && hasAlwaysUninitializedUse(vec))
         DiagnoseUninitializedUse(S, vd, vd->getInit()->IgnoreParenCasts(),
-                                 true, /* alwaysReportSelfInit */ true);
+                                 /* isAlwaysUninit */ true,
+                                 /* alwaysReportSelfInit */ true);
       else {
         // Sort the uses by their SourceLocations.  While not strictly
         // guaranteed to produce them in line/column order, this will provide
@@ -610,6 +611,16 @@ public:
     }
     delete uses;
   }
+
+private:
+  static bool hasAlwaysUninitializedUse(const UsesVec* vec) {
+  for (UsesVec::const_iterator i = vec->begin(), e = vec->end(); i != e; ++i) {
+    if (i->second) {
+      return true;
+    }
+  }
+  return false;
+}
 };
 }
 
