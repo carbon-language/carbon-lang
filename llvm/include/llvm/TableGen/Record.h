@@ -1385,7 +1385,7 @@ class Record {
   unsigned ID;
   Init *Name;
   SMLoc Loc;
-  std::vector<std::string> TemplateArgs;
+  std::vector<Init *> TemplateArgs;
   std::vector<RecordVal> Values;
   std::vector<Record*> SuperClasses;
 
@@ -1425,16 +1425,19 @@ public:
   /// get the corresponding DefInit.
   DefInit *getDefInit();
 
-  const std::vector<std::string> &getTemplateArgs() const {
+  const std::vector<Init *> &getTemplateArgs() const {
     return TemplateArgs;
   }
   const std::vector<RecordVal> &getValues() const { return Values; }
   const std::vector<Record*>   &getSuperClasses() const { return SuperClasses; }
 
-  bool isTemplateArg(StringRef Name) const {
+  bool isTemplateArg(Init *Name) const {
     for (unsigned i = 0, e = TemplateArgs.size(); i != e; ++i)
       if (TemplateArgs[i] == Name) return true;
     return false;
+  }
+  bool isTemplateArg(StringRef Name) const {
+    return isTemplateArg(StringInit::get(Name.str()));
   }
 
   const RecordVal *getValue(StringRef Name) const {
@@ -1451,9 +1454,12 @@ public:
   const RecordVal *getValue(Init *Name) const;
   RecordVal *getValue(Init *Name);
 
-  void addTemplateArg(StringRef Name) {
+  void addTemplateArg(Init *Name) {
     assert(!isTemplateArg(Name) && "Template arg already defined!");
     TemplateArgs.push_back(Name);
+  }
+  void addTemplateArg(StringRef Name) {
+    addTemplateArg(StringInit::get(Name.str()));
   }
 
   void addValue(const RecordVal &RV) {

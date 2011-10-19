@@ -154,7 +154,7 @@ bool TGParser::AddSubClass(Record *CurRec, SubClassReference &SubClass) {
     if (AddValue(CurRec, SubClass.RefLoc, Vals[i]))
       return true;
 
-  const std::vector<std::string> &TArgs = SC->getTemplateArgs();
+  const std::vector<Init *> &TArgs = SC->getTemplateArgs();
 
   // Ensure that an appropriate number of template arguments are specified.
   if (TArgs.size() < SubClass.TemplateArgs.size())
@@ -177,8 +177,8 @@ bool TGParser::AddSubClass(Record *CurRec, SubClassReference &SubClass) {
 
     } else if (!CurRec->getValue(TArgs[i])->getValue()->isComplete()) {
       return Error(SubClass.RefLoc,"Value not specified for template argument #"
-                   + utostr(i) + " (" + TArgs[i] + ") of subclass '" +
-                   SC->getName() + "'!");
+                   + utostr(i) + " (" + TArgs[i]->getAsUnquotedString()
+                   + ") of subclass '" + SC->getNameInitAsString() + "'!");
     }
   }
 
@@ -233,7 +233,7 @@ bool TGParser::AddSubMultiClass(MultiClass *CurMC,
     CurMC->DefPrototypes.push_back(NewDef);
   }
 
-  const std::vector<std::string> &SMCTArgs = SMC->Rec.getTemplateArgs();
+  const std::vector<Init *> &SMCTArgs = SMC->Rec.getTemplateArgs();
 
   // Ensure that an appropriate number of template arguments are
   // specified.
@@ -281,8 +281,8 @@ bool TGParser::AddSubMultiClass(MultiClass *CurMC,
     } else if (!CurRec->getValue(SMCTArgs[i])->getValue()->isComplete()) {
       return Error(SubMultiClass.RefLoc,
                    "Value not specified for template argument #"
-                   + utostr(i) + " (" + SMCTArgs[i] + ") of subclass '" +
-                   SMC->Rec.getName() + "'!");
+                   + utostr(i) + " (" + SMCTArgs[i]->getAsUnquotedString()
+                   + ") of subclass '" + SMC->Rec.getNameInitAsString() + "'!");
     }
   }
 
@@ -652,9 +652,11 @@ Init *TGParser::ParseIDValue(Record *CurRec,
     if (const RecordVal *RV = CurRec->getValue(Name))
       return VarInit::get(Name, RV->getType());
 
-    std::string TemplateArgName = CurRec->getName()+":"+Name;
+    Init *TemplateArgName = QualifyName(*CurRec, CurMultiClass, Name, ":");
+
     if (CurMultiClass)
-      TemplateArgName = CurMultiClass->Rec.getName()+"::"+TemplateArgName;
+      TemplateArgName = QualifyName(CurMultiClass->Rec, CurMultiClass, Name,
+                                    "::");
 
     if (CurRec->isTemplateArg(TemplateArgName)) {
       const RecordVal *RV = CurRec->getValue(TemplateArgName);
@@ -664,7 +666,9 @@ Init *TGParser::ParseIDValue(Record *CurRec,
   }
 
   if (CurMultiClass) {
-    std::string MCName = CurMultiClass->Rec.getName()+"::"+Name;
+    Init *MCName = QualifyName(CurMultiClass->Rec, CurMultiClass, Name,
+                               "::");
+
     if (CurMultiClass->Rec.isTemplateArg(MCName)) {
       const RecordVal *RV = CurMultiClass->Rec.getValue(MCName);
       assert(RV && "Template arg doesn't exist??");
@@ -1420,7 +1424,7 @@ std::vector<Init*> TGParser::ParseValueList(Record *CurRec, Record *ArgsRec,
   RecTy *ItemType = EltTy;
   unsigned int ArgN = 0;
   if (ArgsRec != 0 && EltTy == 0) {
-    const std::vector<std::string> &TArgs = ArgsRec->getTemplateArgs();
+    const std::vector<Init *> &TArgs = ArgsRec->getTemplateArgs();
     const RecordVal *RV = ArgsRec->getValue(TArgs[ArgN]);
     if (!RV) {
       errs() << "Cannot find template arg " << ArgN << " (" << TArgs[ArgN]
@@ -1437,7 +1441,7 @@ std::vector<Init*> TGParser::ParseValueList(Record *CurRec, Record *ArgsRec,
     Lex.Lex();  // Eat the comma
 
     if (ArgsRec != 0 && EltTy == 0) {
-      const std::vector<std::string> &TArgs = ArgsRec->getTemplateArgs();
+      const std::vector<Init *> &TArgs = ArgsRec->getTemplateArgs();
       if (ArgN >= TArgs.size()) {
         TokError("too many template arguments");
         return std::vector<Init*>();
@@ -1465,37 +1469,38 @@ std::vector<Init*> TGParser::ParseValueList(Record *CurRec, Record *ArgsRec,
 ///
 ///  Declaration ::= FIELD? Type ID ('=' Value)?
 ///
-std::string TGParser::ParseDeclaration(Record *CurRec,
+Init *TGParser::ParseDeclaration(Record *CurRec,
                                        bool ParsingTemplateArgs) {
   // Read the field prefix if present.
   bool HasField = Lex.getCode() == tgtok::Field;
   if (HasField) Lex.Lex();
 
   RecTy *Type = ParseType();
-  if (Type == 0) return "";
+  if (Type == 0) return 0;
 
   if (Lex.getCode() != tgtok::Id) {
     TokError("Expected identifier in declaration");
-    return "";
+    return 0;
   }
 
   SMLoc IdLoc = Lex.getLoc();
-  std::string DeclName = Lex.getCurStrVal();
+  Init *DeclName = StringInit::get(Lex.getCurStrVal());
   Lex.Lex();
 
   if (ParsingTemplateArgs) {
     if (CurRec) {
-      DeclName = CurRec->getName() + ":" + DeclName;
+      DeclName = QualifyName(*CurRec, CurMultiClass, DeclName, ":");
     } else {
       assert(CurMultiClass);
     }
     if (CurMultiClass)
-      DeclName = CurMultiClass->Rec.getName() + "::" + DeclName;
+      DeclName = QualifyName(CurMultiClass->Rec, CurMultiClass, DeclName,
+                             "::");
   }
 
   // Add the value.
   if (AddValue(CurRec, IdLoc, RecordVal(DeclName, Type, HasField)))
-    return "";
+    return 0;
 
   // If a value is present, parse it.
   if (Lex.getCode() == tgtok::equal) {
@@ -1504,7 +1509,7 @@ std::string TGParser::ParseDeclaration(Record *CurRec,
     Init *Val = ParseValue(CurRec, Type);
     if (Val == 0 ||
         SetValue(CurRec, ValLoc, DeclName, std::vector<unsigned>(), Val))
-      return "";
+      return 0;
   }
 
   return DeclName;
@@ -1524,8 +1529,8 @@ bool TGParser::ParseTemplateArgList(Record *CurRec) {
   Record *TheRecToAddTo = CurRec ? CurRec : &CurMultiClass->Rec;
 
   // Read the first declaration.
-  std::string TemplArg = ParseDeclaration(CurRec, true/*templateargs*/);
-  if (TemplArg.empty())
+  Init *TemplArg = ParseDeclaration(CurRec, true/*templateargs*/);
+  if (TemplArg == 0)
     return true;
 
   TheRecToAddTo->addTemplateArg(TemplArg);
@@ -1535,7 +1540,7 @@ bool TGParser::ParseTemplateArgList(Record *CurRec) {
 
     // Read the following declarations.
     TemplArg = ParseDeclaration(CurRec, true/*templateargs*/);
-    if (TemplArg.empty())
+    if (TemplArg == 0)
       return true;
     TheRecToAddTo->addTemplateArg(TemplArg);
   }
@@ -1553,7 +1558,7 @@ bool TGParser::ParseTemplateArgList(Record *CurRec) {
 ///   BodyItem ::= LET ID OptionalBitList '=' Value ';'
 bool TGParser::ParseBodyItem(Record *CurRec) {
   if (Lex.getCode() != tgtok::Let) {
-    if (ParseDeclaration(CurRec, false).empty())
+    if (ParseDeclaration(CurRec, false) == 0)
       return true;
 
     if (Lex.getCode() != tgtok::semi)
@@ -1710,7 +1715,7 @@ bool TGParser::ParseDef(MultiClass *CurMultiClass) {
 
   if (CurMultiClass) {
     // Copy the template arguments for the multiclass into the def.
-    const std::vector<std::string> &TArgs =
+    const std::vector<Init *> &TArgs =
                                 CurMultiClass->Rec.getTemplateArgs();
 
     for (unsigned i = 0, e = TArgs.size(); i != e; ++i) {
@@ -1960,7 +1965,7 @@ bool TGParser::ResolveMulticlassDefArgs(MultiClass &MC,
                                         Record *CurRec,
                                         SMLoc DefmPrefixLoc,
                                         SMLoc SubClassLoc,
-                                        const std::vector<std::string> &TArgs,
+                                        const std::vector<Init *> &TArgs,
                                         std::vector<Init *> &TemplateVals,
                                         bool DeleteArgs) {
   // Loop over all of the template arguments, setting them to the specified
@@ -1982,8 +1987,9 @@ bool TGParser::ResolveMulticlassDefArgs(MultiClass &MC,
         
     } else if (!CurRec->getValue(TArgs[i])->getValue()->isComplete()) {
       return Error(SubClassLoc, "value not specified for template argument #"+
-                   utostr(i) + " (" + TArgs[i] + ") of multiclassclass '" +
-                   MC.Rec.getName() + "'");
+                   utostr(i) + " (" + TArgs[i]->getAsUnquotedString()
+                   + ") of multiclassclass '" + MC.Rec.getNameInitAsString()
+                   + "'");
     }
   }
   return false;
@@ -2018,7 +2024,7 @@ bool TGParser::ResolveMulticlassDef(MultiClass &MC,
     CurMultiClass->DefPrototypes.push_back(CurRec);
 
     // Copy the template arguments for the multiclass into the new def.
-    const std::vector<std::string> &TA =
+    const std::vector<Init *> &TA =
       CurMultiClass->Rec.getTemplateArgs();
 
     for (unsigned i = 0, e = TA.size(); i != e; ++i) {
@@ -2073,7 +2079,7 @@ bool TGParser::ParseDefm(MultiClass *CurMultiClass) {
     std::vector<Init*> &TemplateVals = Ref.TemplateArgs;
 
     // Verify that the correct number of template arguments were specified.
-    const std::vector<std::string> &TArgs = MC->Rec.getTemplateArgs();
+    const std::vector<Init *> &TArgs = MC->Rec.getTemplateArgs();
     if (TArgs.size() < TemplateVals.size())
       return Error(SubClassLoc,
                    "more template args specified than multiclass expects");

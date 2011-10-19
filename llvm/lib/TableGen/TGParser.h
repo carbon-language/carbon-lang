@@ -96,7 +96,7 @@ private:  // Parser methods.
                                 Record *DefProto,
                                 SMLoc DefmPrefixLoc,
                                 SMLoc SubClassLoc,
-                                const std::vector<std::string> &TArgs,
+                                const std::vector<Init *> &TArgs,
                                 std::vector<Init *> &TemplateVals,
                                 bool DeleteArgs);
   bool ResolveMulticlassDef(MultiClass &MC,
@@ -113,7 +113,7 @@ private:  // Parser methods.
   bool ParseBodyItem(Record *CurRec);
 
   bool ParseTemplateArgList(Record *CurRec);
-  std::string ParseDeclaration(Record *CurRec, bool ParsingTemplateArgs);
+  Init *ParseDeclaration(Record *CurRec, bool ParsingTemplateArgs);
 
   SubClassReference ParseSubClassReference(Record *CurRec, bool isDefm);
   SubMultiClassReference ParseSubMultiClassReference(MultiClass *CurMC);

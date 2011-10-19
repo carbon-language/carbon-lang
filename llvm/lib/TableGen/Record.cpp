@@ -760,7 +760,9 @@ Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
             return VarInit::get(Name, RV->getType());
           }
 
-          std::string TemplateArgName = CurRec->getName()+":"+Name;
+          Init *TemplateArgName = QualifyName(*CurRec, CurMultiClass, Name,
+                                              ":");
+      
           if (CurRec->isTemplateArg(TemplateArgName)) {
             const RecordVal *RV = CurRec->getValue(TemplateArgName);
             assert(RV && "Template arg doesn't exist??");
@@ -773,7 +775,8 @@ Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
         }
 
         if (CurMultiClass) {
-          std::string MCName = CurMultiClass->Rec.getName()+"::"+Name;
+          Init *MCName = QualifyName(CurMultiClass->Rec, CurMultiClass, Name, "::");
+
           if (CurMultiClass->Rec.isTemplateArg(MCName)) {
             const RecordVal *RV = CurMultiClass->Rec.getValue(MCName);
             assert(RV && "Template arg doesn't exist??");
@@ -1765,7 +1768,7 @@ void Record::dump() const { errs() << *this; }
 raw_ostream &llvm::operator<<(raw_ostream &OS, const Record &R) {
   OS << R.getName();
 
-  const std::vector<std::string> &TArgs = R.getTemplateArgs();
+  const std::vector<Init *> &TArgs = R.getTemplateArgs();
   if (!TArgs.empty()) {
     OS << "<";
     for (unsigned i = 0, e = TArgs.size(); i != e; ++i) {
