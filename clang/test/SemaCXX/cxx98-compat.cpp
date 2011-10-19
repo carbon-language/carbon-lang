@@ -213,3 +213,27 @@ namespace CopyCtorIssues {
   const Ambiguous &c = Ambiguous(); // expected-warning {{copying variable of type 'CopyCtorIssues::Ambiguous' when binding a reference to a temporary would find ambiguous constructors in C++98}}
   const Deleted &d = Deleted(); // expected-warning {{copying variable of type 'CopyCtorIssues::Deleted' when binding a reference to a temporary would invoke a deleted constructor in C++98}}
 }
+
+namespace UnionOrAnonStructMembers {
+  struct NonTrivCtor {
+    NonTrivCtor(); // expected-note 2{{user-declared constructor}}
+  };
+  struct NonTrivCopy {
+    NonTrivCopy(const NonTrivCopy&); // expected-note 2{{user-declared copy constructor}}
+  };
+  struct NonTrivDtor {
+    ~NonTrivDtor(); // expected-note 2{{user-declared destructor}}
+  };
+  union BadUnion {
+    NonTrivCtor ntc; // expected-warning {{union member 'ntc' with a non-trivial constructor is incompatible with C++98}}
+    NonTrivCopy ntcp; // expected-warning {{union member 'ntcp' with a non-trivial copy constructor is incompatible with C++98}}
+    NonTrivDtor ntd; // expected-warning {{union member 'ntd' with a non-trivial destructor is incompatible with C++98}}
+  };
+  struct Wrap {
+    struct {
+      NonTrivCtor ntc; // expected-warning {{anonymous struct member 'ntc' with a non-trivial constructor is incompatible with C++98}}
+      NonTrivCopy ntcp; // expected-warning {{anonymous struct member 'ntcp' with a non-trivial copy constructor is incompatible with C++98}}
+      NonTrivDtor ntd; // expected-warning {{anonymous struct member 'ntd' with a non-trivial destructor is incompatible with C++98}}
+    };
+  };
+}
