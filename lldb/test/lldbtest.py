@@ -565,8 +565,12 @@ class Base(unittest2.TestCase):
         # See HideStdout(self).
         self.sys_stdout_hidden = False
 
-    def runHooks(self, child, prompt):
+    def runHooks(self, child=None, child_prompt=None, use_cmd_api=False):
         """Perform the run hooks to bring lldb debugger to the desired state.
+
+        By default, expect a pexpect spawned child and child prompt to be
+        supplied (use_cmd_api=False).  If use_cmd_api is true, ignore the child
+        and child prompt and use self.runCmd() to run the hooks one by one.
 
         Note that child is a process spawned by pexpect.spawn().  If not, your
         test case is mostly likely going to fail.
@@ -575,9 +579,15 @@ class Base(unittest2.TestCase):
         """
         if not lldb.runHooks:
             self.skipTest("No runhooks specified for lldb, skip the test")
-        for hook in lldb.runHooks:
-            child.sendline(hook)
-            child.expect_exact(prompt)
+        if use_cmd_api:
+            for hook in lldb.runhooks:
+                self.runCmd(hook)
+        else:
+            if not child or not child_prompt:
+                self.fail("Both child and child_prompt need to be defined.")
+            for hook in lldb.runHooks:
+                child.sendline(hook)
+                child.expect_exact(child_prompt)
 
     def HideStdout(self):
         """Hide output to stdout from the user.

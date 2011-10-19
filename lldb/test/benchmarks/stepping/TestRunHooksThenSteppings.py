@@ -38,7 +38,7 @@ class RunHooksThenSteppingsBench(BenchBase):
         #lldb.runHooks = ['process attach -n Mail']
 
         # Perform the run hooks to bring lldb debugger to the desired state.
-        self.runHooks(child, prompt)
+        self.runHooks(child=child, child_prompt=prompt)
 
         # Reset the stopwatch now.
         self.stopwatch.reset()
