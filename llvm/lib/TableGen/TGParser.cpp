@@ -1694,8 +1694,9 @@ bool TGParser::ParseDef(MultiClass *CurMultiClass) {
   } else {
     // Otherwise, a def inside a multiclass, add it to the multiclass.
     for (unsigned i = 0, e = CurMultiClass->DefPrototypes.size(); i != e; ++i)
-      if (CurMultiClass->DefPrototypes[i]->getName() == CurRec->getName()) {
-        Error(DefLoc, "def '" + CurRec->getName() +
+      if (CurMultiClass->DefPrototypes[i]->getNameInit()
+          == CurRec->getNameInit()) {
+        Error(DefLoc, "def '" + CurRec->getNameInitAsString() +
               "' already defined in this multiclass!");
         return true;
       }
