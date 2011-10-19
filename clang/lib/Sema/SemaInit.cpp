@@ -3016,6 +3016,10 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
   return OR_Success;
 }
 
+static void CheckCXX98CompatAccessibleCopy(Sema &S,
+                                           const InitializedEntity &Entity,
+                                           Expr *CurInitExpr);
+
 /// \brief Attempt reference initialization (C++0x [dcl.init.ref])
 static void TryReferenceInitialization(Sema &S,
                                        const InitializedEntity &Entity,
@@ -3168,6 +3172,8 @@ static void TryReferenceInitialization(Sema &S,
       //   be callable whether or not the copy is actually done.
       if (!S.getLangOptions().CPlusPlus0x && !S.getLangOptions().MicrosoftExt)
         Sequence.AddExtraneousCopyToTemporary(cv2T2);
+      else if (S.getLangOptions().CPlusPlus0x)
+        CheckCXX98CompatAccessibleCopy(S, Entity, Initializer);
     }
 
     if (DerivedToBase)
@@ -4090,6 +4096,78 @@ static bool shouldDestroyTemporary(const InitializedEntity &Entity) {
   llvm_unreachable("missed an InitializedEntity kind?");
 }
 
+/// \brief Look for copy and move constructors and constructor templates, for
+/// copying an object via direct-initialization (per C++11 [dcl.init]p16).
+static void LookupCopyAndMoveConstructors(Sema &S,
+                                          OverloadCandidateSet &CandidateSet,
+                                          CXXRecordDecl *Class,
+                                          Expr *CurInitExpr) {
+  DeclContext::lookup_iterator Con, ConEnd;
+  for (llvm::tie(Con, ConEnd) = S.LookupConstructors(Class);
+       Con != ConEnd; ++Con) {
+    CXXConstructorDecl *Constructor = 0;
+
+    if ((Constructor = dyn_cast<CXXConstructorDecl>(*Con))) {
+      // Handle copy/moveconstructors, only.
+      if (!Constructor || Constructor->isInvalidDecl() ||
+          !Constructor->isCopyOrMoveConstructor() ||
+          !Constructor->isConvertingConstructor(/*AllowExplicit=*/true))
+        continue;
+
+      DeclAccessPair FoundDecl
+        = DeclAccessPair::make(Constructor, Constructor->getAccess());
+      S.AddOverloadCandidate(Constructor, FoundDecl,
+                             &CurInitExpr, 1, CandidateSet);
+      continue;
+    }
+
+    // Handle constructor templates.
+    FunctionTemplateDecl *ConstructorTmpl = cast<FunctionTemplateDecl>(*Con);
+    if (ConstructorTmpl->isInvalidDecl())
+      continue;
+
+    Constructor = cast<CXXConstructorDecl>(
+                                         ConstructorTmpl->getTemplatedDecl());
+    if (!Constructor->isConvertingConstructor(/*AllowExplicit=*/true))
+      continue;
+
+    // FIXME: Do we need to limit this to copy-constructor-like
+    // candidates?
+    DeclAccessPair FoundDecl
+      = DeclAccessPair::make(ConstructorTmpl, ConstructorTmpl->getAccess());
+    S.AddTemplateOverloadCandidate(ConstructorTmpl, FoundDecl, 0,
+                                   &CurInitExpr, 1, CandidateSet, true);
+  }
+}
+
+/// \brief Get the location at which initialization diagnostics should appear.
+static SourceLocation getInitializationLoc(const InitializedEntity &Entity,
+                                           Expr *Initializer) {
+  switch (Entity.getKind()) {
+  case InitializedEntity::EK_Result:
+    return Entity.getReturnLoc();
+
+  case InitializedEntity::EK_Exception:
+    return Entity.getThrowLoc();
+
+  case InitializedEntity::EK_Variable:
+    return Entity.getDecl()->getLocation();
+
+  case InitializedEntity::EK_ArrayElement:
+  case InitializedEntity::EK_Member:
+  case InitializedEntity::EK_Parameter:
+  case InitializedEntity::EK_Temporary:
+  case InitializedEntity::EK_New:
+  case InitializedEntity::EK_Base:
+  case InitializedEntity::EK_Delegating:
+  case InitializedEntity::EK_VectorElement:
+  case InitializedEntity::EK_ComplexElement:
+  case InitializedEntity::EK_BlockElement:
+    return Initializer->getLocStart();
+  }
+  llvm_unreachable("missed an InitializedEntity kind?");
+}
+
 /// \brief Make a (potentially elidable) temporary copy of the object
 /// provided by the given initializer by calling the appropriate copy
 /// constructor.
@@ -4139,79 +4217,18 @@ static ExprResult CopyObject(Sema &S,
   // of constructor initialization, while copy elision for exception handlers
   // is handled by the run-time.
   bool Elidable = CurInitExpr->isTemporaryObject(S.Context, Class);
-  SourceLocation Loc;
-  switch (Entity.getKind()) {
-  case InitializedEntity::EK_Result:
-    Loc = Entity.getReturnLoc();
-    break;
-
-  case InitializedEntity::EK_Exception:
-    Loc = Entity.getThrowLoc();
-    break;
-
-  case InitializedEntity::EK_Variable:
-    Loc = Entity.getDecl()->getLocation();
-    break;
-
-  case InitializedEntity::EK_ArrayElement:
-  case InitializedEntity::EK_Member:
-  case InitializedEntity::EK_Parameter:
-  case InitializedEntity::EK_Temporary:
-  case InitializedEntity::EK_New:
-  case InitializedEntity::EK_Base:
-  case InitializedEntity::EK_Delegating:
-  case InitializedEntity::EK_VectorElement:
-  case InitializedEntity::EK_ComplexElement:
-  case InitializedEntity::EK_BlockElement:
-    Loc = CurInitExpr->getLocStart();
-    break;
-  }
+  SourceLocation Loc = getInitializationLoc(Entity, CurInit.get());
 
   // Make sure that the type we are copying is complete.
   if (S.RequireCompleteType(Loc, T, S.PDiag(diag::err_temp_copy_incomplete)))
     return move(CurInit);
 
   // Perform overload resolution using the class's copy/move constructors.
-  DeclContext::lookup_iterator Con, ConEnd;
+  // Only consider constructors and constructor templates. Per
+  // C++0x [dcl.init]p16, second bullet to class types, this initialization
+  // is direct-initialization.
   OverloadCandidateSet CandidateSet(Loc);
-  for (llvm::tie(Con, ConEnd) = S.LookupConstructors(Class);
-       Con != ConEnd; ++Con) {
-    // Only consider copy/move constructors and constructor templates. Per
-    // C++0x [dcl.init]p16, second bullet to class types, this
-    // initialization is direct-initialization.
-    CXXConstructorDecl *Constructor = 0;
-
-    if ((Constructor = dyn_cast<CXXConstructorDecl>(*Con))) {
-      // Handle copy/moveconstructors, only.
-      if (!Constructor || Constructor->isInvalidDecl() ||
-          !Constructor->isCopyOrMoveConstructor() ||
-          !Constructor->isConvertingConstructor(/*AllowExplicit=*/true))
-        continue;
-
-      DeclAccessPair FoundDecl
-        = DeclAccessPair::make(Constructor, Constructor->getAccess());
-      S.AddOverloadCandidate(Constructor, FoundDecl,
-                             &CurInitExpr, 1, CandidateSet);
-      continue;
-    }
-
-    // Handle constructor templates.
-    FunctionTemplateDecl *ConstructorTmpl = cast<FunctionTemplateDecl>(*Con);
-    if (ConstructorTmpl->isInvalidDecl())
-      continue;
-
-    Constructor = cast<CXXConstructorDecl>(
-                                         ConstructorTmpl->getTemplatedDecl());
-    if (!Constructor->isConvertingConstructor(/*AllowExplicit=*/true))
-      continue;
-
-    // FIXME: Do we need to limit this to copy-constructor-like
-    // candidates?
-    DeclAccessPair FoundDecl
-      = DeclAccessPair::make(ConstructorTmpl, ConstructorTmpl->getAccess());
-    S.AddTemplateOverloadCandidate(ConstructorTmpl, FoundDecl, 0,
-                                   &CurInitExpr, 1, CandidateSet, true);
-  }
+  LookupCopyAndMoveConstructors(S, CandidateSet, Class, CurInitExpr);
 
   bool HadMultipleCandidates = (CandidateSet.size() > 1);
 
@@ -4301,6 +4318,61 @@ static ExprResult CopyObject(Sema &S,
   if (!CurInit.isInvalid() && shouldBindAsTemporary(Entity))
     CurInit = S.MaybeBindToTemporary(CurInit.takeAs<Expr>());
   return move(CurInit);
+}
+
+/// \brief Check whether elidable copy construction for binding a reference to
+/// a temporary would have succeeded if we were building in C++98 mode, for
+/// -Wc++98-compat.
+static void CheckCXX98CompatAccessibleCopy(Sema &S,
+                                           const InitializedEntity &Entity,
+                                           Expr *CurInitExpr) {
+  assert(S.getLangOptions().CPlusPlus0x);
+
+  const RecordType *Record = CurInitExpr->getType()->getAs<RecordType>();
+  if (!Record)
+    return;
+
+  SourceLocation Loc = getInitializationLoc(Entity, CurInitExpr);
+  if (S.Diags.getDiagnosticLevel(diag::warn_cxx98_compat_temp_copy, Loc)
+        == DiagnosticsEngine::Ignored)
+    return;
+
+  // Find constructors which would have been considered.
+  OverloadCandidateSet CandidateSet(Loc);
+  LookupCopyAndMoveConstructors(
+      S, CandidateSet, cast<CXXRecordDecl>(Record->getDecl()), CurInitExpr);
+
+  // Perform overload resolution.
+  OverloadCandidateSet::iterator Best;
+  OverloadingResult OR = CandidateSet.BestViableFunction(S, Loc, Best);
+
+  PartialDiagnostic Diag = S.PDiag(diag::warn_cxx98_compat_temp_copy)
+    << OR << (int)Entity.getKind() << CurInitExpr->getType()
+    << CurInitExpr->getSourceRange();
+
+  switch (OR) {
+  case OR_Success:
+    S.CheckConstructorAccess(Loc, cast<CXXConstructorDecl>(Best->Function),
+                             Best->FoundDecl.getAccess(), Diag);
+    // FIXME: Check default arguments as far as that's possible.
+    break;
+
+  case OR_No_Viable_Function:
+    S.Diag(Loc, Diag);
+    CandidateSet.NoteCandidates(S, OCD_AllCandidates, &CurInitExpr, 1);
+    break;
+
+  case OR_Ambiguous:
+    S.Diag(Loc, Diag);
+    CandidateSet.NoteCandidates(S, OCD_ViableCandidates, &CurInitExpr, 1);
+    break;
+
+  case OR_Deleted:
+    S.Diag(Loc, Diag);
+    S.Diag(Best->Function->getLocation(), diag::note_unavailable_here)
+      << 1 << Best->Function->isDeleted();
+    break;
+  }
 }
 
 void InitializationSequence::PrintInitLocationNote(Sema &S,

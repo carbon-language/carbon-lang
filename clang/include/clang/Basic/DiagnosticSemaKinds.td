@@ -1095,6 +1095,14 @@ def err_temp_copy_deleted : Error<
   "of type %1 invokes deleted constructor">;
 def err_temp_copy_incomplete : Error<
   "copying a temporary object of incomplete type %0">;
+def warn_cxx98_compat_temp_copy : Warning<
+  "%select{copying variable|copying parameter|returning object|throwing "
+  "object|copying member subobject|copying array element|allocating object|"
+  "copying temporary|initializing base subobject|initializing vector element}1 "
+  "of type %2 when binding a reference to a temporary would %select{invoke "
+  "an inaccessible constructor|find no viable constructor|find ambiguous "
+  "constructors|invoke a deleted constructor}0 in C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
 
 // C++11 decltype
 def err_cannot_determine_declared_type_of_overloaded_function : Error<
