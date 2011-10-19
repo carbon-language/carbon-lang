@@ -1404,6 +1404,13 @@ public:
   unsigned getID() const { return ID; }
 
   const std::string &getName() const;
+  Init *getNameInit() const {
+    return Name;
+  }
+  const std::string getNameInitAsString() const {
+    return getNameInit()->getAsUnquotedString();
+  }
+
   void setName(Init *Name);               // Also updates RecordKeeper.
   void setName(const std::string &Name);  // Also updates RecordKeeper.
 
