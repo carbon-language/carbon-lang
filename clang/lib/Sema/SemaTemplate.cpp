@@ -1195,9 +1195,6 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
   bool SawDefaultArgument = false;
   SourceLocation PreviousDefaultArgLoc;
 
-  bool SawParameterPack = false;
-  SourceLocation ParameterPackLoc;
-
   // Dummy initialization to avoid warnings.
   TemplateParameterList::iterator OldParam = NewParams->end();
   if (OldParams)
@@ -1212,18 +1209,11 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
     SourceLocation OldDefaultLoc;
     SourceLocation NewDefaultLoc;
 
-    // Variables used to diagnose missing default arguments
+    // Variable used to diagnose missing default arguments
     bool MissingDefaultArg = false;
 
-    // C++0x [temp.param]p11:
-    //   If a template parameter of a primary class template or alias template
-    //   is a template parameter pack, it shall be the last template parameter.
-    if (SawParameterPack &&
-        (TPC == TPC_ClassTemplate || TPC == TPC_TypeAliasTemplate)) {
-      Diag(ParameterPackLoc,
-           diag::err_template_param_pack_must_be_last_template_parameter);
-      Invalid = true;
-    }
+    // Variable used to diagnose non-final parameter packs
+    bool SawParameterPack = false;
 
     if (TemplateTypeParmDecl *NewTypeParm
           = dyn_cast<TemplateTypeParmDecl>(*NewParam)) {
@@ -1243,7 +1233,6 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
         assert(!NewTypeParm->hasDefaultArgument() &&
                "Parameter packs can't have a default argument!");
         SawParameterPack = true;
-        ParameterPackLoc = NewTypeParm->getLocation();
       } else if (OldTypeParm && OldTypeParm->hasDefaultArgument() &&
                  NewTypeParm->hasDefaultArgument()) {
         OldDefaultLoc = OldTypeParm->getDefaultArgumentLoc();
@@ -1288,7 +1277,6 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
         assert(!NewNonTypeParm->hasDefaultArgument() &&
                "Parameter packs can't have a default argument!");
         SawParameterPack = true;
-        ParameterPackLoc = NewNonTypeParm->getLocation();
       } else if (OldNonTypeParm && OldNonTypeParm->hasDefaultArgument() &&
           NewNonTypeParm->hasDefaultArgument()) {
         OldDefaultLoc = OldNonTypeParm->getDefaultArgumentLoc();
@@ -1313,7 +1301,6 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
       } else if (SawDefaultArgument)
         MissingDefaultArg = true;
     } else {
-      // Check the presence of a default argument here.
       TemplateTemplateParmDecl *NewTemplateParm
         = cast<TemplateTemplateParmDecl>(*NewParam);
 
@@ -1323,6 +1310,7 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
         continue;
       }
 
+      // Check the presence of a default argument here.
       if (NewTemplateParm->hasDefaultArgument() &&
           DiagnoseDefaultTemplateArgument(*this, TPC,
                                           NewTemplateParm->getLocation(),
@@ -1336,7 +1324,6 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
         assert(!NewTemplateParm->hasDefaultArgument() &&
                "Parameter packs can't have a default argument!");
         SawParameterPack = true;
-        ParameterPackLoc = NewTemplateParm->getLocation();
       } else if (OldTemplateParm && OldTemplateParm->hasDefaultArgument() &&
           NewTemplateParm->hasDefaultArgument()) {
         OldDefaultLoc = OldTemplateParm->getDefaultArgument().getLocation();
@@ -1361,6 +1348,16 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
           = NewTemplateParm->getDefaultArgument().getLocation();
       } else if (SawDefaultArgument)
         MissingDefaultArg = true;
+    }
+
+    // C++0x [temp.param]p11:
+    //   If a template parameter of a primary class template or alias template
+    //   is a template parameter pack, it shall be the last template parameter.
+    if (SawParameterPack && (NewParam + 1) != NewParamEnd && 
+        (TPC == TPC_ClassTemplate || TPC == TPC_TypeAliasTemplate)) {
+      Diag((*NewParam)->getLocation(),
+           diag::err_template_param_pack_must_be_last_template_parameter);
+      Invalid = true;
     }
 
     if (RedundantDefaultArg) {
@@ -3047,6 +3044,8 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
     // in arguments for non-template parameter packs.
 
     if ((*Param)->isTemplateParameterPack()) {
+      if (!HasParameterPack)
+        return true;
       if (ArgumentPack.empty())
         Converted.push_back(TemplateArgument(0, 0));
       else {

@@ -24,8 +24,9 @@ template<template<class> class M = vector, template<class> class... Metas>
 // If a template-parameter of a primary class template or alias template is a
 // template parameter pack, it shall be the last template-parameter.
 template<typename ...Types, // expected-error{{template parameter pack must be the last template parameter}}
-         int After>
+         int After, int After2>
 struct X0t;
+X0t<int> pr9789();
 template<typename ...Types, // expected-error{{template parameter pack must be the last template parameter}}
          int After>
 using A0t = int;
