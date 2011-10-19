@@ -1744,7 +1744,7 @@ bool TGParser::ParseClass() {
   Record *CurRec = Records.getClass(Lex.getCurStrVal());
   if (CurRec) {
     // If the body was previously defined, this is an error.
-    if (!CurRec->getValues().empty() ||
+    if (CurRec->getValues().size() > 1 ||  // Account for NAME.
         !CurRec->getSuperClasses().empty() ||
         !CurRec->getTemplateArgs().empty())
       return TokError("Class '" + CurRec->getNameInitAsString()

@@ -1,6 +1,6 @@
 // RUN: llvm-tblgen %s | grep {Jr} | count 2
 // RUN: llvm-tblgen %s | grep {Sr} | count 2
-// RUN: llvm-tblgen %s | grep {NAME} | count 1
+// RUN: llvm-tblgen %s | grep {"NAME"} | count 1
 // XFAIL: vg_leak
 
 // Variables for foreach

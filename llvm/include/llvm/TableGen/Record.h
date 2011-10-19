@@ -1473,6 +1473,13 @@ public:
   void addValue(const RecordVal &RV) {
     assert(getValue(RV.getName()) == 0 && "Value already added!");
     Values.push_back(RV);
+    if (Values.size() > 1)
+      // Keep NAME at the end of the list.  It makes record dumps a
+      // bit prettier and allows TableGen tests to be written more
+      // naturally.  Tests can use CHECK-NEXT to look for Record
+      // fields they expect to see after a def.  They can't do that if
+      // NAME is the first Record field.
+      std::swap(Values[Values.size() - 2], Values[Values.size() - 1]);
   }
 
   void removeValue(Init *Name) {

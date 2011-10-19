@@ -1686,6 +1686,11 @@ unsigned Record::LastID = 0;
 
 void Record::init() {
   checkName();
+
+  // Every record potentially has a def at the top.  This value is
+  // replaced with the top-level def name at instantiation time.
+  RecordVal DN("NAME", StringRecTy::get(), 0);
+  addValue(DN);
 }
 
 void Record::checkName() {
