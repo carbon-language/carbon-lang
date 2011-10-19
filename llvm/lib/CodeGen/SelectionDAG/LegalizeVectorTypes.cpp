@@ -1239,6 +1239,7 @@ void DAGTypeLegalizer::WidenVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::LOAD:              Res = WidenVecRes_LOAD(N); break;
   case ISD::SCALAR_TO_VECTOR:  Res = WidenVecRes_SCALAR_TO_VECTOR(N); break;
   case ISD::SIGN_EXTEND_INREG: Res = WidenVecRes_InregOp(N); break;
+  case ISD::VSELECT:
   case ISD::SELECT:            Res = WidenVecRes_SELECT(N); break;
   case ISD::SELECT_CC:         Res = WidenVecRes_SELECT_CC(N); break;
   case ISD::SETCC:             Res = WidenVecRes_SETCC(N); break;
@@ -1928,7 +1929,7 @@ SDValue DAGTypeLegalizer::WidenVecRes_SELECT(SDNode *N) {
   SDValue InOp1 = GetWidenedVector(N->getOperand(1));
   SDValue InOp2 = GetWidenedVector(N->getOperand(2));
   assert(InOp1.getValueType() == WidenVT && InOp2.getValueType() == WidenVT);
-  return DAG.getNode(ISD::SELECT, N->getDebugLoc(),
+  return DAG.getNode(N->getOpcode(), N->getDebugLoc(),
                      WidenVT, Cond1, InOp1, InOp2);
 }
 
@@ -2032,6 +2033,7 @@ bool DAGTypeLegalizer::WidenVectorOperand(SDNode *N, unsigned ResNo) {
   case ISD::EXTRACT_SUBVECTOR:  Res = WidenVecOp_EXTRACT_SUBVECTOR(N); break;
   case ISD::EXTRACT_VECTOR_ELT: Res = WidenVecOp_EXTRACT_VECTOR_ELT(N); break;
   case ISD::STORE:              Res = WidenVecOp_STORE(N); break;
+  case ISD::SETCC:              Res = WidenVecOp_SETCC(N, ResNo); break;
 
   case ISD::FP_EXTEND:
   case ISD::FP_TO_SINT:
@@ -2164,6 +2166,30 @@ SDValue DAGTypeLegalizer::WidenVecOp_STORE(SDNode *N) {
     return DAG.getNode(ISD::TokenFactor, ST->getDebugLoc(),
                        MVT::Other,&StChain[0],StChain.size());
 }
+
+SDValue DAGTypeLegalizer::WidenVecOp_SETCC(SDNode *N, unsigned ResNo) {
+  assert(ResNo < 2 && "Invalid res num to widen");
+  SDValue InOp0 = GetWidenedVector(N->getOperand(0));
+  SDValue InOp1 = GetWidenedVector(N->getOperand(1));
+  EVT VT = InOp0.getValueType();
+  DebugLoc dl = N->getDebugLoc();
+
+  // WARNING: In this code we widen the compare instruction with garbage.
+  // This garbage may contain denormal floats which may be slow. Is this a real
+  // concern ? Should we zero the unused lanes if this is a float compare ?
+
+  SDValue Zero = DAG.getIntPtrConstant(0);
+  EVT ResVT = EVT::getVectorVT(*DAG.getContext(),
+                               N->getValueType(0).getVectorElementType(),
+                               VT.getVectorNumElements());
+
+  SDValue WideSETCC = DAG.getNode(ISD::SETCC, N->getDebugLoc(),
+                     ResVT, InOp0, InOp1, N->getOperand(2));
+
+  return DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, N->getValueType(0),
+                     WideSETCC, Zero);
+}
+
 
 //===----------------------------------------------------------------------===//
 // Vector Widening Utilities
