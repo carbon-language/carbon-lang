@@ -90,6 +90,10 @@ def testConstantArray():
             fields = list(n.get_children())
             assert fields[0].spelling == 'A'
             assert fields[0].type.kind == TypeKind.CONSTANTARRAY
+            assert fields[0].type.get_array_element_type() is not None
+            assert fields[0].type.get_array_element_type().kind == TypeKind.POINTER
+            assert fields[0].type.get_array_size() == 2
+
             break
     else:
         assert False, "Didn't find teststruct??"

@@ -1091,6 +1091,18 @@ class Type(Structure):
         """
         return Type_get_result(self)
 
+    def get_array_element_type(self):
+        """
+        Retrieve the type of the elements of the array type.
+        """
+        return Type_get_array_element(self)
+
+    def get_array_size(self):
+        """
+        Retrieve the size of the constant array.
+        """
+        return Type_get_array_size(self)
+
 ## CIndex Objects ##
 
 # CIndex objects (derived from ClangObject) are essentially lightweight
@@ -1688,6 +1700,14 @@ Type_get_result.argtypes = [Type]
 Type_get_result.restype = Type
 Type_get_result.errcheck = Type.from_result
 
+Type_get_array_element = lib.clang_getArrayElementType
+Type_get_array_element.argtypes = [Type]
+Type_get_array_element.restype = Type
+Type_get_array_element.errcheck = Type.from_result
+
+Type_get_array_size = lib.clang_getArraySize
+Type_get_array_size.argtype = [Type]
+Type_get_array_size.restype = c_longlong
 
 # Index Functions
 Index_create = lib.clang_createIndex
