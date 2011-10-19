@@ -555,6 +555,8 @@ static void maybeSynthesizeBlockSignature(TypeProcessingState &state,
                              /*args*/ 0, 0,
                              /*type quals*/ 0,
                              /*ref-qualifier*/true, SourceLocation(),
+                             /*const qualifier*/SourceLocation(),
+                             /*volatile qualifier*/SourceLocation(),
                              /*mutable qualifier*/SourceLocation(),
                              /*EH*/ EST_None, SourceLocation(), 0, 0, 0, 0,
                              /*parens*/ loc, loc,
@@ -2431,10 +2433,37 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
           << Quals;
       } else {
         if (FnTy->getTypeQuals() != 0) {
-          if (D.isFunctionDeclarator())
-            S.Diag(D.getIdentifierLoc(), 
-                 diag::err_invalid_qualified_function_type);
-          else
+          if (D.isFunctionDeclarator()) {
+            SourceRange Range = D.getIdentifierLoc();
+            for (unsigned I = 0, N = D.getNumTypeObjects(); I != N; ++I) {
+              const DeclaratorChunk &Chunk = D.getTypeObject(N-I-1);
+              if (Chunk.Kind == DeclaratorChunk::Function &&
+                  Chunk.Fun.TypeQuals != 0) {
+                switch (Chunk.Fun.TypeQuals) {
+                case Qualifiers::Const:
+                  Range = Chunk.Fun.getConstQualifierLoc();
+                  break;
+                case Qualifiers::Volatile:
+                  Range = Chunk.Fun.getVolatileQualifierLoc();
+                  break;
+                case Qualifiers::Const | Qualifiers::Volatile: {
+                    SourceLocation CLoc = Chunk.Fun.getConstQualifierLoc();
+                    SourceLocation VLoc = Chunk.Fun.getVolatileQualifierLoc();
+                    if (S.getSourceManager()
+                        .isBeforeInTranslationUnit(CLoc, VLoc)) {
+                      Range = SourceRange(CLoc, VLoc);
+                    } else {
+                      Range = SourceRange(VLoc, CLoc);
+                    }
+                  }
+                  break;
+                }
+                break;
+              }
+            }
+            S.Diag(Range.getBegin(), diag::err_invalid_qualified_function_type)
+                << FixItHint::CreateRemoval(Range);
+          } else
             S.Diag(D.getIdentifierLoc(),
                  diag::err_invalid_qualified_typedef_function_type_use)
               << FreeFunction;

@@ -748,6 +748,8 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
                                            DS.getTypeQualifiers(),
                                            /*RefQualifierIsLValueRef=*/true,
                                            /*RefQualifierLoc=*/SourceLocation(),
+                                         /*ConstQualifierLoc=*/SourceLocation(),
+                                      /*VolatileQualifierLoc=*/SourceLocation(),
                                            MutableLoc,
                                            ESpecType, ESpecRange.getBegin(),
                                            DynamicExceptions.data(),

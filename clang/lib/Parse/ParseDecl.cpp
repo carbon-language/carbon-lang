@@ -4031,6 +4031,8 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
   DeclSpec DS(AttrFactory);
   bool RefQualifierIsLValueRef = true;
   SourceLocation RefQualifierLoc;
+  SourceLocation ConstQualifierLoc;
+  SourceLocation VolatileQualifierLoc;
   ExceptionSpecificationType ESpecType = EST_None;
   SourceRange ESpecRange;
   SmallVector<ParsedType, 2> DynamicExceptions;
@@ -4069,8 +4071,11 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
 
       // Parse cv-qualifier-seq[opt].
       ParseTypeQualifierListOpt(DS, false /*no attributes*/);
-        if (!DS.getSourceRange().getEnd().isInvalid())
+        if (!DS.getSourceRange().getEnd().isInvalid()) {
           EndLoc = DS.getSourceRange().getEnd();
+          ConstQualifierLoc = DS.getConstSpecLoc();
+          VolatileQualifierLoc = DS.getVolatileSpecLoc();
+        }
 
       // Parse ref-qualifier[opt].
       if (Tok.is(tok::amp) || Tok.is(tok::ampamp)) {
@@ -4112,7 +4117,8 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
                                              ParamInfo.data(), ParamInfo.size(),
                                              DS.getTypeQualifiers(),
                                              RefQualifierIsLValueRef,
-                                             RefQualifierLoc,
+                                             RefQualifierLoc, ConstQualifierLoc,
+                                             VolatileQualifierLoc,
                                              /*MutableLoc=*/SourceLocation(),
                                              ESpecType, ESpecRange.getBegin(),
                                              DynamicExceptions.data(),

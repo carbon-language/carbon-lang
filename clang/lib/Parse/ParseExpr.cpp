@@ -2280,6 +2280,8 @@ ExprResult Parser::ParseBlockLiteralExpression() {
                                                        0, 0, 0,
                                                        true, SourceLocation(),
                                                        SourceLocation(),
+                                                       SourceLocation(),
+                                                       SourceLocation(),
                                                        EST_None,
                                                        SourceLocation(),
                                                        0, 0, 0, 0,

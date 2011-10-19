@@ -107,4 +107,7 @@ void test (BD &br) {
   aPtr = br; // expected-error {{assigning to 'A *' from incompatible type 'B'; take the address with &}}
 }
 
+void foo1() const {} // expected-error {{type qualifier is not allowed on this function}}
+void foo2() volatile {} // expected-error {{type qualifier is not allowed on this function}}
+void foo3() const volatile {} // expected-error {{type qualifier is not allowed on this function}}
 
