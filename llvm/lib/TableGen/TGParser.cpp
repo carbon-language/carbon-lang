@@ -1747,7 +1747,8 @@ bool TGParser::ParseClass() {
     if (!CurRec->getValues().empty() ||
         !CurRec->getSuperClasses().empty() ||
         !CurRec->getTemplateArgs().empty())
-      return TokError("Class '" + CurRec->getName() + "' already defined");
+      return TokError("Class '" + CurRec->getNameInitAsString()
+                      + "' already defined");
   } else {
     // If this is the first reference to this class, create and add it.
     CurRec = new Record(Lex.getCurStrVal(), Lex.getLoc(), Records);
