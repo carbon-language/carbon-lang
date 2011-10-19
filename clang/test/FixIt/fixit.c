@@ -70,3 +70,10 @@ void removeUnusedLabels(char c) {
   : c++;
   c = c + 3; L4: return;
 }
+
+int oopsAComma = 0,
+void oopsMoreCommas() {
+  static int a[] = { 0, 1, 2 },
+  static int b[] = { 3, 4, 5 },
+  &a == &b ? oopsMoreCommas() : removeUnusedLabels(a[0]);
+}

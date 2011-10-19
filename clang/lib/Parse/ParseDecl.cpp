@@ -965,6 +965,61 @@ Parser::DeclGroupPtrTy Parser::ParseSimpleDeclaration(StmtVector &Stmts,
   return ParseDeclGroup(DS, Context, /*FunctionDefs=*/ false, &DeclEnd, FRI);  
 }
 
+/// Returns true if this might be the start of a declarator, or a common typo
+/// for a declarator.
+bool Parser::MightBeDeclarator(unsigned Context) {
+  switch (Tok.getKind()) {
+  case tok::annot_cxxscope:
+  case tok::annot_template_id:
+  case tok::caret:
+  case tok::code_completion:
+  case tok::coloncolon:
+  case tok::ellipsis:
+  case tok::kw___attribute:
+  case tok::kw_operator:
+  case tok::l_paren:
+  case tok::star:
+    return true;
+
+  case tok::amp:
+  case tok::ampamp:
+  case tok::colon: // Might be a typo for '::'.
+    return getLang().CPlusPlus;
+
+  case tok::identifier:
+    switch (NextToken().getKind()) {
+    case tok::code_completion:
+    case tok::coloncolon:
+    case tok::comma:
+    case tok::equal:
+    case tok::equalequal: // Might be a typo for '='.
+    case tok::kw_alignas:
+    case tok::kw_asm:
+    case tok::kw___attribute:
+    case tok::l_brace:
+    case tok::l_paren:
+    case tok::l_square:
+    case tok::less:
+    case tok::r_brace:
+    case tok::r_paren:
+    case tok::r_square:
+    case tok::semi:
+      return true;
+
+    case tok::colon:
+      // At namespace scope, 'identifier:' is probably a typo for 'identifier::'
+      // and in block scope it's probably a label.
+      return getLang().CPlusPlus && Context == Declarator::FileContext;
+
+    default:
+      return false;
+    }
+
+  default:
+    return false;
+  }
+}
+
 /// ParseDeclGroup - Having concluded that this is either a function
 /// definition or a group of object declarations, actually parse the
 /// result.
@@ -1042,11 +1097,22 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
   if (FirstDecl)
     DeclsInGroup.push_back(FirstDecl);
 
+  bool ExpectSemi = Context != Declarator::ForContext;
+
   // If we don't have a comma, it is either the end of the list (a ';') or an
   // error, bail out.
   while (Tok.is(tok::comma)) {
-    // Consume the comma.
-    ConsumeToken();
+    SourceLocation CommaLoc = ConsumeToken();
+
+    if (Tok.isAtStartOfLine() && ExpectSemi && !MightBeDeclarator(Context)) {
+      // This comma was followed by a line-break and something which can't be
+      // the start of a declarator. The comma was probably a typo for a
+      // semicolon.
+      Diag(CommaLoc, diag::err_expected_semi_declaration)
+        << FixItHint::CreateReplacement(CommaLoc, ";");
+      ExpectSemi = false;
+      break;
+    }
 
     // Parse the next declarator.
     D.clear();
@@ -1071,7 +1137,7 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
   if (DeclEnd)
     *DeclEnd = Tok.getLocation();
 
-  if (Context != Declarator::ForContext &&
+  if (ExpectSemi &&
       ExpectAndConsume(tok::semi,
                        Context == Declarator::FileContext
                          ? diag::err_invalid_token_after_toplevel_declarator
@@ -3570,6 +3636,9 @@ void Parser::ParseDeclarator(Declarator &D) {
 /// is parsed by the function passed to it. Pass null, and the direct-declarator
 /// isn't parsed at all, making this function effectively parse the C++
 /// ptr-operator production.
+///
+/// If the grammar of this construct is extended, matching changes must also be
+/// made to TryParseDeclarator and MightBeDeclarator.
 ///
 ///       declarator: [C99 6.7.5] [C++ 8p4, dcl.decl]
 /// [C]     pointer[opt] direct-declarator

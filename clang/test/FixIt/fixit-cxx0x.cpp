@@ -52,3 +52,9 @@ namespace Constexpr {
     // -> constexpr static char *const p = 0;
   };
 }
+
+namespace SemiCommaTypo {
+  int m {},
+  n [[]], // expected-error {{expected ';' at end of declaration}}
+  int o;
+}

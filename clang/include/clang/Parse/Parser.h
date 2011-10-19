@@ -1546,6 +1546,7 @@ private:
                                         ParsedAttributes &attrs,
                                         bool RequireSemi,
                                         ForRangeInit *FRI = 0);
+  bool MightBeDeclarator(unsigned Context);
   DeclGroupPtrTy ParseDeclGroup(ParsingDeclSpec &DS, unsigned Context,
                                 bool AllowFunctionDefinitions,
                                 SourceLocation *DeclEnd = 0,

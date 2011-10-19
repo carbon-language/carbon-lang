@@ -111,3 +111,16 @@ void foo1() const {} // expected-error {{type qualifier is not allowed on this f
 void foo2() volatile {} // expected-error {{type qualifier is not allowed on this function}}
 void foo3() const volatile {} // expected-error {{type qualifier is not allowed on this function}}
 
+struct S { void f(int, char); };
+int itsAComma,
+itsAComma2 = 0,
+oopsAComma(42), // expected-error {{expected ';' after declaration}}
+AD oopsMoreCommas() {
+  static int n = 0,
+  static char c,
+  &d = c, // expected-error {{expected ';' after declaration}}
+  S s, // expected-error {{expected ';' after declaration}}
+  s.f(n, d);
+  AD ad, // expected-error {{expected ';' after declaration}}
+  return ad;
+}

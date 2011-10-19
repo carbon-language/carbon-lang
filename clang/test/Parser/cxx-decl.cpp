@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -verify -fsyntax-only %s
+// RUN: %clang_cc1 -verify -fsyntax-only -triple i386-linux %s
 
 int x(*g); // expected-error {{use of undeclared identifier 'g'}}
 
@@ -65,6 +65,36 @@ struct test4 {
   int y;
   int z  // expected-error {{expected ';' at end of declaration list}}
 };
+
+// Make sure we know these are legitimate commas and not typos for ';'.
+namespace Commas {
+  struct S {
+    static int a;
+    int c,
+    operator()();
+  };
+
+  int global1,
+  __attribute__(()) global2,
+  (global5),
+  *global6,
+  &global7 = global1,
+  &&global8 = static_cast<int&&>(global1), // expected-warning 2{{rvalue reference}}
+  S::a,
+  global9,
+  global10 = 0,
+  global11 == 0, // expected-error {{did you mean '='}}
+  global12 __attribute__(()),
+  global13(0),
+  global14[2],
+  global15;
+
+  void g() {
+    static int a,
+    b __asm__("ebx"), // expected-error {{expected ';' at end of declaration}}
+    Statics:return;
+  }
+}
 
 // PR5825
 struct test5 {};
