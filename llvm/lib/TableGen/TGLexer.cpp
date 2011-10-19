@@ -80,6 +80,10 @@ int TGLexer::getNextChar() {
   }  
 }
 
+int TGLexer::peekNextChar(int Index) {
+  return *(CurPtr + Index);
+}
+
 tgtok::TokKind TGLexer::LexToken() {
   TokStart = CurPtr;
   // This always consumes at least one character.

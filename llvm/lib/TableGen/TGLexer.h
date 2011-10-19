@@ -109,6 +109,7 @@ private:
   tgtok::TokKind ReturnError(const char *Loc, const Twine &Msg);
   
   int getNextChar();
+  int peekNextChar(int Index);
   void SkipBCPLComment();
   bool SkipCComment();
   tgtok::TokKind LexIdentifier();
