@@ -2022,6 +2022,41 @@ InstantiateMulticlassDef(MultiClass &MC,
   Ref.Rec = DefProto;
   AddSubClass(CurRec, Ref);
 
+  if (DefNameString == 0) {
+    // We must resolve references to NAME.
+    if (SetValue(CurRec, Ref.RefLoc, "NAME", std::vector<unsigned>(),
+                 DefmPrefix)) {
+      Error(DefmPrefixLoc, "Could not resolve "
+            + CurRec->getNameInitAsString() + ":NAME to '"
+            + DefmPrefix->getAsUnquotedString() + "'");
+      return 0;
+    }
+
+    RecordVal *DefNameRV = CurRec->getValue("NAME");
+    CurRec->resolveReferencesTo(DefNameRV);
+  }
+
+  if (!CurMultiClass) {
+    // We do this after resolving NAME because before resolution, many
+    // multiclass defs will have the same name expression.  If we are
+    // currently in a multiclass, it means this defm appears inside a
+    // multiclass and its name won't be fully resolvable until we see
+    // the top-level defm.  Therefore, we don't add this to the
+    // RecordKeeper at this point.  If we did we could get duplicate
+    // defs as more than one probably refers to NAME or some other
+    // common internal placeholder.
+
+    // Ensure redefinition doesn't happen.
+    if (Records.getDef(CurRec->getNameInitAsString())) {
+      Error(DefmPrefixLoc, "def '" + CurRec->getNameInitAsString() + 
+            "' already defined, instantiating defm with subdef '" + 
+            DefProto->getNameInitAsString() + "'");
+      return 0;
+    }
+
+    Records.addDef(CurRec);
+  }
+
   return CurRec;
 }
 
@@ -2070,12 +2105,6 @@ bool TGParser::ResolveMulticlassDef(MultiClass &MC,
                    LetStack[i][j].Bits, LetStack[i][j].Value))
         return Error(DefmPrefixLoc, "when instantiating this defm");
 
-  // Ensure redefinition doesn't happen.
-  if (Records.getDef(CurRec->getName()))
-    return Error(DefmPrefixLoc, "def '" + CurRec->getName() + 
-                 "' already defined, instantiating defm with subdef '" + 
-                 DefProto->getName() + "'");
-
   // Don't create a top level definition for defm inside multiclasses,
   // instead, only update the prototypes and bind the template args
   // with the new created definition.
@@ -2097,8 +2126,6 @@ bool TGParser::ResolveMulticlassDef(MultiClass &MC,
       assert(RV && "Template arg doesn't exist?");
       CurRec->addValue(*RV);
     }
-  } else {
-    Records.addDef(CurRec);
   }
 
   return false;
