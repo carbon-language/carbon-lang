@@ -1403,9 +1403,11 @@ public:
   explicit Record(const std::string &N, SMLoc loc, RecordKeeper &records) :
     ID(LastID++), Name(StringInit::get(N)), Loc(loc), TrackedRecords(records),
       TheInit(0) {
+    init();
   }
   explicit Record(Init *N, SMLoc loc, RecordKeeper &records) :
     ID(LastID++), Name(N), Loc(loc), TrackedRecords(records), TheInit(0) {
+    init();
   }
   ~Record() {}
 
