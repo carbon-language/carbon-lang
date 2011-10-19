@@ -1789,7 +1789,7 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, const Record &R) {
   if (!SC.empty()) {
     OS << "\t//";
     for (unsigned i = 0, e = SC.size(); i != e; ++i)
-      OS << " " << SC[i]->getName();
+      OS << " " << SC[i]->getNameInitAsString();
   }
   OS << "\n";
 
