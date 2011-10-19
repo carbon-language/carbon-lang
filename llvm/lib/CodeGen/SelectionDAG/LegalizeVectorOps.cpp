@@ -394,10 +394,12 @@ SDValue VectorLegalizer::ExpandVSELECT(SDValue Op) {
 
   // If we can't even use the basic vector operations of
   // AND,OR,XOR, we will have to scalarize the op.
-  if (!TLI.isOperationLegalOrCustom(ISD::AND, VT) ||
-      !TLI.isOperationLegalOrCustom(ISD::XOR, VT) ||
-      !TLI.isOperationLegalOrCustom(ISD::OR, VT))
-        return DAG.UnrollVectorOp(Op.getNode());
+  // Notice that the operation may be 'promoted' which means that it is
+  // 'bitcasted' to another type which is handled.
+  if (TLI.getOperationAction(ISD::AND, VT) == TargetLowering::Expand ||
+      TLI.getOperationAction(ISD::XOR, VT) == TargetLowering::Expand ||
+      TLI.getOperationAction(ISD::OR,  VT) == TargetLowering::Expand)
+    return DAG.UnrollVectorOp(Op.getNode());
 
   assert(VT.getSizeInBits() == Op.getOperand(1).getValueType().getSizeInBits()
          && "Invalid mask size");
@@ -421,9 +423,9 @@ SDValue VectorLegalizer::ExpandUINT_TO_FLOAT(SDValue Op) {
   DebugLoc DL = Op.getDebugLoc();
 
   // Make sure that the SINT_TO_FP and SRL instructions are available.
-  if (!TLI.isOperationLegalOrCustom(ISD::SINT_TO_FP, VT) ||
-      !TLI.isOperationLegalOrCustom(ISD::SRL, VT))
-      return DAG.UnrollVectorOp(Op.getNode());
+  if (TLI.getOperationAction(ISD::SINT_TO_FP, VT) == TargetLowering::Expand ||
+      TLI.getOperationAction(ISD::SRL,        VT) == TargetLowering::Expand)
+    return DAG.UnrollVectorOp(Op.getNode());
 
  EVT SVT = VT.getScalarType();
   assert((SVT.getSizeInBits() == 64 || SVT.getSizeInBits() == 32) &&
