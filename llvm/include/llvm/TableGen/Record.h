@@ -1490,7 +1490,7 @@ public:
 
   bool isSubClassOf(StringRef Name) const {
     for (unsigned i = 0, e = SuperClasses.size(); i != e; ++i)
-      if (SuperClasses[i]->getName() == Name)
+      if (SuperClasses[i]->getNameInitAsString() == Name)
         return true;
     return false;
   }
