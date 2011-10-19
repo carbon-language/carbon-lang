@@ -243,7 +243,7 @@ SVN-UPDATE-OPTIONS =
 AWK = awk
 SUB-SVN-DIRS = $(AWK) '/\?\ \ \ \ \ \ / {print $$2}'   \
 		| LC_ALL=C xargs $(SVN) info 2>/dev/null \
-		| $(AWK) '/Path:\ / {print $$2}'
+		| $(AWK) '/^Path:\ / {print $$2}'
 
 update:
 	$(SVN) $(SVN-UPDATE-OPTIONS) update $(LLVM_SRC_ROOT)
