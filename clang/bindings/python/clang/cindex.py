@@ -969,7 +969,7 @@ class TypeKind(object):
     @staticmethod
     def from_id(id):
         if id >= len(TypeKind._kinds) or TypeKind._kinds[id] is None:
-            raise ValueError,'Unknown cursor kind'
+            raise ValueError,'Unknown type kind %d' % id
         return TypeKind._kinds[id]
 
     def __repr__(self):
