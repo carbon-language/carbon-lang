@@ -5820,10 +5820,14 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
                      .addImm(NumLPads));
     } else {
       MachineConstantPool *ConstantPool = MF->getConstantPool();
-      const Constant *C =
-        ConstantInt::get(Type::getInt32Ty(MF->getFunction()->getContext()),
-                         NumLPads);
-      unsigned Idx = ConstantPool->getConstantPoolIndex(C, 4);
+      Type *Int32Ty = Type::getInt32Ty(MF->getFunction()->getContext());
+      const Constant *C = ConstantInt::get(Int32Ty, NumLPads);
+
+      // MachineConstantPool wants an explicit alignment.
+      unsigned Align = getTargetData()->getPrefTypeAlignment(Int32Ty);
+      if (Align == 0)
+        Align = getTargetData()->getTypeAllocSize(C->getType());
+      unsigned Idx = ConstantPool->getConstantPoolIndex(C, Align);
 
       unsigned VReg1 = MRI->createVirtualRegister(TRC);
       AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::tLDRpci))
@@ -5887,7 +5891,7 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
       AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::CMPri))
                      .addReg(NewVReg1)
                      .addImm(NumLPads));
-    } else {
+    } else if (Subtarget->hasV6T2Ops() && isUInt<16>(NumLPads)) {
       unsigned VReg1 = MRI->createVirtualRegister(TRC);
       AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::MOVi16), VReg1)
                      .addImm(NumLPads & 0xFFFF));
@@ -5903,6 +5907,24 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
       AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::CMPrr))
                      .addReg(NewVReg1)
                      .addReg(VReg2));
+    } else {
+      MachineConstantPool *ConstantPool = MF->getConstantPool();
+      Type *Int32Ty = Type::getInt32Ty(MF->getFunction()->getContext());
+      const Constant *C = ConstantInt::get(Int32Ty, NumLPads);
+
+      // MachineConstantPool wants an explicit alignment.
+      unsigned Align = getTargetData()->getPrefTypeAlignment(Int32Ty);
+      if (Align == 0)
+        Align = getTargetData()->getTypeAllocSize(C->getType());
+      unsigned Idx = ConstantPool->getConstantPoolIndex(C, Align);
+
+      unsigned VReg1 = MRI->createVirtualRegister(TRC);
+      AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::LDRcp))
+                     .addReg(VReg1, RegState::Define)
+                     .addConstantPoolIndex(Idx));
+      AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::CMPrr))
+                     .addReg(NewVReg1)
+                     .addReg(VReg1, RegState::Kill));
     }
 
     BuildMI(DispatchBB, dl, TII->get(ARM::Bcc))
