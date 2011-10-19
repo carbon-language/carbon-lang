@@ -2642,32 +2642,34 @@ Decl *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
   if (getLangOptions().CPlusPlus) {
     const char* PrevSpec = 0;
     unsigned DiagID;
-    // C++ [class.union]p3:
-    //   Anonymous unions declared in a named namespace or in the
-    //   global namespace shall be declared static.
-    if (DS.getStorageClassSpec() != DeclSpec::SCS_static &&
-        (isa<TranslationUnitDecl>(Owner) ||
-         (isa<NamespaceDecl>(Owner) &&
-          cast<NamespaceDecl>(Owner)->getDeclName()))) {
-      Diag(Record->getLocation(), diag::err_anonymous_union_not_static);
-      Invalid = true;
-
-      // Recover by adding 'static'.
-      DS.SetStorageClassSpec(*this, DeclSpec::SCS_static, SourceLocation(),
-                             PrevSpec, DiagID);
-    }
-    // C++ [class.union]p3:
-    //   A storage class is not allowed in a declaration of an
-    //   anonymous union in a class scope.
-    else if (DS.getStorageClassSpec() != DeclSpec::SCS_unspecified &&
-             isa<RecordDecl>(Owner)) {
-      Diag(DS.getStorageClassSpecLoc(),
-           diag::err_anonymous_union_with_storage_spec);
-      Invalid = true;
-
-      // Recover by removing the storage specifier.
-      DS.SetStorageClassSpec(*this, DeclSpec::SCS_unspecified, SourceLocation(),
-                             PrevSpec, DiagID);
+    if (Record->isUnion()) {
+      // C++ [class.union]p6:
+      //   Anonymous unions declared in a named namespace or in the
+      //   global namespace shall be declared static.
+      if (DS.getStorageClassSpec() != DeclSpec::SCS_static &&
+          (isa<TranslationUnitDecl>(Owner) ||
+           (isa<NamespaceDecl>(Owner) &&
+            cast<NamespaceDecl>(Owner)->getDeclName()))) {
+        Diag(Record->getLocation(), diag::err_anonymous_union_not_static);
+        Invalid = true;
+  
+        // Recover by adding 'static'.
+        DS.SetStorageClassSpec(*this, DeclSpec::SCS_static, SourceLocation(),
+                               PrevSpec, DiagID);
+      }
+      // C++ [class.union]p6:
+      //   A storage class is not allowed in a declaration of an
+      //   anonymous union in a class scope.
+      else if (DS.getStorageClassSpec() != DeclSpec::SCS_unspecified &&
+               isa<RecordDecl>(Owner)) {
+        Diag(DS.getStorageClassSpecLoc(),
+             diag::err_anonymous_union_with_storage_spec);
+        Invalid = true;
+  
+        // Recover by removing the storage specifier.
+        DS.SetStorageClassSpec(*this, DeclSpec::SCS_unspecified, SourceLocation(),
+                               PrevSpec, DiagID);
+      }
     }
 
     // Ignore const/volatile/restrict qualifiers.
