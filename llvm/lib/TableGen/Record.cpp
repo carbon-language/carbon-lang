@@ -1684,6 +1684,10 @@ void RecordVal::print(raw_ostream &OS, bool PrintSem) const {
 
 unsigned Record::LastID = 0;
 
+void Record::init() {
+  checkName();
+}
+
 void Record::checkName() {
   // Ensure the record name has string type.
   const TypedInit *TypedName = dynamic_cast<const TypedInit *>(Name);

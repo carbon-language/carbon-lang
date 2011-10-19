@@ -1394,6 +1394,7 @@ class Record {
 
   DefInit *TheInit;
 
+  void init();
   void checkName();
 
 public:
