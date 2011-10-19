@@ -5905,12 +5905,6 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
                      .addReg(VReg2));
     }
 
-    unsigned NewVReg2 = MRI->createVirtualRegister(TRC);
-    AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::MOVi16), NewVReg2)
-                   .addImm(LPadList.size()));
-    AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::CMPrr))
-                   .addReg(NewVReg1)
-                   .addReg(NewVReg2));
     BuildMI(DispatchBB, dl, TII->get(ARM::Bcc))
       .addMBB(TrapBB)
       .addImm(ARMCC::HI)
