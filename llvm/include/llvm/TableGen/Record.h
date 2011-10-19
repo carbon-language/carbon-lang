@@ -1401,7 +1401,9 @@ public:
 
   // Constructs a record.
   explicit Record(const std::string &N, SMLoc loc, RecordKeeper &records) :
-    ID(LastID++), Name(StringInit::get(N)), Loc(loc), TrackedRecords(records), TheInit(0) {}
+    ID(LastID++), Name(StringInit::get(N)), Loc(loc), TrackedRecords(records),
+      TheInit(0) {
+  }
   ~Record() {}
 
 
