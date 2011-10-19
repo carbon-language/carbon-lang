@@ -1970,24 +1970,50 @@ bool TGParser::ParseMultiClass() {
 Record *TGParser::
 InstantiateMulticlassDef(MultiClass &MC,
                          Record *DefProto,
-                         const std::string &DefmPrefix,
+                         Init *DefmPrefix,
                          SMLoc DefmPrefixLoc) {
+  // We need to preserve DefProto so it can be reused for later
+  // instantiations, so create a new Record to inherit from it.
+
   // Add in the defm name.  If the defm prefix is empty, give each
   // instantiated def a unique name.  Otherwise, if "#NAME#" exists in the
   // name, substitute the prefix for #NAME#.  Otherwise, use the defm name
   // as a prefix.
-  std::string DefName = DefProto->getName();
-  if (DefmPrefix.empty()) {
-    DefName = GetNewAnonymousName();
-  } else {
-    std::string::size_type idx = DefName.find("#NAME#");
-    if (idx != std::string::npos) {
-      DefName.replace(idx, 6, DefmPrefix);
-    } else {
-      // Add the suffix to the defm name to get the new name.
-      DefName = DefmPrefix + DefName;
-    }
+  StringInit *DefNameString =
+    dynamic_cast<StringInit *>(DefProto->getNameInit());
+
+  if (DefNameString == 0) {
+    Error(DefmPrefixLoc, "Def name is not a string");
+    return 0;
   }
+
+  if (DefmPrefix == 0)
+    DefmPrefix = StringInit::get(GetNewAnonymousName());
+
+  Init *DefName = DefProto->getNameInit();
+
+  // See if we can substitute #NAME#.
+  Init *NewDefName =
+    TernOpInit::get(TernOpInit::SUBST,
+                    StringInit::get("#NAME#"),
+                    DefmPrefix,
+                    DefName,
+                    StringRecTy::get())->Fold(DefProto, &MC);
+
+  if (NewDefName == DefName) {
+    // We did't do any substitution.  We should concatenate the given
+    // prefix and name.
+    if (DefmPrefix == 0)
+      DefmPrefix = StringInit::get(GetNewAnonymousName());
+
+    DefName =
+      BinOpInit::get(BinOpInit::STRCONCAT,
+                     UnOpInit::get(UnOpInit::CAST, DefmPrefix,
+                                   StringRecTy::get())->Fold(DefProto, &MC),
+                     DefName, StringRecTy::get())->Fold(DefProto, &MC);
+  }
+  else
+    DefName = NewDefName;
 
   Record *CurRec = new Record(DefName, DefmPrefixLoc, Records);
 
@@ -2086,14 +2112,9 @@ bool TGParser::ParseDefm(MultiClass *CurMultiClass) {
   assert(Lex.getCode() == tgtok::Defm && "Unexpected token!");
 
   Init *DefmPrefix = 0;
-  std::string DefmPrefixString;
 
   if (Lex.Lex() == tgtok::Id) {  // eat the defm.
     DefmPrefix = ParseObjectName(CurMultiClass);
-    StringInit *DefmPrefixStringInit = dynamic_cast<StringInit *>(DefmPrefix);
-    if (DefmPrefixStringInit == 0)
-      return TokError("defm prefix is not a string");
-    DefmPrefixString = DefmPrefixStringInit->getValue();
   }
 
   SMLoc DefmPrefixLoc = Lex.getLoc();
@@ -2132,8 +2153,7 @@ bool TGParser::ParseDefm(MultiClass *CurMultiClass) {
     for (unsigned i = 0, e = MC->DefPrototypes.size(); i != e; ++i) {
       Record *DefProto = MC->DefPrototypes[i];
 
-      Record *CurRec = InstantiateMulticlassDef(*MC, DefProto, DefmPrefixString,
-                                                DefmPrefixLoc);
+      Record *CurRec = InstantiateMulticlassDef(*MC, DefProto, DefmPrefix, DefmPrefixLoc);
 
       if (ResolveMulticlassDefArgs(*MC, CurRec, DefmPrefixLoc, SubClassLoc,
                                    TArgs, TemplateVals, true/*Delete args*/))

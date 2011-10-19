@@ -101,7 +101,7 @@ private:  // Parser methods.
   bool ParseMultiClass();
   Record *InstantiateMulticlassDef(MultiClass &MC,
                                    Record *DefProto,
-                                   const std::string &DefmPrefix,
+                                   Init *DefmPrefix,
                                    SMLoc DefmPrefixLoc);
   bool ResolveMulticlassDefArgs(MultiClass &MC,
                                 Record *DefProto,
