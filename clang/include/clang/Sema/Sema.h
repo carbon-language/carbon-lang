@@ -2475,6 +2475,9 @@ public:
                                Expr **Args, unsigned NumArgs,
                                SourceLocation RParenLoc,
                                bool ExecConfig = false);
+  void CheckStaticArrayArgument(SourceLocation CallLoc,
+                                ParmVarDecl *Param,
+                                const Expr *ArgExpr);
 
   /// ActOnCallExpr - Handle a call to Fn with the specified array of arguments.
   /// This provides the location of the left/right parens and a list of comma
@@ -6111,10 +6114,6 @@ private:
   void CheckNonNullArguments(const NonNullAttr *NonNull,
                              const Expr * const *ExprArgs,
                              SourceLocation CallSiteLoc);
-
-  void CheckStaticArrayArguments(const FunctionDecl *FDecl,
-                                 const Expr * const *ExprArgs,
-                                 SourceLocation CallSiteLoc);
 
   void CheckPrintfScanfArguments(const CallExpr *TheCall, bool HasVAListArg,
                                  unsigned format_idx, unsigned firstDataArg,
