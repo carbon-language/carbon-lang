@@ -91,10 +91,10 @@ tgtok::TokKind TGLexer::LexToken() {
 
   switch (CurChar) {
   default:
-    // Handle letters: [a-zA-Z_#]
-    if (isalpha(CurChar) || CurChar == '_' || CurChar == '#')
+    // Handle letters: [a-zA-Z_]
+    if (isalpha(CurChar) || CurChar == '_')
       return LexIdentifier();
-      
+
     // Unknown character, emit an error.
     return ReturnError(TokStart, "Unexpected character");
   case EOF: return tgtok::Eof;
@@ -111,6 +111,7 @@ tgtok::TokKind TGLexer::LexToken() {
   case ')': return tgtok::r_paren;
   case '=': return tgtok::equal;
   case '?': return tgtok::question;
+  case '#': return tgtok::paste;
       
   case 0:
   case ' ':
@@ -250,8 +251,7 @@ tgtok::TokKind TGLexer::LexIdentifier() {
   const char *IdentStart = TokStart;
 
   // Match the rest of the identifier regex: [0-9a-zA-Z_#]*
-  while (isalpha(*CurPtr) || isdigit(*CurPtr) || *CurPtr == '_' ||
-         *CurPtr == '#')
+  while (isalpha(*CurPtr) || isdigit(*CurPtr) || *CurPtr == '_')
     ++CurPtr;
 
   // Check to see if this identifier is a keyword.

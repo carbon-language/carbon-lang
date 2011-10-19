@@ -1083,6 +1083,12 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
   Init *R = 0;
   switch (Lex.getCode()) {
   default: TokError("Unknown token when parsing a value"); break;
+  case tgtok::paste:
+    // This is a leading paste operation.  This is deprecated but
+    // still exists in some .td files.  Ignore it.
+    Lex.Lex();  // Skip '#'.
+    return ParseSimpleValue(CurRec, ItemType, Mode);
+    break;
   case tgtok::IntVal: R = IntInit::get(Lex.getCurIntVal()); Lex.Lex(); break;
   case tgtok::StrVal: {
     std::string Val = Lex.getCurStrVal();
@@ -1409,6 +1415,56 @@ Init *TGParser::ParseValue(Record *CurRec, RecTy *ItemType, IDParseMode Mode) {
       }
       Result = FieldInit::get(Result, Lex.getCurStrVal());
       Lex.Lex();  // eat field name
+      break;
+
+    case tgtok::paste:
+      SMLoc PasteLoc = Lex.getLoc();
+
+      // Create a !strconcat() operation, first casting each operand to
+      // a string if necessary.
+
+      TypedInit *LHS = dynamic_cast<TypedInit *>(Result);
+      if (!LHS) {
+        Error(PasteLoc, "LHS of paste is not typed!");
+        return 0;
+      }
+  
+      if (LHS->getType() != StringRecTy::get()) {
+        LHS = UnOpInit::get(UnOpInit::CAST, LHS, StringRecTy::get());
+      }
+
+      TypedInit *RHS = 0;
+
+      Lex.Lex();  // Eat the '#'.
+      switch (Lex.getCode()) { 
+      case tgtok::colon:
+      case tgtok::semi:
+      case tgtok::l_brace:
+        // These are all of the tokens that can begin an object body.
+        // Some of these can also begin values but we disallow those cases
+        // because they are unlikely to be useful.
+       
+        // Trailing paste, concat with an empty string.
+        RHS = StringInit::get("");
+        break;
+
+      default:
+        Init *RHSResult = ParseValue(CurRec, ItemType, ParseNameMode);
+        RHS = dynamic_cast<TypedInit *>(RHSResult);
+        if (!RHS) {
+          Error(PasteLoc, "RHS of paste is not typed!");
+          return 0;
+        }
+
+        if (RHS->getType() != StringRecTy::get()) {
+          RHS = UnOpInit::get(UnOpInit::CAST, RHS, StringRecTy::get());
+        }
+  
+        break;
+      }
+
+      Result = BinOpInit::get(BinOpInit::STRCONCAT, LHS, RHS,
+                              StringRecTy::get())->Fold(CurRec, CurMultiClass);
       break;
     }
   }
@@ -1979,41 +2035,23 @@ InstantiateMulticlassDef(MultiClass &MC,
   // instantiated def a unique name.  Otherwise, if "#NAME#" exists in the
   // name, substitute the prefix for #NAME#.  Otherwise, use the defm name
   // as a prefix.
-  StringInit *DefNameString =
-    dynamic_cast<StringInit *>(DefProto->getNameInit());
-
-  if (DefNameString == 0) {
-    Error(DefmPrefixLoc, "Def name is not a string");
-    return 0;
-  }
 
   if (DefmPrefix == 0)
     DefmPrefix = StringInit::get(GetNewAnonymousName());
 
   Init *DefName = DefProto->getNameInit();
 
-  // See if we can substitute #NAME#.
-  Init *NewDefName =
-    TernOpInit::get(TernOpInit::SUBST,
-                    StringInit::get("#NAME#"),
-                    DefmPrefix,
-                    DefName,
-                    StringRecTy::get())->Fold(DefProto, &MC);
+  StringInit *DefNameString = dynamic_cast<StringInit *>(DefName);
 
-  if (NewDefName == DefName) {
-    // We did't do any substitution.  We should concatenate the given
-    // prefix and name.
-    if (DefmPrefix == 0)
-      DefmPrefix = StringInit::get(GetNewAnonymousName());
-
+  if (DefNameString != 0) {
+    // We have a fully expanded string so there are no operators to
+    // resolve.  We should concatenate the given prefix and name.
     DefName =
       BinOpInit::get(BinOpInit::STRCONCAT,
                      UnOpInit::get(UnOpInit::CAST, DefmPrefix,
                                    StringRecTy::get())->Fold(DefProto, &MC),
                      DefName, StringRecTy::get())->Fold(DefProto, &MC);
   }
-  else
-    DefName = NewDefName;
 
   Record *CurRec = new Record(DefName, DefmPrefixLoc, Records);
 

@@ -39,7 +39,8 @@ namespace tgtok {
     colon, semi,        // : ;
     comma, period,      // , .
     equal, question,    // = ?
-    
+    paste,              // #
+
     // Keywords.
     Bit, Bits, Class, Code, Dag, Def, Defm, Field, In, Int, Let, List,
     MultiClass, String,
