@@ -1404,6 +1404,9 @@ public:
     ID(LastID++), Name(StringInit::get(N)), Loc(loc), TrackedRecords(records),
       TheInit(0) {
   }
+  explicit Record(Init *N, SMLoc loc, RecordKeeper &records) :
+    ID(LastID++), Name(N), Loc(loc), TrackedRecords(records), TheInit(0) {
+  }
   ~Record() {}
 
 
