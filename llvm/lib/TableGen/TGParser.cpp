@@ -636,7 +636,7 @@ RecTy *TGParser::ParseType() {
 ///  IDValue ::= ID [multiclass template argument]
 ///  IDValue ::= ID [def name]
 ///
-Init *TGParser::ParseIDValue(Record *CurRec) {
+Init *TGParser::ParseIDValue(Record *CurRec, IDParseMode Mode) {
   assert(Lex.getCode() == tgtok::Id && "Expected ID in ParseIDValue");
   std::string Name = Lex.getCurStrVal();
   SMLoc Loc = Lex.getLoc();
@@ -647,7 +647,8 @@ Init *TGParser::ParseIDValue(Record *CurRec) {
 /// ParseIDValue - This is just like ParseIDValue above, but it assumes the ID
 /// has already been read.
 Init *TGParser::ParseIDValue(Record *CurRec,
-                             const std::string &Name, SMLoc NameLoc) {
+                             const std::string &Name, SMLoc NameLoc,
+                             IDParseMode Mode) {
   if (CurRec) {
     if (const RecordVal *RV = CurRec->getValue(Name))
       return VarInit::get(Name, RV->getType());
@@ -1048,7 +1049,8 @@ RecTy *TGParser::ParseOperatorType() {
 ///   SimpleValue ::= SRLTOK '(' Value ',' Value ')'
 ///   SimpleValue ::= STRCONCATTOK '(' Value ',' Value ')'
 ///
-Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType) {
+Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
+                                 IDParseMode Mode) {
   Init *R = 0;
   switch (Lex.getCode()) {
   default: TokError("Unknown token when parsing a value"); break;
@@ -1078,7 +1080,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType) {
     SMLoc NameLoc = Lex.getLoc();
     std::string Name = Lex.getCurStrVal();
     if (Lex.Lex() != tgtok::less)  // consume the Id.
-      return ParseIDValue(CurRec, Name, NameLoc);    // Value ::= IDValue
+      return ParseIDValue(CurRec, Name, NameLoc, Mode);    // Value ::= IDValue
 
     // Value ::= ID '<' ValueListNE '>'
     if (Lex.Lex() == tgtok::greater) {
@@ -1312,8 +1314,8 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType) {
 ///   ValueSuffix ::= '[' BitList ']'
 ///   ValueSuffix ::= '.' ID
 ///
-Init *TGParser::ParseValue(Record *CurRec, RecTy *ItemType) {
-  Init *Result = ParseSimpleValue(CurRec, ItemType);
+Init *TGParser::ParseValue(Record *CurRec, RecTy *ItemType, IDParseMode Mode) {
+  Init *Result = ParseSimpleValue(CurRec, ItemType, Mode);
   if (Result == 0) return 0;
 
   // Parse the suffixes now if present.

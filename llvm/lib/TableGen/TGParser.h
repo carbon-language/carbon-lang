@@ -53,6 +53,17 @@ class TGParser {
 
   // Record tracker
   RecordKeeper &Records;
+
+  // A "named boolean" indicating how to parse identifiers.  Usually
+  // identifiers map to some existing object but in special cases
+  // (e.g. parsing def names) no such object exists yet because we are
+  // in the middle of creating in.  For those situations, allow the
+  // parser to ignore missing object errors.
+  enum IDParseMode {
+    ParseValueMode, // We are parsing a value we expect to look up.
+    ParseNameMode // We are parsing a name of an object that does not yet exist.
+  };
+
 public:
   TGParser(SourceMgr &SrcMgr, RecordKeeper &records) : 
     Lex(SrcMgr), CurMultiClass(0), Records(records) {}
@@ -118,10 +129,13 @@ private:  // Parser methods.
   SubClassReference ParseSubClassReference(Record *CurRec, bool isDefm);
   SubMultiClassReference ParseSubMultiClassReference(MultiClass *CurMC);
 
-  Init *ParseIDValue(Record *CurRec);
-  Init *ParseIDValue(Record *CurRec, const std::string &Name, SMLoc NameLoc);
-  Init *ParseSimpleValue(Record *CurRec, RecTy *ItemType = 0);
-  Init *ParseValue(Record *CurRec, RecTy *ItemType = 0);
+  Init *ParseIDValue(Record *CurRec, IDParseMode Mode = ParseValueMode);
+  Init *ParseIDValue(Record *CurRec, const std::string &Name, SMLoc NameLoc,
+                     IDParseMode Mode = ParseValueMode);
+  Init *ParseSimpleValue(Record *CurRec, RecTy *ItemType = 0,
+                         IDParseMode Mode = ParseValueMode);
+  Init *ParseValue(Record *CurRec, RecTy *ItemType = 0,
+                   IDParseMode Mode = ParseValueMode);
   std::vector<Init*> ParseValueList(Record *CurRec, Record *ArgsRec = 0, RecTy *EltTy = 0);
   std::vector<std::pair<llvm::Init*, std::string> > ParseDagArgList(Record *);
   bool ParseOptionalRangeList(std::vector<unsigned> &Ranges);
