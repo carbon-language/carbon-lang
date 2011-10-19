@@ -170,3 +170,12 @@ struct BadFriends {
 };
 
 int n = {}; // expected-warning {{scalar initialized from empty initializer list is incompatible with C++98}}
+
+class PrivateMember {
+  struct ImPrivate {};
+};
+template<typename T> typename T::ImPrivate SFINAEAccessControl(T t) { // expected-warning {{substitution failure due to access control is incompatible with C++98}} expected-note {{while substituting deduced template arguments into function template 'SFINAEAccessControl' [with T = PrivateMember]}}
+  return typename T::ImPrivate();
+}
+int SFINAEAccessControl(...) { return 0; }
+int CheckSFINAEAccessControl = SFINAEAccessControl(PrivateMember());

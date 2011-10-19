@@ -740,6 +740,11 @@ public:
     assert(isActive() && "DiagnosticsEngine is inactive");
     return DiagObj->CurDiagID;
   }
+
+  /// \brief Retrieve the active diagnostic's location.
+  ///
+  /// \pre \c isActive()
+  SourceLocation getLocation() const { return DiagObj->CurDiagLoc; }
   
   /// \brief Clear out the current diagnostic.
   void Clear() { DiagObj = 0; }

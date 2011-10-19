@@ -625,18 +625,9 @@ Sema::SemaDiagnosticBuilder::~SemaDiagnosticBuilder() {
   if (llvm::Optional<TemplateDeductionInfo*> Info = SemaRef.isSFINAEContext()) {
     switch (DiagnosticIDs::getDiagnosticSFINAEResponse(getDiagID())) {
     case DiagnosticIDs::SFINAE_Report:
-      // Fall through; we'll report the diagnostic below.
+      // We'll report the diagnostic below.
       break;
       
-    case DiagnosticIDs::SFINAE_AccessControl:
-      // Per C++ Core Issue 1170, access control is part of SFINAE.
-      // Additionally, the AccessCheckingSFINAE flag can be used to temporary
-      // make access control a part of SFINAE for the purposes of checking
-      // type traits.
-      if (!SemaRef.AccessCheckingSFINAE &&
-          !SemaRef.getLangOptions().CPlusPlus0x)
-        break;
-        
     case DiagnosticIDs::SFINAE_SubstitutionFailure:
       // Count this failure so that we know that template argument deduction
       // has failed.
@@ -646,6 +637,33 @@ Sema::SemaDiagnosticBuilder::~SemaDiagnosticBuilder() {
       Clear();
       return;
       
+    case DiagnosticIDs::SFINAE_AccessControl: {
+      // Per C++ Core Issue 1170, access control is part of SFINAE.
+      // Additionally, the AccessCheckingSFINAE flag can be used to temporary
+      // make access control a part of SFINAE for the purposes of checking
+      // type traits.
+      if (!SemaRef.AccessCheckingSFINAE &&
+          !SemaRef.getLangOptions().CPlusPlus0x)
+        break;
+
+      SourceLocation Loc = getLocation();
+
+      // Suppress this diagnostic.
+      ++SemaRef.NumSFINAEErrors;
+      SemaRef.Diags.setLastDiagnosticIgnored();
+      SemaRef.Diags.Clear();
+      Clear();
+
+      // Now the diagnostic state is clear, produce a C++98 compatibility
+      // warning.
+      SemaRef.Diag(Loc, diag::warn_cxx98_compat_sfinae_access_control);
+
+      // The last diagnostic which Sema produced was ignored. Suppress any
+      // notes attached to it.
+      SemaRef.Diags.setLastDiagnosticIgnored();
+      return;
+    }
+
     case DiagnosticIDs::SFINAE_Suppress:
       // Make a copy of this suppressed diagnostic and store it with the
       // template-deduction information;
