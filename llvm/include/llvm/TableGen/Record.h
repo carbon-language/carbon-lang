@@ -1058,9 +1058,11 @@ public:
 /// VarInit - 'Opcode' - Represent a reference to an entire variable object.
 ///
 class VarInit : public TypedInit {
-  std::string VarName;
+  Init *VarName;
 
   explicit VarInit(const std::string &VN, RecTy *T)
+      : TypedInit(T), VarName(StringInit::get(VN)) {}
+  explicit VarInit(Init *VN, RecTy *T)
       : TypedInit(T), VarName(VN) {}
 
   VarInit(const VarInit &Other);  // Do not define.
@@ -1074,7 +1076,11 @@ public:
     return Ty->convertValue(const_cast<VarInit *>(this));
   }
 
-  const std::string &getName() const { return VarName; }
+  const std::string &getName() const;
+  Init *getNameInit() const { return VarName; }
+  std::string getNameInitAsString() const {
+    return getNameInit()->getAsUnquotedString();
+  }
 
   virtual Init *resolveBitReference(Record &R, const RecordVal *RV,
                                     unsigned Bit) const;
@@ -1092,7 +1098,7 @@ public:
   ///
   virtual Init *resolveReferences(Record &R, const RecordVal *RV) const;
 
-  virtual std::string getAsString() const { return VarName; }
+  virtual std::string getAsString() const { return getName(); }
 };
 
 
