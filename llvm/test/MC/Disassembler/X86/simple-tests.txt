@@ -564,16 +564,16 @@
 # CHECK: bzhiq %r12, %r11, %r10
 0xc4 0x42 0x98 0xf5 0xd3
 
-# CHECK: pextrl %r12d, %r11d, %r10d
+# CHECK: pextl %r12d, %r11d, %r10d
 0xc4 0x42 0x22 0xf5 0xd4
 
-# CHECK: pextrl (%rax), %r11d, %r10d
+# CHECK: pextl (%rax), %r11d, %r10d
 0xc4 0x62 0x22 0xf5 0x10
 
-# CHECK: pextrq %r12, %r11, %r10
+# CHECK: pextq %r12, %r11, %r10
 0xc4 0x42 0xa2 0xf5 0xd4
 
-# CHECK: pextrq (%rax), %r11, %r10
+# CHECK: pextq (%rax), %r11, %r10
 0xc4 0x62 0xa2 0xf5 0x10
 
 # CHECK: pdepl %r12d, %r11d, %r10d

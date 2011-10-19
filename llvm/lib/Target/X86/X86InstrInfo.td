@@ -1401,57 +1401,80 @@ let Predicates = [HasBMI], Defs = [EFLAGS] in {
 }
 
 multiclass bmi_bls<string mnemonic, Format RegMRM, Format MemMRM,
-                   RegisterClass RC, X86MemOperand x86memop> {
+                   RegisterClass RC, X86MemOperand x86memop, Intrinsic Int,
+                   PatFrag ld_frag> {
   def rr : I<0xF3, RegMRM, (outs RC:$dst), (ins RC:$src),
-             !strconcat(mnemonic, "\t{$src, $dst|$dst, $src}"), []>, T8, VEX_4V;
+             !strconcat(mnemonic, "\t{$src, $dst|$dst, $src}"),
+             [(set RC:$dst, (Int RC:$src)), (implicit EFLAGS)]>, T8, VEX_4V;
   def rm : I<0xF3, MemMRM, (outs RC:$dst), (ins x86memop:$src),
-             !strconcat(mnemonic, "\t{$src, $dst|$dst, $src}"), []>, T8, VEX_4V;
+             !strconcat(mnemonic, "\t{$src, $dst|$dst, $src}"),
+             [(set RC:$dst, (Int (ld_frag addr:$src))), (implicit EFLAGS)]>,
+             T8, VEX_4V;
 }
 
 let Predicates = [HasBMI], Defs = [EFLAGS] in {
-  defm BLSR32 : bmi_bls<"blsr{l}", MRM1r, MRM1m, GR32, i32mem>;
-  defm BLSR64 : bmi_bls<"blsr{q}", MRM1r, MRM1m, GR64, i64mem>, VEX_W;
-  defm BLSMSK32 : bmi_bls<"blsmsk{l}", MRM2r, MRM2m, GR32, i32mem>;
-  defm BLSMSK64 : bmi_bls<"blsmsk{q}", MRM2r, MRM2m, GR64, i64mem>, VEX_W;
-  defm BLSI32 : bmi_bls<"blsi{l}", MRM3r, MRM3m, GR32, i32mem>;
-  defm BLSI64 : bmi_bls<"blsi{q}", MRM3r, MRM3m, GR64, i64mem>, VEX_W;
+  defm BLSR32 : bmi_bls<"blsr{l}", MRM1r, MRM1m, GR32, i32mem,
+                        int_x86_bmi_blsr_32, loadi32>;
+  defm BLSR64 : bmi_bls<"blsr{q}", MRM1r, MRM1m, GR64, i64mem,
+                        int_x86_bmi_blsr_64, loadi64>, VEX_W;
+  defm BLSMSK32 : bmi_bls<"blsmsk{l}", MRM2r, MRM2m, GR32, i32mem,
+                          int_x86_bmi_blsmsk_32, loadi32>;
+  defm BLSMSK64 : bmi_bls<"blsmsk{q}", MRM2r, MRM2m, GR64, i64mem,
+                          int_x86_bmi_blsmsk_64, loadi64>, VEX_W;
+  defm BLSI32 : bmi_bls<"blsi{l}", MRM3r, MRM3m, GR32, i32mem,
+                        int_x86_bmi_blsi_32, loadi32>;
+  defm BLSI64 : bmi_bls<"blsi{q}", MRM3r, MRM3m, GR64, i64mem,
+                        int_x86_bmi_blsi_64, loadi64>, VEX_W;
 }
 
 multiclass bmi_bextr_bzhi<bits<8> opc, string mnemonic, RegisterClass RC,
-                          X86MemOperand x86memop> {
+                          X86MemOperand x86memop, Intrinsic Int,
+                          PatFrag ld_frag> {
   def rr : I<opc, MRMSrcReg, (outs RC:$dst), (ins RC:$src1, RC:$src2),
              !strconcat(mnemonic, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-             []>, T8, VEX_4VOp3;
+             [(set RC:$dst, (Int RC:$src1, RC:$src2)), (implicit EFLAGS)]>,
+             T8, VEX_4VOp3;
   def rm : I<opc, MRMSrcMem, (outs RC:$dst), (ins x86memop:$src1, RC:$src2),
              !strconcat(mnemonic, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-             []>, T8, VEX_4VOp3;
+             [(set RC:$dst, (Int (ld_frag addr:$src1), RC:$src2)),
+              (implicit EFLAGS)]>, T8, VEX_4VOp3;
 }
 
 let Predicates = [HasBMI], Defs = [EFLAGS] in {
-  defm BEXTR32 : bmi_bextr_bzhi<0xF7, "bextr{l}", GR32, i32mem>;
-  defm BEXTR64 : bmi_bextr_bzhi<0xF7, "bextr{q}", GR64, i64mem>, VEX_W;
+  defm BEXTR32 : bmi_bextr_bzhi<0xF7, "bextr{l}", GR32, i32mem,
+                                int_x86_bmi_bextr_32, loadi32>;
+  defm BEXTR64 : bmi_bextr_bzhi<0xF7, "bextr{q}", GR64, i64mem,
+                                int_x86_bmi_bextr_64, loadi64>, VEX_W;
 }
 
 let Predicates = [HasBMI2], Defs = [EFLAGS] in {
-  defm BZHI32 : bmi_bextr_bzhi<0xF5, "bzhi{l}", GR32, i32mem>;
-  defm BZHI64 : bmi_bextr_bzhi<0xF5, "bzhi{q}", GR64, i64mem>, VEX_W;
+  defm BZHI32 : bmi_bextr_bzhi<0xF5, "bzhi{l}", GR32, i32mem,
+                               int_x86_bmi_bzhi_32, loadi32>;
+  defm BZHI64 : bmi_bextr_bzhi<0xF5, "bzhi{q}", GR64, i64mem,
+                               int_x86_bmi_bzhi_64, loadi64>, VEX_W;
 }
 
-multiclass bmi_pdep_pextr<string mnemonic, RegisterClass RC,
-                          X86MemOperand x86memop> {
+multiclass bmi_pdep_pext<string mnemonic, RegisterClass RC,
+                         X86MemOperand x86memop, Intrinsic Int,
+                         PatFrag ld_frag> {
   def rr : I<0xF5, MRMSrcReg, (outs RC:$dst), (ins RC:$src1, RC:$src2),
              !strconcat(mnemonic, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-             []>, VEX_4V;
+             [(set RC:$dst, (Int RC:$src1, RC:$src2))]>,
+             VEX_4V;
   def rm : I<0xF5, MRMSrcMem, (outs RC:$dst), (ins RC:$src1, x86memop:$src2),
              !strconcat(mnemonic, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-             []>, VEX_4V;
+             [(set RC:$dst, (Int RC:$src1, (ld_frag addr:$src2)))]>, VEX_4V;
 }
 
 let Predicates = [HasBMI2] in {
-  defm PDEP32 : bmi_pdep_pextr<"pdep{l}", GR32, i32mem>, T8XD;
-  defm PDEP64 : bmi_pdep_pextr<"pdep{q}", GR64, i64mem>, T8XD, VEX_W;
-  defm PEXTR32 : bmi_pdep_pextr<"pextr{l}", GR32, i32mem>, T8XS;
-  defm PEXTR64 : bmi_pdep_pextr<"pextr{q}", GR64, i64mem>, T8XS, VEX_W;
+  defm PDEP32 : bmi_pdep_pext<"pdep{l}", GR32, i32mem,
+                               int_x86_bmi_pdep_32, loadi32>, T8XD;
+  defm PDEP64 : bmi_pdep_pext<"pdep{q}", GR64, i64mem,
+                               int_x86_bmi_pdep_64, loadi64>, T8XD, VEX_W;
+  defm PEXT32 : bmi_pdep_pext<"pext{l}", GR32, i32mem,
+                               int_x86_bmi_pext_32, loadi32>, T8XS;
+  defm PEXT64 : bmi_pdep_pext<"pext{q}", GR64, i64mem,
+                               int_x86_bmi_pext_64, loadi64>, T8XS, VEX_W;
 }
 
 //===----------------------------------------------------------------------===//
