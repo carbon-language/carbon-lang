@@ -969,7 +969,7 @@ SBDebugger::GetDescription (SBStream &description)
     {
         const char *name = m_opaque_sp->GetInstanceName().AsCString();
         user_id_t id = m_opaque_sp->GetID();
-        description.Printf ("Debugger (instance: \"%s\", id: %d)", name, id);
+        description.Printf ("Debugger (instance: \"%s\", id: %llu)", name, id);
     }
     else
         description.Printf ("No value");

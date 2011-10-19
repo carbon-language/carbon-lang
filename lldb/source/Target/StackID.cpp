@@ -31,7 +31,7 @@ StackID::Dump (Stream *s)
     
         m_symbol_scope->CalculateSymbolContext (&sc);
         if (sc.block)
-            s->Printf(" (Block {0x%8.8x})", sc.block->GetID());
+            s->Printf(" (Block {0x%8.8llx})", sc.block->GetID());
         else if (sc.symbol)
             s->Printf(" (Symbol{0x%8.8x})", sc.symbol->GetID());
     }

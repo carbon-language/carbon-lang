@@ -3581,7 +3581,7 @@ public:
         case eInputReaderDone:
             if (!got_interrupted && !batch_mode)
             {
-                out_stream->Printf ("Stop hook #%d added.\n", new_stop_hook->GetID());
+                out_stream->Printf ("Stop hook #%llu added.\n", new_stop_hook->GetID());
                 out_stream->Flush();
             }
             break;
@@ -3667,7 +3667,7 @@ public:
             {
                 // Use one-liner.
                 new_hook_sp->GetCommandPointer()->AppendString (m_options.m_one_liner.c_str());
-                result.AppendMessageWithFormat("Stop hook #%d added.\n", new_hook_sp->GetID());
+                result.AppendMessageWithFormat("Stop hook #%llu added.\n", new_hook_sp->GetID());
             }
             else
             {

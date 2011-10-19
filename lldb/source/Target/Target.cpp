@@ -1736,7 +1736,7 @@ Target::RunStopHooks ()
                 }
                 if (print_hook_header && !any_thread_matched)
                 {
-                    result.AppendMessageWithFormat("\n- Hook %d\n", cur_hook_sp->GetID());
+                    result.AppendMessageWithFormat("\n- Hook %llu\n", cur_hook_sp->GetID());
                     any_thread_matched = true;
                 }
                 
@@ -1760,7 +1760,7 @@ Target::RunStopHooks ()
                 if ((result.GetStatus() == eReturnStatusSuccessContinuingNoResult) || 
                     (result.GetStatus() == eReturnStatusSuccessContinuingResult))
                 {
-                    result.AppendMessageWithFormat ("Aborting stop hooks, hook %d set the program running.", cur_hook_sp->GetID());
+                    result.AppendMessageWithFormat ("Aborting stop hooks, hook %llu set the program running.", cur_hook_sp->GetID());
                     keep_going = false;
                 }
             }
@@ -1857,7 +1857,7 @@ Target::StopHook::GetDescription (Stream *s, lldb::DescriptionLevel level) const
 
     s->SetIndentLevel(indent_level + 2);
 
-    s->Printf ("Hook: %d\n", GetID());
+    s->Printf ("Hook: %llu\n", GetID());
     if (m_active)
         s->Indent ("State: enabled\n");
     else

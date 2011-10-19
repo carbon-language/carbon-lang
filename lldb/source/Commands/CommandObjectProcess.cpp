@@ -323,7 +323,7 @@ public:
         {
             const char *archname = exe_module->GetArchitecture().GetArchitectureName();
 
-            result.AppendMessageWithFormat ("Process %i launched: '%s' (%s)\n", process->GetID(), filename, archname);
+            result.AppendMessageWithFormat ("Process %llu launched: '%s' (%s)\n", process->GetID(), filename, archname);
             result.SetDidChangeProcessState (true);
             if (m_options.stop_at_entry == false)
             {
@@ -573,7 +573,7 @@ public:
             state = process->GetState();
             if (process->IsAlive() && state != eStateConnected)
             {
-                result.AppendErrorWithFormat ("Process %u is currently being debugged, kill the process before attaching.\n", 
+                result.AppendErrorWithFormat ("Process %llu is currently being debugged, kill the process before attaching.\n", 
                                               process->GetID());
                 result.SetStatus (eReturnStatusFailed);
                 return false;
@@ -676,7 +676,7 @@ public:
                     StateType state = process->WaitForProcessToStop (NULL);
 
                     result.SetDidChangeProcessState (true);
-                    result.AppendMessageWithFormat ("Process %i %s\n", process->GetID(), StateAsCString (state));
+                    result.AppendMessageWithFormat ("Process %llu %s\n", process->GetID(), StateAsCString (state));
                     result.SetStatus (eReturnStatusSuccessFinishNoResult);
                 }
                 else
@@ -728,7 +728,7 @@ public:
                         StateType state = process->WaitForProcessToStop (NULL);
 
                         result.SetDidChangeProcessState (true);
-                        result.AppendMessageWithFormat ("Process %i %s\n", process->GetID(), StateAsCString (state));
+                        result.AppendMessageWithFormat ("Process %llu %s\n", process->GetID(), StateAsCString (state));
                         result.SetStatus (eReturnStatusSuccessFinishNoResult);
                     }
                     else
@@ -859,13 +859,13 @@ public:
             Error error(process->Resume());
             if (error.Success())
             {
-                result.AppendMessageWithFormat ("Process %i resuming\n", process->GetID());
+                result.AppendMessageWithFormat ("Process %llu resuming\n", process->GetID());
                 if (synchronous_execution)
                 {
                     state = process->WaitForProcessToStop (NULL);
 
                     result.SetDidChangeProcessState (true);
-                    result.AppendMessageWithFormat ("Process %i %s\n", process->GetID(), StateAsCString (state));
+                    result.AppendMessageWithFormat ("Process %llu %s\n", process->GetID(), StateAsCString (state));
                     result.SetStatus (eReturnStatusSuccessFinishNoResult);
                 }
                 else
@@ -923,7 +923,7 @@ public:
             return false;
         }
 
-        result.AppendMessageWithFormat ("Detaching from process %i\n", process->GetID());
+        result.AppendMessageWithFormat ("Detaching from process %llu\n", process->GetID());
         Error error (process->Detach());
         if (error.Success())
         {
@@ -1030,7 +1030,7 @@ public:
         {
             if (process->IsAlive())
             {
-                result.AppendErrorWithFormat ("Process %u is currently being debugged, kill the process before connecting.\n", 
+                result.AppendErrorWithFormat ("Process %llu is currently being debugged, kill the process before connecting.\n", 
                                               process->GetID());
                 result.SetStatus (eReturnStatusFailed);
                 return false;

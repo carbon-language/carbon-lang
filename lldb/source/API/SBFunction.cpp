@@ -107,9 +107,9 @@ SBFunction::GetDescription (SBStream &s)
 {
     if (m_opaque_ptr)
     {
-        s.Printf ("SBFunction: id = 0x%8.8x, name = %s", 
-                            m_opaque_ptr->GetID(),
-                            m_opaque_ptr->GetName().AsCString());
+        s.Printf ("SBFunction: id = 0x%8.8llx, name = %s", 
+                  m_opaque_ptr->GetID(),
+                  m_opaque_ptr->GetName().AsCString());
         Type *func_type = m_opaque_ptr->GetType();
         if (func_type)
             s.Printf(", type = %s", func_type->GetName().AsCString());

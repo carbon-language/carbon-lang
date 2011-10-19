@@ -76,7 +76,7 @@ ThreadKDP::WillResume (StateType resume_state)
 
     lldb::LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STEP));
     if (log)
-        log->Printf ("Resuming thread: %4.4x with state: %s.", GetID(), StateAsCString(resume_state));
+        log->Printf ("Resuming thread: %4.4llx with state: %s.", GetID(), StateAsCString(resume_state));
 
 //    ProcessKDP &process = GetKDPProcess();
 //    switch (resume_state)

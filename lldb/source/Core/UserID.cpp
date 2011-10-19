@@ -20,6 +20,6 @@ UserID::~UserID ()
 Stream&
 lldb_private::operator << (Stream& strm, const UserID& uid)
 {
-    strm.Printf("{0x%8.8x}", uid.GetID());
+    strm.Printf("{0x%8.8llx}", uid.GetID());
     return strm;
 }

@@ -228,7 +228,7 @@ Section::Dump (Stream *s, Target *target, uint32_t depth) const
 {
 //    s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
     s->Indent();
-    s->Printf("0x%8.8x %-14s ", GetID(), GetSectionTypeAsCString (m_type));
+    s->Printf("0x%8.8llx %-14s ", GetID(), GetSectionTypeAsCString (m_type));
     bool resolved = true;
     addr_t addr = LLDB_INVALID_ADDRESS;
 

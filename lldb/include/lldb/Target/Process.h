@@ -245,8 +245,8 @@ public:
         m_executable (),
         m_arguments (),
         m_environment (),
-        m_uid (LLDB_INVALID_UID),
-        m_gid (LLDB_INVALID_UID),
+        m_uid (UINT32_MAX),
+        m_gid (UINT32_MAX),
         m_arch(),
         m_pid (LLDB_INVALID_PROCESS_ID)
     {
@@ -258,8 +258,8 @@ public:
         m_executable (name, false),
         m_arguments (),
         m_environment(),
-        m_uid (LLDB_INVALID_UID),
-        m_gid (LLDB_INVALID_UID),
+        m_uid (UINT32_MAX),
+        m_gid (UINT32_MAX),
         m_arch (arch),
         m_pid (pid)
     {
@@ -271,8 +271,8 @@ public:
         m_executable.Clear();
         m_arguments.Clear();
         m_environment.Clear();
-        m_uid = LLDB_INVALID_UID;
-        m_gid = LLDB_INVALID_UID;
+        m_uid = UINT32_MAX;
+        m_gid = UINT32_MAX;
         m_arch.Clear();
         m_pid = LLDB_INVALID_PROCESS_ID;
     }

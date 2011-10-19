@@ -106,7 +106,7 @@ ThreadPlanBase::ShouldStop (Event *event_ptr)
                 // at this point.  Don't force the discard, however, so Master plans can stay
                 // in place if they want to.
                 if (log)
-                    log->Printf("Base plan discarding thread plans for thread tid = 0x%4.4x (breakpoint hit.)", m_thread.GetID());
+                    log->Printf("Base plan discarding thread plans for thread tid = 0x%4.4llx (breakpoint hit.)", m_thread.GetID());
                 m_thread.DiscardThreadPlans(false);
                 return true;
             }
@@ -134,7 +134,7 @@ ThreadPlanBase::ShouldStop (Event *event_ptr)
             // If we crashed, discard thread plans and stop.  Don't force the discard, however,
             // since on rerun the target may clean up this exception and continue normally from there.
                 if (log)
-                    log->Printf("Base plan discarding thread plans for thread tid = 0x%4.4x (exception.)", m_thread.GetID());
+                    log->Printf("Base plan discarding thread plans for thread tid = 0x%4.4llx (exception.)", m_thread.GetID());
             m_thread.DiscardThreadPlans(false);
             return true;
 
@@ -142,7 +142,7 @@ ThreadPlanBase::ShouldStop (Event *event_ptr)
             if (stop_info_sp->ShouldStop(event_ptr))
             {
                 if (log)
-                    log->Printf("Base plan discarding thread plans for thread tid = 0x%4.4x (signal.)", m_thread.GetID());
+                    log->Printf("Base plan discarding thread plans for thread tid = 0x%4.4llx (signal.)", m_thread.GetID());
                 m_thread.DiscardThreadPlans(false);
                 return true;
             }

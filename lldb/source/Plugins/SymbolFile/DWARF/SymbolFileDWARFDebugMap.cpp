@@ -231,6 +231,20 @@ SymbolFileDWARFDebugMap::GetObjectFileByCompUnitInfo (CompileUnitInfo *comp_unit
     return NULL;
 }
 
+
+uint32_t
+SymbolFileDWARFDebugMap::GetCompUnitInfoIndex (const CompileUnitInfo *comp_unit_info)
+{
+    if (!m_compile_unit_infos.empty())
+    {
+        const CompileUnitInfo *first_comp_unit_info = &m_compile_unit_infos.front();
+        const CompileUnitInfo *last_comp_unit_info = &m_compile_unit_infos.back();
+        if (first_comp_unit_info <= comp_unit_info && comp_unit_info <= last_comp_unit_info)
+            return comp_unit_info - first_comp_unit_info;
+    }
+    return UINT32_MAX;
+}
+
 SymbolFileDWARF *
 SymbolFileDWARFDebugMap::GetSymbolFileByOSOIndex (uint32_t oso_idx)
 {
@@ -256,7 +270,12 @@ SymbolFileDWARFDebugMap::GetSymbolFileByCompUnitInfo (CompileUnitInfo *comp_unit
                 // Set a a pointer to this class to set our OSO DWARF file know
                 // that the DWARF is being used along with a debug map and that
                 // it will have the remapped sections that we do below.
-                ((SymbolFileDWARF *)comp_unit_info->oso_symbol_vendor->GetSymbolFile())->SetDebugMapSymfile(this);
+                SymbolFileDWARF *oso_symfile = (SymbolFileDWARF *)comp_unit_info->oso_symbol_vendor->GetSymbolFile();
+                oso_symfile->SetDebugMapSymfile(this);
+                // Set the ID of the symbol file DWARF to the index of the OSO
+                // shifted left by 32 bits to provide a unique prefix for any
+                // UserID's that get created in the symbol file.
+                oso_symfile->SetID (((uint64_t)GetCompUnitInfoIndex(comp_unit_info) + 1ull) << 32ull);
                 comp_unit_info->debug_map_sections_sp.reset(new SectionList);
 
                 Symtab *exe_symtab = m_obj_file->GetSymtab();
@@ -622,11 +641,15 @@ SymbolFileDWARFDebugMap::ParseVariablesForContext (const SymbolContext& sc)
 Type*
 SymbolFileDWARFDebugMap::ResolveTypeUID(lldb::user_id_t type_uid)
 {
+    const uint64_t oso_idx = GetOSOIndexFromUserID (type_uid);
+    SymbolFileDWARF *oso_dwarf = GetSymbolFileByOSOIndex (oso_idx);
+    if (oso_dwarf)
+        oso_dwarf->ResolveTypeUID (type_uid);
     return NULL;
 }
 
 lldb::clang_type_t
-SymbolFileDWARFDebugMap::ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_Type)
+SymbolFileDWARFDebugMap::ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_type)
 {
     // We have a struct/union/class/enum that needs to be fully resolved.
     return NULL;
@@ -1148,4 +1171,25 @@ SymbolFileDWARFDebugMap::CompleteObjCInterfaceDecl (void *baton, clang::ObjCInte
         }
     }
 }
+
+clang::DeclContext*
+SymbolFileDWARFDebugMap::GetClangDeclContextContainingTypeUID (lldb::user_id_t type_uid)
+{
+    const uint64_t oso_idx = GetOSOIndexFromUserID (type_uid);
+    SymbolFileDWARF *oso_dwarf = GetSymbolFileByOSOIndex (oso_idx);
+    if (oso_dwarf)
+        return oso_dwarf->GetClangDeclContextContainingTypeUID (type_uid);
+    return NULL;
+}
+
+clang::DeclContext*
+SymbolFileDWARFDebugMap::GetClangDeclContextForTypeUID (const lldb_private::SymbolContext &sc, lldb::user_id_t type_uid)
+{
+    const uint64_t oso_idx = GetOSOIndexFromUserID (type_uid);
+    SymbolFileDWARF *oso_dwarf = GetSymbolFileByOSOIndex (oso_idx);
+    if (oso_dwarf)
+        return oso_dwarf->GetClangDeclContextForTypeUID (sc, type_uid);
+    return NULL;
+}
+
 

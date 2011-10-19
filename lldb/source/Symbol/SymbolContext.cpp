@@ -500,7 +500,7 @@ SymbolContext::GetParentOfInlinedScope (const Address &curr_frame_pc,
 
                 if (log)
                 {
-                    log->Printf ("warning: inlined block 0x%8.8x doesn't have a range that contains file address 0x%llx", 
+                    log->Printf ("warning: inlined block 0x%8.8llx doesn't have a range that contains file address 0x%llx", 
                                  curr_inlined_block->GetID(), curr_frame_pc.GetFileAddress());
                 }
 #ifdef LLDB_CONFIGURATION_DEBUG
@@ -519,7 +519,7 @@ SymbolContext::GetParentOfInlinedScope (const Address &curr_frame_pc,
                     }
                     if (objfile)
                     {
-                        fprintf (stderr, "warning: inlined block 0x%8.8x doesn't have a range that contains file address 0x%llx in %s/%s\n", 
+                        fprintf (stderr, "warning: inlined block 0x%8.8llx doesn't have a range that contains file address 0x%llx in %s/%s\n", 
                                  curr_inlined_block->GetID(), 
                                  curr_frame_pc.GetFileAddress(),
                                  objfile->GetFileSpec().GetDirectory().GetCString(),
@@ -527,7 +527,7 @@ SymbolContext::GetParentOfInlinedScope (const Address &curr_frame_pc,
                     }
                     else
                     {
-                        fprintf (stderr, "warning: inlined block 0x%8.8x doesn't have a range that contains file address 0x%llx\n", 
+                        fprintf (stderr, "warning: inlined block 0x%8.8llx doesn't have a range that contains file address 0x%llx\n", 
                                  curr_inlined_block->GetID(), curr_frame_pc.GetFileAddress());
                     }
                 }

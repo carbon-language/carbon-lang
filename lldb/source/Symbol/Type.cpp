@@ -228,7 +228,7 @@ Type::DumpValue
         {
             s->PutChar('(');
             if (verbose)
-                s->Printf("Type{0x%8.8x} ", GetID());
+                s->Printf("Type{0x%8.8llx} ", GetID());
             DumpTypeName (s);
             s->PutCString(") ");
         }

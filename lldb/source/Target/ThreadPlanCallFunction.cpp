@@ -292,7 +292,7 @@ ThreadPlanCallFunction::DoTakedown ()
                 abi->GetReturnValue(m_thread, *m_return_value_sp);
         }
         if (log)
-            log->Printf ("DoTakedown called for thread 0x%4.4x, m_valid: %d complete: %d.\n", m_thread.GetID(), m_valid, IsPlanComplete());
+            log->Printf ("DoTakedown called for thread 0x%4.4llx, m_valid: %d complete: %d.\n", m_thread.GetID(), m_valid, IsPlanComplete());
         m_takedown_done = true;
         m_real_stop_info_sp = GetPrivateStopReason();
         m_thread.RestoreThreadStateFromCheckpoint(m_stored_thread_state);
@@ -305,7 +305,7 @@ ThreadPlanCallFunction::DoTakedown ()
     else
     {
         if (log)
-            log->Printf ("DoTakedown called as no-op for thread 0x%4.4x, m_valid: %d complete: %d.\n", m_thread.GetID(), m_valid, IsPlanComplete());
+            log->Printf ("DoTakedown called as no-op for thread 0x%4.4llx, m_valid: %d complete: %d.\n", m_thread.GetID(), m_valid, IsPlanComplete());
     }
 }
 

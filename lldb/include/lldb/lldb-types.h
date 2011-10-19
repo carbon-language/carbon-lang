@@ -96,7 +96,7 @@ const lldb::thread_t lldb_invalid_host_thread_const = { NULL, 0 } ;
 namespace lldb 
 {
     typedef uint64_t    addr_t;
-    typedef uint32_t    user_id_t;
+    typedef uint64_t    user_id_t;
     typedef int32_t     pid_t;
     typedef uint32_t    tid_t;
     typedef int32_t     break_id_t;

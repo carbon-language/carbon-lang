@@ -1082,7 +1082,7 @@ ProcessGDBRemote::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new
     // locker will keep a mutex locked until it goes out of scope
     LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_THREAD));
     if (log && log->GetMask().Test(GDBR_LOG_VERBOSE))
-        log->Printf ("ProcessGDBRemote::%s (pid = %i)", __FUNCTION__, GetID());
+        log->Printf ("ProcessGDBRemote::%s (pid = %llu)", __FUNCTION__, GetID());
     // Update the thread list's stop id immediately so we don't recurse into this function.
 
     std::vector<lldb::tid_t> thread_ids;
@@ -1798,12 +1798,12 @@ ProcessGDBRemote::EnableBreakpoint (BreakpointSite *bp_site)
     user_id_t site_id = bp_site->GetID();
     const addr_t addr = bp_site->GetLoadAddress();
     if (log)
-        log->Printf ("ProcessGDBRemote::EnableBreakpoint (size_id = %d) address = 0x%llx", site_id, (uint64_t)addr);
+        log->Printf ("ProcessGDBRemote::EnableBreakpoint (size_id = %llu) address = 0x%llx", site_id, (uint64_t)addr);
 
     if (bp_site->IsEnabled())
     {
         if (log)
-            log->Printf ("ProcessGDBRemote::EnableBreakpoint (size_id = %d) address = 0x%llx -- SUCCESS (already enabled)", site_id, (uint64_t)addr);
+            log->Printf ("ProcessGDBRemote::EnableBreakpoint (size_id = %llu) address = 0x%llx -- SUCCESS (already enabled)", site_id, (uint64_t)addr);
         return error;
     }
     else
@@ -1860,7 +1860,7 @@ ProcessGDBRemote::DisableBreakpoint (BreakpointSite *bp_site)
     user_id_t site_id = bp_site->GetID();
     LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_BREAKPOINTS));
     if (log)
-        log->Printf ("ProcessGDBRemote::DisableBreakpoint (site_id = %d) addr = 0x%8.8llx", site_id, (uint64_t)addr);
+        log->Printf ("ProcessGDBRemote::DisableBreakpoint (site_id = %llu) addr = 0x%8.8llx", site_id, (uint64_t)addr);
 
     if (bp_site->IsEnabled())
     {
@@ -1889,7 +1889,7 @@ ProcessGDBRemote::DisableBreakpoint (BreakpointSite *bp_site)
     else
     {
         if (log)
-            log->Printf ("ProcessGDBRemote::DisableBreakpoint (site_id = %d) addr = 0x%8.8llx -- SUCCESS (already disabled)", site_id, (uint64_t)addr);
+            log->Printf ("ProcessGDBRemote::DisableBreakpoint (site_id = %llu) addr = 0x%8.8llx -- SUCCESS (already disabled)", site_id, (uint64_t)addr);
         return error;
     }
 
@@ -1926,11 +1926,11 @@ ProcessGDBRemote::EnableWatchpoint (Watchpoint *wp)
         addr_t addr = wp->GetLoadAddress();
         LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_WATCHPOINTS));
         if (log)
-            log->Printf ("ProcessGDBRemote::EnableWatchpoint(watchID = %d)", watchID);
+            log->Printf ("ProcessGDBRemote::EnableWatchpoint(watchID = %llu)", watchID);
         if (wp->IsEnabled())
         {
             if (log)
-                log->Printf("ProcessGDBRemote::EnableWatchpoint(watchID = %d) addr = 0x%8.8llx: watchpoint already enabled.", watchID, (uint64_t)addr);
+                log->Printf("ProcessGDBRemote::EnableWatchpoint(watchID = %llu) addr = 0x%8.8llx: watchpoint already enabled.", watchID, (uint64_t)addr);
             return error;
         }
 
@@ -1970,12 +1970,12 @@ ProcessGDBRemote::DisableWatchpoint (Watchpoint *wp)
 
         addr_t addr = wp->GetLoadAddress();
         if (log)
-            log->Printf ("ProcessGDBRemote::DisableWatchpoint (watchID = %d) addr = 0x%8.8llx", watchID, (uint64_t)addr);
+            log->Printf ("ProcessGDBRemote::DisableWatchpoint (watchID = %llu) addr = 0x%8.8llx", watchID, (uint64_t)addr);
 
         if (!wp->IsEnabled())
         {
             if (log)
-                log->Printf ("ProcessGDBRemote::DisableWatchpoint (watchID = %d) addr = 0x%8.8llx -- SUCCESS (already disabled)", watchID, (uint64_t)addr);
+                log->Printf ("ProcessGDBRemote::DisableWatchpoint (watchID = %llu) addr = 0x%8.8llx -- SUCCESS (already disabled)", watchID, (uint64_t)addr);
             return error;
         }
         
@@ -2307,7 +2307,7 @@ ProcessGDBRemote::AsyncThread (void *arg)
 
     LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
     if (log)
-        log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %i) thread starting...", __FUNCTION__, arg, process->GetID());
+        log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %llu) thread starting...", __FUNCTION__, arg, process->GetID());
 
     Listener listener ("ProcessGDBRemote::AsyncThread");
     EventSP event_sp;
@@ -2322,14 +2322,14 @@ ProcessGDBRemote::AsyncThread (void *arg)
         while (!done)
         {
             if (log)
-                log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %i) listener.WaitForEvent (NULL, event_sp)...", __FUNCTION__, arg, process->GetID());
+                log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %llu) listener.WaitForEvent (NULL, event_sp)...", __FUNCTION__, arg, process->GetID());
             if (listener.WaitForEvent (NULL, event_sp))
             {
                 const uint32_t event_type = event_sp->GetType();
                 if (event_sp->BroadcasterIs (&process->m_async_broadcaster))
                 {
                     if (log)
-                        log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %i) Got an event of type: %d...", __FUNCTION__, arg, process->GetID(), event_type);
+                        log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %llu) Got an event of type: %d...", __FUNCTION__, arg, process->GetID(), event_type);
 
                     switch (event_type)
                     {
@@ -2342,7 +2342,7 @@ ProcessGDBRemote::AsyncThread (void *arg)
                                     const char *continue_cstr = (const char *)continue_packet->GetBytes ();
                                     const size_t continue_cstr_len = continue_packet->GetByteSize ();
                                     if (log)
-                                        log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %i) got eBroadcastBitAsyncContinue: %s", __FUNCTION__, arg, process->GetID(), continue_cstr);
+                                        log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %llu) got eBroadcastBitAsyncContinue: %s", __FUNCTION__, arg, process->GetID(), continue_cstr);
 
                                     if (::strstr (continue_cstr, "vAttach") == NULL)
                                         process->SetPrivateState(eStateRunning);
@@ -2379,13 +2379,13 @@ ProcessGDBRemote::AsyncThread (void *arg)
 
                         case eBroadcastBitAsyncThreadShouldExit:
                             if (log)
-                                log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %i) got eBroadcastBitAsyncThreadShouldExit...", __FUNCTION__, arg, process->GetID());
+                                log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %llu) got eBroadcastBitAsyncThreadShouldExit...", __FUNCTION__, arg, process->GetID());
                             done = true;
                             break;
 
                         default:
                             if (log)
-                                log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %i) got unknown event 0x%8.8x", __FUNCTION__, arg, process->GetID(), event_type);
+                                log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %llu) got unknown event 0x%8.8x", __FUNCTION__, arg, process->GetID(), event_type);
                             done = true;
                             break;
                     }
@@ -2402,14 +2402,14 @@ ProcessGDBRemote::AsyncThread (void *arg)
             else
             {
                 if (log)
-                    log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %i) listener.WaitForEvent (NULL, event_sp) => false", __FUNCTION__, arg, process->GetID());
+                    log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %llu) listener.WaitForEvent (NULL, event_sp) => false", __FUNCTION__, arg, process->GetID());
                 done = true;
             }
         }
     }
 
     if (log)
-        log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %i) thread exiting...", __FUNCTION__, arg, process->GetID());
+        log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %llu) thread exiting...", __FUNCTION__, arg, process->GetID());
 
     process->m_async_thread = LLDB_INVALID_HOST_THREAD;
     return NULL;

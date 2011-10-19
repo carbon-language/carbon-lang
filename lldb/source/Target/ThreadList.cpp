@@ -202,7 +202,7 @@ ThreadList::ShouldStop (Event *event_ptr)
         if (thread_sp->GetResumeState () == eStateSuspended)
         {
             if (log)
-                log->Printf ("ThreadList::%s for tid = 0x%4.4x, pc = 0x%16.16llx, should_stop = 0 (ignore since thread was suspended)", 
+                log->Printf ("ThreadList::%s for tid = 0x%4.4llx, pc = 0x%16.16llx, should_stop = 0 (ignore since thread was suspended)", 
                              __FUNCTION__, 
                              thread_sp->GetID (), 
                              thread_sp->GetRegisterContext()->GetPC());
@@ -212,7 +212,7 @@ ThreadList::ShouldStop (Event *event_ptr)
         if (thread_sp->ThreadStoppedForAReason() == false)
         {
             if (log)
-                log->Printf ("ThreadList::%s for tid = 0x%4.4x, pc = 0x%16.16llx, should_stop = 0 (ignore since no stop reason)", 
+                log->Printf ("ThreadList::%s for tid = 0x%4.4llx, pc = 0x%16.16llx, should_stop = 0 (ignore since no stop reason)", 
                              __FUNCTION__, 
                              thread_sp->GetID (), 
                              thread_sp->GetRegisterContext()->GetPC());
@@ -220,7 +220,7 @@ ThreadList::ShouldStop (Event *event_ptr)
         }
 
         if (log)
-            log->Printf ("ThreadList::%s for tid = 0x%4.4x, pc = 0x%16.16llx", 
+            log->Printf ("ThreadList::%s for tid = 0x%4.4llx, pc = 0x%16.16llx", 
                          __FUNCTION__, 
                          thread_sp->GetID (), 
                          thread_sp->GetRegisterContext()->GetPC());
@@ -267,7 +267,7 @@ ThreadList::ShouldReportStop (Event *event_ptr)
         {
             const Vote vote = thread_sp->ShouldReportStop (event_ptr);
             if (log)
-                log->Printf  ("ThreadList::%s thread 0x%4.4x: pc = 0x%16.16llx, vote = %s", 
+                log->Printf  ("ThreadList::%s thread 0x%4.4llx: pc = 0x%16.16llx, vote = %s", 
                               __FUNCTION__,
                               thread_sp->GetID (), 
                               thread_sp->GetRegisterContext()->GetPC(),
@@ -289,7 +289,7 @@ ThreadList::ShouldReportStop (Event *event_ptr)
                 else
                 {
                     if (log)
-                        log->Printf ("ThreadList::%s thread 0x%4.4x: pc = 0x%16.16llx voted %s, but lost out because result was %s", 
+                        log->Printf ("ThreadList::%s thread 0x%4.4llx: pc = 0x%16.16llx voted %s, but lost out because result was %s", 
                                      __FUNCTION__,
                                      thread_sp->GetID (), 
                                      thread_sp->GetRegisterContext()->GetPC(),
@@ -334,7 +334,7 @@ ThreadList::ShouldReportRun (Event *event_ptr)
                     break;
                 case eVoteNo:
                     if (log)
-                        log->Printf ("ThreadList::ShouldReportRun() thread %d (0x%4.4x) says don't report.", 
+                        log->Printf ("ThreadList::ShouldReportRun() thread %d (0x%4.4llx) says don't report.", 
                                      (*pos)->GetIndexID(), 
                                      (*pos)->GetID());
                     result = eVoteNo;

@@ -294,7 +294,7 @@ ProcessKDP::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new_threa
     // locker will keep a mutex locked until it goes out of scope
     LogSP log (ProcessKDPLog::GetLogIfAllCategoriesSet (KDP_LOG_THREAD));
     if (log && log->GetMask().Test(KDP_LOG_VERBOSE))
-        log->Printf ("ProcessKDP::%s (pid = %i)", __FUNCTION__, GetID());
+        log->Printf ("ProcessKDP::%s (pid = %llu)", __FUNCTION__, GetID());
     
     // We currently are making only one thread per core and we
     // actually don't know about actual threads. Eventually we
@@ -698,7 +698,7 @@ ProcessKDP::AsyncThread (void *arg)
     
     LogSP log (ProcessKDPLog::GetLogIfAllCategoriesSet (KDP_LOG_PROCESS));
     if (log)
-        log->Printf ("ProcessKDP::%s (arg = %p, pid = %i) thread starting...", __FUNCTION__, arg, process->GetID());
+        log->Printf ("ProcessKDP::%s (arg = %p, pid = %llu) thread starting...", __FUNCTION__, arg, process->GetID());
     
     Listener listener ("ProcessKDP::AsyncThread");
     EventSP event_sp;
@@ -713,14 +713,14 @@ ProcessKDP::AsyncThread (void *arg)
         while (!done)
         {
             if (log)
-                log->Printf ("ProcessKDP::%s (arg = %p, pid = %i) listener.WaitForEvent (NULL, event_sp)...", __FUNCTION__, arg, process->GetID());
+                log->Printf ("ProcessKDP::%s (arg = %p, pid = %llu) listener.WaitForEvent (NULL, event_sp)...", __FUNCTION__, arg, process->GetID());
             if (listener.WaitForEvent (NULL, event_sp))
             {
                 const uint32_t event_type = event_sp->GetType();
                 if (event_sp->BroadcasterIs (&process->m_async_broadcaster))
                 {
                     if (log)
-                        log->Printf ("ProcessKDP::%s (arg = %p, pid = %i) Got an event of type: %d...", __FUNCTION__, arg, process->GetID(), event_type);
+                        log->Printf ("ProcessKDP::%s (arg = %p, pid = %llu) Got an event of type: %d...", __FUNCTION__, arg, process->GetID(), event_type);
                     
                     switch (event_type)
                     {
@@ -772,13 +772,13 @@ ProcessKDP::AsyncThread (void *arg)
                             
                         case eBroadcastBitAsyncThreadShouldExit:
                             if (log)
-                                log->Printf ("ProcessKDP::%s (arg = %p, pid = %i) got eBroadcastBitAsyncThreadShouldExit...", __FUNCTION__, arg, process->GetID());
+                                log->Printf ("ProcessKDP::%s (arg = %p, pid = %llu) got eBroadcastBitAsyncThreadShouldExit...", __FUNCTION__, arg, process->GetID());
                             done = true;
                             break;
                             
                         default:
                             if (log)
-                                log->Printf ("ProcessKDP::%s (arg = %p, pid = %i) got unknown event 0x%8.8x", __FUNCTION__, arg, process->GetID(), event_type);
+                                log->Printf ("ProcessKDP::%s (arg = %p, pid = %llu) got unknown event 0x%8.8x", __FUNCTION__, arg, process->GetID(), event_type);
                             done = true;
                             break;
                     }
@@ -795,14 +795,14 @@ ProcessKDP::AsyncThread (void *arg)
             else
             {
                 if (log)
-                    log->Printf ("ProcessKDP::%s (arg = %p, pid = %i) listener.WaitForEvent (NULL, event_sp) => false", __FUNCTION__, arg, process->GetID());
+                    log->Printf ("ProcessKDP::%s (arg = %p, pid = %llu) listener.WaitForEvent (NULL, event_sp) => false", __FUNCTION__, arg, process->GetID());
                 done = true;
             }
         }
     }
     
     if (log)
-        log->Printf ("ProcessKDP::%s (arg = %p, pid = %i) thread exiting...", __FUNCTION__, arg, process->GetID());
+        log->Printf ("ProcessKDP::%s (arg = %p, pid = %llu) thread exiting...", __FUNCTION__, arg, process->GetID());
     
     process->m_async_thread = LLDB_INVALID_HOST_THREAD;
     return NULL;

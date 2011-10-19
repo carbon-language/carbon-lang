@@ -19,7 +19,6 @@
 namespace lldb_private {
 
 class Symbol :
-    public UserID,   // Used to uniquely identify this symbol in its symbol table
     public SymbolContextScope
 {
 public:
@@ -28,7 +27,7 @@ public:
     // and sorting requirements.
     Symbol();
 
-    Symbol (lldb::user_id_t symID,
+    Symbol (uint32_t symID,
             const char *name,
             bool name_is_mangled,
             lldb::SymbolType type,
@@ -41,7 +40,7 @@ public:
             uint32_t size,
             uint32_t flags);
 
-    Symbol (lldb::user_id_t symID,
+    Symbol (uint32_t symID,
             const char *name,
             bool name_is_mangled,
             lldb::SymbolType type,
@@ -56,6 +55,9 @@ public:
 
     const Symbol&
     operator= (const Symbol& rhs);
+
+    void
+    Clear();
 
     bool
     Compare (const ConstString& name, lldb::SymbolType type) const;
@@ -77,6 +79,18 @@ public:
 
     const ConstString &
     GetName () { return m_mangled.GetName(); }
+
+    uint32_t
+    GetID() const
+    {
+        return m_uid;
+    }
+
+    void
+    SetID(uint32_t uid)
+    {
+        m_uid = uid;
+    }
 
     Mangled&
     GetMangled () { return m_mangled; }
@@ -188,6 +202,7 @@ public:
 
 protected:
 
+    uint32_t        m_uid;                  // User ID (usually the original symbol table index)
     Mangled         m_mangled;              // uniqued symbol name/mangled name pair
     lldb::SymbolType m_type;                 // symbol type
     uint16_t        m_type_data;            // data specific to m_type

@@ -55,7 +55,7 @@ class DWARFDIECollection;
 class DWARFFormValue;
 class SymbolFileDWARFDebugMap;
 
-class SymbolFileDWARF : public lldb_private::SymbolFile
+class SymbolFileDWARF : public lldb_private::SymbolFile, public lldb_private::UserID
 {
 public:
     friend class SymbolFileDWARFDebugMap;
@@ -411,6 +411,21 @@ protected:
                                 m_decl_ctx_to_die[decl_ctx].insert(die);
                             }
     
+    bool
+    UserIDMatches (lldb::user_id_t uid) const
+    {
+        const lldb::user_id_t high_uid = uid & 0xffffffff00000000ull;
+        if (high_uid)
+            return high_uid == GetID();
+        return true;
+    }
+
+    lldb::user_id_t
+    MakeUserID (dw_offset_t die_offset) const
+    {
+        return GetID() | die_offset;
+    }
+
     void
     ReportError (const char *format, ...) __attribute__ ((format (printf, 2, 3)));
     void

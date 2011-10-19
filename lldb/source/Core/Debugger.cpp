@@ -1524,7 +1524,7 @@ Debugger::FormatPrompt
                                         var_name_begin += ::strlen ("process.");
                                         if (::strncmp (var_name_begin, "id}", strlen("id}")) == 0)
                                         {
-                                            s.Printf("%i", process->GetID());
+                                            s.Printf("%llu", process->GetID());
                                             var_success = true;
                                         }
                                         else if ((::strncmp (var_name_begin, "name}", strlen("name}")) == 0) ||
@@ -1562,7 +1562,7 @@ Debugger::FormatPrompt
                                         var_name_begin += ::strlen ("thread.");
                                         if (::strncmp (var_name_begin, "id}", strlen("id}")) == 0)
                                         {
-                                            s.Printf("0x%4.4x", thread->GetID());
+                                            s.Printf("0x%4.4llx", thread->GetID());
                                             var_success = true;
                                         }
                                         else if (::strncmp (var_name_begin, "index}", strlen("index}")) == 0)
@@ -1733,7 +1733,7 @@ Debugger::FormatPrompt
                                     if (::strncmp (var_name_begin, "id}", strlen("id}")) == 0)
                                     {
                                         if (sc->function)
-                                            s.Printf("function{0x%8.8x}", sc->function->GetID());
+                                            s.Printf("function{0x%8.8llx}", sc->function->GetID());
                                         else
                                             s.Printf("symbol[%u]", sc->symbol->GetID());
 

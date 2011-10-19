@@ -179,7 +179,7 @@ GDBRemoteRegisterContext::ReadRegisterBytes (const RegisterInfo *reg_info, DataE
                 {
                     // Get all registers in one packet
                     if (thread_suffix_supported)
-                        packet_len = ::snprintf (packet, sizeof(packet), "g;thread:%4.4x;", m_thread.GetID());
+                        packet_len = ::snprintf (packet, sizeof(packet), "g;thread:%4.4llx;", m_thread.GetID());
                     else
                         packet_len = ::snprintf (packet, sizeof(packet), "g");
                     assert (packet_len < (sizeof(packet) - 1));
@@ -195,7 +195,7 @@ GDBRemoteRegisterContext::ReadRegisterBytes (const RegisterInfo *reg_info, DataE
                     // Get each register individually
 
                     if (thread_suffix_supported)
-                        packet_len = ::snprintf (packet, sizeof(packet), "p%x;thread:%4.4x;", reg, m_thread.GetID());
+                        packet_len = ::snprintf (packet, sizeof(packet), "p%x;thread:%4.4llx;", reg, m_thread.GetID());
                     else
                         packet_len = ::snprintf (packet, sizeof(packet), "p%x", reg);
                     assert (packet_len < (sizeof(packet) - 1));
@@ -282,7 +282,7 @@ GDBRemoteRegisterContext::WriteRegisterBytes (const lldb_private::RegisterInfo *
                                               lldb::endian::InlHostByteOrder());
                     
                     if (thread_suffix_supported)
-                        packet.Printf (";thread:%4.4x;", m_thread.GetID());
+                        packet.Printf (";thread:%4.4llx;", m_thread.GetID());
 
                     // Invalidate all register values
                     InvalidateIfNeeded (true);
@@ -309,7 +309,7 @@ GDBRemoteRegisterContext::WriteRegisterBytes (const lldb_private::RegisterInfo *
                                               lldb::endian::InlHostByteOrder());
 
                     if (thread_suffix_supported)
-                        packet.Printf (";thread:%4.4x;", m_thread.GetID());
+                        packet.Printf (";thread:%4.4llx;", m_thread.GetID());
 
                     // Invalidate just this register
                     m_reg_valid[reg] = false;
@@ -346,7 +346,7 @@ GDBRemoteRegisterContext::ReadAllRegisterValues (lldb::DataBufferSP &data_sp)
         {
             int packet_len = 0;
             if (thread_suffix_supported)
-                packet_len = ::snprintf (packet, sizeof(packet), "g;thread:%4.4x", m_thread.GetID());
+                packet_len = ::snprintf (packet, sizeof(packet), "g;thread:%4.4llx", m_thread.GetID());
             else
                 packet_len = ::snprintf (packet, sizeof(packet), "g");
             assert (packet_len < (sizeof(packet) - 1));
@@ -363,7 +363,7 @@ GDBRemoteRegisterContext::ReadAllRegisterValues (lldb::DataBufferSP &data_sp)
                     if (thread_suffix_supported)
                     {
                         char thread_id_cstr[64];
-                        ::snprintf (thread_id_cstr, sizeof(thread_id_cstr), ";thread:%4.4x;", m_thread.GetID());
+                        ::snprintf (thread_id_cstr, sizeof(thread_id_cstr), ";thread:%4.4llx;", m_thread.GetID());
                         response_str.append (thread_id_cstr);
                     }
                     data_sp.reset (new DataBufferHeap (response_str.c_str(), response_str.size()));
@@ -457,7 +457,7 @@ GDBRemoteRegisterContext::WriteAllRegisterValues (const lldb::DataBufferSP &data
                                                           lldb::endian::InlHostByteOrder());
 
                                 if (thread_suffix_supported)
-                                    packet.Printf (";thread:%4.4x;", m_thread.GetID());
+                                    packet.Printf (";thread:%4.4llx;", m_thread.GetID());
 
                                 m_reg_valid[reg] = false;
                                 if (gdb_comm.SendPacketAndWaitForResponse(packet.GetString().c_str(),

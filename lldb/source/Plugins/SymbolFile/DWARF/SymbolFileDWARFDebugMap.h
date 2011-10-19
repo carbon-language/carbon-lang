@@ -66,6 +66,8 @@ public:
     virtual size_t          ParseVariablesForContext (const lldb_private::SymbolContext& sc);
 
     virtual lldb_private::Type* ResolveTypeUID (lldb::user_id_t type_uid);
+    virtual clang::DeclContext* GetClangDeclContextContainingTypeUID (lldb::user_id_t type_uid);
+    virtual clang::DeclContext* GetClangDeclContextForTypeUID (const lldb_private::SymbolContext &sc, lldb::user_id_t type_uid);
     virtual lldb::clang_type_t  ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_Type);
     virtual uint32_t        ResolveSymbolContext (const lldb_private::Address& so_addr, uint32_t resolve_scope, lldb_private::SymbolContext& sc);
     virtual uint32_t        ResolveSymbolContext (const lldb_private::FileSpec& file_spec, uint32_t line, bool check_inlines, uint32_t resolve_scope, lldb_private::SymbolContextList& sc_list);
@@ -151,6 +153,11 @@ protected:
     void
     InitOSO ();
 
+    static uint32_t
+    GetOSOIndexFromUserID (lldb::user_id_t uid)
+    {
+        return (uint32_t)((uid >> 32ull) - 1ull);
+    }
     bool
     GetFileSpecForSO (uint32_t oso_idx, lldb_private::FileSpec &file_spec);
 
@@ -168,6 +175,9 @@ protected:
 
     lldb_private::ObjectFile *
     GetObjectFileByOSOIndex (uint32_t oso_idx);
+
+    uint32_t
+    GetCompUnitInfoIndex (const CompileUnitInfo *comp_unit_info);
 
     SymbolFileDWARF *
     GetSymbolFile (const lldb_private::SymbolContext& sc);

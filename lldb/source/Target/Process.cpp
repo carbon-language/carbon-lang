@@ -1340,7 +1340,7 @@ Process::DisableBreakpointSiteByID (lldb::user_id_t break_id)
     }
     else
     {
-        error.SetErrorStringWithFormat("invalid breakpoint site ID: %i", break_id);
+        error.SetErrorStringWithFormat("invalid breakpoint site ID: %llu", break_id);
     }
 
     return error;
@@ -1358,7 +1358,7 @@ Process::EnableBreakpointSiteByID (lldb::user_id_t break_id)
     }
     else
     {
-        error.SetErrorStringWithFormat("invalid breakpoint site ID: %i", break_id);
+        error.SetErrorStringWithFormat("invalid breakpoint site ID: %llu", break_id);
     }
     return error;
 }
@@ -1540,7 +1540,7 @@ Process::DisableSoftwareBreakpoint (BreakpointSite *bp_site)
     addr_t bp_addr = bp_site->GetLoadAddress();
     lldb::user_id_t breakID = bp_site->GetID();
     if (log)
-        log->Printf ("Process::DisableBreakpoint (breakID = %d) addr = 0x%llx", breakID, (uint64_t)bp_addr);
+        log->Printf ("Process::DisableBreakpoint (breakID = %llu) addr = 0x%llx", breakID, (uint64_t)bp_addr);
 
     if (bp_site->IsHardware())
     {
@@ -2718,7 +2718,7 @@ Process::StartPrivateStateThread ()
     // Create a thread that watches our internal state and controls which
     // events make it to clients (into the DCProcess event queue).
     char thread_name[1024];
-    snprintf(thread_name, sizeof(thread_name), "<lldb.process.internal-state(pid=%i)>", GetID());
+    snprintf(thread_name, sizeof(thread_name), "<lldb.process.internal-state(pid=%llu)>", GetID());
     m_private_state_thread = Host::ThreadCreate (thread_name, Process::PrivateStateThread, this, NULL);
     return IS_VALID_LLDB_HOST_THREAD(m_private_state_thread);
 }
@@ -2823,7 +2823,7 @@ Process::HandlePrivateEvent (EventSP &event_sp)
     {
         if (log)
         {
-            log->Printf ("Process::%s (pid = %i) broadcasting new state %s (old state %s) to %s", 
+            log->Printf ("Process::%s (pid = %llu) broadcasting new state %s (old state %s) to %s", 
                          __FUNCTION__, 
                          GetID(), 
                          StateAsCString(new_state), 
@@ -2842,7 +2842,7 @@ Process::HandlePrivateEvent (EventSP &event_sp)
     {
         if (log)
         {
-            log->Printf ("Process::%s (pid = %i) suppressing state %s (old state %s): should_broadcast == false", 
+            log->Printf ("Process::%s (pid = %llu) suppressing state %s (old state %s): should_broadcast == false", 
                          __FUNCTION__, 
                          GetID(), 
                          StateAsCString(new_state), 
@@ -2867,7 +2867,7 @@ Process::RunPrivateStateThread ()
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
     if (log)
-        log->Printf ("Process::%s (arg = %p, pid = %i) thread starting...", __FUNCTION__, this, GetID());
+        log->Printf ("Process::%s (arg = %p, pid = %llu) thread starting...", __FUNCTION__, this, GetID());
 
     bool exit_now = false;
     while (!exit_now)
@@ -2893,7 +2893,7 @@ Process::RunPrivateStateThread ()
             }
             
             if (log)
-                log->Printf ("Process::%s (arg = %p, pid = %i) got a control event: %d", __FUNCTION__, this, GetID(), event_sp->GetType());
+                log->Printf ("Process::%s (arg = %p, pid = %llu) got a control event: %d", __FUNCTION__, this, GetID(), event_sp->GetType());
 
             m_private_state_control_wait.SetValue (true, eBroadcastAlways);
             continue;
@@ -2912,7 +2912,7 @@ Process::RunPrivateStateThread ()
             internal_state == eStateDetached )
         {
             if (log)
-                log->Printf ("Process::%s (arg = %p, pid = %i) about to exit with internal state %s...", __FUNCTION__, this, GetID(), StateAsCString(internal_state));
+                log->Printf ("Process::%s (arg = %p, pid = %llu) about to exit with internal state %s...", __FUNCTION__, this, GetID(), StateAsCString(internal_state));
 
             break;
         }
@@ -2920,7 +2920,7 @@ Process::RunPrivateStateThread ()
 
     // Verify log is still enabled before attempting to write to it...
     if (log)
-        log->Printf ("Process::%s (arg = %p, pid = %i) thread exiting...", __FUNCTION__, this, GetID());
+        log->Printf ("Process::%s (arg = %p, pid = %llu) thread exiting...", __FUNCTION__, this, GetID());
 
     m_private_state_control_wait.SetValue (true, eBroadcastAlways);
     m_private_state_thread = LLDB_INVALID_HOST_THREAD;
@@ -3043,7 +3043,7 @@ void
 Process::ProcessEventData::Dump (Stream *s) const
 {
     if (m_process_sp)
-        s->Printf(" process = %p (pid = %u), ", m_process_sp.get(), m_process_sp->GetID());
+        s->Printf(" process = %p (pid = %llu), ", m_process_sp.get(), m_process_sp->GetID());
 
     s->Printf("state = %s", StateAsCString(GetState()));
 }
@@ -3433,7 +3433,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
     {
         StreamString s;
         thread_plan_sp->GetDescription(&s, lldb::eDescriptionLevelVerbose);
-        log->Printf ("Process::RunThreadPlan(): Resuming thread %u - 0x%4.4x to run thread plan \"%s\".",  
+        log->Printf ("Process::RunThreadPlan(): Resuming thread %u - 0x%4.4llx to run thread plan \"%s\".",  
                      thread->GetIndexID(), 
                      thread->GetID(), 
                      s.GetData());
@@ -3830,7 +3830,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                         continue;
                     }
                     
-                    ts.Printf("<0x%4.4x ", thread->GetID());
+                    ts.Printf("<0x%4.4llx ", thread->GetID());
                     RegisterContext *register_context = thread->GetRegisterContext().get();
                     
                     if (register_context)
@@ -3967,7 +3967,7 @@ Process::GetStatus (Stream &strm)
         {
             int exit_status = GetExitStatus();
             const char *exit_description = GetExitDescription();
-            strm.Printf ("Process %d exited with status = %i (0x%8.8x) %s\n",
+            strm.Printf ("Process %llu exited with status = %i (0x%8.8x) %s\n",
                           GetID(),
                           exit_status,
                           exit_status,
@@ -3978,12 +3978,12 @@ Process::GetStatus (Stream &strm)
             if (state == eStateConnected)
                 strm.Printf ("Connected to remote target.\n");
             else
-                strm.Printf ("Process %d %s\n", GetID(), StateAsCString (state));
+                strm.Printf ("Process %llu %s\n", GetID(), StateAsCString (state));
         }
     }
     else
     {
-        strm.Printf ("Process %d is running.\n", GetID());
+        strm.Printf ("Process %llu is running.\n", GetID());
     }
 }
 

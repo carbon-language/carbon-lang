@@ -20,8 +20,8 @@ using namespace lldb_private;
 
 
 Symbol::Symbol() :
-    UserID (),
     SymbolContextScope (),
+    m_uid (UINT32_MAX),
     m_mangled (),
     m_type (eSymbolTypeInvalid),
     m_type_data (0),
@@ -39,7 +39,7 @@ Symbol::Symbol() :
 
 Symbol::Symbol
 (
-    user_id_t symID,
+    uint32_t symID,
     const char *name,
     bool name_is_mangled,
     SymbolType type,
@@ -52,8 +52,8 @@ Symbol::Symbol
     uint32_t size,
     uint32_t flags
 ) :
-    UserID (symID),
     SymbolContextScope (),
+    m_uid (symID),
     m_mangled (name, name_is_mangled),
     m_type (type),
     m_type_data (0),
@@ -71,7 +71,7 @@ Symbol::Symbol
 
 Symbol::Symbol
 (
-    user_id_t symID,
+    uint32_t symID,
     const char *name,
     bool name_is_mangled,
     SymbolType type,
@@ -82,8 +82,8 @@ Symbol::Symbol
     const AddressRange &range,
     uint32_t flags
 ) :
-    UserID (symID),
     SymbolContextScope (),
+    m_uid (symID),
     m_mangled (name, name_is_mangled),
     m_type (type),
     m_type_data (0),
@@ -100,8 +100,8 @@ Symbol::Symbol
 }
 
 Symbol::Symbol(const Symbol& rhs):
-    UserID (rhs),
     SymbolContextScope (rhs),
+    m_uid (rhs.m_uid),
     m_mangled (rhs.m_mangled),
     m_type (rhs.m_type),
     m_type_data (rhs.m_type_data),
@@ -123,7 +123,7 @@ Symbol::operator= (const Symbol& rhs)
     if (this != &rhs)
     {
         SymbolContextScope::operator= (rhs);
-        UserID::operator= (rhs);
+        m_uid = rhs.m_uid;
         m_mangled = rhs.m_mangled;
         m_type = rhs.m_type;
         m_type_data = rhs.m_type_data;
@@ -138,6 +138,24 @@ Symbol::operator= (const Symbol& rhs)
         m_flags = rhs.m_flags;
     }
     return *this;
+}
+
+void
+Symbol::Clear()
+{
+    m_uid = UINT32_MAX;
+    m_mangled.Clear();
+    m_type = eSymbolTypeInvalid;
+    m_type_data = 0;
+    m_type_data_resolved = false;
+    m_is_synthetic = false;
+    m_is_debug = false;
+    m_is_external = false;
+    m_size_is_sibling = false;
+    m_size_is_synthesized = false;
+    m_searched_for_function = false;
+    m_addr_range.Clear();
+    m_flags = 0;
 }
 
 AddressRange *

@@ -303,7 +303,7 @@ SBProcess::ReportEventState (const SBEvent &event, FILE *out) const
         char message[1024];
         int message_len = ::snprintf (message,
                                       sizeof (message),
-                                      "Process %d %s\n",
+                                      "Process %llu %s\n",
                                       m_opaque_sp->GetID(),
                                       SBDebugger::StateAsCString (event_state));
 
@@ -321,7 +321,7 @@ SBProcess::AppendEventStateReport (const SBEvent &event, SBCommandReturnObject &
         char message[1024];
         ::snprintf (message,
                     sizeof (message),
-                    "Process %d %s\n",
+                    "Process %llu %s\n",
                     m_opaque_sp->GetID(),
                     SBDebugger::StateAsCString (event_state));
 
@@ -809,7 +809,7 @@ SBProcess::GetDescription (SBStream &description)
         if (exe_module)
             exe_name = exe_module->GetFileSpec().GetFilename().AsCString();
 
-        description.Printf ("SBProcess: pid = %d, state = %s, threads = %d%s%s", 
+        description.Printf ("SBProcess: pid = %llu, state = %s, threads = %d%s%s", 
                             m_opaque_sp->GetID(),
                             lldb_private::StateAsCString (GetState()), 
                             GetNumThreads(),
