@@ -17,4 +17,5 @@ add_llvm_library_dependencies(LLVMJIT
   LLVMRuntimeDyld
   LLVMSupport
   LLVMTarget
+  LLVMCodeGen
   )

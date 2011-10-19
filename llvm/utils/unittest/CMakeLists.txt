@@ -40,3 +40,11 @@ add_llvm_library(gtest
 add_llvm_library(gtest_main
   UnitTestMain/TestMain.cpp
   )
+
+add_llvm_library_dependencies(gtest
+  LLVMSupport
+  )
+
+add_llvm_library_dependencies(gtest_main
+  gtest
+  )
