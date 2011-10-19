@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #===-- test-release.sh - Test the LLVM release candidates ------------------===#
 #
 #                     The LLVM Compiler Infrastructure
@@ -11,6 +11,12 @@
 # Download, build, and test the release candidate for an LLVM release.
 #
 #===------------------------------------------------------------------------===#
+
+if [ `uname -s` = "FreeBSD" ]; then
+    MAKE=gmake
+else
+    MAKE=make
+fi
 
 projects="llvm cfe dragonegg test-suite"
 
@@ -246,13 +252,13 @@ function build_llvmCore() {
 
     cd $ObjDir
     echo "# Compiling llvm $Release-rc$RC $Flavor"
-    echo "# make -j $NumJobs VERBOSE=1 $ExtraOpts"
-    make -j $NumJobs VERBOSE=1 $ExtraOpts \
+    echo "# ${MAKE} -j $NumJobs VERBOSE=1 $ExtraOpts"
+    ${MAKE} -j $NumJobs VERBOSE=1 $ExtraOpts \
         2>&1 | tee $LogDir/llvm.make-Phase$Phase-$Flavor.log
 
     echo "# Installing llvm $Release-rc$RC $Flavor"
-    echo "# make install"
-    make install \
+    echo "# ${MAKE} install"
+    ${MAKE} install \
         2>&1 | tee $LogDir/llvm.install-Phase$Phase-$Flavor.log
     cd $BuildDir
 }
@@ -263,9 +269,9 @@ function test_llvmCore() {
     ObjDir="$3"
 
     cd $ObjDir
-    make -k check-all \
+    ${MAKE} -k check-all \
         2>&1 | tee $LogDir/llvm.check-Phase$Phase-$Flavor.log
-    make -k unittests \
+    ${MAKE} -k unittests \
         2>&1 | tee $LogDir/llvm.unittests-Phase$Phase-$Flavor.log
     cd $BuildDir
 }
