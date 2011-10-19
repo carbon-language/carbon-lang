@@ -417,7 +417,8 @@ bool Sema::DiagnoseUnknownTypeName(const IdentifierInfo &II,
       << (NestedNameSpecifier *)SS->getScopeRep() << II.getName()
       << SourceRange(SS->getRange().getBegin(), IILoc)
       << FixItHint::CreateInsertion(SS->getRange().getBegin(), "typename ");
-    SuggestedType = ActOnTypenameType(S, SourceLocation(), *SS, II, IILoc).get();
+    SuggestedType = ActOnTypenameType(S, SourceLocation(), *SS, II, IILoc)
+                                                                         .get();
   } else {
     assert(SS && SS->isInvalid() && 
            "Invalid scope specifier has already been diagnosed");
@@ -548,7 +549,8 @@ Corrected:
     if (!SecondTry) {
       SecondTry = true;
       if (TypoCorrection Corrected = CorrectTypo(Result.getLookupNameInfo(),
-                                                 Result.getLookupKind(), S, &SS)) {
+                                                 Result.getLookupKind(), S, 
+                                                 &SS)) {
         unsigned UnqualifiedDiag = diag::err_undeclared_var_use_suggest;
         unsigned QualifiedDiag = diag::err_no_member_suggest;
         std::string CorrectedStr(Corrected.getAsString(getLangOptions()));
@@ -2170,7 +2172,8 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
   }
   
   mergeDeclAttributes(New, Old, Context);
-  // Warn if an already-declared variable is made a weak_import in a subsequent declaration
+  // Warn if an already-declared variable is made a weak_import in a subsequent 
+  // declaration
   if (New->getAttr<WeakImportAttr>() &&
       Old->getStorageClass() == SC_None &&
       !Old->getAttr<WeakImportAttr>()) {
@@ -2667,7 +2670,8 @@ Decl *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
         Invalid = true;
   
         // Recover by removing the storage specifier.
-        DS.SetStorageClassSpec(*this, DeclSpec::SCS_unspecified, SourceLocation(),
+        DS.SetStorageClassSpec(*this, DeclSpec::SCS_unspecified, 
+                               SourceLocation(),
                                PrevSpec, DiagID);
       }
     }
@@ -2679,11 +2683,13 @@ Decl *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
           << Record->isUnion() << 0 
           << FixItHint::CreateRemoval(DS.getConstSpecLoc());
       if (DS.getTypeQualifiers() & DeclSpec::TQ_volatile)
-        Diag(DS.getVolatileSpecLoc(), diag::ext_anonymous_struct_union_qualified)
+        Diag(DS.getVolatileSpecLoc(), 
+             diag::ext_anonymous_struct_union_qualified)
           << Record->isUnion() << 1
           << FixItHint::CreateRemoval(DS.getVolatileSpecLoc());
       if (DS.getTypeQualifiers() & DeclSpec::TQ_restrict)
-        Diag(DS.getRestrictSpecLoc(), diag::ext_anonymous_struct_union_qualified)
+        Diag(DS.getRestrictSpecLoc(), 
+             diag::ext_anonymous_struct_union_qualified)
           << Record->isUnion() << 2 
           << FixItHint::CreateRemoval(DS.getRestrictSpecLoc());
 
@@ -3602,7 +3608,8 @@ Sema::CheckTypedefForVariablyModifiedType(Scope *S, TypedefNameDecl *NewTD) {
         else if (T->isVariableArrayType())
           Diag(NewTD->getLocation(), diag::err_vla_decl_in_file_scope);
         else if (Oversized.getBoolValue())
-          Diag(NewTD->getLocation(), diag::err_array_too_large) << Oversized.toString(10);
+          Diag(NewTD->getLocation(), diag::err_array_too_large) 
+            << Oversized.toString(10);
         else
           Diag(NewTD->getLocation(), diag::err_vm_decl_in_file_scope);
         NewTD->setInvalidDecl();
@@ -4518,7 +4525,8 @@ static NamedDecl* DiagnoseInvalidRedeclaration(
   return Result;
 }
 
-static FunctionDecl::StorageClass getFunctionStorageClass(Sema &SemaRef, Declarator &D) {
+static FunctionDecl::StorageClass getFunctionStorageClass(Sema &SemaRef, 
+                                                          Declarator &D) {
   switch (D.getDeclSpec().getStorageClassSpec()) {
   default: llvm_unreachable("Unknown storage class!");
   case DeclSpec::SCS_auto:
@@ -4574,8 +4582,9 @@ static FunctionDecl* CreateNewFunctionDecl(Sema &SemaRef, Declarator &D,
       (D.isFunctionDeclarator() && D.getFunctionTypeInfo().hasPrototype) ||
       (!isa<FunctionType>(R.getTypePtr()) && R->isFunctionProtoType());
 
-    NewFD = FunctionDecl::Create(SemaRef.Context, DC, D.getSourceRange().getBegin(),
-                                 NameInfo, R, TInfo, SC, SCAsWritten, isInline,
+    NewFD = FunctionDecl::Create(SemaRef.Context, DC, 
+                                 D.getSourceRange().getBegin(), NameInfo, R, 
+                                 TInfo, SC, SCAsWritten, isInline, 
                                  HasPrototype);
     if (D.isInvalidType())
       NewFD->setInvalidDecl();
@@ -4805,7 +4814,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
         }
         
         // If we're adding a template to a dependent context, we may need to 
-        // rebuilding some of the types used within the template parameter list, 
+        // rebuilding some of the types used within the template parameter list,
         // now that we know what the current instantiation is.
         if (DC->isDependentContext()) {
           ContextRAII SavedContext(*this, DC);
@@ -4901,7 +4910,8 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     }
 
     // C++ [dcl.fct.spec]p3:
-    //  The inline specifier shall not appear on a block scope function declaration.
+    //  The inline specifier shall not appear on a block scope function 
+    //  declaration.
     if (isInline && !NewFD->isInvalidDecl()) {
       if (CurContext->isFunctionOrMethod()) {
         // 'inline' is not allowed on block scope function declaration.
@@ -4913,8 +4923,8 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
 
     // C++ [dcl.fct.spec]p6:
     //  The explicit specifier shall be used only in the declaration of a
-    //  constructor or conversion function within its class definition; see 12.3.1
-    //  and 12.3.2.
+    //  constructor or conversion function within its class definition; 
+    //  see 12.3.1 and 12.3.2.
     if (isExplicit && !NewFD->isInvalidDecl()) {
       if (!CurContext->isRecord()) {
         // 'explicit' was specified outside of the class.
@@ -5129,8 +5139,8 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
         Diag(D.getIdentifierLoc(), diag::err_template_spec_needs_header)
           << SourceRange(TemplateId->LAngleLoc, TemplateId->RAngleLoc)
           << FixItHint::CreateInsertion(
-                                        D.getDeclSpec().getSourceRange().getBegin(),
-                                                  "template<> ");
+                                    D.getDeclSpec().getSourceRange().getBegin(),
+                                        "template<> ");
         isFunctionTemplateSpecialization = true;
       } else {
         // "friend void foo<>(int);" is an implicit specialization decl.
@@ -5244,9 +5254,10 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     // If we have a function template, check the template parameter
     // list. This will check and merge default template arguments.
     if (FunctionTemplate) {
-      FunctionTemplateDecl *PrevTemplate = FunctionTemplate->getPreviousDeclaration();
+      FunctionTemplateDecl *PrevTemplate = 
+                                     FunctionTemplate->getPreviousDeclaration();
       CheckTemplateParameterList(FunctionTemplate->getTemplateParameters(),
-                                 PrevTemplate? PrevTemplate->getTemplateParameters() : 0,
+                       PrevTemplate ? PrevTemplate->getTemplateParameters() : 0,
                             D.getDeclSpec().isFriendSpecified()
                               ? (D.isFunctionDefinition()
                                    ? TPC_FriendFunctionTemplateDefinition
@@ -5325,8 +5336,9 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       // definition (C++ [dcl.meaning]p1).
       // Note that this is not the case for explicit specializations of
       // function templates or member functions of class templates, per
-      // C++ [temp.expl.spec]p2. We also allow these declarations as an extension
-      // for compatibility with old SWIG code which likes to generate them.
+      // C++ [temp.expl.spec]p2. We also allow these declarations as an 
+      // extension for compatibility with old SWIG code which likes to 
+      // generate them.
       Diag(NewFD->getLocation(), diag::ext_out_of_line_declaration)
         << D.getCXXScopeSpec().getRange();
     }
@@ -5518,7 +5530,7 @@ bool Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
 
       if (FunctionTemplateDecl *OldTemplateDecl
                                     = dyn_cast<FunctionTemplateDecl>(OldDecl)) {
-        NewFD->setPreviousDeclaration(OldTemplateDecl->getTemplatedDecl());        
+        NewFD->setPreviousDeclaration(OldTemplateDecl->getTemplatedDecl());
         FunctionTemplateDecl *NewTemplateDecl
           = NewFD->getDescribedFunctionTemplate();
         assert(NewTemplateDecl && "Template/non-template mismatch");
@@ -5940,7 +5952,8 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
     // data members we also need to check whether there was an in-class
     // declaration with an initializer.
     if (VDecl->isStaticDataMember() && VDecl->getAnyInitializer(PrevInit)) {
-      Diag(VDecl->getLocation(), diag::err_redefinition) << VDecl->getDeclName();
+      Diag(VDecl->getLocation(), diag::err_redefinition) 
+        << VDecl->getDeclName();
       Diag(PrevInit->getLocation(), diag::note_previous_definition);
       return;
     }  
@@ -7861,7 +7874,8 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
             else
                 T = QualType(EnumUnderlying.get<const Type*>(), 0);
 
-            if (!Context.hasSameUnqualifiedType(T, PrevEnum->getIntegerType())) {
+            if (!Context.hasSameUnqualifiedType(T, 
+                                                PrevEnum->getIntegerType())) {
               Diag(NameLoc.isValid() ? NameLoc : KWLoc, 
                    diag::err_enum_redeclare_type_mismatch)
                 << T
@@ -8409,7 +8423,8 @@ FieldDecl *Sema::HandleField(Scope *S, RecordDecl *Record,
           Previous.isSingleResult()) 
     && "Lookup of member name should be either overloaded, single or null");
 
-  // If the name is overloaded then get any declaration else get the single result
+  // If the name is overloaded then get any declaration else get the single 
+  // result
   NamedDecl *PrevDecl = Previous.isOverloadedResult() ?
     Previous.getRepresentativeDecl() : Previous.getAsSingle<NamedDecl>();
 
