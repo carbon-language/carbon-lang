@@ -237,6 +237,9 @@ const ObjCCategoryDecl* ObjCCategoryDecl::getNextClassExtension() const {
 
 ObjCIvarDecl *ObjCInterfaceDecl::lookupInstanceVariable(IdentifierInfo *ID,
                                               ObjCInterfaceDecl *&clsDeclared) {
+  if (ExternallyCompleted)
+    LoadExternalDefinition();
+
   ObjCInterfaceDecl* ClassDecl = this;
   while (ClassDecl != NULL) {
     if (ObjCIvarDecl *I = ClassDecl->getIvarDecl(ID)) {
@@ -261,6 +264,9 @@ ObjCIvarDecl *ObjCInterfaceDecl::lookupInstanceVariable(IdentifierInfo *ID,
 /// the it returns NULL.
 ObjCInterfaceDecl *ObjCInterfaceDecl::lookupInheritedClass(
                                         const IdentifierInfo*ICName) {
+  if (ExternallyCompleted)
+    LoadExternalDefinition();
+
   ObjCInterfaceDecl* ClassDecl = this;
   while (ClassDecl != NULL) {
     if (ClassDecl->getIdentifier() == ICName)
@@ -315,6 +321,9 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupMethod(Selector Sel,
 ObjCMethodDecl *ObjCInterfaceDecl::lookupPrivateMethod(
                                    const Selector &Sel,
                                    bool Instance) {
+  if (ExternallyCompleted)
+    LoadExternalDefinition();
+
   ObjCMethodDecl *Method = 0;
   if (ObjCImplementationDecl *ImpDecl = getImplementation())
     Method = Instance ? ImpDecl->getInstanceMethod(Sel) 

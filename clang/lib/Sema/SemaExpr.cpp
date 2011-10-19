@@ -1934,7 +1934,8 @@ Sema::LookupInObjCMethod(LookupResult &Lookup, Scope *S,
   if (LookForIvars) {
     IFace = CurMethod->getClassInterface();
     ObjCInterfaceDecl *ClassDeclared;
-    if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(II, ClassDeclared)) {
+    ObjCIvarDecl *IV = 0;
+    if (IFace && (IV = IFace->lookupInstanceVariable(II, ClassDeclared))) {
       // Diagnose using an ivar in a class method.
       if (IsClassMethod)
         return ExprError(Diag(Loc, diag::error_ivar_use_in_class_method)
