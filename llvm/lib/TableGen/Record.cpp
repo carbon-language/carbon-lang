@@ -1764,6 +1764,12 @@ void Record::resolveReferencesTo(const RecordVal *RV) {
     if (Init *V = Values[i].getValue())
       Values[i].setValue(V->resolveReferences(*this, RV));
   }
+  Init *OldName = getNameInit();
+  Init *NewName = Name->resolveReferences(*this, RV);
+  if (NewName != OldName) {
+    // Re-register with RecordKeeper.
+    setName(NewName);
+  }
 }
 
 void Record::dump() const { errs() << *this; }
