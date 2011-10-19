@@ -1674,7 +1674,7 @@ void RecordVal::dump() const { errs() << *this; }
 
 void RecordVal::print(raw_ostream &OS, bool PrintSem) const {
   if (getPrefix()) OS << "field ";
-  OS << *getType() << " " << getName();
+  OS << *getType() << " " << getNameInitAsString();
 
   if (getValue())
     OS << " = " << *getValue();
