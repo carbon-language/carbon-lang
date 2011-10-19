@@ -1230,16 +1230,33 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
 
     bool queuedInstantiation = false;
 
-    if (!SemaRef.getLangOptions().CPlusPlus0x &&
+    // C++98 [temp.friend]p5: When a function is defined in a friend function
+    //   declaration in a class template, the function is defined at each
+    //   instantiation of the class template. The function is defined even if it
+    //   is never used.
+    // C++11 [temp.friend]p4: When a function is defined in a friend function
+    //   declaration in a class template, the function is instantiated when the
+    //   function is odr-used.
+    //
+    // If -Wc++98-compat is enabled, we go through the motions of checking for a
+    // redefinition, but don't instantiate the function.
+    if ((!SemaRef.getLangOptions().CPlusPlus0x ||
+         SemaRef.Diags.getDiagnosticLevel(
+             diag::warn_cxx98_compat_friend_redefinition,
+             Function->getLocation())
+           != DiagnosticsEngine::Ignored) &&
         D->isThisDeclarationADefinition()) {
       // Check for a function body.
       const FunctionDecl *Definition = 0;
       if (Function->isDefined(Definition) &&
           Definition->getTemplateSpecializationKind() == TSK_Undeclared) {
-        SemaRef.Diag(Function->getLocation(), diag::err_redefinition)
-          << Function->getDeclName();
+        SemaRef.Diag(Function->getLocation(),
+                     SemaRef.getLangOptions().CPlusPlus0x ?
+                       diag::warn_cxx98_compat_friend_redefinition :
+                       diag::err_redefinition) << Function->getDeclName();
         SemaRef.Diag(Definition->getLocation(), diag::note_previous_definition);
-        Function->setInvalidDecl();
+        if (!SemaRef.getLangOptions().CPlusPlus0x)
+          Function->setInvalidDecl();
       }
       // Check for redefinitions due to other instantiations of this or
       // a similar friend function.
@@ -1250,7 +1267,8 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
           continue;
         switch (R->getFriendObjectKind()) {
         case Decl::FOK_None:
-          if (!queuedInstantiation && R->isUsed(false)) {
+          if (!SemaRef.getLangOptions().CPlusPlus0x &&
+              !queuedInstantiation && R->isUsed(false)) {
             if (MemberSpecializationInfo *MSInfo
                 = Function->getMemberSpecializationInfo()) {
               if (MSInfo->getPointOfInstantiation().isInvalid()) {
@@ -1267,10 +1285,14 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
           if (const FunctionDecl *RPattern
               = R->getTemplateInstantiationPattern())
             if (RPattern->isDefined(RPattern)) {
-              SemaRef.Diag(Function->getLocation(), diag::err_redefinition)
+              SemaRef.Diag(Function->getLocation(),
+                           SemaRef.getLangOptions().CPlusPlus0x ?
+                             diag::warn_cxx98_compat_friend_redefinition :
+                             diag::err_redefinition)
                 << Function->getDeclName();
               SemaRef.Diag(R->getLocation(), diag::note_previous_definition);
-              Function->setInvalidDecl();
+              if (!SemaRef.getLangOptions().CPlusPlus0x)
+                Function->setInvalidDecl();
               break;
             }
         }

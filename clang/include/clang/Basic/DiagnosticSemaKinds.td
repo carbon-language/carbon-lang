@@ -2652,6 +2652,9 @@ def err_definition_of_explicitly_defaulted_member : Error<
 def err_redefinition_extern_inline : Error<
   "redefinition of a 'extern inline' function %0 is not supported in "
   "%select{C99 mode|C++}1">;
+def warn_cxx98_compat_friend_redefinition : Warning<
+  "friend function %0 would be implicitly redefined in C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
 
 // This should eventually be an error.
 def warn_undefined_internal : Warning<

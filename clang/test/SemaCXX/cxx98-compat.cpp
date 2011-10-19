@@ -179,3 +179,10 @@ template<typename T> typename T::ImPrivate SFINAEAccessControl(T t) { // expecte
 }
 int SFINAEAccessControl(...) { return 0; }
 int CheckSFINAEAccessControl = SFINAEAccessControl(PrivateMember());
+
+template<typename T>
+struct FriendRedefinition {
+  friend void Friend() {} // expected-warning {{friend function 'Friend' would be implicitly redefined in C++98}} expected-note {{previous}}
+};
+FriendRedefinition<int> FriendRedef1;
+FriendRedefinition<char> FriendRedef2; // expected-note {{requested here}}
