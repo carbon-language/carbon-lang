@@ -1629,12 +1629,12 @@ public:
     return I == Defs.end() ? 0 : I->second;
   }
   void addClass(Record *R) {
-    assert(getClass(R->getName()) == 0 && "Class already exists!");
-    Classes.insert(std::make_pair(R->getName(), R));
+    assert(getClass(R->getNameInitAsString()) == 0 && "Class already exists!");
+    Classes.insert(std::make_pair(R->getNameInitAsString(), R));
   }
   void addDef(Record *R) {
-    assert(getDef(R->getName()) == 0 && "Def already exists!");
-    Defs.insert(std::make_pair(R->getName(), R));
+    assert(getDef(R->getNameInitAsString()) == 0 && "Def already exists!");
+    Defs.insert(std::make_pair(R->getNameInitAsString(), R));
   }
 
   /// removeClass - Remove, but do not delete, the specified record.
