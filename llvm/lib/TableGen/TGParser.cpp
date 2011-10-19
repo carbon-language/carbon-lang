@@ -677,11 +677,18 @@ Init *TGParser::ParseIDValue(Record *CurRec,
     }
   }
 
+  if (Mode == ParseNameMode)
+    return StringInit::get(Name);
+
   if (Record *D = Records.getDef(Name))
     return DefInit::get(D);
 
-  Error(NameLoc, "Variable not defined: '" + Name + "'");
-  return 0;
+  if (Mode == ParseValueMode) {
+    Error(NameLoc, "Variable not defined: '" + Name + "'");
+    return 0;
+  }
+  
+  return StringInit::get(Name);
 }
 
 /// ParseOperation - Parse an operator.  This returns null on error.
