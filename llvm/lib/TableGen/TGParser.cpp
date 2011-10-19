@@ -1686,7 +1686,8 @@ bool TGParser::ParseDef(MultiClass *CurMultiClass) {
 
     // Ensure redefinition doesn't happen.
     if (Records.getDef(CurRec->getName())) {
-      Error(DefLoc, "def '" + CurRec->getName() + "' already defined");
+      Error(DefLoc, "def '" + CurRec->getNameInitAsString()
+            + "' already defined");
       return true;
     }
     Records.addDef(CurRec);
