@@ -1714,13 +1714,12 @@ const std::string &Record::getName() const {
 void Record::setName(Init *NewName) {
   if (TrackedRecords.getDef(Name->getAsUnquotedString()) == this) {
     TrackedRecords.removeDef(Name->getAsUnquotedString());
-    Name = NewName;
     TrackedRecords.addDef(this);
-  } else {
+  } else if (TrackedRecords.getClass(Name->getAsUnquotedString()) == this) {
     TrackedRecords.removeClass(Name->getAsUnquotedString());
-    Name = NewName;
     TrackedRecords.addClass(this);
-  }
+  }  // Otherwise this isn't yet registered.
+  Name = NewName;
   checkName();
   // Since the Init for the name was changed, see if we can resolve
   // any of it using members of the Record.
