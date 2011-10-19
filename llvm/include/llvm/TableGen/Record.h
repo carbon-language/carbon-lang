@@ -1674,6 +1674,16 @@ struct LessRecordFieldName {
 
 raw_ostream &operator<<(raw_ostream &OS, const RecordKeeper &RK);
 
+/// QualifyName - Return an Init with a qualifier prefix referring
+/// to CurRec's name.
+Init *QualifyName(Record &CurRec, MultiClass *CurMultiClass,
+                  Init *Name, const std::string &Scoper);
+
+/// QualifyName - Return an Init with a qualifier prefix referring
+/// to CurRec's name.
+Init *QualifyName(Record &CurRec, MultiClass *CurMultiClass,
+                  const std::string &Name, const std::string &Scoper);
+
 } // End llvm namespace
 
 #endif

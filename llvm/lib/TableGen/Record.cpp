@@ -2041,3 +2041,39 @@ RecordKeeper::getAllDerivedDefinitions(const std::string &ClassName) const {
   return Defs;
 }
 
+/// QualifyName - Return an Init with a qualifier prefix referring
+/// to CurRec's name.
+Init *llvm::QualifyName(Record &CurRec, MultiClass *CurMultiClass,
+                        Init *Name, const std::string &Scoper) {
+  RecTy *Type = dynamic_cast<TypedInit *>(Name)->getType();
+
+  BinOpInit *NewName =
+    BinOpInit::get(BinOpInit::STRCONCAT, 
+                      BinOpInit::get(BinOpInit::STRCONCAT,
+                                        CurRec.getNameInit(),
+                                        StringInit::get(Scoper),
+                                        Type)->Fold(&CurRec, CurMultiClass),
+                      Name,
+                      Type);
+
+  if (CurMultiClass && Scoper != "::") {
+    NewName =
+      BinOpInit::get(BinOpInit::STRCONCAT, 
+                        BinOpInit::get(BinOpInit::STRCONCAT,
+                                          CurMultiClass->Rec.getNameInit(),
+                                          StringInit::get("::"),
+                                          Type)->Fold(&CurRec, CurMultiClass),
+                        NewName->Fold(&CurRec, CurMultiClass),
+                        Type);
+  }
+
+  return NewName->Fold(&CurRec, CurMultiClass);
+}
+
+/// QualifyName - Return an Init with a qualifier prefix referring
+/// to CurRec's name.
+Init *llvm::QualifyName(Record &CurRec, MultiClass *CurMultiClass,
+                        const std::string &Name,
+                        const std::string &Scoper) {
+  return QualifyName(CurRec, CurMultiClass, StringInit::get(Name), Scoper);
+}
