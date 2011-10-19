@@ -25,8 +25,10 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/ValueHandle.h"
+#include "llvm/Support/Debug.h"
 #include "CodeGenModule.h"
 #include "CGBuilder.h"
+#include "CGDebugInfo.h"
 #include "CGValue.h"
 
 namespace llvm {
@@ -69,7 +71,6 @@ namespace clang {
 
 namespace CodeGen {
   class CodeGenTypes;
-  class CGDebugInfo;
   class CGFunctionInfo;
   class CGRecordLayout;
   class CGBlockInfo;
@@ -767,7 +768,6 @@ public:
   /// \brief Enters a new scope for capturing cleanups, all of which
   /// will be executed once the scope is exited.
   class RunCleanupsScope {
-    CodeGenFunction& CGF;
     EHScopeStack::stable_iterator CleanupStackDepth;
     bool OldDidCallStackSave;
     bool PerformCleanup;
@@ -775,10 +775,13 @@ public:
     RunCleanupsScope(const RunCleanupsScope &); // DO NOT IMPLEMENT
     RunCleanupsScope &operator=(const RunCleanupsScope &); // DO NOT IMPLEMENT
 
+  protected:
+    CodeGenFunction& CGF;
+    
   public:
     /// \brief Enter a new cleanup scope.
     explicit RunCleanupsScope(CodeGenFunction &CGF)
-      : CGF(CGF), PerformCleanup(true)
+      : PerformCleanup(true), CGF(CGF)
     {
       CleanupStackDepth = CGF.EHStack.stable_begin();
       OldDidCallStackSave = CGF.DidCallStackSave;
@@ -806,6 +809,41 @@ public:
       CGF.DidCallStackSave = OldDidCallStackSave;
       CGF.PopCleanupBlocks(CleanupStackDepth);
       PerformCleanup = false;
+    }
+  };
+
+  class LexicalScope: protected RunCleanupsScope {
+    SourceRange Range;
+    bool PopDebugStack;
+
+    LexicalScope(const LexicalScope &); // DO NOT IMPLEMENT THESE
+    LexicalScope &operator=(const LexicalScope &);
+
+  public:
+    /// \brief Enter a new cleanup scope.
+    explicit LexicalScope(CodeGenFunction &CGF, SourceRange Range)
+      : RunCleanupsScope(CGF), Range(Range), PopDebugStack(true) {
+      if (CGDebugInfo *DI = CGF.getDebugInfo())
+        DI->EmitLexicalBlockStart(CGF.Builder, Range.getBegin());
+    }
+
+    /// \brief Exit this cleanup scope, emitting any accumulated
+    /// cleanups.
+    ~LexicalScope() {
+      if (PopDebugStack) {
+        CGDebugInfo *DI = CGF.getDebugInfo();
+        if (DI) DI->EmitLexicalBlockEnd(CGF.Builder, Range.getEnd());
+      }
+    }
+
+    /// \brief Force the emission of cleanups now, instead of waiting
+    /// until this object is destroyed.
+    void ForceCleanup() {
+      RunCleanupsScope::ForceCleanup();
+      if (CGDebugInfo *DI = CGF.getDebugInfo()) {
+        DI->EmitLexicalBlockEnd(CGF.Builder, Range.getEnd());
+        PopDebugStack = false;
+      }
     }
   };
 
