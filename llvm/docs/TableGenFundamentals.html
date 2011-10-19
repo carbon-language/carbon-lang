@@ -407,6 +407,10 @@ which case the user must specify it explicitly.</dd>
 <dt><tt>!strconcat(a, b)</tt></dt>
   <dd>A string value that is the result of concatenating the 'a' and 'b'
   strings.</dd>
+<dt><tt>str1#str2</tt></dt>
+  <dd>"#" (paste) is a shorthand for !strconcat.  It may concatenate
+  things that are not quoted strings, in which case an implicit
+  !cast<string> is done on the operand of the paste.</dd>
 <dt><tt>!cast&lt;type&gt;(a)</tt></dt>
   <dd>A symbol of type <em>type</em> obtained by looking up the string 'a' in
 the symbol table.  If the type of 'a' does not match <em>type</em>, TableGen
