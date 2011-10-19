@@ -79,7 +79,7 @@ bool TGParser::AddValue(Record *CurRec, SMLoc Loc, const RecordVal &RV) {
 
 /// SetValue -
 /// Return true on error, false on success.
-bool TGParser::SetValue(Record *CurRec, SMLoc Loc, const std::string &ValName,
+bool TGParser::SetValue(Record *CurRec, SMLoc Loc, Init *ValName,
                         const std::vector<unsigned> &BitList, Init *V) {
   if (!V) return false;
 
@@ -87,13 +87,14 @@ bool TGParser::SetValue(Record *CurRec, SMLoc Loc, const std::string &ValName,
 
   RecordVal *RV = CurRec->getValue(ValName);
   if (RV == 0)
-    return Error(Loc, "Value '" + ValName + "' unknown!");
+    return Error(Loc, "Value '" + ValName->getAsUnquotedString()
+                 + "' unknown!");
 
   // Do not allow assignments like 'X = X'.  This will just cause infinite loops
   // in the resolution machinery.
   if (BitList.empty())
     if (VarInit *VI = dynamic_cast<VarInit*>(V))
-      if (VI->getName() == ValName)
+      if (VI->getNameInit() == ValName)
         return false;
 
   // If we are assigning to a subset of the bits in the value... then we must be
@@ -103,7 +104,8 @@ bool TGParser::SetValue(Record *CurRec, SMLoc Loc, const std::string &ValName,
   if (!BitList.empty()) {
     BitsInit *CurVal = dynamic_cast<BitsInit*>(RV->getValue());
     if (CurVal == 0)
-      return Error(Loc, "Value '" + ValName + "' is not a bits type");
+      return Error(Loc, "Value '" + ValName->getAsUnquotedString()
+                   + "' is not a bits type");
 
     // Convert the incoming value to a bits type of the appropriate size...
     Init *BI = V->convertInitializerTo(BitsRecTy::get(BitList.size()));
@@ -123,7 +125,7 @@ bool TGParser::SetValue(Record *CurRec, SMLoc Loc, const std::string &ValName,
       unsigned Bit = BitList[i];
       if (NewBits[Bit])
         return Error(Loc, "Cannot set bit #" + utostr(Bit) + " of value '" +
-                     ValName + "' more than once");
+                     ValName->getAsUnquotedString() + "' more than once");
       NewBits[Bit] = BInit->getBit(i);
     }
 
@@ -135,9 +137,10 @@ bool TGParser::SetValue(Record *CurRec, SMLoc Loc, const std::string &ValName,
   }
 
   if (RV->setValue(V))
-   return Error(Loc, "Value '" + ValName + "' of type '" +
-                RV->getType()->getAsString() +
-                "' is incompatible with initializer '" + V->getAsString() +"'");
+    return Error(Loc, "Value '" + ValName->getAsUnquotedString() + "' of type '"
+                 + RV->getType()->getAsString() +
+                 "' is incompatible with initializer '" + V->getAsString()
+                 + "'");
   return false;
 }
 

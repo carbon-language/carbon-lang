@@ -14,6 +14,7 @@
 #ifndef TGPARSER_H
 #define TGPARSER_H
 
+#include "llvm/TableGen/Record.h"
 #include "TGLexer.h"
 #include "llvm/TableGen/Error.h"
 #include "llvm/ADT/Twine.h"
@@ -72,8 +73,12 @@ public:
   }
 private:  // Semantic analysis methods.
   bool AddValue(Record *TheRec, SMLoc Loc, const RecordVal &RV);
-  bool SetValue(Record *TheRec, SMLoc Loc, const std::string &ValName, 
+  bool SetValue(Record *TheRec, SMLoc Loc, Init *ValName, 
                 const std::vector<unsigned> &BitList, Init *V);
+  bool SetValue(Record *TheRec, SMLoc Loc, const std::string &ValName, 
+                const std::vector<unsigned> &BitList, Init *V) {
+    return SetValue(TheRec, Loc, StringInit::get(ValName), BitList, V);
+  }
   bool AddSubClass(Record *Rec, SubClassReference &SubClass);
   bool AddSubMultiClass(MultiClass *CurMC,
                         SubMultiClassReference &SubMultiClass);
