@@ -48,14 +48,12 @@ void test() {
   printf("%X", val);
 
   typedef __SIZE_TYPE__ size_t;
-  typedef signed long int ssize_t; // FIXME: Figure out the right typedef.
   typedef __INTMAX_TYPE__ intmax_t;
   typedef __UINTMAX_TYPE__ uintmax_t;
   typedef __PTRDIFF_TYPE__ ptrdiff_t;
 
   // size_t, etc.
   printf("%f", (size_t) 42);
-  //printf("%f", (ssize_t) 42);
   printf("%f", (intmax_t) 42);
   printf("%f", (uintmax_t) 42);
   printf("%f", (ptrdiff_t) 42);
