@@ -229,7 +229,7 @@ void CGObjCRuntime::EmitTryCatchStmt(CodeGenFunction &CGF,
       cast<llvm::CallInst>(Exn)->setDoesNotThrow();
     }
 
-    CodeGenFunction::RunCleanupsScope cleanups(CGF);
+    CodeGenFunction::LexicalScope cleanups(CGF, Handler.Body->getSourceRange());
 
     if (endCatchFn) {
       // Add a cleanup to leave the catch.
