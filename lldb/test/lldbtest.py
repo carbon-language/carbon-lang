@@ -565,6 +565,20 @@ class Base(unittest2.TestCase):
         # See HideStdout(self).
         self.sys_stdout_hidden = False
 
+    def runHooks(self, child, prompt):
+        """Perform the run hooks to bring lldb debugger to the desired state.
+
+        Note that child is a process spawned by pexpect.spawn().  If not, your
+        test case is mostly likely going to fail.
+
+        See also dotest.py where lldb.runHooks are processed/populated.
+        """
+        if not lldb.runHooks:
+            self.skipTest("No runhooks specified for lldb, skip the test")
+        for hook in lldb.runHooks:
+            child.sendline(hook)
+            child.expect_exact(prompt)
+
     def HideStdout(self):
         """Hide output to stdout from the user.
 

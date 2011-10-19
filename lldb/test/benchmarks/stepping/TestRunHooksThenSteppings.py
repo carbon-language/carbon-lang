@@ -38,17 +38,13 @@ class RunHooksThenSteppingsBench(BenchBase):
         #lldb.runHooks = ['process attach -n Mail']
 
         # Perform the run hooks to bring lldb debugger to the desired state.
-        if not lldb.runHooks:
-            self.skipTest("No runhooks specified for lldb, skip the test")
-        for hook in lldb.runHooks:
-            child.sendline(hook)
-            child.expect_exact(prompt)
+        self.runHooks(child, prompt)
 
         # Reset the stopwatch now.
         self.stopwatch.reset()
         for i in range(count):
             with self.stopwatch:
-                # Disassemble the function.
+                # Step through the function.
                 child.sendline('next') # Aka 'thread step-over'.
                 child.expect_exact(prompt)
 
