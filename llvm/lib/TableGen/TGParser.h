@@ -145,7 +145,7 @@ private:  // Parser methods.
   RecTy *ParseType();
   Init *ParseOperation(Record *CurRec);
   RecTy *ParseOperatorType();
-  std::string ParseObjectName();
+  Init *ParseObjectName(MultiClass *CurMultiClass);
   Record *ParseClassID();
   MultiClass *ParseMultiClassID();
   Record *ParseDefmID();

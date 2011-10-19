@@ -306,18 +306,40 @@ static std::string GetNewAnonymousName() {
 
 /// ParseObjectName - If an object name is specified, return it.  Otherwise,
 /// return an anonymous name.
-///   ObjectName ::= ID
+///   ObjectName ::= Value [ '#' Value ]*
 ///   ObjectName ::= /*empty*/
 ///
-std::string TGParser::ParseObjectName() {
-  if (Lex.getCode() != tgtok::Id)
-    return GetNewAnonymousName();
+Init *TGParser::ParseObjectName(MultiClass *CurMultiClass) {
+  switch (Lex.getCode()) {
+  case tgtok::colon:
+  case tgtok::semi:
+  case tgtok::l_brace:
+    // These are all of the tokens that can begin an object body.
+    // Some of these can also begin values but we disallow those cases
+    // because they are unlikely to be useful.
+    return StringInit::get(GetNewAnonymousName());
+    break;
+  default:
+    break;
+  }
 
-  std::string Ret = Lex.getCurStrVal();
-  Lex.Lex();
-  return Ret;
+  Record *CurRec = 0;
+  if (CurMultiClass)
+    CurRec = &CurMultiClass->Rec;
+
+  RecTy *Type = 0;
+  if (CurRec) {
+    const TypedInit *CurRecName =
+      dynamic_cast<const TypedInit *>(CurRec->getNameInit());
+    if (!CurRecName) {
+      TokError("Record name is not typed!");
+      return 0;
+    }
+    Type = CurRecName->getType();
+  }
+
+  return ParseValue(CurRec, Type, ParseNameMode);
 }
-
 
 /// ParseClassID - Parse and resolve a reference to a class name.  This returns
 /// null on error.
@@ -1692,7 +1714,7 @@ bool TGParser::ParseDef(MultiClass *CurMultiClass) {
   Lex.Lex();  // Eat the 'def' token.
 
   // Parse ObjectName and make a record for it.
-  Record *CurRec = new Record(ParseObjectName(), DefLoc, Records);
+  Record *CurRec = new Record(ParseObjectName(CurMultiClass), DefLoc, Records);
 
   if (!CurMultiClass) {
     // Top-level def definition.
@@ -2063,10 +2085,15 @@ bool TGParser::ResolveMulticlassDef(MultiClass &MC,
 bool TGParser::ParseDefm(MultiClass *CurMultiClass) {
   assert(Lex.getCode() == tgtok::Defm && "Unexpected token!");
 
-  std::string DefmPrefix;
+  Init *DefmPrefix = 0;
+  std::string DefmPrefixString;
+
   if (Lex.Lex() == tgtok::Id) {  // eat the defm.
-    DefmPrefix = Lex.getCurStrVal();
-    Lex.Lex();  // Eat the defm prefix.
+    DefmPrefix = ParseObjectName(CurMultiClass);
+    StringInit *DefmPrefixStringInit = dynamic_cast<StringInit *>(DefmPrefix);
+    if (DefmPrefixStringInit == 0)
+      return TokError("defm prefix is not a string");
+    DefmPrefixString = DefmPrefixStringInit->getValue();
   }
 
   SMLoc DefmPrefixLoc = Lex.getLoc();
@@ -2105,7 +2132,8 @@ bool TGParser::ParseDefm(MultiClass *CurMultiClass) {
     for (unsigned i = 0, e = MC->DefPrototypes.size(); i != e; ++i) {
       Record *DefProto = MC->DefPrototypes[i];
 
-      Record *CurRec = InstantiateMulticlassDef(*MC, DefProto, DefmPrefix, DefmPrefixLoc);
+      Record *CurRec = InstantiateMulticlassDef(*MC, DefProto, DefmPrefixString,
+                                                DefmPrefixLoc);
 
       if (ResolveMulticlassDefArgs(*MC, CurRec, DefmPrefixLoc, SubClassLoc,
                                    TArgs, TemplateVals, true/*Delete args*/))
