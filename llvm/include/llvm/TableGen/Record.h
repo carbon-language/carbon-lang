@@ -1442,6 +1442,9 @@ public:
     return 0;
   }
 
+  const RecordVal *getValue(Init *Name) const;
+  RecordVal *getValue(Init *Name);
+
   void addTemplateArg(StringRef Name) {
     assert(!isTemplateArg(Name) && "Template arg already defined!");
     TemplateArgs.push_back(Name);
@@ -1452,13 +1455,17 @@ public:
     Values.push_back(RV);
   }
 
-  void removeValue(StringRef Name) {
+  void removeValue(Init *Name) {
     for (unsigned i = 0, e = Values.size(); i != e; ++i)
-      if (Values[i].getName() == Name) {
+      if (Values[i].getNameInit() == Name) {
         Values.erase(Values.begin()+i);
         return;
       }
     assert(0 && "Cannot remove an entry that does not exist!");
+  }
+
+  void removeValue(StringRef Name) {
+    removeValue(StringInit::get(Name.str()));
   }
 
   bool isSubClassOf(const Record *R) const {

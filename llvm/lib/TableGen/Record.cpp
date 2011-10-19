@@ -1726,6 +1726,18 @@ void Record::setName(const std::string &Name) {
   setName(StringInit::get(Name));
 }
 
+const RecordVal *Record::getValue(Init *Name) const {
+  for (unsigned i = 0, e = Values.size(); i != e; ++i)
+    if (Values[i].getNameInit() == Name) return &Values[i];
+  return 0;
+}
+
+RecordVal *Record::getValue(Init *Name) {
+  for (unsigned i = 0, e = Values.size(); i != e; ++i)
+    if (Values[i].getNameInit() == Name) return &Values[i];
+  return 0;
+}
+
 /// resolveReferencesTo - If anything in this record refers to RV, replace the
 /// reference to RV with the RHS of RV.  If RV is null, we resolve all possible
 /// references.
