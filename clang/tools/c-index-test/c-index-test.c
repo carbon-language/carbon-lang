@@ -1539,7 +1539,7 @@ static CXIdxEntity makeCXIndexEntity(CXIdxIndexedEntityInfo *info) {
 
   loc = info->declInfo->loc;
   clang_indexLoc_getFileLocation(loc, &file, 0, &line, &column, 0);
- // FIXME: free these.
+  /* FIXME: free these.*/
   newStr = (char *)malloc(strlen(name) + 10);
   sprintf(newStr, "%s:%d:%d", name, line, column);
   return (CXIdxEntity)newStr;
@@ -1935,9 +1935,9 @@ static IndexerCallbacks IndexCB = {
   index_ppMacroDefined,
   index_ppMacroUndefined,
   index_ppMacroExpanded,
-  0, //importedASTFile
+  0, /*importedASTFile*/
   index_importedEntity,
-  0,//index_importedMacro,
+  0,/*index_importedMacro,*/
   index_startedTranslationUnit,
   index_indexTypedef,
   index_indexFunction,
