@@ -109,3 +109,13 @@ Foo<int> x;
 // Template template parameters
 template<template<class T> class Wibble>
 class Wibble<int> { }; // expected-error{{cannot specialize a template template parameter}}
+
+namespace rdar9676205 {
+  template<typename T>
+  struct X {
+    template<typename U>
+    struct X<U*> { // expected-error{{explicit specialization of 'X' in class scope}}
+    };
+  };
+
+}

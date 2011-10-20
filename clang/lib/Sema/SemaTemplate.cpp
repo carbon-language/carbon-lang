@@ -4565,12 +4565,21 @@ static bool CheckTemplateSpecializationScope(Sema &S,
     }
   }
 
+  if (S.CurContext->isRecord() &&
+      !S.CurContext->Equals(Specialized->getDeclContext())) {
+    // Make sure that we're specializing in the right record context.
+    // Otherwise, things can go horribly wrong.
+    S.Diag(Loc, diag::err_template_spec_decl_class_scope)
+      << Specialized;
+    return true;
+  }
+  
   // C++ [temp.class.spec]p6:
   //   A class template partial specialization may be declared or redeclared
   //   in any namespace scope in which its definition may be defined (14.5.1
   //   and 14.5.2).
   bool ComplainedAboutScope = false;
-  DeclContext *SpecializedContext
+  DeclContext *SpecializedContext 
     = Specialized->getDeclContext()->getEnclosingNamespaceContext();
   DeclContext *DC = S.CurContext->getEnclosingNamespaceContext();
   if ((!PrevDecl ||
