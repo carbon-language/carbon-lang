@@ -527,7 +527,7 @@ static bool tryAddingSymbolicOperand(uint64_t Address, int32_t Value,
     MI.addOperand(MCOperand::CreateExpr(ARMMCExpr::CreateLower16(Expr, *Ctx)));
   else if (SymbolicOp.VariantKind == LLVMDisassembler_VariantKind_None)
     MI.addOperand(MCOperand::CreateExpr(Expr));
-  else 
+  else
     assert(0 && "bad SymbolicOp.VariantKind");
 
   return true;
@@ -3074,7 +3074,7 @@ static DecodeStatus DecodePostIdxReg(llvm::MCInst &Inst, unsigned Insn,
 
 static DecodeStatus DecodeThumbBLXOffset(llvm::MCInst &Inst, unsigned Val,
                                  uint64_t Address, const void *Decoder) {
-  if (!tryAddingSymbolicOperand(Address, 
+  if (!tryAddingSymbolicOperand(Address,
                                 (Address & ~2u) + SignExtend32<22>(Val << 1) + 4,
                                 true, 4, Inst, Decoder))
     Inst.addOperand(MCOperand::CreateImm(SignExtend32<22>(Val << 1)));
