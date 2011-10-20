@@ -480,7 +480,7 @@ def parseOptionsAndInitTestdirs():
         elif sys.argv[index].startswith('-x'):
             # Increment by 1 to fetch the breakpoint specification of the benchmark executable.
             index += 1
-            if index >= len(sys.argv) or sys.argv[index].startswith('-'):
+            if index >= len(sys.argv):
                 usage()
             bmBreakpointSpec = sys.argv[index]
             index += 1
