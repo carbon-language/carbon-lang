@@ -57,10 +57,16 @@ ScheduleHazardRecognizer *PPCInstrInfo::CreateTargetHazardRecognizer(
   unsigned Directive = TM->getSubtarget<PPCSubtarget>().getDarwinDirective();
   if (Directive == PPC::DIR_440) {
     const InstrItineraryData *II = TM->getInstrItineraryData();
-    return new PPCHazardRecognizer440(II, DAG);
+    // Disable the hazard recognizer for now, as it doesn't support
+    // bottom-up scheduling.
+    //return new PPCHazardRecognizer440(II, DAG);
+    return new ScheduleHazardRecognizer();
   }
   else {
-    return new PPCHazardRecognizer970(*TII);
+    // Disable the hazard recognizer for now, as it doesn't support
+    // bottom-up scheduling.
+    //return new PPCHazardRecognizer970(*TII);
+    return new ScheduleHazardRecognizer();
   }
 }
 
