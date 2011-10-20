@@ -151,8 +151,6 @@ LogDir=$BuildDir/logs
 mkdir -p $LogDir
 
 # Find compilers.
-c_compiler="$CC"
-cxx_compiler="$CXX"
 if [ "$do_dragonegg" = "yes" ]; then
     gcc_compiler="$GCC"
     if [ -z "$gcc_compiler" ]; then
@@ -338,6 +336,9 @@ for Flavor in $Flavors ; do
     echo "    `uname -a`"
     echo "********************************************************************************"
     echo ""
+
+    c_compiler="$CC"
+    cxx_compiler="$CXX"
 
     llvmCore_phase1_objdir=$BuildDir/Phase1/$Flavor/llvmCore-$Release-rc$RC.obj
     llvmCore_phase1_installdir=$BuildDir/Phase1/$Flavor/llvmCore-$Release-rc$RC.install
