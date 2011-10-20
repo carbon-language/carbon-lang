@@ -2666,7 +2666,8 @@ Decl *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
       else if (DS.getStorageClassSpec() != DeclSpec::SCS_unspecified &&
                isa<RecordDecl>(Owner)) {
         Diag(DS.getStorageClassSpecLoc(),
-             diag::err_anonymous_union_with_storage_spec);
+             diag::err_anonymous_union_with_storage_spec)
+          << FixItHint::CreateRemoval(DS.getStorageClassSpecLoc());
         Invalid = true;
   
         // Recover by removing the storage specifier.
