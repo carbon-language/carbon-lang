@@ -12,12 +12,15 @@ class RunHooksThenSteppingsBench(BenchBase):
 
     def setUp(self):
         BenchBase.setUp(self)
+        self.count = lldb.bmIterationCount
+        if self.count <= 0:
+            self.count = 50
 
     @benchmarks_test
     def test_lldb_runhooks_then_steppings(self):
         """Test lldb steppings on a large executable."""
         print
-        self.run_lldb_runhooks_then_steppings(50)
+        self.run_lldb_runhooks_then_steppings(self.count)
         print "lldb stepping benchmark:", self.stopwatch
 
     def run_lldb_runhooks_then_steppings(self, count):

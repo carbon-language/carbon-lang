@@ -26,6 +26,10 @@ class SteppingSpeedBench(BenchBase):
             else:
                 self.break_spec = '-n main'
 
+        self.count = lldb.bmIterationCount
+        if self.count <= 0:
+            self.count = 50
+
         #print "self.exe=%s" % self.exe
         #print "self.break_spec=%s" % self.break_spec
 
@@ -33,7 +37,7 @@ class SteppingSpeedBench(BenchBase):
     def test_run_lldb_steppings(self):
         """Test lldb steppings on a large executable."""
         print
-        self.run_lldb_steppings(self.exe, self.break_spec, 50)
+        self.run_lldb_steppings(self.exe, self.break_spec, self.count)
         print "lldb stepping benchmark:", self.stopwatch
 
     def run_lldb_steppings(self, exe, break_spec, count):

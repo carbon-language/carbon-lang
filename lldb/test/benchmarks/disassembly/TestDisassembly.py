@@ -16,14 +16,17 @@ class DisassembleDriverMainLoop(BenchBase):
         self.function = 'Driver::MainLoop()'
         self.lldb_avg = None
         self.gdb_avg = None
+        self.count = lldb.bmIterationCount
+        if self.count <= 0:
+            self.count = 5
 
     @benchmarks_test
     def test_run_lldb_then_gdb(self):
         """Test disassembly on a large function with lldb vs. gdb."""
         print
-        self.run_lldb_disassembly(self.exe, self.function, 5)
+        self.run_lldb_disassembly(self.exe, self.function, self.count)
         print "lldb benchmark:", self.stopwatch
-        self.run_gdb_disassembly(self.exe, self.function, 5)
+        self.run_gdb_disassembly(self.exe, self.function, self.count)
         print "gdb benchmark:", self.stopwatch
         print "lldb_avg/gdb_avg: %f" % (self.lldb_avg/self.gdb_avg)
 
@@ -31,9 +34,9 @@ class DisassembleDriverMainLoop(BenchBase):
     def test_run_gdb_then_lldb(self):
         """Test disassembly on a large function with lldb vs. gdb."""
         print
-        self.run_gdb_disassembly(self.exe, self.function, 5)
+        self.run_gdb_disassembly(self.exe, self.function, self.count)
         print "gdb benchmark:", self.stopwatch
-        self.run_lldb_disassembly(self.exe, self.function, 5)
+        self.run_lldb_disassembly(self.exe, self.function, self.count)
         print "lldb benchmark:", self.stopwatch
         print "lldb_avg/gdb_avg: %f" % (self.lldb_avg/self.gdb_avg)
 

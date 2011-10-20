@@ -16,6 +16,9 @@ class RepeatedExprsCase(BenchBase):
         self.line_to_break = line_number(self.source, '// Set breakpoint here.')
         self.lldb_avg = None
         self.gdb_avg = None
+        self.count = lldb.bmIterationCount
+        if self.count <= 0:
+            self.count = 100
 
     @benchmarks_test
     def test_compare_lldb_to_gdb(self):
@@ -24,9 +27,9 @@ class RepeatedExprsCase(BenchBase):
         self.exe_name = 'a.out'
 
         print
-        self.run_lldb_repeated_exprs(self.exe_name, 100)
+        self.run_lldb_repeated_exprs(self.exe_name, self.count)
         print "lldb benchmark:", self.stopwatch
-        self.run_gdb_repeated_exprs(self.exe_name, 100)
+        self.run_gdb_repeated_exprs(self.exe_name, self.count)
         print "gdb benchmark:", self.stopwatch
         print "lldb_avg/gdb_avg: %f" % (self.lldb_avg/self.gdb_avg)
 

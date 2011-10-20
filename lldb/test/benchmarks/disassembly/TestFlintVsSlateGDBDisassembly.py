@@ -18,15 +18,18 @@ class FlintVsSlateGDBDisassembly(BenchBase):
         self.function = 'Driver::MainLoop()'
         self.gdb_41_avg = None
         self.gdb_42_avg = None
+        self.count = lldb.bmIterationCount
+        if self.count <= 0:
+            self.count = 5
 
     @benchmarks_test
     def test_run_41_then_42(self):
         """Test disassembly on a large function with 4.1 vs. 4.2's gdb."""
         print
-        self.run_gdb_disassembly(self.gdb_41_exe, self.exe, self.function, 5)
+        self.run_gdb_disassembly(self.gdb_41_exe, self.exe, self.function, self.count)
         print "4.1 gdb benchmark:", self.stopwatch
         self.gdb_41_avg = self.stopwatch.avg()
-        self.run_gdb_disassembly(self.gdb_42_exe, self.exe, self.function, 5)
+        self.run_gdb_disassembly(self.gdb_42_exe, self.exe, self.function, self.count)
         print "4.2 gdb benchmark:", self.stopwatch
         self.gdb_42_avg = self.stopwatch.avg()
         print "gdb_42_avg/gdb_41_avg: %f" % (self.gdb_42_avg/self.gdb_41_avg)
@@ -35,10 +38,10 @@ class FlintVsSlateGDBDisassembly(BenchBase):
     def test_run_42_then_41(self):
         """Test disassembly on a large function with 4.1 vs. 4.2's gdb."""
         print
-        self.run_gdb_disassembly(self.gdb_42_exe, self.exe, self.function, 5)
+        self.run_gdb_disassembly(self.gdb_42_exe, self.exe, self.function, self.count)
         print "4.2 gdb benchmark:", self.stopwatch
         self.gdb_42_avg = self.stopwatch.avg()
-        self.run_gdb_disassembly(self.gdb_41_exe, self.exe, self.function, 5)
+        self.run_gdb_disassembly(self.gdb_41_exe, self.exe, self.function, self.count)
         print "4.1 gdb benchmark:", self.stopwatch
         self.gdb_41_avg = self.stopwatch.avg()
         print "gdb_42_avg/gdb_41_avg: %f" % (self.gdb_42_avg/self.gdb_41_avg)

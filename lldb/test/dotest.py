@@ -107,6 +107,8 @@ dumpSysPath = False
 bmExecutable = None
 # The breakpoint specification of bmExecutable, as specified by the '-x' option.
 bmBreakpointSpec = None
+# The benchamrk iteration count, as specified by the '-y' option.
+bmIterationCount = -1
 
 # By default, failfast is False.  Use '-F' to overwrite it.
 failfast = False
@@ -210,6 +212,9 @@ where options:
 -v   : do verbose mode of unittest framework (print out each test case invocation)
 -x   : specify the breakpoint specification for the benchmark executable;
        see also '-e', which provides the full path of the executable
+-y   : specify the iteration count used to collect our benchmarks; an example is
+       the number of times to do 'thread step-over' to measure stepping speed
+       see also '-e' and '-x' options
 -w   : insert some wait time (currently 0.5 sec) between consecutive test cases
 -#   : Repeat the test suite for a specified number of times
 
@@ -321,6 +326,7 @@ def parseOptionsAndInitTestdirs():
     global dumpSysPath
     global bmExecutable
     global bmBreakpointSpec
+    global bmIterationCount
     global failfast
     global filters
     global fs4all
@@ -477,6 +483,13 @@ def parseOptionsAndInitTestdirs():
             if index >= len(sys.argv) or sys.argv[index].startswith('-'):
                 usage()
             bmBreakpointSpec = sys.argv[index]
+            index += 1
+        elif sys.argv[index].startswith('-y'):
+            # Increment by 1 to fetch the the benchmark iteration count.
+            index += 1
+            if index >= len(sys.argv) or sys.argv[index].startswith('-'):
+                usage()
+            bmIterationCount = int(sys.argv[index])
             index += 1
         elif sys.argv[index].startswith('-#'):
             # Increment by 1 to fetch the repeat count argument.
@@ -902,9 +915,10 @@ lldb.dont_do_python_api_test = dont_do_python_api_test
 lldb.just_do_python_api_test = just_do_python_api_test
 lldb.just_do_benchmarks_test = just_do_benchmarks_test
 
-# Put bmExecutable and bmBreakpointSpec into the lldb namespace, too.
+# Put bmExecutable, bmBreakpointSpec, and bmIterationCount into the lldb namespace, too.
 lldb.bmExecutable = bmExecutable
 lldb.bmBreakpointSpec = bmBreakpointSpec
+lldb.bmIterationCount = bmIterationCount
 
 # And don't forget the runHooks!
 lldb.runHooks = runHooks
