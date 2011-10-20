@@ -1890,7 +1890,7 @@ bool GlobalOpt::OptimizeFunctions(Module &M) {
     if (!F->hasName() && !F->isDeclaration())
       F->setLinkage(GlobalValue::InternalLinkage);
     F->removeDeadConstantUsers();
-    if (F->use_empty() && (F->hasLocalLinkage() || F->hasLinkOnceLinkage())) {
+    if (F->isDefTriviallyDead()) {
       F->eraseFromParent();
       Changed = true;
       ++NumFnDeleted;

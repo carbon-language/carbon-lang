@@ -533,10 +533,7 @@ bool Inliner::removeDeadFunctions(CallGraph &CG,
 
     if (DNR && DNR->count(F))
       continue;
-    if (!F->hasLinkOnceLinkage() && !F->hasLocalLinkage() &&
-        !F->hasAvailableExternallyLinkage())
-      continue;
-    if (!F->use_empty())
+    if (!F->isDefTriviallyDead())
       continue;
     
     // Remove any call graph edges from the function to its callees.

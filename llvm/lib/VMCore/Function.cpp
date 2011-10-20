@@ -402,6 +402,7 @@ Function *Intrinsic::getDeclaration(Module *M, ID id, ArrayRef<Type*> Tys) {
 bool Function::hasAddressTaken(const User* *PutOffender) const {
   for (Value::const_use_iterator I = use_begin(), E = use_end(); I != E; ++I) {
     const User *U = *I;
+    // FIXME: Check for blockaddress, which does not take the address.
     if (!isa<CallInst>(U) && !isa<InvokeInst>(U))
       return PutOffender ? (*PutOffender = U, true) : true;
     ImmutableCallSite CS(cast<Instruction>(U));
@@ -409,6 +410,20 @@ bool Function::hasAddressTaken(const User* *PutOffender) const {
       return PutOffender ? (*PutOffender = U, true) : true;
   }
   return false;
+}
+
+bool Function::isDefTriviallyDead() const {
+  // Check the linkage
+  if (!hasLinkOnceLinkage() && !hasLocalLinkage() &&
+      !hasAvailableExternallyLinkage())
+    return false;
+
+  // Check if the function is used by anything other than a blockaddress.
+  for (Value::const_use_iterator I = use_begin(), E = use_end(); I != E; ++I)
+    if (!isa<BlockAddress>(*I))
+      return false;
+
+  return true;
 }
 
 /// callsFunctionThatReturnsTwice - Return true if the function has a call to

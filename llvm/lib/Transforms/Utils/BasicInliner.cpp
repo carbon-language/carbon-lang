@@ -131,8 +131,8 @@ void BasicInlinerImpl::inlineFunctions() {
         // Inline
         InlineFunctionInfo IFI(0, TD);
         if (InlineFunction(CS, IFI)) {
-          if (Callee->use_empty() && (Callee->hasLocalLinkage() ||
-                                      Callee->hasAvailableExternallyLinkage()))
+          Callee->removeDeadConstantUsers();
+          if (Callee->isDefTriviallyDead())
             DeadFunctions.insert(Callee);
           Changed = true;
           CallSites.erase(CallSites.begin() + index);
