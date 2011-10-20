@@ -61,8 +61,7 @@ public:
 
         uint32_t    magic;             // HASH_MAGIC or HASH_CIGAM magic value to allow endian detection        
         uint16_t    version;           // Version number
-        uint8_t     addr_bytesize;     // Size in bytes of an address
-		uint8_t     hash_function;     // The hash function enumeration that was used
+		uint16_t    hash_function;     // The hash function enumeration that was used
 		uint32_t    bucket_count;      // The number of buckets in this hash table
 		uint32_t    hashes_count;      // The total number of unique hash values and hash data offsets in this table
         uint32_t    header_data_len;   // The size in bytes of the "header_data" template member below
@@ -71,7 +70,6 @@ public:
 		Header () :
             magic (HASH_MAGIC),
             version (1),
-            addr_bytesize (4),
             hash_function (eHashFunctionDJB),
             bucket_count (0),
             hashes_count (0),
@@ -90,7 +88,6 @@ public:
         {
             return  sizeof(magic) + 
                     sizeof(version) + 
-                    sizeof(addr_bytesize) + 
                     sizeof(hash_function) +
                     sizeof(bucket_count) +
                     sizeof(hashes_count) +
@@ -112,8 +109,7 @@ public:
         {
             s.Printf ("header.magic              = 0x%8.8x\n", magic);
             s.Printf ("header.version            = 0x%4.4x\n", version);
-            s.Printf ("header.addr_bytesize      = 0x%2.2x\n", addr_bytesize);
-            s.Printf ("header.hash_function      = 0x%2.2x\n", hash_function);
+            s.Printf ("header.hash_function      = 0x%4.4x\n", hash_function);
             s.Printf ("header.bucket_count       = 0x%8.8x %u\n", bucket_count, bucket_count);
             s.Printf ("header.hashes_count       = 0x%8.8x %u\n", hashes_count, hashes_count);
             s.Printf ("header.header_data_len    = 0x%8.8x %u\n", header_data_len, header_data_len);
@@ -125,7 +121,6 @@ public:
             if (data.ValidOffsetForDataOfSize (offset, 
                                                sizeof (magic) + 
                                                sizeof (version) + 
-                                               sizeof (addr_bytesize) + 
                                                sizeof (hash_function) +
                                                sizeof (bucket_count) +
                                                sizeof (hashes_count) +
@@ -162,8 +157,9 @@ public:
                     // Unsupported version
                     return UINT32_MAX;
                 }
-                addr_bytesize       = data.GetU8  (&offset);
-                hash_function       = data.GetU8  (&offset);
+                hash_function       = data.GetU16 (&offset);
+                if (hash_function == 4)
+                    hash_function = 0; // Deal with pre-release version of this table...
                 bucket_count        = data.GetU32 (&offset);
                 hashes_count        = data.GetU32 (&offset);
                 header_data_len     = data.GetU32 (&offset);

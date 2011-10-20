@@ -464,7 +464,8 @@ protected:
     NameToDIE                           m_type_index;               // All type DIE offsets
     NameToDIE                           m_namespace_index;          // All type DIE offsets
     bool m_indexed:1,
-         m_is_external_ast_source:1;
+         m_is_external_ast_source:1,
+         m_using_apple_tables:1;
 
     std::auto_ptr<DWARFDebugRanges>     m_ranges;
     UniqueDWARFASTTypeMap m_unique_ast_type_map;

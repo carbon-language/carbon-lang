@@ -194,6 +194,7 @@ SymbolFileDWARF::SymbolFileDWARF(ObjectFile* objfile) :
     m_namespace_index(),
     m_indexed (false),
     m_is_external_ast_source (false),
+    m_using_apple_tables (false),
     m_ranges(),
     m_unique_ast_type_map ()
 {
@@ -260,23 +261,29 @@ SymbolFileDWARF::InitializeObject()
     get_apple_names_data();
     if (m_data_apple_names.GetByteSize() > 0)
     {
-        m_apple_names_ap.reset (new DWARFMappedHash::MemoryTable (m_data_apple_names, get_debug_str_data(), true));
-        if (!m_apple_names_ap->IsValid())
+        m_apple_names_ap.reset (new DWARFMappedHash::MemoryTable (m_data_apple_names, get_debug_str_data(), ".apple_names"));
+        if (m_apple_names_ap->IsValid())
+            m_using_apple_tables = true;
+        else
             m_apple_names_ap.reset();
     }
     get_apple_types_data();
     if (m_data_apple_types.GetByteSize() > 0)
     {
-        m_apple_types_ap.reset (new DWARFMappedHash::MemoryTable (m_data_apple_types, get_debug_str_data(), false));
-        if (!m_apple_types_ap->IsValid())
+        m_apple_types_ap.reset (new DWARFMappedHash::MemoryTable (m_data_apple_types, get_debug_str_data(), ".apple_types"));
+        if (m_apple_types_ap->IsValid())
+            m_using_apple_tables = true;
+        else
             m_apple_types_ap.reset();
     }
 
     get_apple_namespaces_data();
     if (m_data_apple_namespaces.GetByteSize() > 0)
     {
-        m_apple_namespaces_ap.reset (new DWARFMappedHash::MemoryTable (m_data_apple_namespaces, get_debug_str_data(), false));
-        if (!m_apple_namespaces_ap->IsValid())
+        m_apple_namespaces_ap.reset (new DWARFMappedHash::MemoryTable (m_data_apple_namespaces, get_debug_str_data(), ".apple_namespaces"));
+        if (m_apple_namespaces_ap->IsValid())
+            m_using_apple_tables = true;
+        else
             m_apple_namespaces_ap.reset();
     }
 
@@ -2068,16 +2075,19 @@ SymbolFileDWARF::FindGlobalVariables (const ConstString &name, const lldb_privat
 
     DIEArray die_offsets;
     
-    if (m_apple_names_ap.get())
+    if (m_using_apple_tables)
     {
-        const char *name_cstr = name.GetCString();
-        const char *base_name_start;
-        const char *base_name_end = NULL;
-        
-        if (!CPPLanguageRuntime::StripNamespacesFromVariableName(name_cstr, base_name_start, base_name_end))
-            base_name_start = name_cstr;
+        if (m_apple_names_ap.get())
+        {
+            const char *name_cstr = name.GetCString();
+            const char *base_name_start;
+            const char *base_name_end = NULL;
             
-        m_apple_names_ap->FindByName (base_name_start, die_offsets);
+            if (!CPPLanguageRuntime::StripNamespacesFromVariableName(name_cstr, base_name_start, base_name_end))
+                base_name_start = name_cstr;
+                
+            m_apple_names_ap->FindByName (base_name_start, die_offsets);
+        }
     }
     else
     {
@@ -2147,9 +2157,10 @@ SymbolFileDWARF::FindGlobalVariables(const RegularExpression& regex, bool append
 
     DIEArray die_offsets;
     
-    if (m_apple_names_ap.get())
+    if (m_using_apple_tables)
     {
-        m_apple_names_ap->AppendAllDIEsThatMatchingRegex (regex, die_offsets);
+        if (m_apple_names_ap.get())
+            m_apple_names_ap->AppendAllDIEsThatMatchingRegex (regex, die_offsets);
     }
     else
     {
@@ -2467,90 +2478,94 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
         return 0;
 
     DWARFCompileUnit *dwarf_cu = NULL;
-    if (m_apple_names_ap.get())
+    if (m_using_apple_tables)
     {
-        DIEArray die_offsets;
-
-        uint32_t num_matches = 0;
-            
-        if (effective_name_type_mask & eFunctionNameTypeFull)
+        if (m_apple_names_ap.get())
         {
-            // If they asked for the full name, match what they typed.  At some point we may
-            // want to canonicalize this (strip double spaces, etc.  For now, we just add all the
-            // dies that we find by exact match.
-            num_matches = m_apple_names_ap->FindByName (name_cstr, die_offsets);
-            for (uint32_t i = 0; i < num_matches; i++)
+
+            DIEArray die_offsets;
+
+            uint32_t num_matches = 0;
+                
+            if (effective_name_type_mask & eFunctionNameTypeFull)
             {
-                const DWARFDebugInfoEntry *die = info->GetDIEPtrWithCompileUnitHint (die_offsets[i], &dwarf_cu);
-                if (die)
-                {
-                    if (namespace_decl && !DIEIsInNamespace (namespace_decl, dwarf_cu, die))
-                        continue;
-                    
-                    ResolveFunction (dwarf_cu, die, sc_list);
-                }
-            }
-        }
-        else
-        {                
-            if (effective_name_type_mask & eFunctionNameTypeSelector)
-            {
-                if (namespace_decl && *namespace_decl)
-                    return 0; // no selectors in namespaces
-                    
+                // If they asked for the full name, match what they typed.  At some point we may
+                // want to canonicalize this (strip double spaces, etc.  For now, we just add all the
+                // dies that we find by exact match.
                 num_matches = m_apple_names_ap->FindByName (name_cstr, die_offsets);
-                // Now make sure these are actually ObjC methods.  In this case we can simply look up the name,
-                // and if it is an ObjC method name, we're good.
-                
                 for (uint32_t i = 0; i < num_matches; i++)
                 {
-                    const DWARFDebugInfoEntry* die = info->GetDIEPtrWithCompileUnitHint (die_offsets[i], &dwarf_cu);
-                    if (die)
-                    {
-                        const char *die_name = die->GetName(this, dwarf_cu);
-                        if (ObjCLanguageRuntime::IsPossibleObjCMethodName(die_name))
-                            ResolveFunction (dwarf_cu, die, sc_list);
-                    }
-                }
-                die_offsets.clear();
-            }
-            
-            if (effective_name_type_mask & eFunctionNameTypeMethod
-                || effective_name_type_mask & eFunctionNameTypeBase)
-            {
-                if ((effective_name_type_mask & eFunctionNameTypeMethod) &&
-                    (namespace_decl && *namespace_decl))
-                    return 0; // no methods in namespaces
-                
-                // The apple_names table stores just the "base name" of C++ methods in the table.  So we have to 
-                // extract the base name, look that up, and if there is any other information in the name we were
-                // passed in we have to post-filter based on that.
-                
-                // FIXME: Arrange the logic above so that we don't calculate the base name twice:
-                std::string base_name(base_name_start, base_name_end - base_name_start);
-                num_matches = m_apple_names_ap->FindByName (base_name.c_str(), die_offsets);
-                
-                for (uint32_t i = 0; i < num_matches; i++)
-                {
-                    const DWARFDebugInfoEntry* die = info->GetDIEPtrWithCompileUnitHint (die_offsets[i], &dwarf_cu);
+                    const DWARFDebugInfoEntry *die = info->GetDIEPtrWithCompileUnitHint (die_offsets[i], &dwarf_cu);
                     if (die)
                     {
                         if (namespace_decl && !DIEIsInNamespace (namespace_decl, dwarf_cu, die))
                             continue;
                         
-                        if (!FunctionDieMatchesPartialName(die, 
-                                                           dwarf_cu, 
-                                                           effective_name_type_mask, 
-                                                           name_cstr, 
-                                                           base_name_start, 
-                                                           base_name_end))
-                            continue;
-                            
-                        // If we get to here, the die is good, and we should add it:
                         ResolveFunction (dwarf_cu, die, sc_list);
                     }
                 }
-                die_offsets.clear();
+            }
+            else
+            {                
+                if (effective_name_type_mask & eFunctionNameTypeSelector)
+                {
+                    if (namespace_decl && *namespace_decl)
+                        return 0; // no selectors in namespaces
+                        
+                    num_matches = m_apple_names_ap->FindByName (name_cstr, die_offsets);
+                    // Now make sure these are actually ObjC methods.  In this case we can simply look up the name,
+                    // and if it is an ObjC method name, we're good.
+                    
+                    for (uint32_t i = 0; i < num_matches; i++)
+                    {
+                        const DWARFDebugInfoEntry* die = info->GetDIEPtrWithCompileUnitHint (die_offsets[i], &dwarf_cu);
+                        if (die)
+                        {
+                            const char *die_name = die->GetName(this, dwarf_cu);
+                            if (ObjCLanguageRuntime::IsPossibleObjCMethodName(die_name))
+                                ResolveFunction (dwarf_cu, die, sc_list);
+                        }
+                    }
+                    die_offsets.clear();
+                }
+                
+                if (effective_name_type_mask & eFunctionNameTypeMethod
+                    || effective_name_type_mask & eFunctionNameTypeBase)
+                {
+                    if ((effective_name_type_mask & eFunctionNameTypeMethod) &&
+                        (namespace_decl && *namespace_decl))
+                        return 0; // no methods in namespaces
+                    
+                    // The apple_names table stores just the "base name" of C++ methods in the table.  So we have to 
+                    // extract the base name, look that up, and if there is any other information in the name we were
+                    // passed in we have to post-filter based on that.
+                    
+                    // FIXME: Arrange the logic above so that we don't calculate the base name twice:
+                    std::string base_name(base_name_start, base_name_end - base_name_start);
+                    num_matches = m_apple_names_ap->FindByName (base_name.c_str(), die_offsets);
+                    
+                    for (uint32_t i = 0; i < num_matches; i++)
+                    {
+                        const DWARFDebugInfoEntry* die = info->GetDIEPtrWithCompileUnitHint (die_offsets[i], &dwarf_cu);
+                        if (die)
+                        {
+                            if (namespace_decl && !DIEIsInNamespace (namespace_decl, dwarf_cu, die))
+                                continue;
+                            
+                            if (!FunctionDieMatchesPartialName(die, 
+                                                               dwarf_cu, 
+                                                               effective_name_type_mask, 
+                                                               name_cstr, 
+                                                               base_name_start, 
+                                                               base_name_end))
+                                continue;
+                                
+                            // If we get to here, the die is good, and we should add it:
+                            ResolveFunction (dwarf_cu, die, sc_list);
+                        }
+                    }
+                    die_offsets.clear();
+                }
             }
         }
     }
@@ -2660,9 +2675,10 @@ SymbolFileDWARF::FindFunctions(const RegularExpression& regex, bool append, Symb
     // we are appending the results to a variable list.
     uint32_t original_size = sc_list.GetSize();
 
-    if (m_apple_names_ap.get())
+    if (m_using_apple_tables)
     {
-        FindFunctions (regex, *m_apple_names_ap, sc_list);
+        if (m_apple_names_ap.get())
+            FindFunctions (regex, *m_apple_names_ap, sc_list);
     }
     else
     {
@@ -2739,10 +2755,13 @@ SymbolFileDWARF::FindTypes(const SymbolContext& sc, const ConstString &name, con
 
     DIEArray die_offsets;
     
-    if (m_apple_types_ap.get())
+    if (m_using_apple_tables)
     {
-        const char *name_cstr = name.GetCString();
-        m_apple_types_ap->FindByName (name_cstr, die_offsets);
+        if (m_apple_types_ap.get())
+        {
+            const char *name_cstr = name.GetCString();
+            m_apple_types_ap->FindByName (name_cstr, die_offsets);
+        }
     }
     else
     {
@@ -2810,10 +2829,13 @@ SymbolFileDWARF::FindNamespace (const SymbolContext& sc,
 
         // Index if we already haven't to make sure the compile units
         // get indexed and make their global DIE index list
-        if (m_apple_namespaces_ap.get())
+        if (m_using_apple_tables)
         {
-            const char *name_cstr = name.GetCString();
-            m_apple_namespaces_ap->FindByName (name_cstr, die_offsets);
+            if (m_apple_namespaces_ap.get())
+            {
+                const char *name_cstr = name.GetCString();
+                m_apple_namespaces_ap->FindByName (name_cstr, die_offsets);
+            }
         }
         else
         {
@@ -3500,10 +3522,13 @@ SymbolFileDWARF::FindDefinitionTypeForDIE (DWARFCompileUnit* cu,
 
     DIEArray die_offsets;
 
-    if (m_apple_types_ap.get())
+    if (m_using_apple_tables)
     {
-        const char *name_cstr = type_name.GetCString();
-        m_apple_types_ap->FindByName (name_cstr, die_offsets);
+        if (m_apple_types_ap.get())
+        {
+            const char *name_cstr = type_name.GetCString();
+            m_apple_types_ap->FindByName (name_cstr, die_offsets);
+        }
     }
     else
     {
@@ -4702,12 +4727,12 @@ SymbolFileDWARF::ParseVariablesForContext (const SymbolContext& sc)
                 DWARFCompileUnit* match_dwarf_cu = NULL;
                 const DWARFDebugInfoEntry* die = NULL;
                 DIEArray die_offsets;
-                if (m_apple_names_ap.get())
+                if (m_using_apple_tables)
                 {
-                    // TODO: implement finding all items in 
-                    m_apple_names_ap->AppendAllDIEsInRange (dwarf_cu->GetOffset(), 
-                                                            dwarf_cu->GetNextCompileUnitOffset(), 
-                                                            die_offsets);
+                    if (m_apple_names_ap.get())
+                        m_apple_names_ap->AppendAllDIEsInRange (dwarf_cu->GetOffset(), 
+                                                                dwarf_cu->GetNextCompileUnitOffset(), 
+                                                                die_offsets);
                 }
                 else
                 {
