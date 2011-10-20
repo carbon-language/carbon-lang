@@ -110,12 +110,6 @@ public:
   const Function *getParent() const { return Parent; }
         Function *getParent()       { return Parent; }
 
-  /// use_back - Specialize the methods defined in Value, as we know that an
-  /// BasicBlock can only be used by Users (specifically terminators
-  /// and BlockAddress's).
-  User       *use_back()       { return cast<User>(*use_begin());}
-  const User *use_back() const { return cast<User>(*use_begin());}
-
   /// getTerminator() - If this is a well formed basic block, then this returns
   /// a pointer to the terminator instruction.  If it is not, then you get a
   /// null pointer back.
