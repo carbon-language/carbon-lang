@@ -478,7 +478,8 @@ for Flavor in $Flavors ; do
         # Compare .o files between Phase2 and Phase3 and report which ones differ.
         echo
         echo "# Comparing Phase 2 and Phase 3 files"
-        for o in `find $llvmCore_de_phase2_objdir -name '*.o'` ; do
+        for o in `find $llvmCore_de_phase2_objdir -name '*.o'` \
+          `find $dragonegg_phase2_objdir -name '*.o'` ; do
             p3=`echo $o | sed -e 's,Phase2,Phase3,'`
             if ! cmp --ignore-initial=16 $o $p3 > /dev/null 2>&1 ; then
                 echo "file `basename $o` differs between dragonegg phase 2 and phase 3"
