@@ -29,7 +29,6 @@
 #include <sys/stat.h>
 #if !defined(_MSC_VER) && !defined(__MINGW32__)
 #include <unistd.h>
-#include <sys/uio.h>
 #else
 #include <io.h>
 #endif
