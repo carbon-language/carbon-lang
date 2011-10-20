@@ -224,3 +224,9 @@ namespace friend_type_template_no_tag {
   };
   template struct S<int>;
 }
+
+namespace PR10660 {
+  struct A {
+    template <> friend class B; // expected-error{{extraneous 'template<>' in declaration of class 'B'}}
+  };
+}
