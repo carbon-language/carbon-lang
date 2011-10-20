@@ -2926,7 +2926,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_SCALAR_TO_VECTOR(SDNode *N) {
 SDValue DAGTypeLegalizer::PromoteIntRes_CONCAT_VECTORS(SDNode *N) {
   DebugLoc dl = N->getDebugLoc();
 
-  SDValue Op0 = N->getOperand(0);
+  SDValue Op0 = N->getOperand(1);
   SDValue Op1 = N->getOperand(1);
   assert(Op0.getValueType() == Op1.getValueType() &&
          "Invalid input vector types");
