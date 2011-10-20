@@ -135,6 +135,12 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB,
   // for example) would be referring to the original function, and this indirect
   // jump would jump from the inlined copy of the function into the original
   // function which is extremely undefined behavior.
+  // FIXME: This logic isn't really right; we can safely inline functions
+  // with indirectbr's as long as no other function or global references the
+  // blockaddress of a block within the current function.  And as a QOI issue,
+  // if someone is using a blockaddress wihtout an indirectbr, and that
+  // reference somehow ends up in another function or global, we probably
+  // don't want to inline this function.
   if (isa<IndirectBrInst>(BB->getTerminator()))
     containsIndirectBr = true;
 
