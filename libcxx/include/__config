@@ -88,7 +88,11 @@
 #endif
 
 #ifndef _LIBCPP_INLINE_VISIBILITY
-#define _LIBCPP_INLINE_VISIBILITY __forceinline
+# if _MSC_VER
+#  define _LIBCPP_INLINE_VISIBILITY __forceinline
+# else // MinGW GCC and Clang
+#  define _LIBCPP_INLINE_VISIBILITY __attribute__ ((__always_inline__))
+# endif
 #endif
 
 #ifndef _LIBCPP_EXCEPTION_ABI
@@ -97,7 +101,7 @@
 
 #ifndef _LIBCPP_ALWAYS_INLINE
 # if _MSC_VER
-# define _LIBCPP_ALWAYS_INLINE __forceinline
+#  define _LIBCPP_ALWAYS_INLINE __forceinline
 # endif
 #endif
 
