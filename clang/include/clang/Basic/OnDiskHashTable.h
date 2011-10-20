@@ -356,7 +356,7 @@ public:
     friend bool operator!=(const key_iterator& X, const key_iterator &Y) {
       return X.NumEntriesLeft != Y.NumEntriesLeft;
     }
-    
+
     key_iterator& operator++() {  // Preincrement
       if (!NumItemsInBucketLeft) {
         // 'Items' starts with a 16-bit unsigned integer representing the
@@ -421,7 +421,7 @@ public:
     bool operator!=(const item_iterator& X) const {
       return X.NumEntriesLeft != NumEntriesLeft;
     }
-    
+
     item_iterator& operator++() {  // Preincrement
       if (!NumItemsInBucketLeft) {
         // 'Items' starts with a 16-bit unsigned integer representing the
@@ -449,7 +449,7 @@ public:
       LocalPtr += 4; // Skip the hash.
 
       // Determine the length of the key and the data.
-      const std::pair<unsigned, unsigned>& L = Info::ReadKeyDataLength(LocalPtr);
+      const std::pair<unsigned, unsigned>& L =Info::ReadKeyDataLength(LocalPtr);
 
       // Read the key.
       const internal_key_type& Key =
@@ -458,14 +458,14 @@ public:
                           InfoObj->ReadData(Key, LocalPtr + L.first, L.second));
     }
   };
-  
+
   item_iterator item_begin() {
     return item_iterator(Base + 4, getNumEntries(), &InfoObj);
   }
   item_iterator item_end() { return item_iterator(); }
 
   Info &getInfoObj() { return InfoObj; }
-  
+
   static OnDiskChainedHashTable* Create(const unsigned char* buckets,
                                         const unsigned char* const base,
                                         const Info &InfoObj = Info()) {

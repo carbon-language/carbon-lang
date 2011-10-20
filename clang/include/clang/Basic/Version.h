@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This header defines version macros and version-related utility functions 
+// This header defines version macros and version-related utility functions
 // for Clang.
 //
 //===----------------------------------------------------------------------===//
@@ -29,7 +29,8 @@
 /// \brief A string that describes the Clang version number, e.g.,
 /// "1.0".
 #define CLANG_VERSION_STRING \
-  CLANG_MAKE_VERSION_STRING(CLANG_VERSION_MAJOR,CLANG_VERSION_MINOR,CLANG_VERSION_PATCHLEVEL)
+  CLANG_MAKE_VERSION_STRING(CLANG_VERSION_MAJOR,CLANG_VERSION_MINOR, \
+                            CLANG_VERSION_PATCHLEVEL)
 #else
 /// \brief Helper macro for CLANG_VERSION_STRING.
 #define CLANG_MAKE_VERSION_STRING(X,Y) CLANG_MAKE_VERSION_STRING2(X.Y)
@@ -41,21 +42,21 @@
 #endif
 
 namespace clang {
-  /// \brief Retrieves the repository path (e.g., Subversion path) that 
+  /// \brief Retrieves the repository path (e.g., Subversion path) that
   /// identifies the particular Clang branch, tag, or trunk from which this
   /// Clang was built.
   std::string getClangRepositoryPath();
-  
+
   /// \brief Retrieves the repository revision number (or identifer) from which
   ///  this Clang was built.
   std::string getClangRevision();
-  
+
   /// \brief Retrieves the full repository version that is an amalgamation of
   ///  the information in getClangRepositoryPath() and getClangRevision().
   std::string getClangFullRepositoryVersion();
-  
+
   /// \brief Retrieves a string representing the complete clang version,
-  ///   which includes the clang version number, the repository version, 
+  ///   which includes the clang version number, the repository version,
   ///   and the vendor tag.
   std::string getClangFullVersion();
 

@@ -1,4 +1,4 @@
-//===--- ExpressionTraits.h - C++ Expression Traits Support Enumerations ----*- C++ -*-===//
+//===--- ExpressionTraits.h - C++ Expression Traits Support Enumerations --===//
 //
 //                     The LLVM Compiler Infrastructure
 //

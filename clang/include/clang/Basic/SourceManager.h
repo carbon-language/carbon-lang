@@ -569,7 +569,7 @@ class SourceManager : public llvm::RefCountedBase<SourceManager> {
   /// source location.
   typedef std::map<unsigned, SourceLocation> MacroArgsMap;
 
-  mutable llvm::DenseMap<FileID, MacroArgsMap *> MacroArgsCacheMap; 
+  mutable llvm::DenseMap<FileID, MacroArgsMap *> MacroArgsCacheMap;
 
   // SourceManager doesn't support copy construction.
   explicit SourceManager(const SourceManager&);
@@ -1205,7 +1205,8 @@ public:
   unsigned loaded_sloc_entry_size() const { return LoadedSLocEntryTable.size();}
 
   /// \brief Get a loaded SLocEntry. This is exposed for indexing.
-  const SrcMgr::SLocEntry &getLoadedSLocEntry(unsigned Index, bool *Invalid=0) const {
+  const SrcMgr::SLocEntry &getLoadedSLocEntry(unsigned Index,
+                                              bool *Invalid = 0) const {
     assert(Index < LoadedSLocEntryTable.size() && "Invalid index");
     if (!SLocEntryLoaded[Index])
       ExternalSLocEntries->ReadSLocEntry(-(static_cast<int>(Index) + 2));
