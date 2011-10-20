@@ -245,9 +245,9 @@ let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
 
 //   VLD1     : Vector Load (multiple single elements)
 class VLD1D<bits<4> op7_4, string Dt>
-  : NLdSt<0,0b10,0b0111,op7_4, (outs DPR:$Vd),
+  : NLdSt<0,0b10,0b0111,op7_4, (outs VecListOneD:$Vd),
           (ins addrmode6:$Rn), IIC_VLD1,
-          "vld1", Dt, "\\{$Vd\\}, $Rn", "", []> {
+          "vld1", Dt, "$Vd, $Rn", "", []> {
   let Rm = 0b1111;
   let Inst{4} = Rn{4};
   let DecoderMethod = "DecodeVLDInstruction";
@@ -1138,8 +1138,8 @@ class VSTQQQQWBPseudo<InstrItinClass itin>
 
 //   VST1     : Vector Store (multiple single elements)
 class VST1D<bits<4> op7_4, string Dt>
-  : NLdSt<0,0b00,0b0111,op7_4, (outs), (ins addrmode6:$Rn, DPR:$Vd),
-          IIC_VST1, "vst1", Dt, "\\{$Vd\\}, $Rn", "", []> {
+  : NLdSt<0,0b00,0b0111,op7_4, (outs), (ins addrmode6:$Rn, VecListOneD:$Vd),
+          IIC_VST1, "vst1", Dt, "$Vd, $Rn", "", []> {
   let Rm = 0b1111;
   let Inst{4} = Rn{4};
   let DecoderMethod = "DecodeVSTInstruction";
