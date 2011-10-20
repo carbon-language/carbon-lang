@@ -4906,10 +4906,10 @@ def  VTBL4Pseudo
 //   VTBX     : Vector Table Extension
 def  VTBX1
   : N3V<1,1,0b11,0b1000,1,0, (outs DPR:$Vd),
-        (ins DPR:$orig, DPR:$Vn, DPR:$Vm), NVTBLFrm, IIC_VTBX1,
-        "vtbx", "8", "$Vd, \\{$Vn\\}, $Vm", "$orig = $Vd",
+        (ins DPR:$orig, VecListOneD:$Vn, DPR:$Vm), NVTBLFrm, IIC_VTBX1,
+        "vtbx", "8", "$Vd, $Vn, $Vm", "$orig = $Vd",
         [(set DPR:$Vd, (v8i8 (int_arm_neon_vtbx1
-                               DPR:$orig, DPR:$Vn, DPR:$Vm)))]>;
+                               DPR:$orig, VecListOneD:$Vn, DPR:$Vm)))]>;
 let hasExtraSrcRegAllocReq = 1 in {
 def  VTBX2
   : N3V<1,1,0b11,0b1001,1,0, (outs DPR:$Vd),
