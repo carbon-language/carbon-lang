@@ -762,15 +762,15 @@ void MachineLICM::UpdateRegPressure(const MachineInstr *MI) {
   }
 }
 
-/// isLoadFromGOT - Return true if this machine instruction loads from
-/// global offset table.
-static bool isLoadFromGOT(MachineInstr &MI) {
+/// isLoadFromGOTOrConstantPool - Return true if this machine instruction 
+/// loads from global offset table or constant pool.
+static bool isLoadFromGOTOrConstantPool(MachineInstr &MI) {
   assert (MI.getDesc().mayLoad() && "Expected MI that loads!");
   for (MachineInstr::mmo_iterator I = MI.memoperands_begin(),
 	 E = MI.memoperands_end(); I != E; ++I) {
     if (const Value *V = (*I)->getValue()) {
       if (const PseudoSourceValue *PSV = dyn_cast<PseudoSourceValue>(V))
-        if (PSV == PSV->getGOT())
+        if (PSV == PSV->getGOT() || PSV == PSV->getConstantPool())
 	  return true;
     }
   }
@@ -792,7 +792,7 @@ bool MachineLICM::IsLICMCandidate(MachineInstr &I) {
   // from constant memory are not safe to speculate all the time, for example
   // indexed load from a jump table.
   // Stores and side effects are already checked by isSafeToMove.
-  if (I.getDesc().mayLoad() && !isLoadFromGOT(I) && 
+  if (I.getDesc().mayLoad() && !isLoadFromGOTOrConstantPool(I) && 
       !IsGuaranteedToExecute(I.getParent()))
     return false;
 
