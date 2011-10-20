@@ -45,10 +45,6 @@ static RegisterScheduler
                        "Bottom-up register reduction list scheduling",
                        createBURRListDAGScheduler);
 static RegisterScheduler
-  tdrListrDAGScheduler("list-tdrr",
-                       "Top-down register reduction list scheduling",
-                       createTDRRListDAGScheduler);
-static RegisterScheduler
   sourceListDAGScheduler("source",
                          "Similar to list-burr but schedules in source "
                          "order when possible",
@@ -121,10 +117,6 @@ namespace {
 ///
 class ScheduleDAGRRList : public ScheduleDAGSDNodes {
 private:
-  /// isBottomUp - This is true if the scheduling problem is bottom-up, false if
-  /// it is top-down.
-  bool isBottomUp;
-
   /// NeedLatency - True if the scheduler will make use of latency information.
   ///
   bool NeedLatency;
@@ -166,7 +158,7 @@ public:
   ScheduleDAGRRList(MachineFunction &mf, bool needlatency,
                     SchedulingPriorityQueue *availqueue,
                     CodeGenOpt::Level OptLevel)
-    : ScheduleDAGSDNodes(mf), isBottomUp(availqueue->isBottomUp()),
+    : ScheduleDAGSDNodes(mf),
       NeedLatency(needlatency), AvailableQueue(availqueue), CurCycle(0),
       Topo(SUnits) {
 
@@ -221,8 +213,6 @@ private:
 
   void ReleasePred(SUnit *SU, const SDep *PredEdge);
   void ReleasePredecessors(SUnit *SU);
-  void ReleaseSucc(SUnit *SU, const SDep *SuccEdge);
-  void ReleaseSuccessors(SUnit *SU);
   void ReleasePending();
   void AdvanceToCycle(unsigned NextCycle);
   void AdvancePastStalls(SUnit *SU);
@@ -241,10 +231,6 @@ private:
 
   SUnit *PickNodeToScheduleBottomUp();
   void ListScheduleBottomUp();
-
-  void ScheduleNodeTopDown(SUnit*);
-  void ListScheduleTopDown();
-
 
   /// CreateNewSUnit - Creates a new SUnit and returns a pointer to it.
   /// Updates the topological ordering if required.
@@ -343,11 +329,8 @@ void ScheduleDAGRRList::Schedule() {
 
   HazardRec->Reset();
 
-  // Execute the actual scheduling loop Top-Down or Bottom-Up as appropriate.
-  if (isBottomUp)
-    ListScheduleBottomUp();
-  else
-    ListScheduleTopDown();
+  // Execute the actual scheduling loop.
+  ListScheduleBottomUp();
 
 #ifndef NDEBUG
   for (int i = 0; i < NumFactors; ++i) {
@@ -457,8 +440,7 @@ void ScheduleDAGRRList::ReleasePending() {
   // Check to see if any of the pending instructions are ready to issue.  If
   // so, add them to the available queue.
   for (unsigned i = 0, e = PendingQueue.size(); i != e; ++i) {
-    unsigned ReadyCycle =
-      isBottomUp ? PendingQueue[i]->getHeight() : PendingQueue[i]->getDepth();
+    unsigned ReadyCycle = PendingQueue[i]->getHeight();
     if (ReadyCycle < MinAvailableCycle)
       MinAvailableCycle = ReadyCycle;
 
@@ -487,10 +469,7 @@ void ScheduleDAGRRList::AdvanceToCycle(unsigned NextCycle) {
   }
   else {
     for (; CurCycle != NextCycle; ++CurCycle) {
-      if (isBottomUp)
-        HazardRec->RecedeCycle();
-      else
-        HazardRec->AdvanceCycle();
+      HazardRec->RecedeCycle();
     }
   }
   // FIXME: Instead of visiting the pending Q each time, set a dirty flag on the
@@ -511,7 +490,7 @@ void ScheduleDAGRRList::AdvancePastStalls(SUnit *SU) {
   // currently need to treat these nodes like real instructions.
   // if (!SU->getNode() || !SU->getNode()->isMachineOpcode()) return;
 
-  unsigned ReadyCycle = isBottomUp ? SU->getHeight() : SU->getDepth();
+  unsigned ReadyCycle = SU->getHeight();
 
   // Bump CurCycle to account for latency. We assume the latency of other
   // available instructions may be hidden by the stall (not a full pipe stall).
@@ -522,7 +501,7 @@ void ScheduleDAGRRList::AdvancePastStalls(SUnit *SU) {
   // Calls are scheduled in their preceding cycle, so don't conflict with
   // hazards from instructions after the call. EmitNode will reset the
   // scoreboard state before emitting the call.
-  if (isBottomUp && SU->isCall)
+  if (SU->isCall)
     return;
 
   // FIXME: For resource conflicts in very long non-pipelined stages, we
@@ -530,7 +509,7 @@ void ScheduleDAGRRList::AdvancePastStalls(SUnit *SU) {
   int Stalls = 0;
   while (true) {
     ScheduleHazardRecognizer::HazardType HT =
-      HazardRec->getHazardType(SU, isBottomUp ? -Stalls : Stalls);
+      HazardRec->getHazardType(SU, -Stalls);
 
     if (HT == ScheduleHazardRecognizer::NoHazard)
       break;
@@ -568,17 +547,13 @@ void ScheduleDAGRRList::EmitNode(SUnit *SU) {
     HazardRec->Reset();
     return;
   }
-  if (isBottomUp && SU->isCall) {
+  if (SU->isCall) {
     // Calls are scheduled with their preceding instructions. For bottom-up
     // scheduling, clear the pipeline state before emitting.
     HazardRec->Reset();
   }
 
   HazardRec->EmitInstruction(SU);
-
-  if (!isBottomUp && SU->isCall) {
-    HazardRec->Reset();
-  }
 }
 
 static void resetVRegCycle(SUnit *SU);
@@ -1300,98 +1275,9 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
   std::reverse(Sequence.begin(), Sequence.end());
 
 #ifndef NDEBUG
-  VerifySchedule(isBottomUp);
+  VerifySchedule(/*isBottomUp=*/true);
 #endif
 }
-
-//===----------------------------------------------------------------------===//
-//  Top-Down Scheduling
-//===----------------------------------------------------------------------===//
-
-/// ReleaseSucc - Decrement the NumPredsLeft count of a successor. Add it to
-/// the AvailableQueue if the count reaches zero. Also update its cycle bound.
-void ScheduleDAGRRList::ReleaseSucc(SUnit *SU, const SDep *SuccEdge) {
-  SUnit *SuccSU = SuccEdge->getSUnit();
-
-#ifndef NDEBUG
-  if (SuccSU->NumPredsLeft == 0) {
-    dbgs() << "*** Scheduling failed! ***\n";
-    SuccSU->dump(this);
-    dbgs() << " has been released too many times!\n";
-    llvm_unreachable(0);
-  }
-#endif
-  --SuccSU->NumPredsLeft;
-
-  // If all the node's predecessors are scheduled, this node is ready
-  // to be scheduled. Ignore the special ExitSU node.
-  if (SuccSU->NumPredsLeft == 0 && SuccSU != &ExitSU) {
-    SuccSU->isAvailable = true;
-    AvailableQueue->push(SuccSU);
-  }
-}
-
-void ScheduleDAGRRList::ReleaseSuccessors(SUnit *SU) {
-  // Top down: release successors
-  for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
-       I != E; ++I) {
-    assert(!I->isAssignedRegDep() &&
-           "The list-tdrr scheduler doesn't yet support physreg dependencies!");
-
-    ReleaseSucc(SU, &*I);
-  }
-}
-
-/// ScheduleNodeTopDown - Add the node to the schedule. Decrement the pending
-/// count of its successors. If a successor pending count is zero, add it to
-/// the Available queue.
-void ScheduleDAGRRList::ScheduleNodeTopDown(SUnit *SU) {
-  DEBUG(dbgs() << "*** Scheduling [" << CurCycle << "]: ");
-  DEBUG(SU->dump(this));
-
-  assert(CurCycle >= SU->getDepth() && "Node scheduled above its depth!");
-  SU->setDepthToAtLeast(CurCycle);
-  Sequence.push_back(SU);
-
-  ReleaseSuccessors(SU);
-  SU->isScheduled = true;
-  AvailableQueue->ScheduledNode(SU);
-}
-
-/// ListScheduleTopDown - The main loop of list scheduling for top-down
-/// schedulers.
-void ScheduleDAGRRList::ListScheduleTopDown() {
-  AvailableQueue->setCurCycle(CurCycle);
-
-  // Release any successors of the special Entry node.
-  ReleaseSuccessors(&EntrySU);
-
-  // All leaves to Available queue.
-  for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {
-    // It is available if it has no predecessors.
-    if (SUnits[i].Preds.empty()) {
-      AvailableQueue->push(&SUnits[i]);
-      SUnits[i].isAvailable = true;
-    }
-  }
-
-  // While Available queue is not empty, grab the node with the highest
-  // priority. If it is not ready put it back.  Schedule the node.
-  Sequence.reserve(SUnits.size());
-  while (!AvailableQueue->empty()) {
-    SUnit *CurSU = AvailableQueue->pop();
-
-    if (CurSU)
-      ScheduleNodeTopDown(CurSU);
-    ++CurCycle;
-    AvailableQueue->setCurCycle(CurCycle);
-  }
-
-#ifndef NDEBUG
-  VerifySchedule(isBottomUp);
-#endif
-}
-
 
 //===----------------------------------------------------------------------===//
 //                RegReductionPriorityQueue Definition
@@ -1435,21 +1321,6 @@ struct bu_ls_rr_sort : public queue_sort {
   bu_ls_rr_sort(const bu_ls_rr_sort &RHS) : SPQ(RHS.SPQ) {}
 
   bool operator()(SUnit* left, SUnit* right) const;
-};
-
-// td_ls_rr_sort - Priority function for top down register pressure reduction
-// scheduler.
-struct td_ls_rr_sort : public queue_sort {
-  enum {
-    IsBottomUp = false,
-    HasReadyFilter = false
-  };
-
-  RegReductionPQBase *SPQ;
-  td_ls_rr_sort(RegReductionPQBase *spq) : SPQ(spq) {}
-  td_ls_rr_sort(const td_ls_rr_sort &RHS) : SPQ(RHS.SPQ) {}
-
-  bool operator()(const SUnit* left, const SUnit* right) const;
 };
 
 // src_ls_rr_sort - Priority function for source order scheduler.
@@ -1680,10 +1551,7 @@ public:
     SF DumpPicker = Picker;
     while (!DumpQueue.empty()) {
       SUnit *SU = popFromQueue(DumpQueue, DumpPicker, scheduleDAG);
-      if (isBottomUp())
-        dbgs() << "Height " << SU->getHeight() << ": ";
-      else
-        dbgs() << "Depth " << SU->getDepth() << ": ";
+      dbgs() << "Height " << SU->getHeight() << ": ";
       SU->dump(DAG);
     }
   }
@@ -1691,9 +1559,6 @@ public:
 
 typedef RegReductionPriorityQueue<bu_ls_rr_sort>
 BURegReductionPriorityQueue;
-
-typedef RegReductionPriorityQueue<td_ls_rr_sort>
-TDRegReductionPriorityQueue;
 
 typedef RegReductionPriorityQueue<src_ls_rr_sort>
 SrcRegReductionPriorityQueue;
@@ -2907,49 +2772,6 @@ static unsigned LimitedSumOfUnscheduledPredsOfSuccs(const SUnit *SU,
   return Sum;
 }
 
-
-// Top down
-bool td_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
-  if (int res = checkSpecialNodes(left, right))
-    return res < 0;
-
-  unsigned LPriority = SPQ->getNodePriority(left);
-  unsigned RPriority = SPQ->getNodePriority(right);
-  bool LIsTarget = left->getNode() && left->getNode()->isMachineOpcode();
-  bool RIsTarget = right->getNode() && right->getNode()->isMachineOpcode();
-  bool LIsFloater = LIsTarget && left->NumPreds == 0;
-  bool RIsFloater = RIsTarget && right->NumPreds == 0;
-  unsigned LBonus = (LimitedSumOfUnscheduledPredsOfSuccs(left,1) == 1) ? 2 : 0;
-  unsigned RBonus = (LimitedSumOfUnscheduledPredsOfSuccs(right,1) == 1) ? 2 : 0;
-
-  if (left->NumSuccs == 0 && right->NumSuccs != 0)
-    return false;
-  else if (left->NumSuccs != 0 && right->NumSuccs == 0)
-    return true;
-
-  if (LIsFloater)
-    LBonus -= 2;
-  if (RIsFloater)
-    RBonus -= 2;
-  if (left->NumSuccs == 1)
-    LBonus += 2;
-  if (right->NumSuccs == 1)
-    RBonus += 2;
-
-  if (LPriority+LBonus != RPriority+RBonus)
-    return LPriority+LBonus < RPriority+RBonus;
-
-  if (left->getDepth() != right->getDepth())
-    return left->getDepth() < right->getDepth();
-
-  if (left->NumSuccsLeft != right->NumSuccsLeft)
-    return left->NumSuccsLeft > right->NumSuccsLeft;
-
-  assert(left->NodeQueueId && right->NodeQueueId &&
-         "NodeQueueId cannot be zero");
-  return (left->NodeQueueId > right->NodeQueueId);
-}
-
 //===----------------------------------------------------------------------===//
 //                         Public Constructor Functions
 //===----------------------------------------------------------------------===//
@@ -2963,20 +2785,6 @@ llvm::createBURRListDAGScheduler(SelectionDAGISel *IS,
 
   BURegReductionPriorityQueue *PQ =
     new BURegReductionPriorityQueue(*IS->MF, false, TII, TRI, 0);
-  ScheduleDAGRRList *SD = new ScheduleDAGRRList(*IS->MF, false, PQ, OptLevel);
-  PQ->setScheduleDAG(SD);
-  return SD;
-}
-
-llvm::ScheduleDAGSDNodes *
-llvm::createTDRRListDAGScheduler(SelectionDAGISel *IS,
-                                 CodeGenOpt::Level OptLevel) {
-  const TargetMachine &TM = IS->TM;
-  const TargetInstrInfo *TII = TM.getInstrInfo();
-  const TargetRegisterInfo *TRI = TM.getRegisterInfo();
-
-  TDRegReductionPriorityQueue *PQ =
-    new TDRegReductionPriorityQueue(*IS->MF, false, TII, TRI, 0);
   ScheduleDAGRRList *SD = new ScheduleDAGRRList(*IS->MF, false, PQ, OptLevel);
   PQ->setScheduleDAG(SD);
   return SD;
