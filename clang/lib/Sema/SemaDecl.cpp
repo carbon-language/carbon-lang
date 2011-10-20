@@ -2653,7 +2653,8 @@ Decl *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
           (isa<TranslationUnitDecl>(Owner) ||
            (isa<NamespaceDecl>(Owner) &&
             cast<NamespaceDecl>(Owner)->getDeclName()))) {
-        Diag(Record->getLocation(), diag::err_anonymous_union_not_static);
+        Diag(Record->getLocation(), diag::err_anonymous_union_not_static)
+          << FixItHint::CreateInsertion(Record->getLocation(), "static ");
         Invalid = true;
   
         // Recover by adding 'static'.
