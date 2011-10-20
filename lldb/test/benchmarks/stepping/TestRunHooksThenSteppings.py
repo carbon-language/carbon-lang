@@ -12,7 +12,6 @@ class RunHooksThenSteppingsBench(BenchBase):
 
     def setUp(self):
         BenchBase.setUp(self)
-        self.stepping_avg = None
 
     @benchmarks_test
     def test_lldb_runhooks_then_steppings(self):
@@ -54,9 +53,6 @@ class RunHooksThenSteppingsBench(BenchBase):
         except:
             pass
 
-        self.stepping_avg = self.stopwatch.avg()
-        if self.TraceOn():
-            print "lldb stepping benchmark:", str(self.stopwatch)
         self.child = None
 
 
