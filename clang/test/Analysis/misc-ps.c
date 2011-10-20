@@ -81,3 +81,18 @@ int PR8962_f (int *t) {
   }) ) return 0;
   return *t; // no-warning
 }
+
+// This previously crashed logic in the analyzer engine when evaluating locations.
+void rdar10308201_aux(unsigned val);
+void rdar10308201 (int valA, void *valB, unsigned valC) {
+  unsigned actual_base, lines;
+  if (valC == 0) {
+    actual_base = (unsigned)valB;
+    for (;;) {
+      if (valA & (1<<0))
+        rdar10308201_aux(actual_base);
+    }
+  }
+}
+
+
