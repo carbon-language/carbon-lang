@@ -25,7 +25,7 @@ class SteppingSpeedBench(BenchBase):
                 self.break_spec = '-F Driver::MainLoop()'
             else:
                 self.break_spec = '-n main'
-        self.stepping_avg = None
+
         #print "self.exe=%s" % self.exe
         #print "self.break_spec=%s" % self.break_spec
 
@@ -69,9 +69,6 @@ class SteppingSpeedBench(BenchBase):
         except:
             pass
 
-        self.stepping_avg = self.stopwatch.avg()
-        if self.TraceOn():
-            print "lldb stepping benchmark:", str(self.stopwatch)
         self.child = None
 
 
