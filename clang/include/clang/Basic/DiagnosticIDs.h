@@ -182,6 +182,10 @@ public:
   /// category.
   static StringRef getCategoryNameFromID(unsigned CategoryID);
   
+  /// isARCDiagnostic - Return true if a given diagnostic falls into an
+  /// ARC diagnostic category;
+  static bool isARCDiagnostic(unsigned DiagID);
+
   /// \brief Enumeration describing how the the emission of a diagnostic should
   /// be treated when it occurs during C++ template argument deduction.
   enum SFINAEResponse {

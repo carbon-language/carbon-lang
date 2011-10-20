@@ -146,8 +146,6 @@ public:
     : Ctx(Ctx), SemaRef(sema), TA(TA), ARCMTMacroLocs(ARCMTMacroLocs) { }
 };
 
-bool isARCDiagnostic(unsigned diagID, DiagnosticsEngine &Diag);
-
 static inline StringRef getARCMTMacroName() {
   return "__IMPL_ARCMT_REMOVED_EXPR__";
 }

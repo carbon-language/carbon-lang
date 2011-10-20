@@ -98,7 +98,7 @@ public:
 
   virtual void HandleDiagnostic(DiagnosticsEngine::Level level,
                                 const Diagnostic &Info) {
-    if (arcmt::isARCDiagnostic(Info.getID(), Diags) ||
+    if (DiagnosticIDs::isARCDiagnostic(Info.getID()) ||
         level >= DiagnosticsEngine::Error || level == DiagnosticsEngine::Note) {
       CapturedDiags.push_back(StoredDiagnostic(level, Info));
       return;
@@ -571,13 +571,4 @@ bool MigrationProcess::applyTransform(TransformFn trans,
   }
 
   return false;
-}
-
-//===----------------------------------------------------------------------===//
-// isARCDiagnostic.
-//===----------------------------------------------------------------------===//
-
-bool arcmt::isARCDiagnostic(unsigned diagID, DiagnosticsEngine &Diag) {
-  return Diag.getDiagnosticIDs()->getCategoryNumberForDiag(diagID) ==
-           diag::DiagCat_Automatic_Reference_Counting_Issue;
 }

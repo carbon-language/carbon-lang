@@ -21,7 +21,7 @@ void test(id p) {
 // CHECK:  <array>
 // CHECK:   <dict>
 // CHECK:    <key>description</key><string>ARC forbids explicit message send of &apos;release&apos;</string>
-// CHECK:    <key>category</key><string>Automatic Reference Counting Issue</string>
+// CHECK:    <key>category</key><string>ARC Restrictions</string>
 // CHECK:    <key>type</key><string>error</string>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>

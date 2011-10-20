@@ -806,9 +806,14 @@ bool DiagnosticIDs::isUnrecoverable(unsigned DiagID) const {
     return false;
 
   // Currently we consider all ARC errors as recoverable.
-  if (getCategoryNumberForDiag(DiagID) ==
-        diag::DiagCat_Automatic_Reference_Counting_Issue)
+  if (isARCDiagnostic(DiagID))
     return false;
 
   return true;
 }
+
+bool DiagnosticIDs::isARCDiagnostic(unsigned DiagID) {
+  unsigned cat = getCategoryNumberForDiag(DiagID);
+  return DiagnosticIDs::getCategoryNameFromID(cat).startswith("ARC ");
+}
+
