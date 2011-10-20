@@ -5924,7 +5924,8 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
       unsigned VReg1 = MRI->createVirtualRegister(TRC);
       AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::LDRcp))
                      .addReg(VReg1, RegState::Define)
-                     .addConstantPoolIndex(Idx));
+                     .addConstantPoolIndex(Idx)
+                     .addImm(0));
       AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::CMPrr))
                      .addReg(NewVReg1)
                      .addReg(VReg1, RegState::Kill));
