@@ -833,6 +833,9 @@ def err_incomplete_member_access : Error<
   "member access into incomplete type %0">;
 def err_incomplete_type : Error<
   "incomplete type %0 where a complete type is required">;
+def warn_cxx98_compat_enum_nested_name_spec : Warning<
+  "enumeration type in nested name specifier is incompatible with C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
   
 // C++ class members
 def err_storageclass_invalid_for_member : Error<

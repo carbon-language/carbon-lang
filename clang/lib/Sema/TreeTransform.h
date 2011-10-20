@@ -2629,6 +2629,9 @@ TreeTransform<Derived>::TransformNestedNameSpecifierLoc(
            TL.getType()->isEnumeralType())) {
         assert(!TL.getType().hasLocalQualifiers() && 
                "Can't get cv-qualifiers here");
+        if (TL.getType()->isEnumeralType())
+          SemaRef.Diag(TL.getBeginLoc(),
+                       diag::warn_cxx98_compat_enum_nested_name_spec);
         SS.Extend(SemaRef.Context, /*FIXME:*/SourceLocation(), TL,
                   Q.getLocalEndLoc());
         break;

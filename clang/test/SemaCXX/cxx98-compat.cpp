@@ -237,3 +237,9 @@ namespace UnionOrAnonStructMembers {
     };
   };
 }
+
+int EnumNNS = Enum::enum_val; // expected-warning {{enumeration type in nested name specifier is incompatible with C++98}}
+template<typename T> void EnumNNSFn() {
+  int k = T::enum_val; // expected-warning {{enumeration type in nested name specifier is incompatible with C++98}}
+};
+template void EnumNNSFn<Enum>(); // expected-note {{in instantiation}}

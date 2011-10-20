@@ -596,6 +596,9 @@ bool Sema::BuildCXXNestedNameSpecifier(Scope *S,
       llvm_unreachable("Unhandled TypeDecl node in nested-name-specifier");
     }
 
+    if (T->isEnumeralType())
+      Diag(IdentifierLoc, diag::warn_cxx98_compat_enum_nested_name_spec);
+
     SS.Extend(Context, SourceLocation(), TLB.getTypeLocInContext(Context, T),
               CCLoc);
     return false;
