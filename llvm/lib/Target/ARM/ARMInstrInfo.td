@@ -4562,13 +4562,8 @@ def MRSsys : ABI<0b0001, (outs GPR:$Rd), (ins), NoItinerary,
 // same and the assembly parser has no way to distinguish between them. The mask
 // operand contains the special register (R Bit) in bit 4 and bits 3-0 contains
 // the mask with the fields to be accessed in the special register.
-//
-// NOTE: There are separate versions of these instructions for M-class versus
-// AR-class processors.  M-class processors can accept a wider range of
-// mask values than AR-class processors can.
-def MSRm : ABI<0b0001, (outs), (ins msr_mask:$mask, GPR:$Rn), NoItinerary,
-              "msr", "\t$mask, $Rn", []>,
-          Requires<[IsMClass]> {
+def MSR : ABI<0b0001, (outs), (ins msr_mask:$mask, GPR:$Rn), NoItinerary,
+              "msr", "\t$mask, $Rn", []> {
   bits<5> mask;
   bits<4> Rn;
 
@@ -4581,9 +4576,8 @@ def MSRm : ABI<0b0001, (outs), (ins msr_mask:$mask, GPR:$Rn), NoItinerary,
   let Inst{3-0} = Rn;
 }
 
-def MSRmi : ABI<0b0011, (outs), (ins msr_mask:$mask,  so_imm:$a), NoItinerary,
-               "msr", "\t$mask, $a", []>,
-           Requires<[IsMClass]> {
+def MSRi : ABI<0b0011, (outs), (ins msr_mask:$mask,  so_imm:$a), NoItinerary,
+               "msr", "\t$mask, $a", []> {
   bits<5> mask;
   bits<12> a;
 
@@ -4594,38 +4588,6 @@ def MSRmi : ABI<0b0011, (outs), (ins msr_mask:$mask,  so_imm:$a), NoItinerary,
   let Inst{15-12} = 0b1111;
   let Inst{11-0} = a;
 }
-
-def MSRar : ABI<0b0001, (outs), (ins msr_mask:$mask, GPR:$Rn), NoItinerary,
-              "msr", "\t$mask, $Rn", []>,
-          Requires<[IsARClass]> {
-  bits<5> mask;
-  bits<4> Rn;
-
-  let Inst{23} = 0;
-  let Inst{22} = 0;
-  let Inst{21-20} = 0b10;
-  let Inst{19-18} = mask{3-2};
-  let Inst{17-16} = 0b00;
-  let Inst{15-12} = 0b1111;
-  let Inst{11-4} = 0b00000000;
-  let Inst{3-0} = Rn;
-}
-
-def MSRari : ABI<0b0011, (outs), (ins msr_mask:$mask,  so_imm:$a), NoItinerary,
-               "msr", "\t$mask, $a", []>,
-           Requires<[IsARClass]> {
-  bits<5> mask;
-  bits<12> a;
-
-  let Inst{23} = 0;
-  let Inst{22} = 0;
-  let Inst{21-20} = 0b10;
-  let Inst{19-18} = mask{3-2};
-  let Inst{17-16} = 0b00;
-  let Inst{15-12} = 0b1111;
-  let Inst{11-0} = a;
-}
-
 
 //===----------------------------------------------------------------------===//
 // TLS Instructions
