@@ -29,3 +29,6 @@ struct ConvertToInt {
   operator int();
 };
 int *ArraySizeConversion = new int[ConvertToInt()]; // expected-warning {{implicit conversion from array size expression of type 'ConvertToInt' to integral type 'int' is incompatible with C++98}}
+
+template<typename T> class ExternTemplate {};
+extern template class ExternTemplate<int>; // expected-warning {{extern templates are incompatible with C++98}}

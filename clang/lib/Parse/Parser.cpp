@@ -642,6 +642,9 @@ Parser::ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
       // Extern templates
       SourceLocation ExternLoc = ConsumeToken();
       SourceLocation TemplateLoc = ConsumeToken();
+      Diag(ExternLoc, getLang().CPlusPlus0x ?
+             diag::warn_cxx98_compat_extern_template :
+             diag::ext_extern_template) << SourceRange(ExternLoc, TemplateLoc);
       SourceLocation DeclEnd;
       return Actions.ConvertDeclToDeclGroup(
                   ParseExplicitInstantiation(ExternLoc, TemplateLoc, DeclEnd));

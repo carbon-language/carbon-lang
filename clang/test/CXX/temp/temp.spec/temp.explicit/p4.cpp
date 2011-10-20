@@ -43,6 +43,6 @@ namespace test0 {
     // inappropriately instantiating this template.
     void *ptr = x;
   }
-  extern template class foo<char>;
+  extern template class foo<char>; // expected-warning {{extern templates are a C++11 extension}}
   template class foo<char>;
 }

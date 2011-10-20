@@ -469,6 +469,11 @@ def err_missing_dependent_template_keyword : Error<
 def warn_missing_dependent_template_keyword : ExtWarn<
   "use 'template' keyword to treat '%0' as a dependent template name">;
 
+def ext_extern_template : Extension<
+  "extern templates are a C++11 extension">, InGroup<CXX11>;
+def warn_cxx98_compat_extern_template : Warning<
+  "extern templates are incompatible with C++98">,
+  InGroup<CXX98CompatPedantic>, DefaultIgnore;
 def warn_static_inline_explicit_inst_ignored : Warning<
   "ignoring '%select{static|inline}0' keyword on explicit template "
   "instantiation">;
