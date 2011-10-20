@@ -2180,8 +2180,8 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             
             if (log)
             {
-                std::string type_string = ASTDumper(pointer_target_qual_type).AsString();
-                log->Printf("  FEVD[%u] Adding type for $__lldb_class: %s", current_id, type_string.c_str());
+                ASTDumper ast_dumper(pointer_target_qual_type);
+                log->Printf("  FEVD[%u] Adding type for $__lldb_class: %s", current_id, ast_dumper.GetCString());
             }
             
             AddOneType(context, class_user_type, current_id, true);
@@ -2231,8 +2231,8 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             
             if (log)
             {
-                std::string type_string = ASTDumper(pointer_target_type).AsString();
-                log->Printf("  FEVD[%u] Adding type for $__lldb_objc_class: %s", current_id, type_string.c_str());
+                ASTDumper ast_dumper(pointer_target_type);
+                log->Printf("  FEVD[%u] Adding type for $__lldb_objc_class: %s", current_id, ast_dumper.GetCString());
             }
             
             AddOneType(context, class_user_type, current_id, false);
@@ -2591,12 +2591,11 @@ ClangExpressionDeclMap::FindExternalLexicalDecls (const DeclContext *decl_contex
         {
             if (log)
             {
-                std::string decl_print_string = ASTDumper(decl).AsString();
-                
+                ASTDumper ast_dumper(decl);
                 if (const NamedDecl *context_named_decl = dyn_cast<NamedDecl>(context_decl))
-                    log->Printf("  FELD[%d] Adding [to %s] lexical decl %s", current_id, context_named_decl->getNameAsString().c_str(), decl_print_string.c_str());
+                    log->Printf("  FELD[%d] Adding [to %s] lexical decl %s", current_id, context_named_decl->getNameAsString().c_str(), ast_dumper.GetCString());
                 else
-                    log->Printf("  FELD[%d] Adding lexical decl %s", current_id, decl_print_string.c_str());
+                    log->Printf("  FELD[%d] Adding lexical decl %s", current_id, ast_dumper.GetCString());
             }
                         
             Decl *copied_decl = ast_importer->CopyDecl(original_ctx, decl);
@@ -2776,9 +2775,8 @@ ClangExpressionDeclMap::AddOneVariable (NameSearchContext &context, VariableSP v
     
     if (log)
     {
-        std::string var_decl_print_string = ASTDumper(var_decl).AsString();
-        
-        log->Printf("  FEVD[%u] Found variable %s, returned %s", current_id, decl_name.c_str(), var_decl_print_string.c_str());
+        ASTDumper ast_dumper(var_decl);        
+        log->Printf("  FEVD[%u] Found variable %s, returned %s", current_id, decl_name.c_str(), ast_dumper.GetCString());
     }
 }
 
@@ -2806,9 +2804,8 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
     
     if (log)
     {
-        std::string var_decl_print_string = ASTDumper(var_decl).AsString();
-        
-        log->Printf("  FEVD[%u] Added pvar %s, returned %s", current_id, pvar_sp->GetName().GetCString(), var_decl_print_string.c_str());
+        ASTDumper ast_dumper(var_decl);
+        log->Printf("  FEVD[%u] Added pvar %s, returned %s", current_id, pvar_sp->GetName().GetCString(), ast_dumper.GetCString());
     }
 }
 
@@ -2865,9 +2862,9 @@ ClangExpressionDeclMap::AddOneGenericVariable(NameSearchContext &context,
     
     if (log)
     {
-        std::string var_decl_print_string = ASTDumper(var_decl).AsString();
+        ASTDumper ast_dumper(var_decl);
         
-        log->Printf("  FEVD[%u] Found variable %s, returned %s", current_id, decl_name.c_str(), var_decl_print_string.c_str());
+        log->Printf("  FEVD[%u] Found variable %s, returned %s", current_id, decl_name.c_str(), ast_dumper.GetCString());
     }
 }
 
@@ -2899,9 +2896,8 @@ ClangExpressionDeclMap::ResolveUnknownTypes()
             
             if (log)
             {
-                std::string var_decl_print_string = ASTDumper((clang::Decl*)var_decl).AsString();
-            
-                log->Printf("Variable of unknown type now has Decl %s", var_decl_print_string.c_str());
+                ASTDumper ast_dumper(const_cast<VarDecl*>(var_decl));
+                log->Printf("Variable of unknown type now has Decl %s", ast_dumper.GetCString());
             }
                 
             QualType var_type = var_decl->getType();
@@ -2962,9 +2958,8 @@ ClangExpressionDeclMap::AddOneRegister (NameSearchContext &context,
     
     if (log && log->GetVerbose())
     {
-        std::string var_decl_print_string = ASTDumper(var_decl).AsString();
-        
-        log->Printf("  FEVD[%d] Added register %s, returned %s", current_id, context.m_decl_name.getAsString().c_str(), var_decl_print_string.c_str());
+        ASTDumper ast_dumper(var_decl);
+        log->Printf("  FEVD[%d] Added register %s, returned %s", current_id, context.m_decl_name.getAsString().c_str(), ast_dumper.GetCString());
     }
 }
 
@@ -3032,8 +3027,20 @@ ClangExpressionDeclMap::AddOneFunction (NameSearchContext &context,
         
         fun_ast_context = fun_type->GetClangASTContext().getASTContext();
         void *copied_type = GuardedCopyType(context.GetASTContext(), fun_ast_context, fun_opaque_type);
-        
-        fun_decl = context.AddFunDecl(copied_type);
+        if (copied_type)
+        {
+            fun_decl = context.AddFunDecl(copied_type);
+        }
+        else
+        {
+            // We failed to copy the type we found
+            if (log)
+            {
+                log->Printf ("  Failed to import the function type '%s' {0x%8.8llx} into the expression parser AST contenxt",
+                             fun_type->GetName().GetCString(), 
+                             fun_type->GetID());
+            }
+        }
     }
     else if (symbol)
     {
@@ -3070,13 +3077,13 @@ ClangExpressionDeclMap::AddOneFunction (NameSearchContext &context,
         
     if (log)
     {
-        std::string fun_decl_print_string = ASTDumper(fun_decl).AsString();
+        ASTDumper ast_dumper(fun_decl);
         
         log->Printf("  FEVD[%u] Found %s function %s, returned %s", 
                     current_id,
                     (fun ? "specific" : "generic"), 
                     decl_name.c_str(), 
-                    fun_decl_print_string.c_str());
+                    ast_dumper.GetCString());
     }
 }
 

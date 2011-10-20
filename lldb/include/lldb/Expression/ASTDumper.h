@@ -26,7 +26,7 @@ public:
     ASTDumper (clang::QualType type);
     ASTDumper (lldb::clang_type_t type);
     
-    std::string AsString();
+    const char *GetCString();
     void ToSTDERR();
     void ToLog(lldb::LogSP &log, const char *prefix);
     void ToStream(lldb::StreamSP &stream);

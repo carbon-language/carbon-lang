@@ -78,9 +78,10 @@ ASTDumper::ASTDumper (lldb::clang_type_t type)
     m_dump = clang::QualType::getFromOpaquePtr(type).getAsString();
 }
     
-std::string ASTDumper::AsString()
+const char *
+ASTDumper::GetCString()
 {
-    return m_dump;
+    return m_dump.c_str();
 }
 
 void ASTDumper::ToSTDERR()
