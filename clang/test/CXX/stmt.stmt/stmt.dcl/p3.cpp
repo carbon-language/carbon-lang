@@ -30,7 +30,7 @@ struct Y {
 
 void test_Y() {
   goto end; // expected-error{{goto into protected scope}}
-  Y y; // expected-note{{jump bypasses variable initialization}}
+  Y y; // expected-note{{jump bypasses variable with a non-trivial destructor}}
  end:
   return;
 }
@@ -41,7 +41,7 @@ struct Z {
 
 void test_Z() {
   goto end; // expected-error{{goto into protected scope}}
-  Z z; // expected-note{{jump bypasses variable initialization}}
+  Z z; // expected-note{{jump bypasses initialization of non-POD variable}}
  end:
   return;
 }

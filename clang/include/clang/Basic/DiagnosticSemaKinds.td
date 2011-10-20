@@ -2891,17 +2891,28 @@ def warn_unused_label : Warning<"unused label %0">,
 def err_goto_into_protected_scope : Error<"goto into protected scope">;
 def warn_goto_into_protected_scope : ExtWarn<"goto into protected scope">,
   InGroup<Microsoft>;
+def warn_cxx98_compat_goto_into_protected_scope : Warning<
+  "goto would jump into protected scope in C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
 def err_switch_into_protected_scope : Error<
   "switch case is in protected scope">;
+def warn_cxx98_compat_switch_into_protected_scope : Warning<
+  "switch case would be in a protected scope in C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
 def err_indirect_goto_without_addrlabel : Error<
   "indirect goto in function with no address-of-label expressions">;
 def err_indirect_goto_in_protected_scope : Error<
   "indirect goto might cross protected scopes">;
+def warn_cxx98_compat_indirect_goto_in_protected_scope : Warning<
+  "indirect goto might cross protected scopes in C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
 def note_indirect_goto_target : Note<"possible target of indirect goto">;
 def note_protected_by_variable_init : Note<
   "jump bypasses variable initialization">;
 def note_protected_by_variable_nontriv_destructor : Note<
   "jump bypasses variable with a non-trivial destructor">;
+def note_protected_by_variable_non_pod : Note<
+  "jump bypasses initialization of non-POD variable">;
 def note_protected_by_cleanup : Note<
   "jump bypasses initialization of variable with __attribute__((cleanup))">;
 def note_protected_by_vla_typedef : Note<

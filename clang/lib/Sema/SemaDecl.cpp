@@ -6358,7 +6358,7 @@ void Sema::ActOnUninitializedDecl(Decl *RealDecl,
     // Check for jumps past the implicit initializer.  C++0x
     // clarifies that this applies to a "variable with automatic
     // storage duration", not a "local variable".
-    // C++0x [stmt.dcl]p3
+    // C++11 [stmt.dcl]p3
     //   A program that jumps from a point where a variable with automatic
     //   storage duration is not in scope to a point where it is in scope is
     //   ill-formed unless the variable has scalar type, class type with a
@@ -6369,10 +6369,10 @@ void Sema::ActOnUninitializedDecl(Decl *RealDecl,
       if (const RecordType *Record
             = Context.getBaseElementType(Type)->getAs<RecordType>()) {
         CXXRecordDecl *CXXRecord = cast<CXXRecordDecl>(Record->getDecl());
-        if ((!getLangOptions().CPlusPlus0x && !CXXRecord->isPOD()) ||
-            (getLangOptions().CPlusPlus0x &&
-             (!CXXRecord->hasTrivialDefaultConstructor() ||
-              !CXXRecord->hasTrivialDestructor())))
+        // Mark the function for further checking even if the looser rules of
+        // C++11 do not require such checks, so that we can diagnose
+        // incompatibilities with C++98.
+        if (!CXXRecord->isPOD())
           getCurFunction()->setHasBranchProtectedScope();
       }
     }

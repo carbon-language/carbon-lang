@@ -243,3 +243,20 @@ template<typename T> void EnumNNSFn() {
   int k = T::enum_val; // expected-warning {{enumeration type in nested name specifier is incompatible with C++98}}
 };
 template void EnumNNSFn<Enum>(); // expected-note {{in instantiation}}
+
+void JumpDiagnostics(int n) {
+  goto DirectJump; // expected-warning {{goto would jump into protected scope in C++98}}
+  TrivialButNonPOD tnp1; // expected-note {{jump bypasses initialization of non-POD variable}}
+
+DirectJump:
+  void *Table[] = {&&DirectJump, &&Later};
+  goto *Table[n]; // expected-warning {{indirect goto might cross protected scopes in C++98}}
+
+  TrivialButNonPOD tnp2; // expected-note {{jump bypasses initialization of non-POD variable}}
+Later: // expected-note {{possible target of indirect goto}}
+  switch (n) {
+    TrivialButNonPOD tnp3; // expected-note {{jump bypasses initialization of non-POD variable}}
+  default: // expected-warning {{switch case would be in a protected scope in C++98}}
+    return;
+  }
+}

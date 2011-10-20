@@ -35,7 +35,7 @@ struct Y {
 
 void jump_over_var_with_dtor() {
   goto end; // expected-warning{{goto into protected scope}}
-  Y y; // expected-note {{jump bypasses variable initialization}}
+  Y y; // expected-note {{jump bypasses variable with a non-trivial destructor}}
  end:
     ;
 }
