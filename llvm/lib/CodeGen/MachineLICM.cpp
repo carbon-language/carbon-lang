@@ -788,7 +788,9 @@ bool MachineLICM::IsLICMCandidate(MachineInstr &I) {
 
   // If it is load then check if it is guaranteed to execute by making sure that
   // it dominates all exiting blocks. If it doesn't, then there is a path out of
-  // the loop which does not execute this load, so we can't hoist it.
+  // the loop which does not execute this load, so we can't hoist it. Loads
+  // from constant memory are not safe to speculate all the time, for example
+  // indexed load from a jump table.
   // Stores and side effects are already checked by isSafeToMove.
   if (I.getDesc().mayLoad() && !isLoadFromGOT(I) && 
       !IsGuaranteedToExecute(I.getParent()))
