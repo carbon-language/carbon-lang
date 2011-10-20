@@ -6492,9 +6492,7 @@ Decl *Sema::ActOnAliasDeclaration(Scope *S,
   // Warn about shadowing the name of a template parameter.
   if (Previous.isSingleResult() &&
       Previous.getFoundDecl()->isTemplateParameter()) {
-    if (DiagnoseTemplateParameterShadow(Name.StartLocation,
-                                        Previous.getFoundDecl()))
-      Invalid = true;
+    DiagnoseTemplateParameterShadow(Name.StartLocation,Previous.getFoundDecl());
     Previous.clear();
   }
 
@@ -9585,6 +9583,7 @@ Decl *Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D) {
     if (PrevDecl->isTemplateParameter()) {
       // Maybe we will complain about the shadowed template parameter.
       DiagnoseTemplateParameterShadow(D.getIdentifierLoc(), PrevDecl);
+      PrevDecl = 0;
     }
   }
 

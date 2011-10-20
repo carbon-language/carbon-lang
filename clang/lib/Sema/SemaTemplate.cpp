@@ -420,12 +420,12 @@ Sema::BuildDependentDeclRefExpr(const CXXScopeSpec &SS,
 /// that the template parameter 'PrevDecl' is being shadowed by a new
 /// declaration at location Loc. Returns true to indicate that this is
 /// an error, and false otherwise.
-bool Sema::DiagnoseTemplateParameterShadow(SourceLocation Loc, Decl *PrevDecl) {
+void Sema::DiagnoseTemplateParameterShadow(SourceLocation Loc, Decl *PrevDecl) {
   assert(PrevDecl->isTemplateParameter() && "Not a template parameter");
 
   // Microsoft Visual C++ permits template parameters to be shadowed.
   if (getLangOptions().MicrosoftExt)
-    return false;
+    return;
 
   // C++ [temp.local]p4:
   //   A template-parameter shall not be redeclared within its
@@ -433,7 +433,7 @@ bool Sema::DiagnoseTemplateParameterShadow(SourceLocation Loc, Decl *PrevDecl) {
   Diag(Loc, diag::err_template_param_shadow)
     << cast<NamedDecl>(PrevDecl)->getDeclName();
   Diag(PrevDecl->getLocation(), diag::note_template_param_here);
-  return true;
+  return;
 }
 
 /// AdjustDeclIfTemplate - If the given decl happens to be a template, reset
@@ -528,9 +528,10 @@ Decl *Sema::ActOnTypeParameter(Scope *S, bool Typename, bool Ellipsis,
     NamedDecl *PrevDecl = LookupSingleName(S, ParamName, ParamNameLoc,
                                            LookupOrdinaryName,
                                            ForRedeclaration);
-    if (PrevDecl && PrevDecl->isTemplateParameter())
-      Invalid = Invalid || DiagnoseTemplateParameterShadow(ParamNameLoc,
-                                                           PrevDecl);
+    if (PrevDecl && PrevDecl->isTemplateParameter()) {
+      DiagnoseTemplateParameterShadow(ParamNameLoc, PrevDecl);
+      PrevDecl = 0;
+    }
   }
 
   SourceLocation Loc = ParamNameLoc;
@@ -652,9 +653,10 @@ Decl *Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
     NamedDecl *PrevDecl = LookupSingleName(S, ParamName, D.getIdentifierLoc(),
                                            LookupOrdinaryName,
                                            ForRedeclaration);
-    if (PrevDecl && PrevDecl->isTemplateParameter())
-      Invalid = Invalid || DiagnoseTemplateParameterShadow(D.getIdentifierLoc(),
-                                                           PrevDecl);
+    if (PrevDecl && PrevDecl->isTemplateParameter()) {
+      DiagnoseTemplateParameterShadow(D.getIdentifierLoc(), PrevDecl);
+      PrevDecl = 0;
+    }
   }
 
   T = CheckNonTypeTemplateParameterType(T, D.getIdentifierLoc());
