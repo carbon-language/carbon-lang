@@ -6,6 +6,7 @@ target datalayout = "e-p:32:32"
 @hello = constant [6 x i8] c"hello\00"		; <[6 x i8]*> [#uses=3]
 @null = constant [1 x i8] zeroinitializer		; <[1 x i8]*> [#uses=3]
 @null_hello = constant [7 x i8] c"\00hello\00"		; <[7 x i8]*> [#uses=1]
+@nullstring = constant i8 0
 
 declare i32 @strlen(i8*)
 
@@ -53,4 +54,9 @@ define i1 @test7() {
 	%null_l = call i32 @strlen( i8* %null_p )		; <i32> [#uses=1]
 	%ne_null = icmp ne i32 %null_l, 0		; <i1> [#uses=1]
 	ret i1 %ne_null
+}
+
+define i32 @test8() {
+	%len = tail call i32 @strlen(i8* @nullstring) nounwind
+	ret i32 %len
 }

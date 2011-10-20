@@ -1525,8 +1525,7 @@ Value *llvm::GetPointerBaseWithConstantOffset(Value *Ptr, int64_t &Offset,
 /// null-terminated C string pointed to by V.  If successful, it returns true
 /// and returns the string in Str.  If unsuccessful, it returns false.
 bool llvm::GetConstantStringInfo(const Value *V, std::string &Str,
-                                 uint64_t Offset,
-                                 bool StopAtNul) {
+                                 uint64_t Offset, bool StopAtNul) {
   // If V is NULL then return false;
   if (V == NULL) return false;
 
@@ -1536,7 +1535,7 @@ bool llvm::GetConstantStringInfo(const Value *V, std::string &Str,
   
   // If the value is not a GEP instruction nor a constant expression with a
   // GEP instruction, then return false because ConstantArray can't occur
-  // any other way
+  // any other way.
   const User *GEP = 0;
   if (const GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(V)) {
     GEP = GEPI;
@@ -1576,7 +1575,7 @@ bool llvm::GetConstantStringInfo(const Value *V, std::string &Str,
     return GetConstantStringInfo(GEP->getOperand(0), Str, StartIdx+Offset,
                                  StopAtNul);
   }
-  
+
   // The GEP instruction, constant or instruction, must reference a global
   // variable that is a constant and is initialized. The referenced constant
   // initializer is the array that we'll use for optimization.
@@ -1585,8 +1584,8 @@ bool llvm::GetConstantStringInfo(const Value *V, std::string &Str,
     return false;
   const Constant *GlobalInit = GV->getInitializer();
   
-  // Handle the ConstantAggregateZero case
-  if (isa<ConstantAggregateZero>(GlobalInit)) {
+  // Handle the all-zeros case
+  if (GlobalInit->isNullValue()) {
     // This is a degenerate case. The initializer is constant zero so the
     // length of the string must be zero.
     Str.clear();
@@ -1665,6 +1664,14 @@ static uint64_t GetStringLengthH(Value *V, SmallPtrSet<PHINode*, 32> &PHIs) {
     if (Len2 == ~0ULL) return Len1;
     if (Len1 != Len2) return 0;
     return Len1;
+  }
+
+  // As a special-case, "@string = constant i8 0" is also a string with zero
+  // length, not wrapped in a bitcast or GEP.
+  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
+    if (GV->isConstant() && GV->hasDefinitiveInitializer())
+      if (GV->getInitializer()->isNullValue()) return 1;
+    return 0;
   }
 
   // If the value is not a GEP instruction nor a constant expression with a
