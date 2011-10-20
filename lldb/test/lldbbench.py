@@ -1,7 +1,5 @@
 import time
-from lldbtest import Base
-from lldbtest import benchmarks_test
-from lldbtest import line_number
+from lldbtest import *
 
 class Stopwatch(object):
     """Stopwatch provides a simple utility to start/stop your stopwatch multiple
@@ -85,17 +83,19 @@ class Stopwatch(object):
                                                                self.__laps__,
                                                                self.__total_elapsed__)
 
-class BenchBase(Base):
+class BenchBase(TestBase):
     """
     Abstract base class for benchmark tests.
     """
     def setUp(self):
         """Fixture for unittest test case setup."""
-        Base.setUp(self)
+        super(BenchBase, self).setUp()
+        #TestBase.setUp(self)
         self.stopwatch = Stopwatch()
 
     def tearDown(self):
         """Fixture for unittest test case teardown."""
-        Base.tearDown(self)
+        super(BenchBase, self).setUp()
+        #TestBase.tearDown(self)
         del self.stopwatch
 
