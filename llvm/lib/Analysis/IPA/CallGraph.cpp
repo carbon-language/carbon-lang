@@ -127,16 +127,9 @@ private:
       }
     }
 
-    // Loop over all of the users of the function, looking for non-call uses.
-    for (Value::use_iterator I = F->use_begin(), E = F->use_end(); I != E; ++I){
-      User *U = *I;
-      if ((!isa<CallInst>(U) && !isa<InvokeInst>(U))
-          || !CallSite(cast<Instruction>(U)).isCallee(I)) {
-        // Not a call, or being used as a parameter rather than as the callee.
-        ExternalCallingNode->addCalledFunction(CallSite(), Node);
-        break;
-      }
-    }
+    // If this function has its address taken, anything could call it.
+    if (F->hasAddressTaken())
+      ExternalCallingNode->addCalledFunction(CallSite(), Node);
 
     // If this function is not defined in this translation unit, it could call
     // anything.
