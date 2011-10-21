@@ -20,13 +20,14 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "block-placement2"
-#include "llvm/CodeGen/Passes.h"
-#include "llvm/CodeGen/MachineModuleInfo.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineBlockFrequencyInfo.h"
 #include "llvm/CodeGen/MachineBranchProbabilityInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineLoopInfo.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
+#include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/ADT/DenseMap.h"
@@ -35,6 +36,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetLowering.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -259,8 +261,14 @@ class MachineBlockPlacement : public MachineFunctionPass {
   /// \brief A handle to the function-wide block frequency pass.
   const MachineBlockFrequencyInfo *MBFI;
 
+  /// \brief A handle to the loop info.
+  const MachineLoopInfo *MLI;
+
   /// \brief A handle to the target's instruction info.
   const TargetInstrInfo *TII;
+
+  /// \brief A handle to the target's lowering info.
+  const TargetLowering *TLI;
 
   /// \brief A prioritized list of edges in the BB-graph.
   ///
@@ -307,6 +315,7 @@ class MachineBlockPlacement : public MachineFunctionPass {
   void BuildBlockChains();
   void PrioritizeChains(MachineFunction &F);
   void PlaceBlockChains(MachineFunction &F);
+  void AlignLoops(MachineFunction &F);
 
 public:
   static char ID; // Pass identification, replacement for typeid
@@ -319,6 +328,7 @@ public:
   void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.addRequired<MachineBranchProbabilityInfo>();
     AU.addRequired<MachineBlockFrequencyInfo>();
+    AU.addRequired<MachineLoopInfo>();
     MachineFunctionPass::getAnalysisUsage(AU);
   }
 
@@ -331,6 +341,7 @@ INITIALIZE_PASS_BEGIN(MachineBlockPlacement, "block-placement2",
                       "Branch Probability Basic Block Placement", false, false)
 INITIALIZE_PASS_DEPENDENCY(MachineBranchProbabilityInfo)
 INITIALIZE_PASS_DEPENDENCY(MachineBlockFrequencyInfo)
+INITIALIZE_PASS_DEPENDENCY(MachineLoopInfo)
 INITIALIZE_PASS_END(MachineBlockPlacement, "block-placement2",
                     "Branch Probability Basic Block Placement", false, false)
 
@@ -595,6 +606,28 @@ void MachineBlockPlacement::PlaceBlockChains(MachineFunction &F) {
   }
 }
 
+/// \brief Recursive helper to align a loop and any nested loops.
+static void AlignLoop(MachineFunction &F, MachineLoop *L, unsigned Align) {
+  // Recurse through nested loops.
+  for (MachineLoop::iterator I = L->begin(), E = L->end(); I != E; ++I)
+    AlignLoop(F, *I, Align);
+
+  L->getTopBlock()->setAlignment(Align);
+}
+
+/// \brief Align loop headers to target preferred alignments.
+void MachineBlockPlacement::AlignLoops(MachineFunction &F) {
+  if (F.getFunction()->hasFnAttr(Attribute::OptimizeForSize))
+    return;
+
+  unsigned Align = TLI->getPrefLoopAlignment();
+  if (!Align)
+    return;  // Don't care about loop alignment.
+
+  for (MachineLoopInfo::iterator I = MLI->begin(), E = MLI->end(); I != E; ++I)
+    AlignLoop(F, *I, Align);
+}
+
 bool MachineBlockPlacement::runOnMachineFunction(MachineFunction &F) {
   // Check for single-block functions and skip them.
   if (llvm::next(F.begin()) == F.end())
@@ -602,7 +635,9 @@ bool MachineBlockPlacement::runOnMachineFunction(MachineFunction &F) {
 
   MBPI = &getAnalysis<MachineBranchProbabilityInfo>();
   MBFI = &getAnalysis<MachineBlockFrequencyInfo>();
+  MLI = &getAnalysis<MachineLoopInfo>();
   TII = F.getTarget().getInstrInfo();
+  TLI = F.getTarget().getTargetLowering();
   assert(Edges.empty());
   assert(BlockToChain.empty());
   assert(PChains.empty());
@@ -612,6 +647,7 @@ bool MachineBlockPlacement::runOnMachineFunction(MachineFunction &F) {
   BuildBlockChains();
   PrioritizeChains(F);
   PlaceBlockChains(F);
+  AlignLoops(F);
 
   Edges.clear();
   BlockToChain.clear();

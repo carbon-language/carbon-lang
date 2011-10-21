@@ -2,10 +2,10 @@
 
 declare void @error(i32 %i, i32 %a, i32 %b)
 
-define i32 @test1(i32 %i, i32* %a, i32 %b) {
+define i32 @test_ifchains(i32 %i, i32* %a, i32 %b) {
 ; Test a chain of ifs, where the block guarded by the if is error handling code
 ; that is not expected to run.
-; CHECK: test1:
+; CHECK: test_ifchains:
 ; CHECK: %entry
 ; CHECK: %else1
 ; CHECK: %else2
@@ -73,3 +73,70 @@ exit:
 }
 
 !0 = metadata !{metadata !"branch_weights", i32 4, i32 64}
+
+define i32 @test_loop_align(i32 %i, i32* %a) {
+; Check that we provide basic loop body alignment with the block placement
+; pass.
+; CHECK: test_loop_align:
+; CHECK: %entry
+; CHECK: .align 16,
+; CHECK-NEXT: %body
+; CHECK: %exit
+
+entry:
+  br label %body
+
+body:
+  %iv = phi i32 [ 0, %entry ], [ %next, %body ]
+  %base = phi i32 [ 0, %entry ], [ %sum, %body ]
+  %arrayidx = getelementptr inbounds i32* %a, i32 %iv
+  %0 = load i32* %arrayidx
+  %sum = add nsw i32 %0, %base
+  %next = add i32 %iv, 1
+  %exitcond = icmp eq i32 %next, %i
+  br i1 %exitcond, label %exit, label %body
+
+exit:
+  ret i32 %sum
+}
+
+define i32 @test_nested_loop_align(i32 %i, i32* %a, i32* %b) {
+; Check that we provide nested loop body alignment.
+; CHECK: test_nested_loop_align:
+; CHECK: %entry
+; CHECK: .align 16,
+; CHECK-NEXT: %loop.body.1
+; CHECK: .align 16,
+; CHECK-NEXT: %inner.loop.body
+; CHECK-NOT: .align
+; CHECK: %loop.body.2
+; CHECK: %exit
+
+entry:
+  br label %loop.body.1
+
+loop.body.1:
+  %iv = phi i32 [ 0, %entry ], [ %next, %loop.body.2 ]
+  %arrayidx = getelementptr inbounds i32* %a, i32 %iv
+  %bidx = load i32* %arrayidx
+  br label %inner.loop.body
+
+inner.loop.body:
+  %inner.iv = phi i32 [ 0, %loop.body.1 ], [ %inner.next, %inner.loop.body ]
+  %base = phi i32 [ 0, %loop.body.1 ], [ %sum, %inner.loop.body ]
+  %scaled_idx = mul i32 %bidx, %iv
+  %inner.arrayidx = getelementptr inbounds i32* %b, i32 %scaled_idx
+  %0 = load i32* %inner.arrayidx
+  %sum = add nsw i32 %0, %base
+  %inner.next = add i32 %iv, 1
+  %inner.exitcond = icmp eq i32 %inner.next, %i
+  br i1 %inner.exitcond, label %loop.body.2, label %inner.loop.body
+
+loop.body.2:
+  %next = add i32 %iv, 1
+  %exitcond = icmp eq i32 %next, %i
+  br i1 %exitcond, label %exit, label %loop.body.1
+
+exit:
+  ret i32 %sum
+}
