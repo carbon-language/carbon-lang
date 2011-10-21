@@ -416,7 +416,8 @@ InitListChecker::FillInValueInitializations(const InitializedEntity &Entity,
         ElementEntity.getKind() == InitializedEntity::EK_VectorElement)
       ElementEntity.setElementIndex(Init);
 
-    if (Init >= NumInits || !ILE->getInit(Init)) {
+    Expr *InitExpr = (Init < NumInits ? ILE->getInit(Init) : 0);
+    if (!InitExpr && !ILE->hasArrayFiller()) {
       InitializationKind Kind = InitializationKind::CreateValue(Loc, Loc, Loc,
                                                                 true);
       InitializationSequence InitSeq(SemaRef, ElementEntity, Kind, 0, 0);
@@ -460,7 +461,7 @@ InitListChecker::FillInValueInitializations(const InitializedEntity &Entity,
         }
       }
     } else if (InitListExpr *InnerILE
-                 = dyn_cast<InitListExpr>(ILE->getInit(Init)))
+                 = dyn_cast_or_null<InitListExpr>(InitExpr))
       FillInValueInitializations(ElementEntity, InnerILE, RequiresSecondPass);
   }
 }

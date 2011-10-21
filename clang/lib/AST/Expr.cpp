@@ -1394,6 +1394,7 @@ Expr *InitListExpr::updateInit(ASTContext &C, unsigned Init, Expr *expr) {
 }
 
 void InitListExpr::setArrayFiller(Expr *filler) {
+  assert(!hasArrayFiller() && "Filler already set!");
   ArrayFillerOrUnionFieldInit = filler;
   // Fill out any "holes" in the array due to designated initializers.
   Expr **inits = getInits();

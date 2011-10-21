@@ -3400,6 +3400,10 @@ public:
   }
   void setArrayFiller(Expr *filler);
 
+  /// \brief Return true if this is an array initializer and its array "filler"
+  /// has been set.
+  bool hasArrayFiller() const { return getArrayFiller(); }
+
   /// \brief If this initializes a union, specifies which field in the
   /// union to initialize.
   ///
