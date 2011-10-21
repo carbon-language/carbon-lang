@@ -174,12 +174,12 @@ static const NEONLdStTableEntry NEONLdStTable[] = {
 { ARM::VLD2LNq32Pseudo,     ARM::VLD2LNq32,     true, false, EvenDblSpc, 2, 2 ,true},
 { ARM::VLD2LNq32Pseudo_UPD, ARM::VLD2LNq32_UPD, true, true,  EvenDblSpc, 2, 2 ,true},
 
-{ ARM::VLD2d16Pseudo,       ARM::VLD2d16,      true,  false, SingleSpc,  2, 4 ,true},
-{ ARM::VLD2d16Pseudo_UPD,   ARM::VLD2d16_UPD,  true,  true,  SingleSpc,  2, 4 ,true},
-{ ARM::VLD2d32Pseudo,       ARM::VLD2d32,      true,  false, SingleSpc,  2, 2 ,true},
-{ ARM::VLD2d32Pseudo_UPD,   ARM::VLD2d32_UPD,  true,  true,  SingleSpc,  2, 2 ,true},
-{ ARM::VLD2d8Pseudo,        ARM::VLD2d8,       true,  false, SingleSpc,  2, 8 ,true},
-{ ARM::VLD2d8Pseudo_UPD,    ARM::VLD2d8_UPD,   true,  true,  SingleSpc,  2, 8 ,true},
+{ ARM::VLD2d16Pseudo,       ARM::VLD2d16,      true,  false, SingleSpc,  2, 4 ,false},
+{ ARM::VLD2d16Pseudo_UPD,   ARM::VLD2d16_UPD,  true,  true,  SingleSpc,  2, 4 ,false},
+{ ARM::VLD2d32Pseudo,       ARM::VLD2d32,      true,  false, SingleSpc,  2, 2 ,false},
+{ ARM::VLD2d32Pseudo_UPD,   ARM::VLD2d32_UPD,  true,  true,  SingleSpc,  2, 2 ,false},
+{ ARM::VLD2d8Pseudo,        ARM::VLD2d8,       true,  false, SingleSpc,  2, 8 ,false},
+{ ARM::VLD2d8Pseudo_UPD,    ARM::VLD2d8_UPD,   true,  true,  SingleSpc,  2, 8 ,false},
 
 { ARM::VLD2q16Pseudo,       ARM::VLD2q16,      true,  false, SingleSpc,  4, 4 ,true},
 { ARM::VLD2q16Pseudo_UPD,   ARM::VLD2q16_UPD,  true,  true,  SingleSpc,  4, 4 ,true},

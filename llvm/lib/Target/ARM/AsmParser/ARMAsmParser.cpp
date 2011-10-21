@@ -930,6 +930,13 @@ public:
     return VectorList.Count == 4;
   }
 
+  bool isVecListTwoQ() const {
+    if (Kind != k_VectorList) return false;
+    //FIXME: We haven't taught the parser to handle by-two register lists
+    // yet, so don't pretend to know one.
+    return VectorList.Count == 2 && false;
+  }
+
   bool isVectorIndex8() const {
     if (Kind != k_VectorIndex) return false;
     return VectorIndex.Val < 8;
@@ -1537,6 +1544,13 @@ public:
   }
 
   void addVecListFourDOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    // Only the first register actually goes on the instruction. The rest
+    // are implied by the opcode.
+    Inst.addOperand(MCOperand::CreateReg(VectorList.RegNum));
+  }
+
+  void addVecListTwoQOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     // Only the first register actually goes on the instruction. The rest
     // are implied by the opcode.
