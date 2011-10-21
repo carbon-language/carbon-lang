@@ -10,7 +10,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
 #include "lldb/Core/Log.h"
-#include "lldb/Core/Module.h
+#include "lldb/Core/Module.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/ClangASTImporter.h"
 #include "lldb/Symbol/ClangNamespaceDecl.h"
