@@ -1013,6 +1013,13 @@ void DeclContext::addDecl(Decl *D) {
     ND->getDeclContext()->makeDeclVisibleInContext(ND);
 }
 
+void DeclContext::addDeclInternal(Decl *D) {
+  addHiddenDecl(D);
+
+  if (NamedDecl *ND = dyn_cast<NamedDecl>(D))
+    ND->getDeclContext()->makeDeclVisibleInContextInternal(ND);
+}
+
 /// buildLookup - Build the lookup data structure with all of the
 /// declarations in DCtx (and any other contexts linked to it or
 /// transparent contexts nested within it).
@@ -1026,12 +1033,12 @@ void DeclContext::buildLookup(DeclContext *DCtx) {
       // lookup building, this is implicitly enforced by addDecl.
       if (NamedDecl *ND = dyn_cast<NamedDecl>(*D))
         if (D->getDeclContext() == DCtx)
-          makeDeclVisibleInContextImpl(ND);
+          makeDeclVisibleInContextImpl(ND, false);
 
       // Insert any forward-declared Objective-C interface into the lookup
       // data structure.
       if (ObjCClassDecl *Class = dyn_cast<ObjCClassDecl>(*D))
-        makeDeclVisibleInContextImpl(Class->getForwardInterfaceDecl());
+        makeDeclVisibleInContextImpl(Class->getForwardInterfaceDecl(), false);
       
       // If this declaration is itself a transparent declaration context or
       // inline namespace, add its members (recursively).
@@ -1147,7 +1154,17 @@ bool DeclContext::InEnclosingNamespaceSetOf(const DeclContext *O) const {
   return false;
 }
 
-void DeclContext::makeDeclVisibleInContext(NamedDecl *D, bool Recoverable) {
+void DeclContext::makeDeclVisibleInContext(NamedDecl *D, bool Recoverable)
+{
+    makeDeclVisibleInContextWithFlags(D, false, Recoverable);
+}
+
+void DeclContext::makeDeclVisibleInContextInternal(NamedDecl *D, bool Recoverable)
+{
+    makeDeclVisibleInContextWithFlags(D, true, Recoverable);
+}
+
+void DeclContext::makeDeclVisibleInContextWithFlags(NamedDecl *D, bool Internal, bool Recoverable) {
   // FIXME: This feels like a hack. Should DeclarationName support
   // template-ids, or is there a better way to keep specializations
   // from being visible?
@@ -1159,7 +1176,7 @@ void DeclContext::makeDeclVisibleInContext(NamedDecl *D, bool Recoverable) {
 
   DeclContext *PrimaryContext = getPrimaryContext();
   if (PrimaryContext != this) {
-    PrimaryContext->makeDeclVisibleInContext(D, Recoverable);
+    PrimaryContext->makeDeclVisibleInContextWithFlags(D, Internal, Recoverable);
     return;
   }
 
@@ -1168,12 +1185,12 @@ void DeclContext::makeDeclVisibleInContext(NamedDecl *D, bool Recoverable) {
   // them so we can add the decl. Otherwise, be lazy and don't build that
   // structure until someone asks for it.
   if (LookupPtr || !Recoverable || hasExternalVisibleStorage())
-    makeDeclVisibleInContextImpl(D);
+    makeDeclVisibleInContextImpl(D, Internal);
 
   // If we are a transparent context or inline namespace, insert into our
   // parent context, too. This operation is recursive.
   if (isTransparentContext() || isInlineNamespace())
-    getParent()->makeDeclVisibleInContext(D, Recoverable);
+    getParent()->makeDeclVisibleInContextWithFlags(D, Internal, Recoverable);
 
   Decl *DCAsDecl = cast<Decl>(this);
   // Notify that a decl was made visible unless it's a Tag being defined. 
@@ -1182,7 +1199,7 @@ void DeclContext::makeDeclVisibleInContext(NamedDecl *D, bool Recoverable) {
       L->AddedVisibleDecl(this, D);
 }
 
-void DeclContext::makeDeclVisibleInContextImpl(NamedDecl *D) {
+void DeclContext::makeDeclVisibleInContextImpl(NamedDecl *D, bool Internal) {
   // Skip unnamed declarations.
   if (!D->getDeclName())
     return;
@@ -1203,10 +1220,11 @@ void DeclContext::makeDeclVisibleInContextImpl(NamedDecl *D) {
   // with this declaration's name.
   // If the lookup table contains an entry about this name it means that we
   // have already checked the external source.
-  if (ExternalASTSource *Source = getParentASTContext().getExternalSource())
-    if (hasExternalVisibleStorage() &&
-        LookupPtr->find(D->getDeclName()) == LookupPtr->end())
-      Source->FindExternalVisibleDeclsByName(this, D->getDeclName());
+  if (!Internal)
+    if (ExternalASTSource *Source = getParentASTContext().getExternalSource())
+      if (hasExternalVisibleStorage() &&
+          LookupPtr->find(D->getDeclName()) == LookupPtr->end())
+        Source->FindExternalVisibleDeclsByName(this, D->getDeclName());
 
   // Insert this declaration into the map.
   StoredDeclsList &DeclNameEntries = (*LookupPtr)[D->getDeclName()];

@@ -1231,6 +1231,8 @@ public:
   /// If D is also a NamedDecl, it will be made visible within its
   /// semantic context via makeDeclVisibleInContext.
   void addDecl(Decl *D);
+    
+  void addDeclInternal(Decl *D);
 
   /// @brief Add the declaration D to this context without modifying
   /// any lookup tables.
@@ -1290,6 +1292,9 @@ public:
   /// the lookup tables because it can be easily recovered by walking
   /// the declaration chains.
   void makeDeclVisibleInContext(NamedDecl *D, bool Recoverable = true);
+    
+  void makeDeclVisibleInContextInternal(NamedDecl *D,
+                                        bool Recoverable = true);
 
   /// udir_iterator - Iterates through the using-directives stored
   /// within this context.
@@ -1359,7 +1364,8 @@ private:
   StoredDeclsMap *CreateStoredDeclsMap(ASTContext &C) const;
 
   void buildLookup(DeclContext *DCtx);
-  void makeDeclVisibleInContextImpl(NamedDecl *D);
+  void makeDeclVisibleInContextWithFlags(NamedDecl *D, bool Internal, bool Recoverable);
+  void makeDeclVisibleInContextImpl(NamedDecl *D, bool Internal);
 };
 
 inline bool Decl::isTemplateParameter() const {

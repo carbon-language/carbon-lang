@@ -2038,7 +2038,7 @@ Decl *ASTNodeImporter::VisitNamespaceDecl(NamespaceDecl *D) {
                                         Importer.Import(D->getLocStart()),
                                         Loc, Name.getAsIdentifierInfo());
     ToNamespace->setLexicalDeclContext(LexicalDC);
-    LexicalDC->addDecl(ToNamespace);
+    LexicalDC->addDeclInternal(ToNamespace);
     
     // If this is an anonymous namespace, register it as the anonymous
     // namespace within its context.
@@ -2117,7 +2117,7 @@ Decl *ASTNodeImporter::VisitTypedefNameDecl(TypedefNameDecl *D, bool IsAlias) {
   ToTypedef->setAccess(D->getAccess());
   ToTypedef->setLexicalDeclContext(LexicalDC);
   Importer.Imported(D, ToTypedef);
-  LexicalDC->addDecl(ToTypedef);
+  LexicalDC->addDeclInternal(ToTypedef);
   
   return ToTypedef;
 }
@@ -2188,7 +2188,7 @@ Decl *ASTNodeImporter::VisitEnumDecl(EnumDecl *D) {
   D2->setAccess(D->getAccess());
   D2->setLexicalDeclContext(LexicalDC);
   Importer.Imported(D, D2);
-  LexicalDC->addDecl(D2);
+  LexicalDC->addDeclInternal(D2);
 
   // Import the integer type.
   QualType ToIntegerType = Importer.Import(D->getIntegerType());
@@ -2293,7 +2293,7 @@ Decl *ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
     
     D2->setQualifierInfo(Importer.Import(D->getQualifierLoc()));
     D2->setLexicalDeclContext(LexicalDC);
-    LexicalDC->addDecl(D2);
+    LexicalDC->addDeclInternal(D2);
   }
   
   Importer.Imported(D, D2);
@@ -2350,7 +2350,7 @@ Decl *ASTNodeImporter::VisitEnumConstantDecl(EnumConstantDecl *D) {
   ToEnumerator->setAccess(D->getAccess());
   ToEnumerator->setLexicalDeclContext(LexicalDC);
   Importer.Imported(D, ToEnumerator);
-  LexicalDC->addDecl(ToEnumerator);
+  LexicalDC->addDeclInternal(ToEnumerator);
   return ToEnumerator;
 }
 
@@ -2491,14 +2491,14 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
   // Set the parameters.
   for (unsigned I = 0, N = Parameters.size(); I != N; ++I) {
     Parameters[I]->setOwningFunction(ToFunction);
-    ToFunction->addDecl(Parameters[I]);
+    ToFunction->addDeclInternal(Parameters[I]);
   }
   ToFunction->setParams(Parameters);
 
   // FIXME: Other bits to merge?
 
   // Add this function to the lexical context.
-  LexicalDC->addDecl(ToFunction);
+  LexicalDC->addDeclInternal(ToFunction);
 
   return ToFunction;
 }
@@ -2566,7 +2566,7 @@ Decl *ASTNodeImporter::VisitFieldDecl(FieldDecl *D) {
   if (ToField->hasInClassInitializer())
     ToField->setInClassInitializer(D->getInClassInitializer());
   Importer.Imported(D, ToField);
-  LexicalDC->addDecl(ToField);
+  LexicalDC->addDeclInternal(ToField);
   return ToField;
 }
 
@@ -2622,7 +2622,7 @@ Decl *ASTNodeImporter::VisitIndirectFieldDecl(IndirectFieldDecl *D) {
   ToIndirectField->setAccess(D->getAccess());
   ToIndirectField->setLexicalDeclContext(LexicalDC);
   Importer.Imported(D, ToIndirectField);
-  LexicalDC->addDecl(ToIndirectField);
+  LexicalDC->addDeclInternal(ToIndirectField);
   return ToIndirectField;
 }
 
@@ -2671,7 +2671,7 @@ Decl *ASTNodeImporter::VisitObjCIvarDecl(ObjCIvarDecl *D) {
                                               BitWidth, D->getSynthesize());
   ToIvar->setLexicalDeclContext(LexicalDC);
   Importer.Imported(D, ToIvar);
-  LexicalDC->addDecl(ToIvar);
+  LexicalDC->addDeclInternal(ToIvar);
   return ToIvar;
   
 }
@@ -2784,7 +2784,7 @@ Decl *ASTNodeImporter::VisitVarDecl(VarDecl *D) {
   ToVar->setAccess(D->getAccess());
   ToVar->setLexicalDeclContext(LexicalDC);
   Importer.Imported(D, ToVar);
-  LexicalDC->addDecl(ToVar);
+  LexicalDC->addDeclInternal(ToVar);
 
   // Merge the initializer.
   // FIXME: Can we really import any initializer? Alternatively, we could force
@@ -2963,7 +2963,7 @@ Decl *ASTNodeImporter::VisitObjCMethodDecl(ObjCMethodDecl *D) {
   // Set the parameters.
   for (unsigned I = 0, N = ToParams.size(); I != N; ++I) {
     ToParams[I]->setOwningFunction(ToMethod);
-    ToMethod->addDecl(ToParams[I]);
+    ToMethod->addDeclInternal(ToParams[I]);
   }
   SmallVector<SourceLocation, 12> SelLocs;
   D->getSelectorLocs(SelLocs);
@@ -2971,7 +2971,7 @@ Decl *ASTNodeImporter::VisitObjCMethodDecl(ObjCMethodDecl *D) {
 
   ToMethod->setLexicalDeclContext(LexicalDC);
   Importer.Imported(D, ToMethod);
-  LexicalDC->addDecl(ToMethod);
+  LexicalDC->addDeclInternal(ToMethod);
   return ToMethod;
 }
 
@@ -3000,7 +3000,7 @@ Decl *ASTNodeImporter::VisitObjCCategoryDecl(ObjCCategoryDecl *D) {
                                           Name.getAsIdentifierInfo(),
                                           ToInterface);
     ToCategory->setLexicalDeclContext(LexicalDC);
-    LexicalDC->addDecl(ToCategory);
+    LexicalDC->addDeclInternal(ToCategory);
     Importer.Imported(D, ToCategory);
     
     // Import protocols
@@ -3073,7 +3073,7 @@ Decl *ASTNodeImporter::VisitObjCProtocolDecl(ObjCProtocolDecl *D) {
                                          D->isInitiallyForwardDecl());
       ToProto->setForwardDecl(D->isForwardDecl());
       ToProto->setLexicalDeclContext(LexicalDC);
-      LexicalDC->addDecl(ToProto);
+      LexicalDC->addDeclInternal(ToProto);
     }
     Importer.Imported(D, ToProto);
 
@@ -3136,7 +3136,7 @@ Decl *ASTNodeImporter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
                                           D->isImplicitInterfaceDecl());
       ToIface->setForwardDecl(D->isForwardDecl());
       ToIface->setLexicalDeclContext(LexicalDC);
-      LexicalDC->addDecl(ToIface);
+      LexicalDC->addDeclInternal(ToIface);
     }
     Importer.Imported(D, ToIface);
 
@@ -3255,7 +3255,7 @@ Decl *ASTNodeImporter::VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D) {
       ToImpl->setLexicalDeclContext(LexicalDC);
     }
     
-    LexicalDC->addDecl(ToImpl);
+    LexicalDC->addDeclInternal(ToImpl);
     Category->setImplementation(ToImpl);
   }
   
@@ -3384,7 +3384,7 @@ Decl *ASTNodeImporter::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
                                D->getPropertyImplementation());
   Importer.Imported(D, ToProperty);
   ToProperty->setLexicalDeclContext(LexicalDC);
-  LexicalDC->addDecl(ToProperty);
+  LexicalDC->addDeclInternal(ToProperty);
 
   ToProperty->setPropertyAttributes(D->getPropertyAttributes());
   ToProperty->setPropertyAttributesAsWritten(
@@ -3443,7 +3443,7 @@ Decl *ASTNodeImporter::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D) {
                                   Importer.Import(D->getPropertyIvarDeclLoc()));
     ToImpl->setLexicalDeclContext(LexicalDC);
     Importer.Imported(D, ToImpl);
-    LexicalDC->addDecl(ToImpl);
+    LexicalDC->addDeclInternal(ToImpl);
   } else {
     // Check that we have the same kind of property implementation (@synthesize
     // vs. @dynamic).
@@ -3520,7 +3520,7 @@ ASTNodeImporter::VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *D) {
                                       Protocols.data(), Protocols.size(),
                                       Locations.data());
   ToForward->setLexicalDeclContext(LexicalDC);
-  LexicalDC->addDecl(ToForward);
+  LexicalDC->addDeclInternal(ToForward);
   Importer.Imported(D, ToForward);
   return ToForward;
 }
@@ -3549,7 +3549,7 @@ Decl *ASTNodeImporter::VisitObjCClassDecl(ObjCClassDecl *D) {
                                         Importer.Import(From->getLocation()));
     
   ToClass->setLexicalDeclContext(LexicalDC);
-  LexicalDC->addDecl(ToClass);
+  LexicalDC->addDeclInternal(ToClass);
   Importer.Imported(D, ToClass);
   return ToClass;
 }
@@ -3711,7 +3711,7 @@ Decl *ASTNodeImporter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
   
   D2->setAccess(D->getAccess());
   D2->setLexicalDeclContext(LexicalDC);
-  LexicalDC->addDecl(D2);
+  LexicalDC->addDeclInternal(D2);
   
   // Note the relationship between the class templates.
   Importer.Imported(D, D2);
@@ -3806,7 +3806,7 @@ Decl *ASTNodeImporter::VisitClassTemplateSpecializationDecl(
     
     // Add the specialization to this context.
     D2->setLexicalDeclContext(LexicalDC);
-    LexicalDC->addDecl(D2);
+    LexicalDC->addDeclInternal(D2);
   }
   Importer.Imported(D, D2);
   
