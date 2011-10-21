@@ -908,6 +908,27 @@ void SjLjEHPass::lowerAcrossUnwindEdges(Function &F,
       }
     }
   }
+
+  // Go through the landing pads and remove any PHIs there.
+  for (unsigned i = 0, e = Invokes.size(); i != e; ++i) {
+    BasicBlock *UnwindBlock = Invokes[i]->getUnwindDest();
+    LandingPadInst *LPI = UnwindBlock->getLandingPadInst();
+
+    // Place PHIs into a set to avoid invalidating the iterator.
+    SmallPtrSet<PHINode*, 8> PHIsToDemote;
+    for (BasicBlock::iterator
+           PN = UnwindBlock->begin(); isa<PHINode>(PN); ++PN)
+      PHIsToDemote.insert(cast<PHINode>(PN));
+    if (PHIsToDemote.empty()) continue;
+
+    // Demote the PHIs to the stack.
+    for (SmallPtrSet<PHINode*, 8>::iterator
+           I = PHIsToDemote.begin(), E = PHIsToDemote.end(); I != E; ++I)
+      DemotePHIToStack(*I);
+
+    // Move the landingpad instruction back to the top of the landing pad block.
+    LPI->moveBefore(UnwindBlock->begin());
+  }
 }
 
 /// setupEntryBlockAndCallSites - Setup the entry block by creating and filling
