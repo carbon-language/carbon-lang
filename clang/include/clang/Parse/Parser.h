@@ -112,6 +112,9 @@ class Parser : public CodeCompletionHandler {
   IdentifierInfo *Ident__exception_info, *Ident___exception_info, *Ident_GetExceptionInfo; // __except filter expression
   IdentifierInfo *Ident__abnormal_termination, *Ident___abnormal_termination, *Ident_AbnormalTermination; // __finally
 
+  /// Contextual keywords for Microsoft extensions.
+  IdentifierInfo *Ident__except;
+  
   /// Ident_super - IdentifierInfo for "super", to support fast
   /// comparison.
   IdentifierInfo *Ident_super;
@@ -179,6 +182,8 @@ class Parser : public CodeCompletionHandler {
   /// declaration is finished.
   DelayedCleanupPool TopLevelDeclCleanupPool;
 
+  IdentifierInfo *getSEHExceptKeyword();
+  
 public:
   Parser(Preprocessor &PP, Sema &Actions);
   ~Parser();

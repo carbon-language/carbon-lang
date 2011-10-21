@@ -23,6 +23,14 @@
 #include "clang/AST/ASTConsumer.h"
 using namespace clang;
 
+IdentifierInfo *Parser::getSEHExceptKeyword() {
+  // __except is accepted as a (contextual) keyword 
+  if (!Ident__except && (getLang().MicrosoftExt || getLang().Borland))
+    Ident__except = PP.getIdentifierInfo("__except");
+
+  return Ident__except;
+}
+
 Parser::Parser(Preprocessor &pp, Sema &actions)
   : PP(pp), Actions(actions), Diags(PP.getDiagnostics()),
     GreaterThanIsOperator(true), ColonIsSacred(false), 
@@ -431,6 +439,8 @@ void Parser::Initialize() {
   Ident_obsoleted = 0;
   Ident_unavailable = 0;
 
+  Ident__except = 0;
+  
   Ident__exception_code = Ident__exception_info = Ident__abnormal_termination = 0;
   Ident___exception_code = Ident___exception_info = Ident___abnormal_termination = 0;
   Ident_GetExceptionCode = Ident_GetExceptionInfo = Ident_AbnormalTermination = 0;

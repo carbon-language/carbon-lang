@@ -20,7 +20,7 @@ void __abnormal_termination();
 
 #pragma sysheader end
 
-DWORD FilterExpression(int);
+DWORD FilterExpression(int); // expected-note{{declared here}}
 DWORD FilterExceptionInformation(struct EXCEPTION_INFO*);
 
 const char * NotFilterExpression();
@@ -47,7 +47,8 @@ void TEST() {
 }  // expected-error{{expected '__except' or '__finally' block}}
 
 void TEST() {
-  __except ( FilterExpression() ) { // expected-error{{}}
+  __except ( FilterExpression() ) { // expected-warning{{implicit declaration of function '__except' is invalid in C99}} \
+    // expected-error{{too few arguments to function call, expected 1, have 0}}
 
   }
 }

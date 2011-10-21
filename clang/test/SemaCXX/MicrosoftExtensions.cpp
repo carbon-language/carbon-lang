@@ -210,3 +210,6 @@ struct PR11150 {
 
   int array[__is_abstract(X)? 1 : -1];
 };
+
+void f() { int __except = 0; }
+

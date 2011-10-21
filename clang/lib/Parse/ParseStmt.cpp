@@ -355,7 +355,8 @@ StmtResult Parser::ParseSEHTryBlockCommon(SourceLocation TryLoc) {
     return move(TryBlock);
 
   StmtResult Handler;
-  if(Tok.is(tok::kw___except)) {
+  if (Tok.is(tok::identifier) && 
+      Tok.getIdentifierInfo() == getSEHExceptKeyword()) {
     SourceLocation Loc = ConsumeToken();
     Handler = ParseSEHExceptBlock(Loc);
   } else if (Tok.is(tok::kw___finally)) {
@@ -2037,10 +2038,13 @@ StmtResult Parser::ParseCXXTryBlockCommon(SourceLocation TryLoc) {
     return move(TryBlock);
 
   // Borland allows SEH-handlers with 'try'
-  if(Tok.is(tok::kw___except) || Tok.is(tok::kw___finally)) {
+  
+  if((Tok.is(tok::identifier) && 
+      Tok.getIdentifierInfo() == getSEHExceptKeyword()) || 
+     Tok.is(tok::kw___finally)) {
     // TODO: Factor into common return ParseSEHHandlerCommon(...)
     StmtResult Handler;
-    if(Tok.is(tok::kw___except)) {
+    if(Tok.getIdentifierInfo() == getSEHExceptKeyword()) {
       SourceLocation Loc = ConsumeToken();
       Handler = ParseSEHExceptBlock(Loc);
     }
