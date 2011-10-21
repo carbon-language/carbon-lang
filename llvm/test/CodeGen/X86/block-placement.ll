@@ -79,7 +79,7 @@ define i32 @test_loop_align(i32 %i, i32* %a) {
 ; pass.
 ; CHECK: test_loop_align:
 ; CHECK: %entry
-; CHECK: .align 16,
+; CHECK: .align [[ALIGN:[0-9]+]],
 ; CHECK-NEXT: %body
 ; CHECK: %exit
 
@@ -104,9 +104,9 @@ define i32 @test_nested_loop_align(i32 %i, i32* %a, i32* %b) {
 ; Check that we provide nested loop body alignment.
 ; CHECK: test_nested_loop_align:
 ; CHECK: %entry
-; CHECK: .align 16,
+; CHECK: .align [[ALIGN]],
 ; CHECK-NEXT: %loop.body.1
-; CHECK: .align 16,
+; CHECK: .align [[ALIGN]],
 ; CHECK-NEXT: %inner.loop.body
 ; CHECK-NOT: .align
 ; CHECK: %loop.body.2
