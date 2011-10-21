@@ -1959,14 +1959,6 @@ static DecodeStatus DecodeVLDInstruction(llvm::MCInst &Inst, unsigned Insn,
 
   // Second output register
   switch (Inst.getOpcode()) {
-    case ARM::VLD1d8Q:
-    case ARM::VLD1d16Q:
-    case ARM::VLD1d32Q:
-    case ARM::VLD1d64Q:
-    case ARM::VLD1d8Q_UPD:
-    case ARM::VLD1d16Q_UPD:
-    case ARM::VLD1d32Q_UPD:
-    case ARM::VLD1d64Q_UPD:
     case ARM::VLD2d8:
     case ARM::VLD2d16:
     case ARM::VLD2d32:
@@ -2020,14 +2012,6 @@ static DecodeStatus DecodeVLDInstruction(llvm::MCInst &Inst, unsigned Insn,
 
   // Third output register
   switch(Inst.getOpcode()) {
-    case ARM::VLD1d8Q:
-    case ARM::VLD1d16Q:
-    case ARM::VLD1d32Q:
-    case ARM::VLD1d64Q:
-    case ARM::VLD1d8Q_UPD:
-    case ARM::VLD1d16Q_UPD:
-    case ARM::VLD1d32Q_UPD:
-    case ARM::VLD1d64Q_UPD:
     case ARM::VLD2q8:
     case ARM::VLD2q16:
     case ARM::VLD2q32:
@@ -2070,14 +2054,6 @@ static DecodeStatus DecodeVLDInstruction(llvm::MCInst &Inst, unsigned Insn,
 
   // Fourth output register
   switch (Inst.getOpcode()) {
-    case ARM::VLD1d8Q:
-    case ARM::VLD1d16Q:
-    case ARM::VLD1d32Q:
-    case ARM::VLD1d64Q:
-    case ARM::VLD1d8Q_UPD:
-    case ARM::VLD1d16Q_UPD:
-    case ARM::VLD1d32Q_UPD:
-    case ARM::VLD1d64Q_UPD:
     case ARM::VLD2q8:
     case ARM::VLD2q16:
     case ARM::VLD2q32:

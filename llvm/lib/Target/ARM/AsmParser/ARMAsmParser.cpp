@@ -925,6 +925,11 @@ public:
     return VectorList.Count == 3;
   }
 
+  bool isVecListFourD() const {
+    if (Kind != k_VectorList) return false;
+    return VectorList.Count == 4;
+  }
+
   bool isVectorIndex8() const {
     if (Kind != k_VectorIndex) return false;
     return VectorIndex.Val < 8;
@@ -1525,6 +1530,13 @@ public:
   }
 
   void addVecListThreeDOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    // Only the first register actually goes on the instruction. The rest
+    // are implied by the opcode.
+    Inst.addOperand(MCOperand::CreateReg(VectorList.RegNum));
+  }
+
+  void addVecListFourDOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     // Only the first register actually goes on the instruction. The rest
     // are implied by the opcode.
