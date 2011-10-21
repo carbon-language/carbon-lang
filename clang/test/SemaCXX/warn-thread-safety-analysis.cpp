@@ -1475,3 +1475,22 @@ namespace substitution_test {
   };
 } // end namespace substituation_test
 
+
+namespace constructor_destructor_tests {
+  Mutex fooMu;
+  int myVar GUARDED_BY(fooMu);
+
+  class Foo {
+  public:
+    Foo()  __attribute__((exclusive_lock_function(fooMu))) { }
+    ~Foo() __attribute__((unlock_function(fooMu))) { }
+  };
+
+  void fooTest() {
+    // destructors not implemented yet...
+    Foo foo; // \
+    // expected-warning {{mutex 'fooMu' is still locked at the end of function}}
+    myVar = 0;
+  }
+}
+

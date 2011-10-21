@@ -130,6 +130,7 @@ public:
 /// (1) Local variables in the expression, such as "x" have not changed.
 /// (2) Values on the heap that affect the expression have not changed.
 /// (3) The expression involves only pure function calls.
+///
 /// The current implementation assumes, but does not verify, that multiple uses
 /// of the same lock expression satisfies these criteria.
 ///
@@ -158,7 +159,9 @@ class MutexID {
   SmallVector<NamedDecl*, 2> DeclSeq;
 
   /// Build a Decl sequence representing the lock from the given expression.
-  /// Recursive function that bottoms out when the final DeclRefExpr is reached.
+  /// Recursive function that terminates on DeclRefExpr.
+  /// Note: this function merely creates a MutexID; it does not check to
+  /// ensure that the original expression is a valid mutex expression.
   void buildMutexID(Expr *Exp, Expr *Parent, int NumArgs,
                     const NamedDecl **FunArgDecls, Expr **FunArgs) {
     if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Exp)) {
@@ -182,7 +185,9 @@ class MutexID {
         buildMutexID(Parent, 0, 0, 0, 0);
       else
         return;  // mutexID is still valid in this case
-    } else if (CastExpr *CE = dyn_cast<CastExpr>(Exp))
+    } else if (UnaryOperator *UOE = dyn_cast<UnaryOperator>(Exp))
+      buildMutexID(UOE->getSubExpr(), Parent, NumArgs, FunArgDecls, FunArgs);
+    else if (CastExpr *CE = dyn_cast<CastExpr>(Exp))
       buildMutexID(CE->getSubExpr(), Parent, NumArgs, FunArgDecls, FunArgs);
     else
       DeclSeq.clear(); // Mark as invalid lock expression.
@@ -204,10 +209,16 @@ class MutexID {
       return;
     }
 
+    // Examine DeclExp to find Parent and FunArgs, which are used to substitute
+    // for formal parameters when we call buildMutexID later.
     if (MemberExpr *ME = dyn_cast<MemberExpr>(DeclExp)) {
       Parent = ME->getBase();
     } else if (CXXMemberCallExpr *CE = dyn_cast<CXXMemberCallExpr>(DeclExp)) {
       Parent = CE->getImplicitObjectArgument();
+      NumArgs = CE->getNumArgs();
+      FunArgs = CE->getArgs();
+    } else if (CXXConstructExpr *CE = dyn_cast<CXXConstructExpr>(DeclExp)) {
+      Parent = 0;  // FIXME -- get the parent from DeclStmt
       NumArgs = CE->getNumArgs();
       FunArgs = CE->getArgs();
     }
@@ -331,15 +342,14 @@ class BuildLockset : public StmtVisitor<BuildLockset> {
   void addLock(SourceLocation LockLoc, MutexID &Mutex, LockKind LK);
 
   template <class AttrType>
-  void addLocksToSet(LockKind LK, AttrType *Attr, CXXMemberCallExpr *Exp,
-                     NamedDecl *D);
+  void addLocksToSet(LockKind LK, AttrType *Attr, Expr *Exp, NamedDecl *D);
 
   const ValueDecl *getValueDecl(Expr *Exp);
   void warnIfMutexNotHeld (const NamedDecl *D, Expr *Exp, AccessKind AK,
                            Expr *MutexExp, ProtectedOperationKind POK);
   void checkAccess(Expr *Exp, AccessKind AK);
   void checkDereference(Expr *Exp, AccessKind AK);
-
+  void handleCall(Expr *Exp, NamedDecl *D);
 
   /// \brief Returns true if the lockset contains a lock, regardless of whether
   /// the lock is held exclusively or shared.
@@ -382,6 +392,7 @@ public:
   void VisitBinaryOperator(BinaryOperator *BO);
   void VisitCastExpr(CastExpr *CE);
   void VisitCXXMemberCallExpr(CXXMemberCallExpr *Exp);
+  void VisitCXXConstructExpr(CXXConstructExpr *Exp);
 };
 
 /// \brief Add a new lock to the lockset, warning if the lock is already there.
@@ -414,8 +425,7 @@ void BuildLockset::removeLock(SourceLocation UnlockLoc, MutexID &Mutex) {
 /// set of locks specified as attribute arguments to the lockset.
 template <typename AttrType>
 void BuildLockset::addLocksToSet(LockKind LK, AttrType *Attr,
-                                 CXXMemberCallExpr *Exp,
-                                 NamedDecl* FunDecl) {
+                                 Expr *Exp, NamedDecl* FunDecl) {
   typedef typename AttrType::args_iterator iterator_type;
 
   SourceLocation ExpLocation = Exp->getExprLoc();
@@ -508,50 +518,10 @@ void BuildLockset::checkAccess(Expr *Exp, AccessKind AK) {
       warnIfMutexNotHeld(D, Exp, AK, GBAttr->getArg(), POK_VarAccess);
 }
 
-/// \brief For unary operations which read and write a variable, we need to
-/// check whether we hold any required mutexes. Reads are checked in
-/// VisitCastExpr.
-void BuildLockset::VisitUnaryOperator(UnaryOperator *UO) {
-  switch (UO->getOpcode()) {
-    case clang::UO_PostDec:
-    case clang::UO_PostInc:
-    case clang::UO_PreDec:
-    case clang::UO_PreInc: {
-      Expr *SubExp = UO->getSubExpr()->IgnoreParenCasts();
-      checkAccess(SubExp, AK_Written);
-      checkDereference(SubExp, AK_Written);
-      break;
-    }
-    default:
-      break;
-  }
-}
-
-/// For binary operations which assign to a variable (writes), we need to check
-/// whether we hold any required mutexes.
-/// FIXME: Deal with non-primitive types.
-void BuildLockset::VisitBinaryOperator(BinaryOperator *BO) {
-  if (!BO->isAssignmentOp())
-    return;
-  Expr *LHSExp = BO->getLHS()->IgnoreParenCasts();
-  checkAccess(LHSExp, AK_Written);
-  checkDereference(LHSExp, AK_Written);
-}
-
-/// Whenever we do an LValue to Rvalue cast, we are reading a variable and
-/// need to ensure we hold any required mutexes.
-/// FIXME: Deal with non-primitive types.
-void BuildLockset::VisitCastExpr(CastExpr *CE) {
-  if (CE->getCastKind() != CK_LValueToRValue)
-    return;
-  Expr *SubExp = CE->getSubExpr()->IgnoreParenCasts();
-  checkAccess(SubExp, AK_Read);
-  checkDereference(SubExp, AK_Read);
-}
-
-/// \brief When visiting CXXMemberCallExprs we need to examine the attributes on
-/// the method that is being called and add, remove or check locks in the
-/// lockset accordingly.
+/// \brief Process a function call, method call, constructor call,
+/// or destructor call.  This involves looking at the attributes on the
+/// corresponding function/method/constructor/destructor, issuing warnings,
+/// and updating the locksets accordingly.
 ///
 /// FIXME: For classes annotated with one of the guarded annotations, we need
 /// to treat const method calls as reads and non-const method calls as writes,
@@ -562,12 +532,8 @@ void BuildLockset::VisitCastExpr(CastExpr *CE) {
 ///
 /// FIXME: Do not flag an error for member variables accessed in constructors/
 /// destructors
-void BuildLockset::VisitCXXMemberCallExpr(CXXMemberCallExpr *Exp) {
+void BuildLockset::handleCall(Expr *Exp, NamedDecl *D) {
   SourceLocation ExpLocation = Exp->getExprLoc();
-
-  NamedDecl *D = dyn_cast_or_null<NamedDecl>(Exp->getCalleeDecl());
-  if(!D || !D->hasAttrs())
-    return;
 
   AttrVec &ArgAttrs = D->getAttrs();
   for(unsigned i = 0; i < ArgAttrs.size(); ++i) {
@@ -652,6 +618,62 @@ void BuildLockset::VisitCXXMemberCallExpr(CXXMemberCallExpr *Exp) {
         break;
     }
   }
+}
+
+/// \brief For unary operations which read and write a variable, we need to
+/// check whether we hold any required mutexes. Reads are checked in
+/// VisitCastExpr.
+void BuildLockset::VisitUnaryOperator(UnaryOperator *UO) {
+  switch (UO->getOpcode()) {
+    case clang::UO_PostDec:
+    case clang::UO_PostInc:
+    case clang::UO_PreDec:
+    case clang::UO_PreInc: {
+      Expr *SubExp = UO->getSubExpr()->IgnoreParenCasts();
+      checkAccess(SubExp, AK_Written);
+      checkDereference(SubExp, AK_Written);
+      break;
+    }
+    default:
+      break;
+  }
+}
+
+/// For binary operations which assign to a variable (writes), we need to check
+/// whether we hold any required mutexes.
+/// FIXME: Deal with non-primitive types.
+void BuildLockset::VisitBinaryOperator(BinaryOperator *BO) {
+  if (!BO->isAssignmentOp())
+    return;
+  Expr *LHSExp = BO->getLHS()->IgnoreParenCasts();
+  checkAccess(LHSExp, AK_Written);
+  checkDereference(LHSExp, AK_Written);
+}
+
+/// Whenever we do an LValue to Rvalue cast, we are reading a variable and
+/// need to ensure we hold any required mutexes.
+/// FIXME: Deal with non-primitive types.
+void BuildLockset::VisitCastExpr(CastExpr *CE) {
+  if (CE->getCastKind() != CK_LValueToRValue)
+    return;
+  Expr *SubExp = CE->getSubExpr()->IgnoreParenCasts();
+  checkAccess(SubExp, AK_Read);
+  checkDereference(SubExp, AK_Read);
+}
+
+
+void BuildLockset::VisitCXXMemberCallExpr(CXXMemberCallExpr *Exp) {
+  NamedDecl *D = dyn_cast_or_null<NamedDecl>(Exp->getCalleeDecl());
+  if(!D || !D->hasAttrs())
+    return;
+  handleCall(Exp, D);
+}
+
+void BuildLockset::VisitCXXConstructExpr(CXXConstructExpr *Exp) {
+  NamedDecl *D = cast<NamedDecl>(Exp->getConstructor());
+  if(!D || !D->hasAttrs())
+    return;
+  handleCall(Exp, D);
 }
 
 
