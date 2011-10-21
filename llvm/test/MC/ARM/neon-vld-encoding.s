@@ -38,16 +38,16 @@
 	vld2.8	{d16, d17}, [r0, :64]
 	vld2.16	{d16, d17}, [r0, :128]
 	vld2.32	{d16, d17}, [r0]
-@	vld2.8	{d16, d17, d18, d19}, [r0, :64]
-@	vld2.16	{d16, d17, d18, d19}, [r0, :128]
-@	vld2.32	{d16, d17, d18, d19}, [r0, :256]
+	vld2.8	{d16, d17, d18, d19}, [r0, :64]
+	vld2.16	{d16, d17, d18, d19}, [r0, :128]
+	vld2.32	{d16, d17, d18, d19}, [r0, :256]
 
 @ CHECK: vld2.8	{d16, d17}, [r0, :64]   @ encoding: [0x1f,0x08,0x60,0xf4]
 @ CHECK: vld2.16 {d16, d17}, [r0, :128] @ encoding: [0x6f,0x08,0x60,0xf4]
 @ CHECK: vld2.32 {d16, d17}, [r0] @ encoding: [0x8f,0x08,0x60,0xf4]
-@ FIXME: vld2.8	{d16, d17, d18, d19}, [r0, :64] @ encoding: [0x1f,0x03,0x60,0xf4]
-@ FIXME: vld2.16 {d16, d17, d18, d19}, [r0, :128] @ encoding: [0x6f,0x03,0x60,0xf4]
-@ FIXME: vld2.32 {d16, d17, d18, d19}, [r0, :256] @ encoding: [0xbf,0x03,0x60,0xf4]
+@ CHECK: vld2.8	{d16, d17, d18, d19}, [r0, :64] @ encoding: [0x1f,0x03,0x60,0xf4]
+@ CHECK: vld2.16 {d16, d17, d18, d19}, [r0, :128] @ encoding: [0x6f,0x03,0x60,0xf4]
+@ CHECK: vld2.32 {d16, d17, d18, d19}, [r0, :256] @ encoding: [0xbf,0x03,0x60,0xf4]
 
 
 @	vld3.8	{d16, d17, d18}, [r0, :64]
