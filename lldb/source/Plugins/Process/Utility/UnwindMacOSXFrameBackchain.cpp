@@ -28,7 +28,7 @@ UnwindMacOSXFrameBackchain::UnwindMacOSXFrameBackchain (Thread &thread) :
 }
 
 uint32_t
-UnwindMacOSXFrameBackchain::GetFrameCount()
+UnwindMacOSXFrameBackchain::DoGetFrameCount()
 {
     if (m_cursors.empty())
     {
@@ -45,7 +45,7 @@ UnwindMacOSXFrameBackchain::GetFrameCount()
 }
 
 bool
-UnwindMacOSXFrameBackchain::GetFrameInfoAtIndex (uint32_t idx, addr_t& cfa, addr_t& pc)
+UnwindMacOSXFrameBackchain::DoGetFrameInfoAtIndex (uint32_t idx, addr_t& cfa, addr_t& pc)
 {
     const uint32_t frame_count = GetFrameCount();
     if (idx < frame_count)
@@ -64,7 +64,7 @@ UnwindMacOSXFrameBackchain::GetFrameInfoAtIndex (uint32_t idx, addr_t& cfa, addr
 }
     
 lldb::RegisterContextSP
-UnwindMacOSXFrameBackchain::CreateRegisterContextForFrame (StackFrame *frame)
+UnwindMacOSXFrameBackchain::DoCreateRegisterContextForFrame (StackFrame *frame)
 {
     lldb::RegisterContextSP reg_ctx_sp;
     uint32_t concrete_idx = frame->GetConcreteFrameIndex ();

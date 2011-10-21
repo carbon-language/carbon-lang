@@ -30,22 +30,23 @@ public:
     virtual
     ~UnwindLLDB() { }
     
+protected:
     void
-    Clear()
+    DoClear()
     {
         m_frames.clear();
     }
 
     virtual uint32_t
-    GetFrameCount();
+    DoGetFrameCount();
 
     bool
-    GetFrameInfoAtIndex (uint32_t frame_idx,
+    DoGetFrameInfoAtIndex (uint32_t frame_idx,
                          lldb::addr_t& cfa, 
                          lldb::addr_t& start_pc);
     
     lldb::RegisterContextSP
-    CreateRegisterContextForFrame (lldb_private::StackFrame *frame);
+    DoCreateRegisterContextForFrame (lldb_private::StackFrame *frame);
 
 private:
     struct Cursor

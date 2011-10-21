@@ -30,7 +30,7 @@ UnwindLLDB::UnwindLLDB (Thread &thread) :
 }
 
 uint32_t
-UnwindLLDB::GetFrameCount()
+UnwindLLDB::DoGetFrameCount()
 {
     if (m_frames.empty())
     {
@@ -177,7 +177,7 @@ UnwindLLDB::AddOneMoreFrame (ABI *abi)
 }
 
 bool
-UnwindLLDB::GetFrameInfoAtIndex (uint32_t idx, addr_t& cfa, addr_t& pc)
+UnwindLLDB::DoGetFrameInfoAtIndex (uint32_t idx, addr_t& cfa, addr_t& pc)
 {
     if (m_frames.size() == 0)
     {
@@ -200,7 +200,7 @@ UnwindLLDB::GetFrameInfoAtIndex (uint32_t idx, addr_t& cfa, addr_t& pc)
 }
 
 lldb::RegisterContextSP
-UnwindLLDB::CreateRegisterContextForFrame (StackFrame *frame)
+UnwindLLDB::DoCreateRegisterContextForFrame (StackFrame *frame)
 {
     lldb::RegisterContextSP reg_ctx_sp;
     uint32_t idx = frame->GetConcreteFrameIndex ();

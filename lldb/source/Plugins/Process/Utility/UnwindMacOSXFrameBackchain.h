@@ -30,27 +30,24 @@ public:
     {
     }
     
+protected:
     virtual void
-    Clear()
+    DoClear()
     {
         m_cursors.clear();
     }
 
     virtual uint32_t
-    GetFrameCount();
+    DoGetFrameCount();
 
     bool
-    GetFrameInfoAtIndex (uint32_t frame_idx,
+    DoGetFrameInfoAtIndex (uint32_t frame_idx,
                          lldb::addr_t& cfa, 
                          lldb::addr_t& pc);
     
     lldb::RegisterContextSP
-    CreateRegisterContextForFrame (lldb_private::StackFrame *frame);
+    DoCreateRegisterContextForFrame (lldb_private::StackFrame *frame);
 
-    lldb_private::Thread &
-    GetThread();
-
-protected:
     friend class RegisterContextMacOSXFrameBackchain;
 
     struct Cursor
