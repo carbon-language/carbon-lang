@@ -76,6 +76,9 @@ class BranchProbabilityAnalysis {
   static const uint32_t ZH_TAKEN_WEIGHT = 20;
   static const uint32_t ZH_NONTAKEN_WEIGHT = 12;
 
+  static const uint32_t FPH_TAKEN_WEIGHT = 20;
+  static const uint32_t FPH_NONTAKEN_WEIGHT = 12;
+
   // Standard weight value. Used when none of the heuristics set weight for
   // the edge.
   static const uint32_t NORMAL_WEIGHT = 16;
@@ -131,8 +134,11 @@ public:
   // Loop Branch Heuristics
   bool calcLoopBranchHeuristics(BasicBlock *BB);
 
-  // Zero Heurestics
+  // Zero Heuristics
   bool calcZeroHeuristics(BasicBlock *BB);
+
+  // Floating Point Heuristics
+  bool calcFloatingPointHeuristics(BasicBlock *BB);
 
   bool runOnFunction(Function &F);
 };
@@ -378,6 +384,29 @@ bool BranchProbabilityAnalysis::calcZeroHeuristics(BasicBlock *BB) {
   return true;
 }
 
+bool BranchProbabilityAnalysis::calcFloatingPointHeuristics(BasicBlock *BB) {
+  BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator());
+  if (!BI || !BI->isConditional())
+    return false;
+
+  Value *Cond = BI->getCondition();
+  FCmpInst *FCmp = dyn_cast<FCmpInst>(Cond);
+  if (!FCmp || !FCmp->isEquality())
+    return false;
+
+  BasicBlock *Taken = BI->getSuccessor(0);
+  BasicBlock *NonTaken = BI->getSuccessor(1);
+
+  // f1 == f2 -> Unlikely
+  // f1 != f2 -> Likely
+  if (FCmp->isTrueWhenEqual())
+    std::swap(Taken, NonTaken);
+
+  BP->setEdgeWeight(BB, Taken, FPH_TAKEN_WEIGHT);
+  BP->setEdgeWeight(BB, NonTaken, FPH_NONTAKEN_WEIGHT);
+
+  return true;
+}
 
 bool BranchProbabilityAnalysis::runOnFunction(Function &F) {
 
@@ -396,7 +425,10 @@ bool BranchProbabilityAnalysis::runOnFunction(Function &F) {
     if (calcPointerHeuristics(BB))
       continue;
 
-    calcZeroHeuristics(BB);
+    if (calcZeroHeuristics(BB))
+      continue;
+
+    calcFloatingPointHeuristics(BB);
   }
 
   return false;
