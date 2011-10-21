@@ -31,7 +31,7 @@ extern "C" {
 // Opaque type wrappers
 typedef struct LLVMOpaqueObjectFile *LLVMObjectFileRef;
 typedef struct LLVMOpaqueSectionIterator *LLVMSectionIteratorRef;
-typedef struct LLVMOpauqeSymbolIterator *LLVMSymbolIteratorRef;
+typedef struct LLVMOpaqueSymbolIterator *LLVMSymbolIteratorRef;
 
 // ObjectFile creation
 LLVMObjectFileRef LLVMCreateObjectFile(LLVMMemoryBufferRef MemBuf);
