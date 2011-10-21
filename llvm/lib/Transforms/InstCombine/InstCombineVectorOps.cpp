@@ -108,7 +108,7 @@ static Value *FindScalarElement(Value *V, unsigned EltNo) {
   if (ShuffleVectorInst *SVI = dyn_cast<ShuffleVectorInst>(V)) {
     unsigned LHSWidth =
       cast<VectorType>(SVI->getOperand(0)->getType())->getNumElements();
-    int InEl = getShuffleMask(SVI)[EltNo];
+    int InEl = SVI->getMaskValue(EltNo);
     if (InEl < 0)
       return UndefValue::get(PTy->getElementType());
     if (InEl < (int)LHSWidth)
@@ -212,7 +212,7 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
       // If this is extracting an element from a shufflevector, figure out where
       // it came from and extract from the appropriate input element instead.
       if (ConstantInt *Elt = dyn_cast<ConstantInt>(EI.getOperand(1))) {
-        int SrcIdx = getShuffleMask(SVI)[Elt->getZExtValue()];
+        int SrcIdx = SVI->getMaskValue(Elt->getZExtValue());
         Value *Src;
         unsigned LHSWidth =
           cast<VectorType>(SVI->getOperand(0)->getType())->getNumElements();
