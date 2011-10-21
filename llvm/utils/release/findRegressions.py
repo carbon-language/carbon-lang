@@ -62,6 +62,13 @@ def parse(file):
 
 # Diff results and look for regressions.
 def diffResults(d_old, d_new):
+  regressions = {}
+  passes = {}
+  removed = ''
+
+  for x in ['compile state', 'compile time', 'exec state', 'exec time']:
+    regressions[x] = ''
+    passes[x] = ''
 
   for t in sorted(d_old.keys()) :
     if d_new.has_key(t):
@@ -77,13 +84,13 @@ def diffResults(d_old, d_new):
 
             if d_old[t][x] == 'PASS':
               if d_new[t][x] != 'PASS':
-                print t + " *** REGRESSION (" + x + " now fails)"
+                regressions[x] += t + "\n"
             else:
               if d_new[t][x] == 'PASS':
-                print t + " * NEW PASS (" + x + " now fails)"
+                passes[x] += t + "\n"
 
           else :
-            print t + "*** REGRESSION (" + x + " now fails)"
+            regressions[x] += t + "\n"
 
         if x == 'compile state' or x == 'exec state':
           continue
@@ -92,25 +99,53 @@ def diffResults(d_old, d_new):
         if not d_old[t].has_key(x) and not d_new[t].has_key(x):
           continue
         elif not d_new[t].has_key(x):
-          print t + " *** REGRESSION (" + x + ")"
+          regressions[x] += t + "\n"
         elif not d_old[t].has_key(x):
-          print t + " * NEW PASS (" + x + ")"
+          passes[x] += t + "\n"
 
         if math.isnan(d_old[t][x]) and math.isnan(d_new[t][x]):
           continue
 
         elif math.isnan(d_old[t][x]) and not math.isnan(d_new[t][x]):
-          print t + " * NEW PASS (" + x + ")"
+          passes[x] += t + "\n"
 
         elif not math.isnan(d_old[t][x]) and math.isnan(d_new[t][x]):
-          print t + " *** REGRESSION (" + x + ")"
+          regressions[x] += t + ": NaN%\n"
 
         if d_new[t][x] > d_old[t][x] and d_old[t][x] > 0.0 and \
               (d_new[t][x] - d_old[t][x]) / d_old[t][x] > .05:
-          print t + " *** REGRESSION (" + x + ")"
+          regressions[x] += t + ": " + "{0:.1f}".format(100 * (d_new[t][x] - d_old[t][x]) / d_old[t][x]) + "%\n"
 
     else :
-      print t + ": Removed from test-suite."
+      removed += t + "\n"
+
+  if len(regressions['compile state']) != 0:
+    print 'REGRESSION: Compilation Failed'
+    print regressions['compile state']
+
+  if len(regressions['exec state']) != 0:
+    print 'REGRESSION: Execution Failed'
+    print regressions['exec state']
+
+  if len(regressions['compile time']) != 0:
+    print 'REGRESSION: Compilation Time'
+    print regressions['compile time']
+
+  if len(regressions['exec time']) != 0:
+    print 'REGRESSION: Execution Time'
+    print regressions['exec time']
+
+  if len(passes['compile state']) != 0:
+    print 'NEW PASSES: Compilation'
+    print passes['compile state']
+
+  if len(passes['exec state']) != 0:
+    print 'NEW PASSES: Execution'
+    print passes['exec state']
+
+  if len(removed) != 0:
+    print 'REMOVED TESTS'
+    print removed
 
 # Main
 if len(sys.argv) < 3 :
