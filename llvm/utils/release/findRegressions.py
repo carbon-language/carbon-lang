@@ -105,8 +105,8 @@ def diffResults(d_old, d_new):
         elif not math.isnan(d_old[t][x]) and math.isnan(d_new[t][x]):
           print t + " *** REGRESSION (" + x + ")"
 
-        if d_new[t][x] > d_old[t][x] and \
-              (d_new[t][x] - d_old[t][x]) / d_new[t][x] > .05:
+        if d_new[t][x] > d_old[t][x] and d_old[t][x] > 0.0 and \
+              (d_new[t][x] - d_old[t][x]) / d_old[t][x] > .05:
           print t + " *** REGRESSION (" + x + ")"
 
     else :
