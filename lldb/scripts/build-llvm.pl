@@ -22,8 +22,8 @@ our @llvm_clang_slices; # paths to the single architecture static libraries (arc
 
 our $llvm_configuration = $ENV{LLVM_CONFIGURATION};
 
-our $llvm_revision = "141418";
-our $clang_revision = "141418";
+our $llvm_revision = "142634";
+our $clang_revision = "142634";
 
 our $llvm_source_dir = "$ENV{SRCROOT}";
 our @archs = split (/\s+/, $ENV{ARCHS});
