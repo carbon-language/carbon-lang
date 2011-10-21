@@ -2033,7 +2033,7 @@ bool DAGTypeLegalizer::WidenVectorOperand(SDNode *N, unsigned ResNo) {
   case ISD::EXTRACT_SUBVECTOR:  Res = WidenVecOp_EXTRACT_SUBVECTOR(N); break;
   case ISD::EXTRACT_VECTOR_ELT: Res = WidenVecOp_EXTRACT_VECTOR_ELT(N); break;
   case ISD::STORE:              Res = WidenVecOp_STORE(N); break;
-  case ISD::SETCC:              Res = WidenVecOp_SETCC(N, ResNo); break;
+  case ISD::SETCC:              Res = WidenVecOp_SETCC(N); break;
 
   case ISD::FP_EXTEND:
   case ISD::FP_TO_SINT:
@@ -2167,27 +2167,30 @@ SDValue DAGTypeLegalizer::WidenVecOp_STORE(SDNode *N) {
                        MVT::Other,&StChain[0],StChain.size());
 }
 
-SDValue DAGTypeLegalizer::WidenVecOp_SETCC(SDNode *N, unsigned ResNo) {
-  assert(ResNo < 2 && "Invalid res num to widen");
+SDValue DAGTypeLegalizer::WidenVecOp_SETCC(SDNode *N) {
   SDValue InOp0 = GetWidenedVector(N->getOperand(0));
   SDValue InOp1 = GetWidenedVector(N->getOperand(1));
-  EVT VT = InOp0.getValueType();
   DebugLoc dl = N->getDebugLoc();
 
   // WARNING: In this code we widen the compare instruction with garbage.
   // This garbage may contain denormal floats which may be slow. Is this a real
   // concern ? Should we zero the unused lanes if this is a float compare ?
 
-  SDValue Zero = DAG.getIntPtrConstant(0);
-  EVT ResVT = EVT::getVectorVT(*DAG.getContext(),
-                               N->getValueType(0).getVectorElementType(),
-                               VT.getVectorNumElements());
-
+  // Get a new SETCC node to compare the newly widened operands.
+  // Only some of the compared elements are legal.
+  EVT SVT = TLI.getSetCCResultType(InOp0.getValueType());
   SDValue WideSETCC = DAG.getNode(ISD::SETCC, N->getDebugLoc(),
-                     ResVT, InOp0, InOp1, N->getOperand(2));
+                     SVT, InOp0, InOp1, N->getOperand(2));
 
-  return DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, N->getValueType(0),
-                     WideSETCC, Zero);
+  // Extract the needed results from the result vector.
+  EVT ResVT = EVT::getVectorVT(*DAG.getContext(),
+                               SVT.getVectorElementType(),
+                               N->getValueType(0).getVectorNumElements());
+  SDValue CC = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl,
+                           ResVT, WideSETCC, DAG.getIntPtrConstant(0));
+
+  // Convert the result mask to the correct kind.
+  return DAG.getAnyExtOrTrunc(CC, dl, N->getValueType(0));
 }
 
 
