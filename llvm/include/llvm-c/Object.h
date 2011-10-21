@@ -43,6 +43,8 @@ void LLVMDisposeSectionIterator(LLVMSectionIteratorRef SI);
 LLVMBool LLVMIsSectionIteratorAtEnd(LLVMObjectFileRef ObjectFile,
                                 LLVMSectionIteratorRef SI);
 void LLVMMoveToNextSection(LLVMSectionIteratorRef SI);
+void LLVMMoveToContainingSection(LLVMSectionIteratorRef Sect,
+                                 LLVMSymbolIteratorRef Sym);
 
 // ObjectFile Symbol iterators
 LLVMSymbolIteratorRef LLVMGetSymbols(LLVMObjectFileRef ObjectFile);

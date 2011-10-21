@@ -48,6 +48,12 @@ void LLVMMoveToNextSection(LLVMSectionIteratorRef SI) {
   if (ec) report_fatal_error("LLVMMoveToNextSection failed: " + ec.message());
 }
 
+void LLVMMoveToContainingSection(LLVMSectionIteratorRef Sect,
+                                 LLVMSymbolIteratorRef Sym) {
+  if (error_code ec = (*unwrap(Sym))->getSection(*unwrap(Sect)))
+    report_fatal_error(ec.message());
+}
+
 // ObjectFile Symbol iterators
 LLVMSymbolIteratorRef LLVMGetSymbols(LLVMObjectFileRef ObjectFile) {
   symbol_iterator SI = unwrap(ObjectFile)->begin_symbols();
