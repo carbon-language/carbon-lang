@@ -89,12 +89,16 @@ int main() {
 // CHECK-NEXT: sizeof=16, dsize=16, align=8
 // CHECK-NEXT: nvsize=16, nvalign=8
 
+// CHECK: %class.D = type { [8 x i8], double }
+
 // CHECK:       0 | class B
 // CHECK-NEXT:  0 |   (B vftable pointer)
 // CHECK-NEXT:  4 |   int b_field
 
 // CHECK-NEXT: sizeof=8, dsize=8, align=4
 // CHECK-NEXT: nvsize=8, nvalign=4
+
+// CHECK: %class.B = type { [4 x i8], i32 }
 
 // CHECK:       0 | class A
 // CHECK-NEXT:  0 |   class B (primary base)
@@ -127,7 +131,12 @@ int main() {
 
 // CHECK-NEXT: sizeof=80, dsize=80, align=8
 // CHECK-NEXT: nvsize=64, nvalign=8
- 
+
+// CHECK: %class.A = type { %class.B, i32, i8 }
+
+// CHECK: %class.C = type { %class.D, %class.B, [8 x i8], double, i32, double, i32, [4 x i8], %class.A }
+// CHECK: %class.C.base = type { %class.D, %class.B, [8 x i8], double, i32, double, i32 }
+
 // CHECK:       0 | struct BaseStruct
 // CHECK-NEXT:  0 |   double v0
 // CHECK-NEXT:  8 |   float v1
@@ -155,6 +164,8 @@ int main() {
 
 // CHECK: sizeof=96, dsize=96, align=8
 // CHECK-NEXT: nvsize=96, nvalign=8
+
+// CHECK: %struct.BaseStruct = type { double, float, %class.C }
 
 // CHECK:       0 | struct DerivedStruct
 // CHECK-NEXT:  0 |   struct BaseStruct (base)
@@ -185,6 +196,8 @@ int main() {
 // CHECK-NEXT: sizeof=104, dsize=104, align=8
 // CHECK-NEXT: nvsize=104, nvalign=8
 
+// CHECK: %struct.DerivedStruct = type { %struct.BaseStruct, i32 }
+
 // CHECK:      0 | struct G
 // CHECK-NEXT: 0 |   int g_field
 // CHECK-NEXT: sizeof=4, dsize=4, align=4
@@ -200,6 +213,8 @@ int main() {
 // CHECK-NEXT: sizeof=24, dsize=24, align=8
 // CHECK-NEXT: nvsize=8, nvalign=4
 
+// CHECK: %struct.H = type { %struct.G, [4 x i8], %class.D }
+
 // CHECK:       0 | struct I
 // CHECK-NEXT:  0 |   (I vftable pointer)
 // CHECK-NEXT:  8 |   (I vbtable pointer)
@@ -209,3 +224,6 @@ int main() {
 // CHECK-NEXT: 32 |     double a
 // CHECK-NEXT: sizeof=40, dsize=40, align=8
 // CHECK-NEXT: nvsize=24, nvalign=8
+
+// CHECK: %struct.I = type { [16 x i8], double, %class.D }
+// CHECK: %struct.I.base = type { [16 x i8], double }
