@@ -230,6 +230,10 @@ namespace llvm {
 
       ANDN, // ANDN - Bitwise AND NOT with FLAGS results.
 
+      BLSI,   // BLSI - Extract lowest set isolated bit
+      BLSMSK, // BLSMSK - Get mask up to lowest set bit
+      BLSR,   // BLSR - Reset lowest set bit
+
       UMUL, // LOW, HI, FLAGS = umul LHS, RHS
 
       // MUL_IMM - X86 specific multiply by immediate.

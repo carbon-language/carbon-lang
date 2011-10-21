@@ -1155,6 +1155,8 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setTargetDAGCombine(ISD::SINT_TO_FP);
   if (Subtarget->is64Bit())
     setTargetDAGCombine(ISD::MUL);
+  if (Subtarget->hasBMI())
+    setTargetDAGCombine(ISD::XOR);
 
   computeRegisterProperties();
 
@@ -13300,7 +13302,9 @@ static SDValue PerformAndCombine(SDNode *N, SelectionDAG &DAG,
 
   EVT VT = N->getValueType(0);
 
-  // Create ANDN instructions
+  // Create ANDN, BLSI, and BLSR instructions
+  // BLSI is X & (-X)
+  // BLSR is X & (X-1)
   if (Subtarget->hasBMI() && (VT == MVT::i32 || VT == MVT::i64)) {
     SDValue N0 = N->getOperand(0);
     SDValue N1 = N->getOperand(1);
@@ -13312,6 +13316,26 @@ static SDValue PerformAndCombine(SDNode *N, SelectionDAG &DAG,
     // Check RHS for not
     if (N1.getOpcode() == ISD::XOR && isAllOnes(N1.getOperand(1)))
       return DAG.getNode(X86ISD::ANDN, DL, VT, N1.getOperand(0), N0);
+
+    // Check LHS for neg
+    if (N0.getOpcode() == ISD::SUB && N0.getOperand(1) == N1 &&
+        isZero(N0.getOperand(0)))
+      return DAG.getNode(X86ISD::BLSI, DL, VT, N1);
+
+    // Check RHS for neg
+    if (N1.getOpcode() == ISD::SUB && N1.getOperand(1) == N0 &&
+        isZero(N1.getOperand(0)))
+      return DAG.getNode(X86ISD::BLSI, DL, VT, N0);
+
+    // Check LHS for X-1
+    if (N0.getOpcode() == ISD::ADD && N0.getOperand(0) == N1 &&
+        isAllOnes(N0.getOperand(1)))
+      return DAG.getNode(X86ISD::BLSR, DL, VT, N1);
+
+    // Check RHS for X-1
+    if (N1.getOpcode() == ISD::ADD && N1.getOperand(0) == N0 &&
+        isAllOnes(N1.getOperand(1)))
+      return DAG.getNode(X86ISD::BLSR, DL, VT, N0);
 
     return SDValue();
   }
@@ -13496,6 +13520,33 @@ static SDValue PerformOrCombine(SDNode *N, SelectionDAG &DAG,
                          DAG.getNode(ISD::TRUNCATE, DL,
                                        MVT::i8, ShAmt0));
   }
+
+  return SDValue();
+}
+
+static SDValue PerformXorCombine(SDNode *N, SelectionDAG &DAG,
+                                 TargetLowering::DAGCombinerInfo &DCI,
+                                 const X86Subtarget *Subtarget) {
+  if (DCI.isBeforeLegalizeOps())
+    return SDValue();
+
+  EVT VT = N->getValueType(0);
+
+  if (VT != MVT::i32 && VT != MVT::i64)
+    return SDValue();
+
+  // Create BLSMSK instructions by finding X ^ (X-1)
+  SDValue N0 = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
+  DebugLoc DL = N->getDebugLoc();
+
+  if (N0.getOpcode() == ISD::ADD && N0.getOperand(0) == N1 &&
+      isAllOnes(N0.getOperand(1)))
+    return DAG.getNode(X86ISD::BLSMSK, DL, VT, N1);
+
+  if (N1.getOpcode() == ISD::ADD && N1.getOperand(0) == N0 &&
+      isAllOnes(N1.getOperand(1)))
+    return DAG.getNode(X86ISD::BLSMSK, DL, VT, N0);
 
   return SDValue();
 }
@@ -14180,6 +14231,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::SRL:            return PerformShiftCombine(N, DAG, Subtarget);
   case ISD::AND:            return PerformAndCombine(N, DAG, DCI, Subtarget);
   case ISD::OR:             return PerformOrCombine(N, DAG, DCI, Subtarget);
+  case ISD::XOR:            return PerformXorCombine(N, DAG, DCI, Subtarget);
   case ISD::LOAD:           return PerformLOADCombine(N, DAG, Subtarget);
   case ISD::STORE:          return PerformSTORECombine(N, DAG, Subtarget);
   case ISD::SINT_TO_FP:     return PerformSINT_TO_FPCombine(N, DAG, this);

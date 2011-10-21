@@ -226,6 +226,10 @@ def X86and_flag  : SDNode<"X86ISD::AND",  SDTBinaryArithWithFlags,
                           [SDNPCommutative]>;
 def X86andn_flag : SDNode<"X86ISD::ANDN", SDTBinaryArithWithFlags>;
 
+def X86blsi_flag : SDNode<"X86ISD::BLSI",  SDTUnaryArithWithFlags>;
+def X86blsmsk_flag : SDNode<"X86ISD::BLSMSK",  SDTUnaryArithWithFlags>;
+def X86blsr_flag : SDNode<"X86ISD::BLSR",  SDTUnaryArithWithFlags>;
+
 def X86mul_imm : SDNode<"X86ISD::MUL_IMM", SDTIntBinOp>;
 
 def X86WinAlloca : SDNode<"X86ISD::WIN_ALLOCA", SDTX86Void,
@@ -1401,30 +1405,30 @@ let Predicates = [HasBMI], Defs = [EFLAGS] in {
 }
 
 multiclass bmi_bls<string mnemonic, Format RegMRM, Format MemMRM,
-                   RegisterClass RC, X86MemOperand x86memop, Intrinsic Int,
-                   PatFrag ld_frag> {
+                  RegisterClass RC, X86MemOperand x86memop, SDNode OpNode,
+                  PatFrag ld_frag> {
   def rr : I<0xF3, RegMRM, (outs RC:$dst), (ins RC:$src),
              !strconcat(mnemonic, "\t{$src, $dst|$dst, $src}"),
-             [(set RC:$dst, (Int RC:$src)), (implicit EFLAGS)]>, T8, VEX_4V;
+             [(set RC:$dst, EFLAGS, (OpNode RC:$src))]>, T8, VEX_4V;
   def rm : I<0xF3, MemMRM, (outs RC:$dst), (ins x86memop:$src),
              !strconcat(mnemonic, "\t{$src, $dst|$dst, $src}"),
-             [(set RC:$dst, (Int (ld_frag addr:$src))), (implicit EFLAGS)]>,
+             [(set RC:$dst, EFLAGS, (OpNode (ld_frag addr:$src)))]>,
              T8, VEX_4V;
 }
 
 let Predicates = [HasBMI], Defs = [EFLAGS] in {
   defm BLSR32 : bmi_bls<"blsr{l}", MRM1r, MRM1m, GR32, i32mem,
-                        int_x86_bmi_blsr_32, loadi32>;
+                        X86blsr_flag, loadi32>;
   defm BLSR64 : bmi_bls<"blsr{q}", MRM1r, MRM1m, GR64, i64mem,
-                        int_x86_bmi_blsr_64, loadi64>, VEX_W;
+                        X86blsr_flag, loadi64>, VEX_W;
   defm BLSMSK32 : bmi_bls<"blsmsk{l}", MRM2r, MRM2m, GR32, i32mem,
-                          int_x86_bmi_blsmsk_32, loadi32>;
+                          X86blsmsk_flag, loadi32>;
   defm BLSMSK64 : bmi_bls<"blsmsk{q}", MRM2r, MRM2m, GR64, i64mem,
-                          int_x86_bmi_blsmsk_64, loadi64>, VEX_W;
+                          X86blsmsk_flag, loadi64>, VEX_W;
   defm BLSI32 : bmi_bls<"blsi{l}", MRM3r, MRM3m, GR32, i32mem,
-                        int_x86_bmi_blsi_32, loadi32>;
+                        X86blsi_flag, loadi32>;
   defm BLSI64 : bmi_bls<"blsi{q}", MRM3r, MRM3m, GR64, i64mem,
-                        int_x86_bmi_blsi_64, loadi64>, VEX_W;
+                        X86blsi_flag, loadi64>, VEX_W;
 }
 
 multiclass bmi_bextr_bzhi<bits<8> opc, string mnemonic, RegisterClass RC,

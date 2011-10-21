@@ -89,58 +89,52 @@ define i64 @bzhi64(i64 %x, i64 %y) nounwind readnone {
 declare i64 @llvm.x86.bmi.bzhi.64(i64, i64) nounwind readnone
 
 define i32 @blsi32(i32 %x) nounwind readnone {
-  %tmp = tail call i32 @llvm.x86.bmi.blsi.32(i32 %x)
-  ret i32 %tmp
+  %tmp = sub i32 0, %x
+  %tmp2 = and i32 %x, %tmp
+  ret i32 %tmp2
 ; CHECK: blsi32:
 ; CHECK: blsil
 }
 
-declare i32 @llvm.x86.bmi.blsi.32(i32) nounwind readnone
-
 define i64 @blsi64(i64 %x) nounwind readnone {
-  %tmp = tail call i64 @llvm.x86.bmi.blsi.64(i64 %x)
-  ret i64 %tmp
+  %tmp = sub i64 0, %x
+  %tmp2 = and i64 %tmp, %x
+  ret i64 %tmp2
 ; CHECK: blsi64:
 ; CHECK: blsiq
 }
 
-declare i64 @llvm.x86.bmi.blsi.64(i64) nounwind readnone
-
 define i32 @blsmsk32(i32 %x) nounwind readnone {
-  %tmp = tail call i32 @llvm.x86.bmi.blsmsk.32(i32 %x)
-  ret i32 %tmp
+  %tmp = sub i32 %x, 1
+  %tmp2 = xor i32 %x, %tmp
+  ret i32 %tmp2
 ; CHECK: blsmsk32:
 ; CHECK: blsmskl
 }
 
-declare i32 @llvm.x86.bmi.blsmsk.32(i32) nounwind readnone
-
 define i64 @blsmsk64(i64 %x) nounwind readnone {
-  %tmp = tail call i64 @llvm.x86.bmi.blsmsk.64(i64 %x)
-  ret i64 %tmp
+  %tmp = sub i64 %x, 1
+  %tmp2 = xor i64 %tmp, %x
+  ret i64 %tmp2
 ; CHECK: blsmsk64:
 ; CHECK: blsmskq
 }
 
-declare i64 @llvm.x86.bmi.blsmsk.64(i64) nounwind readnone
-
 define i32 @blsr32(i32 %x) nounwind readnone {
-  %tmp = tail call i32 @llvm.x86.bmi.blsr.32(i32 %x)
-  ret i32 %tmp
+  %tmp = sub i32 %x, 1
+  %tmp2 = and i32 %x, %tmp
+  ret i32 %tmp2
 ; CHECK: blsr32:
 ; CHECK: blsrl
 }
 
-declare i32 @llvm.x86.bmi.blsr.32(i32) nounwind readnone
-
 define i64 @blsr64(i64 %x) nounwind readnone {
-  %tmp = tail call i64 @llvm.x86.bmi.blsr.64(i64 %x)
-  ret i64 %tmp
+  %tmp = sub i64 %x, 1
+  %tmp2 = and i64 %tmp, %x
+  ret i64 %tmp2
 ; CHECK: blsr64:
 ; CHECK: blsrq
 }
-
-declare i64 @llvm.x86.bmi.blsr.64(i64) nounwind readnone
 
 define i32 @pdep32(i32 %x, i32 %y) nounwind readnone {
   %tmp = tail call i32 @llvm.x86.bmi.pdep.32(i32 %x, i32 %y)
