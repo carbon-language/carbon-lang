@@ -341,9 +341,23 @@ public:
     
     bool Read (uint8_t *data, lldb::addr_t addr, size_t length)
     {
-        lldb_private::Value target = GetAccessTarget(addr);
+        lldb_private::Value source = GetAccessTarget(addr);
         
-        return m_decl_map.ReadTarget(data, target, length);
+        return m_decl_map.ReadTarget(data, source, length);
+    }
+    
+    bool WriteToRawPtr (lldb::addr_t addr, const uint8_t *data, size_t length)
+    {
+        lldb_private::Value target = m_decl_map.WrapBareAddress(addr);
+        
+        return m_decl_map.WriteTarget(target, data, length);
+    }
+    
+    bool ReadFromRawPtr (uint8_t *data, lldb::addr_t addr, size_t length)
+    {
+        lldb_private::Value source = m_decl_map.WrapBareAddress(addr);
+        
+        return m_decl_map.ReadTarget(data, source, length);
     }
     
     std::string PrintData (lldb::addr_t addr, size_t length)
@@ -533,10 +547,21 @@ public:
             const uint64_t *raw_data = constant_int->getValue().getRawData();
             return m_memory.Write(region.m_base, (const uint8_t*)raw_data, constant_size);
         }
-        if (const ConstantFP *constant_fp = dyn_cast<ConstantFP>(constant))
+        else if (const ConstantFP *constant_fp = dyn_cast<ConstantFP>(constant))
         {
             const uint64_t *raw_data = constant_fp->getValueAPF().bitcastToAPInt().getRawData();
             return m_memory.Write(region.m_base, (const uint8_t*)raw_data, constant_size);
+        }
+        else if (const ConstantExpr *constant_expr = dyn_cast<ConstantExpr>(constant))
+        {
+            switch (constant_expr->getOpcode())
+            {
+            default:
+                return false;
+            case Instruction::IntToPtr:
+            case Instruction::BitCast:
+                return ResolveConstant(region, constant_expr->getOperand(0));
+            }
         }
         
         return false;
@@ -718,6 +743,7 @@ public:
         lldb_private::Value base;
         
         bool transient = false;
+        bool maybe_make_load = false;
         
         if (m_decl_map.ResultIsReference(result_name))
         {
@@ -736,14 +762,25 @@ public:
             
             Memory::Region R_final = m_memory.Lookup(R_pointer, R_final_ty);
             
-            if (!R_final.m_allocation)
-                return false;
+            if (R_final.m_allocation)
+            {            
+                if (R_final.m_allocation->m_data)
+                    transient = true; // this is a stack allocation
             
-            if (R_final.m_allocation->m_data)
-                transient = true; // this is a stack allocation
-            
-            base = R_final.m_allocation->m_origin;
-            base.GetScalar() += (R_final.m_base - R_final.m_allocation->m_virtual_address);
+                base = R_final.m_allocation->m_origin;
+                base.GetScalar() += (R_final.m_base - R_final.m_allocation->m_virtual_address);
+            }
+            else
+            {
+                // We got a bare pointer.  We are going to treat it as a load address
+                // or a file address, letting decl_map make the choice based on whether
+                // or not a process exists.
+                
+                base.SetContext(lldb_private::Value::eContextTypeInvalid, NULL);
+                base.SetValueType(lldb_private::Value::eValueTypeFileAddress);
+                base.GetScalar() = (unsigned long long)R_pointer;
+                maybe_make_load = true;
+            }
         }
         else
         {
@@ -752,7 +789,7 @@ public:
             base.GetScalar() = (unsigned long long)R.m_allocation->m_data->GetBytes() + (R.m_base - R.m_allocation->m_virtual_address);
         }                     
                         
-        return m_decl_map.CompleteResultVariable (result, base, result_name, result_type, transient);
+        return m_decl_map.CompleteResultVariable (result, base, result_name, result_type, transient, maybe_make_load);
     }
 };
 
@@ -829,6 +866,7 @@ IRInterpreter::supportsFunction (Function &llvm_function)
                     }
                 }
                 break;
+            case Instruction::IntToPtr:
             case Instruction::Load:
             case Instruction::Mul:
             case Instruction::Ret:
@@ -1236,6 +1274,35 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 }
             }
             break;
+        case Instruction::IntToPtr:
+            {
+                const IntToPtrInst *int_to_ptr_inst = dyn_cast<IntToPtrInst>(inst);
+                
+                if (!int_to_ptr_inst)
+                {
+                    if (log)
+                        log->Printf("getOpcode() returns IntToPtr, but instruction is not an IntToPtrInst");
+                    
+                    return false;
+                }
+                
+                Value *src_operand = int_to_ptr_inst->getOperand(0);
+                
+                lldb_private::Scalar I;
+                
+                if (!frame.EvaluateValue(I, src_operand, llvm_module))
+                    return false;
+                
+                frame.AssignValue(inst, I, llvm_module);
+                
+                if (log)
+                {
+                    log->Printf("Interpreted an IntToPtr");
+                    log->Printf("  Src : %s", frame.SummarizeValue(src_operand).c_str());
+                    log->Printf("  =   : %s", frame.SummarizeValue(inst).c_str()); 
+                }
+            }
+            break;
         case Instruction::Load:
             {
                 const LoadInst *load_inst = dyn_cast<LoadInst>(inst);
@@ -1289,13 +1356,35 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 
                 Memory::Region R = memory.Lookup(pointer, target_ty);
                 
-                memory.Read(D_encoder->GetDataStart(), R.m_base, target_data.getTypeStoreSize(target_ty));
+                if (R.IsValid())
+                {
+                    if (!memory.Read(D_encoder->GetDataStart(), R.m_base, target_data.getTypeStoreSize(target_ty)))
+                    {
+                        if (log)
+                            log->Printf("Couldn't read from a region on behalf of a LoadInst");
+                        
+                        return false;
+                    }
+                }
+                else
+                {
+                    if (!memory.ReadFromRawPtr(D_encoder->GetDataStart(), pointer, target_data.getTypeStoreSize(target_ty)))
+                    {
+                        if (log)
+                            log->Printf("Couldn't read from a raw pointer on behalf of a LoadInst");
+                        
+                        return false;
+                    }
+                }
                 
                 if (log)
                 {
                     log->Printf("Interpreted a LoadInst");
                     log->Printf("  P : %s", frame.SummarizeValue(pointer_operand).c_str());
-                    log->Printf("  R : %s", memory.SummarizeRegion(R).c_str());
+                    if (R.IsValid())
+                        log->Printf("  R : %s", memory.SummarizeRegion(R).c_str());
+                    else
+                        log->Printf("  R : raw pointer 0x%llx", (unsigned long long)pointer);
                     log->Printf("  D : %s", frame.SummarizeValue(load_inst).c_str());
                 }
             }
@@ -1365,15 +1454,27 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 
                 Memory::Region R = memory.Lookup(pointer, target_ty);
                 
-                if (R.IsInvalid())
+                if (R.IsValid())
                 {
-                    if (log)
-                        log->Printf("StoreInst's pointer doesn't point to a valid target");
-                    
-                    return false;
+                    if (!memory.Write(R.m_base, D_extractor->GetDataStart(), target_data.getTypeStoreSize(target_ty)))
+                    {
+                        if (log)
+                            log->Printf("Couldn't write to a region on behalf of a LoadInst");
+                        
+                        return false;
+                    }
+                }
+                else
+                {
+                    if (!memory.WriteToRawPtr(pointer, D_extractor->GetDataStart(), target_data.getTypeStoreSize(target_ty)))
+                    {
+                        if (log)
+                            log->Printf("Couldn't write to a raw pointer on behalf of a LoadInst");
+                        
+                        return false;
+                    }
                 }
                 
-                memory.Write(R.m_base, D_extractor->GetDataStart(), target_data.getTypeStoreSize(target_ty));
                 
                 if (log)
                 {

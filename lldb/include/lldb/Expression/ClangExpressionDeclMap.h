@@ -381,12 +381,25 @@ public:
     TargetInfo GetTargetInfo();
     
     //------------------------------------------------------------------
-    /// [Used by IRInterpreter] Write to the target.
+    /// [Used by IRInterpreter] Promote an unknown address to a
+    ///     LoadAddress or FileAddress depending on the presence of a
+    ///     process.
     ///
     /// @param[in] addr
+    ///     The address to promote.
+    ///
+    /// @return
+    ///     The wrapped entity.
+    //------------------------------------------------------------------
+    lldb_private::Value WrapBareAddress (lldb::addr_t addr);
+    
+    //------------------------------------------------------------------
+    /// [Used by IRInterpreter] Write to the target.
+    ///
+    /// @param[in] value
     ///     The address to write to.
     ///
-    /// @param[in] data
+    /// @param[in] addr
     ///     The address of the data buffer to read from.
     ///
     /// @param[in] length
@@ -406,7 +419,7 @@ public:
     /// @param[in] data
     ///     The address of the data buffer to write to.
     ///
-    /// @param[in] addr
+    /// @param[in] value
     ///     The address to read from.
     ///
     /// @param[in] length
@@ -419,7 +432,7 @@ public:
     ReadTarget (uint8_t *data,
                 lldb_private::Value &value,
                 size_t length);
-    
+
     //------------------------------------------------------------------
     /// [Used by IRInterpreter] Get the Value for a NamedDecl.
     ///
@@ -467,6 +480,10 @@ public:
     ///     True if the data should be treated as disappearing after the
     ///     expression completes.  In that case, it gets no live data.
     ///
+    /// @param[in] maybe_make_load
+    ///     True if the value is a file address but should be potentially
+    ///     upgraded to a load address if a target is presence.
+    ///
     /// @return
     ///     True on success; false otherwise.
     //------------------------------------------------------------------
@@ -475,7 +492,8 @@ public:
                             lldb_private::Value &value,
                             const ConstString &name,
                             lldb_private::TypeFromParser type,
-                            bool transient);
+                            bool transient,
+                            bool maybe_make_load);
     
     //------------------------------------------------------------------
     /// [Used by CommandObjectExpression] Materialize the entire struct

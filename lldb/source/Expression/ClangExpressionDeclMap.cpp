@@ -350,7 +350,8 @@ ClangExpressionDeclMap::CompleteResultVariable (lldb::ClangExpressionVariableSP 
                                                 lldb_private::Value &value,
                                                 const ConstString &name,
                                                 lldb_private::TypeFromParser type,
-                                                bool transient)
+                                                bool transient,
+                                                bool maybe_make_load)
 {
     assert (m_parser_vars.get());
         
@@ -358,6 +359,14 @@ ClangExpressionDeclMap::CompleteResultVariable (lldb::ClangExpressionVariableSP 
     
     if (!pvar_sp)
         return false;
+        
+    if (maybe_make_load && 
+        value.GetValueType() == Value::eValueTypeFileAddress &&
+        m_parser_vars->m_exe_ctx && 
+        m_parser_vars->m_exe_ctx->GetProcessPtr())
+    {
+        value.SetValueType(Value::eValueTypeLoadAddress);
+    }
     
     if (pvar_sp->m_flags & ClangExpressionVariable::EVIsProgramReference &&
         !pvar_sp->m_live_sp &&
@@ -781,6 +790,23 @@ ClangExpressionDeclMap::GetSymbolAddress (const ConstString &name)
 }
 
 // Interface for IRInterpreter
+
+Value 
+ClangExpressionDeclMap::WrapBareAddress (lldb::addr_t addr)
+{
+    Value ret;
+
+    ret.SetContext(Value::eContextTypeInvalid, NULL);
+
+    if (m_parser_vars->m_exe_ctx && m_parser_vars->m_exe_ctx->GetProcessPtr())
+        ret.SetValueType(Value::eValueTypeLoadAddress);
+    else
+        ret.SetValueType(Value::eValueTypeFileAddress);
+
+    ret.GetScalar() = (unsigned long long)addr;
+
+    return ret;
+}
 
 bool
 ClangExpressionDeclMap::WriteTarget (lldb_private::Value &value,

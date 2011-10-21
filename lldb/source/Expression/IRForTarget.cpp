@@ -672,9 +672,9 @@ IRForTarget::CreateResultVariable (llvm::Function &llvm_function)
         
         if (!m_has_side_effects)
         {
-            MaybeSetConstantResult (initializer, 
-                                    m_result_name, 
-                                    m_result_type);
+            //MaybeSetConstantResult (initializer, 
+            //                        m_result_name, 
+            //                        m_result_type);
         }
                 
         StoreInst *synthesized_store = new StoreInst(initializer,
@@ -688,7 +688,7 @@ IRForTarget::CreateResultVariable (llvm::Function &llvm_function)
     {
         if (!m_has_side_effects && lldb_private::ClangASTContext::IsPointerType (m_result_type.GetOpaqueQualType()))
         {
-            MaybeSetCastResult (m_result_type);
+            //MaybeSetCastResult (m_result_type);
         }
         
         result_global->replaceAllUsesWith(new_result_global);
