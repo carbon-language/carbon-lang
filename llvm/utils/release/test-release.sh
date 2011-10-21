@@ -246,6 +246,7 @@ function configure_llvmCore() {
     $BuildDir/llvm.src/configure --prefix=$InstallDir \
         --enable-optimized=$Optimized \
         --enable-assertions=$Assertions \
+        --disable-timestamps \
         2>&1 | tee $LogDir/llvm.configure-Phase$Phase-$Flavor.log
     cd $BuildDir
 }
