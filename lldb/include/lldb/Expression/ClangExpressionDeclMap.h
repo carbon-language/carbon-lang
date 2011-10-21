@@ -56,7 +56,7 @@ namespace lldb_private {
 /// Fourth and finally, it "dematerializes" the struct after the JITted code has
 /// has executed, placing the new values back where it found the old ones.
 //----------------------------------------------------------------------
-class ClangExpressionDeclMap
+class ClangExpressionDeclMap : public ClangASTImporter::NamespaceMapCompleter
 {
 public:
     //------------------------------------------------------------------
@@ -695,6 +695,25 @@ public:
         assert(m_parser_vars.get());
         m_parser_vars->m_enable_lookups = true;
     }
+    
+    //------------------------------------------------------------------
+    /// [Used by ClangASTImporter] Look up the modules containing a
+    /// given namespace and put the appropriate entries in the namespace
+    /// map.
+    ///
+    /// @param[in] namespace_map
+    ///     The map to be completed.
+    ///
+    /// @param[in] name
+    ///     The name of the namespace to be found.
+    ///
+    /// @param[in] parent_map
+    ///     The map for the namespace's parent namespace, if there is
+    ///     one.
+    //------------------------------------------------------------------
+    void CompleteNamespaceMap (ClangASTImporter::NamespaceMapSP &namespace_map,
+                               const ConstString &name,
+                               ClangASTImporter::NamespaceMapSP &parent_map) const;
 
 private:
     ClangExpressionVariableList    m_found_entities;           ///< All entities that were looked up for the parser.
@@ -707,7 +726,8 @@ private:
     class ParserVars 
     {
     public:
-        ParserVars() :
+        ParserVars(ClangExpressionDeclMap &decl_map) :
+            m_decl_map(decl_map),
             m_exe_ctx(NULL),
             m_sym_ctx(),
             m_persistent_vars(NULL),
@@ -734,6 +754,8 @@ private:
             if (m_ast_importer->TargetASTContext() != ast_context)
                 return NULL;
             
+            m_ast_importer->InstallMapCompleter(m_decl_map);
+            
             return m_ast_importer.get();
         }
         
@@ -745,6 +767,7 @@ private:
         std::auto_ptr<ClangASTImporter> m_ast_importer; ///< The importer used to import types on the parser's behalf.
         TargetInfo                  m_target_info;      ///< Basic information about the target.
     private:
+        ClangExpressionDeclMap     &m_decl_map;
         DISALLOW_COPY_AND_ASSIGN (ParserVars);
     };
     
@@ -757,7 +780,7 @@ private:
     EnableParserVars()
     {
         if (!m_parser_vars.get())
-            m_parser_vars.reset(new ParserVars);
+            m_parser_vars.reset(new ParserVars(*this));
     }
     
     //----------------------------------------------------------------------

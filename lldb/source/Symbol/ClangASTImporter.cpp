@@ -10,8 +10,10 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Core/Module.h
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/ClangASTImporter.h"
+#include "lldb/Symbol/ClangNamespaceDecl.h"
 
 using namespace lldb_private;
 using namespace clang;
@@ -111,6 +113,35 @@ ClangASTImporter::GetNamespaceMap(const clang::NamespaceDecl *decl)
         return NamespaceMapSP();
 }
 
+void 
+ClangASTImporter::BuildNamespaceMap(const clang::NamespaceDecl *decl)
+{
+    const DeclContext *parent_context = decl->getDeclContext();
+    const NamespaceDecl *parent_namespace = dyn_cast<NamespaceDecl>(parent_context);
+    NamespaceMapSP parent_map;
+    
+    if (parent_namespace)
+        parent_map = GetNamespaceMap(parent_namespace);
+    
+    NamespaceMapSP new_map;
+    
+    new_map.reset(new NamespaceMap);
+ 
+    if (m_map_completer)
+    {
+        std::string namespace_string = decl->getDeclName().getAsString();
+    
+        m_map_completer->CompleteNamespaceMap (new_map, ConstString(namespace_string.c_str()), parent_map);
+    }
+    
+    RegisterNamespaceMap (decl, new_map);
+}
+
+ClangASTImporter::NamespaceMapCompleter::~NamespaceMapCompleter ()
+{
+    return;
+}
+
 clang::Decl 
 *ClangASTImporter::Minion::Imported (clang::Decl *from, clang::Decl *to)
 {
@@ -129,6 +160,15 @@ clang::Decl
                         from_tag_decl->getName().str().c_str(),
                         (to_tag_decl->hasExternalLexicalStorage() ? " Lexical" : ""),
                         (to_tag_decl->hasExternalVisibleStorage() ? " Visible" : ""));
+    }
+    
+    if (isa<NamespaceDecl>(from))
+    {
+        NamespaceDecl *to_namespace_decl = dyn_cast<NamespaceDecl>(to);
+        
+        m_master.BuildNamespaceMap(to_namespace_decl);
+        
+        to_namespace_decl->setHasExternalVisibleStorage();
     }
     
     if (isa<ObjCInterfaceDecl>(from))

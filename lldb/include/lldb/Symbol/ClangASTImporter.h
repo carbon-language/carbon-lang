@@ -71,10 +71,27 @@ public:
     typedef std::vector < std::pair<lldb::ModuleSP, ClangNamespaceDecl> > NamespaceMap;
     typedef lldb::SharedPtr<NamespaceMap>::Type NamespaceMapSP;
     
-    void RegisterNamespaceMap(const clang::NamespaceDecl *decl, 
-                              NamespaceMapSP &namespace_map);
+    void RegisterNamespaceMap (const clang::NamespaceDecl *decl, 
+                               NamespaceMapSP &namespace_map);
     
-    NamespaceMapSP GetNamespaceMap(const clang::NamespaceDecl *decl);
+    class NamespaceMapCompleter 
+    {
+    public:
+        virtual ~NamespaceMapCompleter ();
+        
+        virtual void CompleteNamespaceMap (NamespaceMapSP &namespace_map,
+                                           const ConstString &name,
+                                           NamespaceMapSP &parent_map) const = 0;
+    };
+    
+    void InstallMapCompleter (NamespaceMapCompleter &completer)
+    {
+        m_map_completer = &completer;
+    }
+                           
+    NamespaceMapSP GetNamespaceMap (const clang::NamespaceDecl *decl);
+    
+    void BuildNamespaceMap (const clang::NamespaceDecl *decl);
 private:
     
     struct DeclOrigin 
@@ -166,12 +183,13 @@ private:
     
     typedef std::map <const clang::NamespaceDecl *, NamespaceMapSP> NamespaceMetaMap;
     
-    NamespaceMetaMap    m_namespace_maps;
-    clang::FileManager  m_file_manager;
-    clang::ASTContext  *m_target_ctx;
-    MinionMap           m_minions;
-    MinionMap           m_minimal_minions;
-    OriginMap           m_origins;
+    NamespaceMetaMap        m_namespace_maps;
+    NamespaceMapCompleter  *m_map_completer;
+    clang::FileManager      m_file_manager;
+    clang::ASTContext      *m_target_ctx;
+    MinionMap               m_minions;
+    MinionMap               m_minimal_minions;
+    OriginMap               m_origins;
 };
     
 }

@@ -2036,6 +2036,103 @@ ClangExpressionDeclMap::FindGlobalVariable
     return VariableSP();
 }
 
+// Interface for ClangASTImporter
+
+void 
+ClangExpressionDeclMap::CompleteNamespaceMap (ClangASTImporter::NamespaceMapSP &namespace_map,
+                                              const ConstString &name,
+                                              ClangASTImporter::NamespaceMapSP &parent_map) const
+{
+    static unsigned int invocation_id = 0;
+    unsigned int current_id = invocation_id++;
+    
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    
+    if (log)
+    {
+        if (parent_map && parent_map->size())
+            log->Printf("CompleteNamespaceMap[%u] Searching for namespace %s in namespace %s",
+                        current_id,
+                        name.GetCString(),
+                        parent_map->begin()->second.GetNamespaceDecl()->getDeclName().getAsString().c_str());
+        else
+            log->Printf("CompleteNamespaceMap[%u] Searching for namespace %s",
+                        current_id,
+                        name.GetCString());
+    }
+
+    
+    if (parent_map)
+    {
+        for (ClangASTImporter::NamespaceMap::iterator i = parent_map->begin(), e = parent_map->end();
+             i != e;
+             ++i)
+        {
+            ClangNamespaceDecl found_namespace_decl;
+            
+            ModuleSP module_sp = i->first;
+            ClangNamespaceDecl module_parent_namespace_decl = i->second;
+            
+            SymbolVendor *symbol_vendor = module_sp->GetSymbolVendor();
+            
+            if (!symbol_vendor)
+                continue;
+            
+            SymbolContext null_sc;
+                
+            found_namespace_decl = symbol_vendor->FindNamespace(null_sc, name, &module_parent_namespace_decl);
+                
+            if (!found_namespace_decl)
+                continue;
+                
+            namespace_map->push_back(std::pair<ModuleSP, ClangNamespaceDecl>(module_sp, found_namespace_decl));
+                    
+            if (log)
+                log->Printf("  CMN[%u] Found namespace %s in module %s",
+                            current_id,
+                            name.GetCString(), 
+                            module_sp->GetFileSpec().GetFilename().GetCString());
+        }
+    }
+    else
+    {
+        ModuleList &images = m_parser_vars->m_sym_ctx.target_sp->GetImages();
+        ClangNamespaceDecl null_namespace_decl;
+        
+        for (uint32_t i = 0, e = images.GetSize();
+             i != e;
+             ++i)
+        {
+            ModuleSP image = images.GetModuleAtIndex(i);
+            
+            if (!image)
+                continue;
+            
+            ClangNamespaceDecl found_namespace_decl;
+            
+            SymbolVendor *symbol_vendor = image->GetSymbolVendor();
+            
+            if (!symbol_vendor)
+                continue;
+            
+            SymbolContext null_sc;
+            
+            found_namespace_decl = symbol_vendor->FindNamespace(null_sc, name, &null_namespace_decl);
+            
+            if (!found_namespace_decl)
+                continue;
+            
+            namespace_map->push_back(std::pair<ModuleSP, ClangNamespaceDecl>(image, found_namespace_decl));
+                
+            if (log)
+                log->Printf("  CMN[%u] Found namespace %s in module %s",
+                            current_id,
+                            name.GetCString(), 
+                            image->GetFileSpec().GetFilename().GetCString());
+        }
+    }
+}
+
 // Interface for ClangASTSource
 
 void
@@ -2067,13 +2164,16 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context, co
         
     if (const NamespaceDecl *namespace_context = dyn_cast<NamespaceDecl>(context.m_decl_context))
     {
-        ClangASTImporter::NamespaceMapSP namespace_map = m_parser_vars->m_ast_importer->GetNamespaceMap(namespace_context);
+        ClangASTImporter::NamespaceMapSP namespace_map = m_parser_vars->GetASTImporter(context.GetASTContext())->GetNamespaceMap(namespace_context);
         
         if (log && log->GetVerbose())
             log->Printf("  FEVD[%u] Inspecting namespace map %p (%d entries)", 
                         current_id, 
                         namespace_map.get(), 
                         (int)namespace_map->size());
+        
+        if (!namespace_map)
+            return;
         
         for (ClangASTImporter::NamespaceMap::iterator i = namespace_map->begin(), e = namespace_map->end();
              i != e;
