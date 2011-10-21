@@ -33,9 +33,8 @@ class StartupDelaysBench(BenchBase):
         """Test start up delays creating a target and setting a breakpoint."""
         print
         self.run_startup_delays_bench(self.exe, self.break_spec, self.count)
-        print "lldb startup delays benchmark:"
-        print "create fresh target:", self.stopwatch
-        print "set first breakpoint:", self.stopwatch2
+        print "lldb startup delay (create fresh target) benchmark:", self.stopwatch
+        print "lldb startup delay (set first breakpoint) benchmark:", self.stopwatch2
 
     def run_startup_delays_bench(self, exe, break_spec, count):
         # Set self.child_prompt, which is "(lldb) ".
