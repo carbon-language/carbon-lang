@@ -309,7 +309,7 @@ def VLD1q16Pseudo_UPD : VLDQWBPseudo<IIC_VLD1x2u>;
 def VLD1q32Pseudo_UPD : VLDQWBPseudo<IIC_VLD1x2u>;
 def VLD1q64Pseudo_UPD : VLDQWBPseudo<IIC_VLD1x2u>;
 
-// ...with 3 registers (some of these are only for the disassembler):
+// ...with 3 registers
 class VLD1D3<bits<4> op7_4, string Dt>
   : NLdSt<0,0b10,0b0110,op7_4, (outs DPR:$Vd, DPR:$dst2, DPR:$dst3),
           (ins addrmode6:$Rn), IIC_VLD1x3, "vld1", Dt,
@@ -339,7 +339,7 @@ def VLD1d64T_UPD : VLD1D3WB<{1,1,0,?}, "64">;
 def VLD1d64TPseudo     : VLDQQPseudo<IIC_VLD1x3>;
 def VLD1d64TPseudo_UPD : VLDQQWBPseudo<IIC_VLD1x3u>;
 
-// ...with 4 registers (some of these are only for the disassembler):
+// ...with 4 registers
 class VLD1D4<bits<4> op7_4, string Dt>
   : NLdSt<0,0b10,0b0010,op7_4,(outs DPR:$Vd, DPR:$dst2, DPR:$dst3, DPR:$dst4),
           (ins addrmode6:$Rn), IIC_VLD1x4, "vld1", Dt,
@@ -441,7 +441,7 @@ def VLD2q8Pseudo_UPD  : VLDQQWBPseudo<IIC_VLD2x2u>;
 def VLD2q16Pseudo_UPD : VLDQQWBPseudo<IIC_VLD2x2u>;
 def VLD2q32Pseudo_UPD : VLDQQWBPseudo<IIC_VLD2x2u>;
 
-// ...with double-spaced registers (for disassembly only):
+// ...with double-spaced registers
 def VLD2b8      : VLD2D<0b1001, {0,0,?,?}, "8">;
 def VLD2b16     : VLD2D<0b1001, {0,1,?,?}, "16">;
 def VLD2b32     : VLD2D<0b1001, {1,0,?,?}, "32">;
@@ -1200,7 +1200,7 @@ def VST1q16Pseudo_UPD : VSTQWBPseudo<IIC_VST1x2u>;
 def VST1q32Pseudo_UPD : VSTQWBPseudo<IIC_VST1x2u>;
 def VST1q64Pseudo_UPD : VSTQWBPseudo<IIC_VST1x2u>;
 
-// ...with 3 registers (some of these are only for the disassembler):
+// ...with 3 registers
 class VST1D3<bits<4> op7_4, string Dt>
   : NLdSt<0, 0b00, 0b0110, op7_4, (outs),
           (ins addrmode6:$Rn, DPR:$Vd, DPR:$src2, DPR:$src3),
@@ -1232,7 +1232,7 @@ def VST1d64T_UPD : VST1D3WB<{1,1,0,?}, "64">;
 def VST1d64TPseudo     : VSTQQPseudo<IIC_VST1x3>;
 def VST1d64TPseudo_UPD : VSTQQWBPseudo<IIC_VST1x3u>;
 
-// ...with 4 registers (some of these are only for the disassembler):
+// ...with 4 registers
 class VST1D4<bits<4> op7_4, string Dt>
   : NLdSt<0, 0b00, 0b0010, op7_4, (outs),
           (ins addrmode6:$Rn, DPR:$Vd, DPR:$src2, DPR:$src3, DPR:$src4),
@@ -1335,7 +1335,7 @@ def VST2q8Pseudo_UPD  : VSTQQWBPseudo<IIC_VST2x2u>;
 def VST2q16Pseudo_UPD : VSTQQWBPseudo<IIC_VST2x2u>;
 def VST2q32Pseudo_UPD : VSTQQWBPseudo<IIC_VST2x2u>;
 
-// ...with double-spaced registers (for disassembly only):
+// ...with double-spaced registers
 def VST2b8      : VST2D<0b1001, {0,0,?,?}, "8">;
 def VST2b16     : VST2D<0b1001, {0,1,?,?}, "16">;
 def VST2b32     : VST2D<0b1001, {1,0,?,?}, "32">;
@@ -3942,12 +3942,12 @@ def  VBIFd    : N3VX<1, 0, 0b11, 0b0001, 0, 1,
                      (outs DPR:$Vd), (ins DPR:$src1, DPR:$Vn, DPR:$Vm),
                      N3RegFrm, IIC_VBINiD,
                      "vbif", "$Vd, $Vn, $Vm", "$src1 = $Vd",
-                     [/* For disassembly only; pattern left blank */]>;
+                     []>;
 def  VBIFq    : N3VX<1, 0, 0b11, 0b0001, 1, 1,
                      (outs QPR:$Vd), (ins QPR:$src1, QPR:$Vn, QPR:$Vm),
                      N3RegFrm, IIC_VBINiQ,
                      "vbif", "$Vd, $Vn, $Vm", "$src1 = $Vd",
-                     [/* For disassembly only; pattern left blank */]>;
+                     []>;
 
 //   VBIT     : Vector Bitwise Insert if True
 //              like VBSL but with: "vbit $dst, $src2, $src1", "$src3 = $dst",
@@ -3956,12 +3956,12 @@ def  VBITd    : N3VX<1, 0, 0b10, 0b0001, 0, 1,
                      (outs DPR:$Vd), (ins DPR:$src1, DPR:$Vn, DPR:$Vm),
                      N3RegFrm, IIC_VBINiD,
                      "vbit", "$Vd, $Vn, $Vm", "$src1 = $Vd",
-                     [/* For disassembly only; pattern left blank */]>;
+                     []>;
 def  VBITq    : N3VX<1, 0, 0b10, 0b0001, 1, 1,
                      (outs QPR:$Vd), (ins QPR:$src1, QPR:$Vn, QPR:$Vm),
                      N3RegFrm, IIC_VBINiQ,
                      "vbit", "$Vd, $Vn, $Vm", "$src1 = $Vd",
-                     [/* For disassembly only; pattern left blank */]>;
+                     []>;
 
 // VBIT/VBIF are not yet implemented.  The TwoAddress pass will not go looking
 // for equivalent operations with different register constraints; it just
@@ -4328,7 +4328,7 @@ def  VCNTq    : N2VQInt<0b11, 0b11, 0b00, 0b00, 0b01010, 0,
                         IIC_VCNTiQ, "vcnt", "8",
                         v16i8, v16i8, int_arm_neon_vcnt>;
 
-// Vector Swap -- for disassembly only.
+// Vector Swap
 def  VSWPd    : N2VX<0b11, 0b11, 0b00, 0b10, 0b00000, 0, 0,
                      (outs DPR:$Vd), (ins DPR:$Vm), NoItinerary,
                      "vswp", "$Vd, $Vm", "", []>;
