@@ -43,7 +43,8 @@ ASTRecordLayout::ASTRecordLayout(const ASTContext &Ctx, CharUnits size,
 // Constructor for C++ records.
 ASTRecordLayout::ASTRecordLayout(const ASTContext &Ctx,
                                  CharUnits size, CharUnits alignment,
-                                 CharUnits vbptroffset, CharUnits datasize,
+                                 CharUnits vfptroffset, CharUnits vbptroffset,
+                                 CharUnits datasize,
                                  const uint64_t *fieldoffsets,
                                  unsigned fieldcount,
                                  CharUnits nonvirtualsize,
@@ -68,6 +69,7 @@ ASTRecordLayout::ASTRecordLayout(const ASTContext &Ctx,
   CXXInfo->SizeOfLargestEmptySubobject = SizeOfLargestEmptySubobject;
   CXXInfo->BaseOffsets = BaseOffsets;
   CXXInfo->VBaseOffsets = VBaseOffsets;
+  CXXInfo->VFPtrOffset = vfptroffset;
   CXXInfo->VBPtrOffset = vbptroffset;
 
 #ifndef NDEBUG

@@ -62,8 +62,11 @@ class ASTRecordLayout {
     /// (either a base or a member). Will be zero if the class doesn't contain
     /// any empty subobjects.
     CharUnits SizeOfLargestEmptySubobject;
-    
-    /// VBPtrOffset - Virtual base table offset.
+
+    /// VFPtrOffset - Virtual function table offset (Microsoft-only).
+    CharUnits VFPtrOffset;
+
+    /// VBPtrOffset - Virtual base table offset (Microsoft-only).
     CharUnits VBPtrOffset;
     
     /// PrimaryBase - The primary base info for this record.
@@ -92,7 +95,8 @@ class ASTRecordLayout {
   // Constructor for C++ records.
   typedef CXXRecordLayoutInfo::BaseOffsetsMapTy BaseOffsetsMapTy;
   ASTRecordLayout(const ASTContext &Ctx,
-                  CharUnits size, CharUnits alignment, CharUnits vbptroffset,
+                  CharUnits size, CharUnits alignment,
+                  CharUnits vfptroffset, CharUnits vbptroffset,
                   CharUnits datasize,
                   const uint64_t *fieldoffsets, unsigned fieldcount,
                   CharUnits nonvirtualsize, CharUnits nonvirtualalign,
@@ -204,7 +208,17 @@ public:
     return CXXInfo->SizeOfLargestEmptySubobject;
   }
 
+  /// getVFPtrOffset - Get the offset for virtual function table pointer.
+  /// This is only meaningful with the Microsoft ABI.
+  CharUnits getVFPtrOffset() const {
+    assert(CXXInfo && "Record layout does not have C++ specific info!");
+    return CXXInfo->VFPtrOffset;
+  }
+
+  /// getVBPtrOffset - Get the offset for virtual base table pointer.
+  /// This is only meaningful with the Microsoft ABI.
   CharUnits getVBPtrOffset() const {
+    assert(CXXInfo && "Record layout does not have C++ specific info!");
     return CXXInfo->VBPtrOffset;
   }
 };

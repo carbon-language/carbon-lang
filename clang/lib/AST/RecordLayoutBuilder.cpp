@@ -592,6 +592,9 @@ protected:
   /// out is virtual.
   bool PrimaryBaseIsVirtual;
 
+  /// VFPtrOffset - Virtual function table offset. Only for MS layout.
+  CharUnits VFPtrOffset;
+
   /// VBPtrOffset - Virtual base table offset. Only for MS layout.
   CharUnits VBPtrOffset;
 
@@ -625,7 +628,9 @@ protected:
       DataSize(0), NonVirtualSize(CharUnits::Zero()), 
       NonVirtualAlignment(CharUnits::One()), 
       ZeroLengthBitfield(0), PrimaryBase(0), 
-      PrimaryBaseIsVirtual(false), VBPtrOffset(CharUnits::fromQuantity(-1)),
+      PrimaryBaseIsVirtual(false),
+      VFPtrOffset(CharUnits::fromQuantity(-1)),
+      VBPtrOffset(CharUnits::fromQuantity(-1)),
       FirstNearlyEmptyVBase(0) { }
 
   void Layout(const RecordDecl *D);
@@ -669,7 +674,7 @@ protected:
 
   void SelectPrimaryVBase(const CXXRecordDecl *RD);
 
-  void EnsureVTablePointerAlignment();
+  void EnsureVTablePointerAlignment(CharUnits UnpackedBaseAlign);
 
   /// LayoutNonVirtualBases - Determines the primary base class (if any) and
   /// lays it out. Will then proceed to lay out all non-virtual base clasess.
@@ -739,8 +744,6 @@ public:
   static const CXXMethodDecl *ComputeKeyFunction(const CXXRecordDecl *RD);
 
   virtual ~RecordLayoutBuilder() { }
-
-  CharUnits GetVBPtrOffset() const { return VBPtrOffset; }
 };
 } // end anonymous namespace
 
@@ -937,9 +940,7 @@ void RecordLayoutBuilder::ComputeBaseSubobjectInfo(const CXXRecordDecl *RD) {
 }
 
 void
-RecordLayoutBuilder::EnsureVTablePointerAlignment() {
-  CharUnits UnpackedBaseAlign = 
-    Context.toCharUnitsFromBits(Context.getTargetInfo().getPointerAlign(0));
+RecordLayoutBuilder::EnsureVTablePointerAlignment(CharUnits UnpackedBaseAlign) {
   CharUnits BaseAlign = (Packed) ? CharUnits::One() : UnpackedBaseAlign;
 
   // The maximum field alignment overrides base align.
@@ -949,7 +950,8 @@ RecordLayoutBuilder::EnsureVTablePointerAlignment() {
   }
 
   // Round up the current record size to pointer alignment.
-  setDataSize(getDataSize().RoundUpToAlignment(BaseAlign));
+  setSize(getSize().RoundUpToAlignment(BaseAlign));
+  setDataSize(getSize());
 
   // Update the alignment.
   UpdateAlignment(BaseAlign, UnpackedBaseAlign);
@@ -994,9 +996,11 @@ RecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
     // Under the Itanium ABI, a dynamic class without a primary base has a
     // vtable pointer.  It is placed at offset 0.
     assert(DataSize == 0 && "Vtable pointer must be at offset zero!");
-    EnsureVTablePointerAlignment();
     CharUnits PtrWidth = 
       Context.toCharUnitsFromBits(Context.getTargetInfo().getPointerWidth(0));
+    CharUnits PtrAlign = 
+      Context.toCharUnitsFromBits(Context.getTargetInfo().getPointerAlign(0));
+    EnsureVTablePointerAlignment(PtrAlign);
     setSize(getSize() + PtrWidth);
     setDataSize(getSize());
   }
@@ -1032,15 +1036,19 @@ RecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
     // after any base classes.
     CharUnits PtrWidth = 
       Context.toCharUnitsFromBits(Context.getTargetInfo().getPointerWidth(0));
+    CharUnits PtrAlign = 
+      Context.toCharUnitsFromBits(Context.getTargetInfo().getPointerAlign(0));
+    PtrAlign = std::max(PtrAlign, Alignment);
     if (HasNewVirtualFunction(RD) &&
         (!PrimaryBase || !BaseHasVFPtr(PrimaryBase))) {
-      EnsureVTablePointerAlignment();
+      EnsureVTablePointerAlignment(PtrAlign);
+      VFPtrOffset = getSize();
       setSize(getSize() + PtrWidth);
       setDataSize(getSize());
     }
     if (RD->getNumVBases() &&
         (!PrimaryBase || !PrimaryBase->getNumVBases())) {
-      EnsureVTablePointerAlignment();
+      EnsureVTablePointerAlignment(PtrAlign);
       VBPtrOffset = getSize();
       setSize(getSize() + PtrWidth);
       setDataSize(getSize());
@@ -2030,7 +2038,7 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
     
     Builder->Layout(RD);
 
-    TargetAlign = Builder->getAligment();
+    TargetAlign = Builder->NonVirtualAlignment;
     
     if (getTargetInfo().getCXXABI() == CXXABI_Microsoft &&
         TargetAlign.getQuantity() > 4) {
@@ -2053,7 +2061,7 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
     // FIXME: IsPODForThePurposeOfLayout should be stored in the record layout.
     // This does not affect the calculations of MSVC layouts
     bool IsPODForThePurposeOfLayout = 
-      (getTargetInfo().getCXXABI() == CXXABI_Microsoft) ||
+      (getTargetInfo().getCXXABI() != CXXABI_Microsoft) &&
       cast<CXXRecordDecl>(D)->isPOD();
 
     // FIXME: This should be done in FinalizeLayout.
@@ -2065,7 +2073,8 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
     NewEntry =
       new (*this) ASTRecordLayout(*this, Builder->getSize(), 
                                   Builder->Alignment,
-                                  Builder->GetVBPtrOffset(),
+                                  Builder->VFPtrOffset,
+                                  Builder->VBPtrOffset,
                                   DataSize, 
                                   Builder->FieldOffsets.data(),
                                   Builder->FieldOffsets.size(),
@@ -2175,22 +2184,16 @@ static void DumpCXXRecordLayout(raw_ostream &OS,
   IndentLevel++;
 
   const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
+  bool HasVfptr = Layout.getVFPtrOffset() != CharUnits::fromQuantity(-1);
   bool HasVbptr = Layout.getVBPtrOffset() != CharUnits::fromQuantity(-1);
 
   // Vtable pointer.
-  if (RD->isDynamicClass() && !PrimaryBase) {
+  if (RD->isDynamicClass() && !PrimaryBase &&
+      C.getTargetInfo().getCXXABI() != CXXABI_Microsoft) {
     PrintOffset(OS, Offset, IndentLevel);
     OS << '(' << *RD << " vtable pointer)\n";
   }
   
-  if (HasVbptr && !PrimaryBase) {
-    PrintOffset(OS, Offset + Layout.getVBPtrOffset(), IndentLevel);
-    OS << '(' << *RD << " vbtable pointer)\n";
-
-    // one vbtable per class
-    HasVbptr = false;
-  }
-
   // Dump (non-virtual) bases
   for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
          E = RD->bases_end(); I != E; ++I) {
@@ -2208,7 +2211,12 @@ static void DumpCXXRecordLayout(raw_ostream &OS,
                         Base == PrimaryBase ? "(primary base)" : "(base)",
                         /*IncludeVirtualBases=*/false);
   }
-  // vbptr
+
+  // vfptr and vbptr (for Microsoft C++ ABI)
+  if (HasVfptr) {
+    PrintOffset(OS, Offset + Layout.getVFPtrOffset(), IndentLevel);
+    OS << '(' << *RD << " vftable pointer)\n";
+  }
   if (HasVbptr) {
     PrintOffset(OS, Offset + Layout.getVBPtrOffset(), IndentLevel);
     OS << '(' << *RD << " vbtable pointer)\n";
