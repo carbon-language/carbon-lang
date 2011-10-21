@@ -298,11 +298,18 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
 
   // Emit subprogram debug descriptor.
   if (CGDebugInfo *DI = getDebugInfo()) {
-    // FIXME: what is going on here and why does it ignore all these
-    // interesting type properties?
+    unsigned NumArgs = 0;
+    QualType *ArgsArray = new QualType[Args.size()];
+    for (FunctionArgList::const_iterator i = Args.begin(), e = Args.end();
+	 i != e; ++i) {
+      ArgsArray[NumArgs++] = (*i)->getType();
+    }
+
     QualType FnType =
-      getContext().getFunctionType(RetTy, 0, 0,
+      getContext().getFunctionType(RetTy, ArgsArray, NumArgs,
                                    FunctionProtoType::ExtProtoInfo());
+
+    delete ArgsArray;
 
     DI->setLocation(StartLoc);
     DI->EmitFunctionStart(GD, FnType, CurFn, Builder);

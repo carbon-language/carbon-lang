@@ -10,6 +10,6 @@ T fx(XF<T> xi) {
   return xi.member;
 }
 
-//CHECK: DW_TAG_template_type_parameter
 //CHECK: XF<int>
+//CHECK: DW_TAG_template_type_parameter
 template int fx(XF<int>);
