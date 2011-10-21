@@ -8,7 +8,7 @@ from lldbbench import *
 
 class FlintVsSlateGDBDisassembly(BenchBase):
 
-    mydir = os.path.join("benchmarks", "example")
+    mydir = os.path.join("benchmarks", "disassembly")
 
     def setUp(self):
         BenchBase.setUp(self)
