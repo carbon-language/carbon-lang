@@ -146,6 +146,7 @@ void initializeLowerIntrinsicsPass(PassRegistry&);
 void initializeLowerInvokePass(PassRegistry&);
 void initializeLowerSwitchPass(PassRegistry&);
 void initializeMachineBlockFrequencyInfoPass(PassRegistry&);
+void initializeMachineBlockPlacementPass(PassRegistry&);
 void initializeMachineBranchProbabilityInfoPass(PassRegistry&);
 void initializeMachineCSEPass(PassRegistry&);
 void initializeMachineDominatorTreePass(PassRegistry&);

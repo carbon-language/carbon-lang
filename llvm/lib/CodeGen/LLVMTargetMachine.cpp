@@ -53,6 +53,8 @@ static cl::opt<bool> DisableTailDuplicate("disable-tail-duplicate", cl::Hidden,
     cl::desc("Disable tail duplication"));
 static cl::opt<bool> DisableEarlyTailDup("disable-early-taildup", cl::Hidden,
     cl::desc("Disable pre-register allocation tail duplication"));
+static cl::opt<bool> EnableBlockPlacement("enable-block-placement",
+    cl::Hidden, cl::desc("Enable probability-driven block placement"));
 static cl::opt<bool> DisableCodePlace("disable-code-place", cl::Hidden,
     cl::desc("Disable code placement"));
 static cl::opt<bool> DisableSSC("disable-ssc", cl::Hidden,
@@ -486,8 +488,16 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
     PM.add(createGCInfoPrinter(dbgs()));
 
   if (OptLevel != CodeGenOpt::None && !DisableCodePlace) {
-    PM.add(createCodePlacementOptPass());
-    printNoVerify(PM, "After CodePlacementOpt");
+    if (EnableBlockPlacement) {
+      // MachineBlockPlacement is an experimental pass which is disabled by
+      // default currently. Eventually it should subsume CodePlacementOpt, so
+      // when enabled, the other is disabled.
+      PM.add(createMachineBlockPlacementPass());
+      printNoVerify(PM, "After MachineBlockPlacement");
+    } else {
+      PM.add(createCodePlacementOptPass());
+      printNoVerify(PM, "After CodePlacementOpt");
+    }
   }
 
   if (addPreEmitPass(PM, OptLevel))

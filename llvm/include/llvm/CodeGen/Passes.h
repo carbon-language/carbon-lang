@@ -155,6 +155,10 @@ namespace llvm {
   /// IfConverter Pass - This pass performs machine code if conversion.
   FunctionPass *createIfConverterPass();
 
+  /// MachineBlockPlacement Pass - This pass places basic blocks based on branch
+  /// probabilities.
+  FunctionPass *createMachineBlockPlacementPass();
+
   /// Code Placement Pass - This pass optimize code placement and aligns loop
   /// headers to target specific alignment boundary.
   FunctionPass *createCodePlacementOptPass();
