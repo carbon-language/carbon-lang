@@ -1959,14 +1959,6 @@ static DecodeStatus DecodeVLDInstruction(llvm::MCInst &Inst, unsigned Insn,
 
   // Second output register
   switch (Inst.getOpcode()) {
-    case ARM::VLD1q8:
-    case ARM::VLD1q16:
-    case ARM::VLD1q32:
-    case ARM::VLD1q64:
-    case ARM::VLD1q8_UPD:
-    case ARM::VLD1q16_UPD:
-    case ARM::VLD1q32_UPD:
-    case ARM::VLD1q64_UPD:
     case ARM::VLD1d8T:
     case ARM::VLD1d16T:
     case ARM::VLD1d32T:

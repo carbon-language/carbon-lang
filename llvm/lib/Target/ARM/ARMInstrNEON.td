@@ -77,6 +77,14 @@ def VecListOneDAsmOperand : AsmOperandClass {
 def VecListOneD : RegisterOperand<DPR, "printVectorListOne"> {
   let ParserMatchClass = VecListOneDAsmOperand;
 }
+// Register list of two sequential D registers.
+def VecListTwoDAsmOperand : AsmOperandClass {
+  let Name = "VecListTwoD";
+  let ParserMethod = "parseVectorList";
+}
+def VecListTwoD : RegisterOperand<DPR, "printVectorListTwo"> {
+  let ParserMatchClass = VecListTwoDAsmOperand;
+}
 
 //===----------------------------------------------------------------------===//
 // NEON-specific DAG Nodes.
@@ -253,9 +261,9 @@ class VLD1D<bits<4> op7_4, string Dt>
   let DecoderMethod = "DecodeVLDInstruction";
 }
 class VLD1Q<bits<4> op7_4, string Dt>
-  : NLdSt<0,0b10,0b1010,op7_4, (outs DPR:$Vd, DPR:$dst2),
+  : NLdSt<0,0b10,0b1010,op7_4, (outs VecListTwoD:$Vd),
           (ins addrmode6:$Rn), IIC_VLD1x2,
-          "vld1", Dt, "\\{$Vd, $dst2\\}, $Rn", "", []> {
+          "vld1", Dt, "$Vd, $Rn", "", []> {
   let Rm = 0b1111;
   let Inst{5-4} = Rn{5-4};
   let DecoderMethod = "DecodeVLDInstruction";
@@ -286,9 +294,9 @@ class VLD1DWB<bits<4> op7_4, string Dt>
   let DecoderMethod = "DecodeVLDInstruction";
 }
 class VLD1QWB<bits<4> op7_4, string Dt>
-  : NLdSt<0,0b10,0b1010,op7_4, (outs DPR:$Vd, DPR:$dst2, GPR:$wb),
+  : NLdSt<0,0b10,0b1010,op7_4, (outs VecListTwoD:$Vd, GPR:$wb),
           (ins addrmode6:$Rn, am6offset:$Rm), IIC_VLD1x2u,
-          "vld1", Dt, "\\{$Vd, $dst2\\}, $Rn$Rm",
+          "vld1", Dt, "$Vd, $Rn$Rm",
           "$Rn.addr = $wb", []> {
   let Inst{5-4} = Rn{5-4};
   let DecoderMethod = "DecodeVLDInstruction";

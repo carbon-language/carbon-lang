@@ -915,6 +915,11 @@ public:
     return VectorList.Count == 1;
   }
 
+  bool isVecListTwoD() const {
+    if (Kind != k_VectorList) return false;
+    return VectorList.Count == 2;
+  }
+
   bool isVectorIndex8() const {
     if (Kind != k_VectorIndex) return false;
     return VectorIndex.Val < 8;
@@ -1504,6 +1509,13 @@ public:
 
   void addVecListOneDOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateReg(VectorList.RegNum));
+  }
+
+  void addVecListTwoDOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    // Only the first register actually goes on the instruction. The rest
+    // are implied by the opcode.
     Inst.addOperand(MCOperand::CreateReg(VectorList.RegNum));
   }
 
