@@ -103,6 +103,9 @@ ProcessGDBRemote::CreateInstance (Target &target, Listener &listener)
 bool
 ProcessGDBRemote::CanDebug (Target &target, bool plugin_specified_by_name)
 {
+    if (plugin_specified_by_name)
+        return true;
+
     // For now we are just making sure the file exists for a given module
     Module *exe_module = target.GetExecutableModulePointer();
     if (exe_module)

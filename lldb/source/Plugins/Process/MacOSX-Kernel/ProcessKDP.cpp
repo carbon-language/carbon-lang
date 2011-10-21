@@ -58,6 +58,9 @@ ProcessKDP::CreateInstance (Target &target, Listener &listener)
 bool
 ProcessKDP::CanDebug(Target &target, bool plugin_specified_by_name)
 {
+    if (plugin_specified_by_name)
+        return true;
+
     // For now we are just making sure the file exists for a given module
     Module *exe_module = target.GetExecutableModulePointer();
     if (exe_module)
@@ -71,10 +74,8 @@ ProcessKDP::CanDebug(Target &target, bool plugin_specified_by_name)
                 exe_objfile->GetStrata() == ObjectFile::eStrataKernel)
                 return true;
         }
-        return false;
     }
-    // No target executable, assume we can debug if our plug-in was specified by name
-    return plugin_specified_by_name;
+    return false;
 }
 
 //----------------------------------------------------------------------
