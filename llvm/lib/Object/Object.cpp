@@ -104,7 +104,7 @@ uint64_t LLVMGetSectionAddress(LLVMSectionIteratorRef SI) {
   return ret;
 }
 
-int LLVMGetSectionContainsSymbol(LLVMSectionIteratorRef SI,
+LLVMBool LLVMGetSectionContainsSymbol(LLVMSectionIteratorRef SI,
                                  LLVMSymbolIteratorRef Sym) {
   bool ret;
   if (error_code ec = (*unwrap(SI))->containsSymbol(**unwrap(Sym), ret))

@@ -58,7 +58,7 @@ const char *LLVMGetSectionName(LLVMSectionIteratorRef SI);
 uint64_t LLVMGetSectionSize(LLVMSectionIteratorRef SI);
 const char *LLVMGetSectionContents(LLVMSectionIteratorRef SI);
 uint64_t LLVMGetSectionAddress(LLVMSectionIteratorRef SI);
-int LLVMGetSectionContainsSymbol(LLVMSectionIteratorRef SI,
+LLVMBool LLVMGetSectionContainsSymbol(LLVMSectionIteratorRef SI,
                                  LLVMSymbolIteratorRef Sym);
 
 // SymbolRef accessors
