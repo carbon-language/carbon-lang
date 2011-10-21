@@ -227,6 +227,9 @@ class MutexID {
       Parent = 0;  // FIXME -- get the parent from DeclStmt
       NumArgs = CE->getNumArgs();
       FunArgs = CE->getArgs();
+    } else if (D && isa<CXXDestructorDecl>(D)) {
+      // There's no such thing as a "destructor call" in the AST.
+      Parent = DeclExp;
     }
 
     // If the attribute has no arguments, then assume the argument is "this".
@@ -879,8 +882,30 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisContext &AC) {
     BuildLockset LocksetBuilder(Handler, Entryset, LocksetFactory);
     for (CFGBlock::const_iterator BI = CurrBlock->begin(),
          BE = CurrBlock->end(); BI != BE; ++BI) {
-      if (const CFGStmt *CfgStmt = dyn_cast<CFGStmt>(&*BI))
-        LocksetBuilder.Visit(const_cast<Stmt*>(CfgStmt->getStmt()));
+      switch (BI->getKind()) {
+        case CFGElement::Statement: {
+          const CFGStmt *CS = cast<CFGStmt>(&*BI);
+          LocksetBuilder.Visit(const_cast<Stmt*>(CS->getStmt()));
+          break;
+        }
+        // Ignore BaseDtor, MemberDtor, and TemporaryDtor for now.
+        case CFGElement::AutomaticObjectDtor: {
+          const CFGAutomaticObjDtor *AD = cast<CFGAutomaticObjDtor>(&*BI);
+          CXXDestructorDecl *DD = const_cast<CXXDestructorDecl*>(
+            AD->getDestructorDecl(AC.getASTContext()));
+          if (!DD->hasAttrs())
+            break;
+
+          // Create a dummy expression,
+          VarDecl *VD = const_cast<VarDecl*>(AD->getVarDecl());
+          DeclRefExpr DRE(VD, VD->getType(), VK_LValue,
+                          AD->getTriggerStmt()->getLocEnd());
+          LocksetBuilder.handleCall(&DRE, DD);
+          break;
+        }
+        default:
+          break;
+      }
     }
     Exitset = LocksetBuilder.getLockset();
 

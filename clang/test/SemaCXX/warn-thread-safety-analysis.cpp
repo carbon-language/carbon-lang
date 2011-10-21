@@ -1487,9 +1487,7 @@ namespace constructor_destructor_tests {
   };
 
   void fooTest() {
-    // destructors not implemented yet...
-    Foo foo; // \
-    // expected-warning {{mutex 'fooMu' is still locked at the end of function}}
+    Foo foo;
     myVar = 0;
   }
 }
@@ -1500,7 +1498,7 @@ namespace invalid_lock_expression_test {
 class LOCKABLE MyLockable {
 public:
   MyLockable() __attribute__((exclusive_lock_function)) { }
-  ~MyLockable() __attribute__((unlock_function)) { }
+  ~MyLockable() { }
 };
 
 // create an empty lock expression
