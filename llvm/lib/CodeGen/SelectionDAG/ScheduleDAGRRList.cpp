@@ -2752,26 +2752,6 @@ void RegReductionPQBase::AddPseudoTwoAddrDeps() {
   }
 }
 
-/// LimitedSumOfUnscheduledPredsOfSuccs - Compute the sum of the unscheduled
-/// predecessors of the successors of the SUnit SU. Stop when the provided
-/// limit is exceeded.
-static unsigned LimitedSumOfUnscheduledPredsOfSuccs(const SUnit *SU,
-                                                    unsigned Limit) {
-  unsigned Sum = 0;
-  for (SUnit::const_succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
-       I != E; ++I) {
-    const SUnit *SuccSU = I->getSUnit();
-    for (SUnit::const_pred_iterator II = SuccSU->Preds.begin(),
-         EE = SuccSU->Preds.end(); II != EE; ++II) {
-      SUnit *PredSU = II->getSUnit();
-      if (!PredSU->isScheduled)
-        if (++Sum > Limit)
-          return Sum;
-    }
-  }
-  return Sum;
-}
-
 //===----------------------------------------------------------------------===//
 //                         Public Constructor Functions
 //===----------------------------------------------------------------------===//
