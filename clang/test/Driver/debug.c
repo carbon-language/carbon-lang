@@ -6,3 +6,5 @@
 
 // "PWD=/foo gcc" wouldn't necessarily work. You would need to pick a different
 // path to the same directory (try a symlink).
+
+// XFAIL: win32
