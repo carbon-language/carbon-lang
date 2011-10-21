@@ -1231,7 +1231,15 @@ public:
   /// If D is also a NamedDecl, it will be made visible within its
   /// semantic context via makeDeclVisibleInContext.
   void addDecl(Decl *D);
-    
+
+  /// @brief Add the declaration D into this context, but suppress
+  /// searches for external declarations with the same name.
+  ///
+  /// Although analogous in function to addDecl, this removes an
+  /// important check.  This is only useful if the Decl is being
+  /// added in response to an external search; in all other cases,
+  /// addDecl() is the right function to use.
+  /// See the ASTImporter for use cases.
   void addDeclInternal(Decl *D);
 
   /// @brief Add the declaration D to this context without modifying
@@ -1292,9 +1300,6 @@ public:
   /// the lookup tables because it can be easily recovered by walking
   /// the declaration chains.
   void makeDeclVisibleInContext(NamedDecl *D, bool Recoverable = true);
-    
-  void makeDeclVisibleInContextInternal(NamedDecl *D,
-                                        bool Recoverable = true);
 
   /// udir_iterator - Iterates through the using-directives stored
   /// within this context.
@@ -1359,6 +1364,15 @@ public:
 
 private:
   void LoadLexicalDeclsFromExternalStorage() const;
+    
+  /// @brief Makes a declaration visible within this context, but 
+  /// suppresses searches for external declarations with the same
+  /// name.
+  ///
+  /// Analogous to makeDeclVisibleInContext, but for the exclusive
+  /// use of addDeclInternal().
+  void makeDeclVisibleInContextInternal(NamedDecl *D,
+                                        bool Recoverable = true);
 
   friend class DependentDiagnostic;
   StoredDeclsMap *CreateStoredDeclsMap(ASTContext &C) const;
