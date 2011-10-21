@@ -250,6 +250,9 @@ unsigned CGDebugInfo::getColumnNumber(SourceLocation Loc) {
 }
 
 StringRef CGDebugInfo::getCurrentDirname() {
+  if (!CGM.getCodeGenOpts().DebugCompilationDir.empty())
+    return CGM.getCodeGenOpts().DebugCompilationDir;
+
   if (!CWDName.empty())
     return CWDName;
   llvm::SmallString<256> CWD;

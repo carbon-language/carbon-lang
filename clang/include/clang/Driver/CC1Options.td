@@ -110,6 +110,8 @@ def disable_llvm_verifier : Flag<"-disable-llvm-verifier">,
   HelpText<"Don't run the LLVM IR verifier pass">;
 def disable_red_zone : Flag<"-disable-red-zone">,
   HelpText<"Do not emit code that uses the red zone.">;
+def fdebug_compilation_dir : Separate<"-fdebug-compilation-dir">,
+  HelpText<"The compilation directory to embed in the debug info.">;
 def dwarf_debug_flags : Separate<"-dwarf-debug-flags">,
   HelpText<"The string to embed in the Dwarf debug flags record.">;
 def fforbid_guard_variables : Flag<"-fforbid-guard-variables">,
