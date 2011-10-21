@@ -2588,9 +2588,13 @@ parseMSRMaskOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   } else // No match for special register.
     return MatchOperand_NoMatch;
 
-  // Special register without flags are equivalent to "fc" flags.
-  if (!FlagsVal)
-    FlagsVal = 0x9;
+  // Special register without flags is NOT equivalent to "fc" flags.
+  // NOTE: This is a divergence from gas' behavior.  Uncommenting the following
+  // two lines would enable gas compatibility at the expense of breaking
+  // round-tripping.
+  //
+  // if (!FlagsVal)
+  //  FlagsVal = 0x9;
 
   // Bit 4: Special Reg (cpsr, apsr => 0; spsr => 1)
   if (SpecReg == "spsr")
