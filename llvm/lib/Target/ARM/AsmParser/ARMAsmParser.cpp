@@ -1979,37 +1979,6 @@ int ARMAsmParser::tryParseRegister() {
 
   Parser.Lex(); // Eat identifier token.
 
-#if 0
-  // Also check for an index operand. This is only legal for vector registers,
-  // but that'll get caught OK in operand matching, so we don't need to
-  // explicitly filter everything else out here.
-  if (Parser.getTok().is(AsmToken::LBrac)) {
-    SMLoc SIdx = Parser.getTok().getLoc();
-    Parser.Lex(); // Eat left bracket token.
-
-    const MCExpr *ImmVal;
-    if (getParser().ParseExpression(ImmVal))
-      return MatchOperand_ParseFail;
-    const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(ImmVal);
-    if (!MCE) {
-      TokError("immediate value expected for vector index");
-      return MatchOperand_ParseFail;
-    }
-
-    SMLoc E = Parser.getTok().getLoc();
-    if (Parser.getTok().isNot(AsmToken::RBrac)) {
-      Error(E, "']' expected");
-      return MatchOperand_ParseFail;
-    }
-
-    Parser.Lex(); // Eat right bracket token.
-
-    Operands.push_back(ARMOperand::CreateVectorIndex(MCE->getValue(),
-                                                     SIdx, E,
-                                                     getContext()));
-  }
-#endif
-
   return RegNum;
 }
 
