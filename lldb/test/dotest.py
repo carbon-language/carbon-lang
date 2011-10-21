@@ -131,6 +131,10 @@ ignore = False
 # By default, we skip long running test case.  Use '-l' option to override.
 skipLongRunningTest = True
 
+# By default, we print the build dir, lldb version, and svn info.  Use '-n' option to
+# turn it off.
+noHeaders = False
+
 # The regular expression pattern to match against eligible filenames as our test cases.
 regexp = None
 
@@ -201,6 +205,7 @@ where options:
        other to bring the debugger to a desired state, so that, for example, further
        benchmarking can be done
 -l   : don't skip long running test
+-n   : don't print the headers like build dir, lldb version, and svn info at all
 -p   : specify a regexp filename pattern for inclusion in the test suite
 -r   : specify a dir to relocate the tests and their intermediate files to;
        the directory must not exist before running this test driver;
@@ -333,6 +338,7 @@ def parseOptionsAndInitTestdirs():
     global ignore
     global runHooks
     global skipLongRunningTest
+    global noHeaders
     global regexp
     global rdir
     global sdir_name
@@ -443,6 +449,9 @@ def parseOptionsAndInitTestdirs():
             index += 1
         elif sys.argv[index].startswith('-l'):
             skipLongRunningTest = False
+            index += 1
+        elif sys.argv[index].startswith('-n'):
+            noHeaders = True
             index += 1
         elif sys.argv[index].startswith('-p'):
             # Increment by 1 to fetch the reg exp pattern argument.
@@ -575,6 +584,7 @@ def setupSysPath():
     global rdir
     global testdirs
     global dumpSysPath
+    global noHeaders
     global svn_info
 
     # Get the directory containing the current script.
@@ -659,7 +669,8 @@ def setupSysPath():
         if not lldbExec:
             lldbExec = lldbHere
         os.environ["LLDB_BUILD_DIR"] = os.path.split(lldbExec)[0]
-        print "LLDB build dir:", os.environ["LLDB_BUILD_DIR"]
+        if not noHeaders:
+            print "LLDB build dir:", os.environ["LLDB_BUILD_DIR"]
 
     # One last chance to locate the 'lldb' executable.
     if not lldbExec:
@@ -673,7 +684,8 @@ def setupSysPath():
     else:
         os.environ["LLDB_EXEC"] = lldbExec
         #print "The 'lldb' executable path is", lldbExec
-        os.system('%s -v' % lldbExec)
+        if not noHeaders:
+            os.system('%s -v' % lldbExec)
     
     if os.path.isdir(os.path.join(base, '.svn')):
         pipe = subprocess.Popen(["svn", "info", base], stdout = subprocess.PIPE)
@@ -681,7 +693,8 @@ def setupSysPath():
     elif os.path.isdir(os.path.join(base, '.git')):
         pipe = subprocess.Popen(["git", "svn", "info", base], stdout = subprocess.PIPE)
         svn_info = pipe.stdout.read()
-    print svn_info
+    if not noHeaders:
+        print svn_info
 
     global ignore
 
@@ -942,9 +955,10 @@ if not sdir_name:
     sdir_name = timestamp
 os.environ["LLDB_SESSION_DIRNAME"] = os.path.join(os.getcwd(), sdir_name)
 
-sys.stderr.write("\nSession logs for test failures/errors/unexpected successes"
-                 " will go into directory '%s'\n" % sdir_name)
-sys.stderr.write("Command invoked: %s\n" % getMyCommandLine())
+if not noHeaders:
+    sys.stderr.write("\nSession logs for test failures/errors/unexpected successes"
+                     " will go into directory '%s'\n" % sdir_name)
+    sys.stderr.write("Command invoked: %s\n" % getMyCommandLine())
 
 if not os.path.isdir(sdir_name):
     os.mkdir(sdir_name)
