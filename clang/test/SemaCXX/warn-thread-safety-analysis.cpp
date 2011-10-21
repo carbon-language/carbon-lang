@@ -749,23 +749,22 @@ Mutex UPmu;
 // FIXME: add support for lock expressions involving arrays.
 Mutex mua[5];
 
-int x __attribute__((guarded_by(UPmu = sls_mu))); // \
-  // expected-warning{{cannot resolve lock expression to a specific lockable object}}
-int y __attribute__((guarded_by(mua[0]))); // \
-  // expected-warning{{cannot resolve lock expression to a specific lockable object}}
+int x __attribute__((guarded_by(UPmu = sls_mu)));
+int y __attribute__((guarded_by(mua[0])));
 
 
 void testUnparse() {
-  // no errors, since the lock expressions are not resolved
-  x = 5;
-  y = 5;
+  x = 5; // \
+    // expected-warning{{cannot resolve lock expression}}
+  y = 5; // \
+    // expected-warning{{cannot resolve lock expression}}
 }
 
 void testUnparse2() {
   mua[0].Lock(); // \
-    // expected-warning{{cannot resolve lock expression to a specific lockable object}}
+    // expected-warning{{cannot resolve lock expression}}
   (&(mua[0]) + 4)->Lock(); // \
-    // expected-warning{{cannot resolve lock expression to a specific lockable object}}
+    // expected-warning{{cannot resolve lock expression}}
 }
 
 
@@ -1476,6 +1475,7 @@ namespace substitution_test {
 } // end namespace substituation_test
 
 
+
 namespace constructor_destructor_tests {
   Mutex fooMu;
   int myVar GUARDED_BY(fooMu);
@@ -1493,4 +1493,22 @@ namespace constructor_destructor_tests {
     myVar = 0;
   }
 }
+
+
+namespace invalid_lock_expression_test {
+
+class LOCKABLE MyLockable {
+public:
+  MyLockable() __attribute__((exclusive_lock_function)) { }
+  ~MyLockable() __attribute__((unlock_function)) { }
+};
+
+// create an empty lock expression
+void foo() {
+  MyLockable lock;  // \
+    // expected-warning {{cannot resolve lock expression}}
+}
+
+} // end namespace invalid_lock_expression_test
+
 

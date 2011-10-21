@@ -164,6 +164,11 @@ class MutexID {
   /// ensure that the original expression is a valid mutex expression.
   void buildMutexID(Expr *Exp, Expr *Parent, int NumArgs,
                     const NamedDecl **FunArgDecls, Expr **FunArgs) {
+    if (!Exp) {
+      DeclSeq.clear();
+      return;
+    }
+
     if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Exp)) {
       if (FunArgDecls) {
         // Substitute call arguments for references to function parameters
@@ -204,6 +209,7 @@ class MutexID {
     Expr **FunArgs = 0;
     SmallVector<const NamedDecl*, 8> FunArgDecls;
 
+    // If we are processing a raw attribute expression, with no substitutions.
     if (DeclExp == 0) {
       buildMutexID(MutexExp, 0, 0, 0, 0);
       return;
@@ -252,6 +258,18 @@ public:
   /// Caller must call this by hand after construction to handle errors.
   bool isValid() const {
     return !DeclSeq.empty();
+  }
+
+  /// Issue a warning about an invalid lock expression
+  static void warnInvalidLock(ThreadSafetyHandler &Handler, Expr* MutexExp,
+                              Expr *DeclExp, const NamedDecl* D) {
+    SourceLocation Loc;
+    if (DeclExp)
+      Loc = DeclExp->getExprLoc();
+
+    // FIXME: add a note about the attribute location in MutexExp or D
+    if (Loc.isValid())
+      Handler.handleInvalidLockExp(Loc);
   }
 
   bool operator==(const MutexID &other) const {
@@ -333,6 +351,8 @@ typedef llvm::ImmutableMap<MutexID, LockData> Lockset;
 /// output error messages related to missing locks.
 /// FIXME: In future, we may be able to not inherit from a visitor.
 class BuildLockset : public StmtVisitor<BuildLockset> {
+  friend class ThreadSafetyAnalyzer;
+
   ThreadSafetyHandler &Handler;
   Lockset LSet;
   Lockset::Factory &LocksetFactory;
@@ -343,6 +363,8 @@ class BuildLockset : public StmtVisitor<BuildLockset> {
 
   template <class AttrType>
   void addLocksToSet(LockKind LK, AttrType *Attr, Expr *Exp, NamedDecl *D);
+  void removeLocksFromSet(UnlockFunctionAttr *Attr,
+                          Expr *Exp, NamedDecl* FunDecl);
 
   const ValueDecl *getValueDecl(Expr *Exp);
   void warnIfMutexNotHeld (const NamedDecl *D, Expr *Exp, AccessKind AK,
@@ -407,7 +429,8 @@ void BuildLockset::addLock(SourceLocation LockLoc, MutexID &Mutex,
   // FIXME: Don't always warn when we have support for reentrant locks.
   if (locksetContains(Mutex))
     Handler.handleDoubleLock(Mutex.getName(), LockLoc);
-  LSet = LocksetFactory.add(LSet, Mutex, NewLock);
+  else
+    LSet = LocksetFactory.add(LSet, Mutex, NewLock);
 }
 
 /// \brief Remove a lock from the lockset, warning if the lock is not there.
@@ -417,8 +440,8 @@ void BuildLockset::removeLock(SourceLocation UnlockLoc, MutexID &Mutex) {
   Lockset NewLSet = LocksetFactory.remove(LSet, Mutex);
   if(NewLSet == LSet)
     Handler.handleUnmatchedUnlock(Mutex.getName(), UnlockLoc);
-
-  LSet = NewLSet;
+  else
+    LSet = NewLSet;
 }
 
 /// \brief This function, parameterized by an attribute type, is used to add a
@@ -432,10 +455,9 @@ void BuildLockset::addLocksToSet(LockKind LK, AttrType *Attr,
 
   if (Attr->args_size() == 0) {
     // The mutex held is the "this" object.
-
     MutexID Mutex(0, Exp, FunDecl);
     if (!Mutex.isValid())
-      Handler.handleInvalidLockExp(Exp->getExprLoc());
+      MutexID::warnInvalidLock(Handler, 0, Exp, FunDecl);
     else
       addLock(ExpLocation, Mutex, LK);
     return;
@@ -444,9 +466,36 @@ void BuildLockset::addLocksToSet(LockKind LK, AttrType *Attr,
   for (iterator_type I=Attr->args_begin(), E=Attr->args_end(); I != E; ++I) {
     MutexID Mutex(*I, Exp, FunDecl);
     if (!Mutex.isValid())
-      Handler.handleInvalidLockExp(Exp->getExprLoc());
+      MutexID::warnInvalidLock(Handler, *I, Exp, FunDecl);
     else
       addLock(ExpLocation, Mutex, LK);
+  }
+}
+
+/// \brief This function removes a set of locks specified as attribute
+/// arguments from the lockset.
+void BuildLockset::removeLocksFromSet(UnlockFunctionAttr *Attr,
+                                      Expr *Exp, NamedDecl* FunDecl) {
+  SourceLocation ExpLocation;
+  if (Exp) ExpLocation = Exp->getExprLoc();
+
+  if (Attr->args_size() == 0) {
+    // The mutex held is the "this" object.
+    MutexID Mu(0, Exp, FunDecl);
+    if (!Mu.isValid())
+      MutexID::warnInvalidLock(Handler, 0, Exp, FunDecl);
+    else
+      removeLock(ExpLocation, Mu);
+    return;
+  }
+
+  for (UnlockFunctionAttr::args_iterator I = Attr->args_begin(),
+       E = Attr->args_end(); I != E; ++I) {
+    MutexID Mutex(*I, Exp, FunDecl);
+    if (!Mutex.isValid())
+      MutexID::warnInvalidLock(Handler, *I, Exp, FunDecl);
+    else
+      removeLock(ExpLocation, Mutex);
   }
 }
 
@@ -470,7 +519,7 @@ void BuildLockset::warnIfMutexNotHeld(const NamedDecl *D, Expr *Exp,
 
   MutexID Mutex(MutexExp, Exp, D);
   if (!Mutex.isValid())
-    Handler.handleInvalidLockExp(MutexExp->getExprLoc());
+    MutexID::warnInvalidLock(Handler, MutexExp, Exp, D);
   else if (!locksetContainsAtLeast(Mutex, LK))
     Handler.handleMutexNotHeld(D, POK, Mutex.getName(), LK, Exp->getExprLoc());
 }
@@ -533,8 +582,6 @@ void BuildLockset::checkAccess(Expr *Exp, AccessKind AK) {
 /// FIXME: Do not flag an error for member variables accessed in constructors/
 /// destructors
 void BuildLockset::handleCall(Expr *Exp, NamedDecl *D) {
-  SourceLocation ExpLocation = Exp->getExprLoc();
-
   AttrVec &ArgAttrs = D->getAttrs();
   for(unsigned i = 0; i < ArgAttrs.size(); ++i) {
     Attr *Attr = ArgAttrs[i];
@@ -559,24 +606,7 @@ void BuildLockset::handleCall(Expr *Exp, NamedDecl *D) {
       // mutexes from the lockset, and flag a warning if they are not there.
       case attr::UnlockFunction: {
         UnlockFunctionAttr *UFAttr = cast<UnlockFunctionAttr>(Attr);
-
-        if (UFAttr->args_size() == 0) { // The lock held is the "this" object.
-          MutexID Mu(0, Exp, D);
-          if (!Mu.isValid())
-            Handler.handleInvalidLockExp(Exp->getExprLoc());
-          else
-            removeLock(ExpLocation, Mu);
-          break;
-        }
-
-        for (UnlockFunctionAttr::args_iterator I = UFAttr->args_begin(),
-             E = UFAttr->args_end(); I != E; ++I) {
-          MutexID Mutex(*I, Exp, D);
-          if (!Mutex.isValid())
-            Handler.handleInvalidLockExp(Exp->getExprLoc());
-          else
-            removeLock(ExpLocation, Mutex);
-        }
+        removeLocksFromSet(UFAttr, Exp, D);
         break;
       }
 
@@ -605,10 +635,10 @@ void BuildLockset::handleCall(Expr *Exp, NamedDecl *D) {
             E = LEAttr->args_end(); I != E; ++I) {
           MutexID Mutex(*I, Exp, D);
           if (!Mutex.isValid())
-            Handler.handleInvalidLockExp((*I)->getExprLoc());
+            MutexID::warnInvalidLock(Handler, *I, Exp, D);
           else if (locksetContains(Mutex))
             Handler.handleFunExcludesLock(D->getName(), Mutex.getName(),
-                                          ExpLocation);
+                                          Exp->getExprLoc());
         }
         break;
       }
@@ -741,7 +771,7 @@ Lockset ThreadSafetyAnalyzer::addLock(Lockset &LSet, Expr *MutexExp,
                                       LockKind LK, SourceLocation Loc) {
   MutexID Mutex(MutexExp, 0, D);
   if (!Mutex.isValid()) {
-    Handler.handleInvalidLockExp(MutexExp->getExprLoc());
+    MutexID::warnInvalidLock(Handler, MutexExp, 0, D);
     return LSet;
   }
   LockData NewLock(Loc, LK);

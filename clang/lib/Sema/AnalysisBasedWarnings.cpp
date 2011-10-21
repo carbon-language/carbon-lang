@@ -648,15 +648,21 @@ struct SortDiagBySourceLocation {
 class ThreadSafetyReporter : public clang::thread_safety::ThreadSafetyHandler {
   Sema &S;
   DiagList Warnings;
+  SourceLocation FunLocation;
 
   // Helper functions
   void warnLockMismatch(unsigned DiagID, Name LockName, SourceLocation Loc) {
+    // Gracefully handle rare cases when the analysis can't get a more
+    // precise source location.
+    if (!Loc.isValid())
+      Loc = FunLocation;
     PartialDiagnostic Warning = S.PDiag(DiagID) << LockName;
     Warnings.push_back(DelayedDiag(Loc, Warning));
   }
 
  public:
-  ThreadSafetyReporter(Sema &S) : S(S) {}
+  ThreadSafetyReporter(Sema &S, SourceLocation FL)
+    : S(S), FunLocation(FL) {}
 
   /// \brief Emit all buffered diagnostics in order of sourcelocation.
   /// We need to output diagnostics produced while iterating through
@@ -913,7 +919,8 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
 
   // Check for thread safety violations
   if (P.enableThreadSafetyAnalysis) {
-    thread_safety::ThreadSafetyReporter Reporter(S);
+    SourceLocation FL = AC.getDecl()->getLocation();
+    thread_safety::ThreadSafetyReporter Reporter(S, FL);
     thread_safety::runThreadSafetyAnalysis(AC, Reporter);
     Reporter.emitDiagnostics();
   }

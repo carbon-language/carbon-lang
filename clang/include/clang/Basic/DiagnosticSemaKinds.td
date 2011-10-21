@@ -1575,7 +1575,7 @@ def warn_fun_excludes_mutex : Warning<
   "cannot call function '%0' while mutex '%1' is locked">,
   InGroup<ThreadSafety>, DefaultIgnore;
 def warn_cannot_resolve_lock : Warning<
-  "cannot resolve lock expression to a specific lockable object">,
+  "cannot resolve lock expression">,
   InGroup<ThreadSafety>, DefaultIgnore;
 
 
