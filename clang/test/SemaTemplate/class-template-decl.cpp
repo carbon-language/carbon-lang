@@ -74,3 +74,4 @@ namespace PR8001 {
     Foo<int>::Bar<int> y(x);
   }
 }
+

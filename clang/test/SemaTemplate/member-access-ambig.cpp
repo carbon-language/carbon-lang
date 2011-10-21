@@ -33,3 +33,13 @@ void X::g()
   // expected-error{{expected '(' for function-style cast}} \
   // expected-error{{expected expression}}
 }
+
+namespace PR11134 {
+  template<typename Derived> class A;
+  template<typename Derived> class B : A<Derived> {
+    typedef A<Derived> Base;
+    using Base::member;
+    int member;
+  };
+}
+
