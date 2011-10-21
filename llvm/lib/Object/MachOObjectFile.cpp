@@ -294,8 +294,10 @@ error_code MachOObjectFile::getSymbolType(DataRefImpl Symb,
   Res = SymbolRef::ST_Other;
 
   // If this is a STAB debugging symbol, we can do nothing more.
-  if (n_type & MachO::NlistMaskStab)
+  if (n_type & MachO::NlistMaskStab) {
+    Res = SymbolRef::ST_Debug;
     return object_error::success;
+  }
 
   switch (n_type & MachO::NlistMaskType) {
     case MachO::NListTypeUndefined :
