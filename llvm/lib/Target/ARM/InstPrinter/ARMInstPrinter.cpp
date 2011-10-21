@@ -250,7 +250,7 @@ void ARMInstPrinter::printSORegRegOperand(const MCInst *MI, unsigned OpNum,
   O << ", " << ARM_AM::getShiftOpcStr(ShOpc);
   if (ShOpc == ARM_AM::rrx)
     return;
-  
+
   O << ' ' << getRegisterName(MO2.getReg());
   assert(ARM_AM::getSORegOffset(MO3.getImm()) == 0);
 }
