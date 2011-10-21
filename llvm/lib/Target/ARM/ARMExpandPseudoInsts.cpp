@@ -144,8 +144,8 @@ static const NEONLdStTableEntry NEONLdStTable[] = {
 
 { ARM::VLD1d64QPseudo,      ARM::VLD1d64Q,     true,  false, SingleSpc,  4, 1 ,true},
 { ARM::VLD1d64QPseudo_UPD,  ARM::VLD1d64Q_UPD, true,  true,  SingleSpc,  4, 1 ,true},
-{ ARM::VLD1d64TPseudo,      ARM::VLD1d64T,     true,  false, SingleSpc,  3, 1 ,true},
-{ ARM::VLD1d64TPseudo_UPD,  ARM::VLD1d64T_UPD, true,  true,  SingleSpc,  3, 1 ,true},
+{ ARM::VLD1d64TPseudo,      ARM::VLD1d64T,     true,  false, SingleSpc,  3, 1 ,false},
+{ ARM::VLD1d64TPseudo_UPD,  ARM::VLD1d64T_UPD, true,  true,  SingleSpc,  3, 1 ,false},
 
 { ARM::VLD1q16Pseudo,       ARM::VLD1q16,      true,  false, SingleSpc,  2, 4 ,false},
 { ARM::VLD1q16Pseudo_UPD,   ARM::VLD1q16_UPD,  true,  true,  SingleSpc,  2, 4 ,false},
