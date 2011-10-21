@@ -1151,6 +1151,10 @@ bool Sema::AttachBaseSpecifiers(CXXRecordDecl *Class, CXXBaseSpecifier **Bases,
       // Okay, add this new base class.
       KnownBaseTypes[NewBaseType] = Bases[idx];
       Bases[NumGoodBases++] = Bases[idx];
+      if (const RecordType *Record = dyn_cast<RecordType>(NewBaseType))
+        if (const CXXRecordDecl *RD = cast<CXXRecordDecl>(Record->getDecl()))
+          if (RD->hasAttr<WeakAttr>())
+            Class->addAttr(::new (Context) WeakAttr(SourceRange(), Context));
     }
   }
 

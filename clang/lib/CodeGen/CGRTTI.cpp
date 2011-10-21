@@ -336,6 +336,8 @@ getTypeInfoLinkage(CodeGenModule &CGM, QualType Ty) {
 
     if (const RecordType *Record = dyn_cast<RecordType>(Ty)) {
       const CXXRecordDecl *RD = cast<CXXRecordDecl>(Record->getDecl());
+      if (RD->hasAttr<WeakAttr>())
+        return llvm::GlobalValue::WeakODRLinkage;
       if (RD->isDynamicClass())
         return CGM.getVTableLinkage(RD);
     }
