@@ -1443,7 +1443,9 @@ unsigned ASTWriter::getOpaqueValueID(OpaqueValueExpr *e) {
 
 /// \brief Write the given substatement or subexpression to the
 /// bitstream.
-void ASTWriter::WriteSubStmt(Stmt *S) {
+void ASTWriter::WriteSubStmt(Stmt *S,
+                             llvm::DenseMap<Stmt *, uint64_t> &SubStmtEntries,
+                             llvm::DenseSet<Stmt *> &ParentStmts) {
   RecordData Record;
   ASTStmtWriter Writer(*this, Record);
   ++NumStatements;
@@ -1452,6 +1454,32 @@ void ASTWriter::WriteSubStmt(Stmt *S) {
     Stream.EmitRecord(serialization::STMT_NULL_PTR, Record);
     return;
   }
+
+  llvm::DenseMap<Stmt *, uint64_t>::iterator I = SubStmtEntries.find(S);
+  if (I != SubStmtEntries.end()) {
+    Record.push_back(I->second);
+    Stream.EmitRecord(serialization::STMT_REF_PTR, Record);
+    return;
+  }
+
+#ifndef NDEBUG
+  assert(!ParentStmts.count(S) && "There is a Stmt cycle!");
+
+  struct ParentStmtInserterRAII {
+    Stmt *S;
+    llvm::DenseSet<Stmt *> &ParentStmts;
+
+    ParentStmtInserterRAII(Stmt *S, llvm::DenseSet<Stmt *> &ParentStmts)
+      : S(S), ParentStmts(ParentStmts) {
+      ParentStmts.insert(S);
+    }
+    ~ParentStmtInserterRAII() {
+      ParentStmts.erase(S);
+    }
+  };
+
+  ParentStmtInserterRAII ParentStmtInserter(S, ParentStmts);
+#endif
 
   // Redirect ASTWriter::AddStmt to collect sub stmts.
   SmallVector<Stmt *, 16> SubStmts;
@@ -1478,9 +1506,11 @@ void ASTWriter::WriteSubStmt(Stmt *S) {
   // This simplifies reading and allows to store a variable number of sub stmts
   // without knowing it in advance.
   while (!SubStmts.empty())
-    WriteSubStmt(SubStmts.pop_back_val());
+    WriteSubStmt(SubStmts.pop_back_val(), SubStmtEntries, ParentStmts);
   
   Stream.EmitRecord(Writer.Code, Record, Writer.AbbrevToUse);
+ 
+  SubStmtEntries[S] = Stream.GetCurrentBitNo();
 }
 
 /// \brief Flush all of the statements that have been added to the
@@ -1488,8 +1518,14 @@ void ASTWriter::WriteSubStmt(Stmt *S) {
 void ASTWriter::FlushStmts() {
   RecordData Record;
 
+  /// \brief Set of parent Stmts for the currently serializing sub stmt.
+  llvm::DenseSet<Stmt *> ParentStmts;
+  /// \brief Offsets of sub stmts already serialized. The offset points
+  /// just after the stmt record.
+  llvm::DenseMap<Stmt *, uint64_t> SubStmtEntries;
+
   for (unsigned I = 0, N = StmtsToEmit.size(); I != N; ++I) {
-    WriteSubStmt(StmtsToEmit[I]);
+    WriteSubStmt(StmtsToEmit[I], SubStmtEntries, ParentStmts);
     
     assert(N == StmtsToEmit.size() &&
            "Substatement written via AddStmt rather than WriteSubStmt!");
@@ -1498,6 +1534,9 @@ void ASTWriter::FlushStmts() {
     // expression records that follow this one are part of a different
     // expression.
     Stream.EmitRecord(serialization::STMT_STOP, Record);
+
+    SubStmtEntries.clear();
+    ParentStmts.clear();
   }
 
   StmtsToEmit.clear();

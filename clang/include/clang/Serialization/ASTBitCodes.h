@@ -875,6 +875,8 @@ namespace clang {
       STMT_STOP = 100,
       /// \brief A NULL expression.
       STMT_NULL_PTR,
+      /// \brief A reference to a previously [de]serialized Stmt record.
+      STMT_REF_PTR,
       /// \brief A NullStmt record.
       STMT_NULL,
       /// \brief A CompoundStmt record.

@@ -24,6 +24,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
 #include <map>
 #include <queue>
@@ -331,7 +332,9 @@ private:
   SmallVector<QueuedCXXBaseSpecifiers, 2> CXXBaseSpecifiersToWrite;
                     
   /// \brief Write the given subexpression to the bitstream.
-  void WriteSubStmt(Stmt *S);
+  void WriteSubStmt(Stmt *S,
+                    llvm::DenseMap<Stmt *, uint64_t> &SubStmtEntries,
+                    llvm::DenseSet<Stmt *> &ParentStmts);
 
   void WriteBlockInfoBlock();
   void WriteMetadata(ASTContext &Context, StringRef isysroot,

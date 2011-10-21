@@ -1444,6 +1444,10 @@ Stmt *ASTReader::ReadStmtFromStream(Module &F) {
 
   ReadingKindTracker ReadingKind(Read_Stmt, *this);
   llvm::BitstreamCursor &Cursor = F.DeclsCursor;
+  
+  // Map of offset to previously deserialized stmt. The offset points
+  /// just after the stmt record.
+  llvm::DenseMap<uint64_t, Stmt *> StmtEntries;
 
 #ifndef NDEBUG
   unsigned PrevNumStmts = StmtStack.size();
@@ -1483,9 +1487,17 @@ Stmt *ASTReader::ReadStmtFromStream(Module &F) {
     Idx = 0;
     Record.clear();
     bool Finished = false;
+    bool IsStmtReference = false;
     switch ((StmtCode)Cursor.ReadRecord(Code, Record)) {
     case STMT_STOP:
       Finished = true;
+      break;
+
+    case STMT_REF_PTR:
+      IsStmtReference = true;
+      assert(StmtEntries.find(Record[0]) != StmtEntries.end() &&
+             "No stmt was recorded for this offset reference!");
+      S = StmtEntries[Record[Idx++]];
       break;
 
     case STMT_NULL_PTR:
@@ -2041,8 +2053,11 @@ Stmt *ASTReader::ReadStmtFromStream(Module &F) {
 
     ++NumStatementsRead;
 
-    if (S)
+    if (S && !IsStmtReference) {
       Reader.Visit(S);
+      StmtEntries[Cursor.GetCurrentBitNo()] = S;
+    }
+
 
     assert(Idx == Record.size() && "Invalid deserialization of statement");
     StmtStack.push_back(S);
