@@ -787,7 +787,17 @@ void DAGTypeLegalizer::SplitVecRes_UnaryOp(SDNode *N, SDValue &Lo,
     break;
   }
   case TargetLowering::TypePromoteInteger: {
-    SDValue InOp = GetPromotedInteger(N->getOperand(0));
+    SDValue InOp;
+    if (N->getOpcode() == ISD::SIGN_EXTEND ||
+        N->getOpcode() == ISD::SINT_TO_FP) {
+      InOp =   SExtPromotedInteger(N->getOperand(0));
+    } else if (
+        N->getOpcode() == ISD::ZERO_EXTEND ||
+        N->getOpcode() == ISD::UINT_TO_FP) {
+      InOp =   ZExtPromotedInteger(N->getOperand(0));
+    } else {
+      InOp = GetPromotedInteger(N->getOperand(0));
+    }
     EVT InNVT = EVT::getVectorVT(*DAG.getContext(),
                                  InOp.getValueType().getVectorElementType(),
                                  LoVT.getVectorNumElements());
@@ -2189,8 +2199,7 @@ SDValue DAGTypeLegalizer::WidenVecOp_SETCC(SDNode *N) {
   SDValue CC = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl,
                            ResVT, WideSETCC, DAG.getIntPtrConstant(0));
 
-  // Convert the result mask to the correct kind.
-  return DAG.getAnyExtOrTrunc(CC, dl, N->getValueType(0));
+  return PromoteTargetBoolean(CC, N->getValueType(0)); 
 }
 
 
