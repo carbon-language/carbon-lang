@@ -41,6 +41,7 @@ using namespace thread_safety;
 ThreadSafetyHandler::~ThreadSafetyHandler() {}
 
 namespace {
+
 /// \brief Implements a set of CFGBlocks using a BitVector.
 ///
 /// This class contains a minimal interface, primarily dictated by the SetType
@@ -83,6 +84,7 @@ public:
   }
 };
 
+
 /// \brief We create a helper class which we use to iterate through CFGBlocks in
 /// the topological order.
 class TopologicallySortedCFG {
@@ -115,6 +117,7 @@ public:
     return begin() == end();
   }
 };
+
 
 /// \brief A MutexID object uniquely identifies a particular mutex, and
 /// is built from an Expr* (i.e. calling a lock function).
@@ -275,6 +278,7 @@ public:
   }
 };
 
+
 /// \brief This is a helper class that stores info about the most recent
 /// accquire of a Lock.
 ///
@@ -302,10 +306,11 @@ struct LockData {
   }
 
   void Profile(llvm::FoldingSetNodeID &ID) const {
-      ID.AddInteger(AcquireLoc.getRawEncoding());
-      ID.AddInteger(LKind);
-    }
+    ID.AddInteger(AcquireLoc.getRawEncoding());
+    ID.AddInteger(LKind);
+  }
 };
+
 
 /// A Lockset maps each MutexID (defined above) to information about how it has
 /// been locked.
@@ -324,25 +329,27 @@ class BuildLockset : public StmtVisitor<BuildLockset> {
   // Helper functions
   void removeLock(SourceLocation UnlockLoc, MutexID &Mutex);
   void addLock(SourceLocation LockLoc, MutexID &Mutex, LockKind LK);
+
+  template <class AttrType>
+  void addLocksToSet(LockKind LK, AttrType *Attr, CXXMemberCallExpr *Exp,
+                     NamedDecl *D);
+
   const ValueDecl *getValueDecl(Expr *Exp);
   void warnIfMutexNotHeld (const NamedDecl *D, Expr *Exp, AccessKind AK,
                            Expr *MutexExp, ProtectedOperationKind POK);
   void checkAccess(Expr *Exp, AccessKind AK);
   void checkDereference(Expr *Exp, AccessKind AK);
 
-  template <class AttrType>
-  void addLocksToSet(LockKind LK, AttrType *Attr, CXXMemberCallExpr *Exp,
-                     NamedDecl* D);
 
   /// \brief Returns true if the lockset contains a lock, regardless of whether
   /// the lock is held exclusively or shared.
-  bool locksetContains(MutexID Lock) const {
+  bool locksetContains(const MutexID &Lock) const {
     return LSet.lookup(Lock);
   }
 
   /// \brief Returns true if the lockset contains a lock with the passed in
   /// locktype.
-  bool locksetContains(MutexID Lock, LockKind KindRequested) const {
+  bool locksetContains(const MutexID &Lock, LockKind KindRequested) const {
     const LockData *LockHeld = LSet.lookup(Lock);
     return (LockHeld && KindRequested == LockHeld->LKind);
   }
@@ -351,7 +358,8 @@ class BuildLockset : public StmtVisitor<BuildLockset> {
   /// passed in locktype. So for example, if we pass in LK_Shared, this function
   /// returns true if the lock is held LK_Shared or LK_Exclusive. If we pass in
   /// LK_Exclusive, this function returns true if the lock is held LK_Exclusive.
-  bool locksetContainsAtLeast(MutexID Lock, LockKind KindRequested) const {
+  bool locksetContainsAtLeast(const MutexID &Lock,
+                              LockKind KindRequested) const {
     switch (KindRequested) {
       case LK_Shared:
         return locksetContains(Lock);
@@ -402,6 +410,36 @@ void BuildLockset::removeLock(SourceLocation UnlockLoc, MutexID &Mutex) {
   LSet = NewLSet;
 }
 
+/// \brief This function, parameterized by an attribute type, is used to add a
+/// set of locks specified as attribute arguments to the lockset.
+template <typename AttrType>
+void BuildLockset::addLocksToSet(LockKind LK, AttrType *Attr,
+                                 CXXMemberCallExpr *Exp,
+                                 NamedDecl* FunDecl) {
+  typedef typename AttrType::args_iterator iterator_type;
+
+  SourceLocation ExpLocation = Exp->getExprLoc();
+
+  if (Attr->args_size() == 0) {
+    // The mutex held is the "this" object.
+
+    MutexID Mutex(0, Exp, FunDecl);
+    if (!Mutex.isValid())
+      Handler.handleInvalidLockExp(Exp->getExprLoc());
+    else
+      addLock(ExpLocation, Mutex, LK);
+    return;
+  }
+
+  for (iterator_type I=Attr->args_begin(), E=Attr->args_end(); I != E; ++I) {
+    MutexID Mutex(*I, Exp, FunDecl);
+    if (!Mutex.isValid())
+      Handler.handleInvalidLockExp(Exp->getExprLoc());
+    else
+      addLock(ExpLocation, Mutex, LK);
+  }
+}
+
 /// \brief Gets the value decl pointer from DeclRefExprs or MemberExprs
 const ValueDecl *BuildLockset::getValueDecl(Expr *Exp) {
   if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(Exp))
@@ -426,7 +464,6 @@ void BuildLockset::warnIfMutexNotHeld(const NamedDecl *D, Expr *Exp,
   else if (!locksetContainsAtLeast(Mutex, LK))
     Handler.handleMutexNotHeld(D, POK, Mutex.getName(), LK, Exp->getExprLoc());
 }
-
 
 /// \brief This method identifies variable dereferences and checks pt_guarded_by
 /// and pt_guarded_var annotations. Note that we only check these annotations
@@ -510,36 +547,6 @@ void BuildLockset::VisitCastExpr(CastExpr *CE) {
   Expr *SubExp = CE->getSubExpr()->IgnoreParenCasts();
   checkAccess(SubExp, AK_Read);
   checkDereference(SubExp, AK_Read);
-}
-
-/// \brief This function, parameterized by an attribute type, is used to add a
-/// set of locks specified as attribute arguments to the lockset.
-template <typename AttrType>
-void BuildLockset::addLocksToSet(LockKind LK, AttrType *Attr,
-                                 CXXMemberCallExpr *Exp,
-                                 NamedDecl* FunDecl) {
-  typedef typename AttrType::args_iterator iterator_type;
-
-  SourceLocation ExpLocation = Exp->getExprLoc();
-
-  if (Attr->args_size() == 0) {
-    // The mutex held is the "this" object.
-
-    MutexID Mutex(0, Exp, FunDecl);
-    if (!Mutex.isValid())
-      Handler.handleInvalidLockExp(Exp->getExprLoc());
-    else
-      addLock(ExpLocation, Mutex, LK);
-    return;
-  }
-
-  for (iterator_type I=Attr->args_begin(), E=Attr->args_end(); I != E; ++I) {
-    MutexID Mutex(*I, Exp, FunDecl);
-    if (!Mutex.isValid())
-      Handler.handleInvalidLockExp(Exp->getExprLoc());
-    else
-      addLock(ExpLocation, Mutex, LK);
-  }
 }
 
 /// \brief When visiting CXXMemberCallExprs we need to examine the attributes on
@@ -647,7 +654,23 @@ void BuildLockset::VisitCXXMemberCallExpr(CXXMemberCallExpr *Exp) {
   }
 }
 
-} // end anonymous namespace
+
+/// \brief Class which implements the core thread safety analysis routines.
+class ThreadSafetyAnalyzer {
+  ThreadSafetyHandler &Handler;
+  Lockset::Factory    LocksetFactory;
+
+public:
+  ThreadSafetyAnalyzer(ThreadSafetyHandler &H) : Handler(H) {}
+
+  Lockset intersectAndWarn(const Lockset LSet1, const Lockset LSet2,
+                           LockErrorKind LEK);
+
+  Lockset addLock(Lockset &LSet, Expr *MutexExp, const NamedDecl *D,
+                  LockKind LK, SourceLocation Loc);
+
+  void runAnalysis(AnalysisContext &AC);
+};
 
 /// \brief Compute the intersection of two locksets and issue warnings for any
 /// locks in the symmetric difference.
@@ -657,9 +680,9 @@ void BuildLockset::VisitCXXMemberCallExpr(CXXMemberCallExpr *Exp) {
 /// A; if () then B; else C; D; we need to check that the lockset after B and C
 /// are the same. In the event of a difference, we use the intersection of these
 /// two locksets at the start of D.
-static Lockset intersectAndWarn(ThreadSafetyHandler &Handler,
-                                const Lockset LSet1, const Lockset LSet2,
-                                Lockset::Factory &Fact, LockErrorKind LEK) {
+Lockset ThreadSafetyAnalyzer::intersectAndWarn(const Lockset LSet1,
+                                               const Lockset LSet2,
+                                               LockErrorKind LEK) {
   Lockset Intersection = LSet1;
   for (Lockset::iterator I = LSet2.begin(), E = LSet2.end(); I != E; ++I) {
     const MutexID &LSet2Mutex = I.getKey();
@@ -670,7 +693,8 @@ static Lockset intersectAndWarn(ThreadSafetyHandler &Handler,
                                          LSet2LockData.AcquireLoc,
                                          LD->AcquireLoc);
         if (LD->LKind != LK_Exclusive)
-          Intersection = Fact.add(Intersection, LSet2Mutex, LSet2LockData);
+          Intersection = LocksetFactory.add(Intersection, LSet2Mutex,
+                                            LSet2LockData);
       }
     } else {
       Handler.handleMutexHeldEndOfScope(LSet2Mutex.getName(),
@@ -684,16 +708,15 @@ static Lockset intersectAndWarn(ThreadSafetyHandler &Handler,
       const LockData &MissingLock = I.getData();
       Handler.handleMutexHeldEndOfScope(Mutex.getName(),
                                         MissingLock.AcquireLoc, LEK);
-      Intersection = Fact.remove(Intersection, Mutex);
+      Intersection = LocksetFactory.remove(Intersection, Mutex);
     }
   }
   return Intersection;
 }
 
-static Lockset addLock(ThreadSafetyHandler &Handler,
-                       Lockset::Factory &LocksetFactory,
-                       Lockset &LSet, Expr *MutexExp, const NamedDecl *D,
-                       LockKind LK, SourceLocation Loc) {
+Lockset ThreadSafetyAnalyzer::addLock(Lockset &LSet, Expr *MutexExp,
+                                      const NamedDecl *D,
+                                      LockKind LK, SourceLocation Loc) {
   MutexID Mutex(MutexExp, 0, D);
   if (!Mutex.isValid()) {
     Handler.handleInvalidLockExp(MutexExp->getExprLoc());
@@ -703,15 +726,12 @@ static Lockset addLock(ThreadSafetyHandler &Handler,
   return LocksetFactory.add(LSet, Mutex, NewLock);
 }
 
-namespace clang {
-namespace thread_safety {
 /// \brief Check a function's CFG for thread-safety violations.
 ///
 /// We traverse the blocks in the CFG, compute the set of mutexes that are held
 /// at the end of each block, and issue warnings for thread safety violations.
 /// Each block in the CFG is traversed exactly once.
-void runThreadSafetyAnalysis(AnalysisContext &AC,
-                             ThreadSafetyHandler &Handler) {
+void ThreadSafetyAnalyzer::runAnalysis(AnalysisContext &AC) {
   CFG *CFGraph = AC.getCFG();
   if (!CFGraph) return;
   const NamedDecl *D = dyn_cast_or_null<NamedDecl>(AC.getDecl());
@@ -721,9 +741,7 @@ void runThreadSafetyAnalysis(AnalysisContext &AC,
   if (D->getAttr<NoThreadSafetyAnalysisAttr>())
     return;
 
-  Lockset::Factory LocksetFactory;
-
-  // FIXME: Swith to SmallVector? Otherwise improve performance impact?
+  // FIXME: Switch to SmallVector? Otherwise improve performance impact?
   std::vector<Lockset> EntryLocksets(CFGraph->getNumBlockIDs(),
                                      LocksetFactory.getEmptyMap());
   std::vector<Lockset> ExitLocksets(CFGraph->getNumBlockIDs(),
@@ -735,6 +753,8 @@ void runThreadSafetyAnalysis(AnalysisContext &AC,
   TopologicallySortedCFG SortedGraph(CFGraph);
   CFGBlockSet VisitedBlocks(CFGraph);
 
+  // Add locks from exclusive_locks_required and shared_locks_required
+  // to initial lockset.
   if (!SortedGraph.empty() && D->hasAttrs()) {
     const CFGBlock *FirstBlock = *SortedGraph.begin();
     Lockset &InitialLockset = EntryLocksets[FirstBlock->getBlockID()];
@@ -747,7 +767,7 @@ void runThreadSafetyAnalysis(AnalysisContext &AC,
         for (SharedLocksRequiredAttr::args_iterator
             SLRIter = SLRAttr->args_begin(),
             SLREnd = SLRAttr->args_end(); SLRIter != SLREnd; ++SLRIter)
-          InitialLockset = addLock(Handler, LocksetFactory, InitialLockset,
+          InitialLockset = addLock(InitialLockset,
                                    *SLRIter, D, LK_Shared,
                                    AttrLoc);
       } else if (ExclusiveLocksRequiredAttr *ELRAttr
@@ -755,7 +775,7 @@ void runThreadSafetyAnalysis(AnalysisContext &AC,
         for (ExclusiveLocksRequiredAttr::args_iterator
             ELRIter = ELRAttr->args_begin(),
             ELREnd = ELRAttr->args_end(); ELRIter != ELREnd; ++ELRIter)
-          InitialLockset = addLock(Handler, LocksetFactory, InitialLockset,
+          InitialLockset = addLock(InitialLockset,
                                    *ELRIter, D, LK_Exclusive,
                                    AttrLoc);
       }
@@ -799,8 +819,7 @@ void runThreadSafetyAnalysis(AnalysisContext &AC,
         Entryset = ExitLocksets[PrevBlockID];
         LocksetInitialized = true;
       } else {
-        Entryset = intersectAndWarn(Handler, Entryset,
-                                    ExitLocksets[PrevBlockID], LocksetFactory,
+        Entryset = intersectAndWarn(Entryset, ExitLocksets[PrevBlockID],
                                     LEK_LockedSomePredecessors);
       }
     }
@@ -827,8 +846,7 @@ void runThreadSafetyAnalysis(AnalysisContext &AC,
       CFGBlock *FirstLoopBlock = *SI;
       Lockset PreLoop = EntryLocksets[FirstLoopBlock->getBlockID()];
       Lockset LoopEnd = ExitLocksets[CurrBlockID];
-      intersectAndWarn(Handler, LoopEnd, PreLoop, LocksetFactory,
-                       LEK_LockedSomeLoopIterations);
+      intersectAndWarn(LoopEnd, PreLoop, LEK_LockedSomeLoopIterations);
     }
   }
 
@@ -836,8 +854,24 @@ void runThreadSafetyAnalysis(AnalysisContext &AC,
   Lockset FinalLockset = ExitLocksets[CFGraph->getExit().getBlockID()];
 
   // FIXME: Should we call this function for all blocks which exit the function?
-  intersectAndWarn(Handler, InitialLockset, FinalLockset, LocksetFactory,
-                   LEK_LockedAtEndOfFunction);
+  intersectAndWarn(InitialLockset, FinalLockset, LEK_LockedAtEndOfFunction);
+}
+
+} // end anonymous namespace
+
+
+namespace clang {
+namespace thread_safety {
+
+/// \brief Check a function's CFG for thread-safety violations.
+///
+/// We traverse the blocks in the CFG, compute the set of mutexes that are held
+/// at the end of each block, and issue warnings for thread safety violations.
+/// Each block in the CFG is traversed exactly once.
+void runThreadSafetyAnalysis(AnalysisContext &AC,
+                             ThreadSafetyHandler &Handler) {
+  ThreadSafetyAnalyzer Analyzer(Handler);
+  Analyzer.runAnalysis(AC);
 }
 
 /// \brief Helper function that returns a LockKind required for the given level
@@ -851,4 +885,5 @@ LockKind getLockKindFromAccessKind(AccessKind AK) {
   }
   llvm_unreachable("Unknown AccessKind");
 }
+
 }} // end namespace clang::thread_safety
