@@ -47,3 +47,36 @@ extern struct foo x;
   // expected-error{{instance variable 'b' accessed in class method}}
 }
 @end
+
+// rdar://10309454
+@interface Radar10309454
+{
+  int IVAR; // expected-note 4 {{previous definition is here}}
+}
+@end
+
+@interface Radar10309454()
+{
+  int IVAR; // expected-error {{instance variable is already declared}}
+  int PIVAR; // expected-note {{previous definition is here}}
+}
+@end
+
+@interface Radar10309454()
+{
+  int IVAR; // expected-error {{instance variable is already declared}}
+}
+@end
+
+@interface Radar10309454()
+{
+  int IVAR; // expected-error {{instance variable is already declared}}
+  int PIVAR; // expected-error {{instance variable is already declared}}
+}
+@end
+
+@implementation Radar10309454
+{
+  int IVAR; // expected-error {{instance variable is already declared}}
+}
+@end
