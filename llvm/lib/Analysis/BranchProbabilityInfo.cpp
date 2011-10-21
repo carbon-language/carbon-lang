@@ -391,15 +391,28 @@ bool BranchProbabilityAnalysis::calcFloatingPointHeuristics(BasicBlock *BB) {
 
   Value *Cond = BI->getCondition();
   FCmpInst *FCmp = dyn_cast<FCmpInst>(Cond);
-  if (!FCmp || !FCmp->isEquality())
+  if (!FCmp)
     return false;
+
+  bool isProb;
+  if (FCmp->isEquality()) {
+    // f1 == f2 -> Unlikely
+    // f1 != f2 -> Likely
+    isProb = !FCmp->isTrueWhenEqual();
+  } else if (FCmp->getPredicate() == FCmpInst::FCMP_ORD) {
+    // !isnan -> Likely
+    isProb = true;
+  } else if (FCmp->getPredicate() == FCmpInst::FCMP_UNO) {
+    // isnan -> Unlikely
+    isProb = false;
+  } else {
+    return false;
+  }
 
   BasicBlock *Taken = BI->getSuccessor(0);
   BasicBlock *NonTaken = BI->getSuccessor(1);
 
-  // f1 == f2 -> Unlikely
-  // f1 != f2 -> Likely
-  if (FCmp->isTrueWhenEqual())
+  if (!isProb)
     std::swap(Taken, NonTaken);
 
   BP->setEdgeWeight(BB, Taken, FPH_TAKEN_WEIGHT);
