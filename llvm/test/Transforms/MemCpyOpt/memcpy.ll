@@ -136,15 +136,15 @@ declare void @llvm.memcpy.p0i8.p0i8.i32(i8* nocapture, i8* nocapture, i32, i32, 
 
 define void @test8() {
 ; CHECK: test8
+; CHECK-NOT: memcpy
   %A = tail call i8* @malloc(i32 10)
   %B = getelementptr inbounds i8* %A, i64 2
   tail call void @llvm.memcpy.p0i8.p0i8.i32(i8* %B, i8* getelementptr inbounds ([7 x i8]* @test8.str, i64 0, i64 0), i32 7, i32 1, i1 false)
-; CHECK: tail call void @llvm.memcpy.p0i8.p0i8.i32(i8* %B, i8* getelementptr
   %C = tail call i8* @malloc(i32 10)
   %D = getelementptr inbounds i8* %C, i64 2
   tail call void @llvm.memcpy.p0i8.p0i8.i32(i8* %D, i8* %B, i32 7, i32 1, i1 false)
-; CHECK: call void @llvm.memcpy.p0i8.p0i8.i32(i8* %D, i8* getelementptr
   ret void
+; CHECK: ret void
 }
 
 declare noalias i8* @malloc(i32)
