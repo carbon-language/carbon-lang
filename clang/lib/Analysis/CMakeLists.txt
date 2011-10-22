@@ -8,6 +8,7 @@ add_clang_library(clangAnalysis
   CocoaConventions.cpp
   FormatString.cpp
   LiveVariables.cpp
+  PostOrderCFGView.cpp
   PrintfFormatString.cpp
   ProgramPoint.cpp
   PseudoConstantAnalysis.cpp

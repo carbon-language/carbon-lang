@@ -1,4 +1,6 @@
 #include "clang/Analysis/Analyses/LiveVariables.h"
+#include "clang/Analysis/Analyses/PostOrderCFGView.h"
+
 #include "clang/AST/Stmt.h"
 #include "clang/Analysis/CFG.h"
 #include "clang/Analysis/AnalysisContext.h"
@@ -15,113 +17,14 @@ using namespace clang;
 
 namespace {
 
-// FIXME: This is copy-pasted from ThreadSafety.c.  I wanted a patch that
-// contained working code before refactoring the implementation of both
-// files.
-class CFGBlockSet {
-  llvm::BitVector VisitedBlockIDs;
-  
-public:
-  // po_iterator requires this iterator, but the only interface needed is the
-  // value_type typedef.
-  struct iterator {
-    typedef const CFGBlock *value_type;
-  };
-  
-  CFGBlockSet() {}
-  CFGBlockSet(const CFG *G) : VisitedBlockIDs(G->getNumBlockIDs(), false) {}
-  
-  /// \brief Set the bit associated with a particular CFGBlock.
-  /// This is the important method for the SetType template parameter.
-  bool insert(const CFGBlock *Block) {
-    // Note that insert() is called by po_iterator, which doesn't check to make
-    // sure that Block is non-null.  Moreover, the CFGBlock iterator will
-    // occasionally hand out null pointers for pruned edges, so we catch those
-    // here.
-    if (Block == 0)
-      return false;  // if an edge is trivially false.
-    if (VisitedBlockIDs.test(Block->getBlockID()))
-      return false;
-    VisitedBlockIDs.set(Block->getBlockID());
-    return true;
-  }
-  
-  /// \brief Check if the bit for a CFGBlock has been already set.
-  /// This method is for tracking visited blocks in the main threadsafety loop.
-  /// Block must not be null.
-  bool alreadySet(const CFGBlock *Block) {
-    return VisitedBlockIDs.test(Block->getBlockID());
-  }
-};
-
-/// \brief We create a helper class which we use to iterate through CFGBlocks in
-/// the topological order.
-class TopologicallySortedCFG {
-  typedef llvm::po_iterator<const CFG*, CFGBlockSet, true>  po_iterator;
-  
-  std::vector<const CFGBlock*> Blocks;
-  
-  typedef llvm::DenseMap<const CFGBlock *, unsigned> BlockOrderTy;
-  BlockOrderTy BlockOrder;
-  
-  
-public:
-  typedef std::vector<const CFGBlock*>::reverse_iterator iterator;
-  
-  TopologicallySortedCFG(const CFG *CFGraph) {
-    Blocks.reserve(CFGraph->getNumBlockIDs());
-    CFGBlockSet BSet(CFGraph);
-    
-    for (po_iterator I = po_iterator::begin(CFGraph, BSet),
-         E = po_iterator::end(CFGraph, BSet); I != E; ++I) {
-      BlockOrder[*I] = Blocks.size() + 1;
-      Blocks.push_back(*I);      
-    }
-  }
-  
-  iterator begin() {
-    return Blocks.rbegin();
-  }
-  
-  iterator end() {
-    return Blocks.rend();
-  }
-  
-  bool empty() {
-    return begin() == end();
-  }
-  
-  struct BlockOrderCompare;
-  friend struct BlockOrderCompare;
-
-  struct BlockOrderCompare {
-    const TopologicallySortedCFG &TSC;
-  public:
-    BlockOrderCompare(const TopologicallySortedCFG &tsc) : TSC(tsc) {}
-    
-    bool operator()(const CFGBlock *b1, const CFGBlock *b2) const {
-      TopologicallySortedCFG::BlockOrderTy::const_iterator b1It = TSC.BlockOrder.find(b1);
-      TopologicallySortedCFG::BlockOrderTy::const_iterator b2It = TSC.BlockOrder.find(b2);
-      
-      unsigned b1V = (b1It == TSC.BlockOrder.end()) ? 0 : b1It->second;
-      unsigned b2V = (b2It == TSC.BlockOrder.end()) ? 0 : b2It->second;
-      return b1V > b2V;
-    }  
-  };
-  
-  BlockOrderCompare getComparator() const {
-    return BlockOrderCompare(*this);
-  }
-};
-
 class DataflowWorklist {
   SmallVector<const CFGBlock *, 20> worklist;
   llvm::BitVector enqueuedBlocks;
-  TopologicallySortedCFG TSC;
+  PostOrderCFGView *POV;
 public:
-  DataflowWorklist(const CFG &cfg)
+  DataflowWorklist(const CFG &cfg, AnalysisContext &Ctx)
     : enqueuedBlocks(cfg.getNumBlockIDs()),
-      TSC(&cfg) {}
+      POV(Ctx.getAnalysis<PostOrderCFGView>()) {}
   
   void enqueueBlock(const CFGBlock *block);
   void enqueueSuccessors(const CFGBlock *block);
@@ -168,9 +71,8 @@ void DataflowWorklist::enqueuePredecessors(const clang::CFGBlock *block) {
 }
 
 void DataflowWorklist::sortWorklist() {
-  std::sort(worklist.begin(), worklist.end(), TSC.getComparator());
+  std::sort(worklist.begin(), worklist.end(), POV->getComparator());
 }
-
 
 const CFGBlock *DataflowWorklist::dequeue() {
   if (worklist.empty())
@@ -557,7 +459,7 @@ LiveVariables::computeLiveness(AnalysisContext &AC,
 
   // Construct the dataflow worklist.  Enqueue the exit block as the
   // start of the analysis.
-  DataflowWorklist worklist(*cfg);
+  DataflowWorklist worklist(*cfg, AC);
   llvm::BitVector everAnalyzedBlock(cfg->getNumBlockIDs());
 
   // FIXME: we should enqueue using post order.
