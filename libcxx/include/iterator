@@ -626,11 +626,11 @@ public:
     typedef _Container container_type;
 
     _LIBCPP_INLINE_VISIBILITY explicit back_insert_iterator(_Container& __x) : container(&__x) {}
-    _LIBCPP_INLINE_VISIBILITY back_insert_iterator& operator=(const typename _Container::value_type& __value)
-        {container->push_back(__value); return *this;}
+    _LIBCPP_INLINE_VISIBILITY back_insert_iterator& operator=(const typename _Container::value_type& __value_)
+        {container->push_back(__value_); return *this;}
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    _LIBCPP_INLINE_VISIBILITY back_insert_iterator& operator=(typename _Container::value_type&& __value)
-        {container->push_back(_VSTD::move(__value)); return *this;}
+    _LIBCPP_INLINE_VISIBILITY back_insert_iterator& operator=(typename _Container::value_type&& __value_)
+        {container->push_back(_VSTD::move(__value_)); return *this;}
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY back_insert_iterator& operator*()     {return *this;}
     _LIBCPP_INLINE_VISIBILITY back_insert_iterator& operator++()    {return *this;}
@@ -659,11 +659,11 @@ public:
     typedef _Container container_type;
 
     _LIBCPP_INLINE_VISIBILITY explicit front_insert_iterator(_Container& __x) : container(&__x) {}
-    _LIBCPP_INLINE_VISIBILITY front_insert_iterator& operator=(const typename _Container::value_type& __value)
-        {container->push_front(__value); return *this;}
+    _LIBCPP_INLINE_VISIBILITY front_insert_iterator& operator=(const typename _Container::value_type& __value_)
+        {container->push_front(__value_); return *this;}
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    _LIBCPP_INLINE_VISIBILITY front_insert_iterator& operator=(typename _Container::value_type&& __value)
-        {container->push_front(_VSTD::move(__value)); return *this;}
+    _LIBCPP_INLINE_VISIBILITY front_insert_iterator& operator=(typename _Container::value_type&& __value_)
+        {container->push_front(_VSTD::move(__value_)); return *this;}
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY front_insert_iterator& operator*()     {return *this;}
     _LIBCPP_INLINE_VISIBILITY front_insert_iterator& operator++()    {return *this;}
@@ -694,11 +694,11 @@ public:
 
     _LIBCPP_INLINE_VISIBILITY insert_iterator(_Container& __x, typename _Container::iterator __i)
         : container(&__x), iter(__i) {}
-    _LIBCPP_INLINE_VISIBILITY insert_iterator& operator=(const typename _Container::value_type& __value)
-        {iter = container->insert(iter, __value); ++iter; return *this;}
+    _LIBCPP_INLINE_VISIBILITY insert_iterator& operator=(const typename _Container::value_type& __value_)
+        {iter = container->insert(iter, __value_); ++iter; return *this;}
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    _LIBCPP_INLINE_VISIBILITY insert_iterator& operator=(typename _Container::value_type&& __value)
-        {iter = container->insert(iter, _VSTD::move(__value)); ++iter; return *this;}
+    _LIBCPP_INLINE_VISIBILITY insert_iterator& operator=(typename _Container::value_type&& __value_)
+        {iter = container->insert(iter, _VSTD::move(__value_)); ++iter; return *this;}
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY insert_iterator& operator*()        {return *this;}
     _LIBCPP_INLINE_VISIBILITY insert_iterator& operator++()       {return *this;}
@@ -769,9 +769,9 @@ public:
         : __out_stream_(&__s), __delim_(0) {}
     _LIBCPP_INLINE_VISIBILITY ostream_iterator(ostream_type& __s, const _CharT* __delimiter)
         : __out_stream_(&__s), __delim_(__delimiter) {}
-    _LIBCPP_INLINE_VISIBILITY ostream_iterator& operator=(const _Tp& __value)
+    _LIBCPP_INLINE_VISIBILITY ostream_iterator& operator=(const _Tp& __value_)
         {
-            *__out_stream_ << __value;
+            *__out_stream_ << __value_;
             if (__delim_)
                 *__out_stream_ << __delim_;
             return *this;

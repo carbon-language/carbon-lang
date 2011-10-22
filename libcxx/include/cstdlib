@@ -81,6 +81,9 @@ size_t wcstombs(char* restrict s, const wchar_t* restrict pwcs, size_t n);
 
 #include <__config>
 #include <stdlib.h>
+#ifdef _MSC_VER
+#include "support/win32/support.h"
+#endif // _MSC_VER
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
@@ -129,11 +132,13 @@ using ::wctomb;
 using ::mbstowcs;
 using ::wcstombs;
 
+#ifndef _MSC_VER // MSVC already has the correct prototype in <stdlib.h.h> #ifdef __cplusplus
 inline _LIBCPP_INLINE_VISIBILITY long      abs(     long __x) {return  labs(__x);}
 inline _LIBCPP_INLINE_VISIBILITY long long abs(long long __x) {return llabs(__x);}
 
 inline _LIBCPP_INLINE_VISIBILITY  ldiv_t div(     long __x,      long __y) {return  ldiv(__x, __y);}
 inline _LIBCPP_INLINE_VISIBILITY lldiv_t div(long long __x, long long __y) {return lldiv(__x, __y);}
+#endif // _MSC_VER
 
 _LIBCPP_END_NAMESPACE_STD
 

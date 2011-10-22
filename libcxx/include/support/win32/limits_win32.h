@@ -15,6 +15,11 @@
 #error "This header is MSVC specific, Clang and GCC should not include it"
 #else
 
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h> // ymath.h works correctly
+
 #include <float.h> // limit constants
 
 #define __FLT_MANT_DIG__   FLT_MANT_DIG
@@ -57,16 +62,17 @@
 #define __LDBL_DENORM_MIN__ 3.64519953188247460253e-4951L
 
 // __builtin replacements/workarounds
+#include <math.h> // HUGE_VAL
 #include <ymath.h> // internal MSVC header providing the needed functionality
-#define __builtin_huge_val()  HUGE_VAL
-#define __builtin_huge_valf() _FInf
-#define __builtin_huge_vall() _LInf
-#define __builtin_nan()       _Nan
-#define __builtin_nanf()      _FNan
-#define __builtin_nanl()      _LNan
-#define __builtin_nans()      _Snan
-#define __builtin_nansf()     _FSnan
-#define __builtin_nansl()     _LSnan
+#define __builtin_huge_val()     HUGE_VAL
+#define __builtin_huge_valf()    _FInf._Float
+#define __builtin_huge_vall()    _LInf._Long_double
+#define __builtin_nan(__dummy)   _Nan._Double
+#define __builtin_nanf(__dummy)  _FNan._Float
+#define __builtin_nanl(__dummmy) _LNan._Long_double
+#define __builtin_nans(__dummy)  _Snan._Double
+#define __builtin_nansf(__dummy) _FSnan._Float
+#define __builtin_nansl(__dummy) _LSnan._Long_double
 
 #endif // _MSC_VER
 

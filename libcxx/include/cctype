@@ -37,6 +37,9 @@ int toupper(int c);
 
 #include <__config>
 #include <ctype.h>
+#if defined(_MSC_VER)
+#include "support/win32/support.h"
+#endif // _MSC_VER
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header

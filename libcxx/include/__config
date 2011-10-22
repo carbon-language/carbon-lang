@@ -321,6 +321,8 @@ using namespace _LIBCPP_NAMESPACE __attribute__((__strong__));
 
 #elif defined(_MSC_VER)
 
+#define _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#define _LIBCPP_HAS_NO_TEMPLATE_ALIASES
 #define _LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER
 #define _LIBCPP_HAS_NO_CONSTEXPR
 #define _LIBCPP_HAS_NO_UNICODE_CHARS

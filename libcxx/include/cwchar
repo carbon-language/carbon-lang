@@ -124,13 +124,15 @@ using ::FILE;
 using ::fwprintf;
 using ::fwscanf;
 using ::swprintf;
-using ::swscanf;
 using ::vfwprintf;
-using ::vfwscanf;
 using ::vswprintf;
-using ::vswscanf;
 using ::vwprintf;
+#ifndef _MSC_VER
+using ::swscanf;
+using ::vfwscanf;
+using ::vswscanf;
 using ::vwscanf;
+#endif // _MSC_VER
 using ::wprintf;
 using ::wscanf;
 using ::fgetwc;
@@ -144,8 +146,10 @@ using ::putwc;
 using ::putwchar;
 using ::ungetwc;
 using ::wcstod;
+#ifndef _MSC_VER
 using ::wcstof;
 using ::wcstold;
+#endif // _MSC_VER
 using ::wcstol;
 using ::wcstoll;
 using ::wcstoul;

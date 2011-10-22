@@ -15,7 +15,7 @@
 #include <stdio.h>  // vsprintf, vsnprintf
 #include <string.h> // strcpy, wcsncpy
 
-int asprintf(char **sptr, const char *__restrict__ fmt, ...)
+int asprintf(char **sptr, const char *__restrict fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
@@ -23,7 +23,7 @@ int asprintf(char **sptr, const char *__restrict__ fmt, ...)
     va_end(ap);
     return result;
 }
-int vasprintf( char **sptr, const char *__restrict__ fmt, va_list ap )
+int vasprintf( char **sptr, const char *__restrict fmt, va_list ap )
 {
     *sptr = NULL;
     int count = vsnprintf( *sptr, 0, fmt, ap );
@@ -38,8 +38,8 @@ int vasprintf( char **sptr, const char *__restrict__ fmt, va_list ap )
 
 // FIXME: use wcrtomb and avoid copy
 // use mbsrtowcs which is available, first copy first nwc elements of src
-size_t mbsnrtowcs( wchar_t *__restrict__ dst, const char **__restrict__ src,
-                   size_t nmc, size_t len, mbstate_t *__restrict__ ps )
+size_t mbsnrtowcs( wchar_t *__restrict dst, const char **__restrict src,
+                   size_t nmc, size_t len, mbstate_t *__restrict ps )
 {
     char* local_src = new char[nmc+1];
     char* nmcsrc = local_src;
@@ -54,8 +54,8 @@ size_t mbsnrtowcs( wchar_t *__restrict__ dst, const char **__restrict__ src,
 }
 // FIXME: use wcrtomb and avoid copy
 // use wcsrtombs which is available, first copy first nwc elements of src
-size_t wcsnrtombs( char *__restrict__ dst, const wchar_t **__restrict__ src,
-                   size_t nwc, size_t len, mbstate_t *__restrict__ ps )
+size_t wcsnrtombs( char *__restrict dst, const wchar_t **__restrict src,
+                   size_t nwc, size_t len, mbstate_t *__restrict ps )
 {
     wchar_t* local_src = new wchar_t[nwc];
     wchar_t* nwcsrc = local_src;
