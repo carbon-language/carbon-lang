@@ -790,23 +790,32 @@ bool PointerExprEvaluator::VisitCallExpr(const CallExpr *E) {
 
 namespace {
   class VectorExprEvaluator
-  : public ExprEvaluatorBase<VectorExprEvaluator, APValue> {
-    APValue GetZeroVector(QualType VecType);
+  : public ExprEvaluatorBase<VectorExprEvaluator, bool> {
+    APValue &Result;
   public:
 
-    VectorExprEvaluator(EvalInfo &info) : ExprEvaluatorBaseTy(info) {}
+    VectorExprEvaluator(EvalInfo &info, APValue &Result)
+      : ExprEvaluatorBaseTy(info), Result(Result) {}
 
-    APValue Success(const APValue &V, const Expr *E) { return V; }
-    APValue Error(const Expr *E) { return APValue(); }
-    APValue ValueInitialization(const Expr *E)
-      { return GetZeroVector(E->getType()); }
+    bool Success(const ArrayRef<APValue> &V, const Expr *E) {
+      assert(V.size() == E->getType()->castAs<VectorType>()->getNumElements());
+      // FIXME: remove this APValue copy.
+      Result = APValue(V.data(), V.size());
+      return true;
+    }
+    bool Success(const APValue &V, const Expr *E) {
+      Result = V;
+      return true;
+    }
+    bool Error(const Expr *E) { return false; }
+    bool ValueInitialization(const Expr *E);
 
-    APValue VisitUnaryReal(const UnaryOperator *E)
+    bool VisitUnaryReal(const UnaryOperator *E)
       { return Visit(E->getSubExpr()); }
-    APValue VisitCastExpr(const CastExpr* E);
-    APValue VisitCompoundLiteralExpr(const CompoundLiteralExpr *E);
-    APValue VisitInitListExpr(const InitListExpr *E);
-    APValue VisitUnaryImag(const UnaryOperator *E);
+    bool VisitCastExpr(const CastExpr* E);
+    bool VisitCompoundLiteralExpr(const CompoundLiteralExpr *E);
+    bool VisitInitListExpr(const InitListExpr *E);
+    bool VisitUnaryImag(const UnaryOperator *E);
     // FIXME: Missing: unary -, unary ~, binary add/sub/mul/div,
     //                 binary comparisons, binary and/or/xor,
     //                 shufflevector, ExtVectorElementExpr
@@ -818,12 +827,11 @@ namespace {
 static bool EvaluateVector(const Expr* E, APValue& Result, EvalInfo &Info) {
   if (!E->getType()->isVectorType())
     return false;
-  Result = VectorExprEvaluator(Info).Visit(E);
-  return !Result.isUninit();
+  return VectorExprEvaluator(Info, Result).Visit(E);
 }
 
-APValue VectorExprEvaluator::VisitCastExpr(const CastExpr* E) {
-  const VectorType *VTy = E->getType()->getAs<VectorType>();
+bool VectorExprEvaluator::VisitCastExpr(const CastExpr* E) {
+  const VectorType *VTy = E->getType()->castAs<VectorType>();
   QualType EltTy = VTy->getElementType();
   unsigned NElts = VTy->getNumElements();
   unsigned EltWidth = Info.Ctx.getTypeSize(EltTy);
@@ -833,35 +841,36 @@ APValue VectorExprEvaluator::VisitCastExpr(const CastExpr* E) {
 
   switch (E->getCastKind()) {
   case CK_VectorSplat: {
-    APValue Result = APValue();
+    APValue Val = APValue();
     if (SETy->isIntegerType()) {
       APSInt IntResult;
       if (!EvaluateInteger(SE, IntResult, Info))
-         return APValue();
-      Result = APValue(IntResult);
+         return Error(E);
+      Val = APValue(IntResult);
     } else if (SETy->isRealFloatingType()) {
        APFloat F(0.0);
        if (!EvaluateFloat(SE, F, Info))
-         return APValue();
-       Result = APValue(F);
+         return Error(E);
+       Val = APValue(F);
     } else {
-      return APValue();
+      return Error(E);
     }
 
     // Splat and create vector APValue.
-    SmallVector<APValue, 4> Elts(NElts, Result);
-    return APValue(&Elts[0], Elts.size());
+    SmallVector<APValue, 4> Elts(NElts, Val);
+    return Success(Elts, E);
   }
   case CK_BitCast: {
+    // FIXME: this is wrong for any cast other than a no-op cast.
     if (SETy->isVectorType())
       return Visit(SE);
 
     if (!SETy->isIntegerType())
-      return APValue();
+      return Error(E);
 
     APSInt Init;
     if (!EvaluateInteger(SE, Init, Info))
-      return APValue();
+      return Error(E);
 
     assert((EltTy->isIntegerType() || EltTy->isRealFloatingType()) &&
            "Vectors must be composed of ints or floats");
@@ -877,24 +886,24 @@ APValue VectorExprEvaluator::VisitCastExpr(const CastExpr* E) {
 
       Init >>= EltWidth;
     }
-    return APValue(&Elts[0], Elts.size());
+    return Success(Elts, E);
   }
   case CK_LValueToRValue:
   case CK_NoOp:
     return Visit(SE);
   default:
-    return APValue();
+    return Error(E);
   }
 }
 
-APValue
+bool
 VectorExprEvaluator::VisitCompoundLiteralExpr(const CompoundLiteralExpr *E) {
-  return this->Visit(E->getInitializer());
+  return Visit(E->getInitializer());
 }
 
-APValue
+bool
 VectorExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
-  const VectorType *VT = E->getType()->getAs<VectorType>();
+  const VectorType *VT = E->getType()->castAs<VectorType>();
   unsigned NumInits = E->getNumInits();
   unsigned NumElements = VT->getNumElements();
 
@@ -905,22 +914,22 @@ VectorExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
   // becomes every element of the vector, not just the first.
   // This is the behavior described in the IBM AltiVec documentation.
   if (NumInits == 1) {
-    
-    // Handle the case where the vector is initialized by a another 
+
+    // Handle the case where the vector is initialized by another
     // vector (OpenCL 6.1.6).
     if (E->getInit(0)->getType()->isVectorType())
-      return this->Visit(const_cast<Expr*>(E->getInit(0)));
-    
+      return Visit(E->getInit(0));
+
     APValue InitValue;
     if (EltTy->isIntegerType()) {
       llvm::APSInt sInt(32);
       if (!EvaluateInteger(E->getInit(0), sInt, Info))
-        return APValue();
+        return Error(E);
       InitValue = APValue(sInt);
     } else {
       llvm::APFloat f(0.0);
       if (!EvaluateFloat(E->getInit(0), f, Info))
-        return APValue();
+        return Error(E);
       InitValue = APValue(f);
     }
     for (unsigned i = 0; i < NumElements; i++) {
@@ -932,7 +941,7 @@ VectorExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
         llvm::APSInt sInt(32);
         if (i < NumInits) {
           if (!EvaluateInteger(E->getInit(i), sInt, Info))
-            return APValue();
+            return Error(E);
         } else {
           sInt = Info.Ctx.MakeIntValue(0, EltTy);
         }
@@ -941,7 +950,7 @@ VectorExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
         llvm::APFloat f(0.0);
         if (i < NumInits) {
           if (!EvaluateFloat(E->getInit(i), f, Info))
-            return APValue();
+            return Error(E);
         } else {
           f = APFloat::getZero(Info.Ctx.getFloatTypeSemantics(EltTy));
         }
@@ -949,12 +958,12 @@ VectorExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
       }
     }
   }
-  return APValue(&Elements[0], Elements.size());
+  return Success(Elements, E);
 }
 
-APValue
-VectorExprEvaluator::GetZeroVector(QualType T) {
-  const VectorType *VT = T->getAs<VectorType>();
+bool
+VectorExprEvaluator::ValueInitialization(const Expr *E) {
+  const VectorType *VT = E->getType()->getAs<VectorType>();
   QualType EltTy = VT->getElementType();
   APValue ZeroElement;
   if (EltTy->isIntegerType())
@@ -964,14 +973,14 @@ VectorExprEvaluator::GetZeroVector(QualType T) {
         APValue(APFloat::getZero(Info.Ctx.getFloatTypeSemantics(EltTy)));
 
   SmallVector<APValue, 4> Elements(VT->getNumElements(), ZeroElement);
-  return APValue(&Elements[0], Elements.size());
+  return Success(Elements, E);
 }
 
-APValue VectorExprEvaluator::VisitUnaryImag(const UnaryOperator *E) {
+bool VectorExprEvaluator::VisitUnaryImag(const UnaryOperator *E) {
   APValue Scratch;
   if (!Evaluate(Scratch, Info, E->getSubExpr()))
     Info.EvalStatus.HasSideEffects = true;
-  return GetZeroVector(E->getType());
+  return ValueInitialization(E);
 }
 
 //===----------------------------------------------------------------------===//
