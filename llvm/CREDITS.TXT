@@ -367,6 +367,10 @@ N: Xerxes Ranby
 E: xerxes@zafena.se
 D: Cmake dependency chain and various bug fixes
 
+N: Nadav Rotem
+E: nadav.rotem@intel.com
+D: Vector code generation improvments.
+
 N: Bill Wendling
 E: wendling@apple.com
 D: Bunches of stuff
