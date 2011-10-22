@@ -366,7 +366,7 @@ CodeGenFunction::ExpandTypeFromArgs(QualType Ty, LValue LV,
     QualType EltTy = CT->getElementType();
     llvm::Value *RealAddr = Builder.CreateStructGEP(Addr, 0, "real");
     EmitStoreThroughLValue(RValue::get(AI++), MakeAddrLValue(RealAddr, EltTy));
-    llvm::Value *ImagAddr = Builder.CreateStructGEP(Addr, 0, "imag");
+    llvm::Value *ImagAddr = Builder.CreateStructGEP(Addr, 1, "imag");
     EmitStoreThroughLValue(RValue::get(AI++), MakeAddrLValue(ImagAddr, EltTy));
   } else {
     EmitStoreThroughLValue(RValue::get(AI), LV);
