@@ -55,3 +55,10 @@ void test5() {
   // don't warn about it just because it's a bitfield.
   a.b = 100;
 }
+
+void test6() {
+  // Test that unreachable code doesn't trigger the truncation warning.
+  unsigned char x = 0 ? 65535 : 1; // no-warning
+  unsigned char y = 1 ? 65535 : 1; // expected-warning {{changes value}}
+}
+
