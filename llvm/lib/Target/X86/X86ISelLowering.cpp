@@ -10146,9 +10146,6 @@ SDValue X86TargetLowering::LowerSIGN_EXTEND_INREG(SDValue Op, SelectionDAG &DAG)
                          DAG.getConstant(SHLIntrinsicsID, MVT::i32),
                          Node->getOperand(0), ShAmt);
 
-    // In case of 1 bit sext, no need to shr
-    if (ExtraVT.getScalarType().getSizeInBits() == 1) return Tmp1;
-
     return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
                        DAG.getConstant(SRAIntrinsicsID, MVT::i32),
                        Tmp1, ShAmt);
