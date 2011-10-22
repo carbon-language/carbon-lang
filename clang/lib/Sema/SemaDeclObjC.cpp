@@ -2321,10 +2321,14 @@ static inline
 bool containsInvalidMethodImplAttribute(ObjCMethodDecl *IMD,
                                         const AttrVec &A) {
   // If method is only declared in implementation (private method),
-  // or method declared in interface has no attribute. 
   // No need to issue any diagnostics on method definition with attributes.
-  if (!IMD || !IMD->hasAttrs())
+  if (!IMD)
     return false;
+
+  // method declared in interface has no attribute. 
+  // But implementation has attributes. This is invalid
+  if (!IMD->hasAttrs())
+    return true;
 
   const AttrVec &D = IMD->getAttrs();
   if (D.size() != A.size())
