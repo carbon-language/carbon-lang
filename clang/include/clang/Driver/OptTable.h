@@ -49,8 +49,8 @@ namespace options {
       const char *HelpText;
       const char *MetaVar;
       unsigned char Kind;
-      unsigned short Flags;
       unsigned char Param;
+      unsigned short Flags;
       unsigned short GroupID;
       unsigned short AliasID;
     };
