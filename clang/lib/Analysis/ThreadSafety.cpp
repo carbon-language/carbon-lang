@@ -16,6 +16,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Analysis/Analyses/ThreadSafety.h"
+#include "clang/Analysis/Analyses/PostOrderCFGView.h"
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/Analysis/CFG.h"
 #include "clang/Analysis/CFGStmtMap.h"
@@ -41,83 +42,6 @@ using namespace thread_safety;
 ThreadSafetyHandler::~ThreadSafetyHandler() {}
 
 namespace {
-
-/// \brief Implements a set of CFGBlocks using a BitVector.
-///
-/// This class contains a minimal interface, primarily dictated by the SetType
-/// template parameter of the llvm::po_iterator template, as used with external
-/// storage. We also use this set to keep track of which CFGBlocks we visit
-/// during the analysis.
-class CFGBlockSet {
-  llvm::BitVector VisitedBlockIDs;
-
-public:
-  // po_iterator requires this iterator, but the only interface needed is the
-  // value_type typedef.
-  struct iterator {
-    typedef const CFGBlock *value_type;
-  };
-
-  CFGBlockSet() {}
-  CFGBlockSet(const CFG *G) : VisitedBlockIDs(G->getNumBlockIDs(), false) {}
-
-  /// \brief Set the bit associated with a particular CFGBlock.
-  /// This is the important method for the SetType template parameter.
-  bool insert(const CFGBlock *Block) {
-    // Note that insert() is called by po_iterator, which doesn't check to make
-    // sure that Block is non-null.  Moreover, the CFGBlock iterator will
-    // occasionally hand out null pointers for pruned edges, so we catch those
-    // here.
-    if (Block == 0)
-      return false;  // if an edge is trivially false.
-    if (VisitedBlockIDs.test(Block->getBlockID()))
-      return false;
-    VisitedBlockIDs.set(Block->getBlockID());
-    return true;
-  }
-
-  /// \brief Check if the bit for a CFGBlock has been already set.
-  /// This method is for tracking visited blocks in the main threadsafety loop.
-  /// Block must not be null.
-  bool alreadySet(const CFGBlock *Block) {
-    return VisitedBlockIDs.test(Block->getBlockID());
-  }
-};
-
-
-/// \brief We create a helper class which we use to iterate through CFGBlocks in
-/// the topological order.
-class TopologicallySortedCFG {
-  typedef llvm::po_iterator<const CFG*, CFGBlockSet, true>  po_iterator;
-
-  std::vector<const CFGBlock*> Blocks;
-
-public:
-  typedef std::vector<const CFGBlock*>::reverse_iterator iterator;
-
-  TopologicallySortedCFG(const CFG *CFGraph) {
-    Blocks.reserve(CFGraph->getNumBlockIDs());
-    CFGBlockSet BSet(CFGraph);
-
-    for (po_iterator I = po_iterator::begin(CFGraph, BSet),
-         E = po_iterator::end(CFGraph, BSet); I != E; ++I) {
-      Blocks.push_back(*I);
-    }
-  }
-
-  iterator begin() {
-    return Blocks.rbegin();
-  }
-
-  iterator end() {
-    return Blocks.rend();
-  }
-
-  bool empty() {
-    return begin() == end();
-  }
-};
-
 
 /// \brief A MutexID object uniquely identifies a particular mutex, and
 /// is built from an Expr* (i.e. calling a lock function).
@@ -805,13 +729,13 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisContext &AC) {
   // We need to explore the CFG via a "topological" ordering.
   // That way, we will be guaranteed to have information about required
   // predecessor locksets when exploring a new block.
-  TopologicallySortedCFG SortedGraph(CFGraph);
-  CFGBlockSet VisitedBlocks(CFGraph);
+  PostOrderCFGView *SortedGraph = AC.getAnalysis<PostOrderCFGView>();
+  PostOrderCFGView::CFGBlockSet VisitedBlocks(CFGraph);
 
   // Add locks from exclusive_locks_required and shared_locks_required
   // to initial lockset.
-  if (!SortedGraph.empty() && D->hasAttrs()) {
-    const CFGBlock *FirstBlock = *SortedGraph.begin();
+  if (!SortedGraph->empty() && D->hasAttrs()) {
+    const CFGBlock *FirstBlock = *SortedGraph->begin();
     Lockset &InitialLockset = EntryLocksets[FirstBlock->getBlockID()];
     const AttrVec &ArgAttrs = D->getAttrs();
     for(unsigned i = 0; i < ArgAttrs.size(); ++i) {
@@ -837,8 +761,8 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisContext &AC) {
     }
   }
 
-  for (TopologicallySortedCFG::iterator I = SortedGraph.begin(),
-       E = SortedGraph.end(); I!= E; ++I) {
+  for (PostOrderCFGView::iterator I = SortedGraph->begin(),
+       E = SortedGraph->end(); I!= E; ++I) {
     const CFGBlock *CurrBlock = *I;
     int CurrBlockID = CurrBlock->getBlockID();
 

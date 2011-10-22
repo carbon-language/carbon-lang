@@ -27,6 +27,13 @@
 namespace clang {
     
 class PostOrderCFGView : public ManagedAnalysis {
+public:
+  /// \brief Implements a set of CFGBlocks using a BitVector.
+  ///
+  /// This class contains a minimal interface, primarily dictated by the SetType
+  /// template parameter of the llvm::po_iterator template, as used with external
+  /// storage. We also use this set to keep track of which CFGBlocks we visit
+  /// during the analysis.
   class CFGBlockSet {
     llvm::BitVector VisitedBlockIDs;
   public:
@@ -60,6 +67,7 @@ class PostOrderCFGView : public ManagedAnalysis {
     }
   };
 
+private:
   typedef llvm::po_iterator<const CFG*, CFGBlockSet, true>  po_iterator;  
   std::vector<const CFGBlock*> Blocks;
   
