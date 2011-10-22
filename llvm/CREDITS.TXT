@@ -143,6 +143,8 @@ N: James Grosbach
 E: grosbach@apple.com
 D: SjLj exception handling support
 D: General fixes and improvements for the ARM back-end
+D: MCJIT
+D: ARM integrated assembler and assembly parser
 
 N: Lang Hames
 E: lhames@gmail.com
