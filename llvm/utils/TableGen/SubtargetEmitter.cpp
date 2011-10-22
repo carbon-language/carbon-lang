@@ -81,7 +81,8 @@ unsigned SubtargetEmitter::FeatureKeyValues(raw_ostream &OS) {
 
   // Begin feature table
   OS << "// Sorted (by key) array of values for CPU features.\n"
-     << "llvm::SubtargetFeatureKV " << Target << "FeatureKV[] = {\n";
+     << "extern const llvm::SubtargetFeatureKV " << Target
+     << "FeatureKV[] = {\n";
 
   // For each feature
   unsigned NumFeatures = 0;
@@ -140,7 +141,8 @@ unsigned SubtargetEmitter::CPUKeyValues(raw_ostream &OS) {
 
   // Begin processor table
   OS << "// Sorted (by key) array of values for CPU subtype.\n"
-     << "llvm::SubtargetFeatureKV " << Target << "SubTypeKV[] = {\n";
+     << "extern const llvm::SubtargetFeatureKV " << Target
+     << "SubTypeKV[] = {\n";
 
   // For each processor
   for (unsigned i = 0, N = ProcessorList.size(); i < N;) {
@@ -327,9 +329,9 @@ void SubtargetEmitter::EmitStageAndOperandCycleData(raw_ostream &OS,
       OS << "\n// Pipeline forwarding pathes for itineraries \"" << Name
          << "\"\n" << "namespace " << Name << "Bypass {\n";
 
-      OS << "  unsigned NoBypass = 0;\n";
+      OS << "  const unsigned NoBypass = 0;\n";
       for (unsigned j = 0, BPN = BPs.size(); j < BPN; ++j)
-        OS << "  unsigned " << BPs[j]->getName()
+        OS << "  const unsigned " << BPs[j]->getName()
            << " = 1 << " << j << ";\n";
 
       OS << "}\n";
@@ -337,16 +339,17 @@ void SubtargetEmitter::EmitStageAndOperandCycleData(raw_ostream &OS,
   }
 
   // Begin stages table
-  std::string StageTable = "\nllvm::InstrStage " + Target + "Stages[] = {\n";
+  std::string StageTable = "\nextern const llvm::InstrStage " + Target +
+                           "Stages[] = {\n";
   StageTable += "  { 0, 0, 0, llvm::InstrStage::Required }, // No itinerary\n";
 
   // Begin operand cycle table
-  std::string OperandCycleTable = "unsigned " + Target +
+  std::string OperandCycleTable = "extern const unsigned " + Target +
     "OperandCycles[] = {\n";
   OperandCycleTable += "  0, // No itinerary\n";
 
   // Begin pipeline bypass table
-  std::string BypassTable = "unsigned " + Target +
+  std::string BypassTable = "extern const unsigned " + Target +
     "ForwardingPathes[] = {\n";
   BypassTable += "  0, // No itinerary\n";
 
@@ -488,7 +491,7 @@ EmitProcessorData(raw_ostream &OS,
 
     // Begin processor itinerary table
     OS << "\n";
-    OS << "llvm::InstrItinerary " << Name << "[] = {\n";
+    OS << "static const llvm::InstrItinerary " << Name << "[] = {\n";
 
     // For each itinerary class
     std::vector<InstrItinerary> &ItinList = *ProcListIter++;
@@ -530,7 +533,7 @@ void SubtargetEmitter::EmitProcessorLookup(raw_ostream &OS) {
   // Begin processor table
   OS << "\n";
   OS << "// Sorted (by key) array of itineraries for CPU subtype.\n"
-     << "llvm::SubtargetInfoKV "
+     << "extern const llvm::SubtargetInfoKV "
      << Target << "ProcItinKV[] = {\n";
 
   // For each processor
@@ -720,13 +723,13 @@ void SubtargetEmitter::run(raw_ostream &OS) {
   OS << "#undef GET_SUBTARGETINFO_CTOR\n";
 
   OS << "namespace llvm {\n";
-  OS << "extern llvm::SubtargetFeatureKV " << Target << "FeatureKV[];\n";
-  OS << "extern llvm::SubtargetFeatureKV " << Target << "SubTypeKV[];\n";
+  OS << "extern const llvm::SubtargetFeatureKV " << Target << "FeatureKV[];\n";
+  OS << "extern const llvm::SubtargetFeatureKV " << Target << "SubTypeKV[];\n";
   if (HasItineraries) {
-    OS << "extern llvm::SubtargetInfoKV " << Target << "ProcItinKV[];\n";
-    OS << "extern llvm::InstrStage " << Target << "Stages[];\n";
-    OS << "extern unsigned " << Target << "OperandCycles[];\n";
-    OS << "extern unsigned " << Target << "ForwardingPathes[];\n";
+    OS << "extern const llvm::SubtargetInfoKV " << Target << "ProcItinKV[];\n";
+    OS << "extern const llvm::InstrStage " << Target << "Stages[];\n";
+    OS << "extern const unsigned " << Target << "OperandCycles[];\n";
+    OS << "extern const unsigned " << Target << "ForwardingPathes[];\n";
   }
 
   OS << ClassName << "::" << ClassName << "(StringRef TT, StringRef CPU, "

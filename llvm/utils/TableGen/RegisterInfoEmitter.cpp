@@ -41,7 +41,8 @@ RegisterInfoEmitter::runEnums(raw_ostream &OS,
   OS << "namespace llvm {\n\n";
 
   OS << "class MCRegisterClass;\n"
-     << "extern MCRegisterClass " << Namespace << "MCRegisterClasses[];\n\n";
+     << "extern const MCRegisterClass " << Namespace
+     << "MCRegisterClasses[];\n\n";
 
   if (!Namespace.empty())
     OS << "namespace " << Namespace << " {\n";
@@ -308,7 +309,7 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
   }
   OS << "}\n";       // End of anonymous namespace...
 
-  OS << "\nMCRegisterDesc " << TargetName
+  OS << "\nextern const MCRegisterDesc " << TargetName
      << "RegDesc[] = { // Descriptors\n";
   OS << "  { \"NOREG\",\t0,\t0,\t0 },\n";
 
@@ -367,7 +368,8 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
   }
   OS << "}\n\n";
 
-  OS << "MCRegisterClass " << TargetName << "MCRegisterClasses[] = {\n";
+  OS << "extern const MCRegisterClass " << TargetName
+     << "MCRegisterClasses[] = {\n";
 
   for (unsigned rc = 0, e = RegisterClasses.size(); rc != e; ++rc) {
     const CodeGenRegisterClass &RC = *RegisterClasses[rc];
@@ -489,8 +491,8 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
   OS << "namespace llvm {\n\n";
 
   // Get access to MCRegisterClass data.
-  OS << "extern MCRegisterClass " << Target.getName()
-    << "MCRegisterClasses[];\n";
+  OS << "extern const MCRegisterClass " << Target.getName()
+     << "MCRegisterClasses[];\n";
 
   // Start out by emitting each of the register classes.
   ArrayRef<CodeGenRegisterClass*> RegisterClasses = RegBank.getRegClasses();
@@ -818,7 +820,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
   OS << "}\n\n";
 
   // Emit the constructor of the class...
-  OS << "extern MCRegisterDesc " << TargetName << "RegDesc[];\n";
+  OS << "extern const MCRegisterDesc " << TargetName << "RegDesc[];\n";
 
   OS << ClassName << "::" << ClassName
      << "(unsigned RA, unsigned DwarfFlavour, unsigned EHFlavour)\n"

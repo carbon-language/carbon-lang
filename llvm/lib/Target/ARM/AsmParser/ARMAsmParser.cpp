@@ -1886,9 +1886,10 @@ void ARMOperand::print(raw_ostream &OS) const {
     OS << "<ccout " << getReg() << ">";
     break;
   case k_ITCondMask: {
-    static char MaskStr[][6] = { "()", "(t)", "(e)", "(tt)", "(et)", "(te)",
-      "(ee)", "(ttt)", "(ett)", "(tet)", "(eet)", "(tte)", "(ete)",
-      "(tee)", "(eee)" };
+    static const char *MaskStr[] = {
+      "()", "(t)", "(e)", "(tt)", "(et)", "(te)", "(ee)", "(ttt)", "(ett)",
+      "(tet)", "(eet)", "(tte)", "(ete)", "(tee)", "(eee)"
+    };
     assert((ITMask.Mask & 0xf) == ITMask.Mask);
     OS << "<it-mask " << MaskStr[ITMask.Mask] << ">";
     break;
@@ -2366,7 +2367,7 @@ parseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   if (Reg == -1)
     return Error(RegLoc, "register expected");
 
-  MCRegisterClass *RC;
+  const MCRegisterClass *RC;
   if (ARMMCRegisterClasses[ARM::GPRRegClassID].contains(Reg))
     RC = &ARMMCRegisterClasses[ARM::GPRRegClassID];
   else if (ARMMCRegisterClasses[ARM::DPRRegClassID].contains(Reg))
@@ -4237,9 +4238,9 @@ static bool listContainsReg(MCInst &Inst, unsigned OpNo, unsigned Reg) {
 // the ARMInsts array) instead. Getting that here requires awkward
 // API changes, though. Better way?
 namespace llvm {
-extern MCInstrDesc ARMInsts[];
+extern const MCInstrDesc ARMInsts[];
 }
-static MCInstrDesc &getInstDesc(unsigned Opcode) {
+static const MCInstrDesc &getInstDesc(unsigned Opcode) {
   return ARMInsts[Opcode];
 }
 
@@ -4247,7 +4248,7 @@ static MCInstrDesc &getInstDesc(unsigned Opcode) {
 bool ARMAsmParser::
 validateInstruction(MCInst &Inst,
                     const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-  MCInstrDesc &MCID = getInstDesc(Inst.getOpcode());
+  const MCInstrDesc &MCID = getInstDesc(Inst.getOpcode());
   SMLoc Loc = Operands[0]->getStartLoc();
   // Check the IT block state first.
   // NOTE: In Thumb mode, the BKPT instruction has the interesting property of
@@ -4605,7 +4606,7 @@ unsigned ARMAsmParser::checkTargetMatchPredicate(MCInst &Inst) {
   // 16-bit thumb arithmetic instructions either require or preclude the 'S'
   // suffix depending on whether they're in an IT block or not.
   unsigned Opc = Inst.getOpcode();
-  MCInstrDesc &MCID = getInstDesc(Opc);
+  const MCInstrDesc &MCID = getInstDesc(Opc);
   if (MCID.TSFlags & ARMII::ThumbArithFlagSetting) {
     assert(MCID.hasOptionalDef() &&
            "optionally flag setting instruction missing optional def operand");

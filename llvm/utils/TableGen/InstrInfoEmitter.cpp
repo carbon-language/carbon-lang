@@ -203,7 +203,7 @@ void InstrInfoEmitter::run(raw_ostream &OS) {
 
   // Emit all of the MCInstrDesc records in their ENUM ordering.
   //
-  OS << "\nMCInstrDesc " << TargetName << "Insts[] = {\n";
+  OS << "\nextern const MCInstrDesc " << TargetName << "Insts[] = {\n";
   const std::vector<const CodeGenInstruction*> &NumberedInstructions =
     Target.getInstructionsByEnumValue();
 
@@ -239,7 +239,7 @@ void InstrInfoEmitter::run(raw_ostream &OS) {
   OS << "#undef GET_INSTRINFO_CTOR\n";
 
   OS << "namespace llvm {\n";
-  OS << "extern MCInstrDesc " << TargetName << "Insts[];\n";
+  OS << "extern const MCInstrDesc " << TargetName << "Insts[];\n";
   OS << ClassName << "::" << ClassName << "(int SO, int DO)\n"
      << "  : TargetInstrInfoImpl(SO, DO) {\n"
      << "  InitMCInstrInfo(" << TargetName << "Insts, "

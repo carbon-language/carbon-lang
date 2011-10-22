@@ -415,7 +415,7 @@ DecodeStatus ARMDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
 }
 
 namespace llvm {
-extern MCInstrDesc ARMInsts[];
+extern const MCInstrDesc ARMInsts[];
 }
 
 /// tryAddingSymbolicOperand - trys to add a symbolic operand in place of the
