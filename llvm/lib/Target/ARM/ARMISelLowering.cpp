@@ -6015,9 +6015,19 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
       MachineInstrBuilder MIB(&*II);
 
       for (unsigned i = 0; SavedRegs[i] != 0; ++i) {
-        if (!TRC->contains(SavedRegs[i])) continue;
-        if (!DefRegs[SavedRegs[i]])
-          MIB.addReg(SavedRegs[i], RegState::ImplicitDefine | RegState::Dead);
+        unsigned Reg = SavedRegs[i];
+        if (Subtarget->isThumb2() &&
+            !ARM::tGPRRegisterClass->contains(Reg) &&
+            !ARM::hGPRRegisterClass->contains(Reg))
+          continue;
+        else if (Subtarget->isThumb1Only() &&
+                 !ARM::tGPRRegisterClass->contains(Reg))
+          continue;
+        else if (!Subtarget->isThumb() &&
+                 !ARM::GPRRegisterClass->contains(Reg))
+          continue;
+        if (!DefRegs[Reg])
+          MIB.addReg(Reg, RegState::ImplicitDefine | RegState::Dead);
       }
 
       break;
