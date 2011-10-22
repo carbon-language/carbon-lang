@@ -4658,7 +4658,8 @@ ScalarEvolution::ComputeLoadConstantCompareExitLimit(
 /// specified type, assuming that all operands were constants.
 static bool CanConstantFold(const Instruction *I) {
   if (isa<BinaryOperator>(I) || isa<CmpInst>(I) ||
-      isa<SelectInst>(I) || isa<CastInst>(I) || isa<GetElementPtrInst>(I))
+      isa<SelectInst>(I) || isa<CastInst>(I) || isa<GetElementPtrInst>(I) ||
+      isa<LoadInst>(I))
     return true;
 
   if (const CallInst *CI = dyn_cast<CallInst>(I))
@@ -4751,13 +4752,19 @@ static Constant *EvaluateExpression(Value *V, const Loop *L,
                                     const TargetData *TD) {
   // Convenient constant check, but redundant for recursive calls.
   if (Constant *C = dyn_cast<Constant>(V)) return C;
+  Instruction *I = dyn_cast<Instruction>(V);
+  if (!I) return 0;
 
-  Instruction *I = cast<Instruction>(V);
   if (Constant *C = Vals.lookup(I)) return C;
 
-  assert(!isa<PHINode>(I) && "loop header phis should be mapped to constant");
-  assert(canConstantEvolve(I, L) && "cannot evaluate expression in this loop");
-  (void)L;
+  // An instruction inside the loop depends on a value outside the loop that we
+  // weren't given a mapping for, or a value such as a call inside the loop.
+  if (!canConstantEvolve(I, L)) return 0;
+
+  // An unmapped PHI can be due to a branch or another loop inside this loop,
+  // or due to this not being the initial iteration through a loop where we
+  // couldn't compute the evolution of this particular PHI last time.
+  if (isa<PHINode>(I)) return 0;
 
   std::vector<Constant*> Operands(I->getNumOperands());
 
@@ -4774,9 +4781,13 @@ static Constant *EvaluateExpression(Value *V, const Loop *L,
     Operands[i] = C;
   }
 
-  if (const CmpInst *CI = dyn_cast<CmpInst>(I))
+  if (CmpInst *CI = dyn_cast<CmpInst>(I))
     return ConstantFoldCompareInstOperands(CI->getPredicate(), Operands[0],
                                            Operands[1], TD);
+  if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
+    if (!LI->isVolatile())
+      return ConstantFoldLoadFromConstPtr(Operands[0], TD);
+  }
   return ConstantFoldInstOperands(I->getOpcode(), I->getType(), Operands, TD);
 }
 
@@ -4798,23 +4809,26 @@ ScalarEvolution::getConstantEvolutionLoopExitValue(PHINode *PN,
 
   Constant *&RetVal = ConstantEvolutionLoopExitValue[PN];
 
-  // FIXME: Nick's fix for PR11034 will seed constants for multiple header phis.
   DenseMap<Instruction *, Constant *> CurrentIterVals;
+  BasicBlock *Header = L->getHeader();
+  assert(PN->getParent() == Header && "Can't evaluate PHI not in loop header!");
 
   // Since the loop is canonicalized, the PHI node must have two entries.  One
   // entry must be a constant (coming in from outside of the loop), and the
   // second must be derived from the same PHI.
   bool SecondIsBackedge = L->contains(PN->getIncomingBlock(1));
-  Constant *StartCST =
-    dyn_cast<Constant>(PN->getIncomingValue(!SecondIsBackedge));
-  if (StartCST == 0)
-    return RetVal = 0;  // Must be a constant.
-  CurrentIterVals[PN] = StartCST;
+  PHINode *PHI = 0;
+  for (BasicBlock::iterator I = Header->begin();
+       (PHI = dyn_cast<PHINode>(I)); ++I) {
+    Constant *StartCST =
+      dyn_cast<Constant>(PHI->getIncomingValue(!SecondIsBackedge));
+    if (StartCST == 0) continue;
+    CurrentIterVals[PHI] = StartCST;
+  }
+  if (!CurrentIterVals.count(PN))
+    return RetVal = 0;
 
   Value *BEValue = PN->getIncomingValue(SecondIsBackedge);
-  if (getConstantEvolvingPHI(BEValue, L) != PN &&
-      !isa<Constant>(BEValue))
-    return RetVal = 0;  // Not derived from same PHI.
 
   // Execute the loop symbolically to determine the exit value.
   if (BEs.getActiveBits() >= 32)
@@ -4826,15 +4840,29 @@ ScalarEvolution::getConstantEvolutionLoopExitValue(PHINode *PN,
     if (IterationNum == NumIterations)
       return RetVal = CurrentIterVals[PN];  // Got exit value!
 
-    // Compute the value of the PHI node for the next iteration.
+    // Compute the value of the PHIs for the next iteration.
     // EvaluateExpression adds non-phi values to the CurrentIterVals map.
+    DenseMap<Instruction *, Constant *> NextIterVals;
     Constant *NextPHI = EvaluateExpression(BEValue, L, CurrentIterVals, TD);
     if (NextPHI == CurrentIterVals[PN])
       return RetVal = NextPHI;  // Stopped evolving!
     if (NextPHI == 0)
       return 0;        // Couldn't evaluate!
-    DenseMap<Instruction *, Constant *> NextIterVals;
     NextIterVals[PN] = NextPHI;
+
+    // Also evaluate the other PHI nodes.  However, we don't get to stop if we
+    // cease to be able to evaluate one of them or if they stop evolving,
+    // because that doesn't necessarily prevent us from computing PN.
+    for (DenseMap<Instruction *, Constant *>::const_iterator
+           I = CurrentIterVals.begin(), E = CurrentIterVals.end(); I != E; ++I){
+      PHINode *PHI = dyn_cast<PHINode>(I->first);
+      if (!PHI || PHI == PN) continue;
+      Constant *&NextPHI = NextIterVals[PHI];
+      if (NextPHI) continue;    // Already computed!
+
+      Value *BEValue = PHI->getIncomingValue(SecondIsBackedge);
+      NextPHI = EvaluateExpression(BEValue, L, CurrentIterVals, TD);
+    }
     CurrentIterVals.swap(NextIterVals);
   }
 }
@@ -4844,9 +4872,9 @@ ScalarEvolution::getConstantEvolutionLoopExitValue(PHINode *PN,
 /// try to evaluate a few iterations of the loop until we get the exit
 /// condition gets a value of ExitWhen (true or false).  If we cannot
 /// evaluate the trip count of the loop, return getCouldNotCompute().
-const SCEV * ScalarEvolution::ComputeExitCountExhaustively(const Loop *L,
-                                                           Value *Cond,
-                                                           bool ExitWhen) {
+const SCEV *ScalarEvolution::ComputeExitCountExhaustively(const Loop *L,
+                                                          Value *Cond,
+                                                          bool ExitWhen) {
   PHINode *PN = getConstantEvolvingPHI(Cond, L);
   if (PN == 0) return getCouldNotCompute();
 
@@ -4921,6 +4949,98 @@ const SCEV *ScalarEvolution::getSCEVAtScope(const SCEV *V, const Loop *L) {
   return C;
 }
 
+/// This builds up a Constant using the ConstantExpr interface.  That way, we
+/// will return Constants for objects which aren't represented by a
+/// SCEVConstant, because SCEVConstant is restricted to ConstantInt.
+/// Returns NULL if the SCEV isn't representable as a Constant.
+static Constant *BuildConstantFromSCEV(const SCEV *V) {
+  switch (V->getSCEVType()) {
+    default:  // TODO: smax, umax.
+    case scCouldNotCompute:
+    case scAddRecExpr:
+      break;
+    case scConstant:
+      return cast<SCEVConstant>(V)->getValue();
+    case scUnknown:
+      return dyn_cast<Constant>(cast<SCEVUnknown>(V)->getValue());
+    case scSignExtend: {
+      const SCEVSignExtendExpr *SS = cast<SCEVSignExtendExpr>(V);
+      if (Constant *CastOp = BuildConstantFromSCEV(SS->getOperand()))
+        return ConstantExpr::getSExt(CastOp, SS->getType());
+      break;
+    }
+    case scZeroExtend: {
+      const SCEVZeroExtendExpr *SZ = cast<SCEVZeroExtendExpr>(V);
+      if (Constant *CastOp = BuildConstantFromSCEV(SZ->getOperand()))
+        return ConstantExpr::getZExt(CastOp, SZ->getType());
+      break;
+    }
+    case scTruncate: {
+      const SCEVTruncateExpr *ST = cast<SCEVTruncateExpr>(V);
+      if (Constant *CastOp = BuildConstantFromSCEV(ST->getOperand()))
+        return ConstantExpr::getTrunc(CastOp, ST->getType());
+      break;
+    }
+    case scAddExpr: {
+      const SCEVAddExpr *SA = cast<SCEVAddExpr>(V);
+      if (Constant *C = BuildConstantFromSCEV(SA->getOperand(0))) {
+        if (C->getType()->isPointerTy())
+          C = ConstantExpr::getBitCast(C, Type::getInt8PtrTy(C->getContext()));
+        for (unsigned i = 1, e = SA->getNumOperands(); i != e; ++i) {
+          Constant *C2 = BuildConstantFromSCEV(SA->getOperand(i));
+          if (!C2) return 0;
+
+          // First pointer!
+          if (!C->getType()->isPointerTy() && C2->getType()->isPointerTy()) {
+            std::swap(C, C2);
+            // The offsets have been converted to bytes.  We can add bytes to an
+            // i8* by GEP with the byte count in the first index.
+            C = ConstantExpr::getBitCast(C,Type::getInt8PtrTy(C->getContext()));
+          }
+
+          // Don't bother trying to sum two pointers. We probably can't
+          // statically compute a load that results from it anyway.
+          if (C2->getType()->isPointerTy())
+            return 0;
+
+          if (C->getType()->isPointerTy()) {
+            if (cast<PointerType>(C->getType())->getElementType()->isStructTy())
+              C2 = ConstantExpr::getIntegerCast(
+                  C2, Type::getInt32Ty(C->getContext()), true);
+            C = ConstantExpr::getGetElementPtr(C, C2);
+          } else
+            C = ConstantExpr::getAdd(C, C2);
+        }
+        return C;
+      }
+      break;
+    }
+    case scMulExpr: {
+      const SCEVMulExpr *SM = cast<SCEVMulExpr>(V);
+      if (Constant *C = BuildConstantFromSCEV(SM->getOperand(0))) {
+        // Don't bother with pointers at all.
+        if (C->getType()->isPointerTy()) return 0;
+        for (unsigned i = 1, e = SM->getNumOperands(); i != e; ++i) {
+          Constant *C2 = BuildConstantFromSCEV(SM->getOperand(i));
+          if (!C2 || C2->getType()->isPointerTy()) return 0;
+          C = ConstantExpr::getMul(C, C2);
+        }
+        return C;
+      }
+      break;
+    }
+    case scUDivExpr: {
+      const SCEVUDivExpr *SU = cast<SCEVUDivExpr>(V);
+      if (Constant *LHS = BuildConstantFromSCEV(SU->getLHS()))
+        if (Constant *RHS = BuildConstantFromSCEV(SU->getRHS()))
+          if (LHS->getType() == RHS->getType())
+            return ConstantExpr::getUDiv(LHS, RHS);
+      break;
+    }
+  }
+  return 0;
+}
+
 const SCEV *ScalarEvolution::computeSCEVAtScope(const SCEV *V, const Loop *L) {
   if (isa<SCEVConstant>(V)) return V;
 
@@ -4973,11 +5093,7 @@ const SCEV *ScalarEvolution::computeSCEVAtScope(const SCEV *V, const Loop *L) {
           const SCEV *OpV = getSCEVAtScope(OrigV, L);
           MadeImprovement |= OrigV != OpV;
 
-          Constant *C = 0;
-          if (const SCEVConstant *SC = dyn_cast<SCEVConstant>(OpV))
-            C = SC->getValue();
-          if (const SCEVUnknown *SU = dyn_cast<SCEVUnknown>(OpV))
-            C = dyn_cast<Constant>(SU->getValue());
+          Constant *C = BuildConstantFromSCEV(OpV);
           if (!C) return V;
           if (C->getType() != Op->getType())
             C = ConstantExpr::getCast(CastInst::getCastOpcode(C, false,
@@ -4993,7 +5109,10 @@ const SCEV *ScalarEvolution::computeSCEVAtScope(const SCEV *V, const Loop *L) {
           if (const CmpInst *CI = dyn_cast<CmpInst>(I))
             C = ConstantFoldCompareInstOperands(CI->getPredicate(),
                                                 Operands[0], Operands[1], TD);
-          else
+          else if (const LoadInst *LI = dyn_cast<LoadInst>(I)) {
+            if (!LI->isVolatile())
+              C = ConstantFoldLoadFromConstPtr(Operands[0], TD);
+          } else
             C = ConstantFoldInstOperands(I->getOpcode(), I->getType(),
                                          Operands, TD);
           if (!C) return V;
