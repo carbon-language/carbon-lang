@@ -1062,10 +1062,11 @@ for ia in range(len(archs) if iterArchs else 1):
         #print "sys.stdout name is", sys.stdout.name
 
         # First, write out the number of collected test cases.
-        sys.stderr.write(separator + "\n")
-        sys.stderr.write("Collected %d test%s\n\n"
-                         % (suite.countTestCases(),
-                            suite.countTestCases() != 1 and "s" or ""))
+        if not noHeaders:
+            sys.stderr.write(separator + "\n")
+            sys.stderr.write("Collected %d test%s\n\n"
+                             % (suite.countTestCases(),
+                                suite.countTestCases() != 1 and "s" or ""))
 
         class LLDBTestResult(unittest2.TextTestResult):
             """

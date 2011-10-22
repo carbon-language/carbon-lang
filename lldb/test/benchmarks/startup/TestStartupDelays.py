@@ -26,7 +26,7 @@ class StartupDelaysBench(BenchBase):
 
         self.count = lldb.bmIterationCount
         if self.count <= 0:
-            self.count = 15
+            self.count = 30
 
     @benchmarks_test
     def test_startup_delay(self):
