@@ -224,16 +224,41 @@ IRForTarget::GetFunctionAddress (llvm::Function *fun,
     {
         if (!m_decl_map->GetFunctionInfo (fun_decl, fun_value_ptr, fun_addr)) 
         {
-            fun_value_ptr = NULL;
-            
-            if (!m_decl_map->GetFunctionAddress (name, fun_addr))
+            lldb_private::ConstString alternate_mangling_const_str;
+            bool found_it = m_decl_map->GetFunctionAddress (name, fun_addr);
+            if (!found_it)
             {
+                // Check for an alternate mangling for "std::basic_string<char>"
+                // that is part of the itanium C++ name mangling scheme
+                const char *name_cstr = name.GetCString();
+                if (strncmp(name_cstr, "_ZNKSbIcE", strlen("_ZNKSbIcE")) == 0)
+                {
+                    std::string alternate_mangling("_ZNKSs");
+                    alternate_mangling.append (name_cstr + strlen("_ZNKSbIcE"));
+                    alternate_mangling_const_str.SetCString(alternate_mangling.c_str());
+                    found_it = m_decl_map->GetFunctionAddress (alternate_mangling_const_str, fun_addr);
+                }
+            }
+            
+            if (!found_it)
+            {
+                fun_value_ptr = NULL;
+
                 if (log)
-                    log->Printf("Function \"%s\" had no address", name.GetCString());
+                {
+                    if (alternate_mangling_const_str)
+                        log->Printf("Function \"%s\" (alternate name \"%s\") has no address", name.GetCString(), alternate_mangling_const_str.GetCString());
+                    else
+                        log->Printf("Function \"%s\" had no address", name.GetCString());
+                }
                 
                 if (m_error_stream)
-                    m_error_stream->Printf("Error [IRForTarget]: Call to a function '%s' that is not present in the target\n", name.GetCString());
-                
+                {
+                    if (alternate_mangling_const_str)
+                        m_error_stream->Printf("error: call to a function '%s' (alternate name '%s') that is not present in the target\n", name.GetCString(), alternate_mangling_const_str.GetCString());
+                    else
+                        m_error_stream->Printf("error: call to a function '%s' that is not present in the target\n", name.GetCString());
+                }
                 return false;
             }
         }

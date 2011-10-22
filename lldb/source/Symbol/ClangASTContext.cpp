@@ -36,6 +36,7 @@
 #include "clang/AST/ASTImporter.h"
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/DeclTemplate.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/Builtins.h"
@@ -58,6 +59,8 @@
 #include "lldb/Core/dwarf.h"
 #include "lldb/Core/Flags.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Core/RegularExpression.h"
+#include "lldb/Expression/ASTDumper.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
@@ -1085,14 +1088,136 @@ ClangASTContext::CreateRecordType (const char *name, int kind, DeclContext *decl
     // the CXXRecordDecl class since we often don't know from debug information
     // if something is struct or a class, so we default to always use the more
     // complete definition just in case.
-    CXXRecordDecl *decl = CXXRecordDecl::Create(*ast,
-                                                (TagDecl::TagKind)kind,
-                                                decl_ctx,
-                                                SourceLocation(),
-                                                SourceLocation(),
-                                                name && name[0] ? &ast->Idents.get(name) : NULL);
+    CXXRecordDecl *decl = CXXRecordDecl::Create (*ast,
+                                                 (TagDecl::TagKind)kind,
+                                                 decl_ctx,
+                                                 SourceLocation(),
+                                                 SourceLocation(),
+                                                 name && name[0] ? &ast->Idents.get(name) : NULL);
 
     return ast->getTagDeclType(decl).getAsOpaquePtr();
+}
+
+ClassTemplateDecl *
+ClangASTContext::CreateClassTemplateDecl (DeclContext *decl_ctx,
+                                          const char *class_name, 
+                                          int kind, 
+                                          const TemplateParameterInfos &template_param_infos)
+{
+    ASTContext *ast = getASTContext();
+    
+    ClassTemplateDecl *class_template_decl = NULL;
+    if (decl_ctx == NULL)
+        decl_ctx = ast->getTranslationUnitDecl();
+    
+    IdentifierInfo &identifier_info = ast->Idents.get(class_name);
+    DeclarationName decl_name (&identifier_info);
+
+    clang::DeclContext::lookup_result result = decl_ctx->lookup(decl_name);
+    for (clang::DeclContext::lookup_iterator pos = result.first, end = result.second; pos != end; ++pos) 
+    {
+        class_template_decl = dyn_cast<clang::ClassTemplateDecl>(*pos);
+        if (class_template_decl)
+            return class_template_decl;
+    }
+
+    llvm::SmallVector<NamedDecl *, 8> template_param_decls;
+    const bool parameter_pack = false;
+    const bool is_typename = false;
+    const unsigned depth = 0;
+    const size_t num_template_params = template_param_infos.GetSize();
+    for (size_t i=0; i<num_template_params; ++i)
+    {
+        const char *name = template_param_infos.names[i];
+        if (template_param_infos.args[i].getAsIntegral())
+        {
+            template_param_decls.push_back (NonTypeTemplateParmDecl::Create (*ast,
+                                                                             ast->getTranslationUnitDecl(), // Is this the right decl context?, SourceLocation StartLoc,
+                                                                             SourceLocation(), 
+                                                                             SourceLocation(), 
+                                                                             depth, 
+                                                                             i,
+                                                                             &ast->Idents.get(name), 
+                                                                             template_param_infos.args[i].getAsType(), 
+                                                                             parameter_pack, 
+                                                                             NULL));
+                                            
+        }
+        else
+        {
+            template_param_decls.push_back (TemplateTypeParmDecl::Create (*ast, 
+                                                                          ast->getTranslationUnitDecl(), // Is this the right decl context?
+                                                                          SourceLocation(),
+                                                                          SourceLocation(),
+                                                                          depth, 
+                                                                          i,
+                                                                          &ast->Idents.get(name), 
+                                                                          is_typename,
+                                                                          parameter_pack));
+        }
+    }
+    
+    TemplateParameterList *template_param_list =  TemplateParameterList::Create (*ast,
+                                                                                 SourceLocation(),
+                                                                                 SourceLocation(),
+                                                                                 &template_param_decls.front(),
+                                                                                 template_param_decls.size(),
+                                                                                 SourceLocation());
+
+
+    CXXRecordDecl *template_cxx_decl = CXXRecordDecl::Create (*ast,
+                                                              (TagDecl::TagKind)kind,
+                                                              decl_ctx,  // What decl context do we use here? TU? The actual decl context?
+                                                              SourceLocation(),
+                                                              SourceLocation(),
+                                                              &identifier_info);
+            
+            
+    class_template_decl = ClassTemplateDecl::Create (*ast,
+                                                     decl_ctx,  // What decl context do we use here? TU? The actual decl context?
+                                                     SourceLocation(),
+                                                     decl_name,
+                                                     template_param_list,
+                                                     template_cxx_decl,
+                                                     NULL);
+    
+    if (class_template_decl)
+        decl_ctx->addDecl (class_template_decl);
+
+    return class_template_decl;
+}
+
+
+ClassTemplateSpecializationDecl *
+ClangASTContext::CreateClassTemplateSpecializationDecl (DeclContext *decl_ctx,
+                                                        ClassTemplateDecl *class_template_decl,
+                                                        int kind,
+                                                        const TemplateParameterInfos &template_param_infos)
+{
+    ASTContext *ast = getASTContext();
+    ClassTemplateSpecializationDecl *class_template_specialization_decl = ClassTemplateSpecializationDecl::Create (*ast, 
+                                                                                                                   (TagDecl::TagKind)kind,
+                                                                                                                   decl_ctx,
+                                                                                                                   SourceLocation(), 
+                                                                                                                   SourceLocation(),
+                                                                                                                   class_template_decl,
+                                                                                                                   &template_param_infos.args.front(),
+                                                                                                                   template_param_infos.args.size(),
+                                                                                                                   NULL);
+    
+    return class_template_specialization_decl;
+}
+
+lldb::clang_type_t
+ClangASTContext::CreateClassTemplateSpecializationType (ClassTemplateSpecializationDecl *class_template_specialization_decl)
+{
+    if (class_template_specialization_decl)
+    {
+        ASTContext *ast = getASTContext();
+        if (ast)
+            return ast->getTagDeclType(class_template_specialization_decl).getAsOpaquePtr();
+    }
+    return NULL;
 }
 
 bool
@@ -2842,6 +2967,8 @@ ClangASTContext::GetNumPointeeChildren (clang_type_t clang_type)
         case clang::BuiltinType::ObjCClass:
         case clang::BuiltinType::ObjCSel:
         case clang::BuiltinType::BoundMember:
+        case clang::BuiltinType::Half:          
+        case clang::BuiltinType::ARCUnbridgedCast:          
             return 1;
         }
         break;
@@ -4615,6 +4742,8 @@ ClangASTContext::IsPossibleDynamicType (clang::ASTContext *ast, clang_type_t cla
                         case clang::BuiltinType::ObjCClass:
                         case clang::BuiltinType::ObjCSel:
                         case clang::BuiltinType::BoundMember:
+                        case clang::BuiltinType::Half:          
+                        case clang::BuiltinType::ARCUnbridgedCast:          
                             break;
                     }
                     break;
@@ -4748,6 +4877,8 @@ ClangASTContext::IsPossibleCPlusPlusDynamicType (clang::ASTContext *ast, clang_t
                     case clang::BuiltinType::ObjCClass:
                     case clang::BuiltinType::ObjCSel:
                     case clang::BuiltinType::BoundMember:
+                    case clang::BuiltinType::Half:          
+                    case clang::BuiltinType::ARCUnbridgedCast:          
                         break;
                 }
                 break;

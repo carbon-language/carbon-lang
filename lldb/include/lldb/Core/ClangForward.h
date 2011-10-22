@@ -31,6 +31,8 @@ namespace clang
     class AddrLabelExpr;
     class AnalyzerOptions;
     class BinaryOperator;
+    class ClassTemplateDecl;
+    class ClassTemplateSpecializationDecl;
     class CodeGenOptions;
     class CodeGenerator;
     class CompilerInstance;

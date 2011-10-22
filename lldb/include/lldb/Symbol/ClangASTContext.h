@@ -19,6 +19,8 @@
 
 // Other libraries and framework includes
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/SmallVector.h"
+#include "clang/AST/TemplateBase.h"
 
 // Project includes
 #include "lldb/lldb-enumerations.h"
@@ -55,7 +57,7 @@ public:
 
     typedef void (*CompleteTagDeclCallback)(void *baton, clang::TagDecl *);
     typedef void (*CompleteObjCInterfaceDeclCallback)(void *baton, clang::ObjCInterfaceDecl *);
-
+    
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
@@ -300,6 +302,44 @@ public:
                                                           is_explicit);
     }
     
+    class TemplateParameterInfos
+    {
+    public:
+        bool
+        IsValid() const
+        {
+            if (args.empty())
+                return false;
+            return args.size() == names.size();
+        }
+
+        size_t
+        GetSize () const
+        {
+            if (IsValid())
+                return args.size();
+            return 0;
+        }
+
+        llvm::SmallVector<const char *, 8> names;
+        llvm::SmallVector<clang::TemplateArgument, 8> args;        
+    };
+
+    clang::ClassTemplateDecl *
+    CreateClassTemplateDecl (clang::DeclContext *decl_ctx,
+                             const char *class_name, 
+                             int kind, 
+                             const TemplateParameterInfos &infos);
+
+    clang::ClassTemplateSpecializationDecl *
+    CreateClassTemplateSpecializationDecl (clang::DeclContext *decl_ctx,
+                                           clang::ClassTemplateDecl *class_template_decl,
+                                           int kind,
+                                           const TemplateParameterInfos &infos);
+
+    lldb::clang_type_t
+    CreateClassTemplateSpecializationType (clang::ClassTemplateSpecializationDecl *class_template_specialization_decl);
+
     static clang::DeclContext *
     GetAsDeclContext (clang::CXXMethodDecl *cxx_method_decl);
 

@@ -28,6 +28,7 @@
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Flags.h"
 #include "lldb/Core/UniqueCStringMap.h"
+#include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/SymbolFile.h"
 #include "lldb/Symbol/SymbolContext.h"
 
@@ -58,7 +59,7 @@ class SymbolFileDWARFDebugMap;
 class SymbolFileDWARF : public lldb_private::SymbolFile, public lldb_private::UserID
 {
 public:
-    friend class SymbolFileDWARFDebugMap;
+    friend class SymbolFileDWARFDebugMap;    
 
     //------------------------------------------------------------------
     // Static Functions
@@ -425,6 +426,32 @@ protected:
     {
         return GetID() | die_offset;
     }
+
+    static bool
+    DeclKindIsCXXClass (clang::Decl::Kind decl_kind)
+    {
+        switch (decl_kind)
+        {
+            case clang::Decl::CXXRecord:
+            case clang::Decl::ClassTemplateSpecialization:
+                return true;
+            default:
+                break;
+        }
+        return false;
+    }
+    
+    bool
+    ParseTemplateParameterInfos (DWARFCompileUnit* dwarf_cu,
+                                 const DWARFDebugInfoEntry *parent_die,
+                                 lldb_private::ClangASTContext::TemplateParameterInfos &template_param_infos);
+
+    clang::ClassTemplateDecl *
+    ParseClassTemplateDecl (clang::DeclContext *decl_ctx,
+                            const char *parent_name,
+                            int tag_decl_kind,
+                            const lldb_private::ClangASTContext::TemplateParameterInfos &template_param_infos);
+
 
     void
     ReportError (const char *format, ...) __attribute__ ((format (printf, 2, 3)));

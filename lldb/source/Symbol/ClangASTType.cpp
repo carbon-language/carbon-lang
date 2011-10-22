@@ -569,7 +569,10 @@ ClangASTType::GetFormat (clang_type_t clang_type)
         case clang::BuiltinType::Dependent:
         case clang::BuiltinType::ObjCId:
         case clang::BuiltinType::ObjCClass:
-        case clang::BuiltinType::ObjCSel:       return lldb::eFormatHex;
+        case clang::BuiltinType::ObjCSel:       
+        case clang::BuiltinType::Half:          
+        case clang::BuiltinType::ARCUnbridgedCast:          
+            return lldb::eFormatHex;
         }
         break;
     case clang::Type::ObjCObjectPointer:        return lldb::eFormatHex;

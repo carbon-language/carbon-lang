@@ -1133,6 +1133,128 @@ SymbolFileDWARF::ParseFunctionBlocks
     return blocks_added;
 }
 
+bool
+SymbolFileDWARF::ParseTemplateParameterInfos (DWARFCompileUnit* dwarf_cu,
+                                              const DWARFDebugInfoEntry *parent_die,
+                                              ClangASTContext::TemplateParameterInfos &template_param_infos)
+{
+
+    if (parent_die == NULL)
+        return NULL;
+    
+    const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (dwarf_cu->GetAddressByteSize());
+
+    Args template_parameter_names;
+    for (const DWARFDebugInfoEntry *die = parent_die->GetFirstChild(); 
+         die != NULL; 
+         die = die->GetSibling())
+    {
+        const dw_tag_t tag = die->Tag();
+        
+        switch (tag)
+        {
+            case DW_TAG_template_type_parameter:
+            case DW_TAG_template_value_parameter:
+            {
+                DWARFDebugInfoEntry::Attributes attributes;
+                const size_t num_attributes = die->GetAttributes (this, 
+                                                                  dwarf_cu, 
+                                                                  fixed_form_sizes, 
+                                                                  attributes);
+                const char *name = NULL;
+                Type *lldb_type = NULL;
+                clang_type_t clang_type = NULL;
+                uint64_t uval64 = 0;
+                bool uval64_valid = false;
+                if (num_attributes > 0)
+                {
+                    DWARFFormValue form_value;
+                    for (size_t i=0; i<num_attributes; ++i)
+                    {
+                        const dw_attr_t attr = attributes.AttributeAtIndex(i);
+                        
+                        switch (attr)
+                        {
+                            case DW_AT_name:
+                                if (attributes.ExtractFormValueAtIndex(this, i, form_value))
+                                    name = form_value.AsCString(&get_debug_str_data());
+                                break;
+                                
+                            case DW_AT_type:
+                                if (attributes.ExtractFormValueAtIndex(this, i, form_value))
+                                {
+                                    const dw_offset_t type_die_offset = form_value.Reference(dwarf_cu);
+                                    lldb_type = ResolveTypeUID(type_die_offset);
+                                    if (lldb_type)
+                                        clang_type = lldb_type->GetClangForwardType();
+                                }
+                                break;
+
+                            case DW_AT_const_value:
+                                if (attributes.ExtractFormValueAtIndex(this, i, form_value))
+                                {
+                                    uval64_valid = true;
+                                    uval64 = form_value.Unsigned();
+                                }
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                    
+                    if (name && lldb_type && clang_type)
+                    {
+                        bool is_signed = false;
+                        template_param_infos.names.push_back(name);
+                        clang::QualType clang_qual_type (clang::QualType::getFromOpaquePtr (clang_type));
+                        if (tag == DW_TAG_template_value_parameter && ClangASTContext::IsIntegerType (clang_type, is_signed) && uval64_valid)
+                        {
+                            llvm::APInt apint (lldb_type->GetByteSize() * 8, uval64, is_signed);
+                            template_param_infos.args.push_back (clang::TemplateArgument (llvm::APSInt(apint), clang_qual_type));
+                        }
+                        else
+                        {
+                            template_param_infos.args.push_back (clang::TemplateArgument (clang_qual_type));
+                        }
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                    
+                }
+            }
+            break;
+                
+        default:
+            break;
+        }
+    }
+    if (template_param_infos.args.empty())
+        return false;
+    return template_param_infos.args.size() == template_param_infos.names.size();
+}
+
+clang::ClassTemplateDecl *
+SymbolFileDWARF::ParseClassTemplateDecl (clang::DeclContext *decl_ctx,
+                                         const char *parent_name,
+                                         int tag_decl_kind,
+                                         const ClangASTContext::TemplateParameterInfos &template_param_infos)
+{
+    if (template_param_infos.IsValid())
+    {
+        std::string template_basename(parent_name);
+        template_basename.erase (template_basename.find('<'));
+        ClangASTContext &ast = GetClangASTContext();
+
+        return ast.CreateClassTemplateDecl (decl_ctx,
+                                            template_basename.c_str(), 
+                                            tag_decl_kind, 
+                                            template_param_infos);
+    }
+    return NULL;
+}
+
 size_t
 SymbolFileDWARF::ParseChildMembers
 (
@@ -2342,16 +2464,16 @@ SymbolFileDWARF::FunctionDieMatchesPartialName (const DWARFDebugInfoEntry* die,
     if (name_type_mask == eFunctionNameTypeMethod
         || name_type_mask == eFunctionNameTypeBase)
     {
-            clang::DeclContext *containing_decl_ctx = GetClangDeclContextContainingDIEOffset(die->GetOffset());
-            if (!containing_decl_ctx)
-                return false;
-                
-            bool is_cxx_method = (containing_decl_ctx->getDeclKind() == clang::Decl::CXXRecord);
-
-            if (!is_cxx_method && name_type_mask == eFunctionNameTypeMethod)
-                return false;
-            if (is_cxx_method && name_type_mask == eFunctionNameTypeBase)
-                return false;
+        clang::DeclContext *containing_decl_ctx = GetClangDeclContextContainingDIEOffset(die->GetOffset());
+        if (!containing_decl_ctx)
+            return false;
+        
+        bool is_cxx_method = DeclKindIsCXXClass(containing_decl_ctx->getDeclKind());
+        
+        if (!is_cxx_method && name_type_mask == eFunctionNameTypeMethod)
+            return false;
+        if (is_cxx_method && name_type_mask == eFunctionNameTypeBase)
+            return false;
     }
 
     // Now we need to check whether the name we got back for this type matches the extra specifications
@@ -2989,7 +3111,7 @@ SymbolFileDWARF::ParseChildParameters (const SymbolContext& sc,
                             // Ugly, but that
                             if (arg_idx == 0)
                             {
-                                if (containing_decl_ctx->getDeclKind() == clang::Decl::CXXRecord)
+                                if (DeclKindIsCXXClass(containing_decl_ctx->getDeclKind()))
                                 {                                    
                                     // Often times compilers omit the "this" name for the
                                     // specification DIEs, so we can't rely upon the name
@@ -3900,11 +4022,34 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                     clang_type = m_forward_decl_die_to_clang_type.lookup (die);
                     if (clang_type == NULL)
                     {
-                        clang_type_was_created = true;
-                        clang_type = ast.CreateRecordType (type_name_cstr, 
-                                                           tag_decl_kind, 
-                                                           GetClangDeclContextContainingDIE (dwarf_cu, die, NULL), 
-                                                           class_language);
+                        clang::DeclContext *decl_ctx = GetClangDeclContextContainingDIE (dwarf_cu, die, NULL);
+                        if (type_name_cstr && strchr (type_name_cstr, '<'))
+                        {
+                            ClangASTContext::TemplateParameterInfos template_param_infos;
+                            if (ParseTemplateParameterInfos (dwarf_cu, die, template_param_infos))
+                            {
+                                clang::ClassTemplateDecl *class_template_decl = ParseClassTemplateDecl (decl_ctx,
+                                                                                                        type_name_cstr,
+                                                                                                        tag_decl_kind,
+                                                                                                        template_param_infos);
+                            
+                                clang::ClassTemplateSpecializationDecl *class_specialization_decl = ast.CreateClassTemplateSpecializationDecl (decl_ctx,
+                                                                                                                                               class_template_decl,
+                                                                                                                                               tag_decl_kind,
+                                                                                                                                               template_param_infos);
+                                clang_type = ast.CreateClassTemplateSpecializationType (class_specialization_decl);
+                                clang_type_was_created = true;
+                            }
+                        }
+
+                        if (!clang_type_was_created)
+                        {
+                            clang_type_was_created = true;
+                            clang_type = ast.CreateRecordType (type_name_cstr, 
+                                                               tag_decl_kind, 
+                                                               decl_ctx, 
+                                                               class_language);
+                        }
                     }
 
                     // Store a forward declaration to this class type in case any 
@@ -4167,7 +4312,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                     clang::DeclContext *containing_decl_ctx = GetClangDeclContextContainingDIE (dwarf_cu, die, &decl_ctx_die);
                     const clang::Decl::Kind containing_decl_kind = containing_decl_ctx->getDeclKind();
 
-                    const bool is_cxx_method = containing_decl_kind == clang::Decl::CXXRecord;
+                    const bool is_cxx_method = DeclKindIsCXXClass (containing_decl_kind);
                     // Start off static. This will be set to false in ParseChildParameters(...)
                     // if we find a "this" paramters as the first parameter
                     if (is_cxx_method)
