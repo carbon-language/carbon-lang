@@ -122,7 +122,17 @@ CommandInterpreter::Initialize ()
 
     cmd_obj_sp = GetCommandSPExact ("thread step-inst", false);
     if (cmd_obj_sp)
+    {
+        AddAlias ("stepi", cmd_obj_sp);
         AddAlias ("si", cmd_obj_sp);
+    }
+
+    cmd_obj_sp = GetCommandSPExact ("thread step-inst-over", false);
+    if (cmd_obj_sp)
+    {
+        AddAlias ("nexti", cmd_obj_sp);
+        AddAlias ("ni", cmd_obj_sp);
+    }
 
     cmd_obj_sp = GetCommandSPExact ("thread step-in", false);
     if (cmd_obj_sp)
