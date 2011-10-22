@@ -18,13 +18,11 @@
 using namespace clang;
 using namespace CodeGen;
 
-#define D1(x)
-
-llvm::Constant *GetAddrOfVTTVTable(CodeGenVTables &CGVT,
-                                   const CXXRecordDecl *MostDerivedClass,
-                                   const VTTVTable &VTable,
-                                   llvm::GlobalVariable::LinkageTypes Linkage,
-                       llvm::DenseMap<BaseSubobject, uint64_t> &AddressPoints) {
+static llvm::Constant *
+GetAddrOfVTTVTable(CodeGenVTables &CGVT, const CXXRecordDecl *MostDerivedClass,
+                   const VTTVTable &VTable,
+                   llvm::GlobalVariable::LinkageTypes Linkage,
+                   llvm::DenseMap<BaseSubobject, uint64_t> &AddressPoints) {
   if (VTable.getBase() == MostDerivedClass) {
     assert(VTable.getBaseOffset().isZero() &&
            "Most derived class vtable must have a zero offset!");
