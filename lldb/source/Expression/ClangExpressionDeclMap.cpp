@@ -972,9 +972,11 @@ ClangExpressionDeclMap::LookupDecl (clang::NamedDecl *decl)
     {
         if ((persistent_var_sp->m_flags & ClangExpressionVariable::EVIsProgramReference ||
              persistent_var_sp->m_flags & ClangExpressionVariable::EVIsLLDBAllocated) &&
-            persistent_var_sp->m_live_sp)
+            persistent_var_sp->m_live_sp &&
+            m_parser_vars->m_exe_ctx->GetProcessSP() &&
+            m_parser_vars->m_exe_ctx->GetProcessSP()->IsAlive())
         {
-            return persistent_var_sp->m_live_sp->GetValue();
+                return persistent_var_sp->m_live_sp->GetValue();
         }
         else
         {
