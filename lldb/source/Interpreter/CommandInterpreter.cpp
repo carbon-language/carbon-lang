@@ -174,6 +174,14 @@ CommandInterpreter::Initialize ()
     if (cmd_obj_sp)
         AddAlias ("down", cmd_obj_sp);
 
+    cmd_obj_sp = GetCommandSPExact ("_display", false);
+    if (cmd_obj_sp)
+        AddAlias ("display", cmd_obj_sp);
+
+    cmd_obj_sp = GetCommandSPExact ("_undisplay", false);
+    if (cmd_obj_sp)
+        AddAlias ("undisplay", cmd_obj_sp);
+
     cmd_obj_sp = GetCommandSPExact ("target create", false);
     if (cmd_obj_sp)
         AddAlias ("file", cmd_obj_sp);
@@ -212,7 +220,6 @@ CommandInterpreter::Initialize ()
         AddOrReplaceAliasOptions ("r", alias_arguments_vector_sp);
         AddOrReplaceAliasOptions ("run", alias_arguments_vector_sp);
     }
-
 }
 
 const char *
@@ -328,6 +335,35 @@ CommandInterpreter::LoadCommandDictionary ()
             m_command_dict[up_regex_cmd_sp->GetCommandName ()] = up_regex_cmd_sp;
         }
     }
+
+    std::auto_ptr<CommandObjectRegexCommand>
+    display_regex_cmd_ap(new CommandObjectRegexCommand (*this,
+                                                   "_display",
+                                                   "Add an expression evaluation stop-hook.",
+                                                   "_display expression", 2));
+    if (display_regex_cmd_ap.get())
+    {
+        if (display_regex_cmd_ap->AddRegexCommand("^(.+)$", "target stop-hook add -o \"expr -- %1\""))
+        {
+            CommandObjectSP display_regex_cmd_sp(display_regex_cmd_ap.release());
+            m_command_dict[display_regex_cmd_sp->GetCommandName ()] = display_regex_cmd_sp;
+        }
+    }
+
+    std::auto_ptr<CommandObjectRegexCommand>
+    undisplay_regex_cmd_ap(new CommandObjectRegexCommand (*this,
+                                                   "_undisplay",
+                                                   "Remove an expression evaluation stop-hook.",
+                                                   "_undisplay stop-hook-number", 2));
+    if (undisplay_regex_cmd_ap.get())
+    {
+        if (undisplay_regex_cmd_ap->AddRegexCommand("^([0-9]+)$", "target stop-hook delete %1"))
+        {
+            CommandObjectSP undisplay_regex_cmd_sp(undisplay_regex_cmd_ap.release());
+            m_command_dict[undisplay_regex_cmd_sp->GetCommandName ()] = undisplay_regex_cmd_sp;
+        }
+    }
+
 }
 
 int
