@@ -251,3 +251,11 @@ bb:
 ; CHECK: call void @test19f
 }
 
+define void @test20() {
+  %m = call i8* @malloc(i32 24)
+  store i8 0, i8* %m
+  ret void
+}
+; CHECK: @test20
+; CHECK-NOT: store
+; CHECK: ret void

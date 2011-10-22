@@ -24,6 +24,7 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/CaptureTracking.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
@@ -255,6 +256,14 @@ static Value *getStoredPointerOperand(Instruction *I) {
 
 static uint64_t getPointerSize(Value *V, AliasAnalysis &AA) {
   const TargetData *TD = AA.getTargetData();
+
+  if (CallInst *CI = dyn_cast<CallInst>(V)) {
+    assert(isMalloc(CI) && "Expected Malloc call!");
+    if (ConstantInt *C = dyn_cast<ConstantInt>(CI->getArgOperand(0)))
+      return C->getZExtValue();
+    return AliasAnalysis::UnknownSize;
+  }
+
   if (TD == 0)
     return AliasAnalysis::UnknownSize;
 
@@ -265,7 +274,7 @@ static uint64_t getPointerSize(Value *V, AliasAnalysis &AA) {
     return AliasAnalysis::UnknownSize;
   }
 
-  assert(isa<Argument>(V) && "Expected AllocaInst or Argument!");
+  assert(isa<Argument>(V) && "Expected AllocaInst, malloc call or Argument!");
   PointerType *PT = cast<PointerType>(V->getType());
   return TD->getTypeAllocSize(PT->getElementType());
 }
@@ -279,6 +288,8 @@ static bool isObjectPointerWithTrustworthySize(const Value *V) {
     return !GV->mayBeOverridden();
   if (const Argument *A = dyn_cast<Argument>(V))
     return A->hasByValAttr();
+  if (isMalloc(V))
+    return true;
   return false;
 }
 
@@ -588,9 +599,16 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
 
   // Find all of the alloca'd pointers in the entry block.
   BasicBlock *Entry = BB.getParent()->begin();
-  for (BasicBlock::iterator I = Entry->begin(), E = Entry->end(); I != E; ++I)
+  for (BasicBlock::iterator I = Entry->begin(), E = Entry->end(); I != E; ++I) {
     if (AllocaInst *AI = dyn_cast<AllocaInst>(I))
       DeadStackObjects.insert(AI);
+
+    // Okay, so these are dead heap objects, but if the pointer never escapes
+    // then it's leaked by this function anyways.
+    if (CallInst *CI = extractMallocCall(I))
+      if (!PointerMayBeCaptured(CI, true, true))
+        DeadStackObjects.insert(CI);
+  }
 
   // Treat byval arguments the same, stores to them are dead at the end of the
   // function.
@@ -634,6 +652,11 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
 
     if (AllocaInst *A = dyn_cast<AllocaInst>(BBI)) {
       DeadStackObjects.erase(A);
+      continue;
+    }
+
+    if (CallInst *CI = extractMallocCall(BBI)) {
+      DeadStackObjects.erase(CI);
       continue;
     }
 
