@@ -172,6 +172,7 @@
                     <tr>
                         <td class="content">
                             <b>(lldb)</b> thread step-inst-over<br>
+                            <b>(lldb)</b> ni
                         </td>
                         <td class="content">
                             <b>(gdb)</b> nexti<br>
@@ -194,6 +195,7 @@
                     <tr>
                         <td class="content">
                             <b>(lldb)</b> target stop-hook add --one-liner "frame variable argc argv"<br>
+                            <b>(lldb)</b> ta st a -o "fr v argc argv"<br>
                         </td>
                         <td class="content">
                             <b>(gdb)</b> display argc<br>
@@ -205,6 +207,7 @@
                     <tr>
                         <td class="content" colspan="2">
                             <b>(lldb)</b> target stop-hook add --name main --one-liner "frame variable argc argv"<br>
+                            <b>(lldb)</b> ta st a -n main -o "fr v argc argv"<br>
                         </td>
                     </tr>
 
@@ -218,7 +221,7 @@
                     <tr><td class="header" colspan="2">Backtrace and disassemble every time you stop.</td></tr>
                     <tr>
                         <td class="content" colspan="2">
-                            <b>(lldb)</b> target stop-hook add"<br>
+                            <b>(lldb)</b> target stop-hook add<br>
                             Enter your stop hook command(s).  Type 'DONE' to end.<br>
                             &gt; bt<br>
                             &gt; disassemble --pc<br>
@@ -247,7 +250,7 @@
                     <tr>
                         <td class="content">
                             <b>(lldb)</b> breakpoint set --name main<br>
-                            <b>(lldb)</b> breakpoint set -n main<br>
+                            <b>(lldb)</b> br s -n main<br>
                             <b>(lldb)</b> b main
                         </td>
                         <td class="content">
