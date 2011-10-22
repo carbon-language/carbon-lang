@@ -371,7 +371,7 @@ D: Cmake dependency chain and various bug fixes
 
 N: Nadav Rotem
 E: nadav.rotem@intel.com
-D: Vector code generation improvments.
+D: Vector code generation improvements.
 
 N: Bill Wendling
 E: wendling@apple.com
