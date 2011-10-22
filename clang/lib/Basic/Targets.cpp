@@ -3310,14 +3310,26 @@ class Mips64TargetInfoBase : public MipsTargetInfoBase {
   virtual void SetDescriptionString(const std::string &Name) = 0;
 public:
   Mips64TargetInfoBase(const std::string& triple) :
-    MipsTargetInfoBase(triple, "n64") {}
+    MipsTargetInfoBase(triple, "n64") {
+    LongWidth = LongAlign = 64;
+    PointerWidth = PointerAlign = 64;
+    LongDoubleWidth = LongDoubleAlign = 128;
+    LongDoubleFormat = &llvm::APFloat::IEEEquad;
+  }
   virtual bool setABI(const std::string &Name) {
     SetDescriptionString(Name);
-    if ((Name == "n32") || (Name == "n64")) {
-      ABI = Name;
-      return true;
-    } else
+
+    if (Name != "n32" && Name != "n64")
       return false;
+
+    ABI = Name;
+
+    if (Name == "n32") {
+      LongWidth = LongAlign = 32;
+      PointerWidth = PointerAlign = 32;
+    }
+
+    return true;
   }
   virtual void getArchDefines(const LangOptions &Opts,
                               MacroBuilder &Builder) const {
@@ -3379,13 +3391,15 @@ class Mips64EBTargetInfo : public Mips64TargetInfoBase {
     // Change DescriptionString only if ABI is n32.  
     if (Name == "n32")
       DescriptionString = "E-p:32:32:32-i1:8:8-i8:8:32-i16:16:32-i32:32:32-"
-                          "i64:64:64-f32:32:32-f64:64:64-v64:64:64-n32";      
+                          "i64:64:64-f32:32:32-f64:64:64-f128:128:128-"
+                          "v64:64:64-n32";      
   }
 public:
   Mips64EBTargetInfo(const std::string& triple) : Mips64TargetInfoBase(triple) {
     // Default ABI is n64.  
     DescriptionString = "E-p:64:64:64-i1:8:8-i8:8:32-i16:16:32-i32:32:32-"
-                        "i64:64:64-f32:32:32-f64:64:64-v64:64:64-n32";
+                        "i64:64:64-f32:32:32-f64:64:64-f128:128:128-"
+                        "v64:64:64-n32";
   }
   virtual void getTargetDefines(const LangOptions &Opts,
                                 MacroBuilder &Builder) const {
@@ -3403,13 +3417,15 @@ class Mips64ELTargetInfo : public Mips64TargetInfoBase {
     // Change DescriptionString only if ABI is n32.  
     if (Name == "n32")
       DescriptionString = "e-p:32:32:32-i1:8:8-i8:8:32-i16:16:32-i32:32:32-"
-                          "i64:64:64-f32:32:32-f64:64:64-v64:64:64-n32";      
+                          "i64:64:64-f32:32:32-f64:64:64-f128:128:128"
+                          "-v64:64:64-n32";      
   }
 public:
   Mips64ELTargetInfo(const std::string& triple) : Mips64TargetInfoBase(triple) {
     // Default ABI is n64.  
     DescriptionString = "e-p:64:64:64-i1:8:8-i8:8:32-i16:16:32-i32:32:32-"
-                        "i64:64:64-f32:32:32-f64:64:64-v64:64:64-n32";
+                        "i64:64:64-f32:32:32-f64:64:64-f128:128:128-"
+                        "v64:64:64-n32";
   }
   virtual void getTargetDefines(const LangOptions &Opts,
                                 MacroBuilder &Builder) const {
