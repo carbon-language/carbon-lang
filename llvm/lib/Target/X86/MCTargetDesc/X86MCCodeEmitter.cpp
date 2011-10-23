@@ -472,6 +472,10 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
     VEX_PP = 0x3;
     VEX_5M = 0x2;
     break;
+  case X86II::TAXD: // F2 0F 3A
+    VEX_PP = 0x3;
+    VEX_5M = 0x3;
+    break;
   case X86II::XS:  // F3 0F
     VEX_PP = 0x2;
     break;
@@ -802,6 +806,10 @@ void X86MCCodeEmitter::EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
     EmitByte(0xF2, CurByte, OS);
     Need0FPrefix = true;
     break;
+  case X86II::TAXD: // F2 0F 3A
+    EmitByte(0xF2, CurByte, OS);
+    Need0FPrefix = true;
+    break;
   case X86II::XS:   // F3 0F
     EmitByte(0xF3, CurByte, OS);
     Need0FPrefix = true;
@@ -838,6 +846,7 @@ void X86MCCodeEmitter::EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   case X86II::T8:    // 0F 38
     EmitByte(0x38, CurByte, OS);
     break;
+  case X86II::TAXD:  // F2 0F 3A
   case X86II::TA:    // 0F 3A
     EmitByte(0x3A, CurByte, OS);
     break;

@@ -656,6 +656,7 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
     Need0FPrefix = true;
     break;
   case X86II::T8XD: // F2 0F 38
+  case X86II::TAXD: // F2 0F 3A
   case X86II::XD:   // F2 0F
     MCE.emitByte(0xF2);
     Need0FPrefix = true;
@@ -686,6 +687,7 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
   case X86II::T8:    // 0F 38
     MCE.emitByte(0x38);
     break;
+  case X86II::TAXD:  // F2 0F 38
   case X86II::TA:    // 0F 3A
     MCE.emitByte(0x3A);
     break;

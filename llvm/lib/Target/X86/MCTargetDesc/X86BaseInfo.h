@@ -301,6 +301,9 @@ namespace X86II {
     // T8XS - Prefix before and after 0x0F. Combination of T8 and XS.
     T8XS = 18 << Op0Shift,
 
+    // TAXD - Prefix before and after 0x0F. Combination of TA and XD.
+    TAXD = 19 << Op0Shift,
+
     //===------------------------------------------------------------------===//
     // REX_W - REX prefixes are instruction prefixes used in 64-bit mode.
     // They are used to specify GPRs and SSE registers, 64-bit operand size,

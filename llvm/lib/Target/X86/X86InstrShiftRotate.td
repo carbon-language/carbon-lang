@@ -744,3 +744,24 @@ def SHRD64mri8 : RIi8<0xAC, MRMDestMem,
 
 } // Defs = [EFLAGS]
 
+let Predicates = [HasBMI2], neverHasSideEffects = 1 in {
+  def RORX32ri : Ii8<0xF0, MRMSrcReg, (outs GR32:$dst),
+                     (ins GR32:$src1, i8imm:$src2),
+                     "rorx{l}\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>,
+                     TAXD, VEX;
+  let mayLoad = 1 in
+  def RORX32mi : Ii8<0xF0, MRMSrcMem, (outs GR32:$dst),
+                     (ins i32mem:$src1, i8imm:$src2),
+                     "rorx{l}\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>,
+                     TAXD, VEX;
+
+  def RORX64ri : Ii8<0xF0, MRMSrcReg, (outs GR64:$dst),
+                     (ins GR64:$src1, i8imm:$src2),
+                     "rorx{q}\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>,
+                     TAXD, VEX, VEX_W;
+  let mayLoad = 1 in
+  def RORX64mi : Ii8<0xF0, MRMSrcMem, (outs GR64:$dst),
+                     (ins i64mem:$src1, i8imm:$src2),
+                     "rorx{q}\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>,
+                     TAXD, VEX, VEX_W;
+}

@@ -119,3 +119,35 @@
 // CHECK: pdepq (%rax), %r11, %r10
 // CHECK: encoding: [0xc4,0x62,0xa3,0xf5,0x10]
           pdepq (%rax), %r11, %r10
+
+// CHECK: mulxl %r12d, %r11d, %r10d
+// CHECK: encoding: [0xc4,0x42,0x23,0xf6,0xd4]
+          mulxl %r12d, %r11d, %r10d
+
+// CHECK: mulxl (%rax), %r11d, %r10d
+// CHECK: encoding: [0xc4,0x62,0x23,0xf6,0x10]
+          mulxl (%rax), %r11d, %r10d
+
+// CHECK: mulxq %r12, %r11, %r10
+// CHECK: encoding: [0xc4,0x42,0xa3,0xf6,0xd4]
+          mulxq %r12, %r11, %r10
+
+// CHECK: mulxq (%rax), %r11, %r10
+// CHECK: encoding: [0xc4,0x62,0xa3,0xf6,0x10]
+          mulxq (%rax), %r11, %r10
+
+// CHECK: rorxl $10, %r12d, %r10d
+// CHECK: encoding: [0xc4,0x43,0x7b,0xf0,0xd4,0x0a]
+          rorxl $10, %r12d, %r10d
+
+// CHECK: rorxl $31, (%rax), %r10d
+// CHECK: encoding: [0xc4,0x63,0x7b,0xf0,0x10,0x1f]
+          rorxl $31, (%rax), %r10d
+
+// CHECK: rorxq $1, %r12, %r10
+// CHECK: encoding: [0xc4,0x43,0xfb,0xf0,0xd4,0x01]
+          rorxq $1, %r12, %r10
+
+// CHECK: rorxq $63, (%rax), %r10
+// CHECK: encoding: [0xc4,0x63,0xfb,0xf0,0x10,0x3f]
+          rorxq $63, (%rax), %r10

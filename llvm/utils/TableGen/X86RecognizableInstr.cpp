@@ -68,7 +68,7 @@ namespace X86Local {
     DC = 7, DD = 8, DE = 9, DF = 10,
     XD = 11,  XS = 12,
     T8 = 13,  P_TA = 14,
-    A6 = 15,  A7 = 16, T8XD = 17, T8XS = 18
+    A6 = 15,  A7 = 16, T8XD = 17, T8XS = 18, TAXD = 19
   };
 }
 
@@ -296,20 +296,23 @@ InstructionContext RecognizableInstr::insnContext() const {
     else if (HasVEX_LPrefix &&
              (Prefix == X86Local::XS || Prefix == X86Local::T8XS))
       insnContext = IC_VEX_L_XS;
-    else if (HasVEX_LPrefix &&
-             (Prefix == X86Local::XD || Prefix == X86Local::T8XD))
+    else if (HasVEX_LPrefix && (Prefix == X86Local::XD ||
+                                Prefix == X86Local::T8XD ||
+                                Prefix == X86Local::TAXD))
       insnContext = IC_VEX_L_XD;
     else if (HasVEX_WPrefix &&
              (Prefix == X86Local::XS || Prefix == X86Local::T8XS))
       insnContext = IC_VEX_W_XS;
-    else if (HasVEX_WPrefix &&
-             (Prefix == X86Local::XD || Prefix == X86Local::T8XD))
+    else if (HasVEX_WPrefix && (Prefix == X86Local::XD ||
+                                Prefix == X86Local::T8XD ||
+                                Prefix == X86Local::TAXD))
       insnContext = IC_VEX_W_XD;
     else if (HasVEX_WPrefix)
       insnContext = IC_VEX_W;
     else if (HasVEX_LPrefix)
       insnContext = IC_VEX_L;
-    else if (Prefix == X86Local::XD || Prefix == X86Local::T8XD)
+    else if (Prefix == X86Local::XD || Prefix == X86Local::T8XD ||
+             Prefix == X86Local::TAXD)
       insnContext = IC_VEX_XD;
     else if (Prefix == X86Local::XS || Prefix == X86Local::T8XS)
       insnContext = IC_VEX_XS;
@@ -318,8 +321,9 @@ InstructionContext RecognizableInstr::insnContext() const {
   } else if (Is64Bit || HasREX_WPrefix) {
     if (HasREX_WPrefix && HasOpSizePrefix)
       insnContext = IC_64BIT_REXW_OPSIZE;
-    else if (HasOpSizePrefix &&
-             (Prefix == X86Local::XD || Prefix == X86Local::T8XD))
+    else if (HasOpSizePrefix && (Prefix == X86Local::XD ||
+                                 Prefix == X86Local::T8XD ||
+                                 Prefix == X86Local::TAXD))
       insnContext = IC_64BIT_XD_OPSIZE;
     else if (HasOpSizePrefix &&
              (Prefix == X86Local::XS || Prefix == X86Local::T8XS))
@@ -329,10 +333,12 @@ InstructionContext RecognizableInstr::insnContext() const {
     else if (HasREX_WPrefix &&
              (Prefix == X86Local::XS || Prefix == X86Local::T8XS))
       insnContext = IC_64BIT_REXW_XS;
-    else if (HasREX_WPrefix &&
-             (Prefix == X86Local::XD || Prefix == X86Local::T8XD))
+    else if (HasREX_WPrefix && (Prefix == X86Local::XD ||
+                                Prefix == X86Local::T8XD ||
+                                Prefix == X86Local::TAXD))
       insnContext = IC_64BIT_REXW_XD;
-    else if (Prefix == X86Local::XD || Prefix == X86Local::T8XD)
+    else if (Prefix == X86Local::XD || Prefix == X86Local::T8XD ||
+             Prefix == X86Local::TAXD)
       insnContext = IC_64BIT_XD;
     else if (Prefix == X86Local::XS || Prefix == X86Local::T8XS)
       insnContext = IC_64BIT_XS;
@@ -341,15 +347,17 @@ InstructionContext RecognizableInstr::insnContext() const {
     else
       insnContext = IC_64BIT;
   } else {
-    if (HasOpSizePrefix &&
-        (Prefix == X86Local::XD || Prefix == X86Local::T8XD))
+    if (HasOpSizePrefix && (Prefix == X86Local::XD ||
+                            Prefix == X86Local::T8XD ||
+                            Prefix == X86Local::TAXD))
       insnContext = IC_XD_OPSIZE;
     else if (HasOpSizePrefix &&
              (Prefix == X86Local::XS || Prefix == X86Local::T8XS))
       insnContext = IC_XS_OPSIZE;
     else if (HasOpSizePrefix)
       insnContext = IC_OPSIZE;
-    else if (Prefix == X86Local::XD || Prefix == X86Local::T8XD)
+    else if (Prefix == X86Local::XD || Prefix == X86Local::T8XD ||
+             Prefix == X86Local::TAXD)
       insnContext = IC_XD;
     else if (Prefix == X86Local::XS || Prefix == X86Local::T8XS ||
              Prefix == X86Local::REP)
@@ -908,6 +916,7 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
     opcodeToSet = Opcode;
     break;
   case X86Local::P_TA:
+  case X86Local::TAXD:
     opcodeType = THREEBYTE_3A;
     if (needsModRMForDecode(Form))
       filter = new ModFilter(isRegFormat(Form));
