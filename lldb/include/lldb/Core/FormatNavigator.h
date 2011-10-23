@@ -16,19 +16,6 @@
 #include <unistd.h>
 
 // C++ Includes
-
-#ifdef __GNUC__
-#include <ext/hash_map>
-
-namespace std
-{
-    using namespace __gnu_cxx;
-}
-
-#else
-#include <hash_map>
-#endif
-
 #include <map>
 
 // Other libraries and framework includes
