@@ -56,9 +56,10 @@ bool MultiInitializer::isTypeDependent() const {
 
 bool MultiInitializer::DiagnoseUnexpandedParameterPack(Sema &SemaRef) const {
   if (isInitializerList())
-    return SemaRef.DiagnoseUnexpandedParameterPack(getInitList());
+    return SemaRef.DiagnoseUnexpandedParameterPack(getInitList(),
+                                                   Sema::UPPC_Initializer);
   for (iterator I = begin(), E = end(); I != E; ++I) {
-    if (SemaRef.DiagnoseUnexpandedParameterPack(*I))
+    if (SemaRef.DiagnoseUnexpandedParameterPack(*I, Sema::UPPC_Initializer))
       return true;
   }
   return false;
