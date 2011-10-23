@@ -476,12 +476,8 @@ uint32_t BranchProbabilityInfo::getSumForBlock(const BasicBlock *BB) const {
 bool BranchProbabilityInfo::
 isEdgeHot(const BasicBlock *Src, const BasicBlock *Dst) const {
   // Hot probability is at least 4/5 = 80%
-  uint32_t Weight = getEdgeWeight(Src, Dst);
-  uint32_t Sum = getSumForBlock(Src);
-
-  // FIXME: Implement BranchProbability::compare then change this code to
-  // compare this BranchProbability against a static "hot" BranchProbability.
-  return (uint64_t)Weight * 5 > (uint64_t)Sum * 4;
+  // FIXME: Compare against a static "hot" BranchProbability.
+  return getEdgeProbability(Src, Dst) > BranchProbability(4, 5);
 }
 
 BasicBlock *BranchProbabilityInfo::getHotSucc(BasicBlock *BB) const {
@@ -503,8 +499,8 @@ BasicBlock *BranchProbabilityInfo::getHotSucc(BasicBlock *BB) const {
     }
   }
 
-  // FIXME: Use BranchProbability::compare.
-  if ((uint64_t)MaxWeight * 5 > (uint64_t)Sum * 4)
+  // Hot probability is at least 4/5 = 80%
+  if (BranchProbability(MaxWeight, Sum) > BranchProbability(4, 5))
     return MaxSucc;
 
   return 0;

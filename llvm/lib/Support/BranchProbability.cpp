@@ -17,13 +17,6 @@
 
 using namespace llvm;
 
-BranchProbability::BranchProbability(uint32_t n, uint32_t d) {
-  assert(d > 0 && "Denomiator cannot be 0!");
-  assert(n <= d && "Probability cannot be bigger than 1!");
-  N = n;
-  D = d;
-}
-
 void BranchProbability::print(raw_ostream &OS) const {
   OS << N << " / " << D << " = " << ((double)N / D);
 }

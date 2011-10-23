@@ -53,4 +53,24 @@ TEST(BlockFrequencyTest, MaxToMax) {
   EXPECT_EQ(Freq.getFrequency(), UINT64_MAX);
 }
 
+TEST(BlockFrequencyTest, ProbabilityCompare) {
+  BranchProbability A(4, 5);
+  BranchProbability B(4U << 29, 5U << 29);
+  BranchProbability C(3, 4);
+
+  EXPECT_TRUE(A == B);
+  EXPECT_FALSE(A != B);
+  EXPECT_FALSE(A < B);
+  EXPECT_FALSE(A > B);
+  EXPECT_TRUE(A <= B);
+  EXPECT_TRUE(A >= B);
+
+  EXPECT_FALSE(B == C);
+  EXPECT_TRUE(B != C);
+  EXPECT_FALSE(B < C);
+  EXPECT_TRUE(B > C);
+  EXPECT_FALSE(B <= C);
+  EXPECT_TRUE(B >= C);
+}
+
 }
