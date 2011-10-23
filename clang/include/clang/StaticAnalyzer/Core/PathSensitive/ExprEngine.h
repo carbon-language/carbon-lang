@@ -28,8 +28,9 @@
 
 namespace clang {
 
+class AnalysisContextManager;
 class ObjCForCollectionStmt;
-
+  
 namespace ento {
 
 class AnalysisManager;
@@ -38,6 +39,8 @@ class ObjCMessage;
 
 class ExprEngine : public SubEngine {
   AnalysisManager &AMgr;
+  
+  AnalysisContextManager &AnalysisContexts;
 
   CoreEngine Engine;
 

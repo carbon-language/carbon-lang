@@ -32,7 +32,6 @@ namespace ento {
 
 class AnalysisManager : public BugReporterData {
   AnalysisContextManager AnaCtxMgr;
-  LocationContextManager LocCtxMgr;
 
   ASTContext &Ctx;
   DiagnosticsEngine &Diags;
@@ -97,7 +96,6 @@ public:
   ~AnalysisManager() { FlushDiagnostics(); }
   
   void ClearContexts() {
-    LocCtxMgr.clear();
     AnaCtxMgr.clear();
   }
   
@@ -189,30 +187,9 @@ public:
     return AnaCtxMgr.getContext(D, TU);
   }
 
-  const StackFrameContext *getStackFrame(AnalysisContext *Ctx,
-                                         LocationContext const *Parent,
-                                         const Stmt *S,
-                                         const CFGBlock *Blk, unsigned Idx) {
-    return LocCtxMgr.getStackFrame(Ctx, Parent, S, Blk, Idx);
-  }
-
-  // Get the top level stack frame.
-  const StackFrameContext *getStackFrame(Decl const *D, 
-                                         idx::TranslationUnit *TU) {
-    return LocCtxMgr.getStackFrame(AnaCtxMgr.getContext(D, TU), 0, 0, 0, 0);
-  }
-
-  // Get a stack frame with parent.
-  StackFrameContext const *getStackFrame(const Decl *D, 
-                                         LocationContext const *Parent,
-                                         const Stmt *S,
-                                         const CFGBlock *Blk, unsigned Idx) {
-    return LocCtxMgr.getStackFrame(AnaCtxMgr.getContext(D), Parent, S,
-                                   Blk,Idx);
-  }
 };
 
-} // end GR namespace
+} // enAnaCtxMgrspace
 
 } // end clang namespace
 

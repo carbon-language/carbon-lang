@@ -38,7 +38,9 @@ class PseudoConstantAnalysis;
 class ImplicitParamDecl;
 class LocationContextManager;
 class StackFrameContext;
-  
+class AnalysisContextManager;
+class LocationContext;  
+
 namespace idx { class TranslationUnit; }
 
 /// The base class of a hierarchy of objects representing analyses tied
@@ -61,9 +63,14 @@ public:
   // which creates the analysis object given an AnalysisContext.
 };
   
+  
 /// AnalysisContext contains the context data for the function or method under
 /// analysis.
 class AnalysisContext {
+  /// Backpoint to the AnalysisManager object that created this AnalysisContext.
+  /// This may be null.
+  AnalysisContextManager *Manager;
+  
   const Decl *D;
 
   // TranslationUnit is NULL if we don't have multiple translation units.
@@ -91,10 +98,14 @@ class AnalysisContext {
   void *ManagedAnalyses;
 
 public:
-  AnalysisContext(const Decl *d, idx::TranslationUnit *tu);
+  AnalysisContext(AnalysisContextManager *Mgr,
+                  const Decl *D,
+                  idx::TranslationUnit *TU);
 
-  AnalysisContext(const Decl *d, idx::TranslationUnit *tu,
-                  const CFG::BuildOptions &buildOptions);
+  AnalysisContext(AnalysisContextManager *Mgr,
+                  const Decl *D,
+                  idx::TranslationUnit *TU,
+                  const CFG::BuildOptions &BuildOptions);
 
   ~AnalysisContext();
 
@@ -155,6 +166,11 @@ public:
   /// AnalysisContext wraps an ObjCMethodDecl.  Returns NULL otherwise.
   const ImplicitParamDecl *getSelfDecl() const;
   
+  const StackFrameContext *getStackFrame(LocationContext const *Parent,
+                                         const Stmt *S,
+                                         const CFGBlock *Blk,
+                                         unsigned Idx);  
+  
   /// Return the specified analysis object, lazily running the analysis if
   /// necessary.  Return NULL if the analysis could not run.
   template <typename T>
@@ -168,31 +184,8 @@ public:
   }
 private:
   ManagedAnalysis *&getAnalysisImpl(const void* tag);
-};
-
-class AnalysisContextManager {
-  typedef llvm::DenseMap<const Decl*, AnalysisContext*> ContextMap;
-  ContextMap Contexts;
-  CFG::BuildOptions cfgBuildOptions;
-public:
-  AnalysisContextManager(bool useUnoptimizedCFG = false,
-                         bool addImplicitDtors = false,
-                         bool addInitializers = false);
   
-  ~AnalysisContextManager();
-
-  AnalysisContext *getContext(const Decl *D, idx::TranslationUnit *TU = 0);
-
-  bool getUseUnoptimizedCFG() const {
-    return !cfgBuildOptions.PruneTriviallyFalseEdges;
-  }
-  
-  CFG::BuildOptions &getCFGBuildOptions() {
-    return cfgBuildOptions;
-  }
-
-  /// Discard all previously created AnalysisContexts.
-  void clear();
+  LocationContextManager &getLocationContextManager();
 };
 
 class LocationContext : public llvm::FoldingSetNode {
@@ -373,6 +366,65 @@ private:
   const LOC *getLocationContext(AnalysisContext *ctx,
                                 const LocationContext *parent,
                                 const DATA *d);
+};
+
+class AnalysisContextManager {
+  typedef llvm::DenseMap<const Decl*, AnalysisContext*> ContextMap;
+  
+  ContextMap Contexts;
+  LocationContextManager LocContexts;
+  CFG::BuildOptions cfgBuildOptions;
+  
+public:
+  AnalysisContextManager(bool useUnoptimizedCFG = false,
+                         bool addImplicitDtors = false,
+                         bool addInitializers = false);
+  
+  ~AnalysisContextManager();
+  
+  AnalysisContext *getContext(const Decl *D, idx::TranslationUnit *TU = 0);
+  
+  bool getUseUnoptimizedCFG() const {
+    return !cfgBuildOptions.PruneTriviallyFalseEdges;
+  }
+  
+  CFG::BuildOptions &getCFGBuildOptions() {
+    return cfgBuildOptions;
+  }
+  
+  const StackFrameContext *getStackFrame(AnalysisContext *Ctx,
+                                         LocationContext const *Parent,
+                                         const Stmt *S,
+                                         const CFGBlock *Blk,
+                                         unsigned Idx) {
+    return LocContexts.getStackFrame(Ctx, Parent, S, Blk, Idx);
+  }
+  
+  // Get the top level stack frame.
+  const StackFrameContext *getStackFrame(Decl const *D, 
+                                         idx::TranslationUnit *TU) {
+    return LocContexts.getStackFrame(getContext(D, TU), 0, 0, 0, 0);
+  }
+  
+  // Get a stack frame with parent.
+  StackFrameContext const *getStackFrame(const Decl *D, 
+                                         LocationContext const *Parent,
+                                         const Stmt *S,
+                                         const CFGBlock *Blk,
+                                         unsigned Idx) {
+    return LocContexts.getStackFrame(getContext(D), Parent, S, Blk, Idx);
+  }
+
+  
+  /// Discard all previously created AnalysisContexts.
+  void clear();
+
+private:
+  friend class AnalysisContext;
+
+  LocationContextManager &getLocationContextManager() {
+    return LocContexts;
+  }
 };
 
 } // end clang namespace

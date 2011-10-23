@@ -53,6 +53,7 @@ static inline Selector GetNullarySelector(const char* name, ASTContext &Ctx) {
 
 ExprEngine::ExprEngine(AnalysisManager &mgr, bool gcEnabled)
   : AMgr(mgr),
+    AnalysisContexts(mgr.getAnalysisContextManager()),
     Engine(*this),
     G(Engine.getGraph()),
     Builder(NULL),

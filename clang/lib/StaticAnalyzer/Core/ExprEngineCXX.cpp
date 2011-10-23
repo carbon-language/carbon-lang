@@ -215,17 +215,18 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E,
 }
 
 void ExprEngine::VisitCXXDestructor(const CXXDestructorDecl *DD,
-                                      const MemRegion *Dest,
-                                      const Stmt *S,
-                                      ExplodedNode *Pred, 
-                                      ExplodedNodeSet &Dst) {
+                                    const MemRegion *Dest,
+                                    const Stmt *S,
+                                    ExplodedNode *Pred, 
+                                    ExplodedNodeSet &Dst) {
   if (!(DD->doesThisDeclarationHaveABody() && AMgr.shouldInlineCall()))
     return;
+
   // Create the context for 'this' region.
-  const StackFrameContext *SFC = AMgr.getStackFrame(DD,
-                                                    Pred->getLocationContext(),
-                                                    S, Builder->getBlock(),
-                                                    Builder->getIndex());
+  const StackFrameContext *SFC =
+    AnalysisContexts.getContext(DD)->
+      getStackFrame(Pred->getLocationContext(), S,
+                    Builder->getBlock(), Builder->getIndex());
 
   const CXXThisRegion *ThisR = getCXXThisRegion(DD->getParent(), SFC);
 

@@ -830,7 +830,7 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
   const Stmt *Body = D->getBody();
   assert(Body);
 
-  AnalysisContext AC(D, 0);
+  AnalysisContext AC(/* AnalysisContextManager */ 0,  D, 0);
 
   // Don't generate EH edges for CallExprs as we'd like to avoid the n^2
   // explosion for destrutors that can result and the compile time hit.

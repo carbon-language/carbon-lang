@@ -318,7 +318,8 @@ static void ActionExprEngine(AnalysisConsumer &C, AnalysisManager &mgr,
   }
 
   // Execute the worklist algorithm.
-  Eng.ExecuteWorkList(mgr.getStackFrame(D, 0), mgr.getMaxNodes());
+  Eng.ExecuteWorkList(mgr.getAnalysisContextManager().getStackFrame(D, 0),
+                      mgr.getMaxNodes());
 
   // Release the auditor (if any) so that it doesn't monitor the graph
   // created BugReporter.

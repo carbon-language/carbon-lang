@@ -32,10 +32,13 @@ using namespace clang;
 
 typedef llvm::DenseMap<const void *, ManagedAnalysis *> ManagedAnalysisMap;
 
-AnalysisContext::AnalysisContext(const Decl *d,
+AnalysisContext::AnalysisContext(AnalysisContextManager *Mgr,
+                                 const Decl *d,
                                  idx::TranslationUnit *tu,
                                  const CFG::BuildOptions &buildOptions)
-  : D(d), TU(tu),
+  : Manager(Mgr),
+    D(d),
+    TU(tu),
     cfgBuildOptions(buildOptions),
     forcedBlkExprs(0),
     builtCFG(false),
@@ -46,9 +49,12 @@ AnalysisContext::AnalysisContext(const Decl *d,
   cfgBuildOptions.forcedBlkExprs = &forcedBlkExprs;
 }
 
-AnalysisContext::AnalysisContext(const Decl *d,
+AnalysisContext::AnalysisContext(AnalysisContextManager *Mgr,
+                                 const Decl *d,
                                  idx::TranslationUnit *tu)
-: D(d), TU(tu),
+: Manager(Mgr),
+  D(d),
+  TU(tu),
   forcedBlkExprs(0),
   builtCFG(false),
   builtCompleteCFG(false),
@@ -184,8 +190,20 @@ AnalysisContext *AnalysisContextManager::getContext(const Decl *D,
                                                     idx::TranslationUnit *TU) {
   AnalysisContext *&AC = Contexts[D];
   if (!AC)
-    AC = new AnalysisContext(D, TU, cfgBuildOptions);
+    AC = new AnalysisContext(this, D, TU, cfgBuildOptions);
   return AC;
+}
+
+const StackFrameContext *
+AnalysisContext::getStackFrame(LocationContext const *Parent, const Stmt *S,
+                               const CFGBlock *Blk, unsigned Idx) {
+  return getLocationContextManager().getStackFrame(this, Parent, S, Blk, Idx);
+}
+
+LocationContextManager & AnalysisContext::getLocationContextManager() {
+  assert(Manager &&
+         "Cannot create LocationContexts without an AnalysisContextManager!");
+  return Manager->getLocationContextManager();  
 }
 
 //===----------------------------------------------------------------------===//
