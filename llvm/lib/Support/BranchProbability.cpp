@@ -13,17 +13,17 @@
 
 #include "llvm/Support/BranchProbability.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 
 void BranchProbability::print(raw_ostream &OS) const {
-  OS << N << " / " << D << " = " << ((double)N / D);
+  OS << N << " / " << D << " = " << format("%g%%", ((double)N / D) * 100.0);
 }
 
 void BranchProbability::dump() const {
-  print(dbgs());
-  dbgs() << "\n";
+  dbgs() << *this << '\n';
 }
 
 namespace llvm {
