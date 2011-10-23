@@ -20,6 +20,7 @@
 #include "polly/Cloog.h"
 #include "polly/LinkAllPasses.h"
 
+#include "polly/CodeGeneration.h"
 #include "polly/Support/GICHelper.h"
 #include "polly/Dependences.h"
 #include "polly/ScopInfo.h"
@@ -40,12 +41,6 @@ using namespace polly;
 static cl::opt<bool>
 DisableTiling("polly-no-tiling",
 	  cl::desc("Disable tiling in the isl scheduler"), cl::Hidden,
-	  cl::init(false));
-
-static cl::opt<bool>
-Prevector("polly-prevector",
-	  cl::desc("Enable prevectorization in the isl scheduler"), cl::Hidden,
-	  cl::value_desc("Prevectorization enabled"),
 	  cl::init(false));
 
 namespace {
@@ -310,7 +305,7 @@ static isl_union_map *tileBandList(isl_band_list *blist) {
       partialSchedule = isl_union_map_flat_range_product(partialSchedule,
 							 suffixSchedule);
       isl_band_list_free(children);
-    } else if (Prevector) {
+    } else if (EnablePollyVector) {
       isl_map *tileMap;
       isl_union_map *tileUnionMap;
       isl_ctx *ctx;

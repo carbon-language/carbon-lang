@@ -26,6 +26,7 @@
 #include "polly/Support/GICHelper.h"
 #include "polly/Support/ScopHelper.h"
 #include "polly/Cloog.h"
+#include "polly/CodeGeneration.h"
 #include "polly/Dependences.h"
 #include "polly/ScopInfo.h"
 #include "polly/TempScopInfo.h"
@@ -53,11 +54,12 @@ struct isl_set;
 
 namespace polly {
 
-static cl::opt<bool>
+bool EnablePollyVector;
+
+static cl::opt<bool, true>
 Vector("enable-polly-vector",
        cl::desc("Enable polly vector code generation"), cl::Hidden,
-       cl::value_desc("Vector code generation enabled if true"),
-       cl::init(false));
+       cl::location(EnablePollyVector), cl::init(false));
 
 static cl::opt<bool>
 OpenMP("enable-polly-openmp",

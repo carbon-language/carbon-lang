@@ -22,6 +22,7 @@
 #ifdef SCOPLIB_FOUND
 #include "polly/ScopInfo.h"
 #include "polly/Dependences.h"
+#include "polly/CodeGeneration.h"
 
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
@@ -45,11 +46,6 @@ PlutoTile("enable-pluto-tile",
           cl::desc("Enable pluto tiling for polly"), cl::Hidden,
           cl::value_desc("Pluto tiling enabled if true"),
           cl::init(false));
-static cl::opt<bool>
-PlutoPrevector("enable-pluto-prevector",
-               cl::desc("Enable pluto prevectorization for polly"), cl::Hidden,
-               cl::value_desc("Pluto prevectorization enabled if true"),
-               cl::init(false));
 static cl::opt<std::string>
 PlutoFuse("pluto-fuse",
            cl::desc(""), cl::Hidden,
@@ -127,7 +123,7 @@ bool Pocc::runOnScop(Scop &S) {
   if (PlutoTile)
     arguments.push_back("--pluto-tile");
 
-  if (PlutoPrevector)
+  if (EnablePollyVector)
     arguments.push_back("--pluto-prevector");
 
   arguments.push_back(0);
@@ -164,7 +160,7 @@ bool Pocc::runOnScop(Scop &S) {
   } else
     fclose(poccFile);
 
-  if (!PlutoPrevector)
+  if (!EnablePollyVector)
     return false;
 
   // Find the innermost dimension that is not a constant dimension. This

@@ -35,6 +35,13 @@ also need to add '-mllvm -enable-polly-openmp -lgomp' to your CFLAGS.
 
 <pre class="code">clang -load ${POLLY_BUILD_DIR}/lib/LLVMPolly.so -O3 -mllvm -enable-polly-openmp -lgomp file.c</pre>
 
+<h2>Automatic Vector code generation</h2>
+
+Automatic vector code generation can be enabled by adding '-mllvm
+-enable-polly-vector' to your CFLAGS.
+
+<pre class="code">clang -load ${POLLY_BUILD_DIR}/lib/LLVMPolly.so -O3 -mllvm -enable-polly-vector file.c</pre>
+
 <h2>Further options</h2>
 
 Polly supports further options that are mainly useful for the development or
