@@ -26,8 +26,10 @@
 #include "polly/LinkAllPasses.h"
 #include "polly/ScopInfo.h"
 
+#define DEBUG_TYPE "polly-cloog"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Module.h"
+#include "llvm/Support/Debug.h"
 
 #include "cloog/isl/domain.h"
 #include "cloog/isl/cloog.h"
@@ -279,6 +281,12 @@ bool CloogInfo::runOnScop(Scop &S) {
   scop = &S;
 
   C = new Cloog(&S);
+
+  Function *F = S.getRegion().getEntry()->getParent();
+
+  DEBUG(dbgs() << ":: " << F->getNameStr());
+  DEBUG(dbgs() << " : " << S.getRegion().getNameStr() << "\n");;
+  DEBUG(C->pprint(dbgs()));
 
   return false;
 }
