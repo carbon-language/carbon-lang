@@ -38,6 +38,11 @@ using namespace llvm;
 using namespace polly;
 
 static cl::opt<bool>
+DisableTiling("polly-no-tiling",
+	  cl::desc("Disable tiling in the isl scheduler"), cl::Hidden,
+	  cl::init(false));
+
+static cl::opt<bool>
 Prevector("enable-schedule-prevector",
 	  cl::desc("Enable the prevectorization in the scheduler"), cl::Hidden,
 	  cl::value_desc("Prevectorization enabled"),
@@ -202,14 +207,17 @@ isl_union_map *getTiledPartialSchedule(isl_band *band) {
   isl_union_map *tileUnionMap;
 
   partialSchedule = isl_band_get_partial_schedule(band);
-  ctx = isl_union_map_get_ctx(partialSchedule);
-  Space= isl_union_map_get_space(partialSchedule);
-  scheduleDimensions = isl_band_n_member(band);
 
-  tileMap = getTileMap(ctx, scheduleDimensions, Space);
-  tileUnionMap = isl_union_map_from_map(isl_map_from_basic_map(tileMap));
-  tileUnionMap = isl_union_map_align_params(tileUnionMap, Space);
-  partialSchedule = isl_union_map_apply_range(partialSchedule, tileUnionMap);
+  if (!DisableTiling) {
+    ctx = isl_union_map_get_ctx(partialSchedule);
+    Space= isl_union_map_get_space(partialSchedule);
+    scheduleDimensions = isl_band_n_member(band);
+
+    tileMap = getTileMap(ctx, scheduleDimensions, Space);
+    tileUnionMap = isl_union_map_from_map(isl_map_from_basic_map(tileMap));
+    tileUnionMap = isl_union_map_align_params(tileUnionMap, Space);
+    partialSchedule = isl_union_map_apply_range(partialSchedule, tileUnionMap);
+  }
 
   return partialSchedule;
 }
