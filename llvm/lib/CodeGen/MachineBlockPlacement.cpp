@@ -265,7 +265,6 @@ static std::string getBlockNum(MachineBasicBlock *BB) {
 BlockChain *MachineBlockPlacement::CreateChain(MachineBasicBlock *BB) {
   BlockChain *Chain =
     new (ChainAllocator.Allocate()) BlockChain(BlockToChain, BB);
-  //assert(ActiveChains.insert(Chain));
   return Chain;
 }
 
