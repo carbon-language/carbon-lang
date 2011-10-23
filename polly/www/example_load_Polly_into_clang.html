@@ -82,6 +82,10 @@ installed. As the new scheduler may still have some bugs and because being
 able to compare is good in general, it is possible to switch the used optimizer
 back to PoCC. For this add the option '-polly-use-pocc'.
 
+<h3>Disable tiling in the optimizer</h3>
+By default both optimizers perform tiling, if possible. In case this is not
+wanted the option '-polly-no-tiling' can be used to disable it. (This option
+works for both optimizers).
 </div>
 </body>
 </html>

@@ -23,6 +23,7 @@
 #include "polly/ScopInfo.h"
 #include "polly/Dependences.h"
 #include "polly/CodeGeneration.h"
+#include "polly/ScheduleOptimizer.h"
 
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
@@ -41,11 +42,6 @@
 using namespace llvm;
 using namespace polly;
 
-static cl::opt<bool>
-PlutoTile("enable-pluto-tile",
-          cl::desc("Enable pluto tiling for polly"), cl::Hidden,
-          cl::value_desc("Pluto tiling enabled if true"),
-          cl::init(false));
 static cl::opt<std::string>
 PlutoFuse("pluto-fuse",
            cl::desc(""), cl::Hidden,
@@ -120,7 +116,7 @@ bool Pocc::runOnScop(Scop &S) {
 
   arguments.push_back(PlutoFuse.c_str());
 
-  if (PlutoTile)
+  if (!DisablePollyTiling)
     arguments.push_back("--pluto-tile");
 
   if (EnablePollyVector)

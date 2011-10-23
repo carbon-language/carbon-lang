@@ -17,9 +17,10 @@
 // Design and Implementation, PLDI ’08, pages 101–113. ACM, 2008.
 //===----------------------------------------------------------------------===//
 
+#include "polly/ScheduleOptimizer.h"
+
 #include "polly/Cloog.h"
 #include "polly/LinkAllPasses.h"
-
 #include "polly/CodeGeneration.h"
 #include "polly/Support/GICHelper.h"
 #include "polly/Dependences.h"
@@ -38,10 +39,13 @@
 using namespace llvm;
 using namespace polly;
 
-static cl::opt<bool>
+namespace polly {
+  bool DisablePollyTiling;
+}
+static cl::opt<bool, true>
 DisableTiling("polly-no-tiling",
-	  cl::desc("Disable tiling in the isl scheduler"), cl::Hidden,
-	  cl::init(false));
+	      cl::desc("Disable tiling in the scheduler"), cl::Hidden,
+              cl::location(polly::DisablePollyTiling), cl::init(false));
 
 namespace {
 
