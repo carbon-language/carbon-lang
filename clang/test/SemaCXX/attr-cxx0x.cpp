@@ -11,6 +11,10 @@ struct align_member {
 
 template <unsigned A> alignas(A) struct align_class_template {};
 
+// FIXME: these should not error
+template <typename... T> alignas(T...) struct align_class_temp_pack_type {}; // expected-error{{pack expansions in alignment specifiers are not supported yet}}
+template <unsigned... A> alignas(A...) struct align_class_temp_pack_expr {}; // expected-error{{pack expansions in alignment specifiers are not supported yet}}
+
 typedef char align_typedef alignas(8);
 template<typename T> using align_alias_template = align_typedef;
 
@@ -22,4 +26,7 @@ static_assert(sizeof(align_member) == 8, "quuux's size is wrong");
 static_assert(alignof(align_typedef) == 8, "typedef's alignment is wrong");
 static_assert(alignof(align_class_template<8>) == 8, "template's alignment is wrong");
 static_assert(alignof(align_class_template<16>) == 16, "template's alignment is wrong");
+// FIXME: enable these tests
+// static_assert(alignof(align_class_temp_pack_type<short, int, long>) == alignof(long), "template's alignment is wrong");
+// static_assert(alignof(align_class_temp_pack_expr<8, 16, 32>) == 32, "template's alignment is wrong");
 static_assert(alignof(align_alias_template<int>) == 8, "alias template's alignment is wrong");

@@ -160,8 +160,9 @@ struct TestUnexpandedTTP {
 };
 
 // Test for unexpanded parameter packs in declarations.
-// FIXME: Attributes?
 template<typename T, typename... Types>
+// FIXME: this should test that the diagnostic reads "type contains..."
+alignas(Types) // expected-error{{expression contains unexpanded parameter pack 'Types'}}
 struct TestUnexpandedDecls : T{
   void member_function(Types);  // expected-error{{declaration type contains unexpanded parameter pack 'Types'}}
   void member_function () throw(Types); // expected-error{{declaration type contains unexpanded parameter pack 'Types'}}

@@ -1552,19 +1552,28 @@ Parser::getDeclSpecContextFromDeclaratorContext(unsigned Context) {
 /// FIXME: Simply returns an alignof() expression if the argument is a
 /// type. Ideally, the type should be propagated directly into Sema.
 ///
-/// [C1X/C++0x] type-id
-/// [C1X]       constant-expression
-/// [C++0x]     assignment-expression
-ExprResult Parser::ParseAlignArgument(SourceLocation Start) {
+/// [C1X]   type-id
+/// [C1X]   constant-expression
+/// [C++0x] type-id ...[opt]
+/// [C++0x] assignment-expression ...[opt]
+ExprResult Parser::ParseAlignArgument(SourceLocation Start,
+                                      SourceLocation &EllipsisLoc) {
+  ExprResult ER;
   if (isTypeIdInParens()) {
-    EnterExpressionEvaluationContext Unevaluated(Actions, Sema::Unevaluated);
     SourceLocation TypeLoc = Tok.getLocation();
     ParsedType Ty = ParseTypeName().get();
     SourceRange TypeRange(Start, Tok.getLocation());
-    return Actions.ActOnUnaryExprOrTypeTraitExpr(TypeLoc, UETT_AlignOf, true,
-                                                Ty.getAsOpaquePtr(), TypeRange);
+    ER = Actions.ActOnUnaryExprOrTypeTraitExpr(TypeLoc, UETT_AlignOf, true,
+                                               Ty.getAsOpaquePtr(), TypeRange);
   } else
-    return ParseConstantExpression();
+    ER = ParseConstantExpression();
+
+  if (getLang().CPlusPlus0x && Tok.is(tok::ellipsis)) {
+    EllipsisLoc = Tok.getLocation();
+    ConsumeToken();
+  }
+
+  return ER;
 }
 
 /// ParseAlignmentSpecifier - Parse an alignment-specifier, and add the
@@ -1573,8 +1582,8 @@ ExprResult Parser::ParseAlignArgument(SourceLocation Start) {
 /// alignment-specifier:
 /// [C1X]   '_Alignas' '(' type-id ')'
 /// [C1X]   '_Alignas' '(' constant-expression ')'
-/// [C++0x] 'alignas' '(' type-id ')'
-/// [C++0x] 'alignas' '(' assignment-expression ')'
+/// [C++0x] 'alignas' '(' type-id ...[opt] ')'
+/// [C++0x] 'alignas' '(' assignment-expression ...[opt] ')'
 void Parser::ParseAlignmentSpecifier(ParsedAttributes &Attrs,
                                      SourceLocation *endLoc) {
   assert((Tok.is(tok::kw_alignas) || Tok.is(tok::kw__Alignas)) &&
@@ -1587,7 +1596,8 @@ void Parser::ParseAlignmentSpecifier(ParsedAttributes &Attrs,
   if (T.expectAndConsume(diag::err_expected_lparen))
     return;
 
-  ExprResult ArgExpr = ParseAlignArgument(T.getOpenLocation());
+  SourceLocation EllipsisLoc;
+  ExprResult ArgExpr = ParseAlignArgument(T.getOpenLocation(), EllipsisLoc);
   if (ArgExpr.isInvalid()) {
     SkipUntil(tok::r_paren);
     return;
@@ -1596,6 +1606,12 @@ void Parser::ParseAlignmentSpecifier(ParsedAttributes &Attrs,
   T.consumeClose();
   if (endLoc)
     *endLoc = T.getCloseLocation();
+
+  // FIXME: Handle pack-expansions here.
+  if (EllipsisLoc.isValid()) {
+    Diag(EllipsisLoc, diag::err_alignas_pack_exp_unsupported);
+    return;
+  }
 
   ExprVector ArgExprs(Actions);
   ArgExprs.push_back(ArgExpr.release());

@@ -2544,6 +2544,10 @@ static void handleAlignedAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 }
 
 void Sema::AddAlignedAttr(SourceRange AttrRange, Decl *D, Expr *E) {
+  // FIXME: Handle pack-expansions here.
+  if (DiagnoseUnexpandedParameterPack(E))
+    return;
+
   if (E->isTypeDependent() || E->isValueDependent()) {
     // Save dependent expressions in the AST to be instantiated.
     D->addAttr(::new (Context) AlignedAttr(AttrRange, Context, true, E));
