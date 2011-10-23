@@ -425,7 +425,7 @@ def warn_cxx98_compat_attribute : Warning<
 def err_cxx0x_attribute_forbids_arguments : Error<
   "C++11 attribute '%0' cannot have an argument list">;
 def err_cxx0x_attribute_requires_arguments : Error<
-  "C++1 attribute '%0' must have an argument list">;
+  "C++11 attribute '%0' must have an argument list">;
 def err_attributes_not_allowed : Error<"an attribute list cannot appear here">;
 
 /// C++ Templates
