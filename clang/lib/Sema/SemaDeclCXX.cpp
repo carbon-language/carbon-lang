@@ -1635,6 +1635,12 @@ Sema::ActOnCXXInClassMemberInitializer(Decl *D, SourceLocation EqualLoc,
     return;
   }
 
+  if (DiagnoseUnexpandedParameterPack(InitExpr, UPPC_Initializer)) {
+    FD->setInvalidDecl();
+    FD->removeInClassInitializer();
+    return;
+  }
+
   ExprResult Init = InitExpr;
   if (!FD->getType()->isDependentType() && !InitExpr->isTypeDependent()) {
     // FIXME: if there is no EqualLoc, this is list-initialization.
@@ -2030,6 +2036,9 @@ Sema::BuildMemberInitializer(ValueDecl *Member,
   IndirectFieldDecl *IndirectMember = dyn_cast<IndirectFieldDecl>(Member);
   assert((DirectMember || IndirectMember) &&
          "Member must be a FieldDecl or IndirectFieldDecl");
+
+  if (Args.DiagnoseUnexpandedParameterPack(*this))
+    return true;
 
   if (Member->isInvalidDecl())
     return true;

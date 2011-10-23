@@ -189,6 +189,12 @@ struct TestUnexpandedDecls : T{
     T list_init = { static_cast<Types>(0) }; // expected-error{{initializer contains unexpanded parameter pack 'Types'}}
   }
 
+  T in_class_member_init = static_cast<Types>(0); // expected-error{{initializer contains unexpanded parameter pack 'Types'}}
+  TestUnexpandedDecls() : 
+    Types(static_cast<Types>(0)), // expected-error{{initializer contains unexpanded parameter pack 'Types'}}
+    Types(static_cast<Types>(0))...,
+    in_class_member_init(static_cast<Types>(0)) {} // expected-error{{initializer contains unexpanded parameter pack 'Types'}}
+
   void default_function_args(T = static_cast<Types>(0)); // expected-error{{default argument contains unexpanded parameter pack 'Types'}}
 
   template<typename = Types*> // expected-error{{default argument contains unexpanded parameter pack 'Types'}}
