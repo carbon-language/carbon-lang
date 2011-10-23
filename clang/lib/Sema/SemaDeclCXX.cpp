@@ -1778,28 +1778,17 @@ Sema::BuildMemInitializer(Decl *ConstructorD,
   //   using a qualified name. ]
   if (!SS.getScopeRep() && !TemplateTypeTy) {
     // Look for a member, first.
-    FieldDecl *Member = 0;
     DeclContext::lookup_result Result
       = ClassDecl->lookup(MemberOrBase);
     if (Result.first != Result.second) {
-      Member = dyn_cast<FieldDecl>(*Result.first);
-
-      if (Member) {
+      ValueDecl *Member;
+      if ((Member = dyn_cast<FieldDecl>(*Result.first)) ||
+          (Member = dyn_cast<IndirectFieldDecl>(*Result.first))) {
         if (EllipsisLoc.isValid())
           Diag(EllipsisLoc, diag::err_pack_expansion_member_init)
             << MemberOrBase << SourceRange(IdLoc, Args.getEndLoc());
 
         return BuildMemberInitializer(Member, Args, IdLoc);
-      }
-
-      // Handle anonymous union case.
-      if (IndirectFieldDecl* IndirectField
-            = dyn_cast<IndirectFieldDecl>(*Result.first)) {
-        if (EllipsisLoc.isValid())
-          Diag(EllipsisLoc, diag::err_pack_expansion_member_init)
-            << MemberOrBase << SourceRange(IdLoc, Args.getEndLoc());
-
-         return BuildMemberInitializer(IndirectField, Args, IdLoc);
       }
     }
   }
