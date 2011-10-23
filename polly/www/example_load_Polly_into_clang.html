@@ -1,0 +1,39 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" 
+          "http://www.w3.org/TR/html4/strict.dtd">
+<!-- Material used from: HTML 4.01 specs: http://www.w3.org/TR/html401/ -->
+<html>
+<head>
+  <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+  <title>Polly - Load Polly into clang</title>
+  <link type="text/css" rel="stylesheet" href="menu.css">
+  <link type="text/css" rel="stylesheet" href="content.css">
+</head>
+<body>
+<!--#include virtual="menu.html.incl"-->
+<div id="content">
+<!--=====================================================================-->
+<h1>Load Polly into clang and automatically run it at -O3</h1>
+<!--=====================================================================-->
+
+<p>Warning: This example makes it very easy to use Polly. Still, please be aware
+that Polly is a young research project. It is expected to crash, produce
+invalid code or to hang in complex calculations even for simple examples. In
+case you see such a problem, please check the <a href="bugs.html">Bug
+database</a> and consider reporting the bug.
+<h4>Compiling code with Polly</h4>
+
+To compile code with Polly you only need to add '-load
+${POLLY_BUILD_DIR}/lib/LLVMPolly.so' to your command line or your CFLAGS and
+Polly is automatically executed at -O3.
+
+<pre class="code">clang -load ${POLLY_BUILD_DIR}/lib/LLVMPolly.so -O3 file.c</pre>
+
+<h4>Automatic OpenMP code generation</h4>
+
+To automatically detect parallel loops and generate OpenMP code for them you
+also need to add '-mllvm -enable-polly-openmp -lgomp' to your CFLAGS.
+
+<pre class="code">clang -load ${POLLY_BUILD_DIR}/lib/LLVMPolly.so -O3 -mllvm -enable-polly-openmp -lgomp file.c</pre>
+</div>
+</body>
+</html>
