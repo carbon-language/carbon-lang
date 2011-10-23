@@ -89,14 +89,9 @@ scoplib_statement_p ScopLib::initializeStatement(ScopStmt *stmt) {
   scoplib_statement_p Stmt = scoplib_statement_malloc();
 
   // Domain & Schedule
-  isl_set *domain = stmt->getDomain();
   Stmt->domain = scoplib_matrix_list_malloc();
-  Stmt->domain->elt = domainToMatrix(domain);
-  Stmt->domain->next = NULL;
-  isl_map *Scattering = stmt->getScattering();
-  Stmt->schedule = scatteringToMatrix(Scattering);
-  isl_map_free(Scattering);
-  isl_set_free(domain);
+  Stmt->domain->elt = domainToMatrix(stmt->getDomain());
+  Stmt->schedule = scatteringToMatrix(stmt->getScattering());
 
   // Statement name
   std::string entryName;
@@ -107,7 +102,7 @@ scoplib_statement_p ScopLib::initializeStatement(ScopStmt *stmt) {
   strcpy(Stmt->body, entryName.c_str());
 
   // Iterator names
-  Stmt->nb_iterators = isl_set_n_dim(stmt->getDomain());
+  Stmt->nb_iterators = stmt->getNumIterators();
   Stmt->iterators = (char**) malloc(sizeof(char*) * Stmt->nb_iterators);
 
   for (int i = 0; i < Stmt->nb_iterators; ++i) {
@@ -145,10 +140,16 @@ void ScopLib::freeStatement(scoplib_statement_p stmt) {
     scoplib_matrix_free(stmt->write);
   stmt->write = NULL;
 
-  while (stmt->domain) {
-    scoplib_matrix_free(stmt->domain->elt);
-    stmt->domain = stmt->domain->next;
+  scoplib_matrix_list_p current = stmt->domain;
+  while (current) {
+    scoplib_matrix_list_p next = current->next;
+    current->next = NULL;
+    scoplib_matrix_free(current->elt);
+    current->elt = NULL;
+    scoplib_matrix_list_free(current);
+    current = next;
   }
+  stmt->domain = NULL;
 
   if (stmt->schedule)
     scoplib_matrix_free(stmt->schedule);
@@ -183,6 +184,7 @@ int ScopLib::domainToMatrix_constraint(isl_constraint *c, void *user) {
 
   scoplib_vector_p vec = scoplib_vector_malloc(nb_params + nb_vars + 2);
 
+
   // Assign type
   if (isl_constraint_is_equality(c))
     scoplib_vector_tag_equality(vec);
@@ -210,6 +212,10 @@ int ScopLib::domainToMatrix_constraint(isl_constraint *c, void *user) {
 
   scoplib_matrix_insert_vector(m, vec, m->NbRows);
 
+  scoplib_vector_free(vec);
+  isl_constraint_free(c);
+  isl_int_clear(v);
+
   return 0;
 }
 
@@ -226,6 +232,7 @@ int ScopLib::domainToMatrix_basic_set(isl_basic_set *bset, void *user) {
   assert(!m->NbRows && "Union of polyhedron not yet supported");
 
   isl_basic_set_foreach_constraint(bset, &domainToMatrix_constraint, user);
+  isl_basic_set_free(bset);
   return 0;
 }
 
@@ -233,17 +240,14 @@ int ScopLib::domainToMatrix_basic_set(isl_basic_set *bset, void *user) {
 ///
 /// @param PS The set to be translated
 /// @return A ScopLib Matrix
-scoplib_matrix_p ScopLib::domainToMatrix(isl_set *PS) {
-
-  // Create a canonical copy of this set.
-  isl_set *set = isl_set_copy(PS);
+scoplib_matrix_p ScopLib::domainToMatrix(__isl_take isl_set *set) {
   set = isl_set_compute_divs (set);
   set = isl_set_align_divs (set);
 
   // Initialize the matrix.
   unsigned NbRows, NbColumns;
   NbRows = 0;
-  NbColumns = isl_set_n_dim(PS) + isl_set_n_param(PS) + 2;
+  NbColumns = isl_set_n_dim(set) + isl_set_n_param(set) + 2;
   scoplib_matrix_p matrix = scoplib_matrix_malloc(NbRows, NbColumns);
 
   // Copy the content into the matrix.
@@ -301,6 +305,9 @@ int ScopLib::scatteringToMatrix_constraint(isl_constraint *c, void *user) {
   vec = scoplib_vector_sub(null, vec);
   scoplib_matrix_insert_vector(m, vec, 0);
 
+  isl_constraint_free(c);
+  isl_int_clear(v);
+
   return 0;
 }
 
@@ -317,6 +324,7 @@ int ScopLib::scatteringToMatrix_basic_map(isl_basic_map *bmap, void *user) {
   assert(!m->NbRows && "Union of polyhedron not yet supported");
 
   isl_basic_map_foreach_constraint(bmap, &scatteringToMatrix_constraint, user);
+  isl_basic_map_free(bmap);
   return 0;
 }
 
@@ -324,17 +332,14 @@ int ScopLib::scatteringToMatrix_basic_map(isl_basic_map *bmap, void *user) {
 ///
 /// @param map The map to be translated
 /// @return A ScopLib Matrix
-scoplib_matrix_p ScopLib::scatteringToMatrix(isl_map *pmap) {
-
-  // Create a canonical copy of this set.
-  isl_map *map = isl_map_copy(pmap);
+scoplib_matrix_p ScopLib::scatteringToMatrix(__isl_take isl_map *map) {
   map = isl_map_compute_divs (map);
   map = isl_map_align_divs (map);
 
   // Initialize the matrix.
   unsigned NbRows, NbColumns;
   NbRows = 0;
-  NbColumns = isl_map_n_in(pmap) + isl_map_n_param(pmap) + 2;
+  NbColumns = isl_map_n_in(map) + isl_map_n_param(map) + 2;
   scoplib_matrix_p matrix = scoplib_matrix_malloc(NbRows, NbColumns);
 
   // Copy the content into the matrix.
@@ -342,7 +347,7 @@ scoplib_matrix_p ScopLib::scatteringToMatrix(isl_map *pmap) {
 
   // Only keep the relevant rows.
   scoplib_matrix_p reduced = scoplib_matrix_ncopy(matrix,
-                                                  isl_map_n_in(pmap) * 2 + 1);
+                                                  isl_map_n_in(map) * 2 + 1);
 
   scoplib_matrix_free (matrix);
   isl_map_free(map);
@@ -401,6 +406,7 @@ int ScopLib::accessToMatrix_constraint(isl_constraint *c, void *user) {
 
   scoplib_matrix_insert_vector(m, vec, m->NbRows);
 
+  isl_constraint_free(c);
   isl_int_clear(v);
 
   return 0;
@@ -417,6 +423,7 @@ int ScopLib::accessToMatrix_constraint(isl_constraint *c, void *user) {
 /// polyhedron are not yet supported
 int ScopLib::accessToMatrix_basic_map(isl_basic_map *bmap, void *user) {
   isl_basic_map_foreach_constraint(bmap, &accessToMatrix_constraint, user);
+  isl_basic_map_free(bmap);
   return 0;
 }
 
@@ -437,8 +444,10 @@ scoplib_matrix_p ScopLib::createAccessMatrix(ScopStmt *S, bool isRead) {
        MI != ME; ++MI)
     if ((*MI)->isRead() == isRead) {
       // Extract the access function.
-      isl_map_foreach_basic_map((*MI)->getAccessRelation(),
+      isl_map *AccessRelation = (*MI)->getAccessRelation();
+      isl_map_foreach_basic_map(AccessRelation,
                                 &accessToMatrix_basic_map, m);
+      isl_map_free(AccessRelation);
 
       // Set the index of the memory access base element.
       std::map<const Value*, int>::iterator BA =

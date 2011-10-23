@@ -16,6 +16,8 @@
 #define POLLY_SCOPLIB_H
 
 #define SCOPLIB_INT_T_IS_MP
+#include "isl/ctx.h"
+
 #include "scoplib/scop.h"
 
 #include <map>
@@ -52,10 +54,10 @@ namespace polly {
     scoplib_matrix_p createAccessMatrix(ScopStmt *S, bool isRead);
     static int domainToMatrix_constraint(isl_constraint *c, void *user);
     static int domainToMatrix_basic_set(isl_basic_set *bset, void *user);
-    scoplib_matrix_p domainToMatrix(isl_set *PS);
+    scoplib_matrix_p domainToMatrix(__isl_take isl_set *set);
     static int scatteringToMatrix_constraint(isl_constraint *c, void *user);
     static int scatteringToMatrix_basic_map(isl_basic_map *bmap, void *user);
-    scoplib_matrix_p scatteringToMatrix(isl_map *pmap);
+    scoplib_matrix_p scatteringToMatrix(__isl_take isl_map *map);
 
   public:
     ScopLib(Scop *S);
