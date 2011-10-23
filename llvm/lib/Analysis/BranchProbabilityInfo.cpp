@@ -12,11 +12,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Constants.h"
+#include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Metadata.h"
 #include "llvm/Analysis/BranchProbabilityInfo.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Support/CFG.h"
 #include "llvm/Support/Debug.h"
 
 using namespace llvm;
@@ -453,9 +455,24 @@ void BranchProbabilityInfo::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 bool BranchProbabilityInfo::runOnFunction(Function &F) {
+  LastF = &F; // Store the last function we ran on for printing.
   LoopInfo &LI = getAnalysis<LoopInfo>();
   BranchProbabilityAnalysis BPA(this, &LI);
   return BPA.runOnFunction(F);
+}
+
+void BranchProbabilityInfo::print(raw_ostream &OS, const Module *) const {
+  OS << "---- Branch Probabilities ----\n";
+  // We print the probabilities from the last function the analysis ran over,
+  // or the function it is currently running over.
+  assert(LastF && "Cannot print prior to running over a function");
+  for (Function::const_iterator BI = LastF->begin(), BE = LastF->end();
+       BI != BE; ++BI) {
+    for (succ_const_iterator SI = succ_begin(BI), SE = succ_end(BI);
+         SI != SE; ++SI) {
+      printEdgeProbability(OS << "  ", BI, *SI);
+    }
+  }
 }
 
 uint32_t BranchProbabilityInfo::getSumForBlock(const BasicBlock *BB) const {
@@ -537,8 +554,9 @@ getEdgeProbability(const BasicBlock *Src, const BasicBlock *Dst) const {
 }
 
 raw_ostream &
-BranchProbabilityInfo::printEdgeProbability(raw_ostream &OS, BasicBlock *Src,
-                                            BasicBlock *Dst) const {
+BranchProbabilityInfo::printEdgeProbability(raw_ostream &OS,
+                                            const BasicBlock *Src,
+                                            const BasicBlock *Dst) const {
 
   const BranchProbability Prob = getEdgeProbability(Src, Dst);
   OS << "edge " << Src->getNameStr() << " -> " << Dst->getNameStr()

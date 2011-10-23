@@ -37,6 +37,9 @@ class BranchProbabilityInfo : public FunctionPass {
 
   DenseMap<Edge, uint32_t> Weights;
 
+  /// \brief Track the last function we run over for printing.
+  Function *LastF;
+
   // Get sum of the block successors' weights.
   uint32_t getSumForBlock(const BasicBlock *BB) const;
 
@@ -48,8 +51,8 @@ public:
   }
 
   void getAnalysisUsage(AnalysisUsage &AU) const;
-
   bool runOnFunction(Function &F);
+  void print(raw_ostream &OS, const Module *M = 0) const;
 
   // Returned value is between 1 and UINT32_MAX. Look at
   // BranchProbabilityInfo.cpp for details.
@@ -74,8 +77,8 @@ public:
   // Print value between 0 (0% probability) and 1 (100% probability),
   // however the value is never equal to 0, and can be 1 only iff SRC block
   // has only one successor.
-  raw_ostream &printEdgeProbability(raw_ostream &OS, BasicBlock *Src,
-                                    BasicBlock *Dst) const;
+  raw_ostream &printEdgeProbability(raw_ostream &OS, const BasicBlock *Src,
+                                    const BasicBlock *Dst) const;
 };
 
 }
