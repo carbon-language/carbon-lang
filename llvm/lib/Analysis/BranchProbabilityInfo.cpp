@@ -424,34 +424,25 @@ bool BranchProbabilityAnalysis::calcFloatingPointHeuristics(BasicBlock *BB) {
 }
 
 bool BranchProbabilityAnalysis::runOnFunction(Function &F) {
-
-  for (Function::iterator I = F.begin(), E = F.end(); I != E; ) {
-    BasicBlock *BB = I++;
-
-    if (calcMetadataWeights(BB))
+  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
+    if (calcMetadataWeights(I))
       continue;
-
-    if (calcLoopBranchHeuristics(BB))
+    if (calcLoopBranchHeuristics(I))
       continue;
-
-    if (calcReturnHeuristics(BB))
+    if (calcReturnHeuristics(I))
       continue;
-
-    if (calcPointerHeuristics(BB))
+    if (calcPointerHeuristics(I))
       continue;
-
-    if (calcZeroHeuristics(BB))
+    if (calcZeroHeuristics(I))
       continue;
-
-    calcFloatingPointHeuristics(BB);
+    calcFloatingPointHeuristics(I);
   }
-
   return false;
 }
 
 void BranchProbabilityInfo::getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequired<LoopInfo>();
-    AU.setPreservesAll();
+  AU.addRequired<LoopInfo>();
+  AU.setPreservesAll();
 }
 
 bool BranchProbabilityInfo::runOnFunction(Function &F) {
