@@ -37,6 +37,10 @@ DisableCodegen("polly-no-codegen",
        cl::desc("Disable Polly Code Generation"), cl::Hidden,
        cl::init(false));
 static cl::opt<bool>
+UsePocc("polly-use-pocc",
+       cl::desc("Use the PoCC optimizer instead of the one in isl"), cl::Hidden,
+       cl::init(false));
+static cl::opt<bool>
 PollyViewer("polly-show",
        cl::desc("Enable the Polly DOT viewer in -O3"), cl::Hidden,
        cl::value_desc("Run the Polly DOT viewer at -O3"),
@@ -124,8 +128,21 @@ static void registerPollyPasses(const llvm::PassManagerBuilder &Builder,
   if (PollyOnlyPrinter)
     PM.add(polly::createDOTOnlyPrinterPass());
 
-  if (!DisableScheduler)
-    PM.add(polly::createIslScheduleOptimizerPass());
+  if (!DisableScheduler) {
+    if (!UsePocc)
+      PM.add(polly::createIslScheduleOptimizerPass());
+    else {
+#ifdef SCOPLIB_FOUND
+      PM.add(polly::createPoccPass());
+#else
+      errs() << "Polly is compiled without scoplib support. As scoplib is "
+             << "required to run PoCC, PoCC is also not available. Falling "
+             << "back to the isl optimizer.\n";
+      PM.add(polly::createIslScheduleOptimizerPass());
+#endif
+    }
+
+  }
 
   if (!DisableCodegen)
     PM.add(polly::createCodeGenerationPass());
