@@ -287,10 +287,8 @@ void MachineBlockPlacement::mergeSuccessor(MachineBasicBlock *BB,
     return;
 
   // Walk through the successors looking for the highest probability edge.
-  // FIXME: This is an annoying way to do the comparison, but it's correct.
-  // Support should be added to BranchProbability to properly compare two.
   MachineBasicBlock *Successor = 0;
-  BlockFrequency BestFreq;
+  BranchProbability BestProb = BranchProbability::getZero();
   DEBUG(dbgs() << "Attempting merge from: " << getBlockName(BB) << "\n");
   for (MachineBasicBlock::succ_iterator SI = BB->succ_begin(),
                                         SE = BB->succ_end();
@@ -298,13 +296,12 @@ void MachineBlockPlacement::mergeSuccessor(MachineBasicBlock *BB,
     if (BB == *SI || (Filter && !Filter->count(*SI)))
       continue;
 
-    BlockFrequency SuccFreq(BlockFrequency::getEntryFrequency());
-    SuccFreq *= MBPI->getEdgeProbability(BB, *SI);
-    DEBUG(dbgs() << "    " << getBlockName(*SI) << " -> " << SuccFreq << "\n");
-    if (!Successor || SuccFreq > BestFreq || (!(SuccFreq < BestFreq) &&
+    BranchProbability SuccProb = MBPI->getEdgeProbability(BB, *SI);
+    DEBUG(dbgs() << "    " << getBlockName(*SI) << " -> " << SuccProb << "\n");
+    if (!Successor || SuccProb > BestProb || (!(SuccProb < BestProb) &&
                                               BB->isLayoutSuccessor(*SI))) {
       Successor = *SI;
-      BestFreq = SuccFreq;
+      BestProb = SuccProb;
     }
   }
   if (!Successor)

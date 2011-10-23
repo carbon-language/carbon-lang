@@ -39,6 +39,9 @@ public:
     assert(n <= d && "Probability cannot be bigger than 1!");
   }
 
+  static BranchProbability getZero() { return BranchProbability(0, 1); }
+  static BranchProbability getOne() { return BranchProbability(1, 1); }
+
   uint32_t getNumerator() const { return N; }
   uint32_t getDenominator() const { return D; }
 
