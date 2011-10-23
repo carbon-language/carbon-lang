@@ -29,6 +29,10 @@
 using namespace llvm;
 
 static cl::opt<bool>
+DisableCodegen("polly-no-codegen",
+       cl::desc("Disable Polly Code Generation"), cl::Hidden,
+       cl::init(false));
+static cl::opt<bool>
 PollyViewer("enable-polly-viewer",
        cl::desc("Enable the Polly DOT viewer in -O3"), cl::Hidden,
        cl::value_desc("Run the Polly DOT viewer at -O3"),
@@ -117,7 +121,9 @@ static void registerPollyPasses(const llvm::PassManagerBuilder &Builder,
     PM.add(polly::createDOTOnlyPrinterPass());
 
   PM.add(polly::createIslScheduleOptimizerPass());
-  PM.add(polly::createCodeGenerationPass());
+
+  if (!DisableCodegen)
+    PM.add(polly::createCodeGenerationPass());
 }
 
 // Execute Polly together with a set of preparing passes.
