@@ -255,8 +255,7 @@ class ScopStmt {
 
   /// Build the statment.
   //@{
-  __isl_give isl_set *buildConditionSet(const Comparison &Cmp,
-                                        __isl_take isl_space *Space) const;
+  __isl_give isl_set *buildConditionSet(const Comparison &Cmp) const;
   __isl_give isl_set *addConditionsToDomain(__isl_take isl_set *Domain,
                                             TempScop &tempScop,
                                             const Region &CurRegion) const;
@@ -280,7 +279,6 @@ class ScopStmt {
 public:
 
   ~ScopStmt();
-
   /// @brief Get an isl_ctx pointer.
   isl_ctx *getIslCtx() const;
 

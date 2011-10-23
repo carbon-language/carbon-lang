@@ -592,36 +592,24 @@ void ScopStmt::buildAccesses(TempScop &tempScop, const Region &CurRegion) {
   }
 }
 
-__isl_give isl_set *ScopStmt::buildConditionSet(const Comparison &Comp,
-                                                __isl_take isl_space *Space)
-  const {
+__isl_give isl_set *ScopStmt::buildConditionSet(const Comparison &Comp) const {
 
-  isl_pw_aff *LHS = SCEVAffinator::getPwAff(this, Comp.getLHS()->OriginalSCEV,
-                                            0);
-  isl_pw_aff *RHS = SCEVAffinator::getPwAff(this, Comp.getRHS()->OriginalSCEV,
-                                            0);
-
-  isl_set *Set;
+  isl_pw_aff *L = SCEVAffinator::getPwAff(this, Comp.getLHS()->OriginalSCEV, 0);
+  isl_pw_aff *R = SCEVAffinator::getPwAff(this, Comp.getRHS()->OriginalSCEV, 0);
 
   switch (Comp.getPred()) {
   case ICmpInst::ICMP_EQ:
-    Set = isl_pw_aff_eq_set(LHS, RHS);
-    break;
+    return isl_pw_aff_eq_set(L, R);
   case ICmpInst::ICMP_NE:
-    Set = isl_pw_aff_ne_set(LHS, RHS);
-    break;
+    return isl_pw_aff_ne_set(L, R);
   case ICmpInst::ICMP_SLT:
-    Set = isl_pw_aff_lt_set(LHS, RHS);
-    break;
+    return isl_pw_aff_lt_set(L, R);
   case ICmpInst::ICMP_SLE:
-    Set = isl_pw_aff_le_set(LHS, RHS);
-    break;
+    return isl_pw_aff_le_set(L, R);
   case ICmpInst::ICMP_SGT:
-    Set = isl_pw_aff_gt_set(LHS, RHS);
-    break;
+    return isl_pw_aff_gt_set(L, R);
   case ICmpInst::ICMP_SGE:
-    Set = isl_pw_aff_ge_set(LHS, RHS);
-    break;
+    return isl_pw_aff_ge_set(L, R);
   case ICmpInst::ICMP_ULT:
   case ICmpInst::ICMP_UGT:
   case ICmpInst::ICMP_ULE:
@@ -630,8 +618,6 @@ __isl_give isl_set *ScopStmt::buildConditionSet(const Comparison &Comp,
   default:
     llvm_unreachable("Non integer predicate not supported");
   }
-
-  return Set;
 }
 
 __isl_give isl_set *ScopStmt::addLoopBoundsToDomain(__isl_take isl_set *Domain,
@@ -667,7 +653,6 @@ __isl_give isl_set *ScopStmt::addConditionsToDomain(__isl_take isl_set *Domain,
                                                     TempScop &tempScop,
                                                     const Region &CurRegion)
   const {
-  isl_space *Space = isl_set_get_space(Domain);
   const Region *TopRegion = tempScop.getMaxRegion().getParent(),
                *CurrentRegion = &CurRegion;
   const BasicBlock *BranchingBB = BB;
@@ -677,15 +662,13 @@ __isl_give isl_set *ScopStmt::addConditionsToDomain(__isl_take isl_set *Domain,
       if (const BBCond *Condition = tempScop.getBBCond(BranchingBB))
         for (BBCond::const_iterator CI = Condition->begin(),
              CE = Condition->end(); CI != CE; ++CI) {
-          isl_set *ConditionSet = buildConditionSet(*CI, Space);
+          isl_set *ConditionSet = buildConditionSet(*CI);
           Domain = isl_set_intersect(Domain, ConditionSet);
         }
     }
     BranchingBB = CurrentRegion->getEntry();
     CurrentRegion = CurrentRegion->getParent();
   } while (TopRegion != CurrentRegion);
-
-  isl_space_free(Space);
 
   return Domain;
 }
