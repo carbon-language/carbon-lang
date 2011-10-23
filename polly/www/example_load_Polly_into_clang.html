@@ -52,6 +52,15 @@ Polly normally regenerates LLVM-IR from the Polyhedral representation. To only
 see the effects of the preparing transformation, but to disable Polly code
 generation add the option 'polly-no-codegen'.
 
+<h3>Graphical view of the SCoPs</h3>
+
+Polly can use graphviz to show the SCoPs it detects in a program. The relevant
+options are '-polly-show', '-polly-show-only', '-polly-dot' and
+'-polly-dot-only'. The 'show' options automatically run dotty or another
+graphviz viewer to show the scops graphically. The 'dot' options store for each
+function a dot file that highlights the detected SCoPs. If 'only' is appended at
+the end of the option, the basic blocks are shown without the statements the
+contain.
 
 </div>
 </body>

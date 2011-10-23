@@ -33,23 +33,23 @@ DisableCodegen("polly-no-codegen",
        cl::desc("Disable Polly Code Generation"), cl::Hidden,
        cl::init(false));
 static cl::opt<bool>
-PollyViewer("enable-polly-viewer",
+PollyViewer("polly-show",
        cl::desc("Enable the Polly DOT viewer in -O3"), cl::Hidden,
        cl::value_desc("Run the Polly DOT viewer at -O3"),
        cl::init(false));
 static cl::opt<bool>
-PollyOnlyViewer("enable-polly-only-viewer",
+PollyOnlyViewer("polly-show-only",
        cl::desc("Enable the Polly DOT viewer in -O3 (no BB content)"),
        cl::Hidden,
        cl::value_desc("Run the Polly DOT viewer at -O3 (no BB content"),
        cl::init(false));
 static cl::opt<bool>
-PollyPrinter("enable-polly-printer",
+PollyPrinter("polly-dot",
        cl::desc("Enable the Polly DOT printer in -O3"), cl::Hidden,
        cl::value_desc("Run the Polly DOT printer at -O3"),
        cl::init(false));
 static cl::opt<bool>
-PollyOnlyPrinter("enable-polly-only-printer",
+PollyOnlyPrinter("polly-dot-only",
        cl::desc("Enable the Polly DOT printer in -O3 (no BB content)"),
        cl::Hidden,
        cl::value_desc("Run the Polly DOT printer at -O3 (no BB content"),
