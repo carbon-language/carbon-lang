@@ -1171,3 +1171,27 @@ let Predicates = [HasBMI], Defs = [EFLAGS] in {
   defm ANDN32 : bmi_andn<"andn{l}", GR32, i32mem, loadi32>, T8, VEX_4V;
   defm ANDN64 : bmi_andn<"andn{q}", GR64, i64mem, loadi64>, T8, VEX_4V, VEX_W;
 }
+
+//===----------------------------------------------------------------------===//
+// MULX Instruction
+//
+multiclass bmi_mulx<string mnemonic, RegisterClass RC, X86MemOperand x86memop> {
+let neverHasSideEffects = 1 in {
+  let isCommutable = 1 in
+  def rr : I<0xF6, MRMSrcReg, (outs RC:$dst1, RC:$dst2), (ins RC:$src),
+             !strconcat(mnemonic, "\t{$src, $dst2, $dst1|$dst1, $dst2, $src}"),
+             []>, T8XD, VEX_4V;
+
+  let mayLoad = 1 in
+  def rm : I<0xF6, MRMSrcMem, (outs RC:$dst1, RC:$dst2), (ins x86memop:$src),
+             !strconcat(mnemonic, "\t{$src, $dst2, $dst1|$dst1, $dst2, $src}"),
+             []>, T8XD, VEX_4V;
+}
+}
+
+let Predicates = [HasBMI2] in {
+  let Uses = [EDX] in
+    defm MULX32 : bmi_mulx<"mulx{l}", GR32, i32mem>;
+  let Uses = [RDX] in
+    defm MULX64 : bmi_mulx<"mulx{q}", GR64, i64mem>, VEX_W;
+}
