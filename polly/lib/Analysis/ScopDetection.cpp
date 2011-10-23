@@ -63,6 +63,13 @@
 using namespace llvm;
 using namespace polly;
 
+static cl::opt<std::string>
+OnlyFunction("polly-detect-only",
+             cl::desc("Only detect scops in function"), cl::Hidden,
+             cl::value_desc("The function name to detect scops in"),
+             cl::ValueRequired, cl::init(""));
+
+
 //===----------------------------------------------------------------------===//
 // Statistics.
 
@@ -552,6 +559,11 @@ bool ScopDetection::runOnFunction(llvm::Function &F) {
   LI = &getAnalysis<LoopInfo>();
   RI = &getAnalysis<RegionInfo>();
   Region *TopRegion = RI->getTopLevelRegion();
+
+  releaseMemory();
+
+  if (OnlyFunction != "" && F.getNameStr() != OnlyFunction)
+    return false;
 
   if(!isValidFunction(F))
     return false;
