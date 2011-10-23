@@ -1,5 +1,5 @@
 ; RUN: opt %loadPolly -polly-optimize-isl -polly-cloog -analyze %s -S | FileCheck %s
-; RUN: opt %loadPolly -polly-optimize-isl -polly-cloog -analyze -enable-schedule-prevector %s -S | FileCheck %s -check-prefix=VECTOR
+; RUN: opt %loadPolly -polly-optimize-isl -polly-cloog -analyze -polly-prevector %s -S | FileCheck %s -check-prefix=VECTOR
 
 
 target datalayout =

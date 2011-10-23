@@ -43,8 +43,8 @@ DisableTiling("polly-no-tiling",
 	  cl::init(false));
 
 static cl::opt<bool>
-Prevector("enable-schedule-prevector",
-	  cl::desc("Enable the prevectorization in the scheduler"), cl::Hidden,
+Prevector("polly-prevector",
+	  cl::desc("Enable prevectorization in the isl scheduler"), cl::Hidden,
 	  cl::value_desc("Prevectorization enabled"),
 	  cl::init(false));
 
