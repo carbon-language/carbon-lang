@@ -8,8 +8,13 @@
 //===----------------------------------------------------------------------===//
 
 // In order to guarantee correct working with Python, Python.h *MUST* be
-// the *FIRST* header file included in ScriptInterpreterPython.h, and that
-// must be the *FIRST* header file included here.
+// the *FIRST* header file included here.
+
+#if defined (__APPLE__)
+#include <Python/Python.h>
+#else
+#include <Python.h>
+#endif
 
 #include "lldb/Interpreter/ScriptInterpreterPython.h"
 
@@ -242,11 +247,11 @@ ScriptInterpreterPython::~ScriptInterpreterPython ()
         {
             while (!GetPythonLock (1))
                 fprintf (tmp_fh, "Python interpreter locked on another thread; waiting to acquire lock...\n");
-            Py_DECREF (m_new_sysout);
+            Py_DECREF ((PyObject*)m_new_sysout);
             ReleasePythonLock ();
         }
         else
-            Py_DECREF (m_new_sysout);
+            Py_DECREF ((PyObject*)m_new_sysout);
     }
 }
 
@@ -358,7 +363,7 @@ ScriptInterpreterPython::EnterSession ()
     if ((m_new_sysout != NULL)
         && (sysmod != NULL)
         && (sysdict != NULL))
-            PyDict_SetItemString (sysdict, "stdout", m_new_sysout);
+            PyDict_SetItemString (sysdict, "stdout", (PyObject*)m_new_sysout);
             
     if (PyErr_Occurred())
         PyErr_Clear ();

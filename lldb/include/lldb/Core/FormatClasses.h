@@ -11,13 +11,6 @@
 #define lldb_FormatClasses_h_
 
 // C Includes
-
-#if defined (__APPLE__)
-#include <Python/Python.h>
-#else
-#include <Python.h>
-#endif
-
 #include <stdint.h>
 #include <unistd.h>
 
@@ -302,7 +295,7 @@ public:
     {
     private:
         std::string m_python_class;
-        PyObject* m_wrapper;
+        void *m_wrapper; // Wraps PyObject.
         ScriptInterpreter *m_interpreter;
     public:
         
@@ -310,10 +303,7 @@ public:
                  lldb::ValueObjectSP be);
         
         virtual
-        ~FrontEnd()
-        {
-            Py_XDECREF(m_wrapper);
-        }
+        ~FrontEnd();
         
         virtual uint32_t
         CalculateNumChildren()

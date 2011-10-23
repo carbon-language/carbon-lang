@@ -8,6 +8,11 @@
 //===----------------------------------------------------------------------===//
 
 // C Includes
+#if defined (__APPLE__)
+#include <Python/Python.h>
+#else
+#include <Python.h>
+#endif
 
 // C++ Includes
 #include <ostream>
@@ -243,7 +248,12 @@ SyntheticScriptProvider::FrontEnd::FrontEnd(std::string pclass,
     if (m_interpreter == NULL)
         m_wrapper = NULL;
     else
-        m_wrapper = (PyObject*)m_interpreter->CreateSyntheticScriptedProvider(m_python_class, m_backend);
+        m_wrapper = m_interpreter->CreateSyntheticScriptedProvider(m_python_class, m_backend);
+}
+
+SyntheticScriptProvider::FrontEnd::~FrontEnd()
+{
+  Py_XDECREF((PyObject*)m_wrapper);
 }
 
 lldb::ValueObjectSP

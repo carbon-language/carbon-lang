@@ -11,12 +11,6 @@
 #ifndef liblldb_ScriptInterpreterPython_h_
 #define liblldb_ScriptInterpreterPython_h_
 
-#if defined (__APPLE__)
-#include <Python/Python.h>
-#else
-#include <Python.h>
-#endif
-
 #include "lldb/lldb-private.h"
 #include "lldb/Interpreter/ScriptInterpreter.h"
 #include "lldb/Core/InputReader.h"
@@ -197,7 +191,7 @@ private:
     lldb_utility::PseudoTerminal m_embedded_python_pty;
     lldb::InputReaderSP m_embedded_thread_input_reader_sp;
     FILE *m_dbg_stdout;
-    PyObject *m_new_sysout;
+    void *m_new_sysout; // This is a PyObject.
     std::string m_dictionary_name;
     TerminalState m_terminal_state;
     bool m_session_is_active;
