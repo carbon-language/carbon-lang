@@ -35,6 +35,9 @@ constexpr class C1 {}; // expected-error {{class cannot be marked constexpr}}
 constexpr struct S1 {}; // expected-error {{struct cannot be marked constexpr}}
 constexpr union U1 {}; // expected-error {{union cannot be marked constexpr}}
 constexpr enum E1 {}; // expected-error {{enum cannot be marked constexpr}}
+template <typename T> constexpr class TC1 {}; // expected-error {{class cannot be marked constexpr}}
+template <typename T> constexpr struct TS1 {}; // expected-error {{struct cannot be marked constexpr}}
+template <typename T> constexpr union TU1 {}; // expected-error {{union cannot be marked constexpr}}
 class C2 {} constexpr; // expected-error {{class cannot be marked constexpr}}
 struct S2 {} constexpr; // expected-error {{struct cannot be marked constexpr}}
 union U2 {} constexpr; // expected-error {{union cannot be marked constexpr}}

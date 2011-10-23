@@ -9,6 +9,8 @@ struct align_member {
   int member alignas(8);
 };
 
+template <unsigned A> alignas(A) struct align_class_template {};
+
 typedef char align_typedef alignas(8);
 template<typename T> using align_alias_template = align_typedef;
 
@@ -18,4 +20,6 @@ static_assert(alignof(align_multiple) == 8, "l's alignment is wrong");
 static_assert(alignof(align_member) == 8, "quuux's alignment is wrong");
 static_assert(sizeof(align_member) == 8, "quuux's size is wrong");
 static_assert(alignof(align_typedef) == 8, "typedef's alignment is wrong");
+static_assert(alignof(align_class_template<8>) == 8, "template's alignment is wrong");
+static_assert(alignof(align_class_template<16>) == 16, "template's alignment is wrong");
 static_assert(alignof(align_alias_template<int>) == 8, "alias template's alignment is wrong");
