@@ -806,8 +806,10 @@ ConvertScalar_InsertValue(Value *SV, Value *Old,
         return Builder.CreateBitCast(SV, AllocaType);
 
     // Must be an element insertion.
-    assert(SV->getType() == VTy->getElementType());
-    uint64_t EltSize = TD.getTypeAllocSizeInBits(VTy->getElementType());
+    Type *EltTy = VTy->getElementType();
+    if (SV->getType() != EltTy)
+      SV = Builder.CreateBitCast(SV, EltTy);
+    uint64_t EltSize = TD.getTypeAllocSizeInBits(EltTy);
     unsigned Elt = Offset/EltSize;
     return Builder.CreateInsertElement(Old, SV, Builder.getInt32(Elt));
   }
