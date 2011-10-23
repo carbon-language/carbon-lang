@@ -498,16 +498,17 @@ ScopLib::~ScopLib() {
 /// @param Space An isl space object, describing how to spilt the dimensions.
 ///
 /// @return An isl constraint representing this integer array.
-isl_constraint *constraintFromMatrixRow(isl_int *row, isl_space *Space) {
+isl_constraint *constraintFromMatrixRow(isl_int *row,
+                                        __isl_take isl_space *Space) {
   isl_constraint *c;
 
   unsigned NbIn = isl_space_dim(Space, isl_dim_in);
   unsigned NbParam = isl_space_dim(Space, isl_dim_param);
 
   if (isl_int_is_zero(row[0]))
-    c = isl_equality_alloc(isl_local_space_from_space(isl_space_copy(Space)));
+    c = isl_equality_alloc(isl_local_space_from_space(Space));
   else
-    c = isl_inequality_alloc(isl_local_space_from_space(isl_space_copy(Space)));
+    c = isl_inequality_alloc(isl_local_space_from_space(Space));
 
   unsigned current_column = 1;
 
@@ -528,14 +529,14 @@ isl_constraint *constraintFromMatrixRow(isl_int *row, isl_space *Space) {
 /// @param Space The dimensions that are contained in the OpenScop matrix.
 ///
 /// @return An isl map representing m.
-isl_map *mapFromMatrix(scoplib_matrix_p m, isl_space *Space,
+isl_map *mapFromMatrix(scoplib_matrix_p m, __isl_take isl_space *Space,
                        unsigned scatteringDims) {
   isl_basic_map *bmap = isl_basic_map_universe(isl_space_copy(Space));
 
   for (unsigned i = 0; i < m->NbRows; ++i) {
     isl_constraint *c;
 
-    c = constraintFromMatrixRow(m->p[i], Space);
+    c = constraintFromMatrixRow(m->p[i], isl_space_copy(Space));
 
     mpz_t minusOne;
     mpz_init(minusOne);
@@ -558,6 +559,8 @@ isl_map *mapFromMatrix(scoplib_matrix_p m, isl_space *Space,
     bmap = isl_basic_map_add_constraint(bmap, c);
   }
 
+  isl_space_free(Space);
+
   return isl_map_from_basic_map(bmap);
 }
 /// @brief Create an isl constraint from a row of OpenScop integers.
@@ -566,7 +569,8 @@ isl_map *mapFromMatrix(scoplib_matrix_p m, isl_space *Space,
 /// @param Space An isl space object, describing how to spilt the dimensions.
 ///
 /// @return An isl constraint representing this integer array.
-isl_constraint *constraintFromMatrixRowFull(isl_int *row, isl_space *Space) {
+isl_constraint *constraintFromMatrixRowFull(isl_int *row,
+                                            __isl_take isl_space *Space) {
   isl_constraint *c;
 
   unsigned NbOut = isl_space_dim(Space, isl_dim_out);
@@ -602,15 +606,17 @@ isl_constraint *constraintFromMatrixRowFull(isl_int *row, isl_space *Space) {
 /// @param Space The dimensions that are contained in the OpenScop matrix.
 ///
 /// @return An isl map representing m.
-isl_map *mapFromMatrix(scoplib_matrix_p m, isl_space *Space) {
+isl_map *mapFromMatrix(scoplib_matrix_p m, __isl_take isl_space *Space) {
   isl_basic_map *bmap = isl_basic_map_universe(isl_space_copy(Space));
 
   for (unsigned i = 0; i < m->NbRows; ++i) {
     isl_constraint *c;
 
-    c = constraintFromMatrixRowFull(m->p[i], Space);
+    c = constraintFromMatrixRowFull(m->p[i], isl_space_copy(Space));
     bmap = isl_basic_map_add_constraint(bmap, c);
   }
+
+  isl_space_free(Space);
 
   return isl_map_from_basic_map(bmap);
 }
@@ -638,16 +644,10 @@ isl_map *scatteringForStmt(scoplib_matrix_p m, ScopStmt *PollyStmt,
   Space = isl_space_set_tuple_name(Space, isl_dim_out, "scattering");
   Space = isl_space_set_tuple_name(Space, isl_dim_in, PollyStmt->getBaseName());
 
-  isl_map *map;
-
   if (scatteringDims == -1)
-    map = mapFromMatrix(m, Space);
-  else
-    map = mapFromMatrix(m, Space, scatteringDims);
+    return mapFromMatrix(m, Space);
 
-  isl_space_free(Space);
-
-  return map;
+  return mapFromMatrix(m, Space, scatteringDims);
 }
 
 unsigned maxScattering(scoplib_statement_p stmt) {
