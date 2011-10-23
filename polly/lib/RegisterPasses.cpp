@@ -29,6 +29,10 @@
 using namespace llvm;
 
 static cl::opt<bool>
+DisableScheduler("polly-no-optimizer",
+                 cl::desc("Disable Polly Scheduling Optimizer"), cl::Hidden,
+                 cl::init(false));
+static cl::opt<bool>
 DisableCodegen("polly-no-codegen",
        cl::desc("Disable Polly Code Generation"), cl::Hidden,
        cl::init(false));
@@ -120,7 +124,8 @@ static void registerPollyPasses(const llvm::PassManagerBuilder &Builder,
   if (PollyOnlyPrinter)
     PM.add(polly::createDOTOnlyPrinterPass());
 
-  PM.add(polly::createIslScheduleOptimizerPass());
+  if (!DisableScheduler)
+    PM.add(polly::createIslScheduleOptimizerPass());
 
   if (!DisableCodegen)
     PM.add(polly::createCodeGenerationPass());
