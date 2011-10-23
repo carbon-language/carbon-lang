@@ -17,9 +17,8 @@ TOOL_NO_EXPORTS := 1
 NO_INSTALL = 1
 
 LINK_COMPONENTS := support
- 
-USEDLIBS = clangCodeGen.a clangParse.a clangSema.a \
-           clangAST.a clangLex.a clangBasic.a
+
+USEDLIBS = clangBasic.a
 
 include $(CLANG_LEVEL)/Makefile
 
