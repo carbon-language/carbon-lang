@@ -93,7 +93,7 @@ scoplib_statement_p ScopLib::initializeStatement(ScopStmt *stmt) {
   Stmt->domain = scoplib_matrix_list_malloc();
   Stmt->domain->elt = domainToMatrix(domain);
   Stmt->domain->next = NULL;
-  isl_map *Scattering = stmt->getScattering;
+  isl_map *Scattering = stmt->getScattering();
   Stmt->schedule = scatteringToMatrix(Scattering);
   isl_map_free(Scattering);
   isl_set_free(domain);
@@ -175,9 +175,9 @@ void ScopLib::print(FILE *F) {
 int ScopLib::domainToMatrix_constraint(isl_constraint *c, void *user) {
   scoplib_matrix_p m = (scoplib_matrix_p) user;
 
-  int nb_params = isl_constraint_dim(c, isl_space_param);
-  int nb_vars = isl_constraint_dim(c, isl_space_set);
-  int nb_div = isl_constraint_dim(c, isl_space_div);
+  int nb_params = isl_constraint_dim(c, isl_dim_param);
+  int nb_vars = isl_constraint_dim(c, isl_dim_set);
+  int nb_div = isl_constraint_dim(c, isl_dim_div);
 
   assert(!nb_div && "Existentially quantified variables not yet supported");
 
@@ -194,13 +194,13 @@ int ScopLib::domainToMatrix_constraint(isl_constraint *c, void *user) {
 
   // Assign variables
   for (int i = 0; i < nb_vars; ++i) {
-    isl_constraint_get_coefficient(c, isl_space_set, i, &v);
+    isl_constraint_get_coefficient(c, isl_dim_set, i, &v);
     isl_int_set(vec->p[i + 1], v);
   }
 
   // Assign parameters
   for (int i = 0; i < nb_params; ++i) {
-    isl_constraint_get_coefficient(c, isl_space_param, i, &v);
+    isl_constraint_get_coefficient(c, isl_dim_param, i, &v);
     isl_int_set(vec->p[nb_vars + i + 1], v);
   }
 
@@ -261,9 +261,9 @@ scoplib_matrix_p ScopLib::domainToMatrix(isl_set *PS) {
 int ScopLib::scatteringToMatrix_constraint(isl_constraint *c, void *user) {
   scoplib_matrix_p m = (scoplib_matrix_p) user;
 
-  int nb_params = isl_constraint_dim(c, isl_space_param);
-  int nb_in = isl_constraint_dim(c, isl_space_in);
-  int nb_div = isl_constraint_dim(c, isl_space_div);
+  int nb_params = isl_constraint_dim(c, isl_dim_param);
+  int nb_in = isl_constraint_dim(c, isl_dim_in);
+  int nb_div = isl_constraint_dim(c, isl_dim_div);
 
   assert(!nb_div && "Existentially quantified variables not yet supported");
 
@@ -281,13 +281,13 @@ int ScopLib::scatteringToMatrix_constraint(isl_constraint *c, void *user) {
 
   // Assign variables
   for (int i = 0; i < nb_in; ++i) {
-    isl_constraint_get_coefficient(c, isl_space_in, i, &v);
+    isl_constraint_get_coefficient(c, isl_dim_in, i, &v);
     isl_int_set(vec->p[i + 1], v);
   }
 
   // Assign parameters
   for (int i = 0; i < nb_params; ++i) {
-    isl_constraint_get_coefficient(c, isl_space_param, i, &v);
+    isl_constraint_get_coefficient(c, isl_dim_param, i, &v);
     isl_int_set(vec->p[nb_in + i + 1], v);
   }
 
@@ -357,9 +357,9 @@ scoplib_matrix_p ScopLib::scatteringToMatrix(isl_map *pmap) {
 int ScopLib::accessToMatrix_constraint(isl_constraint *c, void *user) {
   scoplib_matrix_p m = (scoplib_matrix_p) user;
 
-  int nb_params = isl_constraint_dim(c, isl_space_param);
-  int nb_in = isl_constraint_dim(c, isl_space_in);
-  int nb_div = isl_constraint_dim(c, isl_space_div);
+  int nb_params = isl_constraint_dim(c, isl_dim_param);
+  int nb_in = isl_constraint_dim(c, isl_dim_in);
+  int nb_div = isl_constraint_dim(c, isl_dim_div);
 
   assert(!nb_div && "Existentially quantified variables not yet supported");
 
@@ -370,13 +370,13 @@ int ScopLib::accessToMatrix_constraint(isl_constraint *c, void *user) {
   isl_int_init(v);
 
   // The access dimension has to be one.
-  isl_constraint_get_coefficient(c, isl_space_out, 0, &v);
+  isl_constraint_get_coefficient(c, isl_dim_out, 0, &v);
   assert(isl_int_is_one(v));
   bool inverse = true ;
 
   // Assign variables
   for (int i = 0; i < nb_in; ++i) {
-    isl_constraint_get_coefficient(c, isl_space_in, i, &v);
+    isl_constraint_get_coefficient(c, isl_dim_in, i, &v);
 
     if (inverse) isl_int_neg(v,v);
 
@@ -385,7 +385,7 @@ int ScopLib::accessToMatrix_constraint(isl_constraint *c, void *user) {
 
   // Assign parameters
   for (int i = 0; i < nb_params; ++i) {
-    isl_constraint_get_coefficient(c, isl_space_param, i, &v);
+    isl_constraint_get_coefficient(c, isl_dim_param, i, &v);
 
     if (inverse) isl_int_neg(v,v);
 
@@ -400,6 +400,8 @@ int ScopLib::accessToMatrix_constraint(isl_constraint *c, void *user) {
   isl_int_set(vec->p[nb_in + nb_params + 1], v);
 
   scoplib_matrix_insert_vector(m, vec, m->NbRows);
+
+  isl_int_clear(v);
 
   return 0;
 }
@@ -435,7 +437,7 @@ scoplib_matrix_p ScopLib::createAccessMatrix(ScopStmt *S, bool isRead) {
        MI != ME; ++MI)
     if ((*MI)->isRead() == isRead) {
       // Extract the access function.
-      isl_map_foreach_basic_map((*MI)->getAccessFunction(),
+      isl_map_foreach_basic_map((*MI)->getAccessRelation(),
                                 &accessToMatrix_basic_map, m);
 
       // Set the index of the memory access base element.
@@ -490,21 +492,21 @@ ScopLib::~ScopLib() {
 isl_constraint *constraintFromMatrixRow(isl_int *row, isl_space *Space) {
   isl_constraint *c;
 
-  unsigned NbIn = isl_space_size(Space, isl_dim_in);
-  unsigned NbParam = isl_space_size(Space, isl_dim_param);
+  unsigned NbIn = isl_space_dim(Space, isl_dim_in);
+  unsigned NbParam = isl_space_dim(Space, isl_dim_param);
 
   if (isl_int_is_zero(row[0]))
-    c = isl_equality_alloc(isl_space_copy(Space));
+    c = isl_equality_alloc(isl_local_space_from_space(isl_space_copy(Space)));
   else
-    c = isl_inequality_alloc(isl_space_copy(Space));
+    c = isl_inequality_alloc(isl_local_space_from_space(isl_space_copy(Space)));
 
   unsigned current_column = 1;
 
   for (unsigned j = 0; j < NbIn; ++j)
-    isl_constraint_set_coefficient(c, isl_space_in, j, row[current_column++]);
+    isl_constraint_set_coefficient(c, isl_dim_in, j, row[current_column++]);
 
   for (unsigned j = 0; j < NbParam; ++j)
-    isl_constraint_set_coefficient(c, isl_space_param, j, row[current_column++]);
+    isl_constraint_set_coefficient(c, isl_dim_param, j, row[current_column++]);
 
   isl_constraint_set_constant(c, row[current_column]);
 
@@ -529,7 +531,7 @@ isl_map *mapFromMatrix(scoplib_matrix_p m, isl_space *Space,
     mpz_t minusOne;
     mpz_init(minusOne);
     mpz_set_si(minusOne, -1);
-    isl_constraint_set_coefficient(c, isl_space_out, i, minusOne);
+    isl_constraint_set_coefficient(c, isl_dim_out, i, minusOne);
 
     bmap = isl_basic_map_add_constraint(bmap, c);
   }
@@ -537,12 +539,12 @@ isl_map *mapFromMatrix(scoplib_matrix_p m, isl_space *Space,
   for (unsigned i = m->NbRows; i < scatteringDims; i++) {
     isl_constraint *c;
 
-    c = isl_equality_alloc(isl_space_copy(Space));
+    c = isl_equality_alloc(isl_local_space_from_space(isl_space_copy(Space)));
 
     mpz_t One;
     mpz_init(One);
     mpz_set_si(One, 1);
-    isl_constraint_set_coefficient(c, isl_space_out, i, One);
+    isl_constraint_set_coefficient(c, isl_dim_out, i, One);
 
     bmap = isl_basic_map_add_constraint(bmap, c);
   }
@@ -558,25 +560,27 @@ isl_map *mapFromMatrix(scoplib_matrix_p m, isl_space *Space,
 isl_constraint *constraintFromMatrixRowFull(isl_int *row, isl_space *Space) {
   isl_constraint *c;
 
-  unsigned NbOut = isl_space_size(Space, isl_dim_out);
-  unsigned NbIn = isl_space_size(Space, isl_dim_in);
-  unsigned NbParam = isl_space_size(Space, isl_dim_param);
+  unsigned NbOut = isl_space_dim(Space, isl_dim_out);
+  unsigned NbIn = isl_space_dim(Space, isl_dim_in);
+  unsigned NbParam = isl_space_dim(Space, isl_dim_param);
+
+  isl_local_space *LSpace = isl_local_space_from_space(Space);
 
   if (isl_int_is_zero(row[0]))
-    c = isl_equality_alloc(isl_space_copy(Space));
+    c = isl_equality_alloc(LSpace);
   else
-    c = isl_inequality_alloc(isl_space_copy(Space));
+    c = isl_inequality_alloc(LSpace);
 
   unsigned current_column = 1;
 
   for (unsigned j = 0; j < NbOut; ++j)
-    isl_constraint_set_coefficient(c, isl_space_out, j, row[current_column++]);
+    isl_constraint_set_coefficient(c, isl_dim_out, j, row[current_column++]);
 
   for (unsigned j = 0; j < NbIn; ++j)
-    isl_constraint_set_coefficient(c, isl_space_in, j, row[current_column++]);
+    isl_constraint_set_coefficient(c, isl_dim_in, j, row[current_column++]);
 
   for (unsigned j = 0; j < NbParam; ++j)
-    isl_constraint_set_coefficient(c, isl_space_param, j, row[current_column++]);
+    isl_constraint_set_coefficient(c, isl_dim_param, j, row[current_column++]);
 
   isl_constraint_set_constant(c, row[current_column]);
 
@@ -620,7 +624,7 @@ isl_map *scatteringForStmt(scoplib_matrix_p m, ScopStmt *PollyStmt,
   else
     NbScattering = scatteringDims;
 
-  isl_ctx *ctx = PollyStmt->getParent()->getCtx();
+  isl_ctx *ctx = PollyStmt->getParent()->getIslCtx();
   isl_space *Space = isl_dim_alloc(ctx, NbParam, NbIterators, NbScattering);
   Space = isl_space_set_tuple_name(Space, isl_dim_out, "scattering");
   Space = isl_space_set_tuple_name(Space, isl_dim_in, PollyStmt->getBaseName());

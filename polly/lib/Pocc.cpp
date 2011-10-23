@@ -199,13 +199,15 @@ bool Pocc::runOnScop(Scop &S) {
   for (Scop::iterator SI = S.begin(), SE = S.end(); SI != SE; ++SI) {
     if ((*SI)->isFinalRead())
       continue;
+    isl_map *scat = (*SI)->getScattering();
     int scatDims = (*SI)->getNumScattering();
-    isl_space *Space = isl_space_alloc(S.getCtx(), S.getNumParams(), scatDims,
-                                       scatDims + 1);
+    isl_space *Space = isl_space_alloc(S.getIslCtx(), S.getNumParams(),
+                                       scatDims, scatDims + 1);
     isl_basic_map *map = isl_basic_map_universe(isl_space_copy(Space));
+    isl_local_space *LSpace = isl_local_space_from_space(Space);
 
     for (int i = 0; i <= lastLoop - 1; i++) {
-      isl_constraint *c = isl_equality_alloc(isl_space_copy(Space));
+      isl_constraint *c = isl_equality_alloc(isl_local_space_copy(LSpace));
 
       isl_constraint_set_coefficient_si(c, isl_dim_in, i, 1);
       isl_constraint_set_coefficient_si(c, isl_dim_out, i, -1);
@@ -214,7 +216,7 @@ bool Pocc::runOnScop(Scop &S) {
     }
 
     for (int i = lastLoop; i < scatDims; i++) {
-      isl_constraint *c = isl_equality_alloc(isl_space_copy(Space));
+      isl_constraint *c = isl_equality_alloc(isl_local_space_copy(LSpace));
 
       isl_constraint_set_coefficient_si(c, isl_dim_in, i, 1);
       isl_constraint_set_coefficient_si(c, isl_dim_out, i + 1, -1);
@@ -225,12 +227,12 @@ bool Pocc::runOnScop(Scop &S) {
     isl_constraint *c;
 
     int vectorWidth = 4;
-    c = isl_inequality_alloc(isl_space_copy(Space));
+    c = isl_inequality_alloc(isl_local_space_copy(LSpace));
     isl_constraint_set_coefficient_si(c, isl_dim_out, lastLoop, -vectorWidth);
     isl_constraint_set_coefficient_si(c, isl_dim_out, lastLoop + 1, 1);
     map = isl_basic_map_add_constraint(map, c);
 
-    c = isl_inequality_alloc(isl_space_copy(Space));
+    c = isl_inequality_alloc(LSpace);
     isl_constraint_set_coefficient_si(c, isl_dim_out, lastLoop, vectorWidth);
     isl_constraint_set_coefficient_si(c, isl_dim_out, lastLoop + 1, -1);
     isl_constraint_set_constant_si(c, vectorWidth - 1);
