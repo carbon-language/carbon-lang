@@ -151,3 +151,52 @@
 // CHECK: rorxq $63, (%rax), %r10
 // CHECK: encoding: [0xc4,0x63,0xfb,0xf0,0x10,0x3f]
           rorxq $63, (%rax), %r10
+
+// CHECK: shlxl %r12d, (%rax), %r10d
+// CHECK: encoding: [0xc4,0x62,0x19,0xf7,0x10]
+          shlxl %r12d, (%rax), %r10d
+
+// CHECK: shlxl %r12d, %r11d, %r10d
+// CHECK: encoding: [0xc4,0x42,0x19,0xf7,0xd3]
+          shlxl %r12d, %r11d, %r10d
+
+// CHECK: shlxq %r12, (%rax), %r10
+// CHECK: encoding: [0xc4,0x62,0x99,0xf7,0x10]
+          shlxq %r12, (%rax), %r10
+
+// CHECK: shlxq %r12, %r11, %r10
+// CHECK: encoding: [0xc4,0x42,0x99,0xf7,0xd3]
+          shlxq %r12, %r11, %r10
+
+// CHECK: sarxl %r12d, (%rax), %r10d
+// CHECK: encoding: [0xc4,0x62,0x1a,0xf7,0x10]
+          sarxl %r12d, (%rax), %r10d
+
+// CHECK: sarxl %r12d, %r11d, %r10d
+// CHECK: encoding: [0xc4,0x42,0x1a,0xf7,0xd3]
+          sarxl %r12d, %r11d, %r10d
+
+// CHECK: sarxq %r12, (%rax), %r10
+// CHECK: encoding: [0xc4,0x62,0x9a,0xf7,0x10]
+          sarxq %r12, (%rax), %r10
+
+// CHECK: sarxq %r12, %r11, %r10
+// CHECK: encoding: [0xc4,0x42,0x9a,0xf7,0xd3]
+          sarxq %r12, %r11, %r10
+
+// CHECK: shrxl %r12d, (%rax), %r10d
+// CHECK: encoding: [0xc4,0x62,0x1b,0xf7,0x10]
+          shrxl %r12d, (%rax), %r10d
+
+// CHECK: shrxl %r12d, %r11d, %r10d
+// CHECK: encoding: [0xc4,0x42,0x1b,0xf7,0xd3]
+          shrxl %r12d, %r11d, %r10d
+
+// CHECK: shrxq %r12, (%rax), %r10
+// CHECK: encoding: [0xc4,0x62,0x9b,0xf7,0x10]
+          shrxq %r12, (%rax), %r10
+
+// CHECK: shrxq %r12, %r11, %r10
+// CHECK: encoding: [0xc4,0x42,0x9b,0xf7,0xd3]
+          shrxq %r12, %r11, %r10
+

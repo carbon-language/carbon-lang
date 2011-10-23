@@ -744,24 +744,38 @@ def SHRD64mri8 : RIi8<0xAC, MRMDestMem,
 
 } // Defs = [EFLAGS]
 
-let Predicates = [HasBMI2], neverHasSideEffects = 1 in {
-  def RORX32ri : Ii8<0xF0, MRMSrcReg, (outs GR32:$dst),
-                     (ins GR32:$src1, i8imm:$src2),
-                     "rorx{l}\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>,
-                     TAXD, VEX;
+multiclass bmi_rotate<string asm, RegisterClass RC, X86MemOperand x86memop> {
+let neverHasSideEffects = 1 in {
+  def ri : Ii8<0xF0, MRMSrcReg, (outs RC:$dst), (ins RC:$src1, i8imm:$src2),
+               !strconcat(asm, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+               []>, TAXD, VEX;
   let mayLoad = 1 in
-  def RORX32mi : Ii8<0xF0, MRMSrcMem, (outs GR32:$dst),
-                     (ins i32mem:$src1, i8imm:$src2),
-                     "rorx{l}\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>,
-                     TAXD, VEX;
+  def mi : Ii8<0xF0, MRMSrcMem, (outs RC:$dst),
+               (ins x86memop:$src1, i8imm:$src2),
+               !strconcat(asm, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+               []>, TAXD, VEX;
+}
+}
 
-  def RORX64ri : Ii8<0xF0, MRMSrcReg, (outs GR64:$dst),
-                     (ins GR64:$src1, i8imm:$src2),
-                     "rorx{q}\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>,
-                     TAXD, VEX, VEX_W;
+multiclass bmi_shift<string asm, RegisterClass RC, X86MemOperand x86memop> {
+let neverHasSideEffects = 1 in {
+  def rr : I<0xF7, MRMSrcReg, (outs RC:$dst), (ins RC:$src1, RC:$src2),
+             !strconcat(asm, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"), []>,
+             VEX_4VOp3;
   let mayLoad = 1 in
-  def RORX64mi : Ii8<0xF0, MRMSrcMem, (outs GR64:$dst),
-                     (ins i64mem:$src1, i8imm:$src2),
-                     "rorx{q}\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>,
-                     TAXD, VEX, VEX_W;
+  def rm : I<0xF7, MRMSrcMem, (outs RC:$dst), (ins x86memop:$src1, RC:$src2),
+             !strconcat(asm, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"), []>,
+             VEX_4VOp3;
+}
+}
+
+let Predicates = [HasBMI2] in {
+  defm RORX32 : bmi_rotate<"rorx{l}", GR32, i32mem>;
+  defm RORX64 : bmi_rotate<"rorx{q}", GR64, i64mem>, VEX_W;
+  defm SARX32 : bmi_shift<"sarx{l}", GR32, i32mem>, T8XS;
+  defm SARX64 : bmi_shift<"sarx{q}", GR64, i64mem>, T8XS, VEX_W;
+  defm SHRX32 : bmi_shift<"shrx{l}", GR32, i32mem>, T8XD;
+  defm SHRX64 : bmi_shift<"shrx{q}", GR64, i64mem>, T8XD, VEX_W;
+  defm SHLX32 : bmi_shift<"shlx{l}", GR32, i32mem>, T8, OpSize;
+  defm SHLX64 : bmi_shift<"shlx{q}", GR64, i64mem>, T8, OpSize, VEX_W;
 }
