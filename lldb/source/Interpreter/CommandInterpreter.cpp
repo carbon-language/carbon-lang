@@ -177,6 +177,16 @@ CommandInterpreter::Initialize ()
     cmd_obj_sp = GetCommandSPExact ("_display", false);
     if (cmd_obj_sp)
         AddAlias ("display", cmd_obj_sp);
+        
+    cmd_obj_sp = GetCommandSPExact ("disassemble", false);
+    if (cmd_obj_sp)
+        AddAlias ("dis", cmd_obj_sp);
+
+    cmd_obj_sp = GetCommandSPExact ("disassemble", false);
+    if (cmd_obj_sp)
+        AddAlias ("di", cmd_obj_sp);
+
+
 
     cmd_obj_sp = GetCommandSPExact ("_undisplay", false);
     if (cmd_obj_sp)
