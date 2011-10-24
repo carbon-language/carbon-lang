@@ -261,6 +261,39 @@ static APFloat HandleIntToFloatCast(QualType DestType, QualType SrcType,
   return Result;
 }
 
+/// Try to evaluate the initializer for a variable declaration.
+static APValue *EvaluateVarDeclInit(EvalInfo &Info, const VarDecl *VD) {
+  if (isa<ParmVarDecl>(VD))
+    return 0;
+
+  const Expr *Init = VD->getAnyInitializer();
+  if (!Init)
+    return 0;
+
+  if (APValue *V = VD->getEvaluatedValue())
+    return V;
+
+  if (VD->isEvaluatingValue())
+    return 0;
+
+  VD->setEvaluatingValue();
+
+  // FIXME: If the initializer isn't a constant expression, propagate up any
+  // diagnostic explaining why not.
+  Expr::EvalResult EResult;
+  if (Init->Evaluate(EResult, Info.Ctx) && !EResult.HasSideEffects)
+    VD->setEvaluatedValue(EResult.Val);
+  else
+    VD->setEvaluatedValue(APValue());
+
+  return VD->getEvaluatedValue();
+}
+
+bool IsConstNonVolatile(QualType T) {
+  Qualifiers Quals = T.getQualifiers();
+  return Quals.hasConst() && !Quals.hasVolatile();
+}
+
 namespace {
 class HasSideEffect
   : public ConstStmtVisitor<HasSideEffect, bool> {
@@ -1163,38 +1196,11 @@ bool IntExprEvaluator::CheckReferencedDecl(const Expr* E, const Decl* D) {
 
   // In C++, const, non-volatile integers initialized with ICEs are ICEs.
   // In C, they can also be folded, although they are not ICEs.
-  if (Info.Ctx.getCanonicalType(E->getType()).getCVRQualifiers() 
-                                                        == Qualifiers::Const) {
-
-    if (isa<ParmVarDecl>(D))
-      return false;
-
+  if (IsConstNonVolatile(E->getType())) {
     if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
-      if (const Expr *Init = VD->getAnyInitializer()) {
-        if (APValue *V = VD->getEvaluatedValue()) {
-          if (V->isInt())
-            return Success(V->getInt(), E);
-          return false;
-        }
-
-        if (VD->isEvaluatingValue())
-          return false;
-
-        VD->setEvaluatingValue();
-
-        Expr::EvalResult EResult;
-        // FIXME: Produce a diagnostic if the initializer isn't a constant
-        // expression.
-        if (Init->Evaluate(EResult, Info.Ctx) && !EResult.HasSideEffects &&
-            EResult.Val.isInt()) {
-          // Cache the evaluated value in the variable declaration.
-          Result = EResult.Val;
-          VD->setEvaluatedValue(Result);
-          return true;
-        }
-
-        VD->setEvaluatedValue(APValue());
-      }
+      APValue *V = EvaluateVarDeclInit(Info, VD);
+      if (V && V->isInt())
+        return Success(V->getInt(), E);
     }
   }
 
@@ -2145,41 +2151,14 @@ bool FloatExprEvaluator::VisitDeclRefExpr(const DeclRefExpr *E) {
   if (ExprEvaluatorBaseTy::VisitDeclRefExpr(E))
     return true;
 
-  const Decl *D = E->getDecl();
-  if (!isa<VarDecl>(D) || isa<ParmVarDecl>(D)) return false;
-  const VarDecl *VD = cast<VarDecl>(D);
-
-  // Require the qualifiers to be const and not volatile.
-  CanQualType T = Info.Ctx.getCanonicalType(E->getType());
-  if (!T.isConstQualified() || T.isVolatileQualified())
-    return false;
-
-  const Expr *Init = VD->getAnyInitializer();
-  if (!Init) return false;
-
-  if (APValue *V = VD->getEvaluatedValue()) {
-    if (V->isFloat()) {
+  const VarDecl *VD = dyn_cast<VarDecl>(E->getDecl());
+  if (VD && IsConstNonVolatile(VD->getType())) {
+    APValue *V = EvaluateVarDeclInit(Info, VD);
+    if (V && V->isFloat()) {
       Result = V->getFloat();
       return true;
     }
-    return false;
   }
-
-  if (VD->isEvaluatingValue())
-    return false;
-
-  VD->setEvaluatingValue();
-
-  Expr::EvalResult InitResult;
-  if (Init->Evaluate(InitResult, Info.Ctx) && !InitResult.HasSideEffects &&
-      InitResult.Val.isFloat()) {
-    // Cache the evaluated value in the variable declaration.
-    Result = InitResult.Val.getFloat();
-    VD->setEvaluatedValue(InitResult.Val);
-    return true;
-  }
-
-  VD->setEvaluatedValue(APValue());
   return false;
 }
 
@@ -2947,8 +2926,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::DeclRefExprClass:
     if (isa<EnumConstantDecl>(cast<DeclRefExpr>(E)->getDecl()))
       return NoDiag();
-    if (Ctx.getLangOptions().CPlusPlus &&
-        E->getType().getCVRQualifiers() == Qualifiers::Const) {
+    if (Ctx.getLangOptions().CPlusPlus && IsConstNonVolatile(E->getType())) {
       const NamedDecl *D = cast<DeclRefExpr>(E)->getDecl();
 
       // Parameter variables are never constants.  Without this check,
@@ -2961,10 +2939,6 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
       //   A variable of non-volatile const-qualified integral or enumeration
       //   type initialized by an ICE can be used in ICEs.
       if (const VarDecl *Dcl = dyn_cast<VarDecl>(D)) {
-        Qualifiers Quals = Ctx.getCanonicalType(Dcl->getType()).getQualifiers();
-        if (Quals.hasVolatile() || !Quals.hasConst())
-          return ICEDiag(2, cast<DeclRefExpr>(E)->getLocation());
-        
         // Look for a declaration of this variable that has an initializer.
         const VarDecl *ID = 0;
         const Expr *Init = Dcl->getAnyInitializer(ID);
