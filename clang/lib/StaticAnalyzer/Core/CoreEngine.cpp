@@ -506,50 +506,11 @@ ExplodedNode* NodeBuilder::generateNodeImpl(const ProgramPoint &Loc,
   return (IsNew ? N : 0);
 }
 
-void StmtNodeBuilder::GenerateAutoTransition(ExplodedNode *N) {
-  assert (!N->isSink());
-
-  // Check if this node entered a callee.
-  if (isa<CallEnter>(N->getLocation())) {
-    // Still use the index of the CallExpr. It's needed to create the callee
-    // StackFrameContext.
-    C.Eng.WList->enqueue(N, C.Block, Idx);
-    return;
-  }
-
-  // Do not create extra nodes. Move to the next CFG element.
-  if (isa<PostInitializer>(N->getLocation())) {
-    C.Eng.WList->enqueue(N, C.Block, Idx+1);
-    return;
-  }
-
-  PostStmt Loc(getStmt(), N->getLocationContext());
-
-  if (Loc == N->getLocation()) {
-    // Note: 'N' should be a fresh node because otherwise it shouldn't be
-    // a member of Deferred.
-    C.Eng.WList->enqueue(N, C.Block, Idx+1);
-    return;
-  }
-
-  bool IsNew;
-  ExplodedNode *Succ = C.Eng.G->getNode(Loc, N->State, &IsNew);
-  Succ->addPredecessor(N, *C.Eng.G);
-
-  if (IsNew)
-    C.Eng.WList->enqueue(Succ, C.Block, Idx+1);
-}
-
-ExplodedNode *StmtNodeBuilder::MakeNode(ExplodedNodeSet &DstSet,
-                                        const Stmt *S, 
-                                        ExplodedNode *Pred,
-                                        const ProgramState *St,
-                                        ProgramPoint::Kind K) {
-  ExplodedNode *N = generateNode(S, St, Pred, K, 0, BuildSinks);
-  if (N && !BuildSinks){
-      DstSet.Add(N);
-  }
-  return N;
+PureStmtNodeBuilder::~PureStmtNodeBuilder() {
+  if (EnclosingBldr)
+    for (ExplodedNodeSet::iterator I = Frontier.begin(),
+                                   E = Frontier.end(); I != E; ++I )
+      EnclosingBldr->addNodes(*I);
 }
 
 ExplodedNode *BranchNodeBuilder::generateNode(const ProgramState *State,

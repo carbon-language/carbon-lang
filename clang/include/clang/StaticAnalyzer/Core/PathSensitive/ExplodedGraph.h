@@ -54,7 +54,6 @@ class ExplodedNode : public llvm::FoldingSetNode {
   friend class ExplodedGraph;
   friend class CoreEngine;
   friend class NodeBuilder;
-  friend class StmtNodeBuilder;
   friend class BranchNodeBuilder;
   friend class IndirectGotoNodeBuilder;
   friend class SwitchNodeBuilder;

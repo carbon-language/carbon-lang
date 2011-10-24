@@ -34,7 +34,6 @@ class ExplodedNode;
 class ProgramState;
 class ProgramStateManager;
 class BlockCounter;
-class StmtNodeBuilder;
 class BranchNodeBuilder;
 class IndirectGotoNodeBuilder;
 class SwitchNodeBuilder;

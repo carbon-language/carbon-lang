@@ -41,7 +41,6 @@ class NodeBuilder;
 class CoreEngine {
   friend struct NodeBuilderContext;
   friend class NodeBuilder;
-  friend class StmtNodeBuilder;
   friend class CommonNodeBuilder;
   friend class GenericNodeBuilderImpl;
   friend class IndirectGotoNodeBuilder;
@@ -192,8 +191,6 @@ struct NodeBuilderContext {
 /// This is the simplest builder which generates nodes in the ExplodedGraph.
 class NodeBuilder {
 protected:
-  friend class StmtNodeBuilder;
-
   const NodeBuilderContext &C;
 
   /// Specifies if the builder results have been finalized. For example, if it
@@ -333,12 +330,7 @@ public:
 
   }
 
-  virtual ~PureStmtNodeBuilder() {
-    if (EnclosingBldr)
-      for (ExplodedNodeSet::iterator I = Frontier.begin(),
-                                     E = Frontier.end(); I != E; ++I )
-        EnclosingBldr->addNodes(*I);
-  }
+  virtual ~PureStmtNodeBuilder();
 
   ExplodedNode *generateNode(const Stmt *S,
                              ExplodedNode *Pred,
@@ -364,86 +356,6 @@ public:
     return generateNodeImpl(PP, State, Pred, MarkAsSink);
   }
 
-};
-
-class StmtNodeBuilder : public NodeBuilder {
-  const unsigned Idx;
-
-public:
-  bool PurgingDeadSymbols;
-  bool BuildSinks;
-  // TODO: Remove the flag. We should be able to use the method in the parent.
-  bool hasGeneratedNode;
-  ProgramPoint::Kind PointKind;
-  const ProgramPointTag *Tag;
-
-  void GenerateAutoTransition(ExplodedNode *N);
-
-  StmtNodeBuilder(ExplodedNode *SrcNode, ExplodedNodeSet &DstSet,
-                  unsigned idx, const NodeBuilderContext &Ctx)
-    : NodeBuilder(SrcNode, DstSet, Ctx), Idx(idx),
-      PurgingDeadSymbols(false), BuildSinks(false), hasGeneratedNode(false),
-      PointKind(ProgramPoint::PostStmtKind), Tag(0) {}
-
-  ExplodedNode *generateNode(const Stmt *S,
-                             const ProgramState *St,
-                             ExplodedNode *Pred,
-                             ProgramPoint::Kind K,
-                             const ProgramPointTag *tag = 0,
-                             bool MarkAsSink = false) {
-    if (PurgingDeadSymbols)
-      K = ProgramPoint::PostPurgeDeadSymbolsKind;
-
-    const ProgramPoint &L = ProgramPoint::getProgramPoint(S, K,
-                                  Pred->getLocationContext(), tag ? tag : Tag);
-    return generateNodeImpl(L, St, Pred, MarkAsSink);
-  }
-
-  ExplodedNode *generateNode(const Stmt *S,
-                             const ProgramState *St,
-                             ExplodedNode *Pred,
-                             const ProgramPointTag *tag = 0) {
-    return generateNode(S, St, Pred, PointKind, tag);
-  }
-
-  ExplodedNode *generateNode(const ProgramPoint &PP,
-                             const ProgramState *State,
-                             ExplodedNode *Pred) {
-    return generateNodeImpl(PP, State, Pred, false);
-  }
-
-  /// getStmt - Return the current block-level expression associated with
-  ///  this builder.
-  const Stmt *getStmt() const { 
-    const CFGStmt *CS = (*C.Block)[Idx].getAs<CFGStmt>();
-    return CS ? CS->getStmt() : 0;
-  }
-
-  unsigned getIndex() const { return Idx; }
-
-  ExplodedNode *MakeNode(ExplodedNodeSet &Dst,
-                         const Stmt *S, 
-                         ExplodedNode *Pred,
-                         const ProgramState *St) {
-    return MakeNode(Dst, S, Pred, St, PointKind);
-  }
-
-  ExplodedNode *MakeNode(ExplodedNodeSet &Dst,
-                         const Stmt *S,
-                         ExplodedNode *Pred,
-                         const ProgramState *St,
-                         ProgramPoint::Kind K);
-
-  ExplodedNode *MakeSinkNode(ExplodedNodeSet &Dst,
-                             const Stmt *S,
-                             ExplodedNode *Pred,
-                             const ProgramState *St) {
-    bool Tmp = BuildSinks;
-    BuildSinks = true;
-    ExplodedNode *N = MakeNode(Dst, S, Pred, St);
-    BuildSinks = Tmp;
-    return N;
-  }
 };
 
 class BranchNodeBuilder: public NodeBuilder {
