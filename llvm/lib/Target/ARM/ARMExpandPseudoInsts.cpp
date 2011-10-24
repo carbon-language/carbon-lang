@@ -102,7 +102,7 @@ namespace {
     unsigned PseudoOpc;
     unsigned RealOpc;
     bool IsLoad;
-    bool HasWriteBack;
+    bool HasWritebackOperand;
     NEONRegSpacing RegSpacing;
     unsigned char NumRegs; // D registers loaded or stored
     unsigned char RegElts; // elements per D register; used for lane ops
@@ -148,13 +148,17 @@ static const NEONLdStTableEntry NEONLdStTable[] = {
 { ARM::VLD1d64TPseudo_UPD,  ARM::VLD1d64T_UPD, true,  true,  SingleSpc,  3, 1 ,false},
 
 { ARM::VLD1q16Pseudo,       ARM::VLD1q16,      true,  false, SingleSpc,  2, 4 ,false},
-{ ARM::VLD1q16Pseudo_UPD,   ARM::VLD1q16_UPD,  true,  true,  SingleSpc,  2, 4 ,false},
+{ ARM::VLD1q16PseudoWB_fixed, ARM::VLD1q16wb_fixed,true,false,SingleSpc, 2, 4 ,false},
+{ ARM::VLD1q16PseudoWB_register, ARM::VLD1q16wb_register, true, true, SingleSpc, 2, 4 ,false},
 { ARM::VLD1q32Pseudo,       ARM::VLD1q32,      true,  false, SingleSpc,  2, 2 ,false},
-{ ARM::VLD1q32Pseudo_UPD,   ARM::VLD1q32_UPD,  true,  true,  SingleSpc,  2, 2 ,false},
+{ ARM::VLD1q32PseudoWB_fixed, ARM::VLD1q32wb_fixed,true,false,SingleSpc, 2, 2 ,false},
+{ ARM::VLD1q32PseudoWB_register, ARM::VLD1q32wb_register, true, true, SingleSpc, 2, 2 ,false},
 { ARM::VLD1q64Pseudo,       ARM::VLD1q64,      true,  false, SingleSpc,  2, 1 ,false},
-{ ARM::VLD1q64Pseudo_UPD,   ARM::VLD1q64_UPD,  true,  true,  SingleSpc,  2, 1 ,false},
+{ ARM::VLD1q64PseudoWB_fixed, ARM::VLD1q64wb_fixed,true,false,SingleSpc, 2, 2 ,false},
+{ ARM::VLD1q64PseudoWB_register, ARM::VLD1q64wb_register, true, true, SingleSpc, 2, 1 ,false},
 { ARM::VLD1q8Pseudo,        ARM::VLD1q8,       true,  false, SingleSpc,  2, 8 ,false},
-{ ARM::VLD1q8Pseudo_UPD,    ARM::VLD1q8_UPD,   true,  true,  SingleSpc,  2, 8 ,false},
+{ ARM::VLD1q8PseudoWB_fixed, ARM::VLD1q8wb_fixed,true,false, SingleSpc,  2, 8 ,false},
+{ ARM::VLD1q8PseudoWB_register, ARM::VLD1q8wb_register,true,true,SingleSpc,2,8,false},
 
 { ARM::VLD2DUPd16Pseudo,     ARM::VLD2DUPd16,     true, false, SingleSpc, 2, 4,true},
 { ARM::VLD2DUPd16Pseudo_UPD, ARM::VLD2DUPd16_UPD, true, true,  SingleSpc, 2, 4,true},
@@ -436,14 +440,14 @@ void ARMExpandPseudo::ExpandVLD(MachineBasicBlock::iterator &MBBI) {
   if (NumRegs > 3 && TableEntry->copyAllListRegs)
     MIB.addReg(D3, RegState::Define | getDeadRegState(DstIsDead));
 
-  if (TableEntry->HasWriteBack)
+  if (TableEntry->HasWritebackOperand)
     MIB.addOperand(MI.getOperand(OpIdx++));
 
   // Copy the addrmode6 operands.
   MIB.addOperand(MI.getOperand(OpIdx++));
   MIB.addOperand(MI.getOperand(OpIdx++));
   // Copy the am6offset operand.
-  if (TableEntry->HasWriteBack)
+  if (TableEntry->HasWritebackOperand)
     MIB.addOperand(MI.getOperand(OpIdx++));
 
   // For an instruction writing double-spaced subregs, the pseudo instruction
@@ -488,14 +492,14 @@ void ARMExpandPseudo::ExpandVST(MachineBasicBlock::iterator &MBBI) {
   MachineInstrBuilder MIB = BuildMI(MBB, MBBI, MI.getDebugLoc(),
                                     TII->get(TableEntry->RealOpc));
   unsigned OpIdx = 0;
-  if (TableEntry->HasWriteBack)
+  if (TableEntry->HasWritebackOperand)
     MIB.addOperand(MI.getOperand(OpIdx++));
 
   // Copy the addrmode6 operands.
   MIB.addOperand(MI.getOperand(OpIdx++));
   MIB.addOperand(MI.getOperand(OpIdx++));
   // Copy the am6offset operand.
-  if (TableEntry->HasWriteBack)
+  if (TableEntry->HasWritebackOperand)
     MIB.addOperand(MI.getOperand(OpIdx++));
 
   bool SrcIsKill = MI.getOperand(OpIdx).isKill();
@@ -565,14 +569,14 @@ void ARMExpandPseudo::ExpandLaneOp(MachineBasicBlock::iterator &MBBI) {
       MIB.addReg(D3, RegState::Define | getDeadRegState(DstIsDead));
   }
 
-  if (TableEntry->HasWriteBack)
+  if (TableEntry->HasWritebackOperand)
     MIB.addOperand(MI.getOperand(OpIdx++));
 
   // Copy the addrmode6 operands.
   MIB.addOperand(MI.getOperand(OpIdx++));
   MIB.addOperand(MI.getOperand(OpIdx++));
   // Copy the am6offset operand.
-  if (TableEntry->HasWriteBack)
+  if (TableEntry->HasWritebackOperand)
     MIB.addOperand(MI.getOperand(OpIdx++));
 
   // Grab the super-register source.
@@ -1068,10 +1072,14 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
     case ARM::VLD1q16Pseudo:
     case ARM::VLD1q32Pseudo:
     case ARM::VLD1q64Pseudo:
-    case ARM::VLD1q8Pseudo_UPD:
-    case ARM::VLD1q16Pseudo_UPD:
-    case ARM::VLD1q32Pseudo_UPD:
-    case ARM::VLD1q64Pseudo_UPD:
+    case ARM::VLD1q8PseudoWB_register:
+    case ARM::VLD1q16PseudoWB_register:
+    case ARM::VLD1q32PseudoWB_register:
+    case ARM::VLD1q64PseudoWB_register:
+    case ARM::VLD1q8PseudoWB_fixed:
+    case ARM::VLD1q16PseudoWB_fixed:
+    case ARM::VLD1q32PseudoWB_fixed:
+    case ARM::VLD1q64PseudoWB_fixed:
     case ARM::VLD2d8Pseudo:
     case ARM::VLD2d16Pseudo:
     case ARM::VLD2d32Pseudo:

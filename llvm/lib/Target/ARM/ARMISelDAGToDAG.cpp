@@ -1549,6 +1549,23 @@ SDValue ARMDAGToDAGISel::GetVLDSTAlign(SDValue Align, unsigned NumVecs,
   return CurDAG->getTargetConstant(Alignment, MVT::i32);
 }
 
+// Get the register stride update opcode of a VLD/VST instruction that
+// is otherwise equivalent to the given fixed stride updating instruction.
+static unsigned getVLDSTRegisterUpdateOpcode(unsigned Opc) {
+  switch (Opc) {
+  default: break;
+  case ARM::VLD1d8wb_fixed: return ARM::VLD1d8wb_register;
+  case ARM::VLD1d16wb_fixed: return ARM::VLD1d16wb_register;
+  case ARM::VLD1d32wb_fixed: return ARM::VLD1d32wb_register;
+  case ARM::VLD1d64wb_fixed: return ARM::VLD1d64wb_register;
+  case ARM::VLD1q8wb_fixed: return ARM::VLD1q8wb_register;
+  case ARM::VLD1q16wb_fixed: return ARM::VLD1q16wb_register;
+  case ARM::VLD1q32wb_fixed: return ARM::VLD1q32wb_register;
+  case ARM::VLD1q64wb_fixed: return ARM::VLD1q64wb_register;
+  }
+  return Opc; // If not one we handle, return it unchanged.
+}
+
 SDNode *ARMDAGToDAGISel::SelectVLD(SDNode *N, bool isUpdating, unsigned NumVecs,
                                    unsigned *DOpcodes, unsigned *QOpcodes0,
                                    unsigned *QOpcodes1) {
@@ -1612,7 +1629,14 @@ SDNode *ARMDAGToDAGISel::SelectVLD(SDNode *N, bool isUpdating, unsigned NumVecs,
     Ops.push_back(Align);
     if (isUpdating) {
       SDValue Inc = N->getOperand(AddrOpIdx + 1);
-      Ops.push_back(isa<ConstantSDNode>(Inc.getNode()) ? Reg0 : Inc);
+      // FIXME: VLD1 fixed increment doesn't need Reg0. Remove the reg0
+      // case entirely when the rest are updated to that form, too.
+      // Do that before committing this change. Likewise, the opcode
+      // update call will become unconditional.
+      if (NumVecs == 1 && !isa<ConstantSDNode>(Inc.getNode()))
+        Opc = getVLDSTRegisterUpdateOpcode(Opc);
+      if (NumVecs != 1 || !isa<ConstantSDNode>(Inc.getNode()))
+        Ops.push_back(isa<ConstantSDNode>(Inc.getNode()) ? Reg0 : Inc);
     }
     Ops.push_back(Pred);
     Ops.push_back(Reg0);
@@ -2750,16 +2774,18 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
   }
 
   case ARMISD::VLD1_UPD: {
-    unsigned DOpcodes[] = { ARM::VLD1d8_UPD, ARM::VLD1d16_UPD,
-                            ARM::VLD1d32_UPD, ARM::VLD1d64_UPD };
-    unsigned QOpcodes[] = { ARM::VLD1q8Pseudo_UPD, ARM::VLD1q16Pseudo_UPD,
-                            ARM::VLD1q32Pseudo_UPD, ARM::VLD1q64Pseudo_UPD };
+    unsigned DOpcodes[] = { ARM::VLD1d8wb_fixed, ARM::VLD1d16wb_fixed,
+                            ARM::VLD1d32wb_fixed, ARM::VLD1d64wb_fixed };
+    unsigned QOpcodes[] = { ARM::VLD1q8PseudoWB_fixed,
+                            ARM::VLD1q16PseudoWB_fixed,
+                            ARM::VLD1q32PseudoWB_fixed,
+                            ARM::VLD1q64PseudoWB_fixed };
     return SelectVLD(N, true, 1, DOpcodes, QOpcodes, 0);
   }
 
   case ARMISD::VLD2_UPD: {
     unsigned DOpcodes[] = { ARM::VLD2d8Pseudo_UPD, ARM::VLD2d16Pseudo_UPD,
-                            ARM::VLD2d32Pseudo_UPD, ARM::VLD1q64Pseudo_UPD };
+                            ARM::VLD2d32Pseudo_UPD, ARM::VLD1q64PseudoWB_fixed};
     unsigned QOpcodes[] = { ARM::VLD2q8Pseudo_UPD, ARM::VLD2q16Pseudo_UPD,
                             ARM::VLD2q32Pseudo_UPD };
     return SelectVLD(N, true, 2, DOpcodes, QOpcodes, 0);
@@ -2767,7 +2793,7 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
 
   case ARMISD::VLD3_UPD: {
     unsigned DOpcodes[] = { ARM::VLD3d8Pseudo_UPD, ARM::VLD3d16Pseudo_UPD,
-                            ARM::VLD3d32Pseudo_UPD, ARM::VLD1d64TPseudo_UPD };
+                            ARM::VLD3d32Pseudo_UPD, ARM::VLD1q64PseudoWB_fixed};
     unsigned QOpcodes0[] = { ARM::VLD3q8Pseudo_UPD,
                              ARM::VLD3q16Pseudo_UPD,
                              ARM::VLD3q32Pseudo_UPD };
@@ -2779,7 +2805,7 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
 
   case ARMISD::VLD4_UPD: {
     unsigned DOpcodes[] = { ARM::VLD4d8Pseudo_UPD, ARM::VLD4d16Pseudo_UPD,
-                            ARM::VLD4d32Pseudo_UPD, ARM::VLD1d64QPseudo_UPD };
+                            ARM::VLD4d32Pseudo_UPD, ARM::VLD1q64PseudoWB_fixed};
     unsigned QOpcodes0[] = { ARM::VLD4q8Pseudo_UPD,
                              ARM::VLD4q16Pseudo_UPD,
                              ARM::VLD4q32Pseudo_UPD };

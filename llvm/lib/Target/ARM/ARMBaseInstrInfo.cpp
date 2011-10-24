@@ -2401,10 +2401,14 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
     case ARM::VLD1q16:
     case ARM::VLD1q32:
     case ARM::VLD1q64:
-    case ARM::VLD1q8_UPD:
-    case ARM::VLD1q16_UPD:
-    case ARM::VLD1q32_UPD:
-    case ARM::VLD1q64_UPD:
+    case ARM::VLD1q8wb_fixed:
+    case ARM::VLD1q16wb_fixed:
+    case ARM::VLD1q32wb_fixed:
+    case ARM::VLD1q64wb_fixed:
+    case ARM::VLD1q8wb_register:
+    case ARM::VLD1q16wb_register:
+    case ARM::VLD1q32wb_register:
+    case ARM::VLD1q64wb_register:
     case ARM::VLD2d8:
     case ARM::VLD2d16:
     case ARM::VLD2d32:
@@ -2562,10 +2566,14 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
     case ARM::VLD1q16Pseudo:
     case ARM::VLD1q32Pseudo:
     case ARM::VLD1q64Pseudo:
-    case ARM::VLD1q8Pseudo_UPD:
-    case ARM::VLD1q16Pseudo_UPD:
-    case ARM::VLD1q32Pseudo_UPD:
-    case ARM::VLD1q64Pseudo_UPD:
+    case ARM::VLD1q8PseudoWB_register:
+    case ARM::VLD1q16PseudoWB_register:
+    case ARM::VLD1q32PseudoWB_register:
+    case ARM::VLD1q64PseudoWB_register:
+    case ARM::VLD1q8PseudoWB_fixed:
+    case ARM::VLD1q16PseudoWB_fixed:
+    case ARM::VLD1q32PseudoWB_fixed:
+    case ARM::VLD1q64PseudoWB_fixed:
     case ARM::VLD2d8Pseudo:
     case ARM::VLD2d16Pseudo:
     case ARM::VLD2d32Pseudo:

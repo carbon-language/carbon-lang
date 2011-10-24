@@ -2054,14 +2054,22 @@ static DecodeStatus DecodeVLDInstruction(llvm::MCInst &Inst, unsigned Insn,
 
   // Writeback operand
   switch (Inst.getOpcode()) {
-    case ARM::VLD1d8_UPD:
-    case ARM::VLD1d16_UPD:
-    case ARM::VLD1d32_UPD:
-    case ARM::VLD1d64_UPD:
-    case ARM::VLD1q8_UPD:
-    case ARM::VLD1q16_UPD:
-    case ARM::VLD1q32_UPD:
-    case ARM::VLD1q64_UPD:
+    case ARM::VLD1d8wb_fixed:
+    case ARM::VLD1d16wb_fixed:
+    case ARM::VLD1d32wb_fixed:
+    case ARM::VLD1d64wb_fixed:
+    case ARM::VLD1d8wb_register:
+    case ARM::VLD1d16wb_register:
+    case ARM::VLD1d32wb_register:
+    case ARM::VLD1d64wb_register:
+    case ARM::VLD1q8wb_fixed:
+    case ARM::VLD1q16wb_fixed:
+    case ARM::VLD1q32wb_fixed:
+    case ARM::VLD1q64wb_fixed:
+    case ARM::VLD1q8wb_register:
+    case ARM::VLD1q16wb_register:
+    case ARM::VLD1q32wb_register:
+    case ARM::VLD1q64wb_register:
     case ARM::VLD1d8T_UPD:
     case ARM::VLD1d16T_UPD:
     case ARM::VLD1d32T_UPD:
@@ -2103,11 +2111,42 @@ static DecodeStatus DecodeVLDInstruction(llvm::MCInst &Inst, unsigned Insn,
     return MCDisassembler::Fail;
 
   // AddrMode6 Offset (register)
-  if (Rm == 0xD)
-    Inst.addOperand(MCOperand::CreateReg(0));
-  else if (Rm != 0xF) {
-    if (!Check(S, DecodeGPRRegisterClass(Inst, Rm, Address, Decoder)))
+  switch (Inst.getOpcode()) {
+  default:
+    // The below have been updated to have explicit am6offset split
+    // between fixed and register offset. For those instructions not
+    // yet updated, we need to add an additional reg0 operand for the
+    // fixed variant.
+    //
+    // The fixed offset encodes as Rm == 0xd, so we check for that.
+    if (Rm == 0xd) {
+      Inst.addOperand(MCOperand::CreateReg(0));
+      break;
+    }
+    // Fall through to handle the register offset variant.
+  case ARM::VLD1d8wb_fixed:
+  case ARM::VLD1d16wb_fixed:
+  case ARM::VLD1d32wb_fixed:
+  case ARM::VLD1d64wb_fixed:
+  case ARM::VLD1d8wb_register:
+  case ARM::VLD1d16wb_register:
+  case ARM::VLD1d32wb_register:
+  case ARM::VLD1d64wb_register:
+  case ARM::VLD1q8wb_fixed:
+  case ARM::VLD1q16wb_fixed:
+  case ARM::VLD1q32wb_fixed:
+  case ARM::VLD1q64wb_fixed:
+  case ARM::VLD1q8wb_register:
+  case ARM::VLD1q16wb_register:
+  case ARM::VLD1q32wb_register:
+  case ARM::VLD1q64wb_register:
+    // The fixed offset post-increment encodes Rm == 0xd. The no-writeback
+    // variant encodes Rm == 0xf. Anything else is a register offset post-
+    // increment and we need to add the register operand to the instruction.
+    if (Rm != 0xD && Rm != 0xF &&
+        !Check(S, DecodeGPRRegisterClass(Inst, Rm, Address, Decoder)))
       return MCDisassembler::Fail;
+    break;
   }
 
   return S;

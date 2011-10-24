@@ -259,6 +259,14 @@ class VLDQWBPseudo<InstrItinClass itin>
   : PseudoNLdSt<(outs QPR:$dst, GPR:$wb),
                 (ins addrmode6:$addr, am6offset:$offset), itin,
                 "$addr.addr = $wb">;
+class VLDQWBfixedPseudo<InstrItinClass itin>
+  : PseudoNLdSt<(outs QPR:$dst, GPR:$wb),
+                (ins addrmode6:$addr), itin,
+                "$addr.addr = $wb">;
+class VLDQWBregisterPseudo<InstrItinClass itin>
+  : PseudoNLdSt<(outs QPR:$dst, GPR:$wb),
+                (ins addrmode6:$addr, rGPR:$offset), itin,
+                "$addr.addr = $wb">;
 class VLDQQPseudo<InstrItinClass itin>
   : PseudoNLdSt<(outs QQPR:$dst), (ins addrmode6:$addr), itin, "">;
 class VLDQQWBPseudo<InstrItinClass itin>
@@ -309,37 +317,58 @@ def  VLD1q32Pseudo : VLDQPseudo<IIC_VLD1x2>;
 def  VLD1q64Pseudo : VLDQPseudo<IIC_VLD1x2>;
 
 // ...with address register writeback:
-class VLD1DWB<bits<4> op7_4, string Dt>
-  : NLdSt<0,0b10,0b0111,op7_4, (outs DPR:$Vd, GPR:$wb),
-          (ins addrmode6:$Rn, am6offset:$Rm), IIC_VLD1u,
-          "vld1", Dt, "\\{$Vd\\}, $Rn$Rm",
-          "$Rn.addr = $wb", []> {
-  let Inst{4} = Rn{4};
-  let DecoderMethod = "DecodeVLDInstruction";
+multiclass VLD1DWB<bits<4> op7_4, string Dt> {
+  def _fixed : NLdSt<0,0b10, 0b0111,op7_4, (outs VecListOneD:$Vd, GPR:$wb),
+                     (ins addrmode6:$Rn), IIC_VLD1u,
+                     "vld1", Dt, "$Vd, $Rn!",
+                     "$Rn.addr = $wb", []> {
+    let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
+    let Inst{4} = Rn{4};
+    let DecoderMethod = "DecodeVLDInstruction";
+  }
+  def _register : NLdSt<0,0b10,0b0111,op7_4, (outs VecListOneD:$Vd, GPR:$wb),
+                        (ins addrmode6:$Rn, rGPR:$Rm), IIC_VLD1u,
+                        "vld1", Dt, "$Vd, $Rn, $Rm",
+                        "$Rn.addr = $wb", []> {
+    let Inst{4} = Rn{4};
+    let DecoderMethod = "DecodeVLDInstruction";
+  }
 }
-class VLD1QWB<bits<4> op7_4, string Dt>
-  : NLdSt<0,0b10,0b1010,op7_4, (outs VecListTwoD:$Vd, GPR:$wb),
-          (ins addrmode6:$Rn, am6offset:$Rm), IIC_VLD1x2u,
-          "vld1", Dt, "$Vd, $Rn$Rm",
-          "$Rn.addr = $wb", []> {
-  let Inst{5-4} = Rn{5-4};
-  let DecoderMethod = "DecodeVLDInstruction";
+multiclass VLD1QWB<bits<4> op7_4, string Dt> {
+  def _fixed : NLdSt<0,0b10,0b1010,op7_4, (outs VecListTwoD:$Vd, GPR:$wb),
+                    (ins addrmode6:$Rn), IIC_VLD1x2u,
+                     "vld1", Dt, "$Vd, $Rn!",
+                     "$Rn.addr = $wb", []> {
+    let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
+    let Inst{5-4} = Rn{5-4};
+    let DecoderMethod = "DecodeVLDInstruction";
+  }
+  def _register : NLdSt<0,0b10,0b1010,op7_4, (outs VecListTwoD:$Vd, GPR:$wb),
+                        (ins addrmode6:$Rn, rGPR:$Rm), IIC_VLD1x2u,
+                        "vld1", Dt, "$Vd, $Rn, $Rm",
+                        "$Rn.addr = $wb", []> {
+    let Inst{5-4} = Rn{5-4};
+    let DecoderMethod = "DecodeVLDInstruction";
+  }
 }
 
-def VLD1d8_UPD  : VLD1DWB<{0,0,0,?}, "8">;
-def VLD1d16_UPD : VLD1DWB<{0,1,0,?}, "16">;
-def VLD1d32_UPD : VLD1DWB<{1,0,0,?}, "32">;
-def VLD1d64_UPD : VLD1DWB<{1,1,0,?}, "64">;
+defm VLD1d8wb  : VLD1DWB<{0,0,0,?}, "8">;
+defm VLD1d16wb : VLD1DWB<{0,1,0,?}, "16">;
+defm VLD1d32wb : VLD1DWB<{1,0,0,?}, "32">;
+defm VLD1d64wb : VLD1DWB<{1,1,0,?}, "64">;
+defm VLD1q8wb  : VLD1QWB<{0,0,?,?}, "8">;
+defm VLD1q16wb : VLD1QWB<{0,1,?,?}, "16">;
+defm VLD1q32wb : VLD1QWB<{1,0,?,?}, "32">;
+defm VLD1q64wb : VLD1QWB<{1,1,?,?}, "64">;
 
-def VLD1q8_UPD  : VLD1QWB<{0,0,?,?}, "8">;
-def VLD1q16_UPD : VLD1QWB<{0,1,?,?}, "16">;
-def VLD1q32_UPD : VLD1QWB<{1,0,?,?}, "32">;
-def VLD1q64_UPD : VLD1QWB<{1,1,?,?}, "64">;
-
-def VLD1q8Pseudo_UPD  : VLDQWBPseudo<IIC_VLD1x2u>;
-def VLD1q16Pseudo_UPD : VLDQWBPseudo<IIC_VLD1x2u>;
-def VLD1q32Pseudo_UPD : VLDQWBPseudo<IIC_VLD1x2u>;
-def VLD1q64Pseudo_UPD : VLDQWBPseudo<IIC_VLD1x2u>;
+def VLD1q8PseudoWB_fixed  : VLDQWBfixedPseudo<IIC_VLD1x2u>;
+def VLD1q16PseudoWB_fixed : VLDQWBfixedPseudo<IIC_VLD1x2u>;
+def VLD1q32PseudoWB_fixed : VLDQWBfixedPseudo<IIC_VLD1x2u>;
+def VLD1q64PseudoWB_fixed : VLDQWBfixedPseudo<IIC_VLD1x2u>;
+def VLD1q8PseudoWB_register  : VLDQWBregisterPseudo<IIC_VLD1x2u>;
+def VLD1q16PseudoWB_register : VLDQWBregisterPseudo<IIC_VLD1x2u>;
+def VLD1q32PseudoWB_register : VLDQWBregisterPseudo<IIC_VLD1x2u>;
+def VLD1q64PseudoWB_register : VLDQWBregisterPseudo<IIC_VLD1x2u>;
 
 // ...with 3 registers
 class VLD1D3<bits<4> op7_4, string Dt>
