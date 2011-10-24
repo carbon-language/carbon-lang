@@ -1159,25 +1159,48 @@ CGObjCGNU::GenerateMessageSend(CodeGenFunction &CGF,
    };
   llvm::MDNode *node = llvm::MDNode::get(VMContext, impMD);
 
-  // Get the IMP to call
-  llvm::Value *imp = LookupIMP(CGF, Receiver, cmd, node);
-
+  CodeGenTypes &Types = CGM.getTypes();
   CallArgList ActualArgs;
   ActualArgs.add(RValue::get(Receiver), ASTIdTy);
   ActualArgs.add(RValue::get(cmd), CGF.getContext().getObjCSelType());
   ActualArgs.addFrom(CallArgs);
-
-  CodeGenTypes &Types = CGM.getTypes();
   const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType, ActualArgs,
                                                        FunctionType::ExtInfo());
+  // Get the IMP to call
+  llvm::Value *imp;
+
+  // If we have non-legacy dispatch specified, we try using the objc_msgSend()
+  // functions.  These are not supported on all platforms (or all runtimes on a
+  // given platform), so we 
+  switch (CGM.getCodeGenOpts().getObjCDispatchMethod()) {
+    default:
+      llvm_unreachable("Invalid dispatch method!");
+    case CodeGenOptions::Legacy:
+      fprintf(stderr, "Legacy\n");
+      imp = LookupIMP(CGF, Receiver, cmd, node);
+      break;
+    case CodeGenOptions::Mixed:
+      fprintf(stderr, "Mixed\n");
+    case CodeGenOptions::NonLegacy:
+      fprintf(stderr, "NonLegacy\n");
+      if (CGM.ReturnTypeUsesFPRet(ResultType) || (Method && Method->isVariadic())) {
+        imp = LookupIMP(CGF, Receiver, cmd, node);
+      } else if (CGM.ReturnTypeUsesSRet(FnInfo)) {
+        // The actual types here don't matter - we're going to bitcast the
+        // function anyway
+        imp = CGM.CreateRuntimeFunction(llvm::FunctionType::get(IdTy, IdTy, true),
+                                  "objc_msgSend_stret");
+      } else {
+        imp = CGM.CreateRuntimeFunction(llvm::FunctionType::get(IdTy, IdTy, true),
+                                  "objc_msgSend");
+      }
+  }
+
+
   llvm::FunctionType *impType =
     Types.GetFunctionType(FnInfo, Method ? Method->isVariadic() : false);
   imp = EnforceType(Builder, imp, llvm::PointerType::getUnqual(impType));
 
-
-  // For sender-aware dispatch, we pass the sender as the third argument to a
-  // lookup function.  When sending messages from C code, the sender is nil.
-  // objc_msg_lookup_sender(id *receiver, SEL selector, id sender);
   llvm::Instruction *call;
   RValue msgRet = CGF.EmitCall(FnInfo, imp, Return, ActualArgs,
       0, &call);

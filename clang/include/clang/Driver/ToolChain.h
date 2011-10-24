@@ -131,7 +131,7 @@ public:
   /// IsObjCLegacyDispatchDefault - Does this tool chain set
   /// -fobjc-legacy-dispatch by default (this is only used with the non-fragile
   /// ABI).
-  virtual bool IsObjCLegacyDispatchDefault() const { return false; }
+  virtual bool IsObjCLegacyDispatchDefault() const { return true; }
 
   /// UseObjCMixedDispatchDefault - When using non-legacy dispatch, should the
   /// mixed dispatch method be used?
