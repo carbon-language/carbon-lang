@@ -1176,13 +1176,10 @@ CGObjCGNU::GenerateMessageSend(CodeGenFunction &CGF,
     default:
       llvm_unreachable("Invalid dispatch method!");
     case CodeGenOptions::Legacy:
-      fprintf(stderr, "Legacy\n");
       imp = LookupIMP(CGF, Receiver, cmd, node);
       break;
     case CodeGenOptions::Mixed:
-      fprintf(stderr, "Mixed\n");
     case CodeGenOptions::NonLegacy:
-      fprintf(stderr, "NonLegacy\n");
       if (CGM.ReturnTypeUsesFPRet(ResultType) || (Method && Method->isVariadic())) {
         imp = LookupIMP(CGF, Receiver, cmd, node);
       } else if (CGM.ReturnTypeUsesSRet(FnInfo)) {
