@@ -31,7 +31,6 @@ const char *Triple::getArchTypeName(ArchType Kind) {
   case ppc:     return "powerpc";
   case sparc:   return "sparc";
   case sparcv9: return "sparcv9";
-  case systemz: return "s390x";
   case tce:     return "tce";
   case thumb:   return "thumb";
   case x86:     return "i386";
@@ -165,8 +164,6 @@ Triple::ArchType Triple::getArchTypeForLLVMName(StringRef Name) {
     return sparc;
   if (Name == "sparcv9")
     return sparcv9;
-  if (Name == "systemz")
-    return systemz;
   if (Name == "tce")
     return tce;
   if (Name == "thumb")
@@ -316,8 +313,6 @@ Triple::ArchType Triple::ParseArch(StringRef ArchName) {
     return sparc;
   else if (ArchName == "sparcv9")
     return sparcv9;
-  else if (ArchName == "s390x")
-    return systemz;
   else if (ArchName == "tce")
     return tce;
   else if (ArchName == "xcore")

@@ -76,7 +76,6 @@ set(LLVM_ALL_TARGETS
   PowerPC
   PTX
   Sparc
-  SystemZ
   X86
   XCore
   )
