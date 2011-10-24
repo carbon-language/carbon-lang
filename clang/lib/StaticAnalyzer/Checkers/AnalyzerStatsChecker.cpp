@@ -54,7 +54,7 @@ void AnalyzerStatsChecker::checkEndAnalysis(ExplodedGraph &G,
 
   // Get the CFG and the Decl of this block
   C = LC->getCFG();
-  D = LC->getAnalysisContext()->getDecl();
+  D = LC->getAnalysisDeclContext()->getDecl();
 
   unsigned total = 0, unreachable = 0;
 

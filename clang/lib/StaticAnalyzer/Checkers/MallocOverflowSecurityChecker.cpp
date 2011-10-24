@@ -205,7 +205,7 @@ void MallocOverflowSecurityChecker::OutputPossibleOverflows(
 
   // Delete any possible overflows which have a comparison.
   CheckOverflowOps c(PossibleMallocOverflows, BR.getContext());
-  c.Visit(mgr.getAnalysisContext(D)->getBody());
+  c.Visit(mgr.getAnalysisDeclContext(D)->getBody());
 
   // Output warnings for all overflows that are left.
   for (CheckOverflowOps::theVecType::iterator

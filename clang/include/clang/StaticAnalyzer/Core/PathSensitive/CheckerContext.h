@@ -147,8 +147,8 @@ public:
     Eng.getBugReporter().EmitReport(R);
   }
 
-  AnalysisContext *getCurrentAnalysisContext() const {
-    return Pred->getLocationContext()->getAnalysisContext();
+  AnalysisDeclContext *getCurrentAnalysisDeclContext() const {
+    return Pred->getLocationContext()->getAnalysisDeclContext();
   }
 
 private:

@@ -143,7 +143,7 @@ public:
 /// We traverse the blocks in the CFG, compute the set of mutexes that are held
 /// at the end of each block, and issue warnings for thread safety violations.
 /// Each block in the CFG is traversed exactly once.
-void runThreadSafetyAnalysis(AnalysisContext &AC, ThreadSafetyHandler &Handler);
+void runThreadSafetyAnalysis(AnalysisDeclContext &AC, ThreadSafetyHandler &Handler);
 
 /// \brief Helper function that returns a LockKind required for the given level
 /// of access.

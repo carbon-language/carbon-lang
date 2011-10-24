@@ -66,8 +66,8 @@ AnalysisManager::AnalysisManager(ASTContext &ctx, DiagnosticsEngine &diags,
 }
 
 
-AnalysisContext *
-AnalysisManager::getAnalysisContextInAnotherTU(const Decl *D) {
+AnalysisDeclContext *
+AnalysisManager::getAnalysisDeclContextInAnotherTU(const Decl *D) {
   idx::Entity Ent = idx::Entity::get(const_cast<Decl *>(D), 
                                      Idxer->getProgram());
   FunctionDecl *FuncDef;
@@ -77,7 +77,7 @@ AnalysisManager::getAnalysisContextInAnotherTU(const Decl *D) {
   if (FuncDef == 0)
     return 0;
 
-  // This AnalysisContext wraps function definition in another translation unit.
+  // This AnalysisDeclContext wraps function definition in another translation unit.
   // But it is still owned by the AnalysisManager associated with the current
   // translation unit.
   return AnaCtxMgr.getContext(FuncDef, TU);

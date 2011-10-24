@@ -101,7 +101,7 @@ public:
   // Used by AnalyisContext to construct this object.
   static const void *getTag();
 
-  static PostOrderCFGView *create(AnalysisContext &analysisContext);
+  static PostOrderCFGView *create(AnalysisDeclContext &analysisContext);
 };
   
 } // end clang namespace

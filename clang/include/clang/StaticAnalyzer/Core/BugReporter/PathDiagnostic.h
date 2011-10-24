@@ -24,7 +24,7 @@
 
 namespace clang {
 
-class AnalysisContext;
+class AnalysisDeclContext;
 class BinaryOperator;
 class CompoundStmt;
 class Decl;
@@ -89,8 +89,8 @@ public:
   PathDiagnosticRange() : isPoint(false) {}
 };
 
-typedef llvm::PointerUnion<const LocationContext*, AnalysisContext*>
-                                                   LocationOrAnalysisContext;
+typedef llvm::PointerUnion<const LocationContext*, AnalysisDeclContext*>
+                                                   LocationOrAnalysisDeclContext;
 
 class PathDiagnosticLocation {
 private:
@@ -111,10 +111,10 @@ private:
 
   FullSourceLoc
     genLocation(SourceLocation L = SourceLocation(),
-                LocationOrAnalysisContext LAC = (AnalysisContext*)0) const;
+                LocationOrAnalysisDeclContext LAC = (AnalysisDeclContext*)0) const;
 
   PathDiagnosticRange
-    genRange(LocationOrAnalysisContext LAC = (AnalysisContext*)0) const;
+    genRange(LocationOrAnalysisDeclContext LAC = (AnalysisDeclContext*)0) const;
 
 public:
   /// Create an invalid location.
@@ -124,7 +124,7 @@ public:
   /// Create a location corresponding to the given statement.
   PathDiagnosticLocation(const Stmt *s,
                          const SourceManager &sm,
-                         LocationOrAnalysisContext lac)
+                         LocationOrAnalysisDeclContext lac)
     : K(StmtK), S(s), D(0), SM(&sm),
       Loc(genLocation(SourceLocation(), lac)),
       Range(genRange(lac)) {
@@ -153,7 +153,7 @@ public:
   /// Create a location for the beginning of the statement.
   static PathDiagnosticLocation createBegin(const Stmt *S,
                                             const SourceManager &SM,
-                                            const LocationOrAnalysisContext LAC);
+                                            const LocationOrAnalysisDeclContext LAC);
 
   /// Create the location for the operator of the binary expression.
   /// Assumes the statement has a valid location.

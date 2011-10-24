@@ -1,7 +1,7 @@
 set(LLVM_USED_LIBS clangBasic clangAST clangIndex)
 
 add_clang_library(clangAnalysis
-  AnalysisContext.cpp
+  AnalysisDeclContext.cpp
   CFG.cpp
   CFGReachabilityAnalysis.cpp
   CFGStmtMap.cpp

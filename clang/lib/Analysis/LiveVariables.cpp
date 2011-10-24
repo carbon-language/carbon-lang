@@ -22,7 +22,7 @@ class DataflowWorklist {
   llvm::BitVector enqueuedBlocks;
   PostOrderCFGView *POV;
 public:
-  DataflowWorklist(const CFG &cfg, AnalysisContext &Ctx)
+  DataflowWorklist(const CFG &cfg, AnalysisDeclContext &Ctx)
     : enqueuedBlocks(cfg.getNumBlockIDs()),
       POV(Ctx.getAnalysis<PostOrderCFGView>()) {}
   
@@ -86,7 +86,7 @@ const CFGBlock *DataflowWorklist::dequeue() {
 namespace {
 class LiveVariablesImpl {
 public:  
-  AnalysisContext &analysisContext;
+  AnalysisDeclContext &analysisContext;
   std::vector<LiveVariables::LivenessValues> cfgBlockValues;
   llvm::ImmutableSet<const Stmt *>::Factory SSetFact;
   llvm::ImmutableSet<const VarDecl *>::Factory DSetFact;
@@ -106,7 +106,7 @@ public:
 
   void dumpBlockLiveness(const SourceManager& M);
 
-  LiveVariablesImpl(AnalysisContext &ac, bool KillAtAssign)
+  LiveVariablesImpl(AnalysisDeclContext &ac, bool KillAtAssign)
     : analysisContext(ac),
       SSetFact(false), // Do not canonicalize ImmutableSets by default.
       DSetFact(false), // This is a *major* performance win.
@@ -323,7 +323,7 @@ void TransferFunctions::VisitBinaryOperator(BinaryOperator *B) {
 }
 
 void TransferFunctions::VisitBlockExpr(BlockExpr *BE) {
-  AnalysisContext::referenced_decls_iterator I, E;
+  AnalysisDeclContext::referenced_decls_iterator I, E;
   llvm::tie(I, E) =
     LV.analysisContext.getReferencedBlockVars(BE->getBlockDecl());
   for ( ; I != E ; ++I) {
@@ -447,7 +447,7 @@ LiveVariables::~LiveVariables() {
 }
 
 LiveVariables *
-LiveVariables::computeLiveness(AnalysisContext &AC,
+LiveVariables::computeLiveness(AnalysisDeclContext &AC,
                                  bool killAtAssign) {
 
   // No CFG?  Bail out.

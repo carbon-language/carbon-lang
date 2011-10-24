@@ -448,11 +448,11 @@ class BlockTextRegion : public CodeTextRegion {
   friend class MemRegionManager;
 
   const BlockDecl *BD;
-  AnalysisContext *AC;
+  AnalysisDeclContext *AC;
   CanQualType locTy;
 
   BlockTextRegion(const BlockDecl *bd, CanQualType lTy,
-                  AnalysisContext *ac, const MemRegion* sreg)
+                  AnalysisDeclContext *ac, const MemRegion* sreg)
     : CodeTextRegion(sreg, BlockTextRegionKind), BD(bd), AC(ac), locTy(lTy) {}
 
 public:
@@ -464,14 +464,14 @@ public:
     return BD;
   }
 
-  AnalysisContext *getAnalysisContext() const { return AC; }
+  AnalysisDeclContext *getAnalysisDeclContext() const { return AC; }
     
   virtual void dumpToStream(raw_ostream &os) const;
   
   void Profile(llvm::FoldingSetNodeID& ID) const;
   
   static void ProfileRegion(llvm::FoldingSetNodeID& ID, const BlockDecl *BD,
-                            CanQualType, const AnalysisContext*,
+                            CanQualType, const AnalysisDeclContext*,
                             const MemRegion*);
   
   static bool classof(const MemRegion* R) {
@@ -1038,7 +1038,7 @@ public:
   const FunctionTextRegion *getFunctionTextRegion(const FunctionDecl *FD);
   const BlockTextRegion *getBlockTextRegion(const BlockDecl *BD,
                                             CanQualType locTy,
-                                            AnalysisContext *AC);
+                                            AnalysisDeclContext *AC);
   
   /// getBlockDataRegion - Get the memory region associated with an instance
   ///  of a block.  Unlike many other MemRegions, the LocationContext*

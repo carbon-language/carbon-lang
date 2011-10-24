@@ -287,7 +287,7 @@ unsigned ScanReachableFromBlock(const CFGBlock *Start,
   return count;
 }
   
-void FindUnreachableCode(AnalysisContext &AC, Callback &CB) {
+void FindUnreachableCode(AnalysisDeclContext &AC, Callback &CB) {
   CFG *cfg = AC.getCFG();
   if (!cfg)
     return;

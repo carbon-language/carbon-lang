@@ -26,7 +26,7 @@ PostOrderCFGView::PostOrderCFGView(const CFG *cfg) {
   }
 }
 
-PostOrderCFGView *PostOrderCFGView::create(AnalysisContext &ctx) {
+PostOrderCFGView *PostOrderCFGView::create(AnalysisDeclContext &ctx) {
   const CFG *cfg = ctx.getCFG();
   if (!cfg)
     return 0;

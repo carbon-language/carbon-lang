@@ -28,7 +28,7 @@
 
 namespace clang {
 
-class AnalysisContext;
+class AnalysisDeclContext;
 class FunctionDecl;
 class LocationContext;
 class ProgramPointTag;

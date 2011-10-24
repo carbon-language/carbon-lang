@@ -31,7 +31,7 @@ namespace ento {
   class CheckerManager;
 
 class AnalysisManager : public BugReporterData {
-  AnalysisContextManager AnaCtxMgr;
+  AnalysisDeclContextManager AnaCtxMgr;
 
   ASTContext &Ctx;
   DiagnosticsEngine &Diags;
@@ -99,7 +99,7 @@ public:
     AnaCtxMgr.clear();
   }
   
-  AnalysisContextManager& getAnalysisContextManager() {
+  AnalysisDeclContextManager& getAnalysisDeclContextManager() {
     return AnaCtxMgr;
   }
 
@@ -164,7 +164,7 @@ public:
 
   bool hasIndexer() const { return Idxer != 0; }
 
-  AnalysisContext *getAnalysisContextInAnotherTU(const Decl *D);
+  AnalysisDeclContext *getAnalysisDeclContextInAnotherTU(const Decl *D);
 
   CFG *getCFG(Decl const *D) {
     return AnaCtxMgr.getContext(D)->getCFG();
@@ -179,11 +179,11 @@ public:
     return AnaCtxMgr.getContext(D)->getParentMap();
   }
 
-  AnalysisContext *getAnalysisContext(const Decl *D) {
+  AnalysisDeclContext *getAnalysisDeclContext(const Decl *D) {
     return AnaCtxMgr.getContext(D);
   }
 
-  AnalysisContext *getAnalysisContext(const Decl *D, idx::TranslationUnit *TU) {
+  AnalysisDeclContext *getAnalysisDeclContext(const Decl *D, idx::TranslationUnit *TU) {
     return AnaCtxMgr.getContext(D, TU);
   }
 

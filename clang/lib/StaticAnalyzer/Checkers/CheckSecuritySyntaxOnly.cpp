@@ -36,14 +36,14 @@ static bool isArc4RandomAvailable(const ASTContext &Ctx) {
 namespace {
 class WalkAST : public StmtVisitor<WalkAST> {
   BugReporter &BR;
-  AnalysisContext* AC;
+  AnalysisDeclContext* AC;
   enum { num_setids = 6 };
   IdentifierInfo *II_setid[num_setids];
 
   const bool CheckRand;
 
 public:
-  WalkAST(BugReporter &br, AnalysisContext* ac)
+  WalkAST(BugReporter &br, AnalysisDeclContext* ac)
   : BR(br), AC(ac), II_setid(),
     CheckRand(isArc4RandomAvailable(BR.getContext())) {}
 
@@ -611,7 +611,7 @@ class SecuritySyntaxChecker : public Checker<check::ASTCodeBody> {
 public:
   void checkASTCodeBody(const Decl *D, AnalysisManager& mgr,
                         BugReporter &BR) const {
-    WalkAST walker(BR, mgr.getAnalysisContext(D));
+    WalkAST walker(BR, mgr.getAnalysisDeclContext(D));
     walker.Visit(D->getBody());
   }
 };

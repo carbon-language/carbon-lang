@@ -63,7 +63,7 @@ namespace {
 }
 
 /// CheckUnreachable - Check for unreachable code.
-static void CheckUnreachable(Sema &S, AnalysisContext &AC) {
+static void CheckUnreachable(Sema &S, AnalysisDeclContext &AC) {
   UnreachableCodeHandler UC(S);
   reachable_code::FindUnreachableCode(AC, UC);
 }
@@ -89,7 +89,7 @@ enum ControlFlowKind {
 /// return.  We assume NeverFallThrough iff we never fall off the end of the
 /// statement but we may return.  We assume that functions not marked noreturn
 /// will return.
-static ControlFlowKind CheckFallThrough(AnalysisContext &AC) {
+static ControlFlowKind CheckFallThrough(AnalysisDeclContext &AC) {
   CFG *cfg = AC.getCFG();
   if (cfg == 0) return UnknownFallThrough;
 
@@ -312,7 +312,7 @@ struct CheckFallThroughDiagnostics {
 static void CheckFallThroughForBody(Sema &S, const Decl *D, const Stmt *Body,
                                     const BlockExpr *blkExpr,
                                     const CheckFallThroughDiagnostics& CD,
-                                    AnalysisContext &AC) {
+                                    AnalysisDeclContext &AC) {
 
   bool ReturnsVoid = false;
   bool HasNoReturn = false;
@@ -830,7 +830,7 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
   const Stmt *Body = D->getBody();
   assert(Body);
 
-  AnalysisContext AC(/* AnalysisContextManager */ 0,  D, 0);
+  AnalysisDeclContext AC(/* AnalysisDeclContextManager */ 0,  D, 0);
 
   // Don't generate EH edges for CallExprs as we'd like to avoid the n^2
   // explosion for destrutors that can result and the compile time hit.

@@ -337,7 +337,7 @@ void FunctionTextRegion::Profile(llvm::FoldingSetNodeID& ID) const {
 
 void BlockTextRegion::ProfileRegion(llvm::FoldingSetNodeID& ID,
                                     const BlockDecl *BD, CanQualType,
-                                    const AnalysisContext *AC,
+                                    const AnalysisDeclContext *AC,
                                     const MemRegion*) {
   ID.AddInteger(MemRegion::BlockTextRegionKind);
   ID.AddPointer(BD);
@@ -590,7 +590,7 @@ const VarRegion* MemRegionManager::getVarRegion(const VarDecl *D,
           const BlockTextRegion *BTR =
             getBlockTextRegion(BD,
                      C.getCanonicalType(BD->getSignatureAsWritten()->getType()),
-                     STC->getAnalysisContext());
+                     STC->getAnalysisDeclContext());
           sReg = getGlobalsRegion(BTR);
         }
         else {
@@ -678,7 +678,7 @@ MemRegionManager::getFunctionTextRegion(const FunctionDecl *FD) {
 
 const BlockTextRegion *
 MemRegionManager::getBlockTextRegion(const BlockDecl *BD, CanQualType locTy,
-                                     AnalysisContext *AC) {
+                                     AnalysisDeclContext *AC) {
   return getSubRegion<BlockTextRegion>(BD, locTy, AC, getCodeRegion());
 }
 
@@ -928,8 +928,8 @@ void BlockDataRegion::LazyInitializeReferencedVars() {
   if (ReferencedVars)
     return;
 
-  AnalysisContext *AC = getCodeRegion()->getAnalysisContext();
-  AnalysisContext::referenced_decls_iterator I, E;
+  AnalysisDeclContext *AC = getCodeRegion()->getAnalysisDeclContext();
+  AnalysisDeclContext::referenced_decls_iterator I, E;
   llvm::tie(I, E) = AC->getReferencedBlockVars(BC->getDecl());
 
   if (I == E) {

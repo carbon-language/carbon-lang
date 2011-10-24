@@ -53,7 +53,7 @@ static inline Selector GetNullarySelector(const char* name, ASTContext &Ctx) {
 
 ExprEngine::ExprEngine(AnalysisManager &mgr, bool gcEnabled)
   : AMgr(mgr),
-    AnalysisContexts(mgr.getAnalysisContextManager()),
+    AnalysisDeclContexts(mgr.getAnalysisDeclContextManager()),
     Engine(*this),
     G(Engine.getGraph()),
     Builder(NULL),
@@ -1509,7 +1509,7 @@ bool ExprEngine::InlineCall(ExplodedNodeSet &Dst, const CallExpr *CE,
   // Check if the function definition is in the same translation unit.
   if (FD->hasBody(FD)) {
     const StackFrameContext *stackFrame = 
-      AMgr.getStackFrame(AMgr.getAnalysisContext(FD), 
+      AMgr.getStackFrame(AMgr.getAnalysisDeclContext(FD), 
                          Pred->getLocationContext(),
                          CE, Builder->getBlock(), Builder->getIndex());
     // Now we have the definition of the callee, create a CallEnter node.
@@ -1522,7 +1522,7 @@ bool ExprEngine::InlineCall(ExplodedNodeSet &Dst, const CallExpr *CE,
 
   // Check if we can find the function definition in other translation units.
   if (AMgr.hasIndexer()) {
-    AnalysisContext *C = AMgr.getAnalysisContextInAnotherTU(FD);
+    AnalysisDeclContext *C = AMgr.getAnalysisDeclContextInAnotherTU(FD);
     if (C == 0)
       return false;
     const StackFrameContext *stackFrame = 

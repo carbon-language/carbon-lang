@@ -224,7 +224,7 @@ void ExprEngine::VisitCXXDestructor(const CXXDestructorDecl *DD,
 
   // Create the context for 'this' region.
   const StackFrameContext *SFC =
-    AnalysisContexts.getContext(DD)->
+    AnalysisDeclContexts.getContext(DD)->
       getStackFrame(Pred->getLocationContext(), S,
                     Builder->getBlock(), Builder->getIndex());
 

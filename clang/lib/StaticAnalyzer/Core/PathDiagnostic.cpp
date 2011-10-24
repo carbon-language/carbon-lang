@@ -94,9 +94,9 @@ void PathDiagnosticConsumer::HandlePathDiagnostic(const PathDiagnostic *D) {
 //===----------------------------------------------------------------------===//
 
 static SourceLocation getValidSourceLocation(const Stmt* S,
-                                             LocationOrAnalysisContext LAC) {
+                                             LocationOrAnalysisDeclContext LAC) {
   SourceLocation L = S->getLocStart();
-  assert(!LAC.isNull() && "A valid LocationContext or AnalysisContext should "
+  assert(!LAC.isNull() && "A valid LocationContext or AnalysisDeclContext should "
                           "be passed to PathDiagnosticLocation upon creation.");
 
   // S might be a temporary statement that does not have a location in the
@@ -107,7 +107,7 @@ static SourceLocation getValidSourceLocation(const Stmt* S,
     if (LAC.is<const LocationContext*>())
       PM = &LAC.get<const LocationContext*>()->getParentMap();
     else
-      PM = &LAC.get<AnalysisContext*>()->getParentMap();
+      PM = &LAC.get<AnalysisDeclContext*>()->getParentMap();
 
     while (!L.isValid()) {
       S = PM->getParent(S);
@@ -127,7 +127,7 @@ PathDiagnosticLocation
 PathDiagnosticLocation
   PathDiagnosticLocation::createBegin(const Stmt *S,
                                       const SourceManager &SM,
-                                      LocationOrAnalysisContext LAC) {
+                                      LocationOrAnalysisDeclContext LAC) {
   return PathDiagnosticLocation(getValidSourceLocation(S, LAC),
                                 SM, SingleLocK);
 }
@@ -229,7 +229,7 @@ PathDiagnosticLocation PathDiagnosticLocation::createSingleLocation(
 
 FullSourceLoc
   PathDiagnosticLocation::genLocation(SourceLocation L,
-                                      LocationOrAnalysisContext LAC) const {
+                                      LocationOrAnalysisDeclContext LAC) const {
   assert(isValid());
   // Note that we want a 'switch' here so that the compiler can warn us in
   // case we add more cases.
@@ -248,7 +248,7 @@ FullSourceLoc
 }
 
 PathDiagnosticRange
-  PathDiagnosticLocation::genRange(LocationOrAnalysisContext LAC) const {
+  PathDiagnosticLocation::genRange(LocationOrAnalysisDeclContext LAC) const {
   assert(isValid());
   // Note that we want a 'switch' here so that the compiler can warn us in
   // case we add more cases.

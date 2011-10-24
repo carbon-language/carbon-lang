@@ -155,7 +155,7 @@ DefinedSVal SValBuilder::getBlockPointer(const BlockDecl *block,
                                          CanQualType locTy,
                                          const LocationContext *locContext) {
   const BlockTextRegion *BC =
-    MemMgr.getBlockTextRegion(block, locTy, locContext->getAnalysisContext());
+    MemMgr.getBlockTextRegion(block, locTy, locContext->getAnalysisDeclContext());
   const BlockDataRegion *BD = MemMgr.getBlockDataRegion(BC, locContext);
   return loc::MemRegionVal(BD);
 }

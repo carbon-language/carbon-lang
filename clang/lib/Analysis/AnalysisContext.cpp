@@ -1,4 +1,4 @@
-//== AnalysisContext.cpp - Analysis context for Path Sens analysis -*- C++ -*-//
+//== AnalysisDeclContext.cpp - Analysis context for Path Sens analysis -*- C++ -*-//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines AnalysisContext, a class that manages the analysis context
+// This file defines AnalysisDeclContext, a class that manages the analysis context
 // data for path sensitive analysis.
 //
 //===----------------------------------------------------------------------===//
@@ -32,7 +32,7 @@ using namespace clang;
 
 typedef llvm::DenseMap<const void *, ManagedAnalysis *> ManagedAnalysisMap;
 
-AnalysisContext::AnalysisContext(AnalysisContextManager *Mgr,
+AnalysisDeclContext::AnalysisDeclContext(AnalysisDeclContextManager *Mgr,
                                  const Decl *d,
                                  idx::TranslationUnit *tu,
                                  const CFG::BuildOptions &buildOptions)
@@ -49,7 +49,7 @@ AnalysisContext::AnalysisContext(AnalysisContextManager *Mgr,
   cfgBuildOptions.forcedBlkExprs = &forcedBlkExprs;
 }
 
-AnalysisContext::AnalysisContext(AnalysisContextManager *Mgr,
+AnalysisDeclContext::AnalysisDeclContext(AnalysisDeclContextManager *Mgr,
                                  const Decl *d,
                                  idx::TranslationUnit *tu)
 : Manager(Mgr),
@@ -64,7 +64,7 @@ AnalysisContext::AnalysisContext(AnalysisContextManager *Mgr,
   cfgBuildOptions.forcedBlkExprs = &forcedBlkExprs;
 }
 
-AnalysisContextManager::AnalysisContextManager(bool useUnoptimizedCFG,
+AnalysisDeclContextManager::AnalysisDeclContextManager(bool useUnoptimizedCFG,
                                                bool addImplicitDtors,
                                                bool addInitializers) {
   cfgBuildOptions.PruneTriviallyFalseEdges = !useUnoptimizedCFG;
@@ -72,13 +72,13 @@ AnalysisContextManager::AnalysisContextManager(bool useUnoptimizedCFG,
   cfgBuildOptions.AddInitializers = addInitializers;
 }
 
-void AnalysisContextManager::clear() {
+void AnalysisDeclContextManager::clear() {
   for (ContextMap::iterator I = Contexts.begin(), E = Contexts.end(); I!=E; ++I)
     delete I->second;
   Contexts.clear();
 }
 
-Stmt *AnalysisContext::getBody() const {
+Stmt *AnalysisDeclContext::getBody() const {
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
     return FD->getBody();
   else if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D))
@@ -92,14 +92,14 @@ Stmt *AnalysisContext::getBody() const {
   llvm_unreachable("unknown code decl");
 }
 
-const ImplicitParamDecl *AnalysisContext::getSelfDecl() const {
+const ImplicitParamDecl *AnalysisDeclContext::getSelfDecl() const {
   if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D))
     return MD->getSelfDecl();
 
   return NULL;
 }
 
-void AnalysisContext::registerForcedBlockExpression(const Stmt *stmt) {
+void AnalysisDeclContext::registerForcedBlockExpression(const Stmt *stmt) {
   if (!forcedBlkExprs)
     forcedBlkExprs = new CFG::BuildOptions::ForcedBlkExprs();
   // Default construct an entry for 'stmt'.
@@ -109,7 +109,7 @@ void AnalysisContext::registerForcedBlockExpression(const Stmt *stmt) {
 }
 
 const CFGBlock *
-AnalysisContext::getBlockForRegisteredExpression(const Stmt *stmt) {
+AnalysisDeclContext::getBlockForRegisteredExpression(const Stmt *stmt) {
   assert(forcedBlkExprs);
   if (const Expr *e = dyn_cast<Expr>(stmt))
     stmt = e->IgnoreParens();
@@ -119,7 +119,7 @@ AnalysisContext::getBlockForRegisteredExpression(const Stmt *stmt) {
   return itr->second;
 }
 
-CFG *AnalysisContext::getCFG() {
+CFG *AnalysisDeclContext::getCFG() {
   if (!cfgBuildOptions.PruneTriviallyFalseEdges)
     return getUnoptimizedCFG();
 
@@ -133,7 +133,7 @@ CFG *AnalysisContext::getCFG() {
   return cfg.get();
 }
 
-CFG *AnalysisContext::getUnoptimizedCFG() {
+CFG *AnalysisDeclContext::getUnoptimizedCFG() {
   if (!builtCompleteCFG) {
     SaveAndRestore<bool> NotPrune(cfgBuildOptions.PruneTriviallyFalseEdges,
                                   false);
@@ -146,7 +146,7 @@ CFG *AnalysisContext::getUnoptimizedCFG() {
   return completeCFG.get();
 }
 
-CFGStmtMap *AnalysisContext::getCFGStmtMap() {
+CFGStmtMap *AnalysisDeclContext::getCFGStmtMap() {
   if (cfgStmtMap)
     return cfgStmtMap.get();
   
@@ -158,7 +158,7 @@ CFGStmtMap *AnalysisContext::getCFGStmtMap() {
   return 0;
 }
 
-CFGReverseBlockReachabilityAnalysis *AnalysisContext::getCFGReachablityAnalysis() {
+CFGReverseBlockReachabilityAnalysis *AnalysisDeclContext::getCFGReachablityAnalysis() {
   if (CFA)
     return CFA.get();
   
@@ -170,39 +170,39 @@ CFGReverseBlockReachabilityAnalysis *AnalysisContext::getCFGReachablityAnalysis(
   return 0;
 }
 
-void AnalysisContext::dumpCFG() {
+void AnalysisDeclContext::dumpCFG() {
     getCFG()->dump(getASTContext().getLangOptions());
 }
 
-ParentMap &AnalysisContext::getParentMap() {
+ParentMap &AnalysisDeclContext::getParentMap() {
   if (!PM)
     PM.reset(new ParentMap(getBody()));
   return *PM;
 }
 
-PseudoConstantAnalysis *AnalysisContext::getPseudoConstantAnalysis() {
+PseudoConstantAnalysis *AnalysisDeclContext::getPseudoConstantAnalysis() {
   if (!PCA)
     PCA.reset(new PseudoConstantAnalysis(getBody()));
   return PCA.get();
 }
 
-AnalysisContext *AnalysisContextManager::getContext(const Decl *D,
+AnalysisDeclContext *AnalysisDeclContextManager::getContext(const Decl *D,
                                                     idx::TranslationUnit *TU) {
-  AnalysisContext *&AC = Contexts[D];
+  AnalysisDeclContext *&AC = Contexts[D];
   if (!AC)
-    AC = new AnalysisContext(this, D, TU, cfgBuildOptions);
+    AC = new AnalysisDeclContext(this, D, TU, cfgBuildOptions);
   return AC;
 }
 
 const StackFrameContext *
-AnalysisContext::getStackFrame(LocationContext const *Parent, const Stmt *S,
+AnalysisDeclContext::getStackFrame(LocationContext const *Parent, const Stmt *S,
                                const CFGBlock *Blk, unsigned Idx) {
   return getLocationContextManager().getStackFrame(this, Parent, S, Blk, Idx);
 }
 
-LocationContextManager & AnalysisContext::getLocationContextManager() {
+LocationContextManager & AnalysisDeclContext::getLocationContextManager() {
   assert(Manager &&
-         "Cannot create LocationContexts without an AnalysisContextManager!");
+         "Cannot create LocationContexts without an AnalysisDeclContextManager!");
   return Manager->getLocationContextManager();  
 }
 
@@ -212,7 +212,7 @@ LocationContextManager & AnalysisContext::getLocationContextManager() {
 
 void LocationContext::ProfileCommon(llvm::FoldingSetNodeID &ID,
                                     ContextKind ck,
-                                    AnalysisContext *ctx,
+                                    AnalysisDeclContext *ctx,
                                     const LocationContext *parent,
                                     const void *data) {
   ID.AddInteger(ck);
@@ -222,15 +222,15 @@ void LocationContext::ProfileCommon(llvm::FoldingSetNodeID &ID,
 }
 
 void StackFrameContext::Profile(llvm::FoldingSetNodeID &ID) {
-  Profile(ID, getAnalysisContext(), getParent(), CallSite, Block, Index);
+  Profile(ID, getAnalysisDeclContext(), getParent(), CallSite, Block, Index);
 }
 
 void ScopeContext::Profile(llvm::FoldingSetNodeID &ID) {
-  Profile(ID, getAnalysisContext(), getParent(), Enter);
+  Profile(ID, getAnalysisDeclContext(), getParent(), Enter);
 }
 
 void BlockInvocationContext::Profile(llvm::FoldingSetNodeID &ID) {
-  Profile(ID, getAnalysisContext(), getParent(), BD);
+  Profile(ID, getAnalysisDeclContext(), getParent(), BD);
 }
 
 //===----------------------------------------------------------------------===//
@@ -239,7 +239,7 @@ void BlockInvocationContext::Profile(llvm::FoldingSetNodeID &ID) {
 
 template <typename LOC, typename DATA>
 const LOC*
-LocationContextManager::getLocationContext(AnalysisContext *ctx,
+LocationContextManager::getLocationContext(AnalysisDeclContext *ctx,
                                            const LocationContext *parent,
                                            const DATA *d) {
   llvm::FoldingSetNodeID ID;
@@ -256,7 +256,7 @@ LocationContextManager::getLocationContext(AnalysisContext *ctx,
 }
 
 const StackFrameContext*
-LocationContextManager::getStackFrame(AnalysisContext *ctx,
+LocationContextManager::getStackFrame(AnalysisDeclContext *ctx,
                                       const LocationContext *parent,
                                       const Stmt *s,
                                       const CFGBlock *blk, unsigned idx) {
@@ -273,7 +273,7 @@ LocationContextManager::getStackFrame(AnalysisContext *ctx,
 }
 
 const ScopeContext *
-LocationContextManager::getScope(AnalysisContext *ctx,
+LocationContextManager::getScope(AnalysisDeclContext *ctx,
                                  const LocationContext *parent,
                                  const Stmt *s) {
   return getLocationContext<ScopeContext, Stmt>(ctx, parent, s);
@@ -395,9 +395,9 @@ static DeclVec* LazyInitializeReferencedDecls(const BlockDecl *BD,
   return BV;
 }
 
-std::pair<AnalysisContext::referenced_decls_iterator,
-          AnalysisContext::referenced_decls_iterator>
-AnalysisContext::getReferencedBlockVars(const BlockDecl *BD) {
+std::pair<AnalysisDeclContext::referenced_decls_iterator,
+          AnalysisDeclContext::referenced_decls_iterator>
+AnalysisDeclContext::getReferencedBlockVars(const BlockDecl *BD) {
   if (!ReferencedBlockVars)
     ReferencedBlockVars = new llvm::DenseMap<const BlockDecl*,void*>();
 
@@ -405,7 +405,7 @@ AnalysisContext::getReferencedBlockVars(const BlockDecl *BD) {
   return std::make_pair(V->begin(), V->end());
 }
 
-ManagedAnalysis *&AnalysisContext::getAnalysisImpl(const void *tag) {
+ManagedAnalysis *&AnalysisDeclContext::getAnalysisImpl(const void *tag) {
   if (!ManagedAnalyses)
     ManagedAnalyses = new ManagedAnalysisMap();
   ManagedAnalysisMap *M = (ManagedAnalysisMap*) ManagedAnalyses;
@@ -418,7 +418,7 @@ ManagedAnalysis *&AnalysisContext::getAnalysisImpl(const void *tag) {
 
 ManagedAnalysis::~ManagedAnalysis() {}
 
-AnalysisContext::~AnalysisContext() {
+AnalysisDeclContext::~AnalysisDeclContext() {
   delete forcedBlkExprs;
   delete ReferencedBlockVars;
   // Release the managed analyses.
@@ -430,7 +430,7 @@ AnalysisContext::~AnalysisContext() {
   }
 }
 
-AnalysisContextManager::~AnalysisContextManager() {
+AnalysisDeclContextManager::~AnalysisDeclContextManager() {
   for (ContextMap::iterator I = Contexts.begin(), E = Contexts.end(); I!=E; ++I)
     delete I->second;
 }

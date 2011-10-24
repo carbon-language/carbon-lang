@@ -17,7 +17,7 @@
 
 namespace clang {
 
-class AnalysisContext;
+class AnalysisDeclContext;
 class CFG;  
 class DeclContext;
 class Expr;
@@ -45,7 +45,7 @@ struct UninitVariablesAnalysisStats {
 };
 
 void runUninitializedVariablesAnalysis(const DeclContext &dc, const CFG &cfg,
-                                       AnalysisContext &ac,
+                                       AnalysisDeclContext &ac,
                                        UninitVariablesHandler &handler,
                                        UninitVariablesAnalysisStats &stats);
 

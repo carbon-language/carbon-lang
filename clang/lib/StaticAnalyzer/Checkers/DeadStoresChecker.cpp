@@ -72,7 +72,7 @@ class DeadStoreObs : public LiveVariables::Observer {
   const CFG &cfg;
   ASTContext &Ctx;
   BugReporter& BR;
-  AnalysisContext* AC;
+  AnalysisDeclContext* AC;
   ParentMap& Parents;
   llvm::SmallPtrSet<const VarDecl*, 20> Escaped;
   llvm::OwningPtr<ReachableCode> reachableCode;
@@ -82,7 +82,7 @@ class DeadStoreObs : public LiveVariables::Observer {
 
 public:
   DeadStoreObs(const CFG &cfg, ASTContext &ctx,
-               BugReporter& br, AnalysisContext* ac, ParentMap& parents,
+               BugReporter& br, AnalysisDeclContext* ac, ParentMap& parents,
                llvm::SmallPtrSet<const VarDecl*, 20> &escaped)
     : cfg(cfg), Ctx(ctx), BR(br), AC(ac), Parents(parents),
       Escaped(escaped), currentBlock(0) {}
@@ -350,7 +350,7 @@ public:
                         BugReporter &BR) const {
     if (LiveVariables *L = mgr.getAnalysis<LiveVariables>(D)) {
       CFG &cfg = *mgr.getCFG(D);
-      AnalysisContext *AC = mgr.getAnalysisContext(D);
+      AnalysisDeclContext *AC = mgr.getAnalysisDeclContext(D);
       ParentMap &pmap = mgr.getParentMap(D);
       FindEscaped FS(&cfg);
       FS.getCFG().VisitBlockStmts(FS);

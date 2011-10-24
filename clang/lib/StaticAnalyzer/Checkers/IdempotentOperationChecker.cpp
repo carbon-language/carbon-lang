@@ -82,16 +82,16 @@ private:
 
   // False positive reduction methods
   static bool isSelfAssign(const Expr *LHS, const Expr *RHS);
-  static bool isUnused(const Expr *E, AnalysisContext *AC);
+  static bool isUnused(const Expr *E, AnalysisDeclContext *AC);
   static bool isTruncationExtensionAssignment(const Expr *LHS,
                                               const Expr *RHS);
-  static bool pathWasCompletelyAnalyzed(AnalysisContext *AC,
+  static bool pathWasCompletelyAnalyzed(AnalysisDeclContext *AC,
                                         const CFGBlock *CB,
                                         const CoreEngine &CE);
   static bool CanVary(const Expr *Ex,
-                      AnalysisContext *AC);
+                      AnalysisDeclContext *AC);
   static bool isConstantOrPseudoConstant(const DeclRefExpr *DR,
-                                         AnalysisContext *AC);
+                                         AnalysisDeclContext *AC);
   static bool containsNonLocalVarDecl(const Stmt *S);
 
   // Hash table and related data structures
@@ -116,7 +116,7 @@ void IdempotentOperationChecker::checkPreStmt(const BinaryOperator *B,
   // been created yet.
   BinaryOperatorData &Data = hash[B];
   Assumption &A = Data.assumption;
-  AnalysisContext *AC = C.getCurrentAnalysisContext();
+  AnalysisDeclContext *AC = C.getCurrentAnalysisDeclContext();
 
   // If we already have visited this node on a path that does not contain an
   // idempotent operation, return immediately.
@@ -366,8 +366,8 @@ void IdempotentOperationChecker::checkEndAnalysis(ExplodedGraph &G,
     // warning
     if (Eng.hasWorkRemaining()) {
       // If we can trace back
-      AnalysisContext *AC = (*ES.begin())->getLocationContext()
-                                         ->getAnalysisContext();
+      AnalysisDeclContext *AC = (*ES.begin())->getLocationContext()
+                                         ->getAnalysisDeclContext();
       if (!pathWasCompletelyAnalyzed(AC,
                                      AC->getCFGStmtMap()->getBlock(B),
                                      Eng.getCoreEngine()))
@@ -487,7 +487,7 @@ bool IdempotentOperationChecker::isSelfAssign(const Expr *LHS, const Expr *RHS) 
 // Returns true if the Expr points to a VarDecl that is not read anywhere
 // outside of self-assignments.
 bool IdempotentOperationChecker::isUnused(const Expr *E,
-                                          AnalysisContext *AC) {
+                                          AnalysisDeclContext *AC) {
   if (!E)
     return false;
 
@@ -531,7 +531,7 @@ bool IdempotentOperationChecker::isTruncationExtensionAssignment(
 // Returns false if a path to this block was not completely analyzed, or true
 // otherwise.
 bool
-IdempotentOperationChecker::pathWasCompletelyAnalyzed(AnalysisContext *AC,
+IdempotentOperationChecker::pathWasCompletelyAnalyzed(AnalysisDeclContext *AC,
                                                       const CFGBlock *CB,
                                                       const CoreEngine &CE) {
 
@@ -615,7 +615,7 @@ IdempotentOperationChecker::pathWasCompletelyAnalyzed(AnalysisContext *AC,
 // expression may also involve a variable that behaves like a constant. The
 // function returns true if the expression varies, and false otherwise.
 bool IdempotentOperationChecker::CanVary(const Expr *Ex,
-                                         AnalysisContext *AC) {
+                                         AnalysisDeclContext *AC) {
   // Parentheses and casts are irrelevant here
   Ex = Ex->IgnoreParenCasts();
 
@@ -699,7 +699,7 @@ bool IdempotentOperationChecker::CanVary(const Expr *Ex,
 // Returns true if a DeclRefExpr is or behaves like a constant.
 bool IdempotentOperationChecker::isConstantOrPseudoConstant(
                                                           const DeclRefExpr *DR,
-                                                          AnalysisContext *AC) {
+                                                          AnalysisDeclContext *AC) {
   // Check if the type of the Decl is const-qualified
   if (DR->getType().isConstQualified())
     return true;

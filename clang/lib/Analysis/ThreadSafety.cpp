@@ -648,7 +648,7 @@ public:
   Lockset addLock(Lockset &LSet, Expr *MutexExp, const NamedDecl *D,
                   LockKind LK, SourceLocation Loc);
 
-  void runAnalysis(AnalysisContext &AC);
+  void runAnalysis(AnalysisDeclContext &AC);
 };
 
 /// \brief Compute the intersection of two locksets and issue warnings for any
@@ -710,7 +710,7 @@ Lockset ThreadSafetyAnalyzer::addLock(Lockset &LSet, Expr *MutexExp,
 /// We traverse the blocks in the CFG, compute the set of mutexes that are held
 /// at the end of each block, and issue warnings for thread safety violations.
 /// Each block in the CFG is traversed exactly once.
-void ThreadSafetyAnalyzer::runAnalysis(AnalysisContext &AC) {
+void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
   CFG *CFGraph = AC.getCFG();
   if (!CFGraph) return;
   const NamedDecl *D = dyn_cast_or_null<NamedDecl>(AC.getDecl());
@@ -869,7 +869,7 @@ namespace thread_safety {
 /// We traverse the blocks in the CFG, compute the set of mutexes that are held
 /// at the end of each block, and issue warnings for thread safety violations.
 /// Each block in the CFG is traversed exactly once.
-void runThreadSafetyAnalysis(AnalysisContext &AC,
+void runThreadSafetyAnalysis(AnalysisDeclContext &AC,
                              ThreadSafetyHandler &Handler) {
   ThreadSafetyAnalyzer Analyzer(Handler);
   Analyzer.runAnalysis(AC);

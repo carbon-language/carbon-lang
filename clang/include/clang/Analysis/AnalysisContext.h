@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines AnalysisContext, a class that manages the analysis context
+// This file defines AnalysisDeclContext, a class that manages the analysis context
 // data for path sensitive analysis.
 //
 //===----------------------------------------------------------------------===//
@@ -38,13 +38,13 @@ class PseudoConstantAnalysis;
 class ImplicitParamDecl;
 class LocationContextManager;
 class StackFrameContext;
-class AnalysisContextManager;
+class AnalysisDeclContextManager;
 class LocationContext;  
 
 namespace idx { class TranslationUnit; }
 
 /// The base class of a hierarchy of objects representing analyses tied
-/// to AnalysisContext.
+/// to AnalysisDeclContext.
 class ManagedAnalysis {
 protected:
   ManagedAnalysis() {}
@@ -58,18 +58,18 @@ public:
   // Which returns a fixed pointer address to distinguish classes of
   // analysis objects.  They also need to implement:
   //
-  //  static [Derived*] create(AnalysisContext &Ctx);
+  //  static [Derived*] create(AnalysisDeclContext &Ctx);
   //
-  // which creates the analysis object given an AnalysisContext.
+  // which creates the analysis object given an AnalysisDeclContext.
 };
   
   
-/// AnalysisContext contains the context data for the function or method under
+/// AnalysisDeclContext contains the context data for the function or method under
 /// analysis.
-class AnalysisContext {
-  /// Backpoint to the AnalysisManager object that created this AnalysisContext.
+class AnalysisDeclContext {
+  /// Backpoint to the AnalysisManager object that created this AnalysisDeclContext.
   /// This may be null.
-  AnalysisContextManager *Manager;
+  AnalysisDeclContextManager *Manager;
   
   const Decl *D;
 
@@ -98,16 +98,16 @@ class AnalysisContext {
   void *ManagedAnalyses;
 
 public:
-  AnalysisContext(AnalysisContextManager *Mgr,
+  AnalysisDeclContext(AnalysisDeclContextManager *Mgr,
                   const Decl *D,
                   idx::TranslationUnit *TU);
 
-  AnalysisContext(AnalysisContextManager *Mgr,
+  AnalysisDeclContext(AnalysisDeclContextManager *Mgr,
                   const Decl *D,
                   idx::TranslationUnit *TU,
                   const CFG::BuildOptions &BuildOptions);
 
-  ~AnalysisContext();
+  ~AnalysisDeclContext();
 
   ASTContext &getASTContext() { return D->getASTContext(); }
   const Decl *getDecl() const { return D; }
@@ -163,7 +163,7 @@ public:
     getReferencedBlockVars(const BlockDecl *BD);
 
   /// Return the ImplicitParamDecl* associated with 'self' if this
-  /// AnalysisContext wraps an ObjCMethodDecl.  Returns NULL otherwise.
+  /// AnalysisDeclContext wraps an ObjCMethodDecl.  Returns NULL otherwise.
   const ImplicitParamDecl *getSelfDecl() const;
   
   const StackFrameContext *getStackFrame(LocationContext const *Parent,
@@ -195,13 +195,13 @@ public:
 private:
   ContextKind Kind;
 
-  // AnalysisContext can't be const since some methods may modify its member.
-  AnalysisContext *Ctx;
+  // AnalysisDeclContext can't be const since some methods may modify its member.
+  AnalysisDeclContext *Ctx;
 
   const LocationContext *Parent;
 
 protected:
-  LocationContext(ContextKind k, AnalysisContext *ctx,
+  LocationContext(ContextKind k, AnalysisDeclContext *ctx,
                   const LocationContext *parent)
     : Kind(k), Ctx(ctx), Parent(parent) {}
 
@@ -210,7 +210,7 @@ public:
 
   ContextKind getKind() const { return Kind; }
 
-  AnalysisContext *getAnalysisContext() const { return Ctx; }
+  AnalysisDeclContext *getAnalysisDeclContext() const { return Ctx; }
 
   idx::TranslationUnit *getTranslationUnit() const { 
     return Ctx->getTranslationUnit(); 
@@ -220,17 +220,17 @@ public:
 
   bool isParentOf(const LocationContext *LC) const;
 
-  const Decl *getDecl() const { return getAnalysisContext()->getDecl(); }
+  const Decl *getDecl() const { return getAnalysisDeclContext()->getDecl(); }
 
-  CFG *getCFG() const { return getAnalysisContext()->getCFG(); }
+  CFG *getCFG() const { return getAnalysisDeclContext()->getCFG(); }
 
   template <typename T>
   T *getAnalysis() const {
-    return getAnalysisContext()->getAnalysis<T>();
+    return getAnalysisDeclContext()->getAnalysis<T>();
   }
 
   ParentMap &getParentMap() const {
-    return getAnalysisContext()->getParentMap();
+    return getAnalysisDeclContext()->getParentMap();
   }
 
   const ImplicitParamDecl *getSelfDecl() const {
@@ -248,7 +248,7 @@ public:
 public:
   static void ProfileCommon(llvm::FoldingSetNodeID &ID,
                             ContextKind ck,
-                            AnalysisContext *ctx,
+                            AnalysisDeclContext *ctx,
                             const LocationContext *parent,
                             const void *data);
 };
@@ -264,7 +264,7 @@ class StackFrameContext : public LocationContext {
   unsigned Index;
 
   friend class LocationContextManager;
-  StackFrameContext(AnalysisContext *ctx, const LocationContext *parent,
+  StackFrameContext(AnalysisDeclContext *ctx, const LocationContext *parent,
                     const Stmt *s, const CFGBlock *blk, 
                     unsigned idx)
     : LocationContext(StackFrame, ctx, parent), CallSite(s),
@@ -281,7 +281,7 @@ public:
 
   void Profile(llvm::FoldingSetNodeID &ID);
 
-  static void Profile(llvm::FoldingSetNodeID &ID, AnalysisContext *ctx,
+  static void Profile(llvm::FoldingSetNodeID &ID, AnalysisDeclContext *ctx,
                       const LocationContext *parent, const Stmt *s,
                       const CFGBlock *blk, unsigned idx) {
     ProfileCommon(ID, StackFrame, ctx, parent, s);
@@ -298,7 +298,7 @@ class ScopeContext : public LocationContext {
   const Stmt *Enter;
 
   friend class LocationContextManager;
-  ScopeContext(AnalysisContext *ctx, const LocationContext *parent,
+  ScopeContext(AnalysisDeclContext *ctx, const LocationContext *parent,
                const Stmt *s)
     : LocationContext(Scope, ctx, parent), Enter(s) {}
 
@@ -307,7 +307,7 @@ public:
 
   void Profile(llvm::FoldingSetNodeID &ID);
 
-  static void Profile(llvm::FoldingSetNodeID &ID, AnalysisContext *ctx,
+  static void Profile(llvm::FoldingSetNodeID &ID, AnalysisDeclContext *ctx,
                       const LocationContext *parent, const Stmt *s) {
     ProfileCommon(ID, Scope, ctx, parent, s);
   }
@@ -324,7 +324,7 @@ class BlockInvocationContext : public LocationContext {
 
   friend class LocationContextManager;
 
-  BlockInvocationContext(AnalysisContext *ctx, const LocationContext *parent,
+  BlockInvocationContext(AnalysisDeclContext *ctx, const LocationContext *parent,
                          const BlockDecl *bd)
     : LocationContext(Block, ctx, parent), BD(bd) {}
 
@@ -335,7 +335,7 @@ public:
 
   void Profile(llvm::FoldingSetNodeID &ID);
 
-  static void Profile(llvm::FoldingSetNodeID &ID, AnalysisContext *ctx,
+  static void Profile(llvm::FoldingSetNodeID &ID, AnalysisDeclContext *ctx,
                       const LocationContext *parent, const BlockDecl *bd) {
     ProfileCommon(ID, Block, ctx, parent, bd);
   }
@@ -350,12 +350,12 @@ class LocationContextManager {
 public:
   ~LocationContextManager();
 
-  const StackFrameContext *getStackFrame(AnalysisContext *ctx,
+  const StackFrameContext *getStackFrame(AnalysisDeclContext *ctx,
                                          const LocationContext *parent,
                                          const Stmt *s,
                                          const CFGBlock *blk, unsigned idx);
 
-  const ScopeContext *getScope(AnalysisContext *ctx,
+  const ScopeContext *getScope(AnalysisDeclContext *ctx,
                                const LocationContext *parent,
                                const Stmt *s);
 
@@ -363,26 +363,26 @@ public:
   void clear();
 private:
   template <typename LOC, typename DATA>
-  const LOC *getLocationContext(AnalysisContext *ctx,
+  const LOC *getLocationContext(AnalysisDeclContext *ctx,
                                 const LocationContext *parent,
                                 const DATA *d);
 };
 
-class AnalysisContextManager {
-  typedef llvm::DenseMap<const Decl*, AnalysisContext*> ContextMap;
+class AnalysisDeclContextManager {
+  typedef llvm::DenseMap<const Decl*, AnalysisDeclContext*> ContextMap;
   
   ContextMap Contexts;
   LocationContextManager LocContexts;
   CFG::BuildOptions cfgBuildOptions;
   
 public:
-  AnalysisContextManager(bool useUnoptimizedCFG = false,
+  AnalysisDeclContextManager(bool useUnoptimizedCFG = false,
                          bool addImplicitDtors = false,
                          bool addInitializers = false);
   
-  ~AnalysisContextManager();
+  ~AnalysisDeclContextManager();
   
-  AnalysisContext *getContext(const Decl *D, idx::TranslationUnit *TU = 0);
+  AnalysisDeclContext *getContext(const Decl *D, idx::TranslationUnit *TU = 0);
   
   bool getUseUnoptimizedCFG() const {
     return !cfgBuildOptions.PruneTriviallyFalseEdges;
@@ -392,7 +392,7 @@ public:
     return cfgBuildOptions;
   }
   
-  const StackFrameContext *getStackFrame(AnalysisContext *Ctx,
+  const StackFrameContext *getStackFrame(AnalysisDeclContext *Ctx,
                                          LocationContext const *Parent,
                                          const Stmt *S,
                                          const CFGBlock *Blk,
@@ -416,11 +416,11 @@ public:
   }
 
   
-  /// Discard all previously created AnalysisContexts.
+  /// Discard all previously created AnalysisDeclContexts.
   void clear();
 
 private:
-  friend class AnalysisContext;
+  friend class AnalysisDeclContext;
 
   LocationContextManager &getLocationContextManager() {
     return LocContexts;

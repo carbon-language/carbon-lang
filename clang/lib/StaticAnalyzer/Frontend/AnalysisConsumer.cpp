@@ -278,7 +278,7 @@ void AnalysisConsumer::HandleCode(Decl *D) {
   if (!Opts.AnalyzeAll && !SM.isFromMainFile(SL))
     return;
 
-  // Clear the AnalysisManager of old AnalysisContexts.
+  // Clear the AnalysisManager of old AnalysisDeclContexts.
   Mgr->ClearContexts();
 
   // Dispatch on the actions.
@@ -318,7 +318,7 @@ static void ActionExprEngine(AnalysisConsumer &C, AnalysisManager &mgr,
   }
 
   // Execute the worklist algorithm.
-  Eng.ExecuteWorkList(mgr.getAnalysisContextManager().getStackFrame(D, 0),
+  Eng.ExecuteWorkList(mgr.getAnalysisDeclContextManager().getStackFrame(D, 0),
                       mgr.getMaxNodes());
 
   // Release the auditor (if any) so that it doesn't monitor the graph

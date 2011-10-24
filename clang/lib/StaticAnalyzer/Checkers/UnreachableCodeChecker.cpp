@@ -69,7 +69,7 @@ void UnreachableCodeChecker::checkEndAnalysis(ExplodedGraph &G,
 
     // Save the CFG if we don't have it already
     if (!C)
-      C = LC->getAnalysisContext()->getUnoptimizedCFG();
+      C = LC->getAnalysisDeclContext()->getUnoptimizedCFG();
     if (!PM)
       PM = &LC->getParentMap();
 

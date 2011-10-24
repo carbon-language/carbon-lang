@@ -725,8 +725,8 @@ void CallEnterNodeBuilder::generateNode(const ProgramState *state) {
     ExprEngine NewEng(AMgr, GCEnabled);
 
     // Create the new LocationContext.
-    AnalysisContext *NewAnaCtx =
-      AMgr.getAnalysisContext(CalleeCtx->getDecl(), 
+    AnalysisDeclContext *NewAnaCtx =
+      AMgr.getAnalysisDeclContext(CalleeCtx->getDecl(), 
                               CalleeCtx->getTranslationUnit());
 
     const StackFrameContext *OldLocCtx = CalleeCtx;

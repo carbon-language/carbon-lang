@@ -70,7 +70,7 @@ public:
   virtual ~LiveVariables();
   
   /// Compute the liveness information for a given CFG.
-  static LiveVariables *computeLiveness(AnalysisContext &analysisContext,
+  static LiveVariables *computeLiveness(AnalysisDeclContext &analysisContext,
                                         bool killAtAssign);
   
   /// Return true if a variable is live at the end of a
@@ -93,7 +93,7 @@ public:
 
   void runOnAllBlocks(Observer &obs);
   
-  static LiveVariables *create(AnalysisContext &analysisContext) {
+  static LiveVariables *create(AnalysisDeclContext &analysisContext) {
     return computeLiveness(analysisContext, true);
   }
   
@@ -106,7 +106,7 @@ private:
   
 class RelaxedLiveVariables : public LiveVariables {
 public:
-  static LiveVariables *create(AnalysisContext &analysisContext) {
+  static LiveVariables *create(AnalysisDeclContext &analysisContext) {
     return computeLiveness(analysisContext, false);
   }
   
