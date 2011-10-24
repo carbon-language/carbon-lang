@@ -309,7 +309,7 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
       getContext().getFunctionType(RetTy, ArgsArray, NumArgs,
                                    FunctionProtoType::ExtProtoInfo());
 
-    delete ArgsArray;
+    delete[] ArgsArray;
 
     DI->setLocation(StartLoc);
     DI->EmitFunctionStart(GD, FnType, CurFn, Builder);
