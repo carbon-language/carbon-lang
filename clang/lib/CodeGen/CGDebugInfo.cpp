@@ -486,7 +486,13 @@ llvm::DIType CGDebugInfo::CreatePointeeType(QualType PointeeTy,
                                             llvm::DIFile Unit) {
   if (!CGM.getCodeGenOpts().LimitDebugInfo)
     return getOrCreateType(PointeeTy, Unit);
-  
+
+  // Limit debug info for the pointee type.
+
+  // Handle qualifiers.
+  if (PointeeTy.hasLocalQualifiers())
+    return CreateQualifiedType(PointeeTy, Unit);
+
   if (const RecordType *RTy = dyn_cast<RecordType>(PointeeTy)) {
     RecordDecl *RD = RTy->getDecl();
     llvm::DIFile DefUnit = getOrCreateFile(RD->getLocation());
