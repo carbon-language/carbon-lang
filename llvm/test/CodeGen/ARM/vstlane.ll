@@ -358,6 +358,13 @@ define void @vst4laneQf(float* %A, <4 x float>* %B) nounwind {
 	ret void
 }
 
+; Make sure this doesn't crash; PR10258
+define <8 x i16> @variable_insertelement(<8 x i16> %a, i16 %b, i32 %c) nounwind readnone {
+;CHECK: variable_insertelement:
+    %r = insertelement <8 x i16> %a, i16 %b, i32 %c
+    ret <8 x i16> %r
+}
+
 declare void @llvm.arm.neon.vst4lane.v8i8(i8*, <8 x i8>, <8 x i8>, <8 x i8>, <8 x i8>, i32, i32) nounwind
 declare void @llvm.arm.neon.vst4lane.v4i16(i8*, <4 x i16>, <4 x i16>, <4 x i16>, <4 x i16>, i32, i32) nounwind
 declare void @llvm.arm.neon.vst4lane.v2i32(i8*, <2 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, i32, i32) nounwind
