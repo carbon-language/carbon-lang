@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -pedantic %s
 
 // C++-specific tests for integral constant expressions.
 
@@ -48,7 +48,7 @@ void pr6373(const unsigned x = 0) {
 namespace rdar9204520 {
   
 struct A {
-  static const int B = int(0.75 * 1000 * 1000);
+  static const int B = int(0.75 * 1000 * 1000); // expected-warning {{not a constant expression, accepted as an extension}}
 };
 
 int foo() { return A::B; }
@@ -59,5 +59,10 @@ const int x = 10;
 int* y = reinterpret_cast<const char&>(x); // expected-error {{cannot initialize}}
 
 // This isn't an integral constant expression, but make sure it folds anyway.
-struct PR8836 { char _; long long a; };
-int PR8836test[(__typeof(sizeof(int)))&reinterpret_cast<const volatile char&>((((PR8836*)0)->a))];
+struct PR8836 { char _; long long a; }; // expected-warning {{long long}}
+int PR8836test[(__typeof(sizeof(int)))&reinterpret_cast<const volatile char&>((((PR8836*)0)->a))]; // expected-warning {{folded to constant array as an extension}}
+
+const int nonconst = 1.0;
+int arr[nonconst]; // expected-warning {{folded to constant array as an extension}}
+const int castfloat = static_cast<int>(1.0);
+int arr2[castfloat]; // ok

@@ -3114,9 +3114,12 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::CXXFunctionalCastExprClass:
   case Expr::CXXStaticCastExprClass:
   case Expr::CXXReinterpretCastExprClass:
-  case Expr::CXXConstCastExprClass: 
+  case Expr::CXXConstCastExprClass:
   case Expr::ObjCBridgedCastExprClass: {
     const Expr *SubExpr = cast<CastExpr>(E)->getSubExpr();
+    if (E->getStmtClass() != Expr::ImplicitCastExprClass &&
+        isa<FloatingLiteral>(SubExpr->IgnoreParenImpCasts()))
+      return NoDiag();
     switch (cast<CastExpr>(E)->getCastKind()) {
     case CK_LValueToRValue:
     case CK_NoOp:
@@ -3124,8 +3127,6 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
     case CK_IntegralCast:
       return CheckICE(SubExpr, Ctx);
     default:
-      if (isa<FloatingLiteral>(SubExpr->IgnoreParens()))
-        return NoDiag();
       return ICEDiag(2, E->getLocStart());
     }
   }
