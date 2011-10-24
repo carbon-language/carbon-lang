@@ -4856,7 +4856,7 @@ ScalarEvolution::getConstantEvolutionLoopExitValue(PHINode *PN,
     for (DenseMap<Instruction *, Constant *>::const_iterator
            I = CurrentIterVals.begin(), E = CurrentIterVals.end(); I != E; ++I){
       PHINode *PHI = dyn_cast<PHINode>(I->first);
-      if (!PHI || PHI == PN) continue;
+      if (!PHI || PHI == PN || PHI->getParent() != Header) continue;
       Constant *&NextPHI = NextIterVals[PHI];
       if (NextPHI) continue;    // Already computed!
 
