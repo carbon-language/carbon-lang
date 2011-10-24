@@ -1297,9 +1297,13 @@ void ExprEngine::evalBind(ExplodedNodeSet &Dst, const Stmt *StoreE,
   getCheckerManager().runCheckersForBind(CheckedSet, Pred, location, Val,
                                          StoreE, *this);
 
+  // TODO: Remove TmpDst after NB refactoring is done.                                        
+  ExplodedNodeSet TmpDst;
+  Builder->takeNodes(CheckedSet);
+  PureStmtNodeBuilder Bldr(CheckedSet, TmpDst, *currentBuilderContext);
+
   for (ExplodedNodeSet::iterator I = CheckedSet.begin(), E = CheckedSet.end();
        I!=E; ++I) {
-
     const ProgramState *state = (*I)->getState();
 
     if (atDeclInit) {
@@ -1311,8 +1315,10 @@ void ExprEngine::evalBind(ExplodedNodeSet &Dst, const Stmt *StoreE,
       state = state->bindLoc(location, Val);
     }
 
-    MakeNode(Dst, StoreE, *I, state);
+    Bldr.generateNode(StoreE, *I, state);
   }
+  Builder->addNodes(TmpDst);
+  Dst.insert(TmpDst);
 }
 
 /// evalStore - Handle the semantics of a store via an assignment.

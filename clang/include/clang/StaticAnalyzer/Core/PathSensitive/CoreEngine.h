@@ -301,6 +301,10 @@ public:
                       const NodeBuilderContext &Ctx)
     : NodeBuilder(SrcNode, DstSet, Ctx) {}
 
+  PureStmtNodeBuilder(ExplodedNodeSet &SrcSet, ExplodedNodeSet &DstSet,
+                      const NodeBuilderContext &Ctx)
+    : NodeBuilder(SrcSet, DstSet, Ctx) {}
+
   ExplodedNode *generateNode(const Stmt *S,
                              ExplodedNode *Pred,
                              const ProgramState *St,

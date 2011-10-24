@@ -373,7 +373,9 @@ void ExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
 
 void ExprEngine::VisitLogicalExpr(const BinaryOperator* B, ExplodedNode *Pred,
                                   ExplodedNodeSet &Dst) {
-  
+  Builder->takeNodes(Pred);
+  PureStmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
+
   assert(B->getOpcode() == BO_LAnd ||
          B->getOpcode() == BO_LOr);
   
@@ -389,7 +391,8 @@ void ExprEngine::VisitLogicalExpr(const BinaryOperator* B, ExplodedNode *Pred,
     
     // Handle undefined values.
     if (X.isUndef()) {
-      MakeNode(Dst, B, Pred, state->BindExpr(B, X));
+      Bldr.generateNode(B, Pred, state->BindExpr(B, X));
+      Builder->addNodes(Dst);
       return;
     }
     
@@ -402,11 +405,11 @@ void ExprEngine::VisitLogicalExpr(const BinaryOperator* B, ExplodedNode *Pred,
     // this right now, and since most logical expressions are used for branches,
     // the payoff is not likely to be large.  Instead, we do eager evaluation.
     if (const ProgramState *newState = state->assume(XD, true))
-      MakeNode(Dst, B, Pred,
+      Bldr.generateNode(B, Pred,
                newState->BindExpr(B, svalBuilder.makeIntVal(1U, B->getType())));
     
     if (const ProgramState *newState = state->assume(XD, false))
-      MakeNode(Dst, B, Pred,
+      Bldr.generateNode(B, Pred,
                newState->BindExpr(B, svalBuilder.makeIntVal(0U, B->getType())));
   }
   else {
@@ -415,13 +418,16 @@ void ExprEngine::VisitLogicalExpr(const BinaryOperator* B, ExplodedNode *Pred,
     // the short-circuiting.
     X = svalBuilder.makeIntVal(B->getOpcode() == BO_LAnd ? 0U : 1U,
                                B->getType());
-    MakeNode(Dst, B, Pred, state->BindExpr(B, X));
+    Bldr.generateNode(B, Pred, state->BindExpr(B, X));
   }
+  Builder->addNodes(Dst);
 }
 
 void ExprEngine::VisitInitListExpr(const InitListExpr *IE,
                                    ExplodedNode *Pred,
                                    ExplodedNodeSet &Dst) {
+  Builder->takeNodes(Pred);
+  PureStmtNodeBuilder B(Pred, Dst, *currentBuilderContext);
 
   const ProgramState *state = Pred->getState();
   QualType T = getContext().getCanonicalType(IE->getType());
@@ -434,7 +440,8 @@ void ExprEngine::VisitInitListExpr(const InitListExpr *IE,
     // e.g: static int* myArray[] = {};
     if (NumInitElements == 0) {
       SVal V = svalBuilder.makeCompoundVal(T, vals);
-      MakeNode(Dst, IE, Pred, state->BindExpr(IE, V));
+      B.generateNode(IE, Pred, state->BindExpr(IE, V));
+      Builder->addNodes(Dst);
       return;
     }
     
@@ -443,15 +450,17 @@ void ExprEngine::VisitInitListExpr(const InitListExpr *IE,
       vals = getBasicVals().consVals(state->getSVal(cast<Expr>(*it)), vals);
     }
     
-    MakeNode(Dst, IE, Pred,
-             state->BindExpr(IE, svalBuilder.makeCompoundVal(T, vals)));
+    B.generateNode(IE, Pred,
+                   state->BindExpr(IE, svalBuilder.makeCompoundVal(T, vals)));
+    Builder->addNodes(Dst);
     return;
   }
   
   if (Loc::isLocType(T) || T->isIntegerType()) {
     assert(IE->getNumInits() == 1);
     const Expr *initEx = IE->getInit(0);
-    MakeNode(Dst, IE, Pred, state->BindExpr(IE, state->getSVal(initEx)));
+    B.generateNode(IE, Pred, state->BindExpr(IE, state->getSVal(initEx)));
+    Builder->addNodes(Dst);
     return;
   }
   
@@ -463,6 +472,8 @@ void ExprEngine::VisitGuardedExpr(const Expr *Ex,
                                   const Expr *R,
                                   ExplodedNode *Pred,
                                   ExplodedNodeSet &Dst) {
+  Builder->takeNodes(Pred);
+  PureStmtNodeBuilder B(Pred, Dst, *currentBuilderContext);
   
   const ProgramState *state = Pred->getState();
   SVal X = state->getSVal(Ex);  
@@ -472,12 +483,15 @@ void ExprEngine::VisitGuardedExpr(const Expr *Ex,
   X = state->getSVal(SE);
   
   // Make sure that we invalidate the previous binding.
-  MakeNode(Dst, Ex, Pred, state->BindExpr(Ex, X, true));
+  B.generateNode(Ex, Pred, state->BindExpr(Ex, X, true));
+  Builder->addNodes(Dst);
 }
 
 void ExprEngine::
 VisitOffsetOfExpr(const OffsetOfExpr *OOE, 
                   ExplodedNode *Pred, ExplodedNodeSet &Dst) {
+  Builder->takeNodes(Pred);
+  PureStmtNodeBuilder B(Pred, Dst, *currentBuilderContext);
   Expr::EvalResult Res;
   if (OOE->Evaluate(Res, getContext()) && Res.Val.isInt()) {
     const APSInt &IV = Res.Val.getInt();
@@ -485,11 +499,10 @@ VisitOffsetOfExpr(const OffsetOfExpr *OOE,
     assert(OOE->getType()->isIntegerType());
     assert(IV.isSigned() == OOE->getType()->isSignedIntegerOrEnumerationType());
     SVal X = svalBuilder.makeIntVal(IV);
-    MakeNode(Dst, OOE, Pred, Pred->getState()->BindExpr(OOE, X));
-    return;
+    B.generateNode(OOE, Pred, Pred->getState()->BindExpr(OOE, X));
   }
   // FIXME: Handle the case where __builtin_offsetof is not a constant.
-  Dst.Add(Pred);
+  Builder->addNodes(Dst);
 }
 
 
