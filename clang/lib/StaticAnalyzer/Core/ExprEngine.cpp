@@ -62,7 +62,8 @@ ExprEngine::ExprEngine(AnalysisManager &mgr, bool gcEnabled)
              *this),
     SymMgr(StateMgr.getSymbolManager()),
     svalBuilder(StateMgr.getSValBuilder()),
-    EntryNode(NULL), currentStmt(NULL),
+    EntryNode(NULL),
+    currentStmt(NULL), currentStmtIdx(0), currentBuilderContext(0),
     NSExceptionII(NULL), NSExceptionInstanceRaiseSelectors(NULL),
     RaiseSel(GetNullarySelector("raise", getContext())),
     ObjCGCEnabled(gcEnabled), BR(mgr, *this) {
@@ -229,6 +230,9 @@ void ExprEngine::ProcessStmt(const CFGStmt S, StmtNodeBuilder& builder,
   StateMgr.recycleUnusedStates();
   
   currentStmt = S.getStmt();
+  currentStmtIdx = builder.getIndex();
+  currentBuilderContext = &builder.getContext();
+
   PrettyStackTraceLoc CrashInfo(getContext().getSourceManager(),
                                 currentStmt->getLocStart(),
                                 "Error evaluating statement");
@@ -432,7 +436,7 @@ void ExprEngine::ProcessTemporaryDtor(const CFGTemporaryDtor D,
 }
 
 void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred, 
-                         ExplodedNodeSet &Dst) {
+                       ExplodedNodeSet &Dst) {
   PrettyStackTraceLoc CrashInfo(getContext().getSourceManager(),
                                 S->getLocStart(),
                                 "Error evaluating statement");

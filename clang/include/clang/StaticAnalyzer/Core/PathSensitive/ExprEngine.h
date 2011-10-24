@@ -69,6 +69,8 @@ class ExprEngine : public SubEngine {
 
   /// currentStmt - The current block-level statement.
   const Stmt *currentStmt;
+  unsigned int currentStmtIdx;
+  const NodeBuilderContext *currentBuilderContext;
 
   /// Obj-C Class Identifiers.
   IdentifierInfo* NSExceptionII;
@@ -342,6 +344,11 @@ public:
   /// VisitUnaryOperator - Transfer function logic for unary operators.
   void VisitUnaryOperator(const UnaryOperator* B, ExplodedNode *Pred, 
                           ExplodedNodeSet &Dst);
+
+  /// Handle ++ and -- (both pre- and post-increment).
+  void VisitIncrementDecrementOperator(const UnaryOperator* U,
+                                       ExplodedNode *Pred,
+                                       ExplodedNodeSet &Dst);
 
   void VisitCXXThisExpr(const CXXThisExpr *TE, ExplodedNode *Pred, 
                         ExplodedNodeSet & Dst);

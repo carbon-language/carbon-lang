@@ -530,9 +530,15 @@ VisitUnaryExprOrTypeTraitExpr(const UnaryExprOrTypeTraitExpr *Ex,
 
 void ExprEngine::VisitUnaryOperator(const UnaryOperator* U, 
                                     ExplodedNode *Pred,
-                                    ExplodedNodeSet &Dst) {  
+                                    ExplodedNodeSet &Dst) {
+  Builder->takeNodes(Pred);
+  PureStmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
+  bool IncDec = false;
   switch (U->getOpcode()) {
     default:
+      Builder->addNodes(Pred);
+      IncDec = true;
+      VisitIncrementDecrementOperator(U, Pred, Dst);
       break;
     case UO_Real: {
       const Expr *Ex = U->getSubExpr()->IgnoreParens();
@@ -544,17 +550,16 @@ void ExprEngine::VisitUnaryOperator(const UnaryOperator* U,
         // FIXME: We don't have complex SValues yet.
         if (Ex->getType()->isAnyComplexType()) {
           // Just report "Unknown."
-          Dst.Add(*I);
           continue;
         }
         
         // For all other types, UO_Real is an identity operation.
         assert (U->getType() == Ex->getType());
         const ProgramState *state = (*I)->getState();
-        MakeNode(Dst, U, *I, state->BindExpr(U, state->getSVal(Ex)));
+        Bldr.generateNode(U, *I, state->BindExpr(U, state->getSVal(Ex)));
       }
       
-      return;
+      break;
     }
       
     case UO_Imag: {
@@ -567,17 +572,16 @@ void ExprEngine::VisitUnaryOperator(const UnaryOperator* U,
         // FIXME: We don't have complex SValues yet.
         if (Ex->getType()->isAnyComplexType()) {
           // Just report "Unknown."
-          Dst.Add(*I);
           continue;
         }
         
         // For all other types, UO_Imag returns 0.
         const ProgramState *state = (*I)->getState();
         SVal X = svalBuilder.makeZeroVal(Ex->getType());
-        MakeNode(Dst, U, *I, state->BindExpr(U, X));
+        Bldr.generateNode(U, *I, state->BindExpr(U, X));
       }
       
-      return;
+      break;
     }
       
     case UO_Plus:
@@ -598,10 +602,10 @@ void ExprEngine::VisitUnaryOperator(const UnaryOperator* U,
       
       for (ExplodedNodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {
         const ProgramState *state = (*I)->getState();
-        MakeNode(Dst, U, *I, state->BindExpr(U, state->getSVal(Ex)));
+        Bldr.generateNode(U, *I, state->BindExpr(U, state->getSVal(Ex)));
       }
       
-      return;
+      break;
     }
       
     case UO_LNot:
@@ -619,7 +623,7 @@ void ExprEngine::VisitUnaryOperator(const UnaryOperator* U,
         SVal V = state->getSVal(Ex);
         
         if (V.isUnknownOrUndef()) {
-          MakeNode(Dst, U, *I, state->BindExpr(U, V));
+          Bldr.generateNode(U, *I, state->BindExpr(U, V));
           continue;
         }
         
@@ -660,14 +664,19 @@ void ExprEngine::VisitUnaryOperator(const UnaryOperator* U,
             
             break;
         }
-        
-        MakeNode(Dst, U, *I, state);
+        Bldr.generateNode(U, *I, state);
       }
-      
-      return;
+      break;
     }
   }
-  
+
+  if (!IncDec)
+    Builder->addNodes(Dst);
+}
+
+void ExprEngine::VisitIncrementDecrementOperator(const UnaryOperator* U,
+                                                 ExplodedNode *Pred,
+                                                 ExplodedNodeSet &Dst) {
   // Handle ++ and -- (both pre- and post-increment).
   assert (U->isIncrementDecrementOp());
   ExplodedNodeSet Tmp;
@@ -729,7 +738,7 @@ void ExprEngine::VisitUnaryOperator(const UnaryOperator* U,
             // It isn't feasible for the original value to be null.
             // Propagate this constraint.
             Constraint = svalBuilder.evalEQ(state, SymVal,
-                                            svalBuilder.makeZeroVal(U->getType()));
+                                         svalBuilder.makeZeroVal(U->getType()));
             
             
             state = state->assume(Constraint, false);

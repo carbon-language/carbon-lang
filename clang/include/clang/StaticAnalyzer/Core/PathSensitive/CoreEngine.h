@@ -222,18 +222,16 @@ public:
   NodeBuilder(ExplodedNode *SrcNode, ExplodedNodeSet &DstSet,
               const NodeBuilderContext &Ctx, bool F = true)
     : C(Ctx), Finalized(F), HasGeneratedNodes(false), Frontier(DstSet) {
-    assert(DstSet.empty());
+  //  assert(DstSet.empty());
     Frontier.Add(SrcNode);
   }
 
   NodeBuilder(const ExplodedNodeSet &SrcSet, ExplodedNodeSet &DstSet,
               const NodeBuilderContext &Ctx, bool F = true)
     : C(Ctx), Finalized(F), HasGeneratedNodes(false), Frontier(DstSet) {
-    assert(DstSet.empty());
+    //assert(DstSet.empty());
     //assert(!SrcSet.empty());
-
     Frontier.insert(SrcSet);
-
     assert(haveNoSinksInFrontier());
   }
 
@@ -297,7 +295,31 @@ protected:
 };
 
 
-class StmtNodeBuilder: public NodeBuilder {
+class PureStmtNodeBuilder: public NodeBuilder {
+public:
+  PureStmtNodeBuilder(ExplodedNode *SrcNode, ExplodedNodeSet &DstSet,
+                      const NodeBuilderContext &Ctx)
+    : NodeBuilder(SrcNode, DstSet, Ctx) {}
+
+  ExplodedNode *generateNode(const Stmt *S,
+                             ExplodedNode *Pred,
+                             const ProgramState *St,
+                             ProgramPoint::Kind K = ProgramPoint::PostStmtKind,
+                             bool MarkAsSink = false,
+                             const ProgramPointTag *tag = 0,
+                             bool Purging = false) {
+    if (Purging) {
+      assert(K == ProgramPoint::PostStmtKind);
+      K = ProgramPoint::PostPurgeDeadSymbolsKind;
+    }
+
+    const ProgramPoint &L = ProgramPoint::getProgramPoint(S, K,
+                                  Pred->getLocationContext(), tag);
+    return generateNodeImpl(L, St, Pred, MarkAsSink);
+  }
+};
+
+class StmtNodeBuilder : public NodeBuilder {
   const unsigned Idx;
 
 public:
@@ -310,15 +332,14 @@ public:
 
   void GenerateAutoTransition(ExplodedNode *N);
 
-public:
   StmtNodeBuilder(ExplodedNode *SrcNode, ExplodedNodeSet &DstSet,
                   unsigned idx, const NodeBuilderContext &Ctx)
     : NodeBuilder(SrcNode, DstSet, Ctx), Idx(idx),
       PurgingDeadSymbols(false), BuildSinks(false), hasGeneratedNode(false),
       PointKind(ProgramPoint::PostStmtKind), Tag(0) {}
 
-  ~StmtNodeBuilder();
-  
+  virtual ~StmtNodeBuilder();
+
   ExplodedNode *generateNode(const Stmt *S,
                              const ProgramState *St,
                              ExplodedNode *Pred,
@@ -395,7 +416,6 @@ public:
   void addNodes(ExplodedNode *N) {
     Frontier.Add(N);
   }
-
 };
 
 class BranchNodeBuilder: public NodeBuilder {
