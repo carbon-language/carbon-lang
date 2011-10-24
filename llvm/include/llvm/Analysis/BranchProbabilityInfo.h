@@ -20,29 +20,10 @@
 #include "llvm/Support/BranchProbability.h"
 
 namespace llvm {
-
+class LoopInfo;
 class raw_ostream;
 
 class BranchProbabilityInfo : public FunctionPass {
-
-  // Default weight value. Used when we don't have information about the edge.
-  // TODO: DEFAULT_WEIGHT makes sense during static predication, when none of
-  // the successors have a weight yet. But it doesn't make sense when providing
-  // weight to an edge that may have siblings with non-zero weights. This can
-  // be handled various ways, but it's probably fine for an edge with unknown
-  // weight to just "inherit" the non-zero weight of an adjacent successor.
-  static const uint32_t DEFAULT_WEIGHT = 16;
-
-  typedef std::pair<const BasicBlock *, const BasicBlock *> Edge;
-
-  DenseMap<Edge, uint32_t> Weights;
-
-  /// \brief Track the last function we run over for printing.
-  Function *LastF;
-
-  // Get sum of the block successors' weights.
-  uint32_t getSumForBlock(const BasicBlock *BB) const;
-
 public:
   static char ID;
 
@@ -79,6 +60,35 @@ public:
   // has only one successor.
   raw_ostream &printEdgeProbability(raw_ostream &OS, const BasicBlock *Src,
                                     const BasicBlock *Dst) const;
+
+private:
+  typedef std::pair<const BasicBlock *, const BasicBlock *> Edge;
+
+  // Default weight value. Used when we don't have information about the edge.
+  // TODO: DEFAULT_WEIGHT makes sense during static predication, when none of
+  // the successors have a weight yet. But it doesn't make sense when providing
+  // weight to an edge that may have siblings with non-zero weights. This can
+  // be handled various ways, but it's probably fine for an edge with unknown
+  // weight to just "inherit" the non-zero weight of an adjacent successor.
+  static const uint32_t DEFAULT_WEIGHT = 16;
+
+  DenseMap<Edge, uint32_t> Weights;
+
+  /// \brief Handle to the LoopInfo analysis.
+  LoopInfo *LI;
+
+  /// \brief Track the last function we run over for printing.
+  Function *LastF;
+
+  /// \brief Get sum of the block successors' weights.
+  uint32_t getSumForBlock(const BasicBlock *BB) const;
+
+  bool calcMetadataWeights(BasicBlock *BB);
+  bool calcReturnHeuristics(BasicBlock *BB);
+  bool calcPointerHeuristics(BasicBlock *BB);
+  bool calcLoopBranchHeuristics(BasicBlock *BB);
+  bool calcZeroHeuristics(BasicBlock *BB);
+  bool calcFloatingPointHeuristics(BasicBlock *BB);
 };
 
 }
