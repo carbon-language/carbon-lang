@@ -945,15 +945,14 @@ static SVal RecoverCastedSymbol(ProgramStateManager& StateMgr,
 void ExprEngine::processBranch(const Stmt *Condition, const Stmt *Term,
                                NodeBuilderContext& BldCtx,
                                ExplodedNode *Pred,
+                               ExplodedNodeSet &Dst,
                                const CFGBlock *DstT,
                                const CFGBlock *DstF) {
-
   // Check for NULL conditions; e.g. "for(;;)"
   if (!Condition) {
-    BranchNodeBuilder NullCondBldr(BldCtx, DstT, DstF);
+    BranchNodeBuilder NullCondBldr(Pred, Dst, BldCtx, DstT, DstF);
     NullCondBldr.markInfeasible(false);
     NullCondBldr.generateNode(Pred->getState(), true, Pred);
-    Engine.enqueue(NullCondBldr);
     return;
   }
 
@@ -961,18 +960,19 @@ void ExprEngine::processBranch(const Stmt *Condition, const Stmt *Term,
                                 Condition->getLocStart(),
                                 "Error evaluating branch");
 
-  NodeBuilder CheckerBldr(BldCtx);
+  ExplodedNodeSet TmpCheckersOut;
+  NodeBuilder CheckerBldr(Pred, TmpCheckersOut, BldCtx);
   getCheckerManager().runCheckersForBranchCondition(Condition, CheckerBldr,
                                                     Pred, *this);
 
-  for (NodeBuilder::iterator I = CheckerBldr.results_begin(),
-                             E = CheckerBldr.results_end(); E != I; ++I) {
+  BranchNodeBuilder builder(CheckerBldr.getResults(), Dst, BldCtx, DstT, DstF);
+  for (NodeBuilder::iterator I = CheckerBldr.begin(),
+                             E = CheckerBldr.end(); E != I; ++I) {
     ExplodedNode *PredI = *I;
 
     if (PredI->isSink())
       continue;
 
-    BranchNodeBuilder builder(BldCtx, DstT, DstF);
     const ProgramState *PrevState = Pred->getState();
     SVal X = PrevState->getSVal(Condition);
 
@@ -998,8 +998,6 @@ void ExprEngine::processBranch(const Stmt *Condition, const Stmt *Term,
     if (X.isUnknownOrUndef()) {
       builder.generateNode(MarkBranch(PrevState, Term, true), true, PredI);
       builder.generateNode(MarkBranch(PrevState, Term, false), false, PredI);
-      // Enqueue the results into the work list.
-      Engine.enqueue(builder);
       continue;
     }
 
@@ -1020,9 +1018,6 @@ void ExprEngine::processBranch(const Stmt *Condition, const Stmt *Term,
       else
         builder.markInfeasible(false);
     }
-
-    // Enqueue the results into the work list.
-    Engine.enqueue(builder);
   }
 }
 

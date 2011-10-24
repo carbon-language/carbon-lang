@@ -315,7 +315,8 @@ void CoreEngine::HandleBlockEntrance(const BlockEntrance &L,
   // Process the entrance of the block.
   if (CFGElement E = L.getFirstElement()) {
     NodeBuilderContext Ctx(*this, L.getBlock(), Pred);
-    StmtNodeBuilder Builder(Pred, 0, Ctx);
+    ExplodedNodeSet Dst;
+    StmtNodeBuilder Builder(Pred, Dst, 0, Ctx);
     SubEng.processCFGElement(E, Builder, Pred);
   }
   else
@@ -419,8 +420,11 @@ void CoreEngine::HandleBranch(const Stmt *Cond, const Stmt *Term,
                                 const CFGBlock * B, ExplodedNode *Pred) {
   assert(B->succ_size() == 2);
   NodeBuilderContext Ctx(*this, B, Pred);
-  SubEng.processBranch(Cond, Term, Ctx, Pred,
+  ExplodedNodeSet Dst;
+  SubEng.processBranch(Cond, Term, Ctx, Pred, Dst,
                        *(B->succ_begin()), *(B->succ_begin()+1));
+  // Enqueue the new frontier onto the worklist.
+  enqueue(Dst);
 }
 
 void CoreEngine::HandlePostStmt(const CFGBlock *B, unsigned StmtIdx, 
@@ -432,7 +436,8 @@ void CoreEngine::HandlePostStmt(const CFGBlock *B, unsigned StmtIdx,
     HandleBlockExit(B, Pred);
   else {
     NodeBuilderContext Ctx(*this, B, Pred);
-    StmtNodeBuilder Builder(Pred, StmtIdx, Ctx);
+    ExplodedNodeSet Dst;
+    StmtNodeBuilder Builder(Pred, Dst, StmtIdx, Ctx);
     SubEng.processCFGElement((*B)[StmtIdx], Builder, Pred);
   }
 }
@@ -457,9 +462,9 @@ void CoreEngine::generateNode(const ProgramPoint &Loc,
   if (IsNew) WList->enqueue(Node);
 }
 
-void CoreEngine::enqueue(NodeBuilder &NB) {
-  for (NodeBuilder::iterator I = NB.results_begin(),
-                               E = NB.results_end(); I != E; ++I) {
+void CoreEngine::enqueue(ExplodedNodeSet &S) {
+  for (ExplodedNodeSet::iterator I = S.begin(),
+                                 E = S.end(); I != E; ++I) {
     WList->enqueue(*I);
   }
 }
@@ -494,28 +499,19 @@ ExplodedNode* NodeBuilder::generateNodeImpl(const ProgramPoint &Loc,
   bool IsNew;
   ExplodedNode *N = C.Eng.G->getNode(Loc, State, &IsNew);
   N->addPredecessor(FromN, *C.Eng.G);
-  Deferred.erase(FromN);
+  Frontier.erase(FromN);
 
   if (MarkAsSink)
     N->markAsSink();
-
-  if (IsNew && !N->isSink())
-    Deferred.insert(N);
+    
+  if (IsNew)
+    Frontier.Add(N);
 
   return (IsNew ? N : 0);
 }
 
-
-StmtNodeBuilder::StmtNodeBuilder(ExplodedNode *N, unsigned idx,
-                                 NodeBuilderContext &Ctx)
-  : NodeBuilder(Ctx), Idx(idx),
-    PurgingDeadSymbols(false), BuildSinks(false), hasGeneratedNode(false),
-    PointKind(ProgramPoint::PostStmtKind), Tag(0) {
-  Deferred.insert(N);
-}
-
 StmtNodeBuilder::~StmtNodeBuilder() {
-  for (DeferredTy::iterator I=Deferred.begin(), E=Deferred.end(); I!=E; ++I)
+  for (iterator I=Frontier.begin(), E=Frontier.end(); I!=E; ++I)
     if (!(*I)->isSink())
       GenerateAutoTransition(*I);
 }
@@ -554,14 +550,14 @@ void StmtNodeBuilder::GenerateAutoTransition(ExplodedNode *N) {
     C.Eng.WList->enqueue(Succ, C.Block, Idx+1);
 }
 
-ExplodedNode *StmtNodeBuilder::MakeNode(ExplodedNodeSet &Dst,
+ExplodedNode *StmtNodeBuilder::MakeNode(ExplodedNodeSet &DstSet,
                                         const Stmt *S, 
                                         ExplodedNode *Pred,
                                         const ProgramState *St,
                                         ProgramPoint::Kind K) {
   ExplodedNode *N = generateNode(S, St, Pred, K, 0, BuildSinks);
   if (N && !BuildSinks){
-      Dst.Add(N);
+      DstSet.Add(N);
   }
   return N;
 }

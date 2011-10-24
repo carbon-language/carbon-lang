@@ -69,6 +69,7 @@ public:
   virtual void processBranch(const Stmt *Condition, const Stmt *Term,
                              NodeBuilderContext& BuilderCtx,
                              ExplodedNode *Pred,
+                             ExplodedNodeSet &Dst,
                              const CFGBlock *DstT,
                              const CFGBlock *DstF) = 0;
 

@@ -386,6 +386,7 @@ public:
 
   unsigned size() const { return Impl.size();  }
   bool empty()    const { return Impl.empty(); }
+  bool erase(ExplodedNode *N) { return Impl.erase(N); }
 
   void clear() { Impl.clear(); }
   void insert(const ExplodedNodeSet &S) {

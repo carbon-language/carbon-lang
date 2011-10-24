@@ -117,6 +117,10 @@ public:
   BugReporter& getBugReporter() { return BR; }
 
   StmtNodeBuilder &getBuilder() { assert(Builder); return *Builder; }
+  const NodeBuilderContext &getBuilderContext() {
+    assert(Builder);
+    return Builder->getContext();
+  }
 
   bool isObjCGCEnabled() { return ObjCGCEnabled; }
 
@@ -163,6 +167,7 @@ public:
   void processBranch(const Stmt *Condition, const Stmt *Term, 
                      NodeBuilderContext& BuilderCtx,
                      ExplodedNode *Pred,
+                     ExplodedNodeSet &Dst,
                      const CFGBlock *DstT,
                      const CFGBlock *DstF);
 
