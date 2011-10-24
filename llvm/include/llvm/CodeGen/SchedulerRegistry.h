@@ -86,10 +86,6 @@ ScheduleDAGSDNodes *createHybridListDAGScheduler(SelectionDAGISel *IS,
 /// to reduce register pressure.
 ScheduleDAGSDNodes *createILPListDAGScheduler(SelectionDAGISel *IS,
                                               CodeGenOpt::Level);
-/// createTDListDAGScheduler - This creates a top-down list scheduler with
-/// a hazard recognizer.
-ScheduleDAGSDNodes *createTDListDAGScheduler(SelectionDAGISel *IS,
-                                             CodeGenOpt::Level OptLevel);
 
 /// createFastDAGScheduler - This creates a "fast" scheduler.
 ///
