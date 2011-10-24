@@ -2829,85 +2829,6 @@ void PTXTargetCodeGenInfo::SetTargetAttributes(const Decl *D,
 }
 
 //===----------------------------------------------------------------------===//
-// SystemZ ABI Implementation
-//===----------------------------------------------------------------------===//
-
-namespace {
-
-class SystemZABIInfo : public ABIInfo {
-public:
-  SystemZABIInfo(CodeGenTypes &CGT) : ABIInfo(CGT) {}
-
-  bool isPromotableIntegerType(QualType Ty) const;
-
-  ABIArgInfo classifyReturnType(QualType RetTy) const;
-  ABIArgInfo classifyArgumentType(QualType RetTy) const;
-
-  virtual void computeInfo(CGFunctionInfo &FI) const {
-    FI.getReturnInfo() = classifyReturnType(FI.getReturnType());
-    for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
-         it != ie; ++it)
-      it->info = classifyArgumentType(it->type);
-  }
-
-  virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
-                                 CodeGenFunction &CGF) const;
-};
-
-class SystemZTargetCodeGenInfo : public TargetCodeGenInfo {
-public:
-  SystemZTargetCodeGenInfo(CodeGenTypes &CGT)
-    : TargetCodeGenInfo(new SystemZABIInfo(CGT)) {}
-};
-
-}
-
-bool SystemZABIInfo::isPromotableIntegerType(QualType Ty) const {
-  // SystemZ ABI requires all 8, 16 and 32 bit quantities to be extended.
-  if (const BuiltinType *BT = Ty->getAs<BuiltinType>())
-    switch (BT->getKind()) {
-    case BuiltinType::Bool:
-    case BuiltinType::Char_S:
-    case BuiltinType::Char_U:
-    case BuiltinType::SChar:
-    case BuiltinType::UChar:
-    case BuiltinType::Short:
-    case BuiltinType::UShort:
-    case BuiltinType::Int:
-    case BuiltinType::UInt:
-      return true;
-    default:
-      return false;
-    }
-  return false;
-}
-
-llvm::Value *SystemZABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
-                                       CodeGenFunction &CGF) const {
-  // FIXME: Implement
-  return 0;
-}
-
-
-ABIArgInfo SystemZABIInfo::classifyReturnType(QualType RetTy) const {
-  if (RetTy->isVoidType())
-    return ABIArgInfo::getIgnore();
-  if (isAggregateTypeForABI(RetTy))
-    return ABIArgInfo::getIndirect(0);
-
-  return (isPromotableIntegerType(RetTy) ?
-          ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
-}
-
-ABIArgInfo SystemZABIInfo::classifyArgumentType(QualType Ty) const {
-  if (isAggregateTypeForABI(Ty))
-    return ABIArgInfo::getIndirect(0);
-
-  return (isPromotableIntegerType(Ty) ?
-          ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
-}
-
-//===----------------------------------------------------------------------===//
 // MBlaze ABI Implementation
 //===----------------------------------------------------------------------===//
 
@@ -3316,9 +3237,6 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
   case llvm::Triple::ptx32:
   case llvm::Triple::ptx64:
     return *(TheTargetCodeGenInfo = new PTXTargetCodeGenInfo(Types));
-
-  case llvm::Triple::systemz:
-    return *(TheTargetCodeGenInfo = new SystemZTargetCodeGenInfo(Types));
 
   case llvm::Triple::mblaze:
     return *(TheTargetCodeGenInfo = new MBlazeTargetCodeGenInfo(Types));

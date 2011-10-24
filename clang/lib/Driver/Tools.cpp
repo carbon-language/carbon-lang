@@ -507,9 +507,6 @@ static bool isSignedCharDefault(const llvm::Triple &Triple) {
     if (Triple.isOSDarwin())
       return true;
     return false;
-
-  case llvm::Triple::systemz:
-    return false;
   }
 }
 
