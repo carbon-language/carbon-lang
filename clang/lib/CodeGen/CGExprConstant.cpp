@@ -573,7 +573,6 @@ public:
     case CK_CPointerToObjCPointerCast:
     case CK_BlockPointerToObjCPointerCast:
     case CK_AnyPointerToBlockPointerCast:
-    case CK_LValueBitCast:
     case CK_BitCast:
       if (C->getType() == destType) return C;
       return llvm::ConstantExpr::getBitCast(C, destType);
@@ -589,6 +588,7 @@ public:
     case CK_ARCConsumeObject:
     case CK_ARCReclaimReturnedObject:
     case CK_ARCExtendBlockObject:
+    case CK_LValueBitCast:
       return 0;
 
     // These might need to be supported for constexpr.

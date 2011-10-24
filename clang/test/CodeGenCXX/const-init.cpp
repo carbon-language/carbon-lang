@@ -36,3 +36,7 @@ namespace test2 {
   double t0 = A::d;
   double t1[] = { A::d, A::f };
 }
+
+// We don't expect to fold this in the frontend, but make sure it doesn't crash.
+// CHECK: @PR9558 = global float 0.000000e+0
+float PR9558 = reinterpret_cast<const float&>("asd");
