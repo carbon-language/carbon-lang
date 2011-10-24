@@ -66,29 +66,20 @@ Path::operator=(StringRef that) {
   return *this;
 }
 
-// push_back 0 on create, and pop_back on delete.
-struct ScopedNullTerminator {
-  std::string &str;
-  ScopedNullTerminator(std::string &s) : str(s) { str.push_back(0); }
-  ~ScopedNullTerminator() {
-    // str.pop_back(); But wait, C++03 doesn't have this...
-    assert(!str.empty() && str[str.size() - 1] == 0
-      && "Null char not present!");
-    str.resize(str.size() - 1);
-  }
-};
-
 bool
 Path::isValid() const {
   if (path.empty())
     return false;
 
+  size_t len = path.size();
+  // If there is a null character, it and all its successors are ignored.
+  size_t pos = path.find_first_of('\0');
+  if (pos != std::string::npos)
+    len = pos;
+
   // If there is a colon, it must be the second character, preceded by a letter
   // and followed by something.
-  size_t len = path.size();
-  // This code assumes that path is null terminated, so make sure it is.
-  ScopedNullTerminator snt(path);
-  size_t pos = path.rfind(':',len);
+  pos = path.rfind(':',len);
   size_t rootslash = 0;
   if (pos != std::string::npos) {
     if (pos != 1 || !isalpha(path[0]) || len < 3)
@@ -118,13 +109,13 @@ Path::isValid() const {
   for (pos = 0; pos < len; ++pos) {
     // A component may not end in a space.
     if (path[pos] == ' ') {
-      if (path[pos+1] == '/' || path[pos+1] == '\0')
+      if (pos+1 == len || path[pos+1] == '/' || path[pos+1] == '\0')
         return false;
     }
 
     // A component may not end in a period.
     if (path[pos] == '.') {
-      if (path[pos+1] == '/' || path[pos+1] == '\0') {
+      if (pos+1 == len || path[pos+1] == '/') {
         // Unless it is the pseudo-directory "."...
         if (pos == 0 || path[pos-1] == '/' || path[pos-1] == ':')
           return true;
