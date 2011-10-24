@@ -4844,11 +4844,11 @@ ScalarEvolution::getConstantEvolutionLoopExitValue(PHINode *PN,
     // EvaluateExpression adds non-phi values to the CurrentIterVals map.
     DenseMap<Instruction *, Constant *> NextIterVals;
     Constant *NextPHI = EvaluateExpression(BEValue, L, CurrentIterVals, TD);
-    if (NextPHI == CurrentIterVals[PN])
-      return RetVal = NextPHI;  // Stopped evolving!
     if (NextPHI == 0)
       return 0;        // Couldn't evaluate!
     NextIterVals[PN] = NextPHI;
+
+    bool StoppedEvolving = NextPHI == CurrentIterVals[PN];
 
     // Also evaluate the other PHI nodes.  However, we don't get to stop if we
     // cease to be able to evaluate one of them or if they stop evolving,
@@ -4858,11 +4858,19 @@ ScalarEvolution::getConstantEvolutionLoopExitValue(PHINode *PN,
       PHINode *PHI = dyn_cast<PHINode>(I->first);
       if (!PHI || PHI == PN || PHI->getParent() != Header) continue;
       Constant *&NextPHI = NextIterVals[PHI];
-      if (NextPHI) continue;    // Already computed!
-
-      Value *BEValue = PHI->getIncomingValue(SecondIsBackedge);
-      NextPHI = EvaluateExpression(BEValue, L, CurrentIterVals, TD);
+      if (!NextPHI) {   // Not already computed.
+        Value *BEValue = PHI->getIncomingValue(SecondIsBackedge);
+        NextPHI = EvaluateExpression(BEValue, L, CurrentIterVals, TD);
+      }
+      if (NextPHI != I->second)
+        StoppedEvolving = false;
     }
+
+    // If all entries in CurrentIterVals == NextIterVals then we can stop
+    // iterating, the loop can't continue to change.
+    if (StoppedEvolving)
+      return RetVal = CurrentIterVals[PN];
+
     CurrentIterVals.swap(NextIterVals);
   }
 }
