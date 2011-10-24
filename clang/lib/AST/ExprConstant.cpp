@@ -2974,6 +2974,9 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
     return NoDiag();
   case Expr::CallExprClass:
   case Expr::CXXOperatorCallExprClass: {
+    // C99 6.6/3 allows function calls within unevaluated subexpressions of
+    // constant expressions, but they can never be ICEs because an ICE cannot
+    // contain an operand of (pointer to) function type.
     const CallExpr *CE = cast<CallExpr>(E);
     if (CE->isBuiltinCall(Ctx))
       return CheckEvalInICE(E, Ctx);
@@ -3034,6 +3037,9 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
     case UO_PreDec:
     case UO_AddrOf:
     case UO_Deref:
+      // C99 6.6/3 allows increment and decrement within unevaluated
+      // subexpressions of constant expressions, but they can never be ICEs
+      // because an ICE cannot contain an lvalue operand.
       return ICEDiag(2, E->getLocStart());
     case UO_Extension:
     case UO_LNot:
@@ -3050,7 +3056,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::OffsetOfExprClass: {
       // Note that per C99, offsetof must be an ICE. And AFAIK, using
       // Evaluate matches the proposed gcc behavior for cases like
-      // "offsetof(struct s{int x[4];}, x[!.0])".  This doesn't affect
+      // "offsetof(struct s{int x[4];}, x[1.0])".  This doesn't affect
       // compliance: we should warn earlier for offsetof expressions with
       // array subscripts that aren't ICEs, and if the array subscripts
       // are ICEs, the value of the offsetof must be an integer constant.
@@ -3079,6 +3085,9 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
     case BO_AndAssign:
     case BO_XorAssign:
     case BO_OrAssign:
+      // C99 6.6/3 allows assignments within unevaluated subexpressions of
+      // constant expressions, but they can never be ICEs because an ICE cannot
+      // contain an lvalue operand.
       return ICEDiag(2, E->getLocStart());
 
     case BO_Mul:
