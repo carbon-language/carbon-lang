@@ -641,6 +641,8 @@ error_code MachOObjectFile::getRelocationType(DataRefImpl Rel,
 }
 error_code MachOObjectFile::getRelocationTypeName(DataRefImpl Rel,
                                           SmallVectorImpl<char> &Result) const {
+  StringRef res = "Unknown";
+  Result.append(res.begin(), res.end());
   return object_error::success;
 }
 error_code MachOObjectFile::getRelocationAdditionalInfo(DataRefImpl Rel,
@@ -666,6 +668,8 @@ error_code MachOObjectFile::getRelocationAdditionalInfo(DataRefImpl Rel,
 }
 error_code MachOObjectFile::getRelocationValueString(DataRefImpl Rel,
                                           SmallVectorImpl<char> &Result) const {
+  StringRef res = "Unknown";
+  Result.append(res.begin(), res.end());
   return object_error::success;
 }
 
