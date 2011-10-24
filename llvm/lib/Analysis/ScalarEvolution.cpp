@@ -4882,29 +4882,33 @@ const SCEV *ScalarEvolution::ComputeExitCountExhaustively(const Loop *L,
   // That's the only form we support here.
   if (PN->getNumIncomingValues() != 2) return getCouldNotCompute();
 
+  DenseMap<Instruction *, Constant *> CurrentIterVals;
+  BasicBlock *Header = L->getHeader();
+  assert(PN->getParent() == Header && "Can't evaluate PHI not in loop header!");
+
   // One entry must be a constant (coming in from outside of the loop), and the
   // second must be derived from the same PHI.
   bool SecondIsBackedge = L->contains(PN->getIncomingBlock(1));
-  Constant *StartCST =
-    dyn_cast<Constant>(PN->getIncomingValue(!SecondIsBackedge));
-  if (StartCST == 0) return getCouldNotCompute();  // Must be a constant.
-
-  Value *BEValue = PN->getIncomingValue(SecondIsBackedge);
-  if (getConstantEvolvingPHI(BEValue, L) != PN &&
-      !isa<Constant>(BEValue))
-    return getCouldNotCompute();  // Not derived from same PHI.
+  PHINode *PHI = 0;
+  for (BasicBlock::iterator I = Header->begin();
+       (PHI = dyn_cast<PHINode>(I)); ++I) {
+    Constant *StartCST =
+      dyn_cast<Constant>(PHI->getIncomingValue(!SecondIsBackedge));
+    if (StartCST == 0) continue;
+    CurrentIterVals[PHI] = StartCST;
+  }
+  if (!CurrentIterVals.count(PN))
+    return getCouldNotCompute();
 
   // Okay, we find a PHI node that defines the trip count of this loop.  Execute
   // the loop symbolically to determine when the condition gets a value of
   // "ExitWhen".
-  unsigned IterationNum = 0;
-  unsigned MaxIterations = MaxBruteForceIterations;   // Limit analysis.
-  for (Constant *PHIVal = StartCST;
-       IterationNum != MaxIterations; ++IterationNum) {
-    DenseMap<Instruction *, Constant *> PHIValMap;
-    PHIValMap[PN] = PHIVal;
+
+  unsigned MaxIterations = MaxBruteForceIterations;   // Limit analysis.  
+  for (unsigned IterationNum = 0; IterationNum != MaxIterations;++IterationNum){
     ConstantInt *CondVal =
-      dyn_cast_or_null<ConstantInt>(EvaluateExpression(Cond, L, PHIValMap, TD));
+      dyn_cast_or_null<ConstantInt>(EvaluateExpression(Cond, L,
+                                                       CurrentIterVals, TD));
 
     // Couldn't symbolically evaluate.
     if (!CondVal) return getCouldNotCompute();
@@ -4914,11 +4918,19 @@ const SCEV *ScalarEvolution::ComputeExitCountExhaustively(const Loop *L,
       return getConstant(Type::getInt32Ty(getContext()), IterationNum);
     }
 
-    // Compute the value of the PHI node for the next iteration.
-    Constant *NextPHI = EvaluateExpression(BEValue, L, PHIValMap, TD);
-    if (NextPHI == 0 || NextPHI == PHIVal)
-      return getCouldNotCompute();// Couldn't evaluate or not making progress...
-    PHIVal = NextPHI;
+    // Update all the PHI nodes for the next iteration.
+    DenseMap<Instruction *, Constant *> NextIterVals;
+    for (DenseMap<Instruction *, Constant *>::const_iterator
+           I = CurrentIterVals.begin(), E = CurrentIterVals.end(); I != E; ++I){
+      PHINode *PHI = dyn_cast<PHINode>(I->first);
+      if (!PHI || PHI->getParent() != Header) continue;
+      Constant *&NextPHI = NextIterVals[PHI];
+      if (NextPHI) continue;    // Already computed!
+
+      Value *BEValue = PHI->getIncomingValue(SecondIsBackedge);
+      NextPHI = EvaluateExpression(BEValue, L, CurrentIterVals, TD);
+    }
+    CurrentIterVals.swap(NextIterVals);
   }
 
   // Too many iterations were needed to evaluate.
