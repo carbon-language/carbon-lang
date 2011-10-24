@@ -161,19 +161,50 @@ private:
 	class Locker
 	{
 	public:
-    	Locker (ScriptInterpreterPython *py_interpreter,
-        	    FILE* wait_msg_handle = NULL,
-            	bool need_session = true);
-    
-    	bool
-    	HasAcquiredLock ()
-    	{
-        	return m_release_lock;
-	    }
-    
+        
+        enum OnEntry
+        {
+            AcquireLock         = 0x0001,
+            InitSession         = 0x0002
+        };
+        
+        enum OnLeave
+        {
+            FreeLock            = 0x0001,
+            FreeAcquiredLock    = 0x0002,    // do not free the lock if we already held it when calling constructor
+            TearDownSession     = 0x0004
+        };
+        
+        Locker (ScriptInterpreterPython *py_interpreter = NULL,
+                uint16_t on_entry = AcquireLock | InitSession,
+                uint16_t on_leave = FreeLock | TearDownSession,
+                FILE* wait_msg_handle = NULL);
+        
     	~Locker ();
     
+        static bool
+        CurrentThreadHasPythonLock ();
+        
 	private:
+        
+        bool
+        DoAcquireLock ();
+        
+        bool
+        DoInitSession ();
+        
+        bool
+        DoFreeLock ();
+        
+        bool
+        DoTearDownSession ();
+        
+        static bool
+        TryGetPythonLock (uint32_t seconds_to_wait);
+        
+        static void
+        ReleasePythonLock ();
+        
     	bool                     m_need_session;
     	bool                     m_release_lock;
     	ScriptInterpreterPython *m_python_interpreter;

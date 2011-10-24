@@ -63,8 +63,8 @@ PythonMutexPredicate ()
     return g_interpreter_is_running;
 }
 
-static bool
-CurrentThreadHasPythonLock ()
+bool
+ScriptInterpreterPython::Locker::CurrentThreadHasPythonLock ()
 {
     TimeValue timeout;
 
@@ -73,8 +73,8 @@ CurrentThreadHasPythonLock ()
     return PythonMutexPredicate().WaitForValueEqualTo (Host::GetCurrentThreadID(), &timeout, NULL);
 }
 
-static bool
-GetPythonLock (uint32_t seconds_to_wait)
+bool
+ScriptInterpreterPython::Locker::TryGetPythonLock (uint32_t seconds_to_wait)
 {
     
     TimeValue timeout;
@@ -89,40 +89,88 @@ GetPythonLock (uint32_t seconds_to_wait)
                                                                     Host::GetCurrentThreadID(), &timeout, NULL);
 }
 
-static void
-ReleasePythonLock ()
+void
+ScriptInterpreterPython::Locker::ReleasePythonLock ()
 {
     PythonMutexPredicate().SetValue (LLDB_INVALID_THREAD_ID, eBroadcastAlways);
 }
 
-ScriptInterpreterPython::Locker::Locker (ScriptInterpreterPython *pi,
-                                        FILE* tmp_fh,
-                                        bool ns) :
-    m_need_session(ns),
-    m_release_lock(false),
-    m_python_interpreter(pi),
-    m_tmp_fh(tmp_fh)
+ScriptInterpreterPython::Locker::Locker (ScriptInterpreterPython *py_interpreter,
+                                         uint16_t on_entry,
+                                         uint16_t on_leave,
+                                         FILE* wait_msg_handle) :
+    m_need_session( (on_leave & TearDownSession) == TearDownSession ),
+    m_release_lock ( false ), // decide in constructor body
+    m_python_interpreter(py_interpreter),
+    m_tmp_fh(wait_msg_handle)
 {
-    // if Enter/LeaveSession() must be called, then m_python_interpreter must be != NULL
-    assert(m_need_session && m_python_interpreter);
+    if (m_python_interpreter && !m_tmp_fh)
+        m_tmp_fh = (m_python_interpreter->m_dbg_stdout ? m_python_interpreter->m_dbg_stdout : stdout);
+    
+    if ( (on_entry & AcquireLock) == AcquireLock )
+    {
+        if (CurrentThreadHasPythonLock())
+        {
+            if ( (on_leave & FreeLock) == FreeLock )
+                m_release_lock = true;
+        }
+        else
+        {
+            DoAcquireLock();
+            if ( (on_leave & FreeLock) == FreeLock )
+                m_release_lock = true;
+            if ( (on_leave & FreeAcquiredLock) == FreeAcquiredLock )
+                m_release_lock = true;
+        }
+    }
+    if ( (on_entry & InitSession) == InitSession )
+        DoInitSession();
+}
+
+bool
+ScriptInterpreterPython::Locker::DoAcquireLock()
+{
     if (!CurrentThreadHasPythonLock())
     {
-        while (!GetPythonLock (1))
-            if (tmp_fh)
-                fprintf (tmp_fh, 
+        while (!TryGetPythonLock (1))
+            if (m_tmp_fh)
+                fprintf (m_tmp_fh, 
                          "Python interpreter locked on another thread; waiting to acquire lock...\n");
-        m_release_lock = true;
     }
-    if (m_need_session)
-        m_python_interpreter->EnterSession ();
+    return true;
+}
+
+bool
+ScriptInterpreterPython::Locker::DoInitSession()
+{
+    if (!m_python_interpreter)
+        return false;
+    m_python_interpreter->EnterSession ();
+    return true;
+}
+
+bool
+ScriptInterpreterPython::Locker::DoFreeLock()
+{
+    ReleasePythonLock ();
+    return true;
+}
+
+bool
+ScriptInterpreterPython::Locker::DoTearDownSession()
+{
+    if (!m_python_interpreter)
+        return false;
+    m_python_interpreter->LeaveSession ();
+    return true;
 }
 
 ScriptInterpreterPython::Locker::~Locker()
 {
     if (m_need_session)
-        m_python_interpreter->LeaveSession ();
+        DoTearDownSession();
     if (m_release_lock)
-        ReleasePythonLock ();
+        DoFreeLock();
 }
 
 ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interpreter) :
@@ -145,33 +193,11 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
         g_initialized = true;
         ScriptInterpreterPython::InitializePrivate ();
     }
+    
+    Locker locker(this,
+                  ScriptInterpreterPython::Locker::AcquireLock,
+                  ScriptInterpreterPython::Locker::FreeAcquiredLock);
 
-    bool safe_to_run = false;
-    bool need_to_release_lock = true;
-    int interval = 5;          // Number of seconds to try getting the Python lock before timing out.
-    
-    // We don't dare exit this function without finishing setting up the script interpreter, so we must wait until
-    // we can get the Python lock.
-    
-    if (CurrentThreadHasPythonLock())
-    {
-        safe_to_run = true;
-        need_to_release_lock = false;
-    }
-
-    while (!safe_to_run)
-    {
-        safe_to_run = GetPythonLock (interval);
-        if (!safe_to_run)
-        {
-            FILE *tmp_fh = (m_dbg_stdout ? m_dbg_stdout : stdout);
-            fprintf (tmp_fh, 
-                     "Python interpreter is locked on another thread; "
-                     "please release interpreter in order to continue.\n");
-            interval = interval * 2;
-        }
-    }
-    
     m_dictionary_name.append("_dict");
     StreamString run_string;
     run_string.Printf ("%s = dict()", m_dictionary_name.c_str());
@@ -221,9 +247,6 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
     {
         m_new_sysout = PyFile_FromFile (m_dbg_stdout, (char *) "", (char *) "w", _check_and_flush);
     }
-    
-    if (need_to_release_lock)
-        ReleasePythonLock();
 }
 
 ScriptInterpreterPython::~ScriptInterpreterPython ()
@@ -242,16 +265,10 @@ ScriptInterpreterPython::~ScriptInterpreterPython ()
     
     if (m_new_sysout)
     {
-        FILE *tmp_fh = (m_dbg_stdout ? m_dbg_stdout : stdout);
-        if (!CurrentThreadHasPythonLock ())
-        {
-            while (!GetPythonLock (1))
-                fprintf (tmp_fh, "Python interpreter locked on another thread; waiting to acquire lock...\n");
-            Py_DECREF ((PyObject*)m_new_sysout);
-            ReleasePythonLock ();
-        }
-        else
-            Py_DECREF ((PyObject*)m_new_sysout);
+        Locker locker(this,
+                      ScriptInterpreterPython::Locker::AcquireLock,
+                      ScriptInterpreterPython::Locker::FreeLock);
+        Py_DECREF ((PyObject*)m_new_sysout);
     }
 }
 
@@ -263,9 +280,7 @@ ScriptInterpreterPython::ResetOutputFileHandle (FILE *fh)
         
     m_dbg_stdout = fh;
 
-    FILE *tmp_fh = (m_dbg_stdout ? m_dbg_stdout : stdout);
-    
-    Locker py_lock(this, tmp_fh);
+    Locker py_lock(this);
     
     m_new_sysout = PyFile_FromFile (m_dbg_stdout, (char *) "", (char *) "w", _check_and_flush);
 }
@@ -289,8 +304,6 @@ ScriptInterpreterPython::RestoreTerminalState ()
     // on the input file handle.
     m_terminal_state.Restore();
 }
-
-
 
 void
 ScriptInterpreterPython::LeaveSession ()
@@ -389,26 +402,15 @@ ScriptInterpreterPython::ExecuteOneLine (const char *command, CommandReturnObjec
     if (!m_valid_session)
         return false;
         
-        
-
     // We want to call run_one_line, passing in the dictionary and the command string.  We cannot do this through
     // PyRun_SimpleString here because the command string may contain escaped characters, and putting it inside
     // another string to pass to PyRun_SimpleString messes up the escaping.  So we use the following more complicated
     // method to pass the command string directly down to Python.
 
+    Locker locker(this,
+                  ScriptInterpreterPython::Locker::AcquireLock | ScriptInterpreterPython::Locker::InitSession,
+                  ScriptInterpreterPython::Locker::FreeAcquiredLock | ScriptInterpreterPython::Locker::TearDownSession);
 
-    bool need_to_release_lock = true;
-
-    if (CurrentThreadHasPythonLock())
-        need_to_release_lock = false;
-    else if (!GetPythonLock (1))
-    {
-        fprintf ((m_dbg_stdout ? m_dbg_stdout : stdout), 
-                 "Python interpreter is currently locked by another thread; unable to process command.\n");
-        return false;
-    }
-
-    EnterSession ();
     bool success = false;
 
     if (command)
@@ -492,11 +494,6 @@ ScriptInterpreterPython::ExecuteOneLine (const char *command, CommandReturnObjec
             }
         }
 
-        LeaveSession ();
-        
-        if (need_to_release_lock)
-            ReleasePythonLock();
-
         if (success)
             return true;
 
@@ -506,17 +503,10 @@ ScriptInterpreterPython::ExecuteOneLine (const char *command, CommandReturnObjec
         return false;
     }
 
-    LeaveSession ();
-
-    if (need_to_release_lock)
-        ReleasePythonLock ();
-
     if (result)
         result->AppendError ("empty command passed to python\n");
     return false;
 }
-
-
 
 size_t
 ScriptInterpreterPython::InputReaderCallback
@@ -535,7 +525,7 @@ ScriptInterpreterPython::InputReaderCallback
         return 0;
         
     ScriptInterpreterPython *script_interpreter = (ScriptInterpreterPython *) baton;
-        
+    
     if (script_interpreter->m_script_lang != eScriptLanguagePython)
         return 0;
     
@@ -559,18 +549,11 @@ ScriptInterpreterPython::InputReaderCallback
 
             script_interpreter->SaveTerminalState(input_fd);
 
-            if (!CurrentThreadHasPythonLock())
             {
-                while (!GetPythonLock(1)) 
-                {
-                    out_stream->Printf ("Python interpreter locked on another thread; waiting to acquire lock...\n");
-                    out_stream->Flush();
-                }
-                script_interpreter->EnterSession ();
-                ReleasePythonLock();
+                ScriptInterpreterPython::Locker locker(script_interpreter,
+                                                       ScriptInterpreterPython::Locker::AcquireLock | ScriptInterpreterPython::Locker::InitSession,
+                                                       ScriptInterpreterPython::Locker::FreeAcquiredLock);
             }
-            else
-                script_interpreter->EnterSession ();
 
             char error_str[1024];
             if (script_interpreter->m_embedded_python_pty.OpenFirstAvailableMaster (O_RDWR|O_NOCTTY, error_str, 
@@ -610,17 +593,11 @@ ScriptInterpreterPython::InputReaderCallback
         break;
 
     case eInputReaderReactivate:
-        if (!CurrentThreadHasPythonLock())
         {
-            while (!GetPythonLock(1))
-            {
-                // Wait until lock is acquired.
-            }
-            script_interpreter->EnterSession ();
-            ReleasePythonLock();
+            ScriptInterpreterPython::Locker locker(script_interpreter,
+                                                   ScriptInterpreterPython::Locker::AcquireLock | ScriptInterpreterPython::Locker::InitSession,
+                                                   ScriptInterpreterPython::Locker::FreeAcquiredLock);
         }
-        else
-            script_interpreter->EnterSession ();
         break;
         
     case eInputReaderAsynchronousOutputWritten:
@@ -716,18 +693,9 @@ ScriptInterpreterPython::ExecuteOneLineWithReturn (const char *in_string,
                                                    void *ret_value)
 {
 
-    bool need_to_release_lock = true;
-
-    if (CurrentThreadHasPythonLock())
-        need_to_release_lock = false;
-    else if (!GetPythonLock (1))
-    {
-        fprintf ((m_dbg_stdout ? m_dbg_stdout : stdout), 
-                 "Python interpreter is currently locked by another thread; unable to process command.\n");
-        return false;
-    }
-
-    EnterSession ();
+    Locker locker(this,
+                  ScriptInterpreterPython::Locker::AcquireLock | ScriptInterpreterPython::Locker::InitSession,
+                  ScriptInterpreterPython::Locker::FreeAcquiredLock | ScriptInterpreterPython::Locker::TearDownSession);
 
     PyObject *py_return = NULL;
     PyObject *mainmod = PyImport_AddModule ("__main__");
@@ -896,11 +864,6 @@ ScriptInterpreterPython::ExecuteOneLineWithReturn (const char *in_string,
         PyErr_Clear();
         ret_success = false;
     }
-    
-    LeaveSession ();
-
-    if (need_to_release_lock)
-        ReleasePythonLock();
 
     return ret_success;
 }
@@ -908,18 +871,11 @@ ScriptInterpreterPython::ExecuteOneLineWithReturn (const char *in_string,
 bool
 ScriptInterpreterPython::ExecuteMultipleLines (const char *in_string)
 {
-    FILE *tmp_fh = (m_dbg_stdout ? m_dbg_stdout : stdout);
-    bool need_to_release_lock = true;
-
-    if (CurrentThreadHasPythonLock())
-        need_to_release_lock = false;
-    else
-    {
-        while (!GetPythonLock (1))
-            fprintf (tmp_fh, "Python interpreter locked on another thread; waiting to acquire lock...\n");
-    }
-
-    EnterSession ();
+    
+    
+    Locker locker(this,
+                  ScriptInterpreterPython::Locker::AcquireLock | ScriptInterpreterPython::Locker::InitSession,
+                  ScriptInterpreterPython::Locker::FreeAcquiredLock | ScriptInterpreterPython::Locker::TearDownSession);
 
     bool success = false;
     PyObject *py_return = NULL;
@@ -989,11 +945,6 @@ ScriptInterpreterPython::ExecuteMultipleLines (const char *in_string)
         PyErr_Clear();
         success = false;
     }
-
-    LeaveSession ();
-
-    if (need_to_release_lock)
-        ReleasePythonLock();
 
     return success;
 }
@@ -1303,7 +1254,7 @@ ScriptInterpreterPython::GenerateScriptAliasFunction (StringList &user_input, St
         return false;
     
     // Take what the user wrote, wrap it all up inside one big auto-generated Python function, passing in the
-    // ValueObject as parameter to the function.
+    // required data as parameters to the function.
     
     sstr.Printf ("lldb_autogen_python_cmd_alias_func_%d", num_created_functions);
     ++num_created_functions;
@@ -1425,11 +1376,9 @@ ScriptInterpreterPython::CreateSyntheticScriptedProvider (std::string class_name
         return NULL;
     
     void* ret_val;
-    
-    FILE *tmp_fh = (python_interpreter->m_dbg_stdout ? python_interpreter->m_dbg_stdout : stdout);
-    
+
     {
-        Locker py_lock(this, tmp_fh);
+        Locker py_lock(this);
         ret_val = g_swig_synthetic_script    (class_name, 
                                               python_interpreter->m_dictionary_name.c_str(),
                                               valobj);
@@ -1539,10 +1488,8 @@ ScriptInterpreterPython::CallPythonScriptFunction (const char *python_function_n
     if (python_function_name 
         && *python_function_name)
     {
-        FILE *tmp_fh = (python_interpreter->m_dbg_stdout ? python_interpreter->m_dbg_stdout : stdout);
-        
         {
-            Locker py_lock(python_interpreter, tmp_fh);
+            Locker py_lock(python_interpreter);
             ret_val = g_swig_typescript_callback (python_function_name, 
                                                   python_interpreter->m_dictionary_name.c_str(),
                                                   valobj);
@@ -1594,10 +1541,8 @@ ScriptInterpreterPython::BreakpointCallbackFunction
             if (stop_frame_sp && bp_loc_sp)
             {
                 bool ret_val = true;
-                FILE *tmp_fh = (python_interpreter->m_dbg_stdout ? python_interpreter->m_dbg_stdout : stdout);
-                
                 {
-                    Locker py_lock(python_interpreter, tmp_fh);
+                    Locker py_lock(python_interpreter);
                     ret_val = g_swig_breakpoint_callback (python_function_name, 
                                                           python_interpreter->m_dictionary_name.c_str(),
                                                           stop_frame_sp, 
@@ -1624,30 +1569,14 @@ ScriptInterpreterPython::RunEmbeddedPythonInterpreter (lldb::thread_arg_t baton)
     
     char error_str[1024];
     const char *pty_slave_name = script_interpreter->m_embedded_python_pty.GetSlaveName (error_str, sizeof (error_str));
-    bool need_to_release_lock = true;
-    bool safe_to_run = false;
 
-    if (CurrentThreadHasPythonLock())
-    {
-        safe_to_run = true;
-        need_to_release_lock = false;
-    }
-    else
-    {
-        int interval = 1;
-        safe_to_run = GetPythonLock (interval);
-        while (!safe_to_run)
-        {
-            interval = interval * 2;
-            safe_to_run = GetPythonLock (interval);
-        }
-    }
-    
-    if (pty_slave_name != NULL && safe_to_run)
+    Locker locker(script_interpreter,
+                  ScriptInterpreterPython::Locker::AcquireLock | ScriptInterpreterPython::Locker::InitSession,
+                  ScriptInterpreterPython::Locker::FreeAcquiredLock | ScriptInterpreterPython::Locker::TearDownSession);
+
+    if (pty_slave_name != NULL)
     {
         StreamString run_string;
-        
-        script_interpreter->EnterSession ();
         
         run_string.Printf ("run_one_line (%s, 'save_stderr = sys.stderr')", script_interpreter->m_dictionary_name.c_str());
         PyRun_SimpleString (run_string.GetData());
@@ -1697,17 +1626,8 @@ ScriptInterpreterPython::RunEmbeddedPythonInterpreter (lldb::thread_arg_t baton)
         run_string.Printf ("run_one_line (%s, 'sys.stderr = save_stderr')", script_interpreter->m_dictionary_name.c_str());
         PyRun_SimpleString (run_string.GetData());
         run_string.Clear();
-
-        script_interpreter->LeaveSession ();
         
     }
-    
-    if (!safe_to_run)
-        fprintf ((script_interpreter->m_dbg_stdout ? script_interpreter->m_dbg_stdout : stdout), 
-                 "Python interpreter locked on another thread; unable to acquire lock.\n");
-    
-    if (need_to_release_lock)
-        ReleasePythonLock ();
     
     if (script_interpreter->m_embedded_thread_input_reader_sp)
         script_interpreter->m_embedded_thread_input_reader_sp->SetIsDone (true);
@@ -1738,15 +1658,11 @@ ScriptInterpreterPython::CalculateNumChildren (void *implementor)
     
     if (!g_swig_calc_children)
         return 0;
-    
-    ScriptInterpreterPython *python_interpreter = this;
-    
+
     uint32_t ret_val = 0;
     
-    FILE *tmp_fh = (python_interpreter->m_dbg_stdout ? python_interpreter->m_dbg_stdout : stdout);
-
     {
-        Locker py_lock(python_interpreter, tmp_fh);
+        Locker py_lock(this);
         ret_val = g_swig_calc_children       (implementor);
     }
     
@@ -1762,16 +1678,12 @@ ScriptInterpreterPython::GetChildAtIndex (void *implementor, uint32_t idx)
     if (!g_swig_get_child_index || !g_swig_cast_to_sbvalue)
         return lldb::ValueObjectSP();
     
-    ScriptInterpreterPython *python_interpreter = this;
-    
     void* child_ptr = NULL;
     lldb::SBValue* value_sb = NULL;
     lldb::ValueObjectSP ret_val;
     
-    FILE *tmp_fh = (python_interpreter->m_dbg_stdout ? python_interpreter->m_dbg_stdout : stdout);
-    
     {
-        Locker py_lock(python_interpreter, tmp_fh);
+        Locker py_lock(this);
         child_ptr = g_swig_get_child_index       (implementor,idx);
         if (child_ptr != NULL && child_ptr != Py_None)
         {
@@ -1799,14 +1711,10 @@ ScriptInterpreterPython::GetIndexOfChildWithName (void *implementor, const char*
     if (!g_swig_get_index_child)
         return UINT32_MAX;
     
-    ScriptInterpreterPython *python_interpreter = this;
-    
     int ret_val = UINT32_MAX;
     
-    FILE *tmp_fh = (python_interpreter->m_dbg_stdout ? python_interpreter->m_dbg_stdout : stdout);
-    
     {
-        Locker py_lock(python_interpreter, tmp_fh);
+        Locker py_lock(this);
         ret_val = g_swig_get_index_child       (implementor, child_name);
     }
     
@@ -1822,12 +1730,8 @@ ScriptInterpreterPython::UpdateSynthProviderInstance (void* implementor)
     if (!g_swig_update_provider)
         return;
     
-    ScriptInterpreterPython *python_interpreter = this;
-        
-    FILE *tmp_fh = (python_interpreter->m_dbg_stdout ? python_interpreter->m_dbg_stdout : stdout);
-    
     {
-        Locker py_lock(python_interpreter, tmp_fh);
+        Locker py_lock(this);
         g_swig_update_provider       (implementor);
     }
     
@@ -1850,14 +1754,10 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
         return false;
     }
     
-    ScriptInterpreterPython *python_interpreter = this;
-    
     lldb::DebuggerSP debugger_sp = m_interpreter.GetDebugger().GetSP();
-    
-    FILE *tmp_fh = (python_interpreter->m_dbg_stdout ? python_interpreter->m_dbg_stdout : stdout);
-    
+
     {
-        Locker py_lock(python_interpreter, tmp_fh);
+        Locker py_lock(this);
         
         FileSpec target_file(pathname, true);
         
@@ -1877,7 +1777,7 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
         command_stream.Printf("if not (sys.path.__contains__('%s')):\n    sys.path.append('%s');\n\n",
                               directory,
                               directory);
-        bool syspath_retval = python_interpreter->ExecuteMultipleLines(command_stream.GetData());
+        bool syspath_retval = ExecuteMultipleLines(command_stream.GetData());
         if (!syspath_retval)
         {
             error.SetErrorString("Python sys.path handling failed");
@@ -1897,7 +1797,7 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
         int refcount = 0;
         // this call will fail if the module does not exist (because the parameter to it is not a string
         // but an actual Python module object, which is non-existant if the module was not imported before)
-        if (python_interpreter->ExecuteOneLineWithReturn(command_stream.GetData(),
+        if (ExecuteOneLineWithReturn(command_stream.GetData(),
                                                          ScriptInterpreterPython::eScriptReturnTypeInt, &refcount) && refcount > 0)
         {
             error.SetErrorString("module already imported");
@@ -1907,7 +1807,7 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
         // now actually do the import
         command_stream.Clear();
         command_stream.Printf("import %s",basename.c_str());
-        bool import_retval = python_interpreter->ExecuteOneLine(command_stream.GetData(), NULL);
+        bool import_retval = ExecuteOneLine(command_stream.GetData(), NULL);
         if (!import_retval)
         {
             error.SetErrorString("Python import statement failed");
@@ -1916,7 +1816,7 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
         
         // call __lldb_module_init(debugger,dict)
         if (!g_swig_call_module_init (basename,
-                                        python_interpreter->m_dictionary_name.c_str(),
+                                        m_dictionary_name.c_str(),
                                         debugger_sp))
         {
             error.SetErrorString("calling __lldb_module_init failed");
@@ -1944,20 +1844,16 @@ ScriptInterpreterPython::RunScriptBasedCommand(const char* impl_function,
         return false;
     }
     
-    ScriptInterpreterPython *python_interpreter = this;
-
     lldb::DebuggerSP debugger_sp = m_interpreter.GetDebugger().GetSP();
     
     bool ret_val;
     
     std::string err_msg;
     
-    FILE *tmp_fh = (python_interpreter->m_dbg_stdout ? python_interpreter->m_dbg_stdout : stdout);
-    
     {
-        Locker py_lock(python_interpreter, tmp_fh);
+        Locker py_lock(this);
         ret_val = g_swig_call_command       (impl_function,
-                                             python_interpreter->m_dictionary_name.c_str(),
+                                             m_dictionary_name.c_str(),
                                              debugger_sp,
                                              args,
                                              err_msg,
