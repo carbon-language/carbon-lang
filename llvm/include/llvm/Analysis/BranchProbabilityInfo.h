@@ -17,6 +17,7 @@
 #include "llvm/InitializePasses.h"
 #include "llvm/Pass.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/BranchProbability.h"
 
 namespace llvm {
@@ -109,11 +110,14 @@ private:
   /// \brief Track the last function we run over for printing.
   Function *LastF;
 
+  /// \brief Track the set of blocks directly succeeded by a returning block.
+  SmallPtrSet<BasicBlock *, 16> PostDominatedByUnreachable;
+
   /// \brief Get sum of the block successors' weights.
   uint32_t getSumForBlock(const BasicBlock *BB) const;
 
+  bool calcUnreachableHeuristics(BasicBlock *BB);
   bool calcMetadataWeights(BasicBlock *BB);
-  bool calcReturnHeuristics(BasicBlock *BB);
   bool calcPointerHeuristics(BasicBlock *BB);
   bool calcLoopBranchHeuristics(BasicBlock *BB);
   bool calcZeroHeuristics(BasicBlock *BB);

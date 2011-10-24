@@ -18,6 +18,7 @@
 #include "llvm/Metadata.h"
 #include "llvm/Analysis/BranchProbabilityInfo.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Debug.h"
 
@@ -54,8 +55,18 @@ char BranchProbabilityInfo::ID = 0;
 static const uint32_t LBH_TAKEN_WEIGHT = 124;
 static const uint32_t LBH_NONTAKEN_WEIGHT = 4;
 
-static const uint32_t RH_TAKEN_WEIGHT = 24;
-static const uint32_t RH_NONTAKEN_WEIGHT = 8;
+/// \brief Unreachable-terminating branch taken weight.
+///
+/// This is the weight for a branch being taken to a block that terminates
+/// (eventually) in unreachable. These are predicted as unlikely as possible.
+static const uint32_t UR_TAKEN_WEIGHT = 1;
+
+/// \brief Unreachable-terminating branch not-taken weight.
+///
+/// This is the weight for a branch not being taken toward a block that
+/// terminates (eventually) in unreachable. Such a branch is essentially never
+/// taken.
+static const uint32_t UR_NONTAKEN_WEIGHT = 1023;
 
 static const uint32_t PH_TAKEN_WEIGHT = 20;
 static const uint32_t PH_NONTAKEN_WEIGHT = 12;
@@ -73,37 +84,61 @@ static const uint32_t NORMAL_WEIGHT = 16;
 // Minimum weight of an edge. Please note, that weight is NEVER 0.
 static const uint32_t MIN_WEIGHT = 1;
 
-// Return TRUE if BB leads directly to a Return Instruction.
-static bool isReturningBlock(BasicBlock *BB) {
-  SmallPtrSet<BasicBlock *, 8> Visited;
-
-  while (true) {
-    TerminatorInst *TI = BB->getTerminator();
-    if (isa<ReturnInst>(TI))
-      return true;
-
-    if (TI->getNumSuccessors() > 1)
-      break;
-
-    // It is unreachable block which we can consider as a return instruction.
-    if (TI->getNumSuccessors() == 0)
-      return true;
-
-    Visited.insert(BB);
-    BB = TI->getSuccessor(0);
-
-    // Stop if cycle is detected.
-    if (Visited.count(BB))
-      return false;
-  }
-
-  return false;
-}
-
 static uint32_t getMaxWeightFor(BasicBlock *BB) {
   return UINT32_MAX / BB->getTerminator()->getNumSuccessors();
 }
 
+
+/// \brief Calculate edge weights for successors lead to unreachable.
+///
+/// Predict that a successor which leads necessarily to an
+/// unreachable-terminated block as extremely unlikely.
+bool BranchProbabilityInfo::calcUnreachableHeuristics(BasicBlock *BB) {
+  TerminatorInst *TI = BB->getTerminator();
+  if (TI->getNumSuccessors() == 0) {
+    if (isa<UnreachableInst>(TI))
+      PostDominatedByUnreachable.insert(BB);
+    return false;
+  }
+
+  SmallPtrSet<BasicBlock *, 4> UnreachableEdges;
+  SmallPtrSet<BasicBlock *, 4> ReachableEdges;
+
+  for (succ_iterator I = succ_begin(BB), E = succ_end(BB); I != E; ++I) {
+    if (PostDominatedByUnreachable.count(*I))
+      UnreachableEdges.insert(*I);
+    else
+      ReachableEdges.insert(*I);
+  }
+
+  // If all successors are in the set of blocks post-dominated by unreachable,
+  // this block is too.
+  if (UnreachableEdges.size() == TI->getNumSuccessors())
+    PostDominatedByUnreachable.insert(BB);
+
+  // Skip probabilities if this block has a single successor or if all were
+  // reachable.
+  if (TI->getNumSuccessors() == 1 || UnreachableEdges.empty())
+    return false;
+
+  uint32_t UnreachableWeight =
+    std::max(UR_TAKEN_WEIGHT / UnreachableEdges.size(), MIN_WEIGHT);
+  for (SmallPtrSet<BasicBlock *, 4>::iterator I = UnreachableEdges.begin(),
+                                              E = UnreachableEdges.end();
+       I != E; ++I)
+    setEdgeWeight(BB, *I, UnreachableWeight);
+
+  if (ReachableEdges.empty())
+    return true;
+  uint32_t ReachableWeight =
+    std::max(UR_NONTAKEN_WEIGHT / ReachableEdges.size(), NORMAL_WEIGHT);
+  for (SmallPtrSet<BasicBlock *, 4>::iterator I = ReachableEdges.begin(),
+                                              E = ReachableEdges.end();
+       I != E; ++I)
+    setEdgeWeight(BB, *I, ReachableWeight);
+
+  return true;
+}
 
 // Propagate existing explicit probabilities from either profile data or
 // 'expect' intrinsic processing.
@@ -141,46 +176,6 @@ bool BranchProbabilityInfo::calcMetadataWeights(BasicBlock *BB) {
     setEdgeWeight(BB, TI->getSuccessor(i), Weights[i]);
 
   return true;
-}
-
-// Calculate Edge Weights using "Return Heuristics". Predict a successor which
-// leads directly to Return Instruction will not be taken.
-bool BranchProbabilityInfo::calcReturnHeuristics(BasicBlock *BB){
-  if (BB->getTerminator()->getNumSuccessors() == 1)
-    return false;
-
-  SmallPtrSet<BasicBlock *, 4> ReturningEdges;
-  SmallPtrSet<BasicBlock *, 4> StayEdges;
-
-  for (succ_iterator I = succ_begin(BB), E = succ_end(BB); I != E; ++I) {
-    BasicBlock *Succ = *I;
-    if (isReturningBlock(Succ))
-      ReturningEdges.insert(Succ);
-    else
-      StayEdges.insert(Succ);
-  }
-
-  if (uint32_t numStayEdges = StayEdges.size()) {
-    uint32_t stayWeight = RH_TAKEN_WEIGHT / numStayEdges;
-    if (stayWeight < NORMAL_WEIGHT)
-      stayWeight = NORMAL_WEIGHT;
-
-    for (SmallPtrSet<BasicBlock *, 4>::iterator I = StayEdges.begin(),
-         E = StayEdges.end(); I != E; ++I)
-      setEdgeWeight(BB, *I, stayWeight);
-  }
-
-  if (uint32_t numRetEdges = ReturningEdges.size()) {
-    uint32_t retWeight = RH_NONTAKEN_WEIGHT / numRetEdges;
-    if (retWeight < MIN_WEIGHT)
-      retWeight = MIN_WEIGHT;
-    for (SmallPtrSet<BasicBlock *, 4>::iterator I = ReturningEdges.begin(),
-         E = ReturningEdges.end(); I != E; ++I) {
-      setEdgeWeight(BB, *I, retWeight);
-    }
-  }
-
-  return ReturningEdges.size() > 0;
 }
 
 // Calculate Edge Weights using "Pointer Heuristics". Predict a comparsion
@@ -390,20 +385,28 @@ void BranchProbabilityInfo::getAnalysisUsage(AnalysisUsage &AU) const {
 bool BranchProbabilityInfo::runOnFunction(Function &F) {
   LastF = &F; // Store the last function we ran on for printing.
   LI = &getAnalysis<LoopInfo>();
+  assert(PostDominatedByUnreachable.empty());
 
-  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
-    if (calcMetadataWeights(I))
+  // Walk the basic blocks in post-order so that we can build up state about
+  // the successors of a block iteratively.
+  for (po_iterator<BasicBlock *> I = po_begin(&F.getEntryBlock()),
+                                 E = po_end(&F.getEntryBlock());
+       I != E; ++I) {
+    DEBUG(dbgs() << "Computing probabilities for " << I->getName() << "\n");
+    if (calcUnreachableHeuristics(*I))
       continue;
-    if (calcLoopBranchHeuristics(I))
+    if (calcMetadataWeights(*I))
       continue;
-    if (calcReturnHeuristics(I))
+    if (calcLoopBranchHeuristics(*I))
       continue;
-    if (calcPointerHeuristics(I))
+    if (calcPointerHeuristics(*I))
       continue;
-    if (calcZeroHeuristics(I))
+    if (calcZeroHeuristics(*I))
       continue;
-    calcFloatingPointHeuristics(I);
+    calcFloatingPointHeuristics(*I);
   }
+
+  PostDominatedByUnreachable.clear();
   return false;
 }
 
