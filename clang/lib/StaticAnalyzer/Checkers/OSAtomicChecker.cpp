@@ -175,7 +175,7 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(const CallExpr *CE,
         return true;
       }
       
-      PureStmtNodeBuilder B(TmpStore, Dst, Eng.getBuilderContext());
+      StmtNodeBuilder B(TmpStore, Dst, Eng.getBuilderContext());
       // Now bind the result of the comparison.
       for (ExplodedNodeSet::iterator I2 = TmpStore.begin(),
            E2 = TmpStore.end(); I2 != E2; ++I2) {
@@ -197,7 +197,7 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(const CallExpr *CE,
       QualType T = CE->getType();
       if (!T->isVoidType())
         Res = Eng.getSValBuilder().makeTruthVal(false, CE->getType());
-      PureStmtNodeBuilder B(N, Dst, Eng.getBuilderContext());    
+      StmtNodeBuilder B(N, Dst, Eng.getBuilderContext());    
       B.generateNode(CE, N, stateNotEqual->BindExpr(CE, Res), false, this);
     }
   }

@@ -188,7 +188,15 @@ struct NodeBuilderContext {
 
 };
 
-/// This is the simplest builder which generates nodes in the ExplodedGraph.
+/// \class NodeBuilder
+/// \brief This is the simplest builder which generates nodes in the
+/// ExplodedGraph.
+///
+/// The main benefit of the builder is that it automatically tracks the
+/// frontier nodes (or destination set). This is the set of nodes which should
+/// be propagated to the next step / builder. They are the nodes which have been
+/// added to the builder (either as the input node set or as the newly
+/// constructed nodes) but did not have any outgoing transitions added.
 class NodeBuilder {
 protected:
   const NodeBuilderContext &C;
@@ -196,9 +204,7 @@ protected:
   /// Specifies if the builder results have been finalized. For example, if it
   /// is set to false, autotransitions are yet to be generated.
   bool Finalized;
-
   bool HasGeneratedNodes;
-
   /// \brief The frontier set - a set of nodes which need to be propagated after
   /// the builder dies.
   ExplodedNodeSet &Frontier;
@@ -210,7 +216,7 @@ protected:
     return true;
   }
 
-  bool haveNoSinksInFrontier() {
+  bool hasNoSinksInFrontier() {
     for (iterator I = Frontier.begin(), E = Frontier.end(); I != E; ++I) {
       if ((*I)->isSink())
         return false;
@@ -230,17 +236,14 @@ public:
   NodeBuilder(ExplodedNode *SrcNode, ExplodedNodeSet &DstSet,
               const NodeBuilderContext &Ctx, bool F = true)
     : C(Ctx), Finalized(F), HasGeneratedNodes(false), Frontier(DstSet) {
-  //  assert(DstSet.empty());
     Frontier.Add(SrcNode);
   }
 
   NodeBuilder(const ExplodedNodeSet &SrcSet, ExplodedNodeSet &DstSet,
               const NodeBuilderContext &Ctx, bool F = true)
     : C(Ctx), Finalized(F), HasGeneratedNodes(false), Frontier(DstSet) {
-    //assert(DstSet.empty());
-    //assert(!SrcSet.empty());
     Frontier.insert(SrcSet);
-    assert(haveNoSinksInFrontier());
+    assert(hasNoSinksInFrontier());
   }
 
   virtual ~NodeBuilder() {}
@@ -254,11 +257,6 @@ public:
                              ExplodedNode *Pred,
                              bool MarkAsSink = false) {
     return generateNodeImpl(PP, State, Pred, MarkAsSink);
-  }
-
-  // TODO: will get removed.
-  bool hasGeneratedNodes() const {
-    return HasGeneratedNodes;
   }
 
   const ExplodedNodeSet &getResults() {
@@ -280,24 +278,15 @@ public:
   }
 
   const NodeBuilderContext &getContext() { return C; }
+  bool hasGeneratedNodes() { return HasGeneratedNodes; }
 
   void takeNodes(const ExplodedNodeSet &S) {
     for (ExplodedNodeSet::iterator I = S.begin(), E = S.end(); I != E; ++I )
       Frontier.erase(*I);
   }
-
-  void takeNodes(ExplodedNode *N) {
-    Frontier.erase(N);
-  }
-
-  void addNodes(const ExplodedNodeSet &S) {
-    Frontier.insert(S);
-  }
-
-  void addNodes(ExplodedNode *N) {
-    Frontier.Add(N);
-  }
-
+  void takeNodes(ExplodedNode *N) { Frontier.erase(N); }
+  void addNodes(const ExplodedNodeSet &S) { Frontier.insert(S); }
+  void addNodes(ExplodedNode *N) { Frontier.Add(N); }
 };
 
 class CommonNodeBuilder {
@@ -309,41 +298,41 @@ protected:
   BlockCounter getBlockCounter() const { return Eng.WList->getBlockCounter(); }
 };
 
-
-class PureStmtNodeBuilder: public NodeBuilder {
+/// \class StmtNodeBuilder
+/// \brief This builder class is useful for generating nodes that resulted from
+/// visiting a statement. The main difference from it's parent NodeBuilder is
+/// that it creates a statement specific ProgramPoint.
+class StmtNodeBuilder: public NodeBuilder {
   NodeBuilder *EnclosingBldr;
 public:
-  PureStmtNodeBuilder(ExplodedNode *SrcNode, ExplodedNodeSet &DstSet,
+
+  /// \brief Constructs a StmtNodeBuilder. If the builder is going to process
+  /// nodes currently owned by another builder(with larger scope), use
+  /// Enclosing builder to transfer ownership.
+  StmtNodeBuilder(ExplodedNode *SrcNode, ExplodedNodeSet &DstSet,
                       const NodeBuilderContext &Ctx, NodeBuilder *Enclosing = 0)
     : NodeBuilder(SrcNode, DstSet, Ctx), EnclosingBldr(Enclosing) {
     if (EnclosingBldr)
       EnclosingBldr->takeNodes(SrcNode);
   }
 
-  PureStmtNodeBuilder(ExplodedNodeSet &SrcSet, ExplodedNodeSet &DstSet,
+  StmtNodeBuilder(ExplodedNodeSet &SrcSet, ExplodedNodeSet &DstSet,
                       const NodeBuilderContext &Ctx, NodeBuilder *Enclosing = 0)
     : NodeBuilder(SrcSet, DstSet, Ctx), EnclosingBldr(Enclosing) {
     if (EnclosingBldr)
       for (ExplodedNodeSet::iterator I = SrcSet.begin(),
                                      E = SrcSet.end(); I != E; ++I )
         EnclosingBldr->takeNodes(*I);
-
   }
 
-  virtual ~PureStmtNodeBuilder();
+  virtual ~StmtNodeBuilder();
 
   ExplodedNode *generateNode(const Stmt *S,
                              ExplodedNode *Pred,
                              const ProgramState *St,
                              bool MarkAsSink = false,
                              const ProgramPointTag *tag = 0,
-                             ProgramPoint::Kind K = ProgramPoint::PostStmtKind,
-                             bool Purging = false) {
-    if (Purging) {
-      assert(K == ProgramPoint::PostStmtKind);
-      K = ProgramPoint::PostPurgeDeadSymbolsKind;
-    }
-
+                             ProgramPoint::Kind K = ProgramPoint::PostStmtKind){
     const ProgramPoint &L = ProgramPoint::getProgramPoint(S, K,
                                   Pred->getLocationContext(), tag);
     return generateNodeImpl(L, St, Pred, MarkAsSink);
@@ -355,7 +344,6 @@ public:
                              bool MarkAsSink = false) {
     return generateNodeImpl(PP, State, Pred, MarkAsSink);
   }
-
 };
 
 class BranchNodeBuilder: public NodeBuilder {

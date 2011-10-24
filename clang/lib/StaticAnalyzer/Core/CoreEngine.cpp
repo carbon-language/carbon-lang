@@ -491,7 +491,6 @@ ExplodedNode* NodeBuilder::generateNodeImpl(const ProgramPoint &Loc,
                                             ExplodedNode *FromN,
                                             bool MarkAsSink) {
   HasGeneratedNodes = true;
-
   bool IsNew;
   ExplodedNode *N = C.Eng.G->getNode(Loc, State, &IsNew);
   N->addPredecessor(FromN, *C.Eng.G);
@@ -506,7 +505,7 @@ ExplodedNode* NodeBuilder::generateNodeImpl(const ProgramPoint &Loc,
   return (IsNew ? N : 0);
 }
 
-PureStmtNodeBuilder::~PureStmtNodeBuilder() {
+StmtNodeBuilder::~StmtNodeBuilder() {
   if (EnclosingBldr)
     for (ExplodedNodeSet::iterator I = Frontier.begin(),
                                    E = Frontier.end(); I != E; ++I )

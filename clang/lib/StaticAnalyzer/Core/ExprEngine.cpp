@@ -306,7 +306,7 @@ void ExprEngine::ProcessStmt(const CFGStmt S,
     // Generate a CleanedNode that has the environment and store cleaned
     // up. Since no symbols are dead, we can optimize and not clean out
     // the constraint manager.
-    PureStmtNodeBuilder Bldr(Pred, Tmp, *currentBuilderContext);
+    StmtNodeBuilder Bldr(Pred, Tmp, *currentBuilderContext);
     Bldr.generateNode(currentStmt, EntryNode, CleanedState, false, &cleanupTag);
 
   } else {
@@ -319,7 +319,7 @@ void ExprEngine::ProcessStmt(const CFGStmt S,
     // For each node in CheckedSet, generate CleanedNodes that have the
     // environment, the store, and the constraints cleaned up but have the
     // user-supplied states as the predecessors.
-    PureStmtNodeBuilder Bldr(CheckedSet, Tmp, *currentBuilderContext);
+    StmtNodeBuilder Bldr(CheckedSet, Tmp, *currentBuilderContext);
     for (ExplodedNodeSet::const_iterator
           I = CheckedSet.begin(), E = CheckedSet.end(); I != E; ++I) {
       const ProgramState *CheckerState = (*I)->getState();
@@ -384,7 +384,7 @@ void ExprEngine::ProcessInitializer(const CFGInitializer Init,
     // Evaluate the initializer.
     Visit(BMI->getInit(), Pred, AfterEval);
 
-    PureStmtNodeBuilder Bldr(AfterEval, Dst, *currentBuilderContext);
+    StmtNodeBuilder Bldr(AfterEval, Dst, *currentBuilderContext);
     for (ExplodedNodeSet::iterator I = AfterEval.begin(),
                                    E = AfterEval.end(); I != E; ++I){
       ExplodedNode *P = *I;
@@ -484,7 +484,7 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
   PrettyStackTraceLoc CrashInfo(getContext().getSourceManager(),
                                 S->getLocStart(),
                                 "Error evaluating statement");
-  PureStmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
+  StmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
 
   // Expressions to ignore.
   if (const Expr *Ex = dyn_cast<Expr>(S))
@@ -1269,7 +1269,7 @@ void ExprEngine::processSwitch(SwitchNodeBuilder& builder) {
 void ExprEngine::VisitCommonDeclRefExpr(const Expr *Ex, const NamedDecl *D,
                                         ExplodedNode *Pred,
                                         ExplodedNodeSet &Dst) {
-  PureStmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
+  StmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
 
   const ProgramState *state = Pred->getState();
 
@@ -1318,7 +1318,7 @@ void ExprEngine::VisitLvalArraySubscriptExpr(const ArraySubscriptExpr *A,
   ExplodedNodeSet checkerPreStmt;
   getCheckerManager().runCheckersForPreStmt(checkerPreStmt, Pred, A, *this);
 
-  PureStmtNodeBuilder Bldr(checkerPreStmt, Dst, *currentBuilderContext);
+  StmtNodeBuilder Bldr(checkerPreStmt, Dst, *currentBuilderContext);
 
   for (ExplodedNodeSet::iterator it = checkerPreStmt.begin(),
                                  ei = checkerPreStmt.end(); it != ei; ++it) {
@@ -1335,7 +1335,7 @@ void ExprEngine::VisitLvalArraySubscriptExpr(const ArraySubscriptExpr *A,
 void ExprEngine::VisitMemberExpr(const MemberExpr *M, ExplodedNode *Pred,
                                  ExplodedNodeSet &Dst) {
 
-  PureStmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
+  StmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
   Decl *member = M->getMemberDecl();
   if (VarDecl *VD = dyn_cast<VarDecl>(member)) {
     assert(M->isLValue());
@@ -1392,7 +1392,7 @@ void ExprEngine::evalBind(ExplodedNodeSet &Dst, const Stmt *StoreE,
 
   // TODO:AZ Remove TmpDst after NB refactoring is done.
   ExplodedNodeSet TmpDst;
-  PureStmtNodeBuilder Bldr(CheckedSet, TmpDst, *currentBuilderContext);
+  StmtNodeBuilder Bldr(CheckedSet, TmpDst, *currentBuilderContext);
 
   for (ExplodedNodeSet::iterator I = CheckedSet.begin(), E = CheckedSet.end();
        I!=E; ++I) {
@@ -1501,7 +1501,7 @@ void ExprEngine::evalLoadCommon(ExplodedNodeSet &Dst, const Expr *Ex,
   if (Tmp.empty())
     return;
 
-  PureStmtNodeBuilder Bldr(Tmp, Dst, *currentBuilderContext);
+  StmtNodeBuilder Bldr(Tmp, Dst, *currentBuilderContext);
   if (location.isUndef())
     return;
 
@@ -1528,7 +1528,7 @@ void ExprEngine::evalLocation(ExplodedNodeSet &Dst, const Stmt *S,
                                 ExplodedNode *Pred,
                                 const ProgramState *state, SVal location,
                                 const ProgramPointTag *tag, bool isLoad) {
-  PureStmtNodeBuilder BldrTop(Pred, Dst, *currentBuilderContext);
+  StmtNodeBuilder BldrTop(Pred, Dst, *currentBuilderContext);
   // Early checks for performance reason.
   if (location.isUnknown()) {
     return;
@@ -1536,7 +1536,7 @@ void ExprEngine::evalLocation(ExplodedNodeSet &Dst, const Stmt *S,
 
   ExplodedNodeSet Src;
   BldrTop.takeNodes(Pred);
-  PureStmtNodeBuilder Bldr(Pred, Src, *currentBuilderContext);
+  StmtNodeBuilder Bldr(Pred, Src, *currentBuilderContext);
   if (Pred->getState() != state) {
     // Associate this new state with an ExplodedNode.
     // FIXME: If I pass null tag, the graph is incorrect, e.g for
@@ -1644,7 +1644,7 @@ ExprEngine::getEagerlyAssumeTags() {
 
 void ExprEngine::evalEagerlyAssume(ExplodedNodeSet &Dst, ExplodedNodeSet &Src,
                                      const Expr *Ex) {
-  PureStmtNodeBuilder Bldr(Src, Dst, *currentBuilderContext);
+  StmtNodeBuilder Bldr(Src, Dst, *currentBuilderContext);
   
   for (ExplodedNodeSet::iterator I=Src.begin(), E=Src.end(); I!=E; ++I) {
     ExplodedNode *Pred = *I;
@@ -1707,7 +1707,7 @@ void ExprEngine::VisitAsmStmtHelperInputs(const AsmStmt *A,
                                             ExplodedNode *Pred,
                                             ExplodedNodeSet &Dst) {
   if (I == E) {
-    PureStmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
+    StmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
     // We have processed both the inputs and the outputs.  All of the outputs
     // should evaluate to Locs.  Nuke all of their values.
 

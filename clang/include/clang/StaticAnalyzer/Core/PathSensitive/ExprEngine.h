@@ -424,7 +424,7 @@ public:
   }
   
 protected:
-  void evalObjCMessage(PureStmtNodeBuilder &Bldr, const ObjCMessage &msg,
+  void evalObjCMessage(StmtNodeBuilder &Bldr, const ObjCMessage &msg,
                        ExplodedNode *Pred, const ProgramState *state,
                        bool GenSink);
 

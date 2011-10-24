@@ -107,7 +107,7 @@ const CXXThisRegion *ExprEngine::getCXXThisRegion(const CXXMethodDecl *decl,
 void ExprEngine::CreateCXXTemporaryObject(const MaterializeTemporaryExpr *ME,
                                           ExplodedNode *Pred,
                                           ExplodedNodeSet &Dst) {
-  PureStmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
+  StmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
   const Expr *tempExpr = ME->GetTemporaryExpr()->IgnoreParens();
   const ProgramState *state = Pred->getState();
 
@@ -184,7 +184,7 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E,
 
     CallEnter Loc(E, SFC, Pred->getLocationContext());
 
-    PureStmtNodeBuilder Bldr(argsEvaluated, destNodes, *currentBuilderContext);
+    StmtNodeBuilder Bldr(argsEvaluated, destNodes, *currentBuilderContext);
     for (ExplodedNodeSet::iterator NI = argsEvaluated.begin(),
                                   NE = argsEvaluated.end(); NI != NE; ++NI) {
       const ProgramState *state = (*NI)->getState();
@@ -199,7 +199,7 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E,
   // Default semantics: invalidate all regions passed as arguments.
   ExplodedNodeSet destCall;
   {
-    PureStmtNodeBuilder Bldr(destPreVisit, destCall, *currentBuilderContext);
+    StmtNodeBuilder Bldr(destPreVisit, destCall, *currentBuilderContext);
     for (ExplodedNodeSet::iterator
         i = destPreVisit.begin(), e = destPreVisit.end();
         i != e; ++i)
@@ -221,7 +221,7 @@ void ExprEngine::VisitCXXDestructor(const CXXDestructorDecl *DD,
                                       const Stmt *S,
                                       ExplodedNode *Pred, 
                                       ExplodedNodeSet &Dst) {
-  PureStmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
+  StmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
   if (!(DD->doesThisDeclarationHaveABody() && AMgr.shouldInlineCall()))
     return;
 
@@ -242,7 +242,7 @@ void ExprEngine::VisitCXXDestructor(const CXXDestructorDecl *DD,
 
 void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
                                    ExplodedNodeSet &Dst) {
-  PureStmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
+  StmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
   
   unsigned blockCount = currentBuilderContext->getCurrentBlockCount();
   DefinedOrUnknownSVal symVal =
@@ -323,7 +323,7 @@ void ExprEngine::VisitCXXDeleteExpr(const CXXDeleteExpr *CDE,
   // Should do more checking.
   ExplodedNodeSet Argevaluated;
   Visit(CDE->getArgument(), Pred, Argevaluated);
-  PureStmtNodeBuilder Bldr(Argevaluated, Dst, *currentBuilderContext);
+  StmtNodeBuilder Bldr(Argevaluated, Dst, *currentBuilderContext);
   for (ExplodedNodeSet::iterator I = Argevaluated.begin(), 
                                  E = Argevaluated.end(); I != E; ++I) {
     const ProgramState *state = (*I)->getState();
@@ -333,7 +333,7 @@ void ExprEngine::VisitCXXDeleteExpr(const CXXDeleteExpr *CDE,
 
 void ExprEngine::VisitCXXThisExpr(const CXXThisExpr *TE, ExplodedNode *Pred,
                                     ExplodedNodeSet &Dst) {
-  PureStmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
+  StmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
 
   // Get the this object region from StoreManager.
   const MemRegion *R =

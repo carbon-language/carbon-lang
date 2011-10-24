@@ -179,7 +179,7 @@ void ExprEngine::VisitCallExpr(const CallExpr *CE, ExplodedNode *Pred,
       }
 
       // First handle the return value.
-      PureStmtNodeBuilder Bldr(Pred, Dst, *Eng.currentBuilderContext);
+      StmtNodeBuilder Bldr(Pred, Dst, *Eng.currentBuilderContext);
 
       // Get the callee.
       const Expr *Callee = CE->getCallee()->IgnoreParens();
@@ -231,7 +231,7 @@ void ExprEngine::VisitReturnStmt(const ReturnStmt *RS, ExplodedNode *Pred,
                                  ExplodedNodeSet &Dst) {
   ExplodedNodeSet Src;
   {
-    PureStmtNodeBuilder Bldr(Pred, Src, *currentBuilderContext);
+    StmtNodeBuilder Bldr(Pred, Src, *currentBuilderContext);
     if (const Expr *RetE = RS->getRetValue()) {
       // Record the returned expression in the state. It will be used in
       // processCallExit to bind the return value to the call expr.

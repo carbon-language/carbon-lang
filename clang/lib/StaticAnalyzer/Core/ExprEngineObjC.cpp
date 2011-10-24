@@ -26,7 +26,7 @@ void ExprEngine::VisitLvalObjCIvarRefExpr(const ObjCIvarRefExpr *Ex,
   SVal location = state->getLValue(Ex->getDecl(), baseVal);
   
   ExplodedNodeSet dstIvar;
-  PureStmtNodeBuilder Bldr(Pred, dstIvar, *currentBuilderContext);
+  StmtNodeBuilder Bldr(Pred, dstIvar, *currentBuilderContext);
   Bldr.generateNode(Ex, Pred, state->BindExpr(Ex, location));
   
   // Perform the post-condition check of the ObjCIvarRefExpr and store
@@ -72,7 +72,7 @@ void ExprEngine::VisitObjCForCollectionStmt(const ObjCForCollectionStmt *S,
   const Stmt *elem = S->getElement();
   const ProgramState *state = Pred->getState();
   SVal elementV;
-  PureStmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
+  StmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
   
   if (const DeclStmt *DS = dyn_cast<DeclStmt>(elem)) {
     const VarDecl *elemD = cast<VarDecl>(DS->getSingleDecl());
@@ -136,7 +136,7 @@ void ExprEngine::VisitObjCMessage(const ObjCMessage &msg,
   
   // Proceed with evaluate the message expression.
   ExplodedNodeSet dstEval;
-  PureStmtNodeBuilder Bldr(dstPrevisit, dstEval, *currentBuilderContext);
+  StmtNodeBuilder Bldr(dstPrevisit, dstEval, *currentBuilderContext);
 
   for (ExplodedNodeSet::iterator DI = dstPrevisit.begin(),
        DE = dstPrevisit.end(); DI != DE; ++DI) {
@@ -223,7 +223,7 @@ void ExprEngine::VisitObjCMessage(const ObjCMessage &msg,
   getCheckerManager().runCheckersForPostObjCMessage(Dst, dstEval, msg, *this);
 }
 
-void ExprEngine::evalObjCMessage(PureStmtNodeBuilder &Bldr,
+void ExprEngine::evalObjCMessage(StmtNodeBuilder &Bldr,
                                  const ObjCMessage &msg,
                                  ExplodedNode *Pred,
                                  const ProgramState *state,
