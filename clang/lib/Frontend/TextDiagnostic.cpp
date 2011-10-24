@@ -760,8 +760,8 @@ void TextDiagnostic::emitMacroExpansionsAndCarets(
 
   llvm::SmallString<100> MessageStorage;
   llvm::raw_svector_ostream Message(MessageStorage);
-  Message << "expanded from macro: "
-          << getImmediateMacroName(MacroLoc, SM, LangOpts);
+  Message << "expanded from macro '"
+          << getImmediateMacroName(MacroLoc, SM, LangOpts) << "'";
   emitDiagnostic(SM.getSpellingLoc(Loc), DiagnosticsEngine::Note,
                  Message.str(),
                  Ranges, ArrayRef<FixItHint>());
