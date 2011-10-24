@@ -56,7 +56,6 @@ namespace CodeGenOpt {
 namespace Sched {
   enum Preference {
     None,             // No preference
-    Latency,          // Scheduling for shortest total latency.
     RegPressure,      // Scheduling for lowest register pressure.
     Hybrid,           // Scheduling for both latency and register pressure.
     ILP               // Scheduling for ILP in low register pressure mode.

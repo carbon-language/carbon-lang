@@ -144,8 +144,6 @@ namespace llvm {
 
     if (OptLevel == CodeGenOpt::None)
       return createSourceListDAGScheduler(IS, OptLevel);
-    if (TLI.getSchedulingPreference() == Sched::Latency)
-      return createTDListDAGScheduler(IS, OptLevel);
     if (TLI.getSchedulingPreference() == Sched::RegPressure)
       return createBURRListDAGScheduler(IS, OptLevel);
     if (TLI.getSchedulingPreference() == Sched::Hybrid)
