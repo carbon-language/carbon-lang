@@ -66,3 +66,6 @@ const int nonconst = 1.0;
 int arr[nonconst]; // expected-warning {{folded to constant array as an extension}}
 const int castfloat = static_cast<int>(1.0);
 int arr2[castfloat]; // ok
+
+extern const int &Recurse1;
+const int &Recurse2 = Recurse1, &Recurse1 = Recurse2;
