@@ -383,12 +383,24 @@ class VLD1D3<bits<4> op7_4, string Dt>
   let Inst{4} = Rn{4};
   let DecoderMethod = "DecodeVLDInstruction";
 }
-class VLD1D3WB<bits<4> op7_4, string Dt>
-  : NLdSt<0,0b10,0b0110,op7_4, (outs VecListThreeD:$Vd, GPR:$wb),
-          (ins addrmode6:$Rn, am6offset:$Rm), IIC_VLD1x3u, "vld1", Dt,
-          "$Vd, $Rn$Rm", "$Rn.addr = $wb", []> {
-  let Inst{4} = Rn{4};
-  let DecoderMethod = "DecodeVLDInstruction";
+multiclass VLD1D3WB<bits<4> op7_4, string Dt> {
+  def _fixed : NLdSt<0,0b10,0b0110, op7_4, (outs VecListThreeD:$Vd, GPR:$wb),
+                    (ins addrmode6:$Rn), IIC_VLD1x2u,
+                     "vld1", Dt, "$Vd, $Rn!",
+                     "$Rn.addr = $wb", []> {
+    let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
+    let Inst{5-4} = Rn{5-4};
+    let DecoderMethod = "DecodeVLDInstruction";
+    let AsmMatchConverter = "cvtVLDwbFixed";
+  }
+  def _register : NLdSt<0,0b10,0b0110,op7_4, (outs VecListThreeD:$Vd, GPR:$wb),
+                        (ins addrmode6:$Rn, rGPR:$Rm), IIC_VLD1x2u,
+                        "vld1", Dt, "$Vd, $Rn, $Rm",
+                        "$Rn.addr = $wb", []> {
+    let Inst{5-4} = Rn{5-4};
+    let DecoderMethod = "DecodeVLDInstruction";
+    let AsmMatchConverter = "cvtVLDwbRegister";
+  }
 }
 
 def VLD1d8T      : VLD1D3<{0,0,0,?}, "8">;
@@ -396,13 +408,12 @@ def VLD1d16T     : VLD1D3<{0,1,0,?}, "16">;
 def VLD1d32T     : VLD1D3<{1,0,0,?}, "32">;
 def VLD1d64T     : VLD1D3<{1,1,0,?}, "64">;
 
-def VLD1d8T_UPD  : VLD1D3WB<{0,0,0,?}, "8">;
-def VLD1d16T_UPD : VLD1D3WB<{0,1,0,?}, "16">;
-def VLD1d32T_UPD : VLD1D3WB<{1,0,0,?}, "32">;
-def VLD1d64T_UPD : VLD1D3WB<{1,1,0,?}, "64">;
+defm VLD1d8Twb  : VLD1D3WB<{0,0,0,?}, "8">;
+defm VLD1d16Twb : VLD1D3WB<{0,1,0,?}, "16">;
+defm VLD1d32Twb : VLD1D3WB<{1,0,0,?}, "32">;
+defm VLD1d64Twb : VLD1D3WB<{1,1,0,?}, "64">;
 
-def VLD1d64TPseudo     : VLDQQPseudo<IIC_VLD1x3>;
-def VLD1d64TPseudo_UPD : VLDQQWBPseudo<IIC_VLD1x3u>;
+def VLD1d64TPseudo : VLDQQPseudo<IIC_VLD1x3>;
 
 // ...with 4 registers
 class VLD1D4<bits<4> op7_4, string Dt>
