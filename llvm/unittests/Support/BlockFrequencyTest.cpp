@@ -71,6 +71,15 @@ TEST(BlockFrequencyTest, ProbabilityCompare) {
   EXPECT_TRUE(B > C);
   EXPECT_FALSE(B <= C);
   EXPECT_TRUE(B >= C);
+
+  BranchProbability BigZero(0, UINT32_MAX);
+  BranchProbability BigOne(UINT32_MAX, UINT32_MAX);
+  EXPECT_FALSE(BigZero == BigOne);
+  EXPECT_TRUE(BigZero != BigOne);
+  EXPECT_TRUE(BigZero < BigOne);
+  EXPECT_FALSE(BigZero > BigOne);
+  EXPECT_TRUE(BigZero <= BigOne);
+  EXPECT_FALSE(BigZero >= BigOne);
 }
 
 }

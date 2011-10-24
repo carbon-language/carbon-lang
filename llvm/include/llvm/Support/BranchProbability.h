@@ -29,10 +29,6 @@ class BranchProbability {
   // Denominator
   uint32_t D;
 
-  int64_t compare(BranchProbability RHS) const {
-    return (uint64_t)N * RHS.D - (uint64_t)D * RHS.N;
-  }
-
 public:
   BranchProbability(uint32_t n, uint32_t d) : N(n), D(d) {
     assert(d > 0 && "Denomiator cannot be 0!");
@@ -54,12 +50,24 @@ public:
 
   void dump() const;
 
-  bool operator==(BranchProbability RHS) const { return compare(RHS) == 0; }
-  bool operator!=(BranchProbability RHS) const { return compare(RHS) != 0; }
-  bool operator< (BranchProbability RHS) const { return compare(RHS) <  0; }
-  bool operator> (BranchProbability RHS) const { return compare(RHS) >  0; }
-  bool operator<=(BranchProbability RHS) const { return compare(RHS) <= 0; }
-  bool operator>=(BranchProbability RHS) const { return compare(RHS) >= 0; }
+  bool operator==(BranchProbability RHS) const {
+    return (uint64_t)N * RHS.D == (uint64_t)D * RHS.N;
+  }
+  bool operator!=(BranchProbability RHS) const {
+    return !(*this == RHS);
+  }
+  bool operator<(BranchProbability RHS) const {
+    return (uint64_t)N * RHS.D < (uint64_t)D * RHS.N;
+  }
+  bool operator>(BranchProbability RHS) const {
+    return RHS < *this;
+  }
+  bool operator<=(BranchProbability RHS) const {
+    return (uint64_t)N * RHS.D <= (uint64_t)D * RHS.N;
+  }
+  bool operator>=(BranchProbability RHS) const {
+    return RHS <= *this;
+  }
 };
 
 raw_ostream &operator<<(raw_ostream &OS, const BranchProbability &Prob);
