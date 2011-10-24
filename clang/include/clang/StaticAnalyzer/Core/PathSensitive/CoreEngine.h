@@ -202,6 +202,14 @@ protected:
     return true;
   }
 
+  bool haveNoSinksInFrontier() {
+    for (iterator I = Frontier.begin(), E = Frontier.end(); I != E; ++I) {
+      if ((*I)->isSink())
+        return false;
+    }
+    return true;
+  }
+
   /// Allow subclasses to finalize results before result_begin() is executed.
   virtual void finalizeResults() {}
   
@@ -214,13 +222,19 @@ public:
   NodeBuilder(ExplodedNode *SrcNode, ExplodedNodeSet &DstSet,
               const NodeBuilderContext &Ctx, bool F = true)
     : C(Ctx), Finalized(F), HasGeneratedNodes(false), Frontier(DstSet) {
-    Frontier.insert(SrcNode);
+    assert(DstSet.empty());
+    Frontier.Add(SrcNode);
   }
 
   NodeBuilder(const ExplodedNodeSet &SrcSet, ExplodedNodeSet &DstSet,
               const NodeBuilderContext &Ctx, bool F = true)
     : C(Ctx), Finalized(F), HasGeneratedNodes(false), Frontier(DstSet) {
+    assert(DstSet.empty());
+    //assert(!SrcSet.empty());
+
     Frontier.insert(SrcSet);
+
+    assert(haveNoSinksInFrontier());
   }
 
   virtual ~NodeBuilder() {}
@@ -365,13 +379,23 @@ public:
     return N;
   }
 
-  void importNodesFromBuilder(const NodeBuilder &NB) {
-    ExplodedNode *NBPred = const_cast<ExplodedNode*>(NB.C.ContextPred);
-    if (NB.hasGeneratedNodes()) {
-      Frontier.erase(NBPred);
-      Frontier.insert(NB.Frontier);
-    }
+  void takeNodes(const ExplodedNodeSet &S) {
+    for (ExplodedNodeSet::iterator I = S.begin(), E = S.end(); I != E; ++I )
+      Frontier.erase(*I);
   }
+
+  void takeNodes(ExplodedNode *N) {
+    Frontier.erase(N);
+  }
+
+  void addNodes(const ExplodedNodeSet &S) {
+    Frontier.insert(S);
+  }
+
+  void addNodes(ExplodedNode *N) {
+    Frontier.Add(N);
+  }
+
 };
 
 class BranchNodeBuilder: public NodeBuilder {

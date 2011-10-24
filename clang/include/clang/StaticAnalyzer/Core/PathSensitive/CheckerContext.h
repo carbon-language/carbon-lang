@@ -23,29 +23,24 @@ namespace clang {
 namespace ento {
 
 class CheckerContext {
-  ExplodedNodeSet &Dst;
   ExprEngine &Eng;
   ExplodedNode *Pred;
   const ProgramPoint Location;
   const ProgramState *ST;
-  const unsigned size;
   NodeBuilder &NB;
 public:
   bool *respondsToCallback;
 public:
-  CheckerContext(ExplodedNodeSet &dst,
-                 NodeBuilder &builder,
+  CheckerContext(NodeBuilder &builder,
                  ExprEngine &eng,
                  ExplodedNode *pred,
                  const ProgramPoint &loc,
                  bool *respondsToCB = 0,
                  const ProgramState *st = 0)
-    : Dst(dst),
-      Eng(eng),
+    : Eng(eng),
       Pred(pred),
       Location(loc),
       ST(st),
-      size(Dst.size()),
       NB(builder),
       respondsToCallback(respondsToCB) {
     assert(!(ST && ST != Pred->getState()));
@@ -153,7 +148,6 @@ private:
                                  bool markAsSink,
                                  ExplodedNode *pred = 0,
                                  const ProgramPointTag *tag = 0) {
-
     ExplodedNode *node = NB.generateNode(tag ? Location.withTag(tag) : Location,
                                         state,
                                         pred ? pred : Pred, markAsSink);

@@ -16,10 +16,4 @@
 using namespace clang;
 using namespace ento;
 
-CheckerContext::~CheckerContext() {
-  // Copy the results into the Dst set.
-  for (NodeBuilder::iterator I = NB.begin(),
-                             E = NB.end(); I != E; ++I) {
-    Dst.Add(*I);
-  }
-}
+CheckerContext::~CheckerContext() {}

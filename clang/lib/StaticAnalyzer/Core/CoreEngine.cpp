@@ -504,7 +504,7 @@ ExplodedNode* NodeBuilder::generateNodeImpl(const ProgramPoint &Loc,
   if (MarkAsSink)
     N->markAsSink();
     
-  if (IsNew)
+  if (IsNew && !MarkAsSink)
     Frontier.Add(N);
 
   return (IsNew ? N : 0);

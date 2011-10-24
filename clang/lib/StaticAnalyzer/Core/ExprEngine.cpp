@@ -964,6 +964,9 @@ void ExprEngine::processBranch(const Stmt *Condition, const Stmt *Term,
   NodeBuilder CheckerBldr(Pred, TmpCheckersOut, BldCtx);
   getCheckerManager().runCheckersForBranchCondition(Condition, CheckerBldr,
                                                     Pred, *this);
+  // We generated only sinks.
+  if (TmpCheckersOut.empty())
+    return;
 
   BranchNodeBuilder builder(CheckerBldr.getResults(), Dst, BldCtx, DstT, DstF);
   for (NodeBuilder::iterator I = CheckerBldr.begin(),
