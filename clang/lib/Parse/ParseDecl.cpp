@@ -1568,10 +1568,8 @@ ExprResult Parser::ParseAlignArgument(SourceLocation Start,
   } else
     ER = ParseConstantExpression();
 
-  if (getLang().CPlusPlus0x && Tok.is(tok::ellipsis)) {
-    EllipsisLoc = Tok.getLocation();
-    ConsumeToken();
-  }
+  if (getLang().CPlusPlus0x && Tok.is(tok::ellipsis))
+    EllipsisLoc = ConsumeToken();
 
   return ER;
 }
