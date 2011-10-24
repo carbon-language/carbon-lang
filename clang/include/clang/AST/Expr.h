@@ -465,8 +465,7 @@ public:
   /// Evaluate - Return true if this is a constant which we can fold using
   /// any crazy technique (that has nothing to do with language standards) that
   /// we want to.  If this function returns true, it returns the folded constant
-  /// in Result. If this expression is a glvalue, an lvalue-to-rvalue conversion
-  /// will be applied.
+  /// in Result.
   bool Evaluate(EvalResult &Result, const ASTContext &Ctx) const;
 
   /// EvaluateAsBooleanCondition - Return true if this is a constant
