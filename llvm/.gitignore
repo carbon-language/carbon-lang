@@ -38,4 +38,3 @@ projects/*
 !projects/Makefile
 # Clang, which is tracked independently.
 tools/clang
-
