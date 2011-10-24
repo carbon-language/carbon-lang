@@ -32,10 +32,6 @@ private:
                                   ExprEngine &Eng,
                                   ExplodedNode *Pred,
                                   ExplodedNodeSet &Dst) const;
-
-  ExplodedNode *generateNode(const ProgramState *State,
-                             ExplodedNode *Pred, const CallExpr *Statement,
-                             StmtNodeBuilder &B, ExplodedNodeSet &Dst) const;
 };
 }
 
@@ -66,17 +62,6 @@ bool OSAtomicChecker::inlineCall(const CallExpr *CE,
   return false;
 }
 
-ExplodedNode *OSAtomicChecker::generateNode(const ProgramState *State,
-                                            ExplodedNode *Pred,
-                                            const CallExpr *Statement,
-                                            StmtNodeBuilder &B,
-                                            ExplodedNodeSet &Dst) const {
-  ExplodedNode *N = B.generateNode(Statement, State, Pred, this);
-  if (N)
-    Dst.Add(N);
-  return N;
-}
-
 bool OSAtomicChecker::evalOSAtomicCompareAndSwap(const CallExpr *CE,
                                                  ExprEngine &Eng,
                                                  ExplodedNode *Pred,
@@ -85,7 +70,6 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(const CallExpr *CE,
   if (CE->getNumArgs() != 3)
     return false;
 
-  StmtNodeBuilder &Builder = Eng.getBuilder();
   ASTContext &Ctx = Eng.getContext();
   const Expr *oldValueExpr = CE->getArg(0);
   QualType oldValueType = Ctx.getCanonicalType(oldValueExpr->getType());
@@ -134,11 +118,8 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(const CallExpr *CE,
                   state, location, &OSAtomicLoadTag, LoadTy);
 
   if (Tmp.empty()) {
-    // If no nodes were generated, other checkers must generated sinks. But 
-    // since the builder state was restored, we set it manually to prevent 
-    // auto transition.
-    // FIXME: there should be a better approach.
-    Builder.BuildSinks = true;
+    // If no nodes were generated, other checkers must have generated sinks. 
+    // We return an empty Dst.
     return true;
   }
  
@@ -189,14 +170,12 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(const CallExpr *CE,
                        stateEqual, location, val, &OSAtomicStoreTag);
 
       if (TmpStore.empty()) {
-        // If no nodes were generated, other checkers must generated sinks. But 
-        // since the builder state was restored, we set it manually to prevent 
-        // auto transition.
-        // FIXME: there should be a better approach.
-        Builder.BuildSinks = true;
+        // If no nodes were generated, other checkers must have generated sinks. 
+        // We return an empty Dst.
         return true;
       }
-
+      
+      PureStmtNodeBuilder B(TmpStore, Dst, Eng.getBuilderContext());
       // Now bind the result of the comparison.
       for (ExplodedNodeSet::iterator I2 = TmpStore.begin(),
            E2 = TmpStore.end(); I2 != E2; ++I2) {
@@ -207,7 +186,7 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(const CallExpr *CE,
         QualType T = CE->getType();
         if (!T->isVoidType())
           Res = Eng.getSValBuilder().makeTruthVal(true, T);
-        generateNode(stateNew->BindExpr(CE, Res), predNew, CE, Builder, Dst);
+        B.generateNode(CE, predNew, stateNew->BindExpr(CE, Res), false, this);
       }
     }
 
@@ -218,7 +197,8 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(const CallExpr *CE,
       QualType T = CE->getType();
       if (!T->isVoidType())
         Res = Eng.getSValBuilder().makeTruthVal(false, CE->getType());
-      generateNode(stateNotEqual->BindExpr(CE, Res), N, CE, Builder, Dst);
+      PureStmtNodeBuilder B(N, Dst, Eng.getBuilderContext());    
+      B.generateNode(CE, N, stateNotEqual->BindExpr(CE, Res), false, this);
     }
   }
 

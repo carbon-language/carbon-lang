@@ -117,7 +117,6 @@ static void expandGraphWithCheckers(CHECK_CTX checkCtx,
     }
 
     NodeBuilder B(*PrevSet, *CurrSet, BldrCtx);
-    checkCtx.Eng.getBuilder().takeNodes(*PrevSet);
     for (ExplodedNodeSet::iterator NI = PrevSet->begin(), NE = PrevSet->end();
          NI != NE; ++NI) {
       checkCtx.runChecker(*I, B, *NI);
@@ -126,8 +125,6 @@ static void expandGraphWithCheckers(CHECK_CTX checkCtx,
     // If all the produced transitions are sinks, stop.
     if (CurrSet->empty())
       return;
-
-    checkCtx.Eng.getBuilder().addNodes(*CurrSet);
 
     // Update which NodeSet is the current one.
     PrevSet = CurrSet;
@@ -453,7 +450,6 @@ void CheckerManager::runCheckersForEvalCall(ExplodedNodeSet &Dst,
     }
 #endif
 
-    Eng.getBuilder().takeNodes(Pred);
     ExplodedNodeSet checkDst;
     NodeBuilder B(Pred, checkDst, Eng.getBuilderContext());
     // Next, check if any of the EvalCall callbacks can evaluate the call.
@@ -475,7 +471,6 @@ void CheckerManager::runCheckersForEvalCall(ExplodedNodeSet &Dst,
       if (evaluated) {
         anyEvaluated = true;
         Dst.insert(checkDst);
-        Eng.getBuilder().addNodes(checkDst);
 #ifdef NDEBUG
         break; // on release don't check that no other checker also evals.
 #endif

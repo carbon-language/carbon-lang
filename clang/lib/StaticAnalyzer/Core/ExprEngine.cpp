@@ -267,7 +267,7 @@ void ExprEngine::ProcessStmt(const CFGStmt S,
                              ExplodedNode *Pred) {
   ExplodedNodeSet TopDst;
   StmtNodeBuilder builder(Pred, TopDst, currentStmtIdx, *currentBuilderContext);
-
+  Builder = &builder;
   // TODO: Use RAII to remove the unnecessary, tagged nodes.
   //RegisterCreatedNodes registerCreatedNodes(getGraph());
 
@@ -281,14 +281,10 @@ void ExprEngine::ProcessStmt(const CFGStmt S,
                                 currentStmt->getLocStart(),
                                 "Error evaluating statement");
 
-  // A tag to track convenience transitions, which can be removed at cleanup.
-  static SimpleProgramPointTag cleanupTag("ExprEngine : Clean Node");
-  Builder = &builder;
   EntryNode = Pred;
 
   const ProgramState *EntryState = EntryNode->getState();
   CleanedState = EntryState;
-  ExplodedNode *CleanedNode = 0;
 
   // Create the cleaned state.
   const LocationContext *LC = EntryNode->getLocationContext();
@@ -307,21 +303,17 @@ void ExprEngine::ProcessStmt(const CFGStmt S,
 
   // Process any special transfer function for dead symbols.
   ExplodedNodeSet Tmp;
+  // A tag to track convenience transitions, which can be removed at cleanup.
+  static SimpleProgramPointTag cleanupTag("ExprEngine : Clean Node");
+
   if (!SymReaper.hasDeadSymbols()) {
     // Generate a CleanedNode that has the environment and store cleaned
     // up. Since no symbols are dead, we can optimize and not clean out
     // the constraint manager.
-    CleanedNode =
-      builder.generateNode(currentStmt, CleanedState, EntryNode, &cleanupTag);
-    Tmp.Add(CleanedNode);
+    PureStmtNodeBuilder Bldr(Pred, Tmp, *currentBuilderContext);
+    Bldr.generateNode(currentStmt, EntryNode, CleanedState, false, &cleanupTag);
 
   } else {
-    SaveAndRestore<bool> OldSink(builder.BuildSinks);
-    SaveOr OldHasGen(builder.hasGeneratedNode);
-
-    SaveAndRestore<bool> OldPurgeDeadSymbols(builder.PurgingDeadSymbols);
-    builder.PurgingDeadSymbols = true;
-
     // Call checkers with the non-cleaned state so that they could query the
     // values of the soon to be dead symbols.
     ExplodedNodeSet CheckedSet;
@@ -331,6 +323,7 @@ void ExprEngine::ProcessStmt(const CFGStmt S,
     // For each node in CheckedSet, generate CleanedNodes that have the
     // environment, the store, and the constraints cleaned up but have the
     // user-supplied states as the predecessors.
+    PureStmtNodeBuilder Bldr(CheckedSet, Tmp, *currentBuilderContext);
     for (ExplodedNodeSet::const_iterator
           I = CheckedSet.begin(), E = CheckedSet.end(); I != E; ++I) {
       const ProgramState *CheckerState = (*I)->getState();
@@ -350,10 +343,8 @@ void ExprEngine::ProcessStmt(const CFGStmt S,
       // generate a transition to that state.
       const ProgramState *CleanedCheckerSt =
         StateMgr.getPersistentStateWithGDM(CleanedState, CheckerState);
-      ExplodedNode *CleanedNode = builder.generateNode(currentStmt,
-                                                        CleanedCheckerSt, *I,
-                                                        &cleanupTag);
-      Tmp.Add(CleanedNode);
+      Bldr.generateNode(currentStmt, *I, CleanedCheckerSt, false, &cleanupTag,
+                        ProgramPoint::PostPurgeDeadSymbolsKind);
     }
   }
 
