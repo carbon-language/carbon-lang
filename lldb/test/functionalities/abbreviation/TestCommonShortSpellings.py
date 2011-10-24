@@ -23,7 +23,7 @@ class CommonShortSpellingsTestCase(TestBase):
 
     def run_abbrevs2 (self):
         exe = os.path.join (os.getcwd(), "a.out")
-        self.expect("fil " + exe,
+        self.expect("file " + exe,
                     patterns = [ "Current executable set to .*a.out.*" ])
 
         # br s -> breakpoint set
