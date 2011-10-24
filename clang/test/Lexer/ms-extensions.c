@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -fms-extensions %s
+// RUN: %clang_cc1 -fsyntax-only -verify -fms-compatibility %s
 
 __int8 x1  = 3i8;
 __int16 x2 = 4i16;
