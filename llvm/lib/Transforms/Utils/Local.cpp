@@ -28,6 +28,7 @@
 #include "llvm/Analysis/DIBuilder.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/InstructionSimplify.h"
+#include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Analysis/ProfileInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Target/TargetData.h"
@@ -257,6 +258,13 @@ bool llvm::isInstructionTriviallyDead(Instruction *I) {
         II->getIntrinsicID() == Intrinsic::lifetime_end)
       return isa<UndefValue>(II->getArgOperand(1));
   }
+
+  if (extractMallocCall(I)) return true;
+
+  if (CallInst *CI = isFreeCall(I))
+    if (Constant *C = dyn_cast<Constant>(CI->getArgOperand(0)))
+      return C->isNullValue() || isa<UndefValue>(C);
+
   return false;
 }
 

@@ -257,5 +257,4 @@ define void @test20() {
   ret void
 }
 ; CHECK: @test20
-; CHECK-NOT: store
-; CHECK: ret void
+; CHECK-NEXT: ret void
