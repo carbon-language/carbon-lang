@@ -1974,12 +1974,6 @@ static DecodeStatus DecodeVLDInstruction(llvm::MCInst &Inst, unsigned Insn,
       if (!Check(S, DecodeDPRRegisterClass(Inst, (Rd+1)%32, Address, Decoder)))
         return MCDisassembler::Fail;
       break;
-    case ARM::VLD2b8:
-    case ARM::VLD2b16:
-    case ARM::VLD2b32:
-    case ARM::VLD2b8_UPD:
-    case ARM::VLD2b16_UPD:
-    case ARM::VLD2b32_UPD:
     case ARM::VLD3q8:
     case ARM::VLD3q16:
     case ARM::VLD3q32:
