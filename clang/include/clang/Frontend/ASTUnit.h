@@ -559,17 +559,26 @@ public:
   }
   
   // Retrieve the diagnostics associated with this AST
-  typedef const StoredDiagnostic *stored_diag_iterator;
-  stored_diag_iterator stored_diag_begin() const { 
+  typedef StoredDiagnostic *stored_diag_iterator;
+  typedef const StoredDiagnostic *stored_diag_const_iterator;
+  stored_diag_const_iterator stored_diag_begin() const { 
     return StoredDiagnostics.begin(); 
   }
-  stored_diag_iterator stored_diag_end() const { 
+  stored_diag_iterator stored_diag_begin() { 
+    return StoredDiagnostics.begin(); 
+  }
+  stored_diag_const_iterator stored_diag_end() const { 
+    return StoredDiagnostics.end(); 
+  }
+  stored_diag_iterator stored_diag_end() { 
     return StoredDiagnostics.end(); 
   }
   unsigned stored_diag_size() const { return StoredDiagnostics.size(); }
-  
-  SmallVector<StoredDiagnostic, 4> &getStoredDiagnostics() { 
-    return StoredDiagnostics; 
+
+  stored_diag_iterator stored_diag_afterDriver_begin() {
+    if (NumStoredDiagnosticsFromDriver > StoredDiagnostics.size())
+      NumStoredDiagnosticsFromDriver = 0;
+    return StoredDiagnostics.begin() + NumStoredDiagnosticsFromDriver; 
   }
 
   typedef std::vector<CachedCodeCompletionResult>::iterator

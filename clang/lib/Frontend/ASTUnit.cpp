@@ -919,9 +919,7 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   CleanTemporaryFiles();
 
   if (!OverrideMainBuffer) {
-    StoredDiagnostics.erase(
-                    StoredDiagnostics.begin() + NumStoredDiagnosticsFromDriver,
-                            StoredDiagnostics.end());
+    StoredDiagnostics.erase(stored_diag_afterDriver_begin(), stored_diag_end());
     TopLevelDeclsInPreamble.clear();
   }
 
@@ -1002,6 +1000,7 @@ error:
   }
   
   StoredDiagnostics.clear();
+  NumStoredDiagnosticsFromDriver = 0;
   return true;
 }
 
@@ -1393,9 +1392,7 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   // Clear out old caches and data.
   getDiagnostics().Reset();
   ProcessWarningOptions(getDiagnostics(), Clang->getDiagnosticOpts());
-  StoredDiagnostics.erase(
-                    StoredDiagnostics.begin() + NumStoredDiagnosticsFromDriver,
-                          StoredDiagnostics.end());
+  StoredDiagnostics.erase(stored_diag_afterDriver_begin(), stored_diag_end());
   TopLevelDecls.clear();
   TopLevelDeclsInPreamble.clear();
   
@@ -1438,11 +1435,8 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   // of preamble diagnostics.
   PreambleDiagnostics.clear();
   PreambleDiagnostics.insert(PreambleDiagnostics.end(), 
-                   StoredDiagnostics.begin() + NumStoredDiagnosticsFromDriver,
-                             StoredDiagnostics.end());
-  StoredDiagnostics.erase(
-                    StoredDiagnostics.begin() + NumStoredDiagnosticsFromDriver,
-                          StoredDiagnostics.end());
+                            stored_diag_afterDriver_begin(), stored_diag_end());
+  StoredDiagnostics.erase(stored_diag_afterDriver_begin(), stored_diag_end());
   
   // Keep track of the preamble we precompiled.
   PreambleFile = FrontendOpts.OutputFile;
@@ -2196,8 +2190,8 @@ void ASTUnit::CodeComplete(StringRef File, unsigned Line, unsigned Column,
   // make that override happen and introduce the preamble.
   PreprocessorOpts.DisableStatCache = true;
   StoredDiagnostics.insert(StoredDiagnostics.end(),
-                           this->StoredDiagnostics.begin(),
-             this->StoredDiagnostics.begin() + NumStoredDiagnosticsFromDriver);
+                           stored_diag_begin(),
+                           stored_diag_afterDriver_begin());
   if (OverrideMainBuffer) {
     PreprocessorOpts.addRemappedFile(OriginalSourceFile, OverrideMainBuffer);
     PreprocessorOpts.PrecompiledPreambleBytes.first = Preamble.size();
