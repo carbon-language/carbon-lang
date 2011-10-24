@@ -986,7 +986,7 @@ Sched::Preference ARMTargetLowering::getSchedulingPreference(SDNode *N) const {
     if (VT == MVT::Glue || VT == MVT::Other)
       continue;
     if (VT.isFloatingPoint() || VT.isVector())
-      return Sched::Latency;
+      return Sched::ILP;
   }
 
   if (!N->isMachineOpcode())
@@ -1001,7 +1001,7 @@ Sched::Preference ARMTargetLowering::getSchedulingPreference(SDNode *N) const {
     return Sched::RegPressure;
   if (!Itins->isEmpty() &&
       Itins->getOperandCycle(MCID.getSchedClass(), 0) > 2)
-    return Sched::Latency;
+    return Sched::ILP;
 
   return Sched::RegPressure;
 }

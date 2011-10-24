@@ -2100,9 +2100,9 @@ static int BUCompareLatency(SUnit *left, SUnit *right, bool checkPref,
   int LHeight = (int)left->getHeight() + LPenalty;
   int RHeight = (int)right->getHeight() + RPenalty;
 
-  bool LStall = (!checkPref || left->SchedulingPref == Sched::Latency) &&
+  bool LStall = (!checkPref || left->SchedulingPref == Sched::ILP) &&
     BUHasStall(left, LHeight, SPQ);
-  bool RStall = (!checkPref || right->SchedulingPref == Sched::Latency) &&
+  bool RStall = (!checkPref || right->SchedulingPref == Sched::ILP) &&
     BUHasStall(right, RHeight, SPQ);
 
   // If scheduling one of the node will cause a pipeline stall, delay it.
@@ -2124,8 +2124,8 @@ static int BUCompareLatency(SUnit *left, SUnit *right, bool checkPref,
 
   // If either node is scheduling for latency, sort them by height/depth
   // and latency.
-  if (!checkPref || (left->SchedulingPref == Sched::Latency ||
-                     right->SchedulingPref == Sched::Latency)) {
+  if (!checkPref || (left->SchedulingPref == Sched::ILP ||
+                     right->SchedulingPref == Sched::ILP)) {
     if (DisableSchedCycles) {
       if (LHeight != RHeight) {
         DEBUG(++FactorCount[FactHeight]);
