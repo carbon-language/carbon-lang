@@ -444,7 +444,6 @@ def VLD1d32Q_UPD : VLD1D4WB<{1,0,?,?}, "32">;
 def VLD1d64Q_UPD : VLD1D4WB<{1,1,?,?}, "64">;
 
 def VLD1d64QPseudo     : VLDQQPseudo<IIC_VLD1x4>;
-def VLD1d64QPseudo_UPD : VLDQQWBPseudo<IIC_VLD1x4u>;
 
 //   VLD2     : Vector Load (multiple 2-element structures)
 class VLD2D<bits<4> op11_8, bits<4> op7_4, string Dt, RegisterOperand VdTy>

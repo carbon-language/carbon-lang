@@ -143,7 +143,6 @@ static const NEONLdStTableEntry NEONLdStTable[] = {
 { ARM::VLD1LNq8Pseudo_UPD,  ARM::VLD1LNd8_UPD,  true, true,  EvenDblSpc, 1, 8 ,true},
 
 { ARM::VLD1d64QPseudo,      ARM::VLD1d64Q,     true,  false, SingleSpc,  4, 1 ,false},
-{ ARM::VLD1d64QPseudo_UPD,  ARM::VLD1d64Q_UPD, true,  true,  SingleSpc,  4, 1 ,false},
 { ARM::VLD1d64TPseudo,      ARM::VLD1d64T,     true,  false, SingleSpc,  3, 1 ,false},
 { ARM::VLD1q16Pseudo,       ARM::VLD1q16,      true,  false, SingleSpc,  2, 4 ,false},
 { ARM::VLD1q16PseudoWB_fixed, ARM::VLD1q16wb_fixed,true,false,SingleSpc, 2, 4 ,false},
@@ -1113,7 +1112,6 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
     case ARM::VLD4d8Pseudo_UPD:
     case ARM::VLD4d16Pseudo_UPD:
     case ARM::VLD4d32Pseudo_UPD:
-    case ARM::VLD1d64QPseudo_UPD:
     case ARM::VLD4q8Pseudo_UPD:
     case ARM::VLD4q16Pseudo_UPD:
     case ARM::VLD4q32Pseudo_UPD:
