@@ -1561,13 +1561,14 @@ bool Sema::LookupParsedName(LookupResult &R, Scope *S, CXXScopeSpec *SS,
         return false;
 
       R.setContextRange(SS->getRange());
-
       return LookupQualifiedName(R, DC);
     }
 
     // We could not resolve the scope specified to a specific declaration
     // context, which means that SS refers to an unknown specialization.
     // Name lookup can't find anything in this case.
+    R.setNotFoundInCurrentInstantiation();
+    R.setContextRange(SS->getRange());
     return false;
   }
 
