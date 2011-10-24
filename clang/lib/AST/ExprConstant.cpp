@@ -493,6 +493,12 @@ public:
     return DerivedValueInitialization(E);
   }
 
+  /// Visit a value which is evaluated, but whose value is ignored.
+  void VisitIgnoredValue(const Expr *E) {
+    APValue Scratch;
+    if (!Evaluate(Scratch, Info, E))
+      Info.EvalStatus.HasSideEffects = true;
+  }
 };
 
 }
@@ -1010,9 +1016,7 @@ VectorExprEvaluator::ValueInitialization(const Expr *E) {
 }
 
 bool VectorExprEvaluator::VisitUnaryImag(const UnaryOperator *E) {
-  APValue Scratch;
-  if (!Evaluate(Scratch, Info, E->getSubExpr()))
-    Info.EvalStatus.HasSideEffects = true;
+  VisitIgnoredValue(E->getSubExpr());
   return ValueInitialization(E);
 }
 
@@ -1408,16 +1412,8 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
 
 bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   if (E->getOpcode() == BO_Comma) {
-    if (!Visit(E->getRHS()))
-      return false;
-
-    // If we can't evaluate the LHS, it might have side effects;
-    // conservatively mark it.
-    APValue Scratch;
-    if (!Evaluate(Scratch, Info, E->getLHS()))
-      Info.EvalStatus.HasSideEffects = true;
-
-    return true;
+    VisitIgnoredValue(E->getLHS());
+    return Visit(E->getRHS());
   }
 
   if (E->isLogicalOp()) {
@@ -2007,9 +2003,7 @@ bool IntExprEvaluator::VisitUnaryImag(const UnaryOperator *E) {
     return Success(LV.getComplexIntImag(), E);
   }
 
-  APValue Scratch;
-  if (!Evaluate(Scratch, Info, E->getSubExpr()))
-    Info.EvalStatus.HasSideEffects = true;
+  VisitIgnoredValue(E->getSubExpr());
   return Success(0, E);
 }
 
@@ -2183,9 +2177,7 @@ bool FloatExprEvaluator::VisitUnaryImag(const UnaryOperator *E) {
     return true;
   }
 
-  APValue Scratch;
-  if (!Evaluate(Scratch, Info, E->getSubExpr()))
-    Info.EvalStatus.HasSideEffects = true;
+  VisitIgnoredValue(E->getSubExpr());
   const llvm::fltSemantics &Sem = Info.Ctx.getFloatTypeSemantics(E->getType());
   Result = llvm::APFloat::getZero(Sem);
   return true;
@@ -2210,16 +2202,8 @@ bool FloatExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
 
 bool FloatExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   if (E->getOpcode() == BO_Comma) {
-    if (!EvaluateFloat(E->getRHS(), Result, Info))
-      return false;
-
-    // If we can't evaluate the LHS, it might have side effects;
-    // conservatively mark it.
-    APValue Scratch;
-    if (!Evaluate(Scratch, Info, E->getLHS()))
-      Info.EvalStatus.HasSideEffects = true;
-
-    return true;
+    VisitIgnoredValue(E->getLHS());
+    return Visit(E->getRHS());
   }
 
   // We can't evaluate pointer-to-member operations.
@@ -2495,16 +2479,8 @@ bool ComplexExprEvaluator::VisitCastExpr(const CastExpr *E) {
 
 bool ComplexExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   if (E->getOpcode() == BO_Comma) {
-    if (!Visit(E->getRHS()))
-      return false;
-
-    // If we can't evaluate the LHS, it might have side effects;
-    // conservatively mark it.
-    APValue Scratch;
-    if (!Evaluate(Scratch, Info, E->getLHS()))
-      Info.EvalStatus.HasSideEffects = true;
-
-    return true;
+    VisitIgnoredValue(E->getLHS());
+    return Visit(E->getRHS());
   }
   if (!Visit(E->getLHS()))
     return false;
