@@ -315,9 +315,7 @@ void CoreEngine::HandleBlockEntrance(const BlockEntrance &L,
   // Process the entrance of the block.
   if (CFGElement E = L.getFirstElement()) {
     NodeBuilderContext Ctx(*this, L.getBlock(), Pred);
-    ExplodedNodeSet Dst;
-    StmtNodeBuilder Builder(Pred, Dst, 0, Ctx);
-    SubEng.processCFGElement(E, Builder, Pred);
+    SubEng.processCFGElement(E, Pred, 0, &Ctx);
   }
   else
     HandleBlockExit(L.getBlock(), Pred);
@@ -436,9 +434,7 @@ void CoreEngine::HandlePostStmt(const CFGBlock *B, unsigned StmtIdx,
     HandleBlockExit(B, Pred);
   else {
     NodeBuilderContext Ctx(*this, B, Pred);
-    ExplodedNodeSet Dst;
-    StmtNodeBuilder Builder(Pred, Dst, StmtIdx, Ctx);
-    SubEng.processCFGElement((*B)[StmtIdx], Builder, Pred);
+    SubEng.processCFGElement((*B)[StmtIdx], Pred, StmtIdx, &Ctx);
   }
 }
 
@@ -508,12 +504,6 @@ ExplodedNode* NodeBuilder::generateNodeImpl(const ProgramPoint &Loc,
     Frontier.Add(N);
 
   return (IsNew ? N : 0);
-}
-
-StmtNodeBuilder::~StmtNodeBuilder() {
-  for (iterator I=Frontier.begin(), E=Frontier.end(); I!=E; ++I)
-    if (!(*I)->isSink())
-      GenerateAutoTransition(*I);
 }
 
 void StmtNodeBuilder::GenerateAutoTransition(ExplodedNode *N) {

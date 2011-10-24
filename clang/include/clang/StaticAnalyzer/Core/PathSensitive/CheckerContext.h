@@ -69,7 +69,9 @@ public:
 
   /// \brief Returns the number of times the current block has been visited
   /// along the analyzed path.
-  unsigned getCurrentBlockCount() {return NB.getCurrentBlockCount();}
+  unsigned getCurrentBlockCount() {
+    return NB.getContext().getCurrentBlockCount();
+  }
 
   ASTContext &getASTContext() {
     return Eng.getContext();

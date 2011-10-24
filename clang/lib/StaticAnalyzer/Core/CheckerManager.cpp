@@ -245,6 +245,7 @@ namespace {
 }
 
 /// \brief Run checkers for load/store of a location.
+
 void CheckerManager::runCheckersForLocation(ExplodedNodeSet &Dst,
                                             const ExplodedNodeSet &Src,
                                             SVal location, bool isLoad,
@@ -261,18 +262,19 @@ namespace {
     SVal Val;
     const Stmt *S;
     ExprEngine &Eng;
+    ProgramPoint::Kind PointKind;
 
     CheckersTy::const_iterator checkers_begin() { return Checkers.begin(); }
     CheckersTy::const_iterator checkers_end() { return Checkers.end(); }
 
     CheckBindContext(const CheckersTy &checkers,
-                     SVal loc, SVal val, const Stmt *s, ExprEngine &eng)
-      : Checkers(checkers), Loc(loc), Val(val), S(s), Eng(eng) { }
+                     SVal loc, SVal val, const Stmt *s, ExprEngine &eng,
+                     ProgramPoint::Kind PK)
+      : Checkers(checkers), Loc(loc), Val(val), S(s), Eng(eng), PointKind(PK) {}
 
     void runChecker(CheckerManager::CheckBindFunc checkFn,
                     NodeBuilder &Bldr, ExplodedNode *Pred) {
-      ProgramPoint::Kind K =  ProgramPoint::PreStmtKind;
-      const ProgramPoint &L = ProgramPoint::getProgramPoint(S, K,
+      const ProgramPoint &L = ProgramPoint::getProgramPoint(S, PointKind,
                                 Pred->getLocationContext(), checkFn.Checker);
       CheckerContext C(Bldr, Eng, Pred, L, 0);
 
@@ -285,8 +287,9 @@ namespace {
 void CheckerManager::runCheckersForBind(ExplodedNodeSet &Dst,
                                         const ExplodedNodeSet &Src,
                                         SVal location, SVal val,
-                                        const Stmt *S, ExprEngine &Eng) {
-  CheckBindContext C(BindCheckers, location, val, S, Eng);
+                                        const Stmt *S, ExprEngine &Eng,
+                                        ProgramPoint::Kind PointKind) {
+  CheckBindContext C(BindCheckers, location, val, S, Eng, PointKind);
   expandGraphWithCheckers(C, Dst, Src);
 }
 

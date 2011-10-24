@@ -120,11 +120,15 @@ public:
 
   StmtNodeBuilder &getBuilder() { assert(Builder); return *Builder; }
   const NodeBuilderContext &getBuilderContext() {
-    assert(Builder);
-    return Builder->getContext();
+    assert(currentBuilderContext);
+    return *currentBuilderContext;
   }
 
   bool isObjCGCEnabled() { return ObjCGCEnabled; }
+
+  const Stmt *getStmt() const;
+
+  void GenerateAutoTransition(ExplodedNode *N);
 
   /// ViewGraph - Visualize the ExplodedGraph created by executing the
   ///  simulation.
@@ -141,17 +145,14 @@ public:
 
   /// processCFGElement - Called by CoreEngine. Used to generate new successor
   ///  nodes by processing the 'effects' of a CFG element.
-  void processCFGElement(const CFGElement E, StmtNodeBuilder& Bldr,
-                         ExplodedNode *Pred);
+  void processCFGElement(const CFGElement E, ExplodedNode *Pred,
+                         unsigned StmtIdx, NodeBuilderContext *Ctx);
 
-  void ProcessStmt(const CFGStmt S, StmtNodeBuilder &builder,
-                   ExplodedNode *Pred);
+  void ProcessStmt(const CFGStmt S, ExplodedNode *Pred);
 
-  void ProcessInitializer(const CFGInitializer I, StmtNodeBuilder &Bldr,
-                          ExplodedNode *Pred);
+  void ProcessInitializer(const CFGInitializer I, ExplodedNode *Pred);
 
-  void ProcessImplicitDtor(const CFGImplicitDtor D, StmtNodeBuilder &builder,
-                           ExplodedNode *Pred);
+  void ProcessImplicitDtor(const CFGImplicitDtor D, ExplodedNode *Pred);
 
   void ProcessAutomaticObjDtor(const CFGAutomaticObjDtor D, 
                                StmtNodeBuilder &builder, ExplodedNode *Pred);
@@ -431,8 +432,9 @@ public:
   }
   
 protected:
-  void evalObjCMessage(ExplodedNodeSet &Dst, const ObjCMessage &msg, 
-                       ExplodedNode *Pred, const ProgramState *state);
+  void evalObjCMessage(PureStmtNodeBuilder &Bldr, const ObjCMessage &msg,
+                       ExplodedNode *Pred, const ProgramState *state,
+                       bool GenSink);
 
   const ProgramState *invalidateArguments(const ProgramState *State,
                                           const CallOrObjCMessage &Call,
@@ -444,7 +446,8 @@ protected:
   /// evalBind - Handle the semantics of binding a value to a specific location.
   ///  This method is used by evalStore, VisitDeclStmt, and others.
   void evalBind(ExplodedNodeSet &Dst, const Stmt *StoreE, ExplodedNode *Pred,
-                SVal location, SVal Val, bool atDeclInit = false);
+                SVal location, SVal Val, bool atDeclInit = false,
+                ProgramPoint::Kind PP = ProgramPoint::PostStmtKind);
 
 public:
   // FIXME: 'tag' should be removed, and a LocationContext should be used

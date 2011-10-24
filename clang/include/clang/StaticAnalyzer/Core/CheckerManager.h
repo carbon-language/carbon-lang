@@ -19,6 +19,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/Store.h"
+#include "clang/Analysis/ProgramPoint.h"
 #include <vector>
 
 namespace clang {
@@ -221,7 +222,8 @@ public:
   void runCheckersForBind(ExplodedNodeSet &Dst,
                           const ExplodedNodeSet &Src,
                           SVal location, SVal val,
-                          const Stmt *S, ExprEngine &Eng);
+                          const Stmt *S, ExprEngine &Eng,
+                          ProgramPoint::Kind PointKind);
 
   /// \brief Run checkers for end of analysis.
   void runCheckersForEndAnalysis(ExplodedGraph &G, BugReporter &BR,

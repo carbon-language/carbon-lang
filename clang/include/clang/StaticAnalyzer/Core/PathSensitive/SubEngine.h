@@ -55,8 +55,8 @@ public:
 
   /// Called by CoreEngine. Used to generate new successor
   /// nodes by processing the 'effects' of a block-level statement.
-  virtual void processCFGElement(const CFGElement E, StmtNodeBuilder& builder,
-                                 ExplodedNode* Pred)=0;
+  virtual void processCFGElement(const CFGElement E, ExplodedNode* Pred,
+                                 unsigned StmtIdx, NodeBuilderContext *Ctx)=0;
 
   /// Called by CoreEngine when it starts processing a CFGBlock.  The
   /// SubEngine is expected to populate dstNodes with new nodes representing

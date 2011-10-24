@@ -147,7 +147,7 @@ ExprEngine::invalidateArguments(const ProgramState *State,
   //  expression (the context) and the expression itself.  This should
   //  disambiguate conjured symbols.
   assert(Builder && "Invalidating arguments outside of a statement context");
-  unsigned Count = Builder->getCurrentBlockCount();
+  unsigned Count = currentBuilderContext->getCurrentBlockCount();
   StoreManager::InvalidatedSymbols IS;
 
   // NOTE: Even if RegionsToInvalidate is empty, we may still invalidate
@@ -180,8 +180,7 @@ void ExprEngine::VisitCallExpr(const CallExpr *CE, ExplodedNode *Pred,
       }
 
       // First handle the return value.
-      StmtNodeBuilder &Builder = Eng.getBuilder();
-      assert(&Builder && "StmtNodeBuilder must be defined.");
+      PureStmtNodeBuilder Bldr(Pred, Dst, *Eng.currentBuilderContext, Eng.Builder);
 
       // Get the callee.
       const Expr *Callee = CE->getCallee()->IgnoreParens();
@@ -200,7 +199,7 @@ void ExprEngine::VisitCallExpr(const CallExpr *CE, ExplodedNode *Pred,
 
       // Conjure a symbol value to use as the result.
       SValBuilder &SVB = Eng.getSValBuilder();
-      unsigned Count = Builder.getCurrentBlockCount();
+      unsigned Count = Eng.currentBuilderContext->getCurrentBlockCount();
       SVal RetVal = SVB.getConjuredSymbolVal(0, CE, ResultTy, Count);
 
       // Generate a new state with the return value set.
@@ -211,7 +210,7 @@ void ExprEngine::VisitCallExpr(const CallExpr *CE, ExplodedNode *Pred,
       state = Eng.invalidateArguments(state, CallOrObjCMessage(CE, state), LC);
 
       // And make the result node.
-      Eng.MakeNode(Dst, CE, Pred, state);
+      Bldr.generateNode(CE, Pred, state);
     }
   };
   
@@ -232,21 +231,25 @@ void ExprEngine::VisitCallExpr(const CallExpr *CE, ExplodedNode *Pred,
 void ExprEngine::VisitReturnStmt(const ReturnStmt *RS, ExplodedNode *Pred,
                                  ExplodedNodeSet &Dst) {
   ExplodedNodeSet Src;
-  if (const Expr *RetE = RS->getRetValue()) {
-    // Record the returned expression in the state. It will be used in
-    // processCallExit to bind the return value to the call expr.
-    {
-      static SimpleProgramPointTag tag("ExprEngine: ReturnStmt");
-      const ProgramState *state = Pred->getState();
-      state = state->set<ReturnExpr>(RetE);
-      Pred = Builder->generateNode(RetE, state, Pred, &tag);
+  {
+    PureStmtNodeBuilder Bldr(Pred, Src, *currentBuilderContext, Builder);
+    if (const Expr *RetE = RS->getRetValue()) {
+      // Record the returned expression in the state. It will be used in
+      // processCallExit to bind the return value to the call expr.
+      {
+        static SimpleProgramPointTag tag("ExprEngine: ReturnStmt");
+        const ProgramState *state = Pred->getState();
+        state = state->set<ReturnExpr>(RetE);
+        Pred = Bldr.generateNode(RetE, Pred, state, false, &tag);
+      }
+      // We may get a NULL Pred because we generated a cached node.
+      if (Pred) {
+        Bldr.takeNodes(Pred);
+        ExplodedNodeSet Tmp;
+        Visit(RetE, Pred, Tmp);
+        Bldr.addNodes(Tmp);
+      }
     }
-    // We may get a NULL Pred because we generated a cached node.
-    if (Pred)
-      Visit(RetE, Pred, Src);
-  }
-  else {
-    Src.Add(Pred);
   }
   
   getCheckerManager().runCheckersForPreStmt(Dst, Src, RS, *this);

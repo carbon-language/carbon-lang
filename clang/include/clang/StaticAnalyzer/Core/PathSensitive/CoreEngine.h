@@ -39,16 +39,17 @@ class NodeBuilder;
 ///   at the statement and block-level.  The analyses themselves must implement
 ///   any transfer function logic and the sub-expression level (if any).
 class CoreEngine {
-  friend class CommonNodeBuilder;
+  friend struct NodeBuilderContext;
   friend class NodeBuilder;
   friend class StmtNodeBuilder;
+  friend class CommonNodeBuilder;
   friend class GenericNodeBuilderImpl;
-  friend class BranchNodeBuilder;
   friend class IndirectGotoNodeBuilder;
   friend class SwitchNodeBuilder;
   friend class EndOfFunctionNodeBuilder;
   friend class CallEnterNodeBuilder;
   friend class CallExitNodeBuilder;
+  friend class ExprEngine;
 
 public:
   typedef std::vector<std::pair<BlockEdge, const ExplodedNode*> >
@@ -174,6 +175,18 @@ struct NodeBuilderContext {
   ExplodedNode *ContextPred;
   NodeBuilderContext(CoreEngine &E, const CFGBlock *B, ExplodedNode *N)
     : Eng(E), Block(B), ContextPred(N) { assert(B); assert(!N->isSink()); }
+
+  /// \brief Return the CFGBlock associated with this builder.
+  const CFGBlock *getBlock() const { return Block; }
+
+  /// \brief Returns the number of times the current basic block has been
+  /// visited on the exploded graph path.
+  unsigned getCurrentBlockCount() const {
+    return Eng.WList->getBlockCounter().getNumVisited(
+                    ContextPred->getLocationContext()->getCurrentStackFrame(),
+                    Block->getBlockID());
+  }
+
 };
 
 /// This is the simplest builder which generates nodes in the ExplodedGraph.
@@ -192,8 +205,6 @@ protected:
   /// \brief The frontier set - a set of nodes which need to be propagated after
   /// the builder dies.
   ExplodedNodeSet &Frontier;
-
-  BlockCounter getBlockCounter() const { return C.Eng.WList->getBlockCounter();}
 
   /// Checkes if the results are ready.
   virtual bool checkResults() {
@@ -271,18 +282,7 @@ public:
     return Frontier.end();
   }
 
-  /// \brief Return the CFGBlock associated with this builder.
-  const CFGBlock *getBlock() const { return C.Block; }
-
   const NodeBuilderContext &getContext() { return C; }
-
-  /// \brief Returns the number of times the current basic block has been
-  /// visited on the exploded graph path.
-  unsigned getCurrentBlockCount() const {
-    return getBlockCounter().getNumVisited(
-                    C.ContextPred->getLocationContext()->getCurrentStackFrame(),
-                    C.Block->getBlockID());
-  }
 
   void takeNodes(const ExplodedNodeSet &S) {
     for (ExplodedNodeSet::iterator I = S.begin(), E = S.end(); I != E; ++I )
@@ -306,7 +306,7 @@ public:
 class CommonNodeBuilder {
 protected:
   ExplodedNode *Pred;
-  CoreEngine& Eng;
+  CoreEngine &Eng;
 
   CommonNodeBuilder(CoreEngine* E, ExplodedNode *P) : Pred(P), Eng(*E) {}
   BlockCounter getBlockCounter() const { return Eng.WList->getBlockCounter(); }
@@ -314,21 +314,38 @@ protected:
 
 
 class PureStmtNodeBuilder: public NodeBuilder {
+  NodeBuilder *EnclosingBldr;
 public:
   PureStmtNodeBuilder(ExplodedNode *SrcNode, ExplodedNodeSet &DstSet,
-                      const NodeBuilderContext &Ctx)
-    : NodeBuilder(SrcNode, DstSet, Ctx) {}
+                      const NodeBuilderContext &Ctx, NodeBuilder *Enclosing = 0)
+    : NodeBuilder(SrcNode, DstSet, Ctx), EnclosingBldr(Enclosing) {
+    if (EnclosingBldr)
+      EnclosingBldr->takeNodes(SrcNode);
+  }
 
   PureStmtNodeBuilder(ExplodedNodeSet &SrcSet, ExplodedNodeSet &DstSet,
-                      const NodeBuilderContext &Ctx)
-    : NodeBuilder(SrcSet, DstSet, Ctx) {}
+                      const NodeBuilderContext &Ctx, NodeBuilder *Enclosing = 0)
+    : NodeBuilder(SrcSet, DstSet, Ctx), EnclosingBldr(Enclosing) {
+    if (EnclosingBldr)
+      for (ExplodedNodeSet::iterator I = SrcSet.begin(),
+                                     E = SrcSet.end(); I != E; ++I )
+        EnclosingBldr->takeNodes(*I);
+
+  }
+
+  virtual ~PureStmtNodeBuilder() {
+    if (EnclosingBldr)
+      for (ExplodedNodeSet::iterator I = Frontier.begin(),
+                                     E = Frontier.end(); I != E; ++I )
+        EnclosingBldr->addNodes(*I);
+  }
 
   ExplodedNode *generateNode(const Stmt *S,
                              ExplodedNode *Pred,
                              const ProgramState *St,
-                             ProgramPoint::Kind K = ProgramPoint::PostStmtKind,
                              bool MarkAsSink = false,
                              const ProgramPointTag *tag = 0,
+                             ProgramPoint::Kind K = ProgramPoint::PostStmtKind,
                              bool Purging = false) {
     if (Purging) {
       assert(K == ProgramPoint::PostStmtKind);
@@ -339,6 +356,14 @@ public:
                                   Pred->getLocationContext(), tag);
     return generateNodeImpl(L, St, Pred, MarkAsSink);
   }
+
+  ExplodedNode *generateNode(const ProgramPoint &PP,
+                             ExplodedNode *Pred,
+                             const ProgramState *State,
+                             bool MarkAsSink = false) {
+    return generateNodeImpl(PP, State, Pred, MarkAsSink);
+  }
+
 };
 
 class StmtNodeBuilder : public NodeBuilder {
@@ -359,8 +384,6 @@ public:
     : NodeBuilder(SrcNode, DstSet, Ctx), Idx(idx),
       PurgingDeadSymbols(false), BuildSinks(false), hasGeneratedNode(false),
       PointKind(ProgramPoint::PostStmtKind), Tag(0) {}
-
-  virtual ~StmtNodeBuilder();
 
   ExplodedNode *generateNode(const Stmt *S,
                              const ProgramState *St,

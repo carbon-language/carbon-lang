@@ -46,7 +46,7 @@ void ExprEngine::VisitBinaryOperator(const BinaryOperator* B,
       // FIXME: Handle structs.
       if (RightV.isUnknown() ||
           !getConstraintManager().canReasonAbout(RightV)) {
-        unsigned Count = Builder->getCurrentBlockCount();
+        unsigned Count = currentBuilderContext->getCurrentBlockCount();
         RightV = svalBuilder.getConjuredSymbolVal(NULL, B->getRHS(), Count);
       }
       // Simulate the effects of a "store":  bind the value of the RHS
@@ -57,16 +57,17 @@ void ExprEngine::VisitBinaryOperator(const BinaryOperator* B,
     }
       
     if (!B->isAssignmentOp()) {
+      PureStmtNodeBuilder Bldr(*it, Tmp2, *currentBuilderContext, Builder);
       // Process non-assignments except commas or short-circuited
       // logical expressions (LAnd and LOr).
       SVal Result = evalBinOp(state, Op, LeftV, RightV, B->getType());      
       if (Result.isUnknown()) {
-        MakeNode(Tmp2, B, *it, state);
+        Bldr.generateNode(B, *it, state);
         continue;
       }        
 
       state = state->BindExpr(B, Result);      
-      MakeNode(Tmp2, B, *it, state);
+      Bldr.generateNode(B, *it, state);
       continue;
     }
       
@@ -125,7 +126,7 @@ void ExprEngine::VisitBinaryOperator(const BinaryOperator* B,
       if (Result.isUnknown() ||
           !getConstraintManager().canReasonAbout(Result)) {
         
-        unsigned Count = Builder->getCurrentBlockCount();
+        unsigned Count = currentBuilderContext->getCurrentBlockCount();
         
         // The symbolic value is actually for the type of the left-hand side
         // expression, not the computation type, as this is the value the
@@ -165,8 +166,9 @@ void ExprEngine::VisitBlockExpr(const BlockExpr *BE, ExplodedNode *Pred,
                                        Pred->getLocationContext());
   
   ExplodedNodeSet Tmp;
-  MakeNode(Tmp, BE, Pred, Pred->getState()->BindExpr(BE, V),
-           ProgramPoint::PostLValueKind);
+  PureStmtNodeBuilder Bldr(Pred, Tmp, *currentBuilderContext);
+  Bldr.generateNode(BE, Pred, Pred->getState()->BindExpr(BE, V), false, 0,
+                    ProgramPoint::PostLValueKind);
   
   // FIXME: Move all post/pre visits to ::Visit().
   getCheckerManager().runCheckersForPostStmt(Dst, Tmp, BE, *this);
@@ -196,6 +198,7 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
   if (const ExplicitCastExpr *ExCast=dyn_cast_or_null<ExplicitCastExpr>(CastE))
     T = ExCast->getTypeAsWritten();
   
+  PureStmtNodeBuilder Bldr(dstPreStmt, Dst, *currentBuilderContext, Builder);
   for (ExplodedNodeSet::iterator I = dstPreStmt.begin(), E = dstPreStmt.end();
        I != E; ++I) {
     
@@ -207,7 +210,6 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
       case CK_GetObjCProperty:
         llvm_unreachable("GetObjCProperty casts handled earlier.");
       case CK_ToVoid:
-        Dst.Add(Pred);
         continue;
         // The analyzer doesn't do anything special with these casts,
         // since it understands retain/release semantics already.
@@ -222,7 +224,7 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
         const ProgramState *state = Pred->getState();
         SVal V = state->getSVal(Ex);
         state = state->BindExpr(CastE, V);
-        MakeNode(Dst, CastE, Pred, state);
+        Bldr.generateNode(CastE, Pred, state);
         continue;
       }
       case CK_Dependent:
@@ -258,7 +260,7 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
         SVal V = state->getSVal(Ex);
         V = svalBuilder.evalCast(V, T, ExTy);
         state = state->BindExpr(CastE, V);
-        MakeNode(Dst, CastE, Pred, state);
+        Bldr.generateNode(CastE, Pred, state);
         continue;
       }
       case CK_DerivedToBase:
@@ -268,7 +270,7 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
         SVal val = state->getSVal(Ex);
         val = getStoreManager().evalDerivedToBase(val, T);
         state = state->BindExpr(CastE, val);
-        MakeNode(Dst, CastE, Pred, state);
+        Bldr.generateNode(CastE, Pred, state);
         continue;
       }
         // Various C++ casts that are not handled yet.
@@ -289,10 +291,10 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
         
         SVal result =
         svalBuilder.getConjuredSymbolVal(NULL, CastE, resultType,
-                                         Builder->getCurrentBlockCount());
+                               currentBuilderContext->getCurrentBlockCount());
         
         const ProgramState *state = Pred->getState()->BindExpr(CastE, result);
-        MakeNode(Dst, CastE, Pred, state);
+        Bldr.generateNode(CastE, Pred, state);
         continue;
       }
     }
@@ -302,8 +304,7 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
 void ExprEngine::VisitCompoundLiteralExpr(const CompoundLiteralExpr *CL,
                                           ExplodedNode *Pred,
                                           ExplodedNodeSet &Dst) {
-  PureStmtNodeBuilder B(Pred, Dst, *currentBuilderContext);
-  Builder->takeNodes(Pred);
+  PureStmtNodeBuilder B(Pred, Dst, *currentBuilderContext, Builder);
 
   const InitListExpr *ILE 
     = cast<InitListExpr>(CL->getInitializer()->IgnoreParens());
@@ -317,7 +318,6 @@ void ExprEngine::VisitCompoundLiteralExpr(const CompoundLiteralExpr *CL,
     B.generateNode(CL, Pred, state->BindExpr(CL, state->getLValue(CL, LC)));
   else
     B.generateNode(CL, Pred, state->BindExpr(CL, ILV));
-  Builder->addNodes(Dst);
 }
 
 void ExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
@@ -330,15 +330,17 @@ void ExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
   // Assumption: The CFG has one DeclStmt per Decl.
   const Decl *D = *DS->decl_begin();
   
-  if (!D || !isa<VarDecl>(D))
+  if (!D || !isa<VarDecl>(D)) {
+    //TODO:AZ: remove explicit insertion after refactoring is done.
+    Dst.insert(Pred);
     return;
+  }
   
   // FIXME: all pre/post visits should eventually be handled by ::Visit().
   ExplodedNodeSet dstPreVisit;
   getCheckerManager().runCheckersForPreStmt(dstPreVisit, Pred, DS, *this);
   
-  PureStmtNodeBuilder B(dstPreVisit, Dst, *currentBuilderContext);
-  Builder->takeNodes(dstPreVisit);
+  PureStmtNodeBuilder B(dstPreVisit, Dst, *currentBuilderContext, Builder);
   const VarDecl *VD = dyn_cast<VarDecl>(D);
   for (ExplodedNodeSet::iterator I = dstPreVisit.begin(), E = dstPreVisit.end();
        I!=E; ++I) {
@@ -365,7 +367,7 @@ void ExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
            !getConstraintManager().canReasonAbout(InitVal)) &&
           !VD->getType()->isReferenceType()) {
         InitVal = svalBuilder.getConjuredSymbolVal(NULL, InitEx,
-                                                   Builder->getCurrentBlockCount());
+                                 currentBuilderContext->getCurrentBlockCount());
       }
       B.takeNodes(N);
       evalBind(Dst, DS, N, state->getLValue(VD, LC), InitVal, true);
@@ -375,17 +377,14 @@ void ExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
       B.generateNode(DS, N,state->bindDeclWithNoInit(state->getRegion(VD, LC)));
     }
   }
-  Builder->addNodes(Dst);
 }
 
 void ExprEngine::VisitLogicalExpr(const BinaryOperator* B, ExplodedNode *Pred,
                                   ExplodedNodeSet &Dst) {
-  Builder->takeNodes(Pred);
-  PureStmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
-
   assert(B->getOpcode() == BO_LAnd ||
          B->getOpcode() == BO_LOr);
-  
+
+  PureStmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext, Builder);
   const ProgramState *state = Pred->getState();
   SVal X = state->getSVal(B);
   assert(X.isUndef());
@@ -399,7 +398,6 @@ void ExprEngine::VisitLogicalExpr(const BinaryOperator* B, ExplodedNode *Pred,
     // Handle undefined values.
     if (X.isUndef()) {
       Bldr.generateNode(B, Pred, state->BindExpr(B, X));
-      Builder->addNodes(Dst);
       return;
     }
     
@@ -427,14 +425,12 @@ void ExprEngine::VisitLogicalExpr(const BinaryOperator* B, ExplodedNode *Pred,
                                B->getType());
     Bldr.generateNode(B, Pred, state->BindExpr(B, X));
   }
-  Builder->addNodes(Dst);
 }
 
 void ExprEngine::VisitInitListExpr(const InitListExpr *IE,
                                    ExplodedNode *Pred,
                                    ExplodedNodeSet &Dst) {
-  Builder->takeNodes(Pred);
-  PureStmtNodeBuilder B(Pred, Dst, *currentBuilderContext);
+  PureStmtNodeBuilder B(Pred, Dst, *currentBuilderContext, Builder);
 
   const ProgramState *state = Pred->getState();
   QualType T = getContext().getCanonicalType(IE->getType());
@@ -448,7 +444,6 @@ void ExprEngine::VisitInitListExpr(const InitListExpr *IE,
     if (NumInitElements == 0) {
       SVal V = svalBuilder.makeCompoundVal(T, vals);
       B.generateNode(IE, Pred, state->BindExpr(IE, V));
-      Builder->addNodes(Dst);
       return;
     }
     
@@ -459,7 +454,6 @@ void ExprEngine::VisitInitListExpr(const InitListExpr *IE,
     
     B.generateNode(IE, Pred,
                    state->BindExpr(IE, svalBuilder.makeCompoundVal(T, vals)));
-    Builder->addNodes(Dst);
     return;
   }
   
@@ -467,7 +461,6 @@ void ExprEngine::VisitInitListExpr(const InitListExpr *IE,
     assert(IE->getNumInits() == 1);
     const Expr *initEx = IE->getInit(0);
     B.generateNode(IE, Pred, state->BindExpr(IE, state->getSVal(initEx)));
-    Builder->addNodes(Dst);
     return;
   }
   
@@ -479,8 +472,7 @@ void ExprEngine::VisitGuardedExpr(const Expr *Ex,
                                   const Expr *R,
                                   ExplodedNode *Pred,
                                   ExplodedNodeSet &Dst) {
-  Builder->takeNodes(Pred);
-  PureStmtNodeBuilder B(Pred, Dst, *currentBuilderContext);
+  PureStmtNodeBuilder B(Pred, Dst, *currentBuilderContext, Builder);
   
   const ProgramState *state = Pred->getState();
   SVal X = state->getSVal(Ex);  
@@ -491,14 +483,12 @@ void ExprEngine::VisitGuardedExpr(const Expr *Ex,
   
   // Make sure that we invalidate the previous binding.
   B.generateNode(Ex, Pred, state->BindExpr(Ex, X, true));
-  Builder->addNodes(Dst);
 }
 
 void ExprEngine::
 VisitOffsetOfExpr(const OffsetOfExpr *OOE, 
                   ExplodedNode *Pred, ExplodedNodeSet &Dst) {
-  Builder->takeNodes(Pred);
-  PureStmtNodeBuilder B(Pred, Dst, *currentBuilderContext);
+  PureStmtNodeBuilder B(Pred, Dst, *currentBuilderContext, Builder);
   Expr::EvalResult Res;
   if (OOE->Evaluate(Res, getContext()) && Res.Val.isInt()) {
     const APSInt &IV = Res.Val.getInt();
@@ -509,7 +499,6 @@ VisitOffsetOfExpr(const OffsetOfExpr *OOE,
     B.generateNode(OOE, Pred, Pred->getState()->BindExpr(OOE, X));
   }
   // FIXME: Handle the case where __builtin_offsetof is not a constant.
-  Builder->addNodes(Dst);
 }
 
 
@@ -517,6 +506,7 @@ void ExprEngine::
 VisitUnaryExprOrTypeTraitExpr(const UnaryExprOrTypeTraitExpr *Ex,
                               ExplodedNode *Pred,
                               ExplodedNodeSet &Dst) {
+  PureStmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext, Builder);
 
   QualType T = Ex->getTypeOfArgument();
   
@@ -526,14 +516,12 @@ VisitUnaryExprOrTypeTraitExpr(const UnaryExprOrTypeTraitExpr *Ex,
       
       // FIXME: Add support for VLA type arguments and VLA expressions.
       // When that happens, we should probably refactor VLASizeChecker's code.
-      Dst.Add(Pred);
       return;
     }
     else if (T->getAs<ObjCObjectType>()) {
       // Some code tries to take the sizeof an ObjCObjectType, relying that
       // the compiler has laid out its representation.  Just report Unknown
       // for these.
-      Dst.Add(Pred);
       return;
     }
   }
@@ -545,20 +533,22 @@ VisitUnaryExprOrTypeTraitExpr(const UnaryExprOrTypeTraitExpr *Ex,
   const ProgramState *state = Pred->getState();
   state = state->BindExpr(Ex, svalBuilder.makeIntVal(amt.getQuantity(),
                                                      Ex->getType()));
-  MakeNode(Dst, Ex, Pred, state);
+  Bldr.generateNode(Ex, Pred, state);
 }
 
 void ExprEngine::VisitUnaryOperator(const UnaryOperator* U, 
                                     ExplodedNode *Pred,
                                     ExplodedNodeSet &Dst) {
-  Builder->takeNodes(Pred);
   PureStmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
   bool IncDec = false;
   switch (U->getOpcode()) {
-    default:
-      Builder->addNodes(Pred);
+    default: {
+      Bldr.takeNodes(Pred);
       IncDec = true;
-      VisitIncrementDecrementOperator(U, Pred, Dst);
+      ExplodedNodeSet Tmp;
+      VisitIncrementDecrementOperator(U, Pred, Tmp);
+      Bldr.addNodes(Tmp);
+    }
       break;
     case UO_Real: {
       const Expr *Ex = U->getSubExpr()->IgnoreParens();
@@ -690,8 +680,6 @@ void ExprEngine::VisitUnaryOperator(const UnaryOperator* U,
     }
   }
 
-  if (!IncDec)
-    Builder->addNodes(Dst);
 }
 
 void ExprEngine::VisitIncrementDecrementOperator(const UnaryOperator* U,
@@ -712,6 +700,8 @@ void ExprEngine::VisitIncrementDecrementOperator(const UnaryOperator* U,
     ExplodedNodeSet Tmp2;
     evalLoad(Tmp2, Ex, *I, state, loc);
     
+    ExplodedNodeSet Dst2;
+    PureStmtNodeBuilder Bldr(Tmp2, Dst2, *currentBuilderContext, Builder);
     for (ExplodedNodeSet::iterator I2=Tmp2.begin(), E2=Tmp2.end();I2!=E2;++I2) {
       
       state = (*I2)->getState();
@@ -719,7 +709,7 @@ void ExprEngine::VisitIncrementDecrementOperator(const UnaryOperator* U,
       
       // Propagate unknown and undefined values.
       if (V2_untested.isUnknownOrUndef()) {
-        MakeNode(Dst, U, *I2, state->BindExpr(U, V2_untested));
+        Bldr.generateNode(U, *I2, state->BindExpr(U, V2_untested));
         continue;
       }
       DefinedSVal V2 = cast<DefinedSVal>(V2_untested);
@@ -744,7 +734,7 @@ void ExprEngine::VisitIncrementDecrementOperator(const UnaryOperator* U,
       if (Result.isUnknown() || !getConstraintManager().canReasonAbout(Result)){
         DefinedOrUnknownSVal SymVal =
         svalBuilder.getConjuredSymbolVal(NULL, Ex,
-                                         Builder->getCurrentBlockCount());
+                                 currentBuilderContext->getCurrentBlockCount());
         Result = SymVal;
         
         // If the value is a location, ++/-- should always preserve
@@ -775,7 +765,11 @@ void ExprEngine::VisitIncrementDecrementOperator(const UnaryOperator* U,
         state = state->BindExpr(U, U->isPostfix() ? V2 : Result);
       
       // Perform the store.
-      evalStore(Dst, NULL, U, *I2, state, loc, Result);
+      Bldr.takeNodes(*I2);
+      ExplodedNodeSet Dst4;
+      evalStore(Dst4, NULL, U, *I2, state, loc, Result);
+      Bldr.addNodes(Dst4);
     }
+    Dst.insert(Dst2);
   }
 }
