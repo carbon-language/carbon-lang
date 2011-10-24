@@ -16,6 +16,7 @@
 #include "llvm/Object/MachO.h"
 #include "llvm/Object/MachOFormat.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/raw_ostream.h"
 
 #include <cctype>
 #include <cstring>
@@ -596,15 +597,15 @@ error_code MachOObjectFile::getRelocationNext(DataRefImpl Rel,
 }
 error_code MachOObjectFile::getRelocationAddress(DataRefImpl Rel,
                                                  uint64_t &Res) const {
-  const uint8_t* sectAddress = base();
+  const uint8_t* sectAddress = 0;
   if (MachOObj->is64Bit()) {
     InMemoryStruct<macho::Section64> Sect;
     getSection64(Sections[Rel.d.b], Sect);
-    sectAddress += Sect->Offset;
+    sectAddress += Sect->Address;
   } else {
     InMemoryStruct<macho::Section> Sect;
     getSection(Sections[Rel.d.b], Sect);
-    sectAddress += Sect->Offset;
+    sectAddress += Sect->Address;
   }
   InMemoryStruct<macho::RelocationEntry> RE;
   getRelocation(Rel, RE);
@@ -641,7 +642,88 @@ error_code MachOObjectFile::getRelocationType(DataRefImpl Rel,
 }
 error_code MachOObjectFile::getRelocationTypeName(DataRefImpl Rel,
                                           SmallVectorImpl<char> &Result) const {
-  StringRef res = "Unknown";
+  // TODO: Support scattered relocations.
+  StringRef res;
+  InMemoryStruct<macho::RelocationEntry> RE;
+  getRelocation(Rel, RE);
+  unsigned r_type = (RE->Word1 >> 28) & 0xF;
+
+  unsigned Arch = getArch();
+  switch (Arch) {
+    case Triple::x86: {
+      const char* Table[] =  {
+        "GENERIC_RELOC_VANILLA",
+        "GENERIC_RELOC_PAIR",
+        "GENERIC_RELOC_SECTDIFF",
+        "GENERIC_RELOC_LOCAL_SECTDIFF",
+        "GENERIC_RELOC_PB_LA_PTR" };
+
+      if (r_type > 4)
+        res = "Unknown";
+      else
+        res = Table[r_type];
+      break;
+    }
+    case Triple::x86_64: {
+      const char* Table[] =  {
+        "X86_64_RELOC_BRANCH",
+        "X86_64_RELOC_GOT_LOAD",
+        "X86_64_RELOC_GOT",
+        "X86_64_RELOC_SIGNED",
+        "X86_64_RELOC_UNSIGNED",
+        "X86_64_RELOC_SUBTRACTOR" };
+
+      if (r_type > 5)
+        res = "Unknown";
+      else
+        res = Table[r_type];
+      break;
+    }
+    case Triple::arm: {
+      const char* Table[] =  {
+        "ARM_RELOC_VANILLA",
+        "ARM_RELOC_PAIR",
+        "ARM_RELOC_SECTDIFF",
+        "ARM_RELOC_LOCAL_SECTDIFF",
+        "ARM_RELOC_PB_LA_PTR",
+        "ARM_RELOC_BR24",
+        "ARM_THUMB_RELOC_BR22",
+        "ARM_THUMB_32BIT_BRANCH",
+        "ARM_RELOC_HALF",
+        "ARM_RELOC_HALF_SECTDIFF" };
+
+      if (r_type > 9)
+        res = "Unknown";
+      else
+        res = Table[r_type];
+      break;
+    }
+    case Triple::ppc: {
+      const char* Table[] =  {
+        "PPC_RELOC_VANILLA",
+        "PPC_RELOC_PAIR",
+        "PPC_RELOC_BR14",
+        "PPC_RELOC_BR24",
+        "PPC_RELOC_HI16",
+        "PPC_RELOC_LO16",
+        "PPC_RELOC_HA16",
+        "PPC_RELOC_LO14",
+        "PPC_RELOC_SECTDIFF",
+        "PPC_RELOC_PB_LA_PTR",
+        "PPC_RELOC_HI16_SECTDIFF",
+        "PPC_RELOC_LO16_SECTDIFF",
+        "PPC_RELOC_HA16_SECTDIFF",
+        "PPC_RELOC_JBSR",
+        "PPC_RELOC_LO14_SECTDIFF",
+        "PPC_RELOC_LOCAL_SECTDIFF" };
+
+      res = Table[r_type];
+      break;
+    }
+    case Triple::UnknownArch:
+      res = "Unknown";
+      break;
+  }
   Result.append(res.begin(), res.end());
   return object_error::success;
 }
@@ -668,8 +750,47 @@ error_code MachOObjectFile::getRelocationAdditionalInfo(DataRefImpl Rel,
 }
 error_code MachOObjectFile::getRelocationValueString(DataRefImpl Rel,
                                           SmallVectorImpl<char> &Result) const {
-  StringRef res = "Unknown";
-  Result.append(res.begin(), res.end());
+  InMemoryStruct<macho::RelocationEntry> RE;
+  getRelocation(Rel, RE);
+
+  std::string fmtbuf;
+  raw_string_ostream fmt(fmtbuf);
+
+  bool isExtern = (RE->Word1 >> 27) & 1;
+  if (isExtern) {
+    uint32_t Val = (RE->Word1 & 0xFFFFFF);
+    symbol_iterator SI = begin_symbols();
+
+    error_code ec;
+    while (Val--) {
+      SI.increment(ec);
+      if (ec) report_fatal_error(ec.message());
+    }
+
+    StringRef SymName;
+    if ((ec = SI->getName(SymName)))
+      report_fatal_error(ec.message());
+
+    fmt << SymName;
+  } else {
+    uint32_t Val = (RE->Word1 & 0xFFFFFF);
+    section_iterator SI = begin_sections();
+
+    error_code ec;
+    while (Val--) {
+      SI.increment(ec);
+      if (ec) report_fatal_error(ec.message());
+    }
+
+    StringRef SectName;
+    if ((ec = SI->getName(SectName)))
+      report_fatal_error(ec.message());
+
+    fmt << SectName;
+  }
+
+  fmt.flush();
+  Result.append(fmtbuf.begin(), fmtbuf.end());
   return object_error::success;
 }
 
