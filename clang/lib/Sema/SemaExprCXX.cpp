@@ -4665,17 +4665,37 @@ StmtResult Sema::ActOnFinishFullStmt(Stmt *FullStmt) {
   return MaybeCreateStmtWithCleanups(FullStmt);
 }
 
-bool Sema::CheckMicrosoftIfExistsSymbol(CXXScopeSpec &SS,
-                                        UnqualifiedId &Name) {
+Sema::IfExistsResult Sema::CheckMicrosoftIfExistsSymbol(Scope *S,
+                                                        CXXScopeSpec &SS,
+                                                        UnqualifiedId &Name) {
   DeclarationNameInfo TargetNameInfo = GetNameFromUnqualifiedId(Name);
   DeclarationName TargetName = TargetNameInfo.getName();
   if (!TargetName)
-    return false;
+    return IER_DoesNotExist;
 
+  // If the name itself is dependent, then the result is dependent.
+  if (TargetName.isDependentName())
+    return IER_Dependent;
+      
   // Do the redeclaration lookup in the current scope.
   LookupResult R(*this, TargetNameInfo, Sema::LookupAnyName,
                  Sema::NotForRedeclaration);
+  LookupParsedName(R, S, &SS);
   R.suppressDiagnostics();
-  LookupParsedName(R, getCurScope(), &SS);
-  return !R.empty(); 
+  
+  switch (R.getResultKind()) {
+  case LookupResult::Found:
+  case LookupResult::FoundOverloaded:
+  case LookupResult::FoundUnresolvedValue:
+  case LookupResult::Ambiguous:
+    return IER_Exists;
+    
+  case LookupResult::NotFound:
+    return IER_DoesNotExist;
+    
+  case LookupResult::NotFoundInCurrentInstantiation:
+    return IER_Dependent;
+  }
+  
+  return IER_DoesNotExist;
 }

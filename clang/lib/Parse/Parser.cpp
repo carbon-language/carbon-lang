@@ -1470,81 +1470,91 @@ void Parser::CodeCompleteNaturalLanguage() {
   Actions.CodeCompleteNaturalLanguage();
 }
 
-bool Parser::ParseMicrosoftIfExistsCondition(bool& Result) {
+bool Parser::ParseMicrosoftIfExistsCondition(IfExistsCondition& Result) {
   assert((Tok.is(tok::kw___if_exists) || Tok.is(tok::kw___if_not_exists)) &&
          "Expected '__if_exists' or '__if_not_exists'");
-  Token Condition = Tok;
-  SourceLocation IfExistsLoc = ConsumeToken();
+  Result.IsIfExists = Tok.is(tok::kw___if_exists);
+  Result.KeywordLoc = ConsumeToken();
 
   BalancedDelimiterTracker T(*this, tok::l_paren);
   if (T.consumeOpen()) {
-    Diag(Tok, diag::err_expected_lparen_after) << IfExistsLoc;
-    SkipUntil(tok::semi);
+    Diag(Tok, diag::err_expected_lparen_after) 
+      << (Result.IsIfExists? "__if_exists" : "__if_not_exists");
     return true;
   }
   
   // Parse nested-name-specifier.
-  CXXScopeSpec SS;
-  ParseOptionalCXXScopeSpecifier(SS, ParsedType(), false);
+  ParseOptionalCXXScopeSpecifier(Result.SS, ParsedType(), false);
 
   // Check nested-name specifier.
-  if (SS.isInvalid()) {
-    SkipUntil(tok::semi);
+  if (Result.SS.isInvalid()) {
+    T.skipToEnd();
     return true;
   }
 
   // Parse the unqualified-id. 
-  UnqualifiedId Name;
-  if (ParseUnqualifiedId(SS, false, true, true, ParsedType(), Name)) {
-    SkipUntil(tok::semi);
+  if (ParseUnqualifiedId(Result.SS, false, true, true, ParsedType(), 
+                         Result.Name)) {
+    T.skipToEnd();
     return true;
   }
 
-  T.consumeClose();
-  if (T.getCloseLocation().isInvalid())
+  if (T.consumeClose())
     return true;
-
+  
   // Check if the symbol exists.
-  bool Exist = Actions.CheckMicrosoftIfExistsSymbol(SS, Name);
+  switch (Actions.CheckMicrosoftIfExistsSymbol(getCurScope(), Result.SS, 
+                                               Result.Name)) {
+  case Sema::IER_Exists:
+    Result.Behavior = Result.IsIfExists ? IEB_Parse : IEB_Skip;
+    break;
 
-  Result = ((Condition.is(tok::kw___if_exists) && Exist) ||
-            (Condition.is(tok::kw___if_not_exists) && !Exist));
+  case Sema::IER_DoesNotExist:
+    Result.Behavior = !Result.IsIfExists ? IEB_Parse : IEB_Skip;
+    break;
+
+  case Sema::IER_Dependent:
+    Result.Behavior = IEB_Dependent;
+    break;
+  }
 
   return false;
 }
 
 void Parser::ParseMicrosoftIfExistsExternalDeclaration() {
-  bool Result;
+  IfExistsCondition Result;
   if (ParseMicrosoftIfExistsCondition(Result))
     return;
   
-  if (Tok.isNot(tok::l_brace)) {
+  BalancedDelimiterTracker Braces(*this, tok::l_brace);
+  if (Braces.consumeOpen()) {
     Diag(Tok, diag::err_expected_lbrace);
     return;
   }
-  ConsumeBrace();
 
-  // Condition is false skip all inside the {}.
-  if (!Result) {
-    SkipUntil(tok::r_brace, false);
+  switch (Result.Behavior) {
+  case IEB_Parse:
+    // Parse declarations below.
+    break;
+      
+  case IEB_Dependent:
+    llvm_unreachable("Cannot have a dependent external declaration");
+      
+  case IEB_Skip:
+    Braces.skipToEnd();
     return;
   }
 
-  // Condition is true, parse the declaration.
-  while (Tok.isNot(tok::r_brace)) {
+  // Parse the declarations.
+  while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
     ParsedAttributesWithRange attrs(AttrFactory);
     MaybeParseCXX0XAttributes(attrs);
     MaybeParseMicrosoftAttributes(attrs);
     DeclGroupPtrTy Result = ParseExternalDeclaration(attrs);
     if (Result && !getCurScope()->getParent())
       Actions.getASTConsumer().HandleTopLevelDecl(Result.get());
-  }
-
-  if (Tok.isNot(tok::r_brace)) {
-    Diag(Tok, diag::err_expected_rbrace);
-    return;
-  }
-  ConsumeBrace();
+  }     
+  Braces.consumeClose();
 }
 
 Parser::DeclGroupPtrTy Parser::ParseModuleImport() {
@@ -1628,4 +1638,9 @@ bool Parser::BalancedDelimiterTracker::consumeClose() {
       LClose = P.Tok.getLocation();
   }
   return true;
+}
+
+void Parser::BalancedDelimiterTracker::skipToEnd() {
+  P.SkipUntil(Close, false);
+  Cleanup = false;
 }

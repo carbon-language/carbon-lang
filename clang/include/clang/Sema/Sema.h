@@ -2591,7 +2591,20 @@ public:
 
   bool CheckCaseExpression(Expr *E);
 
-  bool CheckMicrosoftIfExistsSymbol(CXXScopeSpec &SS, UnqualifiedId &Name);
+  /// \brief Describes the result of an "if-exists" condition check.
+  enum IfExistsResult {
+    /// \brief The symbol exists.
+    IER_Exists,
+    
+    /// \brief The symbol does not exist.
+    IER_DoesNotExist,
+    
+    /// \brief The name is a dependent name, so it 
+    IER_Dependent
+  };
+  
+  IfExistsResult 
+  CheckMicrosoftIfExistsSymbol(Scope *S, CXXScopeSpec &SS, UnqualifiedId &Name);
 
   //===------------------------- "Block" Extension ------------------------===//
 

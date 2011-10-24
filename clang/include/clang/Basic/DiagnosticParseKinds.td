@@ -75,6 +75,10 @@ def warn_cxx98_compat_alignof : Warning<
   "alignof expressions are incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;
 
+def warn_microsoft_dependent_exists : Warning<
+  "dependent %select{__if_not_exists|__if_exists}0 declarations are ignored">, 
+  InGroup<DiagGroup<"microsoft-exists">>;
+
 def ext_c1x_generic_selection : Extension<
   "generic selections are a C1X-specific feature">, InGroup<C1X>;
 def err_duplicate_default_assoc : Error<

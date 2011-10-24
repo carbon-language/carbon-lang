@@ -488,6 +488,7 @@ private:
                           const char *Msg = "", 
                           tok::TokenKind SkipToTok = tok::unknown);
     bool consumeClose();
+    void skipToEnd();
   };
 
   DelimiterTracker QuantityTracker;
@@ -1487,7 +1488,40 @@ private:
   StmtResult ParseReturnStatement(ParsedAttributes &Attr);
   StmtResult ParseAsmStatement(bool &msAsm);
   StmtResult ParseMicrosoftAsmStatement(SourceLocation AsmLoc);
-  bool ParseMicrosoftIfExistsCondition(bool& Result);
+  
+  /// \brief Describes the behavior that should be taken for an __if_exists
+  /// block.
+  enum IfExistsBehavior {
+    /// \brief Parse the block; this code is always used.
+    IEB_Parse,
+    /// \brief Skip the block entirely; this code is never used.
+    IEB_Skip,
+    /// \brief Parse the block as a dependent block, which may be used in
+    /// some template instantiations but not others.
+    IEB_Dependent
+  };
+  
+  /// \brief Describes the condition of a Microsoft __if_exists or 
+  /// __if_not_exists block.
+  struct IfExistsCondition {
+    /// \brief The location of the initial keyword.
+    SourceLocation KeywordLoc;
+    /// \brief Whether this is an __if_exists block (rather than an 
+    /// __if_not_exists block).
+    bool IsIfExists;
+    
+    /// \brief Nested-name-specifier preceding the name.
+    CXXScopeSpec SS;
+    
+    /// \brief The name we're looking for.
+    UnqualifiedId Name;
+
+    /// \brief The behavior of this __if_exists or __if_not_exists block
+    /// should.
+    IfExistsBehavior Behavior;
+};
+  
+  bool ParseMicrosoftIfExistsCondition(IfExistsCondition& Result);
   void ParseMicrosoftIfExistsStatement(StmtVector &Stmts);
   void ParseMicrosoftIfExistsExternalDeclaration();
   void ParseMicrosoftIfExistsClassDeclaration(DeclSpec::TST TagType,
