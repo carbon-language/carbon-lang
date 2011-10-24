@@ -151,12 +151,13 @@ class AbbreviationsTestCase(TestBase):
         self.expect("i d symt",
                     patterns = ["Dumping symbol table for [0-9]+ modules."])
 
-        self.expect("i li",
-                    substrs = [ 'a.out',
-                                '/usr/lib/dyld',
-                                '/usr/lib/libstdc++',
-                                '/usr/lib/libSystem.B.dylib',
-                                '/usr/lib/system/libmathCommon.A.dylib'])
+        if sys.platform.startswith("darwin"):
+            self.expect("i li",
+                        substrs = [ 'a.out',
+                                    '/usr/lib/dyld',
+                                    '/usr/lib/libstdc++',
+                                    '/usr/lib/libSystem.B.dylib',
+                                    '/usr/lib/system/libmathCommon.A.dylib'])
 
 
 if __name__ == '__main__':

@@ -1736,7 +1736,13 @@ Target::RunStopHooks ()
                 }
                 if (print_hook_header && !any_thread_matched)
                 {
-                    result.AppendMessageWithFormat("\n- Hook %llu\n", cur_hook_sp->GetID());
+                    const char *cmd = (cur_hook_sp->GetCommands().GetSize() == 1 ?
+                                       cur_hook_sp->GetCommands().GetStringAtIndex(0) :
+                                       NULL);
+                    if (cmd)
+                        result.AppendMessageWithFormat("\n- Hook %llu (%s)\n", cur_hook_sp->GetID(), cmd);
+                    else
+                        result.AppendMessageWithFormat("\n- Hook %llu\n", cur_hook_sp->GetID());
                     any_thread_matched = true;
                 }
                 
