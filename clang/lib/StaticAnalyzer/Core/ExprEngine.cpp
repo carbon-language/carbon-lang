@@ -1297,7 +1297,7 @@ void ExprEngine::evalBind(ExplodedNodeSet &Dst, const Stmt *StoreE,
   getCheckerManager().runCheckersForBind(CheckedSet, Pred, location, Val,
                                          StoreE, *this);
 
-  // TODO: Remove TmpDst after NB refactoring is done.                                        
+  // TODO:AZ Remove TmpDst after NB refactoring is done.
   ExplodedNodeSet TmpDst;
   Builder->takeNodes(CheckedSet);
   PureStmtNodeBuilder Bldr(CheckedSet, TmpDst, *currentBuilderContext);

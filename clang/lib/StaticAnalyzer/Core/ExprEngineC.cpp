@@ -302,6 +302,9 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
 void ExprEngine::VisitCompoundLiteralExpr(const CompoundLiteralExpr *CL,
                                           ExplodedNode *Pred,
                                           ExplodedNodeSet &Dst) {
+  PureStmtNodeBuilder B(Pred, Dst, *currentBuilderContext);
+  Builder->takeNodes(Pred);
+
   const InitListExpr *ILE 
     = cast<InitListExpr>(CL->getInitializer()->IgnoreParens());
   
@@ -311,9 +314,10 @@ void ExprEngine::VisitCompoundLiteralExpr(const CompoundLiteralExpr *CL,
   state = state->bindCompoundLiteral(CL, LC, ILV);
   
   if (CL->isLValue())
-    MakeNode(Dst, CL, Pred, state->BindExpr(CL, state->getLValue(CL, LC)));
+    B.generateNode(CL, Pred, state->BindExpr(CL, state->getLValue(CL, LC)));
   else
-    MakeNode(Dst, CL, Pred, state->BindExpr(CL, ILV));
+    B.generateNode(CL, Pred, state->BindExpr(CL, ILV));
+  Builder->addNodes(Dst);
 }
 
 void ExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
@@ -333,8 +337,9 @@ void ExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
   ExplodedNodeSet dstPreVisit;
   getCheckerManager().runCheckersForPreStmt(dstPreVisit, Pred, DS, *this);
   
+  PureStmtNodeBuilder B(dstPreVisit, Dst, *currentBuilderContext);
+  Builder->takeNodes(dstPreVisit);
   const VarDecl *VD = dyn_cast<VarDecl>(D);
-  
   for (ExplodedNodeSet::iterator I = dstPreVisit.begin(), E = dstPreVisit.end();
        I!=E; ++I) {
     ExplodedNode *N = *I;
@@ -362,13 +367,15 @@ void ExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
         InitVal = svalBuilder.getConjuredSymbolVal(NULL, InitEx,
                                                    Builder->getCurrentBlockCount());
       }
-      
+      B.takeNodes(N);
       evalBind(Dst, DS, N, state->getLValue(VD, LC), InitVal, true);
+      B.addNodes(Dst);
     }
     else {
-      MakeNode(Dst, DS, N, state->bindDeclWithNoInit(state->getRegion(VD, LC)));
+      B.generateNode(DS, N,state->bindDeclWithNoInit(state->getRegion(VD, LC)));
     }
   }
+  Builder->addNodes(Dst);
 }
 
 void ExprEngine::VisitLogicalExpr(const BinaryOperator* B, ExplodedNode *Pred,

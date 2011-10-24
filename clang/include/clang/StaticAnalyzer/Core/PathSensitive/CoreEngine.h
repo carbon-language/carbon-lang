@@ -283,6 +283,24 @@ public:
                     C.ContextPred->getLocationContext()->getCurrentStackFrame(),
                     C.Block->getBlockID());
   }
+
+  void takeNodes(const ExplodedNodeSet &S) {
+    for (ExplodedNodeSet::iterator I = S.begin(), E = S.end(); I != E; ++I )
+      Frontier.erase(*I);
+  }
+
+  void takeNodes(ExplodedNode *N) {
+    Frontier.erase(N);
+  }
+
+  void addNodes(const ExplodedNodeSet &S) {
+    Frontier.insert(S);
+  }
+
+  void addNodes(ExplodedNode *N) {
+    Frontier.Add(N);
+  }
+
 };
 
 class CommonNodeBuilder {
@@ -402,23 +420,6 @@ public:
     ExplodedNode *N = MakeNode(Dst, S, Pred, St);
     BuildSinks = Tmp;
     return N;
-  }
-
-  void takeNodes(const ExplodedNodeSet &S) {
-    for (ExplodedNodeSet::iterator I = S.begin(), E = S.end(); I != E; ++I )
-      Frontier.erase(*I);
-  }
-
-  void takeNodes(ExplodedNode *N) {
-    Frontier.erase(N);
-  }
-
-  void addNodes(const ExplodedNodeSet &S) {
-    Frontier.insert(S);
-  }
-
-  void addNodes(ExplodedNode *N) {
-    Frontier.Add(N);
   }
 };
 
