@@ -2617,7 +2617,9 @@ public:
         
         CommandOptions (CommandInterpreter &interpreter) :
             Options(interpreter),
-            m_format_array()
+            m_use_global_module_list (false),
+            m_format_array(),
+            m_module_addr (LLDB_INVALID_ADDRESS)
         {
         }
         
@@ -2633,6 +2635,16 @@ public:
             if (short_option == 'g')
             {
                 m_use_global_module_list = true;
+            }
+            else if (short_option == 'a')
+            {
+                bool success;
+                m_module_addr = Args::StringToAddress(option_arg, LLDB_INVALID_ADDRESS, &success);
+                if (!success)
+                {
+                    Error error;
+                    error.SetErrorStringWithFormat("Invalid address: \"%s\".", option_arg);
+                }
             }
             else
             {
@@ -2650,6 +2662,7 @@ public:
         {
             m_format_array.clear();
             m_use_global_module_list = false;
+            m_module_addr = LLDB_INVALID_ADDRESS;
         }
         
         const OptionDefinition*
@@ -2666,6 +2679,7 @@ public:
         typedef std::vector< std::pair<char, uint32_t> > FormatWidthCollection;
         FormatWidthCollection m_format_array;
         bool m_use_global_module_list;
+        lldb::addr_t m_module_addr;
     };
     
     CommandObjectTargetModulesList (CommandInterpreter &interpreter) :
@@ -2712,6 +2726,42 @@ public:
             // Dump all sections for all modules images
             uint32_t num_modules = 0;
             Mutex::Locker locker;
+            
+            Stream &strm = result.GetOutputStream();
+            
+            if (m_options.m_module_addr != LLDB_INVALID_ADDRESS)
+            {
+                if (target)
+                {
+                    Address module_address;
+                    if (module_address.SetLoadAddress(m_options.m_module_addr, target))
+                    {
+                        Module *module = module_address.GetModule();
+                        if (module)
+                        {
+                            PrintModule (strm, module);
+                            result.SetStatus (eReturnStatusSuccessFinishResult);
+                        }
+                        else
+                        {
+                            result.AppendError ("Couldn't find module matching address: 0x%llx.", m_options.m_module_addr);
+                            result.SetStatus (eReturnStatusFailed);
+                        }
+                    }
+                    else
+                    {
+                        result.AppendError ("Couldn't find module containing address: 0x%llx.", m_options.m_module_addr);
+                        result.SetStatus (eReturnStatusFailed);
+                    }
+                }
+                else
+                {
+                    result.AppendError ("Can only look up modules by address with a valid target.");
+                    result.SetStatus (eReturnStatusFailed);
+                }
+                return result.Succeeded();
+            }
+            
             if (use_global_module_list)
             {
                 locker.Reset (Module::GetAllocationModuleCollectionMutex().GetMutex());
@@ -2721,9 +2771,7 @@ public:
                 num_modules = target->GetImages().GetSize();
 
             if (num_modules > 0)
-            {
-                Stream &strm = result.GetOutputStream();
-                
+            {                
                 for (uint32_t image_idx = 0; image_idx<num_modules; ++image_idx)
                 {
                     ModuleSP module_sp;
@@ -2738,109 +2786,10 @@ public:
                         module_sp = target->GetImages().GetModuleAtIndex(image_idx);
                         module = module_sp.get();
                     }
-
+                    
                     strm.Printf("[%3u] ", image_idx);
+                    PrintModule (strm, module);
 
-                    bool dump_object_name = false;
-                    if (m_options.m_format_array.empty())
-                    {
-                        DumpFullpath(strm, &module->GetFileSpec(), 0);
-                        dump_object_name = true;
-                    }
-                    else
-                    {
-                        const size_t num_entries = m_options.m_format_array.size();
-                        for (size_t i=0; i<num_entries; ++i)
-                        {
-                            if (i > 0)
-                                strm.PutChar(' ');
-                            char format_char = m_options.m_format_array[i].first;
-                            uint32_t width = m_options.m_format_array[i].second;
-                            switch (format_char)
-                            {
-                                case 'a':
-                                    DumpModuleArchitecture (strm, module, false, width);
-                                    break;
-                                    
-                                case 't':
-                                    DumpModuleArchitecture (strm, module, true, width);
-                                    break;
-                                    
-                                case 'f':
-                                    DumpFullpath (strm, &module->GetFileSpec(), width);
-                                    dump_object_name = true;
-                                    break;
-                                    
-                                case 'd':
-                                    DumpDirectory (strm, &module->GetFileSpec(), width);
-                                    break;
-                                    
-                                case 'b':
-                                    DumpBasename (strm, &module->GetFileSpec(), width);
-                                    dump_object_name = true;
-                                    break;
-                                    
-                                case 'r':
-                                    {
-                                        uint32_t ref_count = 0;
-                                        if (module_sp)
-                                        {
-                                            // Take one away to make sure we don't count our local "module_sp"
-                                            ref_count = module_sp.use_count() - 1;
-                                        }
-                                        if (width)
-                                            strm.Printf("{%*u}", width, ref_count);
-                                        else
-                                            strm.Printf("{%u}", ref_count);
-                                    }
-                                    break;
-
-                                case 's':
-                                case 'S':
-                                    {
-                                        SymbolVendor *symbol_vendor = module->GetSymbolVendor();
-                                        if (symbol_vendor)
-                                        {
-                                            SymbolFile *symbol_file = symbol_vendor->GetSymbolFile();
-                                            if (symbol_file)
-                                            {
-                                                if (format_char == 'S')
-                                                    DumpBasename(strm, &symbol_file->GetObjectFile()->GetFileSpec(), width);
-                                                else
-                                                    DumpFullpath (strm, &symbol_file->GetObjectFile()->GetFileSpec(), width);
-                                                dump_object_name = true;
-                                                break;
-                                            }
-                                        }
-                                        strm.Printf("%.*s", width, "<NONE>");
-                                    }
-                                    break;
-                                    
-                                case 'm':
-                                    module->GetModificationTime().Dump(&strm, width);
-                                    break;
-
-                                case 'p':
-                                    strm.Printf("%p", module);
-                                    break;
-
-                                case 'u':
-                                    DumpModuleUUID(strm, module);
-                                    break;
-                                    
-                                default:
-                                    break;
-                            }
-                            
-                        }
-                    }
-                    if (dump_object_name)
-                    {
-                        const char *object_name = module->GetObjectName().GetCString();
-                        if (object_name)
-                            strm.Printf ("(%s)", object_name);
-                    }
-                    strm.EOL();
                 }
                 result.SetStatus (eReturnStatusSuccessFinishResult);
             }
@@ -2857,14 +2806,122 @@ public:
         return result.Succeeded();
     }
 protected:
-    
+
+    void
+    PrintModule (Stream &strm, Module *module)
+    {
+
+        bool dump_object_name = false;
+        if (m_options.m_format_array.empty())
+        {
+            DumpFullpath(strm, &module->GetFileSpec(), 0);
+            dump_object_name = true;
+        }
+        else
+        {
+            const size_t num_entries = m_options.m_format_array.size();
+            for (size_t i=0; i<num_entries; ++i)
+            {
+                if (i > 0)
+                    strm.PutChar(' ');
+                char format_char = m_options.m_format_array[i].first;
+                uint32_t width = m_options.m_format_array[i].second;
+                switch (format_char)
+                {
+                    case 'A':
+                        DumpModuleArchitecture (strm, module, false, width);
+                        break;
+                        
+                    case 't':
+                        DumpModuleArchitecture (strm, module, true, width);
+                        break;
+                        
+                    case 'f':
+                        DumpFullpath (strm, &module->GetFileSpec(), width);
+                        dump_object_name = true;
+                        break;
+                        
+                    case 'd':
+                        DumpDirectory (strm, &module->GetFileSpec(), width);
+                        break;
+                        
+                    case 'b':
+                        DumpBasename (strm, &module->GetFileSpec(), width);
+                        dump_object_name = true;
+                        break;
+                        
+                    case 'r':
+                        {
+                            uint32_t ref_count = 0;
+                            ModuleSP module_sp (module);
+                            if (module_sp)
+                            {
+                                // Take one away to make sure we don't count our local "module_sp"
+                                ref_count = module_sp.use_count() - 1;
+                            }
+                            if (width)
+                                strm.Printf("{%*u}", width, ref_count);
+                            else
+                                strm.Printf("{%u}", ref_count);
+                        }
+                        break;
+
+                    case 's':
+                    case 'S':
+                        {
+                            SymbolVendor *symbol_vendor = module->GetSymbolVendor();
+                            if (symbol_vendor)
+                            {
+                                SymbolFile *symbol_file = symbol_vendor->GetSymbolFile();
+                                if (symbol_file)
+                                {
+                                    if (format_char == 'S')
+                                        DumpBasename(strm, &symbol_file->GetObjectFile()->GetFileSpec(), width);
+                                    else
+                                        DumpFullpath (strm, &symbol_file->GetObjectFile()->GetFileSpec(), width);
+                                    dump_object_name = true;
+                                    break;
+                                }
+                            }
+                            strm.Printf("%.*s", width, "<NONE>");
+                        }
+                        break;
+                        
+                    case 'm':
+                        module->GetModificationTime().Dump(&strm, width);
+                        break;
+
+                    case 'p':
+                        strm.Printf("%p", module);
+                        break;
+
+                    case 'u':
+                        DumpModuleUUID(strm, module);
+                        break;
+                        
+                    default:
+                        break;
+                }
+                
+            }
+            if (dump_object_name)
+            {
+                const char *object_name = module->GetObjectName().GetCString();
+                if (object_name)
+                    strm.Printf ("(%s)", object_name);
+            }
+        }
+        strm.EOL();
+    }
+        
     CommandOptions m_options;
 };
 
 OptionDefinition
 CommandObjectTargetModulesList::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_1, false, "arch",       'a', optional_argument, NULL, 0, eArgTypeWidth,   "Display the architecture when listing images."},
+    { LLDB_OPT_SET_1, false, "address",    'a', required_argument, NULL, 0, eArgTypeAddress, "Display the image at this address."},
+    { LLDB_OPT_SET_1, false, "arch",       'A', optional_argument, NULL, 0, eArgTypeWidth,   "Display the architecture when listing images."},
     { LLDB_OPT_SET_1, false, "triple",     't', optional_argument, NULL, 0, eArgTypeWidth,   "Display the triple when listing images."},
     { LLDB_OPT_SET_1, false, "uuid",       'u', no_argument,       NULL, 0, eArgTypeNone,    "Display the UUID when listing images."},
     { LLDB_OPT_SET_1, false, "fullpath",   'f', optional_argument, NULL, 0, eArgTypeWidth,   "Display the fullpath to the image object file."},
