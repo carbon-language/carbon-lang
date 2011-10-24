@@ -10,15 +10,11 @@ entry:
 ; CHECK-EL:  .cfi_def_cfa_offset
 ; CHECK-EL:  sdc1 $f20
 ; CHECK-EL:  sw  $ra
-; CHECK-EL:  sw  $17
-; CHECK-EL:  sw  $16
 ; CHECK-EL:  .cfi_offset 52, -8
 ; CHECK-EL:  .cfi_offset 53, -4
 ; CHECK-EB:  .cfi_offset 53, -8
 ; CHECK-EB:  .cfi_offset 52, -4
 ; CHECK-EL:  .cfi_offset 31, -12
-; CHECK-EL:  .cfi_offset 17, -16
-; CHECK-EL:  .cfi_offset 16, -20
 ; CHECK-EL:  .cprestore 
 
   %exception = tail call i8* @__cxa_allocate_exception(i32 8) nounwind

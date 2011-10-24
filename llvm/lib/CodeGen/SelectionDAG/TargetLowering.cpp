@@ -610,7 +610,7 @@ TargetLowering::TargetLowering(const TargetMachine &tm,
   ExceptionSelectorRegister = 0;
   BooleanContents = UndefinedBooleanContent;
   BooleanVectorContents = UndefinedBooleanContent;
-  SchedPreferenceInfo = Sched::Latency;
+  SchedPreferenceInfo = Sched::ILP;
   JumpBufSize = 0;
   JumpBufAlignment = 0;
   MinFunctionAlignment = 0;

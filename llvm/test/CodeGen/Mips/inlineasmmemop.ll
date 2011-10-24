@@ -8,10 +8,10 @@ entry:
 ; CHECK: #APP
 ; CHECK: sw $4, 0($[[T0]])
 ; CHECK: #NO_APP
-; CHECK: lw  $[[T1:[0-9]+]], %got(g1)($gp)
 ; CHECK: #APP
 ; CHECK: lw $[[T3:[0-9]+]], 0($[[T0]])
 ; CHECK: #NO_APP
+; CHECK: lw  $[[T1:[0-9]+]], %got(g1)($gp)
 ; CHECK: sw  $[[T3]], 0($[[T1]])
 
   %l1 = alloca i32, align 4

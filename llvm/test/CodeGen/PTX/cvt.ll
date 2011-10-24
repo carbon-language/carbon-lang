@@ -172,9 +172,9 @@ define ptx_device i64 @cvt_i64_f64(double %x) {
 ; f32
 
 define ptx_device float @cvt_f32_preds(i1 %x) {
-; CHECK: mov.b32 %f0, 1065353216;
-; CHECK: mov.b32 %f1, 0;
-; CHECK: selp.f32 %ret{{[0-9]+}}, %f0, %f1, %p{{[0-9]+}};
+; CHECK: mov.b32 %f0, 0;
+; CHECK: mov.b32 %f1, 1065353216;
+; CHECK: selp.f32 %ret{{[0-9]+}}, %f1, %f0, %p{{[0-9]+}};
 ; CHECK: ret;
 	%a = uitofp i1 %x to float
 	ret float %a
@@ -232,9 +232,9 @@ define ptx_device float @cvt_f32_s64(i64 %x) {
 ; f64
 
 define ptx_device double @cvt_f64_preds(i1 %x) {
-; CHECK: mov.b64 %fd0, 4575657221408423936;
-; CHECK: mov.b64 %fd1, 0;
-; CHECK: selp.f64 %ret{{[0-9]+}}, %fd0, %fd1, %p{{[0-9]+}};
+; CHECK: mov.b64 %fd0, 0;
+; CHECK: mov.b64 %fd1, 4575657221408423936;
+; CHECK: selp.f64 %ret{{[0-9]+}}, %fd1, %fd0, %p{{[0-9]+}};
 ; CHECK: ret;
 	%a = uitofp i1 %x to double
 	ret double %a

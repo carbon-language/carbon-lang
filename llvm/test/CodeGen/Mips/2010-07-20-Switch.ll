@@ -6,8 +6,8 @@ entry:
   volatile store i32 2, i32* %x, align 4
   %0 = volatile load i32* %x, align 4             ; <i32> [#uses=1]
 ; CHECK: lui $3, %hi($JTI0_0)
-; CHECK: sll $2, $2, 2
 ; CHECK: addiu $3, $3, %lo($JTI0_0)
+; CHECK: sll $2, $2, 2
   switch i32 %0, label %bb4 [
     i32 0, label %bb5
     i32 1, label %bb1

@@ -13,14 +13,14 @@ define i8 @test_i8(i8 %a, i8 %b) {
     ; FUN-NOT:    idiv
     ; FUN:        brlid
     ; DIV-NOT:    brlid
-    ; DIV:        idivu
+    ; DIV:        idiv
 
     %tmp.2 = sdiv i8 %a, %b
     ; FUN-NOT:    idiv
     ; FUN:        brlid
     ; DIV-NOT:    brlid
-    ; DIV-NOT:    idivu
-    ; DIV:        idiv
+    ; DIV-NOT:    idiv
+    ; DIV:        idivu
 
     %tmp.3 = add i8 %tmp.1, %tmp.2
     ret i8 %tmp.3
@@ -36,14 +36,14 @@ define i16 @test_i16(i16 %a, i16 %b) {
     ; FUN-NOT:    idiv
     ; FUN:        brlid
     ; DIV-NOT:    brlid
-    ; DIV:        idivu
+    ; DIV:        idiv
 
     %tmp.2 = sdiv i16 %a, %b
     ; FUN-NOT:    idiv
     ; FUN:        brlid
     ; DIV-NOT:    brlid
-    ; DIV-NOT:    idivu
-    ; DIV:        idiv
+    ; DIV-NOT:    idiv
+    ; DIV:        idivu
 
     %tmp.3 = add i16 %tmp.1, %tmp.2
     ret i16 %tmp.3
@@ -59,14 +59,14 @@ define i32 @test_i32(i32 %a, i32 %b) {
     ; FUN-NOT:    idiv
     ; FUN:        brlid
     ; DIV-NOT:    brlid
-    ; DIV:        idivu
+    ; DIV:        idiv
 
     %tmp.2 = sdiv i32 %a, %b
     ; FUN-NOT:    idiv
     ; FUN:        brlid
     ; DIV-NOT:    brlid
-    ; DIV-NOT:    idivu
-    ; DIV:        idiv
+    ; DIV-NOT:    idiv
+    ; DIV:        idivu
 
     %tmp.3 = add i32 %tmp.1, %tmp.2
     ret i32 %tmp.3

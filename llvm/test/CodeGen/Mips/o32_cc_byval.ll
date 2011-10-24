@@ -12,20 +12,20 @@ define void @f1() nounwind {
 entry:
 ; CHECK: lw  $[[R1:[0-9]+]], %got(f1.s1)($gp)
 ; CHECK: addiu $[[R0:[0-9]+]], $[[R1]], %lo(f1.s1)
-; CHECK: lw  $[[R2:[0-9]+]], 8($[[R0]])
-; CHECK: lw  $[[R7:[0-9]+]], 12($[[R0]])
-; CHECK: lw  $[[R3:[0-9]+]], 16($[[R0]])
-; CHECK: lw  $[[R4:[0-9]+]], 20($[[R0]])
-; CHECK: lw  $[[R5:[0-9]+]], 24($[[R0]])
 ; CHECK: lw  $[[R6:[0-9]+]], 28($[[R0]])
-; CHECK: sw  $[[R2]], 16($sp)
-; CHECK: sw  $[[R7]], 20($sp)
-; CHECK: sw  $[[R3]], 24($sp)
-; CHECK: sw  $[[R4]], 28($sp)
-; CHECK: sw  $[[R5]], 32($sp)
+; CHECK: lw  $[[R5:[0-9]+]], 24($[[R0]])
+; CHECK: lw  $[[R4:[0-9]+]], 20($[[R0]])
+; CHECK: lw  $[[R3:[0-9]+]], 16($[[R0]])
+; CHECK: lw  $[[R7:[0-9]+]], 12($[[R0]])
+; CHECK: lw  $[[R2:[0-9]+]], 8($[[R0]])
 ; CHECK: sw  $[[R6]], 36($sp)
-; CHECK: lw  $6, %lo(f1.s1)($[[R1]])
+; CHECK: sw  $[[R5]], 32($sp)
+; CHECK: sw  $[[R4]], 28($sp)
+; CHECK: sw  $[[R3]], 24($sp)
+; CHECK: sw  $[[R7]], 20($sp)
+; CHECK: sw  $[[R2]], 16($sp)
 ; CHECK: lw  $7, 4($[[R0]])
+; CHECK: lw  $6, %lo(f1.s1)($[[R1]])
   %agg.tmp10 = alloca %struct.S3, align 4
   call void @callee1(float 2.000000e+01, %struct.S1* byval bitcast (%0* @f1.s1 to %struct.S1*)) nounwind
   call void @callee2(%struct.S2* byval @f1.s2) nounwind
@@ -44,20 +44,20 @@ declare void @callee3(float, %struct.S3* byval, %struct.S1* byval)
 define void @f2(float %f, %struct.S1* nocapture byval %s1) nounwind {
 entry:
 ; CHECK: addiu $sp, $sp, -56
-; CHECK: sw  $6, 64($sp)
 ; CHECK: sw  $7, 68($sp)
+; CHECK: sw  $6, 64($sp)
+; CHECK: lw  $4, 88($sp)
 ; CHECK: ldc1 $f[[F0:[0-9]+]], 80($sp)
+; CHECK: lw  $[[R3:[0-9]+]], 72($sp)
+; CHECK: lw  $[[R4:[0-9]+]], 76($sp)
 ; CHECK: lw  $[[R2:[0-9]+]], 68($sp)
 ; CHECK: lh  $[[R1:[0-9]+]], 66($sp)
 ; CHECK: lb  $[[R0:[0-9]+]], 64($sp)
-; CHECK: lw  $[[R3:[0-9]+]], 72($sp)
-; CHECK: lw  $[[R4:[0-9]+]], 76($sp)
-; CHECK: lw  $4, 88($sp)
-; CHECK: sw  $[[R3]], 16($sp)
-; CHECK: sw  $[[R4]], 20($sp)
-; CHECK: sw  $[[R2]], 24($sp)
-; CHECK: sw  $[[R1]], 28($sp)
 ; CHECK: sw  $[[R0]], 32($sp)
+; CHECK: sw  $[[R1]], 28($sp)
+; CHECK: sw  $[[R2]], 24($sp)
+; CHECK: sw  $[[R4]], 20($sp)
+; CHECK: sw  $[[R3]], 16($sp)
 ; CHECK: mfc1 $6, $f[[F0]]
 
   %i2 = getelementptr inbounds %struct.S1* %s1, i32 0, i32 5
@@ -81,12 +81,12 @@ declare void @callee4(i32, double, i64, i32, i16 signext, i8 signext, float)
 define void @f3(%struct.S2* nocapture byval %s2) nounwind {
 entry:
 ; CHECK: addiu $sp, $sp, -56
-; CHECK: sw  $4, 56($sp)
-; CHECK: sw  $5, 60($sp)
-; CHECK: sw  $6, 64($sp)
 ; CHECK: sw  $7, 68($sp)
-; CHECK: lw  $[[R0:[0-9]+]], 68($sp)
+; CHECK: sw  $6, 64($sp)
+; CHECK: sw  $5, 60($sp)
+; CHECK: sw  $4, 56($sp)
 ; CHECK: lw  $4, 56($sp)
+; CHECK: lw  $[[R0:[0-9]+]], 68($sp)
 ; CHECK: sw  $[[R0]], 24($sp)
 
   %arrayidx = getelementptr inbounds %struct.S2* %s2, i32 0, i32 0, i32 0
@@ -100,14 +100,14 @@ entry:
 define void @f4(float %f, %struct.S3* nocapture byval %s3, %struct.S1* nocapture byval %s1) nounwind {
 entry:
 ; CHECK: addiu $sp, $sp, -56
-; CHECK: sw  $5, 60($sp)
-; CHECK: sw  $6, 64($sp)
 ; CHECK: sw  $7, 68($sp)
+; CHECK: sw  $6, 64($sp)
+; CHECK: sw  $5, 60($sp)
+; CHECK: lw  $4, 68($sp)
 ; CHECK: lw  $[[R1:[0-9]+]], 88($sp)
 ; CHECK: lb  $[[R0:[0-9]+]], 60($sp)
-; CHECK: lw  $4, 68($sp)
-; CHECK: sw  $[[R1]], 24($sp)
 ; CHECK: sw  $[[R0]], 32($sp)
+; CHECK: sw  $[[R1]], 24($sp)
 
   %i = getelementptr inbounds %struct.S1* %s1, i32 0, i32 2
   %tmp = load i32* %i, align 4, !tbaa !0

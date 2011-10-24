@@ -47,8 +47,8 @@ L2:                                               ; preds = %L3, %bb2
 
 L1:                                               ; preds = %L2, %bb2
   %res.3 = phi i32 [ %phitmp, %L2 ], [ 2, %bb2 ]  ; <i32> [#uses=1]
-; PIC: addis r[[R0:[0-9]+]], r{{[0-9]+}}, ha16(Ltmp0-L0$pb)
 ; PIC: li r[[R1:[0-9]+]], lo16(Ltmp0-L0$pb)
+; PIC: addis r[[R0:[0-9]+]], r{{[0-9]+}}, ha16(Ltmp0-L0$pb)
 ; PIC: add r[[R2:[0-9]+]], r[[R0]], r[[R1]]
 ; PIC: stw r[[R2]]
 ; STATIC: li r[[R0:[0-9]+]], lo16(Ltmp0)
