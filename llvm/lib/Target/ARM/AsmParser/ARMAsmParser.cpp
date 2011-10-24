@@ -198,6 +198,10 @@ class ARMAsmParser : public MCTargetAsmParser {
                                   const SmallVectorImpl<MCParsedAsmOperand*> &);
   bool cvtThumbMultiply(MCInst &Inst, unsigned Opcode,
                         const SmallVectorImpl<MCParsedAsmOperand*> &);
+  bool cvtVLDwbFixed(MCInst &Inst, unsigned Opcode,
+                     const SmallVectorImpl<MCParsedAsmOperand*> &);
+  bool cvtVLDwbRegister(MCInst &Inst, unsigned Opcode,
+                        const SmallVectorImpl<MCParsedAsmOperand*> &);
 
   bool validateInstruction(MCInst &Inst,
                            const SmallVectorImpl<MCParsedAsmOperand*> &Ops);
@@ -3323,6 +3327,36 @@ cvtThumbMultiply(MCInst &Inst, unsigned Opcode,
     Inst.addOperand(Inst.getOperand(0));
   ((ARMOperand*)Operands[2])->addCondCodeOperands(Inst, 2);
 
+  return true;
+}
+
+bool ARMAsmParser::
+cvtVLDwbFixed(MCInst &Inst, unsigned Opcode,
+              const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  // Vd
+  ((ARMOperand*)Operands[3])->addVecListTwoDOperands(Inst, 1);
+  // Create a writeback register dummy placeholder.
+  Inst.addOperand(MCOperand::CreateImm(0));
+  // Vn
+  ((ARMOperand*)Operands[4])->addAlignedMemoryOperands(Inst, 2);
+  // pred
+  ((ARMOperand*)Operands[1])->addCondCodeOperands(Inst, 2);
+  return true;
+}
+
+bool ARMAsmParser::
+cvtVLDwbRegister(MCInst &Inst, unsigned Opcode,
+                 const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  // Vd
+  ((ARMOperand*)Operands[3])->addVecListTwoDOperands(Inst, 1);
+  // Create a writeback register dummy placeholder.
+  Inst.addOperand(MCOperand::CreateImm(0));
+  // Vn
+  ((ARMOperand*)Operands[4])->addAlignedMemoryOperands(Inst, 2);
+  // Vm
+  ((ARMOperand*)Operands[5])->addRegOperands(Inst, 1);
+  // pred
+  ((ARMOperand*)Operands[1])->addCondCodeOperands(Inst, 2);
   return true;
 }
 
