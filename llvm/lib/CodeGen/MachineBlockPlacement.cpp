@@ -395,9 +395,8 @@ void MachineBlockPlacement::buildCFGChains(MachineFunction &F) {
 
 void MachineBlockPlacement::placeChainsTopologically(MachineFunction &F) {
   MachineBasicBlock *EntryB = &F.front();
-  BlockChain *EntryChain = BlockToChain[EntryB];
-  assert(EntryChain && "Missing chain for entry block");
-  assert(*EntryChain->begin() == EntryB &&
+  assert(BlockToChain[EntryB] && "Missing chain for entry block");
+  assert(*BlockToChain[EntryB]->begin() == EntryB &&
          "Entry block is not the head of the entry block chain");
 
   // Walk the blocks in RPO, and insert each block for a chain in order the
