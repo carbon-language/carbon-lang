@@ -47,10 +47,6 @@ class ExprEngine : public SubEngine {
   /// G - the simulation graph.
   ExplodedGraph& G;
 
-  /// Builder - The current StmtNodeBuilder which is used when building the
-  ///  nodes for a given statement.
-  StmtNodeBuilder* Builder;
-
   /// StateMgr - Object that manages the data for all created states.
   ProgramStateManager StateMgr;
 
@@ -118,7 +114,6 @@ public:
 
   BugReporter& getBugReporter() { return BR; }
 
-  StmtNodeBuilder &getBuilder() { assert(Builder); return *Builder; }
   const NodeBuilderContext &getBuilderContext() {
     assert(currentBuilderContext);
     return *currentBuilderContext;
@@ -155,11 +150,13 @@ public:
   void ProcessImplicitDtor(const CFGImplicitDtor D, ExplodedNode *Pred);
 
   void ProcessAutomaticObjDtor(const CFGAutomaticObjDtor D, 
-                               StmtNodeBuilder &builder, ExplodedNode *Pred);
-  void ProcessBaseDtor(const CFGBaseDtor D, StmtNodeBuilder &builder);
-  void ProcessMemberDtor(const CFGMemberDtor D, StmtNodeBuilder &builder);
+                               ExplodedNode *Pred, ExplodedNodeSet &Dst);
+  void ProcessBaseDtor(const CFGBaseDtor D,
+                       ExplodedNode *Pred, ExplodedNodeSet &Dst);
+  void ProcessMemberDtor(const CFGMemberDtor D,
+                         ExplodedNode *Pred, ExplodedNodeSet &Dst);
   void ProcessTemporaryDtor(const CFGTemporaryDtor D, 
-                            StmtNodeBuilder &builder);
+                            ExplodedNode *Pred, ExplodedNodeSet &Dst);
 
   /// Called by CoreEngine when processing the entrance of a CFGBlock.
   virtual void processCFGBlockEntrance(ExplodedNodeSet &dstNodes,
@@ -243,11 +240,6 @@ public:
   const CoreEngine &getCoreEngine() const { return Engine; }
 
 public:
-  ExplodedNode *MakeNode(ExplodedNodeSet &Dst, const Stmt *S, 
-                         ExplodedNode *Pred, const ProgramState *St,
-                         ProgramPoint::Kind K = ProgramPoint::PostStmtKind,
-                         const ProgramPointTag *tag = 0);
-
   /// Visit - Transfer function logic for all statements.  Dispatches to
   ///  other functions that handle specific kinds of statements.
   void Visit(const Stmt *S, ExplodedNode *Pred, ExplodedNodeSet &Dst);

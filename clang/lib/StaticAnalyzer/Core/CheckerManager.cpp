@@ -479,7 +479,6 @@ void CheckerManager::runCheckersForEvalCall(ExplodedNodeSet &Dst,
     
     // If none of the checkers evaluated the call, ask ExprEngine to handle it.
     if (!anyEvaluated) {
-      Eng.getBuilder().addNodes(Pred);
       if (defaultEval)
         defaultEval->expandGraph(Dst, Pred);
       else

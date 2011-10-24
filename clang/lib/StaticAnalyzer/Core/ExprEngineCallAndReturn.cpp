@@ -146,7 +146,6 @@ ExprEngine::invalidateArguments(const ProgramState *State,
   //  to identify conjured symbols by an expression pair: the enclosing
   //  expression (the context) and the expression itself.  This should
   //  disambiguate conjured symbols.
-  assert(Builder && "Invalidating arguments outside of a statement context");
   unsigned Count = currentBuilderContext->getCurrentBlockCount();
   StoreManager::InvalidatedSymbols IS;
 
@@ -180,7 +179,7 @@ void ExprEngine::VisitCallExpr(const CallExpr *CE, ExplodedNode *Pred,
       }
 
       // First handle the return value.
-      PureStmtNodeBuilder Bldr(Pred, Dst, *Eng.currentBuilderContext, Eng.Builder);
+      PureStmtNodeBuilder Bldr(Pred, Dst, *Eng.currentBuilderContext);
 
       // Get the callee.
       const Expr *Callee = CE->getCallee()->IgnoreParens();
@@ -232,7 +231,7 @@ void ExprEngine::VisitReturnStmt(const ReturnStmt *RS, ExplodedNode *Pred,
                                  ExplodedNodeSet &Dst) {
   ExplodedNodeSet Src;
   {
-    PureStmtNodeBuilder Bldr(Pred, Src, *currentBuilderContext, Builder);
+    PureStmtNodeBuilder Bldr(Pred, Src, *currentBuilderContext);
     if (const Expr *RetE = RS->getRetValue()) {
       // Record the returned expression in the state. It will be used in
       // processCallExit to bind the return value to the call expr.

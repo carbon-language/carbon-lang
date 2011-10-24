@@ -57,7 +57,7 @@ void ExprEngine::VisitBinaryOperator(const BinaryOperator* B,
     }
       
     if (!B->isAssignmentOp()) {
-      PureStmtNodeBuilder Bldr(*it, Tmp2, *currentBuilderContext, Builder);
+      PureStmtNodeBuilder Bldr(*it, Tmp2, *currentBuilderContext);
       // Process non-assignments except commas or short-circuited
       // logical expressions (LAnd and LOr).
       SVal Result = evalBinOp(state, Op, LeftV, RightV, B->getType());      
@@ -198,7 +198,7 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
   if (const ExplicitCastExpr *ExCast=dyn_cast_or_null<ExplicitCastExpr>(CastE))
     T = ExCast->getTypeAsWritten();
   
-  PureStmtNodeBuilder Bldr(dstPreStmt, Dst, *currentBuilderContext, Builder);
+  PureStmtNodeBuilder Bldr(dstPreStmt, Dst, *currentBuilderContext);
   for (ExplodedNodeSet::iterator I = dstPreStmt.begin(), E = dstPreStmt.end();
        I != E; ++I) {
     
@@ -304,7 +304,7 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
 void ExprEngine::VisitCompoundLiteralExpr(const CompoundLiteralExpr *CL,
                                           ExplodedNode *Pred,
                                           ExplodedNodeSet &Dst) {
-  PureStmtNodeBuilder B(Pred, Dst, *currentBuilderContext, Builder);
+  PureStmtNodeBuilder B(Pred, Dst, *currentBuilderContext);
 
   const InitListExpr *ILE 
     = cast<InitListExpr>(CL->getInitializer()->IgnoreParens());
@@ -340,7 +340,7 @@ void ExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
   ExplodedNodeSet dstPreVisit;
   getCheckerManager().runCheckersForPreStmt(dstPreVisit, Pred, DS, *this);
   
-  PureStmtNodeBuilder B(dstPreVisit, Dst, *currentBuilderContext, Builder);
+  PureStmtNodeBuilder B(dstPreVisit, Dst, *currentBuilderContext);
   const VarDecl *VD = dyn_cast<VarDecl>(D);
   for (ExplodedNodeSet::iterator I = dstPreVisit.begin(), E = dstPreVisit.end();
        I!=E; ++I) {
@@ -384,7 +384,7 @@ void ExprEngine::VisitLogicalExpr(const BinaryOperator* B, ExplodedNode *Pred,
   assert(B->getOpcode() == BO_LAnd ||
          B->getOpcode() == BO_LOr);
 
-  PureStmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext, Builder);
+  PureStmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
   const ProgramState *state = Pred->getState();
   SVal X = state->getSVal(B);
   assert(X.isUndef());
@@ -430,7 +430,7 @@ void ExprEngine::VisitLogicalExpr(const BinaryOperator* B, ExplodedNode *Pred,
 void ExprEngine::VisitInitListExpr(const InitListExpr *IE,
                                    ExplodedNode *Pred,
                                    ExplodedNodeSet &Dst) {
-  PureStmtNodeBuilder B(Pred, Dst, *currentBuilderContext, Builder);
+  PureStmtNodeBuilder B(Pred, Dst, *currentBuilderContext);
 
   const ProgramState *state = Pred->getState();
   QualType T = getContext().getCanonicalType(IE->getType());
@@ -472,7 +472,7 @@ void ExprEngine::VisitGuardedExpr(const Expr *Ex,
                                   const Expr *R,
                                   ExplodedNode *Pred,
                                   ExplodedNodeSet &Dst) {
-  PureStmtNodeBuilder B(Pred, Dst, *currentBuilderContext, Builder);
+  PureStmtNodeBuilder B(Pred, Dst, *currentBuilderContext);
   
   const ProgramState *state = Pred->getState();
   SVal X = state->getSVal(Ex);  
@@ -488,7 +488,7 @@ void ExprEngine::VisitGuardedExpr(const Expr *Ex,
 void ExprEngine::
 VisitOffsetOfExpr(const OffsetOfExpr *OOE, 
                   ExplodedNode *Pred, ExplodedNodeSet &Dst) {
-  PureStmtNodeBuilder B(Pred, Dst, *currentBuilderContext, Builder);
+  PureStmtNodeBuilder B(Pred, Dst, *currentBuilderContext);
   Expr::EvalResult Res;
   if (OOE->Evaluate(Res, getContext()) && Res.Val.isInt()) {
     const APSInt &IV = Res.Val.getInt();
@@ -506,7 +506,7 @@ void ExprEngine::
 VisitUnaryExprOrTypeTraitExpr(const UnaryExprOrTypeTraitExpr *Ex,
                               ExplodedNode *Pred,
                               ExplodedNodeSet &Dst) {
-  PureStmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext, Builder);
+  PureStmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
 
   QualType T = Ex->getTypeOfArgument();
   
@@ -701,7 +701,7 @@ void ExprEngine::VisitIncrementDecrementOperator(const UnaryOperator* U,
     evalLoad(Tmp2, Ex, *I, state, loc);
     
     ExplodedNodeSet Dst2;
-    PureStmtNodeBuilder Bldr(Tmp2, Dst2, *currentBuilderContext, Builder);
+    PureStmtNodeBuilder Bldr(Tmp2, Dst2, *currentBuilderContext);
     for (ExplodedNodeSet::iterator I2=Tmp2.begin(), E2=Tmp2.end();I2!=E2;++I2) {
       
       state = (*I2)->getState();

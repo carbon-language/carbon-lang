@@ -56,7 +56,6 @@ ExprEngine::ExprEngine(AnalysisManager &mgr, bool gcEnabled)
     AnalysisDeclContexts(mgr.getAnalysisDeclContextManager()),
     Engine(*this),
     G(Engine.getGraph()),
-    Builder(NULL),
     StateMgr(getContext(), mgr.getStoreManagerCreator(),
              mgr.getConstraintManagerCreator(), G.getAllocator(),
              *this),
@@ -265,9 +264,6 @@ void ExprEngine::GenerateAutoTransition(ExplodedNode *N) {
 
 void ExprEngine::ProcessStmt(const CFGStmt S,
                              ExplodedNode *Pred) {
-  ExplodedNodeSet TopDst;
-  StmtNodeBuilder builder(Pred, TopDst, currentStmtIdx, *currentBuilderContext);
-  Builder = &builder;
   // TODO: Use RAII to remove the unnecessary, tagged nodes.
   //RegisterCreatedNodes registerCreatedNodes(getGraph());
 
@@ -366,31 +362,33 @@ void ExprEngine::ProcessStmt(const CFGStmt S,
   CleanedState = NULL;
   EntryNode = NULL;
   currentStmt = 0;
-  Builder = NULL;
 }
 
 void ExprEngine::ProcessInitializer(const CFGInitializer Init,
-                                    ExplodedNode *pred) {
+                                    ExplodedNode *Pred) {
   ExplodedNodeSet Dst;
-  StmtNodeBuilder Bldr(pred, Dst, currentStmtIdx, *currentBuilderContext);
 
   // We don't set EntryNode and currentStmt. And we don't clean up state.
   const CXXCtorInitializer *BMI = Init.getInitializer();
-  const StackFrameContext *stackFrame = cast<StackFrameContext>(pred->getLocationContext());
-  const CXXConstructorDecl *decl = cast<CXXConstructorDecl>(stackFrame->getDecl());
+  const StackFrameContext *stackFrame =
+                           cast<StackFrameContext>(Pred->getLocationContext());
+  const CXXConstructorDecl *decl =
+                           cast<CXXConstructorDecl>(stackFrame->getDecl());
   const CXXThisRegion *thisReg = getCXXThisRegion(decl, stackFrame);
 
-  SVal thisVal = pred->getState()->getSVal(thisReg);
+  SVal thisVal = Pred->getState()->getSVal(thisReg);
 
   if (BMI->isAnyMemberInitializer()) {
-    ExplodedNodeSet Dst;
+    ExplodedNodeSet AfterEval;
 
     // Evaluate the initializer.
-    Visit(BMI->getInit(), pred, Dst);
+    Visit(BMI->getInit(), Pred, AfterEval);
 
-    for (ExplodedNodeSet::iterator I = Dst.begin(), E = Dst.end(); I != E; ++I){
-      ExplodedNode *Pred = *I;
-      const ProgramState *state = Pred->getState();
+    PureStmtNodeBuilder Bldr(AfterEval, Dst, *currentBuilderContext);
+    for (ExplodedNodeSet::iterator I = AfterEval.begin(),
+                                   E = AfterEval.end(); I != E; ++I){
+      ExplodedNode *P = *I;
+      const ProgramState *state = P->getState();
 
       const FieldDecl *FD = BMI->getAnyMember();
 
@@ -402,26 +400,24 @@ void ExprEngine::ProcessInitializer(const CFGInitializer Init,
       PostInitializer PP(BMI, stackFrame);
       // Builder automatically add the generated node to the deferred set,
       // which are processed in the builder's dtor.
-      Bldr.generateNode(PP, state, Pred);
+      Bldr.generateNode(PP, P, state);
     }
-    return;
+  } else {
+    assert(BMI->isBaseInitializer());
+
+    // Get the base class declaration.
+    const CXXConstructExpr *ctorExpr = cast<CXXConstructExpr>(BMI->getInit());
+
+    // Create the base object region.
+    SVal baseVal =
+        getStoreManager().evalDerivedToBase(thisVal, ctorExpr->getType());
+    const MemRegion *baseReg = baseVal.getAsRegion();
+    assert(baseReg);
+
+    VisitCXXConstructExpr(ctorExpr, baseReg, Pred, Dst);
   }
-
-  assert(BMI->isBaseInitializer());
-
-  // Get the base class declaration.
-  const CXXConstructExpr *ctorExpr = cast<CXXConstructExpr>(BMI->getInit());
-
-  // Create the base object region.
-  SVal baseVal = 
-    getStoreManager().evalDerivedToBase(thisVal, ctorExpr->getType());
-  const MemRegion *baseReg = baseVal.getAsRegion();
-  assert(baseReg);
-  Builder = &Bldr;
-  ExplodedNodeSet dst;
-  VisitCXXConstructExpr(ctorExpr, baseReg, pred, dst);
-  for (ExplodedNodeSet::iterator I = dst.begin(),
-                                 E = dst.end(); I != E; ++I) {
+  for (ExplodedNodeSet::iterator I = Dst.begin(),
+                                 E = Dst.end(); I != E; ++I) {
       GenerateAutoTransition(*I);
   }
 }
@@ -429,22 +425,18 @@ void ExprEngine::ProcessInitializer(const CFGInitializer Init,
 void ExprEngine::ProcessImplicitDtor(const CFGImplicitDtor D,
                                      ExplodedNode *Pred) {
   ExplodedNodeSet Dst;
-  StmtNodeBuilder builder(Pred, Dst, currentStmtIdx, *currentBuilderContext);
-
-  Builder = &builder;
-
   switch (D.getKind()) {
   case CFGElement::AutomaticObjectDtor:
-    ProcessAutomaticObjDtor(cast<CFGAutomaticObjDtor>(D), builder, Pred);
+    ProcessAutomaticObjDtor(cast<CFGAutomaticObjDtor>(D), Pred, Dst);
     break;
   case CFGElement::BaseDtor:
-    ProcessBaseDtor(cast<CFGBaseDtor>(D), builder);
+    ProcessBaseDtor(cast<CFGBaseDtor>(D), Pred, Dst);
     break;
   case CFGElement::MemberDtor:
-    ProcessMemberDtor(cast<CFGMemberDtor>(D), builder);
+    ProcessMemberDtor(cast<CFGMemberDtor>(D), Pred, Dst);
     break;
   case CFGElement::TemporaryDtor:
-    ProcessTemporaryDtor(cast<CFGTemporaryDtor>(D), builder);
+    ProcessTemporaryDtor(cast<CFGTemporaryDtor>(D), Pred, Dst);
     break;
   default:
     llvm_unreachable("Unexpected dtor kind.");
@@ -456,11 +448,11 @@ void ExprEngine::ProcessImplicitDtor(const CFGImplicitDtor D,
   }
 }
 
-void ExprEngine::ProcessAutomaticObjDtor(const CFGAutomaticObjDtor dtor,
-                                         StmtNodeBuilder &builder,
-                                         ExplodedNode *pred) {
-  const ProgramState *state = pred->getState();
-  const VarDecl *varDecl = dtor.getVarDecl();
+void ExprEngine::ProcessAutomaticObjDtor(const CFGAutomaticObjDtor Dtor,
+                                         ExplodedNode *Pred,
+                                         ExplodedNodeSet &Dst) {
+  const ProgramState *state = Pred->getState();
+  const VarDecl *varDecl = Dtor.getVarDecl();
 
   QualType varType = varDecl->getType();
 
@@ -471,24 +463,21 @@ void ExprEngine::ProcessAutomaticObjDtor(const CFGAutomaticObjDtor dtor,
   assert(recordDecl && "get CXXRecordDecl fail");
   const CXXDestructorDecl *dtorDecl = recordDecl->getDestructor();
 
-  Loc dest = state->getLValue(varDecl, pred->getLocationContext());
+  Loc dest = state->getLValue(varDecl, Pred->getLocationContext());
 
-  ExplodedNodeSet dstSet;
   VisitCXXDestructor(dtorDecl, cast<loc::MemRegionVal>(dest).getRegion(),
-                     dtor.getTriggerStmt(), pred, dstSet);
+                     Dtor.getTriggerStmt(), Pred, Dst);
 }
 
 void ExprEngine::ProcessBaseDtor(const CFGBaseDtor D,
-                                   StmtNodeBuilder &builder) {
-}
+                                 ExplodedNode *Pred, ExplodedNodeSet &Dst) {}
 
 void ExprEngine::ProcessMemberDtor(const CFGMemberDtor D,
-                                     StmtNodeBuilder &builder) {
-}
+                                   ExplodedNode *Pred, ExplodedNodeSet &Dst) {}
 
 void ExprEngine::ProcessTemporaryDtor(const CFGTemporaryDtor D,
-                                        StmtNodeBuilder &builder) {
-}
+                                      ExplodedNode *Pred,
+                                      ExplodedNodeSet &Dst) {}
 
 void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred, 
                        ExplodedNodeSet &Dst) {
@@ -937,20 +926,6 @@ void ExprEngine::processCFGBlockEntrance(ExplodedNodeSet &dstNodes,
 }
 
 //===----------------------------------------------------------------------===//
-// Generic node creation.
-//===----------------------------------------------------------------------===//
-
-ExplodedNode *ExprEngine::MakeNode(ExplodedNodeSet &Dst, const Stmt *S,
-                                   ExplodedNode *Pred, const ProgramState *St,
-                                   ProgramPoint::Kind K,
-                                   const ProgramPointTag *tag) {
-  assert (Builder && "StmtNodeBuilder not present.");
-  SaveAndRestore<const ProgramPointTag*> OldTag(Builder->Tag);
-  Builder->Tag = tag;
-  return Builder->MakeNode(Dst, S, Pred, St, K);
-}
-
-//===----------------------------------------------------------------------===//
 // Branch processing.
 //===----------------------------------------------------------------------===//
 
@@ -1294,7 +1269,7 @@ void ExprEngine::processSwitch(SwitchNodeBuilder& builder) {
 void ExprEngine::VisitCommonDeclRefExpr(const Expr *Ex, const NamedDecl *D,
                                         ExplodedNode *Pred,
                                         ExplodedNodeSet &Dst) {
-  PureStmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext, Builder);
+  PureStmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
 
   const ProgramState *state = Pred->getState();
 
@@ -1343,7 +1318,7 @@ void ExprEngine::VisitLvalArraySubscriptExpr(const ArraySubscriptExpr *A,
   ExplodedNodeSet checkerPreStmt;
   getCheckerManager().runCheckersForPreStmt(checkerPreStmt, Pred, A, *this);
 
-  PureStmtNodeBuilder Bldr(checkerPreStmt, Dst, *currentBuilderContext, Builder);
+  PureStmtNodeBuilder Bldr(checkerPreStmt, Dst, *currentBuilderContext);
 
   for (ExplodedNodeSet::iterator it = checkerPreStmt.begin(),
                                  ei = checkerPreStmt.end(); it != ei; ++it) {
@@ -1360,7 +1335,7 @@ void ExprEngine::VisitLvalArraySubscriptExpr(const ArraySubscriptExpr *A,
 void ExprEngine::VisitMemberExpr(const MemberExpr *M, ExplodedNode *Pred,
                                  ExplodedNodeSet &Dst) {
 
-  PureStmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext, Builder);
+  PureStmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
   Decl *member = M->getMemberDecl();
   if (VarDecl *VD = dyn_cast<VarDecl>(member)) {
     assert(M->isLValue());
@@ -1451,9 +1426,6 @@ void ExprEngine::evalStore(ExplodedNodeSet &Dst, const Expr *AssignE,
                              ExplodedNode *Pred,
                              const ProgramState *state, SVal location, SVal Val,
                              const ProgramPointTag *tag) {
-
-  assert(Builder && "StmtNodeBuilder must be defined.");
-
   // Proceed with the store.  We use AssignE as the anchor for the PostStore
   // ProgramPoint if it is non-NULL, and LocationE otherwise.
   const Expr *StoreE = AssignE ? AssignE : LocationE;
@@ -1529,7 +1501,7 @@ void ExprEngine::evalLoadCommon(ExplodedNodeSet &Dst, const Expr *Ex,
   if (Tmp.empty())
     return;
 
-  PureStmtNodeBuilder Bldr(Tmp, Dst, *currentBuilderContext, Builder);
+  PureStmtNodeBuilder Bldr(Tmp, Dst, *currentBuilderContext);
   if (location.isUndef())
     return;
 
@@ -1556,7 +1528,7 @@ void ExprEngine::evalLocation(ExplodedNodeSet &Dst, const Stmt *S,
                                 ExplodedNode *Pred,
                                 const ProgramState *state, SVal location,
                                 const ProgramPointTag *tag, bool isLoad) {
-  PureStmtNodeBuilder BldrTop(Pred, Dst, *currentBuilderContext, Builder);
+  PureStmtNodeBuilder BldrTop(Pred, Dst, *currentBuilderContext);
   // Early checks for performance reason.
   if (location.isUnknown()) {
     return;
@@ -1633,7 +1605,7 @@ bool ExprEngine::InlineCall(ExplodedNodeSet &Dst, const CallExpr *CE,
     const StackFrameContext *stackFrame = 
       AMgr.getStackFrame(AMgr.getAnalysisDeclContext(FD), 
                          Pred->getLocationContext(),
-                         CE, Builder->getBlock(), Builder->getIndex());
+                         CE, currentBuilderContext->getBlock(), currentStmtIdx);
     // Now we have the definition of the callee, create a CallEnter node.
     CallEnter Loc(CE, stackFrame, Pred->getLocationContext());
 
@@ -1649,7 +1621,7 @@ bool ExprEngine::InlineCall(ExplodedNodeSet &Dst, const CallExpr *CE,
       return false;
     const StackFrameContext *stackFrame = 
       AMgr.getStackFrame(C, Pred->getLocationContext(),
-                         CE, Builder->getBlock(), Builder->getIndex());
+                         CE, currentBuilderContext->getBlock(), currentStmtIdx);
     CallEnter Loc(CE, stackFrame, Pred->getLocationContext());
     ExplodedNode *N = Builder->generateNode(Loc, state, Pred);
     Dst.Add(N);
@@ -1672,7 +1644,7 @@ ExprEngine::getEagerlyAssumeTags() {
 
 void ExprEngine::evalEagerlyAssume(ExplodedNodeSet &Dst, ExplodedNodeSet &Src,
                                      const Expr *Ex) {
-  PureStmtNodeBuilder Bldr(Src, Dst, *currentBuilderContext, Builder);
+  PureStmtNodeBuilder Bldr(Src, Dst, *currentBuilderContext);
   
   for (ExplodedNodeSet::iterator I=Src.begin(), E=Src.end(); I!=E; ++I) {
     ExplodedNode *Pred = *I;
@@ -1735,7 +1707,7 @@ void ExprEngine::VisitAsmStmtHelperInputs(const AsmStmt *A,
                                             ExplodedNode *Pred,
                                             ExplodedNodeSet &Dst) {
   if (I == E) {
-    PureStmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext, Builder);
+    PureStmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
     // We have processed both the inputs and the outputs.  All of the outputs
     // should evaluate to Locs.  Nuke all of their values.
 
