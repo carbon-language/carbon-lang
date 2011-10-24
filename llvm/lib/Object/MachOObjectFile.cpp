@@ -666,14 +666,18 @@ error_code MachOObjectFile::getRelocationTypeName(DataRefImpl Rel,
     }
     case Triple::x86_64: {
       const char* Table[] =  {
+        "X86_64_RELOC_UNSIGNED",
+        "X86_64_RELOC_SIGNED",
         "X86_64_RELOC_BRANCH",
         "X86_64_RELOC_GOT_LOAD",
         "X86_64_RELOC_GOT",
-        "X86_64_RELOC_SIGNED",
-        "X86_64_RELOC_UNSIGNED",
-        "X86_64_RELOC_SUBTRACTOR" };
+        "X86_64_RELOC_SUBTRACTOR",
+        "X86_64_RELOC_SIGNED_1",
+        "X86_64_RELOC_SIGNED_2",
+        "X86_64_RELOC_SIGNED_4",
+        "X86_64_RELOC_TLV" };
 
-      if (r_type > 5)
+      if (r_type > 9)
         res = "Unknown";
       else
         res = Table[r_type];
@@ -748,46 +752,138 @@ error_code MachOObjectFile::getRelocationAdditionalInfo(DataRefImpl Rel,
   }
   return object_error::success;
 }
+
+// Helper to advance a section or symbol iterator multiple increments at a time.
+template<class T>
+error_code advance(T &it, size_t Val) {
+  error_code ec;
+  while (Val--) {
+    it.increment(ec);
+  }
+  return ec;
+}
+
+template<class T>
+void advanceTo(T &it, size_t Val) {
+  if (error_code ec = advance(it, Val))
+    report_fatal_error(ec.message());
+}
+
+error_code
+MachOObjectFile::getRelocationTargetName(uint32_t Idx, StringRef &S) const {
+  bool isExtern = (Idx >> 27) & 1;
+  uint32_t Val = Idx & 0xFFFFFF;
+  error_code ec;
+
+  if (isExtern) {
+    symbol_iterator SI = begin_symbols();
+    advanceTo(SI, Val);
+    ec = SI->getName(S);
+  } else {
+    section_iterator SI = begin_sections();
+    advanceTo(SI, Val);
+    ec = SI->getName(S);
+  }
+
+  return ec;
+}
+
 error_code MachOObjectFile::getRelocationValueString(DataRefImpl Rel,
                                           SmallVectorImpl<char> &Result) const {
   InMemoryStruct<macho::RelocationEntry> RE;
   getRelocation(Rel, RE);
 
+  std::string addend;
+  raw_string_ostream addend_fmt(addend);
+
+  bool isPCRel = (RE->Word1 >> 25) & 1;
+  unsigned Type = (RE->Word1 >> 28) & 0xF;
+
+  // Determine any addends that should be displayed with the relocation.
+  // These require decoding the relocation type, which is triple-specific.
+  unsigned Arch = getArch();
+
+  // X86_64 has entirely custom relocation types.
+  if (Arch == Triple::x86_64) {
+    switch (Type) {
+      case 5: { // X86_64_RELOC_SUBTRACTOR
+        RelocationRef NextReloc;
+        if (error_code ec = getRelocationNext(Rel, NextReloc))
+          report_fatal_error(ec.message());
+
+        uint32_t SucessorType;
+        if (error_code ec = NextReloc.getType(SucessorType))
+          report_fatal_error(ec.message());
+
+        // X86_64_SUBTRACTOR must be followed by a relocation of type
+        // X86_64_RELOC_UNSIGNED.
+        unsigned RType = (SucessorType >> 28) & 0xF;
+        if (RType != 0)
+          report_fatal_error("Expected X86_64_RELOC_UNSIGNED after "
+                             "X86_64_RELOC_SUBTRACTOR.");
+
+        StringRef Name;
+        if (error_code ec = getRelocationTargetName(SucessorType, Name))
+          report_fatal_error(ec.message());
+
+        addend_fmt << "-" << Name;
+      }
+      case 6: // X86_64_RELOC_SIGNED1
+        addend_fmt << "-1";
+        break;
+      case 7: // X86_64_RELOC_SIGNED2
+        addend_fmt << "-2";
+        break;
+      case 8: // X86_64_RELOC_SIGNED4
+        addend_fmt << "-4";
+        break;
+    }
+  }
+
+  // X86 and ARM share some relocation types in common.
+  if (Arch == Triple::x86 || Arch == Triple::arm) {
+    switch (Type) {
+      case 1: // GENERIC_RELOC_PAIR - prints no info
+        return object_error::success;
+      case 2:   // GENERIC_RELOC_SECTDIFF
+      case 4: { // GENERIC_RELOC_LOCAL_SECTDIFF
+        RelocationRef NextReloc;
+        if (error_code ec = getRelocationNext(Rel, NextReloc))
+          report_fatal_error(ec.message());
+
+        uint32_t SucessorType;
+        if (error_code ec = NextReloc.getType(SucessorType))
+          report_fatal_error(ec.message());
+
+        // X86 sect diff's must be followed by a relocation of type
+        // GENERIC_RELOC_PAIR.
+        unsigned RType = (SucessorType >> 28) & 0xF;
+        if (RType != 1)
+          report_fatal_error("Expected GENERIC_RELOC_PAIR after "
+                             "GENERIC_RELOC_SECTDIFF or "
+                             "GENERIC_RELOC_LOCAL_SECTDIFF.");
+
+        StringRef Name;
+        if (error_code ec = getRelocationTargetName(SucessorType, Name))
+          report_fatal_error(ec.message());
+
+        addend_fmt << "-" << Name;
+
+      }
+    }
+  }
+
+  addend_fmt.flush();
+
   std::string fmtbuf;
   raw_string_ostream fmt(fmtbuf);
 
-  bool isExtern = (RE->Word1 >> 27) & 1;
-  if (isExtern) {
-    uint32_t Val = (RE->Word1 & 0xFFFFFF);
-    symbol_iterator SI = begin_symbols();
+  StringRef Name;
+  if (error_code ec = getRelocationTargetName(RE->Word1, Name))
+    report_fatal_error(ec.message());
 
-    error_code ec;
-    while (Val--) {
-      SI.increment(ec);
-      if (ec) report_fatal_error(ec.message());
-    }
-
-    StringRef SymName;
-    if ((ec = SI->getName(SymName)))
-      report_fatal_error(ec.message());
-
-    fmt << SymName;
-  } else {
-    uint32_t Val = (RE->Word1 & 0xFFFFFF);
-    section_iterator SI = begin_sections();
-
-    error_code ec;
-    while (Val--) {
-      SI.increment(ec);
-      if (ec) report_fatal_error(ec.message());
-    }
-
-    StringRef SectName;
-    if ((ec = SI->getName(SectName)))
-      report_fatal_error(ec.message());
-
-    fmt << SectName;
-  }
+  fmt << Name << addend;
+  if (isPCRel) fmt << "-P";
 
   fmt.flush();
   Result.append(fmtbuf.begin(), fmtbuf.end());

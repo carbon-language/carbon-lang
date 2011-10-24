@@ -108,6 +108,8 @@ private:
   void getRelocation(DataRefImpl Rel,
                      InMemoryStruct<macho::RelocationEntry> &Res) const;
   std::size_t getSectionIndex(DataRefImpl Sec) const;
+
+  error_code getRelocationTargetName(uint32_t Idx, StringRef &S) const;
 };
 
 }
