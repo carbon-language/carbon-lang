@@ -174,7 +174,7 @@ CommandInterpreter::Initialize ()
     if (cmd_obj_sp)
         AddAlias ("down", cmd_obj_sp);
 
-    cmd_obj_sp = GetCommandSPExact ("_display", false);
+    cmd_obj_sp = GetCommandSPExact ("_regexp-display", false);
     if (cmd_obj_sp)
         AddAlias ("display", cmd_obj_sp);
         
@@ -188,7 +188,7 @@ CommandInterpreter::Initialize ()
 
 
 
-    cmd_obj_sp = GetCommandSPExact ("_undisplay", false);
+    cmd_obj_sp = GetCommandSPExact ("_regexp-undisplay", false);
     if (cmd_obj_sp)
         AddAlias ("undisplay", cmd_obj_sp);
 
@@ -348,9 +348,9 @@ CommandInterpreter::LoadCommandDictionary ()
 
     std::auto_ptr<CommandObjectRegexCommand>
     display_regex_cmd_ap(new CommandObjectRegexCommand (*this,
-                                                   "_display",
+                                                   "_regexp-display",
                                                    "Add an expression evaluation stop-hook.",
-                                                   "_display expression", 2));
+                                                   "_regexp-display expression", 2));
     if (display_regex_cmd_ap.get())
     {
         if (display_regex_cmd_ap->AddRegexCommand("^(.+)$", "target stop-hook add -o \"expr -- %1\""))
@@ -362,9 +362,9 @@ CommandInterpreter::LoadCommandDictionary ()
 
     std::auto_ptr<CommandObjectRegexCommand>
     undisplay_regex_cmd_ap(new CommandObjectRegexCommand (*this,
-                                                   "_undisplay",
+                                                   "_regexp-undisplay",
                                                    "Remove an expression evaluation stop-hook.",
-                                                   "_undisplay stop-hook-number", 2));
+                                                   "_regexp-undisplay stop-hook-number", 2));
     if (undisplay_regex_cmd_ap.get())
     {
         if (undisplay_regex_cmd_ap->AddRegexCommand("^([0-9]+)$", "target stop-hook delete %1"))
