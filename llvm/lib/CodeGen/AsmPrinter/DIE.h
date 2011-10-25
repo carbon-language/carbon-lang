@@ -200,7 +200,6 @@ namespace llvm {
       isInteger,
       isString,
       isLabel,
-      isSectionOffset,
       isDelta,
       isEntry,
       isBlock
