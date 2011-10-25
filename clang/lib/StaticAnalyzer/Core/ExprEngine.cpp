@@ -556,6 +556,7 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::NullStmtClass:
     case Stmt::SwitchStmtClass:
     case Stmt::WhileStmtClass:
+    case Expr::MSDependentExistsStmtClass:
       llvm_unreachable("Stmt should not be in analyzer evaluation loop");
       break;
 

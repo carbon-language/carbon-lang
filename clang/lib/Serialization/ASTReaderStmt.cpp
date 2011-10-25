@@ -992,6 +992,15 @@ void ASTStmtReader::VisitCXXForRangeStmt(CXXForRangeStmt *S) {
   S->setBody(Reader.ReadSubStmt());
 }
 
+void ASTStmtReader::VisitMSDependentExistsStmt(MSDependentExistsStmt *S) {
+  VisitStmt(S);
+  S->KeywordLoc = ReadSourceLocation(Record, Idx);
+  S->IsIfExists = Record[Idx++];
+  S->QualifierLoc = Reader.ReadNestedNameSpecifierLoc(F, Record, Idx);
+  ReadDeclarationNameInfo(S->NameInfo, Record, Idx);
+  S->SubStmt = Reader.ReadSubStmt();
+}
+
 void ASTStmtReader::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
   VisitCallExpr(E);
   E->setOperator((OverloadedOperatorKind)Record[Idx++]);
@@ -1847,6 +1856,13 @@ Stmt *ASTReader::ReadStmtFromStream(Module &F) {
       S = new (Context) CXXForRangeStmt(Empty);
       break;
 
+    case STMT_MS_DEPENDENT_EXISTS:
+      S = new (Context) MSDependentExistsStmt(SourceLocation(), true,
+                                              NestedNameSpecifierLoc(),
+                                              DeclarationNameInfo(),
+                                              0);
+      break;
+        
     case EXPR_CXX_OPERATOR_CALL:
       S = new (Context) CXXOperatorCallExpr(Context, Empty);
       break;

@@ -1291,7 +1291,20 @@ public:
     return getSema().BuildCXXForRangeStmt(ForLoc, ColonLoc, Range, BeginEnd,
                                           Cond, Inc, LoopVar, RParenLoc);
   }
-  
+
+  /// \brief Build a new C++0x range-based for statement.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  StmtResult RebuildMSDependentExistsStmt(SourceLocation KeywordLoc, 
+                                          bool IsIfExists,
+                                          NestedNameSpecifierLoc QualifierLoc,
+                                          DeclarationNameInfo NameInfo,
+                                          Stmt *Nested) {
+    return getSema().BuildMSDependentExistsStmt(KeywordLoc, IsIfExists,
+                                                QualifierLoc, NameInfo, Nested);
+  }
+
   /// \brief Attach body to a C++0x range-based for statement.
   ///
   /// By default, performs semantic analysis to finish the new statement.
@@ -5743,6 +5756,72 @@ TreeTransform<Derived>::TransformCXXForRangeStmt(CXXForRangeStmt *S) {
     return SemaRef.Owned(S);
 
   return FinishCXXForRangeStmt(NewStmt.get(), Body.get());
+}
+
+template<typename Derived>
+StmtResult
+TreeTransform<Derived>::TransformMSDependentExistsStmt(
+                                                    MSDependentExistsStmt *S) {
+  // Transform the nested-name-specifier, if any.
+  NestedNameSpecifierLoc QualifierLoc;
+  if (S->getQualifierLoc()) {
+    QualifierLoc 
+      = getDerived().TransformNestedNameSpecifierLoc(S->getQualifierLoc());
+    if (!QualifierLoc)
+      return StmtError();
+  }
+
+  // Transform the declaration name.
+  DeclarationNameInfo NameInfo = S->getNameInfo();
+  if (NameInfo.getName()) {
+    NameInfo = getDerived().TransformDeclarationNameInfo(NameInfo);
+    if (!NameInfo.getName())
+      return StmtError();
+  }
+
+  // Check whether anything changed.
+  if (!getDerived().AlwaysRebuild() &&
+      QualifierLoc == S->getQualifierLoc() &&
+      NameInfo.getName() == S->getNameInfo().getName())
+    return S;
+  
+  // Determine whether this name exists, if we can.
+  CXXScopeSpec SS;
+  SS.Adopt(QualifierLoc);
+  bool Dependent = false;
+  switch (getSema().CheckMicrosoftIfExistsSymbol(/*S=*/0, SS, NameInfo)) {
+  case Sema::IER_Exists:
+    if (S->isIfExists())
+      break;
+      
+    return new (getSema().Context) NullStmt(S->getKeywordLoc());
+
+  case Sema::IER_DoesNotExist:
+    if (S->isIfNotExists())
+      break;
+    
+    return new (getSema().Context) NullStmt(S->getKeywordLoc());
+      
+  case Sema::IER_Dependent:
+    Dependent = true;
+    break;
+  }
+  
+  // We need to continue with the instantiation, so do so now.
+  StmtResult SubStmt = getDerived().TransformCompoundStmt(S->getSubStmt());
+  if (SubStmt.isInvalid())
+    return StmtError();
+  
+  // If we have resolved the name, just transform to the substatement.
+  if (!Dependent)
+    return SubStmt;
+  
+  // The name is still dependent, so build a dependent expression again.
+  return getDerived().RebuildMSDependentExistsStmt(S->getKeywordLoc(),
+                                                   S->isIfExists(),
+                                                   QualifierLoc,
+                                                   NameInfo,
+                                                   SubStmt.get());
 }
 
 template<typename Derived>

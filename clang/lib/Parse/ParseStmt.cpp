@@ -2152,7 +2152,16 @@ void Parser::ParseMicrosoftIfExistsStatement(StmtVector &Stmts) {
     
     ParsedAttributes Attrs(AttrFactory);
     StmtResult Compound = ParseCompoundStatement(Attrs);
-    // FIXME: We're dropping these statements on the floor.
+    if (Compound.isInvalid())
+      return;
+    
+    StmtResult DepResult = Actions.ActOnMSDependentExistsStmt(Result.KeywordLoc,
+                                                              Result.IsIfExists,
+                                                              Result.SS, 
+                                                              Result.Name,
+                                                              Compound.get());
+    if (DepResult.isUsable())
+      Stmts.push_back(DepResult.get());
     return;
   }
   

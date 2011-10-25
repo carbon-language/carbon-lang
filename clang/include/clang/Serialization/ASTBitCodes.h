@@ -1099,7 +1099,9 @@ namespace clang {
       STMT_SEH_TRY,               // SEHTryStmt
       
       // ARC
-      EXPR_OBJC_BRIDGED_CAST       // ObjCBridgedCastExpr
+      EXPR_OBJC_BRIDGED_CAST,     // ObjCBridgedCastExpr
+      
+      STMT_MS_DEPENDENT_EXISTS    // MSDependentExistsStmt
     };
 
     /// \brief The kinds of designators that can occur in a

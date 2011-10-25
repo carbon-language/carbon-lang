@@ -44,10 +44,10 @@ void f(T t) {
   }
 
   __if_not_exists(T::bar) {
-    int *i = t;
+    int *i = t; // expected-error{{no viable conversion from 'HasFoo' to 'int *'}}
     { }
   }
 }
 
-template void f(HasFoo);
+template void f(HasFoo); // expected-note{{in instantiation of function template specialization 'f<HasFoo>' requested here}}
 template void f(HasBar);

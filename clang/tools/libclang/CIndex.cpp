@@ -1754,6 +1754,8 @@ public:
     switch (S->getStmtClass()) {
     default:
       llvm_unreachable("Unhandled Stmt");
+    case clang::Stmt::MSDependentExistsStmtClass:
+      return cast<MSDependentExistsStmt>(S)->getNameInfo();
     case Stmt::CXXDependentScopeMemberExprClass:
       return cast<CXXDependentScopeMemberExpr>(S)->getMemberNameInfo();
     case Stmt::DependentScopeDeclRefExprClass:
@@ -1788,6 +1790,7 @@ public:
   void VisitCompoundLiteralExpr(CompoundLiteralExpr *E);
   void VisitCompoundStmt(CompoundStmt *S);
   void VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E) { /* Do nothing. */ }
+  void VisitMSDependentExistsStmt(MSDependentExistsStmt *S);
   void VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E);
   void VisitCXXNewExpr(CXXNewExpr *E);
   void VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E);
@@ -1897,6 +1900,14 @@ void EnqueueVisitor::VisitCompoundStmt(CompoundStmt *S) {
     AddStmt(*I);
   }
 }
+void EnqueueVisitor::
+VisitMSDependentExistsStmt(MSDependentExistsStmt *S) {
+  AddStmt(S->getSubStmt());
+  AddDeclarationNameInfo(S);
+  if (NestedNameSpecifierLoc QualifierLoc = S->getQualifierLoc())
+    AddNestedNameSpecifierLoc(QualifierLoc);
+}
+
 void EnqueueVisitor::
 VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E) {
   AddExplicitTemplateArgs(E->getOptionalExplicitTemplateArgs());

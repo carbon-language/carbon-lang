@@ -73,6 +73,7 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
   case Stmt::CXXCatchStmtClass:
   case Stmt::SEHExceptStmtClass:
   case Stmt::SEHFinallyStmtClass:
+  case Stmt::MSDependentExistsStmtClass:
     llvm_unreachable("invalid statement class to emit generically");
   case Stmt::NullStmtClass:
   case Stmt::CompoundStmtClass:

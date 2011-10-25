@@ -2602,10 +2602,24 @@ public:
     /// \brief The name is a dependent name, so it 
     IER_Dependent
   };
-  
+
+  IfExistsResult 
+  CheckMicrosoftIfExistsSymbol(Scope *S, CXXScopeSpec &SS, 
+                               const DeclarationNameInfo &TargetNameInfo);
+
   IfExistsResult 
   CheckMicrosoftIfExistsSymbol(Scope *S, CXXScopeSpec &SS, UnqualifiedId &Name);
 
+  StmtResult BuildMSDependentExistsStmt(SourceLocation KeywordLoc,
+                                        bool IsIfExists,
+                                        NestedNameSpecifierLoc QualifierLoc,
+                                        DeclarationNameInfo NameInfo,
+                                        Stmt *Nested);
+  StmtResult ActOnMSDependentExistsStmt(SourceLocation KeywordLoc, 
+                                        bool IsIfExists,
+                                        CXXScopeSpec &SS, UnqualifiedId &Name,
+                                        Stmt *Nested);
+  
   //===------------------------- "Block" Extension ------------------------===//
 
   /// ActOnBlockStart - This callback is invoked when a block literal is

@@ -1735,6 +1735,9 @@ DEF_TRAVERSE_STMT(ObjCAtTryStmt, { })
 DEF_TRAVERSE_STMT(ObjCForCollectionStmt, { })
 DEF_TRAVERSE_STMT(ObjCAutoreleasePoolStmt, { })
 DEF_TRAVERSE_STMT(CXXForRangeStmt, { })
+DEF_TRAVERSE_STMT(MSDependentExistsStmt, { 
+    TRY_TO(TraverseNestedNameSpecifierLoc(S->getQualifierLoc()));
+})
 DEF_TRAVERSE_STMT(ReturnStmt, { })
 DEF_TRAVERSE_STMT(SwitchStmt, { })
 DEF_TRAVERSE_STMT(WhileStmt, { })

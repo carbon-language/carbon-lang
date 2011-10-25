@@ -305,6 +305,22 @@ void StmtPrinter::VisitCXXForRangeStmt(CXXForRangeStmt *Node) {
   Indent() << "}\n";
 }
 
+void StmtPrinter::VisitMSDependentExistsStmt(MSDependentExistsStmt *Node) {
+  Indent();
+  if (Node->isIfExists())
+    OS << "__if_exists (";
+  else
+    OS << "__if_not_exists (";
+  
+  if (NestedNameSpecifier *Qualifier
+        = Node->getQualifierLoc().getNestedNameSpecifier())
+    Qualifier->print(OS, Policy);
+  
+  OS << Node->getNameInfo() << ") ";
+  
+  PrintRawCompoundStmt(Node->getSubStmt());
+}
+
 void StmtPrinter::VisitGotoStmt(GotoStmt *Node) {
   Indent() << "goto " << Node->getLabel()->getName() << ";\n";
 }

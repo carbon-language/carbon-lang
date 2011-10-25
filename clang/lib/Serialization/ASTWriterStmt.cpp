@@ -957,6 +957,16 @@ void ASTStmtWriter::VisitCXXForRangeStmt(CXXForRangeStmt *S) {
   Code = serialization::STMT_CXX_FOR_RANGE;
 }
 
+void ASTStmtWriter::VisitMSDependentExistsStmt(MSDependentExistsStmt *S) {
+  VisitStmt(S);
+  Writer.AddSourceLocation(S->getKeywordLoc(), Record);
+  Record.push_back(S->isIfExists());
+  Writer.AddNestedNameSpecifierLoc(S->getQualifierLoc(), Record);
+  Writer.AddDeclarationNameInfo(S->getNameInfo(), Record);
+  Writer.AddStmt(S->getSubStmt());
+  Code = serialization::STMT_MS_DEPENDENT_EXISTS;
+}
+
 void ASTStmtWriter::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
   VisitCallExpr(E);
   Record.push_back(E->getOperator());

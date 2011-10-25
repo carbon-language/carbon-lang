@@ -4665,18 +4665,18 @@ StmtResult Sema::ActOnFinishFullStmt(Stmt *FullStmt) {
   return MaybeCreateStmtWithCleanups(FullStmt);
 }
 
-Sema::IfExistsResult Sema::CheckMicrosoftIfExistsSymbol(Scope *S,
-                                                        CXXScopeSpec &SS,
-                                                        UnqualifiedId &Name) {
-  DeclarationNameInfo TargetNameInfo = GetNameFromUnqualifiedId(Name);
+Sema::IfExistsResult 
+Sema::CheckMicrosoftIfExistsSymbol(Scope *S,
+                                   CXXScopeSpec &SS,
+                                   const DeclarationNameInfo &TargetNameInfo) {
   DeclarationName TargetName = TargetNameInfo.getName();
   if (!TargetName)
     return IER_DoesNotExist;
-
+  
   // If the name itself is dependent, then the result is dependent.
   if (TargetName.isDependentName())
     return IER_Dependent;
-      
+  
   // Do the redeclaration lookup in the current scope.
   LookupResult R(*this, TargetNameInfo, Sema::LookupAnyName,
                  Sema::NotForRedeclaration);
@@ -4697,5 +4697,13 @@ Sema::IfExistsResult Sema::CheckMicrosoftIfExistsSymbol(Scope *S,
     return IER_Dependent;
   }
   
-  return IER_DoesNotExist;
+  return IER_DoesNotExist;  
 }
+
+Sema::IfExistsResult Sema::CheckMicrosoftIfExistsSymbol(Scope *S,
+                                                        CXXScopeSpec &SS,
+                                                        UnqualifiedId &Name) {
+  DeclarationNameInfo TargetNameInfo = GetNameFromUnqualifiedId(Name);
+  return CheckMicrosoftIfExistsSymbol(S, SS, TargetNameInfo);
+}
+

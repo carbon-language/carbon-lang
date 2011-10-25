@@ -2484,3 +2484,26 @@ Sema::ActOnSEHFinallyBlock(SourceLocation Loc,
   assert(Block);
   return Owned(SEHFinallyStmt::Create(Context,Loc,Block));
 }
+
+StmtResult Sema::BuildMSDependentExistsStmt(SourceLocation KeywordLoc,
+                                            bool IsIfExists,
+                                            NestedNameSpecifierLoc QualifierLoc,
+                                            DeclarationNameInfo NameInfo,
+                                            Stmt *Nested)
+{
+  return new (Context) MSDependentExistsStmt(KeywordLoc, IsIfExists,
+                                             QualifierLoc, NameInfo, 
+                                             cast<CompoundStmt>(Nested));
+}
+
+
+StmtResult Sema::ActOnMSDependentExistsStmt(SourceLocation KeywordLoc, 
+                                            bool IsIfExists,
+                                            CXXScopeSpec &SS, 
+                                            UnqualifiedId &Name,
+                                            Stmt *Nested) {
+  return BuildMSDependentExistsStmt(KeywordLoc, IsIfExists, 
+                                    SS.getWithLocInContext(Context),
+                                    GetNameFromUnqualifiedId(Name),
+                                    Nested);
+}
