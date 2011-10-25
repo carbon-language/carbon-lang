@@ -577,13 +577,13 @@ void ObjCMethodDecl::createImplicitParams(ASTContext &Context,
     selfIsConsumed = hasAttr<NSConsumesSelfAttr>();
 
     // 'self' is always __strong.  It's actually pseudo-strong except
-    // in init methods, though.
+    // in init methods (or methods labeled ns_consumes_self), though.
     Qualifiers qs;
     qs.setObjCLifetime(Qualifiers::OCL_Strong);
     selfTy = Context.getQualifiedType(selfTy, qs);
 
     // In addition, 'self' is const unless this is an init method.
-    if (getMethodFamily() != OMF_init) {
+    if (getMethodFamily() != OMF_init && !selfIsConsumed) {
       selfTy = selfTy.withConst();
       selfIsPseudoStrong = true;
     }

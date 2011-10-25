@@ -294,6 +294,16 @@ void test12(id collection) {
 }
 @end
 
+// <rdar://problem/10274056>
+@interface Test13_B
+- (id) consumesSelf __attribute__((ns_consumes_self));
+@end
+@implementation Test13_B
+- (id) consumesSelf {
+  self = 0; // no-warning
+}
+@end
+
 // rdar://problem/9172151
 @class Test14A, Test14B;
 void test14() {
