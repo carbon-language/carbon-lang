@@ -82,7 +82,7 @@ public:
 
   /// Called by CoreEngine.  Used to generate end-of-path
   /// nodes when the control reaches the end of a function.
-  virtual void processEndOfFunction(EndOfFunctionNodeBuilder& builder) = 0;
+  virtual void processEndOfFunction(NodeBuilderContext& BC) = 0;
 
   // Generate the entry node of the callee.
   virtual void processCallEnter(CallEnterNodeBuilder &builder) = 0;

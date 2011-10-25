@@ -75,7 +75,7 @@ public:
 
   bool evalCall(const CallExpr *CE, CheckerContext &C) const;
   void checkDeadSymbols(SymbolReaper &SymReaper, CheckerContext &C) const;
-  void checkEndPath(EndOfFunctionNodeBuilder &B, ExprEngine &Eng) const;
+  void checkEndPath(CheckerContext &Ctx) const;
   void checkPreStmt(const ReturnStmt *S, CheckerContext &C) const;
 
 private:
@@ -418,23 +418,22 @@ void StreamChecker::checkDeadSymbols(SymbolReaper &SymReaper,
   }
 }
 
-void StreamChecker::checkEndPath(EndOfFunctionNodeBuilder &B,
-                                 ExprEngine &Eng) const {
-  const ProgramState *state = B.getState();
+void StreamChecker::checkEndPath(CheckerContext &Ctx) const {
+  const ProgramState *state = Ctx.getState();
   typedef llvm::ImmutableMap<SymbolRef, StreamState> SymMap;
   SymMap M = state->get<StreamState>();
   
   for (SymMap::iterator I = M.begin(), E = M.end(); I != E; ++I) {
     StreamState SS = I->second;
     if (SS.isOpened()) {
-      ExplodedNode *N = B.generateNode(state);
+      ExplodedNode *N = Ctx.generateNode(state);
       if (N) {
         if (!BT_ResourceLeak)
           BT_ResourceLeak.reset(new BuiltinBug("Resource Leak", 
                          "Opened File never closed. Potential Resource leak."));
         BugReport *R = new BugReport(*BT_ResourceLeak, 
                                      BT_ResourceLeak->getDescription(), N);
-        Eng.getBugReporter().EmitReport(R);
+        Ctx.EmitReport(R);
       }
     }
   }

@@ -47,24 +47,13 @@ class GenericNodeBuilderRefCount {
   EndOfFunctionNodeBuilder *ENB;
 public:
   GenericNodeBuilderRefCount(CheckerContext &c,
-                             const ProgramPointTag *t)
+                             const ProgramPointTag *t = 0)
   : C(&c), tag(t), ENB(0) {}
-
-  GenericNodeBuilderRefCount(EndOfFunctionNodeBuilder &enb)
-  : C(0), tag(0), ENB(&enb) {}
 
   ExplodedNode *MakeNode(const ProgramState *state, ExplodedNode *Pred,
                          bool MarkAsSink = false) {
-    if (C) {
-        return C->generateNode(state, Pred, tag, false, MarkAsSink);
-    }
-
-    assert(ENB);
-    ExplodedNode *N = ENB->generateNode(state, Pred);
-    if (MarkAsSink) 
-      N->markAsSink();
-    
-    return N;
+    assert(C);
+    return C->generateNode(state, Pred, tag, false, MarkAsSink);
   }
 };
 } // end anonymous namespace
@@ -2445,7 +2434,7 @@ public:
                                 SymbolRef Sym, const ProgramState *state) const;
                                               
   void checkDeadSymbols(SymbolReaper &SymReaper, CheckerContext &C) const;
-  void checkEndPath(EndOfFunctionNodeBuilder &Builder, ExprEngine &Eng) const;
+  void checkEndPath(CheckerContext &C) const;
 
   const ProgramState *updateSymbol(const ProgramState *state, SymbolRef sym,
                                    RefVal V, ArgEffect E, RefVal::Kind &hasErr,
@@ -3439,12 +3428,12 @@ RetainCountChecker::processLeaks(const ProgramState *state,
   return N;
 }
 
-void RetainCountChecker::checkEndPath(EndOfFunctionNodeBuilder &Builder,
-                                      ExprEngine &Eng) const {
-  const ProgramState *state = Builder.getState();
-  GenericNodeBuilderRefCount Bd(Builder);
+void RetainCountChecker::checkEndPath(CheckerContext &Ctx) const {
+  const ProgramState *state = Ctx.getState();
+  GenericNodeBuilderRefCount Bd(Ctx);
   RefBindings B = state->get<RefBindings>();
-  ExplodedNode *Pred = Builder.getPredecessor();
+  ExplodedNode *Pred = Ctx.getPredecessor();
+  ExprEngine &Eng = Ctx.getEngine();
 
   for (RefBindings::iterator I = B.begin(), E = B.end(); I != E; ++I) {
     llvm::tie(Pred, state) = handleAutoreleaseCounts(state, Bd, Pred, Eng,

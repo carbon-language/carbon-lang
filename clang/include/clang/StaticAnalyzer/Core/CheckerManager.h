@@ -39,8 +39,8 @@ namespace ento {
   class ExplodedNodeSet;
   class ExplodedGraph;
   class ProgramState;
-  class EndOfFunctionNodeBuilder;
   class NodeBuilder;
+  struct NodeBuilderContext;
   class MemRegion;
   class SymbolReaper;
 
@@ -230,7 +230,9 @@ public:
                                  ExprEngine &Eng);
 
   /// \brief Run checkers for end of path.
-  void runCheckersForEndPath(EndOfFunctionNodeBuilder &B, ExprEngine &Eng);
+  void runCheckersForEndPath(NodeBuilderContext &BC,
+                             ExplodedNodeSet &Dst,
+                             ExprEngine &Eng);
 
   /// \brief Run checkers for branch condition.
   void runCheckersForBranchCondition(const Stmt *condition,
@@ -334,7 +336,7 @@ public:
   typedef CheckerFn<void (ExplodedGraph &, BugReporter &, ExprEngine &)>
       CheckEndAnalysisFunc;
   
-  typedef CheckerFn<void (EndOfFunctionNodeBuilder &, ExprEngine &)>
+  typedef CheckerFn<void (CheckerContext &)>
       CheckEndPathFunc;
   
   typedef CheckerFn<void (const Stmt *, NodeBuilder &, ExplodedNode *Pred,

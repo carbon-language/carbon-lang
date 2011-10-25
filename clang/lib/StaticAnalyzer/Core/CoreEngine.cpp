@@ -269,8 +269,8 @@ void CoreEngine::HandleBlockEdge(const BlockEdge &L, ExplodedNode *Pred) {
             && "EXIT block cannot contain Stmts.");
 
     // Process the final state transition.
-    EndOfFunctionNodeBuilder Builder(Blk, Pred, this);
-    SubEng.processEndOfFunction(Builder);
+    NodeBuilderContext BuilderCtx(*this, Blk, Pred);
+    SubEng.processEndOfFunction(BuilderCtx);
 
     // This path is done. Don't enqueue any more nodes.
     return;
@@ -596,57 +596,6 @@ SwitchNodeBuilder::generateDefaultCaseNode(const ProgramState *St,
 
   return NULL;
 }
-
-EndOfFunctionNodeBuilder::~EndOfFunctionNodeBuilder() {
-  // Auto-generate an EOP node if one has not been generated.
-  if (!hasGeneratedNode) {
-    // If we are in an inlined call, generate CallExit node.
-    if (Pred->getLocationContext()->getParent())
-      GenerateCallExitNode(Pred->State);
-    else
-      generateNode(Pred->State);
-  }
-}
-
-ExplodedNode*
-EndOfFunctionNodeBuilder::generateNode(const ProgramState *State,
-                                       ExplodedNode *P,
-                                       const ProgramPointTag *tag) {
-  hasGeneratedNode = true;
-  bool IsNew;
-
-  ExplodedNode *Node = Eng.G->getNode(BlockEntrance(&B,
-                               Pred->getLocationContext(), tag ? tag : Tag),
-                               State, &IsNew);
-
-  Node->addPredecessor(P ? P : Pred, *Eng.G);
-
-  if (IsNew) {
-    Eng.G->addEndOfPath(Node);
-    return Node;
-  }
-
-  return NULL;
-}
-
-void EndOfFunctionNodeBuilder::GenerateCallExitNode(const ProgramState *state) {
-  hasGeneratedNode = true;
-  // Create a CallExit node and enqueue it.
-  const StackFrameContext *LocCtx
-                         = cast<StackFrameContext>(Pred->getLocationContext());
-  const Stmt *CE = LocCtx->getCallSite();
-
-  // Use the the callee location context.
-  CallExit Loc(CE, LocCtx);
-
-  bool isNew;
-  ExplodedNode *Node = Eng.G->getNode(Loc, state, &isNew);
-  Node->addPredecessor(Pred, *Eng.G);
-
-  if (isNew)
-    Eng.WList->enqueue(Node);
-}
-                                                
 
 void CallEnterNodeBuilder::generateNode(const ProgramState *state) {
   // Check if the callee is in the same translation unit.

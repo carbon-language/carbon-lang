@@ -171,9 +171,9 @@ public:
 struct NodeBuilderContext {
   CoreEngine &Eng;
   const CFGBlock *Block;
-  ExplodedNode *ContextPred;
+  ExplodedNode *Pred;
   NodeBuilderContext(CoreEngine &E, const CFGBlock *B, ExplodedNode *N)
-    : Eng(E), Block(B), ContextPred(N) { assert(B); assert(!N->isSink()); }
+    : Eng(E), Block(B), Pred(N) { assert(B); assert(!N->isSink()); }
 
   /// \brief Return the CFGBlock associated with this builder.
   const CFGBlock *getBlock() const { return Block; }
@@ -182,10 +182,9 @@ struct NodeBuilderContext {
   /// visited on the exploded graph path.
   unsigned getCurrentBlockCount() const {
     return Eng.WList->getBlockCounter().getNumVisited(
-                    ContextPred->getLocationContext()->getCurrentStackFrame(),
+                    Pred->getLocationContext()->getCurrentStackFrame(),
                     Block->getBlockID());
   }
-
 };
 
 /// \class NodeBuilder
@@ -287,15 +286,6 @@ public:
   void takeNodes(ExplodedNode *N) { Frontier.erase(N); }
   void addNodes(const ExplodedNodeSet &S) { Frontier.insert(S); }
   void addNodes(ExplodedNode *N) { Frontier.Add(N); }
-};
-
-class CommonNodeBuilder {
-protected:
-  ExplodedNode *Pred;
-  CoreEngine &Eng;
-
-  CommonNodeBuilder(CoreEngine* E, ExplodedNode *P) : Pred(P), Eng(*E) {}
-  BlockCounter getBlockCounter() const { return Eng.WList->getBlockCounter(); }
 };
 
 /// \class StmtNodeBuilder
@@ -521,47 +511,6 @@ public:
   }
   
   const PP_T &getProgramPoint() const { return cast<PP_T>(pp); }
-};
-
-class EndOfFunctionNodeBuilder : public CommonNodeBuilder {
-  const CFGBlock &B;
-  const ProgramPointTag *Tag;
-
-public:
-  bool hasGeneratedNode;
-
-public:
-  EndOfFunctionNodeBuilder(const CFGBlock *b, ExplodedNode *N, CoreEngine* e,
-                           const ProgramPointTag *tag = 0)
-    : CommonNodeBuilder(e, N), B(*b), Tag(tag), hasGeneratedNode(false) {}
-
-  ~EndOfFunctionNodeBuilder();
-
-  EndOfFunctionNodeBuilder withCheckerTag(const ProgramPointTag *tag) {
-    return EndOfFunctionNodeBuilder(&B, Pred, &Eng, tag);
-  }
-
-  WorkList &getWorkList() { return *Eng.WList; }
-
-  ExplodedNode *getPredecessor() const { return Pred; }
-
-  unsigned getCurrentBlockCount() const {
-    return getBlockCounter().getNumVisited(
-                            Pred->getLocationContext()->getCurrentStackFrame(),
-                                           B.getBlockID());
-  }
-
-  ExplodedNode *generateNode(const ProgramState *State,
-                             ExplodedNode *P = 0,
-                             const ProgramPointTag *tag = 0);
-
-  void GenerateCallExitNode(const ProgramState *state);
-
-  const CFGBlock *getBlock() const { return &B; }
-
-  const ProgramState *getState() const {
-    return getPredecessor()->getState();
-  }
 };
 
 class CallEnterNodeBuilder {

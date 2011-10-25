@@ -124,6 +124,8 @@ public:
   const Stmt *getStmt() const;
 
   void GenerateAutoTransition(ExplodedNode *N);
+  void enqueueEndOfPath(ExplodedNodeSet &S);
+  void GenerateCallExitNode(ExplodedNode *N);
 
   /// ViewGraph - Visualize the ExplodedGraph created by executing the
   ///  simulation.
@@ -181,7 +183,7 @@ public:
 
   /// ProcessEndPath - Called by CoreEngine.  Used to generate end-of-path
   ///  nodes when the control reaches the end of a function.
-  void processEndOfFunction(EndOfFunctionNodeBuilder& builder);
+  void processEndOfFunction(NodeBuilderContext& BC);
 
   /// Generate the entry node of the callee.
   void processCallEnter(CallEnterNodeBuilder &builder);

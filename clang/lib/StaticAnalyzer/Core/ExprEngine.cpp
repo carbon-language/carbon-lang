@@ -1153,11 +1153,42 @@ void ExprEngine::processIndirectGoto(IndirectGotoNodeBuilder &builder) {
     builder.generateNode(I, state);
 }
 
+// TODO: The next two functions should be moved into CoreEngine.
+void ExprEngine::GenerateCallExitNode(ExplodedNode *N) {
+  // Create a CallExit node and enqueue it.
+  const StackFrameContext *LocCtx
+                         = cast<StackFrameContext>(N->getLocationContext());
+  const Stmt *CE = LocCtx->getCallSite();
+
+  // Use the the callee location context.
+  CallExit Loc(CE, LocCtx);
+
+  bool isNew;
+  ExplodedNode *Node = Engine.G->getNode(Loc, N->getState(), &isNew);
+  Node->addPredecessor(N, *Engine.G);
+
+  if (isNew)
+    Engine.WList->enqueue(Node);
+}
+
+void ExprEngine::enqueueEndOfPath(ExplodedNodeSet &S) {
+  for (ExplodedNodeSet::iterator I = S.begin(), E = S.end(); I != E; ++I) {
+    ExplodedNode *N = *I;
+    // If we are in an inlined call, generate CallExit node.
+    if (N->getLocationContext()->getParent())
+      GenerateCallExitNode(N);
+    else
+      Engine.G->addEndOfPath(N);
+  }
+}
+
 /// ProcessEndPath - Called by CoreEngine.  Used to generate end-of-path
 ///  nodes when the control reaches the end of a function.
-void ExprEngine::processEndOfFunction(EndOfFunctionNodeBuilder& builder) {
-  StateMgr.EndPath(builder.getState());
-  getCheckerManager().runCheckersForEndPath(builder, *this);
+void ExprEngine::processEndOfFunction(NodeBuilderContext& BC) {
+  StateMgr.EndPath(BC.Pred->getState());
+  ExplodedNodeSet Dst;
+  getCheckerManager().runCheckersForEndPath(BC, Dst, *this);
+  enqueueEndOfPath(Dst);
 }
 
 /// ProcessSwitch - Called by CoreEngine.  Used to generate successor
