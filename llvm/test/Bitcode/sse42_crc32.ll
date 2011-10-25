@@ -1,9 +1,10 @@
-; Check to make sure old CRC32 intrinsics are auto-upgraded
-; correctly.
+; Check to make sure old CRC32 intrinsics are auto-upgraded correctly.  
+; Auto-upgrade happens when parsing a .bc or a .ll file.  Thus, leave the test
+; case as a .ll file so we can see what's going on.
 ;
 ; Rdar: 9472944
 ;
-; RUN: opt < %s | llvm-dis | FileCheck %s
+; RUN: opt < %s -S | FileCheck %s
 
 ; crc32.8 should upgrade to crc32.32.8
 ; CHECK: i32 @llvm.x86.sse42.crc32.32.8(
