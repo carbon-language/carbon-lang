@@ -67,12 +67,11 @@ void NSAutoreleasePoolChecker::checkPreObjCMessage(ObjCMessage msg,
     return;
                      
   SourceRange R = msg.getSourceRange();
-  BugReporter &BR = C.getBugReporter();
   const LocationContext *LC = C.getPredecessor()->getLocationContext();
-  const SourceManager &SM = BR.getSourceManager();
+  const SourceManager &SM = C.getSourceManager();
   const Expr *E = msg.getMsgOrPropExpr();
   PathDiagnosticLocation L = PathDiagnosticLocation::createBegin(E, SM, LC);
-  C.getBugReporter().EmitBasicReport("Use -drain instead of -release",
+  C.EmitBasicReport("Use -drain instead of -release",
     "API Upgrade (Apple)",
     "Use -drain instead of -release when using NSAutoreleasePool "
     "and garbage collection", L, &R, 1);

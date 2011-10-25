@@ -38,10 +38,6 @@ public:
 
   ~CheckerContext();
 
-  ExprEngine &getEngine() {
-    return Eng;
-  }
-
   AnalysisManager &getAnalysisManager() {
     return Eng.getAnalysisManager();
   }
@@ -87,6 +83,11 @@ public:
     return Eng.isObjCGCEnabled();
   }
 
+  ProgramStateManager &getStateManager() {
+    return Eng.getStateManager();
+  }
+
+
   AnalysisDeclContext *getCurrentAnalysisDeclContext() const {
     return Pred->getLocationContext()->getAnalysisDeclContext();
   }
@@ -121,6 +122,14 @@ public:
   /// \brief Emit the diagnostics report.
   void EmitReport(BugReport *R) {
     Eng.getBugReporter().EmitReport(R);
+  }
+
+  void EmitBasicReport(StringRef Name,
+                       StringRef Category,
+                       StringRef Str, PathDiagnosticLocation Loc,
+                       SourceRange* RBeg, unsigned NumRanges) {
+    Eng.getBugReporter().EmitBasicReport(Name, Category, Str, Loc,
+                                         RBeg, NumRanges);
   }
 
 private:
