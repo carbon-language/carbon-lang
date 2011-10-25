@@ -828,7 +828,6 @@ error_code MachOObjectFile::getRelocationValueString(DataRefImpl Rel,
           report_fatal_error(ec.message());
 
         fmt << Name << "-" << SucName;
-        if (isPCRel) fmt << "-PC";
       }
       case 6: // X86_64_RELOC_SIGNED1
         fmt << Name << "-1";
