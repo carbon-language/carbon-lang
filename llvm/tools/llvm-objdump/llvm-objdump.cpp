@@ -301,9 +301,15 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
 
         // Print relocation for instruction.
         while (rel_cur != rel_end) {
+          bool hidden = false;
           uint64_t addr;
           SmallString<16> name;
           SmallString<32> val;
+
+          // If this relocation is hidden, skip it.
+          if (error(rel_cur->getHidden(hidden))) goto skip_print_rel;
+          if (hidden) goto skip_print_rel;
+
           if (error(rel_cur->getAddress(addr))) goto skip_print_rel;
           // Stop when rel_cur's address is past the current instruction.
           if (addr >= Index + Size) break;
@@ -336,9 +342,12 @@ static void PrintRelocations(const ObjectFile *o) {
                              ri != re; ri.increment(ec)) {
       if (error(ec)) return;
 
+      bool hidden;
       uint64_t address;
       SmallString<32> relocname;
       SmallString<32> valuestr;
+      if (error(ri->getHidden(hidden))) continue;
+      if (hidden) continue;
       if (error(ri->getTypeName(relocname))) continue;
       if (error(ri->getAddress(address))) continue;
       if (error(ri->getValueString(valuestr))) continue;

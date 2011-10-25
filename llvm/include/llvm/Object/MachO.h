@@ -88,6 +88,7 @@ protected:
                                                  int64_t &Res) const;
   virtual error_code getRelocationValueString(DataRefImpl Rel,
                                            SmallVectorImpl<char> &Result) const;
+  virtual error_code getRelocationHidden(DataRefImpl Rel, bool &Result) const;
 
 private:
   MachOObject *MachOObj;

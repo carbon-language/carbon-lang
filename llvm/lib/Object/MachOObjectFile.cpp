@@ -952,6 +952,38 @@ error_code MachOObjectFile::getRelocationValueString(DataRefImpl Rel,
   return object_error::success;
 }
 
+error_code MachOObjectFile::getRelocationHidden(DataRefImpl Rel,
+                                                bool &Result) const {
+  InMemoryStruct<macho::RelocationEntry> RE;
+  getRelocation(Rel, RE);
+
+  unsigned Type = (RE->Word1 >> 28) & 0xF;
+  unsigned Arch = getArch();
+
+  Result = false;
+
+  // On arches that use the generic relocations, GENERIC_RELOC_PAIR
+  // is always hidden.
+  if (Arch == Triple::x86 || Arch == Triple::arm) {
+    if (Type == 1) Result = true;
+  } else if (Arch == Triple::x86_64) {
+    // On x86_64, X86_64_RELOC_UNSIGNED is hidden only when it follows
+    // an X864_64_RELOC_SUBTRACTOR.
+    if (Type == 0 && Rel.d.a > 0) {
+      DataRefImpl RelPrev = Rel;
+      RelPrev.d.a--;
+      InMemoryStruct<macho::RelocationEntry> REPrev;
+      getRelocation(RelPrev, REPrev);
+
+      unsigned PrevType = (REPrev->Word1 >> 28) & 0xF;
+
+      if (PrevType == 5) Result = true;
+    }
+  }
+
+  return object_error::success;
+}
+
 /*===-- Miscellaneous -----------------------------------------------------===*/
 
 uint8_t MachOObjectFile::getBytesInAddress() const {

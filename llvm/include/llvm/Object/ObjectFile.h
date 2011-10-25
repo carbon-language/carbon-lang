@@ -101,6 +101,11 @@ public:
   error_code getSymbol(SymbolRef &Result) const;
   error_code getType(uint32_t &Result) const;
 
+  /// @brief Indicates whether this relocation should hidden when listing
+  /// relocations, usually because it is the trailing part of a multipart
+  /// relocation that will be printed as part of the leading relocation.
+  error_code getHidden(bool &Result) const;
+
   /// @brief Get a string that represents the type of this relocation.
   ///
   /// This is for display purposes only.
@@ -286,6 +291,10 @@ protected:
                                                  int64_t &Res) const = 0;
   virtual error_code getRelocationValueString(DataRefImpl Rel,
                                        SmallVectorImpl<char> &Result) const = 0;
+  virtual error_code getRelocationHidden(DataRefImpl Rel, bool &Result) const {
+    Result = false;
+    return object_error::success;
+  }
 
 public:
 
@@ -481,6 +490,10 @@ inline error_code RelocationRef::getAdditionalInfo(int64_t &Result) const {
 inline error_code RelocationRef::getValueString(SmallVectorImpl<char> &Result)
   const {
   return OwningObject->getRelocationValueString(RelocationPimpl, Result);
+}
+
+inline error_code RelocationRef::getHidden(bool &Result) const {
+  return OwningObject->getRelocationHidden(RelocationPimpl, Result);
 }
 
 } // end namespace object
