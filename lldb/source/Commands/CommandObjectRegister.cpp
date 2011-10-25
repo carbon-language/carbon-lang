@@ -332,7 +332,7 @@ public:
     CommandOptions m_command_options;
 };
 
-OptionDefinition
+const OptionDefinition
 CommandObjectRegisterRead::CommandOptions::g_option_table[] =
 {
     { LLDB_OPT_SET_ALL, false, "alternate", 'A', no_argument      , NULL, 0, eArgTypeNone      , "Display register names using the alternate register name if there is one."},
