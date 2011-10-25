@@ -730,11 +730,11 @@ FileID SourceManager::getFileIDLocal(unsigned SLocOffset) const {
 /// This function knows that the SourceLocation is in a loaded buffer, not a
 /// local one.
 FileID SourceManager::getFileIDLoaded(unsigned SLocOffset) const {
-  assert(SLocOffset >= CurrentLoadedOffset && "Bad function choice");
-
   // Sanity checking, otherwise a bug may lead to hanging in release build.
-  if (SLocOffset < CurrentLoadedOffset)
+  if (SLocOffset < CurrentLoadedOffset) {
+    assert(0 && "Invalid SLocOffset or bad function choice");
     return FileID();
+  }
 
   // Essentially the same as the local case, but the loaded array is sorted
   // in the other direction.
