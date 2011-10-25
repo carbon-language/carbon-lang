@@ -11,7 +11,7 @@ void f(T t) {
   }
 }
 
-// RUN: c-index-test -test-annotate-tokens=%s:3:1:11:3 -fms-extensions %s | FileCheck %s
+// RUN: c-index-test -test-annotate-tokens=%s:3:1:11:3 -fms-extensions -fno-ms-compatibility -fno-delayed-template-parsing %s | FileCheck %s
 
 // CHECK: Identifier: "T" [3:15 - 3:16] TypeRef=T:1:19
 // CHECK: Punctuation: "}" [4:7 - 4:8] CompoundStmt=
