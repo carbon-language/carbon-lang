@@ -31,7 +31,6 @@
 namespace llvm {
 
 class CompileUnit;
-class DbgConcreteScope;
 class DbgVariable;
 class MachineFrameInfo;
 class MachineModuleInfo;
