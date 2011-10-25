@@ -2260,15 +2260,7 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
     break;
 
   case ICK_Lvalue_To_Rvalue:
-    // Should this get its own ICK?
-    if (From->getObjectKind() == OK_ObjCProperty) {
-      ExprResult FromRes = ConvertPropertyForRValue(From);
-      if (FromRes.isInvalid())
-        return ExprError();
-      From = FromRes.take();
-      if (!From->isGLValue()) break;
-    }
-
+    assert(From->getObjectKind() != OK_ObjCProperty);
     FromType = FromType.getUnqualifiedType();
     From = ImplicitCastExpr::Create(Context, FromType, CK_LValueToRValue,
                                     From, 0, VK_RValue);
@@ -4194,6 +4186,10 @@ Sema::ActOnStartCXXMemberReference(Scope *S, Expr *Base, SourceLocation OpLoc,
   if (Result.isInvalid()) return ExprError();
   Base = Result.get();
 
+  Result = CheckPlaceholderExpr(Base);
+  if (Result.isInvalid()) return ExprError();
+  Base = Result.take();
+
   QualType BaseType = Base->getType();
   MayBePseudoDestructor = false;
   if (BaseType->isDependentType()) {
@@ -4592,6 +4588,12 @@ ExprResult Sema::ActOnNoexceptExpr(SourceLocation KeyLoc, SourceLocation,
 /// Perform the conversions required for an expression used in a
 /// context that ignores the result.
 ExprResult Sema::IgnoredValueConversions(Expr *E) {
+  if (E->hasPlaceholderType()) {
+    ExprResult result = CheckPlaceholderExpr(E);
+    if (result.isInvalid()) return Owned(E);
+    E = result.take();
+  }
+
   // C99 6.3.2.1:
   //   [Except in specific positions,] an lvalue that does not have
   //   array type is converted to the value stored in the
@@ -4605,14 +4607,6 @@ ExprResult Sema::IgnoredValueConversions(Expr *E) {
       return DefaultFunctionArrayConversion(E);
 
     return Owned(E);
-  }
-
-  // We always want to do this on ObjC property references.
-  if (E->getObjectKind() == OK_ObjCProperty) {
-    ExprResult Res = ConvertPropertyForRValue(E);
-    if (Res.isInvalid()) return Owned(E);
-    E = Res.take();
-    if (E->isRValue()) return Owned(E);
   }
 
   // Otherwise, this rule does not apply in C++, at least not for the moment.

@@ -9,7 +9,7 @@
 
 void FUNC () {
     Foo *foo;
-    foo.bar = 0; // expected-error {{assigning to property with 'readonly' attribute not allowed}}
+    foo.bar = 0; // expected-error {{assignment to readonly property}}
 }
 
 // rdar://8747333

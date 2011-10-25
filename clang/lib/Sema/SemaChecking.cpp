@@ -4256,7 +4256,8 @@ void Sema::checkUnsafeExprAssigns(SourceLocation Loc,
   if (LT != Qualifiers::OCL_None)
     return;
   
-  if (ObjCPropertyRefExpr *PRE = dyn_cast<ObjCPropertyRefExpr>(LHS)) {
+  if (ObjCPropertyRefExpr *PRE
+        = dyn_cast<ObjCPropertyRefExpr>(LHS->IgnoreParens())) {
     if (PRE->isImplicitProperty())
       return;
     const ObjCPropertyDecl *PD = PRE->getExplicitProperty();

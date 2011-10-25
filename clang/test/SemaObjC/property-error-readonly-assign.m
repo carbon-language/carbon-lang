@@ -13,9 +13,9 @@
 @end
 
 void f0(A *a, B* b) {
-  a.x = 10;  // expected-error {{assigning to property with 'readonly' attribute not allowed}}
+  a.x = 10;  // expected-error {{assignment to readonly property}}
   a.ok = 20;
-  b.x = 10;  // expected-error {{setter method is needed to assign to object using property assignment syntax}}
+  b.x = 10;  // expected-error {{no setter method 'setX:' for assignment to property}}
   b.ok = 20;
 }
 
@@ -39,6 +39,6 @@ NSRect NSMakeRect();
 @implementation NSWindow (Category)
 -(void)methodToMakeClangCrash
 {
- self.frame =  NSMakeRect(); // expected-error {{setter method is needed to assign to object using property assignment syntax}}
+ self.frame =  NSMakeRect(); // expected-error {{no setter method 'setFrame:' for assignment to property}}
 }
 @end

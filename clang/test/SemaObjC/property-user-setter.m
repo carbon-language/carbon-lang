@@ -20,7 +20,7 @@
 -(void) im0 {
   self.x = 0;
   self.y = 2;
-  self.z = 2; // expected-error {{assigning to property with 'readonly' attribute not allowed}}
+  self.z = 2; // expected-error {{assignment to readonly property}}
 }
 @end
 
@@ -85,7 +85,7 @@ static int g_val;
 - (void)setFoo:(int)value;
 @end
 
-void g(int);
+void g(int); // expected-note {{passing argument to parameter here}}
 
 void f(C *c) {
     c.Foo = 17; // OK 

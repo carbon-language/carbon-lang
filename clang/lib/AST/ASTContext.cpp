@@ -461,6 +461,9 @@ void ASTContext::InitBuiltinTypes(const TargetInfo &Target) {
   // Placeholder type for bound members.
   InitBuiltinType(BoundMemberTy,       BuiltinType::BoundMember);
 
+  // Placeholder type for pseudo-objects.
+  InitBuiltinType(PseudoObjectTy,      BuiltinType::PseudoObject);
+
   // "any" type; useful for debugger-like clients.
   InitBuiltinType(UnknownAnyTy,        BuiltinType::UnknownAny);
 

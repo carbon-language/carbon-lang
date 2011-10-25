@@ -2249,8 +2249,8 @@ public:
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
   ExprResult RebuildObjCPropertyRefExpr(Expr *BaseArg, 
-                                              ObjCPropertyDecl *Property,
-                                              SourceLocation PropertyLoc) {
+                                        ObjCPropertyDecl *Property,
+                                        SourceLocation PropertyLoc) {
     CXXScopeSpec SS;
     ExprResult Base = getSema().Owned(BaseArg);
     LookupResult R(getSema(), Property->getDeclName(), PropertyLoc,
@@ -8049,7 +8049,7 @@ TreeTransform<Derived>::TransformObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
                                                    E->getLocation());
 
   return getDerived().RebuildObjCPropertyRefExpr(Base.get(),
-                                                 E->getType(),
+                                                 SemaRef.Context.PseudoObjectTy,
                                                  E->getImplicitPropertyGetter(),
                                                  E->getImplicitPropertySetter(),
                                                  E->getLocation());

@@ -492,6 +492,10 @@ Sema::ActOnStartOfSwitchStmt(SourceLocation SwitchLoc, Expr *Cond,
   if (!Cond)
     return StmtError();
 
+  CondResult = CheckPlaceholderExpr(Cond);
+  if (CondResult.isInvalid())
+    return StmtError();
+
   CondResult
     = ConvertToIntegralOrEnumerationType(SwitchLoc, Cond,
                           PDiag(diag::err_typecheck_statement_requires_integer),

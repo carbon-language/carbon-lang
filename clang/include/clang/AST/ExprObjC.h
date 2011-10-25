@@ -227,7 +227,6 @@ public:
 
 /// ObjCPropertyRefExpr - A dot-syntax expression to access an ObjC
 /// property.
-///
 class ObjCPropertyRefExpr : public Expr {
 private:
   /// If the bool is true, this is an implicit property reference; the
@@ -236,6 +235,11 @@ private:
   /// the pointer is an ObjCPropertyDecl and Setter is always null.
   llvm::PointerIntPair<NamedDecl*, 1, bool> PropertyOrGetter;
   ObjCMethodDecl *Setter;
+
+  // FIXME: Maybe we should store the property identifier here,
+  // because it's not rederivable from the other data when there's an
+  // implicit property with no getter (because the 'foo' -> 'setFoo:'
+  // transformation is lossy on the first character).
 
   SourceLocation IdLoc;
   
@@ -255,6 +259,7 @@ public:
            base->containsUnexpandedParameterPack()),
       PropertyOrGetter(PD, false), Setter(0),
       IdLoc(l), ReceiverLoc(), Receiver(base) {
+    assert(t->isSpecificPlaceholderType(BuiltinType::PseudoObject));
   }
   
   ObjCPropertyRefExpr(ObjCPropertyDecl *PD, QualType t,
@@ -265,6 +270,7 @@ public:
            st->containsUnexpandedParameterPack()),
       PropertyOrGetter(PD, false), Setter(0),
       IdLoc(l), ReceiverLoc(sl), Receiver(st.getTypePtr()) {
+    assert(t->isSpecificPlaceholderType(BuiltinType::PseudoObject));
   }
 
   ObjCPropertyRefExpr(ObjCMethodDecl *Getter, ObjCMethodDecl *Setter,
@@ -275,6 +281,7 @@ public:
            Base->containsUnexpandedParameterPack()),
       PropertyOrGetter(Getter, true), Setter(Setter),
       IdLoc(IdLoc), ReceiverLoc(), Receiver(Base) {
+    assert(T->isSpecificPlaceholderType(BuiltinType::PseudoObject));
   }
 
   ObjCPropertyRefExpr(ObjCMethodDecl *Getter, ObjCMethodDecl *Setter,
@@ -284,6 +291,7 @@ public:
     : Expr(ObjCPropertyRefExprClass, T, VK, OK, false, false, false, false),
       PropertyOrGetter(Getter, true), Setter(Setter),
       IdLoc(IdLoc), ReceiverLoc(SuperLoc), Receiver(SuperTy.getTypePtr()) {
+    assert(T->isSpecificPlaceholderType(BuiltinType::PseudoObject));
   }
 
   ObjCPropertyRefExpr(ObjCMethodDecl *Getter, ObjCMethodDecl *Setter,
@@ -293,6 +301,7 @@ public:
     : Expr(ObjCPropertyRefExprClass, T, VK, OK, false, false, false, false),
       PropertyOrGetter(Getter, true), Setter(Setter),
       IdLoc(IdLoc), ReceiverLoc(ReceiverLoc), Receiver(Receiver) {
+    assert(T->isSpecificPlaceholderType(BuiltinType::PseudoObject));
   }
 
   explicit ObjCPropertyRefExpr(EmptyShell Empty)
@@ -348,14 +357,15 @@ public:
       if (const ObjCMethodDecl *Getter = PDecl->getGetterMethodDecl())
         ResultType = Getter->getResultType();
       else
-        ResultType = getType();
+        ResultType = PDecl->getType();
     } else {
       const ObjCMethodDecl *Getter = getImplicitPropertyGetter();
-      ResultType = Getter->getResultType(); // with reference!
+      if (Getter)
+        ResultType = Getter->getResultType(); // with reference!
     }
     return ResultType;
   }
-  
+
   QualType getSetterArgType() const {
     QualType ArgType;
     if (isImplicitProperty()) {
