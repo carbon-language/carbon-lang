@@ -233,7 +233,7 @@ def ext_auto_type_specifier : ExtWarn<
   "'auto' type specifier is a C++11 extension">, InGroup<CXX11>;
 def warn_auto_storage_class : Warning<
   "'auto' storage class specifier is redundant and incompatible with C++11">,
-  InGroup<CXX11Compat>;
+  InGroup<CXX11Compat>, DefaultIgnore;
 def ext_auto_storage_class : ExtWarn<
   "'auto' storage class specifier is not permitted in C++11, and will not "
   "be supported in future releases">, InGroup<DiagGroup<"auto-storage-class">>;

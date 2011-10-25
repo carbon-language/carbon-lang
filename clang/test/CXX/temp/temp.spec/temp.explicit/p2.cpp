@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -pedantic %s
+// RUN: %clang_cc1 -fsyntax-only -verify -pedantic -Wc++11-compat %s
 
 // Example from the standard
 template<class T> class Array { void mf() { } }; 

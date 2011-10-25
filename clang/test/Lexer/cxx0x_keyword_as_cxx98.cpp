@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -verify -fsyntax-only
+// RUN: %clang_cc1 %s -verify -fsyntax-only -Wc++11-compat 
 
 #define constexpr const
 constexpr int x = 0;

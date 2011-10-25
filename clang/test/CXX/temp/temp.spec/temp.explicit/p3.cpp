@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wc++11-compat %s
 
 // A declaration of a function template shall be in scope at the point of the 
 // explicit instantiation of the function template.

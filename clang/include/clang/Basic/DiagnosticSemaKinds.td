@@ -2453,10 +2453,10 @@ def err_explicit_instantiation_must_be_global : Error<
   "explicit instantiation of %0 must occur at global scope">;
 def warn_explicit_instantiation_out_of_scope_0x : Warning<
   "explicit instantiation of %0 not in a namespace enclosing %1">, 
-  InGroup<CXX11Compat>;
+  InGroup<CXX11Compat>, DefaultIgnore;
 def warn_explicit_instantiation_must_be_global_0x : Warning<
   "explicit instantiation of %0 must occur at global scope">, 
-  InGroup<CXX11Compat>;
+  InGroup<CXX11Compat>, DefaultIgnore;
   
 def err_explicit_instantiation_requires_name : Error<
   "explicit instantiation declaration requires a name">;
@@ -2482,7 +2482,8 @@ def note_explicit_instantiation_candidate : Note<
 def err_explicit_instantiation_inline : Error<
   "explicit instantiation cannot be 'inline'">;
 def warn_explicit_instantiation_inline_0x : Warning<
-  "explicit instantiation cannot be 'inline'">, InGroup<CXX11Compat>;
+  "explicit instantiation cannot be 'inline'">, InGroup<CXX11Compat>,
+  DefaultIgnore;
 def err_explicit_instantiation_constexpr : Error<
   "explicit instantiation cannot be 'constexpr'">;
 def ext_explicit_instantiation_without_qualified_id : Extension<
@@ -2492,7 +2493,7 @@ def err_explicit_instantiation_unqualified_wrong_namespace : Error<
   "explicit instantiation of %q0 must occur in namespace %1">;
 def warn_explicit_instantiation_unqualified_wrong_namespace_0x : Warning<
   "explicit instantiation of %q0 must occur in namespace %1">,
-  InGroup<CXX11Compat>;
+  InGroup<CXX11Compat>, DefaultIgnore;
 def err_explicit_instantiation_undefined_member : Error<
   "explicit instantiation of undefined %select{member class|member function|"
   "static data member}0 %1 of class template %2">;

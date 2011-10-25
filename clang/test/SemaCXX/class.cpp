@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s 
+// RUN: %clang_cc1 -fsyntax-only -verify -Wc++11-compat %s 
 class C {
 public:
   auto int errx; // expected-error {{error: storage class specified for a member declaration}} expected-warning {{'auto' storage class specifier is redundant}}
