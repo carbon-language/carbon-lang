@@ -1307,7 +1307,7 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
         = cast<TemplateTemplateParmDecl>(*NewParam);
 
       // Check for unexpanded parameter packs, recursively.
-      if (DiagnoseUnexpandedParameterPacks(*this, NewTemplateParm)) {
+      if (::DiagnoseUnexpandedParameterPacks(*this, NewTemplateParm)) {
         Invalid = true;
         continue;
       }

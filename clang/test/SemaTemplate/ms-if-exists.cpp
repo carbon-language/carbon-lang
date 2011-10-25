@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fms-extensions %s -verify
+// RUN: %clang_cc1 -fms-extensions -std=c++11 %s -verify
 
 struct Nontemplate {
   typedef int type;
@@ -51,3 +51,12 @@ void f(T t) {
 
 template void f(HasFoo); // expected-note{{in instantiation of function template specialization 'f<HasFoo>' requested here}}
 template void f(HasBar);
+
+template<typename T, typename ...Ts>
+void g(T, Ts...) {
+  __if_exists(T::operator Ts) { // expected-error{{__if_exists name contains unexpanded parameter pack 'Ts'}}
+  }
+
+  __if_not_exists(Ts::operator T) { // expected-error{{__if_not_exists name contains unexpanded parameter pack 'Ts'}}
+  }
+}

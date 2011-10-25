@@ -4700,10 +4700,24 @@ Sema::CheckMicrosoftIfExistsSymbol(Scope *S,
   return IER_DoesNotExist;  
 }
 
-Sema::IfExistsResult Sema::CheckMicrosoftIfExistsSymbol(Scope *S,
-                                                        CXXScopeSpec &SS,
-                                                        UnqualifiedId &Name) {
+Sema::IfExistsResult 
+Sema::CheckMicrosoftIfExistsSymbol(Scope *S, SourceLocation KeywordLoc,
+                                   bool IsIfExists, CXXScopeSpec &SS,
+                                   UnqualifiedId &Name) {
   DeclarationNameInfo TargetNameInfo = GetNameFromUnqualifiedId(Name);
+  
+  // Check for unexpanded parameter packs.
+  SmallVector<UnexpandedParameterPack, 4> Unexpanded;
+  collectUnexpandedParameterPacks(SS, Unexpanded);
+  collectUnexpandedParameterPacks(TargetNameInfo, Unexpanded);
+  if (!Unexpanded.empty()) {
+    DiagnoseUnexpandedParameterPacks(KeywordLoc,
+                                     IsIfExists? UPPC_IfExists 
+                                               : UPPC_IfNotExists, 
+                                     Unexpanded);
+    return IER_Error;
+  }
+  
   return CheckMicrosoftIfExistsSymbol(S, SS, TargetNameInfo);
 }
 

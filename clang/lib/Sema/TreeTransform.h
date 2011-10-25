@@ -5805,6 +5805,9 @@ TreeTransform<Derived>::TransformMSDependentExistsStmt(
   case Sema::IER_Dependent:
     Dependent = true;
     break;
+      
+  case Sema::IER_Error:
+    return StmtError();
   }
   
   // We need to continue with the instantiation, so do so now.

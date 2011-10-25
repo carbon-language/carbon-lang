@@ -1503,7 +1503,8 @@ bool Parser::ParseMicrosoftIfExistsCondition(IfExistsCondition& Result) {
     return true;
   
   // Check if the symbol exists.
-  switch (Actions.CheckMicrosoftIfExistsSymbol(getCurScope(), Result.SS, 
+  switch (Actions.CheckMicrosoftIfExistsSymbol(getCurScope(), Result.KeywordLoc,
+                                               Result.IsIfExists, Result.SS, 
                                                Result.Name)) {
   case Sema::IER_Exists:
     Result.Behavior = Result.IsIfExists ? IEB_Parse : IEB_Skip;
@@ -1516,6 +1517,9 @@ bool Parser::ParseMicrosoftIfExistsCondition(IfExistsCondition& Result) {
   case Sema::IER_Dependent:
     Result.Behavior = IEB_Dependent;
     break;
+      
+  case Sema::IER_Error:
+    return true;
   }
 
   return false;
