@@ -674,22 +674,17 @@ ClangExpressionDeclMap::GetFunctionAddress
         // We occasionally get debug information in which a const function is reported 
         // as non-const, so the mangled name is wrong.  This is a hack to compensate.
         
-        Mangled mangled(name.GetCString(), true);
-        
-        ConstString demangled_name = mangled.GetDemangledName();
-        
-        if (strlen(demangled_name.GetCString()))
+        if (!strncmp(name.GetCString(), "_ZN", 3) &&
+            strncmp(name.GetCString(), "_ZNK", 4))
         {
-            std::string const_name_scratch(demangled_name.GetCString());
-            
-            const_name_scratch.append(" const");
-            
-            ConstString const_name(const_name_scratch.c_str());
-                        
-            FindCodeSymbolInContext(name, m_parser_vars->m_sym_ctx, sc_list);
+            std::string fixed_scratch("_ZNK");
+            fixed_scratch.append(name.GetCString() + 3);
+            ConstString fixed_name(fixed_scratch.c_str());
             
             if (log)
-                log->Printf("Found %d results with const name %s", sc_list.GetSize(), const_name.GetCString());
+                log->Printf("Failed to find symbols given non-const name %s; trying %s", name.GetCString(), fixed_name.GetCString());
+            
+            FindCodeSymbolInContext(fixed_name, m_parser_vars->m_sym_ctx, sc_list);
         }
     }
     
