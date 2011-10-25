@@ -31,7 +31,7 @@ namespace PR11216 {
   struct Foo { Base foo(); };
   Derived3<Foo> d;
 
-  struct Derived4 : :: decltype(Base()) { }; // expected-error {{expected class name}}
+  struct Derived4 : :: decltype(Base()) { }; // expected-error {{unexpected namespace scope prior to decltype}}
 
-  struct Derived5 : PR11216:: decltype(Base()) { }; // expected-error {{expected class name}}
+  struct Derived5 : PR11216:: decltype(Base()) { }; // expected-error {{unexpected namespace scope prior to decltype}}
 }

@@ -713,12 +713,19 @@ void Parser::ParseUnderlyingTypeSpecifier(DeclSpec &DS) {
 ///
 Parser::TypeResult Parser::ParseBaseTypeSpecifier(SourceLocation &BaseLoc,
                                                   SourceLocation &EndLocation) {
+  // Parse optional nested-name-specifier
+  CXXScopeSpec SS;
+  ParseOptionalCXXScopeSpecifier(SS, ParsedType(), /*EnteringContext=*/false);
+
+  BaseLoc = Tok.getLocation();
+
   // Parse decltype-specifier
   if (Tok.is(tok::kw_decltype)) {
+    if (SS.isNotEmpty())
+      Diag(SS.getBeginLoc(), diag::err_unexpected_scope_on_base_decltype)
+        << FixItHint::CreateRemoval(SS.getRange());
     // Fake up a Declarator to use with ActOnTypeName.
     DeclSpec DS(AttrFactory);
-
-    BaseLoc = Tok.getLocation();
 
     ParseDecltypeSpecifier(DS);    
     EndLocation = DS.getSourceRange().getEnd();
@@ -726,12 +733,6 @@ Parser::TypeResult Parser::ParseBaseTypeSpecifier(SourceLocation &BaseLoc,
     Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
     return Actions.ActOnTypeName(getCurScope(), DeclaratorInfo);
   }
-
-  // Parse optional nested-name-specifier
-  CXXScopeSpec SS;
-  ParseOptionalCXXScopeSpecifier(SS, ParsedType(), /*EnteringContext=*/false);
-
-  BaseLoc = Tok.getLocation();
 
   // Check whether we have a template-id that names a type.
   if (Tok.is(tok::annot_template_id)) {

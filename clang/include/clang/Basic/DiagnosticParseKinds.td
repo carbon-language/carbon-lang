@@ -249,6 +249,8 @@ def err_missing_comma_before_ellipsis : Error<
   "C requires a comma prior to the ellipsis in a variadic function type">;
 def err_unexpected_typedef_ident : Error<
   "unexpected type name %0: expected identifier">;
+def err_unexpected_scope_on_base_decltype : Error<
+  "unexpected namespace scope prior to decltype">;
 def err_expected_class_name : Error<"expected class name">;
 def err_unspecified_vla_size_with_static : Error<
   "'static' may not be used with an unspecified variable length array size">;
