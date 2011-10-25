@@ -52,7 +52,6 @@ namespace lldb_private {
              use_regex:1,
              show_scope:1,
              show_decl:1;
-        lldb::Format format;
         std::string summary;
 
     private:

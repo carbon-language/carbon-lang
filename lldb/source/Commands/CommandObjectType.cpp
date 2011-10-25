@@ -26,15 +26,189 @@
 #include "lldb/Interpreter/CommandObject.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Interpreter/Options.h"
+#include "lldb/Interpreter/OptionGroupFormat.h"
 
 using namespace lldb;
 using namespace lldb_private;
 
-//-------------------------------------------------------------------------
-// CommandObjectTypeFormatAdd
-//-------------------------------------------------------------------------
 
-class CommandObjectTypeFormatAdd : public CommandObject
+class ScriptAddOptions
+{
+    
+public:
+    
+    bool m_skip_pointers;
+    bool m_skip_references;
+    bool m_cascade;
+    StringList m_target_types;
+    StringList m_user_source;
+    
+    bool m_no_children;
+    bool m_no_value;
+    bool m_one_liner;
+    bool m_regex;
+    
+    ConstString* m_name;
+    
+    std::string m_category;
+    
+    ScriptAddOptions(bool sptr,
+                     bool sref,
+                     bool casc,
+                     bool noch,
+                     bool novl,
+                     bool onel,
+                     bool regx,
+                     ConstString* name,
+                     std::string catg) :
+    m_skip_pointers(sptr),
+    m_skip_references(sref),
+    m_cascade(casc),
+    m_target_types(),
+    m_user_source(),
+    m_no_children(noch),
+    m_no_value(novl),
+    m_one_liner(onel),
+    m_regex(regx),
+    m_name(name),
+    m_category(catg)
+    {
+    }
+    
+    typedef lldb::SharedPtr<ScriptAddOptions>::Type SharedPointer;
+    
+};
+
+class SynthAddOptions
+{
+    
+public:
+    
+    bool m_skip_pointers;
+    bool m_skip_references;
+    bool m_cascade;
+    bool m_regex;
+    StringList m_user_source;
+    StringList m_target_types;
+    
+    std::string m_category;
+    
+    SynthAddOptions(bool sptr,
+                    bool sref,
+                    bool casc,
+                    bool regx,
+                    std::string catg) :
+    m_skip_pointers(sptr),
+    m_skip_references(sref),
+    m_cascade(casc),
+    m_regex(regx),
+    m_user_source(),
+    m_target_types(),
+    m_category(catg)
+    {
+    }
+    
+    typedef lldb::SharedPtr<SynthAddOptions>::Type SharedPointer;
+    
+};
+
+
+
+class CommandObjectTypeSummaryAdd : public CommandObject
+{
+    
+private:
+    
+    class CommandOptions : public Options
+    {
+    public:
+        
+        CommandOptions (CommandInterpreter &interpreter) :
+        Options (interpreter)
+        {
+        }
+        
+        virtual
+        ~CommandOptions (){}
+        
+        virtual Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg);
+        
+        void
+        OptionParsingStarting ();
+        
+        const OptionDefinition*
+        GetDefinitions ()
+        {
+            return g_option_table;
+        }
+        
+        // Options table: Required for subclasses of Options.
+        
+        static OptionDefinition g_option_table[];
+        
+        // Instance variables to hold the values for command options.
+        
+        bool m_cascade;
+        bool m_no_children;
+        bool m_no_value;
+        bool m_one_liner;
+        bool m_skip_references;
+        bool m_skip_pointers;
+        bool m_regex;
+        std::string m_format_string;
+        ConstString* m_name;
+        std::string m_python_script;
+        std::string m_python_function;
+        bool m_is_add_script;
+        std::string m_category;
+    };
+    
+    CommandOptions m_options;
+    
+    virtual Options *
+    GetOptions ()
+    {
+        return &m_options;
+    }
+    
+    void
+    CollectPythonScript(ScriptAddOptions *options,
+                        CommandReturnObject &result);
+    
+    bool
+    Execute_ScriptSummary (Args& command, CommandReturnObject &result);
+    
+    bool
+    Execute_StringSummary (Args& command, CommandReturnObject &result);
+    
+public:
+    
+    enum SummaryFormatType
+    {
+        eRegularSummary,
+        eRegexSummary,
+        eNamedSummary
+    };
+    
+    CommandObjectTypeSummaryAdd (CommandInterpreter &interpreter);
+    
+    ~CommandObjectTypeSummaryAdd ()
+    {
+    }
+    
+    bool
+    Execute (Args& command, CommandReturnObject &result);
+    
+    static bool
+    AddSummary(const ConstString& type_name,
+               lldb::SummaryFormatSP entry,
+               SummaryFormatType type,
+               std::string category,
+               Error* error = NULL);
+};
+
+class CommandObjectTypeSynthAdd : public CommandObject
 {
     
 private:
@@ -65,14 +239,24 @@ private:
                     if (!success)
                         error.SetErrorStringWithFormat("Invalid value for cascade: %s.\n", option_arg);
                     break;
-                case 'f':
-                    error = Args::StringToFormat(option_arg, m_format, NULL);
+                case 'P':
+                    handwrite_python = true;
+                    break;
+                case 'l':
+                    m_class_name = std::string(option_arg);
+                    is_class_based = true;
                     break;
                 case 'p':
                     m_skip_pointers = true;
                     break;
                 case 'r':
                     m_skip_references = true;
+                    break;
+                case 'w':
+                    m_category = std::string(option_arg);
+                    break;
+                case 'x':
+                    m_regex = true;
                     break;
                 default:
                     error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
@@ -86,9 +270,13 @@ private:
         OptionParsingStarting ()
         {
             m_cascade = true;
-            m_format = eFormatInvalid;
+            m_class_name = "";
             m_skip_pointers = false;
             m_skip_references = false;
+            m_category = "default";
+            is_class_based = false;
+            handwrite_python = false;
+            m_regex = false;
         }
         
         const OptionDefinition*
@@ -104,9 +292,18 @@ private:
         // Instance variables to hold the values for command options.
         
         bool m_cascade;
-        lldb::Format m_format;
         bool m_skip_references;
         bool m_skip_pointers;
+        std::string m_class_name;
+        bool m_input_python;
+        std::string m_category;
+        
+        bool is_class_based;
+        
+        bool handwrite_python;
+        
+        bool m_regex;
+        
     };
     
     CommandOptions m_options;
@@ -117,12 +314,139 @@ private:
         return &m_options;
     }
     
+    void
+    CollectPythonScript (SynthAddOptions *options,
+                         CommandReturnObject &result);    
+    bool
+    Execute_HandwritePython (Args& command, CommandReturnObject &result);    
+    
+    bool
+    Execute_PythonClass (Args& command, CommandReturnObject &result);
+    
+    bool
+    Execute (Args& command, CommandReturnObject &result);
+    
+public:
+    
+    enum SynthFormatType
+    {
+        eRegularSynth,
+        eRegexSynth
+    };
+    
+    CommandObjectTypeSynthAdd (CommandInterpreter &interpreter);
+    
+    ~CommandObjectTypeSynthAdd ()
+    {
+    }
+    
+    static bool
+    AddSynth(const ConstString& type_name,
+             lldb::SyntheticChildrenSP entry,
+             SynthFormatType type,
+             std::string category_name,
+             Error* error);
+};
+
+//-------------------------------------------------------------------------
+// CommandObjectTypeFormatAdd
+//-------------------------------------------------------------------------
+
+class CommandObjectTypeFormatAdd : public CommandObject
+{
+    
+private:
+    
+    class CommandOptions : public OptionGroup
+    {
+    public:
+        
+        CommandOptions () :
+            OptionGroup()
+        {
+        }
+        
+        virtual
+        ~CommandOptions ()
+        {
+        }
+        
+        virtual uint32_t
+        GetNumDefinitions ();
+        
+        virtual const OptionDefinition*
+        GetDefinitions ()
+        {
+            return g_option_table;
+        }
+        
+        virtual void
+        OptionParsingStarting (CommandInterpreter &interpreter)
+        {
+            m_cascade = true;
+            m_skip_pointers = false;
+            m_skip_references = false;
+        }
+        virtual Error
+        SetOptionValue (CommandInterpreter &interpreter,
+                        uint32_t option_idx,
+                        const char *option_value)
+        {
+            Error error;
+            const char short_option = (char) g_option_table[option_idx].short_option;
+            bool success;
+            
+            switch (short_option)
+            {
+                case 'C':
+                    m_cascade = Args::StringToBoolean(option_value, true, &success);
+                    if (!success)
+                        error.SetErrorStringWithFormat("Invalid value for cascade: %s.\n", option_value);
+                    break;
+                case 'p':
+                    m_skip_pointers = true;
+                    break;
+                case 'r':
+                    m_skip_references = true;
+                    break;
+                default:
+                    error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
+                    break;
+            }
+            
+            return error;
+        }
+        
+        // Options table: Required for subclasses of Options.
+        
+        static OptionDefinition g_option_table[];
+        
+        // Instance variables to hold the values for command options.
+        
+        bool m_cascade;
+        bool m_skip_references;
+        bool m_skip_pointers;
+    };
+    
+    OptionGroupOptions m_option_group;
+    OptionGroupFormat m_format_options;
+    CommandOptions m_command_options;
+    
+    virtual Options *
+    GetOptions ()
+    {
+        return &m_option_group;
+    }
+    
 public:
     CommandObjectTypeFormatAdd (CommandInterpreter &interpreter) :
     CommandObject (interpreter,
                    "type format add",
                    "Add a new formatting style for a type.",
-                   NULL), m_options (interpreter)
+                   NULL), 
+        m_option_group (interpreter),
+        m_format_options (eFormatInvalid),
+        m_command_options ()
     {
         CommandArgumentEntry type_arg;
         CommandArgumentData type_style_arg;
@@ -161,6 +485,12 @@ public:
                     "which now prints all floats and float&s as hexadecimal, but does not format float*s\n"
                     "and does not change the default display for Afloat and Bfloat objects.\n"
                     );
+    
+        // Add the "--format" to all options groups
+        m_option_group.Append (&m_format_options, OptionGroupFormat::OPTION_GROUP_FORMAT, LLDB_OPT_SET_ALL);
+        m_option_group.Append (&m_command_options);
+        m_option_group.Finalize();
+
     }
     
     ~CommandObjectTypeFormatAdd ()
@@ -179,7 +509,8 @@ public:
             return false;
         }
         
-        if (m_options.m_format == eFormatInvalid)
+        const Format format = m_format_options.GetFormat();
+        if (format == eFormatInvalid)
         {
             result.AppendErrorWithFormat ("%s needs a valid format.\n", m_cmd_name.c_str());
             result.SetStatus(eReturnStatusFailed);
@@ -188,10 +519,10 @@ public:
         
         ValueFormatSP entry;
         
-        entry.reset(new ValueFormat(m_options.m_format,
-                                    m_options.m_cascade,
-                                    m_options.m_skip_pointers,
-                                    m_options.m_skip_references));
+        entry.reset(new ValueFormat(format,
+                                    m_command_options.m_cascade,
+                                    m_command_options.m_skip_pointers,
+                                    m_command_options.m_skip_references));
 
         // now I have a valid format, let's add it to every type
         
@@ -218,11 +549,16 @@ OptionDefinition
 CommandObjectTypeFormatAdd::CommandOptions::g_option_table[] =
 {
     { LLDB_OPT_SET_ALL, false, "cascade", 'C', required_argument, NULL, 0, eArgTypeBoolean,    "If true, cascade to derived typedefs."},
-    { LLDB_OPT_SET_ALL, false, "format", 'f', required_argument, NULL, 0, eArgTypeFormat,    "The format to use to display this type."},
     { LLDB_OPT_SET_ALL, false, "skip-pointers", 'p', no_argument, NULL, 0, eArgTypeNone,         "Don't use this format for pointers-to-type objects."},
     { LLDB_OPT_SET_ALL, false, "skip-references", 'r', no_argument, NULL, 0, eArgTypeNone,         "Don't use this format for references-to-type objects."},
-    { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
+
+
+uint32_t
+CommandObjectTypeFormatAdd::CommandOptions::GetNumDefinitions ()
+{
+    return sizeof(g_option_table) / sizeof (OptionDefinition);
+}
 
 
 //-------------------------------------------------------------------------

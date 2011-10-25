@@ -368,14 +368,11 @@ Error
 OptionValueFormat::SetValueFromCString (const char *value_cstr)
 {
     Format new_format;
-    uint32_t new_byte_size = UINT32_MAX;
-    Error error (Args::StringToFormat(value_cstr, new_format, m_byte_size_prefix_ok ? &new_byte_size : NULL));
+    Error error (Args::StringToFormat (value_cstr, new_format, NULL));
     if (error.Success())
     {
         m_value_was_set = true;
         m_current_value = new_format;
-        if (new_byte_size != UINT32_MAX)
-            m_current_byte_size = new_byte_size;
     }
     return error;
 }

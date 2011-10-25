@@ -29,6 +29,7 @@
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Interpreter/Options.h"
+#include "lldb/Interpreter/OptionGroupFormat.h"
 #include "lldb/Interpreter/OptionGroupValueObjectDisplay.h"
 #include "lldb/Interpreter/OptionGroupVariable.h"
 #include "lldb/Interpreter/OptionGroupWatchpoint.h"
@@ -336,6 +337,7 @@ public:
                        eFlagProcessMustBeLaunched | eFlagProcessMustBePaused),
         m_option_group (interpreter),
         m_option_variable(true), // Include the frame specific options by passing "true"
+        m_option_format (eFormatDefault),
         m_option_watchpoint(),
         m_varobj_options()
     {
@@ -353,6 +355,7 @@ public:
         m_arguments.push_back (arg);
         
         m_option_group.Append (&m_option_variable, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
+        m_option_group.Append (&m_option_format, OptionGroupFormat::OPTION_GROUP_FORMAT, LLDB_OPT_SET_1);
         m_option_group.Append (&m_option_watchpoint, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
         m_option_group.Append (&m_varobj_options, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
         m_option_group.Finalize();
@@ -440,6 +443,9 @@ public:
                 // Things have checked out ok...
                 // m_option_watchpoint.watch_type specifies the type of watching.
             }
+            
+            const Format format = m_option_format.GetFormat();
+
             if (command.GetArgumentCount() > 0)
             {
                 VariableList regex_var_list;
@@ -470,8 +476,8 @@ public:
                                         valobj_sp = frame->GetValueObjectForFrameVariable (var_sp, m_varobj_options.use_dynamic);
                                         if (valobj_sp)
                                         {
-                                            if (m_option_variable.format != eFormatDefault)
-                                                valobj_sp->SetFormat (m_option_variable.format);
+                                            if (format != eFormatDefault)
+                                                valobj_sp->SetFormat (format);
                                             
                                             if (m_option_variable.show_decl && var_sp->GetDeclaration ().GetFile())
                                             {
@@ -515,8 +521,8 @@ public:
                                                                               error);
                         if (valobj_sp)
                         {
-                            if (m_option_variable.format != eFormatDefault)
-                                valobj_sp->SetFormat (m_option_variable.format);
+                            if (format != eFormatDefault)
+                                valobj_sp->SetFormat (format);
                             if (m_option_variable.show_decl && var_sp && var_sp->GetDeclaration ().GetFile())
                             {
                                 var_sp->GetDeclaration ().DumpStopContext (&s, false);
@@ -633,8 +639,8 @@ public:
                                                                                m_varobj_options.use_dynamic);
                             if (valobj_sp)
                             {
-                                if (m_option_variable.format != eFormatDefault)
-                                    valobj_sp->SetFormat (m_option_variable.format);
+                                if (format != eFormatDefault)
+                                    valobj_sp->SetFormat (format);
 
                                 // When dumping all variables, don't print any variables
                                 // that are not in scope to avoid extra unneeded output
@@ -673,6 +679,7 @@ protected:
 
     OptionGroupOptions m_option_group;
     OptionGroupVariable m_option_variable;
+    OptionGroupFormat m_option_format;
     OptionGroupWatchpoint m_option_watchpoint;
     OptionGroupValueObjectDisplay m_varobj_options;
 };

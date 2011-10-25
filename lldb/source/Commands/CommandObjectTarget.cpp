@@ -28,6 +28,7 @@
 #include "lldb/Interpreter/OptionGroupArchitecture.h"
 #include "lldb/Interpreter/OptionGroupBoolean.h"
 #include "lldb/Interpreter/OptionGroupFile.h"
+#include "lldb/Interpreter/OptionGroupFormat.h"
 #include "lldb/Interpreter/OptionGroupVariable.h"
 #include "lldb/Interpreter/OptionGroupPlatform.h"
 #include "lldb/Interpreter/OptionGroupUInt64.h"
@@ -504,6 +505,7 @@ public:
                        0),
         m_option_group (interpreter),
         m_option_variable (false), // Don't include frame options
+        m_option_format (eFormatDefault),
         m_option_compile_units    (LLDB_OPT_SET_1, false, "file", 'f', 0, eArgTypePath, "A basename or fullpath to a file that contains global variables. This option can be specified multiple times."),
         m_option_shared_libraries (LLDB_OPT_SET_1, false, "shlib",'s', 0, eArgTypePath, "A basename or fullpath to a shared library to use in the search for global variables. This option can be specified multiple times."),
         m_varobj_options()
@@ -523,6 +525,7 @@ public:
         
         m_option_group.Append (&m_varobj_options, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
         m_option_group.Append (&m_option_variable, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
+        m_option_group.Append (&m_option_format, OptionGroupFormat::OPTION_GROUP_FORMAT, LLDB_OPT_SET_1);
         m_option_group.Append (&m_option_compile_units, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);   
         m_option_group.Append (&m_option_shared_libraries, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);   
         m_option_group.Finalize();
@@ -549,9 +552,6 @@ public:
                .SetOmitSummaryDepth(m_varobj_options.no_summary_depth)
                .SetIgnoreCap(m_varobj_options.ignore_cap);
                 
-        if (m_option_variable.format != eFormatDefault)
-            valobj_sp->SetFormat (m_option_variable.format);
-        
         switch (var_sp->GetScope())
         {
             case eValueTypeVariableGlobal:
@@ -586,7 +586,7 @@ public:
                 s.PutCString (": ");
         }
         
-        const Format format = m_option_variable.format;
+        const Format format = m_option_format.GetFormat();
         if (format != eFormatDefault)
             valobj_sp->SetFormat (format);
         
@@ -765,6 +765,7 @@ public:
 protected:
     OptionGroupOptions m_option_group;
     OptionGroupVariable m_option_variable;
+    OptionGroupFormat m_option_format;
     OptionGroupFileList m_option_compile_units;
     OptionGroupFileList m_option_shared_libraries;
     OptionGroupValueObjectDisplay m_varobj_options;

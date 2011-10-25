@@ -729,16 +729,10 @@ namespace lldb_private {
     class OptionValueFormat : public OptionValue
     {
     public:
-        OptionValueFormat (lldb::Format current_value = lldb::eFormatDefault, 
-                           lldb::Format default_value = lldb::eFormatDefault,
-                           uint32_t current_byte_size = 0,
-                           uint32_t default_byte_size = 0,
-                           bool byte_size_prefix_ok = false) :
+        OptionValueFormat (lldb::Format current_value, 
+                           lldb::Format default_value) :
             m_current_value (current_value),
-            m_default_value (default_value),
-            m_current_byte_size (current_byte_size),
-            m_default_byte_size (default_byte_size),
-            m_byte_size_prefix_ok (byte_size_prefix_ok)
+            m_default_value (default_value)
         {
         }
         
@@ -799,36 +793,9 @@ namespace lldb_private {
             m_default_value = value;
         }
         
-        uint32_t 
-        GetCurrentByteSize () const
-        {
-            return m_current_byte_size;
-        }
-
-        uint32_t 
-        GetDefaultByteSize () const
-        {
-            return m_default_byte_size;
-        }
-        
-        void
-        SetCurrentByteSize (uint32_t byte_size)
-        {
-            m_current_byte_size = byte_size;
-        }
-        
-        void
-        SetDefaultByteSize (uint32_t byte_size)
-        {
-            m_default_byte_size = byte_size;
-        }
-
     protected:
         lldb::Format m_current_value;
         lldb::Format m_default_value;
-        uint32_t m_current_byte_size;
-        uint32_t m_default_byte_size;
-        bool m_byte_size_prefix_ok;
     };
     
     

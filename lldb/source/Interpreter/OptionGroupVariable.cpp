@@ -28,7 +28,6 @@ g_option_table[] =
     { LLDB_OPT_SET_1, false, "no-locals",       'l', no_argument,       NULL, 0, eArgTypeNone,    "Omit local variables."},
     { LLDB_OPT_SET_1, false, "show-globals",    'g', no_argument,       NULL, 0, eArgTypeNone,    "Show the current frame source file global and static variables."},
     { LLDB_OPT_SET_1, false, "show-declaration",'c', no_argument,       NULL, 0, eArgTypeNone,    "Show variable declaration information (source file and line where the variable was declared)."},
-    { LLDB_OPT_SET_1, false, "format",          'f', required_argument, NULL, 0, eArgTypeExprFormat,  "Specify the format that the variable output should use."},
     { LLDB_OPT_SET_1, false, "regex",           'r', no_argument,       NULL, 0, eArgTypeRegularExpression,    "The <variable-name> argument for name lookups are regular expressions."},
     { LLDB_OPT_SET_1, false, "scope",           's', no_argument,       NULL, 0, eArgTypeNone,    "Show variable scope (argument, local, global, static)."},
     { LLDB_OPT_SET_1, false, "summary",         'y', required_argument, NULL, 0, eArgTypeName,  "Specify the summary that the variable output should use."},
@@ -61,7 +60,6 @@ OptionGroupVariable::SetOptionValue (CommandInterpreter &interpreter,
         case 'l':   show_locals  = false; break;
         case 'g':   show_globals = true;  break;
         case 'c':   show_decl    = true;  break;
-        case 'f':   error = Args::StringToFormat(option_arg, format, NULL); break;
         case 's':
             show_scope = true;
             break;
@@ -83,7 +81,6 @@ OptionGroupVariable::OptionParsingStarting (CommandInterpreter &interpreter)
     show_locals   = true;   // Frame option only
     show_globals  = false;  // Frame option only
     show_decl     = false;
-    format        = lldb::eFormatDefault;
     use_regex     = false;
     show_scope    = false;
     summary       = "";

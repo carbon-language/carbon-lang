@@ -15,8 +15,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Interpreter/CommandObject.h"
-#include "lldb/Interpreter/Options.h"
-#include "lldb/Core/Language.h"
+#include "lldb/Interpreter/OptionGroupFormat.h"
 #include "lldb/Target/ExecutionContext.h"
 
 namespace lldb_private {
@@ -25,31 +24,32 @@ class CommandObjectExpression : public CommandObject
 {
 public:
 
-    class CommandOptions : public Options
+    class CommandOptions : public OptionGroup
     {
     public:
 
-        CommandOptions (CommandInterpreter &interpreter);
+        CommandOptions ();
 
         virtual
         ~CommandOptions ();
 
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg);
-
-        void
-        OptionParsingStarting ();
-
-        const OptionDefinition*
+        virtual uint32_t
+        GetNumDefinitions ();
+        
+        virtual const OptionDefinition*
         GetDefinitions ();
+        
+        virtual Error
+        SetOptionValue (CommandInterpreter &interpreter,
+                        uint32_t option_idx,
+                        const char *option_value);
+        
+        virtual void
+        OptionParsingStarting (CommandInterpreter &interpreter);
 
         // Options table: Required for subclasses of Options.
 
         static OptionDefinition g_option_table[];
-        //Language  language;
-        lldb::Encoding  encoding;
-        lldb::Format    format;
-        bool        debug;
         bool        print_object;
         LazyBool    use_dynamic;
         bool        unwind_on_error;
@@ -93,7 +93,9 @@ protected:
                         Stream *error_stream,
                         CommandReturnObject *result = NULL);
 
-    CommandOptions m_options;
+    OptionGroupOptions m_option_group;
+    OptionGroupFormat m_format_options;
+    CommandOptions m_command_options;
     ExecutionContext m_exe_ctx;
     uint32_t m_expr_line_count;
     std::string m_expr_lines; // Multi-line expression support
