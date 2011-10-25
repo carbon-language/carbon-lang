@@ -612,7 +612,6 @@ bool
 ClangExpressionDeclMap::GetFunctionInfo 
 (
     const NamedDecl *decl, 
-    llvm::Value**& value, 
     uint64_t &ptr
 )
 {
@@ -624,7 +623,6 @@ ClangExpressionDeclMap::GetFunctionInfo
     // We know m_parser_vars is valid since we searched for the variable by
     // its NamedDecl
     
-    value = &entity_sp->m_parser_vars->m_llvm_value;
     ptr = entity_sp->m_parser_vars->m_lldb_value->GetScalar().ULongLong();
     
     return true;

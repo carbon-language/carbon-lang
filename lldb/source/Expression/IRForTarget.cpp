@@ -218,11 +218,10 @@ IRForTarget::GetFunctionAddress (llvm::Function *fun,
     // Find the address of the function.
     
     clang::NamedDecl *fun_decl = DeclForGlobal (fun);
-    Value **fun_value_ptr = NULL;
     
     if (fun_decl)
     {
-        if (!m_decl_map->GetFunctionInfo (fun_decl, fun_value_ptr, fun_addr)) 
+        if (!m_decl_map->GetFunctionInfo (fun_decl, fun_addr)) 
         {
             lldb_private::ConstString alternate_mangling_const_str;
             bool found_it = m_decl_map->GetFunctionAddress (name, fun_addr);
@@ -242,8 +241,6 @@ IRForTarget::GetFunctionAddress (llvm::Function *fun,
             
             if (!found_it)
             {
-                fun_value_ptr = NULL;
-
                 if (log)
                 {
                     if (alternate_mangling_const_str)
@@ -1407,6 +1404,96 @@ IRForTarget::RewritePersistentAllocs(llvm::BasicBlock &basic_block)
     return true;
 }
 
+bool
+IRForTarget::MaterializeInitializer (uint8_t *data, Constant *initializer)
+{
+    if (!initializer)
+        return true;
+    
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+
+    if (log && log->GetVerbose())
+        log->Printf("  MaterializeInitializer(%p, %s)", data, PrintValue(initializer).c_str());
+    
+    Type *initializer_type = initializer->getType();
+    
+    if (ConstantInt *int_initializer = dyn_cast<ConstantInt>(initializer))
+    {
+        memcpy (data, int_initializer->getValue().getRawData(), m_target_data->getTypeStoreSize(initializer_type));
+        return true;
+    }
+    else if (ConstantArray *array_initializer = dyn_cast<ConstantArray>(initializer))
+    {
+        if (array_initializer->isString())
+        {
+            std::string array_initializer_string = array_initializer->getAsString();
+            memcpy (data, array_initializer_string.c_str(), m_target_data->getTypeStoreSize(initializer_type));
+        }
+        else
+        {
+            ArrayType *array_initializer_type = array_initializer->getType();
+            Type *array_element_type = array_initializer_type->getElementType();
+                        
+            size_t element_size = m_target_data->getTypeAllocSize(array_element_type);
+            
+            for (int i = 0; i < array_initializer->getNumOperands(); ++i)
+            {
+                if (!MaterializeInitializer(data + (i * element_size), array_initializer->getOperand(i)))
+                    return false;
+            }
+        }
+        return true;
+    }
+    else if (ConstantStruct *struct_initializer = dyn_cast<ConstantStruct>(initializer))
+    {
+        StructType *struct_initializer_type = struct_initializer->getType();
+        const StructLayout *struct_layout = m_target_data->getStructLayout(struct_initializer_type);
+
+        for (int i = 0;
+             i < struct_initializer->getNumOperands();
+             ++i)
+        {
+            if (!MaterializeInitializer(data + struct_layout->getElementOffset(i), struct_initializer->getOperand(i)))
+                return false;
+        }
+        return true;
+    }
+    return false;
+}
+
+bool
+IRForTarget::MaterializeInternalVariable (GlobalVariable *global_variable)
+{
+    if (GlobalVariable::isExternalLinkage(global_variable->getLinkage()))
+        return false;
+    
+    uint64_t offset = m_data_allocator->GetStream().GetSize();
+    
+    llvm::Type *variable_type = global_variable->getType();
+    
+    Constant *initializer = global_variable->getInitializer();
+    
+    llvm::Type *initializer_type = initializer->getType();
+    
+    size_t size = m_target_data->getTypeAllocSize(initializer_type);
+    
+    lldb_private::DataBufferHeap data(size, '\0');
+    
+    if (initializer)
+        if (!MaterializeInitializer(data.GetBytes(), initializer))
+            return false;
+    
+    m_data_allocator->GetStream().Write(data.GetBytes(), data.GetByteSize());
+    
+    Constant *new_pointer = BuildRelocation(variable_type, offset);
+        
+    global_variable->replaceAllUsesWith(new_pointer);
+
+    global_variable->eraseFromParent();
+    
+    return true;
+}
+
 // This function does not report errors; its callers are responsible.
 bool 
 IRForTarget::MaybeHandleVariable (Value *llvm_value_ptr)
@@ -1431,6 +1518,9 @@ IRForTarget::MaybeHandleVariable (Value *llvm_value_ptr)
     }
     else if (GlobalVariable *global_variable = dyn_cast<GlobalVariable>(llvm_value_ptr))
     {
+        if (!GlobalValue::isExternalLinkage(global_variable->getLinkage()))
+            return MaterializeInternalVariable(global_variable);
+        
         clang::NamedDecl *named_decl = DeclForGlobal(global_variable);
         
         if (!named_decl)
@@ -2211,42 +2301,47 @@ IRForTarget::ReplaceVariables (Function &llvm_function)
         }
             
         if (log)
-            log->Printf("  \"%s\" [\"%s\"] (\"%s\") placed at %lld",
-                        value->getName().str().c_str(),
+            log->Printf("  \"%s\" (\"%s\") placed at %lld",
                         name.GetCString(),
-                        PrintValue(value, true).c_str(),
+                        decl->getNameAsString().c_str(),
                         offset);
         
         ConstantInt *offset_int(ConstantInt::get(offset_type, offset, true));
         GetElementPtrInst *get_element_ptr = GetElementPtrInst::Create(argument, offset_int, "", FirstEntryInstruction);
                 
-        Value *replacement = NULL;
-        
-        // Per the comment at ASTResultSynthesizer::SynthesizeBodyResult, in cases where the result
-        // variable is an rvalue, we have to synthesize a dereference of the appropriate structure
-        // entry in order to produce the static variable that the AST thinks it is accessing.
-        if (name == m_result_name && !m_result_is_pointer)
+        if (value)
         {
-            BitCastInst *bit_cast = new BitCastInst(get_element_ptr, value->getType()->getPointerTo(), "", FirstEntryInstruction);
-        
-            LoadInst *load = new LoadInst(bit_cast, "", FirstEntryInstruction);
+            Value *replacement = NULL;
             
-            replacement = load;
-        }
-        else
-        {
-            BitCastInst *bit_cast = new BitCastInst(get_element_ptr, value->getType(), "", FirstEntryInstruction);
-
-            replacement = bit_cast;
-        }
+            if (log)
+                log->Printf("    Replacing [%s]", PrintValue(value).c_str());
             
-        if (Constant *constant = dyn_cast<Constant>(value))
-            UnfoldConstant(constant, replacement, FirstEntryInstruction);
-        else
-            value->replaceAllUsesWith(replacement);
-        
-        if (GlobalVariable *var = dyn_cast<GlobalVariable>(value))
-            var->eraseFromParent();
+            // Per the comment at ASTResultSynthesizer::SynthesizeBodyResult, in cases where the result
+            // variable is an rvalue, we have to synthesize a dereference of the appropriate structure
+            // entry in order to produce the static variable that the AST thinks it is accessing.
+            if (name == m_result_name && !m_result_is_pointer)
+            {
+                BitCastInst *bit_cast = new BitCastInst(get_element_ptr, value->getType()->getPointerTo(), "", FirstEntryInstruction);
+                
+                LoadInst *load = new LoadInst(bit_cast, "", FirstEntryInstruction);
+                
+                replacement = load;
+            }
+            else
+            {
+                BitCastInst *bit_cast = new BitCastInst(get_element_ptr, value->getType(), "", FirstEntryInstruction);
+                
+                replacement = bit_cast;
+            }
+            
+            if (Constant *constant = dyn_cast<Constant>(value))
+                UnfoldConstant(constant, replacement, FirstEntryInstruction);
+            else
+                value->replaceAllUsesWith(replacement);
+            
+            if (GlobalVariable *var = dyn_cast<GlobalVariable>(value))
+                var->eraseFromParent();
+        }
     }
     
     if (log)
@@ -2321,6 +2416,7 @@ IRForTarget::runOnModule (Module &llvm_module)
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     m_module = &llvm_module;
+    m_target_data.reset(new TargetData(m_module));
     
     Function* function = m_module->getFunction(StringRef(m_func_name.c_str()));
     
@@ -2341,6 +2437,18 @@ IRForTarget::runOnModule (Module &llvm_module)
             log->Printf("Couldn't fix the linkage for the function");
         
         return false;
+    }
+    
+    if (log)
+    {
+        std::string s;
+        raw_string_ostream oss(s);
+        
+        m_module->print(oss, NULL);
+        
+        oss.flush();
+        
+        log->Printf("Module as passed in to IRForTarget: \n\"%s\"", s.c_str());
     }
     
     llvm::Type *intptr_ty = Type::getInt8Ty(m_module->getContext());

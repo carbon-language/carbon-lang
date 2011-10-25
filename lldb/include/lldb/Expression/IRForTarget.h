@@ -27,6 +27,7 @@ namespace llvm {
     class Instruction;
     class Module;
     class StoreInst;
+    class TargetData;
     class Type;
     class Value;
 }
@@ -432,6 +433,34 @@ private:
     //------------------------------------------------------------------
     
     //------------------------------------------------------------------
+    /// Write an initializer to a memory array of assumed sufficient
+    /// size.
+    ///
+    /// @param[in] data
+    ///     A pointer to the data to write to.
+    ///
+    /// @param[in] initializer
+    ///     The initializer itself.
+    ///
+    /// @return
+    ///     True on success; false otherwise
+    //------------------------------------------------------------------
+    bool
+    MaterializeInitializer (uint8_t *data, llvm::Constant *initializer);
+    
+    //------------------------------------------------------------------
+    /// Move an internal variable into the static allocation section.
+    ///
+    /// @param[in] global_variable
+    ///     The variable.
+    ///
+    /// @return
+    ///     True on success; false otherwise
+    //------------------------------------------------------------------
+    bool
+    MaterializeInternalVariable (llvm::GlobalVariable *global_variable);
+    
+    //------------------------------------------------------------------
     /// Handle a single externally-defined variable
     ///
     /// @param[in] value
@@ -578,6 +607,7 @@ private:
     lldb_private::ConstString               m_result_name;              ///< The name of the result variable ($0, $1, ...)
     lldb_private::TypeFromParser            m_result_type;              ///< The type of the result variable.
     llvm::Module                           *m_module;                   ///< The module being processed, or NULL if that has not been determined yet.
+    std::auto_ptr<llvm::TargetData>         m_target_data;              ///< The target data for the module being processed, or NULL if there is no module.
     lldb_private::ClangExpressionDeclMap   *m_decl_map;                 ///< The DeclMap containing the Decls 
     StaticDataAllocator                    *m_data_allocator;           ///< If non-NULL, the allocator to use for constant strings
     llvm::Constant                         *m_CFStringCreateWithBytes;  ///< The address of the function CFStringCreateWithBytes, cast to the appropriate function pointer type
