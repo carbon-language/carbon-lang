@@ -718,6 +718,8 @@ Parser::TypeResult Parser::ParseBaseTypeSpecifier(SourceLocation &BaseLoc,
     // Fake up a Declarator to use with ActOnTypeName.
     DeclSpec DS(AttrFactory);
 
+    BaseLoc = Tok.getLocation();
+
     ParseDecltypeSpecifier(DS);    
     EndLocation = DS.getSourceRange().getEnd();
 
