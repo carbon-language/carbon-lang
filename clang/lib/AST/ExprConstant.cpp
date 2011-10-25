@@ -3102,7 +3102,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::CXXConstCastExprClass:
   case Expr::ObjCBridgedCastExprClass: {
     const Expr *SubExpr = cast<CastExpr>(E)->getSubExpr();
-    if (E->getStmtClass() != Expr::ImplicitCastExprClass &&
+    if (isa<ExplicitCastExpr>(E) &&
         isa<FloatingLiteral>(SubExpr->IgnoreParenImpCasts()))
       return NoDiag();
     switch (cast<CastExpr>(E)->getCastKind()) {
