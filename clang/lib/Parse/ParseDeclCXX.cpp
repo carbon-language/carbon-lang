@@ -696,18 +696,23 @@ void Parser::ParseUnderlyingTypeSpecifier(DeclSpec &DS) {
     Diag(StartLoc, DiagID) << PrevSpec;
 }
 
-/// ParseClassName - Parse a C++ class-name, which names a class. Note
-/// that we only check that the result names a type; semantic analysis
-/// will need to verify that the type names a class. The result is
-/// either a type or NULL, depending on whether a type name was
-/// found.
+/// ParseBaseTypeSpecifier - Parse a C++ base-type-specifier which is either a
+/// class name or decltype-specifier. Note that we only check that the result 
+/// names a type; semantic analysis will need to verify that the type names a 
+/// class. The result is either a type or null, depending on whether a type 
+/// name was found.
 ///
+///       base-type-specifier: [C++ 10.1]
+///         class-or-decltype
+///       class-or-decltype: [C++ 10.1]
+///         nested-name-specifier[opt] class-name
+///         decltype-specifier
 ///       class-name: [C++ 9.1]
 ///         identifier
 ///         simple-template-id
 ///
-Parser::TypeResult Parser::ParseClassName(SourceLocation &EndLocation,
-                                          CXXScopeSpec &SS) {
+Parser::TypeResult Parser::ParseBaseTypeSpecifier(SourceLocation &EndLocation,
+                                                  CXXScopeSpec &SS) {
   // Check whether we have a template-id that names a type.
   if (Tok.is(tok::annot_template_id)) {
     TemplateIdAnnotation *TemplateId = takeTemplateIdAnnotation(Tok);
@@ -726,6 +731,17 @@ Parser::TypeResult Parser::ParseClassName(SourceLocation &EndLocation,
     }
 
     // Fall through to produce an error below.
+  }
+
+  if (Tok.is(tok::kw_decltype)) {
+    // Fake up a Declarator to use with ActOnTypeName.
+    DeclSpec DS(AttrFactory);
+
+    ParseDecltypeSpecifier(DS);    
+    EndLocation = DS.getSourceRange().getEnd();
+
+    Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
+    return Actions.ActOnTypeName(getCurScope(), DeclaratorInfo);
   }
 
   if (Tok.isNot(tok::identifier)) {
@@ -1363,9 +1379,9 @@ void Parser::ParseBaseClause(Decl *ClassDecl) {
 ///       base-specifier: [C++ class.derived]
 ///         ::[opt] nested-name-specifier[opt] class-name
 ///         'virtual' access-specifier[opt] ::[opt] nested-name-specifier[opt]
-///                        class-name
+///                        base-type-specifier
 ///         access-specifier 'virtual'[opt] ::[opt] nested-name-specifier[opt]
-///                        class-name
+///                        base-type-specifier
 Parser::BaseResult Parser::ParseBaseSpecifier(Decl *ClassDecl) {
   bool IsVirtual = false;
   SourceLocation StartLoc = Tok.getLocation();
@@ -1403,7 +1419,7 @@ Parser::BaseResult Parser::ParseBaseSpecifier(Decl *ClassDecl) {
 
   // Parse the class-name.
   SourceLocation EndLocation;
-  TypeResult BaseType = ParseClassName(EndLocation, SS);
+  TypeResult BaseType = ParseBaseTypeSpecifier(EndLocation, SS);
   if (BaseType.isInvalid())
     return true;
 

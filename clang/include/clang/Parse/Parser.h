@@ -1993,7 +1993,6 @@ private:
 
   //===--------------------------------------------------------------------===//
   // C++ 9: classes [class] and C structs/unions.
-  TypeResult ParseClassName(SourceLocation &EndLocation, CXXScopeSpec &SS);
   void ParseClassSpecifier(tok::TokenKind TagTokKind, SourceLocation TagLoc,
                            DeclSpec &DS,
                 const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo(),
@@ -2013,6 +2012,8 @@ private:
 
   //===--------------------------------------------------------------------===//
   // C++ 10: Derived classes [class.derived]
+  TypeResult ParseBaseTypeSpecifier(SourceLocation &EndLocation, 
+                                    CXXScopeSpec &SS);
   void ParseBaseClause(Decl *ClassDecl);
   BaseResult ParseBaseSpecifier(Decl *ClassDecl);
   AccessSpecifier getAccessSpecifierIfPresent() const;
