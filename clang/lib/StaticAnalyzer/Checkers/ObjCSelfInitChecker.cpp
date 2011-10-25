@@ -145,7 +145,7 @@ static void addSelfFlag(const ProgramState *state, SVal val,
                         SelfFlagEnum flag, CheckerContext &C) {
   // We tag the symbol that the SVal wraps.
   if (SymbolRef sym = val.getAsSymbol())
-    C.addTransition(state->set<SelfFlag>(sym, getSelfFlags(val, C) | flag));
+    C.generateNode(state->set<SelfFlag>(sym, getSelfFlags(val, C) | flag));
 }
 
 static bool hasSelfFlag(SVal val, SelfFlagEnum flag, CheckerContext &C) {
@@ -265,11 +265,11 @@ void ObjCSelfInitChecker::checkPreStmt(const CallExpr *CE,
     SVal argV = state->getSVal(*I);
     if (isSelfVar(argV, C)) {
       unsigned selfFlags = getSelfFlags(state->getSVal(cast<Loc>(argV)), C);
-      C.addTransition(state->set<PreCallSelfFlags>(selfFlags));
+      C.generateNode(state->set<PreCallSelfFlags>(selfFlags));
       return;
     } else if (hasSelfFlag(argV, SelfFlag_Self, C)) {
       unsigned selfFlags = getSelfFlags(argV, C);
-      C.addTransition(state->set<PreCallSelfFlags>(selfFlags));
+      C.generateNode(state->set<PreCallSelfFlags>(selfFlags));
       return;
     }
   }

@@ -241,15 +241,15 @@ void StreamChecker::OpenFileAux(CheckerContext &C, const CallExpr *CE) const {
     stateNull =
       stateNull->set<StreamState>(Sym, StreamState::getOpenFailed(CE));
 
-    C.addTransition(stateNotNull);
-    C.addTransition(stateNull);
+    C.generateNode(stateNotNull);
+    C.generateNode(stateNull);
   }
 }
 
 void StreamChecker::Fclose(CheckerContext &C, const CallExpr *CE) const {
   const ProgramState *state = CheckDoubleClose(CE, C.getState(), C);
   if (state)
-    C.addTransition(state);
+    C.generateNode(state);
 }
 
 void StreamChecker::Fread(CheckerContext &C, const CallExpr *CE) const {
@@ -457,7 +457,7 @@ void StreamChecker::checkPreStmt(const ReturnStmt *S, CheckerContext &C) const {
   if (SS->isOpened())
     state = state->set<StreamState>(Sym, StreamState::getEscaped(S));
 
-  C.addTransition(state);
+  C.generateNode(state);
 }
 
 void ento::registerStreamChecker(CheckerManager &mgr) {

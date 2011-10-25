@@ -312,7 +312,7 @@ void CallAndMessageChecker::HandleNilReceiver(CheckerContext &C,
 
     // The result is not consumed by a surrounding expression.  Just propagate
     // the current state.
-    C.addTransition(state);
+    C.generateNode(state);
     return;
   }
 
@@ -353,7 +353,7 @@ void CallAndMessageChecker::HandleNilReceiver(CheckerContext &C,
     return;
   }
 
-  C.addTransition(state);
+  C.generateNode(state);
 }
 
 void ento::registerCallAndMessageChecker(CheckerManager &mgr) {

@@ -53,7 +53,7 @@ public:
   ExplodedNode *MakeNode(const ProgramState *state, ExplodedNode *Pred,
                          bool MarkAsSink = false) {
     assert(C);
-    return C->generateNode(state, Pred, tag, false, MarkAsSink);
+    return C->generateNode(state, Pred, tag, MarkAsSink);
   }
 };
 } // end anonymous namespace
@@ -2517,7 +2517,7 @@ void RetainCountChecker::checkPostStmt(const BlockExpr *BE,
   state =
     state->scanReachableSymbols<StopTrackingCallback>(Regions.data(),
                                     Regions.data() + Regions.size()).getState();
-  C.addTransition(state);
+  C.generateNode(state);
 }
 
 void RetainCountChecker::checkPostStmt(const CastExpr *CE,
@@ -3047,7 +3047,7 @@ bool RetainCountChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
       state = state->set<RefBindings>(Sym, *Binding);
   }
 
-  C.addTransition(state);
+  C.generateNode(state);
   return true;
 }
 
@@ -3252,7 +3252,7 @@ void RetainCountChecker::checkBind(SVal loc, SVal val, const Stmt *S,
   // Otherwise, find all symbols referenced by 'val' that we are tracking
   // and stop tracking them.
   state = state->scanReachableSymbols<StopTrackingCallback>(val).getState();
-  C.addTransition(state);
+  C.generateNode(state);
 }
 
 const ProgramState *RetainCountChecker::evalAssume(const ProgramState *state,

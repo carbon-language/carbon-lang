@@ -129,7 +129,7 @@ void VLASizeChecker::checkPreStmt(const DeclStmt *DS, CheckerContext &C) const {
   assert(state);
 
   // Remember our assumptions!
-  C.addTransition(state);
+  C.generateNode(state);
 }
 
 void ento::registerVLASizeChecker(CheckerManager &mgr) {

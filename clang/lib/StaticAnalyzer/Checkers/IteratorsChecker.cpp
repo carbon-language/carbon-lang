@@ -472,7 +472,7 @@ void IteratorsChecker::checkPreStmt(const CXXOperatorCallExpr *OCE,
   if (Kind == OO_Equal) {
     checkExpr(C, OCE->getArg(1));
     state = handleAssign(state, OCE->getArg(0), OCE->getArg(1), LC);
-    C.addTransition(state);
+    C.generateNode(state);
     return;
   }
   else {
@@ -550,7 +550,7 @@ void IteratorsChecker::checkPreStmt(const DeclStmt *DS,
       }
     }
   }
-  C.addTransition(state);
+  C.generateNode(state);
 }
 
 
@@ -600,6 +600,6 @@ void IteratorsChecker::checkPreStmt(const CXXMemberCallExpr *MCE,
     state = state->add<CalledReserved>(MR);
   
   if (state != C.getState())
-    C.addTransition(state);
+    C.generateNode(state);
 }
 

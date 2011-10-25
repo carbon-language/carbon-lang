@@ -859,7 +859,7 @@ void CStringChecker::evalCopyCommon(CheckerContext &C,
   // just bind the return value to the destination buffer and return.
   if (stateZeroSize) {
     stateZeroSize = stateZeroSize->BindExpr(CE, destVal);
-    C.addTransition(stateZeroSize);
+    C.generateNode(stateZeroSize);
   }
 
   // If the size can be nonzero, we have to check the other arguments.
@@ -931,7 +931,7 @@ void CStringChecker::evalCopyCommon(CheckerContext &C,
     // This would probably remove any existing bindings past the end of the
     // copied region, but that's still an improvement over blank invalidation.
     state = InvalidateBuffer(C, state, Dest, state->getSVal(Dest));
-    C.addTransition(state);
+    C.generateNode(state);
   }
 }
 
@@ -993,7 +993,7 @@ void CStringChecker::evalMemcmp(CheckerContext &C, const CallExpr *CE) const {
   if (stateZeroSize) {
     state = stateZeroSize;
     state = state->BindExpr(CE, svalBuilder.makeZeroVal(CE->getType()));
-    C.addTransition(state);
+    C.generateNode(state);
   }
 
   // If the size can be nonzero, we have to check the other arguments.
@@ -1017,7 +1017,7 @@ void CStringChecker::evalMemcmp(CheckerContext &C, const CallExpr *CE) const {
       state = CheckBufferAccess(C, state, Size, Left);
       if (state) {
         state = StSameBuf->BindExpr(CE, svalBuilder.makeZeroVal(CE->getType()));
-        C.addTransition(state); 
+        C.generateNode(state);
       }
     }
 
@@ -1031,7 +1031,7 @@ void CStringChecker::evalMemcmp(CheckerContext &C, const CallExpr *CE) const {
         unsigned Count = C.getCurrentBlockCount();
         SVal CmpV = svalBuilder.getConjuredSymbolVal(NULL, CE, Count);
         state = state->BindExpr(CE, CmpV);
-        C.addTransition(state);
+        C.generateNode(state);
       }
     }
   }
@@ -1067,7 +1067,7 @@ void CStringChecker::evalstrLengthCommon(CheckerContext &C, const CallExpr *CE,
     if (stateZeroSize) {
       SVal zero = C.getSValBuilder().makeZeroVal(CE->getType());
       stateZeroSize = stateZeroSize->BindExpr(CE, zero);
-      C.addTransition(stateZeroSize);
+      C.generateNode(stateZeroSize);
     }
 
     // If the size is GUARANTEED to be zero, we're done!
@@ -1170,7 +1170,7 @@ void CStringChecker::evalstrLengthCommon(CheckerContext &C, const CallExpr *CE,
   // Bind the return value.
   assert(!result.isUnknown() && "Should have conjured a value by now");
   state = state->BindExpr(CE, result);
-  C.addTransition(state);
+  C.generateNode(state);
 }
 
 void CStringChecker::evalStrcpy(CheckerContext &C, const CallExpr *CE) const {
@@ -1512,7 +1512,7 @@ void CStringChecker::evalStrcpyCommon(CheckerContext &C, const CallExpr *CE,
 
   // Set the return value.
   state = state->BindExpr(CE, Result);
-  C.addTransition(state);
+  C.generateNode(state);
 }
 
 void CStringChecker::evalStrcmp(CheckerContext &C, const CallExpr *CE) const {
@@ -1582,7 +1582,7 @@ void CStringChecker::evalStrcmpCommon(CheckerContext &C, const CallExpr *CE,
   // and we only need to check one size.
   if (StSameBuf) {
     StSameBuf = StSameBuf->BindExpr(CE, svalBuilder.makeZeroVal(CE->getType()));
-    C.addTransition(StSameBuf);
+    C.generateNode(StSameBuf);
 
     // If the two arguments are GUARANTEED to be the same, we're done!
     if (!StNotSameBuf)
@@ -1656,7 +1656,7 @@ void CStringChecker::evalStrcmpCommon(CheckerContext &C, const CallExpr *CE,
   }
 
   // Record this as a possible path.
-  C.addTransition(state);
+  C.generateNode(state);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1746,7 +1746,7 @@ void CStringChecker::checkPreStmt(const DeclStmt *DS, CheckerContext &C) const {
     state = state->set<CStringLength>(MR, strLength);
   }
 
-  C.addTransition(state);
+  C.generateNode(state);
 }
 
 bool CStringChecker::wantsRegionChangeUpdate(const ProgramState *state) const {

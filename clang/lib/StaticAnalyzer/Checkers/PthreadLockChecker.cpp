@@ -141,7 +141,7 @@ void PthreadLockChecker::AcquireLock(CheckerContext &C, const CallExpr *CE,
       break;
     }
     assert(lockFail && lockSucc);
-    C.addTransition(lockFail);
+    C.generateNode(lockFail);
 
   } else if (semantics == PthreadSemantics) {
     // Assume that the return value was 0.
@@ -156,7 +156,7 @@ void PthreadLockChecker::AcquireLock(CheckerContext &C, const CallExpr *CE,
   
   // Record that the lock was acquired.  
   lockSucc = lockSucc->add<LockSet>(lockR);
-  C.addTransition(lockSucc);
+  C.generateNode(lockSucc);
 }
 
 void PthreadLockChecker::ReleaseLock(CheckerContext &C, const CallExpr *CE,
@@ -193,7 +193,7 @@ void PthreadLockChecker::ReleaseLock(CheckerContext &C, const CallExpr *CE,
 
   // Record that the lock was released. 
   state = state->set<LockSet>(LS.getTail());
-  C.addTransition(state);
+  C.generateNode(state);
 }
 
 

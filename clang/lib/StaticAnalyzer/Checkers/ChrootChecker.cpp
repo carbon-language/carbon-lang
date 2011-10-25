@@ -94,7 +94,7 @@ void ChrootChecker::Chroot(CheckerContext &C, const CallExpr *CE) const {
   // Once encouter a chroot(), set the enum value ROOT_CHANGED directly in 
   // the GDM.
   state = Mgr.addGDM(state, ChrootChecker::getTag(), (void*) ROOT_CHANGED);
-  C.addTransition(state);
+  C.generateNode(state);
 }
 
 void ChrootChecker::Chdir(CheckerContext &C, const CallExpr *CE) const {
@@ -120,7 +120,7 @@ void ChrootChecker::Chdir(CheckerContext &C, const CallExpr *CE) const {
     }
   }
 
-  C.addTransition(state);
+  C.generateNode(state);
 }
 
 // Check the jail state before any function call except chroot and chdir().

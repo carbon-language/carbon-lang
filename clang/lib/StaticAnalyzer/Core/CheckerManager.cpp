@@ -153,7 +153,7 @@ namespace {
                                            ProgramPoint::PostStmtKind;
       const ProgramPoint &L = ProgramPoint::getProgramPoint(S, K,
                                 Pred->getLocationContext(), checkFn.Checker);
-      CheckerContext C(Bldr, Eng, Pred, L, 0);
+      CheckerContext C(Bldr, Eng, Pred, L);
 
       checkFn(S, C);
     }
@@ -192,7 +192,7 @@ namespace {
                                            ProgramPoint::PostStmtKind;
       const ProgramPoint &L = ProgramPoint::getProgramPoint(Msg.getOriginExpr(),
                                 K, Pred->getLocationContext(), checkFn.Checker);
-      CheckerContext C(Bldr, Eng, Pred, L, 0);
+      CheckerContext C(Bldr, Eng, Pred, L);
 
       checkFn(Msg, C);
     }
@@ -234,7 +234,7 @@ namespace {
                                        ProgramPoint::PreStoreKind;
       const ProgramPoint &L = ProgramPoint::getProgramPoint(S, K,
                                 Pred->getLocationContext(), checkFn.Checker);
-      CheckerContext C(Bldr, Eng, Pred, L, 0);
+      CheckerContext C(Bldr, Eng, Pred, L);
 
       checkFn(Loc, IsLoad, S, C);
     }
@@ -273,7 +273,7 @@ namespace {
                     NodeBuilder &Bldr, ExplodedNode *Pred) {
       const ProgramPoint &L = ProgramPoint::getProgramPoint(S, PointKind,
                                 Pred->getLocationContext(), checkFn.Checker);
-      CheckerContext C(Bldr, Eng, Pred, L, 0);
+      CheckerContext C(Bldr, Eng, Pred, L);
 
       checkFn(Loc, Val, S, C);
     }
@@ -315,7 +315,7 @@ void CheckerManager::runCheckersForEndPath(NodeBuilderContext &BC,
     const ProgramPoint &L = BlockEntrance(BC.Block,
                                           Pred->getLocationContext(),
                                           checkFn.Checker);
-    CheckerContext C(Bldr, Eng, Pred, L, 0);
+    CheckerContext C(Bldr, Eng, Pred, L);
     checkFn(C);
   }
 }
@@ -338,7 +338,7 @@ namespace {
                     NodeBuilder &Bldr, ExplodedNode *Pred) {
       ProgramPoint L = PostCondition(Condition, Pred->getLocationContext(),
                                      checkFn.Checker);
-      CheckerContext C(Bldr, Eng, Pred, L, 0);
+      CheckerContext C(Bldr, Eng, Pred, L);
       checkFn(Condition, C);
     }
   };
@@ -382,7 +382,7 @@ namespace {
       ProgramPoint::Kind K = ProgramPoint::PostPurgeDeadSymbolsKind;
       const ProgramPoint &L = ProgramPoint::getProgramPoint(S, K,
                                 Pred->getLocationContext(), checkFn.Checker);
-      CheckerContext C(Bldr, Eng, Pred, L, 0);
+      CheckerContext C(Bldr, Eng, Pred, L);
 
       checkFn(SR, C);
     }
@@ -500,7 +500,7 @@ void CheckerManager::runCheckersForEvalCall(ExplodedNodeSet &Dst,
       { // CheckerContext generates transitions(populates checkDest) on
         // destruction, so introduce the scope to make sure it gets properly
         // populated.
-        CheckerContext C(B, Eng, Pred, L, 0);
+        CheckerContext C(B, Eng, Pred, L);
         evaluated = (*EI)(CE, C);
       }
       assert(!(evaluated && anyEvaluated)

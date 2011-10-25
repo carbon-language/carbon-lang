@@ -193,7 +193,7 @@ template <typename T>
 static void setFlag(const ProgramState *state, SVal val, CheckerContext &C) {
   // We tag the symbol that the SVal wraps.
   if (SymbolRef sym = val.getAsSymbol())
-    C.addTransition(state->set<T>(sym, true));
+    C.generateNode(state->set<T>(sym, true));
 }
 
 static QualType parameterTypeFromSVal(SVal val, CheckerContext &C) {

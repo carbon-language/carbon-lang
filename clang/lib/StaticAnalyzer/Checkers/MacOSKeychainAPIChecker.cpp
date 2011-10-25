@@ -400,7 +400,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
         // custom deallocator which does the right thing.
         if (DE->getFoundDecl()->getName() != "kCFAllocatorNull") {
           State = State->remove<AllocatedData>(ArgSM);
-          C.addTransition(State);
+          C.generateNode(State);
           return;
         }
       }
@@ -434,7 +434,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
     return;
   }
 
-  C.addTransition(State);
+  C.generateNode(State);
 }
 
 void MacOSKeychainAPIChecker::checkPostStmt(const CallExpr *CE,
@@ -482,7 +482,7 @@ void MacOSKeychainAPIChecker::checkPostStmt(const CallExpr *CE,
     State = State->set<AllocatedData>(V, AllocationState(ArgExpr, idx,
                                                          RetStatusSymbol));
     assert(State);
-    C.addTransition(State);
+    C.generateNode(State);
   }
 }
 
@@ -500,7 +500,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const ReturnStmt *S,
   state = state->remove<AllocatedData>(getSymbolForRegion(C, V));
 
   // Proceed from the new state.
-  C.addTransition(state);
+  C.generateNode(state);
 }
 
 BugReport *MacOSKeychainAPIChecker::

@@ -73,7 +73,7 @@ void DivZeroChecker::checkPreStmt(const BinaryOperator *B,
 
   // If we get here, then the denom should not be zero. We abandon the implicit
   // zero denom case for now.
-  C.addTransition(stateNotZero);
+  C.generateNode(stateNotZero);
 }
 
 void ento::registerDivZeroChecker(CheckerManager &mgr) {

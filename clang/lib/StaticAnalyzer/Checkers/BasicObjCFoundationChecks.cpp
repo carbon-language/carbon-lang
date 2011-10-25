@@ -421,7 +421,7 @@ void CFRetainReleaseChecker::checkPreStmt(const CallExpr *CE,
   }
 
   // From here on, we know the argument is non-null.
-  C.addTransition(stateFalse);
+  C.generateNode(stateFalse);
 }
 
 //===----------------------------------------------------------------------===//

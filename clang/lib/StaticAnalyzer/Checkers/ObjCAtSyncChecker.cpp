@@ -84,7 +84,7 @@ void ObjCAtSyncChecker::checkPreStmt(const ObjCAtSynchronizedStmt *S,
   }
 
   if (notNullState)
-    C.addTransition(notNullState);
+    C.generateNode(notNullState);
 }
 
 void ento::registerObjCAtSyncChecker(CheckerManager &mgr) {
