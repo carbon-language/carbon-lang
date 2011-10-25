@@ -66,7 +66,6 @@ endif()
 set(LLVM_ALL_TARGETS
   Alpha
   ARM
-  Blackfin
   CBackend
   CellSPU
   CppBackend
