@@ -711,8 +711,26 @@ void Parser::ParseUnderlyingTypeSpecifier(DeclSpec &DS) {
 ///         identifier
 ///         simple-template-id
 ///
-Parser::TypeResult Parser::ParseBaseTypeSpecifier(SourceLocation &EndLocation,
-                                                  CXXScopeSpec &SS) {
+Parser::TypeResult Parser::ParseBaseTypeSpecifier(SourceLocation &BaseLoc,
+                                                  SourceLocation &EndLocation) {
+  // Parse decltype-specifier
+  if (Tok.is(tok::kw_decltype)) {
+    // Fake up a Declarator to use with ActOnTypeName.
+    DeclSpec DS(AttrFactory);
+
+    ParseDecltypeSpecifier(DS);    
+    EndLocation = DS.getSourceRange().getEnd();
+
+    Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
+    return Actions.ActOnTypeName(getCurScope(), DeclaratorInfo);
+  }
+
+  // Parse optional nested-name-specifier
+  CXXScopeSpec SS;
+  ParseOptionalCXXScopeSpecifier(SS, ParsedType(), /*EnteringContext=*/false);
+
+  BaseLoc = Tok.getLocation();
+
   // Check whether we have a template-id that names a type.
   if (Tok.is(tok::annot_template_id)) {
     TemplateIdAnnotation *TemplateId = takeTemplateIdAnnotation(Tok);
@@ -731,17 +749,6 @@ Parser::TypeResult Parser::ParseBaseTypeSpecifier(SourceLocation &EndLocation,
     }
 
     // Fall through to produce an error below.
-  }
-
-  if (Tok.is(tok::kw_decltype)) {
-    // Fake up a Declarator to use with ActOnTypeName.
-    DeclSpec DS(AttrFactory);
-
-    ParseDecltypeSpecifier(DS);    
-    EndLocation = DS.getSourceRange().getEnd();
-
-    Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
-    return Actions.ActOnTypeName(getCurScope(), DeclaratorInfo);
   }
 
   if (Tok.isNot(tok::identifier)) {
@@ -1410,16 +1417,10 @@ Parser::BaseResult Parser::ParseBaseSpecifier(Decl *ClassDecl) {
     IsVirtual = true;
   }
 
-  // Parse optional '::' and optional nested-name-specifier.
-  CXXScopeSpec SS;
-  ParseOptionalCXXScopeSpecifier(SS, ParsedType(), /*EnteringContext=*/false);
-
-  // The location of the base class itself.
-  SourceLocation BaseLoc = Tok.getLocation();
-
   // Parse the class-name.
   SourceLocation EndLocation;
-  TypeResult BaseType = ParseBaseTypeSpecifier(EndLocation, SS);
+  SourceLocation BaseLoc;
+  TypeResult BaseType = ParseBaseTypeSpecifier(BaseLoc, EndLocation);
   if (BaseType.isInvalid())
     return true;
 

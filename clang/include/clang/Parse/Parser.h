@@ -2012,8 +2012,8 @@ private:
 
   //===--------------------------------------------------------------------===//
   // C++ 10: Derived classes [class.derived]
-  TypeResult ParseBaseTypeSpecifier(SourceLocation &EndLocation, 
-                                    CXXScopeSpec &SS);
+  TypeResult ParseBaseTypeSpecifier(SourceLocation &BaseLoc, 
+                                    SourceLocation &EndLocation);
   void ParseBaseClause(Decl *ClassDecl);
   BaseResult ParseBaseSpecifier(Decl *ClassDecl);
   AccessSpecifier getAccessSpecifierIfPresent() const;
