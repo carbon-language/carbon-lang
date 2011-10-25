@@ -1509,4 +1509,25 @@ void foo() {
 
 } // end namespace invalid_lock_expression_test
 
+namespace template_member_test {
 
+  struct S { int n; };
+  struct T {
+    Mutex m;
+    S *s GUARDED_BY(this->m);
+  };
+
+  template<typename U>
+  struct IndirectLock {
+    int DoNaughtyThings(T *t) {
+      return t->s->n; // expected-warning {{reading variable 's' requires locking 'm'}}
+    }
+  };
+
+  struct MutexWrapper {
+    typedef Mutex Lock;
+  };
+
+  template struct IndirectLock<MutexWrapper>; // expected-note {{here}}
+
+}

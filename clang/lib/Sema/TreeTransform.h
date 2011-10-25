@@ -1485,6 +1485,11 @@ public:
     ExprResult BaseResult = getSema().DefaultFunctionArrayConversion(Base);
     if (BaseResult.isInvalid())
       return ExprError();
+    if (isArrow) {
+      BaseResult = getSema().DefaultLvalueConversion(BaseResult.get());
+      if (BaseResult.isInvalid())
+        return ExprError();
+    }
     Base = BaseResult.take();
     QualType BaseType = Base->getType();
 
