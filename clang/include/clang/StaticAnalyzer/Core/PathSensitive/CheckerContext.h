@@ -15,11 +15,9 @@
 #ifndef LLVM_CLANG_SA_CORE_PATHSENSITIVE_CHECKERCONTEXT
 #define LLVM_CLANG_SA_CORE_PATHSENSITIVE_CHECKERCONTEXT
 
-#include "clang/Analysis/Support/SaveAndRestore.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 
 namespace clang {
-
 namespace ento {
 
 class CheckerContext {
