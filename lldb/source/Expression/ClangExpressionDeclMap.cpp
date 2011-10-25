@@ -2443,6 +2443,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             {
                 AddOneVariable(context, var, current_id);
                 context.m_found.variable = true;
+                return;
             }
         }
         else if (target)
