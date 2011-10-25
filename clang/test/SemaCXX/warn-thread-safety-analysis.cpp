@@ -1516,10 +1516,17 @@ namespace template_member_test {
     Mutex m;
     S *s GUARDED_BY(this->m);
   };
+  Mutex m;
+  struct U {
+    union {
+      int n;
+    };
+  } *u GUARDED_BY(m);
 
   template<typename U>
   struct IndirectLock {
     int DoNaughtyThings(T *t) {
+      u->n = 0; // expected-warning {{reading variable 'u' requires locking 'm'}}
       return t->s->n; // expected-warning {{reading variable 's' requires locking 'm'}}
     }
   };

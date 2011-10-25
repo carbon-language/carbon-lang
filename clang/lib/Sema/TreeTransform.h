@@ -1482,6 +1482,11 @@ public:
                                                 FoundDecl, Member);
       if (BaseResult.isInvalid())
         return ExprError();
+      if (isArrow) {
+        BaseResult = getSema().DefaultLvalueConversion(BaseResult.take());
+        if (BaseResult.isInvalid())
+          return ExprError();
+      }
       Base = BaseResult.take();
       ExprValueKind VK = isArrow ? VK_LValue : Base->getValueKind();
       MemberExpr *ME =
