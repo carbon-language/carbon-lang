@@ -496,7 +496,7 @@ public:
   CanQualType FloatComplexTy, DoubleComplexTy, LongDoubleComplexTy;
   CanQualType VoidPtrTy, NullPtrTy;
   CanQualType DependentTy, OverloadTy, BoundMemberTy, UnknownAnyTy;
-  CanQualType PseudoObjectTy, ARCUnbridgedCastTy;
+  CanQualType ARCUnbridgedCastTy;
   CanQualType ObjCBuiltinIdTy, ObjCBuiltinClassTy, ObjCBuiltinSelTy;
 
   // Types for deductions in C++0x [stmt.ranged]'s desugaring. Built on demand.

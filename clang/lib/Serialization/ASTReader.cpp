@@ -3857,7 +3857,6 @@ QualType ASTReader::GetType(TypeID ID) {
     case PREDEF_TYPE_LONGDOUBLE_ID: T = Context.LongDoubleTy;       break;
     case PREDEF_TYPE_OVERLOAD_ID:   T = Context.OverloadTy;         break;
     case PREDEF_TYPE_BOUND_MEMBER:  T = Context.BoundMemberTy;      break;
-    case PREDEF_TYPE_PSEUDO_OBJECT: T = Context.PseudoObjectTy;     break;
     case PREDEF_TYPE_DEPENDENT_ID:  T = Context.DependentTy;        break;
     case PREDEF_TYPE_UNKNOWN_ANY:   T = Context.UnknownAnyTy;       break;
     case PREDEF_TYPE_NULLPTR_ID:    T = Context.NullPtrTy;          break;

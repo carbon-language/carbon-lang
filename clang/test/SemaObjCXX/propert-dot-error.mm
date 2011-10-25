@@ -20,7 +20,7 @@ struct X {
 @end
 
 void f(A* a) {
-  a.x = X(); // expected-error {{no setter method 'setX:' for assignment to property}}
+  a.x = X(); // expected-error {{setter method is needed to assign to object using property assignment syntax}}
 }
 
 struct Y : X { };

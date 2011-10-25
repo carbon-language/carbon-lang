@@ -3612,22 +3612,16 @@ def ext_gnu_ptr_func_arith : Extension<
   "arithmetic on%select{ a|}0 pointer%select{|s}0 to%select{ the|}2 function "
   "type%select{|s}2 %1%select{| and %3}2 is a GNU extension">,
   InGroup<PointerArith>;
+def error_readonly_property_assignment : Error<
+  "assigning to property with 'readonly' attribute not allowed">;
 def error_readonly_message_assignment : Error<
   "assigning to 'readonly' return result of an objective-c message not allowed">;
 def ext_integer_increment_complex : Extension<
   "ISO C does not support '++'/'--' on complex integer type %0">;
 def ext_integer_complement_complex : Extension<
   "ISO C does not support '~' for complex conjugation of %0">;
-def err_nosetter_property_assignment : Error<
-  "%select{assignment to readonly property|"
-  "no setter method %1 for assignment to property}0">;
-def err_nosetter_property_incdec : Error<
-  "%select{%select{increment|decrement}1 of readonly property|"
-  "no setter method %2 for %select{increment|decrement}1 of property}0">;
-def err_nogetter_property_compound_assignment : Error<
-  "a getter method is needed to perform a compound assignment on a property">;
-def err_nogetter_property_incdec : Error<
-  "no getter method %1 for %select{increment|decrement} of property">;
+def error_nosetter_property_assignment : Error<
+  "setter method is needed to assign to object using property" " assignment syntax">;
 def error_no_subobject_property_setting : Error<
   "expression is not assignable">;
 def err_qualified_objc_access : Error<

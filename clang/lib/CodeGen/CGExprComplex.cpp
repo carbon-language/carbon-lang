@@ -363,7 +363,7 @@ ComplexPairTy ComplexExprEmitter::EmitCast(CastExpr::CastKind CK, Expr *Op,
   case CK_Dependent: llvm_unreachable("dependent cast kind in IR gen!");
 
   case CK_GetObjCProperty: {
-    LValue LV = CGF.EmitObjCPropertyRefLValue(Op->getObjCProperty());
+    LValue LV = CGF.EmitLValue(Op);
     assert(LV.isPropertyRef() && "Unknown LValue type!");
     return CGF.EmitLoadOfPropertyRefLValue(LV).getComplexVal();
   }

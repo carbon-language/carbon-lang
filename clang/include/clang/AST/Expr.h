@@ -1456,26 +1456,12 @@ public:
 
   bool isPrefix() const { return isPrefix(getOpcode()); }
   bool isPostfix() const { return isPostfix(getOpcode()); }
-
-  static bool isIncrementOp(Opcode Op) {
-    return Op == UO_PreInc || Op == UO_PostInc;
-  }
   bool isIncrementOp() const {
-    return isIncrementOp(getOpcode());
+    return Opc == UO_PreInc || Opc == UO_PostInc;
   }
-
-  static bool isDecrementOp(Opcode Op) {
-    return Op == UO_PreDec || Op == UO_PostDec;
-  }
-  bool isDecrementOp() const {
-    return isDecrementOp(getOpcode());
-  }
-
-  static bool isIncrementDecrementOp(Opcode Op) { return Op <= UO_PreDec; }
   bool isIncrementDecrementOp() const {
-    return isIncrementDecrementOp(getOpcode());
+    return Opc <= UO_PreDec;
   }
-
   static bool isArithmeticOp(Opcode Op) {
     return Op >= UO_Plus && Op <= UO_LNot;
   }

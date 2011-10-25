@@ -3795,8 +3795,15 @@ InitializationSequence::InitializationSequence(Sema &S,
   setSequenceKind(NormalSequence);
 
   for (unsigned I = 0; I != NumArgs; ++I)
-    if (const BuiltinType *PlaceholderTy
-          = Args[I]->getType()->getAsPlaceholderType()) {
+    if (Args[I]->getObjectKind() == OK_ObjCProperty) {
+      ExprResult Result = S.ConvertPropertyForRValue(Args[I]);
+      if (Result.isInvalid()) {
+        SetFailed(FK_ConversionFromPropertyFailed);
+        return;
+      }
+      Args[I] = Result.take();
+    } else if (const BuiltinType *PlaceholderTy
+                 = Args[I]->getType()->getAsPlaceholderType()) {
       // FIXME: should we be doing this here?
       if (PlaceholderTy->getKind() != BuiltinType::Overload) {
         ExprResult result = S.CheckPlaceholderExpr(Args[I]);
@@ -4486,6 +4493,13 @@ InitializationSequence::Perform(Sema &S,
     assert(Args.size() == 1);
     CurInit = Args.get()[0];
     if (!CurInit.get()) return ExprError();
+
+    // Read from a property when initializing something with it.
+    if (CurInit.get()->getObjectKind() == OK_ObjCProperty) {
+      CurInit = S.ConvertPropertyForRValue(CurInit.take());
+      if (CurInit.isInvalid())
+        return ExprError();
+    }
     break;
   }
 

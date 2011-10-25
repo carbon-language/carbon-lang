@@ -575,6 +575,17 @@ namespace {
 /// Return true on unrecoverable error.
 static bool checkPlaceholderForOverload(Sema &S, Expr *&E,
                                         UnbridgedCastsSet *unbridgedCasts = 0) {
+  // ObjCProperty l-values are placeholder-like.
+  if (E->getObjectKind() == OK_ObjCProperty) {
+    ExprResult result = S.ConvertPropertyForRValue(E);
+    if (result.isInvalid())
+      return true;
+
+    E = result.take();
+    return false;
+  }
+
+  // Handle true placeholders.
   if (const BuiltinType *placeholder =  E->getType()->getAsPlaceholderType()) {
     // We can't handle overloaded expressions here because overload
     // resolution might reasonably tweak them.
@@ -992,9 +1003,6 @@ ExprResult
 Sema::PerformImplicitConversion(Expr *From, QualType ToType,
                                 AssignmentAction Action, bool AllowExplicit,
                                 ImplicitConversionSequence& ICS) {
-  if (checkPlaceholderForOverload(*this, From))
-    return ExprError();
-
   // Objective-C ARC: Determine whether we will allow the writeback conversion.
   bool AllowObjCWritebackConversion
     = getLangOptions().ObjCAutoRefCount && 
@@ -4078,9 +4086,6 @@ TryContextuallyConvertToBool(Sema &S, Expr *From) {
 /// PerformContextuallyConvertToBool - Perform a contextual conversion
 /// of the expression From to bool (C++0x [conv]p3).
 ExprResult Sema::PerformContextuallyConvertToBool(Expr *From) {
-  if (checkPlaceholderForOverload(*this, From))
-    return ExprError();
-
   ImplicitConversionSequence ICS = TryContextuallyConvertToBool(*this, From);
   if (!ICS.isBad())
     return PerformImplicitConversion(From, Context.BoolTy, ICS, AA_Converting);
@@ -4140,9 +4145,6 @@ TryContextuallyConvertToObjCPointer(Sema &S, Expr *From) {
 /// PerformContextuallyConvertToObjCPointer - Perform a contextual
 /// conversion of the expression From to an Objective-C pointer type.
 ExprResult Sema::PerformContextuallyConvertToObjCPointer(Expr *From) {
-  if (checkPlaceholderForOverload(*this, From))
-    return ExprError();
-
   QualType Ty = Context.getObjCIdType();
   ImplicitConversionSequence ICS =
     TryContextuallyConvertToObjCPointer(*this, From);
@@ -9007,9 +9009,39 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
   if (checkPlaceholderForOverload(*this, Args[1]))
     return ExprError();
 
-  // Do placeholder-like conversion on the LHS; note that we should
-  // not get here with a PseudoObject LHS.
-  assert(Args[0]->getObjectKind() != OK_ObjCProperty);
+  // The LHS is more complicated.
+  if (Args[0]->getObjectKind() == OK_ObjCProperty) {
+
+    // There's a tension for assignment operators between primitive
+    // property assignment and the overloaded operators.
+    if (BinaryOperator::isAssignmentOp(Opc)) {
+      const ObjCPropertyRefExpr *PRE = LHS->getObjCProperty();
+
+      // Is the property "logically" settable?
+      bool Settable = (PRE->isExplicitProperty() ||
+                       PRE->getImplicitPropertySetter());
+
+      // To avoid gratuitously inventing semantics, use the primitive
+      // unless it isn't.  Thoughts in case we ever really care:
+      // - If the property isn't logically settable, we have to
+      //   load and hope.
+      // - If the property is settable and this is simple assignment,
+      //   we really should use the primitive.
+      // - If the property is settable, then we could try overloading
+      //   on a generic lvalue of the appropriate type;  if it works
+      //   out to a builtin candidate, we would do that same operation
+      //   on the property, and otherwise just error.
+      if (Settable)
+        return CreateBuiltinBinOp(OpLoc, Opc, Args[0], Args[1]);
+    }
+
+    ExprResult Result = ConvertPropertyForRValue(Args[0]);
+    if (Result.isInvalid())
+      return ExprError();
+    Args[0] = Result.take();
+  }
+
+  // Handle all the other placeholders.
   if (checkPlaceholderForOverload(*this, Args[0]))
     return ExprError();
 

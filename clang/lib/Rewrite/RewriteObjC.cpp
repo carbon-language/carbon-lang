@@ -1304,7 +1304,7 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitSetter(BinaryOperator *BinOp, Expr *
     } else {
       OMD = PropRefExpr->getImplicitPropertySetter();
       Sel = OMD->getSelector();
-      Ty = (*OMD->param_begin())->getType();
+      Ty = PropRefExpr->getType();
     }
     Super = PropRefExpr->isSuperReceiver();
     if (!Super) {
@@ -1380,7 +1380,7 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitGetter(Expr *PropOrGetterRefExpr) {
     } else {
       OMD = PropRefExpr->getImplicitPropertyGetter();
       Sel = OMD->getSelector();
-      Ty = OMD->getResultType();
+      Ty = PropRefExpr->getType();
     }
     Super = PropRefExpr->isSuperReceiver();
     if (!Super)

@@ -800,7 +800,9 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
                                       SelfExpr, true, true);
       ObjCMethodDecl::param_iterator P = setterMethod->param_begin();
       ParmVarDecl *Param = (*P);
-      QualType T = Param->getType().getNonReferenceType();
+      QualType T = Param->getType();
+      if (T->isReferenceType())
+        T = T->getAs<ReferenceType>()->getPointeeType();
       Expr *rhs = new (Context) DeclRefExpr(Param, T,
                                             VK_LValue, SourceLocation());
       ExprResult Res = BuildBinOp(S, lhs->getLocEnd(), 
@@ -952,8 +954,8 @@ bool Sema::DiagnosePropertyAccessorMismatch(ObjCPropertyDecl *property,
                                             ObjCMethodDecl *GetterMethod,
                                             SourceLocation Loc) {
   if (GetterMethod &&
-      !Context.hasSameType(GetterMethod->getResultType().getNonReferenceType(),
-                           property->getType().getNonReferenceType())) {
+      GetterMethod->getResultType().getNonReferenceType() 
+      != property->getType().getNonReferenceType()) {
     AssignConvertType result = Incompatible;
     if (property->getType()->isObjCObjectPointerType())
       result = CheckAssignmentConstraints(Loc, GetterMethod->getResultType(),

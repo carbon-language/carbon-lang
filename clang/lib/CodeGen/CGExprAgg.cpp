@@ -326,8 +326,7 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
   }
 
   case CK_GetObjCProperty: {
-    LValue LV =
-      CGF.EmitObjCPropertyRefLValue(E->getSubExpr()->getObjCProperty());
+    LValue LV = CGF.EmitLValue(E->getSubExpr());
     assert(LV.isPropertyRef());
     RValue RV = CGF.EmitLoadOfPropertyRefLValue(LV, getReturnValueSlot());
     EmitMoveFromReturnSlot(E, RV);
