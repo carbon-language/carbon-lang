@@ -913,8 +913,7 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
               // reinsert conditional branch only, for now
               TII->InsertBranch(*PBB, (TBB == IBB) ? FBB : TBB, 0, NewCond, dl);
           }
-          if (!PBB->getLandingPadSuccessor())
-            MergePotentials.push_back(MergePotentialsElt(HashEndOfMBB(PBB),*P));
+          MergePotentials.push_back(MergePotentialsElt(HashEndOfMBB(PBB), *P));
         }
       }
       // If this is a large problem, avoid visiting the same basic blocks
