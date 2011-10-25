@@ -32,7 +32,11 @@ struct ArchiveMemberHeader {
 
   ///! Get the name without looking up long names.
   StringRef getName() const {
-    char EndCond = Name[0] == '/' ? ' ' : '/';
+    char EndCond;
+    if (Name[0] == '/' || Name[0] == '#')
+      EndCond = ' ';
+    else
+      EndCond = '/';
     StringRef::size_type end = StringRef(Name, sizeof(Name)).find(EndCond);
     if (end == StringRef::npos)
       end = sizeof(Name);
@@ -51,6 +55,21 @@ struct ArchiveMemberHeader {
 const ArchiveMemberHeader *ToHeader(const char *base) {
   return reinterpret_cast<const ArchiveMemberHeader *>(base);
 }
+}
+
+static bool isInternalMember(const ArchiveMemberHeader &amh) {
+  const char *internals[] = {
+    "/",
+    "//",
+    "#_LLVM_SYM_TAB_#"
+    };
+
+  StringRef name = amh.getName();
+  for (std::size_t i = 0; i < sizeof(internals) / sizeof(*internals); ++i) {
+    if (name == internals[i])
+      return true;
+  }
+  return false;
 }
 
 Archive::Child Archive::Child::getNext() const {
@@ -101,6 +120,11 @@ error_code Archive::Child::getName(StringRef &Result) const {
       return object_error::parse_failed;
     Result = addr;
     return object_error::success;
+  } else if (name.startswith("#1/")) {
+    APInt name_size;
+    name.substr(3).getAsInteger(10, name_size);
+    Result = Data.substr(0, name_size.getZExtValue());
+    return object_error::success;
   }
   // It's a simple name.
   if (name[name.size() - 1] == '/')
@@ -111,14 +135,27 @@ error_code Archive::Child::getName(StringRef &Result) const {
 }
 
 uint64_t Archive::Child::getSize() const {
-  return ToHeader(Data.data())->getSize();
+  uint64_t size = ToHeader(Data.data())->getSize();
+  // Don't include attached name.
+  StringRef name =  ToHeader(Data.data())->getName();
+  if (name.startswith("#1/")) {
+    APInt name_size;
+    name.substr(3).getAsInteger(10, name_size);
+    size -= name_size.getZExtValue();
+  }
+  return size;
 }
 
 MemoryBuffer *Archive::Child::getBuffer() const {
   StringRef name;
   if (getName(name)) return NULL;
-  return MemoryBuffer::getMemBuffer(Data.substr(sizeof(ArchiveMemberHeader),
-                                                getSize()),
+  int size = sizeof(ArchiveMemberHeader);
+  if (name.startswith("#1/")) {
+    APInt name_size;
+    name.substr(3).getAsInteger(10, name_size);
+    size += name_size.getZExtValue();
+  }
+  return MemoryBuffer::getMemBuffer(Data.substr(size, getSize()),
                                     name,
                                     false);
 }
@@ -144,7 +181,7 @@ Archive::Archive(MemoryBuffer *source, error_code &ec)
   }
 
   // Get the string table. It's the 3rd member.
-  child_iterator StrTable = begin_children();
+  child_iterator StrTable = begin_children(false);
   child_iterator e = end_children();
   for (int i = 0; StrTable != e && i < 2; ++StrTable, ++i) {}
 
@@ -156,11 +193,15 @@ Archive::Archive(MemoryBuffer *source, error_code &ec)
   ec = object_error::success;
 }
 
-Archive::child_iterator Archive::begin_children() const {
+Archive::child_iterator Archive::begin_children(bool skip_internal) const {
   const char *Loc = Data->getBufferStart() + Magic.size();
   size_t Size = sizeof(ArchiveMemberHeader) +
     ToHeader(Loc)->getSize();
-  return Child(this, StringRef(Loc, Size));
+  Child c(this, StringRef(Loc, Size));
+  // Skip internals at the beginning of an archive.
+  if (skip_internal && isInternalMember(*ToHeader(Loc)))
+    return c.getNext();
+  return c;
 }
 
 Archive::child_iterator Archive::end_children() const {

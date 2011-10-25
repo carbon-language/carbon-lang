@@ -71,7 +71,7 @@ public:
 
   Archive(MemoryBuffer *source, error_code &ec);
 
-  child_iterator begin_children() const;
+  child_iterator begin_children(bool skip_internal = true) const;
   child_iterator end_children() const;
 
   // Cast methods.
