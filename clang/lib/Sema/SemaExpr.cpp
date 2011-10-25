@@ -363,18 +363,8 @@ ExprResult Sema::DefaultLvalueConversion(Expr *E) {
   assert(!T.isNull() && "r-value conversion on typeless expression?");
 
   // We can't do lvalue-to-rvalue on atomics yet.
-  if (T->getAs<AtomicType>())
+  if (T->isAtomicType())
     return Owned(E);
-
-  // Create a load out of an ObjCProperty l-value, if necessary.
-  if (E->getObjectKind() == OK_ObjCProperty) {
-    ExprResult Res = ConvertPropertyForRValue(E);
-    if (Res.isInvalid())
-      return Owned(E);
-    E = Res.take();
-    if (!E->isGLValue())
-      return Owned(E);
-  }
 
   // We don't want to throw lvalue-to-rvalue casts on top of
   // expressions of certain types in C++.
@@ -3969,6 +3959,23 @@ Sema::ActOnInitList(SourceLocation LBraceLoc, MultiExprArg InitArgList,
   unsigned NumInit = InitArgList.size();
   Expr **InitList = InitArgList.release();
 
+  // Immediately handle non-overload placeholders.  Overloads can be
+  // resolved contextually, but everything else here can't.
+  for (unsigned I = 0; I != NumInit; ++I) {
+    if (const BuiltinType *pty
+          = InitList[I]->getType()->getAsPlaceholderType()) {
+      if (pty->getKind() == BuiltinType::Overload) continue;
+
+      ExprResult result = CheckPlaceholderExpr(InitList[I]);
+
+      // Ignore failures; dropping the entire initializer list because
+      // of one failure would be terrible for indexing/etc.
+      if (result.isInvalid()) continue;
+
+      InitList[I] = result.take();
+    }
+  }
+
   // Semantic analysis for initializers is done by ActOnDeclarator() and
   // CheckInitializer() - it requires knowledge of the object being intialized.
 
@@ -6953,51 +6960,41 @@ inline QualType Sema::CheckLogicalOperands( // C99 6.5.[13,14]
 /// depends on various declarations and thus must be treated specially.
 ///
 static bool IsReadonlyProperty(Expr *E, Sema &S) {
-  if (E->getStmtClass() == Expr::ObjCPropertyRefExprClass) {
-    const ObjCPropertyRefExpr* PropExpr = cast<ObjCPropertyRefExpr>(E);
-    if (PropExpr->isImplicitProperty()) return false;
+  const ObjCPropertyRefExpr *PropExpr = dyn_cast<ObjCPropertyRefExpr>(E);
+  if (!PropExpr) return false;
+  if (PropExpr->isImplicitProperty()) return false;
 
-    ObjCPropertyDecl *PDecl = PropExpr->getExplicitProperty();
-    QualType BaseType = PropExpr->isSuperReceiver() ? 
+  ObjCPropertyDecl *PDecl = PropExpr->getExplicitProperty();
+  QualType BaseType = PropExpr->isSuperReceiver() ? 
                             PropExpr->getSuperReceiverType() :  
                             PropExpr->getBase()->getType();
       
-    if (const ObjCObjectPointerType *OPT =
-          BaseType->getAsObjCInterfacePointerType())
-      if (ObjCInterfaceDecl *IFace = OPT->getInterfaceDecl())
-        if (S.isPropertyReadonly(PDecl, IFace))
-          return true;
-  }
+  if (const ObjCObjectPointerType *OPT =
+      BaseType->getAsObjCInterfacePointerType())
+    if (ObjCInterfaceDecl *IFace = OPT->getInterfaceDecl())
+      if (S.isPropertyReadonly(PDecl, IFace))
+        return true;
   return false;
 }
 
 static bool IsConstProperty(Expr *E, Sema &S) {
-  if (E->getStmtClass() == Expr::ObjCPropertyRefExprClass) {
-    const ObjCPropertyRefExpr* PropExpr = cast<ObjCPropertyRefExpr>(E);
-    if (PropExpr->isImplicitProperty()) return false;
+  const ObjCPropertyRefExpr *PropExpr = dyn_cast<ObjCPropertyRefExpr>(E);
+  if (!PropExpr) return false;
+  if (PropExpr->isImplicitProperty()) return false;
     
-    ObjCPropertyDecl *PDecl = PropExpr->getExplicitProperty();
-    QualType T = PDecl->getType();
-    if (T->isReferenceType())
-      T = T->getAs<ReferenceType>()->getPointeeType();
-    CanQualType CT = S.Context.getCanonicalType(T);
-    return CT.isConstQualified();
-  }
-  return false;
+  ObjCPropertyDecl *PDecl = PropExpr->getExplicitProperty();
+  QualType T = PDecl->getType().getNonReferenceType();
+  return T.isConstQualified();
 }
 
 static bool IsReadonlyMessage(Expr *E, Sema &S) {
-  if (E->getStmtClass() != Expr::MemberExprClass) 
-    return false;
-  const MemberExpr *ME = cast<MemberExpr>(E);
-  NamedDecl *Member = ME->getMemberDecl();
-  if (isa<FieldDecl>(Member)) {
-    Expr *Base = ME->getBase()->IgnoreParenImpCasts();
-    if (Base->getStmtClass() != Expr::ObjCMessageExprClass)
-      return false;
-    return cast<ObjCMessageExpr>(Base)->getMethodDecl() != 0;
-  }
-  return false;
+  const MemberExpr *ME = dyn_cast<MemberExpr>(E);
+  if (!ME) return false;
+  if (!isa<FieldDecl>(ME->getMemberDecl())) return false;
+  ObjCMessageExpr *Base =
+    dyn_cast<ObjCMessageExpr>(ME->getBase()->IgnoreParenImpCasts());
+  if (!Base) return false;
+  return Base->getMethodDecl() != 0;
 }
 
 /// CheckForModifiableLvalue - Verify that E is a modifiable lvalue.  If not,
@@ -7085,10 +7082,8 @@ static bool CheckForModifiableLvalue(Expr *E, SourceLocation Loc, Sema &S) {
     Diag = diag::err_block_decl_ref_not_modifiable_lvalue;
     break;
   case Expr::MLV_ReadonlyProperty:
-    Diag = diag::error_readonly_property_assignment;
-    break;
   case Expr::MLV_NoSetterProperty:
-    Diag = diag::error_nosetter_property_assignment;
+    llvm_unreachable("readonly properties should be processed differently");
     break;
   case Expr::MLV_InvalidMessageExpression:
     Diag = diag::error_readonly_message_assignment;
@@ -7114,6 +7109,8 @@ static bool CheckForModifiableLvalue(Expr *E, SourceLocation Loc, Sema &S) {
 QualType Sema::CheckAssignmentOperands(Expr *LHSExpr, ExprResult &RHS,
                                        SourceLocation Loc,
                                        QualType CompoundType) {
+  assert(!LHSExpr->hasPlaceholderType(BuiltinType::PseudoObject));
+
   // Verify that LHS is a modifiable lvalue, and emit error if not.
   if (CheckForModifiableLvalue(LHSExpr, Loc, *this))
     return QualType();
@@ -7124,14 +7121,6 @@ QualType Sema::CheckAssignmentOperands(Expr *LHSExpr, ExprResult &RHS,
   AssignConvertType ConvTy;
   if (CompoundType.isNull()) {
     QualType LHSTy(LHSType);
-    // Simple assignment "x = y".
-    if (LHSExpr->getObjectKind() == OK_ObjCProperty) {
-      ExprResult LHSResult = Owned(LHSExpr);
-      ConvertPropertyForLValue(LHSResult, RHS, LHSTy);
-      if (LHSResult.isInvalid())
-        return QualType();
-      LHSExpr = LHSResult.take();
-    }
     ConvTy = CheckSingleAssignmentConstraints(LHSTy, RHS);
     if (RHS.isInvalid())
       return QualType();
@@ -7292,104 +7281,6 @@ static QualType CheckIncrementDecrementOperand(Sema &S, Expr *Op,
     return ResType.getUnqualifiedType();
   }
 }
-
-ExprResult Sema::ConvertPropertyForRValue(Expr *E) {
-  assert(E->getValueKind() == VK_LValue &&
-         E->getObjectKind() == OK_ObjCProperty);
-  const ObjCPropertyRefExpr *PRE = E->getObjCProperty();
-
-  QualType T = E->getType();
-  QualType ReceiverType;
-  if (PRE->isObjectReceiver())
-    ReceiverType = PRE->getBase()->getType();
-  else if (PRE->isSuperReceiver())
-    ReceiverType = PRE->getSuperReceiverType();
-  else
-    ReceiverType = Context.getObjCInterfaceType(PRE->getClassReceiver());
-    
-  ExprValueKind VK = VK_RValue;
-  if (PRE->isImplicitProperty()) {
-    if (ObjCMethodDecl *GetterMethod = 
-          PRE->getImplicitPropertyGetter()) {
-      T = getMessageSendResultType(ReceiverType, GetterMethod, 
-                                   PRE->isClassReceiver(), 
-                                   PRE->isSuperReceiver());
-      VK = Expr::getValueKindForType(GetterMethod->getResultType());
-    }
-    else {
-      Diag(PRE->getLocation(), diag::err_getter_not_found)
-            << PRE->getBase()->getType();
-    }
-  }
-  else {
-    // lvalue-ness of an explicit property is determined by
-    // getter type.
-    QualType ResT = PRE->getGetterResultType();
-    VK = Expr::getValueKindForType(ResT);
-  }
-    
-  E = ImplicitCastExpr::Create(Context, T, CK_GetObjCProperty,
-                               E, 0, VK);
-  
-  ExprResult Result = MaybeBindToTemporary(E);
-  if (!Result.isInvalid())
-    E = Result.take();
-
-  return Owned(E);
-}
-
-void Sema::ConvertPropertyForLValue(ExprResult &LHS, ExprResult &RHS,
-                                    QualType &LHSTy) {
-  assert(LHS.get()->getValueKind() == VK_LValue &&
-         LHS.get()->getObjectKind() == OK_ObjCProperty);
-  const ObjCPropertyRefExpr *PropRef = LHS.get()->getObjCProperty();
-
-  bool Consumed = false;
-
-  if (PropRef->isImplicitProperty()) {
-    // If using property-dot syntax notation for assignment, and there is a
-    // setter, RHS expression is being passed to the setter argument. So,
-    // type conversion (and comparison) is RHS to setter's argument type.
-    if (const ObjCMethodDecl *SetterMD = PropRef->getImplicitPropertySetter()) {
-      ObjCMethodDecl::param_const_iterator P = SetterMD->param_begin();
-      LHSTy = (*P)->getType();
-      Consumed = (getLangOptions().ObjCAutoRefCount &&
-                  (*P)->hasAttr<NSConsumedAttr>());
-
-    // Otherwise, if the getter returns an l-value, just call that.
-    } else {
-      QualType Result = PropRef->getImplicitPropertyGetter()->getResultType();
-      ExprValueKind VK = Expr::getValueKindForType(Result);
-      if (VK == VK_LValue) {
-        LHS = ImplicitCastExpr::Create(Context, LHS.get()->getType(),
-                                        CK_GetObjCProperty, LHS.take(), 0, VK);
-        return;
-      }
-    }
-  } else {
-    const ObjCMethodDecl *setter
-      = PropRef->getExplicitProperty()->getSetterMethodDecl();
-    if (setter) {
-      ObjCMethodDecl::param_const_iterator P = setter->param_begin();
-      LHSTy = (*P)->getType();
-      if (getLangOptions().ObjCAutoRefCount)
-        Consumed = (*P)->hasAttr<NSConsumedAttr>();
-    }
-  }
-
-  if ((getLangOptions().CPlusPlus && LHSTy->isRecordType()) ||
-      getLangOptions().ObjCAutoRefCount) {
-    InitializedEntity Entity = 
-      InitializedEntity::InitializeParameter(Context, LHSTy, Consumed);
-    ExprResult ArgE = PerformCopyInitialization(Entity, SourceLocation(), RHS);
-    if (!ArgE.isInvalid()) {
-      RHS = ArgE;
-      if (getLangOptions().ObjCAutoRefCount && !PropRef->isSuperReceiver())
-        checkRetainCycles(const_cast<Expr*>(PropRef->getBase()), RHS.get());
-    }
-  }
-  LHSTy = LHSTy.getNonReferenceType();
-}
   
 
 /// getPrimaryDecl - Helper function for CheckAddressOfOperand().
@@ -7473,31 +7364,39 @@ static void diagnoseAddressOfInvalidType(Sema &S, SourceLocation Loc,
 /// operator (C99 6.3.2.1p[2-4]), and its result is never an lvalue.
 /// In C++, the operand might be an overloaded function name, in which case
 /// we allow the '&' but retain the overloaded-function type.
-static QualType CheckAddressOfOperand(Sema &S, Expr *OrigOp,
+static QualType CheckAddressOfOperand(Sema &S, ExprResult &OrigOp,
                                       SourceLocation OpLoc) {
-  if (OrigOp->isTypeDependent())
-    return S.Context.DependentTy;
-  if (OrigOp->getType() == S.Context.OverloadTy) {
-    if (!isa<OverloadExpr>(OrigOp->IgnoreParens())) {
-      S.Diag(OpLoc, diag::err_typecheck_invalid_lvalue_addrof)
-        << OrigOp->getSourceRange();
+  if (const BuiltinType *PTy = OrigOp.get()->getType()->getAsPlaceholderType()){
+    if (PTy->getKind() == BuiltinType::Overload) {
+      if (!isa<OverloadExpr>(OrigOp.get()->IgnoreParens())) {
+        S.Diag(OpLoc, diag::err_typecheck_invalid_lvalue_addrof)
+          << OrigOp.get()->getSourceRange();
+        return QualType();
+      }
+                  
+      return S.Context.OverloadTy;
+    }
+
+    if (PTy->getKind() == BuiltinType::UnknownAny)
+      return S.Context.UnknownAnyTy;
+
+    if (PTy->getKind() == BuiltinType::BoundMember) {
+      S.Diag(OpLoc, diag::err_invalid_form_pointer_member_function)
+        << OrigOp.get()->getSourceRange();
       return QualType();
     }
-                  
-    return S.Context.OverloadTy;
-  }
-  if (OrigOp->getType() == S.Context.UnknownAnyTy)
-    return S.Context.UnknownAnyTy;
-  if (OrigOp->getType() == S.Context.BoundMemberTy) {
-    S.Diag(OpLoc, diag::err_invalid_form_pointer_member_function)
-      << OrigOp->getSourceRange();
-    return QualType();
+
+    OrigOp = S.CheckPlaceholderExpr(OrigOp.take());
+    if (OrigOp.isInvalid()) return QualType();
   }
 
-  assert(!OrigOp->getType()->isPlaceholderType());
+  if (OrigOp.get()->isTypeDependent())
+    return S.Context.DependentTy;
+
+  assert(!OrigOp.get()->getType()->isPlaceholderType());
 
   // Make sure to ignore parentheses in subsequent checks
-  Expr *op = OrigOp->IgnoreParens();
+  Expr *op = OrigOp.get()->IgnoreParens();
 
   if (S.getLangOptions().C99) {
     // Implement C99-only parts of addressof rules.
@@ -7530,16 +7429,16 @@ static QualType CheckAddressOfOperand(Sema &S, Expr *OrigOp,
     // If the underlying expression isn't a decl ref, give up.
     if (!isa<DeclRefExpr>(op)) {
       S.Diag(OpLoc, diag::err_invalid_form_pointer_member_function)
-        << OrigOp->getSourceRange();
+        << OrigOp.get()->getSourceRange();
       return QualType();
     }
     DeclRefExpr *DRE = cast<DeclRefExpr>(op);
     CXXMethodDecl *MD = cast<CXXMethodDecl>(DRE->getDecl());
 
     // The id-expression was parenthesized.
-    if (OrigOp != DRE) {
+    if (OrigOp.get() != DRE) {
       S.Diag(OpLoc, diag::err_parens_pointer_member_function)
-        << OrigOp->getSourceRange();
+        << OrigOp.get()->getSourceRange();
 
     // The method was named without a qualifier.
     } else if (!DRE->getQualifier()) {
@@ -7553,10 +7452,15 @@ static QualType CheckAddressOfOperand(Sema &S, Expr *OrigOp,
     // C99 6.5.3.2p1
     // The operand must be either an l-value or a function designator
     if (!op->getType()->isFunctionType()) {
-      // FIXME: emit more specific diag...
-      S.Diag(OpLoc, diag::err_typecheck_invalid_lvalue_addrof)
-        << op->getSourceRange();
-      return QualType();
+      // Use a special diagnostic for loads from property references.
+      if (isa<ObjCPropertyRefExpr>(op->IgnoreImplicit()->IgnoreParens())) {
+        AddressOfError = AO_Property_Expansion;
+      } else {
+        // FIXME: emit more specific diag...
+        S.Diag(OpLoc, diag::err_typecheck_invalid_lvalue_addrof)
+          << op->getSourceRange();
+        return QualType();
+      }
     }
   } else if (op->getObjectKind() == OK_BitField) { // C99 6.5.3.2p1
     // The operand cannot be a bit-field
@@ -7780,23 +7684,6 @@ ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
   QualType CompResultTy; // Type of computation result
   ExprValueKind VK = VK_RValue;
   ExprObjectKind OK = OK_Ordinary;
-
-  // Check if a 'foo<int>' involved in a binary op, identifies a single 
-  // function unambiguously (i.e. an lvalue ala 13.4)
-  // But since an assignment can trigger target based overload, exclude it in 
-  // our blind search. i.e:
-  // template<class T> void f(); template<class T, class U> void f(U);
-  // f<int> == 0;  // resolve f<int> blindly
-  // void (*p)(int); p = f<int>;  // resolve f<int> using target
-  if (Opc != BO_Assign) { 
-    ExprResult resolvedLHS = CheckPlaceholderExpr(LHS.get());
-    if (!resolvedLHS.isUsable()) return ExprError();
-    LHS = move(resolvedLHS);
-
-    ExprResult resolvedRHS = CheckPlaceholderExpr(RHS.get());
-    if (!resolvedRHS.isUsable()) return ExprError();
-    RHS = move(resolvedRHS);
-  }
 
   switch (Opc) {
   case BO_Assign:
@@ -8093,38 +7980,83 @@ ExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
   return BuildBinOp(S, TokLoc, Opc, LHSExpr, RHSExpr);
 }
 
+/// Build an overloaded binary operator expression in the given scope.
+static ExprResult BuildOverloadedBinOp(Sema &S, Scope *Sc, SourceLocation OpLoc,
+                                       BinaryOperatorKind Opc,
+                                       Expr *LHS, Expr *RHS) {
+  // Find all of the overloaded operators visible from this
+  // point. We perform both an operator-name lookup from the local
+  // scope and an argument-dependent lookup based on the types of
+  // the arguments.
+  UnresolvedSet<16> Functions;
+  OverloadedOperatorKind OverOp
+    = BinaryOperator::getOverloadedOperator(Opc);
+  if (Sc && OverOp != OO_None)
+    S.LookupOverloadedOperatorName(OverOp, Sc, LHS->getType(),
+                                   RHS->getType(), Functions);
+
+  // Build the (potentially-overloaded, potentially-dependent)
+  // binary operation.
+  return S.CreateOverloadedBinOp(OpLoc, Opc, Functions, LHS, RHS);
+}
+
 ExprResult Sema::BuildBinOp(Scope *S, SourceLocation OpLoc,
                             BinaryOperatorKind Opc,
                             Expr *LHSExpr, Expr *RHSExpr) {
+  // Handle pseudo-objects in the LHS.
+  if (const BuiltinType *pty = LHSExpr->getType()->getAsPlaceholderType()) {
+    // Assignments with a pseudo-object l-value need special analysis.
+    if (pty->getKind() == BuiltinType::PseudoObject &&
+        BinaryOperator::isAssignmentOp(Opc))
+      return checkPseudoObjectAssignment(S, OpLoc, Opc, LHSExpr, RHSExpr);
+
+    // Don't resolve overloads if the other type is overloadable.
+    if (pty->getKind() == BuiltinType::Overload) {
+      // We can't actually test that if we still have a placeholder,
+      // though.  Fortunately, none of the exceptions we see in that
+      // code below are valid when the LHS is an overload set.
+      ExprResult resolvedRHS = CheckPlaceholderExpr(RHSExpr);
+      if (resolvedRHS.isInvalid()) return ExprError();
+      RHSExpr = resolvedRHS.take();
+
+      if (RHSExpr->getType()->isOverloadableType())
+        return BuildOverloadedBinOp(*this, S, OpLoc, Opc, LHSExpr, RHSExpr);
+    }
+        
+    ExprResult LHS = CheckPlaceholderExpr(LHSExpr);
+    if (LHS.isInvalid()) return ExprError();
+    LHSExpr = LHS.take();
+  }
+
+  // Handle pseudo-objects in the RHS.
+  if (const BuiltinType *pty = RHSExpr->getType()->getAsPlaceholderType()) {
+    // An overload in the RHS can potentially be resolved by the type
+    // being assigned to.
+    if (Opc == BO_Assign && pty->getKind() == BuiltinType::Overload)
+      return CreateBuiltinBinOp(OpLoc, Opc, LHSExpr, RHSExpr);
+
+    // Don't resolve overloads if the other type is overloadable.
+    if (pty->getKind() == BuiltinType::Overload &&
+        LHSExpr->getType()->isOverloadableType())
+      return BuildOverloadedBinOp(*this, S, OpLoc, Opc, LHSExpr, RHSExpr);
+
+    ExprResult resolvedRHS = CheckPlaceholderExpr(RHSExpr);
+    if (!resolvedRHS.isUsable()) return ExprError();
+    RHSExpr = resolvedRHS.take();
+  }
+
   if (getLangOptions().CPlusPlus) {
     bool UseBuiltinOperator;
 
     if (LHSExpr->isTypeDependent() || RHSExpr->isTypeDependent()) {
       UseBuiltinOperator = false;
-    } else if (Opc == BO_Assign &&
-               LHSExpr->getObjectKind() == OK_ObjCProperty) {
-      UseBuiltinOperator = true;
     } else {
       UseBuiltinOperator = !LHSExpr->getType()->isOverloadableType() &&
                            !RHSExpr->getType()->isOverloadableType();
     }
 
-    if (!UseBuiltinOperator) {
-      // Find all of the overloaded operators visible from this
-      // point. We perform both an operator-name lookup from the local
-      // scope and an argument-dependent lookup based on the types of
-      // the arguments.
-      UnresolvedSet<16> Functions;
-      OverloadedOperatorKind OverOp
-        = BinaryOperator::getOverloadedOperator(Opc);
-      if (S && OverOp != OO_None)
-        LookupOverloadedOperatorName(OverOp, S, LHSExpr->getType(),
-                                     RHSExpr->getType(), Functions);
-
-      // Build the (potentially-overloaded, potentially-dependent)
-      // binary operation.
-      return CreateOverloadedBinOp(OpLoc, Opc, Functions, LHSExpr, RHSExpr);
-    }
+    if (!UseBuiltinOperator)
+      return BuildOverloadedBinOp(*this, S, OpLoc, Opc, LHSExpr, RHSExpr);
   }
 
   // Build a built-in binary operation.
@@ -8150,12 +8082,9 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
                                                 Opc == UO_PreDec);
     break;
   case UO_AddrOf:
-    resultType = CheckAddressOfOperand(*this, Input.get(), OpLoc);
+    resultType = CheckAddressOfOperand(*this, Input, OpLoc);
     break;
   case UO_Deref: {
-    ExprResult resolved = CheckPlaceholderExpr(Input.get());
-    if (!resolved.isUsable()) return ExprError();
-    Input = move(resolved);
     Input = DefaultFunctionArrayLvalueConversion(Input.take());
     resultType = CheckIndirectionOperand(*this, Input.get(), VK, OpLoc);
     break;
@@ -8177,11 +8106,6 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
              Opc == UO_Plus &&
              resultType->isPointerType())
       break;
-    else if (resultType->isPlaceholderType()) {
-      Input = CheckPlaceholderExpr(Input.take());
-      if (Input.isInvalid()) return ExprError();
-      return CreateBuiltinUnaryOp(OpLoc, Opc, Input.take());
-    }
 
     return ExprError(Diag(OpLoc, diag::err_typecheck_unary_expr)
       << resultType << Input.get()->getSourceRange());
@@ -8199,11 +8123,7 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
         << resultType << Input.get()->getSourceRange();
     else if (resultType->hasIntegerRepresentation())
       break;
-    else if (resultType->isPlaceholderType()) {
-      Input = CheckPlaceholderExpr(Input.take());
-      if (Input.isInvalid()) return ExprError();
-      return CreateBuiltinUnaryOp(OpLoc, Opc, Input.take());
-    } else {
+    else {
       return ExprError(Diag(OpLoc, diag::err_typecheck_unary_expr)
         << resultType << Input.get()->getSourceRange());
     }
@@ -8231,10 +8151,6 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
         Input = ImpCastExprToType(Input.take(), Context.BoolTy,
                                   ScalarTypeToBooleanCastKind(resultType));
       }
-    } else if (resultType->isPlaceholderType()) {
-      Input = CheckPlaceholderExpr(Input.take());
-      if (Input.isInvalid()) return ExprError();
-      return CreateBuiltinUnaryOp(OpLoc, Opc, Input.take());
     } else {
       return ExprError(Diag(OpLoc, diag::err_typecheck_unary_expr)
         << resultType << Input.get()->getSourceRange());
@@ -8275,6 +8191,32 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
 
 ExprResult Sema::BuildUnaryOp(Scope *S, SourceLocation OpLoc,
                               UnaryOperatorKind Opc, Expr *Input) {
+  // First things first: handle placeholders so that the
+  // overloaded-operator check considers the right type.
+  if (const BuiltinType *pty = Input->getType()->getAsPlaceholderType()) {
+    // Increment and decrement of pseudo-object references.
+    if (pty->getKind() == BuiltinType::PseudoObject &&
+        UnaryOperator::isIncrementDecrementOp(Opc))
+      return checkPseudoObjectIncDec(S, OpLoc, Opc, Input);
+
+    // extension is always a builtin operator.
+    if (Opc == UO_Extension)
+      return CreateBuiltinUnaryOp(OpLoc, Opc, Input);
+
+    // & gets special logic for several kinds of placeholder.
+    // The builtin code knows what to do.
+    if (Opc == UO_AddrOf &&
+        (pty->getKind() == BuiltinType::Overload ||
+         pty->getKind() == BuiltinType::UnknownAny ||
+         pty->getKind() == BuiltinType::BoundMember))
+      return CreateBuiltinUnaryOp(OpLoc, Opc, Input);
+
+    // Anything else needs to be handled now.
+    ExprResult Result = CheckPlaceholderExpr(Input);
+    if (Result.isInvalid()) return ExprError();
+    Input = Result.take();
+  }
+
   if (getLangOptions().CPlusPlus && Input->getType()->isOverloadableType() &&
       UnaryOperator::getOverloadedOperator(Opc) != OO_None) {
     // Find all of the overloaded operators visible from this
@@ -10150,6 +10092,10 @@ ExprResult Sema::CheckPlaceholderExpr(Expr *E) {
   // Expressions of unknown type.
   case BuiltinType::UnknownAny:
     return diagnoseUnknownAnyExpr(*this, E);
+
+  // Pseudo-objects.
+  case BuiltinType::PseudoObject:
+    return checkPseudoObjectRValue(E);
 
   // Everything else should be impossible.
 #define BUILTIN_TYPE(Id, SingletonId) \

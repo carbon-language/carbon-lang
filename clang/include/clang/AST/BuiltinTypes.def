@@ -179,6 +179,24 @@ PLACEHOLDER_TYPE(Overload, OverloadTy)
 //   x->foo       # if only contains non-static members
 PLACEHOLDER_TYPE(BoundMember, BoundMemberTy)
 
+// The type of an expression which refers to a pseudo-object,
+// such as those introduced by Objective C's @property or
+// VS.NET's __property declarations.  A placeholder type.  The
+// pseudo-object is actually accessed by emitting a call to
+// some sort of function or method;  typically there is a pair
+// of a setter and a getter, with the setter used if the
+// pseudo-object reference is used syntactically as the
+// left-hand-side of an assignment operator.
+//
+// A pseudo-object reference naming an Objective-C @property is
+// always a dot access with a base of object-pointer type,
+// e.g. 'x.foo'.
+//
+// In VS.NET, a __property declaration creates an implicit
+// member with an associated name, which can then be named
+// in any of the normal ways an ordinary member could be.
+PLACEHOLDER_TYPE(PseudoObject, PseudoObjectTy)
+
 // __builtin_any_type.  A placeholder type.  Useful for clients
 // like debuggers that don't know what type to give something.
 // Only a small number of operations are valid on expressions of

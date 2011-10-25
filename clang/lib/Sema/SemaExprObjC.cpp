@@ -527,6 +527,35 @@ ObjCMethodDecl *Sema::LookupPrivateInstanceMethod(Selector Sel,
   return Method;
 }
 
+/// LookupMethodInType - Look up a method in an ObjCObjectType.
+ObjCMethodDecl *Sema::LookupMethodInObjectType(Selector sel, QualType type,
+                                               bool isInstance) {
+  const ObjCObjectType *objType = type->castAs<ObjCObjectType>();
+  if (ObjCInterfaceDecl *iface = objType->getInterface()) {
+    // Look it up in the main interface (and categories, etc.)
+    if (ObjCMethodDecl *method = iface->lookupMethod(sel, isInstance))
+      return method;
+
+    // Okay, look for "private" methods declared in any
+    // @implementations we've seen.
+    if (isInstance) {
+      if (ObjCMethodDecl *method = LookupPrivateInstanceMethod(sel, iface))
+        return method;
+    } else {
+      if (ObjCMethodDecl *method = LookupPrivateClassMethod(sel, iface))
+        return method;
+    }
+  }
+
+  // Check qualifiers.
+  for (ObjCObjectType::qual_iterator
+         i = objType->qual_begin(), e = objType->qual_end(); i != e; ++i)
+    if (ObjCMethodDecl *method = (*i)->lookupMethod(sel, isInstance))
+      return method;
+
+  return 0;
+}
+
 /// LookupMethodInQualifiedType - Lookups up a method in protocol qualifier 
 /// list of a qualified objective pointer type.
 ObjCMethodDecl *Sema::LookupMethodInQualifiedType(Selector Sel,
@@ -575,23 +604,14 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
     // Check whether we can reference this property.
     if (DiagnoseUseOfDecl(PD, MemberLoc))
       return ExprError();
-    QualType ResTy = PD->getType();
-    ResTy = ResTy.getNonLValueExprType(Context);
-    Selector Sel = PP.getSelectorTable().getNullarySelector(Member);
-    ObjCMethodDecl *Getter = IFace->lookupInstanceMethod(Sel);
-    if (Getter &&
-        (Getter->hasRelatedResultType()
-         || DiagnosePropertyAccessorMismatch(PD, Getter, MemberLoc)))
-        ResTy = getMessageSendResultType(QualType(OPT, 0), Getter, false, 
-                                         Super);
              
     if (Super)
-      return Owned(new (Context) ObjCPropertyRefExpr(PD, ResTy,
+      return Owned(new (Context) ObjCPropertyRefExpr(PD, Context.PseudoObjectTy,
                                                      VK_LValue, OK_ObjCProperty,
                                                      MemberLoc, 
                                                      SuperLoc, SuperType));
     else
-      return Owned(new (Context) ObjCPropertyRefExpr(PD, ResTy,
+      return Owned(new (Context) ObjCPropertyRefExpr(PD, Context.PseudoObjectTy,
                                                      VK_LValue, OK_ObjCProperty,
                                                      MemberLoc, BaseExpr));
   }
@@ -603,17 +623,16 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
       if (DiagnoseUseOfDecl(PD, MemberLoc))
         return ExprError();
       
-      QualType T = PD->getType();
-      if (ObjCMethodDecl *Getter = PD->getGetterMethodDecl())
-        T = getMessageSendResultType(QualType(OPT, 0), Getter, false, Super);
       if (Super)
-        return Owned(new (Context) ObjCPropertyRefExpr(PD, T,
+        return Owned(new (Context) ObjCPropertyRefExpr(PD,
+                                                       Context.PseudoObjectTy,
                                                        VK_LValue,
                                                        OK_ObjCProperty,
                                                        MemberLoc, 
                                                        SuperLoc, SuperType));
       else
-        return Owned(new (Context) ObjCPropertyRefExpr(PD, T,
+        return Owned(new (Context) ObjCPropertyRefExpr(PD,
+                                                       Context.PseudoObjectTy,
                                                        VK_LValue,
                                                        OK_ObjCProperty,
                                                        MemberLoc,
@@ -668,28 +687,16 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
     return ExprError();
 
   if (Getter || Setter) {
-    QualType PType;
-    if (Getter)
-      PType = getMessageSendResultType(QualType(OPT, 0), Getter, false, Super);
-    else {
-      ParmVarDecl *ArgDecl = *Setter->param_begin();
-      PType = ArgDecl->getType().getUnqualifiedType(); // can't be an array
-    }
-    
-    ExprValueKind VK = VK_LValue;
-    ExprObjectKind OK = OK_ObjCProperty;
-    if (!getLangOptions().CPlusPlus && !PType.hasQualifiers() &&
-        PType->isVoidType())
-      VK = VK_RValue, OK = OK_Ordinary;
-
     if (Super)
       return Owned(new (Context) ObjCPropertyRefExpr(Getter, Setter,
-                                                     PType, VK, OK,
+                                                     Context.PseudoObjectTy,
+                                                     VK_LValue, OK_ObjCProperty,
                                                      MemberLoc,
                                                      SuperLoc, SuperType));
     else
       return Owned(new (Context) ObjCPropertyRefExpr(Getter, Setter,
-                                                     PType, VK, OK,
+                                                     Context.PseudoObjectTy,
+                                                     VK_LValue, OK_ObjCProperty,
                                                      MemberLoc, BaseExpr));
 
   }
@@ -825,34 +832,17 @@ ActOnClassPropertyRefExpr(IdentifierInfo &receiverName,
     return ExprError();
 
   if (Getter || Setter) {
-    QualType PType;
-
-    ExprValueKind VK = VK_LValue;
-    if (Getter) {
-      PType = getMessageSendResultType(Context.getObjCInterfaceType(IFace),
-                                       Getter, true, 
-                                       receiverNamePtr->isStr("super"));
-      if (!getLangOptions().CPlusPlus &&
-          !PType.hasQualifiers() && PType->isVoidType())
-        VK = VK_RValue;
-    } else {
-      for (ObjCMethodDecl::param_iterator PI = Setter->param_begin(),
-           E = Setter->param_end(); PI != E; ++PI)
-        PType = (*PI)->getType();
-      VK = VK_LValue;
-    }
-
-    ExprObjectKind OK = (VK == VK_RValue ? OK_Ordinary : OK_ObjCProperty);
-
     if (IsSuper)
     return Owned(new (Context) ObjCPropertyRefExpr(Getter, Setter,
-                                                   PType, VK, OK,
+                                                   Context.PseudoObjectTy,
+                                                   VK_LValue, OK_ObjCProperty,
                                                    propertyNameLoc,
                                                    receiverNameLoc, 
                                           Context.getObjCInterfaceType(IFace)));
 
     return Owned(new (Context) ObjCPropertyRefExpr(Getter, Setter,
-                                                   PType, VK, OK,
+                                                   Context.PseudoObjectTy,
+                                                   VK_LValue, OK_ObjCProperty,
                                                    propertyNameLoc,
                                                    receiverNameLoc, IFace));
   }

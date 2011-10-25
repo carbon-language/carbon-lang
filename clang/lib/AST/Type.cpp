@@ -1493,6 +1493,7 @@ const char *BuiltinType::getName(const PrintingPolicy &Policy) const {
   case NullPtr:           return "nullptr_t";
   case Overload:          return "<overloaded function type>";
   case BoundMember:       return "<bound member function type>";
+  case PseudoObject:      return "<pseudo-object type>";
   case Dependent:         return "<dependent type>";
   case UnknownAny:        return "<unknown type>";
   case ARCUnbridgedCast:  return "<ARC unbridged cast type>";
