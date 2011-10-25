@@ -424,13 +424,24 @@ class VLD1D4<bits<4> op7_4, string Dt>
   let Inst{5-4} = Rn{5-4};
   let DecoderMethod = "DecodeVLDInstruction";
 }
-class VLD1D4WB<bits<4> op7_4, string Dt>
-  : NLdSt<0, 0b10, 0b0010, op7_4, (outs VecListFourD:$Vd, GPR:$wb),
-          (ins addrmode6:$Rn, am6offset:$Rm), IIC_VLD1x4u, "vld1", Dt,
-          "$Vd, $Rn$Rm", "$Rn.addr = $wb",
-          []> {
-  let Inst{5-4} = Rn{5-4};
-  let DecoderMethod = "DecodeVLDInstruction";
+multiclass VLD1D4WB<bits<4> op7_4, string Dt> {
+  def _fixed : NLdSt<0,0b10,0b0010, op7_4, (outs VecListFourD:$Vd, GPR:$wb),
+                    (ins addrmode6:$Rn), IIC_VLD1x2u,
+                     "vld1", Dt, "$Vd, $Rn!",
+                     "$Rn.addr = $wb", []> {
+    let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
+    let Inst{5-4} = Rn{5-4};
+    let DecoderMethod = "DecodeVLDInstruction";
+    let AsmMatchConverter = "cvtVLDwbFixed";
+  }
+  def _register : NLdSt<0,0b10,0b0010,op7_4, (outs VecListFourD:$Vd, GPR:$wb),
+                        (ins addrmode6:$Rn, rGPR:$Rm), IIC_VLD1x2u,
+                        "vld1", Dt, "$Vd, $Rn, $Rm",
+                        "$Rn.addr = $wb", []> {
+    let Inst{5-4} = Rn{5-4};
+    let DecoderMethod = "DecodeVLDInstruction";
+    let AsmMatchConverter = "cvtVLDwbRegister";
+  }
 }
 
 def VLD1d8Q      : VLD1D4<{0,0,?,?}, "8">;
@@ -438,12 +449,12 @@ def VLD1d16Q     : VLD1D4<{0,1,?,?}, "16">;
 def VLD1d32Q     : VLD1D4<{1,0,?,?}, "32">;
 def VLD1d64Q     : VLD1D4<{1,1,?,?}, "64">;
 
-def VLD1d8Q_UPD  : VLD1D4WB<{0,0,?,?}, "8">;
-def VLD1d16Q_UPD : VLD1D4WB<{0,1,?,?}, "16">;
-def VLD1d32Q_UPD : VLD1D4WB<{1,0,?,?}, "32">;
-def VLD1d64Q_UPD : VLD1D4WB<{1,1,?,?}, "64">;
+defm VLD1d8Qwb   : VLD1D4WB<{0,0,?,?}, "8">;
+defm VLD1d16Qwb  : VLD1D4WB<{0,1,?,?}, "16">;
+defm VLD1d32Qwb  : VLD1D4WB<{1,0,?,?}, "32">;
+defm VLD1d64Qwb  : VLD1D4WB<{1,1,?,?}, "64">;
 
-def VLD1d64QPseudo     : VLDQQPseudo<IIC_VLD1x4>;
+def VLD1d64QPseudo : VLDQQPseudo<IIC_VLD1x4>;
 
 //   VLD2     : Vector Load (multiple 2-element structures)
 class VLD2D<bits<4> op11_8, bits<4> op7_4, string Dt, RegisterOperand VdTy>

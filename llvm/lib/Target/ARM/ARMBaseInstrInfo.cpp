@@ -2440,7 +2440,8 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
     case ARM::VLD4d8_UPD:
     case ARM::VLD4d16_UPD:
     case ARM::VLD4d32_UPD:
-    case ARM::VLD1d64Q_UPD:
+    case ARM::VLD1d64Qwb_fixed:
+    case ARM::VLD1d64Qwb_register:
     case ARM::VLD4q8_UPD:
     case ARM::VLD4q16_UPD:
     case ARM::VLD4q32_UPD:

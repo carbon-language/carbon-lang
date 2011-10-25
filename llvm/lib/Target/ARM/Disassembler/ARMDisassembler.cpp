@@ -2078,10 +2078,14 @@ static DecodeStatus DecodeVLDInstruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::VLD1d32Twb_register:
     case ARM::VLD1d64Twb_fixed:
     case ARM::VLD1d64Twb_register:
-    case ARM::VLD1d8Q_UPD:
-    case ARM::VLD1d16Q_UPD:
-    case ARM::VLD1d32Q_UPD:
-    case ARM::VLD1d64Q_UPD:
+    case ARM::VLD1d8Qwb_fixed:
+    case ARM::VLD1d8Qwb_register:
+    case ARM::VLD1d16Qwb_fixed:
+    case ARM::VLD1d16Qwb_register:
+    case ARM::VLD1d32Qwb_fixed:
+    case ARM::VLD1d32Qwb_register:
+    case ARM::VLD1d64Qwb_fixed:
+    case ARM::VLD1d64Qwb_register:
     case ARM::VLD2d8_UPD:
     case ARM::VLD2d16_UPD:
     case ARM::VLD2d32_UPD:
