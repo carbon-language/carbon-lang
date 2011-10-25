@@ -306,7 +306,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
           SmallString<32> val;
           if (error(rel_cur->getAddress(addr))) goto skip_print_rel;
           // Stop when rel_cur's address is past the current instruction.
-          if (addr > Index + Size) break;
+          if (addr >= Index + Size) break;
           if (error(rel_cur->getTypeName(name))) goto skip_print_rel;
           if (error(rel_cur->getValueString(val))) goto skip_print_rel;
 
