@@ -183,13 +183,13 @@ clang::analyze_format_string::ParseLengthModifier(FormatSpecifier &FS,
       return false;
     case 'h':
       ++I;
-      lmKind = (I != E && *I == 'h') ?
-      ++I, LengthModifier::AsChar : LengthModifier::AsShort;
+      lmKind = (I != E && *I == 'h') ? (++I, LengthModifier::AsChar)
+                                     : LengthModifier::AsShort;
       break;
     case 'l':
       ++I;
-      lmKind = (I != E && *I == 'l') ?
-      ++I, LengthModifier::AsLongLong : LengthModifier::AsLong;
+      lmKind = (I != E && *I == 'l') ? (++I, LengthModifier::AsLongLong)
+                                     : LengthModifier::AsLong;
       break;
     case 'j': lmKind = LengthModifier::AsIntMax;     ++I; break;
     case 'z': lmKind = LengthModifier::AsSizeT;      ++I; break;
@@ -213,7 +213,21 @@ bool ArgTypeResult::matchesType(ASTContext &C, QualType argTy) const {
 
     case UnknownTy:
       return true;
-
+      
+    case AnyCharTy: {
+      if (const BuiltinType *BT = argTy->getAs<BuiltinType>())
+        switch (BT->getKind()) {
+          default:
+            break;
+          case BuiltinType::Char_S:
+          case BuiltinType::SChar:
+          case BuiltinType::UChar:
+          case BuiltinType::Char_U:
+            return true;            
+        }
+      return false;
+    }
+      
     case SpecificTy: {
       argTy = C.getCanonicalType(argTy).getUnqualifiedType();
       if (T == argTy)
@@ -314,6 +328,8 @@ QualType ArgTypeResult::getRepresentativeType(ASTContext &C) const {
       llvm_unreachable("No representative type for Invalid ArgTypeResult");
     case UnknownTy:
       return QualType();
+    case AnyCharTy:
+      return C.CharTy;
     case SpecificTy:
       return T;
     case CStrTy:

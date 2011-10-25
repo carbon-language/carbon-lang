@@ -212,6 +212,12 @@ void test12(char *b) {
   asprintf(&b, "%d", "asprintf"); // expected-warning{{conversion specifies type 'int' but the argument has type 'char *'}}
 }
 
+void test13(short x) {
+  char bel = 007;
+  printf("bel: '0%hhd'\n", bel); // no-warning
+  printf("x: '0%hhd'\n", x); // expected-warning {{conversion specifies type 'char' but the argument has type 'short'}}
+}
+
 typedef struct __aslclient *aslclient;
 typedef struct __aslmsg *aslmsg;
 int asl_log(aslclient asl, aslmsg msg, int level, const char *format, ...) __attribute__((__format__ (__printf__, 4, 5)));

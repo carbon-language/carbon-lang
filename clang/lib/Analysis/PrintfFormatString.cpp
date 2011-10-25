@@ -297,7 +297,7 @@ ArgTypeResult PrintfSpecifier::getArgType(ASTContext &Ctx) const {
       case LengthModifier::AsLongDouble:
         return ArgTypeResult::Invalid();
       case LengthModifier::None: return Ctx.IntTy;
-      case LengthModifier::AsChar: return Ctx.SignedCharTy;
+      case LengthModifier::AsChar: return ArgTypeResult::AnyCharTy;
       case LengthModifier::AsShort: return Ctx.ShortTy;
       case LengthModifier::AsLong: return Ctx.LongTy;
       case LengthModifier::AsLongLong: return Ctx.LongLongTy;
