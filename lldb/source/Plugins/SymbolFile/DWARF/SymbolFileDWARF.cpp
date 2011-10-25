@@ -1348,8 +1348,27 @@ SymbolFileDWARF::ParseChildMembers
                         }
                     }
                     
-                    // FIXME: Make Clang ignore Objective-C accessibility for expressions
+                    // Clang has a DWARF generation bug where sometimes it 
+                    // represents fields that are references with bad byte size
+                    // and bit size/offset information such as:
+                    //
+                    //  DW_AT_byte_size( 0x00 )
+                    //  DW_AT_bit_size( 0x40 )
+                    //  DW_AT_bit_offset( 0xffffffffffffffc0 )
+                    //
+                    // So check the bit offset to make sure it is sane, and if 
+                    // the values are not sane, remove them. If we don't do this
+                    // then we will end up with a crash if we try to use this 
+                    // type in an expression when clang becomes unhappy with its
+                    // recycled debug info.
                     
+                    if (bit_offset > 128)
+                    {
+                        bit_size = 0;
+                        bit_offset = 0;
+                    }
+
+                    // FIXME: Make Clang ignore Objective-C accessibility for expressions
                     if (class_language == eLanguageTypeObjC ||
                         class_language == eLanguageTypeObjC_plus_plus)
                         accessibility = eAccessNone; 
