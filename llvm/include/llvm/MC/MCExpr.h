@@ -174,7 +174,23 @@ public:
     VK_PPC_DARWIN_HA16,  // ha16(symbol)
     VK_PPC_DARWIN_LO16,  // lo16(symbol)
     VK_PPC_GAS_HA16,     // symbol@ha
-    VK_PPC_GAS_LO16      // symbol@l
+    VK_PPC_GAS_LO16,      // symbol@l
+
+    VK_Mips_None,
+    VK_Mips_GPREL,
+    VK_Mips_GOT_CALL,
+    VK_Mips_GOT,
+    VK_Mips_ABS_HI,
+    VK_Mips_ABS_LO,
+    VK_Mips_TLSGD,
+    VK_Mips_GOTTPREL,
+    VK_Mips_TPREL_HI,
+    VK_Mips_TPREL_LO,
+    VK_Mips_GPOFF_HI,
+    VK_Mips_GPOFF_LO,
+    VK_Mips_GOT_DISP,
+    VK_Mips_GOT_PAGE,
+    VK_Mips_GOT_OFST 
   };
 
 private:
