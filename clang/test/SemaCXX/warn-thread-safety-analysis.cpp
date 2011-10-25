@@ -1524,10 +1524,6 @@ namespace template_member_test {
     }
   };
 
-  struct MutexWrapper {
-    typedef Mutex Lock;
-  };
-
-  template struct IndirectLock<MutexWrapper>; // expected-note {{here}}
+  template struct IndirectLock<int>; // expected-note {{here}}
 
 }
