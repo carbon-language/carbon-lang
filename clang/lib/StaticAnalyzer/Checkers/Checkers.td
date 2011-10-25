@@ -359,6 +359,10 @@ def LLVMConventionsChecker : Checker<"Conventions">,
 
 let ParentPackage = Debug in {
 
+def DominatorsTreeDumper : Checker<"DumpDominators">,
+  HelpText<"Print the dominance tree for a given CFG">,
+  DescFile<"DebugCheckers.cpp">;
+
 def LiveVariablesDumper : Checker<"DumpLiveVars">,
   HelpText<"Print results of live variable analysis">,
   DescFile<"DebugCheckers.cpp">;

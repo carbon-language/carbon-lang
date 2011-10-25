@@ -6,6 +6,7 @@ add_clang_library(clangAnalysis
   CFGReachabilityAnalysis.cpp
   CFGStmtMap.cpp
   CocoaConventions.cpp
+  Dominators.cpp
   FormatString.cpp
   LiveVariables.cpp
   PostOrderCFGView.cpp

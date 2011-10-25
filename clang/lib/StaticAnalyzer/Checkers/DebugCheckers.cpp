@@ -15,9 +15,32 @@
 #include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/AnalysisManager.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
+#include "clang/Analysis/Analyses/Dominators.h"
 
 using namespace clang;
 using namespace ento;
+
+//===----------------------------------------------------------------------===//
+// DominatorsTreeDumper
+//===----------------------------------------------------------------------===//
+
+namespace {
+class DominatorsTreeDumper : public Checker<check::ASTCodeBody> {
+public:
+  void checkASTCodeBody(const Decl *D, AnalysisManager& mgr,
+                        BugReporter &BR) const {
+    if (AnalysisDeclContext *AC = mgr.getAnalysisDeclContext(D)) {
+      DominatorTree dom(*AC);
+      dom.BuildDominatorTree();
+      dom.dump();
+    }
+  }
+};
+}
+
+void ento::registerDominatorsTreeDumper(CheckerManager &mgr) {
+  mgr.registerChecker<DominatorsTreeDumper>();
+}
 
 //===----------------------------------------------------------------------===//
 // LiveVariablesDumper
