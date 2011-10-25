@@ -216,8 +216,6 @@ bool BranchProbabilityInfo::calcPointerHeuristics(BasicBlock *BB) {
 // Calculate Edge Weights using "Loop Branch Heuristics". Predict backedges
 // as taken, exiting edges as not-taken.
 bool BranchProbabilityInfo::calcLoopBranchHeuristics(BasicBlock *BB) {
-  uint32_t numSuccs = BB->getTerminator()->getNumSuccessors();
-
   Loop *L = LI->getLoopFor(BB);
   if (!L)
     return false;
@@ -226,17 +224,13 @@ bool BranchProbabilityInfo::calcLoopBranchHeuristics(BasicBlock *BB) {
   SmallPtrSet<BasicBlock *, 8> ExitingEdges;
   SmallPtrSet<BasicBlock *, 8> InEdges; // Edges from header to the loop.
 
-  bool isHeader = BB == L->getHeader();
-
   for (succ_iterator I = succ_begin(BB), E = succ_end(BB); I != E; ++I) {
-    BasicBlock *Succ = *I;
-    Loop *SuccL = LI->getLoopFor(Succ);
-    if (SuccL != L)
-      ExitingEdges.insert(Succ);
-    else if (Succ == L->getHeader())
-      BackEdges.insert(Succ);
-    else if (isHeader)
-      InEdges.insert(Succ);
+    if (!L->contains(*I))
+      ExitingEdges.insert(*I);
+    else if (L->getHeader() == *I)
+      BackEdges.insert(*I);
+    else
+      InEdges.insert(*I);
   }
 
   if (uint32_t numBackEdges = BackEdges.size()) {
@@ -263,9 +257,8 @@ bool BranchProbabilityInfo::calcLoopBranchHeuristics(BasicBlock *BB) {
     }
   }
 
-  uint32_t numExitingEdges = ExitingEdges.size();
-  if (uint32_t numNonExitingEdges = numSuccs - numExitingEdges) {
-    uint32_t exitWeight = LBH_NONTAKEN_WEIGHT / numNonExitingEdges;
+  if (uint32_t numExitingEdges = ExitingEdges.size()) {
+    uint32_t exitWeight = LBH_NONTAKEN_WEIGHT / numExitingEdges;
     if (exitWeight < MIN_WEIGHT)
       exitWeight = MIN_WEIGHT;
 
