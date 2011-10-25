@@ -18,6 +18,7 @@
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/Support/Allocator.h"
 #include <vector>
 
@@ -269,6 +270,13 @@ namespace clang {
     /// preprocessed entities that \arg Range encompasses.
     virtual std::pair<unsigned, unsigned>
         findPreprocessedEntitiesInRange(SourceRange Range) = 0;
+
+    /// \brief Optionally returns true or false if the preallocated preprocessed
+    /// entity with index \arg Index came from file \arg FID.
+    virtual llvm::Optional<bool> isPreprocessedEntityInFileID(unsigned Index,
+                                                              FileID FID) {
+      return llvm::Optional<bool>();
+    }
   };
   
   /// \brief A record of the steps taken while preprocessing a source file,
@@ -386,7 +394,7 @@ namespace clang {
       
       iterator() : Self(0), Position(0) { }
       
-      iterator(PreprocessingRecord *Self, int Position) 
+      iterator(PreprocessingRecord *Self, PPEntityID Position) 
         : Self(Self), Position(Position) { }
       
       value_type operator*() const {
@@ -471,6 +479,7 @@ namespace clang {
         X.Position -= D;
         return X;
       }
+      friend class PreprocessingRecord;
     };
     friend class iterator;
 
@@ -496,7 +505,19 @@ namespace clang {
 
     /// \brief Returns a pair of [Begin, End) iterators of preprocessed entities
     /// that source range \arg R encompasses.
+    ///
+    /// \param R the range to look for preprocessed entities.
+    ///
     std::pair<iterator, iterator> getPreprocessedEntitiesInRange(SourceRange R);
+
+    /// \brief Returns true if the preprocessed entity that \arg PPEI iterator
+    /// points to is coming from the file \arg FID.
+    ///
+    /// Can be used to avoid implicit deserializations of preallocated
+    /// preprocessed entities if we only care about entities of a specific file
+    /// and not from files #included in the range given at
+    /// \see getPreprocessedEntitiesInRange.
+    bool isEntityInFileID(iterator PPEI, FileID FID);
 
     /// \brief Add a new preprocessed entity to this record.
     void addPreprocessedEntity(PreprocessedEntity *Entity);
@@ -525,6 +546,17 @@ namespace clang {
                                     SourceLocation EndLoc,
                                     StringRef SearchPath,
                                     StringRef RelativePath);
+
+  private:
+    /// \brief Cached result of the last \see getPreprocessedEntitiesInRange
+    /// query.
+    struct {
+      SourceRange Range;
+      std::pair<PPEntityID, PPEntityID> Result;
+    } CachedRangeQuery;
+
+    std::pair<PPEntityID, PPEntityID>
+      getPreprocessedEntitiesInRangeSlow(SourceRange R);
 
     friend class ASTReader;
     friend class ASTWriter;

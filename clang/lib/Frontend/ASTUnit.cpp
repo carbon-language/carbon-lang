@@ -2397,6 +2397,50 @@ SourceLocation ASTUnit::mapLocationToPreamble(SourceLocation Loc) {
   return Loc;
 }
 
+bool ASTUnit::isInPreambleFileID(SourceLocation Loc) {
+  FileID FID;
+  if (SourceMgr)
+    FID = SourceMgr->getPreambleFileID();
+  
+  if (Loc.isInvalid() || FID.isInvalid())
+    return false;
+  
+  return SourceMgr->isInFileID(Loc, FID);
+}
+
+bool ASTUnit::isInMainFileID(SourceLocation Loc) {
+  FileID FID;
+  if (SourceMgr)
+    FID = SourceMgr->getMainFileID();
+  
+  if (Loc.isInvalid() || FID.isInvalid())
+    return false;
+  
+  return SourceMgr->isInFileID(Loc, FID);
+}
+
+SourceLocation ASTUnit::getEndOfPreambleFileID() {
+  FileID FID;
+  if (SourceMgr)
+    FID = SourceMgr->getPreambleFileID();
+  
+  if (FID.isInvalid())
+    return SourceLocation();
+
+  return SourceMgr->getLocForEndOfFile(FID);
+}
+
+SourceLocation ASTUnit::getStartOfMainFileID() {
+  FileID FID;
+  if (SourceMgr)
+    FID = SourceMgr->getMainFileID();
+  
+  if (FID.isInvalid())
+    return SourceLocation();
+  
+  return SourceMgr->getLocForStartOfFile(FID);
+}
+
 void ASTUnit::PreambleData::countLines() const {
   NumLines = 0;
   if (empty())

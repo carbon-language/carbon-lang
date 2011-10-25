@@ -807,6 +807,18 @@ public:
     unsigned FileOffset = Entry.getOffset();
     return SourceLocation::getFileLoc(FileOffset);
   }
+  
+  /// \brief Return the source location corresponding to the last byte of the
+  /// specified file.
+  SourceLocation getLocForEndOfFile(FileID FID) const {
+    bool Invalid = false;
+    const SrcMgr::SLocEntry &Entry = getSLocEntry(FID, &Invalid);
+    if (Invalid || !Entry.isFile())
+      return SourceLocation();
+    
+    unsigned FileOffset = Entry.getOffset();
+    return SourceLocation::getFileLoc(FileOffset + getFileIDSize(FID) - 1);
+  }
 
   /// \brief Returns the include location if \arg FID is a #include'd file
   /// otherwise it returns an invalid location.

@@ -546,6 +546,11 @@ public:
   /// preamble, otherwise it returns \arg Loc.
   SourceLocation mapLocationToPreamble(SourceLocation Loc);
 
+  bool isInPreambleFileID(SourceLocation Loc);
+  bool isInMainFileID(SourceLocation Loc);
+  SourceLocation getStartOfMainFileID();
+  SourceLocation getEndOfPreambleFileID();
+
   /// \brief \see mapLocationFromPreamble.
   SourceRange mapRangeFromPreamble(SourceRange R) {
     return SourceRange(mapLocationFromPreamble(R.getBegin()),

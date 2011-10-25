@@ -703,6 +703,11 @@ private:
     findNextPreprocessedEntity(
                         GlobalSLocOffsetMapType::const_iterator SLocMapI) const;
 
+  /// \brief Returns (Module, Local index) pair for \arg GlobalIndex of a
+  /// preprocessed entity.
+  std::pair<Module *, unsigned>
+    getModulePreprocessedEntity(unsigned GlobalIndex);
+
   void PassInterestingDeclsToConsumer();
 
   /// \brief Produce an error diagnostic and return true.
@@ -800,6 +805,11 @@ public:
   /// preprocessed entities that \arg Range encompasses.
   virtual std::pair<unsigned, unsigned>
       findPreprocessedEntitiesInRange(SourceRange Range);
+  
+  /// \brief Optionally returns true or false if the preallocated preprocessed
+  /// entity with index \arg Index came from file \arg FID.
+  virtual llvm::Optional<bool> isPreprocessedEntityInFileID(unsigned Index,
+                                                            FileID FID);
 
   /// \brief Read the header file information for the given file entry.
   virtual HeaderFileInfo GetHeaderFileInfo(const FileEntry *FE);

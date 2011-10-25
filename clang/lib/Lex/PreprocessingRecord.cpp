@@ -49,35 +49,108 @@ PreprocessingRecord::PreprocessingRecord(SourceManager &SM,
 std::pair<PreprocessingRecord::iterator, PreprocessingRecord::iterator>
 PreprocessingRecord::getPreprocessedEntitiesInRange(SourceRange Range) {
   if (Range.isInvalid())
-    return std::make_pair(iterator(this, 0), iterator(this, 0));
-  assert(!SourceMgr.isBeforeInTranslationUnit(Range.getEnd(),Range.getBegin()));
+    return std::make_pair(iterator(), iterator());
 
+  if (CachedRangeQuery.Range == Range) {
+    return std::make_pair(iterator(this, CachedRangeQuery.Result.first),
+                          iterator(this, CachedRangeQuery.Result.second));
+  }
+
+  std::pair<PPEntityID, PPEntityID>
+    Res = getPreprocessedEntitiesInRangeSlow(Range);
+  
+  CachedRangeQuery.Range = Range;
+  CachedRangeQuery.Result = Res;
+  
+  return std::make_pair(iterator(this, Res.first), iterator(this, Res.second));
+}
+
+static bool isPreprocessedEntityIfInFileID(PreprocessedEntity *PPE, FileID FID,
+                                           SourceManager &SM) {
+  assert(!FID.isInvalid());
+  if (!PPE)
+    return false;
+
+  SourceLocation Loc = PPE->getSourceRange().getBegin();
+  if (Loc.isInvalid())
+    return false;
+  
+  if (SM.isInFileID(SM.getFileLoc(Loc), FID))
+    return true;
+  else
+    return false;
+}
+
+/// \brief Returns true if the preprocessed entity that \arg PPEI iterator
+/// points to is coming from the file \arg FID.
+///
+/// Can be used to avoid implicit deserializations of preallocated
+/// preprocessed entities if we only care about entities of a specific file
+/// and not from files #included in the range given at
+/// \see getPreprocessedEntitiesInRange.
+bool PreprocessingRecord::isEntityInFileID(iterator PPEI, FileID FID) {
+  if (FID.isInvalid())
+    return false;
+
+  PPEntityID PPID = PPEI.Position;
+  if (PPID < 0) {
+    assert(unsigned(-PPID-1) < LoadedPreprocessedEntities.size() &&
+           "Out-of bounds loaded preprocessed entity");
+    assert(ExternalSource && "No external source to load from");
+    unsigned LoadedIndex = LoadedPreprocessedEntities.size()+PPID;
+    if (PreprocessedEntity *PPE = LoadedPreprocessedEntities[LoadedIndex])
+      return isPreprocessedEntityIfInFileID(PPE, FID, SourceMgr);
+
+    // See if the external source can see if the entity is in the file without
+    // deserializing it.
+    llvm::Optional<bool>
+      IsInFile = ExternalSource->isPreprocessedEntityInFileID(LoadedIndex, FID);
+    if (IsInFile.hasValue())
+      return IsInFile.getValue();
+
+    // The external source did not provide a definite answer, go and deserialize
+    // the entity to check it.
+    return isPreprocessedEntityIfInFileID(
+                                       getLoadedPreprocessedEntity(LoadedIndex),
+                                          FID, SourceMgr);
+  }
+
+  assert(unsigned(PPID) < PreprocessedEntities.size() &&
+         "Out-of bounds local preprocessed entity");
+  return isPreprocessedEntityIfInFileID(PreprocessedEntities[PPID],
+                                        FID, SourceMgr);
+}
+
+/// \brief Returns a pair of [Begin, End) iterators of preprocessed entities
+/// that source range \arg R encompasses.
+std::pair<PreprocessingRecord::PPEntityID, PreprocessingRecord::PPEntityID>
+PreprocessingRecord::getPreprocessedEntitiesInRangeSlow(SourceRange Range) {
+  assert(Range.isValid());
+  assert(!SourceMgr.isBeforeInTranslationUnit(Range.getEnd(),Range.getBegin()));
+  
   std::pair<unsigned, unsigned>
     Local = findLocalPreprocessedEntitiesInRange(Range);
-
+  
   // Check if range spans local entities.
   if (!ExternalSource || SourceMgr.isLocalSourceLocation(Range.getBegin()))
-    return std::make_pair(iterator(this, Local.first),
-                          iterator(this, Local.second));
-
+    return std::make_pair(Local.first, Local.second);
+  
   std::pair<unsigned, unsigned>
     Loaded = ExternalSource->findPreprocessedEntitiesInRange(Range);
-
+  
   // Check if range spans local entities.
   if (Loaded.first == Loaded.second)
-    return std::make_pair(iterator(this, Local.first),
-                          iterator(this, Local.second));
-
+    return std::make_pair(Local.first, Local.second);
+  
   unsigned TotalLoaded = LoadedPreprocessedEntities.size();
-
+  
   // Check if range spans loaded entities.
   if (Local.first == Local.second)
-    return std::make_pair(iterator(this, int(Loaded.first)-TotalLoaded),
-                          iterator(this, int(Loaded.second)-TotalLoaded));
-
+    return std::make_pair(int(Loaded.first)-TotalLoaded,
+                          int(Loaded.second)-TotalLoaded);
+  
   // Range spands loaded and local entities.
-  return std::make_pair(iterator(this, int(Loaded.first)-TotalLoaded),
-                        iterator(this, Local.second));
+  return std::make_pair(int(Loaded.first)-TotalLoaded, Local.second);
 }
 
 std::pair<unsigned, unsigned>

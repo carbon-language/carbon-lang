@@ -2778,14 +2778,22 @@ bool ASTReader::ParseLanguageOptions(
   return false;
 }
 
-PreprocessedEntity *ASTReader::ReadPreprocessedEntity(unsigned Index) {
-  PreprocessedEntityID PPID = Index+1;
+std::pair<Module *, unsigned>
+ASTReader::getModulePreprocessedEntity(unsigned GlobalIndex) {
   GlobalPreprocessedEntityMapType::iterator
-    I = GlobalPreprocessedEntityMap.find(Index);
+  I = GlobalPreprocessedEntityMap.find(GlobalIndex);
   assert(I != GlobalPreprocessedEntityMap.end() && 
          "Corrupted global preprocessed entity map");
-  Module &M = *I->second;
-  unsigned LocalIndex = Index - M.BasePreprocessedEntityID;
+  Module *M = I->second;
+  unsigned LocalIndex = GlobalIndex - M->BasePreprocessedEntityID;
+  return std::make_pair(M, LocalIndex);
+}
+
+PreprocessedEntity *ASTReader::ReadPreprocessedEntity(unsigned Index) {
+  PreprocessedEntityID PPID = Index+1;
+  std::pair<Module *, unsigned> PPInfo = getModulePreprocessedEntity(Index);
+  Module &M = *PPInfo.first;
+  unsigned LocalIndex = PPInfo.second;
   const PPEntityOffset &PPOffs = M.PreprocessedEntityOffsets[LocalIndex];
 
   SavedStreamPosition SavedPosition(M.PreprocessorDetailCursor);  
@@ -3020,6 +3028,28 @@ std::pair<unsigned, unsigned>
   PreprocessedEntityID BeginID = findBeginPreprocessedEntity(Range.getBegin());
   PreprocessedEntityID EndID = findEndPreprocessedEntity(Range.getEnd());
   return std::make_pair(BeginID, EndID);
+}
+
+/// \brief Optionally returns true or false if the preallocated preprocessed
+/// entity with index \arg Index came from file \arg FID.
+llvm::Optional<bool> ASTReader::isPreprocessedEntityInFileID(unsigned Index,
+                                                             FileID FID) {
+  if (FID.isInvalid())
+    return false;
+
+  std::pair<Module *, unsigned> PPInfo = getModulePreprocessedEntity(Index);
+  Module &M = *PPInfo.first;
+  unsigned LocalIndex = PPInfo.second;
+  const PPEntityOffset &PPOffs = M.PreprocessedEntityOffsets[LocalIndex];
+  
+  SourceLocation Loc = ReadSourceLocation(M, PPOffs.Begin);
+  if (Loc.isInvalid())
+    return false;
+  
+  if (SourceMgr.isInFileID(SourceMgr.getFileLoc(Loc), FID))
+    return true;
+  else
+    return false;
 }
 
 namespace {
