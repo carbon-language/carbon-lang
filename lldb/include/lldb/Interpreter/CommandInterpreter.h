@@ -129,12 +129,6 @@ public:
     AddOrReplaceAliasOptions (const char *alias_name, 
                               OptionArgVectorSP &option_arg_vector_sp);
 
-    bool
-    StripFirstWord (std::string &command_string, 
-                    std::string &next_word,
-                    bool &was_quoted,
-                    char &quote_char);
-
     void
     BuildAliasResult (const char *alias_name, 
                       std::string &raw_input_string, 

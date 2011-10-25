@@ -878,62 +878,70 @@ CommandInterpreter::GetCommandObjectForCommand (std::string &command_string)
     return cmd_obj;
 }
 
-bool
-CommandInterpreter::StripFirstWord (std::string &command_string, std::string &word, bool &was_quoted, char &quote_char)
+static const char *k_white_space = " \t\v";
+
+static void
+StripLeadingSpaces (std::string &s)
 {
-    std::string white_space (" \t\v");
-    size_t start;
-    size_t end;
-    
-    start = command_string.find_first_not_of (white_space);
-    if (start != std::string::npos)
+    if (!s.empty())
     {
-        size_t len = command_string.size() - start;
-        if (len >= 2
-                && ((command_string[start] == '\'') || (command_string[start] == '"')))
+        size_t pos = s.find_first_not_of (k_white_space);
+        if (pos == std::string::npos)
+            s.clear();
+        else if (pos == 0)
+            return;
+        s.erase (0, pos);
+    }
+}
+
+static bool
+StripFirstWord (std::string &command_string, std::string &word, char &quote_char)
+{
+    word.clear();
+    StripLeadingSpaces (command_string);
+
+    bool result = false;
+    quote_char = '\0';
+    
+    if (!command_string.empty())
+    {
+        const char first_char = command_string[0];
+        if (first_char == '\'' || first_char == '"')
         {
-            was_quoted = true;
-            quote_char = command_string[start];
-            std::string quote_string = command_string.substr (start, 1);
-            start = start + 1;
-            end = command_string.find (quote_string, start);
-            if (end != std::string::npos)
+            quote_char = first_char;
+            const size_t end_quote_pos = command_string.find (quote_char, 1);
+            if (end_quote_pos == std::string::npos)
             {
-                word = command_string.substr (start, end - start);
-                if (end + 1 < len)
-                    command_string = command_string.substr (end+1);
-                else
-                    command_string.erase ();
-                size_t pos = command_string.find_first_not_of (white_space);
-                if ((pos != 0) && (pos != std::string::npos))
-                    command_string = command_string.substr (pos);
+                word.swap (command_string);
+                command_string.erase ();
             }
             else
             {
-                word = command_string.substr (start - 1);
-                command_string.erase ();
+                word = command_string.substr (1, end_quote_pos - 1);
+                if (end_quote_pos + 1 < command_string.size())
+                    command_string.erase (0, command_string.find_first_not_of (k_white_space, end_quote_pos + 1));
+                else
+                    command_string.erase ();
             }
         }
         else
         {
-            end = command_string.find_first_of (white_space, start);
-            if (end != std::string::npos)
+            const size_t first_space_pos = command_string.find_first_of (k_white_space);
+            if (first_space_pos == std::string::npos)
             {
-                word = command_string.substr (start, end - start);
-                command_string = command_string.substr (end);
-                size_t pos = command_string.find_first_not_of (white_space);
-                if ((pos != 0) && (pos != std::string::npos))
-                    command_string = command_string.substr (pos);
+                word.swap (command_string);
+                command_string.erase();
             }
             else
             {
-                word = command_string.substr (start);
-                command_string.erase();
+                word = command_string.substr (0, first_space_pos);
+                command_string.erase(0,command_string.find_first_not_of (k_white_space, first_space_pos));
             }
         }
-
+        result = true;
     }
-    return true;
+
+    return result;
 }
 
 void
@@ -1236,9 +1244,8 @@ CommandInterpreter::HandleCommand (const char *command_line,
     size_t actual_cmd_name_len = 0;
     while (!done)
     {
-        bool was_quoted = false;
         char quote_char = '\0';
-        StripFirstWord (command_string, next_word, was_quoted, quote_char);
+        StripFirstWord (command_string, next_word, quote_char);
         if (!cmd_obj && AliasExists (next_word.c_str())) 
         {
             std::string alias_result;
@@ -1276,13 +1283,8 @@ CommandInterpreter::HandleCommand (const char *command_line,
             }
             else
             {
-                if (was_quoted)
-                {
-                    if (quote_char == '"')
-                        revised_command_line.Printf (" \"%s\"", next_word.c_str());
-                    else
-                        revised_command_line.Printf (" '%s'", next_word.c_str());
-                }
+                if (quote_char)
+                    revised_command_line.Printf (" %c%s%c", quote_char, next_word.c_str(), quote_char);
                 else
                     revised_command_line.Printf (" %s", next_word.c_str());
                 done = true;
@@ -1290,13 +1292,8 @@ CommandInterpreter::HandleCommand (const char *command_line,
         }
         else
         {
-            if (was_quoted)
-            {
-                if (quote_char == '"')
-                    revised_command_line.Printf (" \"%s\"", next_word.c_str());
-                else
-                    revised_command_line.Printf (" '%s'", next_word.c_str());
-            }
+            if (quote_char)
+                revised_command_line.Printf (" %c%s%c", quote_char, next_word.c_str(), quote_char);
             else
                 revised_command_line.Printf (" %s", next_word.c_str());
             done = true;
