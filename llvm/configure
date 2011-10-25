@@ -5083,8 +5083,6 @@ else
  ;;
     MSP430)      TARGET_HAS_JIT=0
  ;;
-    Blackfin)    TARGET_HAS_JIT=0
- ;;
     MBlaze)      TARGET_HAS_JIT=0
  ;;
     PTX)         TARGET_HAS_JIT=0
@@ -5273,7 +5271,7 @@ if test "$enableval" = host-only ; then
   enableval=host
 fi
 case "$enableval" in
-  all) TARGETS_TO_BUILD="X86 Sparc PowerPC Alpha ARM Mips CellSPU XCore MSP430 Blackfin CBackend CppBackend MBlaze PTX" ;;
+  all) TARGETS_TO_BUILD="X86 Sparc PowerPC Alpha ARM Mips CellSPU XCore MSP430 CBackend CppBackend MBlaze PTX" ;;
   *)for a_target in `echo $enableval|sed -e 's/,/ /g' ` ; do
       case "$a_target" in
         x86)      TARGETS_TO_BUILD="X86 $TARGETS_TO_BUILD" ;;
@@ -5302,7 +5300,6 @@ case "$enableval" in
             CellSPU|SPU) TARGETS_TO_BUILD="CellSPU $TARGETS_TO_BUILD" ;;
             XCore)       TARGETS_TO_BUILD="XCore $TARGETS_TO_BUILD" ;;
             MSP430)      TARGETS_TO_BUILD="MSP430 $TARGETS_TO_BUILD" ;;
-            Blackfin)    TARGETS_TO_BUILD="Blackfin $TARGETS_TO_BUILD" ;;
             PTX)         TARGETS_TO_BUILD="PTX $TARGETS_TO_BUILD" ;;
             *)       { { echo "$as_me:$LINENO: error: Can not set target to build" >&5
 echo "$as_me: error: Can not set target to build" >&2;}
