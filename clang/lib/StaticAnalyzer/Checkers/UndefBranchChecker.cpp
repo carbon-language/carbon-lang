@@ -49,27 +49,18 @@ class UndefBranchChecker : public Checker<check::BranchCondition> {
   };
 
 public:
-  void checkBranchCondition(const Stmt *Condition, NodeBuilder &Builder,
-                            ExplodedNode *Pred, ExprEngine &Eng) const;
+  void checkBranchCondition(const Stmt *Condition, CheckerContext &Ctx) const;
 };
 
 }
 
 void UndefBranchChecker::checkBranchCondition(const Stmt *Condition,
-                                              NodeBuilder &Builder,
-                                              ExplodedNode *Pred,
-                                              ExprEngine &Eng) const {
-  const ProgramState *state = Pred->getState();
-  SVal X = state->getSVal(Condition);
+                                              CheckerContext &Ctx) const {
+  SVal X = Ctx.getState()->getSVal(Condition);
   if (X.isUndef()) {
-    // TODO: The PP will be generated with the correct tag by the CheckerManager
-    // after we migrate the callback to CheckerContext.
-    const ProgramPointTag *Tag = 0;
-    ProgramPoint PP = PostCondition(Condition, Pred->getLocationContext(), Tag);
     // Generate a sink node, which implicitly marks both outgoing branches as
     // infeasible.
-    ExplodedNode *N = Builder.generateNode(PP, state,
-                                           Pred, true);
+    ExplodedNode *N = Ctx.generateSink();
     if (N) {
       if (!BT)
         BT.reset(
@@ -107,7 +98,7 @@ void UndefBranchChecker::checkBranchCondition(const Stmt *Condition,
       R->addVisitor(bugreporter::getTrackNullOrUndefValueVisitor(N, Ex));
       R->addRange(Ex->getSourceRange());
 
-      Eng.getBugReporter().EmitReport(R);
+      Ctx.EmitReport(R);
     }
   }
 }

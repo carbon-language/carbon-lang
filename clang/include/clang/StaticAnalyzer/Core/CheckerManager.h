@@ -236,7 +236,7 @@ public:
 
   /// \brief Run checkers for branch condition.
   void runCheckersForBranchCondition(const Stmt *condition,
-                                     NodeBuilder &B, ExplodedNode *Pred,
+                                     ExplodedNodeSet &Dst, ExplodedNode *Pred,
                                      ExprEngine &Eng);
 
   /// \brief Run checkers for live symbols.
@@ -339,8 +339,7 @@ public:
   typedef CheckerFn<void (CheckerContext &)>
       CheckEndPathFunc;
   
-  typedef CheckerFn<void (const Stmt *, NodeBuilder &, ExplodedNode *Pred,
-                          ExprEngine &)>
+  typedef CheckerFn<void (const Stmt *, CheckerContext &)>
       CheckBranchConditionFunc;
   
   typedef CheckerFn<void (SymbolReaper &, CheckerContext &)>

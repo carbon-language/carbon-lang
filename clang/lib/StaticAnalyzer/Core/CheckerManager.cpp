@@ -320,15 +320,39 @@ void CheckerManager::runCheckersForEndPath(NodeBuilderContext &BC,
   }
 }
 
+namespace {
+  struct CheckBranchConditionContext {
+    typedef std::vector<CheckerManager::CheckBranchConditionFunc> CheckersTy;
+    const CheckersTy &Checkers;
+    const Stmt *Condition;
+    ExprEngine &Eng;
+
+    CheckersTy::const_iterator checkers_begin() { return Checkers.begin(); }
+    CheckersTy::const_iterator checkers_end() { return Checkers.end(); }
+
+    CheckBranchConditionContext(const CheckersTy &checkers,
+                                const Stmt *Cond, ExprEngine &eng)
+      : Checkers(checkers), Condition(Cond), Eng(eng) {}
+
+    void runChecker(CheckerManager::CheckBranchConditionFunc checkFn,
+                    NodeBuilder &Bldr, ExplodedNode *Pred) {
+      ProgramPoint L = PostCondition(Condition, Pred->getLocationContext(),
+                                     checkFn.Checker);
+      CheckerContext C(Bldr, Eng, Pred, L, 0);
+      checkFn(Condition, C);
+    }
+  };
+}
+
 /// \brief Run checkers for branch condition.
-void CheckerManager::runCheckersForBranchCondition(const Stmt *condition,
-                                                   NodeBuilder &B,
+void CheckerManager::runCheckersForBranchCondition(const Stmt *Condition,
+                                                   ExplodedNodeSet &Dst,
                                                    ExplodedNode *Pred,
                                                    ExprEngine &Eng) {
-  for (unsigned i = 0, e = BranchConditionCheckers.size(); i != e; ++i) {
-    CheckBranchConditionFunc fn = BranchConditionCheckers[i];
-    fn(condition, B, Pred, Eng);
-  }
+  ExplodedNodeSet Src;
+  Src.insert(Pred);
+  CheckBranchConditionContext C(BranchConditionCheckers, Condition, Eng);
+  expandGraphWithCheckers(C, Dst, Src);
 }
 
 /// \brief Run checkers for live symbols.

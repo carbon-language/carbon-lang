@@ -217,10 +217,13 @@ void ExprEngine::processCFGElement(const CFGElement E, ExplodedNode *Pred,
       ProcessImplicitDtor(*E.getAs<CFGImplicitDtor>(), Pred);
       return;
   }
+  currentStmtIdx = 0;
+  currentBuilderContext = 0;
 }
 
 const Stmt *ExprEngine::getStmt() const {
-  const CFGStmt *CS = (*currentBuilderContext->getBlock())[currentStmtIdx].getAs<CFGStmt>();
+  const CFGStmt *CS = (*currentBuilderContext->getBlock())[currentStmtIdx]
+                                                            .getAs<CFGStmt>();
   return CS ? CS->getStmt() : 0;
 }
 
@@ -1033,6 +1036,8 @@ void ExprEngine::processBranch(const Stmt *Condition, const Stmt *Term,
                                ExplodedNodeSet &Dst,
                                const CFGBlock *DstT,
                                const CFGBlock *DstF) {
+  currentBuilderContext = &BldCtx;
+
   // Check for NULL conditions; e.g. "for(;;)"
   if (!Condition) {
     BranchNodeBuilder NullCondBldr(Pred, Dst, BldCtx, DstT, DstF);
@@ -1045,17 +1050,16 @@ void ExprEngine::processBranch(const Stmt *Condition, const Stmt *Term,
                                 Condition->getLocStart(),
                                 "Error evaluating branch");
 
-  ExplodedNodeSet TmpCheckersOut;
-  NodeBuilder CheckerBldr(Pred, TmpCheckersOut, BldCtx);
-  getCheckerManager().runCheckersForBranchCondition(Condition, CheckerBldr,
+  ExplodedNodeSet CheckersOutSet;
+  getCheckerManager().runCheckersForBranchCondition(Condition, CheckersOutSet,
                                                     Pred, *this);
   // We generated only sinks.
-  if (TmpCheckersOut.empty())
+  if (CheckersOutSet.empty())
     return;
 
-  BranchNodeBuilder builder(CheckerBldr.getResults(), Dst, BldCtx, DstT, DstF);
-  for (NodeBuilder::iterator I = CheckerBldr.begin(),
-                             E = CheckerBldr.end(); E != I; ++I) {
+  BranchNodeBuilder builder(CheckersOutSet, Dst, BldCtx, DstT, DstF);
+  for (NodeBuilder::iterator I = CheckersOutSet.begin(),
+                             E = CheckersOutSet.end(); E != I; ++I) {
     ExplodedNode *PredI = *I;
 
     if (PredI->isSink())
@@ -1107,6 +1111,7 @@ void ExprEngine::processBranch(const Stmt *Condition, const Stmt *Term,
         builder.markInfeasible(false);
     }
   }
+  currentBuilderContext = 0;
 }
 
 /// processIndirectGoto - Called by CoreEngine.  Used to generate successor
