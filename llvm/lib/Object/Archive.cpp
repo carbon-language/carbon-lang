@@ -18,9 +18,9 @@
 using namespace llvm;
 using namespace object;
 
-namespace {
-const StringRef Magic = "!<arch>\n";
+static const StringRef Magic = "!<arch>\n";
 
+namespace {
 struct ArchiveMemberHeader {
   char Name[16];
   char LastModified[12];
@@ -51,11 +51,12 @@ struct ArchiveMemberHeader {
     return ret.getZExtValue();
   }
 };
+}
 
-const ArchiveMemberHeader *ToHeader(const char *base) {
+static const ArchiveMemberHeader *ToHeader(const char *base) {
   return reinterpret_cast<const ArchiveMemberHeader *>(base);
 }
-}
+
 
 static bool isInternalMember(const ArchiveMemberHeader &amh) {
   const char *internals[] = {
@@ -207,7 +208,3 @@ Archive::child_iterator Archive::begin_children(bool skip_internal) const {
 Archive::child_iterator Archive::end_children() const {
   return Child(this, StringRef(0, 0));
 }
-
-namespace llvm {
-
-} // end namespace llvm
