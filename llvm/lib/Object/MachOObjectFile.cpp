@@ -793,11 +793,11 @@ error_code MachOObjectFile::getRelocationValueString(DataRefImpl Rel,
   InMemoryStruct<macho::RelocationEntry> RE;
   getRelocation(Rel, RE);
 
-  std::string addend;
-  raw_string_ostream addend_fmt(addend);
-
   bool isPCRel = (RE->Word1 >> 25) & 1;
   unsigned Type = (RE->Word1 >> 28) & 0xF;
+
+  std::string fmtbuf;
+  raw_string_ostream fmt(fmtbuf);
 
   // Determine any addends that should be displayed with the relocation.
   // These require decoding the relocation type, which is triple-specific.
@@ -805,85 +805,147 @@ error_code MachOObjectFile::getRelocationValueString(DataRefImpl Rel,
 
   // X86_64 has entirely custom relocation types.
   if (Arch == Triple::x86_64) {
+    StringRef Name;
+    if (error_code ec = getRelocationTargetName(RE->Word1, Name))
+      report_fatal_error(ec.message());
+
     switch (Type) {
       case 5: { // X86_64_RELOC_SUBTRACTOR
-        RelocationRef NextReloc;
-        if (error_code ec = getRelocationNext(Rel, NextReloc))
-          report_fatal_error(ec.message());
-
-        uint32_t SucessorType;
-        if (error_code ec = NextReloc.getType(SucessorType))
-          report_fatal_error(ec.message());
+        InMemoryStruct<macho::RelocationEntry> RENext;
+        DataRefImpl RelNext = Rel;
+        RelNext.d.a++;
+        getRelocation(RelNext, RENext);
 
         // X86_64_SUBTRACTOR must be followed by a relocation of type
         // X86_64_RELOC_UNSIGNED.
-        unsigned RType = (SucessorType >> 28) & 0xF;
+        unsigned RType = (RENext->Word1 >> 28) & 0xF;
         if (RType != 0)
           report_fatal_error("Expected X86_64_RELOC_UNSIGNED after "
                              "X86_64_RELOC_SUBTRACTOR.");
 
-        StringRef Name;
-        if (error_code ec = getRelocationTargetName(SucessorType, Name))
+        StringRef SucName;
+        if (error_code ec = getRelocationTargetName(RENext->Word1, SucName))
           report_fatal_error(ec.message());
 
-        addend_fmt << "-" << Name;
+        fmt << Name << "-" << SucName;
+        if (isPCRel) fmt << "-PC";
       }
       case 6: // X86_64_RELOC_SIGNED1
-        addend_fmt << "-1";
+        fmt << Name << "-1";
         break;
       case 7: // X86_64_RELOC_SIGNED2
-        addend_fmt << "-2";
+        fmt << Name << "-2";
         break;
       case 8: // X86_64_RELOC_SIGNED4
-        addend_fmt << "-4";
+        fmt << Name << "-4";
+        break;
+      default:
+        fmt << Name;
         break;
     }
-  }
-
   // X86 and ARM share some relocation types in common.
-  if (Arch == Triple::x86 || Arch == Triple::arm) {
+  } else if (Arch == Triple::x86 || Arch == Triple::arm) {
+    // Generic relocation types...
     switch (Type) {
       case 1: // GENERIC_RELOC_PAIR - prints no info
         return object_error::success;
       case 2:   // GENERIC_RELOC_SECTDIFF
       case 4: { // GENERIC_RELOC_LOCAL_SECTDIFF
-        RelocationRef NextReloc;
-        if (error_code ec = getRelocationNext(Rel, NextReloc))
-          report_fatal_error(ec.message());
-
-        uint32_t SucessorType;
-        if (error_code ec = NextReloc.getType(SucessorType))
-          report_fatal_error(ec.message());
+        InMemoryStruct<macho::RelocationEntry> RENext;
+        DataRefImpl RelNext = Rel;
+        RelNext.d.a++;
+        getRelocation(RelNext, RENext);
 
         // X86 sect diff's must be followed by a relocation of type
         // GENERIC_RELOC_PAIR.
-        unsigned RType = (SucessorType >> 28) & 0xF;
+        unsigned RType = (RENext->Word1 >> 28) & 0xF;
         if (RType != 1)
           report_fatal_error("Expected GENERIC_RELOC_PAIR after "
                              "GENERIC_RELOC_SECTDIFF or "
                              "GENERIC_RELOC_LOCAL_SECTDIFF.");
 
-        StringRef Name;
-        if (error_code ec = getRelocationTargetName(SucessorType, Name))
+        StringRef SucName;
+        if (error_code ec = getRelocationTargetName(RENext->Word1, SucName))
           report_fatal_error(ec.message());
 
-        addend_fmt << "-" << Name;
+        StringRef Name;
+        if (error_code ec = getRelocationTargetName(RE->Word1, Name))
+          report_fatal_error(ec.message());
 
+        fmt << Name << "-" << SucName;
+        break;
       }
     }
+
+    if (Arch == Triple::x86 && Type != 1) {
+      // All X86 relocations that need special printing were already
+      // handled in the generic code.
+      StringRef Name;
+      if (error_code ec = getRelocationTargetName(RE->Word1, Name))
+        report_fatal_error(ec.message());
+      fmt << Name;
+    } else { // ARM-specific relocations
+      switch (Type) {
+        case 8:   // ARM_RELOC_HALF
+        case 9: { // ARM_RELOC_HALF_SECTDIFF
+          StringRef Name;
+          if (error_code ec = getRelocationTargetName(RE->Word1, Name))
+            report_fatal_error(ec.message());
+
+          // Half relocations steal a bit from the length field to encode
+          // whether this is an upper16 or a lower16 relocation.
+          bool isUpper = (RE->Word1 >> 25) & 1;
+          if (isUpper)
+            fmt << ":upper16:(" << Name;
+          else
+            fmt << ":lower16:(" << Name;
+
+          InMemoryStruct<macho::RelocationEntry> RENext;
+          DataRefImpl RelNext = Rel;
+          RelNext.d.a++;
+          getRelocation(RelNext, RENext);
+
+          // ARM half relocs must be followed by a relocation of type
+          // ARM_RELOC_PAIR.
+          unsigned RType = (RENext->Word1 >> 28) & 0xF;
+          if (RType != 1)
+            report_fatal_error("Expected ARM_RELOC_PAIR after "
+                               "GENERIC_RELOC_HALF");
+
+          // A constant addend for the relocation is stored in the address
+          // field of the follow-on relocation.  If this is a lower16 relocation
+          // we need to shift it left by 16 before using it.
+          int32_t Addend = RENext->Word0;
+          if (!isUpper) Addend <<= 16;
+
+          // ARM_RELOC_HALF_SECTDIFF encodes the second section in the
+          // symbol/section pointer of the follow-on relocation.
+          StringRef SucName;
+          if (Type == 9) { // ARM_RELOC_HALF_SECTDIFF
+            if (error_code ec = getRelocationTargetName(RENext->Word1, SucName))
+              report_fatal_error(ec.message());
+          }
+
+          if (SucName.size()) fmt << "-" << SucName;
+          if (Addend > 0) fmt << "+" << Addend;
+          else if (Addend < 0) fmt << Addend;
+          fmt << ")";
+          break;
+        }
+        default: {
+          StringRef Name;
+          if (error_code ec = getRelocationTargetName(RE->Word1, Name))
+            report_fatal_error(ec.message());
+          fmt << Name;
+        }
+      }
+    }
+  } else {
+    StringRef Name;
+    if (error_code ec = getRelocationTargetName(RE->Word1, Name))
+      report_fatal_error(ec.message());
+    fmt << Name;
   }
-
-  addend_fmt.flush();
-
-  std::string fmtbuf;
-  raw_string_ostream fmt(fmtbuf);
-
-  StringRef Name;
-  if (error_code ec = getRelocationTargetName(RE->Word1, Name))
-    report_fatal_error(ec.message());
-
-  fmt << Name << addend;
-  if (isPCRel) fmt << "-P";
 
   fmt.flush();
   Result.append(fmtbuf.begin(), fmtbuf.end());
