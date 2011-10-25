@@ -34,4 +34,7 @@ namespace PR11216 {
   struct Derived4 : :: decltype(Base()) { }; // expected-error {{unexpected namespace scope prior to decltype}}
 
   struct Derived5 : PR11216:: decltype(Base()) { }; // expected-error {{unexpected namespace scope prior to decltype}}
+
+  template<typename T>
+  struct Derived6 : typename T::foo { }; // expected-error {{'typename' is redundant; base classes are implicitly types}}
 }

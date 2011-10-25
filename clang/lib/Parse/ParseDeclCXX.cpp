@@ -713,6 +713,13 @@ void Parser::ParseUnderlyingTypeSpecifier(DeclSpec &DS) {
 ///
 Parser::TypeResult Parser::ParseBaseTypeSpecifier(SourceLocation &BaseLoc,
                                                   SourceLocation &EndLocation) {
+  // Ignore attempts to use typename
+  if (Tok.is(tok::kw_typename)) {
+    Diag(Tok, diag::err_expected_class_name_not_template)
+      << FixItHint::CreateRemoval(Tok.getLocation());
+    ConsumeToken();
+  }
+
   // Parse optional nested-name-specifier
   CXXScopeSpec SS;
   ParseOptionalCXXScopeSpecifier(SS, ParsedType(), /*EnteringContext=*/false);
