@@ -1,4 +1,3 @@
-; RUN: llc < %s -mtriple=armv7-apple-darwin  | FileCheck %s
 ; RUN: llc < %s -mtriple=armv7-unknown-linux-eabi | FileCheck %s
 
 ; Check that when optimizing for size, a literal pool load is used
