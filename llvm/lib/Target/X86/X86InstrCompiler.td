@@ -150,6 +150,24 @@ def EH_RETURN64   : I<0xC3, RawFrm, (outs), (ins GR64:$addr),
 }
 
 //===----------------------------------------------------------------------===//
+// Pseudo instructions used by segmented stacks.
+//
+
+// This is lowered into a RET instruction by MCInstLower.  We need
+// this so that we don't have to have a MachineBasicBlock which ends
+// with a RET and also has successors.
+let isPseudo = 1 in {
+def MORESTACK_RET: I<0, Pseudo, (outs), (ins),
+                          "", []>;
+
+// This instruction is lowered to a RET followed by a MOV.  The two
+// instructions are not generated on a higher level since then the
+// verifier sees a MachineBasicBlock ending with a non-terminator.
+def MORESTACK_RET_RESTORE_R10 : I<0, Pseudo, (outs), (ins),
+                                  "", []>;
+}
+
+//===----------------------------------------------------------------------===//
 // Alias Instructions
 //===----------------------------------------------------------------------===//
 

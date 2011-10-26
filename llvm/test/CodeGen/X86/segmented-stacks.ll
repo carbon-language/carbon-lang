@@ -82,6 +82,6 @@ define i32 @test_nested(i32 * nest %closure, i32 %other) {
 ; X64-NEXT: movabsq $0, %r11
 ; X64-NEXT: callq __morestack
 ; X64-NEXT: ret
-; X64:      movq %rax, %r10
+; X64-NEXT: movq %rax, %r10
 
 }
