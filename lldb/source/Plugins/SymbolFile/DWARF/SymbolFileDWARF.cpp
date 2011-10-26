@@ -1237,6 +1237,7 @@ SymbolFileDWARF::ParseTemplateParameterInfos (DWARFCompileUnit* dwarf_cu,
 
 clang::ClassTemplateDecl *
 SymbolFileDWARF::ParseClassTemplateDecl (clang::DeclContext *decl_ctx,
+                                         lldb::AccessType access_type,
                                          const char *parent_name,
                                          int tag_decl_kind,
                                          const ClangASTContext::TemplateParameterInfos &template_param_infos)
@@ -1248,6 +1249,7 @@ SymbolFileDWARF::ParseClassTemplateDecl (clang::DeclContext *decl_ctx,
         ClangASTContext &ast = GetClangASTContext();
 
         return ast.CreateClassTemplateDecl (decl_ctx,
+                                            access_type,
                                             template_basename.c_str(), 
                                             tag_decl_kind, 
                                             template_param_infos);
@@ -4042,12 +4044,22 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                     if (clang_type == NULL)
                     {
                         clang::DeclContext *decl_ctx = GetClangDeclContextContainingDIE (dwarf_cu, die, NULL);
+                        if (accessibility == eAccessNone && decl_ctx)
+                        {
+                            // Check the decl context that contains this class/struct/union.
+                            // If it is a class we must give it an accessability.
+                            const clang::Decl::Kind containing_decl_kind = decl_ctx->getDeclKind();
+                            if (DeclKindIsCXXClass (containing_decl_kind))
+                                accessibility = default_accessibility;
+                        }
+
                         if (type_name_cstr && strchr (type_name_cstr, '<'))
                         {
                             ClangASTContext::TemplateParameterInfos template_param_infos;
                             if (ParseTemplateParameterInfos (dwarf_cu, die, template_param_infos))
                             {
                                 clang::ClassTemplateDecl *class_template_decl = ParseClassTemplateDecl (decl_ctx,
+                                                                                                        accessibility,
                                                                                                         type_name_cstr,
                                                                                                         tag_decl_kind,
                                                                                                         template_param_infos);
@@ -4064,9 +4076,10 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         if (!clang_type_was_created)
                         {
                             clang_type_was_created = true;
-                            clang_type = ast.CreateRecordType (type_name_cstr, 
+                            clang_type = ast.CreateRecordType (decl_ctx, 
+                                                               accessibility, 
+                                                               type_name_cstr, 
                                                                tag_decl_kind, 
-                                                               decl_ctx, 
                                                                class_language);
                         }
                     }

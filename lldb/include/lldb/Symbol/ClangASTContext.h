@@ -241,9 +241,10 @@ public:
     //------------------------------------------------------------------
 
     lldb::clang_type_t
-    CreateRecordType (const char *name,
+    CreateRecordType (clang::DeclContext *decl_ctx,
+                      lldb::AccessType access_type,
+                      const char *name,
                       int kind,
-                      clang::DeclContext *decl_ctx,
                       lldb::LanguageType language);
 
     static bool
@@ -327,6 +328,7 @@ public:
 
     clang::ClassTemplateDecl *
     CreateClassTemplateDecl (clang::DeclContext *decl_ctx,
+                             lldb::AccessType access_type,
                              const char *class_name, 
                              int kind, 
                              const TemplateParameterInfos &infos);

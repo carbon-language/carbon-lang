@@ -1068,7 +1068,7 @@ ClangASTContext::GetTypeForDecl (ObjCInterfaceDecl *decl)
 #pragma mark Structure, Unions, Classes
 
 clang_type_t
-ClangASTContext::CreateRecordType (const char *name, int kind, DeclContext *decl_ctx, LanguageType language)
+ClangASTContext::CreateRecordType (DeclContext *decl_ctx, AccessType access_type, const char *name, int kind, LanguageType language)
 {
     ASTContext *ast = getASTContext();
     assert (ast != NULL);
@@ -1096,11 +1096,18 @@ ClangASTContext::CreateRecordType (const char *name, int kind, DeclContext *decl
                                                  SourceLocation(),
                                                  name && name[0] ? &ast->Idents.get(name) : NULL);
 
+    if (decl_ctx)
+    {
+        if (access_type != eAccessNone)
+            decl->setAccess (ConvertAccessTypeToAccessSpecifier (access_type));
+        decl_ctx->addDecl (decl);
+    }
     return ast->getTagDeclType(decl).getAsOpaquePtr();
 }
 
 ClassTemplateDecl *
 ClangASTContext::CreateClassTemplateDecl (DeclContext *decl_ctx,
+                                          lldb::AccessType access_type,
                                           const char *class_name, 
                                           int kind, 
                                           const TemplateParameterInfos &template_param_infos)
@@ -1184,6 +1191,8 @@ ClangASTContext::CreateClassTemplateDecl (DeclContext *decl_ctx,
     
     if (class_template_decl)
     {
+        if (access_type != eAccessNone)
+            class_template_decl->setAccess (ConvertAccessTypeToAccessSpecifier (access_type));
         decl_ctx->addDecl (class_template_decl);
         
 #ifdef LLDB_CONFIGURATION_DEBUG

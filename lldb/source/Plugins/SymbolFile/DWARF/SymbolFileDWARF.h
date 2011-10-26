@@ -448,6 +448,7 @@ protected:
 
     clang::ClassTemplateDecl *
     ParseClassTemplateDecl (clang::DeclContext *decl_ctx,
+                            lldb::AccessType access_type,
                             const char *parent_name,
                             int tag_decl_kind,
                             const lldb_private::ClangASTContext::TemplateParameterInfos &template_param_infos);
