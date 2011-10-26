@@ -1416,8 +1416,7 @@ Optional Features:
   --enable-targets        Build specific host targets: all or
                           target1,target2,... Valid targets are: host, x86,
                           x86_64, sparc, powerpc, alpha, arm, mips, spu,
-                          xcore, msp430, ptx, cbe, and cpp
-                          (default=all)
+                          xcore, msp430, ptx, cbe, and cpp (default=all)
   --enable-cbe-printf-a   Enable C Backend output with hex floating point via
                           %a (default is YES)
   --enable-bindings       Build specific language bindings:
@@ -8906,7 +8905,7 @@ dgux*)
   shlibpath_var=LD_LIBRARY_PATH
   ;;
 
-freebsd1*)
+freebsd1.*)
   dynamic_linker=no
   ;;
 
@@ -8929,7 +8928,7 @@ freebsd* | dragonfly*)
     objformat=`/usr/bin/objformat`
   else
     case $host_os in
-    freebsd[123]*) objformat=aout ;;
+    freebsd[123].*) objformat=aout ;;
     *) objformat=elf ;;
     esac
   fi
@@ -8947,7 +8946,7 @@ freebsd* | dragonfly*)
   esac
   shlibpath_var=LD_LIBRARY_PATH
   case $host_os in
-  freebsd2*)
+  freebsd2.*)
     shlibpath_overrides_runpath=yes
     ;;
   freebsd3.[01]* | freebsdelf3.[01]*)
@@ -10461,7 +10460,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10474 "configure"
+#line 10463 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -21060,6 +21059,7 @@ ac_config_headers="$ac_config_headers include/llvm/Support/DataTypes.h"
 
 ac_config_files="$ac_config_files Makefile.config"
 
+
 ac_config_files="$ac_config_files llvm.spec"
 
 
@@ -21072,7 +21072,9 @@ fi
 
 ac_config_files="$ac_config_files tools/llvm-config/llvm-config.in"
 
+
 ac_config_files="$ac_config_files bindings/ocaml/llvm/META.llvm"
+
 
 ac_config_commands="$ac_config_commands setup"
 
@@ -21691,6 +21693,7 @@ do
     "docs/doxygen.cfg") CONFIG_FILES="$CONFIG_FILES docs/doxygen.cfg" ;;
     "tools/clang/docs/doxygen.cfg") CONFIG_FILES="$CONFIG_FILES tools/clang/docs/doxygen.cfg" ;;
     "tools/llvm-config/llvm-config.in") CONFIG_FILES="$CONFIG_FILES tools/llvm-config/llvm-config.in" ;;
+    "bindings/ocaml/llvm/META.llvm") CONFIG_FILES="$CONFIG_FILES bindings/ocaml/llvm/META.llvm" ;;
     "setup") CONFIG_COMMANDS="$CONFIG_COMMANDS setup" ;;
     "Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS Makefile" ;;
     "Makefile.common") CONFIG_COMMANDS="$CONFIG_COMMANDS Makefile.common" ;;

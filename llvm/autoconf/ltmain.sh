@@ -4668,7 +4668,7 @@ static const void *lt_preloaded_setup() {
 	  # linked before any other PIC object.  But we must not use
 	  # pic_flag when linking with -static.  The problem exists in
 	  # FreeBSD 2.2.6 and is fixed in FreeBSD 3.1.
-	  *-*-freebsd2*|*-*-freebsd3.0*|*-*-freebsdelf3.0*)
+	  *-*-freebsd2.*|*-*-freebsd3.0*|*-*-freebsdelf3.0*)
 	    case "$compile_command " in
 	    *" -static "*) ;;
 	    *) pic_flag_for_symtable=" $pic_flag -DFREEBSD_WORKAROUND";;
