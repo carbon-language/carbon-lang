@@ -118,7 +118,7 @@ uint64_t MCAsmLayout::getSymbolOffset(const MCSymbolData *SD) const {
     if (Target.getSymB() && Target.getSymB()->getSymbol().isUndefined())
       report_fatal_error("unable to evaluate offset to undefined symbol '" +
                          Target.getSymB()->getSymbol().getName() + "'");
-      
+
     uint64_t Offset = Target.getConstant();
     if (Target.getSymA())
       Offset += getSymbolOffset(&Assembler.getSymbolData(
@@ -295,7 +295,7 @@ bool MCAssembler::EvaluateFixup(const MCAsmLayout &Layout,
 
   if (IsPCRel) {
     uint32_t Offset = Layout.getFragmentOffset(DF) + Fixup.getOffset();
-    
+
     // A number of ARM fixups in Thumb mode require that the effective PC
     // address be determined as the 32-bit aligned version of the actual offset.
     if (ShouldAlignPC) Offset &= ~0x3;
