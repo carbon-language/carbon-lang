@@ -15,8 +15,8 @@ namespace lldb {
 A watchpoint is determined by the address and the byte size that resulted in
 this particular instantiation.  Each watchpoint has its settable options.
 
-See also SBTarget.watchpoint_iter() for for example usage of iterating through
-the watchpoints of the target."
+See also SBTarget.watchpoint_iter() for example usage of iterating through the
+watchpoints of the target."
 ) SBWatchpoint;
 class SBWatchpoint
 {
