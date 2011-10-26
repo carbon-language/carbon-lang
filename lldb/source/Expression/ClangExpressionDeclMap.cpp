@@ -959,7 +959,12 @@ ClangExpressionDeclMap::LookupDecl (clang::NamedDecl *decl)
         if (!expr_var_sp->m_parser_vars.get() || !expr_var_sp->m_parser_vars->m_lldb_var)
             return Value();
         
-        return *GetVariableValue(exe_ctx, expr_var_sp->m_parser_vars->m_lldb_var, NULL);
+        std::auto_ptr<Value> value(GetVariableValue(exe_ctx, expr_var_sp->m_parser_vars->m_lldb_var, NULL));
+        
+        if (value.get())
+            return *value;
+        else
+            return Value();
     }
     else if (persistent_var_sp)
     {
@@ -969,7 +974,7 @@ ClangExpressionDeclMap::LookupDecl (clang::NamedDecl *decl)
             m_parser_vars->m_exe_ctx->GetProcessSP() &&
             m_parser_vars->m_exe_ctx->GetProcessSP()->IsAlive())
         {
-                return persistent_var_sp->m_live_sp->GetValue();
+            return persistent_var_sp->m_live_sp->GetValue();
         }
         else
         {
@@ -984,6 +989,39 @@ ClangExpressionDeclMap::LookupDecl (clang::NamedDecl *decl)
     {
         return Value();
     }
+}
+
+Value
+ClangExpressionDeclMap::GetSpecialValue (const ConstString &name)
+{
+    assert(m_parser_vars.get());
+    
+    if (!m_parser_vars->m_exe_ctx)
+        return Value();
+
+    StackFrame *frame = m_parser_vars->m_exe_ctx->GetFramePtr();
+    
+    if (!frame)
+        return Value();
+    
+    VariableList *vars = frame->GetVariableList(false);
+    
+    if (!vars)
+        return Value();
+    
+    lldb::VariableSP var = vars->FindVariable(name);
+    
+    if (!var ||
+        !var->IsInScope(frame) || 
+        !var->LocationIsValidForFrame (frame))
+        return Value();
+    
+    std::auto_ptr<Value> value(GetVariableValue(*m_parser_vars->m_exe_ctx, var, NULL));
+    
+    if (value.get())
+        return *value;
+    else
+        return Value();
 }
 
 // Interface for CommandObjectExpression
@@ -1535,8 +1573,8 @@ ClangExpressionDeclMap::DoMaterializeOnePersistentVariable
             Error allocate_error;
             
             mem = process->AllocateMemory(pvar_byte_size, 
-                                                  lldb::ePermissionsReadable | lldb::ePermissionsWritable, 
-                                                  allocate_error);
+                                          lldb::ePermissionsReadable | lldb::ePermissionsWritable, 
+                                          allocate_error);
             
             if (mem == LLDB_INVALID_ADDRESS)
             {
@@ -1577,9 +1615,9 @@ ClangExpressionDeclMap::DoMaterializeOnePersistentVariable
             // Now write the location of the area into the struct.
             Error write_error;
             if (!process->WriteScalarToMemory (addr, 
-                                                       var_sp->m_live_sp->GetValue().GetScalar(), 
-                                                       process->GetAddressByteSize(), 
-                                                       write_error))
+                                               var_sp->m_live_sp->GetValue().GetScalar(), 
+                                               process->GetAddressByteSize(), 
+                                               write_error))
             {
                 err.SetErrorStringWithFormat ("Couldn't write %s to the target: %s", var_sp->GetName().GetCString(), write_error.AsCString());
                 return false;

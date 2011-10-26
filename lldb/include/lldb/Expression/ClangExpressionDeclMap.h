@@ -441,6 +441,19 @@ public:
     LookupDecl (clang::NamedDecl *decl);
     
     //------------------------------------------------------------------
+    /// [Used by IRInterpreter] Get the Value for "this", "self", or
+    ///   "_cmd".
+    ///
+    /// @param[in] name
+    ///     The name of the entity to be found.
+    ///
+    /// @return
+    ///     The value, or NULL.
+    //------------------------------------------------------------------
+    lldb_private::Value
+    GetSpecialValue (const ConstString &name);
+    
+    //------------------------------------------------------------------
     /// [Used by IRInterpreter] Returns true if the result is a
     ///   reference to data in the target, meaning it must be
     ///   dereferenced once more to get its data.

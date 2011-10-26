@@ -576,6 +576,12 @@ public:
         
         const GlobalValue *global_value = dyn_cast<GlobalValue>(value);
         
+        // If the variable is indirected through the argument
+        // array then we need to build an extra level of indirection
+        // for it.  This is the default; only magic arguments like
+        // "this", "self", and "_cmd" are direct.
+        bool indirect_variable = true; 
+        
         // Attempt to resolve the value using the program's data.
         // If it is, the values to be created are:
         //
@@ -586,17 +592,40 @@ public:
         //   resides.  This is an IR-level variable.
         do
         {
-            if (!global_value)
-                break;
-            
             lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+
+            lldb_private::Value resolved_value;
             
-            clang::NamedDecl *decl = IRForTarget::DeclForGlobal(global_value, &module);
-            
-            if (!decl)
-                break;
-            
-            lldb_private::Value resolved_value = m_decl_map.LookupDecl(decl);
+            if (global_value)
+            {            
+                clang::NamedDecl *decl = IRForTarget::DeclForGlobal(global_value, &module);
+
+                if (!decl)
+                    break;
+                
+                if (isa<clang::FunctionDecl>(decl))
+                {
+                    if (log)
+                        log->Printf("The interpreter does not handle function pointers at the moment");
+                    
+                    return Memory::Region();
+                }
+                
+                resolved_value = m_decl_map.LookupDecl(decl);
+            }
+            else
+            {
+                // Special-case "this", "self", and "_cmd"
+                
+                std::string name_str = value->getNameStr();
+                
+                if (name_str == "this" ||
+                    name_str == "self" ||
+                    name_str == "_cmd")
+                    resolved_value = m_decl_map.GetSpecialValue(lldb_private::ConstString(name_str.c_str()));
+                
+                indirect_variable = false;
+            }
             
             if (resolved_value.GetScalar().GetType() != lldb_private::Scalar::e_void)
             {
@@ -605,7 +634,10 @@ public:
                     Memory::Region data_region = m_memory.Malloc(value->getType());
                     data_region.m_allocation->m_origin = resolved_value;
                     Memory::Region ref_region = m_memory.Malloc(value->getType());
-                    Memory::Region pointer_region = m_memory.Malloc(value->getType());
+                    Memory::Region pointer_region;
+                    
+                    if (indirect_variable)
+                        pointer_region = m_memory.Malloc(value->getType());
                     
                     if (!Cache(data_region.m_allocation, value->getType()))
                         return Memory::Region();
@@ -613,7 +645,7 @@ public:
                     if (ref_region.IsInvalid())
                         return Memory::Region();
                     
-                    if (pointer_region.IsInvalid())
+                    if (pointer_region.IsInvalid() && indirect_variable)
                         return Memory::Region();
                     
                     DataEncoderSP ref_encoder = m_memory.GetEncoder(ref_region);
@@ -621,31 +653,35 @@ public:
                     if (ref_encoder->PutAddress(0, data_region.m_base) == UINT32_MAX)
                         return Memory::Region();
                     
-                    DataEncoderSP pointer_encoder = m_memory.GetEncoder(pointer_region);
-                    
-                    if (pointer_encoder->PutAddress(0, ref_region.m_base) == UINT32_MAX)
-                        return Memory::Region();
-                    
-                    m_values[value] = pointer_region;
-                    return pointer_region;
-                }
-                else if (isa<clang::FunctionDecl>(decl))
-                {
-                    if (log)
-                        log->Printf("The interpreter does not handle function pointers at the moment");
-                    
-                    return Memory::Region();
+                    if (indirect_variable)
+                    {
+                        DataEncoderSP pointer_encoder = m_memory.GetEncoder(pointer_region);
+                        
+                        if (pointer_encoder->PutAddress(0, ref_region.m_base) == UINT32_MAX)
+                            return Memory::Region();
+                        
+                        m_values[value] = pointer_region;
+                        return pointer_region;
+                    }
+                    else
+                    {
+                        m_values[value] = ref_region;
+                        return ref_region;
+                    }
                 }
                 else
                 {
                     Memory::Region data_region = m_memory.Place(value->getType(), resolved_value.GetScalar().ULongLong(), resolved_value);
                     Memory::Region ref_region = m_memory.Malloc(value->getType());
-                    Memory::Region pointer_region = m_memory.Malloc(value->getType());
+                    Memory::Region pointer_region;
+                    
+                    if (indirect_variable)
+                        pointer_region = m_memory.Malloc(value->getType());
                            
                     if (ref_region.IsInvalid())
                         return Memory::Region();
                     
-                    if (pointer_region.IsInvalid())
+                    if (pointer_region.IsInvalid() && indirect_variable)
                         return Memory::Region();
                     
                     DataEncoderSP ref_encoder = m_memory.GetEncoder(ref_region);
@@ -653,23 +689,30 @@ public:
                     if (ref_encoder->PutAddress(0, data_region.m_base) == UINT32_MAX)
                         return Memory::Region();
                     
-                    DataEncoderSP pointer_encoder = m_memory.GetEncoder(pointer_region);
+                    if (indirect_variable)
+                    {
+                        DataEncoderSP pointer_encoder = m_memory.GetEncoder(pointer_region);
                     
-                    if (pointer_encoder->PutAddress(0, ref_region.m_base) == UINT32_MAX)
-                        return Memory::Region();
-                    
-                    m_values[value] = pointer_region;
+                        if (pointer_encoder->PutAddress(0, ref_region.m_base) == UINT32_MAX)
+                            return Memory::Region();
+                        
+                        m_values[value] = pointer_region;
+                    }
                     
                     if (log)
                     {
-                        log->Printf("Made an allocation for %s", PrintValue(global_value).c_str());
+                        log->Printf("Made an allocation for %s", PrintValue(value).c_str());
                         log->Printf("  Data contents  : %s", m_memory.PrintData(data_region.m_base, data_region.m_extent).c_str());
                         log->Printf("  Data region    : %llx", (unsigned long long)data_region.m_base);
                         log->Printf("  Ref region     : %llx", (unsigned long long)ref_region.m_base);
-                        log->Printf("  Pointer region : %llx", (unsigned long long)pointer_region.m_base);
+                        if (indirect_variable)
+                            log->Printf("  Pointer region : %llx", (unsigned long long)pointer_region.m_base);
                     }
                     
-                    return pointer_region;
+                    if (indirect_variable)
+                        return pointer_region;
+                    else 
+                        return ref_region;
                 }
             }
         }
