@@ -1193,6 +1193,7 @@ bool ARMFastISel::ARMEmitCmp(const Value *Src1Value, const Value *Src2Value) {
 
   unsigned CmpOpc;
   switch (VT.SimpleTy) {
+    // TODO: Add support for non-legal types (i.e., i1, i8, i16).
     default: return false;
     // TODO: Verify compares.
     case MVT::f32:
