@@ -669,15 +669,37 @@ BreakpointIDRangeHelpTextCallback ()
 static const char *
 GDBFormatHelpTextCallback ()
 {
-    return "A GDB format consists of a repeat count followed by a format letter "
-    "and a size letter.\n\nFormat letters are o (octal), x (hex), d (decimal), u"
-    " (unsigned decimal), t (binary), f (float), a (address), i (instruction), "
-    "c (char) and s (string), T (OSType), A (floating point values in hex).\n\n"
-    "Size letters are b (byte), h (halfword), w (word), g (giant, 8 bytes).\n\n"
-    "The specified number of objects of the specified size are printed "
-    "according to the format.\n\n"
-    "Defaults for format and size letters are those previously used. Default "
-    "count is 1.";
+    return "A GDB format consists of a repeat count, a format letter and a size letter. "
+    "The repeat count is optional and defaults to 1. The format letter is optional "
+    "and defaults to the previous format that was used. The size letter is optional "
+    "and defaults to the previous size that was used.\n"
+    "\n"
+    "Format letters include:\n"
+    "o - octal\n"
+    "x - hexadecimal\n"
+    "d - decimal\n"
+    "u - unsigned decimal\n"
+    "t - binary\n"
+    "f - float\n"
+    "a - address\n"
+    "i - instruction\n"
+    "c - char\n"
+    "s - string\n"
+    "T - OSType\n"
+    "A - float as hex\n"
+    "\n"
+    "Size letters include:\n"
+    "b - 1 byte  (byte)\n"
+    "h - 2 bytes (halfword)\n"
+    "w - 4 bytes (word)\n"
+    "g - 8 bytes (giant)\n"
+    "\n"
+    "Example formats:\n"
+    "32xb - show 32 1 byte hexadecimal integer values\n"
+    "16xh - show 16 2 byte hexadecimal integer values\n"
+    "64   - show 64 2 byte hexadecimal integer values (format and size from the last format)\n"
+    "dw   - show 1 4 byte decimal integer value\n"
+    ;
 } 
 
 static const char *
