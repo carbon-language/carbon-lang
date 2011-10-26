@@ -98,7 +98,6 @@ void CompileUnit::addDIEEntry(DIE *Die, unsigned Attribute, unsigned Form,
   Die->addValue(Attribute, Form, createDIEEntry(Entry));
 }
 
-
 /// addBlock - Add block data.
 ///
 void CompileUnit::addBlock(DIE *Die, unsigned Attribute, unsigned Form,
@@ -135,8 +134,7 @@ void CompileUnit::addSourceLine(DIE *Die, DIGlobalVariable G) {
   unsigned Line = G.getLineNumber();
   if (Line == 0)
     return;
-  unsigned FileID = DD->GetOrCreateSourceID(G.getFilename(),
-                                            G.getDirectory());
+  unsigned FileID = DD->GetOrCreateSourceID(G.getFilename(), G.getDirectory());
   assert(FileID && "Invalid file id");
   addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
@@ -155,7 +153,8 @@ void CompileUnit::addSourceLine(DIE *Die, DISubprogram SP) {
   unsigned Line = SP.getLineNumber();
   if (!SP.getContext().Verify())
     return;
-  unsigned FileID = DD->GetOrCreateSourceID(SP.getFilename(), SP.getDirectory());
+  unsigned FileID = DD->GetOrCreateSourceID(SP.getFilename(),
+                                            SP.getDirectory());
   assert(FileID && "Invalid file id");
   addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
@@ -171,7 +170,8 @@ void CompileUnit::addSourceLine(DIE *Die, DIType Ty) {
   unsigned Line = Ty.getLineNumber();
   if (Line == 0 || !Ty.getContext().Verify())
     return;
-  unsigned FileID = DD->GetOrCreateSourceID(Ty.getFilename(), Ty.getDirectory());
+  unsigned FileID = DD->GetOrCreateSourceID(Ty.getFilename(),
+                                            Ty.getDirectory());
   assert(FileID && "Invalid file id");
   addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
@@ -458,7 +458,7 @@ static bool isTypeSigned(DIType Ty, int *SizeInBits) {
 /// addConstantValue - Add constant value entry in variable DIE.
 bool CompileUnit::addConstantValue(DIE *Die, const MachineOperand &MO,
                                    DIType Ty) {
-  assert (MO.isImm() && "Invalid machine operand!");
+  assert(MO.isImm() && "Invalid machine operand!");
   DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
   int SizeInBits = -1;
   bool SignedConstant = isTypeSigned(Ty, &SizeInBits);
@@ -479,7 +479,7 @@ bool CompileUnit::addConstantValue(DIE *Die, const MachineOperand &MO,
 
 /// addConstantFPValue - Add constant value entry in variable DIE.
 bool CompileUnit::addConstantFPValue(DIE *Die, const MachineOperand &MO) {
-  assert (MO.isFPImm() && "Invalid machine operand!");
+  assert(MO.isFPImm() && "Invalid machine operand!");
   DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
   APFloat FPImm = MO.getFPImm()->getValueAPF();
 
@@ -556,8 +556,8 @@ void CompileUnit::addTemplateParams(DIE &Buffer, DIArray TParams) {
       Buffer.addChild(getOrCreateTemplateValueParameterDIE(
                         DITemplateValueParameter(Element)));
   }
-
 }
+
 /// addToContextOwner - Add Die into the list of its context owner's children.
 void CompileUnit::addToContextOwner(DIE *Die, DIDescriptor Context) {
   if (Context.isType()) {
@@ -669,7 +669,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DIBasicType BTy) {
   }
 
   Buffer.setTag(dwarf::DW_TAG_base_type);
-  addUInt(&Buffer, dwarf::DW_AT_encoding,  dwarf::DW_FORM_data1,
+  addUInt(&Buffer, dwarf::DW_AT_encoding, dwarf::DW_FORM_data1,
 	  BTy.getEncoding());
 
   uint64_t Size = BTy.getSizeInBits() >> 3;
@@ -840,7 +840,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
 
   if (Tag == dwarf::DW_TAG_enumeration_type || Tag == dwarf::DW_TAG_class_type
       || Tag == dwarf::DW_TAG_structure_type || Tag == dwarf::DW_TAG_union_type)
-    {
+  {
     // Add size if non-zero (derived types might be zero-sized.)
     if (Size)
       addUInt(&Buffer, dwarf::DW_AT_byte_size, 0, Size);
@@ -932,9 +932,8 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
 
   StringRef LinkageName = SP.getLinkageName();
   if (!LinkageName.empty())
-    addString(SPDie, dwarf::DW_AT_MIPS_linkage_name, 
-                    dwarf::DW_FORM_string,
-                    getRealLinkageName(LinkageName));
+    addString(SPDie, dwarf::DW_AT_MIPS_linkage_name, dwarf::DW_FORM_string,
+              getRealLinkageName(LinkageName));
 
   // If this DIE is going to refer declaration info using AT_specification
   // then there is no need to add other attributes.
@@ -943,8 +942,7 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
 
   // Constructors and operators for anonymous aggregates do not have names.
   if (!SP.getName().empty())
-    addString(SPDie, dwarf::DW_AT_name, dwarf::DW_FORM_string, 
-                    SP.getName());
+    addString(SPDie, dwarf::DW_AT_name, dwarf::DW_FORM_string, SP.getName());
 
   addSourceLine(SPDie, SP);
 
@@ -1051,13 +1049,12 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
 
   // Add name.
   addString(VariableDIE, dwarf::DW_AT_name, dwarf::DW_FORM_string,
-                   GV.getDisplayName());
+            GV.getDisplayName());
   StringRef LinkageName = GV.getLinkageName();
   bool isGlobalVariable = GV.getGlobal() != NULL;
   if (!LinkageName.empty() && isGlobalVariable)
-    addString(VariableDIE, dwarf::DW_AT_MIPS_linkage_name, 
-                     dwarf::DW_FORM_string,
-                     getRealLinkageName(LinkageName));
+    addString(VariableDIE, dwarf::DW_AT_MIPS_linkage_name,
+              dwarf::DW_FORM_string, getRealLinkageName(LinkageName));
   // Add type.
   DIType GTy = GV.getType();
   addType(VariableDIE, GTy);

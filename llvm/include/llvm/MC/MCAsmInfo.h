@@ -323,11 +323,11 @@ namespace llvm {
     const char* DwarfSectionOffsetDirective; // Defaults to NULL
 
     /// DwarfRequiresRelocationForSectionOffset - True if we need to produce a
-    // relocation when we want a section offset in dwarf.
+    /// relocation when we want a section offset in dwarf.
     bool DwarfRequiresRelocationForSectionOffset;  // Defaults to true;
 
-    // DwarfUsesLabelOffsetDifference - True if Dwarf2 output can
-    // use EmitLabelOffsetDifference.
+    /// DwarfUsesLabelOffsetDifference - True if Dwarf2 output can
+    /// use EmitLabelOffsetDifference.
     bool DwarfUsesLabelOffsetForRanges;
 
     /// DwarfRegNumForCFI - True if dwarf register numbers are printed

@@ -203,7 +203,7 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(CompileUnit *SPCU,
     if (SP.isDefinition() && !SP.getContext().isCompileUnit() &&
         !SP.getContext().isFile() &&
         !isSubprogramContext(SP.getContext())) {
-      SPCU-> addUInt(SPDie, dwarf::DW_AT_declaration, dwarf::DW_FORM_flag, 1);
+      SPCU->addUInt(SPDie, dwarf::DW_AT_declaration, dwarf::DW_FORM_flag, 1);
       
       // Add arguments.
       DICompositeType SPTy = SP.getType();
@@ -248,7 +248,6 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(CompileUnit *SPCU,
 /// for this scope and attach DW_AT_low_pc/DW_AT_high_pc labels.
 DIE *DwarfDebug::constructLexicalScopeDIE(CompileUnit *TheCU, 
                                           LexicalScope *Scope) {
-
   DIE *ScopeDIE = new DIE(dwarf::DW_TAG_lexical_block);
   if (Scope->isAbstractScope())
     return ScopeDIE;
@@ -294,10 +293,9 @@ DIE *DwarfDebug::constructLexicalScopeDIE(CompileUnit *TheCU,
 /// of the function.
 DIE *DwarfDebug::constructInlinedScopeDIE(CompileUnit *TheCU,
                                           LexicalScope *Scope) {
-
   const SmallVector<InsnRange, 4> &Ranges = Scope->getRanges();
-  assert (Ranges.empty() == false
-          && "LexicalScope does not have instruction markers!");
+  assert(Ranges.empty() == false &&
+         "LexicalScope does not have instruction markers!");
 
   if (!Scope->getScopeNode())
     return NULL;
@@ -314,7 +312,7 @@ DIE *DwarfDebug::constructInlinedScopeDIE(CompileUnit *TheCU,
   const MCSymbol *EndLabel = getLabelAfterInsn(RI->second);
 
   if (StartLabel == 0 || EndLabel == 0) {
-    assert (0 && "Unexpected Start and End labels for a inlined scope!");
+    assert(0 && "Unexpected Start and End labels for a inlined scope!");
     return 0;
   }
   assert(StartLabel->isDefined() &&
@@ -358,8 +356,7 @@ DIE *DwarfDebug::constructInlinedScopeDIE(CompileUnit *TheCU,
     I = InlineInfo.find(InlinedSP);
 
   if (I == InlineInfo.end()) {
-    InlineInfo[InlinedSP].push_back(std::make_pair(StartLabel,
-                                                             ScopeDIE));
+    InlineInfo[InlinedSP].push_back(std::make_pair(StartLabel, ScopeDIE));
     InlinedSPNodes.push_back(InlinedSP);
   } else
     I->second.push_back(std::make_pair(StartLabel, ScopeDIE));
@@ -376,7 +373,7 @@ DIE *DwarfDebug::constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope) {
   if (!Scope || !Scope->getScopeNode())
     return NULL;
 
-  SmallVector <DIE *, 8> Children;
+  SmallVector<DIE *, 8> Children;
 
   // Collect arguments for current function.
   if (LScopes.isCurrentFunctionScope(Scope))
@@ -435,7 +432,6 @@ DIE *DwarfDebug::constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope) {
 /// source file names. If none currently exists, create a new id and insert it
 /// in the SourceIds map. This can update DirectoryNames and SourceFileNames
 /// maps as well.
-
 unsigned DwarfDebug::GetOrCreateSourceID(StringRef FileName, 
                                          StringRef DirName) {
   // If FE did not provide a file name, then assume stdin.
@@ -673,7 +669,7 @@ void DwarfDebug::endModule() {
         
         // Construct subprogram DIE and add variables DIEs.
         CompileUnit *SPCU = CUMap.lookup(TheCU);
-        assert (SPCU && "Unable to find Compile Unit!");
+        assert(SPCU && "Unable to find Compile Unit!");
         constructSubprogramDIE(SPCU, SP);
         DIE *ScopeDIE = SPCU->getDIE(SP);
         for (unsigned vi = 0, ve = Variables.getNumElements(); vi != ve; ++vi) {
@@ -834,7 +830,7 @@ DwarfDebug::collectVariableInfoFromMMITable(const MachineFunction *MF,
 /// isDbgValueInDefinedReg - Return true if debug value, encoded by
 /// DBG_VALUE instruction, is in a defined reg.
 static bool isDbgValueInDefinedReg(const MachineInstr *MI) {
-  assert (MI->isDebugValue() && "Invalid DBG_VALUE machine instruction!");
+  assert(MI->isDebugValue() && "Invalid DBG_VALUE machine instruction!");
   return MI->getNumOperands() == 3 &&
          MI->getOperand(0).isReg() && MI->getOperand(0).getReg() &&
          MI->getOperand(1).isImm() && MI->getOperand(1).getImm() == 0;
@@ -864,7 +860,7 @@ static DotDebugLocEntry getDebugLocEntry(AsmPrinter *Asm,
   if (MI->getOperand(0).isCImm())
     return DotDebugLocEntry(FLabel, SLabel, MI->getOperand(0).getCImm());
 
-  assert (0 && "Unexpected 3 operand DBG_VALUE instruction!");
+  assert(0 && "Unexpected 3 operand DBG_VALUE instruction!");
   return DotDebugLocEntry();
 }
 
@@ -1132,7 +1128,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
       const MachineInstr *MI = II;
 
       if (MI->isDebugValue()) {
-        assert (MI->getNumOperands() > 1 && "Invalid machine instruction!");
+        assert(MI->getNumOperands() > 1 && "Invalid machine instruction!");
 
         // Keep track of user variables.
         const MDNode *Var =
@@ -1300,7 +1296,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   
   LexicalScope *FnScope = LScopes.getCurrentFunctionScope();
   CompileUnit *TheCU = SPMap.lookup(FnScope->getScopeNode());
-  assert (TheCU && "Unable to find compile unit!");
+  assert(TheCU && "Unable to find compile unit!");
 
   // Construct abstract scopes.
   ArrayRef<LexicalScope *> AList = LScopes.getAbstractScopesList();
