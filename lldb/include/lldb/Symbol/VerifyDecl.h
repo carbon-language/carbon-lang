@@ -10,7 +10,7 @@
 #ifndef lldb_VariableList_h_
 #define lldb_VariableList_h_
 
-#include "ClangForward.h"
+#include "lldb/Core/ClangForward.h"
 
 namespace lldb_private
 {
