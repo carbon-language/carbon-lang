@@ -793,7 +793,6 @@ error_code MachOObjectFile::getRelocationValueString(DataRefImpl Rel,
   InMemoryStruct<macho::RelocationEntry> RE;
   getRelocation(Rel, RE);
 
-  bool isPCRel = (RE->Word1 >> 25) & 1;
   unsigned Type = (RE->Word1 >> 28) & 0xF;
 
   std::string fmtbuf;
