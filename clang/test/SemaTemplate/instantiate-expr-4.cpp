@@ -282,6 +282,16 @@ template struct ArrowMemRef0<ArrowWrapper<MemIntFunc*>, int (*)(int)>;
 template struct ArrowMemRef0<ArrowWrapper<MemInt*>, float&>; // expected-note{{instantiation}}
 template struct ArrowMemRef0<ArrowWrapper<ArrowWrapper<MemInt*> >, int&>;
 
+struct UnresolvedMemRefArray {
+  int f(int);
+  int f(char);
+};
+UnresolvedMemRefArray Arr[10];
+template<typename U> int UnresolvedMemRefArrayT(U u) {
+  return Arr->f(u);
+}
+template int UnresolvedMemRefArrayT<int>(int);
+
 // FIXME: we should be able to return a MemInt without the reference!
 MemInt &createMemInt(int);
 
