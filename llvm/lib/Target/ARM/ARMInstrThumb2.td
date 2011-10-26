@@ -2887,7 +2887,7 @@ def t2MOVCCi32imm : PseudoInst<(outs rGPR:$dst),
 
 let isMoveImm = 1 in
 def t2MVNCCi : T2OneRegImm<(outs rGPR:$Rd), (ins rGPR:$false, t2_so_imm:$imm),
-                   IIC_iCMOVi, "mvn", ".w\t$Rd, $imm",
+                   IIC_iCMOVi, "mvn", "\t$Rd, $imm",
 [/*(set rGPR:$Rd,(ARMcmov rGPR:$false,t2_so_imm_not:$imm,
                    imm:$cc, CCR:$ccr))*/]>,
                    RegConstraint<"$false = $Rd"> {

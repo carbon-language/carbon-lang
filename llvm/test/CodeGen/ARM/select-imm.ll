@@ -71,7 +71,7 @@ entry:
 ; ARMT2: movtlt [[R0]], #65365
 
 ; THUMB2: t4:
-; THUMB2: mvnlt.w [[R0:r[0-9]+]], #11141290
+; THUMB2: mvnlt [[R0:r[0-9]+]], #11141290
   %0 = icmp slt i32 %a, %b
   %1 = select i1 %0, i32 4283826005, i32 %x
   ret i32 %1
