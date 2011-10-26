@@ -634,7 +634,7 @@ error_code MachOObjectFile::getRelocationSymbol(DataRefImpl Rel,
   return object_error::success;
 }
 error_code MachOObjectFile::getRelocationType(DataRefImpl Rel,
-                                              uint32_t &Res) const {
+                                              uint64_t &Res) const {
   InMemoryStruct<macho::RelocationEntry> RE;
   getRelocation(Rel, RE);
   Res = RE->Word1;

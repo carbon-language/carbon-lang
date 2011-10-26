@@ -99,7 +99,7 @@ public:
 
   error_code getAddress(uint64_t &Result) const;
   error_code getSymbol(SymbolRef &Result) const;
-  error_code getType(uint32_t &Result) const;
+  error_code getType(uint64_t &Result) const;
 
   /// @brief Indicates whether this relocation should hidden when listing
   /// relocations, usually because it is the trailing part of a multipart
@@ -284,7 +284,7 @@ protected:
   virtual error_code getRelocationSymbol(DataRefImpl Rel,
                                          SymbolRef &Res) const = 0;
   virtual error_code getRelocationType(DataRefImpl Rel,
-                                       uint32_t &Res) const = 0;
+                                       uint64_t &Res) const = 0;
   virtual error_code getRelocationTypeName(DataRefImpl Rel,
                                        SmallVectorImpl<char> &Result) const = 0;
   virtual error_code getRelocationAdditionalInfo(DataRefImpl Rel,
@@ -474,7 +474,7 @@ inline error_code RelocationRef::getSymbol(SymbolRef &Result) const {
   return OwningObject->getRelocationSymbol(RelocationPimpl, Result);
 }
 
-inline error_code RelocationRef::getType(uint32_t &Result) const {
+inline error_code RelocationRef::getType(uint64_t &Result) const {
   return OwningObject->getRelocationType(RelocationPimpl, Result);
 }
 

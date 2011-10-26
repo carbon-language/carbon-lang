@@ -394,7 +394,7 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
       Sections[SectIdx].getAddress(SectionAddress);
       RelocOffset -= SectionAddress;
 
-      uint32_t RelocInfo;
+      uint64_t RelocInfo;
       RI->getType(RelocInfo);
 
       Relocs.push_back(std::make_pair(RelocOffset, RelocInfo));

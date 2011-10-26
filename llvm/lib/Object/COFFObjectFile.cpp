@@ -623,7 +623,7 @@ error_code COFFObjectFile::getRelocationSymbol(DataRefImpl Rel,
   return object_error::success;
 }
 error_code COFFObjectFile::getRelocationType(DataRefImpl Rel,
-                                             uint32_t &Res) const {
+                                             uint64_t &Res) const {
   const coff_relocation* R = toRel(Rel);
   Res = R->Type;
   return object_error::success;

@@ -81,7 +81,7 @@ protected:
   virtual error_code getRelocationSymbol(DataRefImpl Rel,
                                          SymbolRef &Res) const;
   virtual error_code getRelocationType(DataRefImpl Rel,
-                                       uint32_t &Res) const;
+                                       uint64_t &Res) const;
   virtual error_code getRelocationTypeName(DataRefImpl Rel,
                                            SmallVectorImpl<char> &Result) const;
   virtual error_code getRelocationAdditionalInfo(DataRefImpl Rel,
