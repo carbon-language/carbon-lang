@@ -2104,11 +2104,8 @@ SDValue ARMTargetLowering::LowerGlobalAddressELF(SDValue Op,
   }
 
   // If we have T2 ops, we can materialize the address directly via movt/movw
-  // pair. This is always cheaper in terms of performance, but uses at least 2
-  // extra bytes.
-  MachineFunction &MF = DAG.getMachineFunction();
-  if (Subtarget->useMovt() &&
-      !MF.getFunction()->hasFnAttr(Attribute::OptimizeForSize)) {
+  // pair. This is always cheaper.
+  if (Subtarget->useMovt()) {
     ++NumMovwMovt;
     // FIXME: Once remat is capable of dealing with instructions with register
     // operands, expand this into two nodes.
