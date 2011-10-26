@@ -807,8 +807,15 @@ error_code MachOObjectFile::getRelocationValueString(DataRefImpl Rel,
     StringRef Name;
     if (error_code ec = getRelocationTargetName(RE->Word1, Name))
       report_fatal_error(ec.message());
+    bool isPCRel = ((RE->Word1 >> 24) & 1);
 
     switch (Type) {
+      case 3:   // X86_64_RELOC_GOT_LOAD
+      case 4: { // X86_64_RELOC_GOT
+        fmt << Name << "@GOT";
+        if (isPCRel) fmt << "PCREL";
+        break;
+      }
       case 5: { // X86_64_RELOC_SUBTRACTOR
         InMemoryStruct<macho::RelocationEntry> RENext;
         DataRefImpl RelNext = Rel;
