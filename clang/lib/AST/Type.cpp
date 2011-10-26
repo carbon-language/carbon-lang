@@ -1272,6 +1272,10 @@ bool Type::isPromotableIntegerType() const {
     case BuiltinType::UChar:
     case BuiltinType::Short:
     case BuiltinType::UShort:
+    case BuiltinType::WChar_S:
+    case BuiltinType::WChar_U:
+    case BuiltinType::Char16:
+    case BuiltinType::Char32:
       return true;
     default:
       return false;
@@ -1284,10 +1288,7 @@ bool Type::isPromotableIntegerType() const {
         || ET->getDecl()->isScoped())
       return false;
     
-    const BuiltinType *BT
-      = ET->getDecl()->getPromotionType()->getAs<BuiltinType>();
-    return BT->getKind() == BuiltinType::Int
-           || BT->getKind() == BuiltinType::UInt;
+    return true;
   }
   
   return false;

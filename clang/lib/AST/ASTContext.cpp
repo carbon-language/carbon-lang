@@ -3549,18 +3549,6 @@ int ASTContext::getFloatingTypeOrder(QualType LHS, QualType RHS) const {
 /// or if it is not canonicalized.
 unsigned ASTContext::getIntegerRank(const Type *T) const {
   assert(T->isCanonicalUnqualified() && "T should be canonicalized");
-  if (const EnumType* ET = dyn_cast<EnumType>(T))
-    T = ET->getDecl()->getPromotionType().getTypePtr();
-
-  if (T->isSpecificBuiltinType(BuiltinType::WChar_S) ||
-      T->isSpecificBuiltinType(BuiltinType::WChar_U))
-    T = getFromTargetType(Target->getWCharType()).getTypePtr();
-
-  if (T->isSpecificBuiltinType(BuiltinType::Char16))
-    T = getFromTargetType(Target->getChar16Type()).getTypePtr();
-
-  if (T->isSpecificBuiltinType(BuiltinType::Char32))
-    T = getFromTargetType(Target->getChar32Type()).getTypePtr();
 
   switch (cast<BuiltinType>(T)->getKind()) {
   default: llvm_unreachable("getIntegerRank(): not a built-in integer");
@@ -3630,6 +3618,34 @@ QualType ASTContext::getPromotedIntegerType(QualType Promotable) const {
   assert(Promotable->isPromotableIntegerType());
   if (const EnumType *ET = Promotable->getAs<EnumType>())
     return ET->getDecl()->getPromotionType();
+
+  if (const BuiltinType *BT = Promotable->getAs<BuiltinType>()) {
+    // C++ [conv.prom]: A prvalue of type char16_t, char32_t, or wchar_t
+    // (3.9.1) can be converted to a prvalue of the first of the following
+    // types that can represent all the values of its underlying type:
+    // int, unsigned int, long int, unsigned long int, long long int, or
+    // unsigned long long int [...]
+    // FIXME: Is there some better way to compute this?
+    if (BT->getKind() == BuiltinType::WChar_S ||
+        BT->getKind() == BuiltinType::WChar_U ||
+        BT->getKind() == BuiltinType::Char16 ||
+        BT->getKind() == BuiltinType::Char32) {
+      bool FromIsSigned = BT->getKind() == BuiltinType::WChar_S;
+      uint64_t FromSize = getTypeSize(BT);
+      QualType PromoteTypes[] = { IntTy, UnsignedIntTy, LongTy, UnsignedLongTy,
+                                  LongLongTy, UnsignedLongLongTy };
+      for (size_t Idx = 0; Idx < llvm::array_lengthof(PromoteTypes); ++Idx) {
+        uint64_t ToSize = getTypeSize(PromoteTypes[Idx]);
+        if (FromSize < ToSize ||
+            (FromSize == ToSize &&
+             FromIsSigned == PromoteTypes[Idx]->isSignedIntegerType()))
+          return PromoteTypes[Idx];
+      }
+      llvm_unreachable("char type should fit into long long");
+    }
+  }
+
+  // At this point, we should have a signed or unsigned integer type.
   if (Promotable->isSignedIntegerType())
     return IntTy;
   uint64_t PromotableSize = getTypeSize(Promotable);
