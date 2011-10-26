@@ -26,8 +26,10 @@ To compile code with Polly you only need to add '-load
 ${POLLY_BUILD_DIR}/lib/LLVMPolly.so' to your command line or your CFLAGS and
 Polly is automatically executed at -O3.
 
-<b>WARNING: You need clang/LLVM/Polly need to be in sync. This normally means
-            you need to compile all of them from a recent svn/git checkout</b>
+<p>
+<b>WARNING: clang/LLVM/Polly need to be in sync. This means
+            you need to compile them yourself from a recent svn/git checkout</b>
+            </p>
 
 <pre class="code">clang -load ${POLLY_BUILD_DIR}/lib/LLVMPolly.so -O3 file.c</pre>
 
