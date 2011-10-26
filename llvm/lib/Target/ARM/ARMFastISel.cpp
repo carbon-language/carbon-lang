@@ -1100,30 +1100,8 @@ bool ARMFastISel::SelectBranch(const Instruction *I) {
 
   // If we can, avoid recomputing the compare - redoing it could lead to wonky
   // behavior.
-  // TODO: Factor this out.
   if (const CmpInst *CI = dyn_cast<CmpInst>(BI->getCondition())) {
-    MVT SourceVT;
-    Type *Ty = CI->getOperand(0)->getType();
-    if (CI->hasOneUse() && (CI->getParent() == I->getParent())
-        && isTypeLegal(Ty, SourceVT)) {
-      bool isFloat = (Ty->isDoubleTy() || Ty->isFloatTy());
-      if (isFloat && !Subtarget->hasVFP2())
-        return false;
-
-      unsigned CmpOpc;
-      switch (SourceVT.SimpleTy) {
-        default: return false;
-        // TODO: Verify compares.
-        case MVT::f32:
-          CmpOpc = ARM::VCMPES;
-          break;
-        case MVT::f64:
-          CmpOpc = ARM::VCMPED;
-          break;
-        case MVT::i32:
-          CmpOpc = isThumb ? ARM::t2CMPrr : ARM::CMPrr;
-          break;
-      }
+    if (CI->hasOneUse() && (CI->getParent() == I->getParent())) {
 
       // Get the compare predicate.
       // Try to take advantage of fallthrough opportunities.
@@ -1138,19 +1116,14 @@ bool ARMFastISel::SelectBranch(const Instruction *I) {
       // We may not handle every CC for now.
       if (ARMPred == ARMCC::AL) return false;
 
-      unsigned Arg1 = getRegForValue(CI->getOperand(0));
-      if (Arg1 == 0) return false;
-
-      unsigned Arg2 = getRegForValue(CI->getOperand(1));
-      if (Arg2 == 0) return false;
-
-      AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                              TII.get(CmpOpc))
-                      .addReg(Arg1).addReg(Arg2));
+      // Emit the compare.
+      Type *Ty = CI->getOperand(0)->getType();
+      if (!ARMEmitCmp(Ty, CI->getOperand(0), CI->getOperand(1)))
+        return false;
 
       // For floating point we need to move the result to a comparison register
       // that we can then use for branches.
-      if (isFloat)
+      if (Ty->isFloatTy() || Ty->isDoubleTy())
         AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                                 TII.get(ARM::FMSTAT)));
 
