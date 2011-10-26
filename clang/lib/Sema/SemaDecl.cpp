@@ -9702,7 +9702,11 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
     Packed = true;
 
   if (Enum->isFixed()) {
-    BestType = BestPromotionType = Enum->getIntegerType();
+    BestType = Enum->getIntegerType();
+    if (BestType->isPromotableIntegerType())
+      BestPromotionType = Context.getPromotedIntegerType(BestType);
+    else
+      BestPromotionType = BestType;
     // We don't need to set BestWidth, because BestType is going to be the type
     // of the enumerators, but we do anyway because otherwise some compilers
     // warn that it might be used uninitialized.
