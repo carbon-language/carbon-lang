@@ -42,7 +42,6 @@ class CoreEngine {
   friend struct NodeBuilderContext;
   friend class NodeBuilder;
   friend class CommonNodeBuilder;
-  friend class GenericNodeBuilderImpl;
   friend class IndirectGotoNodeBuilder;
   friend class SwitchNodeBuilder;
   friend class EndOfFunctionNodeBuilder;

@@ -26,7 +26,6 @@ class Stmt;
 
 namespace ento {
   
-template <typename PP> class GenericNodeBuilder;
 struct NodeBuilderContext;
 class AnalysisManager;
 class ExplodedNodeSet;
