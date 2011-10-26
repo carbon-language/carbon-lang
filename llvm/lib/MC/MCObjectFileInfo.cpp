@@ -354,8 +354,9 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
     Ctx->getELFSection(".debug_pubtypes", ELF::SHT_PROGBITS, 0,
                        SectionKind::getMetadata());
   DwarfStrSection =
-    Ctx->getELFSection(".debug_str", ELF::SHT_PROGBITS, 0,
-                       SectionKind::getMetadata());
+    Ctx->getELFSection(".debug_str", ELF::SHT_PROGBITS,
+                       ELF::SHF_MERGE | ELF::SHF_STRINGS,
+                       SectionKind::getMergeable1ByteCString());
   DwarfLocSection =
     Ctx->getELFSection(".debug_loc", ELF::SHT_PROGBITS, 0,
                        SectionKind::getMetadata());
