@@ -65,9 +65,11 @@ export CLOOG_INSTALL=${LLVM_SRC}/cloog_install
 <h4> First installation</h4>
 <pre>
 ${POLLY_SRC}/utils/checkout_cloog.sh ${CLOOG_SRC}
-${POLLY_SRC}/configure --prefix=${CLOOG_INSTALL}
+cd ${CLOOG_SRC}
+./configure --prefix=${CLOOG_INSTALL}
 make
 make install
+cd ${BASE}
 </pre>
 
 <h4> Update the installation</h4>
@@ -76,8 +78,10 @@ Updating CLooG may become necessary, if Polly uses a feature
 only available in a recent version of CLooG.
 <pre>
 ${POLLY_SRC}/utils/checkout_cloog.sh ${CLOOG_SRC}
+cd ${CLOOG_SRC}
 make
 make install
+cd ${BASE}
 </pre>
 
 <h3> Install Pocc (Optional) </h3>
