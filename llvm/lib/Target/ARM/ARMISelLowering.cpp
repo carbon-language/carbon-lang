@@ -752,6 +752,8 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
 
   //// temporary - rewrite interface to use type
   maxStoresPerMemcpy = maxStoresPerMemcpyOptSize = 1;
+  maxStoresPerMemset = 16;
+  maxStoresPerMemsetOptSize = Subtarget->isTargetDarwin() ? 8 : 4;
 
   // On ARM arguments smaller than 4 bytes are extended, so all arguments
   // are at least 4 bytes aligned.
