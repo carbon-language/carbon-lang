@@ -173,6 +173,7 @@ class ARMFastISel : public FastISel {
   private:
     bool isTypeLegal(Type *Ty, MVT &VT);
     bool isLoadTypeLegal(Type *Ty, MVT &VT);
+    bool ARMEmitCmp(Type *Ty, const Value *Src1Value, const Value *Src2Value);
     bool ARMEmitLoad(EVT VT, unsigned &ResultReg, Address &Addr);
     bool ARMEmitStore(EVT VT, unsigned SrcReg, Address &Addr);
     bool ARMComputeAddress(const Value *Obj, Address &Addr);
@@ -1214,36 +1215,43 @@ bool ARMFastISel::SelectBranch(const Instruction *I) {
   return true;
 }
 
-bool ARMFastISel::SelectCmp(const Instruction *I) {
-  const CmpInst *CI = cast<CmpInst>(I);
-
+bool ARMFastISel::ARMEmitCmp(Type *Ty, const Value *Src1Value,
+                             const Value *Src2Value) {
   MVT VT;
-  Type *Ty = CI->getOperand(0)->getType();
   if (!isTypeLegal(Ty, VT))
     return false;
 
-  bool isFloat = (Ty->isDoubleTy() || Ty->isFloatTy());
-  if (isFloat && !Subtarget->hasVFP2())
+  if ((Ty->isFloatTy() || Ty->isDoubleTy()) && !Subtarget->hasVFP2())
     return false;
 
   unsigned CmpOpc;
-  unsigned CondReg;
   switch (VT.SimpleTy) {
     default: return false;
     // TODO: Verify compares.
     case MVT::f32:
       CmpOpc = ARM::VCMPES;
-      CondReg = ARM::FPSCR;
       break;
     case MVT::f64:
       CmpOpc = ARM::VCMPED;
-      CondReg = ARM::FPSCR;
       break;
     case MVT::i32:
       CmpOpc = isThumb ? ARM::t2CMPrr : ARM::CMPrr;
-      CondReg = ARM::CPSR;
       break;
   }
+
+  unsigned Src1 = getRegForValue(Src1Value);
+  if (Src1 == 0) return false;
+
+  unsigned Src2 = getRegForValue(Src2Value);
+  if (Src2 == 0) return false;
+
+  AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(CmpOpc))
+                  .addReg(Src1).addReg(Src2));
+  return true;
+}
+
+bool ARMFastISel::SelectCmp(const Instruction *I) {
+  const CmpInst *CI = cast<CmpInst>(I);
 
   // Get the compare predicate.
   ARMCC::CondCodes ARMPred = getComparePred(CI->getPredicate());
@@ -1251,17 +1259,14 @@ bool ARMFastISel::SelectCmp(const Instruction *I) {
   // We may not handle every CC for now.
   if (ARMPred == ARMCC::AL) return false;
 
-  unsigned Arg1 = getRegForValue(CI->getOperand(0));
-  if (Arg1 == 0) return false;
-
-  unsigned Arg2 = getRegForValue(CI->getOperand(1));
-  if (Arg2 == 0) return false;
-
-  AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(CmpOpc))
-                  .addReg(Arg1).addReg(Arg2));
+  // Emit the compare.
+  Type *Ty = CI->getOperand(0)->getType();
+  if (!ARMEmitCmp(Ty, CI->getOperand(0), CI->getOperand(1)))
+    return false;
 
   // For floating point we need to move the result to a comparison register
   // that we can then use for branches.
+  bool isFloat = Ty->isFloatTy() || Ty->isDoubleTy();
   if (isFloat)
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(ARM::FMSTAT)));
@@ -1275,6 +1280,7 @@ bool ARMFastISel::SelectCmp(const Instruction *I) {
   Constant *Zero
     = ConstantInt::get(Type::getInt32Ty(*Context), 0);
   unsigned ZeroReg = TargetMaterializeConstant(Zero);
+  unsigned CondReg = isFloat ? ARM::FPSCR : ARM::CPSR;
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(MovCCOpc), DestReg)
           .addReg(ZeroReg).addImm(1)
           .addImm(ARMPred).addReg(CondReg);
