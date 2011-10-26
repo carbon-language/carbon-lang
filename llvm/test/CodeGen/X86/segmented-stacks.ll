@@ -30,6 +30,10 @@ false:
 ; X32-NEXT: addl $8, %esp
 ; X32-NEXT: ret 
 
+; X32:      movl %esp, %eax
+; X32-NEXT: subl %ecx, %eax
+; X32-NEXT: cmpl %eax, %gs:48
+
 ; X32:      movl %eax, %esp
 
 ; X32:      subl $12, %esp
@@ -47,14 +51,15 @@ false:
 ; X64-NEXT: callq __morestack
 ; X64-NEXT: ret
 
-; X64:      movq %rsp, %rax
-; X64-NEXT: subq %rcx, %rax
-; X64-NEXT: cmpq %rax, %fs:112
+; X64:      movq %rsp, %rdi
+; X64-NEXT: subq %rax, %rdi
+; X64-NEXT: cmpq %rdi, %fs:112
 
-; X64:      movq %rax, %rsp
+; X64:      movq %rdi, %rsp
 
-; X64:      movq %rcx, %rdi
+; X64:      movq %rax, %rdi
 ; X64-NEXT: callq __morestack_allocate_stack_space
+; X64-NEXT: movq %rax, %rdi
 
 }
 

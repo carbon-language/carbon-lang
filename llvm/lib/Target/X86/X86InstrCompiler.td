@@ -112,14 +112,14 @@ let Defs = [EAX, ESP, EFLAGS], Uses = [ESP] in
 // allocated by bumping the stack pointer. Otherwise memory is allocated from 
 // the heap.
 
-let Defs = [EAX, ESP, EFLAGS], Uses = [ESP, EAX] in
+let Defs = [EAX, ESP, EFLAGS], Uses = [ESP] in
 def SEG_ALLOCA_32 : I<0, Pseudo, (outs GR32:$dst), (ins GR32:$size),
                       "# variable sized alloca for segmented stacks",
                       [(set GR32:$dst,
                          (X86SegAlloca GR32:$size))]>,
                     Requires<[In32BitMode]>;
 
-let Defs = [RAX, RSP, EFLAGS], Uses = [RSP, RAX] in
+let Defs = [RAX, RSP, EFLAGS], Uses = [RSP] in
 def SEG_ALLOCA_64 : I<0, Pseudo, (outs GR64:$dst), (ins GR64:$size),
                       "# variable sized alloca for segmented stacks",
                       [(set GR64:$dst,
