@@ -4,7 +4,7 @@ class A
 {
 };
 
-// RUN: env CINDEXTEST_EDITING=1 c-index-test -test-load-source-reparse 2 all -I%S/Inputs %s | FileCheck %s
+// RUN: env CINDEXTEST_EDITING=1 c-index-test -test-load-source-reparse 2 all -I%S/Inputs -fno-delayed-template-parsing %s | FileCheck %s
 
 // CHECK: redeclarations.h:1:7: ClassDecl=X:1:7 (Definition) Extent=[1:1 - 4:2]
 // CHECK: redeclarations.h:8:7: ClassTemplate=B:8:7 (Definition) Extent=[7:1 - 10:2]
