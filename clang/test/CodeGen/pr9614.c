@@ -10,6 +10,6 @@ int f(void) {
 
 // CHECK-NOT: define
 // CHECK: define i32 @f()
-// CHECK: %call = call i32 @foo()
-// CHECK: ret i32 %call
+// CHECK: call i32 @foo()
+// CHECK-NEXT: ret i32
 // CHECK-NOT: define
