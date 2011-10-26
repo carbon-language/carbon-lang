@@ -870,6 +870,9 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
         // Visit each predecessor only once.
         if (!UniquePreds.insert(PBB))
           continue;
+        // Skip blocks which may jump to a landing pad. Can't tail merge these.
+        if (PBB->getLandingPadSuccessor())
+          continue;
         MachineBasicBlock *TBB = 0, *FBB = 0;
         SmallVector<MachineOperand, 4> Cond;
         if (!TII->AnalyzeBranch(*PBB, TBB, FBB, Cond, true)) {
