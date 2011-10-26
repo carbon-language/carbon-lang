@@ -745,10 +745,15 @@ void llvm::ComputeSignBit(Value *V, bool &KnownZero, bool &KnownOne,
 /// bit set when defined. For vectors return true if every element is known to
 /// be a power of two when defined.  Supports values with integer or pointer
 /// types and vectors of integers.
-bool llvm::isPowerOfTwo(Value *V, const TargetData *TD, unsigned Depth) {
-  if (ConstantInt *CI = dyn_cast<ConstantInt>(V))
-    return CI->getValue().isPowerOf2();
-  // TODO: Handle vector constants.
+bool llvm::isPowerOfTwo(Value *V, const TargetData *TD, bool OrZero,
+                        unsigned Depth) {
+  if (Constant *C = dyn_cast<Constant>(V)) {
+    if (C->isNullValue())
+      return OrZero;
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(C))
+      return CI->getValue().isPowerOf2();
+    // TODO: Handle vector constants.
+  }
 
   // 1 << X is clearly a power of two if the one is not shifted off the end.  If
   // it is shifted off the end then the result is undefined.
@@ -765,11 +770,23 @@ bool llvm::isPowerOfTwo(Value *V, const TargetData *TD, unsigned Depth) {
     return false;
 
   if (ZExtInst *ZI = dyn_cast<ZExtInst>(V))
-    return isPowerOfTwo(ZI->getOperand(0), TD, Depth);
+    return isPowerOfTwo(ZI->getOperand(0), TD, OrZero, Depth);
 
   if (SelectInst *SI = dyn_cast<SelectInst>(V))
-    return isPowerOfTwo(SI->getTrueValue(), TD, Depth) &&
-      isPowerOfTwo(SI->getFalseValue(), TD, Depth);
+    return isPowerOfTwo(SI->getTrueValue(), TD, OrZero, Depth) &&
+      isPowerOfTwo(SI->getFalseValue(), TD, OrZero, Depth);
+
+  Value *X = 0, *Y = 0;
+  if (OrZero && match(V, m_And(m_Value(X), m_Value(Y)))) {
+    // A power of two and'd with anything is a power of two or zero.
+    if (isPowerOfTwo(X, TD, /*OrZero*/true, Depth) ||
+        isPowerOfTwo(Y, TD, /*OrZero*/true, Depth))
+      return true;
+    // X & (-X) is always a power of two or zero.
+    if (match(X, m_Neg(m_Specific(Y))) || match(Y, m_Neg(m_Specific(X))))
+      return true;
+    return false;
+  }
 
   // An exact divide or right shift can only shift off zero bits, so the result
   // is a power of two only if the first operand is a power of two and not
@@ -778,7 +795,7 @@ bool llvm::isPowerOfTwo(Value *V, const TargetData *TD, unsigned Depth) {
       match(V, m_UDiv(m_Value(), m_Value()))) {
     PossiblyExactOperator *PEO = cast<PossiblyExactOperator>(V);
     if (PEO->isExact())
-      return isPowerOfTwo(PEO->getOperand(0), TD, Depth);
+      return isPowerOfTwo(PEO->getOperand(0), TD, OrZero, Depth);
   }
 
   return false;
@@ -879,9 +896,9 @@ bool llvm::isKnownNonZero(Value *V, const TargetData *TD, unsigned Depth) {
     }
 
     // The sum of a non-negative number and a power of two is not zero.
-    if (XKnownNonNegative && isPowerOfTwo(Y, TD, Depth))
+    if (XKnownNonNegative && isPowerOfTwo(Y, TD, /*OrZero*/false, Depth))
       return true;
-    if (YKnownNonNegative && isPowerOfTwo(X, TD, Depth))
+    if (YKnownNonNegative && isPowerOfTwo(X, TD, /*OrZero*/false, Depth))
       return true;
   }
   // X * Y.

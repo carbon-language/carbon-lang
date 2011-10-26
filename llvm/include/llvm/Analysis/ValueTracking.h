@@ -48,8 +48,10 @@ namespace llvm {
   /// isPowerOfTwo - Return true if the given value is known to have exactly one
   /// bit set when defined. For vectors return true if every element is known to
   /// be a power of two when defined.  Supports values with integer or pointer
-  /// type and vectors of integers.
-  bool isPowerOfTwo(Value *V, const TargetData *TD = 0, unsigned Depth = 0);
+  /// type and vectors of integers.  If 'OrZero' is set then returns true if the
+  /// given value is either a power of two or zero.
+  bool isPowerOfTwo(Value *V, const TargetData *TD = 0, bool OrZero = false,
+                    unsigned Depth = 0);
 
   /// isKnownNonZero - Return true if the given value is known to be non-zero
   /// when defined.  For vectors return true if every element is known to be

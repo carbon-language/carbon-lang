@@ -1197,6 +1197,15 @@ static Value *SimplifyAndInst(Value *Op0, Value *Op1, const TargetData *TD,
       (A == Op0 || B == Op0))
     return Op0;
 
+  // A & (-A) = A if A is a power of two or zero.
+  if (match(Op0, m_Neg(m_Specific(Op1))) ||
+      match(Op1, m_Neg(m_Specific(Op0)))) {
+    if (isPowerOfTwo(Op0, TD, /*OrZero*/true))
+      return Op0;
+    if (isPowerOfTwo(Op1, TD, /*OrZero*/true))
+      return Op1;
+  }
+
   // Try some generic simplifications for associative operations.
   if (Value *V = SimplifyAssociativeBinOp(Instruction::And, Op0, Op1, TD, DT,
                                           MaxRecurse))
