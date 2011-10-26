@@ -94,6 +94,14 @@ public:
         return m_count;
     }
     
+    
+    bool
+    AnyOptionWasSet () const
+    {
+        return m_format.OptionWasSet() ||
+               m_byte_size.OptionWasSet() ||
+               m_count.OptionWasSet();
+    }
 
 protected:
 

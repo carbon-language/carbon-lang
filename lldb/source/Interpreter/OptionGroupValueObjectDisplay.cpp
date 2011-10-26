@@ -124,6 +124,7 @@ OptionGroupValueObjectDisplay::SetOptionValue (CommandInterpreter &interpreter,
 void
 OptionGroupValueObjectDisplay::OptionParsingStarting (CommandInterpreter &interpreter)
 {
+    // If these defaults change, be sure to modify AnyOptionWasSet().
     show_types        = false;
     no_summary_depth  = 0;
     show_location     = false;

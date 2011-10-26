@@ -123,7 +123,7 @@ OptionGroupFormat::SetOptionValue (CommandInterpreter &interpreter,
                     ++gdb_format_cstr;
 
                 uint32_t byte_size = SetByteSizeUsingGDBSizeLetter (gdb_format_cstr[0]);
-                if (byte_size == 0)
+                if (byte_size > 0)
                     ++gdb_format_cstr;
                 
                 // We the first character of the "gdb_format_cstr" is not the 

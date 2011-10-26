@@ -46,6 +46,21 @@ public:
     virtual void
     OptionParsingStarting (CommandInterpreter &interpreter);
     
+    bool
+    AnyOptionWasSet () const
+    {
+        return show_types == true ||
+               no_summary_depth  != 0 ||
+               show_location == true ||
+               flat_output == true ||
+               use_objc == true ||
+               max_depth != UINT32_MAX ||
+               ptr_depth != 0 ||
+               use_synth == false ||
+               be_raw == true ||
+               ignore_cap == true;
+    }
+
     bool show_types;
     uint32_t no_summary_depth;
     bool show_location;

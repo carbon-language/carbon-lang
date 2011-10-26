@@ -242,6 +242,14 @@ public:
         return error;
     }
 
+    bool
+    AnyOptionWasSet () const
+    {
+        return m_num_per_line.OptionWasSet() ||
+               m_output_as_binary ||
+               m_view_as_type.OptionWasSet();
+    }
+    
     OptionValueUInt64 m_num_per_line;
     bool m_output_as_binary;
     OptionValueString m_view_as_type;
@@ -266,7 +274,13 @@ public:
         m_format_options (eFormatBytesWithASCII, 1, 8),
         m_memory_options (),
         m_outfile_options (),
-        m_varobj_options()
+        m_varobj_options(),
+        m_next_addr(LLDB_INVALID_ADDRESS),
+        m_prev_byte_size(0),
+        m_prev_format_options (eFormatBytesWithASCII, 1, 8),
+        m_prev_memory_options (),
+        m_prev_outfile_options (),
+        m_prev_varobj_options()
     {
         CommandArgumentEntry arg1;
         CommandArgumentEntry arg2;
@@ -316,6 +330,11 @@ public:
         return &m_option_group;
     }
 
+    virtual const char *GetRepeatCommand (Args &current_command_args, uint32_t index)
+    {
+        return m_cmd_name.c_str();
+    }
+
     virtual bool
     Execute (Args& command,
              CommandReturnObject &result)
@@ -331,7 +350,7 @@ public:
         const size_t argc = command.GetArgumentCount();
 
         
-        if (argc == 0 || argc > 2)
+        if ((argc == 0 && m_next_addr == LLDB_INVALID_ADDRESS) || argc > 2)
         {
             result.AppendErrorWithFormat ("%s takes 1 or two args.\n", m_cmd_name.c_str());
             result.SetStatus(eReturnStatusFailed);
@@ -486,15 +505,39 @@ public:
             return false;
         }
 
+        lldb::addr_t addr;
+        size_t total_byte_size = 0;
+        if (argc == 0)
+        {
+            // Use the last address and byte size and all options as they were
+            // if no options have been set
+            addr = m_next_addr;
+            total_byte_size = m_prev_byte_size;
+            if (!m_format_options.AnyOptionWasSet() && 
+                !m_memory_options.AnyOptionWasSet() &&
+                !m_outfile_options.AnyOptionWasSet() &&
+                !m_varobj_options.AnyOptionWasSet())
+            {
+                m_format_options = m_prev_format_options;
+                m_memory_options = m_prev_memory_options;
+                m_outfile_options = m_prev_outfile_options;
+                m_varobj_options = m_prev_varobj_options;
+            }
+        }
+
         size_t item_count = m_format_options.GetCountValue().GetCurrentValue();
         const size_t item_byte_size = m_format_options.GetByteSizeValue().GetCurrentValue();
         const size_t num_per_line = m_memory_options.m_num_per_line.GetCurrentValue();
 
-        size_t total_byte_size = item_count * item_byte_size;
         if (total_byte_size == 0)
-            total_byte_size = 32;
+        {
+            total_byte_size = item_count * item_byte_size;
+            if (total_byte_size == 0)
+                total_byte_size = 32;
+        }
 
-        lldb::addr_t addr = Args::StringToUInt64(command.GetArgumentAtIndex(0), LLDB_INVALID_ADDRESS, 0);
+        if (argc > 0)
+            addr = Args::StringToUInt64(command.GetArgumentAtIndex(0), LLDB_INVALID_ADDRESS, 0);
 
         if (addr == LLDB_INVALID_ADDRESS)
         {
@@ -546,6 +589,15 @@ public:
             
             if (bytes_read < total_byte_size)
                 result.AppendWarningWithFormat("Not all bytes (%lu/%lu) were able to be read from 0x%llx.\n", bytes_read, total_byte_size, addr);
+            else
+            {
+                m_next_addr = addr + bytes_read;
+                m_prev_byte_size = bytes_read; 
+                m_prev_format_options = m_format_options;
+                m_prev_memory_options = m_memory_options;
+                m_prev_outfile_options = m_outfile_options;
+                m_prev_varobj_options = m_varobj_options;
+            }
         }
 
         StreamFile outfile_stream;
@@ -674,7 +726,12 @@ protected:
     OptionGroupReadMemory m_memory_options;
     OptionGroupOutputFile m_outfile_options;
     OptionGroupValueObjectDisplay m_varobj_options;
-
+    lldb::addr_t m_next_addr;
+    lldb::addr_t m_prev_byte_size; 
+    OptionGroupFormat m_prev_format_options;
+    OptionGroupReadMemory m_prev_memory_options;
+    OptionGroupOutputFile m_prev_outfile_options;
+    OptionGroupValueObjectDisplay m_prev_varobj_options;
 };
 
 

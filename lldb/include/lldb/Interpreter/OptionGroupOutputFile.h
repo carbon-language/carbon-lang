@@ -57,6 +57,12 @@ public:
     {
         return m_append;
     }
+    
+    bool
+    AnyOptionWasSet () const
+    {
+        return m_file.OptionWasSet() || m_append.OptionWasSet();
+    }
 
 protected:
     OptionValueFileSpec m_file;
