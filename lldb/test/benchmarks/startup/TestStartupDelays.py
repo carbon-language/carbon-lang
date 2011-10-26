@@ -15,6 +15,8 @@ class StartupDelaysBench(BenchBase):
         # Create self.stopwatch2 for measuring "set first breakpoint".
         # The default self.stopwatch is for "create fresh target".
         self.stopwatch2 = Stopwatch()
+        # Create self.stopwatch3 for measuring "run to breakpoint".
+        self.stopwatch3 = Stopwatch()
         if lldb.bmExecutable:
             self.exe = lldb.bmExecutable
         else:
@@ -35,6 +37,7 @@ class StartupDelaysBench(BenchBase):
         self.run_startup_delays_bench(self.exe, self.break_spec, self.count)
         print "lldb startup delay (create fresh target) benchmark:", self.stopwatch
         print "lldb startup delay (set first breakpoint) benchmark:", self.stopwatch2
+        print "lldb startup delay (run to breakpoint) benchmark:", self.stopwatch3
 
     def run_startup_delays_bench(self, exe, break_spec, count):
         # Set self.child_prompt, which is "(lldb) ".
@@ -61,6 +64,11 @@ class StartupDelaysBench(BenchBase):
             with self.stopwatch2:
                 # Read debug info and set the first breakpoint.
                 child.sendline('breakpoint set %s' % break_spec)
+                child.expect_exact(prompt)
+
+            with self.stopwatch3:
+                # Run to the breakpoint just set.
+                child.sendline('run')
                 child.expect_exact(prompt)
 
             child.sendline('quit')
