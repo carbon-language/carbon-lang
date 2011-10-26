@@ -3345,7 +3345,7 @@ static bool isMemSrcFromString(SDValue Src, std::string &Str) {
 static bool FindOptimalMemOpLowering(std::vector<EVT> &MemOps,
                                      unsigned Limit, uint64_t Size,
                                      unsigned DstAlign, unsigned SrcAlign,
-                                     bool NonScalarIntSafe,
+                                     bool IsZeroVal,
                                      bool MemcpyStrSrc,
                                      SelectionDAG &DAG,
                                      const TargetLowering &TLI) {
@@ -3359,7 +3359,7 @@ static bool FindOptimalMemOpLowering(std::vector<EVT> &MemOps,
   // 'MemcpyStrSrc' indicates whether the memcpy source is constant so it does
   // not need to be loaded.
   EVT VT = TLI.getOptimalMemOpType(Size, DstAlign, SrcAlign,
-                                   NonScalarIntSafe, MemcpyStrSrc,
+                                   IsZeroVal, MemcpyStrSrc,
                                    DAG.getMachineFunction());
 
   if (VT == MVT::Other) {
@@ -3606,11 +3606,11 @@ static SDValue getMemsetStores(SelectionDAG &DAG, DebugLoc dl,
   FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(Dst);
   if (FI && !MFI->isFixedObjectIndex(FI->getIndex()))
     DstAlignCanChange = true;
-  bool NonScalarIntSafe =
+  bool IsZeroVal =
     isa<ConstantSDNode>(Src) && cast<ConstantSDNode>(Src)->isNullValue();
   if (!FindOptimalMemOpLowering(MemOps, TLI.getMaxStoresPerMemset(OptSize),
                                 Size, (DstAlignCanChange ? 0 : Align), 0,
-                                NonScalarIntSafe, false, DAG, TLI))
+                                IsZeroVal, false, DAG, TLI))
     return SDValue();
 
   if (DstAlignCanChange) {

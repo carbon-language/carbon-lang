@@ -646,7 +646,7 @@ public:
   /// alignment can satisfy any constraint. Similarly if SrcAlign is zero it
   /// means there isn't a need to check it against alignment requirement,
   /// probably because the source does not need to be loaded. If
-  /// 'NonScalarIntSafe' is true, that means it's safe to return a
+  /// 'IsZeroVal' is true, that means it's safe to return a
   /// non-scalar-integer type, e.g. empty string source, constant, or loaded
   /// from memory. 'MemcpyStrSrc' indicates whether the memcpy source is
   /// constant so it does not need to be loaded.
@@ -654,7 +654,7 @@ public:
   /// target-independent logic.
   virtual EVT getOptimalMemOpType(uint64_t /*Size*/,
                                   unsigned /*DstAlign*/, unsigned /*SrcAlign*/,
-                                  bool /*NonScalarIntSafe*/,
+                                  bool /*IsZeroVal*/,
                                   bool /*MemcpyStrSrc*/,
                                   MachineFunction &/*MF*/) const {
     return MVT::Other;
