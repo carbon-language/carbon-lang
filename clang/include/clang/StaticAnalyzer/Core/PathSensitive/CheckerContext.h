@@ -138,17 +138,6 @@ public:
     Eng.getBugReporter().EmitReport(R);
   }
 
-  /// \brief Emit a very simple diagnostic report. Should only be used for
-  ///        non-path sensitive checkers.
-  // TODO: We should not need it here!
-  void EmitBasicReport(StringRef Name,
-                       StringRef Category,
-                       StringRef Str, PathDiagnosticLocation Loc,
-                       SourceRange* RBeg, unsigned NumRanges) {
-    Eng.getBugReporter().EmitBasicReport(Name, Category, Str, Loc,
-                                         RBeg, NumRanges);
-  }
-
 private:
   ExplodedNode *addTransitionImpl(const ProgramState *state,
                                  bool markAsSink,
