@@ -284,7 +284,25 @@ be used to verify some algorithms.
    projects that have already been updated to work with LLVM 3.0.</p>
 
 <!--=========================================================================-->
+<h3>ClamAV</h3>
+  
+<div>
 
+<p><a href="http://www.clamav.net">Clam AntiVirus</a> is an open source (GPL)
+   anti-virus toolkit for UNIX, designed especially for e-mail scanning on mail
+   gateways.</p>
+
+<p>Since version 0.96 it
+   has <a href="http://vrt-sourcefire.blogspot.com/2010/09/introduction-to-clamavs-low-level.html">bytecode
+   signatures</a> that allow writing detections for complex malware.</p>
+
+<p>It uses LLVM's JIT to speed up the execution of bytecode on X86, X86-64,
+   PPC32/64, falling back to its own interpreter otherwise.  The git version was
+   updated to work with LLVM 3.0.</p>
+
+</div>
+
+<!--=========================================================================-->
 <!-- FIXME: Comment out
 <h3>Crack Programming Language</h3>
 
