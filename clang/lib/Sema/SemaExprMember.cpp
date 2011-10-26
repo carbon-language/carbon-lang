@@ -970,6 +970,17 @@ static bool isPointerToRecordType(QualType T) {
   return false;
 }
 
+/// Perform conversions on the LHS of a member access expression.
+ExprResult
+Sema::PerformMemberExprBaseConversion(Expr *Base, bool IsArrow) {
+  ExprResult BaseResult = DefaultFunctionArrayConversion(Base);
+
+  if (!BaseResult.isInvalid() && IsArrow)
+    BaseResult = DefaultLvalueConversion(BaseResult.take());
+
+  return BaseResult;
+}
+
 /// Look up the given member of the given non-type-dependent
 /// expression.  This can return in one of two ways:
 ///  * If it returns a sentinel null-but-valid result, the caller will
@@ -988,15 +999,9 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
   assert(BaseExpr.get() && "no base expression");
 
   // Perform default conversions.
-  BaseExpr = DefaultFunctionArrayConversion(BaseExpr.take());
+  BaseExpr = PerformMemberExprBaseConversion(BaseExpr.take(), IsArrow);
   if (BaseExpr.isInvalid())
     return ExprError();
-
-  if (IsArrow) {
-    BaseExpr = DefaultLvalueConversion(BaseExpr.take());
-    if (BaseExpr.isInvalid())
-      return ExprError();
-  }
 
   QualType BaseType = BaseExpr.get()->getType();
   assert(!BaseType->isDependentType());
