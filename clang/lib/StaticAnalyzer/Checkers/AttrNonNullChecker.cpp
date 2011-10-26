@@ -125,7 +125,7 @@ void AttrNonNullChecker::checkPreStmt(const CallExpr *CE,
 
   // If we reach here all of the arguments passed the nonnull check.
   // If 'state' has been updated generated a new node.
-  C.generateNode(state);
+  C.addTransition(state);
 }
 
 void ento::registerAttrNonNullChecker(CheckerManager &mgr) {

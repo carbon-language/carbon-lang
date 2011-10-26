@@ -50,7 +50,7 @@ void PointerArithChecker::checkPreStmt(const BinaryOperator *B,
   if (isa<VarRegion>(LR) || isa<CodeTextRegion>(LR) || 
       isa<CompoundLiteralRegion>(LR)) {
 
-    if (ExplodedNode *N = C.generateNode()) {
+    if (ExplodedNode *N = C.addTransition()) {
       if (!BT)
         BT.reset(new BuiltinBug("Dangerous pointer arithmetic",
                             "Pointer arithmetic done on non-array variables "

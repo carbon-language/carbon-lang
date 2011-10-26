@@ -188,7 +188,7 @@ void StackAddrEscapeChecker::checkEndPath(CheckerContext &Ctx) const {
     return;
 
   // Generate an error node.
-  ExplodedNode *N = Ctx.generateNode(state);
+  ExplodedNode *N = Ctx.addTransition(state);
   if (!N)
     return;
 

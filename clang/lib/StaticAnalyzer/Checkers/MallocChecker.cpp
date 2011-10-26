@@ -197,7 +197,7 @@ bool MallocChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
 void MallocChecker::MallocMem(CheckerContext &C, const CallExpr *CE) {
   const ProgramState *state = MallocMemAux(C, CE, CE->getArg(0), UndefinedVal(),
                                       C.getState());
-  C.generateNode(state);
+  C.addTransition(state);
 }
 
 void MallocChecker::MallocMemReturnsAttr(CheckerContext &C, const CallExpr *CE,
@@ -209,12 +209,12 @@ void MallocChecker::MallocMemReturnsAttr(CheckerContext &C, const CallExpr *CE,
   if (I != E) {
     const ProgramState *state =
         MallocMemAux(C, CE, CE->getArg(*I), UndefinedVal(), C.getState());
-    C.generateNode(state);
+    C.addTransition(state);
     return;
   }
   const ProgramState *state = MallocMemAux(C, CE, UnknownVal(), UndefinedVal(),
                                         C.getState());
-  C.generateNode(state);
+  C.addTransition(state);
 }
 
 const ProgramState *MallocChecker::MallocMemAux(CheckerContext &C,  
@@ -252,7 +252,7 @@ void MallocChecker::FreeMem(CheckerContext &C, const CallExpr *CE) const {
   const ProgramState *state = FreeMemAux(C, CE, C.getState(), 0, false);
 
   if (state)
-    C.generateNode(state);
+    C.addTransition(state);
 }
 
 void MallocChecker::FreeMemAttr(CheckerContext &C, const CallExpr *CE,
@@ -265,7 +265,7 @@ void MallocChecker::FreeMemAttr(CheckerContext &C, const CallExpr *CE,
     const ProgramState *state = FreeMemAux(C, CE, C.getState(), *I,
                                       Att->getOwnKind() == OwnershipAttr::Holds);
     if (state)
-      C.generateNode(state);
+      C.addTransition(state);
   }
 }
 
@@ -531,7 +531,7 @@ void MallocChecker::ReallocMem(CheckerContext &C, const CallExpr *CE) const {
 
     const ProgramState *stateMalloc = MallocMemAux(C, CE, CE->getArg(1), 
                                               UndefinedVal(), stateEqual);
-    C.generateNode(stateMalloc);
+    C.addTransition(stateMalloc);
   }
 
   if (const ProgramState *stateNotEqual = state->assume(PtrEQ, false)) {
@@ -541,7 +541,7 @@ void MallocChecker::ReallocMem(CheckerContext &C, const CallExpr *CE) const {
           FreeMemAux(C, CE, stateSizeZero, 0, false)) {
 
         // Bind the return value to NULL because it is now free.
-        C.generateNode(stateFree->BindExpr(CE, svalBuilder.makeNull(), true));
+        C.addTransition(stateFree->BindExpr(CE, svalBuilder.makeNull(), true));
       }
     if (const ProgramState *stateSizeNotZero = stateNotEqual->assume(SizeZero,false))
       if (const ProgramState *stateFree = FreeMemAux(C, CE, stateSizeNotZero,
@@ -549,7 +549,7 @@ void MallocChecker::ReallocMem(CheckerContext &C, const CallExpr *CE) const {
         // FIXME: We should copy the content of the original buffer.
         const ProgramState *stateRealloc = MallocMemAux(C, CE, CE->getArg(1), 
                                                    UnknownVal(), stateFree);
-        C.generateNode(stateRealloc);
+        C.addTransition(stateRealloc);
       }
   }
 }
@@ -564,7 +564,7 @@ void MallocChecker::CallocMem(CheckerContext &C, const CallExpr *CE) {
                                         svalBuilder.getContext().getSizeType());  
   SVal zeroVal = svalBuilder.makeZeroVal(svalBuilder.getContext().CharTy);
 
-  C.generateNode(MallocMemAux(C, CE, TotalSize, zeroVal, state));
+  C.addTransition(MallocMemAux(C, CE, TotalSize, zeroVal, state));
 }
 
 void MallocChecker::checkDeadSymbols(SymbolReaper &SymReaper,
@@ -590,7 +590,7 @@ void MallocChecker::checkDeadSymbols(SymbolReaper &SymReaper,
     }
   }
   
-  ExplodedNode *N = C.generateNode(state->set<RegionState>(RS));
+  ExplodedNode *N = C.addTransition(state->set<RegionState>(RS));
 
   // FIXME: This does not handle when we have multiple leaks at a single
   // place.
@@ -611,7 +611,7 @@ void MallocChecker::checkEndPath(CheckerContext &Ctx) const {
   for (RegionStateTy::iterator I = M.begin(), E = M.end(); I != E; ++I) {
     RefState RS = I->second;
     if (RS.isAllocated()) {
-      ExplodedNode *N = Ctx.generateNode(state);
+      ExplodedNode *N = Ctx.addTransition(state);
       if (N) {
         if (!BT_Leak)
           BT_Leak.reset(new BuiltinBug("Memory leak",
@@ -642,7 +642,7 @@ void MallocChecker::checkPreStmt(const ReturnStmt *S, CheckerContext &C) const {
   if (RS->isAllocated())
     state = state->set<RegionState>(Sym, RefState::getEscaped(S));
 
-  C.generateNode(state);
+  C.addTransition(state);
 }
 
 const ProgramState *MallocChecker::evalAssume(const ProgramState *state, SVal Cond, 
@@ -668,7 +668,7 @@ void MallocChecker::checkLocation(SVal l, bool isLoad, const Stmt *S,
   if (Sym) {
     const RefState *RS = C.getState()->get<RegionState>(Sym);
     if (RS && RS->isReleased()) {
-      if (ExplodedNode *N = C.generateNode()) {
+      if (ExplodedNode *N = C.addTransition()) {
         if (!BT_UseFree)
           BT_UseFree.reset(new BuiltinBug("Use dynamically allocated memory "
                                           "after it is freed."));
@@ -707,7 +707,7 @@ void MallocChecker::checkBind(SVal location, SVal val,
       // Generate a transition for 'nullState' to record the assumption
       // that the state was null.
       if (nullState)
-        C.generateNode(nullState);
+        C.addTransition(nullState);
 
       if (!notNullState)
         return;
@@ -735,7 +735,7 @@ void MallocChecker::checkBind(SVal location, SVal val,
         }
         while (false);
       }
-      C.generateNode(notNullState);
+      C.addTransition(notNullState);
     }
   }
 }

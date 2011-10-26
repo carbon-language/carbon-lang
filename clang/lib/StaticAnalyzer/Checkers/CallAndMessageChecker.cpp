@@ -312,7 +312,7 @@ void CallAndMessageChecker::HandleNilReceiver(CheckerContext &C,
 
     // The result is not consumed by a surrounding expression.  Just propagate
     // the current state.
-    C.generateNode(state);
+    C.addTransition(state);
     return;
   }
 
@@ -349,11 +349,11 @@ void CallAndMessageChecker::HandleNilReceiver(CheckerContext &C,
     // of this case unless we have *a lot* more knowledge.
     //
     SVal V = C.getSValBuilder().makeZeroVal(msg.getType(Ctx));
-    C.generateNode(state->BindExpr(msg.getOriginExpr(), V));
+    C.addTransition(state->BindExpr(msg.getOriginExpr(), V));
     return;
   }
 
-  C.generateNode(state);
+  C.addTransition(state);
 }
 
 void ento::registerCallAndMessageChecker(CheckerManager &mgr) {

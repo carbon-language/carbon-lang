@@ -241,15 +241,15 @@ void StreamChecker::OpenFileAux(CheckerContext &C, const CallExpr *CE) const {
     stateNull =
       stateNull->set<StreamState>(Sym, StreamState::getOpenFailed(CE));
 
-    C.generateNode(stateNotNull);
-    C.generateNode(stateNull);
+    C.addTransition(stateNotNull);
+    C.addTransition(stateNull);
   }
 }
 
 void StreamChecker::Fclose(CheckerContext &C, const CallExpr *CE) const {
   const ProgramState *state = CheckDoubleClose(CE, C.getState(), C);
   if (state)
-    C.generateNode(state);
+    C.addTransition(state);
 }
 
 void StreamChecker::Fread(CheckerContext &C, const CallExpr *CE) const {
@@ -279,7 +279,7 @@ void StreamChecker::Fseek(CheckerContext &C, const CallExpr *CE) const {
   if (x >= 0 && x <= 2)
     return;
 
-  if (ExplodedNode *N = C.generateNode(state)) {
+  if (ExplodedNode *N = C.addTransition(state)) {
     if (!BT_illegalwhence)
       BT_illegalwhence.reset(new BuiltinBug("Illegal whence argument",
 					"The whence argument to fseek() should be "
@@ -426,7 +426,7 @@ void StreamChecker::checkEndPath(CheckerContext &Ctx) const {
   for (SymMap::iterator I = M.begin(), E = M.end(); I != E; ++I) {
     StreamState SS = I->second;
     if (SS.isOpened()) {
-      ExplodedNode *N = Ctx.generateNode(state);
+      ExplodedNode *N = Ctx.addTransition(state);
       if (N) {
         if (!BT_ResourceLeak)
           BT_ResourceLeak.reset(new BuiltinBug("Resource Leak", 
@@ -457,7 +457,7 @@ void StreamChecker::checkPreStmt(const ReturnStmt *S, CheckerContext &C) const {
   if (SS->isOpened())
     state = state->set<StreamState>(Sym, StreamState::getEscaped(S));
 
-  C.generateNode(state);
+  C.addTransition(state);
 }
 
 void ento::registerStreamChecker(CheckerManager &mgr) {

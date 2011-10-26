@@ -94,7 +94,7 @@ void ChrootChecker::Chroot(CheckerContext &C, const CallExpr *CE) const {
   // Once encouter a chroot(), set the enum value ROOT_CHANGED directly in 
   // the GDM.
   state = Mgr.addGDM(state, ChrootChecker::getTag(), (void*) ROOT_CHANGED);
-  C.generateNode(state);
+  C.addTransition(state);
 }
 
 void ChrootChecker::Chdir(CheckerContext &C, const CallExpr *CE) const {
@@ -120,7 +120,7 @@ void ChrootChecker::Chdir(CheckerContext &C, const CallExpr *CE) const {
     }
   }
 
-  C.generateNode(state);
+  C.addTransition(state);
 }
 
 // Check the jail state before any function call except chroot and chdir().
@@ -146,7 +146,7 @@ void ChrootChecker::checkPreStmt(const CallExpr *CE, CheckerContext &C) const {
   void *const* k = state->FindGDM(ChrootChecker::getTag());
   if (k)
     if (isRootChanged((intptr_t) *k))
-      if (ExplodedNode *N = C.generateNode()) {
+      if (ExplodedNode *N = C.addTransition()) {
         if (!BT_BreakJail)
           BT_BreakJail.reset(new BuiltinBug("Break out of jail",
                                         "No call of chdir(\"/\") immediately "

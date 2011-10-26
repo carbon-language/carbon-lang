@@ -215,7 +215,7 @@ void UnixAPIChecker::CheckMallocZero(CheckerContext &C,
   // Assume the the value is non-zero going forward.
   assert(trueState);
   if (trueState != state) {
-    C.generateNode(trueState);
+    C.addTransition(trueState);
   }
 }
   

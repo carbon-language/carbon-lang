@@ -56,7 +56,7 @@ void CastToStructChecker::checkPreStmt(const CastExpr *CE,
 
   // Now the cast-to-type is struct pointer, the original type is not void*.
   if (!OrigPointeeTy->isRecordType()) {
-    if (ExplodedNode *N = C.generateNode()) {
+    if (ExplodedNode *N = C.addTransition()) {
       if (!BT)
         BT.reset(new BuiltinBug("Cast from non-struct type to struct type",
                             "Casting a non-structure type to a structure type "

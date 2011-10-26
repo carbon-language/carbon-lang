@@ -166,7 +166,7 @@ void ArrayBoundCheckerV2::checkLocation(SVal location, bool isLoad,
   while (false);
   
   if (state != originalState)
-    checkerContext.generateNode(state);
+    checkerContext.addTransition(state);
 }
 
 void ArrayBoundCheckerV2::reportOOB(CheckerContext &checkerContext,

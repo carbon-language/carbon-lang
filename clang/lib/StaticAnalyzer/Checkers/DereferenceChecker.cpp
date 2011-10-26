@@ -184,7 +184,7 @@ void DereferenceChecker::checkLocation(SVal l, bool isLoad, const Stmt* S,
   }
 
   // From this point forward, we know that the location is not null.
-  C.generateNode(notNullState);
+  C.addTransition(notNullState);
 }
 
 void ento::registerDereferenceChecker(CheckerManager &mgr) {

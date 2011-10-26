@@ -316,7 +316,7 @@ void CFNumberCreateChecker::checkPreStmt(const CallExpr *CE,
   //  the bits initialized to the provided values.
   //
   if (ExplodedNode *N = SourceSize < TargetSize ? C.generateSink() 
-                                                : C.generateNode()) {
+                                                : C.addTransition()) {
     llvm::SmallString<128> sbuf;
     llvm::raw_svector_ostream os(sbuf);
     
@@ -421,7 +421,7 @@ void CFRetainReleaseChecker::checkPreStmt(const CallExpr *CE,
   }
 
   // From here on, we know the argument is non-null.
-  C.generateNode(stateFalse);
+  C.addTransition(stateFalse);
 }
 
 //===----------------------------------------------------------------------===//
@@ -464,7 +464,7 @@ void ClassReleaseChecker::checkPreObjCMessage(ObjCMessage msg,
   if (!(S == releaseS || S == retainS || S == autoreleaseS || S == drainS))
     return;
   
-  if (ExplodedNode *N = C.generateNode()) {
+  if (ExplodedNode *N = C.addTransition()) {
     llvm::SmallString<200> buf;
     llvm::raw_svector_ostream os(buf);
 
@@ -612,7 +612,7 @@ void VariadicMethodTypeChecker::checkPreObjCMessage(ObjCMessage msg,
 
     // Generate only one error node to use for all bug reports.
     if (!errorNode.hasValue()) {
-      errorNode = C.generateNode();
+      errorNode = C.addTransition();
     }
 
     if (!errorNode.getValue())

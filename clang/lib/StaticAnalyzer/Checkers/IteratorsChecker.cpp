@@ -405,7 +405,7 @@ void IteratorsChecker::checkExpr(CheckerContext &C, const Expr *E) const {
   if (!RS)
     return;
   if (RS->isInvalid()) {
-    if (ExplodedNode *N = C.generateNode()) {
+    if (ExplodedNode *N = C.addTransition()) {
       if (!BT_Invalid)
         // FIXME: We are eluding constness here.
         const_cast<IteratorsChecker*>(this)->BT_Invalid = new BuiltinBug("");
@@ -428,7 +428,7 @@ void IteratorsChecker::checkExpr(CheckerContext &C, const Expr *E) const {
     }
   }
   else if (RS->isUndefined()) {
-    if (ExplodedNode *N = C.generateNode()) {
+    if (ExplodedNode *N = C.addTransition()) {
       if (!BT_Undefined)
         // FIXME: We are eluding constness here.
         const_cast<IteratorsChecker*>(this)->BT_Undefined =
@@ -472,7 +472,7 @@ void IteratorsChecker::checkPreStmt(const CXXOperatorCallExpr *OCE,
   if (Kind == OO_Equal) {
     checkExpr(C, OCE->getArg(1));
     state = handleAssign(state, OCE->getArg(0), OCE->getArg(1), LC);
-    C.generateNode(state);
+    C.addTransition(state);
     return;
   }
   else {
@@ -497,7 +497,7 @@ void IteratorsChecker::checkPreStmt(const CXXOperatorCallExpr *OCE,
       if (!RS1)
         return;
       if (RS0->getMemRegion() != RS1->getMemRegion()) {
-      if (ExplodedNode *N = C.generateNode()) {
+      if (ExplodedNode *N = C.addTransition()) {
           if (!BT_Incompatible)
             const_cast<IteratorsChecker*>(this)->BT_Incompatible =
               new BuiltinBug(
@@ -550,7 +550,7 @@ void IteratorsChecker::checkPreStmt(const DeclStmt *DS,
       }
     }
   }
-  C.generateNode(state);
+  C.addTransition(state);
 }
 
 
@@ -600,6 +600,6 @@ void IteratorsChecker::checkPreStmt(const CXXMemberCallExpr *MCE,
     state = state->add<CalledReserved>(MR);
   
   if (state != C.getState())
-    C.generateNode(state);
+    C.addTransition(state);
 }
 

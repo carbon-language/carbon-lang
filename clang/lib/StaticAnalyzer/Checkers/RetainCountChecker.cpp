@@ -51,7 +51,7 @@ public:
 
   ExplodedNode *MakeNode(const ProgramState *state, ExplodedNode *Pred,
                          bool MarkAsSink = false) {
-    return C->generateNode(state, Pred, tag, MarkAsSink);
+    return C->addTransition(state, Pred, tag, MarkAsSink);
   }
 };
 } // end anonymous namespace
@@ -2515,7 +2515,7 @@ void RetainCountChecker::checkPostStmt(const BlockExpr *BE,
   state =
     state->scanReachableSymbols<StopTrackingCallback>(Regions.data(),
                                     Regions.data() + Regions.size()).getState();
-  C.generateNode(state);
+  C.addTransition(state);
 }
 
 void RetainCountChecker::checkPostStmt(const CastExpr *CE,
@@ -2555,7 +2555,7 @@ void RetainCountChecker::checkPostStmt(const CastExpr *CE,
     return;
   }
 
-  C.generateNode(state);
+  C.addTransition(state);
 }
 
 void RetainCountChecker::checkPostStmt(const CallExpr *CE,
@@ -2768,7 +2768,7 @@ void RetainCountChecker::checkSummary(const RetainSummary &Summ,
   if (state == C.getState()) {
     NewNode = C.getPredecessor();
   } else {
-    NewNode = C.generateNode(state);
+    NewNode = C.addTransition(state);
   }
 
   // Annotate the node with summary we used.
@@ -3045,7 +3045,7 @@ bool RetainCountChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
       state = state->set<RefBindings>(Sym, *Binding);
   }
 
-  C.generateNode(state);
+  C.addTransition(state);
   return true;
 }
 
@@ -3099,7 +3099,7 @@ void RetainCountChecker::checkPreStmt(const ReturnStmt *S,
 
   // Update the binding.
   state = state->set<RefBindings>(Sym, X);
-  ExplodedNode *Pred = C.generateNode(state);
+  ExplodedNode *Pred = C.addTransition(state);
 
   // At this point we have updated the state properly.
   // Everything after this is merely checking to see if the return value has
@@ -3177,7 +3177,7 @@ void RetainCountChecker::checkReturnWithRetEffect(const ReturnStmt *S,
 
         static SimpleProgramPointTag
                ReturnOwnLeakTag("RetainCountChecker : ReturnsOwnLeak");
-        ExplodedNode *N = C.generateNode(state, Pred, &ReturnOwnLeakTag);
+        ExplodedNode *N = C.addTransition(state, Pred, &ReturnOwnLeakTag);
         if (N) {
           const LangOptions &LOpts = C.getASTContext().getLangOptions();
           bool GCEnabled = C.isObjCGCEnabled();
@@ -3197,7 +3197,7 @@ void RetainCountChecker::checkReturnWithRetEffect(const ReturnStmt *S,
 
       static SimpleProgramPointTag
              ReturnNotOwnedTag("RetainCountChecker : ReturnNotOwnedForOwned");
-      ExplodedNode *N = C.generateNode(state, Pred, &ReturnNotOwnedTag);
+      ExplodedNode *N = C.addTransition(state, Pred, &ReturnNotOwnedTag);
       if (N) {
         if (!returnNotOwnedForOwned)
           returnNotOwnedForOwned.reset(new ReturnedNotOwnedForOwned());
@@ -3249,7 +3249,7 @@ void RetainCountChecker::checkBind(SVal loc, SVal val, const Stmt *S,
   // Otherwise, find all symbols referenced by 'val' that we are tracking
   // and stop tracking them.
   state = state->scanReachableSymbols<StopTrackingCallback>(val).getState();
-  C.generateNode(state);
+  C.addTransition(state);
 }
 
 const ProgramState *RetainCountChecker::evalAssume(const ProgramState *state,
@@ -3509,7 +3509,7 @@ void RetainCountChecker::checkDeadSymbols(SymbolReaper &SymReaper,
     B = F.remove(B, *I);
 
   state = state->set<RefBindings>(B);
-  C.generateNode(state, Pred);
+  C.addTransition(state, Pred);
 }
 
 //===----------------------------------------------------------------------===//

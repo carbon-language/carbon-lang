@@ -46,7 +46,7 @@ void AdjustedReturnValueChecker::checkPostStmt(const CallExpr *CE,
   
   // Casting to void?  Discard the value.
   if (expectedResultTy->isVoidType()) {
-    C.generateNode(state->BindExpr(CE, UnknownVal()));
+    C.addTransition(state->BindExpr(CE, UnknownVal()));
     return;
   }                   
 
@@ -82,7 +82,7 @@ void AdjustedReturnValueChecker::checkPostStmt(const CallExpr *CE,
     // the cast avoids some assertion failures elsewhere.
     SValBuilder &svalBuilder = C.getSValBuilder();
     V = svalBuilder.evalCast(V, expectedResultTy, actualResultTy);
-    C.generateNode(state->BindExpr(CE, V));
+    C.addTransition(state->BindExpr(CE, V));
   }
 }
 

@@ -87,36 +87,50 @@ public:
     return Eng.getStateManager();
   }
 
-
   AnalysisDeclContext *getCurrentAnalysisDeclContext() const {
     return Pred->getLocationContext()->getAnalysisDeclContext();
   }
 
-  /// \brief Generate a default checker node (containing checker tag but no
-  /// checker state changes).
-  ExplodedNode *generateNode() {
-    return generateNode(getState());
-  }
-  
-  /// \brief Generate a new checker node.
-  ExplodedNode *generateNode(const ProgramState *state,
-                             const ProgramPointTag *tag = 0) {
-    return generateNodeImpl(state, false, 0, tag);
+  /// \brief Generates a new transition in the program state graph
+  /// (ExplodedGraph). Uses the default CheckerContext predecessor node.
+  ///
+  /// @param State The state of the generated node.
+  /// @param Tag The tag is used to uniquely identify the creation site. If no
+  ///        tag is specified, a default tag, unique to the given checker,
+  ///        will be used. Tags are used to prevent states generated at
+  ///        different sites from caching out.
+  ExplodedNode *addTransition(const ProgramState *State,
+                              const ProgramPointTag *Tag = 0) {
+    return addTransitionImpl(State, false, 0, Tag);
   }
 
-  /// \brief Generate a new checker node with the given predecessor.
+  /// \brief Generates a default transition (containing checker tag but no
+  /// checker state changes).
+  // TODO: Can we remove this one? We always generate autotransitions.
+  ExplodedNode *addTransition() {
+    return addTransition(getState());
+  }
+
+  /// \brief Generates a new transition with the given predecessor.
   /// Allows checkers to generate a chain of nodes.
-  ExplodedNode *generateNode(const ProgramState *state,
-                             ExplodedNode *pred,
-                             const ProgramPointTag *tag = 0,
-                             bool isSink = false) {
-    return generateNodeImpl(state, isSink, pred, tag);
+  ///
+  /// @param State The state of the generated node.
+  /// @param Pred The transition will be generated from the specified Pred node
+  ///             to the newly generated node.
+  /// @param Tag The tag to uniquely identify the creation site.
+  /// @param IsSink Mark the new node as sink, which will stop exploration of
+  ///               the given path.
+  ExplodedNode *addTransition(const ProgramState *State,
+                             ExplodedNode *Pred,
+                             const ProgramPointTag *Tag = 0,
+                             bool IsSink = false) {
+    return addTransitionImpl(State, IsSink, Pred, Tag);
   }
 
   /// \brief Generate a sink node. Generating sink stops exploration of the
   /// given path.
   ExplodedNode *generateSink(const ProgramState *state = 0) {
-    return generateNodeImpl(state ? state : getState(), true);
+    return addTransitionImpl(state ? state : getState(), true);
   }
 
   /// \brief Emit the diagnostics report.
@@ -124,6 +138,9 @@ public:
     Eng.getBugReporter().EmitReport(R);
   }
 
+  /// \brief Emit a very simple diagnostic report. Should only be used for
+  ///        non-path sensitive checkers.
+  // TODO: We should not need it here!
   void EmitBasicReport(StringRef Name,
                        StringRef Category,
                        StringRef Str, PathDiagnosticLocation Loc,
@@ -133,7 +150,7 @@ public:
   }
 
 private:
-  ExplodedNode *generateNodeImpl(const ProgramState *state,
+  ExplodedNode *addTransitionImpl(const ProgramState *state,
                                  bool markAsSink,
                                  ExplodedNode *pred = 0,
                                  const ProgramPointTag *tag = 0) {

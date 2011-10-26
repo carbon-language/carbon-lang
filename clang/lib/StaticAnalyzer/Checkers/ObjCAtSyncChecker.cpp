@@ -66,7 +66,7 @@ void ObjCAtSyncChecker::checkPreStmt(const ObjCAtSynchronizedStmt *S,
     if (!notNullState) {
       // Generate an error node.  This isn't a sink since
       // a null mutex just means no synchronization occurs.
-      if (ExplodedNode *N = C.generateNode(nullState)) {
+      if (ExplodedNode *N = C.addTransition(nullState)) {
         if (!BT_null)
           BT_null.reset(new BuiltinBug("Nil value used as mutex for @synchronized() "
                                    "(no synchronization will occur)"));
@@ -84,7 +84,7 @@ void ObjCAtSyncChecker::checkPreStmt(const ObjCAtSynchronizedStmt *S,
   }
 
   if (notNullState)
-    C.generateNode(notNullState);
+    C.addTransition(notNullState);
 }
 
 void ento::registerObjCAtSyncChecker(CheckerManager &mgr) {

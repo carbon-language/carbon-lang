@@ -261,7 +261,7 @@ void MacOSKeychainAPIChecker::
                                     CheckerContext &C) const {
   const ProgramState *State = C.getState();
   State = State->remove<AllocatedData>(AP.first);
-  ExplodedNode *N = C.generateNode(State);
+  ExplodedNode *N = C.addTransition(State);
 
   if (!N)
     return;
@@ -304,7 +304,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
           // Remove the value from the state. The new symbol will be added for
           // tracking when the second allocator is processed in checkPostStmt().
           State = State->remove<AllocatedData>(V);
-          ExplodedNode *N = C.generateNode(State);
+          ExplodedNode *N = C.addTransition(State);
           if (!N)
             return;
           initBugType();
@@ -362,7 +362,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
     if (isEnclosingFunctionParam(ArgExpr))
       return;
 
-    ExplodedNode *N = C.generateNode(State);
+    ExplodedNode *N = C.addTransition(State);
     if (!N)
       return;
     initBugType();
@@ -400,7 +400,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
         // custom deallocator which does the right thing.
         if (DE->getFoundDecl()->getName() != "kCFAllocatorNull") {
           State = State->remove<AllocatedData>(ArgSM);
-          C.generateNode(State);
+          C.addTransition(State);
           return;
         }
       }
@@ -422,7 +422,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
 
   // If the return status is undefined or is error, report a bad call to free.
   if (!definitelyDidnotReturnError(AS->Region, State, C.getSValBuilder())) {
-    ExplodedNode *N = C.generateNode(State);
+    ExplodedNode *N = C.addTransition(State);
     if (!N)
       return;
     initBugType();
@@ -434,7 +434,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
     return;
   }
 
-  C.generateNode(State);
+  C.addTransition(State);
 }
 
 void MacOSKeychainAPIChecker::checkPostStmt(const CallExpr *CE,
@@ -482,7 +482,7 @@ void MacOSKeychainAPIChecker::checkPostStmt(const CallExpr *CE,
     State = State->set<AllocatedData>(V, AllocationState(ArgExpr, idx,
                                                          RetStatusSymbol));
     assert(State);
-    C.generateNode(State);
+    C.addTransition(State);
   }
 }
 
@@ -500,7 +500,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const ReturnStmt *S,
   state = state->remove<AllocatedData>(getSymbolForRegion(C, V));
 
   // Proceed from the new state.
-  C.generateNode(state);
+  C.addTransition(state);
 }
 
 BugReport *MacOSKeychainAPIChecker::
@@ -545,7 +545,7 @@ void MacOSKeychainAPIChecker::checkDeadSymbols(SymbolReaper &SR,
     return;
 
   // Generate the new, cleaned up state.
-  ExplodedNode *N = C.generateNode(State);
+  ExplodedNode *N = C.addTransition(State);
   if (!N)
     return;
 
@@ -584,7 +584,7 @@ void MacOSKeychainAPIChecker::checkEndPath(CheckerContext &Ctx) const {
   if (!Changed)
     return;
 
-  ExplodedNode *N = Ctx.generateNode(state);
+  ExplodedNode *N = Ctx.addTransition(state);
   if (!N)
     return;
 
