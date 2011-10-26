@@ -773,56 +773,18 @@ void DAGTypeLegalizer::SplitVecRes_UnaryOp(SDNode *N, SDValue &Lo,
   DebugLoc dl = N->getDebugLoc();
   GetSplitDestVTs(N->getValueType(0), LoVT, HiVT);
 
-  // Split the input.
+  // If the input also splits, handle it directly for a compile time speedup.
+  // Otherwise split it by hand.
   EVT InVT = N->getOperand(0).getValueType();
-  switch (getTypeAction(InVT)) {
-  default: llvm_unreachable("Unexpected type action!");
-  case TargetLowering::TypeLegal: {
+  if (getTypeAction(InVT) == TargetLowering::TypeSplitVector) {
+    GetSplitVector(N->getOperand(0), Lo, Hi);
+  } else {
     EVT InNVT = EVT::getVectorVT(*DAG.getContext(), InVT.getVectorElementType(),
                                  LoVT.getVectorNumElements());
     Lo = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, InNVT, N->getOperand(0),
                      DAG.getIntPtrConstant(0));
     Hi = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, InNVT, N->getOperand(0),
                      DAG.getIntPtrConstant(InNVT.getVectorNumElements()));
-    break;
-  }
-  case TargetLowering::TypePromoteInteger: {
-    SDValue InOp;
-    if (N->getOpcode() == ISD::SIGN_EXTEND ||
-        N->getOpcode() == ISD::SINT_TO_FP) {
-      InOp =   SExtPromotedInteger(N->getOperand(0));
-    } else if (
-        N->getOpcode() == ISD::ZERO_EXTEND ||
-        N->getOpcode() == ISD::UINT_TO_FP) {
-      InOp =   ZExtPromotedInteger(N->getOperand(0));
-    } else {
-      InOp = GetPromotedInteger(N->getOperand(0));
-    }
-    EVT InNVT = EVT::getVectorVT(*DAG.getContext(),
-                                 InOp.getValueType().getVectorElementType(),
-                                 LoVT.getVectorNumElements());
-    Lo = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, InNVT, InOp,
-                     DAG.getIntPtrConstant(0));
-    Hi = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, InNVT, InOp,
-                     DAG.getIntPtrConstant(InNVT.getVectorNumElements()));
-    break;
-  }
-  case TargetLowering::TypeSplitVector:
-    GetSplitVector(N->getOperand(0), Lo, Hi);
-    break;
-  case TargetLowering::TypeWidenVector: {
-    // If the result needs to be split and the input needs to be widened,
-    // the two types must have different lengths. Use the widened result
-    // and extract from it to do the split.
-    SDValue InOp = GetWidenedVector(N->getOperand(0));
-    EVT InNVT = EVT::getVectorVT(*DAG.getContext(), InVT.getVectorElementType(),
-                                 LoVT.getVectorNumElements());
-    Lo = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, InNVT, InOp,
-                     DAG.getIntPtrConstant(0));
-    Hi = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, InNVT, InOp,
-                     DAG.getIntPtrConstant(InNVT.getVectorNumElements()));
-    break;
-  }
   }
 
   if (N->getOpcode() == ISD::FP_ROUND) {
