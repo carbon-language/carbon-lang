@@ -2145,6 +2145,13 @@ public:
     CXXScopeSpec SS;
     SS.Adopt(QualifierLoc);
 
+    if (BaseE && IsArrow) {
+      ExprResult BaseResult = getSema().DefaultLvalueConversion(BaseE);
+      if (BaseResult.isInvalid())
+        return ExprError();
+      BaseE = BaseResult.take();
+    }
+
     return SemaRef.BuildMemberReferenceExpr(BaseE, BaseType,
                                             OperatorLoc, IsArrow,
                                             SS, FirstQualifierInScope,

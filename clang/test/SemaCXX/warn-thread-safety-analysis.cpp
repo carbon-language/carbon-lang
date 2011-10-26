@@ -1533,4 +1533,19 @@ namespace template_member_test {
 
   template struct IndirectLock<int>; // expected-note {{here}}
 
+  struct V {
+    void f(int);
+    void f(double);
+
+    Mutex m;
+    V *p GUARDED_BY(this->m);
+  };
+  template<typename U> struct W {
+    V v;
+    void f(U u) {
+      v.p->f(u); // expected-warning {{reading variable 'p' requires locking 'm'}}
+    }
+  };
+  template struct W<int>; // expected-note {{here}}
+
 }
