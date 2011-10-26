@@ -1576,10 +1576,17 @@ bool ShuffleVectorInst::isValidOperands(const Value *V1, const Value *V2,
         return false;
       }
     }
-  }
-  else if (!isa<UndefValue>(Mask) && !isa<ConstantAggregateZero>(Mask))
+  } else if (!isa<UndefValue>(Mask) && !isa<ConstantAggregateZero>(Mask)) {
+    // The bitcode reader can create a place holder for a forward reference
+    // used as the shuffle mask. When this occurs, the shuffle mask will
+    // fall into this case and fail. To avoid this error, do this bit of
+    // ugliness to allow such a mask pass.
+    if (const ConstantExpr* CE = dyn_cast<ConstantExpr>(Mask)) {
+      if (CE->getOpcode() == Instruction::UserOp1)
+        return true;
+    }
     return false;
-  
+  }
   return true;
 }
 
