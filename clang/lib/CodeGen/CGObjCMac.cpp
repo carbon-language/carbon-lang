@@ -1325,13 +1325,13 @@ public:
 /// value.
 struct NullReturnState {
   llvm::BasicBlock *NullBB;
-
-  NullReturnState() : NullBB(0) {}
+  llvm::BasicBlock *callBB;
+  NullReturnState() : NullBB(0), callBB(0) {}
 
   void init(CodeGenFunction &CGF, llvm::Value *receiver) {
     // Make blocks for the null-init and call edges.
     NullBB = CGF.createBasicBlock("msgSend.nullinit");
-    llvm::BasicBlock *callBB = CGF.createBasicBlock("msgSend.call");
+    callBB = CGF.createBasicBlock("msgSend.call");
 
     // Check for a null receiver and, if there is one, jump to the
     // null-init test.
@@ -1351,13 +1351,29 @@ struct NullReturnState {
 
     // Emit the null-init block and perform the null-initialization there.
     CGF.EmitBlock(NullBB);
-    assert(result.isAggregate() && "null init of non-aggregate result?");
-    CGF.EmitNullInitialization(result.getAggregateAddr(), resultType);
+    if (!resultType->isAnyComplexType()) {
+      assert(result.isAggregate() && "null init of non-aggregate result?");
+      CGF.EmitNullInitialization(result.getAggregateAddr(), resultType);
+      // Jump to the continuation block.
+      CGF.EmitBlock(contBB);
+      return result;
+    }
 
-    // Jump to the continuation block.
+    // _Complex type
+    // FIXME. Now easy to handle any other scalar type whose result is returned
+    // in memory due to ABI limitations.
     CGF.EmitBlock(contBB);
-
-    return result;
+    CodeGenFunction::ComplexPairTy CallCV = result.getComplexVal();
+    llvm::Type *MemberType = CallCV.first->getType();
+    llvm::Constant *ZeroCV = llvm::Constant::getNullValue(MemberType);
+    // Create phi instruction for scalar complex value.
+    llvm::PHINode *PHIReal = CGF.Builder.CreatePHI(MemberType, 2);
+    PHIReal->addIncoming(ZeroCV, NullBB);
+    PHIReal->addIncoming(CallCV.first, callBB);
+    llvm::PHINode *PHIImag = CGF.Builder.CreatePHI(MemberType, 2);
+    PHIImag->addIncoming(ZeroCV, NullBB);
+    PHIImag->addIncoming(CallCV.second, callBB);
+    return RValue::getComplex(PHIReal, PHIImag);
   }
 };
 
