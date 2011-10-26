@@ -1481,11 +1481,7 @@ DataExtractor::Dump
                 s->PutChar('\'');
                 for (i=0; i<item_byte_size; ++i)
                 {
-                    uint8_t ch;
-                    if (i > 0)
-                        ch = (uint8_t)(uval64 >> ((item_byte_size - i - 1) * 8));
-                    else
-                        ch = (uint8_t)uval64;
+                    uint8_t ch = (uint8_t)(uval64 >> ((item_byte_size - i - 1) * 8));
                     if (isprint(ch))
                         s->Printf ("%c", ch);
                     else
