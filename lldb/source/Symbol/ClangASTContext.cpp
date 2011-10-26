@@ -61,6 +61,7 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Expression/ASTDumper.h"
+#include "lldb/Symbol/VerifyDecl.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
@@ -1182,7 +1183,13 @@ ClangASTContext::CreateClassTemplateDecl (DeclContext *decl_ctx,
                                                      NULL);
     
     if (class_template_decl)
+    {
         decl_ctx->addDecl (class_template_decl);
+        
+#ifdef LLDB_CONFIGURATION_DEBUG
+        VerifyDecl(class_template_decl);
+#endif
+    }
 
     return class_template_decl;
 }
@@ -1691,6 +1698,10 @@ ClangASTContext::AddMethodToCXXRecordType
     cxx_method_decl->setParams (ArrayRef<ParmVarDecl*>(params));
     
     cxx_record_decl->addDecl (cxx_method_decl);
+    
+#ifdef LLDB_CONFIGURATION_DEBUG
+    VerifyDecl(cxx_method_decl);
+#endif
 
 //    printf ("decl->isPolymorphic()             = %i\n", cxx_record_decl->isPolymorphic());
 //    printf ("decl->isAggregate()               = %i\n", cxx_record_decl->isAggregate());
@@ -1756,6 +1767,10 @@ ClangASTContext::AddFieldToRecordType
             if (field)
             {
                 record_decl->addDecl(field);
+                
+#ifdef LLDB_CONFIGURATION_DEBUG
+                VerifyDecl(field);
+#endif
             }
         }
         else
@@ -2019,6 +2034,11 @@ ClangASTContext::AddObjCClassIVar
                 if (field)
                 {
                     class_interface_decl->addDecl(field);
+                    
+#ifdef LLDB_CONFIGURATION_DEBUG
+                    VerifyDecl(field);
+#endif
+                    
                     return true;
                 }
             }
@@ -2191,6 +2211,9 @@ ClangASTContext::AddMethodToObjCObjectType
     
     class_interface_decl->addDecl (objc_method_decl);
 
+#ifdef LLDB_CONFIGURATION_DEBUG
+    VerifyDecl(objc_method_decl);
+#endif
 
     return objc_method_decl;
 }
@@ -4269,6 +4292,10 @@ ClangASTContext::GetUniqueNamespaceDeclaration (const char *name, DeclContext *d
         namespace_decl = NamespaceDecl::Create(*ast, decl_ctx, SourceLocation(), SourceLocation(), &identifier_info);
         
         decl_ctx->addDecl (namespace_decl);
+        
+#ifdef LLDB_CONFIGURATION_DEBUG
+        VerifyDecl(namespace_decl);
+#endif
     }
     return namespace_decl;
 }
@@ -4312,6 +4339,11 @@ ClangASTContext::CreateFunctionDeclaration (DeclContext *decl_ctx, const char *n
     }
     if (func_decl)
         decl_ctx->addDecl (func_decl);
+    
+#ifdef LLDB_CONFIGURATION_DEBUG
+    VerifyDecl(func_decl);
+#endif
+    
     return func_decl;
 }
 
@@ -4579,6 +4611,11 @@ ClangASTContext::AddEnumerationValueToEnumerationType
                 if (enumerator_decl)
                 {
                     enum_type->getDecl()->addDecl(enumerator_decl);
+                    
+#ifdef LLDB_CONFIGURATION_DEBUG
+                    VerifyDecl(enumerator_decl);
+#endif
+                    
                     return true;
                 }
             }
