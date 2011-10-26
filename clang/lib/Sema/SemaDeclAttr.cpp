@@ -1949,7 +1949,7 @@ static void handleWeakImportAttr(Sema &S, Decl *D, const AttributeList &Attr) {
         << "weak_import" << 2 /*variable and function*/;
     else if (isa<ObjCPropertyDecl>(D) || isa<ObjCMethodDecl>(D) ||
              (S.Context.getTargetInfo().getTriple().isOSDarwin() &&
-              isa<ObjCInterfaceDecl>(D))) {
+              (isa<ObjCInterfaceDecl>(D) || isa<EnumDecl>(D)))) {
       // Nothing to warn about here.
     } else
       S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
