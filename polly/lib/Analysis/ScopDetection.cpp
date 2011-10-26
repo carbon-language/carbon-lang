@@ -402,7 +402,7 @@ bool ScopDetection::isValidLoop(Loop *L, DetectionContext &Context) const {
   // Is the loop count affine?
   const SCEV *LoopCount = SE->getBackedgeTakenCount(L);
   if (!isValidAffineFunction(LoopCount, Context.CurRegion))
-    INVALID(LoopBound, "Non affine loop bound '" << LoopCount << "'for loop: "
+    INVALID(LoopBound, "Non affine loop bound '" << *LoopCount << "' in loop: "
                        << L->getHeader()->getNameStr());
 
   return true;
