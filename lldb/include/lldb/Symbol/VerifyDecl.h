@@ -10,10 +10,7 @@
 #ifndef lldb_VariableList_h_
 #define lldb_VariableList_h_
 
-namespace clang
-{
-    class Decl;
-}
+#include "ClangForward.h"
 
 namespace lldb_private
 {
