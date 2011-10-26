@@ -5996,9 +5996,10 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
 
     // Remove the landing pad successor from the invoke block and replace it
     // with the new dispatch block.
-    for (MachineBasicBlock::succ_iterator
-           SI = BB->succ_begin(), SE = BB->succ_end(); SI != SE; ++SI) {
-      MachineBasicBlock *SMBB = *SI;
+    SmallVector<MachineBasicBlock*, 4> Successors(BB->succ_begin(),
+                                                  BB->succ_end());
+    while (!Successors.empty()) {
+      MachineBasicBlock *SMBB = Successors.pop_back_val();
       if (SMBB->isLandingPad()) {
         BB->removeSuccessor(SMBB);
         MBBLPads.push_back(SMBB);
