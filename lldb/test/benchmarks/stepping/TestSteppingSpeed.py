@@ -14,17 +14,12 @@ class SteppingSpeedBench(BenchBase):
         BenchBase.setUp(self)
         if lldb.bmExecutable:
             self.exe = lldb.bmExecutable
-            bmExecutableDefauled = False
         else:
             self.exe = self.lldbHere
-            bmExecutableDefauled = True
         if lldb.bmBreakpointSpec:
             self.break_spec = lldb.bmBreakpointSpec
         else:
-            if bmExecutableDefauled:
-                self.break_spec = '-F Driver::MainLoop()'
-            else:
-                self.break_spec = '-n main'
+            self.break_spec = '-n main'
 
         self.count = lldb.bmIterationCount
         if self.count <= 0:

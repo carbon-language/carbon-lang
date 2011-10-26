@@ -1,4 +1,6 @@
-"""Test lldb's disassemblt speed."""
+"""Test lldb's disassemblt speed.  This bench deliberately attaches to an lldb
+inferior and traverses the stack for thread0 to arrive at frame with function
+'MainLoop'.  It is important to specify an lldb executable as the inferior."""
 
 import os, sys
 import unittest2
@@ -12,20 +14,27 @@ class AttachThenDisassemblyBench(BenchBase):
 
     def setUp(self):
         BenchBase.setUp(self)
+        if lldb.bmExecutable:
+            self.exe = lldb.bmExecutable
+        else:
+            self.exe = self.lldbHere
+        self.count = lldb.bmIterationCount
+        if self.count <= 0:
+            self.count = 10
 
     @benchmarks_test
     def test_attach_then_disassembly(self):
         """Attach to a spawned lldb process then run disassembly benchmarks."""
         print
-        self.run_lldb_attach_then_disassembly(10)
+        self.run_lldb_attach_then_disassembly(self.exe, self.count)
         print "lldb disassembly benchmark:", self.stopwatch
 
-    def run_lldb_attach_then_disassembly(self, count):
-        target = self.dbg.CreateTarget(self.lldbHere)
+    def run_lldb_attach_then_disassembly(self, exe, count):
+        target = self.dbg.CreateTarget(exe)
 
         # Spawn a new process and don't display the stdout if not in TraceOn() mode.
         import subprocess
-        popen = subprocess.Popen([self.lldbHere, self.lldbOption],
+        popen = subprocess.Popen([exe, self.lldbOption],
                                  stdout = open(os.devnull, 'w') if not self.TraceOn() else None)
         if self.TraceOn():
             print "pid of spawned process: %d" % popen.pid

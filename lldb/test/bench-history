@@ -27,3 +27,15 @@ lldb stepping benchmark: Avg: 0.104091 (Laps: 50, Total Elapsed Time: 5.204557)
 lldb expr cmd benchmark: Avg: 0.207095 (Laps: 25, Total Elapsed Time: 5.177363)
 lldb disassembly benchmark: Avg: 0.001531 (Laps: 10, Total Elapsed Time: 0.015311)
 
+r143065 (Oct 26, 2011):
+# Establish a baseline by using a fixed lldb executable as the inferior program
+# for the lldb debugger to operate on.  The fixed lldb executable corresponds to
+# r142902.
+[15:50:34] johnny:/Volumes/data/lldb/svn/trunk/test $ ./bench.py -e /Volumes/data/lldb/svn/regression/build/Debug/lldb -x '-F Driver::MainLoop()' 2>&1 | grep -P '^lldb.*benchmark:'
+lldb startup delay (create fresh target) benchmark: Avg: 0.103774 (Laps: 30, Total Elapsed Time: 3.113226)
+lldb startup delay (set first breakpoint) benchmark: Avg: 0.102230 (Laps: 30, Total Elapsed Time: 3.066896)
+lldb startup delay (run to breakpoint) benchmark: Avg: 0.448635 (Laps: 30, Total Elapsed Time: 13.459048)
+lldb frame variable benchmark: Avg: 1.615647 (Laps: 20, Total Elapsed Time: 32.312934)
+lldb stepping benchmark: Avg: 0.138386 (Laps: 50, Total Elapsed Time: 6.919313)
+lldb expr cmd benchmark: Avg: 0.218967 (Laps: 25, Total Elapsed Time: 5.474171)
+lldb disassembly benchmark: Avg: 0.092677 (Laps: 10, Total Elapsed Time: 0.926766)

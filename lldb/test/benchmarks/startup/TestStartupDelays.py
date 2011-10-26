@@ -1,4 +1,4 @@
-"""Test lldb's startup delays creating a target and setting a breakpoint."""
+"""Test lldb's startup delays creating a target, setting a breakpoint, and run to breakpoint stop."""
 
 import os, sys
 import unittest2
@@ -32,7 +32,7 @@ class StartupDelaysBench(BenchBase):
 
     @benchmarks_test
     def test_startup_delay(self):
-        """Test start up delays creating a target and setting a breakpoint."""
+        """Test start up delays creating a target, setting a breakpoint, and run to breakpoint stop."""
         print
         self.run_startup_delays_bench(self.exe, self.break_spec, self.count)
         print "lldb startup delay (create fresh target) benchmark:", self.stopwatch
