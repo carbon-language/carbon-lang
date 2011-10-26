@@ -18,6 +18,7 @@
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Object/MachOObject.h"
 #include "llvm/Support/MachO.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/SmallVector.h"
 
 namespace llvm {
@@ -110,7 +111,8 @@ private:
                      InMemoryStruct<macho::RelocationEntry> &Res) const;
   std::size_t getSectionIndex(DataRefImpl Sec) const;
 
-  error_code getRelocationTargetName(uint32_t Idx, StringRef &S) const;
+  void printRelocationTargetName(InMemoryStruct<macho::RelocationEntry>& RE,
+                                 raw_string_ostream &fmt) const;
 };
 
 }

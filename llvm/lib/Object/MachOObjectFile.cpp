@@ -15,8 +15,8 @@
 #include "llvm/ADT/Triple.h"
 #include "llvm/Object/MachO.h"
 #include "llvm/Object/MachOFormat.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/raw_ostream.h"
 
 #include <cctype>
 #include <cstring>
@@ -609,7 +609,17 @@ error_code MachOObjectFile::getRelocationAddress(DataRefImpl Rel,
   }
   InMemoryStruct<macho::RelocationEntry> RE;
   getRelocation(Rel, RE);
-  Res = reinterpret_cast<uintptr_t>(sectAddress + RE->Word0);
+
+  unsigned Arch = getArch();
+  bool isScattered = (Arch != Triple::x86_64) &&
+                     (RE->Word0 & macho::RF_Scattered);
+  uint64_t RelAddr = 0;
+  if (isScattered) 
+    RelAddr = RE->Word0 & 0xFFFFFF;
+  else
+    RelAddr = RE->Word0;
+
+  Res = reinterpret_cast<uintptr_t>(sectAddress + RelAddr);
   return object_error::success;
 }
 error_code MachOObjectFile::getRelocationSymbol(DataRefImpl Rel,
@@ -648,9 +658,17 @@ error_code MachOObjectFile::getRelocationTypeName(DataRefImpl Rel,
   StringRef res;
   InMemoryStruct<macho::RelocationEntry> RE;
   getRelocation(Rel, RE);
-  unsigned r_type = (RE->Word1 >> 28) & 0xF;
 
   unsigned Arch = getArch();
+  bool isScattered = (Arch != Triple::x86_64) &&
+                     (RE->Word0 & macho::RF_Scattered);
+
+  unsigned r_type;
+  if (isScattered)
+    r_type = (RE->Word0 >> 24) & 0xF;
+  else
+    r_type = (RE->Word1 >> 28) & 0xF;
+
   switch (Arch) {
     case Triple::x86: {
       const char* Table[] =  {
@@ -771,23 +789,56 @@ void advanceTo(T &it, size_t Val) {
     report_fatal_error(ec.message());
 }
 
-error_code
-MachOObjectFile::getRelocationTargetName(uint32_t Idx, StringRef &S) const {
-  bool isExtern = (Idx >> 27) & 1;
-  uint32_t Val = Idx & 0xFFFFFF;
-  error_code ec;
+void MachOObjectFile::printRelocationTargetName(
+                                     InMemoryStruct<macho::RelocationEntry>& RE,
+                                     raw_string_ostream &fmt) const {
+  unsigned Arch = getArch();
+  bool isScattered = (Arch != Triple::x86_64) &&
+                     (RE->Word0 & macho::RF_Scattered);
+
+  // Target of a scattered relocation is an address.  In the interest of
+  // generating pretty output, scan through the symbol table looking for a
+  // symbol that aligns with that address.  If we find one, print it.
+  // Otherwise, we just print the hex address of the target.
+  if (isScattered) {
+    uint32_t Val = RE->Word1;
+
+    error_code ec;
+    for (symbol_iterator SI = begin_symbols(), SE = end_symbols(); SI != SE;
+        SI.increment(ec)) {
+      if (ec) report_fatal_error(ec.message());
+
+      uint64_t Addr;
+      StringRef Name;
+
+      if ((ec = SI->getAddress(Addr)))
+        report_fatal_error(ec.message());
+      if (Addr != Val) continue;
+      if ((ec = SI->getName(Name)))
+        report_fatal_error(ec.message());
+      fmt << Name;
+      return;
+    }
+
+    fmt << format("0x%x", Val);
+    return;
+  }
+
+  StringRef S;
+  bool isExtern = (RE->Word1 >> 27) & 1;
+  uint32_t Val = RE->Word1 & 0xFFFFFF;
 
   if (isExtern) {
     symbol_iterator SI = begin_symbols();
     advanceTo(SI, Val);
-    ec = SI->getName(S);
+    SI->getName(S);
   } else {
     section_iterator SI = begin_sections();
     advanceTo(SI, Val);
-    ec = SI->getName(S);
+    SI->getName(S);
   }
 
-  return ec;
+  fmt << S;
 }
 
 error_code MachOObjectFile::getRelocationValueString(DataRefImpl Rel,
@@ -795,30 +846,35 @@ error_code MachOObjectFile::getRelocationValueString(DataRefImpl Rel,
   InMemoryStruct<macho::RelocationEntry> RE;
   getRelocation(Rel, RE);
 
-  unsigned Type = (RE->Word1 >> 28) & 0xF;
+  unsigned Arch = getArch();
+  bool isScattered = (Arch != Triple::x86_64) &&
+                     (RE->Word0 & macho::RF_Scattered);
 
   std::string fmtbuf;
   raw_string_ostream fmt(fmtbuf);
 
+  unsigned Type;
+  if (isScattered)
+    Type = (RE->Word0 >> 24) & 0xF;
+  else
+    Type = (RE->Word1 >> 28) & 0xF;
+
   // Determine any addends that should be displayed with the relocation.
   // These require decoding the relocation type, which is triple-specific.
-  unsigned Arch = getArch();
 
   // X86_64 has entirely custom relocation types.
   if (Arch == Triple::x86_64) {
-    StringRef Name;
-    if (error_code ec = getRelocationTargetName(RE->Word1, Name))
-      report_fatal_error(ec.message());
     bool isPCRel = ((RE->Word1 >> 24) & 1);
 
     switch (Type) {
-      case 3:   // X86_64_RELOC_GOT_LOAD
-      case 4: { // X86_64_RELOC_GOT
-        fmt << Name << "@GOT";
+      case macho::RIT_X86_64_GOTLoad:   // X86_64_RELOC_GOT_LOAD
+      case macho::RIT_X86_64_GOT: {     // X86_64_RELOC_GOT
+        printRelocationTargetName(RE, fmt);
+        fmt << "@GOT";
         if (isPCRel) fmt << "PCREL";
         break;
       }
-      case 5: { // X86_64_RELOC_SUBTRACTOR
+      case macho::RIT_X86_64_Subtractor: { // X86_64_RELOC_SUBTRACTOR
         InMemoryStruct<macho::RelocationEntry> RENext;
         DataRefImpl RelNext = Rel;
         RelNext.d.a++;
@@ -826,40 +882,42 @@ error_code MachOObjectFile::getRelocationValueString(DataRefImpl Rel,
 
         // X86_64_SUBTRACTOR must be followed by a relocation of type
         // X86_64_RELOC_UNSIGNED.
+        // NOTE: Scattered relocations don't exist on x86_64.
         unsigned RType = (RENext->Word1 >> 28) & 0xF;
         if (RType != 0)
           report_fatal_error("Expected X86_64_RELOC_UNSIGNED after "
                              "X86_64_RELOC_SUBTRACTOR.");
 
-        StringRef SucName;
-        if (error_code ec = getRelocationTargetName(RENext->Word1, SucName))
-          report_fatal_error(ec.message());
-
         // The X86_64_RELOC_UNSIGNED contains the minuend symbol,
         // X86_64_SUBTRACTOR contains to the subtrahend.
-        fmt << SucName << "-" << Name;
+        printRelocationTargetName(RENext, fmt);
+        fmt << "-";
+        printRelocationTargetName(RE, fmt);
       }
-      case 6: // X86_64_RELOC_SIGNED1
-        fmt << Name << "-1";
+      case macho::RIT_X86_64_Signed1: // X86_64_RELOC_SIGNED1
+        printRelocationTargetName(RE, fmt);
+        fmt << "-1";
         break;
-      case 7: // X86_64_RELOC_SIGNED2
-        fmt << Name << "-2";
+      case macho::RIT_X86_64_Signed2: // X86_64_RELOC_SIGNED2
+        printRelocationTargetName(RE, fmt);
+        fmt << "-2";
         break;
-      case 8: // X86_64_RELOC_SIGNED4
-        fmt << Name << "-4";
+      case macho::RIT_X86_64_Signed4: // X86_64_RELOC_SIGNED4
+        printRelocationTargetName(RE, fmt);
+        fmt << "-4";
         break;
       default:
-        fmt << Name;
+        printRelocationTargetName(RE, fmt);
         break;
     }
   // X86 and ARM share some relocation types in common.
   } else if (Arch == Triple::x86 || Arch == Triple::arm) {
     // Generic relocation types...
     switch (Type) {
-      case 1: // GENERIC_RELOC_PAIR - prints no info
+      case macho::RIT_Pair: // GENERIC_RELOC_PAIR - prints no info
         return object_error::success;
-      case 2:   // GENERIC_RELOC_SECTDIFF
-      case 4: { // GENERIC_RELOC_LOCAL_SECTDIFF
+      case macho::RIT_Difference:                // GENERIC_RELOC_SECTDIFF
+      case macho::RIT_Generic_LocalDifference: { // GENERIC_RELOC_LOCAL_SECTDIFF
         InMemoryStruct<macho::RelocationEntry> RENext;
         DataRefImpl RelNext = Rel;
         RelNext.d.a++;
@@ -867,47 +925,46 @@ error_code MachOObjectFile::getRelocationValueString(DataRefImpl Rel,
 
         // X86 sect diff's must be followed by a relocation of type
         // GENERIC_RELOC_PAIR.
-        unsigned RType = (RENext->Word1 >> 28) & 0xF;
+        bool isNextScattered = (Arch != Triple::x86_64) &&
+                               (RENext->Word0 & macho::RF_Scattered);
+        unsigned RType;
+        if (isNextScattered)
+          RType = (RENext->Word0 >> 24) & 0xF;
+        else
+          RType = (RENext->Word1 >> 28) & 0xF;
         if (RType != 1)
           report_fatal_error("Expected GENERIC_RELOC_PAIR after "
                              "GENERIC_RELOC_SECTDIFF or "
                              "GENERIC_RELOC_LOCAL_SECTDIFF.");
 
-        StringRef SucName;
-        if (error_code ec = getRelocationTargetName(RENext->Word1, SucName))
-          report_fatal_error(ec.message());
-
-        StringRef Name;
-        if (error_code ec = getRelocationTargetName(RE->Word1, Name))
-          report_fatal_error(ec.message());
-
-        fmt << Name << "-" << SucName;
+        printRelocationTargetName(RE, fmt);
+        fmt << "-";
+        printRelocationTargetName(RENext, fmt);
         break;
       }
     }
 
-    if (Arch == Triple::x86 && Type != 1) {
+    if (Arch == Triple::x86) {
       // All X86 relocations that need special printing were already
       // handled in the generic code.
-      StringRef Name;
-      if (error_code ec = getRelocationTargetName(RE->Word1, Name))
-        report_fatal_error(ec.message());
-      fmt << Name;
+      printRelocationTargetName(RE, fmt);
     } else { // ARM-specific relocations
       switch (Type) {
-        case 8:   // ARM_RELOC_HALF
-        case 9: { // ARM_RELOC_HALF_SECTDIFF
-          StringRef Name;
-          if (error_code ec = getRelocationTargetName(RE->Word1, Name))
-            report_fatal_error(ec.message());
-
+        case macho::RIT_ARM_Half:             // ARM_RELOC_HALF
+        case macho::RIT_ARM_HalfDifference: { // ARM_RELOC_HALF_SECTDIFF
           // Half relocations steal a bit from the length field to encode
           // whether this is an upper16 or a lower16 relocation.
-          bool isUpper = (RE->Word1 >> 25) & 1;
-          if (isUpper)
-            fmt << ":upper16:(" << Name;
+          bool isUpper;
+          if (isScattered)
+            isUpper = (RE->Word0 >> 28) & 1;
           else
-            fmt << ":lower16:(" << Name;
+            isUpper = (RE->Word1 >> 25) & 1;
+
+          if (isUpper)
+            fmt << ":upper16:(";
+          else
+            fmt << ":lower16:(";
+          printRelocationTargetName(RE, fmt);
 
           InMemoryStruct<macho::RelocationEntry> RENext;
           DataRefImpl RelNext = Rel;
@@ -916,45 +973,40 @@ error_code MachOObjectFile::getRelocationValueString(DataRefImpl Rel,
 
           // ARM half relocs must be followed by a relocation of type
           // ARM_RELOC_PAIR.
-          unsigned RType = (RENext->Word1 >> 28) & 0xF;
+          bool isNextScattered = (Arch != Triple::x86_64) &&
+                                 (RENext->Word0 & macho::RF_Scattered);
+          unsigned RType;
+          if (isNextScattered)
+            RType = (RENext->Word0 >> 24) & 0xF;
+          else
+            RType = (RENext->Word1 >> 28) & 0xF;
+
           if (RType != 1)
             report_fatal_error("Expected ARM_RELOC_PAIR after "
                                "GENERIC_RELOC_HALF");
 
-          // A constant addend for the relocation is stored in the address
-          // field of the follow-on relocation.  If this is a lower16 relocation
-          // we need to shift it left by 16 before using it.
-          int32_t Addend = RENext->Word0;
-          if (!isUpper) Addend <<= 16;
+          // NOTE: The half of the target virtual address is stashed in the
+          // address field of the secondary relocation, but we can't reverse
+          // engineer the constant offset from it without decoding the movw/movt
+          // instruction to find the other half in its immediate field.
 
           // ARM_RELOC_HALF_SECTDIFF encodes the second section in the
           // symbol/section pointer of the follow-on relocation.
-          StringRef SucName;
-          if (Type == 9) { // ARM_RELOC_HALF_SECTDIFF
-            if (error_code ec = getRelocationTargetName(RENext->Word1, SucName))
-              report_fatal_error(ec.message());
+          if (Type == macho::RIT_ARM_HalfDifference) {
+            fmt << "-";
+            printRelocationTargetName(RENext, fmt);
           }
 
-          if (SucName.size()) fmt << "-" << SucName;
-          if (Addend > 0) fmt << "+" << Addend;
-          else if (Addend < 0) fmt << Addend;
           fmt << ")";
           break;
         }
         default: {
-          StringRef Name;
-          if (error_code ec = getRelocationTargetName(RE->Word1, Name))
-            report_fatal_error(ec.message());
-          fmt << Name;
+          printRelocationTargetName(RE, fmt);
         }
       }
     }
-  } else {
-    StringRef Name;
-    if (error_code ec = getRelocationTargetName(RE->Word1, Name))
-      report_fatal_error(ec.message());
-    fmt << Name;
-  }
+  } else
+    printRelocationTargetName(RE, fmt);
 
   fmt.flush();
   Result.append(fmtbuf.begin(), fmtbuf.end());
@@ -966,19 +1018,25 @@ error_code MachOObjectFile::getRelocationHidden(DataRefImpl Rel,
   InMemoryStruct<macho::RelocationEntry> RE;
   getRelocation(Rel, RE);
 
-  unsigned Type = (RE->Word1 >> 28) & 0xF;
   unsigned Arch = getArch();
+  bool isScattered = (Arch != Triple::x86_64) &&
+                     (RE->Word0 & macho::RF_Scattered);
+  unsigned Type;
+  if (isScattered)
+    Type = (RE->Word0 >> 24) & 0xF;
+  else
+    Type = (RE->Word1 >> 28) & 0xF;
 
   Result = false;
 
   // On arches that use the generic relocations, GENERIC_RELOC_PAIR
   // is always hidden.
   if (Arch == Triple::x86 || Arch == Triple::arm) {
-    if (Type == 1) Result = true;
+    if (Type == macho::RIT_Pair) Result = true;
   } else if (Arch == Triple::x86_64) {
     // On x86_64, X86_64_RELOC_UNSIGNED is hidden only when it follows
     // an X864_64_RELOC_SUBTRACTOR.
-    if (Type == 0 && Rel.d.a > 0) {
+    if (Type == macho::RIT_X86_64_Unsigned && Rel.d.a > 0) {
       DataRefImpl RelPrev = Rel;
       RelPrev.d.a--;
       InMemoryStruct<macho::RelocationEntry> REPrev;
@@ -986,7 +1044,7 @@ error_code MachOObjectFile::getRelocationHidden(DataRefImpl Rel,
 
       unsigned PrevType = (REPrev->Word1 >> 28) & 0xF;
 
-      if (PrevType == 5) Result = true;
+      if (PrevType == macho::RIT_X86_64_Subtractor) Result = true;
     }
   }
 
