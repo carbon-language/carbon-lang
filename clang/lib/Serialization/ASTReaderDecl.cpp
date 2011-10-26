@@ -278,8 +278,8 @@ void ASTDeclReader::VisitTypeAliasDecl(TypeAliasDecl *TD) {
 }
 
 void ASTDeclReader::VisitTagDecl(TagDecl *TD) {
-  VisitTypeDecl(TD);
   VisitRedeclarable(TD);
+  VisitTypeDecl(TD);
   TD->IdentifierNamespace = Record[Idx++];
   TD->setTagKind((TagDecl::TagKind)Record[Idx++]);
   TD->setCompleteDefinition(Record[Idx++]);
@@ -340,8 +340,8 @@ void ASTDeclReader::VisitDeclaratorDecl(DeclaratorDecl *DD) {
 }
 
 void ASTDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
-  VisitDeclaratorDecl(FD);
   VisitRedeclarable(FD);
+  VisitDeclaratorDecl(FD);
 
   ReadDeclarationNameLoc(FD->DNLoc, FD->getDeclName(), Record, Idx);
   FD->IdentifierNamespace = Record[Idx++];
@@ -712,8 +712,8 @@ void ASTDeclReader::VisitIndirectFieldDecl(IndirectFieldDecl *FD) {
 }
 
 void ASTDeclReader::VisitVarDecl(VarDecl *VD) {
-  VisitDeclaratorDecl(VD);
   VisitRedeclarable(VD);
+  VisitDeclaratorDecl(VD);
   VD->VarDeclBits.SClass = (StorageClass)Record[Idx++];
   VD->VarDeclBits.SClassAsWritten = (StorageClass)Record[Idx++];
   VD->VarDeclBits.ThreadSpecified = Record[Idx++];
@@ -1329,17 +1329,36 @@ void ASTDeclReader::VisitRedeclarable(Redeclarable<T> *D) {
     // We temporarily set the first (canonical) declaration as the previous one
     // which is the one that matters and mark the real previous DeclID to be
     // loaded & attached later on.
-    D->RedeclLink = typename Redeclarable<T>::PreviousDeclLink(
-                                cast_or_null<T>(Reader.GetDecl(FirstDeclID)));
+    T *FirstDecl = cast_or_null<T>(Reader.GetDecl(FirstDeclID));
+    D->RedeclLink = typename Redeclarable<T>::PreviousDeclLink(FirstDecl);
     if (PreviousDeclID != FirstDeclID)
       Reader.PendingPreviousDecls.push_back(std::make_pair(static_cast<T*>(D),
                                                            PreviousDeclID));
+
+    // If the first declaration in the chain is in an inconsistent
+    // state where it thinks that it is the only declaration, fix its
+    // redeclaration link now to point at this declaration, so that we have a 
+    // proper redeclaration chain.
+    if (FirstDecl->RedeclLink.getPointer() == FirstDecl) {
+      FirstDecl->RedeclLink
+        = typename Redeclarable<T>::LatestDeclLink(static_cast<T*>(D));
+    }
     break;
   }
-  case PointsToLatest:
-    D->RedeclLink = typename Redeclarable<T>::LatestDeclLink(
-                                                   ReadDeclAs<T>(Record, Idx));
+  case PointsToLatest: {
+    T *LatestDecl = ReadDeclAs<T>(Record, Idx);
+    D->RedeclLink = typename Redeclarable<T>::LatestDeclLink(LatestDecl);
+    
+    // If the latest declaration in the chain is in an inconsistent
+    // state where it thinks that it is the only declaration, fix its
+    // redeclaration link now to point at this declaration, so that we have a 
+    // proper redeclaration chain.
+    if (LatestDecl->RedeclLink.getPointer() == LatestDecl) {
+      LatestDecl->RedeclLink
+        = typename Redeclarable<T>::PreviousDeclLink(static_cast<T*>(D));
+    }
     break;
+  }
   }
 
   assert(!(Kind == PointsToPrevious &&
