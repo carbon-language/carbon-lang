@@ -263,14 +263,31 @@ CommandObjectHelp::HandleCompletion
     else
     {
         CommandObject *cmd_obj = m_interpreter.GetCommandObject (input.GetArgumentAtIndex(0));
-        input.Shift();
-        cursor_index--;
-        return cmd_obj->HandleCompletion (input, 
-                                          cursor_index, 
-                                          cursor_char_position, 
-                                          match_start_point, 
-                                          max_return_elements, 
-                                          word_complete, 
-                                          matches);
+        
+        // The command that they are getting help on might be ambiguous, in which case we should complete that,
+        // otherwise complete with the command the user is getting help on...
+        
+        if (cmd_obj)
+        {
+            input.Shift();
+            cursor_index--;
+            return cmd_obj->HandleCompletion (input, 
+                                              cursor_index, 
+                                              cursor_char_position, 
+                                              match_start_point, 
+                                              max_return_elements, 
+                                              word_complete, 
+                                              matches);
+        }
+        else
+        {
+            return m_interpreter.HandleCompletionMatches (input, 
+                                                        cursor_index, 
+                                                        cursor_char_position, 
+                                                        match_start_point, 
+                                                        max_return_elements, 
+                                                        word_complete, 
+                                                        matches);
+        }
     }
 }
