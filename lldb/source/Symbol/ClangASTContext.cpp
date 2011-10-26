@@ -25,7 +25,7 @@
 // file. So we have to define NDEBUG when including clang headers to avoid any
 // mismatches. This is covered by rdar://problem/8691220
 
-#ifndef NDEBUG
+#if !defined(NDEBUG) && !defined(LLVM_NDEBUG_OFF)
 #define LLDB_DEFINED_NDEBUG_FOR_CLANG
 #define NDEBUG
 // Need to include assert.h so it is as clang would expect it to be (disabled)
