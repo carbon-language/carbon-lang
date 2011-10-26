@@ -897,7 +897,6 @@ AC_PATH_PROG(MKDIR,[mkdir],[mkdir])
 AC_PATH_PROG(MV,   [mv],   [mv])
 AC_PROG_RANLIB
 AC_CHECK_TOOL(AR, ar, false)
-AC_CHECK_TOOL(STRIP,[strip], false)
 AC_PATH_PROG(RM,   [rm],   [rm])
 AC_PATH_PROG(SED,  [sed],  [sed])
 AC_PATH_PROG(TAR,  [tar],  [gtar])
