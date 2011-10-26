@@ -3691,6 +3691,7 @@ bool ARMAsmParser::parseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
     // Fall though for the Identifier case that is not a register or a
     // special name.
   }
+  case AsmToken::LParen:  // parenthesized expressions like (_strcmp-4)
   case AsmToken::Integer: // things like 1f and 2b as a branch targets
   case AsmToken::Dot: {   // . as a branch target
     // This was not a register so parse other operands that start with an
