@@ -57,7 +57,7 @@ class CommandObjectSourceInfo : public CommandObject
             case 'l':
                 start_line = Args::StringToUInt32 (option_arg, 0);
                 if (start_line == 0)
-                    error.SetErrorStringWithFormat("Invalid line number: '%s'.\n", option_arg);
+                    error.SetErrorStringWithFormat("invalid line number: '%s'", option_arg);
                 break;
 
              case 'f':
@@ -65,7 +65,7 @@ class CommandObjectSourceInfo : public CommandObject
                 break;
 
            default:
-                error.SetErrorStringWithFormat("Unrecognized short option '%c'.\n", short_option);
+                error.SetErrorStringWithFormat("unrecognized short option '%c'", short_option);
                 break;
             }
 
@@ -169,13 +169,13 @@ class CommandObjectSourceList : public CommandObject
             case 'l':
                 start_line = Args::StringToUInt32 (option_arg, 0);
                 if (start_line == 0)
-                    error.SetErrorStringWithFormat("Invalid line number: '%s'.\n", option_arg);
+                    error.SetErrorStringWithFormat("invalid line number: '%s'", option_arg);
                 break;
 
             case 'c':
                 num_lines = Args::StringToUInt32 (option_arg, 0);
                 if (num_lines == 0)
-                    error.SetErrorStringWithFormat("Invalid line count: '%s'.\n", option_arg);
+                    error.SetErrorStringWithFormat("invalid line count: '%s'", option_arg);
                 break;
 
             case 'f':
@@ -194,7 +194,7 @@ class CommandObjectSourceList : public CommandObject
                 show_bp_locs = true;
                 break;
            default:
-                error.SetErrorStringWithFormat("Unrecognized short option '%c'.\n", short_option);
+                error.SetErrorStringWithFormat("unrecognized short option '%c'", short_option);
                 break;
             }
 

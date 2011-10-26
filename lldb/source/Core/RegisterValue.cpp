@@ -392,18 +392,18 @@ RegisterValue::SetValueFromCString (const RegisterInfo *reg_info, const char *va
             {
                 uint64_t uval64 = Args::StringToUInt64(value_str, UINT64_MAX, 0, &success);
                 if (!success)
-                    error.SetErrorStringWithFormat ("'%s' is not a valid unsigned integer string value.\n", value_str);
+                    error.SetErrorStringWithFormat ("'%s' is not a valid unsigned integer string value", value_str);
                 else if (!Args::UInt64ValueIsValidForByteSize (uval64, byte_size))
-                    error.SetErrorStringWithFormat ("Value 0x%llx is too large to fit in a %u byte unsigned integer value.\n", uval64, byte_size);
+                    error.SetErrorStringWithFormat ("value 0x%llx is too large to fit in a %u byte unsigned integer value", uval64, byte_size);
                 else
                 {
                     if (!SetUInt (uval64, reg_info->byte_size))
-                        error.SetErrorStringWithFormat ("Unsupported unsigned integer byte size: %u.\n", byte_size);
+                        error.SetErrorStringWithFormat ("unsupported unsigned integer byte size: %u", byte_size);
                 }
             }
             else
             {
-                error.SetErrorStringWithFormat ("Unsupported unsigned integer byte size: %u.\n", byte_size);
+                error.SetErrorStringWithFormat ("unsupported unsigned integer byte size: %u", byte_size);
                 return error;
             }
             break;
@@ -413,18 +413,18 @@ RegisterValue::SetValueFromCString (const RegisterInfo *reg_info, const char *va
             {
                 uint64_t sval64 = Args::StringToSInt64(value_str, INT64_MAX, 0, &success);
                 if (!success)
-                    error.SetErrorStringWithFormat ("'%s' is not a valid signed integer string value.\n", value_str);
+                    error.SetErrorStringWithFormat ("'%s' is not a valid signed integer string value", value_str);
                 else if (!Args::SInt64ValueIsValidForByteSize (sval64, byte_size))
-                    error.SetErrorStringWithFormat ("Value 0x%llx is too large to fit in a %u byte signed integer value.\n", sval64, byte_size);
+                    error.SetErrorStringWithFormat ("value 0x%llx is too large to fit in a %u byte signed integer value", sval64, byte_size);
                 else
                 {
                     if (!SetUInt (sval64, reg_info->byte_size))
-                        error.SetErrorStringWithFormat ("Unsupported signed integer byte size: %u.\n", byte_size);
+                        error.SetErrorStringWithFormat ("unsupported signed integer byte size: %u", byte_size);
                 }
             }
             else
             {
-                error.SetErrorStringWithFormat ("Unsupported signed integer byte size: %u.\n", byte_size);
+                error.SetErrorStringWithFormat ("unsupported signed integer byte size: %u", byte_size);
                 return error;
             }
             break;
@@ -435,31 +435,31 @@ RegisterValue::SetValueFromCString (const RegisterInfo *reg_info, const char *va
                 if (::sscanf (value_str, "%f", &m_data.ieee_float) == 1)
                     m_type = eTypeFloat;
                 else
-                    error.SetErrorStringWithFormat ("'%s' is not a valid float string value.\n", value_str);
+                    error.SetErrorStringWithFormat ("'%s' is not a valid float string value", value_str);
             }
             else if (byte_size == sizeof (double))
             {
                 if (::sscanf (value_str, "%lf", &m_data.ieee_double) == 1)
                     m_type = eTypeDouble;
                 else
-                    error.SetErrorStringWithFormat ("'%s' is not a valid float string value.\n", value_str);
+                    error.SetErrorStringWithFormat ("'%s' is not a valid float string value", value_str);
             }
             else if (byte_size == sizeof (long double))
             {
                 if (::sscanf (value_str, "%Lf", &m_data.ieee_long_double) == 1)
                     m_type = eTypeLongDouble;
                 else
-                    error.SetErrorStringWithFormat ("'%s' is not a valid float string value.\n", value_str);
+                    error.SetErrorStringWithFormat ("'%s' is not a valid float string value", value_str);
             }
             else
             {
-                error.SetErrorStringWithFormat ("Unsupported float byte size: %u.\n", byte_size);
+                error.SetErrorStringWithFormat ("unsupported float byte size: %u", byte_size);
                 return error;
             }
             break;
             
         case eEncodingVector:
-            error.SetErrorString ("Vector encoding unsupported.");
+            error.SetErrorString ("vector encoding unsupported.");
             break;
     }
     if (error.Fail())

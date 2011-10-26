@@ -1022,12 +1022,12 @@ Target::ReadMemory (const Address& addr,
         if (load_addr == LLDB_INVALID_ADDRESS)
         {
             if (resolved_addr.GetModule() && resolved_addr.GetModule()->GetFileSpec())
-                error.SetErrorStringWithFormat("%s[0x%llx] can't be resolved, %s in not currently loaded.\n", 
+                error.SetErrorStringWithFormat("%s[0x%llx] can't be resolved, %s in not currently loaded", 
                                                resolved_addr.GetModule()->GetFileSpec().GetFilename().AsCString(), 
                                                resolved_addr.GetFileAddress(),
                                                resolved_addr.GetModule()->GetFileSpec().GetFilename().AsCString());
             else
-                error.SetErrorStringWithFormat("0x%llx can't be resolved.\n", resolved_addr.GetFileAddress());
+                error.SetErrorStringWithFormat("0x%llx can't be resolved", resolved_addr.GetFileAddress());
         }
         else
         {
@@ -1037,9 +1037,9 @@ Target::ReadMemory (const Address& addr,
                 if (error.Success())
                 {
                     if (bytes_read == 0)
-                        error.SetErrorStringWithFormat("Read memory from 0x%llx failed.\n", load_addr);
+                        error.SetErrorStringWithFormat("read memory from 0x%llx failed", load_addr);
                     else
-                        error.SetErrorStringWithFormat("Only %zu of %zu bytes were read from memory at 0x%llx.\n", bytes_read, dst_len, load_addr);
+                        error.SetErrorStringWithFormat("only %zu of %zu bytes were read from memory at 0x%llx", bytes_read, dst_len, load_addr);
                 }
             }
             if (bytes_read)
@@ -2115,7 +2115,7 @@ TargetInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_n
                     if (!m_expr_prefix_file.GetCurrentValue().Exists())
                     {
                         err.SetErrorToGenericError ();
-                        err.SetErrorStringWithFormat ("%s does not exist.\n", value);
+                        err.SetErrorStringWithFormat ("%s does not exist", value);
                         return;
                     }
             
@@ -2123,7 +2123,7 @@ TargetInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_n
             
                     if (!m_expr_prefix_contents_sp && m_expr_prefix_contents_sp->GetByteSize() == 0)
                     {
-                        err.SetErrorStringWithFormat ("Couldn't read data from '%s'\n", value);
+                        err.SetErrorStringWithFormat ("couldn't read data from '%s'", value);
                         m_expr_prefix_contents_sp.reset();
                     }
                 }

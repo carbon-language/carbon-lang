@@ -72,7 +72,7 @@ public:
                     m_show_user_defined = false;
                     break;
                 default:
-                    error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
+                    error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
                     break;
             }
             

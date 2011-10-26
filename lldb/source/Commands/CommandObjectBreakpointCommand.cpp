@@ -120,7 +120,7 @@ CommandObjectBreakpointCommandAdd::CommandOptions::SetOptionValue
             bool success = false;
             m_stop_on_error = Args::StringToBoolean(option_arg, false, &success);
             if (!success)
-                error.SetErrorStringWithFormat("Invalid value for stop-on-error: \"%s\".\n", option_arg);
+                error.SetErrorStringWithFormat("invalid value for stop-on-error: \"%s\"", option_arg);
         }
         break;
 

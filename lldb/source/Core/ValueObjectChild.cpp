@@ -179,7 +179,7 @@ ValueObjectChild::UpdateValue ()
                     // extract the child value from within the parent data?
                     // Probably...
                 default:
-                    m_error.SetErrorString ("Parent has invalid value.");
+                    m_error.SetErrorString ("parent has invalid value.");
                     break;
                 }
             }
@@ -192,7 +192,7 @@ ValueObjectChild::UpdateValue ()
         }
         else
         {
-            m_error.SetErrorStringWithFormat("Parent failed to evaluate: %s.\n", parent->GetError().AsCString());
+            m_error.SetErrorStringWithFormat("parent failed to evaluate: %s", parent->GetError().AsCString());
         }
     }
     else

@@ -526,7 +526,7 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *debugserver_url,
     }
     else
     {
-        error.SetErrorStringWithFormat ("Unable to locate " DEBUGSERVER_BASENAME ".\n");
+        error.SetErrorStringWithFormat ("unable to locate " DEBUGSERVER_BASENAME );
     }
     return error;
 }

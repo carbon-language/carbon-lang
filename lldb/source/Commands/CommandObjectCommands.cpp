@@ -62,7 +62,7 @@ private:
                 case 'c':
                     m_end_idx = Args::StringToUInt32(option_arg, UINT_MAX, 0, &success);
                     if (!success)
-                        error.SetErrorStringWithFormat("Invalid value for count: %s.\n", option_arg);
+                        error.SetErrorStringWithFormat("invalid value for count: %s", option_arg);
                     if (m_end_idx != 0)
                         m_end_idx--;
                     m_start_idx = 0;
@@ -70,15 +70,15 @@ private:
                 case 'e':
                     m_end_idx = Args::StringToUInt32(option_arg, 0, 0, &success);
                     if (!success)
-                        error.SetErrorStringWithFormat("Invalid value for end index: %s.\n", option_arg);
+                        error.SetErrorStringWithFormat("invalid value for end index: %s", option_arg);
                     break;
                 case 's':
                     m_start_idx = Args::StringToUInt32(option_arg, 0, 0, &success);
                     if (!success)
-                        error.SetErrorStringWithFormat("Invalid value for start index: %s.\n", option_arg);
+                        error.SetErrorStringWithFormat("invalid value for start index: %s", option_arg);
                     break;
                 default:
-                    error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
+                    error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
                     break;
             }
             
@@ -188,15 +188,15 @@ private:
                 case 'e':
                     m_stop_on_error = Args::StringToBoolean(option_arg, true, &success);
                     if (!success)
-                        error.SetErrorStringWithFormat("Invalid value for stop-on-error: %s.\n", option_arg);
+                        error.SetErrorStringWithFormat("invalid value for stop-on-error: %s", option_arg);
                     break;
                 case 'c':
                     m_stop_on_continue = Args::StringToBoolean(option_arg, true, &success);
                     if (!success)
-                        error.SetErrorStringWithFormat("Invalid value for stop-on-continue: %s.\n", option_arg);
+                        error.SetErrorStringWithFormat("invalid value for stop-on-continue: %s", option_arg);
                     break;
                 default:
-                    error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
+                    error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
                     break;
             }
             
@@ -478,7 +478,7 @@ public:
         
         if (!cmd_obj)
         {
-            result.AppendErrorWithFormat ("Invalid command given to 'alias'. '%s' does not begin with a valid command."
+            result.AppendErrorWithFormat ("invalid command given to 'alias'. '%s' does not begin with a valid command."
                                           "  No alias created.", raw_command_string.c_str());
             result.SetStatus (eReturnStatusFailed);
             return false;
@@ -1008,7 +1008,7 @@ private:
                      break;
 
                  default:
-                     error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
+                     error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
                      break;
              }
              
@@ -1325,7 +1325,7 @@ private:
                     m_funct_name = std::string(option_arg);
                     break;
                 default:
-                    error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
+                    error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
                     break;
             }
             

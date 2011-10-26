@@ -265,7 +265,7 @@ CommandObjectSettingsSet::CommandOptions::SetOptionValue (uint32_t option_idx, c
             m_reset = true;
             break;
         default:
-            error.SetErrorStringWithFormat ("Unrecognized options '%c'.\n", short_option);
+            error.SetErrorStringWithFormat ("unrecognized options '%c'", short_option);
             break;
     }
 

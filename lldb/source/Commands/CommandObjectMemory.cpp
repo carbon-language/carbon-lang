@@ -84,7 +84,7 @@ public:
             case 'l':
                 error = m_num_per_line.SetValueFromCString (option_arg);
                 if (m_num_per_line.GetCurrentValue() == 0)
-                    error.SetErrorStringWithFormat("Invalid value for --num-per-line option '%s'. Must be positive integer value.\n", option_arg);
+                    error.SetErrorStringWithFormat("invalid value for --num-per-line option '%s'", option_arg);
                 break;
 
             case 'b':
@@ -96,7 +96,7 @@ public:
                 break;
                 
             default:
-                error.SetErrorStringWithFormat("Unrecognized short option '%c'.\n", short_option);
+                error.SetErrorStringWithFormat("unrecognized short option '%c'", short_option);
                 break;
         }
         return error;
@@ -116,28 +116,10 @@ public:
         Error error;
         OptionValueUInt64 &byte_size_value = format_options.GetByteSizeValue();
         OptionValueUInt64 &count_value = format_options.GetCountValue();
-        bool byte_size_option_set = byte_size_value.OptionWasSet();
+        const bool byte_size_option_set = byte_size_value.OptionWasSet();
         const bool num_per_line_option_set = m_num_per_line.OptionWasSet();
         const bool count_option_set = format_options.GetCountValue().OptionWasSet();
         
-        uint32_t format_byte_size = byte_size_value.GetCurrentValue();
-        if (byte_size_option_set)
-        {
-            if (format_byte_size > 0)
-            {
-                error.SetErrorString("can't specify the byte size in both the '--size <num>' option and the '--format [<byte-size>]<format-char>' options.");
-                return error;
-            }
-        }
-        else
-        {
-            if (format_byte_size != 0)
-            {
-                byte_size_option_set = true;
-                byte_size_value = format_byte_size;
-            }
-        }
-    
         switch (format_options.GetFormat())
         {
             default:
@@ -181,7 +163,7 @@ public:
                 
             case eFormatBytes:
             case eFormatBytesWithASCII:
-                if (byte_size_value.OptionWasSet())
+                if (byte_size_option_set)
                 {
                     if (byte_size_value > 1)
                         error.SetErrorString ("use --count option to specify an end address to display a number of bytes");
@@ -751,7 +733,7 @@ public:
                     if (!m_infile.Exists())
                     {
                         m_infile.Clear();
-                        error.SetErrorStringWithFormat("Input file does not exist: '%s'\n", option_arg);
+                        error.SetErrorStringWithFormat("input file does not exist: '%s'", option_arg);
                     }
                     break;
                     
@@ -761,13 +743,13 @@ public:
                         m_infile_offset = Args::StringToUInt64(option_arg, 0, 0, &success);
                         if (!success)
                         {
-                            error.SetErrorStringWithFormat("Invalid offset string '%s'\n", option_arg);
+                            error.SetErrorStringWithFormat("invalid offset string '%s'", option_arg);
                         }
                     }
                     break;
                     
                 default:
-                    error.SetErrorStringWithFormat("Unrecognized short option '%c'.\n", short_option);
+                    error.SetErrorStringWithFormat("unrecognized short option '%c'", short_option);
                     break;
             }
             return error;

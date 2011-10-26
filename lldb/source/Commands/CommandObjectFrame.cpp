@@ -127,11 +127,11 @@ public:
             case 'r':   
                 relative_frame_offset = Args::StringToSInt32 (option_arg, INT32_MIN, 0, &success);
                 if (!success)
-                    error.SetErrorStringWithFormat ("invalid frame offset argument '%s'.\n", option_arg);
+                    error.SetErrorStringWithFormat ("invalid frame offset argument '%s'", option_arg);
                 break;
 
             default:
-                error.SetErrorStringWithFormat ("Invalid short option character '%c'.\n", short_option);
+                error.SetErrorStringWithFormat ("invalid short option character '%c'", short_option);
                 break;
             }
 

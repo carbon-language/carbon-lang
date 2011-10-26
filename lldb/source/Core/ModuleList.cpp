@@ -866,14 +866,14 @@ ModuleList::GetSharedModule
                 if (arch.IsValid())
                 {
                     if (uuid_cstr[0])
-                        error.SetErrorStringWithFormat("'%s' does not contain the %s architecture and UUID %s.\n", path, arch.GetArchitectureName(), uuid_cstr);
+                        error.SetErrorStringWithFormat("'%s' does not contain the %s architecture and UUID %s", path, arch.GetArchitectureName(), uuid_cstr);
                     else
-                        error.SetErrorStringWithFormat("'%s' does not contain the %s architecture.\n", path, arch.GetArchitectureName());
+                        error.SetErrorStringWithFormat("'%s' does not contain the %s architecture.", path, arch.GetArchitectureName());
                 }
             }
             else
             {
-                error.SetErrorStringWithFormat("'%s' does not exist.\n", path);
+                error.SetErrorStringWithFormat("'%s' does not exist", path);
             }
             return error;
         }
@@ -930,9 +930,9 @@ ModuleList::GetSharedModule
                 if (file_spec)
                 {
                     if (arch.IsValid())
-                        error.SetErrorStringWithFormat("Unable to open %s architecture in '%s'.\n", arch.GetArchitectureName(), path);
+                        error.SetErrorStringWithFormat("unable to open %s architecture in '%s'", arch.GetArchitectureName(), path);
                     else
-                        error.SetErrorStringWithFormat("Unable to open '%s'.\n", path);
+                        error.SetErrorStringWithFormat("unable to open '%s'", path);
                 }
                 else
                 {
@@ -942,9 +942,9 @@ ModuleList::GetSharedModule
                         uuid_cstr[0] = '\0';
 
                     if (uuid_cstr[0])
-                        error.SetErrorStringWithFormat("Cannot locate a module for UUID '%s'.\n", uuid_cstr);
+                        error.SetErrorStringWithFormat("cannot locate a module for UUID '%s'", uuid_cstr);
                     else
-                        error.SetErrorStringWithFormat("Cannot locate a module.\n");
+                        error.SetErrorStringWithFormat("cannot locate a module");
                 }
             }
         }

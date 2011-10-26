@@ -2160,7 +2160,7 @@ DebuggerInstanceSettings::ValidTermWidthValue (const char *value, Error err)
     // Verify we have a value string.
     if (value == NULL || value[0] == '\0')
     {
-        err.SetErrorString ("Missing value. Can't set terminal width without a value.\n");
+        err.SetErrorString ("missing value, can't set terminal width without a value");
     }
     else
     {
@@ -2172,10 +2172,10 @@ DebuggerInstanceSettings::ValidTermWidthValue (const char *value, Error err)
             if (width >= 10 && width <= 1024)
                 valid = true;
             else
-                err.SetErrorString ("Invalid term-width value; value must be between 10 and 1024.\n");
+                err.SetErrorString ("invalid term-width value; value must be between 10 and 1024");
         }
         else
-            err.SetErrorStringWithFormat ("'%s' is not a valid unsigned integer string.\n", value);
+            err.SetErrorStringWithFormat ("'%s' is not a valid unsigned integer string", value);
     }
 
     return valid;

@@ -732,7 +732,7 @@ SBThread::StepOverUntil (lldb::SBFrame &sb_frame,
                 sb_error.SetErrorStringWithFormat("No line entries for %s:%u", path, line);
             }
             else
-                sb_error.SetErrorString ("Step until target not in current function.\n");
+                sb_error.SetErrorString ("step until target not in current function");
         }
         else
         {

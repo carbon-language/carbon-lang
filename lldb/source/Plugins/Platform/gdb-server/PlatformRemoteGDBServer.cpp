@@ -331,7 +331,7 @@ PlatformRemoteGDBServer::LaunchProcess (ProcessLaunchInfo &launch_info)
     }
     else
     {
-        error.SetErrorStringWithFormat("'A' packet returned an error: %i.\n", arg_packet_err);
+        error.SetErrorStringWithFormat("'A' packet returned an error: %i", arg_packet_err);
     }
     return error;
 }

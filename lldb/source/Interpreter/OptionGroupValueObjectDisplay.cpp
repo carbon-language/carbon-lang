@@ -88,13 +88,13 @@ OptionGroupValueObjectDisplay::SetOptionValue (CommandInterpreter &interpreter,
         case 'D':
             max_depth = Args::StringToUInt32 (option_arg, UINT32_MAX, 0, &success);
             if (!success)
-                error.SetErrorStringWithFormat("Invalid max depth '%s'.\n", option_arg);
+                error.SetErrorStringWithFormat("invalid max depth '%s'", option_arg);
             break;
             
         case 'P':
             ptr_depth = Args::StringToUInt32 (option_arg, 0, 0, &success);
             if (!success)
-                error.SetErrorStringWithFormat("Invalid pointer depth '%s'.\n", option_arg);
+                error.SetErrorStringWithFormat("invalid pointer depth '%s'", option_arg);
             break;
             
         case 'Y':
@@ -102,7 +102,7 @@ OptionGroupValueObjectDisplay::SetOptionValue (CommandInterpreter &interpreter,
             {
                 no_summary_depth = Args::StringToUInt32 (option_arg, 0, 0, &success);
                 if (!success)
-                    error.SetErrorStringWithFormat("Invalid pointer depth '%s'.\n", option_arg);
+                    error.SetErrorStringWithFormat("invalid pointer depth '%s'", option_arg);
             }
             else
                 no_summary_depth = 1;
@@ -111,10 +111,10 @@ OptionGroupValueObjectDisplay::SetOptionValue (CommandInterpreter &interpreter,
         case 'S':
             use_synth = Args::StringToBoolean(option_arg, true, &success);
             if (!success)
-                error.SetErrorStringWithFormat("Invalid synthetic-type '%s'.\n", option_arg);
+                error.SetErrorStringWithFormat("invalid synthetic-type '%s'", option_arg);
             break;
         default:
-            error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
+            error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
             break;
     }
 

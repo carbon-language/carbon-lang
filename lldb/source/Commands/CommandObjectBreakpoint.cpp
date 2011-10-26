@@ -154,7 +154,7 @@ CommandObjectBreakpointSet::CommandOptions::SetOptionValue (uint32_t option_idx,
                 m_load_addr = Args::StringToUInt64(option_arg, LLDB_INVALID_ADDRESS, 16);
 
             if (m_load_addr == LLDB_INVALID_ADDRESS)
-                error.SetErrorStringWithFormat ("Invalid address string '%s'.\n", option_arg);
+                error.SetErrorStringWithFormat ("invalid address string '%s'", option_arg);
             break;
 
         case 'c':
@@ -211,14 +211,14 @@ CommandObjectBreakpointSet::CommandOptions::SetOptionValue (uint32_t option_idx,
         {
             m_ignore_count = Args::StringToUInt32(option_arg, UINT32_MAX, 0);
             if (m_ignore_count == UINT32_MAX)
-               error.SetErrorStringWithFormat ("Invalid ignore count '%s'.\n", option_arg);
+               error.SetErrorStringWithFormat ("invalid ignore count '%s'", option_arg);
         }
         break;
         case 't' :
         {
             m_thread_id = Args::StringToUInt64(option_arg, LLDB_INVALID_THREAD_ID, 0);
             if (m_thread_id == LLDB_INVALID_THREAD_ID)
-               error.SetErrorStringWithFormat ("Invalid thread id string '%s'.\n", option_arg);
+               error.SetErrorStringWithFormat ("invalid thread id string '%s'", option_arg);
         }
         break;
         case 'T':
@@ -231,12 +231,12 @@ CommandObjectBreakpointSet::CommandOptions::SetOptionValue (uint32_t option_idx,
         {
             m_thread_index = Args::StringToUInt32(option_arg, UINT32_MAX, 0);
             if (m_thread_id == UINT32_MAX)
-               error.SetErrorStringWithFormat ("Invalid thread index string '%s'.\n", option_arg);
+               error.SetErrorStringWithFormat ("invalid thread index string '%s'", option_arg);
             
         }
         break;
         default:
-            error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
+            error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
             break;
     }
 
@@ -689,7 +689,7 @@ CommandObjectBreakpointList::CommandOptions::SetOptionValue (uint32_t option_idx
             m_internal = true;
             break;
         default:
-            error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
+            error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
             break;
     }
 
@@ -1057,7 +1057,7 @@ CommandObjectBreakpointClear::CommandOptions::SetOptionValue (uint32_t option_id
             break;
 
         default:
-            error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
+            error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
             break;
     }
 
@@ -1369,7 +1369,7 @@ CommandObjectBreakpointModify::CommandOptions::SetOptionValue (uint32_t option_i
         {
             m_ignore_count = Args::StringToUInt32(option_arg, UINT32_MAX, 0);
             if (m_ignore_count == UINT32_MAX)
-               error.SetErrorStringWithFormat ("Invalid ignore count '%s'.\n", option_arg);
+               error.SetErrorStringWithFormat ("invalid ignore count '%s'", option_arg);
         }
         break;
         case 't' :
@@ -1383,7 +1383,7 @@ CommandObjectBreakpointModify::CommandOptions::SetOptionValue (uint32_t option_i
             {
                 m_thread_id = Args::StringToUInt64(option_arg, LLDB_INVALID_THREAD_ID, 0);
                 if (m_thread_id == LLDB_INVALID_THREAD_ID)
-                   error.SetErrorStringWithFormat ("Invalid thread id string '%s'.\n", option_arg);
+                   error.SetErrorStringWithFormat ("invalid thread id string '%s'", option_arg);
                 else
                     m_thread_id_passed = true;
             }
@@ -1414,14 +1414,14 @@ CommandObjectBreakpointModify::CommandOptions::SetOptionValue (uint32_t option_i
             {
                 m_thread_index = Args::StringToUInt32 (option_arg, UINT32_MAX, 0);
                 if (m_thread_id == UINT32_MAX)
-                   error.SetErrorStringWithFormat ("Invalid thread index string '%s'.\n", option_arg);
+                   error.SetErrorStringWithFormat ("invalid thread index string '%s'", option_arg);
                 else
                     m_thread_index_passed = true;
             }
         }
         break;
         default:
-            error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
+            error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
             break;
     }
 

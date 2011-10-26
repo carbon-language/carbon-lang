@@ -71,13 +71,13 @@ CommandObjectDisassemble::CommandOptions::SetOptionValue (uint32_t option_idx, c
     case 'C':
         num_lines_context = Args::StringToUInt32(option_arg, 0, 0, &success);
         if (!success)
-            error.SetErrorStringWithFormat ("Invalid num context lines string: \"%s\".\n", option_arg);
+            error.SetErrorStringWithFormat ("invalid num context lines string: \"%s\"", option_arg);
         break;
 
     case 'c':
         num_instructions = Args::StringToUInt32(option_arg, 0, 0, &success);
         if (!success)
-            error.SetErrorStringWithFormat ("Invalid num of instructions string: \"%s\".\n", option_arg);
+            error.SetErrorStringWithFormat ("invalid num of instructions string: \"%s\"", option_arg);
         break;
 
     case 'b':
@@ -90,7 +90,7 @@ CommandObjectDisassemble::CommandOptions::SetOptionValue (uint32_t option_idx, c
             start_addr = Args::StringToUInt64(option_arg, LLDB_INVALID_ADDRESS, 16);
 
         if (start_addr == LLDB_INVALID_ADDRESS)
-            error.SetErrorStringWithFormat ("Invalid start address string '%s'.\n", option_arg);
+            error.SetErrorStringWithFormat ("invalid start address string '%s'", option_arg);
         some_location_specified = true;
         break;
     case 'e':
@@ -99,7 +99,7 @@ CommandObjectDisassemble::CommandOptions::SetOptionValue (uint32_t option_idx, c
             end_addr = Args::StringToUInt64(option_arg, LLDB_INVALID_ADDRESS, 16);
 
         if (end_addr == LLDB_INVALID_ADDRESS)
-            error.SetErrorStringWithFormat ("Invalid end address string '%s'.\n", option_arg);
+            error.SetErrorStringWithFormat ("invalid end address string '%s'", option_arg);
         break;
         some_location_specified = true;
     case 'n':
@@ -138,7 +138,7 @@ CommandObjectDisassemble::CommandOptions::SetOptionValue (uint32_t option_idx, c
         break;
 
     default:
-        error.SetErrorStringWithFormat("Unrecognized short option '%c'.\n", short_option);
+        error.SetErrorStringWithFormat("unrecognized short option '%c'", short_option);
         break;
     }
 

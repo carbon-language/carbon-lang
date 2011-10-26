@@ -1880,7 +1880,7 @@ public:
                     break;
                     
                 default:
-                    error.SetErrorStringWithFormat("Invalid short option character '%c'.\n", short_option);
+                    error.SetErrorStringWithFormat("invalid short option character '%c'", short_option);
                     break;
                     
             }
@@ -2644,7 +2644,7 @@ public:
                 if (!success)
                 {
                     Error error;
-                    error.SetErrorStringWithFormat("Invalid address: \"%s\".", option_arg);
+                    error.SetErrorStringWithFormat("invalid address: \"%s\"", option_arg);
                 }
             }
             else
@@ -2985,13 +2985,13 @@ public:
                     m_type = eLookupTypeAddress;
                     m_addr = Args::StringToUInt64(option_arg, LLDB_INVALID_ADDRESS);
                     if (m_addr == LLDB_INVALID_ADDRESS)
-                        error.SetErrorStringWithFormat ("Invalid address string '%s'.\n", option_arg);
+                        error.SetErrorStringWithFormat ("invalid address string '%s'", option_arg);
                     break;
                     
                 case 'o':
                     m_offset = Args::StringToUInt64(option_arg, LLDB_INVALID_ADDRESS);
                     if (m_offset == LLDB_INVALID_ADDRESS)
-                        error.SetErrorStringWithFormat ("Invalid offset string '%s'.\n", option_arg);
+                        error.SetErrorStringWithFormat ("invalid offset string '%s'", option_arg);
                     break;
                     
                 case 's':
@@ -3011,9 +3011,9 @@ public:
                 case 'l':
                     m_line_number = Args::StringToUInt32(option_arg, UINT32_MAX);
                     if (m_line_number == UINT32_MAX)
-                        error.SetErrorStringWithFormat ("Invalid line number string '%s'.\n", option_arg);
+                        error.SetErrorStringWithFormat ("invalid line number string '%s'", option_arg);
                     else if (m_line_number == 0)
-                        error.SetErrorString ("Zero is an invalid line number.");
+                        error.SetErrorString ("zero is an invalid line number");
                     m_type = eLookupTypeFileLine;
                     break;
                     
@@ -3434,7 +3434,7 @@ public:
                     m_line_end = Args::StringToUInt32 (option_arg, UINT_MAX, 0, &success);
                     if (!success)
                     {
-                        error.SetErrorStringWithFormat ("Invalid end line number: \"%s\".", option_arg);
+                        error.SetErrorStringWithFormat ("invalid end line number: \"%s\"", option_arg);
                         break;
                     }
                     m_sym_ctx_specified = true;
@@ -3444,7 +3444,7 @@ public:
                     m_line_start = Args::StringToUInt32 (option_arg, 0, 0, &success);
                     if (!success)
                     {
-                        error.SetErrorStringWithFormat ("Invalid start line number: \"%s\".", option_arg);
+                        error.SetErrorStringWithFormat ("invalid start line number: \"%s\"", option_arg);
                         break;
                     }
                     m_sym_ctx_specified = true;
@@ -3468,7 +3468,7 @@ public:
                 {
                     m_thread_id = Args::StringToUInt64(option_arg, LLDB_INVALID_THREAD_ID, 0);
                     if (m_thread_id == LLDB_INVALID_THREAD_ID)
-                       error.SetErrorStringWithFormat ("Invalid thread id string '%s'.\n", option_arg);
+                       error.SetErrorStringWithFormat ("invalid thread id string '%s'", option_arg);
                     m_thread_specified = true;
                 }
                 break;
@@ -3484,7 +3484,7 @@ public:
                 {
                     m_thread_index = Args::StringToUInt32(option_arg, UINT32_MAX, 0);
                     if (m_thread_id == UINT32_MAX)
-                       error.SetErrorStringWithFormat ("Invalid thread index string '%s'.\n", option_arg);
+                       error.SetErrorStringWithFormat ("invalid thread index string '%s'", option_arg);
                     m_thread_specified = true;
                 }
                 break;
@@ -3493,7 +3493,7 @@ public:
                     m_one_liner = option_arg;
                 break;
                 default:
-                    error.SetErrorStringWithFormat ("Unrecognized option %c.", short_option);
+                    error.SetErrorStringWithFormat ("unrecognized option %c.", short_option);
                 break;
             }
             return error;

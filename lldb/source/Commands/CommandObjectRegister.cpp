@@ -311,7 +311,7 @@ public:
                     break;
                     
                 default:
-                    error.SetErrorStringWithFormat("Unrecognized short option '%c'\n", short_option);
+                    error.SetErrorStringWithFormat("unrecognized short option '%c'", short_option);
                     break;
             }
             return error;

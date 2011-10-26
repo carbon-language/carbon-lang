@@ -76,7 +76,7 @@ CommandObjectExpression::CommandOptions::SetOptionValue (CommandInterpreter &int
       //case 'l':
       //if (language.SetLanguageFromCString (option_arg) == false)
       //{
-      //    error.SetErrorStringWithFormat("Invalid language option argument '%s'.\n", option_arg);
+      //    error.SetErrorStringWithFormat("invalid language option argument '%s'", option_arg);
       //}
       //break;
 
@@ -90,7 +90,7 @@ CommandObjectExpression::CommandOptions::SetOptionValue (CommandInterpreter &int
             bool result;
             result = Args::StringToBoolean(option_arg, true, &success);
             if (!success)
-                error.SetErrorStringWithFormat("Invalid dynamic value setting: \"%s\".\n", option_arg);
+                error.SetErrorStringWithFormat("invalid dynamic value setting: \"%s\"", option_arg);
             else
             {
                 if (result)
@@ -106,11 +106,11 @@ CommandObjectExpression::CommandOptions::SetOptionValue (CommandInterpreter &int
             bool success;
             unwind_on_error = Args::StringToBoolean(option_arg, true, &success);
             if (!success)
-                error.SetErrorStringWithFormat("Could not convert \"%s\" to a boolean value.", option_arg);
+                error.SetErrorStringWithFormat("could not convert \"%s\" to a boolean value.", option_arg);
             break;
         }
     default:
-        error.SetErrorStringWithFormat("Invalid short option character '%c'.\n", short_option);
+        error.SetErrorStringWithFormat("invalid short option character '%c'", short_option);
         break;
     }
 

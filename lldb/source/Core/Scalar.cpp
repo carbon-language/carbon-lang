@@ -1829,9 +1829,9 @@ Scalar::SetValueFromCString (const char *value_str, Encoding encoding, uint32_t 
         {
             uint64_t uval64 = Args::StringToUInt64(value_str, UINT64_MAX, 0, &success);
             if (!success)
-                error.SetErrorStringWithFormat ("'%s' is not a valid unsigned integer string value.\n", value_str);
+                error.SetErrorStringWithFormat ("'%s' is not a valid unsigned integer string value", value_str);
             else if (!UIntValueIsValidForSize (uval64, byte_size))
-                error.SetErrorStringWithFormat ("Value 0x%llx is too large to fit in a %u byte unsigned integer value.\n", uval64, byte_size);
+                error.SetErrorStringWithFormat ("value 0x%llx is too large to fit in a %u byte unsigned integer value", uval64, byte_size);
             else
             {
                 m_type = Scalar::GetValueTypeForUnsignedIntegerWithByteSize (byte_size);
@@ -1841,14 +1841,14 @@ Scalar::SetValueFromCString (const char *value_str, Encoding encoding, uint32_t 
                 case e_ulong:       m_data.ulong = uval64;      break;
                 case e_ulonglong:   m_data.ulonglong = uval64;  break;
                 default:
-                    error.SetErrorStringWithFormat ("Unsupported unsigned integer byte size: %u.\n", byte_size);
+                    error.SetErrorStringWithFormat ("unsupported unsigned integer byte size: %u", byte_size);
                     break;
                 }
             }
         }
         else
         {
-            error.SetErrorStringWithFormat ("Unsupported unsigned integer byte size: %u.\n", byte_size);
+            error.SetErrorStringWithFormat ("unsupported unsigned integer byte size: %u", byte_size);
             return error;
         }
         break;
@@ -1858,9 +1858,9 @@ Scalar::SetValueFromCString (const char *value_str, Encoding encoding, uint32_t 
         {
             uint64_t sval64 = Args::StringToSInt64(value_str, INT64_MAX, 0, &success);
             if (!success)
-                error.SetErrorStringWithFormat ("'%s' is not a valid signed integer string value.\n", value_str);
+                error.SetErrorStringWithFormat ("'%s' is not a valid signed integer string value", value_str);
             else if (!SIntValueIsValidForSize (sval64, byte_size))
-                error.SetErrorStringWithFormat ("Value 0x%llx is too large to fit in a %u byte signed integer value.\n", sval64, byte_size);
+                error.SetErrorStringWithFormat ("value 0x%llx is too large to fit in a %u byte signed integer value", sval64, byte_size);
             else
             {
                 m_type = Scalar::GetValueTypeForSignedIntegerWithByteSize (byte_size);
@@ -1870,14 +1870,14 @@ Scalar::SetValueFromCString (const char *value_str, Encoding encoding, uint32_t 
                 case e_slong:       m_data.slong = sval64;      break;
                 case e_slonglong:   m_data.slonglong = sval64;  break;
                 default:
-                    error.SetErrorStringWithFormat ("Unsupported signed integer byte size: %u.\n", byte_size);
+                    error.SetErrorStringWithFormat ("unsupported signed integer byte size: %u", byte_size);
                     break;
                 }
             }
         }
         else
         {
-            error.SetErrorStringWithFormat ("Unsupported signed integer byte size: %u.\n", byte_size);
+            error.SetErrorStringWithFormat ("unsupported signed integer byte size: %u", byte_size);
             return error;
         }
         break;
@@ -1888,31 +1888,31 @@ Scalar::SetValueFromCString (const char *value_str, Encoding encoding, uint32_t 
             if (::sscanf (value_str, "%f", &m_data.flt) == 1)
                 m_type = e_float;
             else
-                error.SetErrorStringWithFormat ("'%s' is not a valid float string value.\n", value_str);
+                error.SetErrorStringWithFormat ("'%s' is not a valid float string value", value_str);
         }
         else if (byte_size == sizeof (double))
         {
             if (::sscanf (value_str, "%lf", &m_data.dbl) == 1)
                 m_type = e_double;
             else
-                error.SetErrorStringWithFormat ("'%s' is not a valid float string value.\n", value_str);
+                error.SetErrorStringWithFormat ("'%s' is not a valid float string value", value_str);
         }
         else if (byte_size == sizeof (long double))
         {
             if (::sscanf (value_str, "%Lf", &m_data.ldbl) == 1)
                 m_type = e_long_double;
             else
-                error.SetErrorStringWithFormat ("'%s' is not a valid float string value.\n", value_str);
+                error.SetErrorStringWithFormat ("'%s' is not a valid float string value", value_str);
         }
         else
         {
-            error.SetErrorStringWithFormat ("Unsupported float byte size: %u.\n", byte_size);
+            error.SetErrorStringWithFormat ("unsupported float byte size: %u", byte_size);
             return error;
         }
         break;
 
     case eEncodingVector:
-        error.SetErrorString ("Vector encoding unsupported.");
+        error.SetErrorString ("vector encoding unsupported.");
         break;
     }
     if (error.Fail())

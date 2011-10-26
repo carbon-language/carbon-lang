@@ -210,7 +210,7 @@ public:
             case 'p':  log_options |= LLDB_LOG_OPTION_PREPEND_PROC_AND_THREAD;break;
             case 'n':  log_options |= LLDB_LOG_OPTION_PREPEND_THREAD_NAME;    break;
             default:
-                error.SetErrorStringWithFormat ("Unrecognized option '%c'\n", short_option);
+                error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
                 break;
             }
 

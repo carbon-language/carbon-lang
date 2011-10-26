@@ -79,7 +79,7 @@ TargetList::CreateTarget (Debugger &debugger,
         arch.SetTriple(triple_cstr, platform_sp.get());
         if (!arch.IsValid())
         {
-            error.SetErrorStringWithFormat("invalid triple '%s'\n", triple_cstr);
+            error.SetErrorStringWithFormat("invalid triple '%s'", triple_cstr);
             return error;
         }
     }

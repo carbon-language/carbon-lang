@@ -67,7 +67,7 @@ OptionGroupVariable::SetOptionValue (CommandInterpreter &interpreter,
             summary = std::string(option_arg);
             break;
         default:
-            error.SetErrorStringWithFormat("Invalid short option character '%c'.\n", short_option);
+            error.SetErrorStringWithFormat("unrecognized short option '%c'", short_option);
             break;
     }
     

@@ -189,11 +189,11 @@ OptionValueBoolean::SetValueFromCString (const char *value_cstr)
     else
     {
         if (value_cstr == NULL)
-            error.SetErrorString ("invalid boolean string value: NULL\n");
+            error.SetErrorString ("invalid boolean string value: NULL");
         else if (value_cstr[0] == '\0')
-            error.SetErrorString ("invalid boolean string value <empty>\n");
+            error.SetErrorString ("invalid boolean string value <empty>");
         else
-            error.SetErrorStringWithFormat ("invalid boolean string value: '%s'\n", value_cstr);
+            error.SetErrorStringWithFormat ("invalid boolean string value: '%s'", value_cstr);
     }
     return error;
 }
@@ -221,7 +221,7 @@ OptionValueSInt64::SetValueFromCString (const char *value_cstr)
     }
     else
     {
-        error.SetErrorStringWithFormat ("invalid int64_t string value: '%s'\n", value_cstr);
+        error.SetErrorStringWithFormat ("invalid int64_t string value: '%s'", value_cstr);
     }
     return error;
 }
@@ -260,7 +260,7 @@ OptionValueUInt64::SetValueFromCString (const char *value_cstr)
     }
     else
     {
-        error.SetErrorStringWithFormat ("invalid uint64_t string value: '%s'\n", value_cstr);
+        error.SetErrorStringWithFormat ("invalid uint64_t string value: '%s'", value_cstr);
     }
     return error;
 }
@@ -396,7 +396,7 @@ Error
 OptionValueArray::SetValueFromCString (const char *value_cstr)
 {
     Error error;
-    error.SetErrorStringWithFormat ("array option values don't yet support being set by string: '%s'\n", value_cstr);
+    error.SetErrorStringWithFormat ("array option values don't yet support being set by string: '%s'", value_cstr);
     return error;
 }
 
@@ -419,7 +419,7 @@ Error
 OptionValueDictionary::SetValueFromCString (const char *value_cstr)
 {
     Error error;
-    error.SetErrorStringWithFormat ("dictionary option values don't yet support being set by string: '%s'\n", value_cstr);
+    error.SetErrorStringWithFormat ("dictionary option values don't yet support being set by string: '%s'", value_cstr);
     return error;
 }
 

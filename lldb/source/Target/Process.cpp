@@ -420,7 +420,7 @@ ProcessLaunchCommandOptions::SetOptionValue (uint32_t option_idx, const char *op
             break;
 
         default:
-            error.SetErrorStringWithFormat("Invalid short option character '%c'.\n", short_option);
+            error.SetErrorStringWithFormat("unrecognized short option character '%c'", short_option);
             break;
             
     }
@@ -1481,7 +1481,7 @@ Process::EnableSoftwareBreakpoint (BreakpointSite *bp_site)
 
     if (bp_opcode_size == 0)
     {
-        error.SetErrorStringWithFormat ("Process::GetSoftwareBreakpointTrapOpcode() returned zero, unable to get breakpoint trap for address 0x%llx.\n", bp_addr);
+        error.SetErrorStringWithFormat ("Process::GetSoftwareBreakpointTrapOpcode() returned zero, unable to get breakpoint trap for address 0x%llx", bp_addr);
     }
     else
     {
@@ -1512,7 +1512,7 @@ Process::EnableSoftwareBreakpoint (BreakpointSite *bp_site)
                                          (uint64_t)bp_addr);
                     }
                     else
-                        error.SetErrorString("Failed to verify the breakpoint trap in memory.");
+                        error.SetErrorString("failed to verify the breakpoint trap in memory.");
                 }
                 else
                     error.SetErrorString("Unable to read memory to verify breakpoint trap.");
@@ -2161,7 +2161,7 @@ Process::Launch
         }
         else
         {
-            error.SetErrorStringWithFormat("File doesn't exist: '%s'.\n", local_exec_file_path);
+            error.SetErrorStringWithFormat("file doesn't exist: '%s'", local_exec_file_path);
         }
     }
     return error;
@@ -2272,16 +2272,16 @@ Process::Attach (const char *process_name, bool wait_for_launch)
             platform_sp->FindProcesses (match_info, process_infos);
             if (process_infos.GetSize() > 1)
             {
-                error.SetErrorStringWithFormat ("More than one process named %s\n", process_name);
+                error.SetErrorStringWithFormat ("more than one process named %s", process_name);
             }
             else if (process_infos.GetSize() == 0)
             {
-                error.SetErrorStringWithFormat ("Could not find a process named %s\n", process_name);
+                error.SetErrorStringWithFormat ("could not find a process named %s", process_name);
             }
         }
         else
         {        
-            error.SetErrorString ("Invalid platform");
+            error.SetErrorString ("invalid platform");
         }
     }
 

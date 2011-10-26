@@ -584,7 +584,7 @@ Args::ParseOptions (Options &options)
     struct option *long_options = options.GetLongOptions();
     if (long_options == NULL)
     {
-        error.SetErrorStringWithFormat("Invalid long options.\n");
+        error.SetErrorStringWithFormat("invalid long options");
         return error;
     }
 
@@ -620,7 +620,7 @@ Args::ParseOptions (Options &options)
         // Did we get an error?
         if (val == '?')
         {
-            error.SetErrorStringWithFormat("Unknown or ambiguous option.\n");
+            error.SetErrorStringWithFormat("unknown or ambiguous option");
             break;
         }
         // The option auto-set itself
@@ -651,7 +651,7 @@ Args::ParseOptions (Options &options)
         }
         else
         {
-            error.SetErrorStringWithFormat("Invalid option with value '%i'.\n", val);
+            error.SetErrorStringWithFormat("invalid option with value '%i'", val);
         }
         if (error.Fail())
             break;
@@ -940,7 +940,7 @@ Args::StringToFormat
     }
     else
     {
-        error.SetErrorStringWithFormat("%s option string.\n", s ? "empty" : "invalid");
+        error.SetErrorStringWithFormat("%s option string", s ? "empty" : "invalid");
     }
     return error;
 }

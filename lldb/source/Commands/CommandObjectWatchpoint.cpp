@@ -231,7 +231,7 @@ CommandObjectWatchpointList::CommandOptions::SetOptionValue(uint32_t option_idx,
             m_level = lldb::eDescriptionLevelVerbose;
             break;
         default:
-            error.SetErrorStringWithFormat("Unrecognized option '%c'.\n", short_option);
+            error.SetErrorStringWithFormat("unrecognized option '%c'", short_option);
             break;
     }
 
@@ -601,11 +601,11 @@ CommandObjectWatchpointIgnore::CommandOptions::SetOptionValue (uint32_t option_i
         {
             m_ignore_count = Args::StringToUInt32(option_arg, UINT32_MAX, 0);
             if (m_ignore_count == UINT32_MAX)
-               error.SetErrorStringWithFormat ("Invalid ignore count '%s'.\n", option_arg);
+               error.SetErrorStringWithFormat ("invalid ignore count '%s'", option_arg);
         }
         break;
         default:
-            error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
+            error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
             break;
     }
 
@@ -741,7 +741,7 @@ CommandObjectWatchpointModify::CommandOptions::SetOptionValue (uint32_t option_i
             m_condition_passed = true;
             break;
         default:
-            error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
+            error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
             break;
     }
 

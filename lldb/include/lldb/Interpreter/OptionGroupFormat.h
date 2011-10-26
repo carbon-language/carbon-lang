@@ -97,9 +97,17 @@ public:
 
 protected:
 
+    lldb::Format
+    SetFormatUsingGDBFormatLetter (char format_letter);
+
+    uint32_t
+    SetByteSizeUsingGDBSizeLetter (char size_letter);
+
     OptionValueFormat m_format;
     OptionValueUInt64 m_byte_size;
     OptionValueUInt64 m_count;
+    char m_prev_gdb_format;
+    char m_prev_gdb_size;
 };
 
 } // namespace lldb_private

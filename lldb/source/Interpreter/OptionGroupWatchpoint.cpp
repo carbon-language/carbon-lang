@@ -74,7 +74,7 @@ OptionGroupWatchpoint::SetOptionValue (CommandInterpreter &interpreter,
             break;
 
         default:
-            error.SetErrorStringWithFormat("Invalid short option character '%c'.\n", short_option);
+            error.SetErrorStringWithFormat("unrecognized short option '%c'", short_option);
             break;
     }
     

@@ -563,7 +563,7 @@ ProcessGDBRemote::DoLaunch
             }
             else
             {
-                error.SetErrorStringWithFormat("'A' packet returned an error: %i.\n", arg_packet_err);
+                error.SetErrorStringWithFormat("'A' packet returned an error: %i", arg_packet_err);
             }
             
             m_gdb_comm.SetPacketTimeout (old_packet_timeout);
@@ -597,7 +597,7 @@ ProcessGDBRemote::DoLaunch
     {
         // Set our user ID to an invalid process ID.
         SetID(LLDB_INVALID_PROCESS_ID);
-        error.SetErrorStringWithFormat("Failed to get object file from '%s' for arch %s.\n", 
+        error.SetErrorStringWithFormat("failed to get object file from '%s' for arch %s", 
                                        module->GetFileSpec().GetFilename().AsCString(), 
                                        module->GetArchitecture().GetArchitectureName());
     }
@@ -2166,7 +2166,7 @@ ProcessGDBRemote::StartDebugserverProcess (const char *debugserver_url)    // Th
         }
         else
         {
-            error.SetErrorStringWithFormat ("Unable to locate " DEBUGSERVER_BASENAME ".\n");
+            error.SetErrorStringWithFormat ("unable to locate " DEBUGSERVER_BASENAME);
         }
 
         if (m_debugserver_pid != LLDB_INVALID_PROCESS_ID)

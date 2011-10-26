@@ -276,7 +276,7 @@ File::GetFileSpec (FileSpec &file_spec) const
     char proc[64];
     char path[PATH_MAX];
     if (::snprintf(proc, sizeof(proc), "/proc/self/fd/%d", GetDescriptor()) < 0)
-        error.SetErrorString ("Cannot resolve file descriptor\n");
+        error.SetErrorString ("cannot resolve file descriptor");
     else
     {
         ssize_t len;

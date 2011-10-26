@@ -58,7 +58,7 @@ CommandObjectArgs::CommandOptions::SetOptionValue (uint32_t option_idx, const ch
     switch (short_option)
     {
         default:
-            error.SetErrorStringWithFormat("Invalid short option character '%c'.\n", short_option);
+            error.SetErrorStringWithFormat("invalid short option character '%c'", short_option);
             break;
     }
     

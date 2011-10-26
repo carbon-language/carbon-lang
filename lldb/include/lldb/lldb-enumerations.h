@@ -361,6 +361,7 @@ namespace lldb {
         eArgTypeFrameIndex,
         eArgTypeFullName,
         eArgTypeFunctionName,
+        eArgTypeGDBFormat,
         eArgTypeIndex,
         eArgTypeLineNum,
         eArgTypeLogCategory,

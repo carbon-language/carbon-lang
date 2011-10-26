@@ -207,7 +207,7 @@ CommandObject::ParseOptions
             if (error_cstr)
             {
                 // We got an error string, lets use that
-                result.GetErrorStream().PutCString(error_cstr);
+                result.AppendError(error_cstr);
             }
             else
             {
@@ -640,14 +640,45 @@ CommandObject::LookupArgumentName (const char *arg_name)
 static const char *
 BreakpointIDHelpTextCallback ()
 {
-    return "Breakpoint ID's consist major and minor numbers;  the major number corresponds to the single entity that was created with a 'breakpoint set' command; the minor numbers correspond to all the locations that were actually found/set based on the major breakpoint.  A full breakpoint ID might look like 3.14, meaning the 14th location set for the 3rd breakpoint.  You can specify all the locations of a breakpoint by just indicating the major breakpoint number. A valid breakpoint id consists either of just the major id number, or the major number, a dot, and the location number (e.g. 3 or 3.2 could both be valid breakpoint ids).";
+    return "Breakpoint ID's consist major and minor numbers;  the major number "
+    "corresponds to the single entity that was created with a 'breakpoint set' "
+    "command; the minor numbers correspond to all the locations that were actually "
+    "found/set based on the major breakpoint.  A full breakpoint ID might look like "
+    "3.14, meaning the 14th location set for the 3rd breakpoint.  You can specify "
+    "all the locations of a breakpoint by just indicating the major breakpoint "
+    "number. A valid breakpoint id consists either of just the major id number, "
+    "or the major number, a dot, and the location number (e.g. 3 or 3.2 could "
+    "both be valid breakpoint ids).";
 }
 
 static const char *
 BreakpointIDRangeHelpTextCallback ()
 {
-    return "A 'breakpoint id list' is a manner of specifying multiple breakpoints. This can be done  through several mechanisms.  The easiest way is to just enter a space-separated list of breakpoint ids.  To specify all the breakpoint locations under a major breakpoint, you can use the major breakpoint number followed by '.*', eg. '5.*' means all the locations under breakpoint 5.  You can also indicate a range of breakpoints by using <start-bp-id> - <end-bp-id>.  The start-bp-id and end-bp-id for a range can be any valid breakpoint ids.  It is not legal, however, to specify a range using specific locations that cross major breakpoint numbers.  I.e. 3.2 - 3.7 is legal; 2 - 5 is legal; but 3.2 - 4.4 is not legal.";
+    return "A 'breakpoint id list' is a manner of specifying multiple breakpoints. "
+    "This can be done  through several mechanisms.  The easiest way is to just "
+    "enter a space-separated list of breakpoint ids.  To specify all the "
+    "breakpoint locations under a major breakpoint, you can use the major "
+    "breakpoint number followed by '.*', eg. '5.*' means all the locations under "
+    "breakpoint 5.  You can also indicate a range of breakpoints by using "
+    "<start-bp-id> - <end-bp-id>.  The start-bp-id and end-bp-id for a range can "
+    "be any valid breakpoint ids.  It is not legal, however, to specify a range "
+    "using specific locations that cross major breakpoint numbers.  I.e. 3.2 - 3.7"
+    " is legal; 2 - 5 is legal; but 3.2 - 4.4 is not legal.";
 }
+
+static const char *
+GDBFormatHelpTextCallback ()
+{
+    return "A GDB format consists of a repeat count followed by a format letter "
+    "and a size letter.\n\nFormat letters are o (octal), x (hex), d (decimal), u"
+    " (unsigned decimal), t (binary), f (float), a (address), i (instruction), "
+    "c (char) and s (string), T (OSType), A (floating point values in hex).\n\n"
+    "Size letters are b (byte), h (halfword), w (word), g (giant, 8 bytes).\n\n"
+    "The specified number of objects of the specified size are printed "
+    "according to the format.\n\n"
+    "Defaults for format and size letters are those previously used. Default "
+    "count is 1.";
+} 
 
 static const char *
 FormatHelpTextCallback ()
@@ -803,6 +834,7 @@ CommandObject::g_arguments_data[] =
     { eArgTypeFrameIndex, "frame-index", CommandCompletions::eNoCompletion, { NULL, false }, "Index into a thread's list of frames." },
     { eArgTypeFullName, "fullname", CommandCompletions::eNoCompletion, { NULL, false }, "Help text goes here." },
     { eArgTypeFunctionName, "function-name", CommandCompletions::eNoCompletion, { NULL, false }, "The name of a function." },
+    { eArgTypeGDBFormat, "gdb-format", CommandCompletions::eNoCompletion, { GDBFormatHelpTextCallback, true }, NULL },
     { eArgTypeIndex, "index", CommandCompletions::eNoCompletion, { NULL, false }, "An index into a list." },
     { eArgTypeLineNum, "linenum", CommandCompletions::eNoCompletion, { NULL, false }, "Line number in a source file." },
     { eArgTypeLogCategory, "log-category", CommandCompletions::eNoCompletion, { NULL, false }, "The name of a category within a log channel, e.g. all (try \"log list\" to see a list of all channels and their categories." },

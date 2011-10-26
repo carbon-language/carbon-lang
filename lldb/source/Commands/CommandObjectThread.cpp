@@ -75,7 +75,7 @@ public:
                     bool success;
                     int32_t input_count =  Args::StringToSInt32 (option_arg, -1, 0, &success);
                     if (!success)
-                        error.SetErrorStringWithFormat("Invalid integer value for option '%c'.\n", short_option);
+                        error.SetErrorStringWithFormat("invalid integer value for option '%c'", short_option);
                     if (input_count < -1)
                         m_count = UINT32_MAX;
                     else
@@ -87,11 +87,11 @@ public:
                     bool success;
                     m_start =  Args::StringToUInt32 (option_arg, 0, 0, &success);
                     if (!success)
-                        error.SetErrorStringWithFormat("Invalid integer value for option '%c'.\n", short_option);
+                        error.SetErrorStringWithFormat("invalid integer value for option '%c'", short_option);
                 }
                 break;
                 default:
-                    error.SetErrorStringWithFormat("Invalid short option character '%c'.\n", short_option);
+                    error.SetErrorStringWithFormat("invalid short option character '%c'", short_option);
                     break;
 
             }
@@ -301,7 +301,7 @@ public:
                     bool success;
                     m_avoid_no_debug =  Args::StringToBoolean (option_arg, true, &success);
                     if (!success)
-                        error.SetErrorStringWithFormat("Invalid boolean value for option '%c'.\n", short_option);
+                        error.SetErrorStringWithFormat("invalid boolean value for option '%c'", short_option);
                 }
                 break;
             
@@ -320,7 +320,7 @@ public:
                 break;
 
             default:
-                error.SetErrorStringWithFormat("Invalid short option character '%c'.\n", short_option);
+                error.SetErrorStringWithFormat("invalid short option character '%c'", short_option);
                 break;
 
             }
@@ -426,7 +426,7 @@ public:
                 uint32_t step_thread_idx = Args::StringToUInt32 (thread_idx_cstr, LLDB_INVALID_INDEX32);
                 if (step_thread_idx == LLDB_INVALID_INDEX32)
                 {
-                    result.AppendErrorWithFormat ("Invalid thread index '%s'.\n", thread_idx_cstr);
+                    result.AppendErrorWithFormat ("invalid thread index '%s'.\n", thread_idx_cstr);
                     result.SetStatus (eReturnStatusFailed);
                     return false;
                 }
@@ -789,7 +789,7 @@ public:
                     m_thread_idx = Args::StringToUInt32 (option_arg, LLDB_INVALID_INDEX32);
                     if (m_thread_idx == LLDB_INVALID_INDEX32)
                     {
-                        error.SetErrorStringWithFormat ("Invalid thread index '%s'.\n", option_arg);
+                        error.SetErrorStringWithFormat ("invalid thread index '%s'", option_arg);
                     }
                 }
                 break;
@@ -798,7 +798,7 @@ public:
                     m_frame_idx = Args::StringToUInt32 (option_arg, LLDB_INVALID_FRAME_ID);
                     if (m_frame_idx == LLDB_INVALID_FRAME_ID)
                     {
-                        error.SetErrorStringWithFormat ("Invalid frame index '%s'.\n", option_arg);
+                        error.SetErrorStringWithFormat ("invalid frame index '%s'", option_arg);
                     }
                 }
                 break;
@@ -817,7 +817,7 @@ public:
                 }
                 break;
                 default:
-                    error.SetErrorStringWithFormat("Invalid short option character '%c'.\n", short_option);
+                    error.SetErrorStringWithFormat("invalid short option character '%c'", short_option);
                     break;
 
             }
@@ -922,7 +922,7 @@ public:
             line_number = Args::StringToUInt32 (command.GetArgumentAtIndex(0), UINT32_MAX);
             if (line_number == UINT32_MAX)
             {
-                result.AppendErrorWithFormat ("Invalid line number: '%s'.\n", command.GetArgumentAtIndex(0));
+                result.AppendErrorWithFormat ("invalid line number: '%s'.\n", command.GetArgumentAtIndex(0));
                 result.SetStatus (eReturnStatusFailed);
                 return false;
             }
@@ -1142,7 +1142,7 @@ public:
         Thread *new_thread = process->GetThreadList().FindThreadByIndexID(index_id).get();
         if (new_thread == NULL)
         {
-            result.AppendErrorWithFormat ("Invalid thread #%s.\n", command.GetArgumentAtIndex(0));
+            result.AppendErrorWithFormat ("invalid thread #%s.\n", command.GetArgumentAtIndex(0));
             result.SetStatus (eReturnStatusFailed);
             return false;
         }

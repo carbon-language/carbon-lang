@@ -237,7 +237,7 @@ private:
                 case 'C':
                     m_cascade = Args::StringToBoolean(option_arg, true, &success);
                     if (!success)
-                        error.SetErrorStringWithFormat("Invalid value for cascade: %s.\n", option_arg);
+                        error.SetErrorStringWithFormat("invalid value for cascade: %s", option_arg);
                     break;
                 case 'P':
                     handwrite_python = true;
@@ -259,7 +259,7 @@ private:
                     m_regex = true;
                     break;
                 default:
-                    error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
+                    error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
                     break;
             }
             
@@ -401,7 +401,7 @@ private:
                 case 'C':
                     m_cascade = Args::StringToBoolean(option_value, true, &success);
                     if (!success)
-                        error.SetErrorStringWithFormat("Invalid value for cascade: %s.\n", option_value);
+                        error.SetErrorStringWithFormat("invalid value for cascade: %s", option_value);
                     break;
                 case 'p':
                     m_skip_pointers = true;
@@ -410,7 +410,7 @@ private:
                     m_skip_references = true;
                     break;
                 default:
-                    error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
+                    error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
                     break;
             }
             
@@ -937,7 +937,7 @@ CommandObjectTypeSummaryAdd::CommandOptions::SetOptionValue (uint32_t option_idx
         case 'C':
             m_cascade = Args::StringToBoolean(option_arg, true, &success);
             if (!success)
-                error.SetErrorStringWithFormat("Invalid value for cascade: %s.\n", option_arg);
+                error.SetErrorStringWithFormat("invalid value for cascade: %s", option_arg);
             break;
         case 'e':
             m_no_children = false;
@@ -978,7 +978,7 @@ CommandObjectTypeSummaryAdd::CommandOptions::SetOptionValue (uint32_t option_idx
             m_category = std::string(option_arg);
             break;
         default:
-            error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
+            error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
             break;
     }
     
@@ -1469,7 +1469,7 @@ private:
                     m_category = std::string(option_arg);
                     break;
                 default:
-                    error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
+                    error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
                     break;
             }
             
@@ -1627,7 +1627,7 @@ private:
                     m_delete_all = true;
                     break;
                 default:
-                    error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
+                    error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
                     break;
             }
             
@@ -1769,7 +1769,7 @@ class CommandObjectTypeSummaryList : public CommandObject
                     m_category_regex = std::string(option_arg);
                     break;
                 default:
-                    error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
+                    error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
                     break;
             }
             
@@ -2290,7 +2290,7 @@ class CommandObjectTypeFilterList : public CommandObject
                     m_category_regex = std::string(option_arg);
                     break;
                 default:
-                    error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
+                    error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
                     break;
             }
             
@@ -2500,7 +2500,7 @@ class CommandObjectTypeSynthList : public CommandObject
                     m_category_regex = std::string(option_arg);
                     break;
                 default:
-                    error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
+                    error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
                     break;
             }
             
@@ -2698,7 +2698,7 @@ private:
                     m_category = std::string(option_arg);
                     break;
                 default:
-                    error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
+                    error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
                     break;
             }
             
@@ -2860,7 +2860,7 @@ private:
                     m_category = std::string(option_arg);
                     break;
                 default:
-                    error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
+                    error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
                     break;
             }
             
@@ -3020,7 +3020,7 @@ private:
                     m_delete_all = true;
                     break;
                 default:
-                    error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
+                    error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
                     break;
             }
             
@@ -3146,7 +3146,7 @@ private:
                     m_delete_all = true;
                     break;
                 default:
-                    error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
+                    error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
                     break;
             }
             
@@ -3642,7 +3642,7 @@ private:
                 case 'C':
                     m_cascade = Args::StringToBoolean(option_arg, true, &success);
                     if (!success)
-                        error.SetErrorStringWithFormat("Invalid value for cascade: %s.\n", option_arg);
+                        error.SetErrorStringWithFormat("invalid value for cascade: %s", option_arg);
                     break;
                 case 'c':
                     m_expr_paths.push_back(option_arg);
@@ -3661,7 +3661,7 @@ private:
                     m_regex = true;
                     break;
                 default:
-                    error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
+                    error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
                     break;
             }
             

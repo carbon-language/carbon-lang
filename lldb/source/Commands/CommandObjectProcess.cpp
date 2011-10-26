@@ -71,7 +71,7 @@ public:
                     in_new_tty = true; 
                     break;
                 default:
-                    error.SetErrorStringWithFormat("Invalid short option character '%c'.\n", short_option);
+                    error.SetErrorStringWithFormat("invalid short option character '%c'", short_option);
                     break;
 
             }
@@ -442,7 +442,7 @@ public:
                     pid = Args::StringToUInt32 (option_arg, LLDB_INVALID_PROCESS_ID, 0, &success);
                     if (!success || pid == LLDB_INVALID_PROCESS_ID)
                     {
-                        error.SetErrorStringWithFormat("Invalid process ID '%s'.\n", option_arg);
+                        error.SetErrorStringWithFormat("invalid process ID '%s'", option_arg);
                     }
                     break;
 
@@ -459,7 +459,7 @@ public:
                     break;
 
                 default:
-                    error.SetErrorStringWithFormat("Invalid short option character '%c'.\n", short_option);
+                    error.SetErrorStringWithFormat("invalid short option character '%c'", short_option);
                     break;
             }
             return error;
@@ -976,7 +976,7 @@ public:
                 break;
 
             default:
-                error.SetErrorStringWithFormat("Invalid short option character '%c'.\n", short_option);
+                error.SetErrorStringWithFormat("invalid short option character '%c'", short_option);
                 break;
             }
             return error;
@@ -1541,7 +1541,7 @@ public:
                     pass = option_arg;
                     break;
                 default:
-                    error.SetErrorStringWithFormat("Invalid short option character '%c'.\n", short_option);
+                    error.SetErrorStringWithFormat("invalid short option character '%c'", short_option);
                     break;
             }
             return error;
