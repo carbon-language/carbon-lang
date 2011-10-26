@@ -1460,7 +1460,7 @@ def t2STRD_POST : T2Ii8s4post<0, 1, 0, (outs GPR:$wb),
                  "$addr.base = $wb", []>;
 
 // T2Ipl (Preload Data/Instruction) signals the memory system of possible future
-// data/instruction access.  These are for disassembly only.
+// data/instruction access.
 // instr_write is inverted for Thumb mode: (prefetch 3) -> (preload 0),
 // (prefetch 1) -> (preload 2),  (prefetch 2) -> (preload 1).
 multiclass T2Ipl<bits<1> write, bits<1> instr, string opc> {
@@ -1518,6 +1518,10 @@ multiclass T2Ipl<bits<1> write, bits<1> instr, string opc> {
 
     let DecoderMethod = "DecodeT2LoadShift";
   }
+  // FIXME: We should have a separate 'pci' variant here. As-is we represent
+  // it via the i12 variant, which it's related to, but that means we can
+  // represent negative immediates, which aren't legal for anything except
+  // the 'pci' case (Rn == 15).
 }
 
 defm t2PLD  : T2Ipl<0, 0, "pld">,  Requires<[IsThumb2]>;
@@ -3905,6 +3909,17 @@ def : t2InstAlias<"ldrsb${p} $Rt, $addr",
                   (t2LDRSBs rGPR:$Rt, t2addrmode_so_reg:$addr, pred:$p)>;
 def : t2InstAlias<"ldrsh${p} $Rt, $addr",
                   (t2LDRSHs rGPR:$Rt, t2addrmode_so_reg:$addr, pred:$p)>;
+
+def : t2InstAlias<"ldr${p} $Rt, $addr",
+                  (t2LDRpci GPR:$Rt, t2ldrlabel:$addr, pred:$p)>;
+def : t2InstAlias<"ldrb${p} $Rt, $addr",
+                  (t2LDRBpci rGPR:$Rt, t2ldrlabel:$addr, pred:$p)>;
+def : t2InstAlias<"ldrh${p} $Rt, $addr",
+                  (t2LDRHpci rGPR:$Rt, t2ldrlabel:$addr, pred:$p)>;
+def : t2InstAlias<"ldrsb${p} $Rt, $addr",
+                  (t2LDRSBpci rGPR:$Rt, t2ldrlabel:$addr, pred:$p)>;
+def : t2InstAlias<"ldrsh${p} $Rt, $addr",
+                  (t2LDRSHpci rGPR:$Rt, t2ldrlabel:$addr, pred:$p)>;
 
 // Alias for MVN without the ".w" optional width specifier.
 def : t2InstAlias<"mvn${s}${p} $Rd, $Rm",

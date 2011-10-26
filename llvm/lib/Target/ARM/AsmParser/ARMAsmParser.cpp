@@ -865,12 +865,6 @@ public:
     return Val > -256 && Val < 0;
   }
   bool isMemUImm12Offset() const {
-    // If we have an immediate that's not a constant, treat it as a label
-    // reference needing a fixup. If it is a constant, it's something else
-    // and we reject it.
-    if (Kind == k_Immediate && !isa<MCConstantExpr>(getImm()))
-      return true;
-
     if (!isMemory() || Memory.OffsetRegNum != 0 || Memory.Alignment != 0)
       return false;
     // Immediate offset in range [0, 4095].

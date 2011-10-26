@@ -638,9 +638,12 @@ _func:
 @ LDR(literal)
 @------------------------------------------------------------------------------
         ldr.w r5, _foo
+        ldr   lr, (_strcmp-4)
 
 @ CHECK: ldr.w	r5, _foo                @ encoding: [0x5f'A',0xf8'A',A,0x50'A']
-            @   fixup A - offset: 0, value: _foo, kind: fixup_t2_ldst_pcrel_12
+@ CHECK: @   fixup A - offset: 0, value: _foo, kind: fixup_t2_ldst_pcrel_12
+@ CHECK: ldr.w	lr, _strcmp-4           @ encoding: [0x5f'A',0xf8'A',A,0xe0'A']
+@ CHECK: @   fixup A - offset: 0, value: _strcmp-4, kind: fixup_t2_ldst_pcrel_12
 
 
 @------------------------------------------------------------------------------
@@ -813,7 +816,7 @@ _func:
 @------------------------------------------------------------------------------
         ldrh r5, _bar
 
-@ CHECK: ldrh.w	r5, _bar                @ encoding: [0xbf'A',0xf8'A',A,0x50'A']
+@ CHECK: ldrh.w	r5, _bar                @ encoding: [0x3f'A',0xf8'A',A,0x50'A']
 @ CHECK:     @   fixup A - offset: 0, value: _bar, kind: fixup_t2_ldst_pcrel_12
 
 
@@ -882,7 +885,7 @@ _func:
 @------------------------------------------------------------------------------
         ldrsb r5, _bar
 
-@ CHECK: ldrsb.w r5, _bar               @ encoding: [0x9f'A',0xf9'A',A,0x50'A']
+@ CHECK: ldrsb.w r5, _bar               @ encoding: [0x1f'A',0xf9'A',A,0x50'A']
 @ CHECK:      @   fixup A - offset: 0, value: _bar, kind: fixup_t2_ldst_pcrel_12
 
 
@@ -951,7 +954,7 @@ _func:
 @------------------------------------------------------------------------------
         ldrsh r5, _bar
 
-@ CHECK: ldrsh.w r5, _bar               @ encoding: [0xbf'A',0xf9'A',A,0x50'A']
+@ CHECK: ldrsh.w r5, _bar               @ encoding: [0x3f'A',0xf9'A',A,0x50'A']
 @ CHECK:      @   fixup A - offset: 0, value: _bar, kind: fixup_t2_ldst_pcrel_12
 
 @ TEMPORARILY DISABLED:
@@ -1354,9 +1357,9 @@ _func:
 @------------------------------------------------------------------------------
 @ PLD(literal)
 @------------------------------------------------------------------------------
-        pld  _foo
+@        pld  _foo
 
-@ CHECK: pld	_foo                    @ encoding: [0x9f'A',0xf8'A',A,0xf0'A']
+@ FIXME: pld	_foo                    @ encoding: [0x9f'A',0xf8'A',A,0xf0'A']
             @   fixup A - offset: 0, value: _foo, kind: fixup_t2_ldst_pcrel_12
 
 
@@ -1396,10 +1399,10 @@ _func:
 @------------------------------------------------------------------------------
 @ PLI(literal)
 @------------------------------------------------------------------------------
-        pli  _foo
+@        pli  _foo
 
 
-@ CHECK: pli	_foo                    @ encoding: [0x9f'A',0xf9'A',A,0xf0'A']
+@ FIXME: pli	_foo                    @ encoding: [0x9f'A',0xf9'A',A,0xf0'A']
            @   fixup A - offset: 0, value: _foo, kind: fixup_t2_ldst_pcrel_12
 
 
