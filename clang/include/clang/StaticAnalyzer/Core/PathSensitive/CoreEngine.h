@@ -168,12 +168,15 @@ public:
   void enqueue(ExplodedNodeSet &NB);
 };
 
+// TODO: Turn into a calss.
 struct NodeBuilderContext {
   CoreEngine &Eng;
   const CFGBlock *Block;
   ExplodedNode *Pred;
   NodeBuilderContext(CoreEngine &E, const CFGBlock *B, ExplodedNode *N)
     : Eng(E), Block(B), Pred(N) { assert(B); assert(!N->isSink()); }
+
+  ExplodedNode *getPred() const { return Pred; }
 
   /// \brief Return the CFGBlock associated with this builder.
   const CFGBlock *getBlock() const { return Block; }
@@ -286,6 +289,34 @@ public:
   void takeNodes(ExplodedNode *N) { Frontier.erase(N); }
   void addNodes(const ExplodedNodeSet &S) { Frontier.insert(S); }
   void addNodes(ExplodedNode *N) { Frontier.Add(N); }
+};
+
+/// \class NodeBuilderWithSinks
+/// \brief This node builder keeps track of the generated sink nodes.
+class NodeBuilderWithSinks: public NodeBuilder {
+protected:
+  SmallVector<ExplodedNode*, 2> sinksGenerated;
+  ProgramPoint &Location;
+
+public:
+  NodeBuilderWithSinks(ExplodedNode *Pred, ExplodedNodeSet &DstSet,
+                       const NodeBuilderContext &Ctx, ProgramPoint &L)
+    : NodeBuilder(Pred, DstSet, Ctx), Location(L) {}
+  ExplodedNode *generateNode(const ProgramState *State,
+                             ExplodedNode *Pred,
+                             const ProgramPointTag *Tag = 0,
+                             bool MarkAsSink = false) {
+    ProgramPoint LocalLoc = (Tag ? Location.withTag(Tag): Location);
+
+    ExplodedNode *N = generateNodeImpl(LocalLoc, State, Pred, MarkAsSink);
+    if (N && N->isSink())
+      sinksGenerated.push_back(N);
+    return N;
+  }
+
+  const SmallVectorImpl<ExplodedNode*> &getSinks() const {
+    return sinksGenerated;
+  }
 };
 
 /// \class StmtNodeBuilder
@@ -465,52 +496,6 @@ public:
   const Expr *getCondition() const { return Condition; }
 
   const ProgramState *getState() const { return Pred->State; }
-};
-
-class GenericNodeBuilderImpl {
-protected:
-  CoreEngine &engine;
-  ExplodedNode *pred;
-  ProgramPoint pp;
-  SmallVector<ExplodedNode*, 2> sinksGenerated;  
-
-  ExplodedNode *generateNodeImpl(const ProgramState *state,
-                                 ExplodedNode *pred,
-                                 ProgramPoint programPoint,
-                                 bool asSink);
-
-  GenericNodeBuilderImpl(CoreEngine &eng, ExplodedNode *pr, ProgramPoint p)
-    : engine(eng), pred(pr), pp(p), hasGeneratedNode(false) {}
-
-public:
-  bool hasGeneratedNode;
-  
-  WorkList &getWorkList() { return *engine.WList; }
-  
-  ExplodedNode *getPredecessor() const { return pred; }
-  
-  BlockCounter getBlockCounter() const {
-    return engine.WList->getBlockCounter();
-  }
-  
-  const SmallVectorImpl<ExplodedNode*> &sinks() const {
-    return sinksGenerated;
-  }
-};
-
-template <typename PP_T>
-class GenericNodeBuilder : public GenericNodeBuilderImpl {
-public:
-  GenericNodeBuilder(CoreEngine &eng, ExplodedNode *pr, const PP_T &p)
-    : GenericNodeBuilderImpl(eng, pr, p) {}
-
-  ExplodedNode *generateNode(const ProgramState *state, ExplodedNode *pred,
-                             const ProgramPointTag *tag, bool asSink) {
-    return generateNodeImpl(state, pred, cast<PP_T>(pp).withTag(tag),
-                            asSink);
-  }
-  
-  const PP_T &getProgramPoint() const { return cast<PP_T>(pp); }
 };
 
 class CallEnterNodeBuilder {

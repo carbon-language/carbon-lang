@@ -261,6 +261,7 @@ void CoreEngine::HandleCallExit(const CallExit &L, ExplodedNode *Pred) {
 void CoreEngine::HandleBlockEdge(const BlockEdge &L, ExplodedNode *Pred) {
 
   const CFGBlock *Blk = L.getDst();
+  NodeBuilderContext BuilderCtx(*this, Blk, Pred);
 
   // Check if we are entering the EXIT block.
   if (Blk == &(L.getLocationContext()->getCFG()->getExit())) {
@@ -269,35 +270,30 @@ void CoreEngine::HandleBlockEdge(const BlockEdge &L, ExplodedNode *Pred) {
             && "EXIT block cannot contain Stmts.");
 
     // Process the final state transition.
-    NodeBuilderContext BuilderCtx(*this, Blk, Pred);
     SubEng.processEndOfFunction(BuilderCtx);
 
     // This path is done. Don't enqueue any more nodes.
     return;
   }
 
-  // Call into the subengine to process entering the CFGBlock.
+  // Call into the SubEngine to process entering the CFGBlock.
   ExplodedNodeSet dstNodes;
   BlockEntrance BE(Blk, Pred->getLocationContext());
-  GenericNodeBuilder<BlockEntrance> nodeBuilder(*this, Pred, BE);
-  SubEng.processCFGBlockEntrance(dstNodes, nodeBuilder);
+  NodeBuilderWithSinks nodeBuilder(Pred, dstNodes, BuilderCtx, BE);
+  SubEng.processCFGBlockEntrance(nodeBuilder);
 
-  if (dstNodes.empty()) {
-    if (!nodeBuilder.hasGeneratedNode) {
-      // Auto-generate a node and enqueue it to the worklist.
-      generateNode(BE, Pred->State, Pred);    
-    }
-  }
-  else {
-    for (ExplodedNodeSet::iterator I = dstNodes.begin(), E = dstNodes.end();
-         I != E; ++I) {
-      WList->enqueue(*I);
-    }
+  // Auto-generate a node.
+  if (!nodeBuilder.hasGeneratedNodes()) {
+    nodeBuilder.generateNode(Pred->State, Pred);
   }
 
+  // Enqueue nodes onto the worklist.
+  enqueue(dstNodes);
+
+  // Make sink nodes as exhausted.
+  const SmallVectorImpl<ExplodedNode*> &Sinks =  nodeBuilder.getSinks();
   for (SmallVectorImpl<ExplodedNode*>::const_iterator
-       I = nodeBuilder.sinks().begin(), E = nodeBuilder.sinks().end();
-       I != E; ++I) {
+         I =Sinks.begin(), E = Sinks.end(); I != E; ++I) {
     blocksExhausted.push_back(std::make_pair(L, *I));
   }
 }
@@ -463,27 +459,6 @@ void CoreEngine::enqueue(ExplodedNodeSet &S) {
                                  E = S.end(); I != E; ++I) {
     WList->enqueue(*I);
   }
-}
-
-ExplodedNode *
-GenericNodeBuilderImpl::generateNodeImpl(const ProgramState *state,
-                                         ExplodedNode *pred,
-                                         ProgramPoint programPoint,
-                                         bool asSink) {
-  
-  hasGeneratedNode = true;
-  bool isNew;
-  ExplodedNode *node = engine.getGraph().getNode(programPoint, state, &isNew);
-  if (pred)
-    node->addPredecessor(pred, engine.getGraph());
-  if (isNew) {
-    if (asSink) {
-      node->markAsSink();
-      sinksGenerated.push_back(node);
-    }
-    return node;
-  }
-  return 0;
 }
 
 ExplodedNode* NodeBuilder::generateNodeImpl(const ProgramPoint &Loc,

@@ -161,8 +161,7 @@ public:
                             ExplodedNode *Pred, ExplodedNodeSet &Dst);
 
   /// Called by CoreEngine when processing the entrance of a CFGBlock.
-  virtual void processCFGBlockEntrance(ExplodedNodeSet &dstNodes,
-                                GenericNodeBuilder<BlockEntrance> &nodeBuilder);
+  virtual void processCFGBlockEntrance(NodeBuilderWithSinks &nodeBuilder);
   
   /// ProcessBranch - Called by CoreEngine.  Used to generate successor
   ///  nodes by processing the 'effects' of a branch condition.

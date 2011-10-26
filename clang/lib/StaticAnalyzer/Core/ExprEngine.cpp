@@ -909,20 +909,13 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
   }
 }
 
-//===----------------------------------------------------------------------===//
-// Block entrance.  (Update counters).
-//===----------------------------------------------------------------------===//
-
-void ExprEngine::processCFGBlockEntrance(ExplodedNodeSet &dstNodes,
-                               GenericNodeBuilder<BlockEntrance> &nodeBuilder){
+/// Block entrance.  (Update counters).
+void ExprEngine::processCFGBlockEntrance(NodeBuilderWithSinks &nodeBuilder) {
   
   // FIXME: Refactor this into a checker.
-  const CFGBlock *block = nodeBuilder.getProgramPoint().getBlock();
-  ExplodedNode *pred = nodeBuilder.getPredecessor();
+  ExplodedNode *pred = nodeBuilder.getContext().getPred();
   
-  if (nodeBuilder.getBlockCounter().getNumVisited(
-                       pred->getLocationContext()->getCurrentStackFrame(), 
-                       block->getBlockID()) >= AMgr.getMaxVisit()) {
+  if (nodeBuilder.getContext().getCurrentBlockCount() >= AMgr.getMaxVisit()) {
     static SimpleProgramPointTag tag("ExprEngine : Block count exceeded");
     nodeBuilder.generateNode(pred->getState(), pred, &tag, true);
   }
