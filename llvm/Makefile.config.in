@@ -149,6 +149,9 @@ LDFLAGS+=@LDFLAGS@
 AR_PATH = @AR@
 AR = @AR@
 
+# Path to the strip program,
+STRIP = @STRIP@
+
 # Path to the nm program
 NM_PATH = @NM@
 

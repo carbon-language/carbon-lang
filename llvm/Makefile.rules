@@ -531,7 +531,7 @@ endif
 ifndef KEEP_SYMBOLS
   Strip := $(PLATFORMSTRIPOPTS)
   StripWarnMsg := "(without symbols)"
-  Install.StripFlag += -s
+  Install.StripFlag += -s --strip-program=$(STRIP)
 endif
 
 ifdef TOOL_NO_EXPORTS
