@@ -198,7 +198,7 @@ static void setFlag(const ProgramState *state, SVal val, CheckerContext &C) {
 
 static QualType parameterTypeFromSVal(SVal val, CheckerContext &C) {
   const StackFrameContext *
-    SFC = C.getPredecessor()->getLocationContext()->getCurrentStackFrame();
+    SFC = C.getLocationContext()->getCurrentStackFrame();
   if (const loc::MemRegionVal* X = dyn_cast<loc::MemRegionVal>(&val)) {
     const MemRegion* R = X->getRegion();
     if (const VarRegion *VR = R->getAs<VarRegion>())

@@ -1733,7 +1733,7 @@ void CStringChecker::checkPreStmt(const DeclStmt *DS, CheckerContext &C) const {
     if (!isa<StringLiteral>(Init))
       continue;
 
-    Loc VarLoc = state->getLValue(D, C.getPredecessor()->getLocationContext());
+    Loc VarLoc = state->getLValue(D, C.getLocationContext());
     const MemRegion *MR = VarLoc.getAsRegion();
     if (!MR)
       continue;

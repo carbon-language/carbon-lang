@@ -2501,7 +2501,7 @@ void RetainCountChecker::checkPostStmt(const BlockExpr *BE,
   // via captured variables, even though captured variables result in a copy
   // and in implicit increment/decrement of a retain count.
   SmallVector<const MemRegion*, 10> Regions;
-  const LocationContext *LC = C.getPredecessor()->getLocationContext();
+  const LocationContext *LC = C.getLocationContext();
   MemRegionManager &MemMgr = C.getSValBuilder().getRegionManager();
 
   for ( ; I != E; ++I) {
@@ -2681,7 +2681,7 @@ void RetainCountChecker::checkSummary(const RetainSummary &Summ,
   // Evaluate the effect on the message receiver.
   bool ReceiverIsTracked = false;
   if (!hasErr && CallOrMsg.isObjCMessage()) {
-    const LocationContext *LC = C.getPredecessor()->getLocationContext();
+    const LocationContext *LC = C.getLocationContext();
     SVal Receiver = CallOrMsg.getInstanceMessageReceiver(LC);
     if (SymbolRef Sym = Receiver.getAsLocSymbol()) {
       if (const RefVal *T = state->get<RefBindings>(Sym)) {

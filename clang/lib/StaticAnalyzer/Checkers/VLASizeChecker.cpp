@@ -117,7 +117,7 @@ void VLASizeChecker::checkPreStmt(const DeclStmt *DS, CheckerContext &C) const {
                                               cast<NonLoc>(EleSizeVal), SizeTy);
 
   // Finally, assume that the array's extent matches the given size.
-  const LocationContext *LC = C.getPredecessor()->getLocationContext();
+  const LocationContext *LC = C.getLocationContext();
   DefinedOrUnknownSVal Extent =
     state->getRegion(VD, LC)->getExtent(svalBuilder);
   DefinedOrUnknownSVal ArraySize = cast<DefinedOrUnknownSVal>(ArraySizeVal);

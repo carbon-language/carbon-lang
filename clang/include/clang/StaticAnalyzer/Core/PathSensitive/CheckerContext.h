@@ -50,7 +50,7 @@ public:
     return Eng.getStoreManager();
   }
 
-  ExplodedNode *&getPredecessor() { return Pred; }
+  ExplodedNode *getPredecessor() { return Pred; }
   const ProgramState *getState() { return Pred->getState(); }
 
   /// \brief Returns the number of times the current block has been visited
@@ -63,6 +63,10 @@ public:
     return Eng.getContext();
   }
   
+  const LocationContext *getLocationContext() {
+    return Pred->getLocationContext();
+  }
+
   BugReporter &getBugReporter() {
     return Eng.getBugReporter();
   }
@@ -139,14 +143,14 @@ public:
   }
 
 private:
-  ExplodedNode *addTransitionImpl(const ProgramState *state,
-                                 bool markAsSink,
-                                 ExplodedNode *pred = 0,
-                                 const ProgramPointTag *tag = 0) {
-    assert(state);
-    ExplodedNode *node = NB.generateNode(tag ? Location.withTag(tag) : Location,
-                                        state,
-                                        pred ? pred : Pred, markAsSink);
+  ExplodedNode *addTransitionImpl(const ProgramState *State,
+                                 bool MarkAsSink,
+                                 ExplodedNode *P = 0,
+                                 const ProgramPointTag *Tag = 0) {
+    assert(State);
+    ExplodedNode *node = NB.generateNode(Tag ? Location.withTag(Tag) : Location,
+                                        State,
+                                        P ? P : Pred, MarkAsSink);
     return node;
   }
 };
