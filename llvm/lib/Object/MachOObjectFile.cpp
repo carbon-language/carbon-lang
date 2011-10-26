@@ -835,7 +835,9 @@ error_code MachOObjectFile::getRelocationValueString(DataRefImpl Rel,
         if (error_code ec = getRelocationTargetName(RENext->Word1, SucName))
           report_fatal_error(ec.message());
 
-        fmt << Name << "-" << SucName;
+        // The X86_64_RELOC_UNSIGNED contains the minuend symbol,
+        // X86_64_SUBTRACTOR contains to the subtrahend.
+        fmt << SucName << "-" << Name;
       }
       case 6: // X86_64_RELOC_SIGNED1
         fmt << Name << "-1";
