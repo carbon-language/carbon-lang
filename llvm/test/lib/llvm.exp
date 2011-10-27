@@ -47,9 +47,9 @@ proc execOneLine { test PRS outcome lineno line } {
 # cases.
 proc substitute { line test tmpFile } {
   global srcroot objroot srcdir objdir subdir target_triplet
-  global llvmgcc llvmgxx emitir ocamlopt
-  global gccpath gxxpath compile_c compile_cxx link shlibext llvmlibsdir
-  global llvmdsymutil valgrind grep gas bugpoint_topts
+  global ocamlopt
+  global link shlibext
+  global valgrind grep gas
   set path [file join $srcdir $subdir]
 
   # Substitute all Tcl variables.
@@ -57,28 +57,12 @@ proc substitute { line test tmpFile } {
 
   #replace %% with _#MARKER#_ to make the replacement of %% more predictable
   regsub -all {%%} $new_line {_#MARKER#_} new_line
-  #replace %llvmgcc_only with actual path to llvmgcc
-  regsub -all {%llvmgcc_only} $new_line "$llvmgcc" new_line
-  #replace %llvmgcc with actual path to llvmgcc
-  regsub -all {%llvmgcc} $new_line "$llvmgcc $emitir -w" new_line
-  #replace %llvmgxx with actual path to llvmg++
-  regsub -all {%llvmgxx} $new_line "$llvmgxx $emitir -w" new_line
-  #replace %compile_cxx with C++ compilation command
-  regsub -all {%compile_cxx} $new_line "$compile_cxx" new_line
-  #replace %compile_c with C compilation command
-  regsub -all {%compile_c} $new_line "$compile_c" new_line
   #replace %link with C++ link command
   regsub -all {%link} $new_line "$link" new_line
   #replace %shlibext with shared library extension
   regsub -all {%shlibext} $new_line "$shlibext" new_line
   #replace %ocamlopt with ocaml compiler command
   regsub -all {%ocamlopt} $new_line "$ocamlopt" new_line
-  #replace %llvmdsymutil with dsymutil command
-  regsub -all {%llvmdsymutil} $new_line "$llvmdsymutil" new_line
-  #replace %llvmlibsdir with configure library directory
-  regsub -all {%llvmlibsdir} $new_line "$llvmlibsdir" new_line
-  #replace %bugpoint_topts with actual bugpoint target options
-  regsub -all {%bugpoint_topts} $new_line "$bugpoint_topts" new_line
   #replace %p with path to source,
   regsub -all {%p} $new_line [file join $srcdir $subdir] new_line
   #replace %s with filename

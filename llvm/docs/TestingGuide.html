@@ -798,36 +798,9 @@ define two separate CHECK lines that match on the same line.
     you need multiple temporaries. This is useful as the destination of some
     redirected output.</dd>
 
-    <dt><b>llvmlibsdir</b> (%llvmlibsdir)</dt>
-    <dd>The directory where the LLVM libraries are located.</dd>
-
     <dt><b>target_triplet</b> (%target_triplet)</dt>
     <dd>The target triplet that corresponds to the current host machine (the one
     running the test cases). This should probably be called "host".<dd>
-
-    <dt><b>llvmgcc</b> (%llvmgcc)</dt>
-    <dd>The full path to the <tt>llvm-gcc</tt> executable as specified in the
-    configured LLVM environment</dd>
-
-    <dt><b>llvmgxx</b> (%llvmgxx)</dt>
-    <dd>The full path to the <tt>llvm-gxx</tt> executable as specified in the
-    configured LLVM environment</dd>
-
-    <dt><b>gccpath</b></dt>
-    <dd>The full path to the C compiler used to <i>build </i> LLVM. Note that 
-    this might not be gcc.</dd>
-
-    <dt><b>gxxpath</b></dt>
-    <dd>The full path to the C++ compiler used to <i>build </i> LLVM. Note that 
-    this might not be g++.</dd>
-
-    <dt><b>compile_c</b> (%compile_c)</dt>
-    <dd>The full command line used to compile LLVM C source  code. This has all 
-    the configured -I, -D and optimization options.</dd>
-
-    <dt><b>compile_cxx</b> (%compile_cxx)</dt>
-    <dd>The full command used to compile LLVM C++ source  code. This has 
-    all the configured -I, -D and optimization options.</dd>
 
     <dt><b>link</b> (%link)</dt> 
     <dd>This full link command used to link LLVM executables. This has all the
