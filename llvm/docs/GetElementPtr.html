@@ -594,10 +594,10 @@ idx3 = (char*) &amp;MyVar + 8
      because LLVM has no restrictions on mixing types in addressing, loads or
      stores.</p>
 
-  <p>It would be possible to add special annotations to the IR, probably using
-     metadata, to describe a different type system (such as the C type system),
-     and do type-based aliasing on top of that. This is a much bigger
-     undertaking though.</p>
+  <p>LLVM's type-based alias analysis pass uses metadata to describe a different
+     type system (such as the C type system), and performs type-based aliasing
+     on top of that.  Further details are in the
+     <a href="LangRef.html#tbaa">language reference</a>.</p>
 
 </div>
 

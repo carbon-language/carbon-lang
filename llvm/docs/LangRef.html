@@ -100,7 +100,11 @@
   <li><a href="#othervalues">Other Values</a>
     <ol>
       <li><a href="#inlineasm">Inline Assembler Expressions</a></li>
-      <li><a href="#metadata">Metadata Nodes and Metadata Strings</a></li>
+      <li><a href="#metadata">Metadata Nodes and Metadata Strings</a>
+        <ol>
+          <li><a href="#tbaa">'<tt>tbaa</tt>' Metadata</a></li>
+        </ol>
+      </li>
     </ol>
   </li>
   <li><a href="#intrinsic_globals">Intrinsic Global Variables</a>
@@ -2913,6 +2917,53 @@ call void @llvm.dbg.value(metadata !24, i64 0, metadata !25)
 <pre>
 %indvar.next = add i64 %indvar, 1, !dbg !21
 </pre>
+</div>
+
+<p>More information about specific metadata nodes recognized by the optimizers
+   and code generator is found below.</p>
+
+<h4>
+  <a name="tbaa">'<tt>tbaa</tt>' Metadata</a>
+</h4>
+
+<div>
+
+<p>In LLVM IR, memory does not have types, so LLVM's own type system is not
+   suitable for doing TBAA. Instead, metadata is added to the IR to describe
+   a type system of a higher level language. This can be used to implement
+   typical C/C++ TBAA, but it can also be used to implement custom alias
+   analysis behavior for other languages.</p>
+
+<p>The current metadata format is very simple. TBAA metadata nodes have up to
+   three fields, e.g.:</p>
+
+<div class="doc_code">
+<pre>
+!0 = metadata !{ metadata !"an example type tree" }
+!1 = metadata !{ metadata !"int", metadata !0 }
+!2 = metadata !{ metadata !"float", metadata !0 }
+!3 = metadata !{ metadata !"const float", metadata !2, i64 1 }
+</pre>
+</div>
+
+<p>The first field is an identity field. It can be any value, usually
+   a metadata string, which uniquely identifies the type. The most important
+   name in the tree is the name of the root node. Two trees with
+   different root node names are entirely disjoint, even if they
+   have leaves with common names.</p>
+
+<p>The second field identifies the type's parent node in the tree, or
+   is null or omitted for a root node. A type is considered to alias
+   all of its descendants and all of its ancestors in the tree. Also,
+   a type is considered to alias all types in other trees, so that
+   bitcode produced from multiple front-ends is handled conservatively.</p>
+
+<p>If the third field is present, it's an integer which if equal to 1
+   indicates that the type is "constant" (meaning
+   <tt>pointsToConstantMemory</tt> should return true; see
+   <a href="AliasAnalysis.html#OtherItfs">other useful
+   <tt>AliasAnalysis</tt> methods</a>).</p>
+
 </div>
 
 </div>
