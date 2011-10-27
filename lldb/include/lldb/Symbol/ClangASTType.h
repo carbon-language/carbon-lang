@@ -148,7 +148,8 @@ public:
                    uint32_t data_offset,
                    size_t data_byte_size,
                    uint32_t bitfield_bit_size,
-                   uint32_t bitfield_bit_offset);
+                   uint32_t bitfield_bit_offset,
+                   ExecutionContextScope *exe_scope);
     
     
     static bool
@@ -160,7 +161,8 @@ public:
                    uint32_t data_offset,
                    size_t data_byte_size,
                    uint32_t bitfield_bit_size,
-                   uint32_t bitfield_bit_offset);
+                   uint32_t bitfield_bit_offset,
+                   ExecutionContextScope *exe_scope);
 
     void
     DumpSummary (ExecutionContext *exe_ctx,

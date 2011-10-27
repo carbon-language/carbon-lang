@@ -233,32 +233,35 @@ ObjectFileMachO::GetAddressClass (lldb::addr_t file_addr)
                         return eAddressClassCode;
 
                     case eSectionTypeContainer:             return eAddressClassUnknown;
-                    case eSectionTypeData:                  return eAddressClassData;
-                    case eSectionTypeDataCString:           return eAddressClassData;
-                    case eSectionTypeDataCStringPointers:   return eAddressClassData;
-                    case eSectionTypeDataSymbolAddress:     return eAddressClassData;
-                    case eSectionTypeData4:                 return eAddressClassData;
-                    case eSectionTypeData8:                 return eAddressClassData;
-                    case eSectionTypeData16:                return eAddressClassData;
-                    case eSectionTypeDataPointers:          return eAddressClassData;
-                    case eSectionTypeZeroFill:              return eAddressClassData;
-                    case eSectionTypeDataObjCMessageRefs:   return eAddressClassData;
-                    case eSectionTypeDataObjCCFStrings:     return eAddressClassData;
-                    case eSectionTypeDebug:                 return eAddressClassDebug;
-                    case eSectionTypeDWARFDebugAbbrev:      return eAddressClassDebug;
-                    case eSectionTypeDWARFDebugAranges:     return eAddressClassDebug;
-                    case eSectionTypeDWARFDebugFrame:       return eAddressClassDebug;
-                    case eSectionTypeDWARFDebugInfo:        return eAddressClassDebug;
-                    case eSectionTypeDWARFDebugLine:        return eAddressClassDebug;
-                    case eSectionTypeDWARFDebugLoc:         return eAddressClassDebug;
-                    case eSectionTypeDWARFDebugMacInfo:     return eAddressClassDebug;
-                    case eSectionTypeDWARFDebugPubNames:    return eAddressClassDebug;
-                    case eSectionTypeDWARFDebugPubTypes:    return eAddressClassDebug;
-                    case eSectionTypeDWARFDebugRanges:      return eAddressClassDebug;
-                    case eSectionTypeDWARFDebugStr:         return eAddressClassDebug;
-                    case eSectionTypeDWARFAppleNames:       return eAddressClassDebug;
-                    case eSectionTypeDWARFAppleTypes:       return eAddressClassDebug;
-                    case eSectionTypeDWARFAppleNamespaces:  return eAddressClassDebug;
+                    case eSectionTypeData:
+                    case eSectionTypeDataCString:
+                    case eSectionTypeDataCStringPointers:
+                    case eSectionTypeDataSymbolAddress:
+                    case eSectionTypeData4:
+                    case eSectionTypeData8:
+                    case eSectionTypeData16:
+                    case eSectionTypeDataPointers:
+                    case eSectionTypeZeroFill:
+                    case eSectionTypeDataObjCMessageRefs:
+                    case eSectionTypeDataObjCCFStrings:
+                        return eAddressClassData;
+                    case eSectionTypeDebug:
+                    case eSectionTypeDWARFDebugAbbrev:
+                    case eSectionTypeDWARFDebugAranges:
+                    case eSectionTypeDWARFDebugFrame:
+                    case eSectionTypeDWARFDebugInfo:
+                    case eSectionTypeDWARFDebugLine:
+                    case eSectionTypeDWARFDebugLoc:
+                    case eSectionTypeDWARFDebugMacInfo:
+                    case eSectionTypeDWARFDebugPubNames:
+                    case eSectionTypeDWARFDebugPubTypes:
+                    case eSectionTypeDWARFDebugRanges:
+                    case eSectionTypeDWARFDebugStr:
+                    case eSectionTypeDWARFAppleNames:
+                    case eSectionTypeDWARFAppleTypes:
+                    case eSectionTypeDWARFAppleNamespaces:
+                    case eSectionTypeDWARFAppleObjC:
+                        return eAddressClassDebug;
                     case eSectionTypeEHFrame:               return eAddressClassRuntime;
                     case eSectionTypeOther:                 return eAddressClassUnknown;
                     }
@@ -512,6 +515,7 @@ ObjectFileMachO::ParseSections ()
                         static ConstString g_sect_name_dwarf_apple_names ("__apple_names");
                         static ConstString g_sect_name_dwarf_apple_types ("__apple_types");
                         static ConstString g_sect_name_dwarf_apple_namespaces ("__apple_namespac");
+                        static ConstString g_sect_name_dwarf_apple_objc ("__apple_objc");
                         static ConstString g_sect_name_eh_frame ("__eh_frame");
                         static ConstString g_sect_name_DATA ("__DATA");
                         static ConstString g_sect_name_TEXT ("__TEXT");
@@ -546,6 +550,8 @@ ObjectFileMachO::ParseSections ()
                             sect_type = eSectionTypeDWARFAppleTypes;
                         else if (section_name == g_sect_name_dwarf_apple_namespaces)
                             sect_type = eSectionTypeDWARFAppleNamespaces;
+                        else if (section_name == g_sect_name_dwarf_apple_objc)
+                            sect_type = eSectionTypeDWARFAppleObjC;
                         else if (section_name == g_sect_name_objc_selrefs)
                             sect_type = eSectionTypeDataCStringPointers;
                         else if (section_name == g_sect_name_objc_msgrefs)

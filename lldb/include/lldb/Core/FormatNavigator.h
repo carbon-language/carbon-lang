@@ -25,7 +25,6 @@
 
 // Project includes
 #include "lldb/lldb-public.h"
-#include "lldb/lldb-enumerations.h"
 
 #include "lldb/Core/FormatClasses.h"
 #include "lldb/Core/Log.h"
@@ -262,7 +261,7 @@ public:
         lldb::DynamicValueType use_dynamic,
         uint32_t* why = NULL)
     {
-        uint32_t value = lldb::eFormatterChoiceCriterionDirectChoice;
+        uint32_t value = lldb_private::eFormatterChoiceCriterionDirectChoice;
         clang::QualType type = clang::QualType::getFromOpaquePtr(valobj.GetClangType());
         bool ret = Get(valobj, type, entry, use_dynamic, value);
         if (ret)
@@ -423,7 +422,7 @@ protected:
         }
         if (Get_ObjC(valobj, parent, entry, reason))
         {
-            reason |= lldb::eFormatterChoiceCriterionNavigatedBaseClasses;
+            reason |= lldb_private::eFormatterChoiceCriterionNavigatedBaseClasses;
             return true;
         }
         return false;
@@ -468,7 +467,7 @@ protected:
             }
             else
             {
-                reason |= lldb::eFormatterChoiceCriterionStrippedBitField;
+                reason |= lldb_private::eFormatterChoiceCriterionStrippedBitField;
                 if (log)
                     log->Printf("no bitfield direct match");
             }
@@ -493,7 +492,7 @@ protected:
                 log->Printf("stripping reference");
             if (Get(valobj,type.getNonReferenceType(),entry, use_dynamic, reason) && !entry->m_skip_references)
             {
-                reason |= lldb::eFormatterChoiceCriterionStrippedPointerReference;
+                reason |= lldb_private::eFormatterChoiceCriterionStrippedPointerReference;
                 return true;
             }
         }
@@ -514,7 +513,7 @@ protected:
             {
                 if (Get_ObjC(valobj, runtime->GetISA(valobj), entry, reason))
                 {
-                    reason |= lldb::eFormatterChoiceCriterionDynamicObjCHierarchy;
+                    reason |= lldb_private::eFormatterChoiceCriterionDynamicObjCHierarchy;
                     return true;
                 }
             }
@@ -535,7 +534,7 @@ protected:
             clang::QualType pointee = typePtr->getPointeeType();
             if (Get(valobj, pointee, entry, use_dynamic, reason) && !entry->m_skip_pointers)
             {
-                reason |= lldb::eFormatterChoiceCriterionStrippedPointerReference;
+                reason |= lldb_private::eFormatterChoiceCriterionStrippedPointerReference;
                 return true;
             }
         }
@@ -557,7 +556,7 @@ protected:
                 {
                     if (Get_ObjC(valobj, runtime->GetISA(valobj), entry, reason))
                     {
-                        reason |= lldb::eFormatterChoiceCriterionDynamicObjCHierarchy;
+                        reason |= lldb_private::eFormatterChoiceCriterionDynamicObjCHierarchy;
                         return true;
                     }
                 }
@@ -576,7 +575,7 @@ protected:
                 return false;
             if (Get(*target, typePtr->getPointeeType(), entry, use_dynamic, reason) && !entry->m_skip_pointers)
             {
-                reason |= lldb::eFormatterChoiceCriterionStrippedPointerReference;
+                reason |= lldb_private::eFormatterChoiceCriterionStrippedPointerReference;
                 return true;
             }
         }
@@ -601,7 +600,7 @@ protected:
                         clang::QualType ivar_qual_type(ast->getObjCInterfaceType(superclass_interface_decl));
                         if (Get(valobj, ivar_qual_type, entry, use_dynamic, reason) && entry->m_cascades)
                         {
-                            reason |= lldb::eFormatterChoiceCriterionNavigatedBaseClasses;
+                            reason |= lldb_private::eFormatterChoiceCriterionNavigatedBaseClasses;
                             return true;
                         }
                     }
@@ -630,7 +629,7 @@ protected:
                         {
                             if ((Get(valobj, pos->getType(), entry, use_dynamic, reason)) && entry->m_cascades)
                             {
-                                reason |= lldb::eFormatterChoiceCriterionNavigatedBaseClasses;
+                                reason |= lldb_private::eFormatterChoiceCriterionNavigatedBaseClasses;
                                 return true;
                             }
                         }
@@ -644,7 +643,7 @@ protected:
                         {
                             if ((Get(valobj, pos->getType(), entry, use_dynamic, reason)) && entry->m_cascades)
                             {
-                                reason |= lldb::eFormatterChoiceCriterionNavigatedBaseClasses;
+                                reason |= lldb_private::eFormatterChoiceCriterionNavigatedBaseClasses;
                                 return true;
                             }
                         }
@@ -660,7 +659,7 @@ protected:
                 log->Printf("stripping typedef");
             if ((Get(valobj, type_tdef->getDecl()->getUnderlyingType(), entry, use_dynamic, reason)) && entry->m_cascades)
             {
-                reason |= lldb::eFormatterChoiceCriterionNavigatedTypedefs;
+                reason |= lldb_private::eFormatterChoiceCriterionNavigatedTypedefs;
                 return true;
             }
         }

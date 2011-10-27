@@ -164,8 +164,8 @@ CommandObjectExpression::CommandObjectExpression (CommandInterpreter &interprete
     // Push the data for the first argument into the m_arguments vector.
     m_arguments.push_back (arg);
     
-    // Add the "--format" and "--count" options to group 1 and 3
-    m_option_group.Append (&m_format_options, OptionGroupFormat::OPTION_GROUP_FORMAT, LLDB_OPT_SET_1);
+    // Add the "--format" and "--gdb-format"
+    m_option_group.Append (&m_format_options, OptionGroupFormat::OPTION_GROUP_FORMAT | OptionGroupFormat::OPTION_GROUP_GDB_FMT, LLDB_OPT_SET_1);
     m_option_group.Append (&m_command_options);
     m_option_group.Finalize();
 }

@@ -117,8 +117,11 @@ namespace lldb {
         eFormatVectorOfFloat32,
         eFormatVectorOfFloat64,
         eFormatVectorOfUInt128,
-        eFormatComplexInteger,   // Integer complex type
-        eFormatCharArray,       // Print characters with no single quotes, used for character arrays that can contain non printable characters
+        eFormatComplexInteger,      // Integer complex type
+        eFormatCharArray,           // Print characters with no single quotes, used for character arrays that can contain non printable characters
+        eFormatAddressInfo,         // Describe what an address points to (func + offset with file/line, symbol + offset, data, etc)
+        eFormatHexFloat,            // ISO C99 hex float string
+        eFormatInstruction,         // Disassemble an opcode
         kNumFormats
     } Format;
 
@@ -479,6 +482,7 @@ namespace lldb {
         eSectionTypeDWARFAppleNames,
         eSectionTypeDWARFAppleTypes,
         eSectionTypeDWARFAppleNamespaces,
+        eSectionTypeDWARFAppleObjC,
         eSectionTypeEHFrame,
         eSectionTypeOther
         
@@ -507,20 +511,6 @@ namespace lldb {
         eFunctionNameTypeSelector   = (1u << 5)     // Find function by selector name (ObjC) names
     } FunctionNameType;
     
-    //----------------------------------------------------------------------
-    // Ways that the FormatManager picks a particular format for a type
-    //----------------------------------------------------------------------
-    typedef enum FormatterChoiceCriterion
-    {
-        eFormatterChoiceCriterionDirectChoice =                  0x00000000,
-        eFormatterChoiceCriterionStrippedPointerReference =      0x00000001,
-        eFormatterChoiceCriterionNavigatedTypedefs =             0x00000002,
-        eFormatterChoiceCriterionNavigatedBaseClasses =          0x00000004,
-        eFormatterChoiceCriterionRegularExpressionSummary =      0x00000008,
-        eFormatterChoiceCriterionRegularExpressionFilter =       0x00000008,
-        eFormatterChoiceCriterionDynamicObjCHierarchy =          0x00000010,
-        eFormatterChoiceCriterionStrippedBitField =              0x00000020
-    } FormatterChoiceCriterion;
     
     //----------------------------------------------------------------------
     // Basic types enumeration for the public API SBType::GetBasicType()

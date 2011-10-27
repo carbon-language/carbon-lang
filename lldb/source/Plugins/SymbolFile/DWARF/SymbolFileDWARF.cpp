@@ -184,6 +184,7 @@ SymbolFileDWARF::SymbolFileDWARF(ObjectFile* objfile) :
     m_apple_names_ap (),
     m_apple_types_ap (),
     m_apple_namespaces_ap (),
+    m_apple_objc_ap (),
     m_function_basename_index(),
     m_function_fullname_index(),
     m_function_method_index(),
@@ -287,6 +288,15 @@ SymbolFileDWARF::InitializeObject()
             m_apple_namespaces_ap.reset();
     }
 
+    get_apple_objc_data();
+    if (m_data_apple_objc.GetByteSize() > 0)
+    {
+        m_apple_objc_ap.reset (new DWARFMappedHash::MemoryTable (m_data_apple_objc, get_debug_str_data(), ".apple_objc"));
+        if (m_apple_objc_ap->IsValid())
+            m_using_apple_tables = true;
+        else
+            m_apple_objc_ap.reset();
+    }
 }
 
 bool
@@ -492,19 +502,25 @@ SymbolFileDWARF::get_debug_str_data()
 const DataExtractor&
 SymbolFileDWARF::get_apple_names_data()
 {
-    return GetCachedSectionData (flagsGotDebugNamesData, eSectionTypeDWARFAppleNames, m_data_apple_names);
+    return GetCachedSectionData (flagsGotAppleNamesData, eSectionTypeDWARFAppleNames, m_data_apple_names);
 }
 
 const DataExtractor&
 SymbolFileDWARF::get_apple_types_data()
 {
-    return GetCachedSectionData (flagsGotDebugTypesData, eSectionTypeDWARFAppleTypes, m_data_apple_types);
+    return GetCachedSectionData (flagsGotAppleTypesData, eSectionTypeDWARFAppleTypes, m_data_apple_types);
 }
 
 const DataExtractor&
 SymbolFileDWARF::get_apple_namespaces_data()
 {
-    return GetCachedSectionData (flagsGotDebugNamespacesData, eSectionTypeDWARFAppleNamespaces, m_data_apple_namespaces);
+    return GetCachedSectionData (flagsGotAppleNamespacesData, eSectionTypeDWARFAppleNamespaces, m_data_apple_namespaces);
+}
+
+const DataExtractor&
+SymbolFileDWARF::get_apple_objc_data()
+{
+    return GetCachedSectionData (flagsGotAppleObjCData, eSectionTypeDWARFAppleObjC, m_data_apple_objc);
 }
 
 
@@ -1691,9 +1707,22 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_type
                 if (!class_str.empty())
                 {
                 
-                    ConstString class_name (class_str.c_str());
                     DIEArray method_die_offsets;
-                    if (m_objc_class_selectors_index.Find (class_name, method_die_offsets))
+                    if (m_using_apple_tables)
+                    {
+                        if (m_apple_objc_ap.get())
+                            m_apple_objc_ap->FindByName(class_str.c_str(), method_die_offsets);
+                    }
+                    else
+                    {
+                        if (!m_indexed)
+                            Index ();
+                        
+                        ConstString class_name (class_str.c_str());
+                        m_objc_class_selectors_index.Find (class_name, method_die_offsets);
+                    }
+
+                    if (!method_die_offsets.empty())
                     {
                         DWARFDebugInfo* debug_info = DebugInfo();
 

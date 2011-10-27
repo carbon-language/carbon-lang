@@ -169,6 +169,12 @@ public:
     void
     Append (lldb::InstructionSP &inst_sp);
 
+    void
+    Dump (Stream *s,
+          bool show_address,
+          bool show_bytes,
+          const ExecutionContext* exe_ctx);
+
 private:
     typedef std::vector<lldb::InstructionSP> collection;
     typedef collection::iterator iterator;
@@ -178,7 +184,7 @@ private:
 };
 
 class PseudoInstruction : 
-    public lldb_private::Instruction
+    public Instruction
 {
 public:
 
@@ -188,11 +194,11 @@ public:
      ~PseudoInstruction ();
      
     virtual void
-    Dump (lldb_private::Stream *s,
+    Dump (Stream *s,
           uint32_t max_opcode_byte_size,
           bool show_address,
           bool show_bytes,
-          const lldb_private::ExecutionContext* exe_ctx,
+          const ExecutionContext* exe_ctx,
           bool raw);
     
     virtual bool
@@ -217,8 +223,8 @@ public:
     }
 
     virtual size_t
-    Decode (const lldb_private::Disassembler &disassembler,
-            const lldb_private::DataExtractor &data,
+    Decode (const Disassembler &disassembler,
+            const DataExtractor &data,
             uint32_t data_offset);
             
     void

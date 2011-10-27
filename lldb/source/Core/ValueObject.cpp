@@ -1048,7 +1048,8 @@ ValueObject::GetValueAsCString ()
                                                              0,                        // Byte offset into "m_data"
                                                              GetByteSize(),            // Byte size of item in "m_data"
                                                              GetBitfieldBitSize(),     // Bitfield bit size
-                                                             GetBitfieldBitOffset()))  // Bitfield bit offset
+                                                             GetBitfieldBitOffset(),
+                                                             GetExecutionContextScope()))  // Bitfield bit offset
                                 m_value_str.swap(sstr.GetString());
                             else
                             {
@@ -1067,7 +1068,7 @@ ValueObject::GetValueAsCString ()
                         if (reg_info)
                         {
                             StreamString reg_sstr;
-                            m_data.Dump(&reg_sstr, 0, reg_info->format, reg_info->byte_size, 1, UINT32_MAX, LLDB_INVALID_ADDRESS, 0, 0);
+                            m_data.Dump(&reg_sstr, 0, reg_info->format, reg_info->byte_size, 1, UINT32_MAX, LLDB_INVALID_ADDRESS, 0, 0, GetExecutionContextScope());
                             m_value_str.swap(reg_sstr.GetString());
                         }
                     }

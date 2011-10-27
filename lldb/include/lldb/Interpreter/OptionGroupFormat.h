@@ -26,9 +26,10 @@ namespace lldb_private {
 class OptionGroupFormat : public OptionGroup
 {
 public:
-    static const uint32_t OPTION_GROUP_FORMAT = LLDB_OPT_SET_1;
-    static const uint32_t OPTION_GROUP_SIZE   = LLDB_OPT_SET_2;
-    static const uint32_t OPTION_GROUP_COUNT  = LLDB_OPT_SET_3;
+    static const uint32_t OPTION_GROUP_FORMAT   = LLDB_OPT_SET_1;
+    static const uint32_t OPTION_GROUP_GDB_FMT  = LLDB_OPT_SET_2;
+    static const uint32_t OPTION_GROUP_SIZE     = LLDB_OPT_SET_3;
+    static const uint32_t OPTION_GROUP_COUNT    = LLDB_OPT_SET_4;
     
     OptionGroupFormat (lldb::Format default_format, 
                        uint64_t default_byte_size = UINT64_MAX,  // Pass UINT64_MAX to disable the "--size" option

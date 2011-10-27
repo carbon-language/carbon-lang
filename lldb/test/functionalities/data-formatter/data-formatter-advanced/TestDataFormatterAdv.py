@@ -175,7 +175,7 @@ class AdvDataFormatterTestCase(TestBase):
         
         # check that we can format a variable in a summary even if a format is defined for its datatype
         self.runCmd("type format add -f hex int")
-        self.runCmd("type summary add --summary-string \"x=${var.x%i}\" Simple")
+        self.runCmd("type summary add --summary-string \"x=${var.x%d}\" Simple")
 
         self.expect("frame variable a_simple_object",
             substrs = ['x=3'])

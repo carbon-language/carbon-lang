@@ -170,6 +170,7 @@ public:
     const lldb_private::DataExtractor&      get_apple_names_data ();
     const lldb_private::DataExtractor&      get_apple_types_data ();
     const lldb_private::DataExtractor&      get_apple_namespaces_data ();
+    const lldb_private::DataExtractor&      get_apple_objc_data ();
 
 
     DWARFDebugAbbrev*       DebugAbbrev();
@@ -251,9 +252,10 @@ protected:
         flagsGotDebugPubTypesData   = (1 << 8),
         flagsGotDebugRangesData     = (1 << 9),
         flagsGotDebugStrData        = (1 << 10),
-        flagsGotDebugNamesData      = (1 << 11),
-        flagsGotDebugTypesData      = (1 << 12),
-        flagsGotDebugNamespacesData = (1 << 13)
+        flagsGotAppleNamesData      = (1 << 11),
+        flagsGotAppleTypesData      = (1 << 12),
+        flagsGotAppleNamespacesData = (1 << 13),
+        flagsGotAppleObjCData       = (1 << 14)
     };
     
     bool                    NamespaceDeclMatchesThisSymbolFile (const lldb_private::ClangNamespaceDecl *namespace_decl);
@@ -474,6 +476,7 @@ protected:
     lldb_private::DataExtractor     m_data_apple_names;
     lldb_private::DataExtractor     m_data_apple_types;
     lldb_private::DataExtractor     m_data_apple_namespaces;
+    lldb_private::DataExtractor     m_data_apple_objc;
 
     // The auto_ptr items below are generated on demand if and when someone accesses
     // them through a non const version of this class.
@@ -483,6 +486,7 @@ protected:
     std::auto_ptr<DWARFMappedHash::MemoryTable> m_apple_names_ap;
     std::auto_ptr<DWARFMappedHash::MemoryTable> m_apple_types_ap;
     std::auto_ptr<DWARFMappedHash::MemoryTable> m_apple_namespaces_ap;
+    std::auto_ptr<DWARFMappedHash::MemoryTable> m_apple_objc_ap;
     NameToDIE                           m_function_basename_index;  // All concrete functions
     NameToDIE                           m_function_fullname_index;  // All concrete functions
     NameToDIE                           m_function_method_index;    // All inlined functions

@@ -262,6 +262,7 @@ lldb_private::GetSectionTypeAsCString (SectionType sect_type)
     case eSectionTypeDWARFAppleNames: return "apple-names";
     case eSectionTypeDWARFAppleTypes: return "apple-types";
     case eSectionTypeDWARFAppleNamespaces: return "apple-namespaces";
+    case eSectionTypeDWARFAppleObjC: return "apple-objc";
     case eSectionTypeEHFrame: return "eh-frame";
     case eSectionTypeOther: return "regular";
     }

@@ -937,16 +937,14 @@ ClangASTType::DumpValue
 
 
 bool
-ClangASTType::DumpTypeValue
-(
-    Stream *s,
-    lldb::Format format,
-    const lldb_private::DataExtractor &data,
-    uint32_t byte_offset,
-    size_t byte_size,
-    uint32_t bitfield_bit_size,
-    uint32_t bitfield_bit_offset
-)
+ClangASTType::DumpTypeValue (Stream *s,
+                             lldb::Format format,
+                             const lldb_private::DataExtractor &data,
+                             uint32_t byte_offset,
+                             size_t byte_size,
+                             uint32_t bitfield_bit_size,
+                             uint32_t bitfield_bit_offset,
+                             ExecutionContextScope *exe_scope)
 {
     return DumpTypeValue (m_ast,
                           m_type,
@@ -956,23 +954,22 @@ ClangASTType::DumpTypeValue
                           byte_offset,
                           byte_size,
                           bitfield_bit_size,
-                          bitfield_bit_offset);
+                          bitfield_bit_offset,
+                          exe_scope);
 }
 
 
 bool
-ClangASTType::DumpTypeValue
-(
-    clang::ASTContext *ast_context,
-    clang_type_t clang_type,
-    Stream *s,
-    lldb::Format format,
-    const lldb_private::DataExtractor &data,
-    uint32_t byte_offset,
-    size_t byte_size,
-    uint32_t bitfield_bit_size,
-    uint32_t bitfield_bit_offset
-)
+ClangASTType::DumpTypeValue (clang::ASTContext *ast_context,
+                             clang_type_t clang_type,
+                             Stream *s,
+                             lldb::Format format,
+                             const lldb_private::DataExtractor &data,
+                             uint32_t byte_offset,
+                             size_t byte_size,
+                             uint32_t bitfield_bit_size,
+                             uint32_t bitfield_bit_offset,
+                             ExecutionContextScope *exe_scope)
 {
     clang::QualType qual_type(clang::QualType::getFromOpaquePtr(clang_type));
     if (ClangASTContext::IsAggregateType (clang_type))
@@ -1001,7 +998,8 @@ ClangASTType::DumpTypeValue
                                                     byte_offset,            // Offset into "data" where to grab value from
                                                     typedef_byte_size,      // Size of this type in bytes
                                                     bitfield_bit_size,      // Size in bits of a bitfield value, if zero don't treat as a bitfield
-                                                    bitfield_bit_offset);   // Offset in bits of a bitfield value if bitfield_bit_size != 0
+                                                    bitfield_bit_offset,    // Offset in bits of a bitfield value if bitfield_bit_size != 0
+                                                    exe_scope);
             }
             break;
 
@@ -1094,7 +1092,8 @@ ClangASTType::DumpTypeValue
                                   UINT32_MAX,
                                   LLDB_INVALID_ADDRESS,
                                   bitfield_bit_size,
-                                  bitfield_bit_offset);
+                                  bitfield_bit_offset,
+                                  exe_scope);
             }
             break;
         }

@@ -136,7 +136,21 @@ public:
                 
             case eFormatCString:
                 break;
-                
+
+            case eFormatInstruction:
+                if (count_option_set)
+                    byte_size_value = target->GetArchitecture().GetMaximumOpcodeByteSize() * format_options.GetCountValue().GetCurrentValue();
+                m_num_per_line = 1;
+                break;
+
+            case eFormatAddressInfo:
+                if (!byte_size_option_set)
+                    byte_size_value = target->GetArchitecture().GetAddressByteSize();
+                m_num_per_line = 1;
+                if (!count_option_set)
+                    format_options.GetCountValue() = 8;
+                break;
+
             case eFormatPointer:
                 byte_size_value = target->GetArchitecture().GetAddressByteSize();
                 if (!num_per_line_option_set)
@@ -153,6 +167,7 @@ public:
             case eFormatUnicode16:
             case eFormatUnicode32:
             case eFormatUnsigned:
+            case eFormatHexFloat:
                 if (!byte_size_option_set)
                     byte_size_value = 4;
                 if (!num_per_line_option_set)
@@ -160,7 +175,7 @@ public:
                 if (!count_option_set)
                     format_options.GetCountValue() = 8;
                 break;
-                
+            
             case eFormatBytes:
             case eFormatBytesWithASCII:
                 if (byte_size_option_set)
@@ -309,6 +324,9 @@ public:
         m_option_group.Append (&m_format_options, 
                                OptionGroupFormat::OPTION_GROUP_FORMAT | OptionGroupFormat::OPTION_GROUP_COUNT, 
                                LLDB_OPT_SET_1 | LLDB_OPT_SET_3);
+        m_option_group.Append (&m_format_options, 
+                               OptionGroupFormat::OPTION_GROUP_GDB_FMT, 
+                               LLDB_OPT_SET_1 | LLDB_OPT_SET_2 | LLDB_OPT_SET_3);
         // Add the "--size" option to group 1 and 2
         m_option_group.Append (&m_format_options, 
                                OptionGroupFormat::OPTION_GROUP_SIZE, 
@@ -653,6 +671,7 @@ public:
         }
 
 
+        ExecutionContextScope *exe_scope = exe_ctx.GetBestExecutionContextScope();
         if (clang_ast_type.GetOpaqueQualType())
         {
             for (uint32_t i = 0; i<item_count; ++i)
@@ -661,7 +680,7 @@ public:
                 Address address (NULL, item_addr);
                 StreamString name_strm;
                 name_strm.Printf ("0x%llx", item_addr);
-                ValueObjectSP valobj_sp (ValueObjectMemory::Create (exe_ctx.GetBestExecutionContextScope(), 
+                ValueObjectSP valobj_sp (ValueObjectMemory::Create (exe_scope, 
                                                                     name_strm.GetString().c_str(), 
                                                                     address, 
                                                                     clang_ast_type));
@@ -715,7 +734,8 @@ public:
                    num_per_line,
                    addr,
                    0,
-                   0);
+                   0,
+                   exe_scope);
         output_stream->EOL();
         return true;
     }
@@ -1030,6 +1050,9 @@ public:
             case eFormatVectorOfUInt128:
             case eFormatOSType:
             case eFormatComplexInteger:
+            case eFormatAddressInfo:
+            case eFormatHexFloat:
+            case eFormatInstruction:
                 result.AppendError("unsupported format for writing memory");
                 result.SetStatus(eReturnStatusFailed);
                 return false;

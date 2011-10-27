@@ -274,15 +274,16 @@ public:
     ///     The offset at which dumping ended.
     //------------------------------------------------------------------
     uint32_t
-    Dump(Stream *s,
-         uint32_t offset,
-         lldb::Format item_format,
-         uint32_t item_byte_size,
-         uint32_t item_count,
-         uint32_t num_per_line,
-         uint64_t base_addr,
-         uint32_t item_bit_size,
-         uint32_t item_bit_offset) const;
+    Dump (Stream *s,
+          uint32_t offset,
+          lldb::Format item_format,
+          uint32_t item_byte_size,
+          uint32_t item_count,
+          uint32_t num_per_line,
+          uint64_t base_addr,
+          uint32_t item_bit_size,
+          uint32_t item_bit_offset,
+          ExecutionContextScope *exe_scope = NULL) const;
 
     //------------------------------------------------------------------
     /// Dump a UUID value at \a offset.

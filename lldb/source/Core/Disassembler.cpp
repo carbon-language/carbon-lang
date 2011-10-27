@@ -834,6 +834,25 @@ InstructionList::GetInstructionAtIndex (uint32_t idx) const
 }
 
 void
+InstructionList::Dump (Stream *s,
+                       bool show_address,
+                       bool show_bytes,
+                       const ExecutionContext* exe_ctx)
+{
+    const uint32_t max_opcode_byte_size = GetMaxOpcocdeByteSize();
+    collection::const_iterator pos, begin, end;
+    for (begin = m_instructions.begin(), end = m_instructions.end(), pos = begin;
+         pos != end;
+         ++pos)
+    {
+        if (pos != begin)
+            s->EOL();
+        (*pos)->Dump(s, max_opcode_byte_size, show_address, show_bytes, exe_ctx, false);
+    }
+}
+
+
+void
 InstructionList::Clear()
 {
   m_instructions.clear();

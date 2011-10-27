@@ -13,6 +13,7 @@
 #include <bitset>
 #include <string>
 
+#include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/MathExtras.h"
@@ -20,12 +21,16 @@
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/DataBuffer.h"
+#include "lldb/Core/Disassembler.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/UUID.h"
 #include "lldb/Core/dwarf.h"
 #include "lldb/Host/Endian.h"
+#include "lldb/Target/ExecutionContext.h"
+#include "lldb/Target/ExecutionContextScope.h"
+#include "lldb/Target/Target.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -1300,18 +1305,16 @@ DumpAPInt (Stream *s, const DataExtractor &data, uint32_t offset, uint32_t byte_
 }
 
 uint32_t
-DataExtractor::Dump
-(
-    Stream *s,
-    uint32_t start_offset,
-    lldb::Format item_format,
-    uint32_t item_byte_size,
-    uint32_t item_count,
-    uint32_t num_per_line,
-    uint64_t base_addr,
-    uint32_t item_bit_size,     // If zero, this is not a bitfield value, if non-zero, the value is a bitfield
-    uint32_t item_bit_offset    // If "item_bit_size" is non-zero, this is the shift amount to apply to a bitfield
-) const
+DataExtractor::Dump (Stream *s,
+                     uint32_t start_offset,
+                     lldb::Format item_format,
+                     uint32_t item_byte_size,
+                     uint32_t item_count,
+                     uint32_t num_per_line,
+                     uint64_t base_addr,
+                     uint32_t item_bit_size,     // If zero, this is not a bitfield value, if non-zero, the value is a bitfield
+                     uint32_t item_bit_offset,    // If "item_bit_size" is non-zero, this is the shift amount to apply to a bitfield
+                     ExecutionContextScope *exe_scope) const
 {
     if (s == NULL)
         return start_offset;
@@ -1326,9 +1329,44 @@ DataExtractor::Dump
             item_byte_size = s->GetAddressByteSize();
     }
     
-    if (item_format == eFormatOSType && item_byte_size > 8)
+    if (item_format == eFormatInstruction)
+    {
+        Target *target = NULL;
+        if (exe_scope)
+            target = exe_scope->CalculateTarget();
+        if (target)
+        {
+            DisassemblerSP disassembler_sp (Disassembler::FindPlugin(target->GetArchitecture(), NULL));
+            if (disassembler_sp)
+            {
+                lldb::addr_t addr = base_addr + start_offset;
+                lldb_private::Address so_addr;
+                if (!target->GetSectionLoadList().ResolveLoadAddress(addr, so_addr))
+                {
+                    so_addr.SetOffset(addr);
+                    so_addr.SetSection(NULL);
+                }
+
+                if (disassembler_sp->DecodeInstructions (so_addr, *this, start_offset, item_count, false))
+                {
+                    const bool show_address = base_addr != LLDB_INVALID_ADDRESS;
+                    const bool show_bytes = true;
+                    ExecutionContext exe_ctx;
+                    exe_scope->CalculateExecutionContext(exe_ctx);
+                    disassembler_sp->GetInstructionList().Dump (s,  show_address, show_bytes, &exe_ctx);
+                }
+            }
+        }
+        else
+            s->Printf ("invalid target");
+
+        return offset;
+    }
+
+    if ((item_format == eFormatOSType || item_format == eFormatAddressInfo) && item_byte_size > 8)
         item_format = eFormatHex;
 
+    
     for (offset = start_offset, line_start_offset = start_offset, count = 0; ValidOffset(offset) && count < item_count; ++count)
     {
         if ((count % num_per_line) == 0)
@@ -1622,6 +1660,51 @@ DataExtractor::Dump
 
         case eFormatUnicode32:
             s->Printf("0x%8.8x", GetU32 (&offset));
+            break;
+
+        case eFormatAddressInfo:
+            {
+                addr_t addr = GetMaxU64Bitfield(&offset, item_byte_size, item_bit_size, item_bit_offset);
+                s->Printf("0x%*.*llx", 2 * item_byte_size, 2 * item_byte_size, addr);
+                if (exe_scope)
+                {
+                    Target *target = exe_scope->CalculateTarget();
+                    lldb_private::Address so_addr;
+                    if (target && target->GetSectionLoadList().ResolveLoadAddress(addr, so_addr))
+                    {
+                        s->PutChar(' ');
+                        so_addr.Dump (s, 
+                                      exe_scope, 
+                                      Address::DumpStyleResolvedDescription, 
+                                      Address::DumpStyleModuleWithFileAddress);
+                        break;
+                    }
+                }
+            }
+            break;
+
+        case eFormatHexFloat:
+            if (sizeof(float) == item_byte_size)
+            {
+                char float_cstr[256];
+                llvm::APFloat ap_float (GetFloat (&offset));
+                ap_float.convertToHexString (float_cstr, 0, false, llvm::APFloat::rmNearestTiesToEven);
+                s->Printf ("%s", float_cstr);
+                break;
+            }
+            else if (sizeof(double) == item_byte_size)
+            {
+                char float_cstr[256];
+                llvm::APFloat ap_float (GetDouble (&offset));
+                ap_float.convertToHexString (float_cstr, 0, false, llvm::APFloat::rmNearestTiesToEven);
+                s->Printf ("%s", float_cstr);
+                break;
+            }
+            else if (sizeof(long double) * 2 == item_byte_size)
+            {
+                s->Printf ("unsupported hex float byte size %u", item_byte_size);
+                return start_offset;
+            }
             break;
 
 // please keep the single-item formats below in sync with FormatManager::GetSingleItemFormat

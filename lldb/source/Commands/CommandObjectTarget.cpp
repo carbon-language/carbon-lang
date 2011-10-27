@@ -525,7 +525,7 @@ public:
         
         m_option_group.Append (&m_varobj_options, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
         m_option_group.Append (&m_option_variable, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
-        m_option_group.Append (&m_option_format, OptionGroupFormat::OPTION_GROUP_FORMAT, LLDB_OPT_SET_1);
+        m_option_group.Append (&m_option_format, OptionGroupFormat::OPTION_GROUP_FORMAT | OptionGroupFormat::OPTION_GROUP_GDB_FMT, LLDB_OPT_SET_1);
         m_option_group.Append (&m_option_compile_units, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);   
         m_option_group.Append (&m_option_shared_libraries, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);   
         m_option_group.Finalize();

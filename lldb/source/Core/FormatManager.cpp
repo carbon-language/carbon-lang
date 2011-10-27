@@ -39,7 +39,7 @@ g_format_infos[] =
     { eFormatCharPrintable  , 'C'   , "printable character" },
     { eFormatComplexFloat   , 'F'   , "complex float"       },
     { eFormatCString        , 's'   , "c-string"            },
-    { eFormatDecimal        , 'i'   , "decimal"             },
+    { eFormatDecimal        , 'd'   , "decimal"             },
     { eFormatEnum           , 'E'   , "enumeration"         },
     { eFormatHex            , 'x'   , "hex"                 },
     { eFormatFloat          , 'f'   , "float"               },
@@ -62,7 +62,10 @@ g_format_infos[] =
     { eFormatVectorOfFloat64, '\0'  , "float64[]"           },
     { eFormatVectorOfUInt128, '\0'  , "uint128_t[]"         },
     { eFormatComplexInteger , 'I'   , "complex integer"     },
-    { eFormatCharArray      , 'a'   , "character array"     }
+    { eFormatCharArray      , 'a'   , "character array"     },
+    { eFormatAddressInfo    , 'A'   , "address"             },
+    { eFormatHexFloat       , 'X'   , "hex float"           },
+    { eFormatInstruction    , 'i'   , "instruction"         }
 };
 
 static uint32_t 
@@ -180,7 +183,7 @@ FormatCategory::Get (ValueObject& valobj,
         return true;
     bool regex = GetRegexSummaryNavigator()->Get(valobj, entry, use_dynamic, reason);
     if (regex && reason)
-        *reason |= lldb::eFormatterChoiceCriterionRegularExpressionSummary;
+        *reason |= lldb_private::eFormatterChoiceCriterionRegularExpressionSummary;
     return regex;
 }
 
@@ -228,14 +231,14 @@ FormatCategory::Get(ValueObject& valobj,
     if (pick_synth)
     {
         if (regex_synth && reason)
-            *reason |= lldb::eFormatterChoiceCriterionRegularExpressionFilter;
+            *reason |= lldb_private::eFormatterChoiceCriterionRegularExpressionFilter;
         entry = synth;
         return true;
     }
     else
     {
         if (regex_filter && reason)
-            *reason |= lldb::eFormatterChoiceCriterionRegularExpressionFilter;
+            *reason |= lldb_private::eFormatterChoiceCriterionRegularExpressionFilter;
         entry = filter;
         return true;
     }

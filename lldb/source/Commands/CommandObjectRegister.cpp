@@ -62,7 +62,7 @@ public:
         m_arguments.push_back (arg);
 
         // Add the "--format"
-        m_option_group.Append (&m_format_options, OptionGroupFormat::OPTION_GROUP_FORMAT, LLDB_OPT_SET_ALL);
+        m_option_group.Append (&m_format_options, OptionGroupFormat::OPTION_GROUP_FORMAT | OptionGroupFormat::OPTION_GROUP_GDB_FMT, LLDB_OPT_SET_ALL);
         m_option_group.Append (&m_command_options);
         m_option_group.Finalize();
 
