@@ -46,6 +46,7 @@
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Mutex.h"
+#include "llvm/Support/MutexGuard.h"
 #include "llvm/Support/CrashRecoveryContext.h"
 #include <cstdlib>
 #include <cstdio>
@@ -101,6 +102,11 @@ namespace {
   };
 }
 
+static llvm::sys::SmartMutex<false> &getOnDiskMutex() {
+  static llvm::sys::SmartMutex<false> M(/* recursive = */ true);
+  return M;
+}
+
 static void cleanupOnDiskMapAtExit(void);
 
 typedef llvm::DenseMap<const ASTUnit *, OnDiskData *> OnDiskDataMap;
@@ -115,6 +121,7 @@ static OnDiskDataMap &getOnDiskDataMap() {
 }
 
 static void cleanupOnDiskMapAtExit(void) {
+  // No mutex required here since we are leaving the program.
   OnDiskDataMap &M = getOnDiskDataMap();
   for (OnDiskDataMap::iterator I = M.begin(), E = M.end(); I != E; ++I) {
     // We don't worry about freeing the memory associated with OnDiskDataMap.
@@ -124,6 +131,9 @@ static void cleanupOnDiskMapAtExit(void) {
 }
 
 static OnDiskData &getOnDiskData(const ASTUnit *AU) {
+  // We require the mutex since we are modifying the structure of the
+  // DenseMap.
+  llvm::MutexGuard Guard(getOnDiskMutex());
   OnDiskDataMap &M = getOnDiskDataMap();
   OnDiskData *&D = M[AU];
   if (!D)
@@ -136,6 +146,9 @@ static void erasePreambleFile(const ASTUnit *AU) {
 }
 
 static void removeOnDiskEntry(const ASTUnit *AU) {
+  // We require the mutex since we are modifying the structure of the
+  // DenseMap.
+  llvm::MutexGuard Guard(getOnDiskMutex());
   OnDiskDataMap &M = getOnDiskDataMap();
   OnDiskDataMap::iterator I = M.find(AU);
   if (I != M.end()) {
