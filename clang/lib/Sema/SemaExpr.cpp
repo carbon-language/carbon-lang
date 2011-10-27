@@ -4334,7 +4334,9 @@ ExprResult Sema::BuildVectorLiteral(SourceLocation LParenLoc,
     // be replicated to all the components of the vector
     if (numExprs == 1) {
       QualType ElemTy = Ty->getAs<VectorType>()->getElementType();
-      ExprResult Literal = Owned(exprs[0]);
+      ExprResult Literal = DefaultLvalueConversion(exprs[0]);
+      if (Literal.isInvalid())
+        return ExprError();
       Literal = ImpCastExprToType(Literal.take(), ElemTy,
                                   PrepareScalarCast(Literal, ElemTy));
       return BuildCStyleCastExpr(LParenLoc, TInfo, RParenLoc, Literal.take());
@@ -4355,7 +4357,9 @@ ExprResult Sema::BuildVectorLiteral(SourceLocation LParenLoc,
         VTy->getVectorKind() == VectorType::GenericVector &&
         numExprs == 1) {
         QualType ElemTy = Ty->getAs<VectorType>()->getElementType();
-        ExprResult Literal = Owned(exprs[0]);
+        ExprResult Literal = DefaultLvalueConversion(exprs[0]);
+        if (Literal.isInvalid())
+          return ExprError();
         Literal = ImpCastExprToType(Literal.take(), ElemTy,
                                     PrepareScalarCast(Literal, ElemTy));
         return BuildCStyleCastExpr(LParenLoc, TInfo, RParenLoc, Literal.take());

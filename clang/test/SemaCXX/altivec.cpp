@@ -66,3 +66,13 @@ void test2()
   (++vi)[1]=1;
   template_f(vi);
 }
+
+namespace LValueToRValueConversions {
+  struct Struct {
+    float f();
+    int n();
+  };
+
+  vector float initFloat = (vector float)(Struct().f); // expected-error {{did you mean to call it}}
+  vector int initInt = (vector int)(Struct().n); // expected-error {{did you mean to call it}}
+}
