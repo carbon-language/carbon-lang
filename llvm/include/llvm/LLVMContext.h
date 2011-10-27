@@ -40,7 +40,8 @@ public:
   enum {
     MD_dbg = 0,  // "dbg"
     MD_tbaa = 1, // "tbaa"
-    MD_prof = 2  // "prof"
+    MD_prof = 2,  // "prof"
+    MD_fpaccuracy = 3  // "fpaccuracy"
   };
   
   /// getMDKindID - Return a unique non-zero ID for the specified metadata kind.

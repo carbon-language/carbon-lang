@@ -103,6 +103,7 @@
       <li><a href="#metadata">Metadata Nodes and Metadata Strings</a>
         <ol>
           <li><a href="#tbaa">'<tt>tbaa</tt>' Metadata</a></li>
+          <li><a href="#fpaccuracy">'<tt>fpaccuracy</tt>' Metadata</a></li>
         </ol>
       </li>
     </ol>
@@ -2963,6 +2964,35 @@ call void @llvm.dbg.value(metadata !24, i64 0, metadata !25)
    <tt>pointsToConstantMemory</tt> should return true; see
    <a href="AliasAnalysis.html#OtherItfs">other useful
    <tt>AliasAnalysis</tt> methods</a>).</p>
+
+</div>
+
+<h4>
+  <a name="fpaccuracy">'<tt>fpaccuracy</tt>' Metadata</a>
+</h4>
+ 
+<div>
+
+<p><tt>fpaccuracy</tt> metadata may be attached to any instruction of floating
+   point type.  It expresses the maximum relative error of the result of
+   that instruction, in ULPs. ULP is defined as follows:</p>
+
+<blockquote><p>
+If x is a real number that lies between two finite consecutive floating-point
+numbers a and b, without being equal to one of them, then ulp(x) = |b - a|,
+otherwise ulp(x) is the distance between the two non-equal finite
+floating-point numbers nearest x. Moreover, ulp(NaN) is NaN.
+</p></blockquote>
+
+<p>The maximum relative error may be any rational number.  The metadata node
+   shall consist of a pair of unsigned integers respectively representing
+   the numerator and denominator.  For example, 2.5 ULP:</p>
+
+<div class="doc_code">
+<pre>
+!0 = metadata !{ i32 5, i32 2 }
+</pre>
+</div>
 
 </div>
 
