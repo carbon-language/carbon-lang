@@ -147,7 +147,7 @@ AppleObjCRuntimeV1::CreateObjectChecker(const char *name)
                     "};                                                                     \n"
                     "                                                                       \n"
                     "extern \"C\" void                                                      \n"
-                    "%s(void *$__lldb_arg_obj)                                              \n"
+                    "%s(void *$__lldb_arg_obj, void *$__lldb_arg_selector)                  \n"
                     "{                                                                      \n"
                     "   struct __objc_object *obj = (struct __objc_object*)$__lldb_arg_obj; \n"
                     "   (int)strlen(obj->isa->name);                                        \n"

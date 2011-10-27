@@ -275,6 +275,34 @@ protected:
         return ConstantExpr::getIntToPtr(fun_addr_int, fun_ptr_ty);
     }
     
+    //------------------------------------------------------------------
+    /// Build a function pointer for a function with signature 
+    /// void (*)(uint8_t*, uint8_t*) with a given address
+    ///
+    /// @param[in] start_address
+    ///     The address of the function.
+    ///
+    /// @return
+    ///     The function pointer, for use in a CallInst.
+    //------------------------------------------------------------------
+    llvm::Value *BuildObjectCheckerFunc(lldb::addr_t start_address)
+    {
+        IntegerType *intptr_ty = llvm::Type::getIntNTy(m_module.getContext(),
+                                                       (m_module.getPointerSize() == llvm::Module::Pointer64) ? 64 : 32);
+        
+        llvm::Type *param_array[2];
+        
+        param_array[0] = const_cast<llvm::PointerType*>(GetI8PtrTy());
+        param_array[1] = const_cast<llvm::PointerType*>(GetI8PtrTy());
+        
+        ArrayRef<llvm::Type*> params(param_array, 2);
+        
+        FunctionType *fun_ty = FunctionType::get(llvm::Type::getVoidTy(m_module.getContext()), params, true);
+        PointerType *fun_ptr_ty = PointerType::getUnqual(fun_ty);
+        Constant *fun_addr_int = ConstantInt::get(intptr_ty, start_address, false);
+        return ConstantExpr::getIntToPtr(fun_addr_int, fun_ptr_ty);
+    }
+    
     PointerType *GetI8PtrTy()
     {
         if (!m_i8ptr_ty)
@@ -386,14 +414,13 @@ private:
             return false; // call_inst really shouldn't be NULL, because otherwise InspectInstruction wouldn't have registered it
         
         if (!m_objc_object_check_func)
-            m_objc_object_check_func = BuildPointerValidatorFunc(m_checker_functions.m_objc_object_check->StartAddress());
-        
-        llvm::Value *target_object = NULL;
+            m_objc_object_check_func = BuildObjectCheckerFunc(m_checker_functions.m_objc_object_check->StartAddress());
         
         // id objc_msgSend(id theReceiver, SEL theSelector, ...)
         
-        target_object = call_inst->getArgOperand(0);
-        
+        llvm::Value *target_object = call_inst->getArgOperand(0);;
+        llvm::Value *selector = call_inst->getArgOperand(1);
+                
         // Insert an instruction to cast the receiver id to int8_t*
         
         BitCastInst *bit_cast = new BitCastInst(target_object,
@@ -403,9 +430,10 @@ private:
         
         // Insert an instruction to call the helper with the result
         
-        llvm::Value *arg_array[1];
+        llvm::Value *arg_array[2];
         
         arg_array[0] = bit_cast;
+        arg_array[1] = selector;
         
         ArrayRef<llvm::Value*> args(arg_array, 1);
         

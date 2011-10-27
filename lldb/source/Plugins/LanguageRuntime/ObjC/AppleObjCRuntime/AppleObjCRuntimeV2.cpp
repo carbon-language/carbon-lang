@@ -499,31 +499,31 @@ AppleObjCRuntimeV2::CreateObjectChecker(const char *name)
     {
         len = ::snprintf (check_function_code, 
                           sizeof(check_function_code),
-                          "extern \"C\" void *gdb_object_getClass(void *);    \n"
-                          "extern \"C\" void                                  \n"
-                          "%s(void *$__lldb_arg_obj)                          \n"
-                          "{                                                  \n"
-                          "   if ($__lldb_arg_obj == (void *)0)               \n"
-                          "       return; // nil is ok                        \n" 
-                          "   if (!gdb_object_getClass($__lldb_arg_obj))      \n"
-                          "       *((volatile int *)0) = 'ocgc';              \n"
-                          "}                                                  \n",
+                          "extern \"C\" void *gdb_object_getClass(void *);          \n"
+                          "extern \"C\" void                                        \n"
+                          "%s(void *$__lldb_arg_obj, void *$__lldb_arg_selector)    \n"
+                          "{                                                        \n"
+                          "   if ($__lldb_arg_obj == (void *)0)                     \n"
+                          "       return; // nil is ok                              \n" 
+                          "   if (!gdb_object_getClass($__lldb_arg_obj))            \n"
+                          "       *((volatile int *)0) = 'ocgc';                    \n"
+                          "}                                                        \n",
                           name);
     }
     else
     {
         len = ::snprintf (check_function_code, 
                           sizeof(check_function_code), 
-                          "extern \"C\" void *gdb_class_getClass(void *);       \n"
-                          "extern \"C\" void                                    \n"
-                          "%s(void *$__lldb_arg_obj)                            \n"
-                          "{                                                    \n"
-                          "   if ($__lldb_arg_obj == (void *)0)                 \n"
-                          "       return; // nil is ok                          \n" 
-                          "    void **$isa_ptr = (void **)$__lldb_arg_obj;      \n"
+                          "extern \"C\" void *gdb_class_getClass(void *);           \n"
+                          "extern \"C\" void                                        \n"
+                          "%s(void *$__lldb_arg_obj, void *$__lldb_arg_selector)    \n"
+                          "{                                                        \n"
+                          "   if ($__lldb_arg_obj == (void *)0)                     \n"
+                          "       return; // nil is ok                              \n" 
+                          "    void **$isa_ptr = (void **)$__lldb_arg_obj;          \n"
                           "    if (*$isa_ptr == (void *)0 || !gdb_class_getClass(*$isa_ptr)) \n"
-                          "       *((volatile int *)0) = 'ocgc';                \n"
-                          "}                                                    \n", 
+                          "       *((volatile int *)0) = 'ocgc';                    \n"
+                          "}                                                        \n", 
                           name);
     }
     
