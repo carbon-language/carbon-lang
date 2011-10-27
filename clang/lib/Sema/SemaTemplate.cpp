@@ -3743,8 +3743,16 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
   //        enumeration type, integral promotions (4.5) and integral
   //        conversions (4.7) are applied.
   QualType ParamType = InstantiatedParamType;
-  QualType ArgType = Arg->getType();
   if (ParamType->isIntegralOrEnumerationType()) {
+    // FIXME: In C++11, the argument is a converted constant expression of the
+    // type of the template parameter.
+    ExprResult ArgResult = DefaultLvalueConversion(Arg);
+    if (ArgResult.isInvalid())
+      return ExprError();
+    Arg = ArgResult.take();
+
+    QualType ArgType = Arg->getType();
+
     // C++ [temp.arg.nontype]p1:
     //   A template-argument for a non-type, non-template
     //   template-parameter shall be one of:
@@ -3868,6 +3876,7 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     return Owned(Arg);
   }
 
+  QualType ArgType = Arg->getType();
   DeclAccessPair FoundResult; // temporary for ResolveOverloadedFunction
 
   // C++0x [temp.arg.nontype]p5 bullets 2, 4 and 6 permit conversion

@@ -761,6 +761,7 @@ static MemberExpr *BuildMemberExpr(ASTContext &C, Expr *Base, bool isArrow,
                                    QualType Ty,
                                    ExprValueKind VK, ExprObjectKind OK,
                                    const TemplateArgumentListInfo *TemplateArgs = 0) {
+  assert((!isArrow || Base->isRValue()) && "-> base must be a pointer rvalue");
   return MemberExpr::Create(C, Base, isArrow, SS.getWithLocInContext(C),
                             Member, FoundDecl, MemberNameInfo,
                             TemplateArgs, Ty, VK, OK);
