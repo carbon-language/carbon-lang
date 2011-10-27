@@ -1231,7 +1231,7 @@ _func:
         mvns r0, #0x3fc0000
         itte eq
         mvnseq r1, #12
-        mvneq r1, #12
+        mvneq.w r1, #12
         mvnne r1, #12
 
 @ CHECK: mvns	r8, #21                 @ encoding: [0x7f,0xf0,0x15,0x08]
@@ -1250,7 +1250,7 @@ _func:
         mvns r2, r3
         mvn r5, r6, lsl #19
         mvn r5, r6, lsr #9
-        mvn r5, r6, asr #4
+        mvn.w r5, r6, asr #4
         mvn r5, r6, ror #6
         mvn r5, r6, rrx
         it eq

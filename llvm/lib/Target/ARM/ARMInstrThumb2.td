@@ -3921,7 +3921,9 @@ def : t2InstAlias<"ldrsb${p} $Rt, $addr",
 def : t2InstAlias<"ldrsh${p} $Rt, $addr",
                   (t2LDRSHpci rGPR:$Rt, t2ldrlabel:$addr, pred:$p)>;
 
-// Alias for MVN without the ".w" optional width specifier.
+// Alias for MVN with(out) the ".w" optional width specifier.
+def : t2InstAlias<"mvn${s}${p}.w $Rd, $imm",
+           (t2MVNi rGPR:$Rd, t2_so_imm:$imm, pred:$p, cc_out:$s)>;
 def : t2InstAlias<"mvn${s}${p} $Rd, $Rm",
            (t2MVNr rGPR:$Rd, rGPR:$Rm, pred:$p, cc_out:$s)>;
 def : t2InstAlias<"mvn${s}${p} $Rd, $ShiftedRm",
