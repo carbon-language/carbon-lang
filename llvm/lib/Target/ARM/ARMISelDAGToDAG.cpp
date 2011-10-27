@@ -923,7 +923,7 @@ bool ARMDAGToDAGISel::SelectAddrMode6(SDNode *Parent, SDValue N, SDValue &Addr,
     // The maximum alignment is equal to the memory size being referenced.
     unsigned LSNAlign = LSN->getAlignment();
     unsigned MemSize = LSN->getMemoryVT().getSizeInBits() / 8;
-    if (LSNAlign > MemSize && MemSize > 1)
+    if (LSNAlign >= MemSize && MemSize > 1)
       Alignment = MemSize;
   } else {
     // All other uses of addrmode6 are for intrinsics.  For now just record

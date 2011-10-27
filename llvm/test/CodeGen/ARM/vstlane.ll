@@ -45,7 +45,7 @@ define void @vst1lanei32(i32* %A, <2 x i32>* %B) nounwind {
 
 define void @vst1lanef(float* %A, <2 x float>* %B) nounwind {
 ;CHECK: vst1lanef:
-;CHECK: vst1.32 {d16[1]}, [r0]
+;CHECK: vst1.32 {d16[1]}, [r0, :32]
 	%tmp1 = load <2 x float>* %B
         %tmp2 = extractelement <2 x float> %tmp1, i32 1
         store float %tmp2, float* %A

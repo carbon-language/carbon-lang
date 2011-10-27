@@ -32,7 +32,7 @@ define <2 x i32> @vld1dupi32(i32* %A) nounwind {
 
 define <2 x float> @vld1dupf(float* %A) nounwind {
 ;CHECK: vld1dupf:
-;CHECK: vld1.32 {d16[]}, [r0]
+;CHECK: vld1.32 {d16[]}, [r0, :32]
 	%tmp0 = load float* %A
         %tmp1 = insertelement <2 x float> undef, float %tmp0, i32 0
         %tmp2 = shufflevector <2 x float> %tmp1, <2 x float> undef, <2 x i32> zeroinitializer
@@ -51,7 +51,7 @@ define <16 x i8> @vld1dupQi8(i8* %A) nounwind {
 
 define <4 x float> @vld1dupQf(float* %A) nounwind {
 ;CHECK: vld1dupQf:
-;CHECK: vld1.32 {d16[], d17[]}, [r0]
+;CHECK: vld1.32 {d16[], d17[]}, [r0, :32]
         %tmp0 = load float* %A
         %tmp1 = insertelement <4 x float> undef, float %tmp0, i32 0
         %tmp2 = shufflevector <4 x float> %tmp1, <4 x float> undef, <4 x i32> zeroinitializer

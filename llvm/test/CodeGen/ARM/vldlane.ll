@@ -31,9 +31,19 @@ define <2 x i32> @vld1lanei32(i32* %A, <2 x i32>* %B) nounwind {
         ret <2 x i32> %tmp3
 }
 
+define <2 x i32> @vld1lanei32a32(i32* %A, <2 x i32>* %B) nounwind {
+;CHECK: vld1lanei32a32:
+;Check the alignment value.  Legal values are none or :32.
+;CHECK: vld1.32 {d16[1]}, [r0, :32]
+	%tmp1 = load <2 x i32>* %B
+	%tmp2 = load i32* %A, align 4
+	%tmp3 = insertelement <2 x i32> %tmp1, i32 %tmp2, i32 1
+        ret <2 x i32> %tmp3
+}
+
 define <2 x float> @vld1lanef(float* %A, <2 x float>* %B) nounwind {
 ;CHECK: vld1lanef:
-;CHECK: vld1.32 {d16[1]}, [r0]
+;CHECK: vld1.32 {d16[1]}, [r0, :32]
 	%tmp1 = load <2 x float>* %B
 	%tmp2 = load float* %A, align 4
 	%tmp3 = insertelement <2 x float> %tmp1, float %tmp2, i32 1
@@ -69,7 +79,7 @@ define <4 x i32> @vld1laneQi32(i32* %A, <4 x i32>* %B) nounwind {
 
 define <4 x float> @vld1laneQf(float* %A, <4 x float>* %B) nounwind {
 ;CHECK: vld1laneQf:
-;CHECK: vld1.32 {d16[0]}, [r0]
+;CHECK: vld1.32 {d16[0]}, [r0, :32]
 	%tmp1 = load <4 x float>* %B
 	%tmp2 = load float* %A
 	%tmp3 = insertelement <4 x float> %tmp1, float %tmp2, i32 0
