@@ -599,10 +599,14 @@ _func:
         ldmdb r4, {r5, r6}
         ldmdb r5!, {r3, r8}
         ldmea r5!, {r3, r8}
+        ldmdb.w r4, {r5, r6}
+        ldmdb.w r5!, {r3, r8}
 
 @ CHECK: ldmdb	r4, {r4, r5, r8, r9}    @ encoding: [0x14,0xe9,0x30,0x03]
 @ CHECK: ldmdb	r4, {r5, r6}            @ encoding: [0x14,0xe9,0x60,0x00]
 @ CHECK: ldmdb	r5!, {r3, r8}           @ encoding: [0x35,0xe9,0x08,0x01]
+@ CHECK: ldmdb	r5!, {r3, r8}           @ encoding: [0x35,0xe9,0x08,0x01]
+@ CHECK: ldmdb	r4, {r5, r6}            @ encoding: [0x14,0xe9,0x60,0x00]
 @ CHECK: ldmdb	r5!, {r3, r8}           @ encoding: [0x35,0xe9,0x08,0x01]
 
 

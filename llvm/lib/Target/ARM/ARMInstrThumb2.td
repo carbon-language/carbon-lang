@@ -3944,6 +3944,12 @@ def : t2InstAlias<"push${p} $regs", (t2STMDB_UPD SP, pred:$p, reglist:$regs)>;
 def : t2InstAlias<"pop${p}.w $regs", (t2LDMIA_UPD SP, pred:$p, reglist:$regs)>;
 def : t2InstAlias<"pop${p} $regs", (t2LDMIA_UPD SP, pred:$p, reglist:$regs)>;
 
+// LDMDB/LDMDB_UPD aliases w/ the optional .w suffix
+def : t2InstAlias<"ldmdb${p}.w $Rn, $regs",
+                  (t2LDMDB GPR:$Rn, pred:$p, reglist:$regs)>;
+def : t2InstAlias<"ldmdb${p}.w $Rn!, $regs",
+                  (t2LDMDB_UPD GPR:$Rn, pred:$p, reglist:$regs)>;
+
 // Alias for REV/REV16/REVSH without the ".w" optional width specifier.
 def : t2InstAlias<"rev${p} $Rd, $Rm", (t2REV rGPR:$Rd, rGPR:$Rm, pred:$p)>;
 def : t2InstAlias<"rev16${p} $Rd, $Rm", (t2REV16 rGPR:$Rd, rGPR:$Rm, pred:$p)>;
