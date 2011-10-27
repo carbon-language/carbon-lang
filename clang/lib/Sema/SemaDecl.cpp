@@ -8288,7 +8288,8 @@ void Sema::ActOnObjCContainerFinishDefinition() {
 }
 
 void Sema::ActOnObjCTemporaryExitContainerContext(DeclContext *DC) {
-  OriginalLexicalContext = CurContext;
+  assert(DC == CurContext && "Mismatch of container contexts");
+  OriginalLexicalContext = DC;
   ActOnObjCContainerFinishDefinition();
 }
 
