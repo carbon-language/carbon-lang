@@ -107,4 +107,10 @@ inline int iswblank_l( wint_t c, locale_t /*loc*/ )
     return ( c == L' ' || c == L'\t' );
 }
 
+#ifdef _MSC_VER
+inline int isblank( int c, locale_t /*loc*/ )
+{ return ( c == ' ' || c == '\t' ); }
+inline int iswblank( wint_t c, locale_t /*loc*/ )
+{ return ( c == L' ' || c == L'\t' ); }
+#endif // _MSC_VER
 #endif // _LIBCPP_SUPPORT_WIN32_LOCALE_WIN32_H

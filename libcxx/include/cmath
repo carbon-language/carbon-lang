@@ -301,6 +301,10 @@ long double    truncl(long double x);
 #include <math.h>
 #include <type_traits>
 
+#ifdef _MSC_VER
+#include "support/win32/math_win32.h"
+#endif
+
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
 #endif
@@ -654,8 +658,10 @@ abs(_A1 __x) {return fabs(__x);}
 using ::acos;
 using ::acosf;
 
+#ifndef _MSC_VER
 inline _LIBCPP_INLINE_VISIBILITY float       acos(float __x)       {return acosf(__x);}
 inline _LIBCPP_INLINE_VISIBILITY long double acos(long double __x) {return acosl(__x);}
+#endif
 
 template <class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -667,8 +673,10 @@ acos(_A1 __x) {return acos((double)__x);}
 using ::asin;
 using ::asinf;
 
+#ifndef _MSC_VER
 inline _LIBCPP_INLINE_VISIBILITY float       asin(float __x)       {return asinf(__x);}
 inline _LIBCPP_INLINE_VISIBILITY long double asin(long double __x) {return asinl(__x);}
+#endif
 
 template <class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -680,8 +688,10 @@ asin(_A1 __x) {return asin((double)__x);}
 using ::atan;
 using ::atanf;
 
+#ifndef _MSC_VER
 inline _LIBCPP_INLINE_VISIBILITY float       atan(float __x)       {return atanf(__x);}
 inline _LIBCPP_INLINE_VISIBILITY long double atan(long double __x) {return atanl(__x);}
+#endif
 
 template <class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -693,8 +703,10 @@ atan(_A1 __x) {return atan((double)__x);}
 using ::atan2;
 using ::atan2f;
 
+#ifndef _MSC_VER
 inline _LIBCPP_INLINE_VISIBILITY float       atan2(float __y, float __x)             {return atan2f(__y, __x);}
 inline _LIBCPP_INLINE_VISIBILITY long double atan2(long double __y, long double __x) {return atan2l(__y, __x);}
+#endif
 
 template <class _A1, class _A2>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -717,8 +729,10 @@ atan2(_A1 __y, _A2 __x)
 using ::ceil;
 using ::ceilf;
 
+#ifndef _MSC_VER
 inline _LIBCPP_INLINE_VISIBILITY float       ceil(float __x)       {return ceilf(__x);}
 inline _LIBCPP_INLINE_VISIBILITY long double ceil(long double __x) {return ceill(__x);}
+#endif
 
 template <class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -730,8 +744,10 @@ ceil(_A1 __x) {return ceil((double)__x);}
 using ::cos;
 using ::cosf;
 
+#ifndef _MSC_VER
 inline _LIBCPP_INLINE_VISIBILITY float       cos(float __x)       {return cosf(__x);}
 inline _LIBCPP_INLINE_VISIBILITY long double cos(long double __x) {return cosl(__x);}
+#endif
 
 template <class _A1>
 inline _LIBCPP_ALWAYS_INLINE _LIBCPP_INLINE_VISIBILITY
@@ -743,8 +759,10 @@ cos(_A1 __x) {return cos((double)__x);}
 using ::cosh;
 using ::coshf;
 
+#ifndef _MSC_VER
 inline _LIBCPP_INLINE_VISIBILITY float       cosh(float __x)       {return coshf(__x);}
 inline _LIBCPP_INLINE_VISIBILITY long double cosh(long double __x) {return coshl(__x);}
+#endif
 
 template <class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -756,8 +774,10 @@ cosh(_A1 __x) {return cosh((double)__x);}
 using ::exp;
 using ::expf;
 
+#ifndef _MSC_VER
 inline _LIBCPP_INLINE_VISIBILITY float       exp(float __x)       {return expf(__x);}
 inline _LIBCPP_INLINE_VISIBILITY long double exp(long double __x) {return expl(__x);}
+#endif
 
 template <class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -769,8 +789,10 @@ exp(_A1 __x) {return exp((double)__x);}
 using ::fabs;
 using ::fabsf;
 
+#ifndef _MSC_VER
 inline _LIBCPP_INLINE_VISIBILITY float       fabs(float __x)       {return fabsf(__x);}
 inline _LIBCPP_INLINE_VISIBILITY long double fabs(long double __x) {return fabsl(__x);}
+#endif
 
 template <class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -782,8 +804,10 @@ fabs(_A1 __x) {return fabs((double)__x);}
 using ::floor;
 using ::floorf;
 
+#ifndef _MSC_VER
 inline _LIBCPP_INLINE_VISIBILITY float       floor(float __x)       {return floorf(__x);}
 inline _LIBCPP_INLINE_VISIBILITY long double floor(long double __x) {return floorl(__x);}
+#endif
 
 template <class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -795,8 +819,10 @@ floor(_A1 __x) {return floor((double)__x);}
 using ::fmod;
 using ::fmodf;
 
+#ifndef _MSC_VER
 inline _LIBCPP_INLINE_VISIBILITY float       fmod(float __x, float __y)             {return fmodf(__x, __y);}
 inline _LIBCPP_INLINE_VISIBILITY long double fmod(long double __x, long double __y) {return fmodl(__x, __y);}
+#endif
 
 template <class _A1, class _A2>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -819,8 +845,10 @@ fmod(_A1 __x, _A2 __y)
 using ::frexp;
 using ::frexpf;
 
+#ifndef _MSC_VER
 inline _LIBCPP_INLINE_VISIBILITY float       frexp(float __x, int* __e)       {return frexpf(__x, __e);}
 inline _LIBCPP_INLINE_VISIBILITY long double frexp(long double __x, int* __e) {return frexpl(__x, __e);}
+#endif
 
 template <class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -832,8 +860,10 @@ frexp(_A1 __x, int* __e) {return frexp((double)__x, __e);}
 using ::ldexp;
 using ::ldexpf;
 
+#ifndef _MSC_VER
 inline _LIBCPP_INLINE_VISIBILITY float       ldexp(float __x, int __e)       {return ldexpf(__x, __e);}
 inline _LIBCPP_INLINE_VISIBILITY long double ldexp(long double __x, int __e) {return ldexpl(__x, __e);}
+#endif
 
 template <class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -845,8 +875,10 @@ ldexp(_A1 __x, int __e) {return ldexp((double)__x, __e);}
 using ::log;
 using ::logf;
 
+#ifndef _MSC_VER
 inline _LIBCPP_INLINE_VISIBILITY float       log(float __x)       {return logf(__x);}
 inline _LIBCPP_INLINE_VISIBILITY long double log(long double __x) {return logl(__x);}
+#endif
 
 template <class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -858,8 +890,10 @@ log(_A1 __x) {return log((double)__x);}
 using ::log10;
 using ::log10f;
 
+#ifndef _MSC_VER
 inline _LIBCPP_INLINE_VISIBILITY float       log10(float __x)       {return log10f(__x);}
 inline _LIBCPP_INLINE_VISIBILITY long double log10(long double __x) {return log10l(__x);}
+#endif
 
 template <class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -871,16 +905,20 @@ log10(_A1 __x) {return log10((double)__x);}
 using ::modf;
 using ::modff;
 
+#ifndef _MSC_VER
 inline _LIBCPP_INLINE_VISIBILITY float       modf(float __x, float* __y)             {return modff(__x, __y);}
 inline _LIBCPP_INLINE_VISIBILITY long double modf(long double __x, long double* __y) {return modfl(__x, __y);}
+#endif
 
 // pow
 
 using ::pow;
 using ::powf;
 
+#ifndef _MSC_VER
 inline _LIBCPP_INLINE_VISIBILITY float       pow(float __x, float __y)             {return powf(__x, __y);}
 inline _LIBCPP_INLINE_VISIBILITY long double pow(long double __x, long double __y) {return powl(__x, __y);}
+#endif
 
 template <class _A1, class _A2>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -903,8 +941,10 @@ pow(_A1 __x, _A2 __y)
 using ::sin;
 using ::sinf;
 
+#ifndef _MSC_VER
 inline _LIBCPP_INLINE_VISIBILITY float       sin(float __x)       {return sinf(__x);}
 inline _LIBCPP_INLINE_VISIBILITY long double sin(long double __x) {return sinl(__x);}
+#endif
 
 template <class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -916,8 +956,10 @@ sin(_A1 __x) {return sin((double)__x);}
 using ::sinh;
 using ::sinhf;
 
+#ifndef _MSC_VER
 inline _LIBCPP_INLINE_VISIBILITY float       sinh(float __x)       {return sinhf(__x);}
 inline _LIBCPP_INLINE_VISIBILITY long double sinh(long double __x) {return sinhl(__x);}
+#endif
 
 template <class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -929,8 +971,10 @@ sinh(_A1 __x) {return sinh((double)__x);}
 using ::sqrt;
 using ::sqrtf;
 
+#ifndef _MSC_VER
 inline _LIBCPP_INLINE_VISIBILITY float       sqrt(float __x)       {return sqrtf(__x);}
 inline _LIBCPP_INLINE_VISIBILITY long double sqrt(long double __x) {return sqrtl(__x);}
+#endif
 
 template <class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -942,8 +986,10 @@ sqrt(_A1 __x) {return sqrt((double)__x);}
 using ::tan;
 using ::tanf;
 
+#ifndef _MSC_VER
 inline _LIBCPP_INLINE_VISIBILITY float       tan(float __x)       {return tanf(__x);}
 inline _LIBCPP_INLINE_VISIBILITY long double tan(long double __x) {return tanl(__x);}
+#endif
 
 template <class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -955,8 +1001,10 @@ tan(_A1 __x) {return tan((double)__x);}
 using ::tanh;
 using ::tanhf;
 
+#ifndef _MSC_VER
 inline _LIBCPP_INLINE_VISIBILITY float       tanh(float __x)       {return tanhf(__x);}
 inline _LIBCPP_INLINE_VISIBILITY long double tanh(long double __x) {return tanhl(__x);}
+#endif
 
 template <class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -965,6 +1013,7 @@ tanh(_A1 __x) {return tanh((double)__x);}
 
 // acosh
 
+#ifndef _MSC_VER
 using ::acosh;
 using ::acoshf;
 
@@ -975,9 +1024,11 @@ template <class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 acosh(_A1 __x) {return acosh((double)__x);}
+#endif
 
 // asinh
 
+#ifndef _MSC_VER
 using ::asinh;
 using ::asinhf;
 
@@ -988,9 +1039,11 @@ template <class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 asinh(_A1 __x) {return asinh((double)__x);}
+#endif
 
 // atanh
 
+#ifndef _MSC_VER
 using ::atanh;
 using ::atanhf;
 
@@ -1001,9 +1054,11 @@ template <class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 atanh(_A1 __x) {return atanh((double)__x);}
+#endif
 
 // cbrt
 
+#ifndef _MSC_VER
 using ::cbrt;
 using ::cbrtf;
 
@@ -1014,6 +1069,7 @@ template <class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 cbrt(_A1 __x) {return cbrt((double)__x);}
+#endif
 
 // copysign
 
@@ -1038,6 +1094,8 @@ copysign(_A1 __x, _A2 __y)
                       is_same<_A2, __result_type>::value)), "");
     return copysign((__result_type)__x, (__result_type)__y);
 }
+
+#ifndef _MSC_VER
 
 // erf
 
@@ -1513,6 +1571,8 @@ inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 trunc(_A1 __x) {return trunc((double)__x);}
 
+#endif // !_MSC_VER
+
 using ::acosl;
 using ::asinl;
 using ::atanl;
@@ -1534,12 +1594,15 @@ using ::sinl;
 using ::sinhl;
 using ::sqrtl;
 using ::tanl;
+#ifndef _MSC_VER
 using ::tanhl;
 using ::acoshl;
 using ::asinhl;
 using ::atanhl;
 using ::cbrtl;
+#endif !_MSC_VER
 using ::copysignl;
+#ifndef _MSC_VER
 using ::erfl;
 using ::erfcl;
 using ::exp2l;
@@ -1570,6 +1633,7 @@ using ::scalblnl;
 using ::scalbnl;
 using ::tgammal;
 using ::truncl;
+#endif // !_MSC_VER
 
 _LIBCPP_END_NAMESPACE_STD
 

@@ -34,10 +34,7 @@ size_t wcsnrtombs( char *__restrict dst, const wchar_t **__restrict src,
 				   
 #if defined(_MSC_VER)
 #define snprintf _snprintf
-inline int isblank( int c, locale_t /*loc*/ )
-{ return ( c == ' ' || c == '\t' ); }
-inline int iswblank( wint_t c, locale_t /*loc*/ )
-{ return ( c == L' ' || c == L'\t' ); }
+
 #include <xlocinfo.h>
 #define atoll _atoi64
 #define strtoll _strtoi64
@@ -50,10 +47,10 @@ _LIBCPP_ALWAYS_INLINE double strtod( const char *nptr, char **endptr )
 { return _Stod(nptr, endptr, 0); }
 _LIBCPP_ALWAYS_INLINE long double strtold( const char *nptr, char **endptr )
 { return _Stold(nptr, endptr, 0); }
-_LIBCPP_ALWAYS_INLINE float wcstof( const wchar_t *nptr, char** endptr )
 
 #define _Exit _exit
 
+#ifndef __clang__ // MSVC-based Clang also defines _MSC_VER
 #include <intrin.h>
 #define __builtin_popcount __popcnt
 #define __builtin_popcountl __popcnt
@@ -89,7 +86,7 @@ _LIBCPP_ALWAYS_INLINE int __builtin_clzll( unsigned long long x )
 	_BitScanForward64(&r, x);
 	return static_cast<int>(r);
 }
-
-#endif
+#endif // !__clang__
+#endif // _MSC_VER
 
 #endif // _LIBCPP_SUPPORT_WIN32_SUPPORT_H

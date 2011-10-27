@@ -82,7 +82,7 @@ size_t wcstombs(char* restrict s, const wchar_t* restrict pwcs, size_t n);
 #include <__config>
 #include <stdlib.h>
 #ifdef _MSC_VER
-#include "support/win32/support.h"
+#include "support/win32/locale_win32.h"
 #endif // _MSC_VER
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
