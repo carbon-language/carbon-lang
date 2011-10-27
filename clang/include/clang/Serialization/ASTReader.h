@@ -1256,6 +1256,9 @@ public:
   /// \brief Read the macro definition for this identifier.
   virtual void LoadMacroDefinition(IdentifierInfo *II);
 
+  /// \brief Update an out-of-date identifier.
+  virtual void updateOutOfDateIdentifier(IdentifierInfo &II);
+
   /// \brief Read the macro definition corresponding to this iterator
   /// into the unread macro record offsets table.
   void LoadMacroDefinition(

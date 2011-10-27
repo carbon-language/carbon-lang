@@ -98,7 +98,7 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
     CurContext(0), OriginalLexicalContext(0),
     PackContext(0), MSStructPragmaOn(false), VisContext(0),
     ExprNeedsCleanups(0), LateTemplateParser(0), OpaqueParser(0),
-    IdResolver(pp.getLangOptions()), CXXTypeInfoDecl(0), MSVCGuidDecl(0),
+    IdResolver(pp), CXXTypeInfoDecl(0), MSVCGuidDecl(0),
     GlobalNewDeleteDeclared(false), 
     ObjCShouldCallSuperDealloc(false),
     ObjCShouldCallSuperFinalize(false),
@@ -143,11 +143,11 @@ void Sema::Initialize() {
     // If either of the 128-bit integer types are unavailable to name lookup,
     // define them now.
     DeclarationName Int128 = &Context.Idents.get("__int128_t");
-    if (IdentifierResolver::begin(Int128) == IdentifierResolver::end())
+    if (IdResolver.begin(Int128) == IdResolver.end())
       PushOnScopeChains(Context.getInt128Decl(), TUScope);
 
     DeclarationName UInt128 = &Context.Idents.get("__uint128_t");
-    if (IdentifierResolver::begin(UInt128) == IdentifierResolver::end())
+    if (IdResolver.begin(UInt128) == IdResolver.end())
       PushOnScopeChains(Context.getUInt128Decl(), TUScope);
   }
   
@@ -157,18 +157,18 @@ void Sema::Initialize() {
     // If 'SEL' does not yet refer to any declarations, make it refer to the
     // predefined 'SEL'.
     DeclarationName SEL = &Context.Idents.get("SEL");
-    if (IdentifierResolver::begin(SEL) == IdentifierResolver::end())
+    if (IdResolver.begin(SEL) == IdResolver.end())
       PushOnScopeChains(Context.getObjCSelDecl(), TUScope);
 
     // If 'id' does not yet refer to any declarations, make it refer to the
     // predefined 'id'.
     DeclarationName Id = &Context.Idents.get("id");
-    if (IdentifierResolver::begin(Id) == IdentifierResolver::end())
+    if (IdResolver.begin(Id) == IdResolver.end())
       PushOnScopeChains(Context.getObjCIdDecl(), TUScope);
     
     // Create the built-in typedef for 'Class'.
     DeclarationName Class = &Context.Idents.get("Class");
-    if (IdentifierResolver::begin(Class) == IdentifierResolver::end())
+    if (IdResolver.begin(Class) == IdResolver.end())
       PushOnScopeChains(Context.getObjCClassDecl(), TUScope);
   }
 }

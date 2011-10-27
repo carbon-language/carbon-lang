@@ -1664,8 +1664,9 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP, bool IsModule) {
     // chained PCH, by storing the offset into the original PCH rather than
     // writing the macro definition a second time.
     if (MI->isBuiltinMacro() ||
-        (Chain && Name->isFromAST() && MI->isFromAST() &&
-        !MI->hasChangedAfterLoad()))
+        (Chain && 
+         Name->isFromAST() && !Name->hasChangedSinceDeserialization() && 
+         MI->isFromAST() && !MI->hasChangedAfterLoad()))
       continue;
 
     AddIdentifierRef(Name, Record);
@@ -2191,6 +2192,7 @@ namespace {
 class ASTIdentifierTableTrait {
   ASTWriter &Writer;
   Preprocessor &PP;
+  IdentifierResolver &IdResolver;
   bool IsModule;
   
   /// \brief Determines whether this is an "interesting" identifier
@@ -2200,6 +2202,7 @@ class ASTIdentifierTableTrait {
     if (II->isPoisoned() ||
         II->isExtensionToken() ||
         II->getObjCOrBuiltinID() ||
+        II->hasRevertedTokenIDToIdentifier() ||
         II->getFETokenInfo<void>())
       return true;
 
@@ -2223,15 +2226,16 @@ public:
   typedef IdentID data_type;
   typedef data_type data_type_ref;
 
-  ASTIdentifierTableTrait(ASTWriter &Writer, Preprocessor &PP, bool IsModule)
-    : Writer(Writer), PP(PP), IsModule(IsModule) { }
+  ASTIdentifierTableTrait(ASTWriter &Writer, Preprocessor &PP, 
+                          IdentifierResolver &IdResolver, bool IsModule)
+    : Writer(Writer), PP(PP), IdResolver(IdResolver), IsModule(IsModule) { }
 
   static unsigned ComputeHash(const IdentifierInfo* II) {
     return llvm::HashString(II->getName());
   }
 
   std::pair<unsigned,unsigned>
-    EmitKeyDataLength(raw_ostream& Out, IdentifierInfo* II, IdentID ID) {
+  EmitKeyDataLength(raw_ostream& Out, IdentifierInfo* II, IdentID ID) {
     unsigned KeyLen = II->getLength() + 1;
     unsigned DataLen = 4; // 4 bytes for the persistent ID << 1
     MacroInfo *Macro = 0;
@@ -2239,8 +2243,9 @@ public:
       DataLen += 2; // 2 bytes for builtin ID, flags
       if (hasMacroDefinition(II, Macro))
         DataLen += 4;
-      for (IdentifierResolver::iterator D = IdentifierResolver::begin(II),
-                                     DEnd = IdentifierResolver::end();
+      
+      for (IdentifierResolver::iterator D = IdResolver.begin(II),
+                                     DEnd = IdResolver.end();
            D != DEnd; ++D)
         DataLen += sizeof(DeclID);
     }
@@ -2285,14 +2290,13 @@ public:
     // Emit the declaration IDs in reverse order, because the
     // IdentifierResolver provides the declarations as they would be
     // visible (e.g., the function "stat" would come before the struct
-    // "stat"), but IdentifierResolver::AddDeclToIdentifierChain()
-    // adds declarations to the end of the list (so we need to see the
-    // struct "status" before the function "status").
+    // "stat"), but the ASTReader adds declarations to the end of the list 
+    // (so we need to see the struct "status" before the function "status").
     // Only emit declarations that aren't from a chained PCH, though.
-    SmallVector<Decl *, 16> Decls(IdentifierResolver::begin(II),
-                                        IdentifierResolver::end());
+    SmallVector<Decl *, 16> Decls(IdResolver.begin(II),
+                                  IdResolver.end());
     for (SmallVector<Decl *, 16>::reverse_iterator D = Decls.rbegin(),
-                                                      DEnd = Decls.rend();
+                                                DEnd = Decls.rend();
          D != DEnd; ++D)
       clang::io::Emit32(Out, Writer.getDeclID(*D));
   }
@@ -2304,14 +2308,16 @@ public:
 /// The identifier table consists of a blob containing string data
 /// (the actual identifiers themselves) and a separate "offsets" index
 /// that maps identifier IDs to locations within the blob.
-void ASTWriter::WriteIdentifierTable(Preprocessor &PP, bool IsModule) {
+void ASTWriter::WriteIdentifierTable(Preprocessor &PP, 
+                                     IdentifierResolver &IdResolver,
+                                     bool IsModule) {
   using namespace llvm;
 
   // Create and write out the blob that contains the identifier
   // strings.
   {
     OnDiskChainedHashTableGenerator<ASTIdentifierTableTrait> Generator;
-    ASTIdentifierTableTrait Trait(*this, PP, IsModule);
+    ASTIdentifierTableTrait Trait(*this, PP, IdResolver, IsModule);
 
     // Look for any identifiers that were named while processing the
     // headers, but are otherwise not needed. We add these to the hash
@@ -2330,7 +2336,8 @@ void ASTWriter::WriteIdentifierTable(Preprocessor &PP, bool IsModule) {
            ID = IdentifierIDs.begin(), IDEnd = IdentifierIDs.end();
          ID != IDEnd; ++ID) {
       assert(ID->first && "NULL identifier in identifier table");
-      if (!Chain || !ID->first->isFromAST())
+      if (!Chain || !ID->first->isFromAST() || 
+          ID->first->hasChangedSinceDeserialization())
         Generator.insert(const_cast<IdentifierInfo *>(ID->first), ID->second, 
                          Trait);
     }
@@ -2339,7 +2346,7 @@ void ASTWriter::WriteIdentifierTable(Preprocessor &PP, bool IsModule) {
     llvm::SmallString<4096> IdentifierTable;
     uint32_t BucketOffset;
     {
-      ASTIdentifierTableTrait Trait(*this, PP, IsModule);
+      ASTIdentifierTableTrait Trait(*this, PP, IdResolver, IsModule);
       llvm::raw_svector_ostream Out(IdentifierTable);
       // Make sure that no bucket is at offset 0
       clang::io::Emit32(Out, 0);
@@ -2791,6 +2798,15 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
       getIdentifierRef(&Table.get(BuiltinNames[I]));
   }
 
+  // If there are any out-of-date identifiers, bring them up to date.
+  if (ExternalPreprocessorSource *ExtSource = PP.getExternalSource()) {
+    for (IdentifierTable::iterator ID = PP.getIdentifierTable().begin(),
+                                IDEnd = PP.getIdentifierTable().end();
+         ID != IDEnd; ++ID)
+      if (ID->second->isOutOfDate())
+        ExtSource->updateOutOfDateIdentifier(*ID->second);
+  }
+
   // Build a record containing all of the tentative definitions in this file, in
   // TentativeDefinitions order.  Generally, this record will be empty for
   // headers.
@@ -3018,7 +3034,7 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   WriteHeaderSearch(PP.getHeaderSearchInfo(), isysroot);
   WriteSelectors(SemaRef);
   WriteReferencedSelectorsPool(SemaRef);
-  WriteIdentifierTable(PP, IsModule);
+  WriteIdentifierTable(PP, SemaRef.IdResolver, IsModule);
   WriteFPPragmaOptions(SemaRef.getFPOptions());
   WriteOpenCLExtensions(SemaRef);
 

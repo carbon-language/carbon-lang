@@ -23,9 +23,11 @@ class ASTContext;
 class Decl;
 class DeclContext;
 class DeclarationName;
+class ExternalPreprocessorSource;
 class NamedDecl;
+class Preprocessor;
 class Scope;
-
+  
 /// IdentifierResolver - Keeps track of shadowed decls on enclosing
 /// scopes.  It manages the shadowing chains of declaration names and
 /// implements efficient decl lookup based on a declaration name.
@@ -141,10 +143,10 @@ public:
   };
 
   /// begin - Returns an iterator for decls with the name 'Name'.
-  static iterator begin(DeclarationName Name);
+  iterator begin(DeclarationName Name);
 
   /// end - Returns an iterator that has 'finished'.
-  static iterator end() {
+  iterator end() {
     return iterator();
   }
 
@@ -175,23 +177,29 @@ public:
   /// position.
   void InsertDeclAfter(iterator Pos, NamedDecl *D);
 
-  /// \brief Link the declaration into the chain of declarations for
-  /// the given identifier.
+  /// \brief Try to add the given declaration to the top level scope, if it
+  /// (or a redeclaration of it) hasn't already been added.
   ///
-  /// This is a lower-level routine used by the AST reader to link a
-  /// declaration into a specific IdentifierInfo before the
-  /// declaration actually has a name.
-  void AddDeclToIdentifierChain(IdentifierInfo *II, NamedDecl *D);
-
-  explicit IdentifierResolver(const LangOptions &LangOpt);
+  /// \param D The externally-produced declaration to add.
+  ///
+  /// \param Name The name of the externally-produced declaration.
+  ///
+  /// \returns true if the declaration was added, false otherwise.
+  bool tryAddTopLevelDecl(NamedDecl *D, DeclarationName Name);
+  
+  explicit IdentifierResolver(Preprocessor &PP);
   ~IdentifierResolver();
 
 private:
   const LangOptions &LangOpt;
-
+  Preprocessor &PP;
+  
   class IdDeclInfoMap;
   IdDeclInfoMap *IdDeclInfos;
 
+  void updatingIdentifier(IdentifierInfo &II);
+  void readingIdentifier(IdentifierInfo &II);
+  
   /// FETokenInfo contains a Decl pointer if lower bit == 0.
   static inline bool isDeclPtr(void *Ptr) {
     return (reinterpret_cast<uintptr_t>(Ptr) & 0x1) == 0;

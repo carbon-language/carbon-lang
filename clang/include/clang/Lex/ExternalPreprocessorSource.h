@@ -30,6 +30,9 @@ public:
   
   /// \brief Read the definition for the given macro.
   virtual void LoadMacroDefinition(IdentifierInfo *II) = 0;
+  
+  /// \brief Update an out-of-date identifier.
+  virtual void updateOutOfDateIdentifier(IdentifierInfo &II) = 0;
 };
   
 }

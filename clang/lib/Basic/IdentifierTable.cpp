@@ -37,7 +37,9 @@ IdentifierInfo::IdentifierInfo() {
   IsCPPOperatorKeyword = false;
   NeedsHandleIdentifier = false;
   IsFromAST = false;
+  ChangedAfterLoad = false;
   RevertedTokenID = false;
+  OutOfDate = false;
   FETokenInfo = 0;
   Entry = 0;
 }

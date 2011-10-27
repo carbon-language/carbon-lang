@@ -51,9 +51,13 @@ void Preprocessor::setMacroInfo(IdentifierInfo *II, MacroInfo *MI) {
   if (MI) {
     Macros[II] = MI;
     II->setHasMacroDefinition(true);
+    if (II->isFromAST())
+      II->setChangedSinceDeserialization();
   } else if (II->hasMacroDefinition()) {
     Macros.erase(II);
     II->setHasMacroDefinition(false);
+    if (II->isFromAST())
+      II->setChangedSinceDeserialization();
   }
 }
 

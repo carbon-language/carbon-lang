@@ -304,6 +304,8 @@ void Preprocessor::HandlePragmaPoison(Token &PoisonTok) {
 
     // Finally, poison it!
     II->setIsPoisoned();
+    if (II->isFromAST())
+      II->setChangedSinceDeserialization();
   }
 }
 

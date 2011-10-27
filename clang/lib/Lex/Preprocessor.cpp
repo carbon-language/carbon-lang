@@ -492,6 +492,13 @@ void Preprocessor::HandleIdentifier(Token &Identifier) {
 
   IdentifierInfo &II = *Identifier.getIdentifierInfo();
 
+  // If the information about this identifier is out of date, update it from
+  // the external source.
+  if (II.isOutOfDate()) {
+    ExternalSource->updateOutOfDateIdentifier(II);
+    Identifier.setKind(II.getTokenID());
+  }
+  
   // If this identifier was poisoned, and if it was not produced from a macro
   // expansion, emit an error.
   if (II.isPoisoned() && CurPPLexer) {
