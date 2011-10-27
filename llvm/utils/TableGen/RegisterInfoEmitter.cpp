@@ -253,10 +253,6 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
   OS << "namespace llvm {\n\n";
 
   const std::string &TargetName = Target.getName();
-  std::string ClassName = TargetName + "GenMCRegisterInfo";
-  OS << "struct " << ClassName << " : public MCRegisterInfo {\n"
-     << "  explicit " << ClassName << "(const MCRegisterDesc *D);\n";
-  OS << "};\n";
 
   OS << "\nnamespace {\n";
 
