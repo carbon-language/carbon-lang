@@ -142,7 +142,7 @@ private:
 
   /// \brief Offset of each declaration in the bitstream, indexed by
   /// the declaration's ID.
-  std::vector<uint32_t> DeclOffsets;
+  std::vector<serialization::DeclOffset> DeclOffsets;
 
   /// \brief The first ID number we can use for our own types.
   serialization::TypeID FirstTypeID;

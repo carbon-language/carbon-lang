@@ -1756,7 +1756,7 @@ ASTReader::ReadASTBlock(Module &F) {
         Error("duplicate DECL_OFFSET record in AST file");
         return Failure;
       }
-      F.DeclOffsets = (const uint32_t *)BlobStart;
+      F.DeclOffsets = (const DeclOffset *)BlobStart;
       F.LocalNumDecls = Record[0];
       unsigned LocalBaseDeclID = Record[1];
       F.BaseDeclID = getTotalNumDecls();

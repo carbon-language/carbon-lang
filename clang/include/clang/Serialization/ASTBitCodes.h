@@ -156,6 +156,22 @@ namespace clang {
           BitOffset(BitOffset) { }
     };
 
+    /// \brief Source range/offset of a preprocessed entity.
+    struct DeclOffset {
+      /// \brief Raw source location.
+      unsigned Loc;
+      /// \brief Offset in the AST file.
+      uint32_t BitOffset;
+
+      DeclOffset() : Loc(0), BitOffset(0) { }
+      DeclOffset(SourceLocation Loc, uint32_t BitOffset)
+        : Loc(Loc.getRawEncoding()),
+          BitOffset(BitOffset) { }
+      void setLocation(SourceLocation L) {
+        Loc = L.getRawEncoding();
+      }
+    };
+
     /// \brief The number of predefined preprocessed entity IDs.
     const unsigned int NUM_PREDEF_PP_ENTITY_IDS = 1;
 

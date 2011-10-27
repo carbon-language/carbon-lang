@@ -679,7 +679,8 @@ private:
   RecordLocation TypeCursorForIndex(unsigned Index);
   void LoadedDecl(unsigned Index, Decl *D);
   Decl *ReadDeclRecord(serialization::DeclID ID);
-  RecordLocation DeclCursorForID(serialization::DeclID ID);
+  RecordLocation DeclCursorForID(serialization::DeclID ID,
+                                 unsigned &RawLocation);
   void loadDeclUpdateRecords(serialization::DeclID ID, Decl *D);
   void loadObjCChainedCategories(serialization::GlobalDeclID ID,
                                  ObjCInterfaceDecl *D);

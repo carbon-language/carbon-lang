@@ -35,6 +35,7 @@ namespace clang {
     Module &F;
     llvm::BitstreamCursor &Cursor;
     const DeclID ThisDeclID;
+    const unsigned RawLocation;
     typedef ASTReader::RecordData RecordData;
     const RecordData &Record;
     unsigned &Idx;
@@ -94,9 +95,11 @@ namespace clang {
   public:
     ASTDeclReader(ASTReader &Reader, Module &F,
                   llvm::BitstreamCursor &Cursor, DeclID thisDeclID,
+                  unsigned RawLocation,
                   const RecordData &Record, unsigned &Idx)
       : Reader(Reader), F(F), Cursor(Cursor), ThisDeclID(thisDeclID),
-        Record(Record), Idx(Idx), TypeIDForTypeDecl(0) { }
+        RawLocation(RawLocation), Record(Record), Idx(Idx),
+        TypeIDForTypeDecl(0) { }
 
     static void attachPreviousDecl(Decl *D, Decl *previous);
 
@@ -236,7 +239,7 @@ void ASTDeclReader::VisitDecl(Decl *D) {
     D->setDeclContext(ReadDeclAs<DeclContext>(Record, Idx));
     D->setLexicalDeclContext(ReadDeclAs<DeclContext>(Record, Idx));
   }
-  D->setLocation(ReadSourceLocation(Record, Idx));
+  D->setLocation(Reader.ReadSourceLocation(F, RawLocation));
   D->setInvalidDecl(Record[Idx++]);
   if (Record[Idx++]) { // hasAttrs
     AttrVec Attrs;
@@ -1443,7 +1446,7 @@ static bool isConsumerInterestedIn(Decl *D) {
 
 /// \brief Get the correct cursor and offset for loading a declaration.
 ASTReader::RecordLocation
-ASTReader::DeclCursorForID(DeclID ID) {
+ASTReader::DeclCursorForID(DeclID ID, unsigned &RawLocation) {
   // See if there's an override.
   DeclReplacementMap::iterator It = ReplacedDecls.find(ID);
   if (It != ReplacedDecls.end())
@@ -1452,8 +1455,10 @@ ASTReader::DeclCursorForID(DeclID ID) {
   GlobalDeclMapType::iterator I = GlobalDeclMap.find(ID);
   assert(I != GlobalDeclMap.end() && "Corrupted global declaration map");
   Module *M = I->second;
-  return RecordLocation(M, 
-           M->DeclOffsets[ID - M->BaseDeclID - NUM_PREDEF_DECL_IDS]);
+  const DeclOffset &
+    DOffs =  M->DeclOffsets[ID - M->BaseDeclID - NUM_PREDEF_DECL_IDS];
+  RawLocation = DOffs.Loc;
+  return RecordLocation(M, DOffs.BitOffset);
 }
 
 ASTReader::RecordLocation ASTReader::getLocalBitOffset(uint64_t GlobalOffset) {
@@ -1490,7 +1495,8 @@ void ASTReader::loadAndAttachPreviousDecl(Decl *D, serialization::DeclID ID) {
 /// \brief Read the declaration at the given offset from the AST file.
 Decl *ASTReader::ReadDeclRecord(DeclID ID) {
   unsigned Index = ID - NUM_PREDEF_DECL_IDS;
-  RecordLocation Loc = DeclCursorForID(ID);
+  unsigned RawLocation = 0;
+  RecordLocation Loc = DeclCursorForID(ID, RawLocation);
   llvm::BitstreamCursor &DeclsCursor = Loc.F->DeclsCursor;
   // Keep track of where we are in the stream, then jump back there
   // after reading this declaration.
@@ -1505,7 +1511,7 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
   RecordData Record;
   unsigned Code = DeclsCursor.ReadCode();
   unsigned Idx = 0;
-  ASTDeclReader Reader(*this, *Loc.F, DeclsCursor, ID, Record, Idx);
+  ASTDeclReader Reader(*this, *Loc.F, DeclsCursor, ID, RawLocation, Record,Idx);
 
   Decl *D = 0;
   switch ((DeclCode)DeclsCursor.ReadRecord(Code, Record)) {
@@ -1799,7 +1805,7 @@ void ASTReader::loadDeclUpdateRecords(serialization::DeclID ID, Decl *D) {
       assert(RecCode == DECL_UPDATES && "Expected DECL_UPDATES record!");
       
       unsigned Idx = 0;
-      ASTDeclReader Reader(*this, *F, Cursor, ID, Record, Idx);
+      ASTDeclReader Reader(*this, *F, Cursor, ID, 0, Record, Idx);
       Reader.UpdateDecl(D, *F, Record);
     }
   }

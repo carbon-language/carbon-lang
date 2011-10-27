@@ -241,7 +241,7 @@ public:
   
   /// \brief Offset of each declaration within the bitstream, indexed
   /// by the declaration ID (-1).
-  const uint32_t *DeclOffsets;
+  const DeclOffset *DeclOffsets;
   
   /// \brief Base declaration ID for declarations local to this module.
   serialization::DeclID BaseDeclID;

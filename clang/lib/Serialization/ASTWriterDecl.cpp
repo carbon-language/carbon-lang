@@ -146,7 +146,6 @@ void ASTDeclWriter::Visit(Decl *D) {
 void ASTDeclWriter::VisitDecl(Decl *D) {
   Writer.AddDeclRef(cast_or_null<Decl>(D->getDeclContext()), Record);
   Writer.AddDeclRef(cast_or_null<Decl>(D->getLexicalDeclContext()), Record);
-  Writer.AddSourceLocation(D->getLocation(), Record);
   Record.push_back(D->isInvalidDecl());
   Record.push_back(D->hasAttrs());
   if (D->hasAttrs())
@@ -1274,7 +1273,6 @@ void ASTWriter::WriteDeclsBlockAbbrevs() {
   // Decl
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // DeclContext
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // LexicalDeclContext
-  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Location
   Abv->Add(BitCodeAbbrevOp(0));                       // isInvalidDecl (!?)
   Abv->Add(BitCodeAbbrevOp(0));                       // HasAttrs
   Abv->Add(BitCodeAbbrevOp(0));                       // isImplicit
@@ -1305,7 +1303,6 @@ void ASTWriter::WriteDeclsBlockAbbrevs() {
   // Decl
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // DeclContext
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // LexicalDeclContext
-  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Location
   Abv->Add(BitCodeAbbrevOp(0));                       // isInvalidDecl (!?)
   Abv->Add(BitCodeAbbrevOp(0));                       // HasAttrs
   Abv->Add(BitCodeAbbrevOp(0));                       // isImplicit
@@ -1341,7 +1338,6 @@ void ASTWriter::WriteDeclsBlockAbbrevs() {
   // Decl
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // DeclContext
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // LexicalDeclContext
-  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Location
   Abv->Add(BitCodeAbbrevOp(0));                       // isInvalidDecl (!?)
   Abv->Add(BitCodeAbbrevOp(0));                       // HasAttrs
   Abv->Add(BitCodeAbbrevOp(0));                       // isImplicit
@@ -1387,7 +1383,6 @@ void ASTWriter::WriteDeclsBlockAbbrevs() {
   // Decl
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // DeclContext
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // LexicalDeclContext
-  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Location
   Abv->Add(BitCodeAbbrevOp(0));                       // isInvalidDecl (!?)
   Abv->Add(BitCodeAbbrevOp(0));                       // HasAttrs
   Abv->Add(BitCodeAbbrevOp(0));                       // isImplicit
@@ -1427,7 +1422,6 @@ void ASTWriter::WriteDeclsBlockAbbrevs() {
   // Decl
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // DeclContext
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // LexicalDeclContext
-  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Location
   Abv->Add(BitCodeAbbrevOp(0));                       // isInvalidDecl (!?)
   Abv->Add(BitCodeAbbrevOp(0));                       // HasAttrs
   Abv->Add(BitCodeAbbrevOp(0));                       // isImplicit
@@ -1474,7 +1468,6 @@ void ASTWriter::WriteDeclsBlockAbbrevs() {
   // Decl
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // DeclContext
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // LexicalDeclContext
-  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Location
   Abv->Add(BitCodeAbbrevOp(0));                       // isInvalidDecl (!?)
   Abv->Add(BitCodeAbbrevOp(0));                       // HasAttrs
   Abv->Add(BitCodeAbbrevOp(0));                       // isImplicit
@@ -1501,7 +1494,6 @@ void ASTWriter::WriteDeclsBlockAbbrevs() {
   // Decl
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // DeclContext
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // LexicalDeclContext
-  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Location
   Abv->Add(BitCodeAbbrevOp(0));                       // isInvalidDecl (!?)
   Abv->Add(BitCodeAbbrevOp(0));                       // HasAttrs
   Abv->Add(BitCodeAbbrevOp(0));                       // isImplicit
@@ -1660,10 +1652,12 @@ void ASTWriter::WriteDecl(ASTContext &Context, Decl *D) {
 
     // Record the offset for this declaration
     if (DeclOffsets.size() == Index)
-      DeclOffsets.push_back(Stream.GetCurrentBitNo());
+      DeclOffsets.push_back(DeclOffset(D->getLocation(),
+                                       Stream.GetCurrentBitNo()));
     else if (DeclOffsets.size() < Index) {
       DeclOffsets.resize(Index+1);
-      DeclOffsets[Index] = Stream.GetCurrentBitNo();
+      DeclOffsets[Index].setLocation(D->getLocation());
+      DeclOffsets[Index].BitOffset = Stream.GetCurrentBitNo();
     }
   }
 
