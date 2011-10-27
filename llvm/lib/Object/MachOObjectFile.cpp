@@ -821,6 +821,24 @@ void MachOObjectFile::printRelocationTargetName(
       return;
     }
 
+    // If we couldn't find a symbol that this relocation refers to, try
+    // to find a section beginning instead.
+    for (section_iterator SI = begin_sections(), SE = end_sections(); SI != SE;
+         SI.increment(ec)) {
+      if (ec) report_fatal_error(ec.message());
+
+      uint64_t Addr;
+      StringRef Name;
+
+      if ((ec = SI->getAddress(Addr)))
+        report_fatal_error(ec.message());
+      if (Addr != Val) continue;
+      if ((ec = SI->getName(Name)))
+        report_fatal_error(ec.message());
+      fmt << Name;
+      return;
+    }
+
     fmt << format("0x%x", Val);
     return;
   }
