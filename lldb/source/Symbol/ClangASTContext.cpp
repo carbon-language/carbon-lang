@@ -4964,6 +4964,35 @@ ClangASTContext::IsPossibleCPlusPlusDynamicType (clang::ASTContext *ast, clang_t
     return false;
 }
 
+bool
+ClangASTContext::IsReferenceType (clang_type_t clang_type, clang_type_t *target_type)
+{
+    if (clang_type == NULL)
+        return false;
+    
+    QualType qual_type (QualType::getFromOpaquePtr(clang_type));
+    const clang::Type::TypeClass type_class = qual_type->getTypeClass();
+
+    switch (type_class)
+    {
+    case clang::Type::LValueReference:
+        if (target_type)
+            *target_type = cast<LValueReferenceType>(qual_type)->desugar().getAsOpaquePtr();
+        return true;
+    case clang::Type::RValueReference:
+        if (target_type)
+            *target_type = cast<LValueReferenceType>(qual_type)->desugar().getAsOpaquePtr();
+        return true;
+    case clang::Type::Typedef:
+        return ClangASTContext::IsReferenceType (cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr());
+    case clang::Type::Elaborated:
+        return ClangASTContext::IsReferenceType (cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr());
+    default:
+        break;
+    }
+    
+    return false;
+}
 
 bool
 ClangASTContext::IsPointerOrReferenceType (clang_type_t clang_type, clang_type_t*target_type)

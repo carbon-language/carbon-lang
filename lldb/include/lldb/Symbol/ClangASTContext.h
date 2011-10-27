@@ -710,6 +710,9 @@ public:
     IsPointerType (lldb::clang_type_t clang_type, lldb::clang_type_t *target_type = NULL);
 
     static bool
+    IsReferenceType (lldb::clang_type_t clang_type, lldb::clang_type_t *target_type = NULL);
+    
+    static bool
     IsPointerOrReferenceType (lldb::clang_type_t clang_type, lldb::clang_type_t *target_type = NULL);
     
     static bool

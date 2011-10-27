@@ -1663,6 +1663,8 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
     VariableSP &var(expr_var->m_parser_vars->m_lldb_var);
     lldb_private::Symbol *sym(expr_var->m_parser_vars->m_lldb_sym);
     
+    bool is_reference(expr_var->m_flags & ClangExpressionVariable::EVTypeIsReference);
+    
     std::auto_ptr<lldb_private::Value> location_value;
 
     if (var)
@@ -1741,15 +1743,42 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
             {
                 Error write_error;
 
-                if (!process->WriteScalarToMemory (addr, 
-                                                           location_value->GetScalar(), 
-                                                           process->GetAddressByteSize(), 
-                                                           write_error))
+                if (is_reference)
                 {
-                    err.SetErrorStringWithFormat ("Couldn't write %s to the target: %s", 
-                                                  name.GetCString(), 
-                                                  write_error.AsCString());
-                    return false;
+                    Error read_error;
+                    
+                    addr_t ref_value = process->ReadPointerFromMemory(location_value->GetScalar().ULongLong(), read_error);
+                    
+                    if (!read_error.Success())
+                    {
+                        err.SetErrorStringWithFormat ("Couldn't read reference to %s from the target: %s",
+                                                      name.GetCString(),
+                                                      read_error.AsCString());
+                        return false;
+                    }
+                    
+                    if (!process->WritePointerToMemory(addr,
+                                                       ref_value,
+                                                       write_error))
+                    {
+                        err.SetErrorStringWithFormat ("Couldn't write %s to the target: %s", 
+                                                      name.GetCString(), 
+                                                      write_error.AsCString());
+                        return false;
+                    }
+                }
+                else
+                {
+                    if (!process->WriteScalarToMemory (addr, 
+                                                       location_value->GetScalar(), 
+                                                       process->GetAddressByteSize(), 
+                                                       write_error))
+                    {
+                        err.SetErrorStringWithFormat ("Couldn't write %s to the target: %s", 
+                                                      name.GetCString(), 
+                                                      write_error.AsCString());
+                        return false;
+                    }
                 }
             }
         }
@@ -1792,6 +1821,9 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
             
             if (dematerialize)
             {
+                if (is_reference)
+                    return true; // reference types don't need demateralizing
+                
                 // Get the location of the spare memory area out of the variable's live data.
                 
                 if (!expr_var->m_live_sp)
@@ -1839,14 +1871,45 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
             }
             else
             {
+                Error write_error;
+                
+                RegisterValue reg_value;
+                
+                if (!reg_ctx->ReadRegister (reg_info, reg_value))
+                {
+                    err.SetErrorStringWithFormat ("Couldn't read %s from %s", 
+                                                  name.GetCString(), 
+                                                  reg_info->name);
+                    return false;
+                }
+
+                if (is_reference)
+                {
+                    write_error = reg_ctx->WriteRegisterValueToMemory(reg_info, 
+                                                                      addr,
+                                                                      process->GetAddressByteSize(), 
+                                                                      reg_value);
+                    
+                    if (!write_error.Success())
+                    {
+                        err.SetErrorStringWithFormat ("Couldn't write %s from register %s to the target: %s", 
+                                                      name.GetCString(),
+                                                      reg_info->name,
+                                                      write_error.AsCString());
+                        return false;
+                    }
+                    
+                    return true;
+                }
+
                 // Allocate a spare memory area to place the register's contents into.  This memory area will be pointed to by the slot in the
                 // struct.
                 
                 Error allocate_error;
                 
                 Scalar reg_addr (process->AllocateMemory (value_byte_size, 
-                                                                  lldb::ePermissionsReadable | lldb::ePermissionsWritable, 
-                                                                  allocate_error));
+                                                          lldb::ePermissionsReadable | lldb::ePermissionsWritable, 
+                                                          allocate_error));
                 
                 if (reg_addr.ULongLong() == LLDB_INVALID_ADDRESS)
                 {
@@ -1867,13 +1930,11 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
                                                                       value_byte_size);
                 
                 // Now write the location of the area into the struct.
-                
-                Error write_error;
-                
+                                
                 if (!process->WriteScalarToMemory (addr, 
-                                                           reg_addr, 
-                                                           process->GetAddressByteSize(), 
-                                                           write_error))
+                                                   reg_addr, 
+                                                   process->GetAddressByteSize(), 
+                                                   write_error))
                 {
                     err.SetErrorStringWithFormat ("Couldn't write %s to the target: %s", 
                                                   name.GetCString(), 
@@ -1888,8 +1949,6 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
                                                   reg_info->name);
                     return false;
                 }
-
-                RegisterValue reg_value;
 
                 if (!reg_ctx->ReadRegister (reg_info, reg_value))
                 {
@@ -2924,7 +2983,15 @@ ClangExpressionDeclMap::AddOneVariable (NameSearchContext &context, VariableSP v
     if (!var_location)
         return;
     
-    NamedDecl *var_decl = context.AddVarDecl(ClangASTContext::CreateLValueReferenceType(pt.GetASTContext(), pt.GetOpaqueQualType()));
+    NamedDecl *var_decl;
+    
+    bool is_reference = ClangASTContext::IsReferenceType(pt.GetOpaqueQualType());
+
+    if (is_reference)
+        var_decl = context.AddVarDecl(pt.GetOpaqueQualType());
+    else
+        var_decl = context.AddVarDecl(ClangASTContext::CreateLValueReferenceType(pt.GetASTContext(), pt.GetOpaqueQualType()));
+        
     std::string decl_name(context.m_decl_name.getAsString());
     ConstString entity_name(decl_name.c_str());
     ClangExpressionVariableSP entity(m_found_entities.CreateVariable (m_parser_vars->m_exe_ctx->GetBestExecutionContextScope (),
@@ -2939,6 +3006,9 @@ ClangExpressionDeclMap::AddOneVariable (NameSearchContext &context, VariableSP v
     entity->m_parser_vars->m_llvm_value  = NULL;
     entity->m_parser_vars->m_lldb_value  = var_location;
     entity->m_parser_vars->m_lldb_var    = var;
+    
+    if (is_reference)
+        entity->m_flags |= ClangExpressionVariable::EVTypeIsReference;
     
     if (log)
     {
