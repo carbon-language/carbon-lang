@@ -7,5 +7,6 @@
 // CHECK-REPARSE-SOURCE-CRASH: Unable to reparse translation unit
 //
 // REQUIRES: crash-recovery
+// REQUIRES: shell
 
 #warning parsing original file
