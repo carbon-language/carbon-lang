@@ -500,6 +500,9 @@
 // CHECK: 	sysexit
         	sysexit
 
+// CHECK: 	sysexitl
+        	sysexitl
+
 // CHECK: 	ud2
         	ud2
 
@@ -4416,6 +4419,10 @@
 // CHECK: sysexit
 // CHECK:  encoding: [0x0f,0x35]
         	sysexit
+
+// CHECK: sysexitl
+// CHECK:  encoding: [0x0f,0x35]
+        	sysexitl
 
 // CHECK: fxsave	3735928559(%ebx,%ecx,8)
 // CHECK:  encoding: [0x0f,0xae,0x84,0xcb,0xef,0xbe,0xad,0xde]

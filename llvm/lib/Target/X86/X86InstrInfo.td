@@ -1573,6 +1573,7 @@ def : MnemonicAlias<"verrw", "verr">;
 // System instruction aliases.
 def : MnemonicAlias<"iret", "iretl">;
 def : MnemonicAlias<"sysret", "sysretl">;
+def : MnemonicAlias<"sysexit", "sysexitl">;
 
 def : MnemonicAlias<"lgdtl", "lgdt">, Requires<[In32BitMode]>;
 def : MnemonicAlias<"lgdtq", "lgdt">, Requires<[In64BitMode]>;

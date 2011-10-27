@@ -1191,3 +1191,15 @@ xchgl %ecx, %eax
 // CHECK: xchgl %ecx, %eax
 // CHECK: encoding: [0x91]
 xchgl %eax, %ecx
+
+// CHECK: sysexit
+// CHECK: encoding: [0x0f,0x35]
+sysexit
+
+// CHECK: sysexitl
+// CHECK: encoding: [0x0f,0x35]
+sysexitl
+
+// CHECK: sysexitq
+// CHECK: encoding: [0x48,0x0f,0x35]
+sysexitq

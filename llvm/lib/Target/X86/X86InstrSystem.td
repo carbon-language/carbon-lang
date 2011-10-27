@@ -51,9 +51,8 @@ def SYSRETQ  :RI<0x07, RawFrm, (outs), (ins), "sysretq", []>, TB,
 
 def SYSENTER : I<0x34, RawFrm, (outs), (ins), "sysenter", []>, TB;
                  
-def SYSEXIT   : I<0x35, RawFrm, (outs), (ins), "sysexit", []>, TB,
-                Requires<[In32BitMode]>;
-def SYSEXIT64 :RI<0x35, RawFrm, (outs), (ins), "sysexit", []>, TB,
+def SYSEXIT   : I<0x35, RawFrm, (outs), (ins), "sysexitl", []>, TB;
+def SYSEXIT64 :RI<0x35, RawFrm, (outs), (ins), "sysexitq", []>, TB,
                 Requires<[In64BitMode]>;
 
 def IRET16 : I<0xcf, RawFrm, (outs), (ins), "iretw", []>, OpSize;

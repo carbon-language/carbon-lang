@@ -18,3 +18,5 @@ addl $0, 0(%rax)
 
 movl 0(%rax), 0(%edx)  // error: invalid operand for instruction
 
+// 32: error: instruction requires a CPU feature not currently enabled
+sysexitq
