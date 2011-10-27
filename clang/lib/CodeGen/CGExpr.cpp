@@ -23,6 +23,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/Frontend/CodeGenOptions.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Target/TargetData.h"
 using namespace clang;
 using namespace CodeGen;
@@ -2751,4 +2752,19 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
   if (E->getOp() == AtomicExpr::Store)
     return RValue::get(0);
   return ConvertTempToRValue(*this, E->getType(), OrigDest);
+}
+
+void CodeGenFunction::SetFPAccuracy(llvm::Value *Val, unsigned AccuracyN,
+                                    unsigned AccuracyD) {
+  assert(Val->getType()->isFPOrFPVectorTy());
+  if (!AccuracyN || !isa<llvm::Instruction>(Val))
+    return;
+
+  llvm::Value *Vals[2];
+  Vals[0] = llvm::ConstantInt::get(Int32Ty, AccuracyN);
+  Vals[1] = llvm::ConstantInt::get(Int32Ty, AccuracyD);
+  llvm::MDNode *Node = llvm::MDNode::get(getLLVMContext(), Vals);
+
+  cast<llvm::Instruction>(Val)->setMetadata(llvm::LLVMContext::MD_fpaccuracy,
+                                            Node);
 }

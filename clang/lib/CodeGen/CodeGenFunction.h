@@ -2382,6 +2382,11 @@ public:
   /// a r-value suitable for passing the given parameter.
   void EmitDelegateCallArg(CallArgList &args, const VarDecl *param);
 
+  /// SetFPAccuracy - Set the minimum required accuracy of the given floating
+  /// point operation, expressed as the maximum relative error in ulp.
+  void SetFPAccuracy(llvm::Value *Val, unsigned AccuracyN,
+                     unsigned AccuracyD = 1);
+
 private:
   void EmitReturnOfRValue(RValue RV, QualType Ty);
 
