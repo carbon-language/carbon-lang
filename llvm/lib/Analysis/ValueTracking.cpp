@@ -201,36 +201,9 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
     ComputeMaskedBits(I->getOperand(1), Mask2, KnownZero, KnownOne, TD,Depth+1);
     ComputeMaskedBits(I->getOperand(0), Mask2, KnownZero2, KnownOne2, TD,
                       Depth+1);
-    assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?");
-    assert((KnownZero2 & KnownOne2) == 0 && "Bits known to be one AND zero?");
-
-    bool isKnownNegative = false;
-    bool isKnownNonNegative = false;
-    // If the multiplication is known not to overflow, compute the sign bit.
-    if (Mask.isNegative() && cast<BinaryOperator>(I)->hasNoSignedWrap()) {
-      Value *Op1 = I->getOperand(1), *Op2 = I->getOperand(0);
-      if (Op1 == Op2) {
-        // The product of a number with itself is non-negative.
-        isKnownNonNegative = true;
-      } else {
-        bool isKnownNonNegative1 = KnownZero.isNegative();
-        bool isKnownNonNegative2 = KnownZero2.isNegative();
-        bool isKnownNegative1 = KnownOne.isNegative();
-        bool isKnownNegative2 = KnownOne2.isNegative();
-        // The product of two numbers with the same sign is non-negative.
-        isKnownNonNegative = (isKnownNegative1 && isKnownNegative2) ||
-          (isKnownNonNegative1 && isKnownNonNegative2);
-        // The product of a negative number and a non-negative number is either
-        // negative or zero.
-        isKnownNegative = (isKnownNegative1 && isKnownNonNegative2 &&
-                           isKnownNonZero(Op2, TD, Depth)) ||
-                          (isKnownNegative2 && isKnownNonNegative1 &&
-                           isKnownNonZero(Op1, TD, Depth));
-        assert(!(isKnownNegative && isKnownNonNegative) &&
-               "Sign bit both zero and one?");
-      }
-    }
-
+    assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
+    assert((KnownZero2 & KnownOne2) == 0 && "Bits known to be one AND zero?"); 
+    
     // If low bits are zero in either operand, output low known-0 bits.
     // Also compute a conserative estimate for high known-0 bits.
     // More trickiness is possible, but this is sufficient for the
@@ -247,12 +220,6 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
     KnownZero = APInt::getLowBitsSet(BitWidth, TrailZ) |
                 APInt::getHighBitsSet(BitWidth, LeadZ);
     KnownZero &= Mask;
-
-    if (isKnownNonNegative)
-      KnownZero.setBit(BitWidth - 1);
-    else if (isKnownNegative)
-      KnownOne.setBit(BitWidth - 1);
-
     return;
   }
   case Instruction::UDiv: {
@@ -817,7 +784,7 @@ bool llvm::isKnownNonZero(Value *V, const TargetData *TD, unsigned Depth) {
   }
 
   // The remaining tests are all recursive, so bail out if we hit the limit.
-  if (Depth++ >= MaxDepth)
+  if (Depth++ == MaxDepth)
     return false;
 
   unsigned BitWidth = getBitWidth(V->getType(), TD);
@@ -899,15 +866,6 @@ bool llvm::isKnownNonZero(Value *V, const TargetData *TD, unsigned Depth) {
     if (XKnownNonNegative && isPowerOfTwo(Y, TD, /*OrZero*/false, Depth))
       return true;
     if (YKnownNonNegative && isPowerOfTwo(X, TD, /*OrZero*/false, Depth))
-      return true;
-  }
-  // X * Y.
-  else if (match(V, m_Mul(m_Value(X), m_Value(Y)))) {
-    BinaryOperator *BO = cast<BinaryOperator>(V);
-    // If X and Y are non-zero then so is X * Y as long as the multiplication
-    // does not overflow.
-    if ((BO->hasNoSignedWrap() || BO->hasNoUnsignedWrap()) &&
-        isKnownNonZero(X, TD, Depth) && isKnownNonZero(Y, TD, Depth))
       return true;
   }
   // (C ? X : Y) != 0 if X != 0 and Y != 0.

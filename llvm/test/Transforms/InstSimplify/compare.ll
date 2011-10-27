@@ -323,34 +323,3 @@ define i1 @and1(i32 %X) {
   ret i1 %B
 ; CHECK: ret i1 false
 }
-
-define i1 @mul1(i32 %X) {
-; CHECK: @mul1
-; Square of a non-zero number is non-zero if there is no overflow.
-  %Y = or i32 %X, 1
-  %M = mul nuw i32 %Y, %Y
-  %C = icmp eq i32 %M, 0
-  ret i1 %C
-; CHECK: ret i1 false
-}
-
-define i1 @mul2(i32 %X) {
-; CHECK: @mul2
-; Square of a non-zero number is positive if there is no signed overflow.
-  %Y = or i32 %X, 1
-  %M = mul nsw i32 %Y, %Y
-  %C = icmp sgt i32 %M, 0
-  ret i1 %C
-; CHECK: ret i1 true
-}
-
-define i1 @mul3(i32 %X, i32 %Y) {
-; CHECK: @mul3
-; Product of non-negative numbers is non-negative if there is no signed overflow.
-  %XX = mul nsw i32 %X, %X
-  %YY = mul nsw i32 %Y, %Y
-  %M = mul nsw i32 %XX, %YY
-  %C = icmp sge i32 %M, 0
-  ret i1 %C
-; CHECK: ret i1 true
-}
