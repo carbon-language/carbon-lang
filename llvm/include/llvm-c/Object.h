@@ -76,6 +76,16 @@ uint64_t LLVMGetSymbolAddress(LLVMSymbolIteratorRef SI);
 uint64_t LLVMGetSymbolOffset(LLVMSymbolIteratorRef SI);
 uint64_t LLVMGetSymbolSize(LLVMSymbolIteratorRef SI);
 
+// RelocationRef accessors
+uint64_t LLVMGetRelocationAddress(LLVMRelocationIteratorRef RI);
+LLVMSymbolIteratorRef LLVMGetRelocationSymbol(LLVMRelocationIteratorRef RI);
+uint64_t LLVMGetRelocationType(LLVMRelocationIteratorRef RI);
+// NOTE: Caller takes ownership of returned string of the two
+// following functions.
+const char *LLVMGetRelocationTypeName(LLVMRelocationIteratorRef RI);
+const char *LLVMGetRelocationValueString(LLVMRelocationIteratorRef RI);
+
+
 #ifdef __cplusplus
 }
 

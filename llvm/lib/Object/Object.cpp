@@ -164,3 +164,48 @@ uint64_t LLVMGetSymbolSize(LLVMSymbolIteratorRef SI) {
   return ret;
 }
 
+// RelocationRef accessors
+uint64_t LLVMGetRelocationAddress(LLVMRelocationIteratorRef RI) {
+  uint64_t ret;
+  if (error_code ec = (*unwrap(RI))->getAddress(ret))
+    report_fatal_error(ec.message());
+  return ret;
+}
+
+LLVMSymbolIteratorRef LLVMGetRelocationSymbol(LLVMRelocationIteratorRef RI) {
+  SymbolRef ret;
+  if (error_code ec = (*unwrap(RI))->getSymbol(ret))
+    report_fatal_error(ec.message());
+
+  return wrap(new symbol_iterator(ret));
+}
+
+uint64_t LLVMGetRelocationType(LLVMRelocationIteratorRef RI) {
+  uint64_t ret;
+  if (error_code ec = (*unwrap(RI))->getType(ret))
+    report_fatal_error(ec.message());
+  return ret;
+}
+
+// NOTE: Caller takes ownership of returned string.
+const char *LLVMGetRelocationTypeName(LLVMRelocationIteratorRef RI) {
+  SmallVector<char, 0> ret;
+  if (error_code ec = (*unwrap(RI))->getTypeName(ret))
+    report_fatal_error(ec.message());
+
+  char *str = static_cast<char*>(malloc(ret.size()));
+  std::copy(ret.begin(), ret.end(), str);
+  return str;
+}
+
+// NOTE: Caller takes ownership of returned string.
+const char *LLVMGetRelocationValueString(LLVMRelocationIteratorRef RI) {
+  SmallVector<char, 0> ret;
+  if (error_code ec = (*unwrap(RI))->getValueString(ret))
+    report_fatal_error(ec.message());
+
+  char *str = static_cast<char*>(malloc(ret.size()));
+  std::copy(ret.begin(), ret.end(), str);
+  return str;
+}
+
