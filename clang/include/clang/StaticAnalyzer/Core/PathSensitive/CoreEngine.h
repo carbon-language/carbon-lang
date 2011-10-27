@@ -100,6 +100,9 @@ private:
   CoreEngine(const CoreEngine&); // Do not implement.
   CoreEngine& operator=(const CoreEngine&);
 
+  void enqueueStmtNode(ExplodedNode *N,
+                       const CFGBlock *Block, unsigned Idx);
+
 public:
   /// Construct a CoreEngine object to analyze the provided CFG using
   ///  a DFS exploration of the exploded graph.
@@ -163,8 +166,12 @@ public:
     return blocksAborted.end();
   }
 
-  /// Enqueue the results of the node builder onto the work list.
+  /// \brief Enqueue the given set of nodes onto the work list.
   void enqueue(ExplodedNodeSet &NB);
+
+  /// \brief Enqueue nodes that were created as a result of processing
+  /// a statement onto the work list.
+  void enqueue(ExplodedNodeSet &Set, const CFGBlock *Block, unsigned Idx);
 };
 
 // TODO: Turn into a calss.

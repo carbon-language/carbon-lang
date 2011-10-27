@@ -220,50 +220,6 @@ void ExprEngine::processCFGElement(const CFGElement E, ExplodedNode *Pred,
   currentBuilderContext = 0;
 }
 
-const Stmt *ExprEngine::getStmt() const {
-  const CFGStmt *CS = (*currentBuilderContext->getBlock())[currentStmtIdx]
-                                                            .getAs<CFGStmt>();
-  return CS ? CS->getStmt() : 0;
-}
-
-// TODO: Adding nodes to the worklist shoudl be a function inside CoreEngine.
-void ExprEngine::GenerateAutoTransition(ExplodedNode *N) {
-  assert (!N->isSink());
-  const CFGBlock *Block = currentBuilderContext->getBlock();
-  unsigned Idx = currentStmtIdx;
-
-  // Check if this node entered a callee.
-  if (isa<CallEnter>(N->getLocation())) {
-    // Still use the index of the CallExpr. It's needed to create the callee
-    // StackFrameContext.
-    Engine.WList->enqueue(N, Block, Idx);
-    return;
-  }
-
-  // Do not create extra nodes. Move to the next CFG element.
-  if (isa<PostInitializer>(N->getLocation())) {
-    Engine.WList->enqueue(N, Block, Idx+1);
-    return;
-  }
-
-  PostStmt Loc(getStmt(), N->getLocationContext());
-
-  if (Loc == N->getLocation()) {
-    // Note: 'N' should be a fresh node because otherwise it shouldn't be
-    // a member of Deferred.
-    Engine.WList->enqueue(N, Block, Idx+1);
-    return;
-  }
-
-  bool IsNew;
-  ExplodedNode *Succ = Engine.G->getNode(Loc, N->getState(), &IsNew);
-  Succ->addPredecessor(N, *Engine.G);
-
-  if (IsNew)
-    Engine.WList->enqueue(Succ, Block, Idx+1);
-}
-
-
 void ExprEngine::ProcessStmt(const CFGStmt S,
                              ExplodedNode *Pred) {
   // TODO: Use RAII to remove the unnecessary, tagged nodes.
@@ -346,19 +302,16 @@ void ExprEngine::ProcessStmt(const CFGStmt S,
     }
   }
 
-  ExplodedNodeSet AllDst;
+  ExplodedNodeSet Dst;
   for (ExplodedNodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {
-    ExplodedNodeSet Dst;
+    ExplodedNodeSet DstI;
     // Visit the statement.
-    Visit(currentStmt, *I, Dst);
-    AllDst.insert(Dst);
+    Visit(currentStmt, *I, DstI);
+    Dst.insert(DstI);
   }
 
-  for (ExplodedNodeSet::iterator I = AllDst.begin(),
-                                 E = AllDst.end(); I != E; ++I) {
-    assert(!(*I)->isSink());
-      GenerateAutoTransition(*I);
-  }
+  // Enqueue the new nodes onto the work list.
+  Engine.enqueue(Dst, currentBuilderContext->getBlock(), currentStmtIdx);
 
   // NULL out these variables to cleanup.
   CleanedState = NULL;
@@ -418,10 +371,9 @@ void ExprEngine::ProcessInitializer(const CFGInitializer Init,
 
     VisitCXXConstructExpr(ctorExpr, baseReg, Pred, Dst);
   }
-  for (ExplodedNodeSet::iterator I = Dst.begin(),
-                                 E = Dst.end(); I != E; ++I) {
-      GenerateAutoTransition(*I);
-  }
+
+  // Enqueue the new nodes onto the work list.
+  Engine.enqueue(Dst, currentBuilderContext->getBlock(), currentStmtIdx);
 }
 
 void ExprEngine::ProcessImplicitDtor(const CFGImplicitDtor D,
@@ -444,10 +396,8 @@ void ExprEngine::ProcessImplicitDtor(const CFGImplicitDtor D,
     llvm_unreachable("Unexpected dtor kind.");
   }
 
-  for (ExplodedNodeSet::iterator I = Dst.begin(),
-                                 E = Dst.end(); I != E; ++I) {
-      GenerateAutoTransition(*I);
-  }
+  // Enqueue the new nodes onto the work list.
+  Engine.enqueue(Dst, currentBuilderContext->getBlock(), currentStmtIdx);
 }
 
 void ExprEngine::ProcessAutomaticObjDtor(const CFGAutomaticObjDtor Dtor,
