@@ -23,9 +23,11 @@
 #include "llvm/ADT/Triple.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDisassembler.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstPrinter.h"
+#include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
@@ -159,8 +161,30 @@ static bool RelocAddressLess(RelocationRef a, RelocationRef b) {
   return a_addr < b_addr;
 }
 
+// OperandInfoCallback - Callback from the MCDisassembler to perform
+// relocation resolution for operands while disassembling.
+int OperandInfoCallback(void *ObjectFile, uint64_t PC, uint64_t Offset,
+                            uint64_t Size, int TagType, void *TagBuf) {
+  LLVMOpInfo1 *OpInfo = static_cast<LLVMOpInfo1*>(TagBuf);
+  OpInfo->AddSymbol.Present = 0;
+  OpInfo->SubtractSymbol.Present = 0;
+  OpInfo->VariantKind = LLVMDisassembler_VariantKind_None;
+
+  return 0;
+}
+
+// SymbolLookupCallback - Callback from the MCDisassembler to convert
+// offsets to symbolic references while disassembling.
+const char* SymbolLookupCallback(void *ObjectFile, uint64_t ReferenceValue,
+                          uint64_t *ReferenceType, uint64_t PC,
+                          const char **ReferenceName) {
+  *ReferenceType = LLVMDisassembler_ReferenceType_InOut_None;
+  return 0;
+}
+
 static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
   const Target *TheTarget = GetTarget(Obj);
+
   if (!TheTarget) {
     // GetTarget prints out stuff.
     return;
@@ -227,6 +251,14 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
       return;
     }
 
+    OwningPtr<const MCRegisterInfo>
+       RegInfo(TheTarget->createMCRegInfo(TripleName));
+
+    if (!RegInfo) {
+      errs() << "error: no register info for target " << TripleName << "\n";
+      return;
+    }
+
     OwningPtr<const MCSubtargetInfo> STI(
       TheTarget->createMCSubtargetInfo(TripleName, "", ""));
 
@@ -235,12 +267,19 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
       return;
     }
 
-    OwningPtr<const MCDisassembler> DisAsm(
+    MCContext Context(*AsmInfo, *RegInfo, 0);
+    OwningPtr<MCDisassembler> DisAsm(
       TheTarget->createMCDisassembler(*STI));
     if (!DisAsm) {
       errs() << "error: no disassembler for target " << TripleName << "\n";
       return;
     }
+
+    // Setup the disassembler for symbolic decoding.
+    DisAsm->setupForSymbolicDisassembly(OperandInfoCallback,
+                                        SymbolLookupCallback,
+                                        const_cast<ObjectFile*>(Obj),
+                                        &Context);
 
     int AsmPrinterVariant = AsmInfo->getAssemblerDialect();
     OwningPtr<MCInstPrinter> IP(TheTarget->createMCInstPrinter(
@@ -289,7 +328,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
 
         if (DisAsm->getInstruction(Inst, Size, memoryObject, Index,
                                    DebugOut, nulls())) {
-          outs() << format("%8llx:\t", SectionAddr + Index);
+          outs() << format("%8x:\t", SectionAddr + Index);
           DumpBytes(StringRef(Bytes.data() + Index, Size));
           IP->printInst(&Inst, outs(), "");
           outs() << "\n";
@@ -316,7 +355,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
           if (error(rel_cur->getTypeName(name))) goto skip_print_rel;
           if (error(rel_cur->getValueString(val))) goto skip_print_rel;
 
-          outs() << format("\t\t\t%8llx: ", SectionAddr + addr) << name << "\t"
+          outs() << format("\t\t\t%8x: ", SectionAddr + addr) << name << "\t"
                  << val << "\n";
 
         skip_print_rel:
@@ -400,7 +439,7 @@ static void PrintSectionContents(const ObjectFile *o) {
 
     // Dump out the content as hex and printable ascii characters.
     for (std::size_t addr = 0, end = Contents.size(); addr < end; addr += 16) {
-      outs() << format(" %04llx ", BaseAddr + addr);
+      outs() << format(" %04x ", BaseAddr + addr);
       // Dump line of hex.
       for (std::size_t i = 0; i < 16; ++i) {
         if (i != 0 && i % 4 == 0)
@@ -506,7 +545,7 @@ static void PrintSymbolTable(const ObjectFile *o) {
       else if (Type == SymbolRef::ST_Function)
         FileFunc = 'F';
 
-      outs() << format("%08llx", Offset) << " "
+      outs() << format("%08x", Offset) << " "
              << GlobLoc // Local -> 'l', Global -> 'g', Neither -> ' '
              << (Weak ? 'w' : ' ') // Weak?
              << ' ' // Constructor. Not supported yet.
@@ -526,7 +565,7 @@ static void PrintSymbolTable(const ObjectFile *o) {
         outs() << SectionName;
       }
       outs() << '\t'
-             << format("%08llx ", Size)
+             << format("%08x ", Size)
              << Name
              << '\n';
     }
