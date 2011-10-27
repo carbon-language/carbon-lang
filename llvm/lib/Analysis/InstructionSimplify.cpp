@@ -758,7 +758,8 @@ static Value *SimplifyMulInst(Value *Op0, Value *Op1, const TargetData *TD,
   Value *X = 0, *Y = 0;
   if ((match(Op0, m_IDiv(m_Value(X), m_Value(Y))) && Y == Op1) || // (X / Y) * Y
       (match(Op1, m_IDiv(m_Value(X), m_Value(Y))) && Y == Op0)) { // Y * (X / Y)
-    BinaryOperator *Div = cast<BinaryOperator>(Y == Op1 ? Op0 : Op1);
+    PossiblyExactOperator *Div =
+      cast<PossiblyExactOperator>(Y == Op1 ? Op0 : Op1);
     if (Div->isExact())
       return X;
   }
@@ -842,7 +843,7 @@ static Value *SimplifyDiv(Instruction::BinaryOps Opcode, Value *Op0, Value *Op1,
   Value *X = 0, *Y = 0;
   if (match(Op0, m_Mul(m_Value(X), m_Value(Y))) && (X == Op1 || Y == Op1)) {
     if (Y != Op1) std::swap(X, Y); // Ensure expression is (X * Y) / Y, Y = Op1
-    BinaryOperator *Mul = cast<BinaryOperator>(Op0);
+    OverflowingBinaryOperator *Mul = cast<OverflowingBinaryOperator>(Op0);
     // If the Mul knows it does not overflow, then we are good to go.
     if ((isSigned && Mul->hasNoSignedWrap()) ||
         (!isSigned && Mul->hasNoUnsignedWrap()))
