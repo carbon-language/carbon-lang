@@ -60,8 +60,7 @@ class WatchpointConditionCmdTestCase(TestBase):
         # With a condition of 'global==5'.
         self.expect("frame variable -w write -g -L global", WATCHPOINT_CREATED,
             substrs = ['Watchpoint created', 'size = 4', 'type = w',
-                       #'%s:%d' % (self.source, self.decl)])
-                       ':%d' % (self.decl)])
+                       '%s:%d' % (self.source, self.decl)])
 
         self.runCmd("watchpoint modify -c 'global==5'")
 

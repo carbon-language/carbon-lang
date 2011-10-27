@@ -60,8 +60,7 @@ class HelloWatchpointTestCase(TestBase):
         # There should be only one watchpoint hit (see main.c).
         self.expect("frame variable -w write -g -L global", WATCHPOINT_CREATED,
             substrs = ['Watchpoint created', 'size = 4', 'type = w',
-                       #'%s:%d' % (self.source, self.decl)])
-                       ':%d' % (self.decl)])
+                       '%s:%d' % (self.source, self.decl)])
 
         # Use the '-v' option to do verbose listing of the watchpoint.
         # The hit count should be 0 initially.

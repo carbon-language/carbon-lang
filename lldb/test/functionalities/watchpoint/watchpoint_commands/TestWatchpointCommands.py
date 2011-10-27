@@ -113,8 +113,7 @@ class WatchpointCommandsTestCase(TestBase):
         # There should be two watchpoint hits (see main.c).
         self.expect("frame variable -w read_write -g -L global", WATCHPOINT_CREATED,
             substrs = ['Watchpoint created', 'size = 4', 'type = rw',
-                       #'%s:%d' % (self.source, self.decl)])
-                       ':%d' % (self.decl)])
+                       '%s:%d' % (self.source, self.decl)])
 
         # Use the '-v' option to do verbose listing of the watchpoint.
         # The hit count should be 0 initially.
@@ -170,8 +169,7 @@ class WatchpointCommandsTestCase(TestBase):
         # There should be two watchpoint hits (see main.c).
         self.expect("frame variable -w read_write -g -L global", WATCHPOINT_CREATED,
             substrs = ['Watchpoint created', 'size = 4', 'type = rw',
-                       #'%s:%d' % (self.source, self.decl)])
-                       ':%d' % (self.decl)])
+                       '%s:%d' % (self.source, self.decl)])
 
         # Delete the watchpoint immediately, but set auto-confirm to true first.
         self.runCmd("settings set auto-confirm true")
@@ -213,8 +211,7 @@ class WatchpointCommandsTestCase(TestBase):
         # There should be two watchpoint hits (see main.c).
         self.expect("frame variable -w read_write -g -L global", WATCHPOINT_CREATED,
             substrs = ['Watchpoint created', 'size = 4', 'type = rw',
-                       #'%s:%d' % (self.source, self.decl)])
-                       ':%d' % (self.decl)])
+                       '%s:%d' % (self.source, self.decl)])
 
         # Set the ignore count of the watchpoint immediately.
         self.expect("watchpoint ignore -i 2",
@@ -260,8 +257,7 @@ class WatchpointCommandsTestCase(TestBase):
         # There should be two watchpoint hits (see main.c).
         self.expect("frame variable -w read_write -g -L global", WATCHPOINT_CREATED,
             substrs = ['Watchpoint created', 'size = 4', 'type = rw',
-                       #'%s:%d' % (self.source, self.decl)])
-                       ':%d' % (self.decl)])
+                       '%s:%d' % (self.source, self.decl)])
 
         # Use the '-v' option to do verbose listing of the watchpoint.
         # The hit count should be 0 initially.
@@ -320,8 +316,7 @@ class WatchpointCommandsTestCase(TestBase):
         # There should be two watchpoint hits (see main.c).
         self.expect("frame variable -w read_write -g -L global", WATCHPOINT_CREATED,
             substrs = ['Watchpoint created', 'size = 4', 'type = rw',
-                       #'%s:%d' % (self.source, self.decl)])
-                       ':%d' % (self.decl)])
+                       '%s:%d' % (self.source, self.decl)])
 
         # Immediately, we disable the watchpoint.  We won't be stopping due to a
         # watchpoint after this.
