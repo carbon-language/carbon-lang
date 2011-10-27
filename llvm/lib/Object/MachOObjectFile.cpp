@@ -675,10 +675,11 @@ error_code MachOObjectFile::getRelocationTypeName(DataRefImpl Rel,
         "GENERIC_RELOC_VANILLA",
         "GENERIC_RELOC_PAIR",
         "GENERIC_RELOC_SECTDIFF",
+        "GENERIC_RELOC_PB_LA_PTR",
         "GENERIC_RELOC_LOCAL_SECTDIFF",
-        "GENERIC_RELOC_PB_LA_PTR" };
+        "GENERIC_RELOC_TLV" };
 
-      if (r_type > 4)
+      if (r_type > 6)
         res = "Unknown";
       else
         res = Table[r_type];
@@ -859,6 +860,12 @@ error_code MachOObjectFile::getRelocationValueString(DataRefImpl Rel,
   else
     Type = (RE->Word1 >> 28) & 0xF;
 
+  bool isPCRel;
+  if (isScattered)
+    isPCRel = ((RE->Word0 >> 30) & 1);
+  else
+    isPCRel = ((RE->Word1 >> 24) & 1);
+
   // Determine any addends that should be displayed with the relocation.
   // These require decoding the relocation type, which is triple-specific.
 
@@ -894,6 +901,11 @@ error_code MachOObjectFile::getRelocationValueString(DataRefImpl Rel,
         fmt << "-";
         printRelocationTargetName(RE, fmt);
       }
+      case macho::RIT_X86_64_TLV:
+        printRelocationTargetName(RE, fmt);
+        fmt << "@TLV";
+        if (isPCRel) fmt << "P";
+        break;
       case macho::RIT_X86_64_Signed1: // X86_64_RELOC_SIGNED1
         printRelocationTargetName(RE, fmt);
         fmt << "-1";
@@ -916,8 +928,7 @@ error_code MachOObjectFile::getRelocationValueString(DataRefImpl Rel,
     switch (Type) {
       case macho::RIT_Pair: // GENERIC_RELOC_PAIR - prints no info
         return object_error::success;
-      case macho::RIT_Difference:                // GENERIC_RELOC_SECTDIFF
-      case macho::RIT_Generic_LocalDifference: { // GENERIC_RELOC_LOCAL_SECTDIFF
+      case macho::RIT_Difference: { // GENERIC_RELOC_SECTDIFF
         InMemoryStruct<macho::RelocationEntry> RENext;
         DataRefImpl RelNext = Rel;
         RelNext.d.a++;
@@ -934,8 +945,7 @@ error_code MachOObjectFile::getRelocationValueString(DataRefImpl Rel,
           RType = (RENext->Word1 >> 28) & 0xF;
         if (RType != 1)
           report_fatal_error("Expected GENERIC_RELOC_PAIR after "
-                             "GENERIC_RELOC_SECTDIFF or "
-                             "GENERIC_RELOC_LOCAL_SECTDIFF.");
+                             "GENERIC_RELOC_SECTDIFF.");
 
         printRelocationTargetName(RE, fmt);
         fmt << "-";
@@ -947,7 +957,40 @@ error_code MachOObjectFile::getRelocationValueString(DataRefImpl Rel,
     if (Arch == Triple::x86) {
       // All X86 relocations that need special printing were already
       // handled in the generic code.
-      printRelocationTargetName(RE, fmt);
+      switch (Type) {
+        case macho::RIT_Generic_LocalDifference:{// GENERIC_RELOC_LOCAL_SECTDIFF
+          InMemoryStruct<macho::RelocationEntry> RENext;
+          DataRefImpl RelNext = Rel;
+          RelNext.d.a++;
+          getRelocation(RelNext, RENext);
+
+          // X86 sect diff's must be followed by a relocation of type
+          // GENERIC_RELOC_PAIR.
+          bool isNextScattered = (Arch != Triple::x86_64) &&
+                               (RENext->Word0 & macho::RF_Scattered);
+          unsigned RType;
+          if (isNextScattered)
+            RType = (RENext->Word0 >> 24) & 0xF;
+          else
+            RType = (RENext->Word1 >> 28) & 0xF;
+          if (RType != 1)
+            report_fatal_error("Expected GENERIC_RELOC_PAIR after "
+                               "GENERIC_RELOC_LOCAL_SECTDIFF.");
+
+          printRelocationTargetName(RE, fmt);
+          fmt << "-";
+          printRelocationTargetName(RENext, fmt);
+          break;
+        }
+        case macho::RIT_Generic_TLV: {
+          printRelocationTargetName(RE, fmt);
+          fmt << "@TLV";
+          if (isPCRel) fmt << "P";
+          break;
+        }
+        default:
+          printRelocationTargetName(RE, fmt);
+      }
     } else { // ARM-specific relocations
       switch (Type) {
         case macho::RIT_ARM_Half:             // ARM_RELOC_HALF
