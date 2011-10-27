@@ -1,4 +1,5 @@
 import time
+#import numpy
 from lldbtest import *
 
 class Stopwatch(object):
@@ -48,6 +49,7 @@ class Stopwatch(object):
         self.__start__ = None
         self.__stop__ = None
         self.__elapsed__ = 0.0
+        self.__nums__ = []
 
     def __init__(self):
         self.reset()
@@ -66,6 +68,7 @@ class Stopwatch(object):
             elapsed = self.__stop__ - self.__start__
             self.__total_elapsed__ += elapsed
             self.__laps__ += 1
+            self.__nums__.append(elapsed)
             self.__start__ = None # Reset __start__ to be None again.
         else:
             raise Exception("stop() called without first start()?")
@@ -78,10 +81,18 @@ class Stopwatch(object):
         """Equal to total elapsed time divided by the number of laps."""
         return self.__total_elapsed__ / self.__laps__
 
+    #def sigma(self):
+    #    """Return the standard deviation of the available samples."""
+    #    if self.__laps__ <= 0:
+    #        return None
+    #    return numpy.std(self.__nums__)
+
     def __str__(self):
-        return "Avg: %f (Laps: %d, Total Elapsed Time: %f)" % (self.avg(),
-                                                               self.__laps__,
-                                                               self.__total_elapsed__)
+        return "Avg: %f (Laps: %d, Total Elapsed Time: %f, min=%f, max=%f)" % (self.avg(),
+                                                                               self.__laps__,
+                                                                               self.__total_elapsed__,
+                                                                               min(self.__nums__),
+                                                                               max(self.__nums__))
 
 class BenchBase(TestBase):
     """
