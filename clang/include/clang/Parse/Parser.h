@@ -607,11 +607,11 @@ private:
     explicit ObjCDeclContextSwitch(Parser &p) : P(p), 
                DC(p.getObjCDeclContext()) {
       if (DC)
-        P.Actions.ActOnObjCTemporaryExitContainerContext();
+        P.Actions.ActOnObjCTemporaryExitContainerContext(cast<DeclContext>(DC));
     }
     ~ObjCDeclContextSwitch() {
       if (DC)
-        P.Actions.ActOnObjCReenterContainerContext();
+        P.Actions.ActOnObjCReenterContainerContext(cast<DeclContext>(DC));
     }
   };
 

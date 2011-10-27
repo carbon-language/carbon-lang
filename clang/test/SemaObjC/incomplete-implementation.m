@@ -24,4 +24,17 @@
 - Meth {return 0;} // expected-warning {{category is implementing a method which will also be implemented by its primary class}}
 @end
 
+@interface Q
+@end
+
+// rdar://10336158
+@implementation Q
+
+__attribute__((visibility("default")))
+@interface QN 
+{
+}
+@end
+
+@end
 

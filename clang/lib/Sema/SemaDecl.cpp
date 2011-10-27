@@ -8287,13 +8287,13 @@ void Sema::ActOnObjCContainerFinishDefinition() {
   PopDeclContext();
 }
 
-void Sema::ActOnObjCTemporaryExitContainerContext() {
+void Sema::ActOnObjCTemporaryExitContainerContext(DeclContext *DC) {
   OriginalLexicalContext = CurContext;
   ActOnObjCContainerFinishDefinition();
 }
 
-void Sema::ActOnObjCReenterContainerContext() {
-  ActOnObjCContainerStartDefinition(cast<Decl>(OriginalLexicalContext));
+void Sema::ActOnObjCReenterContainerContext(DeclContext *DC) {
+  ActOnObjCContainerStartDefinition(cast<Decl>(DC));
   OriginalLexicalContext = 0;
 }
 
