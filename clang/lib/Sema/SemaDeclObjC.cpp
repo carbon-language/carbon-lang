@@ -2142,7 +2142,7 @@ void Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd,
   if (!isInterfaceDeclKind && AtEnd.isInvalid()) {
     // FIXME: This is wrong.  We shouldn't be pretending that there is
     //  an '@end' in the declaration.
-    SourceLocation L = ClassDecl->getLocation();
+    SourceLocation L = OCD->getAtStartLoc();
     AtEnd.setBegin(L);
     AtEnd.setEnd(L);
     Diag(L, diag::err_missing_atend);
