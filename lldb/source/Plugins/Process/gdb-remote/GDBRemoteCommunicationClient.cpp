@@ -290,6 +290,16 @@ GDBRemoteCommunicationClient::SendPacketAndWaitForResponse
                     // Make sure we wait until the continue packet has been sent again...
                     if (m_private_is_running.WaitForValueEqualTo (true, &timeout_time, &timed_out))
                     {
+                        if (log)
+                        {
+                            if (timed_out) 
+                                log->Printf ("async: timed out waiting for process to resume, but process was resumed");
+                            else
+                                log->Printf ("async: async packet sent");
+                        }
+                    }
+                    else
+                    {
                         if (log) 
                             log->Printf ("async: timed out waiting for process to resume");
                     }
@@ -379,7 +389,7 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
             if (SendPacket(continue_packet.c_str(), continue_packet.size()) == 0)
                 state = eStateInvalid;
         
-            m_private_is_running.SetValue (true, eBroadcastNever);
+            m_private_is_running.SetValue (true, eBroadcastAlways);
         }
         
         got_stdout = false;
