@@ -3,7 +3,7 @@
 // RUN:   -remap-file="%s;%S/Inputs/crash-recovery-reparse-remap.c" \
 // RUN:   %s 2> %t.err
 // RUN: FileCheck < %t.err -check-prefix=CHECK-REPARSE-SOURCE-CRASH %s
-// RUN: rm %t-preamble.pch
+// RUN: test ! -e $t-preamble.pch
 // CHECK-REPARSE-SOURCE-CRASH: Unable to reparse translation unit
 //
 // REQUIRES: crash-recovery

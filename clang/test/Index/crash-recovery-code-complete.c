@@ -3,7 +3,7 @@
 // RUN:   "-remap-file=%s;%S/Inputs/crash-recovery-code-complete-remap.c" \
 // RUN:   %s 2> %t.err
 // RUN: FileCheck < %t.err -check-prefix=CHECK-CODE-COMPLETE-CRASH %s
-// RUN: rm %t-preamble.pch
+// RUN: test ! -e %t-preamble.pch
 // CHECK-CODE-COMPLETE-CRASH: Unable to perform code completion!
 //
 // REQUIRES: crash-recovery

@@ -147,10 +147,6 @@ private:
   /// the next.
   unsigned NumStoredDiagnosticsFromDriver;
   
-  /// \brief Temporary files that should be removed when the ASTUnit is 
-  /// destroyed.
-  SmallVector<llvm::sys::Path, 4> TemporaryFiles;
-  
   /// \brief Counter that determines when we want to try building a
   /// precompiled preamble.
   ///
@@ -161,10 +157,7 @@ private:
   /// building the precompiled preamble fails, we won't try again for
   /// some number of calls.
   unsigned PreambleRebuildCounter;
-  
-  /// \brief The file in which the precompiled preamble is stored.
-  std::string PreambleFile;
-  
+
 public:
   class PreambleData {
     const FileEntry *File;
@@ -468,9 +461,7 @@ public:
   /// \brief Add a temporary file that the ASTUnit depends on.
   ///
   /// This file will be erased when the ASTUnit is destroyed.
-  void addTemporaryFile(const llvm::sys::Path &TempFile) {
-    TemporaryFiles.push_back(TempFile);
-  }
+  void addTemporaryFile(const llvm::sys::Path &TempFile);
                         
   bool getOnlyLocalDecls() const { return OnlyLocalDecls; }
 
