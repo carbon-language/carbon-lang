@@ -3001,6 +3001,16 @@ CanQualType ASTContext::getSizeType() const {
   return getFromTargetType(Target->getSizeType());
 }
 
+/// getIntMaxType - Return the unique type for "intmax_t" (C99 7.18.1.5).
+CanQualType ASTContext::getIntMaxType() const {
+  return getFromTargetType(Target->getIntMaxType());
+}
+
+/// getUIntMaxType - Return the unique type for "uintmax_t" (C99 7.18.1.5).
+CanQualType ASTContext::getUIntMaxType() const {
+  return getFromTargetType(Target->getUIntMaxType());
+}
+
 /// getSignedWCharType - Return the type of "signed wchar_t".
 /// Used when in C++, as a GCC extension.
 QualType ASTContext::getSignedWCharType() const {
@@ -3015,7 +3025,7 @@ QualType ASTContext::getUnsignedWCharType() const {
   return UnsignedIntTy;
 }
 
-/// getPointerDiffType - Return the unique type for "ptrdiff_t" (ref?)
+/// getPointerDiffType - Return the unique type for "ptrdiff_t" (C99 7.17)
 /// defined in <stddef.h>. Pointer - pointer requires this (C99 6.5.6p9).
 QualType ASTContext::getPointerDiffType() const {
   return getFromTargetType(Target->getPtrDiffType(0));

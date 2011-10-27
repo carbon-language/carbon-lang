@@ -835,6 +835,14 @@ public:
   /// in <stddef.h>. The sizeof operator requires this (C99 6.5.3.4p4).
   CanQualType getSizeType() const;
 
+  /// getIntMaxType - Return the unique type for "intmax_t" (C99 7.18.1.5),
+  /// defined in <stdint.h>.
+  CanQualType getIntMaxType() const;
+
+  /// getUIntMaxType - Return the unique type for "uintmax_t" (C99 7.18.1.5),
+  /// defined in <stdint.h>.
+  CanQualType getUIntMaxType() const;
+
   /// getWCharType - In C++, this returns the unique wchar_t type.  In C99, this
   /// returns a type compatible with the type defined in <stddef.h> as defined
   /// by the target.
@@ -848,7 +856,7 @@ public:
   /// Used when in C++, as a GCC extension.
   QualType getUnsignedWCharType() const;
 
-  /// getPointerDiffType - Return the unique type for "ptrdiff_t" (ref?)
+  /// getPointerDiffType - Return the unique type for "ptrdiff_t" (C99 7.17)
   /// defined in <stddef.h>. Pointer - pointer requires this (C99 6.5.6p9).
   QualType getPointerDiffType() const;
 

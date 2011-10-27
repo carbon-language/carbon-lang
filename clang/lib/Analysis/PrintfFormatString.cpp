@@ -301,10 +301,10 @@ ArgTypeResult PrintfSpecifier::getArgType(ASTContext &Ctx) const {
       case LengthModifier::AsShort: return Ctx.ShortTy;
       case LengthModifier::AsLong: return Ctx.LongTy;
       case LengthModifier::AsLongLong: return Ctx.LongLongTy;
-      case LengthModifier::AsIntMax:
-        // FIXME: Return unknown for now.
+      case LengthModifier::AsIntMax: return Ctx.getIntMaxType();
+      case LengthModifier::AsSizeT:
+        // FIXME: How to get the corresponding signed version of size_t?
         return ArgTypeResult();
-      case LengthModifier::AsSizeT: return Ctx.getSizeType();
       case LengthModifier::AsPtrDiff: return Ctx.getPointerDiffType();
     }
 
@@ -317,13 +317,9 @@ ArgTypeResult PrintfSpecifier::getArgType(ASTContext &Ctx) const {
       case LengthModifier::AsShort: return Ctx.UnsignedShortTy;
       case LengthModifier::AsLong: return Ctx.UnsignedLongTy;
       case LengthModifier::AsLongLong: return Ctx.UnsignedLongLongTy;
-      case LengthModifier::AsIntMax:
-        // FIXME: Return unknown for now.
-        return ArgTypeResult();
+      case LengthModifier::AsIntMax: return Ctx.getUIntMaxType();
       case LengthModifier::AsSizeT:
-        // FIXME: How to get the corresponding unsigned
-        // version of size_t?
-        return ArgTypeResult();
+        return Ctx.getSizeType();
       case LengthModifier::AsPtrDiff:
         // FIXME: How to get the corresponding unsigned
         // version of ptrdiff_t?
