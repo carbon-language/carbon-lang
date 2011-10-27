@@ -1151,6 +1151,12 @@ bool ARMFastISel::SelectBranch(const Instruction *I) {
       FuncInfo.MBB->addSuccessor(TBB);
       return true;
     }
+  } else if (const ConstantInt *CI =
+             dyn_cast<ConstantInt>(BI->getCondition())) {
+    uint64_t Imm = CI->getZExtValue();
+    MachineBasicBlock *Target = (Imm == 0) ? FBB : TBB;
+    FastEmitBranch(Target, DL);
+    return true;
   }
 
   unsigned CmpReg = getRegForValue(BI->getCondition());
