@@ -2548,7 +2548,7 @@ __independent_bits_engine<_Engine, _UIntType>::__eval(true_type)
         {
             __u = __e_() - _Engine::min();
         } while (__u >= __y0_);
-        if (__w0_ < _EDt)
+        if (__w0_ < _WDt)
             _S <<= __w0_;
         else
             _S = 0;
@@ -2561,7 +2561,7 @@ __independent_bits_engine<_Engine, _UIntType>::__eval(true_type)
         {
             __u = __e_() - _Engine::min();
         } while (__u >= __y1_);
-        if (__w0_ < _EDt - 1)
+        if (__w0_ < _WDt - 1)
             _S <<= __w0_ + 1;
         else
             _S = 0;
