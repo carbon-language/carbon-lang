@@ -2646,15 +2646,17 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
     
     static ConstString id_name("id");
     
-    if (name != id_name)
+    do 
     {
         TypeList types;
         SymbolContext null_sc;
         
         if (module_sp && namespace_decl)
             module_sp->FindTypes(null_sc, name, &namespace_decl, true, 1, types);
-        else
+        else if(name != id_name)
             target->GetImages().FindTypes (null_sc, name, true, 1, types);
+        else
+            break;
         
         if (types.GetSize())
         {
@@ -2675,7 +2677,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                 
             AddOneType(context, user_type, current_id, false);
         }
-    }
+    } while(0);
 }
 
 clang::ExternalLoadResult
