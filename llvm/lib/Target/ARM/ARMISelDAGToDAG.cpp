@@ -1562,6 +1562,10 @@ static unsigned getVLDSTRegisterUpdateOpcode(unsigned Opc) {
   case ARM::VLD1q16wb_fixed: return ARM::VLD1q16wb_register;
   case ARM::VLD1q32wb_fixed: return ARM::VLD1q32wb_register;
   case ARM::VLD1q64wb_fixed: return ARM::VLD1q64wb_register;
+  case ARM::VLD1q8PseudoWB_fixed: return ARM::VLD1q8PseudoWB_register;
+  case ARM::VLD1q16PseudoWB_fixed: return ARM::VLD1q16PseudoWB_register;
+  case ARM::VLD1q32PseudoWB_fixed: return ARM::VLD1q32PseudoWB_register;
+  case ARM::VLD1q64PseudoWB_fixed: return ARM::VLD1q64PseudoWB_register;
   }
   return Opc; // If not one we handle, return it unchanged.
 }
