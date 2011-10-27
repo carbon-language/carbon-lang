@@ -169,7 +169,7 @@ public:
     else
       L2DwarfRegs[LLVMReg] = DwarfReg;
   }
-    
+
   /// mapDwarfRegToLLVMReg - Used to initialize Dwarf register to LLVM
   /// register number mapping. Called by TableGen auto-generated routines.
   /// *DO NOT USE*.
@@ -179,7 +179,7 @@ public:
     else
       Dwarf2LRegs[DwarfReg] = LLVMReg;
   }
-     
+
   /// mapLLVMRegToSEHReg - Used to initialize LLVM register to SEH register
   /// number mapping. By default the SEH register number is just the same
   /// as the LLVM register number.
@@ -301,7 +301,7 @@ public:
     return Classes[i];
   }
 };
- 
+
 } // End llvm namespace
 
 #endif
