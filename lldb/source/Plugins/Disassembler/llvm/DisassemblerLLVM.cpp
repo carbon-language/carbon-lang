@@ -80,12 +80,18 @@ InstructionLLVM::InstructionLLVM (const Address &addr,
                                   llvm::Triple::ArchType arch_type) :
     Instruction (addr, addr_class),
     m_disassembler (disassembler),
-    m_arch_type (arch_type)
+    m_arch_type (arch_type),
+    m_inst (NULL)
 {
 }
 
 InstructionLLVM::~InstructionLLVM()
 {
+    if (m_inst)
+    {
+        EDReleaseInst(m_inst);
+        m_inst = NULL;
+    }
 }
 
 static void
