@@ -32,6 +32,7 @@ extern "C" {
 typedef struct LLVMOpaqueObjectFile *LLVMObjectFileRef;
 typedef struct LLVMOpaqueSectionIterator *LLVMSectionIteratorRef;
 typedef struct LLVMOpaqueSymbolIterator *LLVMSymbolIteratorRef;
+typedef struct LLVMOpaqueRelocationIterator *LLVMRelocationIteratorRef;
 
 // ObjectFile creation
 LLVMObjectFileRef LLVMCreateObjectFile(LLVMMemoryBufferRef MemBuf);
@@ -60,6 +61,14 @@ const char *LLVMGetSectionContents(LLVMSectionIteratorRef SI);
 uint64_t LLVMGetSectionAddress(LLVMSectionIteratorRef SI);
 LLVMBool LLVMGetSectionContainsSymbol(LLVMSectionIteratorRef SI,
                                  LLVMSymbolIteratorRef Sym);
+
+// Section Relocation iterators
+LLVMRelocationIteratorRef LLVMGetRelocations(LLVMSectionIteratorRef Section);
+void LLVMDisposeRelocationIterator(LLVMRelocationIteratorRef RI);
+LLVMBool LLVMIsRelocationIteratorAtEnd(LLVMSectionIteratorRef Section,
+                                       LLVMRelocationIteratorRef RI);
+void LLVMMoveToNextRelocation(LLVMRelocationIteratorRef RI);
+
 
 // SymbolRef accessors
 const char *LLVMGetSymbolName(LLVMSymbolIteratorRef SI);
@@ -99,6 +108,17 @@ namespace llvm {
       return reinterpret_cast<LLVMSymbolIteratorRef>
         (const_cast<symbol_iterator*>(SI));
     }
+
+    inline relocation_iterator *unwrap(LLVMRelocationIteratorRef SI) {
+      return reinterpret_cast<relocation_iterator*>(SI);
+    }
+
+    inline LLVMRelocationIteratorRef
+    wrap(const relocation_iterator *SI) {
+      return reinterpret_cast<LLVMRelocationIteratorRef>
+        (const_cast<relocation_iterator*>(SI));
+    }
+
   }
 }
 

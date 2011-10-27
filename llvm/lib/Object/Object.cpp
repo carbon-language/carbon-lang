@@ -112,6 +112,29 @@ LLVMBool LLVMGetSectionContainsSymbol(LLVMSectionIteratorRef SI,
   return ret;
 }
 
+// Section Relocation iterators
+LLVMRelocationIteratorRef LLVMGetRelocations(LLVMSectionIteratorRef Section) {
+  relocation_iterator SI = (*unwrap(Section))->begin_relocations();
+  return wrap(new relocation_iterator(SI));
+}
+
+void LLVMDisposeRelocationIterator(LLVMRelocationIteratorRef SI) {
+  delete unwrap(SI);
+}
+
+LLVMBool LLVMIsRelocationIteratorAtEnd(LLVMSectionIteratorRef Section,
+                                       LLVMRelocationIteratorRef SI) {
+  return (*unwrap(SI) == (*unwrap(Section))->end_relocations()) ? 1 : 0;
+}
+
+void LLVMMoveToNextRelocation(LLVMRelocationIteratorRef SI) {
+  error_code ec;
+  unwrap(SI)->increment(ec);
+  if (ec) report_fatal_error("LLVMMoveToNextRelocation failed: " +
+                             ec.message());
+}
+
+
 // SymbolRef accessors
 const char *LLVMGetSymbolName(LLVMSymbolIteratorRef SI) {
   StringRef ret;
