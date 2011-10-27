@@ -2642,34 +2642,39 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                 }
             }
         }
-    }    
+    }
     
-    TypeList types;
-    SymbolContext null_sc;
+    static ConstString id_name("id");
     
-    if (module_sp && namespace_decl)
-        module_sp->FindTypes(null_sc, name, &namespace_decl, true, 1, types);
-    else
-        target->GetImages().FindTypes (null_sc, name, true, 1, types);
-    
-    if (types.GetSize())
+    if (name != id_name)
     {
-        TypeSP type_sp = types.GetTypeAtIndex(0);
+        TypeList types;
+        SymbolContext null_sc;
         
-        if (log)
+        if (module_sp && namespace_decl)
+            module_sp->FindTypes(null_sc, name, &namespace_decl, true, 1, types);
+        else
+            target->GetImages().FindTypes (null_sc, name, true, 1, types);
+        
+        if (types.GetSize())
         {
-            const char *name_string = type_sp->GetName().GetCString();
+            TypeSP type_sp = types.GetTypeAtIndex(0);
             
-            log->Printf("  FEVD[%u] Matching type found for \"%s\": %s", 
-                        current_id, 
-                        name.GetCString(), 
-                        (name_string ? name_string : "<anonymous>"));
-        }
+            if (log)
+            {
+                const char *name_string = type_sp->GetName().GetCString();
+                
+                log->Printf("  FEVD[%u] Matching type found for \"%s\": %s", 
+                            current_id, 
+                            name.GetCString(), 
+                            (name_string ? name_string : "<anonymous>"));
+            }
 
-        TypeFromUser user_type(type_sp->GetClangFullType(),
-                               type_sp->GetClangAST());
-            
-        AddOneType(context, user_type, current_id, false);
+            TypeFromUser user_type(type_sp->GetClangFullType(),
+                                   type_sp->GetClangAST());
+                
+            AddOneType(context, user_type, current_id, false);
+        }
     }
 }
 
