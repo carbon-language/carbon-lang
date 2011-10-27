@@ -1680,11 +1680,12 @@ void IndVarSimplify::SinkUnusedInvariants(Loop *L) {
     if (isa<LandingPadInst>(I))
       continue;
 
-    // Don't sink static AllocaInsts out of the entry block, which would
-    // turn them into dynamic allocas!
-    if (AllocaInst *AI = dyn_cast<AllocaInst>(I))
-      if (AI->isStaticAlloca())
-        continue;
+    // Don't sink alloca: we never want to sink static alloca's out of the
+    // entry block, and correctly sinking dynamic alloca's requires
+    // checks for stacksave/stackrestore intrinsics.
+    // FIXME: Refactor this check somehow?
+    if (isa<AllocaInst>(I))
+      continue;
 
     // Determine if there is a use in or before the loop (direct or
     // otherwise).
