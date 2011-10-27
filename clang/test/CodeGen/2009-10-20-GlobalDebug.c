@@ -1,9 +1,10 @@
 // REQUIRES: x86-registered-target
-// RUN: %clang -ccc-host-triple i386-apple-darwin10 -S -g -dA %s -o - | FileCheck %s
+// RUN: %clang -ccc-host-triple i386-apple-darwin10 -flto -S -g %s -o - | FileCheck %s
 int global;
-// CHECK: ascii   "localstatic"          ## DW_AT_name
-// CHECK: asciz   "global" ## External Name
 int main() { 
   static int localstatic;
   return 0;
 }
+
+// CHECK: !14 = metadata !{i32 720948, i32 0, metadata !5, metadata !"localstatic", metadata !"localstatic", metadata !"", metadata !6, i32 5, metadata !9, i32 1, i32 1, i32* @main.localstatic} ; [ DW_TAG_variable ]
+// CHECK: !15 = metadata !{i32 720948, i32 0, null, metadata !"global", metadata !"global", metadata !"", metadata !6, i32 3, metadata !9, i32 0, i32 1, i32* @global} ; [ DW_TAG_variable ]

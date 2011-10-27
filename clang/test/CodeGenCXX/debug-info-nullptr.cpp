@@ -1,8 +1,7 @@
-// RUN: %clang_cc1 -S -std=c++11 -masm-verbose -g %s -o -| FileCheck %s
-
-//CHECK: DW_TAG_unspecified_type
-//CHECK-NEXT: "nullptr_t"
+// RUN: %clang_cc1 -emit-llvm -std=c++11 -g %s -o -| FileCheck %s
 
 void foo() {
   decltype(nullptr) t = 0;
- }
+}
+
+// CHECK: !13 = metadata !{i32 720955, null, metadata !"nullptr_t", null, i32 0, i64 0, i64 0, i64 0, i32 0, i32 0} ; [ DW_TAG_unspecified_type ]
