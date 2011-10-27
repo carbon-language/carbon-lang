@@ -20,10 +20,16 @@
 				<h1 class ="postheader">Status</h1>
 				<div class="postcontent">
 
-				   <p>LLDB is in early development and supports basic debugging scenarios on
-				      Mac OS X. The public API has not been finalized, and different parts are
-				      at different levels of maturity.  We welcome any help fleshing out missing
-				      pieces and improving the code.</p>
+				   <p>LLDB has matured a lot in the last year and can be used for
+				      C, C++ and Objective C development for x86_64, i386 and ARM debugging.
+				      The entire public API is exposed though a framework on Mac OS X which
+				      is used by Xcode, the lldb command line tool, and can also be used by
+				      python. The entire public API is exposed through script bridging which
+				      allows LLDB to use an embedded python script interpreter, as well as 
+				      having a python module named "lldb" which can be used from python
+				      on the command line. This allows debug sessions to be scripted. It also
+				      allows powerful debugging actions to be created and attached to a variety
+				      of debugging workflows.</p>
 
 				   <p>What works well:</p>
 				   <ul>   
@@ -34,32 +40,16 @@
     				   <li>Symbol reading and object file introspection</li>
     				   <li>Script bridging</li>
     				   <li>Thread inspection and stepping</li>
-    				   <li>Disassembly of i386, x86-64, &amp; ARM/Thumb machine code, and
-    				       backtracing on i386 &amp; x86-64</li>
-    				   <li>The basic command line prompt system, shared library tracking,
-    				       source listings.</li>
-				   </ul>
-
-				   <p>What is still pretty new:</p>
-				   <ul>   
+    				   <li>Disassembly of i386, x86-64, &amp; ARM/Thumb machine code</li>
+    				   <li>Backtracing of i386, x86-64, &amp; ARM/Thumb machine code</li>
+    				   <li>libedit powers the command line prompt and input
+    				   <li>Objective-C 2.0 Support: Printing properties, synthetic properties,
+    				       Objective-C expressions, KVO, dynamic types, dot syntax, runtime data</li>
+    				   <li>C++ support: method access, template support, dynamic types</li>
     				   <li>The public API to the library</li>
     				   <li>Expression evaluation</li>
     				   <li>Objective-C support: stepping into/over, printing the description of
     				       an object ("po")</li>
-    				   <li>Breakpoint actions &amp; scripts</li>
-    				   <li>Attaching to existing processes</li>
-				   </ul>
-
-				   <p>What isn't there yet:</p>
-				   <ul>   
-    				   <li>Regression test suite</li>
-    				   <li>Operating system support hasn't been fully modularized yet</li>
-    				   <li><a href="http://clang.llvm.org/docs/LanguageExtensions.html#blocks">Blocks</a> support</li>
-    				   <li>Calling functions in expressions</li>
-    				   <li>Objective-C 2.0 Support: Printing properties, synthetic properties,
-    				       Objective-C expressions, KVO, dynamic types, dot syntax, runtime data</li>
-    				   <li>C++ support: Method access, handling demangled names, dynamic types</li>
-    				   <li>Exception support: Breaking by name, thrown object, thrower</li>
 				   </ul>
 				</div>
 				<div class="postfooter"></div>
