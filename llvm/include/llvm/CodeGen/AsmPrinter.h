@@ -194,6 +194,11 @@ namespace llvm {
 
     bool needsSEHMoves();
 
+    /// needsRelocationsForDwarfStringPool - Specifies whether the object format
+    /// expects to use relocations to refer to debug entries. Alternatively we
+    /// emit section offsets in bytes from the start of the string pool.
+    bool needsRelocationsForDwarfStringPool() const;
+
     /// EmitConstantPool - Print to the current output stream assembly
     /// representations of the constants in the constant pool MCP. This is
     /// used to print out constants which have been "spilled to memory" by

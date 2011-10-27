@@ -6,8 +6,8 @@ target triple = "thumbv7-apple-macosx10.6.7"
 ;CHECK: Ldebug_loc0:
 ;CHECK-NEXT:        .long   Ltmp1
 ;CHECK-NEXT:        .long   Ltmp2
-;CHECK-NEXT: Lset8 = Ltmp10-Ltmp9                    @ Loc expr size
-;CHECK-NEXT:        .short  Lset8
+;CHECK-NEXT: Lset[[N:[0-9]+]] = Ltmp10-Ltmp9        @ Loc expr size
+;CHECK-NEXT:        .short  Lset[[N]]
 ;CHECK-NEXT: Ltmp9:
 ;CHECK-NEXT:        .byte   144                     @ DW_OP_regx for S register
 

@@ -136,6 +136,10 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
 DwarfDebug::~DwarfDebug() {
 }
 
+MCSymbol *DwarfDebug::getStringPool() {
+  return Asm->GetTempSymbol("section_str");
+}
+
 MCSymbol *DwarfDebug::getStringPoolEntry(StringRef Str) {
   std::pair<MCSymbol*, unsigned> &Entry = StringPool[Str];
   if (Entry.first) return Entry.first;
@@ -467,11 +471,10 @@ CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
 
   DIE *Die = new DIE(dwarf::DW_TAG_compile_unit);
   CompileUnit *NewCU = new CompileUnit(ID, Die, Asm, this);
-  NewCU->addString(Die, dwarf::DW_AT_producer, dwarf::DW_FORM_string,
-                   DIUnit.getProducer());
+  NewCU->addString(Die, dwarf::DW_AT_producer, DIUnit.getProducer());
   NewCU->addUInt(Die, dwarf::DW_AT_language, dwarf::DW_FORM_data2,
                  DIUnit.getLanguage());
-  NewCU->addString(Die, dwarf::DW_AT_name, dwarf::DW_FORM_string, FN);
+  NewCU->addString(Die, dwarf::DW_AT_name, FN);
   // Use DW_AT_entry_pc instead of DW_AT_low_pc/DW_AT_high_pc pair. This
   // simplifies debug range entries.
   NewCU->addUInt(Die, dwarf::DW_AT_entry_pc, dwarf::DW_FORM_addr, 0);
@@ -484,14 +487,13 @@ CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
     NewCU->addUInt(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4, 0);
 
   if (!Dir.empty())
-    NewCU->addString(Die, dwarf::DW_AT_comp_dir, dwarf::DW_FORM_string, Dir);
+    NewCU->addString(Die, dwarf::DW_AT_comp_dir, Dir);
   if (DIUnit.isOptimized())
     NewCU->addUInt(Die, dwarf::DW_AT_APPLE_optimized, dwarf::DW_FORM_flag, 1);
 
   StringRef Flags = DIUnit.getFlags();
   if (!Flags.empty())
-    NewCU->addString(Die, dwarf::DW_AT_APPLE_flags, dwarf::DW_FORM_string, 
-                     Flags);
+    NewCU->addString(Die, dwarf::DW_AT_APPLE_flags, Flags);
   
   if (unsigned RVer = DIUnit.getRunTimeVersion())
     NewCU->addUInt(Die, dwarf::DW_AT_APPLE_major_runtime_vers,
@@ -1796,6 +1798,7 @@ void DwarfDebug::emitDebugStr() {
 
     // Emit the string itself.
     Asm->OutStreamer.EmitBytes(Entries[i].second->getKey(), 0/*addrspace*/);
+    Asm->OutStreamer.EmitZeros(1, 0);
   }
 }
 

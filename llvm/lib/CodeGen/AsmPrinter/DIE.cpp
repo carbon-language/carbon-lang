@@ -267,6 +267,7 @@ void DIELabel::EmitValue(AsmPrinter *AP, unsigned Form) const {
 ///
 unsigned DIELabel::SizeOf(AsmPrinter *AP, unsigned Form) const {
   if (Form == dwarf::DW_FORM_data4) return 4;
+  if (Form == dwarf::DW_FORM_strp) return 4;
   return AP->getTargetData().getPointerSize();
 }
 
@@ -290,6 +291,7 @@ void DIEDelta::EmitValue(AsmPrinter *AP, unsigned Form) const {
 ///
 unsigned DIEDelta::SizeOf(AsmPrinter *AP, unsigned Form) const {
   if (Form == dwarf::DW_FORM_data4) return 4;
+  if (Form == dwarf::DW_FORM_strp) return 4;
   return AP->getTargetData().getPointerSize();
 }
 

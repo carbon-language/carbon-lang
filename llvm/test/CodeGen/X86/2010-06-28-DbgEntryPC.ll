@@ -5,17 +5,17 @@
 ; CHECK:	.byte	17                      ## DW_TAG_compile_unit
 ; CHECK-NEXT:	.byte	1                       ## DW_CHILDREN_yes
 ; CHECK-NEXT:	.byte	37                      ## DW_AT_producer
-; CHECK-NEXT:	.byte	8                       ## DW_FORM_string
+; CHECK-NEXT:	.byte	14                      ## DW_FORM_strp
 ; CHECK-NEXT:	.byte	19                      ## DW_AT_language
 ; CHECK-NEXT:	.byte	5                       ## DW_FORM_data2
 ; CHECK-NEXT:	.byte	3                       ## DW_AT_name
-; CHECK-NEXT:	.byte	8                       ## DW_FORM_string
+; CHECK-NEXT:	.byte	14                      ## DW_FORM_strp
 ; CHECK-NEXT:	.byte	82                      ## DW_AT_entry_pc
 ; CHECK-NEXT:	.byte	1                       ## DW_FORM_addr
 ; CHECK-NEXT:	.byte	16                      ## DW_AT_stmt_list
 ; CHECK-NEXT:	.byte	6                       ## DW_FORM_data4
 ; CHECK-NEXT:	.byte	27                      ## DW_AT_comp_dir
-; CHECK-NEXT:	.byte	8                       ## DW_FORM_string
+; CHECK-NEXT:	.byte	14                      ## DW_FORM_strp
 ; CHECK-NEXT:	.byte	225                     ## DW_AT_APPLE_optimized
 
 %struct.a = type { i32, %struct.a* }

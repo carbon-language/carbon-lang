@@ -330,6 +330,10 @@ namespace llvm {
     /// use EmitLabelOffsetDifference.
     bool DwarfUsesLabelOffsetForRanges;
 
+    /// DwarfUsesRelocationsForStringPool - True if this Dwarf output must use
+    /// relocations to refer to entries in the string pool.
+    bool DwarfUsesRelocationsForStringPool;
+
     /// DwarfRegNumForCFI - True if dwarf register numbers are printed
     /// instead of symbolic register names in .cfi_* directives.
     bool DwarfRegNumForCFI;  // Defaults to false;
@@ -565,6 +569,9 @@ namespace llvm {
     }
     bool doesDwarfUsesLabelOffsetForRanges() const {
       return DwarfUsesLabelOffsetForRanges;
+    }
+    bool doesDwarfUseRelocationsForStringPool() const {
+      return DwarfUsesRelocationsForStringPool;
     }
     bool useDwarfRegNumForCFI() const {
       return DwarfRegNumForCFI;

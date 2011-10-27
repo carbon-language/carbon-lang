@@ -216,8 +216,6 @@ class DwarfDebug {
   StringMap<std::pair<MCSymbol*, unsigned> > StringPool;
   unsigned NextStringPoolNumber;
   
-  MCSymbol *getStringPoolEntry(StringRef Str);
-
   /// SectionMap - Provides a unique id per text section.
   ///
   UniqueVector<const MCSection*> SectionMap;
@@ -504,6 +502,13 @@ public:
 
   /// createSubprogramDIE - Create new DIE using SP.
   DIE *createSubprogramDIE(DISubprogram SP);
+
+  /// getStringPool - returns the entry into the start of the pool.
+  MCSymbol *getStringPool();
+
+  /// getStringPoolEntry - returns an entry into the string pool with the given
+  /// string text.
+  MCSymbol *getStringPoolEntry(StringRef Str);
 };
 } // End of namespace llvm
 

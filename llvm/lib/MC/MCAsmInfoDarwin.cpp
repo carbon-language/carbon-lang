@@ -66,4 +66,5 @@ MCAsmInfoDarwin::MCAsmInfoDarwin() {
 
   DwarfRequiresRelocationForSectionOffset = false;
   DwarfUsesLabelOffsetForRanges = false;
+  DwarfUsesRelocationsForStringPool = false;
 }
