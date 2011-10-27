@@ -110,7 +110,6 @@ public:
 
   /// \brief Generates a default transition (containing checker tag but no
   /// checker state changes).
-  // TODO: Can we remove this one? We always generate autotransitions.
   ExplodedNode *addTransition() {
     return addTransition(getState());
   }
@@ -148,6 +147,9 @@ private:
                                  ExplodedNode *P = 0,
                                  const ProgramPointTag *Tag = 0) {
     assert(State);
+    if (State == Pred->getState() && !Tag && !MarkAsSink)
+      return Pred;
+
     ExplodedNode *node = NB.generateNode(Tag ? Location.withTag(Tag) : Location,
                                         State,
                                         P ? P : Pred, MarkAsSink);
