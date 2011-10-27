@@ -355,6 +355,9 @@ public:
     static Error
     LaunchProcess (ProcessLaunchInfo &launch_info);
     
+    static lldb::TargetSP
+    GetDummyTarget (Debugger &debugger);
+    
     static bool
     OpenFileInExternalEditor (const FileSpec &file_spec, 
                               uint32_t line_no);

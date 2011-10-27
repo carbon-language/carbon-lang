@@ -10,6 +10,7 @@
 #include "lldb/Host/Host.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/ConstString.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/StreamString.h"
@@ -18,6 +19,7 @@
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Target/Process.h"
+#include "lldb/Target/TargetList.h"
 
 #include "llvm/Support/Host.h"
 #include "llvm/Support/MachO.h"
@@ -1164,6 +1166,24 @@ Host::GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &process_info)
     return false;
 }
 #endif
+
+lldb::TargetSP
+Host::GetDummyTarget (lldb_private::Debugger &debugger)
+{
+    static TargetSP dummy_target;
+    
+    if (!dummy_target)
+    {
+        Error err = debugger.GetTargetList().CreateTarget(debugger, 
+                                                          FileSpec(), 
+                                                          Host::GetTargetTriple().AsCString(), 
+                                                          false, 
+                                                          NULL, 
+                                                          dummy_target);
+    }
+    
+    return dummy_target;
+}
 
 #if !defined (__APPLE__)
 bool

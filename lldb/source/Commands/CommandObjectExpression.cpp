@@ -283,6 +283,10 @@ CommandObjectExpression::EvaluateExpression
 )
 {
     Target *target = m_exe_ctx.GetTargetPtr();
+    
+    if (!target)
+        target = Host::GetDummyTarget(m_interpreter.GetDebugger()).get();
+    
     if (target)
     {
         lldb::ValueObjectSP result_valobj_sp;
