@@ -18,7 +18,6 @@ const char *Triple::getArchTypeName(ArchType Kind) {
   case InvalidArch: return "<invalid>";
   case UnknownArch: return "unknown";
 
-  case alpha:   return "alpha";
   case arm:     return "arm";
   case cellspu: return "cellspu";
   case mips:    return "mips";
@@ -49,8 +48,6 @@ const char *Triple::getArchTypePrefix(ArchType Kind) {
   switch (Kind) {
   default:
     return 0;
-
-  case alpha:   return "alpha";
 
   case arm:
   case thumb:   return "arm";
@@ -131,8 +128,6 @@ const char *Triple::getEnvironmentTypeName(EnvironmentType Kind) {
 }
 
 Triple::ArchType Triple::getArchTypeForLLVMName(StringRef Name) {
-  if (Name == "alpha")
-    return alpha;
   if (Name == "arm")
     return arm;
   if (Name == "cellspu")
@@ -286,8 +281,6 @@ Triple::ArchType Triple::ParseArch(StringRef ArchName) {
   else if (ArchName == "thumb" ||
            ArchName.startswith("thumbv"))
     return thumb;
-  else if (ArchName.startswith("alpha"))
-    return alpha;
   else if (ArchName == "spu" || ArchName == "cellspu")
     return cellspu;
   else if (ArchName == "msp430")

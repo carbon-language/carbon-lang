@@ -43,7 +43,6 @@ public:
   enum ArchType {
     UnknownArch,
 
-    alpha,   // Alpha: alpha
     arm,     // ARM; arm, armv.*, xscale
     cellspu, // CellSPU: spu, cellspu
     mips,    // MIPS: mips, mipsallegrex

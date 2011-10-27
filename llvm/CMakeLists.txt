@@ -64,7 +64,6 @@ Please clean the source directory.")
 endif()
 
 set(LLVM_ALL_TARGETS
-  Alpha
   ARM
   CBackend
   CellSPU
