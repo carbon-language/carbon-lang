@@ -669,6 +669,7 @@ def setupSysPath():
         os.environ["LLDB_BUILD_DIR"] = os.path.split(lldbHere)[0]
         if not noHeaders:
             print "LLDB build dir:", os.environ["LLDB_BUILD_DIR"]
+            os.system('%s -v' % lldbExec)
 
     # One last chance to locate the 'lldb' executable.
     if not lldbExec:
@@ -681,9 +682,7 @@ def setupSysPath():
         print "The 'lldb' executable cannot be located.  Some of the tests may not be run as a result."
     else:
         os.environ["LLDB_EXEC"] = lldbExec
-        #print "The 'lldb' executable path is", lldbExec
-        if not noHeaders:
-            os.system('%s -v' % lldbExec)
+        #print "The 'lldb' from PATH env variable", lldbExec
     
     if os.path.isdir(os.path.join(base, '.svn')):
         pipe = subprocess.Popen(["svn", "info", base], stdout = subprocess.PIPE)
