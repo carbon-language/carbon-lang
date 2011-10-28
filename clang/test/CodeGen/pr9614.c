@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm %s -O1 -o - | FileCheck %s
 
 extern void foo_alias (void) __asm ("foo");
 inline void foo (void) {
@@ -14,8 +14,7 @@ void f(void) {
 }
 
 // CHECK: define void @f()
-// CHECK-NEXT: entry:
-// CHECK-NEXT: call void @foo()
+// CHECK: call void @foo()
 // CHECK-NEXT: call void @bar()
 // CHECK-NEXT: ret void
 
