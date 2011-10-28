@@ -2835,10 +2835,27 @@ ClangExpressionDeclMap::FindExternalLexicalDecls (const DeclContext *decl_contex
 
 void
 ClangExpressionDeclMap::CompleteTagDecl (TagDecl *tag_decl)
-{    
+{
     assert (m_parser_vars.get());
-    
+
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+
+    if (log)
+    {
+        log->Printf("    [CompleteTagDecl] Completing a TagDecl named %s", tag_decl->getName().str().c_str());
+        log->Printf("      [CTD] Before:");
+        ASTDumper dumper((Decl*)tag_decl);
+        dumper.ToLog(log, "      [CTD] ");
+    }
+        
     m_parser_vars->GetASTImporter(&tag_decl->getASTContext())->CompleteTagDecl (tag_decl);
+
+    if (log)
+    {
+        log->Printf("      [CTD] After:");
+        ASTDumper dumper((Decl*)tag_decl);
+        dumper.ToLog(log, "      [CTD] ");
+    }
 }
 
 void
@@ -2846,7 +2863,25 @@ ClangExpressionDeclMap::CompleteObjCInterfaceDecl (clang::ObjCInterfaceDecl *int
 {
     assert (m_parser_vars.get());
     
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    
+    if (log)
+    {
+        log->Printf("    [CompleteObjCInterfaceDecl] Completing an ObjCInterfaceDecl named %s", interface_decl->getName().str().c_str());
+        log->Printf("      [COID] Before:");
+        ASTDumper dumper((Decl*)interface_decl);
+        dumper.ToLog(log, "      [COID] ");    
+    }
+    
     m_parser_vars->GetASTImporter(&interface_decl->getASTContext())->CompleteObjCInterfaceDecl (interface_decl);
+
+    if (log)
+    {
+        log->Printf("    [CompleteObjCInterfaceDecl] Completing an ObjCInterfaceDecl named %s", interface_decl->getName().str().c_str());
+        log->Printf("      [COID] After:");
+        ASTDumper dumper((Decl*)interface_decl);
+        dumper.ToLog(log, "      [COID] ");    
+    }
 }
 
 Value *

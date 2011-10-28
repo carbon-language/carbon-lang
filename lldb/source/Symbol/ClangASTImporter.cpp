@@ -51,9 +51,6 @@ void
 ClangASTImporter::CompleteTagDecl (clang::TagDecl *decl)
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
-
-    if (log)
-        log->Printf("    [ClangASTImporter] Completing a TagDecl named %s", decl->getName().str().c_str());
     
     DeclOrigin decl_origin = GetDeclOrigin(decl);
     
@@ -75,9 +72,6 @@ void
 ClangASTImporter::CompleteObjCInterfaceDecl (clang::ObjCInterfaceDecl *interface_decl)
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
-    
-    if (log)
-        log->Printf("    [ClangASTImporter] Completing an ObjCInterfaceDecl named %s", interface_decl->getName().str().c_str());
     
     DeclOrigin decl_origin = GetDeclOrigin(interface_decl);
     
