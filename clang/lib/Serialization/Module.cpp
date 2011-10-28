@@ -35,6 +35,7 @@ Module::Module(ModuleKind Kind)
     SelectorLookupTableData(0), SelectorLookupTable(0), LocalNumDecls(0),
     DeclOffsets(0), BaseDeclID(0),
     LocalNumCXXBaseSpecifiers(0), CXXBaseSpecifiersOffsets(0),
+    FileSortedDecls(0),
     LocalNumTypes(0), TypeOffsets(0), BaseTypeIndex(0), StatCache(0)
 {}
 

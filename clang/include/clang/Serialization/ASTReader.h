@@ -296,6 +296,9 @@ private:
   /// \brief Declarations that have been replaced in a later file in the chain.
   DeclReplacementMap ReplacedDecls;
 
+  /// \brief Map from a FileID to the file-level declarations that it contains.
+  llvm::DenseMap<FileID, ArrayRef<serialization::DeclID> > FileDeclIDs;
+
   // Updates for visible decls can occur for other contexts than just the
   // TU, and when we read those update records, the actual context will not
   // be available yet (unless it's the TU), so have this pending map using the

@@ -271,6 +271,9 @@ public:
   /// Key is the ID of the interface.
   /// Value is a pair of linked category DeclIDs (head category, tail category).
   ChainedObjCCategoriesMap ChainedObjCCategories;
+
+  /// \brief Array of file-level DeclIDs sorted by file.
+  const serialization::DeclID *FileSortedDecls;
   
   // === Types ===
   

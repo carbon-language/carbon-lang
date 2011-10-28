@@ -18,6 +18,7 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/DeclContextInternals.h"
+#include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -1651,13 +1652,19 @@ void ASTWriter::WriteDecl(ASTContext &Context, Decl *D) {
     unsigned Index = ID - FirstDeclID;
 
     // Record the offset for this declaration
+    SourceLocation Loc = D->getLocation();
     if (DeclOffsets.size() == Index)
-      DeclOffsets.push_back(DeclOffset(D->getLocation(),
-                                       Stream.GetCurrentBitNo()));
+      DeclOffsets.push_back(DeclOffset(Loc, Stream.GetCurrentBitNo()));
     else if (DeclOffsets.size() < Index) {
       DeclOffsets.resize(Index+1);
-      DeclOffsets[Index].setLocation(D->getLocation());
+      DeclOffsets[Index].setLocation(Loc);
       DeclOffsets[Index].BitOffset = Stream.GetCurrentBitNo();
+    }
+    
+    SourceManager &SM = Context.getSourceManager();
+    if (Loc.isValid() && SM.isLocalSourceLocation(Loc)) {
+      SourceLocation FileLoc = SM.getFileLoc(Loc);
+      associateDeclWithFile(D, ID, FileLoc);
     }
   }
 

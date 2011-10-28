@@ -1172,6 +1172,8 @@ static unsigned CreateSLocFileAbbrev(llvm::BitstreamWriter &Stream) {
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 12)); // Size
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 32)); // Modification time
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // NumCreatedFIDs
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 24)); // FirstDeclIndex
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // NumDecls
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // File name
   return Stream.EmitAbbrev(Abbrev);
 }
@@ -1445,6 +1447,15 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
         Record.push_back(Content->OrigEntry->getModificationTime());
 
         Record.push_back(File.NumCreatedFIDs);
+        
+        FileDeclIDsTy::iterator FDI = FileDeclIDs.find(SLoc);
+        if (FDI != FileDeclIDs.end()) {
+          Record.push_back(FDI->second->FirstDeclIndex);
+          Record.push_back(FDI->second->DeclIDs.size());
+        } else {
+          Record.push_back(0);
+          Record.push_back(0);
+        }
 
         // Turn the file name into an absolute path, if it isn't already.
         const char *Filename = Content->OrigEntry->getName();
@@ -1970,6 +1981,29 @@ void ASTWriter::WriteTypeDeclOffsets() {
   Record.push_back(DeclOffsets.size());
   Record.push_back(FirstDeclID - NUM_PREDEF_DECL_IDS);
   Stream.EmitRecordWithBlob(DeclOffsetAbbrev, Record, data(DeclOffsets));
+}
+
+void ASTWriter::WriteFileDeclIDsMap() {
+  using namespace llvm;
+  RecordData Record;
+
+  // Join the vectors of DeclIDs from all files.
+  SmallVector<DeclID, 256> FileSortedIDs;
+  for (FileDeclIDsTy::iterator
+         FI = FileDeclIDs.begin(), FE = FileDeclIDs.end(); FI != FE; ++FI) {
+    DeclIDInFileInfo &Info = *FI->second;
+    Info.FirstDeclIndex = FileSortedIDs.size();
+    for (LocDeclIDsTy::iterator
+           DI = Info.DeclIDs.begin(), DE = Info.DeclIDs.end(); DI != DE; ++DI)
+      FileSortedIDs.push_back(DI->second);
+  }
+
+  BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
+  Abbrev->Add(BitCodeAbbrevOp(FILE_SORTED_DECLS));
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
+  unsigned AbbrevCode = Stream.EmitAbbrev(Abbrev);
+  Record.push_back(FILE_SORTED_DECLS);
+  Stream.EmitRecordWithBlob(AbbrevCode, Record, data(FileSortedIDs));
 }
 
 //===----------------------------------------------------------------------===//
@@ -2732,6 +2766,12 @@ ASTWriter::ASTWriter(llvm::BitstreamWriter &Stream)
 {
 }
 
+ASTWriter::~ASTWriter() {
+  for (FileDeclIDsTy::iterator
+         I = FileDeclIDs.begin(), E = FileDeclIDs.end(); I != E; ++I)
+    delete I->second;
+}
+
 void ASTWriter::WriteAST(Sema &SemaRef, MemorizeStatCalls *StatCalls,
                          const std::string &OutputFile,
                          bool IsModule, StringRef isysroot) {
@@ -2910,49 +2950,6 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   WriteLanguageOptions(Context.getLangOptions());
   if (StatCalls && isysroot.empty())
     WriteStatCache(*StatCalls);
-  WriteSourceManagerBlock(Context.getSourceManager(), PP, isysroot);
-  
-  if (Chain) {
-    // Write the mapping information describing our module dependencies and how
-    // each of those modules were mapped into our own offset/ID space, so that
-    // the reader can build the appropriate mapping to its own offset/ID space.
-    // The map consists solely of a blob with the following format:
-    // *(module-name-len:i16 module-name:len*i8
-    //   source-location-offset:i32
-    //   identifier-id:i32
-    //   preprocessed-entity-id:i32
-    //   macro-definition-id:i32
-    //   selector-id:i32
-    //   declaration-id:i32
-    //   c++-base-specifiers-id:i32
-    //   type-id:i32)
-    // 
-    llvm::BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
-    Abbrev->Add(BitCodeAbbrevOp(MODULE_OFFSET_MAP));
-    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
-    unsigned ModuleOffsetMapAbbrev = Stream.EmitAbbrev(Abbrev);
-    llvm::SmallString<2048> Buffer;
-    {
-      llvm::raw_svector_ostream Out(Buffer);
-      for (ModuleManager::ModuleConstIterator M = Chain->ModuleMgr.begin(),
-           MEnd = Chain->ModuleMgr.end();
-           M != MEnd; ++M) {
-        StringRef FileName = (*M)->FileName;
-        io::Emit16(Out, FileName.size());
-        Out.write(FileName.data(), FileName.size());
-        io::Emit32(Out, (*M)->SLocEntryBaseOffset);
-        io::Emit32(Out, (*M)->BaseIdentifierID);
-        io::Emit32(Out, (*M)->BasePreprocessedEntityID);
-        io::Emit32(Out, (*M)->BaseSelectorID);
-        io::Emit32(Out, (*M)->BaseDeclID);
-        io::Emit32(Out, (*M)->BaseTypeIndex);
-      }
-    }
-    Record.clear();
-    Record.push_back(MODULE_OFFSET_MAP);
-    Stream.EmitRecordWithBlob(ModuleOffsetMapAbbrev, Record,
-                              Buffer.data(), Buffer.size());
-  }
 
   // Create a lexical update block containing all of the declarations in the
   // translation unit that do not come from other AST files.
@@ -3029,6 +3026,51 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
       WriteDecl(Context, DOT.getDecl());
   }
   Stream.ExitBlock();
+
+  WriteFileDeclIDsMap();
+  WriteSourceManagerBlock(Context.getSourceManager(), PP, isysroot);
+  
+  if (Chain) {
+    // Write the mapping information describing our module dependencies and how
+    // each of those modules were mapped into our own offset/ID space, so that
+    // the reader can build the appropriate mapping to its own offset/ID space.
+    // The map consists solely of a blob with the following format:
+    // *(module-name-len:i16 module-name:len*i8
+    //   source-location-offset:i32
+    //   identifier-id:i32
+    //   preprocessed-entity-id:i32
+    //   macro-definition-id:i32
+    //   selector-id:i32
+    //   declaration-id:i32
+    //   c++-base-specifiers-id:i32
+    //   type-id:i32)
+    // 
+    llvm::BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
+    Abbrev->Add(BitCodeAbbrevOp(MODULE_OFFSET_MAP));
+    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
+    unsigned ModuleOffsetMapAbbrev = Stream.EmitAbbrev(Abbrev);
+    llvm::SmallString<2048> Buffer;
+    {
+      llvm::raw_svector_ostream Out(Buffer);
+      for (ModuleManager::ModuleConstIterator M = Chain->ModuleMgr.begin(),
+           MEnd = Chain->ModuleMgr.end();
+           M != MEnd; ++M) {
+        StringRef FileName = (*M)->FileName;
+        io::Emit16(Out, FileName.size());
+        Out.write(FileName.data(), FileName.size());
+        io::Emit32(Out, (*M)->SLocEntryBaseOffset);
+        io::Emit32(Out, (*M)->BaseIdentifierID);
+        io::Emit32(Out, (*M)->BasePreprocessedEntityID);
+        io::Emit32(Out, (*M)->BaseSelectorID);
+        io::Emit32(Out, (*M)->BaseDeclID);
+        io::Emit32(Out, (*M)->BaseTypeIndex);
+      }
+    }
+    Record.clear();
+    Record.push_back(MODULE_OFFSET_MAP);
+    Stream.EmitRecordWithBlob(ModuleOffsetMapAbbrev, Record,
+                              Buffer.data(), Buffer.size());
+  }
 
   WritePreprocessor(PP, IsModule);
   WriteHeaderSearch(PP.getHeaderSearchInfo(), isysroot);
@@ -3437,6 +3479,48 @@ DeclID ASTWriter::getDeclID(const Decl *D) {
 
   assert(DeclIDs.find(D) != DeclIDs.end() && "Declaration not emitted!");
   return DeclIDs[D];
+}
+
+static inline bool compLocDecl(std::pair<unsigned, serialization::DeclID> L,
+                               std::pair<unsigned, serialization::DeclID> R) {
+  return L.first < R.first;
+}
+
+void ASTWriter::associateDeclWithFile(const Decl *D, DeclID ID,
+                                      SourceLocation FileLoc) {
+  assert(ID);
+  assert(FileLoc.isValid());
+  assert(FileLoc.isFileID());
+
+  // We only keep track of the file-level declarations of each file.
+  if (!D->getLexicalDeclContext()->isFileContext())
+    return;
+
+  SourceManager &SM = Context->getSourceManager();
+  assert(SM.isLocalSourceLocation(FileLoc));
+  FileID FID = SM.getFileID(FileLoc);
+  if (FID.isInvalid())
+    return;
+  const SrcMgr::SLocEntry *Entry = &SM.getSLocEntry(FID);
+  assert(Entry->isFile());
+
+  DeclIDInFileInfo *&Info = FileDeclIDs[Entry];
+  if (!Info)
+    Info = new DeclIDInFileInfo();
+
+  unsigned RawLoc = FileLoc.getRawEncoding();
+  std::pair<unsigned, serialization::DeclID> LocDecl(RawLoc, ID);
+  LocDeclIDsTy &Decls = Info->DeclIDs;
+
+  if (Decls.empty() || Decls.back().first <= RawLoc) {
+    Decls.push_back(LocDecl);
+    return;
+  }
+
+  LocDeclIDsTy::iterator
+    I = std::upper_bound(Decls.begin(), Decls.end(), LocDecl, compLocDecl);
+
+  Decls.insert(I, LocDecl);
 }
 
 void ASTWriter::AddDeclarationName(DeclarationName Name, RecordDataImpl &Record) {

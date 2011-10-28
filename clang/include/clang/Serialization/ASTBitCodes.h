@@ -436,7 +436,10 @@ namespace clang {
 
       /// \brief Record code for ObjC categories in a module that are chained to
       /// an interface.
-      OBJC_CHAINED_CATEGORIES
+      OBJC_CHAINED_CATEGORIES,
+
+      /// \brief Record code for a file sorted array of DeclIDs in a module.
+      FILE_SORTED_DECLS
     };
 
     /// \brief Record types used within a source manager block.

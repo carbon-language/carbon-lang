@@ -1134,6 +1134,13 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(int ID) {
     FileInfo.NumCreatedFIDs = Record[6];
     if (Record[3])
       FileInfo.setHasLineDirectives();
+
+    const DeclID *FirstDecl = F->FileSortedDecls + Record[7];
+    unsigned NumFileDecls = Record[8];
+    if (NumFileDecls) {
+      assert(F->FileSortedDecls && "FILE_SORTED_DECLS not encountered yet ?");
+      FileDeclIDs[FID] = llvm::makeArrayRef(FirstDecl, NumFileDecls);
+    }
     
     break;
   }
@@ -1959,6 +1966,10 @@ ASTReader::ReadASTBlock(Module &F) {
     case PP_COUNTER_VALUE:
       if (!Record.empty() && Listener)
         Listener->ReadCounter(Record[0]);
+      break;
+      
+    case FILE_SORTED_DECLS:
+      F.FileSortedDecls = (const DeclID *)BlobStart;
       break;
 
     case SOURCE_LOCATION_OFFSETS: {
