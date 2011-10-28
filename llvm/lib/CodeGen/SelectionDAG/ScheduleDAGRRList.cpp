@@ -386,6 +386,90 @@ void ScheduleDAGRRList::ReleasePred(SUnit *SU, const SDep *PredEdge) {
   }
 }
 
+/// IsChainDependent - Test if Outer is reachable from Inner through
+/// chain dependencies.
+static bool IsChainDependent(SDNode *Outer, SDNode *Inner) {
+  SDNode *N = Outer;
+  for (;;) {
+    if (N == Inner)
+      return true;
+    if (N->getOpcode() == ISD::TokenFactor) {
+      for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
+        if (IsChainDependent(N->getOperand(i).getNode(), Inner))
+          return true;
+      return false;
+    }
+    for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
+      if (N->getOperand(i).getValueType() == MVT::Other) {
+        N = N->getOperand(i).getNode();
+        goto found_chain_operand;
+      }
+    return false;
+  found_chain_operand:;
+    if (N->getOpcode() == ISD::EntryToken)
+      return false;
+  }
+}
+
+/// FindCallSeqStart - Starting from the (lowered) CALLSEQ_END node, locate
+/// the corresponding (lowered) CALLSEQ_BEGIN node.
+///
+/// NestLevel and MaxNested are used in recursion to indcate the current level
+/// of nesting of CALLSEQ_BEGIN and CALLSEQ_END pairs, as well as the maximum
+/// level seen so far.
+///
+/// TODO: It would be better to give CALLSEQ_END an explicit operand to point
+/// to the corresponding CALLSEQ_BEGIN to avoid needing to search for it.
+static SDNode *
+FindCallSeqStart(SDNode *N, unsigned &NestLevel, unsigned &MaxNest,
+                 const TargetInstrInfo *TII) {
+  for (;;) {
+    // For a TokenFactor, examine each operand. There may be multiple ways
+    // to get to the CALLSEQ_BEGIN, but we need to find the path with the
+    // most nesting in order to ensure that we find the corresponding match.
+    if (N->getOpcode() == ISD::TokenFactor) {
+      SDNode *Best = 0;
+      unsigned BestMaxNest = MaxNest;
+      for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
+        unsigned MyNestLevel = NestLevel;
+        unsigned MyMaxNest = MaxNest;
+        if (SDNode *New = FindCallSeqStart(N->getOperand(i).getNode(),
+                                           MyNestLevel, MyMaxNest, TII))
+          if (!Best || (MyMaxNest > BestMaxNest)) {
+            Best = New;
+            BestMaxNest = MyMaxNest;
+          }
+      }
+      assert(Best);
+      MaxNest = BestMaxNest;
+      return Best;
+    }
+    // Check for a lowered CALLSEQ_BEGIN or CALLSEQ_END.
+    if (N->isMachineOpcode()) {
+      if (N->getMachineOpcode() ==
+          (unsigned)TII->getCallFrameDestroyOpcode()) {
+        ++NestLevel;
+        MaxNest = std::max(MaxNest, NestLevel);
+      } else if (N->getMachineOpcode() ==
+                 (unsigned)TII->getCallFrameSetupOpcode()) {
+        --NestLevel;
+        if (NestLevel == 0)
+          return N;
+      }
+    }
+    // Otherwise, find the chain and continue climbing.
+    for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
+      if (N->getOperand(i).getValueType() == MVT::Other) {
+        N = N->getOperand(i).getNode();
+        goto found_chain_operand;
+      }
+    return 0;
+  found_chain_operand:;
+    if (N->getOpcode() == ISD::EntryToken)
+      return 0;
+  }
+}
+
 /// Call ReleasePred for each predecessor, then update register live def/gen.
 /// Always update LiveRegDefs for a register dependence even if the current SU
 /// also defines the register. This effectively create one large live range
@@ -423,6 +507,26 @@ void ScheduleDAGRRList::ReleasePredecessors(SUnit *SU) {
       }
     }
   }
+
+  // If we're scheduling a lowered CALLSEQ_END, find the corresponding CALLSEQ_BEGIN.
+  // Inject an artificial physical register dependence between these nodes, to
+  // prevent other calls from being interscheduled with them.
+  const TargetLowering *TLI = TM.getTargetLowering();
+  unsigned SP = TLI->getStackPointerRegisterToSaveRestore();
+  if (!LiveRegDefs[SP])
+    for (SDNode *Node = SU->getNode(); Node; Node = Node->getGluedNode())
+      if (Node->isMachineOpcode() &&
+          Node->getMachineOpcode() == (unsigned)TII->getCallFrameDestroyOpcode()) {
+        unsigned NestLevel = 0;
+        unsigned MaxNest = 0;
+        SDNode *N = FindCallSeqStart(Node, NestLevel, MaxNest, TII);
+
+        SUnit *Def = &SUnits[N->getNodeId()];
+        ++NumLiveRegs;
+        LiveRegDefs[SP] = Def;
+        LiveRegGens[SP] = SU;
+        break;
+      }
 }
 
 /// Check to see if any of the pending instructions are ready to issue.  If
@@ -603,6 +707,22 @@ void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU) {
       --NumLiveRegs;
       LiveRegDefs[I->getReg()] = NULL;
       LiveRegGens[I->getReg()] = NULL;
+    }
+  }
+  // Release the special call resource dependence, if this is the beginning
+  // of a call.
+  const TargetLowering *TLI = TM.getTargetLowering();
+  unsigned SP = TLI->getStackPointerRegisterToSaveRestore();
+  if (LiveRegDefs[SP] == SU)
+  for (const SDNode *SUNode = SU->getNode(); SUNode;
+       SUNode = SUNode->getGluedNode()) {
+    if (SUNode->isMachineOpcode() &&
+        SUNode->getMachineOpcode() == (unsigned)TII->getCallFrameSetupOpcode() &&
+        LiveRegDefs[SP] == SU) {
+      assert(NumLiveRegs > 0 && "NumLiveRegs is already zero!");
+      --NumLiveRegs;
+      LiveRegDefs[SP] = NULL;
+      LiveRegGens[SP] = NULL;
     }
   }
 
@@ -1083,6 +1203,20 @@ DelayForLiveRegsBottomUp(SUnit *SU, SmallVector<unsigned, 4> &LRegs) {
 
     if (!Node->isMachineOpcode())
       continue;
+    // If we're in the middle of scheduling a call, don't begin scheduling
+    // another call.
+    if (Node->getMachineOpcode() == (unsigned)TII->getCallFrameSetupOpcode() ||
+        Node->getMachineOpcode() == (unsigned)TII->getCallFrameDestroyOpcode()) {
+      for (unsigned i = 0, e = TRI->getNumRegs(); i != e; ++i)
+        if (LiveRegDefs[i]) {
+          SDNode *Gen = LiveRegGens[i]->getNode();
+          while (SDNode *Glued = Gen->getGluedNode())
+            Gen = Glued;
+          if (!IsChainDependent(Gen, Node) && RegAdded.insert(i))
+            LRegs.push_back(i);
+        }
+      continue;
+    }
     const MCInstrDesc &MCID = TII->get(Node->getMachineOpcode());
     if (!MCID.ImplicitDefs)
       continue;
