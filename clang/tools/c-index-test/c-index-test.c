@@ -995,6 +995,31 @@ clang_getCompletionChunkKindSpelling(enum CXCompletionChunkKind Kind) {
   return "Unknown";
 }
 
+static int checkForErrors(CXTranslationUnit TU) {
+  unsigned Num, i;
+  CXDiagnostic Diag;
+  CXString DiagStr;
+
+  if (!getenv("CINDEXTEST_FAILONERROR"))
+    return 0;
+
+  Num = clang_getNumDiagnostics(TU);
+  for (i = 0; i != Num; ++i) {
+    Diag = clang_getDiagnostic(TU, i);
+    if (clang_getDiagnosticSeverity(Diag) >= CXDiagnostic_Error) {
+      DiagStr = clang_formatDiagnostic(Diag,
+                                       clang_defaultDiagnosticDisplayOptions());
+      fprintf(stderr, "%s\n", clang_getCString(DiagStr));
+      clang_disposeString(DiagStr);
+      clang_disposeDiagnostic(Diag);
+      return -1;
+    }
+    clang_disposeDiagnostic(Diag);
+  }
+
+  return 0;
+}
+
 void print_completion_string(CXCompletionString completion_string, FILE *file) {
   int I, N;
 
@@ -1347,6 +1372,9 @@ static int inspect_cursor_at(int argc, const char **argv) {
     return -1;
   }
 
+  if (checkForErrors(TU) != 0)
+    return -1;
+
   for (I = 0; I != Repeats; ++I) {
     if (Repeats > 1 &&
         clang_reparseTranslationUnit(TU, num_unsaved_files, unsaved_files, 
@@ -1354,6 +1382,9 @@ static int inspect_cursor_at(int argc, const char **argv) {
       clang_disposeTranslationUnit(TU);
       return 1;
     }
+
+    if (checkForErrors(TU) != 0)
+      return -1;
     
     for (Loc = 0; Loc < NumLocations; ++Loc) {
       CXFile file = clang_getFile(TU, Locations[Loc].filename);
@@ -1363,6 +1394,10 @@ static int inspect_cursor_at(int argc, const char **argv) {
       Cursor = clang_getCursor(TU,
                                clang_getLocation(TU, file, Locations[Loc].line,
                                                  Locations[Loc].column));
+
+      if (checkForErrors(TU) != 0)
+        return -1;
+
       if (I + 1 == Repeats) {
         CXCompletionString completionString = clang_getCursorCompletionString(
                                                                         Cursor);
@@ -1446,6 +1481,9 @@ static int find_file_refs_at(int argc, const char **argv) {
     return -1;
   }
 
+  if (checkForErrors(TU) != 0)
+    return -1;
+
   for (I = 0; I != Repeats; ++I) {
     if (Repeats > 1 &&
         clang_reparseTranslationUnit(TU, num_unsaved_files, unsaved_files, 
@@ -1453,6 +1491,9 @@ static int find_file_refs_at(int argc, const char **argv) {
       clang_disposeTranslationUnit(TU);
       return 1;
     }
+
+    if (checkForErrors(TU) != 0)
+      return -1;
     
     for (Loc = 0; Loc < NumLocations; ++Loc) {
       CXFile file = clang_getFile(TU, Locations[Loc].filename);
@@ -1462,12 +1503,19 @@ static int find_file_refs_at(int argc, const char **argv) {
       Cursor = clang_getCursor(TU,
                                clang_getLocation(TU, file, Locations[Loc].line,
                                                  Locations[Loc].column));
+
+      if (checkForErrors(TU) != 0)
+        return -1;
+
       if (I + 1 == Repeats) {
         CXCursorAndRangeVisitor visitor = { 0, findFileRefsVisit };
         PrintCursor(Cursor);
         printf("\n");
         clang_findReferencesInFile(Cursor, file, visitor);
         free(Locations[Loc].filename);
+
+        if (checkForErrors(TU) != 0)
+          return -1;
       }
     }
   }
@@ -1483,6 +1531,7 @@ static int find_file_refs_at(int argc, const char **argv) {
 typedef struct {
   const char *check_prefix;
   int first_check_printed;
+  int fail_for_error;
 } IndexData;
 
 static void printCheck(IndexData *data) {
@@ -1622,6 +1671,11 @@ static void index_diagnostic(CXClientData client_data,
   cstr = clang_getCString(str);
   printf("diagnostic: %s\n", cstr);
   clang_disposeString(str);  
+
+  if (getenv("CINDEXTEST_FAILONERROR") &&
+      clang_getDiagnosticSeverity(diag) >= CXDiagnostic_Error) {
+    index_data->fail_for_error = 1;
+  }
 }
 
 static CXIdxFile index_recordFile(CXClientData client_data,
@@ -1966,6 +2020,7 @@ static int index_file(int argc, const char **argv) {
   const char *check_prefix;
   CXIndex CIdx;
   IndexData index_data;
+  int result;
 
   check_prefix = 0;
   if (argc > 0) {
@@ -1984,9 +2039,15 @@ static int index_file(int argc, const char **argv) {
   CIdx = clang_createIndex(0, 1);
   index_data.check_prefix = check_prefix;
   index_data.first_check_printed = 0;
+  index_data.fail_for_error = 0;
 
-  return clang_indexTranslationUnit(CIdx, &index_data, &IndexCB,sizeof(IndexCB),
-                                    0, 0, argv, argc, 0, 0, 0, 0);
+  result = clang_indexTranslationUnit(CIdx, &index_data,
+                                      &IndexCB,sizeof(IndexCB),
+                                      0, 0, argv, argc, 0, 0, 0, 0);
+  if (index_data.fail_for_error)
+    return -1;
+
+  return result;
 }
 
 int perform_token_annotation(int argc, const char **argv) {
@@ -2031,6 +2092,9 @@ int perform_token_annotation(int argc, const char **argv) {
   }
   errorCode = 0;
 
+  if (checkForErrors(TU) != 0)
+    return -1;
+
   if (getenv("CINDEXTEST_EDITING")) {
     for (i = 0; i < 5; ++i) {
       if (clang_reparseTranslationUnit(TU, num_unsaved_files, unsaved_files,
@@ -2040,6 +2104,11 @@ int perform_token_annotation(int argc, const char **argv) {
         goto teardown;
       }
     }
+  }
+
+  if (checkForErrors(TU) != 0) {
+    errorCode = -1;
+    goto teardown;
   }
 
   file = clang_getFile(TU, filename);
@@ -2067,8 +2136,20 @@ int perform_token_annotation(int argc, const char **argv) {
 
   range = clang_getRange(startLoc, endLoc);
   clang_tokenize(TU, range, &tokens, &num_tokens);
+
+  if (checkForErrors(TU) != 0) {
+    errorCode = -1;
+    goto teardown;
+  }
+
   cursors = (CXCursor *)malloc(num_tokens * sizeof(CXCursor));
   clang_annotateTokens(TU, tokens, num_tokens, cursors);
+
+  if (checkForErrors(TU) != 0) {
+    errorCode = -1;
+    goto teardown;
+  }
+
   for (i = 0; i != num_tokens; ++i) {
     const char *kind = "<unknown>";
     CXString spelling = clang_getTokenSpelling(TU, tokens[i]);
