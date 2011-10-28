@@ -3042,6 +3042,9 @@ def err_arc_mismatched_cast : Error<
   "%select{%2|a non-Objective-C pointer type %2|a block pointer|"
   "an Objective-C pointer|an indirect pointer to an Objective-C pointer}1"
   " to %3 is disallowed with ARC">;
+def err_arc_nolifetime_behavior : Error<
+  "casting expression of type %1 to type %0 with qualified lifetime"
+  "will not change object lifetime">;
 def err_arc_objc_object_in_struct : Error<
   "ARC forbids Objective-C objects in structs or unions">;
 def err_arc_objc_property_default_assign_on_object : Error<

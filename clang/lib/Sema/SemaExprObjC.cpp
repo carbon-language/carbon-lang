@@ -1934,7 +1934,24 @@ Sema::CheckObjCARCConversion(SourceRange castRange, QualType castType,
   
   ARCConversionTypeClass exprACTC = classifyTypeForARCConversion(castExprType);
   ARCConversionTypeClass castACTC = classifyTypeForARCConversion(effCastType);
-  if (exprACTC == castACTC) return ACR_okay;
+  if (exprACTC == castACTC) {
+    // check for viablity and report error if casting an rvalue to a
+    // life-time qualifier.
+    if ((castACTC == ACTC_retainable) && 
+        isa<AttributedType>(castType) &&
+        (castType.getObjCLifetime() !=  Qualifiers::OCL_None) &&
+        (CCK == CCK_CStyleCast || CCK == CCK_OtherCast) &&
+        castType != castExprType) {
+      SourceLocation loc =
+        (castRange.isValid() ? castRange.getBegin() 
+                             : castExpr->getExprLoc());
+      Diag(loc, diag::err_arc_nolifetime_behavior)
+        << effCastType << castExprType 
+        << castRange << castExpr->getSourceRange();
+    }
+    return ACR_okay;
+  }
+  
   if (isAnyCLike(exprACTC) && isAnyCLike(castACTC)) return ACR_okay;
 
   // Allow all of these types to be cast to integer types (but not
