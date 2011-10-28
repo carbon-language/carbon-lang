@@ -162,8 +162,7 @@ private:
   /// that it contains.
   FileDeclIDsTy FileDeclIDs;
 
-  void associateDeclWithFile(const Decl *D, serialization::DeclID,
-                             SourceLocation FileLoc);
+  void associateDeclWithFile(const Decl *D, serialization::DeclID);
 
   /// \brief The first ID number we can use for our own types.
   serialization::TypeID FirstTypeID;

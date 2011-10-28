@@ -1662,10 +1662,8 @@ void ASTWriter::WriteDecl(ASTContext &Context, Decl *D) {
     }
     
     SourceManager &SM = Context.getSourceManager();
-    if (Loc.isValid() && SM.isLocalSourceLocation(Loc)) {
-      SourceLocation FileLoc = SM.getFileLoc(Loc);
-      associateDeclWithFile(D, ID, FileLoc);
-    }
+    if (Loc.isValid() && SM.isLocalSourceLocation(Loc))
+      associateDeclWithFile(D, ID);
   }
 
   // Build and emit a record for this declaration

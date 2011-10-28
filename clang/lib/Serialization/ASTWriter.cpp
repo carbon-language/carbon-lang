@@ -3486,17 +3486,20 @@ static inline bool compLocDecl(std::pair<unsigned, serialization::DeclID> L,
   return L.first < R.first;
 }
 
-void ASTWriter::associateDeclWithFile(const Decl *D, DeclID ID,
-                                      SourceLocation FileLoc) {
+void ASTWriter::associateDeclWithFile(const Decl *D, DeclID ID) {
   assert(ID);
-  assert(FileLoc.isValid());
-  assert(FileLoc.isFileID());
+  assert(D);
+
+  SourceLocation Loc = D->getLocation();
+  if (Loc.isInvalid())
+    return;
 
   // We only keep track of the file-level declarations of each file.
   if (!D->getLexicalDeclContext()->isFileContext())
     return;
 
   SourceManager &SM = Context->getSourceManager();
+  SourceLocation FileLoc = SM.getFileLoc(Loc);
   assert(SM.isLocalSourceLocation(FileLoc));
   FileID FID = SM.getFileID(FileLoc);
   if (FID.isInvalid())
