@@ -300,6 +300,30 @@ define i1 @udiv2(i32 %X, i32 %Y, i32 %Z) {
 ; CHECK: ret i1 true
 }
 
+define i1 @udiv3(i32 %X, i32 %Y) {
+; CHECK: @udiv3
+  %A = udiv i32 %X, %Y
+  %C = icmp ugt i32 %A, %X
+  ret i1 %C
+; CHECK: ret i1 false
+}
+
+define i1 @udiv4(i32 %X, i32 %Y) {
+; CHECK: @udiv4
+  %A = udiv i32 %X, %Y
+  %C = icmp ule i32 %A, %X
+  ret i1 %C
+; CHECK: ret i1 true
+}
+
+define i1 @udiv5(i32 %X) {
+; CHECK: @udiv5
+  %A = udiv i32 123, %X
+  %C = icmp ugt i32 %A, 124
+  ret i1 %C
+; CHECK: ret i1 false
+}
+
 define i1 @sdiv1(i32 %X) {
 ; CHECK: @sdiv1
   %A = sdiv i32 %X, 1000000
