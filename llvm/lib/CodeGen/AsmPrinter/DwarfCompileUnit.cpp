@@ -67,23 +67,19 @@ void CompileUnit::addSInt(DIE *Die, unsigned Attribute,
   Die->addValue(Attribute, Form, Value);
 }
 
-/// addString - Add a string attribute data and value. DIEString only
-/// keeps string reference.
+/// addString - Add a string attribute data and value. We always emit a
+/// reference to the string pool instead of immediate strings so that DIEs have
+/// more predictable sizes.
 void CompileUnit::addString(DIE *Die, unsigned Attribute, StringRef String) {
-  if (String.size() > 3) {
-    MCSymbol *Symb = DD->getStringPoolEntry(String);
-    DIEValue *Value;
-    if (Asm->needsRelocationsForDwarfStringPool())
-      Value = new (DIEValueAllocator) DIELabel(Symb);
-    else {
-      MCSymbol *StringPool = DD->getStringPool();
-      Value = new (DIEValueAllocator) DIEDelta(Symb, StringPool);
-    }
-    Die->addValue(Attribute, dwarf::DW_FORM_strp, Value);
-  } else {
-    DIEValue *Value = new (DIEValueAllocator) DIEString(String);
-    Die->addValue(Attribute, dwarf::DW_FORM_string, Value);
+  MCSymbol *Symb = DD->getStringPoolEntry(String);
+  DIEValue *Value;
+  if (Asm->needsRelocationsForDwarfStringPool())
+    Value = new (DIEValueAllocator) DIELabel(Symb);
+  else {
+    MCSymbol *StringPool = DD->getStringPool();
+    Value = new (DIEValueAllocator) DIEDelta(Symb, StringPool);
   }
+  Die->addValue(Attribute, dwarf::DW_FORM_strp, Value);
 }
 
 /// addLabel - Add a Dwarf label attribute data and value.

@@ -236,24 +236,6 @@ void DIEInteger::print(raw_ostream &O) {
 #endif
 
 //===----------------------------------------------------------------------===//
-// DIEString Implementation
-//===----------------------------------------------------------------------===//
-
-/// EmitValue - Emit string value.
-///
-void DIEString::EmitValue(AsmPrinter *AP, unsigned Form) const {
-  AP->OutStreamer.EmitBytes(Str, /*addrspace*/0);
-  // Emit nul terminator.
-  AP->OutStreamer.EmitIntValue(0, 1, /*addrspace*/0);
-}
-
-#ifndef NDEBUG
-void DIEString::print(raw_ostream &O) {
-  O << "Str: \"" << Str << "\"";
-}
-#endif
-
-//===----------------------------------------------------------------------===//
 // DIELabel Implementation
 //===----------------------------------------------------------------------===//
 

@@ -275,33 +275,6 @@ namespace llvm {
   };
 
   //===--------------------------------------------------------------------===//
-  /// DIEString - A string value DIE. This DIE keeps string reference only.
-  ///
-  class DIEString : public DIEValue {
-    const StringRef Str;
-  public:
-    explicit DIEString(const StringRef S) : DIEValue(isString), Str(S) {}
-
-    /// EmitValue - Emit string value.
-    ///
-    virtual void EmitValue(AsmPrinter *AP, unsigned Form) const;
-
-    /// SizeOf - Determine size of string value in bytes.
-    ///
-    virtual unsigned SizeOf(AsmPrinter *AP, unsigned /*Form*/) const {
-      return Str.size() + sizeof(char); // sizeof('\0');
-    }
-
-    // Implement isa/cast/dyncast.
-    static bool classof(const DIEString *) { return true; }
-    static bool classof(const DIEValue *S) { return S->getType() == isString; }
-
-#ifndef NDEBUG
-    virtual void print(raw_ostream &O);
-#endif
-  };
-
-  //===--------------------------------------------------------------------===//
   /// DIELabel - A label expression DIE.
   //
   class DIELabel : public DIEValue {

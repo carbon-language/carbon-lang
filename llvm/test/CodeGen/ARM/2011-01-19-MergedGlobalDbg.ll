@@ -17,8 +17,7 @@ target triple = "thumbv7-apple-darwin10"
 ; DW_OP_constu
 ; offset
 
-;CHECK:        .ascii   "x2"                   @ DW_AT_name
-;CHECK-NEXT:        .byte   0
+;CHECK: .long Lset6
 ;CHECK-NEXT:        @ DW_AT_type
 ;CHECK-NEXT:        @ DW_AT_decl_file
 ;CHECK-NEXT:        @ DW_AT_decl_line

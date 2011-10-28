@@ -8,7 +8,7 @@
 ;CHECK-NEXT: DW_AT_call_file
 ;CHECK-NEXT: DW_AT_call_line
 ;CHECK-NEXT: DW_TAG_formal_parameter
-;CHECK-NEXT: .ascii   "sp"                   ## DW_AT_name
+;CHECK-NEXT: Lstring11-Lsection_str ## DW_AT_name
 
 %struct.S1 = type { float*, i32 }
 
