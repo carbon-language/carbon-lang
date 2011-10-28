@@ -289,7 +289,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
 
         if (DisAsm->getInstruction(Inst, Size, memoryObject, Index,
                                    DebugOut, nulls())) {
-          outs() << format("%8llx:\t", SectionAddr + Index);
+          outs() << format("%8"PRIx64":\t", SectionAddr + Index);
           DumpBytes(StringRef(Bytes.data() + Index, Size));
           IP->printInst(&Inst, outs(), "");
           outs() << "\n";
@@ -316,7 +316,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
           if (error(rel_cur->getTypeName(name))) goto skip_print_rel;
           if (error(rel_cur->getValueString(val))) goto skip_print_rel;
 
-          outs() << format("\t\t\t%8llx: ", SectionAddr + addr) << name << "\t"
+          outs() << format("\t\t\t%8"PRIx64": ", SectionAddr + addr) << name << "\t"
                  << val << "\n";
 
         skip_print_rel:
@@ -400,7 +400,7 @@ static void PrintSectionContents(const ObjectFile *o) {
 
     // Dump out the content as hex and printable ascii characters.
     for (std::size_t addr = 0, end = Contents.size(); addr < end; addr += 16) {
-      outs() << format(" %04llx ", BaseAddr + addr);
+      outs() << format(" %04"PRIx64" ", BaseAddr + addr);
       // Dump line of hex.
       for (std::size_t i = 0; i < 16; ++i) {
         if (i != 0 && i % 4 == 0)
@@ -506,7 +506,7 @@ static void PrintSymbolTable(const ObjectFile *o) {
       else if (Type == SymbolRef::ST_Function)
         FileFunc = 'F';
 
-      outs() << format("%08llx", Offset) << " "
+      outs() << format("%08"PRIx64, Offset) << " "
              << GlobLoc // Local -> 'l', Global -> 'g', Neither -> ' '
              << (Weak ? 'w' : ' ') // Weak?
              << ' ' // Constructor. Not supported yet.
@@ -526,7 +526,7 @@ static void PrintSymbolTable(const ObjectFile *o) {
         outs() << SectionName;
       }
       outs() << '\t'
-             << format("%08llx ", Size)
+             << format("%08"PRIx64" ", Size)
              << Name
              << '\n';
     }
