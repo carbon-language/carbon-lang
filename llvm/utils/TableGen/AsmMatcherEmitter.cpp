@@ -591,7 +591,8 @@ private:
 
   /// getOperandClass - Lookup or create the class for the given operand.
   ClassInfo *getOperandClass(const CGIOperandList::OperandInfo &OI,
-                             int SubOpIdx = -1);
+                             int SubOpIdx);
+  ClassInfo *getOperandClass(Record *Rec, int SubOpIdx);
 
   /// BuildRegisterClasses - Build the ClassInfo* instances for register
   /// classes.
@@ -870,7 +871,11 @@ AsmMatcherInfo::getOperandClass(const CGIOperandList::OperandInfo &OI,
   Record *Rec = OI.Rec;
   if (SubOpIdx != -1)
     Rec = dynamic_cast<DefInit*>(OI.MIOperandInfo->getArg(SubOpIdx))->getDef();
+  return getOperandClass(Rec, SubOpIdx);
+}
 
+ClassInfo *
+AsmMatcherInfo::getOperandClass(Record *Rec, int SubOpIdx) {
   if (Rec->isSubClassOf("RegisterOperand")) {
     // RegisterOperand may have an associated ParserMatchClass. If it does,
     // use it, else just fall back to the underlying register class.
@@ -1375,9 +1380,11 @@ void AsmMatcherInfo::BuildAliasOperandReference(MatchableInfo *II,
         CGA.ResultOperands[i].getName() == OperandName) {
       // It's safe to go with the first one we find, because CodeGenInstAlias
       // validates that all operands with the same name have the same record.
-      unsigned ResultIdx = CGA.ResultInstOperandIndex[i].first;
       Op.SubOpIdx = CGA.ResultInstOperandIndex[i].second;
-      Op.Class = getOperandClass(CGA.ResultInst->Operands[ResultIdx],
+      // Use the match class from the Alias definition, not the
+      // destination instruction, as we may have an immediate that's
+      // being munged by the match class.
+      Op.Class = getOperandClass(CGA.ResultOperands[i].getRecord(),
                                  Op.SubOpIdx);
       Op.SrcOpName = OperandName;
       return;
