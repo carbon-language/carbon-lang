@@ -185,7 +185,7 @@ _DNBLogThreaded (const char *format, ...)
                 timersub (&tv, &g_timeval, &delta);
             }
             g_timeval = tv;
-            _DNBLog (DNBLOG_FLAG_THREADED, "%u +%u.%06u sec [%4.4x/%4.4x]: %s", 
+            _DNBLog (DNBLOG_FLAG_THREADED, "%u +%lu.%06u sec [%4.4x/%4.4x]: %s", 
                      ++g_message_id, 
                      delta.tv_sec, 
                      delta.tv_usec,             
@@ -230,7 +230,7 @@ _DNBLogThreadedIf (uint32_t log_bit, const char *format, ...)
                 timersub (&tv, &g_timeval, &delta);
             }
             g_timeval = tv;
-            _DNBLog (DNBLOG_FLAG_THREADED, "%u +%u.%06u sec [%4.4x/%4.4x]: %s", 
+            _DNBLog (DNBLOG_FLAG_THREADED, "%u +%lu.%06u sec [%4.4x/%4.4x]: %s", 
                      ++g_message_id, 
                      delta.tv_sec, 
                      delta.tv_usec, 

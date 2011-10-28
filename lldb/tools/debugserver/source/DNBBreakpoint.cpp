@@ -77,34 +77,34 @@ DNBBreakpoint::Dump() const
 {
     if (IsBreakpoint())
     {
-        DNBLog("DNBBreakpoint %u: tid = %4.4x  addr = %8.8p  state = %s  type = %s breakpoint  hw_index = %i  hit_count = %-4u  ignore_count = %-4u  callback = %8.8p baton = %8.8p",
-            m_breakID,
-            m_tid,
-            m_addr,
-            m_enabled ? "enabled " : "disabled",
-            IsHardware() ? "hardware" : "software",
-            GetHardwareIndex(),
-            GetHitCount(),
-            GetIgnoreCount(),
-            m_callback,
-            m_callback_baton);
+        DNBLog ("DNBBreakpoint %u: tid = %4.4x  addr = 0x%llx  state = %s  type = %s breakpoint  hw_index = %i  hit_count = %-4u  ignore_count = %-4u  callback = %p baton = %p",
+                m_breakID,
+                m_tid,
+                (uint64_t)m_addr,
+                m_enabled ? "enabled " : "disabled",
+                IsHardware() ? "hardware" : "software",
+                GetHardwareIndex(),
+                GetHitCount(),
+                GetIgnoreCount(),
+                m_callback,
+                m_callback_baton);
     }
     else
     {
-        DNBLog("DNBBreakpoint %u: tid = %4.4x  addr = %8.8p  size = %u  state = %s  type = %s watchpoint (%s%s)  hw_index = %i  hit_count = %-4u  ignore_count = %-4u  callback = %8.8p baton = %8.8p",
-            m_breakID,
-            m_tid,
-            m_addr,
-            m_byte_size,
-            m_enabled ? "enabled " : "disabled",
-            IsHardware() ? "hardware" : "software",
-            m_watch_read ? "r" : "",
-            m_watch_write ? "w" : "",
-            GetHardwareIndex(),
-            GetHitCount(),
-            GetIgnoreCount(),
-            m_callback,
-            m_callback_baton);
+        DNBLog ("DNBBreakpoint %u: tid = %4.4x  addr = 0x%llx  size = %zu  state = %s  type = %s watchpoint (%s%s)  hw_index = %i  hit_count = %-4u  ignore_count = %-4u  callback = %p baton = %p",
+                m_breakID,
+                m_tid,
+                (uint64_t)m_addr,
+                m_byte_size,
+                m_enabled ? "enabled " : "disabled",
+                IsHardware() ? "hardware" : "software",
+                m_watch_read ? "r" : "",
+                m_watch_write ? "w" : "",
+                GetHardwareIndex(),
+                GetHitCount(),
+                GetIgnoreCount(),
+                m_callback,
+                m_callback_baton);
     }
 }
 

@@ -19,20 +19,6 @@
 #include <vector>
 #include "DNBConfig.h"
 
-#ifdef HAVE_64_BIT_MACH_EXCEPTIONS
-
-#define MACH_EXCEPTION_DATA_FMT_DEC "%lld"
-#define MACH_EXCEPTION_DATA_FMT_HEX "0x%16.16llx"
-#define MACH_EXCEPTION_DATA_FMT_MINHEX "0x%llx"
-
-#else
-
-#define MACH_EXCEPTION_DATA_FMT_DEC "%d"
-#define MACH_EXCEPTION_DATA_FMT_HEX "0x%8.8x"
-#define MACH_EXCEPTION_DATA_FMT_MINHEX "0x%x"
-
-#endif
-
 class MachProcess;
 class PThreadMutex;
 

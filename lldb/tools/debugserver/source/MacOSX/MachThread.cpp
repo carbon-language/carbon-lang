@@ -349,7 +349,7 @@ MachThread::Dump(uint32_t index)
     default:                        thread_run_state = "???"; break;
     }
 
-    DNBLogThreaded("[%3u] #%3u tid: 0x%4.4x, pc: 0x%16.16llx, sp: 0x%16.16llx, breakID: %3d, user: %d.%06.6d, system: %d.%06.6d, cpu: %2d, policy: %2d, run_state: %2d (%s), flags: %2d, suspend_count: %2d (current %2d), sleep_time: %d",
+    DNBLogThreaded("[%3u] #%3u tid: 0x%4.4x, pc: 0x%16.16llx, sp: 0x%16.16llx, breakID: %3d, user: %d.%6.6d, system: %d.%6.6d, cpu: %2d, policy: %2d, run_state: %2d (%s), flags: %2d, suspend_count: %2d (current %2d), sleep_time: %d",
         index,
         m_seq_id,
         m_tid,

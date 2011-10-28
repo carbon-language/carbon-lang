@@ -95,12 +95,12 @@ catch_mach_exception_raise_state
 {
     if (DNBLogCheckLogBit(LOG_EXCEPTIONS))
     {
-        DNBLogThreaded("::%s ( exc_port = 0x%4.4x, exc_type = %d ( %s ), exc_data = " MACH_EXCEPTION_DATA_FMT_HEX ", exc_data_count = %d)",
-            __FUNCTION__,
-            exc_port,
-            exc_type, MachException::Name(exc_type),
-            exc_data,
-            exc_data_count);
+        DNBLogThreaded ("::%s ( exc_port = 0x%4.4x, exc_type = %d ( %s ), exc_data = 0x%llx, exc_data_count = %d)",
+                        __FUNCTION__,
+                        exc_port,
+                        exc_type, MachException::Name(exc_type),
+                        (uint64_t)exc_data,
+                        exc_data_count);
     }
     return KERN_FAILURE;
 }
@@ -125,15 +125,15 @@ catch_mach_exception_raise_state_identity
     kern_return_t kret;
     if (DNBLogCheckLogBit(LOG_EXCEPTIONS))
     {
-        DNBLogThreaded("::%s ( exc_port = 0x%4.4x, thd_port = 0x%4.4x, tsk_port = 0x%4.4x, exc_type = %d ( %s ), exc_data[%d] = { " MACH_EXCEPTION_DATA_FMT_HEX ",  " MACH_EXCEPTION_DATA_FMT_HEX " })",
+        DNBLogThreaded("::%s ( exc_port = 0x%4.4x, thd_port = 0x%4.4x, tsk_port = 0x%4.4x, exc_type = %d ( %s ), exc_data[%d] = { 0x%llx, 0x%llx })",
             __FUNCTION__,
             exc_port,
             thread_port,
             task_port,
             exc_type, MachException::Name(exc_type),
             exc_data_count,
-            exc_data_count > 0 ? exc_data[0] : 0xBADDBADD,
-            exc_data_count > 1 ? exc_data[1] : 0xBADDBADD);
+            (uint64_t)(exc_data_count > 0 ? exc_data[0] : 0xBADDBADD),
+            (uint64_t)(exc_data_count > 1 ? exc_data[1] : 0xBADDBADD));
     }
     kret = mach_port_deallocate (mach_task_self (), task_port);
     kret = mach_port_deallocate (mach_task_self (), thread_port);
@@ -154,15 +154,15 @@ catch_mach_exception_raise
 {
     if (DNBLogCheckLogBit(LOG_EXCEPTIONS))
     {
-        DNBLogThreaded("::%s ( exc_port = 0x%4.4x, thd_port = 0x%4.4x, tsk_port = 0x%4.4x, exc_type = %d ( %s ), exc_data[%d] = { " MACH_EXCEPTION_DATA_FMT_HEX ",  " MACH_EXCEPTION_DATA_FMT_HEX " })",
-            __FUNCTION__,
-            exc_port,
-            thread_port,
-            task_port,
-            exc_type, MachException::Name(exc_type),
-            exc_data_count,
-            exc_data_count > 0 ? exc_data[0] : 0xBADDBADD,
-            exc_data_count > 1 ? exc_data[1] : 0xBADDBADD);
+        DNBLogThreaded ("::%s ( exc_port = 0x%4.4x, thd_port = 0x%4.4x, tsk_port = 0x%4.4x, exc_type = %d ( %s ), exc_data[%d] = { 0x%llx, 0x%llx })",
+                        __FUNCTION__,
+                        exc_port,
+                        thread_port,
+                        task_port,
+                        exc_type, MachException::Name(exc_type),
+                        exc_data_count,
+                        (uint64_t)(exc_data_count > 0 ? exc_data[0] : 0xBADDBADD),
+                        (uint64_t)(exc_data_count > 1 ? exc_data[1] : 0xBADDBADD));
     }
 
     g_message->task_port = task_port;
@@ -178,7 +178,7 @@ void
 MachException::Message::Dump() const
 {
     DNBLogThreadedIf(LOG_EXCEPTIONS,
-        "  exc_msg { bits = 0x%8.8lx size = 0x%8.8lx remote-port = 0x%8.8lx local-port = 0x%8.8lx reserved = 0x%8.8lx id = 0x%8.8lx } ",
+        "  exc_msg { bits = 0x%8.8x size = 0x%8.8x remote-port = 0x%8.8x local-port = 0x%8.8x reserved = 0x%8.8x id = 0x%8.8x } ",
         exc_msg.hdr.msgh_bits,
         exc_msg.hdr.msgh_size,
         exc_msg.hdr.msgh_remote_port,
@@ -187,7 +187,7 @@ MachException::Message::Dump() const
         exc_msg.hdr.msgh_id);
 
     DNBLogThreadedIf(LOG_EXCEPTIONS,
-        "reply_msg { bits = 0x%8.8lx size = 0x%8.8lx remote-port = 0x%8.8lx local-port = 0x%8.8lx reserved = 0x%8.8lx id = 0x%8.8lx }",
+        "reply_msg { bits = 0x%8.8x size = 0x%8.8x remote-port = 0x%8.8x local-port = 0x%8.8x reserved = 0x%8.8x id = 0x%8.8x }",
         reply_msg.hdr.msgh_bits,
         reply_msg.hdr.msgh_size,
         reply_msg.hdr.msgh_remote_port,
@@ -237,7 +237,7 @@ MachException::Data::GetStopInfo(struct DNBThreadStopInfo *stop_info) const
             desc += snprintf(desc, end_desc - desc, " data[%zu] = {", stop_info->details.exception.data_count);
 
             for (idx = 0; desc < end_desc && idx < stop_info->details.exception.data_count; ++idx)
-                desc += snprintf(desc, end_desc - desc, MACH_EXCEPTION_DATA_FMT_MINHEX "%c", exc_data[idx], ((idx + 1 == stop_info->details.exception.data_count) ? '}' : ','));
+                desc += snprintf(desc, end_desc - desc, "0x%llx%c", (uint64_t)exc_data[idx], ((idx + 1 == stop_info->details.exception.data_count) ? '}' : ','));
         }
     }
 
@@ -275,19 +275,18 @@ MachException::Message::Receive(mach_port_t port, mach_msg_option_t options, mac
     if (log_exceptions && ((options & MACH_RCV_TIMEOUT) == 0))
     {
         // Dump this log message if we have no timeout in case it never returns
-        DNBLogThreaded("::mach_msg ( msg->{bits = %#x, size = %u remote_port = %#x, local_port = %#x, reserved = 0x%x, id = 0x%x}, option = %#x, send_size = %u, rcv_size = %u, rcv_name = %#x, timeout = %u, notify = %#x)",
-                exc_msg.hdr.msgh_bits,
-                exc_msg.hdr.msgh_size,
-                exc_msg.hdr.msgh_remote_port,
-                exc_msg.hdr.msgh_local_port,
-                exc_msg.hdr.msgh_reserved,
-                exc_msg.hdr.msgh_id,
-                options,
-                0,
-                sizeof (exc_msg.data),
-                port,
-                mach_msg_timeout,
-                notify_port);
+        DNBLogThreaded ("::mach_msg ( msg->{bits = %#x, size = %u remote_port = %#x, local_port = %#x, reserved = 0x%x, id = 0x%x}, option = %#x, send_size = 0, rcv_size = %zu, rcv_name = %#x, timeout = %u, notify = %#x)",
+                        exc_msg.hdr.msgh_bits,
+                        exc_msg.hdr.msgh_size,
+                        exc_msg.hdr.msgh_remote_port,
+                        exc_msg.hdr.msgh_local_port,
+                        exc_msg.hdr.msgh_reserved,
+                        exc_msg.hdr.msgh_id,
+                        options,
+                        sizeof (exc_msg.data),
+                        port,
+                        mach_msg_timeout,
+                        notify_port);
     }
 
     err = ::mach_msg (&exc_msg.hdr,
@@ -461,7 +460,7 @@ MachException::Data::Dump() const
         size_t idx;
         for (idx = 0; idx < exc_data_count; ++idx)
         {
-            DNBLogThreadedIf(LOG_EXCEPTIONS, "            exc_data[%u]: " MACH_EXCEPTION_DATA_FMT_HEX, idx, exc_data[idx]);
+            DNBLogThreadedIf(LOG_EXCEPTIONS, "            exc_data[%zu]: 0x%llx", idx, (uint64_t)exc_data[idx]);
         }
     }
 }

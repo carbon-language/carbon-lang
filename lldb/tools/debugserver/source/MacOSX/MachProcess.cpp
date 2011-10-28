@@ -343,7 +343,7 @@ MachProcess::Kill (const struct timespec *timeout_abstime)
     ::ptrace (PT_KILL, m_pid, 0, 0);
     DNBError err;
     err.SetErrorToErrno();
-    DNBLogThreadedIf(LOG_PROCESS, "MachProcess::Kill() DoSIGSTOP() ::ptrace (PT_KILL, pid=%u, 0, 0) => 0x%8.8x (%s)", err.Error(), err.AsString());
+    DNBLogThreadedIf(LOG_PROCESS, "MachProcess::Kill() DoSIGSTOP() ::ptrace (PT_KILL, pid=%u, 0, 0) => 0x%8.8x (%s)", m_pid, err.Error(), err.AsString());
     m_thread_actions = DNBThreadResumeActions (eStateRunning, 0);
     PrivateResume ();
     return true;
@@ -616,7 +616,7 @@ MachProcess::ReplyToAllExceptions ()
         MachException::Message::iterator end = m_exception_messages.end();
         for (pos = begin; pos != end; ++pos)
         {
-            DNBLogThreadedIf(LOG_EXCEPTIONS, "Replying to exception %d...", std::distance(begin, pos));
+            DNBLogThreadedIf(LOG_EXCEPTIONS, "Replying to exception %u...", (uint32_t)std::distance(begin, pos));
             int thread_reply_signal = 0;
 
             const DNBThreadResumeAction *action = m_thread_actions.GetActionForThread (pos->state.thread_port, false);
@@ -664,7 +664,7 @@ MachProcess::PrivateResume ()
 nub_break_t
 MachProcess::CreateBreakpoint(nub_addr_t addr, nub_size_t length, bool hardware, thread_t tid)
 {
-    DNBLogThreadedIf(LOG_BREAKPOINTS, "MachProcess::CreateBreakpoint ( addr = 0x%8.8llx, length = %u, hardware = %i, tid = 0x%4.4x )", (uint64_t)addr, length, hardware, tid);
+    DNBLogThreadedIf(LOG_BREAKPOINTS, "MachProcess::CreateBreakpoint ( addr = 0x%8.8llx, length = %zu, hardware = %i, tid = 0x%4.4x )", (uint64_t)addr, length, hardware, tid);
     if (hardware && tid == INVALID_NUB_THREAD)
         tid = GetCurrentThread();
 
@@ -672,7 +672,7 @@ MachProcess::CreateBreakpoint(nub_addr_t addr, nub_size_t length, bool hardware,
     nub_break_t breakID = m_breakpoints.Add(bp);
     if (EnableBreakpoint(breakID))
     {
-        DNBLogThreadedIf(LOG_BREAKPOINTS, "MachProcess::CreateBreakpoint ( addr = 0x%8.8llx, length = %u, tid = 0x%4.4x ) => %u", (uint64_t)addr, length, tid, breakID);
+        DNBLogThreadedIf(LOG_BREAKPOINTS, "MachProcess::CreateBreakpoint ( addr = 0x%8.8llx, length = %zu, tid = 0x%4.4x ) => %u", (uint64_t)addr, length, tid, breakID);
         return breakID;
     }
     else
@@ -686,7 +686,7 @@ MachProcess::CreateBreakpoint(nub_addr_t addr, nub_size_t length, bool hardware,
 nub_watch_t
 MachProcess::CreateWatchpoint(nub_addr_t addr, nub_size_t length, uint32_t watch_flags, bool hardware, thread_t tid)
 {
-    DNBLogThreadedIf(LOG_WATCHPOINTS, "MachProcess::CreateWatchpoint ( addr = 0x%8.8llx, length = %u, flags = 0x%8.8x, hardware = %i, tid = 0x%4.4x )", (uint64_t)addr, length, watch_flags, hardware, tid);
+    DNBLogThreadedIf(LOG_WATCHPOINTS, "MachProcess::CreateWatchpoint ( addr = 0x%8.8llx, length = %zu, flags = 0x%8.8x, hardware = %i, tid = 0x%4.4x )", (uint64_t)addr, length, watch_flags, hardware, tid);
     if (hardware && tid == INVALID_NUB_THREAD)
         tid = GetCurrentThread();
 
@@ -696,12 +696,12 @@ MachProcess::CreateWatchpoint(nub_addr_t addr, nub_size_t length, uint32_t watch
     nub_watch_t watchID = m_watchpoints.Add(watch);
     if (EnableWatchpoint(watchID))
     {
-        DNBLogThreadedIf(LOG_WATCHPOINTS, "MachProcess::CreateWatchpoint ( addr = 0x%8.8llx, length = %u, tid = 0x%x) => %u", (uint64_t)addr, length, tid, watchID);
+        DNBLogThreadedIf(LOG_WATCHPOINTS, "MachProcess::CreateWatchpoint ( addr = 0x%8.8llx, length = %zu, tid = 0x%x) => %u", (uint64_t)addr, length, tid, watchID);
         return watchID;
     }
     else
     {
-        DNBLogThreadedIf(LOG_WATCHPOINTS, "MachProcess::CreateWatchpoint ( addr = 0x%8.8llx, length = %u, tid = 0x%x) => FAILED (%u)", (uint64_t)addr, length, tid, watchID);
+        DNBLogThreadedIf(LOG_WATCHPOINTS, "MachProcess::CreateWatchpoint ( addr = 0x%8.8llx, length = %zu, tid = 0x%x) => FAILED (%u)", (uint64_t)addr, length, tid, watchID);
         m_watchpoints.Remove(watchID);
     }
     // We failed to enable the watchpoint
@@ -1071,7 +1071,7 @@ MachProcess::ExceptionMessageBundleComplete()
 {
     // We have a complete bundle of exceptions for our child process.
     PTHREAD_MUTEX_LOCKER (locker, m_exception_messages_mutex);
-    DNBLogThreadedIf(LOG_EXCEPTIONS, "%s: %d exception messages.", __PRETTY_FUNCTION__, m_exception_messages.size());
+    DNBLogThreadedIf(LOG_EXCEPTIONS, "%s: %zu exception messages.", __PRETTY_FUNCTION__, m_exception_messages.size());
     if (!m_exception_messages.empty())
     {
         // Let all threads recover from stopping and do any clean up based
@@ -1140,7 +1140,7 @@ MachProcess::SharedLibrariesUpdated ( )
 void
 MachProcess::AppendSTDOUT (char* s, size_t len)
 {
-    DNBLogThreadedIf(LOG_PROCESS, "MachProcess::%s (<%d> %s) ...", __FUNCTION__, len, s);
+    DNBLogThreadedIf(LOG_PROCESS, "MachProcess::%s (<%zu> %s) ...", __FUNCTION__, len, s);
     PTHREAD_MUTEX_LOCKER (locker, m_stdio_mutex);
     m_stdout_data.append(s, len);
     m_events.SetEvents(eEventStdioAvailable);
@@ -1152,7 +1152,7 @@ MachProcess::AppendSTDOUT (char* s, size_t len)
 size_t
 MachProcess::GetAvailableSTDOUT (char *buf, size_t buf_size)
 {
-    DNBLogThreadedIf(LOG_PROCESS, "MachProcess::%s (&%p[%u]) ...", __FUNCTION__, buf, buf_size);
+    DNBLogThreadedIf(LOG_PROCESS, "MachProcess::%s (&%p[%zu]) ...", __FUNCTION__, buf, buf_size);
     PTHREAD_MUTEX_LOCKER (locker, m_stdio_mutex);
     size_t bytes_available = m_stdout_data.size();
     if (bytes_available > 0)

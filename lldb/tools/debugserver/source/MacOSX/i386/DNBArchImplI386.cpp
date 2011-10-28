@@ -822,7 +822,7 @@ DNBArchImplI386::GetWatchAddress(const DBG &debug_state, uint32_t hw_index)
 uint32_t
 DNBArchImplI386::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool read, bool write)
 {
-    DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchImplI386::EnableHardwareWatchpoint(addr = %8.8p, size = %u, read = %u, write = %u)", addr, size, read, write);
+    DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchImplI386::EnableHardwareWatchpoint(addr = 0x%llx, size = %zu, read = %u, write = %u)", (uint64_t)addr, size, read, write);
 
     const uint32_t num_hw_watchpoints = NumSupportedHardwareWatchpoints();
 
@@ -924,8 +924,8 @@ DNBArchImplI386::GetHardwareWatchpointHit(nub_addr_t &addr)
             {
                 addr = GetWatchAddress(debug_state, i);
                 DNBLogThreadedIf(LOG_WATCHPOINTS,
-                                 "DNBArchImplI386::GetHardwareWatchpointHit() found => %u (addr = %8.8p).",
-                                 i, addr);
+                                 "DNBArchImplI386::GetHardwareWatchpointHit() found => %u (addr = 0x%llx).",
+                                 i, (uint64_t)addr);
                 return i;
             }
         }

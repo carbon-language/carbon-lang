@@ -286,7 +286,7 @@ DNBProcessAttachByName (const char *name, struct timespec *timeout, char *err_st
     }
     else if (num_matching_proc_infos > 1)
     {
-        DNBLogError ("error: %u processes match '%s':\n", num_matching_proc_infos, name);
+        DNBLogError ("error: %zu processes match '%s':\n", num_matching_proc_infos, name);
         size_t i;
         for (i=0; i<num_matching_proc_infos; ++i)
             DNBLogError ("%6u - %s\n", matching_proc_infos[i].kp_proc.p_pid, matching_proc_infos[i].kp_proc.p_comm);

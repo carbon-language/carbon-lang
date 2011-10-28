@@ -172,7 +172,7 @@ MachTask::ReadMemory (nub_addr_t addr, nub_size_t size, void *buf)
     {
         n = m_vm_memory.Read(task, addr, buf, size);
 
-        DNBLogThreadedIf(LOG_MEMORY, "MachTask::ReadMemory ( addr = 0x%8.8llx, size = %zu, buf = %8.8p) => %u bytes read", (uint64_t)addr, size, buf, n);
+        DNBLogThreadedIf(LOG_MEMORY, "MachTask::ReadMemory ( addr = 0x%8.8llx, size = %zu, buf = %p) => %zu bytes read", (uint64_t)addr, size, buf, n);
         if (DNBLogCheckLogBit(LOG_MEMORY_DATA_LONG) || (DNBLogCheckLogBit(LOG_MEMORY_DATA_SHORT) && size <= 8))
         {
             DNBDataRef data((uint8_t*)buf, n, false);
@@ -194,7 +194,7 @@ MachTask::WriteMemory (nub_addr_t addr, nub_size_t size, const void *buf)
     if (task != TASK_NULL)
     {
         n = m_vm_memory.Write(task, addr, buf, size);
-        DNBLogThreadedIf(LOG_MEMORY, "MachTask::WriteMemory ( addr = 0x%8.8llx, size = %zu, buf = %8.8p) => %u bytes written", (uint64_t)addr, size, buf, n);
+        DNBLogThreadedIf(LOG_MEMORY, "MachTask::WriteMemory ( addr = 0x%8.8llx, size = %zu, buf = %p) => %zu bytes written", (uint64_t)addr, size, buf, n);
         if (DNBLogCheckLogBit(LOG_MEMORY_DATA_LONG) || (DNBLogCheckLogBit(LOG_MEMORY_DATA_SHORT) && size <= 8))
         {
             DNBDataRef data((uint8_t*)buf, n, false);
@@ -284,8 +284,12 @@ MachTask::BasicInfo(task_t task, struct task_basic_info *info)
     {
         float user = (float)info->user_time.seconds + (float)info->user_time.microseconds / 1000000.0f;
         float system = (float)info->user_time.seconds + (float)info->user_time.microseconds / 1000000.0f;
-        DNBLogThreaded("task_basic_info = { suspend_count = %i, virtual_size = 0x%8.8x, resident_size = 0x%8.8x, user_time = %f, system_time = %f }",
-            info->suspend_count, info->virtual_size, info->resident_size, user, system);
+        DNBLogThreaded ("task_basic_info = { suspend_count = %i, virtual_size = 0x%8.8llx, resident_size = 0x%8.8llx, user_time = %f, system_time = %f }",
+                        info->suspend_count, 
+                        (uint64_t)info->virtual_size, 
+                        (uint64_t)info->resident_size, 
+                        user, 
+                        system);
     }
     return err.Error();
 }
