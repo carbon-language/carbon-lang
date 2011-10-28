@@ -2266,6 +2266,7 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
 
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     CCValAssign &VA = ArgLocs[i];
+    EVT ValVT = VA.getValVT();
 
     // Arguments stored on registers
     if (VA.isRegLoc()) {
@@ -2300,23 +2301,22 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
           Opcode = ISD::AssertZext;
         if (Opcode)
           ArgValue = DAG.getNode(Opcode, dl, RegVT, ArgValue,
-                                 DAG.getValueType(VA.getValVT()));
-        ArgValue = DAG.getNode(ISD::TRUNCATE, dl, VA.getValVT(), ArgValue);
+                                 DAG.getValueType(ValVT));
+        ArgValue = DAG.getNode(ISD::TRUNCATE, dl, ValVT, ArgValue);
       }
 
-      // Handle O32 ABI cases: i32->f32 and (i32,i32)->f64
-      if (IsO32) {
-        if (RegVT == MVT::i32 && VA.getValVT() == MVT::f32)
-          ArgValue = DAG.getNode(ISD::BITCAST, dl, MVT::f32, ArgValue);
-        if (RegVT == MVT::i32 && VA.getValVT() == MVT::f64) {
-          unsigned Reg2 = AddLiveIn(DAG.getMachineFunction(),
-                                    getNextIntArgReg(ArgReg), RC);
-          SDValue ArgValue2 = DAG.getCopyFromReg(Chain, dl, Reg2, RegVT);
-          if (!Subtarget->isLittle())
-            std::swap(ArgValue, ArgValue2);
-          ArgValue = DAG.getNode(MipsISD::BuildPairF64, dl, MVT::f64,
-                                 ArgValue, ArgValue2);
-        }
+      // Handle floating point arguments passed in integer registers.
+      if ((RegVT == MVT::i32 && ValVT == MVT::f32) ||
+          (RegVT == MVT::i64 && ValVT == MVT::f64))
+        ArgValue = DAG.getNode(ISD::BITCAST, dl, ValVT, ArgValue);
+      else if (IsO32 && RegVT == MVT::i32 && ValVT == MVT::f64) {
+        unsigned Reg2 = AddLiveIn(DAG.getMachineFunction(),
+                                  getNextIntArgReg(ArgReg), RC);
+        SDValue ArgValue2 = DAG.getCopyFromReg(Chain, dl, Reg2, RegVT);
+        if (!Subtarget->isLittle())
+          std::swap(ArgValue, ArgValue2);
+        ArgValue = DAG.getNode(MipsISD::BuildPairF64, dl, MVT::f64,
+                               ArgValue, ArgValue2);
       }
 
       InVals.push_back(ArgValue);
@@ -2343,12 +2343,12 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
       }
 
       // The stack pointer offset is relative to the caller stack frame.
-      LastFI = MFI->CreateFixedObject(VA.getValVT().getSizeInBits()/8,
+      LastFI = MFI->CreateFixedObject(ValVT.getSizeInBits()/8,
                                       VA.getLocMemOffset(), true);
 
       // Create load nodes to retrieve arguments from the stack
       SDValue FIN = DAG.getFrameIndex(LastFI, getPointerTy());
-      InVals.push_back(DAG.getLoad(VA.getValVT(), dl, Chain, FIN,
+      InVals.push_back(DAG.getLoad(ValVT, dl, Chain, FIN,
                                    MachinePointerInfo::getFixedStack(LastFI),
                                    false, false, 0));
     }
