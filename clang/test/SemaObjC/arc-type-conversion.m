@@ -77,4 +77,12 @@ void ownership_transfer_in_cast(void *vp, Block *pblk) {
   Block_strong blk_strong1;
   Block_strong blk_strong2 = (Block)blk_strong1;
   Block_autoreleasing *blk_auto = (Block*)pblk;
+
+  id lv;
+  (void)(id)&lv; // expected-error {{cast of an indirect pointer to an Objective-C pointer to 'id'}}
+  (void)(id*)lv; // expected-error {{cast of an Objective-C pointer to '__strong id *'}}
+  (void)(NSString*)&lv; // expected-error {{cast of an indirect pointer to an Objective-C pointer to 'NSString *'}}
+  (void)(NSString**)lv; // expected-error {{cast of an Objective-C pointer to 'NSString *__strong *'}}
+  (void)(Block)&lv; // expected-error {{cast of an indirect pointer to an Objective-C pointer to 'Block'}}
+  (void)(Block*)lv; // expected-error {{cast of an Objective-C pointer to '__strong Block *'}}
 }
