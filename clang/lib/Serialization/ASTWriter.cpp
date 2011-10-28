@@ -3501,7 +3501,9 @@ void ASTWriter::associateDeclWithFile(const Decl *D, DeclID ID) {
   SourceManager &SM = Context->getSourceManager();
   SourceLocation FileLoc = SM.getFileLoc(Loc);
   assert(SM.isLocalSourceLocation(FileLoc));
-  FileID FID = SM.getFileID(FileLoc);
+  FileID FID;
+  unsigned Offset;
+  llvm::tie(FID, Offset) = SM.getDecomposedLoc(FileLoc);
   if (FID.isInvalid())
     return;
   const SrcMgr::SLocEntry *Entry = &SM.getSLocEntry(FID);
@@ -3511,11 +3513,10 @@ void ASTWriter::associateDeclWithFile(const Decl *D, DeclID ID) {
   if (!Info)
     Info = new DeclIDInFileInfo();
 
-  unsigned RawLoc = FileLoc.getRawEncoding();
-  std::pair<unsigned, serialization::DeclID> LocDecl(RawLoc, ID);
+  std::pair<unsigned, serialization::DeclID> LocDecl(Offset, ID);
   LocDeclIDsTy &Decls = Info->DeclIDs;
 
-  if (Decls.empty() || Decls.back().first <= RawLoc) {
+  if (Decls.empty() || Decls.back().first <= Offset) {
     Decls.push_back(LocDecl);
     return;
   }

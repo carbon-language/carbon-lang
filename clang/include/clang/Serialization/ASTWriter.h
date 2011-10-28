@@ -146,7 +146,7 @@ private:
   /// the declaration's ID.
   std::vector<serialization::DeclOffset> DeclOffsets;
 
-  /// \brief Vector of pairs of raw location/DeclID.
+  /// \brief Sorted (by file offset) vector of pairs of file offset/DeclID.
   typedef SmallVector<std::pair<unsigned, serialization::DeclID>, 64>
     LocDeclIDsTy;
   struct DeclIDInFileInfo {
