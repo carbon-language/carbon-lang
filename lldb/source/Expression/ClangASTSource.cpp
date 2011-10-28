@@ -25,9 +25,11 @@ ClangASTSource::~ClangASTSource()
 void
 ClangASTSource::StartTranslationUnit(ASTConsumer *Consumer) 
 {
-    // Tell Sema to ask us when looking into the translation unit's decl.
-    m_ast_context.getTranslationUnitDecl()->setHasExternalVisibleStorage();
-    m_ast_context.getTranslationUnitDecl()->setHasExternalLexicalStorage();
+    if (!m_ast_context)
+        return;
+    
+    m_ast_context->getTranslationUnitDecl()->setHasExternalVisibleStorage();
+    m_ast_context->getTranslationUnitDecl()->setHasExternalLexicalStorage();
 }
 
 // The core lookup interface.
@@ -38,7 +40,10 @@ ClangASTSource::FindExternalVisibleDeclsByName
     DeclarationName clang_decl_name
 ) 
 {
-    if (m_decl_map.GetImportInProgress())
+    if (!m_ast_context)
+        return SetNoExternalVisibleDeclsForName(decl_ctx, clang_decl_name);
+    
+    if (GetImportInProgress())
         return SetNoExternalVisibleDeclsForName(decl_ctx, clang_decl_name);
         
     std::string decl_name (clang_decl_name.getAsString());
@@ -77,13 +82,13 @@ ClangASTSource::FindExternalVisibleDeclsByName
     }
 
 
-    if (!m_decl_map.GetLookupsEnabled())
+    if (!GetLookupsEnabled())
     {
         // Wait until we see a '$' at the start of a name before we start doing 
         // any lookups so we can avoid lookup up all of the builtin types.
         if (!decl_name.empty() && decl_name[0] == '$')
         {
-            m_decl_map.SetLookupsEnabled ();
+            SetLookupsEnabled (true);
         }
         else
         {               
@@ -105,7 +110,7 @@ ClangASTSource::FindExternalVisibleDeclsByName
 //  printf("[%5u] FindExternalVisibleDeclsByName() \"%s\"\n", g_depth, uniqued_const_decl_name);
     llvm::SmallVector<NamedDecl*, 4> name_decls;    
     NameSearchContext name_search_context(*this, name_decls, clang_decl_name, decl_ctx);
-    m_decl_map.FindExternalVisibleDecls(name_search_context, const_decl_name);
+    FindExternalVisibleDecls(name_search_context);
     DeclContext::lookup_result result (SetExternalVisibleDeclsForName (decl_ctx, clang_decl_name, name_decls));
 //  --g_depth;
     m_active_lookups.erase (uniqued_const_decl_name);
@@ -113,25 +118,20 @@ ClangASTSource::FindExternalVisibleDeclsByName
 }
 
 void
+ClangASTSource::FindExternalVisibleDecls (NameSearchContext &context)
+{
+}
+
+void
 ClangASTSource::CompleteType (TagDecl *tag_decl)
 {
-    m_decl_map.CompleteTagDecl (tag_decl);
 }
 
 void
 ClangASTSource::CompleteType (ObjCInterfaceDecl *objc_decl)
 {
-    m_decl_map.CompleteObjCInterfaceDecl (objc_decl);
 }
 
-void 
-ClangASTSource::MaterializeVisibleDecls(const DeclContext *DC)
-{
-    return;
-}
-
-// This is used to support iterating through an entire lexical context,
-// which isn't something the debugger should ever need to do.
 clang::ExternalLoadResult
 ClangASTSource::FindExternalLexicalDecls
 (
@@ -140,13 +140,7 @@ ClangASTSource::FindExternalLexicalDecls
     llvm::SmallVectorImpl<Decl*> &Decls
 )
 {
-    return m_decl_map.FindExternalLexicalDecls (DC, isKindWeWant, Decls);
-}
-
-clang::ASTContext *
-NameSearchContext::GetASTContext() 
-{
-    return &m_ast_source.m_ast_context;
+    return ELR_Success;
 }
 
 clang::NamedDecl *
@@ -156,7 +150,7 @@ NameSearchContext::AddVarDecl(void *type)
     
     assert (type && "Type for variable must be non-NULL!");
         
-    clang::NamedDecl *Decl = VarDecl::Create(m_ast_source.m_ast_context, 
+    clang::NamedDecl *Decl = VarDecl::Create(*m_ast_source.m_ast_context, 
                                              const_cast<DeclContext*>(m_decl_context), 
                                              SourceLocation(), 
                                              SourceLocation(),
@@ -173,7 +167,7 @@ NameSearchContext::AddVarDecl(void *type)
 clang::NamedDecl *
 NameSearchContext::AddFunDecl (void *type) 
 {
-    clang::FunctionDecl *func_decl = FunctionDecl::Create (m_ast_source.m_ast_context,
+    clang::FunctionDecl *func_decl = FunctionDecl::Create (*m_ast_source.m_ast_context,
                                                            const_cast<DeclContext*>(m_decl_context),
                                                            SourceLocation(),
                                                            SourceLocation(),
@@ -203,7 +197,7 @@ NameSearchContext::AddFunDecl (void *type)
         {
             QualType arg_qual_type (func_proto_type->getArgType(ArgIndex));
             
-            parm_var_decls.push_back(ParmVarDecl::Create (m_ast_source.m_ast_context,
+            parm_var_decls.push_back(ParmVarDecl::Create (*m_ast_source.m_ast_context,
                                                           const_cast<DeclContext*>(m_decl_context),
                                                           SourceLocation(),
                                                           SourceLocation(),
@@ -230,10 +224,10 @@ NameSearchContext::AddGenericFunDecl()
     
     proto_info.Variadic = true;
     
-    QualType generic_function_type(m_ast_source.m_ast_context.getFunctionType (m_ast_source.m_ast_context.UnknownAnyTy,     // result
-                                                                               NULL,                                        // argument types
-                                                                               0,                                           // number of arguments
-                                                                               proto_info));
+    QualType generic_function_type(m_ast_source.m_ast_context->getFunctionType (m_ast_source.m_ast_context->UnknownAnyTy,    // result
+                                                                                NULL,                                        // argument types
+                                                                                0,                                           // number of arguments
+                                                                                proto_info));
     
     return AddFunDecl(generic_function_type.getAsOpaquePtr());
 }

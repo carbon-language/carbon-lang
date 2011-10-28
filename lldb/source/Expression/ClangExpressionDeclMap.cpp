@@ -2228,8 +2228,12 @@ ClangExpressionDeclMap::CompleteNamespaceMap (ClangASTImporter::NamespaceMapSP &
 // Interface for ClangASTSource
 
 void
-ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context, const ConstString &name)
+ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context)
 {
+    assert (m_ast_context);
+    
+    const ConstString name(context.m_decl_name.getAsString().c_str());
+    
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     if (m_parser_vars->m_ignore_lookups)
@@ -2256,7 +2260,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context, co
         
     if (const NamespaceDecl *namespace_context = dyn_cast<NamespaceDecl>(context.m_decl_context))
     {
-        ClangASTImporter::NamespaceMapSP namespace_map = m_parser_vars->GetASTImporter(context.GetASTContext())->GetNamespaceMap(namespace_context);
+        ClangASTImporter::NamespaceMapSP namespace_map = m_parser_vars->GetASTImporter(m_ast_context)->GetNamespaceMap(namespace_context);
         
         if (log && log->GetVerbose())
             log->Printf("  FEVD[%u] Inspecting namespace map %p (%d entries)", 
@@ -2327,6 +2331,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
 {
     assert (m_struct_vars.get());
     assert (m_parser_vars.get());
+    assert (m_ast_context);
     
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
             
@@ -2482,7 +2487,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             if (!ptype_type_decl)
                 break;
             
-            Decl *parser_ptype_decl = ClangASTContext::CopyDecl(context.GetASTContext(), scratch_ast_context, ptype_type_decl);
+            Decl *parser_ptype_decl = ClangASTContext::CopyDecl(m_ast_context, scratch_ast_context, ptype_type_decl);
             
             if (!parser_ptype_decl)
                 break;
@@ -2834,7 +2839,7 @@ ClangExpressionDeclMap::FindExternalLexicalDecls (const DeclContext *decl_contex
 }
 
 void
-ClangExpressionDeclMap::CompleteTagDecl (TagDecl *tag_decl)
+ClangExpressionDeclMap::CompleteType (TagDecl *tag_decl)
 {
     assert (m_parser_vars.get());
 
@@ -2859,7 +2864,7 @@ ClangExpressionDeclMap::CompleteTagDecl (TagDecl *tag_decl)
 }
 
 void
-ClangExpressionDeclMap::CompleteObjCInterfaceDecl (clang::ObjCInterfaceDecl *interface_decl)
+ClangExpressionDeclMap::CompleteType (clang::ObjCInterfaceDecl *interface_decl)
 {
     assert (m_parser_vars.get());
     
@@ -2877,7 +2882,6 @@ ClangExpressionDeclMap::CompleteObjCInterfaceDecl (clang::ObjCInterfaceDecl *int
 
     if (log)
     {
-        log->Printf("    [CompleteObjCInterfaceDecl] Completing an ObjCInterfaceDecl named %s", interface_decl->getName().str().c_str());
         log->Printf("      [COID] After:");
         ASTDumper dumper((Decl*)interface_decl);
         dumper.ToLog(log, "      [COID] ");    
@@ -3011,7 +3015,7 @@ ClangExpressionDeclMap::AddOneVariable (NameSearchContext &context, VariableSP v
     
     Value *var_location = GetVariableValue (*m_parser_vars->m_exe_ctx, 
                                             var, 
-                                            context.GetASTContext(),
+                                            m_ast_context,
                                             &ut,
                                             &pt);
     
@@ -3061,10 +3065,10 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
     
     TypeFromUser user_type (pvar_sp->GetTypeFromUser());
     
-    TypeFromParser parser_type (GuardedCopyType(context.GetASTContext(), 
+    TypeFromParser parser_type (GuardedCopyType(m_ast_context, 
                                                 user_type.GetASTContext(), 
                                                 user_type.GetOpaqueQualType()),
-                                context.GetASTContext());
+                                m_ast_context);
     
     NamedDecl *var_decl = context.AddVarDecl(ClangASTContext::CreateLValueReferenceType(parser_type.GetASTContext(), parser_type.GetOpaqueQualType()));
     
@@ -3100,8 +3104,8 @@ ClangExpressionDeclMap::AddOneGenericVariable(NameSearchContext &context,
     TypeFromUser user_type (ClangASTContext::CreateLValueReferenceType(scratch_ast_context, ClangASTContext::GetVoidPtrType(scratch_ast_context, true)),
                             scratch_ast_context);
     
-    TypeFromParser parser_type (ClangASTContext::CreateLValueReferenceType(scratch_ast_context, ClangASTContext::GetVoidPtrType(context.GetASTContext(), true)),
-                                context.GetASTContext());
+    TypeFromParser parser_type (ClangASTContext::CreateLValueReferenceType(scratch_ast_context, ClangASTContext::GetVoidPtrType(m_ast_context, true)),
+                                m_ast_context);
     
     NamedDecl *var_decl = context.AddVarDecl(parser_type.GetOpaqueQualType());
     
@@ -3199,7 +3203,7 @@ ClangExpressionDeclMap::AddOneRegister (NameSearchContext &context,
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
-    void *ast_type = ClangASTContext::GetBuiltinTypeForEncodingAndBitSize(context.GetASTContext(),
+    void *ast_type = ClangASTContext::GetBuiltinTypeForEncodingAndBitSize(m_ast_context,
                                                                           reg_info->encoding,
                                                                           reg_info->byte_size * 8);
     
@@ -3211,7 +3215,7 @@ ClangExpressionDeclMap::AddOneRegister (NameSearchContext &context,
     }
     
     TypeFromParser parser_type (ast_type,
-                                context.GetASTContext());
+                                m_ast_context);
     
     NamedDecl *var_decl = context.AddVarDecl(parser_type.GetOpaqueQualType());
     
@@ -3247,12 +3251,12 @@ ClangExpressionDeclMap::AddNamespace (NameSearchContext &context, ClangASTImport
     
     const ClangNamespaceDecl &namespace_decl = namespace_decls->begin()->second;
     
-    Decl *copied_decl = m_parser_vars->GetASTImporter(context.GetASTContext())->CopyDecl(namespace_decl.GetASTContext(), 
-                                                                                         namespace_decl.GetNamespaceDecl());
+    Decl *copied_decl = m_parser_vars->GetASTImporter(m_ast_context)->CopyDecl(namespace_decl.GetASTContext(), 
+                                                                               namespace_decl.GetNamespaceDecl());
     
     NamespaceDecl *copied_namespace_decl = dyn_cast<NamespaceDecl>(copied_decl);
     
-    m_parser_vars->GetASTImporter(context.GetASTContext())->RegisterNamespaceMap(copied_namespace_decl, namespace_decls);
+    m_parser_vars->GetASTImporter(m_ast_context)->RegisterNamespaceMap(copied_namespace_decl, namespace_decls);
     
     return dyn_cast<NamespaceDecl>(copied_decl);
 }
@@ -3298,7 +3302,7 @@ ClangExpressionDeclMap::AddOneFunction (NameSearchContext &context,
         fun_address = &fun->GetAddressRange().GetBaseAddress();
         
         fun_ast_context = fun_type->GetClangASTContext().getASTContext();
-        void *copied_type = GuardedCopyType(context.GetASTContext(), fun_ast_context, fun_opaque_type);
+        void *copied_type = GuardedCopyType(m_ast_context, fun_ast_context, fun_opaque_type);
         if (copied_type)
         {
             fun_decl = context.AddFunDecl(copied_type);
@@ -3365,7 +3369,7 @@ ClangExpressionDeclMap::AddOneType(NameSearchContext &context,
                                    unsigned int current_id,
                                    bool add_method)
 {
-    ASTContext *parser_ast_context = context.GetASTContext();
+    ASTContext *parser_ast_context = m_ast_context;
     ASTContext *user_ast_context = ut.GetASTContext();
     
     void *copied_type = GuardedCopyType(parser_ast_context, user_ast_context, ut.GetOpaqueQualType());

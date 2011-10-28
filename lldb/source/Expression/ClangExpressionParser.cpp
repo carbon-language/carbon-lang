@@ -320,7 +320,8 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
     
     if (decl_map)
     {
-        OwningPtr<clang::ExternalASTSource> ast_source(new ClangASTSource(*ast_context, *decl_map));
+        llvm::OwningPtr<clang::ExternalASTSource> ast_source(decl_map->CreateProxy());
+        decl_map->InstallASTContext(ast_context.get());
         ast_context->setExternalSource(ast_source);
     }
     

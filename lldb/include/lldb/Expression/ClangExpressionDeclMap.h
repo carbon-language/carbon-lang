@@ -25,6 +25,7 @@
 #include "lldb/lldb-public.h"
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Core/Value.h"
+#include "lldb/Expression/ClangASTSource.h"
 #include "lldb/Expression/ClangExpressionVariable.h"
 #include "lldb/Symbol/ClangASTImporter.h"
 #include "lldb/Symbol/TaggedASTType.h"
@@ -56,7 +57,9 @@ namespace lldb_private {
 /// Fourth and finally, it "dematerializes" the struct after the JITted code has
 /// has executed, placing the new values back where it found the old ones.
 //----------------------------------------------------------------------
-class ClangExpressionDeclMap : public ClangASTImporter::NamespaceMapCompleter
+class ClangExpressionDeclMap : 
+    public ClangASTSource,
+    public ClangASTImporter::NamespaceMapCompleter
 {
 public:
     //------------------------------------------------------------------
@@ -617,18 +620,11 @@ public:
     /// @param[in] context
     ///     The NameSearchContext that can construct Decls for this name.
     ///
-    /// @param[in] name
-    ///     The name as a plain C string.  The NameSearchContext contains 
-    ///     a DeclarationName for the name so at first the name may seem
-    ///     redundant, but ClangExpressionDeclMap operates in RTTI land so 
-    ///     it can't access DeclarationName.
-    ///
     /// @return
     ///     True on success; false otherwise.
     //------------------------------------------------------------------
     void 
-    FindExternalVisibleDecls (NameSearchContext &context,
-                              const ConstString &name);
+    FindExternalVisibleDecls (NameSearchContext &context);
     
     //------------------------------------------------------------------
     /// [Used by ClangASTSource] Find all Decls in a context that match
@@ -656,7 +652,7 @@ public:
     ///     The TagDecl to be completed.
     //------------------------------------------------------------------
     void
-    CompleteTagDecl (clang::TagDecl *tag_decl);
+    CompleteType (clang::TagDecl *tag_decl);
     
     //------------------------------------------------------------------
     /// [Used by ClangASTSource] Complete the definition of an
@@ -666,43 +662,7 @@ public:
     ///     The ObjCInterfaceDecl to be completed.
     //------------------------------------------------------------------
     void
-    CompleteObjCInterfaceDecl (clang::ObjCInterfaceDecl *interface_decl);
-    
-    //------------------------------------------------------------------
-    /// [Used by ClangASTSource] Report whether a $__lldb variable has
-    /// been searched for yet.  This is the trigger for beginning to 
-    /// actually look for externally-defined names.  (Names that come
-    /// before this are typically the names of built-ins that don't need
-    /// to be looked up.)
-    ///
-    /// @return
-    ///     True if a $__lldb variable has been found.
-    //------------------------------------------------------------------
-    bool
-    GetLookupsEnabled () const
-    {
-        assert(m_parser_vars.get());
-        return m_parser_vars->m_enable_lookups;
-    }
-
-    bool
-    GetImportInProgress () const
-    {
-        if (m_parser_vars.get())
-            return m_parser_vars->m_ignore_lookups;
-        return false;
-    }
-    
-    //------------------------------------------------------------------
-    /// [Used by ClangASTSource] Indicate that a $__lldb variable has
-    /// been found.
-    //------------------------------------------------------------------
-    void
-    SetLookupsEnabled ()
-    {
-        assert(m_parser_vars.get());
-        m_parser_vars->m_enable_lookups = true;
-    }
+    CompleteType (clang::ObjCInterfaceDecl *interface_decl);
     
     //------------------------------------------------------------------
     /// [Used by ClangASTImporter] Look up the modules containing a
