@@ -4655,9 +4655,6 @@ def warn_format_invalid_positional_specifier : Warning<
 def warn_format_mix_positional_nonpositional_args : Warning<
   "cannot mix positional and non-positional arguments in format string">,
   InGroup<Format>;
-def warn_null_arg : Warning<
-  "null passed to a callee which requires a non-null argument">,
-  InGroup<NonNull>;
 def warn_static_array_too_small : Warning<
   "array argument is too small; contains %0 elements, callee requires at least %1">,
   InGroup<DiagGroup<"array-bounds">>;
@@ -4689,7 +4686,12 @@ def warn_printf_ignored_flag: Warning<
 def warn_scanf_scanlist_incomplete : Warning<
   "no closing ']' for '%%[' in scanf format string">,
   InGroup<Format>;
-  
+def note_format_string_defined : Note<"format string is defined here">;
+ 
+def warn_null_arg : Warning<
+  "null passed to a callee which requires a non-null argument">,
+  InGroup<NonNull>;
+
 // CHECK: returning address/reference of stack memory
 def warn_ret_stack_addr : Warning<
   "address of stack memory associated with local variable %0 returned">,

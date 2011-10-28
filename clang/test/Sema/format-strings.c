@@ -393,3 +393,79 @@ void test_suppress_invalid_specifier() {
 #pragma clang diagnostic pop
 }
 
+// Make sure warnings are on for next test.
+#pragma GCC diagnostic warning "-Wformat"
+#pragma GCC diagnostic warning "-Wformat-security"
+
+// Test that the printf call site is where the warning is attached.  If the
+// format string is somewhere else, point to it in a note.
+void pr9751() {
+  const char kFormat1[] = "%d %d \n"; // expected-note{{format string is defined here}}}
+  printf(kFormat1, 0); // expected-warning{{more '%' conversions than data arguments}}
+  printf("%d %s\n", 0); // expected-warning{{more '%' conversions than data arguments}}
+
+  const char kFormat2[] = "%18$s\n"; // expected-note{{format string is defined here}}
+  printf(kFormat2, 1, "foo"); // expected-warning{{data argument position '18' exceeds the number of data arguments (2)}}
+  printf("%18$s\n", 1, "foo"); // expected-warning{{data argument position '18' exceeds the number of data arguments (2)}}
+
+  const char kFormat3[] = "%n"; // expected-note{{format string is defined here}}
+  printf(kFormat3, "as"); // expected-warning{{use of '%n' in format string discouraged}}
+  printf("%n", "as"); // expected-warning{{use of '%n' in format string discouraged}}
+
+  const char kFormat4[] = "%y"; // expected-note{{format string is defined here}}
+  printf(kFormat4, 5); // expected-warning{{invalid conversion specifier 'y'}}
+  printf("%y", 5); // expected-warning{{invalid conversion specifier 'y'}}
+
+  const char kFormat5[] = "%."; // expected-note{{format string is defined here}}
+  printf(kFormat5, 5); // expected-warning{{incomplete format specifier}}
+  printf("%.", 5); // expected-warning{{incomplete format specifier}}
+
+  const char kFormat6[] = "%s"; // expected-note{{format string is defined here}}
+  printf(kFormat6, 5); // expected-warning{{conversion specifies type 'char *' but the argument has type 'int'}}
+  printf("%s", 5); // expected-warning{{conversion specifies type 'char *' but the argument has type 'int'}}
+
+  const char kFormat7[] = "%0$"; // expected-note{{format string is defined here}}
+  printf(kFormat7, 5); // expected-warning{{position arguments in format strings start counting at 1 (not 0)}}
+  printf("%0$", 5); // expected-warning{{position arguments in format strings start counting at 1 (not 0)}}
+
+  const char kFormat8[] = "%1$d %d"; // expected-note{{format string is defined here}}
+  printf(kFormat8, 4, 4); // expected-warning{{cannot mix positional and non-positional arguments in format string}}
+  printf("%1$d %d", 4, 4); // expected-warning{{cannot mix positional and non-positional arguments in format string}}
+
+  const char kFormat9[] = ""; // expected-note{{format string is defined here}}
+  printf(kFormat9, 4, 4); // expected-warning{{format string is empty}}
+  printf("", 4, 4); // expected-warning{{format string is empty}}
+
+  const char kFormat10[] = "\0%d"; // expected-note{{format string is defined here}}
+  printf(kFormat10, 4); // expected-warning{{format string contains '\0' within the string body}}
+  printf("\0%d", 4); // expected-warning{{format string contains '\0' within the string body}}
+
+  const char kFormat11[] = "%*d"; // expected-note{{format string is defined here}}
+  printf(kFormat11); // expected-warning{{'*' specified field width is missing a matching 'int' argument}}
+  printf("%*d"); // expected-warning{{'*' specified field width is missing a matching 'int' argument}}
+
+  const char kFormat12[] = "%*d"; // expected-note{{format string is defined here}}
+  printf(kFormat12, 4.4); // expected-warning{{field width should have type 'int', but argument has type 'double'}}
+  printf("%*d", 4.4); // expected-warning{{field width should have type 'int', but argument has type 'double'}}
+
+  const char kFormat13[] = "%.3p"; // expected-note{{format string is defined here}}
+  void *p;
+  printf(kFormat13, p); // expected-warning{{precision used with 'p' conversion specifier, resulting in undefined behavior}}
+  printf("%.3p", p); // expected-warning{{precision used with 'p' conversion specifier, resulting in undefined behavior}}
+
+  const char kFormat14[] = "%0s"; // expected-note{{format string is defined here}}
+  printf(kFormat14, "a"); // expected-warning{{flag '0' results in undefined behavior with 's' conversion specifier}}
+  printf("%0s", "a"); // expected-warning{{flag '0' results in undefined behavior with 's' conversion specifier}}
+
+  const char kFormat15[] = "%hhs"; // expected-note{{format string is defined here}}
+  printf(kFormat15, "a"); // expected-warning{{length modifier 'hh' results in undefined behavior or no effect with 's' conversion specifier}}
+  printf("%hhs", "a"); // expected-warning{{length modifier 'hh' results in undefined behavior or no effect with 's' conversion specifier}}
+
+  const char kFormat16[] = "%-0d"; // expected-note{{format string is defined here}}
+  printf(kFormat16, 5); // expected-warning{{flag '0' is ignored when flag '-' is present}}
+  printf("%-0d", 5); // expected-warning{{flag '0' is ignored when flag '-' is present}}
+
+  // Make sure that the "format string is defined here" note is not emitted
+  // when the original string is within the argument expression.
+  printf(1 ? "yes %d" : "no %d"); // expected-warning 2{{more '%' conversions than data arguments}}
+}

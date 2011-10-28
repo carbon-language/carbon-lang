@@ -32,3 +32,15 @@ void bad_length_modifiers(char *s, void *p, wchar_t *ws, long double *ld) {
   scanf("%ls", ws); // no-warning
   scanf("%#.2Lf", ld); // expected-warning{{invalid conversion specifier '#'}}
 }
+
+// Test that the scanf call site is where the warning is attached.  If the
+// format string is somewhere else, point to it in a note.
+void pr9751() {
+  int *i;
+  const char kFormat1[] = "%00d"; // expected-note{{format string is defined here}}}
+  scanf(kFormat1, i); // expected-warning{{zero field width in scanf format string is unused}}
+  scanf("%00d", i); // expected-warning{{zero field width in scanf format string is unused}}
+  const char kFormat2[] = "%["; // expected-note{{format string is defined here}}}
+  scanf(kFormat2, &i); // expected-warning{{no closing ']' for '%[' in scanf format string}}
+  scanf("%[", &i); // expected-warning{{no closing ']' for '%[' in scanf format string}}
+}

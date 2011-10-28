@@ -6185,12 +6185,13 @@ private:
 
   bool SemaCheckStringLiteral(const Expr *E, const CallExpr *TheCall,
                               bool HasVAListArg, unsigned format_idx,
-                              unsigned firstDataArg, bool isPrintf);
+                              unsigned firstDataArg, bool isPrintf,
+                              bool inFunctionCall = true);
 
   void CheckFormatString(const StringLiteral *FExpr, const Expr *OrigFormatExpr,
                          const CallExpr *TheCall, bool HasVAListArg,
                          unsigned format_idx, unsigned firstDataArg,
-                         bool isPrintf);
+                         bool isPrintf, bool inFunctionCall);
 
   void CheckNonNullArguments(const NonNullAttr *NonNull,
                              const Expr * const *ExprArgs,
