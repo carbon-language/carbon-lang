@@ -26,6 +26,7 @@
 
 #include <getopt.h>
 #include <mach/machine.h>
+#include <signal.h>
 #include <spawn.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -117,11 +118,18 @@ posix_spawn_for_debug
     // since we want this program to turn into the program we want to debug, 
     // and also have the new program start suspended (right at __dyld_start)
     // so we can debug it
-    short flags = POSIX_SPAWN_START_SUSPENDED | POSIX_SPAWN_SETEXEC;
+    short flags = POSIX_SPAWN_START_SUSPENDED | POSIX_SPAWN_SETEXEC | POSIX_SPAWN_SETSIGDEF | POSIX_SPAWN_SETSIGMASK;
 
     // Disable ASLR if we were asked to
     if (disable_aslr)
         flags |= _POSIX_SPAWN_DISABLE_ASLR;
+    
+    sigset_t no_signals;
+    sigset_t all_signals;
+    sigemptyset (&no_signals);
+    sigfillset (&all_signals);
+    ::posix_spawnattr_setsigmask(&attr, &no_signals);
+    ::posix_spawnattr_setsigdefault(&attr, &all_signals);
     
     // Set the flags we just made into our posix spawn attributes
     exit_with_errno (::posix_spawnattr_setflags (&attr, flags), "::posix_spawnattr_setflags (&attr, flags) error: ");

@@ -1210,7 +1210,14 @@ Host::LaunchProcess (ProcessLaunchInfo &launch_info)
     // we return in the middle of this function.
     lldb_utility::CleanUp <posix_spawnattr_t *, int> posix_spawnattr_cleanup(&attr, posix_spawnattr_destroy);
     
-    short flags = 0;
+    sigset_t no_signals;
+    sigset_t all_signals;
+    sigemptyset (&no_signals);
+    sigfillset (&all_signals);
+    ::posix_spawnattr_setsigmask(&attr, &no_signals);
+    ::posix_spawnattr_setsigdefault(&attr, &all_signals);
+
+    short flags = POSIX_SPAWN_SETSIGDEF | POSIX_SPAWN_SETSIGMASK;
     if (launch_info.GetFlags().Test (eLaunchFlagExec))
         flags |= POSIX_SPAWN_SETEXEC;           // Darwin specific posix_spawn flag
 

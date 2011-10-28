@@ -13,6 +13,7 @@
 
 #include "DNB.h"
 #include <mach/mach.h>
+#include <signal.h>
 #include <spawn.h>
 #include <sys/fcntl.h>
 #include <sys/types.h>
@@ -1653,10 +1654,17 @@ MachProcess::PosixSpawnChildForPTraceDebugging
     if (err.Fail())
         return INVALID_NUB_PROCESS;
 
-    flags = POSIX_SPAWN_START_SUSPENDED;
+    flags = POSIX_SPAWN_START_SUSPENDED | POSIX_SPAWN_SETSIGDEF | POSIX_SPAWN_SETSIGMASK;
     if (disable_aslr)
         flags |= _POSIX_SPAWN_DISABLE_ASLR;
-    
+
+    sigset_t no_signals;
+    sigset_t all_signals;
+    sigemptyset (&no_signals);
+    sigfillset (&all_signals);
+    ::posix_spawnattr_setsigmask(&attr, &no_signals);
+    ::posix_spawnattr_setsigdefault(&attr, &all_signals);
+
     err.SetError( ::posix_spawnattr_setflags (&attr, flags), DNBError::POSIX);
     if (err.Fail() || DNBLogCheckLogBit(LOG_PROCESS))
         err.LogThreaded("::posix_spawnattr_setflags ( &attr, POSIX_SPAWN_START_SUSPENDED%s )", flags & _POSIX_SPAWN_DISABLE_ASLR ? " | _POSIX_SPAWN_DISABLE_ASLR" : "");
