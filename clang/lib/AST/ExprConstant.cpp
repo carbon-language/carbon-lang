@@ -2492,8 +2492,8 @@ bool FloatExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
     return Visit(E->getRHS());
   }
 
-  // We can't evaluate pointer-to-member operations.
-  if (E->isPtrMemOp())
+  // We can't evaluate pointer-to-member operations or assignments.
+  if (E->isPtrMemOp() || E->isAssignmentOp())
     return false;
 
   // FIXME: Diagnostics?  I really don't understand how the warnings
