@@ -386,15 +386,6 @@ IsWordAlignedBasePlusConstantOffset(SDValue Addr, SDValue &AlignedBase,
     Offset = off;
     return true;
   }
-  // Check for an aligned global variable.
-  if (GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(*Root)) {
-    const GlobalValue *GV = GA->getGlobal();
-    if (GA->getOffset() == 0 && GV->getAlignment() >= 4) {
-      AlignedBase = Base;
-      Offset = off;
-      return true;
-    }
-  }
   return false;
 }
 

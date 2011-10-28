@@ -1084,6 +1084,7 @@ DAGTypeLegalizer::ExpandChainLibCall(RTLIB::Libcall LC,
   SDValue Callee = DAG.getExternalSymbol(TLI.getLibcallName(LC),
                                          TLI.getPointerTy());
 
+  // Splice the libcall in wherever FindInputOutputChains tells us to.
   Type *RetTy = Node->getValueType(0).getTypeForEVT(*DAG.getContext());
   std::pair<SDValue, SDValue> CallInfo =
     TLI.LowerCallTo(InChain, RetTy, isSigned, !isSigned, false, false,
