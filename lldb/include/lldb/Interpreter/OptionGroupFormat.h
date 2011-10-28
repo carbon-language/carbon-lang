@@ -106,11 +106,8 @@ public:
 
 protected:
 
-    lldb::Format
-    SetFormatUsingGDBFormatLetter (char format_letter);
-
-    uint32_t
-    SetByteSizeUsingGDBSizeLetter (char size_letter);
+    bool
+    ParserGDBFormatLetter (char format_letter, lldb::Format &format, uint32_t &byte_size);
 
     OptionValueFormat m_format;
     OptionValueUInt64 m_byte_size;

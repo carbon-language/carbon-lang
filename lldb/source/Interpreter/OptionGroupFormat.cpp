@@ -116,13 +116,13 @@ OptionGroupFormat::SetOptionValue (CommandInterpreter &interpreter,
                         count = 0;
                 }
 
-                Format format = SetFormatUsingGDBFormatLetter (gdb_format_cstr[0]);
-                if (format != eFormatInvalid)
+                Format format = eFormatDefault;
+                uint32_t byte_size = 0;
+                
+                while (ParserGDBFormatLetter (gdb_format_cstr[0], format, byte_size))
+                {
                     ++gdb_format_cstr;
-
-                uint32_t byte_size = SetByteSizeUsingGDBSizeLetter (gdb_format_cstr[0]);
-                if (byte_size > 0)
-                    ++gdb_format_cstr;
+                }
                 
                 // We the first character of the "gdb_format_cstr" is not the 
                 // NULL terminator, we didn't consume the entire string and 
@@ -139,7 +139,7 @@ OptionGroupFormat::SetOptionValue (CommandInterpreter &interpreter,
                 // Anything that wasn't set correctly should be set to the
                 // previous default
                 if (format == eFormatInvalid)
-                    format = SetFormatUsingGDBFormatLetter (m_prev_gdb_format);
+                    ParserGDBFormatLetter (m_prev_gdb_format, format, byte_size);
                 
                 const bool byte_size_enabled = m_byte_size.GetDefaultValue() < UINT64_MAX;
                 const bool count_enabled = m_count.GetDefaultValue() < UINT64_MAX;
@@ -147,7 +147,7 @@ OptionGroupFormat::SetOptionValue (CommandInterpreter &interpreter,
                 {
                     // Byte size is enabled
                     if (byte_size == 0)
-                        byte_size = SetByteSizeUsingGDBSizeLetter (m_prev_gdb_size);
+                        ParserGDBFormatLetter (m_prev_gdb_size, format, byte_size);
                 }
                 else
                 {
@@ -198,61 +198,31 @@ OptionGroupFormat::SetOptionValue (CommandInterpreter &interpreter,
     return error;
 }
 
-Format
-OptionGroupFormat::SetFormatUsingGDBFormatLetter (char format_letter)
+bool
+OptionGroupFormat::ParserGDBFormatLetter (char format_letter, Format &format, uint32_t &byte_size)
 {
-    Format format = eFormatInvalid;
     switch (format_letter)
     {
-        case 'o': format = eFormatOctal;        break; 
-        case 'x': format = eFormatHex;          break;
-        case 'd': format = eFormatDecimal;      break;
-        case 'u': format = eFormatUnsigned;     break;
-        case 't': format = eFormatBinary;       break;
-        case 'f': format = eFormatFloat;        break;
-        case 'a': format = eFormatHex;          break; // TODO: add a new format: eFormatAddress
-        case 'i': format = eFormatHex;          break; // TODO: add a new format: eFormatInstruction
-        case 'c': format = eFormatChar;         break;
-        case 's': format = eFormatCString;      break;
-        case 'T': format = eFormatOSType;       break;
-        case 'A': format = eFormatHex;          break; // TODO: add a new format: eFormatHexFloat
+        case 'o': format = eFormatOctal;        m_prev_gdb_format = format_letter; return true; 
+        case 'x': format = eFormatHex;          m_prev_gdb_format = format_letter; return true;
+        case 'd': format = eFormatDecimal;      m_prev_gdb_format = format_letter; return true;
+        case 'u': format = eFormatUnsigned;     m_prev_gdb_format = format_letter; return true;
+        case 't': format = eFormatBinary;       m_prev_gdb_format = format_letter; return true;
+        case 'f': format = eFormatFloat;        m_prev_gdb_format = format_letter; return true;
+        case 'a': format = eFormatAddressInfo;  m_prev_gdb_format = format_letter; return true;
+        case 'i': format = eFormatInstruction;  m_prev_gdb_format = format_letter; return true;
+        case 'c': format = eFormatChar;         m_prev_gdb_format = format_letter; return true;
+        case 's': format = eFormatCString;      m_prev_gdb_format = format_letter; return true;
+        case 'T': format = eFormatOSType;       m_prev_gdb_format = format_letter; return true;
+        case 'A': format = eFormatHexFloat;     m_prev_gdb_format = format_letter; return true;
+        case 'b': byte_size = 1;                m_prev_gdb_size = format_letter;   return true;
+        case 'h': byte_size = 2;                m_prev_gdb_size = format_letter;   return true;
+        case 'w': byte_size = 4;                m_prev_gdb_size = format_letter;   return true;
+        case 'g': byte_size = 8;                m_prev_gdb_size = format_letter;   return true;
         default:  break;
     }
-    if (format != eFormatInvalid)
-        m_prev_gdb_format = format_letter;
-    return format;
+    return false;
 }
-
-uint32_t
-OptionGroupFormat::SetByteSizeUsingGDBSizeLetter (char size_letter)
-{
-    uint32_t byte_size = 0;
-    switch (size_letter)
-    {
-        case 'b': // byte
-            byte_size = 1; 
-            break;
-
-        case 'h': // halfword
-            byte_size = 2;
-            break;
-
-        case 'w': // word
-            byte_size = 4;
-            break;
-
-        case 'g': // giant
-            byte_size = 8;
-            break;
-
-        default:
-            break;
-    }
-    if (byte_size)
-        m_prev_gdb_size = size_letter;
-    return byte_size;
-}
-
 
 void
 OptionGroupFormat::OptionParsingStarting (CommandInterpreter &interpreter)
