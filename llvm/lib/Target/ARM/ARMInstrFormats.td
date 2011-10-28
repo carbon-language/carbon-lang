@@ -481,6 +481,8 @@ class AIswp<bit b, dag oops, dag iops, string opc, list<dag> pattern>
   let Inst{15-12} = Rt;
   let Inst{11-4} = 0b00001001;
   let Inst{3-0} = Rt2;
+
+  let DecoderMethod = "DecodeSwap";
 }
 
 // addrmode1 instructions

@@ -249,6 +249,8 @@ static DecodeStatus DecodeVMOVSRR(llvm::MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeVMOVRRS(llvm::MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeSwap(llvm::MCInst &Inst, unsigned Insn,
+                               uint64_t Address, const void *Decoder);
 
 static DecodeStatus DecodeThumbAddSpecialReg(llvm::MCInst &Inst, uint16_t Insn,
                                uint64_t Address, const void *Decoder);
@@ -4043,3 +4045,25 @@ static DecodeStatus DecodeT2ShifterImmOperand(llvm::MCInst &Inst, uint32_t Val,
   return S;
 }
 
+static DecodeStatus DecodeSwap(llvm::MCInst &Inst, unsigned Insn,
+                               uint64_t Address, const void *Decoder) {
+  unsigned Rt   = fieldFromInstruction32(Insn, 12, 4);
+  unsigned Rt2  = fieldFromInstruction32(Insn, 0,  4);
+  unsigned Rn   = fieldFromInstruction32(Insn, 16, 4);
+  unsigned pred = fieldFromInstruction32(Insn, 28, 4);
+
+  if (pred == 0xF)
+    return DecodeCPSInstruction(Inst, Insn, Address, Decoder);
+
+  DecodeStatus S = MCDisassembler::Success;
+  if (!Check(S, DecodeGPRnopcRegisterClass(Inst, Rt, Address, Decoder)))
+    return MCDisassembler::Fail;
+  if (!Check(S, DecodeGPRnopcRegisterClass(Inst, Rt2, Address, Decoder)))
+    return MCDisassembler::Fail;
+  if (!Check(S, DecodeGPRnopcRegisterClass(Inst, Rn, Address, Decoder)))
+    return MCDisassembler::Fail;
+  if (!Check(S, DecodePredicateOperand(Inst, pred, Address, Decoder)))
+    return MCDisassembler::Fail;
+
+  return S;
+}
