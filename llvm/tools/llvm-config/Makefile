@@ -68,6 +68,8 @@ llvm-config-perobj: llvm-config.in $(GenLibDeps) $(LibDir) $(wildcard $(LibDir)/
 	>> temp.sed
 	$(Verb) $(ECHO) 's/@LLVM_BUILDMODE@/$(subst /,\/,$(BuildMode))/' \
 	>> temp.sed
+	$(Verb) $(ECHO) 's/@LLVM_OBJ_SUFFIX@/$(subst /,\/,/$(BuildMode))/' \
+	>> temp.sed
 	$(Verb) $(SED) -f temp.sed < $< > $@
 	$(Verb) $(RM) temp.sed
 	$(Verb) cat PerobjDepsFinal.txt >> $@
@@ -88,6 +90,8 @@ llvm-config-perobjincl: llvm-config.in $(GenLibDeps) $(LibDir) $(wildcard $(LibD
 	>> temp.sed
 	$(Verb) $(ECHO) 's/@LLVM_BUILDMODE@/$(subst /,\/,$(BuildMode))/' \
 	>> temp.sed
+	$(Verb) $(ECHO) 's/@LLVM_OBJ_SUFFIX@/$(subst /,\/,/$(BuildMode))/' \
+	>> temp.sed
 	$(Verb) $(SED) -f temp.sed < $< > $@
 	$(Verb) $(RM) temp.sed
 	$(Verb) cat PerobjDepsInclFinal.txt >> $@
@@ -105,6 +109,8 @@ $(ToolDir)/llvm-config: llvm-config.in $(FinalLibDeps)
 	$(Verb) $(ECHO) 's/@LLVM_LDFLAGS@/$(subst /,\/,$(SUB_LDFLAGS))/' \
 	  >> temp.sed
 	$(Verb) $(ECHO) 's/@LLVM_BUILDMODE@/$(subst /,\/,$(BuildMode))/' \
+	  >> temp.sed
+	$(Verb) $(ECHO) 's/@LLVM_OBJ_SUFFIX@/$(subst /,\/,/$(BuildMode))/' \
 	  >> temp.sed
 	$(Verb) $(SED) -f temp.sed < $< > $@
 	$(Verb) $(RM) temp.sed

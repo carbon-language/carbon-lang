@@ -45,6 +45,7 @@ my $CXXFLAGS            = q{@LLVM_CXXFLAGS@};
 my $LDFLAGS             = q{@LLVM_LDFLAGS@};
 my $SYSTEM_LIBS         = q{@LIBS@};
 my $LLVM_BUILDMODE      = q{@LLVM_BUILDMODE@};
+my $LLVM_OBJ_SUFFIX     = q{@LLVM_OBJ_SUFFIX@};
 #---- end Makefile values ----
 
 # Figure out where llvm-config is being run from.  Primarily, we care if it has
@@ -60,7 +61,7 @@ my $ABS_RUN_DIR = abs_path("$RUN_DIR/..");
 chomp($ABS_RUN_DIR);
 
 # Compute the absolute object directory build, e.g. "foo/llvm/Debug".
-my $ABS_OBJ_ROOT = "$LLVM_OBJ_ROOT/$LLVM_BUILDMODE";
+my $ABS_OBJ_ROOT = "$LLVM_OBJ_ROOT$LLVM_OBJ_SUFFIX";
 $ABS_OBJ_ROOT = abs_path("$ABS_OBJ_ROOT") if (-d $ABS_OBJ_ROOT);
 chomp($ABS_OBJ_ROOT);
 

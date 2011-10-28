@@ -48,6 +48,7 @@ set(LLVM_CXXFLAGS "@LLVM_CXXFLAGS@")
 set(LLVM_LDFLAGS "@LLVM_LDFLAGS@")
 set(LIBS "@LIBS@")
 set(LLVM_BUILDMODE "@LLVM_BUILDMODE@")
+set(LLVM_OBJ_SUFFIX "@LLVM_OBJ_SUFFIX@")
 
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/llvm-config.in.in
@@ -114,6 +115,7 @@ add_custom_command(OUTPUT ${LLVM_CONFIG}
   COMMAND echo s!@LLVM_LDFLAGS@!${CMAKE_SHARED_LINKER_FLAGS}! >> temp.sed
   COMMAND echo s!@LIBS@!${LLVM_SYSTEM_LIBS}! >> temp.sed
   COMMAND echo s!@LLVM_BUILDMODE@!${CMAKE_BUILD_TYPE}! >> temp.sed
+  COMMAND echo s!@LLVM_OBJ_SUFFIX@!! >> temp.sed
   COMMAND sed -f temp.sed < ${LLVM_CONFIG_IN} > ${LLVM_CONFIG}
   COMMAND ${CMAKE_COMMAND} -E remove -f temp.sed
   COMMAND cat ${FINAL_LIBDEPS} >> ${LLVM_CONFIG}
