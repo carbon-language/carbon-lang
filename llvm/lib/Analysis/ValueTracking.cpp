@@ -769,6 +769,12 @@ bool llvm::isPowerOfTwo(Value *V, const TargetData *TD, bool OrZero,
   if (Depth++ == MaxDepth)
     return false;
 
+  Value *X = 0, *Y = 0;
+  // A shift of a power of two is a power of two or zero.
+  if (OrZero && (match(V, m_Shl(m_Value(X), m_Value())) ||
+                 match(V, m_Shr(m_Value(X), m_Value()))))
+    return isPowerOfTwo(X, TD, /*OrZero*/true, Depth);
+
   if (ZExtInst *ZI = dyn_cast<ZExtInst>(V))
     return isPowerOfTwo(ZI->getOperand(0), TD, OrZero, Depth);
 
@@ -776,7 +782,6 @@ bool llvm::isPowerOfTwo(Value *V, const TargetData *TD, bool OrZero,
     return isPowerOfTwo(SI->getTrueValue(), TD, OrZero, Depth) &&
       isPowerOfTwo(SI->getFalseValue(), TD, OrZero, Depth);
 
-  Value *X = 0, *Y = 0;
   if (OrZero && match(V, m_And(m_Value(X), m_Value(Y)))) {
     // A power of two and'd with anything is a power of two or zero.
     if (isPowerOfTwo(X, TD, /*OrZero*/true, Depth) ||
