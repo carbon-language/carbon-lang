@@ -2718,6 +2718,12 @@ int clang_reparseTranslationUnit(CXTranslationUnit TU,
                                  unsigned options) {
   ReparseTranslationUnitInfo RTUI = { TU, num_unsaved_files, unsaved_files,
                                       options, 0 };
+
+  if (getenv("CINDEXTEST_NOTHREADS")) {
+    clang_reparseTranslationUnit_Impl(&RTUI);
+    return RTUI.result;
+  }
+
   llvm::CrashRecoveryContext CRC;
 
   if (!RunSafely(CRC, clang_reparseTranslationUnit_Impl, &RTUI)) {
