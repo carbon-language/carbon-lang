@@ -669,7 +669,7 @@ def setupSysPath():
         os.environ["LLDB_BUILD_DIR"] = os.path.split(lldbHere)[0]
         if not noHeaders:
             print "LLDB build dir:", os.environ["LLDB_BUILD_DIR"]
-            os.system('%s -v' % lldbExec)
+            os.system('%s -v' % lldbHere)
 
     # One last chance to locate the 'lldb' executable.
     if not lldbExec:
