@@ -1945,7 +1945,7 @@ MipsTargetLowering::LowerCall(SDValue InChain, SDValue Callee,
 
   // If this is the first call, create a stack frame object that points to
   // a location to which .cprestore saves $gp.
-  if (IsPIC && !MipsFI->getGPFI())
+  if (IsO32 && IsPIC && !MipsFI->getGPFI())
     MipsFI->setGPFI(MFI->CreateFixedObject(4, 0, true));
 
   // Get the frame index of the stack frame object that points to the location
@@ -1970,7 +1970,7 @@ MipsTargetLowering::LowerCall(SDValue InChain, SDValue Callee,
     NextStackOffset = (NextStackOffset + StackAlignment - 1) /
                       StackAlignment * StackAlignment;
 
-    if (IsPIC)
+    if (MipsFI->needGPSaveRestore())
       MFI->setObjectOffset(MipsFI->getGPFI(), NextStackOffset);
 
     MFI->setObjectOffset(DynAllocFI, NextStackOffset);
@@ -1986,15 +1986,17 @@ MipsTargetLowering::LowerCall(SDValue InChain, SDValue Callee,
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     SDValue Arg = OutVals[i];
     CCValAssign &VA = ArgLocs[i];
-
+    MVT ValVT = VA.getValVT(), LocVT = VA.getLocVT();
+    
     // Promote the value if needed.
     switch (VA.getLocInfo()) {
     default: llvm_unreachable("Unknown loc info!");
     case CCValAssign::Full:
-      if (IsO32 && VA.isRegLoc()) {
-        if (VA.getValVT() == MVT::f32 && VA.getLocVT() == MVT::i32)
-          Arg = DAG.getNode(ISD::BITCAST, dl, MVT::i32, Arg);
-        if (VA.getValVT() == MVT::f64 && VA.getLocVT() == MVT::i32) {
+      if (VA.isRegLoc()) {
+        if ((ValVT == MVT::f32 && LocVT == MVT::i32) ||
+            (ValVT == MVT::f64 && LocVT == MVT::i64))
+          Arg = DAG.getNode(ISD::BITCAST, dl, LocVT, Arg);
+        else if (ValVT == MVT::f64 && LocVT == MVT::i32) {
           SDValue Lo = DAG.getNode(MipsISD::ExtractElementF64, dl, MVT::i32,
                                    Arg, DAG.getConstant(0, MVT::i32));
           SDValue Hi = DAG.getNode(MipsISD::ExtractElementF64, dl, MVT::i32,
@@ -2010,13 +2012,13 @@ MipsTargetLowering::LowerCall(SDValue InChain, SDValue Callee,
       }
       break;
     case CCValAssign::SExt:
-      Arg = DAG.getNode(ISD::SIGN_EXTEND, dl, VA.getLocVT(), Arg);
+      Arg = DAG.getNode(ISD::SIGN_EXTEND, dl, LocVT, Arg);
       break;
     case CCValAssign::ZExt:
-      Arg = DAG.getNode(ISD::ZERO_EXTEND, dl, VA.getLocVT(), Arg);
+      Arg = DAG.getNode(ISD::ZERO_EXTEND, dl, LocVT, Arg);
       break;
     case CCValAssign::AExt:
-      Arg = DAG.getNode(ISD::ANY_EXTEND, dl, VA.getLocVT(), Arg);
+      Arg = DAG.getNode(ISD::ANY_EXTEND, dl, LocVT, Arg);
       break;
     }
 
@@ -2043,7 +2045,7 @@ MipsTargetLowering::LowerCall(SDValue InChain, SDValue Callee,
     }
 
     // Create the frame index object for this incoming parameter
-    LastFI = MFI->CreateFixedObject(VA.getValVT().getSizeInBits()/8,
+    LastFI = MFI->CreateFixedObject(ValVT.getSizeInBits()/8,
                                     VA.getLocMemOffset(), true);
     SDValue PtrOff = DAG.getFrameIndex(LastFI, getPointerTy());
 
@@ -2075,17 +2077,21 @@ MipsTargetLowering::LowerCall(SDValue InChain, SDValue Callee,
   // If the callee is a GlobalAddress/ExternalSymbol node (quite common, every
   // direct call is) turn it into a TargetGlobalAddress/TargetExternalSymbol
   // node so that legalize doesn't hack it.
-  unsigned char OpFlag = IsPIC ? MipsII::MO_GOT_CALL : MipsII::MO_NO_FLAG;
+  unsigned char OpFlag;
+  bool IsPICCall = (IsN64 || IsPIC); // true if calls are translated to jalr $25
   bool LoadSymAddr = false;
   SDValue CalleeLo;
 
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
-    if (IsPIC && G->getGlobal()->hasInternalLinkage()) {
-      Callee = DAG.getTargetGlobalAddress(G->getGlobal(), dl,
-                                          getPointerTy(), 0,MipsII:: MO_GOT);
+    if (IsPICCall && G->getGlobal()->hasInternalLinkage()) {
+      OpFlag = IsO32 ? MipsII::MO_GOT : MipsII::MO_GOT_PAGE;
+      unsigned char LoFlag = IsO32 ? MipsII::MO_ABS_LO : MipsII::MO_GOT_OFST;
+      Callee = DAG.getTargetGlobalAddress(G->getGlobal(), dl, getPointerTy(), 0,
+                                          OpFlag);
       CalleeLo = DAG.getTargetGlobalAddress(G->getGlobal(), dl, getPointerTy(),
-                                            0, MipsII::MO_ABS_LO);
+                                            0, LoFlag);
     } else {
+      OpFlag = IsPICCall ? MipsII::MO_GOT_CALL : MipsII::MO_NO_FLAG;
       Callee = DAG.getTargetGlobalAddress(G->getGlobal(), dl,
                                           getPointerTy(), 0, OpFlag);
     }
@@ -2093,34 +2099,41 @@ MipsTargetLowering::LowerCall(SDValue InChain, SDValue Callee,
     LoadSymAddr = true;
   }
   else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
+    if (IsN64 || (!IsO32 && IsPIC))
+      OpFlag = MipsII::MO_GOT_DISP;
+    else if (!IsPIC) // !N64 && static
+      OpFlag = MipsII::MO_NO_FLAG;
+    else // O32 & PIC
+      OpFlag = MipsII::MO_GOT_CALL;
     Callee = DAG.getTargetExternalSymbol(S->getSymbol(),
-                                getPointerTy(), OpFlag);
+                                         getPointerTy(), OpFlag);
     LoadSymAddr = true;
   }
 
   SDValue InFlag;
 
   // Create nodes that load address of callee and copy it to T9
-  if (IsPIC) {
+  if (IsPICCall) {
     if (LoadSymAddr) {
       // Load callee address
-      Callee = DAG.getNode(MipsISD::WrapperPIC, dl, MVT::i32, Callee);
-      SDValue LoadValue = DAG.getLoad(MVT::i32, dl, DAG.getEntryNode(), Callee,
-                                      MachinePointerInfo::getGOT(),
+      Callee = DAG.getNode(MipsISD::WrapperPIC, dl, getPointerTy(), Callee);
+      SDValue LoadValue = DAG.getLoad(getPointerTy(), dl, DAG.getEntryNode(),
+                                      Callee, MachinePointerInfo::getGOT(),
                                       false, false, 0);
 
       // Use GOT+LO if callee has internal linkage.
       if (CalleeLo.getNode()) {
-        SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, CalleeLo);
-        Callee = DAG.getNode(ISD::ADD, dl, MVT::i32, LoadValue, Lo);
+        SDValue Lo = DAG.getNode(MipsISD::Lo, dl, getPointerTy(), CalleeLo);
+        Callee = DAG.getNode(ISD::ADD, dl, getPointerTy(), LoadValue, Lo);
       } else
         Callee = LoadValue;
     }
 
     // copy to T9
-    Chain = DAG.getCopyToReg(Chain, dl, Mips::T9, Callee, SDValue(0, 0));
+    unsigned T9Reg = IsN64 ? Mips::T9_64 : Mips::T9;
+    Chain = DAG.getCopyToReg(Chain, dl, T9Reg, Callee, SDValue(0, 0));
     InFlag = Chain.getValue(1);
-    Callee = DAG.getRegister(Mips::T9, MVT::i32);
+    Callee = DAG.getRegister(T9Reg, getPointerTy());
   }
 
   // Build a sequence of copy-to-reg nodes chained together with token
