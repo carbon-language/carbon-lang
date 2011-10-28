@@ -389,7 +389,7 @@ multiclass VLD1D3WB<bits<4> op7_4, string Dt> {
                      "vld1", Dt, "$Vd, $Rn!",
                      "$Rn.addr = $wb", []> {
     let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
-    let Inst{5-4} = Rn{5-4};
+    let Inst{4} = Rn{4};
     let DecoderMethod = "DecodeVLDInstruction";
     let AsmMatchConverter = "cvtVLDwbFixed";
   }
@@ -397,7 +397,7 @@ multiclass VLD1D3WB<bits<4> op7_4, string Dt> {
                         (ins addrmode6:$Rn, rGPR:$Rm), IIC_VLD1x2u,
                         "vld1", Dt, "$Vd, $Rn, $Rm",
                         "$Rn.addr = $wb", []> {
-    let Inst{5-4} = Rn{5-4};
+    let Inst{4} = Rn{4};
     let DecoderMethod = "DecodeVLDInstruction";
     let AsmMatchConverter = "cvtVLDwbRegister";
   }
