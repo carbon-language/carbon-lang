@@ -2,37 +2,31 @@
 
 // <rdar://problem/6888289> - This test case shows that a nil instance
 // variable can possibly be initialized by a method.
-typedef struct RDar6888289_data {
-  long data[100];
-} RDar6888289_data;
-
 @interface RDar6888289
 {
-  RDar6888289 *x;
+  id *x;
 }
-- (RDar6888289_data) test;
-- (RDar6888289_data) test2;
+- (void) test:(id) y;
+- (void) test2:(id) y;
 - (void) invalidate;
-- (RDar6888289_data) getData;
 @end
 
+id *getVal(void);
+
 @implementation RDar6888289
-- (RDar6888289_data) test {
+- (void) test:(id)y {
   if (!x)
     [self invalidate];
-  return [x getData];
+  *x = y;
 }
-- (RDar6888289_data) test2 {
+- (void) test2:(id)y {
   if (!x) {}
-  return [x getData]; // expected-warning{{The receiver of message 'getData' is nil and returns a value of type 'RDar6888289_data' that will be garbage}}
+  *x = y; // expected-warning {{null}}
 }
 
 - (void) invalidate {
-  x = self;
+  x = getVal();
 }
 
-- (RDar6888289_data) getData {
-  return (RDar6888289_data) { 0 };
-}
 @end
 

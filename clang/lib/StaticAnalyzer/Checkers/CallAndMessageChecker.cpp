@@ -297,26 +297,16 @@ void CallAndMessageChecker::HandleNilReceiver(CheckerContext &C,
   // Check the return type of the message expression.  A message to nil will
   // return different values depending on the return type and the architecture.
   QualType RetTy = msg.getType(Ctx);
-
   CanQualType CanRetTy = Ctx.getCanonicalType(RetTy);
 
   if (CanRetTy->isStructureOrClassType()) {
-    // FIXME: At some point we shouldn't rely on isConsumedExpr(), but instead
-    // have the "use of undefined value" be smarter about where the
-    // undefined value came from.
-    if (C.getPredecessor()->getParentMap().isConsumedExpr(msg.getOriginExpr())){
-      if (ExplodedNode *N = C.generateSink(state))
-        emitNilReceiverBug(C, msg, N);
-      return;
-    }
-
-    // The result is not consumed by a surrounding expression.  Just propagate
-    // the current state.
-    C.addTransition(state);
+    // Structure returns are safe since the compiler zeroes them out.
+    SVal V = C.getSValBuilder().makeZeroVal(msg.getType(Ctx));
+    C.addTransition(state->BindExpr(msg.getOriginExpr(), V));
     return;
   }
 
-  // Other cases: check if the return type is smaller than void*.
+  // Other cases: check if sizeof(return type) > sizeof(void*)
   if (CanRetTy != Ctx.VoidTy &&
       C.getPredecessor()->getParentMap().isConsumedExpr(msg.getOriginExpr())) {
     // Compute: sizeof(void *) and sizeof(return type)

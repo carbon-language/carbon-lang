@@ -14,12 +14,12 @@ typedef struct Foo { int x; } Bar;
 
 void createFoo() {
   MyClass *obj = 0;  
-  Bar f = [obj foo]; // expected-warning{{The receiver of message 'foo' is nil and returns a value of type 'Bar' that will be garbage}}
+  Bar f = [obj foo]; // no-warning
 }
 
 void createFoo2() {
   MyClass *obj = 0;  
   [obj foo]; // no-warning
-  Bar f = [obj foo]; // expected-warning{{The receiver of message 'foo' is nil and returns a value of type 'Bar' that will be garbage}}
+  Bar f = [obj foo]; // no-warning
 }
 
