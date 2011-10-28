@@ -1558,8 +1558,7 @@ LinearFunctionTestReplace(Loop *L,
   }
 
   // For unit stride, IVLimit = Start + BECount with 2's complement overflow.
-  // So for, non-zero start compute the IVLimit here.
-  bool isPtrIV = false;
+  // So for non-zero start compute the IVLimit here.
   Type *CmpTy = CntTy;
   const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(SE->getSCEV(IndVar));
   assert(AR && AR->getLoop() == L && AR->isAffine() && "bad loop counter");
@@ -1571,8 +1570,7 @@ LinearFunctionTestReplace(Loop *L,
     // Note that for without EnableIVRewrite, we never run SCEVExpander on a
     // pointer type, because we must preserve the existing GEPs. Instead we
     // directly generate a GEP later.
-    if (IVInit->getType()->isPointerTy()) {
-      isPtrIV = true;
+    if (CmpIndVar->getType()->isPointerTy()) {
       CmpTy = SE->getEffectiveSCEVType(IVInit->getType());
       IVLimit = SE->getTruncateOrSignExtend(IVLimit, CmpTy);
     }
@@ -1590,21 +1588,25 @@ LinearFunctionTestReplace(Loop *L,
 
   assert(SE->isLoopInvariant(IVLimit, L) &&
          "Computed iteration count is not loop invariant!");
+  assert( !IVLimit->getType()->isPointerTy() &&
+          "Should not expand pointer types" );
   Value *ExitCnt = Rewriter.expandCodeFor(IVLimit, CmpTy, BI);
 
   // Create a gep for IVInit + IVLimit from on an existing pointer base.
-  assert(isPtrIV == IndVar->getType()->isPointerTy() &&
-         "IndVar type must match IVInit type");
-  if (isPtrIV) {
-      Value *IVStart = IndVar->getIncomingValueForBlock(L->getLoopPreheader());
-      assert(AR->getStart() == SE->getSCEV(IVStart) && "bad loop counter");
-      assert(SE->getSizeOfExpr(
-               cast<PointerType>(IVStart->getType())->getElementType())->isOne()
-             && "unit stride pointer IV must be i8*");
+  //
+  // In the presence of null pointer values, the SCEV expression may be an
+  // integer type while the IV is a pointer type. Ensure that the compare
+  // operands are always the same type by checking the IV type here.
+  if (CmpIndVar->getType()->isPointerTy()) {
+    Value *IVStart = IndVar->getIncomingValueForBlock(L->getLoopPreheader());
+    assert(AR->getStart() == SE->getSCEV(IVStart) && "bad loop counter");
+    assert(SE->getSizeOfExpr(
+             cast<PointerType>(IVStart->getType())->getElementType())->isOne()
+           && "unit stride pointer IV must be i8*");
 
-      Builder.SetInsertPoint(L->getLoopPreheader()->getTerminator());
-      ExitCnt = Builder.CreateGEP(IVStart, ExitCnt, "lftr.limit");
-      Builder.SetInsertPoint(BI);
+    Builder.SetInsertPoint(L->getLoopPreheader()->getTerminator());
+    ExitCnt = Builder.CreateGEP(IVStart, ExitCnt, "lftr.limit");
+    Builder.SetInsertPoint(BI);
   }
 
   // Insert a new icmp_ne or icmp_eq instruction before the branch.
