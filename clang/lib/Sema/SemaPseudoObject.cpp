@@ -40,26 +40,23 @@ using namespace sema;
 
 static ObjCMethodDecl *LookupMethodInReceiverType(Sema &S, Selector sel,
                                             const ObjCPropertyRefExpr *PRE) {
-  bool instanceProperty;
-  QualType searchType;
   if (PRE->isObjectReceiver()) {
-    searchType = PRE->getBase()->getType()
-      ->castAs<ObjCObjectPointerType>()->getPointeeType();
-    instanceProperty = true;
-  } else if (PRE->isSuperReceiver()) {
-    searchType = PRE->getSuperReceiverType();
-    instanceProperty = false;
-    if (const ObjCObjectPointerType *PT
-        = searchType->getAs<ObjCObjectPointerType>()) {
-      searchType = PT->getPointeeType();
-      instanceProperty = true;
-    }
-  } else if (PRE->isClassReceiver()) {
-    searchType = S.Context.getObjCInterfaceType(PRE->getClassReceiver());
-    instanceProperty = false;
+    const ObjCObjectPointerType *PT =
+      PRE->getBase()->getType()->castAs<ObjCObjectPointerType>();
+    return S.LookupMethodInObjectType(sel, PT->getPointeeType(), true);
   }
 
-  return S.LookupMethodInObjectType(sel, searchType, instanceProperty);
+  if (PRE->isSuperReceiver()) {
+    if (const ObjCObjectPointerType *PT =
+        PRE->getSuperReceiverType()->getAs<ObjCObjectPointerType>())
+      return S.LookupMethodInObjectType(sel, PT->getPointeeType(), true);
+
+    return S.LookupMethodInObjectType(sel, PRE->getSuperReceiverType(), false);
+  }
+
+  assert(PRE->isClassReceiver() && "Invalid expression");
+  QualType IT = S.Context.getObjCInterfaceType(PRE->getClassReceiver());
+  return S.LookupMethodInObjectType(sel, IT, false);
 }
 
 ExprResult Sema::checkPseudoObjectRValue(Expr *E) {
