@@ -1959,6 +1959,9 @@ public:
   Expr **getArgs() {
     return reinterpret_cast<Expr **>(SubExprs+getNumPreArgs()+PREARGS_START);
   }
+  const Expr *const *getArgs() const {
+    return const_cast<CallExpr*>(this)->getArgs();
+  }
   
   /// getArg - Return the specified argument.
   Expr *getArg(unsigned Arg) {

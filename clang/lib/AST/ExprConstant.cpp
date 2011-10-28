@@ -43,11 +43,22 @@ using llvm::APFloat;
 /// evaluate the expression regardless of what the RHS is, but C only allows
 /// certain things in certain situations.
 namespace {
+  struct CallStackFrame;
+
   struct EvalInfo {
     const ASTContext &Ctx;
 
     /// EvalStatus - Contains information about the evaluation.
     Expr::EvalStatus &EvalStatus;
+
+    /// CurrentCall - The top of the constexpr call stack.
+    const CallStackFrame *CurrentCall;
+
+    /// NumCalls - The number of calls we've evaluated so far.
+    unsigned NumCalls;
+
+    /// CallStackDepth - The number of calls in the call stack right now.
+    unsigned CallStackDepth;
 
     typedef llvm::DenseMap<const OpaqueValueExpr*, APValue> MapTy;
     MapTy OpaqueValues;
@@ -58,9 +69,38 @@ namespace {
     }
 
     EvalInfo(const ASTContext &C, Expr::EvalStatus &S)
-      : Ctx(C), EvalStatus(S) {}
+      : Ctx(C), EvalStatus(S), CurrentCall(0), NumCalls(0), CallStackDepth(0) {}
 
     const LangOptions &getLangOpts() { return Ctx.getLangOptions(); }
+  };
+
+  /// A stack frame in the constexpr call stack.
+  struct CallStackFrame {
+    EvalInfo &Info;
+
+    /// Parent - The caller of this stack frame.
+    const CallStackFrame *Caller;
+
+    /// ParmBindings - Parameter bindings for this function call, indexed by
+    /// parameters' function scope indices.
+    const APValue *Arguments;
+
+    /// CallIndex - The index of the current call. This is used to match lvalues
+    /// referring to parameters up with the corresponding stack frame, and to
+    /// detect when the parameter is no longer in scope.
+    unsigned CallIndex;
+
+    CallStackFrame(EvalInfo &Info, const APValue *Arguments)
+        : Info(Info), Caller(Info.CurrentCall), Arguments(Arguments),
+          CallIndex(Info.NumCalls++) {
+      Info.CurrentCall = this;
+      ++Info.CallStackDepth;
+    }
+    ~CallStackFrame() {
+      assert(Info.CurrentCall == this && "calls retired out of order");
+      --Info.CallStackDepth;
+      Info.CurrentCall = Caller;
+    }
   };
 
   struct ComplexValue {
@@ -269,11 +309,17 @@ static APFloat HandleIntToFloatCast(QualType DestType, QualType SrcType,
 }
 
 /// Try to evaluate the initializer for a variable declaration.
-static APValue *EvaluateVarDeclInit(EvalInfo &Info, const VarDecl *VD) {
-  // FIXME: If this is a parameter to an active constexpr function call, perform
-  // substitution now.
-  if (isa<ParmVarDecl>(VD))
+static const APValue *EvaluateVarDeclInit(EvalInfo &Info, const VarDecl *VD) {
+  // If this is a parameter to an active constexpr function call, perform
+  // argument substitution.
+  if (const ParmVarDecl *PVD = dyn_cast<ParmVarDecl>(VD)) {
+    // FIXME This assumes that all parameters must be parameters of the current
+    // call. Add the CallIndex to the LValue representation and use that to
+    // check.
+    if (Info.CurrentCall)
+      return &Info.CurrentCall->Arguments[PVD->getFunctionScopeIndex()];
     return 0;
+  }
 
   const Expr *Init = VD->getAnyInitializer();
   if (!Init)
@@ -341,22 +387,28 @@ bool HandleLValueToRValueConversion(EvalInfo &Info, QualType Type,
   if (D) {
     // In C++98, const, non-volatile integers initialized with ICEs are ICEs.
     // In C++11, constexpr, non-volatile variables initialized with constant
-    // expressions are constant expressions too.
+    // expressions are constant expressions too. Inside constexpr functions,
+    // parameters are constant expressions even if they're non-const.
     // In C, such things can also be folded, although they are not ICEs.
     //
     // FIXME: Allow folding any const variable of literal type initialized with
     // a constant expression. For now, we only allow variables with integral and
     // floating types to be folded.
+    // FIXME: volatile-qualified ParmVarDecls need special handling. A literal
+    // interpretation of C++11 suggests that volatile parameters are OK if
+    // they're never read (there's no prohibition against constructing volatile
+    // objects in constant expressions), but lvalue-to-rvalue conversions on
+    // them are not permitted.
     const VarDecl *VD = dyn_cast<VarDecl>(D);
-    if (!VD || !IsConstNonVolatile(VD->getType()) ||
-        (!Type->isIntegralOrEnumerationType() && !Type->isRealFloatingType()))
+    if (!VD || !(IsConstNonVolatile(VD->getType()) || isa<ParmVarDecl>(VD)) ||
+        !(Type->isIntegralOrEnumerationType() || Type->isRealFloatingType()))
       return false;
 
-    APValue *V = EvaluateVarDeclInit(Info, VD);
+    const APValue *V = EvaluateVarDeclInit(Info, VD);
     if (!V || V->isUninit())
       return false;
 
-    if (!VD->getAnyInitializer()->isLValue()) {
+    if (isa<ParmVarDecl>(VD) || !VD->getAnyInitializer()->isLValue()) {
       RVal = *V;
       return true;
     }
@@ -383,6 +435,64 @@ bool HandleLValueToRValueConversion(EvalInfo &Info, QualType Type,
   }
 
   return false;
+}
+
+namespace {
+enum EvalStmtResult {
+  /// Evaluation failed.
+  ESR_Failed,
+  /// Hit a 'return' statement.
+  ESR_Returned,
+  /// Evaluation succeeded.
+  ESR_Succeeded
+};
+}
+
+// Evaluate a statement.
+static EvalStmtResult EvaluateStmt(APValue &Result, EvalInfo &Info,
+                                   const Stmt *S) {
+  switch (S->getStmtClass()) {
+  default:
+    return ESR_Failed;
+
+  case Stmt::NullStmtClass:
+  case Stmt::DeclStmtClass:
+    return ESR_Succeeded;
+
+  case Stmt::ReturnStmtClass:
+    if (Evaluate(Result, Info, cast<ReturnStmt>(S)->getRetValue()))
+      return ESR_Returned;
+    return ESR_Failed;
+
+  case Stmt::CompoundStmtClass: {
+    const CompoundStmt *CS = cast<CompoundStmt>(S);
+    for (CompoundStmt::const_body_iterator BI = CS->body_begin(),
+           BE = CS->body_end(); BI != BE; ++BI) {
+      EvalStmtResult ESR = EvaluateStmt(Result, Info, *BI);
+      if (ESR != ESR_Succeeded)
+        return ESR;
+    }
+    return ESR_Succeeded;
+  }
+  }
+}
+
+/// Evaluate a function call.
+static bool HandleFunctionCall(ArrayRef<const Expr*> Args, const Stmt *Body,
+                               EvalInfo &Info, APValue &Result) {
+  // FIXME: Implement a proper call limit, along with a command-line flag.
+  if (Info.NumCalls >= 1000000 || Info.CallStackDepth >= 512)
+    return false;
+
+  SmallVector<APValue, 16> ArgValues(Args.size());
+  // FIXME: Deal with default arguments and 'this'.
+  for (ArrayRef<const Expr*>::iterator I = Args.begin(), E = Args.end();
+       I != E; ++I)
+    if (!Evaluate(ArgValues[I - Args.begin()], Info, *I))
+      return false;
+
+  CallStackFrame Frame(Info, ArgValues.data());
+  return EvaluateStmt(Result, Info, Body) == ESR_Returned;
 }
 
 namespace {
@@ -568,6 +678,47 @@ public:
     return DerivedSuccess(*value, E);
   }
 
+  RetTy VisitCallExpr(const CallExpr *E) {
+    const Expr *Callee = E->getCallee();
+    QualType CalleeType = Callee->getType();
+
+    // FIXME: Handle the case where Callee is a (parenthesized) MemberExpr for a
+    // non-static member function.
+    if (CalleeType->isSpecificBuiltinType(BuiltinType::BoundMember))
+      return DerivedError(E);
+
+    if (!CalleeType->isFunctionType() && !CalleeType->isFunctionPointerType())
+      return DerivedError(E);
+
+    APValue Call;
+    if (!Evaluate(Call, Info, Callee) || !Call.isLValue() ||
+        !Call.getLValueBase() || !Call.getLValueOffset().isZero())
+      return DerivedError(Callee);
+
+    const FunctionDecl *FD = 0;
+    if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Call.getLValueBase()))
+      FD = dyn_cast<FunctionDecl>(DRE->getDecl());
+    else if (const MemberExpr *ME = dyn_cast<MemberExpr>(Call.getLValueBase()))
+      FD = dyn_cast<FunctionDecl>(ME->getMemberDecl());
+    if (!FD)
+      return DerivedError(Callee);
+
+    // Don't call function pointers which have been cast to some other type.
+    if (!Info.Ctx.hasSameType(CalleeType->getPointeeType(), FD->getType()))
+      return DerivedError(E);
+
+    const FunctionDecl *Definition;
+    Stmt *Body = FD->getBody(Definition);
+    APValue Result;
+    llvm::ArrayRef<const Expr*> Args(E->getArgs(), E->getNumArgs());
+
+    if (Body && Definition->isConstexpr() && !Definition->isInvalidDecl() &&
+        HandleFunctionCall(Args, Body, Info, Result))
+      return DerivedSuccess(Result, E);
+
+    return DerivedError(E);
+  }
+
   RetTy VisitCompoundLiteralExpr(const CompoundLiteralExpr *E) {
     return StmtVisitorTy::Visit(E->getInitializer());
   }
@@ -716,7 +867,7 @@ bool LValueExprEvaluator::VisitVarDecl(const Expr *E, const VarDecl *VD) {
   if (!VD->getType()->isReferenceType())
     return Success(E);
 
-  APValue *V = EvaluateVarDeclInit(Info, VD);
+  const APValue *V = EvaluateVarDeclInit(Info, VD);
   if (V && !V->isUninit())
     return Success(*V, E);
 
@@ -736,6 +887,14 @@ bool LValueExprEvaluator::VisitMemberExpr(const MemberExpr *E) {
   if (const VarDecl *VD = dyn_cast<VarDecl>(E->getMemberDecl())) {
     VisitIgnoredValue(E->getBase());
     return VisitVarDecl(E, VD);
+  }
+
+  // Handle static member functions.
+  if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(E->getMemberDecl())) {
+    if (MD->isStatic()) {
+      VisitIgnoredValue(E->getBase());
+      return Success(E);
+    }
   }
 
   QualType Ty;
