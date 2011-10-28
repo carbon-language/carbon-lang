@@ -69,4 +69,22 @@ lldb stepping benchmark: Avg: 0.157824 (Laps: 50, Total Elapsed Time: 7.891186, 
 lldb expr cmd benchmark: Avg: 0.207600 (Laps: 25, Total Elapsed Time: 5.189992, min=0.203037, max=0.241189)
 lldb disassembly benchmark: Avg: 0.006725 (Laps: 10, Total Elapsed Time: 0.067249, min=0.002470, max=0.042690)
 
+r143199 (Oct 28, 2011):
+# No performance regression.
+[11:11:54] johnny:/Volumes/data/lldb/svn/trunk/test $ ./bench.py -e /Volumes/data/lldb/svn/regression/build/Debug/lldb -x '-F Driver::MainLoop()' 2>&1 | grep -P '^lldb.*benchmark:'
+lldb startup delay (create fresh target) benchmark: Avg: 0.104717 (Laps: 30, Total Elapsed Time: 3.141521, min=0.101881, max=0.162480)
+lldb startup delay (set first breakpoint) benchmark: Avg: 0.116985 (Laps: 30, Total Elapsed Time: 3.509554, min=0.101890, max=0.537634)
+lldb startup delay (run to breakpoint) benchmark: Avg: 0.462864 (Laps: 30, Total Elapsed Time: 13.885922, min=0.434867, max=0.877184)
+lldb frame variable benchmark: Avg: 1.749605 (Laps: 20, Total Elapsed Time: 34.992090, min=1.604043, max=2.365440)
+lldb stepping benchmark: Avg: 0.147439 (Laps: 50, Total Elapsed Time: 7.371955, min=0.101088, max=2.360912)
+lldb expr cmd benchmark: Avg: 0.210252 (Laps: 25, Total Elapsed Time: 5.256302, min=0.202591, max=0.258185)
+lldb disassembly benchmark: Avg: 0.028243 (Laps: 10, Total Elapsed Time: 0.282434, min=0.027451, max=0.031222)
+[11:16:16] johnny:/Volumes/data/lldb/svn/trunk/test $ ./bench.py -e /Volumes/data/lldb/svn/regression/build/Debug/lldb -x '-F Driver::MainLoop()' 2>&1 | grep -P '^lldb.*benchmark:'
+lldb startup delay (create fresh target) benchmark: Avg: 0.103913 (Laps: 30, Total Elapsed Time: 3.117384, min=0.101510, max=0.136605)
+lldb startup delay (set first breakpoint) benchmark: Avg: 0.102452 (Laps: 30, Total Elapsed Time: 3.073559, min=0.101508, max=0.105250)
+lldb startup delay (run to breakpoint) benchmark: Avg: 0.461532 (Laps: 30, Total Elapsed Time: 13.845950, min=0.436977, max=0.676502)
+lldb frame variable benchmark: Avg: 1.640990 (Laps: 20, Total Elapsed Time: 32.819801, min=1.583961, max=2.031209)
+lldb stepping benchmark: Avg: 0.104966 (Laps: 50, Total Elapsed Time: 5.248294, min=0.101296, max=0.240781)
+lldb expr cmd benchmark: Avg: 0.211872 (Laps: 25, Total Elapsed Time: 5.296811, min=0.203827, max=0.259524)
+lldb disassembly benchmark: Avg: 0.104108 (Laps: 10, Total Elapsed Time: 1.041076, min=0.089751, max=0.227173)
 
