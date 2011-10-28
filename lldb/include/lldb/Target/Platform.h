@@ -417,7 +417,15 @@ namespace lldb_private {
             m_sdk_build = sdk_build;
         }    
         
-
+        // There may be modules that we don't want to find by default for operations like "setting breakpoint by name".
+        // The platform will return "true" from this call if the passed in module happens to be one of these.
+        
+        virtual bool
+        ModuleIsExcludedForNonModuleSpecificSearches (Target &target, const lldb::ModuleSP &module_sp)
+        {
+            return false;
+        }
+                
     protected:
         bool m_is_host;
         // Set to true when we are able to actually set the OS version while 

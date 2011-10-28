@@ -252,7 +252,7 @@ BreakpointSP
 Target::CreateBreakpoint (Address &addr, bool internal)
 {
     TargetSP target_sp = this->GetSP();
-    SearchFilterSP filter_sp(new SearchFilter (target_sp));
+    SearchFilterSP filter_sp(new SearchFilterForNonModuleSpecificSearches (target_sp));
     BreakpointResolverSP resolver_sp (new BreakpointResolverAddress (NULL, addr));
     return CreateBreakpoint (filter_sp, resolver_sp, internal);
 }
@@ -295,7 +295,7 @@ Target::GetSearchFilterForModule (const FileSpec *containingModule)
     else
     {
         if (m_search_filter_sp.get() == NULL)
-            m_search_filter_sp.reset (new SearchFilter (target_sp));
+            m_search_filter_sp.reset (new SearchFilterForNonModuleSpecificSearches (target_sp));
         filter_sp = m_search_filter_sp;
     }
     return filter_sp;
@@ -315,7 +315,7 @@ Target::GetSearchFilterForModuleList (const FileSpecList *containingModules)
     else
     {
         if (m_search_filter_sp.get() == NULL)
-            m_search_filter_sp.reset (new SearchFilter (target_sp));
+            m_search_filter_sp.reset (new SearchFilterForNonModuleSpecificSearches (target_sp));
         filter_sp = m_search_filter_sp;
     }
     return filter_sp;
@@ -932,6 +932,50 @@ Target::ModulesDidUnload (ModuleList &module_list)
 
     // TODO: make event data that packages up the module_list
     BroadcastEvent (eBroadcastBitModulesUnloaded, NULL);
+}
+
+
+const bool
+Target::ModuleIsExcludedForNonModuleSpecificSearches (const FileSpec &module_spec)
+{
+
+    if (!m_breakpoints_use_platform_avoid)
+        return false;
+    else
+    {
+        ModuleList matchingModules;
+        const ArchSpec *arch_ptr = NULL;
+        const lldb_private::UUID *uuid_ptr= NULL;
+        const ConstString *object_name = NULL;
+        size_t num_modules = GetImages().FindModules(&module_spec, arch_ptr, uuid_ptr, object_name, matchingModules);
+        
+        // If there is more than one module for this file spec, only return true if ALL the modules are on the
+        // black list.
+        if (num_modules > 0)
+        {
+            for (int i  = 0; i < num_modules; i++)
+            {
+                if (!ModuleIsExcludedForNonModuleSpecificSearches (matchingModules.GetModuleAtIndex(i)))
+                    return false;
+            }
+            return true;
+        }
+        else
+            return false;
+    }
+}
+
+const bool
+Target::ModuleIsExcludedForNonModuleSpecificSearches (const lldb::ModuleSP &module_sp)
+{
+    if (!m_breakpoints_use_platform_avoid)
+        return false;
+    else if (GetPlatform())
+    {
+        return GetPlatform()->ModuleIsExcludedForNonModuleSpecificSearches (*this, module_sp);
+    }
+    else
+        return false;
 }
 
 size_t
@@ -1935,6 +1979,7 @@ Target::SettingsController::CreateInstanceSettings (const char *instance_name)
 #define TSC_SOURCE_MAP        "source-map"
 #define TSC_MAX_CHILDREN      "max-children-count"
 #define TSC_MAX_STRLENSUMMARY "max-string-summary-length"
+#define TSC_PLATFORM_AVOID    "breakpoints-use-platform-avoid-list"
 
 
 static const ConstString &
@@ -1985,6 +2030,14 @@ GetSettingNameForMaxStringSummaryLength ()
     static ConstString g_const_string (TSC_MAX_STRLENSUMMARY);
     return g_const_string;
 }
+
+static const ConstString &
+GetSettingNameForPlatformAvoid ()
+{
+    static ConstString g_const_string (TSC_PLATFORM_AVOID);
+    return g_const_string;
+}
+
 
 bool
 Target::SettingsController::SetGlobalVariable (const ConstString &var_name,
@@ -2039,7 +2092,8 @@ TargetInstanceSettings::TargetInstanceSettings
     m_skip_prologue (true, true),
     m_source_map (NULL, NULL),
     m_max_children_display(256),
-    m_max_strlen_length(1024)
+    m_max_strlen_length(1024),
+    m_breakpoints_use_platform_avoid (true, true)
 {
     // CopyInstanceSettings is a pure virtual function in InstanceSettings; it therefore cannot be called
     // until the vtables for TargetInstanceSettings are properly set up, i.e. AFTER all the initializers.
@@ -2067,7 +2121,8 @@ TargetInstanceSettings::TargetInstanceSettings (const TargetInstanceSettings &rh
     m_skip_prologue (rhs.m_skip_prologue),
     m_source_map (rhs.m_source_map),
     m_max_children_display(rhs.m_max_children_display),
-    m_max_strlen_length(rhs.m_max_strlen_length)
+    m_max_strlen_length(rhs.m_max_strlen_length),
+    m_breakpoints_use_platform_avoid (rhs.m_breakpoints_use_platform_avoid)
 {
     if (m_instance_name != InstanceSettings::GetDefaultName())
     {
@@ -2214,6 +2269,10 @@ TargetInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_n
                 break;
         }        
     }
+    else if (var_name == GetSettingNameForPlatformAvoid ())
+    {
+        err = UserSettingsController::UpdateBooleanOptionValue (value, op, m_breakpoints_use_platform_avoid);
+    }
 }
 
 void
@@ -2224,12 +2283,13 @@ TargetInstanceSettings::CopyInstanceSettings (const lldb::InstanceSettingsSP &ne
     if (!new_settings_ptr)
         return;
     
-    m_expr_prefix_file          = new_settings_ptr->m_expr_prefix_file;
-    m_expr_prefix_contents_sp   = new_settings_ptr->m_expr_prefix_contents_sp;
-    m_prefer_dynamic_value      = new_settings_ptr->m_prefer_dynamic_value;
-    m_skip_prologue             = new_settings_ptr->m_skip_prologue;
-    m_max_children_display      = new_settings_ptr->m_max_children_display;
-    m_max_strlen_length         = new_settings_ptr->m_max_strlen_length;
+    m_expr_prefix_file               = new_settings_ptr->m_expr_prefix_file;
+    m_expr_prefix_contents_sp        = new_settings_ptr->m_expr_prefix_contents_sp;
+    m_prefer_dynamic_value           = new_settings_ptr->m_prefer_dynamic_value;
+    m_skip_prologue                  = new_settings_ptr->m_skip_prologue;
+    m_max_children_display           = new_settings_ptr->m_max_children_display;
+    m_max_strlen_length              = new_settings_ptr->m_max_strlen_length;
+    m_breakpoints_use_platform_avoid = new_settings_ptr->m_breakpoints_use_platform_avoid;
 }
 
 bool
@@ -2270,6 +2330,13 @@ TargetInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
         StreamString count_str;
         count_str.Printf ("%d", m_max_strlen_length);
         value.AppendString (count_str.GetData());
+    }
+    else if (var_name == GetSettingNameForPlatformAvoid())
+    {
+        if (m_breakpoints_use_platform_avoid)
+            value.AppendString ("true");
+        else
+            value.AppendString ("false");
     }
     else 
     {
@@ -2326,5 +2393,6 @@ Target::SettingsController::instance_settings_table[] =
     { TSC_SOURCE_MAP        , eSetVarTypeArray  , NULL          , NULL,                  false, false, "Source path remappings to use when locating source files from debug information." },
     { TSC_MAX_CHILDREN      , eSetVarTypeInt    , "256"         , NULL,                  true,  false, "Maximum number of children to expand in any level of depth." },
     { TSC_MAX_STRLENSUMMARY , eSetVarTypeInt    , "1024"        , NULL,                  true,  false, "Maximum number of characters to show when using %s in summary strings." },
+    { TSC_PLATFORM_AVOID    , eSetVarTypeBoolean, "true"        , NULL,                  false, false, "Consult the platform module avoid list when setting non-module specific breakpoints." },
     { NULL                  , eSetVarTypeNone   , NULL          , NULL,                  false, false, NULL }
 };

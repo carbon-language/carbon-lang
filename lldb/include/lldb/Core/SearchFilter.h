@@ -274,6 +274,24 @@ protected:
 };
 
 //----------------------------------------------------------------------
+/// @class SearchFilterForNonModuleSpecificSearches SearchFilter.h "lldb/Core/SearchFilter.h"
+/// @brief This is a SearchFilter that searches through all modules.  It also consults the Target::ModuleIsExcludedForNonModuleSpecificSearches.
+//----------------------------------------------------------------------
+class SearchFilterForNonModuleSpecificSearches :
+    public SearchFilter
+{
+public:
+    SearchFilterForNonModuleSpecificSearches (lldb::TargetSP &targetSP) : SearchFilter(targetSP) {};
+    ~SearchFilterForNonModuleSpecificSearches () {}
+    
+    virtual bool 
+    ModulePasses (const FileSpec &module_spec);
+    
+    virtual bool
+    ModulePasses (const lldb::ModuleSP &module_sp);
+};
+
+//----------------------------------------------------------------------
 /// @class SearchFilterByModule SearchFilter.h "lldb/Core/SearchFilter.h"
 /// @brief This is a SearchFilter that restricts the search to a given module.
 //----------------------------------------------------------------------

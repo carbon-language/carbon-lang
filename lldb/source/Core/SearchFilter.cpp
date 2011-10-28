@@ -287,6 +287,29 @@ SearchFilter::DoFunctionIteration (Function *function, const SymbolContext &cont
 }
 
 //----------------------------------------------------------------------
+//  SearchFilterForNonModuleSpecificSearches:
+//  Selects a shared library matching a given file spec, consulting the targets "black list".
+//----------------------------------------------------------------------
+
+    bool 
+    SearchFilterForNonModuleSpecificSearches::ModulePasses (const FileSpec &module_spec)
+    {
+        if (m_target_sp->ModuleIsExcludedForNonModuleSpecificSearches (module_spec))
+            return false;
+        else
+            return true;
+    }
+    
+    bool
+    SearchFilterForNonModuleSpecificSearches::ModulePasses (const lldb::ModuleSP &module_sp)
+    {
+        if (m_target_sp->ModuleIsExcludedForNonModuleSpecificSearches (module_sp))
+            return false;
+        else
+            return true;
+    }
+
+//----------------------------------------------------------------------
 //  SearchFilterByModule:
 //  Selects a shared library matching a given file spec
 //----------------------------------------------------------------------

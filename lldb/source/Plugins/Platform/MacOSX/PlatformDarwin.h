@@ -85,6 +85,9 @@ public:
             lldb_private::Listener &listener, 
             lldb_private::Error &error);
 
+    virtual bool
+    ModuleIsExcludedForNonModuleSpecificSearches (lldb_private::Target &target, const lldb::ModuleSP &module_sp);
+                
 protected:
     lldb::PlatformSP m_remote_platform_sp; // Allow multiple ways to connect to a remote darwin OS
 

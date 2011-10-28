@@ -481,4 +481,16 @@ PlatformDarwin::GetGroupName (uint32_t gid)
     return NULL;
 }
 
-
+bool
+PlatformDarwin::ModuleIsExcludedForNonModuleSpecificSearches (lldb_private::Target &target, const lldb::ModuleSP &module_sp)
+{
+    ObjectFile *obj_file = module_sp->GetObjectFile();
+    if (!obj_file)
+        return false;
+    
+    ObjectFile::Type obj_type = obj_file->GetType();
+    if (obj_type == ObjectFile::eTypeDynamicLinker)
+        return true;
+    else
+        return false;
+}
