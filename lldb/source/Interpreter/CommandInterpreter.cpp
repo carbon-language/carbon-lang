@@ -644,7 +644,7 @@ CommandInterpreter::ProcessAliasOptionsArgs (lldb::CommandObjectSP &cmd_obj_sp,
         }
     }
     
-    if (options_string.size() > 0)
+    if (!options_string.empty())
     {
         if (cmd_obj_sp->WantsRawCommandString ())
             option_arg_vector->push_back (OptionArgPair ("<argument>",
@@ -779,7 +779,7 @@ CommandInterpreter::GetHelp (CommandReturnObject &result,
 
     }
 
-    if (m_alias_dict.size() > 0 && ( (cmd_types & eCommandTypesAliases) == eCommandTypesAliases ))
+    if (!m_alias_dict.empty() && ( (cmd_types & eCommandTypesAliases) == eCommandTypesAliases ))
     {
         result.AppendMessage("The following is a list of your current command abbreviations "
                              "(see 'help command alias' for more info):");
@@ -801,7 +801,7 @@ CommandInterpreter::GetHelp (CommandReturnObject &result,
         result.AppendMessage("");
     }
 
-    if (m_user_dict.size() > 0 && ( (cmd_types & eCommandTypesUserDef) == eCommandTypesUserDef ))
+    if (!m_user_dict.empty() && ( (cmd_types & eCommandTypesUserDef) == eCommandTypesUserDef ))
     {
         result.AppendMessage ("The following is a list of your current user-defined commands:");
         result.AppendMessage("");
@@ -879,7 +879,7 @@ CommandInterpreter::GetCommandObjectForCommand (std::string &command_string)
 }
 
 static const char *k_white_space = " \t\v";
-
+static const char *k_valid_command_chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_";
 static void
 StripLeadingSpaces (std::string &s)
 {
@@ -895,9 +895,10 @@ StripLeadingSpaces (std::string &s)
 }
 
 static bool
-StripFirstWord (std::string &command_string, std::string &word, char &quote_char)
+ExtractCommand (std::string &command_string, std::string &command, std::string &suffix, char &quote_char)
 {
-    word.clear();
+    command.clear();
+    suffix.clear();
     StripLeadingSpaces (command_string);
 
     bool result = false;
@@ -912,12 +913,12 @@ StripFirstWord (std::string &command_string, std::string &word, char &quote_char
             const size_t end_quote_pos = command_string.find (quote_char, 1);
             if (end_quote_pos == std::string::npos)
             {
-                word.swap (command_string);
+                command.swap (command_string);
                 command_string.erase ();
             }
             else
             {
-                word = command_string.substr (1, end_quote_pos - 1);
+                command.assign (command_string, 1, end_quote_pos - 1);
                 if (end_quote_pos + 1 < command_string.size())
                     command_string.erase (0, command_string.find_first_not_of (k_white_space, end_quote_pos + 1));
                 else
@@ -929,25 +930,43 @@ StripFirstWord (std::string &command_string, std::string &word, char &quote_char
             const size_t first_space_pos = command_string.find_first_of (k_white_space);
             if (first_space_pos == std::string::npos)
             {
-                word.swap (command_string);
+                command.swap (command_string);
                 command_string.erase();
             }
             else
             {
-                word = command_string.substr (0, first_space_pos);
-                command_string.erase(0,command_string.find_first_not_of (k_white_space, first_space_pos));
+                command.assign (command_string, 0, first_space_pos);
+                command_string.erase(0, command_string.find_first_not_of (k_white_space, first_space_pos));
             }
         }
         result = true;
+    }
+    
+    
+    if (!command.empty())
+    {
+        // actual commands can't start with '-' or '_'
+        if (command[0] != '-' && command[0] != '_')
+        {
+            size_t pos = command.find_first_not_of(k_valid_command_chars);
+            if (pos > 0 && pos != std::string::npos)
+            {
+                suffix.assign (command.begin() + pos, command.end());
+                command.erase (pos);
+            }
+        }
     }
 
     return result;
 }
 
-void
-CommandInterpreter::BuildAliasResult (const char *alias_name, std::string &raw_input_string, std::string &alias_result,
-                                      CommandObject *&alias_cmd_obj, CommandReturnObject &result)
+CommandObject *
+CommandInterpreter::BuildAliasResult (const char *alias_name, 
+                                      std::string &raw_input_string, 
+                                      std::string &alias_result,
+                                      CommandReturnObject &result)
 {
+    CommandObject *alias_cmd_obj = NULL;
     Args cmd_args (raw_input_string.c_str());
     alias_cmd_obj = GetCommandObject (alias_name);
     StreamString result_str;
@@ -992,7 +1011,7 @@ CommandInterpreter::BuildAliasResult (const char *alias_name, std::string &raw_i
                             ("Not enough arguments provided; you need at least %d arguments to use this alias.\n",
                              index);
                             result.SetStatus (eReturnStatusFailed);
-                            return;
+                            return alias_cmd_obj;
                         }
                         else
                         {
@@ -1009,6 +1028,7 @@ CommandInterpreter::BuildAliasResult (const char *alias_name, std::string &raw_i
         
         alias_result = result_str.GetData();
     }
+    return alias_cmd_obj;
 }
 
 Error
@@ -1135,7 +1155,6 @@ CommandInterpreter::HandleCommand (const char *command_line,
 
     bool done = false;
     CommandObject *cmd_obj = NULL;
-    std::string next_word;
     bool wants_raw_input = false;
     std::string command_string (command_line);
     std::string original_command_string (command_line);
@@ -1242,61 +1261,69 @@ CommandInterpreter::HandleCommand (const char *command_line,
 
     StreamString revised_command_line;
     size_t actual_cmd_name_len = 0;
+    std::string next_word;
     while (!done)
     {
         char quote_char = '\0';
-        StripFirstWord (command_string, next_word, quote_char);
-        if (!cmd_obj && AliasExists (next_word.c_str())) 
+        std::string suffix;
+        ExtractCommand (command_string, next_word, suffix, quote_char);
+        if (cmd_obj == NULL)
         {
-            std::string alias_result;
-            BuildAliasResult (next_word.c_str(), command_string, alias_result, cmd_obj, result);
-            revised_command_line.Printf ("%s", alias_result.c_str());
-            if (cmd_obj)
+            if (AliasExists (next_word.c_str())) 
             {
-                wants_raw_input = cmd_obj->WantsRawCommandString ();
-                actual_cmd_name_len = strlen (cmd_obj->GetCommandName());
-            }
-        }
-        else if (!cmd_obj)
-        {
-            cmd_obj = GetCommandObject (next_word.c_str());
-            if (cmd_obj)
-            {
-                actual_cmd_name_len += next_word.length();
-                revised_command_line.Printf ("%s", next_word.c_str());
-                wants_raw_input = cmd_obj->WantsRawCommandString ();
+                std::string alias_result;
+                cmd_obj = BuildAliasResult (next_word.c_str(), command_string, alias_result, result);
+                revised_command_line.Printf ("%s", alias_result.c_str());
+                if (cmd_obj)
+                {
+                    wants_raw_input = cmd_obj->WantsRawCommandString ();
+                    actual_cmd_name_len = strlen (cmd_obj->GetCommandName());
+                }
             }
             else
             {
-                revised_command_line.Printf ("%s", next_word.c_str());
-            }
-        }
-        else if (cmd_obj->IsMultiwordObject ())
-        {
-            CommandObject *sub_cmd_obj = ((CommandObjectMultiword *) cmd_obj)->GetSubcommandObject (next_word.c_str());
-            if (sub_cmd_obj)
-            {
-                actual_cmd_name_len += next_word.length() + 1;
-                revised_command_line.Printf (" %s", next_word.c_str());
-                cmd_obj = sub_cmd_obj;
-                wants_raw_input = cmd_obj->WantsRawCommandString ();
-            }
-            else
-            {
-                if (quote_char)
-                    revised_command_line.Printf (" %c%s%c", quote_char, next_word.c_str(), quote_char);
+                cmd_obj = GetCommandObject (next_word.c_str());
+                if (cmd_obj)
+                {
+                    actual_cmd_name_len += next_word.length();
+                    revised_command_line.Printf ("%s", next_word.c_str());
+                    wants_raw_input = cmd_obj->WantsRawCommandString ();
+                }
                 else
-                    revised_command_line.Printf (" %s", next_word.c_str());
-                done = true;
+                {
+                    revised_command_line.Printf ("%s", next_word.c_str());
+                }
             }
         }
         else
         {
-            if (quote_char)
-                revised_command_line.Printf (" %c%s%c", quote_char, next_word.c_str(), quote_char);
+            if (cmd_obj->IsMultiwordObject ())
+            {
+                CommandObject *sub_cmd_obj = ((CommandObjectMultiword *) cmd_obj)->GetSubcommandObject (next_word.c_str());
+                if (sub_cmd_obj)
+                {
+                    actual_cmd_name_len += next_word.length() + 1;
+                    revised_command_line.Printf (" %s", next_word.c_str());
+                    cmd_obj = sub_cmd_obj;
+                    wants_raw_input = cmd_obj->WantsRawCommandString ();
+                }
+                else
+                {
+                    if (quote_char)
+                        revised_command_line.Printf (" %c%s%s%c", quote_char, next_word.c_str(), suffix.c_str(), quote_char);
+                    else
+                        revised_command_line.Printf (" %s%s", next_word.c_str(), suffix.c_str());
+                    done = true;
+                }
+            }
             else
-                revised_command_line.Printf (" %s", next_word.c_str());
-            done = true;
+            {
+                if (quote_char)
+                    revised_command_line.Printf (" %c%s%s%c", quote_char, next_word.c_str(), suffix.c_str(), quote_char);
+                else
+                    revised_command_line.Printf (" %s%s", next_word.c_str(), suffix.c_str());
+                done = true;
+            }
         }
 
         if (cmd_obj == NULL)
@@ -1306,13 +1333,39 @@ CommandInterpreter::HandleCommand (const char *command_line,
             return false;
         }
 
-        next_word.erase ();
+        if (cmd_obj->IsMultiwordObject ())
+        {
+            if (!suffix.empty())
+            {
+
+                result.AppendErrorWithFormat ("multi-word commands ('%s') can't have shorthand suffixes: '%s'\n", 
+                                              next_word.c_str(),
+                                              suffix.c_str());
+                result.SetStatus (eReturnStatusFailed);
+                return false;
+            }
+        }
+        else
+        {
+            // If we found a normal command, we are done
+            done = true;
+            if (!suffix.empty())
+            {
+                switch (suffix[0])
+                {
+                case '/':
+                    // GDB format suffixes
+                    revised_command_line.Printf (" --gdb-format=%s", suffix.c_str() + 1);
+                    break;
+                }
+            }
+        }
         if (command_string.length() == 0)
             done = true;
             
     }
 
-    if (command_string.size() > 0)
+    if (!command_string.empty())
         revised_command_line.Printf (" %s", command_string.c_str());
 
     // End of Phase 1.
@@ -1345,7 +1398,7 @@ CommandInterpreter::HandleCommand (const char *command_line,
                 m_repeat_command.assign(original_command_string.c_str());
             
             // Don't keep pushing the same command onto the history...
-            if (m_command_history.size() == 0 || m_command_history.back() != original_command_string) 
+            if (m_command_history.empty() || m_command_history.back() != original_command_string) 
                 m_command_history.push_back (original_command_string);
         }
         
@@ -2450,15 +2503,13 @@ CommandInterpreter::DumpHistory (Stream &stream, uint32_t count) const
 void
 CommandInterpreter::DumpHistory (Stream &stream, uint32_t start, uint32_t end) const
 {
-    size_t num_history_elements = m_command_history.size();
-    if (start > num_history_elements)
-        return;
-    for (uint32_t i = start; i < num_history_elements && i <= end; i++)
+    const size_t last_idx = std::min<size_t>(m_command_history.size(), end + 1);
+    for (size_t i = start; i < last_idx; i++)
     {
         if (!m_command_history[i].empty())
         {
             stream.Indent();
-            stream.Printf ("%4d: %s\n", i, m_command_history[i].c_str());
+            stream.Printf ("%4zu: %s\n", i, m_command_history[i].c_str());
         }
     }
 }

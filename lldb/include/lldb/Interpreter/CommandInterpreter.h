@@ -129,11 +129,10 @@ public:
     AddOrReplaceAliasOptions (const char *alias_name, 
                               OptionArgVectorSP &option_arg_vector_sp);
 
-    void
+    CommandObject *
     BuildAliasResult (const char *alias_name, 
                       std::string &raw_input_string, 
                       std::string &alias_result, 
-                      CommandObject *&alias_cmd_obj, 
                       CommandReturnObject &result);
 
     bool
