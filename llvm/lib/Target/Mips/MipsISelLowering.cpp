@@ -84,7 +84,8 @@ MipsTargetLowering::
 MipsTargetLowering(MipsTargetMachine &TM)
   : TargetLowering(TM, new MipsTargetObjectFile()),
     Subtarget(&TM.getSubtarget<MipsSubtarget>()),
-    HasMips64(Subtarget->hasMips64()), IsN64(Subtarget->isABI_N64()) {
+    HasMips64(Subtarget->hasMips64()), IsN64(Subtarget->isABI_N64()),
+    IsO32(Subtarget->isABI_O32()) {
 
   // Mips does not have i1 type, so use i32 for
   // setcc operations results (slt, sgt, ...).
@@ -1926,7 +1927,7 @@ MipsTargetLowering::LowerCall(SDValue InChain, SDValue Callee,
   CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
 		 getTargetMachine(), ArgLocs, *DAG.getContext());
 
-  if (Subtarget->isABI_O32())
+  if (IsO32)
     CCInfo.AnalyzeCallOperands(Outs, CC_MipsO32);
   else
     CCInfo.AnalyzeCallOperands(Outs, CC_Mips);
@@ -1954,7 +1955,7 @@ MipsTargetLowering::LowerCall(SDValue InChain, SDValue Callee,
   // Update size of the maximum argument space.
   // For O32, a minimum of four words (16 bytes) of argument space is
   // allocated.
-  if (Subtarget->isABI_O32())
+  if (IsO32)
     NextStackOffset = std::max(NextStackOffset, (unsigned)16);
 
   unsigned MaxCallFrameSize = MipsFI->getMaxCallFrameSize();
@@ -1990,7 +1991,7 @@ MipsTargetLowering::LowerCall(SDValue InChain, SDValue Callee,
     switch (VA.getLocInfo()) {
     default: llvm_unreachable("Unknown loc info!");
     case CCValAssign::Full:
-      if (Subtarget->isABI_O32() && VA.isRegLoc()) {
+      if (IsO32 && VA.isRegLoc()) {
         if (VA.getValVT() == MVT::f32 && VA.getLocVT() == MVT::i32)
           Arg = DAG.getNode(ISD::BITCAST, dl, MVT::i32, Arg);
         if (VA.getValVT() == MVT::f64 && VA.getLocVT() == MVT::i32) {
@@ -2032,7 +2033,7 @@ MipsTargetLowering::LowerCall(SDValue InChain, SDValue Callee,
     // ByVal Arg.
     ISD::ArgFlagsTy Flags = Outs[i].Flags;
     if (Flags.isByVal()) {
-      assert(Subtarget->isABI_O32() &&
+      assert(IsO32 &&
              "No support for ByVal args by ABIs other than O32 yet.");
       assert(Flags.getByValSize() &&
              "ByVal args of size 0 should have been ignored by front-end.");
@@ -2243,7 +2244,7 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
   CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
 		 getTargetMachine(), ArgLocs, *DAG.getContext());
 
-  if (Subtarget->isABI_O32())
+  if (IsO32)
     CCInfo.AnalyzeFormalArguments(Ins, CC_MipsO32);
   else
     CCInfo.AnalyzeFormalArguments(Ins, CC_Mips);
@@ -2291,7 +2292,7 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
       }
 
       // Handle O32 ABI cases: i32->f32 and (i32,i32)->f64
-      if (Subtarget->isABI_O32()) {
+      if (IsO32) {
         if (RegVT == MVT::i32 && VA.getValVT() == MVT::f32)
           ArgValue = DAG.getNode(ISD::BITCAST, dl, MVT::f32, ArgValue);
         if (RegVT == MVT::i32 && VA.getValVT() == MVT::f64) {
@@ -2314,7 +2315,7 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
       ISD::ArgFlagsTy Flags = Ins[i].Flags;
 
       if (Flags.isByVal()) {
-        assert(Subtarget->isABI_O32() &&
+        assert(IsO32 &&
                "No support for ByVal args by ABIs other than O32 yet.");
         assert(Flags.getByValSize() &&
                "ByVal args of size 0 should have been ignored by front-end.");
@@ -2353,7 +2354,7 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
     Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Copy, Chain);
   }
 
-  if (isVarArg && Subtarget->isABI_O32()) {
+  if (isVarArg && IsO32) {
     // Record the frame index of the first variable argument
     // which is a value necessary to VASTART.
     unsigned NextStackOffset = CCInfo.getNextStackOffset();
