@@ -1511,9 +1511,6 @@ ProcessGDBRemote::DoDetach()
     // Sleep for one second to let the process get all detached...
     StopAsyncThread ();
 
-    m_gdb_comm.StopReadThread();
-    m_gdb_comm.Disconnect();    // Disconnect from the debug server.
-
     SetPrivateState (eStateDetached);
     ResumePrivateStateThread();
 
@@ -1532,13 +1529,7 @@ ProcessGDBRemote::DoDestroy ()
     // Interrupt if our inferior is running...
     if (m_gdb_comm.IsConnected())
     {
-        if (m_public_state.GetValue() == eStateAttaching)
-        {
-            // We are being asked to halt during an attach. We need to just close
-            // our file handle and debugserver will go away, and we can be done...
-            m_gdb_comm.Disconnect();
-        }
-        else
+        if (m_public_state.GetValue() != eStateAttaching)
         {
 
             StringExtractorGDBRemote response;
@@ -1561,9 +1552,7 @@ ProcessGDBRemote::DoDestroy ()
         }
     }
     StopAsyncThread ();
-    m_gdb_comm.StopReadThread();
     KillDebugserverProcess ();
-    m_gdb_comm.Disconnect();    // Disconnect from the debug server.
     return error;
 }
 
@@ -2294,6 +2283,9 @@ ProcessGDBRemote::StopAsyncThread ()
         log->Printf ("ProcessGDBRemote::%s ()", __FUNCTION__);
 
     m_async_broadcaster.BroadcastEvent (eBroadcastBitAsyncThreadShouldExit);
+    
+    //  This will shut down the async thread.
+    m_gdb_comm.Disconnect();    // Disconnect from the debug server.
 
     // Stop the stdio thread
     if (IS_VALID_LLDB_HOST_THREAD(m_async_thread))
