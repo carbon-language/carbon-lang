@@ -240,6 +240,20 @@ ExprResult Sema::ImpCastExprToType(Expr *E, QualType Ty,
                                    CastKind Kind, ExprValueKind VK,
                                    const CXXCastPath *BasePath,
                                    CheckedConversionKind CCK) {
+#ifndef NDEBUG
+  if (VK == VK_RValue && !E->isRValue()) {
+    switch (Kind) {
+    default:
+      assert(0 && "can't implicitly cast lvalue to rvalue with this cast kind");
+    case CK_LValueToRValue:
+    case CK_ArrayToPointerDecay:
+    case CK_FunctionToPointerDecay:
+    case CK_ToVoid:
+      break;
+    }
+  }
+#endif
+
   QualType ExprTy = Context.getCanonicalType(E->getType());
   QualType TypeTy = Context.getCanonicalType(Ty);
 

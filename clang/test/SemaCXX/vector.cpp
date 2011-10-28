@@ -218,3 +218,52 @@ void test(fltx2 fltx2_val, fltx4 fltx4_val, dblx2 dblx2_val, dblx4 dblx4_val) {
   // Scalar-to-vector conversions.
   accept_fltx2(1.0); // expected-error{{no matching function for call to 'accept_fltx2'}}
 }
+
+typedef int intx4 __attribute__((__vector_size__(16)));
+typedef int inte4 __attribute__((__ext_vector_type__(4)));
+typedef int flte4 __attribute__((__ext_vector_type__(4)));
+
+void test_mixed_vector_types(fltx4 f, intx4 n, flte4 g, flte4 m) {
+  (void)(f == g);
+  (void)(g != f);
+  (void)(f <= g);
+  (void)(g >= f);
+  (void)(f < g);
+  (void)(g > f);
+
+  (void)(+g);
+  (void)(-g);
+
+  (void)(f + g);
+  (void)(f - g);
+  (void)(f * g);
+  (void)(f / g);
+  (void)(f = g);
+  (void)(f += g);
+  (void)(f -= g);
+  (void)(f *= g);
+  (void)(f /= g);
+
+
+  (void)(n == m);
+  (void)(m != n);
+  (void)(n <= m);
+  (void)(m >= n);
+  (void)(n < m);
+  (void)(m > n);
+
+  (void)(+m);
+  (void)(-m);
+  (void)(~m);
+
+  (void)(n + m);
+  (void)(n - m);
+  (void)(n * m);
+  (void)(n / m);
+  (void)(n % m);
+  (void)(n = m);
+  (void)(n += m);
+  (void)(n -= m);
+  (void)(n *= m);
+  (void)(n /= m);
+}
