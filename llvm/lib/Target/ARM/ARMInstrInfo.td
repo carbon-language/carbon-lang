@@ -1640,7 +1640,7 @@ class CPS<dag iops, string asm_ops>
   let Inst{27-20} = 0b00010000;
   let Inst{19-18} = imod;
   let Inst{17}    = M; // Enabled if mode is set;
-  let Inst{16-9}  = 0b00000000;
+  let Inst{16}    = 0;
   let Inst{8-6}   = iflags;
   let Inst{5}     = 0;
   let Inst{4-0}   = mode;
