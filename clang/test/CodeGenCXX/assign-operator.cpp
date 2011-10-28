@@ -17,3 +17,14 @@ void f(int i, int j) {
   // CHECK: ret
   (i += j) = 17;
 }
+
+// Taken from g++.old-deja/g++.jason/net.C
+namespace test1 {
+  template <class T> void fn (T t) { }
+  template <class T> struct A {
+    void (*p)(T);
+    A() { p = fn; }
+  };
+
+  A<int> a;
+}
