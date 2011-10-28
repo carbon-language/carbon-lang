@@ -901,18 +901,15 @@ bool
 CodeGenModule::shouldEmitFunction(const FunctionDecl *F) {
   if (getFunctionLinkage(F) != llvm::Function::AvailableExternallyLinkage)
     return true;
-  if (F->hasAttr<AlwaysInlineAttr>())
-    return true;
-  if (CodeGenOpts.OptimizationLevel == 0)
+  if (CodeGenOpts.OptimizationLevel == 0 &&
+      !F->hasAttr<AlwaysInlineAttr>())
     return false;
   // PR9614. Avoid cases where the source code is lying to us. An available
   // externally function should have an equivalent function somewhere else,
   // but a function that calls itself is clearly not equivalent to the real
   // implementation.
   // This happens in glibc's btowc and in some configure checks.
-  if (isTriviallyRecursiveViaAsm(F))
-    return false;
-  return true;
+  return !isTriviallyRecursiveViaAsm(F);
 }
 
 void CodeGenModule::EmitGlobalDefinition(GlobalDecl GD) {

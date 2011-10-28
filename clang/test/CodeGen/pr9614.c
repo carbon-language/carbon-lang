@@ -1,15 +1,23 @@
 // RUN: %clang_cc1 -emit-llvm %s -o - | FileCheck %s
 
-extern int foo_alias (void) __asm ("foo");
-inline int foo (void) {
+extern void foo_alias (void) __asm ("foo");
+inline void foo (void) {
   return foo_alias ();
 }
-int f(void) {
-  return foo();
+extern void bar_alias (void) __asm ("bar");
+inline __attribute__ ((__always_inline__)) void bar (void) {
+  return bar_alias ();
+}
+void f(void) {
+  foo();
+  bar();
 }
 
-// CHECK-NOT: define
-// CHECK: define i32 @f()
-// CHECK: call i32 @foo()
-// CHECK-NEXT: ret i32
-// CHECK-NOT: define
+// CHECK: define void @f()
+// CHECK-NEXT: entry:
+// CHECK-NEXT: call void @foo()
+// CHECK-NEXT: call void @bar()
+// CHECK-NEXT: ret void
+
+// CHECK: declare void @foo()
+// CHECK: declare void @bar()
