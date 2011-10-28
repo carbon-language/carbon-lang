@@ -125,10 +125,10 @@ error: invalid operand for instruction
         add sp, #3
         add sp, sp, #512
         add r2, sp, #1024
-@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS: error: instruction requires a CPU feature not currently enabled
 @ CHECK-ERRORS:         add sp, #-1
 @ CHECK-ERRORS:                 ^
-@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS: error: instruction requires a CPU feature not currently enabled
 @ CHECK-ERRORS:         add sp, #3
 @ CHECK-ERRORS:                 ^
 @ CHECK-ERRORS: error: instruction requires a CPU feature not currently enabled

@@ -3861,6 +3861,16 @@ def : t2InstAlias<"add${s}${p} $Rd, $Rn, $Rm",
 def : t2InstAlias<"add${s}${p} $Rd, $Rn, $ShiftedRm",
                   (t2ADDrs GPRnopc:$Rd, GPRnopc:$Rn, t2_so_reg:$ShiftedRm,
                            pred:$p, cc_out:$s)>;
+// ... and with the destination and source register combined.
+def : t2InstAlias<"add${s}${p} $Rdn, $imm",
+      (t2ADDri GPRnopc:$Rdn, GPRnopc:$Rdn, t2_so_imm:$imm, pred:$p, cc_out:$s)>;
+def : t2InstAlias<"add${p} $Rdn, $imm",
+           (t2ADDri12 GPRnopc:$Rdn, GPRnopc:$Rdn, imm0_4095:$imm, pred:$p)>;
+def : t2InstAlias<"add${s}${p} $Rdn, $Rm",
+            (t2ADDrr GPRnopc:$Rdn, GPRnopc:$Rdn, rGPR:$Rm, pred:$p, cc_out:$s)>;
+def : t2InstAlias<"add${s}${p} $Rdn, $ShiftedRm",
+                  (t2ADDrs GPRnopc:$Rdn, GPRnopc:$Rdn, t2_so_reg:$ShiftedRm,
+                           pred:$p, cc_out:$s)>;
 
 // Aliases for SUB without the ".w" optional width specifier.
 def : t2InstAlias<"sub${s}${p} $Rd, $Rn, $imm",
@@ -3872,6 +3882,17 @@ def : t2InstAlias<"sub${s}${p} $Rd, $Rn, $Rm",
 def : t2InstAlias<"sub${s}${p} $Rd, $Rn, $ShiftedRm",
                   (t2SUBrs GPRnopc:$Rd, GPRnopc:$Rn, t2_so_reg:$ShiftedRm,
                            pred:$p, cc_out:$s)>;
+// ... and with the destination and source register combined.
+def : t2InstAlias<"sub${s}${p} $Rdn, $imm",
+      (t2SUBri GPRnopc:$Rdn, GPRnopc:$Rdn, t2_so_imm:$imm, pred:$p, cc_out:$s)>;
+def : t2InstAlias<"sub${p} $Rdn, $imm",
+           (t2SUBri12 GPRnopc:$Rdn, GPRnopc:$Rdn, imm0_4095:$imm, pred:$p)>;
+def : t2InstAlias<"sub${s}${p} $Rdn, $Rm",
+            (t2SUBrr GPRnopc:$Rdn, GPRnopc:$Rdn, rGPR:$Rm, pred:$p, cc_out:$s)>;
+def : t2InstAlias<"sub${s}${p} $Rdn, $ShiftedRm",
+                  (t2SUBrs GPRnopc:$Rdn, GPRnopc:$Rdn, t2_so_reg:$ShiftedRm,
+                           pred:$p, cc_out:$s)>;
+
 
 // Alias for compares without the ".w" optional width specifier.
 def : t2InstAlias<"cmn${p} $Rn, $Rm",
