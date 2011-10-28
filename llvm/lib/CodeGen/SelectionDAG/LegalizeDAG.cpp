@@ -185,23 +185,6 @@ SelectionDAGLegalize::SelectionDAGLegalize(SelectionDAG &dag)
 void SelectionDAGLegalize::LegalizeDAG() {
   DAG.AssignTopologicalOrder();
 
-#if 0
-  SDValue LastChain = DAG.getEntryNode();
-  for (SelectionDAG::allnodes_iterator I = DAG.allnodes_begin(),
-       E = DAG.allnodes_end(); I != E; ++I) {
-    SDNode *N = I;
-    if (N->getOpcode() == ISD::CALLSEQ_START) {
-      SmallVector<SDValue, 4> Ops(N->op_begin(), N->op_end());
-      Ops[0] = LastChain;
-      SDNode *New = DAG.UpdateNodeOperands(N, Ops.data(), Ops.size());
-      assert(New == N && "CALLSEQ_START got CSE'd!");
-    }
-    for (unsigned i = 0, e = N->getNumValues(); i != e; ++i)
-      if (N->getValueType(i) == MVT::Other)
-        LastChain = SDValue(N, i);
-  }
-#endif
-
   // Visit all the nodes. We start in topological order, so that we see
   // nodes with their original operands intact. Legalization can produce
   // new nodes which may themselves need to be legalized. Iterate until all
