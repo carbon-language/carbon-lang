@@ -3808,6 +3808,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
             case DW_TAG_const_type:
             case DW_TAG_restrict_type:
             case DW_TAG_volatile_type:
+            case DW_TAG_unspecified_type:
                 {
                     // Set a bit that lets us know that we are currently parsing this
                     m_die_to_type[die] = DIE_IS_BEING_PARSED;
@@ -3860,6 +3861,15 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                     {
                     default:
                         break;
+
+                    case DW_TAG_unspecified_type:
+                        if (strcmp(type_name_cstr, "nullptr_t") == 0)
+                        {
+                            resolve_state = Type::eResolveStateFull;
+                            clang_type = ast.getASTContext()->NullPtrTy.getAsOpaquePtr();
+                            break;
+                        }
+                        // Fall through to base type below in case we can handle the type there...
 
                     case DW_TAG_base_type:
                         resolve_state = Type::eResolveStateFull;

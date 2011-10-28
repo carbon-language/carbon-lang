@@ -660,6 +660,7 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
         case DW_TAG_typedef:
         case DW_TAG_namespace:
         case DW_TAG_variable:
+        case DW_TAG_unspecified_type:
             break;
             
         default:
@@ -889,6 +890,7 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
         case DW_TAG_structure_type:
         case DW_TAG_union_type:
         case DW_TAG_typedef:
+        case DW_TAG_unspecified_type:
             if (name && is_declaration == false)
             {
                 types.Insert (ConstString(name), die.GetOffset());
