@@ -72,8 +72,14 @@ public:
         m_description(),
         m_should_stop (false),
         m_should_stop_is_valid (false),
-        m_should_perform_action (true)
+        m_should_perform_action (true),
+        m_address (LLDB_INVALID_ADDRESS)
     {
+        BreakpointSiteSP bp_site_sp (m_thread.GetProcess().GetBreakpointSiteList().FindByID (m_value));
+        if (bp_site_sp)
+        {
+          m_address = bp_site_sp->GetLoadAddress();
+        }
     }
     
     StopInfoBreakpoint (Thread &thread, break_id_t break_id, bool should_stop) :
@@ -81,8 +87,14 @@ public:
         m_description(),
         m_should_stop (should_stop),
         m_should_stop_is_valid (true),
-        m_should_perform_action (true)
+        m_should_perform_action (true),
+        m_address (LLDB_INVALID_ADDRESS)
     {
+        BreakpointSiteSP bp_site_sp (m_thread.GetProcess().GetBreakpointSiteList().FindByID (m_value));
+        if (bp_site_sp)
+        {
+          m_address = bp_site_sp->GetLoadAddress();
+        }
     }
 
     virtual ~StopInfoBreakpoint ()
@@ -300,7 +312,10 @@ public:
             else
             {
                 StreamString strm;
-                strm.Printf("breakpoint site %lli", m_value);
+                if (m_address == LLDB_INVALID_ADDRESS)
+                    strm.Printf("breakpoint site %lli which has been deleted - unknown address", m_value);
+                else
+                    strm.Printf("breakpoint site %lli which has been deleted - was at 0x%llx", m_value, m_address);
                 m_description.swap (strm.GetString());
             }
         }
@@ -313,6 +328,9 @@ private:
     bool m_should_stop_is_valid;
     bool m_should_perform_action; // Since we are trying to preserve the "state" of the system even if we run functions
                                   // etc. behind the users backs, we need to make sure we only REALLY perform the action once.
+    lldb::addr_t m_address;       // We use this to capture the breakpoint site address when we create the StopInfo,
+                                  // in case somebody deletes it between the time the StopInfo is made and the
+                                  // description is asked for.
 };
 
 
