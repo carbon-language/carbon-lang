@@ -16,10 +16,8 @@ class Holder:
         cls._prev_dir_ = dir
 
 def chdir(debugger, args, result, dict):
-    """
-    Change the working directory, or cd to ${HOME}.
-    You can also issue 'cd -' to change to the previous working directory.    
-    """
+    """Change the working directory, or cd to ${HOME}.
+    You can also issue 'cd -' to change to the previous working directory."""
     new_dir = args.strip()
     if not new_dir:
         new_dir = os.path.expanduser('~')
