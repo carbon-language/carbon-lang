@@ -1274,7 +1274,7 @@ public:
   CanQualType getCanonicalParamType(QualType T) const;
 
   /// \brief Determine whether the given types are equivalent.
-  bool hasSameType(QualType T1, QualType T2) {
+  bool hasSameType(QualType T1, QualType T2) const {
     return getCanonicalType(T1) == getCanonicalType(T2);
   }
 
@@ -1294,7 +1294,7 @@ public:
 
   /// \brief Determine whether the given types are equivalent after
   /// cvr-qualifiers have been removed.
-  bool hasSameUnqualifiedType(QualType T1, QualType T2) {
+  bool hasSameUnqualifiedType(QualType T1, QualType T2) const {
     return getCanonicalType(T1).getTypePtr() ==
            getCanonicalType(T2).getTypePtr();
   }

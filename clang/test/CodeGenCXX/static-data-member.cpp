@@ -64,3 +64,17 @@ namespace test3 {
   // CHECK-NEXT: br label
   // CHECK:      ret void
 }
+
+// Test that we can fold member lookup expressions which resolve to static data
+// members.
+namespace test4 {
+  struct A {
+    static const int n = 76;
+  };
+
+  int f(A *a) {
+    // CHECK: define i32 @_ZN5test41fEPNS_1AE
+    // CHECK: ret i32 76
+    return a->n;
+  }
+}

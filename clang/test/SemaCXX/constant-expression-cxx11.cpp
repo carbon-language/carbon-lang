@@ -26,3 +26,17 @@ namespace CaseStatements {
     }
   }
 }
+
+extern int &Recurse1;
+int &Recurse2 = Recurse1, &Recurse1 = Recurse2;
+constexpr int &Recurse3 = Recurse2; // expected-error {{must be initialized by a constant expression}}
+
+namespace MemberEnum {
+  struct WithMemberEnum {
+    enum E { A = 42 };
+  } wme;
+  // FIXME: b's initializer is not treated as a constant expression yet, but we
+  // can at least fold it.
+  constexpr bool b = wme.A == 42;
+  int n[b];
+}
