@@ -5290,6 +5290,10 @@ void SelectionDAG::ReplaceAllUsesWith(SDValue FromN, SDValue To,
     // already exists there, recursively merge the results together.
     AddModifiedNodeToCSEMaps(User, &Listener);
   }
+
+  // If we just RAUW'd the root, take note.
+  if (FromN == getRoot())
+    setRoot(To);
 }
 
 /// ReplaceAllUsesWith - Modify anything using 'From' to use 'To' instead.
@@ -5335,6 +5339,10 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From, SDNode *To,
     // already exists there, recursively merge the results together.
     AddModifiedNodeToCSEMaps(User, &Listener);
   }
+
+  // If we just RAUW'd the root, take note.
+  if (From == getRoot().getNode())
+    setRoot(SDValue(To, getRoot().getResNo()));
 }
 
 /// ReplaceAllUsesWith - Modify anything using 'From' to use 'To' instead.
@@ -5373,6 +5381,10 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From,
     // already exists there, recursively merge the results together.
     AddModifiedNodeToCSEMaps(User, &Listener);
   }
+
+  // If we just RAUW'd the root, take note.
+  if (From == getRoot().getNode())
+    setRoot(SDValue(To[getRoot().getResNo()]));
 }
 
 /// ReplaceAllUsesOfValueWith - Replace any uses of From with To, leaving
@@ -5431,6 +5443,10 @@ void SelectionDAG::ReplaceAllUsesOfValueWith(SDValue From, SDValue To,
     // already exists there, recursively merge the results together.
     AddModifiedNodeToCSEMaps(User, &Listener);
   }
+
+  // If we just RAUW'd the root, take note.
+  if (From == getRoot())
+    setRoot(To);
 }
 
 namespace {
