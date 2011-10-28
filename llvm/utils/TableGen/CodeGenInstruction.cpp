@@ -423,6 +423,15 @@ bool CodeGenInstAlias::tryAliasOpMatch(DagInit *Result, unsigned AliasOpNo,
     return true;
   }
 
+  // For register operands, the source register class can be a subclass
+  // of the instruction register class, not just an exact match.
+  if (ADI && ADI->getDef()->isSubClassOf("RegisterClass")) {
+    if (!InstOpRec->isSubClassOf("RegisterClass"))
+      return false;
+    return T.getRegisterClass(InstOpRec)
+              .hasSubClass(&T.getRegisterClass(ADI->getDef()));
+  }
+
   // Handle explicit registers.
   if (ADI && ADI->getDef()->isSubClassOf("Register")) {
     if (InstOpRec->isSubClassOf("OptionalDefOperand")) {
