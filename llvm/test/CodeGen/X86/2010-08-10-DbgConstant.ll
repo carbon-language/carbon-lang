@@ -1,4 +1,4 @@
-; RUN: llc  -march=x86 -O0 < %s | FileCheck %s
+; RUN: llc  -mtriple=i686-linux -O0 < %s | FileCheck %s
 ; CHECK: DW_TAG_constant
 ; CHECK-NEXT: .long .Lstring3 #{{#?}} DW_AT_name
 
