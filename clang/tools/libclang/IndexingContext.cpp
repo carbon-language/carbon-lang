@@ -397,9 +397,11 @@ void IndexingContext::handleReference(const NamedDecl *D, SourceLocation Loc,
   if (isNotFromSourceFile(D->getLocation()))
     return;
 
-  CXIdxEntityRefInfo Info = { E ? MakeCXCursor((Stmt*)E,
-                                               (Decl*)cast<Decl>(DC), CXTU)
-                                : getRefCursor(D, Loc),
+  CXCursor Cursor = E ? MakeCXCursor(const_cast<Expr*>(E),
+                                     const_cast<Decl*>(cast<Decl>(DC)), CXTU)
+                      : getRefCursor(D, Loc);
+
+  CXIdxEntityRefInfo Info = { Cursor,
                               getIndexLoc(Loc),
                               getIndexEntity(D),
                               getIndexEntity(Parent),
