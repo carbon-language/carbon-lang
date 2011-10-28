@@ -1,5 +1,7 @@
 "Collection of tools for displaying bit representation of numbers."""
 
+import StringIO
+
 def binary(n, width=None):
     """
     Return a list of (0|1)'s for the binary representation of n where n >= 0.
@@ -50,4 +52,71 @@ def twos_complement(n, width):
 # [1, 1, 1]
 # print twos_complement(-5, 64)
 # [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1]
+
+def positions(width):
+    """Helper function returning a list describing the bit positions.
+    Bit positions greater than 99 are truncated to 2 digits, for example,
+    100 -> 00 and 127 -> 27."""
+    return ['{0:2}'.format(i)[-2:] for i in reversed(range(width))]
+    
+
+def utob(debugger, command_line, result, dict):
+    """Convert the unsigned integer to print its binary representation.
+    args[0] (mandatory) is the unsigned integer to be converted
+    args[1] (optional) is the bit width of the binary representation
+    args[2] (optional) if specified, turns on verbose printing"""
+    args = command_line.split()
+    try:
+        n = int(args[0], 0)
+        width = None
+        if len(args) > 1:
+            width = int(args[1], 0)
+            if width < 0:
+                width = 0
+    except:
+        print utob.__doc__
+        return
+
+    if len(args) > 2:
+        verbose = True
+    else:
+        verbose = False
+
+    bits = binary(n, width)
+    if not bits:
+        print "insufficient width value: %d" % width
+        return
+    if verbose and width > 0:
+        pos = positions(width)
+        print ' '+' '.join(pos)
+    print ' %s' % str(bits)
+
+def itob(debugger, command_line, result, dict):
+    """Convert the integer to print its two's complement representation.
+    args[0] (mandatory) is the integer to be converted
+    args[1] (mandatory) is the bit width of the two's complement representation
+    args[2] (optional) if specified, turns on verbose printing"""
+    args = command_line.split()
+    try:
+        n = int(args[0], 0)
+        width = int(args[1], 0)
+        if width < 0:
+            width = 0
+    except:
+        print itob.__doc__
+        return
+
+    if len(args) > 2:
+        verbose = True
+    else:
+        verbose = False
+
+    bits = twos_complement(n, width)
+    if not bits:
+        print "insufficient width value: %d" % width
+        return
+    if verbose and width > 0:
+        pos = positions(width)
+        print ' '+' '.join(pos)
+    print ' %s' % str(bits)
 

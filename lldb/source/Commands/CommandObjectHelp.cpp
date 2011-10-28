@@ -182,7 +182,7 @@ CommandObjectHelp::Execute (Args& command, CommandReturnObject &result)
                     const char *long_help = sub_cmd_obj->GetHelpLong();
                     if ((long_help != NULL)
                         && (strlen (long_help) > 0))
-                        output_strm.Printf ("\n%s", long_help);
+                        output_strm.Printf ("%s", long_help);
                     else if (sub_cmd_obj->WantsRawCommandString())
                     {
                         std::string help_text (sub_cmd_obj->GetHelp());
