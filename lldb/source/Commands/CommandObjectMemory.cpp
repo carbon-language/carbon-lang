@@ -726,16 +726,17 @@ public:
 
 
         assert (output_stream);
-        data.Dump (output_stream,
-                   0,
-                   m_format_options.GetFormat(),
-                   item_byte_size,
-                   item_count,
-                   num_per_line,
-                   addr,
-                   0,
-                   0,
-                   exe_scope);
+        uint32_t bytes_dumped = data.Dump (output_stream,
+                                           0,
+                                           m_format_options.GetFormat(),
+                                           item_byte_size,
+                                           item_count,
+                                           num_per_line,
+                                           addr,
+                                           0,
+                                           0,
+                                           exe_scope);
+        m_next_addr = addr + bytes_dumped;
         output_stream->EOL();
         return true;
     }

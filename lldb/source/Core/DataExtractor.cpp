@@ -1319,16 +1319,14 @@ DataExtractor::Dump (Stream *s,
     if (s == NULL)
         return start_offset;
 
-    uint32_t offset;
-    uint32_t count;
-    uint32_t line_start_offset;
-
     if (item_format == eFormatPointer)
     {
         if (item_byte_size != 4 && item_byte_size != 8)
             item_byte_size = s->GetAddressByteSize();
     }
     
+    uint32_t offset = start_offset;
+
     if (item_format == eFormatInstruction)
     {
         Target *target = NULL;
@@ -1347,8 +1345,11 @@ DataExtractor::Dump (Stream *s,
                     so_addr.SetSection(NULL);
                 }
 
-                if (disassembler_sp->DecodeInstructions (so_addr, *this, start_offset, item_count, false))
+                size_t bytes_consumed = disassembler_sp->DecodeInstructions (so_addr, *this, start_offset, item_count, false);
+                
+                if (bytes_consumed)
                 {
+                    offset += bytes_consumed;
                     const bool show_address = base_addr != LLDB_INVALID_ADDRESS;
                     const bool show_bytes = true;
                     ExecutionContext exe_ctx;
@@ -1366,8 +1367,8 @@ DataExtractor::Dump (Stream *s,
     if ((item_format == eFormatOSType || item_format == eFormatAddressInfo) && item_byte_size > 8)
         item_format = eFormatHex;
 
-    
-    for (offset = start_offset, line_start_offset = start_offset, count = 0; ValidOffset(offset) && count < item_count; ++count)
+    uint32_t line_start_offset = start_offset;
+    for (uint32_t count = 0; ValidOffset(offset) && count < item_count; ++count)
     {
         if ((count % num_per_line) == 0)
         {
