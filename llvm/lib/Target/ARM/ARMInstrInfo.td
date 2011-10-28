@@ -258,10 +258,16 @@ def so_imm_neg :
     return ARM_AM::getSOImmVal(-(uint32_t)N->getZExtValue()) != -1;
   }], so_imm_neg_XFORM>;
 
+// Note: this pattern doesn't require an encoder method and such, as it's
+// only used on aliases (Pat<> and InstAlias<>). The actual encoding
+// is handled by the destination instructions, which use t2_so_imm.
+def so_imm_not_asmoperand : AsmOperandClass { let Name = "ARMSOImmNot"; }
 def so_imm_not :
-  PatLeaf<(imm), [{
+  Operand<i32>, PatLeaf<(imm), [{
     return ARM_AM::getSOImmVal(~(uint32_t)N->getZExtValue()) != -1;
-  }], so_imm_not_XFORM>;
+  }], so_imm_not_XFORM> {
+  let ParserMatchClass = so_imm_not_asmoperand;
+}
 
 // sext_16_node predicate - True if the SDNode is sign-extended 16 or more bits.
 def sext_16_node : PatLeaf<(i32 GPR:$a), [{
@@ -4988,3 +4994,9 @@ def : MnemonicAlias<"usubaddx", "usax">;
 //                (LDRHTi GPR:$Rt, GPR:$Rt, addr_offset_none:$addr, 0, pred:$p)>;
 //def : InstAlias<"ldrsht${p} $Rt, $addr",
 //                (LDRSHTi GPR:$Rt, GPR:$Rt, addr_offset_none:$addr, 0, pred:$p)>;
+
+
+// "mov Rd, so_imm_not" can be handled via "mvn" in assembly, just like
+// for isel.
+def : ARMInstAlias<"mov${s}${p} $Rd, $imm",
+                   (MVNi rGPR:$Rd, so_imm_not:$imm, pred:$p, cc_out:$s)>;
