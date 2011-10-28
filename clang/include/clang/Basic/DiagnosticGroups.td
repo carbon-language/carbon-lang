@@ -302,7 +302,7 @@ def Most : DiagGroup<"most", [
 def ThreadSafety : DiagGroup<"thread-safety">;
 
 // -Wall is -Wmost -Wparentheses -Wtop-level-comparison
-def : DiagGroup<"all", [Most, Parentheses, CXX11Compat]>;
+def : DiagGroup<"all", [Most, Parentheses]>;
 
 // Aliases.
 def : DiagGroup<"", [Extra]>;                   // -W = -Wextra
