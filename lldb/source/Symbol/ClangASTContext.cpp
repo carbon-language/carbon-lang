@@ -726,10 +726,13 @@ ClangASTContext::GetBuiltinTypeForDWARFEncodingAndBitSize (const char *type_name
 
         case DW_ATE_lo_user:
             // This has been seen to mean DW_AT_complex_integer
-            if (::strstr(type_name, "complex"))
+            if (type_name)
             {
-                clang_type_t complex_int_clang_type = GetBuiltinTypeForDWARFEncodingAndBitSize ("int", DW_ATE_signed, bit_size/2);
-                return ast->getComplexType (QualType::getFromOpaquePtr(complex_int_clang_type)).getAsOpaquePtr();
+                if (::strstr(type_name, "complex"))
+                {
+                    clang_type_t complex_int_clang_type = GetBuiltinTypeForDWARFEncodingAndBitSize ("int", DW_ATE_signed, bit_size/2);
+                    return ast->getComplexType (QualType::getFromOpaquePtr(complex_int_clang_type)).getAsOpaquePtr();
+                }
             }
             break;
             
@@ -883,6 +886,20 @@ ClangASTContext::GetBuiltinTypeForDWARFEncodingAndBitSize (const char *type_name
             break;
 
         case DW_ATE_imaginary_float:
+            break;
+                
+        case DW_ATE_UTF:
+            if (type_name)
+            {
+                if (streq(type_name, "char16_t"))
+                {
+                    return ast->Char16Ty.getAsOpaquePtr();
+                }
+                else if (streq(type_name, "char32_t"))
+                {
+                    return ast->Char32Ty.getAsOpaquePtr();
+                }
+            }
             break;
         }
     }
