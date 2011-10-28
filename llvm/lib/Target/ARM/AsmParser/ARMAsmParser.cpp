@@ -2440,6 +2440,29 @@ parseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   return false;
 }
 
+// Return the low-subreg of a given Q register.
+static unsigned getDRegFromQReg(unsigned QReg) {
+  switch (QReg) {
+  default: llvm_unreachable("expected a Q register!");
+  case ARM::Q0:  return ARM::D0;
+  case ARM::Q1:  return ARM::D2;
+  case ARM::Q2:  return ARM::D4;
+  case ARM::Q3:  return ARM::D6;
+  case ARM::Q4:  return ARM::D8;
+  case ARM::Q5:  return ARM::D10;
+  case ARM::Q6:  return ARM::D12;
+  case ARM::Q7:  return ARM::D14;
+  case ARM::Q8:  return ARM::D16;
+  case ARM::Q9:  return ARM::D19;
+  case ARM::Q10: return ARM::D20;
+  case ARM::Q11: return ARM::D22;
+  case ARM::Q12: return ARM::D24;
+  case ARM::Q13: return ARM::D26;
+  case ARM::Q14: return ARM::D28;
+  case ARM::Q15: return ARM::D30;
+  }
+}
+
 // parse a vector register list
 ARMAsmParser::OperandMatchResultTy ARMAsmParser::
 parseVectorList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
@@ -2455,9 +2478,16 @@ parseVectorList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     Error(RegLoc, "register expected");
     return MatchOperand_ParseFail;
   }
-
-  unsigned FirstReg = Reg;
   unsigned Count = 1;
+  unsigned FirstReg = Reg;
+  // The list is of D registers, but we also allow Q regs and just interpret
+  // them as the two D sub-registers.
+  if (ARMMCRegisterClasses[ARM::QPRRegClassID].contains(Reg)) {
+    FirstReg = Reg = getDRegFromQReg(Reg);
+    ++Reg;
+    ++Count;
+  }
+
   while (Parser.getTok().is(AsmToken::Comma)) {
     Parser.Lex(); // Eat the comma.
     RegLoc = Parser.getTok().getLoc();
@@ -2467,14 +2497,27 @@ parseVectorList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
       Error(RegLoc, "register expected");
       return MatchOperand_ParseFail;
     }
-    // vector register lists must also be contiguous.
+    // vector register lists must be contiguous.
     // It's OK to use the enumeration values directly here rather, as the
     // VFP register classes have the enum sorted properly.
+    //
+    // The list is of D registers, but we also allow Q regs and just interpret
+    // them as the two D sub-registers.
+    if (ARMMCRegisterClasses[ARM::QPRRegClassID].contains(Reg)) {
+      Reg = getDRegFromQReg(Reg);
+      if (Reg != OldReg + 1) {
+        Error(RegLoc, "non-contiguous register range");
+        return MatchOperand_ParseFail;
+      }
+      ++Reg;
+      Count += 2;
+      continue;
+    }
+    // Normal D register. Just check that it's contiguous and keep going.
     if (Reg != OldReg + 1) {
       Error(RegLoc, "non-contiguous register range");
       return MatchOperand_ParseFail;
     }
-
     ++Count;
   }
 

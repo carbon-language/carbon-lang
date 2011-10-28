@@ -214,3 +214,12 @@
 @ FIXME: vld4.32 {d16[1], d17[1], d18[1], d19[1]}, [r0, :128] @ encoding: [0xaf,0x0b,0xe0,0xf4]
 @ FIXME: vld4.16 {d16[1], d18[1], d20[1], d22[1]}, [r0, :64] @ encoding: [0x7f,0x07,0xe0,0xf4]
 @ FIXME: vld4.32 {d17[0], d19[0], d21[0], d23[0]}, [r0] @ encoding: [0x4f,0x1b,0xe0,0xf4]
+
+
+@ Handle 'Q' registers in register lists as if the sub-reg D regs were
+@ specified instead.
+	vld1.8 {q3}, [r9]
+	vld1.8 {q3, q4}, [r9]
+
+@ CHECK: vld1.8	{d6, d7}, [r9]          @ encoding: [0x0f,0x6a,0x29,0xf4]
+@ CHECK: vld1.8	{d6, d7, d8, d9}, [r9]  @ encoding: [0x0f,0x62,0x29,0xf4]
