@@ -665,6 +665,14 @@ public:
     int64_t Value = CE->getValue();
     return ARM_AM::getT2SOImmVal(Value) != -1;
   }
+  bool isT2SOImmNot() const {
+    if (Kind != k_Immediate)
+      return false;
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    if (!CE) return false;
+    int64_t Value = CE->getValue();
+    return ARM_AM::getT2SOImmVal(~Value) != -1;
+  }
   bool isSetEndImm() const {
     if (Kind != k_Immediate)
       return false;
@@ -1239,6 +1247,14 @@ public:
   void addT2SOImmOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     addExpr(Inst, getImm());
+  }
+
+  void addT2SOImmNotOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    // The operand is actually a t2_so_imm, but we have its bitwise
+    // negation in the assembly source, so twiddle it here.
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    Inst.addOperand(MCOperand::CreateImm(~CE->getValue()));
   }
 
   void addSetEndImmOperands(MCInst &Inst, unsigned N) const {

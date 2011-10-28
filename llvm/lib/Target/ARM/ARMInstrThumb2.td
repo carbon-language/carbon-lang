@@ -76,10 +76,16 @@ def t2_so_imm : Operand<i32>, ImmLeaf<i32, [{
 
 // t2_so_imm_not - Match an immediate that is a complement
 // of a t2_so_imm.
+// Note: this pattern doesn't require an encoder method and such, as it's
+// only used on aliases (Pat<> and InstAlias<>). The actual encoding
+// is handled by the destination instructions, which use t2_so_imm.
+def t2_so_imm_not_asmoperand : AsmOperandClass { let Name = "T2SOImmNot"; }
 def t2_so_imm_not : Operand<i32>,
                     PatLeaf<(imm), [{
   return ARM_AM::getT2SOImmVal(~((uint32_t)N->getZExtValue())) != -1;
-}], t2_so_imm_not_XFORM>;
+}], t2_so_imm_not_XFORM> {
+  let ParserMatchClass = t2_so_imm_not_asmoperand;
+}
 
 // t2_so_imm_neg - Match an immediate that is a negation of a t2_so_imm.
 def t2_so_imm_neg : Operand<i32>,
@@ -4066,3 +4072,9 @@ def : t2InstAlias<"sxtb16${p} $Rd, $Rm$rot",
                   (t2SXTB16 rGPR:$Rd, rGPR:$Rm, rot_imm:$rot, pred:$p)>;
 def : t2InstAlias<"sxth${p} $Rd, $Rm$rot",
                   (t2SXTH rGPR:$Rd, rGPR:$Rm, rot_imm:$rot, pred:$p)>;
+
+
+// "mov Rd, t2_so_imm_not" can be handled via "mvn" in assembly, just like
+// for isel.
+def : t2InstAlias<"mov${p} $Rd, $imm",
+                  (t2MVNi rGPR:$Rd, t2_so_imm_not:$imm, pred:$p, zero_reg)>;

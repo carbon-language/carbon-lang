@@ -1118,6 +1118,10 @@ _func:
         movne.w r1, #12
         mov.w r6, #450
 
+        @ alias for mvn
+	mov r3, #-3
+
+
 @ CHECK: movs	r1, #21                 @ encoding: [0x15,0x21]
 @ CHECK: movs.w	r1, #21                 @ encoding: [0x5f,0xf0,0x15,0x01]
 @ CHECK: movs.w	r8, #21                 @ encoding: [0x5f,0xf0,0x15,0x08]
@@ -1132,6 +1136,9 @@ _func:
 @ CHECK: moveq	r1, #12                 @ encoding: [0x0c,0x21]
 @ CHECK: movne.w r1, #12                @ encoding: [0x4f,0xf0,0x0c,0x01]
 @ CHECK: mov.w	r6, #450                @ encoding: [0x4f,0xf4,0xe1,0x76]
+
+@ CHECK: mvn	r3, #2                  @ encoding: [0x6f,0xf0,0x02,0x03]
+
 
 
 @------------------------------------------------------------------------------
