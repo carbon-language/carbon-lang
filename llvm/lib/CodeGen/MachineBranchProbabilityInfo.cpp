@@ -55,12 +55,8 @@ MachineBranchProbabilityInfo::getEdgeWeight(MachineBasicBlock *Src,
 bool MachineBranchProbabilityInfo::isEdgeHot(MachineBasicBlock *Src,
                                              MachineBasicBlock *Dst) const {
   // Hot probability is at least 4/5 = 80%
-  uint32_t Weight = getEdgeWeight(Src, Dst);
-  uint32_t Sum = getSumForBlock(Src);
-
-  // FIXME: Implement BranchProbability::compare then change this code to
-  // compare this BranchProbability against a static "hot" BranchProbability.
-  return (uint64_t)Weight * 5 > (uint64_t)Sum * 4;
+  // FIXME: Compare against a static "hot" BranchProbability.
+  return getEdgeProbability(Src, Dst) > BranchProbability(4, 5);
 }
 
 MachineBasicBlock *
@@ -84,8 +80,7 @@ MachineBranchProbabilityInfo::getHotSucc(MachineBasicBlock *MBB) const {
     }
   }
 
-  // FIXME: Use BranchProbability::compare.
-  if ((uint64_t)MaxWeight * 5 >= (uint64_t)Sum * 4)
+  if (BranchProbability(MaxWeight, Sum) >= BranchProbability(4, 5))
     return MaxSucc;
 
   return 0;
