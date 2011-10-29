@@ -303,7 +303,7 @@ Symbol::SetValue(addr_t value)
 bool
 Symbol::Compare(const ConstString& name, SymbolType type) const
 {
-    if (m_type == eSymbolTypeAny || m_type == type)
+    if (type == eSymbolTypeAny || m_type == type)
         return m_mangled.GetMangledName() == name || m_mangled.GetDemangledName() == name;
     return false;
 }
