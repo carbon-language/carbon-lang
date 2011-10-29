@@ -2912,7 +2912,7 @@ bool ComplexExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
 }
 
 //===----------------------------------------------------------------------===//
-// Top level Expr::Evaluate method.
+// Top level Expr::EvaluateAsRValue method.
 //===----------------------------------------------------------------------===//
 
 static bool Evaluate(APValue &Result, EvalInfo &Info, const Expr *E) {
@@ -2951,12 +2951,12 @@ static bool Evaluate(APValue &Result, EvalInfo &Info, const Expr *E) {
 }
 
 
-/// Evaluate - Return true if this is a constant which we can fold using
+/// EvaluateAsRValue - Return true if this is a constant which we can fold using
 /// any crazy technique (that has nothing to do with language standards) that
 /// we want to.  If this function returns true, it returns the folded constant
 /// in Result. If this expression is a glvalue, an lvalue-to-rvalue conversion
 /// will be applied to the result.
-bool Expr::Evaluate(EvalResult &Result, const ASTContext &Ctx) const {
+bool Expr::EvaluateAsRValue(EvalResult &Result, const ASTContext &Ctx) const {
   EvalInfo Info(Ctx, Result);
 
   if (!::Evaluate(Result.Val, Info, this))
@@ -2968,20 +2968,21 @@ bool Expr::Evaluate(EvalResult &Result, const ASTContext &Ctx) const {
     return HandleLValueToRValueConversion(Info, getType(), LV, Result.Val);
   }
 
-  // FIXME: We don't allow expressions to fold to pointers or references to
-  // locals. Code which calls Evaluate() isn't ready for that yet.
+  // FIXME: We don't allow expressions to fold to pointers to locals. Code which
+  // calls EvaluateAsRValue() isn't ready for that yet.
   return !Result.Val.isLValue() || IsGlobalLValue(Result.Val.getLValueBase());
 }
 
 bool Expr::EvaluateAsBooleanCondition(bool &Result,
                                       const ASTContext &Ctx) const {
   EvalResult Scratch;
-  return Evaluate(Scratch, Ctx) && HandleConversionToBool(Scratch.Val, Result);
+  return EvaluateAsRValue(Scratch, Ctx) &&
+         HandleConversionToBool(Scratch.Val, Result);
 }
 
 bool Expr::EvaluateAsInt(APSInt &Result, const ASTContext &Ctx) const {
   EvalResult ExprResult;
-  if (!Evaluate(ExprResult, Ctx) || ExprResult.HasSideEffects ||
+  if (!EvaluateAsRValue(ExprResult, Ctx) || ExprResult.HasSideEffects ||
       !ExprResult.Val.isInt()) {
     return false;
   }
@@ -3013,11 +3014,11 @@ bool Expr::EvaluateAsAnyLValue(EvalResult &Result,
   return false;
 }
 
-/// isEvaluatable - Call Evaluate to see if this expression can be constant
-/// folded, but discard the result.
+/// isEvaluatable - Call EvaluateAsRValue to see if this expression can be
+/// constant folded, but discard the result.
 bool Expr::isEvaluatable(const ASTContext &Ctx) const {
   EvalResult Result;
-  return Evaluate(Result, Ctx) && !Result.HasSideEffects;
+  return EvaluateAsRValue(Result, Ctx) && !Result.HasSideEffects;
 }
 
 bool Expr::HasSideEffects(const ASTContext &Ctx) const {
@@ -3026,7 +3027,7 @@ bool Expr::HasSideEffects(const ASTContext &Ctx) const {
 
 APSInt Expr::EvaluateKnownConstInt(const ASTContext &Ctx) const {
   EvalResult EvalResult;
-  bool Result = Evaluate(EvalResult, Ctx);
+  bool Result = EvaluateAsRValue(EvalResult, Ctx);
   (void)Result;
   assert(Result && "Could not evaluate expression");
   assert(EvalResult.Val.isInt() && "Expression did not evaluate to integer");
@@ -3058,7 +3059,7 @@ APSInt Expr::EvaluateKnownConstInt(const ASTContext &Ctx) const {
 // value, it calls into Evalute.
 //
 // Meanings of Val:
-// 0: This expression is an ICE if it can be evaluated by Evaluate.
+// 0: This expression is an ICE.
 // 1: This expression is not an ICE, but if it isn't evaluated, it's
 //    a legal subexpression for an ICE. This return value is used to handle
 //    the comma operator in C99 mode.
@@ -3081,7 +3082,7 @@ static ICEDiag NoDiag() { return ICEDiag(); }
 
 static ICEDiag CheckEvalInICE(const Expr* E, ASTContext &Ctx) {
   Expr::EvalResult EVResult;
-  if (!E->Evaluate(EVResult, Ctx) || EVResult.HasSideEffects ||
+  if (!E->EvaluateAsRValue(EVResult, Ctx) || EVResult.HasSideEffects ||
       !EVResult.Val.isInt()) {
     return ICEDiag(2, E->getLocStart());
   }
@@ -3272,7 +3273,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   }
   case Expr::OffsetOfExprClass: {
       // Note that per C99, offsetof must be an ICE. And AFAIK, using
-      // Evaluate matches the proposed gcc behavior for cases like
+      // EvaluateAsRValue matches the proposed gcc behavior for cases like
       // "offsetof(struct s{int x[4];}, x[1.0])".  This doesn't affect
       // compliance: we should warn earlier for offsetof expressions with
       // array subscripts that aren't ICEs, and if the array subscripts
@@ -3328,7 +3329,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
       ICEDiag RHSResult = CheckICE(Exp->getRHS(), Ctx);
       if (Exp->getOpcode() == BO_Div ||
           Exp->getOpcode() == BO_Rem) {
-        // Evaluate gives an error for undefined Div/Rem, so make sure
+        // EvaluateAsRValue gives an error for undefined Div/Rem, so make sure
         // we don't evaluate one.
         if (LHSResult.Val == 0 && RHSResult.Val == 0) {
           llvm::APSInt REval = Exp->getRHS()->EvaluateKnownConstInt(Ctx);
@@ -3433,7 +3434,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
         = dyn_cast<CallExpr>(Exp->getCond()->IgnoreParenCasts()))
       if (CallCE->isBuiltinCall(Ctx) == Builtin::BI__builtin_constant_p) {
         Expr::EvalResult EVResult;
-        if (!E->Evaluate(EVResult, Ctx) || EVResult.HasSideEffects ||
+        if (!E->EvaluateAsRValue(EVResult, Ctx) || EVResult.HasSideEffects ||
             !EVResult.Val.isInt()) {
           return ICEDiag(2, E->getLocStart());
         }

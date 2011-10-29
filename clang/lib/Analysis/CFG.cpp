@@ -431,7 +431,7 @@ private:
       return false;
     return !S->isTypeDependent() && 
            !S->isValueDependent() &&
-           S->Evaluate(outResult, *Context);
+           S->EvaluateAsRValue(outResult, *Context);
   }
 
   /// tryEvaluateBool - Try and evaluate the Stmt and return 0 or 1

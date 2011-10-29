@@ -1180,7 +1180,7 @@ static bool isArraySizeVLA(Expr *ArraySize, llvm::APSInt &SizeVal, Sema &S) {
   // If we're in a GNU mode (like gnu99, but not c99) accept any evaluatable
   // value as an extension.
   Expr::EvalResult Result;
-  if (S.LangOpts.GNUMode && ArraySize->Evaluate(Result, S.Context)) {
+  if (S.LangOpts.GNUMode && ArraySize->EvaluateAsRValue(Result, S.Context)) {
     if (!Result.hasSideEffects() && Result.Val.isInt()) {
       SizeVal = Result.Val.getInt();
       S.Diag(ArraySize->getLocStart(), diag::ext_vla_folded_to_constant);

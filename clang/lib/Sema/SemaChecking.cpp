@@ -2994,7 +2994,7 @@ IntRange GetExprRange(ASTContext &C, Expr *E, unsigned MaxWidth) {
 
   // Try a full evaluation first.
   Expr::EvalResult result;
-  if (E->Evaluate(result, C))
+  if (E->EvaluateAsRValue(result, C))
     return GetValueRange(C, result.Val, E->getType(), MaxWidth);
 
   // I think we only want to look through implicit casts here; if the
@@ -3405,7 +3405,7 @@ bool AnalyzeBitFieldAssignment(Sema &S, FieldDecl *Bitfield, Expr *Init,
   Expr *OriginalInit = Init->IgnoreParenImpCasts();
 
   Expr::EvalResult InitValue;
-  if (!OriginalInit->Evaluate(InitValue, S.Context) ||
+  if (!OriginalInit->EvaluateAsRValue(InitValue, S.Context) ||
       !InitValue.Val.isInt())
     return false;
 
@@ -3576,7 +3576,7 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
         // Don't warn about float constants that are precisely
         // representable in the target type.
         Expr::EvalResult result;
-        if (E->Evaluate(result, S.Context)) {
+        if (E->EvaluateAsRValue(result, S.Context)) {
           // Value might be a float, a float vector, or a float complex.
           if (IsSameFloatAfterCast(result.Val,
                    S.Context.getFloatTypeSemantics(QualType(TargetBT, 0)),

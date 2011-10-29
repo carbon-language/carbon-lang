@@ -3445,7 +3445,7 @@ static QualType TryToFixInvalidVariablyModifiedType(QualType T,
 
   Expr::EvalResult EvalResult;
   if (!VLATy->getSizeExpr() ||
-      !VLATy->getSizeExpr()->Evaluate(EvalResult, Context) ||
+      !VLATy->getSizeExpr()->EvaluateAsRValue(EvalResult, Context) ||
       !EvalResult.Val.isInt())
     return QualType();
 

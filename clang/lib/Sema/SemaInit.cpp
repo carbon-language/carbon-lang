@@ -2526,7 +2526,7 @@ bool InitializationSequence::endsWithNarrowing(ASTContext &Ctx,
       Expr::EvalResult InitializerValue;
       // FIXME: Check whether Initializer is a constant expression according
       // to C++0x [expr.const], rather than just whether it can be folded.
-      if (Initializer->Evaluate(InitializerValue, Ctx) &&
+      if (Initializer->EvaluateAsRValue(InitializerValue, Ctx) &&
           !InitializerValue.HasSideEffects && InitializerValue.Val.isFloat()) {
         // Constant! (Except for FIXME above.)
         llvm::APFloat FloatVal = InitializerValue.Val.getFloat();

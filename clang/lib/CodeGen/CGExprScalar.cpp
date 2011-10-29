@@ -208,7 +208,7 @@ public:
   // l-values.
   Value *VisitDeclRefExpr(DeclRefExpr *E) {
     Expr::EvalResult Result;
-    if (!E->Evaluate(Result, CGF.getContext()))
+    if (!E->EvaluateAsRValue(Result, CGF.getContext()))
       return EmitLoadOfLValue(E);
 
     assert(!Result.HasSideEffects && "Constant declref with side-effect?!");
@@ -801,7 +801,7 @@ Value *ScalarExprEmitter::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
 }
 Value *ScalarExprEmitter::VisitMemberExpr(MemberExpr *E) {
   Expr::EvalResult Result;
-  if (E->Evaluate(Result, CGF.getContext()) && Result.Val.isInt()) {
+  if (E->EvaluateAsRValue(Result, CGF.getContext()) && Result.Val.isInt()) {
     if (E->isArrow())
       CGF.EmitScalarExpr(E->getBase());
     else
@@ -1474,7 +1474,7 @@ Value *ScalarExprEmitter::VisitUnaryLNot(const UnaryOperator *E) {
 Value *ScalarExprEmitter::VisitOffsetOfExpr(OffsetOfExpr *E) {
   // Try folding the offsetof to a constant.
   Expr::EvalResult EvalResult;
-  if (E->Evaluate(EvalResult, CGF.getContext()))
+  if (E->EvaluateAsRValue(EvalResult, CGF.getContext()))
     return Builder.getInt(EvalResult.Val.getInt());
 
   // Loop over the components of the offsetof to compute the value.
@@ -1597,7 +1597,7 @@ ScalarExprEmitter::VisitUnaryExprOrTypeTraitExpr(
   // If this isn't sizeof(vla), the result must be constant; use the constant
   // folding logic so we don't have to duplicate it here.
   Expr::EvalResult Result;
-  E->Evaluate(Result, CGF.getContext());
+  E->EvaluateAsRValue(Result, CGF.getContext());
   return Builder.getInt(Result.Val.getInt());
 }
 

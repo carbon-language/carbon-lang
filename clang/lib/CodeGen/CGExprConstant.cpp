@@ -957,7 +957,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
   if (DestType->isReferenceType())
     Success = E->EvaluateAsLValue(Result, Context);
   else
-    Success = E->Evaluate(Result, Context);
+    Success = E->EvaluateAsRValue(Result, Context);
 
   if (Success && !Result.HasSideEffects) {
     switch (Result.Val.getKind()) {

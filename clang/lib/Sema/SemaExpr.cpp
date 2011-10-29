@@ -9121,7 +9121,7 @@ bool Sema::VerifyIntegerConstantExpression(const Expr *E, llvm::APSInt *Result){
 
   Expr::EvalResult EvalResult;
 
-  if (!E->Evaluate(EvalResult, Context) || !EvalResult.Val.isInt() ||
+  if (!E->EvaluateAsRValue(EvalResult, Context) || !EvalResult.Val.isInt() ||
       EvalResult.HasSideEffects) {
     Diag(E->getExprLoc(), diag::err_expr_not_ice) << E->getSourceRange();
 

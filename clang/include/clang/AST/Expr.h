@@ -462,12 +462,13 @@ public:
     bool isGlobalLValue() const;
   };
 
-  /// Evaluate - Return true if this is a constant which we can fold using
-  /// any crazy technique (that has nothing to do with language standards) that
-  /// we want to.  If this function returns true, it returns the folded constant
-  /// in Result. If this expression is a glvalue, an lvalue-to-rvalue conversion
-  /// will be applied.
-  bool Evaluate(EvalResult &Result, const ASTContext &Ctx) const;
+  /// EvaluateAsRValue - Return true if this is a constant which we can fold to
+  /// an rvalue using any crazy technique (that has nothing to do with language
+  /// standards) that we want to, even if the expression has side-effects. If
+  /// this function returns true, it returns the folded constant in Result. If
+  /// the expression is a glvalue, an lvalue-to-rvalue conversion will be
+  /// applied.
+  bool EvaluateAsRValue(EvalResult &Result, const ASTContext &Ctx) const;
 
   /// EvaluateAsBooleanCondition - Return true if this is a constant
   /// which we we can fold and convert to a boolean condition using
@@ -476,28 +477,31 @@ public:
   bool EvaluateAsBooleanCondition(bool &Result, const ASTContext &Ctx) const;
 
   /// EvaluateAsInt - Return true if this is a constant which we can fold and
-  /// convert to an integer using any crazy technique that we want to.
+  /// convert to an integer without side-effects, using any crazy technique that
+  /// we want to.
   bool EvaluateAsInt(llvm::APSInt &Result, const ASTContext &Ctx) const;
 
-  /// isEvaluatable - Call Evaluate to see if this expression can be constant
-  /// folded, but discard the result.
+  /// isEvaluatable - Call EvaluateAsRValue to see if this expression can be
+  /// constant folded without side-effects, but discard the result.
   bool isEvaluatable(const ASTContext &Ctx) const;
 
   /// HasSideEffects - This routine returns true for all those expressions
-  /// which must be evaluated each time and must not be optimized away 
+  /// which must be evaluated each time and must not be optimized away
   /// or evaluated at compile time. Example is a function call, volatile
   /// variable read.
   bool HasSideEffects(const ASTContext &Ctx) const;
-  
-  /// EvaluateKnownConstInt - Call Evaluate and return the folded integer. This
-  /// must be called on an expression that constant folds to an integer.
+
+  /// EvaluateKnownConstInt - Call EvaluateAsRValue and return the folded
+  /// integer. This must be called on an expression that constant folds to an
+  /// integer.
   llvm::APSInt EvaluateKnownConstInt(const ASTContext &Ctx) const;
 
-  /// EvaluateAsLValue - Evaluate an expression to see if it's a lvalue
-  /// with link time known address.
+  /// EvaluateAsLValue - Evaluate an expression to see if we can fold it to an
+  /// lvalue with link time known address, with no side-effects.
   bool EvaluateAsLValue(EvalResult &Result, const ASTContext &Ctx) const;
 
-  /// EvaluateAsLValue - Evaluate an expression to see if it's a lvalue.
+  /// EvaluateAsLValue - Evaluate an expression to see if we can fold it to an
+  /// lvalue, even if the expression has side-effects.
   bool EvaluateAsAnyLValue(EvalResult &Result, const ASTContext &Ctx) const;
 
   /// \brief Enumeration used to describe the kind of Null pointer constant

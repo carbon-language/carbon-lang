@@ -1112,7 +1112,8 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
     if (const VarDecl *V = dyn_cast<VarDecl>(*I)) {
       if (const Expr *Init = V->getInit()) {
         Expr::EvalResult Result;
-        if (Init->Evaluate(Result, CGM.getContext()) && Result.Val.isInt()) {
+        if (Init->EvaluateAsRValue(Result, CGM.getContext()) &&
+            Result.Val.isInt()) {
           llvm::ConstantInt *CI 
             = llvm::ConstantInt::get(CGM.getLLVMContext(), Result.Val.getInt());
           

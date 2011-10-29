@@ -513,7 +513,7 @@ ConstantFoldsToSimpleInteger(const Expr *Cond, llvm::APInt &ResultInt) {
   // FIXME: Rename and handle conversion of other evaluatable things
   // to bool.
   Expr::EvalResult Result;
-  if (!Cond->Evaluate(Result, getContext()) || !Result.Val.isInt() ||
+  if (!Cond->EvaluateAsRValue(Result, getContext()) || !Result.Val.isInt() ||
       Result.HasSideEffects)
     return false;  // Not foldable, not integer or not fully evaluatable.
   

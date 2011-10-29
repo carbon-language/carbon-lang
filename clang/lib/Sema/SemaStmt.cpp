@@ -666,7 +666,8 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
     bool ShouldCheckConstantCond = false;
     if (!HasDependentValue && !TheDefaultStmt) {
       Expr::EvalResult Result;
-      HasConstantCond = CondExprBeforePromotion->Evaluate(Result, Context);
+      HasConstantCond
+        = CondExprBeforePromotion->EvaluateAsRValue(Result, Context);
       if (HasConstantCond) {
         assert(Result.Val.isInt() && "switch condition evaluated to non-int");
         ConstantCondValue = Result.Val.getInt();
