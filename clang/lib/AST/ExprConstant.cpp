@@ -1436,6 +1436,10 @@ public:
   }
 
   bool Success(const CCValue &V, const Expr *E) {
+    if (V.isLValue()) {
+      Result = V;
+      return true;
+    }
     return Success(V.getInt(), E);
   }
   bool Error(const Expr *E) {
