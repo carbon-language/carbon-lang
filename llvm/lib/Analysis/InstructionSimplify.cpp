@@ -416,55 +416,39 @@ static Value *ThreadCmpOverSelect(CmpInst::Predicate Pred, Value *LHS,
   }
   assert(isa<SelectInst>(LHS) && "Not comparing with a select instruction!");
   SelectInst *SI = cast<SelectInst>(LHS);
-  Value *Cond = SI->getCondition();
-  Value *TV = SI->getTrueValue();
-  Value *FV = SI->getFalseValue();
 
   // Now that we have "cmp select(Cond, TV, FV), RHS", analyse it.
   // Does "cmp TV, RHS" simplify?
-  Value *TCmp = SimplifyCmpInst(Pred, TV, RHS, TD, DT, MaxRecurse);
-  if (!TCmp) {
-    // It didn't simplify.  However if "cmp TV, RHS" is equal to the select
-    // condition itself then we can replace it with 'true'.
-    if (match(Cond, m_ICmp(Pred, m_Specific(TV), m_Specific(RHS))))
-      TCmp = getTrue(Cond->getType());
+  if (Value *TCmp = SimplifyCmpInst(Pred, SI->getTrueValue(), RHS, TD, DT,
+                                    MaxRecurse)) {
+    // It does!  Does "cmp FV, RHS" simplify?
+    if (Value *FCmp = SimplifyCmpInst(Pred, SI->getFalseValue(), RHS, TD, DT,
+                                      MaxRecurse)) {
+      // It does!  If they simplified to the same value, then use it as the
+      // result of the original comparison.
+      if (TCmp == FCmp)
+        return TCmp;
+      Value *Cond = SI->getCondition();
+      // If the false value simplified to false, then the result of the compare
+      // is equal to "Cond && TCmp".  This also catches the case when the false
+      // value simplified to false and the true value to true, returning "Cond".
+      if (match(FCmp, m_Zero()))
+        if (Value *V = SimplifyAndInst(Cond, TCmp, TD, DT, MaxRecurse))
+          return V;
+      // If the true value simplified to true, then the result of the compare
+      // is equal to "Cond || FCmp".
+      if (match(TCmp, m_One()))
+        if (Value *V = SimplifyOrInst(Cond, FCmp, TD, DT, MaxRecurse))
+          return V;
+      // Finally, if the false value simplified to true and the true value to
+      // false, then the result of the compare is equal to "!Cond".
+      if (match(FCmp, m_One()) && match(TCmp, m_Zero()))
+        if (Value *V =
+            SimplifyXorInst(Cond, Constant::getAllOnesValue(Cond->getType()),
+                            TD, DT, MaxRecurse))
+          return V;
+    }
   }
-  if (!TCmp)
-    return 0;
-
-  // Does "cmp FV, RHS" simplify?
-  Value *FCmp = SimplifyCmpInst(Pred, FV, RHS, TD, DT, MaxRecurse);
-  if (!FCmp) {
-    // It didn't simplify.  However if "cmp FV, RHS" is equal to the select
-    // condition itself then we can replace it with 'false'.
-    if (match(Cond, m_ICmp(Pred, m_Specific(FV), m_Specific(RHS))))
-      FCmp = getFalse(Cond->getType());
-  }
-  if (!FCmp)
-    return 0;
-
-  // If both sides simplified to the same value, then use it as the result of
-  // the original comparison.
-  if (TCmp == FCmp)
-    return TCmp;
-  // If the false value simplified to false, then the result of the compare
-  // is equal to "Cond && TCmp".  This also catches the case when the false
-  // value simplified to false and the true value to true, returning "Cond".
-  if (match(FCmp, m_Zero()))
-    if (Value *V = SimplifyAndInst(Cond, TCmp, TD, DT, MaxRecurse))
-      return V;
-  // If the true value simplified to true, then the result of the compare
-  // is equal to "Cond || FCmp".
-  if (match(TCmp, m_One()))
-    if (Value *V = SimplifyOrInst(Cond, FCmp, TD, DT, MaxRecurse))
-      return V;
-  // Finally, if the false value simplified to true and the true value to
-  // false, then the result of the compare is equal to "!Cond".
-  if (match(FCmp, m_One()) && match(TCmp, m_Zero()))
-    if (Value *V =
-        SimplifyXorInst(Cond, Constant::getAllOnesValue(Cond->getType()),
-                        TD, DT, MaxRecurse))
-      return V;
 
   return 0;
 }
