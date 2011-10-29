@@ -1070,6 +1070,10 @@ CommandInterpreter::PreprocessCommand (std::string &command)
                 std::string expr_str (command, expr_content_start, end_backtick - expr_content_start);
                 
                 Target *target = m_exe_ctx.GetTargetPtr();
+                // Get a dummy target to allow for calculator mode while processing backticks.
+                // This also helps break the infinite loop caused when target is null.
+                if (!target)
+                    target = Host::GetDummyTarget(GetDebugger()).get();
                 if (target)
                 {
                     const bool unwind_on_error = true;
