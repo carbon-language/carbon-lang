@@ -15,11 +15,10 @@
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/AST/ExternalASTSource.h"
 #include "lldb/Symbol/ClangASTImporter.h"
+#include "lldb/Target/Target.h"
 
 namespace lldb_private {
     
-class ClangExpressionDeclMap;
-
 //----------------------------------------------------------------------
 /// @class ClangASTSource ClangASTSource.h "lldb/Expression/ClangASTSource.h"
 /// @brief Provider for named objects defined in the debug info for Clang
@@ -31,7 +30,9 @@ class ClangExpressionDeclMap;
 /// to Clang for these names, consulting the ClangExpressionDeclMap to do
 /// the actual lookups.
 //----------------------------------------------------------------------
-class ClangASTSource : public clang::ExternalASTSource 
+class ClangASTSource : 
+    public clang::ExternalASTSource,
+    public ClangASTImporter::NamespaceMapCompleter
 {
 public:
     //------------------------------------------------------------------
@@ -42,11 +43,12 @@ public:
     /// @param[in] declMap
     ///     A reference to the LLDB object that handles entity lookup.
     //------------------------------------------------------------------
-	ClangASTSource () :
+	ClangASTSource (const lldb::TargetSP &target) :
         m_ast_context (NULL),
         m_active_lookups (),
         m_import_in_progress (false),
-        m_lookups_enabled (false)
+        m_lookups_enabled (false),
+        m_target (target)
     {
     }
     
@@ -69,6 +71,13 @@ public:
 	
     void InstallASTContext (clang::ASTContext *ast_context)
     {
+        if (!m_ast_importer.get() ||
+            m_ast_importer->TargetASTContext() != ast_context)
+        {
+            m_ast_importer.reset(new ClangASTImporter(ast_context));
+            m_ast_importer->InstallMapCompleter(*this);
+        }
+        
         m_ast_context = ast_context;
     }
     
@@ -143,6 +152,29 @@ public:
     ///     Unused.
     //------------------------------------------------------------------
     void StartTranslationUnit (clang::ASTConsumer *Consumer);
+    
+    //
+    // APIs for NamespaceMapCompleter
+    //
+    
+    
+    //------------------------------------------------------------------
+    /// Look up the modules containing a given namespace and put the 
+    /// appropriate entries in the namespace map.
+    ///
+    /// @param[in] namespace_map
+    ///     The map to be completed.
+    ///
+    /// @param[in] name
+    ///     The name of the namespace to be found.
+    ///
+    /// @param[in] parent_map
+    ///     The map for the namespace's parent namespace, if there is
+    ///     one.
+    //------------------------------------------------------------------
+    void CompleteNamespaceMap (ClangASTImporter::NamespaceMapSP &namespace_map,
+                               const ConstString &name,
+                               ClangASTImporter::NamespaceMapSP &parent_map) const;
     
     //
     // Helper APIs
@@ -223,8 +255,10 @@ protected:
     bool                    m_import_in_progress;
     bool                    m_lookups_enabled;
 
-	clang::ASTContext      *m_ast_context;     ///< The parser's AST context, for copying types into
-    std::set<const char *>  m_active_lookups;
+    const lldb::TargetSP                m_target;           ///< The target to use in finding variables and types.
+	clang::ASTContext                  *m_ast_context;      ///< The parser's AST context, for copying types into
+    std::auto_ptr<ClangASTImporter>     m_ast_importer;
+    std::set<const char *>              m_active_lookups;
 };
 
 //----------------------------------------------------------------------

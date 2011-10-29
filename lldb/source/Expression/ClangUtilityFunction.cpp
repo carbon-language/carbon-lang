@@ -99,7 +99,7 @@ ClangUtilityFunction::Install (Stream &error_stream,
     
     bool keep_result_in_memory = false;
     
-    m_expr_decl_map.reset(new ClangExpressionDeclMap(keep_result_in_memory));
+    m_expr_decl_map.reset(new ClangExpressionDeclMap(keep_result_in_memory, exe_ctx));
     
     m_data_allocator.reset(new ProcessDataAllocator(*process));
     

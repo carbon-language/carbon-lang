@@ -48,7 +48,8 @@ using namespace lldb;
 using namespace lldb_private;
 using namespace clang;
 
-ClangExpressionDeclMap::ClangExpressionDeclMap (bool keep_result_in_memory) :
+ClangExpressionDeclMap::ClangExpressionDeclMap (bool keep_result_in_memory, ExecutionContext &exe_ctx) :
+    ClangASTSource (exe_ctx.GetTargetSP()),
     m_found_entities (),
     m_struct_members (),
     m_keep_result_in_memory (keep_result_in_memory),
@@ -2128,103 +2129,6 @@ ClangExpressionDeclMap::FindGlobalVariable
     return VariableSP();
 }
 
-// Interface for ClangASTImporter
-
-void 
-ClangExpressionDeclMap::CompleteNamespaceMap (ClangASTImporter::NamespaceMapSP &namespace_map,
-                                              const ConstString &name,
-                                              ClangASTImporter::NamespaceMapSP &parent_map) const
-{
-    static unsigned int invocation_id = 0;
-    unsigned int current_id = invocation_id++;
-    
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
-    
-    if (log)
-    {
-        if (parent_map && parent_map->size())
-            log->Printf("CompleteNamespaceMap[%u] Searching for namespace %s in namespace %s",
-                        current_id,
-                        name.GetCString(),
-                        parent_map->begin()->second.GetNamespaceDecl()->getDeclName().getAsString().c_str());
-        else
-            log->Printf("CompleteNamespaceMap[%u] Searching for namespace %s",
-                        current_id,
-                        name.GetCString());
-    }
-
-    
-    if (parent_map)
-    {
-        for (ClangASTImporter::NamespaceMap::iterator i = parent_map->begin(), e = parent_map->end();
-             i != e;
-             ++i)
-        {
-            ClangNamespaceDecl found_namespace_decl;
-            
-            ModuleSP module_sp = i->first;
-            ClangNamespaceDecl module_parent_namespace_decl = i->second;
-            
-            SymbolVendor *symbol_vendor = module_sp->GetSymbolVendor();
-            
-            if (!symbol_vendor)
-                continue;
-            
-            SymbolContext null_sc;
-                
-            found_namespace_decl = symbol_vendor->FindNamespace(null_sc, name, &module_parent_namespace_decl);
-                
-            if (!found_namespace_decl)
-                continue;
-                
-            namespace_map->push_back(std::pair<ModuleSP, ClangNamespaceDecl>(module_sp, found_namespace_decl));
-                    
-            if (log)
-                log->Printf("  CMN[%u] Found namespace %s in module %s",
-                            current_id,
-                            name.GetCString(), 
-                            module_sp->GetFileSpec().GetFilename().GetCString());
-        }
-    }
-    else
-    {
-        ModuleList &images = m_parser_vars->m_sym_ctx.target_sp->GetImages();
-        ClangNamespaceDecl null_namespace_decl;
-        
-        for (uint32_t i = 0, e = images.GetSize();
-             i != e;
-             ++i)
-        {
-            ModuleSP image = images.GetModuleAtIndex(i);
-            
-            if (!image)
-                continue;
-            
-            ClangNamespaceDecl found_namespace_decl;
-            
-            SymbolVendor *symbol_vendor = image->GetSymbolVendor();
-            
-            if (!symbol_vendor)
-                continue;
-            
-            SymbolContext null_sc;
-            
-            found_namespace_decl = symbol_vendor->FindNamespace(null_sc, name, &null_namespace_decl);
-            
-            if (!found_namespace_decl)
-                continue;
-            
-            namespace_map->push_back(std::pair<ModuleSP, ClangNamespaceDecl>(image, found_namespace_decl));
-                
-            if (log)
-                log->Printf("  CMN[%u] Found namespace %s in module %s",
-                            current_id,
-                            name.GetCString(), 
-                            image->GetFileSpec().GetFilename().GetCString());
-        }
-    }
-}
-
 // Interface for ClangASTSource
 
 void
@@ -2260,7 +2164,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context)
         
     if (const NamespaceDecl *namespace_context = dyn_cast<NamespaceDecl>(context.m_decl_context))
     {
-        ClangASTImporter::NamespaceMapSP namespace_map = m_parser_vars->GetASTImporter(m_ast_context)->GetNamespaceMap(namespace_context);
+        ClangASTImporter::NamespaceMapSP namespace_map = m_ast_importer->GetNamespaceMap(namespace_context);
         
         if (log && log->GetVerbose())
             log->Printf("  FEVD[%u] Inspecting namespace map %p (%d entries)", 
@@ -2757,9 +2661,7 @@ ClangExpressionDeclMap::FindExternalLexicalDecls (const DeclContext *decl_contex
     
     if (!context_decl)
         return ELR_Failure;
-    
-    ASTContext *ast_context = &context_decl->getASTContext();
-    
+        
     static unsigned int invocation_id = 0;
     unsigned int current_id = invocation_id++;
     
@@ -2785,12 +2687,7 @@ ClangExpressionDeclMap::FindExternalLexicalDecls (const DeclContext *decl_contex
     Decl *original_decl = NULL;
     ASTContext *original_ctx = NULL;
     
-    ClangASTImporter *ast_importer = m_parser_vars->GetASTImporter(ast_context);
-    
-    if (!ast_importer)
-        return ELR_Failure;
-    
-    if (!ast_importer->ResolveDeclOrigin(context_decl, &original_decl, &original_ctx))
+    if (!m_ast_importer->ResolveDeclOrigin(context_decl, &original_decl, &original_ctx))
         return ELR_Failure;
     
     if (log)
@@ -2829,7 +2726,7 @@ ClangExpressionDeclMap::FindExternalLexicalDecls (const DeclContext *decl_contex
                     log->Printf("  FELD[%d] Adding lexical decl %s", current_id, ast_dumper.GetCString());
             }
                         
-            Decl *copied_decl = ast_importer->CopyDecl(original_ctx, decl);
+            Decl *copied_decl = m_ast_importer->CopyDecl(original_ctx, decl);
             
             decls.push_back(copied_decl);
         }
@@ -2853,7 +2750,7 @@ ClangExpressionDeclMap::CompleteType (TagDecl *tag_decl)
         dumper.ToLog(log, "      [CTD] ");
     }
         
-    m_parser_vars->GetASTImporter(&tag_decl->getASTContext())->CompleteTagDecl (tag_decl);
+    m_ast_importer->CompleteTagDecl (tag_decl);
 
     if (log)
     {
@@ -2878,7 +2775,7 @@ ClangExpressionDeclMap::CompleteType (clang::ObjCInterfaceDecl *interface_decl)
         dumper.ToLog(log, "      [COID] ");    
     }
     
-    m_parser_vars->GetASTImporter(&interface_decl->getASTContext())->CompleteObjCInterfaceDecl (interface_decl);
+    m_ast_importer->CompleteObjCInterfaceDecl (interface_decl);
 
     if (log)
     {
@@ -3251,12 +3148,11 @@ ClangExpressionDeclMap::AddNamespace (NameSearchContext &context, ClangASTImport
     
     const ClangNamespaceDecl &namespace_decl = namespace_decls->begin()->second;
     
-    Decl *copied_decl = m_parser_vars->GetASTImporter(m_ast_context)->CopyDecl(namespace_decl.GetASTContext(), 
-                                                                               namespace_decl.GetNamespaceDecl());
+    Decl *copied_decl = m_ast_importer->CopyDecl(namespace_decl.GetASTContext(), namespace_decl.GetNamespaceDecl());
     
     NamespaceDecl *copied_namespace_decl = dyn_cast<NamespaceDecl>(copied_decl);
     
-    m_parser_vars->GetASTImporter(m_ast_context)->RegisterNamespaceMap(copied_namespace_decl, namespace_decls);
+    m_ast_importer->RegisterNamespaceMap(copied_namespace_decl, namespace_decls);
     
     return dyn_cast<NamespaceDecl>(copied_decl);
 }
@@ -3416,11 +3312,8 @@ ClangExpressionDeclMap::GuardedCopyType (ASTContext *dest_context,
     assert (m_parser_vars.get());
     
     m_parser_vars->m_ignore_lookups = true;
-    
-    lldb_private::ClangASTImporter *importer = m_parser_vars->GetASTImporter(dest_context);
-    
-    QualType ret_qual_type = importer->CopyType (source_context,
-                                                 QualType::getFromOpaquePtr(clang_type));
+        
+    QualType ret_qual_type = m_ast_importer->CopyType (source_context, QualType::getFromOpaquePtr(clang_type));
     
     void *ret = ret_qual_type.getAsOpaquePtr();
     

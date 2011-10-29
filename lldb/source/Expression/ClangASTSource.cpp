@@ -11,9 +11,13 @@
 #include "clang/AST/ASTContext.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
+#include "lldb/Core/ModuleList.h"
 #include "lldb/Expression/ClangASTSource.h"
 #include "lldb/Expression/ClangExpression.h"
 #include "lldb/Expression/ClangExpressionDeclMap.h"
+#include "lldb/Symbol/ClangNamespaceDecl.h"
+#include "lldb/Symbol/SymbolVendor.h"
+#include "lldb/Target/Target.h"
 
 using namespace clang;
 using namespace lldb_private;
@@ -141,6 +145,101 @@ ClangASTSource::FindExternalLexicalDecls
 )
 {
     return ELR_Success;
+}
+
+void 
+ClangASTSource::CompleteNamespaceMap (ClangASTImporter::NamespaceMapSP &namespace_map,
+                                      const ConstString &name,
+                                      ClangASTImporter::NamespaceMapSP &parent_map) const
+{
+    static unsigned int invocation_id = 0;
+    unsigned int current_id = invocation_id++;
+    
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    
+    if (log)
+    {
+        if (parent_map && parent_map->size())
+            log->Printf("CompleteNamespaceMap[%u] Searching for namespace %s in namespace %s",
+                        current_id,
+                        name.GetCString(),
+                        parent_map->begin()->second.GetNamespaceDecl()->getDeclName().getAsString().c_str());
+        else
+            log->Printf("CompleteNamespaceMap[%u] Searching for namespace %s",
+                        current_id,
+                        name.GetCString());
+    }
+    
+    
+    if (parent_map)
+    {
+        for (ClangASTImporter::NamespaceMap::iterator i = parent_map->begin(), e = parent_map->end();
+             i != e;
+             ++i)
+        {
+            ClangNamespaceDecl found_namespace_decl;
+            
+            lldb::ModuleSP module_sp = i->first;
+            ClangNamespaceDecl module_parent_namespace_decl = i->second;
+            
+            SymbolVendor *symbol_vendor = module_sp->GetSymbolVendor();
+            
+            if (!symbol_vendor)
+                continue;
+            
+            SymbolContext null_sc;
+            
+            found_namespace_decl = symbol_vendor->FindNamespace(null_sc, name, &module_parent_namespace_decl);
+            
+            if (!found_namespace_decl)
+                continue;
+            
+            namespace_map->push_back(std::pair<lldb::ModuleSP, ClangNamespaceDecl>(module_sp, found_namespace_decl));
+            
+            if (log)
+                log->Printf("  CMN[%u] Found namespace %s in module %s",
+                            current_id,
+                            name.GetCString(), 
+                            module_sp->GetFileSpec().GetFilename().GetCString());
+        }
+    }
+    else
+    {
+        ModuleList &images = m_target->GetImages();
+        ClangNamespaceDecl null_namespace_decl;
+        
+        for (uint32_t i = 0, e = images.GetSize();
+             i != e;
+             ++i)
+        {
+            lldb::ModuleSP image = images.GetModuleAtIndex(i);
+            
+            if (!image)
+                continue;
+            
+            ClangNamespaceDecl found_namespace_decl;
+            
+            SymbolVendor *symbol_vendor = image->GetSymbolVendor();
+            
+            if (!symbol_vendor)
+                continue;
+            
+            SymbolContext null_sc;
+            
+            found_namespace_decl = symbol_vendor->FindNamespace(null_sc, name, &null_namespace_decl);
+            
+            if (!found_namespace_decl)
+                continue;
+            
+            namespace_map->push_back(std::pair<lldb::ModuleSP, ClangNamespaceDecl>(image, found_namespace_decl));
+            
+            if (log)
+                log->Printf("  CMN[%u] Found namespace %s in module %s",
+                            current_id,
+                            name.GetCString(), 
+                            image->GetFileSpec().GetFilename().GetCString());
+        }
+    }
 }
 
 clang::NamedDecl *

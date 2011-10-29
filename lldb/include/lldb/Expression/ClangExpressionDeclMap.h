@@ -58,8 +58,7 @@ namespace lldb_private {
 /// has executed, placing the new values back where it found the old ones.
 //----------------------------------------------------------------------
 class ClangExpressionDeclMap : 
-    public ClangASTSource,
-    public ClangASTImporter::NamespaceMapCompleter
+    public ClangASTSource
 {
 public:
     //------------------------------------------------------------------
@@ -72,7 +71,8 @@ public:
     ///     the result persistent variable, and instead marks the variable
     ///     as persisting.
     //------------------------------------------------------------------
-    ClangExpressionDeclMap (bool keep_result_in_memory);
+    ClangExpressionDeclMap (bool keep_result_in_memory,
+                            ExecutionContext &exe_ctx);
     
     //------------------------------------------------------------------
     /// Destructor
@@ -663,25 +663,6 @@ public:
     //------------------------------------------------------------------
     void
     CompleteType (clang::ObjCInterfaceDecl *interface_decl);
-    
-    //------------------------------------------------------------------
-    /// [Used by ClangASTImporter] Look up the modules containing a
-    /// given namespace and put the appropriate entries in the namespace
-    /// map.
-    ///
-    /// @param[in] namespace_map
-    ///     The map to be completed.
-    ///
-    /// @param[in] name
-    ///     The name of the namespace to be found.
-    ///
-    /// @param[in] parent_map
-    ///     The map for the namespace's parent namespace, if there is
-    ///     one.
-    //------------------------------------------------------------------
-    void CompleteNamespaceMap (ClangASTImporter::NamespaceMapSP &namespace_map,
-                               const ConstString &name,
-                               ClangASTImporter::NamespaceMapSP &parent_map) const;
 
 private:
     ClangExpressionVariableList    m_found_entities;           ///< All entities that were looked up for the parser.
@@ -712,19 +693,6 @@ private:
             else if (m_sym_ctx.target_sp)
                 m_sym_ctx.target_sp.get();
             return NULL;
-        }
-        
-        ClangASTImporter *GetASTImporter (clang::ASTContext *ast_context)
-        {            
-            if (!m_ast_importer.get())
-                m_ast_importer.reset(new ClangASTImporter(ast_context));
-            
-            if (m_ast_importer->TargetASTContext() != ast_context)
-                return NULL;
-            
-            m_ast_importer->InstallMapCompleter(m_decl_map);
-            
-            return m_ast_importer.get();
         }
         
         ExecutionContext           *m_exe_ctx;          ///< The execution context to use when parsing.

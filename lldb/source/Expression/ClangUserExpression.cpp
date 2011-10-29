@@ -231,7 +231,7 @@ ClangUserExpression::Parse (Stream &error_stream,
     
     m_desired_type = desired_type;
     
-    m_expr_decl_map.reset(new ClangExpressionDeclMap(keep_result_in_memory));
+    m_expr_decl_map.reset(new ClangExpressionDeclMap(keep_result_in_memory, exe_ctx));
     
     if (!m_expr_decl_map->WillParse(exe_ctx))
     {
