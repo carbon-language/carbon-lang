@@ -2114,9 +2114,7 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
         HasNoSignedComparisonUses(Node))
       // Look past the truncate if CMP is the only use of it.
       N0 = N0.getOperand(0);
-    if ((N0.getNode()->getOpcode() == ISD::AND ||
-         (N0.getResNo() == 0 && N0.getNode()->getOpcode() == X86ISD::AND)) &&
-        N0.getNode()->hasOneUse() &&
+    if (N0.getNode()->getOpcode() == ISD::AND && N0.getNode()->hasOneUse() &&
         N0.getValueType() != MVT::i8 &&
         X86::isZeroNode(N1)) {
       ConstantSDNode *C = dyn_cast<ConstantSDNode>(N0.getNode()->getOperand(1));
