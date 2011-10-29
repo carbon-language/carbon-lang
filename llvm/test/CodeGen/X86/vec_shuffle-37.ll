@@ -26,10 +26,12 @@ entry:
 
 define void @t02(<8 x i32>* %source, <2 x i32>* %dest) nounwind noinline {
 entry:
-; CHECK: movl  36({{%rdi|%rcx}})
-; CHECK-NEXT: movl  48({{%rdi|%rcx}})
-; CHECK: punpcklqdq
-; CHECK: movq    %xmm0, ({{%rsi|%rdx}})
+; CHECK: t02
+; CHECK: movaps
+; CHECK: shufps
+; CHECK: pshufd
+; CHECK: movq
+; CHECK: ret
   %0 = bitcast <8 x i32>* %source to <4 x i32>*
   %arrayidx = getelementptr inbounds <4 x i32>* %0, i64 3
   %tmp2 = load <4 x i32>* %arrayidx, align 16
