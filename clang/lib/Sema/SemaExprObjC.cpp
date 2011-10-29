@@ -1937,17 +1937,27 @@ Sema::CheckObjCARCConversion(SourceRange castRange, QualType castType,
   if (exprACTC == castACTC) {
     // check for viablity and report error if casting an rvalue to a
     // life-time qualifier.
-    if ((castACTC == ACTC_retainable) && 
-        isa<AttributedType>(castType) &&
-        (castType.getObjCLifetime() !=  Qualifiers::OCL_None) &&
+    if ((castACTC == ACTC_retainable) &&
         (CCK == CCK_CStyleCast || CCK == CCK_OtherCast) &&
-        castType != castExprType) {
-      SourceLocation loc =
-        (castRange.isValid() ? castRange.getBegin() 
-                             : castExpr->getExprLoc());
-      Diag(loc, diag::err_arc_nolifetime_behavior)
-        << effCastType << castExprType 
-        << castRange << castExpr->getSourceRange();
+        (castType != castExprType)) {
+      const Type *DT = castType.getTypePtr();
+      QualType QDT = castType;
+      // We desugar some types but not others. We ignore those
+      // that cannot happen in a cast; i.e. auto, and those which
+      // should not be de-sugared; i.e typedef.
+      if (const ParenType *PT = dyn_cast<ParenType>(DT))
+        QDT = PT->desugar();
+      else if (const TypeOfType *TP = dyn_cast<TypeOfType>(DT))
+        QDT = TP->desugar();
+      else if (const AttributedType *AT = dyn_cast<AttributedType>(DT))
+        QDT = AT->desugar();
+      if (QDT != castType &&
+          QDT.getObjCLifetime() !=  Qualifiers::OCL_None) {
+        SourceLocation loc =
+          (castRange.isValid() ? castRange.getBegin() 
+                              : castExpr->getExprLoc());
+        Diag(loc, diag::err_arc_nolifetime_behavior);
+      }
     }
     return ACR_okay;
   }

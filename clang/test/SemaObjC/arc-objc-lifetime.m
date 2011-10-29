@@ -17,12 +17,14 @@ typedef __autoreleasing NSString * AUTORELEASEPNSString;
 - (CFStringRef)myString
 {
     CFStringRef myString =
-      (__bridge CFStringRef) (__strong NSString *)CFBridgingRelease(); // expected-error {{casting expression of type 'NSString *' to type 'NSString *__strong' with qualified lifetimewill not change object lifetime}}
+      (__bridge CFStringRef) (__strong NSString *)CFBridgingRelease(); // expected-error {{explicit ownership qualifier on cast result would have no effect}}
 
     myString =
-      (__bridge CFStringRef) (__autoreleasing PNSString) CFBridgingRelease(); // expected-error {{casting expression of type 'NSString *' to type '__autoreleasing PNSString' (aka 'NSString *__autoreleasing') with qualified lifetimewill not change object}}
+      (__bridge CFStringRef) (__autoreleasing PNSString) CFBridgingRelease(); // expected-error {{explicit ownership qualifier on cast result would have no effect}}
     myString =
       (__bridge CFStringRef) (AUTORELEASEPNSString) CFBridgingRelease(); // OK
+    myString =
+      (__bridge CFStringRef) (typeof(__strong NSString *)) CFBridgingRelease(); // expected-error {{explicit ownership qualifier on cast result would have no effect}}
     return myString;
 }
 

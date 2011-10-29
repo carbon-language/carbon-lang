@@ -3043,8 +3043,7 @@ def err_arc_mismatched_cast : Error<
   "an Objective-C pointer|an indirect pointer to an Objective-C pointer}1"
   " to %3 is disallowed with ARC">;
 def err_arc_nolifetime_behavior : Error<
-  "casting expression of type %1 to type %0 with qualified lifetime"
-  "will not change object lifetime">;
+  "explicit ownership qualifier on cast result would have no effect">;
 def err_arc_objc_object_in_struct : Error<
   "ARC forbids Objective-C objects in structs or unions">;
 def err_arc_objc_property_default_assign_on_object : Error<
