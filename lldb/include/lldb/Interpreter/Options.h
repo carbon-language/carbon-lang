@@ -158,6 +158,9 @@ public:
     GenerateOptionUsage (Stream &strm,
                          CommandObject *cmd);
 
+    bool
+    SupportsLongOption (const char *long_option);
+
     // The following two pure virtual functions must be defined by every 
     // class that inherits from this class.
 

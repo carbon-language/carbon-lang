@@ -186,7 +186,7 @@ Options::BuildValidOptionSets ()
     if (num_options == 0)
         return;
 
-    const OptionDefinition *full_options_table = GetDefinitions();
+    const OptionDefinition *opt_defs = GetDefinitions();
     m_required_options.resize(1);
     m_optional_options.resize(1);
     
@@ -196,7 +196,7 @@ Options::BuildValidOptionSets ()
     
     for (int i = 0; i < num_options; i++)
     {
-        uint32_t this_usage_mask = full_options_table[i].usage_mask;
+        uint32_t this_usage_mask = opt_defs[i].usage_mask;
         if (this_usage_mask == LLDB_OPT_SET_ALL)
         {
             if (num_option_sets == 0)
@@ -224,12 +224,12 @@ Options::BuildValidOptionSets ()
         {
             for (int j = 0; j < num_option_sets; j++)
             {
-                if (full_options_table[i].usage_mask & 1 << j)
+                if (opt_defs[i].usage_mask & 1 << j)
                 {
-                    if (full_options_table[i].required)
-                        m_required_options[j].insert(full_options_table[i].short_option);
+                    if (opt_defs[i].required)
+                        m_required_options[j].insert(opt_defs[i].short_option);
                     else
-                        m_optional_options[j].insert(full_options_table[i].short_option);
+                        m_optional_options[j].insert(opt_defs[i].short_option);
                 }
             }
         }
@@ -239,15 +239,15 @@ Options::BuildValidOptionSets ()
 uint32_t
 Options::NumCommandOptions ()
 {
-    const OptionDefinition *full_options_table = GetDefinitions ();
-    if (full_options_table == NULL) 
+    const OptionDefinition *opt_defs = GetDefinitions ();
+    if (opt_defs == NULL) 
         return 0;
         
     int i = 0;
 
-    if (full_options_table != NULL)
+    if (opt_defs != NULL)
     {
-        while (full_options_table[i].long_option != NULL)
+        while (opt_defs[i].long_option != NULL)
             ++i;
     }
 
@@ -267,21 +267,21 @@ Options::GetLongOptions ()
 
         uint32_t i;
         uint32_t j;
-        const OptionDefinition *full_options_table = GetDefinitions();
+        const OptionDefinition *opt_defs = GetDefinitions();
 
         std::bitset<256> option_seen;
 
         m_getopt_table.resize(num_options + 1);
         for (i = 0, j = 0; i < num_options; ++i)
         {
-            char short_opt = full_options_table[i].short_option;
+            char short_opt = opt_defs[i].short_option;
 
             if (option_seen.test(short_opt) == false)
             {
-                m_getopt_table[j].name    = full_options_table[i].long_option;
-                m_getopt_table[j].has_arg = full_options_table[i].option_has_arg;
+                m_getopt_table[j].name    = opt_defs[i].long_option;
+                m_getopt_table[j].has_arg = opt_defs[i].option_has_arg;
                 m_getopt_table[j].flag    = NULL;
-                m_getopt_table[j].val     = full_options_table[i].short_option;
+                m_getopt_table[j].val     = opt_defs[i].short_option;
                 option_seen.set(short_opt);
                 ++j;
             }
@@ -367,6 +367,30 @@ Options::OutputFormattedUsageText
     }
 }
 
+bool
+Options::SupportsLongOption (const char *long_option)
+{
+    if (long_option && long_option[0])
+    {
+        const OptionDefinition *opt_defs = GetDefinitions ();
+        if (opt_defs)
+        {
+            const char *long_option_name;
+            if (long_option[0] == '-' && long_option[1] == '-')
+                long_option_name += 2;
+            else
+                long_option_name = long_option;
+
+            for (uint32_t i = 0; opt_defs[i].long_option; ++i)
+            {
+                if (strcmp(opt_defs[i].long_option, long_option_name) == 0)
+                    return true;
+            }
+        }
+    }
+    return false;
+}
+
 void
 Options::GenerateOptionUsage
 (
@@ -376,7 +400,7 @@ Options::GenerateOptionUsage
 {
     const uint32_t screen_width = m_interpreter.GetDebugger().GetTerminalWidth();
 
-    const OptionDefinition *full_options_table = GetDefinitions();
+    const OptionDefinition *opt_defs = GetDefinitions();
     const uint32_t save_indent_level = strm.GetIndentLevel();
     const char *name;
 
@@ -424,14 +448,14 @@ Options::GenerateOptionUsage
         bool first;
         for (i = 0, first = true; i < num_options; ++i)
         {
-            if (full_options_table[i].usage_mask & opt_set_mask)
+            if (opt_defs[i].usage_mask & opt_set_mask)
             {
                 // Add current option to the end of out_stream.
 
-                if (full_options_table[i].required == true && 
-                    full_options_table[i].option_has_arg == no_argument)
+                if (opt_defs[i].required == true && 
+                    opt_defs[i].option_has_arg == no_argument)
                 {
-                    options.insert (full_options_table[i].short_option);
+                    options.insert (opt_defs[i].short_option);
                 }
             }
         }
@@ -455,14 +479,14 @@ Options::GenerateOptionUsage
 
         for (i = 0, options.clear(); i < num_options; ++i)
         {
-            if (full_options_table[i].usage_mask & opt_set_mask)
+            if (opt_defs[i].usage_mask & opt_set_mask)
             {
                 // Add current option to the end of out_stream.
 
-                if (full_options_table[i].required == false &&
-                    full_options_table[i].option_has_arg == no_argument)
+                if (opt_defs[i].required == false &&
+                    opt_defs[i].option_has_arg == no_argument)
                 {
-                    options.insert (full_options_table[i].short_option);
+                    options.insert (opt_defs[i].short_option);
                 }
             }
         }
@@ -489,23 +513,23 @@ Options::GenerateOptionUsage
         
         for (i = 0; i < num_options; ++i)
         {
-            if (full_options_table[i].usage_mask & opt_set_mask)
+            if (opt_defs[i].usage_mask & opt_set_mask)
             {
                 // Add current option to the end of out_stream.
-                CommandArgumentType arg_type = full_options_table[i].argument_type;
+                CommandArgumentType arg_type = opt_defs[i].argument_type;
                 
-                if (full_options_table[i].required)
+                if (opt_defs[i].required)
                 {
-                    if (full_options_table[i].option_has_arg == required_argument)
+                    if (opt_defs[i].option_has_arg == required_argument)
                     {
                         strm.Printf (" -%c <%s>",
-                                     full_options_table[i].short_option, 
+                                     opt_defs[i].short_option, 
                                      CommandObject::GetArgumentName (arg_type));
                     }
-                    else if (full_options_table[i].option_has_arg == optional_argument)
+                    else if (opt_defs[i].option_has_arg == optional_argument)
                     {
                         strm.Printf (" -%c [<%s>]",
-                                     full_options_table[i].short_option,
+                                     opt_defs[i].short_option,
                                      CommandObject::GetArgumentName (arg_type));
                     }
                 }
@@ -516,19 +540,19 @@ Options::GenerateOptionUsage
 
         for (i = 0; i < num_options; ++i)
         {
-            if (full_options_table[i].usage_mask & opt_set_mask)
+            if (opt_defs[i].usage_mask & opt_set_mask)
             {
                 // Add current option to the end of out_stream.
 
-                CommandArgumentType arg_type = full_options_table[i].argument_type;
+                CommandArgumentType arg_type = opt_defs[i].argument_type;
                 
-                if (! full_options_table[i].required)
+                if (! opt_defs[i].required)
                 {
-                    if (full_options_table[i].option_has_arg == required_argument)
-                        strm.Printf (" [-%c <%s>]", full_options_table[i].short_option,
+                    if (opt_defs[i].option_has_arg == required_argument)
+                        strm.Printf (" [-%c <%s>]", opt_defs[i].short_option,
                                      CommandObject::GetArgumentName (arg_type));
-                    else if (full_options_table[i].option_has_arg == optional_argument)
-                        strm.Printf (" [-%c [<%s>]]", full_options_table[i].short_option,
+                    else if (opt_defs[i].option_has_arg == optional_argument)
+                        strm.Printf (" [-%c [<%s>]]", opt_defs[i].short_option,
                                      CommandObject::GetArgumentName (arg_type));
                 }
             }
@@ -557,11 +581,11 @@ Options::GenerateOptionUsage
 
     for (i = 0; i < num_options; ++i)
     {
-        pos = options_seen.find (full_options_table[i].short_option);
+        pos = options_seen.find (opt_defs[i].short_option);
         if (pos == options_seen.end())
         {
-            options_seen.insert (full_options_table[i].short_option);
-            sorted_options.push_back (full_options_table[i].short_option);
+            options_seen.insert (opt_defs[i].short_option);
+            sorted_options.push_back (opt_defs[i].short_option);
         }
     }
 
@@ -578,7 +602,7 @@ Options::GenerateOptionUsage
         bool found = false;
         for (i = 0; i < num_options && !found; ++i)
         {
-            if (full_options_table[i].short_option == option)
+            if (opt_defs[i].short_option == option)
             {
                 found = true;
                 //Print out the help information for this option.
@@ -589,36 +613,36 @@ Options::GenerateOptionUsage
                 else
                     strm.EOL();
                 
-                CommandArgumentType arg_type = full_options_table[i].argument_type;
+                CommandArgumentType arg_type = opt_defs[i].argument_type;
                 
                 StreamString arg_name_str;
                 arg_name_str.Printf ("<%s>", CommandObject::GetArgumentName (arg_type));
 
                 strm.Indent ();
-                strm.Printf ("-%c", full_options_table[i].short_option);
+                strm.Printf ("-%c", opt_defs[i].short_option);
                 if (arg_type != eArgTypeNone)
                     strm.Printf (" <%s>",  CommandObject::GetArgumentName (arg_type));
-                strm.Printf ("  ( --%s", full_options_table[i].long_option);
+                strm.Printf ("  ( --%s", opt_defs[i].long_option);
                 if (arg_type != eArgTypeNone)
                     strm.Printf (" <%s>", CommandObject::GetArgumentName (arg_type));
                 strm.PutCString(" )\n");
                 
                 strm.IndentMore (5);
                 
-                if (full_options_table[i].usage_text)
+                if (opt_defs[i].usage_text)
                     OutputFormattedUsageText (strm,
-                                              full_options_table[i].usage_text,
+                                              opt_defs[i].usage_text,
                                               screen_width);
-                if (full_options_table[i].enum_values != NULL)
+                if (opt_defs[i].enum_values != NULL)
                 {
                     strm.Indent ();
                     strm.Printf("Values: ");
-                    for (int k = 0; full_options_table[i].enum_values[k].string_value != NULL; k++) 
+                    for (int k = 0; opt_defs[i].enum_values[k].string_value != NULL; k++) 
                     {
                         if (k == 0)
-                            strm.Printf("%s", full_options_table[i].enum_values[k].string_value);
+                            strm.Printf("%s", opt_defs[i].enum_values[k].string_value);
                         else
-                            strm.Printf(" | %s", full_options_table[i].enum_values[k].string_value);
+                            strm.Printf(" | %s", opt_defs[i].enum_values[k].string_value);
                     }
                     strm.EOL();
                 }

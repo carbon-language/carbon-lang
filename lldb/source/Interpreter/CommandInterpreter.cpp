@@ -1359,8 +1359,30 @@ CommandInterpreter::HandleCommand (const char *command_line,
                 {
                 case '/':
                     // GDB format suffixes
-                    revised_command_line.Printf (" --gdb-format=%s", suffix.c_str() + 1);
+                    {
+                        Options *command_options = cmd_obj->GetOptions();
+                        if (command_options && command_options->SupportsLongOption("gdb-format"))
+                        {
+                            revised_command_line.Printf (" --gdb-format=%s", suffix.c_str() + 1);
+                            if (wants_raw_input && command_string.find ("-- ") == std::string::npos)
+                                revised_command_line.Printf (" --");
+                        }
+                        else
+                        {
+                            result.AppendErrorWithFormat ("the '%s' command doesn't support the --gdb-format option\n", 
+                                                          cmd_obj->GetCommandName());
+                            result.SetStatus (eReturnStatusFailed);
+                            return false;
+                        }
+                    }
                     break;
+
+                default:
+                    result.AppendErrorWithFormat ("unknown command shorthand suffix: '%s'\n", 
+                                                  suffix.c_str());
+                    result.SetStatus (eReturnStatusFailed);
+                    return false;
+        
                 }
             }
         }
