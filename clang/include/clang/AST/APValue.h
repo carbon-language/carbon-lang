@@ -170,7 +170,10 @@ public:
   }
 
   const Expr* getLValueBase() const;
-  CharUnits getLValueOffset() const;
+  CharUnits &getLValueOffset();
+  const CharUnits &getLValueOffset() const {
+    return const_cast<APValue*>(this)->getLValueOffset();
+  }
 
   void setInt(const APSInt &I) {
     assert(isInt() && "Invalid accessor");

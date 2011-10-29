@@ -28,6 +28,8 @@ using namespace clang;
 using llvm::APSInt;
 using llvm::APFloat;
 
+static bool IsParamLValue(const Expr *E);
+
 /// EvalInfo - This is a private struct used by the evaluator to capture
 /// information about a subexpression as it is folded.  It retains information
 /// about the AST context, but also maintains information about the folded
@@ -45,6 +47,35 @@ using llvm::APFloat;
 namespace {
   struct CallStackFrame;
 
+  /// A core constant value. This can be the value of any constant expression,
+  /// or a pointer or reference to a non-static object or function parameter.
+  class CCValue : public APValue {
+    typedef llvm::APSInt APSInt;
+    typedef llvm::APFloat APFloat;
+    /// If the value is a DeclRefExpr lvalue referring to a ParmVarDecl, this is
+    /// the index of the corresponding function call.
+    unsigned CallIndex;
+  public:
+    CCValue() {}
+    explicit CCValue(const APSInt &I) : APValue(I) {}
+    explicit CCValue(const APFloat &F) : APValue(F) {}
+    CCValue(const APValue *E, unsigned N) : APValue(E, N) {}
+    CCValue(const APSInt &R, const APSInt &I) : APValue(R, I) {}
+    CCValue(const APFloat &R, const APFloat &I) : APValue(R, I) {}
+    CCValue(const CCValue &V) : APValue(V), CallIndex(V.CallIndex) {}
+    CCValue(const Expr *B, const CharUnits &O, unsigned I) :
+      APValue(B, O), CallIndex(I) {}
+    CCValue(const APValue &V, unsigned CallIndex) :
+      APValue(V), CallIndex(CallIndex) {}
+
+    enum { NoCallIndex = (unsigned)-1 };
+
+    unsigned getLValueCallIndex() const {
+      assert(getKind() == LValue);
+      return CallIndex;
+    }
+  };
+
   struct EvalInfo {
     const ASTContext &Ctx;
 
@@ -60,13 +91,16 @@ namespace {
     /// CallStackDepth - The number of calls in the call stack right now.
     unsigned CallStackDepth;
 
-    typedef llvm::DenseMap<const OpaqueValueExpr*, APValue> MapTy;
+    typedef llvm::DenseMap<const OpaqueValueExpr*, CCValue> MapTy;
     MapTy OpaqueValues;
-    const APValue *getOpaqueValue(const OpaqueValueExpr *e) const {
+    const CCValue *getOpaqueValue(const OpaqueValueExpr *e) const {
       MapTy::const_iterator i = OpaqueValues.find(e);
       if (i == OpaqueValues.end()) return 0;
       return &i->second;
     }
+
+    unsigned getCurrentCallIndex() const;
+    const CCValue *getCallValue(unsigned CallIndex, unsigned ArgIndex) const;
 
     EvalInfo(const ASTContext &C, Expr::EvalStatus &S)
       : Ctx(C), EvalStatus(S), CurrentCall(0), NumCalls(0), CallStackDepth(0) {}
@@ -83,14 +117,14 @@ namespace {
 
     /// ParmBindings - Parameter bindings for this function call, indexed by
     /// parameters' function scope indices.
-    const APValue *Arguments;
+    const CCValue *Arguments;
 
     /// CallIndex - The index of the current call. This is used to match lvalues
     /// referring to parameters up with the corresponding stack frame, and to
     /// detect when the parameter is no longer in scope.
     unsigned CallIndex;
 
-    CallStackFrame(EvalInfo &Info, const APValue *Arguments)
+    CallStackFrame(EvalInfo &Info, const CCValue *Arguments)
         : Info(Info), Caller(Info.CurrentCall), Arguments(Arguments),
           CallIndex(Info.NumCalls++) {
       Info.CurrentCall = this;
@@ -102,6 +136,19 @@ namespace {
       Info.CurrentCall = Caller;
     }
   };
+
+  unsigned EvalInfo::getCurrentCallIndex() const {
+    return CurrentCall ? CurrentCall->CallIndex : CCValue::NoCallIndex;
+  }
+
+  const CCValue *EvalInfo::getCallValue(unsigned CallIndex,
+                                        unsigned ArgIndex) const {
+    for (const CallStackFrame *Frame = CurrentCall;
+         Frame && Frame->CallIndex >= CallIndex; Frame = Frame->Caller)
+      if (Frame->CallIndex == CallIndex)
+        return Frame->Arguments + ArgIndex;
+    return 0;
+  }
 
   struct ComplexValue {
   private:
@@ -123,13 +170,13 @@ namespace {
     APSInt &getComplexIntReal() { return IntReal; }
     APSInt &getComplexIntImag() { return IntImag; }
 
-    void moveInto(APValue &v) const {
+    void moveInto(CCValue &v) const {
       if (isComplexFloat())
-        v = APValue(FloatReal, FloatImag);
+        v = CCValue(FloatReal, FloatImag);
       else
-        v = APValue(IntReal, IntImag);
+        v = CCValue(IntReal, IntImag);
     }
-    void setFrom(const APValue &v) {
+    void setFrom(const CCValue &v) {
       assert(v.isComplexFloat() || v.isComplexInt());
       if (v.isComplexFloat()) {
         makeComplexFloat();
@@ -146,26 +193,29 @@ namespace {
   struct LValue {
     const Expr *Base;
     CharUnits Offset;
+    unsigned CallIndex;
 
     const Expr *getLValueBase() { return Base; }
-    CharUnits getLValueOffset() { return Offset; }
+    CharUnits &getLValueOffset() { return Offset; }
+    unsigned getLValueCallIndex() { return CallIndex; }
 
-    void moveInto(APValue &v) const {
-      v = APValue(Base, Offset);
+    void moveInto(CCValue &V) const {
+      V = CCValue(Base, Offset, CallIndex);
     }
-    void setFrom(const APValue &v) {
-      assert(v.isLValue());
-      Base = v.getLValueBase();
-      Offset = v.getLValueOffset();
+    void setFrom(const CCValue &V) {
+      assert(V.isLValue());
+      Base = V.getLValueBase();
+      Offset = V.getLValueOffset();
+      CallIndex = V.getLValueCallIndex();
     }
   };
 }
 
-static bool Evaluate(APValue &Result, EvalInfo &Info, const Expr *E);
+static bool Evaluate(CCValue &Result, EvalInfo &Info, const Expr *E);
 static bool EvaluateLValue(const Expr *E, LValue &Result, EvalInfo &Info);
 static bool EvaluatePointer(const Expr *E, LValue &Result, EvalInfo &Info);
 static bool EvaluateInteger(const Expr *E, APSInt  &Result, EvalInfo &Info);
-static bool EvaluateIntegerOrLValue(const Expr *E, APValue  &Result,
+static bool EvaluateIntegerOrLValue(const Expr *E, CCValue &Result,
                                     EvalInfo &Info);
 static bool EvaluateFloat(const Expr *E, APFloat &Result, EvalInfo &Info);
 static bool EvaluateComplex(const Expr *E, ComplexValue &Res, EvalInfo &Info);
@@ -194,6 +244,18 @@ static bool IsGlobalLValue(const Expr* E) {
   return true;
 }
 
+static bool IsParamLValue(const Expr *E) {
+  if (const DeclRefExpr *DRE = dyn_cast_or_null<DeclRefExpr>(E))
+    return isa<ParmVarDecl>(DRE->getDecl());
+  return false;
+}
+
+/// Check that this core constant expression value is a valid value for a
+/// constant expression.
+static bool CheckConstantExpression(const CCValue &Value) {
+  return !Value.isLValue() || IsGlobalLValue(Value.getLValueBase());
+}
+
 static bool EvalPointerValueAsBool(const LValue &Value, bool &Result) {
   const Expr* Base = Value.Base;
 
@@ -205,6 +267,7 @@ static bool EvalPointerValueAsBool(const LValue &Value, bool &Result) {
   }
 
   // Require the base expression to be a global l-value.
+  // FIXME: C++11 requires such conversions. Remove this check.
   if (!IsGlobalLValue(Base)) return false;
 
   // We have a non-null base expression.  These are generally known to
@@ -226,7 +289,7 @@ static bool EvalPointerValueAsBool(const LValue &Value, bool &Result) {
   return true;
 }
 
-static bool HandleConversionToBool(const APValue &Val, bool &Result) {
+static bool HandleConversionToBool(const CCValue &Val, bool &Result) {
   switch (Val.getKind()) {
   case APValue::Uninitialized:
     return false;
@@ -244,12 +307,11 @@ static bool HandleConversionToBool(const APValue &Val, bool &Result) {
     Result = !Val.getComplexFloatReal().isZero() ||
              !Val.getComplexFloatImag().isZero();
     return true;
-  case APValue::LValue:
-    {
-      LValue PointerResult;
-      PointerResult.setFrom(Val);
-      return EvalPointerValueAsBool(PointerResult, Result);
-    }
+  case APValue::LValue: {
+    LValue PointerResult;
+    PointerResult.setFrom(Val);
+    return EvalPointerValueAsBool(PointerResult, Result);
+  }
   case APValue::Vector:
     return false;
   }
@@ -260,7 +322,7 @@ static bool HandleConversionToBool(const APValue &Val, bool &Result) {
 static bool EvaluateAsBooleanCondition(const Expr *E, bool &Result,
                                        EvalInfo &Info) {
   assert(E->isRValue() && "missing lvalue-to-rvalue conv in bool condition");
-  APValue Val;
+  CCValue Val;
   if (!Evaluate(Val, Info, E))
     return false;
   return HandleConversionToBool(Val, Result);
@@ -309,40 +371,44 @@ static APFloat HandleIntToFloatCast(QualType DestType, QualType SrcType,
 }
 
 /// Try to evaluate the initializer for a variable declaration.
-static const APValue *EvaluateVarDeclInit(EvalInfo &Info, const VarDecl *VD) {
+static bool EvaluateVarDeclInit(EvalInfo &Info, const VarDecl *VD,
+                                unsigned CallIndex, CCValue &Result) {
   // If this is a parameter to an active constexpr function call, perform
   // argument substitution.
   if (const ParmVarDecl *PVD = dyn_cast<ParmVarDecl>(VD)) {
-    // FIXME This assumes that all parameters must be parameters of the current
-    // call. Add the CallIndex to the LValue representation and use that to
-    // check.
-    if (Info.CurrentCall)
-      return &Info.CurrentCall->Arguments[PVD->getFunctionScopeIndex()];
-    return 0;
+    if (const CCValue *ArgValue =
+          Info.getCallValue(CallIndex, PVD->getFunctionScopeIndex())) {
+      Result = *ArgValue;
+      return true;
+    }
+    return false;
   }
 
   const Expr *Init = VD->getAnyInitializer();
   if (!Init)
-    return 0;
+    return false;
 
-  if (APValue *V = VD->getEvaluatedValue())
-    return V;
+  if (APValue *V = VD->getEvaluatedValue()) {
+    Result = CCValue(*V, CCValue::NoCallIndex);
+    return !Result.isUninit();
+  }
 
   if (VD->isEvaluatingValue())
-    return 0;
+    return false;
 
   VD->setEvaluatingValue();
 
-  Expr::EvalResult EResult;
-  EvalInfo InitInfo(Info.Ctx, EResult);
+  Expr::EvalStatus EStatus;
+  EvalInfo InitInfo(Info.Ctx, EStatus);
   // FIXME: The caller will need to know whether the value was a constant
   // expression. If not, we should propagate up a diagnostic.
-  if (Evaluate(EResult.Val, InitInfo, Init))
-    VD->setEvaluatedValue(EResult.Val);
-  else
+  if (!Evaluate(Result, InitInfo, Init) || !CheckConstantExpression(Result)) {
     VD->setEvaluatedValue(APValue());
+    return false;
+  }
 
-  return VD->getEvaluatedValue();
+  VD->setEvaluatedValue(Result);
+  return true;
 }
 
 static bool IsConstNonVolatile(QualType T) {
@@ -351,7 +417,7 @@ static bool IsConstNonVolatile(QualType T) {
 }
 
 bool HandleLValueToRValueConversion(EvalInfo &Info, QualType Type,
-                                    const LValue &LVal, APValue &RVal) {
+                                    const LValue &LVal, CCValue &RVal) {
   const Expr *Base = LVal.Base;
 
   // FIXME: Indirection through a null pointer deserves a diagnostic.
@@ -401,26 +467,21 @@ bool HandleLValueToRValueConversion(EvalInfo &Info, QualType Type,
     // them are not permitted.
     const VarDecl *VD = dyn_cast<VarDecl>(D);
     if (!VD || !(IsConstNonVolatile(VD->getType()) || isa<ParmVarDecl>(VD)) ||
-        !(Type->isIntegralOrEnumerationType() || Type->isRealFloatingType()))
+        !(Type->isIntegralOrEnumerationType() || Type->isRealFloatingType()) ||
+        !EvaluateVarDeclInit(Info, VD, LVal.CallIndex, RVal))
       return false;
 
-    const APValue *V = EvaluateVarDeclInit(Info, VD);
-    if (!V || V->isUninit())
-      return false;
-
-    if (isa<ParmVarDecl>(VD) || !VD->getAnyInitializer()->isLValue()) {
-      RVal = *V;
+    if (isa<ParmVarDecl>(VD) || !VD->getAnyInitializer()->isLValue())
       return true;
-    }
 
     // The declaration was initialized by an lvalue, with no lvalue-to-rvalue
     // conversion. This happens when the declaration and the lvalue should be
     // considered synonymous, for instance when initializing an array of char
     // from a string literal. Continue as if the initializer lvalue was the
     // value we were originally given.
-    Base = V->getLValueBase();
-    if (!V->getLValueOffset().isZero())
+    if (!RVal.getLValueOffset().isZero())
       return false;
+    Base = RVal.getLValueBase();
   }
 
   // FIXME: C++11: Support MaterializeTemporaryExpr in LValueExprEvaluator and
@@ -449,7 +510,7 @@ enum EvalStmtResult {
 }
 
 // Evaluate a statement.
-static EvalStmtResult EvaluateStmt(APValue &Result, EvalInfo &Info,
+static EvalStmtResult EvaluateStmt(CCValue &Result, EvalInfo &Info,
                                    const Stmt *S) {
   switch (S->getStmtClass()) {
   default:
@@ -479,12 +540,12 @@ static EvalStmtResult EvaluateStmt(APValue &Result, EvalInfo &Info,
 
 /// Evaluate a function call.
 static bool HandleFunctionCall(ArrayRef<const Expr*> Args, const Stmt *Body,
-                               EvalInfo &Info, APValue &Result) {
+                               EvalInfo &Info, CCValue &Result) {
   // FIXME: Implement a proper call limit, along with a command-line flag.
   if (Info.NumCalls >= 1000000 || Info.CallStackDepth >= 512)
     return false;
 
-  SmallVector<APValue, 16> ArgValues(Args.size());
+  SmallVector<CCValue, 16> ArgValues(Args.size());
   // FIXME: Deal with default arguments and 'this'.
   for (ArrayRef<const Expr*>::iterator I = Args.begin(), E = Args.end();
        I != E; ++I)
@@ -609,7 +670,7 @@ template <class Derived, typename RetTy=void>
 class ExprEvaluatorBase
   : public ConstStmtVisitor<Derived, RetTy> {
 private:
-  RetTy DerivedSuccess(const APValue &V, const Expr *E) {
+  RetTy DerivedSuccess(const CCValue &V, const Expr *E) {
     return static_cast<Derived*>(this)->Success(V, E);
   }
   RetTy DerivedError(const Expr *E) {
@@ -671,11 +732,11 @@ public:
   }
 
   RetTy VisitOpaqueValueExpr(const OpaqueValueExpr *E) {
-    const APValue *value = Info.getOpaqueValue(E);
-    if (!value)
+    const CCValue *Value = Info.getOpaqueValue(E);
+    if (!Value)
       return (E->getSourceExpr() ? StmtVisitorTy::Visit(E->getSourceExpr())
                                  : DerivedError(E));
-    return DerivedSuccess(*value, E);
+    return DerivedSuccess(*Value, E);
   }
 
   RetTy VisitCallExpr(const CallExpr *E) {
@@ -690,7 +751,7 @@ public:
     if (!CalleeType->isFunctionType() && !CalleeType->isFunctionPointerType())
       return DerivedError(E);
 
-    APValue Call;
+    CCValue Call;
     if (!Evaluate(Call, Info, Callee) || !Call.isLValue() ||
         !Call.getLValueBase() || !Call.getLValueOffset().isZero())
       return DerivedError(Callee);
@@ -709,7 +770,7 @@ public:
 
     const FunctionDecl *Definition;
     Stmt *Body = FD->getBody(Definition);
-    APValue Result;
+    CCValue Result;
     llvm::ArrayRef<const Expr*> Args(E->getArgs(), E->getNumArgs());
 
     if (Body && Definition->isConstexpr() && !Definition->isInvalidDecl() &&
@@ -749,7 +810,7 @@ public:
     case CK_LValueToRValue: {
       LValue LVal;
       if (EvaluateLValue(E->getSubExpr(), LVal, Info)) {
-        APValue RVal;
+        CCValue RVal;
         if (HandleLValueToRValueConversion(Info, E->getType(), LVal, RVal))
           return DerivedSuccess(RVal, E);
       }
@@ -762,7 +823,7 @@ public:
 
   /// Visit a value which is evaluated, but whose value is ignored.
   void VisitIgnoredValue(const Expr *E) {
-    APValue Scratch;
+    CCValue Scratch;
     if (!Evaluate(Scratch, Info, E))
       Info.EvalStatus.HasSideEffects = true;
   }
@@ -799,6 +860,7 @@ class LValueExprEvaluator
   bool Success(const Expr *E) {
     Result.Base = E;
     Result.Offset = CharUnits::Zero();
+    Result.CallIndex = Info.getCurrentCallIndex();
     return true;
   }
 public:
@@ -806,7 +868,7 @@ public:
   LValueExprEvaluator(EvalInfo &info, LValue &Result) :
     ExprEvaluatorBaseTy(info), Result(Result), PrevDecl(0) {}
 
-  bool Success(const APValue &V, const Expr *E) {
+  bool Success(const CCValue &V, const Expr *E) {
     Result.setFrom(V);
     return true;
   }
@@ -867,9 +929,9 @@ bool LValueExprEvaluator::VisitVarDecl(const Expr *E, const VarDecl *VD) {
   if (!VD->getType()->isReferenceType())
     return Success(E);
 
-  const APValue *V = EvaluateVarDeclInit(Info, VD);
-  if (V && !V->isUninit())
-    return Success(*V, E);
+  CCValue V;
+  if (EvaluateVarDeclInit(Info, VD, Info.getCurrentCallIndex(), V))
+    return Success(V, E);
 
   return Error(E);
 }
@@ -956,6 +1018,7 @@ class PointerExprEvaluator
   bool Success(const Expr *E) {
     Result.Base = E;
     Result.Offset = CharUnits::Zero();
+    Result.CallIndex = Info.getCurrentCallIndex();
     return true;
   }
 public:
@@ -963,7 +1026,7 @@ public:
   PointerExprEvaluator(EvalInfo &info, LValue &Result)
     : ExprEvaluatorBaseTy(info), Result(Result) {}
 
-  bool Success(const APValue &V, const Expr *E) {
+  bool Success(const CCValue &V, const Expr *E) {
     Result.setFrom(V);
     return true;
   }
@@ -1059,8 +1122,7 @@ bool PointerExprEvaluator::VisitCastExpr(const CastExpr* E) {
 
   case CK_DerivedToBase:
   case CK_UncheckedDerivedToBase: {
-    LValue BaseLV;
-    if (!EvaluatePointer(E->getSubExpr(), BaseLV, Info))
+    if (!EvaluatePointer(E->getSubExpr(), Result, Info))
       return false;
 
     // Now figure out the necessary offset to add to the baseLV to get from
@@ -1083,35 +1145,31 @@ bool PointerExprEvaluator::VisitCastExpr(const CastExpr* E) {
       const CXXRecordDecl *BaseDecl = Base->getType()->getAsCXXRecordDecl();
       const ASTRecordLayout &Layout = Info.Ctx.getASTRecordLayout(DerivedDecl);
 
-      Offset += Layout.getBaseClassOffset(BaseDecl);
+      Result.getLValueOffset() += Layout.getBaseClassOffset(BaseDecl);
       DerivedDecl = BaseDecl;
     }
 
-    Result.Base = BaseLV.getLValueBase();
-    Result.Offset = BaseLV.getLValueOffset() + Offset;
     return true;
   }
 
-  case CK_NullToPointer: {
-    Result.Base = 0;
-    Result.Offset = CharUnits::Zero();
-    return true;
-  }
+  case CK_NullToPointer:
+    return ValueInitialization(E);
 
   case CK_IntegralToPointer: {
-    APValue Value;
+    CCValue Value;
     if (!EvaluateIntegerOrLValue(SubExpr, Value, Info))
       break;
 
     if (Value.isInt()) {
-      Value.getInt() = Value.getInt().extOrTrunc((unsigned)Info.Ctx.getTypeSize(E->getType()));
+      unsigned Size = Info.Ctx.getTypeSize(E->getType());
+      uint64_t N = Value.getInt().extOrTrunc(Size).getZExtValue();
       Result.Base = 0;
-      Result.Offset = CharUnits::fromQuantity(Value.getInt().getZExtValue());
+      Result.Offset = CharUnits::fromQuantity(N);
+      Result.CallIndex = CCValue::NoCallIndex;
       return true;
     } else {
       // Cast is of an lvalue, no need to change value.
-      Result.Base = Value.getLValueBase();
-      Result.Offset = Value.getLValueOffset();
+      Result.setFrom(Value);
       return true;
     }
   }
@@ -1331,9 +1389,9 @@ bool VectorExprEvaluator::VisitUnaryImag(const UnaryOperator *E) {
 namespace {
 class IntExprEvaluator
   : public ExprEvaluatorBase<IntExprEvaluator, bool> {
-  APValue &Result;
+  CCValue &Result;
 public:
-  IntExprEvaluator(EvalInfo &info, APValue &result)
+  IntExprEvaluator(EvalInfo &info, CCValue &result)
     : ExprEvaluatorBaseTy(info), Result(result) {}
 
   bool Success(const llvm::APSInt &SI, const Expr *E) {
@@ -1343,7 +1401,7 @@ public:
            "Invalid evaluation result.");
     assert(SI.getBitWidth() == Info.Ctx.getIntWidth(E->getType()) &&
            "Invalid evaluation result.");
-    Result = APValue(SI);
+    Result = CCValue(SI);
     return true;
   }
 
@@ -1352,7 +1410,7 @@ public:
            "Invalid evaluation result.");
     assert(I.getBitWidth() == Info.Ctx.getIntWidth(E->getType()) &&
            "Invalid evaluation result.");
-    Result = APValue(APSInt(I));
+    Result = CCValue(APSInt(I));
     Result.getInt().setIsUnsigned(
                             E->getType()->isUnsignedIntegerOrEnumerationType());
     return true;
@@ -1361,7 +1419,7 @@ public:
   bool Success(uint64_t Value, const Expr *E) {
     assert(E->getType()->isIntegralOrEnumerationType() && 
            "Invalid evaluation result.");
-    Result = APValue(Info.Ctx.MakeIntValue(Value, E->getType()));
+    Result = CCValue(Info.Ctx.MakeIntValue(Value, E->getType()));
     return true;
   }
 
@@ -1380,7 +1438,7 @@ public:
     return false;
   }
 
-  bool Success(const APValue &V, const Expr *E) {
+  bool Success(const CCValue &V, const Expr *E) {
     return Success(V.getInt(), E);
   }
   bool Error(const Expr *E) {
@@ -1472,13 +1530,14 @@ private:
 /// an integer rvalue to produce a pointer (represented as an lvalue) instead.
 /// Some simple arithmetic on such values is supported (they are treated much
 /// like char*).
-static bool EvaluateIntegerOrLValue(const Expr* E, APValue &Result, EvalInfo &Info) {
+static bool EvaluateIntegerOrLValue(const Expr* E, CCValue &Result,
+                                    EvalInfo &Info) {
   assert(E->isRValue() && E->getType()->isIntegralOrEnumerationType());
   return IntExprEvaluator(Info, Result).Visit(E);
 }
 
 static bool EvaluateInteger(const Expr* E, APSInt &Result, EvalInfo &Info) {
-  APValue Val;
+  CCValue Val;
   if (!EvaluateIntegerOrLValue(E, Val, Info) || !Val.isInt())
     return false;
   Result = Val.getInt();
@@ -1890,33 +1949,32 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   }
 
   // The LHS of a constant expr is always evaluated and needed.
-  APValue LHSVal;
+  CCValue LHSVal;
   if (!EvaluateIntegerOrLValue(E->getLHS(), LHSVal, Info))
     return false; // error in subexpression.
 
   if (!Visit(E->getRHS()))
     return false;
-  APValue &RHSVal = Result;
+  CCValue &RHSVal = Result;
 
   // Handle cases like (unsigned long)&a + 4.
   if (E->isAdditiveOp() && LHSVal.isLValue() && RHSVal.isInt()) {
-    CharUnits Offset = LHSVal.getLValueOffset();
     CharUnits AdditionalOffset = CharUnits::fromQuantity(
                                      RHSVal.getInt().getZExtValue());
     if (E->getOpcode() == BO_Add)
-      Offset += AdditionalOffset;
+      LHSVal.getLValueOffset() += AdditionalOffset;
     else
-      Offset -= AdditionalOffset;
-    Result = APValue(LHSVal.getLValueBase(), Offset);
+      LHSVal.getLValueOffset() -= AdditionalOffset;
+    Result = LHSVal;
     return true;
   }
 
   // Handle cases like 4 + (unsigned long)&a
   if (E->getOpcode() == BO_Add &&
         RHSVal.isLValue() && LHSVal.isInt()) {
-    CharUnits Offset = RHSVal.getLValueOffset();
-    Offset += CharUnits::fromQuantity(LHSVal.getInt().getZExtValue());
-    Result = APValue(RHSVal.getLValueBase(), Offset);
+    RHSVal.getLValueOffset() += CharUnits::fromQuantity(
+                                    LHSVal.getInt().getZExtValue());
+    // Note that RHSVal is Result.
     return true;
   }
 
@@ -2145,7 +2203,7 @@ bool IntExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
     return false;
 
   // Get the operand value.
-  APValue Val;
+  CCValue Val;
   if (!Evaluate(Val, Info, E->getSubExpr()))
     return false;
 
@@ -2330,7 +2388,7 @@ public:
   FloatExprEvaluator(EvalInfo &info, APFloat &result)
     : ExprEvaluatorBaseTy(info), Result(result) {}
 
-  bool Success(const APValue &V, const Expr *e) {
+  bool Success(const CCValue &V, const Expr *e) {
     Result = V.getFloat();
     return true;
   }
@@ -2575,7 +2633,7 @@ public:
   ComplexExprEvaluator(EvalInfo &info, ComplexValue &Result)
     : ExprEvaluatorBaseTy(info), Result(Result) {}
 
-  bool Success(const APValue &V, const Expr *e) {
+  bool Success(const CCValue &V, const Expr *e) {
     Result.setFrom(V);
     return true;
   }
@@ -2915,7 +2973,7 @@ bool ComplexExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
 // Top level Expr::EvaluateAsRValue method.
 //===----------------------------------------------------------------------===//
 
-static bool Evaluate(APValue &Result, EvalInfo &Info, const Expr *E) {
+static bool Evaluate(CCValue &Result, EvalInfo &Info, const Expr *E) {
   // In C, function designators are not lvalues, but we evaluate them as if they
   // are.
   if (E->isGLValue() || E->getType()->isFunctionType()) {
@@ -2938,7 +2996,7 @@ static bool Evaluate(APValue &Result, EvalInfo &Info, const Expr *E) {
     llvm::APFloat F(0.0);
     if (!EvaluateFloat(E, F, Info))
       return false;
-    Result = APValue(F);
+    Result = CCValue(F);
   } else if (E->getType()->isAnyComplexType()) {
     ComplexValue C;
     if (!EvaluateComplex(E, C, Info))
@@ -2959,25 +3017,31 @@ static bool Evaluate(APValue &Result, EvalInfo &Info, const Expr *E) {
 bool Expr::EvaluateAsRValue(EvalResult &Result, const ASTContext &Ctx) const {
   EvalInfo Info(Ctx, Result);
 
-  if (!::Evaluate(Result.Val, Info, this))
+  CCValue Value;
+  if (!::Evaluate(Value, Info, this))
     return false;
 
   if (isGLValue()) {
     LValue LV;
-    LV.setFrom(Result.Val);
-    return HandleLValueToRValueConversion(Info, getType(), LV, Result.Val);
+    LV.setFrom(Value);
+    if (!HandleLValueToRValueConversion(Info, getType(), LV, Value))
+      return false;
   }
 
-  // FIXME: We don't allow expressions to fold to pointers to locals. Code which
-  // calls EvaluateAsRValue() isn't ready for that yet.
-  return !Result.Val.isLValue() || IsGlobalLValue(Result.Val.getLValueBase());
+  // Check this core constant expression is a constant expression, and if so,
+  // slice it down to one.
+  if (!CheckConstantExpression(Value))
+    return false;
+  Result.Val = Value;
+  return true;
 }
 
 bool Expr::EvaluateAsBooleanCondition(bool &Result,
                                       const ASTContext &Ctx) const {
   EvalResult Scratch;
   return EvaluateAsRValue(Scratch, Ctx) &&
-         HandleConversionToBool(Scratch.Val, Result);
+         HandleConversionToBool(CCValue(Scratch.Val, CCValue::NoCallIndex),
+                                Result);
 }
 
 bool Expr::EvaluateAsInt(APSInt &Result, const ASTContext &Ctx) const {
@@ -2996,7 +3060,7 @@ bool Expr::EvaluateAsLValue(EvalResult &Result, const ASTContext &Ctx) const {
   LValue LV;
   if (EvaluateLValue(this, LV, Info) && !Result.HasSideEffects &&
       IsGlobalLValue(LV.Base)) {
-    LV.moveInto(Result.Val);
+    Result.Val = APValue(LV.Base, LV.Offset);
     return true;
   }
   return false;
@@ -3007,8 +3071,10 @@ bool Expr::EvaluateAsAnyLValue(EvalResult &Result,
   EvalInfo Info(Ctx, Result);
 
   LValue LV;
-  if (EvaluateLValue(this, LV, Info)) {
-    LV.moveInto(Result.Val);
+  // Don't allow references to out-of-scope function parameters to escape.
+  if (EvaluateLValue(this, LV, Info) &&
+      (!IsParamLValue(LV.Base) || LV.CallIndex == CCValue::NoCallIndex)) {
+    Result.Val = APValue(LV.Base, LV.Offset);
     return true;
   }
   return false;

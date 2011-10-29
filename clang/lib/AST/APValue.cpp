@@ -169,9 +169,9 @@ const Expr* APValue::getLValueBase() const {
   return ((const LV*)(const void*)Data)->Base;
 }
 
-CharUnits APValue::getLValueOffset() const {
-    assert(isLValue() && "Invalid accessor");
-    return ((const LV*)(const void*)Data)->Offset;
+CharUnits &APValue::getLValueOffset() {
+  assert(isLValue() && "Invalid accessor");
+  return ((LV*)(void*)Data)->Offset;
 }
 
 void APValue::setLValue(const Expr *B, const CharUnits &O) {
@@ -185,4 +185,3 @@ void APValue::MakeLValue() {
   new ((void*)(char*)Data) LV();
   Kind = LValue;
 }
-

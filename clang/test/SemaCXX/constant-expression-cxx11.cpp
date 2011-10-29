@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s
+// RUN: %clang_cc1 -triple i686-linux -fsyntax-only -verify -std=c++11 %s
 
 // FIXME: support const T& parameters here.
 //template<typename T> constexpr T id(const T &t) { return t; }
@@ -10,8 +10,8 @@ template<typename T> constexpr T id(T t) { return t; }
 //template<typename T> constexpr T max(const T &a, const T &b) {
 //  return a < b ? b : a;
 //}
-constexpr int min(int a, int b) { return a < b ? a : b; }
-constexpr int max(int a, int b) { return a < b ? b : a; }
+constexpr int min(const int &a, const int &b) { return a < b ? a : b; }
+constexpr int max(const int &a, const int &b) { return a < b ? b : a; }
 
 struct MemberZero {
   constexpr int zero() { return 0; }
@@ -90,4 +90,32 @@ namespace StaticMemberFunction {
   constexpr int n = s.f(19);
   using check_static_call = int[s.f(19)];
   using check_static_call = int[800];
+}
+
+namespace ParameterScopes {
+
+  const int k = 42;
+  constexpr const int &ObscureTheTruth(const int &a) { return a; }
+  constexpr const int &MaybeReturnJunk(bool b, const int a) {
+    return ObscureTheTruth(b ? a : k);
+  }
+  constexpr int n1 = MaybeReturnJunk(false, 0); // ok
+  constexpr int n2 = MaybeReturnJunk(true, 0); // expected-error {{must be initialized by a constant expression}}
+
+  constexpr int InternalReturnJunk(int n) {
+    // FIXME: We should reject this: it never produces a constant expression.
+    return MaybeReturnJunk(true, n);
+  }
+  constexpr int n3 = InternalReturnJunk(0); // expected-error {{must be initialized by a constant expression}}
+
+  constexpr int LToR(int &n) { return n; }
+  constexpr int GrabCallersArgument(bool which, int a, int b) {
+    return LToR(which ? b : a);
+  }
+  constexpr int n4 = GrabCallersArgument(false, 1, 2);
+  constexpr int n5 = GrabCallersArgument(true, 4, 8);
+  // FIXME: this isn't an ICE yet.
+  using check_value = int[n4 + n5];
+  using check_value = int[9];
+
 }
