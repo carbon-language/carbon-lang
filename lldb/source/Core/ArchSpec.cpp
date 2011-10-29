@@ -43,9 +43,6 @@ namespace lldb_private {
 // This core information can be looked using the ArchSpec::Core as the index
 static const CoreDefinition g_core_definitions[ArchSpec::kNumCores] =
 {
-    // TODO: verify alpha has 32 bit fixed instructions
-    { eByteOrderLittle, 4, 4, 4, llvm::Triple::alpha  , ArchSpec::eCore_alpha_generic   , "alpha"     },
-
     { eByteOrderLittle, 4, 2, 4, llvm::Triple::arm    , ArchSpec::eCore_arm_generic     , "arm"       },
     { eByteOrderLittle, 4, 2, 4, llvm::Triple::arm    , ArchSpec::eCore_arm_armv4       , "armv4"     },
     { eByteOrderLittle, 4, 2, 4, llvm::Triple::arm    , ArchSpec::eCore_arm_armv4t      , "armv4t"    },
