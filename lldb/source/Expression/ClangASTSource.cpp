@@ -12,9 +12,9 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ModuleList.h"
+#include "lldb/Expression/ASTDumper.h"
 #include "lldb/Expression/ClangASTSource.h"
 #include "lldb/Expression/ClangExpression.h"
-#include "lldb/Expression/ClangExpressionDeclMap.h"
 #include "lldb/Symbol/ClangNamespaceDecl.h"
 #include "lldb/Symbol/SymbolVendor.h"
 #include "lldb/Target/Target.h"
@@ -128,23 +128,133 @@ ClangASTSource::FindExternalVisibleDecls (NameSearchContext &context)
 
 void
 ClangASTSource::CompleteType (TagDecl *tag_decl)
-{
+{    
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    
+    if (log)
+    {
+        log->Printf("    [CompleteTagDecl] Completing a TagDecl named %s", tag_decl->getName().str().c_str());
+        log->Printf("      [CTD] Before:");
+        ASTDumper dumper((Decl*)tag_decl);
+        dumper.ToLog(log, "      [CTD] ");
+    }
+    
+    m_ast_importer->CompleteTagDecl (tag_decl);
+    
+    if (log)
+    {
+        log->Printf("      [CTD] After:");
+        ASTDumper dumper((Decl*)tag_decl);
+        dumper.ToLog(log, "      [CTD] ");
+    }
 }
 
 void
-ClangASTSource::CompleteType (ObjCInterfaceDecl *objc_decl)
-{
+ClangASTSource::CompleteType (clang::ObjCInterfaceDecl *interface_decl)
+{    
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    
+    if (log)
+    {
+        log->Printf("    [CompleteObjCInterfaceDecl] Completing an ObjCInterfaceDecl named %s", interface_decl->getName().str().c_str());
+        log->Printf("      [COID] Before:");
+        ASTDumper dumper((Decl*)interface_decl);
+        dumper.ToLog(log, "      [COID] ");    
+    }
+    
+    m_ast_importer->CompleteObjCInterfaceDecl (interface_decl);
+    
+    if (log)
+    {
+        log->Printf("      [COID] After:");
+        ASTDumper dumper((Decl*)interface_decl);
+        dumper.ToLog(log, "      [COID] ");    
+    }
 }
 
 clang::ExternalLoadResult
-ClangASTSource::FindExternalLexicalDecls
-(
-    const DeclContext *DC, 
-    bool (*isKindWeWant)(Decl::Kind),
-    llvm::SmallVectorImpl<Decl*> &Decls
-)
-{
-    return ELR_Success;
+ClangASTSource::FindExternalLexicalDecls (const DeclContext *decl_context, 
+                                          bool (*predicate)(Decl::Kind),
+                                          llvm::SmallVectorImpl<Decl*> &decls)
+{    
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    
+    const Decl *context_decl = dyn_cast<Decl>(decl_context);
+    
+    if (!context_decl)
+        return ELR_Failure;
+    
+    static unsigned int invocation_id = 0;
+    unsigned int current_id = invocation_id++;
+    
+    if (log)
+    {
+        if (const NamedDecl *context_named_decl = dyn_cast<NamedDecl>(context_decl))
+            log->Printf("FindExternalLexicalDecls[%u] in '%s' (a %s) with %s predicate",
+                        current_id,
+                        context_named_decl->getNameAsString().c_str(),
+                        context_decl->getDeclKindName(), 
+                        (predicate ? "non-null" : "null"));
+        else if(context_decl)
+            log->Printf("FindExternalLexicalDecls[%u] in a %s with %s predicate",
+                        current_id,
+                        context_decl->getDeclKindName(), 
+                        (predicate ? "non-null" : "null"));
+        else
+            log->Printf("FindExternalLexicalDecls[%u] in a NULL context with %s predicate",
+                        current_id,
+                        (predicate ? "non-null" : "null"));
+    }
+    
+    Decl *original_decl = NULL;
+    ASTContext *original_ctx = NULL;
+    
+    if (!m_ast_importer->ResolveDeclOrigin(context_decl, &original_decl, &original_ctx))
+        return ELR_Failure;
+    
+    if (log)
+    {       
+        log->Printf("  FELD[%u] Original decl:", current_id);
+        ASTDumper(original_decl).ToLog(log, "    ");
+    }
+    
+    if (TagDecl *original_tag_decl = dyn_cast<TagDecl>(original_decl))
+    {
+        ExternalASTSource *external_source = original_ctx->getExternalSource();
+        
+        if (external_source)
+            external_source->CompleteType (original_tag_decl);
+    }
+    
+    DeclContext *original_decl_context = dyn_cast<DeclContext>(original_decl);
+    
+    if (!original_decl_context)
+        return ELR_Failure;
+    
+    for (TagDecl::decl_iterator iter = original_decl_context->decls_begin();
+         iter != original_decl_context->decls_end();
+         ++iter)
+    {
+        Decl *decl = *iter;
+        
+        if (!predicate || predicate(decl->getKind()))
+        {
+            if (log)
+            {
+                ASTDumper ast_dumper(decl);
+                if (const NamedDecl *context_named_decl = dyn_cast<NamedDecl>(context_decl))
+                    log->Printf("  FELD[%d] Adding [to %s] lexical decl %s", current_id, context_named_decl->getNameAsString().c_str(), ast_dumper.GetCString());
+                else
+                    log->Printf("  FELD[%d] Adding lexical decl %s", current_id, ast_dumper.GetCString());
+            }
+            
+            Decl *copied_decl = m_ast_importer->CopyDecl(original_ctx, decl);
+            
+            decls.push_back(copied_decl);
+        }
+    }
+    
+    return ELR_AlreadyLoaded;
 }
 
 void 
@@ -240,6 +350,25 @@ ClangASTSource::CompleteNamespaceMap (ClangASTImporter::NamespaceMapSP &namespac
                             image->GetFileSpec().GetFilename().GetCString());
         }
     }
+}
+
+NamespaceDecl *
+ClangASTSource::AddNamespace (NameSearchContext &context, ClangASTImporter::NamespaceMapSP &namespace_decls)
+{
+    if (namespace_decls.empty())
+        return NULL;
+    
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+        
+    const ClangNamespaceDecl &namespace_decl = namespace_decls->begin()->second;
+    
+    Decl *copied_decl = m_ast_importer->CopyDecl(namespace_decl.GetASTContext(), namespace_decl.GetNamespaceDecl());
+    
+    NamespaceDecl *copied_namespace_decl = dyn_cast<NamespaceDecl>(copied_decl);
+    
+    m_ast_importer->RegisterNamespaceMap(copied_namespace_decl, namespace_decls);
+    
+    return dyn_cast<NamespaceDecl>(copied_decl);
 }
 
 clang::NamedDecl *

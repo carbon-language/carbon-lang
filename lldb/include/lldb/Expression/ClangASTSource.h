@@ -120,7 +120,7 @@ public:
     /// @param[in] Decls
     ///     A vector that is filled in with matching Decls.
     //------------------------------------------------------------------
-    virtual clang::ExternalLoadResult 
+    clang::ExternalLoadResult 
     FindExternalLexicalDecls (const clang::DeclContext *DC,
                               bool (*isKindWeWant)(clang::Decl::Kind),
                               llvm::SmallVectorImpl<clang::Decl*> &Decls);
@@ -157,7 +157,6 @@ public:
     // APIs for NamespaceMapCompleter
     //
     
-    
     //------------------------------------------------------------------
     /// Look up the modules containing a given namespace and put the 
     /// appropriate entries in the namespace map.
@@ -179,6 +178,10 @@ public:
     //
     // Helper APIs
     //
+    
+    clang::NamespaceDecl *
+    AddNamespace (NameSearchContext &context, 
+                  ClangASTImporter::NamespaceMapSP &namespace_decls);
     
     //------------------------------------------------------------------
     /// The worker function for FindExternalVisibleDeclsByName.

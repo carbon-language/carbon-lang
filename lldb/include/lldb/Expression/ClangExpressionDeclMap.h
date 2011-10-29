@@ -117,10 +117,6 @@ public:
     //------------------------------------------------------------------
     const ConstString &
     GetPersistentResultName ();
-    
-    clang::NamespaceDecl *
-    AddNamespace (NameSearchContext &context, 
-                  ClangASTImporter::NamespaceMapSP &namespace_decls);
 
     //------------------------------------------------------------------
     /// [Used by IRForTarget] Get a constant variable given a name,
@@ -625,45 +621,6 @@ public:
     //------------------------------------------------------------------
     void 
     FindExternalVisibleDecls (NameSearchContext &context);
-    
-    //------------------------------------------------------------------
-    /// [Used by ClangASTSource] Find all Decls in a context that match
-    /// a given criterion.
-    ///
-    /// @param[in] decl_context
-    ///     The DeclContext to search.
-    ///
-    /// @param[in] predicate
-    ///     Returns True if a DeclKind is desired; False if not.
-    ///
-    /// @param[in] decls
-    ///     A list to add all found Decls that have a desired DeclKind
-    ///     into.
-    //------------------------------------------------------------------
-    clang::ExternalLoadResult
-    FindExternalLexicalDecls (const clang::DeclContext *decl_context, 
-                              bool (*predicate)(clang::Decl::Kind),
-                              llvm::SmallVectorImpl<clang::Decl*> &decls);
-    
-    //------------------------------------------------------------------
-    /// [Used by ClangASTSource] Complete the definition of a TagDecl.
-    ///
-    /// @param[in] tag_decl
-    ///     The TagDecl to be completed.
-    //------------------------------------------------------------------
-    void
-    CompleteType (clang::TagDecl *tag_decl);
-    
-    //------------------------------------------------------------------
-    /// [Used by ClangASTSource] Complete the definition of an
-    /// ObjCInterfaceDecl.
-    ///
-    /// @param[in] tag_decl
-    ///     The ObjCInterfaceDecl to be completed.
-    //------------------------------------------------------------------
-    void
-    CompleteType (clang::ObjCInterfaceDecl *interface_decl);
-
 private:
     ClangExpressionVariableList    m_found_entities;           ///< All entities that were looked up for the parser.
     ClangExpressionVariableList    m_struct_members;           ///< All entities that need to be placed in the struct.
