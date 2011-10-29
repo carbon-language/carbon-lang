@@ -457,9 +457,6 @@ bool HandleLValueToRValueConversion(EvalInfo &Info, QualType Type,
     // parameters are constant expressions even if they're non-const.
     // In C, such things can also be folded, although they are not ICEs.
     //
-    // FIXME: Allow folding any const variable of literal type initialized with
-    // a constant expression. For now, we only allow variables with integral and
-    // floating types to be folded.
     // FIXME: volatile-qualified ParmVarDecls need special handling. A literal
     // interpretation of C++11 suggests that volatile parameters are OK if
     // they're never read (there's no prohibition against constructing volatile
@@ -467,7 +464,7 @@ bool HandleLValueToRValueConversion(EvalInfo &Info, QualType Type,
     // them are not permitted.
     const VarDecl *VD = dyn_cast<VarDecl>(D);
     if (!VD || !(IsConstNonVolatile(VD->getType()) || isa<ParmVarDecl>(VD)) ||
-        !(Type->isIntegralOrEnumerationType() || Type->isRealFloatingType()) ||
+        !Type->isLiteralType() ||
         !EvaluateVarDeclInit(Info, VD, LVal.CallIndex, RVal))
       return false;
 

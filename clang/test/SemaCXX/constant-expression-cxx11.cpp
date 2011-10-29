@@ -119,3 +119,41 @@ namespace ParameterScopes {
   using check_value = int[9];
 
 }
+
+namespace Pointers {
+
+  constexpr int f(int n, const int *a, const int *b, const int *c) {
+    return n == 0 ? 0 : *a + f(n-1, b, c, a);
+  }
+
+  const int x = 1, y = 10, z = 100;
+  constexpr int n1 = f(23, &x, &y, &z);
+  // FIXME: this isn't an ICE yet.
+  using check_value_1 = int[n1];
+  using check_value_1 = int[788];
+
+  constexpr int g(int n, int a, int b, int c) {
+    return f(n, &a, &b, &c);
+  }
+  constexpr int n2 = g(23, x, y, z);
+  using check_value_1 = int[n2];
+
+}
+
+namespace FunctionPointers {
+
+  constexpr int Double(int n) { return 2 * n; }
+  constexpr int Triple(int n) { return 3 * n; }
+  constexpr int Twice(int (*F)(int), int n) { return F(F(n)); }
+  constexpr int Quadruple(int n) { return Twice(Double, n); }
+  constexpr auto Select(int n) -> int (*)(int) {
+    return n == 2 ? &Double : n == 3 ? &Triple : n == 4 ? &Quadruple : 0;
+  }
+  constexpr int Apply(int (*F)(int), int n) { return F(n); }
+
+  using check_value = int[1 + Apply(Select(4), 5) + Apply(Select(3), 7)];
+  using check_value = int[42];
+
+  constexpr int Invalid = Apply(Select(0), 0); // expected-error {{must be initialized by a constant expression}}
+
+}
