@@ -3657,7 +3657,7 @@
 				FRAMEWORK_SEARCH_PATHS = /System/Library/PrivateFrameworks;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
-				INSTALL_PATH = /Developer/usr/bin;
+				INSTALL_PATH = "$(DEVELOPER_DIR)/usr/bin";
 				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_NAME = "darwin-debug";
 			};
@@ -3669,7 +3669,7 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				COPY_PHASE_STRIP = YES;
 				FRAMEWORK_SEARCH_PATHS = /System/Library/PrivateFrameworks;
-				INSTALL_PATH = /Developer/usr/bin;
+				INSTALL_PATH = "$(DEVELOPER_DIR)/usr/bin";
 				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_NAME = "darwin-debug";
 			};
@@ -3680,7 +3680,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				FRAMEWORK_SEARCH_PATHS = /System/Library/PrivateFrameworks;
-				INSTALL_PATH = /Developer/usr/bin;
+				INSTALL_PATH = "$(DEVELOPER_DIR)/usr/bin";
 				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_NAME = "darwin-debug";
 			};
@@ -3691,9 +3691,9 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 82;
+				CURRENT_PROJECT_VERSION = 83;
 				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 82;
+				DYLIB_CURRENT_VERSION = 83;
 				EXPORTED_SYMBOLS_FILE = "resources/lldb-framework-exports";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -3710,7 +3710,7 @@
 				);
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "resources/LLDB-Info.plist";
-				INSTALL_PATH = /Developer/Library/PrivateFrameworks;
+				INSTALL_PATH = "$(DEVELOPER_DIR)/Library/PrivateFrameworks";
 				LD_DYLIB_INSTALL_NAME = "@rpath/LLDB.framework/Versions/A/LLDB";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
@@ -3741,10 +3741,10 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 82;
+				CURRENT_PROJECT_VERSION = 83;
 				DEAD_CODE_STRIPPING = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 82;
+				DYLIB_CURRENT_VERSION = 83;
 				EXPORTED_SYMBOLS_FILE = "resources/lldb-framework-exports";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -3760,7 +3760,7 @@
 				);
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "resources/LLDB-Info.plist";
-				INSTALL_PATH = /Developer/Library/PrivateFrameworks;
+				INSTALL_PATH = "$(DEVELOPER_DIR)/Library/PrivateFrameworks";
 				LD_DYLIB_INSTALL_NAME = "@rpath/LLDB.framework/Versions/A/LLDB";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
@@ -3790,8 +3790,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 82;
-				DYLIB_CURRENT_VERSION = 82;
+				CURRENT_PROJECT_VERSION = 83;
+				DYLIB_CURRENT_VERSION = 83;
 				EXECUTABLE_EXTENSION = a;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -3804,7 +3804,7 @@
 					__STDC_LIMIT_MACROS,
 					LLDB_CONFIGURATION_DEBUG,
 				);
-				LD_DYLIB_INSTALL_NAME = "/Developer/Library/PrivateFrameworks/LLDB.framework/Resources/lldb-core.a";
+				LD_DYLIB_INSTALL_NAME = "$(DEVELOPER_DIR)/Library/PrivateFrameworks/LLDB.framework/Resources/lldb-core.a";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(LLVM_BUILD_DIR)",
@@ -3828,8 +3828,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 82;
-				DYLIB_CURRENT_VERSION = 82;
+				CURRENT_PROJECT_VERSION = 83;
+				DYLIB_CURRENT_VERSION = 83;
 				EXECUTABLE_EXTENSION = a;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -3842,7 +3842,7 @@
 					__STDC_LIMIT_MACROS,
 					LLDB_CONFIGURATION_RELEASE,
 				);
-				LD_DYLIB_INSTALL_NAME = "/Developer/Library/PrivateFrameworks/LLDB.framework/Resources/lldb-core.a";
+				LD_DYLIB_INSTALL_NAME = "$(DEVELOPER_DIR)/Library/PrivateFrameworks/LLDB.framework/Resources/lldb-core.a";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(LLVM_BUILD_DIR)",
@@ -3866,8 +3866,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 82;
-				DYLIB_CURRENT_VERSION = 82;
+				CURRENT_PROJECT_VERSION = 83;
+				DYLIB_CURRENT_VERSION = 83;
 				EXECUTABLE_EXTENSION = a;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -3880,7 +3880,7 @@
 					__STDC_LIMIT_MACROS,
 					LLDB_CONFIGURATION_BUILD_AND_INTEGRATION,
 				);
-				LD_DYLIB_INSTALL_NAME = "/Developer/Library/PrivateFrameworks/LLDB.framework/Resources/lldb-core.a";
+				LD_DYLIB_INSTALL_NAME = "$(DEVELOPER_DIR)/Library/PrivateFrameworks/LLDB.framework/Resources/lldb-core.a";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(LLVM_BUILD_DIR)",
@@ -3939,7 +3939,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COPY_PHASE_STRIP = YES;
-				CURRENT_PROJECT_VERSION = 82;
+				CURRENT_PROJECT_VERSION = 83;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
@@ -3948,7 +3948,7 @@
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "lldb-Info.plist";
-				INSTALL_PATH = /Developer/usr/bin;
+				INSTALL_PATH = "$(DEVELOPER_DIR)/usr/bin";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				OTHER_LDFLAGS = (
 					"-sectcreate",
@@ -3968,10 +3968,10 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				COPY_PHASE_STRIP = YES;
-				CURRENT_PROJECT_VERSION = 82;
+				CURRENT_PROJECT_VERSION = 83;
 				DEAD_CODE_STRIPPING = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 82;
+				DYLIB_CURRENT_VERSION = 83;
 				EXPORTED_SYMBOLS_FILE = "resources/lldb-framework-exports";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -3987,7 +3987,7 @@
 				);
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "resources/LLDB-Info.plist";
-				INSTALL_PATH = /Developer/Library/PrivateFrameworks;
+				INSTALL_PATH = "$(DEVELOPER_DIR)/Library/PrivateFrameworks";
 				LD_DYLIB_INSTALL_NAME = "@rpath/LLDB.framework/Versions/A/LLDB";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
@@ -4028,7 +4028,7 @@
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				INSTALL_PATH = /usr/local/bin;
+				INSTALL_PATH = "$(DEVELOPER_DIR)/usr/bin";
 				OTHER_LDFLAGS = (
 					"-framework",
 					Foundation,
@@ -4054,7 +4054,7 @@
 				GCC_ENABLE_CPP_RTTI = NO;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				INSTALL_PATH = /usr/local/bin;
+				INSTALL_PATH = "$(DEVELOPER_DIR)/usr/bin";
 				OTHER_LDFLAGS = (
 					"-framework",
 					Foundation,
@@ -4078,7 +4078,7 @@
 				GCC_ENABLE_CPP_RTTI = NO;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				INSTALL_PATH = /usr/local/bin;
+				INSTALL_PATH = "$(DEVELOPER_DIR)/usr/bin";
 				OTHER_LDFLAGS = (
 					"-framework",
 					Foundation,
@@ -4094,7 +4094,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 82;
+				CURRENT_PROJECT_VERSION = 83;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
@@ -4105,7 +4105,7 @@
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "lldb-Info.plist";
-				INSTALL_PATH = /Developer/usr/bin;
+				INSTALL_PATH = "$(DEVELOPER_DIR)/usr/bin";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				OTHER_LDFLAGS = (
 					"-sectcreate",
@@ -4124,7 +4124,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COPY_PHASE_STRIP = YES;
-				CURRENT_PROJECT_VERSION = 82;
+				CURRENT_PROJECT_VERSION = 83;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
@@ -4133,7 +4133,7 @@
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "lldb-Info.plist";
-				INSTALL_PATH = /Developer/usr/bin;
+				INSTALL_PATH = "$(DEVELOPER_DIR)/usr/bin";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				OTHER_LDFLAGS = (
 					"-sectcreate",
