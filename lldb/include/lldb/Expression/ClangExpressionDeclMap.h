@@ -621,6 +621,38 @@ public:
     //------------------------------------------------------------------
     void 
     FindExternalVisibleDecls (NameSearchContext &context);
+    
+    //------------------------------------------------------------------
+    /// Find all entities matching a given name in a given module/namespace,
+    /// using a NameSearchContext to make Decls for them.
+    ///
+    /// @param[in] context
+    ///     The NameSearchContext that can construct Decls for this name.
+    ///
+    /// @param[in] module
+    ///     If non-NULL, the module to query.
+    ///
+    /// @param[in] namespace_decl
+    ///     If valid and module is non-NULL, the parent namespace.
+    ///
+    /// @param[in] name
+    ///     The name as a plain C string.  The NameSearchContext contains 
+    ///     a DeclarationName for the name so at first the name may seem
+    ///     redundant, but ClangExpressionDeclMap operates in RTTI land so 
+    ///     it can't access DeclarationName.
+    ///
+    /// @param[in] current_id
+    ///     The ID for the current FindExternalVisibleDecls invocation,
+    ///     for logging purposes.
+    ///
+    /// @return
+    ///     True on success; false otherwise.
+    //------------------------------------------------------------------
+    void 
+    FindExternalVisibleDecls (NameSearchContext &context, 
+                              lldb::ModuleSP module,
+                              ClangNamespaceDecl &namespace_decl,
+                              unsigned int current_id);
 private:
     ClangExpressionVariableList    m_found_entities;           ///< All entities that were looked up for the parser.
     ClangExpressionVariableList    m_struct_members;           ///< All entities that need to be placed in the struct.
@@ -637,8 +669,7 @@ private:
             m_exe_ctx(NULL),
             m_sym_ctx(),
             m_persistent_vars(NULL),
-            m_enable_lookups(false),
-            m_ignore_lookups(false)
+            m_enable_lookups(false)
         {
         }
         
@@ -656,7 +687,6 @@ private:
         SymbolContext               m_sym_ctx;          ///< The symbol context to use in finding variables and types.
         ClangPersistentVariables   *m_persistent_vars;  ///< The persistent variables for the process.
         bool                        m_enable_lookups;   ///< Set to true during parsing if we have found the first "$__lldb" name.
-        bool                        m_ignore_lookups;   ///< True during an import when we should be ignoring type lookups.
         std::auto_ptr<ClangASTImporter> m_ast_importer; ///< The importer used to import types on the parser's behalf.
         TargetInfo                  m_target_info;      ///< Basic information about the target.
     private:
@@ -763,39 +793,6 @@ private:
     {
         m_material_vars.reset();
     }
-    
-    //------------------------------------------------------------------
-    /// [Used by ClangASTSource] Find all entities matching a given name,
-    /// using a NameSearchContext to make Decls for them.
-    ///
-    /// @param[in] context
-    ///     The NameSearchContext that can construct Decls for this name.
-    ///
-    /// @param[in] module
-    ///     If non-NULL, the module to query.
-    ///
-    /// @param[in] namespace_decl
-    ///     If valid and module is non-NULL, the parent namespace.
-    ///
-    /// @param[in] name
-    ///     The name as a plain C string.  The NameSearchContext contains 
-    ///     a DeclarationName for the name so at first the name may seem
-    ///     redundant, but ClangExpressionDeclMap operates in RTTI land so 
-    ///     it can't access DeclarationName.
-    ///
-    /// @param[in] current_id
-    ///     The ID for the current FindExternalVisibleDecls invocation,
-    ///     for logging purposes.
-    ///
-    /// @return
-    ///     True on success; false otherwise.
-    //------------------------------------------------------------------
-    void 
-    FindExternalVisibleDecls (NameSearchContext &context, 
-                              lldb::ModuleSP module,
-                              ClangNamespaceDecl &namespace_decl,
-                              const ConstString &name,
-                              unsigned int current_id);
     
     //------------------------------------------------------------------
     /// Given a stack frame, find a variable that matches the given name and 
@@ -1167,28 +1164,6 @@ private:
                               const RegisterInfo &reg_info,
                               lldb::addr_t addr, 
                               Error &err);
-    
-    //------------------------------------------------------------------
-    /// A wrapper for ClangASTContext::CopyType that sets a flag that
-    /// indicates that we should not respond to queries during import.
-    ///
-    /// @param[in] dest_context
-    ///     The target AST context, typically the parser's AST context.
-    ///
-    /// @param[in] source_context
-    ///     The source AST context, typically the AST context of whatever
-    ///     symbol file the type was found in.
-    ///
-    /// @param[in] clang_type
-    ///     The source type.
-    ///
-    /// @return
-    ///     The imported type.
-    //------------------------------------------------------------------
-    void *
-    GuardedCopyType (clang::ASTContext *dest_context, 
-                     clang::ASTContext *source_context,
-                     void *clang_type);
 };
     
 } // namespace lldb_private

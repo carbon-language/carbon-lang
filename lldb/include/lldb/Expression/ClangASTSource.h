@@ -195,7 +195,7 @@ public:
     bool GetImportInProgress () { return m_import_in_progress; }
     
     void SetLookupsEnabled (bool lookups_enabled) { m_lookups_enabled = lookups_enabled; }
-    bool GetLookupsEnabled () { return m_lookups_enabled; }
+    bool GetLookupsEnabled () { return m_lookups_enabled; } 
     
     //----------------------------------------------------------------------
     /// @class ClangASTSourceProxy ClangASTSource.h "lldb/Expression/ClangASTSource.h"
@@ -253,6 +253,54 @@ public:
     }
     
 protected:
+    //------------------------------------------------------------------
+    /// Find all entities matching a given name in a given module,
+    /// using a NameSearchContext to make Decls for them.
+    ///
+    /// @param[in] context
+    ///     The NameSearchContext that can construct Decls for this name.
+    ///
+    /// @param[in] module
+    ///     If non-NULL, the module to query.
+    ///
+    /// @param[in] namespace_decl
+    ///     If valid and module is non-NULL, the parent namespace.
+    ///
+    /// @param[in] current_id
+    ///     The ID for the current FindExternalVisibleDecls invocation,
+    ///     for logging purposes.
+    ///
+    /// @return
+    ///     True on success; false otherwise.
+    //------------------------------------------------------------------
+    void 
+    FindExternalVisibleDecls (NameSearchContext &context, 
+                              lldb::ModuleSP module,
+                              ClangNamespaceDecl &namespace_decl,
+                              unsigned int current_id);
+        
+    //------------------------------------------------------------------
+    /// A wrapper for ClangASTContext::CopyType that sets a flag that
+    /// indicates that we should not respond to queries during import.
+    ///
+    /// @param[in] dest_context
+    ///     The target AST context, typically the parser's AST context.
+    ///
+    /// @param[in] source_context
+    ///     The source AST context, typically the AST context of whatever
+    ///     symbol file the type was found in.
+    ///
+    /// @param[in] clang_type
+    ///     The source type.
+    ///
+    /// @return
+    ///     The imported type.
+    //------------------------------------------------------------------
+    void *
+    GuardedCopyType (clang::ASTContext *dest_context, 
+                     clang::ASTContext *source_context,
+                     void *clang_type);
+    
     friend struct NameSearchContext;
     
     bool                    m_import_in_progress;

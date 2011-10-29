@@ -2140,7 +2140,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context)
     
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
-    if (m_parser_vars->m_ignore_lookups)
+    if (GetImportInProgress())
     {
         if (log && log->GetVerbose())
             log->Printf("Ignoring a query during an import");
@@ -2153,21 +2153,19 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context)
     if (log)
     {
         if (!context.m_decl_context)
-            log->Printf("FindExternalVisibleDecls[%u] for '%s' in a NULL DeclContext", current_id, name.GetCString());
+            log->Printf("ClangExpressionDeclMap::FindExternalVisibleDecls[%u] for '%s' in a NULL DeclContext", current_id, name.GetCString());
         else if (const NamedDecl *context_named_decl = dyn_cast<NamedDecl>(context.m_decl_context))
-            log->Printf("FindExternalVisibleDecls[%u] for '%s' in '%s'", current_id, name.GetCString(), context_named_decl->getNameAsString().c_str());
+            log->Printf("ClangExpressionDeclMap::FindExternalVisibleDecls[%u] for '%s' in '%s'", current_id, name.GetCString(), context_named_decl->getNameAsString().c_str());
         else
-            log->Printf("FindExternalVisibleDecls[%u] for '%s' in a '%s'", current_id, name.GetCString(), context.m_decl_context->getDeclKindName());
+            log->Printf("ClangExpressionDeclMap::FindExternalVisibleDecls[%u] for '%s' in a '%s'", current_id, name.GetCString(), context.m_decl_context->getDeclKindName());
     }
-    
-    context.m_namespace_map.reset(new ClangASTImporter::NamespaceMap);
-        
+            
     if (const NamespaceDecl *namespace_context = dyn_cast<NamespaceDecl>(context.m_decl_context))
     {
         ClangASTImporter::NamespaceMapSP namespace_map = m_ast_importer->GetNamespaceMap(namespace_context);
         
         if (log && log->GetVerbose())
-            log->Printf("  FEVD[%u] Inspecting namespace map %p (%d entries)", 
+            log->Printf("  CEDM::FEVD[%u] Inspecting namespace map %p (%d entries)", 
                         current_id, 
                         namespace_map.get(), 
                         (int)namespace_map->size());
@@ -2180,7 +2178,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context)
              ++i)
         {
             if (log)
-                log->Printf("  FEVD[%u] Searching namespace %s in module %s",
+                log->Printf("  CEDM::FEVD[%u] Searching namespace %s in module %s",
                             current_id,
                             i->second.GetNamespaceDecl()->getNameAsString().c_str(),
                             i->first->GetFileSpec().GetFilename().GetCString());
@@ -2188,7 +2186,6 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context)
             FindExternalVisibleDecls(context,
                                      i->first,
                                      i->second,
-                                     name,
                                      current_id);
         }
     }
@@ -2202,50 +2199,37 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context)
         ClangNamespaceDecl namespace_decl;
         
         if (log)
-            log->Printf("  FEVD[%u] Searching the root namespace", current_id);
+            log->Printf("  CEDM::FEVD[%u] Searching the root namespace", current_id);
         
         FindExternalVisibleDecls(context,
                                  lldb::ModuleSP(),
                                  namespace_decl,
-                                 name,
                                  current_id);
     }
     
-    if (!context.m_namespace_map->empty())
-    {
-        if (log && log->GetVerbose())
-            log->Printf("  FEVD[%u] Registering namespace map %p (%d entries)", 
-                        current_id,
-                        context.m_namespace_map.get(), 
-                        (int)context.m_namespace_map->size());
-        
-        NamespaceDecl *clang_namespace_decl = AddNamespace(context, context.m_namespace_map);
-        
-        if (clang_namespace_decl)
-            clang_namespace_decl->setHasExternalVisibleStorage();
-    }
+    if (!context.m_found.variable)
+        ClangASTSource::FindExternalVisibleDecls(context);
 }
 
 void 
 ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context, 
                                                   lldb::ModuleSP module_sp,
                                                   ClangNamespaceDecl &namespace_decl,
-                                                  const ConstString &name,
                                                   unsigned int current_id)
 {
-    assert (m_struct_vars.get());
-    assert (m_parser_vars.get());
     assert (m_ast_context);
     
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
-            
+    
     SymbolContextList sc_list;
+    
+    const ConstString name(context.m_decl_name.getAsString().c_str());
     
     const char *name_unique_cstr = name.GetCString();
     
     if (name_unique_cstr == NULL)
         return;
-
+    
     // Only look for functions by name out in our symbols if the function 
     // doesn't start with our phony prefix of '$'
     Target *target = m_parser_vars->m_exe_ctx->GetTargetPtr();
@@ -2280,7 +2264,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             
             if (log && log->GetVerbose())
             {
-                log->Printf ("  FEVD[%u] Type for \"this\" is: ", current_id);
+                log->Printf ("  CEDM::FEVD[%u] Type for \"this\" is: ", current_id);
                 StreamString strm;
                 this_type->Dump(&strm, true);
                 log->PutCString (strm.GetData());
@@ -2308,7 +2292,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             if (log)
             {
                 ASTDumper ast_dumper(pointer_target_qual_type);
-                log->Printf("  FEVD[%u] Adding type for $__lldb_class: %s", current_id, ast_dumper.GetCString());
+                log->Printf("  CEDM::FEVD[%u] Adding type for $__lldb_class: %s", current_id, ast_dumper.GetCString());
             }
             
             AddOneType(context, class_user_type, current_id, true);
@@ -2402,7 +2386,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                 break;
             
             if (log)
-                log->Printf("  FEVD[%u] Found persistent type %s", current_id, name.GetCString());
+                log->Printf("  CEDM::FEVD[%u] Found persistent type %s", current_id, name.GetCString());
             
             context.AddNamedDecl(parser_ptype_type_decl);
         } while (0);
@@ -2420,11 +2404,11 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
         if (m_parser_vars->m_exe_ctx->GetRegisterContext())
         {
             const RegisterInfo *reg_info(m_parser_vars->m_exe_ctx->GetRegisterContext()->GetRegisterInfoByName(reg_name));
-                        
+            
             if (reg_info)
             {
                 if (log)
-                    log->Printf("  FEVD[%u] Found register %s", current_id, reg_info->name);
+                    log->Printf("  CEDM::FEVD[%u] Found register %s", current_id, reg_info->name);
                 
                 AddOneRegister(context, reg_info, current_id);
             }
@@ -2549,103 +2533,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                 }
             }
         }
-        
-        if (module_sp && namespace_decl)
-        {
-            ClangNamespaceDecl found_namespace_decl;
-            
-            SymbolVendor *symbol_vendor = module_sp->GetSymbolVendor();
-            
-            if (symbol_vendor)
-            {
-                SymbolContext null_sc;
-                
-                found_namespace_decl = symbol_vendor->FindNamespace(null_sc, name, &namespace_decl);
-                
-                if (found_namespace_decl)
-                {
-                    context.m_namespace_map->push_back(std::pair<ModuleSP, ClangNamespaceDecl>(module_sp, found_namespace_decl));
-                    
-                    if (log)
-                        log->Printf("  FEVD[%u] Found namespace %s in module %s",
-                                    current_id,
-                                    name.GetCString(), 
-                                    module_sp->GetFileSpec().GetFilename().GetCString());
-                }
-            }
-        }
-        else 
-        {
-            ModuleList &images = m_parser_vars->m_sym_ctx.target_sp->GetImages();
-                        
-            for (uint32_t i = 0, e = images.GetSize();
-                 i != e;
-                 ++i)
-            {
-                ModuleSP image = images.GetModuleAtIndex(i);
-                
-                if (!image)
-                    continue;
-                
-                ClangNamespaceDecl found_namespace_decl;
-                
-                SymbolVendor *symbol_vendor = image->GetSymbolVendor();
-                
-                if (!symbol_vendor)
-                    continue;
-                
-                SymbolContext null_sc;
-                
-                found_namespace_decl = symbol_vendor->FindNamespace(null_sc, name, &namespace_decl);
-                
-                if (found_namespace_decl)
-                {
-                    context.m_namespace_map->push_back(std::pair<ModuleSP, ClangNamespaceDecl>(image, found_namespace_decl));
-                    
-                    if (log)
-                        log->Printf("  FEVD[%u] Found namespace %s in module %s",
-                                    current_id,
-                                    name.GetCString(), 
-                                    image->GetFileSpec().GetFilename().GetCString());
-                }
-            }
-        }
     }
-    
-    static ConstString id_name("id");
-    
-    do 
-    {
-        TypeList types;
-        SymbolContext null_sc;
-        
-        if (module_sp && namespace_decl)
-            module_sp->FindTypes(null_sc, name, &namespace_decl, true, 1, types);
-        else if(name != id_name)
-            target->GetImages().FindTypes (null_sc, name, true, 1, types);
-        else
-            break;
-        
-        if (types.GetSize())
-        {
-            TypeSP type_sp = types.GetTypeAtIndex(0);
-            
-            if (log)
-            {
-                const char *name_string = type_sp->GetName().GetCString();
-                
-                log->Printf("  FEVD[%u] Matching type found for \"%s\": %s", 
-                            current_id, 
-                            name.GetCString(), 
-                            (name_string ? name_string : "<anonymous>"));
-            }
-
-            TypeFromUser user_type(type_sp->GetClangFullType(),
-                                   type_sp->GetClangAST());
-                
-            AddOneType(context, user_type, current_id, false);
-        }
-    } while(0);
 }
 
 Value *
@@ -2812,7 +2700,7 @@ ClangExpressionDeclMap::AddOneVariable (NameSearchContext &context, VariableSP v
     if (log)
     {
         ASTDumper ast_dumper(var_decl);        
-        log->Printf("  FEVD[%u] Found variable %s, returned %s", current_id, decl_name.c_str(), ast_dumper.GetCString());
+        log->Printf("  CEDM::FEVD[%u] Found variable %s, returned %s", current_id, decl_name.c_str(), ast_dumper.GetCString());
     }
 }
 
@@ -2841,7 +2729,7 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
     if (log)
     {
         ASTDumper ast_dumper(var_decl);
-        log->Printf("  FEVD[%u] Added pvar %s, returned %s", current_id, pvar_sp->GetName().GetCString(), ast_dumper.GetCString());
+        log->Printf("  CEDM::FEVD[%u] Added pvar %s, returned %s", current_id, pvar_sp->GetName().GetCString(), ast_dumper.GetCString());
     }
 }
 
@@ -2899,7 +2787,7 @@ ClangExpressionDeclMap::AddOneGenericVariable(NameSearchContext &context,
     {
         ASTDumper ast_dumper(var_decl);
         
-        log->Printf("  FEVD[%u] Found variable %s, returned %s", current_id, decl_name.c_str(), ast_dumper.GetCString());
+        log->Printf("  CEDM::FEVD[%u] Found variable %s, returned %s", current_id, decl_name.c_str(), ast_dumper.GetCString());
     }
 }
 
@@ -2994,7 +2882,7 @@ ClangExpressionDeclMap::AddOneRegister (NameSearchContext &context,
     if (log && log->GetVerbose())
     {
         ASTDumper ast_dumper(var_decl);
-        log->Printf("  FEVD[%d] Added register %s, returned %s", current_id, context.m_decl_name.getAsString().c_str(), ast_dumper.GetCString());
+        log->Printf("  CEDM::FEVD[%d] Added register %s, returned %s", current_id, context.m_decl_name.getAsString().c_str(), ast_dumper.GetCString());
     }
 }
 
@@ -3092,7 +2980,7 @@ ClangExpressionDeclMap::AddOneFunction (NameSearchContext &context,
     {
         ASTDumper ast_dumper(fun_decl);
         
-        log->Printf("  FEVD[%u] Found %s function %s, returned %s", 
+        log->Printf("  CEDM::FEVD[%u] Found %s function %s, returned %s", 
                     current_id,
                     (fun ? "specific" : "generic"), 
                     decl_name.c_str(), 
@@ -3110,9 +2998,7 @@ ClangExpressionDeclMap::AddOneType(NameSearchContext &context,
     ASTContext *user_ast_context = ut.GetASTContext();
     
     void *copied_type = GuardedCopyType(parser_ast_context, user_ast_context, ut.GetOpaqueQualType());
- 
-    TypeFromParser parser_type(copied_type, parser_ast_context);
-    
+     
     if (add_method && ClangASTContext::IsAggregateType(copied_type))
     {
         void *args[1];
@@ -3143,22 +3029,4 @@ ClangExpressionDeclMap::AddOneType(NameSearchContext &context,
     }
     
     context.AddTypeDecl(copied_type);
-}
-
-void * 
-ClangExpressionDeclMap::GuardedCopyType (ASTContext *dest_context, 
-                                         ASTContext *source_context,
-                                         void *clang_type)
-{
-    assert (m_parser_vars.get());
-    
-    m_parser_vars->m_ignore_lookups = true;
-        
-    QualType ret_qual_type = m_ast_importer->CopyType (source_context, QualType::getFromOpaquePtr(clang_type));
-    
-    void *ret = ret_qual_type.getAsOpaquePtr();
-    
-    m_parser_vars->m_ignore_lookups = false;
-    
-    return ret;
 }
