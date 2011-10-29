@@ -9646,7 +9646,8 @@ Decl *Sema::ActOnStaticAssertDeclaration(SourceLocation StaticAssertLoc,
 /// \brief Perform semantic analysis of the given friend type declaration.
 ///
 /// \returns A friend declaration that.
-FriendDecl *Sema::CheckFriendTypeDecl(SourceLocation FriendLoc, 
+FriendDecl *Sema::CheckFriendTypeDecl(SourceLocation Loc,
+                                      SourceLocation FriendLoc,
                                       TypeSourceInfo *TSInfo) {
   assert(TSInfo && "NULL TypeSourceInfo for friend type declaration");
   
@@ -9703,7 +9704,7 @@ FriendDecl *Sema::CheckFriendTypeDecl(SourceLocation FriendLoc,
   // FIXME: C++0x has some syntactic restrictions on friend type declarations
   // in [class.friend]p3 that we do not implement.
   
-  return FriendDecl::Create(Context, CurContext, FriendLoc, TSInfo, FriendLoc);
+  return FriendDecl::Create(Context, CurContext, Loc, TSInfo, FriendLoc);
 }
 
 /// Handle a friend tag declaration where the scope specifier was
@@ -9900,7 +9901,7 @@ Decl *Sema::ActOnFriendTypeDecl(Scope *S, const DeclSpec &DS,
                                    TSI,
                                    DS.getFriendSpecLoc());
   else
-    D = CheckFriendTypeDecl(DS.getFriendSpecLoc(), TSI);
+    D = CheckFriendTypeDecl(Loc, DS.getFriendSpecLoc(), TSI);
   
   if (!D)
     return 0;

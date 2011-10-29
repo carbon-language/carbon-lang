@@ -3611,7 +3611,8 @@ public:
                                      Expr *AssertMessageExpr,
                                      SourceLocation RParenLoc);
 
-  FriendDecl *CheckFriendTypeDecl(SourceLocation FriendLoc,
+  FriendDecl *CheckFriendTypeDecl(SourceLocation Loc,
+                                  SourceLocation FriendLoc,
                                   TypeSourceInfo *TSInfo);
   Decl *ActOnFriendTypeDecl(Scope *S, const DeclSpec &DS,
                             MultiTemplateParamsArg TemplateParams);
