@@ -34,8 +34,6 @@ class ArchSpec
 public:
     enum Core
     {
-        eCore_alpha_generic,
-
         eCore_arm_generic,
         eCore_arm_armv4,
         eCore_arm_armv4t,
@@ -192,7 +190,7 @@ public:
     bool
     IsValid () const
     {
-        return m_core >= eCore_alpha_generic && m_core < kNumCores;
+        return m_core >= eCore_arm_generic && m_core < kNumCores;
     }
 
 
