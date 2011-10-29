@@ -2719,7 +2719,7 @@ int clang_reparseTranslationUnit(CXTranslationUnit TU,
   ReparseTranslationUnitInfo RTUI = { TU, num_unsaved_files, unsaved_files,
                                       options, 0 };
 
-  if (getenv("CINDEXTEST_NOTHREADS")) {
+  if (getenv("LIBCLANG_NOTHREADS")) {
     clang_reparseTranslationUnit_Impl(&RTUI);
     return RTUI.result;
   }

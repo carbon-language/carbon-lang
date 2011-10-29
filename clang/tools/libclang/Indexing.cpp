@@ -407,7 +407,7 @@ int clang_indexTranslationUnit(CXIndex CIdx,
                                     num_command_line_args, unsaved_files,
                                     num_unsaved_files, out_TU, TU_options, 0 };
 
-  if (getenv("CINDEXTEST_NOTHREADS")) {
+  if (getenv("LIBCLANG_NOTHREADS")) {
     clang_indexTranslationUnit_Impl(&ITUI);
     return ITUI.result;
   }
