@@ -82,6 +82,10 @@ def warn_fe_cc_print_header_failure : Warning<
 def warn_fe_cc_log_diagnostics_failure : Warning<
     "unable to open CC_LOG_DIAGNOSTICS file: %0 (using stderr)">;
 
+def warn_fe_serialized_diag_failure : Warning<
+    "unable to open file %0 for serializing diagnostics (%1)">,
+    InGroup<DiagGroup<"serialized-diagnostics">>;
+
 def err_verify_missing_start : Error<
     "cannot find start ('{{') of expected %0">;
 def err_verify_missing_end : Error<

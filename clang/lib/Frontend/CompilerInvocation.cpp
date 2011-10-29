@@ -1109,6 +1109,8 @@ static void ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
                                 DiagnosticsEngine &Diags) {
   using namespace cc1options;
   Opts.DiagnosticLogFile = Args.getLastArgValue(OPT_diagnostic_log_file);
+  Opts.DiagnosticSerializationFile =
+    Args.getLastArgValue(OPT_diagnostic_serialized_file);
   Opts.IgnoreWarnings = Args.hasArg(OPT_w);
   Opts.NoRewriteMacros = Args.hasArg(OPT_Wno_rewrite_macros);
   Opts.Pedantic = Args.hasArg(OPT_pedantic);

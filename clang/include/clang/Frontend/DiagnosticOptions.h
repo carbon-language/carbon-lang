@@ -67,6 +67,9 @@ public:
 
   /// The file to log diagnostic output to.
   std::string DiagnosticLogFile;
+  
+  /// The file to serialize diagnostics to (non-appending).
+  std::string DiagnosticSerializationFile;
 
   /// The list of -W... options used to alter the diagnostic mappings, with the
   /// prefixes removed.

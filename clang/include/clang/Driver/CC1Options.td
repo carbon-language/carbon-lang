@@ -228,6 +228,9 @@ def dump_build_information : Separate<"-dump-build-information">,
   HelpText<"output a dump of some build information to a file">;
 def diagnostic_log_file : Separate<"-diagnostic-log-file">,
   HelpText<"Filename (or -) to log diagnostics to">;
+def diagnostic_serialized_file : Separate<"-diagnostic-serialized-file">,
+  MetaVarName<"<filename>">,
+  HelpText<"File for serializing diagnostics in a binary format">;
 def fno_show_column : Flag<"-fno-show-column">,
   HelpText<"Do not include column number on diagnostics">;
 def fshow_column : Flag<"-fshow-column">,

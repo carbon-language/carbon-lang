@@ -24,6 +24,7 @@
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/LogDiagnosticPrinter.h"
+#include "clang/Frontend/SerializedDiagnosticPrinter.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Frontend/VerifyDiagnosticConsumer.h"
 #include "clang/Frontend/Utils.h"
@@ -153,6 +154,28 @@ static void SetUpDiagnosticLog(const DiagnosticOptions &DiagOpts,
   Diags.setClient(new ChainedDiagnosticConsumer(Diags.takeClient(), Logger));
 }
 
+static void SetupSerializedDiagnostics(const DiagnosticOptions &DiagOpts,
+                                       DiagnosticsEngine &Diags,
+                                       StringRef OutputFile) {
+  std::string ErrorInfo;
+  llvm::OwningPtr<llvm::raw_fd_ostream> OS;
+  OS.reset(new llvm::raw_fd_ostream(OutputFile.str().c_str(), ErrorInfo,
+                                    llvm::raw_fd_ostream::F_Binary));
+  
+  if (!ErrorInfo.empty()) {
+    Diags.Report(diag::warn_fe_serialized_diag_failure)
+      << OutputFile << ErrorInfo;
+    return;
+  }
+  
+  DiagnosticConsumer *SerializedConsumer =
+    clang::serialized_diags::create(OS.take(), Diags);
+
+  
+  Diags.setClient(new ChainedDiagnosticConsumer(Diags.takeClient(),
+                                                SerializedConsumer));
+}
+
 void CompilerInstance::createDiagnostics(int Argc, const char* const *Argv,
                                          DiagnosticConsumer *Client,
                                          bool ShouldOwnClient,
@@ -194,6 +217,10 @@ CompilerInstance::createDiagnostics(const DiagnosticOptions &Opts,
   if (!Opts.DumpBuildInformation.empty())
     SetUpBuildDumpLog(Opts, Argc, Argv, *Diags);
 
+  if (!Opts.DiagnosticSerializationFile.empty())
+    SetupSerializedDiagnostics(Opts, *Diags,
+                               Opts.DiagnosticSerializationFile);
+  
   // Configure our handling of diagnostics.
   ProcessWarningOptions(*Diags, Opts);
 
