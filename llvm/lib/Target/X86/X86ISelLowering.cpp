@@ -13042,7 +13042,8 @@ static SDValue PerformSHLCombine(SDNode *N, SelectionDAG &DAG) {
 
   // fold (shl (and (setcc_c), c1), c2) -> (and setcc_c, (c1 << c2))
   // since the result of setcc_c is all zero's or all ones.
-  if (N1C && N0.getOpcode() == ISD::AND &&
+  if (VT.isInteger() && !VT.isVector() &&
+      N1C && N0.getOpcode() == ISD::AND &&
       N0.getOperand(1).getOpcode() == ISD::Constant) {
     SDValue N00 = N0.getOperand(0);
     if (N00.getOpcode() == X86ISD::SETCC_CARRY ||
@@ -13058,6 +13059,22 @@ static SDValue PerformSHLCombine(SDNode *N, SelectionDAG &DAG) {
     }
   }
 
+
+  // Hardware support for vector shifts is sparse which makes us scalarize the
+  // vector operations in many cases. Also, on sandybridge ADD is faster than
+  // shl.
+  // (shl V, 1) -> add V,V
+  if (isSplatVector(N1.getNode())) {
+    assert(N0.getValueType().isVector() && "Invalid vector shift type");
+    ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1->getOperand(0));
+    // We shift all of the values by one. In many cases we do not have
+    // hardware support for this operation. This is better expressed as an ADD
+    // of two values.
+    if (N1C && (1 == N1C->getZExtValue())) {
+      return DAG.getNode(ISD::ADD, N->getDebugLoc(), VT, N0, N0);
+    }
+  }
+
   return SDValue();
 }
 
@@ -13066,9 +13083,10 @@ static SDValue PerformSHLCombine(SDNode *N, SelectionDAG &DAG) {
 static SDValue PerformShiftCombine(SDNode* N, SelectionDAG &DAG,
                                    const X86Subtarget *Subtarget) {
   EVT VT = N->getValueType(0);
-  if (!VT.isVector() && VT.isInteger() &&
-      N->getOpcode() == ISD::SHL)
-    return PerformSHLCombine(N, DAG);
+  if (N->getOpcode() == ISD::SHL) {
+    SDValue V = PerformSHLCombine(N, DAG);
+    if (V.getNode()) return V;
+  }
 
   // On X86 with SSE2 support, we can transform this to a vector shift if
   // all elements are shifted by the same amount.  We can't do this in legalize

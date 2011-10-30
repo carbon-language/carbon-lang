@@ -6,8 +6,9 @@
 define <4 x i32> @shl4(<4 x i32> %A) nounwind {
 entry:
 ; CHECK:      shl4
+; CHECK:      padd
 ; CHECK:      pslld
-; CHECK-NEXT: pslld
+; CHECK:      ret
   %B = shl <4 x i32> %A,  < i32 2, i32 2, i32 2, i32 2>
   %C = shl <4 x i32> %A,  < i32 1, i32 1, i32 1, i32 1>
   %K = xor <4 x i32> %B, %C
@@ -19,6 +20,7 @@ entry:
 ; CHECK:      shr4
 ; CHECK:      psrld
 ; CHECK-NEXT: psrld
+; CHECK:      ret
   %B = lshr <4 x i32> %A,  < i32 2, i32 2, i32 2, i32 2>
   %C = lshr <4 x i32> %A,  < i32 1, i32 1, i32 1, i32 1>
   %K = xor <4 x i32> %B, %C
@@ -30,6 +32,7 @@ entry:
 ; CHECK:      sra4
 ; CHECK:      psrad
 ; CHECK-NEXT: psrad
+; CHECK:      ret
   %B = ashr <4 x i32> %A,  < i32 2, i32 2, i32 2, i32 2>
   %C = ashr <4 x i32> %A,  < i32 1, i32 1, i32 1, i32 1>
   %K = xor <4 x i32> %B, %C
@@ -41,6 +44,7 @@ entry:
 ; CHECK:      shl2
 ; CHECK:      psllq
 ; CHECK-NEXT: psllq
+; CHECK:      ret
   %B = shl <2 x i64> %A,  < i64 2, i64 2>
   %C = shl <2 x i64> %A,  < i64 9, i64 9>
   %K = xor <2 x i64> %B, %C
@@ -52,6 +56,7 @@ entry:
 ; CHECK:      shr2
 ; CHECK:      psrlq
 ; CHECK-NEXT: psrlq
+; CHECK:      ret
   %B = lshr <2 x i64> %A,  < i64 8, i64 8>
   %C = lshr <2 x i64> %A,  < i64 1, i64 1>
   %K = xor <2 x i64> %B, %C
@@ -62,8 +67,9 @@ entry:
 define <8 x i16> @shl8(<8 x i16> %A) nounwind {
 entry:
 ; CHECK:      shl8
+; CHECK:      padd
 ; CHECK:      psllw
-; CHECK-NEXT: psllw
+; CHECK:      ret
   %B = shl <8 x i16> %A,  < i16 2, i16 2, i16 2, i16 2, i16 2, i16 2, i16 2, i16 2>
   %C = shl <8 x i16> %A,  < i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1>
   %K = xor <8 x i16> %B, %C
@@ -75,6 +81,7 @@ entry:
 ; CHECK:      shr8
 ; CHECK:      psrlw
 ; CHECK-NEXT: psrlw
+; CHECK:      ret
   %B = lshr <8 x i16> %A,  < i16 2, i16 2, i16 2, i16 2, i16 2, i16 2, i16 2, i16 2>
   %C = lshr <8 x i16> %A,  < i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1>
   %K = xor <8 x i16> %B, %C
@@ -86,6 +93,7 @@ entry:
 ; CHECK:      sra8
 ; CHECK:      psraw
 ; CHECK-NEXT: psraw
+; CHECK:      ret
   %B = ashr <8 x i16> %A,  < i16 2, i16 2, i16 2, i16 2, i16 2, i16 2, i16 2, i16 2>
   %C = ashr <8 x i16> %A,  < i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1>
   %K = xor <8 x i16> %B, %C
@@ -100,6 +108,7 @@ entry:
 ; CHECK: sll8_nosplat
 ; CHECK-NOT: psll
 ; CHECK-NOT: psll
+; CHECK:      ret
   %B = shl <8 x i16> %A,  < i16 1, i16 2, i16 3, i16 6, i16 2, i16 2, i16 2, i16 2>
   %C = shl <8 x i16> %A,  < i16 9, i16 7, i16 5, i16 1, i16 4, i16 1, i16 1, i16 1>
   %K = xor <8 x i16> %B, %C
@@ -112,6 +121,7 @@ entry:
 ; CHECK: shr2_nosplat
 ; CHECK-NOT:  psrlq
 ; CHECK-NOT:  psrlq
+; CHECK:      ret
   %B = lshr <2 x i64> %A,  < i64 8, i64 1>
   %C = lshr <2 x i64> %A,  < i64 1, i64 0>
   %K = xor <2 x i64> %B, %C
@@ -125,6 +135,7 @@ define <2 x i32> @shl2_other(<2 x i32> %A) nounwind {
 entry:
 ; CHECK: shl2_other
 ; CHECK: psllq
+; CHECK: ret
   %B = shl <2 x i32> %A,  < i32 2, i32 2>
   %C = shl <2 x i32> %A,  < i32 9, i32 9>
   %K = xor <2 x i32> %B, %C
@@ -135,6 +146,7 @@ define <2 x i32> @shr2_other(<2 x i32> %A) nounwind {
 entry:
 ; CHECK: shr2_other
 ; CHECK: psrlq
+; CHECK: ret
   %B = lshr <2 x i32> %A,  < i32 8, i32 8>
   %C = lshr <2 x i32> %A,  < i32 1, i32 1>
   %K = xor <2 x i32> %B, %C
