@@ -1286,6 +1286,7 @@ class X86TargetInfo : public TargetInfo {
     CK_K8SSE3,
     CK_Opteron,
     CK_OpteronSSE3,
+    CK_AMDFAM10,
 
     /// This specification is deprecated and will be removed in the future.
     /// Users should prefer \see CK_K8.
@@ -1385,6 +1386,7 @@ public:
       .Case("k8-sse3", CK_K8SSE3)
       .Case("opteron", CK_Opteron)
       .Case("opteron-sse3", CK_OpteronSSE3)
+      .Case("amdfam10", CK_AMDFAM10)
       .Case("x86-64", CK_x86_64)
       .Case("geode", CK_Geode)
       .Default(CK_Generic);
@@ -1445,6 +1447,7 @@ public:
     case CK_K8SSE3:
     case CK_Opteron:
     case CK_OpteronSSE3:
+    case CK_AMDFAM10:
     case CK_x86_64:
       return true;
     }
@@ -1562,6 +1565,7 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
   case CK_K8SSE3:
   case CK_OpteronSSE3:
   case CK_Athlon64SSE3:
+  case CK_AMDFAM10:
     setFeatureEnabled(Features, "sse3", true);
     setFeatureEnabled(Features, "3dnowa", true);
     break;
@@ -1829,6 +1833,11 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
     Builder.defineMacro("__k8");
     Builder.defineMacro("__k8__");
     Builder.defineMacro("__tune_k8__");
+    break;
+  case CK_AMDFAM10:
+    Builder.defineMacro("__amdfam10");
+    Builder.defineMacro("__amdfam10__");
+    Builder.defineMacro("__tune_amdfam10__");
     break;
   case CK_Geode:
     Builder.defineMacro("__geode");
