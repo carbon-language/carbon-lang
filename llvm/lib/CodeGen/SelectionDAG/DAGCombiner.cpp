@@ -6988,14 +6988,14 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
                                  DAG.getConstant(0, InScalarTy);
 
     unsigned NewBVElems = ElemRatio * N->getValueType(0).getVectorNumElements();
-    SmallVector<SDValue,8> Ops(NewBVElems , Filler);
+    SmallVector<SDValue, 8> Ops(NewBVElems, Filler);
 
     // Populate the new build_vector
     for (unsigned i=0; i < N->getNumOperands(); ++i) {
       SDValue Cast = N->getOperand(i);
-      assert(Cast.getOpcode() == ISD::ANY_EXTEND ||
-             Cast.getOpcode() == ISD::ZERO_EXTEND ||
-             Cast.getOpcode() == ISD::UNDEF && "Invalid cast opcode");
+      assert((Cast.getOpcode() == ISD::ANY_EXTEND ||
+              Cast.getOpcode() == ISD::ZERO_EXTEND ||
+              Cast.getOpcode() == ISD::UNDEF) && "Invalid cast opcode");
       SDValue In;
       if (Cast.getOpcode() == ISD::UNDEF)
         In = DAG.getUNDEF(InScalarTy);
