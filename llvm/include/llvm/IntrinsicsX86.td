@@ -919,7 +919,7 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 // Vector sum of absolute differences
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse41_mpsadbw         : GCCBuiltin<"__builtin_ia32_mpsadbw128">,
-          Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty, llvm_v16i8_ty,llvm_i32_ty],
+          Intrinsic<[llvm_v8i16_ty], [llvm_v16i8_ty, llvm_v16i8_ty,llvm_i32_ty],
                     [IntrNoMem, Commutative]>;
 }
 

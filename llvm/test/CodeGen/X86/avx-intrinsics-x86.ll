@@ -964,12 +964,12 @@ define <2 x i64> @test_x86_sse41_movntdqa(i8* %a0) {
 declare <2 x i64> @llvm.x86.sse41.movntdqa(i8*) nounwind readonly
 
 
-define <16 x i8> @test_x86_sse41_mpsadbw(<16 x i8> %a0, <16 x i8> %a1) {
+define <8 x i16> @test_x86_sse41_mpsadbw(<16 x i8> %a0, <16 x i8> %a1) {
   ; CHECK: vmpsadbw
-  %res = call <16 x i8> @llvm.x86.sse41.mpsadbw(<16 x i8> %a0, <16 x i8> %a1, i32 7) ; <<16 x i8>> [#uses=1]
-  ret <16 x i8> %res
+  %res = call <8 x i16> @llvm.x86.sse41.mpsadbw(<16 x i8> %a0, <16 x i8> %a1, i32 7) ; <<8 x i16>> [#uses=1]
+  ret <8 x i16> %res
 }
-declare <16 x i8> @llvm.x86.sse41.mpsadbw(<16 x i8>, <16 x i8>, i32) nounwind readnone
+declare <8 x i16> @llvm.x86.sse41.mpsadbw(<16 x i8>, <16 x i8>, i32) nounwind readnone
 
 
 define <8 x i16> @test_x86_sse41_packusdw(<4 x i32> %a0, <4 x i32> %a1) {
