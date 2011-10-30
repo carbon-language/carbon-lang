@@ -446,7 +446,7 @@ bool ModuleLinker::getLinkageResult(GlobalValue *Dest, const GlobalValue *Src,
   assert(!Src->hasLocalLinkage() &&
          "If Src has internal linkage, Dest shouldn't be set!");
   
-  bool SrcIsDeclaration = Src->isDeclaration();
+  bool SrcIsDeclaration = Src->isDeclaration() && !Src->isMaterializable();
   bool DestIsDeclaration = Dest->isDeclaration();
   
   if (SrcIsDeclaration) {
