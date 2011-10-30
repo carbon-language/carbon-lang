@@ -9929,6 +9929,19 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(SclrAmt)) {
       uint64_t ShiftAmt = C->getZExtValue();
 
+      if (VT == MVT::v16i8 && Op.getOpcode() == ISD::SHL) {
+        // Make a large shift.
+        SDValue SHL =
+          DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
+                      DAG.getConstant(Intrinsic::x86_sse2_pslli_w, MVT::i32),
+                      R, DAG.getConstant(ShiftAmt, MVT::i32));
+        // Zero out the rightmost bits.
+        SmallVector<SDValue, 16> V(16, DAG.getConstant(uint8_t(-1U << ShiftAmt),
+                                                       MVT::i8));
+        return DAG.getNode(ISD::AND, dl, VT, SHL,
+                           DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &V[0], 16));
+      }
+
       if (VT == MVT::v2i64 && Op.getOpcode() == ISD::SHL)
        return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
                      DAG.getConstant(Intrinsic::x86_sse2_pslli_q, MVT::i32),
@@ -9943,6 +9956,19 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
        return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
                      DAG.getConstant(Intrinsic::x86_sse2_pslli_w, MVT::i32),
                      R, DAG.getConstant(ShiftAmt, MVT::i32));
+
+      if (VT == MVT::v16i8 && Op.getOpcode() == ISD::SRL) {
+        // Make a large shift.
+        SDValue SRL =
+          DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
+                      DAG.getConstant(Intrinsic::x86_sse2_psrli_w, MVT::i32),
+                      R, DAG.getConstant(ShiftAmt, MVT::i32));
+        // Zero out the leftmost bits.
+        SmallVector<SDValue, 16> V(16, DAG.getConstant(uint8_t(-1U) >> ShiftAmt,
+                                                       MVT::i8));
+        return DAG.getNode(ISD::AND, dl, VT, SRL,
+                           DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &V[0], 16));
+      }
 
       if (VT == MVT::v2i64 && Op.getOpcode() == ISD::SRL)
        return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,

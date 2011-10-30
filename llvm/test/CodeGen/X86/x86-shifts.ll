@@ -152,3 +152,21 @@ entry:
   %K = xor <2 x i32> %B, %C
   ret <2 x i32> %K
 }
+
+define <16 x i8> @shl9(<16 x i8> %A) nounwind {
+  %B = shl <16 x i8> %A, <i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3>
+  ret <16 x i8> %B
+; CHECK: shl9:
+; CHECK: psllw $3
+; CHECK: pand
+; CHECK: ret
+}
+
+define <16 x i8> @shr9(<16 x i8> %A) nounwind {
+  %B = lshr <16 x i8> %A, <i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3>
+  ret <16 x i8> %B
+; CHECK: shr9:
+; CHECK: psrlw $3
+; CHECK: pand
+; CHECK: ret
+}
