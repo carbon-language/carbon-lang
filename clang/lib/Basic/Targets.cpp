@@ -1466,11 +1466,9 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
   Features["ssse3"] = false;
   Features["sse41"] = false;
   Features["sse42"] = false;
+  Features["sse4a"] = false;
   Features["aes"] = false;
   Features["avx"] = false;
-
-  // LLVM does not currently recognize this.
-  // Features["sse4a"] = false;
 
   // FIXME: This *really* should not be here.
 
@@ -1565,8 +1563,12 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
   case CK_K8SSE3:
   case CK_OpteronSSE3:
   case CK_Athlon64SSE3:
+    setFeatureEnabled(Features, "sse3", true);
+    setFeatureEnabled(Features, "3dnowa", true);
+    break;
   case CK_AMDFAM10:
     setFeatureEnabled(Features, "sse3", true);
+    setFeatureEnabled(Features, "sse4a", true);
     setFeatureEnabled(Features, "3dnowa", true);
     break;
   case CK_C3_2:
@@ -1612,6 +1614,8 @@ bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
     else if (Name == "avx")
       Features["avx"] = Features["sse"] = Features["sse2"] = Features["sse3"] =
         Features["ssse3"] = Features["sse41"] = Features["sse42"] = true;
+    else if (Name == "sse4a")
+      Features["sse4a"] = true;
   } else {
     if (Name == "mmx")
       Features["mmx"] = Features["3dnow"] = Features["3dnowa"] = false;
@@ -1638,6 +1642,8 @@ bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
       Features["aes"] = false;
     else if (Name == "avx")
       Features["avx"] = false;
+    else if (Name == "sse4a")
+      Features["sse4a"] = false;
   }
 
   return true;
