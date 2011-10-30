@@ -2529,17 +2529,13 @@ bool FloatExprEvaluator::VisitUnaryImag(const UnaryOperator *E) {
 }
 
 bool FloatExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
-  if (E->getOpcode() == UO_Deref)
-    return false;
-
-  if (!EvaluateFloat(E->getSubExpr(), Result, Info))
-    return false;
-
   switch (E->getOpcode()) {
   default: return false;
   case UO_Plus:
-    return true;
+    return EvaluateFloat(E->getSubExpr(), Result, Info);
   case UO_Minus:
+    if (!EvaluateFloat(E->getSubExpr(), Result, Info))
+      return false;
     Result.changeSign();
     return true;
   }

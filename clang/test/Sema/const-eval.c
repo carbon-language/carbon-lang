@@ -88,6 +88,7 @@ void rdar8875946() {
 }
 
 double d = (d = 0.0); // expected-error {{not a compile-time constant}}
+double d2 = ++d; // expected-error {{not a compile-time constant}}
 
 int n = 2;
 int intLvalue[*(int*)((long)&n ?: 1)] = { 1, 2 }; // expected-error {{variable length array}}
