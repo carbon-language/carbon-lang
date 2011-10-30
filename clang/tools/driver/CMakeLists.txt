@@ -1,11 +1,11 @@
 set( LLVM_USED_LIBS
+  clangFrontendTool
   clangAST
   clangAnalysis
   clangBasic
   clangCodeGen
   clangDriver
   clangFrontend
-  clangFrontendTool
   clangIndex
   clangLex
   clangParse
@@ -26,6 +26,7 @@ set( LLVM_LINK_COMPONENTS
   codegen
   instrumentation
   ipo
+  linker
   selectiondag
   )
 

@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/CodeGen/CodeGenAction.h"
+#include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/AST/ASTConsumer.h"
@@ -18,9 +19,11 @@
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/Linker.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Support/IRReader.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
@@ -42,7 +45,7 @@ namespace clang {
 
     llvm::OwningPtr<CodeGenerator> Gen;
 
-    llvm::OwningPtr<llvm::Module> TheModule;
+    llvm::OwningPtr<llvm::Module> TheModule, LinkModule;
 
   public:
     BackendConsumer(BackendAction action, DiagnosticsEngine &_Diags,
@@ -50,7 +53,9 @@ namespace clang {
                     const TargetOptions &targetopts,
                     const LangOptions &langopts,
                     bool TimePasses,
-                    const std::string &infile, raw_ostream *OS,
+                    const std::string &infile,
+                    llvm::Module *LinkModule,
+                    raw_ostream *OS,
                     LLVMContext &C) :
       Diags(_Diags),
       Action(action),
@@ -59,11 +64,13 @@ namespace clang {
       LangOpts(langopts),
       AsmOutStream(OS),
       LLVMIRGeneration("LLVM IR Generation Time"),
-      Gen(CreateLLVMCodeGen(Diags, infile, compopts, C)) {
+      Gen(CreateLLVMCodeGen(Diags, infile, compopts, C)),
+      LinkModule(LinkModule) {
       llvm::TimePassesIsEnabled = TimePasses;
     }
 
     llvm::Module *takeModule() { return TheModule.take(); }
+    llvm::Module *takeLinkModule() { return LinkModule.take(); }
 
     virtual void Initialize(ASTContext &Ctx) {
       Context = &Ctx;
@@ -121,6 +128,17 @@ namespace clang {
 
       assert(TheModule.get() == M &&
              "Unexpected module change during IR generation");
+
+      // Link LinkModule into this module if present, preserving its validity.
+      if (LinkModule) {
+        std::string ErrorMsg;
+        if (Linker::LinkModules(M, LinkModule.get(), Linker::PreserveSource,
+                                &ErrorMsg)) {
+          Diags.Report(diag::err_fe_cannot_link_module)
+            << LinkModule->getModuleIdentifier() << ErrorMsg;
+          return;
+        }
+      }
 
       // Install an inline asm handler so that diagnostics get printed through
       // our diagnostics hooks.
@@ -238,7 +256,8 @@ void BackendConsumer::InlineAsmDiagHandler2(const llvm::SMDiagnostic &D,
 //
 
 CodeGenAction::CodeGenAction(unsigned _Act, LLVMContext *_VMContext)
-  : Act(_Act), VMContext(_VMContext ? _VMContext : new LLVMContext),
+  : Act(_Act), LinkModule(0),
+    VMContext(_VMContext ? _VMContext : new LLVMContext),
     OwnsVMContext(!_VMContext) {}
 
 CodeGenAction::~CodeGenAction() {
@@ -253,6 +272,10 @@ void CodeGenAction::EndSourceFileAction() {
   // If the consumer creation failed, do nothing.
   if (!getCompilerInstance().hasASTConsumer())
     return;
+
+  // If we were given a link module, release consumer's ownership of it.
+  if (LinkModule)
+    BEConsumer->takeLinkModule();
 
   // Steal the module from the consumer.
   TheModule.reset(BEConsumer->takeModule());
@@ -294,12 +317,36 @@ ASTConsumer *CodeGenAction::CreateASTConsumer(CompilerInstance &CI,
   if (BA != Backend_EmitNothing && !OS)
     return 0;
 
+  llvm::Module *LinkModuleToUse = LinkModule;
+
+  // If we were not given a link module, and the user requested that one be
+  // loaded from bitcode, do so now.
+  const std::string &LinkBCFile = CI.getCodeGenOpts().LinkBitcodeFile;
+  if (!LinkModuleToUse && !LinkBCFile.empty()) {
+    std::string ErrorStr;
+
+    llvm::MemoryBuffer *BCBuf =
+      CI.getFileManager().getBufferForFile(LinkBCFile, &ErrorStr);
+    if (!BCBuf) {
+      CI.getDiagnostics().Report(diag::err_cannot_open_file)
+        << LinkBCFile << ErrorStr;
+      return 0;
+    }
+
+    LinkModuleToUse = getLazyBitcodeModule(BCBuf, *VMContext, &ErrorStr);
+    if (!LinkModuleToUse) {
+      CI.getDiagnostics().Report(diag::err_cannot_open_file)
+        << LinkBCFile << ErrorStr;
+      return 0;
+    }
+  }
+
   BEConsumer = 
       new BackendConsumer(BA, CI.getDiagnostics(),
                           CI.getCodeGenOpts(), CI.getTargetOpts(),
                           CI.getLangOpts(),
-                          CI.getFrontendOpts().ShowTimers, InFile, OS.take(),
-                          *VMContext);
+                          CI.getFrontendOpts().ShowTimers, InFile,
+                          LinkModuleToUse, OS.take(), *VMContext);
   return BEConsumer;
 }
 

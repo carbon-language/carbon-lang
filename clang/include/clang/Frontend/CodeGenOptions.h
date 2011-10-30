@@ -128,6 +128,9 @@ public:
   /// The float precision limit to use, if non-empty.
   std::string LimitFloatPrecision;
 
+  /// The name of the bitcode file to link before optzns.
+  std::string LinkBitcodeFile;
+
   /// The kind of inlining to perform.
   InliningMethod Inlining;
 

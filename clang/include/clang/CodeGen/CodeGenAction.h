@@ -25,6 +25,7 @@ class CodeGenAction : public ASTFrontendAction {
 private:
   unsigned Act;
   llvm::OwningPtr<llvm::Module> TheModule;
+  llvm::Module *LinkModule;
   llvm::LLVMContext *VMContext;
   bool OwnsVMContext;
 
@@ -45,6 +46,11 @@ protected:
 
 public:
   ~CodeGenAction();
+
+  /// setLinkModule - Set the link module to be used by this action.  If a link
+  /// module is not provided, and CodeGenOptions::LinkBitcodeFile is non-empty,
+  /// the action will load it from the specified file.
+  void setLinkModule(llvm::Module *Mod) { LinkModule = Mod; }
 
   /// takeModule - Take the generated LLVM module, for use after the action has
   /// been run. The result may be null on failure.
