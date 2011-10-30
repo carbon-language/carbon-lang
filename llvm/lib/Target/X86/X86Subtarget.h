@@ -78,6 +78,9 @@ protected:
   /// HasAVX - Target has AVX instructions
   bool HasAVX;
 
+  /// HasAVX2 - Target has AVX2 instructions
+  bool HasAVX2;
+
   /// HasAES - Target has AES instructions
   bool HasAES;
 
@@ -98,6 +101,9 @@ protected:
 
   /// HasF16C - Processor has 16-bit floating point conversion instructions.
   bool HasF16C;
+
+  /// HasFSGSBase - Processor has FS/GS base insturctions.
+  bool HasFSGSBase;
 
   /// HasLZCNT - Processor has LZCNT instruction.
   bool HasLZCNT;
@@ -181,6 +187,7 @@ public:
   bool has3DNowA() const { return X863DNowLevel >= ThreeDNowA; }
   bool hasPOPCNT() const { return HasPOPCNT; }
   bool hasAVX() const { return HasAVX; }
+  bool hasAVX2() const { return HasAVX2; }
   bool hasXMM() const { return hasSSE1() || hasAVX(); }
   bool hasXMMInt() const { return hasSSE2() || hasAVX(); }
   bool hasAES() const { return HasAES; }
@@ -190,6 +197,7 @@ public:
   bool hasMOVBE() const { return HasMOVBE; }
   bool hasRDRAND() const { return HasRDRAND; }
   bool hasF16C() const { return HasF16C; }
+  bool hasFSGSBase() const { return HasFSGSBase; }
   bool hasLZCNT() const { return HasLZCNT; }
   bool hasBMI() const { return HasBMI; }
   bool hasBMI2() const { return HasBMI2; }

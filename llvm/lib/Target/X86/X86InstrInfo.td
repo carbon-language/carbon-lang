@@ -472,6 +472,7 @@ def HasSSE42     : Predicate<"Subtarget->hasSSE42()">;
 def HasSSE4A     : Predicate<"Subtarget->hasSSE4A()">;
 
 def HasAVX       : Predicate<"Subtarget->hasAVX()">;
+def HasAVX2      : Predicate<"Subtarget->hasAVX2()">;
 def HasXMMInt    : Predicate<"Subtarget->hasXMMInt()">;
 
 def HasPOPCNT    : Predicate<"Subtarget->hasPOPCNT()">;
@@ -482,6 +483,7 @@ def HasFMA4      : Predicate<"Subtarget->hasFMA4()">;
 def HasMOVBE     : Predicate<"Subtarget->hasMOVBE()">;
 def HasRDRAND    : Predicate<"Subtarget->hasRDRAND()">;
 def HasF16C      : Predicate<"Subtarget->hasF16C()">;
+def HasFSGSBase  : Predicate<"Subtarget->hasFSGSBase()">;
 def HasLZCNT     : Predicate<"Subtarget->hasLZCNT()">;
 def HasBMI       : Predicate<"Subtarget->hasBMI()">;
 def HasBMI2      : Predicate<"Subtarget->hasBMI2()">;

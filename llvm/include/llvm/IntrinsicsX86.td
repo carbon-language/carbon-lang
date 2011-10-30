@@ -1651,3 +1651,25 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_bmi_pext_64 : GCCBuiltin<"__builtin_ia32_pext_di">,
               Intrinsic<[llvm_i64_ty], [llvm_i64_ty, llvm_i64_ty], [IntrNoMem]>;
 }
+
+//===----------------------------------------------------------------------===//
+// FS/GS Base
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_rdfsbase_32 : GCCBuiltin<"__builtin_ia32_rdfsbase32">,
+              Intrinsic<[llvm_i32_ty], []>;
+  def int_x86_rdgsbase_32 : GCCBuiltin<"__builtin_ia32_rdgsbase32">,
+              Intrinsic<[llvm_i32_ty], []>;
+  def int_x86_rdfsbase_64 : GCCBuiltin<"__builtin_ia32_rdfsbase64">,
+              Intrinsic<[llvm_i64_ty], []>;
+  def int_x86_rdgsbase_64 : GCCBuiltin<"__builtin_ia32_rdgsbase64">,
+              Intrinsic<[llvm_i64_ty], []>;
+  def int_x86_wrfsbase_32 : GCCBuiltin<"__builtin_ia32_wrfsbase32">,
+              Intrinsic<[], [llvm_i32_ty]>;
+  def int_x86_wrgsbase_32 : GCCBuiltin<"__builtin_ia32_wrgsbase32">,
+              Intrinsic<[], [llvm_i32_ty]>;
+  def int_x86_wrfsbase_64 : GCCBuiltin<"__builtin_ia32_wrfsbase64">,
+              Intrinsic<[], [llvm_i64_ty]>;
+  def int_x86_wrgsbase_64 : GCCBuiltin<"__builtin_ia32_wrgsbase64">,
+              Intrinsic<[], [llvm_i64_ty]>;
+}

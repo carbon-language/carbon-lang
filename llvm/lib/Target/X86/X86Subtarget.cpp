@@ -279,10 +279,19 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
 
   if (IsIntel && MaxLevel >= 7) {
     if (!X86_MC::GetCpuIDAndInfoEx(0x7, 0x0, &EAX, &EBX, &ECX, &EDX)) {
+      if (EBX & 0x1) {
+        HasFSGSBase = true;
+        ToggleFeature(X86::FeatureFSGSBase);
+      }
       if ((EBX >> 3) & 0x1) {
         HasBMI = true;
         ToggleFeature(X86::FeatureBMI);
       }
+      // FIXME: AVX2 codegen support is not ready.
+      //if ((EBX >> 5) & 0x1) {
+      //  HasAVX2 = true;
+      //  ToggleFeature(X86::FeatureAVX2);
+      //}
       if ((EBX >> 8) & 0x1) {
         HasBMI2 = true;
         ToggleFeature(X86::FeatureBMI2);
@@ -303,6 +312,7 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
   , HasPOPCNT(false)
   , HasSSE4A(false)
   , HasAVX(false)
+  , HasAVX2(false)
   , HasAES(false)
   , HasCLMUL(false)
   , HasFMA3(false)
@@ -310,6 +320,7 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
   , HasMOVBE(false)
   , HasRDRAND(false)
   , HasF16C(false)
+  , HasFSGSBase(false)
   , HasLZCNT(false)
   , HasBMI(false)
   , HasBMI2(false)
