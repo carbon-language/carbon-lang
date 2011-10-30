@@ -210,15 +210,9 @@ Tool &Darwin::SelectTool(const Compilation &C, const JobAction &JA,
   } else
     Key = JA.getKind();
 
-  // FIXME: This doesn't belong here, but ideally we will support static soon
-  // anyway.
-  bool HasStatic = (C.getArgs().hasArg(options::OPT_mkernel) ||
-                    C.getArgs().hasArg(options::OPT_static) ||
-                    C.getArgs().hasArg(options::OPT_fapple_kext));
-  bool IsIADefault = IsIntegratedAssemblerDefault() && !HasStatic;
   bool UseIntegratedAs = C.getArgs().hasFlag(options::OPT_integrated_as,
                                              options::OPT_no_integrated_as,
-                                             IsIADefault);
+                                             IsIntegratedAssemblerDefault());
 
   Tool *&T = Tools[Key];
   if (!T) {
