@@ -616,7 +616,7 @@ void DeclPrinter::VisitVarDecl(VarDecl *D) {
       Out << "(";
     else {
         CXXConstructExpr *CCE = dyn_cast<CXXConstructExpr>(Init);
-        if (!CCE || CCE->getConstructor()->isCopyConstructor())
+        if (!CCE || CCE->getConstructor()->isCopyOrMoveConstructor())
           Out << " = ";
     }
     Init->printPretty(Out, Context, 0, Policy, Indentation);
