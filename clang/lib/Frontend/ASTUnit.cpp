@@ -184,6 +184,13 @@ void OnDiskData::Cleanup() {
   CleanPreambleFile();
 }
 
+void ASTUnit::clearFileLevelDecls() {
+  for (FileDeclsTy::iterator
+         I = FileDecls.begin(), E = FileDecls.end(); I != E; ++I)
+    delete I->second;
+  FileDecls.clear();
+}
+
 void ASTUnit::CleanTemporaryFiles() {
   getOnDiskData(this).CleanTemporaryFiles();
 }
@@ -223,6 +230,8 @@ ASTUnit::ASTUnit(bool _MainFileIsAST)
 }
 
 ASTUnit::~ASTUnit() {
+  clearFileLevelDecls();
+
   // Clean up the temporary files and the preamble file.
   removeOnDiskEntry(this);
 
@@ -840,24 +849,42 @@ public:
     : Unit(_Unit), Hash(Hash) {
     Hash = 0;
   }
-  
-  void HandleTopLevelDecl(DeclGroupRef D) {
-    for (DeclGroupRef::iterator it = D.begin(), ie = D.end(); it != ie; ++it) {
-      Decl *D = *it;
-      // FIXME: Currently ObjC method declarations are incorrectly being
-      // reported as top-level declarations, even though their DeclContext
-      // is the containing ObjC @interface/@implementation.  This is a
-      // fundamental problem in the parser right now.
-      if (isa<ObjCMethodDecl>(D))
-        continue;
 
-      AddTopLevelDeclarationToHash(D, Hash);
-      Unit.addTopLevelDecl(D);
+  void handleTopLevelDecl(Decl *D) {
+    // FIXME: Currently ObjC method declarations are incorrectly being
+    // reported as top-level declarations, even though their DeclContext
+    // is the containing ObjC @interface/@implementation.  This is a
+    // fundamental problem in the parser right now.
+    if (isa<ObjCMethodDecl>(D))
+      return;
+
+    AddTopLevelDeclarationToHash(D, Hash);
+    Unit.addTopLevelDecl(D);
+
+    handleFileLevelDecl(D);
+  }
+
+  void handleFileLevelDecl(Decl *D) {
+    Unit.addFileLevelDecl(D);
+    if (NamespaceDecl *NSD = dyn_cast<NamespaceDecl>(D)) {
+      for (NamespaceDecl::decl_iterator
+             I = NSD->decls_begin(), E = NSD->decls_end(); I != E; ++I)
+        handleFileLevelDecl(*I);
     }
+  }
+
+  void HandleTopLevelDecl(DeclGroupRef D) {
+    for (DeclGroupRef::iterator it = D.begin(), ie = D.end(); it != ie; ++it)
+      handleTopLevelDecl(*it);
   }
 
   // We're not interested in "interesting" decls.
   void HandleInterestingDecl(DeclGroupRef) {}
+
+  void HandleTopLevelDeclInObjCContainer(DeclGroupRef D) {
+    for (DeclGroupRef::iterator it = D.begin(), ie = D.end(); it != ie; ++it)
+      handleTopLevelDecl(*it);
+  }
 };
 
 class TopLevelDeclTrackerAction : public ASTFrontendAction {
@@ -1018,6 +1045,7 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   
   // Clear out old caches and data.
   TopLevelDecls.clear();
+  clearFileLevelDecls();
   CleanTemporaryFiles();
 
   if (!OverrideMainBuffer) {
@@ -1870,6 +1898,8 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
 bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {
   if (!Invocation)
     return true;
+
+  clearFileLevelDecls();
   
   SimpleTimer ParsingTimer(WantTiming);
   ParsingTimer.setOutput("Reparsing " + getMainFileName());
@@ -2438,6 +2468,49 @@ void ASTUnit::TranslateStoredDiagnostics(
                                       SD.getMessage(), Loc, Ranges, FixIts));
   }
   Result.swap(Out);
+}
+
+static inline bool compLocDecl(std::pair<unsigned, Decl *> L,
+                               std::pair<unsigned, Decl *> R) {
+  return L.first < R.first;
+}
+
+void ASTUnit::addFileLevelDecl(Decl *D) {
+  assert(D);
+  assert(!D->isFromASTFile() && "This is only for local decl");
+
+  SourceManager &SM = *SourceMgr;
+  SourceLocation Loc = D->getLocation();
+  if (Loc.isInvalid() || !SM.isLocalSourceLocation(Loc))
+    return;
+
+  // We only keep track of the file-level declarations of each file.
+  if (!D->getLexicalDeclContext()->isFileContext())
+    return;
+
+  SourceLocation FileLoc = SM.getFileLoc(Loc);
+  assert(SM.isLocalSourceLocation(FileLoc));
+  FileID FID;
+  unsigned Offset;
+  llvm::tie(FID, Offset) = SM.getDecomposedLoc(FileLoc);
+  if (FID.isInvalid())
+    return;
+
+  LocDeclsTy *&Decls = FileDecls[FID];
+  if (!Decls)
+    Decls = new LocDeclsTy();
+
+  std::pair<unsigned, Decl *> LocDecl(Offset, D);
+
+  if (Decls->empty() || Decls->back().first <= Offset) {
+    Decls->push_back(LocDecl);
+    return;
+  }
+
+  LocDeclsTy::iterator
+    I = std::upper_bound(Decls->begin(), Decls->end(), LocDecl, compLocDecl);
+
+  Decls->insert(I, LocDecl);
 }
 
 SourceLocation ASTUnit::getLocation(const FileEntry *File,

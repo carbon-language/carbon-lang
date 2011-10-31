@@ -126,6 +126,14 @@ private:
   // source. In the long term we should make the Index library use efficient and
   // more scalable search mechanisms.
   std::vector<Decl*> TopLevelDecls;
+
+  /// \brief Sorted (by file offset) vector of pairs of file offset/Decl.
+  typedef SmallVector<std::pair<unsigned, Decl *>, 64> LocDeclsTy;
+  typedef llvm::DenseMap<FileID, LocDeclsTy *> FileDeclsTy;
+
+  /// \brief Map from FileID to the file-level declarations that it contains.
+  /// The files and decls are only local (and non-preamble) ones.
+  FileDeclsTy FileDecls;
   
   /// The name of the original source file used to generate this ASTUnit.
   std::string OriginalSourceFile;
@@ -263,6 +271,8 @@ private:
                                   SourceManager &SrcMan,
                       const SmallVectorImpl<StoredDiagnostic> &Diags,
                             SmallVectorImpl<StoredDiagnostic> &Out);
+
+  void clearFileLevelDecls();
 
 public:
   /// \brief A cached code-completion result, which may be introduced in one of
@@ -504,6 +514,9 @@ public:
   void addTopLevelDecl(Decl *D) {
     TopLevelDecls.push_back(D);
   }
+
+  /// \brief Add a new local file-level declaration.
+  void addFileLevelDecl(Decl *D);
 
   /// \brief Add a new top-level declaration, identified by its ID in
   /// the precompiled preamble.
