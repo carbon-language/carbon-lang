@@ -1942,6 +1942,12 @@ bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {
   
   // Parse the sources
   bool Result = Parse(OverrideMainBuffer);
+  
+  // If we're caching global code-completion results, and the top-level 
+  // declarations have changed, clear out the code-completion cache.
+  if (!Result && ShouldCacheCodeCompletionResults &&
+      CurrentTopLevelHashValue != CompletionCacheTopLevelHashValue)
+    CacheCodeCompletionResults();
 
   // We now need to clear out the completion allocator for
   // clang_getCursorCompletionString; it'll be recreated if necessary.
@@ -2201,12 +2207,6 @@ void ASTUnit::CodeComplete(StringRef File, unsigned Line, unsigned Column,
              SmallVectorImpl<const llvm::MemoryBuffer *> &OwnedBuffers) {
   if (!Invocation)
     return;
-  
-  // If we're caching global code-completion results, and the top-level 
-  // declarations have changed, clear out the code-completion cache.
-  if (ShouldCacheCodeCompletionResults &&
-      CurrentTopLevelHashValue != CompletionCacheTopLevelHashValue)
-    CacheCodeCompletionResults();
 
   SimpleTimer CompletionTimer(WantTiming);
   CompletionTimer.setOutput("Code completion @ " + File + ":" +
