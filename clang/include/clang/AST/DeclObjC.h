@@ -592,6 +592,12 @@ public:
                                    SourceLocation ClassLoc = SourceLocation(),
                                    bool ForwardDecl = false,
                                    bool isInternal = false);
+
+  virtual SourceRange getSourceRange() const {
+    if (isForwardDecl())
+      return SourceRange(getAtStartLoc(), getLocation());
+    return ObjCContainerDecl::getSourceRange();
+  }
   
   /// \brief Indicate that this Objective-C class is complete, but that
   /// the external AST source will be responsible for filling in its contents
