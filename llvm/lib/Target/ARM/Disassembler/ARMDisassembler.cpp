@@ -2183,14 +2183,22 @@ static DecodeStatus DecodeVSTInstruction(llvm::MCInst &Inst, unsigned Insn,
 
   // Writeback Operand
   switch (Inst.getOpcode()) {
-    case ARM::VST1d8_UPD:
-    case ARM::VST1d16_UPD:
-    case ARM::VST1d32_UPD:
-    case ARM::VST1d64_UPD:
-    case ARM::VST1q8_UPD:
-    case ARM::VST1q16_UPD:
-    case ARM::VST1q32_UPD:
-    case ARM::VST1q64_UPD:
+    case ARM::VST1d8wb_fixed:
+    case ARM::VST1d16wb_fixed:
+    case ARM::VST1d32wb_fixed:
+    case ARM::VST1d64wb_fixed:
+    case ARM::VST1d8wb_register:
+    case ARM::VST1d16wb_register:
+    case ARM::VST1d32wb_register:
+    case ARM::VST1d64wb_register:
+    case ARM::VST1q8wb_fixed:
+    case ARM::VST1q16wb_fixed:
+    case ARM::VST1q32wb_fixed:
+    case ARM::VST1q64wb_fixed:
+    case ARM::VST1q8wb_register:
+    case ARM::VST1q16wb_register:
+    case ARM::VST1q32wb_register:
+    case ARM::VST1q64wb_register:
     case ARM::VST1d8T_UPD:
     case ARM::VST1d16T_UPD:
     case ARM::VST1d32T_UPD:
@@ -2249,10 +2257,6 @@ static DecodeStatus DecodeVSTInstruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::VST1q16:
     case ARM::VST1q32:
     case ARM::VST1q64:
-    case ARM::VST1q8_UPD:
-    case ARM::VST1q16_UPD:
-    case ARM::VST1q32_UPD:
-    case ARM::VST1q64_UPD:
     case ARM::VST1d8T:
     case ARM::VST1d16T:
     case ARM::VST1d32T:

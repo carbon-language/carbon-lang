@@ -273,13 +273,17 @@ static const NEONLdStTableEntry NEONLdStTable[] = {
 { ARM::VST1d64TPseudo_UPD,  ARM::VST1d64T_UPD, false, true, true,  SingleSpc,  3, 1 ,true},
 
 { ARM::VST1q16Pseudo,       ARM::VST1q16,      false, false, false, SingleSpc,  2, 4 ,true},
-{ ARM::VST1q16Pseudo_UPD,   ARM::VST1q16_UPD, false, true, true,  SingleSpc,  2, 4 ,true},
+{ ARM::VST1q16PseudoWB_fixed,   ARM::VST1q16wb_fixed, false, true, false,  SingleSpc,  2, 4 ,false},
+{ ARM::VST1q16PseudoWB_register,   ARM::VST1q16wb_register, false, true, true,  SingleSpc,  2, 4 ,false},
 { ARM::VST1q32Pseudo,       ARM::VST1q32,      false, false, false, SingleSpc,  2, 2 ,true},
-{ ARM::VST1q32Pseudo_UPD,   ARM::VST1q32_UPD, false, true, true,  SingleSpc,  2, 2 ,true},
+{ ARM::VST1q32PseudoWB_fixed,   ARM::VST1q32wb_fixed, false, true, false,  SingleSpc,  2, 2 ,false},
+{ ARM::VST1q32PseudoWB_register,   ARM::VST1q32wb_register, false, true, true,  SingleSpc,  2, 2 ,false},
 { ARM::VST1q64Pseudo,       ARM::VST1q64,      false, false, false, SingleSpc,  2, 1 ,true},
-{ ARM::VST1q64Pseudo_UPD,   ARM::VST1q64_UPD, false, true, true,  SingleSpc,  2, 1 ,true},
+{ ARM::VST1q64PseudoWB_fixed,   ARM::VST1q64wb_fixed, false, true, false,  SingleSpc,  2, 1 ,false},
+{ ARM::VST1q64PseudoWB_register,   ARM::VST1q64wb_register, false, true, true,  SingleSpc,  2, 1 ,false},
 { ARM::VST1q8Pseudo,        ARM::VST1q8,       false, false, false, SingleSpc,  2, 8 ,true},
-{ ARM::VST1q8Pseudo_UPD,    ARM::VST1q8_UPD, false, true, true,  SingleSpc,  2, 8 ,true},
+{ ARM::VST1q8PseudoWB_fixed,    ARM::VST1q8wb_fixed, false, true, false,  SingleSpc,  2, 8 ,false},
+{ ARM::VST1q8PseudoWB_register,    ARM::VST1q8wb_register, false, true, true,  SingleSpc,  2, 8 ,false},
 
 { ARM::VST2LNd16Pseudo,     ARM::VST2LNd16,     false, false, false, SingleSpc, 2, 4 ,true},
 { ARM::VST2LNd16Pseudo_UPD, ARM::VST2LNd16_UPD, false, true, true,  SingleSpc, 2, 4 ,true},
@@ -504,10 +508,12 @@ void ARMExpandPseudo::ExpandVST(MachineBasicBlock::iterator &MBBI) {
   unsigned SrcReg = MI.getOperand(OpIdx++).getReg();
   unsigned D0, D1, D2, D3;
   GetDSubRegs(SrcReg, RegSpc, TRI, D0, D1, D2, D3);
-  MIB.addReg(D0).addReg(D1);
-  if (NumRegs > 2)
+  MIB.addReg(D0);
+  if (NumRegs > 1 && TableEntry->copyAllListRegs)
+    MIB.addReg(D1);
+  if (NumRegs > 2 && TableEntry->copyAllListRegs)
     MIB.addReg(D2);
-  if (NumRegs > 3)
+  if (NumRegs > 3 && TableEntry->copyAllListRegs)
     MIB.addReg(D3);
 
   // Copy the predicate operands.
@@ -1153,10 +1159,14 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
     case ARM::VST1q16Pseudo:
     case ARM::VST1q32Pseudo:
     case ARM::VST1q64Pseudo:
-    case ARM::VST1q8Pseudo_UPD:
-    case ARM::VST1q16Pseudo_UPD:
-    case ARM::VST1q32Pseudo_UPD:
-    case ARM::VST1q64Pseudo_UPD:
+    case ARM::VST1q8PseudoWB_fixed:
+    case ARM::VST1q16PseudoWB_fixed:
+    case ARM::VST1q32PseudoWB_fixed:
+    case ARM::VST1q64PseudoWB_fixed:
+    case ARM::VST1q8PseudoWB_register:
+    case ARM::VST1q16PseudoWB_register:
+    case ARM::VST1q32PseudoWB_register:
+    case ARM::VST1q64PseudoWB_register:
     case ARM::VST2d8Pseudo:
     case ARM::VST2d16Pseudo:
     case ARM::VST2d32Pseudo:

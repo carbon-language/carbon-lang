@@ -1566,6 +1566,19 @@ static unsigned getVLDSTRegisterUpdateOpcode(unsigned Opc) {
   case ARM::VLD1q16PseudoWB_fixed: return ARM::VLD1q16PseudoWB_register;
   case ARM::VLD1q32PseudoWB_fixed: return ARM::VLD1q32PseudoWB_register;
   case ARM::VLD1q64PseudoWB_fixed: return ARM::VLD1q64PseudoWB_register;
+
+  case ARM::VST1d8wb_fixed: return ARM::VST1d8wb_register;
+  case ARM::VST1d16wb_fixed: return ARM::VST1d16wb_register;
+  case ARM::VST1d32wb_fixed: return ARM::VST1d32wb_register;
+  case ARM::VST1d64wb_fixed: return ARM::VST1d64wb_register;
+  case ARM::VST1q8wb_fixed: return ARM::VST1q8wb_register;
+  case ARM::VST1q16wb_fixed: return ARM::VST1q16wb_register;
+  case ARM::VST1q32wb_fixed: return ARM::VST1q32wb_register;
+  case ARM::VST1q64wb_fixed: return ARM::VST1q64wb_register;
+  case ARM::VST1q8PseudoWB_fixed: return ARM::VST1q8PseudoWB_register;
+  case ARM::VST1q16PseudoWB_fixed: return ARM::VST1q16PseudoWB_register;
+  case ARM::VST1q32PseudoWB_fixed: return ARM::VST1q32PseudoWB_register;
+  case ARM::VST1q64PseudoWB_fixed: return ARM::VST1q64PseudoWB_register;
   }
   return Opc; // If not one we handle, return it unchanged.
 }
@@ -1635,11 +1648,12 @@ SDNode *ARMDAGToDAGISel::SelectVLD(SDNode *N, bool isUpdating, unsigned NumVecs,
       SDValue Inc = N->getOperand(AddrOpIdx + 1);
       // FIXME: VLD1 fixed increment doesn't need Reg0. Remove the reg0
       // case entirely when the rest are updated to that form, too.
-      // Do that before committing this change. Likewise, the opcode
-      // update call will become unconditional.
       if (NumVecs == 1 && !isa<ConstantSDNode>(Inc.getNode()))
         Opc = getVLDSTRegisterUpdateOpcode(Opc);
-      if (NumVecs != 1 || !isa<ConstantSDNode>(Inc.getNode()))
+      // We use a VST1 for v1i64 even if the pseudo says vld2/3/4, so
+      // check for that explicitly too. Horribly hacky, but temporary.
+      if ((NumVecs != 1 && Opc != ARM::VLD1q64PseudoWB_fixed) ||
+          !isa<ConstantSDNode>(Inc.getNode()))
         Ops.push_back(isa<ConstantSDNode>(Inc.getNode()) ? Reg0 : Inc);
     }
     Ops.push_back(Pred);
@@ -1782,7 +1796,15 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, bool isUpdating, unsigned NumVecs,
     Ops.push_back(Align);
     if (isUpdating) {
       SDValue Inc = N->getOperand(AddrOpIdx + 1);
-      Ops.push_back(isa<ConstantSDNode>(Inc.getNode()) ? Reg0 : Inc);
+      // FIXME: VST1 fixed increment doesn't need Reg0. Remove the reg0
+      // case entirely when the rest are updated to that form, too.
+      if (NumVecs == 1 && !isa<ConstantSDNode>(Inc.getNode()))
+        Opc = getVLDSTRegisterUpdateOpcode(Opc);
+      // We use a VST1 for v1i64 even if the pseudo says vld2/3/4, so
+      // check for that explicitly too. Horribly hacky, but temporary.
+      if ((NumVecs != 1 && Opc != ARM::VST1q64PseudoWB_fixed) ||
+          !isa<ConstantSDNode>(Inc.getNode()))
+        Ops.push_back(isa<ConstantSDNode>(Inc.getNode()) ? Reg0 : Inc);
     }
     Ops.push_back(SrcReg);
     Ops.push_back(Pred);
@@ -2844,16 +2866,18 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
   }
 
   case ARMISD::VST1_UPD: {
-    unsigned DOpcodes[] = { ARM::VST1d8_UPD, ARM::VST1d16_UPD,
-                            ARM::VST1d32_UPD, ARM::VST1d64_UPD };
-    unsigned QOpcodes[] = { ARM::VST1q8Pseudo_UPD, ARM::VST1q16Pseudo_UPD,
-                            ARM::VST1q32Pseudo_UPD, ARM::VST1q64Pseudo_UPD };
+    unsigned DOpcodes[] = { ARM::VST1d8wb_fixed, ARM::VST1d16wb_fixed,
+                            ARM::VST1d32wb_fixed, ARM::VST1d64wb_fixed };
+    unsigned QOpcodes[] = { ARM::VST1q8PseudoWB_fixed,
+                            ARM::VST1q16PseudoWB_fixed,
+                            ARM::VST1q32PseudoWB_fixed,
+                            ARM::VST1q64PseudoWB_fixed };
     return SelectVST(N, true, 1, DOpcodes, QOpcodes, 0);
   }
 
   case ARMISD::VST2_UPD: {
     unsigned DOpcodes[] = { ARM::VST2d8Pseudo_UPD, ARM::VST2d16Pseudo_UPD,
-                            ARM::VST2d32Pseudo_UPD, ARM::VST1q64Pseudo_UPD };
+                            ARM::VST2d32Pseudo_UPD, ARM::VST1q64PseudoWB_fixed};
     unsigned QOpcodes[] = { ARM::VST2q8Pseudo_UPD, ARM::VST2q16Pseudo_UPD,
                             ARM::VST2q32Pseudo_UPD };
     return SelectVST(N, true, 2, DOpcodes, QOpcodes, 0);

@@ -1208,6 +1208,14 @@ class VSTQWBPseudo<InstrItinClass itin>
   : PseudoNLdSt<(outs GPR:$wb),
                 (ins addrmode6:$addr, am6offset:$offset, QPR:$src), itin,
                 "$addr.addr = $wb">;
+class VSTQWBfixedPseudo<InstrItinClass itin>
+  : PseudoNLdSt<(outs GPR:$wb),
+                (ins addrmode6:$addr, QPR:$src), itin,
+                "$addr.addr = $wb">;
+class VSTQWBregisterPseudo<InstrItinClass itin>
+  : PseudoNLdSt<(outs GPR:$wb),
+                (ins addrmode6:$addr, rGPR:$offset, QPR:$src), itin,
+                "$addr.addr = $wb">;
 class VSTQQPseudo<InstrItinClass itin>
   : PseudoNLdSt<(outs), (ins addrmode6:$addr, QQPR:$src), itin, "">;
 class VSTQQWBPseudo<InstrItinClass itin>
@@ -1254,36 +1262,65 @@ def  VST1q32Pseudo : VSTQPseudo<IIC_VST1x2>;
 def  VST1q64Pseudo : VSTQPseudo<IIC_VST1x2>;
 
 // ...with address register writeback:
-class VST1DWB<bits<4> op7_4, string Dt>
-  : NLdSt<0, 0b00, 0b0111, op7_4, (outs GPR:$wb),
-          (ins addrmode6:$Rn, am6offset:$Rm, DPR:$Vd), IIC_VST1u,
-          "vst1", Dt, "\\{$Vd\\}, $Rn$Rm", "$Rn.addr = $wb", []> {
-  let Inst{4} = Rn{4};
-  let DecoderMethod = "DecodeVSTInstruction";
+multiclass VST1DWB<bits<4> op7_4, string Dt> {
+  def _fixed : NLdSt<0,0b00, 0b0111,op7_4, (outs GPR:$wb),
+                     (ins addrmode6:$Rn, VecListOneD:$Vd), IIC_VLD1u,
+                     "vst1", Dt, "$Vd, $Rn!",
+                     "$Rn.addr = $wb", []> {
+    let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
+    let Inst{4} = Rn{4};
+    let DecoderMethod = "DecodeVSTInstruction";
+    let AsmMatchConverter = "cvtVSTwbFixed";
+  }
+  def _register : NLdSt<0,0b00,0b0111,op7_4, (outs GPR:$wb),
+                        (ins addrmode6:$Rn, rGPR:$Rm, VecListOneD:$Vd),
+                        IIC_VLD1u,
+                        "vst1", Dt, "$Vd, $Rn, $Rm",
+                        "$Rn.addr = $wb", []> {
+    let Inst{4} = Rn{4};
+    let DecoderMethod = "DecodeVSTInstruction";
+    let AsmMatchConverter = "cvtVSTwbRegister";
+  }
 }
-class VST1QWB<bits<4> op7_4, string Dt>
-  : NLdSt<0, 0b00, 0b1010, op7_4, (outs GPR:$wb),
-          (ins addrmode6:$Rn, am6offset:$Rm, DPR:$Vd, DPR:$src2),
-          IIC_VST1x2u, "vst1", Dt, "\\{$Vd, $src2\\}, $Rn$Rm",
-          "$Rn.addr = $wb", []> {
-  let Inst{5-4} = Rn{5-4};
-  let DecoderMethod = "DecodeVSTInstruction";
+multiclass VST1QWB<bits<4> op7_4, string Dt> {
+  def _fixed : NLdSt<0,0b00,0b1010,op7_4, (outs GPR:$wb),
+                    (ins addrmode6:$Rn, VecListTwoD:$Vd), IIC_VLD1x2u,
+                     "vst1", Dt, "$Vd, $Rn!",
+                     "$Rn.addr = $wb", []> {
+    let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
+    let Inst{5-4} = Rn{5-4};
+    let DecoderMethod = "DecodeVSTInstruction";
+    let AsmMatchConverter = "cvtVSTwbFixed";
+  }
+  def _register : NLdSt<0,0b00,0b1010,op7_4, (outs GPR:$wb),
+                        (ins addrmode6:$Rn, rGPR:$Rm, VecListTwoD:$Vd),
+                        IIC_VLD1x2u,
+                        "vst1", Dt, "$Vd, $Rn, $Rm",
+                        "$Rn.addr = $wb", []> {
+    let Inst{5-4} = Rn{5-4};
+    let DecoderMethod = "DecodeVSTInstruction";
+    let AsmMatchConverter = "cvtVSTwbRegister";
+  }
 }
 
-def VST1d8_UPD  : VST1DWB<{0,0,0,?}, "8">;
-def VST1d16_UPD : VST1DWB<{0,1,0,?}, "16">;
-def VST1d32_UPD : VST1DWB<{1,0,0,?}, "32">;
-def VST1d64_UPD : VST1DWB<{1,1,0,?}, "64">;
+defm VST1d8wb  : VST1DWB<{0,0,0,?}, "8">;
+defm VST1d16wb : VST1DWB<{0,1,0,?}, "16">;
+defm VST1d32wb : VST1DWB<{1,0,0,?}, "32">;
+defm VST1d64wb : VST1DWB<{1,1,0,?}, "64">;
 
-def VST1q8_UPD  : VST1QWB<{0,0,?,?}, "8">;
-def VST1q16_UPD : VST1QWB<{0,1,?,?}, "16">;
-def VST1q32_UPD : VST1QWB<{1,0,?,?}, "32">;
-def VST1q64_UPD : VST1QWB<{1,1,?,?}, "64">;
+defm VST1q8wb  : VST1QWB<{0,0,?,?}, "8">;
+defm VST1q16wb : VST1QWB<{0,1,?,?}, "16">;
+defm VST1q32wb : VST1QWB<{1,0,?,?}, "32">;
+defm VST1q64wb : VST1QWB<{1,1,?,?}, "64">;
 
-def VST1q8Pseudo_UPD  : VSTQWBPseudo<IIC_VST1x2u>;
-def VST1q16Pseudo_UPD : VSTQWBPseudo<IIC_VST1x2u>;
-def VST1q32Pseudo_UPD : VSTQWBPseudo<IIC_VST1x2u>;
-def VST1q64Pseudo_UPD : VSTQWBPseudo<IIC_VST1x2u>;
+def VST1q8PseudoWB_fixed  : VSTQWBfixedPseudo<IIC_VST1x2u>;
+def VST1q16PseudoWB_fixed : VSTQWBfixedPseudo<IIC_VST1x2u>;
+def VST1q32PseudoWB_fixed : VSTQWBfixedPseudo<IIC_VST1x2u>;
+def VST1q64PseudoWB_fixed : VSTQWBfixedPseudo<IIC_VST1x2u>;
+def VST1q8PseudoWB_register  : VSTQWBregisterPseudo<IIC_VST1x2u>;
+def VST1q16PseudoWB_register : VSTQWBregisterPseudo<IIC_VST1x2u>;
+def VST1q32PseudoWB_register : VSTQWBregisterPseudo<IIC_VST1x2u>;
+def VST1q64PseudoWB_register : VSTQWBregisterPseudo<IIC_VST1x2u>;
 
 // ...with 3 registers
 class VST1D3<bits<4> op7_4, string Dt>
