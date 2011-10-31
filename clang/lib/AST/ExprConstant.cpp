@@ -1983,12 +1983,13 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
           return false;
         // A constant address may compare equal to the address of a symbol.
         // The one exception is that address of an object cannot compare equal
-        // to the null pointer.
+        // to a null pointer constant.
         if ((!LHSValue.Base && !LHSValue.Offset.isZero()) ||
             (!RHSValue.Base && !RHSValue.Offset.isZero()))
           return false;
         // It's implementation-defined whether distinct literals will have
-        // distinct addresses. We define it to be unspecified.
+        // distinct addresses. In clang, we do not guarantee the addresses are
+        // distinct.
         if (IsLiteralLValue(LHSValue) || IsLiteralLValue(RHSValue))
           return false;
         // We can't tell whether weak symbols will end up pointing to the same
@@ -1996,6 +1997,9 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
         if (IsWeakLValue(LHSValue) || IsWeakLValue(RHSValue))
           return false;
         // Pointers with different bases cannot represent the same object.
+        // (Note that clang defaults to -fmerge-all-constants, which can
+        // lead to inconsistent results for comparisons involving the address
+        // of a constant; this generally doesn't matter in practice.)
         return Success(E->getOpcode() == BO_NE, E);
       }
 
