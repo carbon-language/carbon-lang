@@ -230,8 +230,8 @@ class Diagnostic(object):
                 return int(_clang_getDiagnosticNumRanges(self.diag))
 
             def __getitem__(self, key):
-		if (key >= len(self)):
-			raise IndexError
+                if (key >= len(self)):
+                    raise IndexError
                 return _clang_getDiagnosticRange(self.diag, key)
 
         return RangeIterator(self)
@@ -1381,7 +1381,9 @@ class Index(ClangObject):
     def read(self, path):
         """Load the translation unit from the given AST file."""
         ptr = TranslationUnit_read(self, path)
-        return TranslationUnit(ptr) if ptr else None
+        if ptr:
+            return TranslationUnit(ptr)
+        return None
 
     def parse(self, path, args = [], unsaved_files = [], options = 0):
         """
@@ -1414,7 +1416,9 @@ class Index(ClangObject):
         ptr = TranslationUnit_parse(self, path, arg_array, len(args),
                                     unsaved_files_array, len(unsaved_files),
                                     options)
-        return TranslationUnit(ptr) if ptr else None
+        if ptr:
+            return TranslationUnit(ptr)
+        return None
 
 
 class TranslationUnit(ClangObject):
@@ -1533,8 +1537,9 @@ class TranslationUnit(ClangObject):
                                            unsaved_files_array,
                                            len(unsaved_files),
                                            options)
-        return CodeCompletionResults(ptr) if ptr else None
-
+        if ptr:
+            return CodeCompletionResults(ptr)
+        return None
 
 class File(ClangObject):
     """
