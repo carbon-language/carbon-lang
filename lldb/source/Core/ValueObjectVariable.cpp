@@ -83,7 +83,10 @@ ValueObjectVariable::CalculateNumChildren()
 clang::ASTContext *
 ValueObjectVariable::GetClangAST ()
 {
-    return m_variable_sp->GetType()->GetClangAST();
+    Type *var_type = m_variable_sp->GetType();
+    if (var_type)
+        return var_type->GetClangAST();
+    return 0;
 }
 
 size_t
