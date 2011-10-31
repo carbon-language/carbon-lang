@@ -197,6 +197,9 @@ constexpr bool s4 = &x >= &x;
 constexpr bool s5 = &x < &x;
 constexpr bool s6 = &x > &x;
 
+constexpr S* sptr = &s;
+constexpr bool dyncast = sptr == dynamic_cast<S*>(sptr);
+
 using check = int[m1 + (m2<<1) + (m3<<2) + (m4<<3) + (m5<<4) + (m6<<5) +
                   (n1<<6) + (n2<<7) + (n7<<8) + (n8<<9) + (g1<<10) + (g2<<11) +
                (s1<<12) + (s2<<13) + (s3<<14) + (s4<<15) + (s5<<16) + (s6<<17)];

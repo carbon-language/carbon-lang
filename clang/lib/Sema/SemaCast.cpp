@@ -529,6 +529,12 @@ CastsAwayConstness(Sema &Self, QualType SrcType, QualType DestType,
 /// Refer to C++ 5.2.7 for details. Dynamic casts are used mostly for runtime-
 /// checked downcasts in class hierarchies.
 void CastOperation::CheckDynamicCast() {
+  if (ValueKind == VK_RValue && !isPlaceholder(BuiltinType::Overload)) {
+    SrcExpr = Self.DefaultFunctionArrayLvalueConversion(SrcExpr.take());
+    if (SrcExpr.isInvalid()) // if conversion failed, don't report another error
+      return;
+  }
+
   QualType OrigSrcType = SrcExpr.get()->getType();
   QualType DestType = Self.Context.getCanonicalType(this->DestType);
 
