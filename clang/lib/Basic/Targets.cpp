@@ -2245,6 +2245,9 @@ public:
     // Use fpret only for long double.
     RealTypeUsesObjCFPRet = (1 << TargetInfo::LongDouble);
 
+    // Use fp2ret for _Complex long double.
+    ComplexLongDoubleUsesFP2Ret = true;
+
     // x86-64 has atomics up to 16 bytes.
     // FIXME: Once the backend is fixed, increase MaxAtomicInlineWidth to 128
     // on CPUs with cmpxchg16b

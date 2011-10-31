@@ -715,9 +715,13 @@ public:
   /// as a return type.
   bool ReturnTypeUsesSRet(const CGFunctionInfo &FI);
 
-  /// ReturnTypeUsesSret - Return true iff the given type uses 'fpret' when used
-  /// as a return type.
+  /// ReturnTypeUsesFPRet - Return true iff the given type uses 'fpret' when
+  /// used as a return type.
   bool ReturnTypeUsesFPRet(QualType ResultType);
+
+  /// ReturnTypeUsesFP2Ret - Return true iff the given type uses 'fp2ret' when
+  /// used as a return type.
+  bool ReturnTypeUsesFP2Ret(QualType ResultType);
 
   /// ConstructAttributeList - Get the LLVM attributes and calling convention to
   /// use for a particular function type.

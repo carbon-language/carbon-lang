@@ -74,6 +74,9 @@ TargetInfo::TargetInfo(const std::string &T) : Triple(T) {
   // Default to no types using fpret.
   RealTypeUsesObjCFPRet = 0;
 
+  // Default to not using fp2ret for __Complex long double
+  ComplexLongDoubleUsesFP2Ret = false;
+
   // Default to using the Itanium ABI.
   CXXABI = CXXABI_Itanium;
 

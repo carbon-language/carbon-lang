@@ -698,6 +698,8 @@ LIBBUILTIN(objc_msgSend, "GGH.",   "f",     "objc/message.h", OBJC_LANG)
 
 // long double objc_msgSend_fpret(id self, SEL op, ...) 
 LIBBUILTIN(objc_msgSend_fpret, "LdGH.", "f", "objc/message.h", OBJC_LANG)
+// _Complex long double objc_msgSend_fp2ret(id self, SEL op, ...)
+LIBBUILTIN(objc_msgSend_fp2ret, "XLdGH.", "f", "objc/message.h", OBJC_LANG)
 // id objc_msgSend_stret (id, SEL, ...)
 LIBBUILTIN(objc_msgSend_stret, "GGH.", "f", "objc/message.h", OBJC_LANG)
 // id objc_msgSendSuper(struct objc_super *super, SEL op, ...)

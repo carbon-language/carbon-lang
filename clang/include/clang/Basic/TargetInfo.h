@@ -91,6 +91,7 @@ protected:
 
   unsigned HasAlignMac68kSupport : 1;
   unsigned RealTypeUsesObjCFPRet : 3;
+  unsigned ComplexLongDoubleUsesFP2Ret : 1;
 
   // TargetInfo Constructor.  Default initializes all fields.
   TargetInfo(const std::string &T);
@@ -325,6 +326,12 @@ public:
   /// Obj-C message passing on this target.
   bool useObjCFPRetForRealType(RealType T) const {
     return RealTypeUsesObjCFPRet & (1 << T);
+  }
+
+  /// \brief Check whether _Complex long double should use the "fp2ret" flavor
+  /// of Obj-C message passing on this target.
+  bool useObjCFP2RetForComplexLongDouble() const {
+    return ComplexLongDoubleUsesFP2Ret;
   }
 
   ///===---- Other target property query methods --------------------------===//

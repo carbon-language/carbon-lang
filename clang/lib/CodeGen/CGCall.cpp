@@ -611,6 +611,17 @@ bool CodeGenModule::ReturnTypeUsesFPRet(QualType ResultType) {
   return false;
 }
 
+bool CodeGenModule::ReturnTypeUsesFP2Ret(QualType ResultType) {
+  if (const ComplexType *CT = ResultType->getAs<ComplexType>()) {
+    if (const BuiltinType *BT = CT->getElementType()->getAs<BuiltinType>()) {
+      if (BT->getKind() == BuiltinType::LongDouble)
+        return getContext().getTargetInfo().useObjCFP2RetForComplexLongDouble();
+    }
+  }
+
+  return false;
+}
+
 llvm::FunctionType *CodeGenTypes::GetFunctionType(GlobalDecl GD) {
   const CGFunctionInfo &FI = getFunctionInfo(GD);
 

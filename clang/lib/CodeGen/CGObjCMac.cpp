@@ -99,6 +99,22 @@ private:
 
   }
 
+  /// _Complex long double objc_msgSend_fp2ret(id self, SEL op, ...)
+  ///
+  /// The messenger used when the return value is returned in two values on the
+  /// x87 floating point stack; without a special entrypoint, the nil case
+  /// would be unbalanced. Only used on 64-bit X86.
+  llvm::Constant *getMessageSendFp2retFn() const {
+    llvm::Type *params[] = { ObjectPtrTy, SelectorPtrTy };
+    llvm::Type *longDoubleType = llvm::Type::getX86_FP80Ty(VMContext);
+    llvm::Type *resultType = 
+      llvm::StructType::get(longDoubleType, longDoubleType, NULL);
+
+    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(resultType,
+                                                             params, true),
+                                     "objc_msgSend_fp2ret");
+  }
+
   /// id objc_msgSendSuper(struct objc_super *super, SEL op, ...)
   ///
   /// The messenger used for super calls, which have different dispatch
@@ -389,6 +405,14 @@ public:
 
   llvm::Constant *getSendFpretFn2(bool IsSuper) const {
     return IsSuper ? getMessageSendSuperFpretFn2() : getMessageSendFpretFn();
+  }
+
+  llvm::Constant *getSendFp2retFn(bool IsSuper) const {
+    return IsSuper ? getMessageSendSuperFn() : getMessageSendFp2retFn();
+  }
+
+  llvm::Constant *getSendFp2RetFn2(bool IsSuper) const {
+    return IsSuper ? getMessageSendSuperFn2() : getMessageSendFp2retFn();
   }
 
   ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm);
@@ -1590,6 +1614,9 @@ CGObjCCommonMac::EmitMessageSend(CodeGen::CodeGenFunction &CGF,
   } else if (CGM.ReturnTypeUsesFPRet(ResultType)) {
     Fn = (ObjCABI == 2) ? ObjCTypes.getSendFpretFn2(IsSuper)
       : ObjCTypes.getSendFpretFn(IsSuper);
+  } else if (CGM.ReturnTypeUsesFP2Ret(ResultType)) {
+    Fn = (ObjCABI == 2) ? ObjCTypes.getSendFp2RetFn2(IsSuper)
+      : ObjCTypes.getSendFp2retFn(IsSuper);
   } else {
     Fn = (ObjCABI == 2) ? ObjCTypes.getSendFn2(IsSuper)
       : ObjCTypes.getSendFn(IsSuper);
