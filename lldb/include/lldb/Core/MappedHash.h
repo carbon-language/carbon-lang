@@ -20,7 +20,7 @@ public:
 
     enum HashFunctionType
     {
-        eHashFunctionDJB        = 0u,   // Daniel J Bernstein hash function that is also used by the ELF GNU_HASH sections
+        eHashFunctionDJB        = 0u    // Daniel J Bernstein hash function that is also used by the ELF GNU_HASH sections
     };
 
 

@@ -163,7 +163,7 @@ protected:
         GPRRegSet = 1,
         FPURegSet = 2,
         EXCRegSet = 3,
-        DBGRegSet = 4,
+        DBGRegSet = 4
     };
 
     enum

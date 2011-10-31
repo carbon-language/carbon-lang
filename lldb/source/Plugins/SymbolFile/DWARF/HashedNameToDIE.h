@@ -29,7 +29,7 @@ struct DWARFMappedHash
         eAtomTypeCUOffset   = 2u,   // DIE offset of the compiler unit header that contains the item in question
         eAtomTypeTag        = 3u,   // DW_TAG_xxx value, should be encoded as DW_FORM_data1 (if no tags exceed 255) or DW_FORM_data2
         eAtomTypeNameFlags  = 4u,   // Flags from enum NameFlags
-        eAtomTypeTypeFlags  = 5u,   // Flags from enum TypeFlags
+        eAtomTypeTypeFlags  = 5u    // Flags from enum TypeFlags
     };
 
     struct Atom
