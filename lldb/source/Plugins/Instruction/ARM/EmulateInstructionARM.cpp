@@ -13185,11 +13185,11 @@ EmulateInstructionARM::SelectInstrSet (Mode arm_or_thumb)
     {
     default:
         return false;
-    eModeARM:
+    case eModeARM:
         // Clear the T bit.
         m_new_inst_cpsr &= ~MASK_CPSR_T;
         break;
-    eModeThumb:
+    case eModeThumb:
         // Set the T bit.
         m_new_inst_cpsr |= MASK_CPSR_T;
         break;

@@ -73,7 +73,7 @@ main (int argc, char *argv[])
     Args log_args;
     Error error;
     std::string listen_host_port;
-    char ch;
+    int ch;
     Debugger::Initialize();
     
 //    ConnectionMachPort a;

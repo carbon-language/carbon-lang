@@ -4299,12 +4299,13 @@ NamespaceDecl *
 ClangASTContext::GetUniqueNamespaceDeclaration (const char *name, DeclContext *decl_ctx)
 {
     NamespaceDecl *namespace_decl = NULL;
+    ASTContext *ast = getASTContext();
+    TranslationUnitDecl *translation_unit_decl = ast->getTranslationUnitDecl ();
+    if (decl_ctx == NULL)
+        decl_ctx = translation_unit_decl;
+    
     if (name)
     {
-        ASTContext *ast = getASTContext();
-        if (decl_ctx == NULL)
-            decl_ctx = ast->getTranslationUnitDecl();
-        
         IdentifierInfo &identifier_info = ast->Idents.get(name);
         DeclarationName decl_name (&identifier_info);
         clang::DeclContext::lookup_result result = decl_ctx->lookup(decl_name);
@@ -4317,12 +4318,61 @@ ClangASTContext::GetUniqueNamespaceDeclaration (const char *name, DeclContext *d
 
         namespace_decl = NamespaceDecl::Create(*ast, decl_ctx, SourceLocation(), SourceLocation(), &identifier_info);
         
-        decl_ctx->addDecl (namespace_decl);
-        
-#ifdef LLDB_CONFIGURATION_DEBUG
-        VerifyDecl(namespace_decl);
-#endif
+        decl_ctx->addDecl (namespace_decl);        
     }
+    else
+    {
+        if (decl_ctx == translation_unit_decl)
+        {
+            namespace_decl = translation_unit_decl->getAnonymousNamespace();
+            if (namespace_decl)
+                return namespace_decl;
+            
+            namespace_decl = NamespaceDecl::Create(*ast, decl_ctx, SourceLocation(), SourceLocation(), NULL);
+            translation_unit_decl->setAnonymousNamespace (namespace_decl);
+            translation_unit_decl->addDecl (namespace_decl);
+            assert (namespace_decl == translation_unit_decl->getAnonymousNamespace());
+        }
+        else
+        {
+            NamespaceDecl *parent_namespace_decl = cast<NamespaceDecl>(decl_ctx);
+            if (parent_namespace_decl)
+            {
+                namespace_decl = parent_namespace_decl->getAnonymousNamespace();
+                if (namespace_decl)
+                    return namespace_decl;
+                namespace_decl = NamespaceDecl::Create(*ast, decl_ctx, SourceLocation(), SourceLocation(), NULL);
+                parent_namespace_decl->setAnonymousNamespace (namespace_decl);
+                parent_namespace_decl->addDecl (namespace_decl);
+                assert (namespace_decl == parent_namespace_decl->getAnonymousNamespace());
+            }
+            else
+            {
+                // BAD!!!
+            }
+        }
+        
+
+        if (namespace_decl)
+        {
+            // If we make it here, we are creating the anonymous namespace decl
+            // for the first time, so we need to do the using directive magic
+            // like SEMA does
+            UsingDirectiveDecl* using_directive_decl = UsingDirectiveDecl::Create (*ast, 
+                                                                                   decl_ctx, 
+                                                                                   SourceLocation(),
+                                                                                   SourceLocation(),
+                                                                                   NestedNameSpecifierLoc(),
+                                                                                   SourceLocation(),
+                                                                                   namespace_decl,
+                                                                                   decl_ctx);
+            using_directive_decl->setImplicit();
+            decl_ctx->addDecl(using_directive_decl);
+        }
+    }
+#ifdef LLDB_CONFIGURATION_DEBUG
+    VerifyDecl(namespace_decl);
+#endif
     return namespace_decl;
 }
 

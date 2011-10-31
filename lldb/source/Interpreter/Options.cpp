@@ -375,11 +375,9 @@ Options::SupportsLongOption (const char *long_option)
         const OptionDefinition *opt_defs = GetDefinitions ();
         if (opt_defs)
         {
-            const char *long_option_name;
+            const char *long_option_name = long_option;
             if (long_option[0] == '-' && long_option[1] == '-')
                 long_option_name += 2;
-            else
-                long_option_name = long_option;
 
             for (uint32_t i = 0; opt_defs[i].long_option; ++i)
             {

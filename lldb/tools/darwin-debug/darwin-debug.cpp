@@ -178,7 +178,7 @@ int main (int argc, char *const *argv, char *const *envp, const char **apple)
 
     cpu_type_t cpu_type = 0;
     bool show_usage = false;
-    char ch;
+    int ch;
     int disable_aslr = 0; // By default we disable ASLR
     int pass_env = 1;
     std::string unix_socket_name;

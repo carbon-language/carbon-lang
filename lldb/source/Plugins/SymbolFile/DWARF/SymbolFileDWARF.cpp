@@ -1012,7 +1012,17 @@ SymbolFileDWARF::ParseCompileUnitLineTable (const SymbolContext &sc)
             std::auto_ptr<LineTable> line_table_ap(new LineTable(sc.comp_unit));
             if (line_table_ap.get())
             {
-                ParseDWARFLineTableCallbackInfo info = { line_table_ap.get(), m_obj_file->GetSectionList(), 0, 0, m_debug_map_symfile != NULL, false};
+                ParseDWARFLineTableCallbackInfo info = { 
+                    line_table_ap.get(), 
+                    m_obj_file->GetSectionList(), 
+                    0, 
+                    0, 
+                    m_debug_map_symfile != NULL, 
+                    false, 
+                    DWARFDebugLine::Row(), 
+                    SectionSP(), 
+                    SectionSP()
+                };
                 uint32_t offset = cu_line_offset;
                 DWARFDebugLine::ParseStatementTable(get_debug_line_data(), &offset, ParseDWARFLineTableCallback, &info);
                 sc.comp_unit->SetLineTable(line_table_ap.release());
@@ -3516,14 +3526,14 @@ SymbolFileDWARF::ResolveNamespaceDIE (DWARFCompileUnit *curr_cu, const DWARFDebu
         else
         {
             const char *namespace_name = die->GetAttributeValueAsString(this, curr_cu, DW_AT_name, NULL);
-            if (namespace_name)
+            clang::DeclContext *containing_decl_ctx = GetClangDeclContextContainingDIE (curr_cu, die, NULL);            
+            namespace_decl = GetClangASTContext().GetUniqueNamespaceDeclaration (namespace_name, containing_decl_ctx);
+            LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_INFO));
+            if (log)
             {
-                clang::DeclContext *containing_decl_ctx = GetClangDeclContextContainingDIE (curr_cu, die, NULL);            
-                namespace_decl = GetClangASTContext().GetUniqueNamespaceDeclaration (namespace_name, containing_decl_ctx);
-                LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_INFO));
-                if (log)
+                const char *object_name = m_obj_file->GetModule()->GetObjectName().GetCString();
+                if (namespace_name)
                 {
-                    const char *object_name = m_obj_file->GetModule()->GetObjectName().GetCString();
                     log->Printf ("ASTContext => %p: 0x%8.8llx: DW_TAG_namespace with DW_AT_name(\"%s\") => clang::NamespaceDecl * %p in %s/%s%s%s%s (original = %p)", 
                                  GetClangASTContext().getASTContext(),
                                  MakeUserID(die->GetOffset()),
@@ -3536,11 +3546,24 @@ SymbolFileDWARF::ResolveNamespaceDIE (DWARFCompileUnit *curr_cu, const DWARFDebu
                                  object_name ? "(" : "",
                                  namespace_decl->getOriginalNamespace());
                 }
-
-                if (namespace_decl)
-                    LinkDeclContextToDIE((clang::DeclContext*)namespace_decl, die);
-                return namespace_decl;
+                else
+                {
+                    log->Printf ("ASTContext => %p: 0x%8.8llx: DW_TAG_namespace (anonymous) => clang::NamespaceDecl * %p in %s/%s%s%s%s (original = %p)", 
+                                 GetClangASTContext().getASTContext(),
+                                 MakeUserID(die->GetOffset()),
+                                 namespace_decl,
+                                 m_obj_file->GetFileSpec().GetDirectory().GetCString(),
+                                 m_obj_file->GetFileSpec().GetFilename().GetCString(),
+                                 object_name ? "(" : "",
+                                 object_name ? object_name : "",
+                                 object_name ? "(" : "",
+                                 namespace_decl->getOriginalNamespace());
+                }
             }
+
+            if (namespace_decl)
+                LinkDeclContextToDIE((clang::DeclContext*)namespace_decl, die);
+            return namespace_decl;
         }
     }
     return NULL;
