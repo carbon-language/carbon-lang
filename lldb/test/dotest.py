@@ -663,6 +663,8 @@ def setupSysPath():
         lldbHere = baiExec
     elif is_exe(baiExec2):
         lldbHere = baiExec2
+    elif lldbExec:
+        lldbHere = lldbExec
 
     if lldbHere:
         os.environ["LLDB_HERE"] = lldbHere

@@ -32,5 +32,6 @@ check-local::
 	rm -rf ../test-rdir
 	env PATH="$(ToolDir):$(PATH)" \
 	    PYTHONPATH=$(ToolDir) \
+	    LLDB_EXEC=$(ToolDir)/lldb \
 	    $(SHLIBPATH_VAR)=$(LibDir):$($(SHLIBPATH_VAR)) \
 	     python $(PROJ_SRC_DIR)/dotest.py -i -v -r ../test-rdir
