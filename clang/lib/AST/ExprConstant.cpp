@@ -1223,7 +1223,9 @@ bool PointerExprEvaluator::VisitCastExpr(const CastExpr* E) {
   }
   case CK_ArrayToPointerDecay:
   case CK_FunctionToPointerDecay:
-    return EvaluateLValue(SubExpr, Result, Info);
+    if (SubExpr->isGLValue() || SubExpr->getType()->isFunctionType())
+      return EvaluateLValue(SubExpr, Result, Info);
+    return Error(E);
   }
 
   return ExprEvaluatorBaseTy::VisitCastExpr(E);
