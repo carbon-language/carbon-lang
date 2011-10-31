@@ -102,7 +102,6 @@ ifeq ($(HOST_OS),Darwin)
                            -Wl,-compatibility_version -Wl,1
     endif
     # extra options to override libtool defaults 
-    LLVMLibsOptions += -avoid-version
 	LLVMLibsOptions += -F/System/Library/Frameworks -F/System/Library/PrivateFrameworks
 	LLVMLibsOptions += -framework Foundation -framework CoreFoundation
 	LLVMLibsOptions += -framework CoreServices -framework Carbon
@@ -111,7 +110,7 @@ ifeq ($(HOST_OS),Darwin)
     # Mac OS X 10.4 and earlier tools do not allow a second -install_name on command line
     DARWIN_VERS := $(shell echo $(TARGET_TRIPLE) | sed 's/.*darwin\([0-9]*\).*/\1/')
     ifneq ($(DARWIN_VERS),8)
-       LLVMLibsOptions  += -no-undefined -Wl,-install_name \
+       LLVMLibsOptions  += -Wl,-install_name \
                            -Wl,"@executable_path/../lib/lib$(LIBRARYNAME)$(SHLIBEXT)"
     endif
 endif
