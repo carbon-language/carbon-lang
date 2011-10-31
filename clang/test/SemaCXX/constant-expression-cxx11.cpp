@@ -203,3 +203,19 @@ using check = int[m1 + (m2<<1) + (m3<<2) + (m4<<3) + (m5<<4) + (m6<<5) +
 using check = int[2+4+16+128+512+2048+4096+16384+32768];
 
 }
+
+namespace MaterializeTemporary {
+
+constexpr int f(const int &r) { return r; }
+constexpr int n = f(1);
+
+constexpr bool same(const int &a, const int &b) { return &a == &b; }
+constexpr bool sameTemporary(const int &n) { return same(n, n); }
+
+using check_value = int[1];
+using check_value = int[n];
+using check_value = int[!same(4, 4)];
+using check_value = int[same(n, n)];
+using check_value = int[sameTemporary(9)];
+
+}

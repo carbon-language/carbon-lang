@@ -46,6 +46,7 @@ static bool IsParamLValue(const Expr *E);
 /// certain things in certain situations.
 namespace {
   struct CallStackFrame;
+  struct EvalInfo;
 
   /// A core constant value. This can be the value of any constant expression,
   /// or a pointer or reference to a non-static object or function parameter.
@@ -68,7 +69,7 @@ namespace {
     CCValue(const APValue &V, unsigned CallIndex) :
       APValue(V), CallIndex(CallIndex) {}
 
-    enum { NoCallIndex = (unsigned)-1 };
+    enum { NoCallIndex = (unsigned)0 };
 
     unsigned getLValueCallIndex() const {
       assert(getKind() == LValue);
@@ -76,44 +77,12 @@ namespace {
     }
   };
 
-  struct EvalInfo {
-    const ASTContext &Ctx;
-
-    /// EvalStatus - Contains information about the evaluation.
-    Expr::EvalStatus &EvalStatus;
-
-    /// CurrentCall - The top of the constexpr call stack.
-    const CallStackFrame *CurrentCall;
-
-    /// NumCalls - The number of calls we've evaluated so far.
-    unsigned NumCalls;
-
-    /// CallStackDepth - The number of calls in the call stack right now.
-    unsigned CallStackDepth;
-
-    typedef llvm::DenseMap<const OpaqueValueExpr*, CCValue> MapTy;
-    MapTy OpaqueValues;
-    const CCValue *getOpaqueValue(const OpaqueValueExpr *e) const {
-      MapTy::const_iterator i = OpaqueValues.find(e);
-      if (i == OpaqueValues.end()) return 0;
-      return &i->second;
-    }
-
-    unsigned getCurrentCallIndex() const;
-    const CCValue *getCallValue(unsigned CallIndex, unsigned ArgIndex) const;
-
-    EvalInfo(const ASTContext &C, Expr::EvalStatus &S)
-      : Ctx(C), EvalStatus(S), CurrentCall(0), NumCalls(0), CallStackDepth(0) {}
-
-    const LangOptions &getLangOpts() { return Ctx.getLangOptions(); }
-  };
-
   /// A stack frame in the constexpr call stack.
   struct CallStackFrame {
     EvalInfo &Info;
 
     /// Parent - The caller of this stack frame.
-    const CallStackFrame *Caller;
+    CallStackFrame *Caller;
 
     /// ParmBindings - Parameter bindings for this function call, indexed by
     /// parameters' function scope indices.
@@ -124,29 +93,84 @@ namespace {
     /// detect when the parameter is no longer in scope.
     unsigned CallIndex;
 
-    CallStackFrame(EvalInfo &Info, const CCValue *Arguments)
-        : Info(Info), Caller(Info.CurrentCall), Arguments(Arguments),
-          CallIndex(Info.NumCalls++) {
-      Info.CurrentCall = this;
-      ++Info.CallStackDepth;
-    }
-    ~CallStackFrame() {
-      assert(Info.CurrentCall == this && "calls retired out of order");
-      --Info.CallStackDepth;
-      Info.CurrentCall = Caller;
-    }
+    typedef llvm::DenseMap<const Expr*, CCValue> MapTy;
+    typedef MapTy::const_iterator temp_iterator;
+    /// Temporaries - Temporary lvalues materialized within this stack frame.
+    MapTy Temporaries;
+
+    CallStackFrame(EvalInfo &Info, const CCValue *Arguments);
+    ~CallStackFrame();
   };
 
-  unsigned EvalInfo::getCurrentCallIndex() const {
-    return CurrentCall ? CurrentCall->CallIndex : CCValue::NoCallIndex;
+  struct EvalInfo {
+    const ASTContext &Ctx;
+
+    /// EvalStatus - Contains information about the evaluation.
+    Expr::EvalStatus &EvalStatus;
+
+    /// CurrentCall - The top of the constexpr call stack.
+    CallStackFrame *CurrentCall;
+
+    /// NumCalls - The number of calls we've evaluated so far.
+    unsigned NumCalls;
+
+    /// CallStackDepth - The number of calls in the call stack right now.
+    unsigned CallStackDepth;
+
+    typedef llvm::DenseMap<const OpaqueValueExpr*, CCValue> MapTy;
+    /// OpaqueValues - Values used as the common expression in a
+    /// BinaryConditionalOperator.
+    MapTy OpaqueValues;
+
+    /// BottomFrame - The frame in which evaluation started. This must be
+    /// initialized last.
+    CallStackFrame BottomFrame;
+
+
+    EvalInfo(const ASTContext &C, Expr::EvalStatus &S)
+      : Ctx(C), EvalStatus(S), CurrentCall(0), NumCalls(0), CallStackDepth(0),
+        BottomFrame(*this, 0) {}
+
+    unsigned getCurrentCallIndex() const { return CurrentCall->CallIndex; }
+    CallStackFrame *getStackFrame(unsigned CallIndex) const;
+    const CCValue *getCallValue(unsigned CallIndex, unsigned ArgIndex) const;
+
+    const CCValue *getOpaqueValue(const OpaqueValueExpr *e) const {
+      MapTy::const_iterator i = OpaqueValues.find(e);
+      if (i == OpaqueValues.end()) return 0;
+      return &i->second;
+    }
+
+    const LangOptions &getLangOpts() { return Ctx.getLangOptions(); }
+  };
+
+  CallStackFrame::CallStackFrame(EvalInfo &Info, const CCValue *Arguments)
+      : Info(Info), Caller(Info.CurrentCall), Arguments(Arguments),
+        CallIndex(Info.NumCalls++) {
+    Info.CurrentCall = this;
+    ++Info.CallStackDepth;
+  }
+
+  CallStackFrame::~CallStackFrame() {
+    assert(Info.CurrentCall == this && "calls retired out of order");
+    --Info.CallStackDepth;
+    Info.CurrentCall = Caller;
+  }
+
+  CallStackFrame *EvalInfo::getStackFrame(unsigned CallIndex) const {
+    for (CallStackFrame *Frame = CurrentCall;
+         Frame && Frame->CallIndex >= CallIndex; Frame = Frame->Caller)
+      if (Frame->CallIndex == CallIndex)
+        return Frame;
+    return 0;
   }
 
   const CCValue *EvalInfo::getCallValue(unsigned CallIndex,
                                         unsigned ArgIndex) const {
-    for (const CallStackFrame *Frame = CurrentCall;
-         Frame && Frame->CallIndex >= CallIndex; Frame = Frame->Caller)
-      if (Frame->CallIndex == CallIndex)
-        return Frame->Arguments + ArgIndex;
+    if (CallIndex == 0)
+      return 0;
+    if (CallStackFrame *Frame = getStackFrame(CallIndex))
+      return Frame->Arguments + ArgIndex;
     return 0;
   }
 
@@ -239,7 +263,7 @@ static bool IsGlobalLValue(const Expr* E) {
   if (const CompoundLiteralExpr *CLE = dyn_cast<CompoundLiteralExpr>(E))
     return CLE->isFileScope();
 
-  if (isa<MemberExpr>(E))
+  if (isa<MemberExpr>(E) || isa<MaterializeTemporaryExpr>(E))
     return false;
 
   return true;
@@ -277,7 +301,8 @@ const ValueDecl *GetLValueBaseDecl(const LValue &LVal) {
 static bool IsLiteralLValue(const LValue &Value) {
   return Value.Base &&
          !isa<DeclRefExpr>(Value.Base) &&
-         !isa<MemberExpr>(Value.Base);
+         !isa<MemberExpr>(Value.Base) &&
+         !isa<MaterializeTemporaryExpr>(Value.Base);
 }
 
 static bool IsWeakLValue(const LValue &Value) {
@@ -441,6 +466,7 @@ static bool IsConstNonVolatile(QualType T) {
 bool HandleLValueToRValueConversion(EvalInfo &Info, QualType Type,
                                     const LValue &LVal, CCValue &RVal) {
   const Expr *Base = LVal.Base;
+  unsigned CallIndex = LVal.CallIndex;
 
   // FIXME: Indirection through a null pointer deserves a diagnostic.
   if (!Base)
@@ -473,7 +499,7 @@ bool HandleLValueToRValueConversion(EvalInfo &Info, QualType Type,
     const VarDecl *VD = dyn_cast<VarDecl>(D);
     if (!VD || !(IsConstNonVolatile(VD->getType()) || isa<ParmVarDecl>(VD)) ||
         !Type->isLiteralType() ||
-        !EvaluateVarDeclInit(Info, VD, LVal.CallIndex, RVal))
+        !EvaluateVarDeclInit(Info, VD, CallIndex, RVal))
       return false;
 
     if (isa<ParmVarDecl>(VD) || !VD->getAnyInitializer()->isLValue())
@@ -487,10 +513,18 @@ bool HandleLValueToRValueConversion(EvalInfo &Info, QualType Type,
     if (!RVal.getLValueOffset().isZero())
       return false;
     Base = RVal.getLValueBase();
+    CallIndex = RVal.getLValueCallIndex();
   }
 
-  // FIXME: C++11: Support MaterializeTemporaryExpr in LValueExprEvaluator and
-  // here.
+  // If this is an lvalue expression with a nontrivial initializer, grab the
+  // value from the relevant stack frame, if the object is still in scope.
+  if (isa<MaterializeTemporaryExpr>(Base)) {
+    if (CallStackFrame *Frame = Info.getStackFrame(CallIndex)) {
+      RVal = Frame->Temporaries[Base];
+      return true;
+    }
+    return false;
+  }
 
   // In C99, a CompoundLiteralExpr is an lvalue, and we defer evaluating the
   // initializer until now for such expressions. Such an expression can't be
@@ -847,6 +881,7 @@ public:
 // following types:
 //  * DeclRefExpr
 //  * MemberExpr for a static member
+//  * MaterializeTemporaryExpr
 //  * CompoundLiteralExpr in C
 //  * StringLiteral
 //  * PredefinedExpr
@@ -885,6 +920,7 @@ public:
 
   bool VisitDeclRefExpr(const DeclRefExpr *E);
   bool VisitPredefinedExpr(const PredefinedExpr *E) { return Success(E); }
+  bool VisitMaterializeTemporaryExpr(const MaterializeTemporaryExpr *E);
   bool VisitCompoundLiteralExpr(const CompoundLiteralExpr *E);
   bool VisitMemberExpr(const MemberExpr *E);
   bool VisitStringLiteral(const StringLiteral *E) { return Success(E); }
@@ -939,6 +975,13 @@ bool LValueExprEvaluator::VisitVarDecl(const Expr *E, const VarDecl *VD) {
     return Success(V, E);
 
   return Error(E);
+}
+
+bool LValueExprEvaluator::VisitMaterializeTemporaryExpr(
+    const MaterializeTemporaryExpr *E) {
+  if (!Evaluate(Info.CurrentCall->Temporaries[E], Info, E->GetTemporaryExpr()))
+    return false;
+  return Success(E);
 }
 
 bool
