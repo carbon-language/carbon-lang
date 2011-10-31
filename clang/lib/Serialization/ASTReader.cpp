@@ -1139,7 +1139,8 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(int ID) {
     unsigned NumFileDecls = Record[8];
     if (NumFileDecls) {
       assert(F->FileSortedDecls && "FILE_SORTED_DECLS not encountered yet ?");
-      FileDeclIDs[FID] = llvm::makeArrayRef(FirstDecl, NumFileDecls);
+      FileDeclIDs[FID] = FileDeclsInfo(F, llvm::makeArrayRef(FirstDecl,
+                                                             NumFileDecls));
     }
     
     break;

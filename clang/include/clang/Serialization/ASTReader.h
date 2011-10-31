@@ -296,8 +296,17 @@ private:
   /// \brief Declarations that have been replaced in a later file in the chain.
   DeclReplacementMap ReplacedDecls;
 
+  struct FileDeclsInfo {
+    Module *Mod;
+    ArrayRef<serialization::LocalDeclID> Decls;
+
+    FileDeclsInfo() : Mod(0) {}
+    FileDeclsInfo(Module *Mod, ArrayRef<serialization::LocalDeclID> Decls)
+      : Mod(Mod), Decls(Decls) {}
+  };
+
   /// \brief Map from a FileID to the file-level declarations that it contains.
-  llvm::DenseMap<FileID, ArrayRef<serialization::DeclID> > FileDeclIDs;
+  llvm::DenseMap<FileID, FileDeclsInfo> FileDeclIDs;
 
   // Updates for visible decls can occur for other contexts than just the
   // TU, and when we read those update records, the actual context will not
