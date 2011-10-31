@@ -1,5 +1,5 @@
 """
-Test that we can successfully step into an STL function.
+Test some expressions involving STL data types.
 """
 
 import os, time
@@ -11,16 +11,18 @@ class STLTestCase(TestBase):
 
     mydir = os.path.join("lang", "cpp", "stl")
 
+    @unittest2.expectedFailure
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym(self):
-        """Test that we can successfully step into an STL function."""
+        """Test some expressions involving STL data types."""
         self.buildDsym()
-        self.step_into_stl()
+        self.step_stl_exprs()
 
+    @unittest2.expectedFailure
     def test_with_dwarf(self):
-        """Test that we can successfully step into an STL function."""
+        """Test some expressions involving STL data types."""
         self.buildDwarf()
-        self.step_into_stl()
+        self.step_stl_exprs()
 
     def setUp(self):
         # Call super's setUp().
@@ -28,8 +30,8 @@ class STLTestCase(TestBase):
         # Find the line number to break inside main().
         self.line = line_number('main.cpp', '// Set break point at this line.')
 
-    def step_into_stl(self):
-        """Test that we can successfully step into an STL function."""
+    def step_stl_exprs(self):
+        """Test some expressions involving STL data types."""
         exe = os.path.join(os.getcwd(), "a.out")
 
         # The following two lines, if uncommented, will enable loggings.
@@ -61,6 +63,7 @@ class STLTestCase(TestBase):
 
         self.runCmd('expr for (int i = 0; i < hello_world.length(); ++i) { (void)printf("%c\\n", hello_world[i]); }')
 
+        # rdar://problem/10373783
         self.expect('expr associative_array.size()',
             substrs = [' = 3'])
         self.expect('expr associative_array.count(hello_world)',
