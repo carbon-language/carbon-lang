@@ -17,14 +17,14 @@ typedef __autoreleasing NSString * AUTORELEASEPNSString;
 - (CFStringRef)myString
 {
     CFStringRef myString =
-      (__bridge CFStringRef) (__strong NSString *)CFBridgingRelease(); // expected-error {{explicit ownership qualifier on cast result would have no effect}}
+      (__bridge CFStringRef) (__strong NSString *)CFBridgingRelease(); // expected-error {{explicit ownership qualifier on cast result has no effect}}
 
     myString =
-      (__bridge CFStringRef) (__autoreleasing PNSString) CFBridgingRelease(); // expected-error {{explicit ownership qualifier on cast result would have no effect}}
+      (__bridge CFStringRef) (__autoreleasing PNSString) CFBridgingRelease(); // expected-error {{explicit ownership qualifier on cast result has no effect}}
     myString =
       (__bridge CFStringRef) (AUTORELEASEPNSString) CFBridgingRelease(); // OK
     myString =
-      (__bridge CFStringRef) (typeof(__strong NSString *)) CFBridgingRelease(); // expected-error {{explicit ownership qualifier on cast result would have no effect}}
+      (__bridge CFStringRef) (typeof(__strong NSString *)) CFBridgingRelease(); // expected-error {{explicit ownership qualifier on cast result has no effect}}
     return myString;
 }
 
