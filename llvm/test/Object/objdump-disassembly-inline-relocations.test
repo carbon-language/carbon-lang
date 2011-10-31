@@ -1,6 +1,6 @@
-RUN: llvm-objdump -d -r %p/TestObjectFiles/trivial-object-test.coff-i386 \
+RUN: llvm-objdump -d -r %p/Inputs/trivial-object-test.coff-i386 \
 RUN:              | FileCheck %s -check-prefix COFF-i386
-RUN: llvm-objdump -d -r %p/TestObjectFiles/trivial-object-test.coff-x86-64 \
+RUN: llvm-objdump -d -r %p/Inputs/trivial-object-test.coff-x86-64 \
 RUN:              | FileCheck %s -check-prefix COFF-x86-64
 
 COFF-i386: file format COFF-i386
