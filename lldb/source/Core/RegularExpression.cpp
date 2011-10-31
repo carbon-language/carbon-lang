@@ -32,8 +32,8 @@ RegularExpression::RegularExpression() :
 RegularExpression::RegularExpression(const char* re, int flags) :
     m_re(),
     m_comp_err (1),
-    m_compile_flags(flags),
-    m_preg()
+    m_preg(),
+    m_compile_flags(flags)
 {
     memset(&m_preg,0,sizeof(m_preg));
     Compile(re);
@@ -46,8 +46,8 @@ RegularExpression::RegularExpression(const char* re, int flags) :
 RegularExpression::RegularExpression(const char* re) :
     m_re(),
     m_comp_err (1),
-    m_compile_flags(REG_EXTENDED),
-    m_preg()
+    m_preg(),
+    m_compile_flags(REG_EXTENDED)
 {
     memset(&m_preg,0,sizeof(m_preg));
     Compile(re);

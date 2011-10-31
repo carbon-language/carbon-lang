@@ -94,9 +94,9 @@ DynamicLoaderDarwinKernel::DynamicLoaderDarwinKernel (Process* process) :
     m_kext_summary_header_ptr_addr (),
     m_kext_summary_header_addr (),
     m_kext_summary_header (),
-    m_break_id (LLDB_INVALID_BREAK_ID),
     m_kext_summaries(),
-    m_mutex(Mutex::eMutexTypeRecursive)
+    m_mutex(Mutex::eMutexTypeRecursive),
+    m_break_id (LLDB_INVALID_BREAK_ID)
 {
 }
 

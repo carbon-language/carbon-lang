@@ -419,8 +419,8 @@ public:
     InterpreterStackFrame (TargetData &target_data,
                            Memory &memory,
                            lldb_private::ClangExpressionDeclMap &decl_map) :
-        m_target_data (target_data),
         m_memory (memory),
+        m_target_data (target_data),
         m_decl_map (decl_map)
     {
         m_byte_order = (target_data.isLittleEndian() ? lldb::eByteOrderLittle : lldb::eByteOrderBig);

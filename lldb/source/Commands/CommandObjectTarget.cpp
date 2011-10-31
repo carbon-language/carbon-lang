@@ -2618,8 +2618,8 @@ public:
         
         CommandOptions (CommandInterpreter &interpreter) :
             Options(interpreter),
-            m_use_global_module_list (false),
             m_format_array(),
+            m_use_global_module_list (false),
             m_module_addr (LLDB_INVALID_ADDRESS)
         {
         }

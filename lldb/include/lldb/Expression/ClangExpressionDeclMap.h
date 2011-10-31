@@ -665,11 +665,11 @@ private:
     {
     public:
         ParserVars(ClangExpressionDeclMap &decl_map) :
-            m_decl_map(decl_map),
             m_exe_ctx(NULL),
             m_sym_ctx(),
             m_persistent_vars(NULL),
-            m_enable_lookups(false)
+            m_enable_lookups(false),
+            m_decl_map(decl_map)
         {
         }
         

@@ -85,6 +85,7 @@ ValueObject::ValueObject (ValueObject &parent) :
     m_last_value_format(),
     m_last_synthetic_filter(),
     m_user_id_of_forced_summary(),
+    m_address_type_of_ptr_or_ref_children(eAddressTypeInvalid),
     m_value_is_valid (false),
     m_value_did_change (false),
     m_children_count_valid (false),
@@ -94,7 +95,6 @@ ValueObject::ValueObject (ValueObject &parent) :
     m_is_bitfield_for_scalar(false),
     m_is_expression_path_child(false),
     m_is_child_at_offset(false),
-    m_address_type_of_ptr_or_ref_children(eAddressTypeInvalid),
     m_trying_summary_already(false)
 {
     m_manager->ManageObject(this);
@@ -131,6 +131,7 @@ ValueObject::ValueObject (ExecutionContextScope *exe_scope,
     m_last_value_format(),
     m_last_synthetic_filter(),
     m_user_id_of_forced_summary(),
+    m_address_type_of_ptr_or_ref_children(child_ptr_or_ref_addr_type),
     m_value_is_valid (false),
     m_value_did_change (false),
     m_children_count_valid (false),
@@ -140,7 +141,6 @@ ValueObject::ValueObject (ExecutionContextScope *exe_scope,
     m_is_bitfield_for_scalar(false),
     m_is_expression_path_child(false),
     m_is_child_at_offset(false),
-    m_address_type_of_ptr_or_ref_children(child_ptr_or_ref_addr_type),
     m_trying_summary_already(false)
 {
     m_manager = new ValueObjectManager();

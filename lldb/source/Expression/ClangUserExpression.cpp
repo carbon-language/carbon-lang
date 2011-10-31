@@ -54,9 +54,9 @@ ClangUserExpression::ClangUserExpression (const char *expr,
     m_objectivec (false),
     m_needs_object_ptr (false),
     m_const_object (false),
+    m_target (NULL),
     m_evaluated_statically (false),
-    m_const_result (),
-    m_target (NULL)
+    m_const_result ()
 {
 }
 

@@ -34,10 +34,10 @@ ASTResultSynthesizer::ASTResultSynthesizer(ASTConsumer *passthrough,
     m_ast_context (NULL),
     m_passthrough (passthrough),
     m_passthrough_sema (NULL),
-    m_sema (NULL),
-    m_desired_type (desired_type),
     m_scratch_ast_context (scratch_ast_context),
-    m_persistent_vars (persistent_vars)
+    m_persistent_vars (persistent_vars),
+    m_sema (NULL),
+    m_desired_type (desired_type)
 {
     if (!m_passthrough)
         return;

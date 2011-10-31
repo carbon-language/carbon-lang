@@ -44,11 +44,11 @@ public:
     ///     A reference to the LLDB object that handles entity lookup.
     //------------------------------------------------------------------
 	ClangASTSource (const lldb::TargetSP &target) :
-        m_ast_context (NULL),
-        m_active_lookups (),
         m_import_in_progress (false),
         m_lookups_enabled (false),
-        m_target (target)
+        m_target (target),
+        m_ast_context (NULL),
+        m_active_lookups ()
     {
     }
     

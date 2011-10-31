@@ -378,10 +378,10 @@ Driver::OptionData::OptionData () :
     m_debug_mode (false),
     m_print_version (false),
     m_print_help (false),
-    m_use_external_editor(false),
     m_wait_for(false),
     m_process_name(),
     m_process_pid(LLDB_INVALID_PROCESS_ID),
+    m_use_external_editor(false),
     m_seen_options()
 {
 }

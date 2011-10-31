@@ -80,8 +80,8 @@ InstructionLLVM::InstructionLLVM (const Address &addr,
                                   llvm::Triple::ArchType arch_type) :
     Instruction (addr, addr_class),
     m_disassembler (disassembler),
-    m_arch_type (arch_type),
-    m_inst (NULL)
+    m_inst (NULL),
+    m_arch_type (arch_type)
 {
 }
 
