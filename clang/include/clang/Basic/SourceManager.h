@@ -641,8 +641,9 @@ public:
   /// specified memory buffer.  This does no caching of the buffer and takes
   /// ownership of the MemoryBuffer, so only pass a MemoryBuffer to this once.
   FileID createFileIDForMemBuffer(const llvm::MemoryBuffer *Buffer,
-                                  int LoadedID = 0, unsigned LoadedOffset = 0) {
-    return createFileID(createMemBufferContentCache(Buffer), SourceLocation(),
+                                  int LoadedID = 0, unsigned LoadedOffset = 0,
+                                 SourceLocation IncludeLoc = SourceLocation()) {
+    return createFileID(createMemBufferContentCache(Buffer), IncludeLoc,
                         SrcMgr::C_User, LoadedID, LoadedOffset);
   }
 
