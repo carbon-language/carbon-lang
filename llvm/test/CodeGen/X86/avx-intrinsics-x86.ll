@@ -1743,12 +1743,12 @@ define <4 x i32> @test_x86_ssse3_phadd_d_128(<4 x i32> %a0, <4 x i32> %a1) {
 declare <4 x i32> @llvm.x86.ssse3.phadd.d.128(<4 x i32>, <4 x i32>) nounwind readnone
 
 
-define <4 x i32> @test_x86_ssse3_phadd_sw_128(<4 x i32> %a0, <4 x i32> %a1) {
+define <8 x i16> @test_x86_ssse3_phadd_sw_128(<8 x i16> %a0, <8 x i16> %a1) {
   ; CHECK: vphaddsw
-  %res = call <4 x i32> @llvm.x86.ssse3.phadd.sw.128(<4 x i32> %a0, <4 x i32> %a1) ; <<4 x i32>> [#uses=1]
-  ret <4 x i32> %res
+  %res = call <8 x i16> @llvm.x86.ssse3.phadd.sw.128(<8 x i16> %a0, <8 x i16> %a1) ; <<8 x i16>> [#uses=1]
+  ret <8 x i16> %res
 }
-declare <4 x i32> @llvm.x86.ssse3.phadd.sw.128(<4 x i32>, <4 x i32>) nounwind readnone
+declare <8 x i16> @llvm.x86.ssse3.phadd.sw.128(<8 x i16>, <8 x i16>) nounwind readnone
 
 
 define <8 x i16> @test_x86_ssse3_phadd_w_128(<8 x i16> %a0, <8 x i16> %a1) {
