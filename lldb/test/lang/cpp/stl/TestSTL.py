@@ -41,8 +41,6 @@ class STLTestCase(TestBase):
         # rdar://problem/8543077
         # test/stl: clang built binaries results in the breakpoint locations = 3,
         # is this a problem with clang generated debug info?
-        #
-        # Break on line 13 of main.cpp.
         self.expect("breakpoint set -f main.cpp -l %d" % self.line,
                     BREAKPOINT_CREATED,
             startstr = "Breakpoint created: 1: file ='main.cpp', line = %d" %
@@ -59,14 +57,18 @@ class STLTestCase(TestBase):
         self.expect("breakpoint list -f", BREAKPOINT_HIT_ONCE,
             substrs = [' resolved, hit count = 1'])
 
-        # Now do 'thread step-in', if we have successfully stopped, we should
-        # stop due to the reason of "step in".
-        self.runCmd("thread step-in")
+        # Now try some expressions....
 
-        self.runCmd("process status")
-        if "stopped" in self.res.GetOutput():
-            self.expect("thread backtrace", "We have successfully stepped in",
-                        substrs = ['stop reason = step in'])
+        self.runCmd('expr for (int i = 0; i < hello_world.length(); ++i) { (void)printf("%c\\n", hello_world[i]); }')
+
+        self.expect('expr associative_array.size()',
+            substrs = [' = 3'])
+        self.expect('expr associative_array.count(hello_world)',
+            substrs = [' = 1'])
+        self.expect('expr associative_array[hello_world]',
+            substrs = [' = 1'])
+        self.expect('expr associative_array["hello"]',
+            substrs = [' = 2'])
 
 
 if __name__ == '__main__':
