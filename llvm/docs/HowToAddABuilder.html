@@ -1,0 +1,118 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+                      "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>How To Add Your Build Configuration To LLVM Buildbot Infrastructure</title>
+  <link rel="stylesheet" href="llvm.css" type="text/css">
+</head>
+<body>
+
+<h1>How To Release LLVM To The Public</h1>
+<ol>
+  <li><a href="#introduction">Introduction</a></li>
+  <li><a href="#criteria">Steps To Add Builder To LLVM Buildbot</a></li>
+</ol>
+<div class="doc_author">
+  <p>Written by <a href="mailto:gkistanova@gmail.com">Galina Kistanova</a>
+  </p>
+</div>
+
+<!-- *********************************************************************** -->
+<h2><a name="introduction">Introduction</a></h2>
+<!-- *********************************************************************** -->
+
+<div>
+
+<p>This document contains information about adding private slave builder to 
+   LLVM Buildbot Infrastructure: <tt>http://lab.llvm.org:8011</tt>
+</div>
+
+<!-- *********************************************************************** -->
+<h2><a name="process">Steps To Add Builder To LLVM Buildbot</a></h2>
+<!-- *********************************************************************** -->
+<div>
+
+<p>Volunters can provade there build machines to work as slave builders to 
+   public LLVM Buildbot. Below desrcibed recommended steps to implement this 
+   task.</p>
+
+<p>The steps are roughly as follows:</p>
+
+<ol>
+  <li><p>Check the existing build configurations to make sure the one you are 
+      interested in is not covered yet or gets built on your computer much 
+      faster than existing one. We prefer faster builds so developers will get 
+      feedback sooner after changes get committed.</p></li>
+
+  <li><p>The computer you will be registering with the LLVM buildbot 
+      infrastructure should have all dependencies installed and you can 
+      actually build your configuration successfully. You can build multiple 
+      configurations on one computer.</p></li>
+
+  <li><p>Install buildslave (currently we are using buildbot version 0.8.5). 
+      Depending on the platform, buildslave could be available to download and 
+      install with your packet manager, or you can download it directly from 
+      <tt>http://trac.buildbot.net/</tt> and install it manually.</p></li>
+
+  <li><p>Create a designated user account your buildslave will be running 
+      under.</p></li>
+
+  <li><p>Choose the buildslave root directory (all builds will be placed under 
+      it), buildslave access name and password the build master will be using 
+      to authenticate your build slave.</p></li>
+
+  <li><p>Then create a build slave in context of that buildslave account.
+      Point it to the <tt>lab.llvm.org port 9990</tt><br /> 
+      (see <tt>http://buildbot.net/buildbot/docs/current/full.html#creating-a-slave</tt>
+      for more details) by running the following command:
+      <div class="doc_code">
+      <pre>
+      $ buildslave create-slave <i>buildslave-root-directory</i> lab.llvm.org: 9990 \
+      <i>buildslave-access-name buildslave-access-password</i>
+      </pre></div></p></li>
+
+  <li><p>Fill the build slave description and admin name/e-mail. 
+      Here is an example of the build slave description:
+      <div class="doc_code">
+      <pre>
+           Windows 7 x64
+           Core i7 (2.66GHz), 16GB of RAM
+           
+           g++.exe (TDM-1 mingw32) 4.4.0
+           GNU Binutils 2.19.1
+           cmake version 2.8.4
+           Microsoft(R) 32-bit C/C++ Optimizing Compiler Version 16.00.40219.01 for 80x86
+      </pre></div></p></li>     
+
+  <li><p>Make sure you can actually start the buildslave successfully. Then set 
+      up your build slave to start automatically at the start up time.
+      See buildbot manual for help.</p></li>
+
+  <li><p>Send a patch which adds your build slave and builder to zorg.<br />
+           * slaves are added to<br />
+<tt>http://llvm.org/svn/llvm-project/zorg/trunk/buildbot/osuosl/master/config/slaves.py</tt><br />
+           * builders are added to<br />
+<tt>http://llvm.org/svn/llvm-project/zorg/trunk/buildbot/osuosl/master/config/builders.py</tt></p></li>
+
+  <li><p>Then send the buildslave access name and password directly to 
+      <a href="mailto:gkistanova@gmail.com">Galina Kistanova</a> 
+
+  <li><p>Finally, the end!</p></li>
+</ol>
+
+</div>
+
+<!-- *********************************************************************** -->
+<hr>
+<address>
+  <a href="http://jigsaw.w3.org/css-validator/check/referer"><img
+  src="http://jigsaw.w3.org/css-validator/images/vcss-blue" alt="Valid CSS"></a>
+  <a href="http://validator.w3.org/check/referer"><img
+  src="http://www.w3.org/Icons/valid-html401-blue" alt="Valid HTML 4.01"></a>
+  <a href="http://llvm.org/">The LLVM Compiler Infrastructure</a>
+  <br>
+  Last modified: $Date: 2011-10-31 12:50:0 -0700 (Mon, 31 Oct 2011) $
+</address>
+</body>
+</html>
