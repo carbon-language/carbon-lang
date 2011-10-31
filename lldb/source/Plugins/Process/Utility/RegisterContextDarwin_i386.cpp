@@ -17,6 +17,13 @@
 #include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/Scalar.h"
 #include "lldb/Host/Endian.h"
+#include "llvm/Support/Compiler.h"
+
+// Support building against older versions of LLVM, this macro was added
+// recently.
+#ifndef LLVM_EXTENSION
+#define LLVM_EXTENSION
+#endif
 
 // Project includes
 #include "RegisterContextDarwin_i386.h"
@@ -204,9 +211,9 @@ RegisterContextDarwin_i386::~RegisterContextDarwin_i386()
 
 
 
-#define GPR_OFFSET(reg) (offsetof (RegisterContextDarwin_i386::GPR, reg))
-#define FPU_OFFSET(reg) (offsetof (RegisterContextDarwin_i386::FPU, reg) + sizeof (RegisterContextDarwin_i386::GPR))
-#define EXC_OFFSET(reg) (offsetof (RegisterContextDarwin_i386::EXC, reg) + sizeof (RegisterContextDarwin_i386::GPR) + sizeof (RegisterContextDarwin_i386::FPU))
+#define GPR_OFFSET(reg) (LLVM_EXTENSION offsetof (RegisterContextDarwin_i386::GPR, reg))
+#define FPU_OFFSET(reg) (LLVM_EXTENSION offsetof (RegisterContextDarwin_i386::FPU, reg) + sizeof (RegisterContextDarwin_i386::GPR))
+#define EXC_OFFSET(reg) (LLVM_EXTENSION offsetof (RegisterContextDarwin_i386::EXC, reg) + sizeof (RegisterContextDarwin_i386::GPR) + sizeof (RegisterContextDarwin_i386::FPU))
 
 // These macros will auto define the register name, alt name, register size,
 // register offset, encoding, format and native register. This ensures that
