@@ -32,9 +32,16 @@ INST_LIBLLDB := $(PROJ_libdir)/liblldb$(SHLIBEXT)
 LLDB_SWIG_INCLUDE_DIRS += -I"/usr/local/include"
 LLDB_SWIG_INCLUDE_DIRS += -I"/usr/include"
 
+# On Darwin, stdint.h might only be in the compiler subdirectory. Unfortunately,
+# swig doesn't currently seem able to understand Clang's stdint.h, so we have to
+# point at the GCC one.
+ifeq ($(HOST_OS),Darwin)
+LLDB_SWIG_INCLUDE_DIRS += -I"/usr/include/gcc/darwin/4.2"
+endif
+
 SWIG_DEPEND_OPTIONS = -MMD -MF "$(PROJ_OBJ_DIR)/$*.cpp.d.tmp"
 CPP_DEPEND_MOVEFILE = then $(MV) -f "$(PROJ_OBJ_DIR)/$*.cpp.d.tmp" "$(PROJ_OBJ_DIR)/$*.cpp.d"; \
-                      else $(RM) "$(PROJ_OBJ_DIR)/$*.cpp.d.tmp"; exit 1; fi
+                      else $(RM) -f "$(PROJ_OBJ_DIR)/$*.cpp.d.tmp"; exit 1; fi
 
 LLDBWrapPython.cpp: $(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts/Python/modify-python-lldb.py \
                     $(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts/Python/edit-swig-python-wrapper-file.py
