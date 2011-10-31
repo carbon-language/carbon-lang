@@ -28,8 +28,17 @@ typedef std::vector<Module *> ModuleCollection;
 static ModuleCollection &
 GetModuleCollection()
 {
-    static ModuleCollection g_module_collection;
-    return g_module_collection;
+    // This module collection needs to live past any module, so we could either make it a
+    // shared pointer in each module or just leak is.  Since it is only an empty vector by
+    // the time all the modules have gone away, we just leak it for now.  If we decide this 
+    // is a big problem we can introduce a Finalize method that will tear everything down in
+    // a predictable order.
+    
+    static ModuleCollection *g_module_collection = NULL;
+    if (g_module_collection == NULL)
+        g_module_collection = new ModuleCollection();
+        
+    return *g_module_collection;
 }
 
 Mutex &
