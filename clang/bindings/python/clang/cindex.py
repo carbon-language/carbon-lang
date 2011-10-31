@@ -115,6 +115,14 @@ class SourceLocation(Structure):
             self._data = (f, int(l.value), int(c.value), int(o.value))
         return self._data
 
+    @staticmethod
+    def from_position(tu, file, line, column):
+        """
+        Retrieve the source location associated with a given file/line/column in
+        a particular translation unit.
+        """
+        return SourceLocation_getLocation(tu, file, line, column)
+
     @property
     def file(self):
         """Get the file represented by this source location."""
@@ -816,6 +824,10 @@ class Cursor(Structure):
     acts as a kind of iterator.
     """
     _fields_ = [("_kind_id", c_int), ("xdata", c_int), ("data", c_void_p * 3)]
+
+    @staticmethod
+    def from_location(tu, location):
+        return Cursor_get(tu, location)
 
     def __eq__(self, other):
         return Cursor_eq(self, other)
@@ -1579,6 +1591,10 @@ SourceLocation_loc = lib.clang_getInstantiationLocation
 SourceLocation_loc.argtypes = [SourceLocation, POINTER(c_object_p),
                                POINTER(c_uint), POINTER(c_uint),
                                POINTER(c_uint)]
+
+SourceLocation_getLocation = lib.clang_getLocation
+SourceLocation_getLocation.argtypes = [TranslationUnit, File, c_uint, c_uint]
+SourceLocation_getLocation.restype = SourceLocation
 
 # Source Range Functions
 SourceRange_getRange = lib.clang_getRange

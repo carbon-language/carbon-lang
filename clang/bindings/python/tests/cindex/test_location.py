@@ -1,4 +1,4 @@
-from clang.cindex import Index
+from clang.cindex import Index, File, SourceLocation, Cursor
 
 baseInput="int one;\nint two;\n"
 
@@ -34,6 +34,18 @@ def test_location():
             assert_location(n.location,line=1,column=6,offset=5)
         if n.spelling == 'two':
             assert_location(n.location,line=2,column=5,offset=14)
+
+    # define the expected location ourselves and see if it matches
+    # the returned location
+    tu = index.parse('t.c', unsaved_files = [('t.c',baseInput)])
+
+    file = File.from_name(tu, 't.c')
+    location = SourceLocation.from_position(tu, file, 1, 5)
+    cursor = Cursor.from_location(tu, location)
+
+    for n in tu.cursor.get_children():
+        if n.spelling == 'one':
+            assert n == cursor
 
 def test_extent():
     index = Index.create()
