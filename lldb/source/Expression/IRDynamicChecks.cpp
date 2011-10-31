@@ -435,7 +435,7 @@ private:
         arg_array[0] = bit_cast;
         arg_array[1] = selector;
         
-        ArrayRef<llvm::Value*> args(arg_array, 1);
+        ArrayRef<llvm::Value*> args(arg_array, 2);
         
         CallInst::Create(m_objc_object_check_func, 
                          args,

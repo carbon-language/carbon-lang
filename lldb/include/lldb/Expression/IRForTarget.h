@@ -233,6 +233,11 @@ private:
     BuildFunctionPointer (llvm::Type *type,
                           uint64_t ptr);
     
+    void
+    RegisterFunctionMetadata (llvm::LLVMContext &context,
+                              llvm::Value *function_ptr,
+                              const char *name);
+    
     //------------------------------------------------------------------
     /// The top-level pass implementation
     ///

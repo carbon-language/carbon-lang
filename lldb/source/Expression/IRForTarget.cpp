@@ -291,6 +291,36 @@ IRForTarget::BuildFunctionPointer (llvm::Type *type,
     return ConstantExpr::getIntToPtr(fun_addr_int, fun_ptr_ty);
 }
 
+void
+IRForTarget::RegisterFunctionMetadata(LLVMContext &context,
+                                      llvm::Value *function_ptr, 
+                                      const char *name)
+{
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+
+    for (Value::use_iterator i = function_ptr->use_begin(), e = function_ptr->use_end();
+         i != e;
+         ++i)
+    {
+        Value *user = *i;
+                
+        if (Instruction *user_inst = dyn_cast<Instruction>(user))
+        {
+            Constant *name_array = ConstantArray::get(context, StringRef(name));
+            
+            ArrayRef<Value *> md_values(name_array);
+            
+            MDNode *metadata = MDNode::get(context, md_values);
+            
+            user_inst->setMetadata("lldb.call.realName", metadata);
+        }
+        else
+        {
+            RegisterFunctionMetadata (context, user, name);
+        }
+    }
+}
+
 bool 
 IRForTarget::ResolveFunctionPointers(llvm::Module &llvm_module,
                                      llvm::Function &llvm_function)
@@ -325,6 +355,8 @@ IRForTarget::ResolveFunctionPointers(llvm::Module &llvm_module,
             return false; // GetFunctionAddress reports its own errors
         
         Constant *value = BuildFunctionPointer(fun->getFunctionType(), addr);
+        
+        RegisterFunctionMetadata (llvm_module.getContext(), fun, name.AsCString());
         
         if (value_ptr)
             *value_ptr = value;
