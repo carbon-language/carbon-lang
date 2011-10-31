@@ -1409,8 +1409,10 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
 }
 
 LValue CodeGenFunction::EmitBlockDeclRefLValue(const BlockDeclRefExpr *E) {
+  bool RefAsPointee = 
+    E->getDecl()->getType()->isRValueReferenceType() ? true : false;
   unsigned Alignment =
-    getContext().getDeclAlign(E->getDecl()).getQuantity();
+    getContext().getDeclAlign(E->getDecl(), RefAsPointee).getQuantity();
   return MakeAddrLValue(GetAddrOfBlockDecl(E), E->getType(), Alignment);
 }
 
