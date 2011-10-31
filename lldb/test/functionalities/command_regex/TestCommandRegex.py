@@ -27,13 +27,13 @@ class CommandRegexTestCase(TestBase):
 
         # Substitute 'Help!' for 'help' using the 'commands regex' mechanism.
         child.expect_exact(prompt)
-        child.sendline("command regex 'Help!'")
+        child.sendline("command regex 'Help__'")
         child.expect_exact(regex_prompt)
         child.sendline('s/^$/help/')
         child.expect_exact(regex_prompt1)
         child.sendline('')
         # Help!
-        child.sendline('Help!')
+        child.sendline('Help__')
         # If we see the familiar 'help' output, the test is done.
         child.expect('The following is a list of built-in, permanent debugger commands:')
 

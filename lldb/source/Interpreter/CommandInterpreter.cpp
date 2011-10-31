@@ -1376,6 +1376,13 @@ CommandInterpreter::HandleCommand (const char *command_line,
                         }
                     }
                     break;
+
+                default:
+                    result.AppendErrorWithFormat ("unknown command shorthand suffix: '%s'\n", 
+                                                  suffix.c_str());
+                    result.SetStatus (eReturnStatusFailed);
+                    return false;
+        
                 }
             }
         }
