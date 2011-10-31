@@ -1260,6 +1260,17 @@ public:
     return Loc.getOffset() < NextLocalOffset;
   }
 
+  /// \brief Returns true if \arg FID came from a PCH/Module.
+  bool isLoadedFileID(FileID FID) const {
+    assert(FID.ID != -1 && "Using FileID sentinel value");
+    return FID.ID < 0;
+  }
+
+  /// \brief Returns true if \arg FID did not come from a PCH/Module.
+  bool isLocalFileID(FileID FID) const {
+    return !isLoadedFileID(FID);
+  }
+
 private:
   const llvm::MemoryBuffer *getFakeBufferForRecovery() const;
 
