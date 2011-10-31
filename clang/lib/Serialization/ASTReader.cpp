@@ -2217,13 +2217,13 @@ ASTReader::ReadASTBlock(Module &F) {
     }
 
     case DECL_REPLACEMENTS: {
-      if (Record.size() % 2 != 0) {
+      if (Record.size() % 3 != 0) {
         Error("invalid DECL_REPLACEMENTS block in AST file");
         return Failure;
       }
-      for (unsigned I = 0, N = Record.size(); I != N; I += 2)
+      for (unsigned I = 0, N = Record.size(); I != N; I += 3)
         ReplacedDecls[getGlobalDeclID(F, Record[I])]
-          = std::make_pair(&F, Record[I+1]);
+          = ReplacedDeclInfo(&F, Record[I+1], Record[I+2]);
       break;
     }
 

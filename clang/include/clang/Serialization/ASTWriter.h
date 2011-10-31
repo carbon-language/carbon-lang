@@ -286,14 +286,24 @@ private:
   /// another module.
   SmallVector<ChainedObjCCategoriesData, 16> LocalChainedObjCCategories;
 
+  struct ReplacedDeclInfo {
+    serialization::DeclID ID;
+    uint64_t Offset;
+    unsigned Loc;
+
+    ReplacedDeclInfo() : ID(0), Offset(0), Loc(0) {}
+    ReplacedDeclInfo(serialization::DeclID ID, uint64_t Offset,
+                     SourceLocation Loc)
+      : ID(ID), Offset(Offset), Loc(Loc.getRawEncoding()) {}
+  };
+
   /// \brief Decls that have been replaced in the current dependent AST file.
   ///
   /// When a decl changes fundamentally after being deserialized (this shouldn't
   /// happen, but the ObjC AST nodes are designed this way), it will be
   /// serialized again. In this case, it is registered here, so that the reader
   /// knows to read the updated version.
-  SmallVector<std::pair<serialization::DeclID, uint64_t>, 16>
-      ReplacedDecls;
+  SmallVector<ReplacedDeclInfo, 16> ReplacedDecls;
 
   /// \brief Statements that we've encountered while serializing a
   /// declaration or type.

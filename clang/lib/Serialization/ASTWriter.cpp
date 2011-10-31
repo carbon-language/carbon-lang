@@ -3234,10 +3234,11 @@ void ASTWriter::WriteDeclReplacementsBlock() {
     return;
 
   RecordData Record;
-  for (SmallVector<std::pair<DeclID, uint64_t>, 16>::iterator
+  for (SmallVector<ReplacedDeclInfo, 16>::iterator
            I = ReplacedDecls.begin(), E = ReplacedDecls.end(); I != E; ++I) {
-    Record.push_back(I->first);
-    Record.push_back(I->second);
+    Record.push_back(I->ID);
+    Record.push_back(I->Offset);
+    Record.push_back(I->Loc);
   }
   Stream.EmitRecord(DECL_REPLACEMENTS, Record);
 }

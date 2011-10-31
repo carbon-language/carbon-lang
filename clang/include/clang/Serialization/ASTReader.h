@@ -290,8 +290,17 @@ private:
   /// in the chain.
   DeclUpdateOffsetsMap DeclUpdateOffsets;
 
-  typedef llvm::DenseMap<serialization::DeclID,
-                         std::pair<Module *, uint64_t> >
+  struct ReplacedDeclInfo {
+    Module *Mod;
+    uint64_t Offset;
+    unsigned RawLoc;
+
+    ReplacedDeclInfo() : Mod(0), Offset(0), RawLoc(0) {}
+    ReplacedDeclInfo(Module *Mod, uint64_t Offset, unsigned RawLoc)
+      : Mod(Mod), Offset(Offset), RawLoc(RawLoc) {}
+  };
+
+  typedef llvm::DenseMap<serialization::DeclID, ReplacedDeclInfo>
       DeclReplacementMap;
   /// \brief Declarations that have been replaced in a later file in the chain.
   DeclReplacementMap ReplacedDecls;

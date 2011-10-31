@@ -1449,8 +1449,10 @@ ASTReader::RecordLocation
 ASTReader::DeclCursorForID(DeclID ID, unsigned &RawLocation) {
   // See if there's an override.
   DeclReplacementMap::iterator It = ReplacedDecls.find(ID);
-  if (It != ReplacedDecls.end())
-    return RecordLocation(It->second.first, It->second.second);
+  if (It != ReplacedDecls.end()) {
+    RawLocation = It->second.RawLoc;
+    return RecordLocation(It->second.Mod, It->second.Offset);
+  }
 
   GlobalDeclMapType::iterator I = GlobalDeclMap.find(ID);
   assert(I != GlobalDeclMap.end() && "Corrupted global declaration map");

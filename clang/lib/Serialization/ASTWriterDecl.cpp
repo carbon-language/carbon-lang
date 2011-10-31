@@ -1647,7 +1647,8 @@ void ASTWriter::WriteDecl(ASTContext &Context, Decl *D) {
 
   if (ID < FirstDeclID) {
     // We're replacing a decl in a previous file.
-    ReplacedDecls.push_back(std::make_pair(ID, Stream.GetCurrentBitNo()));
+    ReplacedDecls.push_back(ReplacedDeclInfo(ID, Stream.GetCurrentBitNo(),
+                                             D->getLocation()));
   } else {
     unsigned Index = ID - FirstDeclID;
 
