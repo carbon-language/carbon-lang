@@ -772,8 +772,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                 DataBufferSP strtab_data_sp(m_file.ReadFileContents(m_offset + symtab_load_command.stroff, symtab_load_command.strsize));
 
                 const char *strtab_data = (const char *)strtab_data_sp->GetBytes();
-//                DataExtractor symtab_data(symtab_data_sp, endian, addr_size);
-//                DataExtractor strtab_data(strtab_data_sp, endian, addr_size);
+                const size_t strtab_data_len = strtab_data_sp->GetByteSize();
 
                 static ConstString g_segment_name_TEXT ("__TEXT");
                 static ConstString g_segment_name_DATA ("__DATA");
@@ -840,7 +839,21 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                     }
 
                     SymbolType type = eSymbolTypeInvalid;
+                    if (nlist.n_strx >= strtab_data_len)
+                    {
+                        // No symbol should be NULL, even the symbols with no 
+                        // string values should have an offset zero which points
+                        // to an empty C-string
+                        fprintf (stderr,
+                                 "error: symbol[%u] has invalid string table offset 0x%x in %s/%s, ignoring symbol\n", 
+                                 nlist_idx,
+                                 nlist.n_strx,
+                                 m_module->GetFileSpec().GetDirectory().GetCString(),
+                                 m_module->GetFileSpec().GetFilename().GetCString());
+                        continue;
+                    }
                     const char* symbol_name = &strtab_data[nlist.n_strx];
+
                     if (symbol_name[0] == '\0')
                         symbol_name = NULL;
                     Section* symbol_section = NULL;
