@@ -6941,9 +6941,9 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
   // Check to see if this is a BUILD_VECTOR of a bunch of values
   // which come from any_extend or zero_extend nodes. If so, we can create
   // a new BUILD_VECTOR using bit-casts which may enable other BUILD_VECTOR
-  // optimizations.
+  // optimizations. We do not handle sign-extend because we can't fill the sign
+  // using shuffles.
   EVT SourceType = MVT::Other;
-  bool allExtend = true;
   bool allAnyExt = true;
   for (unsigned i = 0; i < NumInScalars; ++i) {
     SDValue In = N->getOperand(i);
@@ -6953,9 +6953,9 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
     bool AnyExt  = In.getOpcode() == ISD::ANY_EXTEND;
     bool ZeroExt = In.getOpcode() == ISD::ZERO_EXTEND;
 
-    // Abort non-extend incoming values.
+    // Abort if the element is not an extension.
     if (!ZeroExt && !AnyExt) {
-      allExtend = false;
+      SourceType = MVT::Other;
       break;
     }
 
@@ -6964,10 +6964,11 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
 
     // Check that all of the widened source types are the same.
     if (SourceType == MVT::Other)
+      // First time.
       SourceType = InTy;
     else if (InTy != SourceType) {
       // Multiple income types. Abort.
-      allExtend = false;
+      SourceType = MVT::Other;
       break;
     }
 
@@ -6975,17 +6976,27 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
     allAnyExt &= AnyExt;
   }
 
-  // And we are post type-legalization,
-  // If all of the values are Ext or undef,
-  // We have a non undef entry.
-  if (LegalTypes && allExtend && SourceType != MVT::Other) {
+
+  // In order to have valid types, all of the inputs must be extended from the
+  // same source type and all of the inputs must be any or zero extend.
+  // Scalar sizes must be a power of two.
+  EVT OutScalarTy = N->getValueType(0).getScalarType();
+  bool validTypes = SourceType != MVT::Other &&
+                 isPowerOf2_32(OutScalarTy.getSizeInBits()) &&
+                 isPowerOf2_32(SourceType.getSizeInBits());
+
+  // We perform this optimization post type-legalization because
+  // the type-legalizer often scalarizes integer-promoted vectors.
+  // Performing this optimization before may create bit-casts which
+  // will be type-legalized to complex code sequences.
+  // We perform this optimization only before the operation legalizer because we
+  // may introduce illegal operations.
+  if (LegalTypes && !LegalOperations && validTypes) {
     bool isLE = TLI.isLittleEndian();
-    EVT InScalarTy = SourceType.getScalarType();
-    EVT OutScalarTy = N->getValueType(0).getScalarType();
-    unsigned ElemRatio = OutScalarTy.getSizeInBits()/InScalarTy.getSizeInBits();
+    unsigned ElemRatio = OutScalarTy.getSizeInBits()/SourceType.getSizeInBits();
     assert(ElemRatio > 1 && "Invalid element size ratio");
-    SDValue Filler = allAnyExt ? DAG.getUNDEF(InScalarTy):
-                                 DAG.getConstant(0, InScalarTy);
+    SDValue Filler = allAnyExt ? DAG.getUNDEF(SourceType):
+                                 DAG.getConstant(0, SourceType);
 
     unsigned NewBVElems = ElemRatio * N->getValueType(0).getVectorNumElements();
     SmallVector<SDValue, 8> Ops(NewBVElems, Filler);
@@ -6998,7 +7009,7 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
               Cast.getOpcode() == ISD::UNDEF) && "Invalid cast opcode");
       SDValue In;
       if (Cast.getOpcode() == ISD::UNDEF)
-        In = DAG.getUNDEF(InScalarTy);
+        In = DAG.getUNDEF(SourceType);
       else
         In = Cast->getOperand(0);
       unsigned Index = isLE ? (i * ElemRatio) :
@@ -7009,9 +7020,11 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
     }
 
     // The type of the new BUILD_VECTOR node.
-    EVT VecVT = EVT::getVectorVT(*DAG.getContext(), InScalarTy, NewBVElems);
+    EVT VecVT = EVT::getVectorVT(*DAG.getContext(), SourceType, NewBVElems);
     assert(VecVT.getSizeInBits() == N->getValueType(0).getSizeInBits() &&
            "Invalid vector size");
+    // Check if the new vector type is legal.
+    if (!isTypeLegal(VecVT)) return SDValue();
 
     // Make the new BUILD_VECTOR.
     SDValue BV = DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(),
