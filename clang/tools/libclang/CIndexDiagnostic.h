@@ -13,19 +13,99 @@
 #ifndef LLVM_CLANG_CINDEX_DIAGNOSTIC_H
 #define LLVM_CLANG_CINDEX_DIAGNOSTIC_H
 
+#include "clang-c/Index.h"
+
 namespace clang {
 
 class LangOptions;
 class StoredDiagnostic;
 
+class CXDiagnosticImpl {
+public:
+  enum Kind { StoredDiagnosticKind, SerializedDiagnosticKind };
+  
+  virtual ~CXDiagnosticImpl();
+  
+  /// \brief Return the severity of the diagnostic.
+  virtual CXDiagnosticSeverity getSeverity() const = 0;
+  
+  /// \brief Return the location of the diagnostic.
+  virtual CXSourceLocation getLocation() const = 0;
+
+  /// \brief Return the spelling of the diagnostic.
+  virtual CXString getSpelling() const = 0;
+
+  /// \brief Return the text for the diagnostic option.
+  virtual CXString getDiagnosticOption(CXString *Disable) const = 0;
+  
+  /// \brief Return the category of the diagnostic.
+  virtual unsigned getCategory() const = 0;
+  
+  /// \brief Return the number of source ranges for the diagnostic.
+  virtual unsigned getNumRanges() const = 0;
+  
+  /// \brief Return the source ranges for the diagnostic.
+  virtual CXSourceRange getRange(unsigned Range) const = 0;
+
+  /// \brief Return the number of FixIts.
+  virtual unsigned getNumFixIts() const = 0;
+
+  /// \brief Return the FixIt information (source range and inserted text).
+  virtual CXString getFixIt(unsigned FixIt,
+                            CXSourceRange *ReplacementRange) const = 0;
+
+  Kind getKind() const { return K; }
+
+protected:
+  CXDiagnosticImpl(Kind k) : K(k) {}
+  
+private:
+  Kind K;
+};
+  
 /// \brief The storage behind a CXDiagnostic
-struct CXStoredDiagnostic {
+struct CXStoredDiagnostic : public CXDiagnosticImpl {
   const StoredDiagnostic &Diag;
   const LangOptions &LangOpts;
   
   CXStoredDiagnostic(const StoredDiagnostic &Diag,
                      const LangOptions &LangOpts)
-    : Diag(Diag), LangOpts(LangOpts) { }
+    : CXDiagnosticImpl(StoredDiagnosticKind),
+      Diag(Diag), LangOpts(LangOpts) { }
+  
+  virtual ~CXStoredDiagnostic() {}
+  
+  /// \brief Return the severity of the diagnostic.
+  virtual CXDiagnosticSeverity getSeverity() const;
+  
+  /// \brief Return the location of the diagnostic.
+  virtual CXSourceLocation getLocation() const;
+
+  /// \brief Return the spelling of the diagnostic.
+  virtual CXString getSpelling() const;
+
+  /// \brief Return the text for the diagnostic option.
+  virtual CXString getDiagnosticOption(CXString *Disable) const;
+  
+  /// \brief Return the category of the diagnostic.
+  virtual unsigned getCategory() const;
+  
+  /// \brief Return the number of source ranges for the diagnostic.
+  virtual unsigned getNumRanges() const;
+  
+  /// \brief Return the source ranges for the diagnostic.
+  virtual CXSourceRange getRange(unsigned Range) const;
+
+  /// \brief Return the number of FixIts.
+  virtual unsigned getNumFixIts() const;
+
+  /// \brief Return the FixIt information (source range and inserted text).
+  virtual CXString getFixIt(unsigned FixIt,
+                            CXSourceRange *ReplacementRange) const;
+
+  static bool classof(const CXDiagnosticImpl *D) {
+    return D->getKind() == StoredDiagnosticKind;
+  }
 };
 
 } // end namespace clang
