@@ -257,6 +257,39 @@ static bool CheckConstantExpression(const CCValue &Value) {
   return !Value.isLValue() || IsGlobalLValue(Value.getLValueBase());
 }
 
+const ValueDecl *GetLValueBaseDecl(const LValue &LVal) {
+  if (!LVal.Base)
+    return 0;
+
+  if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(LVal.Base))
+    return DRE->getDecl();
+
+  // FIXME: Static data members accessed via a MemberExpr are represented as
+  // that MemberExpr. We should use the Decl directly instead.
+  if (const MemberExpr *ME = dyn_cast<MemberExpr>(LVal.Base)) {
+    assert(!isa<FieldDecl>(ME->getMemberDecl()) && "shouldn't see fields here");
+    return ME->getMemberDecl();
+  }
+
+  return 0;
+}
+
+static bool IsLiteralLValue(const LValue &Value) {
+  return Value.Base &&
+         !isa<DeclRefExpr>(Value.Base) &&
+         !isa<MemberExpr>(Value.Base);
+}
+
+static bool IsWeakLValue(const LValue &Value) {
+  const ValueDecl *Decl = GetLValueBaseDecl(Value);
+  if (!Decl)
+    return false;
+
+  return Decl->hasAttr<WeakAttr>() ||
+         Decl->hasAttr<WeakRefAttr>() ||
+         Decl->isWeakImported();
+}
+
 static bool EvalPointerValueAsBool(const LValue &Value, bool &Result) {
   const Expr* Base = Value.Base;
 
@@ -275,19 +308,7 @@ static bool EvalPointerValueAsBool(const LValue &Value, bool &Result) {
   // be true, but if it'a decl-ref to a weak symbol it can be null at
   // runtime.
   Result = true;
-
-  const DeclRefExpr* DeclRef = dyn_cast<DeclRefExpr>(Base);
-  if (!DeclRef)
-    return true;
-
-  // If it's a weak symbol, it isn't constant-evaluable.
-  const ValueDecl* Decl = DeclRef->getDecl();
-  if (Decl->hasAttr<WeakAttr>() ||
-      Decl->hasAttr<WeakRefAttr>() ||
-      Decl->isWeakImported())
-    return false;
-
-  return true;
+  return !IsWeakLValue(Value);
 }
 
 static bool HandleConversionToBool(const CCValue &Val, bool &Result) {
@@ -415,23 +436,6 @@ static bool EvaluateVarDeclInit(EvalInfo &Info, const VarDecl *VD,
 static bool IsConstNonVolatile(QualType T) {
   Qualifiers Quals = T.getQualifiers();
   return Quals.hasConst() && !Quals.hasVolatile();
-}
-
-const ValueDecl *GetLValueBaseDecl(const LValue &LVal) {
-  if (!LVal.Base)
-    return 0;
-
-  if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(LVal.Base))
-    return DRE->getDecl();
-
-  // FIXME: Static data members accessed via a MemberExpr are represented as
-  // that MemberExpr. We should use the Decl directly instead.
-  if (const MemberExpr *ME = dyn_cast<MemberExpr>(LVal.Base)) {
-    assert(!isa<FieldDecl>(ME->getMemberDecl()) && "shouldn't see fields here");
-    return ME->getMemberDecl();
-  }
-
-  return 0;
 }
 
 bool HandleLValueToRValueConversion(EvalInfo &Info, QualType Type,
@@ -1925,16 +1929,20 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
       // Reject differing bases from the normal codepath; we special-case
       // comparisons to null.
       if (!HasSameBase(LHSValue, RHSValue)) {
+        // Inequalities and subtractions between unrelated pointers have
+        // unspecified or undefined behavior.
         if (!E->isEqualityOp())
           return false;
-        if ((LHSValue.getLValueBase() || !LHSValue.getLValueOffset().isZero())&&
-            (RHSValue.getLValueBase() || !RHSValue.getLValueOffset().isZero()))
+        // It's implementation-defined whether distinct literals will have
+        // distinct addresses. We define it to be unspecified.
+        if (IsLiteralLValue(LHSValue) || IsLiteralLValue(RHSValue))
           return false;
-        LValue &NonNull = LHSValue.getLValueBase() ? LHSValue : RHSValue;
-        bool bres;
-        if (!EvalPointerValueAsBool(NonNull, bres))
+        // We can't tell whether weak symbols will end up pointing to the same
+        // object.
+        if (IsWeakLValue(LHSValue) || IsWeakLValue(RHSValue))
           return false;
-        return Success(bres ^ (E->getOpcode() == BO_EQ), E);
+        // Pointers with different bases cannot represent the same object.
+        return Success(E->getOpcode() == BO_NE, E);
       }
 
       if (E->getOpcode() == BO_Sub) {
