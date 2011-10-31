@@ -1981,6 +1981,12 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
         // unspecified or undefined behavior.
         if (!E->isEqualityOp())
           return false;
+        // A constant address may compare equal to the address of a symbol.
+        // The one exception is that address of an object cannot compare equal
+        // to the null pointer.
+        if ((!LHSValue.Base && !LHSValue.Offset.isZero()) ||
+            (!RHSValue.Base && !RHSValue.Offset.isZero()))
+          return false;
         // It's implementation-defined whether distinct literals will have
         // distinct addresses. We define it to be unspecified.
         if (IsLiteralLValue(LHSValue) || IsLiteralLValue(RHSValue))
