@@ -35,6 +35,8 @@
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/ThreadPlanRunToAddress.h"
 
+#include "llvm/ADT/STLExtras.h"
+
 using namespace lldb;
 using namespace lldb_private;
 
@@ -244,7 +246,7 @@ AppleObjCTrampolineHandler::AppleObjCVTables::VTableRegion::SetUpRegion()
         lldb::addr_t start_offset = offset_ptr;
         uint32_t offset = desc_extractor.GetU32 (&offset_ptr);
         uint32_t flags  = desc_extractor.GetU32 (&offset_ptr);
-        lldb:addr_t code_addr = desc_ptr + start_offset + offset;
+        lldb::addr_t code_addr = desc_ptr + start_offset + offset;
         m_descriptors.push_back (VTableDescriptor(flags, code_addr));
         
         if (m_code_start_addr == 0 || code_addr < m_code_start_addr)
@@ -516,7 +518,6 @@ AppleObjCTrampolineHandler::g_dispatch_functions[] =
     {"objc_msgSendSuper2_stret",         true,  true,   true, DispatchFunction::eFixUpNone    },
     {"objc_msgSendSuper2_stret_fixup",   true,  true,   true, DispatchFunction::eFixUpToFix   },
     {"objc_msgSendSuper2_stret_fixedup", true,  true,   true, DispatchFunction::eFixUpFixed   },
-    {NULL}
 };
 
 AppleObjCTrampolineHandler::AppleObjCTrampolineHandler (const ProcessSP &process_sp, 
@@ -558,7 +559,7 @@ AppleObjCTrampolineHandler::AppleObjCTrampolineHandler (const ProcessSP &process
     // turn the g_dispatch_functions char * array into a template table, and populate the DispatchFunction map
     // from there.
 
-    for (int i = 0; g_dispatch_functions[i].name != NULL; i++)
+    for (int i = 0; i != llvm::array_lengthof(g_dispatch_functions); i++)
     {
         ConstString name_const_str(g_dispatch_functions[i].name);
         const Symbol *msgSend_symbol = m_objc_module_sp->FindFirstSymbolWithNameAndType (name_const_str, eSymbolTypeCode);
