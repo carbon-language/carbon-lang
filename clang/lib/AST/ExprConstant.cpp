@@ -195,9 +195,10 @@ namespace {
     CharUnits Offset;
     unsigned CallIndex;
 
-    const Expr *getLValueBase() { return Base; }
+    const Expr *getLValueBase() const { return Base; }
     CharUnits &getLValueOffset() { return Offset; }
-    unsigned getLValueCallIndex() { return CallIndex; }
+    const CharUnits &getLValueOffset() const { return Offset; }
+    unsigned getLValueCallIndex() const { return CallIndex; }
 
     void moveInto(CCValue &V) const {
       V = CCValue(Base, Offset, CallIndex);
@@ -416,6 +417,23 @@ static bool IsConstNonVolatile(QualType T) {
   return Quals.hasConst() && !Quals.hasVolatile();
 }
 
+const ValueDecl *GetLValueBaseDecl(const LValue &LVal) {
+  if (!LVal.Base)
+    return 0;
+
+  if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(LVal.Base))
+    return DRE->getDecl();
+
+  // FIXME: Static data members accessed via a MemberExpr are represented as
+  // that MemberExpr. We should use the Decl directly instead.
+  if (const MemberExpr *ME = dyn_cast<MemberExpr>(LVal.Base)) {
+    assert(!isa<FieldDecl>(ME->getMemberDecl()) && "shouldn't see fields here");
+    return ME->getMemberDecl();
+  }
+
+  return 0;
+}
+
 bool HandleLValueToRValueConversion(EvalInfo &Info, QualType Type,
                                     const LValue &LVal, CCValue &RVal) {
   const Expr *Base = LVal.Base;
@@ -431,26 +449,12 @@ bool HandleLValueToRValueConversion(EvalInfo &Info, QualType Type,
   if (!LVal.Offset.isZero())
     return false;
 
-  const Decl *D = 0;
-
-  if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Base)) {
+  if (const ValueDecl *D = GetLValueBaseDecl(LVal)) {
     // If the lvalue has been cast to some other type, don't try to read it.
     // FIXME: Could simulate a bitcast here.
-    if (!Info.Ctx.hasSameUnqualifiedType(Type, DRE->getType()))
-      return false;
-    D = DRE->getDecl();
-  }
+    if (!Info.Ctx.hasSameUnqualifiedType(Type, D->getType()))
+      return 0;
 
-  // FIXME: Static data members accessed via a MemberExpr are represented as
-  // that MemberExpr. We should use the Decl directly instead.
-  if (const MemberExpr *ME = dyn_cast<MemberExpr>(Base)) {
-    if (!Info.Ctx.hasSameUnqualifiedType(Type, ME->getType()))
-      return false;
-    D = ME->getMemberDecl();
-    assert(!isa<FieldDecl>(D) && "shouldn't see fields here");
-  }
-
-  if (D) {
     // In C++98, const, non-volatile integers initialized with ICEs are ICEs.
     // In C++11, constexpr, non-volatile variables initialized with constant
     // expressions are constant expressions too. Inside constexpr functions,
@@ -1767,6 +1771,25 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
   }
 }
 
+static bool HasSameBase(const LValue &A, const LValue &B) {
+  if (!A.getLValueBase())
+    return !B.getLValueBase();
+  if (!B.getLValueBase())
+    return false;
+
+  if (A.getLValueBase() != B.getLValueBase()) {
+    const Decl *ADecl = GetLValueBaseDecl(A);
+    if (!ADecl)
+      return false;
+    const Decl *BDecl = GetLValueBaseDecl(B);
+    if (ADecl != BDecl)
+      return false;
+  }
+
+  return IsGlobalLValue(A.getLValueBase()) ||
+         A.getLValueCallIndex() == B.getLValueCallIndex();
+}
+
 bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   if (E->isAssignmentOp())
     return Error(E->getOperatorLoc(), diag::note_invalid_subexpr_in_ice, E);
@@ -1890,7 +1913,7 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   }
 
   if (LHSTy->isPointerType() && RHSTy->isPointerType()) {
-    if (E->getOpcode() == BO_Sub || E->isEqualityOp()) {
+    if (E->getOpcode() == BO_Sub || E->isComparisonOp()) {
       LValue LHSValue;
       if (!EvaluatePointer(E->getLHS(), LHSValue, Info))
         return false;
@@ -1899,24 +1922,17 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
       if (!EvaluatePointer(E->getRHS(), RHSValue, Info))
         return false;
 
-      // Reject any bases from the normal codepath; we special-case comparisons
-      // to null.
-      if (LHSValue.getLValueBase()) {
+      // Reject differing bases from the normal codepath; we special-case
+      // comparisons to null.
+      if (!HasSameBase(LHSValue, RHSValue)) {
         if (!E->isEqualityOp())
           return false;
-        if (RHSValue.getLValueBase() || !RHSValue.getLValueOffset().isZero())
+        if ((LHSValue.getLValueBase() || !LHSValue.getLValueOffset().isZero())&&
+            (RHSValue.getLValueBase() || !RHSValue.getLValueOffset().isZero()))
           return false;
+        LValue &NonNull = LHSValue.getLValueBase() ? LHSValue : RHSValue;
         bool bres;
-        if (!EvalPointerValueAsBool(LHSValue, bres))
-          return false;
-        return Success(bres ^ (E->getOpcode() == BO_EQ), E);
-      } else if (RHSValue.getLValueBase()) {
-        if (!E->isEqualityOp())
-          return false;
-        if (LHSValue.getLValueBase() || !LHSValue.getLValueOffset().isZero())
-          return false;
-        bool bres;
-        if (!EvalPointerValueAsBool(RHSValue, bres))
+        if (!EvalPointerValueAsBool(NonNull, bres))
           return false;
         return Success(bres ^ (E->getOpcode() == BO_EQ), E);
       }
@@ -1933,13 +1949,18 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
                              RHSValue.getLValueOffset();
         return Success(Diff / ElementSize, E);
       }
-      bool Result;
-      if (E->getOpcode() == BO_EQ) {
-        Result = LHSValue.getLValueOffset() == RHSValue.getLValueOffset();
-      } else {
-        Result = LHSValue.getLValueOffset() != RHSValue.getLValueOffset();
+
+      const CharUnits &LHSOffset = LHSValue.getLValueOffset();
+      const CharUnits &RHSOffset = RHSValue.getLValueOffset();
+      switch (E->getOpcode()) {
+      default: llvm_unreachable("missing comparison operator");
+      case BO_LT: return Success(LHSOffset < RHSOffset, E);
+      case BO_GT: return Success(LHSOffset > RHSOffset, E);
+      case BO_LE: return Success(LHSOffset <= RHSOffset, E);
+      case BO_GE: return Success(LHSOffset >= RHSOffset, E);
+      case BO_EQ: return Success(LHSOffset == RHSOffset, E);
+      case BO_NE: return Success(LHSOffset != RHSOffset, E);
       }
-      return Success(Result, E);
     }
   }
   if (!LHSTy->isIntegralOrEnumerationType() ||

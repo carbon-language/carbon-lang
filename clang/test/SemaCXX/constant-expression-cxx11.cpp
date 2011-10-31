@@ -157,3 +157,41 @@ namespace FunctionPointers {
   constexpr int Invalid = Apply(Select(0), 0); // expected-error {{must be initialized by a constant expression}}
 
 }
+
+namespace PointerComparison {
+
+int x, y;
+constexpr bool g1 = &x == &y; // expected-error {{must be initialized by a constant expression}}
+constexpr bool g2 = &x != &y; // expected-error {{must be initialized by a constant expression}}
+constexpr bool g3 = &x <= &y; // expected-error {{must be initialized by a constant expression}}
+constexpr bool g4 = &x >= &y; // expected-error {{must be initialized by a constant expression}}
+constexpr bool g5 = &x < &y; // expected-error {{must be initialized by a constant expression}}
+constexpr bool g6 = &x > &y; // expected-error {{must be initialized by a constant expression}}
+
+struct S { int x, y; } s;
+constexpr bool m1 = &s.x == &s.y;
+constexpr bool m2 = &s.x != &s.y;
+constexpr bool m3 = &s.x <= &s.y;
+constexpr bool m4 = &s.x >= &s.y;
+constexpr bool m5 = &s.x < &s.y;
+constexpr bool m6 = &s.x > &s.y;
+
+constexpr bool n1 = 0 == &y;
+constexpr bool n2 = 0 != &y;
+constexpr bool n3 = 0 <= &y; // expected-error {{must be initialized by a constant expression}}
+constexpr bool n4 = 0 >= &y; // expected-error {{must be initialized by a constant expression}}
+constexpr bool n5 = 0 < &y; // expected-error {{must be initialized by a constant expression}}
+constexpr bool n6 = 0 > &y; // expected-error {{must be initialized by a constant expression}}
+
+constexpr bool n7 = &x == 0;
+constexpr bool n8 = &x != 0;
+constexpr bool n9 = &x <= 0; // expected-error {{must be initialized by a constant expression}}
+constexpr bool n10 = &x >= 0; // expected-error {{must be initialized by a constant expression}}
+constexpr bool n11 = &x < 0; // expected-error {{must be initialized by a constant expression}}
+constexpr bool n12 = &x > 0; // expected-error {{must be initialized by a constant expression}}
+
+using check = int[m1 + (m2<<1) + (m3<<2) + (m4<<3) + (m5<<4) + (m6<<5) +
+                  (n1<<6) + (n2<<7) + (n7<<8) + (n8<<9)];
+using check = int[2+4+16+128+512];
+
+}
