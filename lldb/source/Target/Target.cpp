@@ -935,7 +935,7 @@ Target::ModulesDidUnload (ModuleList &module_list)
 }
 
 
-const bool
+bool
 Target::ModuleIsExcludedForNonModuleSpecificSearches (const FileSpec &module_spec)
 {
 
@@ -965,7 +965,7 @@ Target::ModuleIsExcludedForNonModuleSpecificSearches (const FileSpec &module_spe
     }
 }
 
-const bool
+bool
 Target::ModuleIsExcludedForNonModuleSpecificSearches (const lldb::ModuleSP &module_sp)
 {
     if (!m_breakpoints_use_platform_avoid)

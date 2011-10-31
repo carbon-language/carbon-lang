@@ -483,7 +483,7 @@ public:
         return m_head.GetCount();
     }
     
-    const int
+    int
     GetRealIndexForIndex(int i);
     
     bool

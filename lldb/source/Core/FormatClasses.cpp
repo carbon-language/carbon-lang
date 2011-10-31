@@ -278,7 +278,7 @@ SyntheticScriptProvider::GetDescription()
     return sstr.GetString();
 }
 
-const int
+int
 SyntheticArrayView::GetRealIndexForIndex(int i)
 {
     if (i >= GetCount())

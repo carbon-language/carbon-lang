@@ -507,7 +507,7 @@ public:
     ///
     /// @return \b true if the module should be excluded, \b false otherwise.
     //------------------------------------------------------------------
-    const bool
+    bool
     ModuleIsExcludedForNonModuleSpecificSearches (const FileSpec &module_spec);
     
     //------------------------------------------------------------------
@@ -529,7 +529,7 @@ public:
     ///
     /// @return \b true if the module should be excluded, \b false otherwise.
     //------------------------------------------------------------------
-    const bool
+    bool
     ModuleIsExcludedForNonModuleSpecificSearches (const lldb::ModuleSP &module_sp);
 
     ArchSpec &
