@@ -133,8 +133,8 @@ cl::opt<bool> DisableDotLoc("disable-dot-loc", cl::Hidden,
 cl::opt<bool> DisableCFI("disable-cfi", cl::Hidden,
                          cl::desc("Do not use .cfi_* directives"));
 
-cl::opt<bool> DisableDwarfDirectory("disable-dwarf-directory", cl::Hidden,
-    cl::desc("Do not use file directives with an explicit directory."));
+cl::opt<bool> EnableDwarfDirectory("enable-dwarf-directory", cl::Hidden,
+    cl::desc("Use .file directives with an explicit directory."));
 
 static cl::opt<bool>
 DisableRedZone("disable-red-zone",
@@ -319,8 +319,8 @@ int main(int argc, char **argv) {
   if (DisableCFI)
     Target.setMCUseCFI(false);
 
-  if (DisableDwarfDirectory)
-    Target.setMCUseDwarfDirectory(false);
+  if (EnableDwarfDirectory)
+    Target.setMCUseDwarfDirectory(true);
 
   // Disable .loc support for older OS X versions.
   if (TheTriple.isMacOSX() &&
