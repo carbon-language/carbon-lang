@@ -193,9 +193,9 @@ class CursorVisitor : public DeclVisitor<CursorVisitor, bool>,
   /// after visiting other declarations.
   bool VisitPreprocessorLast;
 
-  /// \brief Whether we should visit the preprocessing record entries that are
-  /// #included inside the \arg RegionOfInterest.
-  bool VisitIncludedPreprocessingEntries;
+  /// \brief Whether we should visit declarations or preprocessing record
+  /// entries that are #included inside the \arg RegionOfInterest.
+  bool VisitIncludedEntities;
   
   /// \brief When valid, a source range to which the cursor should restrict
   /// its search.
@@ -249,7 +249,7 @@ public:
     : TU(TU), AU(static_cast<ASTUnit*>(TU->TUData)),
       Visitor(Visitor), ClientData(ClientData),
       VisitPreprocessorLast(VisitPreprocessorLast),
-      VisitIncludedPreprocessingEntries(VisitIncludedPreprocessingEntries),
+      VisitIncludedEntities(VisitIncludedPreprocessingEntries),
       RegionOfInterest(RegionOfInterest), DI_current(0)
   {
     Parent.kind = CXCursor_NoDeclFound;
@@ -274,8 +274,8 @@ public:
   
   bool visitPreprocessedEntitiesInRegion();
 
-  bool shouldVisitIncludedPreprocessingEntries() const {
-    return VisitIncludedPreprocessingEntries;
+  bool shouldVisitIncludedEntities() const {
+    return VisitIncludedEntities;
   }
 
   template<typename InputIterator>
@@ -417,7 +417,7 @@ static bool visitPreprocessedEntitiesInRange(SourceRange R,
   SourceManager &SM = Visitor.getASTUnit()->getSourceManager();
   FileID FID;
   
-  if (!Visitor.shouldVisitIncludedPreprocessingEntries()) {
+  if (!Visitor.shouldVisitIncludedEntities()) {
     // If the begin/end of the range lie in the same FileID, do the optimization
     // where we skip preprocessed entities that do not come from the same FileID.
     FID = SM.getFileID(R.getBegin());
@@ -3974,7 +3974,7 @@ CXCursor cxcursor::getCursor(CXTranslationUnit TU, SourceLocation SLoc) {
     CXCursor Parent = clang_getTranslationUnitCursor(TU);
     CursorVisitor CursorVis(TU, GetCursorVisitor, &ResultData,
                             /*VisitPreprocessorLast=*/true, 
-                            /*VisitIncludedPreprocessingEntries=*/false,
+                            /*VisitIncludedEntities=*/false,
                             SourceLocation(SLoc));
     CursorVis.VisitChildren(Parent);
   }
@@ -4804,7 +4804,7 @@ public:
       AnnotateVis(tu,
                   AnnotateTokensVisitor, this,
                   /*VisitPreprocessorLast=*/true,
-                  /*VisitIncludedPreprocessingEntries=*/false,
+                  /*VisitIncludedEntities=*/false,
                   RegionOfInterest),
       SrcMgr(static_cast<ASTUnit*>(tu->TUData)->getSourceManager()),
       HasContextSensitiveKeywords(false) { }
@@ -5281,7 +5281,7 @@ static void clang_annotateTokensImpl(void *UserData) {
     CursorVisitor MacroArgMarker(TU,
                                  MarkMacroArgTokensVisitorDelegate, &Visitor,
                                  /*VisitPreprocessorLast=*/true,
-                                 /*VisitIncludedPreprocessingEntries=*/false,
+                                 /*VisitIncludedEntities=*/false,
                                  RegionOfInterest);
     MacroArgMarker.visitPreprocessedEntitiesInRegion();
   }
