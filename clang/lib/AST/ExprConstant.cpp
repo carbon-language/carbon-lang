@@ -1222,10 +1222,13 @@ bool PointerExprEvaluator::VisitCastExpr(const CastExpr* E) {
     }
   }
   case CK_ArrayToPointerDecay:
+    // FIXME: Support array-to-pointer decay on array rvalues.
+    if (!SubExpr->isGLValue())
+      return Error(E);
+    return EvaluateLValue(SubExpr, Result, Info);
+
   case CK_FunctionToPointerDecay:
-    if (SubExpr->isGLValue() || SubExpr->getType()->isFunctionType())
-      return EvaluateLValue(SubExpr, Result, Info);
-    return Error(E);
+    return EvaluateLValue(SubExpr, Result, Info);
   }
 
   return ExprEvaluatorBaseTy::VisitCastExpr(E);

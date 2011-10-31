@@ -92,3 +92,6 @@ double d2 = ++d; // expected-error {{not a compile-time constant}}
 
 int n = 2;
 int intLvalue[*(int*)((long)&n ?: 1)] = { 1, 2 }; // expected-error {{variable length array}}
+
+union u { int a; char b[4]; };
+char c = ((union u)(123456)).b[0]; // expected-error {{not a compile-time constant}}
