@@ -1756,21 +1756,15 @@ static std::string getMultiarchTriple(const llvm::Triple TargetTriple,
 
     // We use the existence of '/lib/<triple>' as a directory to detect some
     // common linux triples that don't quite match the Clang triple for both
-    // 32-bit and 64-bit targets. This works around annoying discrepancies on
-    // Debian-based systems.
+    // 32-bit and 64-bit targets. Multiarch fixes its install triples to these
+    // regardless of what the actual target triple is.
   case llvm::Triple::x86:
-    if (llvm::sys::fs::exists(SysRoot + "/lib/i686-linux-gnu"))
-      return "i686-linux-gnu";
     if (llvm::sys::fs::exists(SysRoot + "/lib/i386-linux-gnu"))
       return "i386-linux-gnu";
     return TargetTriple.str();
   case llvm::Triple::x86_64:
     if (llvm::sys::fs::exists(SysRoot + "/lib/x86_64-linux-gnu"))
       return "x86_64-linux-gnu";
-    if (llvm::sys::fs::exists(SysRoot + "/lib/x86_64-pc-linux-gnu"))
-      return "x86_64-pc-linux-gnu";
-    if (llvm::sys::fs::exists(SysRoot + "/lib/x86_64-unknown-linux-gnu"))
-      return "x86_64-unknown-linux-gnu";
     return TargetTriple.str();
   }
 }
