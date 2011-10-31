@@ -1527,7 +1527,7 @@ DataExtractor::Dump (Stream *s,
                     {
                         switch (ch)
                         {
-                        case '\e': s->Printf ("\\e"); break;
+                        case '\033': s->Printf ("\\e"); break;
                         case '\a': s->Printf ("\\a"); break;
                         case '\b': s->Printf ("\\b"); break;
                         case '\f': s->Printf ("\\f"); break;
