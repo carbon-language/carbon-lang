@@ -23,6 +23,13 @@
 #include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/Scalar.h"
 #include "lldb/Host/Endian.h"
+#include "llvm/Support/Compiler.h"
+
+// Support building against older versions of LLVM, this macro was added
+// recently.
+#ifndef LLVM_EXTENSION
+#define LLVM_EXTENSION
+#endif
 
 // Project includes
 #include "ARM_GCC_Registers.h"
@@ -184,7 +191,7 @@ RegisterContextDarwin_arm::~RegisterContextDarwin_arm()
 #define GPR_OFFSET(idx) ((idx) * 4)
 #define FPU_OFFSET(idx) ((idx) * 4 + sizeof (RegisterContextDarwin_arm::GPR))
 #define EXC_OFFSET(idx) ((idx) * 4 + sizeof (RegisterContextDarwin_arm::GPR) + sizeof (RegisterContextDarwin_arm::FPU))
-#define DBG_OFFSET(reg) (offsetof (RegisterContextDarwin_arm::DBG, reg) + sizeof (RegisterContextDarwin_arm::GPR) + sizeof (RegisterContextDarwin_arm::FPU) + sizeof (RegisterContextDarwin_arm::EXC))
+#define DBG_OFFSET(reg) ((LLVM_EXTENSION offsetof (RegisterContextDarwin_arm::DBG, reg) + sizeof (RegisterContextDarwin_arm::GPR) + sizeof (RegisterContextDarwin_arm::FPU) + sizeof (RegisterContextDarwin_arm::EXC)))
 
 #define DEFINE_DBG(reg, i)  #reg, NULL, sizeof(((RegisterContextDarwin_arm::DBG *)NULL)->reg[i]), DBG_OFFSET(reg[i]), eEncodingUint, eFormatHex, { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, dbg_##reg##i }
 #define REG_CONTEXT_SIZE (sizeof (RegisterContextDarwin_arm::GPR) + sizeof (RegisterContextDarwin_arm::FPU) + sizeof (RegisterContextDarwin_arm::EXC))
