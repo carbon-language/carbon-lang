@@ -1550,7 +1550,7 @@ check_op_param (uint32_t op_kind, bool unary, bool binary, uint32_t num_params)
     else 
     return false;
 }
-;
+
 bool
 ClangASTContext::CheckOverloadedOperatorKindParameterCount (uint32_t op_kind, uint32_t num_params)
 {
