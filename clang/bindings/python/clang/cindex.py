@@ -111,7 +111,10 @@ class SourceLocation(Structure):
         if self._data is None:
             f, l, c, o = c_object_p(), c_uint(), c_uint(), c_uint()
             SourceLocation_loc(self, byref(f), byref(l), byref(c), byref(o))
-            f = File(f) if f else None
+            if f:
+                f = File(f)
+            else:
+                f = None
             self._data = (f, int(l.value), int(c.value), int(o.value))
         return self._data
 
@@ -144,8 +147,12 @@ class SourceLocation(Structure):
         return self._get_instantiation()[3]
 
     def __repr__(self):
+        if self.file:
+            filename = self.file.name
+        else:
+            filename = None
         return "<SourceLocation file %r, line %r, column %r>" % (
-            self.file.name if self.file else None, self.line, self.column)
+            filename, self.line, self.column)
 
 class SourceRange(Structure):
     """
