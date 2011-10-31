@@ -25,11 +25,10 @@
 #include "lldb/Core/UUID.h"
 #include "lldb/Host/Endian.h"
 #include "lldb/Utility/CleanUp.h"
+#include "Host/macosx/cfcpp/CFCBundle.h"
 #include "Host/macosx/cfcpp/CFCReleaser.h"
 #include "Host/macosx/cfcpp/CFCString.h"
 #include "mach/machine.h"
-
-#include "CFCBundle.h"
 
 
 using namespace lldb;
