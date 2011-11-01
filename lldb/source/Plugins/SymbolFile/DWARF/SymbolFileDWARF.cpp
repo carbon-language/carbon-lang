@@ -4570,6 +4570,8 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                                                                          m_obj_file->GetFileSpec().GetDirectory().GetCString(),
                                                                                          m_obj_file->GetFileSpec().GetFilename().GetCString());
 
+                                                    const bool is_attr_used = false;
+                                                    
                                                     cxx_method_decl = ast.AddMethodToCXXRecordType (class_opaque_type, 
                                                                                                     type_name_cstr,
                                                                                                     clang_type,
@@ -4577,7 +4579,8 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                                                                                     is_virtual,
                                                                                                     is_static,
                                                                                                     is_inline,
-                                                                                                    is_explicit);
+                                                                                                    is_explicit,
+                                                                                                    is_attr_used);
                                                     LinkDeclContextToDIE(ClangASTContext::GetAsDeclContext(cxx_method_decl), die);
 
                                                     type_handled = cxx_method_decl != NULL;

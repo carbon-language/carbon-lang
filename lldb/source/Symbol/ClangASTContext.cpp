@@ -1574,7 +1574,8 @@ ClangASTContext::AddMethodToCXXRecordType
     bool is_virtual,
     bool is_static,
     bool is_inline,
-    bool is_explicit
+    bool is_explicit,
+    bool is_attr_used
 )
 {
     if (!record_opaque_type || !method_opaque_type || !name)
@@ -1700,6 +1701,9 @@ ClangASTContext::AddMethodToCXXRecordType
     
     cxx_method_decl->setAccess (access_specifier);
     cxx_method_decl->setVirtualAsWritten (is_virtual);
+    
+    if (is_attr_used)
+        cxx_method_decl->addAttr(::new (*ast) UsedAttr(SourceRange(), *ast));
     
     // Populate the method decl with parameter decls
     

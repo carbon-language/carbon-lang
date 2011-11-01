@@ -3005,17 +3005,18 @@ ClangExpressionDeclMap::AddOneType(NameSearchContext &context,
         
         args[0] = ClangASTContext::GetVoidPtrType(parser_ast_context, false);
         
-        void *method_type = ClangASTContext::CreateFunctionType (parser_ast_context,
-                                                                 ClangASTContext::GetBuiltInType_void(parser_ast_context),
-                                                                 args,
-                                                                 1,
-                                                                 false,
-                                                                 ClangASTContext::GetTypeQualifiers(copied_type));
-
+        clang_type_t method_type = ClangASTContext::CreateFunctionType (parser_ast_context,
+                                                                        ClangASTContext::GetBuiltInType_void(parser_ast_context),
+                                                                        args,
+                                                                        1,
+                                                                        false,
+                                                                        ClangASTContext::GetTypeQualifiers(copied_type));
+        
         const bool is_virtual = false;
         const bool is_static = false;
         const bool is_inline = false;
         const bool is_explicit = false;
+        const bool is_attr_used = false;
         
         ClangASTContext::AddMethodToCXXRecordType (parser_ast_context,
                                                    copied_type,
@@ -3025,7 +3026,8 @@ ClangExpressionDeclMap::AddOneType(NameSearchContext &context,
                                                    is_virtual,
                                                    is_static,
                                                    is_inline,
-                                                   is_explicit);
+                                                   is_explicit,
+                                                   is_attr_used);
     }
     
     context.AddTypeDecl(copied_type);
