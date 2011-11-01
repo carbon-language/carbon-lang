@@ -190,3 +190,21 @@ int no_alignas();
 
 // CHECK-0X: has_alignas
 // CHECK-NO-0X: no_alignas
+
+#if __has_feature(cxx_raw_string_literals)
+int has_raw_string_literals();
+#else
+int no_raw_string_literals();
+#endif
+
+// CHECK-0X: has_raw_string_literals
+// CHECK-NO-0X: no_raw_string_literals
+
+#if __has_feature(cxx_unicode_literals)
+int has_unicode_literals();
+#else
+int no_unicode_literals();
+#endif
+
+// CHECK-0X: has_unicode_literals
+// CHECK-NO-0X: no_unicode_literals
