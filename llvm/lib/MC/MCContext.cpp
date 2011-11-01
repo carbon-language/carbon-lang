@@ -273,8 +273,10 @@ unsigned MCContext::GetDwarfFile(StringRef Directory, StringRef FileName,
     // Separate the directory part from the basename of the FileName.
     std::pair<StringRef, StringRef> Slash = FileName.rsplit('/');
     Directory = Slash.second;
-    if (!Directory.empty())
-      FileName = Slash.first;
+    if (!Directory.empty()) {
+      Directory = Slash.first;
+      FileName = Slash.second;
+    }
   }
 
   // Find or make a entry in the MCDwarfDirs vector for this Directory.
