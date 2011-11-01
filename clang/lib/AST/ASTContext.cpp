@@ -1261,6 +1261,17 @@ void ASTContext::setObjCImplementation(ObjCCategoryDecl *CatD,
   ObjCImpls[CatD] = ImplD;
 }
 
+ObjCInterfaceDecl *ASTContext::getObjContainingInterface(NamedDecl *ND) const {
+  if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(ND->getDeclContext()))
+    return ID;
+  if (ObjCCategoryDecl *CD = dyn_cast<ObjCCategoryDecl>(ND->getDeclContext()))
+    return CD->getClassInterface();
+  if (ObjCImplDecl *IMD = dyn_cast<ObjCImplDecl>(ND->getDeclContext()))
+    return IMD->getClassInterface();
+
+  return 0;
+}
+
 /// \brief Get the copy initialization expression of VarDecl,or NULL if 
 /// none exists.
 Expr *ASTContext::getBlockVarCopyInits(const VarDecl*VD) {

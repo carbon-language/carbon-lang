@@ -80,6 +80,14 @@ int test_multi_declaration(void) {
 - (void)method;
 @end
 
+@interface CWithExt2
+@end
+@interface CWithExt2 () {
+  id var_ext;
+}
+@property (assign) id pro_ext;
+@end
+
 // CHECK: usrs.m c:usrs.m@67@F@my_helper Extent=[3:1 - 3:60]
 // CHECK: usrs.m c:usrs.m@95@F@my_helper@x Extent=[3:29 - 3:34]
 // CHECK: usrs.m c:usrs.m@102@F@my_helper@y Extent=[3:36 - 3:41]
@@ -118,9 +126,9 @@ int test_multi_declaration(void) {
 // CHECK: usrs.m c:usrs.m@551@F@local_func@x Extent=[49:23 - 49:28]
 // CHECK: usrs.m c:objc(cs)CWithExt Extent=[51:1 - 53:5]
 // CHECK: usrs.m c:objc(cs)CWithExt(im)meth1 Extent=[52:1 - 52:14]
-// CHECK: usrs.m c:objc(cs)CWithExt Extent=[54:1 - 56:5]
+// CHECK: usrs.m c:objc(ext)CWithExt@usrs.m@612 Extent=[54:1 - 56:5]
 // CHECK: usrs.m c:objc(cs)CWithExt(im)meth2 Extent=[55:1 - 55:14]
-// CHECK: usrs.m c:objc(cs)CWithExt Extent=[57:1 - 59:5]
+// CHECK: usrs.m c:objc(ext)CWithExt@usrs.m@654 Extent=[57:1 - 59:5]
 // CHECK: usrs.m c:objc(cs)CWithExt(im)meth3 Extent=[58:1 - 58:14]
 // CHECK: usrs.m c:objc(cy)CWithExt@Bar Extent=[60:1 - 62:5]
 // CHECK: usrs.m c:objc(cs)CWithExt(im)meth4 Extent=[61:1 - 61:14]
@@ -137,6 +145,12 @@ int test_multi_declaration(void) {
 // CHECK: usrs.m c:usrs.m@980@F@test_multi_declaration@baz Extent=[74:25 - 74:32]
 // CHECK: usrs.m c:objc(pl)P1 Extent=[79:1 - 81:5]
 // CHECK: usrs.m c:objc(pl)P1(im)method Extent=[80:1 - 80:16]
+// CHECK: usrs.m c:objc(cs)CWithExt2 Extent=[83:1 - 84:5]
+// CHECK: usrs.m c:objc(ext)CWithExt2@usrs.m@1111 Extent=[85:1 - 89:5]
+// CHECK: usrs.m c:objc(cs)CWithExt2@var_ext Extent=[86:3 - 86:13]
+// CHECK: usrs.m c:objc(cs)CWithExt2(py)pro_ext Extent=[88:1 - 88:30]
+// CHECK: usrs.m c:objc(cs)CWithExt2(im)pro_ext Extent=[88:23 - 88:30]
+// CHECK: usrs.m c:objc(cs)CWithExt2(im)setPro_ext: Extent=[88:23 - 88:30]
 
 // RUN: c-index-test -test-load-source all %s | FileCheck -check-prefix=CHECK-source %s
 // CHECK-source: usrs.m:3:19: FunctionDecl=my_helper:3:19 (Definition) Extent=[3:1 - 3:60]

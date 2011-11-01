@@ -1614,6 +1614,11 @@ public:
                                   const ObjCMethodDecl *Redecl) {
     ObjCMethodRedecls[MD] = Redecl;
   }
+
+  /// \brief Returns the objc interface that \arg ND belongs to if it is a
+  /// objc method/property/ivar etc. that is part of an interface,
+  /// otherwise returns null.
+  ObjCInterfaceDecl *getObjContainingInterface(NamedDecl *ND) const;
   
   /// \brief Set the copy inialization expression of a block var decl.
   void setBlockVarCopyInits(VarDecl*VD, Expr* Init);

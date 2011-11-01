@@ -169,7 +169,12 @@ void USRGenerator::VisitDeclContext(DeclContext *DC) {
 }
 
 void USRGenerator::VisitFieldDecl(FieldDecl *D) {
-  VisitDeclContext(D->getDeclContext());
+  // The USR for an ivar declared in a class extension is based on the
+  // ObjCInterfaceDecl, not the ObjCCategoryDecl.
+  if (ObjCInterfaceDecl *ID = Context->getObjContainingInterface(D))
+    Visit(ID);
+  else
+    VisitDeclContext(D->getDeclContext());
   Out << (isa<ObjCIvarDecl>(D) ? "@" : "@FI@");
   if (EmitDeclName(D)) {
     // Bit fields can be anonymous.
@@ -336,9 +341,11 @@ void USRGenerator::VisitObjCContainerDecl(ObjCContainerDecl *D) {
         IgnoreResults = true;
         return;
       }
+      // Specially handle class extensions, which are anonymous categories.
+      // We want to mangle in the location to uniquely distinguish them.
       if (CD->IsClassExtension()) {
-        // An extension semantically continues the interface of the class.
-        GenObjCClass(ID->getName());
+        Out << "objc(ext)" << ID->getName() << '@';
+        GenLoc(CD);
       }
       else
         GenObjCCategory(ID->getName(), CD->getName());
@@ -366,7 +373,12 @@ void USRGenerator::VisitObjCContainerDecl(ObjCContainerDecl *D) {
 }
 
 void USRGenerator::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
-  Visit(cast<Decl>(D->getDeclContext()));
+  // The USR for a property declared in a class extension or category is based
+  // on the ObjCInterfaceDecl, not the ObjCCategoryDecl.
+  if (ObjCInterfaceDecl *ID = Context->getObjContainingInterface(D))
+    Visit(ID);
+  else
+    Visit(cast<Decl>(D->getDeclContext()));
   GenObjCProperty(D->getName());
 }
 
