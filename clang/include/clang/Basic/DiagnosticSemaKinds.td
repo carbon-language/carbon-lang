@@ -502,6 +502,9 @@ def warn_objc_property_copy_missing_on_block : Warning<
 def warn_objc_property_retain_of_block : Warning<
     "retain'ed block property does not copy the block "
     "- use copy attribute instead">, InGroup<ObjCRetainBlockProperty>;
+def warn_objc_readonly_property_has_setter : Warning<
+    "setter cannot be specified for a readonly property">,
+    InGroup<ObjCReadonlyPropertyHasSetter>;
 def warn_atomic_property_rule : Warning<
   "writable atomic property %0 cannot pair a synthesized %select{getter|setter}1 "
   "with a user defined %select{getter|setter}2">,

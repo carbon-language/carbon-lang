@@ -37,3 +37,12 @@
 @property(nonatomic,copy) int (*PROP1)(); // expected-error {{property with 'copy' attribute must be of object type}}
 @property(nonatomic,weak) int (*PROP2)(); // expected-error {{property with 'weak' attribute must be of object type}}
 @end
+
+// rdar://10357768
+@interface rdar10357768
+{
+    int n1;
+}
+@property (readonly, setter=crushN1:) int n1; // expected-warning {{setter cannot be specified for a readonly property}}
+@end
+

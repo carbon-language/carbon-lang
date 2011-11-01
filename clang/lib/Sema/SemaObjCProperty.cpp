@@ -1798,4 +1798,9 @@ void Sema::CheckObjCPropertyAttributes(Decl *PDecl,
            !(Attributes & ObjCDeclSpec::DQ_PR_strong) &&
            PropertyTy->isBlockPointerType())
       Diag(Loc, diag::warn_objc_property_retain_of_block);
+  
+  if ((Attributes & ObjCDeclSpec::DQ_PR_readonly) &&
+      (Attributes & ObjCDeclSpec::DQ_PR_setter))
+    Diag(Loc, diag::warn_objc_readonly_property_has_setter);
+      
 }
