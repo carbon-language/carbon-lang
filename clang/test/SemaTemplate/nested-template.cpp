@@ -142,3 +142,16 @@ namespace PR10896 {
     f.foo();
   }
 }
+
+namespace PR10924 {
+  template< class Topology, class ctype >
+  struct ReferenceElement
+  {
+  };
+
+  template< class Topology, class ctype >
+  template< int codim >
+  class ReferenceElement< Topology, ctype > :: BaryCenterArray // expected-error{{out-of-line definition of 'BaryCenterArray' does not match any declaration in 'ReferenceElement<Topology, ctype>'}}
+  {
+  };
+}

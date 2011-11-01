@@ -989,9 +989,11 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
     // If the name of the template was qualified, we must be defining the
     // template out-of-line.
     if (!SS.isInvalid() && !Invalid && !PrevClassTemplate &&
-        !(TUK == TUK_Friend && CurContext->isDependentContext()))
+        !(TUK == TUK_Friend && CurContext->isDependentContext())) {
       Diag(NameLoc, diag::err_member_def_does_not_match)
         << Name << SemanticContext << SS.getRange();
+      Invalid = true;
+    }
   }
 
   CXXRecordDecl *NewClass =
