@@ -456,6 +456,7 @@ void CoreEngine::generateNode(const ProgramPoint &Loc,
 
 void CoreEngine::enqueueStmtNode(ExplodedNode *N,
                                  const CFGBlock *Block, unsigned Idx) {
+  assert(Block);
   assert (!N->isSink());
 
   // Check if this node entered a callee.

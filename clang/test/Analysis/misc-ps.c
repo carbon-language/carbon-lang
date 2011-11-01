@@ -95,4 +95,14 @@ void rdar10308201 (int valA, void *valB, unsigned valC) {
   }
 }
 
+typedef struct Struct103 {
+  unsigned i;
+} Struct103;
+typedef unsigned int size_t;
+void __my_memset_chk(char*, int, size_t);
+static int radar10367606(int t) {
+  Struct103 overall;
+  ((__builtin_object_size ((char *) &overall, 0) != (size_t) -1) ? __builtin___memset_chk ((char *) &overall, 0, sizeof(Struct103), __builtin_object_size ((char *) &overall, 0)) : __my_memset_chk ((char *) &overall, 0, sizeof(Struct103)));
+  return 0;
+}
 

@@ -73,6 +73,7 @@ public:
   }
 
   void enqueue(ExplodedNode *N) {
+    assert(N->getLocation().getKind() != ProgramPoint::PostStmtKind);
     enqueue(WorkListUnit(N, CurrentCounter));
   }
 

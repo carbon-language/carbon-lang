@@ -378,6 +378,8 @@ public:
   }
 };
 
+/// \brief BranchNodeBuilder is responsible for constructing the nodes
+/// corresponding to the two branches of the if statement - true and false.
 class BranchNodeBuilder: public NodeBuilder {
   const CFGBlock *DstT;
   const CFGBlock *DstF;
@@ -390,13 +392,19 @@ public:
                     const NodeBuilderContext &C,
                     const CFGBlock *dstT, const CFGBlock *dstF)
   : NodeBuilder(SrcNode, DstSet, C), DstT(dstT), DstF(dstF),
-    InFeasibleTrue(!DstT), InFeasibleFalse(!DstF) {}
+    InFeasibleTrue(!DstT), InFeasibleFalse(!DstF) {
+    // The Banch node builder does not generate autotransitions.
+    // If there are no successors it means that both branches are infeasible.
+    takeNodes(SrcNode);
+  }
 
   BranchNodeBuilder(const ExplodedNodeSet &SrcSet, ExplodedNodeSet &DstSet,
                     const NodeBuilderContext &C,
                     const CFGBlock *dstT, const CFGBlock *dstF)
   : NodeBuilder(SrcSet, DstSet, C), DstT(dstT), DstF(dstF),
-    InFeasibleTrue(!DstT), InFeasibleFalse(!DstF) {}
+    InFeasibleTrue(!DstT), InFeasibleFalse(!DstF) {
+    takeNodes(SrcSet);
+  }
 
   ExplodedNode *generateNode(const ProgramState *State, bool branch,
                              ExplodedNode *Pred);
