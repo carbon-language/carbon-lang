@@ -555,7 +555,7 @@
 #cmakedefine01 LLVM_HAS_ATOMICS
 
 /* Host triple we were built on */
-#cmakedefine LLVM_HOSTTRIPLE "${LLVM_HOSTTRIPLE}"
+#cmakedefine LLVM_DEFAULT_TARGET_TRIPLE "${LLVM_DEFAULT_TARGET_TRIPLE}"
 
 /* Installation directory for include files */
 #cmakedefine LLVM_INCLUDEDIR "${LLVM_INCLUDEDIR}"

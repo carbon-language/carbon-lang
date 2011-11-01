@@ -35,7 +35,7 @@
 #undef LLVM_HAS_ATOMICS
 
 /* Host triple we were built on */
-#undef LLVM_HOSTTRIPLE
+#undef LLVM_DEFAULT_TARGET_TRIPLE
 
 /* Installation directory for include files */
 #undef LLVM_INCLUDEDIR

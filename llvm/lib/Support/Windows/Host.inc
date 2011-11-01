@@ -18,6 +18,5 @@
 using namespace llvm;
 
 std::string sys::getHostTriple() {
-  // FIXME: Adapt to running version.
-  return LLVM_HOSTTRIPLE;
+  return LLVM_DEFAULT_TARGET_TRIPLE;
 }

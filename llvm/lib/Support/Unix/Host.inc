@@ -36,10 +36,7 @@ static std::string getOSVersion() {
 }
 
 std::string sys::getHostTriple() {
-  // FIXME: Derive directly instead of relying on the autoconf generated
-  // variable.
-
-  StringRef HostTripleString(LLVM_HOSTTRIPLE);
+  StringRef HostTripleString(LLVM_DEFAULT_TARGET_TRIPLE);
   std::pair<StringRef, StringRef> ArchSplit = HostTripleString.split('-');
 
   // Normalize the arch, since the host triple may not actually match the host.

@@ -543,6 +543,9 @@
 /* Installation directory for data files */
 #undef LLVM_DATADIR
 
+/* Target triple LLVM will generate code for by default */
+#undef LLVM_DEFAULT_TARGET_TRIPLE
+
 /* Installation directory for documentation */
 #undef LLVM_DOCSDIR
 
@@ -551,9 +554,6 @@
 
 /* Has gcc/MSVC atomic intrinsics */
 #undef LLVM_HAS_ATOMICS
-
-/* Host triple we were built on */
-#undef LLVM_HOSTTRIPLE
 
 /* Installation directory for include files */
 #undef LLVM_INCLUDEDIR
