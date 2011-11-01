@@ -67,7 +67,6 @@ protected:
     uint32_t m_exc_data_count;
     uint64_t m_exc_code;
     uint64_t m_exc_subcode;
-    std::string m_description;
 };
 
 

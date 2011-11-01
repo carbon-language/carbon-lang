@@ -74,6 +74,25 @@ DynamicCheckerFunctions::Install(Stream &error_stream,
     return true;
 }
 
+bool
+DynamicCheckerFunctions::DoCheckersExplainStop (lldb::addr_t addr, Stream &message)
+{
+    // FIXME: We have to get the checkers to know why they scotched the call in more detail,
+    // so we can print a better message here.
+    if (m_valid_pointer_check.get() != NULL && m_valid_pointer_check->ContainsAddress(addr))
+    {
+        message.Printf ("Attempted to dereference an invalid pointer.");
+        return true;
+    }
+    else if (m_objc_object_check.get() != NULL && m_objc_object_check->ContainsAddress(addr))
+    {
+        message.Printf ("Attempted to dereference an invalid ObjC Object or send it an unrecognized selector");
+        return true;
+    }
+    return false;
+}
+
+
 static std::string 
 PrintValue(llvm::Value *V, bool truncate = false)
 {

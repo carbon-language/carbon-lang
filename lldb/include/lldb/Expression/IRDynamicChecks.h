@@ -10,6 +10,7 @@
 #ifndef liblldb_IRDynamicChecks_h_
 #define liblldb_IRDynamicChecks_h_
 
+#include "lldb-types.h"
 #include "llvm/Pass.h"
 
 namespace llvm {
@@ -73,6 +74,8 @@ public:
     //------------------------------------------------------------------
     bool Install (Stream &error_stream,
                   ExecutionContext &exe_ctx);
+    
+    bool DoCheckersExplainStop (lldb::addr_t addr, Stream &message);
     
     std::auto_ptr<ClangUtilityFunction> m_valid_pointer_check;
     std::auto_ptr<ClangUtilityFunction> m_objc_object_check;

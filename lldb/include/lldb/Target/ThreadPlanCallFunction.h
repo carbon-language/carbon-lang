@@ -127,6 +127,12 @@ public:
     {
         return m_real_stop_info_sp;
     }
+    
+    lldb::addr_t
+    GetStopAddress ()
+    {
+        return m_stop_address;
+    }
 
 protected:
     void ReportRegisterState (const char *message);
@@ -148,8 +154,8 @@ private:
     Address                                         m_function_addr;
     Address                                         m_start_addr;
     lldb::addr_t                                    m_function_sp;
-    Process                                        &m_process;
-    Thread                                         &m_thread;
+//    Process                                        &m_process;
+//    Thread                                         &m_thread;
     Thread::RegisterCheckpoint                      m_register_backup;
     lldb::ThreadPlanSP                              m_subplan_sp;
     LanguageRuntime                                *m_cxx_language_runtime;
@@ -161,6 +167,7 @@ private:
                                                                          // This gets set in DoTakedown.
     lldb::ValueSP                                   m_return_value_sp;  // If this contains a valid pointer, use the ABI to extract values when complete
     bool                                            m_takedown_done;    // We want to ensure we only do the takedown once.  This ensures that.
+    lldb::addr_t                                    m_stop_address;     // This is the address we stopped at.  Also set in DoTakedown;
 
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanCallFunction);
 };

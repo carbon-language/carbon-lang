@@ -48,6 +48,9 @@ public:
             m_user_expression_sp.reset();
     }
 
+    virtual lldb::StopInfoSP
+    GetRealStopInfo();
+    
 protected:
 private:
     ClangUserExpression::ClangUserExpressionSP m_user_expression_sp;    // This is currently just used to ensure the

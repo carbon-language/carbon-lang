@@ -47,9 +47,8 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     m_stop_other_threads (stop_other_threads),
     m_function_addr (function),
     m_function_sp (NULL),
-    m_process (thread.GetProcess()),
-    m_thread (thread),
-    m_takedown_done (false)
+    m_takedown_done (false),
+    m_stop_address (LLDB_INVALID_ADDRESS)
 {
     SetOkayToDiscard (discard_on_error);
 
@@ -163,8 +162,6 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     m_stop_other_threads (stop_other_threads),
     m_function_addr (function),
     m_function_sp(NULL),
-    m_process (thread.GetProcess()),
-    m_thread (thread),
     m_takedown_done (false)
 {
     SetOkayToDiscard (discard_on_error);
@@ -294,6 +291,7 @@ ThreadPlanCallFunction::DoTakedown ()
         if (log)
             log->Printf ("DoTakedown called for thread 0x%4.4llx, m_valid: %d complete: %d.\n", m_thread.GetID(), m_valid, IsPlanComplete());
         m_takedown_done = true;
+        m_stop_address = m_thread.GetStackFrameAtIndex(0)->GetRegisterContext()->GetPC();
         m_real_stop_info_sp = GetPrivateStopReason();
         m_thread.RestoreThreadStateFromCheckpoint(m_stored_thread_state);
         SetPlanComplete();
@@ -324,7 +322,7 @@ ThreadPlanCallFunction::GetDescription (Stream *s, DescriptionLevel level)
     }
     else
     {
-        s->Printf("Thread plan to call 0x%llx", m_function_addr.GetLoadAddress(&m_process.GetTarget()));
+        s->Printf("Thread plan to call 0x%llx", m_function_addr.GetLoadAddress(&m_thread.GetProcess().GetTarget()));
     }
 }
 
@@ -474,8 +472,8 @@ ThreadPlanCallFunction::MischiefManaged ()
 void
 ThreadPlanCallFunction::SetBreakpoints ()
 {
-    m_cxx_language_runtime = m_process.GetLanguageRuntime(eLanguageTypeC_plus_plus);
-    m_objc_language_runtime = m_process.GetLanguageRuntime(eLanguageTypeObjC);
+    m_cxx_language_runtime = m_thread.GetProcess().GetLanguageRuntime(eLanguageTypeC_plus_plus);
+    m_objc_language_runtime = m_thread.GetProcess().GetLanguageRuntime(eLanguageTypeObjC);
     
     if (m_cxx_language_runtime)
         m_cxx_language_runtime->SetExceptionBreakpoints();
