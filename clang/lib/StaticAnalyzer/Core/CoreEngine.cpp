@@ -546,14 +546,17 @@ ExplodedNode* NodeBuilder::generateNodeImpl(const ProgramPoint &Loc,
   ExplodedNode *N = C.Eng.G->getNode(Loc, State, &IsNew);
   N->addPredecessor(FromN, *C.Eng.G);
   Frontier.erase(FromN);
+  assert(IsNew || N->isSink() == MarkAsSink);
+
+  if (!IsNew)
+    return 0;
 
   if (MarkAsSink)
     N->markAsSink();
-    
-  if (IsNew && !MarkAsSink)
+  else
     Frontier.Add(N);
 
-  return (IsNew ? N : 0);
+  return N;
 }
 
 StmtNodeBuilder::~StmtNodeBuilder() {

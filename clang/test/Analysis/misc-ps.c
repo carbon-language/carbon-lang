@@ -106,3 +106,17 @@ static int radar10367606(int t) {
   return 0;
 }
 
+/* Caching out on a sink node. */
+extern int fooR10376675();
+extern int* bazR10376675();
+extern int nR10376675;
+void barR10376675(int *x) {
+  int *pm;
+  if (nR10376675 * 2) {
+    int *pk  = bazR10376675();
+    pm = pk; //expected-warning {{never read}}
+  }
+  do {
+    *x = fooR10376675();
+  } while (0);
+}

@@ -393,7 +393,7 @@ public:
                     const CFGBlock *dstT, const CFGBlock *dstF)
   : NodeBuilder(SrcNode, DstSet, C), DstT(dstT), DstF(dstF),
     InFeasibleTrue(!DstT), InFeasibleFalse(!DstF) {
-    // The Banch node builder does not generate autotransitions.
+    // The branch node builder does not generate autotransitions.
     // If there are no successors it means that both branches are infeasible.
     takeNodes(SrcNode);
   }

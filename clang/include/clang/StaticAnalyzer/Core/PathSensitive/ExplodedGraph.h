@@ -389,6 +389,7 @@ public:
 
   void clear() { Impl.clear(); }
   void insert(const ExplodedNodeSet &S) {
+    assert(&S != this);
     if (empty())
       Impl = S.Impl;
     else
