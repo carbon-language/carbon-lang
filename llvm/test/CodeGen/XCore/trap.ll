@@ -1,8 +1,9 @@
-; RUN: llc < %s -march=xcore > %t1.s
-; RUN: grep "ecallf" %t1.s | count 1
-; RUN: grep "ldc" %t1.s | count 1
+; RUN: llc < %s -march=xcore | FileCheck %s
 define i32 @test() noreturn nounwind  {
 entry:
+; CHECK: test:
+; CHECK: ldc
+; CHECK: ecallf
 	tail call void @llvm.trap( )
 	unreachable
 }
