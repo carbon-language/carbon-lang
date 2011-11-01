@@ -2240,12 +2240,26 @@ static DecodeStatus DecodeVSTInstruction(llvm::MCInst &Inst, unsigned Insn,
     return MCDisassembler::Fail;
 
   // AddrMode6 Offset (register)
-  if (Rm == 0xD)
-    Inst.addOperand(MCOperand::CreateReg(0));
-  else if (Rm != 0xF) {
-    if (!Check(S, DecodeGPRRegisterClass(Inst, Rm, Address, Decoder)))
-    return MCDisassembler::Fail;
+  switch (Inst.getOpcode()) {
+    default:
+      if (Rm == 0xD)
+        Inst.addOperand(MCOperand::CreateReg(0));
+      else if (Rm != 0xF) {
+        if (!Check(S, DecodeGPRRegisterClass(Inst, Rm, Address, Decoder)))
+          return MCDisassembler::Fail;
+      }
+      break;
+    case ARM::VST1d8wb_fixed:
+    case ARM::VST1d16wb_fixed:
+    case ARM::VST1d32wb_fixed:
+    case ARM::VST1d64wb_fixed:
+    case ARM::VST1q8wb_fixed:
+    case ARM::VST1q16wb_fixed:
+    case ARM::VST1q32wb_fixed:
+    case ARM::VST1q64wb_fixed:
+      break;
   }
+
 
   // First input register
   if (!Check(S, DecodeDPRRegisterClass(Inst, Rd, Address, Decoder)))
