@@ -120,7 +120,7 @@ bool XCoreDAGToDAGISel::SelectADDRdpii(SDValue Addr, SDValue &Base,
     ConstantSDNode *CN = 0;
     if ((Addr.getOperand(0).getOpcode() == XCoreISD::DPRelativeWrapper)
       && (CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1)))
-      && (CN->getSExtValue() % 4 == 0)) {
+      && (CN->getSExtValue() % 4 == 0 && CN->getSExtValue() >= 0)) {
       // Constant word offset from a object in the data region
       Base = Addr.getOperand(0).getOperand(0);
       Offset = CurDAG->getTargetConstant(CN->getSExtValue(), MVT::i32);
@@ -141,7 +141,7 @@ bool XCoreDAGToDAGISel::SelectADDRcpii(SDValue Addr, SDValue &Base,
     ConstantSDNode *CN = 0;
     if ((Addr.getOperand(0).getOpcode() == XCoreISD::CPRelativeWrapper)
       && (CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1)))
-      && (CN->getSExtValue() % 4 == 0)) {
+      && (CN->getSExtValue() % 4 == 0 && CN->getSExtValue() >= 0)) {
       // Constant word offset from a object in the data region
       Base = Addr.getOperand(0).getOperand(0);
       Offset = CurDAG->getTargetConstant(CN->getSExtValue(), MVT::i32);
