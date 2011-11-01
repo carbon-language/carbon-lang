@@ -307,8 +307,8 @@ void CallAndMessageChecker::HandleNilReceiver(CheckerContext &C,
   }
 
   // Other cases: check if sizeof(return type) > sizeof(void*)
-  if (CanRetTy != Ctx.VoidTy &&
-      C.getPredecessor()->getParentMap().isConsumedExpr(msg.getOriginExpr())) {
+  if (CanRetTy != Ctx.VoidTy && C.getLocationContext()->getParentMap()
+                                  .isConsumedExpr(msg.getOriginExpr())) {
     // Compute: sizeof(void *) and sizeof(return type)
     const uint64_t voidPtrSize = Ctx.getTypeSize(Ctx.VoidPtrTy);
     const uint64_t returnTypeSize = Ctx.getTypeSize(CanRetTy);

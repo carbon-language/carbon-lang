@@ -2606,13 +2606,12 @@ void RetainCountChecker::checkPostStmt(const CXXConstructExpr *CE,
 void RetainCountChecker::checkPostObjCMessage(const ObjCMessage &Msg, 
                                               CheckerContext &C) const {
   const ProgramState *state = C.getState();
-  ExplodedNode *Pred = C.getPredecessor();
 
   RetainSummaryManager &Summaries = getSummaryManager(C);
 
   const RetainSummary *Summ;
   if (Msg.isInstanceMessage()) {
-    const LocationContext *LC = Pred->getLocationContext();
+    const LocationContext *LC = C.getLocationContext();
     Summ = Summaries.getInstanceMethodSummary(Msg, state, LC);
   } else {
     Summ = Summaries.getClassMethodSummary(Msg);    
