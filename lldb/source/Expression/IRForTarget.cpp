@@ -2556,7 +2556,7 @@ IRForTarget::runOnModule (Module &llvm_module)
         }
     }
     
-    if (log)
+    if (log && log->GetVerbose())
     {
         std::string s;
         raw_string_ostream oss(s);
@@ -2669,7 +2669,7 @@ IRForTarget::runOnModule (Module &llvm_module)
         return false;
     }
     
-    if (log)
+    if (log && log->GetVerbose())
     {
         std::string s;
         raw_string_ostream oss(s);

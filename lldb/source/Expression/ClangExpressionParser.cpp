@@ -539,7 +539,19 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
     RecordingMemoryManager *jit_memory_manager = new RecordingMemoryManager();
     
     std::string error_string;
-            
+
+    if (log)
+    {
+        std::string s;
+        raw_string_ostream oss(s);
+        
+        module->print(oss, NULL);
+        
+        oss.flush();
+        
+        log->Printf ("Module being sent to JIT: \n%s", s.c_str());
+    }
+    
 #if defined (USE_STANDARD_JIT)
     m_execution_engine.reset(llvm::ExecutionEngine::createJIT (module, 
                                                                &error_string, 
@@ -578,10 +590,17 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
     
     // Errors usually cause failures in the JIT, but if we're lucky we get here.
     
+    if (!function)
+    {
+        err.SetErrorToGenericError();
+        err.SetErrorStringWithFormat("Couldn't find '%s' in the JITted module", function_name.c_str());
+        return err;
+    }
+    
     if (!fun_ptr)
     {
         err.SetErrorToGenericError();
-        err.SetErrorString("Couldn't JIT the function");
+        err.SetErrorStringWithFormat("'%s' was in the JITted module but wasn't lowered", function_name.c_str());
         return err;
     }
     
