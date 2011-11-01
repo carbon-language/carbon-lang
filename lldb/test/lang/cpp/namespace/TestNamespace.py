@@ -56,7 +56,7 @@ class NamespaceTestCase(TestBase):
         slist = ['(int) a = 12', 'anon_uint', 'a_uint', 'b_uint', 'y_uint']
         if sys.platform.startswith("darwin") and self.getCompiler() in ['clang', 'llvm-gcc']:
             slist = ['(int) a = 12',
-                     '(my_uint_t) anon_uint = 0',
+                     '::my_uint_t', 'anon_uint = 0',
                      '(A::uint_t) a_uint = 1',
                      '(A::B::uint_t) b_uint = 2',
                      '(Y::uint_t) y_uint = 3']
