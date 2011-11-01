@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -emit-llvm -o - -std=c++11 %s | FileCheck -check-prefix=CHECK-ASSIGN %s
+// RUN: %clang_cc1 -emit-llvm -o - -std=c++11 %s | FileCheck -check-prefix=CHECK-ASSIGN %s
 // RUN: %clang_cc1 -emit-llvm -o - -std=c++11 %s | FileCheck -check-prefix=CHECK-CTOR %s
 
 // construct
@@ -96,21 +97,21 @@ void move_VirtualWithEmptyBase(VirtualWithEmptyBase &x, VirtualWithEmptyBase &y)
 // CHECK-ASSIGN: define linkonce_odr {{.*}} @_ZN20VirtualWithEmptyBaseaSEOS_
 // CHECK-ASSIGN: store
 // CHECK-ASSIGN-NEXT: store
-// CHECK-NOT: call
-// CHECK: ret
+// CHECK-ASSIGN-NOT: call
+// CHECK-ASSIGN: ret
 
 // CHECK-ASSIGN: define linkonce_odr {{.*}} @_ZN1CaSEOS_
 // CHECK-ASSIGN: call {{.*}} @_ZN1AaSEOS_
 
 // move ctors
 
-// CHECK-CTOR: define linkonce_odr void @_ZN1HC2EOS_
-// CHECK-CTOR: call void @_ZN1GC2EOS_
-// CHECK-CTOR: call void @_ZN1FC1EOS_
-// CHECK-CTOR: call void @_ZN1EC1EOS_
+// CHECK-CTOR: define linkonce_odr {{.*}} @_ZN1HC2EOS_
+// CHECK-CTOR: call {{.*}} @_ZN1GC2EOS_
+// CHECK-CTOR: call {{.*}} @_ZN1FC1EOS_
+// CHECK-CTOR: call {{.*}} @_ZN1EC1EOS_
 // array loop
 // CHECK-CTOR: br i1
-// CHECK-CTOR: call void @_ZN1FC1EOS_
+// CHECK-CTOR: call {{.*}} @_ZN1FC1EOS_
 
-// CHECK-CTOR: define linkonce_odr void @_ZN1GC2EOS_
-// CHECK-CTOR: call void @_ZN1EC1EOS_
+// CHECK-CTOR: define linkonce_odr {{.*}} @_ZN1GC2EOS_
+// CHECK-CTOR: call {{.*}} @_ZN1EC1EOS_
