@@ -966,6 +966,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
 
     setOperationAction(ISD::SRA,               MVT::v4i32, Custom);
     setOperationAction(ISD::SRA,               MVT::v8i16, Custom);
+    setOperationAction(ISD::SRA,               MVT::v16i8, Custom);
   }
 
   if (Subtarget->hasSSE42() || Subtarget->hasAVX())
@@ -9994,6 +9995,23 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
        return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
                      DAG.getConstant(Intrinsic::x86_sse2_psrai_w, MVT::i32),
                      R, DAG.getConstant(ShiftAmt, MVT::i32));
+
+      if (VT == MVT::v16i8 && Op.getOpcode() == ISD::SRA) {
+        if (ShiftAmt == 7) {
+          // R s>> 7  ===  R s< 0
+          SDValue Zeros = getZeroVector(VT, true /* HasXMMInt */, DAG, dl);
+          return DAG.getNode(X86ISD::PCMPGTB, dl, VT, Zeros, R);
+        }
+
+        // R s>> a === ((R u>> a) ^ m) - m
+        SDValue Res = DAG.getNode(ISD::SRL, dl, VT, R, Amt);
+        SmallVector<SDValue, 16> V(16, DAG.getConstant(128 >> ShiftAmt,
+                                                       MVT::i8));
+        SDValue Mask = DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &V[0], 16);
+        Res = DAG.getNode(ISD::XOR, dl, VT, Res, Mask);
+        Res = DAG.getNode(ISD::SUB, dl, VT, Res, Mask);
+        return Res;
+      }
     }
   }
 

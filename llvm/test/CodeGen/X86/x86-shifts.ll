@@ -170,3 +170,23 @@ define <16 x i8> @shr9(<16 x i8> %A) nounwind {
 ; CHECK: pand
 ; CHECK: ret
 }
+
+define <16 x i8> @sra_v16i8_7(<16 x i8> %A) nounwind {
+  %B = ashr <16 x i8> %A, <i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7>
+  ret <16 x i8> %B
+; CHECK: sra_v16i8_7:
+; CHECK: pxor
+; CHECK: pcmpgtb
+; CHECK: ret
+}
+
+define <16 x i8> @sra_v16i8(<16 x i8> %A) nounwind {
+  %B = ashr <16 x i8> %A, <i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3>
+  ret <16 x i8> %B
+; CHECK: sra_v16i8:
+; CHECK: psrlw $3
+; CHECK: pand
+; CHECK: pxor
+; CHECK: psubb
+; CHECK: ret
+}
