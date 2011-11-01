@@ -55,4 +55,22 @@ int main()
     typedef std::ratio_add<R1, R2>::type R;
     static_assert(R::num == 127970191639601LL && R::den == 5177331081415LL, "");
     }
+    {
+    typedef std::ratio<0> R1;
+    typedef std::ratio<0> R2;
+    typedef std::ratio_add<R1, R2>::type R;
+    static_assert(R::num == 0 && R::den == 1, "");
+    }
+    {
+    typedef std::ratio<1> R1;
+    typedef std::ratio<0> R2;
+    typedef std::ratio_add<R1, R2>::type R;
+    static_assert(R::num == 1 && R::den == 1, "");
+    }
+    {
+    typedef std::ratio<0> R1;
+    typedef std::ratio<1> R2;
+    typedef std::ratio_add<R1, R2>::type R;
+    static_assert(R::num == 1 && R::den == 1, "");
+    }
 }

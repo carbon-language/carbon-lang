@@ -90,6 +90,12 @@ struct __static_gcd<_Xp, 0>
     static const intmax_t value = _Xp;
 };
 
+template <>
+struct __static_gcd<0, 0>
+{
+    static const intmax_t value = 1;
+};
+
 // __static_lcm
 
 template <intmax_t _Xp, intmax_t _Yp>
