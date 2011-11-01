@@ -10,7 +10,7 @@
 // U+0448 U+043A U+0430
 
 #ifndef __cplusplus
-#include <wchar.h>
+#include <stddef.h>
 #endif
 
 #ifdef __cplusplus
