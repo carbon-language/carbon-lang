@@ -79,6 +79,14 @@ int no_deleted_functions();
 // CHECK-0X: has_deleted_functions
 // CHECK-NO-0X: no_deleted_functions
 
+#if __has_feature(cxx_defaulted_functions)
+int has_defaulted_functions();
+#else
+int no_defaulted_functions();
+#endif
+
+// CHECK-0X: has_defaulted_functions
+// CHECK-NO-0X: no_defaulted_functions
 
 #if __has_feature(cxx_rvalue_references)
 int has_rvalue_references();

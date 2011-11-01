@@ -628,6 +628,7 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
          //.Case("cxx_constexpr", false);
            .Case("cxx_decltype", LangOpts.CPlusPlus0x)
            .Case("cxx_default_function_template_args", LangOpts.CPlusPlus0x)
+           .Case("cxx_defaulted_functions", LangOpts.CPlusPlus0x)
            .Case("cxx_delegating_constructors", LangOpts.CPlusPlus0x)
            .Case("cxx_deleted_functions", LangOpts.CPlusPlus0x)
            .Case("cxx_explicit_conversions", LangOpts.CPlusPlus0x)
