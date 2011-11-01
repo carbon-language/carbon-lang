@@ -69,10 +69,10 @@ UnwindLLDB::AddFirstFrame ()
 {
     // First, set up the 0th (initial) frame
     CursorSP first_cursor_sp(new Cursor ());
-    RegisterContextLLDB::SharedPtr reg_ctx_sp (new RegisterContextLLDB (m_thread, 
-                                                                        RegisterContextLLDB::SharedPtr(), 
+    RegisterContextLLDBSharedPtr reg_ctx_sp (new RegisterContextLLDB (m_thread, 
+                                                                        RegisterContextLLDBSharedPtr(), 
                                                                         first_cursor_sp->sctx, 
-                                                                        0));
+                                                                        0, *this));
     if (reg_ctx_sp.get() == NULL)
         return false;
     
@@ -104,10 +104,10 @@ UnwindLLDB::AddOneMoreFrame (ABI *abi)
         return false;
 
     uint32_t cur_idx = m_frames.size ();
-    RegisterContextLLDB::SharedPtr reg_ctx_sp(new RegisterContextLLDB (m_thread, 
+    RegisterContextLLDBSharedPtr reg_ctx_sp(new RegisterContextLLDB (m_thread, 
                                                                        m_frames[cur_idx - 1]->reg_ctx, 
                                                                        cursor_sp->sctx, 
-                                                                       cur_idx));
+                                                                       cur_idx, *this));
     if (reg_ctx_sp.get() == NULL)
         return false;
 
@@ -224,4 +224,29 @@ UnwindLLDB::DoCreateRegisterContextForFrame (StackFrame *frame)
     if (idx < m_frames.size ())
         reg_ctx_sp = m_frames[idx]->reg_ctx;
     return reg_ctx_sp;
+}
+
+UnwindLLDB::RegisterContextLLDBSharedPtr
+UnwindLLDB::GetRegisterContextForFrameNum (uint32_t frame_num)
+{
+    RegisterContextLLDBSharedPtr reg_ctx_sp;
+    if (frame_num >= m_frames.size())
+        return reg_ctx_sp;
+    reg_ctx_sp = m_frames[frame_num]->reg_ctx;
+    return reg_ctx_sp;
+}
+
+bool
+UnwindLLDB::SearchForSavedLocationForRegister (uint32_t lldb_regnum, lldb_private::UnwindLLDB::RegisterLocation &regloc, uint32_t starting_frame_num)
+{
+    int64_t frame_num = starting_frame_num;
+    if (frame_num >= m_frames.size())
+        return false;
+    while (frame_num >= 0)
+    {
+        if (m_frames[frame_num]->reg_ctx->SavedLocationForRegister (lldb_regnum, regloc, false))
+            return true;
+        frame_num--;
+    }
+    return false;
 }

@@ -16,6 +16,11 @@
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Symbol/UnwindPlan.h"
 #include "lldb/Symbol/SymbolContext.h"
+#include "UnwindLLDB.h"
+
+namespace lldb_private {
+
+class UnwindLLDB;
 
 class RegisterContextLLDB : public lldb_private::RegisterContext
 {
@@ -25,7 +30,7 @@ public:
     RegisterContextLLDB (lldb_private::Thread &thread,
                          const SharedPtr& next_frame,
                          lldb_private::SymbolContext& sym_ctx,
-                         uint32_t frame_number);
+                         uint32_t frame_number, lldb_private::UnwindLLDB& unwind_lldb);
 
     ///
     // pure virtual functions from the base class that we must implement
@@ -86,33 +91,11 @@ private:
         eNotAValidFrame  // this frame is invalid for some reason - most likely it is past the top (end) of the stack
     };
 
-    enum RegisterLocationTypes
-    {
-        eRegisterNotSaved = 0,          // register was not preserved by callee.  If volatile reg, is unavailable
-        eRegisterSavedAtMemoryLocation, // register is saved at a specific word of target mem (target_memory_location)
-        eRegisterInRegister,            // register is available in a (possible other) register (register_number)
-        eRegisterSavedAtHostMemoryLocation, // register is saved at a word in lldb's address space
-        eRegisterValueInferred          // register val was computed (and is in inferred_value)
-    };
-
-    struct RegisterLocation
-    {
-        int type;
-        union
-        {
-            lldb::addr_t target_memory_location;
-            uint32_t     register_number;       // in eRegisterKindLLDB register numbering system
-            void*        host_memory_location;
-            uint64_t     inferred_value;        // eRegisterValueInferred - e.g. stack pointer == cfa + offset
-        } location;
-    };
-
+    // UnwindLLDB needs to pass around references to RegisterLocations
+    friend class UnwindLLDB;
 
     // Indicates whether this frame is frame zero -- the currently
-    // executing frame -- or not.  If it is not frame zero, m_next_frame's
-    // shared pointer holds a pointer to the RegisterContextLLDB
-    // object "below" this frame, i.e. this frame called m_next_frame's
-    // function.
+    // executing frame -- or not.  
     bool
     IsFrameZero () const;
 
@@ -123,7 +106,7 @@ private:
     InitializeNonZerothFrame();
 
     SharedPtr
-    GetNextFrame ();
+    GetNextFrame () const;
 
     // Provide a location for where THIS function saved the CALLER's register value
     // Or a frame "below" this one saved it, i.e. a function called by this one, preserved a register that this
@@ -137,22 +120,25 @@ private:
     // stack have saved the register anywhere, it is safe to assume that frame 0's register values are still the same
     // as the requesting frame's.
     //
+    // NB this function takes a "check_next_frame" boolean which indicates whether it should call back to the
+    // containing UnwindLLDB object to iterate the search down the stack (true) or if this call should look for
+    // a register save for that reg in the current frame only (false).  Allows UnwindLLDB to iterate through the
+    // RegisterContextLLDB's instead of using recursion to find saved register values.
     bool
-    SavedLocationForRegister (uint32_t lldb_regnum, RegisterLocation &regloc);
+    SavedLocationForRegister (uint32_t lldb_regnum, lldb_private::UnwindLLDB::RegisterLocation &regloc, bool check_next_frame);
 
     bool
-    ReadRegisterValueFromRegisterLocation (RegisterLocation regloc, 
+    ReadRegisterValueFromRegisterLocation (lldb_private::UnwindLLDB::RegisterLocation regloc, 
                                            const lldb_private::RegisterInfo *reg_info,
                                            lldb_private::RegisterValue &value);
 
     bool
-    WriteRegisterValueToRegisterLocation (RegisterLocation regloc, 
+    WriteRegisterValueToRegisterLocation (lldb_private::UnwindLLDB::RegisterLocation regloc, 
                                           const lldb_private::RegisterInfo *reg_info,
                                           const lldb_private::RegisterValue &value);
 
     // Get the contents of a general purpose (address-size) register for this frame 
-    // (usually retrieved from the m_next_frame)
-    // m_base_reg_ectx and m_next_frame should both be initialized appropriately before calling.
+    // (usually retrieved from the next frame)
     bool
     ReadGPRValue (int register_kind, uint32_t regnum, lldb::addr_t &value);
 
@@ -164,8 +150,6 @@ private:
 
     lldb_private::Thread& m_thread;
     
-    SharedPtr m_next_frame;
-
     ///
     // The following tell us how to retrieve the CALLER's register values (ie the "previous" frame, aka the frame above)
     // i.e. where THIS frame saved them
@@ -194,9 +178,11 @@ private:
     lldb_private::SymbolContext& m_sym_ctx;
     bool m_sym_ctx_valid;                         // if ResolveSymbolContextForAddress fails, don't try to use m_sym_ctx
 
-    uint32_t m_frame_number;                      // What stack frame level this frame is - used for debug logging
+    uint32_t m_frame_number;                      // What stack frame this RegisterContext is
 
-    std::map<uint32_t, RegisterLocation> m_registers; // where to find reg values for this frame
+    std::map<uint32_t, lldb_private::UnwindLLDB::RegisterLocation> m_registers; // where to find reg values for this frame
+
+    lldb_private::UnwindLLDB& m_parent_unwind;    // The UnwindLLDB that is creating this RegisterContextLLDB
 
     //------------------------------------------------------------------
     // For RegisterContextLLDB only
@@ -204,5 +190,7 @@ private:
 
     DISALLOW_COPY_AND_ASSIGN (RegisterContextLLDB);
 };
+
+} // namespace lldb_private
 
 #endif  // lldb_RegisterContextLLDB_h_
