@@ -95,3 +95,7 @@ int intLvalue[*(int*)((long)&n ?: 1)] = { 1, 2 }; // expected-error {{variable l
 
 union u { int a; char b[4]; };
 char c = ((union u)(123456)).b[0]; // expected-error {{not a compile-time constant}}
+
+extern const int weak_int __attribute__((weak));
+const int weak_int = 42;
+int weak_int_test = weak_int; // expected-error {{not a compile-time constant}}
