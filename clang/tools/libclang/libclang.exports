@@ -92,6 +92,7 @@ clang_getDiagnosticOption
 clang_getDiagnosticRange
 clang_getDiagnosticSeverity
 clang_getDiagnosticSpelling
+clang_getExpansionLocation
 clang_getFile
 clang_getFileName
 clang_getFileTime
