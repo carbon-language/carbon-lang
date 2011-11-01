@@ -35,7 +35,7 @@ TargetMachine *EngineBuilder::selectTarget(Module *Mod,
                               std::string *ErrorStr) {
   Triple TheTriple(Mod->getTargetTriple());
   if (TheTriple.getTriple().empty())
-    TheTriple.setTriple(sys::getHostTriple());
+    TheTriple.setTriple(sys::getDefaultTargetTriple());
 
   // Adjust the triple to match what the user requested.
   const Target *TheTarget = 0;

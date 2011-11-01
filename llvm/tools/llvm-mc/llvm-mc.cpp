@@ -175,7 +175,7 @@ Action(cl::desc("Action to perform:"),
 static const Target *GetTarget(const char *ProgName) {
   // Figure out the target triple.
   if (TripleName.empty())
-    TripleName = sys::getHostTriple();
+    TripleName = sys::getDefaultTargetTriple();
   Triple TheTriple(Triple::normalize(TripleName));
 
   const Target *TheTarget = 0;

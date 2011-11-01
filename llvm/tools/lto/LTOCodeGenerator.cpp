@@ -243,7 +243,7 @@ bool LTOCodeGenerator::determineTarget(std::string& errMsg)
     if ( _target == NULL ) {
         std::string Triple = _linker.getModule()->getTargetTriple();
         if (Triple.empty())
-          Triple = sys::getHostTriple();
+          Triple = sys::getDefaultTargetTriple();
 
         // create target machine from info for merged modules
         const Target *march = TargetRegistry::lookupTarget(Triple, errMsg);

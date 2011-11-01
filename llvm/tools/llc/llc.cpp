@@ -261,7 +261,7 @@ int main(int argc, char **argv) {
 
   Triple TheTriple(mod.getTargetTriple());
   if (TheTriple.getTriple().empty())
-    TheTriple.setTriple(sys::getHostTriple());
+    TheTriple.setTriple(sys::getDefaultTargetTriple());
 
   // Allocate target machine.  First, check whether the user has explicitly
   // specified an architecture to compile for. If so we have to look it up by

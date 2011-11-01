@@ -96,7 +96,7 @@ Module *llvm::ParseInputFile(const std::string &Filename,
       Triple TheTriple(Result->getTargetTriple());
 
       if (TheTriple.getTriple().empty())
-        TheTriple.setTriple(sys::getHostTriple());
+        TheTriple.setTriple(sys::getDefaultTargetTriple());
 
       TargetTriple.setTriple(TheTriple.getTriple());
     }

@@ -33,14 +33,14 @@ namespace sys {
     return !isLittleEndianHost();
   }
 
-  /// getHostTriple() - Return the target triple of the running
+  /// getDefaultTargetTriple() - Return the target triple of the running
   /// system.
   ///
   /// The target triple is a string in the format of:
   ///   CPU_TYPE-VENDOR-OPERATING_SYSTEM
   /// or
   ///   CPU_TYPE-VENDOR-KERNEL-OPERATING_SYSTEM
-  std::string getHostTriple();
+  std::string getDefaultTargetTriple();
 
   /// getHostCPUName - Get the LLVM name for the host CPU. The particular format
   /// of the name is target dependent, and suitable for passing as -mcpu to the

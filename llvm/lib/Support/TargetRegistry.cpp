@@ -84,7 +84,7 @@ void TargetRegistry::RegisterTarget(Target &T,
 }
 
 const Target *TargetRegistry::getClosestTargetForJIT(std::string &Error) {
-  const Target *TheTarget = lookupTarget(sys::getHostTriple(), Error);
+  const Target *TheTarget = lookupTarget(sys::getDefaultTargetTriple(), Error);
 
   if (TheTarget && !TheTarget->hasJIT()) {
     Error = "No JIT compatible target available for this host";

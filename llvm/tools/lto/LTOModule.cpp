@@ -151,7 +151,7 @@ LTOModule *LTOModule::makeLTOModule(MemoryBuffer *buffer,
 
   std::string Triple = m->getTargetTriple();
   if (Triple.empty())
-    Triple = sys::getHostTriple();
+    Triple = sys::getDefaultTargetTriple();
 
   // find machine architecture for this module
   const Target *march = TargetRegistry::lookupTarget(Triple, errMsg);
