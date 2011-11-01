@@ -3810,6 +3810,7 @@ bool ARMAsmParser::parseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
   }
   case AsmToken::LParen:  // parenthesized expressions like (_strcmp-4)
   case AsmToken::Integer: // things like 1f and 2b as a branch targets
+  case AsmToken::String:  // quoted label names.
   case AsmToken::Dot: {   // . as a branch target
     // This was not a register so parse other operands that start with an
     // identifier (like labels) as expressions and create them as immediates.
