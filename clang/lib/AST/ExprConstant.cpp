@@ -28,8 +28,6 @@ using namespace clang;
 using llvm::APSInt;
 using llvm::APFloat;
 
-static bool IsParamLValue(const Expr *E);
-
 /// EvalInfo - This is a private struct used by the evaluator to capture
 /// information about a subexpression as it is folded.  It retains information
 /// about the AST context, but also maintains information about the folded
@@ -53,27 +51,27 @@ namespace {
   class CCValue : public APValue {
     typedef llvm::APSInt APSInt;
     typedef llvm::APFloat APFloat;
-    /// If the value is a DeclRefExpr lvalue referring to a ParmVarDecl, this is
-    /// the index of the corresponding function call.
-    unsigned CallIndex;
+    /// If the value is a reference or pointer into a parameter or temporary,
+    /// this is the corresponding call stack frame.
+    CallStackFrame *CallFrame;
   public:
+    struct GlobalValue {};
+
     CCValue() {}
     explicit CCValue(const APSInt &I) : APValue(I) {}
     explicit CCValue(const APFloat &F) : APValue(F) {}
     CCValue(const APValue *E, unsigned N) : APValue(E, N) {}
     CCValue(const APSInt &R, const APSInt &I) : APValue(R, I) {}
     CCValue(const APFloat &R, const APFloat &I) : APValue(R, I) {}
-    CCValue(const CCValue &V) : APValue(V), CallIndex(V.CallIndex) {}
-    CCValue(const Expr *B, const CharUnits &O, unsigned I) :
-      APValue(B, O), CallIndex(I) {}
-    CCValue(const APValue &V, unsigned CallIndex) :
-      APValue(V), CallIndex(CallIndex) {}
+    CCValue(const CCValue &V) : APValue(V), CallFrame(V.CallFrame) {}
+    CCValue(const Expr *B, const CharUnits &O, CallStackFrame *F) :
+      APValue(B, O), CallFrame(F) {}
+    CCValue(const APValue &V, GlobalValue) :
+      APValue(V), CallFrame(0) {}
 
-    enum { NoCallIndex = (unsigned)0 };
-
-    unsigned getLValueCallIndex() const {
+    CallStackFrame *getLValueFrame() const {
       assert(getKind() == LValue);
-      return CallIndex;
+      return CallFrame;
     }
   };
 
@@ -87,11 +85,6 @@ namespace {
     /// ParmBindings - Parameter bindings for this function call, indexed by
     /// parameters' function scope indices.
     const CCValue *Arguments;
-
-    /// CallIndex - The index of the current call. This is used to match lvalues
-    /// referring to parameters up with the corresponding stack frame, and to
-    /// detect when the parameter is no longer in scope.
-    unsigned CallIndex;
 
     typedef llvm::DenseMap<const Expr*, CCValue> MapTy;
     typedef MapTy::const_iterator temp_iterator;
@@ -131,10 +124,6 @@ namespace {
       : Ctx(C), EvalStatus(S), CurrentCall(0), NumCalls(0), CallStackDepth(0),
         BottomFrame(*this, 0) {}
 
-    unsigned getCurrentCallIndex() const { return CurrentCall->CallIndex; }
-    CallStackFrame *getStackFrame(unsigned CallIndex) const;
-    const CCValue *getCallValue(unsigned CallIndex, unsigned ArgIndex) const;
-
     const CCValue *getOpaqueValue(const OpaqueValueExpr *e) const {
       MapTy::const_iterator i = OpaqueValues.find(e);
       if (i == OpaqueValues.end()) return 0;
@@ -145,8 +134,7 @@ namespace {
   };
 
   CallStackFrame::CallStackFrame(EvalInfo &Info, const CCValue *Arguments)
-      : Info(Info), Caller(Info.CurrentCall), Arguments(Arguments),
-        CallIndex(Info.NumCalls++) {
+      : Info(Info), Caller(Info.CurrentCall), Arguments(Arguments) {
     Info.CurrentCall = this;
     ++Info.CallStackDepth;
   }
@@ -155,23 +143,6 @@ namespace {
     assert(Info.CurrentCall == this && "calls retired out of order");
     --Info.CallStackDepth;
     Info.CurrentCall = Caller;
-  }
-
-  CallStackFrame *EvalInfo::getStackFrame(unsigned CallIndex) const {
-    for (CallStackFrame *Frame = CurrentCall;
-         Frame && Frame->CallIndex >= CallIndex; Frame = Frame->Caller)
-      if (Frame->CallIndex == CallIndex)
-        return Frame;
-    return 0;
-  }
-
-  const CCValue *EvalInfo::getCallValue(unsigned CallIndex,
-                                        unsigned ArgIndex) const {
-    if (CallIndex == 0)
-      return 0;
-    if (CallStackFrame *Frame = getStackFrame(CallIndex))
-      return Frame->Arguments + ArgIndex;
-    return 0;
   }
 
   struct ComplexValue {
@@ -217,21 +188,21 @@ namespace {
   struct LValue {
     const Expr *Base;
     CharUnits Offset;
-    unsigned CallIndex;
+    CallStackFrame *Frame;
 
     const Expr *getLValueBase() const { return Base; }
     CharUnits &getLValueOffset() { return Offset; }
     const CharUnits &getLValueOffset() const { return Offset; }
-    unsigned getLValueCallIndex() const { return CallIndex; }
+    CallStackFrame *getLValueFrame() const { return Frame; }
 
     void moveInto(CCValue &V) const {
-      V = CCValue(Base, Offset, CallIndex);
+      V = CCValue(Base, Offset, Frame);
     }
     void setFrom(const CCValue &V) {
       assert(V.isLValue());
       Base = V.getLValueBase();
       Offset = V.getLValueOffset();
-      CallIndex = V.getLValueCallIndex();
+      Frame = V.getLValueFrame();
     }
   };
 }
@@ -267,12 +238,6 @@ static bool IsGlobalLValue(const Expr* E) {
     return false;
 
   return true;
-}
-
-static bool IsParamLValue(const Expr *E) {
-  if (const DeclRefExpr *DRE = dyn_cast_or_null<DeclRefExpr>(E))
-    return isa<ParmVarDecl>(DRE->getDecl());
-  return false;
 }
 
 /// Check that this core constant expression value is a valid value for a
@@ -419,16 +384,14 @@ static APFloat HandleIntToFloatCast(QualType DestType, QualType SrcType,
 
 /// Try to evaluate the initializer for a variable declaration.
 static bool EvaluateVarDeclInit(EvalInfo &Info, const VarDecl *VD,
-                                unsigned CallIndex, CCValue &Result) {
+                                CallStackFrame *Frame, CCValue &Result) {
   // If this is a parameter to an active constexpr function call, perform
   // argument substitution.
   if (const ParmVarDecl *PVD = dyn_cast<ParmVarDecl>(VD)) {
-    if (const CCValue *ArgValue =
-          Info.getCallValue(CallIndex, PVD->getFunctionScopeIndex())) {
-      Result = *ArgValue;
-      return true;
-    }
-    return false;
+    if (!Frame || !Frame->Arguments)
+      return false;
+    Result = Frame->Arguments[PVD->getFunctionScopeIndex()];
+    return true;
   }
 
   const Expr *Init = VD->getAnyInitializer();
@@ -436,7 +399,7 @@ static bool EvaluateVarDeclInit(EvalInfo &Info, const VarDecl *VD,
     return false;
 
   if (APValue *V = VD->getEvaluatedValue()) {
-    Result = CCValue(*V, CCValue::NoCallIndex);
+    Result = CCValue(*V, CCValue::GlobalValue());
     return !Result.isUninit();
   }
 
@@ -466,7 +429,7 @@ static bool IsConstNonVolatile(QualType T) {
 bool HandleLValueToRValueConversion(EvalInfo &Info, QualType Type,
                                     const LValue &LVal, CCValue &RVal) {
   const Expr *Base = LVal.Base;
-  unsigned CallIndex = LVal.CallIndex;
+  CallStackFrame *Frame = LVal.Frame;
 
   // FIXME: Indirection through a null pointer deserves a diagnostic.
   if (!Base)
@@ -498,8 +461,7 @@ bool HandleLValueToRValueConversion(EvalInfo &Info, QualType Type,
     // them are not permitted.
     const VarDecl *VD = dyn_cast<VarDecl>(D);
     if (!VD || !(IsConstNonVolatile(VD->getType()) || isa<ParmVarDecl>(VD)) ||
-        !Type->isLiteralType() ||
-        !EvaluateVarDeclInit(Info, VD, CallIndex, RVal))
+        !Type->isLiteralType() || !EvaluateVarDeclInit(Info, VD, Frame, RVal))
       return false;
 
     if (isa<ParmVarDecl>(VD) || !VD->getAnyInitializer()->isLValue())
@@ -513,17 +475,14 @@ bool HandleLValueToRValueConversion(EvalInfo &Info, QualType Type,
     if (!RVal.getLValueOffset().isZero())
       return false;
     Base = RVal.getLValueBase();
-    CallIndex = RVal.getLValueCallIndex();
+    Frame = RVal.getLValueFrame();
   }
 
-  // If this is an lvalue expression with a nontrivial initializer, grab the
-  // value from the relevant stack frame, if the object is still in scope.
-  if (isa<MaterializeTemporaryExpr>(Base)) {
-    if (CallStackFrame *Frame = Info.getStackFrame(CallIndex)) {
-      RVal = Frame->Temporaries[Base];
-      return true;
-    }
-    return false;
+  // If this is a temporary expression with a nontrivial initializer, grab the
+  // value from the relevant stack frame.
+  if (Frame) {
+    RVal = Frame->Temporaries[Base];
+    return true;
   }
 
   // In C99, a CompoundLiteralExpr is an lvalue, and we defer evaluating the
@@ -726,6 +685,14 @@ protected:
 
   RetTy ValueInitialization(const Expr *E) { return DerivedError(E); }
 
+  bool MakeTemporary(const Expr *Key, const Expr *Value, LValue &Result) {
+    if (!Evaluate(Info.CurrentCall->Temporaries[Key], Info, Value))
+      return false;
+    Result.Base = Key;
+    Result.Offset = CharUnits::Zero();
+    Result.Frame = Info.CurrentCall;
+    return true;
+  }
 public:
   ExprEvaluatorBase(EvalInfo &Info) : Info(Info) {}
 
@@ -813,7 +780,8 @@ public:
     llvm::ArrayRef<const Expr*> Args(E->getArgs(), E->getNumArgs());
 
     if (Body && Definition->isConstexpr() && !Definition->isInvalidDecl() &&
-        HandleFunctionCall(Args, Body, Info, Result))
+        HandleFunctionCall(Args, Body, Info, Result) &&
+        CheckConstantExpression(Result))
       return DerivedSuccess(Result, E);
 
     return DerivedError(E);
@@ -881,7 +849,6 @@ public:
 // following types:
 //  * DeclRefExpr
 //  * MemberExpr for a static member
-//  * MaterializeTemporaryExpr
 //  * CompoundLiteralExpr in C
 //  * StringLiteral
 //  * PredefinedExpr
@@ -889,7 +856,9 @@ public:
 //  * AddrLabelExpr
 //  * BlockExpr
 //  * CallExpr for a MakeStringConstant builtin
-// plus an offset in bytes.
+// plus an offset in bytes. It can also produce lvalues referring to locals. In
+// that case, the Frame will point to a stack frame, and the Expr is used as a
+// key to find the relevant temporary's value.
 //===----------------------------------------------------------------------===//
 namespace {
 class LValueExprEvaluator
@@ -900,7 +869,7 @@ class LValueExprEvaluator
   bool Success(const Expr *E) {
     Result.Base = E;
     Result.Offset = CharUnits::Zero();
-    Result.CallIndex = Info.getCurrentCallIndex();
+    Result.Frame = 0;
     return true;
   }
 public:
@@ -967,11 +936,18 @@ bool LValueExprEvaluator::VisitDeclRefExpr(const DeclRefExpr *E) {
 }
 
 bool LValueExprEvaluator::VisitVarDecl(const Expr *E, const VarDecl *VD) {
-  if (!VD->getType()->isReferenceType())
+  if (!VD->getType()->isReferenceType()) {
+    if (isa<ParmVarDecl>(VD)) {
+      Result.Base = E;
+      Result.Offset = CharUnits::Zero();
+      Result.Frame = Info.CurrentCall;
+      return true;
+    }
     return Success(E);
+  }
 
   CCValue V;
-  if (EvaluateVarDeclInit(Info, VD, Info.getCurrentCallIndex(), V))
+  if (EvaluateVarDeclInit(Info, VD, Info.CurrentCall, V))
     return Success(V, E);
 
   return Error(E);
@@ -979,9 +955,7 @@ bool LValueExprEvaluator::VisitVarDecl(const Expr *E, const VarDecl *VD) {
 
 bool LValueExprEvaluator::VisitMaterializeTemporaryExpr(
     const MaterializeTemporaryExpr *E) {
-  if (!Evaluate(Info.CurrentCall->Temporaries[E], Info, E->GetTemporaryExpr()))
-    return false;
-  return Success(E);
+  return MakeTemporary(E, E->GetTemporaryExpr(), Result);
 }
 
 bool
@@ -1066,7 +1040,7 @@ class PointerExprEvaluator
   bool Success(const Expr *E) {
     Result.Base = E;
     Result.Offset = CharUnits::Zero();
-    Result.CallIndex = Info.getCurrentCallIndex();
+    Result.Frame = 0;
     return true;
   }
 public:
@@ -1213,7 +1187,7 @@ bool PointerExprEvaluator::VisitCastExpr(const CastExpr* E) {
       uint64_t N = Value.getInt().extOrTrunc(Size).getZExtValue();
       Result.Base = 0;
       Result.Offset = CharUnits::fromQuantity(N);
-      Result.CallIndex = CCValue::NoCallIndex;
+      Result.Frame = 0;
       return true;
     } else {
       // Cast is of an lvalue, no need to change value.
@@ -1839,7 +1813,7 @@ static bool HasSameBase(const LValue &A, const LValue &B) {
   }
 
   return IsGlobalLValue(A.getLValueBase()) ||
-         A.getLValueCallIndex() == B.getLValueCallIndex();
+         A.getLValueFrame() == B.getLValueFrame();
 }
 
 bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
@@ -3124,7 +3098,7 @@ bool Expr::EvaluateAsBooleanCondition(bool &Result,
                                       const ASTContext &Ctx) const {
   EvalResult Scratch;
   return EvaluateAsRValue(Scratch, Ctx) &&
-         HandleConversionToBool(CCValue(Scratch.Val, CCValue::NoCallIndex),
+         HandleConversionToBool(CCValue(Scratch.Val, CCValue::GlobalValue()),
                                 Result);
 }
 
@@ -3155,9 +3129,7 @@ bool Expr::EvaluateAsAnyLValue(EvalResult &Result,
   EvalInfo Info(Ctx, Result);
 
   LValue LV;
-  // Don't allow references to out-of-scope function parameters to escape.
-  if (EvaluateLValue(this, LV, Info) &&
-      (!IsParamLValue(LV.Base) || LV.CallIndex == CCValue::NoCallIndex)) {
+  if (EvaluateLValue(this, LV, Info)) {
     Result.Val = APValue(LV.Base, LV.Offset);
     return true;
   }

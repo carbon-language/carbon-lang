@@ -102,6 +102,14 @@ namespace ParameterScopes {
   constexpr int n1 = MaybeReturnJunk(false, 0); // ok
   constexpr int n2 = MaybeReturnJunk(true, 0); // expected-error {{must be initialized by a constant expression}}
 
+  constexpr const int MaybeReturnNonstaticRef(bool b, const int a) {
+    // If ObscureTheTruth returns a reference to 'a', the result is not a
+    // constant expression even though 'a' is still in scope.
+    return ObscureTheTruth(b ? a : k);
+  }
+  constexpr int n1a = MaybeReturnJunk(false, 0); // ok
+  constexpr int n2a = MaybeReturnJunk(true, 0); // expected-error {{must be initialized by a constant expression}}
+
   constexpr int InternalReturnJunk(int n) {
     // FIXME: We should reject this: it never produces a constant expression.
     return MaybeReturnJunk(true, n);
