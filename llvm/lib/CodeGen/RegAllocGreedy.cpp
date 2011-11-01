@@ -1118,6 +1118,8 @@ unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
       }
       --NumCands;
       GlobalCand[Worst] = GlobalCand[NumCands];
+      if (BestCand == NumCands)
+        BestCand = Worst;
     }
 
     if (GlobalCand.size() <= NumCands)
