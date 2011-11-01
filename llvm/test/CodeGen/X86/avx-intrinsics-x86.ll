@@ -1783,12 +1783,12 @@ define <8 x i16> @test_x86_ssse3_phsub_w_128(<8 x i16> %a0, <8 x i16> %a1) {
 declare <8 x i16> @llvm.x86.ssse3.phsub.w.128(<8 x i16>, <8 x i16>) nounwind readnone
 
 
-define <8 x i16> @test_x86_ssse3_pmadd_ub_sw_128(<8 x i16> %a0, <8 x i16> %a1) {
+define <8 x i16> @test_x86_ssse3_pmadd_ub_sw_128(<16 x i8> %a0, <16 x i8> %a1) {
   ; CHECK: vpmaddubsw
-  %res = call <8 x i16> @llvm.x86.ssse3.pmadd.ub.sw.128(<8 x i16> %a0, <8 x i16> %a1) ; <<8 x i16>> [#uses=1]
+  %res = call <8 x i16> @llvm.x86.ssse3.pmadd.ub.sw.128(<16 x i8> %a0, <16 x i8> %a1) ; <<8 x i16>> [#uses=1]
   ret <8 x i16> %res
 }
-declare <8 x i16> @llvm.x86.ssse3.pmadd.ub.sw.128(<8 x i16>, <8 x i16>) nounwind readnone
+declare <8 x i16> @llvm.x86.ssse3.pmadd.ub.sw.128(<16 x i8>, <16 x i8>) nounwind readnone
 
 
 define <8 x i16> @test_x86_ssse3_pmul_hr_sw_128(<8 x i16> %a0, <8 x i16> %a1) {

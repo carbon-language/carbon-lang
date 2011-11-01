@@ -655,8 +655,8 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
               Intrinsic<[llvm_x86mmx_ty], [llvm_x86mmx_ty,
                          llvm_x86mmx_ty], [IntrNoMem]>;
   def int_x86_ssse3_pmadd_ub_sw_128 : GCCBuiltin<"__builtin_ia32_pmaddubsw128">,
-              Intrinsic<[llvm_v8i16_ty], [llvm_v8i16_ty,
-                         llvm_v8i16_ty], [IntrNoMem]>;
+              Intrinsic<[llvm_v8i16_ty], [llvm_v16i8_ty,
+                         llvm_v16i8_ty], [IntrNoMem]>;
 }
 
 // Packed multiply high with round and scale
