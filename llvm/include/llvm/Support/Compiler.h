@@ -111,6 +111,14 @@
 #define LLVM_ATTRIBUTE_NORETURN
 #endif
 
+// LLVM_EXTENSION - Support compilers where we have a keyword to suppress
+// pedantic diagnostics.
+#ifdef __GNUC__
+#define LLVM_EXTENSION __extension__
+#else
+#define LLVM_EXTENSION
+#endif
+
 // LLVM_ATTRIBUTE_DEPRECATED(decl, "message")
 #if __has_feature(attribute_deprecated_with_message)
 # define LLVM_ATTRIBUTE_DEPRECATED(decl, message) \
