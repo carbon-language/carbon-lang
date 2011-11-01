@@ -432,11 +432,12 @@ void ExprEngine::ProcessTemporaryDtor(const CFGTemporaryDtor D,
                                       ExplodedNodeSet &Dst) {}
 
 void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred, 
-                       ExplodedNodeSet &Dst) {
+                       ExplodedNodeSet &DstTop) {
   PrettyStackTraceLoc CrashInfo(getContext().getSourceManager(),
                                 S->getLocStart(),
                                 "Error evaluating statement");
-  StmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
+  ExplodedNodeSet Dst;
+  StmtNodeBuilder Bldr(Pred, DstTop, *currentBuilderContext);
 
   // Expressions to ignore.
   if (const Expr *Ex = dyn_cast<Expr>(S))
@@ -1283,9 +1284,10 @@ void ExprEngine::VisitLvalArraySubscriptExpr(const ArraySubscriptExpr *A,
 
 /// VisitMemberExpr - Transfer function for member expressions.
 void ExprEngine::VisitMemberExpr(const MemberExpr *M, ExplodedNode *Pred,
-                                 ExplodedNodeSet &Dst) {
+                                 ExplodedNodeSet &TopDst) {
 
-  StmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
+  StmtNodeBuilder Bldr(Pred, TopDst, *currentBuilderContext);
+  ExplodedNodeSet Dst;
   Decl *member = M->getMemberDecl();
   if (VarDecl *VD = dyn_cast<VarDecl>(member)) {
     assert(M->isLValue());

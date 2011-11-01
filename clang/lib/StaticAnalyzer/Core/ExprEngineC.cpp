@@ -369,8 +369,9 @@ void ExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
                                  currentBuilderContext->getCurrentBlockCount());
       }
       B.takeNodes(N);
-      evalBind(Dst, DS, N, state->getLValue(VD, LC), InitVal, true);
-      B.addNodes(Dst);
+      ExplodedNodeSet Dst2;
+      evalBind(Dst2, DS, N, state->getLValue(VD, LC), InitVal, true);
+      B.addNodes(Dst2);
     }
     else {
       B.generateNode(DS, N,state->bindDeclWithNoInit(state->getRegion(VD, LC)));
