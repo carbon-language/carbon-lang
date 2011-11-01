@@ -761,6 +761,11 @@ public:
     return (Val > -256 && Val < 256) || Val == INT32_MIN;
   }
   bool isAddrMode5() const {
+    // If we have an immediate that's not a constant, treat it as a label
+    // reference needing a fixup. If it is a constant, it's something else
+    // and we reject it.
+    if (Kind == k_Immediate && !isa<MCConstantExpr>(getImm()))
+      return true;
     if (!isMemory() || Memory.Alignment != 0) return false;
     // Check for register offset.
     if (Memory.OffsetRegNum) return false;
@@ -768,7 +773,7 @@ public:
     if (!Memory.OffsetImm) return true;
     int64_t Val = Memory.OffsetImm->getValue();
     return (Val >= -1020 && Val <= 1020 && ((Val & 3) == 0)) ||
-           Val == INT32_MIN;
+      Val == INT32_MIN;
   }
   bool isMemTBB() const {
     if (!isMemory() || !Memory.OffsetRegNum || Memory.isNegative ||
@@ -1375,6 +1380,15 @@ public:
 
   void addAddrMode5Operands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
+    // If we have an immediate that's not a constant, treat it as a label
+    // reference needing a fixup. If it is a constant, it's something else
+    // and we reject it.
+    if (isImm()) {
+      Inst.addOperand(MCOperand::CreateExpr(getImm()));
+      Inst.addOperand(MCOperand::CreateImm(0));
+      return;
+    }
+
     // The lower two bits are always zero and as such are not encoded.
     int32_t Val = Memory.OffsetImm ? Memory.OffsetImm->getValue() / 4 : 0;
     ARM_AM::AddrOpc AddSub = Val < 0 ? ARM_AM::sub : ARM_AM::add;
