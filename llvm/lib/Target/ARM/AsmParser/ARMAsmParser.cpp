@@ -3835,13 +3835,11 @@ bool ARMAsmParser::parseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
     if (getParser().ParseExpression(ImmVal))
       return true;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(ImmVal);
-    if (!CE) {
-      Error(S, "constant expression expected");
-      return MatchOperand_ParseFail;
+    if (CE) {
+      int32_t Val = CE->getValue();
+      if (isNegative && Val == 0)
+        ImmVal = MCConstantExpr::Create(INT32_MIN, getContext());
     }
-    int32_t Val = CE->getValue();
-    if (isNegative && Val == 0)
-      ImmVal = MCConstantExpr::Create(INT32_MIN, getContext());
     E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
     Operands.push_back(ARMOperand::CreateImm(ImmVal, S, E));
     return false;
