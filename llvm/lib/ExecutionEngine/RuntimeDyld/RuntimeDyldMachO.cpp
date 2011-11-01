@@ -176,7 +176,8 @@ loadSegment32(const MachOObject *Obj,
         continue;
       // Flags == 0x8 marks a thumb function for ARM, which is fine as it
       // doesn't require any special handling here.
-      if (STE->Flags != 0x0 && STE->Flags != 0x8)
+      // Flags in the upper nibble we don't care about.
+      if ((STE->Flags & 0xf) != 0x0 && STE->Flags != 0x8)
         continue;
 
       // Remember the symbol.
@@ -313,7 +314,8 @@ loadSegment64(const MachOObject *Obj,
       // FIXME: Check the symbol type and flags.
       if (STE->Type != 0xF)  // external, defined in this section.
         continue;
-      if (STE->Flags != 0x0)
+      // Flags in the upper nibble we don't care about.
+      if ((STE->Flags & 0xf) != 0x0)
         continue;
 
       // Remember the symbol.
