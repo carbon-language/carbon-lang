@@ -1704,6 +1704,63 @@ IRForTarget::MaybeHandleCallArguments (CallInst *Old)
 }
 
 bool
+IRForTarget::HandleObjCClass(Value *classlist_reference)
+{
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+
+    GlobalVariable *global_variable = dyn_cast<GlobalVariable>(classlist_reference);
+    
+    if (!global_variable)
+        return false;
+    
+    Constant *initializer = global_variable->getInitializer();
+    
+    if (!initializer)
+        return false;
+    
+    if (!initializer->hasName())
+        return false;
+    
+    StringRef name(initializer->getName());
+    lldb_private::ConstString name_cstr(name.str().c_str());
+    lldb::addr_t class_ptr = m_decl_map->GetSymbolAddress(name_cstr);
+    
+    if (log)
+        log->Printf("Found reference to Objective-C class %s (0x%llx)", name_cstr.AsCString(), (unsigned long long)class_ptr);
+    
+    if (class_ptr == LLDB_INVALID_ADDRESS)
+        return false;
+    
+    if (global_variable->use_begin() == global_variable->use_end())
+        return false;
+    
+    LoadInst *load_instruction = NULL;
+    
+    for (Value::use_iterator i = global_variable->use_begin(), e = global_variable->use_end();
+         i != e;
+         ++i)
+    {
+        if ((load_instruction = dyn_cast<LoadInst>(*i)))
+            break;
+    }
+    
+    if (!load_instruction)
+        return false;
+    
+    IntegerType *intptr_ty = Type::getIntNTy(m_module->getContext(),
+                                             (m_module->getPointerSize() == Module::Pointer64) ? 64 : 32);
+    
+    Constant *class_addr = ConstantInt::get(intptr_ty, (uint64_t)class_ptr);
+    Constant *class_bitcast = ConstantExpr::getIntToPtr(class_addr, load_instruction->getType());
+    
+    load_instruction->replaceAllUsesWith(class_bitcast);
+    
+    load_instruction->eraseFromParent();
+    
+    return true;
+}
+
+bool
 IRForTarget::ResolveCalls(BasicBlock &basic_block)
 {        
     /////////////////////////////////////////////////////////////////////////
@@ -1742,12 +1799,24 @@ IRForTarget::ResolveExternals (Function &llvm_function)
                         (*global).getName().str().c_str(),
                         DeclForGlobal(global));
     
-        if ((*global).getName().str().find("OBJC_IVAR") == 0)
+        std::string global_name = (*global).getName().str();
+        
+        if (global_name.find("OBJC_IVAR") == 0)
         {
             if (!HandleSymbol(global))
             {
                 if (m_error_stream)
                     m_error_stream->Printf("Error [IRForTarget]: Couldn't find Objective-C indirect ivar symbol %s\n", (*global).getName().str().c_str());
+                
+                return false;
+            }
+        }
+        else if (global_name.find("OBJC_CLASSLIST_REFERENCES_$") != global_name.npos)
+        {
+            if (!HandleObjCClass(global))
+            {
+                if (m_error_stream)
+                    m_error_stream->Printf("Error [IRForTarget]: Couldn't resolve the class for an Objective-C static method call\n");
                 
                 return false;
             }

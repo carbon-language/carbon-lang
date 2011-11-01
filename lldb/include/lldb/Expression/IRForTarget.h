@@ -488,6 +488,19 @@ private:
     //------------------------------------------------------------------
     bool
     HandleSymbol (llvm::Value *symbol);
+    
+    //------------------------------------------------------------------
+    /// Handle a single externally-defined Objective-C class
+    ///
+    /// @param[in] classlist_reference
+    ///     The reference, usually "01L_OBJC_CLASSLIST_REFERENCES_$_n"
+    ///     where n (if present) is an index.
+    ///
+    /// @return
+    ///     True on success; false otherwise
+    //------------------------------------------------------------------
+    bool
+    HandleObjCClass(llvm::Value *classlist_reference);
 
     //------------------------------------------------------------------
     /// Handle all the arguments to a function call
