@@ -5152,21 +5152,20 @@ ASTReader::ReadCXXCtorInitializers(Module &F, const RecordData &Record,
     CtorInitializers
         = new (Context) CXXCtorInitializer*[NumInitializers];
     for (unsigned i=0; i != NumInitializers; ++i) {
-      TypeSourceInfo *BaseClassInfo = 0;
+      TypeSourceInfo *TInfo = 0;
       bool IsBaseVirtual = false;
       FieldDecl *Member = 0;
       IndirectFieldDecl *IndirectMember = 0;
-      CXXConstructorDecl *Target = 0;
 
       CtorInitializerType Type = (CtorInitializerType)Record[Idx++];
       switch (Type) {
-       case CTOR_INITIALIZER_BASE:
-        BaseClassInfo = GetTypeSourceInfo(F, Record, Idx);
+      case CTOR_INITIALIZER_BASE:
+        TInfo = GetTypeSourceInfo(F, Record, Idx);
         IsBaseVirtual = Record[Idx++];
         break;
-
-       case CTOR_INITIALIZER_DELEGATING:
-        Target = ReadDeclAs<CXXConstructorDecl>(F, Record, Idx);
+          
+      case CTOR_INITIALIZER_DELEGATING:
+        TInfo = GetTypeSourceInfo(F, Record, Idx);
         break;
 
        case CTOR_INITIALIZER_MEMBER:
@@ -5196,12 +5195,12 @@ ASTReader::ReadCXXCtorInitializers(Module &F, const RecordData &Record,
 
       CXXCtorInitializer *BOMInit;
       if (Type == CTOR_INITIALIZER_BASE) {
-        BOMInit = new (Context) CXXCtorInitializer(Context, BaseClassInfo, IsBaseVirtual,
+        BOMInit = new (Context) CXXCtorInitializer(Context, TInfo, IsBaseVirtual,
                                              LParenLoc, Init, RParenLoc,
                                              MemberOrEllipsisLoc);
       } else if (Type == CTOR_INITIALIZER_DELEGATING) {
-        BOMInit = new (Context) CXXCtorInitializer(Context, MemberOrEllipsisLoc, LParenLoc,
-                                             Target, Init, RParenLoc);
+        BOMInit = new (Context) CXXCtorInitializer(Context, TInfo, LParenLoc,
+                                                   Init, RParenLoc);
       } else if (IsWritten) {
         if (Member)
           BOMInit = new (Context) CXXCtorInitializer(Context, Member, MemberOrEllipsisLoc,

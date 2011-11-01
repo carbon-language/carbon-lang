@@ -17,6 +17,7 @@
 #include "clang/AST/ASTMutationListener.h"
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/ExprCXX.h"
 #include "clang/AST/TypeLoc.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "llvm/ADT/STLExtras.h"
@@ -1299,8 +1300,8 @@ CXXCtorInitializer::CXXCtorInitializer(ASTContext &Context,
                                        SourceLocation R,
                                        SourceLocation EllipsisLoc)
   : Initializee(TInfo), MemberOrEllipsisLocation(EllipsisLoc), Init(Init), 
-    LParenLoc(L), RParenLoc(R), IsVirtual(IsVirtual), IsWritten(false),
-    SourceOrderOrNumArrayIndices(0)
+    LParenLoc(L), RParenLoc(R), IsDelegating(false), IsVirtual(IsVirtual), 
+    IsWritten(false), SourceOrderOrNumArrayIndices(0)
 {
 }
 
@@ -1310,7 +1311,7 @@ CXXCtorInitializer::CXXCtorInitializer(ASTContext &Context,
                                        SourceLocation L, Expr *Init,
                                        SourceLocation R)
   : Initializee(Member), MemberOrEllipsisLocation(MemberLoc), Init(Init),
-    LParenLoc(L), RParenLoc(R), IsVirtual(false),
+    LParenLoc(L), RParenLoc(R), IsDelegating(false), IsVirtual(false),
     IsWritten(false), SourceOrderOrNumArrayIndices(0)
 {
 }
@@ -1321,17 +1322,17 @@ CXXCtorInitializer::CXXCtorInitializer(ASTContext &Context,
                                        SourceLocation L, Expr *Init,
                                        SourceLocation R)
   : Initializee(Member), MemberOrEllipsisLocation(MemberLoc), Init(Init),
-    LParenLoc(L), RParenLoc(R), IsVirtual(false),
+    LParenLoc(L), RParenLoc(R), IsDelegating(false), IsVirtual(false),
     IsWritten(false), SourceOrderOrNumArrayIndices(0)
 {
 }
 
 CXXCtorInitializer::CXXCtorInitializer(ASTContext &Context,
-                                       SourceLocation D, SourceLocation L,
-                                       CXXConstructorDecl *Target, Expr *Init,
+                                       TypeSourceInfo *TInfo,
+                                       SourceLocation L, Expr *Init, 
                                        SourceLocation R)
-  : Initializee(Target), MemberOrEllipsisLocation(D), Init(Init),
-    LParenLoc(L), RParenLoc(R), IsVirtual(false),
+  : Initializee(TInfo), MemberOrEllipsisLocation(), Init(Init),
+    LParenLoc(L), RParenLoc(R), IsDelegating(true), IsVirtual(false),
     IsWritten(false), SourceOrderOrNumArrayIndices(0)
 {
 }
@@ -1380,13 +1381,16 @@ const Type *CXXCtorInitializer::getBaseClass() const {
 }
 
 SourceLocation CXXCtorInitializer::getSourceLocation() const {
-  if (isAnyMemberInitializer() || isDelegatingInitializer())
+  if (isAnyMemberInitializer())
     return getMemberLocation();
 
   if (isInClassMemberInitializer())
     return getAnyMember()->getLocation();
   
-  return getBaseClassLoc().getLocalSourceRange().getBegin();
+  if (TypeSourceInfo *TSInfo = Initializee.get<TypeSourceInfo*>())
+    return TSInfo->getTypeLoc().getLocalSourceRange().getBegin();
+  
+  return SourceLocation();
 }
 
 SourceRange CXXCtorInitializer::getSourceRange() const {
@@ -1419,6 +1423,15 @@ CXXConstructorDecl::Create(ASTContext &C, CXXRecordDecl *RD,
   return new (C) CXXConstructorDecl(RD, StartLoc, NameInfo, T, TInfo,
                                     isExplicit, isInline, isImplicitlyDeclared,
                                     isConstexpr);
+}
+
+CXXConstructorDecl *CXXConstructorDecl::getTargetConstructor() const {
+  assert(isDelegatingConstructor() && "Not a delegating constructor!");
+  Expr *E = (*init_begin())->getInit()->IgnoreImplicit();
+  if (CXXConstructExpr *Construct = dyn_cast<CXXConstructExpr>(E))
+    return Construct->getConstructor();
+  
+  return 0;
 }
 
 bool CXXConstructorDecl::isDefaultConstructor() const {

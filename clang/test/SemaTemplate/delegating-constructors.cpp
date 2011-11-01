@@ -15,4 +15,17 @@ namespace PR10457 {
   void f() {
     string s("hello");
   }
+
+  struct Foo {
+   Foo(int) { }
+
+
+   template <typename T>
+   Foo(T, int i) : Foo(i) { }
+};
+
+  void test_Foo()
+  {
+    Foo f(1, 1);
+  }
 }

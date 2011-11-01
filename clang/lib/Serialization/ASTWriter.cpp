@@ -3881,11 +3881,11 @@ void ASTWriter::AddCXXCtorInitializers(
 
     if (Init->isBaseInitializer()) {
       Record.push_back(CTOR_INITIALIZER_BASE);
-      AddTypeSourceInfo(Init->getBaseClassInfo(), Record);
+      AddTypeSourceInfo(Init->getTypeSourceInfo(), Record);
       Record.push_back(Init->isBaseVirtual());
     } else if (Init->isDelegatingInitializer()) {
       Record.push_back(CTOR_INITIALIZER_DELEGATING);
-      AddDeclRef(Init->getTargetConstructor(), Record);
+      AddTypeSourceInfo(Init->getTypeSourceInfo(), Record);
     } else if (Init->isMemberInitializer()){
       Record.push_back(CTOR_INITIALIZER_MEMBER);
       AddDeclRef(Init->getMember(), Record);

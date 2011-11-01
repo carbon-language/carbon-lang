@@ -828,8 +828,8 @@ bool CursorVisitor::VisitFunctionDecl(FunctionDecl *ND) {
           if (Visit(MakeCursorMemberRef(Init->getAnyMember(),
                                         Init->getMemberLocation(), TU)))
             return true;
-        } else if (TypeSourceInfo *BaseInfo = Init->getBaseClassInfo()) {
-          if (Visit(BaseInfo->getTypeLoc()))
+        } else if (TypeSourceInfo *TInfo = Init->getTypeSourceInfo()) {
+          if (Visit(TInfo->getTypeLoc()))
             return true;
         }
         

@@ -667,7 +667,9 @@ bool RecursiveASTVisitor<Derived>::TraverseTemplateArguments(
 template<typename Derived>
 bool RecursiveASTVisitor<Derived>::TraverseConstructorInitializer(
                                                      CXXCtorInitializer *Init) {
-  // FIXME: recurse on TypeLoc of the base initializer if isBaseInitializer()?
+  if (TypeSourceInfo *TInfo = Init->getTypeSourceInfo())
+    TRY_TO(TraverseTypeLoc(TInfo->getTypeLoc()));
+  
   if (Init->isWritten())
     TRY_TO(TraverseStmt(Init->getInit()));
   return true;

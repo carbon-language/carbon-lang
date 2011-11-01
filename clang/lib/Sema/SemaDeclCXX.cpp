@@ -2125,13 +2125,12 @@ Sema::BuildMemberInitializer(ValueDecl *Member,
 MemInitResult
 Sema::BuildDelegatingInitializer(TypeSourceInfo *TInfo,
                                  const MultiInitializer &Args,
-                                 SourceLocation NameLoc,
                                  CXXRecordDecl *ClassDecl) {
-  SourceLocation Loc = TInfo->getTypeLoc().getLocalSourceRange().getBegin();
+  SourceLocation NameLoc = TInfo->getTypeLoc().getLocalSourceRange().getBegin();
   if (!LangOpts.CPlusPlus0x)
-    return Diag(Loc, diag::err_delegating_ctor)
+    return Diag(NameLoc, diag::err_delegating_ctor)
       << TInfo->getTypeLoc().getLocalSourceRange();
-  Diag(Loc, diag::warn_cxx98_compat_delegating_ctor);
+  Diag(NameLoc, diag::warn_cxx98_compat_delegating_ctor);
 
   // Initialize the object.
   InitializedEntity DelegationEntity = InitializedEntity::InitializeDelegation(
@@ -2158,9 +2157,7 @@ Sema::BuildDelegatingInitializer(TypeSourceInfo *TInfo,
   if (DelegationInit.isInvalid())
     return true;
 
-  assert(!CurContext->isDependentContext());
-  return new (Context) CXXCtorInitializer(Context, Loc, Args.getStartLoc(),
-                                          Constructor,
+  return new (Context) CXXCtorInitializer(Context, TInfo, Args.getStartLoc(), 
                                           DelegationInit.takeAs<Expr>(),
                                           Args.getEndLoc());
 }
@@ -2210,7 +2207,7 @@ Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
   if (!Dependent) { 
     if (Context.hasSameUnqualifiedType(QualType(ClassDecl->getTypeForDecl(),0),
                                        BaseType))
-      return BuildDelegatingInitializer(BaseTInfo, Args, BaseLoc, ClassDecl);
+      return BuildDelegatingInitializer(BaseTInfo, Args, ClassDecl);
 
     FindBaseInitializer(*this, ClassDecl, BaseType, DirectBaseSpec, 
                         VirtualBaseSpec);
@@ -3000,12 +2997,12 @@ DiagnoseBaseOrMemInitializerOrder(Sema &SemaRef,
       if (PrevInit->isAnyMemberInitializer())
         D << 0 << PrevInit->getAnyMember()->getDeclName();
       else
-        D << 1 << PrevInit->getBaseClassInfo()->getType();
+        D << 1 << PrevInit->getTypeSourceInfo()->getType();
       
       if (Init->isAnyMemberInitializer())
         D << 0 << Init->getAnyMember()->getDeclName();
       else
-        D << 1 << Init->getBaseClassInfo()->getType();
+        D << 1 << Init->getTypeSourceInfo()->getType();
 
       // Move back to the initializer's location in the ideal list.
       for (IdealIndex = 0; IdealIndex != NumIdealInits; ++IdealIndex)

@@ -2744,7 +2744,7 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
 
     if (Init->isPackExpansion()) {
       // This is a pack expansion. We should expand it now.
-      TypeLoc BaseTL = Init->getBaseClassInfo()->getTypeLoc();
+      TypeLoc BaseTL = Init->getTypeSourceInfo()->getTypeLoc();
       SmallVector<UnexpandedParameterPack, 2> Unexpanded;
       collectUnexpandedParameterPacks(BaseTL, Unexpanded);
       bool ShouldExpand = false;
@@ -2774,7 +2774,7 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
         }
 
         // Instantiate the base type.
-        TypeSourceInfo *BaseTInfo = SubstType(Init->getBaseClassInfo(),
+        TypeSourceInfo *BaseTInfo = SubstType(Init->getTypeSourceInfo(),
                                               TemplateArgs,
                                               Init->getSourceLocation(),
                                               New->getDeclName());
@@ -2809,20 +2809,25 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
     }
 
     MemInitResult NewInit;
-    if (Init->isBaseInitializer()) {
-      TypeSourceInfo *BaseTInfo = SubstType(Init->getBaseClassInfo(),
-                                            TemplateArgs,
-                                            Init->getSourceLocation(),
-                                            New->getDeclName());
-      if (!BaseTInfo) {
+    if (Init->isDelegatingInitializer() || Init->isBaseInitializer()) {
+      TypeSourceInfo *TInfo = SubstType(Init->getTypeSourceInfo(),
+                                        TemplateArgs,
+                                        Init->getSourceLocation(),
+                                        New->getDeclName());
+      if (!TInfo) {
         AnyErrors = true;
         New->setInvalidDecl();
         continue;
       }
 
       MultiInitializer MultiInit(CreateMultiInitializer(NewArgs, Init));
-      NewInit = BuildBaseInitializer(BaseTInfo->getType(), BaseTInfo, MultiInit,
-                                     New->getParent(), EllipsisLoc);
+      
+      if (Init->isBaseInitializer())
+        NewInit = BuildBaseInitializer(TInfo->getType(), TInfo, MultiInit,
+                                       New->getParent(), EllipsisLoc);
+      else
+        NewInit = BuildDelegatingInitializer(TInfo, MultiInit, 
+                                  cast<CXXRecordDecl>(CurContext->getParent()));
     } else if (Init->isMemberInitializer()) {
       FieldDecl *Member = cast_or_null<FieldDecl>(FindInstantiatedDecl(
                                                      Init->getMemberLocation(),

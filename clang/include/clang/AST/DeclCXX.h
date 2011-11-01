@@ -1445,11 +1445,10 @@ public:
 /// };
 /// @endcode
 class CXXCtorInitializer {
-  /// \brief Either the base class name (stored as a TypeSourceInfo*), an normal
-  /// field (FieldDecl), anonymous field (IndirectFieldDecl*), or target
-  /// constructor (CXXConstructorDecl*) being initialized.
-  llvm::PointerUnion4<TypeSourceInfo *, FieldDecl *, IndirectFieldDecl *,
-                      CXXConstructorDecl *>
+  /// \brief Either the base class name/delegating constructor type (stored as
+  /// a TypeSourceInfo*), an normal field (FieldDecl), or an anonymous field 
+  /// (IndirectFieldDecl*) being initialized.
+  llvm::PointerUnion3<TypeSourceInfo *, FieldDecl *, IndirectFieldDecl *>
     Initializee;
   
   /// \brief The source location for the field name or, for a base initializer
@@ -1470,6 +1469,10 @@ class CXXCtorInitializer {
   /// RParenLoc - Location of the right paren of the ctor-initializer.
   SourceLocation RParenLoc;
 
+  /// \brief If the initializee is a type, whether that type makes this
+  /// a delegating initialization.
+  bool IsDelegating : 1;
+  
   /// IsVirtual - If the initializer is a base initializer, this keeps track
   /// of whether the base is virtual or not.
   bool IsVirtual : 1;
@@ -1483,7 +1486,7 @@ class CXXCtorInitializer {
   /// original sources, counting from 0; otherwise, if IsWritten is false,
   /// it stores the number of array index variables stored after this
   /// object in memory.
-  unsigned SourceOrderOrNumArrayIndices : 14;
+  unsigned SourceOrderOrNumArrayIndices : 13;
 
   CXXCtorInitializer(ASTContext &Context, FieldDecl *Member,
                      SourceLocation MemberLoc, SourceLocation L, Expr *Init,
@@ -1510,8 +1513,8 @@ public:
 
   /// CXXCtorInitializer - Creates a new delegating Initializer.
   explicit
-  CXXCtorInitializer(ASTContext &Context, SourceLocation D, SourceLocation L,
-                     CXXConstructorDecl *Target, Expr *Init, SourceLocation R);
+  CXXCtorInitializer(ASTContext &Context, TypeSourceInfo *TInfo,
+                     SourceLocation L, Expr *Init, SourceLocation R);
 
   /// \brief Creates a new member initializer that optionally contains 
   /// array indices used to describe an elementwise initialization.
@@ -1522,7 +1525,9 @@ public:
   
   /// isBaseInitializer - Returns true when this initializer is
   /// initializing a base class.
-  bool isBaseInitializer() const { return Initializee.is<TypeSourceInfo*>(); }
+  bool isBaseInitializer() const { 
+    return Initializee.is<TypeSourceInfo*>() && !IsDelegating; 
+  }
 
   /// isMemberInitializer - Returns true when this initializer is
   /// initializing a non-static data member.
@@ -1546,7 +1551,7 @@ public:
   /// isDelegatingInitializer - Returns true when this initializer is creating
   /// a delegating constructor.
   bool isDelegatingInitializer() const {
-    return Initializee.is<CXXConstructorDecl *>();
+    return Initializee.is<TypeSourceInfo*>() && IsDelegating; 
   }
 
   /// \brief Determine whether this initializer is a pack expansion.
@@ -1576,8 +1581,9 @@ public:
     return IsVirtual;
   }
 
-  /// \brief Returns the declarator information for a base class initializer.
-  TypeSourceInfo *getBaseClassInfo() const {
+  /// \brief Returns the declarator information for a base class or delegating
+  /// initializer.
+  TypeSourceInfo *getTypeSourceInfo() const {
     return Initializee.dyn_cast<TypeSourceInfo *>();
   }
   
@@ -1602,13 +1608,6 @@ public:
   IndirectFieldDecl *getIndirectMember() const {
     if (isIndirectMemberInitializer())
       return Initializee.get<IndirectFieldDecl*>();
-    else
-      return 0;
-  }
-
-  CXXConstructorDecl *getTargetConstructor() const {
-    if (isDelegatingInitializer())
-      return Initializee.get<CXXConstructorDecl*>();
     else
       return 0;
   }
@@ -1821,11 +1820,7 @@ public:
 
   /// getTargetConstructor - When this constructor delegates to
   /// another, retrieve the target
-  CXXConstructorDecl *getTargetConstructor() const {
-    assert(isDelegatingConstructor() &&
-           "A non-delegating constructor has no target");
-    return CtorInitializers[0]->getTargetConstructor();
-  }
+  CXXConstructorDecl *getTargetConstructor() const;
 
   /// isDefaultConstructor - Whether this constructor is a default
   /// constructor (C++ [class.ctor]p5), which can be used to

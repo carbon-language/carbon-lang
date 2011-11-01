@@ -3518,7 +3518,6 @@ public:
 
   MemInitResult BuildDelegatingInitializer(TypeSourceInfo *TInfo,
                                            const MultiInitializer &Args,
-                                           SourceLocation BaseLoc,
                                            CXXRecordDecl *ClassDecl);
 
   bool SetDelegatingInitializer(CXXConstructorDecl *Constructor,
