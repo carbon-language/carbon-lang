@@ -211,7 +211,7 @@ const unsigned DefaultPreambleRebuildInterval = 5;
 static llvm::sys::cas_flag ActiveASTUnitObjects;
 
 ASTUnit::ASTUnit(bool _MainFileIsAST)
-  : OnlyLocalDecls(false), CaptureDiagnostics(false),
+  : Reader(0), OnlyLocalDecls(false), CaptureDiagnostics(false),
     MainFileIsAST(_MainFileIsAST), 
     TUKind(TU_Complete), WantTiming(getenv("LIBCLANG_TIMING")),
     OwnsRemappedFileBuffers(true),
@@ -783,6 +783,7 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
   AST->TheSema.reset(new Sema(PP, Context, *AST->Consumer));
   AST->TheSema->Initialize();
   ReaderPtr->InitializeSema(*AST->TheSema);
+  AST->Reader = ReaderPtr;
 
   return AST.take();
 }
@@ -1042,6 +1043,7 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   TheSema.reset();
   Ctx = 0;
   PP = 0;
+  Reader = 0;
   
   // Clear out old caches and data.
   TopLevelDecls.clear();
@@ -1117,6 +1119,7 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   Clang->setSourceManager(0);
   Clang->setFileManager(0);
   Target = &Clang->getTarget();
+  Reader = Clang->getModuleManager();
   
   Act->EndSourceFile();
 
@@ -1709,6 +1712,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocationAction(CompilerInvocation *CI,
   AST->TheSema.reset();
   AST->Ctx = 0;
   AST->PP = 0;
+  AST->Reader = 0;
   
   // Create a file manager object to provide access to and cache the filesystem.
   Clang->setFileManager(&AST->getFileManager());
@@ -1743,6 +1747,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocationAction(CompilerInvocation *CI,
   Clang->setSourceManager(0);
   Clang->setFileManager(0);
   AST->Target = &Clang->getTarget();
+  AST->Reader = Clang->getModuleManager();
   
   Act->EndSourceFile();
 

@@ -76,6 +76,7 @@ private:
   llvm::IntrusiveRefCntPtr<TargetInfo>        Target;
   llvm::IntrusiveRefCntPtr<Preprocessor>      PP;
   llvm::IntrusiveRefCntPtr<ASTContext>        Ctx;
+  ASTReader *Reader;
 
   FileSystemOptions FileSystemOpts;
 
