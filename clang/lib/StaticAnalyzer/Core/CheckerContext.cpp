@@ -15,5 +15,3 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 using namespace clang;
 using namespace ento;
-
-CheckerContext::~CheckerContext() {}

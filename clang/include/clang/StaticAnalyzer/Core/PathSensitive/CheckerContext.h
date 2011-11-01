@@ -36,8 +36,6 @@ public:
       Location(loc),
       NB(builder) {}
 
-  ~CheckerContext();
-
   AnalysisManager &getAnalysisManager() {
     return Eng.getAnalysisManager();
   }
