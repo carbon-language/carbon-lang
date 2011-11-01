@@ -235,11 +235,6 @@ Path::GetBitcodeLibraryPaths(std::vector<sys::Path>& Paths) {
 }
 
 Path
-Path::GetLLVMDefaultConfigDir() {
-  return Path("/etc/llvm/");
-}
-
-Path
 Path::GetUserHomeDirectory() {
   const char* home = getenv("HOME");
   Path result;

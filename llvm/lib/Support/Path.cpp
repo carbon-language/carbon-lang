@@ -38,16 +38,6 @@ bool Path::operator<(const Path& that) const {
   return path < that.path;
 }
 
-Path
-Path::GetLLVMConfigDir() {
-  Path result;
-#ifdef LLVM_ETCDIR
-  if (result.set(LLVM_ETCDIR))
-    return result;
-#endif
-  return GetLLVMDefaultConfigDir();
-}
-
 LLVMFileType
 sys::IdentifyFileType(const char *magic, unsigned length) {
   assert(magic && "Invalid magic number string");
