@@ -2143,10 +2143,8 @@ Sema::BuildDelegatingInitializer(TypeSourceInfo *TInfo,
   if (DelegationInit.isInvalid())
     return true;
 
-  CXXConstructExpr *ConExpr = cast<CXXConstructExpr>(DelegationInit.get());
-  CXXConstructorDecl *Constructor
-    = ConExpr->getConstructor();
-  assert(Constructor && "Delegating constructor with no target?");
+  assert(cast<CXXConstructExpr>(DelegationInit.get())->getConstructor() &&
+         "Delegating constructor with no target?");
 
   CheckImplicitConversions(DelegationInit.get(), Args.getStartLoc());
 
