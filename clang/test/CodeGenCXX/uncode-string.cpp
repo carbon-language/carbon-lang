@@ -3,4 +3,4 @@
 
 wchar_t s[] = L"\u2722";
 
-// CHECK: @s = global [8 x i8] c"\22'\00\00\00\00\00\00"
+// CHECK: @s = global [2 x i32] [i32 10018, i32 0], align 4

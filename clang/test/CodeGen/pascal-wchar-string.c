@@ -29,8 +29,8 @@ int main(int argc, char* argv[])
         return 0;
 }
 
-// CHECK: c"\03\00b\00a\00r\00\00\00"
-// CHECK: c"\04\00g\00o\00r\00f\00\00\00"
+// CHECK: [i16 3, i16 98, i16 97, i16 114, i16 0]
+// CHECK: [i16 4, i16 103, i16 111, i16 114, i16 102, i16 0]
 
 
 // PR8856 - -fshort-wchar makes wchar_t be unsigned.

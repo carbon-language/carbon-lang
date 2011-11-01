@@ -1141,7 +1141,7 @@ Sema::ActOnStringLiteral(const Token *StringToks, unsigned NumStringToks) {
     StrTy = Context.Char16Ty;
   else if (Literal.isUTF32())
     StrTy = Context.Char32Ty;
-  else if (Literal.Pascal)
+  else if (Literal.isPascal())
     StrTy = Context.UnsignedCharTy;
 
   StringLiteral::StringKind Kind = StringLiteral::Ascii;

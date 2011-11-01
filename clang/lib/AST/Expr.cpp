@@ -29,6 +29,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
+#include <cstring>
 using namespace clang;
 
 /// isKnownToHaveBooleanValue - Return true if this is an integer expression
@@ -482,6 +483,29 @@ double FloatingLiteral::getValueAsApproximateDouble() const {
   return V.convertToDouble();
 }
 
+int StringLiteral::mapCharByteWidth(TargetInfo const &target,StringKind k) {
+  int CharByteWidth;
+  switch(k) {
+    case Ascii:
+    case UTF8:
+      CharByteWidth = target.getCharWidth();
+      break;
+    case Wide:
+      CharByteWidth = target.getWCharWidth();
+      break;
+    case UTF16:
+      CharByteWidth = target.getChar16Width();
+      break;
+    case UTF32:
+      CharByteWidth = target.getChar32Width();
+  }
+  assert((CharByteWidth & 7) == 0 && "Assumes character size is byte multiple");
+  CharByteWidth /= 8;
+  assert((CharByteWidth==1 || CharByteWidth==2 || CharByteWidth==4)
+         && "character byte widths supported are 1, 2, and 4 only");
+  return CharByteWidth;
+}
+
 StringLiteral *StringLiteral::Create(ASTContext &C, StringRef Str,
                                      StringKind Kind, bool Pascal, QualType Ty,
                                      const SourceLocation *Loc,
@@ -494,12 +518,8 @@ StringLiteral *StringLiteral::Create(ASTContext &C, StringRef Str,
   StringLiteral *SL = new (Mem) StringLiteral(Ty);
 
   // OPTIMIZE: could allocate this appended to the StringLiteral.
-  char *AStrData = new (C, 1) char[Str.size()];
-  memcpy(AStrData, Str.data(), Str.size());
-  SL->StrData = AStrData;
-  SL->ByteLength = Str.size();
-  SL->Kind = Kind;
-  SL->IsPascal = Pascal;
+  SL->setString(C,Str,Kind,Pascal);
+
   SL->TokLocs[0] = Loc[0];
   SL->NumConcatenated = NumStrs;
 
@@ -513,17 +533,46 @@ StringLiteral *StringLiteral::CreateEmpty(ASTContext &C, unsigned NumStrs) {
                          sizeof(SourceLocation)*(NumStrs-1),
                          llvm::alignOf<StringLiteral>());
   StringLiteral *SL = new (Mem) StringLiteral(QualType());
-  SL->StrData = 0;
-  SL->ByteLength = 0;
+  SL->CharByteWidth = 0;
+  SL->Length = 0;
   SL->NumConcatenated = NumStrs;
   return SL;
 }
 
-void StringLiteral::setString(ASTContext &C, StringRef Str) {
-  char *AStrData = new (C, 1) char[Str.size()];
-  memcpy(AStrData, Str.data(), Str.size());
-  StrData = AStrData;
-  ByteLength = Str.size();
+void StringLiteral::setString(ASTContext &C, StringRef Str,
+                              StringKind Kind, bool IsPascal) {
+  //FIXME: we assume that the string data comes from a target that uses the same
+  // code unit size and endianess for the type of string.
+  this->Kind = Kind;
+  this->IsPascal = IsPascal;
+  
+  CharByteWidth = mapCharByteWidth(C.getTargetInfo(),Kind);
+  assert((Str.size()%CharByteWidth == 0)
+         && "size of data must be multiple of CharByteWidth");
+  Length = Str.size()/CharByteWidth;
+
+  switch(CharByteWidth) {
+    case 1: {
+      char *AStrData = new (C) char[Length];
+      std::memcpy(AStrData,Str.data(),Str.size());
+      StrData.asChar = AStrData;
+      break;
+    }
+    case 2: {
+      uint16_t *AStrData = new (C) uint16_t[Length];
+      std::memcpy(AStrData,Str.data(),Str.size());
+      StrData.asUInt16 = AStrData;
+      break;
+    }
+    case 4: {
+      uint32_t *AStrData = new (C) uint32_t[Length];
+      std::memcpy(AStrData,Str.data(),Str.size());
+      StrData.asUInt32 = AStrData;
+      break;
+    }
+    default:
+      assert(false && "unsupported CharByteWidth");
+  }
 }
 
 /// getLocationOfByte - Return a source location that points to the specified

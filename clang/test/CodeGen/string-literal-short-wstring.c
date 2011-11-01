@@ -6,11 +6,11 @@ int main() {
   // CHECK: private unnamed_addr constant [10 x i8] c"\E1\84\A0\C8\A0\F4\82\80\B0\00", align 1
   char b[10] = "\u1120\u0220\U00102030";
 
-  // CHECK: private unnamed_addr constant [6 x i8] c"A\00B\00\00\00"
+  // CHECK: private unnamed_addr constant [3 x i16] [i16 65, i16 66, i16 0]
   const wchar_t *foo = L"AB";
 
   // This should convert to utf16.
-  // CHECK: private unnamed_addr constant [10 x i8] c" \11 \02\C8\DB0\DC\00\00"
+  // CHECK: private unnamed_addr constant [5 x i16] [i16 4384, i16 544, i16 -9272, i16 -9168, i16 0]
   const wchar_t *bar = L"\u1120\u0220\U00102030";
 
 

@@ -565,6 +565,10 @@ public:
   /// -fconstant-string-class=class_name option.
   llvm::Constant *GetAddrOfConstantString(const StringLiteral *Literal);
 
+  /// GetConstantArrayFromStringLiteral - Return a constant array for the given
+  /// string.
+  llvm::Constant *GetConstantArrayFromStringLiteral(const StringLiteral *E);
+
   /// GetAddrOfConstantStringFromLiteral - Return a pointer to a constant array
   /// for the given string literal.
   llvm::Constant *GetAddrOfConstantStringFromLiteral(const StringLiteral *S);

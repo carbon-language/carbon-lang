@@ -189,11 +189,12 @@ public:
   /// checking of the string literal and emit errors and warnings.
   unsigned getOffsetOfStringByte(const Token &TheTok, unsigned ByteNo) const;
 
-  bool isAscii() { return Kind == tok::string_literal; }
-  bool isWide() { return Kind == tok::wide_string_literal; }
-  bool isUTF8() { return Kind == tok::utf8_string_literal; }
-  bool isUTF16() { return Kind == tok::utf16_string_literal; }
-  bool isUTF32() { return Kind == tok::utf32_string_literal; }
+  bool isAscii() const { return Kind == tok::string_literal; }
+  bool isWide() const { return Kind == tok::wide_string_literal; }
+  bool isUTF8() const { return Kind == tok::utf8_string_literal; }
+  bool isUTF16() const { return Kind == tok::utf16_string_literal; }
+  bool isUTF32() const { return Kind == tok::utf32_string_literal; }
+  bool isPascal() const { return Pascal; }
 
 private:
   void init(const Token *StringToks, unsigned NumStringToks);

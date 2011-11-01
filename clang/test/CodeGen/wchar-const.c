@@ -14,8 +14,8 @@ typedef __WCHAR_TYPE__ wchar_t;
 #endif
 
 
-// CHECK-DAR: private unnamed_addr constant [72 x i8] c"
-// CHECK-WIN: private unnamed_addr constant [36 x i8] c"
+// CHECK-DAR: private unnamed_addr constant [18 x i32] [i32 84,
+// CHECK-WIN: private unnamed_addr constant [18 x i16] [i16 84,
 extern void foo(const wchar_t* p);
 int main (int argc, const char * argv[])
 {

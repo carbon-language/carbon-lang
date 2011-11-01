@@ -1271,8 +1271,13 @@ public:
 private:
   friend class ASTStmtReader;
 
-  const char *StrData;
-  unsigned ByteLength;
+  union {
+    const char *asChar;
+    const uint16_t *asUInt16;
+    const uint32_t *asUInt32;
+  } StrData;
+  unsigned Length;
+  unsigned CharByteWidth;
   unsigned NumConcatenated;
   unsigned Kind : 3;
   bool IsPascal : 1;
@@ -1281,6 +1286,8 @@ private:
   StringLiteral(QualType Ty) :
     Expr(StringLiteralClass, Ty, VK_LValue, OK_Ordinary, false, false, false,
          false) {}
+
+  static int mapCharByteWidth(TargetInfo const &target,StringKind k);
 
 public:
   /// This is the "fully general" constructor that allows representation of
@@ -1300,15 +1307,52 @@ public:
   static StringLiteral *CreateEmpty(ASTContext &C, unsigned NumStrs);
 
   StringRef getString() const {
-    return StringRef(StrData, ByteLength);
+    assert(CharByteWidth==1
+           && "This function is used in places that assume strings use char");
+    return StringRef(StrData.asChar, getByteLength());
   }
 
-  unsigned getByteLength() const { return ByteLength; }
+  /// Allow clients that need the byte representation, such as ASTWriterStmt
+  /// ::VisitStringLiteral(), access.
+  StringRef getBytes() const {
+    // FIXME: StringRef may not be the right type to use as a result for this...
+    assert((CharByteWidth==1 || CharByteWidth==2 || CharByteWidth==4)
+           && "unsupported CharByteWidth");
+    if (CharByteWidth==4) {
+      return StringRef(reinterpret_cast<const char*>(StrData.asUInt32),
+                       getByteLength());
+    } else if (CharByteWidth==2) {
+      return StringRef(reinterpret_cast<const char*>(StrData.asUInt16),
+                       getByteLength());
+    } else {
+      return StringRef(StrData.asChar, getByteLength());
+    }
+  }
+
+  uint32_t getCodeUnit(size_t i) const {
+    assert(i<Length && "out of bounds access");
+    assert((CharByteWidth==1 || CharByteWidth==2 || CharByteWidth==4)
+           && "unsupported CharByteWidth");
+    if (CharByteWidth==4) {
+      return StrData.asUInt32[i];
+    } else if (CharByteWidth==2) {
+      return StrData.asUInt16[i];
+    } else {
+      return static_cast<unsigned char>(StrData.asChar[i]);
+    }
+  }
+
+  unsigned getByteLength() const { return CharByteWidth*Length; }
+  unsigned getLength() const { return Length; }
+  unsigned getCharByteWidth() const { return CharByteWidth; }
 
   /// \brief Sets the string data to the given string data.
-  void setString(ASTContext &C, StringRef Str);
+  void setString(ASTContext &C, StringRef Str,
+                 StringKind Kind, bool IsPascal);
 
   StringKind getKind() const { return static_cast<StringKind>(Kind); }
+  
+  
   bool isAscii() const { return Kind == Ascii; }
   bool isWide() const { return Kind == Wide; }
   bool isUTF8() const { return Kind == UTF8; }
@@ -1323,6 +1367,7 @@ public:
         return true;
     return false;
   }
+  
   /// getNumConcatenated - Get the number of string literal tokens that were
   /// concatenated in translation phase #6 to form this string literal.
   unsigned getNumConcatenated() const { return NumConcatenated; }

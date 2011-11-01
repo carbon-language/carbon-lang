@@ -2037,6 +2037,8 @@ QualType CodeGenModule::getObjCFastEnumerationStateType() {
 /// GetStringForStringLiteral - Return the appropriate bytes for a
 /// string literal, properly padded to match the literal type.
 std::string CodeGenModule::GetStringForStringLiteral(const StringLiteral *E) {
+  assert((E->isAscii() || E->isUTF8())
+         && "Use GetConstantArrayFromStringLiteral for wide strings");
   const ASTContext &Context = getContext();
   const ConstantArrayType *CAT =
     Context.getAsConstantArrayType(E->getType());
@@ -2045,25 +2047,42 @@ std::string CodeGenModule::GetStringForStringLiteral(const StringLiteral *E) {
   // Resize the string to the right size.
   uint64_t RealLen = CAT->getSize().getZExtValue();
 
-  switch (E->getKind()) {
-  case StringLiteral::Ascii:
-  case StringLiteral::UTF8:
-    break;
-  case StringLiteral::Wide:
-    RealLen *= Context.getTargetInfo().getWCharWidth() / Context.getCharWidth();
-    break;
-  case StringLiteral::UTF16:
-    RealLen *= Context.getTargetInfo().getChar16Width() / Context.getCharWidth();
-    break;
-  case StringLiteral::UTF32:
-    RealLen *= Context.getTargetInfo().getChar32Width() / Context.getCharWidth();
-    break;
-  }
-
   std::string Str = E->getString().str();
   Str.resize(RealLen, '\0');
 
   return Str;
+}
+
+llvm::Constant *
+CodeGenModule::GetConstantArrayFromStringLiteral(const StringLiteral *E) {
+  assert(!E->getType()->isPointerType() && "Strings are always arrays");
+  
+  // Don't emit it as the address of the string, emit the string data itself
+  // as an inline array.
+  if (E->getCharByteWidth()==1) {
+    return llvm::ConstantArray::get(VMContext,
+                                    GetStringForStringLiteral(E), false);
+  } else {
+    llvm::ArrayType *AType =
+      cast<llvm::ArrayType>(getTypes().ConvertType(E->getType()));
+    llvm::Type *ElemTy = AType->getElementType();
+    unsigned NumElements = AType->getNumElements();
+    std::vector<llvm::Constant*> Elts;
+    Elts.reserve(NumElements);
+    
+    for(unsigned i=0;i<E->getLength();++i) {
+      unsigned value = E->getCodeUnit(i);
+      llvm::Constant *C = llvm::ConstantInt::get(ElemTy,value,false);
+      Elts.push_back(C);
+    }
+    for(unsigned i=E->getLength();i<NumElements;++i) {
+      llvm::Constant *C = llvm::ConstantInt::get(ElemTy,0,false);
+      Elts.push_back(C);
+    }
+    
+    return llvm::ConstantArray::get(AType, Elts);
+  }
+
 }
 
 /// GetAddrOfConstantStringFromLiteral - Return a pointer to a
@@ -2073,15 +2092,23 @@ CodeGenModule::GetAddrOfConstantStringFromLiteral(const StringLiteral *S) {
   // FIXME: This can be more efficient.
   // FIXME: We shouldn't need to bitcast the constant in the wide string case.
   CharUnits Align = getContext().getTypeAlignInChars(S->getType());
-  llvm::Constant *C = GetAddrOfConstantString(GetStringForStringLiteral(S),
-                                              /* GlobalName */ 0,
-                                              Align.getQuantity());
-  if (S->isWide() || S->isUTF16() || S->isUTF32()) {
-    llvm::Type *DestTy =
-        llvm::PointerType::getUnqual(getTypes().ConvertType(S->getType()));
-    C = llvm::ConstantExpr::getBitCast(C, DestTy);
+  if (S->isAscii() || S->isUTF8()) {
+    return GetAddrOfConstantString(GetStringForStringLiteral(S),
+                                   /* GlobalName */ 0,
+                                   Align.getQuantity());
   }
-  return C;
+
+  // FIXME: the following does not memoize wide strings
+  llvm::Constant *C = GetConstantArrayFromStringLiteral(S);
+  llvm::GlobalVariable *GV =
+    new llvm::GlobalVariable(getModule(),C->getType(),
+                             !Features.WritableStrings,
+                             llvm::GlobalValue::PrivateLinkage,
+                             C,".str");
+  GV->setAlignment(Align.getQuantity());
+  GV->setUnnamedAddr(true);
+  
+  return GV;
 }
 
 /// GetAddrOfConstantStringFromObjCEncode - Return a pointer to a constant

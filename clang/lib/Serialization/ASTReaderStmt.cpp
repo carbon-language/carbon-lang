@@ -372,12 +372,13 @@ void ASTStmtReader::VisitStringLiteral(StringLiteral *E) {
   assert(Record[Idx] == E->getNumConcatenated() &&
          "Wrong number of concatenated tokens!");
   ++Idx;
-  E->Kind = static_cast<StringLiteral::StringKind>(Record[Idx++]);
-  E->IsPascal = Record[Idx++];
+  StringLiteral::StringKind kind =
+        static_cast<StringLiteral::StringKind>(Record[Idx++]);
+  bool isPascal = Record[Idx++];
 
   // Read string data
   llvm::SmallString<16> Str(&Record[Idx], &Record[Idx] + Len);
-  E->setString(Reader.getContext(), Str.str());
+  E->setString(Reader.getContext(), Str.str(), kind, isPascal);
   Idx += Len;
 
   // Read source locations
