@@ -461,7 +461,8 @@ bool HandleLValueToRValueConversion(EvalInfo &Info, QualType Type,
     // them are not permitted.
     const VarDecl *VD = dyn_cast<VarDecl>(D);
     if (!VD || !(IsConstNonVolatile(VD->getType()) || isa<ParmVarDecl>(VD)) ||
-        !Type->isLiteralType() || !EvaluateVarDeclInit(Info, VD, Frame, RVal))
+        !(Type->isIntegralOrEnumerationType() || Type->isRealFloatingType()) ||
+        !EvaluateVarDeclInit(Info, VD, Frame, RVal))
       return false;
 
     if (isa<ParmVarDecl>(VD) || !VD->getAnyInitializer()->isLValue())
