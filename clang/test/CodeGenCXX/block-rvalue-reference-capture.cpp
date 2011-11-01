@@ -14,3 +14,18 @@ int main() {
 // CHECK: [[C:%.*]] = getelementptr inbounds <{ {{.*}} i32 }>* [[B]]
 // CHECK: [[R:%.*]] = load i32* [[C]], align 4
 // CHECK: ret i32 [[R]]
+
+class S {
+public:
+  S (const S &);
+  S(int);
+  int field;
+};
+
+int func(S && rv)
+{ 
+     return ^{ return rv.field; }();
+}
+
+// CHECK: define i32 @_Z4funcO1S
+// CHECK: call void @_ZN1SC1ERKS_
