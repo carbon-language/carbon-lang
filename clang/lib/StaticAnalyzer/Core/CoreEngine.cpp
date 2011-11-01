@@ -441,7 +441,7 @@ void CoreEngine::generateNode(const ProgramPoint &Loc,
                               ExplodedNode *Pred) {
 
   bool IsNew;
-  ExplodedNode *Node = G->getNode(Loc, State, &IsNew);
+  ExplodedNode *Node = G->getNode(Loc, State, false, &IsNew);
 
   if (Pred)
     Node->addPredecessor(Pred, *G);  // Link 'Node' with its predecessor.
@@ -485,7 +485,7 @@ void CoreEngine::enqueueStmtNode(ExplodedNode *N,
   }
 
   bool IsNew;
-  ExplodedNode *Succ = G->getNode(Loc, N->getState(), &IsNew);
+  ExplodedNode *Succ = G->getNode(Loc, N->getState(), false, &IsNew);
   Succ->addPredecessor(N, *G);
 
   if (IsNew)
@@ -502,7 +502,7 @@ ExplodedNode *CoreEngine::generateCallExitNode(ExplodedNode *N) {
   CallExit Loc(CE, LocCtx);
 
   bool isNew;
-  ExplodedNode *Node = G->getNode(Loc, N->getState(), &isNew);
+  ExplodedNode *Node = G->getNode(Loc, N->getState(), false, &isNew);
   Node->addPredecessor(N, *G);
   return isNew ? Node : 0;
 }
@@ -543,17 +543,14 @@ ExplodedNode* NodeBuilder::generateNodeImpl(const ProgramPoint &Loc,
                                             bool MarkAsSink) {
   HasGeneratedNodes = true;
   bool IsNew;
-  ExplodedNode *N = C.Eng.G->getNode(Loc, State, &IsNew);
+  ExplodedNode *N = C.Eng.G->getNode(Loc, State, MarkAsSink, &IsNew);
   N->addPredecessor(FromN, *C.Eng.G);
   Frontier.erase(FromN);
-  assert(IsNew || N->isSink() == MarkAsSink);
 
   if (!IsNew)
     return 0;
 
-  if (MarkAsSink)
-    N->markAsSink();
-  else
+  if (!MarkAsSink)
     Frontier.Add(N);
 
   return N;
@@ -582,25 +579,20 @@ ExplodedNode *BranchNodeBuilder::generateNode(const ProgramState *State,
 ExplodedNode*
 IndirectGotoNodeBuilder::generateNode(const iterator &I,
                                       const ProgramState *St,
-                                      bool isSink) {
+                                      bool IsSink) {
   bool IsNew;
-
   ExplodedNode *Succ = Eng.G->getNode(BlockEdge(Src, I.getBlock(),
-                                      Pred->getLocationContext()), St, &IsNew);
-
+                                      Pred->getLocationContext()), St,
+                                      IsSink, &IsNew);
   Succ->addPredecessor(Pred, *Eng.G);
 
-  if (IsNew) {
+  if (!IsNew)
+    return 0;
 
-    if (isSink)
-      Succ->markAsSink();
-    else
-      Eng.WList->enqueue(Succ);
+  if (!IsSink)
+    Eng.WList->enqueue(Succ);
 
-    return Succ;
-  }
-
-  return NULL;
+  return Succ;
 }
 
 
@@ -610,20 +602,20 @@ SwitchNodeBuilder::generateCaseStmtNode(const iterator &I,
 
   bool IsNew;
   ExplodedNode *Succ = Eng.G->getNode(BlockEdge(Src, I.getBlock(),
-                                      Pred->getLocationContext()),
-                                      St, &IsNew);
+                                      Pred->getLocationContext()), St,
+                                      false, &IsNew);
   Succ->addPredecessor(Pred, *Eng.G);
-  if (IsNew) {
-    Eng.WList->enqueue(Succ);
-    return Succ;
-  }
-  return NULL;
+  if (!IsNew)
+    return 0;
+
+  Eng.WList->enqueue(Succ);
+  return Succ;
 }
 
 
 ExplodedNode*
 SwitchNodeBuilder::generateDefaultCaseNode(const ProgramState *St,
-                                           bool isSink) {
+                                           bool IsSink) {
   // Get the block for the default case.
   assert(Src->succ_rbegin() != Src->succ_rend());
   CFGBlock *DefaultBlock = *Src->succ_rbegin();
@@ -634,21 +626,18 @@ SwitchNodeBuilder::generateDefaultCaseNode(const ProgramState *St,
     return NULL;
   
   bool IsNew;
-
   ExplodedNode *Succ = Eng.G->getNode(BlockEdge(Src, DefaultBlock,
-                                      Pred->getLocationContext()), St, &IsNew);
+                                      Pred->getLocationContext()), St,
+                                      IsSink, &IsNew);
   Succ->addPredecessor(Pred, *Eng.G);
 
-  if (IsNew) {
-    if (isSink)
-      Succ->markAsSink();
-    else
-      Eng.WList->enqueue(Succ);
+  if (!IsNew)
+    return 0;
 
-    return Succ;
-  }
+  if (!IsSink)
+    Eng.WList->enqueue(Succ);
 
-  return NULL;
+  return Succ;
 }
 
 void CallEnterNodeBuilder::generateNode(const ProgramState *state) {
@@ -706,7 +695,7 @@ void CallEnterNodeBuilder::generateNode(const ProgramState *state) {
   BlockEdge Loc(Entry, SuccB, CalleeCtx);
 
   bool isNew;
-  ExplodedNode *Node = Eng.G->getNode(Loc, state, &isNew);
+  ExplodedNode *Node = Eng.G->getNode(Loc, state, false, &isNew);
   Node->addPredecessor(const_cast<ExplodedNode*>(Pred), *Eng.G);
 
   if (isNew)
@@ -721,7 +710,7 @@ void CallExitNodeBuilder::generateNode(const ProgramState *state) {
   // that triggers the dtor.
   PostStmt Loc(LocCtx->getCallSite(), LocCtx->getParent());
   bool isNew;
-  ExplodedNode *Node = Eng.G->getNode(Loc, state, &isNew);
+  ExplodedNode *Node = Eng.G->getNode(Loc, state, false, &isNew);
   Node->addPredecessor(const_cast<ExplodedNode*>(Pred), *Eng.G);
   if (isNew)
     Eng.WList->enqueue(Node, LocCtx->getCallSiteBlock(),

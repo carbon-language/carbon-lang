@@ -1595,7 +1595,7 @@ ExprEngine::getEagerlyAssumeTags() {
 }
 
 void ExprEngine::evalEagerlyAssume(ExplodedNodeSet &Dst, ExplodedNodeSet &Src,
-                                     const Expr *Ex) {
+                                   const Expr *Ex) {
   StmtNodeBuilder Bldr(Src, Dst, *currentBuilderContext);
   
   for (ExplodedNodeSet::iterator I=Src.begin(), E=Src.end(); I!=E; ++I) {

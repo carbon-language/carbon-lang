@@ -215,12 +215,14 @@ ExplodedNode** ExplodedNode::NodeGroup::end() const {
 }
 
 ExplodedNode *ExplodedGraph::getNode(const ProgramPoint &L,
-                                     const ProgramState *State, bool* IsNew) {
+                                     const ProgramState *State,
+                                     bool IsSink,
+                                     bool* IsNew) {
   // Profile 'State' to determine if we already have an existing node.
   llvm::FoldingSetNodeID profile;
   void *InsertPos = 0;
 
-  NodeTy::Profile(profile, L, State);
+  NodeTy::Profile(profile, L, State, IsSink);
   NodeTy* V = Nodes.FindNodeOrInsertPos(profile, InsertPos);
 
   if (!V) {
@@ -234,7 +236,7 @@ ExplodedNode *ExplodedGraph::getNode(const ProgramPoint &L,
       V = (NodeTy*) getAllocator().Allocate<NodeTy>();
     }
 
-    new (V) NodeTy(L, State);
+    new (V) NodeTy(L, State, IsSink);
 
     if (reclaimNodes) {
       if (!recentlyAllocatedNodes)
@@ -334,7 +336,7 @@ ExplodedGraph::TrimInternal(const ExplodedNode* const* BeginSources,
 
     // Create the corresponding node in the new graph and record the mapping
     // from the old node to the new node.
-    ExplodedNode *NewN = G->getNode(N->getLocation(), N->State, NULL);
+    ExplodedNode *NewN = G->getNode(N->getLocation(), N->State, N->isSink(), 0);
     Pass2[N] = NewN;
 
     // Also record the reverse mapping from the new node to the old node.
@@ -372,10 +374,6 @@ ExplodedGraph::TrimInternal(const ExplodedNode* const* BeginSources,
       if (Pass1.count(*I))
         WL2.push_back(*I);
     }
-
-    // Finally, explicitly mark all nodes without any successors as sinks.
-    if (N->isSink())
-      NewN->markAsSink();
   }
 
   return G;
