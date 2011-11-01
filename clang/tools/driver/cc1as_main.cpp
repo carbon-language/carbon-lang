@@ -151,8 +151,8 @@ void AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
 
   // Target Options
   Opts.Triple = Triple::normalize(Args->getLastArgValue(OPT_triple));
-  if (Opts.Triple.empty()) // Use the host triple if unspecified.
-    Opts.Triple = sys::getHostTriple();
+  if (Opts.Triple.empty()) // Use the default target triple if unspecified.
+    Opts.Triple = sys::getDefaultTargetTriple();
 
   // Language Options
   Opts.IncludePaths = Args->getAllArgValues(OPT_I);

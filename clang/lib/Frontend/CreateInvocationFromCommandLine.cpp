@@ -48,7 +48,7 @@ clang::createInvocationFromCommandLine(ArrayRef<const char *> ArgList,
   Args.push_back("-fsyntax-only");
 
   // FIXME: We shouldn't have to pass in the path info.
-  driver::Driver TheDriver("clang", llvm::sys::getHostTriple(),
+  driver::Driver TheDriver("clang", llvm::sys::getDefaultTargetTriple(),
                            "a.out", false, *Diags);
 
   // Don't check that inputs exist, they may have been remapped.

@@ -382,7 +382,7 @@ int main(int argc_, const char **argv_) {
 #else
   const bool IsProduction = false;
 #endif
-  Driver TheDriver(Path.str(), llvm::sys::getHostTriple(),
+  Driver TheDriver(Path.str(), llvm::sys::getDefaultTargetTriple(),
                    "a.out", IsProduction, Diags);
 
   // Attempt to find the original path used to invoke the driver, to determine

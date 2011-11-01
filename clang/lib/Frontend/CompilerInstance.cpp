@@ -639,7 +639,7 @@ bool CompilerInstance::ExecuteAction(FrontendAction &Act) {
   if (getHeaderSearchOpts().Verbose)
     OS << "clang -cc1 version " CLANG_VERSION_STRING
        << " based upon " << PACKAGE_STRING
-       << " hosted on " << llvm::sys::getHostTriple() << "\n";
+       << " default target " << llvm::sys::getDefaultTargetTriple() << "\n";
 
   if (getFrontendOpts().ShowTimers)
     createFrontendTimer();
