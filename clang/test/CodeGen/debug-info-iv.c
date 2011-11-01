@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin -Os -S -g  -o - %s | FileCheck %s
+// REQUIRES: x86-registered-target
 
 int calculate(int);
 static void test_indvars(int *Array1, int Array2[100][200]) {
