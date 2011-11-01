@@ -130,6 +130,8 @@ def warn_cxx98_compat_unicode_literal : Warning<
   InGroup<CXX98Compat>, DefaultIgnore;
 def err_unsupported_string_concat : Error<
   "unsupported non-standard concatenation of string literals">;
+def err_bad_string_encoding : Error<
+  "illegal sequence in string literal">;
   
 //===----------------------------------------------------------------------===//
 // PTH Diagnostics

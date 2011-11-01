@@ -16,6 +16,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/LexDiagnostic.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/Basic/ConvertUTF.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace clang;
@@ -1033,7 +1034,14 @@ void StringLiteralParser::init(const Token *StringToks, unsigned NumStringToks){
         ThisTokEnd -= (ThisTokBuf - Prefix);
 
       // Copy the string over
-      CopyStringFragment(StringRef(ThisTokBuf, ThisTokEnd - ThisTokBuf));
+      if (CopyStringFragment(StringRef(ThisTokBuf,ThisTokEnd-ThisTokBuf)))
+      {
+        if (Diags)
+          Diags->Report(FullSourceLoc(StringToks[i].getLocation(), SM),
+                        diag::err_bad_string_encoding);
+        hadError = true;
+      }
+
     } else {
       assert(ThisTokBuf[0] == '"' && "Expected quote, lexer broken?");
       ++ThisTokBuf; // skip "
@@ -1060,7 +1068,13 @@ void StringLiteralParser::init(const Token *StringToks, unsigned NumStringToks){
           } while (ThisTokBuf != ThisTokEnd && ThisTokBuf[0] != '\\');
 
           // Copy the character span over.
-          CopyStringFragment(StringRef(InStart, ThisTokBuf - InStart));
+          if (CopyStringFragment(StringRef(InStart,ThisTokBuf-InStart)))
+          {
+            if (Diags)
+              Diags->Report(FullSourceLoc(StringToks[i].getLocation(), SM),
+                            diag::err_bad_string_encoding);
+            hadError = true;
+          }
           continue;
         }
         // Is this a Universal Character Name escape?
@@ -1116,20 +1130,39 @@ void StringLiteralParser::init(const Token *StringToks, unsigned NumStringToks){
 
 /// copyStringFragment - This function copies from Start to End into ResultPtr.
 /// Performs widening for multi-byte characters.
-void StringLiteralParser::CopyStringFragment(StringRef Fragment) {
+bool StringLiteralParser::CopyStringFragment(StringRef Fragment) {
+  assert(CharByteWidth==1 || CharByteWidth==2 || CharByteWidth==4);
+  ConversionResult result = conversionOK;
   // Copy the character span over.
   if (CharByteWidth == 1) {
     memcpy(ResultPtr, Fragment.data(), Fragment.size());
     ResultPtr += Fragment.size();
-  } else {
-    // Note: our internal rep of wide char tokens is always little-endian.
-    for (StringRef::iterator I=Fragment.begin(), E=Fragment.end(); I!=E; ++I) {
-      *ResultPtr++ = *I;
-      // Add zeros at the end.
-      for (unsigned i = 1, e = CharByteWidth; i != e; ++i)
-        *ResultPtr++ = 0;
-    }
+  } else if (CharByteWidth == 2) {
+    UTF8 const *sourceStart = (UTF8 const *)Fragment.data();
+    // FIXME: Make the type of the result buffer correct instead of
+    // using reinterpret_cast.
+    UTF16 *targetStart = reinterpret_cast<UTF16*>(ResultPtr);
+    ConversionFlags flags = lenientConversion;
+    result = ConvertUTF8toUTF16(
+	    &sourceStart,sourceStart + Fragment.size(),
+        &targetStart,targetStart + 2*Fragment.size(),flags);
+    if (result==conversionOK)
+      ResultPtr = reinterpret_cast<char*>(targetStart);
+  } else if (CharByteWidth == 4) {
+    UTF8 const *sourceStart = (UTF8 const *)Fragment.data();
+    // FIXME: Make the type of the result buffer correct instead of
+    // using reinterpret_cast.
+    UTF32 *targetStart = reinterpret_cast<UTF32*>(ResultPtr);
+    ConversionFlags flags = lenientConversion;
+    result = ConvertUTF8toUTF32(
+        &sourceStart,sourceStart + Fragment.size(),
+        &targetStart,targetStart + 4*Fragment.size(),flags);
+    if (result==conversionOK)
+      ResultPtr = reinterpret_cast<char*>(targetStart);
   }
+  assert((result != targetExhausted)
+         && "ConvertUTF8toUTFXX exhausted target buffer");
+  return result != conversionOK;
 }
 
 
