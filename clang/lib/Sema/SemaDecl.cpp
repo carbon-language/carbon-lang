@@ -3233,13 +3233,23 @@ Decl *Sema::HandleDeclarator(Scope *S, Declarator &D,
         // class X {
         //   void X::f();
         // };
-        if (CurContext->Equals(DC))
+        if (CurContext->Equals(DC)) {
           Diag(D.getIdentifierLoc(), diag::warn_member_extra_qualification)
             << Name << FixItHint::CreateRemoval(D.getCXXScopeSpec().getRange());
-        else
+        } else {
           Diag(D.getIdentifierLoc(), diag::err_member_qualification)
             << Name << D.getCXXScopeSpec().getRange();
-        
+          
+          // C++ constructors and destructors with incorrect scopes can break
+          // our AST invariants by having the wrong underlying types. If
+          // that's the case, then drop this declaration entirely.
+          if ((Name.getNameKind() == DeclarationName::CXXConstructorName ||
+               Name.getNameKind() == DeclarationName::CXXDestructorName) &&
+              !Context.hasSameType(Name.getCXXNameType(),
+                 Context.getTypeDeclType(cast<CXXRecordDecl>(CurContext))))
+            return 0;
+        }
+
         // Pretend that this qualifier was not here.
         D.getCXXScopeSpec().clear();
       }
