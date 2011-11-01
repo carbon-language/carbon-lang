@@ -98,6 +98,17 @@ namespace llvm {
     MCDwarfLoc CurrentDwarfLoc;
     bool DwarfLocSeen;
 
+    /// Generate dwarf debugging info for assembly source files.
+    bool GenDwarfForAssembly;
+
+    /// The current dwarf file number when generate dwarf debugging info for
+    /// assembly source files.
+    unsigned GenDwarfFileNumber;
+
+    /// The default initial text section that we generate dwarf debugging line
+    /// info for when generating dwarf assembly source files.
+    const MCSection *GenDwarfSection;
+
     /// Honor temporary labels, this is useful for debugging semantic
     /// differences between temporary and non-temporary labels (primarily on
     /// Darwin).
@@ -251,6 +262,13 @@ namespace llvm {
 
     bool getDwarfLocSeen() { return DwarfLocSeen; }
     const MCDwarfLoc &getCurrentDwarfLoc() { return CurrentDwarfLoc; }
+
+    bool getGenDwarfForAssembly() { return GenDwarfForAssembly; }
+    void setGenDwarfForAssembly(bool Value) { GenDwarfForAssembly = Value; }
+    unsigned getGenDwarfFileNumber() { return GenDwarfFileNumber; }
+    unsigned nextGenDwarfFileNumber() { return ++GenDwarfFileNumber; }
+    const MCSection *getGenDwarfSection() { return GenDwarfSection; }
+    void setGenDwarfSection(const MCSection *Sec) { GenDwarfSection = Sec; }
 
     /// @}
 

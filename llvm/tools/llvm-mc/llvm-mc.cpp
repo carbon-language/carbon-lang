@@ -152,6 +152,10 @@ NoInitialTextSection("n", cl::desc("Don't assume assembly file starts "
 static cl::opt<bool>
 SaveTempLabels("L", cl::desc("Don't discard temporary labels"));
 
+static cl::opt<bool>
+GenDwarfForAssembly("g", cl::desc("Generate dwarf debugging info for assembly "
+                                  "source files"));
+
 enum ActionType {
   AC_AsLex,
   AC_Assemble,
@@ -376,6 +380,8 @@ static int AssembleInput(const char *ProgName) {
 
   if (SaveTempLabels)
     Ctx.setAllowTemporaryLabels(false);
+
+  Ctx.setGenDwarfForAssembly(GenDwarfForAssembly);
 
   // Package up features to be passed to target/subtarget
   std::string FeaturesStr;

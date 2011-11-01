@@ -43,6 +43,8 @@ MCContext::MCContext(const MCAsmInfo &mai, const MCRegisterInfo &mri,
   SecureLogUsed = false;
 
   DwarfLocSeen = false;
+  GenDwarfForAssembly = false;
+  GenDwarfFileNumber = 0;
 }
 
 MCContext::~MCContext() {
