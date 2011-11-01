@@ -20865,7 +20865,7 @@ _ACEOF
 
 
 cat >>confdefs.h <<_ACEOF
-#define LLVM_HOSTTRIPLE "$host"
+#define LLVM_HOSTTRIPLE "$target"
 _ACEOF
 
 
