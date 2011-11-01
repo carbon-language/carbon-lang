@@ -1695,9 +1695,10 @@ def warn_attribute_ibaction: Warning<
   "ibaction attribute can only be applied to Objective-C instance methods">;
 def err_iboutletcollection_type : Error<
   "invalid type %0 as argument of iboutletcollection attribute">;
-def err_iboutlet_object_type : Error<
+def warn_iboutlet_object_type : Warning<
   "%select{ivar|property}2 with %0 attribute must "
-  "be an object type (invalid %1)">;
+  "be an object type (invalid %1)">,
+  InGroup<DiagGroup<"invalid-iboutlet">>;
 def err_attribute_overloadable_not_function : Error<
   "'overloadable' attribute can only be applied to a function">;
 def err_attribute_overloadable_missing : Error<

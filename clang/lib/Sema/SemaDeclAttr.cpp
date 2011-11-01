@@ -760,14 +760,14 @@ static bool checkIBOutletCommon(Sema &S, Decl *D, const AttributeList &Attr) {
   // have an object reference type.
   if (const ObjCIvarDecl *VD = dyn_cast<ObjCIvarDecl>(D)) {
     if (!VD->getType()->getAs<ObjCObjectPointerType>()) {
-      S.Diag(Attr.getLoc(), diag::err_iboutlet_object_type)
+      S.Diag(Attr.getLoc(), diag::warn_iboutlet_object_type)
         << Attr.getName() << VD->getType() << 0;
       return false;
     }
   }
   else if (const ObjCPropertyDecl *PD = dyn_cast<ObjCPropertyDecl>(D)) {
     if (!PD->getType()->getAs<ObjCObjectPointerType>()) {
-      S.Diag(Attr.getLoc(), diag::err_iboutlet_object_type) 
+      S.Diag(Attr.getLoc(), diag::warn_iboutlet_object_type) 
         << Attr.getName() << PD->getType() << 1;
       return false;
     }
