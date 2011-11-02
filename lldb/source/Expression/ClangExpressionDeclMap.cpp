@@ -3016,7 +3016,7 @@ ClangExpressionDeclMap::AddOneType(NameSearchContext &context,
         const bool is_static = false;
         const bool is_inline = false;
         const bool is_explicit = false;
-        const bool is_attr_used = false;
+        const bool is_attr_used = true;
         const bool is_artificial = false;
         
         ClangASTContext::AddMethodToCXXRecordType (parser_ast_context,
