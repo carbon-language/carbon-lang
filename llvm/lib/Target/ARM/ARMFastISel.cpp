@@ -179,6 +179,7 @@ class ARMFastISel : public FastISel {
     bool ARMEmitStore(EVT VT, unsigned SrcReg, Address &Addr);
     bool ARMComputeAddress(const Value *Obj, Address &Addr);
     void ARMSimplifyAddress(Address &Addr, EVT VT);
+    unsigned ARMEmitIntExt(EVT SrcVT, unsigned SrcReg, EVT DestVT, bool isZExt);
     unsigned ARMMaterializeFP(const ConstantFP *CFP, EVT VT);
     unsigned ARMMaterializeInt(const Constant *C, EVT VT);
     unsigned ARMMaterializeGV(const GlobalValue *GV, EVT VT);
@@ -1987,66 +1988,71 @@ bool ARMFastISel::SelectTrunc(const Instruction *I) {
   return true;
 }
 
-bool ARMFastISel::SelectIntExt(const Instruction *I) {
-  // On ARM, in general, integer casts don't involve legal types; this code
-  // handles promotable integers.  The high bits for a type smaller than
-  // the register size are assumed to be undefined.
-  Type *DestTy = I->getType();
-  Value *Op = I->getOperand(0);
-  Type *SrcTy = Op->getType();
-
-  EVT SrcVT, DestVT;
-  SrcVT = TLI.getValueType(SrcTy, true);
-  DestVT = TLI.getValueType(DestTy, true);
-
+unsigned ARMFastISel::ARMEmitIntExt(EVT SrcVT, unsigned SrcReg, EVT DestVT,
+                                    bool isZExt) {
   if (DestVT != MVT::i32 && DestVT != MVT::i16 && DestVT != MVT::i8)
-    return false;
+    return 0;
 
   unsigned Opc;
-  bool isZext = isa<ZExtInst>(I);
   bool isBoolZext = false;
-  if (!SrcVT.isSimple())
-    return false;
+  if (!SrcVT.isSimple()) return 0;
   switch (SrcVT.getSimpleVT().SimpleTy) {
-  default: return false;
+  default: return 0;
   case MVT::i16:
-    if (!Subtarget->hasV6Ops()) return false;
-    if (isZext)
+    if (!Subtarget->hasV6Ops()) return 0;
+    if (isZExt)
       Opc = isThumb ? ARM::t2UXTH : ARM::UXTH;
     else
       Opc = isThumb ? ARM::t2SXTH : ARM::SXTH;
     break;
   case MVT::i8:
-    if (!Subtarget->hasV6Ops()) return false;
-    if (isZext)
+    if (!Subtarget->hasV6Ops()) return 0;
+    if (isZExt)
       Opc = isThumb ? ARM::t2UXTB : ARM::UXTB;
     else
       Opc = isThumb ? ARM::t2SXTB : ARM::SXTB;
     break;
   case MVT::i1:
-    if (isZext) {
+    if (isZExt) {
       Opc = isThumb ? ARM::t2ANDri : ARM::ANDri;
       isBoolZext = true;
       break;
     }
-    return false;
+    return 0;
   }
 
-  // FIXME: We could save an instruction in many cases by special-casing
-  // load instructions.
-  unsigned SrcReg = getRegForValue(Op);
-  if (!SrcReg) return false;
-
-  unsigned DestReg = createResultReg(TLI.getRegClassFor(MVT::i32));
+  unsigned ResultReg = createResultReg(TLI.getRegClassFor(MVT::i32));
   MachineInstrBuilder MIB;
-  MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc), DestReg)
+  MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc), ResultReg)
         .addReg(SrcReg);
   if (isBoolZext)
     MIB.addImm(1);
   else
     MIB.addImm(0);
   AddOptionalDefs(MIB);
-  UpdateValueMap(I, DestReg);
+  return ResultReg;
+}
+
+bool ARMFastISel::SelectIntExt(const Instruction *I) {
+  // On ARM, in general, integer casts don't involve legal types; this code
+  // handles promotable integers.
+  // FIXME: We could save an instruction in many cases by special-casing
+  // load instructions.
+  Type *DestTy = I->getType();
+  Value *Src = I->getOperand(0);
+  Type *SrcTy = Src->getType();
+
+  EVT SrcVT, DestVT;
+  SrcVT = TLI.getValueType(SrcTy, true);
+  DestVT = TLI.getValueType(DestTy, true);
+
+  bool isZExt = isa<ZExtInst>(I);
+  unsigned SrcReg = getRegForValue(Src);
+  if (!SrcReg) return false;
+
+  unsigned ResultReg = ARMEmitIntExt(SrcVT, SrcReg, DestVT, isZExt);
+  if (ResultReg == 0) return false;
+  UpdateValueMap(I, ResultReg);
   return true;
 }
 
