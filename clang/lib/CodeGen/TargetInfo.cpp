@@ -2993,8 +2993,9 @@ void MSP430TargetCodeGenInfo::SetTargetAttributes(const Decl *D,
 namespace {
 class MipsABIInfo : public ABIInfo {
   static const unsigned MinABIStackAlignInBytes = 4;
+  bool IsO32;
 public:
-  MipsABIInfo(CodeGenTypes &CGT) : ABIInfo(CGT) {}
+  MipsABIInfo(CodeGenTypes &CGT, bool _IsO32) : ABIInfo(CGT), IsO32(_IsO32) {}
 
   ABIArgInfo classifyReturnType(QualType RetTy) const;
   ABIArgInfo classifyArgumentType(QualType RetTy) const;
@@ -3008,8 +3009,9 @@ const unsigned MipsABIInfo::MinABIStackAlignInBytes;
 class MIPSTargetCodeGenInfo : public TargetCodeGenInfo {
   unsigned SizeOfUnwindException;
 public:
-  MIPSTargetCodeGenInfo(CodeGenTypes &CGT, unsigned SZ)
-    : TargetCodeGenInfo(new MipsABIInfo(CGT)), SizeOfUnwindException(SZ) {}
+  MIPSTargetCodeGenInfo(CodeGenTypes &CGT, bool IsO32)
+    : TargetCodeGenInfo(new MipsABIInfo(CGT, IsO32)),
+      SizeOfUnwindException(IsO32 ? 24 : 32) {}
 
   int getDwarfEHStackPointer(CodeGen::CodeGenModule &CGM) const {
     return 29;
@@ -3051,7 +3053,8 @@ ABIArgInfo MipsABIInfo::classifyReturnType(QualType RetTy) const {
     return ABIArgInfo::getIgnore();
 
   if (isAggregateTypeForABI(RetTy)) {
-    if (RetTy->isAnyComplexType())
+    if ((IsO32 && RetTy->isAnyComplexType()) ||
+        (!IsO32 && (getContext().getTypeSize(RetTy) <= 128)))
       return ABIArgInfo::getDirect();
 
     return ABIArgInfo::getIndirect(0);
@@ -3220,11 +3223,11 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
 
   case llvm::Triple::mips:
   case llvm::Triple::mipsel:
-    return *(TheTargetCodeGenInfo = new MIPSTargetCodeGenInfo(Types, 24));
+    return *(TheTargetCodeGenInfo = new MIPSTargetCodeGenInfo(Types, true));
 
   case llvm::Triple::mips64:
   case llvm::Triple::mips64el:
-    return *(TheTargetCodeGenInfo = new MIPSTargetCodeGenInfo(Types, 32));
+    return *(TheTargetCodeGenInfo = new MIPSTargetCodeGenInfo(Types, false));
 
   case llvm::Triple::arm:
   case llvm::Triple::thumb:
