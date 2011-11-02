@@ -1111,11 +1111,7 @@ static DecodeStatus DecodeRegListOperand(llvm::MCInst &Inst, unsigned Val,
   }
 
   // Empty register lists are not allowed.
-  uint32_t popcnt = CountPopulation_32(Val);
-  if (popcnt == 0) return MCDisassembler::Fail;
-  // and one-register lists are unpredictable.
-  else if (popcnt == 1) Check(S, MCDisassembler::SoftFail);
-
+  if (CountPopulation_32(Val) == 0) return MCDisassembler::Fail;
   for (unsigned i = 0; i < 16; ++i) {
     if (Val & (1 << i)) {
       if (!Check(S, DecodeGPRRegisterClass(Inst, i, Address, Decoder)))
