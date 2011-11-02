@@ -6248,6 +6248,22 @@ multiclass SS41I_binop_rm_int<bits<8> opc, string OpcodeStr,
           (bitconvert (memopv16i8 addr:$src2))))]>, OpSize;
 }
 
+/// SS41I_binop_rm_int - Simple SSE 4.1 binary operator
+multiclass SS41I_binop_rm_int_y<bits<8> opc, string OpcodeStr,
+                                Intrinsic IntId256> {
+  let isCommutable = 1 in
+  def Yrr : SS48I<opc, MRMSrcReg, (outs VR256:$dst),
+       (ins VR256:$src1, VR256:$src2),
+       !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+       [(set VR256:$dst, (IntId256 VR256:$src1, VR256:$src2))]>, OpSize;
+  def Yrm : SS48I<opc, MRMSrcMem, (outs VR256:$dst),
+       (ins VR256:$src1, i256mem:$src2),
+       !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+       [(set VR256:$dst,
+         (IntId256 VR256:$src1,
+          (bitconvert (memopv32i8 addr:$src2))))]>, OpSize;
+}
+
 let Predicates = [HasAVX] in {
   let isCommutable = 0 in
   defm VPACKUSDW : SS41I_binop_rm_int<0x2B, "vpackusdw", int_x86_sse41_packusdw,
@@ -6279,6 +6295,32 @@ let Predicates = [HasAVX] in {
             (VPCMPEQQrm VR128:$src1, addr:$src2)>;
 }
 
+let Predicates = [HasAVX2] in {
+  let isCommutable = 0 in
+  defm VPACKUSDW : SS41I_binop_rm_int_y<0x2B, "vpackusdw",
+                                        int_x86_avx2_packusdw>, VEX_4V;
+  defm VPCMPEQQ  : SS41I_binop_rm_int_y<0x29, "vpcmpeqq",
+                                        int_x86_avx2_pcmpeq_q>, VEX_4V;
+  defm VPMINSB   : SS41I_binop_rm_int_y<0x38, "vpminsb",
+                                        int_x86_avx2_pmins_b>, VEX_4V;
+  defm VPMINSD   : SS41I_binop_rm_int_y<0x39, "vpminsd",
+                                        int_x86_avx2_pmins_d>, VEX_4V;
+  defm VPMINUD   : SS41I_binop_rm_int_y<0x3B, "vpminud",
+                                        int_x86_avx2_pminu_d>, VEX_4V;
+  defm VPMINUW   : SS41I_binop_rm_int_y<0x3A, "vpminuw",
+                                        int_x86_avx2_pminu_w>, VEX_4V;
+  defm VPMAXSB   : SS41I_binop_rm_int_y<0x3C, "vpmaxsb",
+                                        int_x86_avx2_pmaxs_b>, VEX_4V;
+  defm VPMAXSD   : SS41I_binop_rm_int_y<0x3D, "vpmaxsd",
+                                        int_x86_avx2_pmaxs_d>, VEX_4V;
+  defm VPMAXUD   : SS41I_binop_rm_int_y<0x3F, "vpmaxud",
+                                        int_x86_avx2_pmaxu_d>, VEX_4V;
+  defm VPMAXUW   : SS41I_binop_rm_int_y<0x3E, "vpmaxuw",
+                                        int_x86_avx2_pmaxu_w>, VEX_4V;
+  defm VPMULDQ   : SS41I_binop_rm_int_y<0x28, "vpmuldq",
+                                        int_x86_avx2_pmul_dq>, VEX_4V;
+}
+
 let Constraints = "$src1 = $dst" in {
   let isCommutable = 0 in
   defm PACKUSDW : SS41I_binop_rm_int<0x2B, "packusdw", int_x86_sse41_packusdw>;
@@ -6301,7 +6343,7 @@ def : Pat<(v2i64 (X86pcmpeqq VR128:$src1, (memop addr:$src2))),
 
 /// SS48I_binop_rm - Simple SSE41 binary operator.
 multiclass SS48I_binop_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
-                        ValueType OpVT, bit Is2Addr = 1> {
+                          ValueType OpVT, bit Is2Addr = 1> {
   let isCommutable = 1 in
   def rr : SS48I<opc, MRMSrcReg, (outs VR128:$dst),
        (ins VR128:$src1, VR128:$src2),
@@ -6320,8 +6362,27 @@ multiclass SS48I_binop_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
        OpSize;
 }
 
+/// SS48I_binop_rm - Simple SSE41 binary operator.
+multiclass SS48I_binop_rm_y<bits<8> opc, string OpcodeStr, SDNode OpNode,
+                            ValueType OpVT> {
+  let isCommutable = 1 in
+  def Yrr : SS48I<opc, MRMSrcReg, (outs VR256:$dst),
+       (ins VR256:$src1, VR256:$src2),
+       !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+       [(set VR256:$dst, (OpVT (OpNode VR256:$src1, VR256:$src2)))]>,
+       OpSize;
+  def Yrm : SS48I<opc, MRMSrcMem, (outs VR256:$dst),
+       (ins VR256:$src1, i256mem:$src2),
+       !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+       [(set VR256:$dst, (OpNode VR256:$src1,
+                                  (bc_v8i32 (memopv4i64 addr:$src2))))]>,
+       OpSize;
+}
+
 let Predicates = [HasAVX] in
   defm VPMULLD : SS48I_binop_rm<0x40, "vpmulld", mul, v4i32, 0>, VEX_4V;
+let Predicates = [HasAVX2] in
+  defm VPMULLD : SS48I_binop_rm_y<0x40, "vpmulld", mul, v8i32>, VEX_4V;
 let Constraints = "$src1 = $dst" in
   defm PMULLD : SS48I_binop_rm<0x40, "pmulld", mul, v4i32>;
 
@@ -6375,6 +6436,15 @@ let Predicates = [HasAVX] in {
                                    VR256, memopv32i8, i256mem, 0>, VEX_4V;
 }
 
+let Predicates = [HasAVX2] in {
+  let isCommutable = 0 in {
+  defm VPBLENDWY : SS41I_binop_rmi_int<0x0E, "vpblendw", int_x86_avx2_pblendw,
+                                       VR256, memopv32i8, i256mem, 0>, VEX_4V;
+  defm VMPSADBWY : SS41I_binop_rmi_int<0x42, "vmpsadbw", int_x86_avx2_mpsadbw,
+                                       VR256, memopv32i8, i256mem, 0>, VEX_4V;
+  }
+}
+
 let Constraints = "$src1 = $dst" in {
   let isCommutable = 0 in {
   defm BLENDPS : SS41I_binop_rmi_int<0x0C, "blendps", int_x86_sse41_blendps,
@@ -6393,7 +6463,6 @@ let Constraints = "$src1 = $dst" in {
 }
 
 /// SS41I_quaternary_int_avx - AVX SSE 4.1 with 4 operators
-let Predicates = [HasAVX] in {
 multiclass SS41I_quaternary_int_avx<bits<8> opc, string OpcodeStr,
                                     RegisterClass RC, X86MemOperand x86memop,
                                     PatFrag mem_frag, Intrinsic IntId> {
@@ -6413,8 +6482,8 @@ multiclass SS41I_quaternary_int_avx<bits<8> opc, string OpcodeStr,
                                RC:$src3))],
                   SSEPackedInt>, OpSize, TA, VEX_4V, VEX_I8IMM;
 }
-}
 
+let Predicates = [HasAVX] in {
 defm VBLENDVPD  : SS41I_quaternary_int_avx<0x4B, "vblendvpd", VR128, i128mem,
                                            memopv16i8, int_x86_sse41_blendvpd>;
 defm VBLENDVPS  : SS41I_quaternary_int_avx<0x4A, "vblendvps", VR128, i128mem,
@@ -6425,6 +6494,12 @@ defm VBLENDVPDY : SS41I_quaternary_int_avx<0x4B, "vblendvpd", VR256, i256mem,
                                          memopv32i8, int_x86_avx_blendv_pd_256>;
 defm VBLENDVPSY : SS41I_quaternary_int_avx<0x4A, "vblendvps", VR256, i256mem,
                                          memopv32i8, int_x86_avx_blendv_ps_256>;
+}
+
+let Predicates = [HasAVX2] in {
+defm VPBLENDVBY : SS41I_quaternary_int_avx<0x4C, "vpblendvb", VR256, i256mem,
+                                           memopv32i8, int_x86_avx2_pblendvb>;
+}
 
 let Predicates = [HasAVX] in {
   def : Pat<(v16i8 (vselect (v16i8 VR128:$mask), (v16i8 VR128:$src1),
@@ -6503,6 +6578,11 @@ def VMOVNTDQArm : SS48I<0x2A, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
                        "vmovntdqa\t{$src, $dst|$dst, $src}",
                        [(set VR128:$dst, (int_x86_sse41_movntdqa addr:$src))]>,
                        OpSize, VEX;
+let Predicates = [HasAVX2] in
+def VMOVNTDQAYrm : SS48I<0x2A, MRMSrcMem, (outs VR256:$dst), (ins i256mem:$src),
+                         "vmovntdqa\t{$src, $dst|$dst, $src}",
+                         [(set VR256:$dst, (int_x86_avx2_movntdqa addr:$src))]>,
+                         OpSize, VEX;
 def MOVNTDQArm : SS48I<0x2A, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
                        "movntdqa\t{$src, $dst|$dst, $src}",
                        [(set VR128:$dst, (int_x86_sse41_movntdqa addr:$src))]>,
@@ -6532,6 +6612,22 @@ multiclass SS42I_binop_rm_int<bits<8> opc, string OpcodeStr,
           (bitconvert (memopv16i8 addr:$src2))))]>, OpSize;
 }
 
+/// SS42I_binop_rm_int - Simple SSE 4.2 binary operator
+multiclass SS42I_binop_rm_int_y<bits<8> opc, string OpcodeStr,
+                                Intrinsic IntId256> {
+  def Yrr : SS428I<opc, MRMSrcReg, (outs VR256:$dst),
+       (ins VR256:$src1, VR256:$src2),
+       !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+       [(set VR256:$dst, (IntId256 VR256:$src1, VR256:$src2))]>,
+       OpSize;
+  def Yrm : SS428I<opc, MRMSrcMem, (outs VR256:$dst),
+       (ins VR256:$src1, i256mem:$src2),
+       !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+       [(set VR256:$dst,
+         (IntId256 VR256:$src1,
+          (bitconvert (memopv32i8 addr:$src2))))]>, OpSize;
+}
+
 let Predicates = [HasAVX] in {
   defm VPCMPGTQ : SS42I_binop_rm_int<0x37, "vpcmpgtq", int_x86_sse42_pcmpgtq,
                                      0>, VEX_4V;
@@ -6540,6 +6636,11 @@ let Predicates = [HasAVX] in {
             (VPCMPGTQrr VR128:$src1, VR128:$src2)>;
   def : Pat<(v2i64 (X86pcmpgtq VR128:$src1, (memop addr:$src2))),
             (VPCMPGTQrm VR128:$src1, addr:$src2)>;
+}
+
+let Predicates = [HasAVX2] in {
+  defm VPCMPGTQ : SS42I_binop_rm_int_y<0x37, "vpcmpgtq", int_x86_avx2_pcmpgt_q>,
+                                       VEX_4V;
 }
 
 let Constraints = "$src1 = $dst" in
@@ -6990,6 +7091,10 @@ def VBROADCASTSD   : avx_broadcast<0x19, "vbroadcastsd", VR256, f64mem,
                                    int_x86_avx_vbroadcast_sd_256>;
 def VBROADCASTF128 : avx_broadcast<0x1A, "vbroadcastf128", VR256, f128mem,
                                    int_x86_avx_vbroadcastf128_pd_256>;
+
+let Predicates = [HasAVX2] in
+def VBROADCASTI128 : avx_broadcast<0x5A, "vbroadcasti128", VR256, i128mem,
+                                   int_x86_avx2_vbroadcasti128>;
 
 def : Pat<(int_x86_avx_vbroadcastf128_ps_256 addr:$src),
           (VBROADCASTF128 addr:$src)>;
