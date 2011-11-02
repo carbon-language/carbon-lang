@@ -125,6 +125,13 @@ add_custom_command(OUTPUT ${LLVM_CONFIG}
   COMMENT "Building llvm-config script."
   )
 
+add_custom_target(llvm-config.target ALL
+  DEPENDS ${LLVM_CONFIG})
+
+# Ensure we build llvm-config after we build all of the libraries so that we
+# have their full dependencies.
+add_dependencies(llvm-config.target ${llvm_libs})
+
 install(FILES ${LLVM_CONFIG}
   PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE
   WORLD_READ WORLD_EXECUTE
