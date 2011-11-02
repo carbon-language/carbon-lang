@@ -442,6 +442,10 @@ unsigned DwarfDebug::GetOrCreateSourceID(StringRef FileName,
   if (FileName.empty())
     return GetOrCreateSourceID("<stdin>", StringRef());
 
+  // TODO: this might not belong here. See if we can factor this better.
+  if (DirName == CompilationDir)
+    DirName = "";
+
   unsigned SrcId = SourceIdMap.size()+1;
   std::pair<std::string, std::string> SourceName =
       std::make_pair(FileName, DirName);
@@ -466,8 +470,8 @@ unsigned DwarfDebug::GetOrCreateSourceID(StringRef FileName,
 CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
   DICompileUnit DIUnit(N);
   StringRef FN = DIUnit.getFilename();
-  StringRef Dir = DIUnit.getDirectory();
-  unsigned ID = GetOrCreateSourceID(FN, Dir);
+  CompilationDir = DIUnit.getDirectory();
+  unsigned ID = GetOrCreateSourceID(FN, CompilationDir);
 
   DIE *Die = new DIE(dwarf::DW_TAG_compile_unit);
   CompileUnit *NewCU = new CompileUnit(ID, Die, Asm, this);
@@ -486,8 +490,8 @@ CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
   else
     NewCU->addUInt(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4, 0);
 
-  if (!Dir.empty())
-    NewCU->addString(Die, dwarf::DW_AT_comp_dir, Dir);
+  if (!CompilationDir.empty())
+    NewCU->addString(Die, dwarf::DW_AT_comp_dir, CompilationDir);
   if (DIUnit.isOptimized())
     NewCU->addUInt(Die, dwarf::DW_AT_APPLE_optimized, dwarf::DW_FORM_flag, 1);
 

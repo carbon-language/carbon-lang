@@ -302,6 +302,10 @@ class DwarfDebug {
   MCSymbol *DwarfDebugLocSectionSym;
   MCSymbol *FunctionBeginSym, *FunctionEndSym;
 
+  // As an optimization, there is no need to emit an entry in the directory
+  // table for the same directory as DW_at_comp_dir.
+  StringRef CompilationDir;
+
 private:
 
   /// assignAbbrevNumber - Define a unique number for the abbreviation.
