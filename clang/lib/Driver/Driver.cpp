@@ -373,6 +373,12 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
   CCCIsCPP = true;
   CCGenDiagnostics = true;
 
+  // Save the original job command(s).
+  std::string Cmd;
+  llvm::raw_string_ostream OS(Cmd);
+  C.PrintJob(OS, C.getJobs(), "\n", false);
+  OS.flush();
+
   // Clear stale state and suppress tool output.
   C.initCompilationForDiagnostics();
   Diags.Reset();
@@ -449,11 +455,26 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
   // If the command succeeded, we are done.
   if (Res == 0) {
     Diag(clang::diag::note_drv_command_failed_diag_msg)
-      << "Preprocessed source(s) are located at:";
+      << "Preprocessed source(s) and associated run script(s) are located at:";
     ArgStringList Files = C.getTempFiles();
     for (ArgStringList::const_iterator it = Files.begin(), ie = Files.end();
-         it != ie; ++it)
+         it != ie; ++it) {
       Diag(clang::diag::note_drv_command_failed_diag_msg) << *it;
+
+      std::string Err;
+      std::string Script = StringRef(*it).rsplit('.').first;
+      Script += ".sh";
+      llvm::raw_fd_ostream ScriptOS(Script.c_str(), Err,
+                                    llvm::raw_fd_ostream::F_Excl |
+                                    llvm::raw_fd_ostream::F_Binary);
+      if (!Err.empty()) {
+        Diag(clang::diag::note_drv_command_failed_diag_msg)
+          << "Error generating run script: " + Script + " " + Err;
+      } else {
+        ScriptOS << Cmd;
+        Diag(clang::diag::note_drv_command_failed_diag_msg) << Script;
+      }
+    }
   } else {
     // Failure, remove preprocessed files.
     if (!C.getArgs().hasArg(options::OPT_save_temps))
