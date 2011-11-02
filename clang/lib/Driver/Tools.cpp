@@ -2171,6 +2171,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       D.Diag(diag::warn_drv_clang_unsupported) << A->getAsString(Args);
   }
 
+  if (Args.hasFlag(options::OPT_fapple_pragma_pack,
+                   options::OPT_fno_apple_pragma_pack, false))
+    CmdArgs.push_back("-fapple-pragma-pack");
+
   // Default to -fno-builtin-str{cat,cpy} on Darwin for ARM.
   //
   // FIXME: This is disabled until clang -cc1 supports -fno-builtin-foo. PR4941.

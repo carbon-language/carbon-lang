@@ -261,6 +261,7 @@ def fno_PIE : Flag<"-fno-PIE">, Group<f_Group>, Flags<[NoArgumentUnused]>;
 def faccess_control : Flag<"-faccess-control">, Group<f_Group>;
 def fallow_unsupported : Flag<"-fallow-unsupported">, Group<f_Group>;
 def fapple_kext : Flag<"-fapple-kext">, Group<f_Group>;
+def fapple_pragma_pack : Flag<"-fapple-pragma-pack">, Group<f_Group>;
 def fasm : Flag<"-fasm">, Group<f_Group>;
 
 def fasm_blocks : Flag<"-fasm-blocks">, Group<f_Group>;
@@ -355,6 +356,7 @@ def fmudflap : Flag<"-fmudflap">, Group<f_Group>;
 def fnested_functions : Flag<"-fnested-functions">, Group<f_Group>;
 def fnext_runtime : Flag<"-fnext-runtime">, Group<f_Group>;
 def fno_access_control : Flag<"-fno-access-control">, Group<f_Group>;
+def fno_apple_pragma_pack : Flag<"-fno-apple-pragma-pack">, Group<f_Group>;
 def fno_asm : Flag<"-fno-asm">, Group<f_Group>;
 def fno_asynchronous_unwind_tables : Flag<"-fno-asynchronous-unwind-tables">, Group<f_Group>;
 def fno_assume_sane_operator_new : Flag<"-fno-assume-sane-operator-new">, Group<f_Group>;

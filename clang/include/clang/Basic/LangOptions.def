@@ -150,6 +150,8 @@ BENIGN_LANGOPT(NumLargeByValueCopy, 32, 0,
 VALUE_LANGOPT(MSCVersion, 32, 0, 
               "version of Microsoft Visual C/C++")
 
+LANGOPT(ApplePragmaPack, 1, 0, "Apple gcc-compatible #pragma pack handling")
+
 #undef LANGOPT
 #undef VALUE_LANGOPT
 #undef BENIGN_LANGOPT
