@@ -275,7 +275,7 @@ void StmtProfiler::VisitImaginaryLiteral(const ImaginaryLiteral *S) {
 
 void StmtProfiler::VisitStringLiteral(const StringLiteral *S) {
   VisitExpr(S);
-  ID.AddString(S->getString());
+  ID.AddString(S->getBytes());
   ID.AddInteger(S->getKind());
 }
 
