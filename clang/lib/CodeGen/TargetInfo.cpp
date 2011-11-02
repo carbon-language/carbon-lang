@@ -2671,6 +2671,14 @@ ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy) const {
   if (isEmptyRecord(getContext(), RetTy, true))
     return ABIArgInfo::getIgnore();
 
+  // Check for homogeneous aggregates with AAPCS-VFP.
+  if (getABIKind() == AAPCS_VFP) {
+    const Type *Base = 0;
+    if (isHomogeneousAggregate(RetTy, Base, getContext()))
+      // Homogeneous Aggregates are returned directly.
+      return ABIArgInfo::getDirect();
+  }
+
   // Aggregates <= 4 bytes are returned in r0; other aggregates
   // are returned indirectly.
   uint64_t Size = getContext().getTypeSize(RetTy);

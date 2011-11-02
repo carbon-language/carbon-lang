@@ -12,10 +12,10 @@ struct homogeneous_struct {
   float f3;
   float f4;
 };
-// CHECK: define arm_aapcs_vfpcc void @test_struct(float %{{.*}}, float %{{.*}}, float %{{.*}}, float %{{.*}})
-extern void struct_callee(struct homogeneous_struct);
-void test_struct(struct homogeneous_struct arg) {
-  struct_callee(arg);
+// CHECK: define arm_aapcs_vfpcc %struct.homogeneous_struct @test_struct(float %{{.*}}, float %{{.*}}, float %{{.*}}, float %{{.*}})
+extern struct homogeneous_struct struct_callee(struct homogeneous_struct);
+struct homogeneous_struct test_struct(struct homogeneous_struct arg) {
+  return struct_callee(arg);
 }
 
 struct nested_array {
