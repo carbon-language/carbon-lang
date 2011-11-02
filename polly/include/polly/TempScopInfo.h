@@ -167,7 +167,7 @@ typedef SmallVector<Comparison, 4> BBCond;
 /// A canonical induction variable is:
 /// an integer recurrence that starts at 0 and increments by one each time
 /// through the loop.
-typedef std::map<const Loop*, SCEVAffFunc> LoopBoundMapType;
+typedef std::map<const Loop*, const SCEV*> LoopBoundMapType;
 
 /// Mapping BBs to its condition constrains
 typedef std::map<const BasicBlock*, BBCond> BBCondMapType;
@@ -234,7 +234,7 @@ public:
   ///
   /// @return The bounds of the loop L in { Lower bound, Upper bound } form.
   ///
-  const SCEVAffFunc &getLoopBound(const Loop *L) const {
+  const SCEV *getLoopBound(const Loop *L) const {
     LoopBoundMapType::const_iterator at = LoopBounds.find(L);
     assert(at != LoopBounds.end() && "Only valid loop is allow!");
     return at->second;

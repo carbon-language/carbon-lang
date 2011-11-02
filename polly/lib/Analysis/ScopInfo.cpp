@@ -639,7 +639,7 @@ __isl_give isl_set *ScopStmt::addLoopBoundsToDomain(__isl_take isl_set *Domain,
 
     // IV <= LatchExecutions.
     const Loop *L = getLoopForDimension(i);
-    const SCEV *LatchExecutions = tempScop.getLoopBound(L).OriginalSCEV;
+    const SCEV *LatchExecutions = tempScop.getLoopBound(L);
     isl_pw_aff *UpperBound = SCEVAffinator::getPwAff(this, LatchExecutions);
     isl_set *UpperBoundSet = isl_pw_aff_le_set(IV, UpperBound);
     Domain = isl_set_intersect(Domain, UpperBoundSet);

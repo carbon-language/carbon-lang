@@ -156,7 +156,7 @@ void TempScop::printDetail(llvm::raw_ostream &OS, ScalarEvolution *SE,
   if (at != LoopBounds.end()) {
     OS.indent(ind) << "Bounds of Loop: " << at->first->getHeader()->getName()
       << ":\t{ ";
-    OS << *(at->second.OriginalSCEV);
+    OS << *(at->second);
     OS << " }\n";
     ind += 2;
   }
@@ -279,9 +279,14 @@ void TempScopInfo::buildLoopBounds(TempScop &Scop) {
     if (LoopBounds.find(L) != LoopBounds.end())
       continue;
 
-    const SCEV *LoopCount = SE->getBackedgeTakenCount(L);
-    LoopBounds[L] = SCEVAffFunc(SCEVAffFunc::Eq, LoopCount);
-    buildAffineFunction(LoopCount, LoopBounds[L], Scop.getMaxRegion(),
+    const SCEV *BackedgeTakenCount = SE->getBackedgeTakenCount(L);
+    LoopBounds[L] = BackedgeTakenCount;
+
+    // FIXME: Do not build TempSCEVAffFunc. It is not needed anywhere else
+    //        and only build to register the parameters in this SCoP. We should
+    //        move this functionality to the ScopDetection.
+    SCEVAffFunc Temp(SCEVAffFunc::Eq, BackedgeTakenCount);
+    buildAffineFunction(BackedgeTakenCount, Temp, Scop.getMaxRegion(),
                         Scop.getParamSet());
 
     Loop *OL = R.outermostLoopInRegion(L);
