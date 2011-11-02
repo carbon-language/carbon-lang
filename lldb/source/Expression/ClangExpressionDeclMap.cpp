@@ -954,13 +954,32 @@ ClangExpressionDeclMap::LookupDecl (clang::NamedDecl *decl)
         
     ClangExpressionVariableSP expr_var_sp (m_found_entities.GetVariable(decl));
     ClangExpressionVariableSP persistent_var_sp (m_parser_vars->m_persistent_vars->GetVariable(decl));
-
+    
     if (expr_var_sp)
     {
         if (!expr_var_sp->m_parser_vars.get() || !expr_var_sp->m_parser_vars->m_lldb_var)
             return Value();
         
+        bool is_reference = expr_var_sp->m_flags & ClangExpressionVariable::EVTypeIsReference;
+        
         std::auto_ptr<Value> value(GetVariableValue(exe_ctx, expr_var_sp->m_parser_vars->m_lldb_var, NULL));
+        
+        if (is_reference && value.get() && value->GetValueType() == Value::eValueTypeLoadAddress)
+        {
+            Process *process = m_parser_vars->m_exe_ctx->GetProcessPtr();
+            
+            if (!process)
+                return Value();
+            
+            lldb::addr_t value_addr = value->GetScalar().ULongLong();
+            Error read_error;
+            addr_t ref_value = process->ReadPointerFromMemory (value_addr, read_error);
+            
+            if (!read_error.Success())
+                return Value();
+            
+            value->GetScalar() = (unsigned long long)ref_value;
+        }
         
         if (value.get())
             return *value;
