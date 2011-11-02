@@ -231,7 +231,7 @@ void TypePrinting::print(Type *Ty, raw_ostream &OS) {
     if (I != NumberedTypes.end())
       OS << '%' << I->second;
     else  // Not enumerated, print the hex address.
-      OS << "%\"type 0x" << STy << '\"';
+      OS << "%\"type " << STy << '\"';
     return;
   }
   case Type::PointerTyID: {
