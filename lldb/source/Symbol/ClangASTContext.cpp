@@ -1733,17 +1733,36 @@ ClangASTContext::AddMethodToCXXRecordType
     
     cxx_record_decl->addDecl (cxx_method_decl);
     
+    // Sometimes the debug info will mention a constructor (default/copy/move), 
+    // destructor, or assignment operator (copy/move) but there won't be any
+    // version of this in the code. So we check if the function was artificially
+    // generated and if it is trivial and this lets the compiler/backend know
+    // that it can inline the IR for these when it needs to and we can avoid a
+    // "missing function" error when running expressions.
+    
     if (is_artificial)
     {
-        if (cxx_ctor_decl && cxx_ctor_decl->isCopyConstructor() && cxx_record_decl->hasTrivialCopyConstructor())
+        if (cxx_ctor_decl && 
+            ((cxx_ctor_decl->isDefaultConstructor() && cxx_record_decl->hasTrivialDefaultConstructor ()) ||
+             (cxx_ctor_decl->isCopyConstructor()    && cxx_record_decl->hasTrivialCopyConstructor    ()) ||
+             (cxx_ctor_decl->isMoveConstructor()    && cxx_record_decl->hasTrivialMoveConstructor    ()) ))
         {
             cxx_ctor_decl->setDefaulted();
             cxx_ctor_decl->setTrivial(true);
         }
-        else if (cxx_dtor_decl && cxx_record_decl->hasTrivialDestructor())
+        else if (cxx_dtor_decl)
         {
-            cxx_dtor_decl->setDefaulted();
-            cxx_dtor_decl->setTrivial(true);
+            if (cxx_record_decl->hasTrivialDestructor())
+            {
+                cxx_dtor_decl->setDefaulted();
+                cxx_dtor_decl->setTrivial(true);
+            }
+        }
+        else if ((cxx_method_decl->isCopyAssignmentOperator() && cxx_record_decl->hasTrivialCopyAssignment()) ||
+                 (cxx_method_decl->isMoveAssignmentOperator() && cxx_record_decl->hasTrivialMoveAssignment()))
+        {
+            cxx_method_decl->setDefaulted();
+            cxx_method_decl->setTrivial(true);
         }
     }
     
