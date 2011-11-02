@@ -111,7 +111,5 @@ namespace test1 {
   B::B() {}
   // CHECK:    define void @_ZN5test11BC2Ev(
   // CHECK:      [[THIS:%.*]] = load [[B:%.*]]**
-  // CHECK-NEXT: [[A:%.*]] = getelementptr inbounds [[B:%.*]]* [[THIS]], i32 0, i32 1
-  // CHECK-NEXT: [[BEGIN:%.*]] = getelementptr inbounds [0 x {{%.*}}]* [[A]], i32 0, i32 0
   // CHECK-NEXT: ret void
 }

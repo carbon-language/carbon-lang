@@ -2413,7 +2413,7 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     // Suppress copying zero-width bitfields.
     if (Field->isBitField() && Field->getBitWidthValue(SemaRef.Context) == 0)
       return false;
-    
+        
     Expr *MemberExprBase = 
       DeclRefExpr::Create(SemaRef.Context, NestedNameSpecifierLoc(), Param, 
                           Loc, ParamType, VK_LValue, 0);
@@ -2649,6 +2649,22 @@ static bool isWithinAnonymousUnion(IndirectFieldDecl *F) {
   return false;
 }
 
+/// \brief Determine whether the given type is an incomplete or zero-lenfgth
+/// array type.
+static bool isIncompleteOrZeroLengthArrayType(ASTContext &Context, QualType T) {
+  if (T->isIncompleteArrayType())
+    return true;
+  
+  while (const ConstantArrayType *ArrayT = Context.getAsConstantArrayType(T)) {
+    if (!ArrayT->getSize())
+      return true;
+    
+    T = ArrayT->getElementType();
+  }
+  
+  return false;
+}
+
 static bool CollectFieldInitializer(Sema &SemaRef, BaseAndFieldInfo &Info,
                                     FieldDecl *Field, 
                                     IndirectFieldDecl *Indirect = 0) {
@@ -2682,6 +2698,10 @@ static bool CollectFieldInitializer(Sema &SemaRef, BaseAndFieldInfo &Info,
   // explicitly specified.
   if (Field->getParent()->isUnion() ||
       (Indirect && isWithinAnonymousUnion(Indirect)))
+    return false;
+
+  // Don't initialize incomplete or zero-length arrays.
+  if (isIncompleteOrZeroLengthArrayType(SemaRef.Context, Field->getType()))
     return false;
 
   // Don't try to build an implicit initializer if there were semantic
@@ -2822,13 +2842,7 @@ bool Sema::SetCtorInitializers(CXXConstructorDecl *Constructor,
       //   initialized.
       if (F->isUnnamedBitfield())
         continue;
-      
-      if (F->getType()->isIncompleteArrayType()) {
-        assert(ClassDecl->hasFlexibleArrayMember() &&
-               "Incomplete array type is not valid");
-        continue;
-      }
-      
+            
       // If we're not generating the implicit copy/move constructor, then we'll
       // handle anonymous struct/union fields based on their individual
       // indirect fields.
@@ -3169,6 +3183,11 @@ Sema::MarkBaseAndMemberDestructorsReferenced(SourceLocation Location,
     FieldDecl *Field = *I;
     if (Field->isInvalidDecl())
       continue;
+    
+    // Don't destroy incomplete or zero-length arrays.
+    if (isIncompleteOrZeroLengthArrayType(Context, Field->getType()))
+      continue;
+
     QualType FieldType = Context.getBaseElementType(Field->getType());
     
     const RecordType* RT = FieldType->getAs<RecordType>();
