@@ -1588,7 +1588,7 @@ LinearFunctionTestReplace(Loop *L,
 
   assert(SE->isLoopInvariant(IVLimit, L) &&
          "Computed iteration count is not loop invariant!");
-  assert( !IVLimit->getType()->isPointerTy() &&
+  assert( EnableIVRewrite || !IVLimit->getType()->isPointerTy() &&
           "Should not expand pointer types" );
   Value *ExitCnt = Rewriter.expandCodeFor(IVLimit, CmpTy, BI);
 
