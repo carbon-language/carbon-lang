@@ -8127,6 +8127,34 @@ bool ARMTargetLowering::allowsUnalignedMemoryAccesses(EVT VT) const {
   }
 }
 
+static bool memOpAlign(unsigned DstAlign, unsigned SrcAlign,
+                       unsigned AlignCheck) {
+  return ((SrcAlign == 0 || SrcAlign % AlignCheck == 0) &&
+          (DstAlign == 0 || DstAlign % AlignCheck == 0));
+}
+
+EVT ARMTargetLowering::getOptimalMemOpType(uint64_t Size,
+                                           unsigned DstAlign, unsigned SrcAlign,
+                                           bool NonScalarIntSafe,
+                                           bool MemcpyStrSrc,
+                                           MachineFunction &MF) const {
+  const Function *F = MF.getFunction();
+
+  // See if we can use NEON instructions for this...
+  if (NonScalarIntSafe &&
+      !F->hasFnAttr(Attribute::NoImplicitFloat) &&
+      Subtarget->hasNEON()) {
+    if (memOpAlign(SrcAlign, DstAlign, 16) && Size >= 16) {
+      return MVT::v4i32;
+    } else if (memOpAlign(SrcAlign, DstAlign, 8) && Size >= 8) {
+      return MVT::v2i32;
+    }
+  }
+
+  // Let the target-independent logic figure it out.
+  return MVT::Other;
+}
+
 static bool isLegalT1AddressImmediate(int64_t V, EVT VT) {
   if (V < 0)
     return false;

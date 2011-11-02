@@ -266,8 +266,13 @@ namespace llvm {
 
     /// allowsUnalignedMemoryAccesses - Returns true if the target allows
     /// unaligned memory accesses. of the specified type.
-    /// FIXME: Add getOptimalMemOpType to implement memcpy with NEON?
     virtual bool allowsUnalignedMemoryAccesses(EVT VT) const;
+
+    virtual EVT getOptimalMemOpType(uint64_t Size,
+                                    unsigned DstAlign, unsigned SrcAlign,
+                                    bool NonScalarIntSafe,
+                                    bool MemcpyStrSrc,
+                                    MachineFunction &MF) const;
 
     /// isLegalAddressingMode - Return true if the addressing mode represented
     /// by AM is legal for this target, for a load/store of the specified type.
