@@ -1,0 +1,181 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+          "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <title>Checker Developer Manual</title>
+  <link type="text/css" rel="stylesheet" href="menu.css" />
+  <link type="text/css" rel="stylesheet" href="content.css" />
+  <script type="text/javascript" src="scripts/menu.js"></script>
+</head>
+<body>
+
+<div id="page">
+<!--#include virtual="menu.html.incl"-->
+
+<div id="content">
+
+<h1><font color=red>This Page Is Under Construction</font></h1>
+
+<h1>Checker Developer Manual</h1>
+
+<p>The static analyzer engine performs symbolic execution of the program and 
+relies on a set of checkers to implement the logic for detecting and 
+constructing bug reports. This page provides hints and guidelines for anyone 
+who is interested in implementing their own checker. The static analyzer is a 
+part of the Clang project, so consult <a href="http://clang.llvm.org/hacking.html">Hacking on Clang</a> 
+and <a href="http://llvm.org/docs/ProgrammersManual.html">LLVM Programmer's Manual</a>
+for general developer guidelines and information. </p>
+
+    <ul>
+      <li><a href="#start">Getting Started</a></li>
+      <li><a href="#analyzer">Static Analyzer Overview</a></li>
+      <li><a href="#idea">Idea for a Checker</a></li>
+      <li><a href="#skeleton">Checker Skeleton</a></li>
+      <li><a href="#node">Exploded Node</a></li>
+      <li><a href="#bugs">Bug Reports</a></li>
+      <li><a href="#ast">AST Visitors</a></li>
+      <li><a href="#testing">Testing</a></li>
+      <li><a href="#commands">Useful Commands</a></li>
+    </ul>
+
+<h2 id=start>Getting Started</h2>
+  <ul>
+    <li>To check out the source code and build the project, follow steps 1-4 of the <a href="http://clang.llvm.org/get_started.html">Clang Getting Started</a> 
+  page.</li>
+
+    <li>The analyzer source code is located under the Clang source tree:
+    <br><tt>
+    $ <b>cd llvm/tools/clang</b>
+    </tt>
+    <br>See: <tt>include/clang/StaticAnalyzer</tt>, <tt>lib/StaticAnalyzer</tt>, <tt>test/Analysis</tt>.</li>
+
+    <li>The analyzer regression tests can be executed from the Clang's build directory:
+    <br><tt>
+    $ <b>cd ../../../; cd build/tools/clang; TESTDIRS=Analysis make test</b>
+    </tt></li>
+    
+    <li>Analyze a file with the specified checker:
+    <br><tt>
+    $ <b>clang -cc1 -analyze -analyzer-checker=core.DivideZero test.c</b>
+    </tt></li>
+
+    <li>List the available checkers:
+    <br><tt>
+    $ <b>clang -cc1 -analyzer-checker-help</b>
+    </tt></li>
+
+    <li>See the analyzer help for different output formats, fine tuning, and debug options:
+    <br><tt>
+    $ <b>clang -cc1 -help | grep "analyzer"</b>
+    </tt></li>
+
+  </ul>
+ 
+<h2 id=analyzer>Static Analyzer Overview</h2>
+  ExplidedGraph, ExplodedNode (ProgramPoint, State)<br>
+  Engine-Checker Interaction<br>
+  Symbols<br>
+  
+
+<h2 id=idea>Idea for a Checker</h2>
+  Here are several questions which you should consider when evaluating your checker idea:
+  <ul>
+    <li>Can the check be effectively implemented without path-sensitive analysis? See <a href="#ast">AST Visitors</a>.</li>
+    
+    <li>How high the false positive rate is going to be? Looking at the occurrences 
+    of the issue you want to write a checker for in the existing code bases might give you some 
+    ideas. </li>
+    
+    <li>How the current limitations of the analysis will effect the false alarm 
+    rate? Currently, the analyzer only reasons about one procedure at a time (no 
+    inter-procedural analysis). Also, it uses a simple range tracking based solver to model symbolic 
+    execution.</li>
+    
+    <li>Consult the <a href="http://llvm.org/bugs/buglist.cgi?query_format=advanced&bug_status=NEW&bug_status=REOPENED&version=trunk&component=Static%20Analyzer&product=clang">Bugzilla database</a> 
+    to get some ideas for new checkers and consider starting with improving/fixing  
+    bugs in the existing checkers.</li>
+  </ul>
+
+<h2 id=skeleton>Checker Skeleton</h2>
+  The source code for all the checkers goes into <tt>clang/lib/StaticAnalyzer/Checkers</tt>.<p>
+  There are two main decisions you need to make:
+  <ul>
+    <li> Which events the checker should be tracking.</li>
+    <li> What data you want to store as part of the checker-specific program state. Try to minimize the checker state as much as possible. </li>
+  </ul>
+   Describe the registration process.
+
+<h2 id=bugs>Bug Reports</h2>
+
+<h2 id=ast>AST Visitors</h2>
+  Some checks might not require path-sensitivity to be effective. Simple AST walk 
+  might be sufficient. If that is the case, consider implementing a Clang compiler warning. 
+  On the other hand, a check might not be acceptable as a compiler 
+  warning; for example, because of a relatively high false positive rate. In this 
+  situation, AST callbacks <tt><b>checkASTDecl</b></tt> and 
+  <tt><b>checkASTCodeBody</b></tt> are your best friends. 
+
+<h2 id=testing>Testing</h2>
+  Every patch should be well tested with Clang regression tests. The checker tests 
+  live in <tt>clang/test/Analysis</tt> folder. To run all of the analyzer tests, 
+  execute the following from the <tt>clang</tt> build directory:
+    <pre class="code">
+    $ <b>TESTDIRS=Analysis make test</b>
+    </pre>
+
+<h2 id=commands>Useful Commands/Debugging Hints</h2>
+<ul>
+<li>
+While investigating a checker-related issue, instruct the analyzer to only execute a single checker:
+<br><tt>
+$ <b>clang -cc1 -analyze -analyzer-checker=osx.KeychainAPI test.c</b>
+</tt>
+</li>
+<li>
+To dump AST:
+<br><tt>
+$ <b>clang -cc1 -ast-dump test.c</b>
+</tt>
+</li>
+<li>
+To view/dump CFG use <tt>debug.ViewCFG</tt> or <tt>debug.DumpCFG</tt> checkers:
+<br><tt>
+$ <b>clang -cc1 -analyze -analyzer-checker=debug.ViewCFG test.c</b>
+</tt> 
+</li>
+<li>
+To see all available debug checkers:
+<br><tt>
+$ <b>clang -cc1 -analyzer-checker-help | grep "debug"</b>
+</tt>
+</li>
+<li>
+To see which function is failing while processing a large file use <tt>-analyzer-display-progress</tt> option.
+</li>
+<li>
+While debugging execute <tt>clang -cc1 -analyze -analyzer-checker=core</tt> instead of <tt>clang --analyze</tt>, as the later would call the compiler in a separate process.
+</li>
+<li>
+To view <tt>ExplodedGraph</tt> (the state graph explored by the analyzer) while debugging, goto a frame that has <tt>clang::ento::ExprEngine</tt> object and execute:
+<br><tt> 
+(gdb) <b>p ViewGraph(0)</b>
+</tt>
+</li>
+<li>
+To see <tt>clang::Expr</tt> while debugging use the following command. If you pass in a SourceManager object, it will also dump the corresponding line in the source code.
+<br><tt>
+(gdb) <b>p E->dump()</b>
+</tt> 
+</li>
+<li>
+To dump AST of a method that the current <tt>ExplodedNode</tt> belongs to:
+<br><tt>
+(gdb) <b>p ENode->getCodeDecl().getBody()->dump(getContext().getSourceManager())</b>
+</tt>
+</li>
+</ul>
+
+</div>
+</div>
+</body>
+</html>
