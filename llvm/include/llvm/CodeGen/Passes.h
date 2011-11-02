@@ -159,6 +159,11 @@ namespace llvm {
   /// probabilities.
   FunctionPass *createMachineBlockPlacementPass();
 
+  /// MachineBlockPlacementStats Pass - This pass collects statistics about the
+  /// basic block placement using branch probabilities and block frequency
+  /// information.
+  FunctionPass *createMachineBlockPlacementStatsPass();
+
   /// Code Placement Pass - This pass optimize code placement and aligns loop
   /// headers to target specific alignment boundary.
   FunctionPass *createCodePlacementOptPass();

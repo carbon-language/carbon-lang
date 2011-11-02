@@ -55,6 +55,8 @@ static cl::opt<bool> DisableEarlyTailDup("disable-early-taildup", cl::Hidden,
     cl::desc("Disable pre-register allocation tail duplication"));
 static cl::opt<bool> EnableBlockPlacement("enable-block-placement",
     cl::Hidden, cl::desc("Enable probability-driven block placement"));
+static cl::opt<bool> EnableBlockPlacementStats("enable-block-placement-stats",
+    cl::Hidden, cl::desc("Collect probability-driven block placement stats"));
 static cl::opt<bool> DisableCodePlace("disable-code-place", cl::Hidden,
     cl::desc("Disable code placement"));
 static cl::opt<bool> DisableSSC("disable-ssc", cl::Hidden,
@@ -498,6 +500,12 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
     } else {
       PM.add(createCodePlacementOptPass());
       printNoVerify(PM, "After CodePlacementOpt");
+    }
+
+    // Run a separate pass to collect block placement statistics.
+    if (EnableBlockPlacementStats) {
+      PM.add(createMachineBlockPlacementStatsPass());
+      printNoVerify(PM, "After MachineBlockPlacementStats");
     }
   }
 

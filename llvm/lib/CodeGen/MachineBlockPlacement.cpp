@@ -48,6 +48,13 @@
 #include <algorithm>
 using namespace llvm;
 
+STATISTIC(NumCondBranches, "Number of conditional branches");
+STATISTIC(NumUncondBranches, "Number of uncondittional branches");
+STATISTIC(CondBranchTakenFreq,
+          "Potential frequency of taking conditional branches");
+STATISTIC(UncondBranchTakenFreq,
+          "Potential frequency of taking unconditional branches");
+
 namespace {
 /// \brief A structure for storing a weighted edge.
 ///
@@ -481,3 +488,79 @@ bool MachineBlockPlacement::runOnMachineFunction(MachineFunction &F) {
   // differs from the original order.
   return true;
 }
+
+namespace {
+/// \brief A pass to compute block placement statistics.
+///
+/// A separate pass to compute interesting statistics for evaluating block
+/// placement. This is separate from the actual placement pass so that they can
+/// be computed in the absense of any placement transformations or when using
+/// alternative placement strategies.
+class MachineBlockPlacementStats : public MachineFunctionPass {
+  /// \brief A handle to the branch probability pass.
+  const MachineBranchProbabilityInfo *MBPI;
+
+  /// \brief A handle to the function-wide block frequency pass.
+  const MachineBlockFrequencyInfo *MBFI;
+
+public:
+  static char ID; // Pass identification, replacement for typeid
+  MachineBlockPlacementStats() : MachineFunctionPass(ID) {
+    initializeMachineBlockPlacementStatsPass(*PassRegistry::getPassRegistry());
+  }
+
+  bool runOnMachineFunction(MachineFunction &F);
+
+  void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.addRequired<MachineBranchProbabilityInfo>();
+    AU.addRequired<MachineBlockFrequencyInfo>();
+    AU.setPreservesAll();
+    MachineFunctionPass::getAnalysisUsage(AU);
+  }
+
+  const char *getPassName() const { return "Block Placement Stats"; }
+};
+}
+
+char MachineBlockPlacementStats::ID = 0;
+INITIALIZE_PASS_BEGIN(MachineBlockPlacementStats, "block-placement-stats",
+                      "Basic Block Placement Stats", false, false)
+INITIALIZE_PASS_DEPENDENCY(MachineBranchProbabilityInfo)
+INITIALIZE_PASS_DEPENDENCY(MachineBlockFrequencyInfo)
+INITIALIZE_PASS_END(MachineBlockPlacementStats, "block-placement-stats",
+                    "Basic Block Placement Stats", false, false)
+
+FunctionPass *llvm::createMachineBlockPlacementStatsPass() {
+  return new MachineBlockPlacementStats();
+}
+
+bool MachineBlockPlacementStats::runOnMachineFunction(MachineFunction &F) {
+  // Check for single-block functions and skip them.
+  if (llvm::next(F.begin()) == F.end())
+    return false;
+
+  MBPI = &getAnalysis<MachineBranchProbabilityInfo>();
+  MBFI = &getAnalysis<MachineBlockFrequencyInfo>();
+
+  for (MachineFunction::iterator I = F.begin(), E = F.end(); I != E; ++I) {
+    BlockFrequency BlockFreq = MBFI->getBlockFreq(I);
+    Statistic &NumBranches = (I->succ_size() > 1) ? NumCondBranches
+                                                  : NumUncondBranches;
+    Statistic &BranchTakenFreq = (I->succ_size() > 1) ? CondBranchTakenFreq
+                                                      : UncondBranchTakenFreq;
+    for (MachineBasicBlock::succ_iterator SI = I->succ_begin(),
+                                          SE = I->succ_end();
+         SI != SE; ++SI) {
+      // Skip if this successor is a fallthrough.
+      if (I->isLayoutSuccessor(*SI))
+        continue;
+
+      BlockFrequency EdgeFreq = BlockFreq * MBPI->getEdgeProbability(I, *SI);
+      ++NumBranches;
+      BranchTakenFreq += EdgeFreq.getFrequency();
+    }
+  }
+
+  return false;
+}
+
