@@ -284,6 +284,7 @@ error_code COFFObjectFile::getSymbolSection(DataRefImpl Symb,
     const coff_section *sec;
     if (error_code ec = getSection(symb->SectionNumber, sec)) return ec;
     DataRefImpl Sec;
+    std::memset(&Sec, 0, sizeof(Sec));
     Sec.p = reinterpret_cast<uintptr_t>(sec);
     Result = section_iterator(SectionRef(Sec, this));
   }
@@ -618,6 +619,7 @@ error_code COFFObjectFile::getRelocationSymbol(DataRefImpl Rel,
                                                SymbolRef &Res) const {
   const coff_relocation* R = toRel(Rel);
   DataRefImpl Symb;
+  std::memset(&Symb, 0, sizeof(Symb));
   Symb.p = reinterpret_cast<uintptr_t>(SymbolTable + R->SymbolTableIndex);
   Res = SymbolRef(Symb, this);
   return object_error::success;
