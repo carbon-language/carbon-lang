@@ -1774,8 +1774,8 @@ ASTNodeImporter::ImportDeclarationNameLoc(const DeclarationNameInfo &From,
     To.setNamedTypeInfo(Importer.Import(FromTInfo));
     return;
   }
-    llvm_unreachable("Unknown name kind.");
   }
+  llvm_unreachable("Unknown name kind.");
 }
 
 void ASTNodeImporter::ImportDeclContext(DeclContext *FromDC, bool ForceImport) {

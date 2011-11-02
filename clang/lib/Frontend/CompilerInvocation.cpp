@@ -690,11 +690,12 @@ static void LangOptsToArgs(const LangOptions &Opts,
   case LangOptions::SOB_Undefined: break;
   case LangOptions::SOB_Defined:   Res.push_back("-fwrapv"); break;
   case LangOptions::SOB_Trapping:
-    Res.push_back("-ftrapv"); break;
+    Res.push_back("-ftrapv");
     if (!Opts.OverflowHandler.empty()) {
       Res.push_back("-ftrapv-handler");
       Res.push_back(Opts.OverflowHandler);
     }
+    break;
   }
   if (Opts.HeinousExtensions)
     Res.push_back("-fheinous-gnu-extensions");

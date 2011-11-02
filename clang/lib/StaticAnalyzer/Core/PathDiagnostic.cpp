@@ -193,9 +193,6 @@ PathDiagnosticLocation
   }
 
   return PathDiagnosticLocation(S, SMng, P.getLocationContext());
-
-  if (!S)
-    return PathDiagnosticLocation();
 }
 
 PathDiagnosticLocation
