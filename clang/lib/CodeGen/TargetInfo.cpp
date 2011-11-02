@@ -2994,6 +2994,7 @@ namespace {
 class MipsABIInfo : public ABIInfo {
   static const unsigned MinABIStackAlignInBytes = 4;
   bool IsO32;
+  llvm::Type* HandleStructTy(QualType Ty) const;
 public:
   MipsABIInfo(CodeGenTypes &CGT, bool _IsO32) : ABIInfo(CGT), IsO32(_IsO32) {}
 
@@ -3026,6 +3027,72 @@ public:
 };
 }
 
+// In N32/64, an aligned double precision floating point field is passed in
+// a register.
+llvm::Type* MipsABIInfo::HandleStructTy(QualType Ty) const {
+  if (IsO32)
+    return 0;
+
+  const RecordType *RT = Ty->getAsStructureType();
+
+  if (!RT)
+    return 0;
+
+  const RecordDecl *RD = RT->getDecl();
+  const ASTRecordLayout &Layout = getContext().getASTRecordLayout(RD);
+  uint64_t StructSize = getContext().getTypeSize(Ty);
+  assert(!(StructSize % 8) && "Size of structure must be multiple of 8.");
+  
+  SmallVector<llvm::Type*, 8> ArgList;
+  uint64_t LastOffset = 0;
+  unsigned idx = 0;
+  llvm::IntegerType *I64 = llvm::IntegerType::get(getVMContext(), 64);
+
+  for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
+       i != e; ++i, ++idx) {
+    const QualType Ty = (*i)->getType();
+    const BuiltinType *BT = Ty->getAs<BuiltinType>();
+
+    if (!BT || BT->getKind() != BuiltinType::Double)
+      continue;
+
+    uint64_t Offset = Layout.getFieldOffset(idx);
+    if (Offset % 64) // Ignore doubles that are not aligned.
+      continue;
+
+    // Add ((Offset - LastOffset) / 64) args of type i64.
+    for (unsigned j = (Offset - LastOffset) / 64; j > 0; --j)
+      ArgList.push_back(I64);
+
+    // Add double type.
+    ArgList.push_back(llvm::Type::getDoubleTy(getVMContext()));
+    LastOffset = Offset + 64;
+  }
+
+  // This structure doesn't have an aligned double field.
+  if (!LastOffset)
+    return 0;
+
+  // Add ((StructSize - LastOffset) / 64) args of type i64.
+  for (unsigned N = (StructSize - LastOffset) / 64; N; --N)
+    ArgList.push_back(I64);
+
+  // Whatever is left over goes into a structure consisting of sub-doubleword
+  // types. For example, if the size of the remainder is 40-bytes,
+  // struct {i32, i8} is added to ArgList.
+  unsigned R = (StructSize - LastOffset) % 64;
+  SmallVector<llvm::Type*, 3> ArgList2;
+  
+  for (; R; R &= (R - 1))
+    ArgList2.insert(ArgList2.begin(),
+                    llvm::IntegerType::get(getVMContext(), (R & (R - 1)) ^ R));
+
+  if (!ArgList2.empty())
+    ArgList.push_back(llvm::StructType::get(getVMContext(), ArgList2));
+
+  return llvm::StructType::get(getVMContext(), ArgList);
+}
+
 ABIArgInfo MipsABIInfo::classifyArgumentType(QualType Ty) const {
   if (isAggregateTypeForABI(Ty)) {
     // Ignore empty aggregates.
@@ -3036,6 +3103,10 @@ ABIArgInfo MipsABIInfo::classifyArgumentType(QualType Ty) const {
     // by value.
     if (isRecordWithNonTrivialDestructorOrCopyConstructor(Ty))
       return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
+
+    llvm::Type *ResType;
+    if ((ResType = HandleStructTy(Ty)))
+      return ABIArgInfo::getDirect(ResType);
 
     return ABIArgInfo::getIndirect(0);
   }
