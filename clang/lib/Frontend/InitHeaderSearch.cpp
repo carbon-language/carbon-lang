@@ -840,6 +840,10 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple, const HeaderSearchOp
     AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.5.3",
                                 "x86_64-slackware-linux", "", "", triple);
 
+    // Gentoo x86 gcc 4.5.3
+    AddGnuCPlusPlusIncludePaths(
+      "/usr/lib/gcc/i686-pc-linux-gnu/4.5.3/include/g++-v4",
+      "i686-pc-linux-gnu", "", "", triple);
     // Gentoo x86 gcc 4.5.2
     AddGnuCPlusPlusIncludePaths(
       "/usr/lib/gcc/i686-pc-linux-gnu/4.5.2/include/g++-v4",
@@ -873,6 +877,10 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple, const HeaderSearchOp
         "/usr/lib/llvm-gcc-4.2-9999/include/c++/4.2.1",
         "i686-pc-linux-gnu", "", "", triple);
 
+    // Gentoo amd64 gcc 4.5.3
+    AddGnuCPlusPlusIncludePaths(
+        "/usr/lib/gcc/x86_64-pc-linux-gnu/4.5.3/include/g++-v4",
+        "x86_64-pc-linux-gnu", "32", "", triple);
     // Gentoo amd64 gcc 4.5.2
     AddGnuCPlusPlusIncludePaths(
         "/usr/lib/gcc/x86_64-pc-linux-gnu/4.5.2/include/g++-v4",
