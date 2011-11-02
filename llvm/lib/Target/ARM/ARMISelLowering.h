@@ -270,7 +270,7 @@ namespace llvm {
 
     virtual EVT getOptimalMemOpType(uint64_t Size,
                                     unsigned DstAlign, unsigned SrcAlign,
-                                    bool NonScalarIntSafe,
+                                    bool IsZeroVal,
                                     bool MemcpyStrSrc,
                                     MachineFunction &MF) const;
 
