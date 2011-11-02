@@ -1278,6 +1278,16 @@ static bool isHighCostExpansion(const SCEV *S, BranchInst *BI,
 /// canExpandBackedgeTakenCount - Return true if this loop's backedge taken
 /// count expression can be safely and cheaply expanded into an instruction
 /// sequence that can be used by LinearFunctionTestReplace.
+///
+/// TODO: This fails for pointer-type loop counters with greater than one byte
+/// strides, consequently preventing LFTR from running. For the purpose of LFTR
+/// we could skip this check in the case that the LFTR loop counter (chosen by
+/// FindLoopCounter) is also pointer type. Instead, we could directly convert
+/// the loop test to an inequality test by checking the target data's alignment
+/// of element types (given that the initial pointer value originates from or is
+/// used by ABI constrained operation, as opposed to inttoptr/ptrtoint).
+/// However, we don't yet have a strong motivation for converting loop tests
+/// into inequality tests.
 static bool canExpandBackedgeTakenCount(Loop *L, ScalarEvolution *SE) {
   const SCEV *BackedgeTakenCount = SE->getBackedgeTakenCount(L);
   if (isa<SCEVCouldNotCompute>(BackedgeTakenCount) ||
@@ -1429,6 +1439,10 @@ static bool AlmostDeadIV(PHINode *Phi, BasicBlock *LatchBlock, Value *Cond) {
 
 /// FindLoopCounter - Find an affine IV in canonical form.
 ///
+/// BECount may be an i8* pointer type. The pointer difference is already
+/// valid count without scaling the address stride, so it remains a pointer
+/// expression as far as SCEV is concerned.
+///
 /// FIXME: Accept -1 stride and set IVLimit = IVInit - BECount
 ///
 /// FIXME: Accept non-unit stride as long as SCEV can reduce BECount * Stride.
@@ -1437,11 +1451,6 @@ static bool AlmostDeadIV(PHINode *Phi, BasicBlock *LatchBlock, Value *Cond) {
 static PHINode *
 FindLoopCounter(Loop *L, const SCEV *BECount,
                 ScalarEvolution *SE, DominatorTree *DT, const TargetData *TD) {
-  // I'm not sure how BECount could be a pointer type, but we definitely don't
-  // want to LFTR that.
-  if (BECount->getType()->isPointerTy())
-    return 0;
-
   uint64_t BCWidth = SE->getTypeSizeInBits(BECount->getType());
 
   Value *Cond =
@@ -1456,6 +1465,10 @@ FindLoopCounter(Loop *L, const SCEV *BECount,
   for (BasicBlock::iterator I = L->getHeader()->begin(); isa<PHINode>(I); ++I) {
     PHINode *Phi = cast<PHINode>(I);
     if (!SE->isSCEVable(Phi->getType()))
+      continue;
+
+    // Avoid comparing an integer IV against a pointer Limit.
+    if (BECount->getType()->isPointerTy() && !Phi->getType()->isPointerTy())
       continue;
 
     const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(SE->getSCEV(Phi));
@@ -1503,6 +1516,82 @@ FindLoopCounter(Loop *L, const SCEV *BECount,
   return BestPhi;
 }
 
+/// genLoopLimit - Help LinearFunctionTestReplace by generating a value that
+/// holds the RHS of the new loop test.
+static Value *genLoopLimit(PHINode *IndVar, const SCEV *IVCount, Loop *L,
+                           SCEVExpander &Rewriter, ScalarEvolution *SE) {
+  const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(SE->getSCEV(IndVar));
+  assert(AR && AR->getLoop() == L && AR->isAffine() && "bad loop counter");
+  const SCEV *IVInit = AR->getStart();
+
+  // IVInit may be a pointer while IVCount is an integer when FindLoopCounter
+  // finds a valid pointer IV. Sign extend BECount in order to materialize a
+  // GEP. Avoid running SCEVExpander on a new pointer value, instead reusing
+  // the existing GEPs whenever possible.
+  if (IndVar->getType()->isPointerTy()
+      && !IVCount->getType()->isPointerTy()) {
+
+    Type *OfsTy = SE->getEffectiveSCEVType(IVInit->getType());
+    const SCEV *IVOffset = SE->getTruncateOrSignExtend(IVCount, OfsTy);
+
+    // Expand the code for the iteration count.
+    assert(SE->isLoopInvariant(IVOffset, L) &&
+           "Computed iteration count is not loop invariant!");
+    BranchInst *BI = cast<BranchInst>(L->getExitingBlock()->getTerminator());
+    Value *GEPOffset = Rewriter.expandCodeFor(IVOffset, OfsTy, BI);
+
+    Value *GEPBase = IndVar->getIncomingValueForBlock(L->getLoopPreheader());
+    assert(AR->getStart() == SE->getSCEV(GEPBase) && "bad loop counter");
+    // We could handle pointer IVs other than i8*, but we need to compensate for
+    // gep index scaling. See canExpandBackedgeTakenCount comments.
+    assert(SE->getSizeOfExpr(
+             cast<PointerType>(GEPBase->getType())->getElementType())->isOne()
+           && "unit stride pointer IV must be i8*");
+
+    IRBuilder<> Builder(L->getLoopPreheader()->getTerminator());
+    return Builder.CreateGEP(GEPBase, GEPOffset, "lftr.limit");
+  }
+  else {
+    // In any other case, convert both IVInit and IVCount to integers before
+    // comparing. This may result in SCEV expension of pointers, but in practice
+    // SCEV will fold the pointer arithmetic away as such:
+    // BECount = (IVEnd - IVInit - 1) => IVLimit = IVInit (postinc).
+    //
+    // Valid Cases: (1) both integers is most common; (2) both may be pointers
+    // for simple memset-style loops; (3) IVInit is an integer and IVCount is a
+    // pointer may occur when enable-iv-rewrite generates a canonical IV on top
+    // of case #2.
+
+    const SCEV *IVLimit = 0;
+    // For unit stride, IVCount = Start + BECount with 2's complement overflow.
+    // For non-zero Start, compute IVCount here.
+    if (AR->getStart()->isZero())
+      IVLimit = IVCount;
+    else {
+      assert(AR->getStepRecurrence(*SE)->isOne() && "only handles unit stride");
+      const SCEV *IVInit = AR->getStart();
+
+      // For integer IVs, truncate the IV before computing IVInit + BECount.
+      if (SE->getTypeSizeInBits(IVInit->getType())
+          > SE->getTypeSizeInBits(IVCount->getType()))
+        IVInit = SE->getTruncateExpr(IVInit, IVCount->getType());
+
+      IVLimit = SE->getAddExpr(IVInit, IVCount);
+    }
+    // Expand the code for the iteration count.
+    BranchInst *BI = cast<BranchInst>(L->getExitingBlock()->getTerminator());
+    IRBuilder<> Builder(BI);
+    assert(SE->isLoopInvariant(IVLimit, L) &&
+           "Computed iteration count is not loop invariant!");
+    // Ensure that we generate the same type as IndVar, or a smaller integer
+    // type. In the presence of null pointer values, we have an integer type
+    // SCEV expression (IVInit) for a pointer type IV value (IndVar).
+    Type *LimitTy = IVCount->getType()->isPointerTy() ?
+      IndVar->getType() : IVCount->getType();
+    return Rewriter.expandCodeFor(IVLimit, LimitTy, BI);
+  }
+}
+
 /// LinearFunctionTestReplace - This method rewrites the exit condition of the
 /// loop to be a canonical != comparison against the incremented loop induction
 /// variable.  This pass is able to rewrite the exit tests of any loop where the
@@ -1514,37 +1603,36 @@ LinearFunctionTestReplace(Loop *L,
                           PHINode *IndVar,
                           SCEVExpander &Rewriter) {
   assert(canExpandBackedgeTakenCount(L, SE) && "precondition");
-  BranchInst *BI = cast<BranchInst>(L->getExitingBlock()->getTerminator());
 
   // LFTR can ignore IV overflow and truncate to the width of
   // BECount. This avoids materializing the add(zext(add)) expression.
   Type *CntTy = !EnableIVRewrite ?
     BackedgeTakenCount->getType() : IndVar->getType();
 
-  const SCEV *IVLimit = BackedgeTakenCount;
+  const SCEV *IVCount = BackedgeTakenCount;
 
-  // If the exiting block is not the same as the backedge block, we must compare
-  // against the preincremented value, otherwise we prefer to compare against
-  // the post-incremented value.
+  // If the exiting block is the same as the backedge block, we prefer to
+  // compare against the post-incremented value, otherwise we must compare
+  // against the preincremented value.
   Value *CmpIndVar;
   if (L->getExitingBlock() == L->getLoopLatch()) {
     // Add one to the "backedge-taken" count to get the trip count.
     // If this addition may overflow, we have to be more pessimistic and
     // cast the induction variable before doing the add.
     const SCEV *N =
-      SE->getAddExpr(IVLimit, SE->getConstant(IVLimit->getType(), 1));
-    if (CntTy == IVLimit->getType())
-      IVLimit = N;
+      SE->getAddExpr(IVCount, SE->getConstant(IVCount->getType(), 1));
+    if (CntTy == IVCount->getType())
+      IVCount = N;
     else {
-      const SCEV *Zero = SE->getConstant(IVLimit->getType(), 0);
+      const SCEV *Zero = SE->getConstant(IVCount->getType(), 0);
       if ((isa<SCEVConstant>(N) && !N->isZero()) ||
           SE->isLoopEntryGuardedByCond(L, ICmpInst::ICMP_NE, N, Zero)) {
         // No overflow. Cast the sum.
-        IVLimit = SE->getTruncateOrZeroExtend(N, CntTy);
+        IVCount = SE->getTruncateOrZeroExtend(N, CntTy);
       } else {
         // Potential overflow. Cast before doing the add.
-        IVLimit = SE->getTruncateOrZeroExtend(IVLimit, CntTy);
-        IVLimit = SE->getAddExpr(IVLimit, SE->getConstant(CntTy, 1));
+        IVCount = SE->getTruncateOrZeroExtend(IVCount, CntTy);
+        IVCount = SE->getAddExpr(IVCount, SE->getConstant(CntTy, 1));
       }
     }
     // The BackedgeTaken expression contains the number of times that the
@@ -1552,64 +1640,17 @@ LinearFunctionTestReplace(Loop *L,
     // number of times the loop executes, so use the incremented indvar.
     CmpIndVar = IndVar->getIncomingValueForBlock(L->getExitingBlock());
   } else {
-    // We have to use the preincremented value...
-    IVLimit = SE->getTruncateOrZeroExtend(IVLimit, CntTy);
+    // We must use the preincremented value...
+    IVCount = SE->getTruncateOrZeroExtend(IVCount, CntTy);
     CmpIndVar = IndVar;
   }
 
-  // For unit stride, IVLimit = Start + BECount with 2's complement overflow.
-  // So for non-zero start compute the IVLimit here.
-  Type *CmpTy = CntTy;
-  const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(SE->getSCEV(IndVar));
-  assert(AR && AR->getLoop() == L && AR->isAffine() && "bad loop counter");
-  if (!AR->getStart()->isZero()) {
-    assert(AR->getStepRecurrence(*SE)->isOne() && "only handles unit stride");
-    const SCEV *IVInit = AR->getStart();
-
-    // For pointer types, sign extend BECount in order to materialize a GEP.
-    // Note that for without EnableIVRewrite, we never run SCEVExpander on a
-    // pointer type, because we must preserve the existing GEPs. Instead we
-    // directly generate a GEP later.
-    if (CmpIndVar->getType()->isPointerTy()) {
-      CmpTy = SE->getEffectiveSCEVType(IVInit->getType());
-      IVLimit = SE->getTruncateOrSignExtend(IVLimit, CmpTy);
-    }
-    // For integer types, truncate the IV before computing IVInit + BECount.
-    else {
-      if (SE->getTypeSizeInBits(IVInit->getType())
-          > SE->getTypeSizeInBits(CmpTy))
-        IVInit = SE->getTruncateExpr(IVInit, CmpTy);
-
-      IVLimit = SE->getAddExpr(IVInit, IVLimit);
-    }
-  }
-  // Expand the code for the iteration count.
-  IRBuilder<> Builder(BI);
-
-  assert(SE->isLoopInvariant(IVLimit, L) &&
-         "Computed iteration count is not loop invariant!");
-  assert((EnableIVRewrite || !IVLimit->getType()->isPointerTy()) &&
-         "Should not expand pointer types" );
-  Value *ExitCnt = Rewriter.expandCodeFor(IVLimit, CmpTy, BI);
-
-  // Create a gep for IVInit + IVLimit from on an existing pointer base.
-  //
-  // In the presence of null pointer values, the SCEV expression may be an
-  // integer type while the IV is a pointer type. Ensure that the compare
-  // operands are always the same type by checking the IV type here.
-  if (CmpIndVar->getType()->isPointerTy()) {
-    Value *IVStart = IndVar->getIncomingValueForBlock(L->getLoopPreheader());
-    assert(AR->getStart() == SE->getSCEV(IVStart) && "bad loop counter");
-    assert(SE->getSizeOfExpr(
-             cast<PointerType>(IVStart->getType())->getElementType())->isOne()
-           && "unit stride pointer IV must be i8*");
-
-    Builder.SetInsertPoint(L->getLoopPreheader()->getTerminator());
-    ExitCnt = Builder.CreateGEP(IVStart, ExitCnt, "lftr.limit");
-    Builder.SetInsertPoint(BI);
-  }
+  Value *ExitCnt = genLoopLimit(IndVar, IVCount, L, Rewriter, SE);
+  assert(ExitCnt->getType()->isPointerTy() == IndVar->getType()->isPointerTy()
+         && "genLoopLimit missed a cast");
 
   // Insert a new icmp_ne or icmp_eq instruction before the branch.
+  BranchInst *BI = cast<BranchInst>(L->getExitingBlock()->getTerminator());
   ICmpInst::Predicate P;
   if (L->contains(BI->getSuccessor(0)))
     P = ICmpInst::ICMP_NE;
@@ -1621,11 +1662,13 @@ LinearFunctionTestReplace(Loop *L,
                << "       op:\t"
                << (P == ICmpInst::ICMP_NE ? "!=" : "==") << "\n"
                << "      RHS:\t" << *ExitCnt << "\n"
-               << "     Expr:\t" << *IVLimit << "\n");
+               << "  IVCount:\t" << *IVCount << "\n");
 
+  IRBuilder<> Builder(BI);
   if (SE->getTypeSizeInBits(CmpIndVar->getType())
-      > SE->getTypeSizeInBits(CmpTy)) {
-    CmpIndVar = Builder.CreateTrunc(CmpIndVar, CmpTy, "lftr.wideiv");
+      > SE->getTypeSizeInBits(ExitCnt->getType())) {
+    CmpIndVar = Builder.CreateTrunc(CmpIndVar, ExitCnt->getType(),
+                                    "lftr.wideiv");
   }
 
   Value *Cond = Builder.CreateICmp(P, CmpIndVar, ExitCnt, "exitcond");
