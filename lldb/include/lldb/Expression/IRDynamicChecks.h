@@ -10,7 +10,7 @@
 #ifndef liblldb_IRDynamicChecks_h_
 #define liblldb_IRDynamicChecks_h_
 
-#include "lldb-types.h"
+#include "lldb/lldb-types.h"
 #include "llvm/Pass.h"
 
 namespace llvm {
