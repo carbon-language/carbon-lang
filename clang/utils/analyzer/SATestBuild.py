@@ -29,7 +29,7 @@ The files which should be kept around for failure investigations:
    
 Assumptions (TODO: shouldn't need to assume these.):   
    The script is being run from the Repository Directory.
-   The compiler for scan-build is in the PATH.
+   The compiler for scan-build and scan-build are in the PATH.
    export PATH=/Users/zaks/workspace/c2llvm/build/Release+Asserts/bin:$PATH
 
 For more logging, set the  env variables:
@@ -52,7 +52,7 @@ ProjectMapFile = "projectMap.csv"
 
 # Names of the project specific scripts.
 # The script that needs to be executed before the build can start.
-PreprocessScript = "pre_run_static_analyzer.sh"
+CleanupScript = "cleanup_run_static_analyzer.sh"
 # This is a file containing commands for scan-build.  
 BuildScript = "run_static_analyzer.cmd"
 
@@ -84,8 +84,8 @@ def getProjectDir(ID):
     return os.path.join(os.path.abspath(os.curdir), ID)        
 
 # Run pre-processing script if any.
-def runPreProcessingScript(Dir, PBuildLogFile):
-    ScriptPath = os.path.join(Dir, PreprocessScript)
+def runCleanupScript(Dir, PBuildLogFile):
+    ScriptPath = os.path.join(Dir, CleanupScript)
     if os.path.exists(ScriptPath):
         try:
             if Verbose == 1:        
@@ -126,7 +126,7 @@ def runScanBuild(Dir, SBOutputDir, PBuildLogFile):
               " for details."
         sys.exit(-1)
 
-def buildProject(Dir, SBOutputDir):
+def buildProject(Dir, SBOutputDir, ClenupAfterBuild):
     TBegin = time.time() 
 
     BuildLogPath = os.path.join(Dir, BuildLogName)
@@ -136,7 +136,7 @@ def buildProject(Dir, SBOutputDir):
     if (os.path.exists(BuildLogPath)) :
         RmCommand = "rm " + BuildLogPath
         if Verbose == 1:
-            print "  Executing: %s." % (RmCommand,)
+            print "  Executing: %s" % (RmCommand,)
         check_call(RmCommand, shell=True)
         
     # Open the log file.
@@ -150,8 +150,12 @@ def buildProject(Dir, SBOutputDir):
                 check_call(RmCommand, stderr=PBuildLogFile, 
                                       stdout=PBuildLogFile, shell=True)
     
-        runPreProcessingScript(Dir, PBuildLogFile)
-        runScanBuild(Dir, SBOutputDir, PBuildLogFile)        
+        runCleanupScript(Dir, PBuildLogFile)
+        runScanBuild(Dir, SBOutputDir, PBuildLogFile)
+        
+        if ClenupAfterBuild :
+            runCleanupScript(Dir, PBuildLogFile)
+           
     finally:
         PBuildLogFile.close()
         
@@ -283,7 +287,7 @@ def testProject(ID, IsReferenceBuild, Dir=None):
     else :    
         SBOutputDir = os.path.join(Dir, SBOutputDirName)
     
-    buildProject(Dir, SBOutputDir)    
+    buildProject(Dir, SBOutputDir, IsReferenceBuild)    
 
     checkBuild(SBOutputDir)
     
