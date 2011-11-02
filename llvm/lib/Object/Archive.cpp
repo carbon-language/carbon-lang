@@ -13,6 +13,7 @@
 
 #include "llvm/Object/Archive.h"
 #include "llvm/ADT/APInt.h"
+#include "llvm/Support/Endian.h"
 #include "llvm/Support/MemoryBuffer.h"
 
 using namespace llvm;
@@ -171,8 +172,7 @@ error_code Archive::Child::getAsBinary(OwningPtr<Binary> &Result) const {
 }
 
 Archive::Archive(MemoryBuffer *source, error_code &ec)
-  : Binary(Binary::isArchive, source)
-  , StringTable(Child(this, StringRef(0, 0))) {
+  : Binary(Binary::isArchive, source) {
   // Check for sufficient magic.
   if (!source || source->getBufferSize()
                  < (8 + sizeof(ArchiveMemberHeader) + 2) // Smallest archive.
@@ -181,15 +181,18 @@ Archive::Archive(MemoryBuffer *source, error_code &ec)
     return;
   }
 
-  // Get the string table. It's the 3rd member.
-  child_iterator StrTable = begin_children(false);
+  // Get the special members.
+  child_iterator i = begin_children(false);
   child_iterator e = end_children();
-  for (int i = 0; StrTable != e && i < 2; ++StrTable, ++i) {}
 
-  // Check to see if there were 3 members, or the 3rd member wasn't named "//".
-  StringRef name;
-  if (StrTable != e && !StrTable->getName(name) && name == "//")
-    StringTable = StrTable;
+  if (i != e) ++i; // Nobody cares about the first member.
+  if (i != e) {
+    SymbolTable = i;
+    ++i;
+  }
+  if (i != e) {
+    StringTable = i;
+  }
 
   ec = object_error::success;
 }
@@ -207,4 +210,63 @@ Archive::child_iterator Archive::begin_children(bool skip_internal) const {
 
 Archive::child_iterator Archive::end_children() const {
   return Child(this, StringRef(0, 0));
+}
+
+error_code Archive::Symbol::getName(StringRef &Result) const {
+  Result =
+    StringRef(Parent->SymbolTable->getBuffer()->getBufferStart() + StringIndex);
+  return object_error::success;
+}
+
+error_code Archive::Symbol::getMember(child_iterator &Result) const {
+  const char *buf = Parent->SymbolTable->getBuffer()->getBufferStart();
+  uint32_t member_count = *reinterpret_cast<const support::ulittle32_t*>(buf);
+  const char *offsets = buf + 4;
+  buf += 4 + (member_count * 4); // Skip offsets.
+  uint32_t symbol_count = *reinterpret_cast<const support::ulittle32_t*>(buf);
+  const char *indicies = buf + 4;
+
+  uint16_t offsetindex =
+    *(reinterpret_cast<const support::ulittle16_t*>(indicies)
+      + SymbolIndex);
+
+  uint32_t offset = *(reinterpret_cast<const support::ulittle32_t*>(offsets)
+                      + (offsetindex - 1));
+
+  const char *Loc = Parent->getData().begin() + offset;
+  size_t Size = sizeof(ArchiveMemberHeader) +
+    ToHeader(Loc)->getSize();
+  Result = Child(Parent, StringRef(Loc, Size));
+
+  return object_error::success;
+}
+
+Archive::Symbol Archive::Symbol::getNext() const {
+  Symbol t(*this);
+  const char *buf = Parent->SymbolTable->getBuffer()->getBufferStart();
+  buf += t.StringIndex;
+  while (*buf++); // Go to one past next null.
+  t.StringIndex = buf - Parent->SymbolTable->getBuffer()->getBufferStart();
+  ++t.SymbolIndex;
+  return t;
+}
+
+Archive::symbol_iterator Archive::begin_symbols() const {
+  const char *buf = SymbolTable->getBuffer()->getBufferStart();
+  uint32_t member_count = *reinterpret_cast<const support::ulittle32_t*>(buf);
+  buf += 4 + (member_count * 4); // Skip offsets.
+  uint32_t symbol_count = *reinterpret_cast<const support::ulittle32_t*>(buf);
+  buf += 4 + (symbol_count * 2); // Skip indices.
+  uint32_t string_start_offset =
+    buf - SymbolTable->getBuffer()->getBufferStart();
+  return symbol_iterator(Symbol(this, 0, string_start_offset));
+}
+
+Archive::symbol_iterator Archive::end_symbols() const {
+  const char *buf = SymbolTable->getBuffer()->getBufferStart();
+  uint32_t member_count = *reinterpret_cast<const support::ulittle32_t*>(buf);
+  buf += 4 + (member_count * 4); // Skip offsets.
+  uint32_t symbol_count = *reinterpret_cast<const support::ulittle32_t*>(buf);
+  return symbol_iterator(
+    Symbol(this, symbol_count, 0));
 }
