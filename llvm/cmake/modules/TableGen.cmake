@@ -76,7 +76,10 @@ endif()
 macro(add_tablegen target project)
   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${LLVM_TOOLS_BINARY_DIR})
 
+  set(${target}_OLD_LLVM_LINK_COMPONENTS ${LLVM_LINK_COMPONENTS})
+  set(LLVM_LINK_COMPONENTS ${LLVM_LINK_COMPONENTS} TableGen)
   add_llvm_utility(${target} ${ARGN})
+  set(LLVM_LINK_COMPONENTS ${target}_OLD_LLVM_LINK_COMPONENTS)
 
   set(${project}_TABLEGEN "${target}" CACHE
       STRING "Native TableGen executable. Saves building one when cross-compiling.")
@@ -110,7 +113,6 @@ macro(add_tablegen target project)
     endif()
   endif()
 
-  target_link_libraries(${target} LLVMSupport LLVMTableGen)
   if( MINGW )
     target_link_libraries(${target} imagehlp psapi)
     if(CMAKE_SIZEOF_VOID_P MATCHES "8")
