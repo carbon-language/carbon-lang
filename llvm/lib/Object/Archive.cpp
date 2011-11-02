@@ -223,7 +223,6 @@ error_code Archive::Symbol::getMember(child_iterator &Result) const {
   uint32_t member_count = *reinterpret_cast<const support::ulittle32_t*>(buf);
   const char *offsets = buf + 4;
   buf += 4 + (member_count * 4); // Skip offsets.
-  uint32_t symbol_count = *reinterpret_cast<const support::ulittle32_t*>(buf);
   const char *indicies = buf + 4;
 
   uint16_t offsetindex =
