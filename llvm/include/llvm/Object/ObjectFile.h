@@ -78,6 +78,12 @@ static bool operator ==(const DataRefImpl &a, const DataRefImpl &b) {
   return std::memcmp(&a, &b, sizeof(DataRefImpl)) == 0;
 }
 
+static bool operator <(const DataRefImpl &a, const DataRefImpl &b) {
+  // Check bitwise identical. This is the only legal way to compare a union w/o
+  // knowing which member is in use.
+  return std::memcmp(&a, &b, sizeof(DataRefImpl)) < 0;
+}
+
 class SymbolRef;
 
 /// RelocationRef - This is a value type class that represents a single
@@ -135,6 +141,7 @@ public:
   SectionRef(DataRefImpl SectionP, const ObjectFile *Owner);
 
   bool operator==(const SectionRef &Other) const;
+  bool operator <(const SectionRef &Other) const;
 
   error_code getNext(SectionRef &Result) const;
 
@@ -182,6 +189,7 @@ public:
   SymbolRef(DataRefImpl SymbolP, const ObjectFile *Owner);
 
   bool operator==(const SymbolRef &Other) const;
+  bool operator <(const SymbolRef &Other) const;
 
   error_code getNext(SymbolRef &Result) const;
 
@@ -339,6 +347,10 @@ inline bool SymbolRef::operator==(const SymbolRef &Other) const {
   return SymbolPimpl == Other.SymbolPimpl;
 }
 
+inline bool SymbolRef::operator <(const SymbolRef &Other) const {
+  return SymbolPimpl < Other.SymbolPimpl;
+}
+
 inline error_code SymbolRef::getNext(SymbolRef &Result) const {
   return OwningObject->getSymbolNext(SymbolPimpl, Result);
 }
@@ -400,6 +412,10 @@ inline SectionRef::SectionRef(DataRefImpl SectionP,
 
 inline bool SectionRef::operator==(const SectionRef &Other) const {
   return SectionPimpl == Other.SectionPimpl;
+}
+
+inline bool SectionRef::operator <(const SectionRef &Other) const {
+  return SectionPimpl < Other.SectionPimpl;
 }
 
 inline error_code SectionRef::getNext(SectionRef &Result) const {
