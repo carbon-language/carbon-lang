@@ -92,7 +92,7 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf) {
         // candidate. I.e., it would trigger the creation of a stack protector.
         bool MayNeedSP =
           (AI->isArrayAllocation() ||
-           (TySize > 8 && isa<ArrayType>(Ty) &&
+           (TySize >= 8 && isa<ArrayType>(Ty) &&
             cast<ArrayType>(Ty)->getElementType()->isIntegerTy(8)));
         StaticAllocaMap[AI] =
           MF->getFrameInfo()->CreateStackObject(TySize, Align, false, MayNeedSP);
