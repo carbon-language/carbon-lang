@@ -3017,6 +3017,7 @@ ClangExpressionDeclMap::AddOneType(NameSearchContext &context,
         const bool is_inline = false;
         const bool is_explicit = false;
         const bool is_attr_used = false;
+        const bool is_artificial = false;
         
         ClangASTContext::AddMethodToCXXRecordType (parser_ast_context,
                                                    copied_type,
@@ -3027,7 +3028,8 @@ ClangExpressionDeclMap::AddOneType(NameSearchContext &context,
                                                    is_static,
                                                    is_inline,
                                                    is_explicit,
-                                                   is_attr_used);
+                                                   is_attr_used,
+                                                   is_artificial);
     }
     
     context.AddTypeDecl(copied_type);

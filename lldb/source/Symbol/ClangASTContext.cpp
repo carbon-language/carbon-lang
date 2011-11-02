@@ -1575,7 +1575,8 @@ ClangASTContext::AddMethodToCXXRecordType
     bool is_static,
     bool is_inline,
     bool is_explicit,
-    bool is_attr_used
+    bool is_attr_used,
+    bool is_artificial
 )
 {
     if (!record_opaque_type || !method_opaque_type || !name)
@@ -1600,8 +1601,6 @@ ClangASTContext::AddMethodToCXXRecordType
     
     DeclarationName decl_name (&identifier_table->get(name));
 
-    const bool is_implicitly_declared = false;
-    
     const clang::FunctionType *function_Type = dyn_cast<FunctionType>(method_qual_type.getTypePtr());
     
     if (function_Type == NULL)
@@ -1614,29 +1613,34 @@ ClangASTContext::AddMethodToCXXRecordType
     
     unsigned int num_params = method_function_prototype->getNumArgs();
     
+    CXXDestructorDecl *cxx_dtor_decl(NULL);
+    CXXConstructorDecl *cxx_ctor_decl(NULL);
+    
     if (name[0] == '~')
     {
-        cxx_method_decl = CXXDestructorDecl::Create (*ast,
-                                                     cxx_record_decl,
-                                                     SourceLocation(),
-                                                     DeclarationNameInfo (ast->DeclarationNames.getCXXDestructorName (ast->getCanonicalType (record_qual_type)), SourceLocation()),
-                                                     method_qual_type,
-                                                     NULL,
-                                                     is_inline,
-                                                     is_implicitly_declared);
+        cxx_dtor_decl = CXXDestructorDecl::Create (*ast,
+                                                   cxx_record_decl,
+                                                   SourceLocation(),
+                                                   DeclarationNameInfo (ast->DeclarationNames.getCXXDestructorName (ast->getCanonicalType (record_qual_type)), SourceLocation()),
+                                                   method_qual_type,
+                                                   NULL,
+                                                   is_inline,
+                                                   is_artificial);
+        cxx_method_decl = cxx_dtor_decl;
     }
     else if (decl_name == cxx_record_decl->getDeclName())
     {
-        cxx_method_decl = CXXConstructorDecl::Create (*ast,
-                                                      cxx_record_decl,
-                                                      SourceLocation(),
-                                                      DeclarationNameInfo (ast->DeclarationNames.getCXXConstructorName (ast->getCanonicalType (record_qual_type)), SourceLocation()),
-                                                      method_qual_type,
-                                                      NULL, // TypeSourceInfo *
-                                                      is_explicit, 
-                                                      is_inline,
-                                                      is_implicitly_declared,
-                                                      false /*is_constexpr*/);
+       cxx_ctor_decl = CXXConstructorDecl::Create (*ast,
+                                                   cxx_record_decl,
+                                                   SourceLocation(),
+                                                   DeclarationNameInfo (ast->DeclarationNames.getCXXConstructorName (ast->getCanonicalType (record_qual_type)), SourceLocation()),
+                                                   method_qual_type,
+                                                   NULL, // TypeSourceInfo *
+                                                   is_explicit, 
+                                                   is_inline,
+                                                   is_artificial,
+                                                   false /*is_constexpr*/);
+        cxx_method_decl = cxx_ctor_decl;
     }
     else
     {   
@@ -1728,6 +1732,20 @@ ClangASTContext::AddMethodToCXXRecordType
     cxx_method_decl->setParams (ArrayRef<ParmVarDecl*>(params));
     
     cxx_record_decl->addDecl (cxx_method_decl);
+    
+    if (is_artificial)
+    {
+        if (cxx_ctor_decl && cxx_ctor_decl->isCopyConstructor() && cxx_record_decl->hasTrivialCopyConstructor())
+        {
+            cxx_ctor_decl->setDefaulted();
+            cxx_ctor_decl->setTrivial(true);
+        }
+        else if (cxx_dtor_decl && cxx_record_decl->hasTrivialDestructor())
+        {
+            cxx_dtor_decl->setDefaulted();
+            cxx_dtor_decl->setTrivial(true);
+        }
+    }
     
 #ifdef LLDB_CONFIGURATION_DEBUG
     VerifyDecl(cxx_method_decl);

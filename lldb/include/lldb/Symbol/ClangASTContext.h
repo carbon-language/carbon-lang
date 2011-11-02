@@ -280,7 +280,8 @@ public:
                               bool is_static,
                               bool is_inline,
                               bool is_explicit,
-                              bool is_attr_used);
+                              bool is_attr_used,
+                              bool is_artificial);
     
     clang::CXXMethodDecl *
     AddMethodToCXXRecordType (lldb::clang_type_t record_opaque_type,
@@ -291,7 +292,8 @@ public:
                               bool is_static,
                               bool is_inline,
                               bool is_explicit,
-                              bool is_attr_used)
+                              bool is_attr_used,
+                              bool is_artificial)
     
     {
         return ClangASTContext::AddMethodToCXXRecordType (getASTContext(),
@@ -303,7 +305,8 @@ public:
                                                           is_static,
                                                           is_inline,
                                                           is_explicit,
-                                                          is_attr_used);
+                                                          is_attr_used,
+                                                          is_artificial);
     }
     
     class TemplateParameterInfos

@@ -4298,6 +4298,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                     bool is_static = false;
                     bool is_virtual = false;
                     bool is_explicit = false;
+                    bool is_artificial = false;
                     dw_offset_t specification_die_offset = DW_INVALID_OFFSET;
                     dw_offset_t abstract_origin_die_offset = DW_INVALID_OFFSET;
 
@@ -4332,6 +4333,8 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                 case DW_AT_inline:              is_inline = form_value.Unsigned() != 0; break;
                                 case DW_AT_virtuality:          is_virtual = form_value.Unsigned() != 0;  break;
                                 case DW_AT_explicit:            is_explicit = form_value.Unsigned() != 0;  break; 
+                                case DW_AT_artificial:          is_artificial = form_value.Unsigned() != 0;  break; 
+                                        
 
                                 case DW_AT_external:
                                     if (form_value.Unsigned())
@@ -4351,11 +4354,9 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                     abstract_origin_die_offset = form_value.Reference(dwarf_cu);
                                     break;
 
-
                                 case DW_AT_allocated:
                                 case DW_AT_associated:
                                 case DW_AT_address_class:
-                                case DW_AT_artificial:
                                 case DW_AT_calling_convention:
                                 case DW_AT_data_location:
                                 case DW_AT_elemental:
@@ -4580,7 +4581,8 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                                                                                     is_static,
                                                                                                     is_inline,
                                                                                                     is_explicit,
-                                                                                                    is_attr_used);
+                                                                                                    is_attr_used,
+                                                                                                    is_artificial);
                                                     LinkDeclContextToDIE(ClangASTContext::GetAsDeclContext(cxx_method_decl), die);
 
                                                     type_handled = cxx_method_decl != NULL;
