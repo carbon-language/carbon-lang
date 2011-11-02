@@ -209,7 +209,7 @@ ifneq ($(ENABLE_OPTIMIZED),1)
 	$(Echo) '*****' configure with --enable-optimized.
 ifeq ($(SHOW_DIAGNOSTICS),1)
 	$(Verb) if test -s $(LLVM_OBJ_ROOT)/$(BuildMode)/diags; then \
-	  $(LLVM_SRC_ROOT)/utils/show-diagnostics \
+	  $(LLVM_SRC_ROOT)/utils/clang-parse-diagnostics-file -a \
 	    $(LLVM_OBJ_ROOT)/$(BuildMode)/diags; \
 	fi
 endif
