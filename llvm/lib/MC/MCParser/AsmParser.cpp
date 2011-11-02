@@ -1227,7 +1227,7 @@ bool AsmParser::ParseStatement() {
     getStreamer().EmitDwarfLocDirective(getContext().getGenDwarfFileNumber(),
                                         SrcMgr.FindLineNumber(IDLoc, CurBuffer),
                                         0, DWARF2_LINE_DEFAULT_IS_STMT ?
-					DWARF2_FLAG_IS_STMT : 0, 0, 0,
+                                        DWARF2_FLAG_IS_STMT : 0, 0, 0,
                                         StringRef());
   }
 
