@@ -156,7 +156,7 @@ void TempScop::printDetail(llvm::raw_ostream &OS, ScalarEvolution *SE,
   if (at != LoopBounds.end()) {
     OS.indent(ind) << "Bounds of Loop: " << at->first->getHeader()->getName()
       << ":\t{ ";
-    at->second.print(OS, false);
+    OS << *(at->second.OriginalSCEV);
     OS << " }\n";
     ind += 2;
   }

@@ -11,11 +11,6 @@ target triple = "x86_64-linux-gnu"
 ;  }
 ;  return k;
 ;}
-
-
-target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
-target triple = "x86_64-linux-gnu"
-
 define i64 @f(i64* nocapture %a, i64 %n) nounwind readonly {
 entry:
   %0 = icmp sgt i64 %n, 1                         ; <i1> [#uses=1]
@@ -40,7 +35,7 @@ bb2:                                              ; preds = %bb, %entry
   ret i64 %k.0.lcssa
 }
 
-; CHECK:  Bounds of Loop: bb:   { 1 * %n + -2 }
+; CHECK:  Bounds of Loop: bb:   { (-2 + %n) }
 ; CHECK:    BB: bb{
 ; CHECK:      Reads %k.05.reg2mem[0]  Refs: Must alias {%k.05.reg2mem, } May alias {},
 ; CHECK:      Reads %a[8 * {0,+,1}<%bb> + 8]  Refs: Must alias {%a, } May alias {},
