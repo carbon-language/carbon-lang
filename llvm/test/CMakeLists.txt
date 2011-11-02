@@ -77,7 +77,7 @@ if(PYTHONINTERP_FOUND)
   add_dependencies(check.deps
                 UnitTests
                 BugpointPasses LLVMHello
-                llc lli llvm-ar llvm-as llvm-dis llvm-extract
+                llc lli llvm-ar llvm-as llvm-dis llvm-extract llvm-dwarfdump
                 llvm-ld llvm-link llvm-mc llvm-nm llvm-objdump macho-dump opt
                 FileCheck count not)
   set_target_properties(check.deps PROPERTIES FOLDER "Tests")
