@@ -1305,9 +1305,6 @@ static CaptureResult shouldCaptureValueReference(Sema &S, SourceLocation loc,
   // Actually try to capture it.
   QualType type = var->getType();
   
-  if (type->isRValueReferenceType())
-    type = type->getPointeeType();
-  
   // Prohibit variably-modified types.
   if (type->isVariablyModifiedType()) {
     S.Diag(loc, diag::err_ref_vm_type);

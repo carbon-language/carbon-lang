@@ -380,12 +380,9 @@ static void computeBlockInfo(CodeGenModule &CGM, CGBlockInfo &info) {
       }
     }
 
-    bool IsRValReference = variable->getType()->isRValueReferenceType();
-    QualType VT = 
-      IsRValReference ? variable->getType()->getPointeeType() 
-                      : variable->getType();
+    QualType VT = variable->getType();
     CharUnits size = C.getTypeSizeInChars(VT);
-    CharUnits align = C.getDeclAlign(variable, IsRValReference);
+    CharUnits align = C.getDeclAlign(variable);
     
     maxFieldAlign = std::max(maxFieldAlign, align);
 
@@ -599,32 +596,30 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const BlockExpr *blockExpr) {
       EmitSynthesizedCXXCopyCtor(blockField, src, copyExpr);
 
     // If it's a reference variable, copy the reference into the block field.
-    } else if (type->isReferenceType() && !type->isRValueReferenceType()) {
+    } else if (type->isReferenceType()) {
       Builder.CreateStore(Builder.CreateLoad(src, "ref.val"), blockField);
 
     // Otherwise, fake up a POD copy into the block field.
     } else {
-      QualType VT = 
-        (!type->isRValueReferenceType()) ? type : type->getPointeeType();
       // Fake up a new variable so that EmitScalarInit doesn't think
       // we're referring to the variable in its own initializer.
       ImplicitParamDecl blockFieldPseudoVar(/*DC*/ 0, SourceLocation(),
-                                            /*name*/ 0, VT);
+                                            /*name*/ 0, type);
 
       // We use one of these or the other depending on whether the
       // reference is nested.
-      DeclRefExpr notNested(const_cast<VarDecl*>(variable), VT, VK_LValue,
+      DeclRefExpr notNested(const_cast<VarDecl*>(variable), type, VK_LValue,
                             SourceLocation());
-      BlockDeclRefExpr nested(const_cast<VarDecl*>(variable), VT,
+      BlockDeclRefExpr nested(const_cast<VarDecl*>(variable), type,
                               VK_LValue, SourceLocation(), /*byref*/ false);
 
       Expr *declRef = 
         (ci->isNested() ? static_cast<Expr*>(&nested) : &notNested);
 
-      ImplicitCastExpr l2r(ImplicitCastExpr::OnStack, VT, CK_LValueToRValue,
+      ImplicitCastExpr l2r(ImplicitCastExpr::OnStack, type, CK_LValueToRValue,
                            declRef, VK_RValue);
       EmitExprAsInit(&l2r, &blockFieldPseudoVar,
-                     MakeAddrLValue(blockField, VT,
+                     MakeAddrLValue(blockField, type,
                                     getContext().getDeclAlign(variable)
                                                 .getQuantity()),
                      /*captured by init*/ false);
@@ -796,8 +791,7 @@ llvm::Value *CodeGenFunction::GetAddrOfBlockDecl(const VarDecl *variable,
                                    variable->getNameAsString());
   }
 
-  if (variable->getType()->isReferenceType() &&
-      !variable->getType()->isRValueReferenceType())
+  if (variable->getType()->isReferenceType())
     addr = Builder.CreateLoad(addr, "ref.tmp");
 
   return addr;
