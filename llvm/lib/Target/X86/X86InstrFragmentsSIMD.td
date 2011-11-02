@@ -276,11 +276,12 @@ def memopv8i16 : PatFrag<(ops node:$ptr), (v8i16 (memop node:$ptr))>;
 def memopv16i8 : PatFrag<(ops node:$ptr), (v16i8 (memop node:$ptr))>;
 
 // 256-bit memop pattern fragments
-def memopv32i8 : PatFrag<(ops node:$ptr), (v32i8 (memop node:$ptr))>;
 def memopv8f32 : PatFrag<(ops node:$ptr), (v8f32 (memop node:$ptr))>;
 def memopv4f64 : PatFrag<(ops node:$ptr), (v4f64 (memop node:$ptr))>;
 def memopv4i64 : PatFrag<(ops node:$ptr), (v4i64 (memop node:$ptr))>;
 def memopv8i32 : PatFrag<(ops node:$ptr), (v8i32 (memop node:$ptr))>;
+def memopv16i16 : PatFrag<(ops node:$ptr), (v16i16 (memop node:$ptr))>;
+def memopv32i8 : PatFrag<(ops node:$ptr), (v32i8 (memop node:$ptr))>;
 
 // SSSE3 uses MMX registers for some instructions. They aren't aligned on a
 // 16-byte boundary.
@@ -326,6 +327,8 @@ def bc_v4i32 : PatFrag<(ops node:$in), (v4i32 (bitconvert node:$in))>;
 def bc_v2i64 : PatFrag<(ops node:$in), (v2i64 (bitconvert node:$in))>;
 
 // 256-bit bitconvert pattern fragments
+def bc_v32i8 : PatFrag<(ops node:$in), (v32i8 (bitconvert node:$in))>;
+def bc_v16i16 : PatFrag<(ops node:$in), (v16i16 (bitconvert node:$in))>;
 def bc_v8i32 : PatFrag<(ops node:$in), (v8i32 (bitconvert node:$in))>;
 def bc_v4i64 : PatFrag<(ops node:$in), (v4i64 (bitconvert node:$in))>;
 
