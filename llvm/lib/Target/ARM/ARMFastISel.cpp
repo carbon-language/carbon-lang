@@ -167,7 +167,8 @@ class ARMFastISel : public FastISel {
     bool SelectCall(const Instruction *I);
     bool SelectSelect(const Instruction *I);
     bool SelectRet(const Instruction *I);
-    bool SelectIntCast(const Instruction *I);
+    bool SelectTrunc(const Instruction *I);
+    bool SelectIntExt(const Instruction *I);
 
     // Utility routines.
   private:
@@ -1963,7 +1964,30 @@ bool ARMFastISel::SelectCall(const Instruction *I) {
 
 }
 
-bool ARMFastISel::SelectIntCast(const Instruction *I) {
+bool ARMFastISel::SelectTrunc(const Instruction *I) {
+  // The high bits for a type smaller than the register size are assumed to be 
+  // undefined.
+  Value *Op = I->getOperand(0);
+
+  EVT SrcVT, DestVT;
+  SrcVT = TLI.getValueType(Op->getType(), true);
+  DestVT = TLI.getValueType(I->getType(), true);
+
+  if (SrcVT != MVT::i32 && SrcVT != MVT::i16 && SrcVT != MVT::i8)
+    return false;
+  if (DestVT != MVT::i16 && DestVT != MVT::i8 && DestVT != MVT::i1)
+    return false;
+
+  unsigned SrcReg = getRegForValue(Op);
+  if (!SrcReg) return false;
+
+  // Because the high bits are undefined, a truncate doesn't generate
+  // any code.
+  UpdateValueMap(I, SrcReg);
+  return true;
+}
+
+bool ARMFastISel::SelectIntExt(const Instruction *I) {
   // On ARM, in general, integer casts don't involve legal types; this code
   // handles promotable integers.  The high bits for a type smaller than
   // the register size are assumed to be undefined.
@@ -1975,20 +1999,6 @@ bool ARMFastISel::SelectIntCast(const Instruction *I) {
   SrcVT = TLI.getValueType(SrcTy, true);
   DestVT = TLI.getValueType(DestTy, true);
 
-  if (isa<TruncInst>(I)) {
-    if (SrcVT != MVT::i32 && SrcVT != MVT::i16 && SrcVT != MVT::i8)
-      return false;
-    if (DestVT != MVT::i16 && DestVT != MVT::i8 && DestVT != MVT::i1)
-      return false;
-
-    unsigned SrcReg = getRegForValue(Op);
-    if (!SrcReg) return false;
-
-    // Because the high bits are undefined, a truncate doesn't generate
-    // any code.
-    UpdateValueMap(I, SrcReg);
-    return true;
-  }
   if (DestVT != MVT::i32 && DestVT != MVT::i16 && DestVT != MVT::i8)
     return false;
 
@@ -2078,9 +2088,10 @@ bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
     case Instruction::Ret:
       return SelectRet(I);
     case Instruction::Trunc:
+      return SelectTrunc(I);
     case Instruction::ZExt:
     case Instruction::SExt:
-      return SelectIntCast(I);
+      return SelectIntExt(I);
     default: break;
   }
   return false;
