@@ -37,6 +37,17 @@ class ComponentInfo(object):
         # under.
         self.parent = parent
 
+    def get_component_references(self):
+        """get_component_references() -> iter
+
+        Return an iterator over the named references to other components from
+        this object. Items are of the form (reference-type, component-name).
+        """
+
+        # Parent references are handled specially.
+        for r in self.dependencies:
+            yield ('dependency', r)
+
 class GroupComponentInfo(ComponentInfo):
     """
     Group components have no semantics as far as the build system are concerned,
@@ -81,6 +92,14 @@ class LibraryComponentInfo(ComponentInfo):
         # considered part of.
         self.add_to_library_groups = list(add_to_library_groups)
 
+    def get_component_references(self):
+        for r in ComponentInfo.get_component_references(self):
+            yield r
+        for r in self.required_libraries:
+            yield ('required library', r)
+        for r in self.add_to_library_groups:
+            yield ('library group', r)
+
 class LibraryGroupComponentInfo(ComponentInfo):
     type_name = 'LibraryGroup'
 
@@ -104,6 +123,14 @@ class LibraryGroupComponentInfo(ComponentInfo):
         # considered part of.
         self.add_to_library_groups = list(add_to_library_groups)
 
+    def get_component_references(self):
+        for r in ComponentInfo.get_component_references(self):
+            yield r
+        for r in self.required_libraries:
+            yield ('required library', r)
+        for r in self.add_to_library_groups:
+            yield ('library group', r)
+
 class ToolComponentInfo(ComponentInfo):
     type_name = 'Tool'
 
@@ -120,6 +147,12 @@ class ToolComponentInfo(ComponentInfo):
         # The names of the library components which are required to link this
         # tool.
         self.required_libraries = list(required_libraries)
+
+    def get_component_references(self):
+        for r in ComponentInfo.get_component_references(self):
+            yield r
+        for r in self.required_libraries:
+            yield ('required library', r)
 
 class BuildToolComponentInfo(ToolComponentInfo):
     type_name = 'BuildTool'

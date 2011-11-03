@@ -1,7 +1,11 @@
-import pprint
 import os
+import sys
 
 import componentinfo
+
+from util import *
+
+###
 
 class LLVMProjectInfo(object):
     @staticmethod
@@ -35,8 +39,61 @@ class LLVMProjectInfo(object):
         return LLVMProjectInfo(source_root, infos)
 
     def __init__(self, source_root, component_infos):
+        # Store our simple ivars.
         self.source_root = source_root
         self.component_infos = component_infos
+
+        # Create the component info map and validate that component names are
+        # unique.
+        self.component_info_map = {}
+        for ci in component_infos:
+            existing = self.component_info_map.get(ci.name)
+            if existing is not None:
+                # We found a duplicate component name, report it and error out.
+                fatal("found duplicate component %r (at %r and %r)" % (
+                        ci.name, ci.subpath, existing.subpath))
+            self.component_info_map[ci.name] = ci
+
+        # Topologically order the component information according to their
+        # component references.
+        def visit_component_info(ci, current_stack, current_set):
+            # Check for a cycles.
+            if ci in current_set:
+                # We found a cycle, report it and error out.
+                cycle_description = ' -> '.join(
+                    '%r (%s)' % (ci.name, relation)
+                    for relation,ci in current_stack)
+                fatal("found cycle to %r after following: %s -> %s" % (
+                        ci.name, cycle_description, ci.name))
+
+            # If we have already visited this item, we are done.
+            if ci not in components_to_visit:
+                return
+
+            # Otherwise, mark the component info as visited and traverse.
+            components_to_visit.remove(ci)
+
+            for relation,referent_name in ci.get_component_references():
+                # Validate that the reference is ok.
+                referent = self.component_info_map.get(referent_name)
+                if referent is None:
+                    fatal("component %r has invalid reference %r (via %r)" % (
+                            ci.name, referent_name, relation))
+
+                # Visit the reference.
+                current_stack.append((relation,ci))
+                current_set.add(ci)
+                visit_component_info(referent, current_stack, current_set)
+                current_set.remove(ci)
+                current_stack.pop()
+
+            # Finally, add the component info to the ordered list.
+            self.ordered_component_infos.append(ci)
+
+        self.ordered_component_infos = []
+        components_to_visit = set(component_infos)
+        while components_to_visit:
+            visit_component_info(iter(components_to_visit).next(), [], set())
 
 def main():
     from optparse import OptionParser, OptionGroup
