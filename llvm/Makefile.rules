@@ -631,6 +631,10 @@ CPP.Flags     += $(sort -I$(PROJ_OBJ_DIR) -I$(PROJ_SRC_DIR) \
 	         $(LLVM_OBJ_ROOT) $(LLVM_SRC_ROOT))) \
 	         $(CPP.BaseFlags)
 
+ifeq ($(INCLUDE_BUILD_DIR),1)
+  CPP.Flags   += -I$(ObjDir)
+endif
+
 # SHOW_DIAGNOSTICS support.
 ifeq ($(SHOW_DIAGNOSTICS),1)
   Compile.Wrapper := env CC_LOG_DIAGNOSTICS=1 \
