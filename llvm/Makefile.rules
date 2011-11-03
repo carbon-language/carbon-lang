@@ -87,8 +87,8 @@ LLVMConfigLibraryDependenciesInc := \
 # Note that this target gets its real dependencies generated for us by
 # llvm-build.
 $(LLVMBuildMakeFrag):
-	$(EchoCmd) Constructing LLVMBuild project information. ; \
-	$(LLVMBuildTool) \
+	$(Echo) Constructing LLVMBuild project information.
+	$(Verb) $(LLVMBuildTool) \
 	  --write-library-table $(LLVMConfigLibraryDependenciesInc) \
 	  --write-make-fragment $(LLVMBuildMakeFrag)
 
