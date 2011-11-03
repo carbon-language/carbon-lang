@@ -1329,16 +1329,25 @@ bool ARMFastISel::SelectSIToFP(const Instruction *I) {
   if (!isTypeLegal(Ty, DstVT))
     return false;
 
-  // FIXME: Handle sign-extension where necessary.
-  if (!I->getOperand(0)->getType()->isIntegerTy(32))
+  Value *Src = I->getOperand(0);
+  EVT SrcVT = TLI.getValueType(Src->getType(), true);
+  if (SrcVT != MVT::i32 && SrcVT != MVT::i16 && SrcVT != MVT::i8)
     return false;
 
-  unsigned Op = getRegForValue(I->getOperand(0));
-  if (Op == 0) return false;
+  unsigned SrcReg = getRegForValue(Src);
+  if (SrcReg == 0) return false;
+
+  // Handle sign-extension.
+  if (SrcVT == MVT::i16 || SrcVT == MVT::i8) {
+    EVT DestVT = MVT::i32;
+    unsigned ResultReg = ARMEmitIntExt(SrcVT, SrcReg, DestVT, /*isZExt*/ false);
+    if (ResultReg == 0) return false;
+    SrcReg = ResultReg;
+  }
 
   // The conversion routine works on fp-reg to fp-reg and the operand above
   // was an integer, move it to the fp registers if possible.
-  unsigned FP = ARMMoveToFPReg(MVT::f32, Op);
+  unsigned FP = ARMMoveToFPReg(MVT::f32, SrcReg);
   if (FP == 0) return false;
 
   unsigned Opc;
