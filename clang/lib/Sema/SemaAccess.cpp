@@ -1651,19 +1651,24 @@ void Sema::CheckLookupAccess(const LookupResult &R) {
 /// \param Decl the declaration to check if it can be accessed
 /// \param Class the class/context from which to start the search
 /// \return true if the Decl is accessible from the Class, false otherwise.
-bool Sema::IsSimplyAccessible(NamedDecl *Decl, CXXRecordDecl *Class) {
-  if (!Class || !Decl->isCXXClassMember())
-    return true;
+bool Sema::IsSimplyAccessible(NamedDecl *Decl, DeclContext *Ctx) {
+  if (CXXRecordDecl *Class = dyn_cast<CXXRecordDecl>(Ctx)) {
+    if (!Class || !Decl->isCXXClassMember())
+      return true;
 
-  QualType qType = Class->getTypeForDecl()->getCanonicalTypeInternal();
-  AccessTarget Entity(Context, AccessedEntity::Member, Class,
-                      DeclAccessPair::make(Decl, Decl->getAccess()),
-                      qType);
-  if (Entity.getAccess() == AS_public)
-    return true;
+    QualType qType = Class->getTypeForDecl()->getCanonicalTypeInternal();
+    AccessTarget Entity(Context, AccessedEntity::Member, Class,
+                        DeclAccessPair::make(Decl, Decl->getAccess()),
+                        qType);
+    if (Entity.getAccess() == AS_public)
+      return true;
 
-  EffectiveContext EC(CurContext);
-  return ::IsAccessible(*this, EC, Entity) != ::AR_inaccessible;
+    EffectiveContext EC(CurContext);
+    return ::IsAccessible(*this, EC, Entity) != ::AR_inaccessible;
+  }
+  
+  // FIXME: Check access for Objective-C ivars.
+  return true;
 }
 
 void Sema::ActOnStartSuppressingAccessChecks() {
