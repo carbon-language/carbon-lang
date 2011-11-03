@@ -17,6 +17,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Config/config.h"
@@ -26,6 +28,7 @@
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cstdlib>
+#include <set>
 #include <vector>
 
 using namespace llvm;
@@ -40,16 +43,88 @@ const char LLVM_CXXFLAGS[] = "FIXME";
 const char LLVM_BUILDMODE[] = "FIXME";
 const char LLVM_SYSTEM_LIBS[] = "FIXME";
 
-// FIXME: Include component table.
+// Include the component table. This creates an array of struct
+// AvailableComponent entries, which record the component name, library name,
+// and required components for all of the available libraries.
+//
+// Not all components define a library, we also use "library groups" as a way to
+// create entries for pseudo groups like x86 or all-targets.
+//
+// FIXME: Include real component table.
 struct AvailableComponent {
   const char *Name;
-} AvailableComponents[1] = {};
-unsigned NumAvailableComponents = 0;
+  const char *Library;
+  const char *RequiredLibraries[1];
+} AvailableComponents[1] = {
+  { "all", 0, { } }
+};
 
+/// \brief Traverse a single component adding to the topological ordering in
+/// \arg RequiredLibs.
+///
+/// \param Name - The component to traverse.
+/// \param ComponentMap - A prebuilt map of component names to descriptors.
+/// \param VisitedComponents [in] [out] - The set of already visited components.
+/// \param RequiredLibs [out] - The ordered list of required libraries.
+static void VisitComponent(StringRef Name,
+                           const StringMap<AvailableComponent*> &ComponentMap,
+                           std::set<StringRef> &VisitedComponents,
+                           std::vector<StringRef> &RequiredLibs) {
+  // Add to the visited table.
+  if (!VisitedComponents.insert(Name).second) {
+    // We are done if the component has already been visited.
+    return;
+  }
+
+  // Otherwise, visit all the dependencies.
+  AvailableComponent *AC = ComponentMap.lookup(Name);
+  assert(AC && "Invalid component name!");
+
+  for (unsigned i = 0; AC->RequiredLibraries[i]; ++i) {
+    VisitComponent(AC->RequiredLibraries[i], ComponentMap, VisitedComponents,
+                   RequiredLibs);
+  }
+
+  // Add to the required library list.
+  if (AC->Library)
+    RequiredLibs.push_back(AC->Library);
+}
+
+/// \brief Compute the list of required libraries for a given list of
+/// components, in an order suitable for passing to a linker (that is, libraries
+/// appear prior to their dependencies).
+///
+/// \param Components - The names of the components to find libraries for.
+/// \param RequiredLibs [out] - On return, the ordered list of libraries that
+/// are required to link the given components.
 void ComputeLibsForComponents(const std::vector<StringRef> &Components,
                               std::vector<StringRef> &RequiredLibs) {
-  // FIXME: Implement.
-  RequiredLibs = Components;
+  std::set<StringRef> VisitedComponents;
+  std::vector<StringRef> ToVisit = Components;
+
+  // Build a map of component names to information.
+  StringMap<AvailableComponent*> ComponentMap;
+  for (unsigned i = 0; i != array_lengthof(AvailableComponents); ++i) {
+    AvailableComponent *AC = &AvailableComponents[i];
+    ComponentMap[AC->Name] = AC;
+  }
+
+  // Visit the components.
+  for (unsigned i = 0, e = Components.size(); i != e; ++i) {
+    // Validate that the user supplied a valid component name.
+    if (!ComponentMap.count(Components[i])) {
+      llvm::errs() << "llvm-config: unknown component name: " << Components[i]
+                   << "\n";
+      exit(1);
+    }
+
+    VisitComponent(Components[i], ComponentMap, VisitedComponents,
+                   RequiredLibs);
+  }
+
+  // The list is now ordered with leafs first, we want the libraries to printed
+  // in the reverse order of dependency.
+  std::reverse(RequiredLibs.begin(), RequiredLibs.end());
 }
 
 /* *** */
@@ -90,6 +165,7 @@ Typical components:\n\
   exit(1);
 }
 
+/// \brief Compute the path to the main executable.
 llvm::sys::Path GetExecutablePath(const char *Argv0) {
   // This just needs to be some symbol in the binary; C++ doesn't
   // allow taking the address of ::main however.
@@ -191,9 +267,9 @@ int main(int argc, char **argv) {
       } else if (Arg == "--libfiles") {
         PrintLibFiles = true;
       } else if (Arg == "--components") {
-        for (unsigned j = 0; j != NumAvailableComponents; ++j) {
-          if (j)
-            OS << ' ';
+        OS << "all";
+        for (unsigned j = 0; j != array_lengthof(AvailableComponents); ++j) {
+          OS << ' ';
           OS << AvailableComponents[j].Name;
         }
         OS << '\n';
@@ -235,21 +311,22 @@ int main(int argc, char **argv) {
       if (i)
         OS << ' ';
 
-      if (PrintLibs) {
+      if (PrintLibNames) {
         OS << Lib;
       } else if (PrintLibFiles) {
-        OS << ActiveLibDir << Lib;
-      } else if (PrintLibNames) {
+        OS << ActiveLibDir << '/' << Lib;
+      } else if (PrintLibs) {
         // If this is a typical library name, include it using -l.
         if (Lib.startswith("lib") && Lib.endswith(".a")) {
           OS << "-l" << Lib.slice(3, Lib.size()-2);
           continue;
         }
-        
+
         // Otherwise, print the full path.
-        OS << ActiveLibDir << Lib;
+        OS << ActiveLibDir << '/' << Lib;
       }
     }
+    OS << '\n';
   } else if (!Components.empty()) {
     errs() << "llvm-config: error: components given, but unused\n\n";
     usage();
