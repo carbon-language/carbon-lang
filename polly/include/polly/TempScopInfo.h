@@ -73,9 +73,6 @@ private:
   SCEVAffFuncType FuncType  : 3;
 
 public:
-  /// @brief Create a new SCEV affine function.
-  SCEVAffFunc() : TransComp(0), BaseAddr(0), ElemBytes(0), FuncType(None) {}
-
   /// @brief Create a new SCEV affine function with memory access type or
   ///        condition type
   explicit SCEVAffFunc(SCEVAffFuncType Type, const SCEV *OriginalSCEV,
