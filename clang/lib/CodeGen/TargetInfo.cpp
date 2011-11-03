@@ -2992,11 +2992,12 @@ void MSP430TargetCodeGenInfo::SetTargetAttributes(const Decl *D,
 
 namespace {
 class MipsABIInfo : public ABIInfo {
-  static const unsigned MinABIStackAlignInBytes = 4;
   bool IsO32;
+  unsigned MinABIStackAlignInBytes;
   llvm::Type* HandleStructTy(QualType Ty) const;
 public:
-  MipsABIInfo(CodeGenTypes &CGT, bool _IsO32) : ABIInfo(CGT), IsO32(_IsO32) {}
+  MipsABIInfo(CodeGenTypes &CGT, bool _IsO32) :
+    ABIInfo(CGT), IsO32(_IsO32), MinABIStackAlignInBytes(IsO32 ? 4 : 8) {}
 
   ABIArgInfo classifyReturnType(QualType RetTy) const;
   ABIArgInfo classifyArgumentType(QualType RetTy) const;
@@ -3004,8 +3005,6 @@ public:
   virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                  CodeGenFunction &CGF) const;
 };
-
-const unsigned MipsABIInfo::MinABIStackAlignInBytes;
 
 class MIPSTargetCodeGenInfo : public TargetCodeGenInfo {
   unsigned SizeOfUnwindException;
