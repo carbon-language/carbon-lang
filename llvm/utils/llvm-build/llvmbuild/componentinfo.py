@@ -5,12 +5,26 @@ Descriptor objects for entities that are part of the LLVM project.
 import ConfigParser
 import sys
 
+from util import *
+
+class ParseError(Exception):
+    pass
+
 class ComponentInfo(object):
     """
     Base class for component descriptions.
     """
 
     type_name = None
+
+    @staticmethod
+    def parse_items(items, has_dependencies = True):
+        kwargs = {}
+        kwargs['name'] = items.get_string('name')
+        kwargs['parent'] = items.get_optional_string('parent')
+        if has_dependencies:
+            kwargs['dependencies'] = items.get_list('dependencies')
+        return kwargs
 
     def __init__(self, subpath, name, dependencies, parent):
         if not subpath.startswith('/'):
@@ -31,14 +45,28 @@ class GroupComponentInfo(ComponentInfo):
 
     type_name = 'Group'
 
+    @staticmethod
+    def parse(subpath, items):
+        kwargs = ComponentInfo.parse_items(items, has_dependencies = False)
+        return GroupComponentInfo(subpath, **kwargs)
+
     def __init__(self, subpath, name, parent):
         ComponentInfo.__init__(self, subpath, name, [], parent)
 
 class LibraryComponentInfo(ComponentInfo):
     type_name = 'Library'
 
-    def __init__(self, subpath, name, dependencies, parent, library_name = None,
-                 required_libraries = [], add_to_library_groups = []):
+    @staticmethod
+    def parse(subpath, items):
+        kwargs = ComponentInfo.parse_items(items)
+        kwargs['library_name'] = items.get_optional_string('name')
+        kwargs['required_libraries'] = items.get_list('required_libraries')
+        kwargs['add_to_library_groups'] = items.get_list(
+            'add_to_library_groups')
+        return LibraryComponentInfo(subpath, **kwargs)
+
+    def __init__(self, subpath, name, dependencies, parent, library_name,
+                 required_libraries, add_to_library_groups):
         ComponentInfo.__init__(self, subpath, name, dependencies, parent)
 
         # If given, the name to use for the library instead of deriving it from
@@ -56,6 +84,14 @@ class LibraryComponentInfo(ComponentInfo):
 class LibraryGroupComponentInfo(ComponentInfo):
     type_name = 'LibraryGroup'
 
+    @staticmethod
+    def parse(subpath, items):
+        kwargs = ComponentInfo.parse_items(items, has_dependencies = False)
+        kwargs['required_libraries'] = items.get_list('required_libraries')
+        kwargs['add_to_library_groups'] = items.get_list(
+            'add_to_library_groups')
+        return LibraryGroupComponentInfo(subpath, **kwargs)
+
     def __init__(self, subpath, name, parent, required_libraries = [],
                  add_to_library_groups = []):
         ComponentInfo.__init__(self, subpath, name, [], parent)
@@ -71,8 +107,14 @@ class LibraryGroupComponentInfo(ComponentInfo):
 class ToolComponentInfo(ComponentInfo):
     type_name = 'Tool'
 
+    @staticmethod
+    def parse(subpath, items):
+        kwargs = ComponentInfo.parse_items(items)
+        kwargs['required_libraries'] = items.get_list('required_libraries')
+        return ToolComponentInfo(subpath, **kwargs)
+
     def __init__(self, subpath, name, dependencies, parent,
-                 required_libraries = []):
+                 required_libraries):
         ComponentInfo.__init__(self, subpath, name, dependencies, parent)
 
         # The names of the library components which are required to link this
@@ -81,6 +123,38 @@ class ToolComponentInfo(ComponentInfo):
 
 class BuildToolComponentInfo(ToolComponentInfo):
     type_name = 'BuildTool'
+
+    @staticmethod
+    def parse(subpath, items):
+        kwargs = ComponentInfo.parse_items(items)
+        kwargs['required_libraries'] = items.get_list('required_libraries')
+        return BuildToolComponentInfo(subpath, **kwargs)
+
+###
+
+class IniFormatParser(dict):
+    def get_list(self, key):
+        # Check if the value is defined.
+        value = self.get(key)
+        if value is None:
+            return []
+
+        # Lists are just whitespace separated strings.
+        return value.split()
+
+    def get_optional_string(self, key):
+        value = self.get_list(key)
+        if not value:
+            return None
+        if len(value) > 1:
+            raise ParseError("multiple values for scalar key: %r" % key)
+        return value[0]
+
+    def get_string(self, key):
+        value = self.get_optional_string(key)
+        if not value:
+            raise ParseError("missing value for required string: %r" % key)
+        return value
 
 _component_type_map = dict(
     (t.type_name, t)
@@ -97,38 +171,32 @@ def load_from_path(path, subpath):
     for section in parser.sections():
         if not section.startswith('component'):
             # We don't expect arbitrary sections currently, warn the user.
-            print >>sys.stderr, "warning: ignoring unknown section %r in %r" % (
-                section, path)
+            warning("ignoring unknown section %r in %r" % (section, path))
             continue
 
-        # Load the component that this section describes. For now we just do
-        # this the trivial way by letting python validate the argument
-        # assignment. This is simple, but means users see lame diagnostics. We
-        # should audit the component manually, eventually.
+        # Determine the type of the component to instantiate.
         if not parser.has_option(section, 'type'):
-            print >>sys.stderr, "error: invalid component %r in %r: %s" % (
-                section, path, "no component type")
-            raise SystemExit, 1
+            fatal("invalid component %r in %r: %s" % (
+                    section, path, "no component type"))
 
         type_name = parser.get(section, 'type')
         type_class = _component_type_map.get(type_name)
         if type_class is None:
-            print >>sys.stderr, "error: invalid component %r in %r: %s" % (
-                section, path, "invalid component type: %r" % type_name)
-            raise SystemExit, 1
-
-        items = dict(parser.items(section))
-        items['subpath'] = subpath
-        items.pop('type')
+            fatal("invalid component %r in %r: %s" % (
+                    section, path, "invalid component type: %r" % type_name))
 
         # Instantiate the component based on the remaining values.
         try:
-            info = type_class(**items)
+            info = type_class.parse(subpath,
+                                    IniFormatParser(parser.items(section)))
         except TypeError:
             print >>sys.stderr, "error: invalid component %r in %r: %s" % (
                 section, path, "unable to instantiate: %r" % type_name)
             import traceback
             traceback.print_exc()
             raise SystemExit, 1
+        except ParseError,e:
+            fatal("unable to load component %r in %r: %s" % (
+                    section, path, e.message))
 
         yield info
