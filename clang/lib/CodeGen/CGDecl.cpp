@@ -1442,7 +1442,10 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg,
     DeclPtr = Arg;
   } else {
     // Otherwise, create a temporary to hold the value.
-    DeclPtr = CreateMemTemp(Ty, D.getName() + ".addr");
+    llvm::AllocaInst *Alloc = CreateTempAlloca(ConvertTypeForMem(Ty),
+                                               D.getName() + ".addr");
+    Alloc->setAlignment(getContext().getDeclAlign(&D).getQuantity());
+    DeclPtr = Alloc;
 
     bool doStore = true;
 
