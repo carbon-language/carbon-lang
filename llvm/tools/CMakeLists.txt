@@ -19,6 +19,7 @@ if( NOT WIN32 OR MSYS OR CYGWIN )
   add_subdirectory(llvm-config)
 endif()
 
+add_subdirectory(llvm-config-2)
 add_subdirectory(opt)
 add_subdirectory(llvm-as)
 add_subdirectory(llvm-dis)
