@@ -1940,6 +1940,8 @@ bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {
   // Clear out the diagnostics state.
   getDiagnostics().Reset();
   ProcessWarningOptions(getDiagnostics(), Invocation->getDiagnosticOpts());
+  if (OverrideMainBuffer)
+    getDiagnostics().setNumWarnings(NumWarningsInPreamble);
 
   // Parse the sources
   bool Result = Parse(OverrideMainBuffer);
