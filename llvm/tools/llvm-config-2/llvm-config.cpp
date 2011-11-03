@@ -33,15 +33,9 @@
 
 using namespace llvm;
 
-// FIXME: Need to get various bits of build time information.
-const char LLVM_SRC_ROOT[] = "FIXME";
-const char LLVM_OBJ_ROOT[] = "FIXME";
-const char LLVM_CPPFLAGS[] = "FIXME";
-const char LLVM_CFLAGS[] = "FIXME";
-const char LLVM_LDFLAGS[] = "FIXME";
-const char LLVM_CXXFLAGS[] = "FIXME";
-const char LLVM_BUILDMODE[] = "FIXME";
-const char LLVM_SYSTEM_LIBS[] = "FIXME";
+// Include the build time variables we can report to the user. This is generated
+// at build time from the BuildVariables.inc.in file by the build system.
+#include "BuildVariables.inc"
 
 // Include the component table. This creates an array of struct
 // AvailableComponent entries, which record the component name, library name,
