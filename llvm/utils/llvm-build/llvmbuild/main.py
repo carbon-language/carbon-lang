@@ -162,6 +162,31 @@ class LLVMProjectInfo(object):
             # Create the LLVMBuild file.
             file_path = os.path.join(directory_path, 'LLVMBuild.txt')
             f = open(file_path, "w")
+
+            # Write the header.
+            header_fmt = ';===- %s %s-*- Conf -*--===;'
+            header_name = '.' + os.path.join(subpath, 'LLVMBuild.txt')
+            header_pad = '-' * (80 - len(header_fmt % (header_name, '')))
+            header_string = header_fmt % (header_name, header_pad)
+            print >>f, """\
+%s
+;
+;                     The LLVM Compiler Infrastructure
+;
+; This file is distributed under the University of Illinois Open Source
+; License. See LICENSE.TXT for details.
+;
+;===------------------------------------------------------------------------===;
+;
+; This is an LLVMBuild description file for the components in this subdirectory.
+;
+; For more information on the LLVMBuild system, please see:
+;
+;   http://llvm.org/docs/LLVMBuild.html
+;
+;===------------------------------------------------------------------------===;
+""" % header_string
+
             for i,fragment in enumerate(fragments):
                 print >>f, '[component_%d]' % i
                 f.write(fragment)
