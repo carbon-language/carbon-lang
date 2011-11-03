@@ -1,8 +1,4 @@
-; DISABLED: llc -march=mipsel -mcpu=4ke < %s | FileCheck %s
-; RUN: false
-
-; byval is currently unsupported.
-; XFAIL: *
+; RUN: llc -march=mipsel -mcpu=4ke < %s | FileCheck %s
 
 %struct.S1 = type { [65536 x i8] }
 

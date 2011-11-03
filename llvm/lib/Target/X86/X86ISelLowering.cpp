@@ -4221,6 +4221,29 @@ static bool isScalarLoadToVector(SDNode *N, LoadSDNode **LD = NULL) {
   return true;
 }
 
+// Test whether the given value is a vector value which will be legalized
+// into a load.
+static bool WillBeConstantPoolLoad(SDNode *N) {
+  if (N->getOpcode() != ISD::BUILD_VECTOR)
+    return false;
+
+  // Check for any non-constant elements.
+  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
+    switch (N->getOperand(i).getNode()->getOpcode()) {
+    case ISD::UNDEF:
+    case ISD::ConstantFP:
+    case ISD::Constant:
+      break;
+    default:
+      return false;
+    }
+
+  // Vectors of all-zeros and all-ones are materialized with special
+  // instructions rather than being loaded.
+  return !ISD::isBuildVectorAllZeros(N) &&
+         !ISD::isBuildVectorAllOnes(N);
+}
+
 /// ShouldXformToMOVLP{S|D} - Return true if the node should be transformed to
 /// match movlp{s|d}. The lower half elements should come from lower half of
 /// V1 (and in order), and the upper half elements should come from the upper
@@ -4236,7 +4259,7 @@ static bool ShouldXformToMOVLP(SDNode *V1, SDNode *V2,
     return false;
   // Is V2 is a vector load, don't do this transformation. We will try to use
   // load folding shufps op.
-  if (ISD::isNON_EXTLoad(V2))
+  if (ISD::isNON_EXTLoad(V2) || WillBeConstantPoolLoad(V2))
     return false;
 
   unsigned NumElems = VT.getVectorNumElements();
@@ -6352,6 +6375,8 @@ SDValue getMOVLP(SDValue &Op, DebugLoc &dl, SelectionDAG &DAG, bool HasXMMInt) {
   if (MayFoldVectorLoad(V1) && MayFoldIntoStore(Op))
     CanFoldLoad = true;
 
+  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
+
   // Both of them can't be memory operations though.
   if (MayFoldVectorLoad(V1) && MayFoldVectorLoad(V2))
     CanFoldLoad = false;
@@ -6361,10 +6386,11 @@ SDValue getMOVLP(SDValue &Op, DebugLoc &dl, SelectionDAG &DAG, bool HasXMMInt) {
       return getTargetShuffleNode(X86ISD::MOVLPD, dl, VT, V1, V2, DAG);
 
     if (NumElems == 4)
-      return getTargetShuffleNode(X86ISD::MOVLPS, dl, VT, V1, V2, DAG);
+      // If we don't care about the second element, procede to use movss.
+      if (SVOp->getMaskElt(1) != -1)
+        return getTargetShuffleNode(X86ISD::MOVLPS, dl, VT, V1, V2, DAG);
   }
 
-  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
   // movl and movlp will both match v2i64, but v2i64 is never matched by
   // movl earlier because we make it strict to avoid messing with the movlp load
   // folding logic (see the code above getMOVLP call). Match it here then,
@@ -8682,8 +8708,9 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
 
   // If condition flag is set by a X86ISD::CMP, then use it as the condition
   // setting operand in place of the X86ISD::SETCC.
-  if (Cond.getOpcode() == X86ISD::SETCC ||
-      Cond.getOpcode() == X86ISD::SETCC_CARRY) {
+  unsigned CondOpcode = Cond.getOpcode();
+  if (CondOpcode == X86ISD::SETCC ||
+      CondOpcode == X86ISD::SETCC_CARRY) {
     CC = Cond.getOperand(0);
 
     SDValue Cmp = Cond.getOperand(1);
@@ -8700,6 +8727,39 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
       Cond = Cmp;
       addTest = false;
     }
+  } else if (CondOpcode == ISD::USUBO || CondOpcode == ISD::SSUBO ||
+             CondOpcode == ISD::UADDO || CondOpcode == ISD::SADDO ||
+             ((CondOpcode == ISD::UMULO || CondOpcode == ISD::SMULO) &&
+              Cond.getOperand(0).getValueType() != MVT::i8)) {
+    SDValue LHS = Cond.getOperand(0);
+    SDValue RHS = Cond.getOperand(1);
+    unsigned X86Opcode;
+    unsigned X86Cond;
+    SDVTList VTs;
+    switch (CondOpcode) {
+    case ISD::UADDO: X86Opcode = X86ISD::ADD; X86Cond = X86::COND_B; break;
+    case ISD::SADDO: X86Opcode = X86ISD::ADD; X86Cond = X86::COND_O; break;
+    case ISD::USUBO: X86Opcode = X86ISD::SUB; X86Cond = X86::COND_B; break;
+    case ISD::SSUBO: X86Opcode = X86ISD::SUB; X86Cond = X86::COND_O; break;
+    case ISD::UMULO: X86Opcode = X86ISD::UMUL; X86Cond = X86::COND_O; break;
+    case ISD::SMULO: X86Opcode = X86ISD::SMUL; X86Cond = X86::COND_O; break;
+    default: llvm_unreachable("unexpected overflowing operator");
+    }
+    if (CondOpcode == ISD::UMULO)
+      VTs = DAG.getVTList(LHS.getValueType(), LHS.getValueType(),
+                          MVT::i32);
+    else
+      VTs = DAG.getVTList(LHS.getValueType(), MVT::i32);
+
+    SDValue X86Op = DAG.getNode(X86Opcode, DL, VTs, LHS, RHS);
+
+    if (CondOpcode == ISD::UMULO)
+      Cond = X86Op.getValue(2);
+    else
+      Cond = X86Op.getValue(1);
+
+    CC = DAG.getConstant(X86Cond, MVT::i8);
+    addTest = false;
   }
 
   if (addTest) {
@@ -8781,11 +8841,27 @@ SDValue X86TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) const {
   SDValue Dest  = Op.getOperand(2);
   DebugLoc dl = Op.getDebugLoc();
   SDValue CC;
+  bool Inverted = false;
 
   if (Cond.getOpcode() == ISD::SETCC) {
-    SDValue NewCond = LowerSETCC(Cond, DAG);
-    if (NewCond.getNode())
-      Cond = NewCond;
+    // Check for setcc([su]{add,sub,mul}o == 0).
+    if (cast<CondCodeSDNode>(Cond.getOperand(2))->get() == ISD::SETEQ &&
+        isa<ConstantSDNode>(Cond.getOperand(1)) &&
+        cast<ConstantSDNode>(Cond.getOperand(1))->isNullValue() &&
+        Cond.getOperand(0).getResNo() == 1 &&
+        (Cond.getOperand(0).getOpcode() == ISD::SADDO ||
+         Cond.getOperand(0).getOpcode() == ISD::UADDO ||
+         Cond.getOperand(0).getOpcode() == ISD::SSUBO ||
+         Cond.getOperand(0).getOpcode() == ISD::USUBO ||
+         Cond.getOperand(0).getOpcode() == ISD::SMULO ||
+         Cond.getOperand(0).getOpcode() == ISD::UMULO)) {
+      Inverted = true;
+      Cond = Cond.getOperand(0);
+    } else {
+      SDValue NewCond = LowerSETCC(Cond, DAG);
+      if (NewCond.getNode())
+        Cond = NewCond;
+    }
   }
 #if 0
   // FIXME: LowerXALUO doesn't handle these!!
@@ -8806,8 +8882,9 @@ SDValue X86TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) const {
 
   // If condition flag is set by a X86ISD::CMP, then use it as the condition
   // setting operand in place of the X86ISD::SETCC.
-  if (Cond.getOpcode() == X86ISD::SETCC ||
-      Cond.getOpcode() == X86ISD::SETCC_CARRY) {
+  unsigned CondOpcode = Cond.getOpcode();
+  if (CondOpcode == X86ISD::SETCC ||
+      CondOpcode == X86ISD::SETCC_CARRY) {
     CC = Cond.getOperand(0);
 
     SDValue Cmp = Cond.getOperand(1);
@@ -8828,6 +8905,43 @@ SDValue X86TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) const {
         break;
       }
     }
+  }
+  CondOpcode = Cond.getOpcode();
+  if (CondOpcode == ISD::UADDO || CondOpcode == ISD::SADDO ||
+      CondOpcode == ISD::USUBO || CondOpcode == ISD::SSUBO ||
+      ((CondOpcode == ISD::UMULO || CondOpcode == ISD::SMULO) &&
+       Cond.getOperand(0).getValueType() != MVT::i8)) {
+    SDValue LHS = Cond.getOperand(0);
+    SDValue RHS = Cond.getOperand(1);
+    unsigned X86Opcode;
+    unsigned X86Cond;
+    SDVTList VTs;
+    switch (CondOpcode) {
+    case ISD::UADDO: X86Opcode = X86ISD::ADD; X86Cond = X86::COND_B; break;
+    case ISD::SADDO: X86Opcode = X86ISD::ADD; X86Cond = X86::COND_O; break;
+    case ISD::USUBO: X86Opcode = X86ISD::SUB; X86Cond = X86::COND_B; break;
+    case ISD::SSUBO: X86Opcode = X86ISD::SUB; X86Cond = X86::COND_O; break;
+    case ISD::UMULO: X86Opcode = X86ISD::UMUL; X86Cond = X86::COND_O; break;
+    case ISD::SMULO: X86Opcode = X86ISD::SMUL; X86Cond = X86::COND_O; break;
+    default: llvm_unreachable("unexpected overflowing operator");
+    }
+    if (Inverted)
+      X86Cond = X86::GetOppositeBranchCondition((X86::CondCode)X86Cond);
+    if (CondOpcode == ISD::UMULO)
+      VTs = DAG.getVTList(LHS.getValueType(), LHS.getValueType(),
+                          MVT::i32);
+    else
+      VTs = DAG.getVTList(LHS.getValueType(), MVT::i32);
+
+    SDValue X86Op = DAG.getNode(X86Opcode, dl, VTs, LHS, RHS);
+
+    if (CondOpcode == ISD::UMULO)
+      Cond = X86Op.getValue(2);
+    else
+      Cond = X86Op.getValue(1);
+
+    CC = DAG.getConstant(X86Cond, MVT::i8);
+    addTest = false;
   } else {
     unsigned CondOpc;
     if (Cond.hasOneUse() && isAndOrOfSetCCs(Cond, CondOpc)) {
@@ -8891,6 +9005,66 @@ SDValue X86TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) const {
       CC = DAG.getConstant(CCode, MVT::i8);
       Cond = Cond.getOperand(0).getOperand(1);
       addTest = false;
+    } else if (Cond.getOpcode() == ISD::SETCC &&
+               cast<CondCodeSDNode>(Cond.getOperand(2))->get() == ISD::SETOEQ) {
+      // For FCMP_OEQ, we can emit
+      // two branches instead of an explicit AND instruction with a
+      // separate test. However, we only do this if this block doesn't
+      // have a fall-through edge, because this requires an explicit
+      // jmp when the condition is false.
+      if (Op.getNode()->hasOneUse()) {
+        SDNode *User = *Op.getNode()->use_begin();
+        // Look for an unconditional branch following this conditional branch.
+        // We need this because we need to reverse the successors in order
+        // to implement FCMP_OEQ.
+        if (User->getOpcode() == ISD::BR) {
+          SDValue FalseBB = User->getOperand(1);
+          SDNode *NewBR =
+            DAG.UpdateNodeOperands(User, User->getOperand(0), Dest);
+          assert(NewBR == User);
+          (void)NewBR;
+          Dest = FalseBB;
+
+          SDValue Cmp = DAG.getNode(X86ISD::CMP, dl, MVT::i32,
+                                    Cond.getOperand(0), Cond.getOperand(1));
+          CC = DAG.getConstant(X86::COND_NE, MVT::i8);
+          Chain = DAG.getNode(X86ISD::BRCOND, dl, Op.getValueType(),
+                              Chain, Dest, CC, Cmp);
+          CC = DAG.getConstant(X86::COND_P, MVT::i8);
+          Cond = Cmp;
+          addTest = false;
+        }
+      }
+    } else if (Cond.getOpcode() == ISD::SETCC &&
+               cast<CondCodeSDNode>(Cond.getOperand(2))->get() == ISD::SETUNE) {
+      // For FCMP_UNE, we can emit
+      // two branches instead of an explicit AND instruction with a
+      // separate test. However, we only do this if this block doesn't
+      // have a fall-through edge, because this requires an explicit
+      // jmp when the condition is false.
+      if (Op.getNode()->hasOneUse()) {
+        SDNode *User = *Op.getNode()->use_begin();
+        // Look for an unconditional branch following this conditional branch.
+        // We need this because we need to reverse the successors in order
+        // to implement FCMP_UNE.
+        if (User->getOpcode() == ISD::BR) {
+          SDValue FalseBB = User->getOperand(1);
+          SDNode *NewBR =
+            DAG.UpdateNodeOperands(User, User->getOperand(0), Dest);
+          assert(NewBR == User);
+          (void)NewBR;
+
+          SDValue Cmp = DAG.getNode(X86ISD::CMP, dl, MVT::i32,
+                                    Cond.getOperand(0), Cond.getOperand(1));
+          CC = DAG.getConstant(X86::COND_NE, MVT::i8);
+          Chain = DAG.getNode(X86ISD::BRCOND, dl, Op.getValueType(),
+                              Chain, Dest, CC, Cmp);
+          CC = DAG.getConstant(X86::COND_NP, MVT::i8);
+          Cond = Cmp;
+          addTest = false;
+          Dest = FalseBB;
+        }
+      }
     }
   }
 

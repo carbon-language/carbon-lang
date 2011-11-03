@@ -1353,12 +1353,10 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
       SDValue Src = DAG.getNode(ISD::ADD, dl, getPointerTy(), Arg, SrcOffset);
       SDValue SizeNode = DAG.getConstant(Flags.getByValSize() - 4*offset,
                                          MVT::i32);
-      // TODO: Disable AlwaysInline when it becomes possible
-      //       to emit a nested call sequence.
       MemOpChains.push_back(DAG.getMemcpy(Chain, dl, Dst, Src, SizeNode,
                                           Flags.getByValAlign(),
                                           /*isVolatile=*/false,
-                                          /*AlwaysInline=*/true,
+                                          /*AlwaysInline=*/false,
                                           MachinePointerInfo(0),
                                           MachinePointerInfo(0)));
 
@@ -4350,8 +4348,23 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
       // If this is undef splat, generate it via "just" vdup, if possible.
       if (Lane == -1) Lane = 0;
 
+      // Test if V1 is a SCALAR_TO_VECTOR.
       if (Lane == 0 && V1.getOpcode() == ISD::SCALAR_TO_VECTOR) {
         return DAG.getNode(ARMISD::VDUP, dl, VT, V1.getOperand(0));
+      }
+      // Test if V1 is a BUILD_VECTOR which is equivalent to a SCALAR_TO_VECTOR
+      // (and probably will turn into a SCALAR_TO_VECTOR once legalization
+      // reaches it).
+      if (Lane == 0 && V1.getOpcode() == ISD::BUILD_VECTOR &&
+          !isa<ConstantSDNode>(V1.getOperand(0))) {
+        bool IsScalarToVector = true;
+        for (unsigned i = 1, e = V1.getNumOperands(); i != e; ++i)
+          if (V1.getOperand(i).getOpcode() != ISD::UNDEF) {
+            IsScalarToVector = false;
+            break;
+          }
+        if (IsScalarToVector)
+          return DAG.getNode(ARMISD::VDUP, dl, VT, V1.getOperand(0));
       }
       return DAG.getNode(ARMISD::VDUPLANE, dl, VT, V1,
                          DAG.getConstant(Lane, MVT::i32));
