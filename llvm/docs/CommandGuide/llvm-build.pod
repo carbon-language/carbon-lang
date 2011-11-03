@@ -36,6 +36,13 @@ the B<llvm-build> script itself.
 
 Print the component tree for the project.
 
+=item B<--write-library-table>
+
+Write out the C++ fragment which defines the components, library names, and
+required libraries. This C++ fragment is built into L<llvm-config|llvm-config>
+in order to provide clients with the list of required libraries for arbitrary
+component combinations.
+
 =item B<--write-llvmbuild>
 
 Write out new I<LLVMBuild.txt> files based on the loaded components. This is

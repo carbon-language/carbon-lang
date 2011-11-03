@@ -54,6 +54,10 @@ class LLVMProjectInfo(object):
                         ci.name, ci.subpath, existing.subpath))
             self.component_info_map[ci.name] = ci
 
+        # Disallow 'all' as a component name, which is a special case.
+        if 'all' in self.component_info_map:
+            fatal("project is not allowed to define 'all' component")
+
         # Add the root component.
         if '$ROOT' in self.component_info_map:
             fatal("project is not allowed to define $ROOT component")
@@ -164,6 +168,94 @@ class LLVMProjectInfo(object):
                 print >>f
             f.close()
 
+    def write_library_table(self, output_path):
+        # Write out the mapping from component names to required libraries.
+        #
+        # We do this in topological order so that we know we can append the
+        # dependencies for added library groups.
+        entries = {}
+        for c in self.ordered_component_infos:
+            # Only Library and LibraryGroup components are in the table.
+            if c.type_name not in ('Library', 'LibraryGroup'):
+                continue
+
+            # Compute the llvm-config "component name". For historical reasons,
+            # this is lowercased based on the library name.
+            llvmconfig_component_name = c.get_llvmconfig_component_name()
+            
+            # Get the library name, or None for LibraryGroups.
+            if c.type_name == 'LibraryGroup':
+                library_name = None
+            else:
+                library_name = c.get_library_name()
+
+            # Get the component names of all the required libraries.
+            required_llvmconfig_component_names = [
+                self.component_info_map[dep].get_llvmconfig_component_name()
+                for dep in c.required_libraries]
+
+            # Insert the entries for library groups we should add to.
+            for dep in c.add_to_library_groups:
+                entries[dep][2].append(llvmconfig_component_name)
+
+            # Add the entry.
+            entries[c.name] = (llvmconfig_component_name, library_name,
+                               required_llvmconfig_component_names)
+
+        # Convert to a list of entries and sort by name.
+        entries = entries.values()
+
+        # Create an 'all' pseudo component. We keep the dependency list small by
+        # only listing entries that have no other dependents.
+        root_entries = set(e[0] for e in entries)
+        for _,_,deps in entries:
+            root_entries -= set(deps)
+        entries.append(('all', None, root_entries))
+
+        entries.sort()
+
+        # Compute the maximum number of required libraries, plus one so there is
+        # always a sentinel.
+        max_required_libraries = max(len(deps)
+                                     for _,_,deps in entries) + 1
+
+        # Write out the library table.
+        f = open(output_path, 'w')
+        print >>f, """\
+//===- llvm-build generated file --------------------------------*- C++ -*-===//
+//
+// Component Library Depenedency Table
+//
+// Automatically generated file, do not edit!
+//
+//===----------------------------------------------------------------------===//
+"""
+        print >>f, 'struct AvailableComponent {'
+        print >>f, '  /// The name of the component.'
+        print >>f, '  const char *Name;'
+        print >>f, ''
+        print >>f, '  /// The name of the library for this component (or NULL).'
+        print >>f, '  const char *Library;'
+        print >>f, ''
+        print >>f, '\
+  /// The list of libraries required when linking this component.'
+        print >>f, '  const char *RequiredLibraries[%d];' % (
+            max_required_libraries)
+        print >>f, '} AvailableComponents[%d] = {' % len(entries)
+        for name,library_name,required_names in entries:
+            if library_name is None:
+                library_name_as_cstr = '0'
+            else:
+                # If we had a project level component, we could derive the
+                # library prefix.
+                library_name_as_cstr = '"libLLVM%s.a"' % library_name
+            print >>f, '  { "%s", %s, { %s } },' % (
+                name, library_name_as_cstr,
+                ', '.join('"%s"' % dep
+                          for dep in required_names))
+        print >>f, '};'
+        f.close()
+
 def main():
     from optparse import OptionParser, OptionGroup
     parser = OptionParser("usage: %prog [options]")
@@ -176,10 +268,15 @@ def main():
     parser.add_option("", "--write-llvmbuild", dest="write_llvmbuild",
                       help="Write out the LLVMBuild.txt files to PATH",
                       action="store", default=None, metavar="PATH")
-    parser.add_option(
-        "", "--llvmbuild-source-root", dest="llvmbuild_source_root",
-        help="If given, an alternate path to search for LLVMBuild.txt files",
-        action="store", default=None, metavar="PATH")
+    parser.add_option("", "--write-library-table",
+                      dest="write_library_table", metavar="PATH",
+                      help="Write the C++ library dependency table to PATH",
+                      action="store", default=None)
+    parser.add_option("", "--llvmbuild-source-root",
+                      dest="llvmbuild_source_root",
+                      help=(
+            "If given, an alternate path to search for LLVMBuild.txt files"),
+                      action="store", default=None, metavar="PATH")
     (opts, args) = parser.parse_args()
 
     # Determine the LLVM source path, if not given.
@@ -210,6 +307,10 @@ def main():
     # the schema.
     if opts.write_llvmbuild:
         project_info.write_components(opts.write_llvmbuild)
+
+    # Write out the required librariy, if requested.
+    if opts.write_library_table:
+        project_info.write_library_table(opts.write_library_table)
 
 if __name__=='__main__':
     main()

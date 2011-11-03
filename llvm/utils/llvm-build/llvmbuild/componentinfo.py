@@ -135,6 +135,12 @@ class LibraryComponentInfo(ComponentInfo):
                 self.add_to_library_groups)
         return result.getvalue()
 
+    def get_library_name(self):
+        return self.library_name or self.name
+
+    def get_llvmconfig_component_name(self):
+        return self.get_library_name().lower()
+
 class LibraryGroupComponentInfo(ComponentInfo):
     type_name = 'LibraryGroup'
 
@@ -178,6 +184,9 @@ class LibraryGroupComponentInfo(ComponentInfo):
             print >>result, 'add_to_library_groups = %s' % ' '.join(
                 self.add_to_library_groups)
         return result.getvalue()
+
+    def get_llvmconfig_component_name(self):
+        return self.name.lower()
 
 class ToolComponentInfo(ComponentInfo):
     type_name = 'Tool'
