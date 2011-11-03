@@ -126,6 +126,44 @@ class LLVMProjectInfo(object):
                 visit(c, depth + 1)
         visit(self.component_info_map['$ROOT'])
 
+    def write_components(self, output_path):
+        # Organize all the components by the directory their LLVMBuild file
+        # should go in.
+        info_basedir = {}
+        for ci in self.component_infos:
+            # Ignore the $ROOT component.
+            if ci.parent is None:
+                continue
+
+            info_basedir[ci.subpath] = info_basedir.get(ci.subpath, []) + [ci]
+
+        # Generate the build files.
+        for subpath, infos in info_basedir.items():
+            # Order the components by name to have a canonical ordering.
+            infos.sort(key = lambda ci: ci.name)
+
+            # Format the components into llvmbuild fragments.
+            fragments = filter(None, [ci.get_llvmbuild_fragment()
+                                      for ci in infos])
+            if not fragments:
+                continue
+
+            assert subpath.startswith('/')
+            directory_path = os.path.join(output_path, subpath[1:])
+
+            # Create the directory if it does not already exist.
+            if not os.path.exists(directory_path):
+                os.makedirs(directory_path)
+
+            # Create the LLVMBuild file.
+            file_path = os.path.join(directory_path, 'LLVMBuild.txt')
+            f = open(file_path, "w")
+            for i,fragment in enumerate(fragments):
+                print >>f, '[component_%d]' % i
+                f.write(fragment)
+                print >>f
+            f.close()
+
 def main():
     from optparse import OptionParser, OptionGroup
     parser = OptionParser("usage: %prog [options]")
@@ -135,6 +173,9 @@ def main():
     parser.add_option("", "--print-tree", dest="print_tree",
                       help="Print out the project component tree [%default]",
                       action="store_true", default=False)
+    parser.add_option("", "--write-llvmbuild", dest="write_llvmbuild",
+                      help="Write out the LLVMBuild.txt files to PATH",
+                      action="store", default=None, metavar="PATH")
     parser.add_option(
         "", "--llvmbuild-source-root", dest="llvmbuild_source_root",
         help="If given, an alternate path to search for LLVMBuild.txt files",
@@ -164,6 +205,11 @@ def main():
     # Print the component tree, if requested.
     if opts.print_tree:
         project_info.print_tree()
+
+    # Write out the components, if requested. This is useful for auto-upgrading
+    # the schema.
+    if opts.write_llvmbuild:
+        project_info.write_components(opts.write_llvmbuild)
 
 if __name__=='__main__':
     main()
