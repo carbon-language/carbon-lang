@@ -1038,6 +1038,23 @@ ClangExpressionDeclMap::GetSpecialValue (const ConstString &name)
     
     std::auto_ptr<Value> value(GetVariableValue(*m_parser_vars->m_exe_ctx, var, NULL));
     
+    if (value.get() && value->GetValueType() == Value::eValueTypeLoadAddress)
+    {
+        Process *process = m_parser_vars->m_exe_ctx->GetProcessPtr();
+        
+        if (!process)
+            return Value();
+        
+        lldb::addr_t value_addr = value->GetScalar().ULongLong();
+        Error read_error;
+        addr_t ptr_value = process->ReadPointerFromMemory (value_addr, read_error);
+        
+        if (!read_error.Success())
+            return Value();
+        
+        value->GetScalar() = (unsigned long long)ptr_value;
+    }
+    
     if (value.get())
         return *value;
     else
