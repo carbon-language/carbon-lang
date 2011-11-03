@@ -4020,6 +4020,25 @@ bool ASTReader::isDeclIDFromModule(serialization::GlobalDeclID ID,
   return &M == I->second;
 }
 
+SourceLocation ASTReader::getSourceLocationForDeclID(GlobalDeclID ID) {
+  if (ID < NUM_PREDEF_DECL_IDS)
+    return SourceLocation();
+  
+  unsigned Index = ID - NUM_PREDEF_DECL_IDS;
+
+  if (Index > DeclsLoaded.size()) {
+    Error("declaration ID out-of-range for AST file");
+    return SourceLocation();
+  }
+  
+  if (Decl *D = DeclsLoaded[Index])
+    return D->getLocation();
+
+  unsigned RawLocation = 0;
+  RecordLocation Rec = DeclCursorForID(ID, RawLocation);
+  return ReadSourceLocation(*Rec.F, RawLocation);
+}
+
 Decl *ASTReader::GetDecl(DeclID ID) {
   if (ID < NUM_PREDEF_DECL_IDS) {    
     switch ((PredefinedDeclIDs)ID) {
@@ -4160,6 +4179,74 @@ ExternalLoadResult ASTReader::FindExternalLexicalDecls(const DeclContext *DC,
   ModuleMgr.visitDepthFirst(&FindExternalLexicalDeclsVisitor::visit, &Visitor);
   ++NumLexicalDeclContextsRead;
   return ELR_Success;
+}
+
+namespace {
+
+class DeclIDComp {
+  ASTReader &Reader;
+  Module &Mod;
+
+public:
+  DeclIDComp(ASTReader &Reader, Module &M) : Reader(Reader), Mod(M) {}
+
+  bool operator()(LocalDeclID L, LocalDeclID R) const {
+    SourceLocation LHS = getLocation(L);
+    SourceLocation RHS = getLocation(R);
+    return Reader.getSourceManager().isBeforeInTranslationUnit(LHS, RHS);
+  }
+
+  bool operator()(SourceLocation LHS, LocalDeclID R) const {
+    SourceLocation RHS = getLocation(R);
+    return Reader.getSourceManager().isBeforeInTranslationUnit(LHS, RHS);
+  }
+
+  bool operator()(LocalDeclID L, SourceLocation RHS) const {
+    SourceLocation LHS = getLocation(L);
+    return Reader.getSourceManager().isBeforeInTranslationUnit(LHS, RHS);
+  }
+
+  SourceLocation getLocation(LocalDeclID ID) const {
+    return Reader.getSourceManager().getFileLoc(
+            Reader.getSourceLocationForDeclID(Reader.getGlobalDeclID(Mod, ID)));
+  }
+};
+
+}
+
+void ASTReader::FindFileRegionDecls(FileID File,
+                                    unsigned Offset, unsigned Length,
+                                    SmallVectorImpl<Decl *> &Decls) {
+  SourceManager &SM = getSourceManager();
+
+  llvm::DenseMap<FileID, FileDeclsInfo>::iterator I = FileDeclIDs.find(File);
+  if (I == FileDeclIDs.end())
+    return;
+
+  FileDeclsInfo &DInfo = I->second;
+  if (DInfo.Decls.empty())
+    return;
+
+  SourceLocation
+    BeginLoc = SM.getLocForStartOfFile(File).getLocWithOffset(Offset);
+  SourceLocation EndLoc = BeginLoc.getLocWithOffset(Length);
+
+  DeclIDComp DIDComp(*this, *DInfo.Mod);
+  ArrayRef<serialization::LocalDeclID>::iterator
+    BeginIt = std::lower_bound(DInfo.Decls.begin(), DInfo.Decls.end(),
+                               BeginLoc, DIDComp);
+  if (BeginIt != DInfo.Decls.begin())
+    --BeginIt;
+
+  ArrayRef<serialization::LocalDeclID>::iterator
+    EndIt = std::upper_bound(DInfo.Decls.begin(), DInfo.Decls.end(),
+                             EndLoc, DIDComp);
+  if (EndIt != DInfo.Decls.end())
+    ++EndIt;
+  
+  for (ArrayRef<serialization::LocalDeclID>::iterator
+         DIt = BeginIt; DIt != EndIt; ++DIt)
+    Decls.push_back(GetDecl(getGlobalDeclID(*DInfo.Mod, *DIt)));
 }
 
 namespace {

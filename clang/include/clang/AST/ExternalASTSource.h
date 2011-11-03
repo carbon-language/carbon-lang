@@ -153,6 +153,12 @@ public:
     return FindExternalLexicalDecls(DC, DeclTy::classofKind, Result);
   }
 
+  /// \brief Get the decls that are contained in a file in the Offset/Length
+  /// range. \arg Length can be 0 to indicate a point at \arg Offset instead of
+  /// a range. 
+  virtual void FindFileRegionDecls(FileID File, unsigned Offset,unsigned Length,
+                                   SmallVectorImpl<Decl *> &Decls) {}
+
   /// \brief Gives the external AST source an opportunity to complete
   /// an incomplete type.
   virtual void CompleteType(TagDecl *Tag) {}

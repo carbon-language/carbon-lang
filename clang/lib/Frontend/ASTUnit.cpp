@@ -2518,6 +2518,42 @@ void ASTUnit::addFileLevelDecl(Decl *D) {
   Decls->insert(I, LocDecl);
 }
 
+void ASTUnit::findFileRegionDecls(FileID File, unsigned Offset, unsigned Length,
+                                  SmallVectorImpl<Decl *> &Decls) {
+  if (File.isInvalid())
+    return;
+
+  if (SourceMgr->isLoadedFileID(File)) {
+    assert(Ctx->getExternalSource() && "No external source!");
+    return Ctx->getExternalSource()->FindFileRegionDecls(File, Offset, Length,
+                                                         Decls);
+  }
+
+  FileDeclsTy::iterator I = FileDecls.find(File);
+  if (I == FileDecls.end())
+    return;
+
+  LocDeclsTy &LocDecls = *I->second;
+  if (LocDecls.empty())
+    return;
+
+  LocDeclsTy::iterator
+    BeginIt = std::lower_bound(LocDecls.begin(), LocDecls.end(),
+                               std::make_pair(Offset, (Decl*)0), compLocDecl);
+  if (BeginIt != LocDecls.begin())
+    --BeginIt;
+
+  LocDeclsTy::iterator
+    EndIt = std::upper_bound(LocDecls.begin(), LocDecls.end(),
+                             std::make_pair(Offset+Length, (Decl*)0),
+                             compLocDecl);
+  if (EndIt != LocDecls.end())
+    ++EndIt;
+  
+  for (LocDeclsTy::iterator DIt = BeginIt; DIt != EndIt; ++DIt)
+    Decls.push_back(DIt->second);
+}
+
 SourceLocation ASTUnit::getLocation(const FileEntry *File,
                                     unsigned Line, unsigned Col) const {
   const SourceManager &SM = getSourceManager();

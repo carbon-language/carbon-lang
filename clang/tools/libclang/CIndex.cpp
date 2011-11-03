@@ -219,6 +219,12 @@ class CursorVisitor : public DeclVisitor<CursorVisitor, bool>,
   /// \param R a half-open source range retrieved from the abstract syntax tree.
   RangeComparisonResult CompareRegionOfInterest(SourceRange R);
 
+  CXChildVisitResult invokeVisitor(CXCursor cursor, CXCursor parent) {
+    return Visitor(cursor, parent, ClientData);
+  }
+
+  void visitDeclsFromFileRegion(FileID File, unsigned Offset, unsigned Length);
+
   class SetParentRAII {
     CXCursor &Parent;
     Decl *&StmtParent;
@@ -271,6 +277,10 @@ public:
   CXTranslationUnit getTU() const { return TU; }
 
   bool Visit(CXCursor Cursor, bool CheckedRegionOfInterest = false);
+
+  /// \brief Visit declarations and preprocessed entities for the file region
+  /// designated by \see RegionOfInterest.
+  void visitFileRegion();
   
   bool visitPreprocessedEntitiesInRegion();
 
@@ -429,6 +439,139 @@ static bool visitPreprocessedEntitiesInRange(SourceRange R,
     Entities = PPRec.getPreprocessedEntitiesInRange(R);
   return Visitor.visitPreprocessedEntities(Entities.first, Entities.second,
                                            PPRec, FID);
+}
+
+void CursorVisitor::visitFileRegion() {
+  if (RegionOfInterest.isInvalid())
+    return;
+
+  ASTUnit *Unit = static_cast<ASTUnit *>(TU->TUData);
+  SourceManager &SM = Unit->getSourceManager();
+  
+  std::pair<FileID, unsigned>
+    Begin = SM.getDecomposedLoc(SM.getFileLoc(RegionOfInterest.getBegin())), 
+    End = SM.getDecomposedLoc(SM.getFileLoc(RegionOfInterest.getEnd())); 
+
+  if (End.first != Begin.first) {
+    // If the end does not reside in the same file, try to recover by
+    // picking the end of the file of begin location.
+    End.first = Begin.first;
+    End.second = SM.getFileIDSize(Begin.first);
+  }
+
+  assert(Begin.first == End.first);
+  if (Begin.second > End.second)
+    return;
+  
+  FileID File = Begin.first;
+  unsigned Offset = Begin.second;
+  unsigned Length = End.second - Begin.second;
+
+  if (!VisitPreprocessorLast &&
+      Unit->getPreprocessor().getPreprocessingRecord())
+    visitPreprocessedEntitiesInRegion();
+
+  visitDeclsFromFileRegion(File, Offset, Length);
+
+  if (VisitPreprocessorLast &&
+      Unit->getPreprocessor().getPreprocessingRecord())
+    visitPreprocessedEntitiesInRegion();
+}
+
+void CursorVisitor::visitDeclsFromFileRegion(FileID File,
+                                             unsigned Offset, unsigned Length) {
+  ASTUnit *Unit = static_cast<ASTUnit *>(TU->TUData);
+  SourceManager &SM = Unit->getSourceManager();
+
+  SourceRange Range = RegionOfInterest;
+  CXCursor Parent = clang_getTranslationUnitCursor(TU);
+
+  SmallVector<Decl *, 16> Decls;
+  Unit->findFileRegionDecls(File, Offset, Length, Decls);
+
+  // If we didn't find any file level decls for the file, try looking at the
+  // file that it was included from.
+  while (Decls.empty()) {
+    bool Invalid = false;
+    const SrcMgr::SLocEntry &SLEntry = SM.getSLocEntry(File, &Invalid);
+    if (Invalid)
+      return;
+
+    SourceLocation Outer;
+    if (SLEntry.isFile())
+      Outer = SLEntry.getFile().getIncludeLoc();
+    else
+      Outer = SLEntry.getExpansion().getExpansionLocStart();
+    if (Outer.isInvalid())
+      return;
+
+    llvm::tie(File, Offset) = SM.getDecomposedExpansionLoc(Outer);
+    Length = 0;
+    Unit->findFileRegionDecls(File, Offset, Length, Decls);
+  }
+
+  assert(!Decls.empty());
+
+  bool VisitedAtLeastOnce = false;
+  SmallVector<Decl *, 16>::iterator DIt = Decls.begin();
+  for (SmallVector<Decl *, 16>::iterator DE = Decls.end(); DIt != DE; ++DIt) {
+    Decl *D = *DIt;
+
+    // We handle forward decls via ObjCClassDecl.
+    if (ObjCInterfaceDecl *InterD = dyn_cast<ObjCInterfaceDecl>(D)) {
+      if (InterD->isForwardDecl())
+        continue;
+      // An interface that started as a forward decl may have changed location
+      // because its @interface was parsed.
+      if (InterD->isInitiallyForwardDecl() &&
+          !SM.isInFileID(SM.getFileLoc(InterD->getLocation()), File))
+        continue;
+    }
+
+    RangeComparisonResult CompRes = RangeCompare(SM, D->getSourceRange(),Range);
+    if (CompRes == RangeBefore)
+      continue;
+    if (CompRes == RangeAfter)
+      break;
+
+    assert(CompRes == RangeOverlap);
+    VisitedAtLeastOnce = true;
+    CXCursor C = MakeCXCursor(D, TU, Range);
+    CXChildVisitResult
+      Res = invokeVisitor(C, Parent);
+    if (Res == CXChildVisit_Break)
+      break;
+    if (Res == CXChildVisit_Recurse)
+      if (VisitChildren(C))
+        break;
+  }
+
+  if (VisitedAtLeastOnce)
+    return;
+
+  // No Decls overlapped with the range. Move up the lexical context until there
+  // is a context that contains the range or we reach the translation unit
+  // level.
+  DeclContext *DC = DIt == Decls.begin() ? (*DIt)->getLexicalDeclContext()
+                                         : (*(DIt-1))->getLexicalDeclContext();
+
+  while (DC && !DC->isTranslationUnit()) {
+    Decl *D = cast<Decl>(DC);
+    SourceRange CurDeclRange = D->getSourceRange();
+    if (CurDeclRange.isInvalid())
+      break;
+
+    if (RangeCompare(SM, CurDeclRange, Range) == RangeOverlap) {
+      CXCursor C = MakeCXCursor(D, TU, Range);
+      CXChildVisitResult
+        Res = invokeVisitor(C, Parent);
+      if (Res == CXChildVisit_Recurse)
+        VisitChildren(C);
+      break;
+    }
+
+    DC = D->getLexicalDeclContext();
+  }
 }
 
 bool CursorVisitor::visitPreprocessedEntitiesInRegion() {
@@ -3741,16 +3884,12 @@ CXCursor cxcursor::getCursor(CXTranslationUnit TU, SourceLocation SLoc) {
   
   CXCursor Result = MakeCXCursorInvalid(CXCursor_NoDeclFound);
   if (SLoc.isValid()) {
-    // FIXME: Would be great to have a "hint" cursor, then walk from that
-    // hint cursor upward until we find a cursor whose source range encloses
-    // the region of interest, rather than starting from the translation unit.
     GetCursorData ResultData(CXXUnit->getSourceManager(), SLoc, Result);
-    CXCursor Parent = clang_getTranslationUnitCursor(TU);
     CursorVisitor CursorVis(TU, GetCursorVisitor, &ResultData,
                             /*VisitPreprocessorLast=*/true, 
                             /*VisitIncludedEntities=*/false,
                             SourceLocation(SLoc));
-    CursorVis.VisitChildren(Parent);
+    CursorVis.visitFileRegion();
   }
 
   return Result;

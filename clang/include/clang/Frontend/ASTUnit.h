@@ -519,6 +519,12 @@ public:
   /// \brief Add a new local file-level declaration.
   void addFileLevelDecl(Decl *D);
 
+  /// \brief Get the decls that are contained in a file in the Offset/Length
+  /// range. \arg Length can be 0 to indicate a point at \arg Offset instead of
+  /// a range. 
+  void findFileRegionDecls(FileID File, unsigned Offset, unsigned Length,
+                           SmallVectorImpl<Decl *> &Decls);
+
   /// \brief Add a new top-level declaration, identified by its ID in
   /// the precompiled preamble.
   void addTopLevelDeclFromPreamble(serialization::DeclID D) {
