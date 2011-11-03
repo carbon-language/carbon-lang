@@ -212,6 +212,7 @@ void clang_getExpansionLocation(CXSourceLocation location,
       *column = SM.getExpansionColumnNumber(ExpansionLoc);
     if (offset)
       *offset = SM.getDecomposedLoc(ExpansionLoc).second;
+    return;
   }
   
   // FIXME:
