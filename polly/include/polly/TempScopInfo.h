@@ -71,19 +71,17 @@ private:
   Value *BaseAddr;
   unsigned ElemBytes        : 28;
   SCEVAffFuncType FuncType  : 3;
-  bool has_sign             : 1;
 
 public:
   /// @brief Create a new SCEV affine function.
-  SCEVAffFunc() : TransComp(0), BaseAddr(0), ElemBytes(0), FuncType(None),
-                  has_sign(true) {}
+  SCEVAffFunc() : TransComp(0), BaseAddr(0), ElemBytes(0), FuncType(None) {}
 
   /// @brief Create a new SCEV affine function with memory access type or
   ///        condition type
   explicit SCEVAffFunc(SCEVAffFuncType Type, const SCEV *OriginalSCEV,
                        unsigned elemBytes = 0)
     : TransComp(0), OriginalSCEV(OriginalSCEV), BaseAddr(0),
-      ElemBytes(elemBytes), FuncType(Type), has_sign(true) {}
+      ElemBytes(elemBytes), FuncType(Type) {}
 
   /// @brief Construct a new SCEVAffFunc from a SCEV
   ///
@@ -97,8 +95,6 @@ public:
   SCEVAffFunc(const SCEV *S, SCEVAffFuncType Type, Region &R,
               ParamSetType &Param, LoopInfo *LI, ScalarEvolution *SE);
 
-  void setUnsigned() {has_sign = false;}
-
   // getCoeff - Get the Coefficient of a given variable.
   const SCEV *getCoeff(const SCEV *Var) const {
     LnrTransSet::const_iterator At = LnrTrans.find(Var);
@@ -108,8 +104,6 @@ public:
   const SCEV *getTransComp() const {
     return TransComp;
   }
-
-  bool isSigned() const { return has_sign; }
 
   enum SCEVAffFuncType getType() const { return FuncType; }
 

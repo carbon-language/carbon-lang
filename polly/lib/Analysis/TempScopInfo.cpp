@@ -38,7 +38,7 @@ using namespace polly;
 SCEVAffFunc::SCEVAffFunc(const SCEV *S, SCEVAffFuncType Type, Region &R,
                          ParamSetType &Params, LoopInfo *LI,
                          ScalarEvolution *SE)
-    : ElemBytes(0), FuncType(Type), has_sign(true) {
+    : ElemBytes(0), FuncType(Type) {
   assert(S && "S can not be null!");
   assert(!isa<SCEVCouldNotCompute>(S) && "Non affine function in Scop");
 
