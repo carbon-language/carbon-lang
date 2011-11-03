@@ -50,8 +50,8 @@ void f(Sub *sub, Other *other) {
 }
 @end
 
-// RUN: c-index-test -code-completion-at=%s:43:8 %s | FileCheck -check-prefix=CHECK-SUB %s
-// RUN: c-index-test -code-completion-at=%s:48:8 %s | FileCheck -check-prefix=CHECK-SUB %s
+// RUN: c-index-test -code-completion-at=%s:43:8 -fobjc-nonfragile-abi %s | FileCheck -check-prefix=CHECK-SUB %s
+// RUN: c-index-test -code-completion-at=%s:48:8 -fobjc-nonfragile-abi %s | FileCheck -check-prefix=CHECK-SUB %s
 // CHECK-SUB: ObjCIvarDecl:{ResultType int}{TypedText sub_private} (35)
 // CHECK-SUB: ObjCIvarDecl:{ResultType int}{TypedText sub_protected} (35)
 // CHECK-SUB: ObjCIvarDecl:{ResultType int}{TypedText sub_public} (35)
@@ -62,8 +62,8 @@ void f(Sub *sub, Other *other) {
 // CHECK-SUB: ObjCIvarDecl:{ResultType int}{TypedText super_protected} (37)
 // CHECK-SUB: ObjCIvarDecl:{ResultType int}{TypedText super_public} (37)
 
-// RUN: c-index-test -code-completion-at=%s:44:10 %s | FileCheck -check-prefix=CHECK-OTHER %s
-// RUN: c-index-test -code-completion-at=%s:49:10 %s | FileCheck -check-prefix=CHECK-OTHER %s
+// RUN: c-index-test -code-completion-at=%s:44:10 -fobjc-nonfragile-abi %s | FileCheck -check-prefix=CHECK-OTHER %s
+// RUN: c-index-test -code-completion-at=%s:49:10 -fobjc-nonfragile-abi %s | FileCheck -check-prefix=CHECK-OTHER %s
 // CHECK-OTHER: ObjCIvarDecl:{ResultType int}{TypedText other_private} (35) (inaccessible)
 // CHECK-OTHER: ObjCIvarDecl:{ResultType int}{TypedText other_protected} (35) (inaccessible)
 // CHECK-OTHER: ObjCIvarDecl:{ResultType int}{TypedText other_public} (35)
