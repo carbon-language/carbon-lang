@@ -219,10 +219,6 @@ class CursorVisitor : public DeclVisitor<CursorVisitor, bool>,
   /// \param R a half-open source range retrieved from the abstract syntax tree.
   RangeComparisonResult CompareRegionOfInterest(SourceRange R);
 
-  CXChildVisitResult invokeVisitor(CXCursor cursor, CXCursor parent) {
-    return Visitor(cursor, parent, ClientData);
-  }
-
   void visitDeclsFromFileRegion(FileID File, unsigned Offset, unsigned Length);
 
   class SetParentRAII {
@@ -482,9 +478,7 @@ void CursorVisitor::visitDeclsFromFileRegion(FileID File,
                                              unsigned Offset, unsigned Length) {
   ASTUnit *Unit = static_cast<ASTUnit *>(TU->TUData);
   SourceManager &SM = Unit->getSourceManager();
-
   SourceRange Range = RegionOfInterest;
-  CXCursor Parent = clang_getTranslationUnitCursor(TU);
 
   SmallVector<Decl *, 16> Decls;
   Unit->findFileRegionDecls(File, Offset, Length, Decls);
@@ -536,14 +530,8 @@ void CursorVisitor::visitDeclsFromFileRegion(FileID File,
 
     assert(CompRes == RangeOverlap);
     VisitedAtLeastOnce = true;
-    CXCursor C = MakeCXCursor(D, TU, Range);
-    CXChildVisitResult
-      Res = invokeVisitor(C, Parent);
-    if (Res == CXChildVisit_Break)
+    if (Visit(MakeCXCursor(D, TU, Range), /*CheckedRegionOfInterest=*/true))
       break;
-    if (Res == CXChildVisit_Recurse)
-      if (VisitChildren(C))
-        break;
   }
 
   if (VisitedAtLeastOnce)
@@ -562,11 +550,7 @@ void CursorVisitor::visitDeclsFromFileRegion(FileID File,
       break;
 
     if (RangeCompare(SM, CurDeclRange, Range) == RangeOverlap) {
-      CXCursor C = MakeCXCursor(D, TU, Range);
-      CXChildVisitResult
-        Res = invokeVisitor(C, Parent);
-      if (Res == CXChildVisit_Recurse)
-        VisitChildren(C);
+      Visit(MakeCXCursor(D, TU, Range), /*CheckedRegionOfInterest=*/true);
       break;
     }
 
