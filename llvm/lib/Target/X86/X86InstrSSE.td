@@ -7083,35 +7083,48 @@ class avx_broadcast<bits<8> opc, string OpcodeStr, RegisterClass RC,
         !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
         [(set RC:$dst, (Int addr:$src))]>, VEX;
 
-def VBROADCASTSS   : avx_broadcast<0x18, "vbroadcastss", VR128, f32mem,
-                                   int_x86_avx_vbroadcastss>;
-def VBROADCASTSSY  : avx_broadcast<0x18, "vbroadcastss", VR256, f32mem,
-                                   int_x86_avx_vbroadcastss_256>;
-def VBROADCASTSD   : avx_broadcast<0x19, "vbroadcastsd", VR256, f64mem,
-                                   int_x86_avx_vbroadcast_sd_256>;
+class avx_broadcast_reg<bits<8> opc, string OpcodeStr, RegisterClass RC,
+                        Intrinsic Int> :
+  AVX8I<opc, MRMSrcReg, (outs RC:$dst), (ins VR128:$src),
+        !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+        [(set RC:$dst, (Int VR128:$src))]>, VEX;
+
+def VBROADCASTSSrm  : avx_broadcast<0x18, "vbroadcastss", VR128, f32mem,
+                                    int_x86_avx_vbroadcast_ss>;
+def VBROADCASTSSYrm : avx_broadcast<0x18, "vbroadcastss", VR256, f32mem,
+                                    int_x86_avx_vbroadcast_ss_256>;
+def VBROADCASTSDrm  : avx_broadcast<0x19, "vbroadcastsd", VR256, f64mem,
+                                    int_x86_avx_vbroadcast_sd_256>;
 def VBROADCASTF128 : avx_broadcast<0x1A, "vbroadcastf128", VR256, f128mem,
                                    int_x86_avx_vbroadcastf128_pd_256>;
 
-let Predicates = [HasAVX2] in
+let Predicates = [HasAVX2] in {
 def VBROADCASTI128 : avx_broadcast<0x5A, "vbroadcasti128", VR256, i128mem,
                                    int_x86_avx2_vbroadcasti128>;
+def VBROADCASTSSrr  : avx_broadcast_reg<0x18, "vbroadcastss", VR128,
+                                        int_x86_avx2_vbroadcast_ss_ps>;
+def VBROADCASTSSYrr : avx_broadcast_reg<0x18, "vbroadcastss", VR256,
+                                        int_x86_avx2_vbroadcast_ss_ps_256>;
+def VBROADCASTSDrr  : avx_broadcast_reg<0x19, "vbroadcastsd", VR256,
+                                        int_x86_avx2_vbroadcast_sd_pd_256>;
+}
 
 def : Pat<(int_x86_avx_vbroadcastf128_ps_256 addr:$src),
           (VBROADCASTF128 addr:$src)>;
 
 def : Pat<(v8i32 (X86VBroadcast (loadi32 addr:$src))),
-          (VBROADCASTSSY addr:$src)>;
+          (VBROADCASTSSYrm addr:$src)>;
 def : Pat<(v4i64 (X86VBroadcast (loadi64 addr:$src))),
-          (VBROADCASTSD addr:$src)>;
+          (VBROADCASTSDrm addr:$src)>;
 def : Pat<(v8f32 (X86VBroadcast (loadf32 addr:$src))),
-          (VBROADCASTSSY addr:$src)>;
+          (VBROADCASTSSYrm addr:$src)>;
 def : Pat<(v4f64 (X86VBroadcast (loadf64 addr:$src))),
-          (VBROADCASTSD addr:$src)>;
+          (VBROADCASTSDrm addr:$src)>;
 
 def : Pat<(v4f32 (X86VBroadcast (loadf32 addr:$src))),
-          (VBROADCASTSS addr:$src)>;
+          (VBROADCASTSSrm addr:$src)>;
 def : Pat<(v4i32 (X86VBroadcast (loadi32 addr:$src))),
-          (VBROADCASTSS addr:$src)>;
+          (VBROADCASTSSrm addr:$src)>;
 
 //===----------------------------------------------------------------------===//
 // VINSERTF128 - Insert packed floating-point values

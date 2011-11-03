@@ -2292,20 +2292,20 @@ define <8 x float> @test_x86_avx_vbroadcastf128_ps_256(i8* %a0) {
 declare <8 x float> @llvm.x86.avx.vbroadcastf128.ps.256(i8*) nounwind readonly
 
 
-define <4 x float> @test_x86_avx_vbroadcastss(i8* %a0) {
+define <4 x float> @test_x86_avx_vbroadcast_ss(i8* %a0) {
   ; CHECK: vbroadcastss
-  %res = call <4 x float> @llvm.x86.avx.vbroadcastss(i8* %a0) ; <<4 x float>> [#uses=1]
+  %res = call <4 x float> @llvm.x86.avx.vbroadcast.ss(i8* %a0) ; <<4 x float>> [#uses=1]
   ret <4 x float> %res
 }
-declare <4 x float> @llvm.x86.avx.vbroadcastss(i8*) nounwind readonly
+declare <4 x float> @llvm.x86.avx.vbroadcast.ss(i8*) nounwind readonly
 
 
-define <8 x float> @test_x86_avx_vbroadcastss_256(i8* %a0) {
+define <8 x float> @test_x86_avx_vbroadcast_ss_256(i8* %a0) {
   ; CHECK: vbroadcastss
-  %res = call <8 x float> @llvm.x86.avx.vbroadcastss.256(i8* %a0) ; <<8 x float>> [#uses=1]
+  %res = call <8 x float> @llvm.x86.avx.vbroadcast.ss.256(i8* %a0) ; <<8 x float>> [#uses=1]
   ret <8 x float> %res
 }
-declare <8 x float> @llvm.x86.avx.vbroadcastss.256(i8*) nounwind readonly
+declare <8 x float> @llvm.x86.avx.vbroadcast.ss.256(i8*) nounwind readonly
 
 
 define <2 x double> @test_x86_avx_vextractf128_pd_256(<4 x double> %a0) {

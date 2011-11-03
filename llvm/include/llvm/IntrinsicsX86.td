@@ -1281,13 +1281,13 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 
 // Vector load with broadcast
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
-  def int_x86_avx_vbroadcastss :
+  def int_x86_avx_vbroadcast_ss :
         GCCBuiltin<"__builtin_ia32_vbroadcastss">,
         Intrinsic<[llvm_v4f32_ty], [llvm_ptr_ty], [IntrReadMem]>;
   def int_x86_avx_vbroadcast_sd_256 :
         GCCBuiltin<"__builtin_ia32_vbroadcastsd256">,
         Intrinsic<[llvm_v4f64_ty], [llvm_ptr_ty], [IntrReadMem]>;
-  def int_x86_avx_vbroadcastss_256 :
+  def int_x86_avx_vbroadcast_ss_256 :
         GCCBuiltin<"__builtin_ia32_vbroadcastss256">,
         Intrinsic<[llvm_v8f32_ty], [llvm_ptr_ty], [IntrReadMem]>;
   def int_x86_avx_vbroadcastf128_pd_256 :
@@ -1672,6 +1672,15 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 
 // Vector load with broadcast
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_avx2_vbroadcast_ss_ps :
+        GCCBuiltin<"__builtin_ia32_vbroadcastss_ps">,
+        Intrinsic<[llvm_v4f32_ty], [llvm_v4f32_ty], [IntrReadMem]>;
+  def int_x86_avx2_vbroadcast_sd_pd_256 :
+        GCCBuiltin<"__builtin_ia32_vbroadcastsd_pd256">,
+        Intrinsic<[llvm_v4f64_ty], [llvm_v2f64_ty], [IntrReadMem]>;
+  def int_x86_avx2_vbroadcast_ss_ps_256 :
+        GCCBuiltin<"__builtin_ia32_vbroadcastss_ps256">,
+        Intrinsic<[llvm_v8f32_ty], [llvm_v4f32_ty], [IntrReadMem]>;
   def int_x86_avx2_vbroadcasti128 :
         GCCBuiltin<"__builtin_ia32_vbroadcastsi256">,
         Intrinsic<[llvm_v4i64_ty], [llvm_ptr_ty], [IntrReadMem]>;
