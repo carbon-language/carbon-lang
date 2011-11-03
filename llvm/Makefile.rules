@@ -57,6 +57,54 @@ VPATH=$(PROJ_SRC_DIR)
 
 $(UserTargets)::
 
+#------------------------------------------------------------------------
+# LLVMBuild Integration
+#------------------------------------------------------------------------
+#
+# We use llvm-build to generate all the data required by the Makefile based
+# build system in one swoop:
+#
+#  - We generate a file (a Makefile fragment) in the object root which contains
+#    all the definitions that are required by Makefiles across the entire
+#    project.
+#
+#  - We generate the library table used by llvm-config.
+#
+#  - We generate the dependencies for the Makefile fragment, so that we will
+#    automatically reconfigure outselves.
+
+# The path to the llvm-build tool itself.
+LLVMBuildTool	:= $(PROJ_SRC_ROOT)/utils/llvm-build/llvm-build
+
+# The files we are going to generate using llvm-build.
+LLVMBuildMakeFrag := $(PROJ_OBJ_ROOT)/Makefile.llvmbuild
+LLVMConfigLibraryDependenciesInc := \
+	$(PROJ_OBJ_ROOT)/tools/llvm-config/LibraryDependencies.inc
+
+# The rule to create the LLVMBuild Makefile fragment as well as the llvm-config
+# library table.
+#
+# Note that this target gets its real dependencies generated for us by
+# llvm-build.
+$(LLVMBuildMakeFrag):
+	$(EchoCmd) Constructing LLVMBuild project information. ; \
+	$(LLVMBuildTool) \
+	  --write-library-table $(LLVMConfigLibraryDependenciesInc) \
+	  --write-make-fragment $(LLVMBuildMakeFrag)
+
+# Include the generated Makefile fragment.
+#
+# We currently only include the dependencies for the fragment itself if we are
+# at the top-level. Otherwise, recursive invocations would ends up doing
+# substantially more redundant stat'ing.
+#
+# This means that we won't properly regenerate things for developers used to
+# building from a subdirectory, but that is always somewhat unreliable.
+ifeq ($(LEVEL),.)
+LLVMBUILD_INCLUDE_DEPENDENCIES := 1
+endif
+-include $(LLVMBuildMakeFrag)
+
 ################################################################################
 # PRECONDITIONS: that which must be built/checked first
 ################################################################################
