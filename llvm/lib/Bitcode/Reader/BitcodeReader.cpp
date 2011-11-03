@@ -615,7 +615,7 @@ bool BitcodeReader::ParseTypeTableBody() {
       ResultTy = PointerType::get(ResultTy, AddressSpace);
       break;
     }
-    case bitc::TYPE_CODE_FUNCTION: {
+    case bitc::TYPE_CODE_FUNCTION_OLD: {
       // FIXME: attrid is dead, remove it in LLVM 3.0
       // FUNCTION: [vararg, attrid, retty, paramty x N]
       if (Record.size() < 3)
@@ -630,6 +630,25 @@ bool BitcodeReader::ParseTypeTableBody() {
       
       ResultTy = getTypeByID(Record[2]);
       if (ResultTy == 0 || ArgTys.size() < Record.size()-3)
+        return Error("invalid type in function type");
+
+      ResultTy = FunctionType::get(ResultTy, ArgTys, Record[0]);
+      break;
+    }
+    case bitc::TYPE_CODE_FUNCTION: {
+      // FUNCTION: [vararg, retty, paramty x N]
+      if (Record.size() < 2)
+        return Error("Invalid FUNCTION type record");
+      std::vector<Type*> ArgTys;
+      for (unsigned i = 2, e = Record.size(); i != e; ++i) {
+        if (Type *T = getTypeByID(Record[i]))
+          ArgTys.push_back(T);
+        else
+          break;
+      }
+      
+      ResultTy = getTypeByID(Record[1]);
+      if (ResultTy == 0 || ArgTys.size() < Record.size()-2)
         return Error("invalid type in function type");
 
       ResultTy = FunctionType::get(ResultTy, ArgTys, Record[0]);
@@ -871,7 +890,7 @@ RestartScan:
         ResultTy = PointerType::get(ResultTy, AddressSpace);
       break;
     }
-    case bitc::TYPE_CODE_FUNCTION: {
+    case bitc::TYPE_CODE_FUNCTION_OLD: {
       // FIXME: attrid is dead, remove it in LLVM 3.0
       // FUNCTION: [vararg, attrid, retty, paramty x N]
       if (Record.size() < 3)
@@ -886,6 +905,23 @@ RestartScan:
       if (ArgTys.size()+3 != Record.size())
         break;  // Something was null.
       if ((ResultTy = getTypeByIDOrNull(Record[2])))
+        ResultTy = FunctionType::get(ResultTy, ArgTys, Record[0]);
+      break;
+    }
+    case bitc::TYPE_CODE_FUNCTION: {
+      // FUNCTION: [vararg, retty, paramty x N]
+      if (Record.size() < 2)
+        return Error("Invalid FUNCTION type record");
+      std::vector<Type*> ArgTys;
+      for (unsigned i = 2, e = Record.size(); i != e; ++i) {
+        if (Type *Elt = getTypeByIDOrNull(Record[i]))
+          ArgTys.push_back(Elt);
+        else
+          break;
+      }
+      if (ArgTys.size()+2 != Record.size())
+        break;  // Something was null.
+      if ((ResultTy = getTypeByIDOrNull(Record[1])))
         ResultTy = FunctionType::get(ResultTy, ArgTys, Record[0]);
       break;
     }

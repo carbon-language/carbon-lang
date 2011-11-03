@@ -175,7 +175,7 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
     case bitc::TYPE_CODE_OPAQUE:       return "OPAQUE";
     case bitc::TYPE_CODE_INTEGER:      return "INTEGER";
     case bitc::TYPE_CODE_POINTER:      return "POINTER";
-    case bitc::TYPE_CODE_FUNCTION:     return "FUNCTION";
+    case bitc::TYPE_CODE_FUNCTION_OLD: return "FUNCTION_OLD";
     case bitc::TYPE_CODE_STRUCT_OLD:   return "STRUCT_OLD";
     case bitc::TYPE_CODE_ARRAY:        return "ARRAY";
     case bitc::TYPE_CODE_VECTOR:       return "VECTOR";
@@ -186,6 +186,7 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
     case bitc::TYPE_CODE_STRUCT_ANON:  return "STRUCT_ANON";
     case bitc::TYPE_CODE_STRUCT_NAME:  return "STRUCT_NAME";
     case bitc::TYPE_CODE_STRUCT_NAMED: return "STRUCT_NAMED";
+    case bitc::TYPE_CODE_FUNCTION:     return "FUNCTION";
     }
 
   case bitc::CONSTANTS_BLOCK_ID:

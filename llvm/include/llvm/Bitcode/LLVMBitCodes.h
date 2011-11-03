@@ -92,7 +92,7 @@ namespace bitc {
     TYPE_CODE_OPAQUE   =  6,    // OPAQUE
     TYPE_CODE_INTEGER  =  7,    // INTEGER: [width]
     TYPE_CODE_POINTER  =  8,    // POINTER: [pointee type]
-    TYPE_CODE_FUNCTION =  9,    // FUNCTION: [vararg, retty, paramty x N]
+    TYPE_CODE_FUNCTION_OLD = 9, // FUNCTION: [vararg, attrid, retty, paramty x N]
     
     // FIXME: This is the encoding used for structs in LLVM 2.9 and earlier.
     // REMOVE this in LLVM 3.1
@@ -113,7 +113,9 @@ namespace bitc {
     
     TYPE_CODE_STRUCT_ANON = 18, // STRUCT_ANON: [ispacked, eltty x N]
     TYPE_CODE_STRUCT_NAME = 19, // STRUCT_NAME: [strchr x N]
-    TYPE_CODE_STRUCT_NAMED = 20 // STRUCT_NAMED: [ispacked, eltty x N]
+    TYPE_CODE_STRUCT_NAMED = 20,// STRUCT_NAMED: [ispacked, eltty x N]
+
+    TYPE_CODE_FUNCTION = 21     // FUNCTION: [vararg, retty, paramty x N]
   };
 
   // The type symbol table only has one code (TST_ENTRY_CODE).

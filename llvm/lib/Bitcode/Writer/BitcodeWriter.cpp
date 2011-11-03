@@ -206,7 +206,6 @@ static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
   Abbv = new BitCodeAbbrev();
   Abbv->Add(BitCodeAbbrevOp(bitc::TYPE_CODE_FUNCTION));
   Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1));  // isvararg
-  Abbv->Add(BitCodeAbbrevOp(0));  // FIXME: DEAD value, remove in LLVM 3.0
   Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
   Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed,
                             Log2_32_Ceil(VE.getTypes().size()+1)));
@@ -284,10 +283,9 @@ static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
     }
     case Type::FunctionTyID: {
       FunctionType *FT = cast<FunctionType>(T);
-      // FUNCTION: [isvararg, attrid, retty, paramty x N]
+      // FUNCTION: [isvararg, retty, paramty x N]
       Code = bitc::TYPE_CODE_FUNCTION;
       TypeVals.push_back(FT->isVarArg());
-      TypeVals.push_back(0);  // FIXME: DEAD: remove in llvm 3.0
       TypeVals.push_back(VE.getTypeID(FT->getReturnType()));
       for (unsigned i = 0, e = FT->getNumParams(); i != e; ++i)
         TypeVals.push_back(VE.getTypeID(FT->getParamType(i)));
