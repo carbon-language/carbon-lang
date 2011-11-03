@@ -14,8 +14,13 @@ class LLVMProjectInfo(object):
         # directories we have already traversed.
 
         # First, discover all the LLVMBuild.txt files.
-        for dirpath,dirnames,filenames in os.walk(llvmbuild_source_root,
-                                                  followlinks = True):
+        #
+        # FIXME: We would like to use followlinks=True here, but that isn't
+        # compatible with Python 2.4. Instead, we will either have to special
+        # case projects we would expect to possibly be linked to, or implement
+        # our own walk that can follow links. For now, it doesn't matter since
+        # we haven't picked up the LLVMBuild system in any other LLVM projects.
+        for dirpath,dirnames,filenames in os.walk(llvmbuild_source_root):
             # If there is no LLVMBuild.txt file in a directory, we don't recurse
             # past it. This is a simple way to prune our search, although it
             # makes it easy for users to add LLVMBuild.txt files in places they
