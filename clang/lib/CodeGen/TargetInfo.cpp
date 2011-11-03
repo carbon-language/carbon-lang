@@ -3082,18 +3082,11 @@ llvm::Type* MipsABIInfo::HandleStructTy(QualType Ty) const {
   for (unsigned N = (StructSize - LastOffset) / 64; N; --N)
     ArgList.push_back(I64);
 
-  // Whatever is left over goes into a structure consisting of sub-doubleword
-  // types. For example, if the size of the remainder is 40-bytes,
-  // struct {i32, i8} is added to ArgList.
+  // If the size of the remainder is not zero, add one more integer type to
+  // ArgList.
   unsigned R = (StructSize - LastOffset) % 64;
-  SmallVector<llvm::Type*, 3> ArgList2;
-  
-  for (; R; R &= (R - 1))
-    ArgList2.insert(ArgList2.begin(),
-                    llvm::IntegerType::get(getVMContext(), (R & (R - 1)) ^ R));
-
-  if (!ArgList2.empty())
-    ArgList.push_back(llvm::StructType::get(getVMContext(), ArgList2));
+  if (R)
+    ArgList.push_back(llvm::IntegerType::get(getVMContext(), R));
 
   return llvm::StructType::get(getVMContext(), ArgList);
 }
