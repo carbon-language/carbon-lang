@@ -239,6 +239,24 @@ static bool isRemovable(Instruction *I) {
   }
 }
 
+
+/// isShortenable - Returns true if this instruction can be safely shortened in
+/// length.
+static bool isShortenable(Instruction *I) {
+  // Don't shorten stores for now
+  if (isa<StoreInst>(I))
+    return false;
+  
+  IntrinsicInst *II = cast<IntrinsicInst>(I);
+  switch (II->getIntrinsicID()) {
+    default: return false;
+    case Intrinsic::memset:
+    case Intrinsic::memcpy:
+      // Do shorten memory intrinsics.
+      return true;
+  }
+}
+
 /// getStoredPointerOperand - Return the pointer that is being written to.
 static Value *getStoredPointerOperand(Instruction *I) {
   if (StoreInst *SI = dyn_cast<StoreInst>(I))
@@ -293,11 +311,24 @@ static bool isObjectPointerWithTrustworthySize(const Value *V) {
   return false;
 }
 
-/// isCompleteOverwrite - Return true if a store to the 'Later' location
+namespace {
+  enum OverwriteResult
+  {
+    OverwriteComplete,
+    OverwriteEnd,
+    OverwriteUnknown
+  };
+}
+
+/// isOverwrite - Return 'OverwriteComplete' if a store to the 'Later' location
 /// completely overwrites a store to the 'Earlier' location.
-static bool isCompleteOverwrite(const AliasAnalysis::Location &Later,
-                                const AliasAnalysis::Location &Earlier,
-                                AliasAnalysis &AA) {
+/// 'OverwriteEnd' if the end of the 'Earlier' location is completely 
+/// overwritten by 'Later', or 'OverwriteUnknown' if nothing can be determined
+static OverwriteResult isOverwrite(const AliasAnalysis::Location &Later,
+                                   const AliasAnalysis::Location &Earlier,
+                                   AliasAnalysis &AA,
+                                   int64_t& EarlierOff,
+                                   int64_t& LaterOff) {
   const Value *P1 = Earlier.Ptr->stripPointerCasts();
   const Value *P2 = Later.Ptr->stripPointerCasts();
 
@@ -311,23 +342,24 @@ static bool isCompleteOverwrite(const AliasAnalysis::Location &Later,
       // If we have no TargetData information around, then the size of the store
       // is inferrable from the pointee type.  If they are the same type, then
       // we know that the store is safe.
-      if (AA.getTargetData() == 0)
-        return Later.Ptr->getType() == Earlier.Ptr->getType();
-      return false;
+      if (AA.getTargetData() == 0 &&
+          Later.Ptr->getType() == Earlier.Ptr->getType())
+        return OverwriteComplete;
+        
+      return OverwriteUnknown;
     }
 
     // Make sure that the Later size is >= the Earlier size.
-    if (Later.Size < Earlier.Size)
-      return false;
-    return true;
+    if (Later.Size >= Earlier.Size)
+      return OverwriteComplete;
   }
 
   // Otherwise, we have to have size information, and the later store has to be
   // larger than the earlier one.
   if (Later.Size == AliasAnalysis::UnknownSize ||
       Earlier.Size == AliasAnalysis::UnknownSize ||
-      Later.Size <= Earlier.Size || AA.getTargetData() == 0)
-    return false;
+      AA.getTargetData() == 0)
+    return OverwriteUnknown;
 
   // Check to see if the later store is to the entire object (either a global,
   // an alloca, or a byval argument).  If so, then it clearly overwrites any
@@ -340,26 +372,27 @@ static bool isCompleteOverwrite(const AliasAnalysis::Location &Later,
   // If we can't resolve the same pointers to the same object, then we can't
   // analyze them at all.
   if (UO1 != UO2)
-    return false;
+    return OverwriteUnknown;
 
   // If the "Later" store is to a recognizable object, get its size.
   if (isObjectPointerWithTrustworthySize(UO2)) {
     uint64_t ObjectSize =
       TD.getTypeAllocSize(cast<PointerType>(UO2->getType())->getElementType());
     if (ObjectSize == Later.Size)
-      return true;
+      return OverwriteComplete;
   }
 
   // Okay, we have stores to two completely different pointers.  Try to
   // decompose the pointer into a "base + constant_offset" form.  If the base
   // pointers are equal, then we can reason about the two stores.
-  int64_t EarlierOff = 0, LaterOff = 0;
+  EarlierOff = 0;
+  LaterOff = 0;
   const Value *BP1 = GetPointerBaseWithConstantOffset(P1, EarlierOff, TD);
   const Value *BP2 = GetPointerBaseWithConstantOffset(P2, LaterOff, TD);
 
   // If the base pointers still differ, we have two completely different stores.
   if (BP1 != BP2)
-    return false;
+    return OverwriteUnknown;
 
   // The later store completely overlaps the earlier store if:
   //
@@ -377,11 +410,24 @@ static bool isCompleteOverwrite(const AliasAnalysis::Location &Later,
   //
   // We have to be careful here as *Off is signed while *.Size is unsigned.
   if (EarlierOff >= LaterOff &&
+      Later.Size > Earlier.Size &&
       uint64_t(EarlierOff - LaterOff) + Earlier.Size <= Later.Size)
-    return true;
+    return OverwriteComplete;
+  
+  // The other interesting case is if the later store overwrites the end of
+  // the earlier store
+  //
+  //      |--earlier--|
+  //                |--   later   --|
+  //
+  // In this case we may want to trim the size of earlier to avoid generating
+  // writes to addresses which will definitely be overwritten later
+  if (LaterOff > EarlierOff &&
+      LaterOff + Later.Size >= EarlierOff + Earlier.Size)
+    return OverwriteEnd;
 
   // Otherwise, they don't completely overlap.
-  return false;
+  return OverwriteUnknown;
 }
 
 /// isPossibleSelfRead - If 'Inst' might be a self read (i.e. a noop copy of a
@@ -505,22 +551,52 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
       // If we find a write that is a) removable (i.e., non-volatile), b) is
       // completely obliterated by the store to 'Loc', and c) which we know that
       // 'Inst' doesn't load from, then we can remove it.
-      if (isRemovable(DepWrite) && isCompleteOverwrite(Loc, DepLoc, *AA) &&
+      if (isRemovable(DepWrite) && 
           !isPossibleSelfRead(Inst, Loc, DepWrite, *AA)) {
-        DEBUG(dbgs() << "DSE: Remove Dead Store:\n  DEAD: "
-              << *DepWrite << "\n  KILLER: " << *Inst << '\n');
+        int64_t InstWriteOffset, DepWriteOffset; 
+        OverwriteResult OR = isOverwrite(Loc, DepLoc, *AA, 
+                                         DepWriteOffset, InstWriteOffset); 
+        if (OR == OverwriteComplete) {
+          DEBUG(dbgs() << "DSE: Remove Dead Store:\n  DEAD: "
+                << *DepWrite << "\n  KILLER: " << *Inst << '\n');
 
-        // Delete the store and now-dead instructions that feed it.
-        DeleteDeadInstruction(DepWrite, *MD);
-        ++NumFastStores;
-        MadeChange = true;
-
-        // DeleteDeadInstruction can delete the current instruction in loop
-        // cases, reset BBI.
-        BBI = Inst;
-        if (BBI != BB.begin())
-          --BBI;
-        break;
+          // Delete the store and now-dead instructions that feed it.
+          DeleteDeadInstruction(DepWrite, *MD);
+          ++NumFastStores;
+          MadeChange = true;
+          
+          // DeleteDeadInstruction can delete the current instruction in loop
+          // cases, reset BBI.
+          BBI = Inst;
+          if (BBI != BB.begin())
+            --BBI;
+          break;
+        } else if (OR == OverwriteEnd && isShortenable(DepWrite)) {
+          // TODO: base this on the target vector size so that if the earlier
+          // store was too small to get vector writes anyway then its likely
+          // a good idea to shorten it
+          // Power of 2 vector writes are probably always a bad idea to optimize
+          // as any store/memset/memcpy is likely using vector instructions so
+          // shortening it to not vector size is likely to be slower
+          MemIntrinsic* DepIntrinsic = cast<MemIntrinsic>(DepWrite);
+          unsigned DepWriteAlign = DepIntrinsic->getAlignment();
+          if (llvm::isPowerOf2_64(InstWriteOffset) ||
+              ((DepWriteAlign != 0) && InstWriteOffset % DepWriteAlign == 0)) {
+            
+            DEBUG(dbgs() << "DSE: Remove Dead Store:\n  OW END: "
+                  << *DepWrite << "\n  KILLER (offset " 
+                  << InstWriteOffset << ", " 
+                  << DepLoc.Size << ")"
+                  << *Inst << '\n');
+            
+            Value* DepWriteLength = DepIntrinsic->getLength();
+            Value* TrimmedLength = ConstantInt::get(DepWriteLength->getType(),
+                                                    InstWriteOffset - 
+                                                    DepWriteOffset);
+            DepIntrinsic->setLength(TrimmedLength);
+            MadeChange = true;
+          }
+        }
       }
 
       // If this is a may-aliased store that is clobbering the store value, we
