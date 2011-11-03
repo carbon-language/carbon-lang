@@ -20,6 +20,11 @@ int LocalVar2;
 // RUN:    -Xclang -error-on-deserialized-decl=TopVar  \
 // RUN:  | FileCheck %s -check-prefix=NESTED-CURSOR1
 
+// RUN: env CINDEXTEST_FAILONERROR=1 c-index-test -cursor-at=%S/targeted-fields.h:2:7 %s -include %t.h \
+// RUN:    -Xclang -error-on-deserialized-decl=NestedVar1  \
+// RUN:    -Xclang -error-on-deserialized-decl=TopVar  \
+// RUN:  | FileCheck %s -check-prefix=FIELD-CURSOR1
+
 // RUN: env CINDEXTEST_FAILONERROR=1 CINDEXTEST_EDITING=1 CINDEXTEST_COMPLETION_NO_CACHING=1 \
 // RUN:   c-index-test -cursor-at=%s:5:10 %s -include %t.h \
 // RUN:    -Xclang -error-on-deserialized-decl=PreambleVar  \
@@ -50,3 +55,4 @@ int LocalVar2;
 // TOP-CURSOR1: VarDecl=TopVar:11:12
 // NESTED-CURSOR1: VarDecl=NestedVar1:2:12
 // PREAMBLE-CURSOR1: VarDecl=PreambleVar:2:12
+// FIELD-CURSOR1: FieldDecl=z:2:7 (Definition)
