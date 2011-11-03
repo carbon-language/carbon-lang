@@ -231,7 +231,17 @@ SBTarget::Launch
             if (getenv("LLDB_LAUNCH_FLAG_DISABLE_STDIO"))
                 launch_flags |= eLaunchFlagDisableSTDIO;
 
-            error.SetError (sb_process->Launch (argv, envp, launch_flags, stdin_path, stdout_path, stderr_path, working_directory));
+            ProcessLaunchInfo launch_info (stdin_path, stdout_path, stderr_path, working_directory, launch_flags);
+            
+            Module *exe_module = m_opaque_sp->GetExecutableModulePointer();
+            if (exe_module)
+                launch_info.SetExecutableFile(exe_module->GetFileSpec(), true);
+            if (argv)
+                launch_info.GetArguments().AppendArguments (argv);
+            if (envp)
+                launch_info.GetEnvironmentEntries ().SetArguments (envp);
+
+            error.SetError (sb_process->Launch (launch_info));
             if (error.Success())
             {
                 // We we are stopping at the entry point, we can return now!

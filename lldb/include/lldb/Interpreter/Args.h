@@ -205,6 +205,10 @@ public:
 
     void
     AppendArguments (const Args &rhs);
+    
+    void
+    AppendArguments (const char **argv);
+
     //------------------------------------------------------------------
     /// Insert the argument value at index \a idx to \a arg_cstr.
     ///
@@ -265,6 +269,9 @@ public:
     //------------------------------------------------------------------
     void
     SetArguments (int argc, const char **argv);
+
+    void
+    SetArguments (const char **argv);
 
     //------------------------------------------------------------------
     /// Shifts the first argument C string value of the array off the

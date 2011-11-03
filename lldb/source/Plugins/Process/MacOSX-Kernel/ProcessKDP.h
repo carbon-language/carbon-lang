@@ -78,14 +78,8 @@ public:
     WillLaunch (lldb_private::Module* module);
     
     virtual lldb_private::Error
-    DoLaunch (lldb_private::Module* module,
-              char const *argv[],           // Can be NULL
-              char const *envp[],           // Can be NULL
-              uint32_t flags,
-              const char *stdin_path,       // Can be NULL
-              const char *stdout_path,      // Can be NULL
-              const char *stderr_path,      // Can be NULL
-              const char *working_dir);     // Can be NULL
+    DoLaunch (lldb_private::Module *exe_module, 
+              const lldb_private::ProcessLaunchInfo &launch_info);
     
     virtual lldb_private::Error
     WillAttachToProcessWithID (lldb::pid_t pid);

@@ -300,7 +300,29 @@ public:
     {
         return m_executable;
     }
-    
+
+    void
+    SetExecutableFile (const FileSpec &exe_file, bool add_exe_file_as_first_arg)
+    {
+        if (exe_file)
+        {
+            m_executable = exe_file;
+            if (add_exe_file_as_first_arg)
+            {
+                m_arguments.Clear();
+                char filename[PATH_MAX];
+                if (exe_file.GetPath(filename, sizeof(filename)))
+                    m_arguments.AppendArgument (filename);
+            }
+        }
+        else
+        {
+            m_executable.Clear();
+            if (add_exe_file_as_first_arg)
+                m_arguments.Clear();
+        }
+    }
+
     const FileSpec &
     GetExecutableFile () const
     {
@@ -389,10 +411,15 @@ public:
     }
     
     void
-    SetArgumentsFromArgs (const Args& args, 
-                          bool first_arg_is_executable,
-                          bool first_arg_is_executable_and_argument);
+    SetArguments (const Args& args, 
+                  bool first_arg_is_executable,
+                  bool first_arg_is_executable_and_argument);
 
+    void
+    SetArguments (char const **argv,
+                  bool first_arg_is_executable,
+                  bool first_arg_is_executable_and_argument);
+    
     Args &
     GetEnvironmentEntries ()
     {
@@ -534,6 +561,14 @@ public:
     class FileAction
     {
     public:
+        enum Action
+        {
+            eFileActionNone,
+            eFileActionClose,
+            eFileActionDuplicate,
+            eFileActionOpen
+        };
+        
 
         FileAction () :
             m_action (eFileActionNone),
@@ -567,15 +602,33 @@ public:
                                  Log *log, 
                                  Error& error);
 
-    protected:
-        enum Action
+        int
+        GetFD () const
         {
-            eFileActionNone,
-            eFileActionClose,
-            eFileActionDuplicate,
-            eFileActionOpen
-        };
+            return m_fd;
+        }
 
+        Action 
+        GetAction () const
+        {
+            return m_action;
+        }
+        
+        int 
+        GetActionArgument () const
+        {
+            return m_arg;
+        }
+        
+        const char *
+        GetPath () const
+        {
+            if (m_path.empty())
+                return NULL;
+            return m_path.c_str();
+        }
+
+    protected:
         Action m_action;    // The action for this file
         int m_fd;           // An existing file descriptor
         int m_arg;          // oflag for eFileActionOpen*, dup_fd for eFileActionDuplicate
@@ -584,13 +637,45 @@ public:
     
     ProcessLaunchInfo () :
         ProcessInfo(),
-        m_flags (),
-        m_stdin_info (),
-        m_stdout_info (),
-        m_stderr_info ()
+        m_flags ()
     {
     }
 
+    ProcessLaunchInfo (const char *stdin_path,
+                       const char *stdout_path,
+                       const char *stderr_path,
+                       const char *working_directory,
+                       uint32_t launch_flags) :
+        ProcessInfo(),
+        m_flags (launch_flags)
+    {
+        if (stderr_path)
+        {
+            ProcessLaunchInfo::FileAction file_action;
+            const bool read = true;
+            const bool write = true;
+            if (file_action.Open(STDERR_FILENO, stderr_path, read, write))
+                AppendFileAction (file_action);
+        }
+        if (stdout_path)
+        {
+            ProcessLaunchInfo::FileAction file_action;
+            const bool read = false;
+            const bool write = true;
+            if (file_action.Open(STDOUT_FILENO, stdout_path, read, write))
+                AppendFileAction (file_action);
+        }
+        if (stdin_path)
+        {
+            ProcessLaunchInfo::FileAction file_action;
+            const bool read = true;
+            const bool write = false;
+            if (file_action.Open(STDIN_FILENO, stdin_path, read, write))
+                AppendFileAction (file_action);
+        }
+        if (working_directory)
+            SetWorkingDirectory(working_directory);        
+    }
     void
     AppendFileAction (const FileAction &info)
     {
@@ -640,6 +725,17 @@ public:
     {
         if (idx < m_file_actions.size())
             return &m_file_actions[idx];
+        return NULL;
+    }
+
+    const FileAction *
+    GetFileActionForFD (int fd) const
+    {
+        for (uint32_t idx=0, count=m_file_actions.size(); idx < count; ++idx)
+        {
+            if (m_file_actions[idx].GetFD () == fd)
+                return &m_file_actions[idx];
+        }
         return NULL;
     }
 
@@ -703,9 +799,6 @@ public:
         m_working_dir.clear();
         m_plugin_name.clear();
         m_flags.Clear();
-        m_stdin_info.Clear();
-        m_stdout_info.Clear();
-        m_stderr_info.Clear();
         m_file_actions.clear();
     }
 
@@ -713,9 +806,6 @@ protected:
     std::string m_working_dir;
     std::string m_plugin_name;
     Flags m_flags;       // Bitwise OR of bits from lldb::LaunchFlags
-    FileAction m_stdin_info;      // File action for stdin
-    FileAction m_stdout_info;     // File action for stdout
-    FileAction m_stderr_info;     // File action for stderr
     std::vector<FileAction> m_file_actions; // File actions for any other files
 };
 
@@ -1316,13 +1406,7 @@ public:
     ///     the error object is success.
     //------------------------------------------------------------------
     virtual Error
-    Launch (char const *argv[],
-            char const *envp[],
-            uint32_t launch_flags,
-            const char *stdin_path,
-            const char *stdout_path,
-            const char *stderr_path,
-            const char *working_directory);
+    Launch (const ProcessLaunchInfo &launch_info);
 
     //------------------------------------------------------------------
     /// Attach to an existing process using a process ID.
@@ -1688,14 +1772,8 @@ public:
     ///     launching fails.
     //------------------------------------------------------------------
     virtual Error
-    DoLaunch (Module* module,
-              char const *argv[],
-              char const *envp[],
-              uint32_t launch_flags,
-              const char *stdin_path,
-              const char *stdout_path,
-              const char *stderr_path,
-              const char *working_directory) = 0;
+    DoLaunch (Module *exe_module,
+              const ProcessLaunchInfo &launch_info) = 0;
     
     //------------------------------------------------------------------
     /// Called after launching a process.

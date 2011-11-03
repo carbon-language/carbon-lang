@@ -44,7 +44,8 @@ namespace lldb {
         eLaunchFlagStopAtEntry  = (1u << 2),  ///< Stop at the program entry point instead of auto-continuing when launching or attaching at entry point
         eLaunchFlagDisableASLR  = (1u << 3),  ///< Disable Address Space Layout Randomization
         eLaunchFlagDisableSTDIO = (1u << 4),  ///< Disable stdio for inferior process (e.g. for a GUI app)
-        eLaunchFlagLaunchInTTY  = (1u << 5)   ///< Launch the process in a new TTY if supported by the host 
+        eLaunchFlagLaunchInTTY  = (1u << 5),  ///< Launch the process in a new TTY if supported by the host 
+        eLaunchFlagLaunchInShell= (1u << 6)   ///< Launch the process inside a shell to get shell expansion
     } LaunchFlags;
         
     //----------------------------------------------------------------------

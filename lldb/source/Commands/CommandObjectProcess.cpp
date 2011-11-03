@@ -35,86 +35,86 @@ class CommandObjectProcessLaunch : public CommandObject
 {
 public:
 
-    class CommandOptions : public Options
-    {
-    public:
-
-        CommandOptions (CommandInterpreter &interpreter) :
-            Options(interpreter)
-        {
-            // Keep default values of all options in one place: OptionParsingStarting ()
-            OptionParsingStarting ();
-        }
-
-        ~CommandOptions ()
-        {
-        }
-
-        Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
-        {
-            Error error;
-            char short_option = (char) m_getopt_table[option_idx].val;
-
-            switch (short_option)
-            {
-                case 's':   stop_at_entry = true;               break;
-                case 'e':   stderr_path.assign (option_arg);    break;
-                case 'i':   stdin_path.assign (option_arg);     break;
-                case 'o':   stdout_path.assign (option_arg);    break;
-                case 'p':   plugin_name.assign (option_arg);    break;
-                case 'n':   no_stdio = true;                    break;
-                case 'w':   working_dir.assign (option_arg);    break;
-                case 't':   
-                    if (option_arg && option_arg[0])
-                        tty_name.assign (option_arg);
-                    in_new_tty = true; 
-                    break;
-                default:
-                    error.SetErrorStringWithFormat("invalid short option character '%c'", short_option);
-                    break;
-
-            }
-            return error;
-        }
-
-        void
-        OptionParsingStarting ()
-        {
-            stop_at_entry = false;
-            in_new_tty = false;
-            tty_name.clear();
-            stdin_path.clear();
-            stdout_path.clear();
-            stderr_path.clear();
-            plugin_name.clear();
-            working_dir.clear();
-            no_stdio = false;
-        }
-
-        const OptionDefinition*
-        GetDefinitions ()
-        {
-            return g_option_table;
-        }
-
-        // Options table: Required for subclasses of Options.
-
-        static OptionDefinition g_option_table[];
-
-        // Instance variables to hold the values for command options.
-
-        bool stop_at_entry;
-        bool in_new_tty;
-        bool no_stdio;
-        std::string tty_name;
-        std::string stderr_path;
-        std::string stdin_path;
-        std::string stdout_path;
-        std::string plugin_name;
-        std::string working_dir;
-
-    };
+//    class CommandOptions : public Options
+//    {
+//    public:
+//
+//        CommandOptions (CommandInterpreter &interpreter) :
+//            Options(interpreter)
+//        {
+//            // Keep default values of all options in one place: OptionParsingStarting ()
+//            OptionParsingStarting ();
+//        }
+//
+//        ~CommandOptions ()
+//        {
+//        }
+//
+//        Error
+//        SetOptionValue (uint32_t option_idx, const char *option_arg)
+//        {
+//            Error error;
+//            char short_option = (char) m_getopt_table[option_idx].val;
+//
+//            switch (short_option)
+//            {
+//                case 's':   stop_at_entry = true;               break;
+//                case 'e':   stderr_path.assign (option_arg);    break;
+//                case 'i':   stdin_path.assign (option_arg);     break;
+//                case 'o':   stdout_path.assign (option_arg);    break;
+//                case 'p':   plugin_name.assign (option_arg);    break;
+//                case 'n':   no_stdio = true;                    break;
+//                case 'w':   working_dir.assign (option_arg);    break;
+//                case 't':   
+//                    if (option_arg && option_arg[0])
+//                        tty_name.assign (option_arg);
+//                    in_new_tty = true; 
+//                    break;
+//                default:
+//                    error.SetErrorStringWithFormat("invalid short option character '%c'", short_option);
+//                    break;
+//
+//            }
+//            return error;
+//        }
+//
+//        void
+//        OptionParsingStarting ()
+//        {
+//            stop_at_entry = false;
+//            in_new_tty = false;
+//            tty_name.clear();
+//            stdin_path.clear();
+//            stdout_path.clear();
+//            stderr_path.clear();
+//            plugin_name.clear();
+//            working_dir.clear();
+//            no_stdio = false;
+//        }
+//
+//        const OptionDefinition*
+//        GetDefinitions ()
+//        {
+//            return g_option_table;
+//        }
+//
+//        // Options table: Required for subclasses of Options.
+//
+//        static OptionDefinition g_option_table[];
+//
+//        // Instance variables to hold the values for command options.
+//
+//        bool stop_at_entry;
+//        bool in_new_tty;
+//        bool no_stdio;
+//        std::string tty_name;
+//        std::string stderr_path;
+//        std::string stdin_path;
+//        std::string stdout_path;
+//        std::string plugin_name;
+//        std::string working_dir;
+//
+//    };
 
     CommandObjectProcessLaunch (CommandInterpreter &interpreter) :
         CommandObject (interpreter,
@@ -171,8 +171,11 @@ public:
             return false;
         }
         
-        exe_module->GetFileSpec().GetPath(filename, sizeof(filename));
+        exe_module->GetFileSpec().GetPath (filename, sizeof(filename));
 
+        const bool add_exe_file_as_first_arg = true;
+        m_options.launch_info.SetExecutableFile(exe_module->GetFileSpec(), add_exe_file_as_first_arg);
+        
         StateType state = eStateInvalid;
         Process *process = m_interpreter.GetExecutionContext().GetProcessPtr();
         if (process)
@@ -210,11 +213,7 @@ public:
         
         if (state != eStateConnected)
         {
-            const char *plugin_name;
-            if (!m_options.plugin_name.empty())
-                plugin_name = m_options.plugin_name.c_str();
-            else
-                plugin_name = NULL;
+            const char *plugin_name = m_options.launch_info.GetProcessPluginName();
 
             process = target->CreateProcess (m_interpreter.GetDebugger().GetListener(), plugin_name).get();
             if (process == NULL)
@@ -225,99 +224,74 @@ public:
             }
         }
 
-
-        // If no launch args were given on the command line, then use any that
-        // might have been set using the "run-args" set variable.
-        if (launch_args.GetArgumentCount() == 0)
+        if (launch_args.GetArgumentCount() > 0)
         {
-            if (process->GetRunArguments().GetArgumentCount() > 0)
-                launch_args = process->GetRunArguments();
+            m_options.launch_info.GetArguments().AppendArguments (launch_args);
+        }
+        else
+        {
+            const Args &process_args = process->GetRunArguments();
+            if (process_args.GetArgumentCount() > 0)
+                m_options.launch_info.GetArguments().AppendArguments (process_args);
         }
         
-        if (m_options.in_new_tty)
+
+        if (m_options.launch_info.GetFlags().Test (eLaunchFlagLaunchInTTY))
         {
             if (state == eStateConnected)
             {
                 result.AppendWarning("launch in tty option is ignored when launching through a remote connection");
-                m_options.in_new_tty = false;
-            }
-            else
-            {
-                char exec_file_path[PATH_MAX];
-                if (exe_module->GetFileSpec().GetPath(exec_file_path, sizeof(exec_file_path)))
-                {
-                    launch_args.InsertArgumentAtIndex(0, exec_file_path);
-                }
-                else
-                {
-                    result.AppendError("invalid executable");
-                    result.SetStatus (eReturnStatusFailed);
-                    return false;
-                }
+                m_options.launch_info.GetFlags().Clear (eLaunchFlagLaunchInTTY);
             }
         }
 
         Args environment;
-        
         process->GetEnvironmentAsArgs (environment);
-        
-        uint32_t launch_flags = eLaunchFlagNone;
+        m_options.launch_info.GetEnvironmentEntries ().AppendArguments (environment);
         
         if (process->GetDisableASLR())
-            launch_flags |= eLaunchFlagDisableASLR;
+            m_options.launch_info.GetFlags().Set (eLaunchFlagDisableASLR);
 
-        if (m_options.in_new_tty)
-            launch_flags |= eLaunchFlagLaunchInTTY; 
-
-        if (m_options.no_stdio)
-            launch_flags |= eLaunchFlagDisableSTDIO;
-        else if (!m_options.in_new_tty
-                 && m_options.stdin_path.empty()
-                 && m_options.stdout_path.empty()
-                 && m_options.stderr_path.empty())
+        if (m_options.launch_info.GetFlags().Test (eLaunchFlagLaunchInTTY) == false &&
+            m_options.launch_info.GetNumFileActions() == 0)
         {
             // Only use the settings value if the user hasn't specified any options that would override it.
             if (process->GetDisableSTDIO())
-                launch_flags |= eLaunchFlagDisableSTDIO;
-        }
-        
-        const char **inferior_argv = launch_args.GetArgumentCount() ? launch_args.GetConstArgumentVector() : NULL;
-        const char **inferior_envp = environment.GetArgumentCount() ? environment.GetConstArgumentVector() : NULL;
+                m_options.launch_info.GetFlags().Set (eLaunchFlagDisableSTDIO);
+            
+            const char *path;
+            path = process->GetStandardErrorPath();
+            if (path)
+            {
+                ProcessLaunchInfo::FileAction file_action;
+                const bool read = true;
+                const bool write = true;
+                if (file_action.Open(STDERR_FILENO, path, read, write))
+                    m_options.launch_info.AppendFileAction (file_action);
+            }
+            path = process->GetStandardInputPath();
+            if (path)
+            {
+                ProcessLaunchInfo::FileAction file_action;
+                const bool read = true;
+                const bool write = false;
+                if (file_action.Open(STDIN_FILENO, path, read, write))
+                    m_options.launch_info.AppendFileAction (file_action);
+            }
 
+            path = process->GetStandardOutputPath();
+            if (path)
+            {
+                ProcessLaunchInfo::FileAction file_action;
+                const bool read = false;
+                const bool write = true;
+                if (file_action.Open(STDOUT_FILENO, path, read, write))
+                    m_options.launch_info.AppendFileAction (file_action);
+            }
+        }
         Error error;
-        const char *working_dir = NULL;
-        if (!m_options.working_dir.empty())
-            working_dir = m_options.working_dir.c_str();
 
-        const char * stdin_path = NULL;
-        const char * stdout_path = NULL;
-        const char * stderr_path = NULL;
-
-        // Were any standard input/output/error paths given on the command line?
-        if (m_options.stdin_path.empty() &&
-            m_options.stdout_path.empty() &&
-            m_options.stderr_path.empty())
-        {
-            // No standard file handles were given on the command line, check
-            // with the process object in case they were give using "set settings"
-            stdin_path = process->GetStandardInputPath();
-            stdout_path = process->GetStandardOutputPath(); 
-            stderr_path = process->GetStandardErrorPath(); 
-        }
-        else
-        {
-            stdin_path = m_options.stdin_path.empty()  ? NULL : m_options.stdin_path.c_str();
-            stdout_path = m_options.stdout_path.empty() ? NULL : m_options.stdout_path.c_str();
-            stderr_path = m_options.stderr_path.empty() ? NULL : m_options.stderr_path.c_str();
-        }
-
-        error = process->Launch (inferior_argv,
-                                 inferior_envp,
-                                 launch_flags,
-                                 stdin_path,
-                                 stdout_path,
-                                 stderr_path,
-                                 working_dir);
+        error = process->Launch (m_options.launch_info);
                      
         if (error.Success())
         {
@@ -325,7 +299,7 @@ public:
 
             result.AppendMessageWithFormat ("Process %llu launched: '%s' (%s)\n", process->GetID(), filename, archname);
             result.SetDidChangeProcessState (true);
-            if (m_options.stop_at_entry == false)
+            if (m_options.launch_info.GetFlags().Test(eLaunchFlagStopAtEntry) == false)
             {
                 result.SetStatus (eReturnStatusSuccessContinuingNoResult);
                 StateType state = process->WaitForProcessToStop (NULL);
@@ -380,32 +354,31 @@ public:
     }
 
 protected:
-
-    CommandOptions m_options;
+    ProcessLaunchCommandOptions m_options;
 };
 
 
-#define SET1 LLDB_OPT_SET_1
-#define SET2 LLDB_OPT_SET_2
-#define SET3 LLDB_OPT_SET_3
-
-OptionDefinition
-CommandObjectProcessLaunch::CommandOptions::g_option_table[] =
-{
-{ SET1 | SET2 | SET3, false, "stop-at-entry", 's', no_argument,       NULL, 0, eArgTypeNone,    "Stop at the entry point of the program when launching a process."},
-{ SET1              , false, "stdin",         'i', required_argument, NULL, 0, eArgTypePath,    "Redirect stdin for the process to <path>."},
-{ SET1              , false, "stdout",        'o', required_argument, NULL, 0, eArgTypePath,    "Redirect stdout for the process to <path>."},
-{ SET1              , false, "stderr",        'e', required_argument, NULL, 0, eArgTypePath,    "Redirect stderr for the process to <path>."},
-{ SET1 | SET2 | SET3, false, "plugin",        'p', required_argument, NULL, 0, eArgTypePlugin,  "Name of the process plugin you want to use."},
-{        SET2       , false, "tty",           't', optional_argument, NULL, 0, eArgTypePath,    "Start the process in a terminal. If <path> is specified, look for a terminal whose name contains <path>, else start the process in a new terminal."},
-{               SET3, false, "no-stdio",      'n', no_argument,       NULL, 0, eArgTypeNone,    "Do not set up for terminal I/O to go to running process."},
-{ SET1 | SET2 | SET3, false, "working-dir",   'w', required_argument, NULL, 0, eArgTypePath,    "Set the current working directory to <path> when running the inferior."},
-{ 0,                  false, NULL,             0,  0,                 NULL, 0, eArgTypeNone,    NULL }
-};
-
-#undef SET1
-#undef SET2
-#undef SET3
+//#define SET1 LLDB_OPT_SET_1
+//#define SET2 LLDB_OPT_SET_2
+//#define SET3 LLDB_OPT_SET_3
+//
+//OptionDefinition
+//CommandObjectProcessLaunch::CommandOptions::g_option_table[] =
+//{
+//{ SET1 | SET2 | SET3, false, "stop-at-entry", 's', no_argument,       NULL, 0, eArgTypeNone,    "Stop at the entry point of the program when launching a process."},
+//{ SET1              , false, "stdin",         'i', required_argument, NULL, 0, eArgTypePath,    "Redirect stdin for the process to <path>."},
+//{ SET1              , false, "stdout",        'o', required_argument, NULL, 0, eArgTypePath,    "Redirect stdout for the process to <path>."},
+//{ SET1              , false, "stderr",        'e', required_argument, NULL, 0, eArgTypePath,    "Redirect stderr for the process to <path>."},
+//{ SET1 | SET2 | SET3, false, "plugin",        'p', required_argument, NULL, 0, eArgTypePlugin,  "Name of the process plugin you want to use."},
+//{        SET2       , false, "tty",           't', optional_argument, NULL, 0, eArgTypePath,    "Start the process in a terminal. If <path> is specified, look for a terminal whose name contains <path>, else start the process in a new terminal."},
+//{               SET3, false, "no-stdio",      'n', no_argument,       NULL, 0, eArgTypeNone,    "Do not set up for terminal I/O to go to running process."},
+//{ SET1 | SET2 | SET3, false, "working-dir",   'w', required_argument, NULL, 0, eArgTypePath,    "Set the current working directory to <path> when running the inferior."},
+//{ 0,                  false, NULL,             0,  0,                 NULL, 0, eArgTypeNone,    NULL }
+//};
+//
+//#undef SET1
+//#undef SET2
+//#undef SET3
 
 //-------------------------------------------------------------------------
 // CommandObjectProcessAttach

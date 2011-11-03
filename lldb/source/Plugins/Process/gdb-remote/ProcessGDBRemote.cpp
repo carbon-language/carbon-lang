@@ -437,25 +437,42 @@ ProcessGDBRemote::WillLaunchOrAttach ()
 // Process Control
 //----------------------------------------------------------------------
 Error
-ProcessGDBRemote::DoLaunch
-(
-    Module* module,
-    char const *argv[],
-    char const *envp[],
-    uint32_t launch_flags,
-    const char *stdin_path,
-    const char *stdout_path,
-    const char *stderr_path,
-    const char *working_dir
-)
+ProcessGDBRemote::DoLaunch (Module *exe_module, const ProcessLaunchInfo &launch_info)
 {
     Error error;
+
+    uint32_t launch_flags = launch_info.GetFlags().Get();
+    const char *stdin_path = NULL;
+    const char *stdout_path = NULL;
+    const char *stderr_path = NULL;
+    const char *working_dir = launch_info.GetWorkingDirectory();
+
+    const ProcessLaunchInfo::FileAction *file_action;
+    file_action = launch_info.GetFileActionForFD (STDIN_FILENO);
+    if (file_action)
+    {
+        if (file_action->GetAction () == ProcessLaunchInfo::FileAction::eFileActionOpen)
+            stdin_path = file_action->GetPath();
+    }
+    file_action = launch_info.GetFileActionForFD (STDOUT_FILENO);
+    if (file_action)
+    {
+        if (file_action->GetAction () == ProcessLaunchInfo::FileAction::eFileActionOpen)
+            stdout_path = file_action->GetPath();
+    }
+    file_action = launch_info.GetFileActionForFD (STDERR_FILENO);
+    if (file_action)
+    {
+        if (file_action->GetAction () == ProcessLaunchInfo::FileAction::eFileActionOpen)
+            stderr_path = file_action->GetPath();
+    }
+
     //  ::LogSetBitMask (GDBR_LOG_DEFAULT);
     //  ::LogSetOptions (LLDB_LOG_OPTION_THREADSAFE | LLDB_LOG_OPTION_PREPEND_TIMESTAMP | LLDB_LOG_OPTION_PREPEND_PROC_AND_THREAD);
     //  ::LogSetLogFile ("/dev/stdout");
     LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
 
-    ObjectFile * object_file = module->GetObjectFile();
+    ObjectFile * object_file = exe_module->GetObjectFile();
     if (object_file)
     {
         char host_port[128];
@@ -537,18 +554,20 @@ ProcessGDBRemote::DoLaunch
             }
 
             // Send the environment and the program + arguments after we connect
-            if (envp)
+            const Args &environment = launch_info.GetEnvironmentEntries();
+            if (environment.GetArgumentCount())
             {
-                const char *env_entry;
-                for (int i=0; (env_entry = envp[i]); ++i)
+                size_t num_environment_entries = environment.GetArgumentCount();
+                for (size_t i=0; i<num_environment_entries; ++i)
                 {
-                    if (m_gdb_comm.SendEnvironmentPacket(env_entry) != 0)
+                    const char *env_entry = environment.GetArgumentAtIndex(i);
+                    if (env_entry == NULL || m_gdb_comm.SendEnvironmentPacket(env_entry) != 0)
                         break;
                 }
             }
 
             const uint32_t old_packet_timeout = m_gdb_comm.SetPacketTimeout (10);
-            int arg_packet_err = m_gdb_comm.SendArgumentsPacket (argv);
+            int arg_packet_err = m_gdb_comm.SendArgumentsPacket (launch_info.GetArguments().GetConstArgumentVector());
             if (arg_packet_err == 0)
             {
                 std::string error_str;
@@ -597,9 +616,9 @@ ProcessGDBRemote::DoLaunch
     {
         // Set our user ID to an invalid process ID.
         SetID(LLDB_INVALID_PROCESS_ID);
-        error.SetErrorStringWithFormat("failed to get object file from '%s' for arch %s", 
-                                       module->GetFileSpec().GetFilename().AsCString(), 
-                                       module->GetArchitecture().GetArchitectureName());
+        error.SetErrorStringWithFormat ("failed to get object file from '%s' for arch %s", 
+                                        exe_module->GetFileSpec().GetFilename().AsCString(), 
+                                        exe_module->GetArchitecture().GetArchitectureName());
     }
     return error;
 

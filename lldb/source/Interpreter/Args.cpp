@@ -476,6 +476,16 @@ Args::AppendArguments (const Args &rhs)
         AppendArgument(rhs.GetArgumentAtIndex(i));
 }
 
+void
+Args::AppendArguments (const char **argv)
+{
+    if (argv)
+    {
+        for (uint32_t i=0; argv[i]; ++i)
+            AppendArgument(argv[i]);
+    }
+}
+
 const char *
 Args::AppendArgument (const char *arg_cstr, char quote_char)
 {
@@ -560,10 +570,8 @@ Args::SetArguments (int argc, const char **argv)
     m_args.clear();
     m_args_quote_char.clear();
 
-    // Make a copy of the arguments in our internal buffer
-    size_t i;
     // First copy each string
-    for (i=0; i<argc; ++i)
+    for (size_t i=0; i<argc; ++i)
     {
         m_args.push_back (argv[i]);
         if ((argv[i][0] == '\'') || (argv[i][0] == '"') || (argv[i][0] == '`'))
@@ -572,6 +580,30 @@ Args::SetArguments (int argc, const char **argv)
             m_args_quote_char.push_back ('\0');
     }
 
+    UpdateArgvFromArgs();
+}
+
+void
+Args::SetArguments (const char **argv)
+{
+    // m_argv will be rebuilt in UpdateArgvFromArgs() below, so there is
+    // no need to clear it here.
+    m_args.clear();
+    m_args_quote_char.clear();
+    
+    if (argv)
+    {
+        // First copy each string
+        for (size_t i=0; argv[i]; ++i)
+        {
+            m_args.push_back (argv[i]);
+            if ((argv[i][0] == '\'') || (argv[i][0] == '"') || (argv[i][0] == '`'))
+                m_args_quote_char.push_back (argv[i][0]);
+            else
+                m_args_quote_char.push_back ('\0');
+        }
+    }
+    
     UpdateArgvFromArgs();
 }
 

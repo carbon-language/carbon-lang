@@ -197,9 +197,35 @@ ProcessInstanceInfo::DumpAsTableRow (Stream &s, Platform *platform, bool show_ar
 
 
 void
-ProcessInfo::SetArgumentsFromArgs (const Args& args, 
-                                       bool first_arg_is_executable,
-                                       bool first_arg_is_executable_and_argument)
+ProcessInfo::SetArguments (char const **argv,
+                           bool first_arg_is_executable,
+                           bool first_arg_is_executable_and_argument)
+{
+    m_arguments.SetArguments (argv);
+        
+    // Is the first argument the executable?
+    if (first_arg_is_executable)
+    {
+        const char *first_arg = m_arguments.GetArgumentAtIndex (0);
+        if (first_arg)
+        {
+            // Yes the first argument is an executable, set it as the executable
+            // in the launch options. Don't resolve the file path as the path
+            // could be a remote platform path
+            const bool resolve = false;
+            m_executable.SetFile(first_arg, resolve); 
+            
+            // If argument zero is an executable and shouldn't be included
+            // in the arguments, remove it from the front of the arguments
+            if (first_arg_is_executable_and_argument == false)
+                m_arguments.DeleteArgumentAtIndex (0);
+        }
+    }
+}
+void
+ProcessInfo::SetArguments (const Args& args, 
+                           bool first_arg_is_executable,
+                           bool first_arg_is_executable_and_argument)
 {
     // Copy all arguments
     m_arguments = args;
@@ -207,7 +233,7 @@ ProcessInfo::SetArgumentsFromArgs (const Args& args,
     // Is the first argument the executable?
     if (first_arg_is_executable)
     {
-        const char *first_arg = args.GetArgumentAtIndex (0);
+        const char *first_arg = m_arguments.GetArgumentAtIndex (0);
         if (first_arg)
         {
             // Yes the first argument is an executable, set it as the executable
@@ -415,6 +441,10 @@ ProcessLaunchCommandOptions::SetOptionValue (uint32_t option_idx, const char *op
             launch_info.GetFlags().Set (eLaunchFlagDisableASLR); 
             break;
             
+        case 'c':   
+            launch_info.GetFlags().Set (eLaunchFlagLaunchInShell); 
+            break;
+            
         case 'v':
             launch_info.GetEnvironmentEntries().AppendArgument(option_arg);
             break;
@@ -445,6 +475,7 @@ ProcessLaunchCommandOptions::g_option_table[] =
 
 { LLDB_OPT_SET_3  , false, "no-stdio",      'n', no_argument,       NULL, 0, eArgTypeNone,    "Do not set up for terminal I/O to go to running process."},
 
+{ LLDB_OPT_SET_4  , false, "shell",         'c', no_argument,       NULL, 0, eArgTypeNone,    "Run the process in a shell (not supported on all platforms)."},
 { 0               , false, NULL,             0,  0,                 NULL, 0, eArgTypeNone,    NULL }
 };
 
@@ -2037,16 +2068,7 @@ Process::WaitForProcessStopPrivate (const TimeValue *timeout, EventSP &event_sp)
 }
 
 Error
-Process::Launch
-(
-    char const *argv[],
-    char const *envp[],
-    uint32_t launch_flags,
-    const char *stdin_path,
-    const char *stdout_path,
-    const char *stderr_path,
-    const char *working_directory
-)
+Process::Launch (const ProcessLaunchInfo &launch_info)
 {
     Error error;
     m_abi_sp.reset();
@@ -2070,40 +2092,9 @@ Process::Launch
             if (error.Success())
             {
                 SetPublicState (eStateLaunching);
-                // The args coming in should not contain the application name, the
-                // lldb_private::Process class will add this in case the executable
-                // gets resolved to a different file than was given on the command
-                // line (like when an applicaiton bundle is specified and will
-                // resolve to the contained exectuable file, or the file given was
-                // a symlink or other file system link that resolves to a different
-                // file).
-
-                // Get the resolved exectuable path
-
-                // Make a new argument vector
-                std::vector<const char *> exec_path_plus_argv;
-                // Append the resolved executable path
-                exec_path_plus_argv.push_back (platform_exec_file_path);
-
-                // Push all args if there are any
-                if (argv)
-                {
-                    for (int i = 0; argv[i]; ++i)
-                        exec_path_plus_argv.push_back(argv[i]);
-                }
-
-                // Push a NULL to terminate the args.
-                exec_path_plus_argv.push_back(NULL);
 
                 // Now launch using these arguments.
-                error = DoLaunch (exe_module, 
-                                  exec_path_plus_argv.empty() ? NULL : &exec_path_plus_argv.front(), 
-                                  envp, 
-                                  launch_flags,
-                                  stdin_path, 
-                                  stdout_path, 
-                                  stderr_path,
-                                  working_directory);
+                error = DoLaunch (exe_module, launch_info);
 
                 if (error.Fail())
                 {

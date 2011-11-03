@@ -230,14 +230,8 @@ ProcessKDP::DoConnectRemote (const char *remote_url)
 // Process Control
 //----------------------------------------------------------------------
 Error
-ProcessKDP::DoLaunch (Module* module,
-                      char const *argv[],
-                      char const *envp[],
-                      uint32_t launch_flags,
-                      const char *stdin_path,
-                      const char *stdout_path,
-                      const char *stderr_path,
-                      const char *working_dir)
+ProcessKDP::DoLaunch (Module *exe_module, 
+                      const ProcessLaunchInfo &launch_info)
 {
     Error error;
     error.SetErrorString ("launching not supported in kdp-remote plug-in");

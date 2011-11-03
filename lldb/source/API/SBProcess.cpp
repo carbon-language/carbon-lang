@@ -126,7 +126,21 @@ SBProcess::RemoteLaunch (char const **argv,
         Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         if (m_opaque_sp->GetState() == eStateConnected)
         {
-            error.SetError (m_opaque_sp->Launch (argv, envp, launch_flags, stdin_path, stdout_path, stderr_path, working_directory));            
+            if (stop_at_entry)
+                launch_flags |= eLaunchFlagStopAtEntry;
+            ProcessLaunchInfo launch_info (stdin_path, 
+                                           stdout_path,
+                                           stderr_path,
+                                           working_directory,
+                                           launch_flags);
+            Module *exe_module = m_opaque_sp->GetTarget().GetExecutableModulePointer();
+            if (exe_module)
+                launch_info.SetExecutableFile(exe_module->GetFileSpec(), true);
+            if (argv)
+                launch_info.GetArguments().AppendArguments (argv);
+            if (envp)
+                launch_info.GetEnvironmentEntries ().SetArguments (envp);
+            error.SetError (m_opaque_sp->Launch (launch_info));
         }
         else
         {
