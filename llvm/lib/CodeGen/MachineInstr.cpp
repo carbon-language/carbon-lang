@@ -1232,6 +1232,19 @@ bool MachineInstr::hasVolatileMemoryRef() const {
   return false;
 }
 
+/// pointsToRuntimeConstantMemory - Return true if this value points to data
+/// which does never changes once the program starts running
+static bool pointsToRuntimeConstantMemory(const Value *V) {
+  if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
+    StringRef Name = GV->getName();
+    // These special values are known to be constant at runtime
+    // TODO: a new linkage type for these would be far better than this check
+    if (Name.startswith("\01L_OBJC_SELECTOR_REFERENCES_"))
+      return true;
+  }
+  return false;
+}
+
 /// isInvariantLoad - Return true if this instruction is loading from a
 /// location whose value is invariant across the function.  For example,
 /// loading a value from the constant pool or from the argument area
@@ -1259,6 +1272,8 @@ bool MachineInstr::isInvariantLoad(AliasAnalysis *AA) const {
       if (const PseudoSourceValue *PSV = dyn_cast<PseudoSourceValue>(V))
         if (PSV->isConstant(MFI))
           continue;
+      if (pointsToRuntimeConstantMemory(V))
+        continue;
       // If we have an AliasAnalysis, ask it whether the memory is constant.
       if (AA && AA->pointsToConstantMemory(
                       AliasAnalysis::Location(V, (*I)->getSize(),
