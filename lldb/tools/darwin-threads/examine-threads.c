@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <mach/mach.h>
+#include <mach/task_info.h>
 #include <time.h>
 #include <sys/sysctl.h>
 #include <ctype.h>
@@ -308,6 +309,17 @@ main (int argc, char **argv)
       printf ("Error - unable to task_for_pid()\n");
       exit (1);
     }
+
+  struct task_basic_info info;
+  unsigned int info_count = TASK_BASIC_INFO_COUNT;
+
+  kr = task_info (task, TASK_BASIC_INFO, (task_info_t) &info, &info_count);
+  if (kr != KERN_SUCCESS)
+    {
+      printf ("Error - unable to call task_info.\n");
+      exit (1);
+    }
+  printf ("Task suspend count: %d.\n", info.suspend_count);
 
   struct timespec *rqtp = (struct timespec *) malloc (sizeof (struct timespec));
   rqtp->tv_sec = 0;
