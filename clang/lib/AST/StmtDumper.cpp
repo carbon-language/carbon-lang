@@ -425,7 +425,7 @@ void StmtDumper::VisitPredefinedExpr(PredefinedExpr *Node) {
 
 void StmtDumper::VisitCharacterLiteral(CharacterLiteral *Node) {
   DumpExpr(Node);
-  OS << Node->getValue();
+  OS << " " << Node->getValue();
 }
 
 void StmtDumper::VisitIntegerLiteral(IntegerLiteral *Node) {
