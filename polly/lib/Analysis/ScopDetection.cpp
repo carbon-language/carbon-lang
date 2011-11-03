@@ -261,6 +261,9 @@ public:
   }
 
   SCEVType::TYPE visitUnknown(const SCEVUnknown* Expr) {
+    if (Instruction *I = dyn_cast<Instruction>(Expr->getValue()))
+      if (R->contains(I))
+        return SCEVType::INVALID;
     return SCEVType::PARAM;
   }
 };
