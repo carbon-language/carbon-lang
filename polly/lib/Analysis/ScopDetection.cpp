@@ -396,8 +396,8 @@ bool ScopDetection::isValidCFG(BasicBlock &BB, DetectionContext &Context) const
     const SCEV *ScevLHS = SE->getSCEV(ICmp->getOperand(0));
     const SCEV *ScevRHS = SE->getSCEV(ICmp->getOperand(1));
 
-    bool affineLHS = isValidAffineFunction(ScevLHS, RefRegion);
-    bool affineRHS = isValidAffineFunction(ScevRHS, RefRegion);
+    bool affineLHS = SCEVValidator::isValid(&Context.CurRegion, ScevLHS, *SE);
+    bool affineRHS = SCEVValidator::isValid(&Context.CurRegion, ScevRHS, *SE);
 
     if (!affineLHS || !affineRHS)
       INVALID(AffFunc, "Non affine branch in BB: " + BB.getNameStr());
