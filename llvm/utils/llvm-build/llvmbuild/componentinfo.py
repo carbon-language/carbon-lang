@@ -37,6 +37,15 @@ class ComponentInfo(object):
         # under.
         self.parent = parent
 
+        # The parent instance, once loaded.
+        self.parent_instance = None
+        self.children = []
+
+    def set_parent_instance(self, parent):
+        assert parent.name == self.parent, "Unexpected parent!"
+        self.parent_instance = parent
+        self.parent_instance.children.append(self)
+
     def get_component_references(self):
         """get_component_references() -> iter
 

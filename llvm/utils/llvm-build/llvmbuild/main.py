@@ -54,6 +54,12 @@ class LLVMProjectInfo(object):
                         ci.name, ci.subpath, existing.subpath))
             self.component_info_map[ci.name] = ci
 
+        # Add the root component, which does not go in any list.
+        if '$ROOT' in self.component_info_map:
+            fatal("project is not allowed to define $ROOT component")
+        self.component_info_map['$ROOT'] = componentinfo.GroupComponentInfo(
+            '/', '$ROOT', None)
+
         # Topologically order the component information according to their
         # component references.
         def visit_component_info(ci, current_stack, current_set):
@@ -73,6 +79,13 @@ class LLVMProjectInfo(object):
             # Otherwise, mark the component info as visited and traverse.
             components_to_visit.remove(ci)
 
+            # Validate the parent reference, which we treat specially.
+            parent = self.component_info_map.get(ci.parent)
+            if parent is None:
+                fatal("component %r has invalid reference %r (via %r)" % (
+                        ci.name, ci.parent, 'parent'))
+            ci.set_parent_instance(parent)
+
             for relation,referent_name in ci.get_component_references():
                 # Validate that the reference is ok.
                 referent = self.component_info_map.get(referent_name)
@@ -89,6 +102,11 @@ class LLVMProjectInfo(object):
 
             # Finally, add the component info to the ordered list.
             self.ordered_component_infos.append(ci)
+
+        # FIXME: We aren't actually correctly checking for cycles along the
+        # parent edges. Haven't decided how I want to handle this -- I thought
+        # about only checking cycles by relation type. If we do that, it falls
+        # out easily. If we don't, we should special case the check.
 
         self.ordered_component_infos = []
         components_to_visit = set(component_infos)
