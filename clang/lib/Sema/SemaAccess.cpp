@@ -19,6 +19,7 @@
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclFriend.h"
+#include "clang/AST/DeclObjC.h"
 #include "clang/AST/DependentDiagnostic.h"
 #include "clang/AST/ExprCXX.h"
 
@@ -1667,7 +1668,46 @@ bool Sema::IsSimplyAccessible(NamedDecl *Decl, DeclContext *Ctx) {
     return ::IsAccessible(*this, EC, Entity) != ::AR_inaccessible;
   }
   
-  // FIXME: Check access for Objective-C ivars.
+  if (ObjCIvarDecl *Ivar = dyn_cast<ObjCIvarDecl>(Decl)) {
+    // @public and @package ivars are always accessible.
+    if (Ivar->getCanonicalAccessControl() == ObjCIvarDecl::Public ||
+        Ivar->getCanonicalAccessControl() == ObjCIvarDecl::Package)
+      return true;
+    
+    
+    
+    // If we are inside a class or category implementation, determine the
+    // interface we're in.
+    ObjCInterfaceDecl *ClassOfMethodDecl = 0;
+    if (ObjCMethodDecl *MD = getCurMethodDecl())
+      ClassOfMethodDecl =  MD->getClassInterface();
+    else if (FunctionDecl *FD = getCurFunctionDecl()) {
+      if (ObjCImplDecl *Impl 
+            = dyn_cast<ObjCImplDecl>(FD->getLexicalDeclContext())) {
+        if (ObjCImplementationDecl *IMPD
+              = dyn_cast<ObjCImplementationDecl>(Impl))
+          ClassOfMethodDecl = IMPD->getClassInterface();
+        else if (ObjCCategoryImplDecl* CatImplClass
+                   = dyn_cast<ObjCCategoryImplDecl>(Impl))
+          ClassOfMethodDecl = CatImplClass->getClassInterface();
+      }
+    }
+    
+    // If we're not in an interface, this ivar is inaccessible.
+    if (!ClassOfMethodDecl)
+      return false;
+    
+    // If we're inside the same interface that owns the ivar, we're fine.
+    if (ClassOfMethodDecl == Ivar->getContainingInterface())
+      return true;
+    
+    // If the ivar is private, it's inaccessible.
+    if (Ivar->getCanonicalAccessControl() == ObjCIvarDecl::Private)
+      return false;
+    
+    return Ivar->getContainingInterface()->isSuperClassOf(ClassOfMethodDecl);
+  }
+  
   return true;
 }
 
