@@ -118,21 +118,24 @@ struct SCEVValidator : public SCEVVisitor<SCEVValidator, SCEVType::TYPE> {
 private:
   const Region *R;
   ScalarEvolution &SE;
-  const Value **BaseAddress;
+  Value **BaseAddress;
 
 public:
   static bool isValid(const Region *R, const SCEV *Scev,
                       ScalarEvolution &SE,
-                      const Value **BaseAddress = NULL) {
+                      Value **BaseAddress = NULL) {
     if (isa<SCEVCouldNotCompute>(Scev))
       return false;
+
+    if (BaseAddress)
+      *BaseAddress = NULL;
 
     SCEVValidator Validator(R, SE, BaseAddress);
     return Validator.visit(Scev) != SCEVType::INVALID;
   }
 
   SCEVValidator(const Region *R, ScalarEvolution &SE,
-                const Value **BaseAddress) : R(R), SE(SE),
+                Value **BaseAddress) : R(R), SE(SE),
     BaseAddress(BaseAddress) {};
 
   SCEVType::TYPE visitConstant(const SCEVConstant *Constant) {
@@ -261,6 +264,19 @@ public:
   }
 
   SCEVType::TYPE visitUnknown(const SCEVUnknown* Expr) {
+
+    Value *V = Expr->getValue();
+
+    if (isa<UndefValue>(V))
+        return SCEVType::INVALID;
+
+    if (BaseAddress) {
+      if (*BaseAddress)
+        return SCEVType::INVALID;
+      else
+        *BaseAddress = V;
+    }
+
     if (Instruction *I = dyn_cast<Instruction>(Expr->getValue()))
       if (R->contains(I))
         return SCEVType::INVALID;
@@ -438,8 +454,15 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
   Value *Ptr = getPointerOperand(Inst), *BasePtr;
   const SCEV *AccessFunction = SE->getSCEV(Ptr);
 
-  if (!isValidAffineFunction(AccessFunction, Context.CurRegion, &BasePtr))
+  if (!SCEVValidator::isValid(&Context.CurRegion, AccessFunction, *SE,
+                                 &BasePtr))
     INVALID(AffFunc, "Bad memory address " << *AccessFunction);
+
+  // FIXME: Also check with isValidAffineFunction, as for the moment it is
+  //        protecting us to fail because of not supported features in TempScop.
+  //        As soon as TempScop is fixed, this needs to be removed.
+  if (!isValidAffineFunction(AccessFunction, Context.CurRegion, &BasePtr))
+    INVALID(AffFunc, "Access not supported in TempScop" << *AccessFunction);
 
   // FIXME: Alias Analysis thinks IntToPtrInst aliases with alloca instructions
   // created by IndependentBlocks Pass.
