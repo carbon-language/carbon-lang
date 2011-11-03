@@ -1058,10 +1058,11 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
       // If this structure was expanded into multiple arguments then
       // we need to create a temporary and reconstruct it from the
       // arguments.
-      llvm::Value *Temp = CreateMemTemp(Ty, Arg->getName() + ".addr");
-      llvm::Function::arg_iterator End =
-        ExpandTypeFromArgs(Ty, MakeAddrLValue(Temp, Ty), AI);
-      EmitParmDecl(*Arg, Temp, ArgNo);
+      llvm::AllocaInst *Alloca = CreateMemTemp(Ty);
+      Alloca->setAlignment(getContext().getDeclAlign(Arg).getQuantity());
+      LValue LV = MakeAddrLValue(Alloca, Ty, Alloca->getAlignment());
+      llvm::Function::arg_iterator End = ExpandTypeFromArgs(Ty, LV, AI);
+      EmitParmDecl(*Arg, Alloca, ArgNo);
 
       // Name the arguments used in expansion and increment AI.
       unsigned Index = 0;

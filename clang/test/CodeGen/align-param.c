@@ -7,3 +7,12 @@ int test (long long x) {
 }
 // CHECK: define i32 @test
 // CHECK: alloca i64, align 8
+
+
+// Make sure we honor the aligned attribute.
+struct X { int x,y,z,a; };
+int test2(struct X x __attribute((aligned(16)))) {
+  return x.z;
+}
+// CHECK: define i32 @test2
+// CHECK: alloca %struct.X, align 16
