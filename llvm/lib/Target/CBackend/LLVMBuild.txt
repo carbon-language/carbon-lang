@@ -1,0 +1,31 @@
+;===- ./lib/Target/CBackend/LLVMBuild.txt ----------------------*- Conf -*--===;
+;
+;                     The LLVM Compiler Infrastructure
+;
+; This file is distributed under the University of Illinois Open Source
+; License. See LICENSE.TXT for details.
+;
+;===------------------------------------------------------------------------===;
+;
+; This is an LLVMBuild description file for the components in this subdirectory.
+;
+; For more information on the LLVMBuild system, please see:
+;
+;   http://llvm.org/docs/LLVMBuild.html
+;
+;===------------------------------------------------------------------------===;
+
+[component_0]
+type = LibraryGroup
+name = CBackend
+parent = Target
+add_to_library_groups = all-targets
+
+[component_1]
+type = Library
+name = CBackendCodeGen
+parent = CBackend
+library_name = CBackend
+required_libraries = Analysis CBackendInfo CodeGen Core MC Scalar Support Target TransformUtils
+add_to_library_groups = CBackend
+
