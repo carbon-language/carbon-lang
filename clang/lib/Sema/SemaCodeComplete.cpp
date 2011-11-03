@@ -1381,6 +1381,7 @@ static PrintingPolicy getCompletionPrintingPolicy(Sema &S) {
   PrintingPolicy Policy = S.getPrintingPolicy();
   Policy.AnonymousTagLocations = false;
   Policy.SuppressStrongLifetime = true;
+  Policy.SuppressUnwrittenScope = true;
   return Policy;
 }
 

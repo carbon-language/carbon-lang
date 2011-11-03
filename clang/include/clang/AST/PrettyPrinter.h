@@ -36,7 +36,7 @@ struct PrintingPolicy {
   PrintingPolicy(const LangOptions &LO)
     : Indentation(2), LangOpts(LO), SuppressSpecifiers(false),
       SuppressTagKeyword(false), SuppressTag(false), SuppressScope(false),
-      SuppressInitializers(false),
+      SuppressUnwrittenScope(false), SuppressInitializers(false),
       Dump(false), ConstantArraySizeAsWritten(false),
       AnonymousTagLocations(true), SuppressStrongLifetime(false),
       Bool(LO.Bool) { }
@@ -86,6 +86,10 @@ struct PrintingPolicy {
   /// \brief Suppresses printing of scope specifiers.
   bool SuppressScope : 1;
 
+  /// \brief Suppress printing parts of scope specifiers that don't need
+  /// to be written, e.g., for inline or anonymous namespaces.
+  bool SuppressUnwrittenScope : 1;
+  
   /// \brief Suppress printing of variable initializers.
   ///
   /// This flag is used when printing the loop variable in a for-range

@@ -229,6 +229,9 @@ NestedNameSpecifier::print(raw_ostream &OS,
     break;
 
   case Namespace:
+    if (getAsNamespace()->isAnonymousNamespace())
+      return;
+      
     OS << getAsNamespace()->getName();
     break;
 

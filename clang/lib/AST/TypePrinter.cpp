@@ -600,6 +600,9 @@ void TypePrinter::AppendScope(DeclContext *DC, std::string &Buffer) {
   unsigned OldSize = Buffer.size();
 
   if (NamespaceDecl *NS = dyn_cast<NamespaceDecl>(DC)) {
+    if (Policy.SuppressUnwrittenScope && 
+        (NS->isAnonymousNamespace() || NS->isInline()))
+      return;
     if (NS->getIdentifier())
       Buffer += NS->getNameAsString();
     else
@@ -620,6 +623,8 @@ void TypePrinter::AppendScope(DeclContext *DC, std::string &Buffer) {
       Buffer += Typedef->getIdentifier()->getName();
     else if (Tag->getIdentifier())
       Buffer += Tag->getIdentifier()->getName();
+    else
+      return;
   }
 
   if (Buffer.size() != OldSize)
