@@ -318,11 +318,7 @@ void PTXAsmPrinter::EmitVariableDeclaration(const GlobalVariable *gv) {
   if (PointerType::classof(gv->getType())) {
     PointerType* pointerTy = dyn_cast<PointerType>(gv->getType());
     Type* elementTy = pointerTy->getElementType();
-
-    decl += ".b8 ";
-    decl += gvsym->getName();
-    decl += "[";
-
+        
     if (elementTy->isArrayTy())
     {
       assert(elementTy->isArrayTy() && "Only pointers to arrays are supported");
@@ -343,15 +339,24 @@ void PTXAsmPrinter::EmitVariableDeclaration(const GlobalVariable *gv) {
       // FIXME: isPrimitiveType() == false for i16?
       assert(elementTy->isSingleValueType() &&
               "Non-primitive types are not handled");
+            
+      // Find the size of the element in bits
+      unsigned elementSize = elementTy->getPrimitiveSizeInBits();
 
-      // Compute the size of the array, in bytes.
-      uint64_t arraySize = (elementTy->getPrimitiveSizeInBits() >> 3)
-                        * numElements;
-
-      decl += utostr(arraySize);
+      decl += ".b";
+      decl += utostr(elementSize);
+      decl += " ";
+      decl += gvsym->getName();
+      decl += "[";
+      decl += utostr(numElements);
+      decl += "]";
     }
-
-    decl += "]";
+    else
+    {
+      decl += ".b8 ";
+      decl += gvsym->getName();
+      decl += "[]";
+    }
 
     // handle string constants (assume ConstantArray means string)
 

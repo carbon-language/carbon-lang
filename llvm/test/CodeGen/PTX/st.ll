@@ -1,48 +1,48 @@
 ; RUN: llc < %s -march=ptx32 | FileCheck %s
 
-;CHECK: .extern .global .b8 array_i16[20];
+;CHECK: .extern .global .b16 array_i16[10];
 @array_i16 = external global [10 x i16]
 
-;CHECK: .extern .const .b8 array_constant_i16[20];
+;CHECK: .extern .const .b16 array_constant_i16[10];
 @array_constant_i16 = external addrspace(1) constant [10 x i16]
 
-;CHECK: .extern .shared .b8 array_shared_i16[20];
+;CHECK: .extern .shared .b16 array_shared_i16[10];
 @array_shared_i16 = external addrspace(4) global [10 x i16]
 
-;CHECK: .extern .global .b8 array_i32[40];
+;CHECK: .extern .global .b32 array_i32[10];
 @array_i32 = external global [10 x i32]
 
-;CHECK: .extern .const .b8 array_constant_i32[40];
+;CHECK: .extern .const .b32 array_constant_i32[10];
 @array_constant_i32 = external addrspace(1) constant [10 x i32]
 
-;CHECK: .extern .shared .b8 array_shared_i32[40];
+;CHECK: .extern .shared .b32 array_shared_i32[10];
 @array_shared_i32 = external addrspace(4) global [10 x i32]
 
-;CHECK: .extern .global .b8 array_i64[80];
+;CHECK: .extern .global .b64 array_i64[10];
 @array_i64 = external global [10 x i64]
 
-;CHECK: .extern .const .b8 array_constant_i64[80];
+;CHECK: .extern .const .b64 array_constant_i64[10];
 @array_constant_i64 = external addrspace(1) constant [10 x i64]
 
-;CHECK: .extern .shared .b8 array_shared_i64[80];
+;CHECK: .extern .shared .b64 array_shared_i64[10];
 @array_shared_i64 = external addrspace(4) global [10 x i64]
 
-;CHECK: .extern .global .b8 array_float[40];
+;CHECK: .extern .global .b32 array_float[10];
 @array_float = external global [10 x float]
 
-;CHECK: .extern .const .b8 array_constant_float[40];
+;CHECK: .extern .const .b32 array_constant_float[10];
 @array_constant_float = external addrspace(1) constant [10 x float]
 
-;CHECK: .extern .shared .b8 array_shared_float[40];
+;CHECK: .extern .shared .b32 array_shared_float[10];
 @array_shared_float = external addrspace(4) global [10 x float]
 
-;CHECK: .extern .global .b8 array_double[80];
+;CHECK: .extern .global .b64 array_double[10];
 @array_double = external global [10 x double]
 
-;CHECK: .extern .const .b8 array_constant_double[80];
+;CHECK: .extern .const .b64 array_constant_double[10];
 @array_constant_double = external addrspace(1) constant [10 x double]
 
-;CHECK: .extern .shared .b8 array_shared_double[80];
+;CHECK: .extern .shared .b64 array_shared_double[10];
 @array_shared_double = external addrspace(4) global [10 x double]
 
 
