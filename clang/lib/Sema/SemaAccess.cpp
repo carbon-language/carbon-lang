@@ -1653,7 +1653,7 @@ void Sema::CheckLookupAccess(const LookupResult &R) {
 /// \return true if the Decl is accessible from the Class, false otherwise.
 bool Sema::IsSimplyAccessible(NamedDecl *Decl, DeclContext *Ctx) {
   if (CXXRecordDecl *Class = dyn_cast<CXXRecordDecl>(Ctx)) {
-    if (!Class || !Decl->isCXXClassMember())
+    if (!Decl->isCXXClassMember())
       return true;
 
     QualType qType = Class->getTypeForDecl()->getCanonicalTypeInternal();
