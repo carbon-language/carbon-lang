@@ -1,0 +1,62 @@
+=pod
+
+=head1 NAME
+
+llvm-build - LLVM Project Build Utility
+
+=head1 SYNOPSIS
+
+B<llvm-build> [I<options>]
+
+=head1 DESCRIPTION
+
+B<llvm-build> is a tool for working with LLVM projects that use the LLVMBuild
+system for describing their components.
+
+At heart, B<llvm-build> is responsible for loading, verifying, and manipulating
+the project's component data. The tool is primarily designed for use in
+implementing build systems and tools which need access to the project structure
+information.
+
+=head1 OPTIONS
+
+=over
+
+=item B<-h>, B<--help>
+
+Print the builtin program help.
+
+=item B<--source-root>=I<PATH>
+
+If given, load the project at the given source root path. If this option is not
+given, the location of the project sources will be inferred from the location of
+the B<llvm-build> script itself.
+
+=item B<--print-tree>
+
+Print the component tree for the project.
+
+=item B<--write-llvmbuild>
+
+Write out new I<LLVMBuild.txt> files based on the loaded components. This is
+useful for auto-upgrading the schema of the files.
+
+=item B<--llvmbuild-source-root>=I<PATH>
+
+If given, expect the I<LLVMBuild> files for the project to be rooted at the
+given path, instead of inside the source tree itself. This option is primarily
+designed for use in conjunction with B<--write-llvmbuild> to test changes to
+I<LLVMBuild> schema.
+
+=back
+
+=head1 EXIT STATUS
+
+B<llvm-build> exits with 0 if operation was successful. Otherwise, it will exist
+with a non-zero value.
+
+=head1 AUTHOR
+
+Maintained by the LLVM Team (L<http://llvm.org/>).
+
+=cut

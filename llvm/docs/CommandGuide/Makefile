@@ -49,7 +49,7 @@ MAN  := $(patsubst $(SRC_DOC_DIR)%.pod, $(DST_MAN_DIR)%.1, $(POD))
 PS   := $(patsubst $(SRC_DOC_DIR)%.pod, $(DST_PS_DIR)%.ps, $(POD))
 
 # The set of man pages we will not install
-NO_INSTALL_MANS = $(DST_MAN_DIR)FileCheck.1
+NO_INSTALL_MANS = $(DST_MAN_DIR)FileCheck.1 $(DST_MAN_DIR)llvm-build.1
 
 # The set of man pages that we will install
 INSTALL_MANS = $(filter-out $(NO_INSTALL_MANS), $(MAN))
