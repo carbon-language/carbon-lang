@@ -54,11 +54,12 @@ class LLVMProjectInfo(object):
                         ci.name, ci.subpath, existing.subpath))
             self.component_info_map[ci.name] = ci
 
-        # Add the root component, which does not go in any list.
+        # Add the root component.
         if '$ROOT' in self.component_info_map:
             fatal("project is not allowed to define $ROOT component")
         self.component_info_map['$ROOT'] = componentinfo.GroupComponentInfo(
             '/', '$ROOT', None)
+        self.component_infos.append(self.component_info_map['$ROOT'])
 
         # Topologically order the component information according to their
         # component references.
@@ -80,11 +81,12 @@ class LLVMProjectInfo(object):
             components_to_visit.remove(ci)
 
             # Validate the parent reference, which we treat specially.
-            parent = self.component_info_map.get(ci.parent)
-            if parent is None:
-                fatal("component %r has invalid reference %r (via %r)" % (
-                        ci.name, ci.parent, 'parent'))
-            ci.set_parent_instance(parent)
+            if ci.parent is not None:
+                parent = self.component_info_map.get(ci.parent)
+                if parent is None:
+                    fatal("component %r has invalid reference %r (via %r)" % (
+                            ci.name, ci.parent, 'parent'))
+                ci.set_parent_instance(parent)
 
             for relation,referent_name in ci.get_component_references():
                 # Validate that the reference is ok.
@@ -113,12 +115,26 @@ class LLVMProjectInfo(object):
         while components_to_visit:
             visit_component_info(iter(components_to_visit).next(), [], set())
 
+        # Canonicalize children lists.
+        for c in self.ordered_component_infos:
+            c.children.sort(key = lambda c: c.name)
+
+    def print_tree(self):
+        def visit(node, depth = 0):
+            print '%s%-40s (%s)' % ('  '*depth, node.name, node.type_name)
+            for c in node.children:
+                visit(c, depth + 1)
+        visit(self.component_info_map['$ROOT'])
+
 def main():
     from optparse import OptionParser, OptionGroup
     parser = OptionParser("usage: %prog [options]")
     parser.add_option("", "--source-root", dest="source_root", metavar="PATH",
                       help="Path to the LLVM source (inferred if not given)",
                       action="store", default=None)
+    parser.add_option("", "--print-tree", dest="print_tree",
+                      help="Print out the project component tree [%default]",
+                      action="store_true", default=False)
     parser.add_option(
         "", "--llvmbuild-source-root", dest="llvmbuild_source_root",
         help="If given, an alternate path to search for LLVMBuild.txt files",
@@ -144,6 +160,10 @@ def main():
     llvmbuild_source_root = opts.llvmbuild_source_root or source_root
     project_info = LLVMProjectInfo.load_from_path(
         source_root, llvmbuild_source_root)
+
+    # Print the component tree, if requested.
+    if opts.print_tree:
+        project_info.print_tree()
 
 if __name__=='__main__':
     main()
