@@ -10050,7 +10050,7 @@ Decl *Sema::ActOnFriendFunctionDecl(Scope *S, Declarator &D,
              diag::err_friend_is_member);
 
     DCScope = getScopeForDeclContext(S, DC);
-
+    
     // C++ [class.friend]p6:
     //   A function can be defined in a friend declaration of a class if and 
     //   only if the class is a non-local class (9.8), the function name is
@@ -10142,6 +10142,15 @@ Decl *Sema::ActOnFriendFunctionDecl(Scope *S, Declarator &D,
     }
   }
 
+  // FIXME: This is an egregious hack to cope with cases where the scope stack
+  // does not contain the declaration context, i.e., in an out-of-line 
+  // definition of a class.
+  Scope FakeDCScope(S, Scope::DeclScope, Diags);
+  if (!DCScope) {
+    FakeDCScope.setEntity(DC);
+    DCScope = &FakeDCScope;
+  }
+  
   bool AddToScope = true;
   NamedDecl *ND = ActOnFunctionDeclarator(DCScope, D, DC, TInfo, Previous,
                                           move(TemplateParams), AddToScope);
