@@ -555,6 +555,8 @@ class CXXRecordDecl : public RecordDecl {
   void markedVirtualFunctionPure();
   friend void FunctionDecl::setPure(bool);
   
+  friend class ASTNodeImporter;
+  
 protected:
   CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,
                 SourceLocation StartLoc, SourceLocation IdLoc,

@@ -25,9 +25,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include <deque>
 
-using namespace clang;
-
-namespace {
+namespace clang {
   class ASTNodeImporter : public TypeVisitor<ASTNodeImporter, QualType>,
                           public DeclVisitor<ASTNodeImporter, Decl *>,
                           public StmtVisitor<ASTNodeImporter, Stmt *> {
@@ -154,6 +152,7 @@ namespace {
     Expr *VisitCStyleCastExpr(CStyleCastExpr *E);
   };
 }
+using namespace clang;
 
 //----------------------------------------------------------------------------
 // Structural Equivalence
@@ -1801,6 +1800,47 @@ bool ASTNodeImporter::ImportDefinition(RecordDecl *From, RecordDecl *To,
   // Add base classes.
   if (CXXRecordDecl *ToCXX = dyn_cast<CXXRecordDecl>(To)) {
     CXXRecordDecl *FromCXX = cast<CXXRecordDecl>(From);
+
+    struct CXXRecordDecl::DefinitionData &ToData = ToCXX->data();
+    struct CXXRecordDecl::DefinitionData &FromData = FromCXX->data();
+    ToData.UserDeclaredConstructor = FromData.UserDeclaredConstructor;
+    ToData.UserDeclaredCopyConstructor = FromData.UserDeclaredCopyConstructor;
+    ToData.UserDeclaredMoveConstructor = FromData.UserDeclaredMoveConstructor;
+    ToData.UserDeclaredCopyAssignment = FromData.UserDeclaredCopyAssignment;
+    ToData.UserDeclaredMoveAssignment = FromData.UserDeclaredMoveAssignment;
+    ToData.UserDeclaredDestructor = FromData.UserDeclaredDestructor;
+    ToData.Aggregate = FromData.Aggregate;
+    ToData.PlainOldData = FromData.PlainOldData;
+    ToData.Empty = FromData.Empty;
+    ToData.Polymorphic = FromData.Polymorphic;
+    ToData.Abstract = FromData.Abstract;
+    ToData.IsStandardLayout = FromData.IsStandardLayout;
+    ToData.HasNoNonEmptyBases = FromData.HasNoNonEmptyBases;
+    ToData.HasPrivateFields = FromData.HasPrivateFields;
+    ToData.HasProtectedFields = FromData.HasProtectedFields;
+    ToData.HasPublicFields = FromData.HasPublicFields;
+    ToData.HasMutableFields = FromData.HasMutableFields;
+    ToData.HasTrivialDefaultConstructor = FromData.HasTrivialDefaultConstructor;
+    ToData.HasConstexprNonCopyMoveConstructor
+      = FromData.HasConstexprNonCopyMoveConstructor;
+    ToData.HasTrivialCopyConstructor = FromData.HasTrivialCopyConstructor;
+    ToData.HasTrivialMoveConstructor = FromData.HasTrivialMoveConstructor;
+    ToData.HasTrivialCopyAssignment = FromData.HasTrivialCopyAssignment;
+    ToData.HasTrivialMoveAssignment = FromData.HasTrivialMoveAssignment;
+    ToData.HasTrivialDestructor = FromData.HasTrivialDestructor;
+    ToData.HasNonLiteralTypeFieldsOrBases
+      = FromData.HasNonLiteralTypeFieldsOrBases;
+    ToData.UserProvidedDefaultConstructor
+      = FromData.UserProvidedDefaultConstructor;
+    ToData.DeclaredDefaultConstructor = FromData.DeclaredDefaultConstructor;
+    ToData.DeclaredCopyConstructor = FromData.DeclaredCopyConstructor;
+    ToData.DeclaredMoveConstructor = FromData.DeclaredMoveConstructor;
+    ToData.DeclaredCopyAssignment = FromData.DeclaredCopyAssignment;
+    ToData.DeclaredMoveAssignment = FromData.DeclaredMoveAssignment;
+    ToData.DeclaredDestructor = FromData.DeclaredDestructor;
+    ToData.FailedImplicitMoveConstructor
+      = FromData.FailedImplicitMoveConstructor;
+    ToData.FailedImplicitMoveAssignment = FromData.FailedImplicitMoveAssignment;
     
     SmallVector<CXXBaseSpecifier *, 4> Bases;
     for (CXXRecordDecl::base_class_iterator 
