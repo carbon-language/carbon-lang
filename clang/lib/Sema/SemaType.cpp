@@ -3258,8 +3258,21 @@ static void HandleAddressSpaceTypeAttribute(QualType &Type,
 static bool handleObjCOwnershipTypeAttr(TypeProcessingState &state,
                                        AttributeList &attr,
                                        QualType &type) {
-  if (!type->isObjCRetainableType() && !type->isDependentType())
-    return false;
+  bool NonObjCPointer = false;
+
+  if (!type->isDependentType()) {
+    if (const PointerType *ptr = type->getAs<PointerType>()) {
+      QualType pointee = ptr->getPointeeType();
+      if (pointee->isObjCRetainableType() || pointee->isPointerType())
+        return false;
+      // It is important not to lose the source info that there was an attribute
+      // applied to non-objc pointer. We will create an attributed type but
+      // its type will be the same as the original type.
+      NonObjCPointer = true;
+    } else if (!type->isObjCRetainableType()) {
+      return false;
+    }
+  }
 
   Sema &S = state.getSema();
   SourceLocation AttrLoc = attr.getLoc();
@@ -3300,10 +3313,25 @@ static bool handleObjCOwnershipTypeAttr(TypeProcessingState &state,
   if (!S.getLangOptions().ObjCAutoRefCount)
     return true;
 
+  if (NonObjCPointer) {
+    StringRef name = attr.getName()->getName();
+    switch (lifetime) {
+    case Qualifiers::OCL_None:
+    case Qualifiers::OCL_ExplicitNone:
+      break;
+    case Qualifiers::OCL_Strong: name = "__strong"; break;
+    case Qualifiers::OCL_Weak: name = "__weak"; break;
+    case Qualifiers::OCL_Autoreleasing: name = "__autoreleasing"; break;
+    }
+    S.Diag(AttrLoc, diag::warn_objc_object_attribute_wrong_type)
+      << name << type;
+  }
+
   Qualifiers qs;
   qs.setObjCLifetime(lifetime);
   QualType origType = type;
-  type = S.Context.getQualifiedType(type, qs);
+  if (!NonObjCPointer)
+    type = S.Context.getQualifiedType(type, qs);
 
   // If we have a valid source location for the attribute, use an
   // AttributedType instead.
