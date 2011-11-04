@@ -194,11 +194,7 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(CompileUnit *SPCU,
   DISubprogram SP(SPNode);
 
   DISubprogram SPDecl = SP.getFunctionDeclaration();
-  if (SPDecl.isSubprogram())
-    // Refer function declaration directly.
-    SPCU->addDIEEntry(SPDie, dwarf::DW_AT_specification, dwarf::DW_FORM_ref4,
-                      SPCU->getOrCreateSubprogramDIE(SPDecl));
-  else {
+  if (!SPDecl.isSubprogram()) {
     // There is not any need to generate specification DIE for a function
     // defined at compile unit level. If a function is defined inside another
     // function then gdb prefers the definition at top level and but does not
@@ -512,13 +508,30 @@ CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
 /// construct SubprogramDIE - Construct subprogram DIE.
 void DwarfDebug::constructSubprogramDIE(CompileUnit *TheCU, 
                                         const MDNode *N) {
+  CompileUnit *&CURef = SPMap[N];
+  if (CURef)
+    return;
+  CURef = TheCU;
+
   DISubprogram SP(N);
   if (!SP.isDefinition())
     // This is a method declaration which will be handled while constructing
     // class type.
     return;
 
+  DISubprogram SPDecl = SP.getFunctionDeclaration();
+  DIE *DeclDie = NULL;
+  if (SPDecl.isSubprogram()) {
+    DeclDie = TheCU->getOrCreateSubprogramDIE(SPDecl);
+  }
+
   DIE *SubprogramDie = TheCU->getOrCreateSubprogramDIE(SP);
+
+  if (DeclDie) {
+    // Refer function declaration directly.
+    TheCU->addDIEEntry(SubprogramDie, dwarf::DW_AT_specification,
+                       dwarf::DW_FORM_ref4, DeclDie);
+  }
 
   // Add to map.
   TheCU->insertDIE(N, SubprogramDie);
@@ -529,7 +542,6 @@ void DwarfDebug::constructSubprogramDIE(CompileUnit *TheCU,
   // Expose as global.
   TheCU->addGlobal(SP.getName(), SubprogramDie);
 
-  SPMap[N] = TheCU;
   return;
 }
 
