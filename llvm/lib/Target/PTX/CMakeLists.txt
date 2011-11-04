@@ -1,10 +1,10 @@
 set(LLVM_TARGET_DEFINITIONS PTX.td)
 
-llvm_tablegen(PTXGenAsmWriter.inc -gen-asm-writer)
-llvm_tablegen(PTXGenDAGISel.inc -gen-dag-isel)
-llvm_tablegen(PTXGenInstrInfo.inc -gen-instr-info)
-llvm_tablegen(PTXGenRegisterInfo.inc -gen-register-info)
-llvm_tablegen(PTXGenSubtargetInfo.inc -gen-subtarget)
+tablegen(LLVM PTXGenAsmWriter.inc -gen-asm-writer)
+tablegen(LLVM PTXGenDAGISel.inc -gen-dag-isel)
+tablegen(LLVM PTXGenInstrInfo.inc -gen-instr-info)
+tablegen(LLVM PTXGenRegisterInfo.inc -gen-register-info)
+tablegen(LLVM PTXGenSubtargetInfo.inc -gen-subtarget)
 add_public_tablegen_target(PTXCommonTableGen)
 
 add_llvm_target(PTXCodeGen

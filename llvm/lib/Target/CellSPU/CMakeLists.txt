@@ -1,12 +1,12 @@
 set(LLVM_TARGET_DEFINITIONS SPU.td)
 
-llvm_tablegen(SPUGenAsmWriter.inc -gen-asm-writer)
-llvm_tablegen(SPUGenCodeEmitter.inc -gen-emitter)
-llvm_tablegen(SPUGenRegisterInfo.inc -gen-register-info)
-llvm_tablegen(SPUGenInstrInfo.inc -gen-instr-info)
-llvm_tablegen(SPUGenDAGISel.inc -gen-dag-isel)
-llvm_tablegen(SPUGenSubtargetInfo.inc -gen-subtarget)
-llvm_tablegen(SPUGenCallingConv.inc -gen-callingconv)
+tablegen(LLVM SPUGenAsmWriter.inc -gen-asm-writer)
+tablegen(LLVM SPUGenCodeEmitter.inc -gen-emitter)
+tablegen(LLVM SPUGenRegisterInfo.inc -gen-register-info)
+tablegen(LLVM SPUGenInstrInfo.inc -gen-instr-info)
+tablegen(LLVM SPUGenDAGISel.inc -gen-dag-isel)
+tablegen(LLVM SPUGenSubtargetInfo.inc -gen-subtarget)
+tablegen(LLVM SPUGenCallingConv.inc -gen-callingconv)
 add_public_tablegen_target(CellSPUCommonTableGen)
 
 add_llvm_target(CellSPUCodeGen

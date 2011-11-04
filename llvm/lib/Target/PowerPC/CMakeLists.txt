@@ -1,13 +1,13 @@
 set(LLVM_TARGET_DEFINITIONS PPC.td)
 
-llvm_tablegen(PPCGenAsmWriter.inc -gen-asm-writer)
-llvm_tablegen(PPCGenCodeEmitter.inc -gen-emitter)
-llvm_tablegen(PPCGenMCCodeEmitter.inc -gen-emitter -mc-emitter)
-llvm_tablegen(PPCGenRegisterInfo.inc -gen-register-info)
-llvm_tablegen(PPCGenInstrInfo.inc -gen-instr-info)
-llvm_tablegen(PPCGenDAGISel.inc -gen-dag-isel)
-llvm_tablegen(PPCGenCallingConv.inc -gen-callingconv)
-llvm_tablegen(PPCGenSubtargetInfo.inc -gen-subtarget)
+tablegen(LLVM PPCGenAsmWriter.inc -gen-asm-writer)
+tablegen(LLVM PPCGenCodeEmitter.inc -gen-emitter)
+tablegen(LLVM PPCGenMCCodeEmitter.inc -gen-emitter -mc-emitter)
+tablegen(LLVM PPCGenRegisterInfo.inc -gen-register-info)
+tablegen(LLVM PPCGenInstrInfo.inc -gen-instr-info)
+tablegen(LLVM PPCGenDAGISel.inc -gen-dag-isel)
+tablegen(LLVM PPCGenCallingConv.inc -gen-callingconv)
+tablegen(LLVM PPCGenSubtargetInfo.inc -gen-subtarget)
 add_public_tablegen_target(PowerPCCommonTableGen)
 
 add_llvm_target(PowerPCCodeGen

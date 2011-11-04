@@ -184,10 +184,6 @@ endif( ${CMAKE_SYSTEM_NAME} MATCHES SunOS )
 include(AddLLVM)
 include(TableGen)
 
-macro(llvm_tablegen)
-  tablegen(LLVM ${ARGN})
-endmacro()
-
 if( MINGW )
   # People report that -O3 is unreliable on MinGW. The traditional
   # build also uses -O2 for that reason:
