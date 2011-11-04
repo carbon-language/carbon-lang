@@ -1,4 +1,4 @@
-; RUN: llc %s -o %t -filetype=obj
+; RUN: llc -mtriple=x86_64-apple-darwin %s -o %t -filetype=obj
 ; RUN: llvm-dwarfdump %t | FileCheck %s
 
 ; test that the DW_AT_specification is a back edge in the file.
