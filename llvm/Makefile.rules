@@ -79,7 +79,7 @@ LLVMBuildTool	:= $(PROJ_SRC_ROOT)/utils/llvm-build/llvm-build
 # The files we are going to generate using llvm-build.
 LLVMBuildMakeFrag := $(PROJ_OBJ_ROOT)/Makefile.llvmbuild
 LLVMConfigLibraryDependenciesInc := \
-	$(PROJ_OBJ_ROOT)/tools/llvm-config/LibraryDependencies.inc
+	$(PROJ_OBJ_ROOT)/tools/llvm-config-2/LibraryDependencies.inc
 
 # The rule to create the LLVMBuild Makefile fragment as well as the llvm-config
 # library table.
