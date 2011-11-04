@@ -7,6 +7,19 @@ from util import *
 
 ###
 
+def mk_quote_string_for_target(value):
+    """
+    mk_quote_string_for_target(target_name) -> str
+
+    Return a quoted form of the given target_name suitable for including in a 
+    Makefile as a target name.
+    """
+
+    # The only quoting we currently perform is for ':', to support msys users.
+    return value.replace(":", "\\:")
+
+###
+
 class LLVMProjectInfo(object):
     @staticmethod
     def load_infos_from_path(llvmbuild_source_root):
@@ -427,7 +440,7 @@ configure_file(\"%s\"
 # performance of recursive Make systems.""" 
         print >>f, 'ifeq ($(LLVMBUILD_INCLUDE_DEPENDENCIES),1)'
         print >>f, "# The dependencies for this Makefile fragment itself."
-        print >>f, "%s: \\" % (output_path,)
+        print >>f, "%s: \\" % (mk_quote_string_for_target(output_path),)
         for dep in dependencies:
             print >>f, "\t%s \\" % (dep,)
         print >>f
@@ -438,7 +451,7 @@ configure_file(\"%s\"
 # The dummy targets to allow proper regeneration even when files are moved or
 # removed."""
         for dep in dependencies:
-            print >>f, "%s:" % (dep,)
+            print >>f, "%s:" % (mk_quote_string_for_target(dep),)
         print >>f, 'endif'
 
         f.close()
