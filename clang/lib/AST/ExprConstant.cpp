@@ -46,6 +46,78 @@ namespace {
   struct CallStackFrame;
   struct EvalInfo;
 
+  /// A path from a glvalue to a subobject of that glvalue.
+  struct SubobjectDesignator {
+    /// True if the subobject was named in a manner not supported by C++11. Such
+    /// lvalues can still be folded, but they are not core constant expressions
+    /// and we cannot perform lvalue-to-rvalue conversions on them.
+    bool Invalid : 1;
+
+    /// Whether this designates an array element.
+    bool ArrayElement : 1;
+
+    /// Whether this designates 'one past the end' of the current subobject.
+    bool OnePastTheEnd : 1;
+
+    union PathEntry {
+      /// If the current subobject is of class type, this indicates which
+      /// subobject of that type is accessed next.
+      const Decl *BaseOrMember;
+      /// If the current subobject is of array type, this indicates which index
+      /// within that array is accessed next.
+      uint64_t Index;
+    };
+    /// The entries on the path from the glvalue to the designated subobject.
+    SmallVector<PathEntry, 8> Entries;
+
+    SubobjectDesignator() :
+      Invalid(false), ArrayElement(false), OnePastTheEnd(false) {}
+
+    void setInvalid() {
+      Invalid = true;
+      Entries.clear();
+    }
+    /// Update this designator to refer to the given element within this array.
+    void addIndex(uint64_t N) {
+      if (Invalid) return;
+      if (OnePastTheEnd) {
+        setInvalid();
+        return;
+      }
+      PathEntry Entry;
+      Entry.Index = N;
+      Entries.push_back(Entry);
+      ArrayElement = true;
+    }
+    /// Update this designator to refer to the given base or member of this
+    /// object.
+    void addDecl(const Decl *D) {
+      if (Invalid) return;
+      if (OnePastTheEnd) {
+        setInvalid();
+        return;
+      }
+      PathEntry Entry;
+      Entry.BaseOrMember = D;
+      Entries.push_back(Entry);
+      ArrayElement = false;
+    }
+    /// Add N to the address of this subobject.
+    void adjustIndex(uint64_t N) {
+      if (Invalid) return;
+      if (ArrayElement) {
+        Entries.back().Index += N;
+        return;
+      }
+      if (OnePastTheEnd && N == (uint64_t)-1)
+        OnePastTheEnd = false;
+      else if (!OnePastTheEnd && N == 1)
+        OnePastTheEnd = true;
+      else if (N != 0)
+        setInvalid();
+    }
+  };
+
   /// A core constant value. This can be the value of any constant expression,
   /// or a pointer or reference to a non-static object or function parameter.
   class CCValue : public APValue {
@@ -54,6 +126,9 @@ namespace {
     /// If the value is a reference or pointer into a parameter or temporary,
     /// this is the corresponding call stack frame.
     CallStackFrame *CallFrame;
+    /// If the value is a reference or pointer, this is a description of how the
+    /// subobject was specified.
+    SubobjectDesignator Designator;
   public:
     struct GlobalValue {};
 
@@ -64,14 +139,22 @@ namespace {
     CCValue(const APSInt &R, const APSInt &I) : APValue(R, I) {}
     CCValue(const APFloat &R, const APFloat &I) : APValue(R, I) {}
     CCValue(const CCValue &V) : APValue(V), CallFrame(V.CallFrame) {}
-    CCValue(const Expr *B, const CharUnits &O, CallStackFrame *F) :
-      APValue(B, O), CallFrame(F) {}
+    CCValue(const Expr *B, const CharUnits &O, CallStackFrame *F,
+            const SubobjectDesignator &D) :
+      APValue(B, O), CallFrame(F), Designator(D) {}
     CCValue(const APValue &V, GlobalValue) :
-      APValue(V), CallFrame(0) {}
+      APValue(V), CallFrame(0), Designator() {}
 
     CallStackFrame *getLValueFrame() const {
       assert(getKind() == LValue);
       return CallFrame;
+    }
+    SubobjectDesignator &getLValueDesignator() {
+      assert(getKind() == LValue);
+      return Designator;
+    }
+    const SubobjectDesignator &getLValueDesignator() const {
+      return const_cast<CCValue*>(this)->getLValueDesignator();
     }
   };
 
@@ -189,20 +272,31 @@ namespace {
     const Expr *Base;
     CharUnits Offset;
     CallStackFrame *Frame;
+    SubobjectDesignator Designator;
 
     const Expr *getLValueBase() const { return Base; }
     CharUnits &getLValueOffset() { return Offset; }
     const CharUnits &getLValueOffset() const { return Offset; }
     CallStackFrame *getLValueFrame() const { return Frame; }
+    SubobjectDesignator &getLValueDesignator() { return Designator; }
+    const SubobjectDesignator &getLValueDesignator() const { return Designator;}
 
     void moveInto(CCValue &V) const {
-      V = CCValue(Base, Offset, Frame);
+      V = CCValue(Base, Offset, Frame, Designator);
     }
     void setFrom(const CCValue &V) {
       assert(V.isLValue());
       Base = V.getLValueBase();
       Offset = V.getLValueOffset();
       Frame = V.getLValueFrame();
+      Designator = V.getLValueDesignator();
+    }
+
+    void setExpr(const Expr *E, CallStackFrame *F = 0) {
+      Base = E;
+      Offset = CharUnits::Zero();
+      Frame = F;
+      Designator = SubobjectDesignator();
     }
   };
 }
@@ -441,19 +535,7 @@ bool HandleLValueToRValueConversion(EvalInfo &Info, QualType Type,
   if (!Base)
     return false;
 
-  // FIXME: Support accessing subobjects of objects of literal types. A simple
-  // byte offset is insufficient for C++11 semantics: we need to know how the
-  // reference was formed (which union member was named, for instance).
-  // FIXME: Support subobjects of StringLiteral and PredefinedExpr.
-  if (!LVal.Offset.isZero())
-    return false;
-
   if (const ValueDecl *D = GetLValueBaseDecl(LVal)) {
-    // If the lvalue has been cast to some other type, don't try to read it.
-    // FIXME: Could simulate a bitcast here.
-    if (!Info.Ctx.hasSameUnqualifiedType(Type, D->getType()))
-      return 0;
-
     // In C++98, const, non-volatile integers initialized with ICEs are ICEs.
     // In C++11, constexpr, non-volatile variables initialized with constant
     // expressions are constant expressions too. Inside constexpr functions,
@@ -466,24 +548,61 @@ bool HandleLValueToRValueConversion(EvalInfo &Info, QualType Type,
     // objects in constant expressions), but lvalue-to-rvalue conversions on
     // them are not permitted.
     const VarDecl *VD = dyn_cast<VarDecl>(D);
-    if (!VD || !(IsConstNonVolatile(VD->getType()) || isa<ParmVarDecl>(VD)) ||
-        !(Type->isIntegralOrEnumerationType() || Type->isRealFloatingType()) ||
-        !EvaluateVarDeclInit(Info, VD, Frame, RVal))
+    QualType VT = VD->getType();
+    if (!VD)
+      return false;
+    if (!isa<ParmVarDecl>(VD)) {
+      if (!IsConstNonVolatile(VT))
+        return false;
+      if (!VT->isIntegralOrEnumerationType() && !VT->isRealFloatingType())
+        return false;
+    }
+    if (!EvaluateVarDeclInit(Info, VD, Frame, RVal))
       return false;
 
     if (isa<ParmVarDecl>(VD) || !VD->getAnyInitializer()->isLValue())
-      return true;
+      // If the lvalue refers to a subobject or has been cast to some other
+      // type, don't use it.
+      return LVal.Offset.isZero() &&
+             Info.Ctx.hasSameUnqualifiedType(Type, VT);
 
     // The declaration was initialized by an lvalue, with no lvalue-to-rvalue
     // conversion. This happens when the declaration and the lvalue should be
     // considered synonymous, for instance when initializing an array of char
     // from a string literal. Continue as if the initializer lvalue was the
     // value we were originally given.
-    if (!RVal.getLValueOffset().isZero())
-      return false;
+    assert(RVal.getLValueOffset().isZero() &&
+           "offset for lvalue init of non-reference");
     Base = RVal.getLValueBase();
     Frame = RVal.getLValueFrame();
   }
+
+  // FIXME: Support PredefinedExpr, ObjCEncodeExpr, MakeStringConstant
+  if (const StringLiteral *S = dyn_cast<StringLiteral>(Base)) {
+    const SubobjectDesignator &Designator = LVal.Designator;
+    if (Designator.Invalid || Designator.Entries.size() != 1)
+      return false;
+
+    assert(Type->isIntegerType() && "string element not integer type");
+    uint64_t Index = Designator.Entries[0].Index;
+    if (Index > S->getLength())
+      return false;
+    APSInt Value(S->getCharByteWidth() * Info.Ctx.getCharWidth(),
+                 Type->isUnsignedIntegerType());
+    if (Index < S->getLength())
+      Value = S->getCodeUnit(Index);
+    RVal = CCValue(Value);
+    return true;
+  }
+
+  // FIXME: Support accessing subobjects of objects of literal types. A simple
+  // byte offset is insufficient for C++11 semantics: we need to know how the
+  // reference was formed (which union member was named, for instance).
+
+  // Beyond this point, we don't support accessing subobjects.
+  if (!LVal.Offset.isZero() ||
+      !Info.Ctx.hasSameUnqualifiedType(Type, Base->getType()))
+    return false;
 
   // If this is a temporary expression with a nontrivial initializer, grab the
   // value from the relevant stack frame.
@@ -695,9 +814,7 @@ protected:
   bool MakeTemporary(const Expr *Key, const Expr *Value, LValue &Result) {
     if (!Evaluate(Info.CurrentCall->Temporaries[Key], Info, Value))
       return false;
-    Result.Base = Key;
-    Result.Offset = CharUnits::Zero();
-    Result.Frame = Info.CurrentCall;
+    Result.setExpr(Key, Info.CurrentCall);
     return true;
   }
 public:
@@ -874,9 +991,7 @@ class LValueExprEvaluator
   const Decl *PrevDecl;
 
   bool Success(const Expr *E) {
-    Result.Base = E;
-    Result.Offset = CharUnits::Zero();
-    Result.Frame = 0;
+    Result.setExpr(E);
     return true;
   }
 public:
@@ -910,7 +1025,10 @@ public:
       return ExprEvaluatorBaseTy::VisitCastExpr(E);
 
     case CK_LValueBitCast:
-      return Visit(E->getSubExpr());
+      if (!Visit(E->getSubExpr()))
+        return false;
+      Result.Designator.setInvalid();
+      return true;
 
     // FIXME: Support CK_DerivedToBase and CK_UncheckedDerivedToBase.
     // Reuse PointerExprEvaluator::VisitCastExpr for these.
@@ -945,9 +1063,7 @@ bool LValueExprEvaluator::VisitDeclRefExpr(const DeclRefExpr *E) {
 bool LValueExprEvaluator::VisitVarDecl(const Expr *E, const VarDecl *VD) {
   if (!VD->getType()->isReferenceType()) {
     if (isa<ParmVarDecl>(VD)) {
-      Result.Base = E;
-      Result.Offset = CharUnits::Zero();
-      Result.Frame = Info.CurrentCall;
+      Result.setExpr(E, Info.CurrentCall);
       return true;
     }
     return Success(E);
@@ -1011,6 +1127,7 @@ bool LValueExprEvaluator::VisitMemberExpr(const MemberExpr *E) {
 
   unsigned i = FD->getFieldIndex();
   Result.Offset += Info.Ctx.toCharUnitsFromBits(RL.getFieldOffset(i));
+  Result.Designator.addDecl(FD);
   return true;
 }
 
@@ -1025,9 +1142,13 @@ bool LValueExprEvaluator::VisitArraySubscriptExpr(const ArraySubscriptExpr *E) {
   APSInt Index;
   if (!EvaluateInteger(E->getIdx(), Index, Info))
     return false;
+  uint64_t IndexValue
+    = Index.isSigned() ? static_cast<uint64_t>(Index.getSExtValue())
+                       : Index.getZExtValue();
 
   CharUnits ElementSize = Info.Ctx.getTypeSizeInChars(E->getType());
-  Result.Offset += Index.getSExtValue() * ElementSize;
+  Result.Offset += IndexValue * ElementSize;
+  Result.Designator.adjustIndex(IndexValue);
   return true;
 }
 
@@ -1045,9 +1166,7 @@ class PointerExprEvaluator
   LValue &Result;
 
   bool Success(const Expr *E) {
-    Result.Base = E;
-    Result.Offset = CharUnits::Zero();
-    Result.Frame = 0;
+    Result.setExpr(E);
     return true;
   }
 public:
@@ -1110,9 +1229,10 @@ bool PointerExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   int64_t AdditionalOffset
     = Offset.isSigned() ? Offset.getSExtValue()
                         : static_cast<int64_t>(Offset.getZExtValue());
+  if (E->getOpcode() == BO_Sub)
+    AdditionalOffset = -AdditionalOffset;
 
   // Compute the new offset in the appropriate width.
-
   QualType PointeeType =
     PExp->getType()->getAs<PointerType>()->getPointeeType();
   CharUnits SizeOfPointee;
@@ -1123,11 +1243,8 @@ bool PointerExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   else
     SizeOfPointee = Info.Ctx.getTypeSizeInChars(PointeeType);
 
-  if (E->getOpcode() == BO_Add)
-    Result.Offset += AdditionalOffset * SizeOfPointee;
-  else
-    Result.Offset -= AdditionalOffset * SizeOfPointee;
-
+  Result.Offset += AdditionalOffset * SizeOfPointee;
+  Result.Designator.adjustIndex(AdditionalOffset);
   return true;
 }
 
@@ -1147,7 +1264,10 @@ bool PointerExprEvaluator::VisitCastExpr(const CastExpr* E) {
   case CK_CPointerToObjCPointerCast:
   case CK_BlockPointerToObjCPointerCast:
   case CK_AnyPointerToBlockPointerCast:
-    return Visit(SubExpr);
+    if (!Visit(SubExpr))
+      return false;
+    Result.Designator.setInvalid();
+    return true;
 
   case CK_DerivedToBase:
   case CK_UncheckedDerivedToBase: {
@@ -1178,6 +1298,9 @@ bool PointerExprEvaluator::VisitCastExpr(const CastExpr* E) {
       DerivedDecl = BaseDecl;
     }
 
+    // FIXME
+    Result.Designator.setInvalid();
+
     return true;
   }
 
@@ -1195,6 +1318,7 @@ bool PointerExprEvaluator::VisitCastExpr(const CastExpr* E) {
       Result.Base = 0;
       Result.Offset = CharUnits::fromQuantity(N);
       Result.Frame = 0;
+      Result.Designator.setInvalid();
       return true;
     } else {
       // Cast is of an lvalue, no need to change value.
@@ -1206,7 +1330,11 @@ bool PointerExprEvaluator::VisitCastExpr(const CastExpr* E) {
     // FIXME: Support array-to-pointer decay on array rvalues.
     if (!SubExpr->isGLValue())
       return Error(E);
-    return EvaluateLValue(SubExpr, Result, Info);
+    if (!EvaluateLValue(SubExpr, Result, Info))
+      return false;
+    // The result is a pointer to the first element of the array.
+    Result.Designator.addIndex(0);
+    return true;
 
   case CK_FunctionToPointerDecay:
     return EvaluateLValue(SubExpr, Result, Info);

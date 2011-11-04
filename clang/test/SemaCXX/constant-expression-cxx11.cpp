@@ -237,3 +237,29 @@ using check_value = int[same(n, n)];
 using check_value = int[sameTemporary(9)];
 
 }
+
+namespace StringLiteral {
+
+// FIXME: Refactor this once we support constexpr templates.
+constexpr int MangleChars(const char *p) {
+  return *p + 3 * (*p ? MangleChars(p+1) : 0);
+}
+constexpr int MangleChars(const char16_t *p) {
+  return *p + 3 * (*p ? MangleChars(p+1) : 0);
+}
+constexpr int MangleChars(const char32_t *p) {
+  return *p + 3 * (*p ? MangleChars(p+1) : 0);
+}
+
+using check_value = int[1768383];
+using check_value = int[MangleChars("constexpr!")];
+using check_value = int[MangleChars(u"constexpr!")];
+using check_value = int[MangleChars(U"constexpr!")];
+
+constexpr char c0 = "nought index"[0];
+constexpr char c1 = "nice index"[10];
+constexpr char c2 = "nasty index"[12]; // expected-error {{must be initialized by a constant expression}} expected-warning {{indexes past the end}}
+constexpr char c3 = "negative index"[-1]; // expected-error {{must be initialized by a constant expression}} expected-warning {{indexes before the beginning}}
+constexpr char c4 = ((char*)(int*)"no reinterpret_casts allowed")[14]; // expected-error {{must be initialized by a constant expression}}
+
+}
