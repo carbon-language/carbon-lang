@@ -28,6 +28,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringSwitch.h"
 
+#include "../Target/Mips/MCTargetDesc/MipsFixupKinds.h"
 #include "../Target/X86/MCTargetDesc/X86FixupKinds.h"
 #include "../Target/ARM/MCTargetDesc/ARMFixupKinds.h"
 #include "../Target/PowerPC/MCTargetDesc/PPCFixupKinds.h"
@@ -277,7 +278,7 @@ void ELFObjectWriter::WriteSymbolTable(MCDataFragment *SymtabF,
                                        MCDataFragment *ShndxF,
                                        const MCAssembler &Asm,
                                        const MCAsmLayout &Layout,
-                                     const SectionIndexMapTy &SectionIndexMap) {
+                                    const SectionIndexMapTy &SectionIndexMap) {
   // The string table must be emitted first because we need the index
   // into the string table for all the symbol names.
   assert(StringTable.size() && "Missing string table");
@@ -306,7 +307,8 @@ void ELFObjectWriter::WriteSymbolTable(MCDataFragment *SymtabF,
         Section.getType() == ELF::SHT_SYMTAB_SHNDX)
       continue;
     WriteSymbolEntry(SymtabF, ShndxF, 0, ELF::STT_SECTION, 0, 0,
-                     ELF::STV_DEFAULT, SectionIndexMap.lookup(&Section), false);
+                     ELF::STV_DEFAULT, SectionIndexMap.lookup(&Section),
+                     false);
     LastLocalSymbolIndex++;
   }
 
@@ -416,7 +418,7 @@ void ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
       // Offset of the symbol in the section
       int64_t a = Layout.getSymbolOffset(&SDB);
 
-      // Ofeset of the relocation in the section
+      // Offset of the relocation in the section
       int64_t b = Layout.getFragmentOffset(Fragment) + Fixup.getOffset();
       Value += b - a;
     }
@@ -1273,7 +1275,6 @@ MCObjectWriter *llvm::createELFObjectWriter(MCELFObjectTargetWriter *MOTW,
   }
 }
 
-
 /// START OF SUBCLASSES for ELFObjectWriter
 //===- ARMELFObjectWriter -------------------------------------------===//
 
@@ -1815,6 +1816,8 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
   return Type;
 }
 
+//===- MipsELFObjectWriter -------------------------------------------===//
+
 MipsELFObjectWriter::MipsELFObjectWriter(MCELFObjectTargetWriter *MOTW,
                                          raw_ostream &_OS,
                                          bool IsLittleEndian)
@@ -1827,6 +1830,52 @@ unsigned MipsELFObjectWriter::GetRelocType(const MCValue &Target,
                                            bool IsPCRel,
                                            bool IsRelocWithSymbol,
                                            int64_t Addend) {
-  // tbd
-  return 1;
+  // determine the type of the relocation
+  unsigned Type = (unsigned)ELF::R_MIPS_NONE;
+  unsigned Kind = (unsigned)Fixup.getKind();
+
+  switch (Kind) {
+  default:
+    llvm_unreachable("invalid fixup kind!");
+  case FK_Data_4:
+    Type = ELF::R_MIPS_32;
+    break;
+  case Mips::fixup_Mips_GPREL16:
+    Type = ELF::R_MIPS_GPREL16;
+    break;
+  case Mips::fixup_Mips_26:
+    Type = ELF::R_MIPS_26;
+    break;
+  case Mips::fixup_Mips_CALL16:
+    Type = ELF::R_MIPS_CALL16;
+    break;
+  case Mips::fixup_Mips_GOT16:
+    Type = ELF::R_MIPS_GOT16;
+    break;
+  case Mips::fixup_Mips_HI16:
+    Type = ELF::R_MIPS_HI16;
+    break;
+  case Mips::fixup_Mips_LO16:
+    Type = ELF::R_MIPS_LO16;
+    break;
+  case Mips::fixup_Mips_TLSGD:
+    Type = ELF::R_MIPS_TLS_GD;
+    break;
+  case Mips::fixup_Mips_GOTTPREL:
+    Type = ELF::R_MIPS_TLS_GOTTPREL;
+    break;
+  case Mips::fixup_Mips_TPREL_HI:
+    Type = ELF::R_MIPS_TLS_TPREL_HI16;
+    break;
+  case Mips::fixup_Mips_TPREL_LO:
+    Type = ELF::R_MIPS_TLS_TPREL_LO16;
+    break;
+  case Mips::fixup_Mips_Branch_PCRel:
+  case Mips::fixup_Mips_PC16:
+    Type = ELF::R_MIPS_PC16;
+    break;
+  }
+
+  return Type;
 }
+
