@@ -11,6 +11,7 @@
 #define liblldb_Process_h_
 
 // C Includes
+#include <limits.h>
 #include <spawn.h>
 
 // C++ Includes
