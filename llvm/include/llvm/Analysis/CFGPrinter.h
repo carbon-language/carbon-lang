@@ -33,7 +33,7 @@ struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
   }
 
   static std::string getSimpleNodeLabel(const BasicBlock *Node,
-                                  const Function *Graph) {
+                                        const Function *) {
     if (!Node->getName().empty())
       return Node->getNameStr(); 
 
@@ -45,7 +45,7 @@ struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
   }
 
   static std::string getCompleteNodeLabel(const BasicBlock *Node, 
-                                          const Function *Graph) {
+                                          const Function *) {
     std::string Str;
     raw_string_ostream OS(Str);
 

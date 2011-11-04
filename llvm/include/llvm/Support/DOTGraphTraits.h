@@ -42,13 +42,13 @@ public:
   /// top of the graph.
   ///
   template<typename GraphType>
-  static std::string getGraphName(const GraphType& Graph) { return ""; }
+  static std::string getGraphName(const GraphType &) { return ""; }
 
   /// getGraphProperties - Return any custom properties that should be included
   /// in the top level graph structure for dot.
   ///
   template<typename GraphType>
-  static std::string getGraphProperties(const GraphType& Graph) {
+  static std::string getGraphProperties(const GraphType &) {
     return "";
   }
 
@@ -61,44 +61,44 @@ public:
 
   /// isNodeHidden - If the function returns true, the given node is not
   /// displayed in the graph.
-  static bool isNodeHidden(const void *Node) {
+  static bool isNodeHidden(const void *) {
     return false;
   }
 
   /// getNodeLabel - Given a node and a pointer to the top level graph, return
   /// the label to print in the node.
   template<typename GraphType>
-  std::string getNodeLabel(const void *Node, const GraphType& Graph) {
+  std::string getNodeLabel(const void *, const GraphType &) {
     return "";
   }
 
   /// hasNodeAddressLabel - If this method returns true, the address of the node
   /// is added to the label of the node.
   template<typename GraphType>
-  static bool hasNodeAddressLabel(const void *Node, const GraphType& Graph) {
+  static bool hasNodeAddressLabel(const void *, const GraphType &) {
     return false;
   }
 
   /// If you want to specify custom node attributes, this is the place to do so
   ///
   template<typename GraphType>
-  static std::string getNodeAttributes(const void *Node,
-                                       const GraphType& Graph) {
+  static std::string getNodeAttributes(const void *,
+                                       const GraphType &) {
     return "";
   }
 
   /// If you want to override the dot attributes printed for a particular edge,
   /// override this method.
   template<typename EdgeIter, typename GraphType>
-  static std::string getEdgeAttributes(const void *Node, EdgeIter EI,
-                                       const GraphType& Graph) {
+  static std::string getEdgeAttributes(const void *, EdgeIter,
+                                       const GraphType &) {
     return "";
   }
 
   /// getEdgeSourceLabel - If you want to label the edge source itself,
   /// implement this method.
   template<typename EdgeIter>
-  static std::string getEdgeSourceLabel(const void *Node, EdgeIter I) {
+  static std::string getEdgeSourceLabel(const void *, EdgeIter) {
     return "";
   }
 
@@ -106,7 +106,7 @@ public:
   /// should actually target another edge source, not a node.  If this method is
   /// implemented, getEdgeTarget should be implemented.
   template<typename EdgeIter>
-  static bool edgeTargetsEdgeSource(const void *Node, EdgeIter I) {
+  static bool edgeTargetsEdgeSource(const void *, EdgeIter) {
     return false;
   }
 
@@ -114,7 +114,7 @@ public:
   /// called to determine which outgoing edge of Node is the target of this
   /// edge.
   template<typename EdgeIter>
-  static EdgeIter getEdgeTarget(const void *Node, EdgeIter I) {
+  static EdgeIter getEdgeTarget(const void *, EdgeIter I) {
     return I;
   }
 
@@ -126,13 +126,13 @@ public:
 
   /// numEdgeDestLabels - If hasEdgeDestLabels, this function returns the
   /// number of incoming edge labels the given node has.
-  static unsigned numEdgeDestLabels(const void *Node) {
+  static unsigned numEdgeDestLabels(const void *) {
     return 0;
   }
 
   /// getEdgeDestLabel - If hasEdgeDestLabels, this function returns the
   /// incoming edge label with the given index in the given node.
-  static std::string getEdgeDestLabel(const void *Node, unsigned i) {
+  static std::string getEdgeDestLabel(const void *, unsigned) {
     return "";
   }
 
@@ -143,7 +143,7 @@ public:
   /// it to add things to the output graph.
   ///
   template<typename GraphType, typename GraphWriter>
-  static void addCustomGraphFeatures(const GraphType& Graph, GraphWriter &GW) {}
+  static void addCustomGraphFeatures(const GraphType &, GraphWriter &) {}
 };
 
 

@@ -59,9 +59,9 @@ public:
   /// NotifyFunctionEmitted - Called after a function has been successfully
   /// emitted to memory.  The function still has its MachineFunction attached,
   /// if you should happen to need that.
-  virtual void NotifyFunctionEmitted(const Function &F,
-                                     void *Code, size_t Size,
-                                     const EmittedFunctionDetails &Details) {}
+  virtual void NotifyFunctionEmitted(const Function &,
+                                     void *, size_t,
+                                     const EmittedFunctionDetails &) {}
 
   /// NotifyFreeingMachineCode - Called from freeMachineCodeForFunction(), after
   /// the global mapping is removed, but before the machine code is returned to
@@ -71,7 +71,7 @@ public:
   /// parameter to a previous NotifyFunctionEmitted call.  The Function passed
   /// to NotifyFunctionEmitted may have been destroyed by the time of the
   /// matching NotifyFreeingMachineCode call.
-  virtual void NotifyFreeingMachineCode(void *OldPtr) {}
+  virtual void NotifyFreeingMachineCode(void *) {}
 };
 
 // This returns NULL if support isn't available.
