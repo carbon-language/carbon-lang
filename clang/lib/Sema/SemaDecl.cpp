@@ -9812,6 +9812,7 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
     unsigned NewWidth;
     bool NewSign;
     if (!getLangOptions().CPlusPlus &&
+        !Enum->isFixed() &&
         isRepresentableIntegerValue(Context, InitVal, Context.IntTy)) {
       NewTy = Context.IntTy;
       NewWidth = IntWidth;
