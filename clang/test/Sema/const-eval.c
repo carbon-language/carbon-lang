@@ -99,3 +99,6 @@ char c = ((union u)(123456)).b[0]; // expected-error {{not a compile-time consta
 extern const int weak_int __attribute__((weak));
 const int weak_int = 42;
 int weak_int_test = weak_int; // expected-error {{not a compile-time constant}}
+
+int literalVsNull1 = "foo" == 0;
+int literalVsNull2 = 0 == "foo";

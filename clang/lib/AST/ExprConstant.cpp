@@ -1970,8 +1970,10 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
           return false;
         // It's implementation-defined whether distinct literals will have
         // distinct addresses. In clang, we do not guarantee the addresses are
-        // distinct.
-        if (IsLiteralLValue(LHSValue) || IsLiteralLValue(RHSValue))
+        // distinct. However, we do know that the address of a literal will be
+        // non-null.
+        if ((IsLiteralLValue(LHSValue) || IsLiteralLValue(RHSValue)) &&
+            LHSValue.Base && RHSValue.Base)
           return false;
         // We can't tell whether weak symbols will end up pointing to the same
         // object.
