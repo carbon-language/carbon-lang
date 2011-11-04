@@ -635,7 +635,7 @@ define i32 @main() {   <i>; i32()* </i>&nbsp;
       be merged with equivalent globals.  These linkage types are otherwise the
       same as their non-<tt>odr</tt> versions.</dd>
 
-  <dt><tt><b><a name="linkage_external">external</a></b></tt>:</dt>
+  <dt><tt><b><a name="linkage_external">external</a></b></tt></dt>
   <dd>If none of the above identifiers are used, the global is externally
       visible, meaning that it participates in linkage and can be used to
       resolve external symbol references.</dd>
@@ -932,7 +932,7 @@ define i32 @main() {   <i>; i32()* </i>&nbsp;
    alignments must be a power of 2.</p>
 
 <p>If the <tt>unnamed_addr</tt> attribute is given, the address is know to not
-  be significant and two identical functions can be merged</p>.
+   be significant and two identical functions can be merged.</p>
 
 <h5>Syntax:</h5>
 <pre class="doc_code">
