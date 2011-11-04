@@ -540,11 +540,9 @@ void ExprEngine::VisitUnaryOperator(const UnaryOperator* U,
                                     ExplodedNode *Pred,
                                     ExplodedNodeSet &Dst) {
   StmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
-  bool IncDec = false;
   switch (U->getOpcode()) {
     default: {
       Bldr.takeNodes(Pred);
-      IncDec = true;
       ExplodedNodeSet Tmp;
       VisitIncrementDecrementOperator(U, Pred, Tmp);
       Bldr.addNodes(Tmp);

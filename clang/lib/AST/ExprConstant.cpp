@@ -1286,8 +1286,6 @@ bool PointerExprEvaluator::VisitCastExpr(const CastExpr* E) {
 
     // Now figure out the necessary offset to add to the baseLV to get from
     // the derived class to the base class.
-    CharUnits Offset = CharUnits::Zero();
-
     QualType Ty = E->getSubExpr()->getType();
     const CXXRecordDecl *DerivedDecl = 
       Ty->getAs<PointerType>()->getPointeeType()->getAsCXXRecordDecl();
