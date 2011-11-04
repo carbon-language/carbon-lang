@@ -48,6 +48,13 @@ component combinations.
 Write out new I<LLVMBuild.txt> files based on the loaded components. This is
 useful for auto-upgrading the schema of the files.
 
+=item B<--write-cmake-fragment>
+
+Write out the LLVMBuild in the form of a CMake fragment, so it can easily be
+consumed by the CMake based build system. The exact contents and format of this
+file are closely tied to how LLVMBuild is integrated with CMake, see LLVM's
+top-level CMakeLists.txt.
+
 =item B<--write-make-fragment>
 
 Write out the LLVMBuild in the form of a Makefile fragment, so it can easily be
