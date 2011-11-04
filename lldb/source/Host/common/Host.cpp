@@ -440,9 +440,10 @@ Host::GetSignalAsCString (int signo)
     case SIGABRT:   return "SIGABRT";   // 6    abort()
 #if  (defined(_POSIX_C_SOURCE) && !defined(_DARWIN_C_SOURCE))
     case SIGPOLL:   return "SIGPOLL";   // 7    pollable event ([XSR] generated, not supported)
-#else    // !_POSIX_C_SOURCE
+#endif
+#if  !defined(_POSIX_C_SOURCE)
     case SIGEMT:    return "SIGEMT";    // 7    EMT instruction
-#endif    // !_POSIX_C_SOURCE
+#endif
     case SIGFPE:    return "SIGFPE";    // 8    floating point exception
     case SIGKILL:   return "SIGKILL";   // 9    kill (cannot be caught or ignored)
     case SIGBUS:    return "SIGBUS";    // 10    bus error
