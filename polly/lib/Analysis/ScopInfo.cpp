@@ -201,11 +201,14 @@ public:
   int getLoopDepth(const Loop *L) {
     Loop *outerLoop =
       scop->getRegion().outermostLoopInRegion(const_cast<Loop*>(L));
+    assert(outerLoop && "Scop does not contain this loop");
     return L->getLoopDepth() - outerLoop->getLoopDepth();
   }
 
   __isl_give isl_pw_aff *visitAddRecExpr(const SCEVAddRecExpr* Expr) {
     assert(Expr->isAffine() && "Only affine AddRecurrences allowed");
+    assert(scop->getRegion().contains(Expr->getLoop())
+           && "Scop does not contain the loop referenced in this AddRec");
 
     isl_pw_aff *Start = visit(Expr->getStart());
     isl_pw_aff *Step = visit(Expr->getOperand(1));
