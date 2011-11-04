@@ -61,7 +61,6 @@ bool LTOModule::isBitcodeFileForTarget(const void *mem, size_t length,
   return isTargetMatch(buffer, triplePrefix);
 }
 
-
 bool LTOModule::isBitcodeFileForTarget(const char *path,
                                        const char *triplePrefix) {
   OwningPtr<MemoryBuffer> buffer;
@@ -74,8 +73,7 @@ bool LTOModule::isBitcodeFileForTarget(const char *path,
 bool LTOModule::isTargetMatch(MemoryBuffer *buffer, const char *triplePrefix) {
   std::string Triple = getBitcodeTargetTriple(buffer, getGlobalContext());
   delete buffer;
-  return (strncmp(Triple.c_str(), triplePrefix,
- 		  strlen(triplePrefix)) == 0);
+  return strncmp(Triple.c_str(), triplePrefix, strlen(triplePrefix)) == 0;
 }
 
 
@@ -97,8 +95,7 @@ LTOModule *LTOModule::makeLTOModule(const char *path,
 }
 
 LTOModule *LTOModule::makeLTOModule(int fd, const char *path,
-                                    size_t size,
-                                    std::string &errMsg) {
+                                    size_t size, std::string &errMsg) {
   return makeLTOModule(fd, path, size, size, 0, errMsg);
 }
 
@@ -121,7 +118,6 @@ MemoryBuffer *LTOModule::makeBuffer(const void *mem, size_t length) {
   const char *startPtr = (char*)mem;
   return MemoryBuffer::getMemBuffer(StringRef(startPtr, length), "", false);
 }
-
 
 LTOModule *LTOModule::makeLTOModule(const void *mem, size_t length,
                                     std::string &errMsg) {
@@ -165,14 +161,13 @@ LTOModule *LTOModule::makeLTOModule(MemoryBuffer *buffer,
   std::string CPU;
   TargetMachine *target = march->createTargetMachine(Triple, CPU, FeatureStr);
   LTOModule *Ret = new LTOModule(m.take(), target);
-  bool Err = Ret->ParseSymbols(errMsg);
-  if (Err) {
+  if (Ret->ParseSymbols(errMsg)) {
     delete Ret;
     return NULL;
   }
+
   return Ret;
 }
-
 
 const char *LTOModule::getTargetTriple() {
   return _module->getTargetTriple().c_str();
@@ -206,77 +201,78 @@ bool LTOModule::objcClassNameFromExpression(Constant *c, std::string &name) {
 
 // Parse i386/ppc ObjC class data structure.
 void LTOModule::addObjCClass(GlobalVariable *clgv) {
-  if (ConstantStruct *c = dyn_cast<ConstantStruct>(clgv->getInitializer())) {
-    // second slot in __OBJC,__class is pointer to superclass name
-    std::string superclassName;
-    if (objcClassNameFromExpression(c->getOperand(1), superclassName)) {
-      NameAndAttributes info;
-      StringMap<NameAndAttributes>::value_type &entry =
-        _undefines.GetOrCreateValue(superclassName);
-      if (!entry.getValue().name) {
-        const char *symbolName = entry.getKey().data();
-        info.name = symbolName;
-        info.attributes = LTO_SYMBOL_DEFINITION_UNDEFINED;
-        entry.setValue(info);
-      }
-    }
-    // third slot in __OBJC,__class is pointer to class name
-    std::string className;
-    if (objcClassNameFromExpression(c->getOperand(2), className)) {
-      StringSet::value_type &entry =
-        _defines.GetOrCreateValue(className);
-      entry.setValue(1);
-      NameAndAttributes info;
-      info.name = entry.getKey().data();
-      info.attributes = (lto_symbol_attributes)
-        (LTO_SYMBOL_PERMISSIONS_DATA |
-         LTO_SYMBOL_DEFINITION_REGULAR |
-         LTO_SYMBOL_SCOPE_DEFAULT);
-      _symbols.push_back(info);
-    }
-  }
-}
+  ConstantStruct *c = dyn_cast<ConstantStruct>(clgv->getInitializer());
+  if (!c) return;
 
-
-// Parse i386/ppc ObjC category data structure.
-void LTOModule::addObjCCategory(GlobalVariable *clgv) {
-  if (ConstantStruct *c = dyn_cast<ConstantStruct>(clgv->getInitializer())) {
-    // second slot in __OBJC,__category is pointer to target class name
-    std::string targetclassName;
-    if (objcClassNameFromExpression(c->getOperand(1), targetclassName)) {
-      NameAndAttributes info;
-
-      StringMap<NameAndAttributes>::value_type &entry =
-        _undefines.GetOrCreateValue(targetclassName);
-
-      if (entry.getValue().name)
-        return;
-
+  // second slot in __OBJC,__class is pointer to superclass name
+  std::string superclassName;
+  if (objcClassNameFromExpression(c->getOperand(1), superclassName)) {
+    NameAndAttributes info;
+    StringMap<NameAndAttributes>::value_type &entry =
+      _undefines.GetOrCreateValue(superclassName);
+    if (!entry.getValue().name) {
       const char *symbolName = entry.getKey().data();
       info.name = symbolName;
       info.attributes = LTO_SYMBOL_DEFINITION_UNDEFINED;
       entry.setValue(info);
     }
   }
+
+  // third slot in __OBJC,__class is pointer to class name
+  std::string className;
+  if (objcClassNameFromExpression(c->getOperand(2), className)) {
+    StringSet::value_type &entry = _defines.GetOrCreateValue(className);
+    entry.setValue(1);
+    NameAndAttributes info;
+    info.name = entry.getKey().data();
+    info.attributes = lto_symbol_attributes(LTO_SYMBOL_PERMISSIONS_DATA |
+                                            LTO_SYMBOL_DEFINITION_REGULAR |
+                                            LTO_SYMBOL_SCOPE_DEFAULT);
+    _symbols.push_back(info);
+  }
+}
+
+
+// Parse i386/ppc ObjC category data structure.
+void LTOModule::addObjCCategory(GlobalVariable *clgv) {
+  ConstantStruct *c = dyn_cast<ConstantStruct>(clgv->getInitializer());
+  if (!c) return;
+
+  // second slot in __OBJC,__category is pointer to target class name
+  std::string targetclassName;
+  if (!objcClassNameFromExpression(c->getOperand(1), targetclassName))
+    return;
+
+  NameAndAttributes info;
+  StringMap<NameAndAttributes>::value_type &entry =
+    _undefines.GetOrCreateValue(targetclassName);
+
+  if (entry.getValue().name)
+    return;
+
+  const char *symbolName = entry.getKey().data();
+  info.name = symbolName;
+  info.attributes = LTO_SYMBOL_DEFINITION_UNDEFINED;
+  entry.setValue(info);
 }
 
 
 // Parse i386/ppc ObjC class list data structure.
 void LTOModule::addObjCClassRef(GlobalVariable *clgv) {
   std::string targetclassName;
-  if (objcClassNameFromExpression(clgv->getInitializer(), targetclassName)) {
-    NameAndAttributes info;
+  if (!objcClassNameFromExpression(clgv->getInitializer(), targetclassName))
+    return;
 
-    StringMap<NameAndAttributes>::value_type &entry =
-      _undefines.GetOrCreateValue(targetclassName);
-    if (entry.getValue().name)
-      return;
+  NameAndAttributes info;
+  StringMap<NameAndAttributes>::value_type &entry =
+    _undefines.GetOrCreateValue(targetclassName);
+  if (entry.getValue().name)
+    return;
 
-    const char *symbolName = entry.getKey().data();
-    info.name = symbolName;
-    info.attributes = LTO_SYMBOL_DEFINITION_UNDEFINED;
-    entry.setValue(info);
-  }
+  const char *symbolName = entry.getKey().data();
+  info.name = symbolName;
+  info.attributes = LTO_SYMBOL_DEFINITION_UNDEFINED;
+  entry.setValue(info);
 }
 
 
@@ -326,7 +322,6 @@ void LTOModule::addDefinedDataSymbol(GlobalValue *v) {
     }
   }
 }
-
 
 void LTOModule::addDefinedSymbol(GlobalValue *def, bool isFunction) {
   // ignore all llvm.* symbols
@@ -454,7 +449,6 @@ void LTOModule::addPotentialUndefinedSymbol(GlobalValue *decl) {
 
   entry.setValue(info);
 }
-
 
 namespace {
   class RecordStreamer : public MCStreamer {
@@ -711,11 +705,9 @@ bool LTOModule::ParseSymbols(std::string &errMsg) {
   return false;
 }
 
-
 uint32_t LTOModule::getSymbolCount() {
   return _symbols.size();
 }
-
 
 lto_symbol_attributes LTOModule::getSymbolAttributes(uint32_t index) {
   if (index < _symbols.size())
