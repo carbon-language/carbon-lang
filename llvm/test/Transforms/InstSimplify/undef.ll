@@ -84,6 +84,13 @@ define i64 @test11() {
   ret i64 %r
 }
 
+; @test11b
+; CHECK: ret i64 undef
+define i64 @test11b(i64 %a) {
+  %r = shl i64 %a, undef
+  ret i64 %r
+}
+
 ; @test12
 ; CHECK: ret i64 undef
 define i64 @test12() {
@@ -91,10 +98,24 @@ define i64 @test12() {
   ret i64 %r
 }
 
+; @test12b
+; CHECK: ret i64 undef
+define i64 @test12b(i64 %a) {
+  %r = ashr i64 %a, undef
+  ret i64 %r
+}
+
 ; @test13
 ; CHECK: ret i64 undef
 define i64 @test13() {
   %r = lshr i64 undef, undef
+  ret i64 %r
+}
+
+; @test13b
+; CHECK: ret i64 undef
+define i64 @test13b(i64 %a) {
+  %r = lshr i64 %a, undef
   ret i64 %r
 }
 
