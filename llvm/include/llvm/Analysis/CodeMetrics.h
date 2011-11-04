@@ -19,7 +19,10 @@
 
 namespace llvm {
 
+  class BasicBlock;
+  class Function;
   class TargetData;
+  class Value;
 
   // CodeMetrics - Calculate size and a few similar metrics for a set of
   // basic blocks.
