@@ -438,7 +438,7 @@ Host::GetSignalAsCString (int signo)
     case SIGILL:    return "SIGILL";    // 4    illegal instruction (not reset when caught)
     case SIGTRAP:   return "SIGTRAP";   // 5    trace trap (not reset when caught)
     case SIGABRT:   return "SIGABRT";   // 6    abort()
-#if  defined(_POSIX_C_SOURCE)
+#if  (defined(_POSIX_C_SOURCE) && !defined(_DARWIN_C_SOURCE))
     case SIGPOLL:   return "SIGPOLL";   // 7    pollable event ([XSR] generated, not supported)
 #else    // !_POSIX_C_SOURCE
     case SIGEMT:    return "SIGEMT";    // 7    EMT instruction
