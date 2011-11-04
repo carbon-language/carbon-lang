@@ -1,3 +1,7 @@
+# This CMake module is responsible for interpreting the user defined LLVM_
+# options and executing the appropriate CMake commands to realize the users'
+# selections.
+
 include(AddLLVMDefinitions)
 
 if( CMAKE_COMPILER_IS_GNUCXX )
@@ -19,13 +23,6 @@ else()
   # It might be "."
   set(RUNTIME_BUILD_MODE "${CMAKE_CFG_INTDIR}")
 endif()
-
-set(LIT_ARGS_DEFAULT "-sv")
-if (MSVC OR XCODE)
-  set(LIT_ARGS_DEFAULT "${LIT_ARGS_DEFAULT} --no-progress-bar")
-endif()
-set(LLVM_LIT_ARGS "${LIT_ARGS_DEFAULT}"
-    CACHE STRING "Default options for lit")
 
 if( LLVM_ENABLE_ASSERTIONS )
   # MSVC doesn't like _DEBUG on release builds. See PR 4379.
@@ -52,9 +49,6 @@ if(WIN32)
   else(CYGWIN)
     set(LLVM_ON_WIN32 1)
     set(LLVM_ON_UNIX 0)
-
-    # This is effective only on Win32 hosts to use gnuwin32 tools.
-    set(LLVM_LIT_TOOLS_DIR "" CACHE PATH "Path to GnuWin32 tools")
   endif(CYGWIN)
   set(LTDL_SHLIB_EXT ".dll")
   set(EXEEXT ".exe")
@@ -99,7 +93,6 @@ endif()
 
 if( CMAKE_SIZEOF_VOID_P EQUAL 8 AND NOT WIN32 )
   # TODO: support other platforms and toolchains.
-  option(LLVM_BUILD_32_BITS "Build 32 bits executables and libraries." OFF)
   if( LLVM_BUILD_32_BITS )
     message(STATUS "Building 32 bits executables and libraries.")
     add_llvm_definitions( -m32 )
@@ -189,5 +182,3 @@ endif( MSVC )
 add_llvm_definitions( -D__STDC_CONSTANT_MACROS )
 add_llvm_definitions( -D__STDC_FORMAT_MACROS )
 add_llvm_definitions( -D__STDC_LIMIT_MACROS )
-
-option(LLVM_INCLUDE_TESTS "Generate build targets for the LLVM unit tests." ON)

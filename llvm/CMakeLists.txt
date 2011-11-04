@@ -151,6 +151,39 @@ else()
   option(LLVM_ENABLE_ASSERTIONS "Enable assertions" ON)
 endif()
 
+# Define an option controlling whether we should build for 32-bit on 64-bit
+# platforms, where supported.
+if( CMAKE_SIZEOF_VOID_P EQUAL 8 AND NOT WIN32 )
+  # TODO: support other platforms and toolchains.
+  option(LLVM_BUILD_32_BITS "Build 32 bits executables and libraries." OFF)
+endif()
+
+# Define an option controlling whether or not we include the test targets in the
+# project.
+option(LLVM_INCLUDE_TESTS "Generate build targets for the LLVM unit tests." ON)
+
+# Define the default arguments to use with 'lit', and an option for the user to
+# override.
+set(LIT_ARGS_DEFAULT "-sv")
+if (MSVC OR XCODE)
+  set(LIT_ARGS_DEFAULT "${LIT_ARGS_DEFAULT} --no-progress-bar")
+endif()
+set(LLVM_LIT_ARGS "${LIT_ARGS_DEFAULT}" CACHE STRING "Default options for lit")
+
+# On Win32/Cygwin, provide an option to specify the path to the GnuWin32 tools.
+if( WIN32 AND CYGWIN )
+  set(LLVM_LIT_TOOLS_DIR "" CACHE PATH "Path to GnuWin32 tools")
+endif()
+
+# On Win32 using MS tools, provide an option to set the number of parallel jobs
+# to use.
+if( MSVC_IDE AND ( MSVC90 OR MSVC10 ) )
+  # Only Visual Studio 2008 and 2010 officially supports /MP.  Visual Studio
+  # 2005 supports it but it is experimental.
+  set(LLVM_COMPILER_JOBS "0" CACHE STRING
+    "Number of parallel compiler jobs. 0 means use all processors. Default is 0.")
+endif()
+
 # All options referred to from HandleLLVMOptions have to be specified
 # BEFORE this include, otherwise options will not be correctly set on
 # first cmake run
