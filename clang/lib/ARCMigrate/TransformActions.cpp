@@ -122,6 +122,8 @@ public:
                        ASTContext &ctx, Preprocessor &PP)
     : CapturedDiags(capturedDiags), Ctx(ctx), PP(PP), IsInTransaction(false) { }
 
+  ASTContext &getASTContext() { return Ctx; }
+
   void startTransaction();
   bool commitTransaction();
   void abortTransaction();
@@ -674,6 +676,12 @@ void TransformActions::reportError(StringRef error, SourceLocation loc,
                                    SourceRange range) {
   assert(!static_cast<TransformActionsImpl*>(Impl)->isInTransaction() &&
          "Errors should be emitted out of a transaction");
+
+  SourceManager &SM = static_cast<TransformActionsImpl*>(Impl)->
+                                             getASTContext().getSourceManager();
+  if (SM.isInSystemHeader(SM.getExpansionLoc(loc)))
+    return;
+
   // FIXME: Use a custom category name to distinguish rewriter errors.
   std::string rewriteErr = "[rewriter] ";
   rewriteErr += error;
@@ -688,6 +696,12 @@ void TransformActions::reportNote(StringRef note, SourceLocation loc,
                                   SourceRange range) {
   assert(!static_cast<TransformActionsImpl*>(Impl)->isInTransaction() &&
          "Errors should be emitted out of a transaction");
+
+  SourceManager &SM = static_cast<TransformActionsImpl*>(Impl)->
+                                             getASTContext().getSourceManager();
+  if (SM.isInSystemHeader(SM.getExpansionLoc(loc)))
+    return;
+
   // FIXME: Use a custom category name to distinguish rewriter errors.
   std::string rewriteNote = "[rewriter] ";
   rewriteNote += note;

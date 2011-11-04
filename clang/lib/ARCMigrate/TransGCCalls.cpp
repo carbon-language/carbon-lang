@@ -35,6 +35,13 @@ public:
   bool VisitCallExpr(CallExpr *E) {
     TransformActions &TA = MigrateCtx.getPass().TA;
 
+    if (MigrateCtx.isGCOwnedNonObjC(E->getType())) {
+      TA.reportError("call returns pointer to GC managed memory; "
+                     "it will become unmanaged in ARC",
+                     E->getLocStart(), E->getSourceRange());
+      return true;
+    }
+
     Expr *CEE = E->getCallee()->IgnoreParenImpCasts();
     if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(CEE)) {
       if (FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(DRE->getDecl())) {

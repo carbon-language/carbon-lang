@@ -82,6 +82,8 @@ public:
     Traversers.push_back(traverser);
   }
 
+  bool isGCOwnedNonObjC(QualType T);
+
   void traverse(TranslationUnitDecl *TU);
 };
 

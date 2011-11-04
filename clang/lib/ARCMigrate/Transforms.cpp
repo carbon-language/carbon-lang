@@ -324,6 +324,26 @@ MigrationContext::~MigrationContext() {
     delete *I;
 }
 
+bool MigrationContext::isGCOwnedNonObjC(QualType T) {
+  while (!T.isNull()) {
+    if (const AttributedType *AttrT = T->getAs<AttributedType>()) {
+      if (AttrT->getAttrKind() == AttributedType::attr_objc_ownership)
+        return !AttrT->getModifiedType()->isObjCRetainableType();
+    }
+
+    if (T->isArrayType())
+      T = Pass.Ctx.getBaseElementType(T);
+    else if (const PointerType *PT = T->getAs<PointerType>())
+      T = PT->getPointeeType();
+    else if (const ReferenceType *RT = T->getAs<ReferenceType>())
+      T = RT->getPointeeType();
+    else
+      break;
+  }
+
+  return false;
+}
+
 void MigrationContext::traverse(TranslationUnitDecl *TU) {
   ASTTransform(*this).TraverseDecl(TU);
 }
