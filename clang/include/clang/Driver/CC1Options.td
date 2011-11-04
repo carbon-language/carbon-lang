@@ -131,6 +131,8 @@ def no_implicit_float : Flag<"-no-implicit-float">,
   HelpText<"Don't generate implicit floating point instructions (x86-only)">;
 def finstrument_functions : Flag<"-finstrument-functions">,
   HelpText<"Generate calls to instrument function entry and exit">;
+def fno_limit_debug_info : Flag<"-fno-limit-debug-info">,
+  HelpText<"Do not limit debug information produced to reduce size of debug binary">;
 def fno_merge_all_constants : Flag<"-fno-merge-all-constants">,
   HelpText<"Disallow merging of constants.">;
 def fno_threadsafe_statics : Flag<"-fno-threadsafe-statics">,

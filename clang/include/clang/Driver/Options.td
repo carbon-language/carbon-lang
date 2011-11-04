@@ -384,6 +384,8 @@ def fno_inline_functions : Flag<"-fno-inline-functions">, Group<clang_ignored_f_
 def fno_inline : Flag<"-fno-inline">, Group<clang_ignored_f_Group>;
 def fno_keep_inline_functions : Flag<"-fno-keep-inline-functions">, Group<clang_ignored_f_Group>;
 def fno_lax_vector_conversions : Flag<"-fno-lax-vector-conversions">, Group<f_Group>;
+def fno_limit_debug_info : Flag<"-fno-limit-debug-info">, Group<f_Group>,
+  HelpText<"Do not limit debug information produced to reduce size of debug binary">;
 def fno_math_errno : Flag<"-fno-math-errno">, Group<f_Group>;
 def fno_merge_all_constants : Flag<"-fno-merge-all-constants">, Group<f_Group>;
 def fno_ms_extensions : Flag<"-fno-ms-extensions">, Group<f_Group>;
