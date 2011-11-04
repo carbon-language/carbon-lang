@@ -2191,9 +2191,10 @@ def LDRD : AI3ld<0b1101, 0, (outs GPR:$Rd, GPR:$dst2),
 }
 
 // Indexed loads
-multiclass AI2_ldridx<bit isByte, string opc, InstrItinClass itin> {
+multiclass AI2_ldridx<bit isByte, string opc,
+                      InstrItinClass iii, InstrItinClass iir> {
   def _PRE_IMM  : AI2ldstidx<1, isByte, 1, (outs GPR:$Rt, GPR:$Rn_wb),
-                      (ins addrmode_imm12:$addr), IndexModePre, LdFrm, itin,
+                      (ins addrmode_imm12:$addr), IndexModePre, LdFrm, iii,
                       opc, "\t$Rt, $addr!", "$addr.base = $Rn_wb", []> {
     bits<17> addr;
     let Inst{25} = 0;
@@ -2205,7 +2206,7 @@ multiclass AI2_ldridx<bit isByte, string opc, InstrItinClass itin> {
   }
 
   def _PRE_REG  : AI2ldstidx<1, isByte, 1, (outs GPR:$Rt, GPR:$Rn_wb),
-                      (ins ldst_so_reg:$addr), IndexModePre, LdFrm, itin,
+                      (ins ldst_so_reg:$addr), IndexModePre, LdFrm, iir,
                       opc, "\t$Rt, $addr!", "$addr.base = $Rn_wb", []> {
     bits<17> addr;
     let Inst{25} = 1;
@@ -2219,7 +2220,7 @@ multiclass AI2_ldridx<bit isByte, string opc, InstrItinClass itin> {
 
   def _POST_REG : AI2ldstidx<1, isByte, 0, (outs GPR:$Rt, GPR:$Rn_wb),
                        (ins addr_offset_none:$addr, am2offset_reg:$offset),
-                       IndexModePost, LdFrm, itin,
+                       IndexModePost, LdFrm, iir,
                        opc, "\t$Rt, $addr, $offset",
                        "$addr.base = $Rn_wb", []> {
      // {12}     isAdd
@@ -2236,7 +2237,7 @@ multiclass AI2_ldridx<bit isByte, string opc, InstrItinClass itin> {
 
    def _POST_IMM : AI2ldstidx<1, isByte, 0, (outs GPR:$Rt, GPR:$Rn_wb),
                        (ins addr_offset_none:$addr, am2offset_imm:$offset),
-                      IndexModePost, LdFrm, itin,
+                      IndexModePost, LdFrm, iii,
                       opc, "\t$Rt, $addr, $offset",
                       "$addr.base = $Rn_wb", []> {
     // {12}     isAdd
@@ -2254,8 +2255,10 @@ multiclass AI2_ldridx<bit isByte, string opc, InstrItinClass itin> {
 }
 
 let mayLoad = 1, neverHasSideEffects = 1 in {
-defm LDR  : AI2_ldridx<0, "ldr", IIC_iLoad_ru>;
-defm LDRB : AI2_ldridx<1, "ldrb", IIC_iLoad_bh_ru>;
+// FIXME: for LDR_PRE_REG etc. the itineray should be either IIC_iLoad_ru or
+// IIC_iLoad_siu depending on whether it the offset register is shifted.
+defm LDR  : AI2_ldridx<0, "ldr", IIC_iLoad_iu, IIC_iLoad_ru>;
+defm LDRB : AI2_ldridx<1, "ldrb", IIC_iLoad_bh_iu, IIC_iLoad_bh_ru>;
 }
 
 multiclass AI3_ldridx<bits<4> op, string opc, InstrItinClass itin> {
@@ -2445,10 +2448,11 @@ def STRD : AI3str<0b1111, (outs), (ins GPR:$Rt, GPR:$src2, addrmode3:$addr),
 }
 
 // Indexed stores
-multiclass AI2_stridx<bit isByte, string opc, InstrItinClass itin> {
+multiclass AI2_stridx<bit isByte, string opc,
+                      InstrItinClass iii, InstrItinClass iir> {
   def _PRE_IMM : AI2ldstidx<0, isByte, 1, (outs GPR:$Rn_wb),
                             (ins GPR:$Rt, addrmode_imm12:$addr), IndexModePre,
-                            StFrm, itin,
+                            StFrm, iii,
                             opc, "\t$Rt, $addr!", "$addr.base = $Rn_wb", []> {
     bits<17> addr;
     let Inst{25} = 0;
@@ -2461,7 +2465,7 @@ multiclass AI2_stridx<bit isByte, string opc, InstrItinClass itin> {
 
   def _PRE_REG  : AI2ldstidx<0, isByte, 1, (outs GPR:$Rn_wb),
                       (ins GPR:$Rt, ldst_so_reg:$addr),
-                      IndexModePre, StFrm, itin,
+                      IndexModePre, StFrm, iir,
                       opc, "\t$Rt, $addr!", "$addr.base = $Rn_wb", []> {
     bits<17> addr;
     let Inst{25} = 1;
@@ -2474,7 +2478,7 @@ multiclass AI2_stridx<bit isByte, string opc, InstrItinClass itin> {
   }
   def _POST_REG : AI2ldstidx<0, isByte, 0, (outs GPR:$Rn_wb),
                 (ins GPR:$Rt, addr_offset_none:$addr, am2offset_reg:$offset),
-                IndexModePost, StFrm, itin,
+                IndexModePost, StFrm, iir,
                 opc, "\t$Rt, $addr, $offset",
                 "$addr.base = $Rn_wb", []> {
      // {12}     isAdd
@@ -2491,7 +2495,7 @@ multiclass AI2_stridx<bit isByte, string opc, InstrItinClass itin> {
 
    def _POST_IMM : AI2ldstidx<0, isByte, 0, (outs GPR:$Rn_wb),
                 (ins GPR:$Rt, addr_offset_none:$addr, am2offset_imm:$offset),
-                IndexModePost, StFrm, itin,
+                IndexModePost, StFrm, iii,
                 opc, "\t$Rt, $addr, $offset",
                 "$addr.base = $Rn_wb", []> {
     // {12}     isAdd
@@ -2508,8 +2512,10 @@ multiclass AI2_stridx<bit isByte, string opc, InstrItinClass itin> {
 }
 
 let mayStore = 1, neverHasSideEffects = 1 in {
-defm STR  : AI2_stridx<0, "str", IIC_iStore_ru>;
-defm STRB : AI2_stridx<1, "strb", IIC_iStore_bh_ru>;
+// FIXME: for STR_PRE_REG etc. the itineray should be either IIC_iStore_ru or
+// IIC_iStore_siu depending on whether it the offset register is shifted.
+defm STR  : AI2_stridx<0, "str", IIC_iStore_iu, IIC_iStore_ru>;
+defm STRB : AI2_stridx<1, "strb", IIC_iStore_bh_iu, IIC_iStore_bh_ru>;
 }
 
 def : ARMPat<(post_store GPR:$Rt, addr_offset_none:$addr,
