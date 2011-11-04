@@ -35,14 +35,14 @@ namespace trans {
 void rewriteAutoreleasePool(MigrationPass &pass);
 void rewriteUnbridgedCasts(MigrationPass &pass);
 void makeAssignARCSafe(MigrationPass &pass);
-void removeRetainReleaseDealloc(MigrationPass &pass);
-void removeZeroOutPropsInDealloc(MigrationPass &pass);
+void removeRetainReleaseDeallocFinalize(MigrationPass &pass);
+void removeZeroOutPropsInDeallocFinalize(MigrationPass &pass);
 void rewriteProperties(MigrationPass &pass);
 void rewriteBlockObjCVariable(MigrationPass &pass);
 void rewriteUnusedInitDelegate(MigrationPass &pass);
 void checkAPIUses(MigrationPass &pass);
 
-void removeEmptyStatementsAndDealloc(MigrationPass &pass);
+void removeEmptyStatementsAndDeallocFinalize(MigrationPass &pass);
 
 class BodyContext {
   MigrationContext &MigrateCtx;

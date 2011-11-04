@@ -9,3 +9,27 @@
 void test1(CFTypeRef *cft) {
   id x = CFBridgingRelease(cft);
 }
+
+@interface I1
+@end
+
+@implementation I1
+-(void)dealloc {
+  // dealloc
+  test1(0);
+}
+
+@end
+
+@interface I2
+@property  id prop;
+@end
+
+@implementation I2
+@synthesize prop;
+
+-(void)dealloc {
+  // finalize
+  test1(0);
+}
+@end

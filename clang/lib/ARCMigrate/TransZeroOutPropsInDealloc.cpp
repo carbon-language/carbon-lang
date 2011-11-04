@@ -31,9 +31,13 @@ class ZeroOutInDeallocRemover :
   llvm::DenseMap<ObjCPropertyDecl*, ObjCPropertyImplDecl*> SynthesizedProperties;
   ImplicitParamDecl *SelfD;
   ExprSet Removables;
+  Selector FinalizeSel;
 
 public:
-  ZeroOutInDeallocRemover(MigrationPass &pass) : Pass(pass), SelfD(0) { }
+  ZeroOutInDeallocRemover(MigrationPass &pass) : Pass(pass), SelfD(0) {
+    FinalizeSel =
+        Pass.Ctx.Selectors.getNullarySelector(&Pass.Ctx.Idents.get("finalize"));
+  }
 
   bool VisitObjCMessageExpr(ObjCMessageExpr *ME) {
     ASTContext &Ctx = Pass.Ctx;
@@ -84,7 +88,8 @@ public:
   }
 
   bool TraverseObjCMethodDecl(ObjCMethodDecl *D) {
-    if (D->getMethodFamily() != OMF_dealloc)
+    if (D->getMethodFamily() != OMF_dealloc &&
+        !(D->isInstanceMethod() && D->getSelector() == FinalizeSel))
       return true;
     if (!D->hasBody())
       return true;
@@ -191,7 +196,7 @@ private:
 
 } // anonymous namespace
 
-void trans::removeZeroOutPropsInDealloc(MigrationPass &pass) {
+void trans::removeZeroOutPropsInDeallocFinalize(MigrationPass &pass) {
   ZeroOutInDeallocRemover trans(pass);
   trans.TraverseDecl(pass.Ctx.getTranslationUnitDecl());
 }

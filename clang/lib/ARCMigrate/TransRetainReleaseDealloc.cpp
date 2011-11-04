@@ -36,13 +36,15 @@ class RetainReleaseDeallocRemover :
   ExprSet Removables;
   llvm::OwningPtr<ParentMap> StmtMap;
 
-  Selector DelegateSel;
+  Selector DelegateSel, FinalizeSel;
 
 public:
   RetainReleaseDeallocRemover(MigrationPass &pass)
     : Body(0), Pass(pass) {
     DelegateSel =
         Pass.Ctx.Selectors.getNullarySelector(&Pass.Ctx.Idents.get("delegate"));
+    FinalizeSel =
+        Pass.Ctx.Selectors.getNullarySelector(&Pass.Ctx.Idents.get("finalize"));
   }
 
   void transformBody(Stmt *body) {
@@ -55,6 +57,8 @@ public:
   bool VisitObjCMessageExpr(ObjCMessageExpr *E) {
     switch (E->getMethodFamily()) {
     default:
+      if (E->isInstanceMessage() && E->getSelector() == FinalizeSel)
+        break;
       return true;
     case OMF_autorelease:
       if (isRemovable(E)) {
@@ -211,7 +215,7 @@ private:
 
 } // anonymous namespace
 
-void trans::removeRetainReleaseDealloc(MigrationPass &pass) {
+void trans::removeRetainReleaseDeallocFinalize(MigrationPass &pass) {
   BodyTransform<RetainReleaseDeallocRemover> trans(pass);
   trans.TraverseDecl(pass.Ctx.getTranslationUnitDecl());
 }

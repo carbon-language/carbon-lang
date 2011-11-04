@@ -196,35 +196,60 @@ static bool isBodyEmpty(CompoundStmt *body, ASTContext &Ctx,
   return true;
 }
 
-static void removeDeallocMethod(MigrationPass &pass) {
+static void cleanupDeallocOrFinalize(MigrationPass &pass) {
   ASTContext &Ctx = pass.Ctx;
   TransformActions &TA = pass.TA;
   DeclContext *DC = Ctx.getTranslationUnitDecl();
+  Selector FinalizeSel =
+      Ctx.Selectors.getNullarySelector(&pass.Ctx.Idents.get("finalize"));
 
   typedef DeclContext::specific_decl_iterator<ObjCImplementationDecl>
     impl_iterator;
   for (impl_iterator I = impl_iterator(DC->decls_begin()),
                      E = impl_iterator(DC->decls_end()); I != E; ++I) {
+    ObjCMethodDecl *DeallocM = 0;
+    ObjCMethodDecl *FinalizeM = 0;
     for (ObjCImplementationDecl::instmeth_iterator
            MI = (*I)->instmeth_begin(),
            ME = (*I)->instmeth_end(); MI != ME; ++MI) {
       ObjCMethodDecl *MD = *MI;
+      if (!MD->hasBody())
+        continue;
+  
       if (MD->getMethodFamily() == OMF_dealloc) {
-        if (MD->hasBody() &&
-            isBodyEmpty(MD->getCompoundBody(), Ctx, pass.ARCMTMacroLocs)) {
-          Transaction Trans(TA);
-          TA.remove(MD->getSourceRange());
-        }
-        break;
+        DeallocM = MD;
+      } else if (MD->isInstanceMethod() && MD->getSelector() == FinalizeSel) {
+        FinalizeM = MD;
+      }
+    }
+
+    if (DeallocM) {
+      if (isBodyEmpty(DeallocM->getCompoundBody(), Ctx, pass.ARCMTMacroLocs)) {
+        Transaction Trans(TA);
+        TA.remove(DeallocM->getSourceRange());
+      }
+
+      if (FinalizeM) {
+        Transaction Trans(TA);
+        TA.remove(FinalizeM->getSourceRange());
+      }
+
+    } else if (FinalizeM) {
+      if (isBodyEmpty(FinalizeM->getCompoundBody(), Ctx, pass.ARCMTMacroLocs)) {
+        Transaction Trans(TA);
+        TA.remove(FinalizeM->getSourceRange());
+      } else {
+        Transaction Trans(TA);
+        TA.replaceText(FinalizeM->getSelectorStartLoc(), "finalize", "dealloc");
       }
     }
   }
 }
 
-void trans::removeEmptyStatementsAndDealloc(MigrationPass &pass) {
+void trans::removeEmptyStatementsAndDeallocFinalize(MigrationPass &pass) {
   EmptyStatementsRemover(pass).TraverseDecl(pass.Ctx.getTranslationUnitDecl());
 
-  removeDeallocMethod(pass);
+  cleanupDeallocOrFinalize(pass);
 
   for (unsigned i = 0, e = pass.ARCMTMacroLocs.size(); i != e; ++i) {
     Transaction Trans(pass.TA);

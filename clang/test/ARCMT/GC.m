@@ -9,3 +9,32 @@
 void test1(CFTypeRef *cft) {
   id x = NSMakeCollectable(cft);
 }
+
+@interface I1
+@end
+
+@implementation I1
+-(void)dealloc {
+  // dealloc
+  test1(0);
+}
+
+-(void)finalize {
+  // finalize
+  test1(0);
+}
+@end
+
+@interface I2
+@property (retain) id prop;
+@end
+
+@implementation I2
+@synthesize prop;
+
+-(void)finalize {
+  self.prop = 0;
+  // finalize
+  test1(0);
+}
+@end

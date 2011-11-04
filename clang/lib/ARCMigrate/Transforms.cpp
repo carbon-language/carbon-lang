@@ -345,9 +345,9 @@ static void traverseAST(MigrationPass &pass) {
 static void independentTransforms(MigrationPass &pass) {
   rewriteAutoreleasePool(pass);
   rewriteProperties(pass);
-  removeRetainReleaseDealloc(pass);
+  removeRetainReleaseDeallocFinalize(pass);
   rewriteUnusedInitDelegate(pass);
-  removeZeroOutPropsInDealloc(pass);
+  removeZeroOutPropsInDeallocFinalize(pass);
   makeAssignARCSafe(pass);
   rewriteUnbridgedCasts(pass);
   rewriteBlockObjCVariable(pass);
@@ -361,7 +361,7 @@ std::vector<TransformFn> arcmt::getAllTransformations(
 
   transforms.push_back(independentTransforms);
   // This depends on previous transformations removing various expressions.
-  transforms.push_back(removeEmptyStatementsAndDealloc);
+  transforms.push_back(removeEmptyStatementsAndDeallocFinalize);
 
   return transforms;
 }
