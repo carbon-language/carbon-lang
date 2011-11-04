@@ -32,7 +32,6 @@
 #include "llvm/Support/system_error.h"
 #include "llvm/Target/Mangler.h"
 #include "llvm/MC/MCAsmInfo.h"
-#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
@@ -82,7 +81,8 @@ bool LTOModule::isTargetMatch(MemoryBuffer *buffer, const char *triplePrefix) {
 
 
 LTOModule::LTOModule(Module *m, TargetMachine *t)
-  : _module(m), _target(t)
+  : _module(m), _target(t),
+    _context(*_target->getMCAsmInfo(), *_target->getRegisterInfo(), NULL)
 {
 }
 
@@ -613,17 +613,17 @@ namespace {
   };
 }
 
-bool LTOModule::addAsmGlobalSymbols(MCContext &Context, std::string &errMsg) {
+bool LTOModule::addAsmGlobalSymbols(std::string &errMsg) {
   const std::string &inlineAsm = _module->getModuleInlineAsm();
   if (inlineAsm.empty())
     return false;
 
-  OwningPtr<RecordStreamer> Streamer(new RecordStreamer(Context));
+  OwningPtr<RecordStreamer> Streamer(new RecordStreamer(_context));
   MemoryBuffer *Buffer = MemoryBuffer::getMemBuffer(inlineAsm);
   SourceMgr SrcMgr;
   SrcMgr.AddNewSourceBuffer(Buffer, SMLoc());
   OwningPtr<MCAsmParser> Parser(createMCAsmParser(SrcMgr,
-                                                  Context, *Streamer,
+                                                  _context, *Streamer,
                                                   *_target->getMCAsmInfo()));
   OwningPtr<MCSubtargetInfo> STI(_target->getTarget().
                       createMCSubtargetInfo(_target->getTargetTriple(),
@@ -671,8 +671,7 @@ static bool isAliasToDeclaration(const GlobalAlias &V) {
 
 bool LTOModule::ParseSymbols(std::string &errMsg) {
   // Use mangler to add GlobalPrefix to names to match linker names.
-  MCContext Context(*_target->getMCAsmInfo(), *_target->getRegisterInfo(),NULL);
-  Mangler mangler(Context, *_target->getTargetData());
+  Mangler mangler(_context, *_target->getTargetData());
 
   // add functions
   for (Module::iterator f = _module->begin(); f != _module->end(); ++f) {
@@ -692,7 +691,7 @@ bool LTOModule::ParseSymbols(std::string &errMsg) {
   }
 
   // add asm globals
-  if (addAsmGlobalSymbols(Context, errMsg))
+  if (addAsmGlobalSymbols(errMsg))
     return true;
 
   // add aliases
