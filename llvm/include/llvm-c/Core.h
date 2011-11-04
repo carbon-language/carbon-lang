@@ -540,7 +540,7 @@ LLVMUseRef LLVMGetNextUse(LLVMUseRef U);
 LLVMValueRef LLVMGetUser(LLVMUseRef U);
 LLVMValueRef LLVMGetUsedValue(LLVMUseRef U);
 
-/* Operations on Users */
+/* Operations on Users and metadata */
 LLVMValueRef LLVMGetOperand(LLVMValueRef Val, unsigned Index);
 void LLVMSetOperand(LLVMValueRef User, unsigned Index, LLVMValueRef Val);
 int LLVMGetNumOperands(LLVMValueRef Val);
@@ -562,8 +562,6 @@ LLVMValueRef LLVMMDNodeInContext(LLVMContextRef C, LLVMValueRef *Vals,
                                  unsigned Count);
 LLVMValueRef LLVMMDNode(LLVMValueRef *Vals, unsigned Count);
 const char  *LLVMGetMDString(LLVMValueRef V, unsigned* Len);
-int LLVMGetMDNodeNumOperands(LLVMValueRef V);
-LLVMValueRef *LLVMGetMDNodeOperand(LLVMValueRef V, unsigned i);
 unsigned LLVMGetNamedMetadataNumOperands(LLVMModuleRef M, const char* name);
 void LLVMGetNamedMetadataOperands(LLVMModuleRef M, const char* name, LLVMValueRef *Dest);
 
