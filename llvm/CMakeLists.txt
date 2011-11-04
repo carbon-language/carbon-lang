@@ -127,12 +127,6 @@ foreach(c ${LLVM_TARGETS_TO_BUILD})
   endif()
 endforeach(c)
 
-# Produce llvm/Config/Targets.def
-configure_file(
-  ${LLVM_MAIN_INCLUDE_DIR}/llvm/Config/Targets.def.in
-  ${LLVM_BINARY_DIR}/include/llvm/Config/Targets.def
-  )
-
 set(llvm_builded_incs_dir ${LLVM_BINARY_DIR}/include/llvm)
 
 include(AddLLVMDefinitions)
@@ -211,14 +205,54 @@ option(LLVM_INCLUDE_TESTS "Generate build targets for the LLVM unit tests." ON)
 include(config-ix)
 include(HandleLLVMOptions)
 
+# Configure all of the various header file fragments LLVM uses which depend on
+# configuration variables.
+set(LLVM_ENUM_ASM_PRINTERS "")
+set(LLVM_ENUM_ASM_PARSERS "")
+set(LLVM_ENUM_DISASSEMBLERS "")
+foreach(t ${LLVM_TARGETS_TO_BUILD})
+  set( td ${LLVM_MAIN_SRC_DIR}/lib/Target/${t} )
+  file(GLOB asmp_file "${td}/*AsmPrinter.cpp")
+  if( asmp_file )
+    set(LLVM_ENUM_ASM_PRINTERS
+      "${LLVM_ENUM_ASM_PRINTERS}LLVM_ASM_PRINTER(${t})\n")
+  endif()
+  if( EXISTS ${td}/AsmParser/CMakeLists.txt )
+    set(LLVM_ENUM_ASM_PARSERS
+      "${LLVM_ENUM_ASM_PARSERS}LLVM_ASM_PARSER(${t})\n")
+  endif()
+  if( EXISTS ${td}/Disassembler/CMakeLists.txt )
+    set(LLVM_ENUM_DISASSEMBLERS
+      "${LLVM_ENUM_DISASSEMBLERS}LLVM_DISASSEMBLER(${t})\n")
+  endif()
+endforeach(t)
+
+# Produce the target definition files, which provide a way for clients to easily
+# include various classes of targets.
+configure_file(
+  ${LLVM_MAIN_INCLUDE_DIR}/llvm/Config/AsmPrinters.def.in
+  ${LLVM_BINARY_DIR}/include/llvm/Config/AsmPrinters.def
+  )
+configure_file(
+  ${LLVM_MAIN_INCLUDE_DIR}/llvm/Config/AsmParsers.def.in
+  ${LLVM_BINARY_DIR}/include/llvm/Config/AsmParsers.def
+  )
+configure_file(
+  ${LLVM_MAIN_INCLUDE_DIR}/llvm/Config/Disassemblers.def.in
+  ${LLVM_BINARY_DIR}/include/llvm/Config/Disassemblers.def
+  )
+configure_file(
+  ${LLVM_MAIN_INCLUDE_DIR}/llvm/Config/Targets.def.in
+  ${LLVM_BINARY_DIR}/include/llvm/Config/Targets.def
+  )
+
+# Configure the three LLVM configuration header files.
 configure_file(
   ${LLVM_MAIN_INCLUDE_DIR}/llvm/Config/config.h.cmake
   ${LLVM_BINARY_DIR}/include/llvm/Config/config.h)
-
 configure_file(
   ${LLVM_MAIN_INCLUDE_DIR}/llvm/Config/llvm-config.h.cmake
   ${LLVM_BINARY_DIR}/include/llvm/Config/llvm-config.h)
-
 configure_file(
   ${LLVM_MAIN_INCLUDE_DIR}/llvm/Support/DataTypes.h.cmake
   ${LLVM_BINARY_DIR}/include/llvm/Support/DataTypes.h)
