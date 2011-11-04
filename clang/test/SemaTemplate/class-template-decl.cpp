@@ -75,23 +75,3 @@ namespace PR8001 {
   }
 }
 
-namespace rdar9676205 {
-  template <unsigned, class _Tp> class tuple_element;
-
-  template <class _T1, class _T2> class pair;
-
-  template <class _T1, class _T2>
-  class tuple_element<0, pair<_T1, _T2> >
-  {
-    template <class _Tp>
-    struct X
-    {
-      template <class _Up, bool = X<_Up>::value>
-      struct Y
-        : public X<_Up>,
-          public Y<_Up>
-      { };
-    };
-  };
-}
-
