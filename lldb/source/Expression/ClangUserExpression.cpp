@@ -82,7 +82,7 @@ ClangUserExpression::ASTTransformer (clang::ASTConsumer *passthrough)
 }
 
 void
-ClangUserExpression::ScanContext(ExecutionContext &exe_ctx)
+ClangUserExpression::ScanContext(ExecutionContext &exe_ctx, Error &err)
 {
     m_target = exe_ctx.GetTargetPtr();
     
@@ -109,6 +109,28 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx)
     {
         if (method_decl->isInstance())
         {
+            VariableList *vars = frame->GetVariableList(false);
+            
+            const char *thisErrorString = "Stopped in a C++ method, but 'this' isn't available; pretending we are in a generic context";
+            
+            if (!vars)
+            {
+                err.SetErrorToGenericError();
+                err.SetErrorString(thisErrorString);
+                return;
+            }
+            
+            lldb::VariableSP this_var = vars->FindVariable(ConstString("this"));
+            
+            if (!this_var ||
+                !this_var->IsInScope(frame) || 
+                !this_var->LocationIsValidForFrame (frame))
+            {
+                err.SetErrorToGenericError();
+                err.SetErrorString(thisErrorString);
+                return;
+            }
+            
             m_cplusplus = true;
             m_needs_object_ptr = true;
             
@@ -125,9 +147,31 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx)
         }
     }
     else if (clang::ObjCMethodDecl *method_decl = llvm::dyn_cast<clang::ObjCMethodDecl>(decl_context))
-    {
+    {        
         if (method_decl->isInstanceMethod())
         {
+            VariableList *vars = frame->GetVariableList(false);
+            
+            const char *selfErrorString = "Stopped in an Objective-C method, but 'self' isn't available; pretending we are in a generic context";
+            
+            if (!vars)
+            {
+                err.SetErrorToGenericError();
+                err.SetErrorString(selfErrorString);
+                return;
+            }
+            
+            lldb::VariableSP self_var = vars->FindVariable(ConstString("self"));
+            
+            if (!self_var || 
+                !self_var->IsInScope(frame) || 
+                !self_var->LocationIsValidForFrame (frame))
+            {
+                err.SetErrorToGenericError();
+                err.SetErrorString(selfErrorString);
+                return;
+            }
+            
             m_objectivec = true;
             m_needs_object_ptr = true;
         }
@@ -182,7 +226,14 @@ ClangUserExpression::Parse (Stream &error_stream,
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
-    ScanContext(exe_ctx);
+    Error err;
+    
+    ScanContext(exe_ctx, err);
+    
+    if (!err.Success())
+    {
+        error_stream.Printf("warning: %s\n", err.AsCString());
+    }
     
     StreamString m_transformed_stream;
     
