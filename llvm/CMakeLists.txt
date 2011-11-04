@@ -158,10 +158,6 @@ if( CMAKE_SIZEOF_VOID_P EQUAL 8 AND NOT WIN32 )
   option(LLVM_BUILD_32_BITS "Build 32 bits executables and libraries." OFF)
 endif()
 
-# Define an option controlling whether or not we include the test targets in the
-# project.
-option(LLVM_INCLUDE_TESTS "Generate build targets for the LLVM unit tests." ON)
-
 # Define the default arguments to use with 'lit', and an option for the user to
 # override.
 set(LIT_ARGS_DEFAULT "-sv")
@@ -183,6 +179,27 @@ if( MSVC_IDE AND ( MSVC90 OR MSVC10 ) )
   set(LLVM_COMPILER_JOBS "0" CACHE STRING
     "Number of parallel compiler jobs. 0 means use all processors. Default is 0.")
 endif()
+
+# Define options to control the inclusion and default build behavior for
+# components which may not strictly be necessary (tools, runtime, examples, and
+# tests).
+#
+# This is primarily to support building smaller or faster project files.
+option(LLVM_INCLUDE_TOOLS "Generate build targets for the LLVM tools." ON)
+option(LLVM_BUILD_TOOLS
+  "Build the LLVM tools. If OFF, just generate build targets." ON)
+
+option(LLVM_INCLUDE_RUNTIME "Generate build targets for the LLVM runtimes" ON)
+option(LLVM_BUILD_RUNTIME
+  "Build the LLVM runtime libraries. If OFF, just generate build targets." ON)
+
+option(LLVM_BUILD_EXAMPLES
+  "Build the LLVM example programs. If OFF, just generate build targets." OFF)
+option(LLVM_INCLUDE_EXAMPLES "Generate build targets for the LLVM examples" ON)
+
+option(LLVM_BUILD_TESTS
+  "Build LLVM unit tests. If OFF, just generate build targets." OFF)
+option(LLVM_INCLUDE_TESTS "Generate build targets for the LLVM unit tests." ON)
 
 # All options referred to from HandleLLVMOptions have to be specified
 # BEFORE this include, otherwise options will not be correctly set on
@@ -241,29 +258,18 @@ add_subdirectory(utils/llvm-lit)
 
 add_subdirectory(projects)
 
-option(LLVM_BUILD_TOOLS
-  "Build the LLVM tools. If OFF, just generate build targets." ON)
-option(LLVM_INCLUDE_TOOLS "Generate build targets for the LLVM tools." ON)
 if( LLVM_INCLUDE_TOOLS )
   add_subdirectory(tools)
 endif()
 
-option(LLVM_BUILD_RUNTIME
-  "Build the LLVM runtime libraries. If OFF, just generate build targets." ON)
-option(LLVM_INCLUDE_RUNTIME "Generate build targets for the LLVM runtimes" ON)
 if( LLVM_INCLUDE_RUNTIME )
   add_subdirectory(runtime)
 endif()
 
-option(LLVM_BUILD_EXAMPLES
-  "Build the LLVM example programs. If OFF, just generate build targets." OFF)
-option(LLVM_INCLUDE_EXAMPLES "Generate build targets for the LLVM examples" ON)
 if( LLVM_INCLUDE_EXAMPLES )
   add_subdirectory(examples)
 endif()
 
-option(LLVM_BUILD_TESTS
-  "Build LLVM unit tests. If OFF, just generate build targets." OFF)
 if( LLVM_INCLUDE_TESTS )
   add_subdirectory(test)
   add_subdirectory(utils/unittest)
