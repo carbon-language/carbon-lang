@@ -115,6 +115,7 @@ private:
     llvm::StringMap<NameAndAttributes>      _undefines;
     std::vector<const char*>                _asm_undefines;
     llvm::MCContext                         _context;
+    // Use mangler to add GlobalPrefix to names to match linker names.
     llvm::Mangler                           _mangler;
 };
 

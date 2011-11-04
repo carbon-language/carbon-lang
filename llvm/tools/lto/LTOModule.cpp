@@ -668,8 +668,6 @@ static bool isAliasToDeclaration(const GlobalAlias &V) {
 }
 
 bool LTOModule::ParseSymbols(std::string &errMsg) {
-  // Use mangler to add GlobalPrefix to names to match linker names.
-
   // add functions
   for (Module::iterator f = _module->begin(); f != _module->end(); ++f) {
     if (isDeclaration(*f))
