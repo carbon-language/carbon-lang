@@ -3589,7 +3589,7 @@
 				GCC_WARN_UNUSED_LABEL = YES;
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				LLVM_BUILD_DIR = "$(OBJROOT)/llvm";
+				LLVM_BUILD_DIR = "$(SRCROOT)/llvm-build/$(LLVM_CONFIGURATION)";
 				LLVM_BUILD_DIR_ARCH = "$(CURRENT_ARCH)/";
 				LLVM_CONFIGURATION = "Release+Debug";
 				LLVM_SOURCE_DIR = "$(SRCROOT)/llvm";
@@ -3638,7 +3638,7 @@
 				GCC_WARN_UNUSED_LABEL = YES;
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				LLVM_BUILD_DIR = "$(OBJROOT)/llvm";
+				LLVM_BUILD_DIR = "$(SRCROOT)/llvm-build/$(LLVM_CONFIGURATION)";
 				LLVM_BUILD_DIR_ARCH = "$(CURRENT_ARCH)/";
 				LLVM_CONFIGURATION = "Release+Debug";
 				LLVM_SOURCE_DIR = "$(SRCROOT)/llvm";
@@ -4068,8 +4068,6 @@
 					"$(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)",
 					"$(inherited)",
 				);
-				LLVM_CONFIGURATION = Release;
-				"LLVM_CONFIGURATION[sdk=iphoneos*][arch=*]" = "Release+Debug";
 				OTHER_LDFLAGS = (
 					"-lllvmclang",
 					"-lpython",
@@ -4132,8 +4130,6 @@
 					"$(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)",
 					"$(inherited)",
 				);
-				LLVM_CONFIGURATION = Release;
-				"LLVM_CONFIGURATION[sdk=iphoneos*][arch=*]" = "Release+Debug";
 				OTHER_LDFLAGS = (
 					"-lllvmclang",
 					"-lpython",
@@ -4193,8 +4189,6 @@
 					"$(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)",
 					"$(inherited)",
 				);
-				LLVM_CONFIGURATION = Release;
-				"LLVM_CONFIGURATION[sdk=iphoneos*][arch=*]" = "Release+Debug";
 				OTHER_LDFLAGS = (
 					"-lllvmclang",
 					"-lpython",
@@ -4239,6 +4233,7 @@
 				INFOPLIST_FILE = "lldb-Info.plist";
 				INSTALL_PATH = "$(DEVELOPER_DIR)/usr/bin";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				LLVM_BUILD_DIR_ARCH = "$(OBJROOT)/llvm";
 				OTHER_LDFLAGS = (
 					"-sectcreate",
 					__TEXT,
