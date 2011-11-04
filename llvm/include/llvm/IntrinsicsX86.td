@@ -2013,3 +2013,19 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_wrgsbase_64 : GCCBuiltin<"__builtin_ia32_wrgsbase64">,
               Intrinsic<[], [llvm_i64_ty]>;
 }
+
+//===----------------------------------------------------------------------===//
+// Half float conversion
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_vcvtph2ps_128 : GCCBuiltin<"__builtin_ia32_vcvtph2ps">,
+              Intrinsic<[llvm_v4f32_ty], [llvm_v8i16_ty], [IntrNoMem]>;
+  def int_x86_vcvtph2ps_256 : GCCBuiltin<"__builtin_ia32_vcvtph2ps256">,
+              Intrinsic<[llvm_v8f32_ty], [llvm_v8i16_ty], [IntrNoMem]>;
+  def int_x86_vcvtps2ph_128 : GCCBuiltin<"__builtin_ia32_vcvtps2ph">,
+              Intrinsic<[llvm_v8i16_ty], [llvm_v4f32_ty, llvm_i32_ty],
+                        [IntrNoMem]>;
+  def int_x86_vcvtps2ph_256 : GCCBuiltin<"__builtin_ia32_vcvtps2ph256">,
+              Intrinsic<[llvm_v8i16_ty], [llvm_v8f32_ty, llvm_i32_ty],
+                        [IntrNoMem]>;
+}

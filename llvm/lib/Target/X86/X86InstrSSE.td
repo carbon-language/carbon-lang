@@ -7365,29 +7365,34 @@ let Defs = [YMM0, YMM1, YMM2, YMM3, YMM4, YMM5, YMM6, YMM7,
 //===----------------------------------------------------------------------===//
 // Half precision conversion instructions
 //
+multiclass f16c_ph2ps<RegisterClass RC, X86MemOperand x86memop, Intrinsic Int> {
 let Predicates = [HasAVX, HasF16C] in {
-  def VCVTPH2PSrm : I<0x13, MRMSrcMem, (outs VR128:$dst), (ins f64mem:$src),
-                     "vcvtph2ps\t{$src, $dst|$dst, $src}", []>, T8, OpSize, VEX;
-  def VCVTPH2PSrr : I<0x13, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                     "vcvtph2ps\t{$src, $dst|$dst, $src}", []>, T8, OpSize, VEX;
-  def VCVTPH2PSYrm : I<0x13, MRMSrcMem, (outs VR256:$dst), (ins f128mem:$src),
-                     "vcvtph2ps\t{$src, $dst|$dst, $src}", []>, T8, OpSize, VEX;
-  def VCVTPH2PSYrr : I<0x13, MRMSrcReg, (outs VR256:$dst), (ins VR128:$src),
-                     "vcvtph2ps\t{$src, $dst|$dst, $src}", []>, T8, OpSize, VEX;
-  def VCVTPS2PHmr : Ii8<0x1D, MRMDestMem, (outs f64mem:$dst),
-                      (ins VR128:$src1, i32i8imm:$src2),
-                      "vcvtps2ph\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>,
-                      TA, OpSize, VEX;
-  def VCVTPS2PHrr : Ii8<0x1D, MRMDestReg, (outs VR128:$dst),
-                      (ins VR128:$src1, i32i8imm:$src2),
-                      "vcvtps2ph\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>,
-                      TA, OpSize, VEX;
-  def VCVTPS2PHYmr : Ii8<0x1D, MRMDestMem, (outs f128mem:$dst),
-                      (ins VR256:$src1, i32i8imm:$src2),
-                      "vcvtps2ph\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>,
-                      TA, OpSize, VEX;
-  def VCVTPS2PHYrr : Ii8<0x1D, MRMDestReg, (outs VR128:$dst),
-                      (ins VR256:$src1, i32i8imm:$src2),
-                      "vcvtps2ph\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>,
-                      TA, OpSize, VEX;
+  def rr : I<0x13, MRMSrcReg, (outs RC:$dst), (ins VR128:$src),
+             "vcvtph2ps\t{$src, $dst|$dst, $src}",
+             [(set RC:$dst, (Int VR128:$src))]>,
+             T8, OpSize, VEX;
+  let neverHasSideEffects = 1, mayLoad = 1 in
+  def rm : I<0x13, MRMSrcMem, (outs RC:$dst), (ins x86memop:$src),
+             "vcvtph2ps\t{$src, $dst|$dst, $src}", []>, T8, OpSize, VEX;
 }
+}
+
+multiclass f16c_ps2ph<RegisterClass RC, X86MemOperand x86memop, Intrinsic Int> {
+let Predicates = [HasAVX, HasF16C] in {
+  def rr : Ii8<0x1D, MRMDestReg, (outs VR128:$dst),
+               (ins RC:$src1, i32i8imm:$src2),
+               "vcvtps2ph\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+               [(set VR128:$dst, (Int RC:$src1, imm:$src2))]>,
+               TA, OpSize, VEX;
+  let neverHasSideEffects = 1, mayLoad = 1 in
+  def mr : Ii8<0x1D, MRMDestMem, (outs x86memop:$dst),
+               (ins RC:$src1, i32i8imm:$src2),
+               "vcvtps2ph\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>,
+               TA, OpSize, VEX;
+}
+}
+
+defm VCVTPH2PS  : f16c_ph2ps<VR128, f64mem, int_x86_vcvtph2ps_128>;
+defm VCVTPH2PSY : f16c_ph2ps<VR256, f128mem, int_x86_vcvtph2ps_256>;
+defm VCVTPS2PH  : f16c_ps2ph<VR128, f64mem, int_x86_vcvtps2ph_128>;
+defm VCVTPS2PHY : f16c_ps2ph<VR256, f128mem, int_x86_vcvtps2ph_256>;
