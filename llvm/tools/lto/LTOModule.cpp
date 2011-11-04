@@ -30,7 +30,6 @@
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/system_error.h"
-#include "llvm/Target/Mangler.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
@@ -82,7 +81,8 @@ bool LTOModule::isTargetMatch(MemoryBuffer *buffer, const char *triplePrefix) {
 
 LTOModule::LTOModule(Module *m, TargetMachine *t)
   : _module(m), _target(t),
-    _context(*_target->getMCAsmInfo(), *_target->getRegisterInfo(), NULL)
+    _context(*_target->getMCAsmInfo(), *_target->getRegisterInfo(), NULL),
+    _mangler(_context, *_target->getTargetData())
 {
 }
 
@@ -182,9 +182,9 @@ void LTOModule::setTargetTriple(const char *triple) {
   _module->setTargetTriple(triple);
 }
 
-void LTOModule::addDefinedFunctionSymbol(Function *f, Mangler &mangler) {
+void LTOModule::addDefinedFunctionSymbol(Function *f) {
   // add to list of defined symbols
-  addDefinedSymbol(f, mangler, true);
+  addDefinedSymbol(f, true);
 }
 
 // Get string that data pointer points to.
@@ -280,9 +280,9 @@ void LTOModule::addObjCClassRef(GlobalVariable *clgv) {
 }
 
 
-void LTOModule::addDefinedDataSymbol(GlobalValue *v, Mangler &mangler) {
+void LTOModule::addDefinedDataSymbol(GlobalValue *v) {
   // Add to list of defined symbols.
-  addDefinedSymbol(v, mangler, false);
+  addDefinedSymbol(v, false);
 
   // Special case i386/ppc ObjC data structures in magic sections:
   // The issue is that the old ObjC object format did some strange
@@ -328,15 +328,14 @@ void LTOModule::addDefinedDataSymbol(GlobalValue *v, Mangler &mangler) {
 }
 
 
-void LTOModule::addDefinedSymbol(GlobalValue *def, Mangler &mangler,
-                                 bool isFunction) {
+void LTOModule::addDefinedSymbol(GlobalValue *def, bool isFunction) {
   // ignore all llvm.* symbols
   if (def->getName().startswith("llvm."))
     return;
 
   // string is owned by _defines
   SmallString<64> Buffer;
-  mangler.getNameWithPrefix(Buffer, def, false);
+  _mangler.getNameWithPrefix(Buffer, def, false);
 
   // set alignment part log2() can have rounding errors
   uint32_t align = def->getAlignment();
@@ -426,8 +425,7 @@ void LTOModule::addAsmGlobalSymbolUndef(const char *name) {
   entry.setValue(info);
 }
 
-void LTOModule::addPotentialUndefinedSymbol(GlobalValue *decl,
-                                            Mangler &mangler) {
+void LTOModule::addPotentialUndefinedSymbol(GlobalValue *decl) {
   // ignore all llvm.* symbols
   if (decl->getName().startswith("llvm."))
     return;
@@ -437,7 +435,7 @@ void LTOModule::addPotentialUndefinedSymbol(GlobalValue *decl,
     return;
 
   SmallString<64> name;
-  mangler.getNameWithPrefix(name, decl, false);
+  _mangler.getNameWithPrefix(name, decl, false);
 
   StringMap<NameAndAttributes>::value_type &entry =
     _undefines.GetOrCreateValue(name);
@@ -671,23 +669,22 @@ static bool isAliasToDeclaration(const GlobalAlias &V) {
 
 bool LTOModule::ParseSymbols(std::string &errMsg) {
   // Use mangler to add GlobalPrefix to names to match linker names.
-  Mangler mangler(_context, *_target->getTargetData());
 
   // add functions
   for (Module::iterator f = _module->begin(); f != _module->end(); ++f) {
     if (isDeclaration(*f))
-      addPotentialUndefinedSymbol(f, mangler);
+      addPotentialUndefinedSymbol(f);
     else
-      addDefinedFunctionSymbol(f, mangler);
+      addDefinedFunctionSymbol(f);
   }
 
   // add data
   for (Module::global_iterator v = _module->global_begin(),
          e = _module->global_end(); v !=  e; ++v) {
     if (isDeclaration(*v))
-      addPotentialUndefinedSymbol(v, mangler);
+      addPotentialUndefinedSymbol(v);
     else
-      addDefinedDataSymbol(v, mangler);
+      addDefinedDataSymbol(v);
   }
 
   // add asm globals
@@ -698,9 +695,9 @@ bool LTOModule::ParseSymbols(std::string &errMsg) {
   for (Module::alias_iterator i = _module->alias_begin(),
          e = _module->alias_end(); i != e; ++i) {
     if (isAliasToDeclaration(*i))
-      addPotentialUndefinedSymbol(i, mangler);
+      addPotentialUndefinedSymbol(i);
     else
-      addDefinedDataSymbol(i, mangler);
+      addDefinedDataSymbol(i);
   }
 
   // make symbols for all undefines

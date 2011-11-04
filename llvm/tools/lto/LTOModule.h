@@ -16,6 +16,7 @@
 
 #include "llvm/Module.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/Target/Mangler.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringMap.h"
@@ -28,7 +29,6 @@
 
 // forward references to llvm classes
 namespace llvm {
-    class Mangler;
     class MemoryBuffer;
     class GlobalValue;
     class Value;
@@ -78,15 +78,11 @@ private:
                             LTOModule(llvm::Module* m, llvm::TargetMachine* t);
 
     bool                    ParseSymbols(std::string &errMsg);
-    void                    addDefinedSymbol(llvm::GlobalValue* def, 
-                                                    llvm::Mangler& mangler, 
-                                                    bool isFunction);
-    void                    addPotentialUndefinedSymbol(llvm::GlobalValue* decl, 
-                                                        llvm::Mangler &mangler);
-    void                    addDefinedFunctionSymbol(llvm::Function* f, 
-                                                     llvm::Mangler &mangler);
-    void                    addDefinedDataSymbol(llvm::GlobalValue* v, 
-                                                 llvm::Mangler &mangler);
+    void                    addDefinedSymbol(llvm::GlobalValue* def,
+                                             bool isFunction);
+    void                    addPotentialUndefinedSymbol(llvm::GlobalValue* decl);
+    void                    addDefinedFunctionSymbol(llvm::Function* f);
+  void                    addDefinedDataSymbol(llvm::GlobalValue* v);
     bool                    addAsmGlobalSymbols(std::string &errMsg);
     void                    addAsmGlobalSymbol(const char *,
                                                lto_symbol_attributes scope);
@@ -119,6 +115,7 @@ private:
     llvm::StringMap<NameAndAttributes>      _undefines;
     std::vector<const char*>                _asm_undefines;
     llvm::MCContext                         _context;
+    llvm::Mangler                           _mangler;
 };
 
 #endif // LTO_MODULE_H
