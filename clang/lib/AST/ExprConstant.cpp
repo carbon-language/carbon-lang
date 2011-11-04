@@ -302,6 +302,8 @@ namespace {
 }
 
 static bool Evaluate(CCValue &Result, EvalInfo &Info, const Expr *E);
+static bool EvaluateConstantExpression(APValue &Result, EvalInfo &Info,
+                                       const Expr *E);
 static bool EvaluateLValue(const Expr *E, LValue &Result, EvalInfo &Info);
 static bool EvaluatePointer(const Expr *E, LValue &Result, EvalInfo &Info);
 static bool EvaluateInteger(const Expr *E, APSInt  &Result, EvalInfo &Info);
@@ -335,9 +337,14 @@ static bool IsGlobalLValue(const Expr* E) {
 }
 
 /// Check that this core constant expression value is a valid value for a
-/// constant expression.
-static bool CheckConstantExpression(const CCValue &Value) {
-  return !Value.isLValue() || IsGlobalLValue(Value.getLValueBase());
+/// constant expression, and if it is, produce the corresponding constant value.
+static bool CheckConstantExpression(const CCValue &CCValue, APValue &Value) {
+  if (CCValue.isLValue() && !IsGlobalLValue(CCValue.getLValueBase()))
+    return false;
+
+  // Slice off the extra bits.
+  Value = CCValue;
+  return true;
 }
 
 const ValueDecl *GetLValueBaseDecl(const LValue &LVal) {
@@ -512,12 +519,14 @@ static bool EvaluateVarDeclInit(EvalInfo &Info, const VarDecl *VD,
   EvalInfo InitInfo(Info.Ctx, EStatus);
   // FIXME: The caller will need to know whether the value was a constant
   // expression. If not, we should propagate up a diagnostic.
-  if (!Evaluate(Result, InitInfo, Init) || !CheckConstantExpression(Result)) {
+  APValue EvalResult;
+  if (!EvaluateConstantExpression(EvalResult, InitInfo, Init)) {
     VD->setEvaluatedValue(APValue());
     return false;
   }
 
-  VD->setEvaluatedValue(Result);
+  VD->setEvaluatedValue(EvalResult);
+  Result = CCValue(EvalResult, CCValue::GlobalValue());
   return true;
 }
 
@@ -900,13 +909,14 @@ public:
 
     const FunctionDecl *Definition;
     Stmt *Body = FD->getBody(Definition);
-    CCValue Result;
+    CCValue CCResult;
+    APValue Result;
     llvm::ArrayRef<const Expr*> Args(E->getArgs(), E->getNumArgs());
 
     if (Body && Definition->isConstexpr() && !Definition->isInvalidDecl() &&
-        HandleFunctionCall(Args, Body, Info, Result) &&
-        CheckConstantExpression(Result))
-      return DerivedSuccess(Result, E);
+        HandleFunctionCall(Args, Body, Info, CCResult) &&
+        CheckConstantExpression(CCResult, Result))
+      return DerivedSuccess(CCValue(Result, CCValue::GlobalValue()), E);
 
     return DerivedError(E);
   }
@@ -1372,7 +1382,8 @@ namespace {
       Result = APValue(V.data(), V.size());
       return true;
     }
-    bool Success(const APValue &V, const Expr *E) {
+    bool Success(const CCValue &V, const Expr *E) {
+      assert(V.isVector());
       Result = V;
       return true;
     }
@@ -3197,10 +3208,42 @@ static bool Evaluate(CCValue &Result, EvalInfo &Info, const Expr *E) {
     if (!EvaluateComplex(E, C, Info))
       return false;
     C.moveInto(Result);
+  } else if (E->getType()->isMemberPointerType()) {
+    // FIXME: Implement evaluation of pointer-to-member types.
+    return false;
+  } else if (E->getType()->isArrayType() && E->getType()->isLiteralType()) {
+    // FIXME: Implement evaluation of array rvalues.
+    return false;
+  } else if (E->getType()->isRecordType() && E->getType()->isLiteralType()) {
+    // FIXME: Implement evaluation of record rvalues.
+    return false;
   } else
     return false;
 
   return true;
+}
+
+/// EvaluateConstantExpression - Evaluate an expression as a constant expression
+/// in-place in an APValue. In some cases, the in-place evaluation is essential,
+/// since later initializers for an object can indirectly refer to subobjects
+/// which were initialized earlier.
+static bool EvaluateConstantExpression(APValue &Result, EvalInfo &Info,
+                                       const Expr *E) {
+  if (E->isRValue() && E->getType()->isLiteralType()) {
+    // Evaluate arrays and record types in-place, so that later initializers can
+    // refer to earlier-initialized members of the object.
+    if (E->getType()->isArrayType())
+      // FIXME: Implement evaluation of array rvalues.
+      return false;
+    else if (E->getType()->isRecordType())
+      // FIXME: Implement evaluation of record rvalues.
+      return false;
+  }
+
+  // For any other type, in-place evaluation is unimportant.
+  CCValue CoreConstResult;
+  return Evaluate(CoreConstResult, Info, E) &&
+         CheckConstantExpression(CoreConstResult, Result);
 }
 
 
@@ -3224,11 +3267,8 @@ bool Expr::EvaluateAsRValue(EvalResult &Result, const ASTContext &Ctx) const {
   }
 
   // Check this core constant expression is a constant expression, and if so,
-  // slice it down to one.
-  if (!CheckConstantExpression(Value))
-    return false;
-  Result.Val = Value;
-  return true;
+  // convert it to one.
+  return CheckConstantExpression(Value, Result.Val);
 }
 
 bool Expr::EvaluateAsBooleanCondition(bool &Result,
