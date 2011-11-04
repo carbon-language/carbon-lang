@@ -42,7 +42,21 @@ ClangASTImporter::CopyDecl (clang::ASTContext *src_ast,
         minion_sp = GetMinion(src_ast, false);
     
     if (minion_sp)
-        return minion_sp->Import(decl);
+    {
+        clang::Decl *result = minion_sp->Import(decl);
+        
+        if (!result)
+        {
+            lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+
+            if (NamedDecl *named_decl = dyn_cast<NamedDecl>(decl))
+                log->Printf("  [ClangASTImporter] WARNING: Failed to import a %s '%s'", decl->getDeclKindName(), named_decl->getNameAsString().c_str());
+            else
+                log->Printf("  [ClangASTImporter] WARNING: Failed to import a %s", decl->getDeclKindName());
+        }
+        
+        return result;
+    }
     
     return NULL;
 }

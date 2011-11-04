@@ -504,7 +504,7 @@ ArchSpec::SetTriple (const char *triple_cstr, Platform *platform)
                 {
                     // No platform specified, fall back to the host system for
                     // the default vendor, os, and environment.
-                    llvm::Triple host_triple(llvm::sys::getHostTriple());
+                    llvm::Triple host_triple(llvm::sys::getDefaultTargetTriple());
                     normalized_triple.setVendor(host_triple.getVendor());
                     normalized_triple.setOS(host_triple.getOS());
                     normalized_triple.setEnvironment(host_triple.getEnvironment());

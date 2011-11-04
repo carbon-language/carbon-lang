@@ -46,7 +46,35 @@ sub do_command
     }
 }
 
-if (@ARGV == 4)
+sub do_rsync_paths
+{
+    while (@_)
+	{
+		my $rsync_src = shift @_;
+		my $rsync_dst = shift @_;
+		print "rsync_src = '$rsync_src'\n";
+		print "rsync_dst = '$rsync_dst'\n";
+        
+        if (!-d $rsync_dst)
+        {
+            mkdir $rsync_dst;
+        }
+        
+		if (-e $rsync_src)
+		{
+			my ($rsync_dst_file, $rsync_dst_dir) = fileparse ($rsync_dst);
+			print "rsync_dst_dir = '$rsync_dst_dir'\n";
+			-e $rsync_dst_dir or do_command ("mkdir -p '$rsync_dst_dir'");			
+			do_command ("rsync -amvC --exclude='*.tmp' --exclude='*.txt' --exclude='*.TXT' --exclude='*.td' --exclude='\.dir' --exclude=Makefile '$rsync_src' '$rsync_dst'");
+		}
+        else
+        {
+            die "$rsync_src does not exist!\n";
+        }
+	}
+}
+
+if (@ARGV > 4)
 {
 	my $llvm_source_dir = abs_path(shift @ARGV);	# The llvm source that contains full llvm and clang sources
 	my $llvm_build_dir  = abs_path(shift @ARGV);     # The llvm build directory that contains headers and 
@@ -59,42 +87,40 @@ if (@ARGV == 4)
     printf("LLVM zip file: '%s'\n", $llvm_zip_file);
 
 	-e $llvm_build_dir or die "LLVM build directory doesn't exist: '$llvm_build_dir': $!\n";
-	-l "$llvm_build_dir/llvm" || die "Couldn't find llvm symlink '$llvm_build_dir/llvm': $!\n";
 
 	my $temp_dir = tempdir( CLEANUP => 1 );
 	print "temp dir = '$temp_dir'\n";
   	my $llvm_checkpoint_dir = "$temp_dir/llvm";
 	mkdir "$llvm_checkpoint_dir" or die "Couldn't make 'llvm' in '$temp_dir'\n";
 	
-	my @rsync_src_dst_paths =
+	my @generic_rsync_src_dst_paths =
 	(
 		"$llvm_source_dir/include", "$llvm_checkpoint_dir",
 		"$llvm_source_dir/tools/clang/include", "$llvm_checkpoint_dir/tools/clang",
-		"$llvm_build_dir/llvm/include", "$llvm_checkpoint_dir",
-		"$llvm_build_dir/llvm/tools/clang/include", "$llvm_checkpoint_dir/tools/clang",
 	);
-	
-	while (@rsync_src_dst_paths)
-	{
-		my $rsync_src = shift @rsync_src_dst_paths;
-		my $rsync_dst = shift @rsync_src_dst_paths;
-		print "rsync_src = '$rsync_src'\n";
-		print "rsync_dst = '$rsync_dst'\n";
-		if (-e $rsync_src)
-		{
-			my ($rsync_dst_file, $rsync_dst_dir) = fileparse ($rsync_dst);
-			print "rsync_dst_dir = '$rsync_dst_dir'\n";
-			-e $rsync_dst_dir or do_command ("mkdir -p '$rsync_dst_dir'");			
-			do_command ("rsync -amvC --exclude='*.tmp' --exclude='*.txt' --exclude='*.TXT' --exclude='*.td' --exclude='\.dir' --exclude=Makefile '$rsync_src' '$rsync_dst'");
-		}
-	}
+    
+    do_rsync_paths (@generic_rsync_src_dst_paths);
 
-	do_command ("cp '$llvm_build_dir/libllvmclang.a' '$llvm_checkpoint_dir'", "Copying libllvmclang.a", 1);
+	for my $arch (@ARGV)
+    {
+        my @specific_rsync_src_dst_paths =
+        (
+            "$llvm_build_dir/$arch/include", "$llvm_checkpoint_dir/$arch",
+            "$llvm_build_dir/$arch/tools/clang/include", "$llvm_checkpoint_dir/$arch/tools/clang",
+        );
+        
+        do_rsync_paths (@specific_rsync_src_dst_paths);
+
+        do_command ("cp '$llvm_build_dir/$arch/libllvmclang.a' '$llvm_checkpoint_dir/$arch/libllvmclang.a'", "Copying .a file", 1);
+
+    }
+
+	#do_command ("cp '$llvm_build_dir/libllvmclang.a' '$llvm_checkpoint_dir'", "Copying libllvmclang.a", 1);
 	do_command ("rm -rf '$llvm_zip_file'", "Removing old llvm checkpoint file '$llvm_zip_file'", 1);
 	do_command ("(cd '$temp_dir' ; zip -r '$llvm_zip_file' 'llvm')", "Zipping llvm checkpoint directory '$llvm_checkpoint_dir' to '$llvm_zip_file'", 1);
 }
 else
 {
-	print "USAGE\n\tcheckpoint-llvm.pl <llvm-sources> <llvm-build> <lldb-build> <llvm-zip>\n\n";
-	print "EXAMPLE\n\tcd lldb\n\t./scripts/checkpoint-llvm.pl llvm build/llvm build/BuildAndIntegration llvm.zip\n";
+	print "USAGE\n\tcheckpoint-llvm.pl <llvm-sources> <llvm-build> <lldb-build> <llvm-zip> <arch1> [<arch2> ...]\n\n";
+	print "EXAMPLE\n\tcd lldb\n\t./scripts/checkpoint-llvm.pl llvm build/llvm build/BuildAndIntegration llvm.zip x86_64 i386\n";
 }

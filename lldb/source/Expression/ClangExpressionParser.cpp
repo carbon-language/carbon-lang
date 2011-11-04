@@ -270,7 +270,7 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
     }
     else
     {
-        m_compiler->getTargetOpts().Triple = llvm::sys::getHostTriple();
+        m_compiler->getTargetOpts().Triple = llvm::sys::getDefaultTargetTriple();
     }
         
     // 3. Set up various important bits of infrastructure.

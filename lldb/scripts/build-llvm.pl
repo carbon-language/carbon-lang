@@ -21,8 +21,8 @@ our ($llvm_clang_basename, $llvm_clang_dirname) = fileparse ($llvm_clang_outfile
 
 our $llvm_configuration = $ENV{LLVM_CONFIGURATION};
 
-our $llvm_revision = "143472";
-our $clang_revision = "143472";
+our $llvm_revision = "143631";
+our $clang_revision = "143631";
 
 our $SRCROOT = "$ENV{SRCROOT}";
 our $llvm_dstroot_zip = "$SRCROOT/llvm.zip";
@@ -125,6 +125,12 @@ elsif (-e $llvm_dstroot_zip)
         
     }
     my $arch_idx = 0;
+        
+    if (!-d "${llvm_dstroot}")
+    {
+        do_command ("mkdir -p '${llvm_dstroot}'", "Creating directory '${llvm_dstroot}'", 1);
+    }
+        
     foreach my $arch (@archs)
     {
         my $llvm_dstroot_arch = "${llvm_dstroot}/${arch}";
@@ -137,15 +143,9 @@ elsif (-e $llvm_dstroot_zip)
                 # the .a file is a normal file which means it can't be from the 
                 # zip file, we must remove the previous arch directory
                 do_command ("rm -rf '$llvm_dstroot_arch'", "Removing old '$llvm_dstroot_arch' directory", 1);
-            }
-            # Create the arch specific LLVM destination directory if needed
-            if (!-d $llvm_dstroot_arch)
-            {
-                do_command ("mkdir -p '$llvm_dstroot_arch'", "making llvm build directory '$llvm_dstroot_arch'", 1);
-            }
-            
+            }            
             # Create a symlink to the .a file from the zip file
-            do_command ("cd '$llvm_dstroot_arch' ; ln -s $ENV{SRCROOT}/llvm/$llvm_clang_basename", "making llvm archive symlink", 1);
+            do_command ("cd '$llvm_dstroot' ; ln -s $ENV{SRCROOT}/llvm/$arch", "making llvm archive symlink", 1);
         }
     }
     exit 0;
