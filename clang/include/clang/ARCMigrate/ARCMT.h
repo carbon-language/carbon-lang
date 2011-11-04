@@ -78,7 +78,7 @@ bool getFileRemappings(std::vector<std::pair<std::string,std::string> > &remap,
 
 typedef void (*TransformFn)(MigrationPass &pass);
 
-std::vector<TransformFn> getAllTransformations();
+std::vector<TransformFn> getAllTransformations(LangOptions::GCMode OrigGCMode);
 
 class MigrationProcess {
   CompilerInvocation OrigCI;

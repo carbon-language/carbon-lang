@@ -192,6 +192,7 @@ createInvocationForMigration(CompilerInvocation &origCI) {
   define += '=';
   CInvok->getPreprocessorOpts().addMacroDef(define);
   CInvok->getLangOpts().ObjCAutoRefCount = true;
+  CInvok->getLangOpts().setGC(LangOptions::NonGC);
   CInvok->getDiagnosticOpts().ErrorLimit = 0;
   CInvok->getDiagnosticOpts().Warnings.push_back(
                                             "error=arc-unsafe-retained-assign");
@@ -226,7 +227,9 @@ bool arcmt::checkForManualIssues(CompilerInvocation &origCI,
   if (!origCI.getLangOpts().ObjC1)
     return false;
 
-  std::vector<TransformFn> transforms = arcmt::getAllTransformations();
+  LangOptions::GCMode OrigGCMode = origCI.getLangOpts().getGC();
+
+  std::vector<TransformFn> transforms = arcmt::getAllTransformations(OrigGCMode);
   assert(!transforms.empty());
 
   llvm::OwningPtr<CompilerInvocation> CInvok;
@@ -287,7 +290,7 @@ bool arcmt::checkForManualIssues(CompilerInvocation &origCI,
   std::vector<SourceLocation> ARCMTMacroLocs;
 
   TransformActions testAct(*Diags, capturedDiags, Ctx, Unit->getPreprocessor());
-  MigrationPass pass(Ctx, Unit->getSema(), testAct, ARCMTMacroLocs);
+  MigrationPass pass(Ctx, OrigGCMode, Unit->getSema(), testAct, ARCMTMacroLocs);
 
   for (unsigned i=0, e = transforms.size(); i != e; ++i)
     transforms[i](pass);
@@ -316,6 +319,8 @@ static bool applyTransforms(CompilerInvocation &origCI,
   if (!origCI.getLangOpts().ObjC1)
     return false;
 
+  LangOptions::GCMode OrigGCMode = origCI.getLangOpts().getGC();
+
   // Make sure checking is successful first.
   CompilerInvocation CInvokForCheck(origCI);
   if (arcmt::checkForManualIssues(CInvokForCheck, Filename, Kind, DiagClient,
@@ -328,7 +333,7 @@ static bool applyTransforms(CompilerInvocation &origCI,
   
   MigrationProcess migration(CInvok, DiagClient, outputDir);
 
-  std::vector<TransformFn> transforms = arcmt::getAllTransformations();
+  std::vector<TransformFn> transforms = arcmt::getAllTransformations(OrigGCMode);
   assert(!transforms.empty());
 
   for (unsigned i=0, e = transforms.size(); i != e; ++i) {
@@ -537,7 +542,8 @@ bool MigrationProcess::applyTransform(TransformFn trans,
 
   Rewriter rewriter(Ctx.getSourceManager(), Ctx.getLangOptions());
   TransformActions TA(*Diags, capturedDiags, Ctx, Unit->getPreprocessor());
-  MigrationPass pass(Ctx, Unit->getSema(), TA, ARCMTMacroLocs);
+  MigrationPass pass(Ctx, OrigCI.getLangOpts().getGC(),
+                     Unit->getSema(), TA, ARCMTMacroLocs);
 
   trans(pass);
 

@@ -12,7 +12,6 @@
 #include "clang/Sema/SemaDiagnostic.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/AST/StmtVisitor.h"
-#include "clang/AST/ParentMap.h"
 #include "clang/Analysis/DomainSpecific/CocoaConventions.h"
 #include "clang/Lex/Lexer.h"
 #include "clang/Basic/SourceManager.h"
@@ -23,6 +22,8 @@
 using namespace clang;
 using namespace arcmt;
 using namespace trans;
+
+ASTTraverser::~ASTTraverser() { }
 
 //===----------------------------------------------------------------------===//
 // Helpers.
@@ -290,8 +291,56 @@ void trans::collectRemovables(Stmt *S, ExprSet &exprs) {
 }
 
 //===----------------------------------------------------------------------===//
+// MigrationContext
+//===----------------------------------------------------------------------===//
+
+namespace {
+
+class ASTTransform : public RecursiveASTVisitor<ASTTransform> {
+  MigrationContext &MigrateCtx;
+
+public:
+  ASTTransform(MigrationContext &MigrateCtx) : MigrateCtx(MigrateCtx) { }
+
+  bool TraverseStmt(Stmt *rootS) {
+    if (!rootS)
+      return true;
+
+    BodyContext BodyCtx(MigrateCtx, rootS);
+    for (MigrationContext::traverser_iterator
+           I = MigrateCtx.traversers_begin(),
+           E = MigrateCtx.traversers_end(); I != E; ++I)
+      (*I)->traverseBody(BodyCtx);
+
+    return true;
+  }
+};
+
+}
+
+MigrationContext::~MigrationContext() {
+  for (traverser_iterator
+         I = traversers_begin(), E = traversers_end(); I != E; ++I)
+    delete *I;
+}
+
+void MigrationContext::traverse(TranslationUnitDecl *TU) {
+  ASTTransform(*this).TraverseDecl(TU);
+}
+
+//===----------------------------------------------------------------------===//
 // getAllTransformations.
 //===----------------------------------------------------------------------===//
+
+static void traverseAST(MigrationPass &pass) {
+  MigrationContext MigrateCtx(pass);
+
+  if (pass.isGCMigration()) {
+    MigrateCtx.addTraverser(new GCCollectableCallsTraverser);
+  }
+
+  MigrateCtx.traverse(pass.Ctx.getTranslationUnitDecl());
+}
 
 static void independentTransforms(MigrationPass &pass) {
   rewriteAutoreleasePool(pass);
@@ -303,9 +352,11 @@ static void independentTransforms(MigrationPass &pass) {
   rewriteUnbridgedCasts(pass);
   rewriteBlockObjCVariable(pass);
   checkAPIUses(pass);
+  traverseAST(pass);
 }
 
-std::vector<TransformFn> arcmt::getAllTransformations() {
+std::vector<TransformFn> arcmt::getAllTransformations(
+                                               LangOptions::GCMode OrigGCMode) {
   std::vector<TransformFn> transforms;
 
   transforms.push_back(independentTransforms);

@@ -172,7 +172,8 @@ static bool performTransformations(StringRef resourcesPath,
 
   MigrationProcess migration(origCI, DiagClient);
 
-  std::vector<TransformFn> transforms = arcmt::getAllTransformations();
+  std::vector<TransformFn>
+    transforms = arcmt::getAllTransformations(origCI.getLangOpts().getGC());
   assert(!transforms.empty());
 
   llvm::OwningPtr<PrintTransforms> transformPrinter;

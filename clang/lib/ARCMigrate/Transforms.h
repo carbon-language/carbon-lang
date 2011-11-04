@@ -11,6 +11,7 @@
 #define LLVM_CLANG_LIB_ARCMIGRATE_TRANSFORMS_H
 
 #include "clang/AST/RecursiveASTVisitor.h"
+#include "clang/AST/ParentMap.h"
 #include "llvm/ADT/DenseSet.h"
 
 namespace clang {
@@ -24,6 +25,8 @@ namespace arcmt {
   class MigrationPass;
 
 namespace trans {
+
+  class MigrationContext;
 
 //===----------------------------------------------------------------------===//
 // Transformations.
@@ -40,6 +43,54 @@ void rewriteUnusedInitDelegate(MigrationPass &pass);
 void checkAPIUses(MigrationPass &pass);
 
 void removeEmptyStatementsAndDealloc(MigrationPass &pass);
+
+class BodyContext {
+  MigrationContext &MigrateCtx;
+  ParentMap PMap;
+  Stmt *TopStmt;
+
+public:
+  BodyContext(MigrationContext &MigrateCtx, Stmt *S)
+    : MigrateCtx(MigrateCtx), PMap(S), TopStmt(S) {}
+
+  MigrationContext &getMigrationContext() { return MigrateCtx; }
+  ParentMap &getParentMap() { return PMap; }
+  Stmt *getTopStmt() { return TopStmt; }
+};
+
+class ASTTraverser {
+public:
+  virtual ~ASTTraverser();
+  virtual void traverseBody(BodyContext &BodyCtx) { }
+};
+
+class MigrationContext {
+  MigrationPass &Pass;
+  std::vector<ASTTraverser *> Traversers;
+
+public:
+  explicit MigrationContext(MigrationPass &pass) : Pass(pass) {}
+  ~MigrationContext();
+
+  MigrationPass &getPass() { return Pass; }
+  
+  typedef std::vector<ASTTraverser *>::iterator traverser_iterator;
+  traverser_iterator traversers_begin() { return Traversers.begin(); }
+  traverser_iterator traversers_end() { return Traversers.end(); }
+
+  void addTraverser(ASTTraverser *traverser) {
+    Traversers.push_back(traverser);
+  }
+
+  void traverse(TranslationUnitDecl *TU);
+};
+
+// GC transformations
+
+class GCCollectableCallsTraverser : public ASTTraverser {
+public:
+  virtual void traverseBody(BodyContext &BodyCtx);
+};
 
 //===----------------------------------------------------------------------===//
 // Helpers.

@@ -137,13 +137,18 @@ public:
 class MigrationPass {
 public:
   ASTContext &Ctx;
+  LangOptions::GCMode OrigGCMode;
   Sema &SemaRef;
   TransformActions &TA;
   std::vector<SourceLocation> &ARCMTMacroLocs;
 
-  MigrationPass(ASTContext &Ctx, Sema &sema, TransformActions &TA,
+  MigrationPass(ASTContext &Ctx, LangOptions::GCMode OrigGCMode,
+                Sema &sema, TransformActions &TA,
                 std::vector<SourceLocation> &ARCMTMacroLocs)
-    : Ctx(Ctx), SemaRef(sema), TA(TA), ARCMTMacroLocs(ARCMTMacroLocs) { }
+    : Ctx(Ctx), OrigGCMode(OrigGCMode), SemaRef(sema), TA(TA),
+      ARCMTMacroLocs(ARCMTMacroLocs) { }
+
+  bool isGCMigration() const { return OrigGCMode != LangOptions::NonGC; }
 };
 
 static inline StringRef getARCMTMacroName() {

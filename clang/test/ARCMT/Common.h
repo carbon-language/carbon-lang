@@ -4,8 +4,10 @@
 #define NS_AUTOMATED_REFCOUNT_UNAVAILABLE
 #endif
 
+#define NS_RETURNS_RETAINED __attribute__((ns_returns_retained))
 #define CF_CONSUMED __attribute__((cf_consumed))
 
+#define NS_INLINE static __inline__ __attribute__((always_inline))
 #define nil ((void*) 0)
 
 typedef int BOOL;
@@ -19,6 +21,9 @@ typedef struct _NSZone NSZone;
 
 typedef const void * CFTypeRef;
 CFTypeRef CFRetain(CFTypeRef cf);
+id CFBridgingRelease(CFTypeRef CF_CONSUMED X);
+
+NS_INLINE NS_RETURNS_RETAINED id NSMakeCollectable(CFTypeRef CF_CONSUMED cf) NS_AUTOMATED_REFCOUNT_UNAVAILABLE;
 
 @protocol NSObject
 - (BOOL)isEqual:(id)object;
