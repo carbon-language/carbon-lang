@@ -881,7 +881,11 @@ public:
   /// offset from the start of the buffer of the location.
   std::pair<FileID, unsigned> getDecomposedLoc(SourceLocation Loc) const {
     FileID FID = getFileID(Loc);
-    return std::make_pair(FID, Loc.getOffset()-getSLocEntry(FID).getOffset());
+    bool Invalid = false;
+    const SrcMgr::SLocEntry &E = getSLocEntry(FID, &Invalid);
+    if (Invalid)
+      return std::make_pair(FileID(), 0);
+    return std::make_pair(FID, Loc.getOffset()-E.getOffset());
   }
 
   /// getDecomposedExpansionLoc - Decompose the specified location into a raw
@@ -890,7 +894,10 @@ public:
   std::pair<FileID, unsigned>
   getDecomposedExpansionLoc(SourceLocation Loc) const {
     FileID FID = getFileID(Loc);
-    const SrcMgr::SLocEntry *E = &getSLocEntry(FID);
+    bool Invalid = false;
+    const SrcMgr::SLocEntry *E = &getSLocEntry(FID, &Invalid);
+    if (Invalid)
+      return std::make_pair(FileID(), 0);
 
     unsigned Offset = Loc.getOffset()-E->getOffset();
     if (Loc.isFileID())
@@ -905,7 +912,10 @@ public:
   std::pair<FileID, unsigned>
   getDecomposedSpellingLoc(SourceLocation Loc) const {
     FileID FID = getFileID(Loc);
-    const SrcMgr::SLocEntry *E = &getSLocEntry(FID);
+    bool Invalid = false;
+    const SrcMgr::SLocEntry *E = &getSLocEntry(FID, &Invalid);
+    if (Invalid)
+      return std::make_pair(FileID(), 0);
 
     unsigned Offset = Loc.getOffset()-E->getOffset();
     if (Loc.isFileID())
