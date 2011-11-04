@@ -1751,19 +1751,32 @@ bool ARMFastISel::SelectRet(const Instruction *I) {
     CCValAssign &VA = ValLocs[0];
 
     // Don't bother handling odd stuff for now.
-    // FIXME: Should be able to handle i1, i8, and/or i16 return types.
     if (VA.getLocInfo() != CCValAssign::Full)
       return false;
     // Only handle register returns for now.
     if (!VA.isRegLoc())
       return false;
-    // TODO: For now, don't try to handle cases where getLocInfo()
-    // says Full but the types don't match.
-    if (TLI.getValueType(RV->getType()) != VA.getValVT())
-      return false;
+
+    unsigned SrcReg = Reg + VA.getValNo();
+    EVT RVVT = TLI.getValueType(RV->getType());
+    EVT DestVT = VA.getValVT();
+    // Special handling for extended integers.
+    if (RVVT != DestVT) {
+      if (RVVT != MVT::i1 && RVVT != MVT::i8 && RVVT != MVT::i16)
+        return false;
+
+      if (!Outs[0].Flags.isZExt() && !Outs[0].Flags.isSExt())
+        return false;
+
+      assert(DestVT == MVT::i32 && "ARM should always ext to i32");
+
+      bool isZExt = Outs[0].Flags.isZExt();
+      unsigned ResultReg = ARMEmitIntExt(RVVT, SrcReg, DestVT, isZExt);
+      if (ResultReg == 0) return false;
+      SrcReg = ResultReg;
+    }
 
     // Make the copy.
-    unsigned SrcReg = Reg + VA.getValNo();
     unsigned DstReg = VA.getLocReg();
     const TargetRegisterClass* SrcRC = MRI.getRegClass(SrcReg);
     // Avoid a cross-class copy. This is very unlikely.
