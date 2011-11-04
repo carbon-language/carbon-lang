@@ -145,8 +145,9 @@ public:
   SCEVType::TYPE visitTruncateExpr(const SCEVTruncateExpr* Expr) {
     SCEVType::TYPE Op = visit(Expr->getOperand());
 
-    // We cannot represent this as a affine expression yet. If it is constant
-    // during Scop execution treat this as a parameter, otherwise bail out.
+    // We currently do not represent a truncate expression as an affine
+    // expression. If it is constant during Scop execution, we treat it as a
+    // parameter, otherwise we bail out.
     if (Op == SCEVType::INT || Op == SCEVType::PARAM)
       return SCEVType::PARAM;
 
@@ -156,8 +157,9 @@ public:
   SCEVType::TYPE visitZeroExtendExpr(const SCEVZeroExtendExpr * Expr) {
     SCEVType::TYPE Op = visit(Expr->getOperand());
 
-    // We cannot represent this as a affine expression yet. If it is constant
-    // during Scop execution treat this as a parameter, otherwise bail out.
+    // We currently do not represent a zero extend expression as an affine
+    // expression. If it is constant during Scop execution, we treat it as a
+    // parameter, otherwise we bail out.
     if (Op == SCEVType::INT || Op == SCEVType::PARAM)
       return SCEVType::PARAM;
 
@@ -165,8 +167,10 @@ public:
   }
 
   SCEVType::TYPE visitSignExtendExpr(const SCEVSignExtendExpr* Expr) {
-    // Assuming the value is signed, a sign extension is basically a noop.
-    // TODO: Reconsider this as soon as we support unsigned values.
+    // We currently allow only signed SCEV expressions. In the case of a
+    // signed value, a sign extend is a noop.
+    //
+    // TODO: Reconsider this when we add support for unsigned values.
     return visit(Expr->getOperand());
   }
 
@@ -175,6 +179,10 @@ public:
 
     for (int i = 0, e = Expr->getNumOperands(); i < e; ++i) {
       SCEVType::TYPE OpType = visit(Expr->getOperand(i));
+
+      if (OpType == SCEVType::INVALID)
+        return SCEVType::INVALID;
+
       Return = std::max(Return, OpType);
     }
 
@@ -188,26 +196,13 @@ public:
     for (int i = 0, e = Expr->getNumOperands(); i < e; ++i) {
       SCEVType::TYPE OpType = visit(Expr->getOperand(i));
 
-      if (OpType == SCEVType::INVALID)
+      if (OpType == SCEVType::INT)
+        continue;
+
+      if (OpType == SCEVType::INVALID || Return != SCEVType::INT)
         return SCEVType::INVALID;
 
-      if (OpType == SCEVType::IV) {
-        if (Return == SCEVType::PARAM || Return == SCEVType::IV)
-          return SCEVType::INVALID;
-
-        Return = OpType;
-        continue;
-      }
-
-      if (OpType == SCEVType::PARAM) {
-        if (Return == SCEVType::PARAM)
-          return SCEVType::INVALID;
-
-        Return = SCEVType::PARAM;
-        continue;
-      }
-
-      // OpType == SCEVType::INT, no need to change anything.
+      Return = OpType;
     }
 
     // TODO: Check for NSW and NUW.
@@ -215,7 +210,16 @@ public:
   }
 
   SCEVType::TYPE visitUDivExpr(const SCEVUDivExpr* Expr) {
-    // We do not yet support unsigned operations.
+    SCEVType::TYPE LHS = visit(Expr->getLHS());
+    SCEVType::TYPE RHS = visit(Expr->getRHS());
+
+    // We currently do not represent a unsigned devision as an affine
+    // expression. If the division is constant during Scop execution we treat it
+    // as a parameter, otherwise we bail out.
+    if (LHS == SCEVType::INT || LHS == SCEVType::PARAM ||
+        RHS == SCEVType::INT || RHS == SCEVType::PARAM)
+      return SCEVType::PARAM;
+
     return SCEVType::INVALID;
   }
 
@@ -224,15 +228,24 @@ public:
       return SCEVType::INVALID;
 
     SCEVType::TYPE Start = visit(Expr->getStart());
-
-    if (Start == SCEVType::INVALID)
-      return Start;
-
     SCEVType::TYPE Recurrence = visit(Expr->getStepRecurrence(SE));
+
+    if (Start == SCEVType::INVALID ||
+        Recurrence == SCEVType::INVALID ||
+        Recurrence == SCEVType::IV)
+      return SCEVType::INVALID;
+
+    if (!R->contains(Expr->getLoop())) {
+      if (Start == SCEVType::IV)
+        return SCEVType::INVALID;
+      else
+        return SCEVType::PARAM;
+    }
+
     if (Recurrence != SCEVType::INT)
       return SCEVType::INVALID;
 
-    return SCEVType::PARAM;
+    return SCEVType::IV;
   }
 
   SCEVType::TYPE visitSMaxExpr(const SCEVSMaxExpr* Expr) {
@@ -243,32 +256,31 @@ public:
 
       if (OpType == SCEVType::INVALID)
         return SCEVType::INVALID;
-      if (OpType == SCEVType::PARAM)
-        Return = SCEVType::PARAM;
+
+      Return = std::max(Return, OpType);
     }
 
     return Return;
   }
 
   SCEVType::TYPE visitUMaxExpr(const SCEVUMaxExpr* Expr) {
-    // We do not yet support unsigned operations. If 'Expr' is constant
-    // during Scop execution treat this as a parameter, otherwise bail out.
+    // We do not support unsigned operations. If 'Expr' is constant during Scop
+    // execution we treat this as a parameter, otherwise we bail out.
     for (int i = 0, e = Expr->getNumOperands(); i < e; ++i) {
       SCEVType::TYPE OpType = visit(Expr->getOperand(i));
 
       if (OpType != SCEVType::INT && OpType != SCEVType::PARAM)
-        return SCEVType::PARAM;
+        return SCEVType::INVALID;
     }
 
     return SCEVType::PARAM;
   }
 
   SCEVType::TYPE visitUnknown(const SCEVUnknown* Expr) {
-
     Value *V = Expr->getValue();
 
     if (isa<UndefValue>(V))
-        return SCEVType::INVALID;
+      return SCEVType::INVALID;
 
     if (BaseAddress) {
       if (*BaseAddress)
@@ -280,6 +292,7 @@ public:
     if (Instruction *I = dyn_cast<Instruction>(Expr->getValue()))
       if (R->contains(I))
         return SCEVType::INVALID;
+
     return SCEVType::PARAM;
   }
 };
