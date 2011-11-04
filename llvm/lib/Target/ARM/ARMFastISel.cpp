@@ -545,21 +545,26 @@ unsigned ARMFastISel::ARMMaterializeFP(const ConstantFP *CFP, EVT VT) {
 
 unsigned ARMFastISel::ARMMaterializeInt(const Constant *C, EVT VT) {
 
-  // For now 32-bit only.
-  if (VT != MVT::i32) return false;
-
-  unsigned DestReg = createResultReg(TLI.getRegClassFor(VT));
+  if (VT != MVT::i32 && VT != MVT::i16 && VT != MVT::i8 && VT != MVT::i1)
+    return false;
 
   // If we can do this in a single instruction without a constant pool entry
   // do so now.
   const ConstantInt *CI = cast<ConstantInt>(C);
   if (Subtarget->hasV6T2Ops() && isUInt<16>(CI->getSExtValue())) {
     unsigned Opc = isThumb ? ARM::t2MOVi16 : ARM::MOVi16;
+    unsigned ImmReg = createResultReg(TLI.getRegClassFor(VT));
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                            TII.get(Opc), DestReg)
+                            TII.get(Opc), ImmReg)
                     .addImm(CI->getSExtValue()));
-    return DestReg;
+    return ImmReg;
   }
+
+  // For now 32-bit only.
+  if (VT != MVT::i32)
+    return false;
+
+  unsigned DestReg = createResultReg(TLI.getRegClassFor(VT));
 
   // MachineConstantPool wants an explicit alignment.
   unsigned Align = TD.getPrefTypeAlignment(C->getType());
