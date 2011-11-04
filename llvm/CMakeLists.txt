@@ -27,6 +27,11 @@ set(PACKAGE_NAME llvm)
 set(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
 set(PACKAGE_BUGREPORT "llvmbugs@cs.uiuc.edu")
 
+# Sanity check our source directory to make sure that we are not trying to
+# generate an in-tree build (unless on MSVC_IDE, where it is ok), and to make
+# sure that we don't have any stray generated files lying around in the tree
+# (which would end up getting picked up by header search, instead of the correct
+# versions).
 if( CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR AND NOT MSVC_IDE )
   message(FATAL_ERROR "In-source builds are not allowed.
 CMake would overwrite the makefiles distributed with LLVM.
@@ -34,6 +39,23 @@ Please create a directory and run cmake from there, passing the path
 to this source directory as the last argument.
 This process created the file `CMakeCache.txt' and the directory `CMakeFiles'.
 Please delete them.")
+endif()
+if( NOT CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR )
+  file(GLOB_RECURSE
+    tablegenned_files_on_include_dir
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/llvm/*.gen")
+  file(GLOB_RECURSE
+    tablegenned_files_on_lib_dir
+    "${CMAKE_CURRENT_SOURCE_DIR}/lib/Target/*.inc")
+  if( tablegenned_files_on_include_dir OR tablegenned_files_on_lib_dir)
+    message(FATAL_ERROR "Apparently there is a previous in-source build,
+probably as the result of running `configure' and `make' on
+${CMAKE_CURRENT_SOURCE_DIR}.
+This may cause problems. The suspicious files are:
+${tablegenned_files_on_lib_dir}
+${tablegenned_files_on_include_dir}
+Please clean the source directory.")
+  endif()
 endif()
 
 string(TOUPPER "${CMAKE_BUILD_TYPE}" uppercase_CMAKE_BUILD_TYPE)
@@ -44,24 +66,6 @@ set(LLVM_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 set(LLVM_TOOLS_BINARY_DIR ${LLVM_BINARY_DIR}/bin)
 set(LLVM_EXAMPLES_BINARY_DIR ${LLVM_BINARY_DIR}/examples)
 set(LLVM_LIBDIR_SUFFIX "" CACHE STRING "Define suffix of library directory name (32/64)" )
-
-if( NOT CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR )
-  file(GLOB_RECURSE
-    tablegenned_files_on_include_dir
-    "${LLVM_MAIN_SRC_DIR}/include/llvm/*.gen")
-  file(GLOB_RECURSE
-    tablegenned_files_on_lib_dir
-    "${LLVM_MAIN_SRC_DIR}/lib/Target/*.inc")
-  if( tablegenned_files_on_include_dir OR tablegenned_files_on_lib_dir)
-    message(FATAL_ERROR "Apparently there is a previous in-source build,
-probably as the result of running `configure' and `make' on
-${LLVM_MAIN_SRC_DIR}.
-This may cause problems. The suspicious files are:
-${tablegenned_files_on_lib_dir}
-${tablegenned_files_on_include_dir}
-Please clean the source directory.")
-  endif()
-endif()
 
 set(LLVM_ALL_TARGETS
   ARM
