@@ -8761,6 +8761,13 @@ Sema::BuildOverloadedCallExpr(Scope *S, Expr *Fn, UnresolvedLookupExpr *ULE,
         << getDeletedOrUnavailableSuffix(Best->Function)
         << Fn->getSourceRange();
       CandidateSet.NoteCandidates(*this, OCD_AllCandidates, Args, NumArgs);
+
+      // We emitted an error for the unvailable/deleted function call but keep
+      // the call in the AST.
+      FunctionDecl *FDecl = Best->Function;
+      Fn = FixOverloadedFunctionReference(Fn, Best->FoundDecl, FDecl);
+      return BuildResolvedCallExpr(Fn, FDecl, LParenLoc, Args, NumArgs,
+                                   RParenLoc, ExecConfig);
     }
     break;
   }

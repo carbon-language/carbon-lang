@@ -40,6 +40,7 @@ public:
           Transaction Trans(TA);
           TA.clearDiagnostic(diag::err_unavailable,
                              diag::err_unavailable_message,
+                             diag::err_ovl_deleted_call, // ObjC++
                              DRE->getSourceRange());
           TA.replace(DRE->getSourceRange(), "CFBridgingRelease");
         }
