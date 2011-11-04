@@ -126,7 +126,10 @@ class   RegularExpression;
 class   Scalar;
 struct  ScriptSummaryFormat;
 class   ScriptInterpreter;
+#ifndef LLDB_DISABLE_PYTHON
 class   ScriptInterpreterPython;
+class   ScriptSummaryFormat;
+#endif // #ifndef LLDB_DISABLE_PYTHON
 class   SearchFilter;
 class   Section;
 class   SectionImpl;
@@ -157,7 +160,9 @@ class   SymbolVendor;
 class   Symtab;
 class   SyntheticChildren;
 class   SyntheticChildrenFrontEnd;
+#ifndef LLDB_DISABLE_PYTHON
 class   SyntheticScriptProvider;
+#endif // #ifndef LLDB_DISABLE_PYTHON
 class   Target;
 class   TargetList;
 class   Thread;

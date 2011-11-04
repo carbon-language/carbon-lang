@@ -59,7 +59,9 @@ namespace lldb {
     typedef SharedPtr<lldb_private::RegularExpression>::Type RegularExpressionSP;
     typedef SharedPtr<lldb_private::Section>::Type SectionSP;
     typedef SharedPtr<lldb_private::SearchFilter>::Type SearchFilterSP;
+#ifndef LLDB_DISABLE_PYTHON
     typedef SharedPtr<lldb_private::ScriptSummaryFormat>::Type ScriptFormatSP;
+#endif // #ifndef LLDB_DISABLE_PYTHON
     typedef IntrusiveSharedPtr<lldb_private::StackFrame>::Type StackFrameSP;
     typedef SharedPtr<lldb_private::StackFrameList>::Type StackFrameListSP;
     typedef SharedPtr<lldb_private::StopInfo>::Type StopInfoSP;

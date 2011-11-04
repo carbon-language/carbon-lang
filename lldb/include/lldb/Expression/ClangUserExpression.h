@@ -287,12 +287,12 @@ public:
               
     static ExecutionResults
     EvaluateWithError (ExecutionContext &exe_ctx,
-              lldb_private::ExecutionPolicy execution_policy,
-              bool discard_on_error,
-              const char *expr_cstr,
-              const char *expr_prefix,
-              lldb::ValueObjectSP &result_valobj_sp,
-              Error &error);
+                       lldb_private::ExecutionPolicy execution_policy,
+                       bool discard_on_error,
+                       const char *expr_cstr,
+                       const char *expr_prefix,
+                       lldb::ValueObjectSP &result_valobj_sp,
+                       Error &error);
     
     static const Error::ValueType kNoResult = 0x1001; ///< ValueObject::GetError() returns this if there is no result from the expression.
 private:
@@ -301,7 +301,8 @@ private:
     //------------------------------------------------------------------
     
     void
-    ScanContext(ExecutionContext &exe_ctx);
+    ScanContext (ExecutionContext &exe_ctx, 
+                 lldb_private::Error &err);
 
     bool
     PrepareToExecuteJITExpression (Stream &error_stream,

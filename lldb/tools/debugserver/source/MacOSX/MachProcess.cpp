@@ -820,7 +820,7 @@ MachProcess::DisableBreakpoint(nub_break_t breakID, bool remove)
                 }
                 else
                 {
-                    DNBLogThreadedIf(LOG_BREAKPOINTS | LOG_VERBOSE, "MachProcess::DisableBreakpoint ( breakID = %d, remove = %d ) addr = 0x$8.8llx is not enabled", breakID, remove, (uint64_t)addr);
+                    DNBLogThreadedIf(LOG_BREAKPOINTS | LOG_VERBOSE, "MachProcess::DisableBreakpoint ( breakID = %d, remove = %d ) addr = 0x%8.8llx is not enabled", breakID, remove, (uint64_t)addr);
                     // Set verify to true and so we can check if the original opcode is there
                     verify = true;
                 }
@@ -1114,7 +1114,7 @@ MachProcess::ExceptionMessageBundleComplete()
     }
     else
     {
-        DNBLogThreadedIf(LOG_EXCEPTIONS, "%s empty exception messages bundle.", __PRETTY_FUNCTION__, m_exception_messages.size());
+        DNBLogThreadedIf(LOG_EXCEPTIONS, "%s empty exception messages bundle (%zu exceptions).", __PRETTY_FUNCTION__, m_exception_messages.size());
     }
 }
 
@@ -1388,7 +1388,7 @@ MachProcess::PrepareForAttach (const char *path, nub_launch_flavor_t launch_flav
     const char *app_ext = strstr(path, ".app");
     if (app_ext == NULL)
     {
-        DNBLogThreadedIf(LOG_PROCESS, "%s: path '%s' doesn't contain .app, we can't tell springboard to wait for launch...", path);
+        DNBLogThreadedIf(LOG_PROCESS, "MachProcess::PrepareForAttach(): path '%s' doesn't contain .app, we can't tell springboard to wait for launch...", path);
         return NULL;
     }
 

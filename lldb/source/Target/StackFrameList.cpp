@@ -238,7 +238,7 @@ StackFrameList::Dump (Stream *s)
             frame->DumpUsingSettingsFormat (s);
         }
         else
-            s->Printf("frame #%ld", std::distance (begin, pos));
+            s->Printf("frame #%u", (uint32_t)std::distance (begin, pos));
         s->EOL();
     }
     s->EOL();

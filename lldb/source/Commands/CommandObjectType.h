@@ -32,7 +32,6 @@ public:
     ~CommandObjectType ();
 };
 
-
 } // namespace lldb_private
 
 #endif  // liblldb_CommandObjectType_h_

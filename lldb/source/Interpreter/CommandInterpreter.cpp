@@ -2276,11 +2276,15 @@ CommandInterpreter::GetScriptInterpreter ()
     lldb::ScriptLanguage script_lang = GetDebugger().GetScriptLanguage();
     switch (script_lang)
     {
+        case eScriptLanguagePython:
+#ifndef LLDB_DISABLE_PYTHON
+            m_script_interpreter_ap.reset (new ScriptInterpreterPython (*this));
+            break;
+#else
+            // Fall through to the None case when python is disabled
+#endif
         case eScriptLanguageNone:
             m_script_interpreter_ap.reset (new ScriptInterpreterNone (*this));
-            break;
-        case eScriptLanguagePython:
-            m_script_interpreter_ap.reset (new ScriptInterpreterPython (*this));
             break;
         default:
             break;

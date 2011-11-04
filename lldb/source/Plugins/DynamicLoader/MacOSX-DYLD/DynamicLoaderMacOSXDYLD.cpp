@@ -229,19 +229,19 @@ DynamicLoaderMacOSXDYLD::LocateDYLD()
 
     if (executable)
     {
-        if (executable->GetArchitecture().GetAddressByteSize() == 8)
+        const ArchSpec &exe_arch = executable->GetArchitecture();
+        if (exe_arch.GetAddressByteSize() == 8)
         {
             return ReadDYLDInfoFromMemoryAndSetNotificationCallback(0x7fff5fc00000ull);
         }
-#if defined (__arm__)
+        else if (exe_arch.GetMachine() == llvm::Triple::arm || exe_arch.GetMachine() == llvm::Triple::thumb)
+        {
+            return ReadDYLDInfoFromMemoryAndSetNotificationCallback(0x2fe00000);
+        }
         else
         {
-            ArchSpec arm_arch("arm");
-            if (arm_arch == executable->Arch())
-                return ReadDYLDInfoFromMemoryAndSetNotificationCallback(0x2fe00000);
+            return ReadDYLDInfoFromMemoryAndSetNotificationCallback(0x8fe00000);
         }
-#endif
-        return ReadDYLDInfoFromMemoryAndSetNotificationCallback(0x8fe00000);
     }
     return false;
 }

@@ -48,7 +48,7 @@ public:
     bool m_one_liner;
     bool m_regex;
     
-    ConstString* m_name;
+    ConstString m_name;
     
     std::string m_category;
     
@@ -59,19 +59,19 @@ public:
                      bool novl,
                      bool onel,
                      bool regx,
-                     ConstString* name,
+                     const ConstString& name,
                      std::string catg) :
-    m_skip_pointers(sptr),
-    m_skip_references(sref),
-    m_cascade(casc),
-    m_target_types(),
-    m_user_source(),
-    m_no_children(noch),
-    m_no_value(novl),
-    m_one_liner(onel),
-    m_regex(regx),
-    m_name(name),
-    m_category(catg)
+        m_skip_pointers(sptr),
+        m_skip_references(sref),
+        m_cascade(casc),
+        m_target_types(),
+        m_user_source(),
+        m_no_children(noch),
+        m_no_value(novl),
+        m_one_liner(onel),
+        m_regex(regx),
+        m_name(name),
+        m_category(catg)
     {
     }
     
@@ -157,7 +157,7 @@ private:
         bool m_skip_pointers;
         bool m_regex;
         std::string m_format_string;
-        ConstString* m_name;
+        ConstString m_name;
         std::string m_python_script;
         std::string m_python_function;
         bool m_is_add_script;
@@ -753,7 +753,7 @@ CommandObjectTypeFormatList_LoopCallback (
 }
 
 
-
+#ifndef LLDB_DISABLE_PYTHON
 
 //-------------------------------------------------------------------------
 // CommandObjectTypeSummaryAdd
@@ -901,13 +901,18 @@ public:
         
         if (options->m_name)
         {
-            if ( (bool)(*(options->m_name)) )
+            CommandObjectTypeSummaryAdd::AddSummary (options->m_name,
+                                                     script_format,
+                                                     CommandObjectTypeSummaryAdd::eNamedSummary,
+                                                     options->m_category,
+                                                     &error);
+            if (error.Fail())
             {
-                CommandObjectTypeSummaryAdd::AddSummary(*(options->m_name),
-                                                                  script_format,
-                                                                  CommandObjectTypeSummaryAdd::eNamedSummary,
-                                                                  options->m_category,
-                                                                  &error);
+                CommandObjectTypeSummaryAdd::AddSummary (options->m_name,
+                                                         script_format,
+                                                         CommandObjectTypeSummaryAdd::eNamedSummary,
+                                                         options->m_category,
+                                                         &error);
                 if (error.Fail())
                 {
                     out_stream->Printf ("%s", error.AsCString());
@@ -922,8 +927,16 @@ public:
                 return;
             }
         }
+        else
+        {
+            out_stream->PutCString (error.AsCString());
+            out_stream->Flush();
+            return;
+        }
     }
 };
+
+#endif // #ifndef LLDB_DISABLE_PYTHON
 
 Error
 CommandObjectTypeSummaryAdd::CommandOptions::SetOptionValue (uint32_t option_idx, const char *option_arg)
@@ -961,7 +974,7 @@ CommandObjectTypeSummaryAdd::CommandOptions::SetOptionValue (uint32_t option_idx
             m_regex = true;
             break;
         case 'n':
-            m_name = new ConstString(option_arg);
+            m_name.SetCString(option_arg);
             break;
         case 'o':
             m_python_script = std::string(option_arg);
@@ -995,7 +1008,7 @@ CommandObjectTypeSummaryAdd::CommandOptions::OptionParsingStarting ()
     m_skip_references = false;
     m_skip_pointers = false;
     m_regex = false;
-    m_name = NULL;
+    m_name.Clear();
     m_python_script = "";
     m_python_function = "";
     m_format_string = "";
@@ -1003,6 +1016,7 @@ CommandObjectTypeSummaryAdd::CommandOptions::OptionParsingStarting ()
     m_category = "default";
 }
 
+#ifndef LLDB_DISABLE_PYTHON
 void
 CommandObjectTypeSummaryAdd::CollectPythonScript (ScriptAddOptions *options,
                                                   CommandReturnObject &result)
@@ -1166,27 +1180,27 @@ CommandObjectTypeSummaryAdd::Execute_ScriptSummary (Args& command, CommandReturn
     
     if (m_options.m_name)
     {
-        if ( (bool)(*(m_options.m_name)) )
+        AddSummary(m_options.m_name, script_format, eNamedSummary, m_options.m_category, &error);
+        if (error.Fail())
         {
-            AddSummary(*(m_options.m_name), script_format, eNamedSummary, m_options.m_category, &error);
-            if (error.Fail())
-            {
-                result.AppendError(error.AsCString());
-                result.AppendError("added to types, but not given a name");
-                result.SetStatus(eReturnStatusFailed);
-                return false;
-            }
-        }
-        else
-        {
+            result.AppendError(error.AsCString());
             result.AppendError("added to types, but not given a name");
             result.SetStatus(eReturnStatusFailed);
             return false;
         }
     }
+    else
+    {
+        result.AppendError("added to types, but not given a name");
+        result.SetStatus(eReturnStatusFailed);
+        return false;
+    }
     
     return result.Succeeded();
 }
+
+#endif
+
 
 bool
 CommandObjectTypeSummaryAdd::Execute_StringSummary (Args& command, CommandReturnObject &result)
@@ -1263,23 +1277,20 @@ CommandObjectTypeSummaryAdd::Execute_StringSummary (Args& command, CommandReturn
     
     if (m_options.m_name)
     {
-        if ( (bool)(*(m_options.m_name)) )
+        AddSummary(m_options.m_name, entry, eNamedSummary, m_options.m_category, &error);
+        if (error.Fail())
         {
-            AddSummary(*(m_options.m_name), entry, eNamedSummary, m_options.m_category, &error);
-            if (error.Fail())
-            {
-                result.AppendError(error.AsCString());
-                result.AppendError("added to types, but not given a name");
-                result.SetStatus(eReturnStatusFailed);
-                return false;
-            }
-        }
-        else
-        {
+            result.AppendError(error.AsCString());
             result.AppendError("added to types, but not given a name");
             result.SetStatus(eReturnStatusFailed);
             return false;
         }
+    }
+    else
+    {
+        result.AppendError("added to types, but not given a name");
+        result.SetStatus(eReturnStatusFailed);
+        return false;
     }
     
     result.SetStatus(eReturnStatusSuccessFinishNoResult);
@@ -1372,9 +1383,17 @@ bool
 CommandObjectTypeSummaryAdd::Execute (Args& command, CommandReturnObject &result)
 {
     if (m_options.m_is_add_script)
+    {
+#ifndef LLDB_DISABLE_PYTHON
         return Execute_ScriptSummary(command, result);
-    else
-        return Execute_StringSummary(command, result);
+#else
+        result.AppendError ("python is disabled");
+        result.SetStatus(eReturnStatusFailed);
+        return false;
+#endif
+    }
+    
+    return Execute_StringSummary(command, result);
 }
 
 bool
@@ -2454,6 +2473,8 @@ CommandObjectTypeFilterList::CommandOptions::g_option_table[] =
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
+#ifndef LLDB_DISABLE_PYTHON
+
 //-------------------------------------------------------------------------
 // CommandObjectTypeSynthList
 //-------------------------------------------------------------------------
@@ -2664,6 +2685,7 @@ CommandObjectTypeSynthList::CommandOptions::g_option_table[] =
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
+#endif // #ifndef LLDB_DISABLE_PYTHON
 //-------------------------------------------------------------------------
 // CommandObjectTypeFilterDelete
 //-------------------------------------------------------------------------
@@ -2825,6 +2847,8 @@ CommandObjectTypeFilterDelete::CommandOptions::g_option_table[] =
     { LLDB_OPT_SET_2, false, "category", 'w', required_argument, NULL, 0, eArgTypeName,  "Delete from given category."},
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
+
+#ifndef LLDB_DISABLE_PYTHON
 
 //-------------------------------------------------------------------------
 // CommandObjectTypeSynthDelete
@@ -2988,6 +3012,8 @@ CommandObjectTypeSynthDelete::CommandOptions::g_option_table[] =
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
+#endif // #ifndef LLDB_DISABLE_PYTHON
+
 //-------------------------------------------------------------------------
 // CommandObjectTypeFilterClear
 //-------------------------------------------------------------------------
@@ -3114,6 +3140,7 @@ CommandObjectTypeFilterClear::CommandOptions::g_option_table[] =
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
+#ifndef LLDB_DISABLE_PYTHON
 //-------------------------------------------------------------------------
 // CommandObjectTypeSynthClear
 //-------------------------------------------------------------------------
@@ -3240,8 +3267,9 @@ CommandObjectTypeSynthClear::CommandOptions::g_option_table[] =
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
+
 //-------------------------------------------------------------------------
-// CommandObjectTypeSynthAdd
+// TypeSynthAddInputReader
 //-------------------------------------------------------------------------
 
 static const char *g_synth_addreader_instructions =   "Enter your Python command(s). Type 'DONE' to end.\n"
@@ -3257,11 +3285,9 @@ static const char *g_synth_addreader_instructions =   "Enter your Python command
 
 class TypeSynthAddInputReader : public InputReaderEZ
 {
-private:
-    DISALLOW_COPY_AND_ASSIGN (TypeSynthAddInputReader);
 public:
     TypeSynthAddInputReader(Debugger& debugger) : 
-    InputReaderEZ(debugger)
+        InputReaderEZ(debugger)
     {}
     
     virtual
@@ -3402,6 +3428,9 @@ public:
             }
         }
     }
+
+private:
+    DISALLOW_COPY_AND_ASSIGN (TypeSynthAddInputReader);
 };
 
 void
@@ -3611,6 +3640,8 @@ CommandObjectTypeSynthAdd::CommandOptions::g_option_table[] =
     { LLDB_OPT_SET_ALL, false,  "regex", 'x', no_argument, NULL, 0, eArgTypeNone,    "Type names are actually regular expressions."},
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
+
+#endif // #ifndef LLDB_DISABLE_PYTHON
 
 class CommandObjectTypeFilterAdd : public CommandObject
 {
@@ -3918,6 +3949,8 @@ public:
     }
 };
 
+#ifndef LLDB_DISABLE_PYTHON
+
 class CommandObjectTypeSynth : public CommandObjectMultiword
 {
 public:
@@ -3938,6 +3971,8 @@ public:
     {
     }
 };
+
+#endif // #ifndef LLDB_DISABLE_PYTHON
 
 class CommandObjectTypeFilter : public CommandObjectMultiword
 {
@@ -4016,7 +4051,9 @@ CommandObjectType::CommandObjectType (CommandInterpreter &interpreter) :
     LoadSubCommand ("filter",    CommandObjectSP (new CommandObjectTypeFilter (interpreter)));
     LoadSubCommand ("format",    CommandObjectSP (new CommandObjectTypeFormat (interpreter)));
     LoadSubCommand ("summary",   CommandObjectSP (new CommandObjectTypeSummary (interpreter)));
+#ifndef LLDB_DISABLE_PYTHON
     LoadSubCommand ("synthetic", CommandObjectSP (new CommandObjectTypeSynth (interpreter)));
+#endif
 }
 
 

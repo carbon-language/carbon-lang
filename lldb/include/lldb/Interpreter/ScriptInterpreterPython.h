@@ -11,6 +11,18 @@
 #ifndef liblldb_ScriptInterpreterPython_h_
 #define liblldb_ScriptInterpreterPython_h_
 
+#ifdef LLDB_DISABLE_PYTHON
+
+// Python is disabled in this build
+
+#else
+
+#if defined (__APPLE__)
+#include <Python/Python.h>
+#else
+#include <Python.h>
+#endif
+
 #include "lldb/lldb-private.h"
 #include "lldb/Interpreter/ScriptInterpreter.h"
 #include "lldb/Core/InputReader.h"
@@ -232,5 +244,6 @@ private:
 };
 } // namespace lldb_private
 
+#endif // #ifdef LLDB_DISABLE_PYTHON
 
 #endif // #ifndef liblldb_ScriptInterpreterPython_h_

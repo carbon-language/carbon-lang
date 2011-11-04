@@ -8,11 +8,20 @@
 //===----------------------------------------------------------------------===//
 
 // C Includes
+
+#ifdef LLDB_DISABLE_PYTHON
+
+struct PyObject;
+
+#else   // #ifdef LLDB_DISABLE_PYTHON
+
 #if defined (__APPLE__)
 #include <Python/Python.h>
 #else
 #include <Python.h>
 #endif
+
+#endif  // #ifdef LLDB_DISABLE_PYTHON
 
 // C++ Includes
 #include <ostream>
@@ -145,6 +154,8 @@ StringSummaryFormat::GetDescription()
     return sstr.GetString();
 }
 
+#ifndef LLDB_DISABLE_PYTHON
+
 ScriptSummaryFormat::ScriptSummaryFormat(bool casc,
                                          bool skipptr,
                                          bool skipref,
@@ -186,6 +197,8 @@ ScriptSummaryFormat::GetDescription()
     return sstr.GetString();
     
 }
+
+#endif // #ifndef LLDB_DISABLE_PYTHON
 
 std::string
 SyntheticFilter::GetDescription()
@@ -231,6 +244,8 @@ SyntheticArrayView::GetDescription()
     return sstr.GetString();
 }
 
+#ifndef LLDB_DISABLE_PYTHON
+
 SyntheticScriptProvider::FrontEnd::FrontEnd(std::string pclass,
                                             lldb::ValueObjectSP be) :
     SyntheticChildrenFrontEnd(be),
@@ -253,7 +268,7 @@ SyntheticScriptProvider::FrontEnd::FrontEnd(std::string pclass,
 
 SyntheticScriptProvider::FrontEnd::~FrontEnd()
 {
-  Py_XDECREF((PyObject*)m_wrapper);
+    Py_XDECREF((PyObject*)m_wrapper);
 }
 
 lldb::ValueObjectSP
@@ -277,6 +292,8 @@ SyntheticScriptProvider::GetDescription()
     
     return sstr.GetString();
 }
+
+#endif // #ifndef LLDB_DISABLE_PYTHON
 
 int
 SyntheticArrayView::GetRealIndexForIndex(int i)

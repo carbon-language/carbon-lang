@@ -47,8 +47,12 @@
 
 #include <objc/objc-auto.h>
 
+#if defined(__arm__)
+#include <UIKit/UIKit.h>
+#else
 #include <ApplicationServices/ApplicationServices.h>
 #include <Carbon/Carbon.h>
+#endif
 #include <Foundation/Foundation.h>
 
 #ifndef _POSIX_SPAWN_DISABLE_ASLR
@@ -150,6 +154,9 @@ Host::ResolveExecutableInBundle (FileSpec &file)
 lldb::pid_t
 Host::LaunchApplication (const FileSpec &app_file_spec)
 {
+#if defined (__arm__)
+    return LLDB_INVALID_PROCESS_ID;
+#else
     char app_path[PATH_MAX];
     app_file_spec.GetPath(app_path, sizeof(app_path));
 
@@ -181,6 +188,7 @@ Host::LaunchApplication (const FileSpec &app_file_spec)
     ::pid_t pid = LLDB_INVALID_PROCESS_ID;
     error = ::GetProcessPID(&psn, &pid);
     return pid;
+#endif
 }
 
 
@@ -237,6 +245,7 @@ WaitForProcessToSIGSTOP (const lldb::pid_t pid, const int timeout_in_seconds)
     }
     return false;
 }
+#if !defined(__arm__)
 
 static lldb::pid_t
 LaunchInNewTerminalWithCommandFile 
@@ -552,6 +561,8 @@ LaunchInNewTerminalWithAppleScript (const char *exe_path,
     return error;
 }
 
+#endif // #if !defined(__arm__)
+
 
 // On MacOSX CrashReporter will display a string for each shared library if
 // the shared library has an exported symbol named "__crashreporter_info__".
@@ -600,6 +611,9 @@ Host::SetCrashDescription (const char *cstr)
 bool
 Host::OpenFileInExternalEditor (const FileSpec &file_spec, uint32_t line_no)
 {
+#if defined(__arm__)
+    return false;
+#else
     // We attach this to an 'odoc' event to specify a particular selection
     typedef struct {
         int16_t   reserved0;  // must be zero
@@ -794,8 +808,8 @@ Host::OpenFileInExternalEditor (const FileSpec &file_spec, uint32_t line_no)
             return false;
         }
     }
-      
     return true;
+#endif // #if !defined(__arm__)
 }
 
 
@@ -881,6 +895,19 @@ Host::GetOSVersion
 )
 {
     
+#if defined (__arm__)
+    major = UINT32_MAX;
+    minor = UINT32_MAX;
+    update = UINT32_MAX;
+
+    NSString *system_version_nstr = [[UIDevice currentDevice] systemVersion];
+    if (system_version_nstr)
+    {
+        const char *system_version_cstr = system_version_nstr.UTF8String;
+        Args::StringToVersion(system_version_cstr, major, minor, update);
+    }
+    return major != UINT32_MAX;    
+#else
     SInt32 version;
     
     OSErr err = ::Gestalt (gestaltSystemVersion, &version);
@@ -911,6 +938,7 @@ Host::GetOSVersion
     }
     
     return true;
+#endif
 }
 
 static bool

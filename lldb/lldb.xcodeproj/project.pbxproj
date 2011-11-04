@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		260C876A10F538E700BB2B04 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 260C876910F538E700BB2B04 /* Foundation.framework */; };
 		260E07C6136FA69E00CF21D3 /* OptionGroupUUID.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260E07C5136FA69E00CF21D3 /* OptionGroupUUID.cpp */; };
 		260E07C8136FAB9200CF21D3 /* OptionGroupFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260E07C7136FAB9200CF21D3 /* OptionGroupFile.cpp */; };
 		261744781168585B005ADD65 /* SBType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 261744771168585B005ADD65 /* SBType.cpp */; };
@@ -29,7 +28,7 @@
 		265205A813D3E3F700132FE2 /* RegisterContextKDP_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 265205A213D3E3F700132FE2 /* RegisterContextKDP_arm.cpp */; };
 		265205AA13D3E3F700132FE2 /* RegisterContextKDP_i386.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 265205A413D3E3F700132FE2 /* RegisterContextKDP_i386.cpp */; };
 		265205AC13D3E3F700132FE2 /* RegisterContextKDP_x86_64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 265205A613D3E3F700132FE2 /* RegisterContextKDP_x86_64.cpp */; };
-		265ABF6310F42EE900531910 /* DebugSymbols.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 265ABF6210F42EE900531910 /* DebugSymbols.framework */; };
+		2660AAB914622483003A9694 /* LLDBWrapPython.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26A4EEB511682AAC007A372A /* LLDBWrapPython.cpp */; };
 		26651A18133BF9E0005B64B7 /* Opcode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26651A17133BF9DF005B64B7 /* Opcode.cpp */; };
 		266603CA1345B5A8004DA8B6 /* ConnectionSharedMemory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266603C91345B5A8004DA8B6 /* ConnectionSharedMemory.cpp */; };
 		2668020E115FD12C008E1FE4 /* lldb-defines.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7C2510F1B3BC00F91463 /* lldb-defines.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -53,9 +52,6 @@
 		2668022C115FD13D008E1FE4 /* SBTarget.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A9831081125FC5800A56CB0 /* SBTarget.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		2668022E115FD13D008E1FE4 /* SBThread.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A98310A1125FC5800A56CB0 /* SBThread.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		2668022F115FD19D008E1FE4 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C39010F3FA26009D5894 /* CoreFoundation.framework */; };
-		26680230115FD19E008E1FE4 /* DebugSymbols.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 265ABF6210F42EE900531910 /* DebugSymbols.framework */; };
-		26680231115FD1A0008E1FE4 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 260C876910F538E700BB2B04 /* Foundation.framework */; };
-		26680232115FD1A4008E1FE4 /* libpython.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C32410F3DF23009D5894 /* libpython.dylib */; };
 		26680233115FD1A7008E1FE4 /* libobjc.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C37410F3F61B009D5894 /* libobjc.dylib */; };
 		26680324116005D9008E1FE4 /* SBThread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A9831091125FC5800A56CB0 /* SBThread.cpp */; };
 		26680326116005DB008E1FE4 /* SBTarget.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A9831071125FC5800A56CB0 /* SBTarget.cpp */; };
@@ -342,13 +338,8 @@
 		2697A54D133A6305004E4240 /* PlatformDarwin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2697A54B133A6305004E4240 /* PlatformDarwin.cpp */; };
 		26A69C5F137A17A500262477 /* RegisterValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26C6886E137880C400407EDF /* RegisterValue.cpp */; };
 		26A7A035135E6E4200FB369E /* NamedOptionValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26A7A034135E6E4200FB369E /* NamedOptionValue.cpp */; };
-		26B1FA1413380E61002886E2 /* LLDBWrapPython.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26A4EEB511682AAC007A372A /* LLDBWrapPython.cpp */; };
 		26B1FCB813381071002886E2 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C39010F3FA26009D5894 /* CoreFoundation.framework */; };
-		26B1FCB913381071002886E2 /* DebugSymbols.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 265ABF6210F42EE900531910 /* DebugSymbols.framework */; };
-		26B1FCBA13381071002886E2 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 260C876910F538E700BB2B04 /* Foundation.framework */; };
-		26B1FCBB13381071002886E2 /* libpython.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C32410F3DF23009D5894 /* libpython.dylib */; };
 		26B1FCBC13381071002886E2 /* libobjc.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C37410F3F61B009D5894 /* libobjc.dylib */; };
-		26B1FCBD13381071002886E2 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C74CB6212288704006A8171 /* Carbon.framework */; };
 		26B1FCC21338115F002886E2 /* Host.mm in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7EE810F1B88F00F91463 /* Host.mm */; };
 		26B42C4D1187ABA50079C8C8 /* LLDB.h in Headers */ = {isa = PBXBuildFile; fileRef = 26B42C4C1187ABA50079C8C8 /* LLDB.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26B8283D142D01E9002DBC64 /* SBSection.h in Headers */ = {isa = PBXBuildFile; fileRef = 26B8283C142D01E9002DBC64 /* SBSection.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -392,11 +383,8 @@
 		26F4A21C13FBA31A0064B613 /* ThreadMemory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26F4A21A13FBA31A0064B613 /* ThreadMemory.cpp */; };
 		26F5C27710F3D9E4009D5894 /* Driver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26F5C27310F3D9E4009D5894 /* Driver.cpp */; };
 		26F5C27810F3D9E4009D5894 /* IOChannel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26F5C27510F3D9E4009D5894 /* IOChannel.cpp */; };
-		26F5C32510F3DF23009D5894 /* libpython.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C32410F3DF23009D5894 /* libpython.dylib */; };
 		26F5C32C10F3DFDD009D5894 /* libedit.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C32A10F3DFDD009D5894 /* libedit.dylib */; };
 		26F5C32D10F3DFDD009D5894 /* libtermcap.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C32B10F3DFDD009D5894 /* libtermcap.dylib */; };
-		26F5C37510F3F61B009D5894 /* libobjc.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C37410F3F61B009D5894 /* libobjc.dylib */; };
-		26F5C39110F3FA26009D5894 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C39010F3FA26009D5894 /* CoreFoundation.framework */; };
 		26F73062139D8FDB00FD51C7 /* History.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26F73061139D8FDB00FD51C7 /* History.cpp */; };
 		494260DA14579144003C1C78 /* VerifyDecl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 494260D914579144003C1C78 /* VerifyDecl.cpp */; };
 		496B015B1406DEB100F830D5 /* IRInterpreter.h in Headers */ = {isa = PBXBuildFile; fileRef = 496B015A1406DEB100F830D5 /* IRInterpreter.h */; };
@@ -405,7 +393,6 @@
 		49A71FE8141FFACF00D59478 /* DataEncoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 268ED0A4140FF54200DE830F /* DataEncoder.cpp */; };
 		49C8507C1384A786007DB519 /* ProcessDataAllocator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49C850781384A0CA007DB519 /* ProcessDataAllocator.cpp */; };
 		49D8FB3913B5598F00411094 /* ClangASTImporter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49D8FB3513B558DE00411094 /* ClangASTImporter.cpp */; };
-		4C74CB6312288704006A8171 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C74CB6212288704006A8171 /* Carbon.framework */; };
 		4CAA56131422D96A001FFA01 /* BreakpointResolverFileRegex.h in Headers */ = {isa = PBXBuildFile; fileRef = 4CAA56121422D96A001FFA01 /* BreakpointResolverFileRegex.h */; };
 		4CAA56151422D986001FFA01 /* BreakpointResolverFileRegex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CAA56141422D986001FFA01 /* BreakpointResolverFileRegex.cpp */; };
 		4CABA9E0134A8BCD00539BDD /* ValueObjectMemory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CABA9DF134A8BCD00539BDD /* ValueObjectMemory.cpp */; };
@@ -1391,11 +1378,7 @@
 			files = (
 				268901161335BBC300698AC0 /* liblldb-core.a in Frameworks */,
 				2668022F115FD19D008E1FE4 /* CoreFoundation.framework in Frameworks */,
-				26680230115FD19E008E1FE4 /* DebugSymbols.framework in Frameworks */,
-				26680231115FD1A0008E1FE4 /* Foundation.framework in Frameworks */,
-				26680232115FD1A4008E1FE4 /* libpython.dylib in Frameworks */,
 				26680233115FD1A7008E1FE4 /* libobjc.dylib in Frameworks */,
-				4C74CB6312288704006A8171 /* Carbon.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1412,11 +1395,7 @@
 			files = (
 				26DC6A171337FE8000FF7998 /* liblldb-core.a in Frameworks */,
 				26B1FCB813381071002886E2 /* CoreFoundation.framework in Frameworks */,
-				26B1FCB913381071002886E2 /* DebugSymbols.framework in Frameworks */,
-				26B1FCBA13381071002886E2 /* Foundation.framework in Frameworks */,
-				26B1FCBB13381071002886E2 /* libpython.dylib in Frameworks */,
 				26B1FCBC13381071002886E2 /* libobjc.dylib in Frameworks */,
-				26B1FCBD13381071002886E2 /* Carbon.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1424,13 +1403,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				26F5C32510F3DF23009D5894 /* libpython.dylib in Frameworks */,
 				26F5C32C10F3DFDD009D5894 /* libedit.dylib in Frameworks */,
 				26F5C32D10F3DFDD009D5894 /* libtermcap.dylib in Frameworks */,
-				26F5C37510F3F61B009D5894 /* libobjc.dylib in Frameworks */,
-				26F5C39110F3FA26009D5894 /* CoreFoundation.framework in Frameworks */,
-				265ABF6310F42EE900531910 /* DebugSymbols.framework in Frameworks */,
-				260C876A10F538E700BB2B04 /* Foundation.framework in Frameworks */,
 				2668035C11601108008E1FE4 /* LLDB.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -3172,12 +3146,12 @@
 				9AA69DB1118A024600D753A0 /* SBInputReader.cpp in Sources */,
 				268F9D55123AA16600B91E9B /* SBSymbolContextList.cpp in Sources */,
 				26C72C961243229A0068DC16 /* SBStream.cpp in Sources */,
-				26B1FA1413380E61002886E2 /* LLDBWrapPython.cpp in Sources */,
 				9443B122140C18C40013457C /* SBData.cpp in Sources */,
 				4CAA56151422D986001FFA01 /* BreakpointResolverFileRegex.cpp in Sources */,
 				4CF52AF8142829390051E832 /* SBFileSpecList.cpp in Sources */,
 				26B82840142D020F002DBC64 /* SBSection.cpp in Sources */,
 				B2A58724143119D50092BFBA /* SBWatchpoint.cpp in Sources */,
+				2660AAB914622483003A9694 /* LLDBWrapPython.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3582,7 +3556,12 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				ARCHS = "$(NATIVE_ARCH)";
+				"ARCHS[sdk=iphoneos*]" = armv7;
+				"ARCHS[sdk=macosx*]" = (
+					x86_64,
+					i386,
+				);
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -3591,6 +3570,12 @@
 					__STDC_LIMIT_MACROS,
 					LLDB_CONFIGURATION_DEBUG,
 				);
+				"GCC_PREPROCESSOR_DEFINITIONS[sdk=iphoneos*][arch=*]" = (
+					__STDC_CONSTANT_MACROS,
+					__STDC_LIMIT_MACROS,
+					LLDB_CONFIGURATION_DEBUG,
+					LLDB_DISABLE_PYTHON,
+				);
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				GCC_WARN_ABOUT_MISSING_FIELD_INITIALIZERS = YES;
 				GCC_WARN_ABOUT_MISSING_NEWLINE = YES;
@@ -3604,16 +3589,16 @@
 				GCC_WARN_UNUSED_LABEL = YES;
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				LLVM_BUILD_DIR = "$(SRCROOT)/llvm";
-				LLVM_BUILD_DIR_ARCH = "";
-				LLVM_CONFIGURATION = Release;
+				LLVM_BUILD_DIR = "$(OBJROOT)/llvm";
+				LLVM_BUILD_DIR_ARCH = "$(CURRENT_ARCH)/";
+				LLVM_CONFIGURATION = "Release+Debug";
 				LLVM_SOURCE_DIR = "$(SRCROOT)/llvm";
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"-flimit-debug-info",
 					"-Wparentheses",
 				);
-				VALID_ARCHS = "x86_64 i386";
+				VALID_ARCHS = "armv4t armv5 armv6 armv7 i386 ppc ppc64 ppc7400 ppc970 x86_64";
 			};
 			name = Debug;
 		};
@@ -3621,13 +3606,24 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				ARCHS = "$(NATIVE_ARCH)";
+				"ARCHS[sdk=iphoneos*]" = armv7;
+				"ARCHS[sdk=macosx*]" = (
+					x86_64,
+					i386,
+				);
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					__STDC_CONSTANT_MACROS,
 					__STDC_LIMIT_MACROS,
 					LLDB_CONFIGURATION_RELEASE,
+				);
+				"GCC_PREPROCESSOR_DEFINITIONS[sdk=iphoneos*][arch=*]" = (
+					__STDC_CONSTANT_MACROS,
+					__STDC_LIMIT_MACROS,
+					LLDB_CONFIGURATION_RELEASE,
+					LLDB_DISABLE_PYTHON,
 				);
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				GCC_WARN_ABOUT_MISSING_FIELD_INITIALIZERS = YES;
@@ -3642,15 +3638,15 @@
 				GCC_WARN_UNUSED_LABEL = YES;
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				LLVM_BUILD_DIR = "$(SRCROOT)/llvm";
-				LLVM_BUILD_DIR_ARCH = "";
-				LLVM_CONFIGURATION = Release;
+				LLVM_BUILD_DIR = "$(OBJROOT)/llvm";
+				LLVM_BUILD_DIR_ARCH = "$(CURRENT_ARCH)/";
+				LLVM_CONFIGURATION = "Release+Debug";
 				LLVM_SOURCE_DIR = "$(SRCROOT)/llvm";
 				OTHER_CFLAGS = (
 					"-flimit-debug-info",
 					"-Wparentheses",
 				);
-				VALID_ARCHS = "x86_64 i386";
+				VALID_ARCHS = "armv4t armv5 armv6 armv7 i386 ppc ppc64 ppc7400 ppc970 x86_64";
 			};
 			name = Release;
 		};
@@ -3707,18 +3703,13 @@
 				GCC_ENABLE_OBJC_GC = supported;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					__STDC_CONSTANT_MACROS,
-					__STDC_LIMIT_MACROS,
-					LLDB_CONFIGURATION_DEBUG,
-				);
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "resources/LLDB-Info.plist";
 				INSTALL_PATH = "$(DEVELOPER_DIR)/Library/PrivateFrameworks";
-				LD_DYLIB_INSTALL_NAME = "@rpath/LLDB.framework/Versions/A/LLDB";
+				LD_DYLIB_INSTALL_NAME = /Developer/Library/PrivateFrameworks/LLDB.framework/LLDB;
 				LIBRARY_SEARCH_PATHS = (
+					"$(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)",
 					"$(inherited)",
-					"$(LLVM_BUILD_DIR)",
 				);
 				OTHER_CPLUSPLUSFLAGS = (
 					"-fno-rtti",
@@ -3727,12 +3718,28 @@
 				);
 				OTHER_LDFLAGS = (
 					"-framework",
+					Carbon,
+					"-framework",
+					DebugSymbols,
+					"-lpython",
+					"-lllvmclang",
+					"-framework",
 					Foundation,
 					"-framework",
 					AppKit,
 					"-v",
 					"-t",
 					"-Wl,-v",
+				);
+				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
+					"-lllvmclang",
+					"-v",
+					"-t",
+					"-Wl,-v",
+					"-framework",
+					UIKit,
+					"-framework",
+					Foundation,
 				);
 				PRODUCT_NAME = LLDB;
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
@@ -3757,18 +3764,13 @@
 				FRAMEWORK_VERSION = A;
 				GCC_ENABLE_OBJC_GC = supported;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					__STDC_CONSTANT_MACROS,
-					__STDC_LIMIT_MACROS,
-					LLDB_CONFIGURATION_RELEASE,
-				);
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "resources/LLDB-Info.plist";
 				INSTALL_PATH = "$(DEVELOPER_DIR)/Library/PrivateFrameworks";
-				LD_DYLIB_INSTALL_NAME = "@rpath/LLDB.framework/Versions/A/LLDB";
+				LD_DYLIB_INSTALL_NAME = /Developer/Library/PrivateFrameworks/LLDB.framework/LLDB;
 				LIBRARY_SEARCH_PATHS = (
+					"$(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)",
 					"$(inherited)",
-					"$(LLVM_BUILD_DIR)",
 				);
 				OTHER_CPLUSPLUSFLAGS = (
 					"-fno-rtti",
@@ -3777,12 +3779,28 @@
 				);
 				OTHER_LDFLAGS = (
 					"-framework",
+					Carbon,
+					"-framework",
+					DebugSymbols,
+					"-lpython",
+					"-lllvmclang",
+					"-framework",
 					Foundation,
 					"-framework",
 					AppKit,
 					"-v",
 					"-t",
 					"-Wl,-v",
+				);
+				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
+					"-lllvmclang",
+					"-v",
+					"-t",
+					"-Wl,-v",
+					"-framework",
+					UIKit,
+					"-framework",
+					Foundation,
 				);
 				PRODUCT_NAME = LLDB;
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
@@ -3803,16 +3821,7 @@
 				);
 				GCC_ENABLE_OBJC_GC = supported;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					__STDC_CONSTANT_MACROS,
-					__STDC_LIMIT_MACROS,
-					LLDB_CONFIGURATION_DEBUG,
-				);
 				LD_DYLIB_INSTALL_NAME = "$(DEVELOPER_DIR)/Library/PrivateFrameworks/LLDB.framework/Resources/lldb-core.a";
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(LLVM_BUILD_DIR)",
-				);
 				MACH_O_TYPE = staticlib;
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				OTHER_CPLUSPLUSFLAGS = (
@@ -3820,7 +3829,7 @@
 					"-Wglobal-constructors",
 					"$(OTHER_CFLAGS)",
 				);
-				OTHER_LDFLAGS = "-lllvmclang";
+				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "lib$(TARGET_NAME)";
 				STANDARD_C_PLUS_PLUS_LIBRARY_TYPE = static;
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
@@ -3841,16 +3850,7 @@
 				);
 				GCC_ENABLE_OBJC_GC = supported;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					__STDC_CONSTANT_MACROS,
-					__STDC_LIMIT_MACROS,
-					LLDB_CONFIGURATION_RELEASE,
-				);
 				LD_DYLIB_INSTALL_NAME = "$(DEVELOPER_DIR)/Library/PrivateFrameworks/LLDB.framework/Resources/lldb-core.a";
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(LLVM_BUILD_DIR)",
-				);
 				MACH_O_TYPE = staticlib;
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				OTHER_CPLUSPLUSFLAGS = (
@@ -3858,7 +3858,7 @@
 					"-Wglobal-constructors",
 					"$(OTHER_CFLAGS)",
 				);
-				OTHER_LDFLAGS = "-lllvmclang";
+				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "lib$(TARGET_NAME)";
 				STANDARD_C_PLUS_PLUS_LIBRARY_TYPE = static;
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
@@ -3879,16 +3879,7 @@
 				);
 				GCC_ENABLE_OBJC_GC = supported;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					__STDC_CONSTANT_MACROS,
-					__STDC_LIMIT_MACROS,
-					LLDB_CONFIGURATION_BUILD_AND_INTEGRATION,
-				);
 				LD_DYLIB_INSTALL_NAME = "$(DEVELOPER_DIR)/Library/PrivateFrameworks/LLDB.framework/Resources/lldb-core.a";
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(LLVM_BUILD_DIR)",
-				);
 				MACH_O_TYPE = staticlib;
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				OTHER_CPLUSPLUSFLAGS = (
@@ -3896,7 +3887,7 @@
 					"-Wglobal-constructors",
 					"$(OTHER_CFLAGS)",
 				);
-				OTHER_LDFLAGS = "-lllvmclang";
+				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "lib$(TARGET_NAME)";
 				STANDARD_C_PLUS_PLUS_LIBRARY_TYPE = static;
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
@@ -3908,13 +3899,24 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				ARCHS = "$(NATIVE_ARCH)";
+				"ARCHS[sdk=iphoneos*]" = armv7;
+				"ARCHS[sdk=macosx*]" = (
+					x86_64,
+					i386,
+				);
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					__STDC_CONSTANT_MACROS,
 					__STDC_LIMIT_MACROS,
 					LLDB_CONFIGURATION_BUILD_AND_INTEGRATION,
+				);
+				"GCC_PREPROCESSOR_DEFINITIONS[sdk=iphoneos*][arch=*]" = (
+					__STDC_CONSTANT_MACROS,
+					__STDC_LIMIT_MACROS,
+					LLDB_CONFIGURATION_BUILD_AND_INTEGRATION,
+					LLDB_DISABLE_PYTHON,
 				);
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				GCC_WARN_ABOUT_MISSING_FIELD_INITIALIZERS = YES;
@@ -3931,13 +3933,13 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				LLVM_BUILD_DIR = "$(OBJROOT)/llvm";
 				LLVM_BUILD_DIR_ARCH = "$(CURRENT_ARCH)/";
-				LLVM_CONFIGURATION = Release;
+				LLVM_CONFIGURATION = "Release+Debug";
 				LLVM_SOURCE_DIR = "$(SRCROOT)/llvm";
 				OTHER_CFLAGS = (
 					"-flimit-debug-info",
 					"-Wparentheses",
 				);
-				VALID_ARCHS = "x86_64 i386";
+				VALID_ARCHS = "armv4t armv5 armv6 armv7 i386 ppc ppc64 ppc7400 ppc970 x86_64";
 			};
 			name = BuildAndIntegration;
 		};
@@ -3986,18 +3988,13 @@
 				FRAMEWORK_VERSION = A;
 				GCC_ENABLE_OBJC_GC = supported;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					__STDC_CONSTANT_MACROS,
-					__STDC_LIMIT_MACROS,
-					LLDB_CONFIGURATION_BUILD_AND_INTEGRATION,
-				);
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "resources/LLDB-Info.plist";
 				INSTALL_PATH = "$(DEVELOPER_DIR)/Library/PrivateFrameworks";
-				LD_DYLIB_INSTALL_NAME = "@rpath/LLDB.framework/Versions/A/LLDB";
+				LD_DYLIB_INSTALL_NAME = /Developer/Library/PrivateFrameworks/LLDB.framework/LLDB;
 				LIBRARY_SEARCH_PATHS = (
+					"$(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)",
 					"$(inherited)",
-					"$(LLVM_BUILD_DIR)",
 				);
 				OTHER_CPLUSPLUSFLAGS = (
 					"-fno-rtti",
@@ -4006,12 +4003,28 @@
 				);
 				OTHER_LDFLAGS = (
 					"-framework",
+					Carbon,
+					"-framework",
+					DebugSymbols,
+					"-lpython",
+					"-lllvmclang",
+					"-framework",
 					Foundation,
 					"-framework",
 					AppKit,
 					"-v",
 					"-t",
 					"-Wl,-v",
+				);
+				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
+					"-lllvmclang",
+					"-v",
+					"-t",
+					"-Wl,-v",
+					"-framework",
+					UIKit,
+					"-framework",
+					Foundation,
 				);
 				PRODUCT_NAME = LLDB;
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
@@ -4023,6 +4036,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_IDENTITY = lldb_codesign;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -4034,12 +4048,49 @@
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				INSTALL_PATH = "$(DEVELOPER_DIR)/usr/bin";
-				OTHER_LDFLAGS = (
+				INFOPLIST_PREPROCESSOR_DEFINITIONS = (
+					"-lobjc",
+					"-lpython",
+					"-framework",
+					DebugSymbols,
+					"-framework",
+					Carbon,
 					"-framework",
 					Foundation,
 					"-framework",
 					AppKit,
+					"-v",
+					"-t",
+					"-Wl,-v",
+				);
+				INSTALL_PATH = "$(DEVELOPER_DIR)/usr/bin";
+				LIBRARY_SEARCH_PATHS = (
+					"$(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)",
+					"$(inherited)",
+				);
+				LLVM_CONFIGURATION = Release;
+				"LLVM_CONFIGURATION[sdk=iphoneos*][arch=*]" = "Release+Debug";
+				OTHER_LDFLAGS = (
+					"-lllvmclang",
+					"-lpython",
+					"-framework",
+					DebugSymbols,
+					"-framework",
+					Carbon,
+					"-framework",
+					Foundation,
+					"-framework",
+					AppKit,
+					"-v",
+					"-t",
+					"-Wl,-v",
+				);
+				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
+					"-lllvmclang",
+					"-framework",
+					Foundation,
+					"-framework",
+					UIKit,
 				);
 				PRODUCT_NAME = "lldb-platform";
 				PROVISIONING_PROFILE = "";
@@ -4051,6 +4102,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_IDENTITY = lldb_codesign;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
 				COPY_PHASE_STRIP = YES;
 				DEAD_CODE_STRIPPING = YES;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -4060,12 +4112,49 @@
 				GCC_ENABLE_CPP_RTTI = NO;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				INSTALL_PATH = "$(DEVELOPER_DIR)/usr/bin";
-				OTHER_LDFLAGS = (
+				INFOPLIST_PREPROCESSOR_DEFINITIONS = (
+					"-lobjc",
+					"-lpython",
+					"-framework",
+					DebugSymbols,
+					"-framework",
+					Carbon,
 					"-framework",
 					Foundation,
 					"-framework",
 					AppKit,
+					"-v",
+					"-t",
+					"-Wl,-v",
+				);
+				INSTALL_PATH = "$(DEVELOPER_DIR)/usr/bin";
+				LIBRARY_SEARCH_PATHS = (
+					"$(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)",
+					"$(inherited)",
+				);
+				LLVM_CONFIGURATION = Release;
+				"LLVM_CONFIGURATION[sdk=iphoneos*][arch=*]" = "Release+Debug";
+				OTHER_LDFLAGS = (
+					"-lllvmclang",
+					"-lpython",
+					"-framework",
+					DebugSymbols,
+					"-framework",
+					Carbon,
+					"-framework",
+					Foundation,
+					"-framework",
+					AppKit,
+					"-v",
+					"-t",
+					"-Wl,-v",
+				);
+				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
+					"-lllvmclang",
+					"-framework",
+					Foundation,
+					"-framework",
+					UIKit,
 				);
 				PRODUCT_NAME = "lldb-platform";
 				PROVISIONING_PROFILE = "";
@@ -4084,12 +4173,49 @@
 				GCC_ENABLE_CPP_RTTI = NO;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				INSTALL_PATH = "$(DEVELOPER_DIR)/usr/bin";
-				OTHER_LDFLAGS = (
+				INFOPLIST_PREPROCESSOR_DEFINITIONS = (
+					"-lobjc",
+					"-lpython",
+					"-framework",
+					DebugSymbols,
+					"-framework",
+					Carbon,
 					"-framework",
 					Foundation,
 					"-framework",
 					AppKit,
+					"-v",
+					"-t",
+					"-Wl,-v",
+				);
+				INSTALL_PATH = "$(DEVELOPER_DIR)/usr/bin";
+				LIBRARY_SEARCH_PATHS = (
+					"$(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)",
+					"$(inherited)",
+				);
+				LLVM_CONFIGURATION = Release;
+				"LLVM_CONFIGURATION[sdk=iphoneos*][arch=*]" = "Release+Debug";
+				OTHER_LDFLAGS = (
+					"-lllvmclang",
+					"-lpython",
+					"-framework",
+					DebugSymbols,
+					"-framework",
+					Carbon,
+					"-framework",
+					Foundation,
+					"-framework",
+					AppKit,
+					"-v",
+					"-t",
+					"-Wl,-v",
+				);
+				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
+					"-lllvmclang",
+					"-framework",
+					Foundation,
+					"-framework",
+					UIKit,
 				);
 				PRODUCT_NAME = "lldb-platform";
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";

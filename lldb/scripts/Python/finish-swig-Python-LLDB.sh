@@ -33,6 +33,10 @@ CONFIG_BUILD_DIR=$3
 PYTHON_INSTALL_DIR=$4
 debug_flag=$5
 
+# Make sure SDKROOT is not set, since if it is this is an iOS build where python
+# is disabled
+if [ "x$SDKROOT" = "x" ] ; then
+
 if [ -n "$debug_flag" -a "$debug_flag" == "-debug" ]
 then
     Debug=1
@@ -178,6 +182,8 @@ else
     then
         echo "Unable to find ${SRC_ROOT}/examples/synthetic/gnu_libstdcpp.py"
     fi
+fi
+
 fi
 
 exit 0

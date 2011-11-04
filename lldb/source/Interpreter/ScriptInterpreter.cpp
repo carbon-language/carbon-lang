@@ -84,7 +84,6 @@ ScriptInterpreter::LanguageToString (lldb::ScriptLanguage language)
         case eScriptLanguagePython:
             return_value = "Python";
             break;
-        
     }
 
     return return_value;
@@ -103,6 +102,7 @@ ScriptInterpreter::InitializeInterpreter (SWIGInitCallback python_swig_init_call
                                           SWIGPythonCallCommand python_swig_call_command,
                                           SWIGPythonCallModuleInit python_swig_call_mod_init)
 {
+#ifndef LLDB_DISABLE_PYTHON
     ScriptInterpreterPython::InitializeInterpreter (python_swig_init_callback, 
                                                     python_swig_breakpoint_callback,
                                                     python_swig_typescript_callback,
@@ -114,11 +114,14 @@ ScriptInterpreter::InitializeInterpreter (SWIGInitCallback python_swig_init_call
                                                     python_swig_update_provider,
                                                     python_swig_call_command,
                                                     python_swig_call_mod_init);
+#endif // #ifndef LLDB_DISABLE_PYTHON
 }
 
 void
 ScriptInterpreter::TerminateInterpreter ()
 {
+#ifndef LLDB_DISABLE_PYTHON
     ScriptInterpreterPython::TerminateInterpreter ();
+#endif // #ifndef LLDB_DISABLE_PYTHON
 }
 

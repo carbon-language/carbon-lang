@@ -316,6 +316,7 @@ SBCommandInterpreter::GetArgumentDescriptionAsCString (const lldb::CommandArgume
 }
 
 
+#ifndef LLDB_DISABLE_PYTHON
 extern "C" bool
 LLDBSwigPythonBreakpointCallbackFunction 
 (
@@ -358,6 +359,10 @@ extern "C" bool           LLDBSwigPythonCallCommand
     lldb_private::CommandReturnObject& cmd_retobj
 );
 
+// Defined in the SWIG source file
+extern "C" void 
+init_lldb(void);
+
 extern "C" bool           LLDBSwigPythonCallModuleInit 
 (
     const std::string python_module_name,
@@ -365,8 +370,17 @@ extern "C" bool           LLDBSwigPythonCallModuleInit
     lldb::DebuggerSP& debugger
 );
 
+#else
 
 extern "C" void init_lldb(void);
+
+// Usually defined in the SWIG source file, but we have sripting disabled
+extern "C" void 
+init_lldb(void)
+{
+}
+
+#endif
 
 void
 SBCommandInterpreter::InitializeSWIG ()
@@ -375,6 +389,7 @@ SBCommandInterpreter::InitializeSWIG ()
     if (!g_initialized)
     {
         g_initialized = true;
+#ifndef LLDB_DISABLE_PYTHON
         ScriptInterpreter::InitializeInterpreter (init_lldb, 
                                                   LLDBSwigPythonBreakpointCallbackFunction,
                                                   LLDBSwigPythonCallTypeScript,
@@ -386,5 +401,6 @@ SBCommandInterpreter::InitializeSWIG ()
                                                   LLDBSwigPython_UpdateSynthProviderInstance,
                                                   LLDBSwigPythonCallCommand,
                                                   LLDBSwigPythonCallModuleInit);
+#endif
     }
 }

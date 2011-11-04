@@ -44,15 +44,19 @@ private:
     typedef FormatNavigator<ConstString, SyntheticFilter> FilterNavigator;
     typedef FormatNavigator<lldb::RegularExpressionSP, SyntheticFilter> RegexFilterNavigator;
     
+#ifndef LLDB_DISABLE_PYTHON
     typedef FormatNavigator<ConstString, SyntheticScriptProvider> SynthNavigator;
     typedef FormatNavigator<lldb::RegularExpressionSP, SyntheticScriptProvider> RegexSynthNavigator;
+#endif // #ifndef LLDB_DISABLE_PYTHON
 
     typedef SummaryNavigator::MapType SummaryMap;
     typedef RegexSummaryNavigator::MapType RegexSummaryMap;
     typedef FilterNavigator::MapType FilterMap;
     typedef RegexFilterNavigator::MapType RegexFilterMap;
+#ifndef LLDB_DISABLE_PYTHON
     typedef SynthNavigator::MapType SynthMap;
     typedef RegexSynthNavigator::MapType RegexSynthMap;
+#endif // #ifndef LLDB_DISABLE_PYTHON
 
 public:
         
@@ -63,8 +67,10 @@ public:
     typedef RegexSummaryNavigator::SharedPointer RegexSummaryNavigatorSP;
     typedef FilterNavigator::SharedPointer FilterNavigatorSP;
     typedef RegexFilterNavigator::SharedPointer RegexFilterNavigatorSP;
+#ifndef LLDB_DISABLE_PYTHON
     typedef SynthNavigator::SharedPointer SynthNavigatorSP;
     typedef RegexSynthNavigator::SharedPointer RegexSynthNavigatorSP;
+#endif // #ifndef LLDB_DISABLE_PYTHON
 
     FormatCategory (IFormatChangeListener* clist,
                     std::string name);
@@ -92,7 +98,8 @@ public:
     {
         return RegexFilterNavigatorSP(m_regex_filter_nav);
     }
-    
+
+#ifndef LLDB_DISABLE_PYTHON
     SynthNavigatorSP
     GetSyntheticNavigator ()
     {
@@ -104,7 +111,8 @@ public:
     {
         return RegexSynthNavigatorSP(m_regex_synth_nav);
     }
-    
+#endif // #ifndef LLDB_DISABLE_PYTHON
+
     bool
     IsEnabled () const
     {
@@ -153,8 +161,10 @@ private:
     RegexSummaryNavigator::SharedPointer m_regex_summary_nav;
     FilterNavigator::SharedPointer m_filter_nav;
     RegexFilterNavigator::SharedPointer m_regex_filter_nav;
+#ifndef LLDB_DISABLE_PYTHON
     SynthNavigator::SharedPointer m_synth_nav;
     RegexSynthNavigator::SharedPointer m_regex_synth_nav;
+#endif // #ifndef LLDB_DISABLE_PYTHON
     
     bool m_enabled;
     
@@ -187,8 +197,10 @@ private:
     friend class FormatNavigator<ConstString, SyntheticFilter>;
     friend class FormatNavigator<lldb::RegularExpressionSP, SyntheticFilter>;
     
+#ifndef LLDB_DISABLE_PYTHON
     friend class FormatNavigator<ConstString, SyntheticScriptProvider>;
     friend class FormatNavigator<lldb::RegularExpressionSP, SyntheticScriptProvider>;
+#endif // #ifndef LLDB_DISABLE_PYTHON
     
 
 };

@@ -25,6 +25,8 @@
 #include "lldb/Host/Endian.h"
 #include "llvm/Support/Compiler.h"
 
+#include "Plugins/Process/Utility/InstructionUtils.h"
+
 // Support building against older versions of LLVM, this macro was added
 // recently.
 #ifndef LLVM_EXTENSION
@@ -982,7 +984,7 @@ RegisterContextDarwin_arm::NumSupportedHardwareBreakpoints ()
         uint32_t register_DBGDIDR;
 
         asm("mrc p14, 0, %0, c0, c0, 0" : "=r" (register_DBGDIDR));
-        g_num_supported_hw_breakpoints = bits(register_DBGDIDR, 27, 24);
+        g_num_supported_hw_breakpoints = Bits32 (register_DBGDIDR, 27, 24);
         // Zero is reserved for the BRP count, so don't increment it if it is zero
         if (g_num_supported_hw_breakpoints > 0)
             g_num_supported_hw_breakpoints++;
@@ -1111,7 +1113,7 @@ RegisterContextDarwin_arm::NumSupportedHardwareWatchpoints ()
 
         uint32_t register_DBGDIDR;
         asm("mrc p14, 0, %0, c0, c0, 0" : "=r" (register_DBGDIDR));
-        g_num_supported_hw_watchpoints = bits(register_DBGDIDR, 31, 28) + 1;
+        g_num_supported_hw_watchpoints = Bits32 (register_DBGDIDR, 31, 28) + 1;
 //        if (log) log->Printf ("DBGDIDR=0x%8.8x (number WRP pairs = %u)", register_DBGDIDR, g_num_supported_hw_watchpoints);
     }
     return g_num_supported_hw_watchpoints;

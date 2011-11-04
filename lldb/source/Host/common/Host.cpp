@@ -910,7 +910,9 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
                     if (framework_pos)
                     {
                         framework_pos += strlen("LLDB.framework");
+#if !defined (__arm__)
                         ::strncpy (framework_pos, "/Resources", PATH_MAX - (framework_pos - raw_path));
+#endif
                     }
 #endif
                     FileSpec::Resolve (raw_path, resolved_path, sizeof(resolved_path));

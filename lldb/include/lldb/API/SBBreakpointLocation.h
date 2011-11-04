@@ -96,8 +96,9 @@ public:
 
 private:
     friend class SBBreakpoint;
+#ifndef LLDB_DISABLE_PYTHON
     friend class lldb_private::ScriptInterpreterPython;
-    
+#endif
     void
     SetLocation (const lldb::BreakpointLocationSP &break_loc_sp);
 

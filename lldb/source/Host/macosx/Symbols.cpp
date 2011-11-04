@@ -35,12 +35,14 @@ using namespace lldb;
 using namespace lldb_private;
 using namespace llvm::MachO;
 
+#if !defined (__arm__) // No DebugSymbols on the iOS devices
 extern "C" {
 
 CFURLRef DBGCopyFullDSYMURLForUUID (CFUUIDRef uuid, CFURLRef exec_url);
 CFDictionaryRef DBGCopyDSYMPropertyLists (CFURLRef dsym_url);
 
 }
+#endif
 
 static bool
 SkinnyMachOFileContainsArchAndUUID
@@ -287,6 +289,8 @@ LocateMacOSXFilesUsingDebugSymbols
     if (out_dsym_fspec)
         out_dsym_fspec->Clear();
 
+#if !defined (__arm__) // No DebugSymbols on the iOS devices
+
     if (uuid && uuid->IsValid())
     {
         // Try and locate the dSYM file using DebugSymbols first
@@ -424,6 +428,8 @@ LocateMacOSXFilesUsingDebugSymbols
             }
         }
     }
+#endif // #if !defined (__arm__)
+
     return items_found;
 }
 

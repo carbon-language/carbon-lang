@@ -18,15 +18,33 @@ our $llvm_dstroot = $ENV{SCRIPT_INPUT_FILE_1};
 
 our $llvm_clang_outfile = $ENV{SCRIPT_OUTPUT_FILE_0};
 our ($llvm_clang_basename, $llvm_clang_dirname) = fileparse ($llvm_clang_outfile);
-our @llvm_clang_slices; # paths to the single architecture static libraries (archives)
 
 our $llvm_configuration = $ENV{LLVM_CONFIGURATION};
 
 our $llvm_revision = "143472";
 our $clang_revision = "143472";
 
-our $llvm_source_dir = "$ENV{SRCROOT}";
+our $SRCROOT = "$ENV{SRCROOT}";
+our $llvm_dstroot_zip = "$SRCROOT/llvm.zip";
 our @archs = split (/\s+/, $ENV{ARCHS});
+my $os_release = 11;
+
+our %llvm_config_info = (
+ 'Debug'         => { configure_options => '--disable-optimized --disable-assertions', make_options => 'DEBUG_SYMBOLS=1'},
+ 'Debug+Asserts' => { configure_options => '--disable-optimized --enable-assertions' , make_options => 'DEBUG_SYMBOLS=1'},
+ 'Release'       => { configure_options => '--enable-optimized --disable-assertions' , make_options => ''},
+ 'Release+Debug' => { configure_options => '--enable-optimized --disable-assertions' , make_options => 'DEBUG_SYMBOLS=1'},
+);
+
+our $llvm_config_href = undef;
+if (exists $llvm_config_info{"$llvm_configuration"})
+{
+	$llvm_config_href = $llvm_config_info{$llvm_configuration};
+}
+else
+{
+	die "Unsupported LLVM configuration: '$llvm_configuration'\n";
+}
 
 our @archive_files = (  
     "$llvm_configuration/lib/libclang.a",
@@ -85,36 +103,70 @@ our @archive_files = (
     "$llvm_configuration/lib/libLLVMX86Utils.a",
 );
 
-if ($ENV{CONFIGURATION} ne "BuildAndIntegration" and -e "$llvm_srcroot/lib")
+if (-e "$llvm_srcroot/lib")
 {
-	print "Using standard LLVM build directory...\n";
-	# LLVM in the "lldb" root is a symlink which indicates we are using a 
-	# standard LLVM build directory where everything is built into the
-	# same folder
-	create_single_llvm_arhive_for_arch ($llvm_dstroot, 1);
-	my $llvm_dstroot_archive = "$llvm_dstroot/$llvm_clang_basename";
-	push @llvm_clang_slices, $llvm_dstroot_archive;
-	create_dstroot_file ($llvm_clang_basename, $llvm_clang_dirname, \@llvm_clang_slices, $llvm_clang_basename);
-	exit 0;
+    print "Using existing llvm sources in: '$llvm_srcroot'\n";
+    print "Using standard LLVM build directory:\n  SRC = '$llvm_srcroot'\n  DST = '$llvm_dstroot'\n";
 }
-
-
-if ($ENV{CONFIGURATION} eq "Debug" or $ENV{CONFIGURATION} eq "Release")
+elsif (-e $llvm_dstroot_zip)
 {
     # Check for an old llvm source install (not the minimal zip based 
     # install by looking for a .svn file in the llvm directory
-    chomp(my $llvm_zip_md5 = `md5 -q $ENV{SRCROOT}/llvm.zip`);
+    chomp(my $llvm_zip_md5 = `md5 -q '$llvm_dstroot_zip'`);
     my $llvm_zip_md5_file = "$ENV{SRCROOT}/llvm/$llvm_zip_md5";
     if (!-e "$llvm_zip_md5_file")
     {
-        print "Updating LLVM to use checkpoint from: '$ENV{SRCROOT}/llvm.zip'...\n";
+        print "Updating LLVM to use checkpoint from: '$llvm_dstroot_zip'...\n";
         if (-d "$ENV{SRCROOT}/llvm")
         {
             do_command ("cd '$ENV{SRCROOT}' && rm -rf llvm", "removing old llvm repository", 1);            
         }
 		do_command ("cd '$ENV{SRCROOT}' && unzip -q llvm.zip && touch '$llvm_zip_md5_file'", "expanding llvm.zip", 1);
+        
+    }
+    my $arch_idx = 0;
+    foreach my $arch (@archs)
+    {
+        my $llvm_dstroot_arch = "${llvm_dstroot}/${arch}";
+        # Check for our symlink to our .a file
+        if (!-l "$llvm_dstroot_arch/$llvm_clang_basename")
+        {
+            # Symlink doesn't exist, make sure it isn't a normal file
+            if (-e "$llvm_dstroot_arch/$llvm_clang_basename")
+            {
+                # the .a file is a normal file which means it can't be from the 
+                # zip file, we must remove the previous arch directory
+                do_command ("rm -rf '$llvm_dstroot_arch'", "Removing old '$llvm_dstroot_arch' directory", 1);
+            }
+            # Create the arch specific LLVM destination directory if needed
+            if (!-d $llvm_dstroot_arch)
+            {
+                do_command ("mkdir -p '$llvm_dstroot_arch'", "making llvm build directory '$llvm_dstroot_arch'", 1);
+            }
+            
+            # Create a symlink to the .a file from the zip file
+            do_command ("cd '$llvm_dstroot_arch' ; ln -s $ENV{SRCROOT}/llvm/$llvm_clang_basename", "making llvm archive symlink", 1);
+        }
     }
     exit 0;
+}
+else
+{
+    print "Checking out llvm sources from revision $llvm_revision...\n";
+    do_command ("cd '$SRCROOT' && svn co --quiet --revision $llvm_revision http://llvm.org/svn/llvm-project/llvm/trunk llvm", "checking out llvm from repository", 1); 
+    print "Checking out clang sources from revision $clang_revision...\n";
+    do_command ("cd '$llvm_srcroot/tools' && svn co --quiet --revision $clang_revision http://llvm.org/svn/llvm-project/cfe/trunk clang", "checking out clang from repository", 1);
+    print "Applying any local patches to LLVM...";
+    
+    my @llvm_patches = bsd_glob("$ENV{SRCROOT}/scripts/llvm.*.diff");
+    
+    foreach my $patch (@llvm_patches)
+    {
+        do_command ("cd '$llvm_srcroot' && patch -p0 < $patch");
+    }
+    
+    print "Removing the llvm/test and llvm/tools/clang/test directories...\n";
+    do_command ("cd '$llvm_srcroot' && rm -rf test && rm -rf tools/clang/test ", "removing test directories", 1); 
 }
 
 # If our output file already exists then we need not generate it again.
@@ -140,34 +192,6 @@ sub parallel_guess
 sub build_llvm
 {
 	#my $extra_svn_options = $debug ? "" : "--quiet";
-	my $svn_options = "--quiet";
-	if (-d "$llvm_source_dir/llvm")
-	{
-		print "Using existing llvm sources in: '$llvm_source_dir/llvm'\n";
-		# print "Updating llvm to revision $llvm_revision\n";
-		# do_command ("cd '$llvm_source_dir/llvm' && svn update $svn_options --revision $llvm_revision", "updating llvm from repository", 1);
-		# print "Updating clang to revision $llvm_revision\n";
-		# do_command ("cd '$llvm_source_dir/llvm/tools/clang' && svn update $svn_options --revision $clang_revision", "updating clang from repository", 1);
-	}
-	else
-	{
-		print "Checking out llvm sources from revision $llvm_revision...\n";
-		do_command ("cd '$llvm_source_dir' && svn co $svn_options --revision $llvm_revision http://llvm.org/svn/llvm-project/llvm/trunk llvm", "checking out llvm from repository", 1); 
-		print "Checking out clang sources from revision $clang_revision...\n";
-		do_command ("cd '$llvm_source_dir/llvm/tools' && svn co $svn_options --revision $clang_revision http://llvm.org/svn/llvm-project/cfe/trunk clang", "checking out clang from repository", 1);
-        print "Applying any local patches to LLVM...";
-        
-        my @llvm_patches = bsd_glob("$ENV{SRCROOT}/scripts/llvm.*.diff");
-        
-        foreach my $patch (@llvm_patches)
-        {
-            do_command ("cd '$llvm_source_dir/llvm' && patch -p0 < $patch");
-        }
-		
-        print "Removing the llvm/test directory...\n";
-		do_command ("cd '$llvm_source_dir' && rm -rf llvm/test", "removing test directory", 1); 
-	}
-
 	# Make the llvm build directory
     my $arch_idx = 0;
     foreach my $arch (@archs)
@@ -177,7 +201,8 @@ sub build_llvm
 		# if the arch destination root exists we have already built it
 		my $do_configure = 0;
 		my $do_make = 0;
-		
+		my $is_arm = $arch =~ /^arm/;
+        
 		my $llvm_dstroot_arch_archive = "$llvm_dstroot_arch/$llvm_clang_basename";
 		print "LLVM architecture root for ${arch} exists at '$llvm_dstroot_arch'...";
 		if (-e $llvm_dstroot_arch)
@@ -209,25 +234,59 @@ sub build_llvm
 	        do_command ("mkdir -p '$llvm_dstroot_arch'", "making llvm build directory '$llvm_dstroot_arch'", 1);
 			$do_configure = 1;
 			$do_make = 1;
-		}
-		
-		# If this is the first architecture, then make a symbolic link
-		# for any header files that get generated.
-	    if ($arch_idx == 0)
- 		{
-			if (!-l "$llvm_dstroot/llvm")
+
+			if ($is_arm)
 			{
-				do_command ("cd $llvm_dstroot && ln -s './${arch}' llvm");				
+		        my $llvm_dstroot_arch_bin = "${llvm_dstroot_arch}/bin";
+
+				if (!-d $llvm_dstroot_arch_bin)
+				{
+					do_command ("mkdir -p '$llvm_dstroot_arch_bin'", "making llvm build arch bin directory '$llvm_dstroot_arch_bin'", 1);
+					my @tools = ("ar", "nm", "ranlib", "strip", "lipo", "ld", "as");
+					my $script_mode = 0755;
+					my $prog;
+					for $prog (@tools)
+					{
+					   	chomp(my $actual_prog_path = `xcrun -sdk '$ENV{SDKROOT}' -find ${prog}`);
+					   	my $script_prog_path = "$llvm_dstroot_arch_bin/arm-apple-darwin${os_release}-${prog}";
+						open (SCRIPT, ">$script_prog_path") or die "Can't open $! for writing...\n";
+						print SCRIPT "#!/bin/sh\nexec '$actual_prog_path' \"\$\@\"\n";
+						close (SCRIPT);
+					   	chmod($script_mode, $script_prog_path);
+					}
+					#  Tools that must have the "-arch" and "-sysroot" specified
+					my @arch_sysroot_tools = ("clang", "clang++", "gcc", "g++");
+					for $prog (@arch_sysroot_tools)
+					{
+					   	chomp(my $actual_prog_path = `xcrun -sdk '$ENV{SDKROOT}' -find ${prog}`);
+					   	my $script_prog_path = "$llvm_dstroot_arch_bin/arm-apple-darwin${os_release}-${prog}";
+						open (SCRIPT, ">$script_prog_path") or die "Can't open $! for writing...\n";
+						print SCRIPT "#!/bin/sh\nexec '$actual_prog_path' -arch ${arch} -isysroot '$ENV{SDKROOT}' \"\$\@\"\n";
+						close (SCRIPT);
+					   	chmod($script_mode, $script_prog_path);
+					}
+					my $new_path = "$ENV{PATH}:$llvm_dstroot_arch_bin";
+					print "Setting new environment PATH = '$new_path'\n";
+			        $ENV{PATH} = $new_path;
+				}
 			}
 		}
-
+		
 		if ($do_configure)
 		{
 			# Build llvm and clang
 	        print "Configuring clang ($arch) in '$llvm_dstroot_arch'...\n";
-			my $lldb_configuration_options = '';
-			$llvm_configuration eq 'Release' and $lldb_configuration_options .= '--enable-optimized --disable-assertions';
-	        do_command ("cd '$llvm_dstroot_arch' && '$llvm_source_dir/llvm/configure' $lldb_configuration_options --enable-targets=x86_64,arm --build=$arch-apple-darwin10",
+			my $lldb_configuration_options = "--enable-targets=x86_64,arm $llvm_config_href->{configure_options}";
+
+            if ($is_arm)
+            {
+                $lldb_configuration_options .= " --host=arm-apple-darwin${os_release} --target=arm-apple-darwin${os_release} --build=i686-apple-darwin${os_release}";
+            }
+            else
+            {
+                $lldb_configuration_options .= " --build=$arch-apple-darwin${os_release}";
+            }
+	        do_command ("cd '$llvm_dstroot_arch' && '$llvm_srcroot/configure' $lldb_configuration_options",
 	                    "configuring llvm build", 1);			
 		}
 
@@ -236,52 +295,22 @@ sub build_llvm
 			# Build llvm and clang
 			my $num_cpus = parallel_guess();
 			print "Building clang using $num_cpus cpus ($arch)...\n";
-			do_command ("cd '$llvm_dstroot_arch' && make -j$num_cpus clang-only VERBOSE=1 PROJECT_NAME='llvm'", "making llvm and clang", 1);			
-			do_command ("cd '$llvm_dstroot_arch' && make -j$num_cpus tools-only VERBOSE=1 PROJECT_NAME='llvm' EDIS_VERSION=1", "making libedis", 1);			
+            my $extra_make_flags = '';
+            if ($is_arm)
+            {
+                $extra_make_flags = "UNIVERSAL=1 UNIVERSAL_ARCH=${arch} UNIVERSAL_SDK_PATH='$ENV{SDKROOT}'";
+            }
+            do_command ("cd '$llvm_dstroot_arch' && make -j$num_cpus clang-only VERBOSE=1 $llvm_config_href->{make_options} NO_RUNTIME_LIBS=1 PROJECT_NAME='llvm' $extra_make_flags", "making llvm and clang", 1);			
+            do_command ("cd '$llvm_dstroot_arch' && make -j$num_cpus tools-only VERBOSE=1 $llvm_config_href->{make_options} NO_RUNTIME_LIBS=1 PROJECT_NAME='llvm' $extra_make_flags EDIS_VERSION=1", "making libedis", 1);			
 			# Combine all .o files from a bunch of static libraries from llvm
 			# and clang into a single .a file.
 			create_single_llvm_arhive_for_arch ($llvm_dstroot_arch, 1);
 		}
 
-		-f "$llvm_dstroot_arch_archive" and push @llvm_clang_slices, "$llvm_dstroot_arch_archive";
 		++$arch_idx;
     }	
-
-    # Combine all skinny slices of the LLVM/Clang combined archive
-    create_dstroot_file ($llvm_clang_basename, $llvm_clang_dirname, \@llvm_clang_slices, $llvm_clang_basename);
 }
 
-sub create_dstroot_file
-{
-	my $file = shift;
-	my $dir = shift;
-	my $fullpath = "$dir/$file";	# The path to the file to create
-	my $slice_aref = shift; # Array containing one or more skinny files that will be combined into $fullpath
-	my $what = shift;		# Text describing the $fullpath
-
-    print "create_dstroot_file file = '$file', dir = '$dir', slices = (" . join (', ', @$slice_aref) . ") for what = '$what'\n";
-
-	if (-d $dir)
-	{
-		if (@$slice_aref > 0)
-		{
-			print "Creating and installing $what into '$fullpath'...\n";
-			my $lipo_command = "lipo -output '$fullpath' -create";
-			foreach (@$slice_aref) { $lipo_command .= " '$_'"; }
-			do_command ($lipo_command, "creating $what universal output file", 1);
-		}
-	
-
-		if (!-e $fullpath)
-		{
-			# die "error: '$fullpath' is missing\n";
-		}
-	}
-	else
-	{
-		die "error: directory '$dir' doesn't exist to receive file '$file'\n";
-	}
-}
 #----------------------------------------------------------------------
 # quote the path if needed and realpath it if the -r option was 
 # specified

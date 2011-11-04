@@ -11,6 +11,22 @@
 #define lldb_FormatClasses_h_
 
 // C Includes
+
+#ifdef LLDB_DISABLE_PYTHON
+
+struct PyObject;
+
+#else   // #ifdef LLDB_DISABLE_PYTHON
+
+#if defined (__APPLE__)
+#include <Python/Python.h>
+#else
+#include <Python.h>
+#endif
+
+#endif  // #ifdef LLDB_DISABLE_PYTHON
+
+
 #include <stdint.h>
 #include <unistd.h>
 
@@ -262,6 +278,8 @@ public:
     
 };
 
+#ifndef LLDB_DISABLE_PYTHON
+
 class SyntheticScriptProvider : public SyntheticChildren
 {
     std::string m_python_class;
@@ -290,7 +308,7 @@ public:
     {
         return true;
     }
-    
+
     class FrontEnd : public SyntheticChildrenFrontEnd
     {
     private:
@@ -341,10 +359,10 @@ public:
     GetFrontEnd(lldb::ValueObjectSP backend)
     {
         return SyntheticChildrenFrontEnd::SharedPointer(new FrontEnd(m_python_class, backend));
-    }
-    
+    }    
 };
-    
+
+#endif // #ifndef LLDB_DISABLE_PYTHON
 class SyntheticArrayView : public SyntheticChildren
 {
 public:
@@ -648,6 +666,8 @@ struct StringSummaryFormat : public SummaryFormat
         
 };
     
+#ifndef LLDB_DISABLE_PYTHON
+
 // Python-based summaries, running script code to show data
 struct ScriptSummaryFormat : public SummaryFormat
 {
@@ -689,6 +709,8 @@ struct ScriptSummaryFormat : public SummaryFormat
     typedef lldb::SharedPtr<ScriptSummaryFormat>::Type SharedPointer;
 
 };
+
+#endif // #ifndef LLDB_DISABLE_PYTHON
 
 } // namespace lldb_private
 

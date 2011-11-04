@@ -23,6 +23,8 @@ swig_input_file=${SRC_ROOT}/scripts/lldb.swig
 swig_python_extensions=${SRC_ROOT}/scripts/Python/python-extensions.swig
 swig_python_wrapper=${SRC_ROOT}/scripts/Python/python-wrapper.swig
 
+if [ "x$SDKROOT" = "x" ] ; then
+
 if [ -n "$debug_flag" -a "$debug_flag" == "-debug" ]
 then
     Debug=1
@@ -264,4 +266,10 @@ then
     then
         mv "${swig_output_file}.edited" ${swig_output_file}
     fi
+fi
+
+else
+    # SDKROOT was not empty, which currently means iOS cross build where python is disabled
+    rm -rf ${swig_output_file}
+    touch ${swig_output_file}
 fi

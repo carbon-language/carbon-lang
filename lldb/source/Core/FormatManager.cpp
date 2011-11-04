@@ -163,8 +163,10 @@ FormatCategory::FormatCategory(IFormatChangeListener* clist,
     m_regex_summary_nav(new RegexSummaryNavigator("regex-summary",clist)),
     m_filter_nav(new FilterNavigator("filter",clist)),
     m_regex_filter_nav(new RegexFilterNavigator("regex-filter",clist)),
+#ifndef LLDB_DISABLE_PYTHON
     m_synth_nav(new SynthNavigator("synth",clist)),
     m_regex_synth_nav(new RegexSynthNavigator("regex-synth",clist)),
+#endif
     m_enabled(false),
     m_change_listener(clist),
     m_mutex(Mutex::eMutexTypeRecursive),
@@ -189,59 +191,67 @@ FormatCategory::Get (ValueObject& valobj,
 
 bool
 FormatCategory::Get(ValueObject& valobj,
-                    lldb::SyntheticChildrenSP& entry,
+                    lldb::SyntheticChildrenSP& entry_sp,
                     lldb::DynamicValueType use_dynamic,
                     uint32_t* reason)
 {
     if (!IsEnabled())
         return false;
-    SyntheticFilter::SharedPointer filter;
-    SyntheticScriptProvider::SharedPointer synth;
-    bool regex_filter, regex_synth;
-    uint32_t reason_filter;
-    uint32_t reason_synth;
-    
-    bool pick_synth = false;
-    
+    SyntheticFilter::SharedPointer filter_sp;
+    uint32_t reason_filter = 0;
+    bool regex_filter = false;
     // first find both Filter and Synth, and then check which is most recent
     
-    if (!GetFilterNavigator()->Get(valobj, filter, use_dynamic, &reason_filter))
-        regex_filter = GetRegexFilterNavigator()->Get(valobj, filter, use_dynamic, &reason_filter);
-    
+    if (!GetFilterNavigator()->Get(valobj, filter_sp, use_dynamic, &reason_filter))
+        regex_filter = GetRegexFilterNavigator()->Get (valobj, filter_sp, use_dynamic, &reason_filter);
+
+#ifndef LLDB_DISABLE_PYTHON
+    bool regex_synth = false;
+    uint32_t reason_synth = 0;    
+    bool pick_synth = false;
+    SyntheticScriptProvider::SharedPointer synth;
     if (!GetSyntheticNavigator()->Get(valobj, synth, use_dynamic, &reason_synth))
-        regex_synth = GetRegexSyntheticNavigator()->Get(valobj, synth, use_dynamic, &reason_synth);
-    
-    if (!filter.get() && !synth.get())
+        regex_synth = GetRegexSyntheticNavigator()->Get (valobj, synth, use_dynamic, &reason_synth);
+    if (!filter_sp.get() && !synth.get())
         return false;
-    
-    else if (!filter.get() && synth.get())
+    else if (!filter_sp.get() && synth.get())
         pick_synth = true;
     
-    else if (filter.get() && !synth.get())
+    else if (filter_sp.get() && !synth.get())
         pick_synth = false;
     
-    else /*if (filter.get() && synth.get())*/
+    else /*if (filter_sp.get() && synth.get())*/
     {
-        if (filter->m_my_revision > synth->m_my_revision)
+        if (filter_sp->m_my_revision > synth->m_my_revision)
             pick_synth = false;
         else
             pick_synth = true;
     }
-    
     if (pick_synth)
     {
         if (regex_synth && reason)
             *reason |= lldb_private::eFormatterChoiceCriterionRegularExpressionFilter;
-        entry = synth;
+        entry_sp = synth;
         return true;
     }
     else
     {
         if (regex_filter && reason)
             *reason |= lldb_private::eFormatterChoiceCriterionRegularExpressionFilter;
-        entry = filter;
+        entry_sp = filter_sp;
         return true;
     }
+
+#else
+    if (filter_sp)
+    {
+        entry_sp = filter_sp;
+        return true;
+    }
+#endif
+
+    return false;    
+    
 }
 
 void
@@ -255,10 +265,12 @@ FormatCategory::Clear (FormatCategoryItems items)
         m_filter_nav->Clear();
     if ( (items & eFormatCategoryItemRegexFilter) == eFormatCategoryItemRegexFilter )
         m_regex_filter_nav->Clear();
+#ifndef LLDB_DISABLE_PYTHON
     if ( (items & eFormatCategoryItemSynth)  == eFormatCategoryItemSynth )
         m_synth_nav->Clear();
     if ( (items & eFormatCategoryItemRegexSynth) == eFormatCategoryItemRegexSynth )
         m_regex_synth_nav->Clear();
+#endif
 }
 
 bool
@@ -274,10 +286,12 @@ FormatCategory::Delete (ConstString name,
         success = m_filter_nav->Delete(name) || success;
     if ( (items & eFormatCategoryItemRegexFilter) == eFormatCategoryItemRegexFilter )
         success = m_regex_filter_nav->Delete(name) || success;
+#ifndef LLDB_DISABLE_PYTHON
     if ( (items & eFormatCategoryItemSynth)  == eFormatCategoryItemSynth )
         success = m_synth_nav->Delete(name) || success;
     if ( (items & eFormatCategoryItemRegexSynth) == eFormatCategoryItemRegexSynth )
         success = m_regex_synth_nav->Delete(name) || success;
+#endif
     return success;
 }
 
@@ -293,10 +307,12 @@ FormatCategory::GetCount (FormatCategoryItems items)
         count += m_filter_nav->GetCount();
     if ( (items & eFormatCategoryItemRegexFilter) == eFormatCategoryItemRegexFilter )
         count += m_regex_filter_nav->GetCount();
+#ifndef LLDB_DISABLE_PYTHON
     if ( (items & eFormatCategoryItemSynth)  == eFormatCategoryItemSynth )
         count += m_synth_nav->GetCount();
     if ( (items & eFormatCategoryItemRegexSynth) == eFormatCategoryItemRegexSynth )
         count += m_regex_synth_nav->GetCount();
+#endif
     return count;
 }
 
@@ -312,7 +328,9 @@ FormatCategory::AnyMatches(ConstString type_name,
     
     lldb::SummaryFormatSP summary;
     SyntheticFilter::SharedPointer filter;
+#ifndef LLDB_DISABLE_PYTHON
     SyntheticScriptProvider::SharedPointer synth;
+#endif
     
     if ( (items & eFormatCategoryItemSummary) == eFormatCategoryItemSummary )
     {
@@ -358,6 +376,7 @@ FormatCategory::AnyMatches(ConstString type_name,
             return true;
         }
     }
+#ifndef LLDB_DISABLE_PYTHON
     if ( (items & eFormatCategoryItemSynth)  == eFormatCategoryItemSynth )
     {
         if (m_synth_nav->Get(type_name, synth))
@@ -380,6 +399,7 @@ FormatCategory::AnyMatches(ConstString type_name,
             return true;
         }
     }
+#endif
     return false;
 }
 
@@ -597,6 +617,7 @@ FormatManager::FormatManager() :
     gnu_category_sp->GetSummaryNavigator()->Add(ConstString("std::basic_string<char,std::char_traits<char>,std::allocator<char> >"),
                                                 std_string_summary_sp);
     
+#ifndef LLDB_DISABLE_PYTHON
     gnu_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^(std::)?vector<.+>$")),
                                      SyntheticChildrenSP(new SyntheticScriptProvider(true,
                                                                                      false,
@@ -612,7 +633,7 @@ FormatManager::FormatManager() :
                                                                                      false,
                                                                                      false,
                                                                                      "gnu_libstdcpp.StdListSynthProvider")));
-    
+#endif
     // DO NOT change the order of these calls, unless you WANT a change in the priority of these categories
     EnableCategory(m_system_category_name);
     EnableCategory(m_gnu_cpp_category_name);

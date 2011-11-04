@@ -205,7 +205,9 @@ protected:
 private:
     friend class SBThread;
     friend class SBInstruction;
+#ifndef LLDB_DISABLE_PYTHON
     friend class lldb_private::ScriptInterpreterPython;
+#endif
 
 #ifndef SWIG
 

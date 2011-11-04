@@ -30,8 +30,6 @@
 // Project includes
 #include "ProcessKDPLog.h"
 
-#define DEBUGSERVER_BASENAME    "debugserver"
-
 using namespace lldb;
 using namespace lldb_private;
 
