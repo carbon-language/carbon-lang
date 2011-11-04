@@ -3706,7 +3706,7 @@
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "resources/LLDB-Info.plist";
 				INSTALL_PATH = "$(DEVELOPER_DIR)/Library/PrivateFrameworks";
-				LD_DYLIB_INSTALL_NAME = /Developer/Library/PrivateFrameworks/LLDB.framework/LLDB;
+				LD_DYLIB_INSTALL_NAME = "@rpath/LLDB.framework/Versions/A/LLDB";
 				LIBRARY_SEARCH_PATHS = (
 					"$(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)",
 					"$(inherited)",
@@ -3767,7 +3767,7 @@
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "resources/LLDB-Info.plist";
 				INSTALL_PATH = "$(DEVELOPER_DIR)/Library/PrivateFrameworks";
-				LD_DYLIB_INSTALL_NAME = /Developer/Library/PrivateFrameworks/LLDB.framework/LLDB;
+				LD_DYLIB_INSTALL_NAME = "@rpath/LLDB.framework/Versions/A/LLDB";
 				LIBRARY_SEARCH_PATHS = (
 					"$(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)",
 					"$(inherited)",
@@ -3991,7 +3991,7 @@
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "resources/LLDB-Info.plist";
 				INSTALL_PATH = "$(DEVELOPER_DIR)/Library/PrivateFrameworks";
-				LD_DYLIB_INSTALL_NAME = /Developer/Library/PrivateFrameworks/LLDB.framework/LLDB;
+				LD_DYLIB_INSTALL_NAME = "@rpath/LLDB.framework/Versions/A/LLDB";
 				LIBRARY_SEARCH_PATHS = (
 					"$(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)",
 					"$(inherited)",
