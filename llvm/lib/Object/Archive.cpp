@@ -242,10 +242,9 @@ error_code Archive::Symbol::getMember(child_iterator &Result) const {
 
 Archive::Symbol Archive::Symbol::getNext() const {
   Symbol t(*this);
-  const char *buf = Parent->SymbolTable->getBuffer()->getBufferStart();
-  buf += t.StringIndex;
-  while (*buf++); // Go to one past next null.
-  t.StringIndex = buf - Parent->SymbolTable->getBuffer()->getBufferStart();
+  // Go to one past next null.
+  t.StringIndex =
+    Parent->SymbolTable->getBuffer()->getBuffer().find('\0', t.StringIndex) + 1;
   ++t.SymbolIndex;
   return t;
 }
