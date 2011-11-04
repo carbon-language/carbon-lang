@@ -1319,7 +1319,7 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
   // fold the tail block in as well. Otherwise, unless it falls through to the
   // tail, add a unconditional branch to it.
   if (TailBB) {
-    BBInfo TailBBI = BBAnalysis[TailBB->getNumber()];
+    BBInfo &TailBBI = BBAnalysis[TailBB->getNumber()];
     bool CanMergeTail = !TailBBI.HasFallThrough;
     // There may still be a fall-through edge from BBI1 or BBI2 to TailBB;
     // check if there are any other predecessors besides those.
