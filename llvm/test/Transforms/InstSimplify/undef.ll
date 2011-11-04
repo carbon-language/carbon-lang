@@ -125,3 +125,10 @@ define i64 @test17(i64 %a) {
   %r = select i1 undef, i64 undef, i64 %a
   ret i64 %r
 }
+
+; @test18
+; CHECK: ret i64 undef
+define i64 @test18(i64 %a) {
+  %r = call i64 (i64)* undef(i64 %a)
+  ret i64 %r
+}

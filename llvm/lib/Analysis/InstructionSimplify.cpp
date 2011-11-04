@@ -2474,6 +2474,14 @@ Value *llvm::SimplifyCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
   return ::SimplifyCmpInst(Predicate, LHS, RHS, TD, DT, RecursionLimit);
 }
 
+static Value *SimplifyCallInst(CallInst *CI) {
+  // call undef -> undef
+  if (isa<UndefValue>(CI->getCalledValue()))
+    return UndefValue::get(CI->getType());
+
+  return 0;
+}
+
 /// SimplifyInstruction - See if we can compute a simplified version of this
 /// instruction.  If not, this returns null.
 Value *llvm::SimplifyInstruction(Instruction *I, const TargetData *TD,
@@ -2568,6 +2576,9 @@ Value *llvm::SimplifyInstruction(Instruction *I, const TargetData *TD,
   }
   case Instruction::PHI:
     Result = SimplifyPHINode(cast<PHINode>(I), DT);
+    break;
+  case Instruction::Call:
+    Result = SimplifyCallInst(cast<CallInst>(I));
     break;
   }
 
