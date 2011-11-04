@@ -205,6 +205,15 @@ option(LLVM_INCLUDE_TESTS "Generate build targets for the LLVM unit tests." ON)
 include(config-ix)
 include(HandleLLVMOptions)
 
+# Verify that we can find a Python interpreter,
+include(FindPythonInterp)
+if( NOT PYTHONINTERP_FOUND )
+  message(FATAL_ERROR
+"Unable to find Python interpreter, required for builds and testing.
+
+Please install Python or specify the PYTHON_EXECUTABLE CMake variable.")
+endif()
+
 # Configure all of the various header file fragments LLVM uses which depend on
 # configuration variables.
 set(LLVM_ENUM_ASM_PRINTERS "")
