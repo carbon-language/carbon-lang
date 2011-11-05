@@ -557,7 +557,7 @@ unsigned ARMFastISel::ARMMaterializeInt(const Constant *C, EVT VT) {
     unsigned ImmReg = createResultReg(TLI.getRegClassFor(SrcVT));
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(Opc), ImmReg)
-                    .addImm(CI->getSExtValue()));
+                    .addImm(CI->getZExtValue()));
     return ImmReg;
   }
 
@@ -1599,33 +1599,21 @@ bool ARMFastISel::ProcessCallArgs(SmallVectorImpl<Value*> &Args,
     switch (VA.getLocInfo()) {
       case CCValAssign::Full: break;
       case CCValAssign::SExt: {
-        bool Emitted = FastEmitExtend(ISD::SIGN_EXTEND, VA.getLocVT(),
-                                         Arg, ArgVT, Arg);
-        assert(Emitted && "Failed to emit a sext!"); (void)Emitted;
-        Emitted = true;
-        ArgVT = VA.getLocVT();
+        EVT DestVT = VA.getLocVT();
+        unsigned ResultReg = ARMEmitIntExt(ArgVT, Arg, DestVT,
+                                           /*isZExt*/false);
+        assert (ResultReg != 0 && "Failed to emit a sext");
+        Arg = ResultReg;
         break;
       }
+      case CCValAssign::AExt:
+        // Intentional fall-through.  Handle AExt and ZExt.
       case CCValAssign::ZExt: {
-        bool Emitted = FastEmitExtend(ISD::ZERO_EXTEND, VA.getLocVT(),
-                                         Arg, ArgVT, Arg);
-        assert(Emitted && "Failed to emit a zext!"); (void)Emitted;
-        Emitted = true;
-        ArgVT = VA.getLocVT();
-        break;
-      }
-      case CCValAssign::AExt: {
-        bool Emitted = FastEmitExtend(ISD::ANY_EXTEND, VA.getLocVT(),
-                                         Arg, ArgVT, Arg);
-        if (!Emitted)
-          Emitted = FastEmitExtend(ISD::ZERO_EXTEND, VA.getLocVT(),
-                                      Arg, ArgVT, Arg);
-        if (!Emitted)
-          Emitted = FastEmitExtend(ISD::SIGN_EXTEND, VA.getLocVT(),
-                                      Arg, ArgVT, Arg);
-
-        assert(Emitted && "Failed to emit a aext!"); (void)Emitted;
-        ArgVT = VA.getLocVT();
+        EVT DestVT = VA.getLocVT();
+        unsigned ResultReg = ARMEmitIntExt(ArgVT, Arg, DestVT,
+                                           /*isZExt*/true);
+        assert (ResultReg != 0 && "Failed to emit a sext");
+        Arg = ResultReg;
         break;
       }
       case CCValAssign::BCvt: {
@@ -1643,7 +1631,7 @@ bool ARMFastISel::ProcessCallArgs(SmallVectorImpl<Value*> &Args,
     if (VA.isRegLoc() && !VA.needsCustom()) {
       BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
               VA.getLocReg())
-      .addReg(Arg);
+        .addReg(Arg);
       RegArgs.push_back(VA.getLocReg());
     } else if (VA.needsCustom()) {
       // TODO: We need custom lowering for vector (v2f64) args.
@@ -1962,8 +1950,8 @@ bool ARMFastISel::SelectCall(const Instruction *I) {
 
     Type *ArgTy = (*i)->getType();
     MVT ArgVT;
-    // FIXME: Should be able to handle i1, i8, and/or i16 parameters.
-    if (!isTypeLegal(ArgTy, ArgVT))
+    if (!isTypeLegal(ArgTy, ArgVT) && ArgVT != MVT::i16 && ArgVT != MVT::i8 &&
+        ArgVT != MVT::i1)
       return false;
     unsigned OriginalAlignment = TD.getABITypeAlignment(ArgTy);
     Flags.setOrigAlign(OriginalAlignment);
