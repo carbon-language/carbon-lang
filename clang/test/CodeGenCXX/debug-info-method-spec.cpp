@@ -1,4 +1,4 @@
-// RUN: %clang -fverbose-asm -cc1 -g -S %s -o - | grep DW_AT_specification
+// RUN: %clang -fverbose-asm -g -S %s -o - | grep DW_AT_specification
 // Radar 9254491
 class A {
 public:
