@@ -49,10 +49,13 @@ ClangASTImporter::CopyDecl (clang::ASTContext *src_ast,
         {
             lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
-            if (NamedDecl *named_decl = dyn_cast<NamedDecl>(decl))
-                log->Printf("  [ClangASTImporter] WARNING: Failed to import a %s '%s'", decl->getDeclKindName(), named_decl->getNameAsString().c_str());
-            else
-                log->Printf("  [ClangASTImporter] WARNING: Failed to import a %s", decl->getDeclKindName());
+            if (log)
+            {
+                if (NamedDecl *named_decl = dyn_cast<NamedDecl>(decl))
+                    log->Printf("  [ClangASTImporter] WARNING: Failed to import a %s '%s'", decl->getDeclKindName(), named_decl->getNameAsString().c_str());
+                else
+                    log->Printf("  [ClangASTImporter] WARNING: Failed to import a %s", decl->getDeclKindName());
+            }
         }
         
         return result;
