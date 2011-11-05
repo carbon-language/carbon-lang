@@ -7,6 +7,19 @@ from util import *
 
 ###
 
+def cmake_quote_string(value):
+    """
+    cmake_quote_string(value) -> str
+
+    Return a quoted form of the given value that is suitable for use in CMake
+    language files.
+    """
+
+    # Currently, we only handle escaping backslashes.
+    value = value.replace("\\", "\\\\")
+
+    return value
+
 def mk_quote_string_for_target(value):
     """
     mk_quote_string_for_target(target_name) -> str
@@ -388,8 +401,9 @@ class LLVMProjectInfo(object):
         for dep in dependencies:
             print >>f, """\
 configure_file(\"%s\"
-               ${CMAKE_CURRENT_BINARY_DIR}/DummyConfigureOutput)""" % (dep,)
-            
+               ${CMAKE_CURRENT_BINARY_DIR}/DummyConfigureOutput)""" % (
+                cmake_quote_string(dep),)
+
         f.close()
 
     def write_make_fragment(self, output_path):
