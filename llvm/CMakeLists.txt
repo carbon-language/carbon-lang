@@ -10,7 +10,7 @@ set(CMAKE_MODULE_PATH
   "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules"
   )
 
-set(PACKAGE_VERSION "3.0")
+set(PACKAGE_VERSION "3.1svn")
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
