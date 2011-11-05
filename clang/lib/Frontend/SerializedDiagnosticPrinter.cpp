@@ -84,13 +84,7 @@ private:
   
   /// \brief Emit the BLOCKINFO block.
   void EmitBlockInfoBlock();
-  
-  /// \brief Emit the raw characters of the provided string.
-  void EmitRawStringContents(StringRef str);
-  
-  /// \brief Emit the block containing categories and file names.
-  void EmitCategoriesAndFileNames();
-  
+
   /// \brief Emit a record for a CharSourceRange.
   void EmitCharSourceRange(CharSourceRange R);
   
@@ -101,6 +95,12 @@ private:
   unsigned getEmitDiagnosticFlag(DiagnosticsEngine::Level DiagLevel,
                                  const Diagnostic &Info);
   
+  /// \brief Emit (lazily) the file string and retrieved the file identifier.
+  unsigned getEmitFile(SourceLocation Loc);
+  
+  /// \brief Add SourceLocation information the specified record.
+  void AddLocToRecord(SourceLocation Loc, RecordDataImpl &Record);
+
   /// \brief The version of the diagnostics file.
   enum { Version = 1 };
 
@@ -129,7 +129,7 @@ private:
   llvm::DenseSet<unsigned> Categories;
   
   /// \brief The collection of files used.
-  llvm::DenseSet<FileID> Files;
+  llvm::DenseMap<const FileEntry *, unsigned> Files;
 
   typedef llvm::DenseMap<const void *, std::pair<unsigned, llvm::StringRef> > 
           DiagFlagsTy;
@@ -188,18 +188,20 @@ static void EmitRecordID(unsigned ID, const char *Name,
   Stream.EmitRecord(llvm::bitc::BLOCKINFO_CODE_SETRECORDNAME, Record);
 }
 
-static void AddLocToRecord(SourceManager &SM,
-                           SourceLocation Loc,
-                           RecordDataImpl &Record) {
+void SDiagsWriter::AddLocToRecord(SourceLocation Loc,
+                                  RecordDataImpl &Record) {
   if (Loc.isInvalid()) {
     // Emit a "sentinel" location.
-    Record.push_back(~(unsigned)0);  // Line.
-    Record.push_back(~(unsigned)0);  // Column.
-    Record.push_back(~(unsigned)0);  // Offset.
+    Record.push_back((unsigned) 0); // File.
+    Record.push_back(~(unsigned)0); // Line.
+    Record.push_back(~(unsigned)0); // Column.
+    Record.push_back(~(unsigned)0); // Offset.
     return;
   }
 
+  SourceManager &SM = Diags.getSourceManager();
   Loc = SM.getSpellingLoc(Loc);
+  Record.push_back(getEmitFile(Loc));
   Record.push_back(SM.getSpellingLineNumber(Loc));
   Record.push_back(SM.getSpellingColumnNumber(Loc));
   
@@ -209,19 +211,42 @@ static void AddLocToRecord(SourceManager &SM,
   Record.push_back(FileOffset);
 }
 
+unsigned SDiagsWriter::getEmitFile(SourceLocation Loc) {
+  SourceManager &SM = Diags.getSourceManager();
+  assert(Loc.isValid());
+  const std::pair<FileID, unsigned> &LocInfo = SM.getDecomposedLoc(Loc);
+  const FileEntry *FE = SM.getFileEntryForID(LocInfo.first);
+  if (!FE)
+    return 0;
+  
+  unsigned &entry = Files[FE];
+  if (entry)
+    return entry;
+  
+  // Lazily generate the record for the file.
+  entry = Files.size();
+  RecordData Record;
+  Record.push_back(RECORD_FILENAME);
+  Record.push_back(entry);
+  Record.push_back(FE->getSize());
+  Record.push_back(FE->getModificationTime());
+  StringRef Name = FE->getName();
+  Record.push_back(Name.size());
+  Stream.EmitRecordWithBlob(Abbrevs.get(RECORD_FILENAME), Record, Name);
+
+  return entry;
+}
+
 void SDiagsWriter::EmitCharSourceRange(CharSourceRange R) {
   Record.clear();
   Record.push_back(RECORD_SOURCE_RANGE);
-  AddLocToRecord(Diags.getSourceManager(), R.getBegin(), Record);
-  AddLocToRecord(Diags.getSourceManager(), R.getEnd(), Record);
+  AddLocToRecord(R.getBegin(), Record);
+  AddLocToRecord(R.getEnd(), Record);
   Stream.EmitRecordWithAbbrev(Abbrevs.get(RECORD_SOURCE_RANGE), Record);
 }
 
 /// \brief Emits the preamble of the diagnostics file.
 void SDiagsWriter::EmitPreamble() {
- // EmitRawStringContents("CLANG_DIAGS");
- // Stream.Emit(Version, 32);
-  
   // Emit the file header.
   Stream.Emit((unsigned)'D', 8);
   Stream.Emit((unsigned) Version, 32 - 8);
@@ -231,6 +256,7 @@ void SDiagsWriter::EmitPreamble() {
 
 static void AddSourceLocationAbbrev(llvm::BitCodeAbbrev *Abbrev) {
   using namespace llvm;
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 10)); // File ID.
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // Line.
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // Column.
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // Offset;
@@ -247,6 +273,7 @@ void SDiagsWriter::EmitBlockInfoBlock() {
   EmitRecordID(RECORD_SOURCE_RANGE, "SrcRange", Stream, Record);
   EmitRecordID(RECORD_CATEGORY, "CatName", Stream, Record);
   EmitRecordID(RECORD_DIAG_FLAG, "DiagFlag", Stream, Record);
+  EmitRecordID(RECORD_FILENAME, "FileName", Stream, Record);
 
   // Emit Abbrevs.
   using namespace llvm;
@@ -286,21 +313,16 @@ void SDiagsWriter::EmitBlockInfoBlock() {
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Flag name text.
   Abbrevs.set(RECORD_DIAG_FLAG, Stream.EmitBlockInfoAbbrev(BLOCK_DIAG,
                                                            Abbrev));
-
-  // ==---------------------------------------------------------------------==//
-  // The subsequent records and Abbrevs are for the "Strings" block.
-  // ==---------------------------------------------------------------------==//
-
-  EmitBlockID(BLOCK_STRINGS, "Strings", Stream, Record);
-  EmitRecordID(RECORD_FILENAME, "FileName", Stream, Record);
-
+  
+  // Emit the abbreviation for RECORD_FILENAME.
   Abbrev = new BitCodeAbbrev();
   Abbrev->Add(BitCodeAbbrevOp(RECORD_FILENAME));
-  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 64)); // Size.
-  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 64)); // Modifcation time.  
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 10)); // Mapped file ID.
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // Size.
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // Modifcation time.  
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // Text size.
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // File name text.
-  Abbrevs.set(RECORD_FILENAME, Stream.EmitBlockInfoAbbrev(BLOCK_STRINGS,
+  Abbrevs.set(RECORD_FILENAME, Stream.EmitBlockInfoAbbrev(BLOCK_DIAG,
                                                           Abbrev));
 
   Stream.ExitBlock();
@@ -355,11 +377,6 @@ unsigned SDiagsWriter::getEmitDiagnosticFlag(DiagnosticsEngine::Level DiagLevel,
   return entry.first;
 }
 
-void SDiagsWriter::EmitRawStringContents(llvm::StringRef str) {
-  for (StringRef::const_iterator I = str.begin(), E = str.end(); I!=E; ++I)
-    Stream.Emit(*I, 8);
-}
-
 void SDiagsWriter::HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
                                     const Diagnostic &Info) {
 
@@ -372,19 +389,18 @@ void SDiagsWriter::HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
     inNonNoteDiagnostic = true;
   }
   
-  Stream.EnterSubblock(BLOCK_DIAG, 3);
+  Stream.EnterSubblock(BLOCK_DIAG, 4);
   
   // Emit the RECORD_DIAG record.
   Record.clear();
   Record.push_back(RECORD_DIAG);
   Record.push_back(DiagLevel);
-  AddLocToRecord(Diags.getSourceManager(), Info.getLocation(), Record);    
+  AddLocToRecord(Info.getLocation(), Record);    
   // Emit the category string lazily and get the category ID.
   Record.push_back(getEmitCategory(Info.getID()));
   // Emit the diagnostic flag string lazily and get the mapped ID.
   Record.push_back(getEmitDiagnosticFlag(DiagLevel, Info));
-                   
-                     
+  // Emit the diagnostic text.
   diagBuf.clear();   
   Info.FormatDiagnostic(diagBuf); // Compute the diagnostic text.
   Record.push_back(diagBuf.str().size());
@@ -405,54 +421,13 @@ void SDiagsWriter::HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
   }
 }
 
-template <typename T>
-static void populateAndSort(std::vector<T> &scribble,
-                            llvm::DenseSet<T> &set) {
-  scribble.clear();
-
-  for (typename llvm::DenseSet<T>::iterator it = set.begin(), ei = set.end();
-       it != ei; ++it)
-    scribble.push_back(*it);
-  
-  // Sort 'scribble' so we always have a deterministic ordering in the
-  // serialized file.
-  std::sort(scribble.begin(), scribble.end());
-}
-
-void SDiagsWriter::EmitCategoriesAndFileNames() {
-  if (Categories.empty() && Files.empty())
-    return;
-
-  BlockEnterExit BlockEnter(Stream, BLOCK_STRINGS);
-
-  // Emit the file names.
-  {
-    std::vector<FileID> scribble;
-    populateAndSort(scribble, Files);
-    for (std::vector<FileID>::iterator it = scribble.begin(), 
-         ei = scribble.end(); it != ei; ++it) {
-      SourceManager &SM = Diags.getSourceManager();
-      const FileEntry *FE = SM.getFileEntryForID(*it);
-      StringRef Name = FE->getName();
-      
-      Record.clear();
-      Record.push_back(FE->getSize());
-      Record.push_back(FE->getModificationTime());
-      Record.push_back(Name.size());
-      Stream.EmitRecordWithBlob(Abbrevs.get(RECORD_FILENAME), Record, Name);
-    }
-  }
-}
-
 void SDiagsWriter::EndSourceFile() {
   if (inNonNoteDiagnostic) {
     // Finish off any diagnostics we were in the process of emitting.
     Stream.ExitBlock();
     inNonNoteDiagnostic = false;
   }
-  
-  EmitCategoriesAndFileNames();
-  
+
   // Write the generated bitstream to "Out".
   OS->write((char *)&Buffer.front(), Buffer.size());
   OS->flush();
