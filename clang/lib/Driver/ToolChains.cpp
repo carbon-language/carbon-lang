@@ -1519,14 +1519,6 @@ static LinuxDistro DetectLinuxDistro(llvm::Triple::ArchType Arch) {
   return UnknownDistro;
 }
 
-/// \brief Trivial helper function to simplify code checking path existence.
-static bool PathExists(StringRef Path) {
-  bool Exists;
-  if (!llvm::sys::fs::exists(Path, Exists))
-    return Exists;
-  return false;
-}
-
 /// \brief Struct to store and manipulate GCC versions.
 ///
 /// We rely on assumptions about the form and structure of GCC version
@@ -1622,11 +1614,11 @@ Linux::GCCInstallationDetector::GCCInstallationDetector(const Driver &D)
   // installation available. GCC installs are ranked by version number.
   GCCVersion BestVersion = {0, 0, 0};
   for (unsigned i = 0, ie = Prefixes.size(); i < ie; ++i) {
-    if (!PathExists(Prefixes[i]))
+    if (!llvm::sys::fs::exists(Prefixes[i]))
       continue;
     for (unsigned j = 0, je = CandidateLibDirs.size(); j < je; ++j) {
       const std::string LibDir = Prefixes[i] + CandidateLibDirs[j].str();
-      if (!PathExists(LibDir))
+      if (!llvm::sys::fs::exists(LibDir))
         continue;
       for (unsigned k = 0, ke = CandidateTriples.size(); k < ke; ++k)
         ScanLibDirForGCCTriple(LibDir, CandidateTriples[k], BestVersion);
@@ -1729,7 +1721,7 @@ void Linux::GCCInstallationDetector::ScanLibDirForGCCTriple(
         continue;
       if (CandidateVersion <= BestVersion)
         continue;
-      if (!PathExists(LI->path() + "/crtbegin.o"))
+      if (!llvm::sys::fs::exists(LI->path() + "/crtbegin.o"))
         continue;
 
       BestVersion = CandidateVersion;
@@ -1746,7 +1738,7 @@ void Linux::GCCInstallationDetector::ScanLibDirForGCCTriple(
 
 static void addPathIfExists(const std::string &Path,
                             ToolChain::path_list &Paths) {
-  if (PathExists(Path)) Paths.push_back(Path);
+  if (llvm::sys::fs::exists(Path)) Paths.push_back(Path);
 }
 
 /// \brief Get our best guess at the multiarch triple for a target.
