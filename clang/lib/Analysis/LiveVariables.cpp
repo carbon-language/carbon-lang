@@ -232,10 +232,10 @@ static const VariableArrayType *FindVA(QualType Ty) {
 }
 
 static const Stmt *LookThroughStmt(const Stmt *S) {
-  if (const Expr *E = dyn_cast<Expr>(S))
-    return E->IgnoreParens();
   if (const OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(S))
     return OVE->getSourceExpr()->IgnoreParens();
+  if (const Expr *E = dyn_cast<Expr>(S))
+    return E->IgnoreParens();
   return S;
 }
 
