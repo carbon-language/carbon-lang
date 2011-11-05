@@ -10,11 +10,12 @@
 #include "llvm/Object/MachOObject.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/Host.h"
-#include "llvm/Support/SwapByteOrder.h"
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/DataExtractor.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Host.h"
+#include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/SwapByteOrder.h"
 
 using namespace llvm;
 using namespace llvm::object;
@@ -359,25 +360,13 @@ void MachOObject::ReadSymbol64TableEntry(uint64_t SymbolTableOffset,
 
 void MachOObject::ReadULEB128s(uint64_t Index,
                                SmallVectorImpl<uint64_t> &Out) const {
-  const char *ptr = Buffer->getBufferStart() + Index;
-  uint64_t data = 0;
-  uint64_t delta = 0;
-  uint32_t shift = 0;
-  while (true) {
-    assert(ptr < Buffer->getBufferEnd() && "index out of bounds");
-    assert(shift < 64 && "too big for uint64_t");
+  DataExtractor extractor(Buffer->getBuffer(), true, 0);
 
-    uint8_t byte = *ptr++;
-    delta |= ((byte & 0x7F) << shift);
-    shift += 7;
-    if (byte < 0x80) {
-      if (delta == 0)
-        break;
-      data += delta;
-      Out.push_back(data);
-      delta = 0;
-      shift = 0;
-    }
+  uint32_t offset = Index;
+  uint64_t data = 0;
+  while (uint64_t delta = extractor.getULEB128(&offset)) {
+    data += delta;
+    Out.push_back(data);
   }
 }
 
