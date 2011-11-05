@@ -231,6 +231,30 @@ static const VariableArrayType *FindVA(QualType Ty) {
   return 0;
 }
 
+static const Stmt *LookThroughStmt(const Stmt *S) {
+  while (S) {
+    switch (S->getStmtClass()) {
+      case Stmt::ParenExprClass: {
+        S = cast<ParenExpr>(S)->getSubExpr();
+        continue;
+      }
+      case Stmt::OpaqueValueExprClass: {
+        S = cast<OpaqueValueExpr>(S)->getSourceExpr();
+        continue;
+      }
+      default:
+        break;
+    }
+  }
+  return S;
+}
+
+static void AddLiveStmt(llvm::ImmutableSet<const Stmt *> &Set,
+                        llvm::ImmutableSet<const Stmt *>::Factory &F,
+                        const Stmt *S) {
+  Set = F.add(Set, LookThroughStmt(S));
+}
+
 void TransferFunctions::Visit(Stmt *S) {
   if (observer)
     observer->observeStmt(S, currentBlock, val);
@@ -255,8 +279,7 @@ void TransferFunctions::Visit(Stmt *S) {
       // Include the implicit "this" pointer as being live.
       CXXMemberCallExpr *CE = cast<CXXMemberCallExpr>(S);
       if (Expr *ImplicitObj = CE->getImplicitObjectArgument()) {
-        ImplicitObj = ImplicitObj->IgnoreParens();        
-        val.liveStmts = LV.SSetFact.add(val.liveStmts, ImplicitObj);
+        AddLiveStmt(val.liveStmts, LV.SSetFact, ImplicitObj);
       }
       break;
     }
@@ -265,8 +288,7 @@ void TransferFunctions::Visit(Stmt *S) {
       if (const VarDecl *VD = dyn_cast<VarDecl>(DS->getSingleDecl())) {
         for (const VariableArrayType* VA = FindVA(VD->getType());
              VA != 0; VA = FindVA(VA->getElementType())) {
-          val.liveStmts = LV.SSetFact.add(val.liveStmts,
-                                          VA->getSizeExpr()->IgnoreParens());
+          AddLiveStmt(val.liveStmts, LV.SSetFact, VA->getSizeExpr());
         }
       }
       break;
@@ -288,12 +310,8 @@ void TransferFunctions::Visit(Stmt *S) {
   
   for (Stmt::child_iterator it = S->child_begin(), ei = S->child_end();
        it != ei; ++it) {
-    if (Stmt *child = *it) {
-      if (Expr *Ex = dyn_cast<Expr>(child))
-        child = Ex->IgnoreParens();
-               
-      val.liveStmts = LV.SSetFact.add(val.liveStmts, child);
-    }
+    if (Stmt *child = *it)
+      AddLiveStmt(val.liveStmts, LV.SSetFact, child);
   }
 }
 
