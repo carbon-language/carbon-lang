@@ -291,7 +291,7 @@ def ClassReleaseChecker : Checker<"ClassRelease">,
   DescFile<"BasicObjCFoundationChecks.cpp">;
 
 def VariadicMethodTypeChecker : Checker<"VariadicMethodTypes">,
-  HelpText<"Check for passing non-Objective-C types to variadic methods that expect"
+  HelpText<"Check for passing non-Objective-C types to variadic methods that expect "
            "only Objective-C types">,
   DescFile<"BasicObjCFoundationChecks.cpp">;
 
