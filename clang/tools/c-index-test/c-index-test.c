@@ -1653,7 +1653,7 @@ static void printStartedContainerInfo(const char *cb,
   index_data = (IndexData *)client_data;
   printCheck(index_data);
 
-  printf("started %s: ", cb);
+  printf("%s: ", cb);
   printCXIndexEntity(info->entity);
   printf(" | cursor: ");
   PrintCursor(info->cursor);
@@ -1671,7 +1671,7 @@ static void index_diagnostic(CXClientData client_data,
 
   str = clang_formatDiagnostic(diag, clang_defaultDiagnosticDisplayOptions());
   cstr = clang_getCString(str);
-  printf("diagnostic: %s\n", cstr);
+  printf("[diagnostic]: %s\n", cstr);
   clang_disposeString(str);  
 
   if (getenv("CINDEXTEST_FAILONERROR") &&
@@ -1691,7 +1691,7 @@ static void index_ppIncludedFile(CXClientData client_data,
   index_data = (IndexData *)client_data;
   printCheck(index_data);
 
-  printf("included file: ");
+  printf("[ppIncludedFile]: ");
   printCXIndexFile(info->file);
   printf(" | name: \"%s\"", info->filename);
   printf(" | hash loc: ");
@@ -1705,7 +1705,7 @@ static CXIdxMacro index_ppMacroDefined(CXClientData client_data,
   index_data = (IndexData *)client_data;
   printCheck(index_data);
 
-  printf("macro defined: %s", info->macroInfo->name);
+  printf("[ppMacroDefined]: %s", info->macroInfo->name);
   printf(" | loc: ");
   printCXIndexLoc(info->macroInfo->loc);
   printf(" | defBegin: ");
@@ -1721,7 +1721,7 @@ static void index_ppMacroUndefined(CXClientData client_data,
   index_data = (IndexData *)client_data;
   printCheck(index_data);
 
-  printf("macro undefined: %s", info->name);
+  printf("[ppMacroUndefined]: %s", info->name);
   printf(" | loc: ");
   printCXIndexLoc(info->loc);
   printf("\n");
@@ -1733,7 +1733,7 @@ static void index_ppMacroExpanded(CXClientData client_data,
   index_data = (IndexData *)client_data;
   printCheck(index_data);
 
-  printf("macro expanded: %s", info->name);
+  printf("[ppMacroExpanded]: %s", info->name);
   printf(" | loc: ");
   printCXIndexLoc(info->loc);
   printf("\n");
@@ -1757,7 +1757,7 @@ static CXIdxEntity index_importedEntity(CXClientData client_data,
   if (!name)
     name = "<anon-tag>";
 
-  printf("imported entity: %s", name);
+  printf("[importedEntity]: %s", name);
   printf(" | cursor: ");
   PrintCursor(info->cursor);
   printf(" | loc: ");
@@ -1773,13 +1773,13 @@ static CXIdxContainer index_startedTranslationUnit(CXClientData client_data,
   index_data = (IndexData *)client_data;
   printCheck(index_data);
 
-  printf("started TU\n");
+  printf("[startedTranslationUnit]\n");
   return (CXIdxContainer)"TU";
 }
 
 static CXIdxEntity index_indexTypedef(CXClientData client_data,
                                       CXIdxTypedefInfo *info) {
-  printIndexedEntityInfo("typedef", client_data, info->indexedEntityInfo);
+  printIndexedEntityInfo("[indexTypedef]", client_data, info->indexedEntityInfo);
   printf("\n");
   
   return makeCXIndexEntity(info->indexedEntityInfo);
@@ -1787,7 +1787,7 @@ static CXIdxEntity index_indexTypedef(CXClientData client_data,
 
 static CXIdxEntity index_indexFunction(CXClientData client_data,
                                        CXIdxFunctionInfo *info) {
-  printIndexedEntityInfo("function", client_data, info->indexedEntityInfo);
+  printIndexedEntityInfo("[indexFunction]", client_data, info->indexedEntityInfo);
   printf(" | isDefinition: %d\n", info->isDefinition);
 
   return makeCXIndexEntity(info->indexedEntityInfo);
@@ -1795,13 +1795,14 @@ static CXIdxEntity index_indexFunction(CXClientData client_data,
 
 static void index_indexFunctionRedeclaration(CXClientData client_data,
                                              CXIdxFunctionRedeclInfo *info) {
-  printIndexedRedeclInfo("function", client_data, info->indexedRedeclInfo);
+  printIndexedRedeclInfo("[indexFunctionRedeclaration]", client_data,
+                         info->indexedRedeclInfo);
   printf(" | isDefinition: %d\n", info->isDefinition);
 }
 
 static CXIdxEntity index_indexVariable(CXClientData client_data,
                                        CXIdxVariableInfo *info) {
-  printIndexedEntityInfo("variable", client_data, info->indexedEntityInfo);
+  printIndexedEntityInfo("[indexVariable]", client_data, info->indexedEntityInfo);
   printf(" | isDefinition: %d\n", info->isDefinition);
 
   return makeCXIndexEntity(info->indexedEntityInfo);
@@ -1809,13 +1810,14 @@ static CXIdxEntity index_indexVariable(CXClientData client_data,
 
 static void index_indexVariableRedeclaration(CXClientData client_data,
                                              CXIdxVariableRedeclInfo *info) {
-  printIndexedRedeclInfo("variable", client_data, info->indexedRedeclInfo);
+  printIndexedRedeclInfo("[indexVariableRedeclaration]", client_data,
+                         info->indexedRedeclInfo);
   printf(" | isDefinition: %d\n", info->isDefinition);
 }
 
 static CXIdxEntity index_indexTagType(CXClientData client_data,
                                        CXIdxTagTypeInfo *info) {
-  printIndexedEntityInfo("tag type", client_data, info->indexedEntityInfo);
+  printIndexedEntityInfo("[indexTagType]", client_data, info->indexedEntityInfo);
   printf(" | isDefinition: %d | anon: %d\n",
          info->isDefinition, info->isAnonymous);
 
@@ -1824,13 +1826,14 @@ static CXIdxEntity index_indexTagType(CXClientData client_data,
 
 static void index_indexTagTypeRedeclaration(CXClientData client_data,
                                              CXIdxTagTypeRedeclInfo *info) {
-  printIndexedRedeclInfo("tag type", client_data, info->indexedRedeclInfo);
+  printIndexedRedeclInfo("[indexTagTypeRedeclaration]", client_data,
+                         info->indexedRedeclInfo);
   printf(" | isDefinition: %d\n", info->isDefinition);
 }
 
 static CXIdxEntity index_indexField(CXClientData client_data,
                                       CXIdxFieldInfo *info) {
-  printIndexedEntityInfo("field", client_data, info->indexedEntityInfo);
+  printIndexedEntityInfo("[indexField]", client_data, info->indexedEntityInfo);
   printf("\n");
   
   return makeCXIndexEntity(info->indexedEntityInfo);
@@ -1838,7 +1841,8 @@ static CXIdxEntity index_indexField(CXClientData client_data,
 
 static CXIdxEntity index_indexEnumerator(CXClientData client_data,
                                          CXIdxEnumeratorInfo *info) {
-  printIndexedEntityInfo("enumerator", client_data, info->indexedEntityInfo);
+  printIndexedEntityInfo("[indexEnumerator]", client_data,
+                         info->indexedEntityInfo);
   printf("\n");
   
   return makeCXIndexEntity(info->indexedEntityInfo);
@@ -1847,7 +1851,7 @@ static CXIdxEntity index_indexEnumerator(CXClientData client_data,
 static CXIdxContainer
 index_startedTagTypeDefinition(CXClientData client_data,
                                CXIdxTagTypeDefinitionInfo *info) {
-  printStartedContainerInfo("tag type definition", client_data,
+  printStartedContainerInfo("[startedTagTypeDefinition]", client_data,
                             info->containerInfo);
   printf("\n");
   
@@ -1856,7 +1860,8 @@ index_startedTagTypeDefinition(CXClientData client_data,
 
 static CXIdxEntity index_indexObjCClass(CXClientData client_data,
                                        CXIdxObjCClassInfo *info) {
-  printIndexedEntityInfo("ObjC class", client_data, info->indexedEntityInfo);
+  printIndexedEntityInfo("[indexObjCClass]", client_data,
+                         info->indexedEntityInfo);
   printf(" | forward ref: %d\n", info->isForwardRef);
 
   return makeCXIndexEntity(info->indexedEntityInfo);
@@ -1864,7 +1869,7 @@ static CXIdxEntity index_indexObjCClass(CXClientData client_data,
 
 static CXIdxEntity index_indexObjCProtocol(CXClientData client_data,
                                        CXIdxObjCProtocolInfo *info) {
-  printIndexedEntityInfo("ObjC protocol", client_data,
+  printIndexedEntityInfo("[indexObjCProtocol]", client_data,
                          info->indexedEntityInfo);
   printf(" | forward ref: %d\n", info->isForwardRef);
 
@@ -1873,7 +1878,7 @@ static CXIdxEntity index_indexObjCProtocol(CXClientData client_data,
 
 static CXIdxEntity index_indexObjCCategory(CXClientData client_data,
                                            CXIdxObjCCategoryInfo *info) {
-  printIndexedEntityInfo("ObjC category", client_data,
+  printIndexedEntityInfo("[indexObjCCategory]", client_data,
                          info->indexedEntityInfo);
   printf(" | class: ");
   printCXIndexEntity(info->objcClass);
@@ -1884,7 +1889,8 @@ static CXIdxEntity index_indexObjCCategory(CXClientData client_data,
 
 static CXIdxEntity index_indexObjCMethod(CXClientData client_data,
                                        CXIdxObjCMethodInfo *info) {
-  printIndexedEntityInfo("ObjC Method", client_data, info->indexedEntityInfo);
+  printIndexedEntityInfo("[indexObjCMethod]", client_data,
+                         info->indexedEntityInfo);
   printf(" | isDefinition: %d\n", info->isDefinition);
 
   return makeCXIndexEntity(info->indexedEntityInfo);
@@ -1892,7 +1898,8 @@ static CXIdxEntity index_indexObjCMethod(CXClientData client_data,
 
 static CXIdxEntity index_indexObjCProperty(CXClientData client_data,
                                            CXIdxObjCPropertyInfo *info) {
-  printIndexedEntityInfo("ObjC property", client_data, info->indexedEntityInfo);
+  printIndexedEntityInfo("[indexObjCProperty]", client_data,
+                         info->indexedEntityInfo);
   printf("\n");
 
   return makeCXIndexEntity(info->indexedEntityInfo);
@@ -1900,14 +1907,16 @@ static CXIdxEntity index_indexObjCProperty(CXClientData client_data,
 
 static void index_indexObjCMethodRedeclaration(CXClientData client_data,
                                              CXIdxObjCMethodRedeclInfo *info) {
-  printIndexedRedeclInfo("ObjC Method", client_data, info->indexedRedeclInfo);
+  printIndexedRedeclInfo("[indexObjCMethodRedeclaration]", client_data,
+                         info->indexedRedeclInfo);
   printf(" | isDefinition: %d\n", info->isDefinition);
 }
 
 static CXIdxContainer
 index_startedStatementBody(CXClientData client_data,
                            CXIdxStmtBodyInfo *info) {
-  printStartedContainerInfo("body", client_data, info->containerInfo);
+  printStartedContainerInfo("[startedStatementBody]", client_data,
+                            info->containerInfo);
   printf(" | body: ");
   printCXIndexLoc(info->bodyBegin);
   printf("\n");
@@ -1918,7 +1927,8 @@ index_startedStatementBody(CXClientData client_data,
 static CXIdxContainer
 index_startedObjCContainer(CXClientData client_data,
                            CXIdxObjCContainerInfo *info) {
-  printStartedContainerInfo("ObjC container", client_data, info->containerInfo);
+  printStartedContainerInfo("[startedObjCContainer]", client_data,
+                            info->containerInfo);
   printf("\n");
   
   return makeCXIndexContainer(info->containerInfo->entity);
@@ -1930,7 +1940,7 @@ static void index_defineObjCClass(CXClientData client_data,
   index_data = (IndexData *)client_data;
   printCheck(index_data);
 
-  printf("define objc class: ");
+  printf("[defineObjCClass]: ");
   printCXIndexEntity(info->objcClass);
   printf(" | cursor: ");
   PrintCursor(info->cursor);
@@ -1953,7 +1963,7 @@ static void index_endedContainer(CXClientData client_data,
   index_data = (IndexData *)client_data;
   printCheck(index_data);
 
-  printf("ended container: ");
+  printf("[endedContainer]: ");
   printCXIndexContainer(info->container);
   printf(" | end: ");
   printCXIndexLoc(info->endLoc);
@@ -1966,7 +1976,7 @@ static void index_indexEntityReference(CXClientData client_data,
   index_data = (IndexData *)client_data;
   printCheck(index_data);
 
-  printf("reference: ");
+  printf("[indexEntityReference]: ");
   printCXIndexEntity(info->referencedEntity);
   printf(" | cursor: ");
   PrintCursor(info->cursor);
