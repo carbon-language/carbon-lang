@@ -960,6 +960,9 @@ CFGBlock *CFGBuilder::Visit(Stmt * S, AddStmtChoice asc) {
     case Stmt::MemberExprClass:
       return VisitMemberExpr(cast<MemberExpr>(S), asc);
 
+    case Stmt::NullStmtClass:
+      return Block;
+
     case Stmt::ObjCAtCatchStmtClass:
       return VisitObjCAtCatchStmt(cast<ObjCAtCatchStmt>(S));
 
@@ -975,7 +978,7 @@ CFGBlock *CFGBuilder::Visit(Stmt * S, AddStmtChoice asc) {
     case Stmt::ObjCForCollectionStmtClass:
       return VisitObjCForCollectionStmt(cast<ObjCForCollectionStmt>(S));
 
-    case Stmt::NullStmtClass:
+    case Stmt::OpaqueValueExprClass:
       return Block;
 
     case Stmt::ReturnStmtClass:
