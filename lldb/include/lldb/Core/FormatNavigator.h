@@ -14,6 +14,7 @@
 
 #include <stdint.h>
 #include <unistd.h>
+#include <sys/user.h>
 
 // C++ Includes
 #include <map>
