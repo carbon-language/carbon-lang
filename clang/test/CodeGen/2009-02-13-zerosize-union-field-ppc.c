@@ -1,6 +1,5 @@
-// RUN: %clang_cc1 %s -m32 -emit-llvm -o - | grep {i32 32} | count 3
+// RUN: %clang_cc1 %s -triple powerpc-pc-linux -emit-llvm -o - | grep {i32 32} | count 3
 // XFAIL: *
-// XTARGET: powerpc
 //  Every printf has 'i32 0' for the GEP of the string; no point counting those.
 typedef unsigned int Foo __attribute__((aligned(32)));
 typedef union{Foo:0;}a;
