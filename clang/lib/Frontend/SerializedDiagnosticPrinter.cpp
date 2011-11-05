@@ -200,10 +200,8 @@ void SDiagsWriter::EmitPreamble() {
   
   // Emit the file header.
   Stream.Emit((unsigned)'D', 8);
-  Stream.Emit((unsigned)'I', 8);
-  Stream.Emit((unsigned)'A', 8);
-  Stream.Emit((unsigned)'G', 8);
-  
+  Stream.Emit((unsigned) Version, 32 - 8);
+
   EmitBlockInfoBlock();
 }
 
