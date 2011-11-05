@@ -43,10 +43,10 @@
 // Include the necessary headers to interface with the Windows registry and
 // environment.
 #ifdef _MSC_VER
-  #define WIN32_LEAN_AND_MEAN 1
+  #define WIN32_LEAN_AND_MEAN
+  #define NOGDI
+  #define NOMINMAX
   #include <Windows.h>
-  #undef min
-  #undef max
 #endif
 
 using namespace clang::driver;
