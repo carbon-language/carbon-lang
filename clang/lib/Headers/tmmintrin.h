@@ -66,8 +66,15 @@ _mm_abs_epi32(__m128i a)
     return (__m128i)__builtin_ia32_pabsd128((__v4si)a);
 }
 
-#define _mm_alignr_epi8(a, b, n) (__builtin_ia32_palignr128((a), (b), (n)))
-#define _mm_alignr_pi8(a, b, n) (__builtin_ia32_palignr((a), (b), (n)))
+#define _mm_alignr_epi8(a, b, n) __extension__ ({ \
+  __m128i __a = (a); \
+  __m128i __b = (b); \
+  (__m128i)__builtin_ia32_palignr128((__v16qi)__a, (__v16qi)__b, (n)); })
+
+#define _mm_alignr_pi8(a, b, n) __extension__ ({ \
+  __m64 __a = (a); \
+  __m64 __b = (b); \
+  (__m64)__builtin_ia32_palignr((__v8qi)__a, (__v8qi)__b, (n)); })
 
 static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
 _mm_hadd_epi16(__m128i a, __m128i b)

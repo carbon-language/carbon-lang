@@ -337,19 +337,23 @@ _mm256_dp_ps(__m256 a, __m256 b, const int c)
 }
 
 /* Vector shuffle */
-#define _mm256_shuffle_ps(a, b, mask) \
-        (__builtin_shufflevector((__v8sf)(a), (__v8sf)(b), \
+#define _mm256_shuffle_ps(a, b, mask) __extension__ ({ \
+        __m256 __a = (a); \
+        __m256 __b = (b); \
+        (__m256)__builtin_shufflevector((__v8sf)__a, (__v8sf)__b, \
         (mask) & 0x3,                ((mask) & 0xc) >> 2, \
         (((mask) & 0x30) >> 4) + 8,  (((mask) & 0xc0) >> 6) + 8, \
         ((mask) & 0x3) + 4,          (((mask) & 0xc) >> 2) + 4, \
-        (((mask) & 0x30) >> 4) + 12, (((mask) & 0xc0) >> 6) + 12))
+        (((mask) & 0x30) >> 4) + 12, (((mask) & 0xc0) >> 6) + 12); })
 
-#define _mm256_shuffle_pd(a, b, mask) \
-        (__builtin_shufflevector((__v4df)(a), (__v4df)(b), \
+#define _mm256_shuffle_pd(a, b, mask) __extension__ ({ \
+        __m256d __a = (a); \
+        __m256d __b = (b); \
+        (__m256d)__builtin_shufflevector((__v4df)__a, (__v4df)__b, \
         (mask) & 0x1, \
         (((mask) & 0x2) >> 1) + 4, \
         (((mask) & 0x4) >> 2) + 2, \
-        (((mask) & 0x8) >> 3) + 6))
+        (((mask) & 0x8) >> 3) + 6); })
 
 /* Compare */
 #define _CMP_EQ_OQ    0x00 /* Equal (ordered, non-signaling)  */
@@ -385,23 +389,35 @@ _mm256_dp_ps(__m256 a, __m256 b, const int c)
 #define _CMP_GT_OQ    0x1e /* Greater-than (ordered, non-signaling)  */
 #define _CMP_TRUE_US  0x1f /* True (unordered, signaling)  */
 
-#define _mm_cmp_pd(a, b, c) \
-  (__m128d)__builtin_ia32_cmppd((__v2df)(a), (__v2df)(b), (c))
+#define _mm_cmp_pd(a, b, c) __extension__ ({ \
+  __m128d __a = (a); \
+  __m128d __b = (b); \
+  (__m128d)__builtin_ia32_cmppd((__v2df)__a, (__v2df)__b, (c)); })
 
-#define _mm_cmp_ps(a, b, c) \
-  (__m128)__builtin_ia32_cmpps((__v4sf)(a), (__v4sf)(b), (c))
+#define _mm_cmp_ps(a, b, c) __extension__ ({ \
+  __m128 __a = (a); \
+  __m128 __b = (b); \
+  (__m128)__builtin_ia32_cmpps((__v4sf)__a, (__v4sf)__b, (c)); })
 
-#define _mm256_cmp_pd(a, b, c) \
-  (__m256d)__builtin_ia32_cmppd256((__v4df)(a), (__v4df)(b), (c))
+#define _mm256_cmp_pd(a, b, c) __extension__ ({ \
+  __m256d __a = (a); \
+  __m256d __b = (b); \
+  (__m256d)__builtin_ia32_cmppd256((__v4df)__a, (__v4df)__b, (c)); })
 
-#define _mm256_cmp_ps(a, b, c) \
-  (__m256)__builtin_ia32_cmpps256((__v8sf)(a), (__v8sf)(b), (c))
+#define _mm256_cmp_ps(a, b, c) __extension__ ({ \
+  __m256 __a = (a); \
+  __m256 __b = (b); \
+  (__m256)__builtin_ia32_cmpps256((__v8sf)__a, (__v8sf)__b, (c)); })
 
-#define _mm_cmp_sd(a, b, c) \
-  (__m128d)__builtin_ia32_cmpsd((__v2df)(a), (__v2df)(b), (c))
+#define _mm_cmp_sd(a, b, c) __extension__ ({ \
+  __m128d __a = (a); \
+  __m128d __b = (b); \
+  (__m128d)__builtin_ia32_cmpsd((__v2df)__a, (__v2df)__b, (c)); })
 
-#define _mm_cmp_ss(a, b, c) \
-  (__m128)__builtin_ia32_cmpss((__v4sf)(a), (__v4sf)(b), (c))
+#define _mm_cmp_ss(a, b, c) __extension__ ({ \
+  __m128 __a = (a); \
+  __m128 __b = (b); \
+  (__m128)__builtin_ia32_cmpss((__v4sf)__a, (__v4sf)__b, (c)); })
 
 /* Vector extract */
 static __inline __m128d __attribute__((__always_inline__, __nodebug__))
