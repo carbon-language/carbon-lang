@@ -1759,7 +1759,8 @@ static void EmitGlobalConstantImpl(const Constant *CV, unsigned AddrSpace,
     case 4:
     case 8:
       if (AP.isVerbose())
-        AP.OutStreamer.GetCommentOS() << format("0x%llx\n", CI->getZExtValue());
+        AP.OutStreamer.GetCommentOS() << format("0x%" PRIx64 "\n",
+                                                CI->getZExtValue());
       AP.OutStreamer.EmitIntValue(CI->getZExtValue(), Size, AddrSpace);
       return;
     default:

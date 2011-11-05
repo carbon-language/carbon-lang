@@ -280,7 +280,7 @@ DWARFFormValue::dump(raw_ostream &OS, const DWARFCompileUnit *cu) const {
   case DW_FORM_block4:
     if (uvalue > 0) {
       switch (Form) {
-      case DW_FORM_block:  OS << format("<0x%llx> ", uvalue);            break;
+      case DW_FORM_block:  OS << format("<0x%" PRIx64 "> ", uvalue);     break;
       case DW_FORM_block1: OS << format("<0x%2.2x> ", (uint8_t)uvalue);  break;
       case DW_FORM_block2: OS << format("<0x%4.4x> ", (uint16_t)uvalue); break;
       case DW_FORM_block4: OS << format("<0x%8.8x> ", (uint32_t)uvalue); break;
@@ -330,11 +330,11 @@ DWARFFormValue::dump(raw_ostream &OS, const DWARFCompileUnit *cu) const {
     break;
   case DW_FORM_ref8:
     cu_relative_offset = true;
-    OS << format("cu + 0x%8.8llx", uvalue);
+    OS << format("cu + 0x%8.8" PRIx64, uvalue);
     break;
   case DW_FORM_ref_udata:
     cu_relative_offset = true;
-    OS << format("cu + 0x%llx", uvalue);
+    OS << format("cu + 0x%" PRIx64, uvalue);
     break;
 
     // All DW_FORM_indirect attributes should be resolved prior to calling

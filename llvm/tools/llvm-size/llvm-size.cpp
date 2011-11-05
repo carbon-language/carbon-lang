@@ -96,13 +96,13 @@ static void PrintObjectSectionSizes(ObjectFile *o) {
   const char *radix_fmt = 0;
   switch (Radix) {
   case octal:
-    radix_fmt = "llo";
+    radix_fmt = PRIo64;
     break;
   case decimal:
-    radix_fmt = "llu";
+    radix_fmt = PRIu64;
     break;
   case hexadecimal:
-    radix_fmt = "llx";
+    radix_fmt = PRIx64;
     break;
   }
   if (OutputFormat == sysv) {
@@ -223,8 +223,8 @@ static void PrintObjectSectionSizes(ObjectFile *o) {
                      total_data,
                      total_bss);
     fmtbuf.clear();
-    fmt << "%7" << (Radix == octal ? "llo" : "llu") << " "
-        << "%7llx ";
+    fmt << "%7" << (Radix == octal ? PRIo64 : PRIu64) << " "
+        << "%7" PRIx64 " ";
     outs() << format(fmt.str().c_str(),
                      total,
                      total);

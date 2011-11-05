@@ -459,7 +459,7 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
                                      DebugOut, nulls())) {
             uint64_t SectAddress = 0;
             Sections[SectIdx].getAddress(SectAddress);
-            outs() << format("%8llx:\t", SectAddress + Index);
+            outs() << format("%8" PRIx64 ":\t", SectAddress + Index);
 
             DumpBytes(StringRef(Bytes.data() + Index, Size));
             IP->printInst(&Inst, outs(), "");
@@ -579,7 +579,7 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
               outs() << FunctionMap[SectAddress + Inst.Address]-> getName()
                      << ":\n";
 
-            outs() << format("%8llx:\t", SectAddress + Inst.Address);
+            outs() << format("%8" PRIx64 ":\t", SectAddress + Inst.Address);
             DumpBytes(StringRef(Bytes.data() + Inst.Address, Inst.Size));
 
             if (fi->second.contains(fi->first)) // Indent simple loops.

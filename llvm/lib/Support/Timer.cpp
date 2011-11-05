@@ -184,7 +184,7 @@ void TimeRecord::print(const TimeRecord &Total, raw_ostream &OS) const {
   OS << "  ";
   
   if (Total.getMemUsed())
-    OS << format("%9lld  ", (long long)getMemUsed());
+    OS << format("%9" PRId64 "  ", (int64_t)getMemUsed());
 }
 
 

@@ -167,8 +167,23 @@ typedef signed int ssize_t;
 # define UINT64_C(C) C##ui64
 #endif
 
+#ifndef PRId64
+# define PRId64 "I64d"
+#endif
+#ifndef PRIi64
+# define PRIu64 "I64i"
+#endif
+#ifndef PRIo64
+# define PRIx64 "I64o"
+#endif
+#ifndef PRIu64
+# define PRIu64 "I64u"
+#endif
 #ifndef PRIx64
 # define PRIx64 "I64x"
+#endif
+#ifndef PRIX64
+# define PRIX64 "I64X"
 #endif
 
 #endif /* _MSC_VER */

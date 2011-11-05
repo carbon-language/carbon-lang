@@ -122,8 +122,9 @@ void DWARFDebugArangeSet::dump(raw_ostream &OS) const {
   const uint32_t hex_width = Header.AddrSize * 2;
   for (DescriptorConstIter pos = ArangeDescriptors.begin(),
        end = ArangeDescriptors.end(); pos != end; ++pos)
-    OS << format("[0x%*.*llx -", hex_width, hex_width, pos->Address)
-       << format(" 0x%*.*llx)\n", hex_width, hex_width, pos->getEndAddress());
+    OS << format("[0x%*.*" PRIx64 " -", hex_width, hex_width, pos->Address)
+       << format(" 0x%*.*" PRIx64 ")\n",
+                 hex_width, hex_width, pos->getEndAddress());
 }
 
 

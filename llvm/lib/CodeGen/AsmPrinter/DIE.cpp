@@ -230,8 +230,8 @@ unsigned DIEInteger::SizeOf(AsmPrinter *AP, unsigned Form) const {
 
 #ifndef NDEBUG
 void DIEInteger::print(raw_ostream &O) {
-  O << "Int: " << (int64_t)Integer
-    << format("  0x%llx", (unsigned long long)Integer);
+  O << "Int: " << (int64_t)Integer << "  0x";
+  O.write_hex(Integer);
 }
 #endif
 

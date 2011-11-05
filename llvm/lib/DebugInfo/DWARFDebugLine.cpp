@@ -68,7 +68,7 @@ void DWARFDebugLine::Row::reset(bool default_is_stmt) {
 }
 
 void DWARFDebugLine::Row::dump(raw_ostream &OS) const {
-  OS << format("0x%16.16llx %6u %6u", Address, Line, Column)
+  OS << format("0x%16.16" PRIx64 " %6u %6u", Address, Line, Column)
      << format(" %6u %3u ", File, Isa)
      << (IsStmt ? " is_stmt" : "")
      << (BasicBlock ? " basic_block" : "")

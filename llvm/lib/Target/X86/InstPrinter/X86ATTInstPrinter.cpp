@@ -97,7 +97,7 @@ void X86ATTInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
     O << '$' << (int64_t)Op.getImm();
     
     if (CommentStream && (Op.getImm() > 255 || Op.getImm() < -256))
-      *CommentStream << format("imm = 0x%llX\n", (long long)Op.getImm());
+      *CommentStream << format("imm = 0x%" PRIX64 "\n", (uint64_t)Op.getImm());
     
   } else {
     assert(Op.isExpr() && "unknown operand kind in printOperand");
