@@ -153,7 +153,7 @@ def compareResults(A, B):
     while eltsA and eltsB:
         a = eltsA.pop()
         b = eltsB.pop()
-        if a.data == b.data:
+        if a.data['location'] == b.data['location']:
             res.append((a, b, 0))
         elif a.data > b.data:
             neqA.append(a)
