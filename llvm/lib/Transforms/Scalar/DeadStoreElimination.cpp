@@ -34,6 +34,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/STLExtras.h"
 using namespace llvm;
 
 STATISTIC(NumFastStores, "Number of stores deleted");
@@ -43,25 +44,26 @@ namespace {
   struct DSE : public FunctionPass {
     AliasAnalysis *AA;
     MemoryDependenceAnalysis *MD;
+    DominatorTree *DT;
 
     static char ID; // Pass identification, replacement for typeid
-    DSE() : FunctionPass(ID), AA(0), MD(0) {
+    DSE() : FunctionPass(ID), AA(0), MD(0), DT(0) {
       initializeDSEPass(*PassRegistry::getPassRegistry());
     }
 
     virtual bool runOnFunction(Function &F) {
       AA = &getAnalysis<AliasAnalysis>();
       MD = &getAnalysis<MemoryDependenceAnalysis>();
-      DominatorTree &DT = getAnalysis<DominatorTree>();
+      DT = &getAnalysis<DominatorTree>();
 
       bool Changed = false;
       for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
         // Only check non-dead blocks.  Dead blocks may have strange pointer
         // cycles that will confuse alias analysis.
-        if (DT.isReachableFromEntry(I))
+        if (DT->isReachableFromEntry(I))
           Changed |= runOnBasicBlock(*I);
 
-      AA = 0; MD = 0;
+      AA = 0; MD = 0; DT = 0;
       return Changed;
     }
 
@@ -549,37 +551,66 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
   return MadeChange;
 }
 
+/// Find all blocks that will unconditionally lead to the block BB and append
+/// them to F.
+static void FindUnconditionalPreds(SmallVectorImpl<BasicBlock *> &Blocks,
+                                   BasicBlock *BB, DominatorTree *DT) {
+  for (pred_iterator I = pred_begin(BB), E = pred_end(BB); I != E; ++I) {
+    BasicBlock *Pred = *I;
+    TerminatorInst *PredTI = Pred->getTerminator();
+    if (PredTI->getNumSuccessors() != 1)
+      continue;
+
+    if (DT->isReachableFromEntry(Pred))
+      Blocks.push_back(Pred);
+  }
+}
+
 /// HandleFree - Handle frees of entire structures whose dependency is a store
 /// to a field of that structure.
 bool DSE::HandleFree(CallInst *F) {
   bool MadeChange = false;
 
-  MemDepResult Dep = MD->getDependency(F);
+  AliasAnalysis::Location Loc = AliasAnalysis::Location(F->getOperand(0));
+  SmallVector<BasicBlock *, 16> Blocks;
+  Blocks.push_back(F->getParent());
 
-  while (Dep.isDef() || Dep.isClobber()) {
-    Instruction *Dependency = Dep.getInst();
-    if (!hasMemoryWrite(Dependency) || !isRemovable(Dependency))
-      return MadeChange;
+  while (!Blocks.empty()) {
+    BasicBlock *BB = Blocks.pop_back_val();
+    Instruction *InstPt = BB->getTerminator();
+    if (BB == F->getParent()) InstPt = F;
 
-    Value *DepPointer =
-      GetUnderlyingObject(getStoredPointerOperand(Dependency));
+    MemDepResult Dep = MD->getPointerDependencyFrom(Loc, false, InstPt, BB);
+    while (Dep.isDef() || Dep.isClobber()) {
+      Instruction *Dependency = Dep.getInst();
+      if (!hasMemoryWrite(Dependency) || !isRemovable(Dependency))
+        break;
 
-    // Check for aliasing.
-    if (!AA->isMustAlias(F->getArgOperand(0), DepPointer))
-      return MadeChange;
+      Value *DepPointer =
+        GetUnderlyingObject(getStoredPointerOperand(Dependency));
 
-    // DCE instructions only used to calculate that store
-    DeleteDeadInstruction(Dependency, *MD);
-    ++NumFastStores;
-    MadeChange = true;
+      // Check for aliasing.
+      if (!AA->isMustAlias(F->getArgOperand(0), DepPointer))
+        break;
 
-    // Inst's old Dependency is now deleted. Compute the next dependency,
-    // which may also be dead, as in
-    //    s[0] = 0;
-    //    s[1] = 0; // This has just been deleted.
-    //    free(s);
-    Dep = MD->getDependency(F);
-  };
+      Instruction *Next = llvm::next(BasicBlock::iterator(Dependency));
+
+      // DCE instructions only used to calculate that store
+      DeleteDeadInstruction(Dependency, *MD);
+      ++NumFastStores;
+      MadeChange = true;
+
+      // Inst's old Dependency is now deleted. Compute the next dependency,
+      // which may also be dead, as in
+      //    s[0] = 0;
+      //    s[1] = 0; // This has just been deleted.
+      //    free(s);
+      Dep = MD->getPointerDependencyFrom(Loc, false, Next, BB);
+    }
+
+    if (Dep.isNonLocal())
+      FindUnconditionalPreds(Blocks, BB, DT);
+  }
 
   return MadeChange;
 }

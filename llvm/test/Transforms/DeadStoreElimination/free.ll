@@ -2,6 +2,9 @@
 
 target datalayout = "e-p:64:64:64"
 
+declare void @free(i8* nocapture)
+declare noalias i8* @malloc(i64)
+
 ; CHECK: @test
 ; CHECK-NEXT: bitcast
 ; CHECK-NEXT: @free
@@ -26,10 +29,10 @@ define void @test2({i32, i32}* %P) {
 	ret void
 }
 
-; CHECK: @test4
+; CHECK: @test3
 ; CHECK-NOT: store
 ; CHECK: ret void
-define void @test4() {
+define void @test3() {
   %m = call i8* @malloc(i64 24)
   store i8 0, i8* %m
   %m1 = getelementptr i8* %m, i64 1
@@ -38,5 +41,20 @@ define void @test4() {
   ret void
 }
 
-declare void @free(i8*)
-declare i8* @malloc(i64)
+; PR11240
+; CHECK: @test4
+; CHECK-NOT: store
+; CHECK: ret void
+define void @test4(i1 %x) nounwind {
+entry:
+  %alloc1 = tail call noalias i8* @malloc(i64 4) nounwind
+  br i1 %x, label %skipinit1, label %init1
+
+init1:
+  store i8 1, i8* %alloc1
+  br label %skipinit1
+
+skipinit1:
+  tail call void @free(i8* %alloc1) nounwind
+  ret void
+}
