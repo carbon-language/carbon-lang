@@ -25,7 +25,7 @@ def CC_ARM_APCS : CallingConv<[
   // Handles byval parameters.
   CCIfByVal<CCPassByVal<4, 4>>,
     
-  CCIfType<[i8, i16], CCPromoteToType<i32>>,
+  CCIfType<[i1, i8, i16], CCPromoteToType<i32>>,
 
   // Handle all vector types as either f64 or v2f64.
   CCIfType<[v1i64, v2i32, v4i16, v8i8, v2f32], CCBitConvertToType<f64>>,
