@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include <vector>
-#include "llvm/Bitcode/BitstreamWriter.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/SmallString.h"
@@ -20,6 +19,7 @@
 #include "clang/Frontend/SerializedDiagnosticPrinter.h"
 
 using namespace clang;
+using namespace clang::serialized_diags;
 
 namespace {
 
@@ -130,21 +130,6 @@ private:
   /// \brief Flag indicating whether or not we are in the process of
   /// emitting a non-note diagnostic.
   bool inNonNoteDiagnostic;
-
-  enum BlockIDs {
-    /// \brief The DIAG block, which acts as a container around a diagnostic.
-    BLOCK_DIAG = llvm::bitc::FIRST_APPLICATION_BLOCKID,
-    /// \brief The STRINGS block, which contains strings 
-    /// from multiple diagnostics.
-    BLOCK_STRINGS
-  };
-  
-  enum RecordIDs {
-    RECORD_DIAG = 1,
-    RECORD_DIAG_FLAG,
-    RECORD_CATEGORY,
-    RECORD_FILENAME
-  };
 };
 } // end anonymous namespace
 
