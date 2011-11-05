@@ -120,6 +120,12 @@ private:
   
   /// \brief The collection of files used.
   llvm::DenseSet<FileID> Files;
+
+  typedef llvm::DenseMap<const void *, std::pair<unsigned, llvm::StringRef> > 
+          DiagFlagsTy;
+
+  /// \brief Map for uniquing strings.
+  DiagFlagsTy DiagFlags;
   
   /// \brief Flag indicating whether or not we are in the process of
   /// emitting a non-note diagnostic.
@@ -208,9 +214,8 @@ void SDiagsWriter::EmitBlockInfoBlock() {
   // The subsequent records and Abbrevs are for the "Diagnostic" block.
   // ==---------------------------------------------------------------------==//
 
-  EmitBlockID(BLOCK_DIAG, "Diagnostic", Stream, Record);
-  EmitRecordID(RECORD_DIAG, "Diagnostic Info", Stream, Record);
-  EmitRecordID(RECORD_DIAG_FLAG, "Diagnostic Flag", Stream, Record);
+  EmitBlockID(BLOCK_DIAG, "Diag", Stream, Record);
+  EmitRecordID(RECORD_DIAG, "DiagInfo", Stream, Record);
   
   // Emit Abbrevs.
   using namespace llvm;
@@ -218,27 +223,21 @@ void SDiagsWriter::EmitBlockInfoBlock() {
   // Emit abbreviation for RECORD_DIAG.
   BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
   Abbrev->Add(BitCodeAbbrevOp(RECORD_DIAG));
-  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 3)); // Diag level.
-  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16-3)); // Category.  
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 3));  // Diag level.
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 10)); // Category.  
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 10)); // Mapped Diag ID.
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // Text size.
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Diagnostc text.
   Abbrevs.set(RECORD_DIAG, Stream.EmitBlockInfoAbbrev(BLOCK_DIAG, Abbrev));
-
-  
-  // Emit the abbreviation for RECORD_DIAG_FLAG.
-  Abbrev = new BitCodeAbbrev();
-  Abbrev->Add(BitCodeAbbrevOp(RECORD_DIAG_FLAG));
-  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // Text size.
-  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Flag name text.
-  Abbrevs.set(RECORD_DIAG_FLAG, Stream.EmitBlockInfoAbbrev(BLOCK_DIAG, Abbrev));
 
   // ==---------------------------------------------------------------------==//
   // The subsequent records and Abbrevs are for the "Strings" block.
   // ==---------------------------------------------------------------------==//
 
   EmitBlockID(BLOCK_STRINGS, "Strings", Stream, Record);
-  EmitRecordID(RECORD_CATEGORY, "Category Name", Stream, Record);
-  EmitRecordID(RECORD_FILENAME, "File Name", Stream, Record);
+  EmitRecordID(RECORD_CATEGORY, "CatName", Stream, Record);
+  EmitRecordID(RECORD_FILENAME, "FileName", Stream, Record);
+  EmitRecordID(RECORD_DIAG_FLAG, "DiagFlag", Stream, Record);
 
   Abbrev = new BitCodeAbbrev();
   Abbrev->Add(BitCodeAbbrevOp(RECORD_CATEGORY));
@@ -255,6 +254,15 @@ void SDiagsWriter::EmitBlockInfoBlock() {
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // File name text.
   Abbrevs.set(RECORD_FILENAME, Stream.EmitBlockInfoAbbrev(BLOCK_STRINGS,
                                                           Abbrev));
+  
+  // Emit the abbreviation for RECORD_DIAG_FLAG.
+  Abbrev = new BitCodeAbbrev();
+  Abbrev->Add(BitCodeAbbrevOp(RECORD_DIAG_FLAG));
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 10)); // Mapped Diag ID.
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // Text size.
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Flag name text.
+  Abbrevs.set(RECORD_DIAG_FLAG, Stream.EmitBlockInfoAbbrev(BLOCK_STRINGS,
+                                                           Abbrev));
 
   Stream.ExitBlock();
 }
@@ -285,20 +293,29 @@ void SDiagsWriter::HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
   unsigned category = DiagnosticIDs::getCategoryNumberForDiag(Info.getID());
   Record.push_back(category);
   Categories.insert(category);
+  if (DiagLevel == DiagnosticsEngine::Note)
+    Record.push_back(0); // No flag for notes.
+  else {
+    StringRef FlagName = DiagnosticIDs::getWarningOptionForDiag(Info.getID());
+    if (FlagName.empty())
+      Record.push_back(0);
+    else {
+      // Here we assume that FlagName points to static data whose pointer
+      // value is fixed.
+      const void *data = FlagName.data();
+      std::pair<unsigned, StringRef> &entry = DiagFlags[data];
+      if (entry.first == 0) {
+        entry.first = DiagFlags.size();
+        entry.second = FlagName;
+      }
+      Record.push_back(entry.first);
+    }
+  }
+                     
   diagBuf.clear();   
   Info.FormatDiagnostic(diagBuf); // Compute the diagnostic text.
   Record.push_back(diagBuf.str().size());
   Stream.EmitRecordWithBlob(Abbrevs.get(RECORD_DIAG), Record, diagBuf.str());
-
-  // Emit the RECORD_DIAG_FLAG record.
-  StringRef FlagName = DiagnosticIDs::getWarningOptionForDiag(Info.getID());
-  if (!FlagName.empty()) {
-    Record.clear();
-    Record.push_back(RECORD_DIAG_FLAG);
-    Record.push_back(FlagName.size());
-    Stream.EmitRecordWithBlob(Abbrevs.get(RECORD_DIAG_FLAG),
-                              Record, FlagName.str());
-  }
   
   // FIXME: emit location
   // FIXME: emit ranges
@@ -364,6 +381,25 @@ void SDiagsWriter::EmitCategoriesAndFileNames() {
     }
   }
 
+  // Emit the flag strings.
+  {
+    std::vector<StringRef> scribble;
+    scribble.resize(DiagFlags.size());
+
+    for (DiagFlagsTy::iterator it = DiagFlags.begin(), ei = DiagFlags.end();
+         it != ei; ++it) {
+      scribble[it->second.first - 1] = it->second.second;
+    }
+    for (unsigned i = 0, n = scribble.size(); i != n; ++i) {
+      Record.clear();
+      Record.push_back(RECORD_DIAG_FLAG);
+      Record.push_back(i+1);
+      StringRef FlagName = scribble[i];
+      Record.push_back(FlagName.size());
+      Stream.EmitRecordWithBlob(Abbrevs.get(RECORD_DIAG_FLAG),
+                                Record, FlagName);
+    }
+  }
 }
 
 void SDiagsWriter::EndSourceFile() {
