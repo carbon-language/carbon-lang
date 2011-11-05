@@ -40,6 +40,7 @@ else()
   set_property(SOURCE gold-plugin.cpp APPEND PROPERTY
     OBJECT_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/exportsfile)
 
-  target_link_libraries(LLVMgold LTO -Wl,--version-script,exportsfile)
+  target_link_libraries(LLVMgold LTO
+                   -Wl,--version-script,${CMAKE_CURRENT_BINARY_DIR}/exportsfile)
   add_dependencies(LLVMgold gold_exports)
 endif()
