@@ -1014,11 +1014,12 @@ void Driver::BuildActions(const ToolChain &TC, const DerivedArgList &Args,
 
   // Construct the actions to perform.
   ActionList LinkerInputs;
+  unsigned NumSteps = 0;
   for (unsigned i = 0, e = Inputs.size(); i != e; ++i) {
     types::ID InputType = Inputs[i].first;
     const Arg *InputArg = Inputs[i].second;
 
-    unsigned NumSteps = types::getNumCompilationPhases(InputType);
+    NumSteps = types::getNumCompilationPhases(InputType);
     assert(NumSteps && "Invalid number of steps!");
 
     // If the first step comes after the final phase we are doing as part of
@@ -1086,7 +1087,7 @@ void Driver::BuildActions(const ToolChain &TC, const DerivedArgList &Args,
 
   // If we are linking, claim any options which are obviously only used for
   // compilation.
-  if (FinalPhase == phases::Link)
+  if (FinalPhase == phases::Link && (NumSteps == 1))
     Args.ClaimAllArgs(options::OPT_CompileOnly_Group);
 }
 
