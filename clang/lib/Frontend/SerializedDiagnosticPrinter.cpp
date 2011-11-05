@@ -94,8 +94,12 @@ private:
   /// \brief Emit a record for a CharSourceRange.
   void EmitCharSourceRange(CharSourceRange R);
   
-  /// \brief Emit the string information for a category.
-  void EmitCategory(unsigned CatID);
+  /// \brief Emit the string information for the category for a diagnostic.
+  unsigned getEmitCategory(unsigned DiagID);
+  
+  /// \brief Emit the string information for diagnostic flags.
+  unsigned getEmitDiagnosticFlag(DiagnosticsEngine::Level DiagLevel,
+                                 const Diagnostic &Info);
   
   /// \brief The version of the diagnostics file.
   enum { Version = 1 };
@@ -242,7 +246,8 @@ void SDiagsWriter::EmitBlockInfoBlock() {
   EmitRecordID(RECORD_DIAG, "DiagInfo", Stream, Record);
   EmitRecordID(RECORD_SOURCE_RANGE, "SrcRange", Stream, Record);
   EmitRecordID(RECORD_CATEGORY, "CatName", Stream, Record);
-  
+  EmitRecordID(RECORD_DIAG_FLAG, "DiagFlag", Stream, Record);
+
   // Emit Abbrevs.
   using namespace llvm;
 
@@ -272,6 +277,15 @@ void SDiagsWriter::EmitBlockInfoBlock() {
   AddSourceLocationAbbrev(Abbrev);
   Abbrevs.set(RECORD_SOURCE_RANGE,
               Stream.EmitBlockInfoAbbrev(BLOCK_DIAG, Abbrev));
+  
+  // Emit the abbreviation for RECORD_DIAG_FLAG.
+  Abbrev = new BitCodeAbbrev();
+  Abbrev->Add(BitCodeAbbrevOp(RECORD_DIAG_FLAG));
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 10)); // Mapped Diag ID.
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // Text size.
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Flag name text.
+  Abbrevs.set(RECORD_DIAG_FLAG, Stream.EmitBlockInfoAbbrev(BLOCK_DIAG,
+                                                           Abbrev));
 
   // ==---------------------------------------------------------------------==//
   // The subsequent records and Abbrevs are for the "Strings" block.
@@ -279,7 +293,6 @@ void SDiagsWriter::EmitBlockInfoBlock() {
 
   EmitBlockID(BLOCK_STRINGS, "Strings", Stream, Record);
   EmitRecordID(RECORD_FILENAME, "FileName", Stream, Record);
-  EmitRecordID(RECORD_DIAG_FLAG, "DiagFlag", Stream, Record);
 
   Abbrev = new BitCodeAbbrev();
   Abbrev->Add(BitCodeAbbrevOp(RECORD_FILENAME));
@@ -289,33 +302,57 @@ void SDiagsWriter::EmitBlockInfoBlock() {
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // File name text.
   Abbrevs.set(RECORD_FILENAME, Stream.EmitBlockInfoAbbrev(BLOCK_STRINGS,
                                                           Abbrev));
-  
-  // Emit the abbreviation for RECORD_DIAG_FLAG.
-  Abbrev = new BitCodeAbbrev();
-  Abbrev->Add(BitCodeAbbrevOp(RECORD_DIAG_FLAG));
-  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 10)); // Mapped Diag ID.
-  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // Text size.
-  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Flag name text.
-  Abbrevs.set(RECORD_DIAG_FLAG, Stream.EmitBlockInfoAbbrev(BLOCK_STRINGS,
-                                                           Abbrev));
 
   Stream.ExitBlock();
 }
 
-void SDiagsWriter::EmitCategory(unsigned int CatID) {
-  if (Categories.count(CatID))
-    return;
+unsigned SDiagsWriter::getEmitCategory(unsigned int DiagID) {
+  unsigned category = DiagnosticIDs::getCategoryNumberForDiag(DiagID);
   
-  Categories.insert(CatID);
+  if (Categories.count(category))
+    return category;
+  
+  Categories.insert(category);
   
   // We use a local version of 'Record' so that we can be generating
   // another record when we lazily generate one for the category entry.
   RecordData Record;
   Record.push_back(RECORD_CATEGORY);
-  Record.push_back(CatID);
-  StringRef catName = DiagnosticIDs::getCategoryNameFromID(CatID);
+  Record.push_back(category);
+  StringRef catName = DiagnosticIDs::getCategoryNameFromID(category);
   Record.push_back(catName.size());
   Stream.EmitRecordWithBlob(Abbrevs.get(RECORD_CATEGORY), Record, catName);
+  
+  return category;
+}
+
+unsigned SDiagsWriter::getEmitDiagnosticFlag(DiagnosticsEngine::Level DiagLevel,
+                                             const Diagnostic &Info) {
+  if (DiagLevel == DiagnosticsEngine::Note)
+    return 0; // No flag for notes.
+  
+  StringRef FlagName = DiagnosticIDs::getWarningOptionForDiag(Info.getID());
+  if (FlagName.empty())
+    return 0;
+
+  // Here we assume that FlagName points to static data whose pointer
+  // value is fixed.  This allows us to unique by diagnostic groups.
+  const void *data = FlagName.data();
+  std::pair<unsigned, StringRef> &entry = DiagFlags[data];
+  if (entry.first == 0) {
+    entry.first = DiagFlags.size();
+    entry.second = FlagName;
+    
+    // Lazily emit the string in a separate record.
+    RecordData Record;
+    Record.push_back(RECORD_DIAG_FLAG);
+    Record.push_back(entry.first);
+    Record.push_back(FlagName.size());
+    Stream.EmitRecordWithBlob(Abbrevs.get(RECORD_DIAG_FLAG),
+                              Record, FlagName);    
+  }
+
+  return entry.first;
 }
 
 void SDiagsWriter::EmitRawStringContents(llvm::StringRef str) {
@@ -341,32 +378,12 @@ void SDiagsWriter::HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
   Record.clear();
   Record.push_back(RECORD_DIAG);
   Record.push_back(DiagLevel);
-  AddLocToRecord(Diags.getSourceManager(), Info.getLocation(), Record);  
-  unsigned category = DiagnosticIDs::getCategoryNumberForDiag(Info.getID());
-  Record.push_back(category);
-  
-  // Emit the category string lazily if we haven't already.
-  EmitCategory(category);
-
-  Categories.insert(category);
-  if (DiagLevel == DiagnosticsEngine::Note)
-    Record.push_back(0); // No flag for notes.
-  else {
-    StringRef FlagName = DiagnosticIDs::getWarningOptionForDiag(Info.getID());
-    if (FlagName.empty())
-      Record.push_back(0);
-    else {
-      // Here we assume that FlagName points to static data whose pointer
-      // value is fixed.
-      const void *data = FlagName.data();
-      std::pair<unsigned, StringRef> &entry = DiagFlags[data];
-      if (entry.first == 0) {
-        entry.first = DiagFlags.size();
-        entry.second = FlagName;
-      }
-      Record.push_back(entry.first);
-    }
-  }
+  AddLocToRecord(Diags.getSourceManager(), Info.getLocation(), Record);    
+  // Emit the category string lazily and get the category ID.
+  Record.push_back(getEmitCategory(Info.getID()));
+  // Emit the diagnostic flag string lazily and get the mapped ID.
+  Record.push_back(getEmitDiagnosticFlag(DiagLevel, Info));
+                   
                      
   diagBuf.clear();   
   Info.FormatDiagnostic(diagBuf); // Compute the diagnostic text.
@@ -423,26 +440,6 @@ void SDiagsWriter::EmitCategoriesAndFileNames() {
       Record.push_back(FE->getModificationTime());
       Record.push_back(Name.size());
       Stream.EmitRecordWithBlob(Abbrevs.get(RECORD_FILENAME), Record, Name);
-    }
-  }
-
-  // Emit the flag strings.
-  {
-    std::vector<StringRef> scribble;
-    scribble.resize(DiagFlags.size());
-
-    for (DiagFlagsTy::iterator it = DiagFlags.begin(), ei = DiagFlags.end();
-         it != ei; ++it) {
-      scribble[it->second.first - 1] = it->second.second;
-    }
-    for (unsigned i = 0, n = scribble.size(); i != n; ++i) {
-      Record.clear();
-      Record.push_back(RECORD_DIAG_FLAG);
-      Record.push_back(i+1);
-      StringRef FlagName = scribble[i];
-      Record.push_back(FlagName.size());
-      Stream.EmitRecordWithBlob(Abbrevs.get(RECORD_DIAG_FLAG),
-                                Record, FlagName);
     }
   }
 }
