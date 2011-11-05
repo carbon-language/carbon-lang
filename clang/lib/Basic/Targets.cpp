@@ -3029,10 +3029,7 @@ protected:
   std::string ABI;
 public:
   MipsTargetInfoBase(const std::string& triple, const std::string& ABIStr)
-    : TargetInfo(triple), ABI(ABIStr) {
-    SizeType = UnsignedInt;
-    PtrDiffType = SignedInt;
-  }
+    : TargetInfo(triple), ABI(ABIStr) {}
   virtual const char *getABI() const { return ABI.c_str(); }
   virtual bool setABI(const std::string &Name) = 0;
   virtual bool setCPU(const std::string &Name) {
@@ -3098,7 +3095,10 @@ public:
 class Mips32TargetInfoBase : public MipsTargetInfoBase {
 public:
   Mips32TargetInfoBase(const std::string& triple) :
-    MipsTargetInfoBase(triple, "o32") {}
+    MipsTargetInfoBase(triple, "o32") {
+    SizeType = UnsignedInt;
+    PtrDiffType = SignedInt;
+  }
   virtual bool setABI(const std::string &Name) {
     if ((Name == "o32") || (Name == "eabi")) {
       ABI = Name;
