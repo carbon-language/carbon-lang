@@ -94,6 +94,9 @@ private:
   /// \brief Emit a record for a CharSourceRange.
   void EmitCharSourceRange(CharSourceRange R);
   
+  /// \brief Emit the string information for a category.
+  void EmitCategory(unsigned CatID);
+  
   /// \brief The version of the diagnostics file.
   enum { Version = 1 };
 
@@ -238,6 +241,7 @@ void SDiagsWriter::EmitBlockInfoBlock() {
   EmitBlockID(BLOCK_DIAG, "Diag", Stream, Record);
   EmitRecordID(RECORD_DIAG, "DiagInfo", Stream, Record);
   EmitRecordID(RECORD_SOURCE_RANGE, "SrcRange", Stream, Record);
+  EmitRecordID(RECORD_CATEGORY, "CatName", Stream, Record);
   
   // Emit Abbrevs.
   using namespace llvm;
@@ -253,6 +257,14 @@ void SDiagsWriter::EmitBlockInfoBlock() {
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Diagnostc text.
   Abbrevs.set(RECORD_DIAG, Stream.EmitBlockInfoAbbrev(BLOCK_DIAG, Abbrev));
   
+  // Emit abbrevation for RECORD_CATEGORY.
+  Abbrev = new BitCodeAbbrev();
+  Abbrev->Add(BitCodeAbbrevOp(RECORD_CATEGORY));
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // Category ID.
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 8));  // Text size.
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));      // Category text.
+  Abbrevs.set(RECORD_CATEGORY, Stream.EmitBlockInfoAbbrev(BLOCK_DIAG, Abbrev));
+
   // Emit abbrevation for RECORD_SOURCE_RANGE.
   Abbrev = new BitCodeAbbrev();
   Abbrev->Add(BitCodeAbbrevOp(RECORD_SOURCE_RANGE));
@@ -266,17 +278,9 @@ void SDiagsWriter::EmitBlockInfoBlock() {
   // ==---------------------------------------------------------------------==//
 
   EmitBlockID(BLOCK_STRINGS, "Strings", Stream, Record);
-  EmitRecordID(RECORD_CATEGORY, "CatName", Stream, Record);
   EmitRecordID(RECORD_FILENAME, "FileName", Stream, Record);
   EmitRecordID(RECORD_DIAG_FLAG, "DiagFlag", Stream, Record);
 
-  Abbrev = new BitCodeAbbrev();
-  Abbrev->Add(BitCodeAbbrevOp(RECORD_CATEGORY));
-  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 8)); // Text size.
-  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Category text.
-  Abbrevs.set(RECORD_CATEGORY, Stream.EmitBlockInfoAbbrev(BLOCK_STRINGS,
-                                                          Abbrev));
-  
   Abbrev = new BitCodeAbbrev();
   Abbrev->Add(BitCodeAbbrevOp(RECORD_FILENAME));
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 64)); // Size.
@@ -296,6 +300,22 @@ void SDiagsWriter::EmitBlockInfoBlock() {
                                                            Abbrev));
 
   Stream.ExitBlock();
+}
+
+void SDiagsWriter::EmitCategory(unsigned int CatID) {
+  if (Categories.count(CatID))
+    return;
+  
+  Categories.insert(CatID);
+  
+  // We use a local version of 'Record' so that we can be generating
+  // another record when we lazily generate one for the category entry.
+  RecordData Record;
+  Record.push_back(RECORD_CATEGORY);
+  Record.push_back(CatID);
+  StringRef catName = DiagnosticIDs::getCategoryNameFromID(CatID);
+  Record.push_back(catName.size());
+  Stream.EmitRecordWithBlob(Abbrevs.get(RECORD_CATEGORY), Record, catName);
 }
 
 void SDiagsWriter::EmitRawStringContents(llvm::StringRef str) {
@@ -324,6 +344,10 @@ void SDiagsWriter::HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
   AddLocToRecord(Diags.getSourceManager(), Info.getLocation(), Record);  
   unsigned category = DiagnosticIDs::getCategoryNumberForDiag(Info.getID());
   Record.push_back(category);
+  
+  // Emit the category string lazily if we haven't already.
+  EmitCategory(category);
+
   Categories.insert(category);
   if (DiagLevel == DiagnosticsEngine::Note)
     Record.push_back(0); // No flag for notes.
@@ -379,25 +403,10 @@ static void populateAndSort(std::vector<T> &scribble,
 }
 
 void SDiagsWriter::EmitCategoriesAndFileNames() {
-
   if (Categories.empty() && Files.empty())
     return;
-  
+
   BlockEnterExit BlockEnter(Stream, BLOCK_STRINGS);
-  
-  // Emit the category names.
-  {
-    std::vector<unsigned> scribble;
-    populateAndSort(scribble, Categories);
-    for (std::vector<unsigned>::iterator it = scribble.begin(), 
-          ei = scribble.end(); it != ei ; ++it) {
-      Record.clear();
-      Record.push_back(RECORD_CATEGORY);
-      StringRef catName = DiagnosticIDs::getCategoryNameFromID(*it);
-      Record.push_back(catName.size());
-      Stream.EmitRecordWithBlob(Abbrevs.get(RECORD_CATEGORY), Record, catName);
-    }
-  }
 
   // Emit the file names.
   {
