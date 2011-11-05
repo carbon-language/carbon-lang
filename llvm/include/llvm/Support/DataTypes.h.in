@@ -171,10 +171,10 @@ typedef signed int ssize_t;
 # define PRId64 "I64d"
 #endif
 #ifndef PRIi64
-# define PRIu64 "I64i"
+# define PRIi64 "I64i"
 #endif
 #ifndef PRIo64
-# define PRIx64 "I64o"
+# define PRIo64 "I64o"
 #endif
 #ifndef PRIu64
 # define PRIu64 "I64u"
