@@ -235,7 +235,7 @@ static const Stmt *LookThroughStmt(const Stmt *S) {
   if (const Expr *E = dyn_cast<Expr>(S))
     return E->IgnoreParens();
   if (const OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(S))
-    return OVE->IgnoreParens();
+    return OVE->getSourceExpr()->IgnoreParens();
   return S;
 }
 
