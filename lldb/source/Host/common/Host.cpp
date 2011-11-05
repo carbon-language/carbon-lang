@@ -310,7 +310,7 @@ Host::GetArchitecture (SystemDefaultArchitecture arch_kind)
 
     if (g_supports_32 == false && g_supports_64 == false)
     {
-        llvm::Triple triple(llvm::sys::getHostTriple());
+        llvm::Triple triple(llvm::sys::getDefaultTargetTriple());
 
         g_host_arch_32.Clear();
         g_host_arch_64.Clear();
