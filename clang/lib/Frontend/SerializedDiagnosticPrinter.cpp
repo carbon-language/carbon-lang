@@ -245,7 +245,9 @@ void SDiagsWriter::EmitBlockInfoBlock() {
                                                           Abbrev));
   
   Abbrev = new BitCodeAbbrev();
-  Abbrev->Add(BitCodeAbbrevOp(RECORD_CATEGORY));
+  Abbrev->Add(BitCodeAbbrevOp(RECORD_FILENAME));
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 64)); // Size.
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 64)); // Modifcation time.  
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // Text size.
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // File name text.
   Abbrevs.set(RECORD_FILENAME, Stream.EmitBlockInfoAbbrev(BLOCK_STRINGS,
@@ -338,6 +340,8 @@ void SDiagsWriter::EmitCategoriesAndFileNames() {
       StringRef Name = FE->getName();
       
       Record.clear();
+      Record.push_back(FE->getSize());
+      Record.push_back(FE->getModificationTime());
       Record.push_back(Name.size());
       Stream.EmitRecordWithBlob(Abbrevs.get(RECORD_FILENAME), Record, Name);
     }
