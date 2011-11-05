@@ -87,10 +87,16 @@ ProcessLinux::ProcessLinux(Target& target, Listener &listener)
       m_in_limbo(false),
       m_exit_now(false)
 {
+
+#if 0
     // FIXME: Putting this code in the ctor and saving the byte order in a
     // member variable is a hack to avoid const qual issues in GetByteOrder.
     ObjectFile *obj_file = GetTarget().GetExecutableModule()->GetObjectFile();
     m_byte_order = obj_file->GetByteOrder();
+#else
+    // XXX: Will work only for local processes.
+    m_byte_order = lldb::endian::InlHostByteOrder();
+#endif
 }
 
 ProcessLinux::~ProcessLinux()
@@ -138,23 +144,48 @@ ProcessLinux::WillLaunch(Module* module)
 }
 
 Error
-ProcessLinux::DoLaunch(Module *module,
-                       char const *argv[],
-                       char const *envp[],
-                       uint32_t launch_flags,
-                       const char *stdin_path,
-                       const char *stdout_path,
-                       const char *stderr_path,
-                       const char *working_directory)
+ProcessLinux::DoLaunch (Module *module,
+                       const ProcessLaunchInfo &launch_info)
 {
     Error error;
     assert(m_monitor == NULL);
 
     SetPrivateState(eStateLaunching);
-    m_monitor = new ProcessMonitor(this, module,
-                                   argv, envp,
-                                   stdin_path, stdout_path, stderr_path,
-                                   error);
+
+    uint32_t launch_flags = launch_info.GetFlags().Get();
+    const char *stdin_path = NULL;
+    const char *stdout_path = NULL;
+    const char *stderr_path = NULL;
+    const char *working_dir = launch_info.GetWorkingDirectory();
+
+    const ProcessLaunchInfo::FileAction *file_action;
+    file_action = launch_info.GetFileActionForFD (STDIN_FILENO);
+    if (file_action)
+    {
+        if (file_action->GetAction () == ProcessLaunchInfo::FileAction::eFileActionOpen)
+            stdin_path = file_action->GetPath();
+    }
+    file_action = launch_info.GetFileActionForFD (STDOUT_FILENO);
+    if (file_action)
+    {
+        if (file_action->GetAction () == ProcessLaunchInfo::FileAction::eFileActionOpen)
+            stdout_path = file_action->GetPath();
+    }
+    file_action = launch_info.GetFileActionForFD (STDERR_FILENO);
+    if (file_action)
+    {
+        if (file_action->GetAction () == ProcessLaunchInfo::FileAction::eFileActionOpen)
+            stderr_path = file_action->GetPath();
+    }
+
+    m_monitor = new ProcessMonitor (this, 
+                                    module,
+                                    launch_info.GetArguments().GetConstArgumentVector(), 
+                                    launch_info.GetEnvironmentEntries().GetConstArgumentVector(),
+                                    stdin_path, 
+                                    stdout_path, 
+                                    stderr_path,
+                                    error);
 
     m_module = module;
 

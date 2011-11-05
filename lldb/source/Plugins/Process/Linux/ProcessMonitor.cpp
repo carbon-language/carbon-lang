@@ -34,6 +34,8 @@
 #include "ProcessMonitor.h"
 
 
+#define DEBUG_PTRACE_MAXBYTES 20
+
 using namespace lldb_private;
 
 // FIXME: this code is host-dependent with respect to types and
@@ -46,20 +48,90 @@ using namespace lldb_private;
 // avoid the additional indirection and checks.
 #ifndef LLDB_CONFIGURATION_BUILDANDINTEGRATION
 
+static void
+DisplayBytes (lldb_private::StreamString &s, void *bytes, uint32_t count)
+{
+    uint8_t *ptr = (uint8_t *)bytes;
+    const uint32_t loop_count = std::min<uint32_t>(DEBUG_PTRACE_MAXBYTES, count);
+    for(uint32_t i=0; i<loop_count; i++)
+    {
+        s.Printf ("[%x]", *ptr);
+        ptr++;
+    }
+}
+
+static void PtraceDisplayBytes(__ptrace_request &req, void *data)
+{
+    StreamString buf;
+    LogSP verbose_log (ProcessLinuxLog::GetLogIfAllCategoriesSet (
+                                        LINUX_LOG_PTRACE | LINUX_LOG_VERBOSE));
+
+    if (verbose_log)
+    {
+        switch(req)
+        {
+        case PTRACE_POKETEXT:
+            {
+                DisplayBytes(buf, &data, 8);
+                verbose_log->Printf("PTRACE_POKETEXT %s", buf.GetData());
+                break;
+            }
+        case PTRACE_POKEDATA: 
+            {
+                DisplayBytes(buf, &data, 8);
+                verbose_log->Printf("PTRACE_POKEDATA %s", buf.GetData());
+                break;
+            }
+        case PTRACE_POKEUSER: 
+            {
+                DisplayBytes(buf, &data, 8);
+                verbose_log->Printf("PTRACE_POKEUSER %s", buf.GetData());
+                break;
+            }
+        case PTRACE_SETREGS: 
+            {
+                DisplayBytes(buf, data, sizeof(user_regs_struct));
+                verbose_log->Printf("PTRACE_SETREGS %s", buf.GetData());
+                break;
+            }
+        case PTRACE_SETFPREGS:
+            {
+                DisplayBytes(buf, data, sizeof(user_fpregs_struct));
+                verbose_log->Printf("PTRACE_SETFPREGS %s", buf.GetData());
+                break;
+            }
+        case PTRACE_SETSIGINFO: 
+            {
+                DisplayBytes(buf, data, sizeof(siginfo_t));
+                verbose_log->Printf("PTRACE_SETSIGINFO %s", buf.GetData());
+                break;
+            }
+        default:
+            {
+            }
+        }
+    }
+}
+
 // Wrapper for ptrace to catch errors and log calls.
 extern long
 PtraceWrapper(__ptrace_request req, pid_t pid, void *addr, void *data,
               const char* reqName, const char* file, int line)
 {
-    int result;
+    long int result;
 
     LogSP log (ProcessLinuxLog::GetLogIfAllCategoriesSet (LINUX_LOG_PTRACE));
+
     if (log)
         log->Printf("ptrace(%s, %u, %p, %p) called from file %s line %d",
                     reqName, pid, addr, data, file, line);
+    
+    PtraceDisplayBytes(req, data);
 
     errno = 0;
     result = ptrace(req, pid, addr, data);
+
+    PtraceDisplayBytes(req, data);
 
     if (log && (result == -1 || errno != 0))
     {
@@ -352,7 +424,7 @@ ReadRegOperation::Execute(ProcessMonitor *monitor)
 
     // Set errno to zero so that we can detect a failed peek.
     errno = 0;
-    uint32_t data = PTRACE(PTRACE_PEEKUSER, pid, (void*)m_offset, NULL);
+    lldb::addr_t data = PTRACE(PTRACE_PEEKUSER, pid, (void*)m_offset, NULL);
     if (data == -1UL && errno)
         m_result = false;
     else
