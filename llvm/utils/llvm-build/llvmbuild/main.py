@@ -31,6 +31,17 @@ def mk_quote_string_for_target(value):
     # The only quoting we currently perform is for ':', to support msys users.
     return value.replace(":", "\\:")
 
+def make_install_dir(path):
+    """
+    make_install_dir(path) -> None
+
+    Create the given directory path for installation, including any parents.
+    """
+
+    # os.makedirs considers it an error to be called with an existant path.
+    if not os.path.exists(path):
+        os.makedirs(path)
+
 ###
 
 class LLVMProjectInfo(object):
@@ -276,6 +287,7 @@ class LLVMProjectInfo(object):
                                      for _,_,deps in entries) + 1
 
         # Write out the library table.
+        make_install_dir(os.path.dirname(output_path))
         f = open(output_path, 'w')
         print >>f, """\
 //===- llvm-build generated file --------------------------------*- C++ -*-===//
@@ -360,6 +372,7 @@ class LLVMProjectInfo(object):
         dependencies = list(self.get_fragment_dependencies())
 
         # Write out the CMake fragment.
+        make_install_dir(os.path.dirname(output_path))
         f = open(output_path, 'w')
 
         # Write the header.
@@ -419,6 +432,7 @@ configure_file(\"%s\"
         dependencies = list(self.get_fragment_dependencies())
 
         # Write out the Makefile fragment.
+        make_install_dir(os.path.dirname(output_path))
         f = open(output_path, 'w')
 
         # Write the header.
