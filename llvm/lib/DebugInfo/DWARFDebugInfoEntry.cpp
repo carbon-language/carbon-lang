@@ -26,7 +26,7 @@ void DWARFDebugInfoEntryMinimal::dump(raw_ostream &OS,
   uint32_t offset = Offset;
 
   if (debug_info_data.isValidOffset(offset)) {
-    uint64_t abbrCode = debug_info_data.getULEB128(&offset);
+    uint32_t abbrCode = debug_info_data.getULEB128(&offset);
 
     OS << format("\n0x%8.8x: ", Offset);
     if (abbrCode) {
