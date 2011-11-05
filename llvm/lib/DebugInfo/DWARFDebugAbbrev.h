@@ -25,21 +25,21 @@ typedef DWARFAbbreviationDeclarationColl::const_iterator
   DWARFAbbreviationDeclarationCollConstIter;
 
 class DWARFAbbreviationDeclarationSet {
-  uint64_t Offset;
+  uint32_t Offset;
   uint32_t IdxOffset;
   std::vector<DWARFAbbreviationDeclaration> Decls;
   public:
   DWARFAbbreviationDeclarationSet()
     : Offset(0), IdxOffset(0) {}
 
-  DWARFAbbreviationDeclarationSet(uint64_t offset, uint32_t idxOffset)
+  DWARFAbbreviationDeclarationSet(uint32_t offset, uint32_t idxOffset)
     : Offset(offset), IdxOffset(idxOffset) {}
 
   void clear() {
     IdxOffset = 0;
     Decls.clear();
   }
-  uint64_t getOffset() const { return Offset; }
+  uint32_t getOffset() const { return Offset; }
   void dump(raw_ostream &OS) const;
   bool extract(DataExtractor data, uint32_t* offset_ptr);
 

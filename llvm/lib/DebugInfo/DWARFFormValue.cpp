@@ -263,12 +263,12 @@ DWARFFormValue::dump(raw_ostream &OS, const DWARFCompileUnit *cu) const {
   bool cu_relative_offset = false;
 
   switch (Form) {
-  case DW_FORM_addr:      OS << format("0x%016x", uvalue); break;
+  case DW_FORM_addr:      OS << format("0x%016" PRIx64, uvalue); break;
   case DW_FORM_flag:
-  case DW_FORM_data1:     OS << format("0x%02x", uvalue);  break;
-  case DW_FORM_data2:     OS << format("0x%04x", uvalue);  break;
-  case DW_FORM_data4:     OS << format("0x%08x", uvalue);  break;
-  case DW_FORM_data8:     OS << format("0x%016x", uvalue); break;
+  case DW_FORM_data1:     OS << format("0x%02x", (uint8_t)uvalue); break;
+  case DW_FORM_data2:     OS << format("0x%04x", (uint16_t)uvalue); break;
+  case DW_FORM_data4:     OS << format("0x%08x", (uint32_t)uvalue); break;
+  case DW_FORM_data8:     OS << format("0x%016" PRIx64, uvalue); break;
   case DW_FORM_string:
     OS << '"';
     OS.write_escaped(getAsCString(NULL));
@@ -314,7 +314,7 @@ DWARFFormValue::dump(raw_ostream &OS, const DWARFCompileUnit *cu) const {
     break;
   }
   case DW_FORM_ref_addr:
-    OS << format("0x%016x", uvalue);
+    OS << format("0x%016" PRIx64, uvalue);
     break;
   case DW_FORM_ref1:
     cu_relative_offset = true;
@@ -348,7 +348,7 @@ DWARFFormValue::dump(raw_ostream &OS, const DWARFCompileUnit *cu) const {
   }
 
   if (cu_relative_offset)
-    OS << format(" => {0x%8.8x}", (uvalue + (cu ? cu->getOffset() : 0)));
+    OS << format(" => {0x%8.8"PRIx64"}", (uvalue + (cu ? cu->getOffset() : 0)));
 }
 
 const char*

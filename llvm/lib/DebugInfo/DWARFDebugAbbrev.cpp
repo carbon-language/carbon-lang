@@ -83,7 +83,7 @@ void DWARFDebugAbbrev::dump(raw_ostream &OS) const {
 
   DWARFAbbreviationDeclarationCollMapConstIter pos;
   for (pos = AbbrevCollMap.begin(); pos != AbbrevCollMap.end(); ++pos) {
-    OS << format("Abbrev table for offset: 0x%8.8x\n", pos->first);
+    OS << format("Abbrev table for offset: 0x%8.8" PRIx64 "\n", pos->first);
     pos->second.dump(OS);
   }
 }
