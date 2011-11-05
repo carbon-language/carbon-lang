@@ -61,7 +61,7 @@ typedef llvm::SmallVectorImpl<uint64_t> RecordDataImpl;
 class SDiagsWriter : public DiagnosticConsumer {
 public:  
   SDiagsWriter(DiagnosticsEngine &diags, llvm::raw_ostream *os) 
-    : Stream(Buffer), OS(os), Diags(diags)
+    : Stream(Buffer), OS(os), Diags(diags), inNonNoteDiagnostic(false)
   { 
     EmitPreamble();
   };
@@ -121,6 +121,10 @@ private:
   /// \brief The collection of files used.
   llvm::DenseSet<FileID> Files;
   
+  /// \brief Flag indicating whether or not we are in the process of
+  /// emitting a non-note diagnostic.
+  bool inNonNoteDiagnostic;
+
   enum BlockIDs {
     /// \brief The DIAG block, which acts as a container around a diagnostic.
     BLOCK_DIAG = llvm::bitc::FIRST_APPLICATION_BLOCKID,
@@ -135,7 +139,6 @@ private:
     RECORD_CATEGORY,
     RECORD_FILENAME
   };
-
 };
 } // end anonymous namespace
 
@@ -264,7 +267,16 @@ void SDiagsWriter::EmitRawStringContents(llvm::StringRef str) {
 void SDiagsWriter::HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
                                     const Diagnostic &Info) {
 
-  BlockEnterExit DiagBlock(Stream, BLOCK_DIAG);
+  if (DiagLevel != DiagnosticsEngine::Note) {
+    if (inNonNoteDiagnostic) {
+      // We have encountered a non-note diagnostic.  Finish up the previous
+      // diagnostic block before starting a new one.
+      Stream.ExitBlock();
+    }
+    inNonNoteDiagnostic = true;
+  }
+  
+  Stream.EnterSubblock(BLOCK_DIAG, 3);
   
   // Emit the RECORD_DIAG record.
   Record.clear();
@@ -290,8 +302,13 @@ void SDiagsWriter::HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
   
   // FIXME: emit location
   // FIXME: emit ranges
-  // FIXME: emit notes
   // FIXME: emit fixits
+  
+  if (DiagLevel == DiagnosticsEngine::Note) {
+    // Notes currently cannot have child diagnostics.  Complete the
+    // diagnostic now.
+    Stream.ExitBlock();
+  }
 }
 
 template <typename T>
@@ -350,6 +367,12 @@ void SDiagsWriter::EmitCategoriesAndFileNames() {
 }
 
 void SDiagsWriter::EndSourceFile() {
+  if (inNonNoteDiagnostic) {
+    // Finish off any diagnostics we were in the process of emitting.
+    Stream.ExitBlock();
+    inNonNoteDiagnostic = false;
+  }
+  
   EmitCategoriesAndFileNames();
   
   // Write the generated bitstream to "Out".
