@@ -101,6 +101,9 @@ private:
   /// \brief Add SourceLocation information the specified record.
   void AddLocToRecord(SourceLocation Loc, RecordDataImpl &Record);
 
+  /// \brief Add CharSourceRange information the specified record.
+  void AddCharSourceRangeToRecord(CharSourceRange R, RecordDataImpl &Record);
+
   /// \brief The version of the diagnostics file.
   enum { Version = 1 };
 
@@ -211,6 +214,12 @@ void SDiagsWriter::AddLocToRecord(SourceLocation Loc,
   Record.push_back(FileOffset);
 }
 
+void SDiagsWriter::AddCharSourceRangeToRecord(CharSourceRange Range,
+                                              RecordDataImpl &Record) {
+  AddLocToRecord(Range.getBegin(), Record);
+  AddLocToRecord(Range.getEnd(), Record);
+}
+
 unsigned SDiagsWriter::getEmitFile(SourceLocation Loc) {
   SourceManager &SM = Diags.getSourceManager();
   assert(Loc.isValid());
@@ -240,8 +249,7 @@ unsigned SDiagsWriter::getEmitFile(SourceLocation Loc) {
 void SDiagsWriter::EmitCharSourceRange(CharSourceRange R) {
   Record.clear();
   Record.push_back(RECORD_SOURCE_RANGE);
-  AddLocToRecord(R.getBegin(), Record);
-  AddLocToRecord(R.getEnd(), Record);
+  AddCharSourceRangeToRecord(R, Record);
   Stream.EmitRecordWithAbbrev(Abbrevs.get(RECORD_SOURCE_RANGE), Record);
 }
 
@@ -261,6 +269,12 @@ static void AddSourceLocationAbbrev(llvm::BitCodeAbbrev *Abbrev) {
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // Column.
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // Offset;
 }
+
+static void AddRangeLocationAbbrev(llvm::BitCodeAbbrev *Abbrev) {
+  AddSourceLocationAbbrev(Abbrev);
+  AddSourceLocationAbbrev(Abbrev);  
+}
+
 void SDiagsWriter::EmitBlockInfoBlock() {
   Stream.EnterBlockInfoBlock(3);
   
@@ -274,6 +288,7 @@ void SDiagsWriter::EmitBlockInfoBlock() {
   EmitRecordID(RECORD_CATEGORY, "CatName", Stream, Record);
   EmitRecordID(RECORD_DIAG_FLAG, "DiagFlag", Stream, Record);
   EmitRecordID(RECORD_FILENAME, "FileName", Stream, Record);
+  EmitRecordID(RECORD_FIXIT, "FixIt", Stream, Record);
 
   // Emit Abbrevs.
   using namespace llvm;
@@ -300,8 +315,7 @@ void SDiagsWriter::EmitBlockInfoBlock() {
   // Emit abbrevation for RECORD_SOURCE_RANGE.
   Abbrev = new BitCodeAbbrev();
   Abbrev->Add(BitCodeAbbrevOp(RECORD_SOURCE_RANGE));
-  AddSourceLocationAbbrev(Abbrev);
-  AddSourceLocationAbbrev(Abbrev);
+  AddRangeLocationAbbrev(Abbrev);
   Abbrevs.set(RECORD_SOURCE_RANGE,
               Stream.EmitBlockInfoAbbrev(BLOCK_DIAG, Abbrev));
   
@@ -324,6 +338,15 @@ void SDiagsWriter::EmitBlockInfoBlock() {
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // File name text.
   Abbrevs.set(RECORD_FILENAME, Stream.EmitBlockInfoAbbrev(BLOCK_DIAG,
                                                           Abbrev));
+  
+  // Emit the abbreviation for RECORD_FIXIT.
+  Abbrev = new BitCodeAbbrev();
+  Abbrev->Add(BitCodeAbbrevOp(RECORD_FIXIT));
+  AddRangeLocationAbbrev(Abbrev);
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // Text size.
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));      // FixIt text.
+  Abbrevs.set(RECORD_FIXIT, Stream.EmitBlockInfoAbbrev(BLOCK_DIAG,
+                                                       Abbrev));
 
   Stream.ExitBlock();
 }
@@ -405,14 +428,26 @@ void SDiagsWriter::HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
   Info.FormatDiagnostic(diagBuf); // Compute the diagnostic text.
   Record.push_back(diagBuf.str().size());
   Stream.EmitRecordWithBlob(Abbrevs.get(RECORD_DIAG), Record, diagBuf.str());
-  
+
+  // Emit Source Ranges.
   ArrayRef<CharSourceRange> Ranges = Info.getRanges();
   for (ArrayRef<CharSourceRange>::iterator it=Ranges.begin(), ei=Ranges.end();
        it != ei; ++it) {
     EmitCharSourceRange(*it);    
   }
 
-  // FIXME: emit fixits
+  // Emit FixIts.
+  for (unsigned i = 0, n = Info.getNumFixItHints(); i != n; ++i) {
+    const FixItHint &fix = Info.getFixItHint(i);
+    if (fix.isNull())
+      continue;
+    Record.clear();
+    Record.push_back(RECORD_FIXIT);
+    AddCharSourceRangeToRecord(fix.RemoveRange, Record);
+    Record.push_back(fix.CodeToInsert.size());
+    Stream.EmitRecordWithBlob(Abbrevs.get(RECORD_FIXIT), Record,
+                              fix.CodeToInsert);    
+  }
   
   if (DiagLevel == DiagnosticsEngine::Note) {
     // Notes currently cannot have child diagnostics.  Complete the

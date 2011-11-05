@@ -32,7 +32,8 @@ enum RecordIDs {
   RECORD_SOURCE_RANGE,
   RECORD_DIAG_FLAG,
   RECORD_CATEGORY,
-  RECORD_FILENAME
+  RECORD_FILENAME,
+  RECORD_FIXIT
 };
 
 /// \brief Returns a DiagnosticConsumer that serializes diagnostics to
