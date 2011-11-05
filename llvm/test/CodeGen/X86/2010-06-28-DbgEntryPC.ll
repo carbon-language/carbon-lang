@@ -16,7 +16,7 @@
 ; CHECK-NEXT:	.byte	6                       ## DW_FORM_data4
 ; CHECK-NEXT:	.byte	27                      ## DW_AT_comp_dir
 ; CHECK-NEXT:	.byte	14                      ## DW_FORM_strp
-; CHECK-NEXT:	.byte	225                     ## DW_AT_APPLE_optimized
+; CHECK-NEXT:	.ascii	"\341\177"              ## DW_AT_APPLE_optimized
 
 %struct.a = type { i32, %struct.a* }
 

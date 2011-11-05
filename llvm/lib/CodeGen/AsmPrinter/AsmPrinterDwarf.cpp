@@ -35,23 +35,8 @@ using namespace llvm;
 void AsmPrinter::EmitSLEB128(int Value, const char *Desc) const {
   if (isVerbose() && Desc)
     OutStreamer.AddComment(Desc);
-    
-  if (MAI->hasLEB128()) {
-    OutStreamer.EmitSLEB128IntValue(Value);
-    return;
-  }
 
-  // If we don't have .sleb128, emit as .bytes.
-  int Sign = Value >> (8 * sizeof(Value) - 1);
-  bool IsMore;
-  
-  do {
-    unsigned char Byte = static_cast<unsigned char>(Value & 0x7f);
-    Value >>= 7;
-    IsMore = Value != Sign || ((Byte ^ Sign) & 0x40) != 0;
-    if (IsMore) Byte |= 0x80;
-    OutStreamer.EmitIntValue(Byte, 1, /*addrspace*/0);
-  } while (IsMore);
+  OutStreamer.EmitSLEB128IntValue(Value);
 }
 
 /// EmitULEB128 - emit the specified signed leb128 value.
@@ -60,25 +45,7 @@ void AsmPrinter::EmitULEB128(unsigned Value, const char *Desc,
   if (isVerbose() && Desc)
     OutStreamer.AddComment(Desc);
 
-  // FIXME: Should we add a PadTo option to the streamer?
-  if (MAI->hasLEB128() && PadTo == 0) {
-    OutStreamer.EmitULEB128IntValue(Value); 
-    return;
-  }
-  
-  // If we don't have .uleb128 or we want to emit padding, emit as .bytes.
-  do {
-    unsigned char Byte = static_cast<unsigned char>(Value & 0x7f);
-    Value >>= 7;
-    if (Value || PadTo != 0) Byte |= 0x80;
-    OutStreamer.EmitIntValue(Byte, 1, /*addrspace*/0);
-  } while (Value);
-
-  if (PadTo) {
-    if (PadTo > 1)
-      OutStreamer.EmitFill(PadTo - 1, 0x80/*fillval*/, 0/*addrspace*/);
-    OutStreamer.EmitFill(1, 0/*fillval*/, 0/*addrspace*/);
-  }
+  OutStreamer.EmitULEB128IntValue(Value, 0/*addrspace*/, PadTo);
 }
 
 /// EmitCFAByte - Emit a .byte 42 directive for a DW_CFA_xxx value.

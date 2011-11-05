@@ -2,8 +2,7 @@
 ; Radar 9309221
 ; Test dwarf reg no for s16
 ;CHECK: DW_OP_regx for S register
-;CHECK-NEXT: byte
-;CHECK-NEXT: byte
+;CHECK-NEXT: ascii
 ;CHECK-NEXT: DW_OP_bit_piece 32 0
 
 target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:32-f32:32:32-f64:32:32-v64:32:64-v128:32:128-a0:0:32-n32"

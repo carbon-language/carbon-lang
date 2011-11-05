@@ -188,7 +188,8 @@ public:
   /// Utility function to encode a SLEB128 value.
   static void EncodeSLEB128(int64_t Value, raw_ostream &OS);
   /// Utility function to encode a ULEB128 value.
-  static void EncodeULEB128(uint64_t Value, raw_ostream &OS);
+  static void EncodeULEB128(uint64_t Value, raw_ostream &OS,
+                            unsigned Padding = 0);
 };
 
 MCObjectWriter *createWinCOFFObjectWriter(raw_ostream &OS, bool is64Bit);

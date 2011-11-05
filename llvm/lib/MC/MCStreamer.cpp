@@ -94,10 +94,11 @@ void MCStreamer::EmitIntValue(uint64_t Value, unsigned Size,
 
 /// EmitULEB128Value - Special case of EmitULEB128Value that avoids the
 /// client having to pass in a MCExpr for constant integers.
-void MCStreamer::EmitULEB128IntValue(uint64_t Value, unsigned AddrSpace) {
+void MCStreamer::EmitULEB128IntValue(uint64_t Value, unsigned AddrSpace,
+                                     unsigned Padding) {
   SmallString<32> Tmp;
   raw_svector_ostream OSE(Tmp);
-  MCObjectWriter::EncodeULEB128(Value, OSE);
+  MCObjectWriter::EncodeULEB128(Value, OSE, Padding);
   EmitBytes(OSE.str(), AddrSpace);
 }
 
