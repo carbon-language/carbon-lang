@@ -91,6 +91,9 @@ private:
   /// \brief Emit the block containing categories and file names.
   void EmitCategoriesAndFileNames();
   
+  /// \brief Emit a record for a CharSourceRange.
+  void EmitCharSourceRange(CharSourceRange R);
+  
   /// \brief The version of the diagnostics file.
   enum { Version = 1 };
 
@@ -178,6 +181,35 @@ static void EmitRecordID(unsigned ID, const char *Name,
   Stream.EmitRecord(llvm::bitc::BLOCKINFO_CODE_SETRECORDNAME, Record);
 }
 
+static void AddLocToRecord(SourceManager &SM,
+                           SourceLocation Loc,
+                           RecordDataImpl &Record) {
+  if (Loc.isInvalid()) {
+    // Emit a "sentinel" location.
+    Record.push_back(~(unsigned)0);  // Line.
+    Record.push_back(~(unsigned)0);  // Column.
+    Record.push_back(~(unsigned)0);  // Offset.
+    return;
+  }
+
+  Loc = SM.getSpellingLoc(Loc);
+  Record.push_back(SM.getSpellingLineNumber(Loc));
+  Record.push_back(SM.getSpellingColumnNumber(Loc));
+  
+  std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(Loc);
+  FileID FID = LocInfo.first;
+  unsigned FileOffset = LocInfo.second;
+  Record.push_back(FileOffset);
+}
+
+void SDiagsWriter::EmitCharSourceRange(CharSourceRange R) {
+  Record.clear();
+  Record.push_back(RECORD_SOURCE_RANGE);
+  AddLocToRecord(Diags.getSourceManager(), R.getBegin(), Record);
+  AddLocToRecord(Diags.getSourceManager(), R.getEnd(), Record);
+  Stream.EmitRecordWithAbbrev(Abbrevs.get(RECORD_SOURCE_RANGE), Record);
+}
+
 /// \brief Emits the preamble of the diagnostics file.
 void SDiagsWriter::EmitPreamble() {
  // EmitRawStringContents("CLANG_DIAGS");
@@ -190,6 +222,12 @@ void SDiagsWriter::EmitPreamble() {
   EmitBlockInfoBlock();
 }
 
+static void AddSourceLocationAbbrev(llvm::BitCodeAbbrev *Abbrev) {
+  using namespace llvm;
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // Line.
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // Column.
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // Offset;
+}
 void SDiagsWriter::EmitBlockInfoBlock() {
   Stream.EnterBlockInfoBlock(3);
   
@@ -199,6 +237,7 @@ void SDiagsWriter::EmitBlockInfoBlock() {
 
   EmitBlockID(BLOCK_DIAG, "Diag", Stream, Record);
   EmitRecordID(RECORD_DIAG, "DiagInfo", Stream, Record);
+  EmitRecordID(RECORD_SOURCE_RANGE, "SrcRange", Stream, Record);
   
   // Emit Abbrevs.
   using namespace llvm;
@@ -207,11 +246,20 @@ void SDiagsWriter::EmitBlockInfoBlock() {
   BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
   Abbrev->Add(BitCodeAbbrevOp(RECORD_DIAG));
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 3));  // Diag level.
+  AddSourceLocationAbbrev(Abbrev);
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 10)); // Category.  
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 10)); // Mapped Diag ID.
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // Text size.
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Diagnostc text.
   Abbrevs.set(RECORD_DIAG, Stream.EmitBlockInfoAbbrev(BLOCK_DIAG, Abbrev));
+  
+  // Emit abbrevation for RECORD_SOURCE_RANGE.
+  Abbrev = new BitCodeAbbrev();
+  Abbrev->Add(BitCodeAbbrevOp(RECORD_SOURCE_RANGE));
+  AddSourceLocationAbbrev(Abbrev);
+  AddSourceLocationAbbrev(Abbrev);
+  Abbrevs.set(RECORD_SOURCE_RANGE,
+              Stream.EmitBlockInfoAbbrev(BLOCK_DIAG, Abbrev));
 
   // ==---------------------------------------------------------------------==//
   // The subsequent records and Abbrevs are for the "Strings" block.
@@ -273,6 +321,7 @@ void SDiagsWriter::HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
   Record.clear();
   Record.push_back(RECORD_DIAG);
   Record.push_back(DiagLevel);
+  AddLocToRecord(Diags.getSourceManager(), Info.getLocation(), Record);  
   unsigned category = DiagnosticIDs::getCategoryNumberForDiag(Info.getID());
   Record.push_back(category);
   Categories.insert(category);
@@ -300,8 +349,12 @@ void SDiagsWriter::HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
   Record.push_back(diagBuf.str().size());
   Stream.EmitRecordWithBlob(Abbrevs.get(RECORD_DIAG), Record, diagBuf.str());
   
-  // FIXME: emit location
-  // FIXME: emit ranges
+  ArrayRef<CharSourceRange> Ranges = Info.getRanges();
+  for (ArrayRef<CharSourceRange>::iterator it=Ranges.begin(), ei=Ranges.end();
+       it != ei; ++it) {
+    EmitCharSourceRange(*it);    
+  }
+
   // FIXME: emit fixits
   
   if (DiagLevel == DiagnosticsEngine::Note) {

@@ -25,6 +25,7 @@ namespace serialized_diags {
 enum BlockIDs {
   /// \brief The DIAG block, which acts as a container around a diagnostic.
   BLOCK_DIAG = llvm::bitc::FIRST_APPLICATION_BLOCKID,
+
   /// \brief The STRINGS block, which contains strings 
   /// from multiple diagnostics.
   BLOCK_STRINGS
@@ -32,6 +33,7 @@ enum BlockIDs {
 
 enum RecordIDs {
   RECORD_DIAG = 1,
+  RECORD_SOURCE_RANGE,
   RECORD_DIAG_FLAG,
   RECORD_CATEGORY,
   RECORD_FILENAME
