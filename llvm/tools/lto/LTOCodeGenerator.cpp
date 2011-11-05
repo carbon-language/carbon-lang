@@ -90,10 +90,6 @@ LTOCodeGenerator::~LTOCodeGenerator()
 
 bool LTOCodeGenerator::addModule(LTOModule* mod, std::string& errMsg)
 {
-
-  if(mod->getLLVVMModule()->MaterializeAllPermanently(&errMsg))
-    return true;
-
   bool ret = _linker.LinkInModule(mod->getLLVVMModule(), &errMsg);
 
   const std::vector<const char*> &undefs = mod->getAsmUndefinedRefs();
