@@ -39,6 +39,9 @@ public:
   ARCAssignChecker(MigrationPass &pass) : Pass(pass) { }
 
   bool VisitBinaryOperator(BinaryOperator *Exp) {
+    if (Exp->getType()->isDependentType())
+      return true;
+
     Expr *E = Exp->getLHS();
     SourceLocation OrigLoc = E->getExprLoc();
     SourceLocation Loc = OrigLoc;
