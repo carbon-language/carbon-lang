@@ -18,7 +18,6 @@
 #include "clang/Sema/SemaDiagnostic.h"
 #include "llvm/Support/Format.h"
 #include "llvm/ADT/SmallSet.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/CrashRecoveryContext.h"
 
@@ -2162,7 +2161,7 @@ ASTContext::getObjCLayout(const ObjCInterfaceDecl *D,
 
 static void PrintOffset(raw_ostream &OS,
                         CharUnits Offset, unsigned IndentLevel) {
-  OS << llvm::format("%4s | ", llvm::itostr(Offset.getQuantity()).c_str());
+  OS << llvm::format("%4" PRId64 " | ", (int64_t)Offset.getQuantity());
   OS.indent(IndentLevel * 2);
 }
 
