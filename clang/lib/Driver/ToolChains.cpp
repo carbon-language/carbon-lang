@@ -1024,8 +1024,245 @@ Darwin_Generic_GCC::ComputeEffectiveClangTriple(const ArgList &Args,
 /// all subcommands; this relies on gcc translating the majority of
 /// command line options.
 
+/// \brief Parse a GCCVersion object out of a string of text.
+///
+/// This is the primary means of forming GCCVersion objects.
+/*static*/
+Generic_GCC::GCCVersion Linux::GCCVersion::Parse(StringRef VersionText) {
+  const GCCVersion BadVersion = { VersionText.str(), -1, -1, -1, "" };
+  std::pair<StringRef, StringRef> First = VersionText.split('.');
+  std::pair<StringRef, StringRef> Second = First.second.split('.');
+
+  GCCVersion GoodVersion = { VersionText.str(), -1, -1, -1, "" };
+  if (First.first.getAsInteger(10, GoodVersion.Major) ||
+      GoodVersion.Major < 0)
+    return BadVersion;
+  if (Second.first.getAsInteger(10, GoodVersion.Minor) ||
+      GoodVersion.Minor < 0)
+    return BadVersion;
+
+  // First look for a number prefix and parse that if present. Otherwise just
+  // stash the entire patch string in the suffix, and leave the number
+  // unspecified. This covers versions strings such as:
+  //   4.4
+  //   4.4.0
+  //   4.4.x
+  //   4.4.2-rc4
+  //   4.4.x-patched
+  // And retains any patch number it finds.
+  StringRef PatchText = GoodVersion.PatchSuffix = Second.second.str();
+  if (!PatchText.empty()) {
+    if (unsigned EndNumber = PatchText.find_first_not_of("0123456789")) {
+      // Try to parse the number and any suffix.
+      if (PatchText.slice(0, EndNumber).getAsInteger(10, GoodVersion.Patch) ||
+          GoodVersion.Patch < 0)
+        return BadVersion;
+      GoodVersion.PatchSuffix = PatchText.substr(EndNumber).str();
+    }
+  }
+
+  return GoodVersion;
+}
+
+/// \brief Less-than for GCCVersion, implementing a Strict Weak Ordering.
+bool Generic_GCC::GCCVersion::operator<(const GCCVersion &RHS) const {
+  if (Major < RHS.Major) return true; if (Major > RHS.Major) return false;
+  if (Minor < RHS.Minor) return true; if (Minor > RHS.Minor) return false;
+
+  // Note that we rank versions with *no* patch specified is better than ones
+  // hard-coding a patch version. Thus if the RHS has no patch, it always
+  // wins, and the LHS only wins if it has no patch and the RHS does have
+  // a patch.
+  if (RHS.Patch == -1) return true;   if (Patch == -1) return false;
+  if (Patch < RHS.Patch) return true; if (Patch > RHS.Patch) return false;
+
+  // Finally, between completely tied version numbers, the version with the
+  // suffix loses as we prefer full releases.
+  if (RHS.PatchSuffix.empty()) return true;
+  return false;
+}
+
+/// \brief Construct a GCCInstallationDetector from the driver.
+///
+/// This performs all of the autodetection and sets up the various paths.
+/// Once constructed, a GCCInstallation is esentially immutable.
+Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(const Driver &D)
+  : IsValid(false),
+    GccTriple(D.DefaultHostTriple) {
+  // FIXME: Using CXX_INCLUDE_ROOT is here is a bit of a hack, but
+  // avoids adding yet another option to configure/cmake.
+  // It would probably be cleaner to break it in two variables
+  // CXX_GCC_ROOT with just /foo/bar
+  // CXX_GCC_VER with 4.5.2
+  // Then we would have
+  // CXX_INCLUDE_ROOT = CXX_GCC_ROOT/include/c++/CXX_GCC_VER
+  // and this function would return
+  // CXX_GCC_ROOT/lib/gcc/CXX_INCLUDE_ARCH/CXX_GCC_VER
+  llvm::SmallString<128> CxxIncludeRoot(CXX_INCLUDE_ROOT);
+  if (CxxIncludeRoot != "") {
+    // This is of the form /foo/bar/include/c++/4.5.2/
+    if (CxxIncludeRoot.back() == '/')
+      llvm::sys::path::remove_filename(CxxIncludeRoot); // remove the /
+    StringRef Version = llvm::sys::path::filename(CxxIncludeRoot);
+    llvm::sys::path::remove_filename(CxxIncludeRoot); // remove the version
+    llvm::sys::path::remove_filename(CxxIncludeRoot); // remove the c++
+    llvm::sys::path::remove_filename(CxxIncludeRoot); // remove the include
+    GccInstallPath = CxxIncludeRoot.str();
+    GccInstallPath.append("/lib/gcc/");
+    GccInstallPath.append(CXX_INCLUDE_ARCH);
+    GccInstallPath.append("/");
+    GccInstallPath.append(Version);
+    GccParentLibPath = GccInstallPath + "/../../..";
+    IsValid = true;
+    return;
+  }
+
+  llvm::Triple::ArchType HostArch = llvm::Triple(GccTriple).getArch();
+  // The library directories which may contain GCC installations.
+  SmallVector<StringRef, 4> CandidateLibDirs;
+  // The compatible GCC triples for this particular architecture.
+  SmallVector<StringRef, 10> CandidateTriples;
+  CollectLibDirsAndTriples(HostArch, CandidateLibDirs, CandidateTriples);
+
+  // Always include the default host triple as the final fallback if no
+  // specific triple is detected.
+  CandidateTriples.push_back(D.DefaultHostTriple);
+
+  // Compute the set of prefixes for our search.
+  SmallVector<std::string, 8> Prefixes(D.PrefixDirs.begin(),
+                                       D.PrefixDirs.end());
+  Prefixes.push_back(D.SysRoot);
+  Prefixes.push_back(D.SysRoot + "/usr");
+  Prefixes.push_back(D.InstalledDir + "/..");
+
+  // Loop over the various components which exist and select the best GCC
+  // installation available. GCC installs are ranked by version number.
+  Version = GCCVersion::Parse("0.0.0");
+  for (unsigned i = 0, ie = Prefixes.size(); i < ie; ++i) {
+    if (!llvm::sys::fs::exists(Prefixes[i]))
+      continue;
+    for (unsigned j = 0, je = CandidateLibDirs.size(); j < je; ++j) {
+      const std::string LibDir = Prefixes[i] + CandidateLibDirs[j].str();
+      if (!llvm::sys::fs::exists(LibDir))
+        continue;
+      for (unsigned k = 0, ke = CandidateTriples.size(); k < ke; ++k)
+        ScanLibDirForGCCTriple(LibDir, CandidateTriples[k]);
+    }
+  }
+}
+
+/*static*/ void Generic_GCC::GCCInstallationDetector::CollectLibDirsAndTriples(
+    llvm::Triple::ArchType HostArch, SmallVectorImpl<StringRef> &LibDirs,
+    SmallVectorImpl<StringRef> &Triples) {
+  if (HostArch == llvm::Triple::arm || HostArch == llvm::Triple::thumb) {
+    static const char *const ARMLibDirs[] = { "/lib" };
+    static const char *const ARMTriples[] = { "arm-linux-gnueabi" };
+    LibDirs.append(ARMLibDirs, ARMLibDirs + llvm::array_lengthof(ARMLibDirs));
+    Triples.append(ARMTriples, ARMTriples + llvm::array_lengthof(ARMTriples));
+  } else if (HostArch == llvm::Triple::x86_64) {
+    static const char *const X86_64LibDirs[] = { "/lib64", "/lib" };
+    static const char *const X86_64Triples[] = {
+      "x86_64-linux-gnu",
+      "x86_64-unknown-linux-gnu",
+      "x86_64-pc-linux-gnu",
+      "x86_64-redhat-linux6E",
+      "x86_64-redhat-linux",
+      "x86_64-suse-linux",
+      "x86_64-manbo-linux-gnu",
+      "x86_64-linux-gnu",
+      "x86_64-slackware-linux"
+    };
+    LibDirs.append(X86_64LibDirs,
+                   X86_64LibDirs + llvm::array_lengthof(X86_64LibDirs));
+    Triples.append(X86_64Triples,
+                   X86_64Triples + llvm::array_lengthof(X86_64Triples));
+  } else if (HostArch == llvm::Triple::x86) {
+    static const char *const X86LibDirs[] = { "/lib32", "/lib" };
+    static const char *const X86Triples[] = {
+      "i686-linux-gnu",
+      "i686-pc-linux-gnu",
+      "i486-linux-gnu",
+      "i386-linux-gnu",
+      "i686-redhat-linux",
+      "i586-redhat-linux",
+      "i386-redhat-linux",
+      "i586-suse-linux",
+      "i486-slackware-linux"
+    };
+    LibDirs.append(X86LibDirs, X86LibDirs + llvm::array_lengthof(X86LibDirs));
+    Triples.append(X86Triples, X86Triples + llvm::array_lengthof(X86Triples));
+  } else if (HostArch == llvm::Triple::ppc) {
+    static const char *const PPCLibDirs[] = { "/lib32", "/lib" };
+    static const char *const PPCTriples[] = {
+      "powerpc-linux-gnu",
+      "powerpc-unknown-linux-gnu"
+    };
+    LibDirs.append(PPCLibDirs, PPCLibDirs + llvm::array_lengthof(PPCLibDirs));
+    Triples.append(PPCTriples, PPCTriples + llvm::array_lengthof(PPCTriples));
+  } else if (HostArch == llvm::Triple::ppc64) {
+    static const char *const PPC64LibDirs[] = { "/lib64", "/lib" };
+    static const char *const PPC64Triples[] = {
+      "powerpc64-unknown-linux-gnu"
+    };
+    LibDirs.append(PPC64LibDirs,
+                   PPC64LibDirs + llvm::array_lengthof(PPC64LibDirs));
+    Triples.append(PPC64Triples,
+                   PPC64Triples + llvm::array_lengthof(PPC64Triples));
+  }
+}
+
+void Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple(
+    const std::string &LibDir, StringRef CandidateTriple) {
+  // There are various different suffixes involving the triple we
+  // check for. We also record what is necessary to walk from each back
+  // up to the lib directory.
+  const std::string Suffixes[] = {
+    "/gcc/" + CandidateTriple.str(),
+    "/" + CandidateTriple.str() + "/gcc/" + CandidateTriple.str(),
+
+    // Ubuntu has a strange mis-matched pair of triples that this happens to
+    // match.
+    // FIXME: It may be worthwhile to generalize this and look for a second
+    // triple.
+    "/" + CandidateTriple.str() + "/gcc/i686-linux-gnu"
+  };
+  const std::string InstallSuffixes[] = {
+    "/../../..",
+    "/../../../..",
+    "/../../../.."
+  };
+  // Only look at the final, weird Ubuntu suffix for i386-linux-gnu.
+  const unsigned NumSuffixes = (llvm::array_lengthof(Suffixes) -
+                                (CandidateTriple != "i386-linux-gnu"));
+  for (unsigned i = 0; i < NumSuffixes; ++i) {
+    StringRef Suffix = Suffixes[i];
+    llvm::error_code EC;
+    for (llvm::sys::fs::directory_iterator LI(LibDir + Suffix, EC), LE;
+         !EC && LI != LE; LI = LI.increment(EC)) {
+      StringRef VersionText = llvm::sys::path::filename(LI->path());
+      GCCVersion CandidateVersion = GCCVersion::Parse(VersionText);
+      static const GCCVersion MinVersion = { "4.1.1", 4, 1, 1, "" };
+      if (CandidateVersion < MinVersion)
+        continue;
+      if (CandidateVersion <= Version)
+        continue;
+      if (!llvm::sys::fs::exists(LI->path() + "/crtbegin.o"))
+        continue;
+
+      Version = CandidateVersion;
+      GccTriple = CandidateTriple.str();
+      // FIXME: We hack together the directory name here instead of
+      // using LI to ensure stable path separators across Windows and
+      // Linux.
+      GccInstallPath = LibDir + Suffixes[i] + "/" + VersionText.str();
+      GccParentLibPath = GccInstallPath + InstallSuffixes[i];
+      IsValid = true;
+    }
+  }
+}
+
 Generic_GCC::Generic_GCC(const HostInfo &Host, const llvm::Triple& Triple)
-  : ToolChain(Host, Triple) {
+  : ToolChain(Host, Triple), GCCInstallation(getDriver()) {
   getProgramPaths().push_back(getDriver().getInstalledDir());
   if (getDriver().getInstalledDir() != getDriver().Dir)
     getProgramPaths().push_back(getDriver().Dir);
@@ -1506,242 +1743,6 @@ static LinuxDistro DetectLinuxDistro(llvm::Triple::ArchType Arch) {
   return UnknownDistro;
 }
 
-/// \brief Parse a GCCVersion object out of a string of text.
-///
-/// This is the primary means of forming GCCVersion objects.
-/*static*/ Linux::GCCVersion Linux::GCCVersion::Parse(StringRef VersionText) {
-  const GCCVersion BadVersion = { VersionText.str(), -1, -1, -1, "" };
-  std::pair<StringRef, StringRef> First = VersionText.split('.');
-  std::pair<StringRef, StringRef> Second = First.second.split('.');
-
-  GCCVersion GoodVersion = { VersionText.str(), -1, -1, -1, "" };
-  if (First.first.getAsInteger(10, GoodVersion.Major) ||
-      GoodVersion.Major < 0)
-    return BadVersion;
-  if (Second.first.getAsInteger(10, GoodVersion.Minor) ||
-      GoodVersion.Minor < 0)
-    return BadVersion;
-
-  // First look for a number prefix and parse that if present. Otherwise just
-  // stash the entire patch string in the suffix, and leave the number
-  // unspecified. This covers versions strings such as:
-  //   4.4
-  //   4.4.0
-  //   4.4.x
-  //   4.4.2-rc4
-  //   4.4.x-patched
-  // And retains any patch number it finds.
-  StringRef PatchText = GoodVersion.PatchSuffix = Second.second.str();
-  if (!PatchText.empty()) {
-    if (unsigned EndNumber = PatchText.find_first_not_of("0123456789")) {
-      // Try to parse the number and any suffix.
-      if (PatchText.slice(0, EndNumber).getAsInteger(10, GoodVersion.Patch) ||
-          GoodVersion.Patch < 0)
-        return BadVersion;
-      GoodVersion.PatchSuffix = PatchText.substr(EndNumber).str();
-    }
-  }
-
-  return GoodVersion;
-}
-
-/// \brief Less-than for GCCVersion, implementing a Strict Weak Ordering.
-bool Linux::GCCVersion::operator<(const GCCVersion &RHS) const {
-  if (Major < RHS.Major) return true; if (Major > RHS.Major) return false;
-  if (Minor < RHS.Minor) return true; if (Minor > RHS.Minor) return false;
-
-  // Note that we rank versions with *no* patch specified is better than ones
-  // hard-coding a patch version. Thus if the RHS has no patch, it always
-  // wins, and the LHS only wins if it has no patch and the RHS does have
-  // a patch.
-  if (RHS.Patch == -1) return true;   if (Patch == -1) return false;
-  if (Patch < RHS.Patch) return true; if (Patch > RHS.Patch) return false;
-
-  // Finally, between completely tied version numbers, the version with the
-  // suffix loses as we prefer full releases.
-  if (RHS.PatchSuffix.empty()) return true;
-  return false;
-}
-
-/// \brief Construct a GCCInstallationDetector from the driver.
-///
-/// This performs all of the autodetection and sets up the various paths.
-/// Once constructed, a GCCInstallation is esentially immutable.
-Linux::GCCInstallationDetector::GCCInstallationDetector(const Driver &D)
-  : IsValid(false),
-    GccTriple(D.DefaultHostTriple) {
-  // FIXME: Using CXX_INCLUDE_ROOT is here is a bit of a hack, but
-  // avoids adding yet another option to configure/cmake.
-  // It would probably be cleaner to break it in two variables
-  // CXX_GCC_ROOT with just /foo/bar
-  // CXX_GCC_VER with 4.5.2
-  // Then we would have
-  // CXX_INCLUDE_ROOT = CXX_GCC_ROOT/include/c++/CXX_GCC_VER
-  // and this function would return
-  // CXX_GCC_ROOT/lib/gcc/CXX_INCLUDE_ARCH/CXX_GCC_VER
-  llvm::SmallString<128> CxxIncludeRoot(CXX_INCLUDE_ROOT);
-  if (CxxIncludeRoot != "") {
-    // This is of the form /foo/bar/include/c++/4.5.2/
-    if (CxxIncludeRoot.back() == '/')
-      llvm::sys::path::remove_filename(CxxIncludeRoot); // remove the /
-    StringRef Version = llvm::sys::path::filename(CxxIncludeRoot);
-    llvm::sys::path::remove_filename(CxxIncludeRoot); // remove the version
-    llvm::sys::path::remove_filename(CxxIncludeRoot); // remove the c++
-    llvm::sys::path::remove_filename(CxxIncludeRoot); // remove the include
-    GccInstallPath = CxxIncludeRoot.str();
-    GccInstallPath.append("/lib/gcc/");
-    GccInstallPath.append(CXX_INCLUDE_ARCH);
-    GccInstallPath.append("/");
-    GccInstallPath.append(Version);
-    GccParentLibPath = GccInstallPath + "/../../..";
-    IsValid = true;
-    return;
-  }
-
-  llvm::Triple::ArchType HostArch = llvm::Triple(GccTriple).getArch();
-  // The library directories which may contain GCC installations.
-  SmallVector<StringRef, 4> CandidateLibDirs;
-  // The compatible GCC triples for this particular architecture.
-  SmallVector<StringRef, 10> CandidateTriples;
-  CollectLibDirsAndTriples(HostArch, CandidateLibDirs, CandidateTriples);
-
-  // Always include the default host triple as the final fallback if no
-  // specific triple is detected.
-  CandidateTriples.push_back(D.DefaultHostTriple);
-
-  // Compute the set of prefixes for our search.
-  SmallVector<std::string, 8> Prefixes(D.PrefixDirs.begin(),
-                                       D.PrefixDirs.end());
-  Prefixes.push_back(D.SysRoot);
-  Prefixes.push_back(D.SysRoot + "/usr");
-  Prefixes.push_back(D.InstalledDir + "/..");
-
-  // Loop over the various components which exist and select the best GCC
-  // installation available. GCC installs are ranked by version number.
-  Version = GCCVersion::Parse("0.0.0");
-  for (unsigned i = 0, ie = Prefixes.size(); i < ie; ++i) {
-    if (!llvm::sys::fs::exists(Prefixes[i]))
-      continue;
-    for (unsigned j = 0, je = CandidateLibDirs.size(); j < je; ++j) {
-      const std::string LibDir = Prefixes[i] + CandidateLibDirs[j].str();
-      if (!llvm::sys::fs::exists(LibDir))
-        continue;
-      for (unsigned k = 0, ke = CandidateTriples.size(); k < ke; ++k)
-        ScanLibDirForGCCTriple(LibDir, CandidateTriples[k]);
-    }
-  }
-}
-
-/*static*/ void Linux::GCCInstallationDetector::CollectLibDirsAndTriples(
-    llvm::Triple::ArchType HostArch, SmallVectorImpl<StringRef> &LibDirs,
-    SmallVectorImpl<StringRef> &Triples) {
-  if (HostArch == llvm::Triple::arm || HostArch == llvm::Triple::thumb) {
-    static const char *const ARMLibDirs[] = { "/lib" };
-    static const char *const ARMTriples[] = { "arm-linux-gnueabi" };
-    LibDirs.append(ARMLibDirs, ARMLibDirs + llvm::array_lengthof(ARMLibDirs));
-    Triples.append(ARMTriples, ARMTriples + llvm::array_lengthof(ARMTriples));
-  } else if (HostArch == llvm::Triple::x86_64) {
-    static const char *const X86_64LibDirs[] = { "/lib64", "/lib" };
-    static const char *const X86_64Triples[] = {
-      "x86_64-linux-gnu",
-      "x86_64-unknown-linux-gnu",
-      "x86_64-pc-linux-gnu",
-      "x86_64-redhat-linux6E",
-      "x86_64-redhat-linux",
-      "x86_64-suse-linux",
-      "x86_64-manbo-linux-gnu",
-      "x86_64-linux-gnu",
-      "x86_64-slackware-linux"
-    };
-    LibDirs.append(X86_64LibDirs,
-                   X86_64LibDirs + llvm::array_lengthof(X86_64LibDirs));
-    Triples.append(X86_64Triples,
-                   X86_64Triples + llvm::array_lengthof(X86_64Triples));
-  } else if (HostArch == llvm::Triple::x86) {
-    static const char *const X86LibDirs[] = { "/lib32", "/lib" };
-    static const char *const X86Triples[] = {
-      "i686-linux-gnu",
-      "i686-pc-linux-gnu",
-      "i486-linux-gnu",
-      "i386-linux-gnu",
-      "i686-redhat-linux",
-      "i586-redhat-linux",
-      "i386-redhat-linux",
-      "i586-suse-linux",
-      "i486-slackware-linux"
-    };
-    LibDirs.append(X86LibDirs, X86LibDirs + llvm::array_lengthof(X86LibDirs));
-    Triples.append(X86Triples, X86Triples + llvm::array_lengthof(X86Triples));
-  } else if (HostArch == llvm::Triple::ppc) {
-    static const char *const PPCLibDirs[] = { "/lib32", "/lib" };
-    static const char *const PPCTriples[] = {
-      "powerpc-linux-gnu",
-      "powerpc-unknown-linux-gnu"
-    };
-    LibDirs.append(PPCLibDirs, PPCLibDirs + llvm::array_lengthof(PPCLibDirs));
-    Triples.append(PPCTriples, PPCTriples + llvm::array_lengthof(PPCTriples));
-  } else if (HostArch == llvm::Triple::ppc64) {
-    static const char *const PPC64LibDirs[] = { "/lib64", "/lib" };
-    static const char *const PPC64Triples[] = {
-      "powerpc64-unknown-linux-gnu"
-    };
-    LibDirs.append(PPC64LibDirs,
-                   PPC64LibDirs + llvm::array_lengthof(PPC64LibDirs));
-    Triples.append(PPC64Triples,
-                   PPC64Triples + llvm::array_lengthof(PPC64Triples));
-  }
-}
-
-void Linux::GCCInstallationDetector::ScanLibDirForGCCTriple(
-    const std::string &LibDir, StringRef CandidateTriple) {
-  // There are various different suffixes involving the triple we
-  // check for. We also record what is necessary to walk from each back
-  // up to the lib directory.
-  const std::string Suffixes[] = {
-    "/gcc/" + CandidateTriple.str(),
-    "/" + CandidateTriple.str() + "/gcc/" + CandidateTriple.str(),
-
-    // Ubuntu has a strange mis-matched pair of triples that this happens to
-    // match.
-    // FIXME: It may be worthwhile to generalize this and look for a second
-    // triple.
-    "/" + CandidateTriple.str() + "/gcc/i686-linux-gnu"
-  };
-  const std::string InstallSuffixes[] = {
-    "/../../..",
-    "/../../../..",
-    "/../../../.."
-  };
-  // Only look at the final, weird Ubuntu suffix for i386-linux-gnu.
-  const unsigned NumSuffixes = (llvm::array_lengthof(Suffixes) -
-                                (CandidateTriple != "i386-linux-gnu"));
-  for (unsigned i = 0; i < NumSuffixes; ++i) {
-    StringRef Suffix = Suffixes[i];
-    llvm::error_code EC;
-    for (llvm::sys::fs::directory_iterator LI(LibDir + Suffix, EC), LE;
-         !EC && LI != LE; LI = LI.increment(EC)) {
-      StringRef VersionText = llvm::sys::path::filename(LI->path());
-      GCCVersion CandidateVersion = GCCVersion::Parse(VersionText);
-      static const GCCVersion MinVersion = { "4.1.1", 4, 1, 1, "" };
-      if (CandidateVersion < MinVersion)
-        continue;
-      if (CandidateVersion <= Version)
-        continue;
-      if (!llvm::sys::fs::exists(LI->path() + "/crtbegin.o"))
-        continue;
-
-      Version = CandidateVersion;
-      GccTriple = CandidateTriple.str();
-      // FIXME: We hack together the directory name here instead of
-      // using LI to ensure stable path separators across Windows and
-      // Linux.
-      GccInstallPath = LibDir + Suffixes[i] + "/" + VersionText.str();
-      GccParentLibPath = GccInstallPath + InstallSuffixes[i];
-      IsValid = true;
-    }
-  }
-}
-
 static void addPathIfExists(Twine Path, ToolChain::path_list &Paths) {
   if (llvm::sys::fs::exists(Path)) Paths.push_back(Path.str());
 }
@@ -1776,7 +1777,7 @@ static std::string getMultiarchTriple(const llvm::Triple TargetTriple,
 }
 
 Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
-  : Generic_ELF(Host, Triple), GCCInstallation(getDriver()) {
+  : Generic_ELF(Host, Triple) {
   llvm::Triple::ArchType Arch =
     llvm::Triple(getDriver().DefaultHostTriple).getArch();
   const std::string &SysRoot = getDriver().SysRoot;
