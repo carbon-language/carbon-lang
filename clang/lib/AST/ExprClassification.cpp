@@ -232,6 +232,11 @@ static Cl::Kinds ClassifyInternal(ASTContext &Ctx, const Expr *E) {
     return ClassifyExprValueKind(Lang, E,
                                  cast<OpaqueValueExpr>(E)->getValueKind());
 
+    // Pseudo-object expressions can produce l-values with reference magic.
+  case Expr::PseudoObjectExprClass:
+    return ClassifyExprValueKind(Lang, E,
+                                 cast<PseudoObjectExpr>(E)->getValueKind());
+
     // Implicit casts are lvalues if they're lvalue casts. Other than that, we
     // only specifically record class temporaries.
   case Expr::ImplicitCastExprClass:

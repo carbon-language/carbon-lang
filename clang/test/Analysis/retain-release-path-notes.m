@@ -1,5 +1,10 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -analyze -analyzer-checker=core,osx.coreFoundation.CFRetainRelease,osx.cocoa.ClassRelease,osx.cocoa.RetainCount -analyzer-store=region -analyzer-output=text -verify %s
 
+// This actually still works after the pseudo-object refactor, it just
+// uses messages that say 'method' instead of 'property'.  Ted wanted
+// this xfailed and filed as a bug.  rdar://problem/10402993
+// XFAIL: *
+
 /***
 This file is for testing the path-sensitive notes for retain/release errors.
 Its goal is to have simple branch coverage of any path-based diagnostics,

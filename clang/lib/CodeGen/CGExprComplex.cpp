@@ -137,6 +137,10 @@ public:
     return CGF.getOpaqueRValueMapping(E).getComplexVal();
   }
 
+  ComplexPairTy VisitPseudoObjectExpr(PseudoObjectExpr *E) {
+    return CGF.EmitPseudoObjectRValue(E).getComplexVal();
+  }
+
   // FIXME: CompoundLiteralExpr
 
   ComplexPairTy EmitCast(CastExpr::CastKind CK, Expr *Op, QualType DestTy);

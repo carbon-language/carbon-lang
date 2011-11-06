@@ -974,6 +974,14 @@ public:
   /// declaration context DC.
   bool Encloses(const DeclContext *DC) const;
 
+  /// \brief Find the nearest non-closure ancestor of this context,
+  /// i.e. the innermost semantic parent of this context which is not
+  /// a closure.  A context may be its own non-closure ancestor.
+  DeclContext *getNonClosureAncestor();
+  const DeclContext *getNonClosureAncestor() const {
+    return const_cast<DeclContext*>(this)->getNonClosureAncestor();
+  }
+
   /// getPrimaryContext - There may be many different
   /// declarations of the same entity (including forward declarations
   /// of classes, multiple definitions of namespaces, etc.), each with

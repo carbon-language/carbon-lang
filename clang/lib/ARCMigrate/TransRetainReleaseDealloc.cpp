@@ -160,11 +160,13 @@ private:
     if (!E) return false;
 
     E = E->IgnoreParenCasts();
+
+    // Also look through property-getter sugar.
+    if (PseudoObjectExpr *pseudoOp = dyn_cast<PseudoObjectExpr>(E))
+      E = pseudoOp->getResultExpr()->IgnoreImplicit();
+
     if (ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(E))
       return (ME->isInstanceMessage() && ME->getSelector() == DelegateSel);
-
-    if (ObjCPropertyRefExpr *propE = dyn_cast<ObjCPropertyRefExpr>(E))
-      return propE->getGetterSelector() == DelegateSel;
 
     return false;
   }

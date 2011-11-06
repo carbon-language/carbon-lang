@@ -148,6 +148,15 @@ public:
   void VisitMaterializeTemporaryExpr(MaterializeTemporaryExpr *E);
   void VisitOpaqueValueExpr(OpaqueValueExpr *E);
 
+  void VisitPseudoObjectExpr(PseudoObjectExpr *E) {
+    if (E->isGLValue()) {
+      LValue LV = CGF.EmitPseudoObjectLValue(E);
+      return EmitFinalDestCopy(E, LV);
+    }
+
+    CGF.EmitPseudoObjectRValue(E, EnsureSlot(E->getType()));
+  }
+
   void VisitVAArgExpr(VAArgExpr *E);
 
   void EmitInitializationToLValue(Expr *E, LValue Address);

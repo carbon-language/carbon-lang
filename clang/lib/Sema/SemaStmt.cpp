@@ -198,7 +198,7 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
       Diag(Loc, diag::warn_unused_result) << R1 << R2;
       return;
     }
-  } else if (isa<ObjCPropertyRefExpr>(E)) {
+  } else if (isa<PseudoObjectExpr>(E)) {
     DiagID = diag::warn_unused_property_expr;
   } else if (const CXXFunctionalCastExpr *FC
                                        = dyn_cast<CXXFunctionalCastExpr>(E)) {

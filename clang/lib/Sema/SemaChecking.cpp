@@ -4213,6 +4213,26 @@ static bool findRetainCycleOwner(Expr *e, RetainCycleOwner &owner) {
       continue;
     }
 
+    if (PseudoObjectExpr *pseudo = dyn_cast<PseudoObjectExpr>(e)) {
+      // Only pay attention to pseudo-objects on property references.
+      ObjCPropertyRefExpr *pre
+        = dyn_cast<ObjCPropertyRefExpr>(pseudo->getSyntacticForm()
+                                              ->IgnoreParens());
+      if (!pre) return false;
+      if (pre->isImplicitProperty()) return false;
+      ObjCPropertyDecl *property = pre->getExplicitProperty();
+      if (!property->isRetaining() &&
+          !(property->getPropertyIvarDecl() &&
+            property->getPropertyIvarDecl()->getType()
+              .getObjCLifetime() == Qualifiers::OCL_Strong))
+          return false;
+
+      owner.Indirect = true;
+      e = const_cast<Expr*>(cast<OpaqueValueExpr>(pre->getBase())
+                              ->getSourceExpr());
+      continue;
+    }
+
     // Array ivars?
 
     return false;

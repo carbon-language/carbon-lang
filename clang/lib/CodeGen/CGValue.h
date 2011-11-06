@@ -27,6 +27,7 @@ namespace clang {
   class ObjCPropertyRefExpr;
 
 namespace CodeGen {
+  class AggValueSlot;
   class CGBitFieldInfo;
 
 /// RValue - This trivial value class is used to represent the result of an
@@ -452,7 +453,7 @@ public:
   RValue asRValue() const {
     return RValue::getAggregate(getAddr(), isVolatile());
   }
-  
+
   void setZeroed(bool V = true) { ZeroedFlag = V; }
   IsZeroed_t isZeroed() const {
     return IsZeroed_t(ZeroedFlag);

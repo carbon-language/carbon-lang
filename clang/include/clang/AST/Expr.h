@@ -2758,6 +2758,13 @@ public:
   bool isCompoundAssignmentOp() const {
     return isCompoundAssignmentOp(getOpcode());
   }
+  static Opcode getOpForCompoundAssignment(Opcode Opc) {
+    assert(isCompoundAssignmentOp(Opc));
+    if (Opc >= BO_XorAssign)
+      return Opcode(unsigned(Opc) - BO_XorAssign + BO_Xor);
+    else
+      return Opcode(unsigned(Opc) - BO_MulAssign + BO_Mul);
+  }
 
   static bool isShiftAssignOp(Opcode Opc) {
     return Opc == BO_ShlAssign || Opc == BO_ShrAssign;
@@ -4249,6 +4256,140 @@ public:
   
   // Iterators
   child_range children() { return child_range(&SrcExpr, &SrcExpr+1); }
+};
+
+/// PseudoObjectExpr - An expression which accesses a pseudo-object
+/// l-value.  A pseudo-object is an abstract object, accesses to which
+/// are translated to calls.  The pseudo-object expression has a
+/// syntactic form, which shows how the expression was actually
+/// written in the source code, and a semantic form, which is a series
+/// of expressions to be executed in order which detail how the
+/// operation is actually evaluated.  Optionally, one of the semantic
+/// forms may also provide a result value for the expression.
+///
+/// If any of the semantic-form expressions is an OpaqueValueExpr,
+/// that OVE is required to have a source expression, and it is bound
+/// to the result of that source expression.  Such OVEs may appear
+/// only in subsequent semantic-form expressions and as
+/// sub-expressions of the syntactic form.
+///
+/// PseudoObjectExpr should be used only when an operation can be
+/// usefully described in terms of fairly simple rewrite rules on
+/// objects and functions that are meant to be used by end-developers.
+/// For example, under the Itanium ABI, dynamic casts are implemented
+/// as a call to a runtime function called __dynamic_cast; using this
+/// class to describe that would be inappropriate because that call is
+/// not really part of the user-visible semantics, and instead the
+/// cast is properly reflected in the AST and IR-generation has been
+/// taught to generate the call as necessary.  In contrast, an
+/// Objective-C property access is semantically defined to be
+/// equivalent to a particular message send, and this is very much
+/// part of the user model.  The name of this class encourages this
+/// modelling design.
+class PseudoObjectExpr : public Expr {
+  // PseudoObjectExprBits.NumSubExprs - The number of sub-expressions.
+  // Always at least two, because the first sub-expression is the
+  // syntactic form.
+
+  // PseudoObjectExprBits.ResultIndex - The index of the
+  // sub-expression holding the result.  0 means the result is void,
+  // which is unambiguous because it's the index of the syntactic
+  // form.  Note that this is therefore 1 higher than the value passed
+  // in to Create, which is an index within the semantic forms.
+  // Note also that ASTStmtWriter assumes this encoding.
+
+  Expr **getSubExprsBuffer() { return reinterpret_cast<Expr**>(this + 1); }
+  const Expr * const *getSubExprsBuffer() const {
+    return reinterpret_cast<const Expr * const *>(this + 1);
+  }
+
+  friend class ASTStmtReader;
+
+  PseudoObjectExpr(QualType type, ExprValueKind VK,
+                   Expr *syntactic, ArrayRef<Expr*> semantic,
+                   unsigned resultIndex);
+
+  PseudoObjectExpr(EmptyShell shell, unsigned numSemanticExprs);
+
+  unsigned getNumSubExprs() const {
+    return PseudoObjectExprBits.NumSubExprs;
+  }
+
+public:
+  /// NoResult - A value for the result index indicating that there is
+  /// no semantic result.
+  enum { NoResult = ~0U };
+
+  static PseudoObjectExpr *Create(ASTContext &Context, Expr *syntactic,
+                                  ArrayRef<Expr*> semantic,
+                                  unsigned resultIndex);
+
+  static PseudoObjectExpr *Create(ASTContext &Context, EmptyShell shell,
+                                  unsigned numSemanticExprs);
+
+  /// Return the syntactic form of this expression, i.e. the
+  /// expression it actually looks like.  Likely to be expressed in
+  /// terms of OpaqueValueExprs bound in the semantic form.
+  Expr *getSyntacticForm() { return getSubExprsBuffer()[0]; }
+  const Expr *getSyntacticForm() const { return getSubExprsBuffer()[0]; }
+
+  /// Return the index of the result-bearing expression into the semantics
+  /// expressions, or PseudoObjectExpr::NoResult if there is none.
+  unsigned getResultExprIndex() const {
+    if (PseudoObjectExprBits.ResultIndex == 0) return NoResult;
+    return PseudoObjectExprBits.ResultIndex - 1;
+  }
+
+  /// Return the result-bearing expression, or null if there is none.
+  Expr *getResultExpr() {
+    if (PseudoObjectExprBits.ResultIndex == 0)
+      return 0;
+    return getSubExprsBuffer()[PseudoObjectExprBits.ResultIndex];
+  }
+  const Expr *getResultExpr() const {
+    return const_cast<PseudoObjectExpr*>(this)->getResultExpr();
+  }
+
+  unsigned getNumSemanticExprs() const { return getNumSubExprs() - 1; }
+
+  typedef Expr * const *semantics_iterator;
+  typedef const Expr * const *const_semantics_iterator;
+  semantics_iterator semantics_begin() {
+    return getSubExprsBuffer() + 1;
+  }
+  const_semantics_iterator semantics_begin() const {
+    return getSubExprsBuffer() + 1;
+  }
+  semantics_iterator semantics_end() {
+    return getSubExprsBuffer() + getNumSubExprs();
+  }
+  const_semantics_iterator semantics_end() const {
+    return getSubExprsBuffer() + getNumSubExprs();
+  }
+  Expr *getSemanticExpr(unsigned index) {
+    assert(index + 1 < getNumSubExprs());
+    return getSubExprsBuffer()[index + 1];
+  }
+  const Expr *getSemanticExpr(unsigned index) const {
+    return const_cast<PseudoObjectExpr*>(this)->getSemanticExpr(index);
+  }
+
+  SourceLocation getExprLoc() const {
+    return getSyntacticForm()->getExprLoc();
+  }
+  SourceRange getSourceRange() const {
+    return getSyntacticForm()->getSourceRange();
+  }
+
+  child_range children() {
+    Stmt **cs = reinterpret_cast<Stmt**>(getSubExprsBuffer());
+    return child_range(cs, cs + getNumSubExprs());
+  }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == PseudoObjectExprClass;
+  }
+  static bool classof(const PseudoObjectExpr *) { return true; }
 };
 
 /// AtomicExpr - Variadic atomic builtins: __atomic_exchange, __atomic_fetch_*,

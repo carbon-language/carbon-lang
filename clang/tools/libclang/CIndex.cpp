@@ -1714,6 +1714,8 @@ public:
   void VisitUnresolvedMemberExpr(UnresolvedMemberExpr *U);
   void VisitVAArgExpr(VAArgExpr *E);
   void VisitSizeOfPackExpr(SizeOfPackExpr *E);
+  void VisitPseudoObjectExpr(PseudoObjectExpr *E);
+  void VisitOpaqueValueExpr(OpaqueValueExpr *E);
   
 private:
   void AddDeclarationNameInfo(Stmt *S);
@@ -2021,6 +2023,17 @@ void EnqueueVisitor::VisitVAArgExpr(VAArgExpr *E) {
 }
 void EnqueueVisitor::VisitSizeOfPackExpr(SizeOfPackExpr *E) {
   WL.push_back(SizeOfPackExprParts(E, Parent));
+}
+void EnqueueVisitor::VisitOpaqueValueExpr(OpaqueValueExpr *E) {
+  // If the opaque value has a source expression, just transparently
+  // visit that.  This is useful for (e.g.) pseudo-object expressions.
+  if (Expr *SourceExpr = E->getSourceExpr())
+    return Visit(SourceExpr);
+  AddStmt(E);
+}
+void EnqueueVisitor::VisitPseudoObjectExpr(PseudoObjectExpr *E) {
+  // Treat the expression like its syntactic form.
+  Visit(E->getSyntacticForm());
 }
 
 void CursorVisitor::EnqueueWorkList(VisitorWorkList &WL, Stmt *S) {
@@ -2702,6 +2715,11 @@ static Decl *getDeclFromExpr(Stmt *E) {
     return RE->getDecl();
   if (ObjCPropertyRefExpr *PRE = dyn_cast<ObjCPropertyRefExpr>(E))
     return PRE->isExplicitProperty() ? PRE->getExplicitProperty() : 0;
+  if (PseudoObjectExpr *POE = dyn_cast<PseudoObjectExpr>(E))
+    return getDeclFromExpr(POE->getSyntacticForm());
+  if (OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(E))
+    if (Expr *Src = OVE->getSourceExpr())
+      return getDeclFromExpr(Src);
       
   if (CallExpr *CE = dyn_cast<CallExpr>(E))
     return getDeclFromExpr(CE->getCallee());

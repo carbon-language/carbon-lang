@@ -3450,6 +3450,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::AsTypeExprClass:
   case Expr::ObjCIndirectCopyRestoreExprClass:
   case Expr::MaterializeTemporaryExprClass:
+  case Expr::PseudoObjectExprClass:
   case Expr::AtomicExprClass:
     return ICEDiag(2, E->getLocStart());
 

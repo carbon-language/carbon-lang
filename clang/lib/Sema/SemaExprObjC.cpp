@@ -467,14 +467,13 @@ bool Sema::CheckMessageArgumentTypes(QualType ReceiverType,
 
 bool Sema::isSelfExpr(Expr *receiver) {
   // 'self' is objc 'self' in an objc method only.
-  DeclContext *DC = CurContext;
-  while (isa<BlockDecl>(DC))
-    DC = DC->getParent();
-  if (DC && !isa<ObjCMethodDecl>(DC))
-    return false;
+  ObjCMethodDecl *method =
+    dyn_cast<ObjCMethodDecl>(CurContext->getNonClosureAncestor());
+  if (!method) return false;
+
   receiver = receiver->IgnoreParenLValueCasts();
   if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(receiver))
-    if (DRE->getDecl()->getIdentifier() == &Context.Idents.get("self"))
+    if (DRE->getDecl() == method->getSelfDecl())
       return true;
   return false;
 }
@@ -1723,6 +1722,12 @@ namespace {
       ACCResult left = Visit(e->getTrueExpr());
       if (left == ACC_invalid) return ACC_invalid;
       return merge(left, Visit(e->getFalseExpr()));
+    }
+
+    /// Look through pseudo-objects.
+    ACCResult VisitPseudoObjectExpr(PseudoObjectExpr *e) {
+      // If we're getting here, we should always have a result.
+      return Visit(e->getResultExpr());
     }
 
     /// Statement expressions are okay if their result expression is okay.

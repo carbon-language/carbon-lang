@@ -1000,6 +1000,8 @@ namespace clang {
       EXPR_BLOCK_DECL_REF,
       /// \brief A GenericSelectionExpr record.
       EXPR_GENERIC_SELECTION,
+      /// \brief A PseudoObjectExpr record.
+      EXPR_PSEUDO_OBJECT,
       /// \brief An AtomicExpr record.
       EXPR_ATOMIC,
 

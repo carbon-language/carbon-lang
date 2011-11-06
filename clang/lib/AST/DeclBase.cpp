@@ -640,7 +640,11 @@ void Decl::CheckAccessDeclContext() const {
 }
 
 DeclContext *Decl::getNonClosureContext() {
-  DeclContext *DC = getDeclContext();
+  return getDeclContext()->getNonClosureAncestor();
+}
+
+DeclContext *DeclContext::getNonClosureAncestor() {
+  DeclContext *DC = this;
 
   // This is basically "while (DC->isClosure()) DC = DC->getParent();"
   // except that it's significantly more efficient to cast to a known

@@ -1874,6 +1874,23 @@ TraverseGenericSelectionExpr(GenericSelectionExpr *S) {
   return true;
 }
 
+// PseudoObjectExpr is a special case because of the wierdness with
+// syntactic expressions and opaque values.
+template<typename Derived>
+bool RecursiveASTVisitor<Derived>::
+TraversePseudoObjectExpr(PseudoObjectExpr *S) {
+  TRY_TO(WalkUpFromPseudoObjectExpr(S));
+  TRY_TO(TraverseStmt(S->getSyntacticForm()));
+  for (PseudoObjectExpr::semantics_iterator
+         i = S->semantics_begin(), e = S->semantics_end(); i != e; ++i) {
+    Expr *sub = *i;
+    if (OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(sub))
+      sub = OVE->getSourceExpr();
+    TRY_TO(TraverseStmt(sub));
+  }
+  return true;
+}
+
 DEF_TRAVERSE_STMT(CXXScalarValueInitExpr, {
     // This is called for code like 'return T()' where T is a built-in
     // (i.e. non-class) type.

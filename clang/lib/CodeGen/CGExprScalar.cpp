@@ -197,6 +197,10 @@ public:
     return llvm::ConstantInt::get(ConvertType(E->getType()),E->getPackLength());
   }
 
+  Value *VisitPseudoObjectExpr(PseudoObjectExpr *E) {
+    return CGF.EmitPseudoObjectRValue(E).getScalarVal();
+  }
+
   Value *VisitOpaqueValueExpr(OpaqueValueExpr *E) {
     if (E->isGLValue())
       return EmitLoadOfLValue(CGF.getOpaqueLValueMapping(E));

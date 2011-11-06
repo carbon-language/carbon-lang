@@ -950,18 +950,84 @@ public:
 
   public:
     PeepholeProtection() : Inst(0) {}
-  };  
+  };
 
-  /// An RAII object to set (and then clear) a mapping for an OpaqueValueExpr.
-  class OpaqueValueMapping {
-    CodeGenFunction &CGF;
+  /// A non-RAII class containing all the information about a bound
+  /// opaque value.  OpaqueValueMapping, below, is a RAII wrapper for
+  /// this which makes individual mappings very simple; using this
+  /// class directly is useful when you have a variable number of
+  /// opaque values or don't want the RAII functionality for some
+  /// reason.
+  class OpaqueValueMappingData {
     const OpaqueValueExpr *OpaqueValue;
     bool BoundLValue;
     CodeGenFunction::PeepholeProtection Protection;
 
+    OpaqueValueMappingData(const OpaqueValueExpr *ov,
+                           bool boundLValue)
+      : OpaqueValue(ov), BoundLValue(boundLValue) {}
   public:
+    OpaqueValueMappingData() : OpaqueValue(0) {}
+
     static bool shouldBindAsLValue(const Expr *expr) {
       return expr->isGLValue() || expr->getType()->isRecordType();
+    }
+
+    static OpaqueValueMappingData bind(CodeGenFunction &CGF,
+                                       const OpaqueValueExpr *ov,
+                                       const Expr *e) {
+      if (shouldBindAsLValue(ov))
+        return bind(CGF, ov, CGF.EmitLValue(e));
+      return bind(CGF, ov, CGF.EmitAnyExpr(e));
+    }
+
+    static OpaqueValueMappingData bind(CodeGenFunction &CGF,
+                                       const OpaqueValueExpr *ov,
+                                       const LValue &lv) {
+      assert(shouldBindAsLValue(ov));
+      CGF.OpaqueLValues.insert(std::make_pair(ov, lv));
+      return OpaqueValueMappingData(ov, true);
+    }
+
+    static OpaqueValueMappingData bind(CodeGenFunction &CGF,
+                                       const OpaqueValueExpr *ov,
+                                       const RValue &rv) {
+      assert(!shouldBindAsLValue(ov));
+      CGF.OpaqueRValues.insert(std::make_pair(ov, rv));
+
+      OpaqueValueMappingData data(ov, false);
+
+      // Work around an extremely aggressive peephole optimization in
+      // EmitScalarConversion which assumes that all other uses of a
+      // value are extant.
+      data.Protection = CGF.protectFromPeepholes(rv);
+
+      return data;
+    }
+
+    bool isValid() const { return OpaqueValue != 0; }
+    void clear() { OpaqueValue = 0; }
+
+    void unbind(CodeGenFunction &CGF) {
+      assert(OpaqueValue && "no data to unbind!");
+
+      if (BoundLValue) {
+        CGF.OpaqueLValues.erase(OpaqueValue);
+      } else {
+        CGF.OpaqueRValues.erase(OpaqueValue);
+        CGF.unprotectFromPeepholes(Protection);
+      }
+    }
+  };
+
+  /// An RAII object to set (and then clear) a mapping for an OpaqueValueExpr.
+  class OpaqueValueMapping {
+    CodeGenFunction &CGF;
+    OpaqueValueMappingData Data;
+
+  public:
+    static bool shouldBindAsLValue(const Expr *expr) {
+      return OpaqueValueMappingData::shouldBindAsLValue(expr);
     }
 
     /// Build the opaque value mapping for the given conditional
@@ -971,75 +1037,34 @@ public:
     ///
     OpaqueValueMapping(CodeGenFunction &CGF,
                        const AbstractConditionalOperator *op) : CGF(CGF) {
-      if (isa<ConditionalOperator>(op)) {
-        OpaqueValue = 0;
-        BoundLValue = false;
+      if (isa<ConditionalOperator>(op))
+        // Leave Data empty.
         return;
-      }
 
       const BinaryConditionalOperator *e = cast<BinaryConditionalOperator>(op);
-      init(e->getOpaqueValue(), e->getCommon());
+      Data = OpaqueValueMappingData::bind(CGF, e->getOpaqueValue(),
+                                          e->getCommon());
     }
 
     OpaqueValueMapping(CodeGenFunction &CGF,
                        const OpaqueValueExpr *opaqueValue,
                        LValue lvalue)
-      : CGF(CGF), OpaqueValue(opaqueValue), BoundLValue(true) {
-      assert(opaqueValue && "no opaque value expression!");
-      assert(shouldBindAsLValue(opaqueValue));
-      initLValue(lvalue);
+      : CGF(CGF), Data(OpaqueValueMappingData::bind(CGF, opaqueValue, lvalue)) {
     }
 
     OpaqueValueMapping(CodeGenFunction &CGF,
                        const OpaqueValueExpr *opaqueValue,
                        RValue rvalue)
-      : CGF(CGF), OpaqueValue(opaqueValue), BoundLValue(false) {
-      assert(opaqueValue && "no opaque value expression!");
-      assert(!shouldBindAsLValue(opaqueValue));
-      initRValue(rvalue);
+      : CGF(CGF), Data(OpaqueValueMappingData::bind(CGF, opaqueValue, rvalue)) {
     }
 
     void pop() {
-      assert(OpaqueValue && "mapping already popped!");
-      popImpl();
-      OpaqueValue = 0;
+      Data.unbind(CGF);
+      Data.clear();
     }
 
     ~OpaqueValueMapping() {
-      if (OpaqueValue) popImpl();
-    }
-
-  private:
-    void popImpl() {
-      if (BoundLValue)
-        CGF.OpaqueLValues.erase(OpaqueValue);
-      else {
-        CGF.OpaqueRValues.erase(OpaqueValue);
-        CGF.unprotectFromPeepholes(Protection);
-      }
-    }
-
-    void init(const OpaqueValueExpr *ov, const Expr *e) {
-      OpaqueValue = ov;
-      BoundLValue = shouldBindAsLValue(ov);
-      assert(BoundLValue == shouldBindAsLValue(e)
-             && "inconsistent expression value kinds!");
-      if (BoundLValue)
-        initLValue(CGF.EmitLValue(e));
-      else
-        initRValue(CGF.EmitAnyExpr(e));
-    }
-
-    void initLValue(const LValue &lv) {
-      CGF.OpaqueLValues.insert(std::make_pair(OpaqueValue, lv));
-    }
-
-    void initRValue(const RValue &rv) {
-      // Work around an extremely aggressive peephole optimization in
-      // EmitScalarConversion which assumes that all other uses of a
-      // value are extant.
-      Protection = CGF.protectFromPeepholes(rv);
-      CGF.OpaqueRValues.insert(std::make_pair(OpaqueValue, rv));
+      if (Data.isValid()) Data.unbind(CGF);
     }
   };
   
@@ -2014,6 +2039,10 @@ public:
   LValue EmitNullInitializationLValue(const CXXScalarValueInitExpr *E);
   LValue EmitMaterializeTemporaryExpr(const MaterializeTemporaryExpr *E);
   LValue EmitOpaqueValueLValue(const OpaqueValueExpr *e);
+
+  RValue EmitPseudoObjectRValue(const PseudoObjectExpr *e,
+                                AggValueSlot slot = AggValueSlot::ignored());
+  LValue EmitPseudoObjectLValue(const PseudoObjectExpr *e);
 
   llvm::Value *EmitIvarOffset(const ObjCInterfaceDecl *Interface,
                               const ObjCIvarDecl *Ivar);

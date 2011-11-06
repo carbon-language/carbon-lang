@@ -2231,6 +2231,59 @@ static bool shouldEmitSeparateBlockRetain(const Expr *e) {
   return true;
 }
 
+/// Try to emit a PseudoObjectExpr at +1.
+///
+/// This massively duplicates emitPseudoObjectRValue.
+static TryEmitResult tryEmitARCRetainPseudoObject(CodeGenFunction &CGF,
+                                                  const PseudoObjectExpr *E) {
+  llvm::SmallVector<CodeGenFunction::OpaqueValueMappingData, 4> opaques;
+
+  // Find the result expression.
+  const Expr *resultExpr = E->getResultExpr();
+  assert(resultExpr);
+  TryEmitResult result;
+
+  for (PseudoObjectExpr::const_semantics_iterator
+         i = E->semantics_begin(), e = E->semantics_end(); i != e; ++i) {
+    const Expr *semantic = *i;
+
+    // If this semantic expression is an opaque value, bind it
+    // to the result of its source expression.
+    if (const OpaqueValueExpr *ov = dyn_cast<OpaqueValueExpr>(semantic)) {
+      typedef CodeGenFunction::OpaqueValueMappingData OVMA;
+      OVMA opaqueData;
+
+      // If this semantic is the result of the pseudo-object
+      // expression, try to evaluate the source as +1.
+      if (ov == resultExpr) {
+        assert(!OVMA::shouldBindAsLValue(ov));
+        result = tryEmitARCRetainScalarExpr(CGF, ov->getSourceExpr());
+        opaqueData = OVMA::bind(CGF, ov, RValue::get(result.getPointer()));
+
+      // Otherwise, just bind it.
+      } else {
+        opaqueData = OVMA::bind(CGF, ov, ov->getSourceExpr());
+      }
+      opaques.push_back(opaqueData);
+
+    // Otherwise, if the expression is the result, evaluate it
+    // and remember the result.
+    } else if (semantic == resultExpr) {
+      result = tryEmitARCRetainScalarExpr(CGF, semantic);
+
+    // Otherwise, evaluate the expression in an ignored context.
+    } else {
+      CGF.EmitIgnoredExpr(semantic);
+    }
+  }
+
+  // Unbind all the opaques now.
+  for (unsigned i = 0, e = opaques.size(); i != e; ++i)
+    opaques[i].unbind(CGF);
+
+  return result;
+}
+
 static TryEmitResult
 tryEmitARCRetainScalarExpr(CodeGenFunction &CGF, const Expr *e) {
   // Look through cleanups.
@@ -2356,6 +2409,17 @@ tryEmitARCRetainScalarExpr(CodeGenFunction &CGF, const Expr *e) {
       llvm::Value *result = emitARCRetainCall(CGF, e);
       if (resultType) result = CGF.Builder.CreateBitCast(result, resultType);
       return TryEmitResult(result, true);
+
+    // Look through pseudo-object expressions.
+    } else if (const PseudoObjectExpr *pseudo = dyn_cast<PseudoObjectExpr>(e)) {
+      TryEmitResult result
+        = tryEmitARCRetainPseudoObject(CGF, pseudo);
+      if (resultType) {
+        llvm::Value *value = result.getPointer();
+        value = CGF.Builder.CreateBitCast(value, resultType);
+        result.setPointer(value);
+      }
+      return result;
     }
 
     // Conservatively halt the search at any other expression kind.

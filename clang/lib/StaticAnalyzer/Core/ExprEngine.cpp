@@ -857,6 +857,21 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
       Bldr.addNodes(Dst);
       break;
     }
+
+    case Stmt::PseudoObjectExprClass: {
+      Bldr.takeNodes(Pred);
+      const ProgramState *state = Pred->getState();
+      const PseudoObjectExpr *PE = cast<PseudoObjectExpr>(S);
+      if (const Expr *Result = PE->getResultExpr()) { 
+        SVal V = state->getSVal(Result);
+        Bldr.generateNode(S, Pred, state->BindExpr(S, V));
+      }
+      else
+        Bldr.generateNode(S, Pred, state->BindExpr(S, UnknownVal()));
+
+      Bldr.addNodes(Dst);
+      break;
+    }
   }
 }
 

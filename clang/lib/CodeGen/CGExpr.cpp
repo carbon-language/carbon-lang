@@ -672,6 +672,8 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
     return EmitStringLiteralLValue(cast<StringLiteral>(E));
   case Expr::ObjCEncodeExprClass:
     return EmitObjCEncodeExprLValue(cast<ObjCEncodeExpr>(E));
+  case Expr::PseudoObjectExprClass:
+    return EmitPseudoObjectLValue(cast<PseudoObjectExpr>(E));
 
   case Expr::BlockDeclRefExprClass:
     return EmitBlockDeclRefLValue(cast<BlockDeclRefExpr>(E));
@@ -2767,4 +2769,87 @@ void CodeGenFunction::SetFPAccuracy(llvm::Value *Val, unsigned AccuracyN,
 
   cast<llvm::Instruction>(Val)->setMetadata(llvm::LLVMContext::MD_fpaccuracy,
                                             Node);
+}
+
+namespace {
+  struct LValueOrRValue {
+    LValue LV;
+    RValue RV;
+  };
+}
+
+static LValueOrRValue emitPseudoObjectExpr(CodeGenFunction &CGF,
+                                           const PseudoObjectExpr *E,
+                                           bool forLValue,
+                                           AggValueSlot slot) {
+  llvm::SmallVector<CodeGenFunction::OpaqueValueMappingData, 4> opaques;
+
+  // Find the result expression, if any.
+  const Expr *resultExpr = E->getResultExpr();
+  LValueOrRValue result;
+
+  for (PseudoObjectExpr::const_semantics_iterator
+         i = E->semantics_begin(), e = E->semantics_end(); i != e; ++i) {
+    const Expr *semantic = *i;
+
+    // If this semantic expression is an opaque value, bind it
+    // to the result of its source expression.
+    if (const OpaqueValueExpr *ov = dyn_cast<OpaqueValueExpr>(semantic)) {
+
+      // If this is the result expression, we may need to evaluate
+      // directly into the slot.
+      typedef CodeGenFunction::OpaqueValueMappingData OVMA;
+      OVMA opaqueData;
+      if (ov == resultExpr && ov->isRValue() && !forLValue &&
+          CodeGenFunction::hasAggregateLLVMType(ov->getType()) &&
+          !ov->getType()->isAnyComplexType()) {
+        CGF.EmitAggExpr(ov->getSourceExpr(), slot);
+
+        LValue LV = CGF.MakeAddrLValue(slot.getAddr(), ov->getType());
+        opaqueData = OVMA::bind(CGF, ov, LV);
+        result.RV = slot.asRValue();
+
+      // Otherwise, emit as normal.
+      } else {
+        opaqueData = OVMA::bind(CGF, ov, ov->getSourceExpr());
+
+        // If this is the result, also evaluate the result now.
+        if (ov == resultExpr) {
+          if (forLValue)
+            result.LV = CGF.EmitLValue(ov);
+          else
+            result.RV = CGF.EmitAnyExpr(ov, slot);
+        }
+      }
+
+      opaques.push_back(opaqueData);
+
+    // Otherwise, if the expression is the result, evaluate it
+    // and remember the result.
+    } else if (semantic == resultExpr) {
+      if (forLValue)
+        result.LV = CGF.EmitLValue(semantic);
+      else
+        result.RV = CGF.EmitAnyExpr(semantic, slot);
+
+    // Otherwise, evaluate the expression in an ignored context.
+    } else {
+      CGF.EmitIgnoredExpr(semantic);
+    }
+  }
+
+  // Unbind all the opaques now.
+  for (unsigned i = 0, e = opaques.size(); i != e; ++i)
+    opaques[i].unbind(CGF);
+
+  return result;
+}
+
+RValue CodeGenFunction::EmitPseudoObjectRValue(const PseudoObjectExpr *E,
+                                               AggValueSlot slot) {
+  return emitPseudoObjectExpr(*this, E, false, slot).RV;
+}
+
+LValue CodeGenFunction::EmitPseudoObjectLValue(const PseudoObjectExpr *E) {
+  return emitPseudoObjectExpr(*this, E, true, AggValueSlot::ignored()).LV;
 }

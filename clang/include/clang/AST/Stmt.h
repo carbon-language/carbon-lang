@@ -146,6 +146,7 @@ protected:
     friend class CXXUnresolvedConstructExpr; // ctor
     friend class CXXDependentScopeMemberExpr; // ctor
     friend class OverloadExpr; // ctor
+    friend class PseudoObjectExpr; // ctor
     friend class AtomicExpr; // ctor
     unsigned : NumStmtBits;
 
@@ -184,6 +185,18 @@ protected:
     unsigned NumPreArgs : 1;
   };
 
+  class PseudoObjectExprBitfields {
+    friend class PseudoObjectExpr;
+    friend class ASTStmtReader; // deserialization
+
+    unsigned : NumExprBits;
+
+    // These don't need to be particularly wide, because they're
+    // strictly limited by the forms of expressions we permit.
+    unsigned NumSubExprs : 8;
+    unsigned ResultIndex : 32 - 8 - NumExprBits;
+  };
+
   class ObjCIndirectCopyRestoreExprBitfields {
     friend class ObjCIndirectCopyRestoreExpr;
     unsigned : NumExprBits;
@@ -201,6 +214,7 @@ protected:
     DeclRefExprBitfields DeclRefExprBits;
     CastExprBitfields CastExprBits;
     CallExprBitfields CallExprBits;
+    PseudoObjectExprBitfields PseudoObjectExprBits;
     ObjCIndirectCopyRestoreExprBitfields ObjCIndirectCopyRestoreExprBits;
   };
 

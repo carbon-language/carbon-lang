@@ -736,6 +736,25 @@ void ASTStmtWriter::VisitGenericSelectionExpr(GenericSelectionExpr *E) {
   Code = serialization::EXPR_GENERIC_SELECTION;
 }
 
+void ASTStmtWriter::VisitPseudoObjectExpr(PseudoObjectExpr *E) {
+  VisitExpr(E);
+  Record.push_back(E->getNumSemanticExprs());
+
+  // Push the result index.  Currently, this needs to exactly match
+  // the encoding used internally for ResultIndex.
+  unsigned result = E->getResultExprIndex();
+  result = (result == PseudoObjectExpr::NoResult ? 0 : result + 1);
+  Record.push_back(result);
+
+  Writer.AddStmt(E->getSyntacticForm());
+  for (PseudoObjectExpr::semantics_iterator
+         i = E->semantics_begin(), e = E->semantics_end(); i != e; ++i) {
+    Writer.AddStmt(*i);
+    if (OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(*i))
+      Writer.AddStmt(OVE->getSourceExpr());
+  }
+}
+
 void ASTStmtWriter::VisitAtomicExpr(AtomicExpr *E) {
   VisitExpr(E);
   Record.push_back(E->getOp());

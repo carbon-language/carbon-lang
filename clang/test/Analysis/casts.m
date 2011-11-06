@@ -33,9 +33,10 @@ typedef enum {
   RDR10087620Enum   elem;
 }
 @property (readwrite, nonatomic) RDR10087620Enum elem;
+@end
+
 static void
 adium_media_ready_cb(RDR10087620 *InObj)
 {
   InObj.elem |= EEOne;
 }
-@end

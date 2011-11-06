@@ -344,6 +344,7 @@ private:
   CFGBlock *VisitObjCAtTryStmt(ObjCAtTryStmt *S);
   CFGBlock *VisitObjCForCollectionStmt(ObjCForCollectionStmt *S);
   CFGBlock *VisitReturnStmt(ReturnStmt *R);
+  CFGBlock *VisitPseudoObjectExpr(PseudoObjectExpr *E);
   CFGBlock *VisitUnaryExprOrTypeTraitExpr(UnaryExprOrTypeTraitExpr *E,
                                           AddStmtChoice asc);
   CFGBlock *VisitStmtExpr(StmtExpr *S, AddStmtChoice asc);
@@ -980,6 +981,9 @@ CFGBlock *CFGBuilder::Visit(Stmt * S, AddStmtChoice asc) {
 
     case Stmt::OpaqueValueExprClass:
       return Block;
+
+    case Stmt::PseudoObjectExprClass:
+      return VisitPseudoObjectExpr(cast<PseudoObjectExpr>(S));
 
     case Stmt::ReturnStmtClass:
       return VisitReturnStmt(cast<ReturnStmt>(S));
@@ -1905,6 +1909,31 @@ CFGBlock *CFGBuilder::VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt *S) {
 CFGBlock *CFGBuilder::VisitObjCAtTryStmt(ObjCAtTryStmt *S) {
   // FIXME
   return NYS();
+}
+
+CFGBlock *CFGBuilder::VisitPseudoObjectExpr(PseudoObjectExpr *E) {
+  autoCreateBlock();
+
+  // Add the PseudoObject as the last thing.
+  appendStmt(Block, E);
+
+  CFGBlock *lastBlock = Block;  
+
+  // Before that, evaluate all of the semantics in order.  In
+  // CFG-land, that means appending them in reverse order.
+  for (unsigned i = E->getNumSemanticExprs(); i != 0; ) {
+    Expr *Semantic = E->getSemanticExpr(--i);
+
+    // If the semantic is an opaque value, we're being asked to bind
+    // it to its source expression.
+    if (OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(Semantic))
+      Semantic = OVE->getSourceExpr();
+
+    if (CFGBlock *B = Visit(Semantic))
+      lastBlock = B;
+  }
+
+  return lastBlock;
 }
 
 CFGBlock *CFGBuilder::VisitWhileStmt(WhileStmt *W) {

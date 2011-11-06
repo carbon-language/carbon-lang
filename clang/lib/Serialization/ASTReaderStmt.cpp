@@ -775,6 +775,24 @@ void ASTStmtReader::VisitGenericSelectionExpr(GenericSelectionExpr *E) {
   E->RParenLoc = ReadSourceLocation(Record, Idx);
 }
 
+void ASTStmtReader::VisitPseudoObjectExpr(PseudoObjectExpr *E) {
+  VisitExpr(E);
+  unsigned numSemanticExprs = Record[Idx++];
+  assert(numSemanticExprs + 1 == E->PseudoObjectExprBits.NumSubExprs);
+  E->PseudoObjectExprBits.ResultIndex = Record[Idx++];
+
+  // Read the syntactic expression.
+  E->getSubExprsBuffer()[0] = Reader.ReadSubExpr();
+
+  // Read all the semantic expressions.
+  for (unsigned i = 0; i != numSemanticExprs; ++i) {
+    Expr *subExpr = Reader.ReadSubExpr();
+    if (isa<OpaqueValueExpr>(subExpr))
+      cast<OpaqueValueExpr>(subExpr)->setSourceExpr(Reader.ReadSubExpr());
+    E->getSubExprsBuffer()[i+1] = subExpr;
+  }
+}
+
 void ASTStmtReader::VisitAtomicExpr(AtomicExpr *E) {
   VisitExpr(E);
   E->setOp(AtomicExpr::AtomicOp(Record[Idx++]));
@@ -2058,6 +2076,12 @@ Stmt *ASTReader::ReadStmtFromStream(Module &F) {
     case EXPR_ASTYPE:
       S = new (Context) AsTypeExpr(Empty);
       break;
+
+    case EXPR_PSEUDO_OBJECT: {
+      unsigned numSemanticExprs = Record[ASTStmtReader::NumExprFields];
+      S = PseudoObjectExpr::Create(Context, Empty, numSemanticExprs);
+      break;
+    }
 
     case EXPR_ATOMIC:
       S = new (Context) AtomicExpr(Empty);

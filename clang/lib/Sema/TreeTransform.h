@@ -6103,6 +6103,22 @@ TreeTransform<Derived>::TransformOpaqueValueExpr(OpaqueValueExpr *E) {
 
 template<typename Derived>
 ExprResult
+TreeTransform<Derived>::TransformPseudoObjectExpr(PseudoObjectExpr *E) {
+  // Rebuild the syntactic form.
+  ExprResult result = getDerived().TransformExpr(E->getSyntacticForm());
+  if (result.isInvalid()) return ExprError();
+
+  // If that gives us a pseudo-object result back, the pseudo-object
+  // expression must have been an lvalue-to-rvalue conversion which we
+  // should reapply.
+  if (result.get()->hasPlaceholderType(BuiltinType::PseudoObject))
+    result = SemaRef.checkPseudoObjectRValue(result.take());
+
+  return result;
+}
+
+template<typename Derived>
+ExprResult
 TreeTransform<Derived>::TransformUnaryExprOrTypeTraitExpr(
                                                 UnaryExprOrTypeTraitExpr *E) {
   if (E->isArgumentType()) {

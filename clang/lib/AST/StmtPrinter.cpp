@@ -1027,6 +1027,10 @@ void StmtPrinter::VisitVAArgExpr(VAArgExpr *Node) {
   OS << ")";
 }
 
+void StmtPrinter::VisitPseudoObjectExpr(PseudoObjectExpr *Node) {
+  PrintExpr(Node->getSyntacticForm());
+}
+
 void StmtPrinter::VisitAtomicExpr(AtomicExpr *Node) {
   const char *Name = 0;
   switch (Node->getOp()) {

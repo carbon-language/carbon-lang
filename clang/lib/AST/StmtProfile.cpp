@@ -475,6 +475,15 @@ void StmtProfiler::VisitGenericSelectionExpr(const GenericSelectionExpr *S) {
   }
 }
 
+void StmtProfiler::VisitPseudoObjectExpr(const PseudoObjectExpr *S) {
+  VisitExpr(S);
+  for (PseudoObjectExpr::const_semantics_iterator
+         i = S->semantics_begin(), e = S->semantics_end(); i != e; ++i)
+    // Normally, we would not profile the source expressions of OVEs.
+    if (const OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(*i))
+      Visit(OVE->getSourceExpr());
+}
+
 void StmtProfiler::VisitAtomicExpr(const AtomicExpr *S) {
   VisitExpr(S);
   ID.AddInteger(S->getOp());

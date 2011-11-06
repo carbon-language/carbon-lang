@@ -236,7 +236,15 @@ private:
       }
     }
 
-    if (ImplicitCastExpr *implCE = dyn_cast<ImplicitCastExpr>(E->getSubExpr())){
+    Expr *subExpr = E->getSubExpr();
+
+    // Look through pseudo-object expressions.
+    if (PseudoObjectExpr *pseudo = dyn_cast<PseudoObjectExpr>(subExpr)) {
+      subExpr = pseudo->getResultExpr();
+      assert(subExpr && "no result for pseudo-object of non-void type?");
+    }
+
+    if (ImplicitCastExpr *implCE = dyn_cast<ImplicitCastExpr>(subExpr)) {
       if (implCE->getCastKind() == CK_ARCConsumeObject)
         return rewriteToBridgedCast(E, OBC_BridgeRetained);
       if (implCE->getCastKind() == CK_ARCReclaimReturnedObject)
