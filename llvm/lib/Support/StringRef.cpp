@@ -25,6 +25,12 @@ static char ascii_tolower(char x) {
   return x;
 }
 
+static char ascii_toupper(char x) {
+  if (x >= 'a' && x <= 'z')
+    return x - 'a' + 'A';
+  return x;
+}
+
 static bool ascii_isdigit(char x) {
   return x >= '0' && x <= '9';
 }
@@ -128,6 +134,26 @@ unsigned StringRef::edit_distance(llvm::StringRef Other,
   }
 
   unsigned Result = previous[n];
+  return Result;
+}
+
+//===----------------------------------------------------------------------===//
+// String Operations
+//===----------------------------------------------------------------------===//
+
+std::string StringRef::lower() const {
+  std::string Result(size(), char());
+  for (size_type i = 0, e = size(); i != e; ++i) {
+    Result[i] = ascii_tolower(Data[i]);
+  }
+  return Result;
+}
+
+std::string StringRef::upper() const {
+  std::string Result(size(), char());
+  for (size_type i = 0, e = size(); i != e; ++i) {
+    Result[i] = ascii_tolower(Data[i]);
+  }
   return Result;
 }
 

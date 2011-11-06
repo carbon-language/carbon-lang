@@ -327,6 +327,16 @@ namespace llvm {
     bool getAsInteger(unsigned Radix, APInt &Result) const;
 
     /// @}
+    /// @name String Operations
+    /// @{
+
+    // lower - Convert the given ASCII string to lowercase.
+    std::string lower() const;
+
+    /// upper - Convert the given ASCII string to uppercase.
+    std::string upper() const;
+
+    /// @}
     /// @name Substring Operations
     /// @{
 
