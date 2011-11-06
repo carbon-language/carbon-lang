@@ -451,6 +451,20 @@ class AVXAIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
       : Ii8<o, F, outs, ins, asm, pattern, SSEPackedInt>, TA, OpSize,
         Requires<[HasAVX]>;
 
+// AVX2 Instruction Templates:
+//   Instructions introduced in AVX2 (no SSE equivalent forms)
+//
+//   AVX28I - AVX2 instructions with T8 and OpSize prefix.
+//   AVX2AIi8 - AVX2 instructions with TA, OpSize prefix and ImmT = Imm8.
+class AVX28I<bits<8> o, Format F, dag outs, dag ins, string asm,
+            list<dag> pattern>
+      : I<o, F, outs, ins, asm, pattern, SSEPackedInt>, T8, OpSize,
+        Requires<[HasAVX2]>;
+class AVX2Ii8<bits<8> o, Format F, dag outs, dag ins, string asm,
+              list<dag> pattern>
+      : Ii8<o, F, outs, ins, asm, pattern, SSEPackedInt>, TA, OpSize,
+        Requires<[HasAVX2]>;
+
 // AES Instruction Templates:
 //
 // AES8I

@@ -1668,22 +1668,52 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_avx2_pblendw : GCCBuiltin<"__builtin_ia32_pblendw256">,
               Intrinsic<[llvm_v16i16_ty], [llvm_v16i16_ty, llvm_v16i16_ty,
                          llvm_i32_ty], [IntrNoMem]>;
+  def int_x86_avx2_pblendd_128 : GCCBuiltin<"__builtin_ia32_pblendd128">,
+              Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty, llvm_v4i32_ty,
+                         llvm_i32_ty], [IntrNoMem]>;
+  def int_x86_avx2_pblendd_256 : GCCBuiltin<"__builtin_ia32_pblendd256">,
+              Intrinsic<[llvm_v8i32_ty], [llvm_v8i32_ty, llvm_v8i32_ty,
+                         llvm_i32_ty], [IntrNoMem]>;
 }
 
 // Vector load with broadcast
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_avx2_vbroadcast_ss_ps :
-        GCCBuiltin<"__builtin_ia32_vbroadcastss_ps">,
-        Intrinsic<[llvm_v4f32_ty], [llvm_v4f32_ty], [IntrReadMem]>;
+              GCCBuiltin<"__builtin_ia32_vbroadcastss_ps">,
+              Intrinsic<[llvm_v4f32_ty], [llvm_v4f32_ty], [IntrNoMem]>;
   def int_x86_avx2_vbroadcast_sd_pd_256 :
-        GCCBuiltin<"__builtin_ia32_vbroadcastsd_pd256">,
-        Intrinsic<[llvm_v4f64_ty], [llvm_v2f64_ty], [IntrReadMem]>;
+              GCCBuiltin<"__builtin_ia32_vbroadcastsd_pd256">,
+              Intrinsic<[llvm_v4f64_ty], [llvm_v2f64_ty], [IntrNoMem]>;
   def int_x86_avx2_vbroadcast_ss_ps_256 :
-        GCCBuiltin<"__builtin_ia32_vbroadcastss_ps256">,
-        Intrinsic<[llvm_v8f32_ty], [llvm_v4f32_ty], [IntrReadMem]>;
+              GCCBuiltin<"__builtin_ia32_vbroadcastss_ps256">,
+              Intrinsic<[llvm_v8f32_ty], [llvm_v4f32_ty], [IntrNoMem]>;
   def int_x86_avx2_vbroadcasti128 :
-        GCCBuiltin<"__builtin_ia32_vbroadcastsi256">,
-        Intrinsic<[llvm_v4i64_ty], [llvm_ptr_ty], [IntrReadMem]>;
+              GCCBuiltin<"__builtin_ia32_vbroadcastsi256">,
+              Intrinsic<[llvm_v4i64_ty], [llvm_ptr_ty], [IntrReadMem]>;
+  def int_x86_avx2_pbroadcastb_128 :
+              GCCBuiltin<"__builtin_ia32_pbroadcastb128">,
+              Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty], [IntrNoMem]>;
+  def int_x86_avx2_pbroadcastb_256 :
+              GCCBuiltin<"__builtin_ia32_pbroadcastb256">,
+              Intrinsic<[llvm_v32i8_ty], [llvm_v16i8_ty], [IntrNoMem]>;
+  def int_x86_avx2_pbroadcastw_128 :
+              GCCBuiltin<"__builtin_ia32_pbroadcastw128">,
+              Intrinsic<[llvm_v8i16_ty], [llvm_v8i16_ty], [IntrNoMem]>;
+  def int_x86_avx2_pbroadcastw_256 :
+              GCCBuiltin<"__builtin_ia32_pbroadcastw256">,
+              Intrinsic<[llvm_v16i16_ty], [llvm_v8i16_ty], [IntrNoMem]>;
+  def int_x86_avx2_pbroadcastd_128 :
+              GCCBuiltin<"__builtin_ia32_pbroadcastd128">,
+              Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty], [IntrNoMem]>;
+  def int_x86_avx2_pbroadcastd_256 :
+              GCCBuiltin<"__builtin_ia32_pbroadcastd256">,
+              Intrinsic<[llvm_v8i32_ty], [llvm_v4i32_ty], [IntrNoMem]>;
+  def int_x86_avx2_pbroadcastq_128 :
+              GCCBuiltin<"__builtin_ia32_pbroadcastq128">,
+              Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty], [IntrNoMem]>;
+  def int_x86_avx2_pbroadcastq_256 :
+              GCCBuiltin<"__builtin_ia32_pbroadcastq256">,
+              Intrinsic<[llvm_v4i64_ty], [llvm_v2i64_ty], [IntrNoMem]>;
 }
 
 // Misc.

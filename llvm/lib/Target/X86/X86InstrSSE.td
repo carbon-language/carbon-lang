@@ -7083,11 +7083,12 @@ class avx_broadcast<bits<8> opc, string OpcodeStr, RegisterClass RC,
         !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
         [(set RC:$dst, (Int addr:$src))]>, VEX;
 
-class avx_broadcast_reg<bits<8> opc, string OpcodeStr, RegisterClass RC,
-                        Intrinsic Int> :
-  AVX8I<opc, MRMSrcReg, (outs RC:$dst), (ins VR128:$src),
-        !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-        [(set RC:$dst, (Int VR128:$src))]>, VEX;
+// AVX2 adds register forms
+class avx2_broadcast_reg<bits<8> opc, string OpcodeStr, RegisterClass RC,
+                         Intrinsic Int> :
+  AVX28I<opc, MRMSrcReg, (outs RC:$dst), (ins VR128:$src),
+         !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+         [(set RC:$dst, (Int VR128:$src))]>, VEX;
 
 def VBROADCASTSSrm  : avx_broadcast<0x18, "vbroadcastss", VR128, f32mem,
                                     int_x86_avx_vbroadcast_ss>;
@@ -7098,16 +7099,16 @@ def VBROADCASTSDrm  : avx_broadcast<0x19, "vbroadcastsd", VR256, f64mem,
 def VBROADCASTF128 : avx_broadcast<0x1A, "vbroadcastf128", VR256, f128mem,
                                    int_x86_avx_vbroadcastf128_pd_256>;
 
-let Predicates = [HasAVX2] in {
+def VBROADCASTSSrr  : avx2_broadcast_reg<0x18, "vbroadcastss", VR128,
+                                        int_x86_avx2_vbroadcast_ss_ps>;
+def VBROADCASTSSYrr : avx2_broadcast_reg<0x18, "vbroadcastss", VR256,
+                                        int_x86_avx2_vbroadcast_ss_ps_256>;
+def VBROADCASTSDrr  : avx2_broadcast_reg<0x19, "vbroadcastsd", VR256,
+                                        int_x86_avx2_vbroadcast_sd_pd_256>;
+
+let Predicates = [HasAVX2] in
 def VBROADCASTI128 : avx_broadcast<0x5A, "vbroadcasti128", VR256, i128mem,
                                    int_x86_avx2_vbroadcasti128>;
-def VBROADCASTSSrr  : avx_broadcast_reg<0x18, "vbroadcastss", VR128,
-                                        int_x86_avx2_vbroadcast_ss_ps>;
-def VBROADCASTSSYrr : avx_broadcast_reg<0x18, "vbroadcastss", VR256,
-                                        int_x86_avx2_vbroadcast_ss_ps_256>;
-def VBROADCASTSDrr  : avx_broadcast_reg<0x19, "vbroadcastsd", VR256,
-                                        int_x86_avx2_vbroadcast_sd_pd_256>;
-}
 
 def : Pat<(int_x86_avx_vbroadcastf128_ps_256 addr:$src),
           (VBROADCASTF128 addr:$src)>;
@@ -7364,7 +7365,7 @@ let Defs = [YMM0, YMM1, YMM2, YMM3, YMM4, YMM5, YMM6, YMM7,
 
 //===----------------------------------------------------------------------===//
 // Half precision conversion instructions
-//
+//===----------------------------------------------------------------------===//
 multiclass f16c_ph2ps<RegisterClass RC, X86MemOperand x86memop, Intrinsic Int> {
 let Predicates = [HasAVX, HasF16C] in {
   def rr : I<0x13, MRMSrcReg, (outs RC:$dst), (ins VR128:$src),
@@ -7396,3 +7397,71 @@ defm VCVTPH2PS  : f16c_ph2ps<VR128, f64mem, int_x86_vcvtph2ps_128>;
 defm VCVTPH2PSY : f16c_ph2ps<VR256, f128mem, int_x86_vcvtph2ps_256>;
 defm VCVTPS2PH  : f16c_ps2ph<VR128, f64mem, int_x86_vcvtps2ph_128>;
 defm VCVTPS2PHY : f16c_ps2ph<VR256, f128mem, int_x86_vcvtps2ph_256>;
+
+//===----------------------------------------------------------------------===//
+// AVX2 Instructions
+//===----------------------------------------------------------------------===//
+
+/// AVX2I_binop_rmi_int - AVX2 binary operator with 8-bit immediate
+multiclass AVX2I_binop_rmi_int<bits<8> opc, string OpcodeStr,
+                 Intrinsic IntId, RegisterClass RC, PatFrag memop_frag,
+                 X86MemOperand x86memop> {
+  let isCommutable = 1 in
+  def rri : AVX2Ii8<opc, MRMSrcReg, (outs RC:$dst),
+        (ins RC:$src1, RC:$src2, u32u8imm:$src3),
+        !strconcat(OpcodeStr,
+            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
+        [(set RC:$dst, (IntId RC:$src1, RC:$src2, imm:$src3))]>,
+        VEX_4V;
+  def rmi : AVX2Ii8<opc, MRMSrcMem, (outs RC:$dst),
+        (ins RC:$src1, x86memop:$src2, u32u8imm:$src3),
+        !strconcat(OpcodeStr,
+            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
+        [(set RC:$dst,
+          (IntId RC:$src1,
+           (bitconvert (memop_frag addr:$src2)), imm:$src3))]>,
+        VEX_4V;
+}
+
+let isCommutable = 0 in {
+defm VPBLENDD : AVX2I_binop_rmi_int<0x02, "vpblendd", int_x86_avx2_pblendd_128,
+                                    VR128, memopv16i8, i128mem>;
+defm VPBLENDDY : AVX2I_binop_rmi_int<0x02, "vpblendd", int_x86_avx2_pblendd_256,
+                                     VR256, memopv32i8, i256mem>;
+}
+
+//===----------------------------------------------------------------------===//
+// VPBROADCAST - Load from memory and broadcast to all elements of the
+//               destination operand
+//
+multiclass avx2_broadcast<bits<8> opc, string OpcodeStr,
+                          X86MemOperand x86memop, PatFrag ld_frag,
+                          Intrinsic Int128, Intrinsic Int256> {
+  def rr : AVX28I<opc, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
+                  !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                  [(set VR128:$dst, (Int128 VR128:$src))]>, VEX;
+  def rm : AVX28I<opc, MRMSrcMem, (outs VR128:$dst), (ins x86memop:$src),
+                  !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                  [(set VR128:$dst,
+                    (Int128 (scalar_to_vector (ld_frag addr:$src))))]>, VEX;
+  def Yrr : AVX28I<opc, MRMSrcReg, (outs VR256:$dst), (ins VR128:$src),
+                   !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                   [(set VR256:$dst, (Int256 VR128:$src))]>, VEX;
+  def Yrm : AVX28I<opc, MRMSrcMem, (outs VR256:$dst), (ins x86memop:$src),
+                   !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                   [(set VR256:$dst,
+                    (Int256 (scalar_to_vector (ld_frag addr:$src))))]>, VEX;
+}
+
+defm VPBROADCASTB  : avx2_broadcast<0x78, "vpbroadcastb", i8mem, loadi8,
+                                    int_x86_avx2_pbroadcastb_128,
+                                    int_x86_avx2_pbroadcastb_256>;
+defm VPBROADCASTW  : avx2_broadcast<0x79, "vpbroadcastw", i16mem, loadi16,
+                                    int_x86_avx2_pbroadcastw_128,
+                                    int_x86_avx2_pbroadcastw_256>;
+defm VPBROADCASTD  : avx2_broadcast<0x58, "vpbroadcastd", i32mem, loadi32,
+                                    int_x86_avx2_pbroadcastd_128,
+                                    int_x86_avx2_pbroadcastd_256>;
+defm VPBROADCASTQ  : avx2_broadcast<0x59, "vpbroadcastq", i64mem, loadi64,
+                                    int_x86_avx2_pbroadcastq_128,
+                                    int_x86_avx2_pbroadcastq_256>;
