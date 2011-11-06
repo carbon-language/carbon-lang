@@ -186,10 +186,28 @@ static void clearRedundantStrongs(MigrationContext &MigrateCtx) {
   }
 }
 
+static void errorForGCAttrsOnNonObjC(MigrationContext &MigrateCtx) {
+  TransformActions &TA = MigrateCtx.Pass.TA;
+
+  for (unsigned i = 0, e = MigrateCtx.GCAttrs.size(); i != e; ++i) {
+    MigrationContext::GCAttrOccurrence &Attr = MigrateCtx.GCAttrs[i];
+    if (Attr.FullyMigratable && Attr.Dcl) {
+      if (Attr.ModifiedType.isNull())
+        continue;
+      if (!Attr.ModifiedType->isObjCRetainableType()) {
+        TA.reportError("GC managed memory will become unmanaged in ARC",
+                       Attr.Loc);
+      }
+    }
+  }
+}
+
 void GCAttrsTraverser::traverseTU(MigrationContext &MigrateCtx) {
   GCAttrsCollector(MigrateCtx).TraverseDecl(
                                   MigrateCtx.Pass.Ctx.getTranslationUnitDecl());
+
   clearRedundantStrongs(MigrateCtx);
+  errorForGCAttrsOnNonObjC(MigrateCtx);
 }
 
 void MigrationContext::dumpGCAttrs() {

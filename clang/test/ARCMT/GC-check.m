@@ -12,3 +12,8 @@ void test1(CFTypeRef *cft) {
                 // expected-error {{unavailable}}
   NSAllocateCollectable(100, 0); // expected-error {{call returns pointer to GC managed memory; it will become unmanaged in ARC}}
 }
+
+@interface I1 {
+  __strong void *gcVar; // expected-error {{GC managed memory will become unmanaged in ARC}}
+}
+@end;
