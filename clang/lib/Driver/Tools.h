@@ -29,7 +29,8 @@ namespace tools {
 
   /// \brief Clang compiler tool.
   class LLVM_LIBRARY_VISIBILITY Clang : public Tool {
-    void AddPreprocessingOptions(const Driver &D,
+    void AddPreprocessingOptions(Compilation &C,
+                                 const Driver &D,
                                  const ArgList &Args,
                                  ArgStringList &CmdArgs,
                                  const InputInfo &Output,

@@ -217,8 +217,12 @@ void Compilation::initCompilationForDiagnostics(void) {
 
   // Remove any user specified output.  Claim any unclaimed arguments, so as
   // to avoid emitting warnings about unused args.
-  if (TranslatedArgs->hasArg(options::OPT_o))
-    TranslatedArgs->eraseArg(options::OPT_o);
+  OptSpecifier OutputOpts[] = { options::OPT_o, options::OPT_MD,
+                                options::OPT_MMD };
+  for (unsigned i = 0; i != sizeof(OutputOpts)/sizeof(OutputOpts[0]); ++i) {
+    if (TranslatedArgs->hasArg(OutputOpts[i]))
+      TranslatedArgs->eraseArg(OutputOpts[i]);
+  }
   TranslatedArgs->ClaimAllArgs();
 
   // Redirect stdout/stderr to /dev/null.

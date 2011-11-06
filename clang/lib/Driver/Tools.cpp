@@ -203,7 +203,8 @@ static void AddIncludeDirectoryList(const ArgList &Args,
   }
 }
 
-void Clang::AddPreprocessingOptions(const Driver &D,
+void Clang::AddPreprocessingOptions(Compilation &C,
+                                    const Driver &D,
                                     const ArgList &Args,
                                     ArgStringList &CmdArgs,
                                     const InputInfo &Output,
@@ -225,11 +226,13 @@ void Clang::AddPreprocessingOptions(const Driver &D,
       DepFile = Output.getFilename();
     } else if (Arg *MF = Args.getLastArg(options::OPT_MF)) {
       DepFile = MF->getValue(Args);
+      C.addResultFile(DepFile);
     } else if (A->getOption().matches(options::OPT_M) ||
                A->getOption().matches(options::OPT_MM)) {
       DepFile = "-";
     } else {
       DepFile = darwin::CC1::getDependencyFileName(Args, Inputs);
+      C.addResultFile(DepFile);
     }
     CmdArgs.push_back("-dependency-file");
     CmdArgs.push_back(DepFile);
@@ -1541,7 +1544,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   //
   // FIXME: Support -fpreprocessed
   if (types::getPreprocessedType(InputType) != types::TY_INVALID)
-    AddPreprocessingOptions(D, Args, CmdArgs, Output, Inputs);
+    AddPreprocessingOptions(C, D, Args, CmdArgs, Output, Inputs);
 
   // Don't warn about "clang -c -DPIC -fPIC test.i" because libtool.m4 assumes
   // that "The compiler can only warn and ignore the option if not recognized".
