@@ -106,7 +106,7 @@ namespace {
   struct ObjCPropertyRefRebuilder : Rebuilder<ObjCPropertyRefRebuilder> {
     Expr *NewBase;
     ObjCPropertyRefRebuilder(Sema &S, Expr *newBase)
-      : Rebuilder(S), NewBase(newBase) {}
+      : Rebuilder<ObjCPropertyRefRebuilder>(S), NewBase(newBase) {}
 
     typedef ObjCPropertyRefExpr specific_type;
     Expr *rebuildSpecific(ObjCPropertyRefExpr *refExpr) {
