@@ -526,6 +526,8 @@ public:
 
 } // anonymous namespace
 
-void trans::rewriteProperties(MigrationPass &pass) {
-  ImplementationChecker(pass).TraverseDecl(pass.Ctx.getTranslationUnitDecl());
+void PropertyRewriteTraverser::traverseObjCImplementation(
+                                           ObjCImplementationContext &ImplCtx) {
+  PropertiesRewriter(ImplCtx.getMigrationContext().getPass())
+                                  .doTransform(ImplCtx.getImplementationDecl());
 }

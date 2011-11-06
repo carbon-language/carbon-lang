@@ -302,6 +302,16 @@ class ASTTransform : public RecursiveASTVisitor<ASTTransform> {
 public:
   ASTTransform(MigrationContext &MigrateCtx) : MigrateCtx(MigrateCtx) { }
 
+  bool TraverseObjCImplementationDecl(ObjCImplementationDecl *D) {
+    ObjCImplementationContext ImplCtx(MigrateCtx, D);
+    for (MigrationContext::traverser_iterator
+           I = MigrateCtx.traversers_begin(),
+           E = MigrateCtx.traversers_end(); I != E; ++I)
+      (*I)->traverseObjCImplementation(ImplCtx);
+
+    return true;
+  }
+
   bool TraverseStmt(Stmt *rootS) {
     if (!rootS)
       return true;
@@ -358,13 +368,13 @@ static void traverseAST(MigrationPass &pass) {
   if (pass.isGCMigration()) {
     MigrateCtx.addTraverser(new GCCollectableCallsTraverser);
   }
+  MigrateCtx.addTraverser(new PropertyRewriteTraverser());
 
   MigrateCtx.traverse(pass.Ctx.getTranslationUnitDecl());
 }
 
 static void independentTransforms(MigrationPass &pass) {
   rewriteAutoreleasePool(pass);
-  rewriteProperties(pass);
   removeRetainReleaseDeallocFinalize(pass);
   rewriteUnusedInitDelegate(pass);
   removeZeroOutPropsInDeallocFinalize(pass);

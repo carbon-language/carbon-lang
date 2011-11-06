@@ -37,7 +37,6 @@ void rewriteUnbridgedCasts(MigrationPass &pass);
 void makeAssignARCSafe(MigrationPass &pass);
 void removeRetainReleaseDeallocFinalize(MigrationPass &pass);
 void removeZeroOutPropsInDeallocFinalize(MigrationPass &pass);
-void rewriteProperties(MigrationPass &pass);
 void rewriteBlockObjCVariable(MigrationPass &pass);
 void rewriteUnusedInitDelegate(MigrationPass &pass);
 void checkAPIUses(MigrationPass &pass);
@@ -58,10 +57,25 @@ public:
   Stmt *getTopStmt() { return TopStmt; }
 };
 
+class ObjCImplementationContext {
+  MigrationContext &MigrateCtx;
+  ObjCImplementationDecl *ImpD;
+
+public:
+  ObjCImplementationContext(MigrationContext &MigrateCtx,
+                            ObjCImplementationDecl *D)
+    : MigrateCtx(MigrateCtx), ImpD(D) {}
+
+  MigrationContext &getMigrationContext() { return MigrateCtx; }
+  ObjCImplementationDecl *getImplementationDecl() { return ImpD; }
+};
+
 class ASTTraverser {
 public:
   virtual ~ASTTraverser();
+  virtual void traverseTU(MigrationContext &MigrateCtx) { }
   virtual void traverseBody(BodyContext &BodyCtx) { }
+  virtual void traverseObjCImplementation(ObjCImplementationContext &ImplCtx) {}
 };
 
 class MigrationContext {
@@ -85,6 +99,11 @@ public:
   bool isGCOwnedNonObjC(QualType T);
 
   void traverse(TranslationUnitDecl *TU);
+};
+
+class PropertyRewriteTraverser : public ASTTraverser {
+public:
+  virtual void traverseObjCImplementation(ObjCImplementationContext &ImplCtx);
 };
 
 // GC transformations
