@@ -125,8 +125,7 @@ public:
            I = AtProps.begin(), E = AtProps.end(); I != E; ++I) {
       SourceLocation atLoc = SourceLocation::getFromRawEncoding(I->first);
       PropsTy &props = I->second;
-      QualType ty = getPropertyType(props);
-      if (!ty->isObjCRetainableType())
+      if (!getPropertyType(props)->isObjCRetainableType())
         continue;
       if (hasIvarWithExplicitOwnership(props))
         continue;
@@ -486,11 +485,11 @@ private:
 
   QualType getPropertyType(PropsTy &props) const {
     assert(!props.empty());
-    QualType ty = props[0].PropD->getType();
+    QualType ty = props[0].PropD->getType().getUnqualifiedType();
 
 #ifndef NDEBUG
     for (PropsTy::iterator I = props.begin(), E = props.end(); I != E; ++I)
-      assert(ty == I->PropD->getType());
+      assert(ty == I->PropD->getType().getUnqualifiedType());
 #endif
 
     return ty;
