@@ -152,7 +152,7 @@ std::string StringRef::lower() const {
 std::string StringRef::upper() const {
   std::string Result(size(), char());
   for (size_type i = 0, e = size(); i != e; ++i) {
-    Result[i] = ascii_tolower(Data[i]);
+    Result[i] = ascii_toupper(Data[i]);
   }
   return Result;
 }
