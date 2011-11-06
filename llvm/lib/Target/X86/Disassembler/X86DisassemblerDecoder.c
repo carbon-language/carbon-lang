@@ -773,17 +773,20 @@ static int getID(struct InternalInstruction* insn) {
 
   if (insn->rexPrefix & 0x08)
     attrMask |= ATTR_REXW;
-  
+
   if (getIDWithAttrMask(&instructionID, insn, attrMask))
     return -1;
-  
+
   /* The following clauses compensate for limitations of the tables. */
-  
-  if ((attrMask & ATTR_VEXL) && (attrMask & ATTR_REXW)) {
+
+  if ((attrMask & ATTR_VEXL) && (attrMask & ATTR_REXW) &&
+      !(attrMask & ATTR_OPSIZE)) {
     /*
      * Some VEX instructions ignore the L-bit, but use the W-bit. Normally L-bit
      * has precedence since there are no L-bit with W-bit entries in the tables.
      * So if the L-bit isn't significant we should use the W-bit instead.
+     * We only need to do this if the instruction doesn't specify OpSize since
+     * there is a VEX_L_W_OPSIZE table.
      */
 
     const struct InstructionSpecifier *spec;

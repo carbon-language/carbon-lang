@@ -846,3 +846,43 @@ define <4 x i64> @test_x86_avx2_pbroadcastq_256(<2 x i64> %a0) {
   ret <4 x i64> %res
 }
 declare <4 x i64> @llvm.x86.avx2.pbroadcastq.256(<2 x i64>) nounwind readonly
+
+
+define <8 x i32> @test_x86_avx2_permd(<8 x i32> %a0, <8 x i32> %a1) {
+  ; CHECK: vpermd
+  %res = call <8 x i32> @llvm.x86.avx2.permd(<8 x i32> %a0, <8 x i32> %a1) ; <<8 x i32>> [#uses=1]
+  ret <8 x i32> %res
+}
+declare <8 x i32> @llvm.x86.avx2.permd(<8 x i32>, <8 x i32>) nounwind readonly
+
+
+define <8 x float> @test_x86_avx2_permps(<8 x float> %a0, <8 x float> %a1) {
+  ; CHECK: vpermps
+  %res = call <8 x float> @llvm.x86.avx2.permps(<8 x float> %a0, <8 x float> %a1) ; <<8 x float>> [#uses=1]
+  ret <8 x float> %res
+}
+declare <8 x float> @llvm.x86.avx2.permps(<8 x float>, <8 x float>) nounwind readonly
+
+
+define <4 x i64> @test_x86_avx2_permq(<4 x i64> %a0) {
+  ; CHECK: vpermq
+  %res = call <4 x i64> @llvm.x86.avx2.permq(<4 x i64> %a0, i8 7) ; <<4 x i64>> [#uses=1]
+  ret <4 x i64> %res
+}
+declare <4 x i64> @llvm.x86.avx2.permq(<4 x i64>, i8) nounwind readonly
+
+
+define <4 x double> @test_x86_avx2_permpd(<4 x double> %a0) {
+  ; CHECK: vpermpd
+  %res = call <4 x double> @llvm.x86.avx2.permpd(<4 x double> %a0, i8 7) ; <<4 x double>> [#uses=1]
+  ret <4 x double> %res
+}
+declare <4 x double> @llvm.x86.avx2.permpd(<4 x double>, i8) nounwind readonly
+
+
+define <4 x i64> @test_x86_avx2_vperm2i128(<4 x i64> %a0, <4 x i64> %a1) {
+  ; CHECK: vperm2i128
+  %res = call <4 x i64> @llvm.x86.avx2.vperm2i128(<4 x i64> %a0, <4 x i64> %a1, i8 1) ; <<4 x i64>> [#uses=1]
+  ret <4 x i64> %res
+}
+declare <4 x i64> @llvm.x86.avx2.vperm2i128(<4 x i64>, <4 x i64>, i8) nounwind readonly

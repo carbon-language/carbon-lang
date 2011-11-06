@@ -460,7 +460,7 @@ class AVX28I<bits<8> o, Format F, dag outs, dag ins, string asm,
             list<dag> pattern>
       : I<o, F, outs, ins, asm, pattern, SSEPackedInt>, T8, OpSize,
         Requires<[HasAVX2]>;
-class AVX2Ii8<bits<8> o, Format F, dag outs, dag ins, string asm,
+class AVX2AIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
               list<dag> pattern>
       : Ii8<o, F, outs, ins, asm, pattern, SSEPackedInt>, TA, OpSize,
         Requires<[HasAVX2]>;

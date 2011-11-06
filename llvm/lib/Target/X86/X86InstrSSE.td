@@ -7310,14 +7310,17 @@ def : Pat<(v4i64 (X86VPermilpdy VR256:$src1, (i8 imm:$imm))),
 //===----------------------------------------------------------------------===//
 // VPERM2F128 - Permute Floating-Point Values in 128-bit chunks
 //
+let neverHasSideEffects = 1 in {
 def VPERM2F128rr : AVXAIi8<0x06, MRMSrcReg, (outs VR256:$dst),
           (ins VR256:$src1, VR256:$src2, i8imm:$src3),
           "vperm2f128\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
           []>, VEX_4V;
+let mayLoad = 1 in
 def VPERM2F128rm : AVXAIi8<0x06, MRMSrcMem, (outs VR256:$dst),
           (ins VR256:$src1, f256mem:$src2, i8imm:$src3),
           "vperm2f128\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
           []>, VEX_4V;
+}
 
 def : Pat<(int_x86_avx_vperm2f128_ps_256 VR256:$src1, VR256:$src2, imm:$src3),
           (VPERM2F128rr VR256:$src1, VR256:$src2, imm:$src3)>;
@@ -7402,18 +7405,18 @@ defm VCVTPS2PHY : f16c_ps2ph<VR256, f128mem, int_x86_vcvtps2ph_256>;
 // AVX2 Instructions
 //===----------------------------------------------------------------------===//
 
-/// AVX2I_binop_rmi_int - AVX2 binary operator with 8-bit immediate
-multiclass AVX2I_binop_rmi_int<bits<8> opc, string OpcodeStr,
+/// AVX2_binop_rmi_int - AVX2 binary operator with 8-bit immediate
+multiclass AVX2_binop_rmi_int<bits<8> opc, string OpcodeStr,
                  Intrinsic IntId, RegisterClass RC, PatFrag memop_frag,
                  X86MemOperand x86memop> {
   let isCommutable = 1 in
-  def rri : AVX2Ii8<opc, MRMSrcReg, (outs RC:$dst),
+  def rri : AVX2AIi8<opc, MRMSrcReg, (outs RC:$dst),
         (ins RC:$src1, RC:$src2, u32u8imm:$src3),
         !strconcat(OpcodeStr,
             "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
         [(set RC:$dst, (IntId RC:$src1, RC:$src2, imm:$src3))]>,
         VEX_4V;
-  def rmi : AVX2Ii8<opc, MRMSrcMem, (outs RC:$dst),
+  def rmi : AVX2AIi8<opc, MRMSrcMem, (outs RC:$dst),
         (ins RC:$src1, x86memop:$src2, u32u8imm:$src3),
         !strconcat(OpcodeStr,
             "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
@@ -7424,10 +7427,10 @@ multiclass AVX2I_binop_rmi_int<bits<8> opc, string OpcodeStr,
 }
 
 let isCommutable = 0 in {
-defm VPBLENDD : AVX2I_binop_rmi_int<0x02, "vpblendd", int_x86_avx2_pblendd_128,
-                                    VR128, memopv16i8, i128mem>;
-defm VPBLENDDY : AVX2I_binop_rmi_int<0x02, "vpblendd", int_x86_avx2_pblendd_256,
-                                     VR256, memopv32i8, i256mem>;
+defm VPBLENDD : AVX2_binop_rmi_int<0x02, "vpblendd", int_x86_avx2_pblendd_128,
+                                   VR128, memopv16i8, i128mem>;
+defm VPBLENDDY : AVX2_binop_rmi_int<0x02, "vpblendd", int_x86_avx2_pblendd_256,
+                                    VR256, memopv32i8, i256mem>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -7465,3 +7468,62 @@ defm VPBROADCASTD  : avx2_broadcast<0x58, "vpbroadcastd", i32mem, loadi32,
 defm VPBROADCASTQ  : avx2_broadcast<0x59, "vpbroadcastq", i64mem, loadi64,
                                     int_x86_avx2_pbroadcastq_128,
                                     int_x86_avx2_pbroadcastq_256>;
+
+//===----------------------------------------------------------------------===//
+// VPERM - Permute instructions
+//
+
+multiclass avx2_perm<bits<8> opc, string OpcodeStr, PatFrag mem_frag,
+                     Intrinsic Int> {
+  def Yrr : AVX28I<opc, MRMSrcReg, (outs VR256:$dst),
+                   (ins VR256:$src1, VR256:$src2),
+                   !strconcat(OpcodeStr,
+                       "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                   [(set VR256:$dst, (Int VR256:$src1, VR256:$src2))]>, VEX_4V;
+  def Yrm : AVX28I<opc, MRMSrcMem, (outs VR256:$dst),
+                   (ins VR256:$src1, i256mem:$src2),
+                   !strconcat(OpcodeStr,
+                       "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                   [(set VR256:$dst, (Int VR256:$src1, (mem_frag addr:$src2)))]>,
+                   VEX_4V;
+}
+
+defm VPERMD : avx2_perm<0x36, "vpermd", memopv8i32, int_x86_avx2_permd>;
+defm VPERMPS : avx2_perm<0x16, "vpermps", memopv8f32, int_x86_avx2_permps>;
+
+multiclass avx2_perm_imm<bits<8> opc, string OpcodeStr, PatFrag mem_frag,
+                         Intrinsic Int> {
+  def Yrr : AVX2AIi8<opc, MRMSrcReg, (outs VR256:$dst),
+                     (ins VR256:$src1, i8imm:$src2),
+                     !strconcat(OpcodeStr,
+                         "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                     [(set VR256:$dst, (Int VR256:$src1, imm:$src2))]>, VEX;
+  def Yrm : AVX2AIi8<opc, MRMSrcMem, (outs VR256:$dst),
+                     (ins i256mem:$src1, i8imm:$src2),
+                     !strconcat(OpcodeStr,
+                         "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                     [(set VR256:$dst, (Int (mem_frag addr:$src1), imm:$src2))]>,
+                     VEX;
+}
+
+defm VPERMQ : avx2_perm_imm<0x00, "vpermq", memopv4i64, int_x86_avx2_permq>,
+                            VEX_W;
+defm VPERMPD : avx2_perm_imm<0x01, "vpermpd", memopv4f64, int_x86_avx2_permpd>,
+                             VEX_W;
+
+//===----------------------------------------------------------------------===//
+// VPERM2F128 - Permute Floating-Point Values in 128-bit chunks
+//
+def VPERM2I128rr : AVXAIi8<0x46, MRMSrcReg, (outs VR256:$dst),
+          (ins VR256:$src1, VR256:$src2, i8imm:$src3),
+          "vperm2i128\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
+          [(set VR256:$dst,
+           (int_x86_avx2_vperm2i128 VR256:$src1, VR256:$src2, imm:$src3))]>,
+          VEX_4V;
+def VPERM2I128rm : AVXAIi8<0x46, MRMSrcMem, (outs VR256:$dst),
+          (ins VR256:$src1, f256mem:$src2, i8imm:$src3),
+          "vperm2i128\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
+          [(set VR256:$dst,
+           (int_x86_avx2_vperm2i128 VR256:$src1, (memopv4i64 addr:$src2),
+            imm:$src3))]>,
+          VEX_4V;

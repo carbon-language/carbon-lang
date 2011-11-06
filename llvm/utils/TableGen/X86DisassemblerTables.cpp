@@ -95,7 +95,10 @@ static inline bool inheritsFrom(InstructionContext child,
   case IC_VEX_L:
   case IC_VEX_L_XS:
   case IC_VEX_L_XD:
+    return false;
   case IC_VEX_L_OPSIZE:
+    return inheritsFrom(child, IC_VEX_L_W_OPSIZE);
+  case IC_VEX_L_W_OPSIZE:
     return false;
   default:
     llvm_unreachable("Unknown instruction class");
@@ -494,7 +497,9 @@ void DisassemblerTables::emitContextTable(raw_ostream &o, uint32_t &i) const {
   for (index = 0; index < 256; ++index) {
     o.indent(i * 2);
 
-    if ((index & ATTR_VEXL) && (index & ATTR_OPSIZE))
+    if ((index & ATTR_VEXL) && (index & ATTR_REXW) && (index & ATTR_OPSIZE))
+      o << "IC_VEX_L_W_OPSIZE";
+    else if ((index & ATTR_VEXL) && (index & ATTR_OPSIZE))
       o << "IC_VEX_L_OPSIZE";
     else if ((index & ATTR_VEXL) && (index & ATTR_XD))
       o << "IC_VEX_L_XD";

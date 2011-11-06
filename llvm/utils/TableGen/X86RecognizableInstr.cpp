@@ -285,9 +285,12 @@ InstructionContext RecognizableInstr::insnContext() const {
   InstructionContext insnContext;
 
   if (HasVEX_4VPrefix || HasVEX_4VOp3Prefix|| HasVEXPrefix) {
-    if (HasVEX_LPrefix && HasVEX_WPrefix)
-      llvm_unreachable("Don't support VEX.L and VEX.W together");
-    else if (HasOpSizePrefix && HasVEX_LPrefix)
+    if (HasVEX_LPrefix && HasVEX_WPrefix) {
+      if (HasOpSizePrefix)
+        insnContext = IC_VEX_L_W_OPSIZE;
+      else
+        llvm_unreachable("Don't support VEX.L and VEX.W together");
+    } else if (HasOpSizePrefix && HasVEX_LPrefix)
       insnContext = IC_VEX_L_OPSIZE;
     else if (HasOpSizePrefix && HasVEX_WPrefix)
       insnContext = IC_VEX_W_OPSIZE;
