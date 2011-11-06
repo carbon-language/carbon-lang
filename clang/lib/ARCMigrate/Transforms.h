@@ -79,14 +79,26 @@ public:
 };
 
 class MigrationContext {
-  MigrationPass &Pass;
   std::vector<ASTTraverser *> Traversers;
 
 public:
+  MigrationPass &Pass;
+
+  struct GCAttrOccurrence {
+    enum AttrKind { Weak, Strong } Kind;
+    SourceLocation Loc;
+    QualType ModifiedType;
+    Decl *Dcl;
+    /// \brief true if the attribute is owned, e.g. it is in a body and not just
+    /// in an interface.
+    bool FullyMigratable;
+  };
+  std::vector<GCAttrOccurrence> GCAttrs;
+
+  llvm::DenseSet<unsigned> AttrSet;
+
   explicit MigrationContext(MigrationPass &pass) : Pass(pass) {}
   ~MigrationContext();
-
-  MigrationPass &getPass() { return Pass; }
   
   typedef std::vector<ASTTraverser *>::iterator traverser_iterator;
   traverser_iterator traversers_begin() { return Traversers.begin(); }
@@ -107,6 +119,11 @@ public:
 };
 
 // GC transformations
+
+class GCAttrsTraverser : public ASTTraverser {
+public:
+  virtual void traverseTU(MigrationContext &MigrateCtx);
+};
 
 class GCCollectableCallsTraverser : public ASTTraverser {
 public:

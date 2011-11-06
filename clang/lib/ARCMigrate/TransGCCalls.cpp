@@ -27,13 +27,15 @@ class GCCollectableCallsChecker :
 public:
   GCCollectableCallsChecker(MigrationContext &ctx, ParentMap &map)
     : MigrateCtx(ctx), PMap(map) {
-    IdentifierTable &Ids = MigrateCtx.getPass().Ctx.Idents;
+    IdentifierTable &Ids = MigrateCtx.Pass.Ctx.Idents;
     NSMakeCollectableII = &Ids.get("NSMakeCollectable");
     CFMakeCollectableII = &Ids.get("CFMakeCollectable");
   }
 
+  bool shouldWalkTypesOfTypeLocs() const { return false; }
+
   bool VisitCallExpr(CallExpr *E) {
-    TransformActions &TA = MigrateCtx.getPass().TA;
+    TransformActions &TA = MigrateCtx.Pass.TA;
 
     if (MigrateCtx.isGCOwnedNonObjC(E->getType())) {
       TA.reportError("call returns pointer to GC managed memory; "

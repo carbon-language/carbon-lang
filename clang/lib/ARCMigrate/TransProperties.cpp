@@ -528,6 +528,6 @@ public:
 
 void PropertyRewriteTraverser::traverseObjCImplementation(
                                            ObjCImplementationContext &ImplCtx) {
-  PropertiesRewriter(ImplCtx.getMigrationContext().getPass())
+  PropertiesRewriter(ImplCtx.getMigrationContext().Pass)
                                   .doTransform(ImplCtx.getImplementationDecl());
 }
