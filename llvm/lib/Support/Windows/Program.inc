@@ -367,7 +367,7 @@ Program::Wait(const Path &path,
     return -2;
   }
 
-  return status;
+  return status & 0377;
 }
 
 bool
