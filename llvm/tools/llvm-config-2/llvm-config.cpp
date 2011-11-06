@@ -97,14 +97,17 @@ void ComputeLibsForComponents(const std::vector<StringRef> &Components,
 
   // Visit the components.
   for (unsigned i = 0, e = Components.size(); i != e; ++i) {
+    // Users are allowed to provide mixed case component names.
+    std::string ComponentLower = Components[i].lower();
+
     // Validate that the user supplied a valid component name.
-    if (!ComponentMap.count(Components[i])) {
+    if (!ComponentMap.count(ComponentLower)) {
       llvm::errs() << "llvm-config: unknown component name: " << Components[i]
                    << "\n";
       exit(1);
     }
 
-    VisitComponent(Components[i], ComponentMap, VisitedComponents,
+    VisitComponent(ComponentLower, ComponentMap, VisitedComponents,
                    RequiredLibs);
   }
 
