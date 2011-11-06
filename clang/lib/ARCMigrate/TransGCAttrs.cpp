@@ -101,7 +101,7 @@ public:
     MigrationContext::GCAttrOccurrence &Attr = MigrateCtx.GCAttrs.back();
 
     Attr.Kind = Kind;
-    Attr.Loc = Loc;
+    Attr.Loc = SM.getImmediateExpansionRange(Loc).first;
     Attr.ModifiedType = TL.getModifiedLoc().getType();
     Attr.Dcl = D;
     Attr.FullyMigratable = FullyMigratable;
@@ -163,18 +163,43 @@ public:
 
 } // anonymous namespace
 
+static void clearRedundantStrongs(MigrationContext &MigrateCtx) {
+  TransformActions &TA = MigrateCtx.Pass.TA;
+
+  for (unsigned i = 0, e = MigrateCtx.GCAttrs.size(); i != e; ++i) {
+    MigrationContext::GCAttrOccurrence &Attr = MigrateCtx.GCAttrs[i];
+    if (Attr.Kind == MigrationContext::GCAttrOccurrence::Strong &&
+        Attr.FullyMigratable && Attr.Dcl) {
+      TypeSourceInfo *TInfo = 0;
+      if (DeclaratorDecl *DD = dyn_cast<DeclaratorDecl>(Attr.Dcl))
+        TInfo = DD->getTypeSourceInfo();
+      else if (ObjCPropertyDecl *PD = dyn_cast<ObjCPropertyDecl>(Attr.Dcl))
+        TInfo = PD->getTypeSourceInfo();
+      if (!TInfo)
+        continue;
+
+      if (TInfo->getType().getObjCLifetime() == Qualifiers::OCL_Strong) {
+        Transaction Trans(TA);
+        TA.remove(Attr.Loc);
+      }
+    }
+  }
+}
+
 void GCAttrsTraverser::traverseTU(MigrationContext &MigrateCtx) {
   GCAttrsCollector(MigrateCtx).TraverseDecl(
                                   MigrateCtx.Pass.Ctx.getTranslationUnitDecl());
-#if 0
+  clearRedundantStrongs(MigrateCtx);
+}
+
+void MigrationContext::dumpGCAttrs() {
   llvm::errs() << "\n################\n";
-  for (unsigned i = 0, e = MigrateCtx.GCAttrs.size(); i != e; ++i) {
-    MigrationContext::GCAttrOccurrence &Attr = MigrateCtx.GCAttrs[i];
+  for (unsigned i = 0, e = GCAttrs.size(); i != e; ++i) {
+    GCAttrOccurrence &Attr = GCAttrs[i];
     llvm::errs() << "KIND: "
-        << (Attr.Kind == MigrationContext::GCAttrOccurrence::Strong ? "strong"
-                                                                    : "weak");
+        << (Attr.Kind == GCAttrOccurrence::Strong ? "strong" : "weak");
     llvm::errs() << "\nLOC: ";
-    Attr.Loc.dump(MigrateCtx.Pass.Ctx.getSourceManager());
+    Attr.Loc.dump(Pass.Ctx.getSourceManager());
     llvm::errs() << "\nTYPE: ";
     Attr.ModifiedType.dump();
     if (Attr.Dcl) {
@@ -187,5 +212,4 @@ void GCAttrsTraverser::traverseTU(MigrationContext &MigrateCtx) {
     llvm::errs() << "\n----------------\n";
   }
   llvm::errs() << "\n################\n";
-#endif
 }

@@ -111,6 +111,8 @@ public:
   bool isGCOwnedNonObjC(QualType T);
 
   void traverse(TranslationUnitDecl *TU);
+
+  void dumpGCAttrs();
 };
 
 class PropertyRewriteTraverser : public ASTTraverser {

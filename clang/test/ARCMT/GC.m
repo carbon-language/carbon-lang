@@ -5,12 +5,15 @@
 // RUN: diff %t %s.result
 
 #include "Common.h"
+#include "GC.h"
 
 void test1(CFTypeRef *cft) {
   id x = NSMakeCollectable(cft);
 }
 
-@interface I1
+@interface I1 {
+  __strong I1 *myivar;
+}
 @end
 
 @implementation I1
