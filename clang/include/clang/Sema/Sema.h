@@ -1934,6 +1934,7 @@ public:
                                        const bool isAssign,
                                        const bool isReadWrite,
                                        const unsigned Attributes,
+                                       const unsigned AttributesAsWritten,
                                        bool *isOverridingProperty,
                                        TypeSourceInfo *T,
                                        tok::ObjCKeywordKind MethodImplKind);
@@ -1949,6 +1950,7 @@ public:
                                        const bool isAssign,
                                        const bool isReadWrite,
                                        const unsigned Attributes,
+                                       const unsigned AttributesAsWritten,
                                        TypeSourceInfo *T,
                                        tok::ObjCKeywordKind MethodImplKind,
                                        DeclContext *lexicalDC = 0);
