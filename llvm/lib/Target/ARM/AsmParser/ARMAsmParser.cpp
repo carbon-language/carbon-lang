@@ -30,7 +30,6 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Twine.h"
 
@@ -2063,8 +2062,7 @@ int ARMAsmParser::tryParseRegister() {
 
   // FIXME: Validate register for the current architecture; we have to do
   // validation later, so maybe there is no need for this here.
-  std::string upperCase = Tok.getString().str();
-  std::string lowerCase = LowercaseString(upperCase);
+  std::string lowerCase = Tok.getString().lower();
   unsigned RegNum = MatchRegisterName(lowerCase);
   if (!RegNum) {
     RegNum = StringSwitch<unsigned>(lowerCase)
@@ -2092,8 +2090,7 @@ int ARMAsmParser::tryParseShiftRegister(
   const AsmToken &Tok = Parser.getTok();
   assert(Tok.is(AsmToken::Identifier) && "Token is not an Identifier");
 
-  std::string upperCase = Tok.getString().str();
-  std::string lowerCase = LowercaseString(upperCase);
+  std::string lowerCase = Tok.getString().lower();
   ARM_AM::ShiftOpc ShiftTy = StringSwitch<ARM_AM::ShiftOpc>(lowerCase)
       .Case("lsl", ARM_AM::lsl)
       .Case("lsr", ARM_AM::lsr)
@@ -2688,7 +2685,7 @@ parseMSRMaskOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   // Split spec_reg from flag, example: CPSR_sxf => "CPSR" and "sxf"
   size_t Start = 0, Next = Mask.find('_');
   StringRef Flags = "";
-  std::string SpecReg = LowercaseString(Mask.slice(Start, Next));
+  std::string SpecReg = Mask.slice(Start, Next).lower();
   if (Next != StringRef::npos)
     Flags = Mask.slice(Next+1, Mask.size());
 
@@ -2756,8 +2753,8 @@ parsePKHImm(SmallVectorImpl<MCParsedAsmOperand*> &Operands, StringRef Op,
     return MatchOperand_ParseFail;
   }
   StringRef ShiftName = Tok.getString();
-  std::string LowerOp = LowercaseString(Op);
-  std::string UpperOp = UppercaseString(Op);
+  std::string LowerOp = Op.lower();
+  std::string UpperOp = Op.upper();
   if (ShiftName != LowerOp && ShiftName != UpperOp) {
     Error(Parser.getTok().getLoc(), Op + " operand expected.");
     return MatchOperand_ParseFail;

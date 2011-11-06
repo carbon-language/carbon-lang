@@ -15,7 +15,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/ADT/StringExtras.h"
 #include <algorithm>
 #include <cassert>
 #include <cctype>
@@ -115,7 +114,7 @@ void SubtargetFeatures::AddFeature(const StringRef String,
   // Don't add empty features
   if (!String.empty()) {
     // Convert to lowercase, prepend flag and add to vector
-    Features.push_back(PrependFlag(LowercaseString(String), IsEnabled));
+    Features.push_back(PrependFlag(String.lower(), IsEnabled));
   }
 }
 

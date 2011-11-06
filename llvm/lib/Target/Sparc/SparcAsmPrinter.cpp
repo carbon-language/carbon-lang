@@ -23,7 +23,6 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/Mangler.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
@@ -82,7 +81,7 @@ void SparcAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
   }
   switch (MO.getType()) {
   case MachineOperand::MO_Register:
-    O << "%" << LowercaseString(getRegisterName(MO.getReg()));
+    O << "%" << StringRef(getRegisterName(MO.getReg())).lower();
     break;
 
   case MachineOperand::MO_Immediate:
@@ -147,7 +146,7 @@ bool SparcAsmPrinter::printGetPCX(const MachineInstr *MI, unsigned opNum,
            "Operand is not a physical register ");
     assert(MO.getReg() != SP::O7 && 
            "%o7 is assigned as destination for getpcx!");
-    operand = "%" + LowercaseString(getRegisterName(MO.getReg()));
+    operand = "%" + StringRef(getRegisterName(MO.getReg())).lower();
     break;
   }
 

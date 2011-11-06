@@ -14,7 +14,6 @@
 #include "llvm/MC/MCTargetAsmLexer.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringExtras.h"
 
 using namespace llvm;
 
@@ -144,11 +143,7 @@ AsmToken X86AsmLexer::LexTokenIntel() {
     SetError(Lexer->getErrLoc(), Lexer->getErr());
     return lexedToken;
   case AsmToken::Identifier: {
-    std::string upperCase = lexedToken.getString().str();
-    std::string lowerCase = LowercaseString(upperCase);
-    StringRef lowerRef(lowerCase);
-    
-    unsigned regID = MatchRegisterName(lowerRef);
+    unsigned regID = MatchRegisterName(lexedToken.getString().lower());
     
     if (regID)
       return AsmToken(AsmToken::Register,

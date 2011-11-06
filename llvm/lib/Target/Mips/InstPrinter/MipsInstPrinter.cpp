@@ -17,7 +17,6 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 
 #define GET_INSTRUCTION_NAME
@@ -66,7 +65,7 @@ StringRef MipsInstPrinter::getOpcodeName(unsigned Opcode) const {
 }
 
 void MipsInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const {
-  OS << '$' << LowercaseString(getRegisterName(RegNo));
+  OS << '$' << StringRef(getRegisterName(RegNo)).lower();
 }
 
 void MipsInstPrinter::printInst(const MCInst *MI, raw_ostream &O,

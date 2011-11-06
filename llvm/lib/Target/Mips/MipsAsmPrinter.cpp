@@ -36,7 +36,6 @@
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
@@ -177,7 +176,7 @@ void MipsAsmPrinter::printSavedRegsBitmask(raw_ostream &O) {
 void MipsAsmPrinter::printHex32(unsigned Value, raw_ostream &O) {
   O << "0x";
   for (int i = 7; i >= 0; i--)
-    O << utohexstr((Value & (0xF << (i*4))) >> (i*4));
+    O.write_hex((Value & (0xF << (i*4))) >> (i*4));
 }
 
 //===----------------------------------------------------------------------===//
@@ -193,9 +192,9 @@ void MipsAsmPrinter::emitFrameDirective() {
   unsigned stackSize = MF->getFrameInfo()->getStackSize();
 
   OutStreamer.EmitRawText("\t.frame\t$" +
-           Twine(LowercaseString(MipsInstPrinter::getRegisterName(stackReg))) +
+           StringRef(MipsInstPrinter::getRegisterName(stackReg)).lower() +
            "," + Twine(stackSize) + ",$" +
-           Twine(LowercaseString(MipsInstPrinter::getRegisterName(returnReg))));
+           StringRef(MipsInstPrinter::getRegisterName(returnReg)).lower());
 }
 
 /// Emit Set directives.
@@ -335,7 +334,7 @@ void MipsAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
   switch (MO.getType()) {
     case MachineOperand::MO_Register:
       O << '$'
-        << LowercaseString(MipsInstPrinter::getRegisterName(MO.getReg()));
+        << StringRef(MipsInstPrinter::getRegisterName(MO.getReg())).lower();
       break;
 
     case MachineOperand::MO_Immediate:

@@ -117,22 +117,6 @@ static inline std::string ftostr(const APFloat& V) {
   return "<unknown format in ftostr>"; // error
 }
 
-static inline std::string LowercaseString(const std::string &S) {
-  std::string result(S);
-  for (unsigned i = 0; i < S.length(); ++i)
-    if (isupper(result[i]))
-      result[i] = char(tolower(result[i]));
-  return result;
-}
-
-static inline std::string UppercaseString(const std::string &S) {
-  std::string result(S);
-  for (unsigned i = 0; i < S.length(); ++i)
-    if (islower(result[i]))
-      result[i] = char(toupper(result[i]));
-  return result;
-}
-
 /// StrInStrNoCase - Portable version of strcasestr.  Locates the first
 /// occurrence of string 's1' in string 's2', ignoring case.  Returns
 /// the offset of s2 in s1 or npos if s2 cannot be found.

@@ -20,7 +20,6 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/SourceMgr.h"
@@ -412,7 +411,7 @@ bool X86ATTAsmParser::ParseRegister(unsigned &RegNo,
 
   // If the match failed, try the register name as lowercase.
   if (RegNo == 0)
-    RegNo = MatchRegisterName(LowercaseString(Tok.getString()));
+    RegNo = MatchRegisterName(Tok.getString().lower());
 
   if (!is64BitMode()) {
     // FIXME: This should be done using Requires<In32BitMode> and

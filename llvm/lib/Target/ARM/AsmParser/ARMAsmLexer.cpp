@@ -19,7 +19,6 @@
 
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
 
 #include <string>
@@ -107,11 +106,9 @@ AsmToken ARMBaseAsmLexer::LexTokenUAL() {
     SetError(Lexer->getErrLoc(), Lexer->getErr());
     break;
   case AsmToken::Identifier: {
-    std::string upperCase = lexedToken.getString().str();
-    std::string lowerCase = LowercaseString(upperCase);
-    StringRef lowerRef(lowerCase);
+    std::string lowerCase = lexedToken.getString().lower();
 
-    unsigned regID = MatchRegisterName(lowerRef);
+    unsigned regID = MatchRegisterName(lowerCase);
     // Check for register aliases.
     //   r13 -> sp
     //   r14 -> lr

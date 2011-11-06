@@ -47,7 +47,6 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -86,12 +85,12 @@ namespace {
     void EmitTextAttribute(unsigned Attribute, StringRef String) {
       switch (Attribute) {
       case ARMBuildAttrs::CPU_name:
-        Streamer.EmitRawText(StringRef("\t.cpu ") + LowercaseString(String));
+        Streamer.EmitRawText(StringRef("\t.cpu ") + String.lower());
         break;
       /* GAS requires .fpu to be emitted regardless of EABI attribute */
       case ARMBuildAttrs::Advanced_SIMD_arch:
       case ARMBuildAttrs::VFP_arch:
-        Streamer.EmitRawText(StringRef("\t.fpu ") + LowercaseString(String));
+        Streamer.EmitRawText(StringRef("\t.fpu ") + String.lower());
         break;
       default: assert(0 && "Unsupported Text attribute in ASM Mode"); break;
       }
@@ -201,7 +200,7 @@ namespace {
           Streamer.EmitULEB128IntValue(item.IntValue, 0);
           break;
         case AttributeItemType::TextAttribute:
-          Streamer.EmitBytes(UppercaseString(item.StringValue), 0);
+          Streamer.EmitBytes(item.StringValue.upper(), 0);
           Streamer.EmitIntValue(0, 1); // '\0'
           break;
         default:
