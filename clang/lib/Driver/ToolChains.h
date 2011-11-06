@@ -118,6 +118,21 @@ public:
   virtual bool IsUnwindTablesDefault() const;
   virtual const char *GetDefaultRelocationModel() const;
   virtual const char *GetForcedPicModel() const;
+
+protected:
+  /// \name ToolChain Implementation Helper Functions
+  /// @{
+
+  /// \brief Check whether the target triple's architecture is 64-bits.
+  bool isTarget64Bit() const {
+    return (getTriple().getArch() == llvm::Triple::x86_64 ||
+            getTriple().getArch() == llvm::Triple::ppc64);
+  }
+  /// \brief Check whether the target triple's architecture is 32-bits.
+  /// FIXME: This should likely do more than just negate the 64-bit query.
+  bool isTarget32Bit() const { return !isTarget64Bit(); }
+
+  /// @}
 };
 
 /// Darwin - The base Darwin tool chain.

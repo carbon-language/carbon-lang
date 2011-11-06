@@ -2011,9 +2011,6 @@ void Linux::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
     return;
 
   const llvm::Triple &TargetTriple = getTriple();
-  const llvm::Triple::ArchType TargetArch = TargetTriple.getArch();
-  bool IsTarget64Bit = (TargetArch == llvm::Triple::x86_64 ||
-                        TargetArch == llvm::Triple::ppc64);
 
   StringRef CxxIncludeRoot(CXX_INCLUDE_ROOT);
   if (!CxxIncludeRoot.empty()) {
@@ -2023,8 +2020,8 @@ void Linux::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
 
     addLibStdCXXIncludePaths(
       CxxIncludeRoot,
-      CxxIncludeArch + (IsTarget64Bit ? CXX_INCLUDE_64BIT_DIR
-                                      : CXX_INCLUDE_32BIT_DIR),
+      CxxIncludeArch + (isTarget64Bit() ? CXX_INCLUDE_64BIT_DIR
+                                        : CXX_INCLUDE_32BIT_DIR),
       DriverArgs, CC1Args);
     return;
   }
@@ -2034,6 +2031,7 @@ void Linux::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
   // mismatches of just bit width.
   llvm::Triple::ArchType HostArch =
     llvm::Triple(getDriver().DefaultHostTriple).getArch();
+  llvm::Triple::ArchType TargetArch = TargetTriple.getArch();
   StringRef Suffix;
   if ((HostArch == llvm::Triple::x86 && TargetArch == llvm::Triple::x86_64) ||
       (HostArch == llvm::Triple::ppc && TargetArch == llvm::Triple::ppc64))
