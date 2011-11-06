@@ -60,7 +60,7 @@ variables (LLVM_USE_CRT_DEBUG, etc) instead.")
 
   make_crt_regex(MSVC_CRT_REGEX ${MSVC_CRT})
 
-  foreach(build_type ${CMAKE_CONFIGURATION_TYPES})
+  foreach(build_type ${CMAKE_CONFIGURATION_TYPES} ${CMAKE_BUILD_TYPE})
     string(TOUPPER "${build_type}" build)
     if (NOT LLVM_USE_CRT_${build})
       get_current_crt(LLVM_USE_CRT_${build}
@@ -75,7 +75,7 @@ variables (LLVM_USE_CRT_DEBUG, etc) instead.")
     endif(NOT LLVM_USE_CRT_${build})
   endforeach(build_type)
 
-  foreach(build_type ${CMAKE_CONFIGURATION_TYPES})
+  foreach(build_type ${CMAKE_CONFIGURATION_TYPES} ${CMAKE_BUILD_TYPE})
     string(TOUPPER "${build_type}" build)
     if ("${LLVM_USE_CRT_${build}}" STREQUAL "")
       set(flag_string " ")
