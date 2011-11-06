@@ -836,6 +836,29 @@ Builder.CreateResume(UnwindData);
 
 <!--=========================================================================-->
 <h3>
+<a name="loopoptimization">Loop Optimization Improvements</a>
+</h3>
+
+<div>
+<p>The induction variable simplification pass in 3.0 only modifies
+   induction variables when profitable. Sign and zero extension
+   elimination, linear function test replacement, loop unrolling, and
+   other simplifications that require induction variable analysis have
+   been generalized so they no longer require loops to be rewritten in a
+   typically suboptimal form prior to optimization. This new design
+   preserves more IR level information, avoids undoing earlier loop
+   optimizations (particularly hand-optimized loops), and no longer
+   strongly depends on the code generator rewriting loops a second time
+   in a now optimal form--an intractable problem.</p>
+
+<p>The original behavior can be restored with -mllvm -enable-iv-rewrite;
+   however, support for this mode will be short lived. As such, bug
+   reports should be filed for any significant performance regressions
+   when moving from -mllvm -enable-iv-rewrite to the 3.0 default mode.</p>
+</div>
+
+<!--=========================================================================-->
+<h3>
 <a name="optimizer">Optimizer Improvements</a>
 </h3>
 
