@@ -1459,7 +1459,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.ClaimAllArgs(options::OPT_g_Group);
   if (Arg *A = Args.getLastArg(options::OPT_g_Group))
     if (!A->getOption().matches(options::OPT_g0)) {
-      StringRef ArgString = A->getAsString(Args);
+      const std::string &ArgString = A->getAsString(Args);
       bool Valid_g = llvm::StringSwitch<bool>(ArgString)
         .Case("-g", true)
         .Case("-g3", true)
