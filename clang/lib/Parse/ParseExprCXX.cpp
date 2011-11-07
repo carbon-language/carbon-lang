@@ -283,8 +283,7 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
       assert(Tok.is(tok::coloncolon) && "NextToken() not working properly!");
       SourceLocation CCLoc = ConsumeToken();
 
-      if (!HasScopeSpecifier)
-        HasScopeSpecifier = true;
+      HasScopeSpecifier = true;
       
       ASTTemplateArgsPtr TemplateArgsPtr(Actions,
                                          TemplateId->getTemplateArgs(),
@@ -381,7 +380,7 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
                                                         EnteringContext,
                                                         Template,
                                               MemberOfUnknownSpecialization)) {
-        // We have found a template name, so annotate this this token
+        // We have found a template name, so annotate this token
         // with a template-id annotation. We do not permit the
         // template-id to be translated into a type annotation,
         // because some clients (e.g., the parsing of class template
