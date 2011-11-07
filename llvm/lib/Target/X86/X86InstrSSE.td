@@ -7563,3 +7563,41 @@ let neverHasSideEffects = 1, mayStore = 1 in
 def VEXTRACTI128mr : AVX2AIi8<0x39, MRMDestMem, (outs),
           (ins i128mem:$dst, VR256:$src1, i8imm:$src2),
           "vextracti128\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>, VEX;
+
+//===----------------------------------------------------------------------===//
+// VPMASKMOV - Conditional SIMD Integer Packed Loads and Stores
+//
+multiclass avx2_pmovmask<string OpcodeStr,
+                         Intrinsic IntLd128, Intrinsic IntLd256,
+                         Intrinsic IntSt128, Intrinsic IntSt256,
+                         PatFrag pf128, PatFrag pf256> {
+  def rm  : AVX28I<0x8c, MRMSrcMem, (outs VR128:$dst),
+             (ins VR128:$src1, i128mem:$src2),
+             !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+             [(set VR128:$dst, (IntLd128 addr:$src2, VR128:$src1))]>, VEX_4V;
+  def Yrm : AVX28I<0x8c, MRMSrcMem, (outs VR256:$dst),
+             (ins VR256:$src1, i256mem:$src2),
+             !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+             [(set VR256:$dst, (IntLd256 addr:$src2, VR256:$src1))]>, VEX_4V;
+  def mr  : AVX28I<0x8e, MRMDestMem, (outs),
+             (ins i128mem:$dst, VR128:$src1, VR128:$src2),
+             !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+             [(IntSt128 addr:$dst, VR128:$src1, VR128:$src2)]>, VEX_4V;
+  def Ymr : AVX28I<0x8e, MRMDestMem, (outs),
+             (ins i256mem:$dst, VR256:$src1, VR256:$src2),
+             !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+             [(IntSt256 addr:$dst, VR256:$src1, VR256:$src2)]>, VEX_4V;
+}
+
+defm VPMASKMOVD : avx2_pmovmask<"vpmaskmovd",
+                                int_x86_avx2_maskload_d,
+                                int_x86_avx2_maskload_d_256,
+                                int_x86_avx2_maskstore_d,
+                                int_x86_avx2_maskstore_d_256,
+                                memopv4i32, memopv8i32>;
+defm VPMASKMOVQ : avx2_pmovmask<"vpmaskmovq",
+                                int_x86_avx2_maskload_q,
+                                int_x86_avx2_maskload_q_256,
+                                int_x86_avx2_maskstore_q,
+                                int_x86_avx2_maskstore_q_256,
+                                memopv2i64, memopv4i64>, VEX_W;

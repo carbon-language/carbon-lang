@@ -902,3 +902,67 @@ define <4 x i64> @test_x86_avx2_vinserti128(<4 x i64> %a0, <2 x i64> %a1) {
   ret <4 x i64> %res
 }
 declare <4 x i64> @llvm.x86.avx2.vinserti128(<4 x i64>, <2 x i64>, i8) nounwind readnone
+
+
+define <2 x i64> @test_x86_avx2_maskload_q(i8* %a0, <2 x i64> %a1) {
+  ; CHECK: vpmaskmovq
+  %res = call <2 x i64> @llvm.x86.avx2.maskload.q(i8* %a0, <2 x i64> %a1) ; <<2 x i64>> [#uses=1]
+  ret <2 x i64> %res
+}
+declare <2 x i64> @llvm.x86.avx2.maskload.q(i8*, <2 x i64>) nounwind readonly
+
+
+define <4 x i64> @test_x86_avx2_maskload_q_256(i8* %a0, <4 x i64> %a1) {
+  ; CHECK: vpmaskmovq
+  %res = call <4 x i64> @llvm.x86.avx2.maskload.q.256(i8* %a0, <4 x i64> %a1) ; <<4 x i64>> [#uses=1]
+  ret <4 x i64> %res
+}
+declare <4 x i64> @llvm.x86.avx2.maskload.q.256(i8*, <4 x i64>) nounwind readonly
+
+
+define <4 x i32> @test_x86_avx2_maskload_d(i8* %a0, <4 x i32> %a1) {
+  ; CHECK: vpmaskmovd
+  %res = call <4 x i32> @llvm.x86.avx2.maskload.d(i8* %a0, <4 x i32> %a1) ; <<4 x i32>> [#uses=1]
+  ret <4 x i32> %res
+}
+declare <4 x i32> @llvm.x86.avx2.maskload.d(i8*, <4 x i32>) nounwind readonly
+
+
+define <8 x i32> @test_x86_avx2_maskload_d_256(i8* %a0, <8 x i32> %a1) {
+  ; CHECK: vpmaskmovd
+  %res = call <8 x i32> @llvm.x86.avx2.maskload.d.256(i8* %a0, <8 x i32> %a1) ; <<8 x i32>> [#uses=1]
+  ret <8 x i32> %res
+}
+declare <8 x i32> @llvm.x86.avx2.maskload.d.256(i8*, <8 x i32>) nounwind readonly
+
+
+define void @test_x86_avx2_maskstore_q(i8* %a0, <2 x i64> %a1, <2 x i64> %a2) {
+  ; CHECK: vpmaskmovq
+  call void @llvm.x86.avx2.maskstore.q(i8* %a0, <2 x i64> %a1, <2 x i64> %a2)
+  ret void
+}
+declare void @llvm.x86.avx2.maskstore.q(i8*, <2 x i64>, <2 x i64>) nounwind
+
+
+define void @test_x86_avx2_maskstore_q_256(i8* %a0, <4 x i64> %a1, <4 x i64> %a2) {
+  ; CHECK: vpmaskmovq
+  call void @llvm.x86.avx2.maskstore.q.256(i8* %a0, <4 x i64> %a1, <4 x i64> %a2)
+  ret void
+}
+declare void @llvm.x86.avx2.maskstore.q.256(i8*, <4 x i64>, <4 x i64>) nounwind
+
+
+define void @test_x86_avx2_maskstore_d(i8* %a0, <4 x i32> %a1, <4 x i32> %a2) {
+  ; CHECK: vpmaskmovd
+  call void @llvm.x86.avx2.maskstore.d(i8* %a0, <4 x i32> %a1, <4 x i32> %a2)
+  ret void
+}
+declare void @llvm.x86.avx2.maskstore.d(i8*, <4 x i32>, <4 x i32>) nounwind
+
+
+define void @test_x86_avx2_maskstore_d_256(i8* %a0, <8 x i32> %a1, <8 x i32> %a2) {
+  ; CHECK: vpmaskmovd
+  call void @llvm.x86.avx2.maskstore.d.256(i8* %a0, <8 x i32> %a1, <8 x i32> %a2)
+  ret void
+}
+declare void @llvm.x86.avx2.maskstore.d.256(i8*, <8 x i32>, <8 x i32>) nounwind
