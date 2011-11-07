@@ -25,6 +25,7 @@
 <li>
   Development
   <ul>
+    <li><a href="/checker_dev_manual.html">Checker Developer Manual</a></li>
     <li><a href="/dev_cxx.html">Analysis support for C++</a></li>
   </ul>
 </li>
