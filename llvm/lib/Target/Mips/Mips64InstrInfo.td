@@ -155,9 +155,9 @@ def : Pat<(i64 immZExt16:$in),
           (ORi64 ZERO_64, imm:$in)>;
 
 // zextloadi32_u
-def : Pat<(zextloadi32_u addr:$a), (DSRL (DSLL (ULW64_P8 addr:$a), 32), 32)>,
+def : Pat<(zextloadi32_u addr:$a), (DSRL32 (DSLL32 (ULW64_P8 addr:$a), 0), 0)>,
       Requires<[IsN64]>;
-def : Pat<(zextloadi32_u addr:$a), (DSRL (DSLL (ULW64 addr:$a), 32), 32)>,
+def : Pat<(zextloadi32_u addr:$a), (DSRL32 (DSLL32 (ULW64 addr:$a), 0), 0)>,
       Requires<[NotN64]>;
 
 // hi/lo relocs
