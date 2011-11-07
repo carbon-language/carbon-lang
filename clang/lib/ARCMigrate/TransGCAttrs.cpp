@@ -12,6 +12,7 @@
 #include "clang/Lex/Lexer.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Analysis/Support/SaveAndRestore.h"
+#include "clang/Sema/SemaDiagnostic.h"
 
 using namespace clang;
 using namespace arcmt;
@@ -81,6 +82,8 @@ public:
 
     ASTContext &Ctx = MigrateCtx.Pass.Ctx;
     SourceManager &SM = Ctx.getSourceManager();
+    if (Loc.isMacroID())
+      Loc = SM.getImmediateExpansionRange(Loc).first;
     llvm::SmallString<32> Buf;
     bool Invalid = false;
     StringRef Spell = Lexer::getSpelling(
@@ -101,7 +104,7 @@ public:
     MigrationContext::GCAttrOccurrence &Attr = MigrateCtx.GCAttrs.back();
 
     Attr.Kind = Kind;
-    Attr.Loc = SM.getImmediateExpansionRange(Loc).first;
+    Attr.Loc = Loc;
     Attr.ModifiedType = TL.getModifiedLoc().getType();
     Attr.Dcl = D;
     Attr.FullyMigratable = FullyMigratable;
@@ -202,12 +205,35 @@ static void errorForGCAttrsOnNonObjC(MigrationContext &MigrateCtx) {
   }
 }
 
+static void checkWeakGCAttrs(MigrationContext &MigrateCtx) {
+  TransformActions &TA = MigrateCtx.Pass.TA;
+
+  for (unsigned i = 0, e = MigrateCtx.GCAttrs.size(); i != e; ++i) {
+    MigrationContext::GCAttrOccurrence &Attr = MigrateCtx.GCAttrs[i];
+    if (Attr.Kind == MigrationContext::GCAttrOccurrence::Weak &&
+        Attr.FullyMigratable) {
+      if (Attr.ModifiedType.isNull() ||
+          !Attr.ModifiedType->isObjCRetainableType())
+        continue;
+      if (!canApplyWeak(MigrateCtx.Pass.Ctx, Attr.ModifiedType,
+                        /*AllowOnUnknownClass=*/true)) {
+        Transaction Trans(TA);
+        TA.replaceText(Attr.Loc, "__weak", "__unsafe_unretained");
+        TA.clearDiagnostic(diag::err_arc_weak_no_runtime,
+                           diag::err_arc_unsupported_weak_class,
+                           Attr.Loc);
+      }
+    }
+  }
+}
+
 void GCAttrsTraverser::traverseTU(MigrationContext &MigrateCtx) {
   GCAttrsCollector(MigrateCtx).TraverseDecl(
                                   MigrateCtx.Pass.Ctx.getTranslationUnitDecl());
 
   clearRedundantStrongs(MigrateCtx);
   errorForGCAttrsOnNonObjC(MigrateCtx);
+  checkWeakGCAttrs(MigrateCtx);
 }
 
 void MigrationContext::dumpGCAttrs() {

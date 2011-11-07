@@ -137,7 +137,8 @@ public:
 //===----------------------------------------------------------------------===//
 
 /// \brief Determine whether we can add weak to the given type.
-bool canApplyWeak(ASTContext &Ctx, QualType type);
+bool canApplyWeak(ASTContext &Ctx, QualType type,
+                  bool AllowOnUnknownClass = false);
 
 /// \brief 'Loc' is the end of a statement range. This returns the location
 /// immediately after the semicolon following the statement.

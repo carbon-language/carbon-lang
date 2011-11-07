@@ -1,7 +1,7 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fsyntax-only -fobjc-arc -x objective-c %s.result
-// RUN: arcmt-test --args -triple x86_64-apple-darwin10 -fsyntax-only -fobjc-gc-only -x objective-c %s > %t
+// RUN: %clang_cc1 -triple x86_64-apple-macosx10.7 -fsyntax-only -fobjc-runtime-has-weak -fobjc-arc -x objective-c %s.result
+// RUN: arcmt-test --args -triple x86_64-apple-macosx10.7 -fsyntax-only -fobjc-gc-only -x objective-c %s > %t
 // RUN: diff %t %s.result
-// RUN: arcmt-test --args -triple x86_64-apple-darwin10 -fsyntax-only -fobjc-gc-only -x objective-c++ %s > %t
+// RUN: arcmt-test --args -triple x86_64-apple-macosx10.7 -fsyntax-only -fobjc-gc-only -x objective-c++ %s > %t
 // RUN: diff %t %s.result
 
 #include "Common.h"
@@ -39,5 +39,12 @@ void test1(CFTypeRef *cft) {
   self.prop = 0;
   // finalize
   test1(0);
+}
+@end
+
+__attribute__((objc_arc_weak_reference_unavailable))
+@interface QQ {
+  __weak id s;
+  __weak QQ *q;
 }
 @end

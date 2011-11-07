@@ -64,7 +64,8 @@ static bool isClassInWeakBlacklist(ObjCInterfaceDecl *cls) {
   return isClassInWeakBlacklist(cls->getSuperClass());
 }
 
-bool trans::canApplyWeak(ASTContext &Ctx, QualType type) {
+bool trans::canApplyWeak(ASTContext &Ctx, QualType type,
+                         bool AllowOnUnknownClass) {
   if (!Ctx.getLangOptions().ObjCRuntimeHasWeak)
     return false;
 
@@ -73,9 +74,9 @@ bool trans::canApplyWeak(ASTContext &Ctx, QualType type) {
     T = ptr->getPointeeType();
   if (const ObjCObjectPointerType *ObjT = T->getAs<ObjCObjectPointerType>()) {
     ObjCInterfaceDecl *Class = ObjT->getInterfaceDecl();
-    if (!Class || Class->getName() == "NSObject")
+    if (!AllowOnUnknownClass && (!Class || Class->getName() == "NSObject"))
       return false; // id/NSObject is not safe for weak.
-    if (Class->isForwardDecl())
+    if (!AllowOnUnknownClass && Class->isForwardDecl())
       return false; // forward classes are not verifiable, therefore not safe.
     if (Class->isArcWeakrefUnavailable())
       return false;
