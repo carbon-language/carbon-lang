@@ -29,7 +29,7 @@ class ConstantInt;
 class DbgVariable;
 
 //===----------------------------------------------------------------------===//
-/// CompileUnit - This dwarf writer support class manages information associate
+/// CompileUnit - This dwarf writer support class manages information associated
 /// with a source file.
 class CompileUnit {
   /// ID - File identifier for source.
