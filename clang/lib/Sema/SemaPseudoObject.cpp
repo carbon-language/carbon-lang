@@ -141,6 +141,8 @@ namespace {
       : S(S), ResultIndex(PseudoObjectExpr::NoResult),
         GenericLoc(genericLoc) {}
 
+    virtual ~PseudoOpBuilder() {}
+
     /// Add a normal semantic expression.
     void addSemanticExpr(Expr *semantic) {
       Semantics.push_back(semantic);
