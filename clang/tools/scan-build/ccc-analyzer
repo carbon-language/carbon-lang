@@ -78,8 +78,8 @@ sub GetPPExt {
 # Set this to 1 if we want to include 'parser rejects' files.
 my $IncludeParserRejects = 0;
 my $ParserRejects = "Parser Rejects";
-
 my $AttributeIgnored = "Attribute Ignored";
+my $OtherError = "Other Error";
 
 sub ProcessClangFailure {
   my ($Clang, $Lang, $file, $Args, $HtmlDir, $ErrorType, $ofile) = @_;
@@ -92,6 +92,9 @@ sub ProcessClangFailure {
   }
   elsif ($ErrorType eq $AttributeIgnored) {
     $prefix = "clang_attribute_ignored";
+  }
+  elsif ($ErrorType eq $OtherError) {
+    $prefix = "clang_other_error";
   }
 
   # Generate the preprocessed file with Clang.
@@ -259,6 +262,9 @@ sub Analyze {
       if ($IncludeParserRejects && !($file =~/conftest/)) {
         ProcessClangFailure($Clang, $Lang, $file, \@CmdArgsSansAnalyses,
                             $HtmlDir, $ParserRejects, $ofile);
+      } else {
+        ProcessClangFailure($Clang, $Lang, $file, \@CmdArgsSansAnalyses,
+                            $HtmlDir, $OtherError, $ofile);      	
       }
     }
     else {
