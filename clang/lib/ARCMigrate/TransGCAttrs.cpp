@@ -108,6 +108,10 @@ public:
     Attr.ModifiedType = TL.getModifiedLoc().getType();
     Attr.Dcl = D;
     Attr.FullyMigratable = FullyMigratable;
+
+    if (ObjCPropertyDecl *PD = dyn_cast_or_null<ObjCPropertyDecl>(D))
+      MigrateCtx.PropGCAttrs[PD] = MigrateCtx.GCAttrs.size() - 1;
+
     return true;
   }
 

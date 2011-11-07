@@ -94,8 +94,10 @@ public:
     bool FullyMigratable;
   };
   std::vector<GCAttrOccurrence> GCAttrs;
-
   llvm::DenseSet<unsigned> AttrSet;
+
+  /// \brief Map of property decl to the index in the GCAttrs vector.
+  llvm::DenseMap<ObjCPropertyDecl *, unsigned> PropGCAttrs;
 
   explicit MigrationContext(MigrationPass &pass) : Pass(pass) {}
   ~MigrationContext();

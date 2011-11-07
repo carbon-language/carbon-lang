@@ -127,7 +127,7 @@ public:
       PropsTy &props = I->second;
       if (!getPropertyType(props)->isObjCRetainableType())
         continue;
-      if (hasIvarWithExplicitOwnership(props))
+      if (hasIvarWithExplicitARCOwnership(props))
         continue;
       
       Transaction Trans(Pass.TA);
@@ -457,7 +457,10 @@ private:
     return false;
   }
 
-  bool hasIvarWithExplicitOwnership(PropsTy &props) const {
+  bool hasIvarWithExplicitARCOwnership(PropsTy &props) const {
+    if (Pass.isGCMigration())
+      return false;
+
     for (PropsTy::iterator I = props.begin(), E = props.end(); I != E; ++I) {
       if (isUserDeclared(I->IvarD)) {
         if (isa<AttributedType>(I->IvarD->getType()))
