@@ -131,7 +131,7 @@ public:
   virtual bool runOnMachineFunction(MachineFunction &MF);
 
   virtual const char *getPassName() const {
-    return "SSE execution domain fixup";
+    return "Execution dependency fix";
   }
 
 private:
