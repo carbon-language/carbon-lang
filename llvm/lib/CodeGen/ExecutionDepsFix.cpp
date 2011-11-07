@@ -26,7 +26,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/ADT/DepthFirstIterator.h"
+#include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -499,11 +499,10 @@ bool ExeDepsFix::runOnMachineFunction(MachineFunction &mf) {
   }
 
   MachineBasicBlock *Entry = MF->begin();
-  SmallPtrSet<MachineBasicBlock*, 16> Visited;
-  for (df_ext_iterator<MachineBasicBlock*, SmallPtrSet<MachineBasicBlock*, 16> >
-         DFI = df_ext_begin(Entry, Visited), DFE = df_ext_end(Entry, Visited);
-         DFI != DFE; ++DFI) {
-    MachineBasicBlock *MBB = *DFI;
+  ReversePostOrderTraversal<MachineBasicBlock*> RPOT(Entry);
+  for (ReversePostOrderTraversal<MachineBasicBlock*>::rpo_iterator
+         MBBI = RPOT.begin(), MBBE = RPOT.end(); MBBI != MBBE; ++MBBI) {
+    MachineBasicBlock *MBB = *MBBI;
     enterBasicBlock(MBB);
     for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end(); I != E;
         ++I)
