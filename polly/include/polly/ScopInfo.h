@@ -40,6 +40,7 @@ namespace llvm {
 
 struct isl_map;
 struct isl_basic_map;
+struct isl_id;
 struct isl_set;
 struct isl_space;
 struct isl_constraint;
@@ -453,6 +454,14 @@ public:
   ///
   /// @return The set containing the parameters used in this Scop.
   inline const ParamVecType &getParams() const { return Parameters; }
+
+
+  /// @brief Return the isl_id that represents a certain parameter.
+  ///
+  /// @param Parameter A SCEV that was recognized as a Parameter.
+  ///
+  /// @return The corresponding isl_id or NULL otherwise.
+  isl_id *getIdForParam(const SCEV *Parameter) const;
 
   /// @name Parameter Iterators
   ///

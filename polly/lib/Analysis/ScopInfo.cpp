@@ -87,28 +87,20 @@ public:
   }
 
   isl_pw_aff *visit(const SCEV *scev) {
-    // In case the scev is contained in our list of parameters, we do not
-    // further analyze this expression, but create a new parameter in the
-    // isl_pw_aff. This allows us to treat subexpressions that we cannot
-    // translate into an piecewise affine expression, as constant parameters of
-    // the piecewise affine expression.
-    int i = 0;
-    for (Scop::const_param_iterator PI = scop->param_begin(),
-         PE = scop->param_end(); PI != PE; ++PI) {
-      if (*PI == scev) {
-        isl_id *ID = isl_id_alloc(ctx, ("p" + convertInt(i)).c_str(),
-                                  (void *) scev);
-        isl_space *Space = isl_space_set_alloc(ctx, 1, NbLoopSpaces);
-        Space = isl_space_set_dim_id(Space, isl_dim_param, 0, ID);
+    // In case the scev is a valid parameter, we do not further analyze this
+    // expression, but create a new parameter in the isl_pw_aff. This allows us
+    // to treat subexpressions that we cannot translate into an piecewise affine
+    // expression, as constant parameters of the piecewise affine expression.
+    if (isl_id *Id = scop->getIdForParam(scev)) {
+      isl_space *Space = isl_space_set_alloc(ctx, 1, NbLoopSpaces);
+      Space = isl_space_set_dim_id(Space, isl_dim_param, 0, Id);
 
-        isl_set *Domain = isl_set_universe(isl_space_copy(Space));
-        isl_aff *Affine = isl_aff_zero_on_domain(
-          isl_local_space_from_space(Space));
-        Affine = isl_aff_add_coefficient_si(Affine, isl_dim_param, 0, 1);
+      isl_set *Domain = isl_set_universe(isl_space_copy(Space));
+      isl_aff *Affine = isl_aff_zero_on_domain(
+        isl_local_space_from_space(Space));
+      Affine = isl_aff_add_coefficient_si(Affine, isl_dim_param, 0, 1);
 
-        return isl_pw_aff_alloc(Domain, Affine);
-      }
-      i++;
+      return isl_pw_aff_alloc(Domain, Affine);
     }
 
     return SCEVVisitor<SCEVAffinator, isl_pw_aff*>::visit(scev);
@@ -854,6 +846,22 @@ void ScopStmt::dump() const { print(dbgs()); }
 
 //===----------------------------------------------------------------------===//
 /// Scop class implement
+isl_id *Scop::getIdForParam(const SCEV *Parameter) const {
+  int i = 0;
+
+  for (const_param_iterator PI = param_begin(), PE = param_end(); PI != PE;
+       ++PI) {
+    if (Parameter == *PI) {
+      std::string ParameterName = "p" + convertInt(i);
+      isl_id *id = isl_id_alloc(getIslCtx(), ParameterName.c_str(),
+                                (void *) Parameter);
+      return id;
+    }
+    i++;
+  }
+
+  return NULL;
+}
 
 void Scop::buildContext(isl_ctx *IslCtx, ParamSetType *ParamSet) {
   isl_space *Space = isl_space_params_alloc(IslCtx, ParamSet->size());
