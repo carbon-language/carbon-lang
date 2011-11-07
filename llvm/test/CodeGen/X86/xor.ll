@@ -8,7 +8,7 @@ define <4 x i32> @test1() nounwind {
 	ret <4 x i32> %tmp
         
 ; X32: test1:
-; X32:	pxor	%xmm0, %xmm0
+; X32:	xorps	%xmm0, %xmm0
 ; X32:	ret
 }
 

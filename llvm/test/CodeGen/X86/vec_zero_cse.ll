@@ -1,4 +1,4 @@
-; RUN: llc < %s -relocation-model=static -march=x86 -mcpu=yonah | grep pxor | count 1
+; RUN: llc < %s -relocation-model=static -march=x86 -mcpu=yonah | grep xorps | count 1
 ; RUN: llc < %s -relocation-model=static -march=x86 -mcpu=yonah | grep pcmpeqd | count 1
 ; 64-bit stores here do not use MMX.
 

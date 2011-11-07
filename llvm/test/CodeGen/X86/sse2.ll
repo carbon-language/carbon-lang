@@ -98,7 +98,7 @@ define void @test7() nounwind {
         ret void
         
 ; CHECK: test7:
-; CHECK:	pxor	%xmm0, %xmm0
+; CHECK:	xorps	%xmm0, %xmm0
 ; CHECK:	movaps	%xmm0, 0
 }
 
