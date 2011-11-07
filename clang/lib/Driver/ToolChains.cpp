@@ -1920,12 +1920,9 @@ void Linux::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
     addSystemInclude(DriverArgs, CC1Args, D.SysRoot + "/usr/local/include");
 
   if (!DriverArgs.hasArg(options::OPT_nobuiltininc)) {
-    // Ignore the sysroot, we *always* look for clang headers relative to
-    // supplied path.
     llvm::sys::Path P(D.ResourceDir);
     P.appendComponent("include");
-    CC1Args.push_back("-internal-nosysroot-isystem");
-    CC1Args.push_back(DriverArgs.MakeArgString(P.str()));
+    addSystemInclude(DriverArgs, CC1Args, P.str());
   }
 
   if (DriverArgs.hasArg(options::OPT_nostdlibinc))
@@ -2381,12 +2378,9 @@ void Windows::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
     return;
 
   if (!DriverArgs.hasArg(options::OPT_nobuiltininc)) {
-    // Ignore the sysroot, we *always* look for clang headers relative to
-    // supplied path.
     llvm::sys::Path P(getDriver().ResourceDir);
     P.appendComponent("include");
-    CC1Args.push_back("-internal-nosysroot-isystem");
-    CC1Args.push_back(DriverArgs.MakeArgString(P.str()));
+    addSystemInclude(DriverArgs, CC1Args, P.str());
   }
 
   if (DriverArgs.hasArg(options::OPT_nostdlibinc))
