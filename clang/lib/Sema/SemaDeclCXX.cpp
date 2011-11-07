@@ -8972,16 +8972,6 @@ void Sema::AddCXXDirectInitializerToDecl(Decl *RealDecl,
   
   Expr *Init = Result.get();
   CheckImplicitConversions(Init, LParenLoc);
-  
-  if (VDecl->isConstexpr() && !VDecl->isInvalidDecl() &&
-      !Init->isValueDependent() &&
-      !Init->isConstantInitializer(Context,
-                                   VDecl->getType()->isReferenceType())) {
-    // FIXME: Improve this diagnostic to explain why the initializer is not
-    // a constant expression.
-    Diag(VDecl->getLocation(), diag::err_constexpr_var_requires_const_init)
-      << VDecl << Init->getSourceRange();
-  }
 
   Init = MaybeCreateExprWithCleanups(Init);
   VDecl->setInit(Init);

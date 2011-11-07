@@ -17,9 +17,9 @@ extern int (*const d)(int);
 
 // A variable declaration which uses the constexpr specifier shall have an
 // initializer and shall be initialized by a constant expression.
-constexpr int ni1; // expected-error {{declaration of constexpr variable 'ni1' requires an initializer}}
-constexpr struct C { C(); } ni2; // expected-error {{declaration of constexpr variable 'ni2' requires an initializer}}
-constexpr double &ni3; // expected-error {{declaration of constexpr variable 'ni3' requires an initializer}}
+constexpr int ni1; // expected-error {{default initialization of an object of const type 'const int'}}
+constexpr struct C { C(); } ni2; // expected-error {{constexpr variable 'ni2' must be initialized by a constant expression}}
+constexpr double &ni3; // expected-error {{declaration of reference variable 'ni3' requires an initializer}}
 
 constexpr int nc1 = i; // expected-error {{constexpr variable 'nc1' must be initialized by a constant expression}}
 constexpr C nc2 = C(); // expected-error {{constexpr variable 'nc2' must be initialized by a constant expression}}
@@ -34,4 +34,4 @@ struct pixel {
   int x, y;
 };
 constexpr pixel ur = { 1294, 1024 }; // ok
-constexpr pixel origin;              // expected-error {{requires an initializer}}
+constexpr pixel origin;              // expected-error {{default initialization of an object of const type 'const pixel' requires a user-provided default constructor}}

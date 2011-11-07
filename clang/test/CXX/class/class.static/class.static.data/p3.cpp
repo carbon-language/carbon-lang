@@ -6,7 +6,7 @@ struct NonLit {
 
 struct S {
   static constexpr int a = 0;
-  static constexpr int b; // expected-error {{declaration of constexpr variable 'b' requires an initializer}}
+  static constexpr int b; // expected-error {{declaration of constexpr static data member 'b' requires an initializer}}
 
   static constexpr int c = 0;
   static const int d;

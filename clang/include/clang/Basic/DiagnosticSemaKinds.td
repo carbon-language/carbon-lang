@@ -1250,8 +1250,8 @@ def err_constexpr_no_declarators : Error<
   "constexpr can only be used in variable and function declarations">;
 def err_invalid_constexpr_var_decl : Error<
   "constexpr variable declaration must be a definition">;
-def err_constexpr_var_requires_init : Error<
-  "declaration of constexpr variable %0 requires an initializer">;
+def err_constexpr_static_mem_var_requires_init : Error<
+  "declaration of constexpr static data member %0 requires an initializer">;
 def err_constexpr_var_requires_const_init : Error<
   "constexpr variable %0 must be initialized by a constant expression">;
 def err_constexpr_redecl_mismatch : Error<
