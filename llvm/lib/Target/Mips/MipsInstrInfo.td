@@ -334,8 +334,8 @@ class shift_rotate_reg<bits<6> func, bits<5> isRotate, string instr_asm,
 }
 
 // Load Upper Imediate
-class LoadUpper<bits<6> op, string instr_asm>:
-  FI<op, (outs CPURegs:$rt), (ins uimm16:$imm16),
+class LoadUpper<bits<6> op, string instr_asm, RegisterClass RC, Operand Imm>:
+  FI<op, (outs RC:$rt), (ins Imm:$imm16),
      !strconcat(instr_asm, "\t$rt, $imm16"), [], IIAlu> {
   let rs = 0;
 }
@@ -680,7 +680,7 @@ def SLTiu   : SetCC_I<0x0b, "sltiu", setult, simm16, immSExt16, CPURegs>;
 def ANDi    : ArithLogicI<0x0c, "andi", and, uimm16, immZExt16, CPURegs>;
 def ORi     : ArithLogicI<0x0d, "ori", or, uimm16, immZExt16, CPURegs>;
 def XORi    : ArithLogicI<0x0e, "xori", xor, uimm16, immZExt16, CPURegs>;
-def LUi     : LoadUpper<0x0f, "lui">;
+def LUi     : LoadUpper<0x0f, "lui", CPURegs, uimm16>;
 
 /// Arithmetic Instructions (3-Operand, R-Type)
 def ADDu    : ArithLogicR<0x00, 0x21, "addu", add, IIAlu, CPURegs, 1>;
