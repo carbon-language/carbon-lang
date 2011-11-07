@@ -18,7 +18,6 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCExpr.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
@@ -967,7 +966,8 @@ void ARMInstPrinter::printNEONModImmOperand(const MCInst *MI, unsigned OpNum,
   unsigned EncodedImm = MI->getOperand(OpNum).getImm();
   unsigned EltBits;
   uint64_t Val = ARM_AM::decodeNEONModImm(EncodedImm, EltBits);
-  O << "#0x" << utohexstr(Val);
+  O << "#0x";
+  O.write_hex(Val);
 }
 
 void ARMInstPrinter::printImmPlusOneOperand(const MCInst *MI, unsigned OpNum,

@@ -21,7 +21,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
 using namespace llvm;
 
@@ -738,8 +737,8 @@ bool FrameEmitterImpl::EmitCompactUnwind(MCStreamer &Streamer,
 
   // Compact Encoding
   Size = getSizeForEncoding(Streamer, dwarf::DW_EH_PE_udata4);
-  if (VerboseAsm) Streamer.AddComment(Twine("Compact Unwind Encoding: 0x") +
-                                      Twine(llvm::utohexstr(Encoding)));
+  if (VerboseAsm) Streamer.AddComment("Compact Unwind Encoding: 0x" +
+                                      Twine::utohexstr(Encoding));
   Streamer.EmitIntValue(Encoding, Size);
 
 

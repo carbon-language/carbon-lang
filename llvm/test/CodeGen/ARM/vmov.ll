@@ -56,13 +56,13 @@ define <2 x i32> @v_movi32d() nounwind {
 
 define <2 x i32> @v_movi32e() nounwind {
 ;CHECK: v_movi32e:
-;CHECK: vmov.i32 d{{.*}}, #0x20FF
+;CHECK: vmov.i32 d{{.*}}, #0x20ff
 	ret <2 x i32> < i32 8447, i32 8447 >
 }
 
 define <2 x i32> @v_movi32f() nounwind {
 ;CHECK: v_movi32f:
-;CHECK: vmov.i32 d{{.*}}, #0x20FFFF
+;CHECK: vmov.i32 d{{.*}}, #0x20ffff
 	ret <2 x i32> < i32 2162687, i32 2162687 >
 }
 
@@ -92,19 +92,19 @@ define <2 x i32> @v_mvni32d() nounwind {
 
 define <2 x i32> @v_mvni32e() nounwind {
 ;CHECK: v_mvni32e:
-;CHECK: vmvn.i32 d{{.*}}, #0x20FF
+;CHECK: vmvn.i32 d{{.*}}, #0x20ff
 	ret <2 x i32> < i32 4294958848, i32 4294958848 >
 }
 
 define <2 x i32> @v_mvni32f() nounwind {
 ;CHECK: v_mvni32f:
-;CHECK: vmvn.i32 d{{.*}}, #0x20FFFF
+;CHECK: vmvn.i32 d{{.*}}, #0x20ffff
 	ret <2 x i32> < i32 4292804608, i32 4292804608 >
 }
 
 define <1 x i64> @v_movi64() nounwind {
 ;CHECK: v_movi64:
-;CHECK: vmov.i64 d{{.*}}, #0xFF0000FF0000FFFF
+;CHECK: vmov.i64 d{{.*}}, #0xff0000ff0000ffff
 	ret <1 x i64> < i64 18374687574888349695 >
 }
 
@@ -152,19 +152,19 @@ define <4 x i32> @v_movQi32d() nounwind {
 
 define <4 x i32> @v_movQi32e() nounwind {
 ;CHECK: v_movQi32e:
-;CHECK: vmov.i32 q{{.*}}, #0x20FF
+;CHECK: vmov.i32 q{{.*}}, #0x20ff
 	ret <4 x i32> < i32 8447, i32 8447, i32 8447, i32 8447 >
 }
 
 define <4 x i32> @v_movQi32f() nounwind {
 ;CHECK: v_movQi32f:
-;CHECK: vmov.i32 q{{.*}}, #0x20FFFF
+;CHECK: vmov.i32 q{{.*}}, #0x20ffff
 	ret <4 x i32> < i32 2162687, i32 2162687, i32 2162687, i32 2162687 >
 }
 
 define <2 x i64> @v_movQi64() nounwind {
 ;CHECK: v_movQi64:
-;CHECK: vmov.i64 q{{.*}}, #0xFF0000FF0000FFFF
+;CHECK: vmov.i64 q{{.*}}, #0xff0000ff0000ffff
 	ret <2 x i64> < i64 18374687574888349695, i64 18374687574888349695 >
 }
 
@@ -182,7 +182,7 @@ entry:
 define void @vdupnneg75(%struct.int8x8_t* noalias nocapture sret %agg.result) nounwind {
 entry:
 ;CHECK: vdupnneg75:
-;CHECK: vmov.i8 d{{.*}}, #0xB5
+;CHECK: vmov.i8 d{{.*}}, #0xb5
   %0 = getelementptr inbounds %struct.int8x8_t* %agg.result, i32 0, i32 0 ; <<8 x i8>*> [#uses=1]
   store <8 x i8> <i8 -75, i8 -75, i8 -75, i8 -75, i8 -75, i8 -75, i8 -75, i8 -75>, <8 x i8>* %0, align 8
   ret void

@@ -39,7 +39,6 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
@@ -119,7 +118,7 @@ namespace {
 static void printHex32(unsigned int Value, raw_ostream &O) {
   O << "0x";
   for (int i = 7; i >= 0; i--)
-    O << utohexstr((Value & (0xF << (i*4))) >> (i*4));
+    O.write_hex((Value & (0xF << (i*4))) >> (i*4));
 }
 
 // Create a bitmask with all callee saved registers for CPU or Floating Point
