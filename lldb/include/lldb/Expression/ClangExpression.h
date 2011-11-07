@@ -73,6 +73,16 @@ public:
     FunctionName () = 0;
     
     //------------------------------------------------------------------
+    /// Return the language that should be used when parsing.  To use
+    /// the default, return eLanguageTypeUnknown.
+    //------------------------------------------------------------------
+    virtual lldb::LanguageType
+    Language ()
+    {
+        return lldb::eLanguageTypeUnknown;
+    }
+    
+    //------------------------------------------------------------------
     /// Return the object that the parser should use when resolving external
     /// values.  May be NULL if everything should be self-contained.
     //------------------------------------------------------------------

@@ -1544,6 +1544,7 @@ Target::EvaluateExpression
                     
             execution_results = ClangUserExpression::Evaluate (exe_ctx, 
                                                                execution_policy,
+                                                               lldb::eLanguageTypeUnknown,
                                                                unwind_on_error,
                                                                expr_cstr, 
                                                                prefix, 

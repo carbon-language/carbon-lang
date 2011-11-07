@@ -60,7 +60,7 @@ BreakpointOptions::BreakpointOptions(const BreakpointOptions& rhs) :
     if (rhs.m_thread_spec_ap.get() != NULL)
         m_thread_spec_ap.reset (new ThreadSpec(*rhs.m_thread_spec_ap.get()));
     if (rhs.m_condition_ap.get())
-        m_condition_ap.reset (new ClangUserExpression (rhs.m_condition_ap->GetUserText(), NULL));
+        m_condition_ap.reset (new ClangUserExpression (rhs.m_condition_ap->GetUserText(), NULL, lldb::eLanguageTypeUnknown));
 }
 
 //----------------------------------------------------------------------
@@ -77,7 +77,7 @@ BreakpointOptions::operator=(const BreakpointOptions& rhs)
     if (rhs.m_thread_spec_ap.get() != NULL)
         m_thread_spec_ap.reset(new ThreadSpec(*rhs.m_thread_spec_ap.get()));
     if (rhs.m_condition_ap.get())
-        m_condition_ap.reset (new ClangUserExpression (rhs.m_condition_ap->GetUserText(), NULL));
+        m_condition_ap.reset (new ClangUserExpression (rhs.m_condition_ap->GetUserText(), NULL, lldb::eLanguageTypeUnknown));
     return *this;
 }
 
@@ -166,7 +166,7 @@ BreakpointOptions::SetCondition (const char *condition)
     }
     else
     {
-        m_condition_ap.reset(new ClangUserExpression (condition, NULL));
+        m_condition_ap.reset(new ClangUserExpression (condition, NULL, lldb::eLanguageTypeUnknown));
     }
 }
 

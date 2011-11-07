@@ -44,10 +44,12 @@
 using namespace lldb_private;
 
 ClangUserExpression::ClangUserExpression (const char *expr,
-                                          const char *expr_prefix) :
+                                          const char *expr_prefix,
+                                          lldb::LanguageType language) :
     ClangExpression (),
     m_expr_text (expr),
     m_expr_prefix (expr_prefix ? expr_prefix : ""),
+    m_language (language),
     m_transformed_text (),
     m_desired_type (NULL, NULL),
     m_cplusplus (false),
@@ -58,6 +60,20 @@ ClangUserExpression::ClangUserExpression (const char *expr,
     m_evaluated_statically (false),
     m_const_result ()
 {
+    switch (m_language)
+    {
+    case lldb::eLanguageTypeC_plus_plus:
+        m_allow_cxx = true;
+        break;
+    case lldb::eLanguageTypeObjC:
+        m_allow_objc = true;
+        break;
+    case lldb::eLanguageTypeObjC_plus_plus:
+    default:
+        m_allow_cxx = true;
+        m_allow_objc = true;
+        break;
+    }
 }
 
 ClangUserExpression::~ClangUserExpression ()
@@ -86,6 +102,9 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx, Error &err)
 {
     m_target = exe_ctx.GetTargetPtr();
     
+    if (!(m_allow_cxx || m_allow_objc))
+        return;
+    
     StackFrame *frame = exe_ctx.GetFramePtr();
     if (frame == NULL)
         return;
@@ -107,7 +126,7 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx, Error &err)
             
     if (clang::CXXMethodDecl *method_decl = llvm::dyn_cast<clang::CXXMethodDecl>(decl_context))
     {
-        if (method_decl->isInstance())
+        if (m_allow_cxx && method_decl->isInstance())
         {
             VariableList *vars = frame->GetVariableList(false);
             
@@ -148,7 +167,7 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx, Error &err)
     }
     else if (clang::ObjCMethodDecl *method_decl = llvm::dyn_cast<clang::ObjCMethodDecl>(decl_context))
     {        
-        if (method_decl->isInstanceMethod())
+        if (m_allow_objc && method_decl->isInstanceMethod())
         {
             VariableList *vars = frame->GetVariableList(false);
             
@@ -602,18 +621,20 @@ ClangUserExpression::Execute (Stream &error_stream,
 ExecutionResults
 ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
                                lldb_private::ExecutionPolicy execution_policy,
+                               lldb::LanguageType language,
                                bool discard_on_error,
                                const char *expr_cstr,
                                const char *expr_prefix,
                                lldb::ValueObjectSP &result_valobj_sp)
 {
     Error error;
-    return EvaluateWithError (exe_ctx, execution_policy, discard_on_error, expr_cstr, expr_prefix, result_valobj_sp, error);
+    return EvaluateWithError (exe_ctx, execution_policy, language, discard_on_error, expr_cstr, expr_prefix, result_valobj_sp, error);
 }
 
 ExecutionResults
 ClangUserExpression::EvaluateWithError (ExecutionContext &exe_ctx,
                                         lldb_private::ExecutionPolicy execution_policy,
+                                        lldb::LanguageType language,
                                         bool discard_on_error,
                                         const char *expr_cstr,
                                         const char *expr_prefix,
@@ -642,7 +663,7 @@ ClangUserExpression::EvaluateWithError (ExecutionContext &exe_ctx,
     if (process == NULL || !process->CanJIT())
         execution_policy = eExecutionPolicyNever;
     
-    ClangUserExpressionSP user_expression_sp (new ClangUserExpression (expr_cstr, expr_prefix));
+    ClangUserExpressionSP user_expression_sp (new ClangUserExpression (expr_cstr, expr_prefix, language));
 
     StreamString error_stream;
         

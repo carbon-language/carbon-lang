@@ -204,19 +204,32 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
     
     // 2. Set options.
     
-    // Parse expressions as Objective C++ regardless of context.
-    // Our hook into Clang's lookup mechanism only works in C++.
-    m_compiler->getLangOpts().CPlusPlus = true;
+    lldb::LanguageType language = expr.Language();
     
-    // Setup objective C
-    m_compiler->getLangOpts().ObjC1 = true;
-    m_compiler->getLangOpts().ObjC2 = true;
+    switch (language)
+    {
+    case lldb::eLanguageTypeC:
+        break;
+    case lldb::eLanguageTypeObjC:
+        m_compiler->getLangOpts().ObjC1 = true;
+        m_compiler->getLangOpts().ObjC2 = true;
+        break;
+    case lldb::eLanguageTypeC_plus_plus:
+        m_compiler->getLangOpts().CPlusPlus = true;
+        break;
+    case lldb::eLanguageTypeObjC_plus_plus:
+    default:
+        m_compiler->getLangOpts().ObjC1 = true;
+        m_compiler->getLangOpts().ObjC2 = true;
+        m_compiler->getLangOpts().CPlusPlus = true;
+        break;
+    }
     
     Process *process = NULL;
     if (exe_scope)
         process = exe_scope->CalculateProcess();
 
-    if (process)
+    if (process && m_compiler->getLangOpts().ObjC1)
     {
         if (process->GetObjCLanguageRuntime())
         {

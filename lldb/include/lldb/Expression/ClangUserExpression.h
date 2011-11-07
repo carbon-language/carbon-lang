@@ -58,9 +58,15 @@ public:
     /// @param[in] expr_prefix
     ///     If non-NULL, a C string containing translation-unit level
     ///     definitions to be included when the expression is parsed.
+    ///
+    /// @param[in] language
+    ///     If not eLanguageTypeUnknown, a language to use when parsing
+    ///     the expression.  Currently restricted to those languages 
+    ///     supported by Clang.
     //------------------------------------------------------------------
     ClangUserExpression (const char *expr,
-                         const char *expr_prefix);
+                         const char *expr_prefix,
+                         lldb::LanguageType language);
     
     //------------------------------------------------------------------
     /// Destructor
@@ -200,6 +206,16 @@ public:
     }
     
     //------------------------------------------------------------------
+    /// Return the language that should be used when parsing.  To use
+    /// the default, return eLanguageTypeUnknown.
+    //------------------------------------------------------------------
+    virtual lldb::LanguageType
+    Language ()
+    {
+        return m_language;
+    }
+    
+    //------------------------------------------------------------------
     /// Return the object that the parser should use when resolving external
     /// values.  May be NULL if everything should be self-contained.
     //------------------------------------------------------------------
@@ -260,6 +276,11 @@ public:
     ///     Determines whether or not to try using the IR interpreter to
     ///     avoid running the expression on the parser.
     ///
+    /// @param[in] language
+    ///     If not eLanguageTypeUnknown, a language to use when parsing
+    ///     the expression.  Currently restricted to those languages 
+    ///     supported by Clang.
+    ///
     /// @param[in] discard_on_error
     ///     True if the thread's state should be restored in the case 
     ///     of an error.
@@ -280,6 +301,7 @@ public:
     static ExecutionResults
     Evaluate (ExecutionContext &exe_ctx,
               lldb_private::ExecutionPolicy execution_policy,
+              lldb::LanguageType language,
               bool discard_on_error,
               const char *expr_cstr,
               const char *expr_prefix,
@@ -288,6 +310,7 @@ public:
     static ExecutionResults
     EvaluateWithError (ExecutionContext &exe_ctx,
                        lldb_private::ExecutionPolicy execution_policy,
+                       lldb::LanguageType language,
                        bool discard_on_error,
                        const char *expr_cstr,
                        const char *expr_prefix,
@@ -319,6 +342,9 @@ private:
     
     std::string                                 m_expr_text;            ///< The text of the expression, as typed by the user
     std::string                                 m_expr_prefix;          ///< The text of the translation-level definitions, as provided by the user
+    lldb::LanguageType                          m_language;             ///< The language to use when parsing (eLanguageTypeUnknown means use defaults)
+    bool                                        m_allow_cxx;            ///< True if the language allows C++.
+    bool                                        m_allow_objc;           ///< True if the language allows Objective-C.
     std::string                                 m_transformed_text;     ///< The text of the expression, as send to the parser
     TypeFromUser                                m_desired_type;         ///< The type to coerce the expression's result to.  If NULL, inferred from the expression.
     

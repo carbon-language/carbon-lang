@@ -208,6 +208,7 @@ public:
                         Error error;
                         result_code = ClangUserExpression::EvaluateWithError (context.exe_ctx,
                                                                               eExecutionPolicyAlways,
+                                                                              lldb::eLanguageTypeUnknown,
                                                                               discard_on_error,
                                                                               bp_loc_sp->GetConditionText(),
                                                                               NULL,
@@ -446,6 +447,7 @@ public:
                 Error error;
                 result_code = ClangUserExpression::EvaluateWithError (context.exe_ctx,
                                                                       eExecutionPolicyAlways,
+                                                                      lldb::eLanguageTypeUnknown,
                                                                       discard_on_error,
                                                                       wp_sp->GetConditionText(),
                                                                       NULL,
