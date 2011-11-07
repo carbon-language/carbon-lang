@@ -7601,3 +7601,43 @@ defm VPMASKMOVQ : avx2_pmovmask<"vpmaskmovq",
                                 int_x86_avx2_maskstore_q,
                                 int_x86_avx2_maskstore_q_256,
                                 memopv2i64, memopv4i64>, VEX_W;
+
+
+//===----------------------------------------------------------------------===//
+// Variable Bit Shifts
+//
+multiclass avx2_var_shift<bits<8> opc, string OpcodeStr,
+                          PatFrag pf128, PatFrag pf256,
+                          Intrinsic Int128, Intrinsic Int256> {
+  def rr  : AVX28I<opc, MRMSrcReg, (outs VR128:$dst),
+             (ins VR128:$src1, VR128:$src2),
+             !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+             [(set VR128:$dst, (Int128 VR128:$src1, VR128:$src2))]>, VEX_4V;
+  def rm  : AVX28I<opc, MRMSrcMem, (outs VR128:$dst),
+             (ins VR128:$src1, i128mem:$src2),
+             !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+             [(set VR128:$dst, (Int128 VR128:$src1, (pf128 addr:$src2)))]>,
+             VEX_4V;
+  def Yrr : AVX28I<opc, MRMSrcReg, (outs VR256:$dst),
+             (ins VR256:$src1, VR256:$src2),
+             !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+             [(set VR256:$dst, (Int256 VR256:$src1, VR256:$src2))]>, VEX_4V;
+  def Yrm : AVX28I<opc, MRMSrcMem, (outs VR256:$dst),
+             (ins VR256:$src1, i256mem:$src2),
+             !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+             [(set VR256:$dst, (Int256 VR256:$src1, (pf256 addr:$src2)))]>,
+             VEX_4V;
+}
+
+defm VPSLLVD : avx2_var_shift<0x47, "vpsllvd", memopv4i32, memopv8i32,
+                              int_x86_avx2_psllv_d, int_x86_avx2_psllv_d_256>;
+defm VPSLLVQ : avx2_var_shift<0x47, "vpsllvq", memopv2i64, memopv4i64,
+                              int_x86_avx2_psllv_q, int_x86_avx2_psllv_q_256>,
+                              VEX_W;
+defm VPSRLVD : avx2_var_shift<0x45, "vpsrlvd", memopv4i32, memopv8i32,
+                              int_x86_avx2_psrlv_d, int_x86_avx2_psrlv_d_256>;
+defm VPSRLVQ : avx2_var_shift<0x45, "vpsrlvq", memopv2i64, memopv4i64,
+                              int_x86_avx2_psrlv_q, int_x86_avx2_psrlv_q_256>,
+                              VEX_W;
+defm VPSRAVD : avx2_var_shift<0x46, "vpsravd", memopv4i32, memopv8i32,
+                              int_x86_avx2_psrav_d, int_x86_avx2_psrav_d_256>;
