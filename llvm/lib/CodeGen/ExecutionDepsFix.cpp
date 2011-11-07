@@ -510,11 +510,20 @@ bool ExeDepsFix::runOnMachineFunction(MachineFunction &mf) {
     leaveBasicBlock(MBB);
   }
 
-  // Clear the LiveOuts vectors. Should we also collapse any remaining
-  // DomainValues?
-  for (LiveOutMap::const_iterator i = LiveOuts.begin(), e = LiveOuts.end();
-         i != e; ++i)
-    delete[] i->second;
+  // Clear the LiveOuts vectors and collapse any remaining DomainValues.
+  for (ReversePostOrderTraversal<MachineBasicBlock*>::rpo_iterator
+         MBBI = RPOT.begin(), MBBE = RPOT.end(); MBBI != MBBE; ++MBBI) {
+    LiveOutMap::const_iterator FI = LiveOuts.find(*MBBI);
+    if (FI == LiveOuts.end())
+      continue;
+    assert(FI->second && "Null entry");
+    // The DomainValue is collapsed when the last reference is killed.
+    LiveRegs = FI->second;
+    for (unsigned i = 0, e = NumRegs; i != e; ++i)
+      if (LiveRegs[i])
+        Kill(i);
+    delete[] LiveRegs;
+  }
   LiveOuts.clear();
   Avail.clear();
   Allocator.DestroyAll();

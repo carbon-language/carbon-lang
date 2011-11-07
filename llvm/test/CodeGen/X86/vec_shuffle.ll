@@ -1,9 +1,8 @@
-; RUN: llc < %s -march=x86 -mcpu=core2 -o %t
-; RUN: grep movq    %t | count 1
-; RUN: grep pshufd  %t | count 1
-; RUN: grep movupd  %t | count 1
-; RUN: grep pshufhw %t | count 1
+; RUN: llc < %s -march=x86 -mcpu=core2 | FileCheck %s
 
+; CHECK: test_v4sf
+; CHECK: movq 8(%esp)
+; CHECK: pshufd $80
 define void @test_v4sf(<4 x float>* %P, float %X, float %Y) nounwind {
 	%tmp = insertelement <4 x float> zeroinitializer, float %X, i32 0		; <<4 x float>> [#uses=1]
 	%tmp2 = insertelement <4 x float> %tmp, float %X, i32 1		; <<4 x float>> [#uses=1]
@@ -13,6 +12,9 @@ define void @test_v4sf(<4 x float>* %P, float %X, float %Y) nounwind {
 	ret void
 }
 
+; CHECK: test_v2sd
+; CHECK: movups	8(%esp)
+; CHECK: movaps
 define void @test_v2sd(<2 x double>* %P, double %X, double %Y) nounwind {
 	%tmp = insertelement <2 x double> zeroinitializer, double %X, i32 0		; <<2 x double>> [#uses=1]
 	%tmp2 = insertelement <2 x double> %tmp, double %Y, i32 1		; <<2 x double>> [#uses=1]
@@ -20,6 +22,9 @@ define void @test_v2sd(<2 x double>* %P, double %X, double %Y) nounwind {
 	ret void
 }
 
+; CHECK: test_v8i16
+; CHECK: pshufhw $-58
+; CHECK: movdqa
 define void @test_v8i16(<2 x i64>* %res, <2 x i64>* %A) nounwind {
 	%tmp = load <2 x i64>* %A		; <<2 x i64>> [#uses=1]
 	%tmp.upgrd.1 = bitcast <2 x i64> %tmp to <8 x i16>		; <<8 x i16>> [#uses=8]

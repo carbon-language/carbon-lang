@@ -315,24 +315,31 @@ declare i32 @llvm.x86.sse2.movmsk.pd(<2 x double>) nounwind readnone
 
 
 define void @test_x86_sse2_movnt_dq(i8* %a0, <2 x i64> %a1) {
+  ; CHECK: test_x86_sse2_movnt_dq
   ; CHECK: movl
   ; CHECK: vmovntdq
-  call void @llvm.x86.sse2.movnt.dq(i8* %a0, <2 x i64> %a1)
+  ; add operation forces the execution domain.
+  %a2 = add <2 x i64> %a1, <i64 1, i64 1>
+  call void @llvm.x86.sse2.movnt.dq(i8* %a0, <2 x i64> %a2)
   ret void
 }
 declare void @llvm.x86.sse2.movnt.dq(i8*, <2 x i64>) nounwind
 
 
 define void @test_x86_sse2_movnt_pd(i8* %a0, <2 x double> %a1) {
+  ; CHECK test_x86_sse2_movnt_pd
   ; CHECK: movl
   ; CHECK: vmovntpd
-  call void @llvm.x86.sse2.movnt.pd(i8* %a0, <2 x double> %a1)
+  ; fadd operation forces the execution domain.
+  %a2 = fadd <2 x double> %a1, <double 0x0, double 0x4200000000000000>
+  call void @llvm.x86.sse2.movnt.pd(i8* %a0, <2 x double> %a2)
   ret void
 }
 declare void @llvm.x86.sse2.movnt.pd(i8*, <2 x double>) nounwind
 
 
 define <2 x double> @test_x86_sse2_mul_sd(<2 x double> %a0, <2 x double> %a1) {
+  ; CHECK: test_x86_sse2_mul_sd
   ; CHECK: vmulsd
   %res = call <2 x double> @llvm.x86.sse2.mul.sd(<2 x double> %a0, <2 x double> %a1) ; <<2 x double>> [#uses=1]
   ret <2 x double> %res
@@ -749,6 +756,7 @@ declare <2 x double> @llvm.x86.sse2.sqrt.sd(<2 x double>) nounwind readnone
 
 
 define void @test_x86_sse2_storel_dq(i8* %a0, <4 x i32> %a1) {
+  ; CHECK: test_x86_sse2_storel_dq
   ; CHECK: movl
   ; CHECK: vmovq
   call void @llvm.x86.sse2.storel.dq(i8* %a0, <4 x i32> %a1)
@@ -758,6 +766,7 @@ declare void @llvm.x86.sse2.storel.dq(i8*, <4 x i32>) nounwind
 
 
 define void @test_x86_sse2_storeu_dq(i8* %a0, <16 x i8> %a1) {
+  ; CHECK: test_x86_sse2_storeu_dq
   ; CHECK: movl
   ; CHECK: vmovdqu
   call void @llvm.x86.sse2.storeu.dq(i8* %a0, <16 x i8> %a1)
@@ -767,15 +776,18 @@ declare void @llvm.x86.sse2.storeu.dq(i8*, <16 x i8>) nounwind
 
 
 define void @test_x86_sse2_storeu_pd(i8* %a0, <2 x double> %a1) {
+  ; CHECK: test_x86_sse2_storeu_pd
   ; CHECK: movl
   ; CHECK: vmovupd
-  call void @llvm.x86.sse2.storeu.pd(i8* %a0, <2 x double> %a1)
+  %a2 = fadd <2 x double> %a1, <double 0x0, double 0x4200000000000000>
+  call void @llvm.x86.sse2.storeu.pd(i8* %a0, <2 x double> %a2)
   ret void
 }
 declare void @llvm.x86.sse2.storeu.pd(i8*, <2 x double>) nounwind
 
 
 define <2 x double> @test_x86_sse2_sub_sd(<2 x double> %a0, <2 x double> %a1) {
+  ; CHECK: test_x86_sse2_sub_sd
   ; CHECK: vsubsd
   %res = call <2 x double> @llvm.x86.sse2.sub.sd(<2 x double> %a0, <2 x double> %a1) ; <<2 x double>> [#uses=1]
   ret <2 x double> %res

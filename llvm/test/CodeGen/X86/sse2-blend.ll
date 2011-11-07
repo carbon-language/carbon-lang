@@ -26,11 +26,10 @@ define void@vsel_i32(<4 x i32>* %v1, <4 x i32>* %v2) {
   ret void
 }
 
-; FIXME: The -mattr=+sse2,-sse41 disable the ExecutionDepsFix pass causing the
-; mixed domains here.
+; Without forcing instructions, fall back to the preferred PS domain.
 ; CHECK: vsel_i64
 ; CHECK: xorps
-; CHECK: pand
+; CHECK: andps
 ; CHECK: andnps
 ; CHECK: orps
 ; CHECK: ret
@@ -43,15 +42,13 @@ define void@vsel_i64(<4 x i64>* %v1, <4 x i64>* %v2) {
   ret void
 }
 
-; FIXME: The -mattr=+sse2,-sse41 disable the ExecutionDepsFix pass causing the
-; mixed domains here.
+; Without forcing instructions, fall back to the preferred PS domain.
 ; CHECK: vsel_double
 ; CHECK: xorps
-; CHECK: pand
+; CHECK: andps
 ; CHECK: andnps
 ; CHECK: orps
 ; CHECK: ret
-
 
 define void@vsel_double(<4 x double>* %v1, <4 x double>* %v2) {
   %A = load <4 x double>* %v1

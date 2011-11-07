@@ -144,7 +144,7 @@ define <2 x double> @test11(double %a, double %b) nounwind {
 	%tmp7 = insertelement <2 x double> %tmp, double %b, i32 1		; <<2 x double>> [#uses=1]
 	ret <2 x double> %tmp7
 ; CHECK: test11:
-; CHECK: movapd	4(%esp), %xmm0
+; CHECK: movaps	4(%esp), %xmm0
 }
 
 define void @test12() nounwind {

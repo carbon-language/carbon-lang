@@ -165,7 +165,9 @@ entry:
 ; CHECK: vpandn  %xmm
 define <2 x i64> @vpandn(<2 x i64> %a, <2 x i64> %b) nounwind uwtable readnone ssp {
 entry:
-  %y = xor <2 x i64> %a, <i64 -1, i64 -1>
+  ; Force the execution domain with an add.
+  %a2 = add <2 x i64> %a, <i64 1, i64 1>
+  %y = xor <2 x i64> %a2, <i64 -1, i64 -1>
   %x = and <2 x i64> %a, %y
   ret <2 x i64> %x
 }
@@ -173,7 +175,9 @@ entry:
 ; CHECK: vpand %xmm
 define <2 x i64> @vpand(<2 x i64> %a, <2 x i64> %b) nounwind uwtable readnone ssp {
 entry:
-  %x = and <2 x i64> %a, %b
+  ; Force the execution domain with an add.
+  %a2 = add <2 x i64> %a, <i64 1, i64 1>
+  %x = and <2 x i64> %a2, %b
   ret <2 x i64> %x
 }
 
