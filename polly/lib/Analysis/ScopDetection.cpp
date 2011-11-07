@@ -124,6 +124,21 @@ struct ValidatorResult {
 
   ValidatorResult(SCEVType::TYPE type) : type(type) {};
 
+  bool isConstant() {
+    return type == SCEVType::INT || type == SCEVType::PARAM;
+  }
+
+  bool isValid() {
+    return type != SCEVType::INVALID;
+  }
+
+  bool isIV() {
+    return type == SCEVType::IV;
+  }
+
+  bool isINT() {
+    return type == SCEVType::INT;
+  }
 };
 
 /// Check if a SCEV is valid in a SCoP.
@@ -147,7 +162,7 @@ public:
     SCEVValidator Validator(R, SE, BaseAddress);
     ValidatorResult Result = Validator.visit(Scev);
 
-    return Result.type != SCEVType::INVALID;
+    return Result.isValid();
   }
 
   SCEVValidator(const Region *R, ScalarEvolution &SE,
@@ -164,7 +179,7 @@ public:
     // We currently do not represent a truncate expression as an affine
     // expression. If it is constant during Scop execution, we treat it as a
     // parameter, otherwise we bail out.
-    if (Op.type == SCEVType::INT || Op.type == SCEVType::PARAM)
+    if (Op.isConstant())
       return ValidatorResult(SCEVType::PARAM);
 
     return ValidatorResult (SCEVType::INVALID);
@@ -176,7 +191,7 @@ public:
     // We currently do not represent a zero extend expression as an affine
     // expression. If it is constant during Scop execution, we treat it as a
     // parameter, otherwise we bail out.
-    if (Op.type == SCEVType::INT || Op.type == SCEVType::PARAM)
+    if (Op.isConstant())
       return ValidatorResult (SCEVType::PARAM);
 
     return ValidatorResult(SCEVType::INVALID);
@@ -196,7 +211,7 @@ public:
     for (int i = 0, e = Expr->getNumOperands(); i < e; ++i) {
       ValidatorResult Op = visit(Expr->getOperand(i));
 
-      if (Op.type == SCEVType::INVALID)
+      if (!Op.isValid())
         return ValidatorResult(SCEVType::INVALID);
 
       Return.type = std::max(Return.type, Op.type);
@@ -232,8 +247,7 @@ public:
     // We currently do not represent a unsigned devision as an affine
     // expression. If the division is constant during Scop execution we treat it
     // as a parameter, otherwise we bail out.
-    if (LHS.type == SCEVType::INT || LHS.type == SCEVType::PARAM ||
-        RHS.type == SCEVType::INT || RHS.type == SCEVType::PARAM)
+    if (LHS.isConstant() && RHS.isConstant())
       return ValidatorResult(SCEVType::PARAM);
 
     return ValidatorResult(SCEVType::INVALID);
@@ -246,20 +260,18 @@ public:
     ValidatorResult Start = visit(Expr->getStart());
     ValidatorResult Recurrence = visit(Expr->getStepRecurrence(SE));
 
-    if (Start.type == SCEVType::INVALID ||
-        Recurrence.type == SCEVType::INVALID ||
-        Recurrence.type == SCEVType::IV)
+    if (!Start.isValid() || !Recurrence.isValid() || Recurrence.isIV())
       return ValidatorResult(SCEVType::INVALID);
 
 
     if (!R->contains(Expr->getLoop())) {
-      if (Start.type == SCEVType::IV)
+      if (Start.isIV())
         return ValidatorResult(SCEVType::INVALID);
       else
         return ValidatorResult(SCEVType::PARAM);
     }
 
-    if (Recurrence.type != SCEVType::INT)
+    if (!Recurrence.isINT())
       return ValidatorResult(SCEVType::INVALID);
 
     return ValidatorResult(SCEVType::IV);
@@ -271,7 +283,7 @@ public:
     for (int i = 0, e = Expr->getNumOperands(); i < e; ++i) {
       ValidatorResult Op = visit(Expr->getOperand(i));
 
-      if (Op.type == SCEVType::INVALID)
+      if (!Op.isValid())
         return ValidatorResult(SCEVType::INVALID);
 
       Return.type = std::max(Return.type, Op.type);
@@ -286,7 +298,7 @@ public:
     for (int i = 0, e = Expr->getNumOperands(); i < e; ++i) {
       ValidatorResult Op = visit(Expr->getOperand(i));
 
-      if (Op.type != SCEVType::INT && Op.type != SCEVType::PARAM)
+      if (!Op.isConstant())
         return ValidatorResult(SCEVType::INVALID);
     }
 
