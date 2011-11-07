@@ -1458,7 +1458,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.ClaimAllArgs(options::OPT_g_Group);
   if (Arg *A = Args.getLastArg(options::OPT_g_Group))
     if (!A->getOption().matches(options::OPT_g0)) {
-        CmdArgs.push_back("-g");
+      CmdArgs.push_back("-g");
     }
 
   Args.AddAllArgs(CmdArgs, options::OPT_ffunction_sections);
