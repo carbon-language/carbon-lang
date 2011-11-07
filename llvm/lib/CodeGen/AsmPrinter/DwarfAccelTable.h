@@ -69,10 +69,10 @@ class DwarfAccelTable {
     eHashFunctionDJB = 0u
   };
 
-  static uint32_t HashDJB (const char *s) {
+  static uint32_t HashDJB (StringRef Str) {
     uint32_t h = 5381;
-    for (unsigned char c = *s; c; c = *++s)
-      h = ((h << 5) + h) + c;
+    for (unsigned i = 0, e = Str.size(); i != e; ++i)
+      h = ((h << 5) + h) + Str[i];
     return h;
   }
 
@@ -190,7 +190,7 @@ public:
     MCSymbol *Sym;
     std::vector<uint32_t> DIEOffsets; // offsets
     HashData(StringRef S) : Str(S) {
-      HashValue = DwarfAccelTable::HashDJB(S.str().c_str());
+      HashValue = DwarfAccelTable::HashDJB(S);
     }
     void addOffset(uint32_t off) { DIEOffsets.push_back(off); }
     #ifndef NDEBUG
