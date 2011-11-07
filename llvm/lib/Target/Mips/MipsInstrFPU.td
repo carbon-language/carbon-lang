@@ -183,6 +183,14 @@ def MTC1  : FFRGPR<0x04, (outs FGR32:$fs), (ins CPURegs:$rt),
                   "mtc1\t$rt, $fs",
                   [(set FGR32:$fs, (bitconvert CPURegs:$rt))]>;
 
+def DMFC1 : FFRGPR<0x01, (outs CPU64Regs:$rt), (ins FGR64:$fs),
+                  "dmfc1\t$rt, $fs",
+                  [(set CPU64Regs:$rt, (bitconvert FGR64:$fs))]>;
+
+def DMTC1 : FFRGPR<0x05, (outs FGR64:$fs), (ins CPU64Regs:$rt),
+                  "dmtc1\t$rt, $fs",
+                  [(set FGR64:$fs, (bitconvert CPU64Regs:$rt))]>;
+
 def FMOV_S   : FFR1<0x6, 16, "mov", "s", FGR32, FGR32>;
 def FMOV_D32 : FFR1<0x6, 17, "mov", "d", AFGR64, AFGR64>,
                Requires<[NotFP64bit]>;
