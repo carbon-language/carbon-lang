@@ -33,6 +33,10 @@ class CmdPythonTestCase(TestBase):
             self.runCmd('command script delete welcome', check=False)
             self.runCmd('command script delete targetname', check=False)
             self.runCmd('command script delete longwait', check=False)
+            self.runCmd('command script delete mysto', check=False)
+            self.runCmd('command script delete tell_sync', check=False)
+            self.runCmd('command script delete tell_async', check=False)
+            self.runCmd('command script delete tell_curr', check=False)
 
         # Execute the cleanup function during test case tear down.
         self.addTearDownHook(cleanup)
@@ -83,11 +87,33 @@ class CmdPythonTestCase(TestBase):
         self.expect("longwait",
                     substrs = ['Done; if you saw the delays I am doing OK'])
 
+        self.runCmd("b main")
+        self.runCmd("run")
+        self.runCmd("mysto 3")
+        self.expect("frame variable array",
+                    substrs = ['[0] = 79630','[1] = 388785018','[2] = 0'])
+        self.runCmd("mysto 3")
+        self.expect("frame variable array",
+                    substrs = ['[0] = 79630','[4] = 388785018','[5] = 0'])
+
+# we cannot use the stepover command to check for async execution mode since LLDB
+# seems to get confused when events start to queue up
+        self.expect("tell_sync",
+                    substrs = ['running sync'])
+        self.expect("tell_async",
+                    substrs = ['running async'])
+        self.expect("tell_curr",
+                    substrs = ['I am running','sync'])
+
+
         self.runCmd("command script clear")
 
         self.expect('command script list', matching=False,
                     substrs = ['targetname',
                                'longwait'])
+
+        self.expect('command script add -f foobar frame', error=True,
+                    substrs = ['cannot add command'])
 
 if __name__ == '__main__':
     import atexit

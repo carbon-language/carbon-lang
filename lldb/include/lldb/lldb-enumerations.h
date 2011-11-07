@@ -390,6 +390,7 @@ namespace lldb {
         eArgTypeRegularExpression,
         eArgTypeRunArgs,
         eArgTypeRunMode,
+        eArgTypeScriptedCommandSynchronicity,
         eArgTypeScriptLang,
         eArgTypeSearchWord,
         eArgTypeSelector,

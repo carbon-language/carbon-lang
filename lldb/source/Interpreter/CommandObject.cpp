@@ -881,6 +881,7 @@ CommandObject::g_arguments_data[] =
     { eArgTypeRegularExpression, "regular-expression", CommandCompletions::eNoCompletion, { NULL, false }, "A regular expression." },
     { eArgTypeRunArgs, "run-args", CommandCompletions::eNoCompletion, { NULL, false }, "Arguments to be passed to the target program when it starts executing." },
     { eArgTypeRunMode, "run-mode", CommandCompletions::eNoCompletion, { NULL, false }, "Help text goes here." },
+    { eArgTypeScriptedCommandSynchronicity, "script-cmd-synchronicity", CommandCompletions::eNoCompletion, { NULL, false }, "The synchronicity to use to run scripted commands with regard to LLDB event system." },
     { eArgTypeScriptLang, "script-language", CommandCompletions::eNoCompletion, { NULL, false }, "The scripting language to be used for script-based commands.  Currently only Python is valid." },
     { eArgTypeSearchWord, "search-word", CommandCompletions::eNoCompletion, { NULL, false }, "The word for which you wish to search for information about." },
     { eArgTypeSelector, "selector", CommandCompletions::eNoCompletion, { NULL, false }, "An Objective-C selector name." },

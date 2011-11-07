@@ -52,11 +52,18 @@ int
 main(int argc, char const *argv[])
 {
 
-    int array[3];
+    int array[9];
+	memset(array,0,9*sizeof(int));
 
     array[0] = foo (1238, 78392);
     array[1] = foo (379265, 23674);
     array[2] = foo (872934, 234);
+    array[3] = foo (1238, 78392);
+    array[4] = foo (379265, 23674);
+    array[5] = foo (872934, 234);
+    array[6] = foo (1238, 78392);
+    array[7] = foo (379265, 23674);
+    array[8] = foo (872934, 234);
 
     return 0;
 }

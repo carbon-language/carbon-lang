@@ -516,19 +516,23 @@ CommandInterpreter::AddCommand (const char *name, const lldb::CommandObjectSP &c
 }
 
 bool
-CommandInterpreter::AddUserCommand (const char *name, 
+CommandInterpreter::AddUserCommand (std::string name, 
                                     const lldb::CommandObjectSP &cmd_sp,
                                     bool can_replace)
 {
-    if (name && name[0])
+    if (!name.empty())
     {
-        std::string name_sstr(name);
-        if (!can_replace)
-        {
-            if (m_user_dict.find (name_sstr) != m_user_dict.end())
-                return false;
-        }
-        m_user_dict[name_sstr] = cmd_sp;
+        
+        const char* name_cstr = name.c_str();
+        
+        // do not allow replacement of internal commands
+        if (CommandExists(name_cstr))
+            return false;
+        
+        if (can_replace == false && UserCommandExists(name_cstr))
+            return false;
+
+        m_user_dict[name] = cmd_sp;
         return true;
     }
     return false;

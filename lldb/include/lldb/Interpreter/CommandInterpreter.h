@@ -72,7 +72,7 @@ public:
                 bool can_replace);
     
     bool
-    AddUserCommand (const char *name, 
+    AddUserCommand (std::string name, 
                     const lldb::CommandObjectSP &cmd_sp,
                     bool can_replace);
     

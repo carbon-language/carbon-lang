@@ -87,6 +87,7 @@ public:
     virtual bool
     RunScriptBasedCommand(const char* impl_function,
                           const char* args,
+                          ScriptedCommandSynchronicity synchronicity,
                           lldb_private::CommandReturnObject& cmd_retobj,
                           Error& error);
     
@@ -118,6 +119,7 @@ public:
     
     virtual bool
     LoadScriptingModule (const char* filename,
+                         bool can_reload,
                          lldb_private::Error& error);
 
     void
@@ -169,6 +171,18 @@ protected:
     RestoreTerminalState ();
     
 private:
+    
+    class SynchronicityHandler
+    {
+    private:
+        lldb::DebuggerSP             m_debugger_sp;
+        ScriptedCommandSynchronicity m_synch_wanted;
+        bool                         m_old_asynch;
+    public:
+        SynchronicityHandler(lldb::DebuggerSP,
+                             ScriptedCommandSynchronicity);
+        ~SynchronicityHandler();
+    };
     
 	class Locker
 	{

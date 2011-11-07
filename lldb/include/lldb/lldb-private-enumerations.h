@@ -238,7 +238,17 @@ typedef enum FormatterChoiceCriterion
     eFormatterChoiceCriterionStrippedBitField =              0x00000020
 } FormatterChoiceCriterion;
 
-} // namespace lldb
+//----------------------------------------------------------------------
+// Synchronicity behavior of scripted commands
+//----------------------------------------------------------------------
+typedef enum ScriptedCommandSynchronicity
+{
+    eScriptedCommandSynchronicitySynchronous,
+    eScriptedCommandSynchronicityAsynchronous,
+    eScriptedCommandSynchronicityCurrentValue // use whatever the current synchronicity is
+} ScriptedCommandSynchronicity;
+        
+} // namespace lldb_private
 
 
 #endif  // LLDB_lldb_private_enumerations_h_

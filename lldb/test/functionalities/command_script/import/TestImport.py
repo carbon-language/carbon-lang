@@ -48,6 +48,7 @@ class ImportTestCase(TestBase):
         self.runCmd("script import dummymodule")
         self.expect("command script import ./dummymodule.py",
                 error=True, startstr='error: module importing failed')
+        self.runCmd("command script import --allow-reload ./dummymodule.py")
 
         self.runCmd("command script add -f foo.foo_function foocmd")
         self.runCmd("command script add -f foobar.foo_function foobarcmd")

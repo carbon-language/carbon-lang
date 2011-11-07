@@ -1745,6 +1745,7 @@ ScriptInterpreterPython::UpdateSynthProviderInstance (void* implementor)
 
 bool
 ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
+                                              bool can_reload,
                                               lldb_private::Error& error)
 {
     if (!pathname || !pathname[0])
@@ -1802,8 +1803,9 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
         int refcount = 0;
         // this call will fail if the module does not exist (because the parameter to it is not a string
         // but an actual Python module object, which is non-existant if the module was not imported before)
-        if (ExecuteOneLineWithReturn(command_stream.GetData(),
-                                                         ScriptInterpreterPython::eScriptReturnTypeInt, &refcount) && refcount > 0)
+        bool was_imported = (ExecuteOneLineWithReturn(command_stream.GetData(),
+                                                      ScriptInterpreterPython::eScriptReturnTypeInt, &refcount) && refcount > 0);
+        if (was_imported == true && can_reload == false)
         {
             error.SetErrorString("module already imported");
             return false;
@@ -1831,9 +1833,28 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
     }
 }
 
+ScriptInterpreterPython::SynchronicityHandler::SynchronicityHandler (lldb::DebuggerSP debugger_sp,
+                                                                     ScriptedCommandSynchronicity synchro) :
+    m_debugger_sp(debugger_sp),
+    m_synch_wanted(synchro),
+    m_old_asynch(debugger_sp->GetAsyncExecution())
+{
+    if (m_synch_wanted == eScriptedCommandSynchronicitySynchronous)
+        m_debugger_sp->SetAsyncExecution(false);
+    else if (m_synch_wanted == eScriptedCommandSynchronicityAsynchronous)
+        m_debugger_sp->SetAsyncExecution(true);
+}
+
+ScriptInterpreterPython::SynchronicityHandler::~SynchronicityHandler()
+{
+    if (m_synch_wanted != eScriptedCommandSynchronicityCurrentValue)
+        m_debugger_sp->SetAsyncExecution(m_old_asynch);
+}
+
 bool
 ScriptInterpreterPython::RunScriptBasedCommand(const char* impl_function,
                                                const char* args,
+                                               ScriptedCommandSynchronicity synchronicity,
                                                lldb_private::CommandReturnObject& cmd_retobj,
                                                Error& error)
 {
@@ -1850,13 +1871,22 @@ ScriptInterpreterPython::RunScriptBasedCommand(const char* impl_function,
     }
     
     lldb::DebuggerSP debugger_sp = m_interpreter.GetDebugger().GetSP();
+
+    if (!debugger_sp.get())
+    {
+        error.SetErrorString("invalid Debugger pointer");
+        return false;
+    }
     
     bool ret_val;
     
     std::string err_msg;
-    
+
     {
         Locker py_lock(this);
+        SynchronicityHandler synch_handler(debugger_sp,
+                                           synchronicity);
+        
         ret_val = g_swig_call_command       (impl_function,
                                              m_dictionary_name.c_str(),
                                              debugger_sp,
@@ -1864,17 +1894,13 @@ ScriptInterpreterPython::RunScriptBasedCommand(const char* impl_function,
                                              err_msg,
                                              cmd_retobj);
     }
-    
+
     if (!ret_val)
         error.SetErrorString(err_msg.c_str());
     else
         error.Clear();
-        
+    
     return ret_val;
-
-    
-    return true;
-    
 }
 
 // in Python, a special attribute __doc__ contains the docstring

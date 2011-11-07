@@ -25,3 +25,10 @@ def print_wait_impl(debugger, args, result, dict):
     time.sleep(1)
     result.PutCString('Done; if you saw the delays I am doing OK')
     return None
+
+def check_for_synchro(debugger, args, result, dict):
+    if debugger.GetAsync() == True:
+        result.PutCString('I am running async')
+    if debugger.GetAsync() == False:
+        result.PutCString('I am running sync')
+    return None

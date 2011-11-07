@@ -1153,17 +1153,20 @@ class CommandObjectPythonFunction : public CommandObject
 {
 private:
     std::string m_function_name;
+    ScriptedCommandSynchronicity m_synchro;
     
 public:
     
     CommandObjectPythonFunction (CommandInterpreter &interpreter,
                                  std::string name,
-                                 std::string funct) :
+                                 std::string funct,
+                                 ScriptedCommandSynchronicity synch) :
     CommandObject (interpreter,
                    name.c_str(),
                    (std::string("Run Python function ") + funct).c_str(),
                    NULL),
-    m_function_name(funct)
+    m_function_name(funct),
+    m_synchro(synch)
     {
         ScriptInterpreter* scripter = m_interpreter.GetScriptInterpreter();
         if (scripter)
@@ -1188,6 +1191,7 @@ public:
         
         if (!scripter || scripter->RunScriptBasedCommand(m_function_name.c_str(),
                                                          raw_command_line,
+                                                         m_synchro,
                                                          result,
                                                          error) == false)
         {
@@ -1205,7 +1209,7 @@ public:
     {
         return true;
     }
-    
+
     bool
     Execute (Args& command,
              CommandReturnObject &result)
@@ -1214,9 +1218,24 @@ public:
         command.GetCommandString(cmd_string);
         return ExecuteRawCommandString(cmd_string.c_str(), result);
     }
-    
+
     virtual bool
-    IsRemovable() { return true; }
+    IsRemovable ()
+    {
+        return true;
+    }
+
+    const std::string&
+    GetFunctionName ()
+    {
+        return m_function_name;
+    }
+
+    ScriptedCommandSynchronicity
+    GetSynchronicity ()
+    {
+        return m_synchro;
+    }
     
 };
 
@@ -1226,18 +1245,81 @@ public:
 
 class CommandObjectCommandsScriptImport : public CommandObject
 {
+private:
+    
+    class CommandOptions : public Options
+    {
+    public:
+        
+        CommandOptions (CommandInterpreter &interpreter) :
+        Options (interpreter)
+        {
+        }
+        
+        virtual
+        ~CommandOptions (){}
+        
+        virtual Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        {
+            Error error;
+            char short_option = (char) m_getopt_table[option_idx].val;
+            
+            switch (short_option)
+            {
+                case 'r':
+                    m_allow_reload = true;
+                    break;
+                default:
+                    error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
+                    break;
+            }
+            
+            return error;
+        }
+        
+        void
+        OptionParsingStarting ()
+        {
+            m_allow_reload = false;
+        }
+        
+        const OptionDefinition*
+        GetDefinitions ()
+        {
+            return g_option_table;
+        }
+        
+        // Options table: Required for subclasses of Options.
+        
+        static OptionDefinition g_option_table[];
+        
+        // Instance variables to hold the values for command options.
+        
+        bool m_allow_reload;
+    };
+    
+    CommandOptions m_options;
+    
+    virtual Options *
+    GetOptions ()
+    {
+        return &m_options;
+    }
+
 public:
     CommandObjectCommandsScriptImport (CommandInterpreter &interpreter) :
     CommandObject (interpreter,
                    "command script import",
                    "Import a scripting module in LLDB.",
-                   NULL)
+                   NULL),
+    m_options(interpreter)
     {
         CommandArgumentEntry arg1;
         CommandArgumentData cmd_arg;
         
         // Define the first (and only) variant of this arg.
-        cmd_arg.arg_type = eArgTypePath;
+        cmd_arg.arg_type = eArgTypeFilename;
         cmd_arg.arg_repetition = eArgRepeatPlain;
         
         // There is only one variant this argument could be; put it into the argument entry.
@@ -1279,6 +1361,7 @@ public:
         Error error;
         
         if (m_interpreter.GetScriptInterpreter()->LoadScriptingModule(path.c_str(),
+                                                                      m_options.m_allow_reload,
                                                                       error))
         {
             result.SetStatus (eReturnStatusSuccessFinishNoResult);
@@ -1291,7 +1374,39 @@ public:
         
         return result.Succeeded();
     }
+    
+    int
+    HandleArgumentCompletion (Args &input,
+                              int &cursor_index,
+                              int &cursor_char_position,
+                              OptionElementVector &opt_element_vector,
+                              int match_start_point,
+                              int max_return_elements,
+                              bool &word_complete,
+                              StringList &matches)
+    {
+        std::string completion_str (input.GetArgumentAtIndex(cursor_index));
+        completion_str.erase (cursor_char_position);
+        
+        CommandCompletions::InvokeCommonCompletionCallbacks (m_interpreter, 
+                                                             CommandCompletions::eDiskFileCompletion,
+                                                             completion_str.c_str(),
+                                                             match_start_point,
+                                                             max_return_elements,
+                                                             NULL,
+                                                             word_complete,
+                                                             matches);
+        return matches.GetSize();
+    }
 };
+
+OptionDefinition
+CommandObjectCommandsScriptImport::CommandOptions::g_option_table[] =
+{
+    { LLDB_OPT_SET_1, false, "allow-reload", 'r', no_argument, NULL, 0, eArgTypeNone,        "Allow the script to be loaded even if it was already loaded before (for Python, the __lldb_init_module function will be called again, but the module will not be reloaded from disk)."},
+    { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
+};
+
 
 //-------------------------------------------------------------------------
 // CommandObjectCommandsScriptAdd
@@ -1324,6 +1439,11 @@ private:
                 case 'f':
                     m_funct_name = std::string(option_arg);
                     break;
+                case 's':
+                    m_synchronous = (ScriptedCommandSynchronicity) Args::StringToOptionEnum(option_arg, g_option_table[option_idx].enum_values, 0, error);
+                    if (!error.Success())
+                        error.SetErrorStringWithFormat ("unrecognized value for synchronicity '%s'", option_arg);
+                    break;
                 default:
                     error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
                     break;
@@ -1336,6 +1456,7 @@ private:
         OptionParsingStarting ()
         {
             m_funct_name = "";
+            m_synchronous = eScriptedCommandSynchronicitySynchronous;
         }
         
         const OptionDefinition*
@@ -1351,6 +1472,7 @@ private:
         // Instance variables to hold the values for command options.
         
         std::string m_funct_name;
+        ScriptedCommandSynchronicity m_synchronous;
     };
     
     CommandOptions m_options;
@@ -1366,15 +1488,18 @@ private:
     private:
         CommandInterpreter& m_interpreter;
         std::string m_cmd_name;
+        ScriptedCommandSynchronicity m_synchronous;
         StringList m_user_input;
         DISALLOW_COPY_AND_ASSIGN (PythonAliasReader);
     public:
         PythonAliasReader(Debugger& debugger,
                           CommandInterpreter& interpreter,
-                          std::string cmd_name) : 
+                          std::string cmd_name,
+                          ScriptedCommandSynchronicity synch) : 
         InputReaderEZ(debugger),
         m_interpreter(interpreter),
         m_cmd_name(cmd_name),
+        m_synchronous(synch),
         m_user_input()
         {}
         
@@ -1427,7 +1552,7 @@ private:
             data.reader.SetIsDone (true);
             if (!batch_mode)
             {
-                out_stream->Printf ("Warning: No command attached to breakpoint.\n");
+                out_stream->Printf ("Warning: No script attached.\n");
                 out_stream->Flush();
             }
         }
@@ -1442,7 +1567,7 @@ private:
             ScriptInterpreter *interpreter = data.reader.GetDebugger().GetCommandInterpreter().GetScriptInterpreter();
             if (!interpreter)
             {
-                out_stream->Printf ("Internal error #1: no script attached.\n");
+                out_stream->Printf ("Script interpreter missing: no script attached.\n");
                 out_stream->Flush();
                 return;
             }
@@ -1450,20 +1575,20 @@ private:
             if (!interpreter->GenerateScriptAliasFunction (m_user_input, 
                                                            funct_name_sl))
             {
-                out_stream->Printf ("Internal error #2: no script attached.\n");
+                out_stream->Printf ("Unable to create function: no script attached.\n");
                 out_stream->Flush();
                 return;
             }
             if (funct_name_sl.GetSize() == 0)
             {
-                out_stream->Printf ("Internal error #3: no script attached.\n");
+                out_stream->Printf ("Unable to obtain a function name: no script attached.\n");
                 out_stream->Flush();
                 return;
             }
             const char *funct_name = funct_name_sl.GetStringAtIndex(0);
             if (!funct_name || !funct_name[0])
             {
-                out_stream->Printf ("Internal error #4: no script attached.\n");
+                out_stream->Printf ("Invalid function name: no script attached.\n");
                 out_stream->Flush();
                 return;
             }
@@ -1472,11 +1597,12 @@ private:
             
             CommandObjectSP command_obj_sp(new CommandObjectPythonFunction(m_interpreter,
                                                                            m_cmd_name,
-                                                                           funct_name));
+                                                                           funct_name,
+                                                                           m_synchronous));
             
-            if (!m_interpreter.AddUserCommand(m_cmd_name.c_str(), command_obj_sp, true))
+            if (!m_interpreter.AddUserCommand(m_cmd_name, command_obj_sp, true))
             {
-                out_stream->Printf ("Internal error #5: no script attached.\n");
+                out_stream->Printf ("Unable to add selected command: no script attached.\n");
                 out_stream->Flush();
                 return;
             }
@@ -1539,7 +1665,8 @@ public:
         {
             InputReaderSP reader_sp (new PythonAliasReader (m_interpreter.GetDebugger(),
                                                             m_interpreter,
-                                                            cmd_name));
+                                                            cmd_name,
+                                                            m_options.m_synchronous));
             
             if (reader_sp)
             {
@@ -1566,8 +1693,11 @@ public:
         }
         else
         {
-            CommandObjectSP new_cmd(new CommandObjectPythonFunction(m_interpreter, cmd_name, m_options.m_funct_name));
-            if (m_interpreter.AddUserCommand(cmd_name.c_str(), new_cmd, true))
+            CommandObjectSP new_cmd(new CommandObjectPythonFunction(m_interpreter,
+                                                                    cmd_name,
+                                                                    m_options.m_funct_name,
+                                                                    m_options.m_synchronous));
+            if (m_interpreter.AddUserCommand(cmd_name, new_cmd, true))
             {
                 result.SetStatus (eReturnStatusSuccessFinishNoResult);
             }
@@ -1583,10 +1713,19 @@ public:
     }
 };
 
+static OptionEnumValueElement g_script_synchro_type[] =
+{
+    { eScriptedCommandSynchronicitySynchronous,      "synchronous",       "Run synchronous"},
+    { eScriptedCommandSynchronicityAsynchronous,     "asynchronous",      "Run asynchronous"},
+    { eScriptedCommandSynchronicityCurrentValue,     "current",           "Do not alter current setting"},
+    { 0, NULL, NULL }
+};
+
 OptionDefinition
 CommandObjectCommandsScriptAdd::CommandOptions::g_option_table[] =
 {
     { LLDB_OPT_SET_1, false, "function", 'f', required_argument, NULL, 0, eArgTypePythonFunction,        "Name of the Python function to bind to this command name."},
+    { LLDB_OPT_SET_1, false, "synchronicity", 's', required_argument, g_script_synchro_type, 0, eArgTypeScriptedCommandSynchronicity,        "Set the synchronicity of this command's executions with regard to LLDB event system."},
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
@@ -1597,7 +1736,7 @@ CommandObjectCommandsScriptAdd::CommandOptions::g_option_table[] =
 class CommandObjectCommandsScriptList : public CommandObject
 {
 private:
-        
+
 public:
     CommandObjectCommandsScriptList(CommandInterpreter &interpreter) :
     CommandObject (interpreter,

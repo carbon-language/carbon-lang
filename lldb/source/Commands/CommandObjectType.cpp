@@ -1189,12 +1189,6 @@ CommandObjectTypeSummaryAdd::Execute_ScriptSummary (Args& command, CommandReturn
             return false;
         }
     }
-    else
-    {
-        result.AppendError("added to types, but not given a name");
-        result.SetStatus(eReturnStatusFailed);
-        return false;
-    }
     
     return result.Succeeded();
 }
@@ -1285,12 +1279,6 @@ CommandObjectTypeSummaryAdd::Execute_StringSummary (Args& command, CommandReturn
             result.SetStatus(eReturnStatusFailed);
             return false;
         }
-    }
-    else
-    {
-        result.AppendError("added to types, but not given a name");
-        result.SetStatus(eReturnStatusFailed);
-        return false;
     }
     
     result.SetStatus(eReturnStatusSuccessFinishNoResult);
