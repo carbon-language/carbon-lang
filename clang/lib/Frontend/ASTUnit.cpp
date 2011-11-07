@@ -2480,7 +2480,10 @@ static inline bool compLocDecl(std::pair<unsigned, Decl *> L,
 
 void ASTUnit::addFileLevelDecl(Decl *D) {
   assert(D);
-  assert(!D->isFromASTFile() && "This is only for local decl");
+  
+  // We only care about local declarations.
+  if (D->isFromASTFile())
+    return;
 
   SourceManager &SM = *SourceMgr;
   SourceLocation Loc = D->getLocation();
