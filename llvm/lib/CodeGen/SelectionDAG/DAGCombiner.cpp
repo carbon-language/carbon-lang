@@ -7822,7 +7822,7 @@ SDValue DAGCombiner::SimplifySetCC(EVT VT, SDValue N0,
 /// <http://the.wall.riscom.net/books/proc/ppc/cwg/code2.html>
 SDValue DAGCombiner::BuildSDIV(SDNode *N) {
   std::vector<SDNode*> Built;
-  SDValue S = TLI.BuildSDIV(N, DAG, &Built);
+  SDValue S = TLI.BuildSDIV(N, DAG, LegalOperations, &Built);
 
   for (std::vector<SDNode*>::iterator ii = Built.begin(), ee = Built.end();
        ii != ee; ++ii)
@@ -7836,7 +7836,7 @@ SDValue DAGCombiner::BuildSDIV(SDNode *N) {
 /// <http://the.wall.riscom.net/books/proc/ppc/cwg/code2.html>
 SDValue DAGCombiner::BuildUDIV(SDNode *N) {
   std::vector<SDNode*> Built;
-  SDValue S = TLI.BuildUDIV(N, DAG, &Built);
+  SDValue S = TLI.BuildUDIV(N, DAG, LegalOperations, &Built);
 
   for (std::vector<SDNode*>::iterator ii = Built.begin(), ee = Built.end();
        ii != ee; ++ii)
