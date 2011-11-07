@@ -50,6 +50,9 @@ struct APValue::LV : LVBase {
   bool hasPathPtr() const { return hasPath() && PathLength > InlinePathSpace; }
 
   LValuePathEntry *getPath() { return hasPathPtr() ? PathPtr : Path; }
+  const LValuePathEntry *getPath() const {
+    return hasPathPtr() ? PathPtr : Path;
+  }
 };
 
 APValue::APValue(const Expr* B) : Kind(Uninitialized) {
@@ -207,12 +210,12 @@ CharUnits &APValue::getLValueOffset() {
 
 bool APValue::hasLValuePath() const {
   assert(isLValue() && "Invalid accessor");
-  return ((LV*)(char*)Data)->hasPath();
+  return ((const LV*)(const char*)Data)->hasPath();
 }
 
 ArrayRef<APValue::LValuePathEntry> APValue::getLValuePath() const {
   assert(isLValue() && hasLValuePath() && "Invalid accessor");
-  LV &LVal = *((LV*)(char*)Data);
+  const LV &LVal = *((const LV*)(const char*)Data);
   return ArrayRef<LValuePathEntry>(LVal.getPath(), LVal.PathLength);
 }
 
@@ -231,6 +234,7 @@ void APValue::setLValue(const Expr *B, const CharUnits &O,
   LVal.Base = B;
   LVal.Offset = O;
   LVal.PathLength = Path.size();
+  LVal.allocPath();
   memcpy(LVal.getPath(), Path.data(), Path.size() * sizeof(LValuePathEntry));
 }
 
