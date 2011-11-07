@@ -239,19 +239,10 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
                                        InitializedDecl);
   }
 
-  if (const ObjCPropertyRefExpr *PRE = 
-      dyn_cast<ObjCPropertyRefExpr>(E->IgnoreParenImpCasts()))
-    if (PRE->getGetterResultType()->isReferenceType())
-      E = PRE;
-    
   RValue RV;
   if (E->isGLValue()) {
     // Emit the expression as an lvalue.
     LValue LV = CGF.EmitLValue(E);
-    if (LV.isPropertyRef()) {
-      RV = CGF.EmitLoadOfPropertyRefLValue(LV);
-      return RV.getScalarVal();
-    }
     
     if (LV.isSimple())
       return LV.getAddress();
@@ -644,6 +635,9 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
   switch (E->getStmtClass()) {
   default: return EmitUnsupportedLValue(E, "l-value expression");
 
+  case Expr::ObjCPropertyRefExprClass:
+    llvm_unreachable("cannot emit a property reference directly");
+
   case Expr::ObjCSelectorExprClass:
   return EmitObjCSelectorLValue(cast<ObjCSelectorExpr>(E));
   case Expr::ObjCIsaExprClass:
@@ -696,8 +690,6 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
     return EmitObjCMessageExprLValue(cast<ObjCMessageExpr>(E));
   case Expr::ObjCIvarRefExprClass:
     return EmitObjCIvarRefLValue(cast<ObjCIvarRefExpr>(E));
-  case Expr::ObjCPropertyRefExprClass:
-    return EmitObjCPropertyRefLValue(cast<ObjCPropertyRefExpr>(E));
   case Expr::StmtExprClass:
     return EmitStmtExprLValue(cast<StmtExpr>(E));
   case Expr::UnaryOperatorClass:
@@ -835,11 +827,8 @@ RValue CodeGenFunction::EmitLoadOfLValue(LValue LV) {
   if (LV.isExtVectorElt())
     return EmitLoadOfExtVectorElementLValue(LV);
 
-  if (LV.isBitField())
-    return EmitLoadOfBitfieldLValue(LV);
-
-  assert(LV.isPropertyRef() && "Unknown LValue type!");
-  return EmitLoadOfPropertyRefLValue(LV);
+  assert(LV.isBitField() && "Unknown LValue type!");
+  return EmitLoadOfBitfieldLValue(LV);
 }
 
 RValue CodeGenFunction::EmitLoadOfBitfieldLValue(LValue LV) {
@@ -968,11 +957,8 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst) {
     if (Dst.isExtVectorElt())
       return EmitStoreThroughExtVectorComponentLValue(Src, Dst);
 
-    if (Dst.isBitField())
-      return EmitStoreThroughBitfieldLValue(Src, Dst);
-
-    assert(Dst.isPropertyRef() && "Unknown LValue type");
-    return EmitStoreThroughPropertyRefLValue(Src, Dst);
+    assert(Dst.isBitField() && "Unknown LValue type");
+    return EmitStoreThroughBitfieldLValue(Src, Dst);
   }
 
   // There's special magic for assigning into an ARC-qualified l-value.
@@ -2024,20 +2010,7 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
   case CK_Dependent:
     llvm_unreachable("dependent cast kind in IR gen!");
 
-  case CK_GetObjCProperty: {
-    LValue LV = EmitLValue(E->getSubExpr());
-    assert(LV.isPropertyRef());
-    RValue RV = EmitLoadOfPropertyRefLValue(LV);
-
-    // Property is an aggregate r-value.
-    if (RV.isAggregate()) {
-      return MakeAddrLValue(RV.getAggregateAddr(), E->getType());
-    }
-
-    // Implicit property returns an l-value.
-    assert(RV.isScalar());
-    return MakeAddrLValue(RV.getScalarVal(), E->getSubExpr()->getType());
-  }
+  case CK_GetObjCProperty: llvm_unreachable("GetObjCProperty");
 
   case CK_NoOp:
   case CK_LValueToRValue:

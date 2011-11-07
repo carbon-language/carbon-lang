@@ -131,7 +131,6 @@ public:
   void VisitObjCIvarRefExpr(ObjCIvarRefExpr *E) {
     EmitAggLoadOfLValue(E);
   }
-  void VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E);
 
   void VisitAbstractConditionalOperator(const AbstractConditionalOperator *CO);
   void VisitChooseExpr(const ChooseExpr *CE);
@@ -334,14 +333,7 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
                 "should have been unpacked before we got here");
   }
 
-  case CK_GetObjCProperty: {
-    LValue LV =
-      CGF.EmitObjCPropertyRefLValue(E->getSubExpr()->getObjCProperty());
-    assert(LV.isPropertyRef());
-    RValue RV = CGF.EmitLoadOfPropertyRefLValue(LV, getReturnValueSlot());
-    EmitMoveFromReturnSlot(E, RV);
-    break;
-  }
+  case CK_GetObjCProperty: llvm_unreachable("GetObjCProperty!");
 
   case CK_LValueToRValue: // hope for downstream optimization
   case CK_NoOp:
@@ -414,11 +406,6 @@ void AggExprEmitter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
   EmitMoveFromReturnSlot(E, RV);
 }
 
-void AggExprEmitter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
-  llvm_unreachable("direct property access not surrounded by "
-                   "lvalue-to-rvalue cast");
-}
-
 void AggExprEmitter::VisitBinComma(const BinaryOperator *E) {
   CGF.EmitIgnoredExpr(E->getLHS());
   Visit(E->getRHS());
@@ -466,29 +453,13 @@ void AggExprEmitter::VisitBinAssign(const BinaryOperator *E) {
   
   LValue LHS = CGF.EmitLValue(E->getLHS());
 
-  // We have to special case property setters, otherwise we must have
-  // a simple lvalue (no aggregates inside vectors, bitfields).
-  if (LHS.isPropertyRef()) {
-    const ObjCPropertyRefExpr *RE = LHS.getPropertyRefExpr();
-    QualType ArgType = RE->getSetterArgType();
-    RValue Src;
-    if (ArgType->isReferenceType())
-      Src = CGF.EmitReferenceBindingToExpr(E->getRHS(), 0);
-    else {
-      AggValueSlot Slot = EnsureSlot(E->getRHS()->getType());
-      CGF.EmitAggExpr(E->getRHS(), Slot);
-      Src = Slot.asRValue();
-    }
-    CGF.EmitStoreThroughPropertyRefLValue(Src, LHS);
-  } else {
-    // Codegen the RHS so that it stores directly into the LHS.
-    AggValueSlot LHSSlot =
-      AggValueSlot::forLValue(LHS, AggValueSlot::IsDestructed, 
-                              needsGC(E->getLHS()->getType()),
-                              AggValueSlot::IsAliased);
-    CGF.EmitAggExpr(E->getRHS(), LHSSlot, false);
-    EmitFinalDestCopy(E, LHS, true);
-  }
+  // Codegen the RHS so that it stores directly into the LHS.
+  AggValueSlot LHSSlot =
+    AggValueSlot::forLValue(LHS, AggValueSlot::IsDestructed, 
+                            needsGC(E->getLHS()->getType()),
+                            AggValueSlot::IsAliased);
+  CGF.EmitAggExpr(E->getRHS(), LHSSlot, false);
+  EmitFinalDestCopy(E, LHS, true);
 }
 
 void AggExprEmitter::

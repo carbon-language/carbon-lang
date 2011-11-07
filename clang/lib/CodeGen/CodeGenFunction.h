@@ -1994,15 +1994,12 @@ public:
   RValue EmitLoadOfLValue(LValue V);
   RValue EmitLoadOfExtVectorElementLValue(LValue V);
   RValue EmitLoadOfBitfieldLValue(LValue LV);
-  RValue EmitLoadOfPropertyRefLValue(LValue LV,
-                                 ReturnValueSlot Return = ReturnValueSlot());
 
   /// EmitStoreThroughLValue - Store the specified rvalue into the specified
   /// lvalue, where both are guaranteed to the have the same type, and that type
   /// is 'Ty'.
   void EmitStoreThroughLValue(RValue Src, LValue Dst);
   void EmitStoreThroughExtVectorComponentLValue(RValue Src, LValue Dst);
-  void EmitStoreThroughPropertyRefLValue(RValue Src, LValue Dst);
 
   /// EmitStoreThroughLValue - Store Src into Dst with same constraints as
   /// EmitStoreThroughLValue.
@@ -2075,7 +2072,6 @@ public:
 
   LValue EmitObjCMessageExprLValue(const ObjCMessageExpr *E);
   LValue EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E);
-  LValue EmitObjCPropertyRefLValue(const ObjCPropertyRefExpr *E);
   LValue EmitStmtExprLValue(const StmtExpr *E);
   LValue EmitPointerToDataMemberBinaryExpr(const BinaryOperator *E);
   LValue EmitObjCSelectorLValue(const ObjCSelectorExpr *E);

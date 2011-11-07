@@ -1087,22 +1087,6 @@ QualType CodeGenFunction::TypeOfSelfObject() {
   return PTy->getPointeeType();
 }
 
-LValue
-CodeGenFunction::EmitObjCPropertyRefLValue(const ObjCPropertyRefExpr *E) {
-  // This is a special l-value that just issues sends when we load or
-  // store through it.
-
-  // For certain base kinds, we need to emit the base immediately.
-  llvm::Value *Base;
-  if (E->isSuperReceiver())
-    Base = LoadObjCSelf();
-  else if (E->isClassReceiver())
-    Base = CGM.getObjCRuntime().GetClass(Builder, E->getClassReceiver());
-  else
-    Base = EmitScalarExpr(E->getBase());
-  return LValue::MakePropertyRef(E, Base);
-}
-
 static RValue GenerateMessageSendSuper(CodeGenFunction &CGF,
                                        ReturnValueSlot Return,
                                        QualType ResultType,
@@ -1117,85 +1101,6 @@ static RValue GenerateMessageSendSuper(CodeGenFunction &CGF,
                                           S, OMD->getClassInterface(),
                                           isCategoryImpl, Receiver,
                                           isClassMessage, CallArgs);
-}
-
-RValue CodeGenFunction::EmitLoadOfPropertyRefLValue(LValue LV,
-                                                    ReturnValueSlot Return) {
-  const ObjCPropertyRefExpr *E = LV.getPropertyRefExpr();
-  QualType ResultType = E->getGetterResultType();
-  Selector S;
-  const ObjCMethodDecl *method;
-  if (E->isExplicitProperty()) {
-    const ObjCPropertyDecl *Property = E->getExplicitProperty();
-    S = Property->getGetterName();
-    method = Property->getGetterMethodDecl();
-  } else {
-    method = E->getImplicitPropertyGetter();
-    S = method->getSelector();
-  }
-
-  llvm::Value *Receiver = LV.getPropertyRefBaseAddr();
-
-  if (CGM.getLangOptions().ObjCAutoRefCount) {
-    QualType receiverType;
-    if (E->isSuperReceiver())
-      receiverType = E->getSuperReceiverType();
-    else if (E->isClassReceiver())
-      receiverType = getContext().getObjCClassType();
-    else
-      receiverType = E->getBase()->getType();
-  }
-
-  // Accesses to 'super' follow a different code path.
-  if (E->isSuperReceiver())
-    return AdjustRelatedResultType(*this, E, method,
-                                   GenerateMessageSendSuper(*this, Return, 
-                                                            ResultType,
-                                                            S, Receiver, 
-                                                            CallArgList()));
-  const ObjCInterfaceDecl *ReceiverClass
-    = (E->isClassReceiver() ? E->getClassReceiver() : 0);
-  return AdjustRelatedResultType(*this, E, method,
-          CGM.getObjCRuntime().
-             GenerateMessageSend(*this, Return, ResultType, S,
-                                 Receiver, CallArgList(), ReceiverClass));
-}
-
-void CodeGenFunction::EmitStoreThroughPropertyRefLValue(RValue Src,
-                                                        LValue Dst) {
-  const ObjCPropertyRefExpr *E = Dst.getPropertyRefExpr();
-  Selector S = E->getSetterSelector();
-  QualType ArgType = E->getSetterArgType();
-  
-  // FIXME. Other than scalars, AST is not adequate for setter and
-  // getter type mismatches which require conversion.
-  if (Src.isScalar()) {
-    llvm::Value *SrcVal = Src.getScalarVal();
-    QualType DstType = getContext().getCanonicalType(ArgType);
-    llvm::Type *DstTy = ConvertType(DstType);
-    if (SrcVal->getType() != DstTy)
-      Src = 
-        RValue::get(EmitScalarConversion(SrcVal, E->getType(), DstType));
-  }
-  
-  CallArgList Args;
-  Args.add(Src, ArgType);
-
-  llvm::Value *Receiver = Dst.getPropertyRefBaseAddr();
-  QualType ResultType = getContext().VoidTy;
-
-  if (E->isSuperReceiver()) {
-    GenerateMessageSendSuper(*this, ReturnValueSlot(),
-                             ResultType, S, Receiver, Args);
-    return;
-  }
-
-  const ObjCInterfaceDecl *ReceiverClass
-    = (E->isClassReceiver() ? E->getClassReceiver() : 0);
-
-  CGM.getObjCRuntime().GenerateMessageSend(*this, ReturnValueSlot(),
-                                           ResultType, S, Receiver, Args,
-                                           ReceiverClass);
 }
 
 void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
@@ -2378,12 +2283,6 @@ tryEmitARCRetainScalarExpr(CodeGenFunction &CGF, const Expr *e) {
       // skip the consumption.
       case CK_ARCReclaimReturnedObject: {
         llvm::Value *result = emitARCRetainCall(CGF, ce->getSubExpr());
-        if (resultType) result = CGF.Builder.CreateBitCast(result, resultType);
-        return TryEmitResult(result, true);
-      }
-
-      case CK_GetObjCProperty: {
-        llvm::Value *result = emitARCRetainCall(CGF, ce);
         if (resultType) result = CGF.Builder.CreateBitCast(result, resultType);
         return TryEmitResult(result, true);
       }

@@ -244,11 +244,6 @@ public:
   Value *VisitObjCIvarRefExpr(ObjCIvarRefExpr *E) {
     return EmitLoadOfLValue(E);
   }
-  Value *VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
-    assert(E->getObjectKind() == OK_Ordinary &&
-           "reached property reference without lvalue-to-rvalue");
-    return EmitLoadOfLValue(E);
-  }
   Value *VisitObjCMessageExpr(ObjCMessageExpr *E) {
     if (E->getMethodDecl() && 
         E->getMethodDecl()->getResultType()->isReferenceType())
@@ -1051,6 +1046,7 @@ Value *ScalarExprEmitter::VisitCastExpr(CastExpr *CE) {
   // are in the same order as in the CastKind enum.
   switch (Kind) {
   case CK_Dependent: llvm_unreachable("dependent cast kind in IR gen!");
+  case CK_GetObjCProperty: llvm_unreachable("GetObjCProperty!");
       
   case CK_LValueBitCast: 
   case CK_ObjCObjectLValueCast: {
@@ -1169,14 +1165,6 @@ Value *ScalarExprEmitter::VisitCastExpr(CastExpr *CE) {
   case CK_ToUnion:
     llvm_unreachable("scalar cast to non-scalar value");
     break;
-
-  case CK_GetObjCProperty: {
-    assert(E->isGLValue() && E->getObjectKind() == OK_ObjCProperty &&
-           "CK_GetObjCProperty for non-lvalue or non-ObjCProperty");
-    LValue LV = CGF.EmitObjCPropertyRefLValue(E->getObjCProperty());
-    RValue RV = CGF.EmitLoadOfPropertyRefLValue(LV);
-    return RV.getScalarVal();
-  }
 
   case CK_LValueToRValue:
     assert(CGF.getContext().hasSameUnqualifiedType(E->getType(), DestTy));
@@ -1714,10 +1702,6 @@ Value *ScalarExprEmitter::EmitCompoundAssign(const CompoundAssignOperator *E,
 
   // The result of an assignment in C is the assigned r-value.
   if (!CGF.getContext().getLangOptions().CPlusPlus)
-    return RHS;
-
-  // Objective-C property assignment never reloads the value following a store.
-  if (LHS.isPropertyRef())
     return RHS;
 
   // If the lvalue is non-volatile, return the computed value of the assignment.
@@ -2340,10 +2324,6 @@ Value *ScalarExprEmitter::VisitBinAssign(const BinaryOperator *E) {
 
   // The result of an assignment in C is the assigned r-value.
   if (!CGF.getContext().getLangOptions().CPlusPlus)
-    return RHS;
-
-  // Objective-C property assignment never reloads the value following a store.
-  if (LHS.isPropertyRef())
     return RHS;
 
   // If the lvalue is non-volatile, return the computed value of the assignment.

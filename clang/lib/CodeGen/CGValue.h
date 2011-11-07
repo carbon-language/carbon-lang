@@ -24,8 +24,6 @@ namespace llvm {
 }
 
 namespace clang {
-  class ObjCPropertyRefExpr;
-
 namespace CodeGen {
   class AggValueSlot;
   class CGBitFieldInfo;
@@ -106,9 +104,7 @@ class LValue {
     Simple,       // This is a normal l-value, use getAddress().
     VectorElt,    // This is a vector element l-value (V[i]), use getVector*
     BitField,     // This is a bitfield l-value, use getBitfield*.
-    ExtVectorElt, // This is an extended vector subset, use getExtVectorComp
-    PropertyRef   // This is an Objective-C property reference, use
-                  // getPropertyRefExpr
+    ExtVectorElt  // This is an extended vector subset, use getExtVectorComp
   } LVType;
 
   llvm::Value *V;
@@ -122,9 +118,6 @@ class LValue {
 
     // BitField start bit and size
     const CGBitFieldInfo *BitFieldInfo;
-
-    // Obj-C property reference expression
-    const ObjCPropertyRefExpr *PropertyRefExpr;
   };
 
   QualType Type;
@@ -176,7 +169,6 @@ public:
   bool isVectorElt() const { return LVType == VectorElt; }
   bool isBitField() const { return LVType == BitField; }
   bool isExtVectorElt() const { return LVType == ExtVectorElt; }
-  bool isPropertyRef() const { return LVType == PropertyRef; }
 
   bool isVolatileQualified() const { return Quals.hasVolatile(); }
   bool isRestrictQualified() const { return Quals.hasRestrict(); }
@@ -257,16 +249,6 @@ public:
     return *BitFieldInfo;
   }
 
-  // property ref lvalue
-  llvm::Value *getPropertyRefBaseAddr() const {
-    assert(isPropertyRef());
-    return V;
-  }
-  const ObjCPropertyRefExpr *getPropertyRefExpr() const {
-    assert(isPropertyRef());
-    return PropertyRefExpr;
-  }
-
   static LValue MakeAddr(llvm::Value *address, QualType type,
                          unsigned alignment, ASTContext &Context,
                          llvm::MDNode *TBAAInfo = 0) {
@@ -314,19 +296,6 @@ public:
     R.V = BaseValue;
     R.BitFieldInfo = &Info;
     R.Initialize(type, type.getQualifiers());
-    return R;
-  }
-
-  // FIXME: It is probably bad that we aren't emitting the target when we build
-  // the lvalue. However, this complicates the code a bit, and I haven't figured
-  // out how to make it go wrong yet.
-  static LValue MakePropertyRef(const ObjCPropertyRefExpr *E,
-                                llvm::Value *Base) {
-    LValue R;
-    R.LVType = PropertyRef;
-    R.V = Base;
-    R.PropertyRefExpr = E;
-    R.Initialize(QualType(), Qualifiers());
     return R;
   }
 };
