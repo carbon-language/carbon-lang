@@ -2735,8 +2735,9 @@ ClangExpressionDeclMap::AddOneVariable (NameSearchContext &context, VariableSP v
     
     if (log)
     {
+        ASTDumper orig_dumper(ut.GetOpaqueQualType());
         ASTDumper ast_dumper(var_decl);        
-        log->Printf("  CEDM::FEVD[%u] Found variable %s, returned %s", current_id, decl_name.c_str(), ast_dumper.GetCString());
+        log->Printf("  CEDM::FEVD[%u] Found variable %s, returned %s (original %s)", current_id, decl_name.c_str(), ast_dumper.GetCString(), orig_dumper.GetCString());
     }
 }
 
