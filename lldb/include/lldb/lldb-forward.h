@@ -124,10 +124,10 @@ class   RegisterLocationList;
 class   RegisterValue;
 class   RegularExpression;
 class   Scalar;
-struct  ScriptSummaryFormat;
 class   ScriptInterpreter;
 #ifndef LLDB_DISABLE_PYTHON
 class   ScriptInterpreterPython;
+struct  ScriptSummaryFormat;
 #endif // #ifndef LLDB_DISABLE_PYTHON
 class   SearchFilter;
 class   Section;
