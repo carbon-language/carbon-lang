@@ -172,3 +172,8 @@ defm : SetlePats<CPU64Regs, SLT64, SLTu64>;
 defm : SetgtPats<CPU64Regs, SLT64, SLTu64>;
 defm : SetgePats<CPU64Regs, SLT64, SLTu64>;
 defm : SetgeImmPats<CPU64Regs, SLTi64, SLTiu64>;
+
+// truncate
+def : Pat<(i32 (trunc CPU64Regs:$src)),
+          (SLL (EXTRACT_SUBREG CPU64Regs:$src, sub_32), 0)>, Requires<[IsN64]>;
+ 
