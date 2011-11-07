@@ -1744,7 +1744,7 @@ void DwarfDebug::emitDebugPubTypes() {
   for (DenseMap<const MDNode *, CompileUnit *>::iterator I = CUMap.begin(),
          E = CUMap.end(); I != E; ++I) {
     CompileUnit *TheCU = I->second;
-    // Start the dwarf pubnames section.
+    // Start the dwarf pubtypes section.
     Asm->OutStreamer.SwitchSection(
       Asm->getObjFileLowering().getDwarfPubTypesSection());
     Asm->OutStreamer.AddComment("Length of Public Types Info");
