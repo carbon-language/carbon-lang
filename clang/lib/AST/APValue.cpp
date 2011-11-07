@@ -20,14 +20,41 @@
 using namespace clang;
 
 namespace {
-  struct LV {
-    const Expr* Base;
+  struct LVBase {
+    const Expr *Base;
     CharUnits Offset;
+    unsigned PathLength;
   };
 }
 
+struct APValue::LV : LVBase {
+  static const unsigned InlinePathSpace =
+      (MaxSize - sizeof(LVBase)) / sizeof(LValuePathEntry);
+
+  /// Path - The sequence of base classes, fields and array indices to follow to
+  /// walk from Base to the subobject. When performing GCC-style folding, there
+  /// may not be such a path.
+  union {
+    LValuePathEntry Path[InlinePathSpace];
+    LValuePathEntry *PathPtr;
+  };
+
+  LV() { PathLength = (unsigned)-1; }
+  ~LV() { if (hasPathPtr()) delete [] PathPtr; }
+
+  void allocPath() {
+    if (hasPathPtr()) PathPtr = new LValuePathEntry[PathLength];
+  }
+
+  bool hasPath() const { return PathLength != (unsigned)-1; }
+  bool hasPathPtr() const { return hasPath() && PathLength > InlinePathSpace; }
+
+  LValuePathEntry *getPath() { return hasPathPtr() ? PathPtr : Path; }
+};
+
 APValue::APValue(const Expr* B) : Kind(Uninitialized) {
-  MakeLValue(); setLValue(B, CharUnits::Zero());
+  MakeLValue();
+  setLValue(B, CharUnits::Zero(), ArrayRef<LValuePathEntry>());
 }
 
 const APValue &APValue::operator=(const APValue &RHS) {
@@ -57,8 +84,12 @@ const APValue &APValue::operator=(const APValue &RHS) {
     setComplexInt(RHS.getComplexIntReal(), RHS.getComplexIntImag());
   else if (isComplexFloat())
     setComplexFloat(RHS.getComplexFloatReal(), RHS.getComplexFloatImag());
-  else if (isLValue())
-    setLValue(RHS.getLValueBase(), RHS.getLValueOffset());
+  else if (isLValue()) {
+    if (RHS.hasLValuePath())
+      setLValue(RHS.getLValueBase(), RHS.getLValueOffset(),RHS.getLValuePath());
+    else
+      setLValue(RHS.getLValueBase(), RHS.getLValueOffset(), NoLValuePath());
+  }
   return *this;
 }
 
@@ -174,14 +205,38 @@ CharUnits &APValue::getLValueOffset() {
   return ((LV*)(void*)Data)->Offset;
 }
 
-void APValue::setLValue(const Expr *B, const CharUnits &O) {
+bool APValue::hasLValuePath() const {
   assert(isLValue() && "Invalid accessor");
-  ((LV*)(char*)Data)->Base = B;
-  ((LV*)(char*)Data)->Offset = O;
+  return ((LV*)(char*)Data)->hasPath();
+}
+
+ArrayRef<APValue::LValuePathEntry> APValue::getLValuePath() const {
+  assert(isLValue() && hasLValuePath() && "Invalid accessor");
+  LV &LVal = *((LV*)(char*)Data);
+  return ArrayRef<LValuePathEntry>(LVal.getPath(), LVal.PathLength);
+}
+
+void APValue::setLValue(const Expr *B, const CharUnits &O, NoLValuePath) {
+  assert(isLValue() && "Invalid accessor");
+  LV &LVal = *((LV*)(char*)Data);
+  LVal.Base = B;
+  LVal.Offset = O;
+  LVal.PathLength = (unsigned)-1;
+}
+
+void APValue::setLValue(const Expr *B, const CharUnits &O,
+                        ArrayRef<LValuePathEntry> Path) {
+  assert(isLValue() && "Invalid accessor");
+  LV &LVal = *((LV*)(char*)Data);
+  LVal.Base = B;
+  LVal.Offset = O;
+  LVal.PathLength = Path.size();
+  memcpy(LVal.getPath(), Path.data(), Path.size() * sizeof(LValuePathEntry));
 }
 
 void APValue::MakeLValue() {
   assert(isUninit() && "Bad state change");
+  assert(sizeof(LV) <= MaxSize && "LV too big");
   new ((void*)(char*)Data) LV();
   Kind = LValue;
 }

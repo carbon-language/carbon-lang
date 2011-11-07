@@ -500,10 +500,6 @@ public:
   /// lvalue with link time known address, with no side-effects.
   bool EvaluateAsLValue(EvalResult &Result, const ASTContext &Ctx) const;
 
-  /// EvaluateAsLValue - Evaluate an expression to see if we can fold it to an
-  /// lvalue, even if the expression has side-effects.
-  bool EvaluateAsAnyLValue(EvalResult &Result, const ASTContext &Ctx) const;
-
   /// \brief Enumeration used to describe the kind of Null pointer constant
   /// returned from \c isNullPointerConstant().
   enum NullPointerConstantKind {

@@ -22,6 +22,7 @@ namespace clang {
   class CharUnits;
   class DiagnosticBuilder;
   class Expr;
+  class Decl;
 
 /// APValue - This class implements a discriminated union of [uninitialized]
 /// [APSInt] [APFloat], [Complex APSInt] [Complex APFloat], [Expr + Offset].
@@ -38,6 +39,11 @@ public:
     LValue,
     Vector
   };
+  union LValuePathEntry {
+    const Decl *BaseOrMember;
+    uint64_t ArrayIndex;
+  };
+  struct NoLValuePath {};
 private:
   ValueKind Kind;
 
@@ -56,6 +62,8 @@ private:
     Vec() : Elts(0), NumElts(0) {}
     ~Vec() { delete[] Elts; }
   };
+
+  struct LV;
 
   enum {
     MaxSize = (sizeof(ComplexAPSInt) > sizeof(ComplexAPFloat) ?
@@ -87,10 +95,15 @@ public:
   APValue(const APValue &RHS) : Kind(Uninitialized) {
     *this = RHS;
   }
-  APValue(const Expr* B, const CharUnits &O) : Kind(Uninitialized) {
-    MakeLValue(); setLValue(B, O);
+  APValue(const Expr *B, const CharUnits &O, NoLValuePath N)
+      : Kind(Uninitialized) {
+    MakeLValue(); setLValue(B, O, N);
   }
-  APValue(const Expr* B);
+  APValue(const Expr *B, const CharUnits &O, ArrayRef<LValuePathEntry> Path)
+      : Kind(Uninitialized) {
+    MakeLValue(); setLValue(B, O, Path);
+  }
+  APValue(const Expr *B);
 
   ~APValue() {
     MakeUninit();
@@ -174,6 +187,8 @@ public:
   const CharUnits &getLValueOffset() const {
     return const_cast<APValue*>(this)->getLValueOffset();
   }
+  bool hasLValuePath() const;
+  ArrayRef<LValuePathEntry> getLValuePath() const;
 
   void setInt(const APSInt &I) {
     assert(isInt() && "Invalid accessor");
@@ -204,7 +219,9 @@ public:
     ((ComplexAPFloat*)(char*)Data)->Real = R;
     ((ComplexAPFloat*)(char*)Data)->Imag = I;
   }
-  void setLValue(const Expr *B, const CharUnits &O);
+  void setLValue(const Expr *B, const CharUnits &O, NoLValuePath);
+  void setLValue(const Expr *B, const CharUnits &O,
+                 ArrayRef<LValuePathEntry> Path);
 
   const APValue &operator=(const APValue &RHS);
 
