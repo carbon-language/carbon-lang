@@ -98,6 +98,8 @@ namespace llvm {
   public:
     explicit MipsTargetLowering(MipsTargetMachine &TM);
 
+    virtual MVT getShiftAmountTy(EVT LHSTy) const { return MVT::i32; }
+
     virtual bool allowsUnalignedMemoryAccesses (EVT VT) const;
 
     /// LowerOperation - Provide custom lowering hooks for some operations.

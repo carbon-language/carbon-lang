@@ -32,7 +32,7 @@ def Subtract32 : SDNodeXForm<imm, [{
 def immZExt5_64 : ImmLeaf<i64, [{return Imm == (Imm & 0x1f);}]>;
 
 // imm32_63 predicate - True if imm is in range [32, 63].
-def imm32_63 : ImmLeaf<i64,
+def imm32_63 : ImmLeaf<i32,
                        [{return (int32_t)Imm >= 32 && (int32_t)Imm < 64;}],
                        Subtract32>;
 
@@ -43,12 +43,12 @@ def imm32_63 : ImmLeaf<i64,
 // 64-bit shift instructions.
 class shift_rotate_imm64<bits<6> func, bits<5> isRotate, string instr_asm,
                          SDNode OpNode>:
-  shift_rotate_imm<func, isRotate, instr_asm, OpNode, immZExt5_64, shamt_64,
+  shift_rotate_imm<func, isRotate, instr_asm, OpNode, immZExt5, shamt,
                    CPU64Regs>;
 
 class shift_rotate_imm64_32<bits<6> func, bits<5> isRotate, string instr_asm,
                             SDNode OpNode>:
-  shift_rotate_imm<func, isRotate, instr_asm, OpNode, imm32_63, shamt_64,
+  shift_rotate_imm<func, isRotate, instr_asm, OpNode, imm32_63, shamt,
                    CPU64Regs>;
 
 // Mul, Div

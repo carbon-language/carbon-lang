@@ -327,9 +327,9 @@ class shift_rotate_imm32<bits<6> func, bits<5> isRotate, string instr_asm,
 
 class shift_rotate_reg<bits<6> func, bits<5> isRotate, string instr_asm,
                        SDNode OpNode, RegisterClass RC>:
-  FR<0x00, func, (outs RC:$rd), (ins RC:$rs, RC:$rt),
+  FR<0x00, func, (outs RC:$rd), (ins CPURegs:$rs, RC:$rt),
      !strconcat(instr_asm, "\t$rd, $rt, $rs"),
-     [(set RC:$rd, (OpNode RC:$rt, RC:$rs))], IIAlu> {
+     [(set RC:$rd, (OpNode RC:$rt, CPURegs:$rs))], IIAlu> {
   let shamt = isRotate;
 }
 
