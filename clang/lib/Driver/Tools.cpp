@@ -1458,22 +1458,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.ClaimAllArgs(options::OPT_g_Group);
   if (Arg *A = Args.getLastArg(options::OPT_g_Group))
     if (!A->getOption().matches(options::OPT_g0)) {
-      const std::string &ArgString = A->getAsString(Args);
-      bool Valid_g = llvm::StringSwitch<bool>(ArgString)
-        .Case("-g", true)
-        .Case("-g3", true)
-        .Case("-gdwarf-2", true)
-        .Case("-gstabs", true)
-        .Case("-gstabs+", true)
-        .Case("-gstabs1", true)
-        .Case("-gstabs2", true)
-        .Case("-gfull", true)
-        .Case("-gused", true)
-        .Default(false);
-      if (Valid_g)
         CmdArgs.push_back("-g");
-      else
-        D.Diag(diag::warn_drv_clang_unsupported) << ArgString;
     }
 
   Args.AddAllArgs(CmdArgs, options::OPT_ffunction_sections);
