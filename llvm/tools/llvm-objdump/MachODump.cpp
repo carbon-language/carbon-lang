@@ -385,7 +385,7 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
     bool symbolTableWorked = false;
 
     // Parse relocations.
-    std::vector<std::pair<uint64_t, uint32_t> > Relocs;
+    std::vector<std::pair<uint64_t, SymbolRef> > Relocs;
     error_code ec;
     for (relocation_iterator RI = Sections[SectIdx].begin_relocations(),
          RE = Sections[SectIdx].end_relocations(); RI != RE; RI.increment(ec)) {
@@ -394,10 +394,10 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
       Sections[SectIdx].getAddress(SectionAddress);
       RelocOffset -= SectionAddress;
 
-      uint64_t RelocInfo;
-      RI->getType(RelocInfo);
+      SymbolRef RelocSym;
+      RI->getSymbol(RelocSym);
 
-      Relocs.push_back(std::make_pair(RelocOffset, RelocInfo));
+      Relocs.push_back(std::make_pair(RelocOffset, RelocSym));
     }
     array_pod_sort(Relocs.begin(), Relocs.end());
 
@@ -594,8 +594,8 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
                   Relocs[j].first < SectAddress + Inst.Address + Inst.Size) {
                 StringRef SymName;
                 uint64_t Addr;
-                UnsortedSymbols[Relocs[j].second].getName(SymName);
-                UnsortedSymbols[Relocs[j].second].getAddress(Addr);
+                Relocs[j].second.getAddress(Addr);
+                Relocs[j].second.getName(SymName);
 
                 outs() << "\t# " << SymName << ' ';
                 DumpAddress(Addr, Sections, MachOObj, outs());
