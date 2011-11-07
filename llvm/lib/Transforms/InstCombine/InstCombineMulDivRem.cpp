@@ -441,19 +441,23 @@ Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
   // Handle the integer div common cases
   if (Instruction *Common = commonIDivTransforms(I))
     return Common;
-
-  if (ConstantInt *C = dyn_cast<ConstantInt>(Op1)) {
+  
+  { 
     // X udiv 2^C -> X >> C
     // Check to see if this is an unsigned division with an exact power of 2,
     // if so, convert to a right shift.
-    if (C->getValue().isPowerOf2()) { // 0 not included in isPowerOf2
+    const APInt *C;
+    if (match(Op1, m_Power2(C))) {
       BinaryOperator *LShr =
-        BinaryOperator::CreateLShr(Op0, 
-            ConstantInt::get(Op0->getType(), C->getValue().logBase2()));
+      BinaryOperator::CreateLShr(Op0, 
+                                 ConstantInt::get(Op0->getType(), 
+                                                  C->logBase2()));
       if (I.isExact()) LShr->setIsExact();
       return LShr;
     }
+  }
 
+  if (ConstantInt *C = dyn_cast<ConstantInt>(Op1)) {
     // X udiv C, where C >= signbit
     if (C->getValue().isNegative()) {
       Value *IC = Builder->CreateICmpULT(Op0, C);
