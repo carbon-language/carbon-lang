@@ -7130,14 +7130,17 @@ def : Pat<(v4i32 (X86VBroadcast (loadi32 addr:$src))),
 //===----------------------------------------------------------------------===//
 // VINSERTF128 - Insert packed floating-point values
 //
+let neverHasSideEffects = 1 in {
 def VINSERTF128rr : AVXAIi8<0x18, MRMSrcReg, (outs VR256:$dst),
           (ins VR256:$src1, VR128:$src2, i8imm:$src3),
           "vinsertf128\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
           []>, VEX_4V;
+let mayLoad = 1 in
 def VINSERTF128rm : AVXAIi8<0x18, MRMSrcMem, (outs VR256:$dst),
           (ins VR256:$src1, f128mem:$src2, i8imm:$src3),
           "vinsertf128\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
           []>, VEX_4V;
+}
 
 def : Pat<(int_x86_avx_vinsertf128_pd_256 VR256:$src1, VR128:$src2, imm:$src3),
           (VINSERTF128rr VR256:$src1, VR128:$src2, imm:$src3)>;
@@ -7174,14 +7177,17 @@ def : Pat<(vinsertf128_insert:$ins (v16i16 VR256:$src1), (v8i16 VR128:$src2),
 //===----------------------------------------------------------------------===//
 // VEXTRACTF128 - Extract packed floating-point values
 //
+let neverHasSideEffects = 1 in {
 def VEXTRACTF128rr : AVXAIi8<0x19, MRMDestReg, (outs VR128:$dst),
           (ins VR256:$src1, i8imm:$src2),
           "vextractf128\t{$src2, $src1, $dst|$dst, $src1, $src2}",
           []>, VEX;
+let mayStore = 1 in
 def VEXTRACTF128mr : AVXAIi8<0x19, MRMDestMem, (outs),
           (ins f128mem:$dst, VR256:$src1, i8imm:$src2),
           "vextractf128\t{$src2, $src1, $dst|$dst, $src1, $src2}",
           []>, VEX;
+}
 
 def : Pat<(int_x86_avx_vextractf128_pd_256 VR256:$src1, imm:$src2),
           (VEXTRACTF128rr VR256:$src1, imm:$src2)>;
@@ -7514,16 +7520,46 @@ defm VPERMPD : avx2_perm_imm<0x01, "vpermpd", memopv4f64, int_x86_avx2_permpd>,
 //===----------------------------------------------------------------------===//
 // VPERM2F128 - Permute Floating-Point Values in 128-bit chunks
 //
-def VPERM2I128rr : AVXAIi8<0x46, MRMSrcReg, (outs VR256:$dst),
+def VPERM2I128rr : AVX2AIi8<0x46, MRMSrcReg, (outs VR256:$dst),
           (ins VR256:$src1, VR256:$src2, i8imm:$src3),
           "vperm2i128\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
           [(set VR256:$dst,
            (int_x86_avx2_vperm2i128 VR256:$src1, VR256:$src2, imm:$src3))]>,
           VEX_4V;
-def VPERM2I128rm : AVXAIi8<0x46, MRMSrcMem, (outs VR256:$dst),
+def VPERM2I128rm : AVX2AIi8<0x46, MRMSrcMem, (outs VR256:$dst),
           (ins VR256:$src1, f256mem:$src2, i8imm:$src3),
           "vperm2i128\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
           [(set VR256:$dst,
            (int_x86_avx2_vperm2i128 VR256:$src1, (memopv4i64 addr:$src2),
             imm:$src3))]>,
           VEX_4V;
+
+//===----------------------------------------------------------------------===//
+// VINSERTI128 - Insert packed integer values
+//
+def VINSERTI128rr : AVX2AIi8<0x38, MRMSrcReg, (outs VR256:$dst),
+          (ins VR256:$src1, VR128:$src2, i8imm:$src3),
+          "vinserti128\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
+          [(set VR256:$dst,
+            (int_x86_avx2_vinserti128 VR256:$src1, VR128:$src2, imm:$src3))]>,
+          VEX_4V;
+def VINSERTI128rm : AVX2AIi8<0x38, MRMSrcMem, (outs VR256:$dst),
+          (ins VR256:$src1, i128mem:$src2, i8imm:$src3),
+          "vinserti128\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
+          [(set VR256:$dst,
+            (int_x86_avx2_vinserti128 VR256:$src1, (memopv2i64 addr:$src2),
+             imm:$src3))]>, VEX_4V;
+
+//===----------------------------------------------------------------------===//
+// VEXTRACTI128 - Extract packed integer values
+//
+def VEXTRACTI128rr : AVX2AIi8<0x39, MRMDestReg, (outs VR128:$dst),
+          (ins VR256:$src1, i8imm:$src2),
+          "vextracti128\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+          [(set VR128:$dst,
+            (int_x86_avx2_vextracti128 VR256:$src1, imm:$src2))]>,
+          VEX;
+let neverHasSideEffects = 1, mayStore = 1 in
+def VEXTRACTI128mr : AVX2AIi8<0x39, MRMDestMem, (outs),
+          (ins i128mem:$dst, VR256:$src1, i8imm:$src2),
+          "vextracti128\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>, VEX;

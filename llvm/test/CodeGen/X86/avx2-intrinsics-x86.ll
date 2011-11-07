@@ -886,3 +886,19 @@ define <4 x i64> @test_x86_avx2_vperm2i128(<4 x i64> %a0, <4 x i64> %a1) {
   ret <4 x i64> %res
 }
 declare <4 x i64> @llvm.x86.avx2.vperm2i128(<4 x i64>, <4 x i64>, i8) nounwind readonly
+
+
+define <2 x i64> @test_x86_avx2_vextracti128(<4 x i64> %a0) {
+  ; CHECK: vextracti128
+  %res = call <2 x i64> @llvm.x86.avx2.vextracti128(<4 x i64> %a0, i8 7) ; <<2 x i64>> [#uses=1]
+  ret <2 x i64> %res
+}
+declare <2 x i64> @llvm.x86.avx2.vextracti128(<4 x i64>, i8) nounwind readnone
+
+
+define <4 x i64> @test_x86_avx2_vinserti128(<4 x i64> %a0, <2 x i64> %a1) {
+  ; CHECK: vinserti128
+  %res = call <4 x i64> @llvm.x86.avx2.vinserti128(<4 x i64> %a0, <2 x i64> %a1, i8 7) ; <<4 x i64>> [#uses=1]
+  ret <4 x i64> %res
+}
+declare <4 x i64> @llvm.x86.avx2.vinserti128(<4 x i64>, <2 x i64>, i8) nounwind readnone
