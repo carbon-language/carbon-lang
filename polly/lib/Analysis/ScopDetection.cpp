@@ -113,8 +113,22 @@ namespace SCEVType {
   enum TYPE {INT, PARAM, IV, INVALID};
 }
 
+struct ValidatorResult {
+  SCEVType::TYPE type;
+
+  ValidatorResult() : type(SCEVType::INVALID) {};
+
+  ValidatorResult(const ValidatorResult &vres) {
+    type = vres.type;
+  };
+
+  ValidatorResult(SCEVType::TYPE type) : type(type) {};
+
+};
+
 /// Check if a SCEV is valid in a SCoP.
-struct SCEVValidator : public SCEVVisitor<SCEVValidator, SCEVType::TYPE> {
+struct SCEVValidator
+  : public SCEVVisitor<SCEVValidator, struct ValidatorResult> {
 private:
   const Region *R;
   ScalarEvolution &SE;
@@ -131,42 +145,44 @@ public:
       *BaseAddress = NULL;
 
     SCEVValidator Validator(R, SE, BaseAddress);
-    return Validator.visit(Scev) != SCEVType::INVALID;
+    ValidatorResult Result = Validator.visit(Scev);
+
+    return Result.type != SCEVType::INVALID;
   }
 
   SCEVValidator(const Region *R, ScalarEvolution &SE,
                 Value **BaseAddress) : R(R), SE(SE),
     BaseAddress(BaseAddress) {};
 
-  SCEVType::TYPE visitConstant(const SCEVConstant *Constant) {
-    return SCEVType::INT;
+  struct ValidatorResult visitConstant(const SCEVConstant *Constant) {
+    return ValidatorResult(SCEVType::INT);
   }
 
-  SCEVType::TYPE visitTruncateExpr(const SCEVTruncateExpr* Expr) {
-    SCEVType::TYPE Op = visit(Expr->getOperand());
+  struct ValidatorResult visitTruncateExpr(const SCEVTruncateExpr* Expr) {
+    ValidatorResult Op = visit(Expr->getOperand());
 
     // We currently do not represent a truncate expression as an affine
     // expression. If it is constant during Scop execution, we treat it as a
     // parameter, otherwise we bail out.
-    if (Op == SCEVType::INT || Op == SCEVType::PARAM)
-      return SCEVType::PARAM;
+    if (Op.type == SCEVType::INT || Op.type == SCEVType::PARAM)
+      return ValidatorResult(SCEVType::PARAM);
 
-    return SCEVType::INVALID;
+    return ValidatorResult (SCEVType::INVALID);
   }
 
-  SCEVType::TYPE visitZeroExtendExpr(const SCEVZeroExtendExpr * Expr) {
-    SCEVType::TYPE Op = visit(Expr->getOperand());
+  struct ValidatorResult visitZeroExtendExpr(const SCEVZeroExtendExpr * Expr) {
+    ValidatorResult Op = visit(Expr->getOperand());
 
     // We currently do not represent a zero extend expression as an affine
     // expression. If it is constant during Scop execution, we treat it as a
     // parameter, otherwise we bail out.
-    if (Op == SCEVType::INT || Op == SCEVType::PARAM)
-      return SCEVType::PARAM;
+    if (Op.type == SCEVType::INT || Op.type == SCEVType::PARAM)
+      return ValidatorResult (SCEVType::PARAM);
 
-    return SCEVType::INVALID;
+    return ValidatorResult(SCEVType::INVALID);
   }
 
-  SCEVType::TYPE visitSignExtendExpr(const SCEVSignExtendExpr* Expr) {
+  struct ValidatorResult visitSignExtendExpr(const SCEVSignExtendExpr* Expr) {
     // We currently allow only signed SCEV expressions. In the case of a
     // signed value, a sign extend is a noop.
     //
@@ -174,126 +190,130 @@ public:
     return visit(Expr->getOperand());
   }
 
-  SCEVType::TYPE visitAddExpr(const SCEVAddExpr* Expr) {
-    SCEVType::TYPE Return = SCEVType::INT;
+  struct ValidatorResult visitAddExpr(const SCEVAddExpr* Expr) {
+    ValidatorResult Return(SCEVType::INT);
 
     for (int i = 0, e = Expr->getNumOperands(); i < e; ++i) {
-      SCEVType::TYPE OpType = visit(Expr->getOperand(i));
+      ValidatorResult Op = visit(Expr->getOperand(i));
 
-      if (OpType == SCEVType::INVALID)
-        return SCEVType::INVALID;
+      if (Op.type == SCEVType::INVALID)
+        return ValidatorResult(SCEVType::INVALID);
 
-      Return = std::max(Return, OpType);
+      Return.type = std::max(Return.type, Op.type);
     }
 
     // TODO: Check for NSW and NUW.
     return Return;
   }
 
-  SCEVType::TYPE visitMulExpr(const SCEVMulExpr* Expr) {
-    SCEVType::TYPE Return = SCEVType::INT;
+  struct ValidatorResult visitMulExpr(const SCEVMulExpr* Expr) {
+    ValidatorResult Return(SCEVType::INT);
 
     for (int i = 0, e = Expr->getNumOperands(); i < e; ++i) {
-      SCEVType::TYPE OpType = visit(Expr->getOperand(i));
+      ValidatorResult Op = visit(Expr->getOperand(i));
 
-      if (OpType == SCEVType::INT)
+      if (Op.type == SCEVType::INT)
         continue;
 
-      if (OpType == SCEVType::INVALID || Return != SCEVType::INT)
-        return SCEVType::INVALID;
+      if (Op.type == SCEVType::INVALID || Return.type != SCEVType::INT)
+        return ValidatorResult(SCEVType::INVALID);
 
-      Return = OpType;
+      Return.type = Op.type;
     }
 
     // TODO: Check for NSW and NUW.
     return Return;
   }
 
-  SCEVType::TYPE visitUDivExpr(const SCEVUDivExpr* Expr) {
-    SCEVType::TYPE LHS = visit(Expr->getLHS());
-    SCEVType::TYPE RHS = visit(Expr->getRHS());
+  struct ValidatorResult visitUDivExpr(const SCEVUDivExpr* Expr) {
+    ValidatorResult LHS = visit(Expr->getLHS());
+    ValidatorResult RHS = visit(Expr->getRHS());
 
     // We currently do not represent a unsigned devision as an affine
     // expression. If the division is constant during Scop execution we treat it
     // as a parameter, otherwise we bail out.
-    if (LHS == SCEVType::INT || LHS == SCEVType::PARAM ||
-        RHS == SCEVType::INT || RHS == SCEVType::PARAM)
-      return SCEVType::PARAM;
+    if (LHS.type == SCEVType::INT || LHS.type == SCEVType::PARAM ||
+        RHS.type == SCEVType::INT || RHS.type == SCEVType::PARAM)
+      return ValidatorResult(SCEVType::PARAM);
 
-    return SCEVType::INVALID;
+    return ValidatorResult(SCEVType::INVALID);
   }
 
-  SCEVType::TYPE visitAddRecExpr(const SCEVAddRecExpr* Expr) {
+  struct ValidatorResult visitAddRecExpr(const SCEVAddRecExpr* Expr) {
     if (!Expr->isAffine())
-      return SCEVType::INVALID;
+      return ValidatorResult(SCEVType::INVALID);
 
-    SCEVType::TYPE Start = visit(Expr->getStart());
-    SCEVType::TYPE Recurrence = visit(Expr->getStepRecurrence(SE));
+    ValidatorResult Start = visit(Expr->getStart());
+    ValidatorResult Recurrence = visit(Expr->getStepRecurrence(SE));
 
-    if (Start == SCEVType::INVALID ||
-        Recurrence == SCEVType::INVALID ||
-        Recurrence == SCEVType::IV)
-      return SCEVType::INVALID;
+    if (Start.type == SCEVType::INVALID ||
+        Recurrence.type == SCEVType::INVALID ||
+        Recurrence.type == SCEVType::IV)
+      return ValidatorResult(SCEVType::INVALID);
+
 
     if (!R->contains(Expr->getLoop())) {
-      if (Start == SCEVType::IV)
-        return SCEVType::INVALID;
+      if (Start.type == SCEVType::IV)
+        return ValidatorResult(SCEVType::INVALID);
       else
-        return SCEVType::PARAM;
+        return ValidatorResult(SCEVType::PARAM);
     }
 
-    if (Recurrence != SCEVType::INT)
-      return SCEVType::INVALID;
+    if (Recurrence.type != SCEVType::INT)
+      return ValidatorResult(SCEVType::INVALID);
 
-    return SCEVType::IV;
+    return ValidatorResult(SCEVType::IV);
   }
 
-  SCEVType::TYPE visitSMaxExpr(const SCEVSMaxExpr* Expr) {
-    SCEVType::TYPE Return = SCEVType::INT;
+  struct ValidatorResult visitSMaxExpr(const SCEVSMaxExpr* Expr) {
+    ValidatorResult Return(SCEVType::INT);
 
     for (int i = 0, e = Expr->getNumOperands(); i < e; ++i) {
-      SCEVType::TYPE OpType = visit(Expr->getOperand(i));
+      ValidatorResult Op = visit(Expr->getOperand(i));
 
-      if (OpType == SCEVType::INVALID)
-        return SCEVType::INVALID;
+      if (Op.type == SCEVType::INVALID)
+        return ValidatorResult(SCEVType::INVALID);
 
-      Return = std::max(Return, OpType);
+      Return.type = std::max(Return.type, Op.type);
     }
 
     return Return;
   }
 
-  SCEVType::TYPE visitUMaxExpr(const SCEVUMaxExpr* Expr) {
+  struct ValidatorResult visitUMaxExpr(const SCEVUMaxExpr* Expr) {
     // We do not support unsigned operations. If 'Expr' is constant during Scop
     // execution we treat this as a parameter, otherwise we bail out.
     for (int i = 0, e = Expr->getNumOperands(); i < e; ++i) {
-      SCEVType::TYPE OpType = visit(Expr->getOperand(i));
+      ValidatorResult Op = visit(Expr->getOperand(i));
 
-      if (OpType != SCEVType::INT && OpType != SCEVType::PARAM)
-        return SCEVType::INVALID;
+      if (Op.type != SCEVType::INT && Op.type != SCEVType::PARAM)
+        return ValidatorResult(SCEVType::INVALID);
     }
 
-    return SCEVType::PARAM;
+    return ValidatorResult(SCEVType::PARAM);
   }
 
-  SCEVType::TYPE visitUnknown(const SCEVUnknown* Expr) {
+  ValidatorResult visitUnknown(const SCEVUnknown* Expr) {
     Value *V = Expr->getValue();
 
     if (isa<UndefValue>(V))
-      return SCEVType::INVALID;
+      return ValidatorResult(SCEVType::INVALID);
 
     if (BaseAddress) {
       if (*BaseAddress)
-        return SCEVType::INVALID;
+        return ValidatorResult(SCEVType::INVALID);
       else
         *BaseAddress = V;
     }
 
     if (Instruction *I = dyn_cast<Instruction>(Expr->getValue()))
       if (R->contains(I))
-        return SCEVType::INVALID;
+        return ValidatorResult(SCEVType::INVALID);
 
-    return SCEVType::PARAM;
+    if (BaseAddress)
+      return ValidatorResult(SCEVType::PARAM);
+    else
+      return ValidatorResult(SCEVType::PARAM);
   }
 };
 
