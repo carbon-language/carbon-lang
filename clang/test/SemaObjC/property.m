@@ -65,3 +65,12 @@ typedef id BYObjectIdentifier;
 
 // rdar://10127639
 @synthesize window; // expected-error {{missing context for property implementation declaration}}
+
+// rdar://10408414
+Class test6_getClass();
+@interface Test6
+@end
+@implementation Test6
++ (float) globalValue { return 5.0f; }
++ (float) gv { return test6_getClass().globalValue; }
+@end
