@@ -51,12 +51,16 @@ private:
   mutable int DynAllocFI; // Frame index of dynamically allocated stack area.   
   unsigned MaxCallFrameSize;
 
+  // Size of area on callee's stack frame which is used to save va_arg or 
+  // byval arguments passed in registers.
+  unsigned RegSaveAreaSize;
+
 public:
   MipsFunctionInfo(MachineFunction& MF)
   : MF(MF), SRetReturnReg(0), GlobalBaseReg(0),
     VarArgsFrameIndex(0), InArgFIRange(std::make_pair(-1, 0)),
     OutArgFIRange(std::make_pair(-1, 0)), GPFI(0), DynAllocFI(0),
-    MaxCallFrameSize(0)
+    MaxCallFrameSize(0), RegSaveAreaSize(0)
   {}
 
   bool isInArgFI(int FI) const {
@@ -100,6 +104,11 @@ public:
 
   unsigned getMaxCallFrameSize() const { return MaxCallFrameSize; }
   void setMaxCallFrameSize(unsigned S) { MaxCallFrameSize = S; }
+
+  unsigned getRegSaveAreaSize() const { return RegSaveAreaSize; }
+  void setRegSaveAreaSize(unsigned S) {
+    if (RegSaveAreaSize < S) RegSaveAreaSize = S;
+  }
 };
 
 } // end of namespace llvm
