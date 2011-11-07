@@ -66,4 +66,8 @@ __attribute__((objc_arc_weak_reference_unavailable))
 
 @implementation I4Impl
 @synthesize pw1, pw2, ps, pds, pds2;
+
+-(void)test1:(CFTypeRef *)cft {
+  id x = NSMakeCollectable(cft);
+}
 @end

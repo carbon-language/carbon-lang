@@ -302,6 +302,7 @@ namespace {
 
 class ASTTransform : public RecursiveASTVisitor<ASTTransform> {
   MigrationContext &MigrateCtx;
+  typedef RecursiveASTVisitor<ASTTransform> base;
 
 public:
   ASTTransform(MigrationContext &MigrateCtx) : MigrateCtx(MigrateCtx) { }
@@ -315,7 +316,7 @@ public:
            E = MigrateCtx.traversers_end(); I != E; ++I)
       (*I)->traverseObjCImplementation(ImplCtx);
 
-    return true;
+    return base::TraverseObjCImplementationDecl(D);
   }
 
   bool TraverseStmt(Stmt *rootS) {
