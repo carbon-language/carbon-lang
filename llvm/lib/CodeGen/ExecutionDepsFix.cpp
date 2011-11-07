@@ -149,6 +149,8 @@ private:
   bool Merge(DomainValue *A, DomainValue *B);
 
   void enterBasicBlock(MachineBasicBlock*);
+  void leaveBasicBlock(MachineBasicBlock*);
+  void visitInstr(MachineInstr*);
   void visitGenericInstr(MachineInstr*);
   void visitSoftInstr(MachineInstr*, unsigned mask);
   void visitHardInstr(MachineInstr*, unsigned domain);
@@ -303,6 +305,27 @@ void ExeDepsFix::enterBasicBlock(MachineBasicBlock *MBB) {
         Force(rx, pdv->getFirstDomain());
     }
   }
+}
+
+void ExeDepsFix::leaveBasicBlock(MachineBasicBlock *MBB) {
+  // Save live registers at end of MBB - used by enterBasicBlock().
+  if (LiveRegs)
+    LiveOuts.insert(std::make_pair(MBB, LiveRegs));
+  LiveRegs = 0;
+}
+
+void ExeDepsFix::visitInstr(MachineInstr *MI) {
+  if (MI->isDebugValue())
+    return;
+  ++Distance;
+  std::pair<uint16_t, uint16_t> domp = TII->getExecutionDomain(MI);
+  if (domp.first)
+    if (domp.second)
+      visitSoftInstr(MI, domp.second);
+    else
+      visitHardInstr(MI, domp.first);
+  else if (LiveRegs)
+    visitGenericInstr(MI);
 }
 
 // A hard instruction only works in one domain. All input registers will be
@@ -483,24 +506,9 @@ bool ExeDepsFix::runOnMachineFunction(MachineFunction &mf) {
     MachineBasicBlock *MBB = *DFI;
     enterBasicBlock(MBB);
     for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end(); I != E;
-        ++I) {
-      MachineInstr *mi = I;
-      if (mi->isDebugValue()) continue;
-      ++Distance;
-      std::pair<uint16_t, uint16_t> domp = TII->getExecutionDomain(mi);
-      if (domp.first)
-        if (domp.second)
-          visitSoftInstr(mi, domp.second);
-        else
-          visitHardInstr(mi, domp.first);
-      else if (LiveRegs)
-        visitGenericInstr(mi);
-    }
-
-    // Save live registers at end of MBB - used by enterBasicBlock().
-    if (LiveRegs)
-      LiveOuts.insert(std::make_pair(MBB, LiveRegs));
-    LiveRegs = 0;
+        ++I)
+      visitInstr(I);
+    leaveBasicBlock(MBB);
   }
 
   // Clear the LiveOuts vectors. Should we also collapse any remaining
