@@ -543,9 +543,9 @@
 				);
 				"FRAMEWORK_SEARCH_PATHS[sdk=macosx*][arch=*]" = "$(SDKROOT)/System/Library/PrivateFrameworks";
 				GCC_PREPROCESSOR_DEFINITIONS = LLDB_DEBUGSERVER_BUILDANDINTEGRATION;
-				GCC_VERSION = com.apple.compilers.llvmgcc42;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				HEADER_SEARCH_PATHS = /System/Library/Frameworks/System.framework/PrivateHeaders;
-				INSTALL_PATH = /Developer/usr/bin;
+				INSTALL_PATH = /usr/bin;
 				LLDB_DEBUGSERVER = 1;
 				OTHER_CFLAGS = "-Wparentheses";
 				OTHER_LDFLAGS = (
@@ -563,6 +563,7 @@
 				);
 				OTHER_MIGFLAGS = "-I$(DERIVED_FILE_DIR)";
 				PRODUCT_NAME = debugserver;
+				SKIP_INSTALL = YES;
 				STRIP_INSTALLED_PRODUCT = YES;
 				USER_HEADER_SEARCH_PATHS = "./source ../../source $(DERIVED_SOURCES_DIR)";
 				ZERO_LINK = NO;
@@ -586,8 +587,8 @@
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = LLDB_DEBUGSERVER_DEBUG;
-				GCC_VERSION = com.apple.compilers.llvmgcc42;
-				INSTALL_PATH = /Developer/usr/bin;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				INSTALL_PATH = /usr/bin;
 				LLDB_DEBUGSERVER = 1;
 				OTHER_CFLAGS = "-Wparentheses";
 				OTHER_LDFLAGS = (
@@ -606,6 +607,7 @@
 				OTHER_MIGFLAGS = "-I$(DERIVED_FILE_DIR)";
 				PRODUCT_NAME = debugserver;
 				"PROVISIONING_PROFILE[sdk=macosx*]" = "";
+				SKIP_INSTALL = YES;
 				USER_HEADER_SEARCH_PATHS = "./source ../../source $(DERIVED_SOURCES_DIR)";
 				ZERO_LINK = NO;
 			};
@@ -627,9 +629,9 @@
 				);
 				"FRAMEWORK_SEARCH_PATHS[sdk=macosx*][arch=*]" = "$(SDKROOT)/System/Library/PrivateFrameworks";
 				GCC_PREPROCESSOR_DEFINITIONS = LLDB_DEBUGSERVER_RELEASE;
-				GCC_VERSION = com.apple.compilers.llvmgcc42;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				HEADER_SEARCH_PATHS = /System/Library/Frameworks/System.framework/PrivateHeaders;
-				INSTALL_PATH = /Developer/usr/bin;
+				INSTALL_PATH = /usr/bin;
 				LLDB_DEBUGSERVER = 1;
 				OTHER_CFLAGS = "-Wparentheses";
 				OTHER_LDFLAGS = (
@@ -648,6 +650,7 @@
 				OTHER_MIGFLAGS = "-I$(DERIVED_FILE_DIR)";
 				PRODUCT_NAME = debugserver;
 				"PROVISIONING_PROFILE[sdk=macosx*]" = "";
+				SKIP_INSTALL = YES;
 				USER_HEADER_SEARCH_PATHS = "./source ../../source $(DERIVED_SOURCES_DIR)";
 				ZERO_LINK = NO;
 			};

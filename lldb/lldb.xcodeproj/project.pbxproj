@@ -2906,6 +2906,7 @@
 				26680205115FD0ED008E1FE4 /* Frameworks */,
 				261B5A7511C3FA6F00AABD0A /* Fixup Framework Headers */,
 				9A19ACE2116563A700E0D453 /* Finish swig wrapper classes (lldb) */,
+				2613F2F2146880EE00BFE551 /* Copy to Xcode.app */,
 			);
 			buildRules = (
 			);
@@ -2961,6 +2962,7 @@
 			buildPhases = (
 				26F5C26710F3D9A4009D5894 /* Sources */,
 				26F5C26810F3D9A4009D5894 /* Frameworks */,
+				2613F2F1146880C200BFE551 /* Copy to Xcode.app */,
 			);
 			buildRules = (
 			);
@@ -3032,6 +3034,34 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		2613F2F1146880C200BFE551 /* Copy to Xcode.app */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 8;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Copy to Xcode.app";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+			shellPath = /bin/sh;
+			shellScript = "xcode_dir=\"${DSTROOT}/Applications/Xcode.app/Contents/Developer/usr/bin\"\n\nif [ ! -d \"${xcode_dir}\" ]; then\n    mkdir -p \"${xcode_dir}\"\nfi\n\nditto \"$TARGET_BUILD_DIR/$EXECUTABLE_PATH\" \"${xcode_dir}\"\n";
+		};
+		2613F2F2146880EE00BFE551 /* Copy to Xcode.app */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 8;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Copy to Xcode.app";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+			shellPath = "/bin/sh -x";
+			shellScript = "xcode_dir=\"${DSTROOT}/Applications/Xcode.app/Contents/SharedFrameworks\"\n\nif [ ! -d \"${xcode_dir}\" ]; then\n    mkdir -p \"${xcode_dir}\"\nfi\n\nditto \"${TARGET_BUILD_DIR}/${WRAPPER_NAME}\" \"${xcode_dir}/${WRAPPER_NAME}\"\n";
+		};
 		261B5A7511C3FA6F00AABD0A /* Fixup Framework Headers */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -3660,6 +3690,7 @@
 				INSTALL_PATH = "$(DEVELOPER_DIR)/usr/bin";
 				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_NAME = "darwin-debug";
+				SKIP_INSTALL = YES;
 			};
 			name = Debug;
 		};
@@ -3672,6 +3703,7 @@
 				INSTALL_PATH = "$(DEVELOPER_DIR)/usr/bin";
 				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_NAME = "darwin-debug";
+				SKIP_INSTALL = YES;
 			};
 			name = Release;
 		};
@@ -3683,6 +3715,7 @@
 				INSTALL_PATH = "$(DEVELOPER_DIR)/usr/bin";
 				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_NAME = "darwin-debug";
+				SKIP_INSTALL = YES;
 			};
 			name = BuildAndIntegration;
 		};
@@ -3705,7 +3738,7 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "resources/LLDB-Info.plist";
-				INSTALL_PATH = "$(DEVELOPER_DIR)/Library/PrivateFrameworks";
+				INSTALL_PATH = /System/Library/PrivateFrameworks;
 				LD_DYLIB_INSTALL_NAME = "@rpath/LLDB.framework/Versions/A/LLDB";
 				LIBRARY_SEARCH_PATHS = (
 					"$(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)",
@@ -3766,7 +3799,7 @@
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "resources/LLDB-Info.plist";
-				INSTALL_PATH = "$(DEVELOPER_DIR)/Library/PrivateFrameworks";
+				INSTALL_PATH = /System/Library/PrivateFrameworks;
 				LD_DYLIB_INSTALL_NAME = "@rpath/LLDB.framework/Versions/A/LLDB";
 				LIBRARY_SEARCH_PATHS = (
 					"$(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)",
@@ -3831,6 +3864,7 @@
 				);
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "lib$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
 				STANDARD_C_PLUS_PLUS_LIBRARY_TYPE = static;
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
 				VERSIONING_SYSTEM = "apple-generic";
@@ -3860,6 +3894,7 @@
 				);
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "lib$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
 				STANDARD_C_PLUS_PLUS_LIBRARY_TYPE = static;
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
 				VERSIONING_SYSTEM = "apple-generic";
@@ -3889,6 +3924,7 @@
 				);
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "lib$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
 				STANDARD_C_PLUS_PLUS_LIBRARY_TYPE = static;
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
 				VERSIONING_SYSTEM = "apple-generic";
@@ -3956,14 +3992,15 @@
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "lldb-Info.plist";
-				INSTALL_PATH = "$(DEVELOPER_DIR)/usr/bin";
+				INSTALL_PATH = /usr/bin;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				OTHER_LDFLAGS = (
 					"-sectcreate",
 					__TEXT,
 					__info_plist,
 					"$(PROJECT_DIR)/tools/driver/lldb-Info.plist",
-					"-Wl,-rpath,@loader_path/../../Library/PrivateFrameworks/",
+					"-Wl,-rpath,@loader_path/../../../SharedFrameworks",
+					"-Wl,-rpath,@loader_path/../../System/Library/PrivateFrameworks",
 				);
 				PRODUCT_NAME = lldb;
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
@@ -3990,7 +4027,7 @@
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "resources/LLDB-Info.plist";
-				INSTALL_PATH = "$(DEVELOPER_DIR)/Library/PrivateFrameworks";
+				INSTALL_PATH = /System/Library/PrivateFrameworks;
 				LD_DYLIB_INSTALL_NAME = "@rpath/LLDB.framework/Versions/A/LLDB";
 				LIBRARY_SEARCH_PATHS = (
 					"$(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)",
@@ -4092,6 +4129,7 @@
 				);
 				PRODUCT_NAME = "lldb-platform";
 				PROVISIONING_PROFILE = "";
+				SKIP_INSTALL = YES;
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
 			};
 			name = Debug;
@@ -4154,6 +4192,7 @@
 				);
 				PRODUCT_NAME = "lldb-platform";
 				PROVISIONING_PROFILE = "";
+				SKIP_INSTALL = YES;
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
 			};
 			name = Release;
@@ -4212,6 +4251,7 @@
 					UIKit,
 				);
 				PRODUCT_NAME = "lldb-platform";
+				SKIP_INSTALL = YES;
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
 			};
 			name = BuildAndIntegration;
@@ -4231,7 +4271,7 @@
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "lldb-Info.plist";
-				INSTALL_PATH = "$(DEVELOPER_DIR)/usr/bin";
+				INSTALL_PATH = /usr/bin;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				LLVM_BUILD_DIR_ARCH = "$(OBJROOT)/llvm";
 				OTHER_LDFLAGS = (
@@ -4260,7 +4300,7 @@
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "lldb-Info.plist";
-				INSTALL_PATH = "$(DEVELOPER_DIR)/usr/bin";
+				INSTALL_PATH = /usr/bin;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				OTHER_LDFLAGS = (
 					"-sectcreate",
