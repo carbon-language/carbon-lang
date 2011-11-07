@@ -89,7 +89,7 @@ def RetFastCC_ARM_APCS : CallingConv<[
 
 def CC_ARM_AAPCS_Common : CallingConv<[
 
-  CCIfType<[i8, i16], CCPromoteToType<i32>>,
+  CCIfType<[i1, i8, i16], CCPromoteToType<i32>>,
 
   // i64/f64 is passed in even pairs of GPRs
   // i64 is 8-aligned i32 here, so we may need to eat R1 as a pad register
