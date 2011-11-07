@@ -157,15 +157,14 @@ static void addProfileRT(const ToolChain &TC, const ArgList &Args,
   // the link line. We cannot do the same thing because unlike gcov there is a
   // libprofile_rt.so. We used to use the -l:libprofile_rt.a syntax, but that is
   // not supported by old linkers.
-  Twine ProfileRT =
-    Twine(TC.getDriver().Dir) + "/../lib/" + "libprofile_rt.a";
+  std::string ProfileRT =
+    std::string(TC.getDriver().Dir) + "/../lib/libprofile_rt.a";
 
   if (Triple.isOSDarwin()) {
     // On Darwin, if the static library doesn't exist try the dylib.
     bool Exists;
-    if (llvm::sys::fs::exists(ProfileRT.str(), Exists) || !Exists)
-      ProfileRT =
-        Twine(TC.getDriver().Dir) + "/../lib/" + "libprofile_rt.dylib";
+    if (llvm::sys::fs::exists(ProfileRT, Exists) || !Exists)
+      ProfileRT.replace(ProfileRT.size() - 1, 1, "dylib");
   }
 
   CmdArgs.push_back(Args.MakeArgString(ProfileRT));
