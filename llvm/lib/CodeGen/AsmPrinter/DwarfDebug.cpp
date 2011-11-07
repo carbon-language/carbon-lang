@@ -525,20 +525,17 @@ CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
 }
 
 static bool isObjCClass(StringRef Name) {
-  if (Name == "") return false;
-  return Name[0] == '+' || Name[0] == '-';
+  return Name.startswith("+") || Name.startswith("-");
 }
 
 static bool hasObjCCategory(StringRef Name) {
-  if (Name[0] != '+' && Name[0] != '-')
-    return false;
+  if (!isObjCClass(Name)) return false;
 
   size_t pos = Name.find(')');
   if (pos != std::string::npos) {
     if (Name[pos+1] != ' ') return false;
     return true;
   }
-
   return false;
 }
 
