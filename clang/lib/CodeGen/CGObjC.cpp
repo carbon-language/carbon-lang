@@ -1087,22 +1087,6 @@ QualType CodeGenFunction::TypeOfSelfObject() {
   return PTy->getPointeeType();
 }
 
-static RValue GenerateMessageSendSuper(CodeGenFunction &CGF,
-                                       ReturnValueSlot Return,
-                                       QualType ResultType,
-                                       Selector S,
-                                       llvm::Value *Receiver,
-                                       const CallArgList &CallArgs) {
-  const ObjCMethodDecl *OMD = cast<ObjCMethodDecl>(CGF.CurFuncDecl);
-  bool isClassMessage = OMD->isClassMethod();
-  bool isCategoryImpl = isa<ObjCCategoryImplDecl>(OMD->getDeclContext());
-  return CGF.CGM.getObjCRuntime()
-                .GenerateMessageSendSuper(CGF, Return, ResultType,
-                                          S, OMD->getClassInterface(),
-                                          isCategoryImpl, Receiver,
-                                          isClassMessage, CallArgs);
-}
-
 void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   llvm::Constant *EnumerationMutationFn =
     CGM.getObjCRuntime().EnumerationMutationFunction();

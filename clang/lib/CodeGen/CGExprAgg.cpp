@@ -333,8 +333,6 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
                 "should have been unpacked before we got here");
   }
 
-  case CK_GetObjCProperty: llvm_unreachable("GetObjCProperty!");
-
   case CK_LValueToRValue: // hope for downstream optimization
   case CK_NoOp:
   case CK_UserDefinedConversion:

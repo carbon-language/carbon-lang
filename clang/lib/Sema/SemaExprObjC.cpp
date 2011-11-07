@@ -1696,7 +1696,6 @@ namespace {
         case CK_NoOp:
         case CK_LValueToRValue:
         case CK_BitCast:
-        case CK_GetObjCProperty:
         case CK_CPointerToObjCPointerCast:
         case CK_BlockPointerToObjCPointerCast:
         case CK_AnyPointerToBlockPointerCast:

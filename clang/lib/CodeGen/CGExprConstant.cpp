@@ -581,7 +581,6 @@ public:
 
     // These will never be supported.
     case CK_ObjCObjectLValueCast:
-    case CK_GetObjCProperty:
     case CK_ToVoid:
     case CK_Dynamic:
     case CK_ARCProduceObject:

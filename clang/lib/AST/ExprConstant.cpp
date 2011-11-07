@@ -2526,7 +2526,6 @@ bool IntExprEvaluator::VisitCastExpr(const CastExpr *E) {
 
   case CK_BitCast:
   case CK_Dependent:
-  case CK_GetObjCProperty:
   case CK_LValueBitCast:
   case CK_UserDefinedConversion:
   case CK_ARCProduceObject:
@@ -2987,7 +2986,6 @@ bool ComplexExprEvaluator::VisitCastExpr(const CastExpr *E) {
     return ExprEvaluatorBaseTy::VisitCastExpr(E);
 
   case CK_Dependent:
-  case CK_GetObjCProperty:
   case CK_LValueBitCast:
   case CK_UserDefinedConversion:
     return false;

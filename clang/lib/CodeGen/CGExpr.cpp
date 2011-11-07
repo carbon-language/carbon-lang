@@ -2010,8 +2010,6 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
   case CK_Dependent:
     llvm_unreachable("dependent cast kind in IR gen!");
 
-  case CK_GetObjCProperty: llvm_unreachable("GetObjCProperty");
-
   case CK_NoOp:
   case CK_LValueToRValue:
     if (!E->getSubExpr()->Classify(getContext()).isPRValue() 

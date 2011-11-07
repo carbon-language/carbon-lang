@@ -179,8 +179,7 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
   ExplodedNodeSet dstPreStmt;
   getCheckerManager().runCheckersForPreStmt(dstPreStmt, Pred, CastE, *this);
   
-  if (CastE->getCastKind() == CK_LValueToRValue ||
-      CastE->getCastKind() == CK_GetObjCProperty) {
+  if (CastE->getCastKind() == CK_LValueToRValue) {
     for (ExplodedNodeSet::iterator I = dstPreStmt.begin(), E = dstPreStmt.end();
          I!=E; ++I) {
       ExplodedNode *subExprNode = *I;
@@ -206,8 +205,6 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
     switch (CastE->getCastKind()) {
       case CK_LValueToRValue:
         llvm_unreachable("LValueToRValue casts handled earlier.");
-      case CK_GetObjCProperty:
-        llvm_unreachable("GetObjCProperty casts handled earlier.");
       case CK_ToVoid:
         continue;
         // The analyzer doesn't do anything special with these casts,

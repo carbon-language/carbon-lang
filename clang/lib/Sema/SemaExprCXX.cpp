@@ -4080,11 +4080,6 @@ ExprResult Sema::MaybeBindToTemporary(Expr *E) {
       ObjCMethodDecl *D = 0;
       if (ObjCMessageExpr *Send = dyn_cast<ObjCMessageExpr>(E)) {
         D = Send->getMethodDecl();
-      } else {
-        CastExpr *CE = cast<CastExpr>(E);
-        assert(CE->getCastKind() == CK_GetObjCProperty);
-        const ObjCPropertyRefExpr *PRE = CE->getSubExpr()->getObjCProperty();
-        D = (PRE->isImplicitProperty() ? PRE->getImplicitPropertyGetter() : 0);
       }
 
       ReturnsRetained = (D && D->hasAttr<NSReturnsRetainedAttr>());

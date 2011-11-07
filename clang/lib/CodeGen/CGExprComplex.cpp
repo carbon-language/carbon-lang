@@ -355,7 +355,6 @@ ComplexPairTy ComplexExprEmitter::EmitCast(CastExpr::CastKind CK, Expr *Op,
                                            QualType DestTy) {
   switch (CK) {
   case CK_Dependent: llvm_unreachable("dependent cast kind in IR gen!");
-  case CK_GetObjCProperty: llvm_unreachable("GetObjCProperty!");
 
   case CK_NoOp:
   case CK_LValueToRValue:

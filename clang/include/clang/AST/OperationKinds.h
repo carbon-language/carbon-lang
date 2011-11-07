@@ -52,13 +52,6 @@ enum CastKind {
   /// conversion is always unqualified.
   CK_LValueToRValue,
 
-  /// CK_GetObjCProperty - A conversion which calls an Objective-C
-  /// property getter.  The operand is an OK_ObjCProperty l-value; the
-  /// result will generally be an r-value, but could be an ordinary
-  /// gl-value if the property reference is to an implicit property
-  /// for a method that returns a reference type.
-  CK_GetObjCProperty,
-    
   /// CK_NoOp - A conversion which does not affect the type other than
   /// (possibly) adding qualifiers.
   ///   int    -> int

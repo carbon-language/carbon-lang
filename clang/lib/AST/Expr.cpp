@@ -1084,7 +1084,6 @@ void CastExpr::CheckCastConsistency() const {
 
   case CK_Dependent:
   case CK_LValueToRValue:
-  case CK_GetObjCProperty:
   case CK_NoOp:
   case CK_PointerToBoolean:
   case CK_IntegralToBoolean:
@@ -1110,8 +1109,6 @@ const char *CastExpr::getCastKindName() const {
     return "LValueBitCast";
   case CK_LValueToRValue:
     return "LValueToRValue";
-  case CK_GetObjCProperty:
-    return "GetObjCProperty";
   case CK_NoOp:
     return "NoOp";
   case CK_BaseToDerived:
