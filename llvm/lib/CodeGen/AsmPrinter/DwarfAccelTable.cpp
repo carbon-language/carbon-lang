@@ -128,8 +128,7 @@ void DwarfAccelTable::EmitHeader(AsmPrinter *Asm) {
 void DwarfAccelTable::EmitBuckets(AsmPrinter *Asm) {
   unsigned index = 0;
   for (size_t i = 0; i < Buckets.size(); ++i) {
-    Twine Comment = Twine("Bucket ") + Twine(i);
-    Asm->OutStreamer.AddComment(Comment);
+    Asm->OutStreamer.AddComment("Bucket " + Twine(i));
     if (Buckets[i].size() != 0)
       Asm->EmitInt32(index);
     else
@@ -144,8 +143,7 @@ void DwarfAccelTable::EmitHashes(AsmPrinter *Asm) {
   for (size_t i = 0; i < Buckets.size(); ++i) {
     for (HashList::const_iterator HI = Buckets[i].begin(),
            HE = Buckets[i].end(); HI != HE; ++HI) {
-      Twine Comment = Twine("Hash in Bucket ") + Twine(i);
-      Asm->OutStreamer.AddComment(Comment);
+      Asm->OutStreamer.AddComment("Hash in Bucket " + Twine(i));
       Asm->EmitInt32((*HI)->HashValue);
     } 
   }
@@ -159,8 +157,7 @@ void DwarfAccelTable::EmitOffsets(AsmPrinter *Asm, MCSymbol *SecBegin) {
   for (size_t i = 0; i < Buckets.size(); ++i) {
     for (HashList::const_iterator HI = Buckets[i].begin(),
            HE = Buckets[i].end(); HI != HE; ++HI) {
-      Twine Comment = Twine("Offset in Bucket ") + Twine(i);
-      Asm->OutStreamer.AddComment(Comment);
+      Asm->OutStreamer.AddComment("Offset in Bucket " + Twine(i));
       MCContext &Context = Asm->OutStreamer.getContext();
       const MCExpr *Sub =
         MCBinaryExpr::CreateSub(MCSymbolRefExpr::Create((*HI)->Sym, Context),
