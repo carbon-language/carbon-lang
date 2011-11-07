@@ -131,6 +131,8 @@ copyPhysReg(MachineBasicBlock &MBB,
     Opc = Mips::FMOV_S;
   else if (Mips::AFGR64RegClass.contains(DestReg, SrcReg))
     Opc = Mips::FMOV_D32;
+  else if (Mips::FGR64RegClass.contains(DestReg, SrcReg))
+    Opc = Mips::FMOV_D64;
   else if (Mips::CCRRegClass.contains(DestReg, SrcReg))
     Opc = Mips::MOVCCRToCCR;
   else if (Mips::CPU64RegsRegClass.contains(DestReg)) { // Copy to CPU64 Reg.
@@ -140,12 +142,16 @@ copyPhysReg(MachineBasicBlock &MBB,
       Opc = Mips::MFHI64, SrcReg = 0;
     else if (SrcReg == Mips::LO64)
       Opc = Mips::MFLO64, SrcReg = 0;
+    else if (Mips::FGR64RegClass.contains(SrcReg))
+      Opc = Mips::DMFC1;
   }
   else if (Mips::CPU64RegsRegClass.contains(SrcReg)) { // Copy from CPU64 Reg.
     if (DestReg == Mips::HI64)
       Opc = Mips::MTHI64, DestReg = 0;
     else if (DestReg == Mips::LO64)
       Opc = Mips::MTLO64, DestReg = 0;
+    else if (Mips::FGR64RegClass.contains(DestReg))
+      Opc = Mips::DMTC1;
   }
 
   assert(Opc && "Cannot copy registers");
