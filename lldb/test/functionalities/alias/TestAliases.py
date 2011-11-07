@@ -51,7 +51,7 @@ class AliasTestCase(TestBase):
         self.runCmd ("command alias alias command alias")
         self.runCmd ("command alias unalias command unalias")
 
-        self.runCmd ("alias myrun process launch -t%1 --")
+        self.runCmd ("alias myrun process launch -t %1 --")
         self.runCmd ("alias bp breakpoint")
 
         self.expect ("alias bpa bp add",
