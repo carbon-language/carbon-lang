@@ -70,6 +70,9 @@ bool trans::canApplyWeak(ASTContext &Ctx, QualType type,
     return false;
 
   QualType T = type;
+  if (T.isNull())
+    return false;
+
   while (const PointerType *ptr = T->getAs<PointerType>())
     T = ptr->getPointeeType();
   if (const ObjCObjectPointerType *ObjT = T->getAs<ObjCObjectPointerType>()) {
@@ -354,6 +357,90 @@ bool MigrationContext::isGCOwnedNonObjC(QualType T) {
       break;
   }
 
+  return false;
+}
+
+bool MigrationContext::rewritePropertyAttribute(StringRef fromAttr,
+                                                StringRef toAttr,
+                                                SourceLocation atLoc) {
+  if (atLoc.isMacroID())
+    return false;
+
+  SourceManager &SM = Pass.Ctx.getSourceManager();
+
+  // Break down the source location.
+  std::pair<FileID, unsigned> locInfo = SM.getDecomposedLoc(atLoc);
+
+  // Try to load the file buffer.
+  bool invalidTemp = false;
+  StringRef file = SM.getBufferData(locInfo.first, &invalidTemp);
+  if (invalidTemp)
+    return false;
+
+  const char *tokenBegin = file.data() + locInfo.second;
+
+  // Lex from the start of the given location.
+  Lexer lexer(SM.getLocForStartOfFile(locInfo.first),
+              Pass.Ctx.getLangOptions(),
+              file.begin(), tokenBegin, file.end());
+  Token tok;
+  lexer.LexFromRawLexer(tok);
+  if (tok.isNot(tok::at)) return false;
+  lexer.LexFromRawLexer(tok);
+  if (tok.isNot(tok::raw_identifier)) return false;
+  if (StringRef(tok.getRawIdentifierData(), tok.getLength())
+        != "property")
+    return false;
+  lexer.LexFromRawLexer(tok);
+  if (tok.isNot(tok::l_paren)) return false;
+  
+  Token BeforeTok = tok;
+  Token AfterTok;
+  AfterTok.startToken();
+  SourceLocation AttrLoc;
+  
+  lexer.LexFromRawLexer(tok);
+  if (tok.is(tok::r_paren))
+    return false;
+
+  while (1) {
+    if (tok.isNot(tok::raw_identifier)) return false;
+    StringRef ident(tok.getRawIdentifierData(), tok.getLength());
+    if (ident == fromAttr) {
+      if (!toAttr.empty()) {
+        Pass.TA.replaceText(tok.getLocation(), fromAttr, toAttr);
+        return true;
+      }
+      // We want to remove the attribute.
+      AttrLoc = tok.getLocation();
+    }
+
+    do {
+      lexer.LexFromRawLexer(tok);
+      if (AttrLoc.isValid() && AfterTok.is(tok::unknown))
+        AfterTok = tok;
+    } while (tok.isNot(tok::comma) && tok.isNot(tok::r_paren));
+    if (tok.is(tok::r_paren))
+      break;
+    if (AttrLoc.isInvalid())
+      BeforeTok = tok;
+    lexer.LexFromRawLexer(tok);
+  }
+
+  if (toAttr.empty() && AttrLoc.isValid() && AfterTok.isNot(tok::unknown)) {
+    // We want to remove the attribute.
+    if (BeforeTok.is(tok::l_paren) && AfterTok.is(tok::r_paren)) {
+      Pass.TA.remove(SourceRange(BeforeTok.getLocation(),
+                                 AfterTok.getLocation()));
+    } else if (BeforeTok.is(tok::l_paren) && AfterTok.is(tok::comma)) {
+      Pass.TA.remove(SourceRange(AttrLoc, AfterTok.getLocation()));
+    } else {
+      Pass.TA.remove(SourceRange(BeforeTok.getLocation(), AttrLoc));
+    }
+
+    return true;
+  }
+  
   return false;
 }
 

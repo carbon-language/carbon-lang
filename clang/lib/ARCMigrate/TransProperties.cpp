@@ -44,6 +44,7 @@ using namespace trans;
 namespace {
 
 class PropertiesRewriter {
+  MigrationContext &MigrateCtx;
   MigrationPass &Pass;
   ObjCImplementationDecl *CurImplD;
   
@@ -51,7 +52,7 @@ class PropertiesRewriter {
     PropAction_None,
     PropAction_RetainToStrong,
     PropAction_RetainRemoved,
-    PropAction_AssignToStrong,
+    PropAction_AssignRemoved,
     PropAction_AssignRewritten,
     PropAction_MaybeAddStrong,
     PropAction_MaybeAddWeakOrUnsafe
@@ -71,7 +72,8 @@ class PropertiesRewriter {
   llvm::DenseMap<IdentifierInfo *, PropActionKind> ActionOnProp;
 
 public:
-  PropertiesRewriter(MigrationPass &pass) : Pass(pass) { }
+  explicit PropertiesRewriter(MigrationContext &MigrateCtx)
+    : MigrateCtx(MigrateCtx), Pass(MigrateCtx.Pass) { }
 
   static void collectProperties(ObjCContainerDecl *D, AtPropDeclsTy &AtProps) {
     for (ObjCInterfaceDecl::prop_iterator
@@ -167,9 +169,8 @@ private:
     case PropAction_RetainRemoved:
       removeAttribute("retain", atLoc);
       return;
-    case PropAction_AssignToStrong:
-      rewriteAttribute("assign", "strong", atLoc);
-      return;
+    case PropAction_AssignRemoved:
+      return removeAssignForDefaultStrong(props, atLoc);
     case PropAction_AssignRewritten:
       return rewriteAssign(props, atLoc);
     case PropAction_MaybeAddStrong:
@@ -205,21 +206,39 @@ private:
         return doPropAction(PropAction_RetainRemoved, props, atLoc);
     }
 
+    bool HasIvarAssignedAPlusOneObject = hasIvarAssignedAPlusOneObject(props);
+
     if (propAttrs & ObjCPropertyDecl::OBJC_PR_assign) {
-      if (hasIvarAssignedAPlusOneObject(props)) {
-        return doPropAction(PropAction_AssignToStrong, props, atLoc);
+      if (HasIvarAssignedAPlusOneObject ||
+          (Pass.isGCMigration() && !hasGCWeak(props, atLoc))) {
+        return doPropAction(PropAction_AssignRemoved, props, atLoc);
       }
       return doPropAction(PropAction_AssignRewritten, props, atLoc);
     }
 
-    if (hasIvarAssignedAPlusOneObject(props))
+    if (HasIvarAssignedAPlusOneObject ||
+        (Pass.isGCMigration() && !hasGCWeak(props, atLoc)))
       return doPropAction(PropAction_MaybeAddStrong, props, atLoc);
 
     return doPropAction(PropAction_MaybeAddWeakOrUnsafe, props, atLoc);
   }
 
+  void removeAssignForDefaultStrong(PropsTy &props,
+                                    SourceLocation atLoc) const {
+    removeAttribute("retain", atLoc);
+    if (!removeAttribute("assign", atLoc))
+      return;
+
+    for (PropsTy::iterator I = props.begin(), E = props.end(); I != E; ++I) {
+      if (I->ImplD)
+        Pass.TA.clearDiagnostic(diag::err_arc_assign_property_ownership,
+                                I->ImplD->getLocation());
+    }
+  }
+
   void rewriteAssign(PropsTy &props, SourceLocation atLoc) const {
-    bool canUseWeak = canApplyWeak(Pass.Ctx, getPropertyType(props));
+    bool canUseWeak = canApplyWeak(Pass.Ctx, getPropertyType(props),
+                                  /*AllowOnUnknownClass=*/Pass.isGCMigration());
 
     bool rewroteAttr = rewriteAttribute("assign",
                                      canUseWeak ? "weak" : "unsafe_unretained",
@@ -241,7 +260,8 @@ private:
                                           SourceLocation atLoc) const {
     ObjCPropertyDecl::PropertyAttributeKind propAttrs = getPropertyAttrs(props);
 
-    bool canUseWeak = canApplyWeak(Pass.Ctx, getPropertyType(props));
+    bool canUseWeak = canApplyWeak(Pass.Ctx, getPropertyType(props),
+                                  /*AllowOnUnknownClass=*/Pass.isGCMigration());
     if (!(propAttrs & ObjCPropertyDecl::OBJC_PR_readonly) ||
         !hasAllIvarsBacked(props)) {
       bool addedAttr = addAttribute(canUseWeak ? "weak" : "unsafe_unretained",
@@ -289,85 +309,7 @@ private:
 
   bool rewriteAttribute(StringRef fromAttr, StringRef toAttr,
                         SourceLocation atLoc) const {
-    if (atLoc.isMacroID())
-      return false;
-
-    SourceManager &SM = Pass.Ctx.getSourceManager();
-
-    // Break down the source location.
-    std::pair<FileID, unsigned> locInfo = SM.getDecomposedLoc(atLoc);
-
-    // Try to load the file buffer.
-    bool invalidTemp = false;
-    StringRef file = SM.getBufferData(locInfo.first, &invalidTemp);
-    if (invalidTemp)
-      return false;
-
-    const char *tokenBegin = file.data() + locInfo.second;
-
-    // Lex from the start of the given location.
-    Lexer lexer(SM.getLocForStartOfFile(locInfo.first),
-                Pass.Ctx.getLangOptions(),
-                file.begin(), tokenBegin, file.end());
-    Token tok;
-    lexer.LexFromRawLexer(tok);
-    if (tok.isNot(tok::at)) return false;
-    lexer.LexFromRawLexer(tok);
-    if (tok.isNot(tok::raw_identifier)) return false;
-    if (StringRef(tok.getRawIdentifierData(), tok.getLength())
-          != "property")
-      return false;
-    lexer.LexFromRawLexer(tok);
-    if (tok.isNot(tok::l_paren)) return false;
-    
-    Token BeforeTok = tok;
-    Token AfterTok;
-    AfterTok.startToken();
-    SourceLocation AttrLoc;
-    
-    lexer.LexFromRawLexer(tok);
-    if (tok.is(tok::r_paren))
-      return false;
-
-    while (1) {
-      if (tok.isNot(tok::raw_identifier)) return false;
-      StringRef ident(tok.getRawIdentifierData(), tok.getLength());
-      if (ident == fromAttr) {
-        if (!toAttr.empty()) {
-          Pass.TA.replaceText(tok.getLocation(), fromAttr, toAttr);
-          return true;
-        }
-        // We want to remove the attribute.
-        AttrLoc = tok.getLocation();
-      }
-
-      do {
-        lexer.LexFromRawLexer(tok);
-        if (AttrLoc.isValid() && AfterTok.is(tok::unknown))
-          AfterTok = tok;
-      } while (tok.isNot(tok::comma) && tok.isNot(tok::r_paren));
-      if (tok.is(tok::r_paren))
-        break;
-      if (AttrLoc.isInvalid())
-        BeforeTok = tok;
-      lexer.LexFromRawLexer(tok);
-    }
-
-    if (toAttr.empty() && AttrLoc.isValid() && AfterTok.isNot(tok::unknown)) {
-      // We want to remove the attribute.
-      if (BeforeTok.is(tok::l_paren) && AfterTok.is(tok::r_paren)) {
-        Pass.TA.remove(SourceRange(BeforeTok.getLocation(),
-                                   AfterTok.getLocation()));
-      } else if (BeforeTok.is(tok::l_paren) && AfterTok.is(tok::comma)) {
-        Pass.TA.remove(SourceRange(AttrLoc, AfterTok.getLocation()));
-      } else {
-        Pass.TA.remove(SourceRange(BeforeTok.getLocation(), AttrLoc));
-      }
-
-      return true;
-    }
-    
-    return false;
+    return MigrateCtx.rewritePropertyAttribute(fromAttr, toAttr, atLoc);
   }
 
   bool addAttribute(StringRef attr, SourceLocation atLoc) const {
@@ -482,6 +424,15 @@ private:
     return true;
   }
 
+  // \brief Returns true if all declarations in the @property have GC __weak.
+  bool hasGCWeak(PropsTy &props, SourceLocation atLoc) const {
+    if (!Pass.isGCMigration())
+      return false;
+    if (props.empty())
+      return false;
+    return MigrateCtx.AtPropsWeak.count(atLoc.getRawEncoding());
+  }
+
   bool isUserDeclared(ObjCIvarDecl *ivarD) const {
     return ivarD && !ivarD->getSynthesize();
   }
@@ -513,23 +464,10 @@ private:
   }
 };
 
-class ImplementationChecker :
-                             public RecursiveASTVisitor<ImplementationChecker> {
-  MigrationPass &Pass;
-
-public:
-  ImplementationChecker(MigrationPass &pass) : Pass(pass) { }
-
-  bool TraverseObjCImplementationDecl(ObjCImplementationDecl *D) {
-    PropertiesRewriter(Pass).doTransform(D);
-    return true;
-  }
-};
-
 } // anonymous namespace
 
 void PropertyRewriteTraverser::traverseObjCImplementation(
                                            ObjCImplementationContext &ImplCtx) {
-  PropertiesRewriter(ImplCtx.getMigrationContext().Pass)
+  PropertiesRewriter(ImplCtx.getMigrationContext())
                                   .doTransform(ImplCtx.getImplementationDecl());
 }

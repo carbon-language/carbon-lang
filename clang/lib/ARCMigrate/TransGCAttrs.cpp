@@ -13,6 +13,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Analysis/Support/SaveAndRestore.h"
 #include "clang/Sema/SemaDiagnostic.h"
+#include "llvm/ADT/TinyPtrVector.h"
 
 using namespace clang;
 using namespace arcmt;
@@ -24,11 +25,14 @@ namespace {
 class GCAttrsCollector : public RecursiveASTVisitor<GCAttrsCollector> {
   MigrationContext &MigrateCtx;
   bool FullyMigratable;
+  std::vector<ObjCPropertyDecl *> &AllProps;
 
   typedef RecursiveASTVisitor<GCAttrsCollector> base;
 public:
-  explicit GCAttrsCollector(MigrationContext &ctx)
-    : MigrateCtx(ctx), FullyMigratable(false) { }
+  GCAttrsCollector(MigrationContext &ctx,
+                   std::vector<ObjCPropertyDecl *> &AllProps)
+    : MigrateCtx(ctx), FullyMigratable(false),
+      AllProps(AllProps) { }
 
   bool shouldWalkTypesOfTypeLocs() const { return false; }
 
@@ -41,13 +45,14 @@ public:
     if (!D || D->isImplicit())
       return true;
 
-    bool migratable = isMigratable(D);
-    SaveAndRestore<bool> Save(FullyMigratable, migratable);
+    SaveAndRestore<bool> Save(FullyMigratable, isMigratable(D));
     
-    if (DeclaratorDecl *DD = dyn_cast<DeclaratorDecl>(D))
-      lookForAttribute(DD, DD->getTypeSourceInfo());
-    else if (ObjCPropertyDecl *PropD = dyn_cast<ObjCPropertyDecl>(D))
+    if (ObjCPropertyDecl *PropD = dyn_cast<ObjCPropertyDecl>(D)) {
       lookForAttribute(PropD, PropD->getTypeSourceInfo());
+      AllProps.push_back(PropD);
+    } else if (DeclaratorDecl *DD = dyn_cast<DeclaratorDecl>(D)) {
+      lookForAttribute(DD, DD->getTypeSourceInfo());
+    }
     return base::TraverseDecl(D);
   }
 
@@ -56,11 +61,14 @@ public:
       return;
     TypeLoc TL = TInfo->getTypeLoc();
     while (TL) {
-      if (const AttributedTypeLoc *Attr = dyn_cast<AttributedTypeLoc>(&TL)) {
+      if (const QualifiedTypeLoc *QL = dyn_cast<QualifiedTypeLoc>(&TL)) {
+        TL = QL->getUnqualifiedLoc();
+      } else if (const AttributedTypeLoc *
+                   Attr = dyn_cast<AttributedTypeLoc>(&TL)) {
         if (handleAttr(*Attr, D))
           break;
         TL = Attr->getModifiedLoc();
-      } if (const ArrayTypeLoc *Arr = dyn_cast<ArrayTypeLoc>(&TL)) {
+      } else if (const ArrayTypeLoc *Arr = dyn_cast<ArrayTypeLoc>(&TL)) {
         TL = Arr->getElementLoc();
       } else if (const PointerTypeLoc *PT = dyn_cast<PointerTypeLoc>(&TL)) {
         TL = PT->getPointeeLoc();
@@ -108,10 +116,6 @@ public:
     Attr.ModifiedType = TL.getModifiedLoc().getType();
     Attr.Dcl = D;
     Attr.FullyMigratable = FullyMigratable;
-
-    if (ObjCPropertyDecl *PD = dyn_cast_or_null<ObjCPropertyDecl>(D))
-      MigrateCtx.PropGCAttrs[PD] = MigrateCtx.GCAttrs.size() - 1;
-
     return true;
   }
 
@@ -125,15 +129,8 @@ public:
     if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
       return FD->hasBody();
 
-    if (ObjCContainerDecl *ContD = dyn_cast<ObjCContainerDecl>(D)) {
-      if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(ContD))
-        return ID->getImplementation() != 0;
-      if (ObjCCategoryDecl *CD = dyn_cast<ObjCCategoryDecl>(ContD))
-        return CD->getImplementation() != 0;
-      if (isa<ObjCImplDecl>(ContD))
-        return true;
-      return false;
-    }
+    if (ObjCContainerDecl *ContD = dyn_cast<ObjCContainerDecl>(D))
+      return hasObjCImpl(ContD);
 
     if (CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D)) {
       for (CXXRecordDecl::method_iterator
@@ -145,6 +142,21 @@ public:
     }
 
     return isMigratable(cast<Decl>(D->getDeclContext()));
+  }
+
+  static bool hasObjCImpl(Decl *D) {
+    if (!D)
+      return false;
+    if (ObjCContainerDecl *ContD = dyn_cast<ObjCContainerDecl>(D)) {
+      if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(ContD))
+        return ID->getImplementation() != 0;
+      if (ObjCCategoryDecl *CD = dyn_cast<ObjCCategoryDecl>(ContD))
+        return CD->getImplementation() != 0;
+      if (isa<ObjCImplDecl>(ContD))
+        return true;
+      return false;
+    }
+    return false;
   }
 
   bool isInMainFile(Decl *D) {
@@ -214,8 +226,7 @@ static void checkWeakGCAttrs(MigrationContext &MigrateCtx) {
 
   for (unsigned i = 0, e = MigrateCtx.GCAttrs.size(); i != e; ++i) {
     MigrationContext::GCAttrOccurrence &Attr = MigrateCtx.GCAttrs[i];
-    if (Attr.Kind == MigrationContext::GCAttrOccurrence::Weak &&
-        Attr.FullyMigratable) {
+    if (Attr.Kind == MigrationContext::GCAttrOccurrence::Weak) {
       if (Attr.ModifiedType.isNull() ||
           !Attr.ModifiedType->isObjCRetainableType())
         continue;
@@ -231,13 +242,113 @@ static void checkWeakGCAttrs(MigrationContext &MigrateCtx) {
   }
 }
 
+typedef llvm::TinyPtrVector<ObjCPropertyDecl *> IndivPropsTy;
+
+static void checkAllAtProps(MigrationContext &MigrateCtx,
+                            SourceLocation AtLoc,
+                            IndivPropsTy &IndProps) {
+  if (IndProps.empty())
+    return;
+
+  for (IndivPropsTy::iterator
+         PI = IndProps.begin(), PE = IndProps.end(); PI != PE; ++PI) {
+    QualType T = (*PI)->getType();
+    if (T.isNull() || !T->isObjCRetainableType())
+      return;
+  }
+
+  SmallVector<std::pair<AttributedTypeLoc, ObjCPropertyDecl *>, 4> ATLs;
+  bool hasWeak = false, hasStrong = false;
+  for (IndivPropsTy::iterator
+         PI = IndProps.begin(), PE = IndProps.end(); PI != PE; ++PI) {
+    ObjCPropertyDecl *PD = *PI;
+    TypeSourceInfo *TInfo = PD->getTypeSourceInfo();
+    if (!TInfo)
+      return;
+    TypeLoc TL = TInfo->getTypeLoc();
+    if (AttributedTypeLoc *ATL = dyn_cast<AttributedTypeLoc>(&TL)) {
+      ATLs.push_back(std::make_pair(*ATL, PD));
+      if (TInfo->getType().getObjCLifetime() == Qualifiers::OCL_Weak) {
+        hasWeak = true;
+      } else if (TInfo->getType().getObjCLifetime() == Qualifiers::OCL_Strong)
+        hasStrong = true;
+      else
+        return;
+    }
+  }
+  if (ATLs.empty())
+    return;
+  if (hasWeak && hasStrong)
+    return;
+
+  TransformActions &TA = MigrateCtx.Pass.TA;
+  Transaction Trans(TA);
+
+  if (GCAttrsCollector::hasObjCImpl(
+                              cast<Decl>(IndProps.front()->getDeclContext()))) {
+    if (hasWeak)
+      MigrateCtx.AtPropsWeak.insert(AtLoc.getRawEncoding());
+
+  } else {
+    StringRef toAttr = "strong";
+    if (hasWeak) {
+      if (canApplyWeak(MigrateCtx.Pass.Ctx, IndProps.front()->getType(),
+                       /*AllowOnUnkwownClass=*/true))
+        toAttr = "weak";
+      else
+        toAttr = "unsafe_unretained";
+    }
+    if (!MigrateCtx.rewritePropertyAttribute("assign", toAttr, AtLoc)) {
+      return;
+    }
+  }
+
+  for (unsigned i = 0, e = ATLs.size(); i != e; ++i) {
+    SourceLocation Loc = ATLs[i].first.getAttrNameLoc();
+    if (Loc.isMacroID())
+      Loc = MigrateCtx.Pass.Ctx.getSourceManager()
+                                         .getImmediateExpansionRange(Loc).first;
+    TA.remove(Loc);
+    TA.clearDiagnostic(diag::err_objc_property_attr_mutually_exclusive, AtLoc);
+    TA.clearDiagnostic(diag::err_arc_inconsistent_property_ownership,
+                       ATLs[i].second->getLocation());
+  }
+}
+
+static void checkAllProps(MigrationContext &MigrateCtx,
+                          std::vector<ObjCPropertyDecl *> &AllProps) {
+  typedef llvm::TinyPtrVector<ObjCPropertyDecl *> IndivPropsTy;
+  llvm::DenseMap<unsigned, IndivPropsTy> AtProps;
+
+  for (unsigned i = 0, e = AllProps.size(); i != e; ++i) {
+    ObjCPropertyDecl *PD = AllProps[i];
+    if (PD->getPropertyAttributesAsWritten() &
+          ObjCPropertyDecl::OBJC_PR_assign) {
+      SourceLocation AtLoc = PD->getAtLoc();
+      if (AtLoc.isInvalid())
+        continue;
+      unsigned RawAt = AtLoc.getRawEncoding();
+      AtProps[RawAt].push_back(PD);
+    }
+  }
+
+  for (llvm::DenseMap<unsigned, IndivPropsTy>::iterator
+         I = AtProps.begin(), E = AtProps.end(); I != E; ++I) {
+    SourceLocation AtLoc = SourceLocation::getFromRawEncoding(I->first);
+    IndivPropsTy &IndProps = I->second;
+    checkAllAtProps(MigrateCtx, AtLoc, IndProps);
+  }
+}
+
 void GCAttrsTraverser::traverseTU(MigrationContext &MigrateCtx) {
-  GCAttrsCollector(MigrateCtx).TraverseDecl(
+  std::vector<ObjCPropertyDecl *> AllProps;
+  GCAttrsCollector(MigrateCtx, AllProps).TraverseDecl(
                                   MigrateCtx.Pass.Ctx.getTranslationUnitDecl());
 
   clearRedundantStrongs(MigrateCtx);
   errorForGCAttrsOnNonObjC(MigrateCtx);
   checkWeakGCAttrs(MigrateCtx);
+  checkAllProps(MigrateCtx, AllProps);
 }
 
 void MigrationContext::dumpGCAttrs() {

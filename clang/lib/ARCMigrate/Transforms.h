@@ -96,8 +96,9 @@ public:
   std::vector<GCAttrOccurrence> GCAttrs;
   llvm::DenseSet<unsigned> AttrSet;
 
-  /// \brief Map of property decl to the index in the GCAttrs vector.
-  llvm::DenseMap<ObjCPropertyDecl *, unsigned> PropGCAttrs;
+  /// \brief Set of raw '@' locations for 'assign' properties group that contain
+  /// GC __weak.
+  llvm::DenseSet<unsigned> AtPropsWeak;
 
   explicit MigrationContext(MigrationPass &pass) : Pass(pass) {}
   ~MigrationContext();
@@ -111,6 +112,8 @@ public:
   }
 
   bool isGCOwnedNonObjC(QualType T);
+  bool rewritePropertyAttribute(StringRef fromAttr, StringRef toAttr,
+                                SourceLocation atLoc);
 
   void traverse(TranslationUnitDecl *TU);
 

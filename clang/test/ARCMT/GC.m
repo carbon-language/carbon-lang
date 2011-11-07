@@ -48,3 +48,22 @@ __attribute__((objc_arc_weak_reference_unavailable))
   __weak QQ *q;
 }
 @end
+
+@interface I3
+@property (assign) I3 *__weak pw1, *__weak pw2;
+@property (assign) I3 *__strong ps;
+@property (assign) I3 * pds;
+@end
+
+@interface I4Impl {
+  I4Impl *pds2;
+}
+@property (assign) I4Impl *__weak pw1, *__weak pw2;
+@property (assign) I4Impl *__strong ps;
+@property (assign) I4Impl * pds;
+@property (assign) I4Impl * pds2;
+@end
+
+@implementation I4Impl
+@synthesize pw1, pw2, ps, pds, pds2;
+@end
