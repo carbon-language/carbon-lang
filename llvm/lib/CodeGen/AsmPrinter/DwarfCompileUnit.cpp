@@ -904,8 +904,11 @@ DIE *CompileUnit::getOrCreateNameSpace(DINameSpace NS) {
     return NDie;
   NDie = new DIE(dwarf::DW_TAG_namespace);
   insertDIE(NS, NDie);
-  if (!NS.getName().empty())
+  if (!NS.getName().empty()) {
     addString(NDie, dwarf::DW_AT_name, NS.getName());
+    addAccelNamespace(NS.getName(), NDie);
+  } else
+    addAccelNamespace("(anonymous namespace)", NDie);
   addSourceLine(NDie, NS);
   addToContextOwner(NDie, NS.getContext());
   return NDie;
@@ -1078,7 +1081,9 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
   DIDescriptor GVContext = GV.getContext();
   addToContextOwner(VariableDIE, GVContext);
   // Add location.
+  bool addToAccelTable = false;
   if (isGlobalVariable) {
+    addToAccelTable = true;
     DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
     addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_addr);
     addLabel(Block, 0, dwarf::DW_FORM_udata,
@@ -1097,11 +1102,12 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
       addDie(VariableSpecDIE);
     } else {
       addBlock(VariableDIE, dwarf::DW_AT_location, 0, Block);
-    } 
+    }
   } else if (const ConstantInt *CI = 
              dyn_cast_or_null<ConstantInt>(GV.getConstant()))
     addConstantValue(VariableDIE, CI, GTy.isUnsignedDIType());
   else if (const ConstantExpr *CE = getMergedGlobalExpr(N->getOperand(11))) {
+    addToAccelTable = true;
     // GV is a merged global.
     DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
     Value *Ptr = CE->getOperand(0);
@@ -1115,6 +1121,9 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
     addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_plus);
     addBlock(VariableDIE, dwarf::DW_AT_location, 0, Block);
   }
+
+  if (addToAccelTable)
+    addAccelName(GV.getName(), VariableDIE);
 
   return;
 }

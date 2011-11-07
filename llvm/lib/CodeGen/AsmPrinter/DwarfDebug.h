@@ -367,6 +367,21 @@ private:
   ///
   void emitEndOfLineMatrix(unsigned SectionEnd);
 
+  /// emitAccelNames - Emit visible names into a hashed accelerator table
+  /// section.
+  void emitAccelNames();
+  
+  /// emitAccelObjC - Emit objective C classes and categories into a hashed
+  /// accelerator table section.
+  void emitAccelObjC();
+
+  /// emitAccelNamespace - Emit namespace dies into a hashed accelerator
+  /// table.
+  void emitAccelNamespaces();
+
+  /// emitAccelTypes() - Emit type dies into a hashed accelerator table.
+  void emitAccelTypes();
+  
   /// emitDebugPubNames - Emit visible names into a debug pubnames section.
   ///
   void emitDebugPubNames();

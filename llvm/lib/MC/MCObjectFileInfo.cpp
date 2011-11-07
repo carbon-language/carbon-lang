@@ -152,6 +152,24 @@ void MCObjectFileInfo::InitMachOMCObjectFileInfo(Triple T) {
                            SectionKind::getReadOnly());
 
   // Debug Information.
+  DwarfAccelNamesSection =
+    Ctx->getMachOSection("__DWARF", "__apple_names",
+                         MCSectionMachO::S_ATTR_DEBUG,
+                         SectionKind::getMetadata());
+  DwarfAccelObjCSection =
+    Ctx->getMachOSection("__DWARF", "__apple_objc",
+                         MCSectionMachO::S_ATTR_DEBUG,
+                         SectionKind::getMetadata());
+  // 16 character section limit...
+  DwarfAccelNamespaceSection =
+    Ctx->getMachOSection("__DWARF", "__apple_namespac",
+                         MCSectionMachO::S_ATTR_DEBUG,
+                         SectionKind::getMetadata());
+  DwarfAccelTypesSection =
+    Ctx->getMachOSection("__DWARF", "__apple_types",
+                         MCSectionMachO::S_ATTR_DEBUG,
+                         SectionKind::getMetadata());
+    
   DwarfAbbrevSection =
     Ctx->getMachOSection("__DWARF", "__debug_abbrev",
                          MCSectionMachO::S_ATTR_DEBUG,
@@ -506,8 +524,12 @@ void MCObjectFileInfo::InitMCObjectFileInfo(StringRef TT, Reloc::Model relocm,
   PersonalityEncoding = LSDAEncoding = FDEEncoding = FDECFIEncoding =
     TTypeEncoding = dwarf::DW_EH_PE_absptr;
 
-  EHFrameSection = 0;           // Created on demand.
-  CompactUnwindSection = 0;     // Used only by selected targets.
+  EHFrameSection = 0;             // Created on demand.
+  CompactUnwindSection = 0;       // Used only by selected targets.
+  DwarfAccelNamesSection = 0;     // Used only by selected targets.
+  DwarfAccelObjCSection = 0;      // Used only by selected targets.
+  DwarfAccelNamespaceSection = 0; // Used only by selected targets.
+  DwarfAccelTypesSection = 0;     // Used only by selected targets.
 
   Triple T(TT);
   Triple::ArchType Arch = T.getArch();

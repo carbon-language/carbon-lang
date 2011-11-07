@@ -64,6 +64,13 @@ class CompileUnit {
   ///
   StringMap<DIE*> GlobalTypes;
 
+  /// AccelNames - A map of names for the name accelerator table.
+  ///
+  StringMap<DIE*> AccelNames;
+  StringMap<std::vector<DIE*> > AccelObjC;
+  StringMap<DIE*> AccelNamespace;
+  StringMap<DIE*> AccelTypes;
+
   /// DIEBlocks - A list of all the DIEBlocks in use.
   std::vector<DIEBlock *> DIEBlocks;
 
@@ -82,6 +89,13 @@ public:
   const StringMap<DIE*> &getGlobals()     const { return Globals; }
   const StringMap<DIE*> &getGlobalTypes() const { return GlobalTypes; }
 
+  const StringMap<DIE*> &getAccelNames() const { return AccelNames; }
+  const StringMap<std::vector<DIE*> > &getAccelObjC() const {
+    return AccelObjC;
+  }
+  const StringMap<DIE*> &getAccelNamespace() const { return AccelNamespace; }
+  const StringMap<DIE*> &getAccelTypes() const { return AccelTypes; }
+  
   /// hasContent - Return true if this compile unit has something to write out.
   ///
   bool hasContent() const { return !CUDie->getChildren().empty(); }
@@ -94,6 +108,20 @@ public:
   ///
   void addGlobalType(DIType Ty);
 
+
+  /// addAccelName - Add a new name to the name accelerator table.
+  void addAccelName(StringRef Name, DIE *Die) { AccelNames[Name] = Die; }
+  void addAccelObjC(StringRef Name, DIE *Die) {
+    std::vector<DIE*> &DIEs = AccelObjC[Name];
+    DIEs.push_back(Die);
+  }
+  void addAccelNamespace(StringRef Name, DIE *Die) {
+    AccelNamespace[Name] = Die;
+  }
+  void addAccelType(StringRef Name, DIE *Die) {
+    AccelTypes[Name] = Die;
+  }
+  
   /// getDIE - Returns the debug information entry map slot for the
   /// specified debug variable.
   DIE *getDIE(const MDNode *N) { return MDNodeToDieMap.lookup(N); }

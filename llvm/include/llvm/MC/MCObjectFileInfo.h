@@ -82,6 +82,14 @@ protected:
   /// this is the section to emit them into.
   const MCSection *CompactUnwindSection;
 
+  /// DwarfAccelNamesSection, DwarfAccelObjCSection
+  /// If we use the DWARF accelerated hash tables then we want toe emit these
+  /// sections.
+  const MCSection *DwarfAccelNamesSection;
+  const MCSection *DwarfAccelObjCSection;
+  const MCSection *DwarfAccelNamespaceSection;
+  const MCSection *DwarfAccelTypesSection;
+
   // Dwarf sections for debug info.  If a target supports debug info, these must
   // be set.
   const MCSection *DwarfAbbrevSection;
@@ -186,6 +194,18 @@ public:
   const MCSection *getLSDASection() const { return LSDASection; }
   const MCSection *getCompactUnwindSection() const{
     return CompactUnwindSection;
+  }
+  const MCSection *getDwarfAccelNamesSection() const {
+    return DwarfAccelNamesSection;
+  }
+  const MCSection *getDwarfAccelObjCSection() const {
+    return DwarfAccelObjCSection;
+  }
+  const MCSection *getDwarfAccelNamespaceSection() const {
+    return DwarfAccelNamespaceSection;
+  }
+  const MCSection *getDwarfAccelTypesSection() const {
+    return DwarfAccelTypesSection;
   }
   const MCSection *getDwarfAbbrevSection() const { return DwarfAbbrevSection; }
   const MCSection *getDwarfInfoSection() const { return DwarfInfoSection; }

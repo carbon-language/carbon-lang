@@ -25,7 +25,7 @@
 #include <vector>
 #include <map>
 
-// The apple dwarf accelerator tables are an indirect hash table optimized
+// The dwarf accelerator tables are an indirect hash table optimized
 // for null lookup rather than access to known data. They are output into
 // an on-disk format that looks like this:
 //
@@ -176,9 +176,7 @@ public:
 #endif
   };
 
-  // The data itself consists of a str_offset (to deal with collisions in
-  // some magical way? this looks like the KeyType from the spec, which
-  // should mean an integer compare on read), a count of the DIEs in the
+  // The data itself consists of a str_offset, a count of the DIEs in the
   // hash and the offsets to the DIEs themselves.
   // On disk each data section is ended with a 0 KeyType as the end of the
   // hash chain.

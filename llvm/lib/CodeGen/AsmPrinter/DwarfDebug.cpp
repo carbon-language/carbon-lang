@@ -14,6 +14,7 @@
 #define DEBUG_TYPE "dwarfdebug"
 #include "DwarfDebug.h"
 #include "DIE.h"
+#include "DwarfAccelTable.h"
 #include "DwarfCompileUnit.h"
 #include "llvm/Constants.h"
 #include "llvm/Module.h"
@@ -50,6 +51,10 @@ static cl::opt<bool> DisableDebugInfoPrinting("disable-debug-info-print",
 
 static cl::opt<bool> UnknownLocations("use-unknown-locations", cl::Hidden,
      cl::desc("Make an absence of debug location information explicit."),
+     cl::init(false));
+
+static cl::opt<bool> DwarfAccelTables("dwarf-accel-tables", cl::Hidden,
+     cl::desc("Output prototype dwarf accelerator tables."),
      cl::init(false));
 
 namespace {
@@ -444,6 +449,9 @@ DIE *DwarfDebug::constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope) {
   if (DS.isSubprogram())
    TheCU->addPubTypes(DISubprogram(DS));
 
+  if (DS.isSubprogram() && !Scope->isAbstractScope())
+    TheCU->addAccelName(DISubprogram(DS).getName(), ScopeDIE);
+
  return ScopeDIE;
 }
 
@@ -524,6 +532,36 @@ CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
   return NewCU;
 }
 
+static bool isObjCClass(StringRef Name) {
+  return Name[0] == '+' || Name[0] == '-';
+}
+
+static bool hasObjCCategory(StringRef Name) {
+  if (Name[0] != '+' && Name[0] != '-')
+    return false;
+
+  size_t pos = Name.find(')');
+  if (pos != std::string::npos) {
+    if (Name[pos+1] != ' ') return false;
+    return true;
+  }
+
+  return false;
+}
+
+static void getObjCClassCategory(StringRef In, StringRef &Class,
+                                 StringRef &Category) {
+  if (!hasObjCCategory(In)) {
+    Class = In.slice(In.find('[') + 1, In.find(' '));
+    Category = "";
+    return;
+  }
+
+  Class = In.slice(In.find('[') + 1, In.find('('));
+  Category = In.slice(In.find('[') + 1, In.find(' '));
+  return;
+}
+
 /// construct SubprogramDIE - Construct subprogram DIE.
 void DwarfDebug::constructSubprogramDIE(CompileUnit *TheCU, 
                                         const MDNode *N) {
@@ -561,6 +599,18 @@ void DwarfDebug::constructSubprogramDIE(CompileUnit *TheCU,
   // Expose as global.
   TheCU->addGlobal(SP.getName(), SubprogramDie);
 
+  // Add to Accel Names
+  TheCU->addAccelName(SP.getName(), SubprogramDie);
+
+  // If this is an Objective-C selector name add it to the ObjC accelerator too.
+  if (isObjCClass(SP.getName())) {
+    StringRef Class, Category;
+    getObjCClassCategory(SP.getName(), Class, Category);
+    TheCU->addAccelObjC(Class, SubprogramDie);
+    if (Category != "")
+      TheCU->addAccelObjC(Category, SubprogramDie);
+  }
+  
   return;
 }
 
@@ -757,6 +807,14 @@ void DwarfDebug::endModule() {
   // Corresponding abbreviations into a abbrev section.
   emitAbbreviations();
 
+  // Emit info into a dwarf accelerator table sections.
+  if (DwarfAccelTables) {
+    emitAccelNames();
+    emitAccelObjC();
+    emitAccelNamespaces();
+    emitAccelTypes();
+  }
+  
   // Emit info into a debug pubnames section.
   emitDebugPubNames();
 
@@ -1694,6 +1752,116 @@ void DwarfDebug::emitEndOfLineMatrix(unsigned SectionEnd) {
   Asm->EmitInt8(0);
   Asm->EmitInt8(1);
   Asm->EmitInt8(1);
+}
+
+/// emitAccelNames - Emit visible names into a hashed accelerator table
+/// section.
+void DwarfDebug::emitAccelNames() {
+  DwarfAccelTable AT(DwarfAccelTable::Atom(DwarfAccelTable::eAtomTypeDIEOffset,
+                                           dwarf::DW_FORM_data4));
+  for (DenseMap<const MDNode *, CompileUnit *>::iterator I = CUMap.begin(),
+         E = CUMap.end(); I != E; ++I) {
+    CompileUnit *TheCU = I->second;
+    const StringMap<DIE*> &Names = TheCU->getAccelNames();
+    for (StringMap<DIE*>::const_iterator
+           GI = Names.begin(), GE = Names.end(); GI != GE; ++GI) {
+      const char *Name = GI->getKeyData();
+      DIE *Entity = GI->second;
+      AT.AddName(Name, Entity);
+    }
+  }
+
+  AT.FinalizeTable(Asm, "Names");
+  Asm->OutStreamer.SwitchSection(
+    Asm->getObjFileLowering().getDwarfAccelNamesSection());
+  MCSymbol *SectionBegin = Asm->GetTempSymbol("names_begin");
+  Asm->OutStreamer.EmitLabel(SectionBegin);
+
+  // Emit the full data.
+  AT.Emit(Asm, SectionBegin, this);
+}
+
+/// emitAccelObjC - Emit objective C classes and categories into a hashed
+/// accelerator table section.
+void DwarfDebug::emitAccelObjC() {
+  DwarfAccelTable AT(DwarfAccelTable::Atom(DwarfAccelTable::eAtomTypeDIEOffset,
+                                           dwarf::DW_FORM_data4));
+  for (DenseMap<const MDNode *, CompileUnit *>::iterator I = CUMap.begin(),
+         E = CUMap.end(); I != E; ++I) {
+    CompileUnit *TheCU = I->second;
+    const StringMap<std::vector<DIE*> > &Names = TheCU->getAccelObjC();
+    for (StringMap<std::vector<DIE*> >::const_iterator
+           GI = Names.begin(), GE = Names.end(); GI != GE; ++GI) {
+      const char *Name = GI->getKeyData();
+      std::vector<DIE *> Entities = GI->second;
+      for (std::vector<DIE *>::const_iterator DI = Entities.begin(),
+             DE = Entities.end(); DI != DE; ++DI)
+        AT.AddName(Name, (*DI));
+    }
+  }
+
+  AT.FinalizeTable(Asm, "ObjC");
+  Asm->OutStreamer.SwitchSection(Asm->getObjFileLowering()
+                                 .getDwarfAccelObjCSection());
+  MCSymbol *SectionBegin = Asm->GetTempSymbol("objc_begin");
+  Asm->OutStreamer.EmitLabel(SectionBegin);
+
+  // Emit the full data.
+  AT.Emit(Asm, SectionBegin, this);
+}
+
+/// emitAccelNamespace - Emit namespace dies into a hashed accelerator
+/// table.
+void DwarfDebug::emitAccelNamespaces() {
+  DwarfAccelTable AT(DwarfAccelTable::Atom(DwarfAccelTable::eAtomTypeDIEOffset,
+                                           dwarf::DW_FORM_data4));
+  for (DenseMap<const MDNode *, CompileUnit *>::iterator I = CUMap.begin(),
+         E = CUMap.end(); I != E; ++I) {
+    CompileUnit *TheCU = I->second;
+    const StringMap<DIE*> &Names = TheCU->getAccelNamespace();
+    for (StringMap<DIE*>::const_iterator
+           GI = Names.begin(), GE = Names.end(); GI != GE; ++GI) {
+      const char *Name = GI->getKeyData();
+      DIE *Entity = GI->second;
+      AT.AddName(Name, Entity);
+    }
+  }
+
+  AT.FinalizeTable(Asm, "namespac");
+  Asm->OutStreamer.SwitchSection(Asm->getObjFileLowering()
+                                 .getDwarfAccelNamespaceSection());
+  MCSymbol *SectionBegin = Asm->GetTempSymbol("namespac_begin");
+  Asm->OutStreamer.EmitLabel(SectionBegin);
+
+  // Emit the full data.
+  AT.Emit(Asm, SectionBegin, this);
+}
+
+/// emitAccelTypes() - Emit type dies into a hashed accelerator table.
+void DwarfDebug::emitAccelTypes() {
+  DwarfAccelTable AT(DwarfAccelTable::Atom(DwarfAccelTable::eAtomTypeDIEOffset,
+                                           dwarf::DW_FORM_data4));
+  for (DenseMap<const MDNode *, CompileUnit *>::iterator I = CUMap.begin(),
+         E = CUMap.end(); I != E; ++I) {
+    CompileUnit *TheCU = I->second;
+    const StringMap<DIE*> &Names = TheCU->getGlobalTypes();
+    //TODO: TheCU->getAccelTypes();
+    for (StringMap<DIE*>::const_iterator
+           GI = Names.begin(), GE = Names.end(); GI != GE; ++GI) {
+      const char *Name = GI->getKeyData();
+      DIE *Entity = GI->second;
+      AT.AddName(Name, Entity);
+    }
+  }
+
+  AT.FinalizeTable(Asm, "types");
+  Asm->OutStreamer.SwitchSection(Asm->getObjFileLowering()
+                                 .getDwarfAccelTypesSection());
+  MCSymbol *SectionBegin = Asm->GetTempSymbol("types_begin");
+  Asm->OutStreamer.EmitLabel(SectionBegin);
+
+  // Emit the full data.
+  AT.Emit(Asm, SectionBegin, this);
 }
 
 /// emitDebugPubNames - Emit visible names into a debug pubnames section.
