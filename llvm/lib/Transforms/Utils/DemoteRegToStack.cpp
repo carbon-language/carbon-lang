@@ -97,8 +97,8 @@ AllocaInst* llvm::DemoteRegToStack(Instruction &I, bool VolatileLoads,
     InsertPt = II.getNormalDest()->begin();
   }
 
-  for (; isa<PHINode>(InsertPt); ++InsertPt)
-  /* empty */;   // Don't insert before any PHI nodes.
+  for (; isa<PHINode>(InsertPt) || isa<LandingPadInst>(InsertPt); ++InsertPt)
+  /* empty */;   // Don't insert before any PHI nodes or landingpad instrs.
   new StoreInst(&I, Slot, InsertPt);
 
   return Slot;
