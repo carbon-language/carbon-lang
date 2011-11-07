@@ -111,7 +111,6 @@ class ExeDepsFix : public MachineFunctionPass {
   MachineFunction *MF;
   const TargetInstrInfo *TII;
   const TargetRegisterInfo *TRI;
-  MachineBasicBlock *MBB;
   std::vector<int> AliasMap;
   const unsigned NumRegs;
   DomainValue **LiveRegs;
@@ -149,7 +148,7 @@ private:
   void Collapse(DomainValue *dv, unsigned domain);
   bool Merge(DomainValue *A, DomainValue *B);
 
-  void enterBasicBlock();
+  void enterBasicBlock(MachineBasicBlock*);
   void visitGenericInstr(MachineInstr*);
   void visitSoftInstr(MachineInstr*, unsigned mask);
   void visitHardInstr(MachineInstr*, unsigned domain);
@@ -271,7 +270,7 @@ bool ExeDepsFix::Merge(DomainValue *A, DomainValue *B) {
   return true;
 }
 
-void ExeDepsFix::enterBasicBlock() {
+void ExeDepsFix::enterBasicBlock(MachineBasicBlock *MBB) {
   // Try to coalesce live-out registers from predecessors.
   for (MachineBasicBlock::livein_iterator i = MBB->livein_begin(),
          e = MBB->livein_end(); i != e; ++i) {
@@ -451,7 +450,6 @@ bool ExeDepsFix::runOnMachineFunction(MachineFunction &mf) {
   MF = &mf;
   TII = MF->getTarget().getInstrInfo();
   TRI = MF->getTarget().getRegisterInfo();
-  MBB = 0;
   LiveRegs = 0;
   Distance = 0;
   assert(NumRegs == RC->getNumRegs() && "Bad regclass");
@@ -482,8 +480,8 @@ bool ExeDepsFix::runOnMachineFunction(MachineFunction &mf) {
   for (df_ext_iterator<MachineBasicBlock*, SmallPtrSet<MachineBasicBlock*, 16> >
          DFI = df_ext_begin(Entry, Visited), DFE = df_ext_end(Entry, Visited);
          DFI != DFE; ++DFI) {
-    MBB = *DFI;
-    enterBasicBlock();
+    MachineBasicBlock *MBB = *DFI;
+    enterBasicBlock(MBB);
     for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end(); I != E;
         ++I) {
       MachineInstr *mi = I;
