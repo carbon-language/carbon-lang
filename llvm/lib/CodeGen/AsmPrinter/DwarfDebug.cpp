@@ -1834,8 +1834,7 @@ void DwarfDebug::emitAccelTypes() {
   for (DenseMap<const MDNode *, CompileUnit *>::iterator I = CUMap.begin(),
          E = CUMap.end(); I != E; ++I) {
     CompileUnit *TheCU = I->second;
-    const StringMap<DIE*> &Names = TheCU->getGlobalTypes();
-    //TODO: TheCU->getAccelTypes();
+    const StringMap<DIE*> &Names = TheCU->getAccelTypes();
     for (StringMap<DIE*>::const_iterator
            GI = Names.begin(), GE = Names.end(); GI != GE; ++GI) {
       const char *Name = GI->getKeyData();
