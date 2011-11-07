@@ -132,6 +132,7 @@ namespace {
     void adjustIndex(uint64_t N) {
       if (Invalid) return;
       if (ArrayElement) {
+        // FIXME: Make sure the index stays within bounds, or one past the end.
         Entries.back().ArrayIndex += N;
         return;
       }
@@ -475,6 +476,7 @@ static bool HandleConversionToBool(const CCValue &Val, bool &Result) {
     return EvalPointerValueAsBool(PointerResult, Result);
   }
   case APValue::Vector:
+  case APValue::Array:
     return false;
   }
 
@@ -569,6 +571,13 @@ static bool EvaluateVarDeclInit(EvalInfo &Info, const VarDecl *VD,
   // expression. If not, we should propagate up a diagnostic.
   APValue EvalResult;
   if (!EvaluateConstantExpression(EvalResult, InitInfo, Init)) {
+    // FIXME: If the evaluation failure was not permanent (for instance, if we
+    // hit a variable with no declaration yet, or a constexpr function with no
+    // definition yet), the standard is unclear as to how we should behave.
+    //
+    // Either the initializer should be evaluated when the variable is defined,
+    // or a failed evaluation of the initializer should be reattempted each time
+    // it is used.
     VD->setEvaluatedValue(APValue());
     return false;
   }
@@ -583,8 +592,48 @@ static bool IsConstNonVolatile(QualType T) {
   return Quals.hasConst() && !Quals.hasVolatile();
 }
 
-bool HandleLValueToRValueConversion(EvalInfo &Info, QualType Type,
-                                    const LValue &LVal, CCValue &RVal) {
+/// Extract the designated sub-object of an rvalue.
+static bool ExtractSubobject(EvalInfo &Info, CCValue &Obj, QualType ObjType,
+                             const SubobjectDesignator &Sub, QualType SubType) {
+  if (Sub.Invalid || Sub.OnePastTheEnd)
+    return false;
+  if (Sub.Entries.empty()) {
+    assert(Info.Ctx.hasSameUnqualifiedType(ObjType, SubType) &&
+           "Unexpected subobject type");
+    return true;
+  }
+
+  assert(!Obj.isLValue() && "extracting subobject of lvalue");
+  const APValue *O = &Obj;
+  for (unsigned I = 0, N = Sub.Entries.size(); I != N; ++I) {
+    if (O->isUninit())
+      return false;
+    if (ObjType->isArrayType()) {
+      const ConstantArrayType *CAT = Info.Ctx.getAsConstantArrayType(ObjType);
+      if (!CAT)
+        return false;
+      uint64_t Index = Sub.Entries[I].ArrayIndex;
+      if (CAT->getSize().ule(Index))
+        return false;
+      if (O->getArrayInitializedElts() > Index)
+        O = &O->getArrayInitializedElt(Index);
+      else
+        O = &O->getArrayFiller();
+      ObjType = CAT->getElementType();
+    } else {
+      // FIXME: Support handling of subobjects of structs and unions. Also
+      // for vector elements, if we want to support those?
+    }
+  }
+
+  assert(Info.Ctx.hasSameUnqualifiedType(ObjType, SubType) &&
+         "Unexpected subobject type");
+  Obj = CCValue(*O, CCValue::GlobalValue());
+  return true;
+}
+
+static bool HandleLValueToRValueConversion(EvalInfo &Info, QualType Type,
+                                           const LValue &LVal, CCValue &RVal) {
   const Expr *Base = LVal.Base;
   CallStackFrame *Frame = LVal.Frame;
 
@@ -620,10 +669,7 @@ bool HandleLValueToRValueConversion(EvalInfo &Info, QualType Type,
       return false;
 
     if (isa<ParmVarDecl>(VD) || !VD->getAnyInitializer()->isLValue())
-      // If the lvalue refers to a subobject or has been cast to some other
-      // type, don't use it.
-      return LVal.Offset.isZero() &&
-             Info.Ctx.hasSameUnqualifiedType(Type, VT);
+      return ExtractSubobject(Info, RVal, VT, LVal.Designator, Type);
 
     // The declaration was initialized by an lvalue, with no lvalue-to-rvalue
     // conversion. This happens when the declaration and the lvalue should be
@@ -654,31 +700,22 @@ bool HandleLValueToRValueConversion(EvalInfo &Info, QualType Type,
     return true;
   }
 
-  // FIXME: Support accessing subobjects of objects of literal types. A simple
-  // byte offset is insufficient for C++11 semantics: we need to know how the
-  // reference was formed (which union member was named, for instance).
-
-  // Beyond this point, we don't support accessing subobjects.
-  if (!LVal.Offset.isZero() ||
-      !Info.Ctx.hasSameUnqualifiedType(Type, Base->getType()))
+  if (Frame) {
+    // If this is a temporary expression with a nontrivial initializer, grab the
+    // value from the relevant stack frame.
+    RVal = Frame->Temporaries[Base];
+  } else if (const CompoundLiteralExpr *CLE
+             = dyn_cast<CompoundLiteralExpr>(Base)) {
+    // In C99, a CompoundLiteralExpr is an lvalue, and we defer evaluating the
+    // initializer until now for such expressions. Such an expression can't be
+    // an ICE in C, so this only matters for fold.
+    assert(!Info.getLangOpts().CPlusPlus && "lvalue compound literal in c++?");
+    if (!Evaluate(RVal, Info, CLE->getInitializer()))
+      return false;
+  } else
     return false;
 
-  // If this is a temporary expression with a nontrivial initializer, grab the
-  // value from the relevant stack frame.
-  if (Frame) {
-    RVal = Frame->Temporaries[Base];
-    return true;
-  }
-
-  // In C99, a CompoundLiteralExpr is an lvalue, and we defer evaluating the
-  // initializer until now for such expressions. Such an expression can't be
-  // an ICE in C, so this only matters for fold.
-  if (const CompoundLiteralExpr *CLE = dyn_cast<CompoundLiteralExpr>(Base)) {
-    assert(!Info.getLangOpts().CPlusPlus && "lvalue compound literal in c++?");
-    return Evaluate(RVal, Info, CLE->getInitializer());
-  }
-
-  return false;
+  return ExtractSubobject(Info, RVal, Base->getType(), LVal.Designator, Type);
 }
 
 namespace {
@@ -1600,6 +1637,55 @@ bool VectorExprEvaluator::VisitUnaryImag(const UnaryOperator *E) {
 }
 
 //===----------------------------------------------------------------------===//
+// Array Evaluation
+//===----------------------------------------------------------------------===//
+
+namespace {
+  class ArrayExprEvaluator
+  : public ExprEvaluatorBase<ArrayExprEvaluator, bool> {
+    APValue &Result;
+  public:
+
+    ArrayExprEvaluator(EvalInfo &Info, APValue &Result)
+      : ExprEvaluatorBaseTy(Info), Result(Result) {}
+
+    bool Success(const APValue &V, const Expr *E) {
+      assert(V.isArray() && "Expected array type");
+      Result = V;
+      return true;
+    }
+    bool Error(const Expr *E) { return false; }
+
+    bool VisitInitListExpr(const InitListExpr *E);
+  };
+} // end anonymous namespace
+
+static bool EvaluateArray(const Expr* E, APValue& Result, EvalInfo &Info) {
+  assert(E->isRValue() && E->getType()->isArrayType() &&
+         E->getType()->isLiteralType() && "not a literal array rvalue");
+  return ArrayExprEvaluator(Info, Result).Visit(E);
+}
+
+bool ArrayExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
+  const ConstantArrayType *CAT = Info.Ctx.getAsConstantArrayType(E->getType());
+  if (!CAT)
+    return false;
+
+  Result = APValue(APValue::UninitArray(), E->getNumInits(),
+                   CAT->getSize().getZExtValue());
+  for (InitListExpr::const_iterator I = E->begin(), End = E->end();
+       I != End; ++I)
+    if (!EvaluateConstantExpression(Result.getArrayInitializedElt(I-E->begin()),
+                                    Info, cast<Expr>(*I)))
+      return false;
+
+  if (!Result.hasArrayFiller()) return true;
+  assert(E->hasArrayFiller() && "no array filler for incomplete init list");
+  return EvaluateConstantExpression(Result.getArrayFiller(), Info,
+                                    E->getArrayFiller());
+}
+
+//===----------------------------------------------------------------------===//
 // Integer Evaluation
 //
 // As a GNU extension, we support casting pointers to sufficiently-wide integer
@@ -2172,6 +2258,10 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
         // of a constant; this generally doesn't matter in practice.)
         return Success(E->getOpcode() == BO_NE, E);
       }
+
+      // FIXME: Implement the C++11 restrictions:
+      //  - Pointer subtractions must be on elements of the same array.
+      //  - Pointer comparisons must be between members with the same access.
 
       if (E->getOpcode() == BO_Sub) {
         QualType Type = E->getLHS()->getType();
@@ -3258,8 +3348,8 @@ static bool Evaluate(CCValue &Result, EvalInfo &Info, const Expr *E) {
     // FIXME: Implement evaluation of pointer-to-member types.
     return false;
   } else if (E->getType()->isArrayType() && E->getType()->isLiteralType()) {
-    // FIXME: Implement evaluation of array rvalues.
-    return false;
+    if (!EvaluateArray(E, Result, Info))
+      return false;
   } else if (E->getType()->isRecordType() && E->getType()->isLiteralType()) {
     // FIXME: Implement evaluation of record rvalues.
     return false;
@@ -3278,10 +3368,10 @@ static bool EvaluateConstantExpression(APValue &Result, EvalInfo &Info,
   if (E->isRValue() && E->getType()->isLiteralType()) {
     // Evaluate arrays and record types in-place, so that later initializers can
     // refer to earlier-initialized members of the object.
-    if (E->getType()->isArrayType())
-      // FIXME: Implement evaluation of array rvalues.
-      return false;
-    else if (E->getType()->isRecordType())
+    if (E->getType()->isArrayType()) {
+      if (!EvaluateArray(E, Result, Info))
+        return false;
+    } else if (E->getType()->isRecordType())
       // FIXME: Implement evaluation of record rvalues.
       return false;
   }
@@ -3311,6 +3401,10 @@ bool Expr::EvaluateAsRValue(EvalResult &Result, const ASTContext &Ctx) const {
     if (!HandleLValueToRValueConversion(Info, getType(), LV, Value))
       return false;
   }
+
+  // Don't produce array constants until CodeGen is taught to handle them.
+  if (Value.isArray())
+    return false;
 
   // Check this core constant expression is a constant expression, and if so,
   // convert it to one.

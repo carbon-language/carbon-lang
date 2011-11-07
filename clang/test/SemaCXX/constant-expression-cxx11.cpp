@@ -280,3 +280,45 @@ static_assert_fold(*max == 'z', "");
 static_assert_fold(max == str + 38, "");
 
 }
+
+namespace Array {
+
+// FIXME: Use templates for these once we support constexpr templates.
+constexpr int Sum(const int *begin, const int *end) {
+  return begin == end ? 0 : *begin + Sum(begin+1, end);
+}
+constexpr const int *begin(const int (&xs)[5]) { return xs; }
+constexpr const int *end(const int (&xs)[5]) { return xs + 5; }
+
+constexpr int xs[] = { 1, 2, 3, 4, 5 };
+constexpr int ys[] = { 5, 4, 3, 2, 1 };
+constexpr int sum_xs = Sum(begin(xs), end(xs));
+static_assert_fold(sum_xs == 15, "");
+
+constexpr int ZipFoldR(int (*F)(int x, int y, int c), int n,
+                       const int *xs, const int *ys, int c) {
+  return n ? F(*xs, *ys, ZipFoldR(F, n-1, xs+1, ys+1, c)) : c;
+}
+constexpr int MulAdd(int x, int y, int c) { return x * y + c; }
+constexpr int InnerProduct = ZipFoldR(MulAdd, 5, xs, ys, 0);
+static_assert_fold(InnerProduct == 35, "");
+
+constexpr int SubMul(int x, int y, int c) { return (x - y) * c; }
+constexpr int DiffProd = ZipFoldR(SubMul, 2, xs+3, ys+3, 1);
+static_assert_fold(DiffProd == 8, "");
+static_assert_fold(ZipFoldR(SubMul, 3, xs+3, ys+3, 1), ""); // expected-error {{constant expression}}
+
+constexpr const int *p = xs + 3;
+constexpr int xs4 = p[1]; // ok
+constexpr int xs5 = p[2]; // expected-error {{constant expression}}
+constexpr int xs0 = p[-3]; // ok
+constexpr int xs_1 = p[-4]; // expected-error {{constant expression}}
+
+constexpr int zs[2][2][2][2] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+static_assert_fold(zs[0][0][0][0] == 1, "");
+static_assert_fold(zs[1][1][1][1] == 16, "");
+static_assert_fold(zs[0][0][0][2] == 3, ""); // expected-error {{constant expression}}
+static_assert_fold((&zs[0][0][0][2])[-1] == 2, "");
+static_assert_fold(**(**(zs + 1) + 1) == 11, "");
+
+}

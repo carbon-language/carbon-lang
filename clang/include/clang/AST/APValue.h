@@ -25,7 +25,8 @@ namespace clang {
   class Decl;
 
 /// APValue - This class implements a discriminated union of [uninitialized]
-/// [APSInt] [APFloat], [Complex APSInt] [Complex APFloat], [Expr + Offset].
+/// [APSInt] [APFloat], [Complex APSInt] [Complex APFloat], [Expr + Offset],
+/// [Vector: N * APValue], [Array: N * APValue]
 class APValue {
   typedef llvm::APSInt APSInt;
   typedef llvm::APFloat APFloat;
@@ -37,13 +38,15 @@ public:
     ComplexInt,
     ComplexFloat,
     LValue,
-    Vector
+    Vector,
+    Array
   };
   union LValuePathEntry {
     const Decl *BaseOrMember;
     uint64_t ArrayIndex;
   };
   struct NoLValuePath {};
+  struct UninitArray {};
 private:
   ValueKind Kind;
 
@@ -55,15 +58,19 @@ private:
     APFloat Real, Imag;
     ComplexAPFloat() : Real(0.0), Imag(0.0) {}
   };
-
+  struct LV;
   struct Vec {
     APValue *Elts;
     unsigned NumElts;
     Vec() : Elts(0), NumElts(0) {}
     ~Vec() { delete[] Elts; }
   };
-
-  struct LV;
+  struct Arr {
+    APValue *Elts;
+    unsigned NumElts, ArrSize;
+    Arr(unsigned NumElts, unsigned ArrSize);
+    ~Arr();
+  };
 
   enum {
     MaxSize = (sizeof(ComplexAPSInt) > sizeof(ComplexAPFloat) ?
@@ -104,6 +111,9 @@ public:
     MakeLValue(); setLValue(B, O, Path);
   }
   APValue(const Expr *B);
+  APValue(UninitArray, unsigned InitElts, unsigned Size) : Kind(Uninitialized) {
+    MakeArray(InitElts, Size);
+  }
 
   ~APValue() {
     MakeUninit();
@@ -117,6 +127,7 @@ public:
   bool isComplexFloat() const { return Kind == ComplexFloat; }
   bool isLValue() const { return Kind == LValue; }
   bool isVector() const { return Kind == Vector; }
+  bool isArray() const { return Kind == Array; }
 
   void print(raw_ostream &OS) const;
   void dump() const;
@@ -135,19 +146,6 @@ public:
   }
   const APFloat &getFloat() const {
     return const_cast<APValue*>(this)->getFloat();
-  }
-
-  APValue &getVectorElt(unsigned i) {
-    assert(isVector() && "Invalid accessor");
-    return ((Vec*)(char*)Data)->Elts[i];
-  }
-  const APValue &getVectorElt(unsigned i) const {
-    assert(isVector() && "Invalid accessor");
-    return ((const Vec*)(const char*)Data)->Elts[i];
-  }
-  unsigned getVectorLength() const {
-    assert(isVector() && "Invalid accessor");
-    return ((const Vec*)(const void *)Data)->NumElts;
   }
 
   APSInt &getComplexIntReal() {
@@ -189,6 +187,47 @@ public:
   }
   bool hasLValuePath() const;
   ArrayRef<LValuePathEntry> getLValuePath() const;
+
+  APValue &getVectorElt(unsigned I) {
+    assert(isVector() && "Invalid accessor");
+    assert(I < getVectorLength() && "Index out of range");
+    return ((Vec*)(char*)Data)->Elts[I];
+  }
+  const APValue &getVectorElt(unsigned I) const {
+    return const_cast<APValue*>(this)->getVectorElt(I);
+  }
+  unsigned getVectorLength() const {
+    assert(isVector() && "Invalid accessor");
+    return ((const Vec*)(const void *)Data)->NumElts;
+  }
+
+  APValue &getArrayInitializedElt(unsigned I) {
+    assert(isArray() && "Invalid accessor");
+    assert(I < getArrayInitializedElts() && "Index out of range");
+    return ((Arr*)(char*)Data)->Elts[I];
+  }
+  const APValue &getArrayInitializedElt(unsigned I) const {
+    return const_cast<APValue*>(this)->getArrayInitializedElt(I);
+  }
+  bool hasArrayFiller() const {
+    return getArrayInitializedElts() != getArraySize();
+  }
+  APValue &getArrayFiller() {
+    assert(isArray() && "Invalid accessor");
+    assert(hasArrayFiller() && "No array filler");
+    return ((Arr*)(char*)Data)->Elts[getArrayInitializedElts()];
+  }
+  const APValue &getArrayFiller() const {
+    return const_cast<APValue*>(this)->getArrayFiller();
+  }
+  unsigned getArrayInitializedElts() const {
+    assert(isArray() && "Invalid accessor");
+    return ((const Arr*)(const void *)Data)->NumElts;
+  }
+  unsigned getArraySize() const {
+    assert(isArray() && "Invalid accessor");
+    return ((const Arr*)(const void *)Data)->ArrSize;
+  }
 
   void setInt(const APSInt &I) {
     assert(isInt() && "Invalid accessor");
@@ -253,6 +292,7 @@ private:
     Kind = ComplexFloat;
   }
   void MakeLValue();
+  void MakeArray(unsigned InitElts, unsigned Size);
 };
 
 inline raw_ostream &operator<<(raw_ostream &OS, const APValue &V) {
