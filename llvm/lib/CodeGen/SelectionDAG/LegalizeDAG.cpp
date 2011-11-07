@@ -285,7 +285,6 @@ static void ExpandUnalignedStore(StoreSDNode *ST, SelectionDAG &DAG,
       Result = DAG.getStore(Chain, dl, Result, Ptr, ST->getPointerInfo(),
                            ST->isVolatile(), ST->isNonTemporal(), Alignment);
       DAG.ReplaceAllUsesWith(SDValue(ST, 0), Result, DUL);
-      DAG.RemoveDeadNode(ST, DUL);
       return;
     }
     // Do a (aligned) store to a stack slot, then copy from the stack slot
@@ -350,7 +349,6 @@ static void ExpandUnalignedStore(StoreSDNode *ST, SelectionDAG &DAG,
       DAG.getNode(ISD::TokenFactor, dl, MVT::Other, &Stores[0],
                   Stores.size());
     DAG.ReplaceAllUsesWith(SDValue(ST, 0), Result, DUL);
-    DAG.RemoveDeadNode(ST, DUL);
     return;
   }
   assert(ST->getMemoryVT().isInteger() &&
@@ -383,7 +381,6 @@ static void ExpandUnalignedStore(StoreSDNode *ST, SelectionDAG &DAG,
   SDValue Result =
     DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Store1, Store2);
   DAG.ReplaceAllUsesWith(SDValue(ST, 0), Result, DUL);
-  DAG.RemoveDeadNode(ST, DUL);
 }
 
 /// ExpandUnalignedLoad - Expands an unaligned load to 2 half-size loads.
@@ -1147,7 +1144,6 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
     if (!ST->isTruncatingStore()) {
       if (SDNode *OptStore = OptimizeFloatStore(ST).getNode()) {
         DAG.ReplaceAllUsesWith(ST, OptStore, this);
-        DAG.RemoveDeadNode(ST, this);
         break;
       }
 
@@ -1173,10 +1169,8 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
           break;
         case TargetLowering::Custom:
           Tmp1 = TLI.LowerOperation(SDValue(Node, 0), DAG);
-          if (Tmp1.getNode()) {
+          if (Tmp1.getNode())
             DAG.ReplaceAllUsesWith(SDValue(Node, 0), Tmp1, this);
-            DAG.RemoveDeadNode(Node, this);
-          }
           break;
         case TargetLowering::Promote: {
           assert(VT.isVector() && "Unknown legal promote case!");
@@ -1187,7 +1181,6 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
                          ST->getPointerInfo(), isVolatile,
                          isNonTemporal, Alignment);
           DAG.ReplaceAllUsesWith(SDValue(Node, 0), Result, this);
-          DAG.RemoveDeadNode(Node, this);
           break;
         }
         }
@@ -1210,7 +1203,6 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
           DAG.getTruncStore(Tmp1, dl, Tmp3, Tmp2, ST->getPointerInfo(),
                             NVT, isVolatile, isNonTemporal, Alignment);
         DAG.ReplaceAllUsesWith(SDValue(Node, 0), Result, this);
-        DAG.RemoveDeadNode(Node, this);
       } else if (StWidth & (StWidth - 1)) {
         // If not storing a power-of-2 number of bits, expand as two stores.
         assert(!StVT.isVector() && "Unsupported truncstore!");
@@ -1266,7 +1258,6 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
         // The order of the stores doesn't matter.
         SDValue Result = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Lo, Hi);
         DAG.ReplaceAllUsesWith(SDValue(Node, 0), Result, this);
-        DAG.RemoveDeadNode(Node, this);
       } else {
         if (Tmp1 != ST->getChain() || Tmp3 != ST->getValue() ||
             Tmp2 != ST->getBasePtr())
@@ -1289,7 +1280,6 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
           DAG.ReplaceAllUsesWith(SDValue(Node, 0),
                                  TLI.LowerOperation(SDValue(Node, 0), DAG),
                                  this);
-          DAG.RemoveDeadNode(Node, this);
           break;
         case TargetLowering::Expand:
           assert(!StVT.isVector() &&
@@ -1302,7 +1292,6 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
             DAG.getStore(Tmp1, dl, Tmp3, Tmp2, ST->getPointerInfo(),
                          isVolatile, isNonTemporal, Alignment);
           DAG.ReplaceAllUsesWith(SDValue(Node, 0), Result, this);
-          DAG.RemoveDeadNode(Node, this);
           break;
         }
       }
@@ -3372,7 +3361,6 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
       DAG.getNode(ISD::BUILD_VECTOR, dl, Node->getValueType(0),
                   &Scalars[0], Scalars.size());
     DAG.ReplaceAllUsesWith(SDValue(Node, 0), Result, this);
-    DAG.RemoveDeadNode(Node, this);
     break;
   }
   case ISD::GLOBAL_OFFSET_TABLE:
@@ -3389,10 +3377,8 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
   }
 
   // Replace the original node with the legalized result.
-  if (!Results.empty()) {
+  if (!Results.empty())
     DAG.ReplaceAllUsesWith(Node, Results.data(), this);
-    DAG.RemoveDeadNode(Node, this);
-  }
 }
 
 void SelectionDAGLegalize::PromoteNode(SDNode *Node) {
@@ -3526,10 +3512,8 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node) {
   }
 
   // Replace the original node with the legalized result.
-  if (!Results.empty()) {
+  if (!Results.empty())
     DAG.ReplaceAllUsesWith(Node, Results.data(), this);
-    DAG.RemoveDeadNode(Node, this);
-  }
 }
 
 // SelectionDAG::Legalize - This is the entry point for the file.
