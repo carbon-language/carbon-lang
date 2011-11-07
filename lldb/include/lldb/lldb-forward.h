@@ -128,7 +128,6 @@ struct  ScriptSummaryFormat;
 class   ScriptInterpreter;
 #ifndef LLDB_DISABLE_PYTHON
 class   ScriptInterpreterPython;
-class   ScriptSummaryFormat;
 #endif // #ifndef LLDB_DISABLE_PYTHON
 class   SearchFilter;
 class   Section;
