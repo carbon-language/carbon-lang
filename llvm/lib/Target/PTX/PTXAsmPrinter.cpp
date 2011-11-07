@@ -25,7 +25,6 @@
 #include "llvm/Function.h"
 #include "llvm/Module.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/CodeGen/AsmPrinter.h"
@@ -139,15 +138,15 @@ void PTXAsmPrinter::EmitStartOfAsmFile(Module &M)
   const PTXSubtarget& ST = TM.getSubtarget<PTXSubtarget>();
 
   // Emit the PTX .version and .target attributes
-  OutStreamer.EmitRawText(Twine("\t.version " + ST.getPTXVersionString()));
-  OutStreamer.EmitRawText(Twine("\t.target " + ST.getTargetString() +
+  OutStreamer.EmitRawText(Twine("\t.version ") + ST.getPTXVersionString());
+  OutStreamer.EmitRawText(Twine("\t.target ") + ST.getTargetString() +
                                 (ST.supportsDouble() ? ""
-                                                     : ", map_f64_to_f32")));
+                                                     : ", map_f64_to_f32"));
   // .address_size directive is optional, but it must immediately follow
   // the .target directive if present within a module
   if (ST.supportsPTX23()) {
-    std::string addrSize = ST.is64Bit() ? "64" : "32";
-    OutStreamer.EmitRawText(Twine("\t.address_size " + addrSize));
+    const char *addrSize = ST.is64Bit() ? "64" : "32";
+    OutStreamer.EmitRawText(Twine("\t.address_size ") + addrSize);
   }
 
   OutStreamer.AddBlankLine();
@@ -179,68 +178,47 @@ void PTXAsmPrinter::EmitFunctionBodyStart() {
   const PTXParamManager &PM = MFI->getParamManager();
 
   // Print register definitions
-  std::string regDefs;
+  SmallString<128> regDefs;
+  raw_svector_ostream os(regDefs);
   unsigned numRegs;
 
   // pred
   numRegs = MFI->getNumRegistersForClass(PTX::RegPredRegisterClass);
-  if(numRegs > 0) {
-    regDefs += "\t.reg .pred %p<";
-    regDefs += utostr(numRegs);
-    regDefs += ">;\n";
-  }
+  if(numRegs > 0)
+    os << "\t.reg .pred %p<" << numRegs << ">;\n";
 
   // i16
   numRegs = MFI->getNumRegistersForClass(PTX::RegI16RegisterClass);
-  if(numRegs > 0) {
-    regDefs += "\t.reg .b16 %rh<";
-    regDefs += utostr(numRegs);
-    regDefs += ">;\n";
-  }
+  if(numRegs > 0)
+    os << "\t.reg .b16 %rh<" << numRegs << ">;\n";
 
   // i32
   numRegs = MFI->getNumRegistersForClass(PTX::RegI32RegisterClass);
-  if(numRegs > 0) {
-    regDefs += "\t.reg .b32 %r<";
-    regDefs += utostr(numRegs);
-    regDefs += ">;\n";
-  }
+  if(numRegs > 0)
+    os << "\t.reg .b32 %r<" << numRegs << ">;\n";
 
   // i64
   numRegs = MFI->getNumRegistersForClass(PTX::RegI64RegisterClass);
-  if(numRegs > 0) {
-    regDefs += "\t.reg .b64 %rd<";
-    regDefs += utostr(numRegs);
-    regDefs += ">;\n";
-  }
+  if(numRegs > 0)
+    os << "\t.reg .b64 %rd<" << numRegs << ">;\n";
 
   // f32
   numRegs = MFI->getNumRegistersForClass(PTX::RegF32RegisterClass);
-  if(numRegs > 0) {
-    regDefs += "\t.reg .f32 %f<";
-    regDefs += utostr(numRegs);
-    regDefs += ">;\n";
-  }
+  if(numRegs > 0)
+    os << "\t.reg .f32 %f<" << numRegs << ">;\n";
 
   // f64
   numRegs = MFI->getNumRegistersForClass(PTX::RegF64RegisterClass);
-  if(numRegs > 0) {
-    regDefs += "\t.reg .f64 %fd<";
-    regDefs += utostr(numRegs);
-    regDefs += ">;\n";
-  }
+  if(numRegs > 0)
+    os << "\t.reg .f64 %fd<" << numRegs << ">;\n";
 
   // Local params
   for (PTXParamManager::param_iterator i = PM.local_begin(), e = PM.local_end();
-       i != e; ++i) {
-    regDefs += "\t.param .b";
-    regDefs += utostr(PM.getParamSize(*i));
-    regDefs += " ";
-    regDefs += PM.getParamName(*i);
-    regDefs += ";\n";
-  }
+       i != e; ++i)
+    os << "\t.param .b" << PM.getParamSize(*i) << ' ' << PM.getParamName(*i)
+       << ";\n";
 
-  OutStreamer.EmitRawText(Twine(regDefs));
+  OutStreamer.EmitRawText(os.str());
 
 
   const MachineFrameInfo* FrameInfo = MF->getFrameInfo();
@@ -249,16 +227,13 @@ void PTXAsmPrinter::EmitFunctionBodyStart() {
   for (unsigned i = 0, e = FrameInfo->getNumObjects(); i != e; ++i) {
     DEBUG(dbgs() << "Size of object: " << FrameInfo->getObjectSize(i) << "\n");
     if (FrameInfo->getObjectSize(i) > 0) {
-      std::string def = "\t.local .align ";
-      def += utostr(FrameInfo->getObjectAlignment(i));
-      def += " .b8";
-      def += " __local";
-      def += utostr(i);
-      def += "[";
-      def += utostr(FrameInfo->getObjectSize(i)); // Convert to bits
-      def += "]";
-      def += ";";
-      OutStreamer.EmitRawText(Twine(def));
+      OutStreamer.EmitRawText("\t.local .align " +
+                              Twine(FrameInfo->getObjectAlignment(i)) +
+                              " .b8 __local" +
+                              Twine(i) +
+                              "[" +
+                              Twine(FrameInfo->getObjectSize(i)) +
+                              "];");
     }
   }
 
@@ -295,32 +270,27 @@ void PTXAsmPrinter::EmitVariableDeclaration(const GlobalVariable *gv) {
 
   assert(gvsym->isUndefined() && "Cannot define a symbol twice!");
 
-  std::string decl;
+  SmallString<128> decl;
+  raw_svector_ostream os(decl);
 
   // check if it is defined in some other translation unit
   if (gv->isDeclaration())
-    decl += ".extern ";
+    os << ".extern ";
 
   // state space: e.g., .global
-  decl += ".";
-  decl += getStateSpaceName(gv->getType()->getAddressSpace());
-  decl += " ";
+  os << '.' << getStateSpaceName(gv->getType()->getAddressSpace()) << ' ';
 
   // alignment (optional)
   unsigned alignment = gv->getAlignment();
-  if (alignment != 0) {
-    decl += ".align ";
-    decl += utostr(gv->getAlignment());
-    decl += " ";
-  }
+  if (alignment != 0)
+    os << ".align " << gv->getAlignment() << ' ';
 
 
   if (PointerType::classof(gv->getType())) {
     PointerType* pointerTy = dyn_cast<PointerType>(gv->getType());
     Type* elementTy = pointerTy->getElementType();
-        
-    if (elementTy->isArrayTy())
-    {
+
+    if (elementTy->isArrayTy()) {
       assert(elementTy->isArrayTy() && "Only pointers to arrays are supported");
 
       ArrayType* arrayTy = dyn_cast<ArrayType>(elementTy);
@@ -329,7 +299,6 @@ void PTXAsmPrinter::EmitVariableDeclaration(const GlobalVariable *gv) {
       unsigned numElements = arrayTy->getNumElements();
 
       while (elementTy->isArrayTy()) {
-
         arrayTy = dyn_cast<ArrayType>(elementTy);
         elementTy = arrayTy->getElementType();
 
@@ -338,64 +307,46 @@ void PTXAsmPrinter::EmitVariableDeclaration(const GlobalVariable *gv) {
 
       // FIXME: isPrimitiveType() == false for i16?
       assert(elementTy->isSingleValueType() &&
-              "Non-primitive types are not handled");
-            
+             "Non-primitive types are not handled");
+
       // Find the size of the element in bits
       unsigned elementSize = elementTy->getPrimitiveSizeInBits();
 
-      decl += ".b";
-      decl += utostr(elementSize);
-      decl += " ";
-      decl += gvsym->getName();
-      decl += "[";
-      decl += utostr(numElements);
-      decl += "]";
-    }
-    else
-    {
-      decl += ".b8 ";
-      decl += gvsym->getName();
-      decl += "[]";
+      os << ".b" << elementSize << ' ' << gvsym->getName()
+         << '[' << numElements << ']';
+    } else {
+      os << ".b8" << gvsym->getName() << "[]";
     }
 
     // handle string constants (assume ConstantArray means string)
-
-    if (gv->hasInitializer())
-    {
+    if (gv->hasInitializer()) {
       const Constant *C = gv->getInitializer();
-      if (const ConstantArray *CA = dyn_cast<ConstantArray>(C))
-      {
-        decl += " = {";
+      if (const ConstantArray *CA = dyn_cast<ConstantArray>(C)) {
+        os << " = {";
 
-        for (unsigned i = 0, e = C->getNumOperands(); i != e; ++i)
-        {
-          if (i > 0)   decl += ",";
+        for (unsigned i = 0, e = C->getNumOperands(); i != e; ++i) {
+          if (i > 0)
+            os << ',';
 
-          decl += "0x" +
-                utohexstr(cast<ConstantInt>(CA->getOperand(i))->getZExtValue());
+          os << "0x";
+          os.write_hex(cast<ConstantInt>(CA->getOperand(i))->getZExtValue());
         }
 
-        decl += "}";
+        os << '}';
       }
     }
-  }
-  else {
+  } else {
     // Note: this is currently the fall-through case and most likely generates
     //       incorrect code.
-    decl += getTypeName(gv->getType());
-    decl += " ";
+    os << getTypeName(gv->getType()) << ' ' << gvsym->getName();
 
-    decl += gvsym->getName();
-
-    if (ArrayType::classof(gv->getType()) ||
-        PointerType::classof(gv->getType()))
-      decl += "[]";
+    if (isa<ArrayType>(gv->getType()) || isa<PointerType>(gv->getType()))
+      os << "[]";
   }
 
-  decl += ";";
+  os << ';';
 
-  OutStreamer.EmitRawText(Twine(decl));
-
+  OutStreamer.EmitRawText(os.str());
   OutStreamer.AddBlankLine();
 }
 
@@ -414,43 +365,36 @@ void PTXAsmPrinter::EmitFunctionEntryLabel() {
   const PTXSubtarget& ST = TM.getSubtarget<PTXSubtarget>();
   const MachineRegisterInfo& MRI = MF->getRegInfo();
 
-  std::string decl = isKernel ? ".entry" : ".func";
+  SmallString<128> decl;
+  raw_svector_ostream os(decl);
+  os << (isKernel ? ".entry" : ".func");
 
   if (!isKernel) {
-    decl += " (";
+    os << " (";
     if (ST.useParamSpaceForDeviceArgs()) {
       for (PTXParamManager::param_iterator i = PM.ret_begin(), e = PM.ret_end(),
            b = i; i != e; ++i) {
-        if (i != b) {
-          decl += ", ";
-        }
+        if (i != b)
+          os << ", ";
 
-        decl += ".param .b";
-        decl += utostr(PM.getParamSize(*i));
-        decl += " ";
-        decl += PM.getParamName(*i);
+        os << ".param .b" << PM.getParamSize(*i) << ' ' << PM.getParamName(*i);
       }
     } else {
       for (PTXMachineFunctionInfo::reg_iterator
            i = MFI->retreg_begin(), e = MFI->retreg_end(), b = i;
            i != e; ++i) {
-        if (i != b) {
-          decl += ", ";
-        }
-        decl += ".reg .";
-        decl += getRegisterTypeName(*i, MRI);
-        decl += " ";
-        decl += MFI->getRegisterName(*i);
+        if (i != b)
+          os << ", ";
+
+        os << ".reg ." << getRegisterTypeName(*i, MRI) << ' '
+           << MFI->getRegisterName(*i);
       }
     }
-    decl += ")";
+    os << ')';
   }
 
   // Print function name
-  decl += " ";
-  decl += CurrentFnSym->getName().str();
-
-  decl += " (";
+  os << ' ' << CurrentFnSym->getName() << " (";
 
   const Function *F = MF->getFunction();
 
@@ -458,64 +402,56 @@ void PTXAsmPrinter::EmitFunctionEntryLabel() {
   if (isKernel || ST.useParamSpaceForDeviceArgs()) {
     /*for (PTXParamManager::param_iterator i = PM.arg_begin(), e = PM.arg_end(),
          b = i; i != e; ++i) {
-      if (i != b) {
-        decl += ", ";
-      }
+      if (i != b)
+        os << ", ";
 
-      decl += ".param .b";
-      decl += utostr(PM.getParamSize(*i));
-      decl += " ";
-      decl += PM.getParamName(*i);
+      os << ".param .b" << PM.getParamSize(*i) << ' ' << PM.getParamName(*i);
     }*/
     int Counter = 1;
     for (Function::const_arg_iterator i = F->arg_begin(), e = F->arg_end(),
          b = i; i != e; ++i) {
       if (i != b)
-        decl += ", ";
+        os << ", ";
       const Type *ArgType = (*i).getType();
-      decl += ".param .b";
+      os << ".param .b";
       if (ArgType->isPointerTy()) {
         if (ST.is64Bit())
-          decl += "64";
+          os << "64";
         else
-          decl += "32";
+          os << "32";
       } else {
-        decl += utostr(ArgType->getPrimitiveSizeInBits());
+        os << ArgType->getPrimitiveSizeInBits();
       }
       if (ArgType->isPointerTy() && ST.emitPtrAttribute()) {
         const PointerType *PtrType = dyn_cast<const PointerType>(ArgType);
-        decl += " .ptr";
+        os << " .ptr";
         switch (PtrType->getAddressSpace()) {
         default:
           llvm_unreachable("Unknown address space in argument");
         case PTXStateSpace::Global:
-          decl += " .global";
+          os << " .global";
           break;
         case PTXStateSpace::Shared:
-          decl += " .shared";
+          os << " .shared";
           break;
         }
       }
-      decl += " __param_";
-      decl += utostr(Counter++);
+      os << " __param_" << Counter++;
     }
   } else {
     for (PTXMachineFunctionInfo::reg_iterator
          i = MFI->argreg_begin(), e = MFI->argreg_end(), b = i;
          i != e; ++i) {
-      if (i != b) {
-        decl += ", ";
-      }
+      if (i != b)
+        os << ", ";
 
-      decl += ".reg .";
-      decl += getRegisterTypeName(*i, MRI);
-      decl += " ";
-      decl += MFI->getRegisterName(*i);
+      os << ".reg ." << getRegisterTypeName(*i, MRI) << ' '
+         << MFI->getRegisterName(*i);
     }
   }
-  decl += ")";
+  os << ')';
 
-  OutStreamer.EmitRawText(Twine(decl));
+  OutStreamer.EmitRawText(os.str());
 }
 
 unsigned PTXAsmPrinter::GetOrCreateSourceID(StringRef FileName,
