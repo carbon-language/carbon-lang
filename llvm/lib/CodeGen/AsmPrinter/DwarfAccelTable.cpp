@@ -183,7 +183,7 @@ void DwarfAccelTable::EmitData(AsmPrinter *Asm, DwarfDebug *D) {
       Asm->OutStreamer.EmitLabel((*HI)->Sym);
       Asm->OutStreamer.AddComment((*HI)->Str);
       Asm->EmitSectionOffset(D->getStringPoolEntry((*HI)->Str),
-                             D->getDwarfStrSectionSym());
+                             D->getStringPool());
       Asm->OutStreamer.AddComment("Num DIEs");
       Asm->EmitInt32((*HI)->DIEOffsets.size());
       for (std::vector<uint32_t>::const_iterator

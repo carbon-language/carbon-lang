@@ -528,10 +528,6 @@ public:
   /// getStringPoolEntry - returns an entry into the string pool with the given
   /// string text.
   MCSymbol *getStringPoolEntry(StringRef Str);
-
-  /// getDwarfStrSectionSym - returns the symbol that starts the dwarf string
-  /// section.
-  MCSymbol *getDwarfStrSectionSym();
 };
 } // End of namespace llvm
 

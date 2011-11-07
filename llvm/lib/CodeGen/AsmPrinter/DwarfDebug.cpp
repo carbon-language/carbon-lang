@@ -165,14 +165,6 @@ MCSymbol *DwarfDebug::getStringPoolEntry(StringRef Str) {
   return Entry.first = Asm->GetTempSymbol("string", Entry.second);
 }
 
-MCSymbol *DwarfDebug::getDwarfStrSectionSym(void) {
-  if (DwarfStrSectionSym) return DwarfStrSectionSym;
-  DwarfStrSectionSym =
-    EmitSectionSym(Asm, Asm->getObjFileLowering().getDwarfStrSection(),
-                   "section_str");
-  return DwarfStrSectionSym;
-}
-
 /// assignAbbrevNumber - Define a unique number for the abbreviation.
 ///
 void DwarfDebug::assignAbbrevNumber(DIEAbbrev &Abbrev) {
