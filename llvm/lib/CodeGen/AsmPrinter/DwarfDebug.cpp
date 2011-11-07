@@ -525,6 +525,7 @@ CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
 }
 
 static bool isObjCClass(StringRef Name) {
+  if (Name == "") return false;
   return Name[0] == '+' || Name[0] == '-';
 }
 
