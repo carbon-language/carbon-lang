@@ -239,6 +239,7 @@ public:
   // Public Implementation
  public:
   DwarfAccelTable(DwarfAccelTable::Atom Atom);
+  ~DwarfAccelTable();
   void AddName(StringRef, DIE*);
   void FinalizeTable(AsmPrinter *, const char *);
   void Emit(AsmPrinter *, MCSymbol *, DwarfDebug *);

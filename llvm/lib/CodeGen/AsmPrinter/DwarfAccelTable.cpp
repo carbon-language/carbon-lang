@@ -42,6 +42,11 @@ DwarfAccelTable::DwarfAccelTable(DwarfAccelTable::Atom atom) :
   HeaderData(atom) {
 }
 
+DwarfAccelTable::~DwarfAccelTable() {
+  for (size_t i = 0 ; i < Data.size(); ++i)
+    delete Data[i];
+}
+
 void DwarfAccelTable::AddName(StringRef Name, DIE* die) {
   // If the string is in the list already then add this die to the list
   // otherwise add a new one.
