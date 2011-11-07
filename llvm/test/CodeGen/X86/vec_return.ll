@@ -11,7 +11,6 @@ define <2 x double> @test() {
 ; CHECK: test2
 ; CHECK-NOT: shuf
 ; CHECK: movaps {{.*}}CPI
-; CHECK-NEXT: ret
 define <4 x i32> @test2() nounwind  {
 	ret <4 x i32> < i32 0, i32 0, i32 1, i32 0 >
 }
