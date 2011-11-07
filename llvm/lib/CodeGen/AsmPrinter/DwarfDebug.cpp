@@ -136,6 +136,18 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
 DwarfDebug::~DwarfDebug() {
 }
 
+/// EmitSectionSym - Switch to the specified MCSection and emit an assembler
+/// temporary label to it if SymbolStem is specified.
+static MCSymbol *EmitSectionSym(AsmPrinter *Asm, const MCSection *Section,
+                                const char *SymbolStem = 0) {
+  Asm->OutStreamer.SwitchSection(Section);
+  if (!SymbolStem) return 0;
+
+  MCSymbol *TmpSym = Asm->GetTempSymbol(SymbolStem);
+  Asm->OutStreamer.EmitLabel(TmpSym);
+  return TmpSym;
+}
+
 MCSymbol *DwarfDebug::getStringPool() {
   return Asm->GetTempSymbol("section_str");
 }
@@ -148,6 +160,13 @@ MCSymbol *DwarfDebug::getStringPoolEntry(StringRef Str) {
   return Entry.first = Asm->GetTempSymbol("string", Entry.second);
 }
 
+MCSymbol *DwarfDebug::getDwarfStrSectionSym(void) {
+  if (DwarfStrSectionSym) return DwarfStrSectionSym;
+  DwarfStrSectionSym =
+    EmitSectionSym(Asm, Asm->getObjFileLowering().getDwarfStrSection(),
+                   "section_str");
+  return DwarfStrSectionSym;
+}
 
 /// assignAbbrevNumber - Define a unique number for the abbreviation.
 ///
@@ -1463,18 +1482,6 @@ void DwarfDebug::computeSizeAndOffsets() {
       sizeof(int8_t);   // Pointer Size (in bytes)
     computeSizeAndOffset(I->second->getCUDie(), Offset, true);
   }
-}
-
-/// EmitSectionSym - Switch to the specified MCSection and emit an assembler
-/// temporary label to it if SymbolStem is specified.
-static MCSymbol *EmitSectionSym(AsmPrinter *Asm, const MCSection *Section,
-                                const char *SymbolStem = 0) {
-  Asm->OutStreamer.SwitchSection(Section);
-  if (!SymbolStem) return 0;
-
-  MCSymbol *TmpSym = Asm->GetTempSymbol(SymbolStem);
-  Asm->OutStreamer.EmitLabel(TmpSym);
-  return TmpSym;
 }
 
 /// EmitSectionLabels - Emit initial Dwarf sections with a label at
