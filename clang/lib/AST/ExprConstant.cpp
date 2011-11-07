@@ -558,12 +558,14 @@ bool HandleLValueToRValueConversion(EvalInfo &Info, QualType Type,
     // them are not permitted.
     const VarDecl *VD = dyn_cast<VarDecl>(D);
     QualType VT = VD->getType();
-    if (!VD)
+    if (!VD || VD->isInvalidDecl())
       return false;
     if (!isa<ParmVarDecl>(VD)) {
       if (!IsConstNonVolatile(VT))
         return false;
-      if (!VT->isIntegralOrEnumerationType() && !VT->isRealFloatingType())
+      // FIXME: Allow folding of values of any literal type in all languages.
+      if (!VT->isIntegralOrEnumerationType() && !VT->isRealFloatingType() &&
+          !VD->isConstexpr())
         return false;
     }
     if (!EvaluateVarDeclInit(Info, VD, Frame, RVal))
