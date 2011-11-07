@@ -243,9 +243,9 @@ $ <b>clang -fsyntax-only ~/t.c</b>
 
 <pre class="code">
 $ <b>clang -fsyntax-only ~/t.c -pedantic</b>
-/Users/sabre/t.c:2:17: warning: extension used
-typedef float V __attribute__((vector_size(16)));
-                ^
+/Users/sabre/t.c:2:17: <font color="magenta">warning:</font> extension used
+<font color="darkgreen">typedef float V __attribute__((vector_size(16)));</font>
+<font color="blue">                ^</font>
 1 diagnostic generated.
 </pre>
 
