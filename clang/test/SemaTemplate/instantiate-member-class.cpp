@@ -118,3 +118,25 @@ namespace AliasTagDef {
   int m = F<int>::S().g();
   int n = F<int>::U().g();
 }
+
+namespace rdar10397846 {
+  template<int I> struct A
+  {
+    struct B
+    {
+      struct C { C() { int *ptr = I; } }; // expected-error{{cannot initialize a variable of type 'int *' with an rvalue of type 'int'}}
+    };
+  };
+
+  template<int N> void foo()
+  {
+    class A<N>::B::C X; // expected-note{{in instantiation of member function}}
+    int A<N+1>::B::C::*member = 0;
+  }
+
+  void bar()
+  {
+    foo<0>();
+    foo<1>(); // expected-note{{in instantiation of function template}}
+  }
+}

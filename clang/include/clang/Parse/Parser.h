@@ -1997,6 +1997,7 @@ private:
                            DeclSpec &DS,
                 const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo(),
                            AccessSpecifier AS = AS_none,
+                           bool EnteringContext = false,
                            bool SuppressDeclarations = false);
   void ParseCXXMemberSpecification(SourceLocation StartLoc, unsigned TagType,
                                    Decl *TagDecl);

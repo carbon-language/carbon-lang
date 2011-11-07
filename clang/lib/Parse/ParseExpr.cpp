@@ -974,7 +974,8 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
         // type, translate it into a type and continue parsing as a
         // cast expression.
         CXXScopeSpec SS;
-        ParseOptionalCXXScopeSpecifier(SS, ParsedType(), false);
+        ParseOptionalCXXScopeSpecifier(SS, ParsedType(), 
+                                       /*EnteringContext=*/false);
         AnnotateTemplateIdTokenAsType();
         return ParseCastExpression(isUnaryExpression, isAddressOfOperand,
                                    NotCastExpr, isTypeCast);
@@ -1333,7 +1334,8 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
         if (LHS.isInvalid())
           break;
 
-        ParseOptionalCXXScopeSpecifier(SS, ObjectType, false,
+        ParseOptionalCXXScopeSpecifier(SS, ObjectType, 
+                                       /*EnteringContext=*/false,
                                        &MayBePseudoDestructor);
         if (SS.isNotEmpty())
           ObjectType = ParsedType();

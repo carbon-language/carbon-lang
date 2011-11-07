@@ -1205,7 +1205,8 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext, bool NeedType) {
     //            simple-template-id
     SourceLocation TypenameLoc = ConsumeToken();
     CXXScopeSpec SS;
-    if (ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/ParsedType(), false,
+    if (ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/ParsedType(), 
+                                       /*EnteringContext=*/false,
                                        0, /*IsTypename*/true))
       return true;
     if (!SS.isSet()) {
@@ -1484,7 +1485,8 @@ bool Parser::ParseMicrosoftIfExistsCondition(IfExistsCondition& Result) {
   }
   
   // Parse nested-name-specifier.
-  ParseOptionalCXXScopeSpecifier(Result.SS, ParsedType(), false);
+  ParseOptionalCXXScopeSpecifier(Result.SS, ParsedType(), 
+                                 /*EnteringContext=*/false);
 
   // Check nested-name specifier.
   if (Result.SS.isInvalid()) {
