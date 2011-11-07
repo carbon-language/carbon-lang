@@ -13,3 +13,18 @@ static_assert(!__is_trivial(NonTrivial2), "NonTrivial2 is trivial");
 static_assert(!__is_trivial(NonTrivial3), "NonTrivial3 is trivial");
 static_assert(!__is_trivial(NonTrivial4), "NonTrivial4 is trivial");
 static_assert(!__is_trivial(NonTrivial5), "NonTrivial5 is trivial");
+
+struct Trivial2 {
+  Trivial2() = default;
+  Trivial2(const Trivial2 &) = default;
+  Trivial2(Trivial2 &&) = default;
+  Trivial2 &operator=(const Trivial2 &) = default;
+  Trivial2 &operator=(Trivial2 &) = default;
+  ~Trivial2() = default;
+};
+
+class NonTrivial6 { ~NonTrivial6(); };
+
+NonTrivial6::~NonTrivial6() = default;
+
+static_assert(!__is_trivial(NonTrivial6), "NonTrivial6 is trivial");

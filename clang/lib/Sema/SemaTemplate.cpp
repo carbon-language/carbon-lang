@@ -5219,7 +5219,7 @@ Decl *Sema::ActOnStartOfFunctionTemplateDef(Scope *FnBodyScope,
 
   Scope *ParentScope = FnBodyScope->getParent();
 
-  D.setFunctionDefinition(true);
+  D.setFunctionDefinitionKind(FDK_Definition);
   Decl *DP = HandleDeclarator(ParentScope, D,
                               move(TemplateParameterLists));
   if (FunctionTemplateDecl *FunctionTemplate

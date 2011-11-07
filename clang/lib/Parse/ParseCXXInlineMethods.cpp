@@ -24,8 +24,10 @@ using namespace clang;
 Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS,
                                       AttributeList *AccessAttrs,
                                       ParsingDeclarator &D,
-                                const ParsedTemplateInfo &TemplateInfo,
-                                const VirtSpecifiers& VS, ExprResult& Init) {
+                                      const ParsedTemplateInfo &TemplateInfo,
+                                      const VirtSpecifiers& VS, 
+                                      FunctionDefinitionKind DefinitionKind,
+                                      ExprResult& Init) {
   assert(D.isFunctionDeclarator() && "This isn't a function declarator!");
   assert((Tok.is(tok::l_brace) || Tok.is(tok::colon) || Tok.is(tok::kw_try) ||
           Tok.is(tok::equal)) &&
@@ -36,7 +38,7 @@ Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS,
           TemplateInfo.TemplateParams ? TemplateInfo.TemplateParams->size() : 0);
 
   Decl *FnD;
-  D.setFunctionDefinition(true);
+  D.setFunctionDefinitionKind(DefinitionKind);
   if (D.getDeclSpec().isFriendSpecified())
     FnD = Actions.ActOnFriendFunctionDecl(getCurScope(), D,
                                           move(TemplateParams));

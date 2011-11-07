@@ -64,3 +64,15 @@ struct NonAggr6 {
   int n;
 };
 NonAggr6 na6 = { 42 }; // expected-error {{non-aggregate type 'NonAggr6'}}
+
+struct DefaultedAggr {
+  int n;
+
+  DefaultedAggr() = default;
+  DefaultedAggr(const DefaultedAggr &) = default;
+  DefaultedAggr(DefaultedAggr &&) = default;
+  DefaultedAggr &operator=(const DefaultedAggr &) = default;
+  DefaultedAggr &operator=(DefaultedAggr &) = default;
+  ~DefaultedAggr() = default;
+};
+DefaultedAggr da = { 42 } ;

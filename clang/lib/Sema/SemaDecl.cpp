@@ -3145,7 +3145,7 @@ static bool RebuildDeclaratorInCurrentInstantiation(Sema &S, Declarator &D,
 }
 
 Decl *Sema::ActOnDeclarator(Scope *S, Declarator &D) {
-  D.setFunctionDefinition(false);
+  D.setFunctionDefinitionKind(FDK_Declaration);
   return HandleDeclarator(S, D, MultiTemplateParamsArg(*this));
 }
 
@@ -4803,7 +4803,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     // scope specifier, or is the object of a friend declaration, the
     // lexical context will be different from the semantic context.
     NewFD->setLexicalDeclContext(CurContext);
-    
+        
     // Match up the template parameter lists with the scope specifier, then
     // determine whether we have a template or a template specialization.
     bool Invalid = false;
@@ -4995,10 +4995,26 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       NewFD->setAccess(AS_public);
     }
 
+    // If a function is defined as defaulted or deleted, mark it as such now.
+    switch (D.getFunctionDefinitionKind()) {
+      case FDK_Declaration:
+      case FDK_Definition:
+        break;
+        
+      case FDK_Defaulted:
+        NewFD->setDefaulted();
+        break;
+        
+      case FDK_Deleted:
+        NewFD->setDeletedAsWritten();
+        break;
+    }
+
     if (isa<CXXMethodDecl>(NewFD) && DC == CurContext &&
         D.isFunctionDefinition()) {
-      // A method is implicitly inline if it's defined in its class
-      // definition.
+      // C++ [class.mfct]p2:
+      //   A member function may be defined (8.4) in its class definition, in 
+      //   which case it is an inline member function (7.1.2)
       NewFD->setImplicitlyInline();
     }
 
@@ -6885,7 +6901,7 @@ Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope,
   assert(D.isFunctionDeclarator() && "Not a function declarator!");
   Scope *ParentScope = FnBodyScope->getParent();
 
-  D.setFunctionDefinition(true);
+  D.setFunctionDefinitionKind(FDK_Definition);
   Decl *DP = HandleDeclarator(ParentScope, D,
                               MultiTemplateParamsArg(*this));
   return ActOnStartOfFunctionDef(FnBodyScope, DP);

@@ -451,8 +451,7 @@ void CXXRecordDecl::addedMember(Decl *D) {
       //    -- class X has no virtual functions [...]
       data().HasTrivialCopyAssignment = false;
       data().HasTrivialMoveAssignment = false;
-      // FIXME: Destructor?
-
+            
       // C++0x [class]p7:
       //   A standard-layout class is a class that: [...]
       //    -- has no virtual functions
@@ -574,9 +573,10 @@ NotASpecialMember:;
     // This bit is the C++03 POD bit, not the 0x one.
     data().PlainOldData = false;
     
-    // C++0x [class.dtor]p5: 
-    //   A destructor is trivial if it is not user-provided and [...]
-    if (DD->isUserProvided())
+    // C++11 [class.dtor]p5: 
+    //   A destructor is trivial if it is not user-provided and if
+    //    -- the destructor is not virtual.
+    if (DD->isUserProvided() || DD->isVirtual())
       data().HasTrivialDestructor = false;
     
     return;

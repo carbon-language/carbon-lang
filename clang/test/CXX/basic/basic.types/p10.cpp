@@ -18,6 +18,7 @@ struct UserProvDtor {
   constexpr UserProvDtor(); // expected-error {{non-literal type 'UserProvDtor' cannot have constexpr members}}
   ~UserProvDtor(); // expected-note {{has a user-provided destructor}}
 };
+
 struct NonTrivDtor {
   constexpr NonTrivDtor(); // expected-error {{non-literal type 'NonTrivDtor' cannot have constexpr members}}
   virtual ~NonTrivDtor() = default; // expected-note {{has a non-trivial destructor}}

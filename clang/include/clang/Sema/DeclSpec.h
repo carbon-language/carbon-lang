@@ -1379,6 +1379,15 @@ struct DeclaratorChunk {
 
 };
 
+/// \brief Described the kind of function definition (if any) provided for
+/// a function.
+enum FunctionDefinitionKind {
+  FDK_Declaration,
+  FDK_Definition,
+  FDK_Defaulted,
+  FDK_Deleted
+};
+  
 /// Declarator - Information about one declarator, including the parsed type
 /// information and the identifier.  When the declarator is fully formed, this
 /// is turned into the appropriate Decl object.
@@ -1434,8 +1443,11 @@ private:
   /// GroupingParens - Set by Parser::ParseParenDeclarator().
   bool GroupingParens : 1;
 
-  /// FunctionDefinition - Is this Declarator for a function or member defintion
-  bool FunctionDefinition : 1;
+  /// FunctionDefinition - Is this Declarator for a function or member 
+  /// definition and, if so, what kind?
+  ///
+  /// Actually a FunctionDefinitionKind.
+  unsigned FunctionDefinition : 2;
 
   // Redeclaration - Is this Declarator is a redeclaration.
   bool Redeclaration : 1;
@@ -1465,7 +1477,8 @@ public:
   Declarator(const DeclSpec &ds, TheContext C)
     : DS(ds), Range(ds.getSourceRange()), Context(C),
       InvalidType(DS.getTypeSpecType() == DeclSpec::TST_error),
-      GroupingParens(false), FunctionDefinition(false), Redeclaration(false),
+      GroupingParens(false), FunctionDefinition(FDK_Declaration), 
+      Redeclaration(false),
       Attrs(ds.getAttributePool().getFactory()), AsmLabel(0),
       InlineParamsUsed(false), Extension(false) {
   }
@@ -1827,8 +1840,17 @@ public:
   SourceLocation getEllipsisLoc() const { return EllipsisLoc; }
   void setEllipsisLoc(SourceLocation EL) { EllipsisLoc = EL; }
 
-  void setFunctionDefinition(bool Val) { FunctionDefinition = Val; }
-  bool isFunctionDefinition() const { return FunctionDefinition; }
+  void setFunctionDefinitionKind(FunctionDefinitionKind Val) { 
+    FunctionDefinition = Val; 
+  }
+  
+  bool isFunctionDefinition() const {
+    return getFunctionDefinitionKind() != FDK_Declaration;
+  }
+  
+  FunctionDefinitionKind getFunctionDefinitionKind() const { 
+    return (FunctionDefinitionKind)FunctionDefinition; 
+  }
 
   void setRedeclaration(bool Val) { Redeclaration = Val; }
   bool isRedeclaration() const { return Redeclaration; }

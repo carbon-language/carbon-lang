@@ -876,7 +876,7 @@ Decl *Parser::ParseFunctionDefinition(ParsingDeclarator &D,
     ParseScope BodyScope(this, Scope::FnScope|Scope::DeclScope);
     Scope *ParentScope = getCurScope()->getParent();
 
-    D.setFunctionDefinition(true);
+    D.setFunctionDefinitionKind(FDK_Definition);
     Decl *DP = Actions.HandleDeclarator(ParentScope, D,
                                         move(TemplateParameterLists));
     D.complete(DP);

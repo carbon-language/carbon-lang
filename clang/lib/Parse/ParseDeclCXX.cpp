@@ -1779,25 +1779,27 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
         HasInitializer = true;
     }
 
-    bool IsDefinition = false;
+    FunctionDefinitionKind DefinitionKind = FDK_Declaration;
     // function-definition:
     //
     // In C++11, a non-function declarator followed by an open brace is a
     // braced-init-list for an in-class member initialization, not an
     // erroneous function definition.
     if (Tok.is(tok::l_brace) && !getLang().CPlusPlus0x) {
-      IsDefinition = true;
+      DefinitionKind = FDK_Definition;
     } else if (DeclaratorInfo.isFunctionDeclarator()) {
       if (Tok.is(tok::l_brace) || Tok.is(tok::colon) || Tok.is(tok::kw_try)) {
-        IsDefinition = true;
+        DefinitionKind = FDK_Definition;
       } else if (Tok.is(tok::equal)) {
         const Token &KW = NextToken();
-        if (KW.is(tok::kw_default) || KW.is(tok::kw_delete))
-          IsDefinition = true;
+        if (KW.is(tok::kw_default))
+          DefinitionKind = FDK_Defaulted;
+        else if (KW.is(tok::kw_delete))
+          DefinitionKind = FDK_Deleted;
       }
     }
 
-    if (IsDefinition) {
+    if (DefinitionKind) {
       if (!DeclaratorInfo.isFunctionDeclarator()) {
         Diag(Tok, diag::err_func_def_no_params);
         ConsumeBrace();
@@ -1825,7 +1827,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
 
       Decl *FunDecl =
         ParseCXXInlineMethodDef(AS, AccessAttrs, DeclaratorInfo, TemplateInfo,
-                                VS, Init);
+                                VS, DefinitionKind, Init);
 
       for (unsigned i = 0, ni = LateParsedAttrs.size(); i < ni; ++i) {
         LateParsedAttrs[i]->setDecl(FunDecl);

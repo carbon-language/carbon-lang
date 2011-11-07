@@ -1134,7 +1134,9 @@ private:
   Decl *ParseCXXInlineMethodDef(AccessSpecifier AS, AttributeList *AccessAttrs,
                                 ParsingDeclarator &D,
                                 const ParsedTemplateInfo &TemplateInfo,
-                                const VirtSpecifiers& VS, ExprResult& Init);
+                                const VirtSpecifiers& VS, 
+                                FunctionDefinitionKind DefinitionKind,
+                                ExprResult& Init);
   void ParseCXXNonStaticMemberInitializer(Decl *VarD);
   void ParseLexedAttributes(ParsingClass &Class);
   void ParseLexedAttribute(LateParsedAttribute &LA);

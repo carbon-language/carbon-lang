@@ -31,8 +31,7 @@ namespace test1 {
 
   void test() {
     A a;
-    // FIXME: this error about variadics is bogus
-    foo(a); // expected-error {{calling a private constructor of class 'test1::A'}} expected-error {{cannot pass object of non-trivial type 'test1::A' through variadic function}}
+    foo(a); // expected-error {{calling a private constructor of class 'test1::A'}}
   }
 }
 
