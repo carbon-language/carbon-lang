@@ -267,16 +267,16 @@ def MIPS_FCOND_NGE  : PatLeaf<(i32 13)>;
 def MIPS_FCOND_LE   : PatLeaf<(i32 14)>;
 def MIPS_FCOND_NGT  : PatLeaf<(i32 15)>;
 
+class FCMP<bits<5> fmt, RegisterClass RC, string typestr> :
+  FCC<fmt, (outs), (ins RC:$fs, RC:$ft, condcode:$cc),
+      !strconcat("c.$cc.", typestr, "\t$fs, $ft"),
+      [(MipsFPCmp RC:$fs, RC:$ft, imm:$cc)]>;
+
 /// Floating Point Compare
 let Defs=[FCR31] in {
-  def FCMP_S32 : FCC<0x10, (outs), (ins FGR32:$fs, FGR32:$ft, condcode:$cc),
-                     "c.$cc.s\t$fs, $ft",
-                     [(MipsFPCmp FGR32:$fs, FGR32:$ft, imm:$cc)]>;
-
-  def FCMP_D32 : FCC<0x11, (outs), (ins AFGR64:$fs, AFGR64:$ft, condcode:$cc),
-                     "c.$cc.d\t$fs, $ft",
-                     [(MipsFPCmp AFGR64:$fs, AFGR64:$ft, imm:$cc)]>,
-                     Requires<[NotFP64bit]>;
+  def FCMP_S32 : FCMP<0x10, FGR32, "s">;
+  def FCMP_D32 : FCMP<0x11, AFGR64, "d">, Requires<[NotFP64bit]>;
+  def FCMP_D64 : FCMP<0x11, FGR64, "d">, Requires<[IsFP64bit]>;
 }
 
 //===----------------------------------------------------------------------===//
