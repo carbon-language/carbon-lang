@@ -37,10 +37,11 @@ return:                                           ; preds = %invcont
   ret void
 
 lpad:                                             ; preds = %entry
-  %eh_ptr = call i8* @llvm.eh.exception()
+  %exn = landingpad {i8*, i32} personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+           cleanup
+  %eh_ptr = extractvalue {i8*, i32} %exn, 0
   store i8* %eh_ptr, i8** %eh_exception
-  %eh_ptr1 = load i8** %eh_exception
-  %eh_select2 = call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* %eh_ptr1, i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*), i32 0)
+  %eh_select2 = extractvalue {i8*, i32} %exn, 1
   store i32 %eh_select2, i32* %eh_selector
   br label %ppad
 
@@ -93,10 +94,6 @@ return:                                           ; preds = %bb
 declare void @_ZdlPv(i8*) nounwind
 
 declare void @_Z3barv()
-
-declare i8* @llvm.eh.exception() nounwind readonly
-
-declare i32 @llvm.eh.selector(i8*, i8*, ...) nounwind
 
 declare i32 @llvm.eh.typeid.for(i8*) nounwind
 

@@ -34,10 +34,12 @@ return:                                           ; preds = %entry
   ret void
 
 lpad:                                             ; preds = %bb
-  %eh_ptr = call i8* @llvm.eh.exception()         ; <i8*> [#uses=1]
-  store i8* %eh_ptr, i8** %eh_exception
+  %eh_ptr = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+              cleanup
+  %exn = extractvalue { i8*, i32 } %eh_ptr, 0
+  store i8* %exn, i8** %eh_exception
   %eh_ptr13 = load i8** %eh_exception             ; <i8*> [#uses=1]
-  %eh_select14 = call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* %eh_ptr13, i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*), i32 1)
+  %eh_select14 = extractvalue { i8*, i32 } %eh_ptr, 1
   store i32 %eh_select14, i32* %eh_selector
   br label %ppad
 
@@ -53,10 +55,6 @@ Unwind:
 declare arm_apcscc void @func2()
 
 declare arm_apcscc void @_ZSt9terminatev() noreturn nounwind
-
-declare i8* @llvm.eh.exception() nounwind readonly
-
-declare i32 @llvm.eh.selector(i8*, i8*, ...) nounwind
 
 declare arm_apcscc void @_Unwind_SjLj_Resume(i8*)
 

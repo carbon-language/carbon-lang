@@ -24,15 +24,11 @@ invoke.cont:
   ret void
 
 lpad:
-  %exn = call i8* @llvm.eh.exception() nounwind
-  %eh.selector = call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* %exn, i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i8* null) nounwind
+  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+            catch i8* null
   ret void
 }
 
 declare i32 @foo()
 
-declare i8* @llvm.eh.exception() nounwind readonly
-
 declare i32 @__gxx_personality_v0(...)
-
-declare i32 @llvm.eh.selector(i8*, i8*, ...) nounwind

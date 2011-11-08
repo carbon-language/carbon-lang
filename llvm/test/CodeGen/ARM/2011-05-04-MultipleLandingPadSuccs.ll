@@ -35,14 +35,14 @@ for.cond.backedge:
   br label %for.cond
 
 lpad:
-  %exn = tail call i8* @llvm.eh.exception() nounwind
-  %eh.selector = tail call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* %exn, i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*), i8* null) nounwind
+  %exn = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+           catch i8* null
   invoke void @foo()
           to label %eh.resume unwind label %terminate.lpad
 
 lpad26:
-  %exn27 = tail call i8* @llvm.eh.exception() nounwind
-  %eh.selector28 = tail call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* %exn27, i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*), i8* null) nounwind
+  %exn27 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+           catch i8* null
   invoke void @foo()
           to label %eh.resume unwind label %terminate.lpad
 
@@ -57,30 +57,25 @@ call8.i.i.i.noexc:
   ret void
 
 lpad44:
-  %exn45 = tail call i8* @llvm.eh.exception() nounwind
-  %eh.selector46 = tail call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* %exn45, i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*), i8* null) nounwind
+  %exn45 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+           catch i8* null
   invoke void @foo()
           to label %eh.resume unwind label %terminate.lpad
 
 eh.resume:
-  %exn.slot.0 = phi i8* [ %exn27, %lpad26 ], [ %exn, %lpad ], [ %exn45, %lpad44 ]
-  tail call void @_Unwind_SjLj_Resume_or_Rethrow(i8* %exn.slot.0) noreturn
-  unreachable
+  %exn.slot.0 = phi { i8*, i32 } [ %exn27, %lpad26 ], [ %exn, %lpad ], [ %exn45, %lpad44 ]
+  resume { i8*, i32 } %exn.slot.0
 
 terminate.lpad:
-  %exn51 = tail call i8* @llvm.eh.exception() nounwind
-  %eh.selector52 = tail call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* %exn51, i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*), i8* null) nounwind
+  %exn51 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+           catch i8* null
   tail call void @_ZSt9terminatev() noreturn nounwind
   unreachable
 }
 
 declare void @foo()
 
-declare i8* @llvm.eh.exception() nounwind readonly
-
 declare i32 @__gxx_personality_sj0(...)
-
-declare i32 @llvm.eh.selector(i8*, i8*, ...) nounwind
 
 declare void @_Unwind_SjLj_Resume_or_Rethrow(i8*)
 

@@ -21,11 +21,7 @@ declare i32 @printf(i8* nocapture, ...) nounwind
 
 declare i8* @__cxa_allocate_exception(i32)
 
-declare i8* @llvm.eh.exception() nounwind readonly
-
 declare i32 @__gxx_personality_sj0(...)
-
-declare i32 @llvm.eh.selector(i8*, i8*, ...) nounwind
 
 declare i32 @llvm.eh.typeid.for(i8*) nounwind
 
@@ -75,8 +71,11 @@ try.cont:                                         ; preds = %lpad
   ret i32 %conv
 
 lpad:                                             ; preds = %entry
-  %exn = tail call i8* @llvm.eh.exception() nounwind ; <i8*> [#uses=4]
-  %eh.selector = tail call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* %exn, i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*), i8* bitcast (%0* @_ZTI1A to i8*), i8* null) nounwind ; <i32> [#uses=1]
+  %exn.ptr = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+           catch i8* bitcast (%0* @_ZTI1A to i8*)
+           catch i8* null
+  %exn = extractvalue { i8*, i32 } %exn.ptr, 0
+  %eh.selector = extractvalue { i8*, i32 } %exn.ptr, 1
   %2 = tail call i32 @llvm.eh.typeid.for(i8* bitcast (%0* @_ZTI1A to i8*)) nounwind ; <i32> [#uses=1]
   %3 = icmp eq i32 %eh.selector, %2               ; <i1> [#uses=1]
   br i1 %3, label %try.cont, label %eh.resume
