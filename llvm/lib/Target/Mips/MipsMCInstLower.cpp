@@ -12,14 +12,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "MipsMCInstLower.h"
 #include "MipsAsmPrinter.h"
 #include "MipsInstrInfo.h"
-#include "MipsMCSymbolRefExpr.h"
+#include "MipsMCInstLower.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/Target/Mangler.h"
 using namespace llvm;
@@ -31,26 +31,26 @@ MipsMCInstLower::MipsMCInstLower(Mangler *mang, const MachineFunction &mf,
 MCOperand MipsMCInstLower::LowerSymbolOperand(const MachineOperand &MO,
                                               MachineOperandType MOTy,
                                               unsigned Offset) const {
-  MipsMCSymbolRefExpr::VariantKind Kind;
+  MCSymbolRefExpr::VariantKind Kind;
   const MCSymbol *Symbol;
 
   switch(MO.getTargetFlags()) {
   default:                  assert(0 && "Invalid target flag!");
-  case MipsII::MO_NO_FLAG:  Kind = MipsMCSymbolRefExpr::VK_Mips_None; break;
-  case MipsII::MO_GPREL:    Kind = MipsMCSymbolRefExpr::VK_Mips_GPREL; break;
-  case MipsII::MO_GOT_CALL: Kind = MipsMCSymbolRefExpr::VK_Mips_GOT_CALL; break;
-  case MipsII::MO_GOT:      Kind = MipsMCSymbolRefExpr::VK_Mips_GOT; break;
-  case MipsII::MO_ABS_HI:   Kind = MipsMCSymbolRefExpr::VK_Mips_ABS_HI; break;
-  case MipsII::MO_ABS_LO:   Kind = MipsMCSymbolRefExpr::VK_Mips_ABS_LO; break;
-  case MipsII::MO_TLSGD:    Kind = MipsMCSymbolRefExpr::VK_Mips_TLSGD; break;
-  case MipsII::MO_GOTTPREL: Kind = MipsMCSymbolRefExpr::VK_Mips_GOTTPREL; break;
-  case MipsII::MO_TPREL_HI: Kind = MipsMCSymbolRefExpr::VK_Mips_TPREL_HI; break;
-  case MipsII::MO_TPREL_LO: Kind = MipsMCSymbolRefExpr::VK_Mips_TPREL_LO; break;
-  case MipsII::MO_GPOFF_HI: Kind = MipsMCSymbolRefExpr::VK_Mips_GPOFF_HI; break;
-  case MipsII::MO_GPOFF_LO: Kind = MipsMCSymbolRefExpr::VK_Mips_GPOFF_LO; break;
-  case MipsII::MO_GOT_DISP: Kind = MipsMCSymbolRefExpr::VK_Mips_GOT_DISP; break;
-  case MipsII::MO_GOT_PAGE: Kind = MipsMCSymbolRefExpr::VK_Mips_GOT_PAGE; break;
-  case MipsII::MO_GOT_OFST: Kind = MipsMCSymbolRefExpr::VK_Mips_GOT_OFST; break;
+  case MipsII::MO_NO_FLAG:  Kind = MCSymbolRefExpr::VK_None; break;
+  case MipsII::MO_GPREL:    Kind = MCSymbolRefExpr::VK_Mips_GPREL; break;
+  case MipsII::MO_GOT_CALL: Kind = MCSymbolRefExpr::VK_Mips_GOT_CALL; break;
+  case MipsII::MO_GOT:      Kind = MCSymbolRefExpr::VK_Mips_GOT; break;
+  case MipsII::MO_ABS_HI:   Kind = MCSymbolRefExpr::VK_Mips_ABS_HI; break;
+  case MipsII::MO_ABS_LO:   Kind = MCSymbolRefExpr::VK_Mips_ABS_LO; break;
+  case MipsII::MO_TLSGD:    Kind = MCSymbolRefExpr::VK_Mips_TLSGD; break;
+  case MipsII::MO_GOTTPREL: Kind = MCSymbolRefExpr::VK_Mips_GOTTPREL; break;
+  case MipsII::MO_TPREL_HI: Kind = MCSymbolRefExpr::VK_Mips_TPREL_HI; break;
+  case MipsII::MO_TPREL_LO: Kind = MCSymbolRefExpr::VK_Mips_TPREL_LO; break;
+  case MipsII::MO_GPOFF_HI: Kind = MCSymbolRefExpr::VK_Mips_GPOFF_HI; break;
+  case MipsII::MO_GPOFF_LO: Kind = MCSymbolRefExpr::VK_Mips_GPOFF_LO; break;
+  case MipsII::MO_GOT_DISP: Kind = MCSymbolRefExpr::VK_Mips_GOT_DISP; break;
+  case MipsII::MO_GOT_PAGE: Kind = MCSymbolRefExpr::VK_Mips_GOT_PAGE; break;
+  case MipsII::MO_GOT_OFST: Kind = MCSymbolRefExpr::VK_Mips_GOT_OFST; break;
   }
 
   switch (MOTy) {
@@ -84,9 +84,66 @@ MCOperand MipsMCInstLower::LowerSymbolOperand(const MachineOperand &MO,
       llvm_unreachable("<unknown operand type>");
   }
   
-  return MCOperand::CreateExpr(MipsMCSymbolRefExpr::Create(Kind, Symbol, Offset,
-                                                           Ctx));
+  const MCSymbolRefExpr *MCSym = MCSymbolRefExpr::Create(Symbol, Kind, Ctx);
+
+  if (!Offset)
+    return MCOperand::CreateExpr(MCSym);
+
+  // Assume offset is never negative.
+  assert(Offset > 0);
+   
+  const MCConstantExpr *OffsetExpr =  MCConstantExpr::Create(Offset, Ctx);
+  const MCBinaryExpr *AddExpr = MCBinaryExpr::CreateAdd(MCSym, OffsetExpr, Ctx);
+  return MCOperand::CreateExpr(AddExpr);
 }
+
+// Lower ".cpload $reg" to
+//  "lui   $gp, %hi(_gp_disp)"
+//  "addiu $gp, $gp, %lo(_gp_disp)"
+//  "addu  $gp. $gp, $reg"
+void MipsMCInstLower::LowerCPLOAD(const MachineInstr *MI,
+                                  SmallVector<MCInst, 4>& MCInsts) {
+  MCInst Lui, Addiu, Addu;
+  StringRef SymName("_gp_disp");
+  const MCSymbol *Symbol = Ctx.GetOrCreateSymbol(SymName);
+  const MCSymbolRefExpr *MCSym;
+
+  // lui   $gp, %hi(_gp_disp)
+  Lui.setOpcode(Mips::LUi);
+  Lui.addOperand(MCOperand::CreateReg(Mips::GP));
+  MCSym = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_Mips_ABS_HI, Ctx);
+  Lui.addOperand(MCOperand::CreateExpr(MCSym));
+  MCInsts.push_back(Lui);
+
+  // addiu $gp, $gp, %lo(_gp_disp)
+  Addiu.setOpcode(Mips::ADDiu);
+  Addiu.addOperand(MCOperand::CreateReg(Mips::GP));
+  Addiu.addOperand(MCOperand::CreateReg(Mips::GP));
+  MCSym = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_Mips_ABS_LO, Ctx);
+  Addiu.addOperand(MCOperand::CreateExpr(MCSym));
+  MCInsts.push_back(Addiu);
+
+  // addu  $gp. $gp, $reg
+  Addu.setOpcode(Mips::ADDu);
+  Addu.addOperand(MCOperand::CreateReg(Mips::GP));
+  Addu.addOperand(MCOperand::CreateReg(Mips::GP));
+  const MachineOperand &MO = MI->getOperand(0);
+  assert(MO.isReg() && "CPLOAD's operand must be a register.");
+  Addu.addOperand(MCOperand::CreateReg(MO.getReg()));
+  MCInsts.push_back(Addu);
+}
+
+// Lower ".cprestore offset" to "sw $gp, offset($sp)".
+void MipsMCInstLower::LowerCPRESTORE(const MachineInstr *MI, MCInst &OutMI) {
+  OutMI.clear();
+  OutMI.setOpcode(Mips::SW);
+  OutMI.addOperand(MCOperand::CreateReg(Mips::GP));
+  OutMI.addOperand(MCOperand::CreateReg(Mips::SP));
+  const MachineOperand &MO = MI->getOperand(0);
+  assert(MO.isImm() && "CPRESTORE's operand must be an immediate.");
+  OutMI.addOperand(MCOperand::CreateImm(MO.getImm()));
+}
+
 
 MCOperand MipsMCInstLower::LowerOperand(const MachineOperand& MO) const {
   MachineOperandType MOTy = MO.getType();

@@ -13,13 +13,17 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "mips-asm-printer"
-#include "MipsAsmPrinter.h"
 #include "Mips.h"
+#include "MipsAsmPrinter.h"
 #include "MipsInstrInfo.h"
 #include "MipsMachineFunction.h"
 #include "MipsMCInstLower.h"
 #include "MipsMCSymbolRefExpr.h"
 #include "InstPrinter/MipsInstPrinter.h"
+#include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/Twine.h"
+#include "llvm/Analysis/DebugInfo.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Instructions.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -27,19 +31,17 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
+#include "llvm/Instructions.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/Support/TargetRegistry.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/Mangler.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/Twine.h"
-#include "llvm/Support/TargetRegistry.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Analysis/DebugInfo.h"
 
 using namespace llvm;
 
@@ -48,6 +50,12 @@ static bool isUnalignedLoadStore(unsigned Opc) {
          Opc == Mips::USW    || Opc == Mips::USH    ||
          Opc == Mips::ULW_P8 || Opc == Mips::ULH_P8 || Opc == Mips::ULHu_P8 ||
          Opc == Mips::USW_P8 || Opc == Mips::USH_P8;
+}
+
+static bool isDirective(unsigned Opc) {
+  return Opc == Mips::MACRO   || Opc == Mips::NOMACRO ||
+         Opc == Mips::REORDER || Opc == Mips::NOREORDER ||
+         Opc == Mips::ATMACRO || Opc == Mips::NOAT;
 }
 
 void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
@@ -62,8 +70,12 @@ void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   MipsMCInstLower MCInstLowering(Mang, *MF, *this);
   unsigned Opc = MI->getOpcode();
   MCInst TmpInst0;
+  SmallVector<MCInst, 4> MCInsts;
   MCInstLowering.Lower(MI, TmpInst0);
-  
+
+  if (!OutStreamer.hasRawTextSupport() && isDirective(Opc))
+    return;
+
   // Enclose unaligned load or store with .macro & .nomacro directives.
   if (isUnalignedLoadStore(Opc)) {
     MCInst Directive;
@@ -73,6 +85,23 @@ void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     Directive.setOpcode(Mips::NOMACRO);
     OutStreamer.EmitInstruction(Directive);
     return;
+  }
+
+  if (!OutStreamer.hasRawTextSupport()) {
+    // Lower CPLOAD and CPRESTORE
+    if (Opc == Mips::CPLOAD) {
+      MCInstLowering.LowerCPLOAD(MI, MCInsts);
+      for (SmallVector<MCInst, 4>::iterator I = MCInsts.begin();
+           I != MCInsts.end(); ++I)
+        OutStreamer.EmitInstruction(*I);
+      return;
+    }
+
+    if (Opc == Mips::CPRESTORE) {
+      MCInstLowering.LowerCPRESTORE(MI, TmpInst0);
+      OutStreamer.EmitInstruction(TmpInst0);
+      return;
+    } 
   }
 
   OutStreamer.EmitInstruction(TmpInst0);
@@ -191,7 +220,8 @@ void MipsAsmPrinter::emitFrameDirective() {
   unsigned returnReg = RI.getRARegister();
   unsigned stackSize = MF->getFrameInfo()->getStackSize();
 
-  OutStreamer.EmitRawText("\t.frame\t$" +
+  if (OutStreamer.hasRawTextSupport()) 
+    OutStreamer.EmitRawText("\t.frame\t$" +
            StringRef(MipsInstPrinter::getRegisterName(stackReg)).lower() +
            "," + Twine(stackSize) + ",$" +
            StringRef(MipsInstPrinter::getRegisterName(returnReg)).lower());
@@ -212,7 +242,8 @@ const char *MipsAsmPrinter::getCurrentABIString() const {
 }
 
 void MipsAsmPrinter::EmitFunctionEntryLabel() {
-  OutStreamer.EmitRawText("\t.ent\t" + Twine(CurrentFnSym->getName()));
+  if (OutStreamer.hasRawTextSupport()) 
+    OutStreamer.EmitRawText("\t.ent\t" + Twine(CurrentFnSym->getName()));
   OutStreamer.EmitLabel(CurrentFnSym);
 }
 
@@ -221,10 +252,12 @@ void MipsAsmPrinter::EmitFunctionEntryLabel() {
 void MipsAsmPrinter::EmitFunctionBodyStart() {
   emitFrameDirective();
 
-  SmallString<128> Str;
-  raw_svector_ostream OS(Str);
-  printSavedRegsBitmask(OS);
-  OutStreamer.EmitRawText(OS.str());
+  if (OutStreamer.hasRawTextSupport()) {
+    SmallString<128> Str;
+    raw_svector_ostream OS(Str);
+    printSavedRegsBitmask(OS);
+    OutStreamer.EmitRawText(OS.str());
+  }
 }
 
 /// EmitFunctionBodyEnd - Targets can override this to emit stuff after
@@ -233,11 +266,12 @@ void MipsAsmPrinter::EmitFunctionBodyEnd() {
   // There are instruction for this macros, but they must
   // always be at the function end, and we can't emit and
   // break with BB logic.
-  OutStreamer.EmitRawText(StringRef("\t.set\tmacro"));
-  OutStreamer.EmitRawText(StringRef("\t.set\treorder"));
-  OutStreamer.EmitRawText("\t.end\t" + Twine(CurrentFnSym->getName()));
+  if (OutStreamer.hasRawTextSupport()) {
+    OutStreamer.EmitRawText(StringRef("\t.set\tmacro"));
+    OutStreamer.EmitRawText(StringRef("\t.set\treorder"));
+    OutStreamer.EmitRawText("\t.end\t" + Twine(CurrentFnSym->getName()));
+  }
 }
-
 
 /// isBlockOnlyReachableByFallthough - Return true if the basic block has
 /// exactly one predecessor and the control transfer mechanism between
@@ -419,18 +453,22 @@ void MipsAsmPrinter::EmitStartOfAsmFile(Module &M) {
   // FIXME: Use SwitchSection.
 
   // Tell the assembler which ABI we are using
-  OutStreamer.EmitRawText("\t.section .mdebug." + Twine(getCurrentABIString()));
+  if (OutStreamer.hasRawTextSupport())
+    OutStreamer.EmitRawText("\t.section .mdebug." + Twine(getCurrentABIString()));
 
   // TODO: handle O64 ABI
-  if (Subtarget->isABI_EABI()) {
-    if (Subtarget->isGP32bit())
-      OutStreamer.EmitRawText(StringRef("\t.section .gcc_compiled_long32"));
-    else
-      OutStreamer.EmitRawText(StringRef("\t.section .gcc_compiled_long64"));
+  if (OutStreamer.hasRawTextSupport()) {
+    if (Subtarget->isABI_EABI()) {
+      if (Subtarget->isGP32bit())
+        OutStreamer.EmitRawText(StringRef("\t.section .gcc_compiled_long32"));
+      else
+        OutStreamer.EmitRawText(StringRef("\t.section .gcc_compiled_long64"));
+    }
   }
 
   // return to previous section
-  OutStreamer.EmitRawText(StringRef("\t.previous"));
+  if (OutStreamer.hasRawTextSupport())
+    OutStreamer.EmitRawText(StringRef("\t.previous"));
 }
 
 MachineLocation
