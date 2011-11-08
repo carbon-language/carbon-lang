@@ -552,6 +552,10 @@ static void getObjCClassCategory(StringRef In, StringRef &Class,
   return;
 }
 
+static StringRef getObjCMethodName(StringRef In) {
+  return In.slice(In.find(' ') + 1, In.find(']'));
+}
+
 /// construct SubprogramDIE - Construct subprogram DIE.
 void DwarfDebug::constructSubprogramDIE(CompileUnit *TheCU, 
                                         const MDNode *N) {
@@ -599,6 +603,8 @@ void DwarfDebug::constructSubprogramDIE(CompileUnit *TheCU,
     TheCU->addAccelObjC(Class, SubprogramDie);
     if (Category != "")
       TheCU->addAccelObjC(Category, SubprogramDie);
+    // Also add the base method name to the name table.
+    TheCU->addAccelName(getObjCMethodName(SP.getName()), SubprogramDie);
   }
   
   return;
