@@ -852,14 +852,6 @@ Sema::SemaBuiltinAtomicOverloaded(ExprResult TheCallResult) {
   for (unsigned i = 0; i != NumFixed; ++i) {
     ExprResult Arg = TheCall->getArg(i+1);
 
-    // If the argument is an implicit cast, then there was a promotion due to
-    // "...", just remove it now.
-    if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(Arg.get())) {
-      Arg = ICE->getSubExpr();
-      ICE->setSubExpr(0);
-      TheCall->setArg(i+1, Arg.get());
-    }
-
     // GCC does an implicit conversion to the pointer or integer ValType.  This
     // can fail in some cases (1i -> int**), check for this error case now.
     // Initialize the argument.
