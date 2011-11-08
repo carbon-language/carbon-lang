@@ -189,25 +189,25 @@ def cmpScanBuildResults(dirA, dirB, opts, deleteEmpty=True):
         auxLog = None
 
     diff = compareResults(resultsA, resultsB)
-    foundDiffs = False
+    foundDiffs = 0
     for res in diff:
         a,b,confidence = res
         if a is None:
             print "ADDED: %r" % b.getReadableName()
-            foundDiffs = True
+            foundDiffs += 1
             if auxLog:
                 print >>auxLog, ("('ADDED', %r, %r)" % (b.getReadableName(),
                                                         b.getReportData()))
         elif b is None:
             print "REMOVED: %r" % a.getReadableName()
-            foundDiffs = True
+            foundDiffs += 1
             if auxLog:
                 print >>auxLog, ("('REMOVED', %r, %r)" % (a.getReadableName(),
                                                           a.getReportData()))
         elif confidence:
             print "CHANGED: %r to %r" % (a.getReadableName(),
                                          b.getReadableName())
-            foundDiffs = True
+            foundDiffs += 1
             if auxLog:
                 print >>auxLog, ("('CHANGED', %r, %r, %r, %r)" 
                                  % (a.getReadableName(),
@@ -217,10 +217,13 @@ def cmpScanBuildResults(dirA, dirB, opts, deleteEmpty=True):
         else:
             pass
 
-    print "TOTAL REPORTS: %r" % len(resultsB.diagnostics)
+    TotalReports = len(resultsB.diagnostics)
+    print "TOTAL REPORTS: %r" % TotalReports
+    print "TOTAL DIFFERENCES: %r" % foundDiffs
     if auxLog:
-        print >>auxLog, "('TOTAL REPORTS', %r)" % len(resultsB.diagnostics)
-    
+        print >>auxLog, "('TOTAL NEW REPORTS', %r)" % TotalReports
+        print >>auxLog, "('TOTAL DIFFERENCES', %r)" % foundDiffs
+        
     return foundDiffs    
 
 def main():

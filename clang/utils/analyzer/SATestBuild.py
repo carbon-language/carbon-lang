@@ -330,7 +330,7 @@ def runCmpResults(Dir):
         NewList.sort()
     
     # Iterate and find the differences.
-    HaveDiffs = False
+    NumDiffs = 0
     PairList = zip(RefList, NewList)    
     for P in PairList:    
         RefDir = P[0] 
@@ -346,14 +346,14 @@ def runCmpResults(Dir):
         OLD_STDOUT = sys.stdout
         sys.stdout = Discarder()
         # Scan the results, delete empty plist files.
-        HaveDiffs = CmpRuns.cmpScanBuildResults(RefDir, NewDir, Opts, False)
+        NumDiffs = CmpRuns.cmpScanBuildResults(RefDir, NewDir, Opts, False)
         sys.stdout = OLD_STDOUT
-        if HaveDiffs:
-            print "Warning: difference in diagnostics. See %s" % (DiffsPath,)
-            HaveDiffs=True
+        if (NumDiffs > 0) :
+            print "Warning: %r differences in diagnostics. See %s" % \
+                  (NumDiffs, DiffsPath,)
                     
     print "Diagnostic comparison complete (time: %.2f)." % (time.time()-TBegin) 
-    return HaveDiffs
+    return (NumDiffs > 0)
     
 def testProject(ID, InIsReferenceBuild, IsScanBuild , Dir=None):
     global IsReferenceBuild
