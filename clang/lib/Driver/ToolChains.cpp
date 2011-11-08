@@ -1191,6 +1191,20 @@ Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(const Driver &D)
     };
     LibDirs.append(X86LibDirs, X86LibDirs + llvm::array_lengthof(X86LibDirs));
     Triples.append(X86Triples, X86Triples + llvm::array_lengthof(X86Triples));
+  } else if (HostArch == llvm::Triple::mips) {
+    static const char *const MIPSLibDirs[] = { "/lib" };
+    static const char *const MIPSTriples[] = { "mips-linux-gnu" };
+    LibDirs.append(MIPSLibDirs,
+                   MIPSLibDirs + llvm::array_lengthof(MIPSLibDirs));
+    Triples.append(MIPSTriples,
+                   MIPSTriples + llvm::array_lengthof(MIPSTriples));
+  } else if (HostArch == llvm::Triple::mipsel) {
+    static const char *const MIPSELLibDirs[] = { "/lib" };
+    static const char *const MIPSELTriples[] = { "mipsel-linux-gnu" };
+    LibDirs.append(MIPSELLibDirs,
+                   MIPSELLibDirs + llvm::array_lengthof(MIPSELLibDirs));
+    Triples.append(MIPSELTriples,
+                   MIPSELTriples + llvm::array_lengthof(MIPSELTriples));
   } else if (HostArch == llvm::Triple::ppc) {
     static const char *const PPCLibDirs[] = { "/lib32", "/lib" };
     static const char *const PPCTriples[] = {
@@ -1773,6 +1787,14 @@ static std::string getMultiarchTriple(const llvm::Triple TargetTriple,
     if (llvm::sys::fs::exists(SysRoot + "/lib/x86_64-linux-gnu"))
       return "x86_64-linux-gnu";
     return TargetTriple.str();
+  case llvm::Triple::mips:
+    if (llvm::sys::fs::exists(SysRoot + "/lib/mips-linux-gnu"))
+      return "mips-linux-gnu";
+    return TargetTriple.str();
+  case llvm::Triple::mipsel:
+    if (llvm::sys::fs::exists(SysRoot + "/lib/mipsel-linux-gnu"))
+      return "mipsel-linux-gnu";
+    return TargetTriple.str();
   }
 }
 
@@ -1829,6 +1851,8 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
   // to the link paths.
   path_list &Paths = getFilePaths();
   const bool Is32Bits = (getArch() == llvm::Triple::x86 ||
+                         getArch() == llvm::Triple::mips ||
+                         getArch() == llvm::Triple::mipsel ||
                          getArch() == llvm::Triple::ppc);
 
   const std::string Suffix32 = Arch == llvm::Triple::x86_64 ? "/32" : "";
