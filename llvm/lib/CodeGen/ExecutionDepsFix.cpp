@@ -135,18 +135,18 @@ public:
 
 private:
   // Register mapping.
-  int RegIndex(unsigned Reg);
+  int regIndex(unsigned Reg);
 
   // DomainValue allocation.
-  DomainValue *Alloc(int domain = -1);
+  DomainValue *alloc(int domain = -1);
   void release(DomainValue*);
 
   // LiveRegs manipulations.
-  void SetLiveReg(int rx, DomainValue *DV);
-  void Kill(int rx);
-  void Force(int rx, unsigned domain);
-  void Collapse(DomainValue *dv, unsigned domain);
-  bool Merge(DomainValue *A, DomainValue *B);
+  void setLiveReg(int rx, DomainValue *DV);
+  void kill(int rx);
+  void force(int rx, unsigned domain);
+  void collapse(DomainValue *dv, unsigned domain);
+  bool merge(DomainValue *A, DomainValue *B);
 
   void enterBasicBlock(MachineBasicBlock*);
   void leaveBasicBlock(MachineBasicBlock*);
@@ -161,12 +161,12 @@ char ExeDepsFix::ID = 0;
 
 /// Translate TRI register number to an index into our smaller tables of
 /// interesting registers. Return -1 for boring registers.
-int ExeDepsFix::RegIndex(unsigned Reg) {
+int ExeDepsFix::regIndex(unsigned Reg) {
   assert(Reg < AliasMap.size() && "Invalid register");
   return AliasMap[Reg];
 }
 
-DomainValue *ExeDepsFix::Alloc(int domain) {
+DomainValue *ExeDepsFix::alloc(int domain) {
   DomainValue *dv = Avail.empty() ?
                       new(Allocator.Allocate()) DomainValue :
                       Avail.pop_back_val();
@@ -185,14 +185,14 @@ void ExeDepsFix::release(DomainValue *DV) {
 
   // There are no more DV references. Collapse any contained instructions.
   if (DV->AvailableDomains && !DV->isCollapsed())
-    Collapse(DV, DV->getFirstDomain());
+    collapse(DV, DV->getFirstDomain());
 
   DV->clear();
   Avail.push_back(DV);
 }
 
 /// Set LiveRegs[rx] = dv, updating reference counts.
-void ExeDepsFix::SetLiveReg(int rx, DomainValue *dv) {
+void ExeDepsFix::setLiveReg(int rx, DomainValue *dv) {
   assert(unsigned(rx) < NumRegs && "Invalid index");
   if (!LiveRegs) {
     LiveRegs = new DomainValue*[NumRegs];
@@ -208,7 +208,7 @@ void ExeDepsFix::SetLiveReg(int rx, DomainValue *dv) {
 }
 
 // Kill register rx, recycle or collapse any DomainValue.
-void ExeDepsFix::Kill(int rx) {
+void ExeDepsFix::kill(int rx) {
   assert(unsigned(rx) < NumRegs && "Invalid index");
   if (!LiveRegs || !LiveRegs[rx]) return;
 
@@ -217,30 +217,30 @@ void ExeDepsFix::Kill(int rx) {
 }
 
 /// Force register rx into domain.
-void ExeDepsFix::Force(int rx, unsigned domain) {
+void ExeDepsFix::force(int rx, unsigned domain) {
   assert(unsigned(rx) < NumRegs && "Invalid index");
   DomainValue *dv;
   if (LiveRegs && (dv = LiveRegs[rx])) {
     if (dv->isCollapsed())
       dv->addDomain(domain);
     else if (dv->hasDomain(domain))
-      Collapse(dv, domain);
+      collapse(dv, domain);
     else {
       // This is an incompatible open DomainValue. Collapse it to whatever and
       // force the new value into domain. This costs a domain crossing.
-      Collapse(dv, dv->getFirstDomain());
+      collapse(dv, dv->getFirstDomain());
       assert(LiveRegs[rx] && "Not live after collapse?");
       LiveRegs[rx]->addDomain(domain);
     }
   } else {
     // Set up basic collapsed DomainValue.
-    SetLiveReg(rx, Alloc(domain));
+    setLiveReg(rx, alloc(domain));
   }
 }
 
 /// Collapse open DomainValue into given domain. If there are multiple
 /// registers using dv, they each get a unique collapsed DomainValue.
-void ExeDepsFix::Collapse(DomainValue *dv, unsigned domain) {
+void ExeDepsFix::collapse(DomainValue *dv, unsigned domain) {
   assert(dv->hasDomain(domain) && "Cannot collapse");
 
   // Collapse all the instructions.
@@ -252,12 +252,12 @@ void ExeDepsFix::Collapse(DomainValue *dv, unsigned domain) {
   if (LiveRegs && dv->Refs > 1)
     for (unsigned rx = 0; rx != NumRegs; ++rx)
       if (LiveRegs[rx] == dv)
-        SetLiveReg(rx, Alloc(domain));
+        setLiveReg(rx, alloc(domain));
 }
 
 /// Merge - All instructions and registers in B are moved to A, and B is
 /// released.
-bool ExeDepsFix::Merge(DomainValue *A, DomainValue *B) {
+bool ExeDepsFix::merge(DomainValue *A, DomainValue *B) {
   assert(!A->isCollapsed() && "Cannot merge into collapsed");
   assert(!B->isCollapsed() && "Cannot merge from collapsed");
   if (A == B)
@@ -276,7 +276,7 @@ bool ExeDepsFix::Merge(DomainValue *A, DomainValue *B) {
 
   for (unsigned rx = 0; rx != NumRegs; ++rx)
     if (LiveRegs[rx] == B)
-      SetLiveReg(rx, A);
+      setLiveReg(rx, A);
   return true;
 }
 
@@ -284,7 +284,7 @@ void ExeDepsFix::enterBasicBlock(MachineBasicBlock *MBB) {
   // Try to coalesce live-out registers from predecessors.
   for (MachineBasicBlock::livein_iterator i = MBB->livein_begin(),
          e = MBB->livein_end(); i != e; ++i) {
-    int rx = RegIndex(*i);
+    int rx = regIndex(*i);
     if (rx < 0) continue;
     for (MachineBasicBlock::const_pred_iterator pi = MBB->pred_begin(),
            pe = MBB->pred_end(); pi != pe; ++pi) {
@@ -293,7 +293,7 @@ void ExeDepsFix::enterBasicBlock(MachineBasicBlock *MBB) {
       DomainValue *pdv = fi->second[rx];
       if (!pdv || !pdv->AvailableDomains) continue;
       if (!LiveRegs || !LiveRegs[rx]) {
-        SetLiveReg(rx, pdv);
+        setLiveReg(rx, pdv);
         continue;
       }
 
@@ -302,15 +302,15 @@ void ExeDepsFix::enterBasicBlock(MachineBasicBlock *MBB) {
         // We are already collapsed, but predecessor is not. Force him.
         unsigned domain = LiveRegs[rx]->getFirstDomain();
         if (!pdv->isCollapsed() && pdv->hasDomain(domain))
-          Collapse(pdv, domain);
+          collapse(pdv, domain);
         continue;
       }
 
       // Currently open, merge in predecessor.
       if (!pdv->isCollapsed())
-        Merge(LiveRegs[rx], pdv);
+        merge(LiveRegs[rx], pdv);
       else
-        Force(rx, pdv->getFirstDomain());
+        force(rx, pdv->getFirstDomain());
     }
   }
 }
@@ -344,19 +344,19 @@ void ExeDepsFix::visitHardInstr(MachineInstr *mi, unsigned domain) {
                 e = mi->getDesc().getNumOperands(); i != e; ++i) {
     MachineOperand &mo = mi->getOperand(i);
     if (!mo.isReg()) continue;
-    int rx = RegIndex(mo.getReg());
+    int rx = regIndex(mo.getReg());
     if (rx < 0) continue;
-    Force(rx, domain);
+    force(rx, domain);
   }
 
   // Kill all defs and force them.
   for (unsigned i = 0, e = mi->getDesc().getNumDefs(); i != e; ++i) {
     MachineOperand &mo = mi->getOperand(i);
     if (!mo.isReg()) continue;
-    int rx = RegIndex(mo.getReg());
+    int rx = regIndex(mo.getReg());
     if (rx < 0) continue;
-    Kill(rx);
-    Force(rx, domain);
+    kill(rx);
+    force(rx, domain);
   }
 }
 
@@ -373,7 +373,7 @@ void ExeDepsFix::visitSoftInstr(MachineInstr *mi, unsigned mask) {
                   e = mi->getDesc().getNumOperands(); i != e; ++i) {
       MachineOperand &mo = mi->getOperand(i);
       if (!mo.isReg()) continue;
-      int rx = RegIndex(mo.getReg());
+      int rx = regIndex(mo.getReg());
       if (rx < 0) continue;
       if (DomainValue *dv = LiveRegs[rx]) {
         // Bitmask of domains that dv and available have in common.
@@ -390,7 +390,7 @@ void ExeDepsFix::visitSoftInstr(MachineInstr *mi, unsigned mask) {
         else
           // Open DomainValue is not compatible with instruction. It is useless
           // now.
-          Kill(rx);
+          kill(rx);
       }
     }
 
@@ -410,7 +410,7 @@ void ExeDepsFix::visitSoftInstr(MachineInstr *mi, unsigned mask) {
     DomainValue *dv = LiveRegs[rx];
     // This useless DomainValue could have been missed above.
     if (!dv->getCommonDomains(available)) {
-      Kill(*i);
+      kill(*i);
       continue;
     }
     // sorted, uniqued insert.
@@ -438,17 +438,17 @@ void ExeDepsFix::visitSoftInstr(MachineInstr *mi, unsigned mask) {
     }
 
     DomainValue *latest = doms.pop_back_val();
-    if (Merge(dv, latest)) continue;
+    if (merge(dv, latest)) continue;
 
     // If latest didn't merge, it is useless now. Kill all registers using it.
     for (SmallVector<int,4>::iterator i=used.begin(), e=used.end(); i != e; ++i)
       if (LiveRegs[*i] == latest)
-        Kill(*i);
+        kill(*i);
   }
 
   // dv is the DomainValue we are going to use for this instruction.
   if (!dv)
-    dv = Alloc();
+    dv = alloc();
   dv->Dist = Distance;
   dv->AvailableDomains = available;
   dv->Instrs.push_back(mi);
@@ -457,11 +457,11 @@ void ExeDepsFix::visitSoftInstr(MachineInstr *mi, unsigned mask) {
   for (unsigned i = 0, e = mi->getDesc().getNumOperands(); i != e; ++i) {
     MachineOperand &mo = mi->getOperand(i);
     if (!mo.isReg()) continue;
-    int rx = RegIndex(mo.getReg());
+    int rx = regIndex(mo.getReg());
     if (rx < 0) continue;
     if (!LiveRegs || !LiveRegs[rx] || (mo.isDef() && LiveRegs[rx]!=dv)) {
-      Kill(rx);
-      SetLiveReg(rx, dv);
+      kill(rx);
+      setLiveReg(rx, dv);
     }
   }
 }
@@ -471,9 +471,9 @@ void ExeDepsFix::visitGenericInstr(MachineInstr *mi) {
   for (unsigned i = 0, e = mi->getDesc().getNumDefs(); i != e; ++i) {
     MachineOperand &mo = mi->getOperand(i);
     if (!mo.isReg()) continue;
-    int rx = RegIndex(mo.getReg());
+    int rx = regIndex(mo.getReg());
     if (rx < 0) continue;
-    Kill(rx);
+    kill(rx);
   }
 }
 
@@ -529,7 +529,7 @@ bool ExeDepsFix::runOnMachineFunction(MachineFunction &mf) {
     LiveRegs = FI->second;
     for (unsigned i = 0, e = NumRegs; i != e; ++i)
       if (LiveRegs[i])
-        Kill(i);
+        kill(i);
     delete[] LiveRegs;
   }
   LiveOuts.clear();
