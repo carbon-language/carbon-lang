@@ -1186,9 +1186,9 @@ Value *CodeGenFunction::EmitTargetBuiltinExpr(unsigned BuiltinID,
   }
 }
 
-static llvm::VectorType *GetNeonType(LLVMContext &C, NeonTypeFlags Type) {
-  int IsQuad = Type.isQuad();
-  switch (Type.getEltType()) {
+static llvm::VectorType *GetNeonType(LLVMContext &C, NeonTypeFlags TypeFlags) {
+  int IsQuad = TypeFlags.isQuad();
+  switch (TypeFlags.getEltType()) {
   default: break;
   case NeonTypeFlags::Int8:
   case NeonTypeFlags::Poly8:
