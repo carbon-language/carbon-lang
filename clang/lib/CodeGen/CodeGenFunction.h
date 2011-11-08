@@ -970,7 +970,14 @@ public:
     OpaqueValueMappingData() : OpaqueValue(0) {}
 
     static bool shouldBindAsLValue(const Expr *expr) {
-      return expr->isGLValue() || expr->getType()->isRecordType();
+      // gl-values should be bound as l-values for obvious reasons.
+      // Records should be bound as l-values because IR generation
+      // always keeps them in memory.  Expressions of function type
+      // act exactly like l-values but are formally required to be
+      // r-values in C.
+      return expr->isGLValue() ||
+             expr->getType()->isRecordType() ||
+             expr->getType()->isFunctionType();
     }
 
     static OpaqueValueMappingData bind(CodeGenFunction &CGF,

@@ -112,3 +112,14 @@ void test4(Test4 *t) {
 @implementation Test5
 @synthesize x = _x;
 @end
+
+// rdar://problem/10410531
+@interface Test6
+@property void (*prop)(void);
+@end
+
+void test6_func(void);
+void test6(Test6 *a) {
+  a.prop = test6_func;
+}
+
