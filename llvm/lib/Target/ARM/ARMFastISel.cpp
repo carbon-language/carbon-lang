@@ -1697,6 +1697,11 @@ bool ARMFastISel::FinishCall(MVT RetVT, SmallVectorImpl<unsigned> &UsedRegs,
     } else {
       assert(RVLocs.size() == 1 &&"Can't handle non-double multi-reg retvals!");
       EVT CopyVT = RVLocs[0].getValVT();
+
+      // Special handling for extended integers.
+      if (RetVT == MVT::i1 || RetVT == MVT::i8 || RetVT == MVT::i16)
+        CopyVT = MVT::i32;
+
       TargetRegisterClass* DstRC = TLI.getRegClassFor(CopyVT);
 
       unsigned ResultReg = createResultReg(DstRC);
@@ -1913,7 +1918,8 @@ bool ARMFastISel::SelectCall(const Instruction *I) {
   MVT RetVT;
   if (RetTy->isVoidTy())
     RetVT = MVT::isVoid;
-  else if (!isTypeLegal(RetTy, RetVT))
+  else if (!isTypeLegal(RetTy, RetVT) && RetVT != MVT::i16 &&
+           RetVT != MVT::i8  && RetVT != MVT::i1)
     return false;
 
   // TODO: For now if we have long calls specified we don't handle the call.

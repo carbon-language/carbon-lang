@@ -65,3 +65,18 @@ define void @foo(i8 %a, i16 %b) nounwind {
 %7 = call i32 @t4(i16 zeroext 65535)
   ret void
 }
+
+define void @foo2() nounwind {
+  %1 = call signext i16 @t5()
+  %2 = call zeroext i16 @t6()
+  %3 = call signext i8 @t7()
+  %4 = call zeroext i8 @t8()
+  %5 = call zeroext i1 @t9()
+  ret void
+}
+
+declare signext i16 @t5();
+declare zeroext i16 @t6();
+declare signext i8 @t7();
+declare zeroext i8 @t8();
+declare zeroext i1 @t9();

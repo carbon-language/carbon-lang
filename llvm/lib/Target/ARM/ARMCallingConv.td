@@ -43,6 +43,7 @@ def CC_ARM_APCS : CallingConv<[
 ]>;
 
 def RetCC_ARM_APCS : CallingConv<[
+  CCIfType<[i1, i8, i16], CCPromoteToType<i32>>,
   CCIfType<[f32], CCBitConvertToType<i32>>,
 
   // Handle all vector types as either f64 or v2f64.
@@ -106,6 +107,7 @@ def CC_ARM_AAPCS_Common : CallingConv<[
 ]>;
 
 def RetCC_ARM_AAPCS_Common : CallingConv<[
+  CCIfType<[i1, i8, i16], CCPromoteToType<i32>>,
   CCIfType<[i32], CCAssignToReg<[R0, R1, R2, R3]>>,
   CCIfType<[i64], CCAssignToRegWithShadow<[R0, R2], [R1, R3]>>
 ]>;
