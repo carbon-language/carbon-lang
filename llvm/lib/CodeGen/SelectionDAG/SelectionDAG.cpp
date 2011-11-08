@@ -564,6 +564,12 @@ void SelectionDAG::RemoveDeadNodes(SmallVectorImpl<SDNode *> &DeadNodes,
 
 void SelectionDAG::RemoveDeadNode(SDNode *N, DAGUpdateListener *UpdateListener){
   SmallVector<SDNode*, 16> DeadNodes(1, N);
+
+  // Create a dummy node that adds a reference to the root node, preventing
+  // it from being deleted.  (This matters if the root is an operand of the
+  // dead node.)
+  HandleSDNode Dummy(getRoot());
+
   RemoveDeadNodes(DeadNodes, UpdateListener);
 }
 
