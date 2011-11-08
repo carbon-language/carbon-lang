@@ -281,6 +281,7 @@ StringTable::StringTable() {
   // The string table data begins with the length of the entire string table
   // including the length header. Allocate space for this header.
   Data.resize(4);
+  update_length();
 }
 
 size_t StringTable::size() const {
