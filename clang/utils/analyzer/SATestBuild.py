@@ -70,6 +70,10 @@ DiffsSummaryFileName = "diffs.txt"
 SBOutputDirName = "ScanBuildResults"
 SBOutputDirReferencePrefix = "Ref"
 
+# The list of checkers used during analyzes.
+# Currently, consists of all the non experimental checkers.
+Checkers="core,deadcode,cplusplus,security,unix,osx,cocoa"
+
 Verbose = 1
 
 IsReferenceBuild = False
@@ -119,7 +123,7 @@ def runScanBuild(Dir, SBOutputDir, PBuildLogFile):
         print "Error: build script is not defined: %s" % BuildScriptPath
         sys.exit(-1)       
     SBOptions = "-plist -o " + SBOutputDir + " "
-    SBOptions += "-enable-checker core,deadcode.DeadStores"    
+    SBOptions += "-enable-checker " + Checkers + " "  
     try:
         SBCommandFile = open(BuildScriptPath, "r")
         SBPrefix = "scan-build " + SBOptions + " "
@@ -157,7 +161,7 @@ def runAnalyzePreprocessed(Dir, SBOutputDir):
         raise Exception()       
 
     CmdPrefix = "clang -cc1 -analyze -analyzer-output=plist -w "
-    CmdPrefix += "-analyzer-checker=core "   
+    CmdPrefix += "-analyzer-checker=" + Checkers +" -fcxx-exceptions -fblocks "   
     
     PlistPath = os.path.join(Dir, SBOutputDir, "date")
     FailPath = os.path.join(PlistPath, "failures");
