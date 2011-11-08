@@ -863,26 +863,36 @@ __isl_give isl_id *Scop::getIdForParam(const SCEV *Parameter) const {
   return isl_id_alloc(getIslCtx(), ParameterName.c_str(), (void *) Parameter);
 }
 
-void Scop::buildContext(isl_ctx *IslCtx, ParamSetType *ParamSet) {
-  isl_space *Space = isl_space_params_alloc(IslCtx, ParamSet->size());
-
+void Scop::initializeParameters(ParamSetType *ParamSet) {
   int i = 0;
   for (ParamSetType::iterator PI = ParamSet->begin(), PE = ParamSet->end();
        PI != PE; ++PI) {
     const SCEV *Parameter = *PI;
     Parameters.push_back(Parameter);
     ParameterIds.insert(std::pair<const SCEV*, int>(Parameter, i));
-    isl_id *id = getIdForParam(Parameter);
-    Space = isl_space_set_dim_id(Space, isl_dim_param, i, id);
     i++;
   }
+}
 
-  // TODO: Insert relations between parameters.
-  // TODO: Insert constraints on parameters.
+void Scop::buildContext() {
+  isl_space *Space = isl_space_params_alloc(IslCtx, 0);
   Context = isl_set_universe (Space);
 }
 
 void Scop::realignParams() {
+  // Add all parameters into a common model.
+  isl_space *Space = isl_space_params_alloc(IslCtx, Parameters.size());
+
+  for (ParamIdType::iterator PI = ParameterIds.begin(), PE = ParameterIds.end();
+       PI != PE; ++PI) {
+    const SCEV *Parameter = PI->first;
+    isl_id *id = getIdForParam(Parameter);
+    Space = isl_space_set_dim_id(Space, isl_dim_param, PI->second, id);
+  }
+
+  // Align the parameters of all data structures to the model.
+  Context = isl_set_align_params(Context, Space);
+
   for (iterator I = begin(), E = end(); I != E; ++I)
     (*I)->realignParams();
 }
@@ -892,7 +902,8 @@ Scop::Scop(TempScop &tempScop, LoopInfo &LI, ScalarEvolution &ScalarEvolution,
            : SE(&ScalarEvolution), R(tempScop.getMaxRegion()),
            MaxLoopDepth(tempScop.getMaxLoopDepth()) {
   IslCtx = Context;
-  buildContext(Context, &tempScop.getParamSet());
+  initializeParameters(&tempScop.getParamSet());
+  buildContext();
 
   SmallVector<Loop*, 8> NestLoops;
   SmallVector<unsigned, 8> Scatter;

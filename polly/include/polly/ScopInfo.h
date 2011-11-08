@@ -433,11 +433,11 @@ class Scop {
   /// @return True if the basic block is trivial, otherwise false.
   static bool isTrivialBB(BasicBlock *BB, TempScop &tempScop);
 
+  /// @brief Add the parameters to the internal parameter set.
+  void initializeParameters(ParamSetType *ParamSet);
+
   /// @brief Build the Context of the Scop.
-  ///
-  /// @param IslCtx The isl context to use.
-  /// @param ParamSet The list of all parameters in the SCoP.
-  void buildContext(isl_ctx *IslCtx, ParamSetType *ParamSet);
+  void buildContext();
 
   /// Build the Scop and Statement with precalculate scop information.
   void buildScop(TempScop &TempScop, const Region &CurRegion,
