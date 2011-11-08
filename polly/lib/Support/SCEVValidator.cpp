@@ -5,6 +5,8 @@
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/Analysis/RegionInfo.h"
 
+#include <vector>
+
 using namespace llvm;
 
 namespace SCEVType {
@@ -13,14 +15,19 @@ namespace SCEVType {
 
 struct ValidatorResult {
   SCEVType::TYPE type;
+  std::vector<const SCEV*> Parameters;
 
   ValidatorResult() : type(SCEVType::INVALID) {};
 
   ValidatorResult(const ValidatorResult &vres) {
     type = vres.type;
+    Parameters = vres.Parameters;
   };
 
   ValidatorResult(SCEVType::TYPE type) : type(type) {};
+  ValidatorResult(SCEVType::TYPE type, const SCEV* Expr) : type(type) {
+    Parameters.push_back(Expr);
+  };
 
   bool isConstant() {
     return type == SCEVType::INT || type == SCEVType::PARAM;
@@ -36,6 +43,11 @@ struct ValidatorResult {
 
   bool isINT() {
     return type == SCEVType::INT;
+  }
+
+  void addParamsFrom(struct ValidatorResult &Source) {
+    Parameters.insert(Parameters.end(), Source.Parameters.begin(),
+                      Source.Parameters.end());
   }
 };
 
@@ -63,7 +75,7 @@ public:
     // expression. If it is constant during Scop execution, we treat it as a
     // parameter, otherwise we bail out.
     if (Op.isConstant())
-      return ValidatorResult(SCEVType::PARAM);
+      return ValidatorResult(SCEVType::PARAM, Expr);
 
     return ValidatorResult (SCEVType::INVALID);
   }
@@ -75,7 +87,7 @@ public:
     // expression. If it is constant during Scop execution, we treat it as a
     // parameter, otherwise we bail out.
     if (Op.isConstant())
-      return ValidatorResult (SCEVType::PARAM);
+      return ValidatorResult (SCEVType::PARAM, Expr);
 
     return ValidatorResult(SCEVType::INVALID);
   }
@@ -98,6 +110,7 @@ public:
         return ValidatorResult(SCEVType::INVALID);
 
       Return.type = std::max(Return.type, Op.type);
+      Return.addParamsFrom(Op);
     }
 
     // TODO: Check for NSW and NUW.
@@ -117,6 +130,7 @@ public:
         return ValidatorResult(SCEVType::INVALID);
 
       Return.type = Op.type;
+      Return.addParamsFrom(Op);
     }
 
     // TODO: Check for NSW and NUW.
@@ -131,7 +145,7 @@ public:
     // expression. If the division is constant during Scop execution we treat it
     // as a parameter, otherwise we bail out.
     if (LHS.isConstant() && RHS.isConstant())
-      return ValidatorResult(SCEVType::PARAM);
+      return ValidatorResult(SCEVType::PARAM, Expr);
 
     return ValidatorResult(SCEVType::INVALID);
   }
@@ -151,13 +165,15 @@ public:
       if (Start.isIV())
         return ValidatorResult(SCEVType::INVALID);
       else
-        return ValidatorResult(SCEVType::PARAM);
+        return ValidatorResult(SCEVType::PARAM, Expr);
     }
 
     if (!Recurrence.isINT())
       return ValidatorResult(SCEVType::INVALID);
 
-    return ValidatorResult(SCEVType::IV);
+    ValidatorResult Result(SCEVType::IV);
+    Result.addParamsFrom(Start);
+    return Result;
   }
 
   struct ValidatorResult visitSMaxExpr(const SCEVSMaxExpr* Expr) {
@@ -170,12 +186,15 @@ public:
         return ValidatorResult(SCEVType::INVALID);
 
       Return.type = std::max(Return.type, Op.type);
+      Return.addParamsFrom(Op);
     }
 
     return Return;
   }
 
   struct ValidatorResult visitUMaxExpr(const SCEVUMaxExpr* Expr) {
+    ValidatorResult Return(SCEVType::PARAM);
+
     // We do not support unsigned operations. If 'Expr' is constant during Scop
     // execution we treat this as a parameter, otherwise we bail out.
     for (int i = 0, e = Expr->getNumOperands(); i < e; ++i) {
@@ -183,9 +202,11 @@ public:
 
       if (!Op.isConstant())
         return ValidatorResult(SCEVType::INVALID);
+
+      Return.addParamsFrom(Op);
     }
 
-    return ValidatorResult(SCEVType::PARAM);
+    return Return;
   }
 
   ValidatorResult visitUnknown(const SCEVUnknown* Expr) {
@@ -208,7 +229,7 @@ public:
     if (BaseAddress)
       return ValidatorResult(SCEVType::PARAM);
     else
-      return ValidatorResult(SCEVType::PARAM);
+      return ValidatorResult(SCEVType::PARAM, Expr);
   }
 };
 
@@ -225,6 +246,22 @@ namespace polly {
     ValidatorResult Result = Validator.visit(Expr);
 
     return Result.isValid();
+  }
+
+  std::vector<const SCEV*> getParamsInAffineExpr(const Region *R,
+                                                 const SCEV *Expr,
+                                                 ScalarEvolution &SE,
+                                                 Value **BaseAddress) {
+    if (isa<SCEVCouldNotCompute>(Expr))
+      return std::vector<const SCEV*>();
+
+    if (BaseAddress)
+      *BaseAddress = NULL;
+
+    SCEVValidator Validator(R, SE, BaseAddress);
+    ValidatorResult Result = Validator.visit(Expr);
+
+    return Result.Parameters;
   }
 }
 

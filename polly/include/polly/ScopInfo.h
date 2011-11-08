@@ -266,7 +266,7 @@ class ScopStmt {
                                             TempScop &tempScop,
                                             const Region &CurRegion);
   __isl_give isl_set *addLoopBoundsToDomain(__isl_take isl_set *Domain,
-                                            TempScop &tempScop) const;
+                                            TempScop &tempScop);
   __isl_give isl_set *buildDomain(TempScop &tempScop,
                                            const Region &CurRegion);
   void buildScattering(SmallVectorImpl<unsigned> &Scatter);
@@ -433,9 +433,6 @@ class Scop {
   /// @return True if the basic block is trivial, otherwise false.
   static bool isTrivialBB(BasicBlock *BB, TempScop &tempScop);
 
-  /// @brief Add the parameters to the internal parameter set.
-  void initializeParameters(ParamSetType *ParamSet);
-
   /// @brief Build the Context of the Scop.
   void buildContext();
 
@@ -470,6 +467,8 @@ public:
   /// @return The set containing the parameters used in this Scop.
   inline const ParamVecType &getParams() const { return Parameters; }
 
+  /// @brief Take a list of parameters and add the new ones to the scop.
+  void addParams(std::vector<const SCEV*> NewParameters);
 
   /// @brief Return the isl_id that represents a certain parameter.
   ///

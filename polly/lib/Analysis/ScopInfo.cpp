@@ -23,6 +23,7 @@
 #include "polly/LinkAllPasses.h"
 #include "polly/Support/GICHelper.h"
 #include "polly/Support/ScopHelper.h"
+#include "polly/Support/SCEVValidator.h"
 
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
@@ -80,8 +81,18 @@ private:
   const Value *baseAddress;
 
 public:
-  static isl_pw_aff *getPwAff(const ScopStmt *stmt, const SCEV *scev,
+  static isl_pw_aff *getPwAff(ScopStmt *stmt, const SCEV *scev,
                               const Value *baseAddress = 0) {
+    Scop *S = stmt->getParent();
+    const Region *Reg = &S->getRegion();
+
+    if (baseAddress) {
+      Value *Base;
+      S->addParams(getParamsInAffineExpr(Reg, scev, *S->getSE(), &Base));
+    } else {
+      S->addParams(getParamsInAffineExpr(Reg, scev, *S->getSE()));
+    }
+
     SCEVAffinator Affinator(stmt, baseAddress);
     return Affinator.visit(scev);
   }
@@ -598,7 +609,6 @@ void ScopStmt::realignParams() {
 }
 
 __isl_give isl_set *ScopStmt::buildConditionSet(const Comparison &Comp) {
-
   isl_pw_aff *L = SCEVAffinator::getPwAff(this, Comp.getLHS()->OriginalSCEV, 0);
   isl_pw_aff *R = SCEVAffinator::getPwAff(this, Comp.getRHS()->OriginalSCEV, 0);
 
@@ -626,7 +636,7 @@ __isl_give isl_set *ScopStmt::buildConditionSet(const Comparison &Comp) {
 }
 
 __isl_give isl_set *ScopStmt::addLoopBoundsToDomain(__isl_take isl_set *Domain,
-                                                    TempScop &tempScop) const {
+                                                    TempScop &tempScop) {
   isl_space *Space;
   isl_local_space *LocalSpace;
 
@@ -852,6 +862,22 @@ void ScopStmt::dump() const { print(dbgs()); }
 
 //===----------------------------------------------------------------------===//
 /// Scop class implement
+
+void Scop::addParams(std::vector<const SCEV*> NewParameters) {
+  for (std::vector<const SCEV*>::iterator PI = NewParameters.begin(),
+       PE = NewParameters.end(); PI != PE; ++PI) {
+    const SCEV *Parameter = *PI;
+
+    if (ParameterIds.find(Parameter) != ParameterIds.end())
+      continue;
+
+    int dimension = Parameters.size();
+
+    Parameters.push_back(Parameter);
+    ParameterIds[Parameter] = dimension;
+  }
+}
+
 __isl_give isl_id *Scop::getIdForParam(const SCEV *Parameter) const {
   ParamIdType::const_iterator IdIter = ParameterIds.find(Parameter);
 
@@ -862,17 +888,6 @@ __isl_give isl_id *Scop::getIdForParam(const SCEV *Parameter) const {
   return isl_id_alloc(getIslCtx(), ParameterName.c_str(), (void *) Parameter);
 }
 
-void Scop::initializeParameters(ParamSetType *ParamSet) {
-  int i = 0;
-  for (ParamSetType::iterator PI = ParamSet->begin(), PE = ParamSet->end();
-       PI != PE; ++PI) {
-    const SCEV *Parameter = *PI;
-    Parameters.push_back(Parameter);
-    ParameterIds.insert(std::pair<const SCEV*, int>(Parameter, i));
-    i++;
-  }
-}
-
 void Scop::buildContext() {
   isl_space *Space = isl_space_params_alloc(IslCtx, 0);
   Context = isl_set_universe (Space);
@@ -880,7 +895,7 @@ void Scop::buildContext() {
 
 void Scop::realignParams() {
   // Add all parameters into a common model.
-  isl_space *Space = isl_space_params_alloc(IslCtx, Parameters.size());
+  isl_space *Space = isl_space_params_alloc(IslCtx, ParameterIds.size());
 
   for (ParamIdType::iterator PI = ParameterIds.begin(), PE = ParameterIds.end();
        PI != PE; ++PI) {
@@ -901,7 +916,6 @@ Scop::Scop(TempScop &tempScop, LoopInfo &LI, ScalarEvolution &ScalarEvolution,
            : SE(&ScalarEvolution), R(tempScop.getMaxRegion()),
            MaxLoopDepth(tempScop.getMaxLoopDepth()) {
   IslCtx = Context;
-  initializeParameters(&tempScop.getParamSet());
   buildContext();
 
   SmallVector<Loop*, 8> NestLoops;
@@ -964,6 +978,14 @@ void Scop::printContext(raw_ostream &OS) const {
   }
 
   OS.indent(4) << getContextStr() << "\n";
+
+  for (ParamVecType::const_iterator PI = Parameters.begin(),
+       PE = Parameters.end(); PI != PE; ++PI) {
+    const SCEV *Parameter = *PI;
+    int Dim = ParameterIds.find(Parameter)->second;
+
+    OS.indent(4) << "p" << Dim << ": " << *Parameter << "\n";
+  }
 }
 
 void Scop::printStatements(raw_ostream &OS) const {

@@ -61,6 +61,8 @@
 #define DEBUG_TYPE "polly-detect"
 #include "llvm/Support/Debug.h"
 
+#include <set>
+
 using namespace llvm;
 using namespace polly;
 

@@ -19,6 +19,7 @@
 #include "polly/Support/AffineSCEVIterator.h"
 #include "polly/Support/GICHelper.h"
 #include "polly/Support/ScopHelper.h"
+#include "polly/Support/SCEVValidator.h"
 
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/RegionIterator.h"

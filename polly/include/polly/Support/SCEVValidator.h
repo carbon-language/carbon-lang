@@ -12,6 +12,8 @@
 #ifndef POLLY_SCEV_VALIDATOR_H
 #define POLLY_SCEV_VALIDATOR_H
 
+#include <vector>
+
 namespace llvm {
   class Region;
   class SCEV;
@@ -22,6 +24,12 @@ namespace llvm {
 namespace polly {
   bool isAffineExpr(const llvm::Region *R, const llvm::SCEV *Expression,
                     llvm::ScalarEvolution &SE, llvm::Value **BaseAddress = 0);
+  std::vector<const llvm::SCEV*> getParamsInAffineExpr(
+    const llvm::Region *R,
+    const llvm::SCEV *Expression,
+    llvm::ScalarEvolution &SE,
+    llvm::Value **BaseAddress = 0);
+
 }
 
 #endif
