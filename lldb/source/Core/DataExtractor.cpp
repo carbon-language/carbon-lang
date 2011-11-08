@@ -1440,6 +1440,9 @@ DataExtractor::Dump (Stream *s,
         case eFormatChar:
         case eFormatCharPrintable:
         case eFormatCharArray:
+            if (item_bit_size < 8)
+                s->Printf ("%llu", GetMaxU64Bitfield(&offset, item_byte_size, item_bit_size, item_bit_offset));
+            else
             {
                 // If we are only printing one character surround it with single
                 // quotes
