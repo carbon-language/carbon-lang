@@ -90,7 +90,7 @@ class ARMFastISel : public FastISel {
   ARMFunctionInfo *AFI;
 
   // Convenience variables to avoid some queries.
-  bool isThumb;
+  bool isThumb2;
   LLVMContext *Context;
 
   public:
@@ -101,7 +101,7 @@ class ARMFastISel : public FastISel {
       TLI(*TM.getTargetLowering()) {
       Subtarget = &TM.getSubtarget<ARMSubtarget>();
       AFI = funcInfo.MF->getInfo<ARMFunctionInfo>();
-      isThumb = AFI->isThumbFunction();
+      isThumb2 = AFI->isThumbFunction();
       Context = &funcInfo.Fn->getContext();
     }
 
@@ -553,7 +553,7 @@ unsigned ARMFastISel::ARMMaterializeInt(const Constant *C, EVT VT) {
   const ConstantInt *CI = cast<ConstantInt>(C);
   if (Subtarget->hasV6T2Ops() && isUInt<16>(CI->getZExtValue())) {
     EVT SrcVT = MVT::i32;
-    unsigned Opc = isThumb ? ARM::t2MOVi16 : ARM::MOVi16;
+    unsigned Opc = isThumb2 ? ARM::t2MOVi16 : ARM::MOVi16;
     unsigned ImmReg = createResultReg(TLI.getRegClassFor(SrcVT));
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(Opc), ImmReg)
@@ -575,7 +575,7 @@ unsigned ARMFastISel::ARMMaterializeInt(const Constant *C, EVT VT) {
   }
   unsigned Idx = MCP.getConstantPoolIndex(C, Align);
 
-  if (isThumb)
+  if (isThumb2)
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(ARM::t2LDRpci), DestReg)
                     .addConstantPoolIndex(Idx));
@@ -596,7 +596,7 @@ unsigned ARMFastISel::ARMMaterializeGV(const GlobalValue *GV, EVT VT) {
   Reloc::Model RelocM = TM.getRelocationModel();
 
   // TODO: Need more magic for ARM PIC.
-  if (!isThumb && (RelocM == Reloc::PIC_)) return 0;
+  if (!isThumb2 && (RelocM == Reloc::PIC_)) return 0;
 
   // MachineConstantPool wants an explicit alignment.
   unsigned Align = TD.getPrefTypeAlignment(GV->getType());
@@ -616,7 +616,7 @@ unsigned ARMFastISel::ARMMaterializeGV(const GlobalValue *GV, EVT VT) {
   // Load value.
   MachineInstrBuilder MIB;
   unsigned DestReg = createResultReg(TLI.getRegClassFor(VT));
-  if (isThumb) {
+  if (isThumb2) {
     unsigned Opc = (RelocM != Reloc::PIC_) ? ARM::t2LDRpci : ARM::t2LDRpci_pic;
     MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc), DestReg)
           .addConstantPoolIndex(Idx);
@@ -633,7 +633,7 @@ unsigned ARMFastISel::ARMMaterializeGV(const GlobalValue *GV, EVT VT) {
 
   if (Subtarget->GVIsIndirectSymbol(GV, RelocM)) {
     unsigned NewDestReg = createResultReg(TLI.getRegClassFor(VT));
-    if (isThumb)
+    if (isThumb2)
       MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                     TII.get(ARM::t2LDRi12), NewDestReg)
             .addReg(DestReg)
@@ -681,7 +681,7 @@ unsigned ARMFastISel::TargetMaterializeAlloca(const AllocaInst *AI) {
   if (SI != FuncInfo.StaticAllocaMap.end()) {
     TargetRegisterClass* RC = TLI.getRegClassFor(VT);
     unsigned ResultReg = createResultReg(RC);
-    unsigned Opc = isThumb ? ARM::t2ADDri : ARM::ADDri;
+    unsigned Opc = isThumb2 ? ARM::t2ADDri : ARM::ADDri;
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, *FuncInfo.InsertPt, DL,
                             TII.get(Opc), ResultReg)
                             .addFrameIndex(SI->second)
@@ -864,10 +864,10 @@ void ARMFastISel::ARMSimplifyAddress(Address &Addr, EVT VT) {
   // put the alloca address into a register, set the base type back to
   // register and continue. This should almost never happen.
   if (needsLowering && Addr.BaseType == Address::FrameIndexBase) {
-    TargetRegisterClass *RC = isThumb ? ARM::tGPRRegisterClass :
+    TargetRegisterClass *RC = isThumb2 ? ARM::tGPRRegisterClass :
                               ARM::GPRRegisterClass;
     unsigned ResultReg = createResultReg(RC);
-    unsigned Opc = isThumb ? ARM::t2ADDri : ARM::ADDri;
+    unsigned Opc = isThumb2 ? ARM::t2ADDri : ARM::ADDri;
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, *FuncInfo.InsertPt, DL,
                             TII.get(Opc), ResultReg)
                             .addFrameIndex(Addr.Base.FI)
@@ -908,7 +908,7 @@ void ARMFastISel::AddLoadStoreOperands(EVT VT, Address &Addr,
     MIB.addFrameIndex(FI);
 
     // ARM halfword load/stores need an additional operand.
-    if (!isThumb && VT.getSimpleVT().SimpleTy == MVT::i16) MIB.addReg(0);
+    if (!isThumb2 && VT.getSimpleVT().SimpleTy == MVT::i16) MIB.addReg(0);
 
     MIB.addImm(Addr.Offset);
     MIB.addMemOperand(MMO);
@@ -917,7 +917,7 @@ void ARMFastISel::AddLoadStoreOperands(EVT VT, Address &Addr,
     MIB.addReg(Addr.Base.Reg);
 
     // ARM halfword load/stores need an additional operand.
-    if (!isThumb && VT.getSimpleVT().SimpleTy == MVT::i16) MIB.addReg(0);
+    if (!isThumb2 && VT.getSimpleVT().SimpleTy == MVT::i16) MIB.addReg(0);
 
     MIB.addImm(Addr.Offset);
   }
@@ -933,15 +933,15 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg, Address &Addr) {
     // This is mostly going to be Neon/vector support.
     default: return false;
     case MVT::i16:
-      Opc = isThumb ? ARM::t2LDRHi12 : ARM::LDRH;
+      Opc = isThumb2 ? ARM::t2LDRHi12 : ARM::LDRH;
       RC = ARM::GPRRegisterClass;
       break;
     case MVT::i8:
-      Opc = isThumb ? ARM::t2LDRBi12 : ARM::LDRBi12;
+      Opc = isThumb2 ? ARM::t2LDRBi12 : ARM::LDRBi12;
       RC = ARM::GPRRegisterClass;
       break;
     case MVT::i32:
-      Opc = isThumb ? ARM::t2LDRi12 : ARM::LDRi12;
+      Opc = isThumb2 ? ARM::t2LDRi12 : ARM::LDRi12;
       RC = ARM::GPRRegisterClass;
       break;
     case MVT::f32:
@@ -990,22 +990,22 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg, Address &Addr) {
     // This is mostly going to be Neon/vector support.
     default: return false;
     case MVT::i1: {
-      unsigned Res = createResultReg(isThumb ? ARM::tGPRRegisterClass :
+      unsigned Res = createResultReg(isThumb2 ? ARM::tGPRRegisterClass :
                                                ARM::GPRRegisterClass);
-      unsigned Opc = isThumb ? ARM::t2ANDri : ARM::ANDri;
+      unsigned Opc = isThumb2 ? ARM::t2ANDri : ARM::ANDri;
       AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                               TII.get(Opc), Res)
                       .addReg(SrcReg).addImm(1));
       SrcReg = Res;
     } // Fallthrough here.
     case MVT::i8:
-      StrOpc = isThumb ? ARM::t2STRBi12 : ARM::STRBi12;
+      StrOpc = isThumb2 ? ARM::t2STRBi12 : ARM::STRBi12;
       break;
     case MVT::i16:
-      StrOpc = isThumb ? ARM::t2STRHi12 : ARM::STRH;
+      StrOpc = isThumb2 ? ARM::t2STRHi12 : ARM::STRH;
       break;
     case MVT::i32:
-      StrOpc = isThumb ? ARM::t2STRi12 : ARM::STRi12;
+      StrOpc = isThumb2 ? ARM::t2STRi12 : ARM::STRi12;
       break;
     case MVT::f32:
       if (!Subtarget->hasVFP2()) return false;
@@ -1129,7 +1129,7 @@ bool ARMFastISel::SelectBranch(const Instruction *I) {
       if (!ARMEmitCmp(CI->getOperand(0), CI->getOperand(1), CI->isUnsigned()))
         return false;
 
-      unsigned BrOpc = isThumb ? ARM::t2Bcc : ARM::Bcc;
+      unsigned BrOpc = isThumb2 ? ARM::t2Bcc : ARM::Bcc;
       BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(BrOpc))
       .addMBB(TBB).addImm(ARMPred).addReg(ARM::CPSR);
       FastEmitBranch(FBB, DL);
@@ -1140,7 +1140,7 @@ bool ARMFastISel::SelectBranch(const Instruction *I) {
     MVT SourceVT;
     if (TI->hasOneUse() && TI->getParent() == I->getParent() &&
         (isLoadTypeLegal(TI->getOperand(0)->getType(), SourceVT))) {
-      unsigned TstOpc = isThumb ? ARM::t2TSTri : ARM::TSTri;
+      unsigned TstOpc = isThumb2 ? ARM::t2TSTri : ARM::TSTri;
       unsigned OpReg = getRegForValue(TI->getOperand(0));
       AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                               TII.get(TstOpc))
@@ -1152,7 +1152,7 @@ bool ARMFastISel::SelectBranch(const Instruction *I) {
         CCMode = ARMCC::EQ;
       }
 
-      unsigned BrOpc = isThumb ? ARM::t2Bcc : ARM::Bcc;
+      unsigned BrOpc = isThumb2 ? ARM::t2Bcc : ARM::Bcc;
       BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(BrOpc))
       .addMBB(TBB).addImm(CCMode).addReg(ARM::CPSR);
 
@@ -1178,7 +1178,7 @@ bool ARMFastISel::SelectBranch(const Instruction *I) {
   // Regardless, the compare has been done in the predecessor block,
   // and it left a value for us in a virtual register.  Ergo, we test
   // the one-bit value left in the virtual register.
-  unsigned TstOpc = isThumb ? ARM::t2TSTri : ARM::TSTri;
+  unsigned TstOpc = isThumb2 ? ARM::t2TSTri : ARM::TSTri;
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TstOpc))
                   .addReg(CmpReg).addImm(1));
 
@@ -1188,7 +1188,7 @@ bool ARMFastISel::SelectBranch(const Instruction *I) {
     CCMode = ARMCC::EQ;
   }
 
-  unsigned BrOpc = isThumb ? ARM::t2Bcc : ARM::Bcc;
+  unsigned BrOpc = isThumb2 ? ARM::t2Bcc : ARM::Bcc;
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(BrOpc))
                   .addMBB(TBB).addImm(CCMode).addReg(ARM::CPSR);
   FastEmitBranch(FBB, DL);
@@ -1223,7 +1223,7 @@ bool ARMFastISel::ARMEmitCmp(const Value *Src1Value, const Value *Src2Value,
       needsExt = true;
     // Intentional fall-through.
     case MVT::i32:
-      CmpOpc = isThumb ? ARM::t2CMPrr : ARM::CMPrr;
+      CmpOpc = isThumb2 ? ARM::t2CMPrr : ARM::CMPrr;
       break;
   }
 
@@ -1272,8 +1272,8 @@ bool ARMFastISel::SelectCmp(const Instruction *I) {
 
   // Now set a register based on the comparison. Explicitly set the predicates
   // here.
-  unsigned MovCCOpc = isThumb ? ARM::t2MOVCCi : ARM::MOVCCi;
-  TargetRegisterClass *RC = isThumb ? ARM::rGPRRegisterClass
+  unsigned MovCCOpc = isThumb2 ? ARM::t2MOVCCi : ARM::MOVCCi;
+  TargetRegisterClass *RC = isThumb2 ? ARM::rGPRRegisterClass
                                     : ARM::GPRRegisterClass;
   unsigned DestReg = createResultReg(RC);
   Constant *Zero = ConstantInt::get(Type::getInt32Ty(*Context), 0);
@@ -1418,11 +1418,11 @@ bool ARMFastISel::SelectSelect(const Instruction *I) {
   unsigned Op2Reg = getRegForValue(I->getOperand(2));
   if (Op2Reg == 0) return false;
 
-  unsigned CmpOpc = isThumb ? ARM::t2TSTri : ARM::TSTri;
+  unsigned CmpOpc = isThumb2 ? ARM::t2TSTri : ARM::TSTri;
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(CmpOpc))
                   .addReg(CondReg).addImm(1));
   unsigned ResultReg = createResultReg(RC);
-  unsigned MovCCOpc = isThumb ? ARM::t2MOVCCr : ARM::MOVCCr;
+  unsigned MovCCOpc = isThumb2 ? ARM::t2MOVCCr : ARM::MOVCCr;
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(MovCCOpc), ResultReg)
     .addReg(Op1Reg).addReg(Op2Reg)
     .addImm(ARMCC::EQ).addReg(ARM::CPSR);
@@ -1788,7 +1788,7 @@ bool ARMFastISel::SelectRet(const Instruction *I) {
     MRI.addLiveOut(VA.getLocReg());
   }
 
-  unsigned RetOpc = isThumb ? ARM::tBX_RET : ARM::BX_RET;
+  unsigned RetOpc = isThumb2 ? ARM::tBX_RET : ARM::BX_RET;
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                           TII.get(RetOpc)));
   return true;
@@ -1798,7 +1798,7 @@ unsigned ARMFastISel::ARMSelectCallOp(const GlobalValue *GV) {
 
   // Darwin needs the r9 versions of the opcodes.
   bool isDarwin = Subtarget->isTargetDarwin();
-  if (isThumb) {
+  if (isThumb2) {
     return isDarwin ? ARM::tBLr9 : ARM::tBL;
   } else  {
     return isDarwin ? ARM::BLr9 : ARM::BL;
@@ -1864,7 +1864,7 @@ bool ARMFastISel::ARMEmitLibcall(const Instruction *I, RTLIB::Libcall Call) {
   // TODO: Turn this into the table of arm call ops.
   MachineInstrBuilder MIB;
   unsigned CallOpc = ARMSelectCallOp(NULL);
-  if(isThumb)
+  if(isThumb2)
     // Explicitly adding the predicate here.
     MIB = AddDefaultPred(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                          TII.get(CallOpc)))
@@ -1979,7 +1979,7 @@ bool ARMFastISel::SelectCall(const Instruction *I) {
   MachineInstrBuilder MIB;
   unsigned CallOpc = ARMSelectCallOp(GV);
   // Explicitly adding the predicate here.
-  if(isThumb)
+  if(isThumb2)
     // Explicitly adding the predicate here.
     MIB = AddDefaultPred(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                          TII.get(CallOpc)))
@@ -2040,20 +2040,20 @@ unsigned ARMFastISel::ARMEmitIntExt(EVT SrcVT, unsigned SrcReg, EVT DestVT,
   case MVT::i16:
     if (!Subtarget->hasV6Ops()) return 0;
     if (isZExt)
-      Opc = isThumb ? ARM::t2UXTH : ARM::UXTH;
+      Opc = isThumb2 ? ARM::t2UXTH : ARM::UXTH;
     else
-      Opc = isThumb ? ARM::t2SXTH : ARM::SXTH;
+      Opc = isThumb2 ? ARM::t2SXTH : ARM::SXTH;
     break;
   case MVT::i8:
     if (!Subtarget->hasV6Ops()) return 0;
     if (isZExt)
-      Opc = isThumb ? ARM::t2UXTB : ARM::UXTB;
+      Opc = isThumb2 ? ARM::t2UXTB : ARM::UXTB;
     else
-      Opc = isThumb ? ARM::t2SXTB : ARM::SXTB;
+      Opc = isThumb2 ? ARM::t2SXTB : ARM::SXTB;
     break;
   case MVT::i1:
     if (isZExt) {
-      Opc = isThumb ? ARM::t2ANDri : ARM::ANDri;
+      Opc = isThumb2 ? ARM::t2ANDri : ARM::ANDri;
       isBoolZext = true;
       break;
     }
