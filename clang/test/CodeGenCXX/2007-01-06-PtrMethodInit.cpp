@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm %s -o -
+// RUN: %clang_cc1 -emit-llvm %s -o - -triple i386-apple-macosx10.7.2
 // PR1084
 
 extern "C"
