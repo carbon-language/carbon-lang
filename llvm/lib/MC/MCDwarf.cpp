@@ -1020,7 +1020,7 @@ void MCDwarfFrameEmitter::Emit(MCStreamer &Streamer,
   if (IsEH && MOFI->getCompactUnwindSection())
     for (unsigned i = 0, n = Streamer.getNumFrameInfos(); i < n; ++i) {
       const MCDwarfFrameInfo &Frame = Streamer.getFrameInfo(i);
-      if (!Frame.CompactUnwindEncoding)
+      if (Frame.CompactUnwindEncoding)
         Emitter.EmitCompactUnwind(Streamer, Frame);
     }
 
