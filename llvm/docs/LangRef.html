@@ -3023,26 +3023,29 @@ href="#linkage_appending">appending linkage</a>.  This array contains a list of
 pointers to global variables and functions which may optionally have a pointer
 cast formed of bitcast or getelementptr.  For example, a legal use of it is:</p>
 
+<div class="doc_code">
 <pre>
-  @X = global i8 4
-  @Y = global i32 123
+@X = global i8 4
+@Y = global i32 123
 
-  @llvm.used = appending global [2 x i8*] [
-     i8* @X,
-     i8* bitcast (i32* @Y to i8*)
-  ], section "llvm.metadata"
+@llvm.used = appending global [2 x i8*] [
+   i8* @X,
+   i8* bitcast (i32* @Y to i8*)
+], section "llvm.metadata"
 </pre>
+</div>
 
 <p>If a global variable appears in the <tt>@llvm.used</tt> list, then the
-compiler, assembler, and linker are required to treat the symbol as if there is
-a reference to the global that it cannot see.  For example, if a variable has
-internal linkage and no references other than that from the <tt>@llvm.used</tt>
-list, it cannot be deleted.  This is commonly used to represent references from
-inline asms and other things the compiler cannot "see", and corresponds to
-"attribute((used))" in GNU C.</p>
+   compiler, assembler, and linker are required to treat the symbol as if there
+   is a reference to the global that it cannot see.  For example, if a variable
+   has internal linkage and no references other than that from
+   the <tt>@llvm.used</tt> list, it cannot be deleted.  This is commonly used to
+   represent references from inline asms and other things the compiler cannot
+   "see", and corresponds to "<tt>attribute((used))</tt>" in GNU C.</p>
 
 <p>On some targets, the code generator must emit a directive to the assembler or
-object file to prevent the assembler and linker from molesting the symbol.</p>
+   object file to prevent the assembler and linker from molesting the
+   symbol.</p>
 
 </div>
 
@@ -3056,13 +3059,13 @@ object file to prevent the assembler and linker from molesting the symbol.</p>
 <div>
 
 <p>The <tt>@llvm.compiler.used</tt> directive is the same as the
-<tt>@llvm.used</tt> directive, except that it only prevents the compiler from
-touching the symbol.  On targets that support it, this allows an intelligent
-linker to optimize references to the symbol without being impeded as it would be
-by <tt>@llvm.used</tt>.</p>
+   <tt>@llvm.used</tt> directive, except that it only prevents the compiler from
+   touching the symbol.  On targets that support it, this allows an intelligent
+   linker to optimize references to the symbol without being impeded as it would
+   be by <tt>@llvm.used</tt>.</p>
 
 <p>This is a rare construct that should only be used in rare circumstances, and
-should not be exposed to source languages.</p>
+   should not be exposed to source languages.</p>
 
 </div>
 
@@ -3072,12 +3075,19 @@ should not be exposed to source languages.</p>
 </h3>
 
 <div>
+
+<div class="doc_code">
 <pre>
 %0 = type { i32, void ()* }
 @llvm.global_ctors = appending global [1 x %0] [%0 { i32 65535, void ()* @ctor }]
 </pre>
-<p>The <tt>@llvm.global_ctors</tt> array contains a list of constructor functions and associated priorities.  The functions referenced by this array will be called in ascending order of priority (i.e. lowest first) when the module is loaded.  The order of functions with the same priority is not defined.
-</p>
+</div>
+
+<p>The <tt>@llvm.global_ctors</tt> array contains a list of constructor
+   functions and associated priorities.  The functions referenced by this array
+   will be called in ascending order of priority (i.e. lowest first) when the
+   module is loaded.  The order of functions with the same priority is not
+   defined.</p>
 
 </div>
 
@@ -3087,13 +3097,18 @@ should not be exposed to source languages.</p>
 </h3>
 
 <div>
+
+<div class="doc_code">
 <pre>
 %0 = type { i32, void ()* }
 @llvm.global_dtors = appending global [1 x %0] [%0 { i32 65535, void ()* @dtor }]
 </pre>
+</div>
 
-<p>The <tt>@llvm.global_dtors</tt> array contains a list of destructor functions and associated priorities.  The functions referenced by this array will be called in descending order of priority (i.e. highest first) when the module is loaded.  The order of functions with the same priority is not defined.
-</p>
+<p>The <tt>@llvm.global_dtors</tt> array contains a list of destructor functions
+   and associated priorities.  The functions referenced by this array will be
+   called in descending order of priority (i.e. highest first) when the module
+   is loaded.  The order of functions with the same priority is not defined.</p>
 
 </div>
 
