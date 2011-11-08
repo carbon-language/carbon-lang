@@ -28,7 +28,7 @@
 
 /* Must use __inline in Microsoft C */
 #if defined(_MSC_VER)
-#define inline __inline
+#define __inline__ __inline
 #endif
 
 /* note that this is used for functions with large path counts,
@@ -112,7 +112,7 @@ void writeArrayTable(uint32_t fNumber, ftEntry_t* ft, uint32_t* funcCount) {
   }
 }
 
-static inline uint32_t hash (uint32_t key) {
+static __inline__ uint32_t hash (uint32_t key) {
   /* this may benefit from a proper hash function */
   return key%ARBITRARY_HASH_BIN_COUNT;
 }
@@ -155,7 +155,7 @@ void writeHashTable(uint32_t functionNumber, pathHashTable_t* hashTable) {
 }
 
 /* Return a pointer to this path's specific path counter */
-static inline uint32_t* getPathCounter(uint32_t functionNumber,
+static __inline__ uint32_t* getPathCounter(uint32_t functionNumber,
                                        uint32_t pathNumber) {
   pathHashTable_t* hashTable;
   pathHashEntry_t* hashEntry;
