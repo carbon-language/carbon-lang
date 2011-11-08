@@ -42,6 +42,7 @@ static bool isClassInWeakBlacklist(ObjCInterfaceDecl *cls) {
                  .Case("NSLazyBrowserCell", true)
                  .Case("NSWindow", true)
                  .Case("NSWindowController", true)
+                 .Case("NSViewController", true)
                  .Case("NSMenuView", true)
                  .Case("NSPersistentUIWindowInfo", true)
                  .Case("NSTableCellView", true)
