@@ -92,10 +92,10 @@ struct DomainValue {
     return CountTrailingZeros_32(AvailableDomains);
   }
 
-  DomainValue() { clear(); }
+  DomainValue() : Refs(0) { clear(); }
 
   void clear() {
-    Refs = AvailableDomains = Dist = 0;
+    AvailableDomains = Dist = 0;
     Instrs.clear();
   }
 };
@@ -173,6 +173,7 @@ DomainValue *ExeDepsFix::alloc(int domain) {
   dv->Dist = Distance;
   if (domain >= 0)
     dv->addDomain(domain);
+  assert(dv->Refs == 0 && "Reference count wasn't cleared");
   return dv;
 }
 
@@ -271,8 +272,7 @@ bool ExeDepsFix::merge(DomainValue *A, DomainValue *B) {
   A->Instrs.append(B->Instrs.begin(), B->Instrs.end());
 
   // Clear the old DomainValue so we won't try to swizzle instructions twice.
-  B->Instrs.clear();
-  B->AvailableDomains = 0;
+  B->clear();
 
   for (unsigned rx = 0; rx != NumRegs; ++rx)
     if (LiveRegs[rx] == B)
