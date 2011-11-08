@@ -154,6 +154,10 @@ public:
 
   /// @brief Set the updated access relation read from JSCOP file.
   void setNewAccessRelation(isl_map *newAccessRelation);
+
+  /// @brief Align the parameters in the access relation to the scop context
+  void realignParams();
+
   /// @brief Print the MemoryAccess.
   ///
   /// @param OS The output stream the MemoryAccess is printed to.
@@ -344,6 +348,9 @@ public:
   /// A final read statement is scheduled after all statements to model
   /// that all data used in the Scop is read after the Scop.
   bool isFinalRead() { return getBasicBlock() == NULL; }
+
+  /// @brief Align the parameters in the statement to the scop context
+  void realignParams();
 
   /// @brief Print the ScopStmt.
   ///
@@ -539,6 +546,9 @@ public:
   const_reverse_iterator rbegin() const { return Stmts.rbegin(); }
   const_reverse_iterator rend()   const { return Stmts.rend();   }
   //@}
+
+  /// @brief Align the parameters in the statement to the scop context
+  void realignParams();
 
   /// @brief Print the static control part.
   ///

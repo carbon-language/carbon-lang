@@ -342,8 +342,10 @@ MemoryAccess::MemoryAccess(const SCEVAffFunc &AffFunc, ScopStmt *Statement) {
                                           Statement->getBaseName());
   AccessRelation = isl_map_set_tuple_name(AccessRelation, isl_dim_out,
                                           getBaseName().c_str());
+}
 
-  isl_space *ParamSpace = Statement->getParent()->getParamSpace();
+void MemoryAccess::realignParams() {
+  isl_space *ParamSpace = statement->getParent()->getParamSpace();
   AccessRelation = isl_map_align_params(AccessRelation, ParamSpace);
 }
 
@@ -587,6 +589,14 @@ void ScopStmt::buildAccesses(TempScop &tempScop, const Region &CurRegion) {
   }
 }
 
+void ScopStmt::realignParams() {
+  for (memacc_iterator MI = memacc_begin(), ME = memacc_end(); MI != ME; ++MI)
+    (*MI)->realignParams();
+
+  Domain = isl_set_align_params(Domain, Parent.getParamSpace());
+  Scattering = isl_map_align_params(Scattering, Parent.getParamSpace());
+}
+
 __isl_give isl_set *ScopStmt::buildConditionSet(const Comparison &Comp) const {
 
   isl_pw_aff *L = SCEVAffinator::getPwAff(this, Comp.getLHS()->OriginalSCEV, 0);
@@ -676,7 +686,6 @@ __isl_give isl_set *ScopStmt::buildDomain(TempScop &tempScop,
   Space = isl_space_set_alloc(getIslCtx(), 0, getNumIterators());
 
   Domain = isl_set_universe(Space);
-  Domain = isl_set_align_params(Domain, Parent.getParamSpace());
   Domain = addLoopBoundsToDomain(Domain, tempScop);
   Domain = addConditionsToDomain(Domain, tempScop, CurRegion);
   Domain = isl_set_set_tuple_name(Domain, getBaseName());
@@ -717,7 +726,6 @@ ScopStmt::ScopStmt(Scop &parent, SmallVectorImpl<unsigned> &Scatter)
   std::string IterationDomainString = "{[i0] : i0 = 0}";
   Domain = isl_set_read_from_str(getIslCtx(), IterationDomainString.c_str());
   Domain = isl_set_set_tuple_name(Domain, getBaseName());
-  Domain = isl_set_align_params(Domain, parent.getParamSpace());
 
   // Build scattering.
   unsigned ScatSpace = Parent.getMaxLoopDepth() * 2 + 1;
@@ -740,7 +748,6 @@ ScopStmt::ScopStmt(Scop &parent, SmallVectorImpl<unsigned> &Scatter)
   bmap = isl_basic_map_add_constraint(bmap, c);
   isl_int_clear(v);
   Scattering = isl_map_from_basic_map(bmap);
-  Scattering = isl_map_align_params(Scattering, parent.getParamSpace());
 
   // Build memory accesses, use SetVector to keep the order of memory accesses
   // and prevent the same memory access inserted more than once.
@@ -875,6 +882,11 @@ void Scop::buildContext(isl_ctx *IslCtx, ParamSetType *ParamSet) {
   Context = isl_set_universe (Space);
 }
 
+void Scop::realignParams() {
+  for (iterator I = begin(), E = end(); I != E; ++I)
+    (*I)->realignParams();
+}
+
 Scop::Scop(TempScop &tempScop, LoopInfo &LI, ScalarEvolution &ScalarEvolution,
            isl_ctx *Context)
            : SE(&ScalarEvolution), R(tempScop.getMaxRegion()),
@@ -891,6 +903,8 @@ Scop::Scop(TempScop &tempScop, LoopInfo &LI, ScalarEvolution &ScalarEvolution,
   // traversing the region tree.
   buildScop(tempScop, getRegion(), NestLoops, Scatter, LI);
   Stmts.push_back(new ScopStmt(*this, Scatter));
+
+  realignParams();
 
   assert(NestLoops.empty() && "NestLoops not empty at top level!");
 }
