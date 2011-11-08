@@ -218,7 +218,7 @@ private:
 
     if (HasIvarAssignedAPlusOneObject ||
         (Pass.isGCMigration() && !hasGCWeak(props, atLoc)))
-      return doPropAction(PropAction_MaybeAddStrong, props, atLoc);
+      return; // 'strong' by default.
 
     return doPropAction(PropAction_MaybeAddWeakOrUnsafe, props, atLoc);
   }

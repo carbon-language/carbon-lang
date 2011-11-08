@@ -32,8 +32,8 @@ typedef _NSCachedAttributedString *BadClassForWeak;
 @property (unsafe_unretained) NSObject *not_safe2;
 @property (unsafe_unretained) Forw *not_safe3;
 @property (readonly) Foo *assign_plus1;
-@property (strong, readonly) Foo *assign_plus2;
-@property (strong, readonly) Foo *assign_plus3;
+@property (readonly) Foo *assign_plus2;
+@property (readonly) Foo *assign_plus3;
 
 @property (weak) Foo *no_user_ivar1;
 @property (weak, readonly) Foo *no_user_ivar2;

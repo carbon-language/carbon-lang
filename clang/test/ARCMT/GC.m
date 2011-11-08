@@ -64,10 +64,11 @@ __attribute__((objc_arc_weak_reference_unavailable))
 @property (assign) I4Impl * pds;
 @property (assign) I4Impl * pds2;
 @property (readwrite) I4Impl * pds3;
+@property (readonly) I4Impl * pds4;
 @end
 
 @implementation I4Impl
-@synthesize pw1, pw2, ps, pds, pds2, pds3;
+@synthesize pw1, pw2, ps, pds, pds2, pds3, pds4;
 
 -(void)test1:(CFTypeRef *)cft {
   id x = NSMakeCollectable(cft);
