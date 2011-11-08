@@ -526,12 +526,6 @@ static std::string GenMacroLocals(const std::string &proto, StringRef typestr) {
   for (unsigned i = 1, e = proto.size(); i != e; ++i, ++arg) {
     // Do not create a temporary for an immediate argument.
     // That would defeat the whole point of using a macro!
-    // FIXME: For other (non-immediate) arguments that are used directly, a
-    // local temporary (or some other method) is still needed to get the
-    // correct type checking, even if that temporary is not used for anything.
-    // This is omitted for now because it turns out the the use of
-    // "__extension__" in the macro disables any warnings from the pointer
-    // assignment.
     if (MacroArgUsedDirectly(proto, i))
       continue;
     generatedLocal = true;
@@ -1342,14 +1336,28 @@ void NeonEmitter::runHeader(raw_ostream &OS) {
         mask |= 1 << GetNeonEnum(Proto, TypeVec[ti]);
       }
     }
-    if (mask)
+    bool HasPtr = (Proto.find('p') != std::string::npos);
+    bool HasConstPtr = (Proto.find('c') != std::string::npos);
+    if (mask) {
       OS << "case ARM::BI__builtin_neon_"
          << MangleName(name, TypeVec[si], ClassB)
-         << ": mask = " << "0x" << utohexstr(mask) << "; break;\n";
-    if (qmask)
+         << ": mask = " << "0x" << utohexstr(mask);
+      if (HasPtr)
+        OS << "; HasPtr = true";
+      if (HasConstPtr)
+        OS << "; HasConstPtr = true";
+      OS << "; break;\n";
+    }
+    if (qmask) {
       OS << "case ARM::BI__builtin_neon_"
          << MangleName(name, TypeVec[qi], ClassB)
-         << ": mask = " << "0x" << utohexstr(qmask) << "; break;\n";
+         << ": mask = " << "0x" << utohexstr(qmask);
+      if (HasPtr)
+        OS << "; HasPtr = true";
+      if (HasConstPtr)
+        OS << "; HasConstPtr = true";
+      OS << "; break;\n";
+    }
   }
   OS << "#endif\n\n";
 

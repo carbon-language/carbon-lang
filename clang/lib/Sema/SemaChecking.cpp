@@ -268,11 +268,38 @@ static unsigned RFT(unsigned t, bool shift = false) {
   return 0;
 }
 
+/// getNeonEltType - Return the QualType corresponding to the elements of
+/// the vector type specified by the NeonTypeFlags.  This is used to check
+/// the pointer arguments for Neon load/store intrinsics.
+static QualType getNeonEltType(NeonTypeFlags Flags, ASTContext &Context) {
+  switch (Flags.getEltType()) {
+  case NeonTypeFlags::Int8:
+    return Flags.isUnsigned() ? Context.UnsignedCharTy : Context.SignedCharTy;
+  case NeonTypeFlags::Int16:
+    return Flags.isUnsigned() ? Context.UnsignedShortTy : Context.ShortTy;
+  case NeonTypeFlags::Int32:
+    return Flags.isUnsigned() ? Context.UnsignedIntTy : Context.IntTy;
+  case NeonTypeFlags::Int64:
+    return Flags.isUnsigned() ? Context.UnsignedLongLongTy : Context.LongLongTy;
+  case NeonTypeFlags::Poly8:
+    return Context.SignedCharTy;
+  case NeonTypeFlags::Poly16:
+    return Context.ShortTy;
+  case NeonTypeFlags::Float16:
+    return Context.UnsignedShortTy;
+  case NeonTypeFlags::Float32:
+    return Context.FloatTy;
+  }
+  return QualType();
+}
+
 bool Sema::CheckARMBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   llvm::APSInt Result;
 
   unsigned mask = 0;
   unsigned TV = 0;
+  bool HasPtr = false;
+  bool HasConstPtr = false;
   switch (BuiltinID) {
 #define GET_NEON_OVERLOAD_CHECK
 #include "clang/Basic/arm_neon.inc"
@@ -281,15 +308,39 @@ bool Sema::CheckARMBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   
   // For NEON intrinsics which are overloaded on vector element type, validate
   // the immediate which specifies which variant to emit.
+  unsigned ImmArg = TheCall->getNumArgs()-1;
   if (mask) {
-    unsigned ArgNo = TheCall->getNumArgs()-1;
-    if (SemaBuiltinConstantArg(TheCall, ArgNo, Result))
+    if (SemaBuiltinConstantArg(TheCall, ImmArg, Result))
       return true;
     
     TV = Result.getLimitedValue(64);
     if ((TV > 63) || (mask & (1 << TV)) == 0)
       return Diag(TheCall->getLocStart(), diag::err_invalid_neon_type_code)
-        << TheCall->getArg(ArgNo)->getSourceRange();
+        << TheCall->getArg(ImmArg)->getSourceRange();
+  }
+
+  if (HasPtr || HasConstPtr) {
+    // Check that pointer arguments have the specified type.
+    for (unsigned ArgNo = 0; ArgNo < ImmArg; ++ArgNo) {
+      Expr *Arg = TheCall->getArg(ArgNo);
+      if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(Arg))
+        Arg = ICE->getSubExpr();
+      ExprResult RHS = DefaultFunctionArrayLvalueConversion(Arg);
+      QualType RHSTy = RHS.get()->getType();
+      if (!RHSTy->isPointerType())
+        continue;
+      QualType EltTy = getNeonEltType(NeonTypeFlags(TV), Context);
+      if (HasConstPtr)
+        EltTy = EltTy.withConst();
+      QualType LHSTy = Context.getPointerType(EltTy);
+      AssignConvertType ConvTy;
+      ConvTy = CheckSingleAssignmentConstraints(LHSTy, RHS);
+      if (RHS.isInvalid())
+        return true;
+      if (DiagnoseAssignmentResult(ConvTy, Arg->getLocStart(), LHSTy, RHSTy,
+                                   RHS.get(), AA_Assigning))
+        return true;
+    }
   }
   
   // For NEON intrinsics which take an immediate value as part of the 
