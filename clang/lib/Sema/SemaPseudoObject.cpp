@@ -141,6 +141,8 @@ namespace {
       : S(S), ResultIndex(PseudoObjectExpr::NoResult),
         GenericLoc(genericLoc) {}
 
+    virtual ~PseudoOpBuilder() {}
+
     /// Add a normal semantic expression.
     void addSemanticExpr(Expr *semantic) {
       Semantics.push_back(semantic);
@@ -179,9 +181,6 @@ namespace {
     virtual ExprResult buildGet() = 0;
     virtual ExprResult buildSet(Expr *, SourceLocation,
                                 bool captureSetValueAsResult) = 0;
-
-  protected:
-    ~PseudoOpBuilder() {}
   };
 
   /// A PseudoOpBuilder for Objective-C @properties.
