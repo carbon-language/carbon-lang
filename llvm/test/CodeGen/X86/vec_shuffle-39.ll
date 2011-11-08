@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-linux | FileCheck %s
 ; rdar://10050222, rdar://10134392
 
 define <4 x float> @t1(<4 x float> %a, <1 x i64>* nocapture %p) nounwind {
