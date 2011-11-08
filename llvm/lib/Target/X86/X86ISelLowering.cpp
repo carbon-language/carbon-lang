@@ -6190,6 +6190,10 @@ static bool MayFoldVectorLoad(SDValue V) {
     V = V.getOperand(0);
   if (V.hasOneUse() && V.getOpcode() == ISD::SCALAR_TO_VECTOR)
     V = V.getOperand(0);
+  if (V.hasOneUse() && V.getOpcode() == ISD::BUILD_VECTOR &&
+      V.getNumOperands() == 2 && V.getOperand(1).getOpcode() == ISD::UNDEF)
+    // BUILD_VECTOR (load), undef
+    V = V.getOperand(0);
   if (MayFoldLoad(V))
     return true;
   return false;
@@ -6372,15 +6376,10 @@ SDValue getMOVLP(SDValue &Op, DebugLoc &dl, SelectionDAG &DAG, bool HasXMMInt) {
   //    turns into:
   //  (MOVLPSmr addr:$src1, VR128:$src2)
   // So, recognize this potential and also use MOVLPS or MOVLPD
-  if (MayFoldVectorLoad(V1) && MayFoldIntoStore(Op))
+  else if (MayFoldVectorLoad(V1) && MayFoldIntoStore(Op))
     CanFoldLoad = true;
 
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
-
-  // Both of them can't be memory operations though.
-  if (MayFoldVectorLoad(V1) && MayFoldVectorLoad(V2))
-    CanFoldLoad = false;
-
   if (CanFoldLoad) {
     if (HasXMMInt && NumElems == 2)
       return getTargetShuffleNode(X86ISD::MOVLPD, dl, VT, V1, V2, DAG);

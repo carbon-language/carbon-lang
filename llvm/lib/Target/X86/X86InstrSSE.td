@@ -1035,6 +1035,9 @@ let Predicates = [HasSSE1] in {
   }
 
   // (store (vector_shuffle (load addr), v2, <4, 5, 2, 3>), addr) using MOVLPS
+  def : Pat<(store (i64 (vector_extract (bc_v2i64 (v4f32 VR128:$src2)),
+                                 (iPTR 0))), addr:$src1),
+            (MOVLPSmr addr:$src1, VR128:$src2)>;
   def : Pat<(store (v4f32 (movlp (load addr:$src1), VR128:$src2)), addr:$src1),
             (MOVLPSmr addr:$src1, VR128:$src2)>;
   def : Pat<(store (v4i32 (movlp (bc_v4i32 (loadv2i64 addr:$src1)),
@@ -1048,6 +1051,9 @@ let Predicates = [HasSSE1] in {
             (MOVLPSrm VR128:$src1, addr:$src2)>;
   def : Pat<(X86Movlps VR128:$src1,
                       (bc_v4f32 (v2f64 (scalar_to_vector (loadf64 addr:$src2))))),
+            (MOVLPSrm VR128:$src1, addr:$src2)>;
+  def : Pat<(X86Movlps VR128:$src1,
+                      (bc_v4f32 (v2i64 (scalar_to_vector (loadi64 addr:$src2))))),
             (MOVLPSrm VR128:$src1, addr:$src2)>;
 
   // Store patterns
