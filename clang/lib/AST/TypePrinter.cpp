@@ -1162,9 +1162,21 @@ void Qualifiers::getAsStringInternal(std::string &S,
   AppendTypeQualList(S, getCVRQualifiers());
   if (unsigned addrspace = getAddressSpace()) {
     if (!S.empty()) S += ' ';
-    S += "__attribute__((address_space(";
-    S += llvm::utostr_32(addrspace);
-    S += ")))";
+    switch (addrspace) {
+      case LangAS::opencl_global:
+        S += "__global";
+        break;
+      case LangAS::opencl_local:
+        S += "__local";
+        break;
+      case LangAS::opencl_constant:
+        S += "__constant";
+        break;
+      default:
+        S += "__attribute__((address_space(";
+        S += llvm::utostr_32(addrspace);
+        S += ")))";
+    }
   }
   if (Qualifiers::GC gc = getObjCGCAttr()) {
     if (!S.empty()) S += ' ';
