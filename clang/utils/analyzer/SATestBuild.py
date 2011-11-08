@@ -394,6 +394,7 @@ def testAll(InIsReferenceBuild = False):
                 print "Error: Second entry in the ProjectMapFile should be 0 or 1."
                 raise Exception()              
             testProject(I[0], InIsReferenceBuild, int(I[1]))
+            sys.stdout.flush()
     except:
         print "Error occurred. Premature termination."
         raise                            
