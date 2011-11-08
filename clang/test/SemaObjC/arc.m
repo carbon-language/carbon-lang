@@ -502,18 +502,18 @@ void test26(id y) {
   id myProp2;
 }
 @property id x;
-@property (readonly) id ro; // expected-note {{declared here}}
+@property (readonly) id ro;
 @property (readonly) id custom_ro;
 @property int y;
 
-@property (readonly) id myProp1;
+@property (readonly) __weak id myProp1;
 @property (readonly) id myProp2;
 @property (readonly) __strong id myProp3;
 @end
 
 @implementation Test27
 @synthesize x;
-@synthesize ro; // expected-error {{ARC forbids synthesizing a property of an Objective-C object with unspecified ownership or storage attribute}}
+@synthesize ro;
 @synthesize y;
 
 @synthesize myProp1 = _myProp1;

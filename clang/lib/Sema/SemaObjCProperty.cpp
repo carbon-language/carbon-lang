@@ -1770,13 +1770,12 @@ void Sema::CheckObjCPropertyAttributes(Decl *PDecl,
                       ObjCDeclSpec::DQ_PR_unsafe_unretained |
                       ObjCDeclSpec::DQ_PR_retain | ObjCDeclSpec::DQ_PR_strong |
                       ObjCDeclSpec::DQ_PR_weak)) &&
-      !(Attributes & ObjCDeclSpec::DQ_PR_readonly) &&
       PropertyTy->isObjCObjectPointerType()) {
       if (getLangOptions().ObjCAutoRefCount)
         // With arc,  @property definitions should default to (strong) when 
-        // not specified
+        // not specified; including when property is 'readonly'.
         PropertyDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_strong);
-      else {
+      else if (!(Attributes & ObjCDeclSpec::DQ_PR_readonly)) {
           // Skip this warning in gc-only mode.
           if (getLangOptions().getGC() != LangOptions::GCOnly)
             Diag(Loc, diag::warn_objc_property_no_assignment_attribute);
