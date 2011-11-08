@@ -345,7 +345,7 @@ error_code COFFObjectFile::getSectionContents(DataRefImpl Sec,
   // data, as there's nothing that says that is not allowed.
   uintptr_t con_start = uintptr_t(base()) + sec->PointerToRawData;
   uintptr_t con_end = con_start + sec->SizeOfRawData;
-  if (con_end >= uintptr_t(Data->getBufferEnd()))
+  if (con_end > uintptr_t(Data->getBufferEnd()))
     return object_error::parse_failed;
   Result = StringRef(reinterpret_cast<const char*>(con_start),
                      sec->SizeOfRawData);
@@ -424,7 +424,12 @@ relocation_iterator COFFObjectFile::getSectionRelEnd(DataRefImpl Sec) const {
 }
 
 COFFObjectFile::COFFObjectFile(MemoryBuffer *Object, error_code &ec)
-  : ObjectFile(Binary::isCOFF, Object, ec) {
+  : ObjectFile(Binary::isCOFF, Object, ec)
+  , Header(0)
+  , SectionTable(0)
+  , SymbolTable(0)
+  , StringTable(0)
+  , StringTableSize(0) {
   // Check that we at least have enough room for a header.
   if (!checkSize(Data, ec, sizeof(coff_file_header))) return;
 
@@ -437,7 +442,7 @@ COFFObjectFile::COFFObjectFile(MemoryBuffer *Object, error_code &ec)
     // PE/COFF, seek through MS-DOS compatibility stub and 4-byte
     // PE signature to find 'normal' COFF header.
     if (!checkSize(Data, ec, 0x3c + 8)) return;
-    HeaderStart += *reinterpret_cast<const ulittle32_t *>(base() + 0x3c);
+    HeaderStart = *reinterpret_cast<const ulittle16_t *>(base() + 0x3c);
     // Check the PE header. ("PE\0\0")
     if (std::memcmp(base() + HeaderStart, "PE\0\0", 4) != 0) {
       ec = object_error::parse_failed;
@@ -459,28 +464,30 @@ COFFObjectFile::COFFObjectFile(MemoryBuffer *Object, error_code &ec)
                  Header->NumberOfSections * sizeof(coff_section)))
     return;
 
-  SymbolTable =
-    reinterpret_cast<const coff_symbol *>(base()
-                                          + Header->PointerToSymbolTable);
-  if (!checkAddr(Data, ec, uintptr_t(SymbolTable),
-                 Header->NumberOfSymbols * sizeof(coff_symbol)))
-    return;
+  if (Header->PointerToSymbolTable != 0) {
+    SymbolTable =
+      reinterpret_cast<const coff_symbol *>(base()
+                                            + Header->PointerToSymbolTable);
+    if (!checkAddr(Data, ec, uintptr_t(SymbolTable),
+                   Header->NumberOfSymbols * sizeof(coff_symbol)))
+      return;
 
-  // Find string table.
-  StringTable = reinterpret_cast<const char *>(base())
-                + Header->PointerToSymbolTable
-                + Header->NumberOfSymbols * sizeof(coff_symbol);
-  if (!checkAddr(Data, ec, uintptr_t(StringTable), sizeof(ulittle32_t)))
-    return;
+    // Find string table.
+    StringTable = reinterpret_cast<const char *>(base())
+                  + Header->PointerToSymbolTable
+                  + Header->NumberOfSymbols * sizeof(coff_symbol);
+    if (!checkAddr(Data, ec, uintptr_t(StringTable), sizeof(ulittle32_t)))
+      return;
 
-  StringTableSize = *reinterpret_cast<const ulittle32_t *>(StringTable);
-  if (!checkAddr(Data, ec, uintptr_t(StringTable), StringTableSize))
-    return;
-  // Check that the string table is null terminated if has any in it.
-  if (StringTableSize < 4
-      || (StringTableSize > 4 && StringTable[StringTableSize - 1] != 0)) {
-    ec = object_error::parse_failed;
-    return;
+    StringTableSize = *reinterpret_cast<const ulittle32_t *>(StringTable);
+    if (!checkAddr(Data, ec, uintptr_t(StringTable), StringTableSize))
+      return;
+    // Check that the string table is null terminated if has any in it.
+    if (StringTableSize < 4
+        || (StringTableSize > 4 && StringTable[StringTableSize - 1] != 0)) {
+      ec = object_error::parse_failed;
+      return;
+    }
   }
 
   ec = object_error::success;
