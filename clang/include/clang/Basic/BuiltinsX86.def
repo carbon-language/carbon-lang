@@ -357,22 +357,22 @@ BUILTIN(__builtin_ia32_pcmpeqq, "V2LLiV2LLiV2LLi", "")
 BUILTIN(__builtin_ia32_mpsadbw128, "V16cV16cV16ci", "")
 
 // SSE 4.2
-BUILTIN(__builtin_ia32_pcmpistrm128, "V16cV16cV16cc", "")
-BUILTIN(__builtin_ia32_pcmpistri128, "iV16cV16cc", "")
-BUILTIN(__builtin_ia32_pcmpestrm128, "V16cV16ciV16cic", "")
-BUILTIN(__builtin_ia32_pcmpestri128, "iV16ciV16cic","")
+BUILTIN(__builtin_ia32_pcmpistrm128, "V16cV16cV16cIc", "")
+BUILTIN(__builtin_ia32_pcmpistri128, "iV16cV16cIc", "")
+BUILTIN(__builtin_ia32_pcmpestrm128, "V16cV16ciV16ciIc", "")
+BUILTIN(__builtin_ia32_pcmpestri128, "iV16ciV16ciIc","")
 
-BUILTIN(__builtin_ia32_pcmpistria128, "iV16ciV16cic","")
-BUILTIN(__builtin_ia32_pcmpistric128, "iV16ciV16cic","")
-BUILTIN(__builtin_ia32_pcmpistrio128, "iV16ciV16cic","")
-BUILTIN(__builtin_ia32_pcmpistris128, "iV16ciV16cic","")
-BUILTIN(__builtin_ia32_pcmpistriz128, "iV16ciV16cic","")
-
-BUILTIN(__builtin_ia32_pcmpestria128, "iV16ciV16cic","")
-BUILTIN(__builtin_ia32_pcmpestric128, "iV16ciV16cic","")
-BUILTIN(__builtin_ia32_pcmpestrio128, "iV16ciV16cic","")
-BUILTIN(__builtin_ia32_pcmpestris128, "iV16ciV16cic","")
-BUILTIN(__builtin_ia32_pcmpestriz128, "iV16ciV16cic","")
+// FIXME: These builtins are horribly broken; reenable when PR11305 is fixed.
+//BUILTIN(__builtin_ia32_pcmpistria128, "iV16cV16cIc","")
+//BUILTIN(__builtin_ia32_pcmpistric128, "iV16cV16cIc","")
+//BUILTIN(__builtin_ia32_pcmpistrio128, "iV16cV16cIc","")
+//BUILTIN(__builtin_ia32_pcmpistris128, "iV16cV16cIc","")
+//BUILTIN(__builtin_ia32_pcmpistriz128, "iV16cV16cIc","")
+//BUILTIN(__builtin_ia32_pcmpestria128, "iV16ciV16ciIc","")
+//BUILTIN(__builtin_ia32_pcmpestric128, "iV16ciV16ciIc","")
+//BUILTIN(__builtin_ia32_pcmpestrio128, "iV16ciV16ciic","")
+//BUILTIN(__builtin_ia32_pcmpestris128, "iV16ciV16ciIc","")
+//BUILTIN(__builtin_ia32_pcmpestriz128, "iV16ciV16ciIc","")
 
 BUILTIN(__builtin_ia32_pcmpgtq, "V2LLiV2LLiV2LLi", "")
 

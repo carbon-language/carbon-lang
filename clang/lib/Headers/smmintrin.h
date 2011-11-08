@@ -375,16 +375,16 @@ _mm_packus_epi32(__m128i __V1, __m128i __V2)
      __builtin_ia32_pcmpestri128((A), (LA), (B), (LB), (M))
      
 /* SSE4.2 Packed Comparison Intrinsics and EFlag Reading.  */
-#define _mm_cmpistra(A, LA, B, LB, M) \
-     __builtin_ia32_pcmpistria128((A), (LA), (B), (LB), (M))
-#define _mm_cmpistrc(A, LA, B, LB, M) \
-     __builtin_ia32_pcmpistric128((A), (LA), (B), (LB), (M))
-#define _mm_cmpistro(A, LA, B, LB, M) \
-     __builtin_ia32_pcmpistrio128((A), (LA), (B), (LB), (M))
-#define _mm_cmpistrs(A, LA, B, LB, M) \
-     __builtin_ia32_pcmpistris128((A), (LA), (B), (LB), (M))
-#define _mm_cmpistrz(A, LA, B, LB, M) \
-     __builtin_ia32_pcmpistriz128((A), (LA), (B), (LB), (M))
+#define _mm_cmpistra(A, B, M) \
+     __builtin_ia32_pcmpistria128((A), (B), (M))
+#define _mm_cmpistrc(A, B, M) \
+     __builtin_ia32_pcmpistric128((A), (B), (M))
+#define _mm_cmpistro(A, B, M) \
+     __builtin_ia32_pcmpistrio128((A), (B), (M))
+#define _mm_cmpistrs(A, B, M) \
+     __builtin_ia32_pcmpistris128((A), (B), (M))
+#define _mm_cmpistrz(A, B, M) \
+     __builtin_ia32_pcmpistriz128((A), (B), (M))
 
 #define _mm_cmpestra(A, LA, B, LB, M) \
      __builtin_ia32_pcmpestria128((A), (LA), (B), (LB), (M))
