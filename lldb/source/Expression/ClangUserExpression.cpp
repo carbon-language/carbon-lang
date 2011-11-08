@@ -567,6 +567,9 @@ ClangUserExpression::Execute (Stream &error_stream,
         if (log)
             log->Printf("-- [ClangUserExpression::Execute] Execution of expression begins --");
         
+        if (exe_ctx.GetProcessPtr())
+            exe_ctx.GetProcessPtr()->SetRunningUserExpression(true);
+            
         ExecutionResults execution_result = exe_ctx.GetProcessRef().RunThreadPlan (exe_ctx, 
                                                                                    call_plan_sp, 
                                                                                    stop_others, 
@@ -575,6 +578,9 @@ ClangUserExpression::Execute (Stream &error_stream,
                                                                                    single_thread_timeout_usec, 
                                                                                    error_stream);
         
+        if (exe_ctx.GetProcessPtr())
+            exe_ctx.GetProcessPtr()->SetRunningUserExpression(false);
+            
         if (log)
             log->Printf("-- [ClangUserExpression::Execute] Execution of expression completed --");
 

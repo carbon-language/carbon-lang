@@ -22,6 +22,7 @@ namespace lldb_private {
 
 class StopInfo
 {
+    friend class Process;
 public:
     //------------------------------------------------------------------
     // Constructors and Destructors
@@ -136,13 +137,13 @@ protected:
     //------------------------------------------------------------------
     Thread &        m_thread;   // The thread corresponding to the stop reason.
     uint32_t        m_stop_id;  // The process stop ID for which this stop info is valid
+    uint32_t        m_resume_id; // This is the resume ID when we made this stop ID.
     uint64_t        m_value;    // A generic value that can be used for things pertaining to this stop info
     std::string     m_description; // A textual description describing this stop.
     
-    // This provides an accessor to the PrivateEventState of the process for StopInfo's w/o having to make each
-    // StopInfo subclass a friend of Process.
-    lldb::StateType
-    GetPrivateState ();
+    // This determines whether the target has run since this stop info.
+    // N.B. running to evaluate a user expression does not count. 
+    bool HasTargetRunSinceMe ();
 
 private:
     friend class Thread;

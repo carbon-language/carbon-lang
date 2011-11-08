@@ -35,6 +35,7 @@ using namespace lldb_private;
 StopInfo::StopInfo (Thread &thread, uint64_t value) :
     m_thread (thread),
     m_stop_id (thread.GetProcess().GetStopID()),
+    m_resume_id (thread.GetProcess().GetResumeID()),
     m_value (value)
 {
 }
@@ -49,12 +50,37 @@ void
 StopInfo::MakeStopInfoValid ()
 {
     m_stop_id = m_thread.GetProcess().GetStopID();
+    m_resume_id = m_thread.GetProcess().GetResumeID();
 }
 
-lldb::StateType
-StopInfo::GetPrivateState ()
+bool
+StopInfo::HasTargetRunSinceMe ()
 {
-    return m_thread.GetProcess().GetPrivateState();
+    lldb::StateType ret_type = m_thread.GetProcess().GetPrivateState();
+    if (ret_type == eStateRunning)
+    {
+        return true;
+    }
+    else if (ret_type == eStateStopped)
+    {
+        // This is a little tricky.  We want to count "run and stopped again before you could
+        // ask this question as a "TRUE" answer to HasTargetRunSinceMe.  But we don't want to 
+        // include any running of the target done for expressions.  So we track both resumes,
+        // and resumes caused by expressions, and check if there are any resumes NOT caused
+        // by expressions.
+        
+        uint32_t curr_resume_id = m_thread.GetProcess().GetResumeID();
+        uint32_t last_user_expression_id = m_thread.GetProcess().GetLastUserExpressionResumeID ();
+        if (curr_resume_id == m_resume_id)
+        {
+            return false;
+        }
+        else if (curr_resume_id > last_user_expression_id)
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 //----------------------------------------------------------------------
@@ -161,7 +187,7 @@ public:
             // However we want to run all the callbacks, except of course if one of them actually
             // resumes the target.
             // So we use stop_requested to track what we're were asked to do.
-            bool stop_requested = true;
+            bool stop_requested = false;
             for (size_t j = 0; j < num_owners; j++)
             {
                 lldb::BreakpointLocationSP bp_loc_sp = bp_site_sp->GetOwnerAtIndex(j);
@@ -170,11 +196,30 @@ public:
                                                   &m_thread, 
                                                   m_thread.GetStackFrameAtIndex(0).get(),
                                                   false);
-                stop_requested = bp_loc_sp->InvokeCallback (&context);
+                bool callback_return;
+                
+                // FIXME: For now the callbacks have to run in async mode - the first time we restart we need
+                // to get out of there.  So set it here.
+                // When we figure out how to stack breakpoint hits then this will change.
+                
+                Debugger &debugger = m_thread.GetProcess().GetTarget().GetDebugger();
+                bool old_async = debugger.GetAsyncExecution();
+                debugger.SetAsyncExecution (true);
+                
+                callback_return = bp_loc_sp->InvokeCallback (&context);
+                
+                debugger.SetAsyncExecution (old_async);
+                
+                if (callback_return)
+                    stop_requested = true;
+                    
                 // Also make sure that the callback hasn't continued the target.  
                 // If it did, when we'll set m_should_start to false and get out of here.
-                if (GetPrivateState() == eStateRunning)
+                if (HasTargetRunSinceMe ())
+                {
                     m_should_stop = false;
+                    break;
+                }
             }
             
             if (m_should_stop && !stop_requested)
@@ -423,7 +468,7 @@ public:
             bool stop_requested = wp_sp->InvokeCallback (&context);
             // Also make sure that the callback hasn't continued the target.  
             // If it did, when we'll set m_should_start to false and get out of here.
-            if (GetPrivateState() == eStateRunning)
+            if (HasTargetRunSinceMe ())
                 m_should_stop = false;
             
             if (m_should_stop && !stop_requested)

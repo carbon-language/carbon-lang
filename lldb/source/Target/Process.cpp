@@ -1156,6 +1156,12 @@ Process::SetPrivateState (StateType new_state)
     }
 }
 
+void
+Process::SetRunningUserExpression (bool on)
+{
+    m_mod_id.SetRunningUserExpression (on);
+}
+
 addr_t
 Process::GetImageInfoAddress()
 {
@@ -2425,6 +2431,7 @@ Process::Resume ()
         // to see if they are suppoed to start back up with a signal.
         if (m_thread_list.WillResume())
         {
+            m_mod_id.BumpResumeID();
             error = DoResume();
             if (error.Success())
             {
@@ -2986,18 +2993,47 @@ Process::ProcessEventData::DoOnRemoval (Event *event_ptr)
         
     // If we're stopped and haven't restarted, then do the breakpoint commands here:
     if (m_state == eStateStopped && ! m_restarted)
-    {
-        int num_threads = m_process_sp->GetThreadList().GetSize();
+    {        
+        ThreadList &curr_thread_list = m_process_sp->GetThreadList();
+        int num_threads = curr_thread_list.GetSize();
         int idx;
 
         // The actions might change one of the thread's stop_info's opinions about whether we should
         // stop the process, so we need to query that as we go.
+        
+        // One other complication here, is that we try to catch any case where the target has run (except for expressions)
+        // and immediately exit, but if we get that wrong (which is possible) then the thread list might have changed, and
+        // that would cause our iteration here to crash.  We could make a copy of the thread list, but we'd really like
+        // to also know if it has changed at all, so we make up a vector of the thread ID's and check what we get back 
+        // against this list & bag out if anything differs.
+        std::vector<lldb::tid_t> thread_index_array(num_threads);
+        for (idx = 0; idx < num_threads; ++idx)
+            thread_index_array[idx] = curr_thread_list.GetThreadAtIndex(idx)->GetIndexID();
+        
         bool still_should_stop = true;
         
         for (idx = 0; idx < num_threads; ++idx)
         {
-            lldb::ThreadSP thread_sp = m_process_sp->GetThreadList().GetThreadAtIndex(idx);
-
+            curr_thread_list = m_process_sp->GetThreadList();
+            if (curr_thread_list.GetSize() != num_threads)
+            {
+                lldb::LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STEP | LIBLLDB_LOG_PROCESS));
+                log->Printf("Number of threads changed from %d to %d while processing event.", num_threads, curr_thread_list.GetSize());
+                break;
+            }
+            
+            lldb::ThreadSP thread_sp = curr_thread_list.GetThreadAtIndex(idx);
+            
+            if (thread_sp->GetIndexID() != thread_index_array[idx])
+            {
+                lldb::LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STEP | LIBLLDB_LOG_PROCESS));
+                log->Printf("The thread at position %d changed from %d  to %d while processing event.", 
+                            idx, 
+                            thread_index_array[idx],
+                            thread_sp->GetIndexID());
+                break;
+            }
+            
             StopInfoSP stop_info_sp = thread_sp->GetStopInfo ();
             if (stop_info_sp)
             {
@@ -3006,7 +3042,9 @@ Process::ProcessEventData::DoOnRemoval (Event *event_ptr)
                 // event so that whoever is receiving it will know to wait for the running event and reflect
                 // that state appropriately.
                 // We also need to stop processing actions, since they aren't expecting the target to be running.
-                if (m_process_sp->GetPrivateState() == eStateRunning)
+                
+                // FIXME: we might have run.
+                if (stop_info_sp->HasTargetRunSinceMe())
                 {
                     SetRestarted (true);
                     break;

@@ -7,7 +7,8 @@ def stop_if_called_from_a():
     dbg = lldb.SBDebugger.FindDebuggerWithID(lldb.debugger_unique_id)
 
     # Perform synchronous interaction with the debugger.
-    dbg.SetAsync(False)
+    old_async = dbg.GetAsync()
+    dbg.SetAsync(True)
 
     # Retrieve the target, process, and the only thread.
     target = dbg.GetSelectedTarget()
@@ -18,17 +19,19 @@ def stop_if_called_from_a():
     # of the leaf function c() is a().  If it's not the right caller, we ask the
     # command interpreter to continue execution.
 
-    #print >> sys.stdout, "Checking call frames..."
-    #lldbutil.print_stacktrace(thread)
+    print >> sys.stdout, "Checking call frames..."
+    lldbutil.print_stacktrace(thread)
+    should_stop = True
     if thread.GetNumFrames() >= 2:
         funcs = lldbutil.get_function_names(thread)
-        #print >> sys.stdout, funcs[0], "called from", funcs[1]
+        print >> sys.stdout, funcs[0], "called from", funcs[1]
         if (funcs[0] == 'c' and funcs[1] == 'a'):
-            #print >> sys.stdout, "Stopped at c() with immediate caller as a()."
-            pass
+            should_stop = True
         else:
-            #print >> sys.stdout, "Continuing..."
             process.Continue()
+            should_stop = False
 
-    return True
+    dbg.SetAsync(old_async)
+    return should_stop
+
 

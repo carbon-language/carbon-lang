@@ -890,8 +890,11 @@ class ProcessModID
 friend bool operator== (const ProcessModID &lhs, const ProcessModID &rhs);   
 public:
     ProcessModID () : 
-        m_stop_id (0), 
-        m_memory_id (0) 
+        m_stop_id (0),
+        m_resume_id (0), 
+        m_memory_id (0),
+        m_last_user_expression_resume (0),
+        m_running_user_expression (false)
     {}
     
     ProcessModID (const ProcessModID &rhs) :
@@ -911,11 +914,22 @@ public:
     
     ~ProcessModID () {}
     
-    void BumpStopID () { m_stop_id++; }
+    void BumpStopID () { 
+        m_stop_id++; 
+    }
+    
     void BumpMemoryID () { m_memory_id++; }
+    
+    void BumpResumeID () {
+        m_resume_id++;
+        if (m_running_user_expression > 0)
+            m_last_user_expression_resume = m_resume_id;
+    }
     
     uint32_t GetStopID() const { return m_stop_id; }
     uint32_t GetMemoryID () const { return m_memory_id; }
+    uint32_t GetResumeID () const { return m_resume_id; }
+    uint32_t GetLastUserExpressionResumeID () const { return m_last_user_expression_resume; }
     
     bool MemoryIDEqual (const ProcessModID &compare) const
     {
@@ -936,9 +950,23 @@ public:
     {
         return m_stop_id != UINT32_MAX;
     }
+    
+    void
+    SetRunningUserExpression (bool on)
+    {
+        // REMOVEME printf ("Setting running user expression %s at resume id %d - value: %d.\n", on ? "on" : "off", m_resume_id, m_running_user_expression);
+        if (on)
+            m_running_user_expression++;
+        else
+            m_running_user_expression--;
+    }
+    
 private:
     uint32_t m_stop_id;
+    uint32_t m_resume_id;
     uint32_t m_memory_id;
+    uint32_t m_last_user_expression_resume;
+    uint32_t m_running_user_expression;
 };
 inline bool operator== (const ProcessModID &lhs, const ProcessModID &rhs)
 {
@@ -1957,10 +1985,28 @@ public:
         return m_mod_id;
     }
     
+    const ProcessModID &
+    GetModIDRef () const
+    {
+        return m_mod_id;
+    }
+    
     uint32_t
     GetStopID () const
     {
         return m_mod_id.GetStopID();
+    }
+    
+    uint32_t
+    GetResumeID () const
+    {
+        return m_mod_id.GetResumeID();
+    }
+    
+    uint32_t
+    GetLastUserExpressionResumeID () const
+    {
+        return m_mod_id.GetLastUserExpressionResumeID();
     }
     
     //------------------------------------------------------------------
@@ -2607,6 +2653,9 @@ public:
     {   
         return true;
     }
+    
+    void
+    SetRunningUserExpression (bool on);
     
     //------------------------------------------------------------------
     // lldb::ExecutionContextScope pure virtual functions
