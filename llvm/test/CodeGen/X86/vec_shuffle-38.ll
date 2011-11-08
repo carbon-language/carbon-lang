@@ -48,7 +48,7 @@ entry:
 ; CHECK: f
 define <4 x float> @f(<4 x float> %x, double* nocapture %y) nounwind uwtable readonly ssp {
 entry:
-  ; CHECK: movlps  (%rdi), %xmm0
+  ; CHECK: movlps  (%{{rdi|rdx}}), %xmm0
   %u110.i = load double* %y, align 1
   %tmp8.i = insertelement <2 x double> undef, double %u110.i, i32 0
   %tmp9.i = bitcast <2 x double> %tmp8.i to <4 x float>
