@@ -2,6 +2,9 @@ clang_CXCursorSet_contains
 clang_CXCursorSet_insert
 clang_CXXMethod_isStatic
 clang_CXXMethod_isVirtual
+clang_Cursor_getTranslationUnit
+clang_Cursor_isNull
+clang_Range_isNull
 clang_annotateTokens
 clang_codeCompleteAt
 clang_codeCompleteGetContainerKind
@@ -20,8 +23,6 @@ clang_createCXCursorSet
 clang_createIndex
 clang_createTranslationUnit
 clang_createTranslationUnitFromSourceFile
-clang_Cursor_getTranslationUnit
-clang_Cursor_isNull
 clang_defaultCodeCompleteOptions
 clang_defaultDiagnosticDisplayOptions
 clang_defaultEditingTranslationUnitOptions
@@ -53,8 +54,8 @@ clang_getCXXAccessSpecifier
 clang_getCanonicalCursor
 clang_getCanonicalType
 clang_getClangVersion
-clang_getCompletionAvailability
 clang_getCompletionAnnotation
+clang_getCompletionAvailability
 clang_getCompletionChunkCompletionString
 clang_getCompletionChunkKind
 clang_getCompletionChunkText
@@ -150,7 +151,6 @@ clang_isUnexposed
 clang_isVirtualBase
 clang_isVolatileQualifiedType
 clang_parseTranslationUnit
-clang_Range_isNull
 clang_remap_dispose
 clang_remap_getFilenames
 clang_remap_getNumFiles
