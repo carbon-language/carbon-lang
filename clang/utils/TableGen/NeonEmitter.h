@@ -86,6 +86,40 @@ enum ClassKind {
   ClassB            // bitcast arguments with enum argument to specify type
 };
 
+/// NeonTypeFlags - Flags to identify the types for overloaded Neon
+/// builtins.  These must be kept in sync with the flags in
+/// include/clang/Basic/TargetBuiltins.h.
+class NeonTypeFlags {
+  enum {
+    EltTypeMask = 0xf,
+    UnsignedFlag = 0x10,
+    QuadFlag = 0x20
+  };
+  uint32_t Flags;
+
+public:
+  enum EltType {
+    Int8,
+    Int16,
+    Int32,
+    Int64,
+    Poly8,
+    Poly16,
+    Float16,
+    Float32
+  };
+
+  NeonTypeFlags(unsigned F) : Flags(F) {}
+  NeonTypeFlags(EltType ET, bool IsUnsigned, bool IsQuad) : Flags(ET) {
+    if (IsUnsigned)
+      Flags |= UnsignedFlag;
+    if (IsQuad)
+      Flags |= QuadFlag;
+  }
+
+  uint32_t getFlags() const { return Flags; }
+};
+
 namespace llvm {
 
   class NeonEmitter : public TableGenBackend {

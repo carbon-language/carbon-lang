@@ -245,27 +245,25 @@ Sema::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
 
 // Get the valid immediate range for the specified NEON type code.
 static unsigned RFT(unsigned t, bool shift = false) {
-  bool quad = t & 0x10;
-  
-  switch (t & 0x7) {
-    case 0: // i8
-      return shift ? 7 : (8 << (int)quad) - 1;
-    case 1: // i16
-      return shift ? 15 : (4 << (int)quad) - 1;
-    case 2: // i32
-      return shift ? 31 : (2 << (int)quad) - 1;
-    case 3: // i64
-      return shift ? 63 : (1 << (int)quad) - 1;
-    case 4: // f32
-      assert(!shift && "cannot shift float types!");
-      return (2 << (int)quad) - 1;
-    case 5: // poly8
-      return shift ? 7 : (8 << (int)quad) - 1;
-    case 6: // poly16
-      return shift ? 15 : (4 << (int)quad) - 1;
-    case 7: // float16
-      assert(!shift && "cannot shift float types!");
-      return (4 << (int)quad) - 1;
+  NeonTypeFlags Type(t);
+  int IsQuad = Type.isQuad();
+  switch (Type.getEltType()) {
+  case NeonTypeFlags::Int8:
+  case NeonTypeFlags::Poly8:
+    return shift ? 7 : (8 << IsQuad) - 1;
+  case NeonTypeFlags::Int16:
+  case NeonTypeFlags::Poly16:
+    return shift ? 15 : (4 << IsQuad) - 1;
+  case NeonTypeFlags::Int32:
+    return shift ? 31 : (2 << IsQuad) - 1;
+  case NeonTypeFlags::Int64:
+    return shift ? 63 : (1 << IsQuad) - 1;
+  case NeonTypeFlags::Float16:
+    assert(!shift && "cannot shift float types!");
+    return (4 << IsQuad) - 1;
+  case NeonTypeFlags::Float32:
+    assert(!shift && "cannot shift float types!");
+    return (2 << IsQuad) - 1;
   }
   return 0;
 }
@@ -288,8 +286,8 @@ bool Sema::CheckARMBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
     if (SemaBuiltinConstantArg(TheCall, ArgNo, Result))
       return true;
     
-    TV = Result.getLimitedValue(32);
-    if ((TV > 31) || (mask & (1 << TV)) == 0)
+    TV = Result.getLimitedValue(64);
+    if ((TV > 63) || (mask & (1 << TV)) == 0)
       return Diag(TheCall->getLocStart(), diag::err_invalid_neon_type_code)
         << TheCall->getArg(ArgNo)->getSourceRange();
   }

@@ -833,7 +833,6 @@ static std::string GenOpString(OpKind op, const std::string &proto,
 
 static unsigned GetNeonEnum(const std::string &proto, StringRef typestr) {
   unsigned mod = proto[0];
-  unsigned ret = 0;
 
   if (mod == 'v' || mod == 'f')
     mod = proto[1];
@@ -851,35 +850,32 @@ static unsigned GetNeonEnum(const std::string &proto, StringRef typestr) {
   // Based on the modifying character, change the type and width if necessary.
   type = ModType(mod, type, quad, poly, usgn, scal, cnst, pntr);
 
-  if (usgn)
-    ret |= 0x08;
-  if (quad && proto[1] != 'g')
-    ret |= 0x10;
-
+  NeonTypeFlags::EltType ET;
   switch (type) {
     case 'c':
-      ret |= poly ? 5 : 0;
+      ET = poly ? NeonTypeFlags::Poly8 : NeonTypeFlags::Int8;
       break;
     case 's':
-      ret |= poly ? 6 : 1;
+      ET = poly ? NeonTypeFlags::Poly16 : NeonTypeFlags::Int16;
       break;
     case 'i':
-      ret |= 2;
+      ET = NeonTypeFlags::Int32;
       break;
     case 'l':
-      ret |= 3;
+      ET = NeonTypeFlags::Int64;
       break;
     case 'h':
-      ret |= 7;
+      ET = NeonTypeFlags::Float16;
       break;
     case 'f':
-      ret |= 4;
+      ET = NeonTypeFlags::Float32;
       break;
     default:
       throw "unhandled type!";
       break;
   }
-  return ret;
+  NeonTypeFlags Flags(ET, usgn, quad && proto[1] != 'g');
+  return Flags.getFlags();
 }
 
 // Generate the definition for this intrinsic, e.g. __builtin_neon_cls(a)
