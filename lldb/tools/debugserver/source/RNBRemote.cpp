@@ -186,6 +186,8 @@ RNBRemote::CreatePacketTable  ()
 //  t.push_back (Packet (pass_signals_to_inferior,      &RNBRemote::HandlePacket_UNIMPLEMENTED, NULL, "QPassSignals:", "Specify which signals are passed to the inferior"));
     t.push_back (Packet (allocate_memory,               &RNBRemote::HandlePacket_AllocateMemory, NULL, "_M", "Allocate memory in the inferior process."));
     t.push_back (Packet (deallocate_memory,             &RNBRemote::HandlePacket_DeallocateMemory, NULL, "_m", "Deallocate memory in the inferior process."));
+    t.push_back (Packet (address_is_executable,         &RNBRemote::HandlePacket_IsAddressExecutable, NULL, "QAddressIsExecutable", "Indicate if an address is in an executable region or not"));
+
 }
 
 
@@ -3237,6 +3239,45 @@ RNBRemote::HandlePacket_c (const char *p)
     // Don't send an "OK" packet; response is the stopped/exited message.
     return rnb_success;
 }
+
+rnb_err_t
+RNBRemote::HandlePacket_IsAddressExecutable (const char *p)
+{
+    /* This tells us whether the specified address is in an executable region
+       in the remote process or not.  Examples of use:
+          QAddressIsExecutable,3a55140
+          AddressIsInExecutableRegion
+
+          QAddressIsExecutable,0
+          AddressIsNotInExecutableRegion
+
+          QAddressIsExecutable,3a551140   (on a different platform)
+          CannotDetermineRegionAttributes
+    */
+
+    p += sizeof ("QAddressIsExecutable") - 1;
+    if (*p == '\0')
+       return SendPacket ("OK");
+    if (*p++ != ',')
+       return SendPacket ("E67");
+    if (*p == '0' && (*(p + 1) == 'x' || *(p + 1) == 'X'))
+       p += 2;
+
+    errno = 0;
+    uint64_t address = strtoul (p, NULL, 16);
+    if (errno != 0 && address == 0)
+    {
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Invalid address in QAddressIsExecutable packet");
+    }
+    int ret = DNBIsAddressExecutable (m_ctx.ProcessID(), address);
+    if (ret == 1)
+        return SendPacket ("AddressIsInExecutableRegion");
+    if (ret == 0)
+        return SendPacket ("AddressIsNotInExecutableRegion");
+    
+    return SendPacket ("CannotDetermineRegionAttributes");
+}
+
 
 /* `C sig [;addr]'
  Resume with signal sig, optionally at address addr.  */

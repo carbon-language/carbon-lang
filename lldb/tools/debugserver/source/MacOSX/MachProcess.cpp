@@ -478,7 +478,6 @@ MachProcess::Detach()
     return true;
 }
 
-
 nub_size_t
 MachProcess::RemoveTrapsFromBuffer (nub_addr_t addr, nub_size_t size, uint8_t *buf) const
 {
@@ -604,6 +603,11 @@ MachProcess::WriteMemory (nub_addr_t addr, nub_size_t size, const void *buf)
     return bytes_written;
 }
 
+bool
+MachProcess::IsAddressExecutable(nub_addr_t address)
+{
+    return m_task.IsAddressExecutable (address);
+}
 
 void
 MachProcess::ReplyToAllExceptions ()

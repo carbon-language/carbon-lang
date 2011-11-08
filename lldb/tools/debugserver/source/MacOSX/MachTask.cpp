@@ -205,6 +205,23 @@ MachTask::WriteMemory (nub_addr_t addr, nub_size_t size, const void *buf)
 }
 
 //----------------------------------------------------------------------
+// MachTask::IsAddressExecutable
+//----------------------------------------------------------------------
+bool
+MachTask::IsAddressExecutable (nub_addr_t addr)
+{
+    task_t task = TaskPort();
+    bool ret = false;
+    if (task != TASK_NULL)
+    {
+        ret = m_vm_memory.IsExecutable(task, addr);
+        DNBLogThreadedIf(LOG_MEMORY, "MachTask::IsAddressExecutable ( addr = 0x%8.8llx ) => %s", (uint64_t)addr, (ret ? "true" : "false"));
+    }
+    return ret;
+}
+
+
+//----------------------------------------------------------------------
 // MachTask::TaskPortForProcessID
 //----------------------------------------------------------------------
 task_t

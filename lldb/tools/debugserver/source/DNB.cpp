@@ -1124,6 +1124,34 @@ DNBProcessMemoryDeallocate (nub_process_t pid, nub_addr_t addr)
     return 0;
 }
 
+//----------------------------------------------------------------------
+// Try to determine if a given address in the process PID is in an 
+// executable region or not.  Used for sniffing potential caller addresses 
+// when unwinding a stack and we're making guesses about where the caller 
+// frame addr might be saved.
+//
+// RETURNS:  1 if executable
+//           0 if not executable
+//          -1 if we cannot make a determination on this target
+//
+// Note that unmapped memory (an address that is not an allocated page in
+// PID) will return as 0 - it is not executable memory.  -1 is intended
+// for a platform where we can't inspect memory region attributes.
+//----------------------------------------------------------------------
+int
+DNBIsAddressExecutable (nub_process_t pid, nub_addr_t addr)
+{
+    MachProcessSP procSP;
+    if (GetProcessSP (pid, procSP))
+    {
+        if (procSP->IsAddressExecutable(addr))
+            return 1;
+        else
+            return 0;
+    }
+    return -1;
+}
+
 
 //----------------------------------------------------------------------
 // Formatted output that uses memory and registers from process and

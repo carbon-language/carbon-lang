@@ -52,6 +52,17 @@ MachVMMemory::MaxBytesLeftInPage(nub_addr_t addr, nub_size_t count)
     return count;
 }
 
+bool
+MachVMMemory::IsExecutable(task_t task, nub_addr_t address)
+{
+    MachVMRegion vmRegion(task);
+
+    if (vmRegion.GetRegionForAddress(address) && vmRegion.IsExecutable())
+       return true;
+    else
+       return false;
+}
+
 nub_size_t
 MachVMMemory::Read(task_t task, nub_addr_t address, void *data, nub_size_t data_count)
 {

@@ -64,6 +64,7 @@ public:
 
             nub_size_t      ReadMemory (nub_addr_t addr, nub_size_t size, void *buf);
             nub_size_t      WriteMemory (nub_addr_t addr, nub_size_t size, const void *buf);
+            bool            IsAddressExecutable (nub_addr_t addr) ;
 
             nub_addr_t      AllocateMemory (nub_size_t size, uint32_t permissions);
             nub_bool_t      DeallocateMemory (nub_addr_t addr);

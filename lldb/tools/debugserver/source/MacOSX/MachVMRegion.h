@@ -42,6 +42,9 @@ public:
     bool SetProtections(mach_vm_address_t addr, mach_vm_size_t size, vm_prot_t prot);
     bool RestoreProtections();
     bool GetRegionForAddress(nub_addr_t addr);
+
+    bool IsExecutable() const { return (m_data.protection & VM_PROT_EXECUTE) == VM_PROT_EXECUTE; }
+
 protected:
 #if defined (VM_REGION_SUBMAP_SHORT_INFO_COUNT_64)
     typedef vm_region_submap_short_info_data_64_t RegionInfo;
