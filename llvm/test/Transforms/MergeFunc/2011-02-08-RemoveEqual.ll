@@ -75,10 +75,12 @@ bb2:                                              ; preds = %bb1, %invcont
   ret void
 
 lpad:                                             ; preds = %bb
-  %eh_ptr = call i8* @llvm.eh.exception()
-  store i8* %eh_ptr, i8** %eh_exception
+  %eh_ptr = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+              cleanup
+  %exn = extractvalue { i8*, i32 } %eh_ptr, 0
+  store i8* %exn, i8** %eh_exception
   %eh_ptr4 = load i8** %eh_exception
-  %eh_select5 = call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* %eh_ptr4, i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i32 0)
+  %eh_select5 = extractvalue { i8*, i32 } %eh_ptr, 1
   store i32 %eh_select5, i32* %eh_selector
   %eh_select = load i32* %eh_selector
   store i32 %eh_select, i32* %save_filt.150, align 4
@@ -199,10 +201,12 @@ bb2:                                              ; preds = %bb1, %invcont
   ret void
 
 lpad:                                             ; preds = %bb
-  %eh_ptr = call i8* @llvm.eh.exception()
-  store i8* %eh_ptr, i8** %eh_exception
+  %eh_ptr = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+              cleanup
+  %exn = extractvalue { i8*, i32 } %eh_ptr, 0
+  store i8* %exn, i8** %eh_exception
   %eh_ptr4 = load i8** %eh_exception
-  %eh_select5 = call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* %eh_ptr4, i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i32 0)
+  %eh_select5 = extractvalue { i8*, i32 } %eh_ptr, 1
   store i32 %eh_select5, i32* %eh_selector
   %eh_select = load i32* %eh_selector
   store i32 %eh_select, i32* %save_filt.148, align 4
@@ -219,10 +223,6 @@ lpad:                                             ; preds = %bb
   call void @_Unwind_Resume_or_Rethrow()
   unreachable
 }
-
-declare i8* @llvm.eh.exception() nounwind readonly
-
-declare i32 @llvm.eh.selector(i8*, i8*, ...) nounwind
 
 declare i32 @__gxx_personality_v0(...)
 
