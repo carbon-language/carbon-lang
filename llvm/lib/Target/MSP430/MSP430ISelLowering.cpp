@@ -371,7 +371,7 @@ MSP430TargetLowering::LowerCCCArguments(SDValue Chain,
       SDValue FIN = DAG.getFrameIndex(FI, MVT::i16);
       InVals.push_back(DAG.getLoad(VA.getLocVT(), dl, Chain, FIN,
                                    MachinePointerInfo::getFixedStack(FI),
-                                   false, false, 0));
+                                   false, false, false, 0));
     }
   }
 
@@ -907,13 +907,13 @@ SDValue MSP430TargetLowering::LowerRETURNADDR(SDValue Op,
     return DAG.getLoad(getPointerTy(), dl, DAG.getEntryNode(),
                        DAG.getNode(ISD::ADD, dl, getPointerTy(),
                                    FrameAddr, Offset),
-                       MachinePointerInfo(), false, false, 0);
+                       MachinePointerInfo(), false, false, false, 0);
   }
 
   // Just load the return address.
   SDValue RetAddrFI = getReturnAddressFrameIndex(DAG);
   return DAG.getLoad(getPointerTy(), dl, DAG.getEntryNode(),
-                     RetAddrFI, MachinePointerInfo(), false, false, 0);
+                     RetAddrFI, MachinePointerInfo(), false, false, false, 0);
 }
 
 SDValue MSP430TargetLowering::LowerFRAMEADDR(SDValue Op,
@@ -929,7 +929,7 @@ SDValue MSP430TargetLowering::LowerFRAMEADDR(SDValue Op,
   while (Depth--)
     FrameAddr = DAG.getLoad(VT, dl, DAG.getEntryNode(), FrameAddr,
                             MachinePointerInfo(),
-                            false, false, 0);
+                            false, false, false, 0);
   return FrameAddr;
 }
 

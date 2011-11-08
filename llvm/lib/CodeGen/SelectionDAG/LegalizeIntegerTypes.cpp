@@ -1778,6 +1778,7 @@ void DAGTypeLegalizer::ExpandIntRes_LOAD(LoadSDNode *N,
   unsigned Alignment = N->getAlignment();
   bool isVolatile = N->isVolatile();
   bool isNonTemporal = N->isNonTemporal();
+  bool isInvariant = N->isInvariant();
   DebugLoc dl = N->getDebugLoc();
 
   assert(NVT.isByteSized() && "Expanded type not byte sized!");
@@ -1808,7 +1809,7 @@ void DAGTypeLegalizer::ExpandIntRes_LOAD(LoadSDNode *N,
   } else if (TLI.isLittleEndian()) {
     // Little-endian - low bits are at low addresses.
     Lo = DAG.getLoad(NVT, dl, Ch, Ptr, N->getPointerInfo(),
-                     isVolatile, isNonTemporal, Alignment);
+                     isVolatile, isNonTemporal, isInvariant, Alignment);
 
     unsigned ExcessBits =
       N->getMemoryVT().getSizeInBits() - NVT.getSizeInBits();
@@ -2310,7 +2311,7 @@ void DAGTypeLegalizer::ExpandIntRes_XMULO(SDNode *N,
 
   SplitInteger(CallInfo.first, Lo, Hi);
   SDValue Temp2 = DAG.getLoad(PtrVT, dl, CallInfo.second, Temp,
-			      MachinePointerInfo(), false, false, 0);
+			      MachinePointerInfo(), false, false, false, 0);
   SDValue Ofl = DAG.getSetCC(dl, N->getValueType(1), Temp2,
                              DAG.getConstant(0, PtrVT),
                              ISD::SETNE);

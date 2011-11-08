@@ -1402,7 +1402,7 @@ SDValue MipsTargetLowering::LowerGlobalAddress(SDValue Op,
   GA = DAG.getNode(MipsISD::WrapperPIC, dl, ValTy, GA);
   SDValue ResNode = DAG.getLoad(ValTy, dl,
                                 DAG.getEntryNode(), GA, MachinePointerInfo(),
-                                false, false, 0);
+                                false, false, false, 0);
   // On functions and global targets not internal linked only
   // a load from got/GP is necessary for PIC to work.
   if (!HasGotOfst)
@@ -1438,7 +1438,7 @@ SDValue MipsTargetLowering::LowerBlockAddress(SDValue Op,
                                            MipsII::MO_ABS_LO);
   SDValue Load = DAG.getLoad(MVT::i32, dl,
                              DAG.getEntryNode(), BAGOTOffset,
-                             MachinePointerInfo(), false, false, 0);
+                             MachinePointerInfo(), false, false, false, 0);
   SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, BALOOffset);
   return DAG.getNode(ISD::ADD, dl, MVT::i32, Load, Lo);
 }
@@ -1485,7 +1485,7 @@ LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const
                                              MipsII::MO_GOTTPREL);
     Offset = DAG.getLoad(MVT::i32, dl,
                          DAG.getEntryNode(), TGA, MachinePointerInfo(),
-                         false, false, 0);
+                         false, false, false, 0);
   } else {
     // Local Exec TLS Model
     SDVTList VTs = DAG.getVTList(MVT::i32);
@@ -1524,7 +1524,7 @@ LowerJumpTable(SDValue Op, SelectionDAG &DAG) const
     JTI = DAG.getNode(MipsISD::WrapperPIC, dl, MVT::i32, JTI);
     HiPart = DAG.getLoad(MVT::i32, dl, DAG.getEntryNode(), JTI,
                          MachinePointerInfo(),
-                         false, false, 0);
+                         false, false, false, 0);
   }
 
   SDValue JTILo = DAG.getTargetJumpTable(JT->getIndex(), PtrVT,
@@ -1568,7 +1568,7 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG) const
     CP = DAG.getNode(MipsISD::WrapperPIC, dl, MVT::i32, CP);
     SDValue Load = DAG.getLoad(MVT::i32, dl, DAG.getEntryNode(),
                                CP, MachinePointerInfo::getConstantPool(),
-                               false, false, 0);
+                               false, false, false, 0);
     SDValue CPLo = DAG.getTargetConstantPool(C, MVT::i32, N->getAlignment(),
                                              N->getOffset(), MipsII::MO_ABS_LO);
     SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, CPLo);
@@ -1831,8 +1831,8 @@ WriteByValArg(SDValue& ByValChain, SDValue Chain, DebugLoc dl,
                                   DAG.getConstant(Offset, MVT::i32));
     SDValue LoadVal = DAG.getLoad(MVT::i32, dl, Chain, LoadPtr,
                                   MachinePointerInfo(),
-                                  false, false, std::min(ByValAlign,
-                                                         (unsigned )4));
+                                  false, false, false, std::min(ByValAlign,
+                                                                (unsigned )4));
     MemOpChains.push_back(LoadVal.getValue(1));
     unsigned DstReg = O32IntRegs[LocMemOffset / 4];
     RegsToPass.push_back(std::make_pair(DstReg, LoadVal));
@@ -2119,7 +2119,7 @@ MipsTargetLowering::LowerCall(SDValue InChain, SDValue Callee,
       Callee = DAG.getNode(MipsISD::WrapperPIC, dl, getPointerTy(), Callee);
       SDValue LoadValue = DAG.getLoad(getPointerTy(), dl, DAG.getEntryNode(),
                                       Callee, MachinePointerInfo::getGOT(),
-                                      false, false, 0);
+                                      false, false, false, 0);
 
       // Use GOT+LO if callee has internal linkage.
       if (CalleeLo.getNode()) {
@@ -2350,7 +2350,7 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
       SDValue FIN = DAG.getFrameIndex(LastFI, getPointerTy());
       InVals.push_back(DAG.getLoad(ValVT, dl, Chain, FIN,
                                    MachinePointerInfo::getFixedStack(LastFI),
-                                   false, false, 0));
+                                   false, false, false, 0));
     }
   }
 

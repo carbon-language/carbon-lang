@@ -3175,6 +3175,7 @@ void SelectionDAGBuilder::visitLoad(const LoadInst &I) {
 
   bool isVolatile = I.isVolatile();
   bool isNonTemporal = I.getMetadata("nontemporal") != 0;
+  bool isInvariant = I.getMetadata("invariant.load") != 0;
   unsigned Alignment = I.getAlignment();
   const MDNode *TBAAInfo = I.getMetadata(LLVMContext::MD_tbaa);
 
@@ -3224,7 +3225,7 @@ void SelectionDAGBuilder::visitLoad(const LoadInst &I) {
                             DAG.getConstant(Offsets[i], PtrVT));
     SDValue L = DAG.getLoad(ValueVTs[i], getCurDebugLoc(), Root,
                             A, MachinePointerInfo(SV, Offsets[i]), isVolatile,
-                            isNonTemporal, Alignment, TBAAInfo);
+                            isNonTemporal, isInvariant, Alignment, TBAAInfo);
 
     Values[i] = L;
     Chains[ChainI] = L.getValue(1);
@@ -5264,7 +5265,7 @@ void SelectionDAGBuilder::LowerCallTo(ImmutableCallSite CS, SDValue Callee,
       SDValue L = DAG.getLoad(Outs[i].VT, getCurDebugLoc(), Result.second,
                               Add,
                   MachinePointerInfo::getFixedStack(DemoteStackIdx, Offsets[i]),
-                              false, false, 1);
+                              false, false, false, 1);
       Values[i] = L;
       Chains[i] = L.getValue(1);
     }
@@ -5375,7 +5376,8 @@ static SDValue getMemCmpLoad(const Value *PtrVal, MVT LoadVT,
   SDValue LoadVal = Builder.DAG.getLoad(LoadVT, Builder.getCurDebugLoc(), Root,
                                         Ptr, MachinePointerInfo(PtrVal),
                                         false /*volatile*/,
-                                        false /*nontemporal*/, 1 /* align=1 */);
+                                        false /*nontemporal*/, 
+                                        false /*isinvariant*/, 1 /* align=1 */);
 
   if (!ConstantMemory)
     Builder.PendingLoads.push_back(LoadVal.getValue(1));

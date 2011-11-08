@@ -67,7 +67,7 @@ ARMSelectionDAGInfo::EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
                              DAG.getNode(ISD::ADD, dl, MVT::i32, Src,
                                          DAG.getConstant(SrcOff, MVT::i32)),
                              SrcPtrInfo.getWithOffset(SrcOff), isVolatile,
-                             false, 0);
+                             false, false, 0);
       TFOps[i] = Loads[i].getValue(1);
       SrcOff += VTSize;
     }
@@ -105,7 +105,8 @@ ARMSelectionDAGInfo::EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
     Loads[i] = DAG.getLoad(VT, dl, Chain,
                            DAG.getNode(ISD::ADD, dl, MVT::i32, Src,
                                        DAG.getConstant(SrcOff, MVT::i32)),
-                           SrcPtrInfo.getWithOffset(SrcOff), false, false, 0);
+                           SrcPtrInfo.getWithOffset(SrcOff),
+                           false, false, false, 0);
     TFOps[i] = Loads[i].getValue(1);
     ++i;
     SrcOff += VTSize;

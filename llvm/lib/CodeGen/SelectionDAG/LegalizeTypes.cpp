@@ -889,7 +889,7 @@ SDValue DAGTypeLegalizer::CreateStackStoreLoad(SDValue Op,
                                MachinePointerInfo(), false, false, 0);
   // Result is a load from the stack slot.
   return DAG.getLoad(DestVT, dl, Store, StackPtr, MachinePointerInfo(),
-                     false, false, 0);
+                     false, false, false, 0);
 }
 
 /// CustomLowerNode - Replace the node's results with custom code provided

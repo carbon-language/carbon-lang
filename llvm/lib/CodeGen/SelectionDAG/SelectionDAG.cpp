@@ -475,7 +475,7 @@ static void AddNodeIDNode(FoldingSetNodeID &ID, const SDNode *N) {
 ///
 static inline unsigned
 encodeMemSDNodeFlags(int ConvType, ISD::MemIndexedMode AM, bool isVolatile,
-                     bool isNonTemporal) {
+                     bool isNonTemporal, bool isInvariant) {
   assert((ConvType & 3) == ConvType &&
          "ConvType may not require more than 2 bits!");
   assert((AM & 7) == AM &&
@@ -483,7 +483,8 @@ encodeMemSDNodeFlags(int ConvType, ISD::MemIndexedMode AM, bool isVolatile,
   return ConvType |
          (AM << 2) |
          (isVolatile << 5) |
-         (isNonTemporal << 6);
+         (isNonTemporal << 6) |
+         (isInvariant << 7);
 }
 
 //===----------------------------------------------------------------------===//
@@ -3568,7 +3569,7 @@ static SDValue getMemmoveLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
     Value = DAG.getLoad(VT, dl, Chain,
                         getMemBasePlusOffset(Src, SrcOff, DAG),
                         SrcPtrInfo.getWithOffset(SrcOff), isVol,
-                        false, SrcAlign);
+                        false, false, SrcAlign);
     LoadValues.push_back(Value);
     LoadChains.push_back(Value.getValue(1));
     SrcOff += VTSize;
@@ -4144,7 +4145,7 @@ SelectionDAG::getLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
                       EVT VT, DebugLoc dl, SDValue Chain,
                       SDValue Ptr, SDValue Offset,
                       MachinePointerInfo PtrInfo, EVT MemVT,
-                      bool isVolatile, bool isNonTemporal,
+                      bool isVolatile, bool isNonTemporal, bool isInvariant,
                       unsigned Alignment, const MDNode *TBAAInfo) {
   assert(Chain.getValueType() == MVT::Other && 
         "Invalid chain type");
@@ -4156,6 +4157,8 @@ SelectionDAG::getLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
     Flags |= MachineMemOperand::MOVolatile;
   if (isNonTemporal)
     Flags |= MachineMemOperand::MONonTemporal;
+  if (isInvariant)
+    Flags |= MachineMemOperand::MOInvariant;
 
   // If we don't have a PtrInfo, infer the trivial frame index case to simplify
   // clients.
@@ -4202,7 +4205,8 @@ SelectionDAG::getLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
   AddNodeIDNode(ID, ISD::LOAD, VTs, Ops, 3);
   ID.AddInteger(MemVT.getRawBits());
   ID.AddInteger(encodeMemSDNodeFlags(ExtType, AM, MMO->isVolatile(),
-                                     MMO->isNonTemporal()));
+                                     MMO->isNonTemporal(), 
+                                     MMO->isInvariant()));
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP)) {
     cast<LoadSDNode>(E)->refineAlignment(MMO);
@@ -4219,10 +4223,12 @@ SDValue SelectionDAG::getLoad(EVT VT, DebugLoc dl,
                               SDValue Chain, SDValue Ptr,
                               MachinePointerInfo PtrInfo,
                               bool isVolatile, bool isNonTemporal,
-                              unsigned Alignment, const MDNode *TBAAInfo) {
+                              bool isInvariant, unsigned Alignment, 
+                              const MDNode *TBAAInfo) {
   SDValue Undef = getUNDEF(Ptr.getValueType());
   return getLoad(ISD::UNINDEXED, ISD::NON_EXTLOAD, VT, dl, Chain, Ptr, Undef,
-                 PtrInfo, VT, isVolatile, isNonTemporal, Alignment, TBAAInfo);
+                 PtrInfo, VT, isVolatile, isNonTemporal, isInvariant, Alignment, 
+                 TBAAInfo);
 }
 
 SDValue SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, DebugLoc dl, EVT VT,
@@ -4232,7 +4238,7 @@ SDValue SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, DebugLoc dl, EVT VT,
                                  unsigned Alignment, const MDNode *TBAAInfo) {
   SDValue Undef = getUNDEF(Ptr.getValueType());
   return getLoad(ISD::UNINDEXED, ExtType, VT, dl, Chain, Ptr, Undef,
-                 PtrInfo, MemVT, isVolatile, isNonTemporal, Alignment,
+                 PtrInfo, MemVT, isVolatile, isNonTemporal, false, Alignment,
                  TBAAInfo);
 }
 
@@ -4245,8 +4251,8 @@ SelectionDAG::getIndexedLoad(SDValue OrigLoad, DebugLoc dl, SDValue Base,
          "Load is already a indexed load!");
   return getLoad(AM, LD->getExtensionType(), OrigLoad.getValueType(), dl,
                  LD->getChain(), Base, Offset, LD->getPointerInfo(),
-                 LD->getMemoryVT(),
-                 LD->isVolatile(), LD->isNonTemporal(), LD->getAlignment());
+                 LD->getMemoryVT(), LD->isVolatile(), LD->isNonTemporal(), 
+                 false, LD->getAlignment());
 }
 
 SDValue SelectionDAG::getStore(SDValue Chain, DebugLoc dl, SDValue Val,
@@ -4288,7 +4294,7 @@ SDValue SelectionDAG::getStore(SDValue Chain, DebugLoc dl, SDValue Val,
   AddNodeIDNode(ID, ISD::STORE, VTs, Ops, 4);
   ID.AddInteger(VT.getRawBits());
   ID.AddInteger(encodeMemSDNodeFlags(false, ISD::UNINDEXED, MMO->isVolatile(),
-                                     MMO->isNonTemporal()));
+                                     MMO->isNonTemporal(), MMO->isInvariant()));
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP)) {
     cast<StoreSDNode>(E)->refineAlignment(MMO);
@@ -4355,7 +4361,7 @@ SDValue SelectionDAG::getTruncStore(SDValue Chain, DebugLoc dl, SDValue Val,
   AddNodeIDNode(ID, ISD::STORE, VTs, Ops, 4);
   ID.AddInteger(SVT.getRawBits());
   ID.AddInteger(encodeMemSDNodeFlags(true, ISD::UNINDEXED, MMO->isVolatile(),
-                                     MMO->isNonTemporal()));
+                                     MMO->isNonTemporal(), MMO->isInvariant()));
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP)) {
     cast<StoreSDNode>(E)->refineAlignment(MMO);
@@ -5679,7 +5685,7 @@ MemSDNode::MemSDNode(unsigned Opc, DebugLoc dl, SDVTList VTs, EVT memvt,
                      MachineMemOperand *mmo)
  : SDNode(Opc, dl, VTs), MemoryVT(memvt), MMO(mmo) {
   SubclassData = encodeMemSDNodeFlags(0, ISD::UNINDEXED, MMO->isVolatile(),
-                                      MMO->isNonTemporal());
+                                      MMO->isNonTemporal(), MMO->isInvariant());
   assert(isVolatile() == MMO->isVolatile() && "Volatile encoding error!");
   assert(isNonTemporal() == MMO->isNonTemporal() &&
          "Non-temporal encoding error!");
@@ -5692,7 +5698,7 @@ MemSDNode::MemSDNode(unsigned Opc, DebugLoc dl, SDVTList VTs,
    : SDNode(Opc, dl, VTs, Ops, NumOps),
      MemoryVT(memvt), MMO(mmo) {
   SubclassData = encodeMemSDNodeFlags(0, ISD::UNINDEXED, MMO->isVolatile(),
-                                      MMO->isNonTemporal());
+                                      MMO->isNonTemporal(), MMO->isInvariant());
   assert(isVolatile() == MMO->isVolatile() && "Volatile encoding error!");
   assert(memvt.getStoreSize() == MMO->getSize() && "Size mismatch!");
 }

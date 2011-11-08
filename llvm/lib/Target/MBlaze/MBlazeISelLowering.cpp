@@ -951,7 +951,7 @@ LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
       SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());
       InVals.push_back(DAG.getLoad(VA.getValVT(), dl, Chain, FIN,
                                    MachinePointerInfo::getFixedStack(FI),
-                                   false, false, 0));
+                                   false, false, false, 0));
     }
   }
 

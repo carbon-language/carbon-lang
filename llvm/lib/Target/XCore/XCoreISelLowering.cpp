@@ -427,7 +427,7 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
       //
       return DAG.getLoad(getPointerTy(), DL, Chain, BasePtr,
                          MachinePointerInfo(),
-                         false, false, 0);
+                         false, false, false, 0);
     }
     // Lower to
     // ldw low, base[offset >> 2]
@@ -444,9 +444,11 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
     SDValue HighAddr = DAG.getNode(ISD::ADD, DL, MVT::i32, Base, HighOffset);
 
     SDValue Low = DAG.getLoad(getPointerTy(), DL, Chain,
-                              LowAddr, MachinePointerInfo(), false, false, 0);
+                              LowAddr, MachinePointerInfo(),
+                              false, false, false, 0);
     SDValue High = DAG.getLoad(getPointerTy(), DL, Chain,
-                               HighAddr, MachinePointerInfo(), false, false, 0);
+                               HighAddr, MachinePointerInfo(),
+                               false, false, false, 0);
     SDValue LowShifted = DAG.getNode(ISD::SRL, DL, MVT::i32, Low, LowShift);
     SDValue HighShifted = DAG.getNode(ISD::SHL, DL, MVT::i32, High, HighShift);
     SDValue Result = DAG.getNode(ISD::OR, DL, MVT::i32, LowShifted, HighShifted);
@@ -761,7 +763,7 @@ LowerVAARG(SDValue Op, SelectionDAG &DAG) const
   EVT VT = Node->getValueType(0);
   SDValue VAList = DAG.getLoad(getPointerTy(), dl, Node->getOperand(0),
                                Node->getOperand(1), MachinePointerInfo(V),
-                               false, false, 0);
+                               false, false, false, 0);
   // Increment the pointer, VAList, to the next vararg
   SDValue Tmp3 = DAG.getNode(ISD::ADD, dl, getPointerTy(), VAList,
                      DAG.getConstant(VT.getSizeInBits(),
@@ -771,7 +773,7 @@ LowerVAARG(SDValue Op, SelectionDAG &DAG) const
                       MachinePointerInfo(V), false, false, 0);
   // Load the actual argument out of the pointer VAList
   return DAG.getLoad(VT, dl, Tmp3, VAList, MachinePointerInfo(),
-                     false, false, 0);
+                     false, false, false, 0);
 }
 
 SDValue XCoreTargetLowering::
@@ -1146,7 +1148,7 @@ XCoreTargetLowering::LowerCCCArguments(SDValue Chain,
       SDValue FIN = DAG.getFrameIndex(FI, MVT::i32);
       InVals.push_back(DAG.getLoad(VA.getLocVT(), dl, Chain, FIN,
                                    MachinePointerInfo::getFixedStack(FI),
-                                   false, false, 0));
+                                   false, false, false, 0));
     }
   }
 

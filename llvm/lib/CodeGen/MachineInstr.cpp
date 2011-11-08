@@ -1253,6 +1253,7 @@ bool MachineInstr::isInvariantLoad(AliasAnalysis *AA) const {
        E = memoperands_end(); I != E; ++I) {
     if ((*I)->isVolatile()) return false;
     if ((*I)->isStore()) return false;
+    if ((*I)->isInvariant()) return true;
 
     if (const Value *V = (*I)->getValue()) {
       // A load from a constant PseudoSourceValue is invariant.

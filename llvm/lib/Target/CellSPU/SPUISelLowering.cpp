@@ -667,7 +667,7 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   // Do the load as a i128 to allow possible shifting
   SDValue low = DAG.getLoad(MVT::i128, dl, the_chain, basePtr,
                        lowMemPtr,
-                       LN->isVolatile(), LN->isNonTemporal(), 16);
+                       LN->isVolatile(), LN->isNonTemporal(), false, 16);
 
   // When the size is not greater than alignment we get all data with just
   // one load
@@ -704,7 +704,8 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
                                            basePtr,
                                            DAG.getConstant(16, PtrVT)),
                                highMemPtr,
-                               LN->isVolatile(), LN->isNonTemporal(), 16);
+                               LN->isVolatile(), LN->isNonTemporal(), false, 
+                               16);
 
     the_chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, low.getValue(1),
                                                               high.getValue(1));
@@ -859,7 +860,8 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
 
   // Load the lower part of the memory to which to store.
   SDValue low = DAG.getLoad(vecVT, dl, the_chain, basePtr,
-                          lowMemPtr, SN->isVolatile(), SN->isNonTemporal(), 16);
+                          lowMemPtr, SN->isVolatile(), SN->isNonTemporal(),
+                            false, 16);
 
   // if we don't need to store over the 16 byte boundary, one store suffices
   if (alignment >= StVT.getSizeInBits()/8) {
@@ -959,7 +961,8 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
                                DAG.getNode(ISD::ADD, dl, PtrVT, basePtr,
                                            DAG.getConstant( 16, PtrVT)),
                                highMemPtr,
-                               SN->isVolatile(), SN->isNonTemporal(), 16);
+                               SN->isVolatile(), SN->isNonTemporal(), 
+                               false, 16);
     the_chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, low.getValue(1),
                                                               hi.getValue(1));
 
@@ -1194,7 +1197,7 @@ SPUTargetLowering::LowerFormalArguments(SDValue Chain,
       int FI = MFI->CreateFixedObject(ObjSize, ArgOffset, true);
       SDValue FIN = DAG.getFrameIndex(FI, PtrVT);
       ArgVal = DAG.getLoad(ObjectVT, dl, Chain, FIN, MachinePointerInfo(),
-                           false, false, 0);
+                           false, false, false, 0);
       ArgOffset += StackSlotSize;
     }
 

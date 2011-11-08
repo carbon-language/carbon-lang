@@ -917,12 +917,13 @@ public:
   // with MachineMemOperand information.
   bool isVolatile() const { return (SubclassData >> 5) & 1; }
   bool isNonTemporal() const { return (SubclassData >> 6) & 1; }
+  bool isInvariant() const { return (SubclassData >> 7) & 1; }
 
   AtomicOrdering getOrdering() const {
-    return AtomicOrdering((SubclassData >> 7) & 15);
+    return AtomicOrdering((SubclassData >> 8) & 15);
   }
   SynchronizationScope getSynchScope() const {
-    return SynchronizationScope((SubclassData >> 11) & 1);
+    return SynchronizationScope((SubclassData >> 12) & 1);
   }
 
   /// Returns the SrcValue and offset that describes the location of the access
@@ -993,8 +994,8 @@ class AtomicSDNode : public MemSDNode {
            "Ordering may not require more than 4 bits!");
     assert((SynchScope & 1) == SynchScope &&
            "SynchScope may not require more than 1 bit!");
-    SubclassData |= Ordering << 7;
-    SubclassData |= SynchScope << 11;
+    SubclassData |= Ordering << 8;
+    SubclassData |= SynchScope << 12;
     assert(getOrdering() == Ordering && "Ordering encoding error!");
     assert(getSynchScope() == SynchScope && "Synch-scope encoding error!");
 
