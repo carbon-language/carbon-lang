@@ -23,12 +23,18 @@ class DiagnosticsEngine;
 namespace serialized_diags {
   
 enum BlockIDs {
-  /// \brief The DIAG block, which acts as a container around a diagnostic.
-  BLOCK_DIAG = llvm::bitc::FIRST_APPLICATION_BLOCKID
+  /// \brief A top-level block which represents any meta data associated
+  /// with the diagostics, including versioning of the format.
+  BLOCK_META = llvm::bitc::FIRST_APPLICATION_BLOCKID,
+
+  /// \brief The this block acts as a container for all the information
+  /// for a specific diagnostic.
+  BLOCK_DIAG
 };
 
 enum RecordIDs {
-  RECORD_DIAG = 1,
+  RECORD_VERSION = 1,
+  RECORD_DIAG,
   RECORD_SOURCE_RANGE,
   RECORD_DIAG_FLAG,
   RECORD_CATEGORY,

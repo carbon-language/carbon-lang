@@ -22,20 +22,6 @@ using namespace clang;
 using namespace clang::serialized_diags;
 
 namespace {
-
-/// \brief A utility class for entering and exiting bitstream blocks.
-class BlockEnterExit {
-  llvm::BitstreamWriter &Stream;
-public:
-  BlockEnterExit(llvm::BitstreamWriter &stream, unsigned blockID,
-                 unsigned codelen = 3)
-    : Stream(stream) {
-      Stream.EnterSubblock(blockID, codelen);
-  }  
-  ~BlockEnterExit() {
-    Stream.ExitBlock();
-  }
-};
   
 class AbbreviationMap {
   llvm::DenseMap<unsigned, unsigned> Abbrevs;
@@ -85,6 +71,9 @@ private:
   /// \brief Emit the BLOCKINFO block.
   void EmitBlockInfoBlock();
 
+  /// \brief Emit the META data block.
+  void EmitMetaBlock();
+  
   /// \brief Emit a record for a CharSourceRange.
   void EmitCharSourceRange(CharSourceRange R);
   
@@ -257,9 +246,12 @@ void SDiagsWriter::EmitCharSourceRange(CharSourceRange R) {
 void SDiagsWriter::EmitPreamble() {
   // Emit the file header.
   Stream.Emit((unsigned)'D', 8);
-  Stream.Emit((unsigned) Version, 32 - 8);
+  Stream.Emit((unsigned)'I', 8);
+  Stream.Emit((unsigned)'A', 8);
+  Stream.Emit((unsigned)'G', 8);
 
   EmitBlockInfoBlock();
+  EmitMetaBlock();
 }
 
 static void AddSourceLocationAbbrev(llvm::BitCodeAbbrev *Abbrev) {
@@ -277,7 +269,20 @@ static void AddRangeLocationAbbrev(llvm::BitCodeAbbrev *Abbrev) {
 
 void SDiagsWriter::EmitBlockInfoBlock() {
   Stream.EnterBlockInfoBlock(3);
-  
+
+  using namespace llvm;
+
+  // ==---------------------------------------------------------------------==//
+  // The subsequent records and Abbrevs are for the "Meta" block.
+  // ==---------------------------------------------------------------------==//
+
+  EmitBlockID(BLOCK_META, "Meta", Stream, Record);
+  EmitRecordID(RECORD_VERSION, "Version", Stream, Record);
+  BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
+  Abbrev->Add(BitCodeAbbrevOp(RECORD_VERSION));
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32));
+  Abbrevs.set(RECORD_VERSION, Stream.EmitBlockInfoAbbrev(BLOCK_META, Abbrev));
+
   // ==---------------------------------------------------------------------==//
   // The subsequent records and Abbrevs are for the "Diagnostic" block.
   // ==---------------------------------------------------------------------==//
@@ -290,11 +295,8 @@ void SDiagsWriter::EmitBlockInfoBlock() {
   EmitRecordID(RECORD_FILENAME, "FileName", Stream, Record);
   EmitRecordID(RECORD_FIXIT, "FixIt", Stream, Record);
 
-  // Emit Abbrevs.
-  using namespace llvm;
-
   // Emit abbreviation for RECORD_DIAG.
-  BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
+  Abbrev = new BitCodeAbbrev();
   Abbrev->Add(BitCodeAbbrevOp(RECORD_DIAG));
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 3));  // Diag level.
   AddSourceLocationAbbrev(Abbrev);
@@ -348,6 +350,15 @@ void SDiagsWriter::EmitBlockInfoBlock() {
   Abbrevs.set(RECORD_FIXIT, Stream.EmitBlockInfoAbbrev(BLOCK_DIAG,
                                                        Abbrev));
 
+  Stream.ExitBlock();
+}
+
+void SDiagsWriter::EmitMetaBlock() {
+  Stream.EnterSubblock(BLOCK_META, 3);
+  Record.clear();
+  Record.push_back(RECORD_VERSION);
+  Record.push_back(Version);
+  Stream.EmitRecordWithAbbrev(Abbrevs.get(RECORD_VERSION), Record);  
   Stream.ExitBlock();
 }
 
