@@ -15,7 +15,7 @@
 #
 # In addition to the 'residues' removal during the cleanup step, it also
 # transforms the 'char' data type (which was actually 'char *' but the 'autodoc'
-# feature of swig removes ' *' from it into 'str' (as a Python str type).
+# feature of swig removes ' *' from it) into 'str' (as a Python str type).
 #
 # It also calls SBDebugger.Initialize() to initialize the lldb debugger
 # subsystem.
