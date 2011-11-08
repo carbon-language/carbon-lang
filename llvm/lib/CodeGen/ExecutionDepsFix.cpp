@@ -266,6 +266,11 @@ bool ExeDepsFix::Merge(DomainValue *A, DomainValue *B) {
   A->AvailableDomains = common;
   A->Dist = std::max(A->Dist, B->Dist);
   A->Instrs.append(B->Instrs.begin(), B->Instrs.end());
+
+  // Clear the old DomainValue so we won't try to swizzle instructions twice.
+  B->Instrs.clear();
+  B->AvailableDomains = 0;
+
   for (unsigned rx = 0; rx != NumRegs; ++rx)
     if (LiveRegs[rx] == B)
       SetLiveReg(rx, A);
@@ -283,7 +288,7 @@ void ExeDepsFix::enterBasicBlock(MachineBasicBlock *MBB) {
       LiveOutMap::const_iterator fi = LiveOuts.find(*pi);
       if (fi == LiveOuts.end()) continue;
       DomainValue *pdv = fi->second[rx];
-      if (!pdv) continue;
+      if (!pdv || !pdv->AvailableDomains) continue;
       if (!LiveRegs || !LiveRegs[rx]) {
         SetLiveReg(rx, pdv);
         continue;
