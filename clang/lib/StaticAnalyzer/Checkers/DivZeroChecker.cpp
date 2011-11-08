@@ -55,7 +55,8 @@ void DivZeroChecker::checkPreStmt(const BinaryOperator *B,
   const ProgramState *stateNotZero, *stateZero;
   llvm::tie(stateNotZero, stateZero) = CM.assumeDual(C.getState(), *DV);
 
-  if (stateZero && !stateNotZero) {
+  if (!stateNotZero) {
+    assert(stateZero);
     if (ExplodedNode *N = C.generateSink(stateZero)) {
       if (!BT)
         BT.reset(new BuiltinBug("Division by zero"));
