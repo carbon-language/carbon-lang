@@ -52,6 +52,7 @@ ScheduleHazardRecognizer *PPCInstrInfo::CreateTargetHazardRecognizer(
   // Should use subtarget info to pick the right hazard recognizer.  For
   // now, always return a PPC970 recognizer.
   const TargetInstrInfo *TII = TM->getInstrInfo();
+  (void)TII;
   assert(TII && "No InstrInfo?");
 
   unsigned Directive = TM->getSubtarget<PPCSubtarget>().getDarwinDirective();
