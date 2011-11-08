@@ -846,21 +846,14 @@ void ScopStmt::dump() const { print(dbgs()); }
 
 //===----------------------------------------------------------------------===//
 /// Scop class implement
-isl_id *Scop::getIdForParam(const SCEV *Parameter) const {
-  int i = 0;
+__isl_give isl_id *Scop::getIdForParam(const SCEV *Parameter) const {
+  ParamIdType::const_iterator IdIter = ParameterIds.find(Parameter);
 
-  for (const_param_iterator PI = param_begin(), PE = param_end(); PI != PE;
-       ++PI) {
-    if (Parameter == *PI) {
-      std::string ParameterName = "p" + convertInt(i);
-      isl_id *id = isl_id_alloc(getIslCtx(), ParameterName.c_str(),
-                                (void *) Parameter);
-      return id;
-    }
-    i++;
-  }
+  if (IdIter == ParameterIds.end())
+    return NULL;
 
-  return NULL;
+  std::string ParameterName = "p" + convertInt(IdIter->second);
+  return isl_id_alloc(getIslCtx(), ParameterName.c_str(), (void *) Parameter);
 }
 
 void Scop::buildContext(isl_ctx *IslCtx, ParamSetType *ParamSet) {
@@ -871,9 +864,8 @@ void Scop::buildContext(isl_ctx *IslCtx, ParamSetType *ParamSet) {
        PI != PE; ++PI) {
     const SCEV *Parameter = *PI;
     Parameters.push_back(Parameter);
-    std::string ParameterName = "p" + convertInt(i);
-    isl_id *id = isl_id_alloc(IslCtx, ParameterName.c_str(),
-                              (void *) Parameter);
+    ParameterIds.insert(std::pair<const SCEV*, int>(Parameter, i));
+    isl_id *id = getIdForParam(Parameter);
     Space = isl_space_set_dim_id(Space, isl_dim_param, i, id);
     i++;
   }
@@ -887,6 +879,7 @@ Scop::Scop(TempScop &tempScop, LoopInfo &LI, ScalarEvolution &ScalarEvolution,
            isl_ctx *Context)
            : SE(&ScalarEvolution), R(tempScop.getMaxRegion()),
            MaxLoopDepth(tempScop.getMaxLoopDepth()) {
+  IslCtx = Context;
   buildContext(Context, &tempScop.getParamSet());
 
   SmallVector<Loop*, 8> NestLoops;
@@ -966,7 +959,7 @@ void Scop::print(raw_ostream &OS) const {
 
 void Scop::dump() const { print(dbgs()); }
 
-isl_ctx *Scop::getIslCtx() const { return isl_set_get_ctx(Context); }
+isl_ctx *Scop::getIslCtx() const { return IslCtx; }
 
 ScalarEvolution *Scop::getSE() const { return SE; }
 

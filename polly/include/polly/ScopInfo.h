@@ -38,6 +38,7 @@ namespace llvm {
   class Type;
 }
 
+struct isl_ctx;
 struct isl_map;
 struct isl_basic_map;
 struct isl_id;
@@ -399,6 +400,13 @@ class Scop {
   /// Parameters of this Scop
   typedef SmallVector<const SCEV*, 8> ParamVecType;
   ParamVecType Parameters;
+
+  /// The isl_ids that are used to represent the parameters
+  typedef std::map<const SCEV*, int> ParamIdType;
+  ParamIdType ParameterIds;
+
+  // Isl context.
+  isl_ctx *IslCtx;
 
   /// Constraints on parameters.
   isl_set *Context;
