@@ -342,6 +342,16 @@ define i1 @udiv5(i32 %X) {
 ; CHECK: ret i1 false
 }
 
+; PR11340
+define i1 @udiv6(i32 %X) nounwind {
+; CHECK: @udiv6
+  %A = udiv i32 1, %X
+  %C = icmp eq i32 %A, 0
+  ret i1 %C
+; CHECK: ret i1 %C
+}
+
+
 define i1 @sdiv1(i32 %X) {
 ; CHECK: @sdiv1
   %A = sdiv i32 %X, 1000000

@@ -1612,7 +1612,7 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
       Lower = (-Upper) + 1;
     } else if (match(LHS, m_UDiv(m_ConstantInt(CI2), m_Value()))) {
       // 'udiv CI2, x' produces [0, CI2].
-      Upper = CI2->getValue();
+      Upper = CI2->getValue() + 1;
     } else if (match(LHS, m_UDiv(m_Value(), m_ConstantInt(CI2)))) {
       // 'udiv x, CI2' produces [0, UINT_MAX / CI2].
       APInt NegOne = APInt::getAllOnesValue(Width);
