@@ -1968,12 +1968,13 @@ Sema::LookupInObjCMethod(LookupResult &Lookup, Scope *S,
     }
   } else if (CurMethod->isInstanceMethod()) {
     // We should warn if a local variable hides an ivar.
-    ObjCInterfaceDecl *IFace = CurMethod->getClassInterface();
-    ObjCInterfaceDecl *ClassDeclared;
-    if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(II, ClassDeclared)) {
-      if (IV->getAccessControl() != ObjCIvarDecl::Private ||
-          IFace == ClassDeclared)
-        Diag(Loc, diag::warn_ivar_use_hidden) << IV->getDeclName();
+    if (ObjCInterfaceDecl *IFace = CurMethod->getClassInterface()) {
+      ObjCInterfaceDecl *ClassDeclared;
+      if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(II, ClassDeclared)) {
+        if (IV->getAccessControl() != ObjCIvarDecl::Private ||
+            IFace == ClassDeclared)
+          Diag(Loc, diag::warn_ivar_use_hidden) << IV->getDeclName();
+      }
     }
   }
 
