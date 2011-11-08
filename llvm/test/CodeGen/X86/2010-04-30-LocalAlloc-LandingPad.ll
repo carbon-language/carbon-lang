@@ -30,14 +30,16 @@ invoke.cont:                                      ; preds = %entry
   br label %finally
 
 terminate.handler:                                ; preds = %match.end
-  %exc = call i8* @llvm.eh.exception()            ; <i8*> [#uses=1]
-  %1 = call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* %exc, i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i32 1) ; <i32> [#uses=0]
+  %1 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+           cleanup
   call void @_ZSt9terminatev() noreturn nounwind
   unreachable
 
 try.handler:                                      ; preds = %entry
-  %exc1 = call i8* @llvm.eh.exception()           ; <i8*> [#uses=3]
-  %selector = call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* %exc1, i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i8* bitcast (i8** @_ZTIi to i8*), i8* null) ; <i32> [#uses=1]
+  %exc1.ptr = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+           catch i8* null
+  %exc1 = extractvalue { i8*, i32 } %exc1.ptr, 0
+  %selector = extractvalue { i8*, i32 } %exc1.ptr, 1
   %2 = call i32 @llvm.eh.typeid.for(i8* bitcast (i8** @_ZTIi to i8*)) ; <i32> [#uses=1]
   %3 = icmp eq i32 %selector, %2                  ; <i1> [#uses=1]
   br i1 %3, label %match, label %catch.next
@@ -55,9 +57,10 @@ invoke.cont2:                                     ; preds = %match
   br label %match.end
 
 match.handler:                                    ; preds = %match
-  %exc3 = call i8* @llvm.eh.exception()           ; <i8*> [#uses=2]
-  %7 = call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* %exc3, i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i32 0) ; <i32> [#uses=0]
-  store i8* %exc3, i8** %_rethrow
+  %exc3 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+           cleanup
+  %7 = extractvalue { i8*, i32 } %exc3, 0
+  store i8* %7, i8** %_rethrow
   store i32 2, i32* %cleanup.dst
   br label %match.end
 
@@ -123,10 +126,6 @@ finally.end:                                      ; preds = %cleanup.end10, %cle
 declare void @_Z6throwsv() ssp
 
 declare i32 @__gxx_personality_v0(...)
-
-declare i8* @llvm.eh.exception() nounwind readonly
-
-declare i32 @llvm.eh.selector(i8*, i8*, ...) nounwind
 
 declare void @_ZSt9terminatev()
 
