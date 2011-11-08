@@ -4564,6 +4564,16 @@ SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
 SDValue DAGCombiner::GetDemandedBits(SDValue V, const APInt &Mask) {
   switch (V.getOpcode()) {
   default: break;
+  case ISD::Constant: {
+    const ConstantSDNode *CV = cast<ConstantSDNode>(V.getNode());
+    assert(CV != 0 && "Const value should be ConstSDNode.");
+    const APInt &CVal = CV->getAPIntValue();
+    APInt NewVal = CVal & Mask;
+    if (NewVal != CVal) {
+      return DAG.getConstant(NewVal, V.getValueType());
+    }
+    break;
+  }
   case ISD::OR:
   case ISD::XOR:
     // If the LHS or RHS don't contribute bits to the or, drop them.
