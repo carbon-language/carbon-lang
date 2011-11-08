@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mcpu=core2 | FileCheck %s
+; RUN: llc < %s -mtriple=i686-linux -mcpu=core2 | FileCheck %s
 
 ; CHECK: test_v4sf
 ; CHECK: movq 8(%esp)
