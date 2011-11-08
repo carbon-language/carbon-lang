@@ -43,7 +43,7 @@ DwarfAccelTable::DwarfAccelTable(DwarfAccelTable::Atom atom) :
 }
 
 DwarfAccelTable::~DwarfAccelTable() {
-  for (size_t i = 0 ; i < Data.size(); ++i)
+  for (size_t i = 0, e = Data.size() ; i < e; ++i)
     delete Data[i];
 }
 
