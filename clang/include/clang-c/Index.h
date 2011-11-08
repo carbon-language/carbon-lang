@@ -1744,7 +1744,7 @@ enum CXCursorKind {
    */
   CXCursor_AsmStmt                       = 215,
 
-  /** \brief Objective-C's overall @try-@catc-@finall statement.
+  /** \brief Objective-C's overall @try-@catch-@finally statement.
    */
   CXCursor_ObjCAtTryStmt                 = 216,
 
