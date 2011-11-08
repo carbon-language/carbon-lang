@@ -64,6 +64,10 @@ void DiffConsumer::printValue(Value *V, bool isL) {
     }
     return;
   }
+  if (dyn_cast<Constant>(V)) {
+    out << *V;
+    return;
+  }
 
   unsigned N = contexts.size();
   while (N > 0) {
