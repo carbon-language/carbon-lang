@@ -67,11 +67,11 @@ class SBDirCheckerCase(TestBase):
             env_var = 'DYLD_FRAMEWORK_PATH'
             env_val = self.build_dir
 
-        env_cmd = "settings set target.process.env-vars %s=%s" %(env_var, env_val)
+        env_cmd = "settings set target.env-vars %s=%s" %(env_var, env_val)
         if self.TraceOn():
             print "Set environment to: ", env_cmd
         self.runCmd(env_cmd)
-        self.addTearDownHook(lambda: self.runCmd("settings remove target.process.env-vars %s" % env_var))
+        self.addTearDownHook(lambda: self.runCmd("settings remove target.env-vars %s" % env_var))
 
         self.expect('breakpoint set -f %s -l %d' % (self.source, self.line_to_break),
                     BREAKPOINT_CREATED,

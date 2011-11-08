@@ -82,13 +82,13 @@ class LoadUnloadTestCase(TestBase):
         # Try running with the DYLD_LIBRARY_PATH environment variable set, make sure
         # we pick up the hidden dylib.
 
-        env_cmd_string = "settings set target.process.env-vars " + dylibPath + "=" + new_dir
+        env_cmd_string = "settings set target.env-vars " + dylibPath + "=" + new_dir
         if self.TraceOn():
             print "Set environment to: ", env_cmd_string
         self.runCmd(env_cmd_string)
-        self.runCmd("settings show target.process.env-vars")
+        self.runCmd("settings show target.env-vars")
 
-        remove_dyld_path_cmd = "settings remove target.process.env-vars " + dylibPath
+        remove_dyld_path_cmd = "settings remove target.env-vars " + dylibPath
         self.addTearDownHook(lambda: self.runCmd(remove_dyld_path_cmd))
 
         self.expect("breakpoint set -f d.c -l %d" % self.line_d_function,

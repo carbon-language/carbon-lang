@@ -151,7 +151,9 @@ public:
     bool
     Execute (Args& launch_args, CommandReturnObject &result)
     {
-        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
+        Debugger &debugger = m_interpreter.GetDebugger();
+        Target *target = debugger.GetSelectedTarget().get();
+        Error error;
 
         if (target == NULL)
         {
@@ -159,7 +161,6 @@ public:
             result.SetStatus (eReturnStatusFailed);
             return false;
         }
-
         // If our listener is NULL, users aren't allows to launch
         char filename[PATH_MAX];
         const Module *exe_module = target->GetExecutableModulePointer();
@@ -197,25 +198,102 @@ public:
                 }
                 else
                 {
-                    Error error (process->Destroy());
-                    if (error.Success())
+                    Error destroy_error (process->Destroy());
+                    if (destroy_error.Success())
                     {
                         result.SetStatus (eReturnStatusSuccessFinishResult);
                     }
                     else
                     {
-                        result.AppendErrorWithFormat ("Failed to kill process: %s\n", error.AsCString());
+                        result.AppendErrorWithFormat ("Failed to kill process: %s\n", destroy_error.AsCString());
                         result.SetStatus (eReturnStatusFailed);
                     }
                 }
             }
         }
         
-        if (state != eStateConnected)
+        if (launch_args.GetArgumentCount() > 0)
+        {
+            m_options.launch_info.GetArguments().AppendArguments (launch_args);
+        }
+
+        
+        if (state == eStateConnected)
+        {
+            if (m_options.launch_info.GetFlags().Test (eLaunchFlagLaunchInTTY))
+            {
+                result.AppendWarning("can't launch in tty when launching through a remote connection");
+                m_options.launch_info.GetFlags().Clear (eLaunchFlagLaunchInTTY);
+            }
+        }
+        else
         {
             const char *plugin_name = m_options.launch_info.GetProcessPluginName();
 
-            process = target->CreateProcess (m_interpreter.GetDebugger().GetListener(), plugin_name).get();
+            if (m_options.launch_info.GetFlags().Test (eLaunchFlagLaunchInTTY))
+            {
+                process = target->GetPlatform()->DebugProcess (m_options.launch_info, 
+                                                               debugger,
+                                                               target,
+                                                               debugger.GetListener(),
+                                                               error).get();
+            }
+            else
+            {
+                process = target->CreateProcess (debugger.GetListener(), plugin_name).get();
+        
+                if (launch_args.GetArgumentCount() == 0)
+                {
+                    const Args &process_args = target->GetRunArguments();
+                    if (process_args.GetArgumentCount() > 0)
+                        m_options.launch_info.GetArguments().AppendArguments (process_args);
+                }
+
+                Args environment;
+                target->GetEnvironmentAsArgs (environment);
+                m_options.launch_info.GetEnvironmentEntries ().AppendArguments (environment);
+                
+                if (target->GetDisableASLR())
+                    m_options.launch_info.GetFlags().Set (eLaunchFlagDisableASLR);
+
+                if (m_options.launch_info.GetNumFileActions() == 0)
+                {
+                    // Only use the settings value if the user hasn't specified any options that would override it.
+                    if (target->GetDisableSTDIO())
+                        m_options.launch_info.GetFlags().Set (eLaunchFlagDisableSTDIO);
+                    
+                    const char *path;
+                    path = target->GetStandardErrorPath();
+                    if (path)
+                    {
+                        ProcessLaunchInfo::FileAction file_action;
+                        const bool read = true;
+                        const bool write = true;
+                        if (file_action.Open(STDERR_FILENO, path, read, write))
+                            m_options.launch_info.AppendFileAction (file_action);
+                    }
+                    path = target->GetStandardInputPath();
+                    if (path)
+                    {
+                        ProcessLaunchInfo::FileAction file_action;
+                        const bool read = true;
+                        const bool write = false;
+                        if (file_action.Open(STDIN_FILENO, path, read, write))
+                            m_options.launch_info.AppendFileAction (file_action);
+                    }
+
+                    path = target->GetStandardOutputPath();
+                    if (path)
+                    {
+                        ProcessLaunchInfo::FileAction file_action;
+                        const bool read = false;
+                        const bool write = true;
+                        if (file_action.Open(STDOUT_FILENO, path, read, write))
+                            m_options.launch_info.AppendFileAction (file_action);
+                    }
+                }
+                error = process->Launch (m_options.launch_info);
+            }
             if (process == NULL)
             {
                 result.AppendErrorWithFormat ("Failed to find a process plugin for executable.\n");
@@ -223,76 +301,7 @@ public:
                 return false;
             }
         }
-
-        if (launch_args.GetArgumentCount() > 0)
-        {
-            m_options.launch_info.GetArguments().AppendArguments (launch_args);
-        }
-        else
-        {
-            const Args &process_args = process->GetRunArguments();
-            if (process_args.GetArgumentCount() > 0)
-                m_options.launch_info.GetArguments().AppendArguments (process_args);
-        }
-        
-
-        if (m_options.launch_info.GetFlags().Test (eLaunchFlagLaunchInTTY))
-        {
-            if (state == eStateConnected)
-            {
-                result.AppendWarning("launch in tty option is ignored when launching through a remote connection");
-                m_options.launch_info.GetFlags().Clear (eLaunchFlagLaunchInTTY);
-            }
-        }
-
-        Args environment;
-        process->GetEnvironmentAsArgs (environment);
-        m_options.launch_info.GetEnvironmentEntries ().AppendArguments (environment);
-        
-        if (process->GetDisableASLR())
-            m_options.launch_info.GetFlags().Set (eLaunchFlagDisableASLR);
-
-        if (m_options.launch_info.GetFlags().Test (eLaunchFlagLaunchInTTY) == false &&
-            m_options.launch_info.GetNumFileActions() == 0)
-        {
-            // Only use the settings value if the user hasn't specified any options that would override it.
-            if (process->GetDisableSTDIO())
-                m_options.launch_info.GetFlags().Set (eLaunchFlagDisableSTDIO);
-            
-            const char *path;
-            path = process->GetStandardErrorPath();
-            if (path)
-            {
-                ProcessLaunchInfo::FileAction file_action;
-                const bool read = true;
-                const bool write = true;
-                if (file_action.Open(STDERR_FILENO, path, read, write))
-                    m_options.launch_info.AppendFileAction (file_action);
-            }
-            path = process->GetStandardInputPath();
-            if (path)
-            {
-                ProcessLaunchInfo::FileAction file_action;
-                const bool read = true;
-                const bool write = false;
-                if (file_action.Open(STDIN_FILENO, path, read, write))
-                    m_options.launch_info.AppendFileAction (file_action);
-            }
-
-            path = process->GetStandardOutputPath();
-            if (path)
-            {
-                ProcessLaunchInfo::FileAction file_action;
-                const bool read = false;
-                const bool write = true;
-                if (file_action.Open(STDOUT_FILENO, path, read, write))
-                    m_options.launch_info.AppendFileAction (file_action);
-            }
-        }
-        Error error;
-
-        error = process->Launch (m_options.launch_info);
-                     
+             
         if (error.Success())
         {
             const char *archname = exe_module->GetArchitecture().GetArchitectureName();

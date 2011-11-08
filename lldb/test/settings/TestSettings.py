@@ -23,7 +23,7 @@ class SettingsCommandTestCase(TestBase):
         """Test that 'apropos' command should also search descriptions for the settings variables."""
 
         self.expect("apropos 'environment variable'",
-            substrs = ["target.process.env-vars",
+            substrs = ["target.env-vars",
                        "environment variables",
                        "executable's environment"])
 
@@ -99,12 +99,12 @@ class SettingsCommandTestCase(TestBase):
 
         # Set the run-args and the env-vars.
         # And add hooks to restore the settings during tearDown().
-        self.runCmd('settings set target.process.run-args A B C')
+        self.runCmd('settings set target.run-args A B C')
         self.addTearDownHook(
-            lambda: self.runCmd("settings set -r target.process.run-args"))
-        self.runCmd('settings set target.process.env-vars ["MY_ENV_VAR"]=YES')
+            lambda: self.runCmd("settings set -r target.run-args"))
+        self.runCmd('settings set target.env-vars ["MY_ENV_VAR"]=YES')
         self.addTearDownHook(
-            lambda: self.runCmd("settings set -r target.process.env-vars"))
+            lambda: self.runCmd("settings set -r target.env-vars"))
 
         self.runCmd("run", RUN_SUCCEEDED)
 
@@ -126,8 +126,8 @@ class SettingsCommandTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # By default, inherit-env is 'true'.
-        self.expect('settings show target.process.inherit-env', "Default inherit-env is 'true'",
-            startstr = "target.process.inherit-env (boolean) = true")
+        self.expect('settings show target.inherit-env', "Default inherit-env is 'true'",
+            startstr = "target.inherit-env (boolean) = true")
 
         # Set some host environment variables now.
         os.environ["MY_HOST_ENV_VAR1"] = "VAR1"
@@ -150,34 +150,34 @@ class SettingsCommandTestCase(TestBase):
                        "The host environment variable 'MY_HOST_ENV_VAR2' successfully passed."])
 
     def test_set_error_output_path(self):
-        """Test that setting target.process.error/output-path for the launched process works."""
+        """Test that setting target.error/output-path for the launched process works."""
         self.buildDefault()
 
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Set the error-path and output-path and verify both are set.
-        self.runCmd("settings set target.process.error-path stderr.txt")
-        self.runCmd("settings set target.process.output-path stdout.txt")
+        self.runCmd("settings set target.error-path stderr.txt")
+        self.runCmd("settings set target.output-path stdout.txt")
         # And add hooks to restore the original settings during tearDown().
         self.addTearDownHook(
-            lambda: self.runCmd("settings set -r target.process.output-path"))
+            lambda: self.runCmd("settings set -r target.output-path"))
         self.addTearDownHook(
-            lambda: self.runCmd("settings set -r target.process.error-path"))
+            lambda: self.runCmd("settings set -r target.error-path"))
 
-        self.expect("settings show target.process.error-path",
-                    SETTING_MSG("target.process.error-path"),
-            startstr = 'target.process.error-path (string) = "stderr.txt"')
+        self.expect("settings show target.error-path",
+                    SETTING_MSG("target.error-path"),
+            startstr = 'target.error-path (string) = "stderr.txt"')
 
-        self.expect("settings show target.process.output-path",
-                    SETTING_MSG("target.process.output-path"),
-            startstr = 'target.process.output-path (string) = "stdout.txt"')
+        self.expect("settings show target.output-path",
+                    SETTING_MSG("target.output-path"),
+            startstr = 'target.output-path (string) = "stdout.txt"')
 
         self.runCmd("run", RUN_SUCCEEDED)
 
         # The 'stderr.txt' file should now exist.
         self.assertTrue(os.path.isfile("stderr.txt"),
-                        "'stderr.txt' exists due to target.process.error-path.")
+                        "'stderr.txt' exists due to target.error-path.")
 
         # Read the output file produced by running the program.
         with open('stderr.txt', 'r') as f:
@@ -188,7 +188,7 @@ class SettingsCommandTestCase(TestBase):
 
         # The 'stdout.txt' file should now exist.
         self.assertTrue(os.path.isfile("stdout.txt"),
-                        "'stdout.txt' exists due to target.process.output-path.")
+                        "'stdout.txt' exists due to target.output-path.")
 
         # Read the output file produced by running the program.
         with open('stdout.txt', 'r') as f:
@@ -198,35 +198,35 @@ class SettingsCommandTestCase(TestBase):
             startstr = "This message should go to standard out.")
 
     def test_print_dictionary_setting(self):
-        self.runCmd ("settings set -r target.process.env-vars")
-        self.runCmd ("settings set target.process.env-vars [\"MY_VAR\"]=some-value")
-        self.expect ("settings show target.process.env-vars",
+        self.runCmd ("settings set -r target.env-vars")
+        self.runCmd ("settings set target.env-vars [\"MY_VAR\"]=some-value")
+        self.expect ("settings show target.env-vars",
                      substrs = [ "MY_VAR=some-value" ])
-        self.runCmd ("settings set -r target.process.env-vars")
+        self.runCmd ("settings set -r target.env-vars")
 
     def test_print_array_setting(self):
-        self.runCmd ("settings set -r target.process.run-args")
-        self.runCmd ("settings set target.process.run-args gobbledy-gook")
-        self.expect ("settings show target.process.run-args",
+        self.runCmd ("settings set -r target.run-args")
+        self.runCmd ("settings set target.run-args gobbledy-gook")
+        self.expect ("settings show target.run-args",
                      substrs = [ '[0]: "gobbledy-gook"' ])
-        self.runCmd ("settings set -r target.process.run-args")
+        self.runCmd ("settings set -r target.run-args")
 
     def test_settings_with_quotes (self):
-        self.runCmd ("settings set -r target.process.run-args")
-        self.runCmd ("settings set target.process.run-args a b c")
-        self.expect ("settings show target.process.run-args",
+        self.runCmd ("settings set -r target.run-args")
+        self.runCmd ("settings set target.run-args a b c")
+        self.expect ("settings show target.run-args",
                      substrs = [ '[0]: "a"',
                                  '[1]: "b"',
                                  '[2]: "c"' ])
-        self.runCmd ("settings set target.process.run-args 'a b c'")
-        self.expect ("settings show target.process.run-args",
+        self.runCmd ("settings set target.run-args 'a b c'")
+        self.expect ("settings show target.run-args",
                      substrs = [ '[0]: "a b c"' ])
-        self.runCmd ("settings set -r target.process.run-args")
-        self.runCmd ("settings set -r target.process.env-vars")
-        self.runCmd ('settings set target.process.env-vars ["MY_FILE"]="this is a file name with spaces.txt"')
-        self.expect ("settings show target.process.env-vars",
+        self.runCmd ("settings set -r target.run-args")
+        self.runCmd ("settings set -r target.env-vars")
+        self.runCmd ('settings set target.env-vars ["MY_FILE"]="this is a file name with spaces.txt"')
+        self.expect ("settings show target.env-vars",
                      substrs = [ 'MY_FILE=this is a file name with spaces.txt' ])
-        self.runCmd ("settings set -r target.process.env-vars")
+        self.runCmd ("settings set -r target.env-vars")
 
 
     def test_all_settings_exist (self):
@@ -240,15 +240,14 @@ class SettingsCommandTestCase(TestBase):
                                  "auto-confirm (boolean) = ",
                                  "target.default-arch (string) =",
                                  "target.expr-prefix (string) = ",
-                                 "target.process.run-args (array) =",
-                                 "target.process.env-vars (dictionary) =",
-                                 "target.process.inherit-env (boolean) = ",
-                                 "target.process.input-path (string) = ",
-                                 "target.process.output-path (string) = ",
-                                 "target.process.error-path (string) = ",
-                                 "target.process.plugin (enum) =",
-                                 "target.process.disable-aslr (boolean) = ",
-                                 "target.process.disable-stdio (boolean) = ",
+                                 "target.run-args (array) =",
+                                 "target.env-vars (dictionary) =",
+                                 "target.inherit-env (boolean) = ",
+                                 "target.input-path (string) = ",
+                                 "target.output-path (string) = ",
+                                 "target.error-path (string) = ",
+                                 "target.disable-aslr (boolean) = ",
+                                 "target.disable-stdio (boolean) = ",
                                  "target.process.thread.step-avoid-regexp (string) =",
                                  "target.process.thread.trace-thread (boolean) =" ])
         

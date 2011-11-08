@@ -431,17 +431,30 @@ tell application \"Terminal\"\n\
 	do script the_shell_script\n\
 end tell\n";
 
+static const char *
+GetShellSafeArgument (const char *unsafe_arg, std::string &safe_arg)
+{
+    safe_arg.assign (unsafe_arg);
+    size_t prev_pos = 0;
+    while (prev_pos < safe_arg.size())
+    {
+        // Escape spaces and quotes
+        size_t pos = safe_arg.find_first_of(" '\"", prev_pos);
+        if (pos != std::string::npos)
+        {
+            safe_arg.insert (pos, 1, '\\');
+            prev_pos = pos + 2;
+        }
+        else
+            break;
+    }
+    return safe_arg.c_str();
+}
+
 static Error
-LaunchInNewTerminalWithAppleScript (const char *exe_path,
-                                    ProcessLaunchInfo &launch_info)
+LaunchInNewTerminalWithAppleScript (const char *exe_path, ProcessLaunchInfo &launch_info)
 {
     Error error;
-    if (exe_path == NULL || exe_path[0] == '\0')
-    {
-        error.SetErrorString ("invalid executable path");
-        return error;
-    }
-    
     char unix_socket_name[PATH_MAX] = "/tmp/XXXXXX";    
     if (::mktemp (unix_socket_name) == NULL)
     {
@@ -485,15 +498,41 @@ LaunchInNewTerminalWithAppleScript (const char *exe_path,
     
     if (launch_info.GetFlags().Test (eLaunchFlagDisableASLR))
         command.PutCString(" --disable-aslr");
-        
-    command.Printf(" -- '%s'", exe_path);
-
-    const char **argv = launch_info.GetArguments().GetConstArgumentVector ();
-    if (argv)
+    
+    if (launch_info.GetFlags().Test (eLaunchFlagLaunchInShell))
     {
-        for (size_t i=0; argv[i] != NULL; ++i)
+        const char *shell_executable = getenv("SHELL");
+        std::string safe_arg;
+        command.Printf(" -- %s -c '", shell_executable);
+        const char **argv = launch_info.GetArguments().GetConstArgumentVector ();
+        if (argv)
         {
-            command.Printf(" '%s'", argv[i]);
+            for (size_t i=0; argv[i] != NULL; ++i)
+            {
+                const char *arg = GetShellSafeArgument (i == 0 ? exe_path : argv[i], safe_arg);
+                command.Printf(" %s", arg);
+            }
+        }
+        command.PutChar('\'');
+    }
+    else
+    {
+        command.PutCString(" -- ");
+
+        const char **argv = launch_info.GetArguments().GetConstArgumentVector ();
+        if (argv)
+        {
+            for (size_t i=0; argv[i] != NULL; ++i)
+            {
+                if (i==0)
+                    command.Printf(" '%s'", exe_path);
+                else
+                    command.Printf(" '%s'", argv[i]);
+            }
+        }
+        else
+        {
+            command.Printf(" '%s'", exe_path);
         }
     }
     command.PutCString (" ; echo Process exited with status $?");

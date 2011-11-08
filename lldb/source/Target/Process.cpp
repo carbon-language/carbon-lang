@@ -250,6 +250,60 @@ ProcessInfo::SetArguments (const Args& args,
     }
 }
 
+void
+ProcessLaunchInfo::FinalizeFileActions (Target *target, Process *process)
+{
+    // If notthing was specified, then check the process for any default 
+    // settings that were set with "settings set"
+    if (m_file_actions.empty())
+    {
+        const char *path;
+        if (m_flags.Test(eLaunchFlagDisableSTDIO))
+        {
+            AppendSuppressFileAction (STDERR_FILENO, true , true );
+            AppendSuppressFileAction (STDIN_FILENO , true , false);
+            AppendSuppressFileAction (STDOUT_FILENO, false, true );
+        }
+        else
+        {
+            // Check for any values that might have gotten set with any of:
+            // (lldb) settings set target.input-path
+            // (lldb) settings set target.output-path
+            // (lldb) settings set target.error-path
+            if (target)
+            {
+                path = target->GetStandardErrorPath();
+                if (path)
+                {
+                    const bool read = true;
+                    const bool write = true;
+                    AppendOpenFileAction(STDERR_FILENO, path, read, write);
+                }
+                path = target->GetStandardInputPath();
+                if (path)
+                {
+                    const bool read = true;
+                    const bool write = false;
+                    AppendOpenFileAction(STDIN_FILENO, path, read, write);
+                }
+                
+                path = target->GetStandardOutputPath();
+                if (path)
+                {
+                    const bool read = false;
+                    const bool write = true;
+                    AppendOpenFileAction(STDOUT_FILENO, path, read, write);
+                }
+            }
+
+            // If we still don't have any actions...
+            if (m_file_actions.empty())
+            {
+            }
+        }
+    }
+}
+
 bool
 ProcessLaunchInfo::FileAction::Open (int fd, const char *path, bool read, bool write)
 {
@@ -466,6 +520,7 @@ ProcessLaunchCommandOptions::g_option_table[] =
 { LLDB_OPT_SET_ALL, false, "working-dir",   'w', required_argument, NULL, 0, eArgTypePath,          "Set the current working directory to <path> when running the inferior."},
 { LLDB_OPT_SET_ALL, false, "arch",          'a', required_argument, NULL, 0, eArgTypeArchitecture,  "Set the architecture for the process to launch when ambiguous."},
 { LLDB_OPT_SET_ALL, false, "environment",   'v', required_argument, NULL, 0, eArgTypeNone,          "Specify an environment variable name/value stirng (--environement NAME=VALUE). Can be specified multiple times for subsequent environment entries."},
+{ LLDB_OPT_SET_ALL, false, "shell",         'c', no_argument,       NULL, 0, eArgTypeNone,          "Run the process in a shell (not supported on all platforms)."},
 
 { LLDB_OPT_SET_1  , false, "stdin",         'i', required_argument, NULL, 0, eArgTypePath,    "Redirect stdin for the process to <path>."},
 { LLDB_OPT_SET_1  , false, "stdout",        'o', required_argument, NULL, 0, eArgTypePath,    "Redirect stdout for the process to <path>."},
@@ -475,7 +530,6 @@ ProcessLaunchCommandOptions::g_option_table[] =
 
 { LLDB_OPT_SET_3  , false, "no-stdio",      'n', no_argument,       NULL, 0, eArgTypeNone,    "Do not set up for terminal I/O to go to running process."},
 
-{ LLDB_OPT_SET_4  , false, "shell",         'c', no_argument,       NULL, 0, eArgTypeNone,    "Run the process in a shell (not supported on all platforms)."},
 { 0               , false, NULL,             0,  0,                 NULL, 0, eArgTypeNone,    NULL }
 };
 
@@ -946,50 +1000,6 @@ Process::GetExitStatus ()
     if (m_public_state.GetValue() == eStateExited)
         return m_exit_status;
     return -1;
-}
-
-
-void
-Process::ProcessInstanceSettings::GetHostEnvironmentIfNeeded ()
-{
-    if (m_inherit_host_env && !m_got_host_env)
-    {
-        m_got_host_env = true;
-        StringList host_env;
-        const size_t host_env_count = Host::GetEnvironment (host_env);
-        for (size_t idx=0; idx<host_env_count; idx++)
-        {
-            const char *env_entry = host_env.GetStringAtIndex (idx);
-            if (env_entry)
-            {
-                const char *equal_pos = ::strchr(env_entry, '=');
-                if (equal_pos)
-                {
-                    std::string key (env_entry, equal_pos - env_entry);
-                    std::string value (equal_pos + 1);
-                    if (m_env_vars.find (key) == m_env_vars.end())
-                        m_env_vars[key] = value;
-                }
-            }
-        }
-    }
-}
-
-
-size_t
-Process::ProcessInstanceSettings::GetEnvironmentAsArgs (Args &env)
-{
-    GetHostEnvironmentIfNeeded ();
-
-    dictionary::const_iterator pos, end = m_env_vars.end();
-    for (pos = m_env_vars.begin(); pos != end; ++pos)
-    {
-        std::string env_var_equal_value (pos->first);
-        env_var_equal_value.append(1, '=');
-        env_var_equal_value.append (pos->second);
-        env.AppendArgument (env_var_equal_value.c_str());
-    }
-    return env.GetArgumentCount();
 }
 
 
@@ -4044,28 +4054,19 @@ ProcessInstanceSettings::ProcessInstanceSettings
     bool live_instance, 
     const char *name
 ) :
-    InstanceSettings (owner, name ? name : InstanceSettings::InvalidName().AsCString(), live_instance), 
-    m_run_args (),
-    m_env_vars (),
-    m_input_path (),
-    m_output_path (),
-    m_error_path (),
-    m_disable_aslr (true),
-    m_disable_stdio (false),
-    m_inherit_host_env (true),
-    m_got_host_env (false)
+    InstanceSettings (owner, name ? name : InstanceSettings::InvalidName().AsCString(), live_instance)
 {
     // CopyInstanceSettings is a pure virtual function in InstanceSettings; it therefore cannot be called
     // until the vtables for ProcessInstanceSettings are properly set up, i.e. AFTER all the initializers.
     // For this reason it has to be called here, rather than in the initializer or in the parent constructor.
     // This is true for CreateInstanceName() too.
-
+    
     if (GetInstanceName () == InstanceSettings::InvalidName())
     {
         ChangeInstanceName (std::string (CreateInstanceName().AsCString()));
         m_owner.RegisterInstanceSettings (this);
     }
-
+    
     if (live_instance)
     {
         const lldb::InstanceSettingsSP &pending_settings = m_owner.FindPendingSettings (m_instance_name);
@@ -4075,14 +4076,7 @@ ProcessInstanceSettings::ProcessInstanceSettings
 }
 
 ProcessInstanceSettings::ProcessInstanceSettings (const ProcessInstanceSettings &rhs) :
-    InstanceSettings (*Process::GetSettingsController(), CreateInstanceName().AsCString()),
-    m_run_args (rhs.m_run_args),
-    m_env_vars (rhs.m_env_vars),
-    m_input_path (rhs.m_input_path),
-    m_output_path (rhs.m_output_path),
-    m_error_path (rhs.m_error_path),
-    m_disable_aslr (rhs.m_disable_aslr),
-    m_disable_stdio (rhs.m_disable_stdio)
+    InstanceSettings (*Process::GetSettingsController(), CreateInstanceName().AsCString())
 {
     if (m_instance_name != InstanceSettings::GetDefaultName())
     {
@@ -4101,14 +4095,6 @@ ProcessInstanceSettings::operator= (const ProcessInstanceSettings &rhs)
 {
     if (this != &rhs)
     {
-        m_run_args = rhs.m_run_args;
-        m_env_vars = rhs.m_env_vars;
-        m_input_path = rhs.m_input_path;
-        m_output_path = rhs.m_output_path;
-        m_error_path = rhs.m_error_path;
-        m_disable_aslr = rhs.m_disable_aslr;
-        m_disable_stdio = rhs.m_disable_stdio;
-        m_inherit_host_env = rhs.m_inherit_host_env;
     }
 
     return *this;
@@ -4125,45 +4111,16 @@ ProcessInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_
                                                          Error &err,
                                                          bool pending)
 {
-    if (var_name == RunArgsVarName())
-        UserSettingsController::UpdateStringArrayVariable (op, index_value, m_run_args, value, err);
-    else if (var_name == EnvVarsVarName())
-    {
-        // This is nice for local debugging, but it is isn't correct for
-        // remote debugging. We need to stop process.env-vars from being 
-        // populated with the host environment and add this as a launch option
-        // and get the correct environment from the Target's platform.
-        // GetHostEnvironmentIfNeeded ();
-        UserSettingsController::UpdateDictionaryVariable (op, index_value, m_env_vars, value, err);
-    }
-    else if (var_name == InputPathVarName())
-        UserSettingsController::UpdateStringVariable (op, m_input_path, value, err);
-    else if (var_name == OutputPathVarName())
-        UserSettingsController::UpdateStringVariable (op, m_output_path, value, err);
-    else if (var_name == ErrorPathVarName())
-        UserSettingsController::UpdateStringVariable (op, m_error_path, value, err);
-    else if (var_name == DisableASLRVarName())
-        UserSettingsController::UpdateBooleanVariable (op, m_disable_aslr, value, true, err);
-    else if (var_name == DisableSTDIOVarName ())
-        UserSettingsController::UpdateBooleanVariable (op, m_disable_stdio, value, false, err);
 }
 
 void
 ProcessInstanceSettings::CopyInstanceSettings (const lldb::InstanceSettingsSP &new_settings,
                                                bool pending)
 {
-    if (new_settings.get() == NULL)
-        return;
-
-    ProcessInstanceSettings *new_process_settings = (ProcessInstanceSettings *) new_settings.get();
-
-    m_run_args = new_process_settings->m_run_args;
-    m_env_vars = new_process_settings->m_env_vars;
-    m_input_path = new_process_settings->m_input_path;
-    m_output_path = new_process_settings->m_output_path;
-    m_error_path = new_process_settings->m_error_path;
-    m_disable_aslr = new_process_settings->m_disable_aslr;
-    m_disable_stdio = new_process_settings->m_disable_stdio;
+//    if (new_settings.get() == NULL)
+//        return;
+//
+//    ProcessInstanceSettings *new_process_settings = (ProcessInstanceSettings *) new_settings.get();
 }
 
 bool
@@ -4172,69 +4129,9 @@ ProcessInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
                                                    StringList &value,
                                                    Error *err)
 {
-    if (var_name == RunArgsVarName())
-    {
-        if (m_run_args.GetArgumentCount() > 0)
-        {
-            for (int i = 0; i < m_run_args.GetArgumentCount(); ++i)
-                value.AppendString (m_run_args.GetArgumentAtIndex (i));
-        }
-    }
-    else if (var_name == EnvVarsVarName())
-    {
-        GetHostEnvironmentIfNeeded ();
-
-        if (m_env_vars.size() > 0)
-        {
-            std::map<std::string, std::string>::iterator pos;
-            for (pos = m_env_vars.begin(); pos != m_env_vars.end(); ++pos)
-            {
-                StreamString value_str;
-                value_str.Printf ("%s=%s", pos->first.c_str(), pos->second.c_str());
-                value.AppendString (value_str.GetData());
-            }
-        }
-    }
-    else if (var_name == InputPathVarName())
-    {
-        value.AppendString (m_input_path.c_str());
-    }
-    else if (var_name == OutputPathVarName())
-    {
-        value.AppendString (m_output_path.c_str());
-    }
-    else if (var_name == ErrorPathVarName())
-    {
-        value.AppendString (m_error_path.c_str());
-    }
-    else if (var_name == InheritHostEnvVarName())
-    {
-        if (m_inherit_host_env)
-            value.AppendString ("true");
-        else
-            value.AppendString ("false");
-    }
-    else if (var_name == DisableASLRVarName())
-    {
-        if (m_disable_aslr)
-            value.AppendString ("true");
-        else
-            value.AppendString ("false");
-    }
-    else if (var_name == DisableSTDIOVarName())
-    {
-        if (m_disable_stdio)
-            value.AppendString ("true");
-        else
-            value.AppendString ("false");
-    }
-    else
-    {
-        if (err)
-            err->SetErrorStringWithFormat ("unrecognized variable name '%s'", var_name.AsCString());
-        return false;
-    }
-    return true;
+    if (err)
+        err->SetErrorStringWithFormat ("unrecognized variable name '%s'", var_name.AsCString());
+    return false;
 }
 
 const ConstString
@@ -4248,70 +4145,6 @@ ProcessInstanceSettings::CreateInstanceName ()
 
     const ConstString ret_val (sstr.GetData());
     return ret_val;
-}
-
-const ConstString &
-ProcessInstanceSettings::RunArgsVarName ()
-{
-    static ConstString run_args_var_name ("run-args");
-
-    return run_args_var_name;
-}
-
-const ConstString &
-ProcessInstanceSettings::EnvVarsVarName ()
-{
-    static ConstString env_vars_var_name ("env-vars");
-
-    return env_vars_var_name;
-}
-
-const ConstString &
-ProcessInstanceSettings::InheritHostEnvVarName ()
-{
-    static ConstString g_name ("inherit-env");
-
-    return g_name;
-}
-
-const ConstString &
-ProcessInstanceSettings::InputPathVarName ()
-{
-  static ConstString input_path_var_name ("input-path");
-
-    return input_path_var_name;
-}
-
-const ConstString &
-ProcessInstanceSettings::OutputPathVarName ()
-{
-    static ConstString output_path_var_name ("output-path");
-
-    return output_path_var_name;
-}
-
-const ConstString &
-ProcessInstanceSettings::ErrorPathVarName ()
-{
-    static ConstString error_path_var_name ("error-path");
-
-    return error_path_var_name;
-}
-
-const ConstString &
-ProcessInstanceSettings::DisableASLRVarName ()
-{
-    static ConstString disable_aslr_var_name ("disable-aslr");
-
-    return disable_aslr_var_name;
-}
-
-const ConstString &
-ProcessInstanceSettings::DisableSTDIOVarName ()
-{
-    static ConstString disable_stdio_var_name ("disable-stdio");
-    
-    return disable_stdio_var_name;
 }
 
 //--------------------------------------------------
@@ -4330,17 +4163,9 @@ SettingEntry
 Process::SettingsController::instance_settings_table[] =
 {
   //{ "var-name",       var-type,              "default",       enum-table, init'd, hidden, "help-text"},
-    { "run-args",       eSetVarTypeArray,       NULL,           NULL,       false,  false,  "A list containing all the arguments to be passed to the executable when it is run." },
-    { "env-vars",       eSetVarTypeDictionary,  NULL,           NULL,       false,  false,  "A list of all the environment variables to be passed to the executable's environment, and their values." },
-    { "inherit-env",    eSetVarTypeBoolean,     "true",         NULL,       false,  false,  "Inherit the environment from the process that is running LLDB." },
-    { "input-path",     eSetVarTypeString,      NULL,           NULL,       false,  false,  "The file/path to be used by the executable program for reading its input." },
-    { "output-path",    eSetVarTypeString,      NULL,           NULL,       false,  false,  "The file/path to be used by the executable program for writing its output." },
-    { "error-path",     eSetVarTypeString,      NULL,           NULL,       false,  false,  "The file/path to be used by the executable program for writings its error messages." },
-    { "plugin",         eSetVarTypeEnum,        NULL,           NULL,       false,  false,  "The plugin to be used to run the process." }, 
-    { "disable-aslr",   eSetVarTypeBoolean,     "true",         NULL,       false,  false,  "Disable Address Space Layout Randomization (ASLR)" },
-    { "disable-stdio",  eSetVarTypeBoolean,     "false",        NULL,       false,  false,  "Disable stdin/stdout for process (e.g. for a GUI application)" },
     {  NULL,            eSetVarTypeNone,        NULL,           NULL,       false,  false,  NULL }
 };
+
 
 
 

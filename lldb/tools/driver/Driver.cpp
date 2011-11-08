@@ -1251,13 +1251,13 @@ Driver::MainLoop ()
                 
                 if (num_args > 1)
                 {
-                    m_debugger.HandleCommand ("settings clear target.process.run-args");
+                    m_debugger.HandleCommand ("settings clear target.run-args");
                     char arg_cstr[1024];
                     for (size_t arg_idx = 1; arg_idx < num_args; ++arg_idx)
                     {
                         ::snprintf (arg_cstr, 
                                     sizeof(arg_cstr), 
-                                    "settings append target.process.run-args \"%s\"", 
+                                    "settings append target.run-args \"%s\"", 
                                     m_option_data.m_args[arg_idx].c_str());
                         m_debugger.HandleCommand (arg_cstr);
                     }

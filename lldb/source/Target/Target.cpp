@@ -1973,14 +1973,22 @@ Target::SettingsController::CreateInstanceSettings (const char *instance_name)
 }
 
 
-#define TSC_DEFAULT_ARCH      "default-arch"
-#define TSC_EXPR_PREFIX       "expr-prefix"
-#define TSC_PREFER_DYNAMIC    "prefer-dynamic-value"
-#define TSC_SKIP_PROLOGUE     "skip-prologue"
-#define TSC_SOURCE_MAP        "source-map"
-#define TSC_MAX_CHILDREN      "max-children-count"
-#define TSC_MAX_STRLENSUMMARY "max-string-summary-length"
-#define TSC_PLATFORM_AVOID    "breakpoints-use-platform-avoid-list"
+#define TSC_DEFAULT_ARCH        "default-arch"
+#define TSC_EXPR_PREFIX         "expr-prefix"
+#define TSC_PREFER_DYNAMIC      "prefer-dynamic-value"
+#define TSC_SKIP_PROLOGUE       "skip-prologue"
+#define TSC_SOURCE_MAP          "source-map"
+#define TSC_MAX_CHILDREN        "max-children-count"
+#define TSC_MAX_STRLENSUMMARY   "max-string-summary-length"
+#define TSC_PLATFORM_AVOID      "breakpoints-use-platform-avoid-list"
+#define TSC_RUN_ARGS            "run-args"
+#define TSC_ENV_VARS            "env-vars"
+#define TSC_INHERIT_ENV         "inherit-env"
+#define TSC_STDIN_PATH          "input-path"
+#define TSC_STDOUT_PATH         "output-path"
+#define TSC_STDERR_PATH         "error-path"
+#define TSC_DISABLE_ASLR        "disable-aslr"
+#define TSC_DISABLE_STDIO       "disable-stdio"
 
 
 static const ConstString &
@@ -2039,6 +2047,61 @@ GetSettingNameForPlatformAvoid ()
     return g_const_string;
 }
 
+const ConstString &
+GetSettingNameForRunArgs ()
+{
+    static ConstString g_const_string (TSC_RUN_ARGS);
+    return g_const_string;
+}
+
+const ConstString &
+GetSettingNameForEnvVars ()
+{
+    static ConstString g_const_string (TSC_ENV_VARS);
+    return g_const_string;
+}
+
+const ConstString &
+GetSettingNameForInheritHostEnv ()
+{
+    static ConstString g_const_string (TSC_INHERIT_ENV);
+    return g_const_string;
+}
+
+const ConstString &
+GetSettingNameForInputPath ()
+{
+    static ConstString g_const_string (TSC_STDIN_PATH);
+    return g_const_string;
+}
+
+const ConstString &
+GetSettingNameForOutputPath ()
+{
+    static ConstString g_const_string (TSC_STDOUT_PATH);
+    return g_const_string;
+}
+
+const ConstString &
+GetSettingNameForErrorPath ()
+{
+    static ConstString g_const_string (TSC_STDERR_PATH);
+    return g_const_string;
+}
+
+const ConstString &
+GetSettingNameForDisableASLR ()
+{
+    static ConstString g_const_string (TSC_DISABLE_ASLR);
+    return g_const_string;
+}
+
+const ConstString &
+GetSettingNameForDisableSTDIO ()
+{
+    static ConstString g_const_string (TSC_DISABLE_STDIO);
+    return g_const_string;
+}
 
 bool
 Target::SettingsController::SetGlobalVariable (const ConstString &var_name,
@@ -2094,7 +2157,16 @@ TargetInstanceSettings::TargetInstanceSettings
     m_source_map (NULL, NULL),
     m_max_children_display(256),
     m_max_strlen_length(1024),
-    m_breakpoints_use_platform_avoid (true, true)
+    m_breakpoints_use_platform_avoid (true, true),
+    m_run_args (),
+    m_env_vars (),
+    m_input_path (),
+    m_output_path (),
+    m_error_path (),
+    m_disable_aslr (true),
+    m_disable_stdio (false),
+    m_inherit_host_env (true),
+    m_got_host_env (false)
 {
     // CopyInstanceSettings is a pure virtual function in InstanceSettings; it therefore cannot be called
     // until the vtables for TargetInstanceSettings are properly set up, i.e. AFTER all the initializers.
@@ -2121,9 +2193,17 @@ TargetInstanceSettings::TargetInstanceSettings (const TargetInstanceSettings &rh
     m_prefer_dynamic_value (rhs.m_prefer_dynamic_value),
     m_skip_prologue (rhs.m_skip_prologue),
     m_source_map (rhs.m_source_map),
-    m_max_children_display(rhs.m_max_children_display),
-    m_max_strlen_length(rhs.m_max_strlen_length),
-    m_breakpoints_use_platform_avoid (rhs.m_breakpoints_use_platform_avoid)
+    m_max_children_display (rhs.m_max_children_display),
+    m_max_strlen_length (rhs.m_max_strlen_length),
+    m_breakpoints_use_platform_avoid (rhs.m_breakpoints_use_platform_avoid),
+    m_run_args (rhs.m_run_args),
+    m_env_vars (rhs.m_env_vars),
+    m_input_path (rhs.m_input_path),
+    m_output_path (rhs.m_output_path),
+    m_error_path (rhs.m_error_path),
+    m_disable_aslr (rhs.m_disable_aslr),
+    m_disable_stdio (rhs.m_disable_stdio),
+    m_inherit_host_env (rhs.m_inherit_host_env)
 {
     if (m_instance_name != InstanceSettings::GetDefaultName())
     {
@@ -2141,6 +2221,22 @@ TargetInstanceSettings::operator= (const TargetInstanceSettings &rhs)
 {
     if (this != &rhs)
     {
+        m_expr_prefix_file = rhs.m_expr_prefix_file;
+        m_expr_prefix_contents_sp = rhs.m_expr_prefix_contents_sp;
+        m_prefer_dynamic_value = rhs.m_prefer_dynamic_value;
+        m_skip_prologue = rhs.m_skip_prologue;
+        m_source_map = rhs.m_source_map;
+        m_max_children_display = rhs.m_max_children_display;
+        m_max_strlen_length = rhs.m_max_strlen_length;
+        m_breakpoints_use_platform_avoid = rhs.m_breakpoints_use_platform_avoid;
+        m_run_args = rhs.m_run_args;
+        m_env_vars = rhs.m_env_vars;
+        m_input_path = rhs.m_input_path;
+        m_output_path = rhs.m_output_path;
+        m_error_path = rhs.m_error_path;
+        m_disable_aslr = rhs.m_disable_aslr;
+        m_disable_stdio = rhs.m_disable_stdio;
+        m_inherit_host_env = rhs.m_inherit_host_env;
     }
 
     return *this;
@@ -2274,6 +2370,39 @@ TargetInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_n
     {
         err = UserSettingsController::UpdateBooleanOptionValue (value, op, m_breakpoints_use_platform_avoid);
     }
+    else if (var_name == GetSettingNameForRunArgs())
+    {
+        UserSettingsController::UpdateStringArrayVariable (op, index_value, m_run_args, value, err);
+    }
+    else if (var_name == GetSettingNameForEnvVars())
+    {
+        // This is nice for local debugging, but it is isn't correct for
+        // remote debugging. We need to stop process.env-vars from being 
+        // populated with the host environment and add this as a launch option
+        // and get the correct environment from the Target's platform.
+        // GetHostEnvironmentIfNeeded ();
+        UserSettingsController::UpdateDictionaryVariable (op, index_value, m_env_vars, value, err);
+    }
+    else if (var_name == GetSettingNameForInputPath())
+    {
+        UserSettingsController::UpdateStringVariable (op, m_input_path, value, err);
+    }
+    else if (var_name == GetSettingNameForOutputPath())
+    {
+        UserSettingsController::UpdateStringVariable (op, m_output_path, value, err);
+    }
+    else if (var_name == GetSettingNameForErrorPath())
+    {
+        UserSettingsController::UpdateStringVariable (op, m_error_path, value, err);
+    }
+    else if (var_name == GetSettingNameForDisableASLR())
+    {
+        UserSettingsController::UpdateBooleanVariable (op, m_disable_aslr, value, true, err);
+    }
+    else if (var_name == GetSettingNameForDisableSTDIO ())
+    {
+        UserSettingsController::UpdateBooleanVariable (op, m_disable_stdio, value, false, err);
+    }
 }
 
 void
@@ -2284,13 +2413,7 @@ TargetInstanceSettings::CopyInstanceSettings (const lldb::InstanceSettingsSP &ne
     if (!new_settings_ptr)
         return;
     
-    m_expr_prefix_file               = new_settings_ptr->m_expr_prefix_file;
-    m_expr_prefix_contents_sp        = new_settings_ptr->m_expr_prefix_contents_sp;
-    m_prefer_dynamic_value           = new_settings_ptr->m_prefer_dynamic_value;
-    m_skip_prologue                  = new_settings_ptr->m_skip_prologue;
-    m_max_children_display           = new_settings_ptr->m_max_children_display;
-    m_max_strlen_length              = new_settings_ptr->m_max_strlen_length;
-    m_breakpoints_use_platform_avoid = new_settings_ptr->m_breakpoints_use_platform_avoid;
+    *this = *new_settings_ptr;
 }
 
 bool
@@ -2339,15 +2462,114 @@ TargetInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
         else
             value.AppendString ("false");
     }
+    else if (var_name == GetSettingNameForRunArgs())
+    {
+        if (m_run_args.GetArgumentCount() > 0)
+        {
+            for (int i = 0; i < m_run_args.GetArgumentCount(); ++i)
+                value.AppendString (m_run_args.GetArgumentAtIndex (i));
+        }
+    }
+    else if (var_name == GetSettingNameForEnvVars())
+    {
+        GetHostEnvironmentIfNeeded ();
+        
+        if (m_env_vars.size() > 0)
+        {
+            std::map<std::string, std::string>::iterator pos;
+            for (pos = m_env_vars.begin(); pos != m_env_vars.end(); ++pos)
+            {
+                StreamString value_str;
+                value_str.Printf ("%s=%s", pos->first.c_str(), pos->second.c_str());
+                value.AppendString (value_str.GetData());
+            }
+        }
+    }
+    else if (var_name == GetSettingNameForInputPath())
+    {
+        value.AppendString (m_input_path.c_str());
+    }
+    else if (var_name == GetSettingNameForOutputPath())
+    {
+        value.AppendString (m_output_path.c_str());
+    }
+    else if (var_name == GetSettingNameForErrorPath())
+    {
+        value.AppendString (m_error_path.c_str());
+    }
+    else if (var_name == GetSettingNameForInheritHostEnv())
+    {
+        if (m_inherit_host_env)
+            value.AppendString ("true");
+        else
+            value.AppendString ("false");
+    }
+    else if (var_name == GetSettingNameForDisableASLR())
+    {
+        if (m_disable_aslr)
+            value.AppendString ("true");
+        else
+            value.AppendString ("false");
+    }
+    else if (var_name == GetSettingNameForDisableSTDIO())
+    {
+        if (m_disable_stdio)
+            value.AppendString ("true");
+        else
+            value.AppendString ("false");
+    }
     else 
     {
         if (err)
             err->SetErrorStringWithFormat ("unrecognized variable name '%s'", var_name.AsCString());
         return false;
     }
-
     return true;
 }
+
+void
+Target::TargetInstanceSettings::GetHostEnvironmentIfNeeded ()
+{
+    if (m_inherit_host_env && !m_got_host_env)
+    {
+        m_got_host_env = true;
+        StringList host_env;
+        const size_t host_env_count = Host::GetEnvironment (host_env);
+        for (size_t idx=0; idx<host_env_count; idx++)
+        {
+            const char *env_entry = host_env.GetStringAtIndex (idx);
+            if (env_entry)
+            {
+                const char *equal_pos = ::strchr(env_entry, '=');
+                if (equal_pos)
+                {
+                    std::string key (env_entry, equal_pos - env_entry);
+                    std::string value (equal_pos + 1);
+                    if (m_env_vars.find (key) == m_env_vars.end())
+                        m_env_vars[key] = value;
+                }
+            }
+        }
+    }
+}
+
+
+size_t
+Target::TargetInstanceSettings::GetEnvironmentAsArgs (Args &env)
+{
+    GetHostEnvironmentIfNeeded ();
+    
+    dictionary::const_iterator pos, end = m_env_vars.end();
+    for (pos = m_env_vars.begin(); pos != end; ++pos)
+    {
+        std::string env_var_equal_value (pos->first);
+        env_var_equal_value.append(1, '=');
+        env_var_equal_value.append (pos->second);
+        env.AppendArgument (env_var_equal_value.c_str());
+    }
+    return env.GetArgumentCount();
+}
+
 
 const ConstString
 TargetInstanceSettings::CreateInstanceName ()
@@ -2395,5 +2617,14 @@ Target::SettingsController::instance_settings_table[] =
     { TSC_MAX_CHILDREN      , eSetVarTypeInt    , "256"         , NULL,                  true,  false, "Maximum number of children to expand in any level of depth." },
     { TSC_MAX_STRLENSUMMARY , eSetVarTypeInt    , "1024"        , NULL,                  true,  false, "Maximum number of characters to show when using %s in summary strings." },
     { TSC_PLATFORM_AVOID    , eSetVarTypeBoolean, "true"        , NULL,                  false, false, "Consult the platform module avoid list when setting non-module specific breakpoints." },
+    { TSC_RUN_ARGS          , eSetVarTypeArray  , NULL          , NULL,                  false,  false,  "A list containing all the arguments to be passed to the executable when it is run." },
+    { TSC_ENV_VARS          , eSetVarTypeDictionary, NULL       , NULL,                  false,  false,  "A list of all the environment variables to be passed to the executable's environment, and their values." },
+    { TSC_INHERIT_ENV       , eSetVarTypeBoolean, "true"        , NULL,                  false,  false,  "Inherit the environment from the process that is running LLDB." },
+    { TSC_STDIN_PATH        , eSetVarTypeString , NULL          , NULL,                  false,  false,  "The file/path to be used by the executable program for reading its standard input." },
+    { TSC_STDOUT_PATH       , eSetVarTypeString , NULL          , NULL,                  false,  false,  "The file/path to be used by the executable program for writing its standard output." },
+    { TSC_STDERR_PATH       , eSetVarTypeString , NULL          , NULL,                  false,  false,  "The file/path to be used by the executable program for writing its standard error." },
+//    { "plugin",         eSetVarTypeEnum,        NULL,           NULL,                  false,  false,  "The plugin to be used to run the process." }, 
+    { TSC_DISABLE_ASLR      , eSetVarTypeBoolean, "true"        , NULL,                  false,  false,  "Disable Address Space Layout Randomization (ASLR)" },
+    { TSC_DISABLE_STDIO     , eSetVarTypeBoolean, "false"       , NULL,                  false,  false,  "Disable stdin/stdout for process (e.g. for a GUI application)" },
     { NULL                  , eSetVarTypeNone   , NULL          , NULL,                  false, false, NULL }
 };

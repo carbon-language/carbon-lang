@@ -25,6 +25,7 @@
 #include "lldb/Core/UserSettingsController.h"
 #include "lldb/Core/SourceManager.h"
 #include "lldb/Expression/ClangPersistentVariables.h"
+#include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/NamedOptionValue.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Target/ABI.h"
@@ -102,6 +103,113 @@ public:
     {
         return m_breakpoints_use_platform_avoid;
     }
+    
+    
+    const Args &
+    GetRunArguments () const
+    {
+        return m_run_args;
+    }
+    
+    void
+    SetRunArguments (const Args &args)
+    {
+        m_run_args = args;
+    }
+    
+    void
+    GetHostEnvironmentIfNeeded ();
+    
+    size_t
+    GetEnvironmentAsArgs (Args &env);
+    
+    const char *
+    GetStandardInputPath () const
+    {
+        if (m_input_path.empty())
+            return NULL;
+        return m_input_path.c_str();
+    }
+    
+    void
+    SetStandardInputPath (const char *path)
+    {
+        if (path && path[0])
+            m_input_path.assign (path);
+        else
+        {
+            // Make sure we deallocate memory in string...
+            std::string tmp;
+            tmp.swap (m_input_path);
+        }
+    }
+    
+    const char *
+    GetStandardOutputPath () const
+    {
+        if (m_output_path.empty())
+            return NULL;
+        return m_output_path.c_str();
+    }
+    
+    void
+    SetStandardOutputPath (const char *path)
+    {
+        if (path && path[0])
+            m_output_path.assign (path);
+        else
+        {
+            // Make sure we deallocate memory in string...
+            std::string tmp;
+            tmp.swap (m_output_path);
+        }
+    }
+    
+    const char *
+    GetStandardErrorPath () const
+    {
+        if (m_error_path.empty())
+            return NULL;
+        return m_error_path.c_str();
+    }
+    
+    void
+    SetStandardErrorPath (const char *path)
+    {
+        if (path && path[0])
+            m_error_path.assign (path);
+        else
+        {
+            // Make sure we deallocate memory in string...
+            std::string tmp;
+            tmp.swap (m_error_path);
+        }
+    }
+    
+    bool
+    GetDisableASLR () const
+    {
+        return m_disable_aslr;
+    }
+    
+    void
+    SetDisableASLR (bool b)
+    {
+        m_disable_aslr = b;
+    }
+    
+    bool
+    GetDisableSTDIO () const
+    {
+        return m_disable_stdio;
+    }
+    
+    void
+    SetDisableSTDIO (bool b)
+    {
+        m_disable_stdio = b;
+    }
+
 
 protected:
 
@@ -114,13 +222,23 @@ protected:
     
     OptionValueFileSpec m_expr_prefix_file;
     lldb::DataBufferSP m_expr_prefix_contents_sp;
-    int                m_prefer_dynamic_value;
+    int m_prefer_dynamic_value;
     OptionValueBoolean m_skip_prologue;
     PathMappingList m_source_map;
     uint32_t m_max_children_display;
     uint32_t m_max_strlen_length;
     OptionValueBoolean m_breakpoints_use_platform_avoid;
-    
+    typedef std::map<std::string, std::string> dictionary;
+    Args m_run_args;
+    dictionary m_env_vars;
+    std::string m_input_path;
+    std::string m_output_path;
+    std::string m_error_path;
+    bool m_disable_aslr;
+    bool m_disable_stdio;
+    bool m_inherit_host_env;
+    bool m_got_host_env;
+
 
 };
 

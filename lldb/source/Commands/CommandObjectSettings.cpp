@@ -83,14 +83,14 @@ CommandObjectSettingsSet::CommandObjectSettingsSet (CommandInterpreter &interpre
 "When setting a dictionary or array variable, you can set multiple entries \n\
 at once by giving the values to the set command.  For example: \n\
 \n\
-(lldb) settings set target.process.run-args value1  value2 value3 \n\
-(lldb) settings set target.process.env-vars [\"MYPATH\"]=~/.:/usr/bin  [\"SOME_ENV_VAR\"]=12345 \n\
+(lldb) settings set target.run-args value1  value2 value3 \n\
+(lldb) settings set target.env-vars [\"MYPATH\"]=~/.:/usr/bin  [\"SOME_ENV_VAR\"]=12345 \n\
 \n\
-(lldb) settings show target.process.run-args \n\
+(lldb) settings show target.run-args \n\
   [0]: 'value1' \n\
   [1]: 'value2' \n\
   [3]: 'value3' \n\
-(lldb) settings show target.process.env-vars \n\
+(lldb) settings show target.env-vars \n\
   'MYPATH=~/.:/usr/bin'\n\
   'SOME_ENV_VAR=12345' \n\
 \n\

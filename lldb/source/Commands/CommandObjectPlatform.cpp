@@ -374,17 +374,21 @@ public:
             Error error;
             const uint32_t argc = args.GetArgumentCount();
             Target *target = m_interpreter.GetExecutionContext().GetTargetPtr();
-            if (target)
+            if (target == NULL)
             {
-                Module *exe_module = target->GetExecutableModulePointer();
-                if (exe_module)
-                {
-                    m_options.launch_info.GetExecutableFile () = exe_module->GetFileSpec();
-                    char exe_path[PATH_MAX];
-                    if (m_options.launch_info.GetExecutableFile ().GetPath (exe_path, sizeof(exe_path)))
-                        m_options.launch_info.GetArguments().AppendArgument (exe_path);
-                    m_options.launch_info.GetArchitecture() = exe_module->GetArchitecture();
-                }
+                result.AppendError ("invalid target, create a debug target using the 'target create' command");
+                result.SetStatus (eReturnStatusFailed);
+                return false;
+            }
+
+            Module *exe_module = target->GetExecutableModulePointer();
+            if (exe_module)
+            {
+                m_options.launch_info.GetExecutableFile () = exe_module->GetFileSpec();
+                char exe_path[PATH_MAX];
+                if (m_options.launch_info.GetExecutableFile ().GetPath (exe_path, sizeof(exe_path)))
+                    m_options.launch_info.GetArguments().AppendArgument (exe_path);
+                m_options.launch_info.GetArchitecture() = exe_module->GetArchitecture();
             }
 
             if (argc > 0)
@@ -412,21 +416,9 @@ public:
 
                 if (argc == 0)
                 {
-                    lldb::UserSettingsControllerSP process_usc_sp (Process::GetSettingsController ());
-                    if (process_usc_sp)
-                    {
-                        SettableVariableType type;
-                        StringList settings_args (process_usc_sp->GetVariable ("process.run-args", 
-                                                                               type,
-                                                                               m_interpreter.GetDebugger().GetInstanceName().GetCString(),
-                                                                               error));
-                        if (error.Success())
-                        {
-                            const size_t num_settings_args = settings_args.GetSize();
-                            for (size_t i=0; i<num_settings_args; ++i)
-                                m_options.launch_info.GetArguments().AppendArgument (settings_args.GetStringAtIndex(i));
-                        }
-                    }
+                    const Args &target_settings_args = target->GetRunArguments();
+                    if (target_settings_args.GetArgumentCount())
+                        m_options.launch_info.GetArguments() = target_settings_args;
                 }
 
                 ProcessSP process_sp (platform_sp->DebugProcess (m_options.launch_info, 
