@@ -441,8 +441,15 @@ DIE *DwarfDebug::constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope) {
   if (DS.isSubprogram())
    TheCU->addPubTypes(DISubprogram(DS));
 
-  if (DS.isSubprogram() && !Scope->isAbstractScope())
-    TheCU->addAccelName(DISubprogram(DS).getName(), ScopeDIE);
+  if (DS.isSubprogram() && !Scope->isAbstractScope()) {
+    DISubprogram SP = DISubprogram(DS);
+    TheCU->addAccelName(SP.getName(), ScopeDIE);
+
+    // If the linkage name is different than the name, go ahead and output
+    // that as well into the name table.
+    if (SP.getLinkageName() != "" && SP.getName() != SP.getLinkageName())
+      TheCU->addAccelName(SP.getLinkageName(), ScopeDIE);
+  }
 
  return ScopeDIE;
 }
@@ -595,6 +602,11 @@ void DwarfDebug::constructSubprogramDIE(CompileUnit *TheCU,
 
   // Add to Accel Names
   TheCU->addAccelName(SP.getName(), SubprogramDie);
+
+  // If the linkage name is different than the name, go ahead and output
+  // that as well into the name table.
+  if (SP.getLinkageName() != "" && SP.getName() != SP.getLinkageName())
+    TheCU->addAccelName(SP.getLinkageName(), SubprogramDie);
 
   // If this is an Objective-C selector name add it to the ObjC accelerator too.
   if (isObjCClass(SP.getName())) {

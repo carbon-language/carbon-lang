@@ -1131,6 +1131,11 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
   if (addToAccelTable)
     addAccelName(GV.getName(), VariableDIE);
 
+  // If the linkage name is different than the name, go ahead and output
+  // that as well into the name table.
+  if (GV.getLinkageName() != "" && GV.getName() != GV.getLinkageName())
+    addAccelName(GV.getLinkageName(), VariableDIE);
+
   return;
 }
 
