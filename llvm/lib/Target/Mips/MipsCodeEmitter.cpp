@@ -108,6 +108,15 @@ class MipsCodeEmitter : public MachineFunctionPass {
     unsigned getMemEncoding(const MachineInstr &MI, unsigned OpNo) const;
     unsigned getSizeExtEncoding(const MachineInstr &MI, unsigned OpNo) const;
     unsigned getSizeInsEncoding(const MachineInstr &MI, unsigned OpNo) const;
+
+    int emitULW(const MachineInstr &MI);
+    int emitUSW(const MachineInstr &MI);
+    int emitULH(const MachineInstr &MI);
+    int emitULHu(const MachineInstr &MI);
+    int emitUSH(const MachineInstr &MI);
+
+    void emitGlobalAddressUnaligned(const GlobalValue *GV, unsigned Reloc,
+                                                            int Offset) const;
   };
 }
 
@@ -186,9 +195,15 @@ unsigned MipsCodeEmitter::getMachineOpValue(const MachineInstr &MI,
     return MipsRegisterInfo::getRegisterNumbering(MO.getReg());
   else if (MO.isImm())
     return static_cast<unsigned>(MO.getImm());
-  else if (MO.isGlobal())
-    emitGlobalAddress(MO.getGlobal(), getRelocation(MI, MO), true);
-  else if (MO.isSymbol())
+  else if (MO.isGlobal()) {
+    if (MI.getOpcode() == Mips::ULW || MI.getOpcode() == Mips::USW ||
+          MI.getOpcode() == Mips::ULH || MI.getOpcode() == Mips::ULHu)
+      emitGlobalAddressUnaligned(MO.getGlobal(), getRelocation(MI, MO), 4);
+    else if (MI.getOpcode() == Mips::USH)
+      emitGlobalAddressUnaligned(MO.getGlobal(), getRelocation(MI, MO), 8);
+    else
+      emitGlobalAddress(MO.getGlobal(), getRelocation(MI, MO), true);
+  } else if (MO.isSymbol())
     emitExternalSymbolAddress(MO.getSymbolName(), getRelocation(MI, MO));
   else if (MO.isCPI())
     emitConstPoolAddress(MO.getIndex(), getRelocation(MI, MO));
@@ -205,6 +220,14 @@ void MipsCodeEmitter::emitGlobalAddress(const GlobalValue *GV, unsigned Reloc,
                                                 bool MayNeedFarStub) const {
   MCE.addRelocation(MachineRelocation::getGV(MCE.getCurrentPCOffset(), Reloc,
                              const_cast<GlobalValue *>(GV), 0, MayNeedFarStub));
+}
+
+void MipsCodeEmitter::emitGlobalAddressUnaligned(const GlobalValue *GV,
+                                           unsigned Reloc, int Offset) const {
+  MCE.addRelocation(MachineRelocation::getGV(MCE.getCurrentPCOffset(), Reloc,
+                             const_cast<GlobalValue *>(GV), 0, false));
+  MCE.addRelocation(MachineRelocation::getGV(MCE.getCurrentPCOffset() + Offset,
+                      Reloc, const_cast<GlobalValue *>(GV), 0, false));
 }
 
 void MipsCodeEmitter::
@@ -230,6 +253,103 @@ void MipsCodeEmitter::emitMachineBasicBlock(MachineBasicBlock *BB,
                                              Reloc, BB));
 }
 
+int MipsCodeEmitter::emitUSW(const MachineInstr &MI) {
+  unsigned src = getMachineOpValue(MI, MI.getOperand(0));
+  unsigned base = getMachineOpValue(MI, MI.getOperand(1));
+  unsigned offset = getMachineOpValue(MI, MI.getOperand(2));
+  // swr src, offset(base)
+  // swl src, offset+3(base)
+  MCE.emitWordLE(
+    (0x2e << 26) | (base << 21) | (src << 16) | (offset & 0xffff));
+  MCE.emitWordLE(
+    (0x2a << 26) | (base << 21) | (src << 16) | ((offset+3) & 0xffff));
+  return 2;
+}
+
+int MipsCodeEmitter::emitULW(const MachineInstr &MI) {
+  unsigned dst = getMachineOpValue(MI, MI.getOperand(0));
+  unsigned base = getMachineOpValue(MI, MI.getOperand(1));
+  unsigned offset = getMachineOpValue(MI, MI.getOperand(2));
+  unsigned at = 1;
+  if (dst != base) {
+    // lwr dst, offset(base)
+    // lwl dst, offset+3(base)
+    MCE.emitWordLE(
+      (0x26 << 26) | (base << 21) | (dst << 16) | (offset & 0xffff));
+    MCE.emitWordLE(
+      (0x22 << 26) | (base << 21) | (dst << 16) | ((offset+3) & 0xffff));
+    return 2;
+  } else {
+    // lwr at, offset(base)
+    // lwl at, offset+3(base)
+    // addu dst, at, $zero
+    MCE.emitWordLE(
+      (0x26 << 26) | (base << 21) | (at << 16) | (offset & 0xffff));
+    MCE.emitWordLE(
+      (0x22 << 26) | (base << 21) | (at << 16) | ((offset+3) & 0xffff));
+    MCE.emitWordLE(
+      (0x0 << 26) | (at << 21) | (0x0 << 16) | (dst << 11) | (0x0 << 6) | 0x21);
+    return 3;
+  }
+}
+
+int MipsCodeEmitter::emitUSH(const MachineInstr &MI) {
+  unsigned src = getMachineOpValue(MI, MI.getOperand(0));
+  unsigned base = getMachineOpValue(MI, MI.getOperand(1));
+  unsigned offset = getMachineOpValue(MI, MI.getOperand(2));
+  unsigned at = 1;
+  // sb src, offset(base)
+  // srl at,src,8
+  // sb at, offset+1(base)
+  MCE.emitWordLE(
+    (0x28 << 26) | (base << 21) | (src << 16) | (offset & 0xffff));
+  MCE.emitWordLE(
+    (0x0 << 26) | (0x0 << 21) | (src << 16) | (at << 11) | (0x8 << 6) | 0x2);
+  MCE.emitWordLE(
+    (0x28 << 26) | (base << 21) | (at << 16) | ((offset+1) & 0xffff));
+  return 3;
+}
+
+int MipsCodeEmitter::emitULH(const MachineInstr &MI) {
+  unsigned dst = getMachineOpValue(MI, MI.getOperand(0));
+  unsigned base = getMachineOpValue(MI, MI.getOperand(1));
+  unsigned offset = getMachineOpValue(MI, MI.getOperand(2));
+  unsigned at = 1;
+  // lbu at, offset(base)
+  // lb dst, offset+1(base)
+  // sll dst,dst,8
+  // or dst,dst,at
+  MCE.emitWordLE(
+    (0x24 << 26) | (base << 21) | (at << 16) | (offset & 0xffff));
+  MCE.emitWordLE(
+    (0x20 << 26) | (base << 21) | (dst << 16) | ((offset+1) & 0xffff));
+  MCE.emitWordLE(
+    (0x0 << 26) | (0x0 << 21) | (dst << 16) | (dst << 11) | (0x8 << 6) | 0x0);
+  MCE.emitWordLE(
+    (0x0 << 26) | (dst << 21) | (at << 16) | (dst << 11) | (0x0 << 6) | 0x25);
+  return 4;
+}
+
+int MipsCodeEmitter::emitULHu(const MachineInstr &MI) {
+  unsigned dst = getMachineOpValue(MI, MI.getOperand(0));
+  unsigned base = getMachineOpValue(MI, MI.getOperand(1));
+  unsigned offset = getMachineOpValue(MI, MI.getOperand(2));
+  unsigned at = 1;
+  // lbu at, offset(base)
+  // lbu dst, offset+1(base)
+  // sll dst,dst,8
+  // or dst,dst,at
+  MCE.emitWordLE(
+    (0x24 << 26) | (base << 21) | (at << 16) | (offset & 0xffff));
+  MCE.emitWordLE(
+    (0x24 << 26) | (base << 21) | (dst << 16) | ((offset+1) & 0xffff));
+  MCE.emitWordLE(
+    (0x0 << 26) | (0x0 << 21) | (dst << 16) | (dst << 11) | (0x8 << 6) | 0x0);
+  MCE.emitWordLE(
+    (0x0 << 26) | (dst << 21) | (at << 16) | (dst << 11) | (0x0 << 6) | 0x25);
+  return 4;
+}
+
 void MipsCodeEmitter::emitInstruction(const MachineInstr &MI) {
   DEBUG(errs() << "JIT: " << (void*)MCE.getCurrentPCValue() << ":\t" << MI);
 
@@ -239,11 +359,27 @@ void MipsCodeEmitter::emitInstruction(const MachineInstr &MI) {
   if ((MI.getDesc().TSFlags & MipsII::FormMask) == MipsII::Pseudo)
     return;
 
-  ++NumEmitted;  // Keep track of the # of mi's emitted
 
   switch (MI.getOpcode()) {
+  case Mips::USW:
+    NumEmitted += emitUSW(MI);
+    break;
+  case Mips::ULW:
+    NumEmitted += emitULW(MI);
+    break;
+  case Mips::ULH:
+    NumEmitted += emitULH(MI);
+    break;
+  case Mips::ULHu:
+    NumEmitted += emitULHu(MI);
+    break;
+  case Mips::USH:
+    NumEmitted += emitUSH(MI);
+    break;
+
   default:
     emitWordLE(getBinaryCodeForInstr(MI));
+    ++NumEmitted;  // Keep track of the # of mi's emitted
     break;
   }
 

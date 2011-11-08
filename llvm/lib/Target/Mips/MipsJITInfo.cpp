@@ -218,10 +218,16 @@ void MipsJITInfo::relocate(void *Function, MachineRelocation *MR,
       *((unsigned*) RelocPos) |= (unsigned) ResultPtr;
       break;
 
-    case Mips::reloc_mips_lo:
-      ResultPtr = ResultPtr & 0xffff;
+    case Mips::reloc_mips_lo: {
+      // Addend is needed for unaligned load/store instructions, where offset
+      // for the second load/store in the expanded instruction sequence must
+      // be modified by +1 or +3. Otherwise, Addend is 0.
+      int Addend = *((unsigned*) RelocPos) & 0xffff;
+      ResultPtr = (ResultPtr + Addend) & 0xffff;
+      *((unsigned*) RelocPos) &= 0xffff0000;
       *((unsigned*) RelocPos) |= (unsigned) ResultPtr;
       break;
+    }
 
     default:
       llvm_unreachable("ERROR: Unknown Mips relocation.");
