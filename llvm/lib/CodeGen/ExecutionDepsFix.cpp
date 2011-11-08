@@ -525,12 +525,10 @@ bool ExeDepsFix::runOnMachineFunction(MachineFunction &mf) {
     if (FI == LiveOuts.end())
       continue;
     assert(FI->second && "Null entry");
-    // The DomainValue is collapsed when the last reference is killed.
-    LiveRegs = FI->second;
     for (unsigned i = 0, e = NumRegs; i != e; ++i)
-      if (LiveRegs[i])
-        kill(i);
-    delete[] LiveRegs;
+      if (FI->second[i])
+        release(FI->second[i]);
+    delete[] FI->second;
   }
   LiveOuts.clear();
   Avail.clear();
