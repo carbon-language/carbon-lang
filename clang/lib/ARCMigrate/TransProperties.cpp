@@ -287,8 +287,10 @@ private:
   void maybeAddStrongAttr(PropsTy &props, SourceLocation atLoc) const {
     ObjCPropertyDecl::PropertyAttributeKind propAttrs = getPropertyAttrs(props);
 
-    if (!(propAttrs & ObjCPropertyDecl::OBJC_PR_readonly) ||
-        !hasAllIvarsBacked(props)) {
+    if (!(propAttrs & ObjCPropertyDecl::OBJC_PR_readonly))
+      return; // 'strong' by default.
+
+    if (!hasAllIvarsBacked(props)) {
       addAttribute("strong", atLoc);
     }
 
