@@ -50,11 +50,9 @@ class PropertiesRewriter {
   
   enum PropActionKind {
     PropAction_None,
-    PropAction_RetainToStrong,
     PropAction_RetainRemoved,
     PropAction_AssignRemoved,
     PropAction_AssignRewritten,
-    PropAction_MaybeAddStrong,
     PropAction_MaybeAddWeakOrUnsafe
   };
 
@@ -163,9 +161,6 @@ private:
     switch (kind) {
     case PropAction_None:
       return;
-    case PropAction_RetainToStrong:
-      rewriteAttribute("retain", "strong", atLoc);
-      return;
     case PropAction_RetainRemoved:
       removeAttribute("retain", atLoc);
       return;
@@ -173,8 +168,6 @@ private:
       return removeAssignForDefaultStrong(props, atLoc);
     case PropAction_AssignRewritten:
       return rewriteAssign(props, atLoc);
-    case PropAction_MaybeAddStrong:
-      return maybeAddStrongAttr(props, atLoc);
     case PropAction_MaybeAddWeakOrUnsafe:
       return maybeAddWeakOrUnsafeUnretainedAttr(props, atLoc);
     }
@@ -199,11 +192,8 @@ private:
       return;
 
     if (propAttrs & ObjCPropertyDecl::OBJC_PR_retain) {
-      if (propAttrs & ObjCPropertyDecl::OBJC_PR_readonly)
-        return doPropAction(PropAction_RetainToStrong, props, atLoc);
-      else
-        // strong is the default.
-        return doPropAction(PropAction_RetainRemoved, props, atLoc);
+      // strong is the default.
+      return doPropAction(PropAction_RetainRemoved, props, atLoc);
     }
 
     bool HasIvarAssignedAPlusOneObject = hasIvarAssignedAPlusOneObject(props);
@@ -258,43 +248,18 @@ private:
 
   void maybeAddWeakOrUnsafeUnretainedAttr(PropsTy &props,
                                           SourceLocation atLoc) const {
-    ObjCPropertyDecl::PropertyAttributeKind propAttrs = getPropertyAttrs(props);
-
     bool canUseWeak = canApplyWeak(Pass.Ctx, getPropertyType(props),
                                   /*AllowOnUnknownClass=*/Pass.isGCMigration());
-    if (!(propAttrs & ObjCPropertyDecl::OBJC_PR_readonly) ||
-        !hasAllIvarsBacked(props)) {
-      bool addedAttr = addAttribute(canUseWeak ? "weak" : "unsafe_unretained",
-                                    atLoc);
-      if (!addedAttr)
-        canUseWeak = false;
-    }
+
+    bool addedAttr = addAttribute(canUseWeak ? "weak" : "unsafe_unretained",
+                                  atLoc);
+    if (!addedAttr)
+      canUseWeak = false;
 
     for (PropsTy::iterator I = props.begin(), E = props.end(); I != E; ++I) {
       if (isUserDeclared(I->IvarD))
         Pass.TA.insert(I->IvarD->getLocation(),
                        canUseWeak ? "__weak " : "__unsafe_unretained ");
-      if (I->ImplD) {
-        Pass.TA.clearDiagnostic(diag::err_arc_assign_property_ownership,
-                                I->ImplD->getLocation());
-        Pass.TA.clearDiagnostic(
-                           diag::err_arc_objc_property_default_assign_on_object,
-                           I->ImplD->getLocation());
-      }
-    }
-  }
-
-  void maybeAddStrongAttr(PropsTy &props, SourceLocation atLoc) const {
-    ObjCPropertyDecl::PropertyAttributeKind propAttrs = getPropertyAttrs(props);
-
-    if (!(propAttrs & ObjCPropertyDecl::OBJC_PR_readonly))
-      return; // 'strong' by default.
-
-    if (!hasAllIvarsBacked(props)) {
-      addAttribute("strong", atLoc);
-    }
-
-    for (PropsTy::iterator I = props.begin(), E = props.end(); I != E; ++I) {
       if (I->ImplD) {
         Pass.TA.clearDiagnostic(diag::err_arc_assign_property_ownership,
                                 I->ImplD->getLocation());

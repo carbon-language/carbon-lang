@@ -14,8 +14,7 @@ typedef _NSCachedAttributedString *BadClassForWeak;
 @class Forw;
 
 @interface Foo : NSObject {
-  Foo *w, *q1, *q2;
-  __weak Foo *x;
+  Foo *x, *w, *q1, *q2;
   WeakOptOut *oo;
   BadClassForWeak bcw;
   id not_safe1;
@@ -23,7 +22,7 @@ typedef _NSCachedAttributedString *BadClassForWeak;
   Forw *not_safe3;
   Foo *assign_plus1;
 }
-@property (readonly) __weak Foo *x;
+@property (readonly) Foo *x;
 @property (assign) Foo *w;
 @property Foo *q1, *q2;
 @property (assign) WeakOptOut *oo;
