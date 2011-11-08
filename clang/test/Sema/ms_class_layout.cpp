@@ -67,6 +67,35 @@ struct I : public virtual D
   double q;
 };
 
+struct K
+{
+  int k;
+};
+
+struct L
+{
+  int l;
+};
+
+struct M : public virtual K
+{
+  int m;
+};
+
+struct N : public L, public M
+{
+  virtual void f(){}
+};
+
+struct O : public H, public G {
+  virtual void fo(){}
+};
+
+struct P : public M, public virtual L {
+  int p;
+};
+
+
 #pragma pack(pop)
 
 // This needs only for building layouts. 
@@ -79,6 +108,9 @@ int main() {
   H* g;
   BaseStruct* u;
   I* i;
+  N* n;
+  O* o;
+  P* p;
   return 0;
 }
 
@@ -89,7 +121,7 @@ int main() {
 // CHECK-NEXT: sizeof=16, dsize=16, align=8
 // CHECK-NEXT: nvsize=16, nvalign=8
 
-// CHECK: %class.D = type { [8 x i8], double }
+// CHECK: %class.D = type { i32 (...)**, double }
 
 // CHECK:       0 | class B
 // CHECK-NEXT:  0 |   (B vftable pointer)
@@ -98,7 +130,7 @@ int main() {
 // CHECK-NEXT: sizeof=8, dsize=8, align=4
 // CHECK-NEXT: nvsize=8, nvalign=4
 
-// CHECK: %class.B = type { [4 x i8], i32 }
+// CHECK: %class.B = type { i32 (...)**, i32 }
 
 // CHECK:       0 | class A
 // CHECK-NEXT:  0 |   class B (primary base)
@@ -134,8 +166,8 @@ int main() {
 
 // CHECK: %class.A = type { %class.B, i32, i8 }
 
-// CHECK: %class.C = type { %class.D, %class.B, [8 x i8], double, i32, double, i32, [4 x i8], %class.A }
-// CHECK: %class.C.base = type { %class.D, %class.B, [8 x i8], double, i32, double, i32 }
+// CHECK: %class.C = type { %class.D, %class.B, i32*, double, i32, double, i32, [4 x i8], %class.A }
+// CHECK: %class.C.base = type { %class.D, %class.B, i32*, double, i32, double, i32 }
 
 // CHECK:       0 | struct BaseStruct
 // CHECK-NEXT:  0 |   double v0
@@ -213,7 +245,7 @@ int main() {
 // CHECK-NEXT: sizeof=24, dsize=24, align=8
 // CHECK-NEXT: nvsize=8, nvalign=4
 
-// CHECK: %struct.H = type { %struct.G, [4 x i8], %class.D }
+// CHECK: %struct.H = type { %struct.G, i32*, %class.D }
 
 // CHECK:       0 | struct I
 // CHECK-NEXT:  0 |   (I vftable pointer)
@@ -225,5 +257,71 @@ int main() {
 // CHECK-NEXT: sizeof=40, dsize=40, align=8
 // CHECK-NEXT: nvsize=24, nvalign=8
 
-// CHECK: %struct.I = type { [16 x i8], double, %class.D }
-// CHECK: %struct.I.base = type { [16 x i8], double }
+// CHECK: %struct.I = type { i32 (...)**, [4 x i8], i32*, double, %class.D }
+// CHECK: %struct.I.base = type { i32 (...)**, [4 x i8], i32*, double }
+
+// CHECK:       0 | struct L
+// CHECK-NEXT:  0 |   int l
+// CHECK-NEXT: sizeof=4, dsize=4, align=4
+// CHECK-NEXT: nvsize=4, nvalign=4
+
+// CHECK:       0 | struct K
+// CHECK-NEXT:  0 |   int k
+// CHECK-NEXT: sizeof=4, dsize=4, align=4
+// CHECK-NEXT: nvsize=4, nvalign=4
+
+// CHECK:       0 | struct M
+// CHECK-NEXT:  0 |   (M vbtable pointer)
+// CHECK-NEXT:  4 |   int m
+// CHECK-NEXT:  8 |   struct K (virtual base)
+// CHECK-NEXT:  8 |     int k
+// CHECK-NEXT: sizeof=12, dsize=12, align=4
+
+//CHECK: %struct.M = type { i32*, i32, %struct.K }
+//CHECK: %struct.M.base = type { i32*, i32 }
+
+// CHECK:       0 | struct N
+// CHECK-NEXT:  4 |   struct L (base)
+// CHECK-NEXT:  4 |     int l
+// CHECK-NEXT:  8 |   struct M (base)
+// CHECK-NEXT:  8 |     (M vbtable pointer)
+// CHECK-NEXT: 12 |     int m
+// CHECK-NEXT:  0 |   (N vftable pointer)
+// CHECK-NEXT: 16 |   struct K (virtual base)
+// CHECK-NEXT: 16 |     int k
+// CHECK-NEXT: sizeof=20, dsize=20, align=4
+// CHECK-NEXT: nvsize=16, nvalign=4
+
+//CHECK: %struct.N = type { i32 (...)**, %struct.L, %struct.M.base, %struct.K }
+
+// FIXME: MSVC place struct H at offset 8.
+// CHECK:       0 | struct O
+// CHECK-NEXT:  4 |   struct H (base)
+// CHECK-NEXT:  4 |     struct G (base)
+// CHECK-NEXT:  4 |       int g_field
+// CHECK-NEXT:  8 |     (H vbtable pointer)
+// CHECK-NEXT: 12 |   struct G (base)
+// CHECK-NEXT: 12 |     int g_field
+// CHECK-NEXT:  0 |   (O vftable pointer)
+// CHECK-NEXT: 16 |   class D (virtual base)
+// CHECK-NEXT: 16 |     (D vftable pointer)
+// CHECK-NEXT: 24 |     double a
+// CHECK-NEXT: sizeof=32, dsize=32, align=8
+// CHECK-NEXT: nvsize=16, nvalign=4
+
+//CHECK: %struct.O = type { i32 (...)**, %struct.H.base, %struct.G, %class.D }
+//CHECK: %struct.O.base = type { i32 (...)**, %struct.H.base, %struct.G }
+
+// CHECK:       0 | struct P
+// CHECK-NEXT:  0 |   struct M (base)
+// CHECK-NEXT:  0 |     (M vbtable pointer)
+// CHECK-NEXT:  4 |     int m
+// CHECK-NEXT:  8 |   int p
+// CHECK-NEXT: 12 |   struct K (virtual base)
+// CHECK-NEXT: 12 |     int k
+// CHECK-NEXT: 16 |   struct L (virtual base)
+// CHECK-NEXT: 16 |     int l
+// CHECK-NEXT: sizeof=20, dsize=20, align=4
+// CHECK-NEXT: nvsize=12, nvalign=4
+
+//CHECK: %struct.P = type { %struct.M.base, i32, %struct.K, %struct.L }

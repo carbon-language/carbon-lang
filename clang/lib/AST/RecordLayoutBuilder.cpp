@@ -618,10 +618,10 @@ protected:
   /// avoid visiting virtual bases more than once.
   llvm::SmallPtrSet<const CXXRecordDecl *, 4> VisitedVirtualBases;
 
-  RecordLayoutBuilder(const ASTContext &Context, EmptySubobjectMap
-                      *EmptySubobjects, CharUnits Alignment)
+  RecordLayoutBuilder(const ASTContext &Context,
+                      EmptySubobjectMap *EmptySubobjects)
     : Context(Context), EmptySubobjects(EmptySubobjects), Size(0), 
-      Alignment(Alignment), UnpackedAlignment(Alignment),
+      Alignment(CharUnits::One()), UnpackedAlignment(CharUnits::One()),
       Packed(false), IsUnion(false), 
       IsMac68kAlign(false), IsMsStruct(false),
       UnfilledBitsInLastByte(0), MaxFieldAlignment(CharUnits::Zero()), 
@@ -633,6 +633,17 @@ protected:
       VBPtrOffset(CharUnits::fromQuantity(-1)),
       FirstNearlyEmptyVBase(0) { }
 
+  /// Reset this RecordLayoutBuilder to a fresh state, using the given
+  /// alignment as the initial alignment.  This is used for the
+  /// correct layout of vb-table pointers in MSVC.
+  void resetWithTargetAlignment(CharUnits TargetAlignment) {
+    const ASTContext &Context = this->Context;
+    EmptySubobjectMap *EmptySubobjects = this->EmptySubobjects;
+    this->~RecordLayoutBuilder();
+    new (this) RecordLayoutBuilder(Context, EmptySubobjects);
+    Alignment = UnpackedAlignment = TargetAlignment;
+  }
+
   void Layout(const RecordDecl *D);
   void Layout(const CXXRecordDecl *D);
   void Layout(const ObjCInterfaceDecl *D);
@@ -642,8 +653,12 @@ protected:
   void LayoutWideBitField(uint64_t FieldSize, uint64_t TypeSize,
                           bool FieldPacked, const FieldDecl *D);
   void LayoutBitField(const FieldDecl *D);
+
+  bool isMicrosoftCXXABI() const {
+    return Context.getTargetInfo().getCXXABI() == CXXABI_Microsoft;
+  }
+
   void MSLayoutVirtualBases(const CXXRecordDecl *RD);
-  void MSLayout(const CXXRecordDecl *RD);
 
   /// BaseSubobjectInfoAllocator - Allocator for BaseSubobjectInfo objects.
   llvm::SpecificBumpPtrAllocator<BaseSubobjectInfo> BaseSubobjectInfoAllocator;
@@ -686,8 +701,9 @@ protected:
   void AddPrimaryVirtualBaseOffsets(const BaseSubobjectInfo *Info,
                                     CharUnits Offset);
 
-  bool HasNewVirtualFunction(const CXXRecordDecl *RD) const;
-  bool BaseHasVFPtr(const CXXRecordDecl *RD) const;
+  bool needsVFTable(const CXXRecordDecl *RD) const;
+  bool hasNewVirtualFunction(const CXXRecordDecl *RD) const;
+  bool isPossiblePrimaryBase(const CXXRecordDecl *Base) const;
 
   /// LayoutVirtualBases - Lays out all the virtual bases.
   void LayoutVirtualBases(const CXXRecordDecl *RD,
@@ -742,8 +758,6 @@ protected:
   void operator=(const RecordLayoutBuilder&); // DO NOT IMPLEMENT
 public:
   static const CXXMethodDecl *ComputeKeyFunction(const CXXRecordDecl *RD);
-
-  virtual ~RecordLayoutBuilder() { }
 };
 } // end anonymous namespace
 
@@ -800,7 +814,7 @@ void RecordLayoutBuilder::DeterminePrimaryBase(const CXXRecordDecl *RD) {
     const CXXRecordDecl *Base =
       cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
 
-    if (Base->isDynamicClass()) {
+    if (isPossiblePrimaryBase(Base)) {
       // We found it.
       PrimaryBase = Base;
       PrimaryBaseIsVirtual = false;
@@ -809,7 +823,7 @@ void RecordLayoutBuilder::DeterminePrimaryBase(const CXXRecordDecl *RD) {
   }
 
   // The Microsoft ABI doesn't have primary virtual bases.
-  if (Context.getTargetInfo().getCXXABI() == CXXABI_Microsoft) {
+  if (isMicrosoftCXXABI()) {
     assert(!PrimaryBase && "Should not get here with a primary base!");
     return;
   }
@@ -989,34 +1003,45 @@ RecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
 
       LayoutNonVirtualBase(PrimaryBaseInfo);
     }
-  }
 
-  if (Context.getTargetInfo().getCXXABI() != CXXABI_Microsoft &&
-      !PrimaryBase && RD->isDynamicClass()) {
-    // Under the Itanium ABI, a dynamic class without a primary base has a
-    // vtable pointer.  It is placed at offset 0.
+  // If this class needs a vtable/vf-table and didn't get one from a
+  // primary base, add it in now.
+  } else if (needsVFTable(RD)) {
     assert(DataSize == 0 && "Vtable pointer must be at offset zero!");
     CharUnits PtrWidth = 
       Context.toCharUnitsFromBits(Context.getTargetInfo().getPointerWidth(0));
     CharUnits PtrAlign = 
       Context.toCharUnitsFromBits(Context.getTargetInfo().getPointerAlign(0));
     EnsureVTablePointerAlignment(PtrAlign);
+    if (isMicrosoftCXXABI())
+      VFPtrOffset = getSize();
     setSize(getSize() + PtrWidth);
     setDataSize(getSize());
   }
+
+  bool HasDirectVirtualBases = false;
+  bool HasNonVirtualBaseWithVBTable = false;
 
   // Now lay out the non-virtual bases.
   for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
          E = RD->bases_end(); I != E; ++I) {
 
-    // Ignore virtual bases.
-    if (I->isVirtual())
+    // Ignore virtual bases, but remember that we saw one.
+    if (I->isVirtual()) {
+      HasDirectVirtualBases = true;
       continue;
+    }
 
     const CXXRecordDecl *BaseDecl =
-      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+      cast<CXXRecordDecl>(I->getType()->castAs<RecordType>()->getDecl());
 
-    // Skip the primary base.
+    // Remember if this base has virtual bases itself.
+    if (BaseDecl->getNumVBases())
+      HasNonVirtualBaseWithVBTable = true;
+
+    // Skip the primary base, because we've already laid it out.  The
+    // !PrimaryBaseIsVirtual check is required because we might have a
+    // non-virtual base of the same type as a primary virtual base.
     if (BaseDecl == PrimaryBase && !PrimaryBaseIsVirtual)
       continue;
 
@@ -1027,32 +1052,35 @@ RecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
     LayoutNonVirtualBase(BaseInfo);
   }
 
-  if (Context.getTargetInfo().getCXXABI() == CXXABI_Microsoft) {
-    // Under the MS ABI, there are separate virtual function table and
-    // virtual base table pointers. A vfptr is necessary a if a class defines
-    // a virtual function which is not overriding a function from a base;
-    // a vbptr is necessary if a class has virtual bases. Either can come
-    // from a primary base, if it exists.  Otherwise, they are placed
-    // after any base classes.
+  // In the MS ABI, add the vb-table pointer if we need one, which is
+  // whenever we have a virtual base and we can't re-use a vb-table
+  // pointer from a non-virtual base.
+  if (isMicrosoftCXXABI() &&
+      HasDirectVirtualBases && !HasNonVirtualBaseWithVBTable) {
     CharUnits PtrWidth = 
       Context.toCharUnitsFromBits(Context.getTargetInfo().getPointerWidth(0));
     CharUnits PtrAlign = 
       Context.toCharUnitsFromBits(Context.getTargetInfo().getPointerAlign(0));
+
+    // MSVC potentially over-aligns the vb-table pointer by giving it
+    // the max alignment of all the non-virtual objects in the class.
+    // This is completely unnecessary, but we're not here to pass
+    // judgment.
+    //
+    // Note that we've only laid out the non-virtual bases, so on the
+    // first pass Alignment won't be set correctly here, but if the
+    // vb-table doesn't end up aligned correctly we'll come through
+    // and redo the layout from scratch with the right alignment.
+    //
+    // TODO: Instead of doing this, just lay out the fields as if the
+    // vb-table were at offset zero, then retroactively bump the field
+    // offsets up.
     PtrAlign = std::max(PtrAlign, Alignment);
-    if (HasNewVirtualFunction(RD) &&
-        (!PrimaryBase || !BaseHasVFPtr(PrimaryBase))) {
-      EnsureVTablePointerAlignment(PtrAlign);
-      VFPtrOffset = getSize();
-      setSize(getSize() + PtrWidth);
-      setDataSize(getSize());
-    }
-    if (RD->getNumVBases() &&
-        (!PrimaryBase || !PrimaryBase->getNumVBases())) {
-      EnsureVTablePointerAlignment(PtrAlign);
-      VBPtrOffset = getSize();
-      setSize(getSize() + PtrWidth);
-      setDataSize(getSize());
-    }
+
+    EnsureVTablePointerAlignment(PtrAlign);
+    VBPtrOffset = getSize();
+    setSize(getSize() + PtrWidth);
+    setDataSize(getSize());
   }
 }
 
@@ -1102,28 +1130,81 @@ RecordLayoutBuilder::AddPrimaryVirtualBaseOffsets(const BaseSubobjectInfo *Info,
   }
 }
 
+/// needsVFTable - Return true if this class needs a vtable or vf-table
+/// when laid out as a base class.  These are treated the same because
+/// they're both always laid out at offset zero.
+///
+/// This function assumes that the class has no primary base.
+bool RecordLayoutBuilder::needsVFTable(const CXXRecordDecl *RD) const {
+  assert(!PrimaryBase);
+
+  // In the Itanium ABI, every dynamic class needs a vtable: even if
+  // this class has no virtual functions as a base class (i.e. it's
+  // non-polymorphic or only has virtual functions from virtual
+  // bases),x it still needs a vtable to locate its virtual bases.
+  if (!isMicrosoftCXXABI())
+    return RD->isDynamicClass();
+
+  // In the MS ABI, we need a vfptr if the class has virtual functions
+  // other than those declared by its virtual bases.  The AST doesn't
+  // tell us that directly, and checking manually for virtual
+  // functions that aren't overrides is expensive, but there are
+  // some important shortcuts:
+
+  //  - Non-polymorphic classes have no virtual functions at all.
+  if (!RD->isPolymorphic()) return false;
+
+  //  - Polymorphic classes with no virtual bases must either declare
+  //    virtual functions directly or inherit them, but in the latter
+  //    case we would have a primary base.
+  if (RD->getNumVBases() == 0) return true;
+
+  return hasNewVirtualFunction(RD);
+}
+
+/// hasNewVirtualFunction - Does the given polymorphic class declare a
+/// virtual function that does not override a method from any of its
+/// base classes?
 bool 
-RecordLayoutBuilder::HasNewVirtualFunction(const CXXRecordDecl *RD) const {
+RecordLayoutBuilder::hasNewVirtualFunction(const CXXRecordDecl *RD) const {
+  assert(RD->isPolymorphic());
+  if (!RD->getNumBases()) 
+    return true;
+
   for (CXXRecordDecl::method_iterator method = RD->method_begin();
        method != RD->method_end();
        ++method) {
-    if (method->isVirtual() &&
-      !method->size_overridden_methods()) {
+    if (method->isVirtual() && !method->size_overridden_methods()) {
       return true;
     }
   }
   return false;
 }
 
+/// isPossiblePrimaryBase - Is the given base class an acceptable
+/// primary base class?
 bool 
-RecordLayoutBuilder::BaseHasVFPtr(const CXXRecordDecl *Base) const {
-  // FIXME: This function is inefficient.
-  if (HasNewVirtualFunction(Base))
-    return true;
-  const ASTRecordLayout &Layout = Context.getASTRecordLayout(Base);
-  if (const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase())
-    return BaseHasVFPtr(PrimaryBase);
-  return false;
+RecordLayoutBuilder::isPossiblePrimaryBase(const CXXRecordDecl *Base) const {
+  // In the Itanium ABI, a class can be a primary base class if it has
+  // a vtable for any reason.
+  if (!isMicrosoftCXXABI())
+    return Base->isDynamicClass();
+
+  // In the MS ABI, a class can only be a primary base class if it
+  // provides a vf-table at a static offset.  That means it has to be
+  // non-virtual base.  The existence of a separate vb-table means
+  // that it's possible to get virtual functions only from a virtual
+  // base, which we have to guard against.
+
+  // First off, it has to have virtual functions.
+  if (!Base->isPolymorphic()) return false;
+
+  // If it has no virtual bases, then everything is at a static offset.
+  if (!Base->getNumVBases()) return true;
+
+  // Okay, just ask the base class's layout.
+  return (Context.getASTRecordLayout(Base).getVFPtrOffset()
+            != CharUnits::fromQuantity(-1));
 }
 
 void
@@ -1147,7 +1228,7 @@ RecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *RD,
            "Cannot layout class with dependent bases.");
 
     const CXXRecordDecl *BaseDecl =
-      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+      cast<CXXRecordDecl>(I->getType()->castAs<RecordType>()->getDecl());
 
     if (I->isVirtual()) {
       if (PrimaryBase != BaseDecl || !PrimaryBaseIsVirtual) {
@@ -1172,6 +1253,23 @@ RecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *RD,
     }
 
     LayoutVirtualBases(BaseDecl, MostDerivedClass);
+  }
+}
+
+void RecordLayoutBuilder::MSLayoutVirtualBases(const CXXRecordDecl *RD) {
+
+  if (!RD->getNumVBases())
+    return;
+
+  // This is substantially simplified because there are no virtual
+  // primary bases.
+  for (CXXRecordDecl::base_class_const_iterator I = RD->vbases_begin(),
+       E = RD->vbases_end(); I != E; ++I) {
+    const CXXRecordDecl *BaseDecl = I->getType()->getAsCXXRecordDecl();
+    const BaseSubobjectInfo *BaseInfo = VirtualBaseInfo.lookup(BaseDecl);
+    assert(BaseInfo && "Did not find virtual base info!");
+    
+    LayoutVirtualBase(BaseInfo);
   }
 }
 
@@ -1269,11 +1367,6 @@ void RecordLayoutBuilder::Layout(const RecordDecl *D) {
 }
 
 void RecordLayoutBuilder::Layout(const CXXRecordDecl *RD) {
-  if (Context.getTargetInfo().getCXXABI() == CXXABI_Microsoft) {
-    MSLayout(RD);
-    return;
-  }
-
   InitializeLayout(RD);
 
   // Lay out the vtable and the non-virtual bases.
@@ -1286,14 +1379,30 @@ void RecordLayoutBuilder::Layout(const CXXRecordDecl *RD) {
                                  Context.getTargetInfo().getCharAlign()));
   NonVirtualAlignment = Alignment;
 
-  // Lay out the virtual bases and add the primary virtual base offsets.
-  LayoutVirtualBases(RD, RD);
+  if (isMicrosoftCXXABI() &&
+      NonVirtualSize != NonVirtualSize.RoundUpToAlignment(Alignment)) {
+    CharUnits AlignMember = 
+      NonVirtualSize.RoundUpToAlignment(Alignment) - NonVirtualSize;
 
-  VisitedVirtualBases.clear();
+    setSize(getSize() + AlignMember);
+    setDataSize(getSize());
 
-  // Finally, round the size of the total struct up to the alignment of the
-  // struct itself.
-  FinishLayout(RD);
+    NonVirtualSize = Context.toCharUnitsFromBits(
+                             llvm::RoundUpToAlignment(getSizeInBits(),
+                             Context.getTargetInfo().getCharAlign()));
+
+    MSLayoutVirtualBases(RD);
+
+  } else {
+    // Lay out the virtual bases and add the primary virtual base offsets.
+    LayoutVirtualBases(RD, RD);
+  }
+
+  // Finally, round the size of the total struct up to the alignment
+  // of the struct itself.  Amazingly, this does not occur in the MS
+  // ABI after virtual base layout.
+  if (!isMicrosoftCXXABI() || RD->getNumVBases())
+    FinishLayout(RD);
 
 #ifndef NDEBUG
   // Check that we have base offsets for all bases.
@@ -1760,81 +1869,6 @@ void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {
   UpdateAlignment(FieldAlign, UnpackedFieldAlign);
 }
 
-void RecordLayoutBuilder::MSLayoutVirtualBases(const CXXRecordDecl *RD) {
-
-  if (!RD->getNumVBases())
-    return;
-
-  for (CXXRecordDecl::base_class_const_iterator I = RD->vbases_begin(),
-       E = RD->vbases_end(); I != E; ++I) {
-
-    const CXXRecordDecl* BaseDecl = I->getType()->getAsCXXRecordDecl();
-    const BaseSubobjectInfo* BaseInfo = VirtualBaseInfo.lookup(BaseDecl);
-
-    assert(BaseInfo && "Did not find virtual base info!");
-    
-    LayoutVirtualBase(BaseInfo);
-  }
-}
-
-void RecordLayoutBuilder::MSLayout(const CXXRecordDecl *RD) {
-
-  InitializeLayout(RD);
-
-  LayoutNonVirtualBases(RD);
-
-  LayoutFields(RD);
-
-  NonVirtualSize = Context.toCharUnitsFromBits(
-                           llvm::RoundUpToAlignment(getSizeInBits(),
-                           Context.getTargetInfo().getCharAlign()));
-  NonVirtualAlignment = Alignment;
-
-  if (NonVirtualSize != NonVirtualSize.RoundUpToAlignment(Alignment)) {
-    CharUnits AlignMember = 
-      NonVirtualSize.RoundUpToAlignment(Alignment) - NonVirtualSize;
-
-    setSize(getSize() + AlignMember);
-    setDataSize(getSize());
-
-    NonVirtualSize = Context.toCharUnitsFromBits(
-                             llvm::RoundUpToAlignment(getSizeInBits(),
-                             Context.getTargetInfo().getCharAlign()));
-  }
-
-  MSLayoutVirtualBases(RD);
-
-  VisitedVirtualBases.clear();
-
-  // Finally, round the size of the total struct up to the alignment of the
-  // struct itself.
-  if (!RD->getNumVBases())
-    FinishLayout(RD);
-
-#ifndef NDEBUG
-  // Check that we have base offsets for all bases.
-  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
-    E = RD->bases_end(); I != E; ++I) {
-      if (I->isVirtual())
-        continue;
-
-      const CXXRecordDecl *BaseDecl =
-        cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
-
-      assert(Bases.count(BaseDecl) && "Did not find base offset!");
-  }
-
-  // And all virtual bases.
-  for (CXXRecordDecl::base_class_const_iterator I = RD->vbases_begin(),
-    E = RD->vbases_end(); I != E; ++I) {
-      const CXXRecordDecl *BaseDecl =
-        cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
-
-      assert(VBases.count(BaseDecl) && "Did not find base offset!");
-  }
-#endif
-}
-
 void RecordLayoutBuilder::FinishLayout(const NamedDecl *D) {
   // In C++, records cannot be of size 0.
   if (Context.getLangOptions().CPlusPlus && getSizeInBits() == 0) {
@@ -2024,36 +2058,21 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
 
   if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D)) {
     EmptySubobjectMap EmptySubobjects(*this, RD);
+    RecordLayoutBuilder Builder(*this, &EmptySubobjects);
+    Builder.Layout(RD);
 
-    llvm::OwningPtr<RecordLayoutBuilder> Builder;
-    CharUnits TargetAlign = CharUnits::One();
-
-    Builder.reset(new RecordLayoutBuilder(*this,
-                                          &EmptySubobjects,
-                                          TargetAlign));
-
-    // Recover resources if we crash before exiting this method.
-    llvm::CrashRecoveryContextCleanupRegistrar<RecordLayoutBuilder>
-      RecordBuilderCleanup(Builder.get());
-    
-    Builder->Layout(RD);
-
-    TargetAlign = Builder->NonVirtualAlignment;
-    
-    if (getTargetInfo().getCXXABI() == CXXABI_Microsoft &&
-        TargetAlign.getQuantity() > 4) {
-      // MSVC rounds the vtable pointer to the struct alignment in what must
-      // be a multi-pass operation. For now, let the builder figure out the
-      // alignment and recalculate the layout once its known.
-      Builder.reset(new RecordLayoutBuilder(*this,
-                                            &EmptySubobjects,
-                                            TargetAlign));
-
-      Builder->Layout(RD);
-
-      // Recover resources if we crash before exiting this method.
-      llvm::CrashRecoveryContextCleanupRegistrar<RecordLayoutBuilder>
-        RecordBuilderCleanup(Builder.get());
+    // MSVC gives the vb-table pointer an alignment equal to that of
+    // the non-virtual part of the structure.  That's an inherently
+    // multi-pass operation.  If our first pass doesn't give us
+    // adequate alignment, try again with the specified minimum
+    // alignment.  This is *much* more maintainable than computing the
+    // alignment in advance in a separately-coded pass; it's also
+    // significantly more efficient in the common case where the
+    // vb-table doesn't need extra padding.
+    if (Builder.VBPtrOffset != CharUnits::fromQuantity(-1) &&
+        (Builder.VBPtrOffset % Builder.NonVirtualAlignment) != 0) {
+      Builder.resetWithTargetAlignment(Builder.NonVirtualAlignment);
+      Builder.Layout(RD);
     }
 
     // FIXME: This is not always correct. See the part about bitfields at
@@ -2061,31 +2080,30 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
     // FIXME: IsPODForThePurposeOfLayout should be stored in the record layout.
     // This does not affect the calculations of MSVC layouts
     bool IsPODForThePurposeOfLayout = 
-      (getTargetInfo().getCXXABI() != CXXABI_Microsoft) &&
-      cast<CXXRecordDecl>(D)->isPOD();
+      (!Builder.isMicrosoftCXXABI() && cast<CXXRecordDecl>(D)->isPOD());
 
     // FIXME: This should be done in FinalizeLayout.
     CharUnits DataSize =
-      IsPODForThePurposeOfLayout ? Builder->getSize() : Builder->getDataSize();
+      IsPODForThePurposeOfLayout ? Builder.getSize() : Builder.getDataSize();
     CharUnits NonVirtualSize = 
-      IsPODForThePurposeOfLayout ? DataSize : Builder->NonVirtualSize;
+      IsPODForThePurposeOfLayout ? DataSize : Builder.NonVirtualSize;
 
     NewEntry =
-      new (*this) ASTRecordLayout(*this, Builder->getSize(), 
-                                  Builder->Alignment,
-                                  Builder->VFPtrOffset,
-                                  Builder->VBPtrOffset,
+      new (*this) ASTRecordLayout(*this, Builder.getSize(), 
+                                  Builder.Alignment,
+                                  Builder.VFPtrOffset,
+                                  Builder.VBPtrOffset,
                                   DataSize, 
-                                  Builder->FieldOffsets.data(),
-                                  Builder->FieldOffsets.size(),
+                                  Builder.FieldOffsets.data(),
+                                  Builder.FieldOffsets.size(),
                                   NonVirtualSize,
-                                  Builder->NonVirtualAlignment,
+                                  Builder.NonVirtualAlignment,
                                   EmptySubobjects.SizeOfLargestEmptySubobject,
-                                  Builder->PrimaryBase,
-                                  Builder->PrimaryBaseIsVirtual,
-                                  Builder->Bases, Builder->VBases);
+                                  Builder.PrimaryBase,
+                                  Builder.PrimaryBaseIsVirtual,
+                                  Builder.Bases, Builder.VBases);
   } else {
-    RecordLayoutBuilder Builder(*this, /*EmptySubobjects=*/0, CharUnits::One());
+    RecordLayoutBuilder Builder(*this, /*EmptySubobjects=*/0);
     Builder.Layout(D);
 
     NewEntry =
@@ -2144,7 +2162,7 @@ ASTContext::getObjCLayout(const ObjCInterfaceDecl *D,
       return getObjCLayout(D, 0);
   }
 
-  RecordLayoutBuilder Builder(*this, /*EmptySubobjects=*/0, CharUnits::One());
+  RecordLayoutBuilder Builder(*this, /*EmptySubobjects=*/0);
   Builder.Layout(D);
 
   const ASTRecordLayout *NewEntry =

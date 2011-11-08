@@ -131,6 +131,11 @@ private:
   /// LayoutVirtualBases - layout the virtual bases of a record decl.
   void LayoutVirtualBases(const CXXRecordDecl *RD,
                           const ASTRecordLayout &Layout);
+
+  /// MSLayoutVirtualBases - layout the virtual bases of a record decl,
+  /// like MSVC.
+  void MSLayoutVirtualBases(const CXXRecordDecl *RD,
+                            const ASTRecordLayout &Layout);
   
   /// LayoutNonVirtualBase - layout a single non-virtual base.
   void LayoutNonVirtualBase(const CXXRecordDecl *base,
@@ -633,6 +638,25 @@ CGRecordLayoutBuilder::LayoutVirtualBase(const CXXRecordDecl *base,
   VirtualBases[base] = (FieldTypes.size() - 1);
 }
 
+void
+CGRecordLayoutBuilder::MSLayoutVirtualBases(const CXXRecordDecl *RD,
+                                          const ASTRecordLayout &Layout) {
+  if (!RD->getNumVBases())
+    return;
+
+  // The vbases list is uniqued and ordered by a depth-first
+  // traversal, which is what we need here.
+  for (CXXRecordDecl::base_class_const_iterator I = RD->vbases_begin(),
+        E = RD->vbases_end(); I != E; ++I) {
+
+    const CXXRecordDecl *BaseDecl = 
+      cast<CXXRecordDecl>(I->getType()->castAs<RecordType>()->getDecl());
+
+    CharUnits vbaseOffset = Layout.getVBaseClassOffset(BaseDecl);
+    LayoutVirtualBase(BaseDecl, vbaseOffset);
+  }
+}
+
 /// LayoutVirtualBases - layout the non-virtual bases of a record decl.
 void
 CGRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *RD,
@@ -667,25 +691,25 @@ CGRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD,
                                              const ASTRecordLayout &Layout) {
   const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
 
-  // Check if we need to add a vtable pointer.
-  if (RD->isDynamicClass()) {
-    if (PrimaryBase) {
-      if (!Layout.isPrimaryBaseVirtual())
-        LayoutNonVirtualBase(PrimaryBase, CharUnits::Zero());
-      else
-        LayoutVirtualBase(PrimaryBase, CharUnits::Zero());
-    } else if (Types.getContext().getTargetInfo().getCXXABI() !=
-               CXXABI_Microsoft) {
-      llvm::Type *FunctionType =
-        llvm::FunctionType::get(llvm::Type::getInt32Ty(Types.getLLVMContext()),
-                                /*isVarArg=*/true);
-      llvm::Type *VTableTy = FunctionType->getPointerTo();
+  // If we have a primary base, lay it out first.
+  if (PrimaryBase) {
+    if (!Layout.isPrimaryBaseVirtual())
+      LayoutNonVirtualBase(PrimaryBase, CharUnits::Zero());
+    else
+      LayoutVirtualBase(PrimaryBase, CharUnits::Zero());
 
-      assert(NextFieldOffset.isZero() &&
-             "VTable pointer must come first!");
-      AppendField(CharUnits::Zero(), VTableTy->getPointerTo());
-      
-    }
+  // Otherwise, add a vtable / vf-table if the layout says to do so.
+  } else if (Types.getContext().getTargetInfo().getCXXABI() == CXXABI_Microsoft
+               ? Layout.getVFPtrOffset() != CharUnits::fromQuantity(-1)
+               : RD->isDynamicClass()) {
+    llvm::Type *FunctionType =
+      llvm::FunctionType::get(llvm::Type::getInt32Ty(Types.getLLVMContext()),
+                              /*isVarArg=*/true);
+    llvm::Type *VTableTy = FunctionType->getPointerTo();
+    
+    assert(NextFieldOffset.isZero() &&
+           "VTable pointer must come first!");
+    AppendField(CharUnits::Zero(), VTableTy->getPointerTo());
   }
 
   // Layout the non-virtual bases.
@@ -702,6 +726,14 @@ CGRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD,
       continue;
 
     LayoutNonVirtualBase(BaseDecl, Layout.getBaseClassOffset(BaseDecl));
+  }
+
+  // Add a vb-table pointer if the layout insists.
+  if (Layout.getVBPtrOffset() != CharUnits::fromQuantity(-1)) {
+    CharUnits VBPtrOffset = Layout.getVBPtrOffset();
+    llvm::Type *Vbptr = llvm::Type::getInt32PtrTy(Types.getLLVMContext());
+    AppendPadding(VBPtrOffset, getTypeAlignment(Vbptr));
+    AppendField(VBPtrOffset, Vbptr);
   }
 }
 
@@ -733,7 +765,6 @@ CGRecordLayoutBuilder::ComputeNonVirtualBaseType(const CXXRecordDecl *RD) {
     CharUnits NumBytes = AlignedNonVirtualTypeSize - AlignedNextFieldOffset;
     FieldTypes.push_back(getByteArrayType(NumBytes));
   }
-
   
   BaseSubobjectType = llvm::StructType::create(Types.getLLVMContext(),
                                                FieldTypes, "", Packed);
@@ -787,11 +818,17 @@ bool CGRecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
       return false;
     }
 
-    // And lay out the virtual bases.
-    RD->getIndirectPrimaryBases(IndirectPrimaryBases);
-    if (Layout.isPrimaryBaseVirtual())
-      IndirectPrimaryBases.insert(Layout.getPrimaryBase());
-    LayoutVirtualBases(RD, Layout);
+    // Lay out the virtual bases.  The MS ABI uses a different
+    // algorithm here due to the lack of primary virtual bases.
+    if (Types.getContext().getTargetInfo().getCXXABI() != CXXABI_Microsoft) {
+      RD->getIndirectPrimaryBases(IndirectPrimaryBases);
+      if (Layout.isPrimaryBaseVirtual())
+        IndirectPrimaryBases.insert(Layout.getPrimaryBase());
+
+      LayoutVirtualBases(RD, Layout);
+    } else {
+      MSLayoutVirtualBases(RD, Layout);
+    }
   }
   
   // Append tail padding if necessary.
@@ -833,17 +870,24 @@ void CGRecordLayoutBuilder::AppendPadding(CharUnits fieldOffset,
   assert(NextFieldOffset <= fieldOffset &&
          "Incorrect field layout!");
 
-  // Round up the field offset to the alignment of the field type.
-  CharUnits alignedNextFieldOffset =
-    NextFieldOffset.RoundUpToAlignment(fieldAlignment);
+  // Do nothing if we're already at the right offset.
+  if (fieldOffset == NextFieldOffset) return;
 
-  if (alignedNextFieldOffset < fieldOffset) {
-    // Even with alignment, the field offset is not at the right place,
-    // insert padding.
-    CharUnits padding = fieldOffset - NextFieldOffset;
+  // If we're not emitting a packed LLVM type, try to avoid adding
+  // unnecessary padding fields.
+  if (!Packed) {
+    // Round up the field offset to the alignment of the field type.
+    CharUnits alignedNextFieldOffset =
+      NextFieldOffset.RoundUpToAlignment(fieldAlignment);
+    assert(alignedNextFieldOffset <= fieldOffset);
 
-    AppendBytes(padding);
+    // If that's the right offset, we're done.
+    if (alignedNextFieldOffset == fieldOffset) return;
   }
+
+  // Otherwise we need explicit padding.
+  CharUnits padding = fieldOffset - NextFieldOffset;
+  AppendBytes(padding);
 }
 
 bool CGRecordLayoutBuilder::ResizeLastBaseFieldIfNecessary(CharUnits offset) {
