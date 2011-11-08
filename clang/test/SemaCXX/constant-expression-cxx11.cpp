@@ -322,3 +322,18 @@ static_assert_fold((&zs[0][0][0][2])[-1] == 2, "");
 static_assert_fold(**(**(zs + 1) + 1) == 11, "");
 
 }
+
+namespace DependentValues {
+
+struct I { int n; typedef I V[10]; };
+I::V x, y;
+template<bool B> struct S {
+  int k;
+  void f() {
+    I::V &cells = B ? x : y;
+    I &i = cells[k];
+    switch (i.n) {}
+  }
+};
+
+}

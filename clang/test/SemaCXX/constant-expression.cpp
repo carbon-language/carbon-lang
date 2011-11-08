@@ -95,3 +95,10 @@ void diags(int n) {
       ;
   }
 }
+
+namespace IntOrEnum {
+  const int k = 0;
+  const int &p = k;
+  template<int n> struct S {};
+  S<p> s; // expected-error {{not an integral constant expression}}
+}

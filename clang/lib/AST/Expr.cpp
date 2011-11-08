@@ -185,21 +185,29 @@ static void computeDeclRefDependence(NamedDecl *D, QualType T,
   
   //  (VD) - a constant with integral or enumeration type and is
   //         initialized with an expression that is value-dependent.
+  //  (VD) - a constant with literal type and is initialized with an
+  //         expression that is value-dependent [C++11].
+  //  (VD) - FIXME: Missing from the standard:
+  //       -  an entity with reference type and is initialized with an
+  //          expression that is value-dependent [C++11]
   if (VarDecl *Var = dyn_cast<VarDecl>(D)) {
-    if (Var->getType()->isIntegralOrEnumerationType() &&
-        Var->getType().getCVRQualifiers() == Qualifiers::Const) {
+    if ((D->getASTContext().getLangOptions().CPlusPlus0x ?
+           Var->getType()->isLiteralType() :
+           Var->getType()->isIntegralOrEnumerationType()) &&
+        (Var->getType().getCVRQualifiers() == Qualifiers::Const ||
+         Var->getType()->isReferenceType())) {
       if (const Expr *Init = Var->getAnyInitializer())
         if (Init->isValueDependent()) {
           ValueDependent = true;
           InstantiationDependent = true;
         }
-    } 
-    
+    }
+
     // (VD) - FIXME: Missing from the standard: 
     //      -  a member function or a static data member of the current 
     //         instantiation
-    else if (Var->isStaticDataMember() && 
-             Var->getDeclContext()->isDependentContext()) {
+    if (Var->isStaticDataMember() && 
+        Var->getDeclContext()->isDependentContext()) {
       ValueDependent = true;
       InstantiationDependent = true;
     }
@@ -213,8 +221,7 @@ static void computeDeclRefDependence(NamedDecl *D, QualType T,
   if (isa<CXXMethodDecl>(D) && D->getDeclContext()->isDependentContext()) {
     ValueDependent = true;
     InstantiationDependent = true;
-    return;
-  }  
+  }
 }
 
 void DeclRefExpr::computeDependence() {

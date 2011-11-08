@@ -552,7 +552,7 @@ static bool EvaluateVarDeclInit(EvalInfo &Info, const VarDecl *VD,
     return false;
 
   const Expr *Init = VD->getAnyInitializer();
-  if (!Init)
+  if (!Init || Init->isValueDependent())
     return false;
 
   if (APValue *V = VD->getEvaluatedValue()) {
@@ -3640,6 +3640,9 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
       //   A variable of non-volatile const-qualified integral or enumeration
       //   type initialized by an ICE can be used in ICEs.
       if (const VarDecl *Dcl = dyn_cast<VarDecl>(D)) {
+        if (!Dcl->getType()->isIntegralOrEnumerationType())
+          return ICEDiag(2, cast<DeclRefExpr>(E)->getLocation());
+
         // Look for a declaration of this variable that has an initializer.
         const VarDecl *ID = 0;
         const Expr *Init = Dcl->getAnyInitializer(ID);
