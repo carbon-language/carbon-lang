@@ -1987,6 +1987,11 @@ void Linux::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
   if (getTriple().getOS() == llvm::Triple::RTEMS)
     return;
 
+  // Add an include of '/include' directly. This isn't provided by default by
+  // system GCCs, but is often used with cross-compiling GCCs, and harmless to
+  // add even when Clang is acting as-if it were a system compiler.
+  addExternCSystemInclude(DriverArgs, CC1Args, D.SysRoot + "/include");
+
   addExternCSystemInclude(DriverArgs, CC1Args, D.SysRoot + "/usr/include");
 }
 
