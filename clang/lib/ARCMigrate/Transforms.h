@@ -95,6 +95,7 @@ public:
   };
   std::vector<GCAttrOccurrence> GCAttrs;
   llvm::DenseSet<unsigned> AttrSet;
+  llvm::DenseSet<unsigned> RemovedAttrSet;
 
   /// \brief Set of raw '@' locations for 'assign' properties group that contain
   /// GC __weak.

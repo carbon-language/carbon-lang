@@ -200,6 +200,7 @@ static void clearRedundantStrongs(MigrationContext &MigrateCtx) {
       if (TInfo->getType().getObjCLifetime() == Qualifiers::OCL_Strong) {
         Transaction Trans(TA);
         TA.remove(Attr.Loc);
+        MigrateCtx.RemovedAttrSet.insert(Attr.Loc.getRawEncoding());
       }
     }
   }
@@ -233,7 +234,8 @@ static void checkWeakGCAttrs(MigrationContext &MigrateCtx) {
       if (!canApplyWeak(MigrateCtx.Pass.Ctx, Attr.ModifiedType,
                         /*AllowOnUnknownClass=*/true)) {
         Transaction Trans(TA);
-        TA.replaceText(Attr.Loc, "__weak", "__unsafe_unretained");
+        if (!MigrateCtx.RemovedAttrSet.count(Attr.Loc.getRawEncoding()))
+          TA.replaceText(Attr.Loc, "__weak", "__unsafe_unretained");
         TA.clearDiagnostic(diag::err_arc_weak_no_runtime,
                            diag::err_arc_unsupported_weak_class,
                            Attr.Loc);
@@ -312,6 +314,7 @@ static void checkAllAtProps(MigrationContext &MigrateCtx,
     TA.clearDiagnostic(diag::err_objc_property_attr_mutually_exclusive, AtLoc);
     TA.clearDiagnostic(diag::err_arc_inconsistent_property_ownership,
                        ATLs[i].second->getLocation());
+    MigrateCtx.RemovedAttrSet.insert(Loc.getRawEncoding());
   }
 }
 
@@ -347,8 +350,8 @@ void GCAttrsTraverser::traverseTU(MigrationContext &MigrateCtx) {
 
   clearRedundantStrongs(MigrateCtx);
   errorForGCAttrsOnNonObjC(MigrateCtx);
-  checkWeakGCAttrs(MigrateCtx);
   checkAllProps(MigrateCtx, AllProps);
+  checkWeakGCAttrs(MigrateCtx);
 }
 
 void MigrationContext::dumpGCAttrs() {
