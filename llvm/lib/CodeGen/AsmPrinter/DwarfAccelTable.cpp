@@ -58,7 +58,7 @@ void DwarfAccelTable::ComputeBucketCount(void) {
   // First get the number of unique hashes.
   std::vector<uint32_t> uniques;
   uniques.resize(Data.size());
-  for (size_t i = 0; i < Data.size(); ++i)
+  for (size_t i = 0, e = Data.size(); i < e; ++i)
     uniques[i] = Data[i]->HashValue;
   std::sort(uniques.begin(), uniques.end());
   std::vector<uint32_t>::iterator p =
@@ -94,7 +94,7 @@ void DwarfAccelTable::FinalizeTable(AsmPrinter *Asm, const char *Prefix) {
 
   // Compute bucket contents and final ordering.
   Buckets.resize(Header.bucket_count);
-  for (size_t i = 0; i < Data.size(); ++i) {
+  for (size_t i = 0, e = Data.size(); i < e; ++i) {
     uint32_t bucket = Data[i]->HashValue % Header.bucket_count;
     Buckets[bucket].push_back(Data[i]);
     Data[i]->Sym = Asm->GetTempSymbol(Prefix, i);
@@ -132,7 +132,7 @@ void DwarfAccelTable::EmitHeader(AsmPrinter *Asm) {
 // like a list of numbers of how many elements are in each bucket.
 void DwarfAccelTable::EmitBuckets(AsmPrinter *Asm) {
   unsigned index = 0;
-  for (size_t i = 0; i < Buckets.size(); ++i) {
+  for (size_t i = 0, e = Buckets.size(); i < e; ++i) {
     Asm->OutStreamer.AddComment("Bucket " + Twine(i));
     if (Buckets[i].size() != 0)
       Asm->EmitInt32(index);
@@ -145,7 +145,7 @@ void DwarfAccelTable::EmitBuckets(AsmPrinter *Asm) {
 // Walk through the buckets and emit the individual hashes for each
 // bucket.
 void DwarfAccelTable::EmitHashes(AsmPrinter *Asm) {
-  for (size_t i = 0; i < Buckets.size(); ++i) {
+  for (size_t i = 0, e = Buckets.size(); i < e; ++i) {
     for (HashList::const_iterator HI = Buckets[i].begin(),
            HE = Buckets[i].end(); HI != HE; ++HI) {
       Asm->OutStreamer.AddComment("Hash in Bucket " + Twine(i));
@@ -159,7 +159,7 @@ void DwarfAccelTable::EmitHashes(AsmPrinter *Asm) {
 // beginning of the section. The non-section symbol will be output later
 // when we emit the actual data.
 void DwarfAccelTable::EmitOffsets(AsmPrinter *Asm, MCSymbol *SecBegin) {
-  for (size_t i = 0; i < Buckets.size(); ++i) {
+  for (size_t i = 0, e = Buckets.size(); i < e; ++i) {
     for (HashList::const_iterator HI = Buckets[i].begin(),
            HE = Buckets[i].end(); HI != HE; ++HI) {
       Asm->OutStreamer.AddComment("Offset in Bucket " + Twine(i));
@@ -178,7 +178,7 @@ void DwarfAccelTable::EmitOffsets(AsmPrinter *Asm, MCSymbol *SecBegin) {
 // Terminate each HashData bucket with 0.
 void DwarfAccelTable::EmitData(AsmPrinter *Asm, DwarfDebug *D) {
   uint64_t PrevHash = UINT64_MAX;
-  for (size_t i = 0; i < Buckets.size(); ++i) {
+  for (size_t i = 0, e = Buckets.size(); i < e; ++i) {
     for (HashList::const_iterator HI = Buckets[i].begin(),
            HE = Buckets[i].end(); HI != HE; ++HI) {
       // Remember to emit the label for our offset.
@@ -237,7 +237,7 @@ void DwarfAccelTable::print(raw_ostream &O) {
   }
 
   O << "Buckets and Hashes: \n";
-  for (size_t i = 0; i < Buckets.size(); ++i)
+  for (size_t i = 0, e = Buckets.size(); i < e; ++i)
     for (HashList::const_iterator HI = Buckets[i].begin(),
            HE = Buckets[i].end(); HI != HE; ++HI)
       (*HI)->print(O);
