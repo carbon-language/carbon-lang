@@ -1622,7 +1622,7 @@ FunctionDecl::setPreviousDeclaration(FunctionDecl *PrevDecl) {
     FunTmpl->setPreviousDeclaration(PrevFunTmpl);
   }
   
-  if (PrevDecl->IsInline)
+  if (PrevDecl && PrevDecl->IsInline)
     IsInline = true;
 }
 

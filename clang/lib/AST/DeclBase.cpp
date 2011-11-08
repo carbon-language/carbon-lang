@@ -987,7 +987,8 @@ void DeclContext::removeDecl(Decl *D) {
 
     StoredDeclsMap::iterator Pos = Map->find(ND->getDeclName());
     assert(Pos != Map->end() && "no lookup entry for decl");
-    Pos->second.remove(ND);
+    if (Pos->second.getAsVector() || Pos->second.getAsDecl() == ND)
+      Pos->second.remove(ND);
   }
 }
 
