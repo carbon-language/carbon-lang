@@ -139,7 +139,7 @@ private:
 
   // DomainValue allocation.
   DomainValue *Alloc(int domain = -1);
-  void Recycle(DomainValue*);
+  void release(DomainValue*);
 
   // LiveRegs manipulations.
   void SetLiveReg(int rx, DomainValue *DV);
@@ -176,10 +176,19 @@ DomainValue *ExeDepsFix::Alloc(int domain) {
   return dv;
 }
 
-void ExeDepsFix::Recycle(DomainValue *dv) {
-  assert(dv && "Cannot recycle NULL");
-  dv->clear();
-  Avail.push_back(dv);
+/// release - Release a reference to DV.  When the last reference is released,
+/// collapse if needed.
+void ExeDepsFix::release(DomainValue *DV) {
+  assert(DV && DV->Refs && "Bad DomainValue");
+  if (--DV->Refs)
+    return;
+
+  // There are no more DV references. Collapse any contained instructions.
+  if (DV->AvailableDomains && !DV->isCollapsed())
+    Collapse(DV, DV->getFirstDomain());
+
+  DV->clear();
+  Avail.push_back(DV);
 }
 
 /// Set LiveRegs[rx] = dv, updating reference counts.
@@ -192,10 +201,8 @@ void ExeDepsFix::SetLiveReg(int rx, DomainValue *dv) {
 
   if (LiveRegs[rx] == dv)
     return;
-  if (LiveRegs[rx]) {
-    assert(LiveRegs[rx]->Refs && "Bad refcount");
-    if (--LiveRegs[rx]->Refs == 0) Recycle(LiveRegs[rx]);
-  }
+  if (LiveRegs[rx])
+    release(LiveRegs[rx]);
   LiveRegs[rx] = dv;
   if (dv) ++dv->Refs;
 }
@@ -205,12 +212,8 @@ void ExeDepsFix::Kill(int rx) {
   assert(unsigned(rx) < NumRegs && "Invalid index");
   if (!LiveRegs || !LiveRegs[rx]) return;
 
-  // Before killing the last reference to an open DomainValue, collapse it to
-  // the first available domain.
-  if (LiveRegs[rx]->Refs == 1 && !LiveRegs[rx]->isCollapsed())
-    Collapse(LiveRegs[rx], LiveRegs[rx]->getFirstDomain());
-  else
-    SetLiveReg(rx, 0);
+  release(LiveRegs[rx]);
+  LiveRegs[rx] = 0;
 }
 
 /// Force register rx into domain.
