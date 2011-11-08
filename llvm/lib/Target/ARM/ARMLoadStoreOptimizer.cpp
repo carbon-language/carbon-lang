@@ -62,6 +62,7 @@ namespace {
 
     const TargetInstrInfo *TII;
     const TargetRegisterInfo *TRI;
+    const ARMSubtarget *STI;
     ARMFunctionInfo *AFI;
     RegScavenger *RS;
     bool isThumb2;
@@ -1071,11 +1072,17 @@ bool ARMLoadStoreOpt::FixInvalidRegPairOp(MachineBasicBlock &MBB,
   unsigned Opcode = MI->getOpcode();
   if (Opcode == ARM::LDRD || Opcode == ARM::STRD ||
       Opcode == ARM::t2LDRDi8 || Opcode == ARM::t2STRDi8) {
+    const MachineOperand &BaseOp = MI->getOperand(2);
+    unsigned BaseReg = BaseOp.getReg();
     unsigned EvenReg = MI->getOperand(0).getReg();
     unsigned OddReg  = MI->getOperand(1).getReg();
     unsigned EvenRegNum = TRI->getDwarfRegNum(EvenReg, false);
     unsigned OddRegNum  = TRI->getDwarfRegNum(OddReg, false);
-    if ((EvenRegNum & 1) == 0 && (EvenRegNum + 1) == OddRegNum)
+    // ARM errata 602117: LDRD with base in list may result in incorrect base
+    // register when interrupted or faulted.
+    bool Errata602117 = EvenReg == BaseReg && STI->getCPUString() == "cortex-m3";
+    if (!Errata602117 &&
+        ((EvenRegNum & 1) == 0 && (EvenRegNum + 1) == OddRegNum))
       return false;
 
     MachineBasicBlock::iterator NewBBI = MBBI;
@@ -1087,8 +1094,6 @@ bool ARMLoadStoreOpt::FixInvalidRegPairOp(MachineBasicBlock &MBB,
     bool OddDeadKill  = isLd ?
       MI->getOperand(1).isDead() : MI->getOperand(1).isKill();
     bool OddUndef = MI->getOperand(1).isUndef();
-    const MachineOperand &BaseOp = MI->getOperand(2);
-    unsigned BaseReg = BaseOp.getReg();
     bool BaseKill = BaseOp.isKill();
     bool BaseUndef = BaseOp.isUndef();
     bool OffKill = isT2 ? false : MI->getOperand(3).isKill();
@@ -1380,6 +1385,7 @@ bool ARMLoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
   AFI = Fn.getInfo<ARMFunctionInfo>();
   TII = TM.getInstrInfo();
   TRI = TM.getRegisterInfo();
+  STI = &TM.getSubtarget<ARMSubtarget>();
   RS = new RegScavenger();
   isThumb2 = AFI->isThumb2Function();
 
