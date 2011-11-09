@@ -235,6 +235,10 @@ static const Stmt *LookThroughStmt(const Stmt *S) {
   while (S) {
     if (const Expr *Ex = dyn_cast<Expr>(S))
       S = Ex->IgnoreParens();    
+    if (const ExprWithCleanups *EWC = dyn_cast<ExprWithCleanups>(S)) {
+      S = EWC->getSubExpr();
+      continue;
+    }
     if (const OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(S)) {
       S = OVE->getSourceExpr();
       continue;
