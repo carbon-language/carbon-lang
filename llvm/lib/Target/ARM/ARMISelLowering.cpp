@@ -110,7 +110,12 @@ void ARMTargetLowering::addTypeForNEON(EVT VT, EVT PromotedLdStVT,
     setOperationAction(ISD::SETCC, VT.getSimpleVT(), Custom);
   setOperationAction(ISD::INSERT_VECTOR_ELT, VT.getSimpleVT(), Custom);
   setOperationAction(ISD::EXTRACT_VECTOR_ELT, VT.getSimpleVT(), Custom);
-  if (ElemTy != MVT::i32) {
+  if (ElemTy == MVT::i32) {
+    setOperationAction(ISD::SINT_TO_FP, VT.getSimpleVT(), Custom);
+    setOperationAction(ISD::UINT_TO_FP, VT.getSimpleVT(), Custom);
+    setOperationAction(ISD::FP_TO_SINT, VT.getSimpleVT(), Custom);
+    setOperationAction(ISD::FP_TO_UINT, VT.getSimpleVT(), Custom);
+  } else {
     setOperationAction(ISD::SINT_TO_FP, VT.getSimpleVT(), Expand);
     setOperationAction(ISD::UINT_TO_FP, VT.getSimpleVT(), Expand);
     setOperationAction(ISD::FP_TO_SINT, VT.getSimpleVT(), Expand);
@@ -3018,7 +3023,20 @@ SDValue ARMTargetLowering::LowerBR_JT(SDValue Op, SelectionDAG &DAG) const {
   }
 }
 
+static SDValue LowerVectorFP_TO_INT(SDValue Op, SelectionDAG &DAG) {
+  EVT VT = Op.getValueType();
+  assert(VT.getVectorElementType() == MVT::i32 && "Unexpected custom lowering");
+
+  if (Op.getOperand(0).getValueType().getVectorElementType() == MVT::f32)
+    return Op;
+  return DAG.UnrollVectorOp(Op.getNode());
+}
+
 static SDValue LowerFP_TO_INT(SDValue Op, SelectionDAG &DAG) {
+  EVT VT = Op.getValueType();
+  if (VT.isVector())
+    return LowerVectorFP_TO_INT(Op, DAG);
+
   DebugLoc dl = Op.getDebugLoc();
   unsigned Opc;
 
@@ -3039,6 +3057,12 @@ static SDValue LowerFP_TO_INT(SDValue Op, SelectionDAG &DAG) {
 static SDValue LowerVectorINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
   EVT VT = Op.getValueType();
   DebugLoc dl = Op.getDebugLoc();
+
+  if (Op.getOperand(0).getValueType().getVectorElementType() == MVT::i32) {
+    if (VT.getVectorElementType() == MVT::f32)
+      return Op;
+    return DAG.UnrollVectorOp(Op.getNode());
+  }
 
   assert(Op.getOperand(0).getValueType() == MVT::v4i16 &&
          "Invalid type for custom lowering!");
