@@ -38,12 +38,6 @@ class MayAliasSetInfo;
 class SCEVAffFunc {
   // Temporary hack
   friend class TempScopInfo;
-  // The translation component
-  const SCEV *TransComp;
-
-  // { Variable, Coefficient }
-  typedef std::map<const SCEV*, const SCEV*> LnrTransSet;
-  LnrTransSet LnrTrans;
 
 public:
   // The scalar evolution expression from which we derived this affine
@@ -56,12 +50,8 @@ public:
 
   // The type of the scev affine function
   enum SCEVAffFuncType {
-    None = 0,
-    ReadMem, // Or we could call it "Use"
-    WriteMem, // Or define
-    Eq,       // == 0
-    Ne,       // != 0
-    GE        // >= 0
+    ReadMem,
+    WriteMem
   };
 
 private:
@@ -77,57 +67,19 @@ public:
   ///        condition type
   explicit SCEVAffFunc(SCEVAffFuncType Type, const SCEV *OriginalSCEV,
                        unsigned elemBytes = 0)
-    : TransComp(0), OriginalSCEV(OriginalSCEV), BaseAddr(0),
+    : OriginalSCEV(OriginalSCEV), BaseAddr(0),
       ElemBytes(elemBytes), FuncType(Type) {}
-
-  /// @brief Construct a new SCEVAffFunc from a SCEV
-  ///
-  /// @param S The SCEV that should be translated.
-  /// @param Type The type of this affine function.
-  /// @param R The region in which the affine function is evaluated.
-  /// @param Param A set of parameters, where new parameters found in this
-  ///        affine function will be added.
-  /// @param LI A pointer to a current LoopInfo analysis.
-  /// @param SE A pointer to a current ScalarEvolution analysis.
-  SCEVAffFunc(const SCEV *S, SCEVAffFuncType Type, Region &R,
-              ParamSetType &Param, LoopInfo *LI, ScalarEvolution *SE);
-
-  // getCoeff - Get the Coefficient of a given variable.
-  const SCEV *getCoeff(const SCEV *Var) const {
-    LnrTransSet::const_iterator At = LnrTrans.find(Var);
-    return At == LnrTrans.end() ? 0 : At->second;
-  }
-
-  const SCEV *getTransComp() const {
-    return TransComp;
-  }
 
   enum SCEVAffFuncType getType() const { return FuncType; }
 
-  bool isDataRef() const {
-    return getType() == ReadMem || getType() == WriteMem;
-  }
-
   unsigned getElemSizeInBytes() const {
-    assert(isDataRef() && "getElemSizeInBytes on the wrong type!");
     return ElemBytes;
   }
 
   bool isRead() const { return FuncType == ReadMem; }
 
   const Value *getBaseAddr() const { return BaseAddr; }
-
-  /// @brief Print the affine function.
-  ///
-  /// @param OS The output stream the affine function is printed to.
-  void print(raw_ostream &OS, bool PrintInequality = true) const;
-  void dump() const;
 };
-
-static inline raw_ostream& operator<<(raw_ostream &OS, const SCEVAffFunc &SAF){
-  SAF.print(OS);
-  return OS;
-}
 
 class Comparison {
 

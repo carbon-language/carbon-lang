@@ -36,13 +36,6 @@ using namespace polly;
 //===----------------------------------------------------------------------===//
 /// Helper Class
 
-SCEVAffFunc::SCEVAffFunc(const SCEV *S, SCEVAffFuncType Type, Region &R,
-                         ParamSetType &Params, LoopInfo *LI,
-                         ScalarEvolution *SE)
-    : ElemBytes(0), FuncType(Type) {
-  OriginalSCEV = S;
-}
-
 void Comparison::print(raw_ostream &OS) const {
   // Not yet implemented.
 }
