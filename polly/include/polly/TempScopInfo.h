@@ -32,46 +32,30 @@ namespace polly {
 class MayAliasSetInfo;
 
 //===---------------------------------------------------------------------===//
-/// @brief Affine function represent in llvm SCEV expressions.
-///
-/// A helper class for collect affine function information
-class SCEVAffFunc {
+/// @brief A memory access described by a SCEV expression and the access type.
+class IRAccess {
 public:
-  // The scalar evolution expression from which we derived this affine
-  // expression.
-  //
-  // We will use it to directly translation from scalar expressions to the
-  // corresponding isl objects. As soon as this finished, most of SCEVAffFunc
-  // can be removed.
-  const SCEV *OriginalSCEV;
+  // The SCEV of this memory access.
+  const SCEV *Scev;
 
   // The type of the scev affine function
-  enum SCEVAffFuncType {
-    ReadMem,
-    WriteMem
-  };
+  enum TypeKind { READ, WRITE };
 
 private:
-  // The base address of the address SCEV, if the Value is a pointer, this is
-  // an array access, otherwise, this is a value access.
-  // And the Write/Read modifier
-  unsigned ElemBytes        : 28;
-  SCEVAffFuncType FuncType  : 3;
+  unsigned ElemBytes;
+  TypeKind Type;
 
 public:
-  /// @brief Create a new SCEV affine function with memory access type or
-  ///        condition type
-  explicit SCEVAffFunc(SCEVAffFuncType Type, const SCEV *OriginalSCEV,
-                       unsigned elemBytes = 0)
-    : OriginalSCEV(OriginalSCEV), ElemBytes(elemBytes), FuncType(Type) {}
+  explicit IRAccess (TypeKind Type, const SCEV *Scev, unsigned elemBytes)
+    : Scev(Scev), ElemBytes(elemBytes), Type(Type) {}
 
-  enum SCEVAffFuncType getType() const { return FuncType; }
+  enum TypeKind getType() const { return Type; }
 
-  unsigned getElemSizeInBytes() const {
-    return ElemBytes;
-  }
+  const SCEV *getSCEV() const { return Scev; }
 
-  bool isRead() const { return FuncType == ReadMem; }
+  unsigned getElemSizeInBytes() const { return ElemBytes; }
+
+  bool isRead() const { return Type == READ; }
 };
 
 class Comparison {
@@ -108,7 +92,7 @@ typedef std::map<const Loop*, const SCEV*> LoopBoundMapType;
 /// Mapping BBs to its condition constrains
 typedef std::map<const BasicBlock*, BBCond> BBCondMapType;
 
-typedef std::vector<std::pair<SCEVAffFunc, Instruction*> > AccFuncSetType;
+typedef std::vector<std::pair<IRAccess, Instruction*> > AccFuncSetType;
 typedef std::map<const BasicBlock*, AccFuncSetType> AccFuncMapType;
 
 //===---------------------------------------------------------------------===//

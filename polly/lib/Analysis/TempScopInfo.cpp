@@ -87,20 +87,20 @@ void TempScopInfo::buildAccessFunctions(Region &R, ParamSetType &Parameter,
     Instruction &Inst = *I;
     if (isa<LoadInst>(&Inst) || isa<StoreInst>(&Inst)) {
       unsigned Size;
-      enum SCEVAffFunc::SCEVAffFuncType Type;
+      enum IRAccess::TypeKind Type;
 
       if (LoadInst *Load = dyn_cast<LoadInst>(&Inst)) {
         Size = TD->getTypeStoreSize(Load->getType());
-        Type = SCEVAffFunc::ReadMem;
+        Type = IRAccess::READ;
       } else {
         StoreInst *Store = cast<StoreInst>(&Inst);
         Size = TD->getTypeStoreSize(Store->getValueOperand()->getType());
-        Type = SCEVAffFunc::WriteMem;
+        Type = IRAccess::WRITE;
       }
 
       const SCEV *AccessFunction = SE->getSCEV(getPointerOperand(Inst));
-      Functions.push_back(
-        std::make_pair(SCEVAffFunc(Type, AccessFunction, Size), &Inst));
+      Functions.push_back(std::make_pair(IRAccess(Type, AccessFunction, Size),
+                                         &Inst));
     }
   }
 

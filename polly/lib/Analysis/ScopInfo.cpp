@@ -324,13 +324,13 @@ isl_basic_map *MemoryAccess::createBasicAccessMap(ScopStmt *Statement) {
   return isl_basic_map_universe(Space);
 }
 
-MemoryAccess::MemoryAccess(const SCEVAffFunc &AffFunc, ScopStmt *Statement) {
+MemoryAccess::MemoryAccess(const IRAccess &Access, ScopStmt *Statement) {
   newAccessRelation = NULL;
-  Type = AffFunc.isRead() ? Read : Write;
+  Type = Access.isRead() ? Read : Write;
   statement = Statement;
 
   Value *TmpBaseAddress = NULL;
-  isl_pw_aff *Affine = SCEVAffinator::getPwAff(Statement, AffFunc.OriginalSCEV,
+  isl_pw_aff *Affine = SCEVAffinator::getPwAff(Statement, Access.getSCEV(),
                                                &TmpBaseAddress);
   BaseAddr = TmpBaseAddress;
 
@@ -345,7 +345,7 @@ MemoryAccess::MemoryAccess(const SCEVAffFunc &AffFunc, ScopStmt *Statement) {
   // again.
   isl_int v;
   isl_int_init(v);
-  isl_int_set_si(v, AffFunc.getElemSizeInBytes());
+  isl_int_set_si(v, Access.getElemSizeInBytes());
   Affine = isl_pw_aff_scale_down(Affine, v);
   isl_int_clear(v);
 

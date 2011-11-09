@@ -48,6 +48,7 @@ struct isl_constraint;
 
 namespace polly {
 
+class IRAccess;
 class Scop;
 class ScopStmt;
 class ScopInfo;
@@ -103,17 +104,17 @@ private:
   /// Updated access relation read from JSCOP file.
   isl_map *newAccessRelation;
 public:
-  // @brief Create an affine memory access.
+  // @brief Create a memory access from an access in LLVM-IR.
   //
-  // @param AffFunc    The access function.
-  // @param Statement  The Statement that contains this access.
+  // @param Access     The memory access.
+  // @param Statement  The statement that contains the access.
   // @param SE         The ScalarEvolution analysis.
-  MemoryAccess(const SCEVAffFunc &AffFunc, ScopStmt *Statement);
+  MemoryAccess(const IRAccess &Access, ScopStmt *Statement);
 
-  // @brief Create a read all access.
+  // @brief Create a memory access that reads a complete memory object.
   //
-  // @param BaseAddress The base address of the memory accessed.
-  // @param Statement   The Statement that contains this access.
+  // @param BaseAddress The base address of the memory object.
+  // @param Statement   The statement that contains this access.
   MemoryAccess(const Value *BaseAddress, ScopStmt *Statement);
 
   ~MemoryAccess();
