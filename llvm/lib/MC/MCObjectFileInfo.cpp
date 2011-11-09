@@ -186,10 +186,6 @@ void MCObjectFileInfo::InitMachOMCObjectFileInfo(Triple T) {
     Ctx->getMachOSection("__DWARF", "__debug_frame",
                          MCSectionMachO::S_ATTR_DEBUG,
                          SectionKind::getMetadata());
-  DwarfPubNamesSection =
-    Ctx->getMachOSection("__DWARF", "__debug_pubnames",
-                         MCSectionMachO::S_ATTR_DEBUG,
-                         SectionKind::getMetadata());
   DwarfPubTypesSection =
     Ctx->getMachOSection("__DWARF", "__debug_pubtypes",
                          MCSectionMachO::S_ATTR_DEBUG,
@@ -365,9 +361,6 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
   DwarfFrameSection =
     Ctx->getELFSection(".debug_frame", ELF::SHT_PROGBITS, 0,
                        SectionKind::getMetadata());
-  DwarfPubNamesSection =
-    Ctx->getELFSection(".debug_pubnames", ELF::SHT_PROGBITS, 0,
-                       SectionKind::getMetadata());
   DwarfPubTypesSection =
     Ctx->getELFSection(".debug_pubtypes", ELF::SHT_PROGBITS, 0,
                        SectionKind::getMetadata());
@@ -450,11 +443,6 @@ void MCObjectFileInfo::InitCOFFMCObjectFileInfo(Triple T) {
                         SectionKind::getMetadata());
   DwarfFrameSection =
     Ctx->getCOFFSection(".debug_frame",
-                        COFF::IMAGE_SCN_MEM_DISCARDABLE |
-                        COFF::IMAGE_SCN_MEM_READ,
-                        SectionKind::getMetadata());
-  DwarfPubNamesSection =
-    Ctx->getCOFFSection(".debug_pubnames",
                         COFF::IMAGE_SCN_MEM_DISCARDABLE |
                         COFF::IMAGE_SCN_MEM_READ,
                         SectionKind::getMetadata());

@@ -56,10 +56,6 @@ class CompileUnit {
   /// descriptors to debug information entries using a DIEEntry proxy.
   DenseMap<const MDNode *, DIEEntry *> MDNodeToDIEEntryMap;
 
-  /// Globals - A map of globally visible named entities for this unit.
-  ///
-  StringMap<DIE*> Globals;
-
   /// GlobalTypes - A map of globally visible types for this unit.
   ///
   StringMap<DIE*> GlobalTypes;
@@ -86,7 +82,6 @@ public:
   // Accessors.
   unsigned getID()                  const { return ID; }
   DIE* getCUDie()                   const { return CUDie.get(); }
-  const StringMap<DIE*> &getGlobals()     const { return Globals; }
   const StringMap<DIE*> &getGlobalTypes() const { return GlobalTypes; }
 
   const StringMap<DIE*> &getAccelNames() const { return AccelNames; }
@@ -99,10 +94,6 @@ public:
   /// hasContent - Return true if this compile unit has something to write out.
   ///
   bool hasContent() const { return !CUDie->getChildren().empty(); }
-
-  /// addGlobal - Add a new global entity to the compile unit.
-  ///
-  void addGlobal(StringRef Name, DIE *Die) { Globals[Name] = Die; }
 
   /// addGlobalType - Add a new global type to the compile unit.
   ///

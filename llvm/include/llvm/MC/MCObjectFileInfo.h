@@ -96,7 +96,6 @@ protected:
   const MCSection *DwarfInfoSection;
   const MCSection *DwarfLineSection;
   const MCSection *DwarfFrameSection;
-  const MCSection *DwarfPubNamesSection;
   const MCSection *DwarfPubTypesSection;
   const MCSection *DwarfDebugInlineSection;
   const MCSection *DwarfStrSection;
@@ -211,7 +210,6 @@ public:
   const MCSection *getDwarfInfoSection() const { return DwarfInfoSection; }
   const MCSection *getDwarfLineSection() const { return DwarfLineSection; }
   const MCSection *getDwarfFrameSection() const { return DwarfFrameSection; }
-  const MCSection *getDwarfPubNamesSection() const{return DwarfPubNamesSection;}
   const MCSection *getDwarfPubTypesSection() const{return DwarfPubTypesSection;}
   const MCSection *getDwarfDebugInlineSection() const {
     return DwarfDebugInlineSection;

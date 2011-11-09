@@ -597,9 +597,6 @@ void DwarfDebug::constructSubprogramDIE(CompileUnit *TheCU,
   // Add to context owner.
   TheCU->addToContextOwner(SubprogramDie, SP.getContext());
 
-  // Expose as global.
-  TheCU->addGlobal(SP.getName(), SubprogramDie);
-
   // Add to Accel Names
   TheCU->addAccelName(SP.getName(), SubprogramDie);
 
@@ -823,9 +820,6 @@ void DwarfDebug::endModule() {
     emitAccelTypes();
   }
   
-  // Emit info into a debug pubnames section.
-  emitDebugPubNames();
-
   // Emit info into a debug pubtypes section.
   emitDebugPubTypes();
 
@@ -1567,7 +1561,6 @@ void DwarfDebug::EmitSectionLabels() {
 
   EmitSectionSym(Asm, TLOF.getDwarfLineSection(), "section_line");
   EmitSectionSym(Asm, TLOF.getDwarfLocSection());
-  EmitSectionSym(Asm, TLOF.getDwarfPubNamesSection());
   EmitSectionSym(Asm, TLOF.getDwarfPubTypesSection());
   DwarfStrSectionSym =
     EmitSectionSym(Asm, TLOF.getDwarfStrSection(), "section_str");
@@ -1869,57 +1862,6 @@ void DwarfDebug::emitAccelTypes() {
 
   // Emit the full data.
   AT.Emit(Asm, SectionBegin, this);
-}
-
-/// emitDebugPubNames - Emit visible names into a debug pubnames section.
-///
-void DwarfDebug::emitDebugPubNames() {
-  for (DenseMap<const MDNode *, CompileUnit *>::iterator I = CUMap.begin(),
-         E = CUMap.end(); I != E; ++I) {
-    CompileUnit *TheCU = I->second;
-    // Start the dwarf pubnames section.
-    Asm->OutStreamer.SwitchSection(
-      Asm->getObjFileLowering().getDwarfPubNamesSection());
-
-    Asm->OutStreamer.AddComment("Length of Public Names Info");
-    Asm->EmitLabelDifference(
-      Asm->GetTempSymbol("pubnames_end", TheCU->getID()),
-      Asm->GetTempSymbol("pubnames_begin", TheCU->getID()), 4);
-
-    Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("pubnames_begin",
-                                                  TheCU->getID()));
-
-    Asm->OutStreamer.AddComment("DWARF Version");
-    Asm->EmitInt16(dwarf::DWARF_VERSION);
-
-    Asm->OutStreamer.AddComment("Offset of Compilation Unit Info");
-    Asm->EmitSectionOffset(Asm->GetTempSymbol("info_begin", TheCU->getID()),
-                           DwarfInfoSectionSym);
-
-    Asm->OutStreamer.AddComment("Compilation Unit Length");
-    Asm->EmitLabelDifference(Asm->GetTempSymbol("info_end", TheCU->getID()),
-                             Asm->GetTempSymbol("info_begin", TheCU->getID()),
-                             4);
-
-    const StringMap<DIE*> &Globals = TheCU->getGlobals();
-    for (StringMap<DIE*>::const_iterator
-           GI = Globals.begin(), GE = Globals.end(); GI != GE; ++GI) {
-      const char *Name = GI->getKeyData();
-      DIE *Entity = GI->second;
-
-      Asm->OutStreamer.AddComment("DIE offset");
-      Asm->EmitInt32(Entity->getOffset());
-
-      if (Asm->isVerbose())
-        Asm->OutStreamer.AddComment("External Name");
-      Asm->OutStreamer.EmitBytes(StringRef(Name, strlen(Name)+1), 0);
-    }
-
-    Asm->OutStreamer.AddComment("End Mark");
-    Asm->EmitInt32(0);
-    Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("pubnames_end",
-                                                  TheCU->getID()));
-  }
 }
 
 void DwarfDebug::emitDebugPubTypes() {

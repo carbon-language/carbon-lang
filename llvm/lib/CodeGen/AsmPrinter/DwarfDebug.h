@@ -380,12 +380,9 @@ private:
   void emitAccelNamespaces();
 
   /// emitAccelTypes() - Emit type dies into a hashed accelerator table.
+  ///
   void emitAccelTypes();
   
-  /// emitDebugPubNames - Emit visible names into a debug pubnames section.
-  ///
-  void emitDebugPubNames();
-
   /// emitDebugPubTypes - Emit visible types into a debug pubtypes section.
   ///
   void emitDebugPubTypes();
