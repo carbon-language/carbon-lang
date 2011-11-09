@@ -898,6 +898,36 @@ StripLeadingSpaces (std::string &s)
     }
 }
 
+static size_t
+FindArgumentTerminator (const std::string &s)
+{
+    printf ("FindArgumentTerminator( s = '%s') => ", s.c_str());
+    const size_t s_len = s.size();
+    size_t offset = 0;
+    while (offset < s_len)
+    {
+        size_t pos = s.find ("--", offset);
+        if (pos == std::string::npos)
+            break;
+        if (pos > 0)
+        {
+            if (isspace(s[pos-1]))
+            {
+                // Check if the string ends "\s--" (where \s is a space character)
+                // or if we have "\s--\s".
+                if ((pos + 2 >= s_len) || isspace(s[pos+2]))
+                {
+                    printf ("%zu\n", pos);
+                    return pos;
+                }
+            }
+        }
+        offset = pos + 2;
+    }
+    printf ("-1\n");
+    return std::string::npos;
+}
+
 static bool
 ExtractCommand (std::string &command_string, std::string &command, std::string &suffix, char &quote_char)
 {
@@ -1367,9 +1397,25 @@ CommandInterpreter::HandleCommand (const char *command_line,
                         Options *command_options = cmd_obj->GetOptions();
                         if (command_options && command_options->SupportsLongOption("gdb-format"))
                         {
-                            revised_command_line.Printf (" --gdb-format=%s", suffix.c_str() + 1);
-                            if (wants_raw_input && command_string.find ("-- ") == std::string::npos)
-                                revised_command_line.Printf (" --");
+                            std::string gdb_format_option ("--gdb-format=");
+                            gdb_format_option += (suffix.c_str() + 1);
+    
+                            bool inserted = false;
+                            std::string &cmd = revised_command_line.GetString();
+                            size_t arg_terminator_idx = FindArgumentTerminator (cmd);
+                            if (arg_terminator_idx != std::string::npos)
+                            {
+                                // Insert the gdb format option before the "--" that terminates options
+                                gdb_format_option.append(1,' ');
+                                cmd.insert(arg_terminator_idx, gdb_format_option);
+                                inserted = true;
+                            }
+
+                            if (!inserted)
+                                revised_command_line.Printf (" %s", gdb_format_option.c_str());
+                        
+                            if (wants_raw_input && FindArgumentTerminator(cmd) == std::string::npos)
+                                revised_command_line.PutCString (" --");
                         }
                         else
                         {
