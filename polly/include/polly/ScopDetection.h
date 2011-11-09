@@ -187,20 +187,6 @@ class ScopDetection : public FunctionPass {
   /// @return True if the BB contains only valid control flow.
   bool isValidCFG(BasicBlock &BB, DetectionContext &Context) const;
 
-  /// @brief Check if the SCEV expression is a valid affine function
-  ///
-  /// @param S          The SCEV expression to be checked
-  /// @param RefRegion  The reference scope to check SCEV, it help to find out
-  ///                   induction variables and parameters
-  /// @param BasePtr    If S represents a memory access, BasePtr should contain
-  ///                   a valid memory location to which the base address of the
-  ///                   memory access will be stored.
-  ///
-  /// @return True if the SCEV expression is affine, false otherwise
-  ///
-  bool isValidAffineFunction(const SCEV *S, Region &RefRegion,
-                             Value **BasePtr = 0) const;
-
   /// @brief Is a loop valid with respect to a given region.
   ///
   /// @param L The loop to check.

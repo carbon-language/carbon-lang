@@ -123,74 +123,6 @@ std::string ScopDetection::regionIsInvalidBecause(const Region *R) const {
   return InvalidRegions.find(R)->second;
 }
 
-
-bool ScopDetection::isValidAffineFunction(const SCEV *S, Region &RefRegion,
-                                          Value **BasePtr) const {
-  assert(S && "S must not be null!");
-  bool isMemoryAccess = (BasePtr != 0);
-  if (isMemoryAccess) *BasePtr = 0;
-  DEBUG(dbgs() << "Checking " << *S << " ... ");
-
-  if (isa<SCEVCouldNotCompute>(S)) {
-    DEBUG(dbgs() << "Non Affine: SCEV could not be computed\n");
-    return false;
-  }
-
-  for (AffineSCEVIterator I = affine_begin(S, SE), E = affine_end(); I != E;
-       ++I) {
-    // The constant part must be a SCEVConstant.
-    // TODO: support sizeof in coefficient.
-    if (!isa<SCEVConstant>(I->second)) {
-      DEBUG(dbgs() << "Non Affine: Right hand side is not constant\n");
-      return false;
-    }
-
-    const SCEV *Var = I->first;
-
-    // A constant offset is affine.
-    if(isa<SCEVConstant>(Var))
-      continue;
-
-    // Memory accesses are allowed to have a base pointer.
-    if (Var->getType()->isPointerTy()) {
-      if (!isMemoryAccess) {
-        DEBUG(dbgs() << "Non Affine: Pointer in non memory access\n");
-        return false;
-      }
-
-      assert(I->second->isOne() && "Only one as pointer coefficient allowed.\n");
-      const SCEVUnknown *BaseAddr = dyn_cast<SCEVUnknown>(Var);
-
-      if (!BaseAddr || isa<UndefValue>(BaseAddr->getValue())){
-        DEBUG(dbgs() << "Cannot handle base: " << *Var << "\n");
-        return false;
-      }
-
-      // BaseAddr must be invariant in Scop.
-      if (!isParameter(BaseAddr, RefRegion, *LI, *SE)) {
-        DEBUG(dbgs() << "Non Affine: Base address not invariant in SCoP\n");
-        return false;
-      }
-
-      assert(*BasePtr == 0 && "Found second base pointer.\n");
-      *BasePtr = BaseAddr->getValue();
-      continue;
-    }
-
-    if (isParameter(Var, RefRegion, *LI, *SE)
-        || isIndVar(Var, RefRegion, *LI, *SE))
-      continue;
-
-    DEBUG(dbgs() << "Non Affine: " ;
-          Var->print(dbgs());
-          dbgs() << " is neither parameter nor induction variable\n");
-    return false;
-  }
-
-  DEBUG(dbgs() << " is affine.\n");
-  return !isMemoryAccess || (*BasePtr != 0);
-}
-
 bool ScopDetection::isValidCFG(BasicBlock &BB, DetectionContext &Context) const
 {
   Region &RefRegion = Context.CurRegion;
@@ -283,12 +215,6 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
 
   if (!isAffineExpr(&Context.CurRegion, AccessFunction, *SE, &BasePtr))
     INVALID(AffFunc, "Bad memory address " << *AccessFunction);
-
-  // FIXME: Also check with isValidAffineFunction, as for the moment it is
-  //        protecting us to fail because of not supported features in TempScop.
-  //        As soon as TempScop is fixed, this needs to be removed.
-  if (!isValidAffineFunction(AccessFunction, Context.CurRegion, &BasePtr))
-    INVALID(AffFunc, "Access not supported in TempScop" << *AccessFunction);
 
   // FIXME: Alias Analysis thinks IntToPtrInst aliases with alloca instructions
   // created by IndependentBlocks Pass.
