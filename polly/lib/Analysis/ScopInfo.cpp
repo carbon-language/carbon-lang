@@ -82,18 +82,19 @@ private:
 
 public:
   static isl_pw_aff *getPwAff(ScopStmt *stmt, const SCEV *scev,
-                              const Value *baseAddress = 0) {
+                              bool isMemoryAccess = false) {
     Scop *S = stmt->getParent();
     const Region *Reg = &S->getRegion();
 
-    if (baseAddress) {
-      Value *Base;
-      S->addParams(getParamsInAffineExpr(Reg, scev, *S->getSE(), &Base));
+    Value *BaseAddress = NULL;
+
+    if (isMemoryAccess) {
+      S->addParams(getParamsInAffineExpr(Reg, scev, *S->getSE(), &BaseAddress));
     } else {
       S->addParams(getParamsInAffineExpr(Reg, scev, *S->getSE()));
     }
 
-    SCEVAffinator Affinator(stmt, baseAddress);
+    SCEVAffinator Affinator(stmt,  BaseAddress);
     return Affinator.visit(scev);
   }
 
@@ -333,7 +334,7 @@ MemoryAccess::MemoryAccess(const SCEVAffFunc &AffFunc, ScopStmt *Statement) {
   setBaseName();
 
   isl_pw_aff *Affine = SCEVAffinator::getPwAff(Statement, AffFunc.OriginalSCEV,
-                                               AffFunc.getBaseAddr());
+                                               true);
 
   // Devide the access function by the size of the elements in the array.
   //
@@ -609,8 +610,8 @@ void ScopStmt::realignParams() {
 }
 
 __isl_give isl_set *ScopStmt::buildConditionSet(const Comparison &Comp) {
-  isl_pw_aff *L = SCEVAffinator::getPwAff(this, Comp.getLHS()->OriginalSCEV, 0);
-  isl_pw_aff *R = SCEVAffinator::getPwAff(this, Comp.getRHS()->OriginalSCEV, 0);
+  isl_pw_aff *L = SCEVAffinator::getPwAff(this, Comp.getLHS()->OriginalSCEV);
+  isl_pw_aff *R = SCEVAffinator::getPwAff(this, Comp.getRHS()->OriginalSCEV);
 
   switch (Comp.getPred()) {
   case ICmpInst::ICMP_EQ:
