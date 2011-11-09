@@ -16,7 +16,6 @@
 #include "polly/TempScopInfo.h"
 
 #include "polly/LinkAllPasses.h"
-#include "polly/Support/AffineSCEVIterator.h"
 #include "polly/Support/GICHelper.h"
 #include "polly/Support/ScopHelper.h"
 #include "polly/Support/SCEVValidator.h"
@@ -25,6 +24,8 @@
 #include "llvm/Analysis/RegionIterator.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Assembly/Writer.h"
+#include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/ADT/STLExtras.h"
 
 #define DEBUG_TYPE "polly-analyze-ir"

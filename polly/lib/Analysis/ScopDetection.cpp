@@ -49,12 +49,13 @@
 #include "polly/LinkAllPasses.h"
 #include "polly/Support/ScopHelper.h"
 #include "polly/Support/SCEVValidator.h"
-#include "polly/Support/AffineSCEVIterator.h"
 
 #include "llvm/LLVMContext.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/RegionIterator.h"
+#include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Assembly/Writer.h"
 
