@@ -1937,8 +1937,9 @@ void DwarfDebug::emitDebugStr() {
     Asm->OutStreamer.EmitLabel(Entries[i].second->getValue().first);
 
     // Emit the string itself.
-    Asm->OutStreamer.EmitBytes(Entries[i].second->getKey(), 0/*addrspace*/);
-    Asm->OutStreamer.EmitZeros(1, 0);
+    Asm->OutStreamer.EmitBytes(StringRef(Entries[i].second->getKeyData(),
+                                         Entries[i].second->getKeyLength()+1),
+                               0/*addrspace*/);
   }
 }
 
