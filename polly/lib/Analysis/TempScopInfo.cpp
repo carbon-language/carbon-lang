@@ -213,21 +213,11 @@ void TempScopInfo::buildAffineFunction(const SCEV *S, SCEVAffFunc &FuncToBuild,
     const SCEV *Var = I->first;
     // Extract the constant part
     if (isa<SCEVConstant>(Var))
-      // Add the translation component
-      FuncToBuild.TransComp = I->second;
+      ;
     else if (Var->getType()->isPointerTy()) { // Extract the base address
       const SCEVUnknown *BaseAddr = dyn_cast<SCEVUnknown>(Var);
       assert(BaseAddr && "Why we got a broken scev?");
       FuncToBuild.BaseAddr = BaseAddr->getValue();
-    } else { // Extract other affine components.
-      FuncToBuild.LnrTrans.insert(*I);
-      // Do not add the indvar to the parameter list.
-      if (!isIndVar(Var, R, *LI, *SE)) {
-        DEBUG(dbgs() << "Non indvar: "<< *Var << '\n');
-        assert(isParameter(Var, R, *LI, *SE)
-               && "Find non affine function in scop!");
-        Params.insert(Var);
-      }
     }
   }
 }

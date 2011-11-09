@@ -1,4 +1,3 @@
-; RUN: opt %loadPolly %defaultOpts  -polly-analyze-ir  -analyze %s | FileCheck %s -check-prefix=WITHAF
 ; RUN: opt %loadPolly %defaultOpts -polly-analyze-ir  -analyze %s | FileCheck %s
 
 ;void f(long a[], long N) {
@@ -32,10 +31,3 @@ return:                                           ; preds = %bb
 }
 
 ; CHECK: Scop: bb => return        Parameters: ()
-; WITHAF: Scop: bb => return      Parameters: (), Max Loop Depth: 1
-; WITHAF: Bounds of Loop: bb:   { 127 }
-; WITHAF:   BB: bb{
-; WITHAF:     Reads %a[8 * {0,+,1}<nuw><nsw><%bb> + 0]
-; WITHAF:     Reads %a[8 * {0,+,1}<nuw><nsw><%bb> + 16]
-; WITHAF:     Writes %a[8 * {0,+,1}<nuw><nsw><%bb> + 0]
-; WITHAF:   }

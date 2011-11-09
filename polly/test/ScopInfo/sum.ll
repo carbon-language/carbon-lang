@@ -36,9 +36,3 @@ bb2:                                              ; preds = %bb, %entry
 }
 
 ; CHECK:  Bounds of Loop: bb:   { (-2 + %n) }
-; CHECK:    BB: bb{
-; CHECK:      Reads %k.05.reg2mem[0]  Refs: Must alias {%k.05.reg2mem, } May alias {},
-; CHECK:      Reads %a[8 * {0,+,1}<%bb> + 8]  Refs: Must alias {%a, } May alias {},
-; CHECK:      Writes %k.0.lcssa.reg2mem[0]  Refs: Must alias {%k.0.lcssa.reg2mem, } May alias {},
-; CHECK:      Writes %k.05.reg2mem[0]  Refs: Must alias {%k.05.reg2mem, } May alias {},
-; CHECK:    }
