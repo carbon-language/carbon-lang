@@ -1,4 +1,4 @@
-//= UninitializedValues.h - Finding uses of uninitialized values --*- C++ -*-==//
+//= UninitializedValues.h - Finding uses of uninitialized values -*- C++ -*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -18,11 +18,11 @@
 namespace clang {
 
 class AnalysisDeclContext;
-class CFG;  
+class CFG;
 class DeclContext;
 class Expr;
 class VarDecl;
-  
+
 class UninitVariablesHandler {
 public:
   UninitVariablesHandler() {}
@@ -32,7 +32,7 @@ public:
   virtual void handleUseOfUninitVariable(const Expr *ex,
                                          const VarDecl *vd,
                                          bool isAlwaysUninit) {}
-  
+
   /// Called when the uninitialized variable analysis detects the
   /// idiom 'int x = x'.  All other uses of 'x' within the initializer
   /// are handled by handleUseOfUninitVariable.

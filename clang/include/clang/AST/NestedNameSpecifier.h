@@ -95,7 +95,8 @@ private:
       Specifier(Other.Specifier) {
   }
 
-  NestedNameSpecifier &operator=(const NestedNameSpecifier &); // do not implement
+  NestedNameSpecifier &operator=(const NestedNameSpecifier &); // do not
+                                                               // implement
 
   /// \brief Either find or insert the given nested name specifier
   /// mockup in the given context.
@@ -221,12 +222,12 @@ class NestedNameSpecifierLoc {
 public:
   /// \brief Construct an empty nested-name-specifier.
   NestedNameSpecifierLoc() : Qualifier(0), Data(0) { }
-  
+
   /// \brief Construct a nested-name-specifier with source location information
-  /// from 
+  /// from
   NestedNameSpecifierLoc(NestedNameSpecifier *Qualifier, void *Data)
     : Qualifier(Qualifier), Data(Data) { }
-  
+
   /// \brief Evalutes true when this nested-name-specifier location is
   /// non-empty.
   operator bool() const { return Qualifier; }
@@ -239,7 +240,7 @@ public:
 
   /// \brief Retrieve the opaque pointer that refers to source-location data.
   void *getOpaqueData() const { return Data; }
-  
+
   /// \brief Retrieve the source range covering the entirety of this
   /// nested-name-specifier.
   ///
@@ -258,25 +259,25 @@ public:
 
   /// \brief Retrieve the location of the beginning of this
   /// nested-name-specifier.
-  SourceLocation getBeginLoc() const { 
+  SourceLocation getBeginLoc() const {
     return getSourceRange().getBegin();
   }
 
   /// \brief Retrieve the location of the end of this
   /// nested-name-specifier.
-  SourceLocation getEndLoc() const { 
+  SourceLocation getEndLoc() const {
     return getSourceRange().getEnd();
   }
 
   /// \brief Retrieve the location of the beginning of this
   /// component of the nested-name-specifier.
-  SourceLocation getLocalBeginLoc() const { 
+  SourceLocation getLocalBeginLoc() const {
     return getLocalSourceRange().getBegin();
   }
-  
+
   /// \brief Retrieve the location of the end of this component of the
   /// nested-name-specifier.
-  SourceLocation getLocalEndLoc() const { 
+  SourceLocation getLocalEndLoc() const {
     return getLocalSourceRange().getEnd();
   }
 
@@ -300,13 +301,13 @@ public:
   /// \brief Determines the data length for the entire
   /// nested-name-specifier.
   unsigned getDataLength() const { return getDataLength(Qualifier); }
-  
-  friend bool operator==(NestedNameSpecifierLoc X, 
+
+  friend bool operator==(NestedNameSpecifierLoc X,
                          NestedNameSpecifierLoc Y) {
     return X.Qualifier == Y.Qualifier && X.Data == Y.Data;
   }
 
-  friend bool operator!=(NestedNameSpecifierLoc X, 
+  friend bool operator!=(NestedNameSpecifierLoc X,
                          NestedNameSpecifierLoc Y) {
     return !(X == Y);
   }
@@ -316,39 +317,39 @@ public:
 /// with source-location information for all of the components of the
 /// nested-name-specifier.
 class NestedNameSpecifierLocBuilder {
-  /// \brief The current representation of the nested-name-specifier we're 
+  /// \brief The current representation of the nested-name-specifier we're
   /// building.
   NestedNameSpecifier *Representation;
-  
+
   /// \brief Buffer used to store source-location information for the
   /// nested-name-specifier.
   ///
-  /// Note that we explicitly manage the buffer (rather than using a 
+  /// Note that we explicitly manage the buffer (rather than using a
   /// SmallVector) because \c Declarator expects it to be possible to memcpy()
   /// a \c CXXScopeSpec, and CXXScopeSpec uses a NestedNameSpecifierLocBuilder.
   char *Buffer;
-  
+
   /// \brief The size of the buffer used to store source-location information
   /// for the nested-name-specifier.
   unsigned BufferSize;
-  
-  /// \brief The capacity of the buffer used to store source-location 
+
+  /// \brief The capacity of the buffer used to store source-location
   /// information for the nested-name-specifier.
   unsigned BufferCapacity;
 
 public:
   NestedNameSpecifierLocBuilder();
-  
+
   NestedNameSpecifierLocBuilder(const NestedNameSpecifierLocBuilder &Other);
-  
+
   NestedNameSpecifierLocBuilder &
   operator=(const NestedNameSpecifierLocBuilder &Other);
-  
+
   ~NestedNameSpecifierLocBuilder();
-  
+
   /// \brief Retrieve the representation of the nested-name-specifier.
   NestedNameSpecifier *getRepresentation() const { return Representation; }
-  
+
   /// \brief Extend the current nested-name-specifier by another
   /// nested-name-specifier component of the form 'type::'.
   ///
@@ -362,8 +363,8 @@ public:
   /// \param ColonColonLoc The location of the trailing '::'.
   void Extend(ASTContext &Context, SourceLocation TemplateKWLoc, TypeLoc TL,
               SourceLocation ColonColonLoc);
-  
-  /// \brief Extend the current nested-name-specifier by another 
+
+  /// \brief Extend the current nested-name-specifier by another
   /// nested-name-specifier component of the form 'identifier::'.
   ///
   /// \param Context The AST context in which this nested-name-specifier
@@ -376,8 +377,8 @@ public:
   /// \param ColonColonLoc The location of the trailing '::'.
   void Extend(ASTContext &Context, IdentifierInfo *Identifier,
               SourceLocation IdentifierLoc, SourceLocation ColonColonLoc);
-  
-  /// \brief Extend the current nested-name-specifier by another 
+
+  /// \brief Extend the current nested-name-specifier by another
   /// nested-name-specifier component of the form 'namespace::'.
   ///
   /// \param Context The AST context in which this nested-name-specifier
@@ -390,8 +391,8 @@ public:
   /// \param ColonColonLoc The location of the trailing '::'.
   void Extend(ASTContext &Context, NamespaceDecl *Namespace,
               SourceLocation NamespaceLoc, SourceLocation ColonColonLoc);
-  
-  /// \brief Extend the current nested-name-specifier by another 
+
+  /// \brief Extend the current nested-name-specifier by another
   /// nested-name-specifier component of the form 'namespace-alias::'.
   ///
   /// \param Context The AST context in which this nested-name-specifier
@@ -399,35 +400,35 @@ public:
   ///
   /// \param Alias The namespace alias.
   ///
-  /// \param AliasLoc The location of the namespace alias 
+  /// \param AliasLoc The location of the namespace alias
   /// name.
   ///
   /// \param ColonColonLoc The location of the trailing '::'.
   void Extend(ASTContext &Context, NamespaceAliasDecl *Alias,
               SourceLocation AliasLoc, SourceLocation ColonColonLoc);
-  
+
   /// \brief Turn this (empty) nested-name-specifier into the global
   /// nested-name-specifier '::'.
   void MakeGlobal(ASTContext &Context, SourceLocation ColonColonLoc);
-  
+
   /// \brief Make a new nested-name-specifier from incomplete source-location
   /// information.
   ///
   /// This routine should be used very, very rarely, in cases where we
   /// need to synthesize a nested-name-specifier. Most code should instead use
   /// \c Adopt() with a proper \c NestedNameSpecifierLoc.
-  void MakeTrivial(ASTContext &Context, NestedNameSpecifier *Qualifier, 
+  void MakeTrivial(ASTContext &Context, NestedNameSpecifier *Qualifier,
                    SourceRange R);
-  
-  /// \brief Adopt an existing nested-name-specifier (with source-range 
+
+  /// \brief Adopt an existing nested-name-specifier (with source-range
   /// information).
   void Adopt(NestedNameSpecifierLoc Other);
-  
+
   /// \brief Retrieve the source range covered by this nested-name-specifier.
   SourceRange getSourceRange() const {
     return NestedNameSpecifierLoc(Representation, Buffer).getSourceRange();
   }
-    
+
   /// \brief Retrieve a nested-name-specifier with location information,
   /// copied into the given AST context.
   ///
@@ -449,7 +450,7 @@ public:
     Representation = 0;
     BufferSize = 0;
   }
-  
+
   /// \brief Retrieve the underlying buffer.
   ///
   /// \returns A pair containing a pointer to the buffer of source-location
@@ -459,9 +460,9 @@ public:
     return std::make_pair(Buffer, BufferSize);
   }
 };
-  
-/// Insertion operator for diagnostics.  This allows sending NestedNameSpecifiers
-/// into a diagnostic with <<.
+
+/// Insertion operator for diagnostics.  This allows sending
+/// NestedNameSpecifiers into a diagnostic with <<.
 inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
                                            NestedNameSpecifier *NNS) {
   DB.AddTaggedVal(reinterpret_cast<intptr_t>(NNS),

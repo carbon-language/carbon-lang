@@ -23,7 +23,7 @@ class ASTContext;
 class TemplateArgumentList;
 
 namespace sema {
-  
+
 /// \brief Provides information about an attempted template argument
 /// deduction, whose success or failure was described by a
 /// TemplateDeductionResult value.
@@ -39,10 +39,10 @@ class TemplateDeductionInfo {
   /// deduction is occurring.
   SourceLocation Loc;
 
-  /// \brief Warnings (and follow-on notes) that were suppressed due to 
+  /// \brief Warnings (and follow-on notes) that were suppressed due to
   /// SFINAE while performing template argument deduction.
   SmallVector<PartialDiagnosticAt, 4> SuppressedDiagnostics;
-  
+
   // do not implement these
   TemplateDeductionInfo(const TemplateDeductionInfo&);
   TemplateDeductionInfo &operator=(const TemplateDeductionInfo&);
@@ -75,23 +75,24 @@ public:
     Deduced = NewDeduced;
   }
 
-  /// \brief Add a new diagnostic to the set of diagnostics 
-  void addSuppressedDiagnostic(SourceLocation Loc, const PartialDiagnostic &PD) {
+  /// \brief Add a new diagnostic to the set of diagnostics
+  void addSuppressedDiagnostic(SourceLocation Loc,
+                               const PartialDiagnostic &PD) {
     SuppressedDiagnostics.push_back(std::make_pair(Loc, PD));
   }
-  
+
   /// \brief Iterator over the set of suppressed diagnostics.
-  typedef SmallVectorImpl<PartialDiagnosticAt>::const_iterator 
+  typedef SmallVectorImpl<PartialDiagnosticAt>::const_iterator
     diag_iterator;
-  
+
   /// \brief Returns an iterator at the beginning of the sequence of suppressed
   /// diagnostics.
   diag_iterator diag_begin() const { return SuppressedDiagnostics.begin(); }
-  
+
   /// \brief Returns an iterator at the end of the sequence of suppressed
   /// diagnostics.
   diag_iterator diag_end() const { return SuppressedDiagnostics.end(); }
-  
+
   /// \brief The template parameter to which a template argument
   /// deduction failure refers.
   ///

@@ -25,15 +25,15 @@
 #include "clang/Analysis/CFG.h"
 
 namespace clang {
-    
+
 class PostOrderCFGView : public ManagedAnalysis {
 public:
   /// \brief Implements a set of CFGBlocks using a BitVector.
   ///
   /// This class contains a minimal interface, primarily dictated by the SetType
-  /// template parameter of the llvm::po_iterator template, as used with external
-  /// storage. We also use this set to keep track of which CFGBlocks we visit
-  /// during the analysis.
+  /// template parameter of the llvm::po_iterator template, as used with
+  /// external storage. We also use this set to keep track of which CFGBlocks we
+  /// visit during the analysis.
   class CFGBlockSet {
     llvm::BitVector VisitedBlockIDs;
   public:
@@ -47,8 +47,8 @@ public:
     /// \brief Set the bit associated with a particular CFGBlock.
     /// This is the important method for the SetType template parameter.
     bool insert(const CFGBlock *Block) {
-      // Note that insert() is called by po_iterator, which doesn't check to make
-      // sure that Block is non-null.  Moreover, the CFGBlock iterator will
+      // Note that insert() is called by po_iterator, which doesn't check to
+      // make sure that Block is non-null.  Moreover, the CFGBlock iterator will
       // occasionally hand out null pointers for pruned edges, so we catch those
       // here.
       if (Block == 0)
@@ -60,30 +60,30 @@ public:
     }
 
     /// \brief Check if the bit for a CFGBlock has been already set.
-    /// This method is for tracking visited blocks in the main threadsafety loop.
-    /// Block must not be null.
+    /// This method is for tracking visited blocks in the main threadsafety
+    /// loop. Block must not be null.
     bool alreadySet(const CFGBlock *Block) {
       return VisitedBlockIDs.test(Block->getBlockID());
     }
   };
 
 private:
-  typedef llvm::po_iterator<const CFG*, CFGBlockSet, true>  po_iterator;  
+  typedef llvm::po_iterator<const CFG*, CFGBlockSet, true>  po_iterator;
   std::vector<const CFGBlock*> Blocks;
-  
+
   typedef llvm::DenseMap<const CFGBlock *, unsigned> BlockOrderTy;
   BlockOrderTy BlockOrder;
-  
+
 public:
   typedef std::vector<const CFGBlock*>::reverse_iterator iterator;
-  
+
   PostOrderCFGView(const CFG *cfg);
-  
+
   iterator begin() { return Blocks.rbegin(); }
   iterator end()   { return Blocks.rend(); }
-  
+
   bool empty() { return begin() == end(); }
-  
+
   struct BlockOrderCompare;
   friend struct BlockOrderCompare;
 
@@ -91,9 +91,9 @@ public:
     const PostOrderCFGView &POV;
   public:
     BlockOrderCompare(const PostOrderCFGView &pov) : POV(pov) {}
-    bool operator()(const CFGBlock *b1, const CFGBlock *b2) const;  
+    bool operator()(const CFGBlock *b1, const CFGBlock *b2) const;
   };
-  
+
   BlockOrderCompare getComparator() const {
     return BlockOrderCompare(*this);
   }
@@ -103,7 +103,7 @@ public:
 
   static PostOrderCFGView *create(AnalysisDeclContext &analysisContext);
 };
-  
+
 } // end clang namespace
 
 #endif

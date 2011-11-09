@@ -99,7 +99,9 @@ public:
 
   /// \brief If the consumer is interested in entities being deserialized from
   /// AST files, it should return a pointer to a ASTDeserializationListener here
-  virtual ASTDeserializationListener *GetASTDeserializationListener() { return 0; }
+  virtual ASTDeserializationListener *GetASTDeserializationListener() {
+    return 0;
+  }
 
   /// PrintStats - If desired, print any statistics.
   virtual void PrintStats() {}

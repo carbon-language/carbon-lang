@@ -148,7 +148,9 @@ public:
 
 
   DeclStmt *getRangeStmt() { return cast<DeclStmt>(SubExprs[RANGE]); }
-  DeclStmt *getBeginEndStmt() { return cast_or_null<DeclStmt>(SubExprs[BEGINEND]); }
+  DeclStmt *getBeginEndStmt() {
+    return cast_or_null<DeclStmt>(SubExprs[BEGINEND]);
+  }
   Expr *getCond() { return cast_or_null<Expr>(SubExprs[COND]); }
   Expr *getInc() { return cast_or_null<Expr>(SubExprs[INC]); }
   DeclStmt *getLoopVarStmt() { return cast<DeclStmt>(SubExprs[LOOPVAR]); }
@@ -209,10 +211,10 @@ public:
 /// example:
 ///
 /// \code
-/// template<typename T> 
+/// template<typename T>
 /// void call_foo(T &t) {
 ///   __if_exists (T::foo) {
-///     t.foo(); // okay: only called when T::foo exists. 
+///     t.foo(); // okay: only called when T::foo exists.
 ///   }
 /// }
 /// \endcode
@@ -234,56 +236,56 @@ class MSDependentExistsStmt : public Stmt {
   NestedNameSpecifierLoc QualifierLoc;
   DeclarationNameInfo NameInfo;
   Stmt *SubStmt;
-  
+
   friend class ASTReader;
   friend class ASTStmtReader;
-  
+
 public:
-  MSDependentExistsStmt(SourceLocation KeywordLoc, bool IsIfExists, 
+  MSDependentExistsStmt(SourceLocation KeywordLoc, bool IsIfExists,
                         NestedNameSpecifierLoc QualifierLoc,
                         DeclarationNameInfo NameInfo,
                         CompoundStmt *SubStmt)
   : Stmt(MSDependentExistsStmtClass),
-    KeywordLoc(KeywordLoc), IsIfExists(IsIfExists), 
+    KeywordLoc(KeywordLoc), IsIfExists(IsIfExists),
     QualifierLoc(QualifierLoc), NameInfo(NameInfo),
     SubStmt(reinterpret_cast<Stmt *>(SubStmt)) { }
-  
-  /// \brief Retrieve the location of the __if_exists or __if_not_exists 
+
+  /// \brief Retrieve the location of the __if_exists or __if_not_exists
   /// keyword.
   SourceLocation getKeywordLoc() const { return KeywordLoc; }
-  
+
   /// \brief Determine whether this is an __if_exists statement.
   bool isIfExists() const { return IsIfExists; }
 
   /// \brief Determine whether this is an __if_exists statement.
   bool isIfNotExists() const { return !IsIfExists; }
-  
+
   /// \brief Retrieve the nested-name-specifier that qualifies this name, if
   /// any.
   NestedNameSpecifierLoc getQualifierLoc() const { return QualifierLoc; }
-  
+
   /// \brief Retrieve the name of the entity we're testing for, along with
   /// location information
   DeclarationNameInfo getNameInfo() const { return NameInfo; }
-  
+
   /// \brief Retrieve the compound statement that will be included in the
   /// program only if the existence of the symbol matches the initial keyword.
-  CompoundStmt *getSubStmt() const { 
-    return reinterpret_cast<CompoundStmt *>(SubStmt); 
+  CompoundStmt *getSubStmt() const {
+    return reinterpret_cast<CompoundStmt *>(SubStmt);
   }
-  
+
   SourceRange getSourceRange() const {
     return SourceRange(KeywordLoc, SubStmt->getLocEnd());
   }
-  
+
   child_range children() {
     return child_range(&SubStmt, &SubStmt+1);
   }
-  
+
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == MSDependentExistsStmtClass;
   }
-  
+
   static bool classof(MSDependentExistsStmt *) { return true; }
 };
 

@@ -39,11 +39,11 @@ namespace clang {
   class StringLiteral;
   class SwitchStmt;
 
-  //===----------------------------------------------------------------------===//
+  //===--------------------------------------------------------------------===//
   // ExprIterator - Iterators for iterating over Stmt* arrays that contain
   //  only Expr*.  This is needed because AST nodes use Stmt* arrays to store
   //  references to children (to be compatible with StmtIterator).
-  //===----------------------------------------------------------------------===//
+  //===--------------------------------------------------------------------===//
 
   class Stmt;
   class Expr;
@@ -261,7 +261,7 @@ public:
     if (Stmt::CollectingStats()) Stmt::addStmtClass(SC);
   }
 
-  StmtClass getStmtClass() const { 
+  StmtClass getStmtClass() const {
     return static_cast<StmtClass>(StmtBits.sClass);
   }
   const char *getStmtClassName() const;
@@ -497,7 +497,7 @@ public:
   body_iterator body_begin() { return Body; }
   body_iterator body_end() { return Body + size(); }
   Stmt *body_back() { return !body_empty() ? Body[size()-1] : 0; }
-  
+
   void setLastStmt(Stmt *S) {
     assert(!body_empty() && "setLastStmt");
     Body[size()-1] = S;
@@ -545,7 +545,7 @@ public:
   child_range children() {
     return child_range(&Body[0], &Body[0]+CompoundStmtBits.NumStmts);
   }
-  
+
   const_child_range children() const {
     return child_range(&Body[0], &Body[0]+CompoundStmtBits.NumStmts);
   }
@@ -679,7 +679,7 @@ public:
   child_range children() { return child_range(&SubStmt, &SubStmt+1); }
 };
 
-  
+
 /// LabelStmt - Represents a label, which has a substatement.  For example:
 ///    foo: return;
 ///
@@ -724,11 +724,11 @@ class IfStmt : public Stmt {
 
   SourceLocation IfLoc;
   SourceLocation ElseLoc;
-  
+
 public:
-  IfStmt(ASTContext &C, SourceLocation IL, VarDecl *var, Expr *cond, 
+  IfStmt(ASTContext &C, SourceLocation IL, VarDecl *var, Expr *cond,
          Stmt *then, SourceLocation EL = SourceLocation(), Stmt *elsev = 0);
-  
+
   /// \brief Build an empty if/then/else statement
   explicit IfStmt(EmptyShell Empty) : Stmt(IfStmtClass, Empty) { }
 
@@ -742,13 +742,13 @@ public:
   /// \endcode
   VarDecl *getConditionVariable() const;
   void setConditionVariable(ASTContext &C, VarDecl *V);
-  
+
   /// If this IfStmt has a condition variable, return the faux DeclStmt
   /// associated with the creation of that condition variable.
   const DeclStmt *getConditionVariableDeclStmt() const {
     return reinterpret_cast<DeclStmt*>(SubExprs[VAR]);
   }
-  
+
   const Expr *getCond() const { return reinterpret_cast<Expr*>(SubExprs[COND]);}
   void setCond(Expr *E) { SubExprs[COND] = reinterpret_cast<Stmt *>(E); }
   const Stmt *getThen() const { return SubExprs[THEN]; }
@@ -815,7 +815,7 @@ public:
   /// \endcode
   VarDecl *getConditionVariable() const;
   void setConditionVariable(ASTContext &C, VarDecl *V);
-  
+
   /// If this SwitchStmt has a condition variable, return the faux DeclStmt
   /// associated with the creation of that condition variable.
   const DeclStmt *getConditionVariableDeclStmt() const {
@@ -846,7 +846,8 @@ public:
     SwitchLoc = SL;
   }
   void addSwitchCase(SwitchCase *SC) {
-    assert(!SC->getNextSwitchCase() && "case/default already added to a switch");
+    assert(!SC->getNextSwitchCase()
+           && "case/default already added to a switch");
     SC->setNextSwitchCase(FirstCase);
     FirstCase = SC;
   }
@@ -885,7 +886,7 @@ class WhileStmt : public Stmt {
   Stmt* SubExprs[END_EXPR];
   SourceLocation WhileLoc;
 public:
-  WhileStmt(ASTContext &C, VarDecl *Var, Expr *cond, Stmt *body, 
+  WhileStmt(ASTContext &C, VarDecl *Var, Expr *cond, Stmt *body,
             SourceLocation WL);
 
   /// \brief Build an empty while statement.
@@ -993,14 +994,14 @@ class ForStmt : public Stmt {
   SourceLocation LParenLoc, RParenLoc;
 
 public:
-  ForStmt(ASTContext &C, Stmt *Init, Expr *Cond, VarDecl *condVar, Expr *Inc, 
+  ForStmt(ASTContext &C, Stmt *Init, Expr *Cond, VarDecl *condVar, Expr *Inc,
           Stmt *Body, SourceLocation FL, SourceLocation LP, SourceLocation RP);
 
   /// \brief Build an empty for statement.
   explicit ForStmt(EmptyShell Empty) : Stmt(ForStmtClass, Empty) { }
 
   Stmt *getInit() { return SubExprs[INIT]; }
-  
+
   /// \brief Retrieve the variable declared in this "for" statement, if any.
   ///
   /// In the following example, "y" is the condition variable.
@@ -1011,7 +1012,7 @@ public:
   /// \endcode
   VarDecl *getConditionVariable() const;
   void setConditionVariable(ASTContext &C, VarDecl *V);
-  
+
   /// If this ForStmt has a condition variable, return the faux DeclStmt
   /// associated with the creation of that condition variable.
   const DeclStmt *getConditionVariableDeclStmt() const {
@@ -1196,7 +1197,7 @@ class ReturnStmt : public Stmt {
   Stmt *RetExpr;
   SourceLocation RetLoc;
   const VarDecl *NRVOCandidate;
-  
+
 public:
   ReturnStmt(SourceLocation RL)
     : Stmt(ReturnStmtClass), RetExpr(0), RetLoc(RL), NRVOCandidate(0) { }
@@ -1222,7 +1223,7 @@ public:
   /// also marked as an NRVO object.
   const VarDecl *getNRVOCandidate() const { return NRVOCandidate; }
   void setNRVOCandidate(const VarDecl *Var) { NRVOCandidate = Var; }
-  
+
   SourceRange getSourceRange() const;
 
   static bool classof(const Stmt *T) {
@@ -1256,16 +1257,16 @@ class AsmStmt : public Stmt {
   StringLiteral **Constraints;
   Stmt **Exprs;
   StringLiteral **Clobbers;
-  
+
 public:
-  AsmStmt(ASTContext &C, SourceLocation asmloc, bool issimple, bool isvolatile, 
+  AsmStmt(ASTContext &C, SourceLocation asmloc, bool issimple, bool isvolatile,
           bool msasm, unsigned numoutputs, unsigned numinputs,
           IdentifierInfo **names, StringLiteral **constraints,
           Expr **exprs, StringLiteral *asmstr, unsigned numclobbers,
           StringLiteral **clobbers, SourceLocation rparenloc);
 
   /// \brief Build an empty inline-assembly statement.
-  explicit AsmStmt(EmptyShell Empty) : Stmt(AsmStmtClass, Empty), 
+  explicit AsmStmt(EmptyShell Empty) : Stmt(AsmStmtClass, Empty),
     Names(0), Constraints(0), Exprs(0), Clobbers(0) { }
 
   SourceLocation getAsmLoc() const { return AsmLoc; }
@@ -1347,7 +1348,7 @@ public:
   StringRef getOutputName(unsigned i) const {
     if (IdentifierInfo *II = getOutputIdentifier(i))
       return II->getName();
-    
+
     return StringRef();
   }
 
@@ -1408,7 +1409,7 @@ public:
 
   Expr *getInputExpr(unsigned i);
   void setInputExpr(unsigned i, Expr *E);
-  
+
   const Expr *getInputExpr(unsigned i) const {
     return const_cast<AsmStmt*>(this)->getInputExpr(i);
   }
@@ -1418,7 +1419,7 @@ public:
                                       StringLiteral **Constraints,
                                       Stmt **Exprs,
                                       unsigned NumOutputs,
-                                      unsigned NumInputs,                                      
+                                      unsigned NumInputs,
                                       StringLiteral **Clobbers,
                                       unsigned NumClobbers);
 
@@ -1511,8 +1512,13 @@ public:
   SourceLocation getExceptLoc() const { return Loc; }
   SourceLocation getEndLoc() const { return getBlock()->getLocEnd(); }
 
-  Expr *getFilterExpr() const { return reinterpret_cast<Expr*>(Children[FILTER_EXPR]); }
-  CompoundStmt *getBlock() const { return llvm::cast<CompoundStmt>(Children[BLOCK]); }
+  Expr *getFilterExpr() const {
+    return reinterpret_cast<Expr*>(Children[FILTER_EXPR]);
+  }
+
+  CompoundStmt *getBlock() const {
+    return llvm::cast<CompoundStmt>(Children[BLOCK]);
+  }
 
   child_range children() {
     return child_range(Children,Children+2);
@@ -1594,7 +1600,11 @@ public:
   SourceLocation getEndLoc() const { return Children[HANDLER]->getLocEnd(); }
 
   bool getIsCXXTry() const { return IsCXXTry; }
-  CompoundStmt* getTryBlock() const { return llvm::cast<CompoundStmt>(Children[TRY]); }
+
+  CompoundStmt* getTryBlock() const {
+    return llvm::cast<CompoundStmt>(Children[TRY]);
+  }
+
   Stmt *getHandler() const { return Children[HANDLER]; }
 
   /// Returns 0 if not defined
@@ -1611,7 +1621,7 @@ public:
 
   static bool classof(SEHTryStmt *) { return true; }
 };
-  
+
 }  // end namespace clang
 
 #endif

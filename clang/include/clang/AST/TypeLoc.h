@@ -159,7 +159,8 @@ public:
   static bool classof(const TypeLoc *TL) { return true; }
 
 private:
-  static void initializeImpl(ASTContext &Context, TypeLoc TL, SourceLocation Loc);
+  static void initializeImpl(ASTContext &Context, TypeLoc TL,
+                             SourceLocation Loc);
   static TypeLoc getNextTypeLocImpl(TypeLoc TL);
   static TypeLoc IgnoreParensImpl(TypeLoc TL);
   static SourceRange getLocalSourceRangeImpl(TypeLoc TL);
@@ -226,7 +227,7 @@ public:
 
   /// \brief Returns the size of the type source info data block.
   unsigned getFullDataSize() const {
-    return getLocalDataSize() + 
+    return getLocalDataSize() +
       getFullDataSizeForType(getType().getLocalUnqualifiedType());
   }
 
@@ -326,7 +327,7 @@ protected:
   void *getExtraLocalData() const {
     return getLocalData() + 1;
   }
-  
+
   void *getNonLocalData() const {
     return static_cast<char*>(Base::Data) + asDerived()->getLocalDataSize();
   }
@@ -392,7 +393,7 @@ struct TypeSpecLocInfo {
 
 /// \brief A reasonable base class for TypeLocs that correspond to
 /// types that are written as a type-specifier.
-class TypeSpecTypeLoc : public ConcreteTypeLoc<UnqualTypeLoc, 
+class TypeSpecTypeLoc : public ConcreteTypeLoc<UnqualTypeLoc,
                                                TypeSpecTypeLoc,
                                                Type,
                                                TypeSpecLocInfo> {
@@ -566,7 +567,7 @@ class TagTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
 public:
   TagDecl *getDecl() const { return getTypePtr()->getDecl(); }
 
-  /// \brief True if the tag was defined in this type specifier. 
+  /// \brief True if the tag was defined in this type specifier.
   bool isDefinition() const {
     return getDecl()->isCompleteDefinition() &&
          (getNameLoc().isInvalid() || getNameLoc() == getDecl()->getLocation());
@@ -789,7 +790,7 @@ public:
     assert(i < getNumProtocols() && "Index is out of bounds!");
     return *(this->getTypePtr()->qual_begin() + i);
   }
-  
+
   bool hasBaseTypeAsWritten() const {
     return getLocalData()->HasBaseTypeAsWritten;
   }
@@ -900,11 +901,11 @@ struct PointerLikeLocInfo {
   SourceLocation StarLoc;
 };
 
-/// A base class for 
+/// A base class for
 template <class Derived, class TypeClass, class LocalData = PointerLikeLocInfo>
 class PointerLikeTypeLoc : public ConcreteTypeLoc<UnqualTypeLoc, Derived,
                                                   TypeClass, LocalData> {
-public:  
+public:
   SourceLocation getSigilLoc() const {
     return this->getLocalData()->StarLoc;
   }
@@ -1476,9 +1477,9 @@ class AutoTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
 
 struct ElaboratedLocInfo {
   SourceLocation KeywordLoc;
-  
+
   /// \brief Opaque data pointer used to reconstruct a nested-name-specifier
-  /// from 
+  /// from
   void *QualifierData;
 };
 
@@ -1495,12 +1496,12 @@ public:
   }
 
   NestedNameSpecifierLoc getQualifierLoc() const {
-    return NestedNameSpecifierLoc(getTypePtr()->getQualifier(), 
+    return NestedNameSpecifierLoc(getTypePtr()->getQualifier(),
                                   getLocalData()->QualifierData);
   }
- 
+
   void setQualifierLoc(NestedNameSpecifierLoc QualifierLoc) {
-    assert(QualifierLoc.getNestedNameSpecifier() 
+    assert(QualifierLoc.getNestedNameSpecifier()
                                             == getTypePtr()->getQualifier() &&
            "Inconsistent nested-name-specifier pointer");
     getLocalData()->QualifierData = QualifierLoc.getOpaqueData();
@@ -1537,7 +1538,7 @@ public:
 // type is some sort of TypeDeclTypeLoc.
 struct DependentNameLocInfo : ElaboratedLocInfo {
   SourceLocation NameLoc;
-  
+
   /// \brief Data associated with the nested-name-specifier location.
   void *QualifierData;
 };
@@ -1555,17 +1556,17 @@ public:
   }
 
   NestedNameSpecifierLoc getQualifierLoc() const {
-    return NestedNameSpecifierLoc(getTypePtr()->getQualifier(), 
+    return NestedNameSpecifierLoc(getTypePtr()->getQualifier(),
                                   getLocalData()->QualifierData);
   }
-      
+
   void setQualifierLoc(NestedNameSpecifierLoc QualifierLoc) {
-    assert(QualifierLoc.getNestedNameSpecifier() 
+    assert(QualifierLoc.getNestedNameSpecifier()
                                             == getTypePtr()->getQualifier() &&
            "Inconsistent nested-name-specifier pointer");
     getLocalData()->QualifierData = QualifierLoc.getOpaqueData();
   }
-                                                      
+
   SourceLocation getNameLoc() const {
     return this->getLocalData()->NameLoc;
   }
@@ -1612,22 +1613,22 @@ public:
   NestedNameSpecifierLoc getQualifierLoc() const {
     if (!getLocalData()->QualifierData)
       return NestedNameSpecifierLoc();
-    
-    return NestedNameSpecifierLoc(getTypePtr()->getQualifier(), 
+
+    return NestedNameSpecifierLoc(getTypePtr()->getQualifier(),
                                   getLocalData()->QualifierData);
   }
-   
+
   void setQualifierLoc(NestedNameSpecifierLoc QualifierLoc) {
     if (!QualifierLoc) {
-      // Even if we have a nested-name-specifier in the dependent 
+      // Even if we have a nested-name-specifier in the dependent
       // template specialization type, we won't record the nested-name-specifier
       // location information when this type-source location information is
       // part of a nested-name-specifier.
       getLocalData()->QualifierData = 0;
       return;
     }
-    
-    assert(QualifierLoc.getNestedNameSpecifier() 
+
+    assert(QualifierLoc.getNestedNameSpecifier()
                                         == getTypePtr()->getQualifier() &&
            "Inconsistent nested-name-specifier pointer");
     getLocalData()->QualifierData = QualifierLoc.getOpaqueData();
@@ -1702,7 +1703,7 @@ struct PackExpansionTypeLocInfo {
 };
 
 class PackExpansionTypeLoc
-  : public ConcreteTypeLoc<UnqualTypeLoc, PackExpansionTypeLoc, 
+  : public ConcreteTypeLoc<UnqualTypeLoc, PackExpansionTypeLoc,
                            PackExpansionType, PackExpansionTypeLocInfo> {
 public:
   SourceLocation getEllipsisLoc() const {
@@ -1736,7 +1737,7 @@ struct AtomicTypeLocInfo {
 
 class AtomicTypeLoc : public ConcreteTypeLoc<UnqualTypeLoc, AtomicTypeLoc,
                                              AtomicType, AtomicTypeLocInfo> {
-public:  
+public:
   TypeLoc getValueLoc() const {
     return this->getInnerTypeLoc();
   }

@@ -34,16 +34,16 @@ public:
     CK_OffsetToTop,
     CK_RTTI,
     CK_FunctionPointer,
-    
+
     /// CK_CompleteDtorPointer - A pointer to the complete destructor.
     CK_CompleteDtorPointer,
-    
+
     /// CK_DeletingDtorPointer - A pointer to the deleting destructor.
     CK_DeletingDtorPointer,
-    
+
     /// CK_UnusedFunctionPointer - In some cases, a vtable function pointer
     /// will end up never being called. Such vtable function pointers are
-    /// represented as a CK_UnusedFunctionPointer. 
+    /// represented as a CK_UnusedFunctionPointer.
     CK_UnusedFunctionPointer
   };
 
@@ -60,34 +60,34 @@ public:
   static VTableComponent MakeOffsetToTop(CharUnits Offset) {
     return VTableComponent(CK_OffsetToTop, Offset);
   }
-  
+
   static VTableComponent MakeRTTI(const CXXRecordDecl *RD) {
     return VTableComponent(CK_RTTI, reinterpret_cast<uintptr_t>(RD));
   }
 
   static VTableComponent MakeFunction(const CXXMethodDecl *MD) {
-    assert(!isa<CXXDestructorDecl>(MD) && 
+    assert(!isa<CXXDestructorDecl>(MD) &&
            "Don't use MakeFunction with destructors!");
 
-    return VTableComponent(CK_FunctionPointer, 
+    return VTableComponent(CK_FunctionPointer,
                            reinterpret_cast<uintptr_t>(MD));
   }
-  
+
   static VTableComponent MakeCompleteDtor(const CXXDestructorDecl *DD) {
     return VTableComponent(CK_CompleteDtorPointer,
                            reinterpret_cast<uintptr_t>(DD));
   }
 
   static VTableComponent MakeDeletingDtor(const CXXDestructorDecl *DD) {
-    return VTableComponent(CK_DeletingDtorPointer, 
+    return VTableComponent(CK_DeletingDtorPointer,
                            reinterpret_cast<uintptr_t>(DD));
   }
 
   static VTableComponent MakeUnusedFunction(const CXXMethodDecl *MD) {
-    assert(!isa<CXXDestructorDecl>(MD) && 
+    assert(!isa<CXXDestructorDecl>(MD) &&
            "Don't use MakeUnusedFunction with destructors!");
     return VTableComponent(CK_UnusedFunctionPointer,
-                           reinterpret_cast<uintptr_t>(MD));                           
+                           reinterpret_cast<uintptr_t>(MD));
   }
 
   static VTableComponent getFromOpaqueInteger(uint64_t I) {
@@ -101,88 +101,88 @@ public:
 
   CharUnits getVCallOffset() const {
     assert(getKind() == CK_VCallOffset && "Invalid component kind!");
-    
+
     return getOffset();
   }
 
   CharUnits getVBaseOffset() const {
     assert(getKind() == CK_VBaseOffset && "Invalid component kind!");
-    
+
     return getOffset();
   }
 
   CharUnits getOffsetToTop() const {
     assert(getKind() == CK_OffsetToTop && "Invalid component kind!");
-    
+
     return getOffset();
   }
-  
+
   const CXXRecordDecl *getRTTIDecl() const {
     assert(getKind() == CK_RTTI && "Invalid component kind!");
-    
+
     return reinterpret_cast<CXXRecordDecl *>(getPointer());
   }
-  
+
   const CXXMethodDecl *getFunctionDecl() const {
     assert(getKind() == CK_FunctionPointer);
-    
+
     return reinterpret_cast<CXXMethodDecl *>(getPointer());
   }
 
   const CXXDestructorDecl *getDestructorDecl() const {
     assert((getKind() == CK_CompleteDtorPointer ||
             getKind() == CK_DeletingDtorPointer) && "Invalid component kind!");
-    
+
     return reinterpret_cast<CXXDestructorDecl *>(getPointer());
   }
 
   const CXXMethodDecl *getUnusedFunctionDecl() const {
     assert(getKind() == CK_UnusedFunctionPointer);
-    
+
     return reinterpret_cast<CXXMethodDecl *>(getPointer());
   }
-  
+
 private:
   VTableComponent(Kind ComponentKind, CharUnits Offset) {
-    assert((ComponentKind == CK_VCallOffset || 
+    assert((ComponentKind == CK_VCallOffset ||
             ComponentKind == CK_VBaseOffset ||
             ComponentKind == CK_OffsetToTop) && "Invalid component kind!");
     assert(Offset.getQuantity() <= ((1LL << 56) - 1) && "Offset is too big!");
-    
+
     Value = ((Offset.getQuantity() << 3) | ComponentKind);
   }
 
   VTableComponent(Kind ComponentKind, uintptr_t Ptr) {
-    assert((ComponentKind == CK_RTTI || 
+    assert((ComponentKind == CK_RTTI ||
             ComponentKind == CK_FunctionPointer ||
             ComponentKind == CK_CompleteDtorPointer ||
             ComponentKind == CK_DeletingDtorPointer ||
             ComponentKind == CK_UnusedFunctionPointer) &&
             "Invalid component kind!");
-    
+
     assert((Ptr & 7) == 0 && "Pointer not sufficiently aligned!");
-    
+
     Value = Ptr | ComponentKind;
   }
-  
+
   CharUnits getOffset() const {
     assert((getKind() == CK_VCallOffset || getKind() == CK_VBaseOffset ||
             getKind() == CK_OffsetToTop) && "Invalid component kind!");
-    
+
     return CharUnits::fromQuantity(Value >> 3);
   }
 
   uintptr_t getPointer() const {
-    assert((getKind() == CK_RTTI || 
+    assert((getKind() == CK_RTTI ||
             getKind() == CK_FunctionPointer ||
             getKind() == CK_CompleteDtorPointer ||
             getKind() == CK_DeletingDtorPointer ||
             getKind() == CK_UnusedFunctionPointer) &&
            "Invalid component kind!");
-    
+
     return static_cast<uintptr_t>(Value & ~7ULL);
   }
-  
+
   explicit VTableComponent(uint64_t Value)
     : Value(Value) { }
 
@@ -210,7 +210,7 @@ private:
   /// VTableThunks - Contains thunks needed by vtables.
   uint64_t NumVTableThunks;
   VTableThunkTy *VTableThunks;
-  
+
   /// Address points - Address points for all vtables.
   AddressPointsMapTy AddressPoints;
 
@@ -265,10 +265,10 @@ class VTableContext {
   ASTContext &Context;
 
 public:
-  typedef SmallVector<std::pair<uint64_t, ThunkInfo>, 1> 
+  typedef SmallVector<std::pair<uint64_t, ThunkInfo>, 1>
     VTableThunksTy;
   typedef SmallVector<ThunkInfo, 1> ThunkInfoVectorTy;
-  
+
 private:
   /// MethodVTableIndices - Contains the index (relative to the vtable address
   /// point) where the function pointer for a virtual function is stored.
@@ -279,22 +279,22 @@ private:
     VTableLayoutMapTy;
   VTableLayoutMapTy VTableLayouts;
 
-  /// NumVirtualFunctionPointers - Contains the number of virtual function 
+  /// NumVirtualFunctionPointers - Contains the number of virtual function
   /// pointers in the vtable for a given record decl.
   llvm::DenseMap<const CXXRecordDecl *, uint64_t> NumVirtualFunctionPointers;
 
   typedef std::pair<const CXXRecordDecl *,
                     const CXXRecordDecl *> ClassPairTy;
 
-  /// VirtualBaseClassOffsetOffsets - Contains the vtable offset (relative to 
+  /// VirtualBaseClassOffsetOffsets - Contains the vtable offset (relative to
   /// the address point) in chars where the offsets for virtual bases of a class
   /// are stored.
-  typedef llvm::DenseMap<ClassPairTy, CharUnits> 
+  typedef llvm::DenseMap<ClassPairTy, CharUnits>
     VirtualBaseClassOffsetOffsetsMapTy;
   VirtualBaseClassOffsetOffsetsMapTy VirtualBaseClassOffsetOffsets;
 
   typedef llvm::DenseMap<const CXXMethodDecl *, ThunkInfoVectorTy> ThunksMapTy;
-  
+
   /// Thunks - Contains all thunks that a given method decl will need.
   ThunksMapTy Thunks;
 
@@ -312,7 +312,7 @@ public:
   const VTableLayout &getVTableLayout(const CXXRecordDecl *RD) {
     ComputeVTableRelatedInformation(RD);
     assert(VTableLayouts.count(RD) && "No layout for this record decl!");
-    
+
     return *VTableLayouts[RD];
   }
 
@@ -337,14 +337,14 @@ public:
   /// getNumVirtualFunctionPointers - Return the number of virtual function
   /// pointers in the vtable for a given record decl.
   uint64_t getNumVirtualFunctionPointers(const CXXRecordDecl *RD);
-  
+
   /// getMethodVTableIndex - Return the index (relative to the vtable address
   /// point) where the function pointer for the given virtual function is
   /// stored.
   uint64_t getMethodVTableIndex(GlobalDecl GD);
 
   /// getVirtualBaseOffsetOffset - Return the offset in chars (relative to the
-  /// vtable address point) where the offset of the virtual base that contains 
+  /// vtable address point) where the offset of the virtual base that contains
   /// the given base is stored, otherwise, if no virtual base contains the given
   /// class, return 0.  Base must be a virtual base class or an unambigious
   /// base.

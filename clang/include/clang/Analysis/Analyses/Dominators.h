@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements a simple, fast dominance algorithm for source-level CFGs.
+// This file implements a simple, fast dominance algorithm for source-level
+// CFGs.
 //
 //===----------------------------------------------------------------------===//
 
@@ -27,7 +28,7 @@ class DominatorTree : public ManagedAnalysis {
   typedef llvm::DenseMap<const CFGBlock *, CFGBlock*> CFGBlockMapTy;
 
 public:
-  DominatorTree(AnalysisDeclContext &ac) 
+  DominatorTree(AnalysisDeclContext &ac)
       : AC(ac) {}
 
   virtual ~DominatorTree();
@@ -50,7 +51,7 @@ public:
 
   /// Find nearest common dominator for blocks A and B.
   /// Common dominator always exists, ex: entry block.
-  const CFGBlock *findNearestCommonDominator(const CFGBlock *A, 
+  const CFGBlock *findNearestCommonDominator(const CFGBlock *A,
                                        const CFGBlock *B) const;
 
   /// Constructs immediate dominator tree for a given CFG based on the algorithm
@@ -61,7 +62,7 @@ public:
   ///  Software-Practice and Expreience, 2001;4:1-10.
   ///
   /// This implementation is simple and runs faster in practice than the classis
-  /// Lengauer-Tarjan algorithm. For detailed discussions, refer to the paper. 
+  /// Lengauer-Tarjan algorithm. For detailed discussions, refer to the paper.
   void BuildDominatorTree();
 
   /// Dump the immediate dominance tree

@@ -93,7 +93,8 @@ public:
   /// 3. or when a mutex is locked but not unlocked inside a function.
   /// \param LockName -- A StringRef name for the lock expression, to be printed
   /// in the error message.
-  /// \param Loc -- The location of the lock expression where the mutex is locked
+  /// \param Loc -- The location of the lock expression where the mutex is
+  ///               locked
   /// \param LEK -- which of the three above cases we should warn for
   virtual void handleMutexHeldEndOfScope(Name LockName, SourceLocation Loc,
                                          LockErrorKind LEK){}
@@ -143,7 +144,8 @@ public:
 /// We traverse the blocks in the CFG, compute the set of mutexes that are held
 /// at the end of each block, and issue warnings for thread safety violations.
 /// Each block in the CFG is traversed exactly once.
-void runThreadSafetyAnalysis(AnalysisDeclContext &AC, ThreadSafetyHandler &Handler);
+void runThreadSafetyAnalysis(AnalysisDeclContext &AC,
+                             ThreadSafetyHandler &Handler);
 
 /// \brief Helper function that returns a LockKind required for the given level
 /// of access.

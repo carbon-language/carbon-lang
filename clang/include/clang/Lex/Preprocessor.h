@@ -50,7 +50,7 @@ class CodeCompletionHandler;
 class DirectoryLookup;
 class PreprocessingRecord;
 class ModuleLoader;
-  
+
 /// Preprocessor - This object engages in a tight little dance with the lexer to
 /// efficiently preprocess tokens.  Lexers know only about tokens within a
 /// single source file, and don't know anything about preprocessor-level issues
@@ -69,7 +69,7 @@ class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
   /// \brief External source of macros.
   ExternalPreprocessorSource *ExternalSource;
 
-  
+
   /// PTH - An optional PTHManager object used for getting tokens from
   ///  a token cache rather than lexing the original source file.
   llvm::OwningPtr<PTHManager> PTH;
@@ -108,7 +108,7 @@ class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
   bool KeepMacroComments : 1;
   bool SuppressIncludeNotFoundError : 1;
   bool AutoModuleImport : 1;
-  
+
   // State that changes while the preprocessor runs:
   bool InMacroArgs : 1;            // True if parsing fn macro invocation args.
 
@@ -147,7 +147,7 @@ class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
 
   /// \brief The code-completion handler.
   CodeCompletionHandler *CodeComplete;
-  
+
   /// \brief The file that we're performing code-completion for, if any.
   const FileEntry *CodeCompletionFile;
 
@@ -170,7 +170,7 @@ class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
   /// \brief The source location of the currently-active
   /// #pragma clang arc_cf_code_audited begin.
   SourceLocation PragmaARCCFCodeAuditedLoc;
-  
+
   /// \brief True if we hit the code-completion point.
   bool CodeCompletionReached;
 
@@ -179,7 +179,7 @@ class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
   /// with a flag that indicates whether skipping this number of bytes will
   /// place the lexer at the start of a line.
   std::pair<unsigned, bool> SkipMainFilePreamble;
-  
+
   /// CurLexer - This is the current top of the stack that we're lexing from if
   /// not expanding a macro and we are lexing directly from source code.
   ///  Only one of CurLexer, CurPTHLexer, or CurTokenLexer will be non-null.
@@ -194,7 +194,7 @@ class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
   ///  if not expanding a macro.  This is an alias for either CurLexer or
   ///  CurPTHLexer.
   PreprocessorLexer *CurPPLexer;
-    
+
   /// CurLookup - The DirectoryLookup structure used to find the current
   /// FileEntry, if CurLexer is non-null and if applicable.  This allows us to
   /// implement #include_next and find directory-specific properties.
@@ -205,10 +205,10 @@ class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
   llvm::OwningPtr<TokenLexer> CurTokenLexer;
 
   /// \brief The kind of lexer we're currently working with.
-  enum CurLexerKind { 
-    CLK_Lexer, 
-    CLK_PTHLexer, 
-    CLK_TokenLexer, 
+  enum CurLexerKind {
+    CLK_Lexer,
+    CLK_PTHLexer,
+    CLK_TokenLexer,
     CLK_CachingLexer,
     CLK_LexAfterModuleImport
   } CurLexerKind;
@@ -224,10 +224,10 @@ class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
     TokenLexer            *TheTokenLexer;
     const DirectoryLookup *TheDirLookup;
 
-    IncludeStackInfo(enum CurLexerKind K, Lexer *L, PTHLexer* P, 
+    IncludeStackInfo(enum CurLexerKind K, Lexer *L, PTHLexer* P,
                      PreprocessorLexer* PPL,
                      TokenLexer* TL, const DirectoryLookup *D)
-      : CurLexerKind(K), TheLexer(L), ThePTHLexer(P), ThePPLexer(PPL), 
+      : CurLexerKind(K), TheLexer(L), ThePTHLexer(P), ThePPLexer(PPL),
         TheTokenLexer(TL), TheDirLookup(D) {}
   };
   std::vector<IncludeStackInfo> IncludeMacroStack;
@@ -254,9 +254,9 @@ class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
   /// reused for quick allocation.
   MacroArgs *MacroArgCache;
   friend class MacroArgs;
- 
-  /// PragmaPushMacroInfo - For each IdentifierInfo used in a #pragma 
-  /// push_macro directive, we keep a MacroInfo stack used to restore 
+
+  /// PragmaPushMacroInfo - For each IdentifierInfo used in a #pragma
+  /// push_macro directive, we keep a MacroInfo stack used to restore
   /// previous macro value.
   llvm::DenseMap<IdentifierInfo*, std::vector<MacroInfo*> > PragmaPushMacroInfo;
 
@@ -286,12 +286,12 @@ class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
   std::vector<std::pair<TokenLexer *, size_t> > MacroExpandingLexersStack;
 
   /// \brief A record of the macro definitions and expansions that
-  /// occurred during preprocessing. 
+  /// occurred during preprocessing.
   ///
   /// This is an optional side structure that can be enabled with
   /// \c createPreprocessingRecord() prior to preprocessing.
   PreprocessingRecord *Record;
-  
+
 private:  // Cached tokens state.
   typedef SmallVector<Token, 1> CachedTokensTy;
 
@@ -325,7 +325,7 @@ private:  // Cached tokens state.
   MacroInfoChain *MICache;
 
   MacroInfo *getInfoForMacro(IdentifierInfo *II) const;
-  
+
 public:
   Preprocessor(DiagnosticsEngine &diags, LangOptions &opts,
                const TargetInfo *target,
@@ -342,7 +342,7 @@ public:
   ///
   /// \param Target Information about the target.
   void Initialize(const TargetInfo &Target);
-  
+
   DiagnosticsEngine &getDiagnostics() const { return *Diags; }
   void setDiagnostics(DiagnosticsEngine &D) { Diags = &D; }
 
@@ -371,7 +371,7 @@ public:
 
   /// \brief Retrieve the module loader associated with this preprocessor.
   ModuleLoader &getModuleLoader() const { return TheModuleLoader; }
-  
+
   /// SetCommentRetentionState - Control whether or not the preprocessor retains
   /// comments in output.
   void SetCommentRetentionState(bool KeepComments, bool KeepMacroComments) {
@@ -393,7 +393,7 @@ public:
   void setAutoModuleImport(bool AutoModuleImport = true) {
     this->AutoModuleImport = AutoModuleImport;
   }
-  
+
   /// isCurrentLexer - Return true if we are lexing directly from the specified
   /// lexer.
   bool isCurrentLexer(const PreprocessorLexer *L) const {
@@ -425,7 +425,7 @@ public:
   MacroInfo *getMacroInfo(IdentifierInfo *II) const {
     if (!II->hasMacroDefinition())
       return 0;
-    
+
     return getInfoForMacro(II);
   }
 
@@ -484,29 +484,29 @@ public:
   void setCodeCompletionHandler(CodeCompletionHandler &Handler) {
     CodeComplete = &Handler;
   }
-  
+
   /// \brief Retrieve the current code-completion handler.
   CodeCompletionHandler *getCodeCompletionHandler() const {
     return CodeComplete;
   }
-  
+
   /// \brief Clear out the code completion handler.
   void clearCodeCompletionHandler() {
     CodeComplete = 0;
   }
-  
+
   /// \brief Hook used by the lexer to invoke the "natural language" code
   /// completion point.
   void CodeCompleteNaturalLanguage();
-  
+
   /// \brief Retrieve the preprocessing record, or NULL if there is no
   /// preprocessing record.
   PreprocessingRecord *getPreprocessingRecord() const { return Record; }
-  
-  /// \brief Create a new preprocessing record, which will keep track of 
+
+  /// \brief Create a new preprocessing record, which will keep track of
   /// all macro expansions, macro definitions, etc.
   void createPreprocessingRecord(bool IncludeNestedMacroExpansions);
-  
+
   /// EnterMainSourceFile - Enter the specified FileID as the main source file,
   /// which implicitly adds the builtin defines etc.
   void EnterMainSourceFile();
@@ -588,7 +588,7 @@ public:
   }
 
   void LexAfterModuleImport(Token &Result);
-  
+
   /// LexNonComment - Lex a token.  If it's a comment, keep lexing until we get
   /// something not a comment.  This is useful in -E -C mode where comments
   /// would foul up preprocessor directive handling.
@@ -745,11 +745,11 @@ public:
   ///
   /// \brief StartOfLine Whether skipping these bytes puts the lexer at the
   /// start of a line.
-  void setSkipMainFilePreamble(unsigned Bytes, bool StartOfLine) { 
+  void setSkipMainFilePreamble(unsigned Bytes, bool StartOfLine) {
     SkipMainFilePreamble.first = Bytes;
     SkipMainFilePreamble.second = StartOfLine;
   }
-  
+
   /// Diag - Forwarding function for diagnostics.  This emits a diagnostic at
   /// the specified Token's location, translating the token's start
   /// position in the current buffer into a SourcePosition object for rendering.
@@ -795,7 +795,7 @@ public:
   /// to point to a constant buffer with the data already in it (avoiding a
   /// copy).  The caller is not allowed to modify the returned buffer pointer
   /// if an internal buffer is returned.
-  unsigned getSpelling(const Token &Tok, const char *&Buffer, 
+  unsigned getSpelling(const Token &Tok, const char *&Buffer,
                        bool *Invalid = 0) const {
     return Lexer::getSpelling(Tok, Buffer, SourceMgr, Features, Invalid);
   }
@@ -804,12 +804,12 @@ public:
   /// SmallVector. Note that the returned StringRef may not point to the
   /// supplied buffer if a copy can be avoided.
   StringRef getSpelling(const Token &Tok,
-                              SmallVectorImpl<char> &Buffer, 
+                              SmallVectorImpl<char> &Buffer,
                               bool *Invalid = 0) const;
 
   /// getSpellingOfSingleCharacterNumericConstant - Tok is a numeric constant
   /// with length 1, return the character.
-  char getSpellingOfSingleCharacterNumericConstant(const Token &Tok, 
+  char getSpellingOfSingleCharacterNumericConstant(const Token &Tok,
                                                    bool *Invalid = 0) const {
     assert(Tok.is(tok::numeric_constant) &&
            Tok.getLength() == 1 && "Called on unsupported token");
@@ -930,9 +930,18 @@ public:
 private:
   /// Identifiers used for SEH handling in Borland. These are only
   /// allowed in particular circumstances
-  IdentifierInfo *Ident__exception_code, *Ident___exception_code, *Ident_GetExceptionCode; // __except block
-  IdentifierInfo *Ident__exception_info, *Ident___exception_info, *Ident_GetExceptionInfo; // __except filter expression
-  IdentifierInfo *Ident__abnormal_termination, *Ident___abnormal_termination, *Ident_AbnormalTermination; // __finally
+  // __except block
+  IdentifierInfo *Ident__exception_code,
+                 *Ident___exception_code,
+                 *Ident_GetExceptionCode;
+  // __except filter expression
+  IdentifierInfo *Ident__exception_info,
+                 *Ident___exception_info,
+                 *Ident_GetExceptionInfo;
+  // __finally
+  IdentifierInfo *Ident__abnormal_termination,
+                 *Ident___abnormal_termination,
+                 *Ident_AbnormalTermination;
 public:
   void PoisonSEHIdentifiers(bool Poison = true); // Borland
 
@@ -1163,7 +1172,7 @@ private:
   bool InCachingLexMode() const {
     // If the Lexer pointers are 0 and IncludeMacroStack is empty, it means
     // that we are past EOF, not that we are in CachingLex mode.
-    return CurPPLexer == 0 && CurTokenLexer == 0 && CurPTHLexer == 0 && 
+    return CurPPLexer == 0 && CurTokenLexer == 0 && CurPTHLexer == 0 &&
            !IncludeMacroStack.empty();
   }
   void EnterCachingLexMode();
@@ -1184,7 +1193,7 @@ private:
   void HandleIdentSCCSDirective(Token &Tok);
   void HandleMacroExportDirective(Token &Tok);
   void HandleMacroPrivateDirective(Token &Tok);
-  
+
   // File inclusion.
   void HandleIncludeDirective(SourceLocation HashLoc,
                               Token &Tok,

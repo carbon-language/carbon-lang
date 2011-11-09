@@ -104,7 +104,7 @@ private:
   const char *Position;
   Kind kind;
 };
-  
+
 class ConversionSpecifier {
 public:
   enum Kind {
@@ -113,14 +113,14 @@ public:
     cArg,
     dArg,
     iArg,
-    IntArgBeg = cArg, IntArgEnd = iArg,    
-    
+    IntArgBeg = cArg, IntArgEnd = iArg,
+
     oArg,
     uArg,
     xArg,
     XArg,
     UIntArgBeg = oArg, UIntArgEnd = XArg,
-    
+
     fArg,
     FArg,
     eArg,
@@ -130,44 +130,44 @@ public:
     aArg,
     AArg,
     DoubleArgBeg = fArg, DoubleArgEnd = AArg,
-    
+
     sArg,
     pArg,
     nArg,
     PercentArg,
     CArg,
     SArg,
-    
+
     // ** Printf-specific **
-  
+
     // Objective-C specific specifiers.
     ObjCObjArg,  // '@'
     ObjCBeg = ObjCObjArg, ObjCEnd = ObjCObjArg,
-    
+
     // GlibC specific specifiers.
     PrintErrno,   // 'm'
-    
+
     PrintfConvBeg = ObjCObjArg, PrintfConvEnd = PrintErrno,
-    
-    // ** Scanf-specific **    
+
+    // ** Scanf-specific **
     ScanListArg, // '['
     ScanfConvBeg = ScanListArg, ScanfConvEnd = ScanListArg
   };
-  
+
   ConversionSpecifier(bool isPrintf)
     : IsPrintf(isPrintf), Position(0), EndScanList(0), kind(InvalidSpecifier) {}
-  
+
   ConversionSpecifier(bool isPrintf, const char *pos, Kind k)
     : IsPrintf(isPrintf), Position(pos), EndScanList(0), kind(k) {}
-  
+
   const char *getStart() const {
     return Position;
   }
-  
+
   StringRef getCharacters() const {
     return StringRef(getStart(), getLength());
   }
-  
+
   bool consumesDataArgument() const {
     switch (kind) {
       case PrintErrno:
@@ -178,15 +178,15 @@ public:
         return true;
     }
   }
-  
+
   Kind getKind() const { return kind; }
   void setKind(Kind k) { kind = k; }
   unsigned getLength() const {
     return EndScanList ? EndScanList - Position : 1;
   }
-  
+
   const char *toString() const;
-  
+
   bool isPrintfKind() const { return IsPrintf; }
 
 protected:
@@ -337,7 +337,7 @@ public:
   }
 
   bool usesPositionalArg() const { return UsesPositionalArg; }
-  
+
   bool hasValidLengthModifier() const;
 };
 
@@ -348,7 +348,7 @@ public:
 
 namespace analyze_printf {
 
-class PrintfConversionSpecifier : 
+class PrintfConversionSpecifier :
   public analyze_format_string::ConversionSpecifier  {
 public:
   PrintfConversionSpecifier()
@@ -360,7 +360,7 @@ public:
   bool isObjCArg() const { return kind >= ObjCBeg && kind <= ObjCEnd; }
   bool isIntArg() const { return kind >= IntArgBeg && kind <= IntArgEnd; }
   bool isUIntArg() const { return kind >= UIntArgBeg && kind <= UIntArgEnd; }
-  bool isDoubleArg() const { return kind >= DoubleArgBeg && 
+  bool isDoubleArg() const { return kind >= DoubleArgBeg &&
                                     kind <= DoubleArgBeg; }
   unsigned getLength() const {
       // Conversion specifiers currently only are represented by
@@ -438,7 +438,7 @@ public:
   const OptionalAmount &getPrecision() const {
     return Precision;
   }
-  
+
   bool consumesDataArgument() const {
     return getConversionSpecifier().consumesDataArgument();
   }
@@ -450,7 +450,7 @@ public:
   /// more than one type.
   ArgTypeResult getArgType(ASTContext &Ctx) const;
 
-  const OptionalFlag &hasThousandsGrouping() const { 
+  const OptionalFlag &hasThousandsGrouping() const {
       return HasThousandsGrouping;
   }
   const OptionalFlag &isLeftJustified() const { return IsLeftJustified; }
@@ -467,7 +467,7 @@ public:
 
   void toString(raw_ostream &os) const;
 
-    // Validation methods - to check if any element results in undefined behavior
+  // Validation methods - to check if any element results in undefined behavior
   bool hasValidPlusPrefix() const;
   bool hasValidAlternativeForm() const;
   bool hasValidLeadingZeros() const;
@@ -495,10 +495,10 @@ public:
     : ConversionSpecifier(false, pos, k) {}
 
   void setEndScanList(const char *pos) { EndScanList = pos; }
-      
+
   static bool classof(const analyze_format_string::ConversionSpecifier *CS) {
     return !CS->isPrintfKind();
-  }      
+  }
 };
 
 using analyze_format_string::LengthModifier;
@@ -528,7 +528,7 @@ public:
   const ScanfConversionSpecifier &getConversionSpecifier() const {
     return cast<ScanfConversionSpecifier>(CS);
   }
-  
+
   bool consumesDataArgument() const {
     return CS.consumesDataArgument() && !SuppressAssignment;
   }

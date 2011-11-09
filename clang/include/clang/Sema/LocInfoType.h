@@ -36,16 +36,16 @@ class LocInfoType : public Type {
   TypeSourceInfo *DeclInfo;
 
   LocInfoType(QualType ty, TypeSourceInfo *TInfo)
-    : Type((TypeClass)LocInfo, ty, ty->isDependentType(), 
+    : Type((TypeClass)LocInfo, ty, ty->isDependentType(),
            ty->isInstantiationDependentType(),
            ty->isVariablyModifiedType(),
-           ty->containsUnexpandedParameterPack()), 
-    DeclInfo(TInfo) {
-      assert(getTypeClass() == (TypeClass)LocInfo && "LocInfo didn't fit in TC?");
-    }
+           ty->containsUnexpandedParameterPack()),
+      DeclInfo(TInfo) {
+    assert(getTypeClass() == (TypeClass)LocInfo && "LocInfo didn't fit in TC?");
+  }
   friend class Sema;
 
- public:
+public:
   QualType getType() const { return getCanonicalTypeInternal(); }
   TypeSourceInfo *getTypeSourceInfo() const { return DeclInfo; }
 

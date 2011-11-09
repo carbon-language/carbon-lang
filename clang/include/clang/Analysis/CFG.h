@@ -67,22 +67,22 @@ protected:
 
   CFGElement(Kind kind, const void *Ptr1, const void *Ptr2 = 0)
     : Data1(const_cast<void*>(Ptr1), ((unsigned) kind) & 0x3),
-      Data2(const_cast<void*>(Ptr2), (((unsigned) kind) >> 2) & 0x3) {}  
+      Data2(const_cast<void*>(Ptr2), (((unsigned) kind) >> 2) & 0x3) {}
 
 public:
   CFGElement() {}
 
-  Kind getKind() const { 
+  Kind getKind() const {
     unsigned x = Data2.getInt();
     x <<= 2;
     x |= Data1.getInt();
     return (Kind) x;
   }
-    
+
   bool isValid() const { return getKind() != Invalid; }
 
   operator bool() const { return isValid(); }
-  
+
   template<class ElemTy> const ElemTy *getAs() const {
     if (llvm::isa<ElemTy>(this))
       return static_cast<const ElemTy*>(this);
@@ -96,7 +96,7 @@ class CFGStmt : public CFGElement {
 public:
   CFGStmt(Stmt *S) : CFGElement(Statement, S) {}
 
-  const Stmt *getStmt() const { 
+  const Stmt *getStmt() const {
     return static_cast<const Stmt *>(Data1.getPointer());
   }
 
@@ -125,9 +125,9 @@ public:
 /// by compiler on various occasions.
 class CFGImplicitDtor : public CFGElement {
 protected:
-  CFGImplicitDtor(Kind kind, const void *data1, const void *data2 = 0) 
+  CFGImplicitDtor(Kind kind, const void *data1, const void *data2 = 0)
     : CFGElement(kind, data1, data2) {
-    assert(kind >= DTOR_BEGIN && kind <= DTOR_END);    
+    assert(kind >= DTOR_BEGIN && kind <= DTOR_END);
   }
 
 public:
@@ -272,12 +272,12 @@ class CFGBlock {
     ImplTy Impl;
   public:
     ElementList(BumpVectorContext &C) : Impl(C, 4) {}
-    
+
     typedef std::reverse_iterator<ImplTy::iterator>       iterator;
     typedef std::reverse_iterator<ImplTy::const_iterator> const_iterator;
     typedef ImplTy::iterator                              reverse_iterator;
-    typedef ImplTy::const_iterator                        const_reverse_iterator;
-  
+    typedef ImplTy::const_iterator                       const_reverse_iterator;
+
     void push_back(CFGElement e, BumpVectorContext &C) { Impl.push_back(e, C); }
     reverse_iterator insert(reverse_iterator I, size_t Cnt, CFGElement E,
         BumpVectorContext &C) {
@@ -286,7 +286,7 @@ class CFGBlock {
 
     CFGElement front() const { return Impl.back(); }
     CFGElement back() const { return Impl.front(); }
-    
+
     iterator begin() { return Impl.rbegin(); }
     iterator end() { return Impl.rend(); }
     const_iterator begin() const { return Impl.rbegin(); }
@@ -300,7 +300,7 @@ class CFGBlock {
      assert(i < Impl.size());
      return Impl[Impl.size() - 1 - i];
    }
-    
+
     size_t size() const { return Impl.size(); }
     bool empty() const { return Impl.empty(); }
   };
@@ -492,13 +492,13 @@ public:
   void dump(const CFG *cfg, const LangOptions &LO) const;
   void print(raw_ostream &OS, const CFG* cfg, const LangOptions &LO) const;
   void printTerminator(raw_ostream &OS, const LangOptions &LO) const;
-  
+
   void addSuccessor(CFGBlock *Block, BumpVectorContext &C) {
     if (Block)
       Block->Preds.push_back(this, C);
     Succs.push_back(Block, C);
   }
-  
+
   void appendStmt(Stmt *statement, BumpVectorContext &C) {
     Elements.push_back(CFGStmt(statement), C);
   }
@@ -515,7 +515,7 @@ public:
   void appendMemberDtor(FieldDecl *FD, BumpVectorContext &C) {
     Elements.push_back(CFGMemberDtor(FD), C);
   }
-  
+
   void appendTemporaryDtor(CXXBindTemporaryExpr *E, BumpVectorContext &C) {
     Elements.push_back(CFGTemporaryDtor(E), C);
   }
@@ -554,22 +554,22 @@ public:
     llvm::BitVector alwaysAddMask;
   public:
     typedef llvm::DenseMap<const Stmt *, const CFGBlock*> ForcedBlkExprs;
-    ForcedBlkExprs **forcedBlkExprs;    
+    ForcedBlkExprs **forcedBlkExprs;
 
     bool PruneTriviallyFalseEdges;
     bool AddEHEdges;
     bool AddInitializers;
     bool AddImplicitDtors;
-    
+
     bool alwaysAdd(const Stmt *stmt) const {
       return alwaysAddMask[stmt->getStmtClass()];
     }
-    
+
     BuildOptions &setAlwaysAdd(Stmt::StmtClass stmtClass, bool val = true) {
       alwaysAddMask[stmtClass] = val;
       return *this;
     }
-    
+
     BuildOptions &setAllAlwaysAdd() {
       alwaysAddMask.set();
       return *this;
@@ -605,7 +605,7 @@ public:
   // Block Iterators
   //===--------------------------------------------------------------------===//
 
-  typedef BumpVector<CFGBlock*>                    CFGBlockListTy;    
+  typedef BumpVector<CFGBlock*>                    CFGBlockListTy;
   typedef CFGBlockListTy::iterator                 iterator;
   typedef CFGBlockListTy::const_iterator           const_iterator;
   typedef std::reverse_iterator<iterator>          reverse_iterator;
@@ -631,7 +631,7 @@ public:
 
   CFGBlock *       getIndirectGotoBlock() { return IndirectGotoBlock; }
   const CFGBlock * getIndirectGotoBlock() const { return IndirectGotoBlock; }
-  
+
   typedef std::vector<const CFGBlock*>::const_iterator try_block_iterator;
   try_block_iterator try_blocks_begin() const {
     return TryDispatchBlocks.begin();
@@ -639,7 +639,7 @@ public:
   try_block_iterator try_blocks_end() const {
     return TryDispatchBlocks.end();
   }
-  
+
   void addTryDispatchBlock(const CFGBlock *block) {
     TryDispatchBlocks.push_back(block);
   }
@@ -701,7 +701,7 @@ public:
   llvm::BumpPtrAllocator& getAllocator() {
     return BlkBVC.getAllocator();
   }
-  
+
   BumpVectorContext &getBumpVectorContext() {
     return BlkBVC;
   }
@@ -717,11 +717,11 @@ private:
   //  It represents a map from Expr* to integers to record the set of
   //  block-level expressions and their "statement number" in the CFG.
   void *    BlkExprMap;
-  
+
   BumpVectorContext BlkBVC;
-  
+
   CFGBlockListTy Blocks;
-  
+
   /// C++ 'try' statements are modeled with an indirect dispatch block.
   /// This is the collection of such blocks present in the CFG.
   std::vector<const CFGBlock *> TryDispatchBlocks;
