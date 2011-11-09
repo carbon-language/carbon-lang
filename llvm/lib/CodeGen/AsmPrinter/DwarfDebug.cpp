@@ -1901,6 +1901,7 @@ void DwarfDebug::emitDebugPubTypes() {
       Asm->EmitInt32(Entity->getOffset());
 
       if (Asm->isVerbose()) Asm->OutStreamer.AddComment("External Name");
+      // Emit the name with a terminating null byte.
       Asm->OutStreamer.EmitBytes(StringRef(Name, GI->getKeyLength()+1), 0);
     }
 
@@ -1936,7 +1937,7 @@ void DwarfDebug::emitDebugStr() {
     // Emit a label for reference from debug information entries.
     Asm->OutStreamer.EmitLabel(Entries[i].second->getValue().first);
 
-    // Emit the string itself.
+    // Emit the string itself with a terminating null byte.
     Asm->OutStreamer.EmitBytes(StringRef(Entries[i].second->getKeyData(),
                                          Entries[i].second->getKeyLength()+1),
                                0/*addrspace*/);
