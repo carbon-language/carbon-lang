@@ -1146,7 +1146,7 @@ Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(const Driver &D)
       if (!llvm::sys::fs::exists(LibDir))
         continue;
       for (unsigned k = 0, ke = CandidateTriples.size(); k < ke; ++k)
-        ScanLibDirForGCCTriple(LibDir, CandidateTriples[k]);
+        ScanLibDirForGCCTriple(HostArch, LibDir, CandidateTriples[k]);
     }
   }
 }
@@ -1226,7 +1226,8 @@ Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(const Driver &D)
 }
 
 void Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple(
-    const std::string &LibDir, StringRef CandidateTriple) {
+    llvm::Triple::ArchType HostArch, const std::string &LibDir,
+    StringRef CandidateTriple) {
   // There are various different suffixes involving the triple we
   // check for. We also record what is necessary to walk from each back
   // up to the lib directory.
@@ -1238,7 +1239,7 @@ void Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple(
     // match.
     // FIXME: It may be worthwhile to generalize this and look for a second
     // triple.
-    "/" + CandidateTriple.str() + "/gcc/i686-linux-gnu"
+    "/i386-linux-gnu/gcc/" + CandidateTriple.str()
   };
   const std::string InstallSuffixes[] = {
     "/../../..",
@@ -1247,7 +1248,7 @@ void Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple(
   };
   // Only look at the final, weird Ubuntu suffix for i386-linux-gnu.
   const unsigned NumSuffixes = (llvm::array_lengthof(Suffixes) -
-                                (CandidateTriple != "i386-linux-gnu"));
+                                (HostArch != llvm::Triple::x86));
   for (unsigned i = 0; i < NumSuffixes; ++i) {
     StringRef Suffix = Suffixes[i];
     llvm::error_code EC;
@@ -1889,12 +1890,9 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
     if (!Suffix.empty())
       addPathIfExists(GCCInstallation.getInstallPath(), Paths);
     addPathIfExists(LibPath + "/../" + GccTriple + "/lib", Paths);
-    addPathIfExists(LibPath + "/" + MultiarchTriple, Paths);
     addPathIfExists(LibPath, Paths);
   }
-  addPathIfExists(SysRoot + "/lib/" + MultiarchTriple, Paths);
   addPathIfExists(SysRoot + "/lib", Paths);
-  addPathIfExists(SysRoot + "/usr/lib/" + MultiarchTriple, Paths);
   addPathIfExists(SysRoot + "/usr/lib", Paths);
 }
 
@@ -2002,7 +2000,7 @@ void Linux::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
   for (ArrayRef<StringRef>::iterator I = MultiarchIncludeDirs.begin(),
                                      E = MultiarchIncludeDirs.end();
        I != E; ++I) {
-    if (llvm::sys::fs::exists(*I)) {
+    if (llvm::sys::fs::exists(D.SysRoot + *I)) {
       addExternCSystemInclude(DriverArgs, CC1Args, D.SysRoot + *I);
       break;
     }
