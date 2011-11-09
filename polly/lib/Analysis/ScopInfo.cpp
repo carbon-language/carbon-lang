@@ -610,8 +610,8 @@ void ScopStmt::realignParams() {
 }
 
 __isl_give isl_set *ScopStmt::buildConditionSet(const Comparison &Comp) {
-  isl_pw_aff *L = SCEVAffinator::getPwAff(this, Comp.getLHS()->OriginalSCEV);
-  isl_pw_aff *R = SCEVAffinator::getPwAff(this, Comp.getRHS()->OriginalSCEV);
+  isl_pw_aff *L = SCEVAffinator::getPwAff(this, Comp.getLHS());
+  isl_pw_aff *R = SCEVAffinator::getPwAff(this, Comp.getRHS());
 
   switch (Comp.getPred()) {
   case ICmpInst::ICMP_EQ:

@@ -131,17 +131,17 @@ static inline raw_ostream& operator<<(raw_ostream &OS, const SCEVAffFunc &SAF){
 
 class Comparison {
 
-  SCEVAffFunc *LHS;
-  SCEVAffFunc *RHS;
+  const SCEV *LHS;
+  const SCEV *RHS;
 
   ICmpInst::Predicate Pred;
 
 public:
-  Comparison(SCEVAffFunc *lhs, SCEVAffFunc *rhs, ICmpInst::Predicate pred)
-    : LHS(lhs), RHS(rhs), Pred(pred) {}
+  Comparison(const SCEV *LHS, const SCEV *RHS, ICmpInst::Predicate Pred)
+    : LHS(LHS), RHS(RHS), Pred(Pred) {}
 
-  SCEVAffFunc *getLHS() const { return LHS; }
-  SCEVAffFunc *getRHS() const { return RHS; }
+  const SCEV *getLHS() const { return LHS; }
+  const SCEV *getRHS() const { return RHS; }
 
   ICmpInst::Predicate getPred() const { return Pred; }
   void print(raw_ostream &OS) const;
