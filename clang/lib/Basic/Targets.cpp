@@ -3108,6 +3108,10 @@ public:
   }
   virtual void getArchDefines(const LangOptions &Opts,
                               MacroBuilder &Builder) const {
+    Builder.defineMacro("_MIPS_SZPTR", Twine(getPointerWidth(0)));
+    Builder.defineMacro("_MIPS_SZINT", Twine(getIntWidth()));
+    Builder.defineMacro("_MIPS_SZLONG", Twine(getLongWidth()));
+
     if (ABI == "o32") {
       Builder.defineMacro("__mips_o32");
       Builder.defineMacro("_ABIO32", "1");
