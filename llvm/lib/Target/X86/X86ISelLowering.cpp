@@ -1031,25 +1031,42 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::SELECT,            MVT::v4i64, Custom);
     setOperationAction(ISD::SELECT,            MVT::v8f32, Custom);
 
-    setOperationAction(ISD::VSELECT,            MVT::v4f64, Legal);
-    setOperationAction(ISD::VSELECT,            MVT::v4i64, Legal);
-    setOperationAction(ISD::VSELECT,            MVT::v8i32, Legal);
-    setOperationAction(ISD::VSELECT,            MVT::v8f32, Legal);
+    setOperationAction(ISD::VSELECT,           MVT::v4f64, Legal);
+    setOperationAction(ISD::VSELECT,           MVT::v4i64, Legal);
+    setOperationAction(ISD::VSELECT,           MVT::v8i32, Legal);
+    setOperationAction(ISD::VSELECT,           MVT::v8f32, Legal);
 
-    setOperationAction(ISD::ADD,               MVT::v4i64, Custom);
-    setOperationAction(ISD::ADD,               MVT::v8i32, Custom);
-    setOperationAction(ISD::ADD,               MVT::v16i16, Custom);
-    setOperationAction(ISD::ADD,               MVT::v32i8, Custom);
+    if (Subtarget->hasAVX2()) {
+      setOperationAction(ISD::ADD,             MVT::v4i64, Legal);
+      setOperationAction(ISD::ADD,             MVT::v8i32, Legal);
+      setOperationAction(ISD::ADD,             MVT::v16i16, Legal);
+      setOperationAction(ISD::ADD,             MVT::v32i8, Legal);
 
-    setOperationAction(ISD::SUB,               MVT::v4i64, Custom);
-    setOperationAction(ISD::SUB,               MVT::v8i32, Custom);
-    setOperationAction(ISD::SUB,               MVT::v16i16, Custom);
-    setOperationAction(ISD::SUB,               MVT::v32i8, Custom);
+      setOperationAction(ISD::SUB,             MVT::v4i64, Legal);
+      setOperationAction(ISD::SUB,             MVT::v8i32, Legal);
+      setOperationAction(ISD::SUB,             MVT::v16i16, Legal);
+      setOperationAction(ISD::SUB,             MVT::v32i8, Legal);
 
-    setOperationAction(ISD::MUL,               MVT::v4i64, Custom);
-    setOperationAction(ISD::MUL,               MVT::v8i32, Custom);
-    setOperationAction(ISD::MUL,               MVT::v16i16, Custom);
-    // Don't lower v32i8 because there is no 128-bit byte mul
+      setOperationAction(ISD::MUL,             MVT::v4i64, Custom);
+      setOperationAction(ISD::MUL,             MVT::v8i32, Legal);
+      setOperationAction(ISD::MUL,             MVT::v16i16, Legal);
+      // Don't lower v32i8 because there is no 128-bit byte mul
+    } else {
+      setOperationAction(ISD::ADD,             MVT::v4i64, Custom);
+      setOperationAction(ISD::ADD,             MVT::v8i32, Custom);
+      setOperationAction(ISD::ADD,             MVT::v16i16, Custom);
+      setOperationAction(ISD::ADD,             MVT::v32i8, Custom);
+
+      setOperationAction(ISD::SUB,             MVT::v4i64, Custom);
+      setOperationAction(ISD::SUB,             MVT::v8i32, Custom);
+      setOperationAction(ISD::SUB,             MVT::v16i16, Custom);
+      setOperationAction(ISD::SUB,             MVT::v32i8, Custom);
+
+      setOperationAction(ISD::MUL,             MVT::v4i64, Custom);
+      setOperationAction(ISD::MUL,             MVT::v8i32, Custom);
+      setOperationAction(ISD::MUL,             MVT::v16i16, Custom);
+      // Don't lower v32i8 because there is no 128-bit byte mul
+    }
 
     // Custom lower several nodes for 256-bit types.
     for (unsigned i = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
@@ -10004,11 +10021,54 @@ SDValue X86TargetLowering::LowerMUL(SDValue Op, SelectionDAG &DAG) const {
   EVT VT = Op.getValueType();
 
   // Decompose 256-bit ops into smaller 128-bit ops.
-  if (VT.getSizeInBits() == 256)
+  if (VT.getSizeInBits() == 256 && !Subtarget->hasAVX2())
     return Lower256IntArith(Op, DAG);
 
-  assert(VT == MVT::v2i64 && "Only know how to lower V2I64 multiply");
   DebugLoc dl = Op.getDebugLoc();
+
+  SDValue A = Op.getOperand(0);
+  SDValue B = Op.getOperand(1);
+
+  if (VT == MVT::v4i64) {
+    assert(Subtarget->hasAVX2() && "Lowering v4i64 multiply requires AVX2");
+
+    //  ulong2 Ahi = __builtin_ia32_psrlqi256( a, 32);
+    //  ulong2 Bhi = __builtin_ia32_psrlqi256( b, 32);
+    //  ulong2 AloBlo = __builtin_ia32_pmuludq256( a, b );
+    //  ulong2 AloBhi = __builtin_ia32_pmuludq256( a, Bhi );
+    //  ulong2 AhiBlo = __builtin_ia32_pmuludq256( Ahi, b );
+    //
+    //  AloBhi = __builtin_ia32_psllqi256( AloBhi, 32 );
+    //  AhiBlo = __builtin_ia32_psllqi256( AhiBlo, 32 );
+    //  return AloBlo + AloBhi + AhiBlo;
+
+    SDValue Ahi = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
+                         DAG.getConstant(Intrinsic::x86_avx2_psrli_q, MVT::i32),
+                         A, DAG.getConstant(32, MVT::i32));
+    SDValue Bhi = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
+                         DAG.getConstant(Intrinsic::x86_avx2_psrli_q, MVT::i32),
+                         B, DAG.getConstant(32, MVT::i32));
+    SDValue AloBlo = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
+                         DAG.getConstant(Intrinsic::x86_avx2_pmulu_dq, MVT::i32),
+                         A, B);
+    SDValue AloBhi = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
+                         DAG.getConstant(Intrinsic::x86_avx2_pmulu_dq, MVT::i32),
+                         A, Bhi);
+    SDValue AhiBlo = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
+                         DAG.getConstant(Intrinsic::x86_avx2_pmulu_dq, MVT::i32),
+                         Ahi, B);
+    AloBhi = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
+                         DAG.getConstant(Intrinsic::x86_avx2_pslli_q, MVT::i32),
+                         AloBhi, DAG.getConstant(32, MVT::i32));
+    AhiBlo = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
+                         DAG.getConstant(Intrinsic::x86_avx2_pslli_q, MVT::i32),
+                         AhiBlo, DAG.getConstant(32, MVT::i32));
+    SDValue Res = DAG.getNode(ISD::ADD, dl, VT, AloBlo, AloBhi);
+    Res = DAG.getNode(ISD::ADD, dl, VT, Res, AhiBlo);
+    return Res;
+  }
+
+  assert(VT == MVT::v2i64 && "Only know how to lower V2I64 multiply");
 
   //  ulong2 Ahi = __builtin_ia32_psrlqi128( a, 32);
   //  ulong2 Bhi = __builtin_ia32_psrlqi128( b, 32);
@@ -10019,9 +10079,6 @@ SDValue X86TargetLowering::LowerMUL(SDValue Op, SelectionDAG &DAG) const {
   //  AloBhi = __builtin_ia32_psllqi128( AloBhi, 32 );
   //  AhiBlo = __builtin_ia32_psllqi128( AhiBlo, 32 );
   //  return AloBlo + AloBhi + AhiBlo;
-
-  SDValue A = Op.getOperand(0);
-  SDValue B = Op.getOperand(1);
 
   SDValue Ahi = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
                        DAG.getConstant(Intrinsic::x86_sse2_psrli_q, MVT::i32),
