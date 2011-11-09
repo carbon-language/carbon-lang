@@ -8560,8 +8560,7 @@ SDValue X86TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) const {
         UNORD = DAG.getNode(Opc, dl, VT, Op0, Op1, DAG.getConstant(3, MVT::i8));
         EQ = DAG.getNode(Opc, dl, VT, Op0, Op1, DAG.getConstant(0, MVT::i8));
         return DAG.getNode(ISD::OR, dl, VT, UNORD, EQ);
-      }
-      else if (SetCCOpcode == ISD::SETONE) {
+      } else if (SetCCOpcode == ISD::SETONE) {
         SDValue ORD, NEQ;
         ORD = DAG.getNode(Opc, dl, VT, Op0, Op1, DAG.getConstant(7, MVT::i8));
         NEQ = DAG.getNode(Opc, dl, VT, Op0, Op1, DAG.getConstant(4, MVT::i8));
@@ -8574,7 +8573,7 @@ SDValue X86TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) const {
   }
 
   // Break 256-bit integer vector compare into smaller ones.
-  if (!isFP && VT.getSizeInBits() == 256)
+  if (VT.getSizeInBits() == 256 && !Subtarget->hasAVX2())
     return Lower256IntVSETCC(Op, DAG);
 
   // We are handling one of the integer comparisons here.  Since SSE only has
@@ -8583,12 +8582,12 @@ SDValue X86TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) const {
   unsigned Opc = 0, EQOpc = 0, GTOpc = 0;
   bool Swap = false, Invert = false, FlipSigns = false;
 
-  switch (VT.getSimpleVT().SimpleTy) {
+  switch (VT.getVectorElementType().getSimpleVT().SimpleTy) {
   default: break;
-  case MVT::v16i8: EQOpc = X86ISD::PCMPEQB; GTOpc = X86ISD::PCMPGTB; break;
-  case MVT::v8i16: EQOpc = X86ISD::PCMPEQW; GTOpc = X86ISD::PCMPGTW; break;
-  case MVT::v4i32: EQOpc = X86ISD::PCMPEQD; GTOpc = X86ISD::PCMPGTD; break;
-  case MVT::v2i64: EQOpc = X86ISD::PCMPEQQ; GTOpc = X86ISD::PCMPGTQ; break;
+  case MVT::i8:   EQOpc = X86ISD::PCMPEQB; GTOpc = X86ISD::PCMPGTB; break;
+  case MVT::i16:  EQOpc = X86ISD::PCMPEQW; GTOpc = X86ISD::PCMPGTW; break;
+  case MVT::i32:  EQOpc = X86ISD::PCMPEQD; GTOpc = X86ISD::PCMPGTD; break;
+  case MVT::i64:  EQOpc = X86ISD::PCMPEQQ; GTOpc = X86ISD::PCMPGTQ; break;
   }
 
   switch (SetCCOpcode) {

@@ -3917,6 +3917,32 @@ let Predicates = [HasAVX2] in {
                                     VR256, memopv4i64, i256mem, 0, 0>, VEX_4V;
   defm VPCMPGTDY : PDI_binop_rm_int<0x66, "vpcmpgtd", int_x86_avx2_pcmpgt_d,
                                     VR256, memopv4i64, i256mem, 0, 0>, VEX_4V;
+
+  def : Pat<(v32i8 (X86pcmpeqb VR256:$src1, VR256:$src2)),
+            (VPCMPEQBYrr VR256:$src1, VR256:$src2)>;
+  def : Pat<(v32i8 (X86pcmpeqb VR256:$src1, (memop addr:$src2))),
+            (VPCMPEQBYrm VR256:$src1, addr:$src2)>;
+  def : Pat<(v16i16 (X86pcmpeqw VR256:$src1, VR256:$src2)),
+            (VPCMPEQWYrr VR256:$src1, VR256:$src2)>;
+  def : Pat<(v16i16 (X86pcmpeqw VR256:$src1, (memop addr:$src2))),
+            (VPCMPEQWYrm VR256:$src1, addr:$src2)>;
+  def : Pat<(v8i32 (X86pcmpeqd VR256:$src1, VR256:$src2)),
+            (VPCMPEQDYrr VR256:$src1, VR256:$src2)>;
+  def : Pat<(v8i32 (X86pcmpeqd VR256:$src1, (memop addr:$src2))),
+            (VPCMPEQDYrm VR256:$src1, addr:$src2)>;
+
+  def : Pat<(v32i8 (X86pcmpgtb VR256:$src1, VR256:$src2)),
+            (VPCMPGTBYrr VR256:$src1, VR256:$src2)>;
+  def : Pat<(v32i8 (X86pcmpgtb VR256:$src1, (memop addr:$src2))),
+            (VPCMPGTBYrm VR256:$src1, addr:$src2)>;
+  def : Pat<(v16i16 (X86pcmpgtw VR256:$src1, VR256:$src2)),
+            (VPCMPGTWYrr VR256:$src1, VR256:$src2)>;
+  def : Pat<(v16i16 (X86pcmpgtw VR256:$src1, (memop addr:$src2))),
+            (VPCMPGTWYrm VR256:$src1, addr:$src2)>;
+  def : Pat<(v8i32 (X86pcmpgtd VR256:$src1, VR256:$src2)),
+            (VPCMPGTDYrr VR256:$src1, VR256:$src2)>;
+  def : Pat<(v8i32 (X86pcmpgtd VR256:$src1, (memop addr:$src2))),
+            (VPCMPGTDYrm VR256:$src1, addr:$src2)>;
 }
 
 let Constraints = "$src1 = $dst" in {
@@ -6325,6 +6351,11 @@ let Predicates = [HasAVX2] in {
                                         int_x86_avx2_pmaxu_w>, VEX_4V;
   defm VPMULDQ   : SS41I_binop_rm_int_y<0x28, "vpmuldq",
                                         int_x86_avx2_pmul_dq>, VEX_4V;
+
+  def : Pat<(v4i64 (X86pcmpeqq VR256:$src1, VR256:$src2)),
+            (VPCMPEQQYrr VR256:$src1, VR256:$src2)>;
+  def : Pat<(v4i64 (X86pcmpeqq VR256:$src1, (memop addr:$src2))),
+            (VPCMPEQQYrm VR256:$src1, addr:$src2)>;
 }
 
 let Constraints = "$src1 = $dst" in {
@@ -6647,6 +6678,11 @@ let Predicates = [HasAVX] in {
 let Predicates = [HasAVX2] in {
   defm VPCMPGTQ : SS42I_binop_rm_int_y<0x37, "vpcmpgtq", int_x86_avx2_pcmpgt_q>,
                                        VEX_4V;
+
+  def : Pat<(v4i64 (X86pcmpgtq VR256:$src1, VR256:$src2)),
+            (VPCMPGTQYrr VR256:$src1, VR256:$src2)>;
+  def : Pat<(v4i64 (X86pcmpgtq VR256:$src1, (memop addr:$src2))),
+            (VPCMPGTQYrm VR256:$src1, addr:$src2)>;
 }
 
 let Constraints = "$src1 = $dst" in
