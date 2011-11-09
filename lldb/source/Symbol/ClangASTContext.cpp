@@ -3059,7 +3059,7 @@ ClangASTContext::GetNumPointeeChildren (clang_type_t clang_type)
         case clang::BuiltinType::BoundMember:
         case clang::BuiltinType::Half:          
         case clang::BuiltinType::ARCUnbridgedCast:          
-                //case clang::BuiltinType::PseudoObject:
+        case clang::BuiltinType::PseudoObject:
             return 1;
         }
         break;
@@ -4899,7 +4899,7 @@ ClangASTContext::IsPossibleDynamicType (clang::ASTContext *ast, clang_type_t cla
                         case clang::BuiltinType::BoundMember:
                         case clang::BuiltinType::Half:          
                         case clang::BuiltinType::ARCUnbridgedCast:          
-                            //case clang::BuiltinType::PseudoObject:
+                        case clang::BuiltinType::PseudoObject:
                             break;
                     }
                     break;
@@ -5035,7 +5035,7 @@ ClangASTContext::IsPossibleCPlusPlusDynamicType (clang::ASTContext *ast, clang_t
                     case clang::BuiltinType::BoundMember:
                     case clang::BuiltinType::Half:          
                     case clang::BuiltinType::ARCUnbridgedCast:          
-                        //case clang::BuiltinType::PseudoObject:
+                    case clang::BuiltinType::PseudoObject:
                         break;
                 }
                 break;

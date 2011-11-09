@@ -572,7 +572,7 @@ ClangASTType::GetFormat (clang_type_t clang_type)
         case clang::BuiltinType::ObjCSel:       
         case clang::BuiltinType::Half:          
         case clang::BuiltinType::ARCUnbridgedCast:          
-                //case clang::BuiltinType::PseudoObject:
+        case clang::BuiltinType::PseudoObject:
             return lldb::eFormatHex;
         }
         break;
