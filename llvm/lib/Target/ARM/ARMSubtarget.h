@@ -191,6 +191,7 @@ protected:
 
   bool isCortexA8() const { return ARMProcFamily == CortexA8; }
   bool isCortexA9() const { return ARMProcFamily == CortexA9; }
+  bool isCortexM3() const { return CPUString == "cortex-m3"; }
 
   bool hasARMOps() const { return !NoARM; }
 

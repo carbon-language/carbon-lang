@@ -1080,7 +1080,7 @@ bool ARMLoadStoreOpt::FixInvalidRegPairOp(MachineBasicBlock &MBB,
     unsigned OddRegNum  = TRI->getDwarfRegNum(OddReg, false);
     // ARM errata 602117: LDRD with base in list may result in incorrect base
     // register when interrupted or faulted.
-    bool Errata602117 = EvenReg == BaseReg && STI->getCPUString() == "cortex-m3";
+    bool Errata602117 = EvenReg == BaseReg && STI->isCortexM3();
     if (!Errata602117 &&
         ((EvenRegNum & 1) == 0 && (EvenRegNum + 1) == OddRegNum))
       return false;
