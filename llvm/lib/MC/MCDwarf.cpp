@@ -371,10 +371,7 @@ void MCDwarfLineAddr::Encode(int64_t LineDelta, uint64_t AddrDelta,
   // it with DW_LNS_advance_line.
   if (Temp >= DWARF2_LINE_RANGE) {
     OS << char(dwarf::DW_LNS_advance_line);
-    SmallString<32> Tmp;
-    raw_svector_ostream OSE(Tmp);
-    MCObjectWriter::EncodeSLEB128(LineDelta, OSE);
-    OS << OSE.str();
+    MCObjectWriter::EncodeSLEB128(LineDelta, OS);
 
     LineDelta = 0;
     Temp = 0 - DWARF2_LINE_BASE;
@@ -410,10 +407,7 @@ void MCDwarfLineAddr::Encode(int64_t LineDelta, uint64_t AddrDelta,
 
   // Otherwise use DW_LNS_advance_pc.
   OS << char(dwarf::DW_LNS_advance_pc);
-  SmallString<32> Tmp;
-  raw_svector_ostream OSE(Tmp);
-  MCObjectWriter::EncodeULEB128(AddrDelta, OSE);
-  OS << OSE.str();
+  MCObjectWriter::EncodeULEB128(AddrDelta, OS);
 
   if (NeedCopy)
     OS << char(dwarf::DW_LNS_copy);
