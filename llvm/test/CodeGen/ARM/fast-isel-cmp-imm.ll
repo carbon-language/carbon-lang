@@ -6,8 +6,8 @@ entry:
 ; ARM: t1a
 ; THUMB: t1a
   %cmp = fcmp oeq float %a, 0.000000e+00
-; ARM: vcmpe.f32 s0, #0
-; THUMB: vcmpe.f32 s0, #0
+; ARM: vcmpe.f32 s{{[0-9]+}}, #0
+; THUMB: vcmpe.f32 s{{[0-9]+}}, #0
   br i1 %cmp, label %if.then, label %if.end
 
 if.then:                                          ; preds = %entry
@@ -27,9 +27,9 @@ entry:
 ; THUMB: t1b
   %cmp = fcmp oeq float %a, -0.000000e+00
 ; ARM: vldr.32
-; ARM: vcmpe.f32 s0, s1
+; ARM: vcmpe.f32 s{{[0-9]+}}, s{{[0-9]+}}
 ; THUMB: vldr.32
-; THUMB: vcmpe.f32 s0, s1
+; THUMB: vcmpe.f32 s{{[0-9]+}}, s{{[0-9]+}}
   br i1 %cmp, label %if.then, label %if.end
 
 if.then:                                          ; preds = %entry
@@ -45,8 +45,8 @@ entry:
 ; ARM: t2a
 ; THUMB: t2a
   %cmp = fcmp oeq double %a, 0.000000e+00
-; ARM: vcmpe.f64 d16, #0
-; THUMB: vcmpe.f64 d16, #0
+; ARM: vcmpe.f64 d{{[0-9]+}}, #0
+; THUMB: vcmpe.f64 d{{[0-9]+}}, #0
   br i1 %cmp, label %if.then, label %if.end
 
 if.then:                                          ; preds = %entry
@@ -64,9 +64,9 @@ entry:
 ; THUMB: t2b
   %cmp = fcmp oeq double %a, -0.000000e+00
 ; ARM: vldr.64
-; ARM: vcmpe.f64 d16, d17
+; ARM: vcmpe.f64 d{{[0-9]+}}, d{{[0-9]+}}
 ; THUMB: vldr.64
-; THUMB: vcmpe.f64 d16, d17
+; THUMB: vcmpe.f64 d{{[0-9]+}}, d{{[0-9]+}}
   br i1 %cmp, label %if.then, label %if.end
 
 if.then:                                          ; preds = %entry
@@ -82,8 +82,8 @@ entry:
 ; ARM: t4
 ; THUMB: t4
   %cmp = icmp eq i8 %a, -1
-; ARM: cmn r0, #1
-; THUMB: cmn.w r0, #1
+; ARM: cmn r{{[0-9]}}, #1
+; THUMB: cmn.w r{{[0-9]}}, #1
   br i1 %cmp, label %if.then, label %if.end
 
 if.then:                                          ; preds = %entry
@@ -99,8 +99,8 @@ entry:
 ; ARM: t5
 ; THUMB: t5
   %cmp = icmp eq i8 %a, 1
-; ARM: cmp r0, #1
-; THUMB: cmp r0, #1
+; ARM: cmp r{{[0-9]}}, #1
+; THUMB: cmp r{{[0-9]}}, #1
   br i1 %cmp, label %if.then, label %if.end
 
 if.then:                                          ; preds = %entry
@@ -116,8 +116,8 @@ entry:
 ; ARM: t6
 ; THUMB: t6
   %cmp = icmp eq i16 %a, -1
-; ARM: cmn r0, #1
-; THUMB: cmn.w r0, #1
+; ARM: cmn r{{[0-9]}}, #1
+; THUMB: cmn.w r{{[0-9]}}, #1
   br i1 %cmp, label %if.then, label %if.end
 
 if.then:                                          ; preds = %entry
@@ -133,8 +133,8 @@ entry:
 ; ARM: t7
 ; THUMB: t7
   %cmp = icmp eq i16 %a, 1
-; ARM: cmp r0, #1
-; THUMB: cmp r0, #1
+; ARM: cmp r{{[0-9]}}, #1
+; THUMB: cmp r{{[0-9]}}, #1
   br i1 %cmp, label %if.then, label %if.end
 
 if.then:                                          ; preds = %entry
@@ -150,8 +150,8 @@ entry:
 ; ARM: t8
 ; THUMB: t8
   %cmp = icmp eq i32 %a, -1
-; ARM: cmn r0, #1
-; THUMB: cmn.w r0, #1
+; ARM: cmn r{{[0-9]}}, #1
+; THUMB: cmn.w r{{[0-9]}}, #1
   br i1 %cmp, label %if.then, label %if.end
 
 if.then:                                          ; preds = %entry
@@ -167,8 +167,8 @@ entry:
 ; ARM: t9
 ; THUMB: t9
   %cmp = icmp eq i32 %a, 1
-; ARM: cmp r0, #1
-; THUMB: cmp r0, #1
+; ARM: cmp r{{[0-9]}}, #1
+; THUMB: cmp r{{[0-9]}}, #1
   br i1 %cmp, label %if.then, label %if.end
 
 if.then:                                          ; preds = %entry
@@ -184,8 +184,8 @@ entry:
 ; ARM: t10
 ; THUMB: t10
   %cmp = icmp eq i32 %a, 384
-; ARM: cmp r0, #384
-; THUMB: cmp.w r0, #384
+; ARM: cmp r{{[0-9]}}, #384
+; THUMB: cmp.w r{{[0-9]}}, #384
   br i1 %cmp, label %if.then, label %if.end
 
 if.then:                                          ; preds = %entry
@@ -201,8 +201,8 @@ entry:
 ; ARM: t11
 ; THUMB: t11
   %cmp = icmp eq i32 %a, 4096
-; ARM: cmp r0, #4096
-; THUMB: cmp.w r0, #4096
+; ARM: cmp r{{[0-9]}}, #4096
+; THUMB: cmp.w r{{[0-9]}}, #4096
   br i1 %cmp, label %if.then, label %if.end
 
 if.then:                                          ; preds = %entry
