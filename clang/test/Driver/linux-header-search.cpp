@@ -12,6 +12,6 @@
 // CHECK-UBUNTU-11-04: "-internal-isystem" "[[SYSROOT]]/usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5/../../../../../include/c++/4.5/i686-linux-gnu"
 // CHECK-UBUNTU-11-04: "-internal-isystem" "[[SYSROOT]]/usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5/../../../../../include/c++/4.5/backward"
 // CHECK-UBUNTU-11-04: "-internal-isystem" "[[SYSROOT]]/usr/local/include"
-// CHECK-UBUNTU-11-04: "-internal-isystem" "{{.*}}/lib/clang/{{[0-9]\.[0-9]}}/include"
+// CHECK-UBUNTU-11-04: "-internal-isystem" "{{.*}}/lib{{(64|32)?}}/clang/{{[0-9]\.[0-9]}}/include"
 // CHECK-UBUNTU-11-04: "-internal-externc-isystem" "[[SYSROOT]]/include"
 // CHECK-UBUNTU-11-04: "-internal-externc-isystem" "[[SYSROOT]]/usr/include"
