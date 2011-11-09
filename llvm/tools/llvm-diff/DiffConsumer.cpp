@@ -64,7 +64,7 @@ void DiffConsumer::printValue(Value *V, bool isL) {
     }
     return;
   }
-  if (dyn_cast<Constant>(V)) {
+  if (isa<Constant>(V)) {
     out << *V;
     return;
   }
