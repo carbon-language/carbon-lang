@@ -6568,6 +6568,12 @@ let Predicates = [HasAVX] in {
             (VBLENDVPDYrr VR256:$src2, VR256:$src1, VR256:$mask)>;
 }
 
+let Predicates = [HasAVX2] in {
+  def : Pat<(v32i8 (vselect (v32i8 VR256:$mask), (v32i8 VR256:$src1),
+                            (v32i8 VR256:$src2))),
+            (VPBLENDVBYrr VR256:$src2, VR256:$src1, VR256:$mask)>;
+}
+
 /// SS41I_ternary_int - SSE 4.1 ternary operator
 let Uses = [XMM0], Constraints = "$src1 = $dst" in {
   multiclass SS41I_ternary_int<bits<8> opc, string OpcodeStr, Intrinsic IntId> {

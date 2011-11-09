@@ -1050,6 +1050,8 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
       setOperationAction(ISD::MUL,             MVT::v4i64, Custom);
       setOperationAction(ISD::MUL,             MVT::v8i32, Legal);
       setOperationAction(ISD::MUL,             MVT::v16i16, Legal);
+
+      setOperationAction(ISD::VSELECT,         MVT::v32i8, Legal);
       // Don't lower v32i8 because there is no 128-bit byte mul
     } else {
       setOperationAction(ISD::ADD,             MVT::v4i64, Custom);
