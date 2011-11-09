@@ -278,6 +278,17 @@ protected:
                               lldb::ModuleSP module,
                               ClangNamespaceDecl &namespace_decl,
                               unsigned int current_id);
+    
+    //------------------------------------------------------------------
+    /// Find all Objective-C methods matching a given selector.
+    ///
+    /// @param[in] context
+    ///     The NameSearchContext that can construct Decls for this name.
+    ///     Its m_decl_name contains the selector and its m_decl_context
+    ///     is the containing object.
+    //------------------------------------------------------------------
+    void
+    FindObjCMethodDecls (NameSearchContext &context);
         
     //------------------------------------------------------------------
     /// A wrapper for ClangASTContext::CopyType that sets a flag that

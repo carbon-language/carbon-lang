@@ -165,12 +165,16 @@ clang::Decl
         TagDecl *to_tag_decl = dyn_cast<TagDecl>(to);
         
         to_tag_decl->setHasExternalLexicalStorage();
-                
+                        
         if (log)
-            log->Printf("    [ClangASTImporter] Imported a TagDecl named %s%s%s",
+            log->Printf("    [ClangASTImporter] Imported %p, a %s named %s%s%s [%s->%s]",
+                        to,
+                        ((clang::Decl*)from_tag_decl)->getDeclKindName(),
                         from_tag_decl->getName().str().c_str(),
                         (to_tag_decl->hasExternalLexicalStorage() ? " Lexical" : ""),
-                        (to_tag_decl->hasExternalVisibleStorage() ? " Visible" : ""));
+                        (to_tag_decl->hasExternalVisibleStorage() ? " Visible" : ""),
+                        (from_tag_decl->isCompleteDefinition() ? "complete" : "incomplete"),
+                        (to_tag_decl->isCompleteDefinition() ? "complete" : "incomplete"));
     }
     
     if (isa<NamespaceDecl>(from))
@@ -185,6 +189,8 @@ clang::Decl
     if (isa<ObjCInterfaceDecl>(from))
     {
         ObjCInterfaceDecl *to_interface_decl = dyn_cast<ObjCInterfaceDecl>(to);
+        
+        to_interface_decl->setHasExternalVisibleStorage();
         
         if (!to_interface_decl->isForwardDecl())
             to_interface_decl->setExternallyCompleted();

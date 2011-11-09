@@ -72,12 +72,18 @@ ClangASTSource::FindExternalVisibleDeclsByName
     case DeclarationName::CXXUsingDirective:
       return SetNoExternalVisibleDeclsForName(decl_ctx, clang_decl_name);
             
-    // These aren't looked up like this.
     case DeclarationName::ObjCZeroArgSelector:
     case DeclarationName::ObjCOneArgSelector:
     case DeclarationName::ObjCMultiArgSelector:
-      return DeclContext::lookup_result();
+    {
+      llvm::SmallVector<NamedDecl*, 1> method_decls;    
 
+      NameSearchContext method_search_context (*this, method_decls, clang_decl_name, decl_ctx);
+     
+      FindObjCMethodDecls(method_search_context);
+
+      return SetExternalVisibleDeclsForName (decl_ctx, clang_decl_name, method_decls);
+    }
     // These aren't possible in the global context.
     case DeclarationName::CXXConstructorName:
     case DeclarationName::CXXDestructorName:
@@ -455,6 +461,46 @@ ClangASTSource::FindExternalVisibleDecls (NameSearchContext &context,
             context.AddTypeDecl(copied_type);
         }
     } while(0);
+}
+
+void
+ClangASTSource::FindObjCMethodDecls (NameSearchContext &context)
+{
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    
+    const DeclarationName &decl_name(context.m_decl_name);
+    const DeclContext *decl_ctx(context.m_decl_context);
+    
+    const ObjCInterfaceDecl *interface_decl = dyn_cast<ObjCInterfaceDecl>(decl_ctx);
+    
+    if (!interface_decl)
+        return;
+    
+    StreamString ss;
+    if (decl_name.isObjCZeroArgSelector())
+    {
+        ss.Printf("%s", decl_name.getAsString().c_str());
+    }
+    else if (decl_name.isObjCOneArgSelector())
+    {
+        ss.Printf("%s:", decl_name.getAsString().c_str());
+    }
+    else
+    {    
+        clang::Selector sel = decl_name.getObjCSelector();
+        
+        for (unsigned i = 0, e = sel.getNumArgs();
+             i != e;
+             ++i)
+        {
+            llvm::StringRef r = sel.getNameForSlot(i);
+            ss.Printf("%s:", r.str().c_str()); 
+        }
+    }     
+    ss.Flush();
+    
+    if (log)
+        log->Printf("ClangASTSource::FindObjCMethodDecls for selector [%s %s]", interface_decl->getNameAsString().c_str(), ss.GetData());
 }
 
 void 
