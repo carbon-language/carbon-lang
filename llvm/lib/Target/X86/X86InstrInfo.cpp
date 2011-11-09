@@ -3367,6 +3367,14 @@ static const unsigned ReplaceableInstrs[][3] = {
   { X86::VMOVUPSYmr,   X86::VMOVUPDYmr,   X86::VMOVDQUYmr  },
   { X86::VMOVUPSYrm,   X86::VMOVUPDYrm,   X86::VMOVDQUYrm  },
   { X86::VMOVNTPSYmr,  X86::VMOVNTPDYmr,  X86::VMOVNTDQYmr },
+  { X86::VANDNPSYrm,   X86::VANDNPDYrm,   X86::VPANDNYrm   },
+  { X86::VANDNPSYrr,   X86::VANDNPDYrr,   X86::VPANDNYrr   },
+  { X86::VANDPSYrm,    X86::VANDPDYrm,    X86::VPANDYrm    },
+  { X86::VANDPSYrr,    X86::VANDPDYrr,    X86::VPANDYrr    },
+  { X86::VORPSYrm,     X86::VORPDYrm,     X86::VPORYrm     },
+  { X86::VORPSYrr,     X86::VORPDYrr,     X86::VPORYrr     },
+  { X86::VXORPSYrm,    X86::VXORPDYrm,    X86::VPXORYrm    },
+  { X86::VXORPSYrr,    X86::VXORPDYrr,    X86::VPXORYrr    },
 };
 
 // FIXME: Some shuffle and unpack instructions have equivalents in different
