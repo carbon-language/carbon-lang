@@ -1539,7 +1539,7 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
 ///                        sel_registerName(
 ///                          "countByEnumeratingWithState:objects:count:"),
 ///                        &enumState,
-///                        (id *)items, (unsigned int)16)
+///                        (id *)__rw_items, (unsigned int)16)
 ///
 void RewriteObjC::SynthCountByEnumWithState(std::string &buf) {
   buf += "((unsigned int (*) (id, SEL, struct __objcFastEnumerationState *, "
@@ -1549,7 +1549,7 @@ void RewriteObjC::SynthCountByEnumWithState(std::string &buf) {
   buf += "sel_registerName(\"countByEnumeratingWithState:objects:count:\"),";
   buf += "\n\t\t";
   buf += "&enumState, "
-         "(id *)items, (unsigned int)16)";
+         "(id *)__rw_items, (unsigned int)16)";
 }
 
 /// RewriteBreakStmt - Rewrite for a break-stmt inside an ObjC2's foreach
@@ -1594,10 +1594,10 @@ Stmt *RewriteObjC::RewriteContinueStmt(ContinueStmt *S) {
 /// {
 ///   type elem;
 ///   struct __objcFastEnumerationState enumState = { 0 };
-///   id items[16];
+///   id __rw_items[16];
 ///   id l_collection = (id)collection;
 ///   unsigned long limit = [l_collection countByEnumeratingWithState:&enumState
-///                                       objects:items count:16];
+///                                       objects:__rw_items count:16];
 /// if (limit) {
 ///   unsigned long startMutations = *enumState.mutationsPtr;
 ///   do {
@@ -1610,7 +1610,7 @@ Stmt *RewriteObjC::RewriteContinueStmt(ContinueStmt *S) {
 ///             __continue_label: ;
 ///        } while (counter < limit);
 ///   } while (limit = [l_collection countByEnumeratingWithState:&enumState
-///                                  objects:items count:16]);
+///                                  objects:__rw_items count:16]);
 ///   elem = nil;
 ///   __break_label: ;
 ///  }
@@ -1662,8 +1662,8 @@ Stmt *RewriteObjC::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S,
 
   // struct __objcFastEnumerationState enumState = { 0 };
   buf += "struct __objcFastEnumerationState enumState = { 0 };\n\t";
-  // id items[16];
-  buf += "id items[16];\n\t";
+  // id __rw_items[16];
+  buf += "id __rw_items[16];\n\t";
   // id l_collection = (id)
   buf += "id l_collection = (id)";
   // Find start location of 'collection' the hard way!
@@ -1688,7 +1688,7 @@ Stmt *RewriteObjC::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S,
   buf = ";\n\t";
 
   // unsigned long limit = [l_collection countByEnumeratingWithState:&enumState
-  //                                   objects:items count:16];
+  //                                   objects:__rw_items count:16];
   // which is synthesized into:
   // unsigned int limit =
   // ((unsigned int (*)
@@ -1697,7 +1697,7 @@ Stmt *RewriteObjC::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S,
   //                        sel_registerName(
   //                          "countByEnumeratingWithState:objects:count:"),
   //                        (struct __objcFastEnumerationState *)&state,
-  //                        (id *)items, (unsigned int)16);
+  //                        (id *)__rw_items, (unsigned int)16);
   buf += "unsigned long limit =\n\t\t";
   SynthCountByEnumWithState(buf);
   buf += ";\n\t";
@@ -1726,7 +1726,7 @@ Stmt *RewriteObjC::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S,
   ///            __continue_label: ;
   ///        } while (counter < limit);
   ///   } while (limit = [l_collection countByEnumeratingWithState:&enumState
-  ///                                  objects:items count:16]);
+  ///                                  objects:__rw_items count:16]);
   ///   elem = nil;
   ///   __break_label: ;
   ///  }
