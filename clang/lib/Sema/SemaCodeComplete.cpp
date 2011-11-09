@@ -1998,25 +1998,20 @@ static void MaybeAddSentinel(ASTContext &Context, NamedDecl *FunctionOrMethod,
     }
 }
 
-static void appendWithSpace(std::string &Result, StringRef Text) {
-  if (!Result.empty())
-    Result += ' ';
-  Result += Text.str();
-}
 static std::string formatObjCParamQualifiers(unsigned ObjCQuals) {
   std::string Result;
   if (ObjCQuals & Decl::OBJC_TQ_In)
-    appendWithSpace(Result, "in");
+    Result += "in ";
   else if (ObjCQuals & Decl::OBJC_TQ_Inout)
-    appendWithSpace(Result, "inout");
+    Result += "inout ";
   else if (ObjCQuals & Decl::OBJC_TQ_Out)
-    appendWithSpace(Result, "out");
+    Result += "out ";
   if (ObjCQuals & Decl::OBJC_TQ_Bycopy)
-    appendWithSpace(Result, "bycopy");
+    Result += "bycopy ";
   else if (ObjCQuals & Decl::OBJC_TQ_Byref)
-    appendWithSpace(Result, "byref");
+    Result += "byref ";
   if (ObjCQuals & Decl::OBJC_TQ_Oneway)
-    appendWithSpace(Result, "oneway");
+    Result += "oneway ";
   return Result;
 }
 
