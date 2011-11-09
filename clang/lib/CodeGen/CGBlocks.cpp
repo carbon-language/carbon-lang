@@ -1342,21 +1342,62 @@ public:
     // Do a "move" by copying the value and then zeroing out the old
     // variable.
 
-    llvm::Value *value = CGF.Builder.CreateLoad(srcField);
+    llvm::LoadInst *value = CGF.Builder.CreateLoad(srcField);
+    value->setAlignment(Alignment.getQuantity());
+    
     llvm::Value *null =
       llvm::ConstantPointerNull::get(cast<llvm::PointerType>(value->getType()));
-    CGF.Builder.CreateStore(value, destField);
-    CGF.Builder.CreateStore(null, srcField);
+
+    llvm::StoreInst *store = CGF.Builder.CreateStore(value, destField);
+    store->setAlignment(Alignment.getQuantity());
+
+    store = CGF.Builder.CreateStore(null, srcField);
+    store->setAlignment(Alignment.getQuantity());
   }
 
   void emitDispose(CodeGenFunction &CGF, llvm::Value *field) {
-    llvm::Value *value = CGF.Builder.CreateLoad(field);
+    llvm::LoadInst *value = CGF.Builder.CreateLoad(field);
+    value->setAlignment(Alignment.getQuantity());
+
     CGF.EmitARCRelease(value, /*precise*/ false);
   }
 
   void profileImpl(llvm::FoldingSetNodeID &id) const {
     // 1 is distinguishable from all pointers and byref flags
     id.AddInteger(1);
+  }
+};
+
+/// Emits the copy/dispose helpers for an ARC __block __strong
+/// variable that's of block-pointer type.
+class ARCStrongBlockByrefHelpers : public CodeGenModule::ByrefHelpers {
+public:
+  ARCStrongBlockByrefHelpers(CharUnits alignment) : ByrefHelpers(alignment) {}
+
+  void emitCopy(CodeGenFunction &CGF, llvm::Value *destField,
+                llvm::Value *srcField) {
+    // Do the copy with objc_retainBlock; that's all that
+    // _Block_object_assign would do anyway, and we'd have to pass the
+    // right arguments to make sure it doesn't get no-op'ed.
+    llvm::LoadInst *oldValue = CGF.Builder.CreateLoad(srcField);
+    oldValue->setAlignment(Alignment.getQuantity());
+
+    llvm::Value *copy = CGF.EmitARCRetainBlock(oldValue, /*mandatory*/ true);
+
+    llvm::StoreInst *store = CGF.Builder.CreateStore(copy, destField);
+    store->setAlignment(Alignment.getQuantity());
+  }
+
+  void emitDispose(CodeGenFunction &CGF, llvm::Value *field) {
+    llvm::LoadInst *value = CGF.Builder.CreateLoad(field);
+    value->setAlignment(Alignment.getQuantity());
+
+    CGF.EmitARCRelease(value, /*precise*/ false);
+  }
+
+  void profileImpl(llvm::FoldingSetNodeID &id) const {
+    // 2 is distinguishable from all pointers and byref flags
+    id.AddInteger(2);
   }
 };
 
@@ -1586,13 +1627,10 @@ CodeGenFunction::buildByrefHelpers(llvm::StructType &byrefType,
 
     // ARC __strong __block variables need to be retained.
     case Qualifiers::OCL_Strong:
-      // Block-pointers need to be _Block_copy'ed, so we let the
-      // runtime be in charge.  But we can't use the code below
-      // because we don't want to set BYREF_CALLER, which will
-      // just make the runtime ignore us.
+      // Block pointers need to be copied, and there's no direct
+      // transfer possible.
       if (type->isBlockPointerType()) {
-        BlockFieldFlags flags = BLOCK_FIELD_IS_BLOCK;
-        ObjectByrefHelpers byrefInfo(emission.Alignment, flags);
+        ARCStrongBlockByrefHelpers byrefInfo(emission.Alignment);
         return ::buildByrefHelpers(CGM, byrefType, byrefInfo);
 
       // Otherwise, we transfer ownership of the retain from the stack

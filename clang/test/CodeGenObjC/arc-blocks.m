@@ -334,6 +334,34 @@ void test10a(void) {
   // CHECK-NEXT: ret void
 }
 
+// <rdar://problem/10402698>: do this copy and dispose with
+// objc_retainBlock/release instead of _Block_object_assign/destroy.
+// We can also use _Block_object_assign/destroy with
+// BLOCK_FIELD_IS_BLOCK as long as we don't pass BLOCK_BYREF_CALLER.
+
+// CHECK: define internal void @__Block_byref_object_copy
+// CHECK:      [[D0:%.*]] = load i8** {{%.*}}
+// CHECK-NEXT: [[D1:%.*]] = bitcast i8* [[D0]] to [[BYREF_T]]*
+// CHECK-NEXT: [[D2:%.*]] = getelementptr inbounds [[BYREF_T]]* [[D1]], i32 0, i32 6
+// CHECK-NEXT: [[S0:%.*]] = load i8** {{%.*}}
+// CHECK-NEXT: [[S1:%.*]] = bitcast i8* [[S0]] to [[BYREF_T]]*
+// CHECK-NEXT: [[S2:%.*]] = getelementptr inbounds [[BYREF_T]]* [[S1]], i32 0, i32 6
+// CHECK-NEXT: [[T0:%.*]] = load void ()** [[S2]], align 8
+// CHECK-NEXT: [[T1:%.*]] = bitcast void ()* [[T0]] to i8*
+// CHECK-NEXT: [[T2:%.*]] = call i8* @objc_retainBlock(i8* [[T1]])
+// CHECK-NEXT: [[T3:%.*]] = bitcast i8* [[T2]] to void ()*
+// CHECK-NEXT: store void ()* [[T3]], void ()** [[D2]], align 8
+// CHECK-NEXT: ret void
+
+// CHECK: define internal void @__Block_byref_object_dispose
+// CHECK:      [[T0:%.*]] = load i8** {{%.*}}
+// CHECK-NEXT: [[T1:%.*]] = bitcast i8* [[T0]] to [[BYREF_T]]*
+// CHECK-NEXT: [[T2:%.*]] = getelementptr inbounds [[BYREF_T]]* [[T1]], i32 0, i32 6
+// CHECK-NEXT: [[T3:%.*]] = load void ()** [[T2]], align 8
+// CHECK-NEXT: [[T4:%.*]] = bitcast void ()* [[T3]] to i8*
+// CHECK-NEXT: call void @objc_release(i8* [[T4]])
+// CHECK-NEXT: ret void
+
 // Test that we correctly assign to __block variables when the
 // assignment captures the variable.
 void test10b(void) {
@@ -427,4 +455,3 @@ void test11b(void) {
 // CHECK:    define internal void @"\01-[Test12 setNblock:]"(
 // CHECK:    call void @objc_setProperty(i8* {{%.*}}, i8* {{%.*}}, i64 {{%.*}}, i8* {{%.*}}, i1 zeroext false, i1 zeroext true)
 @end
-
