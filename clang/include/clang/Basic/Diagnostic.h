@@ -624,6 +624,21 @@ private:
   /// to insert, remove, or modify at a particular position.
   FixItHint FixItHints[MaxFixItHints];
 
+  DiagnosticMappingInfo makeMappingInfo(diag::Mapping Map, SourceLocation L) {
+    bool isPragma = L.isValid();
+    DiagnosticMappingInfo MappingInfo = DiagnosticMappingInfo::Make(
+      Map, /*IsUser=*/true, isPragma);
+
+    // If this is a pragma mapping, then set the diagnostic mapping flags so
+    // that we override command line options.
+    if (isPragma) {
+      MappingInfo.setNoWarningAsError(true);
+      MappingInfo.setNoErrorAsFatal(true);
+    }
+
+    return MappingInfo;
+  }
+
   /// ProcessDiag - This is the method used to report a diagnostic that is
   /// finally fully formed.
   ///

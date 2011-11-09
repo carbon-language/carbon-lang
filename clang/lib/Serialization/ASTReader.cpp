@@ -3109,6 +3109,10 @@ void ASTReader::ReadPragmaDiagnosticMappings(DiagnosticsEngine &Diag) {
     unsigned Idx = 0;
     while (Idx < F.PragmaDiagMappings.size()) {
       SourceLocation Loc = ReadSourceLocation(F, F.PragmaDiagMappings[Idx++]);
+      Diag.DiagStates.push_back(*Diag.GetCurDiagState());
+      Diag.DiagStatePoints.push_back(
+          DiagnosticsEngine::DiagStatePoint(&Diag.DiagStates.back(),
+                                            FullSourceLoc(Loc, SourceMgr)));
       while (1) {
         assert(Idx < F.PragmaDiagMappings.size() &&
                "Invalid data, didn't find '-1' marking end of diag/map pairs");
@@ -3121,8 +3125,8 @@ void ASTReader::ReadPragmaDiagnosticMappings(DiagnosticsEngine &Diag) {
           break; // no more diag/map pairs for this location.
         }
         diag::Mapping Map = (diag::Mapping)F.PragmaDiagMappings[Idx++];
-        // The user bit gets set by WritePragmaDiagnosticMappings.
-        Diag.setDiagnosticMapping(DiagID, Map, Loc);
+        DiagnosticMappingInfo MappingInfo = Diag.makeMappingInfo(Map, Loc);
+        Diag.GetCurDiagState()->setMappingInfo(DiagID, MappingInfo);
       }
     }
   }

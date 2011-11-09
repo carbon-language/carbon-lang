@@ -169,18 +169,9 @@ void DiagnosticsEngine::setDiagnosticMapping(diag::kind Diag, diag::Mapping Map,
          "Cannot map errors into warnings!");
   assert(!DiagStatePoints.empty());
 
-  bool isPragma = L.isValid();
   FullSourceLoc Loc(L, *SourceMgr);
   FullSourceLoc LastStateChangePos = DiagStatePoints.back().Loc;
-  DiagnosticMappingInfo MappingInfo = DiagnosticMappingInfo::Make(
-    Map, /*IsUser=*/true, isPragma);
-
-  // If this is a pragma mapping, then set the diagnostic mapping flags so that
-  // we override command line options.
-  if (isPragma) {
-    MappingInfo.setNoWarningAsError(true);
-    MappingInfo.setNoErrorAsFatal(true);
-  }
+  DiagnosticMappingInfo MappingInfo = makeMappingInfo(Map, L);
 
   // Common case; setting all the diagnostics of a group in one place.
   if (Loc.isInvalid() || Loc == LastStateChangePos) {
