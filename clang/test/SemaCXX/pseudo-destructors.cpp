@@ -68,3 +68,12 @@ void test_X0(N1::X0 &x0) {
   x0.~X0();
 }
 
+namespace PR11339 {
+  template<class T>
+  void destroy(T* p) {
+    p->~T(); // ok
+    p->~oops(); // expected-error{{expected the class name after '~' to name a destructor}}
+  }
+
+  template void destroy(int*); // expected-note{{in instantiation of function template specialization}}
+}

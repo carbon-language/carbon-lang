@@ -7218,7 +7218,7 @@ TreeTransform<Derived>::TransformCXXPseudoDestructorExpr(
     if (!DestroyedTypeInfo)
       return ExprError();
     Destroyed = DestroyedTypeInfo;
-  } else if (ObjectType->isDependentType()) {
+  } else if (!ObjectType.isNull() && ObjectType->isDependentType()) {
     // We aren't likely to be able to resolve the identifier down to a type
     // now anyway, so just retain the identifier.
     Destroyed = PseudoDestructorTypeStorage(E->getDestroyedTypeIdentifier(),
