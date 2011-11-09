@@ -104,9 +104,6 @@ class TempScop {
   // The Region.
   Region &R;
 
-  // Parameters used in this Scop.
-  ParamSetType Params;
-
   // The max loop depth of this Scop
   unsigned MaxLoopDepth;
 
@@ -129,14 +126,6 @@ class TempScop {
 
 public:
   ~TempScop();
-
-  /// @name Information about this Temporary Scop.
-  ///
-  //@{
-  /// @brief Get the parameters used in this Scop.
-  ///
-  /// @return The parameters use in region.
-  ParamSetType &getParamSet() { return Params; }
 
   /// @brief Get the maximum Region contained by this Scop.
   ///
@@ -268,8 +257,7 @@ class TempScopInfo : public FunctionPass {
 
   bool isReduction(BasicBlock &BB);
 
-  void buildAccessFunctions(Region &RefRegion, ParamSetType &Params,
-                            BasicBlock &BB);
+  void buildAccessFunctions(Region &RefRegion, BasicBlock &BB);
 
   void buildLoopBounds(TempScop &Scop);
 

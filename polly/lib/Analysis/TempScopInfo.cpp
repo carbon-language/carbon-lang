@@ -63,13 +63,8 @@ TempScop::~TempScop() {
 }
 
 void TempScop::print(raw_ostream &OS, ScalarEvolution *SE, LoopInfo *LI) const {
-  OS << "Scop: " << R.getNameStr() << "\tParameters: (";
-  // Print Parameters.
-  for (ParamSetType::const_iterator PI = Params.begin(), PE = Params.end();
-    PI != PE; ++PI)
-    OS << **PI << ", ";
-
-  OS << "), Max Loop Depth: "<< MaxLoopDepth <<"\n";
+  OS << "Scop: " << R.getNameStr() << ", Max Loop Depth: "<< MaxLoopDepth
+    << "\n";
 
   printDetail(OS, SE, LI, &R, 0);
 }
@@ -79,8 +74,7 @@ void TempScop::printDetail(llvm::raw_ostream &OS, ScalarEvolution *SE,
                            unsigned ind) const {
 }
 
-void TempScopInfo::buildAccessFunctions(Region &R, ParamSetType &Parameter,
-                                        BasicBlock &BB) {
+void TempScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB) {
   AccFuncSetType Functions;
 
   for (BasicBlock::iterator I = BB.begin(), E = --BB.end(); I != E; ++I) {
@@ -226,7 +220,7 @@ TempScop *TempScopInfo::buildTempScop(Region &R) {
   for (Region::block_iterator I = R.block_begin(), E = R.block_end();
        I != E; ++I) {
     BasicBlock *BB =  I->getNodeAs<BasicBlock>();
-    buildAccessFunctions(R, TScop->getParamSet(), *BB);
+    buildAccessFunctions(R, *BB);
     buildCondition(BB, R.getEntry(), *TScop);
   }
 
