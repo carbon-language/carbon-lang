@@ -1206,16 +1206,42 @@ bool ARMFastISel::ARMEmitCmp(const Value *Src1Value, const Value *Src2Value,
   if (isFloat && !Subtarget->hasVFP2())
     return false;
 
+  // Check to see if the 2nd operand is a constant that we can encode directly
+  // in the compare.
+  uint64_t Imm;
+  int EncodedImm = 0;
+  bool EncodeImm = false;
+  bool isNegativeImm = false;
+  if (const ConstantInt *ConstInt = dyn_cast<ConstantInt>(Src2Value)) {
+    if (SrcVT == MVT::i32 || SrcVT == MVT::i16 || SrcVT == MVT::i8 ||
+        SrcVT == MVT::i1) {
+      const APInt &CIVal = ConstInt->getValue();
+
+      isNegativeImm = CIVal.isNegative();
+      Imm = (isNegativeImm) ? (-CIVal).getZExtValue() : CIVal.getZExtValue();
+      EncodedImm = (int)Imm;
+      EncodeImm = isThumb2 ? (ARM_AM::getT2SOImmVal(EncodedImm) != -1) :
+        (ARM_AM::getSOImmVal(EncodedImm) != -1);
+    }
+  } else if (const ConstantFP *ConstFP = dyn_cast<ConstantFP>(Src2Value)) {
+    if (SrcVT == MVT::f32 || SrcVT == MVT::f64)
+      if (ConstFP->isZero() && !ConstFP->isNegative())
+        EncodeImm = true;
+  }
+
   unsigned CmpOpc;
+  bool isICmp = true;
   bool needsExt = false;
   switch (SrcVT.getSimpleVT().SimpleTy) {
     default: return false;
     // TODO: Verify compares.
     case MVT::f32:
-      CmpOpc = ARM::VCMPES;
+      isICmp = false;
+      CmpOpc = EncodeImm ? ARM::VCMPEZS : ARM::VCMPES;
       break;
     case MVT::f64:
-      CmpOpc = ARM::VCMPED;
+      isICmp = false;
+      CmpOpc = EncodeImm ? ARM::VCMPEZD : ARM::VCMPED;
       break;
     case MVT::i1:
     case MVT::i8:
@@ -1223,30 +1249,56 @@ bool ARMFastISel::ARMEmitCmp(const Value *Src1Value, const Value *Src2Value,
       needsExt = true;
     // Intentional fall-through.
     case MVT::i32:
-      CmpOpc = isThumb2 ? ARM::t2CMPrr : ARM::CMPrr;
+      if (isThumb2) {
+        if (!EncodeImm)
+          CmpOpc = ARM::t2CMPrr;
+        else
+          CmpOpc = isNegativeImm ? ARM::t2CMNzri : ARM::t2CMPri;
+      } else {
+        if (!EncodeImm)
+          CmpOpc = ARM::CMPrr;
+        else
+          CmpOpc = isNegativeImm ? ARM::CMNzri : ARM::CMPri;
+      }
       break;
   }
 
   unsigned SrcReg1 = getRegForValue(Src1Value);
   if (SrcReg1 == 0) return false;
 
-  unsigned SrcReg2 = getRegForValue(Src2Value);
-  if (SrcReg2 == 0) return false;
+  unsigned SrcReg2;
+  if (!EncodeImm) {
+    SrcReg2 = getRegForValue(Src2Value);
+    if (SrcReg2 == 0) return false;
+  }
 
   // We have i1, i8, or i16, we need to either zero extend or sign extend.
   if (needsExt) {
     unsigned ResultReg;
-    EVT DestVT = MVT::i32;
-    ResultReg = ARMEmitIntExt(SrcVT, SrcReg1, DestVT, isZExt);
+    ResultReg = ARMEmitIntExt(SrcVT, SrcReg1, MVT::i32, isZExt);
     if (ResultReg == 0) return false;
     SrcReg1 = ResultReg;
-    ResultReg = ARMEmitIntExt(SrcVT, SrcReg2, DestVT, isZExt);
-    if (ResultReg == 0) return false;
-    SrcReg2 = ResultReg;
+    if (!EncodeImm) {
+      ResultReg = ARMEmitIntExt(SrcVT, SrcReg2, MVT::i32, isZExt);
+      if (ResultReg == 0) return false;
+      SrcReg2 = ResultReg;
+    }
   }
 
-  AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(CmpOpc))
-                  .addReg(SrcReg1).addReg(SrcReg2));
+  if (!EncodeImm) {
+    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                            TII.get(CmpOpc))
+                    .addReg(SrcReg1).addReg(SrcReg2));
+  } else {
+    MachineInstrBuilder MIB;
+    MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(CmpOpc))
+      .addReg(SrcReg1);
+
+    // Only add immediate for icmp as the immediate for fcmp is an implicit 0.0.
+    if (isICmp)
+      MIB.addImm(EncodedImm);
+    AddOptionalDefs(MIB);
+  }
 
   // For floating point we need to move the result to a comparison register
   // that we can then use for branches.
