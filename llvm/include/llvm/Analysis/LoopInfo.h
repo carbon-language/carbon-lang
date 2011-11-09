@@ -416,14 +416,26 @@ public:
 #ifndef NDEBUG
     assert(!Blocks.empty() && "Loop header is missing");
 
+    // Setup for using a depth-first iterator to visit every block in the loop.
+    SmallVector<BlockT*, 8> ExitBBs;
+    getExitBlocks(ExitBBs);
+    llvm::SmallPtrSet<BlockT*, 8> VisitSet;
+    VisitSet.insert(ExitBBs.begin(), ExitBBs.end());
+    df_ext_iterator<BlockT*, llvm::SmallPtrSet<BlockT*, 8> >
+        BI = df_ext_begin(getHeader(), VisitSet),
+        BE = df_ext_end(getHeader(), VisitSet);
+
+    // Keep track of the number of BBs visited.
+    unsigned NumVisited = 0;
+
     // Sort the blocks vector so that we can use binary search to do quick
     // lookups.
     SmallVector<BlockT*, 128> LoopBBs(block_begin(), block_end());
     std::sort(LoopBBs.begin(), LoopBBs.end());
 
     // Check the individual blocks.
-    for (block_iterator I = block_begin(), E = block_end(); I != E; ++I) {
-      BlockT *BB = *I;
+    for ( ; BI != BE; ++BI) {
+      BlockT *BB = *BI;
       bool HasInsideLoopSuccs = false;
       bool HasInsideLoopPreds = false;
       SmallVector<BlockT *, 2> OutsideLoopPreds;
@@ -440,7 +452,7 @@ public:
       for (typename InvBlockTraits::ChildIteratorType PI =
            InvBlockTraits::child_begin(BB), PE = InvBlockTraits::child_end(BB);
            PI != PE; ++PI) {
-        typename InvBlockTraits::NodeType *N = *PI;
+        BlockT *N = *PI;
         if (std::binary_search(LoopBBs.begin(), LoopBBs.end(), N))
           HasInsideLoopPreds = true;
         else
@@ -464,7 +476,11 @@ public:
       assert(HasInsideLoopSuccs && "Loop block has no in-loop successors!");
       assert(BB != getHeader()->getParent()->begin() &&
              "Loop contains function entry block!");
+
+      NumVisited++;
     }
+
+    assert(NumVisited == getNumBlocks() && "Unreachable block in loop");
 
     // Check the subloops.
     for (iterator I = begin(), E = end(); I != E; ++I)
