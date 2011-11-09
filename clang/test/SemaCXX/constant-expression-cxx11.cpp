@@ -66,6 +66,36 @@ namespace MemberEnum {
   static_assert_fold(wme.A == 42, "");
 }
 
+namespace DefaultArguments {
+
+const int z = int();
+constexpr int Sum(int a = 0, const int &b = 0, const int *c = &z, char d = 0) {
+  return a + b + *c + d;
+}
+const int four = 4;
+constexpr int eight = 8;
+constexpr const int twentyseven = 27;
+static_assert_fold(Sum() == 0, "");
+static_assert_fold(Sum(1) == 1, "");
+static_assert_fold(Sum(1, four) == 5, "");
+static_assert_fold(Sum(1, eight, &twentyseven) == 36, "");
+static_assert_fold(Sum(1, 2, &four, eight) == 15, "");
+
+}
+
+namespace Ellipsis {
+
+// Note, values passed through an ellipsis can't actually be used.
+constexpr int F(int a, ...) { return a; }
+static_assert_fold(F(0) == 0, "");
+static_assert_fold(F(1, 0) == 1, "");
+static_assert_fold(F(2, "test") == 2, "");
+static_assert_fold(F(3, &F) == 3, "");
+int k = 0;
+static_assert_fold(F(4, k) == 3, ""); // expected-error {{constant expression}}
+
+}
+
 namespace Recursion {
   constexpr int fib(int n) { return n > 1 ? fib(n-1) + fib(n-2) : n; }
   static_assert_fold(fib(11) == 89, "");

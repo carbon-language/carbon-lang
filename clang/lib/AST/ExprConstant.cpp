@@ -935,6 +935,8 @@ public:
     { return StmtVisitorTy::Visit(E->getResultExpr()); }
   RetTy VisitSubstNonTypeTemplateParmExpr(const SubstNonTypeTemplateParmExpr *E)
     { return StmtVisitorTy::Visit(E->getReplacement()); }
+  RetTy VisitCXXDefaultArgExpr(const CXXDefaultArgExpr *E)
+    { return StmtVisitorTy::Visit(E->getExpr()); }
 
   RetTy VisitBinaryConditionalOperator(const BinaryConditionalOperator *E) {
     OpaqueValueEvaluation opaque(Info, E->getOpaqueValue(), E->getCommon());
