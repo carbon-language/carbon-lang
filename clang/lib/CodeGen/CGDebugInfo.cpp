@@ -1591,8 +1591,7 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
 }
 
 /// CreateTypeNode - Create a new debug type node.
-llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
-                                         llvm::DIFile Unit) {
+llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty, llvm::DIFile Unit) {
   // Handle qualifiers, which recursively handles what they refer to.
   if (Ty.hasLocalQualifiers())
     return CreateQualifiedType(Ty, Unit);
