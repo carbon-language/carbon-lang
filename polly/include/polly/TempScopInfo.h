@@ -255,8 +255,6 @@ class TempScopInfo : public FunctionPass {
   // of Scop.
   TempScop *buildTempScop(Region &R);
 
-  bool isReduction(BasicBlock &BB);
-
   void buildAccessFunctions(Region &RefRegion, BasicBlock &BB);
 
   void buildLoopBounds(TempScop &Scop);
