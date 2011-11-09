@@ -189,7 +189,7 @@ DIType DIBuilder::createBasicType(StringRef Name, uint64_t SizeInBits,
   return DIType(MDNode::get(VMContext, Elts));
 }
 
-/// createQaulifiedType - Create debugging information entry for a qualified
+/// createQualifiedType - Create debugging information entry for a qualified
 /// type, e.g. 'const int'.
 DIType DIBuilder::createQualifiedType(unsigned Tag, DIType FromTy) {
   // Qualified types are encoded in DIDerivedType format.
