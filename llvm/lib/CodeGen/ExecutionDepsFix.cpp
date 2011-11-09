@@ -60,6 +60,11 @@ struct DomainValue {
   // Position of the last defining instruction.
   unsigned Dist;
 
+  // Pointer to the next DomainValue in a chain.  When two DomainValues are
+  // merged, Victim.Next is set to point to Victor, so old DomainValue
+  // references can be updated by folowing the chain.
+  DomainValue *Next;
+
   // Twiddleable instructions using or defining these registers.
   SmallVector<MachineInstr*, 8> Instrs;
 
@@ -94,8 +99,10 @@ struct DomainValue {
 
   DomainValue() : Refs(0) { clear(); }
 
+  // Clear this DomainValue and point to next which has all its data.
   void clear() {
     AvailableDomains = Dist = 0;
+    Next = 0;
     Instrs.clear();
   }
 };
@@ -139,7 +146,12 @@ private:
 
   // DomainValue allocation.
   DomainValue *alloc(int domain = -1);
+  DomainValue *retain(DomainValue *DV) {
+    if (DV) ++DV->Refs;
+    return DV;
+  }
   void release(DomainValue*);
+  DomainValue *resolve(DomainValue*&);
 
   // LiveRegs manipulations.
   void setLiveReg(int rx, DomainValue *DV);
@@ -174,22 +186,46 @@ DomainValue *ExeDepsFix::alloc(int domain) {
   if (domain >= 0)
     dv->addDomain(domain);
   assert(dv->Refs == 0 && "Reference count wasn't cleared");
+  assert(!dv->Next && "Chained DomainValue shouldn't have been recycled");
   return dv;
 }
 
 /// release - Release a reference to DV.  When the last reference is released,
 /// collapse if needed.
 void ExeDepsFix::release(DomainValue *DV) {
-  assert(DV && DV->Refs && "Bad DomainValue");
-  if (--DV->Refs)
-    return;
+  while (DV) {
+    assert(DV->Refs && "Bad DomainValue");
+    if (--DV->Refs)
+      return;
 
-  // There are no more DV references. Collapse any contained instructions.
-  if (DV->AvailableDomains && !DV->isCollapsed())
-    collapse(DV, DV->getFirstDomain());
+    // There are no more DV references. Collapse any contained instructions.
+    if (DV->AvailableDomains && !DV->isCollapsed())
+      collapse(DV, DV->getFirstDomain());
 
-  DV->clear();
-  Avail.push_back(DV);
+    DomainValue *Next = DV->Next;
+    DV->clear();
+    Avail.push_back(DV);
+    // Also release the next DomainValue in the chain.
+    DV = Next;
+  }
+}
+
+/// resolve - Follow the chain of dead DomainValues until a live DomainValue is
+/// reached.  Update the referenced pointer when necessary.
+DomainValue *ExeDepsFix::resolve(DomainValue *&DVRef) {
+  DomainValue *DV = DVRef;
+  if (!DV || !DV->Next)
+    return DV;
+
+  // DV has a chain. Find the end.
+  do DV = DV->Next;
+  while (DV->Next);
+
+  // Update DVRef to point to DV.
+  retain(DV);
+  release(DVRef);
+  DVRef = DV;
+  return DV;
 }
 
 /// Set LiveRegs[rx] = dv, updating reference counts.
@@ -204,8 +240,7 @@ void ExeDepsFix::setLiveReg(int rx, DomainValue *dv) {
     return;
   if (LiveRegs[rx])
     release(LiveRegs[rx]);
-  LiveRegs[rx] = dv;
-  if (dv) ++dv->Refs;
+  LiveRegs[rx] = retain(dv);
 }
 
 // Kill register rx, recycle or collapse any DomainValue.
@@ -273,6 +308,8 @@ bool ExeDepsFix::merge(DomainValue *A, DomainValue *B) {
 
   // Clear the old DomainValue so we won't try to swizzle instructions twice.
   B->clear();
+  // All uses of B are referred to A.
+  B->Next = retain(A);
 
   for (unsigned rx = 0; rx != NumRegs; ++rx)
     if (LiveRegs[rx] == B)
@@ -290,8 +327,8 @@ void ExeDepsFix::enterBasicBlock(MachineBasicBlock *MBB) {
            pe = MBB->pred_end(); pi != pe; ++pi) {
       LiveOutMap::const_iterator fi = LiveOuts.find(*pi);
       if (fi == LiveOuts.end()) continue;
-      DomainValue *pdv = fi->second[rx];
-      if (!pdv || !pdv->AvailableDomains) continue;
+      DomainValue *pdv = resolve(fi->second[rx]);
+      if (!pdv) continue;
       if (!LiveRegs || !LiveRegs[rx]) {
         setLiveReg(rx, pdv);
         continue;
