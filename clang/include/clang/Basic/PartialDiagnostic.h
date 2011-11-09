@@ -25,6 +25,15 @@ namespace clang {
 
 class PartialDiagnostic {
 public:
+  enum {
+      // The MaxArguments and MaxFixItHints member enum values from
+      // DiagnosticsEngine are private but DiagnosticsEngine declares
+      // PartialDiagnostic a friend.  These enum values are redeclared
+      // here so that the nested Storage class below can access them.
+      MaxArguments = DiagnosticsEngine::MaxArguments,
+      MaxFixItHints = DiagnosticsEngine::MaxFixItHints
+  };
+
   struct Storage {
     Storage() : NumDiagArgs(0), NumDiagRanges(0), NumFixItHints(0) { }
 
@@ -33,7 +42,7 @@ public:
         /// currently only support up to 10 arguments (%0-%9).
         /// A single diagnostic with more than that almost certainly has to
         /// be simplified anyway.
-        MaxArguments = DiagnosticsEngine::MaxArguments
+        MaxArguments = PartialDiagnostic::MaxArguments
     };
 
     /// NumDiagArgs - This contains the number of entries in Arguments.
@@ -65,7 +74,7 @@ public:
     /// only support 10 ranges, could easily be extended if needed.
     CharSourceRange DiagRanges[10];
 
-    enum { MaxFixItHints = DiagnosticsEngine::MaxFixItHints };
+    enum { MaxFixItHints = PartialDiagnostic::MaxFixItHints };
 
     /// FixItHints - If valid, provides a hint with some code
     /// to insert, remove, or modify at a particular position.
