@@ -186,7 +186,7 @@ RNBRemote::CreatePacketTable  ()
 //  t.push_back (Packet (pass_signals_to_inferior,      &RNBRemote::HandlePacket_UNIMPLEMENTED, NULL, "QPassSignals:", "Specify which signals are passed to the inferior"));
     t.push_back (Packet (allocate_memory,               &RNBRemote::HandlePacket_AllocateMemory, NULL, "_M", "Allocate memory in the inferior process."));
     t.push_back (Packet (deallocate_memory,             &RNBRemote::HandlePacket_DeallocateMemory, NULL, "_m", "Deallocate memory in the inferior process."));
-    t.push_back (Packet (address_is_executable,         &RNBRemote::HandlePacket_IsAddressExecutable, NULL, "QAddressIsExecutable", "Indicate if an address is in an executable region or not"));
+    t.push_back (Packet (memory_region_info,            &RNBRemote::HandlePacket_MemoryRegionInfo, NULL, "qMemoryRegionInfo", "Return size and attributes of a memory region that contains the given address"));
 
 }
 
@@ -3241,24 +3241,36 @@ RNBRemote::HandlePacket_c (const char *p)
 }
 
 rnb_err_t
-RNBRemote::HandlePacket_IsAddressExecutable (const char *p)
+RNBRemote::HandlePacket_MemoryRegionInfo (const char *p)
 {
-    /* This tells us whether the specified address is in an executable region
-       in the remote process or not.  Examples of use:
-          QAddressIsExecutable,3a55140
-          AddressIsInExecutableRegion
+    /* This packet will find memory attributes (e.g. readable, writable, executable, stack, jitted code)
+       for the memory region containing a given address and return that information.
+       
+       Users of this packet must be prepared for three results:  
 
-          QAddressIsExecutable,0
-          AddressIsNotInExecutableRegion
+           Region information is returned
+           Region information is unavailable for this address because the address is in unmapped memory
+           Region lookup cannot be performed on this platform or process is not yet launched
+           This packet isn't implemented 
 
-          QAddressIsExecutable,3a551140   (on a different platform)
-          CannotDetermineRegionAttributes
+       Examples of use:
+          qMemoryRegionInfo:3a55140
+          start:3a50000,size:100000,permissions:rwx
+
+          qMemoryRegionInfo:0
+          error:address in unmapped region
+
+          qMemoryRegionInfo:3a551140   (on a different platform)
+          error:region lookup cannot be performed
+
+          qMemoryRegionInfo
+          OK                   // this packet is implemented by the remote nub
     */
 
-    p += sizeof ("QAddressIsExecutable") - 1;
+    p += sizeof ("qMemoryRegionInfo") - 1;
     if (*p == '\0')
        return SendPacket ("OK");
-    if (*p++ != ',')
+    if (*p++ != ':')
        return SendPacket ("E67");
     if (*p == '0' && (*(p + 1) == 'x' || *(p + 1) == 'X'))
        p += 2;
@@ -3267,15 +3279,21 @@ RNBRemote::HandlePacket_IsAddressExecutable (const char *p)
     uint64_t address = strtoul (p, NULL, 16);
     if (errno != 0 && address == 0)
     {
-        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Invalid address in QAddressIsExecutable packet");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Invalid address in qMemoryRegionInfo packet");
     }
-    int ret = DNBIsAddressExecutable (m_ctx.ProcessID(), address);
+
+    char retbuf[1024];
+
+    int ret = DNBMemoryRegionInfo (m_ctx.ProcessID(), address, retbuf, sizeof (retbuf));
+    retbuf[sizeof (retbuf) - 1] = '\0';
     if (ret == 1)
-        return SendPacket ("AddressIsInExecutableRegion");
+        return SendPacket (retbuf);
     if (ret == 0)
-        return SendPacket ("AddressIsNotInExecutableRegion");
-    
-    return SendPacket ("CannotDetermineRegionAttributes");
+        return SendPacket ("error:address in unmapped region");
+    if (ret == -1)
+        return SendPacket ("error:region lookup cannot be performed");
+
+    return SendPacket ("E68");
 }
 
 

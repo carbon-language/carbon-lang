@@ -43,7 +43,7 @@ public:
     bool RestoreProtections();
     bool GetRegionForAddress(nub_addr_t addr);
 
-    bool IsExecutable() const { return (m_data.protection & VM_PROT_EXECUTE) == VM_PROT_EXECUTE; }
+    bool GetRegionDescription (char *outbuf, nub_size_t outbufsize);
 
 protected:
 #if defined (VM_REGION_SUBMAP_SHORT_INFO_COUNT_64)

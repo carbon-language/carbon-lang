@@ -205,18 +205,17 @@ MachTask::WriteMemory (nub_addr_t addr, nub_size_t size, const void *buf)
 }
 
 //----------------------------------------------------------------------
-// MachTask::IsAddressExecutable
+// MachTask::MemoryRegionInfo
 //----------------------------------------------------------------------
-bool
-MachTask::IsAddressExecutable (nub_addr_t addr)
+int
+MachTask::MemoryRegionInfo (nub_addr_t addr, char *outbuf, nub_size_t outbufsize)
 {
     task_t task = TaskPort();
-    bool ret = false;
-    if (task != TASK_NULL)
-    {
-        ret = m_vm_memory.IsExecutable(task, addr);
-        DNBLogThreadedIf(LOG_MEMORY, "MachTask::IsAddressExecutable ( addr = 0x%8.8llx ) => %s", (uint64_t)addr, (ret ? "true" : "false"));
-    }
+    if (task == TASK_NULL)
+        return -1;
+
+    int ret = m_vm_memory.MemoryRegionInfo(task, addr, outbuf, outbufsize);
+    DNBLogThreadedIf(LOG_MEMORY, "MachTask::MemoryRegionInfo ( addr = 0x%8.8llx ) => %d", (uint64_t)addr, ret);
     return ret;
 }
 

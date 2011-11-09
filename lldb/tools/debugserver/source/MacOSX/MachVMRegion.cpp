@@ -177,3 +177,27 @@ MachVMRegion::GetRegionForAddress(nub_addr_t addr)
 
     return true;
 }
+
+bool
+MachVMRegion::GetRegionDescription (char *outbuf, nub_size_t outbufsize)
+{
+  if (m_addr == INVALID_NUB_ADDRESS || m_start == INVALID_NUB_ADDRESS || m_size == 0)
+      return false;
+  snprintf (outbuf, outbufsize, "start:%llx,size:%llx", m_start, m_size);
+  outbuf[outbufsize - 1] = '\0';
+
+  char tmpbuf[128];
+  strcpy (tmpbuf, ",permissions:");
+  if ((m_data.protection & VM_PROT_READ) == VM_PROT_READ)
+      strcat (tmpbuf, "r");
+  if ((m_data.protection & VM_PROT_WRITE) == VM_PROT_WRITE)
+      strcat (tmpbuf, "w");
+  if ((m_data.protection & VM_PROT_EXECUTE) == VM_PROT_EXECUTE)
+      strcat (tmpbuf, "x");
+  strlcat (outbuf, tmpbuf, outbufsize);
+
+  // It would be nice if we could figure out whether the memory region is stack memory or jitted code memory as well
+
+  outbuf[outbufsize - 1] = '\0';
+  return true;
+}

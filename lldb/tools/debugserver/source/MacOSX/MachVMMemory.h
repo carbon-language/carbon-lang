@@ -27,7 +27,7 @@ public:
     nub_size_t Read(task_t task, nub_addr_t address, void *data, nub_size_t data_count);
     nub_size_t Write(task_t task, nub_addr_t address, const void *data, nub_size_t data_count);
     nub_size_t PageSize();
-    bool       IsExecutable(task_t task, nub_addr_t address);
+    int        MemoryRegionInfo(task_t task, nub_addr_t address, char *outbuf, nub_size_t outbufsize);
 
 protected:
     nub_size_t MaxBytesLeftInPage(nub_addr_t addr, nub_size_t count);
