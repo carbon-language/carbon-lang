@@ -36,9 +36,6 @@ class MayAliasSetInfo;
 ///
 /// A helper class for collect affine function information
 class SCEVAffFunc {
-  // Temporary hack
-  friend class TempScopInfo;
-
 public:
   // The scalar evolution expression from which we derived this affine
   // expression.
@@ -58,7 +55,6 @@ private:
   // The base address of the address SCEV, if the Value is a pointer, this is
   // an array access, otherwise, this is a value access.
   // And the Write/Read modifier
-  Value *BaseAddr;
   unsigned ElemBytes        : 28;
   SCEVAffFuncType FuncType  : 3;
 
@@ -67,8 +63,7 @@ public:
   ///        condition type
   explicit SCEVAffFunc(SCEVAffFuncType Type, const SCEV *OriginalSCEV,
                        unsigned elemBytes = 0)
-    : OriginalSCEV(OriginalSCEV), BaseAddr(0),
-      ElemBytes(elemBytes), FuncType(Type) {}
+    : OriginalSCEV(OriginalSCEV), ElemBytes(elemBytes), FuncType(Type) {}
 
   enum SCEVAffFuncType getType() const { return FuncType; }
 
@@ -77,8 +72,6 @@ public:
   }
 
   bool isRead() const { return FuncType == ReadMem; }
-
-  const Value *getBaseAddr() const { return BaseAddr; }
 };
 
 class Comparison {
