@@ -23,7 +23,6 @@
 #include "IntrinsicEmitter.h"
 #include "PseudoLoweringEmitter.h"
 #include "RegisterInfoEmitter.h"
-#include "ARMDecoderEmitter.h"
 #include "SubtargetEmitter.h"
 #include "SetTheory.h"
 
@@ -44,7 +43,6 @@ enum ActionType {
   GenInstrInfo,
   GenAsmWriter,
   GenAsmMatcher,
-  GenARMDecoder,
   GenDisassembler,
   GenPseudoLowering,
   GenCallingConv,
@@ -73,8 +71,6 @@ namespace {
                                "Generate calling convention descriptions"),
                     clEnumValN(GenAsmWriter, "gen-asm-writer",
                                "Generate assembly writer"),
-                    clEnumValN(GenARMDecoder, "gen-arm-decoder",
-                               "Generate decoders for ARM/Thumb"),
                     clEnumValN(GenDisassembler, "gen-disassembler",
                                "Generate disassembler"),
                     clEnumValN(GenPseudoLowering, "gen-pseudo-lowering",
@@ -125,9 +121,6 @@ public:
       break;
     case GenAsmWriter:
       AsmWriterEmitter(Records).run(OS);
-      break;
-    case GenARMDecoder:
-      ARMDecoderEmitter(Records).run(OS);
       break;
     case GenAsmMatcher:
       AsmMatcherEmitter(Records).run(OS);

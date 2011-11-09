@@ -11,7 +11,6 @@
 #include "CodeGenTarget.h"
 #include "X86DisassemblerTables.h"
 #include "X86RecognizableInstr.h"
-#include "ARMDecoderEmitter.h"
 #include "FixedLenDecoderEmitter.h"
 #include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Record.h"
