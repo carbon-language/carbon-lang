@@ -816,7 +816,7 @@ namespace llvm {
     /// addGlobalVariable - Add global variable into GVs.
     bool addGlobalVariable(DIGlobalVariable DIG);
 
-    // addSubprogram - Add subprgoram into SPs.
+    // addSubprogram - Add subprogram into SPs.
     bool addSubprogram(DISubprogram SP);
 
     /// addType - Add type into Tys.
