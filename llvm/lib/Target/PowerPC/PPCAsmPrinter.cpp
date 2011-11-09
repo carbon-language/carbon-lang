@@ -50,7 +50,6 @@
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/ADT/StringSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "InstPrinter/PPCInstPrinter.h"
 using namespace llvm;
