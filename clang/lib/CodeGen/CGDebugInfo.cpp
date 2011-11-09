@@ -754,7 +754,7 @@ CGDebugInfo::getOrCreateMethodType(const CXXMethodDecl *Method,
       unsigned AS = CGM.getContext().getTargetAddressSpace(PointeeTy);
       uint64_t Size = CGM.getContext().getTargetInfo().getPointerWidth(AS);
       uint64_t Align = CGM.getContext().getTypeAlign(ThisPtrTy);
-      llvm::DIType PointeeType =  getOrCreateType(PointeeTy, Unit);
+      llvm::DIType PointeeType = getOrCreateType(PointeeTy, Unit);
       llvm::DIType ThisPtrType =
         DBuilder.createArtificialType
         (DBuilder.createPointerType(PointeeType, Size, Align));
@@ -786,8 +786,8 @@ static bool isFunctionLocalClass(const CXXRecordDecl *RD) {
   else if (isa<FunctionDecl>(RD->getDeclContext()))
     return true;
   return false;
-  
 }
+
 /// CreateCXXMemberFunction - A helper function to create a DISubprogram for
 /// a single member function GlobalDecl.
 llvm::DISubprogram
@@ -1051,7 +1051,7 @@ CollectVTableInfo(const CXXRecordDecl *RD, llvm::DIFile Unit,
 /// getOrCreateRecordType - Emit record type's standalone debug info. 
 llvm::DIType CGDebugInfo::getOrCreateRecordType(QualType RTy, 
                                                 SourceLocation Loc) {
-  llvm::DIType T =  getOrCreateType(RTy, getOrCreateFile(Loc));
+  llvm::DIType T = getOrCreateType(RTy, getOrCreateFile(Loc));
   DBuilder.retainType(T);
   return T;
 }
@@ -1351,17 +1351,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   return RealDecl;
 }
 
-llvm::DIType CGDebugInfo::CreateType(const TagType *Ty) {
-  if (const RecordType *RT = dyn_cast<RecordType>(Ty))
-    return CreateType(RT);
-  else if (const EnumType *ET = dyn_cast<EnumType>(Ty))
-    return CreateEnumType(ET->getDecl());
-
-  return llvm::DIType();
-}
-
-llvm::DIType CGDebugInfo::CreateType(const VectorType *Ty,
-                                     llvm::DIFile Unit) {
+llvm::DIType CGDebugInfo::CreateType(const VectorType *Ty, llvm::DIFile Unit) {
   llvm::DIType ElementTy = getOrCreateType(Ty->getElementType(), Unit);
   int64_t NumElems = Ty->getNumElements();
   int64_t LowerBound = 0;
@@ -1627,15 +1617,20 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
     return CreateType(cast<ObjCObjectType>(Ty), Unit);
   case Type::ObjCInterface:
     return CreateType(cast<ObjCInterfaceType>(Ty), Unit);
-  case Type::Builtin: return CreateType(cast<BuiltinType>(Ty));
-  case Type::Complex: return CreateType(cast<ComplexType>(Ty));
-  case Type::Pointer: return CreateType(cast<PointerType>(Ty), Unit);
+  case Type::Builtin:
+    return CreateType(cast<BuiltinType>(Ty));
+  case Type::Complex:
+    return CreateType(cast<ComplexType>(Ty));
+  case Type::Pointer:
+    return CreateType(cast<PointerType>(Ty), Unit);
   case Type::BlockPointer:
     return CreateType(cast<BlockPointerType>(Ty), Unit);
-  case Type::Typedef: return CreateType(cast<TypedefType>(Ty), Unit);
+  case Type::Typedef:
+    return CreateType(cast<TypedefType>(Ty), Unit);
   case Type::Record:
+    return CreateType(cast<RecordType>(Ty));
   case Type::Enum:
-    return CreateType(cast<TagType>(Ty));
+    return CreateEnumType(cast<EnumType>(Ty)->getDecl());
   case Type::FunctionProto:
   case Type::FunctionNoProto:
     return CreateType(cast<FunctionType>(Ty), Unit);
@@ -2321,7 +2316,6 @@ void CGDebugInfo::EmitDeclareOfBlockLiteralArgVariable(const CGBlockInfo &block,
 /// EmitGlobalVariable - Emit information about a global variable.
 void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
                                      const VarDecl *D) {
-  
   // Create global variable debug descriptor.
   llvm::DIFile Unit = getOrCreateFile(D->getLocation());
   unsigned LineNo = getLineNumber(D->getLocation());
@@ -2338,7 +2332,7 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
     QualType ET = CGM.getContext().getAsArrayType(T)->getElementType();
 
     T = CGM.getContext().getConstantArrayType(ET, ConstVal,
-                                           ArrayType::Normal, 0);
+                                              ArrayType::Normal, 0);
   }
   StringRef DeclName = D->getName();
   StringRef LinkageName;
