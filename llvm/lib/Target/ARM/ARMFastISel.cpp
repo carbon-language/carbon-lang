@@ -846,9 +846,17 @@ void ARMFastISel::ARMSimplifyAddress(Address &Addr, EVT VT) {
   switch (VT.getSimpleVT().SimpleTy) {
     default:
       assert(false && "Unhandled load/store type!");
+    case MVT::i16:
+      if (isThumb2)
+        // Integer loads/stores handle 12-bit offsets.
+        needsLowering = ((Addr.Offset & 0xfff) != Addr.Offset);
+      else
+        // ARM i16 integer loads/stores handle +/-imm8 offsets.
+        if (Addr.Offset > 255 || Addr.Offset < -255)
+          needsLowering = true;
+      break;
     case MVT::i1:
     case MVT::i8:
-    case MVT::i16:
     case MVT::i32:
       // Integer loads/stores handle 12-bit offsets.
       needsLowering = ((Addr.Offset & 0xfff) != Addr.Offset);
@@ -932,12 +940,12 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg, Address &Addr) {
   switch (VT.getSimpleVT().SimpleTy) {
     // This is mostly going to be Neon/vector support.
     default: return false;
-    case MVT::i16:
-      Opc = isThumb2 ? ARM::t2LDRHi12 : ARM::LDRH;
-      RC = ARM::GPRRegisterClass;
-      break;
     case MVT::i8:
       Opc = isThumb2 ? ARM::t2LDRBi12 : ARM::LDRBi12;
+      RC = ARM::GPRRegisterClass;
+      break;
+    case MVT::i16:
+      Opc = isThumb2 ? ARM::t2LDRHi12 : ARM::LDRH;
       RC = ARM::GPRRegisterClass;
       break;
     case MVT::i32:
