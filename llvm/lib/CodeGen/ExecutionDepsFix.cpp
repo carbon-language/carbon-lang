@@ -160,7 +160,7 @@ private:
   void collapse(DomainValue *dv, unsigned domain);
   bool merge(DomainValue *A, DomainValue *B);
 
-  void enterBasicBlock(MachineBasicBlock*);
+  bool enterBasicBlock(MachineBasicBlock*);
   void leaveBasicBlock(MachineBasicBlock*);
   void visitInstr(MachineInstr*);
   void visitGenericInstr(MachineInstr*);
@@ -317,7 +317,13 @@ bool ExeDepsFix::merge(DomainValue *A, DomainValue *B) {
   return true;
 }
 
-void ExeDepsFix::enterBasicBlock(MachineBasicBlock *MBB) {
+// enterBasicBlock - Set up LiveRegs by merging predecessor live-out values.
+// Return true if some predecessor hasn't been processed yet (like on a loop
+// back-edge).
+bool ExeDepsFix::enterBasicBlock(MachineBasicBlock *MBB) {
+  // Detect back-edges from predecessors we haven't processed yet.
+  bool seenBackEdge = false;
+
   // Try to coalesce live-out registers from predecessors.
   for (MachineBasicBlock::livein_iterator i = MBB->livein_begin(),
          e = MBB->livein_end(); i != e; ++i) {
@@ -326,7 +332,12 @@ void ExeDepsFix::enterBasicBlock(MachineBasicBlock *MBB) {
     for (MachineBasicBlock::const_pred_iterator pi = MBB->pred_begin(),
            pe = MBB->pred_end(); pi != pe; ++pi) {
       LiveOutMap::const_iterator fi = LiveOuts.find(*pi);
-      if (fi == LiveOuts.end()) continue;
+      if (fi == LiveOuts.end()) {
+        seenBackEdge = true;
+        continue;
+      }
+      if (!fi->second)
+        continue;
       DomainValue *pdv = resolve(fi->second[rx]);
       if (!pdv) continue;
       if (!LiveRegs || !LiveRegs[rx]) {
@@ -350,12 +361,19 @@ void ExeDepsFix::enterBasicBlock(MachineBasicBlock *MBB) {
         force(rx, pdv->getFirstDomain());
     }
   }
+  return seenBackEdge;
 }
 
 void ExeDepsFix::leaveBasicBlock(MachineBasicBlock *MBB) {
   // Save live registers at end of MBB - used by enterBasicBlock().
-  if (LiveRegs)
-    LiveOuts.insert(std::make_pair(MBB, LiveRegs));
+  // Also use LiveOuts as a visited set to detect back-edges.
+  if (!LiveOuts.insert(std::make_pair(MBB, LiveRegs)).second && LiveRegs) {
+    // Insertion failed, this must be the second pass.
+    // Release all the DomainValues instead of keeping them.
+    for (unsigned i = 0, e = NumRegs; i != e; ++i)
+      release(LiveRegs[i]);
+    delete[] LiveRegs;
+  }
   LiveRegs = 0;
 }
 
@@ -545,13 +563,23 @@ bool ExeDepsFix::runOnMachineFunction(MachineFunction &mf) {
 
   MachineBasicBlock *Entry = MF->begin();
   ReversePostOrderTraversal<MachineBasicBlock*> RPOT(Entry);
+  SmallVector<MachineBasicBlock*, 16> Loops;
   for (ReversePostOrderTraversal<MachineBasicBlock*>::rpo_iterator
          MBBI = RPOT.begin(), MBBE = RPOT.end(); MBBI != MBBE; ++MBBI) {
     MachineBasicBlock *MBB = *MBBI;
-    enterBasicBlock(MBB);
+    if (enterBasicBlock(MBB))
+      Loops.push_back(MBB);
     for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end(); I != E;
         ++I)
       visitInstr(I);
+    leaveBasicBlock(MBB);
+  }
+
+  // Visit all the loop blocks again in order to merge DomainValues from
+  // back-edges.
+  for (unsigned i = 0, e = Loops.size(); i != e; ++i) {
+    MachineBasicBlock *MBB = Loops[i];
+    enterBasicBlock(MBB);
     leaveBasicBlock(MBB);
   }
 
@@ -559,9 +587,8 @@ bool ExeDepsFix::runOnMachineFunction(MachineFunction &mf) {
   for (ReversePostOrderTraversal<MachineBasicBlock*>::rpo_iterator
          MBBI = RPOT.begin(), MBBE = RPOT.end(); MBBI != MBBE; ++MBBI) {
     LiveOutMap::const_iterator FI = LiveOuts.find(*MBBI);
-    if (FI == LiveOuts.end())
+    if (FI == LiveOuts.end() || !FI->second)
       continue;
-    assert(FI->second && "Null entry");
     for (unsigned i = 0, e = NumRegs; i != e; ++i)
       if (FI->second[i])
         release(FI->second[i]);
