@@ -28,7 +28,7 @@ class DominatorTree : public ManagedAnalysis {
 
 public:
   DominatorTree(AnalysisDeclContext &ac) 
-      : AC(ac) {};
+      : AC(ac) {}
 
   virtual ~DominatorTree();
 
