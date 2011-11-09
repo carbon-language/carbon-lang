@@ -197,7 +197,6 @@ Options:
   --build-mode       Print build mode of LLVM tree (e.g. Debug or Release).
 Typical components:
   all                All LLVM libraries (default).
-  backend            Either a native backend or the C backend.
   engine             Either a native JIT or a bitcode interpreter.
 __EOD__
     exit(1);
@@ -344,7 +343,6 @@ sub build_name_map {
     # Add virtual entries.
     $NAME_MAP{'native'}  = have_native_backend() ? [$ARCH] : [];
     $NAME_MAP{'nativecodegen'} = have_native_backend() ? [$ARCH.'codegen'] : [];
-    $NAME_MAP{'backend'} = have_native_backend() ? ['native'] : ['cbackend'];
     $NAME_MAP{'engine'}  = find_best_engine;
     $NAME_MAP{'all-targets'}     = \@all_targets;
     $NAME_MAP{'all'}     = [name_map_entries];   # Must be last.
