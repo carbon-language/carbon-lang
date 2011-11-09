@@ -2976,12 +2976,15 @@ call void @llvm.dbg.value(metadata !24, i64 0, metadata !25)
    point type.  It expresses the maximum relative error of the result of
    that instruction, in ULPs. ULP is defined as follows:</p>
 
-<blockquote><p>
-If x is a real number that lies between two finite consecutive floating-point
-numbers a and b, without being equal to one of them, then ulp(x) = |b - a|,
-otherwise ulp(x) is the distance between the two non-equal finite
-floating-point numbers nearest x. Moreover, ulp(NaN) is NaN.
-</p></blockquote>
+<blockquote>
+
+<p>If <tt>x</tt> is a real number that lies between two finite consecutive
+   floating-point numbers <tt>a</tt> and <tt>b</tt>, without being equal to one
+   of them, then <tt>ulp(x) = |b - a|</tt>, otherwise <tt>ulp(x)</tt> is the
+   distance between the two non-equal finite floating-point numbers nearest
+   <tt>x</tt>. Moreover, <tt>ulp(NaN)</tt> is <tt>NaN</tt>.</p>
+
+</blockquote>
 
 <p>The maximum relative error may be any rational number.  The metadata node
    shall consist of a pair of unsigned integers respectively representing
