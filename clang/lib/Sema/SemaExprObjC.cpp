@@ -873,6 +873,11 @@ Sema::ObjCMessageKind Sema::getObjCMessageKind(Scope *S,
     // FIXME: This is a hack. Ivar lookup should be part of normal
     // lookup.
     if (ObjCMethodDecl *Method = getCurMethodDecl()) {
+      if (!Method->getClassInterface()) {
+        // Fall back: let the parser try to parse it as an instance message.
+        return ObjCInstanceMessage;
+      }
+
       ObjCInterfaceDecl *ClassDeclared;
       if (Method->getClassInterface()->lookupInstanceVariable(Name, 
                                                               ClassDeclared))

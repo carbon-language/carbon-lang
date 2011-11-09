@@ -23,6 +23,7 @@ void foo() {
 @class NSView;
 @implementation IBFillView(IBFillViewIntegration) // expected-error {{cannot find interface declaration for 'IBFillView'}}
 - (NSView *)ibDesignableContentView {
+    [Cake lie]; // expected-error {{undeclared}}
     return self;
 }
 @end
