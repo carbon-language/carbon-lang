@@ -2303,11 +2303,13 @@ _func:
         stmdb r4, {r5, r6}
         stmdb r5!, {r3, r8}
         stmea r5!, {r3, r8}
+        stmdb.w r5, {r0, r1}
 
 @ CHECK: stmdb	r4, {r4, r5, r8, r9}    @ encoding: [0x04,0xe9,0x30,0x03]
 @ CHECK: stmdb	r4, {r5, r6}            @ encoding: [0x04,0xe9,0x60,0x00]
 @ CHECK: stmdb	r5!, {r3, r8}           @ encoding: [0x25,0xe9,0x08,0x01]
 @ CHECK: stm.w	r5!, {r3, r8}           @ encoding: [0xa5,0xe8,0x08,0x01]
+@ CHECK: stmdb	r5, {r0, r1}            @ encoding: [0x05,0xe9,0x03,0x00]
 
 
 @------------------------------------------------------------------------------
