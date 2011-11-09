@@ -160,8 +160,21 @@ TEST(MultiJitTest, JitPool) {
   EXPECT_EQ(getPointerToNamedFunction("foo2"), foo2);
 
   // Symbol search
-  EXPECT_EQ((intptr_t)getPointerToNamedFunction("getPointerToNamedFunction"),
-            (intptr_t)&getPointerToNamedFunction);
+  intptr_t
+    sa = (intptr_t)getPointerToNamedFunction("getPointerToNamedFunction");
+  EXPECT_TRUE(sa != 0);
+  intptr_t fa = (intptr_t)&getPointerToNamedFunction;
+  EXPECT_TRUE(fa != 0);
+#ifdef __i386__
+  // getPointerToNamedFunction might be indirect jump on Win32 --enable-shared.
+  // FF 25 <disp32>: jmp *(pointer to IAT)
+  if (sa != fa && memcmp((char *)fa, "\xFF\x25", 2) == 0) {
+    fa = *(intptr_t *)(fa + 2); // Address to IAT
+    EXPECT_TRUE(fa != 0);
+    fa = *(intptr_t *)fa;       // Bound value of IAT
+  }
+#endif
+  EXPECT_TRUE(sa == fa);
 }
 #endif  // !defined(__arm__)
 
