@@ -43,15 +43,7 @@ using namespace llvm;
 //
 // Not all components define a library, we also use "library groups" as a way to
 // create entries for pseudo groups like x86 or all-targets.
-//
-// FIXME: Include real component table.
-struct AvailableComponent {
-  const char *Name;
-  const char *Library;
-  const char *RequiredLibraries[1];
-} AvailableComponents[1] = {
-  { "all", 0, { } }
-};
+#include "LibraryDependencies.inc"
 
 /// \brief Traverse a single component adding to the topological ordering in
 /// \arg RequiredLibs.
@@ -264,7 +256,6 @@ int main(int argc, char **argv) {
       } else if (Arg == "--libfiles") {
         PrintLibFiles = true;
       } else if (Arg == "--components") {
-        OS << "all";
         for (unsigned j = 0; j != array_lengthof(AvailableComponents); ++j) {
           OS << ' ';
           OS << AvailableComponents[j].Name;
