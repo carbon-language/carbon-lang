@@ -283,13 +283,6 @@ void TempScopInfo::buildLoopBounds(TempScop &Scop) {
     const SCEV *BackedgeTakenCount = SE->getBackedgeTakenCount(L);
     LoopBounds[L] = BackedgeTakenCount;
 
-    // FIXME: Do not build TempSCEVAffFunc. It is not needed anywhere else
-    //        and only build to register the parameters in this SCoP. We should
-    //        move this functionality to the ScopDetection.
-    SCEVAffFunc Temp(SCEVAffFunc::Eq, BackedgeTakenCount);
-    buildAffineFunction(BackedgeTakenCount, Temp, Scop.getMaxRegion(),
-                        Scop.getParamSet());
-
     Loop *OL = R.outermostLoopInRegion(L);
     unsigned LoopDepth = L->getLoopDepth() - OL->getLoopDepth() + 1;
 
