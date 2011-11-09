@@ -3,9 +3,15 @@
 
 ; This testcase shouldn't need to spill the -1 value,
 ; so it should just use pcmpeqd to materialize an all-ones vector.
+; For i386, cp load of -1 are folded.
 
-; I386: pcmpeqd
+; With -regalloc=greedy, the live range is split before spilling, so the first
+; pcmpeq doesn't get folded as a constant pool load.
+
 ; I386-NOT: pcmpeqd
+; I386: orps LCPI0_2, %xmm
+; I386-NOT: pcmpeqd
+; I386: orps LCPI0_2, %xmm
 
 ; X86-64: pcmpeqd
 ; X86-64-NOT: pcmpeqd

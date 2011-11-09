@@ -1666,7 +1666,7 @@ public:
 
 protected:
   bool canClobber(const SUnit *SU, const SUnit *Op);
-  void AddPseudoTwoAddrDeps(const TargetInstrInfo *TII);
+  void AddPseudoTwoAddrDeps();
   void PrescheduleNodesWithMultipleUses();
   void CalculateSethiUllmanNumbers();
 };
@@ -2628,7 +2628,7 @@ bool ilp_ls_rr_sort::operator()(SUnit *left, SUnit *right) const {
 void RegReductionPQBase::initNodes(std::vector<SUnit> &sunits) {
   SUnits = &sunits;
   // Add pseudo dependency edges for two-address nodes.
-  AddPseudoTwoAddrDeps(TII);
+  AddPseudoTwoAddrDeps();
   // Reroute edges to nodes with multiple uses.
   if (!TracksRegPressure)
     PrescheduleNodesWithMultipleUses();
@@ -2855,17 +2855,7 @@ void RegReductionPQBase::PrescheduleNodesWithMultipleUses() {
 /// one that has a CopyToReg use (more likely to be a loop induction update).
 /// If both are two-address, but one is commutable while the other is not
 /// commutable, favor the one that's not commutable.
-void RegReductionPQBase::AddPseudoTwoAddrDeps(const TargetInstrInfo *TII) {
-  // If the graph contains any calls, disable this optimization.
-  // FIXME: This is a kludge to work around the fact that the artificial edges
-  // can combine with the way call sequences use physical register dependencies
-  // to model their resource usage to create unschedulable graphs.
-  for (unsigned i = 0, e = SUnits->size(); i != e; ++i)
-    for (SDNode *Node = (*SUnits)[i].getNode(); Node; Node = Node->getGluedNode())
-      if (Node->isMachineOpcode() &&
-          Node->getMachineOpcode() == (unsigned)TII->getCallFrameSetupOpcode())
-        return;
-
+void RegReductionPQBase::AddPseudoTwoAddrDeps() {
   for (unsigned i = 0, e = SUnits->size(); i != e; ++i) {
     SUnit *SU = &(*SUnits)[i];
     if (!SU->isTwoAddress)
