@@ -7689,3 +7689,31 @@ defm VPSRLVQ : avx2_var_shift<0x45, "vpsrlvq", memopv2i64, memopv4i64,
                               VEX_W;
 defm VPSRAVD : avx2_var_shift<0x46, "vpsravd", memopv4i32, memopv8i32,
                               int_x86_avx2_psrav_d, int_x86_avx2_psrav_d_256>;
+
+
+let Predicates = [HasAVX2] in {
+  def : Pat<(v4i32 (shl (v4i32 VR128:$src1), (v4i32 VR128:$src2))),
+            (VPSLLVDrr VR128:$src1, VR128:$src2)>;
+  def : Pat<(v2i64 (shl (v2i64 VR128:$src1), (v2i64 VR128:$src2))),
+            (VPSLLVQrr VR128:$src1, VR128:$src2)>;
+  def : Pat<(v4i32 (srl (v4i32 VR128:$src1), (v4i32 VR128:$src2))),
+            (VPSRLVDrr VR128:$src1, VR128:$src2)>;
+  def : Pat<(v2i64 (srl (v2i64 VR128:$src1), (v2i64 VR128:$src2))),
+            (VPSRLVQrr VR128:$src1, VR128:$src2)>;
+  def : Pat<(v4i32 (sra (v4i32 VR128:$src1), (v4i32 VR128:$src2))),
+            (VPSRAVDrr VR128:$src1, VR128:$src2)>;
+
+  def : Pat<(v8i32 (shl (v8i32 VR256:$src1), (v8i32 VR256:$src2))),
+            (VPSLLVDYrr VR256:$src1, VR256:$src2)>;
+  def : Pat<(v4i64 (shl (v4i64 VR256:$src1), (v4i64 VR256:$src2))),
+            (VPSLLVQYrr VR256:$src1, VR256:$src2)>;
+  def : Pat<(v8i32 (srl (v8i32 VR256:$src1), (v8i32 VR256:$src2))),
+            (VPSRLVDYrr VR256:$src1, VR256:$src2)>;
+  def : Pat<(v4i64 (srl (v4i64 VR256:$src1), (v4i64 VR256:$src2))),
+            (VPSRLVQYrr VR256:$src1, VR256:$src2)>;
+  def : Pat<(v8i32 (sra (v8i32 VR256:$src1), (v8i32 VR256:$src2))),
+            (VPSRAVDYrr VR256:$src1, VR256:$src2)>;
+}
+
+
+

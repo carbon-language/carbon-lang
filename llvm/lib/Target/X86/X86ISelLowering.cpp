@@ -1052,6 +1052,18 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
       setOperationAction(ISD::MUL,             MVT::v16i16, Legal);
 
       setOperationAction(ISD::VSELECT,         MVT::v32i8, Legal);
+
+      setOperationAction(ISD::SHL,         MVT::v4i32, Legal);
+      setOperationAction(ISD::SHL,         MVT::v2i64, Legal);
+      setOperationAction(ISD::SRL,         MVT::v4i32, Legal);
+      setOperationAction(ISD::SRL,         MVT::v2i64, Legal);
+      setOperationAction(ISD::SRA,         MVT::v4i32, Legal);
+
+      setOperationAction(ISD::SHL,         MVT::v8i32, Legal);
+      setOperationAction(ISD::SHL,         MVT::v4i64, Legal);
+      setOperationAction(ISD::SRL,         MVT::v8i32, Legal);
+      setOperationAction(ISD::SRL,         MVT::v4i64, Legal);
+      setOperationAction(ISD::SRA,         MVT::v8i32, Legal);
       // Don't lower v32i8 because there is no 128-bit byte mul
     } else {
       setOperationAction(ISD::ADD,             MVT::v4i64, Custom);
