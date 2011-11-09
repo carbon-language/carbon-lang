@@ -40,50 +40,7 @@ SCEVAffFunc::SCEVAffFunc(const SCEV *S, SCEVAffFuncType Type, Region &R,
                          ParamSetType &Params, LoopInfo *LI,
                          ScalarEvolution *SE)
     : ElemBytes(0), FuncType(Type) {
-  assert(S && "S can not be null!");
-  assert(!isa<SCEVCouldNotCompute>(S) && "Non affine function in Scop");
-
   OriginalSCEV = S;
-
-  for (AffineSCEVIterator I = affine_begin(S, SE), E = affine_end();
-       I != E; ++I) {
-    // The constant part must be a SCEVConstant.
-    // TODO: support sizeof in coefficient.
-    assert(isa<SCEVConstant>(I->second)
-           && "Expected SCEVConst in coefficient!");
-
-    const SCEV *Var = I->first;
-
-    if (isa<SCEVConstant>(Var)) // Extract the constant part.
-      // Add the translation component.
-      TransComp = I->second;
-    else if (Var->getType()->isPointerTy()) { // Extract the base address.
-      const SCEVUnknown *Addr = dyn_cast<SCEVUnknown>(Var);
-      assert(Addr && "Broken SCEV detected!");
-      BaseAddr = Addr->getValue();
-    } else  { // Extract other affine components.
-      LnrTrans.insert(*I);
-
-      if (isIndVar(Var, R, *LI, *SE))
-        continue;
-
-      assert(isParameter(Var, R, *LI, *SE)
-               && "Found non affine function in Scop!");
-      Params.insert(Var);
-    }
-  }
-}
-
-void SCEVAffFunc::print(raw_ostream &OS, bool PrintInequality) const {
-}
-
-void SCEVAffFunc::dump() const {
-  print(errs());
-}
-
-inline raw_ostream &operator<<(raw_ostream &OS, const SCEVAffFunc &AffFunc) {
-  AffFunc.print(OS);
-  return OS;
 }
 
 void Comparison::print(raw_ostream &OS) const {
