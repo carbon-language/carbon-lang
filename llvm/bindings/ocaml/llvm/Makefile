@@ -30,11 +30,13 @@ copy-meta: $(OcamlDir)/META.llvm
 $(OcamlDir)/META.llvm: META.llvm
 	$(Verb) $(CP) -f $< $@
 
-install-meta:: $(ObjDir)/META.llvm
+install-meta:: $(OcamlDir)/META.llvm
 	$(Echo) "Install $(BuildMode) $(DestMETA)"
 	$(Verb) $(MKDIR) $(PROJ_libocamldir)
-	$(Verb) $(DataInstall) META.llvm "$(DestMETA)"
+	$(Verb) $(DataInstall) $< "$(DestMETA)"
 
 uninstall-meta::
 	$(Echo) "Uninstalling $(DestMETA)"
 	-$(Verb) $(RM) -f "$(DestMETA)"
+
+.PHONY: copy-meta install-meta uninstall-meta

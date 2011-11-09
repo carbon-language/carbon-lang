@@ -238,13 +238,13 @@ clean-cmis::
 # Also install the .mli's (headers) as documentation.
 install-cmis: $(OutputsCMI) $(OcamlHeaders)
 	$(Verb) $(MKDIR) $(PROJ_libocamldir)
-	$(Verb) for i in $(OutputsCMI:$(OcamlDir)/%=%); do \
-	  $(EchoCmd) "Installing $(BuildMode) $(PROJ_libocamldir)/$$i"; \
-	  $(DataInstall) $(OcamlDir)/$$i "$(PROJ_libocamldir)/$$i"; \
-	done
 	$(Verb) for i in $(OcamlHeaders:$(ObjDir)/%=%); do \
 	  $(EchoCmd) "Installing $(BuildMode) $(PROJ_libocamldir)/$$i"; \
 	  $(DataInstall) $(ObjDir)/$$i "$(PROJ_libocamldir)/$$i"; \
+	done
+	$(Verb) for i in $(OutputsCMI:$(OcamlDir)/%=%); do \
+	  $(EchoCmd) "Installing $(BuildMode) $(PROJ_libocamldir)/$$i"; \
+	  $(DataInstall) $(OcamlDir)/$$i "$(PROJ_libocamldir)/$$i"; \
 	done
 
 uninstall-cmis::
