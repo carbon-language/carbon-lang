@@ -86,11 +86,17 @@ LLVMConfigLibraryDependenciesInc := \
 #
 # Note that this target gets its real dependencies generated for us by
 # llvm-build.
-$(LLVMBuildMakeFrag):
+#
+# We include a dependency on this Makefile to ensure that changes to the
+# generation command get picked up.
+$(LLVMBuildMakeFrag): $(PROJ_SRC_ROOT)/Makefile.rules
 	$(Echo) Constructing LLVMBuild project information.
 	$(Verb) $(LLVMBuildTool) \
 	  --write-library-table $(LLVMConfigLibraryDependenciesInc) \
 	  --write-make-fragment $(LLVMBuildMakeFrag)
+
+# For completeness, let Make know how the extra files are generated.
+$(LLVMConfigLibraryDependenciesInc): $(LLVMBuildMakeFrag)
 
 # Include the generated Makefile fragment.
 #
