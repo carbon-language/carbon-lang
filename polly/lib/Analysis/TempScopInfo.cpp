@@ -75,32 +75,6 @@ SCEVAffFunc::SCEVAffFunc(const SCEV *S, SCEVAffFuncType Type, Region &R,
 }
 
 void SCEVAffFunc::print(raw_ostream &OS, bool PrintInequality) const {
-  // Print BaseAddr.
-  if (isDataRef()) {
-    OS << (isRead() ? "Reads" : "Writes") << " ";
-    WriteAsOperand(OS, getBaseAddr(), false);
-    OS << "[";
-  }
-
-  for (LnrTransSet::const_iterator I = LnrTrans.begin(), E = LnrTrans.end();
-    I != E; ++I)
-    OS << *I->second << " * " << *I->first << " + ";
-
-  if (TransComp)
-    OS << *TransComp;
-
-  if (isDataRef())
-    OS << "]";
-
-  if (!PrintInequality)
-    return;
-
-  if (getType() == GE)
-    OS << " >= 0";
-  else if (getType() == Eq)
-    OS << " == 0";
-  else if (getType() == Ne)
-    OS << " != 0";
 }
 
 void SCEVAffFunc::dump() const {
@@ -152,74 +126,6 @@ void TempScop::print(raw_ostream &OS, ScalarEvolution *SE, LoopInfo *LI) const {
 void TempScop::printDetail(llvm::raw_ostream &OS, ScalarEvolution *SE,
                            LoopInfo *LI, const Region *CurR,
                            unsigned ind) const {
-  // Print the loop bounds,  if the current region is a loop.
-  LoopBoundMapType::const_iterator at = LoopBounds.find(castToLoop(*CurR, *LI));
-  if (at != LoopBounds.end()) {
-    OS.indent(ind) << "Bounds of Loop: " << at->first->getHeader()->getName()
-      << ":\t{ ";
-    OS << *(at->second);
-    OS << " }\n";
-    ind += 2;
-  }
-
-  // Iterate over the region nodes of this Scop to print the access functions
-  // and loop bounds.
-  for (Region::const_element_iterator I = CurR->element_begin(),
-       E = CurR->element_end(); I != E; ++I) {
-    if (I->isSubRegion()) {
-      Region *subR = I->getNodeAs<Region>();
-      printDetail(OS, SE, LI, subR, ind + 2);
-    } else {
-      BasicBlock *BB = I->getNodeAs<BasicBlock>();
-
-      if (const AccFuncSetType *AccFunc = getAccessFunctions(BB)) {
-        OS.indent(ind) << "BB: " << BB->getName() << "{\n";
-
-        for (AccFuncSetType::const_iterator FI = AccFunc->begin(),
-             FE = AccFunc->end(); FI != FE; ++FI) {
-          const SCEVAffFunc &AF = FI->first;
-          const Value *Ptr = AF.getBaseAddr();
-
-          OS.indent(ind + 2) << AF << "  Refs: ";
-          for (MayAliasSetInfo::const_alias_iterator
-               MI = MayASInfo->alias_begin(Ptr), ME = MayASInfo->alias_end(Ptr);
-               MI != ME; ++MI) {
-            MI->second->print(OS);
-            OS << ", ";
-          }
-
-          OS << '\n';
-        }
-
-        OS.indent(ind) << "}\n";
-      }
-    }
-  }
-}
-
-void TempScopInfo::buildAffineFunction(const SCEV *S, SCEVAffFunc &FuncToBuild,
-                                       Region &R, ParamSetType &Params) const {
-  assert(S && "S can not be null!");
-
-  assert(!isa<SCEVCouldNotCompute>(S)
-    && "Un Expect broken affine function in Scop!");
-
-  for (AffineSCEVIterator I = affine_begin(S, SE), E = affine_end();
-      I != E; ++I) {
-    // The constant part must be a SCEVConstant.
-    // TODO: support sizeof in coefficient.
-    assert(isa<SCEVConstant>(I->second) && "Expect SCEVConst in coefficient!");
-
-    const SCEV *Var = I->first;
-    // Extract the constant part
-    if (isa<SCEVConstant>(Var))
-      ;
-    else if (Var->getType()->isPointerTy()) { // Extract the base address
-      const SCEVUnknown *BaseAddr = dyn_cast<SCEVUnknown>(Var);
-      assert(BaseAddr && "Why we got a broken scev?");
-      FuncToBuild.BaseAddr = BaseAddr->getValue();
-    }
-  }
 }
 
 void TempScopInfo::buildAccessFunctions(Region &R, ParamSetType &Parameter,
@@ -244,8 +150,6 @@ void TempScopInfo::buildAccessFunctions(Region &R, ParamSetType &Parameter,
       const SCEV *AccessFunction = SE->getSCEV(getPointerOperand(Inst));
       Functions.push_back(
         std::make_pair(SCEVAffFunc(Type, AccessFunction, Size), &Inst));
-
-      buildAffineFunction(AccessFunction, Functions.back().first, R, Parameter);
     }
   }
 

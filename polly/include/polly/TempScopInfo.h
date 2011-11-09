@@ -317,17 +317,6 @@ class TempScopInfo : public FunctionPass {
   // Clear the context.
   void clear();
 
-  /// @brief Build an affine function from a SCEV expression.
-  ///
-  /// @param S            The SCEV expression to be converted to affine
-  ///                     function.
-  /// @param Scop         The Scope of this expression.
-  /// @param FuncToBuild  The SCEVAffFunc to hold the result.
-  ///
-  void buildAffineFunction(const SCEV *S, SCEVAffFunc &FuncToBuild,
-                           Region &R, ParamSetType &Params) const;
-
-
   /// @brief Build condition constrains to BBs in a valid Scop.
   ///
   /// @param BB           The BasicBlock to build condition constrains

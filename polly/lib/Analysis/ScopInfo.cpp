@@ -82,19 +82,18 @@ private:
 
 public:
   static isl_pw_aff *getPwAff(ScopStmt *stmt, const SCEV *scev,
-                              bool isMemoryAccess = false) {
+                              Value **BaseAddress = NULL) {
     Scop *S = stmt->getParent();
     const Region *Reg = &S->getRegion();
 
-    Value *BaseAddress = NULL;
-
-    if (isMemoryAccess) {
-      S->addParams(getParamsInAffineExpr(Reg, scev, *S->getSE(), &BaseAddress));
+    if (BaseAddress) {
+      S->addParams(getParamsInAffineExpr(Reg, scev, *S->getSE(), BaseAddress));
     } else {
       S->addParams(getParamsInAffineExpr(Reg, scev, *S->getSE()));
     }
 
-    SCEVAffinator Affinator(stmt,  BaseAddress);
+    Value *Base = BaseAddress ? *BaseAddress : NULL;
+    SCEVAffinator Affinator(stmt, Base);
     return Affinator.visit(scev);
   }
 
@@ -327,14 +326,15 @@ isl_basic_map *MemoryAccess::createBasicAccessMap(ScopStmt *Statement) {
 
 MemoryAccess::MemoryAccess(const SCEVAffFunc &AffFunc, ScopStmt *Statement) {
   newAccessRelation = NULL;
-  BaseAddr = AffFunc.getBaseAddr();
   Type = AffFunc.isRead() ? Read : Write;
   statement = Statement;
 
-  setBaseName();
-
+  Value *TmpBaseAddress = NULL;
   isl_pw_aff *Affine = SCEVAffinator::getPwAff(Statement, AffFunc.OriginalSCEV,
-                                               true);
+                                               &TmpBaseAddress);
+  BaseAddr = TmpBaseAddress;
+
+  setBaseName();
 
   // Devide the access function by the size of the elements in the array.
   //
