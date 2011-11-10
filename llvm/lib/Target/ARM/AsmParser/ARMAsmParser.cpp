@@ -4966,17 +4966,17 @@ bool ARMAsmParser::parseDirectiveThumbFunc(SMLoc L) {
     const AsmToken &Tok = Parser.getTok();
     if (Tok.isNot(AsmToken::Identifier) && Tok.isNot(AsmToken::String))
       return Error(L, "unexpected token in .thumb_func directive");
-    Name = Tok.getString();
+    Name = Tok.getIdentifier();
     Parser.Lex(); // Consume the identifier token.
   }
 
-  if (getLexer().isNot(AsmToken::EndOfStatement))
+ if (getLexer().isNot(AsmToken::EndOfStatement))
     return Error(L, "unexpected token in directive");
   Parser.Lex();
 
   // FIXME: assuming function name will be the line following .thumb_func
   if (!isMachO) {
-    Name = Parser.getTok().getString();
+    Name = Parser.getTok().getIdentifier();
   }
 
   // Mark symbol as a thumb symbol.
