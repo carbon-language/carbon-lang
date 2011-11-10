@@ -75,9 +75,15 @@ void DwarfAccelTable::ComputeBucketCount(void) {
 
 void DwarfAccelTable::FinalizeTable(AsmPrinter *Asm, const char *Prefix) {
   // Create the individual hash data outputs.
-  for (StringMap<DIEArray>::const_iterator
+  for (StringMap<DIEArray>::iterator
          EI = Entries.begin(), EE = Entries.end(); EI != EE; ++EI) {
     struct HashData *Entry = new HashData((*EI).getKeyData());
+
+    // Unique the entries.
+    std::sort((*EI).second.begin(), (*EI).second.end());
+    (*EI).second.erase(std::unique((*EI).second.begin(), (*EI).second.end()),
+                       (*EI).second.end());
+
     for (DIEArray::const_iterator DI = (*EI).second.begin(),
            DE = (*EI).second.end();
          DI != DE; ++DI)

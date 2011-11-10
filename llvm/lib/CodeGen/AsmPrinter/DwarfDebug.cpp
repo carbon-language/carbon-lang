@@ -198,6 +198,63 @@ static StringRef getRealLinkageName(StringRef LinkageName) {
   return LinkageName;
 }
 
+static bool isObjCClass(StringRef Name) {
+  return Name.startswith("+") || Name.startswith("-");
+}
+
+static bool hasObjCCategory(StringRef Name) {
+  if (!isObjCClass(Name)) return false;
+
+  size_t pos = Name.find(')');
+  if (pos != std::string::npos) {
+    if (Name[pos+1] != ' ') return false;
+    return true;
+  }
+  return false;
+}
+
+static void getObjCClassCategory(StringRef In, StringRef &Class,
+                                 StringRef &Category) {
+  if (!hasObjCCategory(In)) {
+    Class = In.slice(In.find('[') + 1, In.find(' '));
+    Category = "";
+    return;
+  }
+
+  Class = In.slice(In.find('[') + 1, In.find('('));
+  Category = In.slice(In.find('[') + 1, In.find(' '));
+  return;
+}
+
+static StringRef getObjCMethodName(StringRef In) {
+  return In.slice(In.find(' ') + 1, In.find(']'));
+}
+
+// Add the various names to the Dwarf accelerator table names.
+static void addSubprogramNames(CompileUnit *TheCU, DISubprogram SP,
+                               DIE* Die) {
+  if (!SP.isDefinition()) return;
+  
+  TheCU->addAccelName(SP.getName(), Die);
+
+  // If the linkage name is different than the name, go ahead and output
+  // that as well into the name table.
+  if (SP.getLinkageName() != "" && SP.getName() != SP.getLinkageName())
+    TheCU->addAccelName(SP.getLinkageName(), Die);
+
+  // If this is an Objective-C selector name add it to the ObjC accelerator
+  // too.
+  if (isObjCClass(SP.getName())) {
+    StringRef Class, Category;
+    getObjCClassCategory(SP.getName(), Class, Category);
+    TheCU->addAccelObjC(Class, Die);
+    if (Category != "")
+      TheCU->addAccelObjC(Category, Die);
+    // Also add the base method name to the name table.
+    TheCU->addAccelName(getObjCMethodName(SP.getName()), Die);
+  }
+}
+
 /// updateSubprogramScopeDIE - Find DIE for the given subprogram and
 /// attach appropriate DW_AT_low_pc and DW_AT_high_pc attributes.
 /// If there are global variables in this scope then create and insert
@@ -257,6 +314,10 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(CompileUnit *SPCU,
   MachineLocation Location(RI->getFrameRegister(*Asm->MF));
   SPCU->addAddress(SPDie, dwarf::DW_AT_frame_base, Location);
 
+  // Add name to the name table, we do this here because we're guaranteed
+  // to have concrete versions of our DW_TAG_subprogram nodes.
+  addSubprogramNames(SPCU, SP, SPDie);
+  
   return SPDie;
 }
 
@@ -384,6 +445,8 @@ DIE *DwarfDebug::constructInlinedScopeDIE(CompileUnit *TheCU,
   return ScopeDIE;
 }
 
+
+
 /// constructScopeDIE - Construct a DIE for this scope.
 DIE *DwarfDebug::constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope) {
   if (!Scope || !Scope->getScopeNode())
@@ -439,19 +502,9 @@ DIE *DwarfDebug::constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope) {
     ScopeDIE->addChild(*I);
 
   if (DS.isSubprogram())
-   TheCU->addPubTypes(DISubprogram(DS));
+    TheCU->addPubTypes(DISubprogram(DS));
 
-  if (DS.isSubprogram() && !Scope->isAbstractScope()) {
-    DISubprogram SP = DISubprogram(DS);
-    TheCU->addAccelName(SP.getName(), ScopeDIE);
-
-    // If the linkage name is different than the name, go ahead and output
-    // that as well into the name table.
-    if (SP.getLinkageName() != "" && SP.getName() != SP.getLinkageName())
-      TheCU->addAccelName(SP.getLinkageName(), ScopeDIE);
-  }
-
- return ScopeDIE;
+  return ScopeDIE;
 }
 
 /// GetOrCreateSourceID - Look up the source id with the given directory and
@@ -531,38 +584,6 @@ CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
   return NewCU;
 }
 
-static bool isObjCClass(StringRef Name) {
-  return Name.startswith("+") || Name.startswith("-");
-}
-
-static bool hasObjCCategory(StringRef Name) {
-  if (!isObjCClass(Name)) return false;
-
-  size_t pos = Name.find(')');
-  if (pos != std::string::npos) {
-    if (Name[pos+1] != ' ') return false;
-    return true;
-  }
-  return false;
-}
-
-static void getObjCClassCategory(StringRef In, StringRef &Class,
-                                 StringRef &Category) {
-  if (!hasObjCCategory(In)) {
-    Class = In.slice(In.find('[') + 1, In.find(' '));
-    Category = "";
-    return;
-  }
-
-  Class = In.slice(In.find('[') + 1, In.find('('));
-  Category = In.slice(In.find('[') + 1, In.find(' '));
-  return;
-}
-
-static StringRef getObjCMethodName(StringRef In) {
-  return In.slice(In.find(' ') + 1, In.find(']'));
-}
-
 /// construct SubprogramDIE - Construct subprogram DIE.
 void DwarfDebug::constructSubprogramDIE(CompileUnit *TheCU, 
                                         const MDNode *N) {
@@ -597,25 +618,6 @@ void DwarfDebug::constructSubprogramDIE(CompileUnit *TheCU,
   // Add to context owner.
   TheCU->addToContextOwner(SubprogramDie, SP.getContext());
 
-  // Add to Accel Names
-  TheCU->addAccelName(SP.getName(), SubprogramDie);
-
-  // If the linkage name is different than the name, go ahead and output
-  // that as well into the name table.
-  if (SP.getLinkageName() != "" && SP.getName() != SP.getLinkageName())
-    TheCU->addAccelName(SP.getLinkageName(), SubprogramDie);
-
-  // If this is an Objective-C selector name add it to the ObjC accelerator too.
-  if (isObjCClass(SP.getName())) {
-    StringRef Class, Category;
-    getObjCClassCategory(SP.getName(), Class, Category);
-    TheCU->addAccelObjC(Class, SubprogramDie);
-    if (Category != "")
-      TheCU->addAccelObjC(Category, SubprogramDie);
-    // Also add the base method name to the name table.
-    TheCU->addAccelName(getObjCMethodName(SP.getName()), SubprogramDie);
-  }
-  
   return;
 }
 
@@ -1763,12 +1765,14 @@ void DwarfDebug::emitAccelNames() {
   for (DenseMap<const MDNode *, CompileUnit *>::iterator I = CUMap.begin(),
          E = CUMap.end(); I != E; ++I) {
     CompileUnit *TheCU = I->second;
-    const StringMap<DIE*> &Names = TheCU->getAccelNames();
-    for (StringMap<DIE*>::const_iterator
+    const StringMap<std::vector<DIE*> > &Names = TheCU->getAccelNames();
+    for (StringMap<std::vector<DIE*> >::const_iterator
            GI = Names.begin(), GE = Names.end(); GI != GE; ++GI) {
       const char *Name = GI->getKeyData();
-      DIE *Entity = GI->second;
-      AT.AddName(Name, Entity);
+      std::vector<DIE *> Entities = GI->second;
+      for (std::vector<DIE *>::const_iterator DI = Entities.begin(),
+             DE = Entities.end(); DI != DE; ++DI)
+        AT.AddName(Name, (*DI));
     }
   }
 

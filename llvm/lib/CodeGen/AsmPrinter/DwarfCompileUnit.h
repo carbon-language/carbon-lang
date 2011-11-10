@@ -62,7 +62,7 @@ class CompileUnit {
 
   /// AccelNames - A map of names for the name accelerator table.
   ///
-  StringMap<DIE*> AccelNames;
+  StringMap<std::vector<DIE*> > AccelNames;
   StringMap<std::vector<DIE*> > AccelObjC;
   StringMap<DIE*> AccelNamespace;
   StringMap<DIE*> AccelTypes;
@@ -84,7 +84,9 @@ public:
   DIE* getCUDie()                   const { return CUDie.get(); }
   const StringMap<DIE*> &getGlobalTypes() const { return GlobalTypes; }
 
-  const StringMap<DIE*> &getAccelNames() const { return AccelNames; }
+  const StringMap<std::vector<DIE*> > &getAccelNames() const {
+    return AccelNames;
+  }
   const StringMap<std::vector<DIE*> > &getAccelObjC() const {
     return AccelObjC;
   }
@@ -101,7 +103,10 @@ public:
 
 
   /// addAccelName - Add a new name to the name accelerator table.
-  void addAccelName(StringRef Name, DIE *Die) { AccelNames[Name] = Die; }
+  void addAccelName(StringRef Name, DIE *Die) {
+    std::vector<DIE*> &DIEs = AccelNames[Name];
+    DIEs.push_back(Die);
+  }
   void addAccelObjC(StringRef Name, DIE *Die) {
     std::vector<DIE*> &DIEs = AccelObjC[Name];
     DIEs.push_back(Die);
