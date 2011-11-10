@@ -10,12 +10,12 @@
 LEVEL := .
 
 # Top-Level LLVM Build Stages:
+#   0. Execute llvm-build, to construct llvm-config library dependencies.
 #   1. Build lib/Support and lib/TableGen, which are used by utils (tblgen).
 #   2. Build utils, which is used by VMCore.
 #   3. Build VMCore, which builds the Intrinsics.inc file used by libs.
-#   4. Build libs, which are needed by llvm-config.
-#   5. Build llvm-config, which determines inter-lib dependencies for tools.
-#   6. Build tools, runtime, docs.
+#   4. Build llvm-config, which determines inter-lib dependencies for tools.
+#   5. Build tools, runtime, docs.
 #
 # When cross-compiling, there are some things (tablegen) that need to
 # be build for the build system first.
