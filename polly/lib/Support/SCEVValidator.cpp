@@ -57,11 +57,11 @@ struct SCEVValidator
 private:
   const Region *R;
   ScalarEvolution &SE;
-  Value **BaseAddress;
+  const Value *BaseAddress;
 
 public:
   SCEVValidator(const Region *R, ScalarEvolution &SE,
-                Value **BaseAddress) : R(R), SE(SE),
+                const Value *BaseAddress) : R(R), SE(SE),
     BaseAddress(BaseAddress) {};
 
   struct ValidatorResult visitConstant(const SCEVConstant *Constant) {
@@ -215,32 +215,22 @@ public:
     if (isa<UndefValue>(V))
       return ValidatorResult(SCEVType::INVALID);
 
-    if (BaseAddress) {
-      if (*BaseAddress)
-        return ValidatorResult(SCEVType::INVALID);
-      else
-        *BaseAddress = V;
-    }
-
     if (Instruction *I = dyn_cast<Instruction>(Expr->getValue()))
       if (R->contains(I))
         return ValidatorResult(SCEVType::INVALID);
 
-    if (BaseAddress)
-      return ValidatorResult(SCEVType::PARAM);
-    else
-      return ValidatorResult(SCEVType::PARAM, Expr);
+    if (BaseAddress == V)
+      return ValidatorResult(SCEVType::INVALID);
+
+    return ValidatorResult(SCEVType::PARAM, Expr);
   }
 };
 
 namespace polly {
   bool isAffineExpr(const Region *R, const SCEV *Expr, ScalarEvolution &SE,
-                    Value **BaseAddress) {
+                    const Value *BaseAddress) {
     if (isa<SCEVCouldNotCompute>(Expr))
       return false;
-
-    if (BaseAddress)
-      *BaseAddress = NULL;
 
     SCEVValidator Validator(R, SE, BaseAddress);
     ValidatorResult Result = Validator.visit(Expr);
@@ -251,12 +241,9 @@ namespace polly {
   std::vector<const SCEV*> getParamsInAffineExpr(const Region *R,
                                                  const SCEV *Expr,
                                                  ScalarEvolution &SE,
-                                                 Value **BaseAddress) {
+                                                 const Value *BaseAddress) {
     if (isa<SCEVCouldNotCompute>(Expr))
       return std::vector<const SCEV*>();
-
-    if (BaseAddress)
-      *BaseAddress = NULL;
 
     SCEVValidator Validator(R, SE, BaseAddress);
     ValidatorResult Result = Validator.visit(Expr);

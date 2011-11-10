@@ -23,12 +23,13 @@ namespace llvm {
 
 namespace polly {
   bool isAffineExpr(const llvm::Region *R, const llvm::SCEV *Expression,
-                    llvm::ScalarEvolution &SE, llvm::Value **BaseAddress = 0);
+                    llvm::ScalarEvolution &SE,
+                    const llvm::Value *BaseAddress = 0);
   std::vector<const llvm::SCEV*> getParamsInAffineExpr(
     const llvm::Region *R,
     const llvm::SCEV *Expression,
     llvm::ScalarEvolution &SE,
-    llvm::Value **BaseAddress = 0);
+    const llvm::Value *BaseAddress = 0);
 
 }
 

@@ -76,24 +76,14 @@ private:
   int NbLoopSpaces;
   const Scop *scop;
 
-  /// baseAdress is set if we analyze a memory access. It holds the base address
-  /// of this memory access.
-  const Value *baseAddress;
-
 public:
-  static isl_pw_aff *getPwAff(ScopStmt *stmt, const SCEV *scev,
-                              Value **BaseAddress = NULL) {
+  static isl_pw_aff *getPwAff(ScopStmt *stmt, const SCEV *scev) {
     Scop *S = stmt->getParent();
     const Region *Reg = &S->getRegion();
 
-    if (BaseAddress) {
-      S->addParams(getParamsInAffineExpr(Reg, scev, *S->getSE(), BaseAddress));
-    } else {
-      S->addParams(getParamsInAffineExpr(Reg, scev, *S->getSE()));
-    }
+    S->addParams(getParamsInAffineExpr(Reg, scev, *S->getSE()));
 
-    Value *Base = BaseAddress ? *BaseAddress : NULL;
-    SCEVAffinator Affinator(stmt, Base);
+    SCEVAffinator Affinator(stmt);
     return Affinator.visit(scev);
   }
 
@@ -117,11 +107,10 @@ public:
     return SCEVVisitor<SCEVAffinator, isl_pw_aff*>::visit(scev);
   }
 
-  SCEVAffinator(const ScopStmt *stmt, const Value *baseAddress) :
+  SCEVAffinator(const ScopStmt *stmt) :
     ctx(stmt->getIslCtx()),
     NbLoopSpaces(stmt->getNumIterators()),
-    scop(stmt->getParent()),
-    baseAddress(baseAddress) {};
+    scop(stmt->getParent()) {}
 
   __isl_give isl_pw_aff *visitConstant(const SCEVConstant *Constant) {
     ConstantInt *Value = Constant->getValue();
@@ -248,22 +237,14 @@ public:
 
     isl_space *Space;
 
-    /// If baseAddress is set, we ignore its Value object in the scev and do not
-    /// add it to the isl_pw_aff. This is because it is regarded as defining the
-    /// name of an array, in contrast to its array subscript.
-    if (baseAddress != Value) {
-      isl_id *ID = isl_id_alloc(ctx, Value->getNameStr().c_str(), Value);
-      Space = isl_space_set_alloc(ctx, 1, NbLoopSpaces);
-      Space = isl_space_set_dim_id(Space, isl_dim_param, 0, ID);
-    } else {
-      Space = isl_space_set_alloc(ctx, 0, NbLoopSpaces);
-    }
+    isl_id *ID = isl_id_alloc(ctx, Value->getNameStr().c_str(), Value);
+    Space = isl_space_set_alloc(ctx, 1, NbLoopSpaces);
+    Space = isl_space_set_dim_id(Space, isl_dim_param, 0, ID);
 
     isl_set *Domain = isl_set_universe(isl_space_copy(Space));
     isl_aff *Affine = isl_aff_zero_on_domain(isl_local_space_from_space(Space));
 
-    if (baseAddress != Value)
-      Affine = isl_aff_add_coefficient_si(Affine, isl_dim_param, 0, 1);
+    Affine = isl_aff_add_coefficient_si(Affine, isl_dim_param, 0, 1);
 
     return isl_pw_aff_alloc(Domain, Affine);
   }

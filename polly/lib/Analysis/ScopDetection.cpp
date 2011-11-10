@@ -212,10 +212,10 @@ bool ScopDetection::isValidCallInst(CallInst &CI) {
 
 bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
                                         DetectionContext &Context) const {
-  Value *Ptr = getPointerOperand(Inst), *BasePtr;
+  Value *Ptr = getPointerOperand(Inst);
   const SCEV *AccessFunction = SE->getSCEV(Ptr);
   const SCEVUnknown *BasePointer;
-  const Value *BaseValue;
+  Value *BaseValue;
 
   BasePointer = dyn_cast<SCEVUnknown>(SE->getPointerBase(AccessFunction));
 
@@ -229,23 +229,21 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
 
   AccessFunction = SE->getMinusSCEV(AccessFunction, BasePointer);
 
-  if (!isAffineExpr(&Context.CurRegion, AccessFunction, *SE))
+  if (!isAffineExpr(&Context.CurRegion, AccessFunction, *SE, BaseValue))
     INVALID(AffFunc, "Bad memory address " << *AccessFunction);
-
-  BasePtr = BasePointer->getValue();
 
   // FIXME: Alias Analysis thinks IntToPtrInst aliases with alloca instructions
   // created by IndependentBlocks Pass.
-  if (isa<IntToPtrInst>(BasePtr))
-    INVALID(Other, "Find bad intToptr prt: " << *BasePtr);
+  if (isa<IntToPtrInst>(BaseValue))
+    INVALID(Other, "Find bad intToptr prt: " << *BaseValue);
 
   // Check if the base pointer of the memory access does alias with
   // any other pointer. This cannot be handled at the moment.
   AliasSet &AS =
-    Context.AST.getAliasSetForPointer(BasePtr, AliasAnalysis::UnknownSize,
+    Context.AST.getAliasSetForPointer(BaseValue, AliasAnalysis::UnknownSize,
                                       Inst.getMetadata(LLVMContext::MD_tbaa));
   if (!AS.isMustAlias()) {
-    DEBUG(dbgs() << "Bad pointer alias found:" << *BasePtr << "\nAS:\n" << AS);
+    DEBUG(dbgs() << "Bad pointer alias found:" << *BaseValue << "\nAS:\n" << AS);
 
     // STATSCOP triggers an assertion if we are in verifying mode.
     // This is generally good to check that we do not change the SCoP after we

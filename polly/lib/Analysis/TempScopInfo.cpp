@@ -95,7 +95,9 @@ void TempScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB) {
 
       const SCEV *AccessFunction = SE->getSCEV(getPointerOperand(Inst));
       const SCEVUnknown *BasePointer =
-        static_cast<const SCEVUnknown*>(SE->getPointerBase(AccessFunction));
+        dyn_cast<SCEVUnknown>(SE->getPointerBase(AccessFunction));
+
+      assert(BasePointer && "Could not find base pointer");
 
       AccessFunction = SE->getMinusSCEV(AccessFunction, BasePointer);
       Functions.push_back(std::make_pair(IRAccess(Type,
