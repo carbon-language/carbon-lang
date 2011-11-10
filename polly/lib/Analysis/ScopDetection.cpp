@@ -56,6 +56,7 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/RegionIterator.h"
 #include "llvm/Analysis/ScalarEvolution.h"
+#include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Assembly/Writer.h"
 
@@ -213,9 +214,25 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
                                         DetectionContext &Context) const {
   Value *Ptr = getPointerOperand(Inst), *BasePtr;
   const SCEV *AccessFunction = SE->getSCEV(Ptr);
+  const SCEVUnknown *BasePointer;
+  const Value *BaseValue;
 
-  if (!isAffineExpr(&Context.CurRegion, AccessFunction, *SE, &BasePtr))
+  BasePointer = dyn_cast<SCEVUnknown>(SE->getPointerBase(AccessFunction));
+
+  if (!BasePointer)
+    INVALID(AffFunc, "No base pointer");
+
+  BaseValue = BasePointer->getValue();
+
+  if (isa<UndefValue>(BaseValue))
+    INVALID(AffFunc, "Undefined base pointer");
+
+  AccessFunction = SE->getMinusSCEV(AccessFunction, BasePointer);
+
+  if (!isAffineExpr(&Context.CurRegion, AccessFunction, *SE))
     INVALID(AffFunc, "Bad memory address " << *AccessFunction);
+
+  BasePtr = BasePointer->getValue();
 
   // FIXME: Alias Analysis thinks IntToPtrInst aliases with alloca instructions
   // created by IndependentBlocks Pass.
