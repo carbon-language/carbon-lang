@@ -9,7 +9,7 @@
 
 LEVEL := ../..
 TOOLNAME := llvm-config-2
-LINK_COMPONENTS := support
+USEDLIBS := LLVMSupport.a
 
 # We generate sources in the build directory, make sure it is in the include
 # paths.
