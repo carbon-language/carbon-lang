@@ -852,7 +852,8 @@ void ARMFastISel::ARMSimplifyAddress(Address &Addr, EVT VT) {
         needsLowering = ((Addr.Offset & 0xfff) != Addr.Offset);
       else
         // ARM i16 integer loads/stores handle +/-imm8 offsets.
-        if (Addr.Offset > 255 || Addr.Offset < -255)
+        // FIXME: Negative offsets require special handling.
+        if (Addr.Offset > 255 || Addr.Offset < 0)
           needsLowering = true;
       break;
     case MVT::i1:
