@@ -1,4 +1,4 @@
-; RUN: llc -march=x86-64 < %s | FileCheck %s
+; RUN: llc -mtriple=x86_64-darwin < %s | FileCheck %s
 
 ; CHECK: decq
 ; CHECK-NEXT: movl (
