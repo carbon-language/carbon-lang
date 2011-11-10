@@ -223,7 +223,6 @@ llvm::DIFile CGDebugInfo::getOrCreateFile(SourceLocation Loc) {
 
   DIFileCache[fname] = F;
   return F;
-
 }
 
 /// getOrCreateMainFile - Get the file info for main compile unit.
@@ -523,7 +522,6 @@ llvm::DIType CGDebugInfo::CreatePointerLikeType(unsigned Tag,
                                                 const Type *Ty, 
                                                 QualType PointeeTy,
                                                 llvm::DIFile Unit) {
-
   if (Tag == llvm::dwarf::DW_TAG_reference_type)
     return DBuilder.createReferenceType(CreatePointeeType(PointeeTy, Unit));
                                     
@@ -534,8 +532,8 @@ llvm::DIType CGDebugInfo::CreatePointerLikeType(unsigned Tag,
   uint64_t Size = CGM.getContext().getTargetInfo().getPointerWidth(AS);
   uint64_t Align = CGM.getContext().getTypeAlign(Ty);
 
-  return 
-    DBuilder.createPointerType(CreatePointeeType(PointeeTy, Unit), Size, Align);
+  return DBuilder.createPointerType(CreatePointeeType(PointeeTy, Unit),
+                                    Size, Align);
 }
 
 llvm::DIType CGDebugInfo::CreateType(const BlockPointerType *Ty,
@@ -601,8 +599,7 @@ llvm::DIType CGDebugInfo::CreateType(const BlockPointerType *Ty,
   return BlockLiteralGeneric;
 }
 
-llvm::DIType CGDebugInfo::CreateType(const TypedefType *Ty,
-                                     llvm::DIFile Unit) {
+llvm::DIType CGDebugInfo::CreateType(const TypedefType *Ty, llvm::DIFile Unit) {
   // Typedefs are derived from some other type.  If we have a typedef of a
   // typedef, make sure to emit the whole chain.
   llvm::DIType Src = getOrCreateType(Ty->getDecl()->getUnderlyingType(), Unit);
@@ -612,11 +609,11 @@ llvm::DIType CGDebugInfo::CreateType(const TypedefType *Ty,
   // declared.
   unsigned Line = getLineNumber(Ty->getDecl()->getLocation());
   const TypedefNameDecl *TyDecl = Ty->getDecl();
-  llvm::DIDescriptor TydefContext =
+  llvm::DIDescriptor TypedefContext =
     getContextDescriptor(cast<Decl>(Ty->getDecl()->getDeclContext()));
 
   return  
-    DBuilder.createTypedef(Src, TyDecl->getName(), Unit, Line, TydefContext);
+    DBuilder.createTypedef(Src, TyDecl->getName(), Unit, Line, TypedefContext);
 }
 
 llvm::DIType CGDebugInfo::CreateType(const FunctionType *Ty,
@@ -780,10 +777,9 @@ CGDebugInfo::getOrCreateMethodType(const CXXMethodDecl *Method,
 /// isFunctionLocalClass - Return true if CXXRecordDecl is defined 
 /// inside a function.
 static bool isFunctionLocalClass(const CXXRecordDecl *RD) {
-  if (const CXXRecordDecl *NRD = 
-      dyn_cast<CXXRecordDecl>(RD->getDeclContext()))
+  if (const CXXRecordDecl *NRD = dyn_cast<CXXRecordDecl>(RD->getDeclContext()))
     return isFunctionLocalClass(NRD);
-  else if (isa<FunctionDecl>(RD->getDeclContext()))
+  if (isa<FunctionDecl>(RD->getDeclContext()))
     return true;
   return false;
 }
@@ -1565,8 +1561,7 @@ static QualType UnwrapTypeForDebugInfo(QualType T) {
 
 /// getOrCreateType - Get the type from the cache or create a new
 /// one if necessary.
-llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
-                                          llvm::DIFile Unit) {
+llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty, llvm::DIFile Unit) {
   if (Ty.isNull())
     return llvm::DIType();
 
@@ -1723,7 +1718,7 @@ llvm::DIType CGDebugInfo::getOrCreateFunctionType(const Decl * D,
                                                   llvm::DIFile F) {
   if (const CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D))
     return getOrCreateMethodType(Method, F);
-  else if (const ObjCMethodDecl *OMethod = dyn_cast<ObjCMethodDecl>(D)) {
+  if (const ObjCMethodDecl *OMethod = dyn_cast<ObjCMethodDecl>(D)) {
     // Add "self" and "_cmd"
     SmallVector<llvm::Value *, 16> Elts;
 
