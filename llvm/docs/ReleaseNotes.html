@@ -81,7 +81,7 @@ Release Notes</a>.</h1>
 
 <p>The LLVM 3.0 distribution currently consists of code from the core LLVM
    repository (which roughly includes the LLVM optimizers, code generators and
-   supporting tools), the Clang repository and the llvm-gcc repository.  In
+   supporting tools), and the Clang repository.  In
    addition to this code, the LLVM Project includes other sub-projects that are
    in development.  Here we include updates on these subprojects.</p>
 
@@ -442,7 +442,7 @@ be used to verify some algorithms.
    a single core of a CPU with an 8-wide SIMD unit compared to serial code,
    while still providing a clean and easy-to-understand programming model.  For
    an introduction to the language and its performance,
-   see <a href="http://ispc.github.com/example.html">the walkthrough of a short
+   see <a href="http://ispc.github.com/example.html">the walkthrough</a> of a short
    example program.  ispc is licensed under the BSD license.</p>
 
 </div>
@@ -639,89 +639,6 @@ be used to verify some algorithms.
    ZooLib all support.</p>
 
 </div>
-
-<!--=========================================================================-->
-<!--
-<h3>PinaVM</h3>
-  
-<div>
-<p><a href="http://gitorious.org/pinavm/pages/Home">PinaVM</a> is an open
-source, <a href="http://www.systemc.org/">SystemC</a> front-end. Unlike many
-other front-ends, PinaVM actually executes the elaboration of the
-program analyzed using LLVM's JIT infrastructure. It later enriches the
-bitcode with SystemC-specific information.</p>
-</div>
--->
-
-
-<!--=========================================================================-->
-<!--
-<h3 id="icedtea">IcedTea Java Virtual Machine Implementation</h3>
-
-<div>
-<p>
-<a href="http://icedtea.classpath.org/wiki/Main_Page">IcedTea</a> provides a
-harness to build OpenJDK using only free software build tools and to provide
-replacements for the not-yet free parts of OpenJDK.  One of the extensions that
-IcedTea provides is a new JIT compiler named <a
-href="http://icedtea.classpath.org/wiki/ZeroSharkFaq">Shark</a> which uses LLVM
-to provide native code generation without introducing processor-dependent
-code.
-</p>
-
-<p> OpenJDK 7 b112, IcedTea6 1.9 and IcedTea7 1.13 and later have been tested
-and are known to work with LLVM 3.0 (and continue to work with older LLVM
-releases &gt;= 2.6 as well).</p>
-</div>
--->
-
-<!--=========================================================================-->
-<!--
-<h3>Polly - Polyhedral optimizations for LLVM</h3>
-  
-<div>
-<p>Polly is a project that aims to provide advanced memory access optimizations
-to better take advantage of SIMD units, cache hierarchies, multiple cores or
-even vector accelerators for LLVM. Built around an abstract mathematical
-description based on Z-polyhedra, it provides the infrastructure to develop
-advanced optimizations in LLVM and to connect complex external optimizers. In
-its first year of existence Polly already provides an exact value-based
-dependency analysis as well as basic SIMD and OpenMP code generation support.
-Furthermore, Polly can use PoCC(Pluto) an advanced optimizer for data-locality
-and parallelism.</p>
-</div>
--->
-
-<!--=========================================================================-->
-<!--
-<h3>Rubinius</h3>
-
-<div>
-  <p><a href="http://github.com/evanphx/rubinius">Rubinius</a> is an environment
-  for running Ruby code which strives to write as much of the implementation in
-  Ruby as possible. Combined with a bytecode interpreting VM, it uses LLVM to
-  optimize and compile ruby code down to machine code. Techniques such as type
-  feedback, method inlining, and deoptimization are all used to remove dynamism
-  from ruby execution and increase performance.</p>
-</div>
--->
-
-<!--=========================================================================-->
-<!--
-<h3>
-<a name="FAUST">FAUST Real-Time Audio Signal Processing Language</a>
-</h3>
-
-<div>
-<p>
-<a href="http://faust.grame.fr">FAUST</a> is a compiled language for real-time
-audio signal processing. The name FAUST stands for Functional AUdio STream. Its
-programming model combines two approaches: functional programming and block
-diagram composition. In addition with the C, C++, JAVA output formats, the
-Faust compiler can now generate LLVM bitcode, and works with LLVM 2.7-3.0.</p>
-
-</div>
--->
   
 </div>
 
@@ -744,8 +661,10 @@ Faust compiler can now generate LLVM bitcode, and works with LLVM 2.7-3.0.</p>
 
 <div>
 
-<p>LLVM 3.0 includes several major new capabilities:</p>
+<p><b>llvm-gcc is gone</b></p>
 
+<p>LLVM 3.0 includes several major new capabilities:</p>
+  
 <ul>
 
 <!--
@@ -1007,11 +926,11 @@ Builder.CreateResume(UnwindData);
 <a name="OtherTS">Other Target Specific Improvements</a>
 </h3>
 
-<p>PPC32/ELF va_arg was implemented.</p>
-<p>PPC32 initial support for .o file writing was implemented.</p>
-
 <div>
 
+  <p>PPC32/ELF va_arg was implemented.</p>
+  <p>PPC32 initial support for .o file writing was implemented.</p>
+  
 <ul>
 <!--
 <li></li>
@@ -1231,10 +1150,6 @@ Builder.CreateResume(UnwindData);
 
   <li>Windows x64 (aka Win64) code generator has a few issues.
     <ul>
-      <li>llvm-gcc cannot build the mingw-w64 runtime currently due to lack of
-          support for the 'u' inline assembly constraint and for X87 floating
-          point inline assembly.</li>
-
       <li>On mingw-w64, you will see unresolved symbol <tt>__chkstk</tt> due
           to <a href="http://llvm.org/bugs/show_bug.cgi?id=8919">Bug 8919</a>.
           It is fixed
@@ -1344,36 +1259,6 @@ Builder.CreateResume(UnwindData);
 
   <li>The C backend does not support arbitrary precision integers.</li>
 </ul>
-
-</div>
-
-
-<!-- ======================================================================= -->
-<h3>
-  <a name="llvm-gcc">Known problems with the llvm-gcc front-end</a>
-</h3>
-
-<div>
-
-<p><b>LLVM 2.9 was the last release of llvm-gcc.</b></p>
-
-<p>llvm-gcc is generally very stable for the C family of languages.  The only
-   major language feature of GCC not supported by llvm-gcc is the
-   <tt>__builtin_apply</tt> family of builtins.   However, some extensions
-   are only supported on some targets.  For example, trampolines are only
-   supported on some targets (these are used when you take the address of a
-   nested function).</p>
-
-<p>Fortran support generally works, but there are still several unresolved bugs
-   in <a href="http://llvm.org/bugs/">Bugzilla</a>.  Please see the
-   tools/gfortran component for details.  Note that llvm-gcc is missing major
-   Fortran performance work in the frontend and library that went into GCC after
-   4.2.  If you are interested in Fortran, we recommend that you consider using
-   <a href="#dragonegg">dragonegg</a> instead.</p>
-
-<p>The llvm-gcc 4.2 Ada compiler has basic functionality, but is no longer being
-   actively maintained.  If you are interested in Ada, we recommend that you
-   consider using <a href="#dragonegg">dragonegg</a> instead.</p>
 
 </div>
 
