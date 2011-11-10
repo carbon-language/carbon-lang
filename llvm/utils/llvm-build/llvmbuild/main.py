@@ -487,32 +487,41 @@ configure_file(\"%s\"
 def main():
     from optparse import OptionParser, OptionGroup
     parser = OptionParser("usage: %prog [options]")
-    parser.add_option("", "--source-root", dest="source_root", metavar="PATH",
+
+    group = OptionGroup(parser, "Input Options")
+    group.add_option("", "--source-root", dest="source_root", metavar="PATH",
                       help="Path to the LLVM source (inferred if not given)",
                       action="store", default=None)
-    parser.add_option("", "--print-tree", dest="print_tree",
-                      help="Print out the project component tree [%default]",
-                      action="store_true", default=False)
-    parser.add_option("", "--write-llvmbuild", dest="write_llvmbuild",
+    group.add_option("", "--llvmbuild-source-root",
+                     dest="llvmbuild_source_root",
+                     help=(
+            "If given, an alternate path to search for LLVMBuild.txt files"),
+                     action="store", default=None, metavar="PATH")
+    parser.add_option_group(group)
+
+    group = OptionGroup(parser, "Output Options")
+    group.add_option("", "--print-tree", dest="print_tree",
+                     help="Print out the project component tree [%default]",
+                     action="store_true", default=False)
+    group.add_option("", "--write-llvmbuild", dest="write_llvmbuild",
                       help="Write out the LLVMBuild.txt files to PATH",
                       action="store", default=None, metavar="PATH")
-    parser.add_option("", "--write-library-table",
-                      dest="write_library_table", metavar="PATH",
-                      help="Write the C++ library dependency table to PATH",
-                      action="store", default=None)
-    parser.add_option("", "--write-cmake-fragment",
-                      dest="write_cmake_fragment", metavar="PATH",
-                      help="Write the CMake project information to PATH",
-                      action="store", default=None)
-    parser.add_option("", "--write-make-fragment",
+    group.add_option("", "--write-library-table",
+                     dest="write_library_table", metavar="PATH",
+                     help="Write the C++ library dependency table to PATH",
+                     action="store", default=None)
+    group.add_option("", "--write-cmake-fragment",
+                     dest="write_cmake_fragment", metavar="PATH",
+                     help="Write the CMake project information to PATH",
+                     action="store", default=None)
+    group.add_option("", "--write-make-fragment",
                       dest="write_make_fragment", metavar="PATH",
-                      help="Write the Makefile project information to PATH",
+                     help="Write the Makefile project information to PATH",
+                     action="store", default=None)
+    parser.add_option_group(group)
                       action="store", default=None)
-    parser.add_option("", "--llvmbuild-source-root",
-                      dest="llvmbuild_source_root",
-                      help=(
-            "If given, an alternate path to search for LLVMBuild.txt files"),
-                      action="store", default=None, metavar="PATH")
+    parser.add_option_group(group)
+
     (opts, args) = parser.parse_args()
 
     # Determine the LLVM source path, if not given.
