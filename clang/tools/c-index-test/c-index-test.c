@@ -2552,7 +2552,7 @@ static void printDiagnosticSet(CXDiagnosticSet Diags, unsigned indent) {
     printRanges(D, indent);
     printFixIts(D, indent);
     
-    // Print subdiagnostics.
+    /* Print subdiagnostics. */
     printDiagnosticSet(clang_getChildDiagnostics(D), indent+2);
 
     clang_disposeString(FileName);
