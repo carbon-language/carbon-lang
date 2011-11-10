@@ -4526,16 +4526,21 @@ validateInstruction(MCInst &Inst,
                    "in register list");
     break;
   }
+  // Like for ldm/stm, push and pop have hi-reg handling version in Thumb2,
+  // so only issue a diagnostic for thumb1. The instructions will be
+  // switched to the t2 encodings in processInstruction() if necessary.
   case ARM::tPOP: {
     bool listContainsBase;
-    if (checkLowRegisterList(Inst, 2, 0, ARM::PC, listContainsBase))
+    if (checkLowRegisterList(Inst, 2, 0, ARM::PC, listContainsBase) &&
+        !isThumbTwo())
       return Error(Operands[2]->getStartLoc(),
                    "registers must be in range r0-r7 or pc");
     break;
   }
   case ARM::tPUSH: {
     bool listContainsBase;
-    if (checkLowRegisterList(Inst, 2, 0, ARM::LR, listContainsBase))
+    if (checkLowRegisterList(Inst, 2, 0, ARM::LR, listContainsBase) &&
+        !isThumbTwo())
       return Error(Operands[2]->getStartLoc(),
                    "registers must be in range r0-r7 or lr");
     break;
@@ -4689,6 +4694,31 @@ processInstruction(MCInst &Inst,
       assert (isThumbTwo());
       Inst.setOpcode(ARM::t2STMIA_UPD);
     }
+    break;
+  }
+  case ARM::tPOP: {
+    bool listContainsBase;
+    // If the register list contains any high registers, we need to use
+    // the 32-bit encoding instead if we're in Thumb2. Otherwise, this
+    // should have generated an error in validateInstruction().
+    if (!checkLowRegisterList(Inst, 2, 0, ARM::PC, listContainsBase))
+      return;
+    assert (isThumbTwo());
+    Inst.setOpcode(ARM::t2LDMIA_UPD);
+    // Add the base register and writeback operands.
+    Inst.insert(Inst.begin(), MCOperand::CreateReg(ARM::SP));
+    Inst.insert(Inst.begin(), MCOperand::CreateReg(ARM::SP));
+    break;
+  }
+  case ARM::tPUSH: {
+    bool listContainsBase;
+    if (!checkLowRegisterList(Inst, 2, 0, ARM::LR, listContainsBase))
+      return;
+    assert (isThumbTwo());
+    Inst.setOpcode(ARM::t2STMDB_UPD);
+    // Add the base register and writeback operands.
+    Inst.insert(Inst.begin(), MCOperand::CreateReg(ARM::SP));
+    Inst.insert(Inst.begin(), MCOperand::CreateReg(ARM::SP));
     break;
   }
   case ARM::t2MOVi: {
