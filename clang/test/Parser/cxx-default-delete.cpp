@@ -13,3 +13,7 @@ struct foo {
 };
 
 void baz() = delete;
+
+struct quux {
+  int quux() = default; // expected-error{{constructor cannot have a return type}} expected-error {{member 'quux' has the same name as its class}}
+};

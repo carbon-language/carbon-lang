@@ -66,6 +66,11 @@ Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS,
   if (Tok.is(tok::equal)) {
     ConsumeToken();
 
+    if (!FnD) {
+      SkipUntil(tok::semi);
+      return 0;
+    }
+
     bool Delete = false;
     SourceLocation KWLoc;
     if (Tok.is(tok::kw_delete)) {
