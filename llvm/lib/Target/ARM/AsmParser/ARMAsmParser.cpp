@@ -4528,14 +4528,14 @@ validateInstruction(MCInst &Inst,
   }
   case ARM::tPOP: {
     bool listContainsBase;
-    if (checkLowRegisterList(Inst, 3, 0, ARM::PC, listContainsBase))
+    if (checkLowRegisterList(Inst, 2, 0, ARM::PC, listContainsBase))
       return Error(Operands[2]->getStartLoc(),
                    "registers must be in range r0-r7 or pc");
     break;
   }
   case ARM::tPUSH: {
     bool listContainsBase;
-    if (checkLowRegisterList(Inst, 3, 0, ARM::LR, listContainsBase))
+    if (checkLowRegisterList(Inst, 2, 0, ARM::LR, listContainsBase))
       return Error(Operands[2]->getStartLoc(),
                    "registers must be in range r0-r7 or lr");
     break;
