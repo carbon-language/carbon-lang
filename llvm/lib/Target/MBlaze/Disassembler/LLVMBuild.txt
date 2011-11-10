@@ -19,6 +19,12 @@
 type = Library
 name = MBlazeDisassembler
 parent = MBlaze
-required_libraries = MBlazeDesc MBlazeInfo MC Support
+; Strictly speaking, we probably shouldn't have a dependency on
+; MBlazeCodeGen. However, given the current factoring we end up including
+; MBlazeGenRegisterInfo.inc in the disassembler. Those generated headers end up
+; referencing external variables through GPRRegClass, SPRRegClass, and
+; CRCRegClass. These aren't actually used, but some compilers may generate
+; references to them.
+required_libraries = MBlazeCodeGen MBlazeDesc MBlazeInfo MC Support
 add_to_library_groups = MBlaze
 
