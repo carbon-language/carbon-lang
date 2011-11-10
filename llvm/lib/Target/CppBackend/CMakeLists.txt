@@ -1,8 +1,8 @@
-add_llvm_target(CppBackend
+add_llvm_target(CppBackendCodeGen
   CPPBackend.cpp
   )
 
-add_llvm_library_dependencies(LLVMCppBackend
+add_llvm_library_dependencies(LLVMCppBackendCodeGen
   LLVMCore
   LLVMCppBackendInfo
   LLVMSupport

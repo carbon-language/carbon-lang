@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL = ../../..
-LIBRARYNAME = LLVMCBackend
+LIBRARYNAME = LLVMCBackendCodeGen
 DIRS = TargetInfo
 
 include $(LEVEL)/Makefile.common

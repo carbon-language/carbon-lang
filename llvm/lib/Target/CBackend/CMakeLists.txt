@@ -1,8 +1,8 @@
-add_llvm_target(CBackend
+add_llvm_target(CBackendCodeGen
   CBackend.cpp
   )
 
-add_llvm_library_dependencies(LLVMCBackend
+add_llvm_library_dependencies(LLVMCBackendCodeGen
   LLVMAnalysis
   LLVMCBackendInfo
   LLVMCodeGen
