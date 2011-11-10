@@ -5887,7 +5887,12 @@ llvm::Value *CGObjCNonFragileABIMac::EmitSelector(CGBuilderTy &Builder,
 
   if (lval)
     return Entry;
-  return Builder.CreateLoad(Entry);
+  llvm::LoadInst* LI = Builder.CreateLoad(Entry);
+  
+  LI->setMetadata(CGM.getModule().getMDKindID("invariant.load"), 
+                  llvm::MDNode::get(VMContext,
+                                    ArrayRef<llvm::Value*>()));
+  return LI;
 }
 /// EmitObjCIvarAssign - Code gen for assigning to a __strong object.
 /// objc_assign_ivar (id src, id *dst, ptrdiff_t)
