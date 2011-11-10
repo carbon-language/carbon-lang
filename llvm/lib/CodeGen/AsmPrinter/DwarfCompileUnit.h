@@ -64,8 +64,8 @@ class CompileUnit {
   ///
   StringMap<std::vector<DIE*> > AccelNames;
   StringMap<std::vector<DIE*> > AccelObjC;
-  StringMap<DIE*> AccelNamespace;
-  StringMap<DIE*> AccelTypes;
+  StringMap<std::vector<DIE*> > AccelNamespace;
+  StringMap<std::vector<DIE*> > AccelTypes;
 
   /// DIEBlocks - A list of all the DIEBlocks in use.
   std::vector<DIEBlock *> DIEBlocks;
@@ -90,8 +90,12 @@ public:
   const StringMap<std::vector<DIE*> > &getAccelObjC() const {
     return AccelObjC;
   }
-  const StringMap<DIE*> &getAccelNamespace() const { return AccelNamespace; }
-  const StringMap<DIE*> &getAccelTypes() const { return AccelTypes; }
+  const StringMap<std::vector<DIE*> > &getAccelNamespace() const {
+    return AccelNamespace;
+  }
+  const StringMap<std::vector<DIE*> > &getAccelTypes() const {
+    return AccelTypes;
+  }
   
   /// hasContent - Return true if this compile unit has something to write out.
   ///
@@ -112,10 +116,12 @@ public:
     DIEs.push_back(Die);
   }
   void addAccelNamespace(StringRef Name, DIE *Die) {
-    AccelNamespace[Name] = Die;
+    std::vector<DIE*> &DIEs = AccelNamespace[Name];
+    DIEs.push_back(Die);
   }
   void addAccelType(StringRef Name, DIE *Die) {
-    AccelTypes[Name] = Die;
+    std::vector<DIE*> &DIEs = AccelTypes[Name];
+    DIEs.push_back(Die);
   }
   
   /// getDIE - Returns the debug information entry map slot for the

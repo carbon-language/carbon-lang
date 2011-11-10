@@ -1823,12 +1823,14 @@ void DwarfDebug::emitAccelNamespaces() {
   for (DenseMap<const MDNode *, CompileUnit *>::iterator I = CUMap.begin(),
          E = CUMap.end(); I != E; ++I) {
     CompileUnit *TheCU = I->second;
-    const StringMap<DIE*> &Names = TheCU->getAccelNamespace();
-    for (StringMap<DIE*>::const_iterator
+    const StringMap<std::vector<DIE*> > &Names = TheCU->getAccelNamespace();
+    for (StringMap<std::vector<DIE*> >::const_iterator
            GI = Names.begin(), GE = Names.end(); GI != GE; ++GI) {
       const char *Name = GI->getKeyData();
-      DIE *Entity = GI->second;
-      AT.AddName(Name, Entity);
+      std::vector<DIE *> Entities = GI->second;
+      for (std::vector<DIE *>::const_iterator DI = Entities.begin(),
+             DE = Entities.end(); DI != DE; ++DI)
+        AT.AddName(Name, (*DI));
     }
   }
 
@@ -1849,12 +1851,14 @@ void DwarfDebug::emitAccelTypes() {
   for (DenseMap<const MDNode *, CompileUnit *>::iterator I = CUMap.begin(),
          E = CUMap.end(); I != E; ++I) {
     CompileUnit *TheCU = I->second;
-    const StringMap<DIE*> &Names = TheCU->getAccelTypes();
-    for (StringMap<DIE*>::const_iterator
+    const StringMap<std::vector<DIE*> > &Names = TheCU->getAccelTypes();
+    for (StringMap<std::vector<DIE*> >::const_iterator
            GI = Names.begin(), GE = Names.end(); GI != GE; ++GI) {
       const char *Name = GI->getKeyData();
-      DIE *Entity = GI->second;
-      AT.AddName(Name, Entity);
+      std::vector<DIE *> Entities = GI->second;
+      for (std::vector<DIE *>::const_iterator DI = Entities.begin(),
+             DE= Entities.end(); DI !=DE; ++DI)
+        AT.AddName(Name, (*DI));
     }
   }
 
