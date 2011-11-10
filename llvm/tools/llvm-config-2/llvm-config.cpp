@@ -54,18 +54,19 @@ using namespace llvm;
 /// \param RequiredLibs [out] - The ordered list of required libraries.
 static void VisitComponent(StringRef Name,
                            const StringMap<AvailableComponent*> &ComponentMap,
-                           std::set<StringRef> &VisitedComponents,
+                           std::set<AvailableComponent*> &VisitedComponents,
                            std::vector<StringRef> &RequiredLibs) {
+  // Lookup the component.
+  AvailableComponent *AC = ComponentMap.lookup(Name);
+  assert(AC && "Invalid component name!");
+
   // Add to the visited table.
-  if (!VisitedComponents.insert(Name).second) {
+  if (!VisitedComponents.insert(AC).second) {
     // We are done if the component has already been visited.
     return;
   }
 
   // Otherwise, visit all the dependencies.
-  AvailableComponent *AC = ComponentMap.lookup(Name);
-  assert(AC && "Invalid component name!");
-
   for (unsigned i = 0; AC->RequiredLibraries[i]; ++i) {
     VisitComponent(AC->RequiredLibraries[i], ComponentMap, VisitedComponents,
                    RequiredLibs);
@@ -85,8 +86,7 @@ static void VisitComponent(StringRef Name,
 /// are required to link the given components.
 void ComputeLibsForComponents(const std::vector<StringRef> &Components,
                               std::vector<StringRef> &RequiredLibs) {
-  std::set<StringRef> VisitedComponents;
-  std::vector<StringRef> ToVisit = Components;
+  std::set<AvailableComponent*> VisitedComponents;
 
   // Build a map of component names to information.
   StringMap<AvailableComponent*> ComponentMap;
