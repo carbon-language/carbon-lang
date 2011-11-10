@@ -208,7 +208,7 @@ class ARMAsmParser : public MCTargetAsmParser {
 
   bool validateInstruction(MCInst &Inst,
                            const SmallVectorImpl<MCParsedAsmOperand*> &Ops);
-  void processInstruction(MCInst &Inst,
+  bool processInstruction(MCInst &Inst,
                           const SmallVectorImpl<MCParsedAsmOperand*> &Ops);
   bool shouldOmitCCOutOperand(StringRef Mnemonic,
                               SmallVectorImpl<MCParsedAsmOperand*> &Operands);
@@ -4557,7 +4557,7 @@ validateInstruction(MCInst &Inst,
   return false;
 }
 
-void ARMAsmParser::
+bool ARMAsmParser::
 processInstruction(MCInst &Inst,
                    const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   switch (Inst.getOpcode()) {
@@ -4588,7 +4588,7 @@ processInstruction(MCInst &Inst,
     TmpInst.addOperand(Inst.getOperand(4));
     TmpInst.addOperand(Inst.getOperand(5)); // cc_out
     Inst = TmpInst;
-    break;
+    return true;
   }
   case ARM::LDMIA_UPD:
     // If this is a load of a single register via a 'pop', then we should use
@@ -4605,6 +4605,7 @@ processInstruction(MCInst &Inst,
       TmpInst.addOperand(Inst.getOperand(2)); // CondCode
       TmpInst.addOperand(Inst.getOperand(3));
       Inst = TmpInst;
+      return true;
     }
     break;
   case ARM::STMDB_UPD:
@@ -4628,36 +4629,48 @@ processInstruction(MCInst &Inst,
     // explicitly specified. From the ARM ARM: "Encoding T1 is preferred
     // to encoding T2 if <Rd> is specified and encoding T2 is preferred
     // to encoding T1 if <Rd> is omitted."
-    if (Inst.getOperand(3).getImm() < 8 && Operands.size() == 6)
+    if (Inst.getOperand(3).getImm() < 8 && Operands.size() == 6) {
       Inst.setOpcode(ARM::tADDi3);
+      return true;
+    }
     break;
   case ARM::tSUBi8:
     // If the immediate is in the range 0-7, we want tADDi3 iff Rd was
     // explicitly specified. From the ARM ARM: "Encoding T1 is preferred
     // to encoding T2 if <Rd> is specified and encoding T2 is preferred
     // to encoding T1 if <Rd> is omitted."
-    if (Inst.getOperand(3).getImm() < 8 && Operands.size() == 6)
+    if (Inst.getOperand(3).getImm() < 8 && Operands.size() == 6) {
       Inst.setOpcode(ARM::tSUBi3);
+      return true;
+    }
     break;
   case ARM::tB:
     // A Thumb conditional branch outside of an IT block is a tBcc.
-    if (Inst.getOperand(1).getImm() != ARMCC::AL && !inITBlock())
+    if (Inst.getOperand(1).getImm() != ARMCC::AL && !inITBlock()) {
       Inst.setOpcode(ARM::tBcc);
+      return true;
+    }
     break;
   case ARM::t2B:
     // A Thumb2 conditional branch outside of an IT block is a t2Bcc.
-    if (Inst.getOperand(1).getImm() != ARMCC::AL && !inITBlock())
+    if (Inst.getOperand(1).getImm() != ARMCC::AL && !inITBlock()){
       Inst.setOpcode(ARM::t2Bcc);
+      return true;
+    }
     break;
   case ARM::t2Bcc:
     // If the conditional is AL or we're in an IT block, we really want t2B.
-    if (Inst.getOperand(1).getImm() == ARMCC::AL || inITBlock())
+    if (Inst.getOperand(1).getImm() == ARMCC::AL || inITBlock()) {
       Inst.setOpcode(ARM::t2B);
+      return true;
+    }
     break;
   case ARM::tBcc:
     // If the conditional is AL, we really want tB.
-    if (Inst.getOperand(1).getImm() == ARMCC::AL)
+    if (Inst.getOperand(1).getImm() == ARMCC::AL) {
       Inst.setOpcode(ARM::tB);
+      return true;
+    }
     break;
   case ARM::tLDMIA: {
     // If the register list contains any high registers, or if the writeback
@@ -4680,6 +4693,7 @@ processInstruction(MCInst &Inst,
       if (hasWritebackToken)
         Inst.insert(Inst.begin(),
                     MCOperand::CreateReg(Inst.getOperand(0).getReg()));
+      return true;
     }
     break;
   }
@@ -4693,6 +4707,7 @@ processInstruction(MCInst &Inst,
       // 16-bit encoding isn't sufficient. Switch to the 32-bit version.
       assert (isThumbTwo());
       Inst.setOpcode(ARM::t2STMIA_UPD);
+      return true;
     }
     break;
   }
@@ -4702,24 +4717,24 @@ processInstruction(MCInst &Inst,
     // the 32-bit encoding instead if we're in Thumb2. Otherwise, this
     // should have generated an error in validateInstruction().
     if (!checkLowRegisterList(Inst, 2, 0, ARM::PC, listContainsBase))
-      return;
+      return false;
     assert (isThumbTwo());
     Inst.setOpcode(ARM::t2LDMIA_UPD);
     // Add the base register and writeback operands.
     Inst.insert(Inst.begin(), MCOperand::CreateReg(ARM::SP));
     Inst.insert(Inst.begin(), MCOperand::CreateReg(ARM::SP));
-    break;
+    return true;
   }
   case ARM::tPUSH: {
     bool listContainsBase;
     if (!checkLowRegisterList(Inst, 2, 0, ARM::LR, listContainsBase))
-      return;
+      return false;
     assert (isThumbTwo());
     Inst.setOpcode(ARM::t2STMDB_UPD);
     // Add the base register and writeback operands.
     Inst.insert(Inst.begin(), MCOperand::CreateReg(ARM::SP));
     Inst.insert(Inst.begin(), MCOperand::CreateReg(ARM::SP));
-    break;
+    return true;
   }
   case ARM::t2MOVi: {
     // If we can use the 16-bit encoding and the user didn't explicitly
@@ -4740,6 +4755,7 @@ processInstruction(MCInst &Inst,
       TmpInst.addOperand(Inst.getOperand(2));
       TmpInst.addOperand(Inst.getOperand(3));
       Inst = TmpInst;
+      return true;
     }
     break;
   }
@@ -4760,6 +4776,7 @@ processInstruction(MCInst &Inst,
       TmpInst.addOperand(Inst.getOperand(2));
       TmpInst.addOperand(Inst.getOperand(3));
       Inst = TmpInst;
+      return true;
     }
     break;
   }
@@ -4790,6 +4807,7 @@ processInstruction(MCInst &Inst,
       TmpInst.addOperand(Inst.getOperand(3));
       TmpInst.addOperand(Inst.getOperand(4));
       Inst = TmpInst;
+      return true;
     }
     break;
   }
@@ -4822,6 +4840,7 @@ processInstruction(MCInst &Inst,
     break;
   }
   }
+  return false;
 }
 
 unsigned ARMAsmParser::checkTargetMatchPredicate(MCInst &Inst) {
@@ -4887,8 +4906,11 @@ MatchAndEmitInstruction(SMLoc IDLoc,
     }
 
     // Some instructions need post-processing to, for example, tweak which
-    // encoding is selected.
-    processInstruction(Inst, Operands);
+    // encoding is selected. Loop on it while changes happen so the
+    // individual transformations can chain off each other. E.g.,
+    // tPOP(r8)->t2LDMIA_UPD(sp,r8)->t2STR_POST(sp,r8)
+    while (processInstruction(Inst, Operands))
+      ;
 
     // Only move forward at the very end so that everything in validate
     // and process gets a consistent answer about whether we're in an IT
