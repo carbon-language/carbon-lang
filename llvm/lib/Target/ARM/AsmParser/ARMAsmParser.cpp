@@ -4541,6 +4541,21 @@ void ARMAsmParser::
 processInstruction(MCInst &Inst,
                    const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   switch (Inst.getOpcode()) {
+  // Handle the MOV complex aliases.
+  case ARM::ASRi: {
+    unsigned Amt = Inst.getOperand(2).getImm() + 1;
+    unsigned ShiftOp = ARM_AM::getSORegOpc(ARM_AM::asr, Amt);
+    MCInst TmpInst;
+    TmpInst.setOpcode(ARM::MOVsi);
+    TmpInst.addOperand(Inst.getOperand(0)); // Rd
+    TmpInst.addOperand(Inst.getOperand(1)); // Rn
+    TmpInst.addOperand(MCOperand::CreateImm(ShiftOp)); // Shift value and ty
+    TmpInst.addOperand(Inst.getOperand(3)); // CondCode
+    TmpInst.addOperand(Inst.getOperand(4));
+    TmpInst.addOperand(Inst.getOperand(5)); // cc_out
+    Inst = TmpInst;
+    break;
+  }
   case ARM::LDMIA_UPD:
     // If this is a load of a single register via a 'pop', then we should use
     // a post-indexed LDR instruction instead, per the ARM ARM.

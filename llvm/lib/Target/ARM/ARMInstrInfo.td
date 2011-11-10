@@ -4994,3 +4994,12 @@ def : MnemonicAlias<"usubaddx", "usax">;
 // for isel.
 def : ARMInstAlias<"mov${s}${p} $Rd, $imm",
                    (MVNi rGPR:$Rd, so_imm_not:$imm, pred:$p, cc_out:$s)>;
+
+// The shifter forms of the MOV instruction are aliased to the ASR, LSL,
+// LSR, ROR, and RRX instructions.
+// FIXME: We need C++ parser hooks to map the alias to the MOV
+//        encoding. It seems we should be able to do that sort of thing
+//        in tblgen, but it could get ugly.
+def ASRi : ARMAsmPseudo<"asr${s}${p} $Rd, $Rm, $imm",
+                        (ins GPR:$Rd, GPR:$Rm, imm1_32:$imm, pred:$p,
+                             cc_out:$s)>;
