@@ -31,7 +31,7 @@ ifeq ($(BUILD_DIRS_ONLY),1)
   OPTIONAL_DIRS := tools/clang/utils/TableGen
 else
   DIRS := lib/Support lib/TableGen utils lib/VMCore lib tools/llvm-shlib \
-          tools/llvm-config tools runtime docs unittests
+          tools/llvm-config tools/llvm-config-2 tools runtime docs unittests
   OPTIONAL_DIRS := projects bindings
 endif
 

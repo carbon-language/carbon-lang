@@ -516,7 +516,7 @@ ifndef LLVM_TBLGEN
     LLVM_TBLGEN   := $(LLVMToolDir)/llvm-tblgen$(EXEEXT)
   endif
 endif
-LLVM_CONFIG := $(LLVMToolDir)/llvm-config
+LLVM_CONFIG := $(LLVMToolDir)/llvm-config-2
 ifndef LLVMLD
 LLVMLD    := $(LLVMToolDir)/llvm-ld$(EXEEXT)
 endif
