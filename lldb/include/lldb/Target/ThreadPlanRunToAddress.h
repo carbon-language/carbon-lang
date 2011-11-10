@@ -74,7 +74,7 @@ private:
     bool m_stop_others;
     std::vector<lldb::addr_t> m_addresses;   // This is the address we are going to run to.
                           // TODO: Would it be useful to have multiple addresses?
-    std::vector<lldb::user_id_t> m_break_ids; // This is the breakpoint we are using to stop us at m_address.
+    std::vector<lldb::break_id_t> m_break_ids; // This is the breakpoint we are using to stop us at m_address.
 
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanRunToAddress);
 

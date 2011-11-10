@@ -152,7 +152,7 @@ ThreadPlanRunToAddress::GetDescription (Stream *s, lldb::DescriptionLevel level)
             }
             
             s->Address(m_addresses[i], sizeof (addr_t));
-            s->Printf (" using breakpoint: %llu - ", m_break_ids[i]);
+            s->Printf (" using breakpoint: %d - ", m_break_ids[i]);
             Breakpoint *breakpoint = m_thread.GetProcess().GetTarget().GetBreakpointByID (m_break_ids[i]).get();
             if (breakpoint)
                 breakpoint->Dump (s);
