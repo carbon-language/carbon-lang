@@ -380,7 +380,7 @@ static OverwriteResult isOverwrite(const AliasAnalysis::Location &Later,
   if (isObjectPointerWithTrustworthySize(UO2)) {
     uint64_t ObjectSize =
       TD.getTypeAllocSize(cast<PointerType>(UO2->getType())->getElementType());
-    if (ObjectSize == Later.Size)
+    if (ObjectSize == Later.Size && ObjectSize >= Earlier.Size)
       return OverwriteComplete;
   }
 
