@@ -114,10 +114,19 @@ static void registerPollyPasses(const llvm::PassManagerBuilder &Builder,
 
   PM.add(polly::createCodePreparationPass());
   PM.add(polly::createRegionSimplifyPass());
-  // FIXME: Needed as RegionSimplifyPass destroys the canonical form of
-  //        induction variables (It changes the order of the operands in the
-  //        PHI nodes).
+  // FIXME: The next two passes should not be necessary here. They are currently
+  //        because of two problems:
+  //
+  //        1. The RegionSimplifyPass destroys the canonical form of induction
+  //           variables,as it produces PHI nodes with incorrectly ordered
+  //           operands. To fix this we run IndVarSimplify.
+  //
+  //        2. IndVarSimplify does not preserve the region information and
+  //           the regioninfo pass does currently not recover simple regions.
+  //           As a result we need to run the RegionSimplify pass again to
+  //           recover them
   PM.add(llvm::createIndVarSimplifyPass());
+  PM.add(polly::createRegionSimplifyPass());
 
   if (PollyViewer)
     PM.add(polly::createDOTViewerPass());
