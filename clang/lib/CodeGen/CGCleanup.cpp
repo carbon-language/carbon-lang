@@ -251,8 +251,7 @@ void CodeGenFunction::initFullExprCleanup() {
 
   // Initialize it to false at a site that's guaranteed to be run
   // before each evaluation.
-  llvm::BasicBlock *block = OutermostConditional->getStartingBlock();
-  new llvm::StoreInst(Builder.getFalse(), active, &block->back());
+  setBeforeOutermostConditional(Builder.getFalse(), active);
 
   // Initialize it to true at the current location.
   Builder.CreateStore(Builder.getTrue(), active);
@@ -1000,14 +999,15 @@ enum ForActivation_t {
 /// extra uses *after* the change-over point.
 static void SetupCleanupBlockActivation(CodeGenFunction &CGF,
                                         EHScopeStack::stable_iterator C,
-                                        ForActivation_t Kind) {
+                                        ForActivation_t kind,
+                                        llvm::Instruction *dominatingIP) {
   EHCleanupScope &Scope = cast<EHCleanupScope>(*CGF.EHStack.find(C));
 
   // We always need the flag if we're activating the cleanup in a
   // conditional context, because we have to assume that the current
   // location doesn't necessarily dominate the cleanup's code.
   bool isActivatedInConditional =
-    (Kind == ForActivation && CGF.isInConditionalBranch());
+    (kind == ForActivation && CGF.isInConditionalBranch());
 
   bool needFlag = false;
 
@@ -1030,32 +1030,44 @@ static void SetupCleanupBlockActivation(CodeGenFunction &CGF,
   // If it hasn't yet been used as either, we're done.
   if (!needFlag) return;
 
-  llvm::AllocaInst *Var = Scope.getActiveFlag();
-  if (!Var) {
-    Var = CGF.CreateTempAlloca(CGF.Builder.getInt1Ty(), "cleanup.isactive");
-    Scope.setActiveFlag(Var);
+  llvm::AllocaInst *var = Scope.getActiveFlag();
+  if (!var) {
+    var = CGF.CreateTempAlloca(CGF.Builder.getInt1Ty(), "cleanup.isactive");
+    Scope.setActiveFlag(var);
+
+    assert(dominatingIP && "no existing variable and no dominating IP!");
 
     // Initialize to true or false depending on whether it was
     // active up to this point.
-    CGF.InitTempAlloca(Var, CGF.Builder.getInt1(Kind == ForDeactivation));
+    llvm::Value *value = CGF.Builder.getInt1(kind == ForDeactivation);
+
+    // If we're in a conditional block, ignore the dominating IP and
+    // use the outermost conditional branch.
+    if (CGF.isInConditionalBranch()) {
+      CGF.setBeforeOutermostConditional(value, var);
+    } else {
+      new llvm::StoreInst(value, var, dominatingIP);
+    }
   }
 
-  CGF.Builder.CreateStore(CGF.Builder.getInt1(Kind == ForActivation), Var);
+  CGF.Builder.CreateStore(CGF.Builder.getInt1(kind == ForActivation), var);
 }
 
 /// Activate a cleanup that was created in an inactivated state.
-void CodeGenFunction::ActivateCleanupBlock(EHScopeStack::stable_iterator C) {
+void CodeGenFunction::ActivateCleanupBlock(EHScopeStack::stable_iterator C,
+                                           llvm::Instruction *dominatingIP) {
   assert(C != EHStack.stable_end() && "activating bottom of stack?");
   EHCleanupScope &Scope = cast<EHCleanupScope>(*EHStack.find(C));
   assert(!Scope.isActive() && "double activation");
 
-  SetupCleanupBlockActivation(*this, C, ForActivation);
+  SetupCleanupBlockActivation(*this, C, ForActivation, dominatingIP);
 
   Scope.setActive(true);
 }
 
 /// Deactive a cleanup that was created in an active state.
-void CodeGenFunction::DeactivateCleanupBlock(EHScopeStack::stable_iterator C) {
+void CodeGenFunction::DeactivateCleanupBlock(EHScopeStack::stable_iterator C,
+                                             llvm::Instruction *dominatingIP) {
   assert(C != EHStack.stable_end() && "deactivating bottom of stack?");
   EHCleanupScope &Scope = cast<EHCleanupScope>(*EHStack.find(C));
   assert(Scope.isActive() && "double deactivation");
@@ -1071,7 +1083,7 @@ void CodeGenFunction::DeactivateCleanupBlock(EHScopeStack::stable_iterator C) {
   }
 
   // Otherwise, follow the general case.
-  SetupCleanupBlockActivation(*this, C, ForDeactivation);
+  SetupCleanupBlockActivation(*this, C, ForDeactivation, dominatingIP);
 
   Scope.setActive(false);
 }

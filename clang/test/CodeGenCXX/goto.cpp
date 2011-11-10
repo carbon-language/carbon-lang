@@ -16,10 +16,10 @@ namespace test0 {
     // CHECK-NEXT: [[V:%.*]] = alloca [[V:%.*]]*,
     // CHECK-NEXT: [[TMP:%.*]] = alloca [[A]]
     // CHECK-NEXT: [[CLEANUPACTIVE:%.*]] = alloca i1
-    // CHECK:      store i1 true, i1* [[CLEANUPACTIVE]]
     // CHECK:      call void @_ZN5test01AC1Ev([[A]]* [[Y]])
     // CHECK-NEXT: invoke void @_ZN5test01AC1Ev([[A]]* [[Z]])
     // CHECK:      [[NEW:%.*]] = invoke noalias i8* @_Znwm(i64 1)
+    // CHECK:      store i1 true, i1* [[CLEANUPACTIVE]]
     // CHECK:      [[NEWCAST:%.*]] = bitcast i8* [[NEW]] to [[V]]*
     // CHECK-NEXT: invoke void @_ZN5test01AC1Ev([[A]]* [[TMP]])
     // CHECK:      invoke void @_ZN5test01VC1ERKNS_1AE([[V]]* [[NEWCAST]], [[A]]* [[TMP]])

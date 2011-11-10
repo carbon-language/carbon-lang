@@ -816,18 +816,22 @@ CodeGenFunction::EmitNewArrayInitializer(const CXXNewExpr *E,
   // Enter a partial-destruction cleanup if necessary.
   QualType::DestructionKind dtorKind = elementType.isDestructedType();
   EHScopeStack::stable_iterator cleanup;
+  llvm::Instruction *cleanupDominator = 0;
   if (needsEHCleanup(dtorKind)) {
     pushRegularPartialArrayCleanup(beginPtr, curPtr, elementType,
                                    getDestroyer(dtorKind));
     cleanup = EHStack.stable_begin();
+    cleanupDominator = Builder.CreateUnreachable();
   }
 
   // Emit the initializer into this element.
   StoreAnyExprIntoOneUnit(*this, E, curPtr);
 
   // Leave the cleanup if we entered one.
-  if (cleanup != EHStack.stable_end())
-    DeactivateCleanupBlock(cleanup);
+  if (cleanup != EHStack.stable_end()) {
+    DeactivateCleanupBlock(cleanup, cleanupDominator);
+    cleanupDominator->eraseFromParent();
+  }
 
   // Advance to the next element.
   llvm::Value *nextPtr = Builder.CreateConstGEP1_32(curPtr, 1, "array.next");
@@ -1057,7 +1061,7 @@ static void EnterNewDeleteCleanup(CodeGenFunction &CGF,
     DominatingValue<RValue>::save(CGF, RValue::get(AllocSize));
 
   CallDeleteDuringConditionalNew *Cleanup = CGF.EHStack
-    .pushCleanupWithExtra<CallDeleteDuringConditionalNew>(InactiveEHCleanup,
+    .pushCleanupWithExtra<CallDeleteDuringConditionalNew>(EHCleanup,
                                                  E->getNumPlacementArgs(),
                                                  E->getOperatorDelete(),
                                                  SavedNewPtr,
@@ -1066,7 +1070,7 @@ static void EnterNewDeleteCleanup(CodeGenFunction &CGF,
     Cleanup->setPlacementArg(I,
                      DominatingValue<RValue>::save(CGF, NewArgs[I+1].RV));
 
-  CGF.ActivateCleanupBlock(CGF.EHStack.stable_begin());
+  CGF.initFullExprCleanup();
 }
 
 llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
@@ -1168,10 +1172,12 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
   // If there's an operator delete, enter a cleanup to call it if an
   // exception is thrown.
   EHScopeStack::stable_iterator operatorDeleteCleanup;
+  llvm::Instruction *cleanupDominator = 0;
   if (E->getOperatorDelete() &&
       !E->getOperatorDelete()->isReservedGlobalPlacementOperator()) {
     EnterNewDeleteCleanup(*this, E, allocation, allocSize, allocatorArgs);
     operatorDeleteCleanup = EHStack.stable_begin();
+    cleanupDominator = Builder.CreateUnreachable();
   }
 
   assert((allocSize == allocSizeWithoutCookie) ==
@@ -1200,8 +1206,10 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
 
   // Deactivate the 'operator delete' cleanup if we finished
   // initialization.
-  if (operatorDeleteCleanup.isValid())
-    DeactivateCleanupBlock(operatorDeleteCleanup);
+  if (operatorDeleteCleanup.isValid()) {
+    DeactivateCleanupBlock(operatorDeleteCleanup, cleanupDominator);
+    cleanupDominator->eraseFromParent();
+  }
   
   if (nullCheck) {
     conditional.end(*this);

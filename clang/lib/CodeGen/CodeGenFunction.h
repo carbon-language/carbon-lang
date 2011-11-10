@@ -630,10 +630,6 @@ public:
 
   llvm::BasicBlock *getInvokeDestImpl();
 
-  /// Set up the last cleaup that was pushed as a conditional
-  /// full-expression cleanup.
-  void initFullExprCleanup();
-
   template <class T>
   typename DominatingValue<T>::saved_type saveValueInCond(T value) {
     return DominatingValue<T>::save(*this, value);
@@ -744,6 +740,10 @@ public:
     initFullExprCleanup();
   }
 
+  /// Set up the last cleaup that was pushed as a conditional
+  /// full-expression cleanup.
+  void initFullExprCleanup();
+
   /// PushDestructorCleanup - Push a cleanup to call the
   /// complete-object destructor of an object of the given type at the
   /// given address.  Does nothing if T is not a C++ class type with a
@@ -763,11 +763,23 @@ public:
   /// DeactivateCleanupBlock - Deactivates the given cleanup block.
   /// The block cannot be reactivated.  Pops it if it's the top of the
   /// stack.
-  void DeactivateCleanupBlock(EHScopeStack::stable_iterator Cleanup);
+  ///
+  /// \param DominatingIP - An instruction which is known to
+  ///   dominate the current IP (if set) and which lies along
+  ///   all paths of execution between the current IP and the
+  ///   the point at which the cleanup comes into scope.
+  void DeactivateCleanupBlock(EHScopeStack::stable_iterator Cleanup,
+                              llvm::Instruction *DominatingIP);
 
   /// ActivateCleanupBlock - Activates an initially-inactive cleanup.
   /// Cannot be used to resurrect a deactivated cleanup.
-  void ActivateCleanupBlock(EHScopeStack::stable_iterator Cleanup);
+  ///
+  /// \param DominatingIP - An instruction which is known to
+  ///   dominate the current IP (if set) and which lies along
+  ///   all paths of execution between the current IP and the
+  ///   the point at which the cleanup comes into scope.
+  void ActivateCleanupBlock(EHScopeStack::stable_iterator Cleanup,
+                            llvm::Instruction *DominatingIP);
 
   /// \brief Enters a new scope for capturing cleanups, all of which
   /// will be executed once the scope is exited.
@@ -922,6 +934,12 @@ public:
   /// isInConditionalBranch - Return true if we're currently emitting
   /// one branch or the other of a conditional expression.
   bool isInConditionalBranch() const { return OutermostConditional != 0; }
+
+  void setBeforeOutermostConditional(llvm::Value *value, llvm::Value *addr) {
+    assert(isInConditionalBranch());
+    llvm::BasicBlock *block = OutermostConditional->getStartingBlock();
+    new llvm::StoreInst(value, addr, &block->back());    
+  }
 
   /// An RAII object to record that we're evaluating a statement
   /// expression.

@@ -687,6 +687,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
     QualType::DestructionKind dtorKind = elementType.isDestructedType();
     llvm::AllocaInst *endOfInit = 0;
     EHScopeStack::stable_iterator cleanup;
+    llvm::Instruction *cleanupDominator = 0;
     if (CGF.needsEHCleanup(dtorKind)) {
       // In principle we could tell the cleanup where we are more
       // directly, but the control flow can get so varied here that it
@@ -694,7 +695,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
       // alloca.
       endOfInit = CGF.CreateTempAlloca(begin->getType(),
                                        "arrayinit.endOfInit");
-      Builder.CreateStore(begin, endOfInit);
+      cleanupDominator = Builder.CreateStore(begin, endOfInit);
       CGF.pushIrregularPartialArrayCleanup(begin, endOfInit, elementType,
                                            CGF.getDestroyer(dtorKind));
       cleanup = CGF.EHStack.stable_begin();
@@ -794,7 +795,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
     }
 
     // Leave the partial-array cleanup if we entered one.
-    if (dtorKind) CGF.DeactivateCleanupBlock(cleanup);
+    if (dtorKind) CGF.DeactivateCleanupBlock(cleanup, cleanupDominator);
 
     return;
   }
@@ -843,6 +844,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
   // We'll need to enter cleanup scopes in case any of the member
   // initializers throw an exception.
   SmallVector<EHScopeStack::stable_iterator, 16> cleanups;
+  llvm::Instruction *cleanupDominator = 0;
 
   // Here we iterate over the fields; this makes it simpler to both
   // default-initialize fields and skip over unnamed fields.
@@ -886,6 +888,9 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
           = field->getType().isDestructedType()) {
       assert(LV.isSimple());
       if (CGF.needsEHCleanup(dtorKind)) {
+        if (!cleanupDominator)
+          cleanupDominator = CGF.Builder.CreateUnreachable(); // placeholder
+
         CGF.pushDestroy(EHCleanup, LV.getAddress(), field->getType(),
                         CGF.getDestroyer(dtorKind), false);
         cleanups.push_back(CGF.EHStack.stable_begin());
@@ -905,7 +910,11 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
   // Deactivate all the partial cleanups in reverse order, which
   // generally means popping them.
   for (unsigned i = cleanups.size(); i != 0; --i)
-    CGF.DeactivateCleanupBlock(cleanups[i-1]);
+    CGF.DeactivateCleanupBlock(cleanups[i-1], cleanupDominator);
+
+  // Destroy the placeholder if we made one.
+  if (cleanupDominator)
+    cleanupDominator->eraseFromParent();
 }
 
 //===----------------------------------------------------------------------===//

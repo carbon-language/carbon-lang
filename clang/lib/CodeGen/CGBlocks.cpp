@@ -27,7 +27,8 @@ using namespace CodeGen;
 
 CGBlockInfo::CGBlockInfo(const BlockDecl *block, StringRef name)
   : Name(name), CXXThisIndex(0), CanBeGlobal(false), NeedsCopyDispose(false),
-    HasCXXObject(false), UsesStret(false), StructureType(0), Block(block) {
+    HasCXXObject(false), UsesStret(false), StructureType(0), Block(block),
+    DominatingIP(0) {
     
   // Skip asm prefix, if any.  'name' is usually taken directly from
   // the mangled name of the enclosing function.
@@ -541,6 +542,10 @@ static void enterBlockScope(CodeGenFunction &CGF, BlockDecl *block) {
     llvm::Value *addr = CGF.Builder.CreateStructGEP(blockInfo.Address,
                                                     capture.getIndex());
 
+    // We can use that GEP as the dominating IP.
+    if (!blockInfo.DominatingIP)
+      blockInfo.DominatingIP = cast<llvm::Instruction>(addr);
+
     CleanupKind cleanupKind = InactiveNormalCleanup;
     bool useArrayEHCleanup = CGF.needsEHCleanup(dtorKind);
     if (useArrayEHCleanup) 
@@ -749,7 +754,7 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const CGBlockInfo &blockInfo) {
     if (!ci->isByRef()) {
       EHScopeStack::stable_iterator cleanup = capture.getCleanup();
       if (cleanup.isValid())
-        ActivateCleanupBlock(cleanup);
+        ActivateCleanupBlock(cleanup, blockInfo.DominatingIP);
     }
   }
 

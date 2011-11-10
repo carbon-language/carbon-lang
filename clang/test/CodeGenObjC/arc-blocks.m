@@ -471,12 +471,12 @@ void test13(id x) {
   // CHECK-NEXT: [[B:%.*]] = alloca void ()*, align 8
   // CHECK-NEXT: [[BLOCK:%.*]] = alloca [[BLOCK_T:.*]], align 8
   // CHECK-NEXT: [[CLEANUP_ACTIVE:%.*]] = alloca i1
-  // CHECK-NEXT: store i1 false, i1* [[CLEANUP_ACTIVE]]
   // CHECK-NEXT: [[T0:%.*]] = call i8* @objc_retain(i8* {{%.*}})
   // CHECK-NEXT: store i8* [[T0]], i8** [[X]], align 8
   // CHECK-NEXT: [[CLEANUP_ADDR:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
   // CHECK-NEXT: [[T0:%.*]] = load i8** [[X]], align 8
   // CHECK-NEXT: [[T1:%.*]] = icmp ne i8* [[T0]], null
+  // CHECK-NEXT: store i1 false, i1* [[CLEANUP_ACTIVE]]
   // CHECK-NEXT: br i1 [[T1]],
 
   // CHECK-NOT:  br

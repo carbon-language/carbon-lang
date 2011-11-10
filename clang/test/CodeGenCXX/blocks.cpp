@@ -151,13 +151,13 @@ namespace test5 {
   // CHECK-NEXT: [[B:%.*]] = alloca void ()*, align 8
   // CHECK-NEXT: [[BLOCK:%.*]] = alloca [[BLOCK_T:.*]], align 8
   // CHECK-NEXT: [[CLEANUP_ACTIVE:%.*]] = alloca i1
-  // CHECK-NEXT: store i1 false, i1* [[CLEANUP_ACTIVE]]
   // CHECK-NEXT: [[T0:%.*]] = zext i1
   // CHECK-NEXT: store i8 [[T0]], i8* [[COND]], align 1
   // CHECK-NEXT: call void @_ZN5test51AC1Ev([[A]]* [[X]])
   // CHECK-NEXT: [[CLEANUP_ADDR:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
   // CHECK-NEXT: [[T0:%.*]] = load i8* [[COND]], align 1
   // CHECK-NEXT: [[T1:%.*]] = trunc i8 [[T0]] to i1
+  // CHECK-NEXT: store i1 false, i1* [[CLEANUP_ACTIVE]]
   // CHECK-NEXT: br i1 [[T1]],
 
   // CHECK-NOT:  br

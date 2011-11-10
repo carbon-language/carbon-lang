@@ -192,6 +192,15 @@ public:
   const BlockExpr *BlockExpression;
   CharUnits BlockSize;
   CharUnits BlockAlign;
+
+  /// An instruction which dominates the full-expression that the
+  /// block is inside.
+  llvm::Instruction *DominatingIP;
+
+  /// The next block in the block-info chain.  Invalid if this block
+  /// info is not part of the CGF's block-info chain, which is true
+  /// if it corresponds to a global block or a block whose expression
+  /// has been encountered.
   CGBlockInfo *NextBlockInfo;
 
   const Capture &getCapture(const VarDecl *var) const {

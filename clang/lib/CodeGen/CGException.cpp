@@ -359,7 +359,7 @@ static void EmitAnyExprToExn(CodeGenFunction &CGF, const Expr *e,
                        /*IsInit*/ true);
 
   // Deactivate the cleanup block.
-  CGF.DeactivateCleanupBlock(cleanup);
+  CGF.DeactivateCleanupBlock(cleanup, cast<llvm::Instruction>(typedAddr));
 }
 
 llvm::Value *CodeGenFunction::getExceptionSlot() {

@@ -53,8 +53,8 @@ namespace test1 {
   A *c() {
     // CHECK:    define [[A:%.*]]* @_ZN5test11cEv()
     // CHECK:      [[ACTIVE:%.*]] = alloca i1
-    // CHECK-NEXT: store i1 true, i1* [[ACTIVE]] 
     // CHECK-NEXT: [[NEW:%.*]] = call noalias i8* @_Znwm(i64 8)
+    // CHECK-NEXT: store i1 true, i1* [[ACTIVE]] 
     // CHECK-NEXT: [[CAST:%.*]] = bitcast i8* [[NEW]] to [[A]]*
     // CHECK-NEXT: invoke void @_ZN5test11BC1Ev([[B:%.*]]* [[T0:%.*]])
     // CHECK:      [[T1:%.*]] = getelementptr inbounds [[B]]* [[T0]], i32 0, i32 0
@@ -72,8 +72,8 @@ namespace test1 {
   A *d() {
     // CHECK:    define [[A:%.*]]* @_ZN5test11dEv()
     // CHECK:      [[ACTIVE:%.*]] = alloca i1
-    // CHECK-NEXT: store i1 true, i1* [[ACTIVE]] 
     // CHECK-NEXT: [[NEW:%.*]] = call noalias i8* @_Znwm(i64 8)
+    // CHECK-NEXT: store i1 true, i1* [[ACTIVE]] 
     // CHECK-NEXT: [[CAST:%.*]] = bitcast i8* [[NEW]] to [[A]]*
     // CHECK-NEXT: invoke void @_ZN5test11BC1Ev([[B:%.*]]* [[T0:%.*]])
     // CHECK:      [[T1:%.*]] = invoke i32 @_ZN5test11BcviEv([[B]]* [[T0]])
@@ -90,8 +90,8 @@ namespace test1 {
   A *e() {
     // CHECK:    define [[A:%.*]]* @_ZN5test11eEv()
     // CHECK:      [[ACTIVE:%.*]] = alloca i1
-    // CHECK-NEXT: store i1 true, i1* [[ACTIVE]] 
     // CHECK-NEXT: [[NEW:%.*]] = call noalias i8* @_Znwm(i64 8)
+    // CHECK-NEXT: store i1 true, i1* [[ACTIVE]] 
     // CHECK-NEXT: [[CAST:%.*]] = bitcast i8* [[NEW]] to [[A]]*
     // CHECK-NEXT: invoke void @_ZN5test11BC1Ev([[B:%.*]]* [[T0:%.*]])
     // CHECK:      [[T1:%.*]] = invoke i32 @_ZN5test11BcviEv([[B]]* [[T0]])
@@ -121,8 +121,8 @@ namespace test1 {
     // CHECK:    define [[A:%.*]]* @_ZN5test11iEv()
     // CHECK:      [[X:%.*]] = alloca [[A]]*, align 8
     // CHECK:      [[ACTIVE:%.*]] = alloca i1
-    // CHECK:      store i1 true, i1* [[ACTIVE]] 
-    // CHECK-NEXT: [[NEW:%.*]] = call noalias i8* @_Znwm(i64 8)
+    // CHECK:      [[NEW:%.*]] = call noalias i8* @_Znwm(i64 8)
+    // CHECK-NEXT: store i1 true, i1* [[ACTIVE]] 
     // CHECK-NEXT: [[CAST:%.*]] = bitcast i8* [[NEW]] to [[A]]*
     // CHECK-NEXT: invoke void @_ZN5test15makeBEv([[B:%.*]]* sret [[T0:%.*]])
     // CHECK:      [[T1:%.*]] = invoke i32 @_ZN5test11BcviEv([[B]]* [[T0]])
@@ -196,9 +196,9 @@ namespace test3 {
     // CHECK-NEXT: [[CLEANUPACTIVE:%.*]] = alloca i1
     // CHECK-NEXT: [[TMP:%.*]] = alloca [[A]], align 8
     // CHECK:      [[TMPACTIVE:%.*]] = alloca i1
-    // CHECK-NEXT: store i1 false, i1* [[CLEANUPACTIVE]]
 
     // CHECK:      [[COND:%.*]] = trunc i8 {{.*}} to i1
+    // CHECK-NEXT: store i1 false, i1* [[CLEANUPACTIVE]]
     // CHECK-NEXT: store i1 false, i1* [[TMPACTIVE]]
     // CHECK-NEXT: br i1 [[COND]]
     return (cond ?
@@ -330,17 +330,15 @@ namespace test7 {
     // CHECK-NEXT: alloca [[A]]
     // CHECK-NEXT: [[INNER_A:%.*]] = alloca i1
 
-    // These entry-block stores are to deactivate the delete cleanups.
-    // CHECK-NEXT: store i1 false, i1* [[INNER_NEW]]
-    // CHECK-NEXT: store i1 false, i1* [[OUTER_NEW]]
-
     // Allocate the outer object.
     // CHECK-NEXT: [[NEW:%.*]] = call i8* @_ZN5test71BnwEm(
     // CHECK-NEXT: icmp eq i8* [[NEW]], null
 
     // These stores, emitted before the outermost conditional branch,
     // deactivate the temporary cleanups.
+    // CHECK-NEXT: store i1 false, i1* [[OUTER_NEW]]
     // CHECK-NEXT: store i1 false, i1* [[OUTER_A]]
+    // CHECK-NEXT: store i1 false, i1* [[INNER_NEW]]
     // CHECK-NEXT: store i1 false, i1* [[INNER_A]]
     // CHECK-NEXT: br i1
 
