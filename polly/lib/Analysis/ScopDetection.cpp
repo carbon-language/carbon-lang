@@ -397,6 +397,8 @@ Region *ScopDetection::expandRegion(Region &R) {
 void ScopDetection::findScops(Region &R) {
   DetectionContext Context(R, *AA, false /*verifying*/);
 
+  LastFailure = "";
+
   if (isValidRegion(Context)) {
     ++ValidRegion;
     ValidRegions.insert(&R);
