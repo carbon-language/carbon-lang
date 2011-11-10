@@ -262,11 +262,11 @@ public:
 
   unsigned getStructNumBases() const {
     assert(isStruct() && "Invalid accessor");
-    return ((StructData*)(char*)Data)->NumBases;
+    return ((const StructData*)(const char*)Data)->NumBases;
   }
   unsigned getStructNumFields() const {
     assert(isStruct() && "Invalid accessor");
-    return ((StructData*)(char*)Data)->NumFields;
+    return ((const StructData*)(const char*)Data)->NumFields;
   }
   APValue &getStructBase(unsigned i) {
     assert(isStruct() && "Invalid accessor");
@@ -285,7 +285,7 @@ public:
 
   const FieldDecl *getUnionField() const {
     assert(isUnion() && "Invalid accessor");
-    return ((UnionData*)(char*)Data)->Field;
+    return ((const UnionData*)(const char*)Data)->Field;
   }
   APValue &getUnionValue() {
     assert(isUnion() && "Invalid accessor");
