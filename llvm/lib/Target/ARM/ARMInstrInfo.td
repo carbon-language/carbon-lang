@@ -4990,18 +4990,6 @@ def : MnemonicAlias<"uqsubaddx", "uqsax">;
 // USAX == USUBADDX
 def : MnemonicAlias<"usubaddx", "usax">;
 
-// LDRSBT/LDRHT/LDRSHT post-index offset if optional.
-// Note that the write-back output register is a dummy operand for MC (it's
-// only meaningful for codegen), so we just pass zero here.
-// FIXME: tblgen not cooperating with argument conversions.
-//def : InstAlias<"ldrsbt${p} $Rt, $addr",
-//                (LDRSBTi GPR:$Rt, GPR:$Rt, addr_offset_none:$addr, 0,pred:$p)>;
-//def : InstAlias<"ldrht${p} $Rt, $addr",
-//                (LDRHTi GPR:$Rt, GPR:$Rt, addr_offset_none:$addr, 0, pred:$p)>;
-//def : InstAlias<"ldrsht${p} $Rt, $addr",
-//                (LDRSHTi GPR:$Rt, GPR:$Rt, addr_offset_none:$addr, 0, pred:$p)>;
-
-
 // "mov Rd, so_imm_not" can be handled via "mvn" in assembly, just like
 // for isel.
 def : ARMInstAlias<"mov${s}${p} $Rd, $imm",
