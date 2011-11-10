@@ -35,8 +35,9 @@ class MayAliasSetInfo;
 /// @brief A memory access described by a SCEV expression and the access type.
 class IRAccess {
 public:
-  // The SCEV of this memory access.
-  const SCEV *Scev;
+  const Value *BaseAddress;
+
+  const SCEV *Offset;
 
   // The type of the scev affine function
   enum TypeKind { READ, WRITE };
@@ -46,12 +47,16 @@ private:
   TypeKind Type;
 
 public:
-  explicit IRAccess (TypeKind Type, const SCEV *Scev, unsigned elemBytes)
-    : Scev(Scev), ElemBytes(elemBytes), Type(Type) {}
+  explicit IRAccess (TypeKind Type, const Value *BaseAddress,
+                     const SCEV *Offset, unsigned elemBytes)
+    : BaseAddress(BaseAddress), Offset(Offset),
+      ElemBytes(elemBytes), Type(Type) {}
 
   enum TypeKind getType() const { return Type; }
 
-  const SCEV *getSCEV() const { return Scev; }
+  const Value *getBase() const { return BaseAddress; }
+
+  const SCEV *getOffset() const { return Offset; }
 
   unsigned getElemSizeInBytes() const { return ElemBytes; }
 

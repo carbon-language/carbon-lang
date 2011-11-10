@@ -329,10 +329,8 @@ MemoryAccess::MemoryAccess(const IRAccess &Access, ScopStmt *Statement) {
   Type = Access.isRead() ? Read : Write;
   statement = Statement;
 
-  Value *TmpBaseAddress = NULL;
-  isl_pw_aff *Affine = SCEVAffinator::getPwAff(Statement, Access.getSCEV(),
-                                               &TmpBaseAddress);
-  BaseAddr = TmpBaseAddress;
+  isl_pw_aff *Affine = SCEVAffinator::getPwAff(Statement, Access.getOffset());
+  BaseAddr = Access.getBase();
 
   setBaseName();
 

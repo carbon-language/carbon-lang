@@ -26,6 +26,7 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ScalarEvolution.h"
+#include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/ADT/STLExtras.h"
 
 #define DEBUG_TYPE "polly-analyze-ir"
@@ -93,7 +94,13 @@ void TempScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB) {
       }
 
       const SCEV *AccessFunction = SE->getSCEV(getPointerOperand(Inst));
-      Functions.push_back(std::make_pair(IRAccess(Type, AccessFunction, Size),
+      const SCEVUnknown *BasePointer =
+        static_cast<const SCEVUnknown*>(SE->getPointerBase(AccessFunction));
+
+      AccessFunction = SE->getMinusSCEV(AccessFunction, BasePointer);
+      Functions.push_back(std::make_pair(IRAccess(Type,
+                                                  BasePointer->getValue(),
+                                                  AccessFunction, Size),
                                          &Inst));
     }
   }
