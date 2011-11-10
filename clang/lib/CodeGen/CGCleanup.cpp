@@ -1003,27 +1003,32 @@ static void SetupCleanupBlockActivation(CodeGenFunction &CGF,
                                         ForActivation_t Kind) {
   EHCleanupScope &Scope = cast<EHCleanupScope>(*CGF.EHStack.find(C));
 
-  // We always need the flag if we're activating the cleanup, because
-  // we have to assume that the current location doesn't necessarily
-  // dominate all future uses of the cleanup.
-  bool NeedFlag = (Kind == ForActivation);
+  // We always need the flag if we're activating the cleanup in a
+  // conditional context, because we have to assume that the current
+  // location doesn't necessarily dominate the cleanup's code.
+  bool isActivatedInConditional =
+    (Kind == ForActivation && CGF.isInConditionalBranch());
+
+  bool needFlag = false;
 
   // Calculate whether the cleanup was used:
 
   //   - as a normal cleanup
-  if (Scope.isNormalCleanup() && IsUsedAsNormalCleanup(CGF.EHStack, C)) {
+  if (Scope.isNormalCleanup() &&
+      (isActivatedInConditional || IsUsedAsNormalCleanup(CGF.EHStack, C))) {
     Scope.setTestFlagInNormalCleanup();
-    NeedFlag = true;
+    needFlag = true;
   }
 
   //  - as an EH cleanup
-  if (Scope.isEHCleanup() && IsUsedAsEHCleanup(CGF.EHStack, C)) {
+  if (Scope.isEHCleanup() &&
+      (isActivatedInConditional || IsUsedAsEHCleanup(CGF.EHStack, C))) {
     Scope.setTestFlagInEHCleanup();
-    NeedFlag = true;
+    needFlag = true;
   }
 
   // If it hasn't yet been used as either, we're done.
-  if (!NeedFlag) return;
+  if (!needFlag) return;
 
   llvm::AllocaInst *Var = Scope.getActiveFlag();
   if (!Var) {
