@@ -3291,12 +3291,18 @@ ExprResult Sema::BuildCXXDefaultArgExpr(SourceLocation CallLoc,
   // be properly destroyed.
   // FIXME: We should really be rebuilding the default argument with new
   // bound temporaries; see the comment in PR5810.
-  for (unsigned i = 0, e = Param->getNumDefaultArgTemporaries(); i != e; ++i) {
-    CXXTemporary *Temporary = Param->getDefaultArgTemporary(i);
-    MarkDeclarationReferenced(Param->getDefaultArg()->getLocStart(), 
-                    const_cast<CXXDestructorDecl*>(Temporary->getDestructor()));
-    ExprTemporaries.push_back(Temporary);
+  // We don't need to do that with block decls, though, because
+  // blocks in default argument expression can never capture anything.
+  if (isa<ExprWithCleanups>(Param->getInit())) {
+    // Set the "needs cleanups" bit regardless of whether there are
+    // any explicit objects.
     ExprNeedsCleanups = true;
+
+    // Append all the objects to the cleanup list.  Right now, this
+    // should always be a no-op, because blocks in default argument
+    // expressions should never be able to capture anything.
+    assert(!cast<ExprWithCleanups>(Param->getInit())->getNumObjects() &&
+           "default argument expression has capturing blocks?");
   }
 
   // We already type-checked the argument, so we know it works. 
@@ -8828,6 +8834,13 @@ ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
   const AnalysisBasedWarnings::Policy &WP = AnalysisWarnings.getDefaultPolicy();
   PopFunctionOrBlockScope(&WP, Result->getBlockDecl(), Result);
 
+  // If the block isn't obviously global, i.e. it captures anything at
+  // all, mark this full-expression as needing a cleanup.
+  if (Result->getBlockDecl()->hasCaptures()) {
+    ExprCleanupObjects.push_back(Result->getBlockDecl());
+    ExprNeedsCleanups = true;
+  }
+
   return Owned(Result);
 }
 
@@ -9158,7 +9171,7 @@ void
 Sema::PushExpressionEvaluationContext(ExpressionEvaluationContext NewContext) {
   ExprEvalContexts.push_back(
              ExpressionEvaluationContextRecord(NewContext,
-                                               ExprTemporaries.size(),
+                                               ExprCleanupObjects.size(),
                                                ExprNeedsCleanups));
   ExprNeedsCleanups = false;
 }
@@ -9195,8 +9208,8 @@ void Sema::PopExpressionEvaluationContext() {
   // the expression in that context: they aren't relevant because they
   // will never be constructed.
   if (Rec.Context == Unevaluated) {
-    ExprTemporaries.erase(ExprTemporaries.begin() + Rec.NumTemporaries,
-                          ExprTemporaries.end());
+    ExprCleanupObjects.erase(ExprCleanupObjects.begin() + Rec.NumCleanupObjects,
+                             ExprCleanupObjects.end());
     ExprNeedsCleanups = Rec.ParentNeedsCleanups;
 
   // Otherwise, merge the contexts together.
@@ -9209,9 +9222,9 @@ void Sema::PopExpressionEvaluationContext() {
 }
 
 void Sema::DiscardCleanupsInEvaluationContext() {
-  ExprTemporaries.erase(
-              ExprTemporaries.begin() + ExprEvalContexts.back().NumTemporaries,
-              ExprTemporaries.end());
+  ExprCleanupObjects.erase(
+         ExprCleanupObjects.begin() + ExprEvalContexts.back().NumCleanupObjects,
+         ExprCleanupObjects.end());
   ExprNeedsCleanups = false;
 }
 
@@ -9452,6 +9465,12 @@ namespace {
     void VisitMemberExpr(MemberExpr *E) {
       S.MarkDeclarationReferenced(E->getMemberLoc(), E->getMemberDecl());
       Inherited::VisitMemberExpr(E);
+    }
+    
+    void VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
+      S.MarkDeclarationReferenced(E->getLocStart(),
+            const_cast<CXXDestructorDecl*>(E->getTemporary()->getDestructor()));
+      Visit(E->getSubExpr());
     }
     
     void VisitCXXNewExpr(CXXNewExpr *E) {

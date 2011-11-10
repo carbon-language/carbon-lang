@@ -2179,43 +2179,58 @@ public:
 /// Represents an expression --- generally a full-expression --- which
 /// introduces cleanups to be run at the end of the sub-expression's
 /// evaluation.  The most common source of expression-introduced
-/// cleanups is temporary objects in C++, but several other C++
-/// expressions can create cleanups.
+/// cleanups is temporary objects in C++, but several other kinds of
+/// expressions can create cleanups, including basically every
+/// call in ARC that returns an Objective-C pointer.
+///
+/// This expression also tracks whether the sub-expression contains a
+/// potentially-evaluated block literal.  The lifetime of a block
+/// literal is the extent of the enclosing scope.
 class ExprWithCleanups : public Expr {
+public:
+  /// The type of objects that are kept in the cleanup.
+  /// It's useful to remember the set of blocks;  we could also
+  /// remember the set of temporaries, but there's currently
+  /// no need.
+  typedef BlockDecl *CleanupObject;
+
+private:
   Stmt *SubExpr;
 
-  CXXTemporary **Temps;
-  unsigned NumTemps;
+  ExprWithCleanups(EmptyShell, unsigned NumObjects);
+  ExprWithCleanups(Expr *SubExpr, ArrayRef<CleanupObject> Objects);
 
-  ExprWithCleanups(ASTContext &C, Expr *SubExpr,
-                   CXXTemporary **Temps, unsigned NumTemps);
+  CleanupObject *getObjectsBuffer() {
+    return reinterpret_cast<CleanupObject*>(this + 1);
+  }
+  const CleanupObject *getObjectsBuffer() const {
+    return reinterpret_cast<const CleanupObject*>(this + 1);
+  }
+  friend class ASTStmtReader;
 
 public:
-  ExprWithCleanups(EmptyShell Empty)
-    : Expr(ExprWithCleanupsClass, Empty),
-      SubExpr(0), Temps(0), NumTemps(0) {}
+  static ExprWithCleanups *Create(ASTContext &C, EmptyShell empty,
+                                  unsigned numObjects);
 
-  static ExprWithCleanups *Create(ASTContext &C, Expr *SubExpr,
-                                        CXXTemporary **Temps,
-                                        unsigned NumTemps);
+  static ExprWithCleanups *Create(ASTContext &C, Expr *subexpr,
+                                  ArrayRef<CleanupObject> objects);
 
-  unsigned getNumTemporaries() const { return NumTemps; }
-  void setNumTemporaries(ASTContext &C, unsigned N);
-
-  CXXTemporary *getTemporary(unsigned i) {
-    assert(i < NumTemps && "Index out of range");
-    return Temps[i];
+  ArrayRef<CleanupObject> getObjects() const {
+    return ArrayRef<CleanupObject>(getObjectsBuffer(), getNumObjects());
   }
-  const CXXTemporary *getTemporary(unsigned i) const {
-    return const_cast<ExprWithCleanups*>(this)->getTemporary(i);
-  }
-  void setTemporary(unsigned i, CXXTemporary *T) {
-    assert(i < NumTemps && "Index out of range");
-    Temps[i] = T;
+
+  unsigned getNumObjects() const { return ExprWithCleanupsBits.NumObjects; }
+
+  CleanupObject getObject(unsigned i) const {
+    assert(i < getNumObjects() && "Index out of range");
+    return getObjects()[i];
   }
 
   Expr *getSubExpr() { return cast<Expr>(SubExpr); }
   const Expr *getSubExpr() const { return cast<Expr>(SubExpr); }
+
+  /// setSubExpr - As with any mutator of the AST, be very careful
+  /// when modifying an existing AST to preserve its invariants.
   void setSubExpr(Expr *E) { SubExpr = E; }
 
   SourceRange getSourceRange() const {

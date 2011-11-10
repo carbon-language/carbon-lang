@@ -590,10 +590,12 @@ void StmtDumper::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *Node) {
 void StmtDumper::VisitExprWithCleanups(ExprWithCleanups *Node) {
   DumpExpr(Node);
   ++IndentLevel;
-  for (unsigned i = 0, e = Node->getNumTemporaries(); i != e; ++i) {
+  for (unsigned i = 0, e = Node->getNumObjects(); i != e; ++i) {
     OS << "\n";
     Indent();
-    DumpCXXTemporary(Node->getTemporary(i));
+    OS << "(cleanup ";
+    DumpDeclRef(Node->getObject(i));
+    OS << ")";
   }
   --IndentLevel;
 }

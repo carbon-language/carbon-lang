@@ -185,6 +185,15 @@ protected:
     unsigned NumPreArgs : 1;
   };
 
+  class ExprWithCleanupsBitfields {
+    friend class ExprWithCleanups;
+    friend class ASTStmtReader; // deserialization
+
+    unsigned : NumExprBits;
+
+    unsigned NumObjects : 32 - NumExprBits;
+  };
+
   class PseudoObjectExprBitfields {
     friend class PseudoObjectExpr;
     friend class ASTStmtReader; // deserialization
@@ -214,6 +223,7 @@ protected:
     DeclRefExprBitfields DeclRefExprBits;
     CastExprBitfields CastExprBits;
     CallExprBitfields CallExprBits;
+    ExprWithCleanupsBitfields ExprWithCleanupsBits;
     PseudoObjectExprBitfields PseudoObjectExprBits;
     ObjCIndirectCopyRestoreExprBitfields ObjCIndirectCopyRestoreExprBits;
   };

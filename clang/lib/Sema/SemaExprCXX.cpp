@@ -4122,29 +4122,10 @@ ExprResult Sema::MaybeBindToTemporary(Expr *E) {
                           PDiag(diag::err_access_dtor_temp)
                             << E->getType());
 
-    ExprTemporaries.push_back(Temp);
+    // We need a cleanup, but we don't need to remember the temporary.
     ExprNeedsCleanups = true;
   }
   return Owned(CXXBindTemporaryExpr::Create(Context, Temp, E));
-}
-
-Expr *Sema::MaybeCreateExprWithCleanups(Expr *SubExpr) {
-  assert(SubExpr && "sub expression can't be null!");
-
-  unsigned FirstTemporary = ExprEvalContexts.back().NumTemporaries;
-  assert(ExprTemporaries.size() >= FirstTemporary);
-  assert(ExprNeedsCleanups || ExprTemporaries.size() == FirstTemporary);
-  if (!ExprNeedsCleanups)
-    return SubExpr;
-
-  Expr *E = ExprWithCleanups::Create(Context, SubExpr,
-                                     ExprTemporaries.begin() + FirstTemporary,
-                                     ExprTemporaries.size() - FirstTemporary);
-  ExprTemporaries.erase(ExprTemporaries.begin() + FirstTemporary,
-                        ExprTemporaries.end());
-  ExprNeedsCleanups = false;
-
-  return E;
 }
 
 ExprResult
@@ -4153,6 +4134,25 @@ Sema::MaybeCreateExprWithCleanups(ExprResult SubExpr) {
     return ExprError();
 
   return Owned(MaybeCreateExprWithCleanups(SubExpr.take()));
+}
+
+Expr *Sema::MaybeCreateExprWithCleanups(Expr *SubExpr) {
+  assert(SubExpr && "sub expression can't be null!");
+
+  unsigned FirstCleanup = ExprEvalContexts.back().NumCleanupObjects;
+  assert(ExprCleanupObjects.size() >= FirstCleanup);
+  assert(ExprNeedsCleanups || ExprCleanupObjects.size() == FirstCleanup);
+  if (!ExprNeedsCleanups)
+    return SubExpr;
+
+  ArrayRef<ExprWithCleanups::CleanupObject> Cleanups
+    = llvm::makeArrayRef(ExprCleanupObjects.begin() + FirstCleanup,
+                         ExprCleanupObjects.size() - FirstCleanup);
+
+  Expr *E = ExprWithCleanups::Create(Context, SubExpr, Cleanups);
+  DiscardCleanupsInEvaluationContext();
+
+  return E;
 }
 
 Stmt *Sema::MaybeCreateStmtWithCleanups(Stmt *SubStmt) {

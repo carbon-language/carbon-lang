@@ -1412,21 +1412,6 @@ Expr *ParmVarDecl::getDefaultArg() {
   return Arg;
 }
 
-unsigned ParmVarDecl::getNumDefaultArgTemporaries() const {
-  if (const ExprWithCleanups *E = dyn_cast<ExprWithCleanups>(getInit()))
-    return E->getNumTemporaries();
-
-  return 0;
-}
-
-CXXTemporary *ParmVarDecl::getDefaultArgTemporary(unsigned i) {
-  assert(getNumDefaultArgTemporaries() && 
-         "Default arguments does not have any temporaries!");
-
-  ExprWithCleanups *E = cast<ExprWithCleanups>(getInit());
-  return E->getTemporary(i);
-}
-
 SourceRange ParmVarDecl::getDefaultArgRange() const {
   if (const Expr *E = getInit())
     return E->getSourceRange();

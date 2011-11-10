@@ -1285,12 +1285,6 @@ public:
     Init = reinterpret_cast<Stmt *>(defarg);
   }
 
-  unsigned getNumDefaultArgTemporaries() const;
-  CXXTemporary *getDefaultArgTemporary(unsigned i);
-  const CXXTemporary *getDefaultArgTemporary(unsigned i) const {
-    return const_cast<ParmVarDecl *>(this)->getDefaultArgTemporary(i);
-  }
-
   /// \brief Retrieve the source range that covers the entire default
   /// argument.
   SourceRange getDefaultArgRange() const;

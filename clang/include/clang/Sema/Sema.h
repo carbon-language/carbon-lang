@@ -223,6 +223,11 @@ public:
   /// requires cleanups to be run at its conclusion.
   bool ExprNeedsCleanups;
 
+  /// ExprCleanupObjects - This is the stack of objects requiring
+  /// cleanup that are created by the current full expression.  The
+  /// element type here is ExprWithCleanups::Object.
+  SmallVector<BlockDecl*, 8> ExprCleanupObjects;
+
   /// \brief Stack containing information about each of the nested
   /// function, block, and method scopes that are currently active.
   ///
@@ -230,10 +235,6 @@ public:
   /// element, which is used to cache a single FunctionScopeInfo
   /// that's used to parse every top-level function.
   SmallVector<sema::FunctionScopeInfo *, 4> FunctionScopes;
-
-  /// ExprTemporaries - This is the stack of temporaries that are created by
-  /// the current full expression.
-  SmallVector<CXXTemporary*, 8> ExprTemporaries;
 
   typedef LazyVector<TypedefNameDecl *, ExternalSemaSource,
                      &ExternalSemaSource::ReadExtVectorDecls, 2, 2>
@@ -547,9 +548,9 @@ public:
     /// \brief Whether the enclosing context needed a cleanup.
     bool ParentNeedsCleanups;
 
-    /// \brief The number of temporaries that were active when we
-    /// entered this expression evaluation context.
-    unsigned NumTemporaries;
+    /// \brief The number of active cleanup objects when we entered
+    /// this expression evaluation context.
+    unsigned NumCleanupObjects;
 
     /// \brief The set of declarations referenced within a
     /// potentially potentially-evaluated context.
@@ -565,10 +566,10 @@ public:
     PotentiallyEmittedDiagnostics *PotentiallyDiagnosed;
 
     ExpressionEvaluationContextRecord(ExpressionEvaluationContext Context,
-                                      unsigned NumTemporaries,
+                                      unsigned NumCleanupObjects,
                                       bool ParentNeedsCleanups)
       : Context(Context), ParentNeedsCleanups(ParentNeedsCleanups),
-        NumTemporaries(NumTemporaries),
+        NumCleanupObjects(NumCleanupObjects),
         PotentiallyReferenced(0), PotentiallyDiagnosed(0) { }
 
     void addReferencedDecl(SourceLocation Loc, Decl *Decl) {

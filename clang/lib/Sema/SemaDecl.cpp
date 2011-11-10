@@ -7190,8 +7190,7 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
     // deletion in some later function.
     if (PP.getDiagnostics().hasErrorOccurred() ||
         PP.getDiagnostics().getSuppressAllDiagnostics()) {
-      ExprTemporaries.clear();
-      ExprNeedsCleanups = false;
+      DiscardCleanupsInEvaluationContext();
     } else if (!isa<FunctionTemplateDecl>(dcl)) {
       // Since the body is valid, issue any analysis-based warnings that are
       // enabled.
@@ -7202,7 +7201,7 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
         !CheckConstexprFunctionBody(FD, Body))
       FD->setInvalidDecl();
 
-    assert(ExprTemporaries.empty() && "Leftover temporaries in function");
+    assert(ExprCleanupObjects.empty() && "Leftover temporaries in function");
     assert(!ExprNeedsCleanups && "Unaccounted cleanups in function");
   }
   
@@ -7215,8 +7214,7 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
   // been leftover. This ensures that these temporaries won't be picked up for
   // deletion in some later function.
   if (getDiagnostics().hasErrorOccurred()) {
-    ExprTemporaries.clear();
-    ExprNeedsCleanups = false;
+    DiscardCleanupsInEvaluationContext();
   }
 
   return dcl;
