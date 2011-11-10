@@ -4,6 +4,7 @@ set(LLVM_LINK_COMPONENTS
   bitwriter
   instrumentation
   ipo
+  linker
   )
 
 set(LLVM_USED_LIBS clangBasic clangAST clangFrontend)
