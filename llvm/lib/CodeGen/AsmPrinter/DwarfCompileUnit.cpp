@@ -605,7 +605,11 @@ DIE *CompileUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
     assert(Ty.isDerivedType() && "Unknown kind of DIType");
     constructTypeDIE(*TyDIE, DIDerivedType(Ty));
   }
-
+  // If this is a named finished type then include it in the list of types
+  // for the accelerator tables.
+  if (!Ty.getName().empty() && !Ty.isForwardDecl())
+    addAccelType(Ty.getName(), TyDIE);
+  
   addToContextOwner(TyDIE, Ty.getContext());
   return TyDIE;
 }
@@ -634,12 +638,6 @@ void CompileUnit::addType(DIE *Entity, DIType Ty) {
   // If this is a complete composite type then include it in the
   // list of global types.
   addGlobalType(Ty);
-
-  // If this is a named finished type then include it in the list of types
-  // for the accelerator tables.
-  if (!Ty.getName().empty() && !Ty.isForwardDecl())
-    if (DIEEntry *Entry = getDIEEntry(Ty))
-      AccelTypes[Ty.getName()] = Entry->getEntry();
 }
 
 /// addGlobalType - Add a new global type to the compile unit.
