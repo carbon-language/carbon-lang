@@ -901,7 +901,6 @@ StripLeadingSpaces (std::string &s)
 static size_t
 FindArgumentTerminator (const std::string &s)
 {
-    printf ("FindArgumentTerminator( s = '%s') => ", s.c_str());
     const size_t s_len = s.size();
     size_t offset = 0;
     while (offset < s_len)
@@ -917,14 +916,12 @@ FindArgumentTerminator (const std::string &s)
                 // or if we have "\s--\s".
                 if ((pos + 2 >= s_len) || isspace(s[pos+2]))
                 {
-                    printf ("%zu\n", pos);
                     return pos;
                 }
             }
         }
         offset = pos + 2;
     }
-    printf ("-1\n");
     return std::string::npos;
 }
 
