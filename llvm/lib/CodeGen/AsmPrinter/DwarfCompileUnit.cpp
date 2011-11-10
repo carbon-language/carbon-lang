@@ -934,6 +934,12 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
   if (SPDie)
     return SPDie;
 
+  DISubprogram SPDecl = SP.getFunctionDeclaration();
+  DIE *DeclDie = NULL;
+  if (SPDecl.isSubprogram()) {
+    DeclDie = getOrCreateSubprogramDIE(SPDecl);
+  }
+
   SPDie = new DIE(dwarf::DW_TAG_subprogram);
   
   // DW_TAG_inlined_subroutine may refer to this DIE.
@@ -952,8 +958,13 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
 
   // If this DIE is going to refer declaration info using AT_specification
   // then there is no need to add other attributes.
-  if (SP.getFunctionDeclaration().isSubprogram())
+  if (DeclDie) {
+    // Refer function declaration directly.
+    addDIEEntry(SPDie, dwarf::DW_AT_specification, dwarf::DW_FORM_ref4,
+                DeclDie);
+
     return SPDie;
+  }
 
   // Constructors and operators for anonymous aggregates do not have names.
   if (!SP.getName().empty())

@@ -598,19 +598,7 @@ void DwarfDebug::constructSubprogramDIE(CompileUnit *TheCU,
     // class type.
     return;
 
-  DISubprogram SPDecl = SP.getFunctionDeclaration();
-  DIE *DeclDie = NULL;
-  if (SPDecl.isSubprogram()) {
-    DeclDie = TheCU->getOrCreateSubprogramDIE(SPDecl);
-  }
-
   DIE *SubprogramDie = TheCU->getOrCreateSubprogramDIE(SP);
-
-  if (DeclDie) {
-    // Refer function declaration directly.
-    TheCU->addDIEEntry(SubprogramDie, dwarf::DW_AT_specification,
-                       dwarf::DW_FORM_ref4, DeclDie);
-  }
 
   // Add to map.
   TheCU->insertDIE(N, SubprogramDie);
