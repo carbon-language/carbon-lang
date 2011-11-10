@@ -74,6 +74,10 @@ OnlyFunction("polly-detect-only",
              cl::value_desc("The function name to detect scops in"),
              cl::ValueRequired, cl::init(""));
 
+static cl::opt<bool>
+IgnoreAliasing("polly-ignore-aliasing",
+               cl::desc("Ignore possible aliasing of the array bases"),
+               cl::Hidden, cl::init(false));
 
 //===----------------------------------------------------------------------===//
 // Statistics.
@@ -241,7 +245,7 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
   AliasSet &AS =
     Context.AST.getAliasSetForPointer(BaseValue, AliasAnalysis::UnknownSize,
                                       Inst.getMetadata(LLVMContext::MD_tbaa));
-  if (!AS.isMustAlias())
+  if (!AS.isMustAlias() && !IgnoreAliasing)
     INVALID(Alias, "Possible aliasing found for value: " << *BaseValue);
 
   return true;
