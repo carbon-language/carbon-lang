@@ -207,11 +207,7 @@ void SDiagsWriter::AddLocToRecord(SourceLocation Loc,
   Record.push_back(getEmitFile(Loc));
   Record.push_back(SM.getSpellingLineNumber(Loc));
   Record.push_back(SM.getSpellingColumnNumber(Loc)+TokSize);
-  
-  std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(Loc);
-  FileID FID = LocInfo.first;
-  unsigned FileOffset = LocInfo.second;
-  Record.push_back(FileOffset);
+  Record.push_back(SM.getFileOffset(Loc));
 }
 
 void SDiagsWriter::AddCharSourceRangeToRecord(CharSourceRange Range,
