@@ -305,17 +305,15 @@ _mm256_permute2f128_si256(__m256i a, __m256i b, const int c)
 }
 
 /* Vector Blend */
-static __inline __m256d __attribute__((__always_inline__, __nodebug__))
-_mm256_blend_pd(__m256d a, __m256d b, const int c)
-{
-  return (__m256d)__builtin_ia32_blendpd256((__v4df)a, (__v4df)b, c);
-}
+#define _mm256_blend_pd(V1, V2, M) __extension__ ({ \
+  __m256d __V1 = (V1); \
+  __m256d __V2 = (V2); \
+  (__m256d)__builtin_ia32_blendpd256((__v4df)__V1, (__v4df)__V2, M); })
 
-static __inline __m256 __attribute__((__always_inline__, __nodebug__))
-_mm256_blend_ps(__m256 a, __m256 b, const int c)
-{
-  return (__m256)__builtin_ia32_blendps256((__v8sf)a, (__v8sf)b, c);
-}
+#define _mm256_blend_ps(V1, V2, M) __extension__ ({ \
+  __m256 __V1 = (V1); \
+  __m256 __V2 = (V2); \
+  (__m256)__builtin_ia32_blendps256((__v8sf)__V1, (__v8sf)__V2, M); })
 
 static __inline __m256d __attribute__((__always_inline__, __nodebug__))
 _mm256_blendv_pd(__m256d a, __m256d b, __m256d c)
@@ -330,11 +328,10 @@ _mm256_blendv_ps(__m256 a, __m256 b, __m256 c)
 }
 
 /* Vector Dot Product */
-static __inline __m256 __attribute__((__always_inline__, __nodebug__))
-_mm256_dp_ps(__m256 a, __m256 b, const int c)
-{
-  return (__m256)__builtin_ia32_dpps256((__v8sf)a, (__v8sf)b, c);
-}
+#define _mm256_dp_ps(V1, V2, M) __extension__ ({ \
+  __m256 __V1 = (V1); \
+  __m256 __V2 = (V2); \
+  (__m256)__builtin_ia32_dpps256((__v8sf)__V1, (__v8sf)__V2, M); })
 
 /* Vector shuffle */
 #define _mm256_shuffle_ps(a, b, mask) __extension__ ({ \
