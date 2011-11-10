@@ -1,12 +1,8 @@
 <div id="menu">
-  <div>
-    <a href="http://llvm.org/">LLVM Home</a>
-  </div>
-
   <div class="submenu">
-    <label>Polly Info</label>
+    <label>Information</label>
     <a href="/index.html">About</a>
-    <a href="/todo.html">Todo</a>
+    <a href="/todo.html">TODO</a>
     <a href="/documentation.html">Documentation</a>
     <a href="/examples.html">Examples</a>
     <a href="/performance.html">Performance</a>
