@@ -12,7 +12,8 @@ CheckArches = \
   $(shell \
     result=""; \
     for arch in $(1); do \
-      if $(CC) -arch $$arch -c -x c /dev/null \
+      if $(CC) -arch $$arch -c \
+	  $(ProjSrcRoot)/make/platform/clang_darwin_test_input.c \
 	  -o /dev/null > /dev/null 2> /dev/null; then \
         result="$$result$$arch "; \
       fi; \
