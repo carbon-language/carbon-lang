@@ -372,9 +372,11 @@ _func:
 @ MUL
 @------------------------------------------------------------------------------
         muls r1, r2, r1
+        muls r2, r2, r3
         muls r3, r4
 
 @ CHECK: muls	r1, r2, r1              @ encoding: [0x51,0x43]
+@ CHECK: muls	r2, r3, r2              @ encoding: [0x5a,0x43]
 @ CHECK: muls	r3, r4, r3              @ encoding: [0x63,0x43]
 
 

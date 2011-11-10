@@ -3415,13 +3415,15 @@ cvtThumbMultiply(MCInst &Inst, unsigned Opcode,
   }
   ((ARMOperand*)Operands[3])->addRegOperands(Inst, 1);
   ((ARMOperand*)Operands[1])->addCCOutOperands(Inst, 1);
-  ((ARMOperand*)Operands[4])->addRegOperands(Inst, 1);
-  // If we have a three-operand form, use that, else the second source operand
-  // is just the destination operand again.
-  if (Operands.size() == 6)
-    ((ARMOperand*)Operands[5])->addRegOperands(Inst, 1);
-  else
-    Inst.addOperand(Inst.getOperand(0));
+  // If we have a three-operand form, make sure to set Rn to be the operand
+  // that isn't the same as Rd.
+  unsigned RegOp = 4;
+  if (Operands.size() == 6 &&
+      ((ARMOperand*)Operands[4])->getReg() ==
+        ((ARMOperand*)Operands[3])->getReg())
+    RegOp = 5;
+  ((ARMOperand*)Operands[RegOp])->addRegOperands(Inst, 1);
+  Inst.addOperand(Inst.getOperand(0));
   ((ARMOperand*)Operands[2])->addCondCodeOperands(Inst, 2);
 
   return true;
