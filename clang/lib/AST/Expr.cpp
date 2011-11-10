@@ -834,7 +834,7 @@ void CallExpr::setNumArgs(ASTContext& C, unsigned NumArgs) {
 
 /// isBuiltinCall - If this is a call to a builtin, return the builtin ID.  If
 /// not, return 0.
-unsigned CallExpr::isBuiltinCall(const ASTContext &Context) const {
+unsigned CallExpr::isBuiltinCall() const {
   // All simple function calls (e.g. func()) are implicitly cast to pointer to
   // function. As a result, we try and obtain the DeclRefExpr from the
   // ImplicitCastExpr.
@@ -2475,15 +2475,20 @@ bool Expr::isConstantInitializer(ASTContext &Ctx, bool IsForRef) const {
     const CXXConstructExpr *CE = cast<CXXConstructExpr>(this);
 
     // Only if it's
-    // 1) an application of the trivial default constructor or
-    if (!CE->getConstructor()->isTrivial()) return false;
-    if (!CE->getNumArgs()) return true;
+    if (CE->getConstructor()->isTrivial()) {
+      // 1) an application of the trivial default constructor or
+      if (!CE->getNumArgs()) return true;
 
-    // 2) an elidable trivial copy construction of an operand which is
-    //    itself a constant initializer.  Note that we consider the
-    //    operand on its own, *not* as a reference binding.
-    return CE->isElidable() &&
-           CE->getArg(0)->isConstantInitializer(Ctx, false);
+      // 2) an elidable trivial copy construction of an operand which is
+      //    itself a constant initializer.  Note that we consider the
+      //    operand on its own, *not* as a reference binding.
+      if (CE->isElidable() &&
+          CE->getArg(0)->isConstantInitializer(Ctx, false))
+        return true;
+    }
+
+    // 3) a foldable constexpr constructor.
+    break;
   }
   case CompoundLiteralExprClass: {
     // This handles gcc's extension that allows global initializers like

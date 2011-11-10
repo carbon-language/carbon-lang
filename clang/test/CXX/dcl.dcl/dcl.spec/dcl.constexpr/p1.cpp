@@ -117,8 +117,7 @@ constexpr int square(int x) {
   return x * x;
 }
 
-// FIXME: The initializer is a constant expression.
-constexpr pixel large(4); // unexpected-error {{must be initialized by a constant expression}}
+constexpr pixel large(4);
 
 int next(constexpr int x) { // expected-error {{function parameter cannot be constexpr}}
       return x + 1;

@@ -908,7 +908,7 @@ public:
     }
     case Expr::CallExprClass: {
       CallExpr* CE = cast<CallExpr>(E);
-      unsigned builtin = CE->isBuiltinCall(CGM.getContext());
+      unsigned builtin = CE->isBuiltinCall();
       if (builtin !=
             Builtin::BI__builtin___CFStringMakeConstantString &&
           builtin !=
@@ -1071,7 +1071,8 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
       return llvm::ConstantVector::get(Inits);
     }
     case APValue::Array:
-      assert(0 && "shouldn't see array constants here yet");
+    case APValue::Struct:
+    case APValue::Union:
       break;
     }
   }

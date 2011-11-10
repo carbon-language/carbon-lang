@@ -33,6 +33,50 @@ struct MemberZero {
   constexpr int zero() { return 0; }
 };
 
+namespace DerivedToVBaseCast {
+
+  struct U { int n; };
+  struct V : U { int n; };
+  struct A : virtual V { int n; };
+  struct Aa { int n; };
+  struct B : virtual A, Aa {};
+  struct C : virtual A, Aa {};
+  struct D : B, C {};
+
+  D d;
+  constexpr B *p = &d;
+  constexpr C *q = &d;
+  static_assert_fold((void*)p != (void*)q, "");
+  static_assert_fold((A*)p == (A*)q, "");
+  static_assert_fold((Aa*)p != (Aa*)q, "");
+
+  constexpr B &pp = d;
+  constexpr C &qq = d;
+  static_assert_fold((void*)&pp != (void*)&qq, "");
+  static_assert_fold(&(A&)pp == &(A&)qq, "");
+  static_assert_fold(&(Aa&)pp != &(Aa&)qq, "");
+
+  constexpr V *v = p;
+  constexpr V *w = q;
+  constexpr V *x = (A*)p;
+  static_assert_fold(v == w, "");
+  static_assert_fold(v == x, "");
+
+  static_assert_fold((U*)&d == p, "");
+  static_assert_fold((U*)&d == q, "");
+  static_assert_fold((U*)&d == v, "");
+  static_assert_fold((U*)&d == w, "");
+  static_assert_fold((U*)&d == x, "");
+
+  struct X {};
+  struct Y1 : virtual X {};
+  struct Y2 : X {};
+  struct Z : Y1, Y2 {};
+  Z z;
+  static_assert_fold((X*)(Y1*)&z != (X*)(Y2*)&z, "");
+
+}
+
 namespace TemplateArgumentConversion {
   template<int n> struct IntParam {};
 
@@ -268,6 +312,10 @@ static_assert_fold(sameTemporary(9), "");
 
 }
 
+constexpr int strcmp_ce(const char *p, const char *q) {
+  return (!*p || *p != *q) ? *p - *q : strcmp_ce(p+1, q+1);
+}
+
 namespace StringLiteral {
 
 // FIXME: Refactor this once we support constexpr templates.
@@ -308,6 +356,11 @@ constexpr char str[] = "the quick brown fox jumped over the lazy dog";
 constexpr const char *max = max_element(begin(str), end(str));
 static_assert_fold(*max == 'z', "");
 static_assert_fold(max == str + 38, "");
+
+static_assert_fold(strcmp_ce("hello world", "hello world") == 0, "");
+static_assert_fold(strcmp_ce("hello world", "hello clang") > 0, "");
+static_assert_fold(strcmp_ce("constexpr", "test") < 0, "");
+static_assert_fold(strcmp_ce("", " ") < 0, "");
 
 }
 
@@ -350,6 +403,17 @@ static_assert_fold(zs[1][1][1][1] == 16, "");
 static_assert_fold(zs[0][0][0][2] == 3, ""); // expected-error {{constant expression}}
 static_assert_fold((&zs[0][0][0][2])[-1] == 2, "");
 static_assert_fold(**(**(zs + 1) + 1) == 11, "");
+static_assert_fold(*(&(&(*(*&(&zs[2] - 1)[0] + 2 - 2))[2])[-1][-1] + 1) == 11, "");
+
+constexpr int arr[40] = { 1, 2, 3, [8] = 4 };
+constexpr int SumNonzero(const int *p) {
+  return *p + (*p ? SumNonzero(p+1) : 0);
+}
+constexpr int CountZero(const int *p, const int *q) {
+  return p == q ? 0 : (*p == 0) + CountZero(p+1, q);
+}
+static_assert_fold(SumNonzero(arr) == 6, "");
+static_assert_fold(CountZero(arr, arr + 40) == 36, "");
 
 }
 
@@ -365,5 +429,182 @@ template<bool B> struct S {
     switch (i.n) {}
   }
 };
+
+}
+
+namespace Class {
+
+struct A { constexpr A(int a, int b) : k(a + b) {} int k; };
+constexpr int fn(const A &a) { return a.k; }
+static_assert_fold(fn(A(4,5)) == 9, "");
+
+struct B { int n; int m; } constexpr b = { 0, b.n }; // expected-warning {{uninitialized}}
+struct C {
+  constexpr C(C *this_) : m(42), n(this_->m) {} // ok
+  int m, n;
+};
+struct D {
+  C c;
+  constexpr D() : c(&c) {}
+};
+static_assert_fold(D().c.n == 42, "");
+
+struct E {
+  constexpr E() : p(&p) {}
+  void *p;
+};
+constexpr const E &e1 = E(); // expected-error {{constant expression}}
+// This is a constant expression if we elide the copy constructor call, and
+// is not a constant expression if we don't! But we do, so it is.
+// FIXME: The move constructor is not currently implicitly defined as constexpr.
+// We notice this when evaluating an expression which uses it, but not when
+// checking its initializer.
+constexpr E e2 = E(); // unexpected-error {{constant expression}}
+static_assert_fold(e2.p == &e2.p, ""); // unexpected-error {{constant expression}}
+// FIXME: We don't pass through the fact that 'this' is ::e3 when checking the
+// initializer of this declaration.
+constexpr E e3; // unexpected-error {{constant expression}}
+static_assert_fold(e3.p == &e3.p, "");
+
+extern const class F f;
+struct F {
+  constexpr F() : p(&f.p) {}
+  const void *p;
+};
+constexpr F f = F();
+
+struct G {
+  struct T {
+    constexpr T(T *p) : u1(), u2(p) {}
+    union U1 {
+      constexpr U1() {}
+      int a, b = 42;
+    } u1;
+    union U2 {
+      constexpr U2(T *p) : c(p->u1.b) {}
+      int c, d;
+    } u2;
+  } t;
+  constexpr G() : t(&t) {}
+} constexpr g;
+
+static_assert_fold(g.t.u1.a == 42, ""); // expected-error {{constant expression}}
+static_assert_fold(g.t.u1.b == 42, "");
+static_assert_fold(g.t.u2.c == 42, "");
+static_assert_fold(g.t.u2.d == 42, ""); // expected-error {{constant expression}}
+
+struct S {
+  int a, b;
+  const S *p;
+  double d;
+  const char *q;
+
+  constexpr S(int n, const S *p) : a(5), b(n), p(p), d(n), q("hello") {}
+};
+
+S global(43, &global);
+
+static_assert_fold(S(15, &global).b == 15, "");
+
+constexpr bool CheckS(const S &s) {
+  return s.a == 5 && s.b == 27 && s.p == &global && s.d == 27. && s.q[3] == 'l';
+}
+static_assert_fold(CheckS(S(27, &global)), "");
+
+struct Arr {
+  char arr[3];
+  constexpr Arr() : arr{'x', 'y', 'z'} {}
+};
+constexpr int hash(Arr &&a) {
+  return a.arr[0] + a.arr[1] * 0x100 + a.arr[2] * 0x10000;
+}
+constexpr int k = hash(Arr());
+static_assert_fold(k == 0x007a7978, "");
+
+
+struct AggregateInit {
+  const char &c;
+  int n;
+  double d;
+  int arr[5];
+  void *p;
+};
+
+constexpr AggregateInit agg1 = { "hello"[0] };
+
+static_assert_fold(strcmp_ce(&agg1.c, "hello") == 0, "");
+static_assert_fold(agg1.n == 0, "");
+static_assert_fold(agg1.d == 0.0, "");
+static_assert_fold(agg1.arr[-1] == 0, ""); // expected-error {{constant expression}}
+static_assert_fold(agg1.arr[0] == 0, "");
+static_assert_fold(agg1.arr[4] == 0, "");
+static_assert_fold(agg1.arr[5] == 0, ""); // expected-error {{constant expression}}
+static_assert_fold(agg1.p == nullptr, "");
+
+namespace SimpleDerivedClass {
+
+struct B {
+  constexpr B(int n) : a(n) {}
+  int a;
+};
+struct D : B {
+  constexpr D(int n) : B(n) {}
+};
+constexpr D d(3);
+static_assert_fold(d.a == 3, "");
+
+}
+
+struct Base {
+  constexpr Base(int a = 42, const char *b = "test") : a(a), b(b) {}
+  int a;
+  const char *b;
+};
+struct Base2 {
+  constexpr Base2(const int &r) : r(r) {}
+  int q = 123;
+  // FIXME: When we track the global for which we are computing the initializer,
+  // use a reference here.
+  //const int &r;
+  int r;
+};
+struct Derived : Base, Base2 {
+  constexpr Derived() : Base(76), Base2(a) {}
+  int c = r + b[1];
+};
+
+constexpr bool operator==(const Base &a, const Base &b) {
+  return a.a == b.a && strcmp_ce(a.b, b.b) == 0;
+}
+
+constexpr Base base;
+constexpr Base base2(76);
+constexpr Derived derived;
+static_assert_fold(derived.a == 76, "");
+static_assert_fold(derived.b[2] == 's', "");
+static_assert_fold(derived.c == 76 + 'e', "");
+static_assert_fold(derived.q == 123, "");
+static_assert_fold(derived.r == 76, "");
+static_assert_fold(&derived.r == &derived.a, ""); // expected-error {{}}
+
+static_assert_fold(!(derived == base), "");
+static_assert_fold(derived == base2, "");
+
+}
+
+namespace Union {
+
+union U {
+  int a;
+  int b;
+};
+
+constexpr U u[4] = { { .a = 0 }, { .b = 1 }, { .a = 2 }, { .b = 3 } };
+static_assert_fold(u[0].a == 0, "");
+static_assert_fold(u[0].b, ""); // expected-error {{constant expression}}
+static_assert_fold(u[1].b == 1, "");
+static_assert_fold((&u[1].b)[1] == 2, ""); // expected-error {{constant expression}}
+static_assert_fold(*(&(u[1].b) + 1 + 1) == 3, ""); // expected-error {{constant expression}}
+static_assert_fold((&(u[1]) + 1 + 1)->b == 3, "");
 
 }

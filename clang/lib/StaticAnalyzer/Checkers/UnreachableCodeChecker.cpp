@@ -83,8 +83,6 @@ void UnreachableCodeChecker::checkEndAnalysis(ExplodedGraph &G,
   if (!C || !PM)
     return;
 
-  ASTContext &Ctx = B.getContext();
-
   // Find CFGBlocks that were not covered by any node
   for (CFG::const_iterator I = C->begin(), E = C->end(); I != E; ++I) {
     const CFGBlock *CB = *I;
@@ -117,7 +115,7 @@ void UnreachableCodeChecker::checkEndAnalysis(ExplodedGraph &G,
            ci != ce; ++ci) {
         if (const CFGStmt *S = (*ci).getAs<CFGStmt>())
           if (const CallExpr *CE = dyn_cast<CallExpr>(S->getStmt())) {
-            if (CE->isBuiltinCall(Ctx) == Builtin::BI__builtin_unreachable) {
+            if (CE->isBuiltinCall() == Builtin::BI__builtin_unreachable) {
               foundUnreachable = true;
               break;
             }

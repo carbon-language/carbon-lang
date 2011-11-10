@@ -2049,7 +2049,7 @@ public:
 
   /// isBuiltinCall - If this is a call to a builtin, return the builtin ID.  If
   /// not, return 0.
-  unsigned isBuiltinCall(const ASTContext &Context) const;
+  unsigned isBuiltinCall() const;
 
   /// getCallReturnType - Get the return type of the call expr. This is not
   /// always the type of the expr itself, if the return type is a reference

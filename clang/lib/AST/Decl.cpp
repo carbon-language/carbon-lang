@@ -2186,31 +2186,27 @@ unsigned FieldDecl::getBitWidthValue(const ASTContext &Ctx) const {
 unsigned FieldDecl::getFieldIndex() const {
   if (CachedFieldIndex) return CachedFieldIndex - 1;
 
-  unsigned index = 0;
+  unsigned Index = 0;
   const RecordDecl *RD = getParent();
   const FieldDecl *LastFD = 0;
   bool IsMsStruct = RD->hasAttr<MsStructAttr>();
-  
-  RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
-  while (true) {
-    assert(i != e && "failed to find field in parent!");
-    if (*i == this)
-      break;
+
+  for (RecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
+       I != E; ++I, ++Index) {
+    (*I)->CachedFieldIndex = Index + 1;
 
     if (IsMsStruct) {
       // Zero-length bitfields following non-bitfield members are ignored.
-      if (getASTContext().ZeroBitfieldFollowsNonBitfield((*i), LastFD)) {
-        ++i;
+      if (getASTContext().ZeroBitfieldFollowsNonBitfield((*I), LastFD)) {
+        --Index;
         continue;
       }
-      LastFD = (*i);
+      LastFD = (*I);
     }
-    ++i;
-    ++index;
   }
 
-  CachedFieldIndex = index + 1;
-  return index;
+  assert(CachedFieldIndex && "failed to find field in parent");
+  return CachedFieldIndex - 1;
 }
 
 SourceRange FieldDecl::getSourceRange() const {

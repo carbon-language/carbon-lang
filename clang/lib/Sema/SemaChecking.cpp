@@ -2439,7 +2439,7 @@ void Sema::CheckStrlcpycatArguments(const CallExpr *Call,
   else {
     // Look for 'strlcpy(dst, x, strlen(x))'
     if (const CallExpr *SizeCall = dyn_cast<CallExpr>(SizeArg)) {
-      if (SizeCall->isBuiltinCall(Context) == Builtin::BIstrlen
+      if (SizeCall->isBuiltinCall() == Builtin::BIstrlen
           && SizeCall->getNumArgs() == 1)
         CompareWithSrc = ignoreLiteralAdditions(SizeCall->getArg(0), Context);
     }
@@ -2887,12 +2887,12 @@ void Sema::CheckFloatComparison(SourceLocation Loc, Expr* LHS, Expr *RHS) {
   // Check for comparisons with builtin types.
   if (EmitWarning)
     if (CallExpr* CL = dyn_cast<CallExpr>(LeftExprSansParen))
-      if (CL->isBuiltinCall(Context))
+      if (CL->isBuiltinCall())
         EmitWarning = false;
 
   if (EmitWarning)
     if (CallExpr* CR = dyn_cast<CallExpr>(RightExprSansParen))
-      if (CR->isBuiltinCall(Context))
+      if (CR->isBuiltinCall())
         EmitWarning = false;
 
   // Emit the diagnostic.

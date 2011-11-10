@@ -17,11 +17,13 @@
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/PointerIntPair.h"
 
 namespace clang {
   class CharUnits;
   class DiagnosticBuilder;
   class Expr;
+  class FieldDecl;
   class Decl;
 
 /// APValue - This class implements a discriminated union of [uninitialized]
@@ -39,14 +41,21 @@ public:
     ComplexFloat,
     LValue,
     Vector,
-    Array
+    Array,
+    Struct,
+    Union
   };
+  typedef llvm::PointerIntPair<const Decl *, 1, bool> BaseOrMemberType;
   union LValuePathEntry {
-    const Decl *BaseOrMember;
+    /// BaseOrMember - The FieldDecl or CXXRecordDecl indicating the next item
+    /// in the path. An opaque value of type BaseOrMemberType.
+    void *BaseOrMember;
+    /// ArrayIndex - The array index of the next item in the path.
     uint64_t ArrayIndex;
   };
   struct NoLValuePath {};
   struct UninitArray {};
+  struct UninitStruct {};
 private:
   ValueKind Kind;
 
@@ -70,6 +79,19 @@ private:
     unsigned NumElts, ArrSize;
     Arr(unsigned NumElts, unsigned ArrSize);
     ~Arr();
+  };
+  struct StructData {
+    APValue *Elts;
+    unsigned NumBases;
+    unsigned NumFields;
+    StructData(unsigned NumBases, unsigned NumFields);
+    ~StructData();
+  };
+  struct UnionData {
+    const FieldDecl *Field;
+    APValue *Value;
+    UnionData();
+    ~UnionData();
   };
 
   enum {
@@ -114,6 +136,13 @@ public:
   APValue(UninitArray, unsigned InitElts, unsigned Size) : Kind(Uninitialized) {
     MakeArray(InitElts, Size);
   }
+  APValue(UninitStruct, unsigned B, unsigned M) : Kind(Uninitialized) {
+    MakeStruct(B, M);
+  }
+  explicit APValue(const FieldDecl *D, const APValue &V = APValue())
+      : Kind(Uninitialized) {
+    MakeUnion(); setUnion(D, V);
+  }
 
   ~APValue() {
     MakeUninit();
@@ -128,6 +157,8 @@ public:
   bool isLValue() const { return Kind == LValue; }
   bool isVector() const { return Kind == Vector; }
   bool isArray() const { return Kind == Array; }
+  bool isStruct() const { return Kind == Struct; }
+  bool isUnion() const { return Kind == Union; }
 
   void print(raw_ostream &OS) const;
   void dump() const;
@@ -229,6 +260,41 @@ public:
     return ((const Arr*)(const void *)Data)->ArrSize;
   }
 
+  unsigned getStructNumBases() const {
+    assert(isStruct() && "Invalid accessor");
+    return ((StructData*)(char*)Data)->NumBases;
+  }
+  unsigned getStructNumFields() const {
+    assert(isStruct() && "Invalid accessor");
+    return ((StructData*)(char*)Data)->NumFields;
+  }
+  APValue &getStructBase(unsigned i) {
+    assert(isStruct() && "Invalid accessor");
+    return ((StructData*)(char*)Data)->Elts[i];
+  }
+  APValue &getStructField(unsigned i) {
+    assert(isStruct() && "Invalid accessor");
+    return ((StructData*)(char*)Data)->Elts[getStructNumBases() + i];
+  }
+  const APValue &getStructBase(unsigned i) const {
+    return const_cast<APValue*>(this)->getStructBase(i);
+  }
+  const APValue &getStructField(unsigned i) const {
+    return const_cast<APValue*>(this)->getStructField(i);
+  }
+
+  const FieldDecl *getUnionField() const {
+    assert(isUnion() && "Invalid accessor");
+    return ((UnionData*)(char*)Data)->Field;
+  }
+  APValue &getUnionValue() {
+    assert(isUnion() && "Invalid accessor");
+    return *((UnionData*)(char*)Data)->Value;
+  }
+  const APValue &getUnionValue() const {
+    return const_cast<APValue*>(this)->getUnionValue();
+  }
+
   void setInt(const APSInt &I) {
     assert(isInt() && "Invalid accessor");
     *(APSInt*)(char*)Data = I;
@@ -261,6 +327,11 @@ public:
   void setLValue(const Expr *B, const CharUnits &O, NoLValuePath);
   void setLValue(const Expr *B, const CharUnits &O,
                  ArrayRef<LValuePathEntry> Path);
+  void setUnion(const FieldDecl *Field, const APValue &Value) {
+    assert(isUnion() && "Invalid accessor");
+    ((UnionData*)(char*)Data)->Field = Field;
+    *((UnionData*)(char*)Data)->Value = Value;
+  }
 
   const APValue &operator=(const APValue &RHS);
 
@@ -293,6 +364,16 @@ private:
   }
   void MakeLValue();
   void MakeArray(unsigned InitElts, unsigned Size);
+  void MakeStruct(unsigned B, unsigned M) {
+    assert(isUninit() && "Bad state change");
+    new ((void*)(char*)Data) StructData(B, M);
+    Kind = Struct;
+  }
+  void MakeUnion() {
+    assert(isUninit() && "Bad state change");
+    new ((void*)(char*)Data) UnionData();
+    Kind = Union;
+  }
 };
 
 inline raw_ostream &operator<<(raw_ostream &OS, const APValue &V) {

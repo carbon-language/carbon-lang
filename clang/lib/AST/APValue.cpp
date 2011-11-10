@@ -45,6 +45,7 @@ struct APValue::LV : LVBase {
   void allocPath() {
     if (hasPathPtr()) PathPtr = new LValuePathEntry[PathLength];
   }
+  void freePath() { if (hasPathPtr()) delete [] PathPtr; }
 
   bool hasPath() const { return PathLength != (unsigned)-1; }
   bool hasPathPtr() const { return hasPath() && PathLength > InlinePathSpace; }
@@ -62,13 +63,27 @@ APValue::Arr::Arr(unsigned NumElts, unsigned Size) :
   NumElts(NumElts), ArrSize(Size) {}
 APValue::Arr::~Arr() { delete [] Elts; }
 
+APValue::StructData::StructData(unsigned NumBases, unsigned NumFields) :
+  Elts(new APValue[NumBases+NumFields]),
+  NumBases(NumBases), NumFields(NumFields) {}
+APValue::StructData::~StructData() {
+  delete [] Elts;
+}
+
+APValue::UnionData::UnionData() : Field(0), Value(new APValue) {}
+APValue::UnionData::~UnionData () {
+  delete Value;
+}
+
 APValue::APValue(const Expr* B) : Kind(Uninitialized) {
   MakeLValue();
   setLValue(B, CharUnits::Zero(), ArrayRef<LValuePathEntry>());
 }
 
 const APValue &APValue::operator=(const APValue &RHS) {
-  if (Kind != RHS.Kind) {
+  if (this == &RHS)
+    return *this;
+  if (Kind != RHS.Kind || Kind == Array || Kind == Struct) {
     MakeUninit();
     if (RHS.isInt())
       MakeInt();
@@ -84,6 +99,10 @@ const APValue &APValue::operator=(const APValue &RHS) {
       MakeLValue();
     else if (RHS.isArray())
       MakeArray(RHS.getArrayInitializedElts(), RHS.getArraySize());
+    else if (RHS.isStruct())
+      MakeStruct(RHS.getStructNumBases(), RHS.getStructNumFields());
+    else if (RHS.isUnion())
+      MakeUnion();
   }
   if (isInt())
     setInt(RHS.getInt());
@@ -106,7 +125,13 @@ const APValue &APValue::operator=(const APValue &RHS) {
       getArrayInitializedElt(I) = RHS.getArrayInitializedElt(I);
     if (RHS.hasArrayFiller())
       getArrayFiller() = RHS.getArrayFiller();
-  }
+  } else if (isStruct()) {
+    for (unsigned I = 0, N = RHS.getStructNumBases(); I != N; ++I)
+      getStructBase(I) = RHS.getStructBase(I);
+    for (unsigned I = 0, N = RHS.getStructNumFields(); I != N; ++I)
+      getStructField(I) = RHS.getStructField(I);
+  } else if (isUnion())
+    setUnion(RHS.getUnionField(), RHS.getUnionValue());
   return *this;
 }
 
@@ -125,6 +150,10 @@ void APValue::MakeUninit() {
     ((LV*)(char*)Data)->~LV();
   else if (Kind == Array)
     ((Arr*)(char*)Data)->~Arr();
+  else if (Kind == Struct)
+    ((StructData*)(char*)Data)->~StructData();
+  else if (Kind == Union)
+    ((UnionData*)(char*)Data)->~UnionData();
   Kind = Uninitialized;
 }
 
@@ -143,7 +172,6 @@ static double GetApproxValue(const llvm::APFloat &F) {
 
 void APValue::print(raw_ostream &OS) const {
   switch (getKind()) {
-  default: llvm_unreachable("Unknown APValue kind!");
   case Uninitialized:
     OS << "Uninitialized";
     return;
@@ -178,22 +206,38 @@ void APValue::print(raw_ostream &OS) const {
       OS << getArraySize() - getArrayInitializedElts() << " x "
          << getArrayFiller();
     return;
+  case Struct:
+    OS << "Struct ";
+    if (unsigned N = getStructNumBases()) {
+      OS << " bases: " << getStructBase(0);
+      for (unsigned I = 1; I != N; ++I)
+        OS << ", " << getStructBase(I);
+    }
+    if (unsigned N = getStructNumFields()) {
+      OS << " fields: " << getStructField(0);
+      for (unsigned I = 1; I != N; ++I)
+        OS << ", " << getStructField(I);
+    }
+    return;
+  case Union:
+    OS << "Union: " << getUnionValue();
+    return;
   }
+  llvm_unreachable("Unknown APValue kind!");
 }
 
 static void WriteShortAPValueToStream(raw_ostream& Out,
                                       const APValue& V) {
   switch (V.getKind()) {
-  default: llvm_unreachable("Unknown APValue kind!");
   case APValue::Uninitialized:
     Out << "Uninitialized";
-    break;
+    return;
   case APValue::Int:
     Out << V.getInt();
-    break;
+    return;
   case APValue::Float:
     Out << GetApproxValue(V.getFloat());
-    break;
+    return;
   case APValue::Vector:
     Out << '[';
     WriteShortAPValueToStream(Out, V.getVectorElt(0));
@@ -202,17 +246,17 @@ static void WriteShortAPValueToStream(raw_ostream& Out,
       WriteShortAPValueToStream(Out, V.getVectorElt(i));
     }
     Out << ']';
-    break;
+    return;
   case APValue::ComplexInt:
     Out << V.getComplexIntReal() << "+" << V.getComplexIntImag() << "i";
-    break;
+    return;
   case APValue::ComplexFloat:
     Out << GetApproxValue(V.getComplexFloatReal()) << "+"
         << GetApproxValue(V.getComplexFloatImag()) << "i";
-    break;
+    return;
   case APValue::LValue:
     Out << "LValue: <todo>";
-    break;
+    return;
   case APValue::Array:
     Out << '{';
     if (unsigned N = V.getArrayInitializedElts()) {
@@ -221,8 +265,28 @@ static void WriteShortAPValueToStream(raw_ostream& Out,
         Out << ", " << V.getArrayInitializedElt(I);
     }
     Out << '}';
-    break;
+    return;
+  case APValue::Struct:
+    Out << '{';
+    if (unsigned N = V.getStructNumBases()) {
+      Out << V.getStructBase(0);
+      for (unsigned I = 1; I != N; ++I)
+        Out << ", " << V.getStructBase(I);
+      if (V.getStructNumFields())
+        Out << ", ";
+    }
+    if (unsigned N = V.getStructNumFields()) {
+      Out << V.getStructField(0);
+      for (unsigned I = 1; I != N; ++I)
+        Out << ", " << V.getStructField(I);
+    }
+    Out << '}';
+    return;
+  case APValue::Union:
+    Out << '{' << V.getUnionValue() << '}';
+    return;
   }
+  llvm_unreachable("Unknown APValue kind!");
 }
 
 const DiagnosticBuilder &clang::operator<<(const DiagnosticBuilder &DB,
@@ -257,6 +321,7 @@ ArrayRef<APValue::LValuePathEntry> APValue::getLValuePath() const {
 void APValue::setLValue(const Expr *B, const CharUnits &O, NoLValuePath) {
   assert(isLValue() && "Invalid accessor");
   LV &LVal = *((LV*)(char*)Data);
+  LVal.freePath();
   LVal.Base = B;
   LVal.Offset = O;
   LVal.PathLength = (unsigned)-1;
@@ -266,6 +331,7 @@ void APValue::setLValue(const Expr *B, const CharUnits &O,
                         ArrayRef<LValuePathEntry> Path) {
   assert(isLValue() && "Invalid accessor");
   LV &LVal = *((LV*)(char*)Data);
+  LVal.freePath();
   LVal.Base = B;
   LVal.Offset = O;
   LVal.PathLength = Path.size();
