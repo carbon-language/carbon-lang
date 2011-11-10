@@ -384,6 +384,8 @@ SymbolFileDWARFDebugMap::GetSymbolFileByCompUnitInfo (CompileUnitInfo *comp_unit
 #endif
                                 // Next we find the non-stab entry that corresponds to the N_GSYM in the .o file
                                 Symbol *oso_gsym_symbol = oso_symtab->FindFirstSymbolWithNameAndType(exe_symbol->GetMangled().GetName(), eSymbolTypeData, Symtab::eDebugNo, Symtab::eVisibilityAny);
+                                if (oso_gsym_symbol == NULL)
+                                    oso_gsym_symbol = oso_symtab->FindFirstSymbolWithNameAndType(exe_symbol->GetMangled().GetName(), eSymbolTypeExtern, Symtab::eDebugNo, Symtab::eVisibilityExtern);
                                 if (exe_gsym_symbol && oso_gsym_symbol && exe_gsym_symbol->GetAddressRangePtr() && oso_gsym_symbol->GetAddressRangePtr())
                                 {
                                     // If we found the symbol, then we
