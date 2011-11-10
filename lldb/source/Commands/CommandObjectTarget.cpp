@@ -3830,9 +3830,9 @@ public:
 
     CommandObjectTargetStopHookDelete (CommandInterpreter &interpreter) :
         CommandObject (interpreter,
-                       "target stop-hook delete [<id>]",
+                       "target stop-hook delete",
                        "Delete a stop-hook.",
-                       "target stop-hook delete")
+                       "target stop-hook delete [<idx>]")
     {
     }
 
@@ -3976,9 +3976,9 @@ public:
 
     CommandObjectTargetStopHookList (CommandInterpreter &interpreter) :
         CommandObject (interpreter,
-                       "target stop-hook list [<type>]",
+                       "target stop-hook list",
                        "List all stop-hooks.",
-                       "target stop-hook list")
+                       "target stop-hook list [<type>]")
     {
     }
 
