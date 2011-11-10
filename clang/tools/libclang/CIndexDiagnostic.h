@@ -14,15 +14,47 @@
 #define LLVM_CLANG_CINDEX_DIAGNOSTIC_H
 
 #include "clang-c/Index.h"
+#include <vector>
+#include <assert.h>
 
 namespace clang {
 
 class LangOptions;
 class StoredDiagnostic;
+class CXDiagnosticImpl;
+  
+class CXDiagnosticSetImpl {
+  std::vector<CXDiagnosticImpl *> Diagnostics;
+  const bool IsExternallyManaged;
+public:
+  CXDiagnosticSetImpl(bool isManaged = false)
+    : IsExternallyManaged(isManaged) {}
+
+  virtual ~CXDiagnosticSetImpl();
+  
+  size_t getNumDiagnostics() const {
+    return Diagnostics.size();
+  }
+  
+  CXDiagnosticImpl *getDiagnostic(unsigned i) const {
+    assert(i < getNumDiagnostics());
+    return Diagnostics[i];
+  }
+  
+  void appendDiagnostic(CXDiagnosticImpl *D) {
+    Diagnostics.push_back(D);
+  }
+  
+  bool empty() const {
+    return Diagnostics.empty();
+  }
+  
+  bool isExternallyManaged() const { return IsExternallyManaged; }
+};
 
 class CXDiagnosticImpl {
 public:
-  enum Kind { StoredDiagnosticKind, SerializedDiagnosticKind };
+  enum Kind { StoredDiagnosticKind, LoadedDiagnosticKind };
   
   virtual ~CXDiagnosticImpl();
   
@@ -55,9 +87,18 @@ public:
                             CXSourceRange *ReplacementRange) const = 0;
 
   Kind getKind() const { return K; }
-
+  
+  CXDiagnosticSetImpl &getChildDiagnostics() {
+    return ChildDiags;
+  }
+  
 protected:
   CXDiagnosticImpl(Kind k) : K(k) {}
+  CXDiagnosticSetImpl ChildDiags;
+  
+  void append(CXDiagnosticImpl *D) {
+    ChildDiags.appendDiagnostic(D);
+  }
   
 private:
   Kind K;

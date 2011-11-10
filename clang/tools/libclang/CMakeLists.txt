@@ -29,6 +29,8 @@ set(SOURCES
   CIndexer.h
   CXCursor.cpp
   CXCursor.h
+  CXLoadedDiagnostic.cpp
+  CXLoadedDiagnostic.h
   CXSourceLocation.cpp
   CXSourceLocation.h
   CXStoredDiagnostic.cpp

@@ -28,9 +28,6 @@ using namespace clang;
 using namespace clang::cxloc;
 using namespace clang::cxstring;
 
-// Needed for vtable of CXPersisetntDiagnostic.
-CXDiagnosticImpl::~CXDiagnosticImpl() {}
-
 CXDiagnosticSeverity CXStoredDiagnostic::getSeverity() const {
   switch (Diag.getLevel()) {
     case DiagnosticsEngine::Ignored: return CXDiagnostic_Ignored;

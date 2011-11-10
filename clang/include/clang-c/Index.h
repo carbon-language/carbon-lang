@@ -522,6 +522,86 @@ enum CXDiagnosticSeverity {
 typedef void *CXDiagnostic;
 
 /**
+ * \brief A group of CXDiagnostics.
+ */
+typedef void *CXDiagnosticSet;
+  
+/**
+ * \brief Determine the number of diagnostics in a CXDiagnosticSet.
+ */
+CINDEX_LINKAGE unsigned clang_getNumDiagnosticsInSet(CXDiagnosticSet Diags);
+
+/**
+ * \brief Retrieve a diagnostic associated with the given CXDiagnosticSet.
+ *
+ * \param Unit the CXDiagnosticSet to query.
+ * \param Index the zero-based diagnostic number to retrieve.
+ *
+ * \returns the requested diagnostic. This diagnostic must be freed
+ * via a call to \c clang_disposeDiagnostic().
+ */
+CINDEX_LINKAGE CXDiagnostic clang_getDiagnosticInSet(CXDiagnosticSet Diags,
+                                                     unsigned Index);  
+
+
+/**
+ * \brief Describes the kind of error that occurred (if any) in a call to
+ * \c clang_loadDiagnostics.
+ */
+enum CXLoadDiag_Error {
+  /**
+   * \brief Indicates that no error occurred.
+   */
+  CXLoadDiag_None = 0,
+  
+  /**
+   * \brief Indicates that an unknown error occurred while attempting to
+   * deserialize diagnostics.
+   */
+  CXLoadDiag_Unknown = 1,
+  
+  /**
+   * \brief Indicates that the file containing the serialized diagnostics
+   * could not be opened.
+   */
+  CXLoadDiag_CannotLoad = 2,
+  
+  /**
+   * \brief Indicates that the serialized diagnostics file is invalid or
+   *  corrupt.
+   */
+  CXLoadDiag_InvalidFile = 3
+};
+  
+/**
+ * \brief Deserialize a set of diagnostics from a Clang diagnostics bitcode
+ *  file.
+ *
+ * \param The name of the file to deserialize.
+ * \param A pointer to a enum value recording if there was a problem
+ *        deserializing the diagnostics.
+ * \param A pointer to a CXString for recording the error string
+ *        if the file was not successfully loaded.
+ *
+ * \returns A loaded CXDiagnosticSet if successful, and NULL otherwise.  These
+ *  diagnostics should be released using clang_disposeDiagnosticSet().
+ */
+CINDEX_LINKAGE CXDiagnosticSet clang_loadDiagnostics(const char *file,
+                                                  enum CXLoadDiag_Error *error,
+                                                  CXString *errorString);
+
+/**
+ * \brief Release a CXDiagnosticSet and all of its contained diagnostics.
+ */
+CINDEX_LINKAGE void clang_disposeDiagnosticSet(CXDiagnosticSet Diags);
+
+/**
+ * \brief Retrieve the child diagnostics of a CXDiagnostic.  This
+ *  CXDiagnosticSet does not need to be released by clang_diposeDiagnosticSet.
+ */
+CINDEX_LINKAGE CXDiagnosticSet clang_getChildDiagnostics(CXDiagnostic D);
+
+/**
  * \brief Determine the number of diagnostics produced for the given
  * translation unit.
  */

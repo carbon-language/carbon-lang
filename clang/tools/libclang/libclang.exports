@@ -32,6 +32,7 @@ clang_disposeCXCursorSet
 clang_disposeCXTUResourceUsage
 clang_disposeCodeCompleteResults
 clang_disposeDiagnostic
+clang_disposeDiagnosticSet
 clang_disposeIndex
 clang_disposeOverriddenCursors
 clang_disposeString
@@ -53,6 +54,7 @@ clang_getCXTUResourceUsage
 clang_getCXXAccessSpecifier
 clang_getCanonicalCursor
 clang_getCanonicalType
+clang_getChildDiagnostics
 clang_getClangVersion
 clang_getCompletionAnnotation
 clang_getCompletionAvailability
@@ -86,6 +88,7 @@ clang_getDiagnostic
 clang_getDiagnosticCategory
 clang_getDiagnosticCategoryName
 clang_getDiagnosticFixIt
+clang_getDiagnosticInSet
 clang_getDiagnosticLocation
 clang_getDiagnosticNumFixIts
 clang_getDiagnosticNumRanges
@@ -108,6 +111,7 @@ clang_getNullLocation
 clang_getNullRange
 clang_getNumCompletionChunks
 clang_getNumDiagnostics
+clang_getNumDiagnosticsInSet
 clang_getNumOverloadedDecls
 clang_getOverloadedDecl
 clang_getOverriddenCursors
@@ -150,6 +154,7 @@ clang_isTranslationUnit
 clang_isUnexposed
 clang_isVirtualBase
 clang_isVolatileQualifiedType
+clang_loadDiagnostics
 clang_parseTranslationUnit
 clang_remap_dispose
 clang_remap_getFilenames

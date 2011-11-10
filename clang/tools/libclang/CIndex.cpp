@@ -58,6 +58,7 @@ CXTranslationUnit cxtu::MakeCXTranslationUnit(ASTUnit *TU) {
   CXTranslationUnit D = new CXTranslationUnitImpl();
   D->TUData = TU;
   D->StringPool = createCXStringPool();
+  D->Diagnostics = 0;
   return D;
 }
 
@@ -2562,6 +2563,7 @@ void clang_disposeTranslationUnit(CXTranslationUnit CTUnit) {
 
     delete static_cast<ASTUnit *>(CTUnit->TUData);
     disposeCXStringPool(CTUnit->StringPool);
+    delete static_cast<CXDiagnosticSetImpl *>(CTUnit->Diagnostics);
     delete CTUnit;
   }
 }
@@ -2582,6 +2584,11 @@ static void clang_reparseTranslationUnit_Impl(void *UserData) {
   ReparseTranslationUnitInfo *RTUI =
     static_cast<ReparseTranslationUnitInfo*>(UserData);
   CXTranslationUnit TU = RTUI->TU;
+
+  // Reset the associated diagnostics.
+  delete static_cast<CXDiagnosticSetImpl*>(TU->Diagnostics);
+  TU->Diagnostics = 0;
+
   unsigned num_unsaved_files = RTUI->num_unsaved_files;
   struct CXUnsavedFile *unsaved_files = RTUI->unsaved_files;
   unsigned options = RTUI->options;

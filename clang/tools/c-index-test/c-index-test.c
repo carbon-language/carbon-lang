@@ -2431,6 +2431,155 @@ int write_pch_file(const char *filename, int argc, const char *argv[]) {
 }
 
 /******************************************************************************/
+/* Serialized diagnostics.                                                    */
+/******************************************************************************/
+
+static const char *getDiagnosticCodeStr(enum CXLoadDiag_Error error) {
+  switch (error) {
+    case CXLoadDiag_CannotLoad: return "Cannot Load File";
+    case CXLoadDiag_None: break;
+    case CXLoadDiag_Unknown: return "Unknown";
+    case CXLoadDiag_InvalidFile: return "Invalid File";
+  }
+  return "None";
+}
+
+static const char *getSeverityString(enum CXDiagnosticSeverity severity) {
+  switch (severity) {
+    case CXDiagnostic_Note: return "note";
+    case CXDiagnostic_Error: return "error";
+    case CXDiagnostic_Fatal: return "fatal";
+    case CXDiagnostic_Ignored: return "ignored";
+    case CXDiagnostic_Warning: return "warning";
+  }
+  return "unknown";
+}
+
+static void printIndent(unsigned indent) {
+  while (indent > 0) {
+    fprintf(stderr, " ");
+    --indent;
+  }
+}
+
+static void printLocation(CXSourceLocation L) {
+  CXFile File;
+  CXString FileName;
+  unsigned line, column, offset;
+  
+  clang_getExpansionLocation(L, &File, &line, &column, &offset);
+  FileName = clang_getFileName(File);
+  
+  fprintf(stderr, "%s:%d:%d", clang_getCString(FileName), line, column);
+  clang_disposeString(FileName);
+}
+
+static void printRanges(CXDiagnostic D, unsigned indent) {
+  unsigned i, n = clang_getDiagnosticNumRanges(D);
+  
+  for (i = 0; i < n; ++i) {
+    CXSourceLocation Start, End;
+    CXSourceRange SR = clang_getDiagnosticRange(D, i);
+    Start = clang_getRangeStart(SR);
+    End = clang_getRangeEnd(SR);
+    
+    printIndent(indent);
+    fprintf(stderr, "Range: ");
+    printLocation(Start);
+    fprintf(stderr, " ");
+    printLocation(End);
+    fprintf(stderr, "\n");
+  }
+}
+
+static void printFixIts(CXDiagnostic D, unsigned indent) {
+  unsigned i, n = clang_getDiagnosticNumFixIts(D);
+  for (i = 0 ; i < n; ++i) {
+    CXSourceRange ReplacementRange;
+    CXString text;
+    text = clang_getDiagnosticFixIt(D, i, &ReplacementRange);
+    
+    printIndent(indent);
+    fprintf(stderr, "FIXIT: (");
+    printLocation(clang_getRangeStart(ReplacementRange));
+    fprintf(stderr, " - ");
+    printLocation(clang_getRangeEnd(ReplacementRange));
+    fprintf(stderr, "): \"%s\"\n", clang_getCString(text));
+    clang_disposeString(text);
+  }  
+}
+
+static void printDiagnosticSet(CXDiagnosticSet Diags, unsigned indent) {
+  if (!Diags)
+    return;
+  
+  fprintf(stderr, "\n");
+
+  unsigned i = 0;
+  unsigned n = clang_getNumDiagnosticsInSet(Diags);
+  for (i = 0; i < n; ++i) {
+    CXSourceLocation DiagLoc;
+    CXDiagnostic D;
+    CXFile File;
+    CXString FileName, DiagSpelling, DiagOption;
+    unsigned line, column, offset;
+    const char *DiagOptionStr = 0;
+    
+    D = clang_getDiagnosticInSet(Diags, i);
+    DiagLoc = clang_getDiagnosticLocation(D);
+    clang_getExpansionLocation(DiagLoc, &File, &line, &column, &offset);
+    FileName = clang_getFileName(File);
+    DiagSpelling = clang_getDiagnosticSpelling(D);
+    
+    printIndent(indent);
+    
+    fprintf(stderr, "%s:%d:%d: %s: %s",
+            clang_getCString(FileName),
+            line,
+            column,
+            getSeverityString(clang_getDiagnosticSeverity(D)),
+            clang_getCString(DiagSpelling));
+
+    DiagOption = clang_getDiagnosticOption(D, 0);
+    DiagOptionStr = clang_getCString(DiagOption);
+    if (DiagOptionStr) {
+      fprintf(stderr, " [%s]", DiagOptionStr);
+    }
+    
+    fprintf(stderr, "\n");
+    
+    printRanges(D, indent);
+    printFixIts(D, indent);
+    
+    // Print subdiagnostics.
+    printDiagnosticSet(clang_getChildDiagnostics(D), indent+2);
+
+    clang_disposeString(FileName);
+    clang_disposeString(DiagSpelling);
+    clang_disposeString(DiagOption);
+  }  
+}
+
+static int read_diagnostics(const char *filename) {
+  enum CXLoadDiag_Error error;
+  CXString errorString;
+  CXDiagnosticSet Diags = 0;
+  
+  Diags = clang_loadDiagnostics(filename, &error, &errorString);
+  if (!Diags) {
+    fprintf(stderr, "Trouble deserializing file (%s): %s\n",
+            getDiagnosticCodeStr(error),
+            clang_getCString(errorString));
+    clang_disposeString(errorString);
+    return 1;
+  }
+  
+  printDiagnosticSet(Diags, 0);
+  clang_disposeDiagnosticSet(Diags);
+  return 0;
+}
+
+/******************************************************************************/
 /* Command line processing.                                                   */
 /******************************************************************************/
 
@@ -2475,7 +2624,9 @@ static void print_usage(void) {
     "       c-index-test -test-print-typekind {<args>}*\n"
     "       c-index-test -print-usr [<CursorKind> {<args>}]*\n"
     "       c-index-test -print-usr-file <file>\n"
-    "       c-index-test -write-pch <file> <compiler arguments>\n\n");
+    "       c-index-test -write-pch <file> <compiler arguments>\n");
+  fprintf(stderr,
+    "       c-index-test -read-diagnostics <file>\n\n");
   fprintf(stderr,
     " <symbol filter> values:\n%s",
     "   all - load all symbols, including those from PCH\n"
@@ -2492,6 +2643,8 @@ static void print_usage(void) {
 
 int cindextest_main(int argc, const char **argv) {
   clang_enableStackTraces();
+  if (argc > 2 && strcmp(argv[1], "-read-diagnostics") == 0)
+      return read_diagnostics(argv[2]);
   if (argc > 2 && strstr(argv[1], "-code-completion-at=") == argv[1])
     return perform_code_completion(argc, argv, 0);
   if (argc > 2 && strstr(argv[1], "-code-completion-timing=") == argv[1])

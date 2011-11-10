@@ -18,6 +18,7 @@ extern "C" {
 struct CXTranslationUnitImpl {
   void *TUData;
   void *StringPool;
+  void *Diagnostics;
 };
 }
 
@@ -27,7 +28,7 @@ namespace clang {
 namespace cxtu {
 
 CXTranslationUnitImpl *MakeCXTranslationUnit(ASTUnit *TU);
-
+  
 class CXTUOwner {
   CXTranslationUnitImpl *TU;
   

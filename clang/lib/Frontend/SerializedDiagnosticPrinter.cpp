@@ -16,6 +16,7 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/Version.h"
+#include "clang/Lex/Lexer.h"
 #include "clang/Frontend/SerializedDiagnosticPrinter.h"
 
 using namespace clang;
@@ -47,7 +48,8 @@ typedef llvm::SmallVectorImpl<uint64_t> RecordDataImpl;
 class SDiagsWriter : public DiagnosticConsumer {
 public:  
   SDiagsWriter(DiagnosticsEngine &diags, llvm::raw_ostream *os) 
-    : Stream(Buffer), OS(os), Diags(diags), inNonNoteDiagnostic(false)
+    : LangOpts(0), Stream(Buffer), OS(os), Diags(diags),
+      inNonNoteDiagnostic(false)
   { 
     EmitPreamble();
   };
@@ -58,6 +60,11 @@ public:
                         const Diagnostic &Info);
   
   void EndSourceFile();
+  
+  void BeginSourceFile(const LangOptions &LO,
+                       const Preprocessor *PP) {
+    LangOpts = &LO;
+  }
   
   DiagnosticConsumer *clone(DiagnosticsEngine &Diags) const {
     // It makes no sense to clone this.
@@ -88,7 +95,8 @@ private:
   unsigned getEmitFile(SourceLocation Loc);
   
   /// \brief Add SourceLocation information the specified record.
-  void AddLocToRecord(SourceLocation Loc, RecordDataImpl &Record);
+  void AddLocToRecord(SourceLocation Loc, RecordDataImpl &Record,
+                      unsigned TokSize = 0);
 
   /// \brief Add CharSourceRange information the specified record.
   void AddCharSourceRangeToRecord(CharSourceRange R, RecordDataImpl &Record);
@@ -96,6 +104,8 @@ private:
   /// \brief The version of the diagnostics file.
   enum { Version = 1 };
 
+  const LangOptions *LangOpts;
+  
   /// \brief The byte buffer for the serialized content.
   std::vector<unsigned char> Buffer;
 
@@ -181,13 +191,14 @@ static void EmitRecordID(unsigned ID, const char *Name,
 }
 
 void SDiagsWriter::AddLocToRecord(SourceLocation Loc,
-                                  RecordDataImpl &Record) {
+                                  RecordDataImpl &Record,
+                                  unsigned TokSize) {
   if (Loc.isInvalid()) {
     // Emit a "sentinel" location.
-    Record.push_back((unsigned) 0); // File.
-    Record.push_back(~(unsigned)0); // Line.
-    Record.push_back(~(unsigned)0); // Column.
-    Record.push_back(~(unsigned)0); // Offset.
+    Record.push_back((unsigned)0); // File.
+    Record.push_back((unsigned)0); // Line.
+    Record.push_back((unsigned)0); // Column.
+    Record.push_back((unsigned)0); // Offset.
     return;
   }
 
@@ -195,7 +206,7 @@ void SDiagsWriter::AddLocToRecord(SourceLocation Loc,
   Loc = SM.getSpellingLoc(Loc);
   Record.push_back(getEmitFile(Loc));
   Record.push_back(SM.getSpellingLineNumber(Loc));
-  Record.push_back(SM.getSpellingColumnNumber(Loc));
+  Record.push_back(SM.getSpellingColumnNumber(Loc)+TokSize);
   
   std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(Loc);
   FileID FID = LocInfo.first;
@@ -206,7 +217,13 @@ void SDiagsWriter::AddLocToRecord(SourceLocation Loc,
 void SDiagsWriter::AddCharSourceRangeToRecord(CharSourceRange Range,
                                               RecordDataImpl &Record) {
   AddLocToRecord(Range.getBegin(), Record);
-  AddLocToRecord(Range.getEnd(), Record);
+  unsigned TokSize = 0;
+  if (Range.isTokenRange())
+    TokSize = Lexer::MeasureTokenLength(Range.getEnd(),
+                                        Diags.getSourceManager(),
+                                        *LangOpts);
+  
+  AddLocToRecord(Range.getEnd(), Record, TokSize);
 }
 
 unsigned SDiagsWriter::getEmitFile(SourceLocation Loc) {

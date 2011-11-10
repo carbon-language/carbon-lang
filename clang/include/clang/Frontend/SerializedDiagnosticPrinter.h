@@ -39,7 +39,9 @@ enum RecordIDs {
   RECORD_DIAG_FLAG,
   RECORD_CATEGORY,
   RECORD_FILENAME,
-  RECORD_FIXIT
+  RECORD_FIXIT,
+  RECORD_FIRST = RECORD_VERSION,
+  RECORD_LAST = RECORD_FIXIT
 };
 
 /// \brief Returns a DiagnosticConsumer that serializes diagnostics to
