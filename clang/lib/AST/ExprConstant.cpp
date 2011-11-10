@@ -3391,6 +3391,12 @@ static bool EvaluateConstantExpression(APValue &Result, EvalInfo &Info,
 /// in Result. If this expression is a glvalue, an lvalue-to-rvalue conversion
 /// will be applied to the result.
 bool Expr::EvaluateAsRValue(EvalResult &Result, const ASTContext &Ctx) const {
+  // FIXME: Evaluating initializers for large arrays can cause performance
+  // problems, and we don't use such values yet. Once we have a more efficient
+  // array representation, this should be reinstated, and used by CodeGen.
+  if (isRValue() && getType()->isArrayType())
+    return false;
+
   EvalInfo Info(Ctx, Result);
 
   CCValue Value;
