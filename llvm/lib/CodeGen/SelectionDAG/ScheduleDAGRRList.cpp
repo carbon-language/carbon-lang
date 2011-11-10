@@ -89,6 +89,9 @@ static cl::opt<bool> DisableSchedCriticalPath(
 static cl::opt<bool> DisableSchedHeight(
   "disable-sched-height", cl::Hidden, cl::init(false),
   cl::desc("Disable scheduled-height priority in sched=list-ilp"));
+static cl::opt<bool> Disable2AddrHack(
+  "disable-2addr-hack", cl::Hidden, cl::init(true),
+  cl::desc("Disable scheduler's two-address hack"));
 
 static cl::opt<int> MaxReorderWindow(
   "max-sched-reorder", cl::Hidden, cl::init(6),
@@ -2628,7 +2631,8 @@ bool ilp_ls_rr_sort::operator()(SUnit *left, SUnit *right) const {
 void RegReductionPQBase::initNodes(std::vector<SUnit> &sunits) {
   SUnits = &sunits;
   // Add pseudo dependency edges for two-address nodes.
-  AddPseudoTwoAddrDeps();
+  if (!Disable2AddrHack)
+    AddPseudoTwoAddrDeps();
   // Reroute edges to nodes with multiple uses.
   if (!TracksRegPressure)
     PrescheduleNodesWithMultipleUses();

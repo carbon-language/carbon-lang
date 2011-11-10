@@ -226,15 +226,16 @@ entry:
 }
 
 
-
+; FIXME: t15 is worse off from disabling of scheduler 2-address hack.
 define <8 x i16> @t15(<8 x i16> %T0, <8 x i16> %T1) nounwind readnone {
 entry:
         %tmp8 = shufflevector <8 x i16> %T0, <8 x i16> %T1, <8 x i32> < i32 undef, i32 undef, i32 7, i32 2, i32 8, i32 undef, i32 undef , i32 undef >
         ret <8 x i16> %tmp8
 ; X64: 	t15:
-; X64: 		pextrw	$7, %xmm0, %eax
+; X64:          movdqa %xmm0, %xmm2
 ; X64: 		punpcklqdq	%xmm1, %xmm0
 ; X64: 		pshuflw	$-128, %xmm0, %xmm0
+; X64: 		pextrw	$7, %xmm2, %eax
 ; X64: 		pinsrw	$2, %eax, %xmm0
 ; X64: 		ret
 }
@@ -247,12 +248,12 @@ entry:
         %tmp9 = shufflevector <16 x i8> %tmp8, <16 x i8> %T0,  <16 x i32> < i32 0, i32 1, i32 2, i32 17,  i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef , i32 undef >
         ret <16 x i8> %tmp9
 ; X64: 	t16:
-; X64: 		movdqa	%xmm1, %xmm0
-; X64: 		pslldq	$2, %xmm0
-; X64: 		pextrw	$1, %xmm0, %eax
-; X64: 		movd	%xmm0, %ecx
-; X64: 		pinsrw	$0, %ecx, %xmm0
-; X64: 		pextrw	$8, %xmm1, %ecx
+; X64: 		movdqa	%xmm1, %xmm2
+; X64: 		pslldq	$2, %xmm2
+; X64: 		movd	%xmm2, %eax
+; X64: 		pinsrw	$0, %eax, %xmm0
+; X64: 		pextrw	$8, %xmm1, %eax
+; X64: 		pextrw	$1, %xmm2, %ecx
 ; X64: 		ret
 }
 

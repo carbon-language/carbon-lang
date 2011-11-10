@@ -178,8 +178,8 @@ define <4 x float> @test14(<4 x float>* %x, <4 x float>* %y) nounwind {
         %tmp27 = shufflevector <4 x float> %tmp9, <4 x float> %tmp21, <4 x i32> < i32 0, i32 1, i32 4, i32 5 >                ; <<4 x float>> [#uses=1]
         ret <4 x float> %tmp27
 ; CHECK: test14:
-; CHECK: 	addps	[[X1:%xmm[0-9]+]], [[X0:%xmm[0-9]+]]
-; CHECK: 	subps	[[X1]], [[X2:%xmm[0-9]+]]
+; CHECK: 	subps	[[X1:%xmm[0-9]+]], [[X2:%xmm[0-9]+]]
+; CHECK: 	addps	[[X1]], [[X0:%xmm[0-9]+]]
 ; CHECK: 	movlhps	[[X2]], [[X0]]
 }
 

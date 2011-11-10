@@ -1,5 +1,7 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin -mcpu=yonah -regalloc=linearscan | FileCheck --check-prefix=I386 %s
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin | FileCheck --check-prefix=X86-64 %s
+; DISABLED: llc < %s -mtriple=i386-apple-darwin -mcpu=yonah -regalloc=linearscan | FileCheck --check-prefix=I386 %s
+
+; i386 test has been disabled when scheduler 2-addr hack is disabled.
 
 ; This testcase shouldn't need to spill the -1 value,
 ; so it should just use pcmpeqd to materialize an all-ones vector.

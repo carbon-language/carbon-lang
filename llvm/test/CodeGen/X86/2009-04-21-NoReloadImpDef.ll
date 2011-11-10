@@ -5,7 +5,6 @@
 
 ; CHECK: pextrw $14
 ; CHECK-NEXT: shrl $8
-; CHECK-NEXT: (%ebp)
 ; CHECK-NEXT: pinsrw
 
 define void @update(i8** %args_list) nounwind {

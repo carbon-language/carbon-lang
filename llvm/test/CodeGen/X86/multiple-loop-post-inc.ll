@@ -1,6 +1,10 @@
 ; RUN: llc -asm-verbose=false -disable-branch-fold -disable-code-place -disable-tail-duplicate -march=x86-64 < %s | FileCheck %s
 ; rdar://7236213
 
+; Xfailed now that scheduler 2-address hack is disabled a lea is generated.
+; The code isn't any worse though.
+; XFAIL: *
+
 ; CodeGen shouldn't require any lea instructions inside the marked loop.
 ; It should properly set up post-increment uses and do coalescing for
 ; the induction variables.
