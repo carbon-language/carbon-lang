@@ -330,21 +330,21 @@ public:
     "'alias' allows the user to create a short-cut or abbreviation for long \n\
     commands, multi-word commands, and commands that take particular options. \n\
     Below are some simple examples of how one might use the 'alias' command: \n\
-    \n    'commands alias sc script'           // Creates the abbreviation 'sc' for the 'script' \n\
+    \n    'command alias sc script'            // Creates the abbreviation 'sc' for the 'script' \n\
                                          // command. \n\
-    'commands alias bp breakpoint'       // Creates the abbreviation 'bp' for the 'breakpoint' \n\
+    'command alias bp breakpoint'        // Creates the abbreviation 'bp' for the 'breakpoint' \n\
                                          // command.  Since breakpoint commands are two-word \n\
                                          // commands, the user will still need to enter the \n\
                                          // second word after 'bp', e.g. 'bp enable' or \n\
                                          // 'bp delete'. \n\
-    'commands alias bpl breakpoint list' // Creates the abbreviation 'bpl' for the \n\
+    'command alias bpl breakpoint list'  // Creates the abbreviation 'bpl' for the \n\
                                          // two-word command 'breakpoint list'. \n\
     \nAn alias can include some options for the command, with the values either \n\
     filled in at the time the alias is created, or specified as positional \n\
     arguments, to be filled in when the alias is invoked.  The following example \n\
     shows how to create aliases with options: \n\
     \n\
-    'commands alias bfl breakpoint set -f %1 -l %2' \n\
+    'command alias bfl breakpoint set -f %1 -l %2' \n\
     \nThis creates the abbreviation 'bfl' (for break-file-line), with the -f and -l \n\
     options already part of the alias.  So if the user wants to set a breakpoint \n\
     by file and line without explicitly having to use the -f and -l options, the \n\
@@ -359,7 +359,7 @@ public:
     Note: the positional arguments must substitute as whole words in the resultant\n\
     command, so you can't at present do something like:\n\
     \n\
-    commands alias bcppfl breakpoint set -f %1.cpp -l %2\n\
+    command alias bcppfl breakpoint set -f %1.cpp -l %2\n\
     \n\
     to get the file extension \".cpp\" automatically appended.  For more complex\n\
     aliasing, use the \"command regex\" command instead.\n\
@@ -367,19 +367,19 @@ public:
     filled in with the first argument following 'bfl' and the actual line number \n\
     value will be filled in with the second argument.  The user would use this \n\
     alias as follows: \n\
-    \n    (lldb)  commands alias bfl breakpoint set -f %1 -l %2 \n\
+    \n    (lldb)  command alias bfl breakpoint set -f %1 -l %2 \n\
     <... some time later ...> \n\
     (lldb)  bfl my-file.c 137 \n\
     \nThis would be the same as if the user had entered \n\
     'breakpoint set -f my-file.c -l 137'. \n\
     \nAnother example: \n\
-    \n    (lldb)  commands alias pltty  process launch -s -o %1 -e %1 \n\
+    \n    (lldb)  command alias pltty  process launch -s -o %1 -e %1 \n\
     (lldb)  pltty /dev/tty0 \n\
            // becomes 'process launch -s -o /dev/tty0 -e /dev/tty0' \n\
     \nIf the user always wanted to pass the same value to a particular option, the \n\
     alias could be defined with that value directly in the alias as a constant, \n\
     rather than using a positional placeholder: \n\
-    \n    commands alias bl3  breakpoint set -f %1 -l 3  // Always sets a breakpoint on line \n\
+    \n    command alias bl3  breakpoint set -f %1 -l 3  // Always sets a breakpoint on line \n\
                                                    // 3 of whatever file is indicated. \n");
 
         CommandArgumentEntry arg1;
@@ -797,7 +797,7 @@ public:
         const size_t argc = args.GetArgumentCount();
         if (argc == 0)
         {
-            result.AppendError ("usage: 'commands regex <command-name> [s/<regex1>/<subst1>/ s/<regex2>/<subst2>/ ...]'\n");
+            result.AppendError ("usage: 'command regex <command-name> [s/<regex1>/<subst1>/ s/<regex2>/<subst2>/ ...]'\n");
             result.SetStatus (eReturnStatusFailed);
         }
         else
