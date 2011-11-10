@@ -83,12 +83,26 @@ class LLVMProjectInfo(object):
     def __init__(self, source_root, component_infos):
         # Store our simple ivars.
         self.source_root = source_root
-        self.component_infos = component_infos
+        self.component_infos = list(component_infos)
+        self.component_info_map = None
+        self.ordered_component_infos = None
+
+    def validate_components(self):
+        """validate_components() -> None
+
+        Validate that the project components are well-defined. Among other
+        things, this checks that:
+          - Components have valid references.
+          - Components references do not form cycles.
+
+        We also construct the map from component names to info, and the
+        topological ordering of components.
+        """
 
         # Create the component info map and validate that component names are
         # unique.
         self.component_info_map = {}
-        for ci in component_infos:
+        for ci in self.component_infos:
             existing = self.component_info_map.get(ci.name)
             if existing is not None:
                 # We found a duplicate component name, report it and error out.
@@ -157,7 +171,7 @@ class LLVMProjectInfo(object):
         # out easily. If we don't, we should special case the check.
 
         self.ordered_component_infos = []
-        components_to_visit = set(component_infos)
+        components_to_visit = set(self.component_infos)
         while components_to_visit:
             visit_component_info(iter(components_to_visit).next(), [], set())
 
@@ -543,6 +557,9 @@ def main():
     llvmbuild_source_root = opts.llvmbuild_source_root or source_root
     project_info = LLVMProjectInfo.load_from_path(
         source_root, llvmbuild_source_root)
+
+    # Validate the project component info.
+    project_info.validate_components()
 
     # Print the component tree, if requested.
     if opts.print_tree:
