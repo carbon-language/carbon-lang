@@ -301,6 +301,9 @@ else
   endif
 endif
 
+#CXX.Flags +=  -stdlib=libc++
+#LD.Flags +=  -stdlib=libc++
+
 ifeq ($(ENABLE_PROFILING),1)
   BuildMode := $(BuildMode)+Profile
   CXX.Flags := $(filter-out -fomit-frame-pointer,$(CXX.Flags)) -pg -g
@@ -1882,7 +1885,6 @@ clean-local::
 ifneq ($(strip $(ObjRootDir)),)
 	-$(Verb) $(RM) -rf $(ObjRootDir)
 endif
-	-$(Verb) $(RM) -f core core.[0-9][0-9]* *.o *.d *~ *.flc
 ifneq ($(strip $(SHLIBEXT)),) # Extra paranoia - make real sure SHLIBEXT is set
 	-$(Verb) $(RM) -f *$(SHLIBEXT)
 endif
