@@ -220,6 +220,29 @@ void ExprEngine::processCFGElement(const CFGElement E, ExplodedNode *Pred,
   currentBuilderContext = 0;
 }
 
+static bool shouldRemoveDeadBindings(AnalysisManager &AMgr,
+                                     const CFGStmt S,
+                                     const ExplodedNode *Pred,
+                                     const LocationContext *LC) {
+  
+  // Are we never purging state values?
+  if (AMgr.getPurgeMode() == PurgeNone)
+    return false;
+
+  // Is this the beginning of a basic block?
+  if (!isa<StmtPoint>(Pred->getLocation()))
+    return true;
+
+  // Is this on a non-expression?
+  if (!isa<Expr>(S.getStmt()))
+    return true;
+  
+  // Is this an expression that is consumed by another expression?  If so,
+  // postpone cleaning out the state.
+  ParentMap &PM = LC->getAnalysisDeclContext()->getParentMap();
+  return !PM.isConsumedExpr(cast<Expr>(S.getStmt()));
+}
+
 void ExprEngine::ProcessStmt(const CFGStmt S,
                              ExplodedNode *Pred) {
   // TODO: Use RAII to remove the unnecessary, tagged nodes.
@@ -244,7 +267,7 @@ void ExprEngine::ProcessStmt(const CFGStmt S,
   const LocationContext *LC = EntryNode->getLocationContext();
   SymbolReaper SymReaper(LC, currentStmt, SymMgr, getStoreManager());
 
-  if (AMgr.getPurgeMode() != PurgeNone) {
+  if (shouldRemoveDeadBindings(AMgr, S, Pred, LC)) {
     getCheckerManager().runCheckersForLiveSymbols(CleanedState, SymReaper);
 
     const StackFrameContext *SFC = LC->getCurrentStackFrame();
