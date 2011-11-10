@@ -212,3 +212,20 @@ if.then:                                          ; preds = %entry
 if.end:                                           ; preds = %if.then, %entry
   ret void
 }
+
+define void @t12(i8 %a) uwtable ssp {
+entry:
+; ARM: t12
+; THUMB: t12
+  %cmp = icmp ugt i8 %a, -113
+; ARM: cmp r{{[0-9]}}, #143
+; THUMB: cmp r{{[0-9]}}, #143
+  br i1 %cmp, label %if.then, label %if.end
+
+if.then:                                          ; preds = %entry
+  tail call void @foo()
+  br label %if.end
+
+if.end:                                           ; preds = %if.then, %entry
+  ret void
+}

@@ -1216,7 +1216,6 @@ bool ARMFastISel::ARMEmitCmp(const Value *Src1Value, const Value *Src2Value,
 
   // Check to see if the 2nd operand is a constant that we can encode directly
   // in the compare.
-  uint64_t Imm;
   int EncodedImm = 0;
   bool EncodeImm = false;
   bool isNegativeImm = false;
@@ -1224,10 +1223,11 @@ bool ARMFastISel::ARMEmitCmp(const Value *Src1Value, const Value *Src2Value,
     if (SrcVT == MVT::i32 || SrcVT == MVT::i16 || SrcVT == MVT::i8 ||
         SrcVT == MVT::i1) {
       const APInt &CIVal = ConstInt->getValue();
-
-      isNegativeImm = CIVal.isNegative();
-      Imm = (isNegativeImm) ? (-CIVal).getZExtValue() : CIVal.getZExtValue();
-      EncodedImm = (int)Imm;
+      EncodedImm = (isZExt) ? (int)CIVal.getZExtValue() : (int)CIVal.getSExtValue();
+      if (EncodedImm < 0) {
+        isNegativeImm = true;
+        EncodedImm = -EncodedImm;
+      }
       EncodeImm = isThumb2 ? (ARM_AM::getT2SOImmVal(EncodedImm) != -1) :
         (ARM_AM::getSOImmVal(EncodedImm) != -1);
     }
