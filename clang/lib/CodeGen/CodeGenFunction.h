@@ -45,6 +45,7 @@ namespace llvm {
 namespace clang {
   class APValue;
   class ASTContext;
+  class BlockDecl;
   class CXXDestructorDecl;
   class CXXForRangeStmt;
   class CXXTryStmt;
@@ -610,6 +611,9 @@ public:
 
   unsigned NextCleanupDestIndex;
 
+  /// FirstBlockInfo - The head of a singly-linked-list of block layouts.
+  CGBlockInfo *FirstBlockInfo;
+
   /// EHResumeBlock - Unified block containing a call to llvm.eh.resume.
   llvm::BasicBlock *EHResumeBlock;
 
@@ -1169,6 +1173,7 @@ private:
 
 public:
   CodeGenFunction(CodeGenModule &cgm);
+  ~CodeGenFunction();
 
   CodeGenTypes &getTypes() const { return CGM.getTypes(); }
   ASTContext &getContext() const { return CGM.getContext(); }
@@ -1297,6 +1302,8 @@ public:
   //===--------------------------------------------------------------------===//
 
   llvm::Value *EmitBlockLiteral(const BlockExpr *);
+  llvm::Value *EmitBlockLiteral(const CGBlockInfo &Info);
+  static void destroyBlockInfos(CGBlockInfo *info);
   llvm::Constant *BuildDescriptorBlockDecl(const BlockExpr *,
                                            const CGBlockInfo &Info,
                                            llvm::StructType *,
@@ -2074,7 +2081,6 @@ public:
 
   LValue EmitCXXConstructLValue(const CXXConstructExpr *E);
   LValue EmitCXXBindTemporaryLValue(const CXXBindTemporaryExpr *E);
-  LValue EmitExprWithCleanupsLValue(const ExprWithCleanups *E);
   LValue EmitCXXTypeidLValue(const CXXTypeidExpr *E);
 
   LValue EmitObjCMessageExprLValue(const ObjCMessageExpr *E);
@@ -2348,8 +2354,11 @@ public:
   void EmitSynthesizedCXXCopyCtor(llvm::Value *Dest, llvm::Value *Src,
                                   const Expr *Exp);
 
-  RValue EmitExprWithCleanups(const ExprWithCleanups *E,
-                              AggValueSlot Slot =AggValueSlot::ignored());
+  void enterFullExpression(const ExprWithCleanups *E) {
+    if (E->getNumObjects() == 0) return;
+    enterNonTrivialFullExpression(E);
+  }
+  void enterNonTrivialFullExpression(const ExprWithCleanups *E);
 
   void EmitCXXThrowExpr(const CXXThrowExpr *E);
 

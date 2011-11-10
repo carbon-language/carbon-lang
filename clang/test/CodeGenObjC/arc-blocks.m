@@ -25,15 +25,19 @@ void test2(id x) {
 // CHECK:    define void @test2(
 // CHECK:      [[X:%.*]] = alloca i8*,
 // CHECK-NEXT: [[BLOCK:%.*]] = alloca [[BLOCK_T:<{.*}>]],
+// CHECK-NEXT: alloca i1
+// CHECK-NEXT: store i1 false
 // CHECK-NEXT: [[PARM:%.*]] = call i8* @objc_retain(i8* {{%.*}})
 // CHECK-NEXT: store i8* [[PARM]], i8** [[X]]
+// CHECK-NEXT: [[SLOTREL:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
 // CHECK:      [[SLOT:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
 // CHECK-NEXT: [[T0:%.*]] = load i8** [[X]],
 // CHECK-NEXT: [[T1:%.*]] = call i8* @objc_retain(i8* [[T0]])
 // CHECK-NEXT: store i8* [[T1]], i8** [[SLOT]],
+// CHECK-NEXT: store i1 true
 // CHECK-NEXT: bitcast
 // CHECK-NEXT: call void @test2_helper(
-// CHECK-NEXT: [[T0:%.*]] = load i8** [[SLOT]]
+// CHECK-NEXT: [[T0:%.*]] = load i8** [[SLOTREL]]
 // CHECK-NEXT: call void @objc_release(i8* [[T0]]) nounwind, !clang.imprecise_release
 // CHECK-NEXT: [[T0:%.*]] = load i8** [[X]]
 // CHECK-NEXT: call void @objc_release(i8* [[T0]]) nounwind, !clang.imprecise_release
@@ -233,8 +237,8 @@ void test7(void) {
   // CHECK-NEXT: [[T0:%.*]] = call i8* @objc_loadWeak(i8** [[VAR]])
   // CHECK-NEXT: call i8* @objc_initWeak(i8** [[SLOT]], i8* [[T0]])
   // CHECK:      call void @test7_helper(
-  // CHECK-NEXT: call void @objc_destroyWeak(i8** [[SLOT]])
-  // CHECK-NEXT: call void @objc_destroyWeak(i8** [[VAR]])
+  // CHECK-NEXT: call void @objc_destroyWeak(i8** {{%.*}})
+  // CHECK:      call void @objc_destroyWeak(i8** [[VAR]])
   // CHECK-NEXT: ret void
 
   // CHECK:    define internal void @__test7_block_invoke_
@@ -262,15 +266,17 @@ void test7(void) {
 // CHECK-NEXT: [[BLOCK:%.*]] = alloca [[BLOCK_T:<{.*}>]],
 // CHECK: store
 // CHECK-NEXT: store
+// CHECK:      [[D0:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
 // CHECK:      [[T0:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
 // CHECK-NEXT: [[T1:%.*]] = load [[TEST8]]** [[SELF]],
 // CHECK-NEXT: [[T2:%.*]] = bitcast [[TEST8]]* [[T1]] to i8*
 // CHECK-NEXT: [[T3:%.*]] = call i8* @objc_retain(i8* [[T2]])
 // CHECK-NEXT: [[T4:%.*]] = bitcast i8* [[T3]] to [[TEST8]]*
 // CHECK-NEXT: store [[TEST8]]* [[T4]], [[TEST8]]** [[T0]]
+// CHECK-NEXT: store i1 true,
 // CHECK-NEXT: bitcast [[BLOCK_T]]* [[BLOCK]] to
 // CHECK: call void @test8_helper(
-// CHECK-NEXT: [[T1:%.*]] = load [[TEST8]]** [[T0]]
+// CHECK-NEXT: [[T1:%.*]] = load [[TEST8]]** [[D0]]
 // CHECK-NEXT: [[T2:%.*]] = bitcast [[TEST8]]* [[T1]] to i8*
 // CHECK-NEXT: call void @objc_release(i8* [[T2]])
 // CHECK-NEXT: ret void

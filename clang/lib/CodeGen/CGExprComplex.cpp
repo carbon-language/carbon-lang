@@ -179,7 +179,9 @@ public:
     return Visit(DAE->getExpr());
   }
   ComplexPairTy VisitExprWithCleanups(ExprWithCleanups *E) {
-    return CGF.EmitExprWithCleanups(E).getComplexVal();
+    CGF.enterFullExpression(E);
+    CodeGenFunction::RunCleanupsScope Scope(CGF);
+    return Visit(E->getSubExpr());
   }
   ComplexPairTy VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E) {
     assert(E->getType()->isAnyComplexType() && "Expected complex type!");

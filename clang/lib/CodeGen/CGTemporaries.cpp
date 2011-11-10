@@ -35,15 +35,3 @@ void CodeGenFunction::EmitCXXTemporary(const CXXTemporary *Temporary,
                                         Temporary->getDestructor(),
                                         Ptr);
 }
-
-RValue
-CodeGenFunction::EmitExprWithCleanups(const ExprWithCleanups *E,
-                                      AggValueSlot Slot) {
-  RunCleanupsScope Scope(*this);
-  return EmitAnyExpr(E->getSubExpr(), Slot);
-}
-
-LValue CodeGenFunction::EmitExprWithCleanupsLValue(const ExprWithCleanups *E) {
-  RunCleanupsScope Scope(*this);
-  return EmitLValue(E->getSubExpr());
-}

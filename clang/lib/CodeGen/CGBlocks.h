@@ -23,6 +23,7 @@
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
 
+#include "CodeGenFunction.h"
 #include "CGBuilder.h"
 #include "CGCall.h"
 #include "CGValue.h"
@@ -128,13 +129,14 @@ inline BlockFieldFlags operator|(BlockFieldFlag_t l, BlockFieldFlag_t r) {
 class CGBlockInfo {
 public:
   /// Name - The name of the block, kindof.
-  const char *Name;
+  llvm::StringRef Name;
 
   /// The field index of 'this' within the block, if there is one.
   unsigned CXXThisIndex;
 
   class Capture {
     uintptr_t Data;
+    EHScopeStack::stable_iterator Cleanup;
 
   public:
     bool isIndex() const { return (Data & 1) != 0; }
@@ -143,6 +145,14 @@ public:
     llvm::Value *getConstant() const {
       assert(isConstant());
       return reinterpret_cast<llvm::Value*>(Data);
+    }
+    EHScopeStack::stable_iterator getCleanup() const {
+      assert(isIndex());
+      return Cleanup;
+    }
+    void setCleanup(EHScopeStack::stable_iterator cleanup) {
+      assert(isIndex());
+      Cleanup = cleanup;
     }
 
     static Capture makeIndex(unsigned index) {
@@ -157,9 +167,6 @@ public:
       return v;
     }    
   };
-
-  /// The mapping of allocated indexes within the block.
-  llvm::DenseMap<const VarDecl*, Capture> Captures;  
 
   /// CanBeGlobal - True if the block can be global, i.e. it has
   /// no non-constant captures.
@@ -176,22 +183,35 @@ public:
   /// because it gets set later in the block-creation process.
   mutable bool UsesStret : 1;
 
+  /// The mapping of allocated indexes within the block.
+  llvm::DenseMap<const VarDecl*, Capture> Captures;  
+
+  llvm::AllocaInst *Address;
   llvm::StructType *StructureType;
-  const BlockExpr *Block;
+  const BlockDecl *Block;
+  const BlockExpr *BlockExpression;
   CharUnits BlockSize;
   CharUnits BlockAlign;
+  CGBlockInfo *NextBlockInfo;
 
   const Capture &getCapture(const VarDecl *var) const {
-    llvm::DenseMap<const VarDecl*, Capture>::const_iterator
+    return const_cast<CGBlockInfo*>(this)->getCapture(var);
+  }
+  Capture &getCapture(const VarDecl *var) {
+    llvm::DenseMap<const VarDecl*, Capture>::iterator
       it = Captures.find(var);
     assert(it != Captures.end() && "no entry for variable!");
     return it->second;
   }
 
-  const BlockDecl *getBlockDecl() const { return Block->getBlockDecl(); }
-  const BlockExpr *getBlockExpr() const { return Block; }
+  const BlockDecl *getBlockDecl() const { return Block; }
+  const BlockExpr *getBlockExpr() const {
+    assert(BlockExpression);
+    assert(BlockExpression->getBlockDecl() == Block);
+    return BlockExpression;
+  }
 
-  CGBlockInfo(const BlockExpr *blockExpr, const char *Name);
+  CGBlockInfo(const BlockDecl *blockDecl, llvm::StringRef Name);
 };
 
 }  // end namespace CodeGen

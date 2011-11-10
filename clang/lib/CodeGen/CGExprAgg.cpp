@@ -536,7 +536,9 @@ AggExprEmitter::VisitCXXConstructExpr(const CXXConstructExpr *E) {
 }
 
 void AggExprEmitter::VisitExprWithCleanups(ExprWithCleanups *E) {
-  CGF.EmitExprWithCleanups(E, Dest);
+  CGF.enterFullExpression(E);
+  CodeGenFunction::RunCleanupsScope cleanups(CGF);
+  Visit(E->getSubExpr());
 }
 
 void AggExprEmitter::VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E) {

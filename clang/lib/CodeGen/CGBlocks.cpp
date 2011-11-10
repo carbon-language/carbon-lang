@@ -25,13 +25,14 @@
 using namespace clang;
 using namespace CodeGen;
 
-CGBlockInfo::CGBlockInfo(const BlockExpr *blockExpr, const char *N)
-  : Name(N), CXXThisIndex(0), CanBeGlobal(false), NeedsCopyDispose(false),
-    HasCXXObject(false), UsesStret(false), StructureType(0), Block(blockExpr) {
+CGBlockInfo::CGBlockInfo(const BlockDecl *block, StringRef name)
+  : Name(name), CXXThisIndex(0), CanBeGlobal(false), NeedsCopyDispose(false),
+    HasCXXObject(false), UsesStret(false), StructureType(0), Block(block) {
     
-  // Skip asm prefix, if any.
-  if (Name && Name[0] == '\01')
-    ++Name;
+  // Skip asm prefix, if any.  'name' is usually taken directly from
+  // the mangled name of the enclosing function.
+  if (!name.empty() && name[0] == '\01')
+    name = name.substr(1);
 }
 
 // Anchor the vtable to this translation unit.
@@ -483,15 +484,137 @@ static void computeBlockInfo(CodeGenModule &CGM, CGBlockInfo &info) {
     llvm::StructType::get(CGM.getLLVMContext(), elementTypes, true);
 }
 
+/// Enter the scope of a block.  This should be run at the entrance to
+/// a full-expression so that the block's cleanups are pushed at the
+/// right place in the stack.
+static void enterBlockScope(CodeGenFunction &CGF, BlockDecl *block) {
+  // Allocate the block info and place it at the head of the list.
+  CGBlockInfo &blockInfo =
+    *new CGBlockInfo(block, CGF.CurFn->getName());
+  blockInfo.NextBlockInfo = CGF.FirstBlockInfo;
+  CGF.FirstBlockInfo = &blockInfo;
+
+  // Compute information about the layout, etc., of this block,
+  // pushing cleanups as necessary.
+  computeBlockInfo(CGF.CGM, blockInfo);
+
+  // Nothing else to do if it can be global.
+  if (blockInfo.CanBeGlobal) return;
+
+  // Make the allocation for the block.
+  blockInfo.Address =
+    CGF.CreateTempAlloca(blockInfo.StructureType, "block");
+  blockInfo.Address->setAlignment(blockInfo.BlockAlign.getQuantity());
+
+  // If there are cleanups to emit, enter them (but inactive).
+  if (!blockInfo.NeedsCopyDispose) return;
+
+  // Walk through the captures (in order) and find the ones not
+  // captured by constant.
+  for (BlockDecl::capture_const_iterator ci = block->capture_begin(),
+         ce = block->capture_end(); ci != ce; ++ci) {
+    // Ignore __block captures; there's nothing special in the
+    // on-stack block that we need to do for them.
+    if (ci->isByRef()) continue;
+
+    // Ignore variables that are constant-captured.
+    const VarDecl *variable = ci->getVariable();
+    CGBlockInfo::Capture &capture = blockInfo.getCapture(variable);
+    if (capture.isConstant()) continue;
+
+    // Ignore objects that aren't destructed.
+    QualType::DestructionKind dtorKind =
+      variable->getType().isDestructedType();
+    if (dtorKind == QualType::DK_none) continue;
+
+    CodeGenFunction::Destroyer *destroyer;
+
+    // Block captures count as local values and have imprecise semantics.
+    // They also can't be arrays, so need to worry about that.
+    if (dtorKind == QualType::DK_objc_strong_lifetime) {
+      destroyer = &CodeGenFunction::destroyARCStrongImprecise;
+    } else {
+      destroyer = &CGF.getDestroyer(dtorKind);
+    }
+
+    // GEP down to the address.
+    llvm::Value *addr = CGF.Builder.CreateStructGEP(blockInfo.Address,
+                                                    capture.getIndex());
+
+    CleanupKind cleanupKind = InactiveNormalCleanup;
+    bool useArrayEHCleanup = CGF.needsEHCleanup(dtorKind);
+    if (useArrayEHCleanup) 
+      cleanupKind = InactiveNormalAndEHCleanup;
+
+    CGF.pushDestroy(cleanupKind, addr, variable->getType(),
+                    *destroyer, useArrayEHCleanup);
+
+    // Remember where that cleanup was.
+    capture.setCleanup(CGF.EHStack.stable_begin());
+  }
+}
+
+/// Enter a full-expression with a non-trivial number of objects to
+/// clean up.  This is in this file because, at the moment, the only
+/// kind of cleanup object is a BlockDecl*.
+void CodeGenFunction::enterNonTrivialFullExpression(const ExprWithCleanups *E) {
+  assert(E->getNumObjects() != 0);
+  ArrayRef<ExprWithCleanups::CleanupObject> cleanups = E->getObjects();
+  for (ArrayRef<ExprWithCleanups::CleanupObject>::iterator
+         i = cleanups.begin(), e = cleanups.end(); i != e; ++i) {
+    enterBlockScope(*this, *i);
+  }
+}
+
+/// Find the layout for the given block in a linked list and remove it.
+static CGBlockInfo *findAndRemoveBlockInfo(CGBlockInfo **head,
+                                           const BlockDecl *block) {
+  while (true) {
+    assert(head && *head);
+    CGBlockInfo *cur = *head;
+
+    // If this is the block we're looking for, splice it out of the list.
+    if (cur->getBlockDecl() == block) {
+      *head = cur->NextBlockInfo;
+      return cur;
+    }
+
+    head = &cur->NextBlockInfo;
+  }
+}
+
+/// Destroy a chain of block layouts.
+void CodeGenFunction::destroyBlockInfos(CGBlockInfo *head) {
+  assert(head && "destroying an empty chain");
+  do {
+    CGBlockInfo *cur = head;
+    head = cur->NextBlockInfo;
+    delete cur;
+  } while (head != 0);
+}
+
 /// Emit a block literal expression in the current function.
 llvm::Value *CodeGenFunction::EmitBlockLiteral(const BlockExpr *blockExpr) {
-  std::string Name = CurFn->getName();
-  CGBlockInfo blockInfo(blockExpr, Name.c_str());
+  // If the block has no captures, we won't have a pre-computed
+  // layout for it.
+  if (!blockExpr->getBlockDecl()->hasCaptures()) {
+    CGBlockInfo blockInfo(blockExpr->getBlockDecl(), CurFn->getName());
+    computeBlockInfo(CGM, blockInfo);
+    blockInfo.BlockExpression = blockExpr;
+    return EmitBlockLiteral(blockInfo);
+  }
 
-  // Compute information about the layout, etc., of this block.
-  computeBlockInfo(CGM, blockInfo);
+  // Find the block info for this block and take ownership of it.
+  llvm::OwningPtr<CGBlockInfo> blockInfo;
+  blockInfo.reset(findAndRemoveBlockInfo(&FirstBlockInfo,
+                                         blockExpr->getBlockDecl()));
 
-  // Using that metadata, generate the actual block function.
+  blockInfo->BlockExpression = blockExpr;
+  return EmitBlockLiteral(*blockInfo);
+}
+
+llvm::Value *CodeGenFunction::EmitBlockLiteral(const CGBlockInfo &blockInfo) {
+  // Using the computed layout, generate the actual block function.
   llvm::Constant *blockFn
     = CodeGenFunction(CGM).GenerateBlockFunction(CurGD, blockInfo,
                                                  CurFuncDecl, LocalDeclMap);
@@ -509,11 +632,8 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const BlockExpr *blockExpr) {
   // Build the block descriptor.
   llvm::Constant *descriptor = buildBlockDescriptor(CGM, blockInfo);
 
-  llvm::Type *intTy = ConvertType(getContext().IntTy);
-
-  llvm::AllocaInst *blockAddr =
-    CreateTempAlloca(blockInfo.StructureType, "block");
-  blockAddr->setAlignment(blockInfo.BlockAlign.getQuantity());
+  llvm::AllocaInst *blockAddr = blockInfo.Address;
+  assert(blockAddr && "block has no address!");
 
   // Compute the initial on-stack block flags.
   BlockFlags flags = BLOCK_HAS_SIGNATURE;
@@ -523,9 +643,9 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const BlockExpr *blockExpr) {
 
   // Initialize the block literal.
   Builder.CreateStore(isa, Builder.CreateStructGEP(blockAddr, 0, "block.isa"));
-  Builder.CreateStore(llvm::ConstantInt::get(intTy, flags.getBitMask()),
+  Builder.CreateStore(llvm::ConstantInt::get(IntTy, flags.getBitMask()),
                       Builder.CreateStructGEP(blockAddr, 1, "block.flags"));
-  Builder.CreateStore(llvm::ConstantInt::get(intTy, 0),
+  Builder.CreateStore(llvm::ConstantInt::get(IntTy, 0),
                       Builder.CreateStructGEP(blockAddr, 2, "block.reserved"));
   Builder.CreateStore(blockFn, Builder.CreateStructGEP(blockAddr, 3,
                                                        "block.invoke"));
@@ -625,28 +745,11 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const BlockExpr *blockExpr) {
                      /*captured by init*/ false);
     }
 
-    // Push a destructor if necessary.  The semantics for when this
-    // actually gets run are really obscure.
+    // Activate the cleanup if layout pushed one.
     if (!ci->isByRef()) {
-      switch (QualType::DestructionKind dtorKind = type.isDestructedType()) {
-      case QualType::DK_none:
-        break;
-
-      // Block captures count as local values and have imprecise semantics.
-      // They also can't be arrays, so need to worry about that.
-      case QualType::DK_objc_strong_lifetime: {
-        // This local is a GCC and MSVC compiler workaround.
-        Destroyer *destroyer = &destroyARCStrongImprecise;
-        pushDestroy(getCleanupKind(dtorKind), blockField, type,
-                    *destroyer, /*useEHCleanupForArray*/ false);
-        break;
-      }
-
-      case QualType::DK_objc_weak_lifetime:
-      case QualType::DK_cxx_destructor:
-        pushDestroy(dtorKind, blockField, type);
-        break;
-      }
+      EHScopeStack::stable_iterator cleanup = capture.getCleanup();
+      if (cleanup.isValid())
+        ActivateCleanupBlock(cleanup);
     }
   }
 
@@ -800,7 +903,8 @@ llvm::Value *CodeGenFunction::GetAddrOfBlockDecl(const VarDecl *variable,
 llvm::Constant *
 CodeGenModule::GetAddrOfGlobalBlock(const BlockExpr *blockExpr,
                                     const char *name) {
-  CGBlockInfo blockInfo(blockExpr, name);
+  CGBlockInfo blockInfo(blockExpr->getBlockDecl(), name);
+  blockInfo.BlockExpression = blockExpr;
 
   // Compute information about the layout, etc., of this block.
   computeBlockInfo(*this, blockInfo);

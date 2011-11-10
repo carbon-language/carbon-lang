@@ -33,7 +33,7 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm)
   : CodeGenTypeCache(cgm), CGM(cgm),
     Target(CGM.getContext().getTargetInfo()), Builder(cgm.getModule().getContext()),
     AutoreleaseResult(false), BlockInfo(0), BlockPointer(0),
-    NormalCleanupDest(0), NextCleanupDestIndex(1),
+    NormalCleanupDest(0), NextCleanupDestIndex(1), FirstBlockInfo(0), 
     EHResumeBlock(0), ExceptionSlot(0), EHSelectorSlot(0),
     DebugInfo(0), DisableDebugInfo(false), DidCallStackSave(false),
     IndirectBranch(0), SwitchInsn(0), CaseRangeBlock(0), UnreachableBlock(0),
@@ -43,6 +43,14 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm)
 
   CatchUndefined = getContext().getLangOptions().CatchUndefined;
   CGM.getCXXABI().getMangleContext().startNewFunction();
+}
+
+CodeGenFunction::~CodeGenFunction() {
+  // If there are any unclaimed block infos, go ahead and destroy them
+  // now.  This can happen if IR-gen gets clever and skips evaluating
+  // something.
+  if (FirstBlockInfo)
+    destroyBlockInfos(FirstBlockInfo);
 }
 
 

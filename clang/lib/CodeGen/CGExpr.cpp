@@ -229,10 +229,11 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
   if (const CXXDefaultArgExpr *DAE = dyn_cast<CXXDefaultArgExpr>(E))
     E = DAE->getExpr();
   
-  if (const ExprWithCleanups *TE = dyn_cast<ExprWithCleanups>(E)) {
+  if (const ExprWithCleanups *EWC = dyn_cast<ExprWithCleanups>(E)) {
+    CGF.enterFullExpression(EWC);
     CodeGenFunction::RunCleanupsScope Scope(CGF);
 
-    return EmitExprForReferenceBinding(CGF, TE->getSubExpr(), 
+    return EmitExprForReferenceBinding(CGF, EWC->getSubExpr(), 
                                        ReferenceTemporary, 
                                        ReferenceTemporaryDtor,
                                        ObjCARCReferenceLifetimeType,
@@ -677,8 +678,14 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
     return EmitCXXConstructLValue(cast<CXXConstructExpr>(E));
   case Expr::CXXBindTemporaryExprClass:
     return EmitCXXBindTemporaryLValue(cast<CXXBindTemporaryExpr>(E));
-  case Expr::ExprWithCleanupsClass:
-    return EmitExprWithCleanupsLValue(cast<ExprWithCleanups>(E));
+
+  case Expr::ExprWithCleanupsClass: {
+    const ExprWithCleanups *cleanups = cast<ExprWithCleanups>(E);
+    enterFullExpression(cleanups);
+    RunCleanupsScope Scope(*this);
+    return EmitLValue(cleanups->getSubExpr());
+  }
+
   case Expr::CXXScalarValueInitExprClass:
     return EmitNullInitializationLValue(cast<CXXScalarValueInitExpr>(E));
   case Expr::CXXDefaultArgExprClass:
