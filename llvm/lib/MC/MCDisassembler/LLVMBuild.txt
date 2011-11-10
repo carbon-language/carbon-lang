@@ -19,5 +19,7 @@
 type = Library
 name = MCDisassembler
 parent = MC
-required_libraries = ARMAsmParser ARMDesc ARMDisassembler ARMInfo CBackendInfo CellSPUDesc CellSPUInfo CppBackendInfo MBlazeAsmParser MBlazeDesc MBlazeDisassembler MBlazeInfo MC MCParser MSP430Desc MSP430Info MipsDesc MipsInfo PTXDesc PTXInfo PowerPCDesc PowerPCInfo SparcDesc SparcInfo Support X86AsmParser X86Desc X86Disassembler X86Info XCoreDesc XCoreInfo
+; FIXME: This is really horrible, MCDisassembler should not in and of its own
+; accord depending on every target.
+required_libraries = all-targets MC MCParser Support
 
