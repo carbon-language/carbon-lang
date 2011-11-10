@@ -1029,8 +1029,9 @@ static bool EvaluateArgs(ArrayRef<const Expr*> Args, ArgVector &ArgValues,
 }
 
 /// Evaluate a function call.
-static bool HandleFunctionCall(ArrayRef<const Expr*> Args, const Stmt *Body,
-                               EvalInfo &Info, CCValue &Result) {
+static bool HandleFunctionCall(const LValue *This, ArrayRef<const Expr*> Args,
+                               const Stmt *Body, EvalInfo &Info,
+                               CCValue &Result) {
   // FIXME: Implement a proper call limit, along with a command-line flag.
   if (Info.NumCalls >= 1000000 || Info.CallStackDepth >= 512)
     return false;
@@ -1039,16 +1040,15 @@ static bool HandleFunctionCall(ArrayRef<const Expr*> Args, const Stmt *Body,
   if (!EvaluateArgs(Args, ArgValues, Info))
     return false;
 
-  // FIXME: Pass in 'this' for member functions.
-  const LValue *This = 0;
   CallStackFrame Frame(Info, This, ArgValues.data());
   return EvaluateStmt(Result, Info, Body) == ESR_Returned;
 }
 
 /// Evaluate a constructor call.
-static bool HandleConstructorCall(ArrayRef<const Expr*> Args,
+static bool HandleConstructorCall(const LValue &This,
+                                  ArrayRef<const Expr*> Args,
                                   const CXXConstructorDecl *Definition,
-                                  EvalInfo &Info, const LValue &This,
+                                  EvalInfo &Info,
                                   APValue &Result) {
   if (Info.NumCalls >= 1000000 || Info.CallStackDepth >= 512)
     return false;
@@ -1305,39 +1305,64 @@ public:
     const Expr *Callee = E->getCallee();
     QualType CalleeType = Callee->getType();
 
-    // FIXME: Handle the case where Callee is a (parenthesized) MemberExpr for a
-    // non-static member function.
-    if (CalleeType->isSpecificBuiltinType(BuiltinType::BoundMember))
-      return DerivedError(E);
-
-    if (!CalleeType->isFunctionType() && !CalleeType->isFunctionPointerType())
-      return DerivedError(E);
-
-    CCValue Call;
-    if (!Evaluate(Call, Info, Callee) || !Call.isLValue() ||
-        !Call.getLValueBase() || !Call.getLValueOffset().isZero())
-      return DerivedError(Callee);
-
     const FunctionDecl *FD = 0;
-    if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Call.getLValueBase()))
-      FD = dyn_cast<FunctionDecl>(DRE->getDecl());
-    else if (const MemberExpr *ME = dyn_cast<MemberExpr>(Call.getLValueBase()))
-      FD = dyn_cast<FunctionDecl>(ME->getMemberDecl());
-    if (!FD)
-      return DerivedError(Callee);
+    LValue *This = 0, ThisVal;
+    llvm::ArrayRef<const Expr*> Args(E->getArgs(), E->getNumArgs());
 
-    // Don't call function pointers which have been cast to some other type.
-    if (!Info.Ctx.hasSameType(CalleeType->getPointeeType(), FD->getType()))
-      return DerivedError(E);
+    // Extract function decl and 'this' pointer from the callee.
+    if (CalleeType->isSpecificBuiltinType(BuiltinType::BoundMember)) {
+      const MemberExpr *ME = dyn_cast<MemberExpr>(Callee->IgnoreParens());
+      // FIXME: Handle a BinaryOperator callee ('.*' or '->*').
+      if (!ME)
+        return DerivedError(Callee);
+      if (ME->isArrow()) {
+        if (!EvaluatePointer(ME->getBase(), ThisVal, Info))
+          return DerivedError(ME);
+      } else {
+        if (!EvaluateLValue(ME->getBase(), ThisVal, Info))
+          return DerivedError(ME);
+      }
+      This = &ThisVal;
+      FD = dyn_cast<FunctionDecl>(ME->getMemberDecl());
+      if (!FD)
+        return DerivedError(ME);
+    } else if (CalleeType->isFunctionPointerType()) {
+      CCValue Call;
+      if (!Evaluate(Call, Info, Callee) || !Call.isLValue() ||
+          !Call.getLValueBase() || !Call.getLValueOffset().isZero())
+        return DerivedError(Callee);
+
+      const Expr *Base = Call.getLValueBase();
+
+      if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Base))
+        FD = dyn_cast<FunctionDecl>(DRE->getDecl());
+      else if (const MemberExpr *ME = dyn_cast<MemberExpr>(Base))
+        FD = dyn_cast<FunctionDecl>(ME->getMemberDecl());
+      if (!FD)
+        return DerivedError(Callee);
+
+      // Overloaded operator calls to member functions are represented as normal
+      // calls with 'this' as the first argument.
+      const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD);
+      if (MD && !MD->isStatic()) {
+        if (!EvaluateLValue(Args[0], ThisVal, Info))
+          return DerivedError(Args[0]);
+        This = &ThisVal;
+        Args = Args.slice(1);
+      }
+
+      // Don't call function pointers which have been cast to some other type.
+      if (!Info.Ctx.hasSameType(CalleeType->getPointeeType(), FD->getType()))
+        return DerivedError(E);
+    }
 
     const FunctionDecl *Definition;
     Stmt *Body = FD->getBody(Definition);
     CCValue CCResult;
     APValue Result;
-    llvm::ArrayRef<const Expr*> Args(E->getArgs(), E->getNumArgs());
 
     if (Body && Definition->isConstexpr() && !Definition->isInvalidDecl() &&
-        HandleFunctionCall(Args, Body, Info, CCResult) &&
+        HandleFunctionCall(This, Args, Body, Info, CCResult) &&
         CheckConstantExpression(CCResult, Result))
       return DerivedSuccess(CCValue(Result, CCValue::GlobalValue()), E);
 
@@ -1890,8 +1915,8 @@ bool RecordExprEvaluator::VisitCXXConstructExpr(const CXXConstructExpr *E) {
       return Visit(ME->GetTemporaryExpr());
 
   llvm::ArrayRef<const Expr*> Args(E->getArgs(), E->getNumArgs());
-  return HandleConstructorCall(Args, cast<CXXConstructorDecl>(Definition),
-                               Info, This, Result);
+  return HandleConstructorCall(This, Args, cast<CXXConstructorDecl>(Definition),
+                               Info, Result);
 }
 
 static bool EvaluateRecord(const Expr *E, const LValue &This,
