@@ -505,7 +505,7 @@ def add_magic_target_components(parser, project, opts):
     determined based on the target configuration options.
 
     This currently is responsible for populating the required_libraries list of
-    the "Native", "NativeCodeGen", and "Engine" components.
+    the "all-targets", "Native", "NativeCodeGen", and "Engine" components.
     """
 
     # Determine the available targets.
@@ -536,8 +536,14 @@ def add_magic_target_components(parser, project, opts):
     if opts.enable_targets is None:
         enable_targets = available_targets.values()
     else:
+        # We support both space separated and semi-colon separated lists.
+        if ' ' in opts.enable_targets:
+            enable_target_names = opts.enable_targets.split()
+        else:
+            enable_target_names = opts.enable_targets.split(';')
+
         enable_targets = []
-        for name in opts.enable_targets.split():
+        for name in enable_target_names:
             target = available_targets.get(name)
             if target is None:
                 parser.error("invalid target to enable: %r (not in project)" % (
@@ -641,8 +647,8 @@ def main():
                       action="store", default=None)
     group.add_option("", "--enable-targets",
                       dest="enable_targets", metavar="NAMES",
-                      help=("Enable the given space separated list of targets, "
-                            "or all targets if not present"),
+                      help=("Enable the given space or semi-colon separated "
+                            "list of targets, or all targets if not present"),
                       action="store", default=None)
     parser.add_option_group(group)
 

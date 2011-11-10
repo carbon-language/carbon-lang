@@ -21,8 +21,9 @@ name = Target
 parent = Libraries
 required_libraries = Core MC Support
 
-; This is a convenient group we define (and expect targets to add to) which
-; makes it easy for tools to include every target.
+; This is a special group whose required libraries are extended (by llvm-build)
+; with every built target, which makes it easy for tools to include every
+; target.
 [component_1]
 type = LibraryGroup
 name = all-targets

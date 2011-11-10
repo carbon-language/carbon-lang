@@ -236,6 +236,8 @@ set(LLVMBUILDCMAKEFRAG
 message(STATUS "Constructing LLVMBuild project information")
 execute_process(
   COMMAND ${PYTHON_EXECUTABLE} ${LLVMBUILDTOOL}
+            --native-target "${LLVM_NATIVE_ARCH}"
+            --enable-targets "${LLVM_TARGETS_TO_BUILD}"
             --write-library-table ${LLVMCONFIGLIBRARYDEPENDENCIESINC}
             --write-cmake-fragment ${LLVMBUILDCMAKEFRAG}
             ERROR_VARIABLE LLVMBUILDOUTPUT
