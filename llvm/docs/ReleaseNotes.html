@@ -145,14 +145,27 @@ Release Notes</a>.</h1>
 <div>
 <p><a href="http://dragonegg.llvm.org/">DragonEgg</a> is a
    <a href="http://gcc.gnu.org/wiki/plugins">gcc plugin</a> that replaces GCC's
-   optimizers and code generators with LLVM's. Currently it requires a patched
-   version of gcc-4.5.  The plugin can target the x86-32 and x86-64 processor
-   families and has been used successfully on the Darwin, FreeBSD and Linux
-   platforms.  The Ada, C, C++ and Fortran languages work well.  The plugin is
-   capable of compiling plenty of Obj-C, Obj-C++ and Java but it is not known
-   whether the compiled code actually works or not!</p>
+   optimizers and code generators with LLVM's. It works with gcc-4.5 or gcc-4.6,
+   targets the x86-32 and x86-64 processor families, and has been successfully
+   used on the Darwin, FreeBSD, KFreeBSD, Linux and OpenBSD platforms.  It fully
+   supports Ada, C, C++ and Fortran.  It has partial support for Go, Java, Obj-C
+   and Obj-C++.</p>
 
 <p>The 3.0 release has the following notable changes:</p>
+
+  <li>GCC version 4.6 is now fully supported.</li>
+
+  <li>Patching and building GCC is no longer required: the plugin should work
+      with your system GCC (version 4.5 or 4.6; on Debian/Ubuntu systems the
+      gcc-4.5-plugin-dev or gcc-4.6-plugin-dev package is also needed).</li>
+
+  <li>The <tt>-fplugin-arg-dragonegg-enable-gcc-optzns</tt> option, which runs
+      GCC's optimizers as well as LLVM's, now works much better.  This is the
+      option to use if you want ultimate performance! It not yet completely
+      stable: it may cause the plugin to crash.</li>
+
+  <li>The type and constant conversion logic has been almost entirely rewritten,
+      fixing a multitude of obscure bugs.</li>
 
 <ul>
 <!--
