@@ -252,6 +252,7 @@ ExprResult Sema::ImpCastExprToType(Expr *E, QualType Ty,
       break;
     }
   }
+  assert((VK == VK_RValue || !E->isRValue()) && "can't cast rvalue to lvalue");
 #endif
 
   QualType ExprTy = Context.getCanonicalType(E->getType());
