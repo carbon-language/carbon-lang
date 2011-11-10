@@ -1601,6 +1601,70 @@ LookupFileAndLineInModule (CommandInterpreter &interpreter,
     
 }
 
+
+static size_t
+FindModulesByName (Target *target, 
+                   const char *module_name, 
+                   ModuleList &module_list, 
+                   bool check_global_list)
+{
+// Dump specified images (by basename or fullpath)
+    FileSpec module_file_spec(module_name, false);
+    
+    const size_t initial_size = module_list.GetSize ();
+
+    size_t num_matches = 0;
+    
+    if (target)
+    {
+        num_matches = target->GetImages().FindModules (&module_file_spec, 
+                                                       NULL, 
+                                                       NULL, 
+                                                       NULL, 
+                                                       module_list);
+    
+        // Not found in our module list for our target, check the main
+        // shared module list in case it is a extra file used somewhere
+        // else
+        if (num_matches == 0)
+            num_matches = ModuleList::FindSharedModules (module_file_spec, 
+                                                         target->GetArchitecture(), 
+                                                         NULL, 
+                                                         NULL, 
+                                                         module_list);
+    }
+    else
+    {
+        num_matches = ModuleList::FindSharedModules (module_file_spec, 
+                                                     ArchSpec(),
+                                                     NULL, 
+                                                     NULL, 
+                                                     module_list);
+    }
+    
+    if (check_global_list && num_matches == 0)
+    {
+        // Check the global list
+        Mutex::Locker locker(Module::GetAllocationModuleCollectionMutex().GetMutex());
+        const uint32_t num_modules = Module::GetNumberAllocatedModules();
+        ModuleSP module_sp;
+        for (uint32_t image_idx = 0; image_idx<num_modules; ++image_idx)
+        {
+            Module *module = Module::GetAllocatedModuleAtIndex(image_idx);
+            
+            if (module)
+            {
+                if (FileSpec::Equal(module->GetFileSpec(), module_file_spec, true))
+                {
+                    module_sp = module;
+                    module_list.AppendIfNeeded(module_sp);
+                }
+            }
+        }
+    }
+    return module_list.GetSize () - initial_size;
+}
+
 #pragma mark CommandObjectTargetModulesModuleAutoComplete
 
 //----------------------------------------------------------------------
@@ -1796,26 +1860,14 @@ public:
                 const char *arg_cstr;
                 for (int arg_idx = 0; (arg_cstr = command.GetArgumentAtIndex(arg_idx)) != NULL; ++arg_idx)
                 {
-                    FileSpec image_file(arg_cstr, false);
-                    ModuleList matching_modules;
-                    size_t num_matching_modules = target->GetImages().FindModules(&image_file, NULL, NULL, NULL, matching_modules);
-                    
-                    // Not found in our module list for our target, check the main
-                    // shared module list in case it is a extra file used somewhere
-                    // else
-                    if (num_matching_modules == 0)
-                        num_matching_modules = ModuleList::FindSharedModules (image_file, 
-                                                                              target->GetArchitecture(), 
-                                                                              NULL, 
-                                                                              NULL, 
-                                                                              matching_modules);
-                    
-                    if (num_matching_modules > 0)
+                    ModuleList module_list;
+                    const size_t num_matches = FindModulesByName (target, arg_cstr, module_list, true);
+                    if (num_matches > 0)
                     {
-                        for (size_t i=0; i<num_matching_modules; ++i)
+                        for (size_t i=0; i<num_matches; ++i)
                         {
-                            Module *image_module = matching_modules.GetModulePointerAtIndex(i);
-                            if (image_module)
+                            Module *module = module_list.GetModulePointerAtIndex(i);
+                            if (module)
                             {
                                 if (num_dumped > 0)
                                 {
@@ -1823,7 +1875,7 @@ public:
                                     result.GetOutputStream().EOL();
                                 }
                                 num_dumped++;
-                                DumpModuleSymtab (m_interpreter, result.GetOutputStream(), image_module, m_options.m_sort_order);
+                                DumpModuleSymtab (m_interpreter, result.GetOutputStream(), module, m_options.m_sort_order);
                             }
                         }
                     }
@@ -1995,34 +2047,27 @@ public:
                 const char *arg_cstr;
                 for (int arg_idx = 0; (arg_cstr = command.GetArgumentAtIndex(arg_idx)) != NULL; ++arg_idx)
                 {
-                    FileSpec image_file(arg_cstr, false);
-                    ModuleList matching_modules;
-                    size_t num_matching_modules = target->GetImages().FindModules(&image_file, NULL, NULL, NULL, matching_modules);
-                    
-                    // Not found in our module list for our target, check the main
-                    // shared module list in case it is a extra file used somewhere
-                    // else
-                    if (num_matching_modules == 0)
-                        num_matching_modules = ModuleList::FindSharedModules (image_file, 
-                                                                              target->GetArchitecture(), 
-                                                                              NULL, 
-                                                                              NULL, 
-                                                                              matching_modules);
-                    
-                    if (num_matching_modules > 0)
+                    ModuleList module_list;
+                    const size_t num_matches = FindModulesByName (target, arg_cstr, module_list, true);
+                    if (num_matches > 0)
                     {
-                        for (size_t i=0; i<num_matching_modules; ++i)
+                        for (size_t i=0; i<num_matches; ++i)
                         {
-                            Module * image_module = matching_modules.GetModulePointerAtIndex(i);
-                            if (image_module)
+                            Module *module = module_list.GetModulePointerAtIndex(i);
+                            if (module)
                             {
                                 num_dumped++;
-                                DumpModuleSections (m_interpreter, result.GetOutputStream(), image_module);
+                                DumpModuleSections (m_interpreter, result.GetOutputStream(), module);
                             }
                         }
                     }
                     else
+                    {
+                        // Check the global list
+                        Mutex::Locker locker(Module::GetAllocationModuleCollectionMutex().GetMutex());
+
                         result.AppendWarningWithFormat("Unable to find an image that matches '%s'.\n", arg_cstr);
+                    }
                 }
             }
             
@@ -2107,28 +2152,16 @@ public:
                 const char *arg_cstr;
                 for (int arg_idx = 0; (arg_cstr = command.GetArgumentAtIndex(arg_idx)) != NULL; ++arg_idx)
                 {
-                    FileSpec image_file(arg_cstr, false);
-                    ModuleList matching_modules;
-                    size_t num_matching_modules = target->GetImages().FindModules(&image_file, NULL, NULL, NULL, matching_modules);
-                    
-                    // Not found in our module list for our target, check the main
-                    // shared module list in case it is a extra file used somewhere
-                    // else
-                    if (num_matching_modules == 0)
-                        num_matching_modules = ModuleList::FindSharedModules (image_file, 
-                                                                              target->GetArchitecture(), 
-                                                                              NULL, 
-                                                                              NULL, 
-                                                                              matching_modules);
-                    
-                    if (num_matching_modules > 0)
+                    ModuleList module_list;
+                    const size_t num_matches = FindModulesByName (target, arg_cstr, module_list, true);
+                    if (num_matches > 0)
                     {
-                        for (size_t i=0; i<num_matching_modules; ++i)
+                        for (size_t i=0; i<num_matches; ++i)
                         {
-                            Module * image_module = matching_modules.GetModulePointerAtIndex(i);
-                            if (image_module)
+                            Module *module = module_list.GetModulePointerAtIndex(i);
+                            if (module)
                             {
-                                if (DumpModuleSymbolVendor (result.GetOutputStream(), image_module))
+                                if (DumpModuleSymbolVendor (result.GetOutputStream(), module))
                                     num_dumped++;
                             }
                         }
@@ -3248,28 +3281,16 @@ public:
                 const char *arg_cstr;
                 for (i = 0; (arg_cstr = command.GetArgumentAtIndex(i)) != NULL && syntax_error == false; ++i)
                 {
-                    FileSpec image_file(arg_cstr, false);
-                    ModuleList matching_modules;
-                    size_t num_matching_modules = target->GetImages().FindModules(&image_file, NULL, NULL, NULL, matching_modules);
-                    
-                    // Not found in our module list for our target, check the main
-                    // shared module list in case it is a extra file used somewhere
-                    // else
-                    if (num_matching_modules == 0)
-                        num_matching_modules = ModuleList::FindSharedModules (image_file, 
-                                                                              target->GetArchitecture(), 
-                                                                              NULL, 
-                                                                              NULL, 
-                                                                              matching_modules);
-                    
-                    if (num_matching_modules > 0)
+                    ModuleList module_list;
+                    const size_t num_matches = FindModulesByName (target, arg_cstr, module_list, false);
+                    if (num_matches > 0)
                     {
-                        for (size_t j=0; j<num_matching_modules; ++j)
+                        for (size_t i=0; i<num_matches; ++i)
                         {
-                            Module * image_module = matching_modules.GetModulePointerAtIndex(j);
-                            if (image_module)
+                            Module *module = module_list.GetModulePointerAtIndex(i);
+                            if (module)
                             {
-                                if (LookupInModule (m_interpreter, image_module, result, syntax_error))
+                                if (LookupInModule (m_interpreter, module, result, syntax_error))
                                 {
                                     result.GetOutputStream().EOL();
                                     num_successful_lookups++;
