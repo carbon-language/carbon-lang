@@ -170,14 +170,13 @@ bool ScopDetection::isValidCFG(BasicBlock &BB, DetectionContext &Context) const
         || isa<UndefValue>(ICmp->getOperand(1)))
       INVALID(AffFunc, "undef operand in branch at BB: " + BB.getNameStr());
 
-    const SCEV *ScevLHS = SE->getSCEV(ICmp->getOperand(0));
-    const SCEV *ScevRHS = SE->getSCEV(ICmp->getOperand(1));
+    const SCEV *LHS = SE->getSCEV(ICmp->getOperand(0));
+    const SCEV *RHS = SE->getSCEV(ICmp->getOperand(1));
 
-    bool affineLHS = isAffineExpr(&Context.CurRegion, ScevLHS, *SE);
-    bool affineRHS = isAffineExpr(&Context.CurRegion, ScevRHS, *SE);
-
-    if (!affineLHS || !affineRHS)
-      INVALID(AffFunc, "Non affine branch in BB: " + BB.getNameStr());
+    if (!isAffineExpr(&Context.CurRegion, LHS, *SE) ||
+        !isAffineExpr(&Context.CurRegion, RHS, *SE))
+      INVALID(AffFunc, "Non affine branch in BB '" << BB.getNameStr()
+                        << "' with LHS: " << *LHS << " and RHS: " << *RHS);
   }
 
   // Allow loop exit conditions.
