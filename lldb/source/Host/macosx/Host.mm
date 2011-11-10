@@ -503,7 +503,10 @@ LaunchInNewTerminalWithAppleScript (const char *exe_path, ProcessLaunchInfo &lau
     {
         const char *shell_executable = getenv("SHELL");
         std::string safe_arg;
-        command.Printf(" -- %s -c '", shell_executable);
+        if (launch_info.GetArchitecture().IsValid())
+            command.Printf(" -- %s -c 'exec /usr/bin/arch -arch %s ", shell_executable, launch_info.GetArchitecture().GetArchitectureName());
+        else
+            command.Printf(" -- %s -c 'exec ", shell_executable);
         const char **argv = launch_info.GetArguments().GetConstArgumentVector ();
         if (argv)
         {
@@ -644,7 +647,16 @@ void
 Host::SetCrashDescription (const char *cstr)
 {
     Mutex::Locker locker (GetCrashReporterMutex ());
-    __crashreporter_info__ = cstr;
+    static std::string g_crash_description;
+    if (cstr)
+    {
+        g_crash_description.assign (cstr);
+        __crashreporter_info__ = g_crash_description.c_str();
+    }
+    else
+    {
+        __crashreporter_info__ = NULL;
+    }
 }
 
 bool

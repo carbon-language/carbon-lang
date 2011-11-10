@@ -4585,6 +4585,8 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                                                                                     is_artificial);
                                                     LinkDeclContextToDIE(ClangASTContext::GetAsDeclContext(cxx_method_decl), die);
 
+                                                    Host::SetCrashDescription (NULL);
+
                                                     type_handled = cxx_method_decl != NULL;
                                                 }
                                             }

@@ -765,6 +765,8 @@ SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dyna
                                                                                            keep_in_memory, 
                                                                                            fetch_dynamic_value, 
                                                                                            *expr_result);
+        
+        Host::SetCrashDescription (NULL);
     }
     
     if (expr_log)
