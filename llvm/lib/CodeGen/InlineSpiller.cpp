@@ -1017,14 +1017,18 @@ bool InlineSpiller::foldMemoryOperand(MachineBasicBlock::iterator MI,
                                       const SmallVectorImpl<unsigned> &Ops,
                                       MachineInstr *LoadMI) {
   bool WasCopy = MI->isCopy();
+  unsigned ImpReg = 0;
+
   // TargetInstrInfo::foldMemoryOperand only expects explicit, non-tied
   // operands.
   SmallVector<unsigned, 8> FoldOps;
   for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
     unsigned Idx = Ops[i];
     MachineOperand &MO = MI->getOperand(Idx);
-    if (MO.isImplicit())
+    if (MO.isImplicit()) {
+      ImpReg = MO.getReg();
       continue;
+    }
     // FIXME: Teach targets to deal with subregs.
     if (MO.getSubReg())
       return false;
@@ -1045,7 +1049,20 @@ bool InlineSpiller::foldMemoryOperand(MachineBasicBlock::iterator MI,
   if (!LoadMI)
     VRM.addSpillSlotUse(StackSlot, FoldMI);
   MI->eraseFromParent();
-  DEBUG(dbgs() << "\tfolded: " << *FoldMI);
+
+  // TII.foldMemoryOperand may have left some implicit operands on the
+  // instruction.  Strip them.
+  if (ImpReg)
+    for (unsigned i = FoldMI->getNumOperands(); i; --i) {
+      MachineOperand &MO = FoldMI->getOperand(i - 1);
+      if (!MO.isReg() || !MO.isImplicit())
+        break;
+      if (MO.getReg() == ImpReg)
+        FoldMI->RemoveOperand(i - 1);
+    }
+
+  DEBUG(dbgs() << "\tfolded:  " << LIS.getInstructionIndex(FoldMI) << '\t'
+               << *FoldMI);
   if (!WasCopy)
     ++NumFolded;
   else if (Ops.front() == 0)
