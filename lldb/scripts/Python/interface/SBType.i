@@ -143,6 +143,9 @@ public:
     GetDereferencedType();
 
     lldb::SBType
+    GetUnqualifiedType();
+    
+    lldb::SBType
     GetBasicType (lldb::BasicType type);
 
     uint32_t

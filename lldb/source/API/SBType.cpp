@@ -211,6 +211,17 @@ SBType::GetDereferencedType()
     return SBType(ClangASTType(m_opaque_sp->GetASTContext(),qt.getNonReferenceType().getAsOpaquePtr()));
 }
 
+lldb::SBType
+SBType::GetUnqualifiedType()
+{
+    if (!IsValid())
+        return SBType();
+        
+    QualType qt (QualType::getFromOpaquePtr(m_opaque_sp->GetOpaqueQualType()));
+    return SBType(ClangASTType(m_opaque_sp->GetASTContext(),qt.getUnqualifiedType().getAsOpaquePtr()));
+}
+
+
 SBType
 SBType::GetBasicType(lldb::BasicType type)
 {

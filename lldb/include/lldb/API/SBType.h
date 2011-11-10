@@ -92,7 +92,10 @@ public:
     
     lldb::SBType
     GetDereferencedType();
-    
+
+    lldb::SBType
+    GetUnqualifiedType();
+
     lldb::SBType
     GetBasicType(lldb::BasicType type);
     
