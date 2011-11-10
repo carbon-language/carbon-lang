@@ -247,12 +247,31 @@ Release Notes</a>.</h1>
 
 <div>
 
-<p>The <a href="http://vmkit.llvm.org/">VMKit project</a> is an implementation
-   of a Java Virtual Machine (Java VM or JVM) that uses LLVM for static and
-   just-in-time compilation. As of LLVM 3.0, VMKit now supports generational
-   garbage collectors. The garbage collectors are provided by the MMTk
-   framework, and VMKit can be configured to use one of the numerous implemented
-   collectors of MMTk.</p>
+  <p>The <a href="http://vmkit.llvm.org/">VMKit project</a> is an
+  implementation of a Java Virtual Machine (Java VM or JVM) that uses LLVM for
+  static and just-in-time compilation.
+
+  <p>In the LLVM 3.0 time-frame, VMKit has had significant improvements on both
+  runtime and startup performance:</p>
+
+  <ul>
+  <li>Precompilation: by compiling ahead of time a small subset of Java's core
+  library, the startup performance have been highly optimized to the point that
+  running a 'Hello World' program takes less than 30 milliseconds.</li>
+
+  <li>Customization: by customizing virtual methods for individual classes,
+  the VM can statically determine the target of a virtual call, and decide to
+  inline it.</li>
+
+  <li>Inlining: the VM does more inlining than it did before, by allowing more
+  bytecode instructions to be inlined, and thanks to customization. It also
+  inlines GC barriers, and object allocations.</li>
+
+  <li>New exception model: the generated code for a method that does not do
+  any try/catch is not penalized anymore by the eventuality of calling a
+  method that throws an exception. Instead, the method that throws the
+  exception jumps directly to the method that could catch it.</li>
+  </ul>
 
 </div>
   
