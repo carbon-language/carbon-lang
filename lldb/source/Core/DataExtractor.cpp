@@ -1440,18 +1440,15 @@ DataExtractor::Dump (Stream *s,
         case eFormatChar:
         case eFormatCharPrintable:
         case eFormatCharArray:
-            if (item_bit_size < 8)
-                s->Printf ("%llu", GetMaxU64Bitfield(&offset, item_byte_size, item_bit_size, item_bit_offset));
-            else
             {
                 // If we are only printing one character surround it with single
                 // quotes
                 if (item_count == 1 && item_format == eFormatChar)
                     s->PutChar('\'');
 
-                uint32_t ch = GetMaxU64(&offset, item_byte_size);
+                const uint64_t ch = GetMaxU64Bitfield(&offset, item_byte_size, item_bit_size, item_bit_offset);
                 if (isprint(ch))
-                    s->Printf ("%c", ch);
+                    s->Printf ("%c", (char)ch);
                 else if (item_format != eFormatCharPrintable)
                 {
                     switch (ch)
@@ -1467,9 +1464,9 @@ DataExtractor::Dump (Stream *s,
                     case '\0': s->Printf ("\\0"); break;
                     default:   
                         if (item_byte_size == 1)
-                            s->Printf ("\\x%2.2x", ch); 
+                            s->Printf ("\\x%2.2x", (uint8_t)ch); 
                         else
-                            s->Printf ("\\u%x", ch); 
+                            s->Printf ("%llu", ch); 
                         break;
                     }
                 }
