@@ -7692,6 +7692,7 @@ defm VPSRAVD : avx2_var_shift<0x46, "vpsravd", memopv4i32, memopv8i32,
 
 
 let Predicates = [HasAVX2] in {
+
   def : Pat<(v4i32 (shl (v4i32 VR128:$src1), (v4i32 VR128:$src2))),
             (VPSLLVDrr VR128:$src1, VR128:$src2)>;
   def : Pat<(v2i64 (shl (v2i64 VR128:$src1), (v2i64 VR128:$src2))),
@@ -7702,7 +7703,6 @@ let Predicates = [HasAVX2] in {
             (VPSRLVQrr VR128:$src1, VR128:$src2)>;
   def : Pat<(v4i32 (sra (v4i32 VR128:$src1), (v4i32 VR128:$src2))),
             (VPSRAVDrr VR128:$src1, VR128:$src2)>;
-
   def : Pat<(v8i32 (shl (v8i32 VR256:$src1), (v8i32 VR256:$src2))),
             (VPSLLVDYrr VR256:$src1, VR256:$src2)>;
   def : Pat<(v4i64 (shl (v4i64 VR256:$src1), (v4i64 VR256:$src2))),
@@ -7713,6 +7713,29 @@ let Predicates = [HasAVX2] in {
             (VPSRLVQYrr VR256:$src1, VR256:$src2)>;
   def : Pat<(v8i32 (sra (v8i32 VR256:$src1), (v8i32 VR256:$src2))),
             (VPSRAVDYrr VR256:$src1, VR256:$src2)>;
+
+  def : Pat<(v4i32 (shl (v4i32 VR128:$src1),(loadv4i32 addr:$src2))),
+            (VPSLLVDrm VR128:$src1,  addr:$src2)>;
+  def : Pat<(v4i32 (shl (v4i32 VR128:$src1),(loadv2i64 addr:$src2))),
+            (VPSLLVDrm VR128:$src1,  addr:$src2)>;
+  def : Pat<(v2i64 (shl (v2i64 VR128:$src1),(loadv2i64 addr:$src2))),
+            (VPSLLVQrm VR128:$src1,  addr:$src2)>;
+  def : Pat<(v4i32 (srl (v4i32 VR128:$src1),(loadv4i32 addr:$src2))),
+            (VPSRLVDrm VR128:$src1,  addr:$src2)>;
+  def : Pat<(v2i64 (srl (v2i64 VR128:$src1),(loadv2i64 addr:$src2))),
+            (VPSRLVQrm VR128:$src1,  addr:$src2)>;
+  def : Pat<(v4i32 (sra (v4i32 VR128:$src1),(loadv4i32 addr:$src2))),
+            (VPSRAVDrm VR128:$src1,  addr:$src2)>;
+  def : Pat<(v8i32 (shl (v8i32 VR256:$src1),(loadv8i32 addr:$src2))),
+            (VPSLLVDYrm VR256:$src1, addr:$src2)>;
+  def : Pat<(v4i64 (shl (v4i64 VR256:$src1),(loadv4i64 addr:$src2))),
+            (VPSLLVQYrm VR256:$src1, addr:$src2)>;
+  def : Pat<(v8i32 (srl (v8i32 VR256:$src1),(loadv8i32 addr:$src2))),
+            (VPSRLVDYrm VR256:$src1, addr:$src2)>;
+  def : Pat<(v4i64 (srl (v4i64 VR256:$src1),(loadv4i64 addr:$src2))),
+            (VPSRLVQYrm VR256:$src1, addr:$src2)>;
+  def : Pat<(v8i32 (sra (v8i32 VR256:$src1),(loadv8i32 addr:$src2))),
+            (VPSRAVDYrm VR256:$src1, addr:$src2)>;
 }
 
 
