@@ -602,6 +602,14 @@ public:
     int64_t Value = CE->getValue();
     return Value > 0 && Value < 33;
   }
+  bool isImm0_32() const {
+    if (Kind != k_Immediate)
+      return false;
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    if (!CE) return false;
+    int64_t Value = CE->getValue();
+    return Value >= 0 && Value < 33;
+  }
   bool isImm0_65535() const {
     if (Kind != k_Immediate)
       return false;
@@ -1215,6 +1223,11 @@ public:
     // the bits as encoded, so subtract off one here.
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     Inst.addOperand(MCOperand::CreateImm(CE->getValue() - 1));
+  }
+
+  void addImm0_32Operands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    addExpr(Inst, getImm());
   }
 
   void addImm0_65535Operands(MCInst &Inst, unsigned N) const {
@@ -4542,14 +4555,28 @@ processInstruction(MCInst &Inst,
                    const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   switch (Inst.getOpcode()) {
   // Handle the MOV complex aliases.
-  case ARM::ASRi: {
-    unsigned Amt = Inst.getOperand(2).getImm() + 1;
-    unsigned ShiftOp = ARM_AM::getSORegOpc(ARM_AM::asr, Amt);
+  case ARM::ASRi:
+  case ARM::LSRi:
+  case ARM::LSLi:
+  case ARM::RORi: {
+    ARM_AM::ShiftOpc ShiftTy;
+    unsigned Amt = Inst.getOperand(2).getImm();
+    switch(Inst.getOpcode()) {
+    default: llvm_unreachable("unexpected opcode!");
+    case ARM::ASRi: ShiftTy = ARM_AM::asr; break;
+    case ARM::LSRi: ShiftTy = ARM_AM::lsr; break;
+    case ARM::LSLi: ShiftTy = ARM_AM::lsl; break;
+    case ARM::RORi: ShiftTy = ARM_AM::ror; break;
+    }
+    // A shift by zero is a plain MOVr, not a MOVsi.
+    unsigned Opc = Amt == 0 ? ARM::MOVr : ARM::MOVsi;
+    unsigned Shifter = ARM_AM::getSORegOpc(ShiftTy, Amt);
     MCInst TmpInst;
-    TmpInst.setOpcode(ARM::MOVsi);
+    TmpInst.setOpcode(Opc);
     TmpInst.addOperand(Inst.getOperand(0)); // Rd
     TmpInst.addOperand(Inst.getOperand(1)); // Rn
-    TmpInst.addOperand(MCOperand::CreateImm(ShiftOp)); // Shift value and ty
+    if (Opc == ARM::MOVsi)
+      TmpInst.addOperand(MCOperand::CreateImm(Shifter)); // Shift value and ty
     TmpInst.addOperand(Inst.getOperand(3)); // CondCode
     TmpInst.addOperand(Inst.getOperand(4));
     TmpInst.addOperand(Inst.getOperand(5)); // cc_out

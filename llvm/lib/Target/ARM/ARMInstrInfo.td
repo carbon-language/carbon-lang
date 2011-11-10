@@ -544,6 +544,14 @@ def imm0_31 : Operand<i32>, ImmLeaf<i32, [{
   let ParserMatchClass = Imm0_31AsmOperand;
 }
 
+/// imm0_32 predicate - True if the 32-bit immediate is in the range [0,32].
+def Imm0_32AsmOperand: AsmOperandClass { let Name = "Imm0_32"; }
+def imm0_32 : Operand<i32>, ImmLeaf<i32, [{
+  return Imm >= 0 && Imm < 32;
+}]> {
+  let ParserMatchClass = Imm0_32AsmOperand;
+}
+
 /// imm0_255 predicate - Immediate in the range [0,255].
 def Imm0_255AsmOperand : AsmOperandClass { let Name = "Imm0_255"; }
 def imm0_255 : Operand<i32>, ImmLeaf<i32, [{ return Imm >= 0 && Imm < 256; }]> {
@@ -5001,5 +5009,14 @@ def : ARMInstAlias<"mov${s}${p} $Rd, $imm",
 //        encoding. It seems we should be able to do that sort of thing
 //        in tblgen, but it could get ugly.
 def ASRi : ARMAsmPseudo<"asr${s}${p} $Rd, $Rm, $imm",
-                        (ins GPR:$Rd, GPR:$Rm, imm1_32:$imm, pred:$p,
+                        (ins GPR:$Rd, GPR:$Rm, imm0_32:$imm, pred:$p,
+                             cc_out:$s)>;
+def LSRi : ARMAsmPseudo<"lsr${s}${p} $Rd, $Rm, $imm",
+                        (ins GPR:$Rd, GPR:$Rm, imm0_32:$imm, pred:$p,
+                             cc_out:$s)>;
+def LSLi : ARMAsmPseudo<"lsl${s}${p} $Rd, $Rm, $imm",
+                        (ins GPR:$Rd, GPR:$Rm, imm0_31:$imm, pred:$p,
+                             cc_out:$s)>;
+def RORi : ARMAsmPseudo<"ror${s}${p} $Rd, $Rm, $imm",
+                        (ins GPR:$Rd, GPR:$Rm, imm0_31:$imm, pred:$p,
                              cc_out:$s)>;

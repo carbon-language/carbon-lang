@@ -24,12 +24,8 @@
 
 @ Out of range immediates for ASR instruction.
         asrs r2, r3, #33
-        asrs r2, r3, #0
 @ CHECK-ERRORS: error: invalid operand for instruction
 @ CHECK-ERRORS:         asrs r2, r3, #33
-@ CHECK-ERRORS:                      ^
-@ CHECK-ERRORS: error: invalid operand for instruction
-@ CHECK-ERRORS:         asrs r2, r3, #0
 @ CHECK-ERRORS:                      ^
 
 @ Out of range immediates for BKPT instruction.
