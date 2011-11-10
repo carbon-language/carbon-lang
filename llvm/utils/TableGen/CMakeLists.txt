@@ -3,7 +3,6 @@ set(LLVM_REQUIRES_RTTI 1)
 set(LLVM_LINK_COMPONENTS Support)
 
 add_tablegen(llvm-tblgen LLVM
-  ARMDecoderEmitter.cpp
   AsmMatcherEmitter.cpp
   AsmWriterEmitter.cpp
   AsmWriterInst.cpp
