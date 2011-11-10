@@ -16,7 +16,7 @@
 ;===------------------------------------------------------------------------===;
 
 [component_0]
-type = LibraryGroup
+type = TargetGroup
 name = XCore
 parent = Target
 add_to_library_groups = all-targets

@@ -134,7 +134,7 @@ $ROOT of project trees for things which can be checked out separately. -->
 </div>
 
 <!-- *********************************************************************** -->
-<h2><a name="formatref">LLVMBuild Format Reference</a></h2>
+<h2><a name="formatreference">LLVMBuild Format Reference</a></h2>
 <!-- *********************************************************************** -->
 
 <div>
@@ -151,11 +151,12 @@ $ROOT of project trees for things which can be checked out separately. -->
 
 <i>; Properties are declared using '=' and are contained in the previous section.
 ;
-; We support simple scalar values and list values, where items are separated by
-; spaces. There is no support for quoting, and so property values may not contain
-; spaces.</i>
+; We support simple string and boolean scalar values and list values, where
+; items are separated by spaces. There is no support for quoting, and so
+; property values may not contain spaces.</i>
 property_name = property_value
 list_property_name = value_1 value_2 <em>...</em> value_n
+boolean_property_name = 1 <em>(or 0)</em>
 </pre>
   </div>
 
@@ -278,6 +279,21 @@ required_libraries = Archive BitReader Core Support TransformUtils
 
         <li><i>add_to_library_groups</i> <b>[optional]</b>
           <p>See the Library type for a description of this property.</p></li>
+      </ul>
+    </li>
+
+    <li><i>type = TargetGroup</i>
+      <p>TargetGroup components are an extension of LibraryGroups, specifically
+      for defining LLVM targets (which are handled specially in a few
+      places).</p>
+
+      <p>The name of the component should always be the name of the target.</p>
+
+      <p>Components with this type use the LibraryGroup properties in addition
+      to:</p>
+      <ul>
+        <li><i>has_jit</i> <b>[optional]</b> <b>[boolean]</b>
+          <p>Whether this target supports JIT compilation.</p></li>
       </ul>
     </li>
 

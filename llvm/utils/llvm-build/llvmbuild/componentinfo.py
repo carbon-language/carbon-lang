@@ -188,6 +188,60 @@ class LibraryGroupComponentInfo(ComponentInfo):
     def get_llvmconfig_component_name(self):
         return self.name.lower()
 
+class TargetGroupComponentInfo(ComponentInfo):
+    type_name = 'TargetGroup'
+
+    @staticmethod
+    def parse(subpath, items):
+        kwargs = ComponentInfo.parse_items(items, has_dependencies = False)
+        kwargs['required_libraries'] = items.get_list('required_libraries')
+        kwargs['add_to_library_groups'] = items.get_list(
+            'add_to_library_groups')
+        kwargs['has_jit'] = items.get_optional_bool('has_jit', False)
+        return TargetGroupComponentInfo(subpath, **kwargs)
+
+    def __init__(self, subpath, name, parent, required_libraries = [],
+                 add_to_library_groups = [], has_jit = False):
+        ComponentInfo.__init__(self, subpath, name, [], parent)
+
+        # The names of the library components which are required when linking
+        # with this component.
+        self.required_libraries = list(required_libraries)
+
+        # The names of the library group components this component should be
+        # considered part of.
+        self.add_to_library_groups = list(add_to_library_groups)
+
+        # Whether or not this target supports the JIT.
+        self.has_jit = bool(has_jit)
+
+    def get_component_references(self):
+        for r in ComponentInfo.get_component_references(self):
+            yield r
+        for r in self.required_libraries:
+            yield ('required library', r)
+        for r in self.add_to_library_groups:
+            yield ('library group', r)
+
+    def get_llvmbuild_fragment(self):
+        result = StringIO.StringIO()
+        print >>result, 'type = %s' % self.type_name
+        print >>result, 'name = %s' % self.name
+        print >>result, 'parent = %s' % self.parent
+        if self.required_libraries:
+            print >>result, 'required_libraries = %s' % ' '.join(
+                self.required_libraries)
+        if self.add_to_library_groups:
+            print >>result, 'add_to_library_groups = %s' % ' '.join(
+                self.add_to_library_groups)
+        if self.has_jit:
+            print >>result, 'has_jit = %s' % ' '.join(
+                int(self.has_jit))
+        return result.getvalue()
+
+    def get_llvmconfig_component_name(self):
+        return self.name.lower()
+
 class ToolComponentInfo(ComponentInfo):
     type_name = 'Tool'
 
@@ -255,11 +309,27 @@ class IniFormatParser(dict):
             raise ParseError("missing value for required string: %r" % key)
         return value
 
+    def get_optional_bool(self, key, default = None):
+        value = self.get_optional_string(key)
+        if not value:
+            return default
+        if value not in ('0', '1'):
+            raise ParseError("invalid value(%r) for boolean property: %r" % (
+                    value, key))
+        return bool(int(value))
+
+    def get_bool(self, key):
+        value = self.get_optional_bool(key)
+        if value is None:
+            raise ParseError("missing value for required boolean: %r" % key)
+        return value
+
 _component_type_map = dict(
     (t.type_name, t)
     for t in (GroupComponentInfo,
               LibraryComponentInfo, LibraryGroupComponentInfo,
-              ToolComponentInfo, BuildToolComponentInfo))
+              ToolComponentInfo, BuildToolComponentInfo,
+              TargetGroupComponentInfo))
 def load_from_path(path, subpath):
     # Load the LLVMBuild.txt file as an .ini format file.
     parser = ConfigParser.RawConfigParser()

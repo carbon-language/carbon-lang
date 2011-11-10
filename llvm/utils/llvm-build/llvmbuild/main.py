@@ -242,8 +242,8 @@ class LLVMProjectInfo(object):
         # dependencies for added library groups.
         entries = {}
         for c in self.ordered_component_infos:
-            # Only Library and LibraryGroup components are in the table.
-            if c.type_name not in ('Library', 'LibraryGroup'):
+            # Only certain components are in the table.
+            if c.type_name not in ('Library', 'LibraryGroup', 'TargetGroup'):
                 continue
 
             # Compute the llvm-config "component name". For historical reasons,
@@ -251,10 +251,10 @@ class LLVMProjectInfo(object):
             llvmconfig_component_name = c.get_llvmconfig_component_name()
             
             # Get the library name, or None for LibraryGroups.
-            if c.type_name == 'LibraryGroup':
-                library_name = None
-            else:
+            if c.type_name == 'Library':
                 library_name = c.get_library_name()
+            else:
+                library_name = None
 
             # Get the component names of all the required libraries.
             required_llvmconfig_component_names = [
