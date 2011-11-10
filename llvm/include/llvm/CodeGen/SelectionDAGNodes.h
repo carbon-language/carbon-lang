@@ -1685,6 +1685,8 @@ public:
   /// setMemRefs - Assign this MachineSDNodes's memory reference descriptor
   /// list. This does not transfer ownership.
   void setMemRefs(mmo_iterator NewMemRefs, mmo_iterator NewMemRefsEnd) {
+    for (mmo_iterator MMI = NewMemRefs, MME = NewMemRefsEnd; MMI != MME; ++MMI)
+      assert(*MMI && "Null mem ref detected!");
     MemRefs = NewMemRefs;
     MemRefsEnd = NewMemRefsEnd;
   }
