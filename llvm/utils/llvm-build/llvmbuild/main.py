@@ -498,6 +498,105 @@ configure_file(\"%s\"
 
         f.close()
 
+def add_magic_target_components(parser, project, opts):
+    """add_magic_target_components(project, opts) -> None
+
+    Add the "magic" target based components to the project, which can only be
+    determined based on the target configuration options.
+
+    This currently is responsible for populating the required_libraries list of
+    the "Native", "NativeCodeGen", and "Engine" components.
+    """
+
+    # Determine the available targets.
+    available_targets = dict((ci.name,ci)
+                             for ci in project.component_infos
+                             if ci.type_name == 'TargetGroup')
+
+    # Find the configured native target.
+
+    # We handle a few special cases of target names here for historical
+    # reasons, as these are the names configure currently comes up with.
+    native_target_name = { 'x86' : 'X86',
+                           'x86_64' : 'X86',
+                           'Unknown' : None }.get(opts.native_target,
+                                                  opts.native_target)
+    if native_target_name is None:
+        native_target = None
+    else:
+        native_target = available_targets.get(native_target_name)
+        if native_target is None:
+            parser.error("invalid native target: %r (not in project)" % (
+                    opts.native_target,))
+        if native_target.type_name != 'TargetGroup':
+            parser.error("invalid native target: %r (not a target)" % (
+                    opts.native_target,))
+
+    # Find the list of targets to enable.
+    if opts.enable_targets is None:
+        enable_targets = available_targets.values()
+    else:
+        enable_targets = []
+        for name in opts.enable_targets.split():
+            target = available_targets.get(name)
+            if target is None:
+                parser.error("invalid target to enable: %r (not in project)" % (
+                        name,))
+            if target.type_name != 'TargetGroup':
+                parser.error("invalid target to enable: %r (not a target)" % (
+                        name,))
+            enable_targets.append(target)
+
+    # Find the special library groups we are going to populate. We enforce that
+    # these appear in the project (instead of just adding them) so that they at
+    # least have an explicit representation in the project LLVMBuild files (and
+    # comments explaining how they are populated).
+    def find_special_group(name):
+        info = info_map.get(name)
+        if info is None:
+            fatal("expected project to contain special %r component" % (
+                    name,))
+
+        if info.type_name != 'LibraryGroup':
+            fatal("special component %r should be a LibraryGroup" % (
+                    name,))
+
+        if info.required_libraries:
+            fatal("special component %r must have empty %r list" % (
+                    name, 'required_libraries'))
+        if info.add_to_library_groups:
+            fatal("special component %r must have empty %r list" % (
+                    name, 'add_to_library_groups'))
+
+        return info
+
+    info_map = dict((ci.name, ci) for ci in project.component_infos)
+    all_targets = find_special_group('all-targets')
+    native_group = find_special_group('Native')
+    native_codegen_group = find_special_group('NativeCodeGen')
+    engine_group = find_special_group('Engine')
+
+    # Set the enabled bit in all the target groups, and append to the
+    # all-targets list.
+    for ci in enable_targets:
+        all_targets.required_libraries.append(ci.name)
+        ci.enabled = True
+
+    # If we have a native target, then that defines the native and
+    # native_codegen libraries.
+    if native_target and native_target.enabled:
+        native_group.required_libraries.append(native_target.name)
+        native_codegen_group.required_libraries.append(
+            '%sCodeGen' % native_target.name)
+
+    # If we have a native target with a JIT, use that for the engine. Otherwise,
+    # use the interpreter.
+    if native_target and native_target.enabled and native_target.has_jit:
+        engine_group.required_libraries.append('JIT')
+        engine_group.required_libraries.append(native_group.name)
+    else:
+        engine_group.required_libraries.append('Interpreter')
+
 def main():
     from optparse import OptionParser, OptionGroup
     parser = OptionParser("usage: %prog [options]")
@@ -533,6 +632,17 @@ def main():
                      help="Write the Makefile project information to PATH",
                      action="store", default=None)
     parser.add_option_group(group)
+
+    group = OptionGroup(parser, "Configuration Options")
+    group.add_option("", "--native-target",
+                      dest="native_target", metavar="NAME",
+                      help=("Treat the named target as the 'native' one, if "
+                            "given [%default]"),
+                      action="store", default=None)
+    group.add_option("", "--enable-targets",
+                      dest="enable_targets", metavar="NAMES",
+                      help=("Enable the given space separated list of targets, "
+                            "or all targets if not present"),
                       action="store", default=None)
     parser.add_option_group(group)
 
@@ -557,6 +667,9 @@ def main():
     llvmbuild_source_root = opts.llvmbuild_source_root or source_root
     project_info = LLVMProjectInfo.load_from_path(
         source_root, llvmbuild_source_root)
+
+    # Add the magic target based components.
+    add_magic_target_components(parser, project_info, opts)
 
     # Validate the project component info.
     project_info.validate_components()

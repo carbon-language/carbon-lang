@@ -19,7 +19,6 @@
 type = TargetGroup
 name = PowerPC
 parent = Target
-add_to_library_groups = all-targets
 has_jit = 1
 
 [component_1]

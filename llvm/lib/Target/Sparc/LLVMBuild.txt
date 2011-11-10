@@ -19,7 +19,6 @@
 type = TargetGroup
 name = Sparc
 parent = Target
-add_to_library_groups = all-targets
 
 [component_1]
 type = Library

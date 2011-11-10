@@ -215,6 +215,10 @@ class TargetGroupComponentInfo(ComponentInfo):
         # Whether or not this target supports the JIT.
         self.has_jit = bool(has_jit)
 
+        # Whether or not this target is enabled. This is set in response to
+        # configuration parameters.
+        self.enabled = False
+
     def get_component_references(self):
         for r in ComponentInfo.get_component_references(self):
             yield r

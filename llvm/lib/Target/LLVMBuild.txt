@@ -21,20 +21,32 @@ name = Target
 parent = Libraries
 required_libraries = Core MC Support
 
+; This is a convenient group we define (and expect targets to add to) which
+; makes it easy for tools to include every target.
 [component_1]
 type = LibraryGroup
 name = all-targets
 parent = Libraries
 
+; This is a special group whose required libraries are extended (by llvm-build)
+; with the configured native target, if any.
 [component_2]
 type = LibraryGroup
-name = native
+name = Native
 parent = Libraries
-required_libraries = X86
 
+; This is a special group whose required libraries are extended (by llvm-build)
+; with the configured native code generator, if any.
 [component_3]
 type = LibraryGroup
-name = nativecodegen
+name = NativeCodeGen
 parent = Libraries
-required_libraries = X86CodeGen
+
+; This is a special group whose required libraries are extended (by llvm-build)
+; with the best execution engine (the native JIT, if available, or the
+; interpreter).
+[component_4]
+type = LibraryGroup
+name = Engine
+parent = Libraries
 
