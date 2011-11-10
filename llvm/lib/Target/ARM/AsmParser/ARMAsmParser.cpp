@@ -4590,6 +4590,38 @@ processInstruction(MCInst &Inst,
     Inst = TmpInst;
     return true;
   }
+  case ARM::t2LDMIA_UPD: {
+    // If this is a load of a single register, then we should use
+    // a post-indexed LDR instruction instead, per the ARM ARM.
+    if (Inst.getNumOperands() != 5)
+      return false;
+    MCInst TmpInst;
+    TmpInst.setOpcode(ARM::t2LDR_POST);
+    TmpInst.addOperand(Inst.getOperand(4)); // Rt
+    TmpInst.addOperand(Inst.getOperand(0)); // Rn_wb
+    TmpInst.addOperand(Inst.getOperand(1)); // Rn
+    TmpInst.addOperand(MCOperand::CreateImm(4));
+    TmpInst.addOperand(Inst.getOperand(2)); // CondCode
+    TmpInst.addOperand(Inst.getOperand(3));
+    Inst = TmpInst;
+    return true;
+  }
+  case ARM::t2STMDB_UPD: {
+    // If this is a store of a single register, then we should use
+    // a pre-indexed STR instruction instead, per the ARM ARM.
+    if (Inst.getNumOperands() != 5)
+      return false;
+    MCInst TmpInst;
+    TmpInst.setOpcode(ARM::t2STR_PRE);
+    TmpInst.addOperand(Inst.getOperand(0)); // Rn_wb
+    TmpInst.addOperand(Inst.getOperand(4)); // Rt
+    TmpInst.addOperand(Inst.getOperand(1)); // Rn
+    TmpInst.addOperand(MCOperand::CreateImm(-4));
+    TmpInst.addOperand(Inst.getOperand(2)); // CondCode
+    TmpInst.addOperand(Inst.getOperand(3));
+    Inst = TmpInst;
+    return true;
+  }
   case ARM::LDMIA_UPD:
     // If this is a load of a single register via a 'pop', then we should use
     // a post-indexed LDR instruction instead, per the ARM ARM.
