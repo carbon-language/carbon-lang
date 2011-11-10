@@ -88,9 +88,6 @@ STATISTIC(ValidRegion, "Number of regions that a valid part of Scop");
                                            "Number of bad regions for Scop: "\
                                            DESC)
 
-#define STATSCOP(NAME); assert(!Context.Verifying && #NAME); \
-                        if (!Context.Verifying) ++Bad##NAME##ForScop;
-
 #define INVALID(NAME, MESSAGE) \
   do { \
     std::string Buf; \
@@ -100,7 +97,23 @@ STATISTIC(ValidRegion, "Number of regions that a valid part of Scop");
     LastFailure = Buf; \
     DEBUG(dbgs() << MESSAGE); \
     DEBUG(dbgs() << "\n"); \
-    STATSCOP(NAME); \
+    assert(!Context.Verifying && #NAME); \
+    if (!Context.Verifying) ++Bad##NAME##ForScop; \
+    return false; \
+  } while (0);
+
+
+#define INVALID_NOVERIFY(NAME, MESSAGE) \
+  do { \
+    std::string Buf; \
+    raw_string_ostream fmt(Buf); \
+    fmt << MESSAGE; \
+    fmt.flush(); \
+    LastFailure = Buf; \
+    DEBUG(dbgs() << MESSAGE); \
+    DEBUG(dbgs() << "\n"); \
+    /* DISABLED: assert(!Context.Verifying && #NAME); */ \
+    if (!Context.Verifying) ++Bad##NAME##ForScop; \
     return false; \
   } while (0);
 
@@ -245,8 +258,17 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
   AliasSet &AS =
     Context.AST.getAliasSetForPointer(BaseValue, AliasAnalysis::UnknownSize,
                                       Inst.getMetadata(LLVMContext::MD_tbaa));
+
+  // INVALID triggers an assertion in verifying mode, if it detects that a SCoP
+  // was detected by SCoP detection and that this SCoP was invalidated by a pass
+  // that stated it would preserve the SCoPs.
+  // We disable this check as the independent blocks pass may create memory
+  // references which seem to alias, if -basicaa is not available. They actually
+  // do not, but as we can not proof this without -basicaa we would fail. We
+  // disable this check to not cause irrelevant verification failures.
   if (!AS.isMustAlias() && !IgnoreAliasing)
-    INVALID(Alias, "Possible aliasing found for value: " << *BaseValue);
+    INVALID_NOVERIFY(Alias,
+                     "Possible aliasing found for value: " << *BaseValue);
 
   return true;
 }
