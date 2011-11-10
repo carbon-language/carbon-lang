@@ -2510,13 +2510,14 @@ static void printFixIts(CXDiagnostic D, unsigned indent) {
 }
 
 static void printDiagnosticSet(CXDiagnosticSet Diags, unsigned indent) {
+  unsigned i, n;
+
   if (!Diags)
     return;
   
   fprintf(stderr, "\n");
 
-  unsigned i = 0;
-  unsigned n = clang_getNumDiagnosticsInSet(Diags);
+  n = clang_getNumDiagnosticsInSet(Diags);
   for (i = 0; i < n; ++i) {
     CXSourceLocation DiagLoc;
     CXDiagnostic D;
