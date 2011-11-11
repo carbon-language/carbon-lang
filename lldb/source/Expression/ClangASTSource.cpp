@@ -429,6 +429,7 @@ ClangASTSource::FindExternalVisibleDecls (NameSearchContext &context,
     }
     
     static ConstString id_name("id");
+    static ConstString Class_name("Class");
     
     do 
     {
@@ -437,7 +438,7 @@ ClangASTSource::FindExternalVisibleDecls (NameSearchContext &context,
         
         if (module_sp && namespace_decl)
             module_sp->FindTypes(null_sc, name, &namespace_decl, true, 1, types);
-        else if(name != id_name)
+        else if(name != id_name && name != Class_name)
             m_target->GetImages().FindTypes (null_sc, name, true, 1, types);
         else
             break;
@@ -467,6 +468,9 @@ void
 ClangASTSource::FindObjCMethodDecls (NameSearchContext &context)
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    
+    static unsigned int invocation_id = 0;
+    unsigned int current_id = invocation_id++;
     
     const DeclarationName &decl_name(context.m_decl_name);
     const DeclContext *decl_ctx(context.m_decl_context);
@@ -499,8 +503,69 @@ ClangASTSource::FindObjCMethodDecls (NameSearchContext &context)
     }     
     ss.Flush();
     
+    ConstString selector_name(ss.GetData());
+    
     if (log)
-        log->Printf("ClangASTSource::FindObjCMethodDecls for selector [%s %s]", interface_decl->getNameAsString().c_str(), ss.GetData());
+        log->Printf("ClangASTSource::FindObjCMethodDecls[%d] for selector [%s %s]",
+                    current_id, 
+                    interface_decl->getNameAsString().c_str(), 
+                    selector_name.AsCString());
+
+    SymbolContextList sc_list;
+    
+    const bool include_symbols = false;
+    const bool append = false;
+    
+    m_target->GetImages().FindFunctions(selector_name, lldb::eFunctionNameTypeSelector, include_symbols, append, sc_list);
+    
+    for (uint32_t i = 0, e = sc_list.GetSize();
+         i != e;
+         ++i)
+    {
+        SymbolContext sc;
+        
+        if (!sc_list.GetContextAtIndex(i, sc))
+            continue;
+        
+        if (!sc.function)
+            continue;
+        
+        DeclContext *function_ctx = sc.function->GetClangDeclContext();
+        
+        if (!function_ctx)
+            continue;
+        
+        ObjCMethodDecl *method_decl = dyn_cast<ObjCMethodDecl>(function_ctx);
+        
+        if (!method_decl)
+            continue;
+        
+        ObjCInterfaceDecl *found_interface_decl = method_decl->getClassInterface();
+        
+        if (!found_interface_decl)
+            continue;
+        
+        if (found_interface_decl->getName() == interface_decl->getName())
+        {
+            Decl *copied_decl = m_ast_importer->CopyDecl(&method_decl->getASTContext(), method_decl);
+            
+            if (!copied_decl)
+                continue;
+            
+            ObjCMethodDecl *copied_method_decl = dyn_cast<ObjCMethodDecl>(copied_decl);
+            
+            if (!copied_method_decl)
+                continue;
+            
+            if (log)
+            {
+                ASTDumper dumper((Decl*)copied_method_decl);
+                log->Printf("  CAS::FOMD[%d] found %s", current_id, dumper.GetCString());
+            }
+                
+            context.AddNamedDecl(copied_method_decl);
+        }
+    }
 }
 
 void 

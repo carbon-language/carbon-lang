@@ -937,7 +937,7 @@ ClangASTContext::GetBuiltInType_objc_id()
 clang_type_t
 ClangASTContext::GetBuiltInType_objc_Class()
 {
-    return getASTContext()->ObjCBuiltinClassTy.getAsOpaquePtr();
+    return getASTContext()->getPointerType(getASTContext()->ObjCBuiltinClassTy).getAsOpaquePtr();
 }
 
 clang_type_t
