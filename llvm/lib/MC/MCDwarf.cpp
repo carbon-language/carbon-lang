@@ -1011,7 +1011,6 @@ void MCDwarfFrameEmitter::Emit(MCStreamer &Streamer,
   // Emit the compact unwind info if available.
   // FIXME: This emits both the compact unwind and the old CIE/FDE
   //        information. Only one of those is needed.
-  // FIXME: Disable. This is causing failures in the test suite.
   if (IsEH && MOFI->getCompactUnwindSection())
     for (unsigned i = 0, n = Streamer.getNumFrameInfos(); i < n; ++i) {
       const MCDwarfFrameInfo &Frame = Streamer.getFrameInfo(i);
