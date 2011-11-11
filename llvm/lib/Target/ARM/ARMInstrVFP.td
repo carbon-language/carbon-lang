@@ -1163,3 +1163,12 @@ def FCONSTS : VFPAI<(outs SPR:$Sd), (ins vfp_f32imm:$imm),
 
 def : VFP2InstAlias<"fmstat${p}", (FMSTAT pred:$p)>;
 
+// The size suffix is optional for VLDR/VSTR
+def : VFP2InstAlias<"vldr$p $Dd, $addr",
+                    (VLDRD DPR:$Dd, addrmode5:$addr, pred:$p)>;
+def : VFP2InstAlias<"vldr$p $Sd, $addr",
+                    (VLDRS SPR:$Sd, addrmode5:$addr, pred:$p)>;
+def : VFP2InstAlias<"vstr$p $Dd, $addr",
+                    (VSTRD DPR:$Dd, addrmode5:$addr, pred:$p)>;
+def : VFP2InstAlias<"vstr$p $Sd, $addr",
+                    (VSTRS SPR:$Sd, addrmode5:$addr, pred:$p)>;

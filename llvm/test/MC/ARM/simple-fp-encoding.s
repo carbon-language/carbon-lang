@@ -173,7 +173,12 @@
         vmov    r0, r1, d16
 
 @ CHECK: vldr.64 d17, [r0]           @ encoding: [0x00,0x1b,0xd0,0xed]
+@ CHECK: vldr.32 s0, [lr]            @ encoding: [0x00,0x0a,0x9e,0xed]
+@ CHECK: vldr.64 d0, [lr]            @ encoding: [0x00,0x0b,0x9e,0xed]
+
         vldr.64	d17, [r0]
+	vldr s0, [lr]
+	vldr d0, [lr]
 
 @ CHECK: vldr.64 d1, [r2, #32]       @ encoding: [0x08,0x1b,0x92,0xed]
 @ CHECK: vldr.64 d1, [r2, #-32]      @ encoding: [0x08,0x1b,0x12,0xed]
@@ -211,9 +216,14 @@
 @ CHECK: vstr.64 d4, [r1]            @ encoding: [0x00,0x4b,0x81,0xed]
 @ CHECK: vstr.64 d4, [r1, #24]       @ encoding: [0x06,0x4b,0x81,0xed]
 @ CHECK: vstr.64 d4, [r1, #-24]      @ encoding: [0x06,0x4b,0x01,0xed]
+@ CHECK: vstr.32 s0, [lr]            @ encoding: [0x00,0x0a,0x8e,0xed]
+@ CHECK: vstr.64 d0, [lr]            @ encoding: [0x00,0x0b,0x8e,0xed]
+
         vstr.64 d4, [r1]
         vstr.64 d4, [r1, #24]
         vstr.64 d4, [r1, #-24]
+	vstr s0, [lr]
+	vstr d0, [lr]
 
 @ CHECK: vstr.32 s4, [r1]            @ encoding: [0x00,0x2a,0x81,0xed]
 @ CHECK: vstr.32 s4, [r1, #24]       @ encoding: [0x06,0x2a,0x81,0xed]
