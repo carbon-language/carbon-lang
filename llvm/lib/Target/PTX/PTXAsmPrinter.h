@@ -47,7 +47,7 @@ public:
 
 private:
   void EmitVariableDeclaration(const GlobalVariable *gv);
-  void EmitFunctionDeclaration();
+  void EmitFunctionDeclaration(const Function* func);
 
   StringMap<unsigned> SourceIdMap;
 }; // class PTXAsmPrinter

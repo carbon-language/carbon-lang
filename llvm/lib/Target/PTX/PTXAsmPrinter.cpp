@@ -165,6 +165,11 @@ void PTXAsmPrinter::EmitStartOfAsmFile(Module &M)
 
   OutStreamer.AddBlankLine();
 
+  // declare external functions
+  for (Module::const_iterator i = M.begin(), e = M.end();
+       i != e; ++i)
+    EmitFunctionDeclaration(i);
+  
   // declare global variables
   for (Module::const_global_iterator i = M.global_begin(), e = M.global_end();
        i != e; ++i)
@@ -452,6 +457,31 @@ void PTXAsmPrinter::EmitFunctionEntryLabel() {
   os << ')';
 
   OutStreamer.EmitRawText(os.str());
+}
+
+void PTXAsmPrinter::EmitFunctionDeclaration(const Function* func)
+{
+  const PTXSubtarget& ST = TM.getSubtarget<PTXSubtarget>();
+	
+  std::string decl = "";
+
+  // hard-coded emission of extern vprintf function 
+  
+  if (func->getName() == "printf" || func->getName() == "puts") {		
+    decl += ".extern .func (.param .b32 __param_1) vprintf (.param .b";
+    if (ST.is64Bit())	
+      decl += "64";
+    else				
+      decl += "32";
+    decl += " __param_2, .param .b";
+    if (ST.is64Bit())	
+      decl += "64";
+    else				
+      decl += "32";
+    decl += " __param_3)\n";
+  }
+  
+  OutStreamer.EmitRawText(Twine(decl));
 }
 
 unsigned PTXAsmPrinter::GetOrCreateSourceID(StringRef FileName,

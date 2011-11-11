@@ -96,9 +96,23 @@ void PTXInstPrinter::printCall(const MCInst *MI, raw_ostream &O) {
     O << "), ";
   }
 
-  O << *(MI->getOperand(Index++).getExpr()) << ", (";
-
+  const MCExpr* Expr = MI->getOperand(Index++).getExpr();
   unsigned NumArgs = MI->getOperand(Index++).getImm();
+  
+  // if the function call is to printf or puts, change to vprintf
+  if (const MCSymbolRefExpr *SymRefExpr = dyn_cast<MCSymbolRefExpr>(Expr)) {
+    const MCSymbol &Sym = SymRefExpr->getSymbol();
+    if (Sym.getName() == "printf" || Sym.getName() == "puts") {
+      O << "vprintf";
+    } else {
+      O << Sym.getName();
+    }
+  } else {
+    O << *Expr;
+  }
+  
+  O << ", (";
+
   if (NumArgs > 0) {
     printOperand(MI, Index++, O);
     for (unsigned i = 1; i < NumArgs; ++i) {
