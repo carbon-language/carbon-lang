@@ -127,9 +127,19 @@ const FileEntry *HeaderSearch::lookupModule(StringRef ModuleName,
   if (!UmbrellaHeader)
     return 0;
   
+  // Look in the module map to determine if there is a module by this name
+  // that has an umbrella header.
+  // FIXME: Even if it doesn't have an umbrella header, we should be able to
+  // handle the module. However, the caller isn't ready for that yet.
+  if (ModuleMap::Module *Module = ModMap.findModule(ModuleName)) {
+    if (Module->UmbrellaHeader) {
+      *UmbrellaHeader = Module->UmbrellaHeader->getName();
+      return 0;
+    }
+  }
+  
   // Look in each of the framework directories for an umbrella header with
   // the same name as the module.
-  // FIXME: We need a way for non-frameworks to provide umbrella headers.
   llvm::SmallString<128> UmbrellaHeaderName;
   UmbrellaHeaderName = ModuleName;
   UmbrellaHeaderName += '/';

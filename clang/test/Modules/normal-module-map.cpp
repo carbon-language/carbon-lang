@@ -3,6 +3,12 @@
 
 // FIXME: The expected error here is temporary, since we don't yet have the
 // logic to build a module from a module map.
+#include "Umbrella/Umbrella.h"
+
+int getUmbrella() { 
+  return umbrella; 
+}
+
 #include "a1.h" // expected-error{{module 'libA' not found}}
 #include "b1.h"
 #include "nested/nested2.h"

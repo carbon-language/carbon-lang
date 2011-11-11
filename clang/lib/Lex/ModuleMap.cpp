@@ -84,6 +84,14 @@ ModuleMap::Module *ModuleMap::findModuleForHeader(const FileEntry *File) {
   return 0;
 }
 
+ModuleMap::Module *ModuleMap::findModule(StringRef Name) {
+  llvm::StringMap<Module *>::iterator Known = Modules.find(Name);
+  if (Known != Modules.end())
+    return Known->getValue();
+  
+  return 0;
+}
+
 static void indent(llvm::raw_ostream &OS, unsigned Spaces) {
   OS << std::string(' ', Spaces);
 }

@@ -89,7 +89,7 @@ private:
   llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diags;
   LangOptions LangOpts;
   
-  /// \brief The top-level modules that are known
+  /// \brief The top-level modules that are known.
   llvm::StringMap<Module *> Modules;
   
   /// \brief Mapping from each header to the module that owns the contents of the
@@ -121,6 +121,13 @@ public:
   /// that no module owns this header file.
   Module *findModuleForHeader(const FileEntry *File);
 
+  /// \brief Retrieve a module with the given name.
+  ///
+  /// \param The name of the module to look up.
+  ///
+  /// \returns The named module, if known; otherwise, returns null.
+  Module *findModule(StringRef Name);
+  
   /// \brief Parse the given module map file, and record any modules we 
   /// encounter.
   ///
