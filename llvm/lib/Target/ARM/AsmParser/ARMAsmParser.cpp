@@ -2410,6 +2410,29 @@ static unsigned getNextRegister(unsigned Reg) {
   }
 }
 
+// Return the low-subreg of a given Q register.
+static unsigned getDRegFromQReg(unsigned QReg) {
+  switch (QReg) {
+  default: llvm_unreachable("expected a Q register!");
+  case ARM::Q0:  return ARM::D0;
+  case ARM::Q1:  return ARM::D2;
+  case ARM::Q2:  return ARM::D4;
+  case ARM::Q3:  return ARM::D6;
+  case ARM::Q4:  return ARM::D8;
+  case ARM::Q5:  return ARM::D10;
+  case ARM::Q6:  return ARM::D12;
+  case ARM::Q7:  return ARM::D14;
+  case ARM::Q8:  return ARM::D16;
+  case ARM::Q9:  return ARM::D19;
+  case ARM::Q10: return ARM::D20;
+  case ARM::Q11: return ARM::D22;
+  case ARM::Q12: return ARM::D24;
+  case ARM::Q13: return ARM::D26;
+  case ARM::Q14: return ARM::D28;
+  case ARM::Q15: return ARM::D30;
+  }
+}
+
 /// Parse a register list.
 bool ARMAsmParser::
 parseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
@@ -2425,6 +2448,16 @@ parseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   if (Reg == -1)
     return Error(RegLoc, "register expected");
 
+  // The reglist instructions have at most 16 registers, so reserve
+  // space for that many.
+  SmallVector<std::pair<unsigned, SMLoc>, 16> Registers;
+
+  // Allow Q regs and just interpret them as the two D sub-registers.
+  if (ARMMCRegisterClasses[ARM::QPRRegClassID].contains(Reg)) {
+    Reg = getDRegFromQReg(Reg);
+    Registers.push_back(std::pair<unsigned, SMLoc>(Reg, RegLoc));
+    ++Reg;
+  }
   const MCRegisterClass *RC;
   if (ARMMCRegisterClasses[ARM::GPRRegClassID].contains(Reg))
     RC = &ARMMCRegisterClasses[ARM::GPRRegClassID];
@@ -2435,10 +2468,7 @@ parseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   else
     return Error(RegLoc, "invalid register in register list");
 
-  // The reglist instructions have at most 16 registers, so reserve
-  // space for that many.
-  SmallVector<std::pair<unsigned, SMLoc>, 16> Registers;
-  // Store the first register.
+  // Store the register.
   Registers.push_back(std::pair<unsigned, SMLoc>(Reg, RegLoc));
 
   // This starts immediately after the first register token in the list,
@@ -2452,6 +2482,9 @@ parseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
       int EndReg = tryParseRegister();
       if (EndReg == -1)
         return Error(EndLoc, "register expected");
+      // Allow Q regs and just interpret them as the two D sub-registers.
+      if (ARMMCRegisterClasses[ARM::QPRRegClassID].contains(EndReg))
+        EndReg = getDRegFromQReg(EndReg) + 1;
       // If the register is the same as the start reg, there's nothing
       // more to do.
       if (Reg == EndReg)
@@ -2476,6 +2509,12 @@ parseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     Reg = tryParseRegister();
     if (Reg == -1)
       return Error(RegLoc, "register expected");
+    // Allow Q regs and just interpret them as the two D sub-registers.
+    bool isQReg = false;
+    if (ARMMCRegisterClasses[ARM::QPRRegClassID].contains(Reg)) {
+      Reg = getDRegFromQReg(Reg);
+      isQReg = true;
+    }
     // The register must be in the same register class as the first.
     if (!RC->contains(Reg))
       return Error(RegLoc, "invalid register in register list");
@@ -2489,6 +2528,8 @@ parseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
         Reg != OldReg + 1)
       return Error(RegLoc, "non-contiguous register range");
     Registers.push_back(std::pair<unsigned, SMLoc>(Reg, RegLoc));
+    if (isQReg)
+      Registers.push_back(std::pair<unsigned, SMLoc>(++Reg, RegLoc));
   }
 
   SMLoc E = Parser.getTok().getLoc();
@@ -2498,29 +2539,6 @@ parseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
   Operands.push_back(ARMOperand::CreateRegList(Registers, S, E));
   return false;
-}
-
-// Return the low-subreg of a given Q register.
-static unsigned getDRegFromQReg(unsigned QReg) {
-  switch (QReg) {
-  default: llvm_unreachable("expected a Q register!");
-  case ARM::Q0:  return ARM::D0;
-  case ARM::Q1:  return ARM::D2;
-  case ARM::Q2:  return ARM::D4;
-  case ARM::Q3:  return ARM::D6;
-  case ARM::Q4:  return ARM::D8;
-  case ARM::Q5:  return ARM::D10;
-  case ARM::Q6:  return ARM::D12;
-  case ARM::Q7:  return ARM::D14;
-  case ARM::Q8:  return ARM::D16;
-  case ARM::Q9:  return ARM::D19;
-  case ARM::Q10: return ARM::D20;
-  case ARM::Q11: return ARM::D22;
-  case ARM::Q12: return ARM::D24;
-  case ARM::Q13: return ARM::D26;
-  case ARM::Q14: return ARM::D28;
-  case ARM::Q15: return ARM::D30;
-  }
 }
 
 // parse a vector register list

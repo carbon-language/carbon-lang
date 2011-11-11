@@ -229,8 +229,10 @@
 
 @ CHECK: vstmia r1, {d2, d3, d4, d5, d6, d7} @ encoding: [0x0c,0x2b,0x81,0xec]
 @ CHECK: vstmia	r1, {s2, s3, s4, s5, s6, s7} @ encoding: [0x06,0x1a,0x81,0xec]
+@ CHECK: vpush	{d8, d9, d10, d11, d12, d13, d14, d15} @ encoding: [0x10,0x8b,0x2d,0xed]
         vstmia  r1, {d2,d3-d6,d7}
         vstmia  r1, {s2,s3-s6,s7}
+        vstmdb sp!, {q4-q7}
 
 @ CHECK: vcvtr.s32.f64  s0, d0 @ encoding: [0x40,0x0b,0xbd,0xee]
 @ CHECK: vcvtr.s32.f32  s0, s1 @ encoding: [0x60,0x0a,0xbd,0xee]
