@@ -118,7 +118,10 @@ static void printExpr(const MCExpr *Expr, raw_ostream &OS) {
     OS << Offset;
   }
 
-  if (Kind != MCSymbolRefExpr::VK_None)
+  if ((Kind == MCSymbolRefExpr::VK_Mips_GPOFF_HI) ||
+      (Kind == MCSymbolRefExpr::VK_Mips_GPOFF_LO))
+    OS << ")))";
+  else if (Kind != MCSymbolRefExpr::VK_None)
     OS << ')';
 }
 
