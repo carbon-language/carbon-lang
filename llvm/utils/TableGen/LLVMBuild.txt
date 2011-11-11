@@ -19,5 +19,5 @@
 type = BuildTool
 name = tblgen
 parent = BuildTools
-required_libraries = TableGen Support
+required_libraries = Support TableGen
 

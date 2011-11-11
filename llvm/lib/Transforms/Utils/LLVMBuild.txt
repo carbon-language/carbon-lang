@@ -19,5 +19,5 @@
 type = Library
 name = TransformUtils
 parent = Transforms
-required_libraries = Analysis Core Support Target IPA
+required_libraries = Analysis Core IPA Support Target
 
