@@ -32,6 +32,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -1504,6 +1505,23 @@ static bool IsSafeAndProfitableToMove(bool isLd, unsigned Base,
   return AddedRegPressure.size() <= MemRegs.size() * 2;
 }
 
+
+/// Copy Op0 and Op1 operands into a new array assigned to MI.
+static void concatenateMemOperands(MachineInstr *MI, MachineInstr *Op0,
+                                   MachineInstr *Op1) {
+  assert(MI->memoperands_empty() && "expected a new machineinstr");
+  size_t numMemRefs = (Op0->memoperands_end() - Op0->memoperands_begin())
+    + (Op1->memoperands_end() - Op1->memoperands_begin());
+
+  MachineFunction *MF = MI->getParent()->getParent();
+  MachineSDNode::mmo_iterator MemBegin = MF->allocateMemRefsArray(numMemRefs);
+  MachineSDNode::mmo_iterator MemEnd =
+    std::copy(Op0->memoperands_begin(), Op0->memoperands_end(), MemBegin);
+  MemEnd =
+    std::copy(Op1->memoperands_begin(), Op1->memoperands_end(), MemEnd);
+  MI->setMemRefs(MemBegin, MemEnd);
+}
+
 bool
 ARMPreAllocLoadStoreOpt::CanFormLdStDWord(MachineInstr *Op0, MachineInstr *Op1,
                                           DebugLoc &dl,
@@ -1698,6 +1716,8 @@ bool ARMPreAllocLoadStoreOpt::RescheduleOps(MachineBasicBlock *MBB,
             if (!isT2)
               MIB.addReg(0);
             MIB.addImm(Offset).addImm(Pred).addReg(PredReg);
+            concatenateMemOperands(MIB, Op0, Op1);
+            DEBUG(dbgs() << "Formed " << *MIB << "\n");
             ++NumLDRDFormed;
           } else {
             MachineInstrBuilder MIB = BuildMI(*MBB, InsertPos, dl, MCID)
@@ -1710,6 +1730,8 @@ bool ARMPreAllocLoadStoreOpt::RescheduleOps(MachineBasicBlock *MBB,
             if (!isT2)
               MIB.addReg(0);
             MIB.addImm(Offset).addImm(Pred).addReg(PredReg);
+            concatenateMemOperands(MIB, Op0, Op1);
+            DEBUG(dbgs() << "Formed " << *MIB << "\n");
             ++NumSTRDFormed;
           }
           MBB->erase(Op0);
