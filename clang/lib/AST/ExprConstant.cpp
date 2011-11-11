@@ -1033,7 +1033,7 @@ static EvalStmtResult EvaluateStmt(CCValue &Result, EvalInfo &Info,
 }
 
 namespace {
-typedef SmallVector<CCValue, 16> ArgVector;
+typedef SmallVector<CCValue, 8> ArgVector;
 }
 
 /// EvaluateArgs - Evaluate the arguments to a function call.
