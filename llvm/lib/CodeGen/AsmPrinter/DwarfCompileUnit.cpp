@@ -19,6 +19,7 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/Instructions.h"
 #include "llvm/Analysis/DIBuilder.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Target/Mangler.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameLowering.h"
@@ -1095,7 +1096,7 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
   addToContextOwner(VariableDIE, GVContext);
   // Add location.
   bool addToAccelTable = false;
-  DIE *VariableSpecDIE;
+  DIE *VariableSpecDIE = NULL;
   if (isGlobalVariable) {
     addToAccelTable = true;
     DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
