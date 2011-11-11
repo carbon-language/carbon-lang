@@ -415,6 +415,18 @@ dnl=== SECTION 3: Command line arguments for the configure script.
 dnl===
 dnl===-----------------------------------------------------------------------===
 
+dnl --enable-libcpp : check whether or not to use libc++ on the command line
+AC_ARG_ENABLE(libcpp,
+              AS_HELP_STRING([--enable-libcpp],
+                             [Use libc++ if available (default is NO)]),,
+                             enableval=default)
+case "$enableval" in
+  yes) AC_SUBST(ENABLE_LIBCPP,[1]) ;;
+  no)  AC_SUBST(ENABLE_LIBCPP,[0]) ;;
+  default) AC_SUBST(ENABLE_LIBCPP,[0]);;
+  *) AC_MSG_ERROR([Invalid setting for --enable-libcpp. Use "yes" or "no"]) ;;
+esac
+
 dnl --enable-optimized : check whether they want to do an optimized build:
 AC_ARG_ENABLE(optimized, AS_HELP_STRING(
  --enable-optimized,[Compile with optimizations enabled (default is NO)]),,enableval=$optimize)

@@ -301,8 +301,10 @@ else
   endif
 endif
 
-#CXX.Flags +=  -stdlib=libc++
-#LD.Flags +=  -stdlib=libc++
+ifeq ($(ENABLE_LIBCPP),1)
+  CXX.Flags +=  -stdlib=libc++
+  LD.Flags +=  -stdlib=libc++
+endif
 
 ifeq ($(ENABLE_PROFILING),1)
   BuildMode := $(BuildMode)+Profile

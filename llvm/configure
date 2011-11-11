@@ -682,6 +682,7 @@ BUILD_CC
 BUILD_EXEEXT
 BUILD_CXX
 CVSBUILD
+ENABLE_LIBCPP
 ENABLE_OPTIMIZED
 ENABLE_PROFILING
 DISABLE_ASSERTIONS
@@ -1389,6 +1390,7 @@ Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-polly          Use polly if available (default is YES)
+  --enable-libcpp         Use libc++ if available (default is NO)
   --enable-optimized      Compile with optimizations enabled (default is NO)
   --enable-profiling      Compile with profiling enabled (default is NO)
   --enable-assertions     Compile with assertion checks enabled (default is
@@ -1415,8 +1417,8 @@ Optional Features:
                           (default is YES)
   --enable-targets        Build specific host targets: all or
                           target1,target2,... Valid targets are: host, x86,
-                          x86_64, sparc, powerpc, arm, mips, spu,
-                          xcore, msp430, ptx, cbe, and cpp (default=all)
+                          x86_64, sparc, powerpc, arm, mips, spu, xcore,
+                          msp430, ptx, cbe, and cpp (default=all)
   --enable-cbe-printf-a   Enable C Backend output with hex floating point via
                           %a (default is YES)
   --enable-bindings       Build specific language bindings:
@@ -4955,6 +4957,25 @@ else
   optimize="yes"
 fi
 
+
+# Check whether --enable-libcpp was given.
+if test "${enable_libcpp+set}" = set; then
+  enableval=$enable_libcpp;
+else
+  enableval=default
+fi
+
+case "$enableval" in
+  yes) ENABLE_LIBCPP=1
+ ;;
+  no)  ENABLE_LIBCPP=0
+ ;;
+  default) ENABLE_LIBCPP=0
+;;
+  *) { { echo "$as_me:$LINENO: error: Invalid setting for --enable-libcpp. Use \"yes\" or \"no\"" >&5
+echo "$as_me: error: Invalid setting for --enable-libcpp. Use \"yes\" or \"no\"" >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
 
 # Check whether --enable-optimized was given.
 if test "${enable_optimized+set}" = set; then
@@ -10455,7 +10476,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10463 "configure"
+#line 10479 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -21845,6 +21866,7 @@ BUILD_CC!$BUILD_CC$ac_delim
 BUILD_EXEEXT!$BUILD_EXEEXT$ac_delim
 BUILD_CXX!$BUILD_CXX$ac_delim
 CVSBUILD!$CVSBUILD$ac_delim
+ENABLE_LIBCPP!$ENABLE_LIBCPP$ac_delim
 ENABLE_OPTIMIZED!$ENABLE_OPTIMIZED$ac_delim
 ENABLE_PROFILING!$ENABLE_PROFILING$ac_delim
 DISABLE_ASSERTIONS!$DISABLE_ASSERTIONS$ac_delim
@@ -21861,7 +21883,6 @@ ENABLE_PTHREADS!$ENABLE_PTHREADS$ac_delim
 ENABLE_PIC!$ENABLE_PIC$ac_delim
 ENABLE_SHARED!$ENABLE_SHARED$ac_delim
 ENABLE_EMBED_STDCXX!$ENABLE_EMBED_STDCXX$ac_delim
-ENABLE_TIMESTAMPS!$ENABLE_TIMESTAMPS$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
@@ -21903,6 +21924,7 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
+ENABLE_TIMESTAMPS!$ENABLE_TIMESTAMPS$ac_delim
 TARGETS_TO_BUILD!$TARGETS_TO_BUILD$ac_delim
 LLVM_ENUM_TARGETS!$LLVM_ENUM_TARGETS$ac_delim
 LLVM_ENUM_ASM_PRINTERS!$LLVM_ENUM_ASM_PRINTERS$ac_delim
@@ -21994,7 +22016,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 89; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 90; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
