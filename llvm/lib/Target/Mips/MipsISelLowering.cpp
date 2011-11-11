@@ -1658,7 +1658,8 @@ LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const {
   MFI->setFrameAddressIsTaken(true);
   EVT VT = Op.getValueType();
   DebugLoc dl = Op.getDebugLoc();
-  SDValue FrameAddr = DAG.getCopyFromReg(DAG.getEntryNode(), dl, Mips::FP, VT);
+  SDValue FrameAddr = DAG.getCopyFromReg(DAG.getEntryNode(), dl,
+                                         IsN64 ? Mips::FP_64 : Mips::FP, VT);
   return FrameAddr;
 }
 
