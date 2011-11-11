@@ -55,8 +55,11 @@ public:
 
 llvm::StringRef CXLoadedDiagnosticSetImpl::makeString(const char *blob,
                                                       unsigned bloblen) {
-  char *mem = Alloc.Allocate<char>(bloblen);
+  char *mem = Alloc.Allocate<char>(bloblen + 1);
   memcpy(mem, blob, bloblen);
+  // Add a null terminator for those clients accessing the buffer
+  // like a c-string.
+  mem[bloblen] = '\0';
   return llvm::StringRef(mem, bloblen);
 }
 
@@ -100,7 +103,7 @@ CXSourceLocation CXLoadedDiagnostic::getLocation() const {
 }
 
 CXString CXLoadedDiagnostic::getSpelling() const {
-  return cxstring::createCXString(Spelling, false);  
+  return cxstring::createCXString(Spelling, false);
 }
 
 CXString CXLoadedDiagnostic::getDiagnosticOption(CXString *Disable) const {
@@ -242,7 +245,7 @@ public:
       if (errorString)
         *errorString = createCXString("");
     }
-  
+
   CXDiagnosticSet load(const char *file);
 };
 }
@@ -626,8 +629,8 @@ LoadResult DiagLoader::readDiagnosticBlock(llvm::BitstreamCursor &Stream,
         llvm::StringRef RetStr;
         if (readString(TopDiags, RetStr, "FIXIT", Record, BlobStart, BlobLen))
           return Failure;
-        D->FixIts.push_back(std::make_pair(SR, createCXString(RetStr)));
-        continue;        
+        D->FixIts.push_back(std::make_pair(SR, createCXString(RetStr, false)));
+        continue;
       }
         
       case serialized_diags::RECORD_DIAG: {
