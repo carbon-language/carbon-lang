@@ -369,7 +369,10 @@ struct NameSearchContext {
         m_ast_source(astSource),
         m_decls(decls),
         m_decl_name(name),
-        m_decl_context(dc) {}
+        m_decl_context(dc)
+    {
+        memset(&m_found, 0, sizeof(m_found));
+    }
     
     //------------------------------------------------------------------
     /// Create a VarDecl with the name being searched for and the provided
