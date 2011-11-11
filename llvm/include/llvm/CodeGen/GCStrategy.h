@@ -37,6 +37,7 @@
 #define LLVM_CODEGEN_GCSTRATEGY_H
 
 #include "llvm/CodeGen/GCMetadata.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Support/Registry.h"
 #include <string>
 
@@ -68,6 +69,8 @@ namespace llvm {
     bool CustomReadBarriers;   //< Default is to insert loads.
     bool CustomWriteBarriers;  //< Default is to insert stores.
     bool CustomRoots;          //< Default is to pass through to backend.
+    bool CustomSafePoints;     //< Default is to use NeededSafePoints
+                               //  to find safe points.
     bool InitRoots;            //< If set, roots are nulled during lowering.
     bool UsesMetadata;         //< If set, backend must emit metadata tables.
     
@@ -87,7 +90,9 @@ namespace llvm {
 
     /// needsSafePoitns - True if safe points of any kind are required. By
     //                    default, none are recorded.
-    bool needsSafePoints() const { return NeededSafePoints != 0; }
+    bool needsSafePoints() const {
+      return CustomSafePoints || NeededSafePoints != 0;
+    }
     
     /// needsSafePoint(Kind) - True if the given kind of safe point is
     //                          required. By default, none are recorded.
@@ -109,6 +114,11 @@ namespace llvm {
     ///               can generate a stack map. If true, then
     //                performCustomLowering must delete them.
     bool customRoots() const { return CustomRoots; }
+
+    /// customSafePoints - By default, the GC analysis will find safe
+    ///                    points according to NeededSafePoints. If true,
+    ///                    then findCustomSafePoints must create them.
+    bool customSafePoints() const { return CustomSafePoints; }
     
     /// initializeRoots - If set, gcroot intrinsics should initialize their
     //                    allocas to null before the first use. This is
@@ -135,6 +145,7 @@ namespace llvm {
     /// which the LLVM IR can be modified.
     virtual bool initializeCustomLowering(Module &F);
     virtual bool performCustomLowering(Function &F);
+    virtual bool findCustomSafePoints(GCFunctionInfo& FI, MachineFunction& MF);
   };
   
 }
