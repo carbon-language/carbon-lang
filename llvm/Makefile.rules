@@ -704,35 +704,18 @@ else
   Compile.Wrapper :=
 endif
 
-ifeq ($(BUILD_COMPONENT), 1)
-  Compile.C     = $(Compile.Wrapper) \
-	          $(BUILD_CC) $(CPP.Flags) $(C.Flags) $(CFLAGS) $(CPPFLAGS) \
-                  $(TargetCommonOpts) $(CompileCommonOpts) -c
-  Compile.CXX   = $(Compile.Wrapper) \
-	          $(BUILD_CXX) $(CPP.Flags) $(CXX.Flags) $(CXXFLAGS) \
-		  $(CPPFLAGS) \
-                  $(TargetCommonOpts) $(CompileCommonOpts) -c
-  Preprocess.CXX= $(Compile.Wrapper) \
-	          $(BUILD_CXX) $(CPP.Flags) $(CPPFLAGS) $(TargetCommonOpts) \
-                  $(CompileCommonOpts) $(CXX.Flags) -E
-  Link          = $(Compile.Wrapper) \
-	          $(BUILD_CXX) $(CPP.Flags) $(CXX.Flags) $(CXXFLAGS) \
-		  $(LD.Flags) $(LDFLAGS) \
-                  $(TargetCommonOpts) $(CompileCommonOpts) $(Strip)
-else
-  Compile.C     = $(Compile.Wrapper) \
+Compile.C     = $(Compile.Wrapper) \
 	          $(CC) $(CPP.Flags) $(C.Flags) $(CFLAGS) $(CPPFLAGS) \
-                  $(TargetCommonOpts) $(CompileCommonOpts) -c
-  Compile.CXX   = $(Compile.Wrapper) \
+                $(TargetCommonOpts) $(CompileCommonOpts) -c
+Compile.CXX   = $(Compile.Wrapper) \
 	          $(CXX) $(CPP.Flags) $(CXX.Flags) $(CXXFLAGS) $(CPPFLAGS) \
-                  $(TargetCommonOpts) $(CompileCommonOpts) -c
-  Preprocess.CXX= $(Compile.Wrapper) \
+                $(TargetCommonOpts) $(CompileCommonOpts) -c
+Preprocess.CXX= $(Compile.Wrapper) \
 	          $(CXX) $(CPP.Flags) $(TargetCommonOpts) $(CPPFLAGS) \
-                  $(CompileCommonOpts) $(CXX.Flags) -E
-  Link          = $(Compile.Wrapper) \
+                $(CompileCommonOpts) $(CXX.Flags) -E
+Link          = $(Compile.Wrapper) \
 	          $(CXX) $(CPP.Flags) $(CXX.Flags) $(CXXFLAGS) $(LD.Flags) \
-                  $(LDFLAGS) $(TargetCommonOpts)  $(CompileCommonOpts) $(Strip)
-endif
+                $(LDFLAGS) $(TargetCommonOpts)  $(CompileCommonOpts) $(Strip)
 
 BCCompile.C   = $(LLVMCC) $(CPP.Flags) $(C.Flags) $(CFLAGS) $(CPPFLAGS) \
                 $(TargetCommonOpts) $(CompileCommonOpts)
