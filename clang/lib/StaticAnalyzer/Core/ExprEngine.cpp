@@ -230,7 +230,7 @@ static bool shouldRemoveDeadBindings(AnalysisManager &AMgr,
     return false;
 
   // Is this the beginning of a basic block?
-  if (!isa<StmtPoint>(Pred->getLocation()))
+  if (isa<BlockEntrance>(Pred->getLocation()))
     return true;
 
   // Is this on a non-expression?
