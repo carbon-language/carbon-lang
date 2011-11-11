@@ -79,6 +79,9 @@ public:
     /// \brief Retrieve the full name of this module, including the path from
     /// its top-level module.
     std::string getFullModuleName() const;
+    
+    /// \brief Retrieve the name of the top-level module.
+    StringRef getTopLevelModuleName() const;
   };
   
 private:
@@ -105,9 +108,19 @@ public:
   /// \param DC A diagnostic consumer that will be cloned for use in generating
   /// diagnostics.
   ModuleMap(FileManager &FileMgr, const DiagnosticConsumer &DC);
-  
+
+  /// \brief Destroy the module map.
+  ///
   ~ModuleMap();
   
+  /// \brief Retrieve the module that owns the given header file, if any.
+  ///
+  /// \param File The header file that is likely to be included.
+  ///
+  /// \returns The module that owns the given header file, or null to indicate
+  /// that no module owns this header file.
+  Module *findModuleForHeader(const FileEntry *File);
+
   /// \brief Parse the given module map file, and record any modules we 
   /// encounter.
   ///
@@ -115,7 +128,7 @@ public:
   ///
   /// \returns true if an error occurred, false otherwise.
   bool parseModuleMapFile(const FileEntry *File);
-  
+    
   /// \brief Dump the contents of the module map, for debugging purposes.
   void dump();
 };

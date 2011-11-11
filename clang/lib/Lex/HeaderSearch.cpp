@@ -205,7 +205,7 @@ const FileEntry *DirectoryLookup::LookupFile(
       
       // If there is a module that corresponds to this header, 
       // suggest it.
-      StringRef Module = HS.getModuleForHeader(File);
+      StringRef Module = HS.findModuleForHeader(File);
       if (!Module.empty() && Module != BuildingModule)
         *SuggestedModule = Module;
       
@@ -772,8 +772,10 @@ bool HeaderSearch::hasModuleMap(StringRef FileName,
   return false;
 }
 
-StringRef HeaderSearch::getModuleForHeader(const FileEntry *File) {
-  // FIXME: Actually look for the corresponding module for this header.
+StringRef HeaderSearch::findModuleForHeader(const FileEntry *File) {
+  if (ModuleMap::Module *Module = ModMap.findModuleForHeader(File))
+    return Module->getTopLevelModuleName();
+  
   return StringRef();
 }
 

@@ -51,6 +51,14 @@ std::string ModuleMap::Module::getFullModuleName() const {
   return Result;
 }
 
+StringRef ModuleMap::Module::getTopLevelModuleName() const {
+  const Module *Top = this;
+  while (Top->Parent)
+    Top = Top->Parent;
+  
+  return Top->Name;
+}
+
 //----------------------------------------------------------------------------//
 // Module map
 //----------------------------------------------------------------------------//
@@ -65,6 +73,15 @@ ModuleMap::ModuleMap(FileManager &FileMgr, const DiagnosticConsumer &DC) {
 
 ModuleMap::~ModuleMap() {
   delete SourceMgr;
+}
+
+ModuleMap::Module *ModuleMap::findModuleForHeader(const FileEntry *File) {
+  llvm::DenseMap<const FileEntry *, Module *>::iterator Known
+    = Headers.find(File);
+  if (Known != Headers.end())
+    return Known->second;
+  
+  return 0;
 }
 
 static void indent(llvm::raw_ostream &OS, unsigned Spaces) {

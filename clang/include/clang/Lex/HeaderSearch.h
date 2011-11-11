@@ -365,7 +365,7 @@ public:
   /// \brief Retrieve the module that corresponds to the given file, if any.
   ///
   /// FIXME: This will need to be generalized for submodules.
-  StringRef getModuleForHeader(const FileEntry *File);
+  StringRef findModuleForHeader(const FileEntry *File);
   
   typedef std::vector<HeaderFileInfo>::const_iterator header_file_iterator;
   header_file_iterator header_file_begin() const { return FileInfo.begin(); }
