@@ -380,7 +380,7 @@ public:
             m_hash_offsets (NULL)
         {
             uint32_t offset = m_header.Read (data, 0);
-            if (offset != UINT32_MAX)
+            if (offset != UINT32_MAX && IsValid ())
             {
                 m_hash_indexes = (uint32_t *)data.GetData (&offset, m_header.bucket_count * sizeof(uint32_t));
                 m_hash_values  = (uint32_t *)data.GetData (&offset, m_header.hashes_count * sizeof(uint32_t));
@@ -396,7 +396,10 @@ public:
         bool
         IsValid () const
         {
-            return m_header.version == 1 && m_header.hash_function == eHashFunctionDJB;
+            return m_header.version == 1 && 
+                   m_header.hash_function == eHashFunctionDJB && 
+                   m_header.bucket_count > 0 &&
+                   m_header.hashes_count > 0;
         }
         
         uint32_t
