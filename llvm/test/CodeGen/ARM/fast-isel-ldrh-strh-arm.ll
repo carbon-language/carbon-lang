@@ -11,7 +11,7 @@ entry:
 ; ARM: t1
   %add.ptr = getelementptr inbounds i16* %a, i64 -8
   %0 = load i16* %add.ptr, align 2
-; ARM: ldr r{{[1-9]}}, LCPI0_0
+; ARM: mvn r{{[1-9]}}, #15
 ; ARM: add r0, r0, r{{[1-9]}}
 ; ARM: ldrh r0, [r0]
   ret i16 %0
@@ -23,7 +23,7 @@ entry:
 ; ARM: t2
   %add.ptr = getelementptr inbounds i16* %a, i64 -16
   %0 = load i16* %add.ptr, align 2
-; ARM: ldr r{{[1-9]}}, LCPI1_0
+; ARM: mvn r{{[1-9]}}, #31
 ; ARM: add r0, r0, r{{[1-9]}}
 ; ARM: ldrh r0, [r0]
   ret i16 %0
@@ -35,7 +35,7 @@ entry:
 ; ARM: t3
   %add.ptr = getelementptr inbounds i16* %a, i64 -127
   %0 = load i16* %add.ptr, align 2
-; ARM: ldr r{{[1-9]}}, LCPI2_0
+; ARM: mvn r{{[1-9]}}, #253
 ; ARM: add r0, r0, r{{[1-9]}}
 ; ARM: ldrh r0, [r0]
   ret i16 %0
@@ -48,7 +48,7 @@ entry:
 ; ARM: t4
   %add.ptr = getelementptr inbounds i16* %a, i64 -128
   %0 = load i16* %add.ptr, align 2
-; ARM: ldr r{{[1-9]}}, LCPI3_0
+; ARM: mvn r{{[1-9]}}, #255
 ; ARM: add r0, r0, r{{[1-9]}}
 ; ARM: ldrh r0, [r0]
   ret i16 %0
@@ -97,7 +97,7 @@ entry:
 ; ARM: t9
   %add.ptr = getelementptr inbounds i16* %a, i64 -8
   store i16 0, i16* %add.ptr, align 2
-; ARM: ldr r{{[1-9]}}, LCPI8_0
+; ARM: mvn r{{[1-9]}}, #15
 ; ARM: add r0, r0, r{{[1-9]}}
 ; ARM: strh r{{[1-9]}}, [r0]
   ret void
@@ -110,7 +110,7 @@ entry:
 ; ARM: t10
   %add.ptr = getelementptr inbounds i16* %a, i64 -128
   store i16 0, i16* %add.ptr, align 2
-; ARM: ldr r{{[1-9]}}, LCPI9_0
+; ARM: mvn r{{[1-9]}}, #255
 ; ARM: add r0, r0, r{{[1-9]}}
 ; ARM: strh r{{[1-9]}}, [r0]
   ret void

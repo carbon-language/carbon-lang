@@ -552,16 +552,30 @@ unsigned ARMFastISel::ARMMaterializeInt(const Constant *C, EVT VT) {
   // do so now.
   const ConstantInt *CI = cast<ConstantInt>(C);
   if (Subtarget->hasV6T2Ops() && isUInt<16>(CI->getZExtValue())) {
-    EVT SrcVT = MVT::i32;
     unsigned Opc = isThumb2 ? ARM::t2MOVi16 : ARM::MOVi16;
-    unsigned ImmReg = createResultReg(TLI.getRegClassFor(SrcVT));
+    unsigned ImmReg = createResultReg(TLI.getRegClassFor(MVT::i32));
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(Opc), ImmReg)
                     .addImm(CI->getZExtValue()));
     return ImmReg;
   }
 
-  // For now 32-bit only.
+  // Use MVN to emit negative constants.
+  if (VT == MVT::i32 && Subtarget->hasV6T2Ops() && CI->isNegative()) {
+    unsigned Imm = (unsigned)~(CI->getSExtValue());
+    bool EncodeImm = isThumb2 ? (ARM_AM::getT2SOImmVal(Imm) != -1) :
+      (ARM_AM::getSOImmVal(Imm) != -1);
+    if (EncodeImm) {
+      unsigned Opc = isThumb2 ? ARM::t2MVNi : ARM::MVNi;
+      unsigned ImmReg = createResultReg(TLI.getRegClassFor(MVT::i32));
+      AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                              TII.get(Opc), ImmReg)
+                      .addImm(Imm));
+      return ImmReg;
+    }
+  }
+
+  // Load from constant pool.  For now 32-bit only.
   if (VT != MVT::i32)
     return false;
 
