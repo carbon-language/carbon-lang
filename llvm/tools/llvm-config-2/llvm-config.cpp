@@ -174,6 +174,7 @@ int main(int argc, char **argv) {
   bool IsInDevelopmentTree, DevelopmentTreeLayoutIsCMakeStyle;
   llvm::SmallString<256> CurrentPath(GetExecutablePath(argv[0]).str());
   std::string CurrentExecPrefix;
+  std::string ActiveObjRoot;
 
   // Create an absolute path, and pop up one directory (we expect to be inside a
   // bin dir).
@@ -187,9 +188,19 @@ int main(int argc, char **argv) {
   if (CurrentExecPrefix == std::string(LLVM_OBJ_ROOT) + "/" + LLVM_BUILDMODE) {
     IsInDevelopmentTree = true;
     DevelopmentTreeLayoutIsCMakeStyle = false;
+
+    // If we are in a development tree, then check if we are in a BuildTools
+    // directory. This indicates we are built for the build triple, but we
+    // always want to provide information for the host triple.
+    if (sys::path::filename(LLVM_OBJ_ROOT) == "BuildTools") {
+      ActiveObjRoot = sys::path::parent_path(LLVM_OBJ_ROOT);
+    } else {
+      ActiveObjRoot = LLVM_OBJ_ROOT;
+    }
   } else if (CurrentExecPrefix == std::string(LLVM_OBJ_ROOT) + "/bin") {
     IsInDevelopmentTree = true;
     DevelopmentTreeLayoutIsCMakeStyle = true;
+    ActiveObjRoot = LLVM_OBJ_ROOT;
   } else {
     IsInDevelopmentTree = false;
   }
@@ -204,18 +215,18 @@ int main(int argc, char **argv) {
     // CMake organizes the products differently than a normal prefix style
     // layout.
     if (DevelopmentTreeLayoutIsCMakeStyle) {
-      ActiveIncludeDir = std::string(LLVM_OBJ_ROOT) + "/include";
-      ActiveBinDir = std::string(LLVM_OBJ_ROOT) + "/bin/" + LLVM_BUILDMODE;
-      ActiveLibDir = std::string(LLVM_OBJ_ROOT) + "/lib/" + LLVM_BUILDMODE;
+      ActiveIncludeDir = ActiveObjRoot + "/include";
+      ActiveBinDir = ActiveObjRoot + "/bin/" + LLVM_BUILDMODE;
+      ActiveLibDir = ActiveObjRoot + "/lib/" + LLVM_BUILDMODE;
     } else {
-        ActiveIncludeDir = std::string(LLVM_OBJ_ROOT) + "/include";
-      ActiveBinDir = std::string(LLVM_OBJ_ROOT) + "/" + LLVM_BUILDMODE + "/bin";
-      ActiveLibDir = std::string(LLVM_OBJ_ROOT) + "/" + LLVM_BUILDMODE + "/lib";
+      ActiveIncludeDir = ActiveObjRoot + "/include";
+      ActiveBinDir = ActiveObjRoot + "/" + LLVM_BUILDMODE + "/bin";
+      ActiveLibDir = ActiveObjRoot + "/" + LLVM_BUILDMODE + "/lib";
     }
 
     // We need to include files from both the source and object trees.
     ActiveIncludeOption = ("-I" + ActiveIncludeDir + " " +
-                           "-I" + LLVM_OBJ_ROOT + "/include");
+                           "-I" + ActiveObjRoot + "/include");
   } else {
     ActivePrefix = CurrentExecPrefix;
     ActiveIncludeDir = ActivePrefix + "/include";
