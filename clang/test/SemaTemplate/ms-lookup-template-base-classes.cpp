@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fms-extensions -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fms-compatibility -fsyntax-only -verify %s
 
 
 template <class T>
@@ -28,4 +28,23 @@ void test()
     b.z(3);
 }
 
+namespace lookup_dependent_bases_id_expr {
+
+template<class T> class A {
+public:
+  int var;
+};
+
+
+template<class T>
+class B : public A<T> {
+public:
+  void f() {
+    var = 3;
+  }
+};
+
+template class B<int>;
+
+}
 

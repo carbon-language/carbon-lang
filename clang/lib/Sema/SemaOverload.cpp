@@ -8705,7 +8705,7 @@ Sema::BuildOverloadedCallExpr(Scope *S, Expr *Fn, UnresolvedLookupExpr *ULE,
     // create a type dependent CallExpr. The goal is to postpone name lookup
     // to instantiation time to be able to search into type dependent base
     // classes.
-    if (getLangOptions().MicrosoftExt && CurContext->isDependentContext() && 
+    if (getLangOptions().MicrosoftMode && CurContext->isDependentContext() && 
         isa<CXXMethodDecl>(CurContext)) {
       CallExpr *CE = new (Context) CallExpr(Context, Fn, Args, NumArgs,
                                           Context.DependentTy, VK_RValue,
