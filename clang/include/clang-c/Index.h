@@ -4341,14 +4341,15 @@ typedef struct {
 
 } IndexerCallbacks;
 
-int clang_index_isEntityTagKind(CXIdxEntityKind);
-CXIdxTagDeclInfo *clang_index_getTagDeclInfo(CXIdxDeclInfo *);
+CINDEX_LINKAGE int clang_index_isEntityTagKind(CXIdxEntityKind);
+CINDEX_LINKAGE CXIdxTagDeclInfo *clang_index_getTagDeclInfo(CXIdxDeclInfo *);
 
-int clang_index_isEntityObjCContainerKind(CXIdxEntityKind);
-CXIdxObjCContainerDeclInfo *
+CINDEX_LINKAGE int clang_index_isEntityObjCContainerKind(CXIdxEntityKind);
+CINDEX_LINKAGE CXIdxObjCContainerDeclInfo *
 clang_index_getObjCContainerDeclInfo(CXIdxDeclInfo *);
 
-int clang_index_isEntityObjCCategoryKind(CXIdxEntityKind);
+CINDEX_LINKAGE int clang_index_isEntityObjCCategoryKind(CXIdxEntityKind);
+CINDEX_LINKAGE
 CXIdxObjCCategoryDeclInfo *clang_index_getObjCCategoryDeclInfo(CXIdxDeclInfo *);
 
 /**
