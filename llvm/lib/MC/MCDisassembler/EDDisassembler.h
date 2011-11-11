@@ -94,8 +94,6 @@ struct EDDisassembler {
   
   typedef std::map<CPUKey, EDDisassembler*> DisassemblerMap_t;
   
-  /// True if the disassembler registry has been initialized; false if not
-  static bool sInitialized;
   /// A map from disassembler specifications to disassemblers.  Populated
   ///   lazily.
   static DisassemblerMap_t sDisassemblers;
@@ -115,9 +113,6 @@ struct EDDisassembler {
   /// @arg syntax - The disassembly syntax for the required disassembler
   static EDDisassembler *getDisassembler(llvm::StringRef str,
                                          AssemblySyntax syntax);
-  
-  /// initialize - Initializes the disassembler registry and the LLVM backend
-  static void initialize();
   
   ////////////////////////
   // Per-object members //

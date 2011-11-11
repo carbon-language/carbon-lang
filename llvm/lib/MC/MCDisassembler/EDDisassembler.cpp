@@ -34,10 +34,8 @@
 #include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/TargetRegistry.h"
-#include "llvm/Support/TargetSelect.h"
 using namespace llvm;
 
-bool EDDisassembler::sInitialized = false;
 EDDisassembler::DisassemblerMap_t EDDisassembler::sDisassemblers;
 
 struct TripleMap {
@@ -97,20 +95,6 @@ static int getLLVMSyntaxVariant(Triple::ArchType arch,
       return -1;
   }
 }
-
-void EDDisassembler::initialize() {
-  if (sInitialized)
-    return;
-  
-  sInitialized = true;
-  
-  InitializeAllTargetInfos();
-  InitializeAllTargetMCs();
-  InitializeAllAsmParsers();
-  InitializeAllDisassemblers();
-}
-
-#undef BRINGUP_TARGET
 
 EDDisassembler *EDDisassembler::getDisassembler(Triple::ArchType arch,
                                                 AssemblySyntax syntax) {

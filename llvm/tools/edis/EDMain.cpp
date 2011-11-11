@@ -17,14 +17,23 @@
 #include "../../lib/MC/MCDisassembler/EDInst.h"
 #include "../../lib/MC/MCDisassembler/EDOperand.h"
 #include "../../lib/MC/MCDisassembler/EDToken.h"
+#include "llvm/Support/TargetSelect.h"
 #include "llvm-c/EnhancedDisassembly.h"
 using namespace llvm;
 
 int EDGetDisassembler(EDDisassemblerRef *disassembler,
                       const char *triple,
                       EDAssemblySyntax_t syntax) {
-  EDDisassembler::initialize();
-  
+  static bool initialized;
+  if (!initialized) {
+    // Initialize targets and assembly printers/parsers.
+    llvm::InitializeAllTargetInfos();
+    llvm::InitializeAllTargetMCs();
+    llvm::InitializeAllAsmParsers();
+    llvm::InitializeAllDisassemblers();
+    initialized = true;
+  }
+
   EDDisassembler::AssemblySyntax Syntax;
   switch (syntax) {
   default: assert(0 && "Unknown assembly syntax!");

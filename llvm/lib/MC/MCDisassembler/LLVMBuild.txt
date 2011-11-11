@@ -19,7 +19,4 @@
 type = Library
 name = MCDisassembler
 parent = MC
-; FIXME: This is really horrible, MCDisassembler should not in and of its own
-; accord depending on every target.
-required_libraries = all-targets MC MCParser Support
-
+required_libraries = MC MCParser Support

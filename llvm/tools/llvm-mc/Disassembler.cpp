@@ -249,7 +249,6 @@ int Disassembler::disassembleEnhanced(const std::string &TS,
     break;
   }
 
-  EDDisassembler::initialize();
   OwningPtr<EDDisassembler>
     disassembler(EDDisassembler::getDisassembler(TS.c_str(), AS));
 
