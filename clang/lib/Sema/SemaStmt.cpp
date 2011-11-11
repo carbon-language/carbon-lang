@@ -18,6 +18,7 @@
 #include "clang/Sema/Lookup.h"
 #include "clang/AST/APValue.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/CharUnits.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
@@ -1650,14 +1651,29 @@ const VarDecl *Sema::getCopyElisionCandidate(QualType ReturnType,
   if (!VD)
     return 0;
 
-  if (VD->hasLocalStorage() && !VD->isExceptionVariable() &&
-      !VD->getType()->isReferenceType() && !VD->hasAttr<BlocksAttr>() &&
-      !VD->getType().isVolatileQualified() &&
-      ((VD->getKind() == Decl::Var) ||
-       (AllowFunctionParameter && VD->getKind() == Decl::ParmVar)))
-    return VD;
+  // ...object (other than a function or catch-clause parameter)...
+  if (VD->getKind() != Decl::Var &&
+      !(AllowFunctionParameter && VD->getKind() == Decl::ParmVar))
+    return 0;
+  if (VD->isExceptionVariable()) return 0;
 
-  return 0;
+  // ...automatic...
+  if (!VD->hasLocalStorage()) return 0;
+
+  // ...non-volatile...
+  if (VD->getType().isVolatileQualified()) return 0;
+  if (VD->getType()->isReferenceType()) return 0;
+
+  // __block variables can't be allocated in a way that permits NRVO.
+  if (VD->hasAttr<BlocksAttr>()) return 0;
+
+  // Variables with higher required alignment than their type's ABI
+  // alignment cannot use NRVO.
+  if (VD->hasAttr<AlignedAttr>() &&
+      Context.getDeclAlign(VD) > Context.getTypeAlignInChars(VD->getType()))
+    return 0;
+
+  return VD;
 }
 
 /// \brief Perform the initialization of a potentially-movable value, which
