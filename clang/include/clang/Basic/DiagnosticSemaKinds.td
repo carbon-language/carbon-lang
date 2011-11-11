@@ -1113,7 +1113,7 @@ def warn_cxx98_compat_temp_copy : Warning<
   "of type %2 when binding a reference to a temporary would %select{invoke "
   "an inaccessible constructor|find no viable constructor|find ambiguous "
   "constructors|invoke a deleted constructor}0 in C++98">,
-  InGroup<CXX98Compat>, DefaultIgnore;
+  InGroup<CXX98CompatBindToTemporaryCopy>, DefaultIgnore;
 
 // C++11 decltype
 def err_cannot_determine_declared_type_of_overloaded_function : Error<
@@ -2157,10 +2157,10 @@ def ext_template_arg_unnamed_type : ExtWarn<
   "template argument uses unnamed type">, InGroup<UnnamedTypeTemplateArgs>;
 def warn_cxx98_compat_template_arg_local_type : Warning<
   "local type %0 as template argument is incompatible with C++98">,
-  InGroup<CXX98Compat>, DefaultIgnore;
+  InGroup<CXX98CompatLocalTypeTemplateArgs>, DefaultIgnore;
 def warn_cxx98_compat_template_arg_unnamed_type : Warning<
   "unnamed type as template argument is incompatible with C++98">,
-  InGroup<CXX98Compat>, DefaultIgnore;
+  InGroup<CXX98CompatUnnamedTypeTemplateArgs>, DefaultIgnore;
 def note_template_unnamed_type_here : Note<
   "unnamed type used in template argument was declared here">;
 def err_template_arg_overload_type : Error<
