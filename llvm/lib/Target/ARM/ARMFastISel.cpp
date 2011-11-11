@@ -164,7 +164,8 @@ class ARMFastISel : public FastISel {
     bool SelectFPToSI(const Instruction *I);
     bool SelectSDiv(const Instruction *I);
     bool SelectSRem(const Instruction *I);
-    bool SelectCall(const Instruction *I);
+    bool SelectCall(const Instruction *I, const char *IntrMemName);
+    bool SelectIntrinsicCall(const IntrinsicInst &I);
     bool SelectSelect(const Instruction *I);
     bool SelectRet(const Instruction *I);
     bool SelectTrunc(const Instruction *I);
@@ -1997,12 +1998,13 @@ bool ARMFastISel::ARMEmitLibcall(const Instruction *I, RTLIB::Libcall Call) {
   return true;
 }
 
-bool ARMFastISel::SelectCall(const Instruction *I) {
+bool ARMFastISel::SelectCall(const Instruction *I,
+                             const char *IntrMemName = 0) {
   const CallInst *CI = cast<CallInst>(I);
   const Value *Callee = CI->getCalledValue();
 
-  // Can't handle inline asm or worry about intrinsics yet.
-  if (isa<InlineAsm>(Callee) || isa<IntrinsicInst>(CI)) return false;
+  // Can't handle inline asm.
+  if (isa<InlineAsm>(Callee)) return false;
 
   // Only handle global variable Callees.
   const GlobalValue *GV = dyn_cast<GlobalValue>(Callee);
@@ -2044,8 +2046,12 @@ bool ARMFastISel::SelectCall(const Instruction *I) {
   ArgFlags.reserve(CS.arg_size());
   for (ImmutableCallSite::arg_iterator i = CS.arg_begin(), e = CS.arg_end();
        i != e; ++i) {
-    unsigned Arg = getRegForValue(*i);
+    // If we're lowering a memory intrinsic instead of a regular call, skip the
+    // last two arguments, which shouldn't be passed to the underlying function.
+    if (IntrMemName && e-i <= 2)
+      break;
 
+    unsigned Arg = getRegForValue(*i);
     if (Arg == 0)
       return false;
     ISD::ArgFlagsTy Flags;
@@ -2090,14 +2096,16 @@ bool ARMFastISel::SelectCall(const Instruction *I) {
   if(isThumb2)
     // Explicitly adding the predicate here.
     MIB = AddDefaultPred(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                         TII.get(CallOpc)))
-          .addGlobalAddress(GV, 0, 0);
+                                 TII.get(CallOpc)));
   else
     // Explicitly adding the predicate here.
     MIB = AddDefaultPred(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                         TII.get(CallOpc))
-          .addGlobalAddress(GV, 0, 0));
-
+                                 TII.get(CallOpc)));
+  if (!IntrMemName)
+    MIB.addGlobalAddress(GV, 0, 0);
+  else 
+    MIB.addExternalSymbol(IntrMemName, 0);
+  
   // Add implicit physical register uses to the call.
   for (unsigned i = 0, e = RegArgs.size(); i != e; ++i)
     MIB.addReg(RegArgs[i]);
@@ -2110,6 +2118,46 @@ bool ARMFastISel::SelectCall(const Instruction *I) {
   static_cast<MachineInstr *>(MIB)->setPhysRegsDeadExcept(UsedRegs, TRI);
 
   return true;
+}
+
+bool ARMFastISel::SelectIntrinsicCall(const IntrinsicInst &I) {
+  // FIXME: Handle more intrinsics.
+  switch (I.getIntrinsicID()) {
+  default: return false;
+  case Intrinsic::memcpy:
+  case Intrinsic::memmove: {
+    // FIXME: Small memcpy/memmove's are common enough that we want to do them
+    // without a call if possible.
+    const MemTransferInst &MTI = cast<MemTransferInst>(I);
+    // Don't handle volatile.
+    if (MTI.isVolatile())
+      return false;
+    
+    if (!MTI.getLength()->getType()->isIntegerTy(32))
+      return false;
+    
+    if (MTI.getSourceAddressSpace() > 255 || MTI.getDestAddressSpace() > 255)
+      return false;
+
+    const char *IntrMemName = isa<MemCpyInst>(I) ? "memcpy" : "memmove";
+    return SelectCall(&I, IntrMemName);
+  }
+  case Intrinsic::memset: {
+    const MemSetInst &MSI = cast<MemSetInst>(I);
+    // Don't handle volatile.
+    if (MSI.isVolatile())
+      return false;
+    
+    if (!MSI.getLength()->getType()->isIntegerTy(32))
+      return false;
+    
+    if (MSI.getDestAddressSpace() > 255)
+      return false;
+    
+    return SelectCall(&I, "memset");
+  }
+  }
+  return false;    
 }
 
 bool ARMFastISel::SelectTrunc(const Instruction *I) {
@@ -2235,6 +2283,8 @@ bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
     case Instruction::SRem:
       return SelectSRem(I);
     case Instruction::Call:
+      if (const IntrinsicInst *II = dyn_cast<IntrinsicInst>(I))
+        return SelectIntrinsicCall(*II);
       return SelectCall(I);
     case Instruction::Select:
       return SelectSelect(I);
