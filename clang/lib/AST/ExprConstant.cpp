@@ -830,11 +830,8 @@ static bool ExtractSubobject(EvalInfo &Info, CCValue &Obj, QualType ObjType,
                              const SubobjectDesignator &Sub, QualType SubType) {
   if (Sub.Invalid || Sub.OnePastTheEnd)
     return false;
-  if (Sub.Entries.empty()) {
-    assert(Info.Ctx.hasSameUnqualifiedType(ObjType, SubType) &&
-           "Unexpected subobject type");
+  if (Sub.Entries.empty())
     return true;
-  }
 
   assert(!Obj.isLValue() && "extracting subobject of lvalue");
   const APValue *O = &Obj;
@@ -877,8 +874,6 @@ static bool ExtractSubobject(EvalInfo &Info, CCValue &Obj, QualType ObjType,
       return false;
   }
 
-  assert(Info.Ctx.hasSameUnqualifiedType(ObjType, SubType) &&
-         "Unexpected subobject type");
   Obj = CCValue(*O, CCValue::GlobalValue());
   return true;
 }

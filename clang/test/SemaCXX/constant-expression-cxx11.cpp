@@ -77,6 +77,19 @@ namespace DerivedToVBaseCast {
 
 }
 
+namespace ConstCast {
+
+constexpr int n1 = 0;
+constexpr int n2 = const_cast<int&>(n1);
+constexpr int *n3 = const_cast<int*>(&n1);
+constexpr int n4 = *const_cast<int*>(&n1);
+constexpr const int * const *n5 = const_cast<const int* const*>(&n3);
+constexpr int **n6 = const_cast<int**>(&n3);
+constexpr int n7 = **n5;
+constexpr int n8 = **n6;
+
+}
+
 namespace TemplateArgumentConversion {
   template<int n> struct IntParam {};
 
