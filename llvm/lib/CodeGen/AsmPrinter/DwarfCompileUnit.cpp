@@ -1095,6 +1095,7 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
   addToContextOwner(VariableDIE, GVContext);
   // Add location.
   bool addToAccelTable = false;
+  DIE *VariableSpecDIE;
   if (isGlobalVariable) {
     addToAccelTable = true;
     DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
@@ -1106,7 +1107,7 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
     if (GVContext && GV.isDefinition() && !GVContext.isCompileUnit() &&
         !GVContext.isFile() && !isSubprogramContext(GVContext)) {
       // Create specification DIE.
-      DIE *VariableSpecDIE = new DIE(dwarf::DW_TAG_variable);
+      VariableSpecDIE = new DIE(dwarf::DW_TAG_variable);
       addDIEEntry(VariableSpecDIE, dwarf::DW_AT_specification,
                   dwarf::DW_FORM_ref4, VariableDIE);
       addBlock(VariableSpecDIE, dwarf::DW_AT_location, 0, Block);
@@ -1135,13 +1136,15 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
     addBlock(VariableDIE, dwarf::DW_AT_location, 0, Block);
   }
 
-  if (addToAccelTable)
-    addAccelName(GV.getName(), VariableDIE);
+  if (addToAccelTable) {
+    DIE *AddrDIE = VariableSpecDIE ? VariableSpecDIE : VariableDIE;
+    addAccelName(GV.getName(), AddrDIE);
 
-  // If the linkage name is different than the name, go ahead and output
-  // that as well into the name table.
-  if (GV.getLinkageName() != "" && GV.getName() != GV.getLinkageName())
-    addAccelName(GV.getLinkageName(), VariableDIE);
+    // If the linkage name is different than the name, go ahead and output
+    // that as well into the name table.
+    if (GV.getLinkageName() != "" && GV.getName() != GV.getLinkageName())
+      addAccelName(GV.getLinkageName(), AddrDIE);
+  }
 
   return;
 }
