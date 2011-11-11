@@ -154,8 +154,8 @@ X test6() {
   X a __attribute__((aligned(8)));
   return a;
   // CHECK:      [[A:%.*]] = alloca [[X:%.*]], align 8
-  // CHECK-NEXT: call void @_ZN1XC1Ev([[X]]* [[A]])
-  // CHECK-NEXT: call void @_ZN1XC1ERKS_([[X]]* {{%.*}}, [[X]]* [[A]])
-  // CHECK-NEXT: call void @_ZN1XD1Ev([[X]]* [[A]])
+  // CHECK-NEXT: call {{.*}} @_ZN1XC1Ev([[X]]* [[A]])
+  // CHECK-NEXT: call {{.*}} @_ZN1XC1ERKS_([[X]]* {{%.*}}, [[X]]* [[A]])
+  // CHECK-NEXT: call {{.*}} @_ZN1XD1Ev([[X]]* [[A]])
   // CHECK-NEXT: ret void
 }
