@@ -2032,8 +2032,7 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
         ASM = ArrayType::Normal;
         D.setInvalidType(true);
       }
-      T = S.BuildArrayType(T, ASM, ArraySize,
-                           Qualifiers::fromCVRMask(ATI.TypeQuals),
+      T = S.BuildArrayType(T, ASM, ArraySize, ATI.TypeQuals,
                            SourceRange(DeclType.Loc, DeclType.EndLoc), Name);
       break;
     }

@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 %s -fsyntax-only -verify -pedantic
-// PR1892
-void f(double a[restrict][5]);  // should promote to restrict ptr.
-void f(double (* restrict a)[5]);
+
+// PR1892, PR11354
+void f(double a[restrict][5]) { __typeof(a) x = 10; } // expected-warning {{(aka 'double (*restrict)[5]')}}
 
 int foo (__const char *__path);
 int foo(__const char *__restrict __file);
