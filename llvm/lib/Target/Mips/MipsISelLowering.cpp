@@ -395,7 +395,8 @@ static SDValue PerformADDECombine(SDNode *N, SelectionDAG& DAG,
   if (DCI.isBeforeLegalize())
     return SDValue();
 
-  if (Subtarget->hasMips32() && SelectMadd(N, &DAG))
+  if (Subtarget->hasMips32() && N->getValueType(0) == MVT::i32 &&
+      SelectMadd(N, &DAG))
     return SDValue(N, 0);
 
   return SDValue();
@@ -407,7 +408,8 @@ static SDValue PerformSUBECombine(SDNode *N, SelectionDAG& DAG,
   if (DCI.isBeforeLegalize())
     return SDValue();
 
-  if (Subtarget->hasMips32() && SelectMsub(N, &DAG))
+  if (Subtarget->hasMips32() && N->getValueType(0) == MVT::i32 &&
+      SelectMsub(N, &DAG))
     return SDValue(N, 0);
 
   return SDValue();
