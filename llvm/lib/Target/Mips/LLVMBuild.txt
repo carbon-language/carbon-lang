@@ -19,6 +19,7 @@
 type = TargetGroup
 name = Mips
 parent = Target
+has_asmprinter = 1
 has_jit = 1
 
 [component_1]

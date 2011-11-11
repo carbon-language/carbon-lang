@@ -198,10 +198,18 @@ class TargetGroupComponentInfo(ComponentInfo):
         kwargs['add_to_library_groups'] = items.get_list(
             'add_to_library_groups')
         kwargs['has_jit'] = items.get_optional_bool('has_jit', False)
+        kwargs['has_asmprinter'] = items.get_optional_bool('has_asmprinter',
+                                                           False)
+        kwargs['has_asmparser'] = items.get_optional_bool('has_asmparser',
+                                                          False)
+        kwargs['has_disassembler'] = items.get_optional_bool('has_disassembler',
+                                                             False)
         return TargetGroupComponentInfo(subpath, **kwargs)
 
     def __init__(self, subpath, name, parent, required_libraries = [],
-                 add_to_library_groups = [], has_jit = False):
+                 add_to_library_groups = [], has_jit = False,
+                 has_asmprinter = False, has_asmparser = False,
+                 has_disassembler = False):
         ComponentInfo.__init__(self, subpath, name, [], parent)
 
         # The names of the library components which are required when linking
@@ -214,6 +222,15 @@ class TargetGroupComponentInfo(ComponentInfo):
 
         # Whether or not this target supports the JIT.
         self.has_jit = bool(has_jit)
+
+        # Whether or not this target defines an assembly printer.
+        self.has_asmprinter = bool(has_asmprinter)
+
+        # Whether or not this target defines an assembly parser.
+        self.has_asmparser = bool(has_asmparser)
+
+        # Whether or not this target defines an disassembler.
+        self.has_disassembler = bool(has_disassembler)
 
         # Whether or not this target is enabled. This is set in response to
         # configuration parameters.
@@ -238,9 +255,10 @@ class TargetGroupComponentInfo(ComponentInfo):
         if self.add_to_library_groups:
             print >>result, 'add_to_library_groups = %s' % ' '.join(
                 self.add_to_library_groups)
-        if self.has_jit:
-            print >>result, 'has_jit = %s' % ' '.join(
-                int(self.has_jit))
+        for bool_key in ('has_asmparser', 'has_asmprinter', 'has_disassembler',
+                         'has_jit'):
+            if getattr(self, bool_key):
+                print >>result, '%s = 1' % (bool_key,)
         return result.getvalue()
 
     def get_llvmconfig_component_name(self):

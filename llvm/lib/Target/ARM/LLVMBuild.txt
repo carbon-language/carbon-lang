@@ -19,6 +19,9 @@
 type = TargetGroup
 name = ARM
 parent = Target
+has_asmparser = 1
+has_asmprinter = 1
+has_disassembler = 1
 has_jit = 1
 
 [component_1]

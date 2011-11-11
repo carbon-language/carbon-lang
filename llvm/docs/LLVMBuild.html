@@ -292,6 +292,12 @@ required_libraries = Archive BitReader Core Support TransformUtils
       <p>Components with this type use the LibraryGroup properties in addition
       to:</p>
       <ul>
+        <li><i>has_asmparser</i> <b>[optional]</b> <b>[boolean]</b>
+          <p>Whether this target defines an assembly parser.</p></li>
+        <li><i>has_asmprinter</i> <b>[optional]</b> <b>[boolean]</b>
+          <p>Whether this target defines an assembly printer.</p></li>
+        <li><i>has_disassembler</i> <b>[optional]</b> <b>[boolean]</b>
+          <p>Whether this target defines a disassembler.</p></li>
         <li><i>has_jit</i> <b>[optional]</b> <b>[boolean]</b>
           <p>Whether this target supports JIT compilation.</p></li>
       </ul>

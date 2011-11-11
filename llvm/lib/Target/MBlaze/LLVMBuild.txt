@@ -19,6 +19,9 @@
 type = TargetGroup
 name = MBlaze
 parent = Target
+has_asmparser = 1
+has_asmprinter = 1
+has_disassembler = 1
 
 [component_1]
 type = Library
