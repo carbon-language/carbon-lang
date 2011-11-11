@@ -626,7 +626,7 @@ LoadResult DiagLoader::readDiagnosticBlock(llvm::BitstreamCursor &Stream,
         llvm::StringRef RetStr;
         if (readString(TopDiags, RetStr, "FIXIT", Record, BlobStart, BlobLen))
           return Failure;
-        D->FixIts.push_back(std::make_pair(SR, createCXString(RetStr, false)));
+        D->FixIts.push_back(std::make_pair(SR, createCXString(RetStr)));
         continue;        
       }
         
