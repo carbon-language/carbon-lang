@@ -518,6 +518,7 @@ uint32_t X86FrameLowering::getCompactUnwindEncoding(MachineFunction &MF) const {
 
       CFAOffset = 0;
       memset(SavedRegs, 0, sizeof(SavedRegs));
+      SavedRegIdx = 6;
       InstrOffset += MoveInstrSize;
     } else if (Opc == SubtractInstr) {
       if (StackAdjust)
