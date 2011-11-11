@@ -1491,17 +1491,49 @@ bool ARMFastISel::SelectSelect(const Instruction *I) {
   if (CondReg == 0) return false;
   unsigned Op1Reg = getRegForValue(I->getOperand(1));
   if (Op1Reg == 0) return false;
-  unsigned Op2Reg = getRegForValue(I->getOperand(2));
-  if (Op2Reg == 0) return false;
 
-  unsigned CmpOpc = isThumb2 ? ARM::t2TSTri : ARM::TSTri;
+  // Check to see if we can use an immediate in the conditional move.
+  int Imm = 0;
+  bool UseImm = false;
+  bool isNegativeImm = false;
+  if (const ConstantInt *ConstInt = dyn_cast<ConstantInt>(I->getOperand(2))) {
+    assert (VT == MVT::i32 && "Expecting an i32.");
+    Imm = (int)ConstInt->getValue().getZExtValue();
+    if (Imm < 0) {
+      isNegativeImm = true;
+      Imm = ~Imm;
+    }
+    UseImm = isThumb2 ? (ARM_AM::getT2SOImmVal(Imm) != -1) :
+      (ARM_AM::getSOImmVal(Imm) != -1);
+  }
+
+  unsigned Op2Reg;
+  if (!UseImm) {
+    Op2Reg = getRegForValue(I->getOperand(2));
+    if (Op2Reg == 0) return false;
+  }
+
+  unsigned CmpOpc = isThumb2 ? ARM::t2CMPri : ARM::CMPri;
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(CmpOpc))
-                  .addReg(CondReg).addImm(1));
+                  .addReg(CondReg).addImm(0));
+
+  unsigned MovCCOpc;
+  if (!UseImm) {
+    MovCCOpc = isThumb2 ? ARM::t2MOVCCr : ARM::MOVCCr;
+  } else {
+    if (!isNegativeImm) {
+      MovCCOpc = isThumb2 ? ARM::t2MOVCCi : ARM::MOVCCi;
+    } else {
+      MovCCOpc = isThumb2 ? ARM::t2MVNCCi : ARM::MVNCCi;
+    }
+  }
   unsigned ResultReg = createResultReg(RC);
-  unsigned MovCCOpc = isThumb2 ? ARM::t2MOVCCr : ARM::MOVCCr;
-  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(MovCCOpc), ResultReg)
-    .addReg(Op1Reg).addReg(Op2Reg)
-    .addImm(ARMCC::EQ).addReg(ARM::CPSR);
+  if (!UseImm)
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(MovCCOpc), ResultReg)
+    .addReg(Op2Reg).addReg(Op1Reg).addImm(ARMCC::NE).addReg(ARM::CPSR);
+  else
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(MovCCOpc), ResultReg)
+    .addReg(Op1Reg).addImm(Imm).addImm(ARMCC::EQ).addReg(ARM::CPSR);
   UpdateValueMap(I, ResultReg);
   return true;
 }
