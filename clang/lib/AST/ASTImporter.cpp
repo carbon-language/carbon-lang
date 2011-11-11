@@ -3220,6 +3220,17 @@ Decl *ASTNodeImporter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
 
     // Check for consistency of superclasses.
     DeclarationName FromSuperName, ToSuperName;
+    
+    // If the superclass hasn't been imported yet, do so before checking.
+    ObjCInterfaceDecl *DSuperClass = D->getSuperClass();
+    ObjCInterfaceDecl *ToIfaceSuperClass = ToIface->getSuperClass();
+    
+    if (DSuperClass && !ToIfaceSuperClass) {
+      Decl *ImportedSuperClass = Importer.Import(DSuperClass);
+      ObjCInterfaceDecl *ImportedSuperIface = cast<ObjCInterfaceDecl>(ImportedSuperClass);
+      ToIface->setSuperClass(ImportedSuperIface);
+    }
+
     if (D->getSuperClass())
       FromSuperName = Importer.Import(D->getSuperClass()->getDeclName());
     if (ToIface->getSuperClass())
