@@ -201,10 +201,6 @@ class SCCPSolver : public InstVisitor<SCCPSolver> {
 
   SmallVector<BasicBlock*, 64>  BBWorkList;  // The BasicBlock work list
 
-  /// UsersOfOverdefinedPHIs - Keep track of any users of PHI nodes that are not
-  /// overdefined, despite the fact that the PHI node is overdefined.
-  std::multimap<PHINode*, Instruction*> UsersOfOverdefinedPHIs;
-
   /// KnownFeasibleEdges - Entries in this set are edges which have already had
   /// PHI nodes retriggered.
   typedef std::pair<BasicBlock*, BasicBlock*> Edge;
@@ -466,33 +462,6 @@ private:
     if (BBExecutable.count(I->getParent()))   // Inst is executable?
       visit(*I);
   }
-  
-  /// RemoveFromOverdefinedPHIs - If I has any entries in the
-  /// UsersOfOverdefinedPHIs map for PN, remove them now.
-  void RemoveFromOverdefinedPHIs(Instruction *I, PHINode *PN) {
-    if (UsersOfOverdefinedPHIs.empty()) return;
-    typedef std::multimap<PHINode*, Instruction*>::iterator ItTy;
-    std::pair<ItTy, ItTy> Range = UsersOfOverdefinedPHIs.equal_range(PN);
-    for (ItTy It = Range.first, E = Range.second; It != E;) {
-      if (It->second == I)
-        UsersOfOverdefinedPHIs.erase(It++);
-      else
-        ++It;
-    }
-  }
-
-  /// InsertInOverdefinedPHIs - Insert an entry in the UsersOfOverdefinedPHIS
-  /// map for I and PN, but if one is there already, do not create another.
-  /// (Duplicate entries do not break anything directly, but can lead to
-  /// exponential growth of the table in rare cases.)
-  void InsertInOverdefinedPHIs(Instruction *I, PHINode *PN) {
-    typedef std::multimap<PHINode*, Instruction*>::iterator ItTy;
-    std::pair<ItTy, ItTy> Range = UsersOfOverdefinedPHIs.equal_range(PN);
-    for (ItTy J = Range.first, E = Range.second; J != E; ++J)
-      if (J->second == I)
-        return;
-    UsersOfOverdefinedPHIs.insert(std::make_pair(PN, I));
-  }
 
 private:
   friend class InstVisitor<SCCPSolver>;
@@ -700,23 +669,8 @@ void SCCPSolver::visitPHINode(PHINode &PN) {
   if (PN.getType()->isStructTy())
     return markAnythingOverdefined(&PN);
   
-  if (getValueState(&PN).isOverdefined()) {
-    // There may be instructions using this PHI node that are not overdefined
-    // themselves.  If so, make sure that they know that the PHI node operand
-    // changed.
-    typedef std::multimap<PHINode*, Instruction*>::iterator ItTy;
-    std::pair<ItTy, ItTy> Range = UsersOfOverdefinedPHIs.equal_range(&PN);
-    
-    if (Range.first == Range.second)
-      return;
-    
-    SmallVector<Instruction*, 16> Users;
-    for (ItTy I = Range.first, E = Range.second; I != E; ++I)
-      Users.push_back(I->second);
-    while (!Users.empty())
-      visit(Users.pop_back_val());
+  if (getValueState(&PN).isOverdefined())
     return;  // Quick exit
-  }
 
   // Super-extra-high-degree PHI nodes are unlikely to ever be marked constant,
   // and slow us down a lot.  Just mark them overdefined.
@@ -959,64 +913,6 @@ void SCCPSolver::visitBinaryOperator(Instruction &I) {
   }
 
 
-  // If both operands are PHI nodes, it is possible that this instruction has
-  // a constant value, despite the fact that the PHI node doesn't.  Check for
-  // this condition now.
-  if (PHINode *PN1 = dyn_cast<PHINode>(I.getOperand(0)))
-    if (PHINode *PN2 = dyn_cast<PHINode>(I.getOperand(1)))
-      if (PN1->getParent() == PN2->getParent()) {
-        // Since the two PHI nodes are in the same basic block, they must have
-        // entries for the same predecessors.  Walk the predecessor list, and
-        // if all of the incoming values are constants, and the result of
-        // evaluating this expression with all incoming value pairs is the
-        // same, then this expression is a constant even though the PHI node
-        // is not a constant!
-        LatticeVal Result;
-        for (unsigned i = 0, e = PN1->getNumIncomingValues(); i != e; ++i) {
-          LatticeVal In1 = getValueState(PN1->getIncomingValue(i));
-          BasicBlock *InBlock = PN1->getIncomingBlock(i);
-          LatticeVal In2 =getValueState(PN2->getIncomingValueForBlock(InBlock));
-
-          if (In1.isOverdefined() || In2.isOverdefined()) {
-            Result.markOverdefined();
-            break;  // Cannot fold this operation over the PHI nodes!
-          }
-          
-          if (In1.isConstant() && In2.isConstant()) {
-            Constant *V = ConstantExpr::get(I.getOpcode(), In1.getConstant(),
-                                            In2.getConstant());
-            if (Result.isUndefined())
-              Result.markConstant(V);
-            else if (Result.isConstant() && Result.getConstant() != V) {
-              Result.markOverdefined();
-              break;
-            }
-          }
-        }
-
-        // If we found a constant value here, then we know the instruction is
-        // constant despite the fact that the PHI nodes are overdefined.
-        if (Result.isConstant()) {
-          markConstant(IV, &I, Result.getConstant());
-          // Remember that this instruction is virtually using the PHI node
-          // operands. 
-          InsertInOverdefinedPHIs(&I, PN1);
-          InsertInOverdefinedPHIs(&I, PN2);
-          return;
-        }
-        
-        if (Result.isUndefined())
-          return;
-
-        // Okay, this really is overdefined now.  Since we might have
-        // speculatively thought that this was not overdefined before, and
-        // added ourselves to the UsersOfOverdefinedPHIs list for the PHIs,
-        // make sure to clean out any entries that we put there, for
-        // efficiency.
-        RemoveFromOverdefinedPHIs(&I, PN1);
-        RemoveFromOverdefinedPHIs(&I, PN2);
-      }
-
   markOverdefined(&I);
 }
 
@@ -1037,68 +933,6 @@ void SCCPSolver::visitCmpInst(CmpInst &I) {
   if (!V1State.isOverdefined() && !V2State.isOverdefined())
     return;
   
-  // If something is overdefined, use some tricks to avoid ending up and over
-  // defined if we can.
-  
-  // If both operands are PHI nodes, it is possible that this instruction has
-  // a constant value, despite the fact that the PHI node doesn't.  Check for
-  // this condition now.
-  if (PHINode *PN1 = dyn_cast<PHINode>(I.getOperand(0)))
-    if (PHINode *PN2 = dyn_cast<PHINode>(I.getOperand(1)))
-      if (PN1->getParent() == PN2->getParent()) {
-        // Since the two PHI nodes are in the same basic block, they must have
-        // entries for the same predecessors.  Walk the predecessor list, and
-        // if all of the incoming values are constants, and the result of
-        // evaluating this expression with all incoming value pairs is the
-        // same, then this expression is a constant even though the PHI node
-        // is not a constant!
-        LatticeVal Result;
-        for (unsigned i = 0, e = PN1->getNumIncomingValues(); i != e; ++i) {
-          LatticeVal In1 = getValueState(PN1->getIncomingValue(i));
-          BasicBlock *InBlock = PN1->getIncomingBlock(i);
-          LatticeVal In2 =getValueState(PN2->getIncomingValueForBlock(InBlock));
-
-          if (In1.isOverdefined() || In2.isOverdefined()) {
-            Result.markOverdefined();
-            break;  // Cannot fold this operation over the PHI nodes!
-          }
-          
-          if (In1.isConstant() && In2.isConstant()) {
-            Constant *V = ConstantExpr::getCompare(I.getPredicate(), 
-                                                   In1.getConstant(), 
-                                                   In2.getConstant());
-            if (Result.isUndefined())
-              Result.markConstant(V);
-            else if (Result.isConstant() && Result.getConstant() != V) {
-              Result.markOverdefined();
-              break;
-            }
-          }
-        }
-
-        // If we found a constant value here, then we know the instruction is
-        // constant despite the fact that the PHI nodes are overdefined.
-        if (Result.isConstant()) {
-          markConstant(&I, Result.getConstant());
-          // Remember that this instruction is virtually using the PHI node
-          // operands.
-          InsertInOverdefinedPHIs(&I, PN1);
-          InsertInOverdefinedPHIs(&I, PN2);
-          return;
-        }
-        
-        if (Result.isUndefined())
-          return;
-
-        // Okay, this really is overdefined now.  Since we might have
-        // speculatively thought that this was not overdefined before, and
-        // added ourselves to the UsersOfOverdefinedPHIs list for the PHIs,
-        // make sure to clean out any entries that we put there, for
-        // efficiency.
-        RemoveFromOverdefinedPHIs(&I, PN1);
-        RemoveFromOverdefinedPHIs(&I, PN2);
-      }
-
   markOverdefined(&I);
 }
 
