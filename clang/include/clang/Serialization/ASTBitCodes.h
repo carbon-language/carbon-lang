@@ -692,9 +692,9 @@ namespace clang {
       /// \brief C FILE typedef type
       SPECIAL_TYPE_FILE                        = 3,
       /// \brief C jmp_buf typedef type
-      SPECIAL_TYPE_jmp_buf                     = 4,
+      SPECIAL_TYPE_JMP_BUF                     = 4,
       /// \brief C sigjmp_buf typedef type
-      SPECIAL_TYPE_sigjmp_buf                  = 5,
+      SPECIAL_TYPE_SIGJMP_BUF                  = 5,
       /// \brief Objective-C "id" redefinition type
       SPECIAL_TYPE_OBJC_ID_REDEFINITION        = 6,
       /// \brief Objective-C "Class" redefinition type
