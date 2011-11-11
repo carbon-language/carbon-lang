@@ -1044,6 +1044,7 @@ public:
     return ForwardDecl->getInterface();
   }
   ObjCClassRef *getForwardDecl() { return ForwardDecl; }
+  const ObjCClassRef *getForwardDecl() const { return ForwardDecl; }
   void setClass(ASTContext &C, ObjCInterfaceDecl*const Cls,
                 const SourceLocation Locs);
 
