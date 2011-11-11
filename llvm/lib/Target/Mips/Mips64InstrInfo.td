@@ -51,6 +51,30 @@ class shift_rotate_imm64_32<bits<6> func, bits<5> isRotate, string instr_asm,
   shift_rotate_imm<func, isRotate, instr_asm, OpNode, imm32_63, shamt,
                    CPU64Regs>;
 
+// Jump and Link (Call)
+let isCall=1, hasDelaySlot=1,
+  // All calls clobber the non-callee saved registers...
+  Defs = [AT, V0, V1, A0, A1, A2, A3, T0, T1, T2, T3, T4, T5, T6, T7, T8, T9,
+          K0, K1, D0, D1, D2, D3, D4, D5, D6, D7, D8, D9], Uses = [GP] in {
+  class JumpLink64<bits<6> op, string instr_asm>:
+    FJ<op, (outs), (ins calltarget64:$target, variable_ops),
+       !strconcat(instr_asm, "\t$target"), [(MipsJmpLink imm:$target)],
+       IIBranch>;
+
+  class JumpLinkReg64<bits<6> op, bits<6> func, string instr_asm>:
+    FR<op, func, (outs), (ins CPU64Regs:$rs, variable_ops),
+       !strconcat(instr_asm, "\t$rs"),
+       [(MipsJmpLink CPU64Regs:$rs)], IIBranch> {
+    let rt = 0;
+    let rd = 31;
+    let shamt = 0;
+  }
+
+  class BranchLink64<string instr_asm>:
+    FI<0x1, (outs), (ins CPU64Regs:$rs, brtarget:$imm16, variable_ops),
+       !strconcat(instr_asm, "\t$rs, $imm16"), [], IIBranch>;
+}
+
 // Mul, Div
 class Mult64<bits<6> func, string instr_asm, InstrItinClass itin>:
   Mult<func, instr_asm, itin, CPU64Regs, [HI64, LO64]>;
@@ -123,6 +147,8 @@ defm ULD       : LoadM64<0x37, "uld",  load_u, 1>;
 defm USD       : StoreM64<0x3f, "usd", store_u, 1>;
 
 /// Jump and Branch Instructions
+def JAL64  : JumpLink64<0x03, "jal">;
+def JALR64 : JumpLinkReg64<0x00, 0x09, "jalr">;
 def BEQ64  : CBranch<0x04, "beq", seteq, CPU64Regs>;
 def BNE64  : CBranch<0x05, "bne", setne, CPU64Regs>;
 def BGEZ64 : CBranchZero<0x01, 1, "bgez", setge, CPU64Regs>;
