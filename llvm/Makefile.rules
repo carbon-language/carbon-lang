@@ -506,8 +506,12 @@ endif
 #--------------------------------------------------------------------
 # Full Paths To Compiled Tools and Utilities
 #--------------------------------------------------------------------
-EchoCmd  = $(ECHO) llvm[$(MAKELEVEL)]:
-Echo     = @$(EchoCmd)
+EchoCmd  := $(ECHO) llvm[$(MAKELEVEL)]:
+ifdef BUILD_DIRS_ONLY
+EchoCmd  := $(EchoCmd) "(build tools)":
+endif
+
+Echo     := @$(EchoCmd)
 ifndef LLVMAS
 LLVMAS   := $(LLVMToolDir)/llvm-as$(EXEEXT)
 endif
