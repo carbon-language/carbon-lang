@@ -1743,7 +1743,16 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_type
                             const dw_offset_t die_offset = method_die_offsets[i];
                             DWARFDebugInfoEntry *method_die = debug_info->GetDIEPtrWithCompileUnitHint (die_offset, &method_cu);
                             
-                            ResolveType (method_cu, method_die);
+                            if (method_die)
+                                ResolveType (method_cu, method_die);
+                            else
+                            {
+                                if (m_using_apple_tables)
+                                {
+                                    ReportError (".apple_objc accelerator table had bad die 0x%8.8x for '%s'\n",
+                                                 die_offset, class_str.c_str());
+                                }
+                            }            
                         }
                     }
                 }
@@ -2295,16 +2304,27 @@ SymbolFileDWARF::FindGlobalVariables (const ConstString &name, const lldb_privat
             const dw_offset_t die_offset = die_offsets[i];
             die = debug_info->GetDIEPtrWithCompileUnitHint (die_offset, &dwarf_cu);
 
-            sc.comp_unit = GetCompUnitForDWARFCompUnit(dwarf_cu, UINT32_MAX);
-            assert(sc.comp_unit != NULL);
-            
-            if (namespace_decl && !DIEIsInNamespace (namespace_decl, dwarf_cu, die))
-                continue;
+            if (die)
+            {
+                sc.comp_unit = GetCompUnitForDWARFCompUnit(dwarf_cu, UINT32_MAX);
+                assert(sc.comp_unit != NULL);
+                
+                if (namespace_decl && !DIEIsInNamespace (namespace_decl, dwarf_cu, die))
+                    continue;
 
-            ParseVariables(sc, dwarf_cu, LLDB_INVALID_ADDRESS, die, false, false, &variables);
+                ParseVariables(sc, dwarf_cu, LLDB_INVALID_ADDRESS, die, false, false, &variables);
 
-            if (variables.GetSize() - original_size >= max_matches)
-                break;
+                if (variables.GetSize() - original_size >= max_matches)
+                    break;
+            }
+            else
+            {
+                if (m_using_apple_tables)
+                {
+                    ReportError (".apple_names accelerator table had bad die 0x%8.8x for '%s'\n",
+                                 die_offset, name.GetCString());
+                }
+            }
         }
     }
 
@@ -2367,12 +2387,24 @@ SymbolFileDWARF::FindGlobalVariables(const RegularExpression& regex, bool append
         {
             const dw_offset_t die_offset = die_offsets[i];
             die = debug_info->GetDIEPtrWithCompileUnitHint (die_offset, &dwarf_cu);
-            sc.comp_unit = GetCompUnitForDWARFCompUnit(dwarf_cu, UINT32_MAX);
+            
+            if (die)
+            {
+                sc.comp_unit = GetCompUnitForDWARFCompUnit(dwarf_cu, UINT32_MAX);
 
-            ParseVariables(sc, dwarf_cu, LLDB_INVALID_ADDRESS, die, false, false, &variables);
+                ParseVariables(sc, dwarf_cu, LLDB_INVALID_ADDRESS, die, false, false, &variables);
 
-            if (variables.GetSize() - original_size >= max_matches)
-                break;
+                if (variables.GetSize() - original_size >= max_matches)
+                    break;
+            }
+            else
+            {
+                if (m_using_apple_tables)
+                {
+                    ReportError (".apple_names accelerator table had bad die 0x%8.8x for regex '%s'\n",
+                                 die_offset, regex.GetText());
+                }
+            }            
         }
     }
 
@@ -2677,7 +2709,8 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                 num_matches = m_apple_names_ap->FindByName (name_cstr, die_offsets);
                 for (uint32_t i = 0; i < num_matches; i++)
                 {
-                    const DWARFDebugInfoEntry *die = info->GetDIEPtrWithCompileUnitHint (die_offsets[i], &dwarf_cu);
+                    const dw_offset_t die_offset = die_offsets[i];
+                    const DWARFDebugInfoEntry *die = info->GetDIEPtrWithCompileUnitHint (die_offset, &dwarf_cu);
                     if (die)
                     {
                         if (namespace_decl && !DIEIsInNamespace (namespace_decl, dwarf_cu, die))
@@ -2685,6 +2718,11 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                         
                         ResolveFunction (dwarf_cu, die, sc_list);
                     }
+                    else
+                    {
+                        ReportError (".apple_names accelerator table had bad die 0x%8.8x for '%s'\n",
+                                     die_offset, name_cstr);
+                    }                                    
                 }
             }
             else
@@ -2700,13 +2738,19 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                     
                     for (uint32_t i = 0; i < num_matches; i++)
                     {
-                        const DWARFDebugInfoEntry* die = info->GetDIEPtrWithCompileUnitHint (die_offsets[i], &dwarf_cu);
+                        const dw_offset_t die_offset = die_offsets[i];
+                        const DWARFDebugInfoEntry* die = info->GetDIEPtrWithCompileUnitHint (die_offset, &dwarf_cu);
                         if (die)
                         {
                             const char *die_name = die->GetName(this, dwarf_cu);
                             if (ObjCLanguageRuntime::IsPossibleObjCMethodName(die_name))
                                 ResolveFunction (dwarf_cu, die, sc_list);
                         }
+                        else
+                        {
+                            ReportError (".apple_names accelerator table had bad die 0x%8.8x for '%s'\n",
+                                         die_offset, name_cstr);
+                        }                                    
                     }
                     die_offsets.clear();
                 }
@@ -2728,7 +2772,8 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                     
                     for (uint32_t i = 0; i < num_matches; i++)
                     {
-                        const DWARFDebugInfoEntry* die = info->GetDIEPtrWithCompileUnitHint (die_offsets[i], &dwarf_cu);
+                        const dw_offset_t die_offset = die_offsets[i];
+                        const DWARFDebugInfoEntry* die = info->GetDIEPtrWithCompileUnitHint (die_offset, &dwarf_cu);
                         if (die)
                         {
                             if (namespace_decl && !DIEIsInNamespace (namespace_decl, dwarf_cu, die))
@@ -2745,6 +2790,11 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                             // If we get to here, the die is good, and we should add it:
                             ResolveFunction (dwarf_cu, die, sc_list);
                         }
+                        else
+                        {
+                            ReportError (".apple_names accelerator table had bad die 0x%8.8x for '%s'\n",
+                                         die_offset, name_cstr);
+                        }                                    
                     }
                     die_offsets.clear();
                 }
@@ -2967,17 +3017,29 @@ SymbolFileDWARF::FindTypes(const SymbolContext& sc, const ConstString &name, con
             const dw_offset_t die_offset = die_offsets[i];
             die = debug_info->GetDIEPtrWithCompileUnitHint (die_offset, &dwarf_cu);
 
-            if (namespace_decl && !DIEIsInNamespace (namespace_decl, dwarf_cu, die))
-                continue;
-            
-            Type *matching_type = ResolveType (dwarf_cu, die);
-            if (matching_type)
+            if (die)
             {
-                // We found a type pointer, now find the shared pointer form our type list
-                types.InsertUnique (TypeSP (matching_type));
-                if (types.GetSize() >= max_matches)
-                    break;
+                if (namespace_decl && !DIEIsInNamespace (namespace_decl, dwarf_cu, die))
+                    continue;
+                
+                Type *matching_type = ResolveType (dwarf_cu, die);
+                if (matching_type)
+                {
+                    // We found a type pointer, now find the shared pointer form our type list
+                    types.InsertUnique (TypeSP (matching_type));
+                    if (types.GetSize() >= max_matches)
+                        break;
+                }
             }
+            else
+            {
+                if (m_using_apple_tables)
+                {
+                    ReportError (".apple_types accelerator table had bad die 0x%8.8x for '%s'\n",
+                                 die_offset, name.GetCString());
+                }
+            }            
+
         }
         return types.GetSize() - initial_types_size;
     }
@@ -3038,15 +3100,27 @@ SymbolFileDWARF::FindNamespace (const SymbolContext& sc,
                 const dw_offset_t die_offset = die_offsets[i];
                 die = debug_info->GetDIEPtrWithCompileUnitHint (die_offset, &dwarf_cu);
                 
-                if (parent_namespace_decl && !DIEIsInNamespace (parent_namespace_decl, dwarf_cu, die))
-                    continue;
-
-                clang::NamespaceDecl *clang_namespace_decl = ResolveNamespaceDIE (dwarf_cu, die);
-                if (clang_namespace_decl)
+                if (die)
                 {
-                    namespace_decl.SetASTContext (GetClangASTContext().getASTContext());
-                    namespace_decl.SetNamespaceDecl (clang_namespace_decl);
+                    if (parent_namespace_decl && !DIEIsInNamespace (parent_namespace_decl, dwarf_cu, die))
+                        continue;
+
+                    clang::NamespaceDecl *clang_namespace_decl = ResolveNamespaceDIE (dwarf_cu, die);
+                    if (clang_namespace_decl)
+                    {
+                        namespace_decl.SetASTContext (GetClangASTContext().getASTContext());
+                        namespace_decl.SetNamespaceDecl (clang_namespace_decl);
+                    }
                 }
+                else
+                {
+                    if (m_using_apple_tables)
+                    {
+                        ReportError (".apple_namespaces accelerator table had bad die 0x%8.8x for '%s'\n",
+                                     die_offset, name.GetCString());
+                    }
+                }            
+
             }
         }
     }
@@ -3748,31 +3822,43 @@ SymbolFileDWARF::FindDefinitionTypeForDIE (DWARFCompileUnit* cu,
             const dw_offset_t die_offset = die_offsets[i];
             type_die = debug_info->GetDIEPtrWithCompileUnitHint (die_offset, &type_cu);
             
-            if (type_die != die && type_die->Tag() == type_tag)
+            if (type_die)
             {
-                // Hold off on comparing parent DIE tags until
-                // we know what happens with stuff in namespaces
-                // for gcc and clang...
-                //DWARFDebugInfoEntry *parent_die = die->GetParent();
-                //DWARFDebugInfoEntry *parent_type_die = type_die->GetParent();
-                //if (parent_die->Tag() == parent_type_die->Tag())
+                if (type_die != die && type_die->Tag() == type_tag)
                 {
-                    Type *resolved_type = ResolveType (type_cu, type_die, false);
-                    if (resolved_type && resolved_type != DIE_IS_BEING_PARSED)
+                    // Hold off on comparing parent DIE tags until
+                    // we know what happens with stuff in namespaces
+                    // for gcc and clang...
+                    //DWARFDebugInfoEntry *parent_die = die->GetParent();
+                    //DWARFDebugInfoEntry *parent_type_die = type_die->GetParent();
+                    //if (parent_die->Tag() == parent_type_die->Tag())
                     {
-                        DEBUG_PRINTF ("resolved 0x%8.8llx (cu 0x%8.8llx) from %s to 0x%8.8llx (cu 0x%8.8llx)\n",
-                                      MakeUserID(die->GetOffset()), 
-                                      MakeUserID(curr_cu->GetOffset()), 
-                                      m_obj_file->GetFileSpec().GetFilename().AsCString(),
-                                      MakeUserID(type_die->GetOffset()), 
-                                      MakeUserID(type_cu->GetOffset()));
-                        
-                        m_die_to_type[die] = resolved_type;
-                        type_sp = resolved_type;
-                        break;
+                        Type *resolved_type = ResolveType (type_cu, type_die, false);
+                        if (resolved_type && resolved_type != DIE_IS_BEING_PARSED)
+                        {
+                            DEBUG_PRINTF ("resolved 0x%8.8llx (cu 0x%8.8llx) from %s to 0x%8.8llx (cu 0x%8.8llx)\n",
+                                          MakeUserID(die->GetOffset()), 
+                                          MakeUserID(curr_cu->GetOffset()), 
+                                          m_obj_file->GetFileSpec().GetFilename().AsCString(),
+                                          MakeUserID(type_die->GetOffset()), 
+                                          MakeUserID(type_cu->GetOffset()));
+                            
+                            m_die_to_type[die] = resolved_type;
+                            type_sp = resolved_type;
+                            break;
+                        }
                     }
                 }
             }
+            else
+            {
+                if (m_using_apple_tables)
+                {
+                    ReportError (".apple_types accelerator table had bad die 0x%8.8x for '%s'\n",
+                                 die_offset, type_name.GetCString());
+                }
+            }            
+
         }
     }
     return type_sp;
@@ -5000,12 +5086,23 @@ SymbolFileDWARF::ParseVariablesForContext (const SymbolContext& sc)
                     {
                         const dw_offset_t die_offset = die_offsets[i];
                         die = debug_info->GetDIEPtrWithCompileUnitHint (die_offset, &match_dwarf_cu);
-                        VariableSP var_sp (ParseVariableDIE(sc, dwarf_cu, die, LLDB_INVALID_ADDRESS));
-                        if (var_sp)
+                        if (die)
                         {
-                            variables->AddVariableIfUnique (var_sp);
-                            ++vars_added;
+                            VariableSP var_sp (ParseVariableDIE(sc, dwarf_cu, die, LLDB_INVALID_ADDRESS));
+                            if (var_sp)
+                            {
+                                variables->AddVariableIfUnique (var_sp);
+                                ++vars_added;
+                            }
                         }
+                        else
+                        {
+                            if (m_using_apple_tables)
+                            {
+                                ReportError (".apple_names accelerator table had bad die 0x%8.8x\n", die_offset);
+                            }
+                        }            
+
                     }
                 }
             }
