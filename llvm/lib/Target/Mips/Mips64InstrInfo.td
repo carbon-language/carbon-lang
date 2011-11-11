@@ -171,6 +171,12 @@ def MFLO64 : MoveFromLOHI<0x12, "mflo", CPU64Regs, [LO64]>;
 def DCLZ : CountLeading0<0x24, "dclz", CPU64Regs>;
 def DCLO : CountLeading1<0x25, "dclo", CPU64Regs>;
 
+def LEA_ADDiu64 : EffectiveAddress<"addiu\t$rt, $addr", CPU64Regs, mem_ea_64>;
+
+let Uses = [SP_64] in
+def DynAlloc64 : EffectiveAddress<"daddiu\t$rt, $addr", CPU64Regs, mem_ea_64>,
+                 Requires<[IsN64]>;
+
 //===----------------------------------------------------------------------===//
 //  Arbitrary patterns that map to one or more instructions
 //===----------------------------------------------------------------------===//
@@ -199,6 +205,9 @@ defm : SetlePats<CPU64Regs, SLT64, SLTu64>;
 defm : SetgtPats<CPU64Regs, SLT64, SLTu64>;
 defm : SetgePats<CPU64Regs, SLT64, SLTu64>;
 defm : SetgeImmPats<CPU64Regs, SLTi64, SLTiu64>;
+
+// select MipsDynAlloc
+def : Pat<(MipsDynAlloc addr:$f), (DynAlloc64 addr:$f)>, Requires<[IsN64]>;
 
 // truncate
 def : Pat<(i32 (trunc CPU64Regs:$src)),

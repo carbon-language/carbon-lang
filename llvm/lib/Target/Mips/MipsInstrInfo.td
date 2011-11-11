@@ -39,8 +39,8 @@ def SDT_MipsDivRem       : SDTypeProfile<0, 2,
 
 def SDT_MipsThreadPointer : SDTypeProfile<1, 0, [SDTCisPtrTy<0>]>;
 
-def SDT_MipsDynAlloc    : SDTypeProfile<1, 1, [SDTCisVT<0, i32>,
-                                               SDTCisVT<1, iPTR>]>;
+def SDT_MipsDynAlloc    : SDTypeProfile<1, 1, [SDTCisVT<0, iPTR>,
+                                               SDTCisSameAs<0, 1>]>;
 def SDT_Sync             : SDTypeProfile<0, 1, [SDTCisVT<0, i32>]>;
 
 def SDT_Ext : SDTypeProfile<1, 3, [SDTCisInt<0>, SDTCisSameAs<0, 1>,
@@ -165,6 +165,12 @@ def mem64 : Operand<i64> {
 def mem_ea : Operand<i32> {
   let PrintMethod = "printMemOperandEA";
   let MIOperandInfo = (ops CPURegs, simm16);
+  let EncoderMethod = "getMemEncoding";
+}
+
+def mem_ea_64 : Operand<i64> {
+  let PrintMethod = "printMemOperandEA";
+  let MIOperandInfo = (ops CPU64Regs, simm16_64);
   let EncoderMethod = "getMemEncoding";
 }
 
@@ -526,9 +532,9 @@ class MoveToLOHI<bits<6> func, string instr_asm, RegisterClass RC,
   let Defs = DefRegs;
 }
 
-class EffectiveAddress<string instr_asm> :
-  FMem<0x09, (outs CPURegs:$rt), (ins mem_ea:$addr),
-     instr_asm, [(set CPURegs:$rt, addr:$addr)], IIAlu>;
+class EffectiveAddress<string instr_asm, RegisterClass RC, Operand Mem> :
+  FMem<0x09, (outs RC:$rt), (ins Mem:$addr),
+     instr_asm, [(set RC:$rt, addr:$addr)], IIAlu>;
 
 // Count Leading Ones/Zeros in Word
 class CountLeading0<bits<6> func, string instr_asm, RegisterClass RC>:
@@ -799,13 +805,13 @@ let addr=0 in
 // instructions. The same not happens for stack address copies, so an
 // add op with mem ComplexPattern is used and the stack address copy
 // can be matched. It's similar to Sparc LEA_ADDRi
-def LEA_ADDiu : EffectiveAddress<"addiu\t$rt, $addr">;
+def LEA_ADDiu : EffectiveAddress<"addiu\t$rt, $addr", CPURegs, mem_ea>;
 
 // DynAlloc node points to dynamically allocated stack space.
 // $sp is added to the list of implicitly used registers to prevent dead code
 // elimination from removing instructions that modify $sp.
 let Uses = [SP] in
-def DynAlloc : EffectiveAddress<"addiu\t$rt, $addr">;
+def DynAlloc : EffectiveAddress<"addiu\t$rt, $addr", CPURegs, mem_ea>;
 
 // MADD*/MSUB*
 def MADD  : MArithR<0, "madd", MipsMAdd, 1>;

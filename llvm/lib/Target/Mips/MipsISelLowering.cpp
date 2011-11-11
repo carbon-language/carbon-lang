@@ -1295,6 +1295,7 @@ LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG) const
 {
   MachineFunction &MF = DAG.getMachineFunction();
   MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
+  unsigned SP = IsN64 ? Mips::SP_64 : Mips::SP;
 
   assert(getTargetMachine().getFrameLowering()->getStackAlignment() >=
          cast<ConstantSDNode>(Op.getOperand(2).getNode())->getZExtValue() &&
@@ -1306,20 +1307,19 @@ LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG) const
   DebugLoc dl = Op.getDebugLoc();
 
   // Get a reference from Mips stack pointer
-  SDValue StackPointer = DAG.getCopyFromReg(Chain, dl, Mips::SP, MVT::i32);
+  SDValue StackPointer = DAG.getCopyFromReg(Chain, dl, SP, getPointerTy());
 
   // Subtract the dynamic size from the actual stack size to
   // obtain the new stack size.
-  SDValue Sub = DAG.getNode(ISD::SUB, dl, MVT::i32, StackPointer, Size);
+  SDValue Sub = DAG.getNode(ISD::SUB, dl, getPointerTy(), StackPointer, Size);
 
   // The Sub result contains the new stack start address, so it
   // must be placed in the stack pointer register.
-  Chain = DAG.getCopyToReg(StackPointer.getValue(1), dl, Mips::SP, Sub,
-                           SDValue());
+  Chain = DAG.getCopyToReg(StackPointer.getValue(1), dl, SP, Sub, SDValue());
 
   // This node always has two return values: a new stack pointer
   // value and a chain
-  SDVTList VTLs = DAG.getVTList(MVT::i32, MVT::Other);
+  SDVTList VTLs = DAG.getVTList(getPointerTy(), MVT::Other);
   SDValue Ptr = DAG.getFrameIndex(MipsFI->getDynAllocFI(), getPointerTy());
   SDValue Ops[] = { Chain, Ptr, Chain.getValue(1) };
 
