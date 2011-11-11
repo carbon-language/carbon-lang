@@ -81,6 +81,28 @@ class Mult64<bits<6> func, string instr_asm, InstrItinClass itin>:
 class Div64<SDNode op, bits<6> func, string instr_asm, InstrItinClass itin>:
   Div<op, func, instr_asm, itin, CPU64Regs, [HI64, LO64]>;
 
+multiclass Atomic2Ops64<PatFrag Op, string Opstr> {
+  def #NAME# : Atomic2Ops<Op, Opstr, CPU64Regs, CPURegs>, Requires<[NotN64]>;
+  def _P8    : Atomic2Ops<Op, Opstr, CPU64Regs, CPU64Regs>, Requires<[IsN64]>;
+}
+
+multiclass AtomicCmpSwap64<PatFrag Op, string Width>  {
+  def #NAME# : AtomicCmpSwap<Op, Width, CPU64Regs, CPURegs>, Requires<[NotN64]>;
+  def _P8    : AtomicCmpSwap<Op, Width, CPU64Regs, CPU64Regs>,
+               Requires<[IsN64]>;
+}
+
+let usesCustomInserter = 1, Predicates = [HasMips64] in {
+  defm ATOMIC_LOAD_ADD_I64  : Atomic2Ops64<atomic_load_add_64, "load_add_64">;
+  defm ATOMIC_LOAD_SUB_I64  : Atomic2Ops64<atomic_load_sub_64, "load_sub_64">;
+  defm ATOMIC_LOAD_AND_I64  : Atomic2Ops64<atomic_load_and_64, "load_and_64">;
+  defm ATOMIC_LOAD_OR_I64   : Atomic2Ops64<atomic_load_or_64, "load_or_64">;
+  defm ATOMIC_LOAD_XOR_I64  : Atomic2Ops64<atomic_load_xor_64, "load_xor_64">;
+  defm ATOMIC_LOAD_NAND_I64 : Atomic2Ops64<atomic_load_nand_64, "load_nand_64">;
+  defm ATOMIC_SWAP_I64      : Atomic2Ops64<atomic_swap_64, "swap_64">;
+  defm ATOMIC_CMP_SWAP_I64  : AtomicCmpSwap64<atomic_cmp_swap_64, "64">;
+}
+
 //===----------------------------------------------------------------------===//
 // Instruction definition
 //===----------------------------------------------------------------------===//
@@ -145,6 +167,12 @@ defm USH64     : StoreM64<0x29, "ush", truncstorei16_u, 1>;
 defm USW64     : StoreM64<0x2b, "usw", truncstorei32_u, 1>;
 defm ULD       : LoadM64<0x37, "uld",  load_u, 1>;
 defm USD       : StoreM64<0x3f, "usd", store_u, 1>;
+
+/// Load-linked, Store-conditional
+def LLD    : LLBase<0x34, "lld", CPU64Regs, mem>, Requires<[NotN64]>;
+def LLD_P8 : LLBase<0x34, "lld", CPU64Regs, mem64>, Requires<[IsN64]>;
+def SCD    : SCBase<0x3c, "scd", CPU64Regs, mem>, Requires<[NotN64]>;
+def SCD_P8 : SCBase<0x3c, "scd", CPU64Regs, mem64>, Requires<[IsN64]>;
 
 /// Jump and Branch Instructions
 def JAL64  : JumpLink64<0x03, "jal">;
