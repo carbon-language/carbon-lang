@@ -4179,6 +4179,22 @@ bool ARMAsmParser::shouldOmitCCOutOperand(StringRef Mnemonic,
   return false;
 }
 
+static bool isDataTypeToken(StringRef Tok) {
+  return Tok == ".8" || Tok == ".16" || Tok == ".32" || Tok == ".64" ||
+    Tok == ".i8" || Tok == ".i16" || Tok == ".i32" || Tok == ".i64" ||
+    Tok == ".u8" || Tok == ".u16" || Tok == ".u32" || Tok == ".u64" ||
+    Tok == ".s8" || Tok == ".s16" || Tok == ".s32" || Tok == ".s64" ||
+    Tok == ".p8" || Tok == ".p16" || Tok == ".f32" || Tok == ".f64" ||
+    Tok == ".f" || Tok == ".d";
+}
+
+// FIXME: This bit should probably be handled via an explicit match class
+// in the .td files that matches the suffix instead of having it be
+// a literal string token the way it is now.
+static bool doesIgnoreDataTypeSuffix(StringRef Mnemonic, StringRef DT) {
+  return Mnemonic.startswith("vldm") || Mnemonic.startswith("vstm");
+}
+
 /// Parse an arm instruction mnemonic followed by its operands.
 bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
@@ -4282,6 +4298,12 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
     Start = Next;
     Next = Name.find('.', Start + 1);
     StringRef ExtraToken = Name.slice(Start, Next);
+
+    // Some NEON instructions have an optional datatype suffix that is
+    // completely ignored. Check for that.
+    if (isDataTypeToken(ExtraToken) &&
+        doesIgnoreDataTypeSuffix(Mnemonic, ExtraToken))
+      continue;
 
     if (ExtraToken != ".n") {
       SMLoc Loc = SMLoc::getFromPointer(NameLoc.getPointer() + Start);

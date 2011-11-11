@@ -1699,7 +1699,7 @@ void Record::checkName() {
   assert(TypedName && "Record name is not typed!");
   RecTy *Type = TypedName->getType();
   if (dynamic_cast<StringRecTy *>(Type) == 0) {
-    llvm_unreachable("Record name is not a string!");
+    throw "Record name is not a string!";
   }
 }
 
