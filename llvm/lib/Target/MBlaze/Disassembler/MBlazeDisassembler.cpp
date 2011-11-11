@@ -13,13 +13,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "MBlaze.h"
-#include "MBlazeInstrInfo.h"
 #include "MBlazeDisassembler.h"
 
 #include "llvm/MC/EDInstInfo.h"
 #include "llvm/MC/MCDisassembler.h"
-#include "llvm/MC/MCDisassembler.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCInstrDesc.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/TargetRegistry.h"
