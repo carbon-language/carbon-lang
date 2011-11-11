@@ -563,9 +563,9 @@ unsigned ARMFastISel::ARMMaterializeInt(const Constant *C, EVT VT) {
   // Use MVN to emit negative constants.
   if (VT == MVT::i32 && Subtarget->hasV6T2Ops() && CI->isNegative()) {
     unsigned Imm = (unsigned)~(CI->getSExtValue());
-    bool EncodeImm = isThumb2 ? (ARM_AM::getT2SOImmVal(Imm) != -1) :
+    bool UseImm = isThumb2 ? (ARM_AM::getT2SOImmVal(Imm) != -1) :
       (ARM_AM::getSOImmVal(Imm) != -1);
-    if (EncodeImm) {
+    if (UseImm) {
       unsigned Opc = isThumb2 ? ARM::t2MVNi : ARM::MVNi;
       unsigned ImmReg = createResultReg(TLI.getRegClassFor(MVT::i32));
       AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
@@ -1232,25 +1232,25 @@ bool ARMFastISel::ARMEmitCmp(const Value *Src1Value, const Value *Src2Value,
 
   // Check to see if the 2nd operand is a constant that we can encode directly
   // in the compare.
-  int EncodedImm = 0;
-  bool EncodeImm = false;
+  int Imm = 0;
+  bool UseImm = false;
   bool isNegativeImm = false;
   if (const ConstantInt *ConstInt = dyn_cast<ConstantInt>(Src2Value)) {
     if (SrcVT == MVT::i32 || SrcVT == MVT::i16 || SrcVT == MVT::i8 ||
         SrcVT == MVT::i1) {
       const APInt &CIVal = ConstInt->getValue();
-      EncodedImm = (isZExt) ? (int)CIVal.getZExtValue() : (int)CIVal.getSExtValue();
-      if (EncodedImm < 0) {
+      Imm = (isZExt) ? (int)CIVal.getZExtValue() : (int)CIVal.getSExtValue();
+      if (Imm < 0) {
         isNegativeImm = true;
-        EncodedImm = -EncodedImm;
+        Imm = -Imm;
       }
-      EncodeImm = isThumb2 ? (ARM_AM::getT2SOImmVal(EncodedImm) != -1) :
-        (ARM_AM::getSOImmVal(EncodedImm) != -1);
+      UseImm = isThumb2 ? (ARM_AM::getT2SOImmVal(Imm) != -1) :
+        (ARM_AM::getSOImmVal(Imm) != -1);
     }
   } else if (const ConstantFP *ConstFP = dyn_cast<ConstantFP>(Src2Value)) {
     if (SrcVT == MVT::f32 || SrcVT == MVT::f64)
       if (ConstFP->isZero() && !ConstFP->isNegative())
-        EncodeImm = true;
+        UseImm = true;
   }
 
   unsigned CmpOpc;
@@ -1261,11 +1261,11 @@ bool ARMFastISel::ARMEmitCmp(const Value *Src1Value, const Value *Src2Value,
     // TODO: Verify compares.
     case MVT::f32:
       isICmp = false;
-      CmpOpc = EncodeImm ? ARM::VCMPEZS : ARM::VCMPES;
+      CmpOpc = UseImm ? ARM::VCMPEZS : ARM::VCMPES;
       break;
     case MVT::f64:
       isICmp = false;
-      CmpOpc = EncodeImm ? ARM::VCMPEZD : ARM::VCMPED;
+      CmpOpc = UseImm ? ARM::VCMPEZD : ARM::VCMPED;
       break;
     case MVT::i1:
     case MVT::i8:
@@ -1274,12 +1274,12 @@ bool ARMFastISel::ARMEmitCmp(const Value *Src1Value, const Value *Src2Value,
     // Intentional fall-through.
     case MVT::i32:
       if (isThumb2) {
-        if (!EncodeImm)
+        if (!UseImm)
           CmpOpc = ARM::t2CMPrr;
         else
           CmpOpc = isNegativeImm ? ARM::t2CMNzri : ARM::t2CMPri;
       } else {
-        if (!EncodeImm)
+        if (!UseImm)
           CmpOpc = ARM::CMPrr;
         else
           CmpOpc = isNegativeImm ? ARM::CMNzri : ARM::CMPri;
@@ -1291,7 +1291,7 @@ bool ARMFastISel::ARMEmitCmp(const Value *Src1Value, const Value *Src2Value,
   if (SrcReg1 == 0) return false;
 
   unsigned SrcReg2;
-  if (!EncodeImm) {
+  if (!UseImm) {
     SrcReg2 = getRegForValue(Src2Value);
     if (SrcReg2 == 0) return false;
   }
@@ -1302,14 +1302,14 @@ bool ARMFastISel::ARMEmitCmp(const Value *Src1Value, const Value *Src2Value,
     ResultReg = ARMEmitIntExt(SrcVT, SrcReg1, MVT::i32, isZExt);
     if (ResultReg == 0) return false;
     SrcReg1 = ResultReg;
-    if (!EncodeImm) {
+    if (!UseImm) {
       ResultReg = ARMEmitIntExt(SrcVT, SrcReg2, MVT::i32, isZExt);
       if (ResultReg == 0) return false;
       SrcReg2 = ResultReg;
     }
   }
 
-  if (!EncodeImm) {
+  if (!UseImm) {
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(CmpOpc))
                     .addReg(SrcReg1).addReg(SrcReg2));
@@ -1320,7 +1320,7 @@ bool ARMFastISel::ARMEmitCmp(const Value *Src1Value, const Value *Src2Value,
 
     // Only add immediate for icmp as the immediate for fcmp is an implicit 0.0.
     if (isICmp)
-      MIB.addImm(EncodedImm);
+      MIB.addImm(Imm);
     AddOptionalDefs(MIB);
   }
 
