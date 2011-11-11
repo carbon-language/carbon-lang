@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "MipsMCTargetDesc.h"
 #include "MipsMCAsmInfo.h"
+#include "MipsMCTargetDesc.h"
 #include "InstPrinter/MipsInstPrinter.h"
 #include "llvm/MC/MachineLocation.h"
 #include "llvm/MC/MCCodeGenInfo.h"
@@ -139,6 +139,9 @@ extern "C" void LLVMInitializeMipsTargetMC() {
   TargetRegistry::RegisterMCAsmBackend(TheMipselTarget, createMipsAsmBackend);
   TargetRegistry::RegisterMCAsmBackend(TheMips64Target, createMipsAsmBackend);
   TargetRegistry::RegisterMCAsmBackend(TheMips64elTarget, createMipsAsmBackend);
+
+  TargetRegistry::RegisterMCCodeEmitter(TheMipsTarget, createMipsMCCodeEmitter);
+  TargetRegistry::RegisterMCCodeEmitter(TheMipselTarget, createMipsMCCodeEmitter);
 
   // Register the MC subtarget info.
   TargetRegistry::RegisterMCSubtargetInfo(TheMipsTarget,

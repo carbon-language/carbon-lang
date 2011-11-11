@@ -138,7 +138,13 @@ def NotN64      : Predicate<"!Subtarget.isABI_N64()">;
 //===----------------------------------------------------------------------===//
 
 // Instruction operand types
-def brtarget    : Operand<OtherVT>;
+def jmptarget   : Operand<OtherVT> {
+  let EncoderMethod = "getJumpTargetOpValue";
+}
+def brtarget    : Operand<OtherVT> {
+  let EncoderMethod = "getBranchTargetOpValue";
+  let OperandType = "OPERAND_PCREL";
+}
 def calltarget  : Operand<i32>;
 def calltarget64: Operand<i64>;
 def simm16      : Operand<i32>;
@@ -449,7 +455,7 @@ class SetCC_I<bits<6> op, string instr_asm, PatFrag cond_op, Operand Od,
 // Unconditional branch
 let isBranch=1, isTerminator=1, isBarrier=1, hasDelaySlot = 1 in
 class JumpFJ<bits<6> op, string instr_asm>:
-  FJ<op, (outs), (ins brtarget:$target),
+  FJ<op, (outs), (ins jmptarget:$target),
      !strconcat(instr_asm, "\t$target"), [(br bb:$target)], IIBranch>;
 
 let isBranch=1, isTerminator=1, isBarrier=1, rd=0, hasDelaySlot = 1 in

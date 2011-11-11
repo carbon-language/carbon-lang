@@ -16,12 +16,14 @@
 
 namespace llvm {
 class MCAsmBackend;
-class MCInstrInfo;
 class MCCodeEmitter;
 class MCContext;
+class MCInstrInfo;
+class MCObjectWriter;
 class MCSubtargetInfo;
 class StringRef;
 class Target;
+class raw_ostream;
 
 extern Target TheMipsTarget;
 extern Target TheMipselTarget;
@@ -33,6 +35,7 @@ MCCodeEmitter *createMipsMCCodeEmitter(const MCInstrInfo &MCII,
                                        MCContext &Ctx);
 
 MCAsmBackend *createMipsAsmBackend(const Target &T, StringRef TT);
+
 } // End llvm namespace
 
 // Defines symbolic names for Mips registers.  This defines a mapping from

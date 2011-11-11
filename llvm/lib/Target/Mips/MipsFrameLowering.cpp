@@ -14,6 +14,7 @@
 #include "MipsFrameLowering.h"
 #include "MipsInstrInfo.h"
 #include "MipsMachineFunction.h"
+#include "MCTargetDesc/MipsBaseInfo.h"
 #include "llvm/Function.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"

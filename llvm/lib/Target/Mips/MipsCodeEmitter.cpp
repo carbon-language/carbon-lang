@@ -18,26 +18,26 @@
 #include "MipsRelocations.h"
 #include "MipsSubtarget.h"
 #include "MipsTargetMachine.h"
-#include "llvm/Constants.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Function.h"
-#include "llvm/PassManager.h"
+#include "MCTargetDesc/MipsBaseInfo.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/JITCodeEmitter.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
+#include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/ADT/Statistic.h"
+#include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/Function.h"
+#include "llvm/PassManager.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #ifndef NDEBUG
 #include <iomanip>
 #endif
-
-#include "llvm/CodeGen/MachineOperand.h"
 
 using namespace llvm;
 
@@ -66,9 +66,9 @@ class MipsCodeEmitter : public MachineFunctionPass {
   public:
     MipsCodeEmitter(TargetMachine &tm, JITCodeEmitter &mce) :
       MachineFunctionPass(ID), JTI(0),
-        II((const MipsInstrInfo *) tm.getInstrInfo()),
-        TD(tm.getTargetData()), TM(tm), MCE(mce), MCPEs(0), MJTEs(0),
-        IsPIC(TM.getRelocationModel() == Reloc::PIC_) {
+      II((const MipsInstrInfo *) tm.getInstrInfo()),
+      TD(tm.getTargetData()), TM(tm), MCE(mce), MCPEs(0), MJTEs(0),
+      IsPIC(TM.getRelocationModel() == Reloc::PIC_) {
     }
 
     bool runOnMachineFunction(MachineFunction &MF);
@@ -91,7 +91,7 @@ class MipsCodeEmitter : public MachineFunctionPass {
     /// Routines that handle operands which add machine relocations which are
     /// fixed up by the relocation stage.
     void emitGlobalAddress(const GlobalValue *GV, unsigned Reloc,
-                                bool MayNeedFarStub) const;
+                           bool MayNeedFarStub) const;
     void emitExternalSymbolAddress(const char *ES, unsigned Reloc) const;
     void emitConstPoolAddress(unsigned CPI, unsigned Reloc) const;
     void emitJumpTableAddress(unsigned JTIndex, unsigned Reloc) const;
@@ -105,6 +105,9 @@ class MipsCodeEmitter : public MachineFunctionPass {
     unsigned getRelocation(const MachineInstr &MI,
                            const MachineOperand &MO) const;
 
+    unsigned getJumpTargetOpValue(const MachineInstr &MI, unsigned OpNo) const;
+
+    unsigned getBranchTargetOpValue(const MachineInstr &MI, unsigned OpNo) const;
     unsigned getMemEncoding(const MachineInstr &MI, unsigned OpNo) const;
     unsigned getSizeExtEncoding(const MachineInstr &MI, unsigned OpNo) const;
     unsigned getSizeInsEncoding(const MachineInstr &MI, unsigned OpNo) const;
@@ -165,23 +168,34 @@ unsigned MipsCodeEmitter::getRelocation(const MachineInstr &MI,
   return Mips::reloc_mips_lo;
 }
 
+unsigned MipsCodeEmitter::getJumpTargetOpValue(const MachineInstr &MI,
+                                               unsigned OpNo) const {
+  // FIXME: implement
+  return 0;
+}
+
+unsigned MipsCodeEmitter::getBranchTargetOpValue(const MachineInstr &MI,
+                                                 unsigned OpNo) const {
+  // FIXME: implement
+  return 0;
+}
+
 unsigned MipsCodeEmitter::getMemEncoding(const MachineInstr &MI,
-                                          unsigned OpNo) const {
+                                         unsigned OpNo) const {
   // Base register is encoded in bits 20-16, offset is encoded in bits 15-0.
   assert(MI.getOperand(OpNo).isReg());
   unsigned RegBits = getMachineOpValue(MI, MI.getOperand(OpNo)) << 16;
-  return
-    (getMachineOpValue(MI, MI.getOperand(OpNo+1)) & 0xFFFF) | RegBits;
+  return (getMachineOpValue(MI, MI.getOperand(OpNo+1)) & 0xFFFF) | RegBits;
 }
 
 unsigned MipsCodeEmitter::getSizeExtEncoding(const MachineInstr &MI,
-                                          unsigned OpNo) const {
+                                             unsigned OpNo) const {
   // size is encoded as size-1.
   return getMachineOpValue(MI, MI.getOperand(OpNo)) - 1;
 }
 
 unsigned MipsCodeEmitter::getSizeInsEncoding(const MachineInstr &MI,
-                                          unsigned OpNo) const {
+                                             unsigned OpNo) const {
   // size is encoded as pos+size-1.
   return getMachineOpValue(MI, MI.getOperand(OpNo-1)) +
          getMachineOpValue(MI, MI.getOperand(OpNo)) - 1;
@@ -190,7 +204,7 @@ unsigned MipsCodeEmitter::getSizeInsEncoding(const MachineInstr &MI,
 /// getMachineOpValue - Return binary encoding of operand. If the machine
 /// operand requires relocation, record the relocation and return zero.
 unsigned MipsCodeEmitter::getMachineOpValue(const MachineInstr &MI,
-                                           const MachineOperand &MO) const {
+                                            const MachineOperand &MO) const {
   if (MO.isReg())
     return MipsRegisterInfo::getRegisterNumbering(MO.getReg());
   else if (MO.isImm())
@@ -217,9 +231,10 @@ unsigned MipsCodeEmitter::getMachineOpValue(const MachineInstr &MI,
 }
 
 void MipsCodeEmitter::emitGlobalAddress(const GlobalValue *GV, unsigned Reloc,
-                                                bool MayNeedFarStub) const {
+                                        bool MayNeedFarStub) const {
   MCE.addRelocation(MachineRelocation::getGV(MCE.getCurrentPCOffset(), Reloc,
-                             const_cast<GlobalValue *>(GV), 0, MayNeedFarStub));
+                                             const_cast<GlobalValue *>(GV), 0,
+                                             MayNeedFarStub));
 }
 
 void MipsCodeEmitter::emitGlobalAddressUnaligned(const GlobalValue *GV,
@@ -248,7 +263,7 @@ emitJumpTableAddress(unsigned JTIndex, unsigned Reloc) const {
 }
 
 void MipsCodeEmitter::emitMachineBasicBlock(MachineBasicBlock *BB,
-                                           unsigned Reloc) const {
+                                            unsigned Reloc) const {
   MCE.addRelocation(MachineRelocation::getBB(MCE.getCurrentPCOffset(),
                                              Reloc, BB));
 }
@@ -395,7 +410,7 @@ void MipsCodeEmitter::emitWordLE(unsigned Word) {
 /// createMipsJITCodeEmitterPass - Return a pass that emits the collected Mips
 /// code to the specified MCE object.
 FunctionPass *llvm::createMipsJITCodeEmitterPass(MipsTargetMachine &TM,
-    JITCodeEmitter &JCE) {
+                                                 JITCodeEmitter &JCE) {
   return new MipsCodeEmitter(TM, JCE);
 }
 

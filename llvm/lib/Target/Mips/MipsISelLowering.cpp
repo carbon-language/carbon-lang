@@ -24,6 +24,7 @@
 #include "llvm/Intrinsics.h"
 #include "llvm/CallingConv.h"
 #include "InstPrinter/MipsInstPrinter.h"
+#include "MCTargetDesc/MipsBaseInfo.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
