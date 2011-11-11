@@ -149,6 +149,11 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
   unsigned NewReg = 0;
   int NewImm = 0;
   bool ATUsed;
+  unsigned GP = STI.isABI_N64() ? Mips::GP_64 : Mips::GP;
+  unsigned T9 = STI.isABI_N64() ? Mips::T9_64 : Mips::T9;
+  unsigned ADDu = STI.isABI_N64() ? Mips::DADDu : Mips::ADDu;
+  unsigned ADDiu = STI.isABI_N64() ? Mips::DADDiu : Mips::ADDiu;
+  unsigned LUi = STI.isABI_N64() ? Mips::LUi64 : Mips::LUi;
 
   // First, compute final stack size.
   unsigned RegSize = STI.isGP32bit() ? 4 : 8;
@@ -165,10 +170,25 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
   
   BuildMI(MBB, MBBI, dl, TII.get(Mips::NOREORDER));
 
-  // TODO: check need from GP here.
+  // Emit instructions that set $gp using the the value of $t9.
+  // O32 uses the directive .cpload while N32/64 requires three instructions to
+  // do this.  
+  // TODO: Do not emit these instructions if no instructions use $gp.
   if (isPIC && STI.isABI_O32())
     BuildMI(MBB, MBBI, dl, TII.get(Mips::CPLOAD))
       .addReg(RegInfo->getPICCallReg());
+  else if (STI.isABI_N64() || (isPIC && STI.isABI_N32())) {
+    //  lui     $28,%hi(%neg(%gp_rel(fname)))
+    //  addu    $28,$28,$25
+    //  addiu   $28,$28,%lo(%neg(%gp_rel(fname)))
+    const GlobalValue *FName = MF.getFunction();
+    BuildMI(MBB, MBBI, dl, TII.get(LUi), GP)
+      .addGlobalAddress(FName, 0, MipsII::MO_GPOFF_HI);
+    BuildMI(MBB, MBBI, dl, TII.get(ADDu), GP).addReg(GP).addReg(T9);
+    BuildMI(MBB, MBBI, dl, TII.get(ADDiu), GP).addReg(GP)
+      .addGlobalAddress(FName, 0, MipsII::MO_GPOFF_LO);
+  }
+
   BuildMI(MBB, MBBI, dl, TII.get(Mips::NOMACRO));
 
   // No need to allocate space on the stack.
