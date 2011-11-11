@@ -2213,6 +2213,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   Args.AddLastArg(CmdArgs, options::OPT_dM);
   Args.AddLastArg(CmdArgs, options::OPT_dD);
+  
+  // Handle serialized diagnostics.
+  if (Arg *A = Args.getLastArg(options::OPT__serialize_diags)) {
+    CmdArgs.push_back("-serialize-diagnostic-file");
+    CmdArgs.push_back(Args.MakeArgString(A->getValue(Args)));
+  }
 
   // Forward -Xclang arguments to -cc1, and -mllvm arguments to the LLVM option
   // parser.

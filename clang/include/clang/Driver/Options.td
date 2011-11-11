@@ -846,6 +846,8 @@ def _relocatable_pch : Flag<"--relocatable-pch">,
 def _resource_EQ : Joined<"--resource=">, Alias<fcompile_resource_EQ>;
 def _resource : Separate<"--resource">, Alias<fcompile_resource_EQ>;
 def _save_temps : Flag<"--save-temps">, Alias<save_temps>;
+def _serialize_diags : Separate<"--serialize-diagnostics">, Flags<[DriverOption]>,
+  HelpText<"Serialize compiler diagnostics to a file">;
 def _shared : Flag<"--shared">, Alias<shared>;
 def _signed_char : Flag<"--signed-char">, Alias<fsigned_char>;
 def _specs_EQ : Joined<"--specs=">, Alias<specs_EQ>;
