@@ -13,3 +13,12 @@ define void @test_neon_vector_add_2xi8() nounwind {
   store <2 x i8> %3, <2 x i8>* @i8_res
   ret void
 }
+
+define void @test_neon_ld_st_volatile_with_ashr_2xi8() {
+; CHECK: test_neon_ld_st_volatile_with_ashr_2xi8:
+  %1 = load volatile <2 x i8>* @i8_src1
+  %2 = load volatile <2 x i8>* @i8_src2
+  %3 = ashr <2 x i8> %1, %2
+  store volatile <2 x i8> %3, <2 x i8>* @i8_res
+  ret void
+}
