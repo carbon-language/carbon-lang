@@ -374,4 +374,19 @@ def err_pp_include_in_arc_cf_code_audited : Error<
 def err_pp_eof_in_arc_cf_code_audited : Error<
   "'#pragma clang arc_cf_code_audited' was not ended within this file">;
 
+// Module map parsing
+def err_mmap_unknown_token : Error<"skipping stray token">;
+def err_mmap_expected_module : Error<"expected module declaration">;
+def err_mmap_expected_module_after_explicit : Error<
+  "expected 'module' keyword after 'explicit'">;
+def err_mmap_expected_module_name : Error<"expected module name">;
+def err_mmap_expected_lbrace : Error<"expected '{' to start module '%0'">;
+def err_mmap_expected_rbrace : Error<"expected '}'">;
+def note_mmap_lbrace_match : Note<"to match this '{'">;
+def err_mmap_expected_member : Error<
+  "expected umbrella header, header, or submodule">;
+def err_mmap_expected_header : Error<"expected a header name after '%0'">;
+def err_mmap_module_redefinition : Error<
+  "redefinition of module '%0'">;
+def note_mmap_prev_definition : Note<"previously defined here">;
 }

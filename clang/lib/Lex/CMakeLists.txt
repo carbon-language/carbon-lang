@@ -11,6 +11,7 @@ add_clang_library(clangLex
   LiteralSupport.cpp
   MacroArgs.cpp
   MacroInfo.cpp
+  ModuleMap.cpp
   PPCaching.cpp
   PPDirectives.cpp
   PPExpressions.cpp

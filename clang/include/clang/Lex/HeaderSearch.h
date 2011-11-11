@@ -15,6 +15,7 @@
 #define LLVM_CLANG_LEX_HEADERSEARCH_H
 
 #include "clang/Lex/DirectoryLookup.h"
+#include "clang/Lex/ModuleMap.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/Support/Allocator.h"
@@ -151,7 +152,6 @@ class HeaderSearch {
   llvm::StringMap<std::pair<unsigned, unsigned>, llvm::BumpPtrAllocator>
     LookupFileCache;
 
-
   /// FrameworkMap - This is a collection mapping a framework or subframework
   /// name like "Carbon" to the Carbon.framework directory.
   llvm::StringMap<const DirectoryEntry *, llvm::BumpPtrAllocator>
@@ -161,6 +161,12 @@ class HeaderSearch {
   /// headermaps.  This vector owns the headermap.
   std::vector<std::pair<const FileEntry*, const HeaderMap*> > HeaderMaps;
 
+  /// \brief The mapping between modules and headers.
+  ModuleMap ModMap;
+  
+  /// \brief Describes whether a given directory has a module map in it.
+  llvm::DenseMap<const DirectoryEntry *, bool> DirectoryHasModuleMap;
+  
   /// \brief Uniqued set of framework names, which is used to track which 
   /// headers were included as framework headers.
   llvm::StringSet<llvm::BumpPtrAllocator> FrameworkNames;
@@ -347,6 +353,20 @@ public:
   
   void IncrementFrameworkLookupCount() { ++NumFrameworkLookups; }
 
+  /// \brief Determine whether there is a module map that may map the header
+  /// with the given file name to a (sub)module.
+  ///
+  /// \param Filename The name of the file.
+  ///
+  /// \param Root The "root" directory, at which we should stop looking for
+  /// module maps.
+  bool hasModuleMap(StringRef Filename, const DirectoryEntry *Root);
+  
+  /// \brief Retrieve the module that corresponds to the given file, if any.
+  ///
+  /// FIXME: This will need to be generalized for submodules.
+  StringRef getModuleForHeader(const FileEntry *File);
+  
   typedef std::vector<HeaderFileInfo>::const_iterator header_file_iterator;
   header_file_iterator header_file_begin() const { return FileInfo.begin(); }
   header_file_iterator header_file_end() const { return FileInfo.end(); }

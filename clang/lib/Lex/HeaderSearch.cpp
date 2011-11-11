@@ -13,6 +13,7 @@
 
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/HeaderMap.h"
+#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "llvm/Support/FileSystem.h"
@@ -37,7 +38,8 @@ HeaderFileInfo::getControllingMacro(ExternalIdentifierLookup *External) {
 ExternalHeaderFileInfoSource::~ExternalHeaderFileInfoSource() {}
 
 HeaderSearch::HeaderSearch(FileManager &FM, DiagnosticsEngine &Diags)
-  : FileMgr(FM), Diags(Diags), FrameworkMap(64) 
+  : FileMgr(FM), Diags(Diags), FrameworkMap(64), 
+    ModMap(FileMgr, *Diags.getClient()) 
 {
   AngledDirIdx = 0;
   SystemDirIdx = 0;
@@ -192,6 +194,24 @@ const FileEntry *DirectoryLookup::LookupFile(
       RelativePath->clear();
       RelativePath->append(Filename.begin(), Filename.end());
     }
+    
+    // If we have a module map that might map this header, load it and
+    // check whether we'll have a suggestion for a module.
+    if (SuggestedModule && HS.hasModuleMap(TmpDir, getDir())) {
+      const FileEntry *File = HS.getFileMgr().getFile(TmpDir.str(), 
+                                                      /*openFile=*/false);
+      if (!File)
+        return File;
+      
+      // If there is a module that corresponds to this header, 
+      // suggest it.
+      StringRef Module = HS.getModuleForHeader(File);
+      if (!Module.empty() && Module != BuildingModule)
+        *SuggestedModule = Module;
+      
+      return File;
+    }
+    
     return HS.getFileMgr().getFile(TmpDir.str(), /*openFile=*/true);
   }
 
@@ -688,3 +708,73 @@ size_t HeaderSearch::getTotalMemory() const {
 StringRef HeaderSearch::getUniqueFrameworkName(StringRef Framework) {
   return FrameworkNames.GetOrCreateValue(Framework).getKey();
 }
+
+bool HeaderSearch::hasModuleMap(StringRef FileName, 
+                                const DirectoryEntry *Root) {
+  llvm::SmallVector<const DirectoryEntry *, 2> FixUpDirectories;
+  
+  StringRef DirName = FileName;
+  do {
+    // Get the parent directory name.
+    DirName = llvm::sys::path::parent_path(DirName);
+    if (DirName.empty())
+      return false;
+    
+    // Determine whether this directory exists.
+    const DirectoryEntry *Dir = FileMgr.getDirectory(DirName);
+    if (!Dir)
+      return false;
+    
+    llvm::DenseMap<const DirectoryEntry *, bool>::iterator
+      KnownDir = DirectoryHasModuleMap.find(Dir);
+    if (KnownDir != DirectoryHasModuleMap.end()) {
+      // We have seen this directory before. If it has no module map file,
+      // we're done.
+      if (!KnownDir->second)
+        return false;
+      
+      // All of the directories we stepped through inherit this module map
+      // file.
+      for (unsigned I = 0, N = FixUpDirectories.size(); I != N; ++I)
+        DirectoryHasModuleMap[FixUpDirectories[I]] = true;
+      
+      return true;
+    }
+    
+    // We have not checked for a module map file in this directory yet;
+    // do so now.
+    llvm::SmallString<128> ModuleMapFileName;
+    ModuleMapFileName += Dir->getName();
+    llvm::sys::path::append(ModuleMapFileName, "module.map");
+    if (const FileEntry *ModuleMapFile = FileMgr.getFile(ModuleMapFileName)) {
+      // We have found a module map file. Try to parse it.
+      if (!ModMap.parseModuleMapFile(ModuleMapFile)) {
+        // This directory has a module map.
+        DirectoryHasModuleMap[Dir] = true;
+        
+        // All of the directories we stepped through inherit this module map
+        // file.
+        for (unsigned I = 0, N = FixUpDirectories.size(); I != N; ++I)
+          DirectoryHasModuleMap[FixUpDirectories[I]] = true;
+        
+        return true;
+      }
+    }
+
+    // This directory did not have a module map file.
+    DirectoryHasModuleMap[Dir] = false;
+    
+    // Keep track of all of the directories we checked, so we can mark them as
+    // having module maps if we eventually do find a module map.
+    FixUpDirectories.push_back(Dir);
+  } while (true);
+  
+  return false;
+}
+
+StringRef HeaderSearch::getModuleForHeader(const FileEntry *File) {
+  // FIXME: Actually look for the corresponding module for this header.
+  return StringRef();
+}
+
+
