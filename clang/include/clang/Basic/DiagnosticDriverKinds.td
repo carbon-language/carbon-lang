@@ -101,7 +101,8 @@ def warn_drv_input_file_unused : Warning<
 def warn_drv_preprocessed_input_file_unused : Warning<
   "%0: previously preprocessed input unused when '%1' is present">;
 def warn_drv_unused_argument : Warning<
-  "argument unused during compilation: '%0'">;
+  "argument unused during compilation: '%0'">,
+  InGroup<DiagGroup<"unused-command-line-argument">>;
 def warn_drv_pipe_ignored_with_save_temps : Warning<
   "-pipe ignored because -save-temps specified">;
 def warn_drv_not_using_clang_cpp : Warning<
