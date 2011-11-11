@@ -17,9 +17,26 @@
 namespace clang {
   class FileEntry;
   class ObjCPropertyDecl;
+  class ObjCClassDecl;
 
 namespace cxindex {
   class IndexingContext;
+
+struct DeclInfo : public CXIdxDeclInfo {
+  CXIdxEntityInfo CXEntInfo;
+};
+
+struct TagDeclInfo : public DeclInfo {
+  CXIdxTagDeclInfo CXTagDeclInfo;
+};
+
+struct ObjCContainerDeclInfo : public DeclInfo {
+  CXIdxObjCContainerDeclInfo CXObjCContDeclInfo;
+};
+
+struct ObjCCategoryDeclInfo : public ObjCContainerDeclInfo {
+  CXIdxObjCCategoryDeclInfo CXObjCCatDeclInfo;
+};
 
 class IndexingContext {
   ASTContext *Ctx;
@@ -28,10 +45,10 @@ class IndexingContext {
   unsigned IndexOptions;
   CXTranslationUnit CXTU;
   
-  typedef llvm::DenseMap<const FileEntry *, CXIdxFile> FileMapTy;
-  typedef llvm::DenseMap<const NamedDecl *, CXIdxEntity> EntityMapTy;
-  typedef llvm::DenseMap<const void *, CXIdxMacro> MacroMapTy;
-  typedef llvm::DenseMap<const DeclContext *, CXIdxContainer> ContainerMapTy;
+  typedef llvm::DenseMap<const FileEntry *, CXIdxClientFile> FileMapTy;
+  typedef llvm::DenseMap<const NamedDecl *, CXIdxClientEntity> EntityMapTy;
+  typedef llvm::DenseMap<const void *, CXIdxClientMacro> MacroMapTy;
+  typedef llvm::DenseMap<const DeclContext *, CXIdxClientContainer> ContainerMapTy;
   FileMapTy FileMap;
   EntityMapTy EntityMap;
   MacroMapTy MacroMap;
@@ -40,14 +57,23 @@ class IndexingContext {
   SmallVector<DeclGroupRef, 8> TUDeclsInObjCContainer;
   
   llvm::SmallString<256> StrScratch;
+  unsigned StrAdapterCount;
 
   class StrAdapter {
     llvm::SmallString<256> &Scratch;
+    IndexingContext &IdxCtx;
 
   public:
-    StrAdapter(IndexingContext *indexCtx)
-      : Scratch(indexCtx->StrScratch) {}
-    ~StrAdapter() { Scratch.clear(); }
+    StrAdapter(IndexingContext &indexCtx)
+      : Scratch(indexCtx.StrScratch), IdxCtx(indexCtx) {
+      ++IdxCtx.StrAdapterCount;
+    }
+
+    ~StrAdapter() {
+      --IdxCtx.StrAdapterCount;
+      if (IdxCtx.StrAdapterCount == 0)
+        Scratch.clear();
+    }
 
     const char *toCStr(StringRef Str);
 
@@ -65,11 +91,13 @@ public:
   IndexingContext(CXClientData clientData, IndexerCallbacks &indexCallbacks,
                   unsigned indexOptions, CXTranslationUnit cxTU)
     : Ctx(0), ClientData(clientData), CB(indexCallbacks),
-      IndexOptions(indexOptions), CXTU(cxTU) { }
+      IndexOptions(indexOptions), CXTU(cxTU), StrAdapterCount(0) { }
 
   ASTContext &getASTContext() const { return *Ctx; }
 
   void setASTContext(ASTContext &ctx);
+
+  void enteredMainFile(const FileEntry *File);
 
   void ppIncludedFile(SourceLocation hashLoc,
                       StringRef filename, const FileEntry *File,
@@ -117,13 +145,20 @@ public:
   
   void handleTypedef(const TypedefDecl *D);
 
+  void handleObjCClass(const ObjCClassDecl *D);
   void handleObjCInterface(const ObjCInterfaceDecl *D);
+  void handleObjCImplementation(const ObjCImplementationDecl *D);
   
   void defineObjCInterface(const ObjCInterfaceDecl *D);
+
+  void handleObjCForwardProtocol(const ObjCProtocolDecl *D,
+                                 SourceLocation Loc,
+                                 bool isRedeclaration);
 
   void handleObjCProtocol(const ObjCProtocolDecl *D);
 
   void handleObjCCategory(const ObjCCategoryDecl *D);
+  void handleObjCCategoryImpl(const ObjCCategoryImplDecl *D);
 
   void handleObjCMethod(const ObjCMethodDecl *D);
 
@@ -135,13 +170,10 @@ public:
                        const Expr *E = 0,
                        CXIdxEntityRefKind Kind = CXIdxEntityRef_Direct);
   
-  void invokeStartedTagTypeDefinition(const TagDecl *D);
-
-  void invokeStartedStatementBody(const NamedDecl *D, const DeclContext *DC);
+  void startContainer(const NamedDecl *D, bool isStmtBody = false,
+                      const DeclContext *DC = 0);
   
-  void invokeStartedObjCContainer(const ObjCContainerDecl *D);
-
-  void invokeEndedContainer(const DeclContext *DC);
+  void endContainer(const DeclContext *DC);
 
   bool isNotFromSourceFile(SourceLocation Loc) const;
 
@@ -152,44 +184,40 @@ public:
     TUDeclsInObjCContainer.push_back(DG);
   }
 
-  void translateLoc(SourceLocation Loc, CXIdxFile *indexFile, CXFile *file,
+  void translateLoc(SourceLocation Loc, CXIdxClientFile *indexFile, CXFile *file,
                     unsigned *line, unsigned *column, unsigned *offset);
 
 private:
-  void addEntityInMap(const NamedDecl *D, CXIdxEntity entity);
+  void handleDecl(const NamedDecl *D,
+                  SourceLocation Loc, CXCursor Cursor,
+                  bool isRedeclaration, bool isDefinition,
+                  DeclInfo &DInfo);
 
-  void addContainerInMap(const DeclContext *DC, CXIdxContainer container);
+  void handleObjCContainer(const ObjCContainerDecl *D,
+                           SourceLocation Loc, CXCursor Cursor,
+                           bool isForwardRef,
+                           bool isRedeclaration,
+                           bool isImplementation,
+                           ObjCContainerDeclInfo &ContDInfo);
 
-  CXIdxEntity getIndexEntity(const NamedDecl *D);
+  void addEntityInMap(const NamedDecl *D, CXIdxClientEntity entity);
+
+  void addContainerInMap(const DeclContext *DC, CXIdxClientContainer container);
+
+  CXIdxClientEntity getClientEntity(const NamedDecl *D);
 
   const NamedDecl *getEntityDecl(const NamedDecl *D) const;
 
-  CXIdxContainer getIndexContainer(const NamedDecl *D) const {
+  CXIdxClientContainer getIndexContainer(const NamedDecl *D) const {
     return getIndexContainerForDC(D->getDeclContext());
   }
 
   const DeclContext *getScopedContext(const DeclContext *DC) const;
-  CXIdxContainer getIndexContainerForDC(const DeclContext *DC) const;
+  CXIdxClientContainer getIndexContainerForDC(const DeclContext *DC) const;
 
-  CXIdxFile getIndexFile(const FileEntry *File);
+  CXIdxClientFile getIndexFile(const FileEntry *File);
   
   CXIdxLoc getIndexLoc(SourceLocation Loc) const;
-
-  void getIndexedEntityInfo(const NamedDecl *D,
-                            CXIdxIndexedEntityInfo &IdxEntityInfo,
-                            CXIdxEntityInfo &EntityInfo,
-                            CXIdxIndexedDeclInfo &IdxDeclInfo,
-                            StrAdapter &SA);
-
-  void getIndexedDeclInfo(const NamedDecl *D,
-                          CXIdxIndexedDeclInfo &IdxDeclInfo);
-
-  void getIndexedRedeclInfo(const NamedDecl *D,
-                            CXIdxIndexedRedeclInfo &RedeclInfo,
-                            CXIdxIndexedDeclInfo &IdxDeclInfo);
-
-  void getContainerInfo(const NamedDecl *D,
-                        CXIdxContainerInfo &ContainerInfo);
 
   void getEntityInfo(const NamedDecl *D,
                      CXIdxEntityInfo &EntityInfo,

@@ -29,9 +29,9 @@ public:
     if (D->isThisDeclarationADefinition()) {
       const Stmt *Body = D->getBody();
       if (Body) {
-        IndexCtx.invokeStartedStatementBody(D, D);
+        IndexCtx.startContainer(D, /*isBody=*/true);
         IndexCtx.indexBody(Body, D);
-        IndexCtx.invokeEndedContainer(D);
+        IndexCtx.endContainer(D);
       }
     }
     return true;
@@ -68,15 +68,7 @@ public:
   }
 
   bool VisitObjCClassDecl(ObjCClassDecl *D) {
-    ObjCClassDecl::ObjCClassRef *Ref = D->getForwardDecl();
-    if (Ref->getInterface()->getLocation() == Ref->getLocation()) {
-      IndexCtx.handleObjCInterface(Ref->getInterface());
-    } else {
-      IndexCtx.handleReference(Ref->getInterface(),
-                               Ref->getLocation(),
-                               0,
-                               Ref->getInterface()->getDeclContext());
-    }
+    IndexCtx.handleObjCClass(D);
     return true;
   }
 
@@ -87,74 +79,71 @@ public:
       SourceLocation Loc = *LI;
       ObjCProtocolDecl *PD = *I;
 
-      if (PD->getLocation() == Loc) {
-        IndexCtx.handleObjCProtocol(PD);
-      } else {
-        IndexCtx.handleReference(PD, Loc, 0, PD->getDeclContext());
-      }
+      bool isRedeclaration = PD->getLocation() != Loc;
+      IndexCtx.handleObjCForwardProtocol(PD, Loc, isRedeclaration);
     }
     return true;
   }
 
   bool VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
-    // Only definitions are handled here.
+    // Forward decls are handled at VisitObjCClassDecl.
     if (D->isForwardDecl())
       return true;
 
-    if (!D->isInitiallyForwardDecl())
-      IndexCtx.handleObjCInterface(D);
+    IndexCtx.handleObjCInterface(D);
 
     IndexCtx.indexTUDeclsInObjCContainer();
-    IndexCtx.invokeStartedObjCContainer(D);
+    IndexCtx.startContainer(D);
     IndexCtx.defineObjCInterface(D);
     IndexCtx.indexDeclContext(D);
-    IndexCtx.invokeEndedContainer(D);
+    IndexCtx.endContainer(D);
     return true;
   }
 
   bool VisitObjCProtocolDecl(ObjCProtocolDecl *D) {
-    // Only definitions are handled here.
+    // Forward decls are handled at VisitObjCForwardProtocolDecl.
     if (D->isForwardDecl())
       return true;
 
-    if (!D->isInitiallyForwardDecl())
-      IndexCtx.handleObjCProtocol(D);
+    IndexCtx.handleObjCProtocol(D);
 
     IndexCtx.indexTUDeclsInObjCContainer();
-    IndexCtx.invokeStartedObjCContainer(D);
+    IndexCtx.startContainer(D);
     IndexCtx.indexDeclContext(D);
-    IndexCtx.invokeEndedContainer(D);
+    IndexCtx.endContainer(D);
     return true;
   }
 
   bool VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
-    ObjCInterfaceDecl *Class = D->getClassInterface();
-    if (Class->isImplicitInterfaceDecl())
-      IndexCtx.handleObjCInterface(Class);
+    IndexCtx.handleObjCImplementation(D);
 
     IndexCtx.indexTUDeclsInObjCContainer();
-    IndexCtx.invokeStartedObjCContainer(D);
+    IndexCtx.startContainer(D);
     IndexCtx.indexDeclContext(D);
-    IndexCtx.invokeEndedContainer(D);
+    IndexCtx.endContainer(D);
     return true;
   }
 
   bool VisitObjCCategoryDecl(ObjCCategoryDecl *D) {
-    if (!D->IsClassExtension())
-      IndexCtx.handleObjCCategory(D);
+    IndexCtx.handleObjCCategory(D);
 
     IndexCtx.indexTUDeclsInObjCContainer();
-    IndexCtx.invokeStartedObjCContainer(D);
+    IndexCtx.startContainer(D);
     IndexCtx.indexDeclContext(D);
-    IndexCtx.invokeEndedContainer(D);
+    IndexCtx.endContainer(D);
     return true;
   }
 
   bool VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D) {
+    if (D->getCategoryDecl()->getLocation().isInvalid())
+      return true;
+
+    IndexCtx.handleObjCCategoryImpl(D);
+
     IndexCtx.indexTUDeclsInObjCContainer();
-    IndexCtx.invokeStartedObjCContainer(D);
+    IndexCtx.startContainer(D);
     IndexCtx.indexDeclContext(D);
-    IndexCtx.invokeEndedContainer(D);
+    IndexCtx.endContainer(D);
     return true;
   }
 
@@ -168,9 +157,9 @@ public:
     if (D->isThisDeclarationADefinition()) {
       const Stmt *Body = D->getBody();
       if (Body) {
-        IndexCtx.invokeStartedStatementBody(D, D);
+        IndexCtx.startContainer(D, /*isBody=*/true);
         IndexCtx.indexBody(Body, D);
-        IndexCtx.invokeEndedContainer(D);
+        IndexCtx.endContainer(D);
       }
     }
     return true;

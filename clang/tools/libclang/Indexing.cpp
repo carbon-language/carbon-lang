@@ -40,10 +40,25 @@ namespace {
 class IndexPPCallbacks : public PPCallbacks {
   Preprocessor &PP;
   IndexingContext &IndexCtx;
+  bool IsMainFileEntered;
 
 public:
   IndexPPCallbacks(Preprocessor &PP, IndexingContext &indexCtx)
-    : PP(PP), IndexCtx(indexCtx) { }
+    : PP(PP), IndexCtx(indexCtx), IsMainFileEntered(false) { }
+
+  virtual void FileChanged(SourceLocation Loc, FileChangeReason Reason,
+                          SrcMgr::CharacteristicKind FileType, FileID PrevFID) {
+    if (IsMainFileEntered)
+      return;
+
+    SourceManager &SM = PP.getSourceManager();
+    SourceLocation MainFileLoc = SM.getLocForStartOfFile(SM.getMainFileID());
+
+    if (Loc == MainFileLoc && Reason == PPCallbacks::EnterFile) {
+      IsMainFileEntered = true;
+      IndexCtx.enteredMainFile(SM.getFileEntryForID(SM.getMainFileID()));
+    }
+  }
 
   virtual void InclusionDirective(SourceLocation HashLoc,
                                   const Token &IncludeTok,
@@ -389,6 +404,41 @@ static void clang_indexTranslationUnit_Impl(void *UserData) {
 
 extern "C" {
 
+int clang_index_isEntityTagKind(CXIdxEntityKind K) {
+  return CXIdxEntity_Enum <= K && K <= CXIdxEntity_CXXClass;
+}
+
+CXIdxTagDeclInfo *clang_index_getTagDeclInfo(CXIdxDeclInfo *DInfo) {
+  if (clang_index_isEntityTagKind(DInfo->entityInfo->kind))
+    return &static_cast<TagDeclInfo*>(DInfo)->CXTagDeclInfo;
+
+  return 0;
+}
+
+int clang_index_isEntityObjCContainerKind(CXIdxEntityKind K) {
+  return CXIdxEntity_ObjCClass <= K && K <= CXIdxEntity_ObjCCategory;
+}
+
+CXIdxObjCContainerDeclInfo *
+clang_index_getObjCContainerDeclInfo(CXIdxDeclInfo *DInfo) {
+  if (clang_index_isEntityObjCContainerKind(DInfo->entityInfo->kind))
+    return &static_cast<ObjCContainerDeclInfo*>(DInfo)->CXObjCContDeclInfo;
+
+  return 0;
+}
+
+int clang_index_isEntityObjCCategoryKind(CXIdxEntityKind K) {
+  return K == CXIdxEntity_ObjCCategory;
+}
+
+CXIdxObjCCategoryDeclInfo *
+clang_index_getObjCCategoryDeclInfo(CXIdxDeclInfo *DInfo){
+  if (clang_index_isEntityObjCCategoryKind(DInfo->entityInfo->kind))
+    return &static_cast<ObjCCategoryDeclInfo*>(DInfo)->CXObjCCatDeclInfo;
+
+  return 0;
+}
+
 int clang_indexTranslationUnit(CXIndex CIdx,
                                 CXClientData client_data,
                                 IndexerCallbacks *index_callbacks,
@@ -445,7 +495,7 @@ int clang_indexTranslationUnit(CXIndex CIdx,
 }
 
 void clang_indexLoc_getFileLocation(CXIdxLoc location,
-                                    CXIdxFile *indexFile,
+                                    CXIdxClientFile *indexFile,
                                     CXFile *file,
                                     unsigned *line,
                                     unsigned *column,

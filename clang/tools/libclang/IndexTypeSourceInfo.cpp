@@ -87,8 +87,8 @@ void IndexingContext::indexTypeLoc(TypeLoc TL,
 void IndexingContext::indexTagDecl(const TagDecl *D) {
   handleTagDecl(D);
   if (D->isThisDeclarationADefinition()) {
-    invokeStartedTagTypeDefinition(D);
+    startContainer(D);
     indexDeclContext(D);
-    invokeEndedContainer(D);
+    endContainer(D);
   }
 }
