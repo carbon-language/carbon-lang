@@ -21,6 +21,7 @@
 #include "clang/Basic/TargetOptions.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Host.h"
+#include "llvm/Support/PathV2.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -161,6 +162,9 @@ namespace clang {
     DiagnosticsEngine &Diags;
     ModuleMap &Map;
     
+    /// \brief The directory that this module map resides in.
+    const DirectoryEntry *Directory;
+    
     /// \brief Whether an error occurred.
     bool HadError;
     
@@ -194,9 +198,10 @@ namespace clang {
     
     explicit ModuleMapParser(Lexer &L, SourceManager &SourceMgr, 
                              DiagnosticsEngine &Diags,
-                             ModuleMap &Map)
-      : L(L), SourceMgr(SourceMgr), Diags(Diags), Map(Map), HadError(false), 
-        ActiveModule(0)
+                             ModuleMap &Map,
+                             const DirectoryEntry *Directory)
+      : L(L), SourceMgr(SourceMgr), Diags(Diags), Map(Map), 
+        Directory(Directory), HadError(false), ActiveModule(0)
     {
       TargetOptions TargetOpts;
       TargetOpts.Triple = llvm::sys::getDefaultTargetTriple();
@@ -434,7 +439,45 @@ void ModuleMapParser::parseUmbrellaDecl() {
   StringRef FileName = Tok.getString();
   SourceLocation FileNameLoc = consumeToken();
 
-  // FIXME: Record the umbrella header.
+  // Check whether we already have an umbrella header.
+  if (ActiveModule->UmbrellaHeader) {
+    Diags.Report(FileNameLoc, diag::err_mmap_umbrella_header_conflict)
+      << ActiveModule->getFullModuleName() 
+      << ActiveModule->UmbrellaHeader->getName();
+    HadError = true;
+    return;
+  }
+  
+  // Only top-level modules can have umbrella headers.
+  if (ActiveModule->Parent) {
+    Diags.Report(UmbrellaLoc, diag::err_mmap_umbrella_header_submodule)
+      << ActiveModule->getFullModuleName();
+    HadError = true;
+    return;
+  }
+  
+  // Look for this file.
+  llvm::SmallString<128> PathName;
+  PathName += Directory->getName();
+  llvm::sys::path::append(PathName, FileName);
+  
+  // FIXME: We shouldn't be eagerly stat'ing every file named in a module map.
+  // Come up with a lazy way to do this.
+  if (const FileEntry *File = SourceMgr.getFileManager().getFile(PathName)) {
+    if (const Module *OwningModule = Map.Headers[File]) {
+      Diags.Report(FileNameLoc, diag::err_mmap_header_conflict)
+        << FileName << OwningModule->getFullModuleName();
+      HadError = true;
+    } else {
+      // Record this umbrella header.
+      ActiveModule->UmbrellaHeader = File;
+      Map.Headers[File] = ActiveModule;
+    }
+  } else {
+    Diags.Report(FileNameLoc, diag::err_mmap_header_not_found)
+      << true << FileName;
+    HadError = true;    
+  }
 }
 
 /// \brief Parse a header declaration.
@@ -455,7 +498,28 @@ void ModuleMapParser::parseHeaderDecl() {
   StringRef FileName = Tok.getString();
   SourceLocation FileNameLoc = consumeToken();
   
-  // FIXME: Record the header.  
+  // Look for this file.
+  llvm::SmallString<128> PathName;
+  PathName += Directory->getName();
+  llvm::sys::path::append(PathName, FileName);
+  
+  // FIXME: We shouldn't be eagerly stat'ing every file named in a module map.
+  // Come up with a lazy way to do this.
+  if (const FileEntry *File = SourceMgr.getFileManager().getFile(PathName)) {
+    if (const Module *OwningModule = Map.Headers[File]) {
+      Diags.Report(FileNameLoc, diag::err_mmap_header_conflict)
+        << FileName << OwningModule->getFullModuleName();
+      HadError = true;
+    } else {
+      // Record this file.
+      ActiveModule->Headers.push_back(File);      
+      Map.Headers[File] = ActiveModule;
+    }
+  } else {
+    Diags.Report(FileNameLoc, diag::err_mmap_header_not_found)
+      << false << FileName;
+    HadError = true;
+  }
 }
 
 /// \brief Parse a module map file.
@@ -498,7 +562,7 @@ bool ModuleMap::parseModuleMapFile(const FileEntry *File) {
   // Parse this module map file.
   Lexer L(ID, SourceMgr->getBuffer(ID), *SourceMgr, LangOpts);
   Diags->getClient()->BeginSourceFile(LangOpts);
-  ModuleMapParser Parser(L, *SourceMgr, *Diags, *this);
+  ModuleMapParser Parser(L, *SourceMgr, *Diags, *this, File->getDir());
   bool Result = Parser.parseModuleMapFile();
   Diags->getClient()->EndSourceFile();
   
