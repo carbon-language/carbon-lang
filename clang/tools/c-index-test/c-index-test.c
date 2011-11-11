@@ -1617,6 +1617,7 @@ static const char *getEntityKindString(CXIdxEntityKind kind) {
   case CXIdxEntity_Union: return "union";
   case CXIdxEntity_CXXClass: return "c++-class";
   }
+  return "<unknown>";
 }
 
 static void printEntityInfo(const char *cb,
