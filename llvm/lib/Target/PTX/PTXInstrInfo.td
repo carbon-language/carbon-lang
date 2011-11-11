@@ -680,6 +680,12 @@ let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
   def MOVaddr64
     : InstPTX<(outs RegI64:$d), (ins i64imm:$a), "mov.u64\t$d, $a",
               [(set RegI64:$d, (PTXcopyaddress tglobaladdr:$a))]>;
+  def MOVframe32
+    : InstPTX<(outs RegI32:$d), (ins i32imm:$a), "cvta.local.u32\t$d, $a",
+              [(set RegI32:$d, (PTXcopyaddress frameindex:$a))]>;
+  def MOVframe64
+    : InstPTX<(outs RegI64:$d), (ins i64imm:$a), "cvta.local.u64\t$d, $a",
+              [(set RegI64:$d, (PTXcopyaddress frameindex:$a))]>;
 }
 
 // PTX cvt instructions
