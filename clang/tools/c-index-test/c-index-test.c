@@ -2307,8 +2307,12 @@ static const char *getSeverityString(enum CXDiagnosticSeverity severity) {
 }
 
 static void printIndent(unsigned indent) {
+  if (indent == 0)
+    return;
+  fprintf(stderr, "+");
+  --indent;
   while (indent > 0) {
-    fprintf(stderr, " ");
+    fprintf(stderr, "-");
     --indent;
   }
 }
@@ -2366,8 +2370,6 @@ static void printDiagnosticSet(CXDiagnosticSet Diags, unsigned indent) {
   if (!Diags)
     return;
   
-  fprintf(stderr, "\n");
-
   n = clang_getNumDiagnosticsInSet(Diags);
   for (i = 0; i < n; ++i) {
     CXSourceLocation DiagLoc;
@@ -2427,6 +2429,8 @@ static int read_diagnostics(const char *filename) {
   }
   
   printDiagnosticSet(Diags, 0);
+  fprintf(stderr, "Number of diagnostics: %d\n",
+          clang_getNumDiagnosticsInSet(Diags));
   clang_disposeDiagnosticSet(Diags);
   return 0;
 }
