@@ -21,7 +21,8 @@
 #include <vector>
 
 namespace clang {
-
+  
+class DiagnosticsEngine;  
 class ExternalIdentifierLookup;
 class FileEntry;
 class FileManager;
@@ -118,6 +119,7 @@ public:
 /// file referenced by a #include or #include_next, (sub-)framework lookup, etc.
 class HeaderSearch {
   FileManager &FileMgr;
+  DiagnosticsEngine &Diags;
   /// #include search path information.  Requests for #include "x" search the
   /// directory of the #including file first, then each directory in SearchDirs
   /// consecutively. Requests for <x> search the current dir first, then each
@@ -180,7 +182,7 @@ class HeaderSearch {
   explicit HeaderSearch(const HeaderSearch&);
   void operator=(const HeaderSearch&);
 public:
-  HeaderSearch(FileManager &FM);
+  HeaderSearch(FileManager &FM, DiagnosticsEngine &Diags);
   ~HeaderSearch();
 
   FileManager &getFileMgr() const { return FileMgr; }

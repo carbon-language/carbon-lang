@@ -250,7 +250,8 @@ void CompilerInstance::createPreprocessor() {
     PTHMgr = PTHManager::Create(PPOpts.TokenCache, getDiagnostics());
 
   // Create the Preprocessor.
-  HeaderSearch *HeaderInfo = new HeaderSearch(getFileManager());
+  HeaderSearch *HeaderInfo = new HeaderSearch(getFileManager(), 
+                                              getDiagnostics());
   PP = new Preprocessor(getDiagnostics(), getLangOpts(), &getTarget(),
                         getSourceManager(), *HeaderInfo, *this, PTHMgr,
                         /*OwnsHeaderSearch=*/true);

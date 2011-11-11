@@ -664,7 +664,8 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
   AST->FileMgr = new FileManager(FileSystemOpts);
   AST->SourceMgr = new SourceManager(AST->getDiagnostics(),
                                      AST->getFileManager());
-  AST->HeaderInfo.reset(new HeaderSearch(AST->getFileManager()));
+  AST->HeaderInfo.reset(new HeaderSearch(AST->getFileManager(),
+                                         AST->getDiagnostics()));
   
   for (unsigned I = 0; I != NumRemappedFiles; ++I) {
     FilenameOrMemBuf fileOrBuf = RemappedFiles[I].second;

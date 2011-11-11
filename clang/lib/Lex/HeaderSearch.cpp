@@ -36,8 +36,9 @@ HeaderFileInfo::getControllingMacro(ExternalIdentifierLookup *External) {
 
 ExternalHeaderFileInfoSource::~ExternalHeaderFileInfoSource() {}
 
-HeaderSearch::HeaderSearch(FileManager &FM)
-    : FileMgr(FM), FrameworkMap(64) {
+HeaderSearch::HeaderSearch(FileManager &FM, DiagnosticsEngine &Diags)
+  : FileMgr(FM), Diags(Diags), FrameworkMap(64) 
+{
   AngledDirIdx = 0;
   SystemDirIdx = 0;
   NoCurDirSearch = false;
