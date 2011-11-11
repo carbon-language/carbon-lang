@@ -134,14 +134,39 @@ private:
   void ExpandNode(SDNode *Node);
   void PromoteNode(SDNode *Node);
 
-  // DAGUpdateListener implementation.
-  virtual void NodeDeleted(SDNode *N, SDNode *E) {
+  void ForgetNode(SDNode *N) {
     LegalizedNodes.erase(N);
     if (LegalizePosition == SelectionDAG::allnodes_iterator(N))
       ++LegalizePosition;
   }
 
+public:
+  // DAGUpdateListener implementation.
+  virtual void NodeDeleted(SDNode *N, SDNode *E) {
+    ForgetNode(N);
+  }
   virtual void NodeUpdated(SDNode *N) {}
+
+  // Node replacement helpers
+  void ReplacedNode(SDNode *N) {
+    if (N->use_empty()) {
+      DAG.RemoveDeadNode(N, this);
+    } else {
+      ForgetNode(N);
+    }
+  }
+  void ReplaceNode(SDNode *Old, SDNode *New) {
+    DAG.ReplaceAllUsesWith(Old, New, this);
+    ReplacedNode(Old);
+  }
+  void ReplaceNode(SDValue Old, SDValue New) {
+    DAG.ReplaceAllUsesWith(Old, New, this);
+    ReplacedNode(Old.getNode());
+  }
+  void ReplaceNode(SDNode *Old, const SDValue *New) {
+    DAG.ReplaceAllUsesWith(Old, New, this);
+    ReplacedNode(Old);
+  }
 };
 }
 
@@ -267,7 +292,7 @@ SelectionDAGLegalize::ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP) {
 /// ExpandUnalignedStore - Expands an unaligned store to 2 half-size stores.
 static void ExpandUnalignedStore(StoreSDNode *ST, SelectionDAG &DAG,
                                  const TargetLowering &TLI,
-                                 SelectionDAG::DAGUpdateListener *DUL) {
+                                 SelectionDAGLegalize *DAGLegalize) {
   SDValue Chain = ST->getChain();
   SDValue Ptr = ST->getBasePtr();
   SDValue Val = ST->getValue();
@@ -284,8 +309,7 @@ static void ExpandUnalignedStore(StoreSDNode *ST, SelectionDAG &DAG,
       SDValue Result = DAG.getNode(ISD::BITCAST, dl, intVT, Val);
       Result = DAG.getStore(Chain, dl, Result, Ptr, ST->getPointerInfo(),
                            ST->isVolatile(), ST->isNonTemporal(), Alignment);
-      DAG.ReplaceAllUsesWith(SDValue(ST, 0), Result, DUL);
-      DAG.RemoveDeadNode(ST, DUL);
+      DAGLegalize->ReplaceNode(SDValue(ST, 0), Result);
       return;
     }
     // Do a (aligned) store to a stack slot, then copy from the stack slot
@@ -349,8 +373,7 @@ static void ExpandUnalignedStore(StoreSDNode *ST, SelectionDAG &DAG,
     SDValue Result =
       DAG.getNode(ISD::TokenFactor, dl, MVT::Other, &Stores[0],
                   Stores.size());
-    DAG.ReplaceAllUsesWith(SDValue(ST, 0), Result, DUL);
-    DAG.RemoveDeadNode(ST, DUL);
+    DAGLegalize->ReplaceNode(SDValue(ST, 0), Result);
     return;
   }
   assert(ST->getMemoryVT().isInteger() &&
@@ -382,8 +405,7 @@ static void ExpandUnalignedStore(StoreSDNode *ST, SelectionDAG &DAG,
 
   SDValue Result =
     DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Store1, Store2);
-  DAG.ReplaceAllUsesWith(SDValue(ST, 0), Result, DUL);
-  DAG.RemoveDeadNode(ST, DUL);
+  DAGLegalize->ReplaceNode(SDValue(ST, 0), Result);
 }
 
 /// ExpandUnalignedLoad - Expands an unaligned load to 2 half-size loads.
@@ -824,7 +846,7 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
       DAG.ReplaceAllUsesWith(Node, NewNode, this);
       for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i)
         DAG.TransferDbgValues(SDValue(Node, i), SDValue(NewNode, i));
-      DAG.RemoveDeadNode(Node, this);
+      ReplacedNode(Node);
       Node = NewNode;
     }
     switch (Action) {
@@ -846,7 +868,7 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
           DAG.ReplaceAllUsesWith(Node, ResultVals.data(), this);
           for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i)
             DAG.TransferDbgValues(SDValue(Node, i), ResultVals[i]);
-          DAG.RemoveDeadNode(Node, this);
+          ReplacedNode(Node);
         }
         return;
       }
@@ -881,7 +903,6 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
     ISD::LoadExtType ExtType = LD->getExtensionType();
     if (ExtType == ISD::NON_EXTLOAD) {
       EVT VT = Node->getValueType(0);
-      Node = DAG.UpdateNodeOperands(Node, Tmp1, Tmp2, LD->getOffset());
       Tmp3 = SDValue(Node, 0);
       Tmp4 = SDValue(Node, 1);
 
@@ -920,10 +941,12 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
         break;
       }
       }
-      // Since loads produce two values, make sure to remember that we
-      // legalized both of them.
-      DAG.ReplaceAllUsesOfValueWith(SDValue(Node, 0), Tmp3);
-      DAG.ReplaceAllUsesOfValueWith(SDValue(Node, 1), Tmp4);
+      if (Tmp4.getNode() != Node) {
+        assert(Tmp3.getNode() != Node && "Load must be completely replaced");
+        DAG.ReplaceAllUsesOfValueWith(SDValue(Node, 0), Tmp3);
+        DAG.ReplaceAllUsesOfValueWith(SDValue(Node, 1), Tmp4);
+        ReplacedNode(Node);
+      }
       return;
     }
 
@@ -1058,8 +1081,6 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
         isCustom = true;
         // FALLTHROUGH
       case TargetLowering::Legal:
-        Node = DAG.UpdateNodeOperands(Node,
-                                      Tmp1, Tmp2, LD->getOffset());
         Tmp1 = SDValue(Node, 0);
         Tmp2 = SDValue(Node, 1);
 
@@ -1135,8 +1156,12 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
 
     // Since loads produce two values, make sure to remember that we legalized
     // both of them.
-    DAG.ReplaceAllUsesOfValueWith(SDValue(Node, 0), Tmp1);
-    DAG.ReplaceAllUsesOfValueWith(SDValue(Node, 1), Tmp2);
+    if (Tmp2.getNode() != Node) {
+      assert(Tmp1.getNode() != Node && "Load must be completely replaced");
+      DAG.ReplaceAllUsesOfValueWith(SDValue(Node, 0), Tmp1);
+      DAG.ReplaceAllUsesOfValueWith(SDValue(Node, 1), Tmp2);
+      ReplacedNode(Node);
+    }
     break;
   }
   case ISD::STORE: {
@@ -1149,17 +1174,12 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
 
     if (!ST->isTruncatingStore()) {
       if (SDNode *OptStore = OptimizeFloatStore(ST).getNode()) {
-        DAG.ReplaceAllUsesWith(ST, OptStore, this);
-        DAG.RemoveDeadNode(ST, this);
+        ReplaceNode(ST, OptStore);
         break;
       }
 
       {
         Tmp3 = ST->getValue();
-        Node = DAG.UpdateNodeOperands(Node,
-                                      Tmp1, Tmp3, Tmp2,
-                                      ST->getOffset());
-
         EVT VT = Tmp3.getValueType();
         switch (TLI.getOperationAction(ISD::STORE, VT)) {
         default: assert(0 && "This action is not supported yet!");
@@ -1176,10 +1196,8 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
           break;
         case TargetLowering::Custom:
           Tmp1 = TLI.LowerOperation(SDValue(Node, 0), DAG);
-          if (Tmp1.getNode()) {
-            DAG.ReplaceAllUsesWith(SDValue(Node, 0), Tmp1, this);
-            DAG.RemoveDeadNode(Node, this);
-          }
+          if (Tmp1.getNode())
+            ReplaceNode(SDValue(Node, 0), Tmp1);
           break;
         case TargetLowering::Promote: {
           assert(VT.isVector() && "Unknown legal promote case!");
@@ -1189,8 +1207,7 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
             DAG.getStore(Tmp1, dl, Tmp3, Tmp2,
                          ST->getPointerInfo(), isVolatile,
                          isNonTemporal, Alignment);
-          DAG.ReplaceAllUsesWith(SDValue(Node, 0), Result, this);
-          DAG.RemoveDeadNode(Node, this);
+          ReplaceNode(SDValue(Node, 0), Result);
           break;
         }
         }
@@ -1212,8 +1229,7 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
         SDValue Result =
           DAG.getTruncStore(Tmp1, dl, Tmp3, Tmp2, ST->getPointerInfo(),
                             NVT, isVolatile, isNonTemporal, Alignment);
-        DAG.ReplaceAllUsesWith(SDValue(Node, 0), Result, this);
-        DAG.RemoveDeadNode(Node, this);
+        ReplaceNode(SDValue(Node, 0), Result);
       } else if (StWidth & (StWidth - 1)) {
         // If not storing a power-of-2 number of bits, expand as two stores.
         assert(!StVT.isVector() && "Unsupported truncstore!");
@@ -1268,14 +1284,8 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
 
         // The order of the stores doesn't matter.
         SDValue Result = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Lo, Hi);
-        DAG.ReplaceAllUsesWith(SDValue(Node, 0), Result, this);
-        DAG.RemoveDeadNode(Node, this);
+        ReplaceNode(SDValue(Node, 0), Result);
       } else {
-        if (Tmp1 != ST->getChain() || Tmp3 != ST->getValue() ||
-            Tmp2 != ST->getBasePtr())
-          Node = DAG.UpdateNodeOperands(Node, Tmp1, Tmp3, Tmp2,
-                                        ST->getOffset());
-
         switch (TLI.getTruncStoreAction(ST->getValue().getValueType(), StVT)) {
         default: assert(0 && "This action is not supported yet!");
         case TargetLowering::Legal:
@@ -1289,10 +1299,8 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
           }
           break;
         case TargetLowering::Custom:
-          DAG.ReplaceAllUsesWith(SDValue(Node, 0),
-                                 TLI.LowerOperation(SDValue(Node, 0), DAG),
-                                 this);
-          DAG.RemoveDeadNode(Node, this);
+          ReplaceNode(SDValue(Node, 0),
+                      TLI.LowerOperation(SDValue(Node, 0), DAG));
           break;
         case TargetLowering::Expand:
           assert(!StVT.isVector() &&
@@ -1304,8 +1312,7 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
           SDValue Result =
             DAG.getStore(Tmp1, dl, Tmp3, Tmp2, ST->getPointerInfo(),
                          isVolatile, isNonTemporal, Alignment);
-          DAG.ReplaceAllUsesWith(SDValue(Node, 0), Result, this);
-          DAG.RemoveDeadNode(Node, this);
+          ReplaceNode(SDValue(Node, 0), Result);
           break;
         }
       }
@@ -3376,8 +3383,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
     SDValue Result =
       DAG.getNode(ISD::BUILD_VECTOR, dl, Node->getValueType(0),
                   &Scalars[0], Scalars.size());
-    DAG.ReplaceAllUsesWith(SDValue(Node, 0), Result, this);
-    DAG.RemoveDeadNode(Node, this);
+    ReplaceNode(SDValue(Node, 0), Result);
     break;
   }
   case ISD::GLOBAL_OFFSET_TABLE:
@@ -3394,10 +3400,8 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
   }
 
   // Replace the original node with the legalized result.
-  if (!Results.empty()) {
-    DAG.ReplaceAllUsesWith(Node, Results.data(), this);
-    DAG.RemoveDeadNode(Node, this);
-  }
+  if (!Results.empty())
+    ReplaceNode(Node, Results.data());
 }
 
 void SelectionDAGLegalize::PromoteNode(SDNode *Node) {
@@ -3531,10 +3535,8 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node) {
   }
 
   // Replace the original node with the legalized result.
-  if (!Results.empty()) {
-    DAG.ReplaceAllUsesWith(Node, Results.data(), this);
-    DAG.RemoveDeadNode(Node, this);
-  }
+  if (!Results.empty())
+    ReplaceNode(Node, Results.data());
 }
 
 // SelectionDAG::Legalize - This is the entry point for the file.
