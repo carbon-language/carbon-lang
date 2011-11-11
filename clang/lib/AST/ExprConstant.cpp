@@ -810,6 +810,21 @@ static bool IsConstNonVolatile(QualType T) {
   return Quals.hasConst() && !Quals.hasVolatile();
 }
 
+/// Get the base index of the given base class within an APValue representing
+/// the given derived class.
+static unsigned getBaseIndex(const CXXRecordDecl *Derived,
+                             const CXXRecordDecl *Base) {
+  Base = Base->getCanonicalDecl();
+  unsigned Index = 0;
+  for (CXXRecordDecl::base_class_const_iterator I = Derived->bases_begin(),
+         E = Derived->bases_end(); I != E; ++I, ++Index) {
+    if (I->getType()->getAsCXXRecordDecl()->getCanonicalDecl() == Base)
+      return Index;
+  }
+
+  llvm_unreachable("base class missing from derived class's bases list");
+}
+
 /// Extract the designated sub-object of an rvalue.
 static bool ExtractSubobject(EvalInfo &Info, CCValue &Obj, QualType ObjType,
                              const SubobjectDesignator &Sub, QualType SubType) {
@@ -852,22 +867,10 @@ static bool ExtractSubobject(EvalInfo &Info, CCValue &Obj, QualType ObjType,
       ObjType = Field->getType();
     } else {
       // Next subobject is a base class.
-      const CXXRecordDecl *RD =
-        cast<CXXRecordDecl>(ObjType->castAs<RecordType>()->getDecl());
-      const CXXRecordDecl *Base =
-        getAsBaseClass(Sub.Entries[I])->getCanonicalDecl();
-      unsigned Index = 0;
-      for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
-             E = RD->bases_end(); I != E; ++I, ++Index) {
-        QualType BT = I->getType();
-        if (BT->castAs<RecordType>()->getDecl()->getCanonicalDecl() == Base) {
-          O = &O->getStructBase(Index);
-          ObjType = BT;
-          break;
-        }
-      }
-      if (Index == RD->getNumBases())
-        return false;
+      const CXXRecordDecl *Derived = ObjType->getAsCXXRecordDecl();
+      const CXXRecordDecl *Base = getAsBaseClass(Sub.Entries[I]);
+      O = &O->getStructBase(getBaseIndex(Derived, Base));
+      ObjType = Info.Ctx.getRecordType(Base);
     }
 
     if (O->isUninit())
@@ -974,6 +977,21 @@ static bool HandleLValueToRValueConversion(EvalInfo &Info, QualType Type,
   return ExtractSubobject(Info, RVal, Base->getType(), LVal.Designator, Type);
 }
 
+/// Build an lvalue for the object argument of a member function call.
+static bool EvaluateObjectArgument(EvalInfo &Info, const Expr *Object,
+                                   LValue &This) {
+  if (Object->getType()->isPointerType())
+    return EvaluatePointer(Object, This, Info);
+
+  if (Object->isGLValue())
+    return EvaluateLValue(Object, This, Info);
+
+  // Implicitly promote a prvalue *this object to a glvalue.
+  This.setExpr(Object, Info.CurrentCall);
+  return EvaluateConstantExpression(Info.CurrentCall->Temporaries[Object], Info,
+                                    This, Object);
+}
+
 namespace {
 enum EvalStmtResult {
   /// Evaluation failed.
@@ -1029,8 +1047,9 @@ static bool EvaluateArgs(ArrayRef<const Expr*> Args, ArgVector &ArgValues,
 }
 
 /// Evaluate a function call.
-static bool HandleFunctionCall(ArrayRef<const Expr*> Args, const Stmt *Body,
-                               EvalInfo &Info, CCValue &Result) {
+static bool HandleFunctionCall(const LValue *This, ArrayRef<const Expr*> Args,
+                               const Stmt *Body, EvalInfo &Info,
+                               CCValue &Result) {
   // FIXME: Implement a proper call limit, along with a command-line flag.
   if (Info.NumCalls >= 1000000 || Info.CallStackDepth >= 512)
     return false;
@@ -1039,16 +1058,15 @@ static bool HandleFunctionCall(ArrayRef<const Expr*> Args, const Stmt *Body,
   if (!EvaluateArgs(Args, ArgValues, Info))
     return false;
 
-  // FIXME: Pass in 'this' for member functions.
-  const LValue *This = 0;
   CallStackFrame Frame(Info, This, ArgValues.data());
   return EvaluateStmt(Result, Info, Body) == ESR_Returned;
 }
 
 /// Evaluate a constructor call.
-static bool HandleConstructorCall(ArrayRef<const Expr*> Args,
+static bool HandleConstructorCall(const LValue &This,
+                                  ArrayRef<const Expr*> Args,
                                   const CXXConstructorDecl *Definition,
-                                  EvalInfo &Info, const LValue &This,
+                                  EvalInfo &Info,
                                   APValue &Result) {
   if (Info.NumCalls >= 1000000 || Info.CallStackDepth >= 512)
     return false;
@@ -1305,39 +1323,61 @@ public:
     const Expr *Callee = E->getCallee();
     QualType CalleeType = Callee->getType();
 
-    // FIXME: Handle the case where Callee is a (parenthesized) MemberExpr for a
-    // non-static member function.
-    if (CalleeType->isSpecificBuiltinType(BuiltinType::BoundMember))
-      return DerivedError(E);
-
-    if (!CalleeType->isFunctionType() && !CalleeType->isFunctionPointerType())
-      return DerivedError(E);
-
-    CCValue Call;
-    if (!Evaluate(Call, Info, Callee) || !Call.isLValue() ||
-        !Call.getLValueBase() || !Call.getLValueOffset().isZero())
-      return DerivedError(Callee);
-
     const FunctionDecl *FD = 0;
-    if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Call.getLValueBase()))
-      FD = dyn_cast<FunctionDecl>(DRE->getDecl());
-    else if (const MemberExpr *ME = dyn_cast<MemberExpr>(Call.getLValueBase()))
-      FD = dyn_cast<FunctionDecl>(ME->getMemberDecl());
-    if (!FD)
-      return DerivedError(Callee);
+    LValue *This = 0, ThisVal;
+    llvm::ArrayRef<const Expr*> Args(E->getArgs(), E->getNumArgs());
 
-    // Don't call function pointers which have been cast to some other type.
-    if (!Info.Ctx.hasSameType(CalleeType->getPointeeType(), FD->getType()))
+    // Extract function decl and 'this' pointer from the callee.
+    if (CalleeType->isSpecificBuiltinType(BuiltinType::BoundMember)) {
+      // Explicit bound member calls, such as x.f() or p->g();
+      // FIXME: Handle a BinaryOperator callee ('.*' or '->*').
+      const MemberExpr *ME = dyn_cast<MemberExpr>(Callee->IgnoreParens());
+      if (!ME)
+        return DerivedError(Callee);
+      if (!EvaluateObjectArgument(Info, ME->getBase(), ThisVal))
+        return DerivedError(ME->getBase());
+      This = &ThisVal;
+      FD = dyn_cast<FunctionDecl>(ME->getMemberDecl());
+      if (!FD)
+        return DerivedError(ME);
+    } else if (CalleeType->isFunctionPointerType()) {
+      CCValue Call;
+      if (!Evaluate(Call, Info, Callee) || !Call.isLValue() ||
+          !Call.getLValueBase() || !Call.getLValueOffset().isZero())
+        return DerivedError(Callee);
+
+      const Expr *Base = Call.getLValueBase();
+
+      if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Base))
+        FD = dyn_cast<FunctionDecl>(DRE->getDecl());
+      else if (const MemberExpr *ME = dyn_cast<MemberExpr>(Base))
+        FD = dyn_cast<FunctionDecl>(ME->getMemberDecl());
+      if (!FD)
+        return DerivedError(Callee);
+
+      // Overloaded operator calls to member functions are represented as normal
+      // calls with '*this' as the first argument.
+      const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD);
+      if (MD && !MD->isStatic()) {
+        if (!EvaluateObjectArgument(Info, Args[0], ThisVal))
+          return false;
+        This = &ThisVal;
+        Args = Args.slice(1);
+      }
+
+      // Don't call function pointers which have been cast to some other type.
+      if (!Info.Ctx.hasSameType(CalleeType->getPointeeType(), FD->getType()))
+        return DerivedError(E);
+    } else
       return DerivedError(E);
 
     const FunctionDecl *Definition;
     Stmt *Body = FD->getBody(Definition);
     CCValue CCResult;
     APValue Result;
-    llvm::ArrayRef<const Expr*> Args(E->getArgs(), E->getNumArgs());
 
     if (Body && Definition->isConstexpr() && !Definition->isInvalidDecl() &&
-        HandleFunctionCall(Args, Body, Info, CCResult) &&
+        HandleFunctionCall(This, Args, Body, Info, CCResult) &&
         CheckConstantExpression(CCResult, Result))
       return DerivedSuccess(CCValue(Result, CCValue::GlobalValue()), E);
 
@@ -1821,9 +1861,41 @@ namespace {
     }
     bool Error(const Expr *E) { return false; }
 
+    bool VisitCastExpr(const CastExpr *E);
     bool VisitInitListExpr(const InitListExpr *E);
     bool VisitCXXConstructExpr(const CXXConstructExpr *E);
   };
+}
+
+bool RecordExprEvaluator::VisitCastExpr(const CastExpr *E) {
+  switch (E->getCastKind()) {
+  default:
+    return ExprEvaluatorBaseTy::VisitCastExpr(E);
+
+  case CK_ConstructorConversion:
+    return Visit(E->getSubExpr());
+
+  case CK_DerivedToBase:
+  case CK_UncheckedDerivedToBase: {
+    CCValue DerivedObject;
+    if (!Evaluate(DerivedObject, Info, E->getSubExpr()) ||
+        !DerivedObject.isStruct())
+      return false;
+
+    // Derived-to-base rvalue conversion: just slice off the derived part.
+    APValue *Value = &DerivedObject;
+    const CXXRecordDecl *RD = E->getSubExpr()->getType()->getAsCXXRecordDecl();
+    for (CastExpr::path_const_iterator PathI = E->path_begin(),
+         PathE = E->path_end(); PathI != PathE; ++PathI) {
+      assert(!(*PathI)->isVirtual() && "record rvalue with virtual base");
+      const CXXRecordDecl *Base = (*PathI)->getType()->getAsCXXRecordDecl();
+      Value = &Value->getStructBase(getBaseIndex(RD, Base));
+      RD = Base;
+    }
+    Result = *Value;
+    return true;
+  }
+  }
 }
 
 bool RecordExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
@@ -1890,8 +1962,8 @@ bool RecordExprEvaluator::VisitCXXConstructExpr(const CXXConstructExpr *E) {
       return Visit(ME->GetTemporaryExpr());
 
   llvm::ArrayRef<const Expr*> Args(E->getArgs(), E->getNumArgs());
-  return HandleConstructorCall(Args, cast<CXXConstructorDecl>(Definition),
-                               Info, This, Result);
+  return HandleConstructorCall(This, Args, cast<CXXConstructorDecl>(Definition),
+                               Info, Result);
 }
 
 static bool EvaluateRecord(const Expr *E, const LValue &This,
