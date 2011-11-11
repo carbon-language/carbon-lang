@@ -1685,19 +1685,19 @@ enum CXCursorKind {
    */
   CXCursor_UnaryExpr                     = 136,
 
-  /** \brief ObjCStringLiteral, used for Objective-C string literals i.e. "foo".
+  /** \brief An Objective-C string literal i.e. @"foo".
    */
   CXCursor_ObjCStringLiteral             = 137,
 
-  /** \brief ObjCEncodeExpr, used for in Objective-C.
+  /** \brief An Objective-C @encode expression.
    */
   CXCursor_ObjCEncodeExpr                = 138,
 
-  /** \brief ObjCSelectorExpr used for in Objective-C.
+  /** \brief An Objective-C @selector expression.
    */
   CXCursor_ObjCSelectorExpr              = 139,
 
-  /** \brief Objective-C's protocol expression.
+  /** \brief An Objective-C @protocol expression.
    */
   CXCursor_ObjCProtocolExpr              = 140,
 
