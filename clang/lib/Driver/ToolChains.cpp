@@ -1989,6 +1989,12 @@ void Linux::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
   const StringRef ARMMultiarchIncludeDirs[] = {
     "/usr/include/arm-linux-gnueabi"
   };
+  const StringRef MIPSMultiarchIncludeDirs[] = {
+    "/usr/include/mips-linux-gnu"
+  };
+  const StringRef MIPSELMultiarchIncludeDirs[] = {
+    "/usr/include/mipsel-linux-gnu"
+  };
   ArrayRef<StringRef> MultiarchIncludeDirs;
   if (getTriple().getArch() == llvm::Triple::x86_64) {
     MultiarchIncludeDirs = X86_64MultiarchIncludeDirs;
@@ -1996,6 +2002,10 @@ void Linux::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
     MultiarchIncludeDirs = X86MultiarchIncludeDirs;
   } else if (getTriple().getArch() == llvm::Triple::arm) {
     MultiarchIncludeDirs = ARMMultiarchIncludeDirs;
+  } else if (getTriple().getArch() == llvm::Triple::mips) {
+    MultiarchIncludeDirs = MIPSMultiarchIncludeDirs;
+  } else if (getTriple().getArch() == llvm::Triple::mipsel) {
+    MultiarchIncludeDirs = MIPSELMultiarchIncludeDirs;
   }
   for (ArrayRef<StringRef>::iterator I = MultiarchIncludeDirs.begin(),
                                      E = MultiarchIncludeDirs.end();
