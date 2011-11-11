@@ -8615,6 +8615,10 @@ void Sema::ActOnBlockStart(SourceLocation CaretLoc, Scope *CurScope) {
     PushDeclContext(CurScope, Block);
   else
     CurContext = Block;
+
+  // Enter a new evaluation context to insulate the block from any
+  // cleanups from the enclosing full-expression.
+  PushExpressionEvaluationContext(PotentiallyEvaluated);  
 }
 
 void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
@@ -8742,6 +8746,10 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
 /// ActOnBlockError - If there is an error parsing a block, this callback
 /// is invoked to pop the information about the block from the action impl.
 void Sema::ActOnBlockError(SourceLocation CaretLoc, Scope *CurScope) {
+  // Leave the expression-evaluation context.
+  DiscardCleanupsInEvaluationContext();
+  PopExpressionEvaluationContext();
+
   // Pop off CurBlock, handle nested blocks.
   PopDeclContext();
   PopFunctionOrBlockScope();
@@ -8754,6 +8762,10 @@ ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
   // If blocks are disabled, emit an error.
   if (!LangOpts.Blocks)
     Diag(CaretLoc, diag::err_blocks_disable);
+
+  // Leave the expression-evaluation context.
+  assert(!ExprNeedsCleanups && "cleanups within block not correctly bound!");
+  PopExpressionEvaluationContext();
 
   BlockScopeInfo *BSI = cast<BlockScopeInfo>(FunctionScopes.back());
   

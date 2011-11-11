@@ -178,3 +178,28 @@ namespace test5 {
   // CHECK:      call void @_ZN5test51AD1Ev([[A]]* [[X]])
   // CHECK-NEXT: ret void
 }
+
+namespace test6 {
+  struct A {
+    A();
+    ~A();
+  };
+
+  void foo(const A &, void (^)());
+  void bar();
+
+  void test() {
+    // Make sure that the temporary cleanup isn't somehow captured
+    // within the block.
+    foo(A(), ^{ bar(); });
+    bar();
+  }
+
+  // CHECK:    define void @_ZN5test64testEv()
+  // CHECK:      [[TEMP:%.*]] = alloca [[A:%.*]], align 1
+  // CHECK-NEXT: call void @_ZN5test61AC1Ev([[A]]* [[TEMP]])
+  // CHECK-NEXT: call void @_ZN5test63fooERKNS_1AEU13block_pointerFvvE(
+  // CHECK-NEXT: call void @_ZN5test61AD1Ev([[A]]* [[TEMP]])
+  // CHECK-NEXT: call void @_ZN5test63barEv()
+  // CHECK-NEXT: ret void
+}
