@@ -772,6 +772,13 @@ void DwarfDebug::endModule() {
     DIE *ISP = *AI;
     FirstCU->addUInt(ISP, dwarf::DW_AT_inline, 0, dwarf::DW_INL_inlined);
   }
+  for (DenseMap<const MDNode *, DIE *>::iterator AI = AbstractSPDies.begin(),
+         AE = AbstractSPDies.end(); AI != AE; ++AI) {
+    DIE *ISP = AI->second;
+    if (InlinedSubprogramDIEs.count(ISP))
+      continue;
+    FirstCU->addUInt(ISP, dwarf::DW_AT_inline, 0, dwarf::DW_INL_inlined);
+  }
 
   // Emit DW_AT_containing_type attribute to connect types with their
   // vtable holding type.
