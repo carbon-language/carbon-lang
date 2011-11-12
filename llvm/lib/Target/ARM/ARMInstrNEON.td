@@ -1238,9 +1238,8 @@ class VST1D<bits<4> op7_4, string Dt>
   let DecoderMethod = "DecodeVSTInstruction";
 }
 class VST1Q<bits<4> op7_4, string Dt>
-  : NLdSt<0,0b00,0b1010,op7_4, (outs),
-          (ins addrmode6:$Rn, DPR:$Vd, DPR:$src2), IIC_VST1x2,
-          "vst1", Dt, "\\{$Vd, $src2\\}, $Rn", "", []> {
+  : NLdSt<0,0b00,0b1010,op7_4, (outs), (ins addrmode6:$Rn, VecListTwoD:$Vd),
+          IIC_VST1x2, "vst1", Dt, "$Vd, $Rn", "", []> {
   let Rm = 0b1111;
   let Inst{5-4} = Rn{5-4};
   let DecoderMethod = "DecodeVSTInstruction";

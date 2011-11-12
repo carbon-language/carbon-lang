@@ -2267,10 +2267,6 @@ static DecodeStatus DecodeVSTInstruction(llvm::MCInst &Inst, unsigned Insn,
 
   // Second input register
   switch (Inst.getOpcode()) {
-    case ARM::VST1q8:
-    case ARM::VST1q16:
-    case ARM::VST1q32:
-    case ARM::VST1q64:
     case ARM::VST1d8T:
     case ARM::VST1d16T:
     case ARM::VST1d32T:
