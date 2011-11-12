@@ -3080,7 +3080,8 @@ bool CheckRedundantUnionInit(Sema &S,
         S.Diag(En.second->getSourceLocation(), diag::note_previous_initializer)
           << 0 << En.second->getSourceRange();
         return true;
-      } else if (!En.first) {
+      } 
+      if (!En.first) {
         En.first = Child;
         En.second = Init;
       }

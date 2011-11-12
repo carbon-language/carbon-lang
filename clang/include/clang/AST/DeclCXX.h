@@ -1596,23 +1596,20 @@ public:
   FieldDecl *getMember() const {
     if (isMemberInitializer())
       return Initializee.get<FieldDecl*>();
-    else
-      return 0;
+    return 0;
   }
   FieldDecl *getAnyMember() const {
     if (isMemberInitializer())
       return Initializee.get<FieldDecl*>();
-    else if (isIndirectMemberInitializer())
+    if (isIndirectMemberInitializer())
       return Initializee.get<IndirectFieldDecl*>()->getAnonField();
-    else
-      return 0;
+    return 0;
   }
 
   IndirectFieldDecl *getIndirectMember() const {
     if (isIndirectMemberInitializer())
       return Initializee.get<IndirectFieldDecl*>();
-    else
-      return 0;
+    return 0;
   }
 
   SourceLocation getMemberLocation() const {
