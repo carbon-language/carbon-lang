@@ -159,8 +159,12 @@ class ClassTypesTestCase(TestBase):
         # Is this a case of clang (116.1) generating bad debug info?
         #
         # Break on the ctor function of class C.
-        self.expect("breakpoint set -M C", BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: name = 'C'")
+        #self.expect("breakpoint set -M C", BREAKPOINT_CREATED,
+        #    startstr = "Breakpoint created: 1: name = 'C'")
+
+        # Make the test case more robust by using line number to break, instead.
+        self.expect("breakpoint set -l %d" % self.line, BREAKPOINT_CREATED,
+            startstr = "Breakpoint created")
 
         self.runCmd("run", RUN_SUCCEEDED)
 
@@ -174,6 +178,7 @@ class ClassTypesTestCase(TestBase):
             substrs = [' resolved, hit count = 1'])
 
         # Continue on inside the ctor() body...
+        self.runCmd("register read pc")
         self.runCmd("thread step-over")
 
         # Verify that 'frame variable this' gets the data type correct.
@@ -181,6 +186,8 @@ class ClassTypesTestCase(TestBase):
             substrs = ['C *'])
 
         # Verify that frame variable -T this->m_c_int behaves correctly.
+        self.runCmd("register read pc")
+        self.runCmd("expr m_c_int")
         self.expect("frame variable -T this->m_c_int", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = '(int) this->m_c_int = 66')
 
