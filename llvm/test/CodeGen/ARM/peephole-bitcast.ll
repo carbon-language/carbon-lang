@@ -1,4 +1,6 @@
-; RUN: llc < %s -march=arm -mcpu=cortex-a8 -regalloc=linearscan | FileCheck %s
+; RUN: llc < %s -march=arm -mcpu=cortex-a8 | FileCheck %s
+; XFAIL: *
+; PR11364
 
 ; vmov s0, r0 + vmov r0, s0 should have been optimized away.
 ; rdar://9104514
