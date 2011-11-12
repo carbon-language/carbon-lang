@@ -81,6 +81,9 @@ EVAL_EXPR(38, __builtin_expect(1,1) == 1 ? 1 : -1)
 EVAL_EXPR(39, __real__(1.f) == 1 ? 1 : -1)
 EVAL_EXPR(40, __imag__(1.f) == 0 ? 1 : -1)
 
+// From gcc testsuite
+EVAL_EXPR(41, (int)(1+(_Complex unsigned)2))
+
 // rdar://8875946
 void rdar8875946() {
   double _Complex  P;

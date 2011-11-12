@@ -823,14 +823,21 @@ static QualType handleComplexIntConversion(Sema &S, ExprResult &LHS,
 
   if (LHSComplexInt) {
     // int -> _Complex int
+    // FIXME: This needs to take integer ranks into account
+    RHS = S.ImpCastExprToType(RHS.take(), LHSComplexInt->getElementType(),
+                              CK_IntegralCast);
     RHS = S.ImpCastExprToType(RHS.take(), LHSType, CK_IntegralRealToComplex);
     return LHSType;
   }
 
   assert(RHSComplexInt);
   // int -> _Complex int
-  if (!IsCompAssign)
+  // FIXME: This needs to take integer ranks into account
+  if (!IsCompAssign) {
+    LHS = S.ImpCastExprToType(LHS.take(), RHSComplexInt->getElementType(),
+                              CK_IntegralCast);
     LHS = S.ImpCastExprToType(LHS.take(), RHSType, CK_IntegralRealToComplex);
+  }
   return RHSType;
 }
 
