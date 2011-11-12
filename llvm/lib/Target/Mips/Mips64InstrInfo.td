@@ -215,6 +215,10 @@ def : Pat<(i64 immSExt16:$in),
 def : Pat<(i64 immZExt16:$in),
           (ORi64 ZERO_64, imm:$in)>;
 
+// Arbitrary immediates
+def : Pat<(i64 imm:$imm),
+          (ORi64 (LUi64 (HI16 imm:$imm)), (LO16 imm:$imm))>;
+
 // zextloadi32_u
 def : Pat<(zextloadi32_u addr:$a), (DSRL32 (DSLL32 (ULW64_P8 addr:$a), 0), 0)>,
       Requires<[IsN64]>;
