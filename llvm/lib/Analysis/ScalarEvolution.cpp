@@ -4853,10 +4853,18 @@ ScalarEvolution::getConstantEvolutionLoopExitValue(PHINode *PN,
     // Also evaluate the other PHI nodes.  However, we don't get to stop if we
     // cease to be able to evaluate one of them or if they stop evolving,
     // because that doesn't necessarily prevent us from computing PN.
+    SmallVector<std::pair<PHINode *, Constant *>, 8> PHIsToCompute;
     for (DenseMap<Instruction *, Constant *>::const_iterator
            I = CurrentIterVals.begin(), E = CurrentIterVals.end(); I != E; ++I){
       PHINode *PHI = dyn_cast<PHINode>(I->first);
       if (!PHI || PHI == PN || PHI->getParent() != Header) continue;
+      PHIsToCompute.push_back(std::make_pair(PHI, I->second));
+    }
+    // We use two distinct loops because EvaluateExpression may invalidate any
+    // iterators into CurrentIterVals.
+    for (SmallVectorImpl<std::pair<PHINode *, Constant*> >::const_iterator
+             I = PHIsToCompute.begin(), E = PHIsToCompute.end(); I != E; ++I) {
+      PHINode *PHI = I->first;
       Constant *&NextPHI = NextIterVals[PHI];
       if (!NextPHI) {   // Not already computed.
         Value *BEValue = PHI->getIncomingValue(SecondIsBackedge);
@@ -4928,10 +4936,20 @@ const SCEV *ScalarEvolution::ComputeExitCountExhaustively(const Loop *L,
 
     // Update all the PHI nodes for the next iteration.
     DenseMap<Instruction *, Constant *> NextIterVals;
+
+    // Create a list of which PHIs we need to compute. We want to do this before
+    // calling EvaluateExpression on them because that may invalidate iterators
+    // into CurrentIterVals.
+    SmallVector<PHINode *, 8> PHIsToCompute;
     for (DenseMap<Instruction *, Constant *>::const_iterator
            I = CurrentIterVals.begin(), E = CurrentIterVals.end(); I != E; ++I){
       PHINode *PHI = dyn_cast<PHINode>(I->first);
       if (!PHI || PHI->getParent() != Header) continue;
+      PHIsToCompute.push_back(PHI);
+    }
+    for (SmallVectorImpl<PHINode *>::const_iterator I = PHIsToCompute.begin(),
+             E = PHIsToCompute.end(); I != E; ++I) {
+      PHINode *PHI = *I;
       Constant *&NextPHI = NextIterVals[PHI];
       if (NextPHI) continue;    // Already computed!
 
