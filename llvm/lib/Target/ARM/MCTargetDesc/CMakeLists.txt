@@ -12,8 +12,8 @@ add_dependencies(LLVMARMDesc ARMCommonTableGen)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/.. ${CMAKE_CURRENT_BINARY_DIR}/..)
 
 add_llvm_library_dependencies(LLVMARMDesc
-  LLVMARMInfo
   LLVMARMAsmPrinter
+  LLVMARMInfo
   LLVMMC
   LLVMSupport
   )

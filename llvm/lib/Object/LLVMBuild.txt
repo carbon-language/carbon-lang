@@ -19,5 +19,5 @@
 type = Library
 name = Object
 parent = Libraries
-required_libraries = Support
+required_libraries = Core Support
 

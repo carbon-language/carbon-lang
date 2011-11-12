@@ -6,5 +6,6 @@ add_llvm_library(LLVMCppBackendInfo
 
 add_llvm_library_dependencies(LLVMCppBackendInfo
   LLVMMC
+  LLVMSupport
   LLVMTarget
   )

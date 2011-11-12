@@ -62,6 +62,8 @@ add_llvm_library_dependencies(LLVMX86CodeGen
   LLVMTarget
   LLVMX86AsmPrinter
   LLVMX86Desc
+  LLVMX86Info
+  LLVMX86Utils
   )
 
 add_subdirectory(AsmParser)

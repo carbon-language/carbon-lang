@@ -25,6 +25,6 @@ has_asmprinter = 1
 type = Library
 name = PTXCodeGen
 parent = PTX
-required_libraries = Analysis AsmPrinter CodeGen Core MC PTXDesc PTXInfo Scalar SelectionDAG Support Target TransformUtils
+required_libraries = Analysis AsmPrinter CodeGen Core MC PTXDesc PTXInfo SelectionDAG Support Target TransformUtils
 add_to_library_groups = PTX
 

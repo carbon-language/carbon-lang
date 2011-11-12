@@ -12,10 +12,11 @@ add_llvm_library(LLVMJIT
   )
 
 add_llvm_library_dependencies(LLVMJIT
+  LLVMCodeGen
   LLVMCore
   LLVMExecutionEngine
+  LLVMMC
   LLVMRuntimeDyld
   LLVMSupport
   LLVMTarget
-  LLVMCodeGen
   )

@@ -24,6 +24,7 @@ add_llvm_library(LLVMipo
 add_llvm_library_dependencies(LLVMipo
   LLVMAnalysis
   LLVMCore
+  LLVMInstCombine
   LLVMScalarOpts
   LLVMSupport
   LLVMTarget
