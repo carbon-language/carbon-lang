@@ -62,6 +62,45 @@ define <16 x i16> @vshift07(<16 x i16> %a) nounwind readnone {
   ret <16 x i16> %s
 }
 
+; CHECK: vpsrlw
+; CHECK: pand
+; CHECK: pxor
+; CHECK: psubb
+; CHECK: vpsrlw
+; CHECK: pand
+; CHECK: pxor
+; CHECK: psubb
+define <32 x i8> @vshift09(<32 x i8> %a) nounwind readnone {
+  %s = ashr <32 x i8> %a, <i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2>
+  ret <32 x i8> %s
+}
+
+; CHECK: pxor
+; CHECK: pcmpgtb
+; CHECK: pcmpgtb
+define <32 x i8> @vshift10(<32 x i8> %a) nounwind readnone {
+  %s = ashr <32 x i8> %a, <i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7>
+  ret <32 x i8> %s
+}
+
+; CHECK: vpsrlw
+; CHECK: pand
+; CHECK: vpsrlw
+; CHECK: pand
+define <32 x i8> @vshift11(<32 x i8> %a) nounwind readnone {
+  %s = lshr <32 x i8> %a, <i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2>
+  ret <32 x i8> %s
+}
+
+; CHECK: vpsllw
+; CHECK: pand
+; CHECK: vpsllw
+; CHECK: pand
+define <32 x i8> @vshift12(<32 x i8> %a) nounwind readnone {
+  %s = shl <32 x i8> %a, <i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2>
+  ret <32 x i8> %s
+}
+
 ;;; Support variable shifts
 ; CHECK: _vshift08
 ; CHECK: vextractf128 $1

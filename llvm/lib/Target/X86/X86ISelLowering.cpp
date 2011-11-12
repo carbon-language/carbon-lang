@@ -924,10 +924,6 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     // FIXME: Do we need to handle scalar-to-vector here?
     setOperationAction(ISD::MUL,                MVT::v4i32, Legal);
 
-    // Can turn SHL into an integer multiply.
-    setOperationAction(ISD::SHL,                MVT::v4i32, Custom);
-    setOperationAction(ISD::SHL,                MVT::v16i8, Custom);
-
     setOperationAction(ISD::VSELECT,            MVT::v2f64, Legal);
     setOperationAction(ISD::VSELECT,            MVT::v2i64, Legal);
     setOperationAction(ISD::VSELECT,            MVT::v16i8, Legal);
@@ -955,18 +951,32 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   }
 
   if (Subtarget->hasXMMInt()) {
-    setOperationAction(ISD::SRL,               MVT::v2i64, Custom);
-    setOperationAction(ISD::SRL,               MVT::v4i32, Custom);
-    setOperationAction(ISD::SRL,               MVT::v16i8, Custom);
     setOperationAction(ISD::SRL,               MVT::v8i16, Custom);
+    setOperationAction(ISD::SRL,               MVT::v16i8, Custom);
 
-    setOperationAction(ISD::SHL,               MVT::v2i64, Custom);
-    setOperationAction(ISD::SHL,               MVT::v4i32, Custom);
     setOperationAction(ISD::SHL,               MVT::v8i16, Custom);
+    setOperationAction(ISD::SHL,               MVT::v16i8, Custom);
 
-    setOperationAction(ISD::SRA,               MVT::v4i32, Custom);
     setOperationAction(ISD::SRA,               MVT::v8i16, Custom);
     setOperationAction(ISD::SRA,               MVT::v16i8, Custom);
+
+    if (Subtarget->hasAVX2()) {
+      setOperationAction(ISD::SRL,             MVT::v2i64, Legal);
+      setOperationAction(ISD::SRL,             MVT::v4i32, Legal);
+
+      setOperationAction(ISD::SHL,             MVT::v2i64, Legal);
+      setOperationAction(ISD::SHL,             MVT::v4i32, Legal);
+
+      setOperationAction(ISD::SRA,             MVT::v4i32, Legal);
+    } else {
+      setOperationAction(ISD::SRL,             MVT::v2i64, Custom);
+      setOperationAction(ISD::SRL,             MVT::v4i32, Custom);
+
+      setOperationAction(ISD::SHL,             MVT::v2i64, Custom);
+      setOperationAction(ISD::SHL,             MVT::v4i32, Custom);
+
+      setOperationAction(ISD::SRA,             MVT::v4i32, Custom);
+    }
   }
 
   if (Subtarget->hasSSE42() || Subtarget->hasAVX())
@@ -1009,18 +1019,14 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::CONCAT_VECTORS,     MVT::v32i8,  Custom);
     setOperationAction(ISD::CONCAT_VECTORS,     MVT::v16i16, Custom);
 
-    setOperationAction(ISD::SRL,               MVT::v4i64, Custom);
-    setOperationAction(ISD::SRL,               MVT::v8i32, Custom);
     setOperationAction(ISD::SRL,               MVT::v16i16, Custom);
     setOperationAction(ISD::SRL,               MVT::v32i8, Custom);
 
-    setOperationAction(ISD::SHL,               MVT::v4i64, Custom);
-    setOperationAction(ISD::SHL,               MVT::v8i32, Custom);
     setOperationAction(ISD::SHL,               MVT::v16i16, Custom);
     setOperationAction(ISD::SHL,               MVT::v32i8, Custom);
 
-    setOperationAction(ISD::SRA,               MVT::v8i32, Custom);
     setOperationAction(ISD::SRA,               MVT::v16i16, Custom);
+    setOperationAction(ISD::SRA,               MVT::v32i8, Custom);
 
     setOperationAction(ISD::SETCC,             MVT::v32i8, Custom);
     setOperationAction(ISD::SETCC,             MVT::v16i16, Custom);
@@ -1053,6 +1059,14 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
       // Don't lower v32i8 because there is no 128-bit byte mul
 
       setOperationAction(ISD::VSELECT,         MVT::v32i8, Legal);
+
+      setOperationAction(ISD::SRL,             MVT::v4i64, Legal);
+      setOperationAction(ISD::SRL,             MVT::v8i32, Legal);
+
+      setOperationAction(ISD::SHL,             MVT::v4i64, Legal);
+      setOperationAction(ISD::SHL,             MVT::v8i32, Legal);
+
+      setOperationAction(ISD::SRA,             MVT::v8i32, Legal);
     } else {
       setOperationAction(ISD::ADD,             MVT::v4i64, Custom);
       setOperationAction(ISD::ADD,             MVT::v8i32, Custom);
@@ -1068,6 +1082,14 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
       setOperationAction(ISD::MUL,             MVT::v8i32, Custom);
       setOperationAction(ISD::MUL,             MVT::v16i16, Custom);
       // Don't lower v32i8 because there is no 128-bit byte mul
+
+      setOperationAction(ISD::SRL,             MVT::v4i64, Custom);
+      setOperationAction(ISD::SRL,             MVT::v8i32, Custom);
+
+      setOperationAction(ISD::SHL,             MVT::v4i64, Custom);
+      setOperationAction(ISD::SHL,             MVT::v8i32, Custom);
+
+      setOperationAction(ISD::SRA,             MVT::v8i32, Custom);
     }
 
     // Custom lower several nodes for 256-bit types.
@@ -9510,6 +9532,14 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const 
 
   // Fix vector shift instructions where the last operand is a non-immediate
   // i32 value.
+  case Intrinsic::x86_avx2_pslli_w:
+  case Intrinsic::x86_avx2_pslli_d:
+  case Intrinsic::x86_avx2_pslli_q:
+  case Intrinsic::x86_avx2_psrli_w:
+  case Intrinsic::x86_avx2_psrli_d:
+  case Intrinsic::x86_avx2_psrli_q:
+  case Intrinsic::x86_avx2_psrai_w:
+  case Intrinsic::x86_avx2_psrai_d:
   case Intrinsic::x86_sse2_pslli_w:
   case Intrinsic::x86_sse2_pslli_d:
   case Intrinsic::x86_sse2_pslli_q:
@@ -9556,6 +9586,30 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const 
       break;
     case Intrinsic::x86_sse2_psrai_d:
       NewIntNo = Intrinsic::x86_sse2_psra_d;
+      break;
+    case Intrinsic::x86_avx2_pslli_w:
+      NewIntNo = Intrinsic::x86_avx2_psll_w;
+      break;
+    case Intrinsic::x86_avx2_pslli_d:
+      NewIntNo = Intrinsic::x86_avx2_psll_d;
+      break;
+    case Intrinsic::x86_avx2_pslli_q:
+      NewIntNo = Intrinsic::x86_avx2_psll_q;
+      break;
+    case Intrinsic::x86_avx2_psrli_w:
+      NewIntNo = Intrinsic::x86_avx2_psrl_w;
+      break;
+    case Intrinsic::x86_avx2_psrli_d:
+      NewIntNo = Intrinsic::x86_avx2_psrl_d;
+      break;
+    case Intrinsic::x86_avx2_psrli_q:
+      NewIntNo = Intrinsic::x86_avx2_psrl_q;
+      break;
+    case Intrinsic::x86_avx2_psrai_w:
+      NewIntNo = Intrinsic::x86_avx2_psra_w;
+      break;
+    case Intrinsic::x86_avx2_psrai_d:
+      NewIntNo = Intrinsic::x86_avx2_psra_d;
       break;
     default: {
       ShAmtVT = MVT::v2i32;
@@ -10249,52 +10303,6 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
                        R, DAG.getConstant(ShiftAmt, MVT::i32));
         }
     }
-  }
-
-  // AVX2 variable shifts
-  if (Subtarget->hasAVX2()) {
-    if (VT == MVT::v4i32 && Op->getOpcode() == ISD::SHL)
-       return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                     DAG.getConstant(Intrinsic::x86_avx2_psllv_d, MVT::i32),
-                     R, Amt);
-    if (VT == MVT::v8i32 && Op->getOpcode() == ISD::SHL)
-       return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                     DAG.getConstant(Intrinsic::x86_avx2_psllv_d_256, MVT::i32),
-                     R, Amt);
-    if (VT == MVT::v2i64 && Op->getOpcode() == ISD::SHL)
-       return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                     DAG.getConstant(Intrinsic::x86_avx2_psllv_q, MVT::i32),
-                     R, Amt);
-    if (VT == MVT::v4i64 && Op->getOpcode() == ISD::SHL)
-       return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                     DAG.getConstant(Intrinsic::x86_avx2_psllv_q_256, MVT::i32),
-                    R, Amt);
-
-    if (VT == MVT::v4i32 && Op->getOpcode() == ISD::SRL)
-       return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                     DAG.getConstant(Intrinsic::x86_avx2_psrlv_d, MVT::i32),
-                     R, Amt);
-    if (VT == MVT::v8i32 && Op->getOpcode() == ISD::SRL)
-       return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                     DAG.getConstant(Intrinsic::x86_avx2_psrlv_d_256, MVT::i32),
-                     R, Amt);
-    if (VT == MVT::v2i64 && Op->getOpcode() == ISD::SRL)
-       return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                     DAG.getConstant(Intrinsic::x86_avx2_psrlv_q, MVT::i32),
-                     R, Amt);
-    if (VT == MVT::v4i64 && Op->getOpcode() == ISD::SRL)
-       return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                     DAG.getConstant(Intrinsic::x86_avx2_psrlv_q_256, MVT::i32),
-                     R, Amt);
-
-    if (VT == MVT::v4i32 && Op->getOpcode() == ISD::SRA)
-       return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                     DAG.getConstant(Intrinsic::x86_avx2_psrav_d, MVT::i32),
-                     R, Amt);
-    if (VT == MVT::v8i32 && Op->getOpcode() == ISD::SRA)
-       return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                     DAG.getConstant(Intrinsic::x86_avx2_psrav_d_256, MVT::i32),
-                     R, Amt);
   }
 
   // Lower SHL with variable shift amount.
@@ -13464,7 +13472,9 @@ static SDValue PerformShiftCombine(SDNode* N, SelectionDAG &DAG,
   if (!Subtarget->hasXMMInt())
     return SDValue();
 
-  if (VT != MVT::v2i64 && VT != MVT::v4i32 && VT != MVT::v8i16)
+  if (VT != MVT::v2i64 && VT != MVT::v4i32 && VT != MVT::v8i16 &&
+      (!Subtarget->hasAVX2() ||
+       (VT != MVT::v4i64 && VT != MVT::v8i32 && VT != MVT::v16i16)))
     return SDValue();
 
   SDValue ShAmtOp = N->getOperand(1);
@@ -13537,6 +13547,18 @@ static SDValue PerformShiftCombine(SDNode* N, SelectionDAG &DAG,
       return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VT,
                          DAG.getConstant(Intrinsic::x86_sse2_pslli_w, MVT::i32),
                          ValOp, BaseShAmt);
+    if (VT == MVT::v4i64)
+      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VT,
+                         DAG.getConstant(Intrinsic::x86_avx2_pslli_q, MVT::i32),
+                         ValOp, BaseShAmt);
+    if (VT == MVT::v8i32)
+      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VT,
+                         DAG.getConstant(Intrinsic::x86_avx2_pslli_d, MVT::i32),
+                         ValOp, BaseShAmt);
+    if (VT == MVT::v16i16)
+      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VT,
+                         DAG.getConstant(Intrinsic::x86_avx2_pslli_w, MVT::i32),
+                         ValOp, BaseShAmt);
     break;
   case ISD::SRA:
     if (VT == MVT::v4i32)
@@ -13546,6 +13568,14 @@ static SDValue PerformShiftCombine(SDNode* N, SelectionDAG &DAG,
     if (VT == MVT::v8i16)
       return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VT,
                          DAG.getConstant(Intrinsic::x86_sse2_psrai_w, MVT::i32),
+                         ValOp, BaseShAmt);
+    if (VT == MVT::v8i32)
+      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VT,
+                         DAG.getConstant(Intrinsic::x86_avx2_psrai_d, MVT::i32),
+                         ValOp, BaseShAmt);
+    if (VT == MVT::v16i16)
+      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VT,
+                         DAG.getConstant(Intrinsic::x86_avx2_psrai_w, MVT::i32),
                          ValOp, BaseShAmt);
     break;
   case ISD::SRL:
@@ -13560,6 +13590,18 @@ static SDValue PerformShiftCombine(SDNode* N, SelectionDAG &DAG,
     if (VT ==  MVT::v8i16)
       return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VT,
                          DAG.getConstant(Intrinsic::x86_sse2_psrli_w, MVT::i32),
+                         ValOp, BaseShAmt);
+    if (VT == MVT::v4i64)
+      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VT,
+                         DAG.getConstant(Intrinsic::x86_avx2_psrli_q, MVT::i32),
+                         ValOp, BaseShAmt);
+    if (VT == MVT::v8i32)
+      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VT,
+                         DAG.getConstant(Intrinsic::x86_avx2_psrli_d, MVT::i32),
+                         ValOp, BaseShAmt);
+    if (VT ==  MVT::v16i16)
+      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VT,
+                         DAG.getConstant(Intrinsic::x86_avx2_psrli_w, MVT::i32),
                          ValOp, BaseShAmt);
     break;
   }
