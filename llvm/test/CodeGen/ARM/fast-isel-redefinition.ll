@@ -1,4 +1,4 @@
-; RUN: llc -O0 -regalloc=linearscan < %s
+; RUN: llc -O0 -regalloc=basic < %s
 ; This isn't exactly a useful set of command-line options, but check that it
 ; doesn't crash.  (It was crashing because a register was getting redefined.)
 

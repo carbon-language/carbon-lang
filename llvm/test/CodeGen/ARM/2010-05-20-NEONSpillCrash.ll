@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+neon -O0 -regalloc=linearscan
+; RUN: llc < %s -march=arm -mattr=+neon -O0 -regalloc=basic
 
 ; This test would crash the rewriter when trying to handle a spill after one of
 ; the @llvm.arm.neon.vld3.v8i8 defined three parts of a register.
