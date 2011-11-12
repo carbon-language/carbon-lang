@@ -107,6 +107,7 @@ TARGET_OS=@TARGET_OS@
 
 # Target hardware architecture
 ARCH=@ARCH@
+TARGET_NATIVE_ARCH := $(ARCH)
 
 # Indicates, whether we're cross-compiling LLVM or not
 LLVM_CROSS_COMPILING=@LLVM_CROSS_COMPILING@

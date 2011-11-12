@@ -81,6 +81,11 @@ LLVMBuildMakeFrag := $(PROJ_OBJ_ROOT)/Makefile.llvmbuild
 LLVMConfigLibraryDependenciesInc := \
 	$(PROJ_OBJ_ROOT)/tools/llvm-config-2/LibraryDependencies.inc
 
+# This is for temporary backwards compatibility.
+ifndef TARGET_NATIVE_ARCH
+TARGET_NATIVE_ARCH := $(ARCH)
+endif
+
 # The rule to create the LLVMBuild Makefile fragment as well as the llvm-config
 # library table.
 #
@@ -92,7 +97,7 @@ LLVMConfigLibraryDependenciesInc := \
 $(LLVMBuildMakeFrag): $(PROJ_SRC_ROOT)/Makefile.rules
 	$(Echo) Constructing LLVMBuild project information.
 	$(Verb) $(LLVMBuildTool) \
-	  --native-target "$(ARCH)" \
+	  --native-target "$(TARGET_NATIVE_ARCH)" \
 	  --enable-targets "$(TARGETS_TO_BUILD)" \
 	  --write-library-table $(LLVMConfigLibraryDependenciesInc) \
 	  --write-make-fragment $(LLVMBuildMakeFrag)
