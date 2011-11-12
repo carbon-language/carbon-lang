@@ -1875,8 +1875,14 @@ void SROA::RewriteBitCast(BitCastInst *BC, AllocaInst *AI, uint64_t Offset,
     return;
 
   // The bitcast references the original alloca.  Replace its uses with
-  // references to the first new element alloca.
-  Instruction *Val = NewElts[0];
+  // references to the alloca containing offset zero (which is normally at
+  // index zero, but might not be in cases involving structs with elements
+  // of size zero).
+  Type *T = AI->getAllocatedType();
+  uint64_t EltOffset = 0;
+  Type *IdxTy;
+  uint64_t Idx = FindElementAndOffset(T, EltOffset, IdxTy);
+  Instruction *Val = NewElts[Idx];
   if (Val->getType() != BC->getDestTy()) {
     Val = new BitCastInst(Val, BC->getDestTy(), "", BC);
     Val->takeName(BC);
@@ -2160,6 +2166,8 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
     }
 
     unsigned EltSize = TD->getTypeAllocSize(EltTy);
+    if (!EltSize)
+      continue;
 
     IRBuilder<> Builder(MI);
 
