@@ -70,7 +70,6 @@ add_llvm_library(LLVMCodeGen
   RegAllocBasic.cpp
   RegAllocFast.cpp
   RegAllocGreedy.cpp
-  RegAllocLinearScan.cpp
   RegAllocPBQP.cpp
   RegisterClassInfo.cpp
   RegisterCoalescer.cpp
