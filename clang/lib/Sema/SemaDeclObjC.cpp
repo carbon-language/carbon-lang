@@ -21,6 +21,7 @@
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/ASTMutationListener.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Sema/DeclSpec.h"
 #include "llvm/ADT/DenseSet.h"
@@ -701,8 +702,10 @@ Sema::ActOnForwardProtocolDeclaration(SourceLocation AtProtocolLoc,
     }
     if (attrList) {
       ProcessDeclAttributeList(TUScope, PDecl, attrList);
-      if (!isNew)
-        PDecl->setChangedSinceDeserialization(true);
+      if (!isNew) {
+        if (ASTMutationListener *L = Context.getASTMutationListener())
+          L->UpdatedAttributeList(PDecl);
+      }
     }
     Protocols.push_back(PDecl);
     ProtoLocs.push_back(IdentList[i].second);

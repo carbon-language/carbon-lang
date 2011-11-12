@@ -2960,8 +2960,6 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
        I != E; ++I) {
     if (!(*I)->isFromASTFile())
       NewGlobalDecls.push_back(std::make_pair((*I)->getKind(), GetDeclRef(*I)));
-    else if ((*I)->isChangedSinceDeserialization())
-      (void)GetDeclRef(*I); // Make sure it's written, but don't record it.
   }
   
   llvm::BitCodeAbbrev *Abv = new llvm::BitCodeAbbrev();
@@ -3454,12 +3452,6 @@ DeclID ASTWriter::GetDeclRef(const Decl *D) {
     // enqueue it in the list of declarations to emit.
     ID = NextDeclID++;
     DeclTypesToEmit.push(const_cast<Decl *>(D));
-  } else if (ID < FirstDeclID && D->isChangedSinceDeserialization()) {
-    // We don't add it to the replacement collection here, because we don't
-    // have the offset yet.
-    DeclTypesToEmit.push(const_cast<Decl *>(D));
-    // Reset the flag, so that we don't add this decl multiple times.
-    const_cast<Decl *>(D)->setChangedSinceDeserialization(false);
   }
 
   return ID;
@@ -4129,6 +4121,14 @@ void ASTWriter::AddedObjCCategoryToInterface(const ObjCCategoryDecl *CatD,
 }
 
 void ASTWriter::CompletedObjCForwardRef(const ObjCContainerDecl *D) {
+  assert(!WritingAST && "Already writing the AST!");
+  if (!D->isFromASTFile())
+    return; // Declaration not imported from PCH.
+
+  RewriteDecl(D);
+}
+
+void ASTWriter::UpdatedAttributeList(const Decl *D) {
   assert(!WritingAST && "Already writing the AST!");
   if (!D->isFromASTFile())
     return; // Declaration not imported from PCH.

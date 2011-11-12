@@ -64,6 +64,9 @@ public:
 
   /// \brief A objc interface or protocol forward reference was completed.
   virtual void CompletedObjCForwardRef(const ObjCContainerDecl *D) {}
+
+  /// \brief The attributes list of a declaration was updated.
+  virtual void UpdatedAttributeList(const Decl *D) {}
 };
 
 } // end namespace clang

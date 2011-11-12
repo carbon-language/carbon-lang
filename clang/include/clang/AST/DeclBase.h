@@ -253,9 +253,6 @@ protected:
   /// \brief Whether this declaration was loaded from an AST file.
   unsigned FromASTFile : 1;
 
-  /// ChangedAfterLoad - if this declaration has changed since being loaded
-  unsigned ChangedAfterLoad : 1;
-
   /// \brief Whether this declaration is private to the module in which it was
   /// defined.
   unsigned ModulePrivate : 1;
@@ -285,7 +282,7 @@ protected:
     : NextDeclInContext(0), DeclCtx(DC),
       Loc(L), DeclKind(DK), InvalidDecl(0),
       HasAttrs(false), Implicit(false), Used(false), Referenced(false),
-      Access(AS_none), FromASTFile(0), ChangedAfterLoad(false),
+      Access(AS_none), FromASTFile(0),
       ModulePrivate(0),
       IdentifierNamespace(getIdentifierNamespaceForKind(DK)),
       HasCachedLinkage(0)
@@ -296,7 +293,7 @@ protected:
   Decl(Kind DK, EmptyShell Empty)
     : NextDeclInContext(0), DeclKind(DK), InvalidDecl(0),
       HasAttrs(false), Implicit(false), Used(false), Referenced(false),
-      Access(AS_none), FromASTFile(0), ChangedAfterLoad(false),
+      Access(AS_none), FromASTFile(0),
       ModulePrivate(0),
       IdentifierNamespace(getIdentifierNamespaceForKind(DK)),
       HasCachedLinkage(0)
@@ -504,19 +501,6 @@ public:
   /// \brief Determine whether this declaration came from an AST file (such as
   /// a precompiled header or module) rather than having been parsed.
   bool isFromASTFile() const { return FromASTFile; }
-
-  /// \brief Query whether this declaration was changed in a significant way
-  /// since being loaded from an AST file.
-  ///
-  /// In an epic violation of layering, what is "significant" is entirely
-  /// up to the serialization system, but implemented in AST and Sema.
-  bool isChangedSinceDeserialization() const { return ChangedAfterLoad; }
-
-  /// \brief Mark this declaration as having changed since deserialization, or
-  /// reset the flag.
-  void setChangedSinceDeserialization(bool Changed) {
-    ChangedAfterLoad = Changed;
-  }
 
   unsigned getIdentifierNamespace() const {
     return IdentifierNamespace;
