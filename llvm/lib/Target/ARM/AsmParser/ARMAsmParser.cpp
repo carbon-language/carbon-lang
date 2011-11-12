@@ -1189,26 +1189,6 @@ public:
     Inst.addOperand(MCOperand::CreateImm(CE->getValue() / 4));
   }
 
-  void addImm0_255Operands(MCInst &Inst, unsigned N) const {
-    assert(N == 1 && "Invalid number of operands!");
-    addExpr(Inst, getImm());
-  }
-
-  void addImm0_7Operands(MCInst &Inst, unsigned N) const {
-    assert(N == 1 && "Invalid number of operands!");
-    addExpr(Inst, getImm());
-  }
-
-  void addImm0_15Operands(MCInst &Inst, unsigned N) const {
-    assert(N == 1 && "Invalid number of operands!");
-    addExpr(Inst, getImm());
-  }
-
-  void addImm0_31Operands(MCInst &Inst, unsigned N) const {
-    assert(N == 1 && "Invalid number of operands!");
-    addExpr(Inst, getImm());
-  }
-
   void addImm1_16Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     // The constant encodes as the immediate-1, and we store in the instruction
@@ -1225,26 +1205,6 @@ public:
     Inst.addOperand(MCOperand::CreateImm(CE->getValue() - 1));
   }
 
-  void addImm0_32Operands(MCInst &Inst, unsigned N) const {
-    assert(N == 1 && "Invalid number of operands!");
-    addExpr(Inst, getImm());
-  }
-
-  void addImm0_65535Operands(MCInst &Inst, unsigned N) const {
-    assert(N == 1 && "Invalid number of operands!");
-    addExpr(Inst, getImm());
-  }
-
-  void addImm0_65535ExprOperands(MCInst &Inst, unsigned N) const {
-    assert(N == 1 && "Invalid number of operands!");
-    addExpr(Inst, getImm());
-  }
-
-  void addImm24bitOperands(MCInst &Inst, unsigned N) const {
-    assert(N == 1 && "Invalid number of operands!");
-    addExpr(Inst, getImm());
-  }
-
   void addImmThumbSROperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     // The constant encodes as the immediate, except for 32, which encodes as
@@ -1254,11 +1214,6 @@ public:
     Inst.addOperand(MCOperand::CreateImm((Imm == 32 ? 0 : Imm)));
   }
 
-  void addPKHLSLImmOperands(MCInst &Inst, unsigned N) const {
-    assert(N == 1 && "Invalid number of operands!");
-    addExpr(Inst, getImm());
-  }
-
   void addPKHASRImmOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     // An ASR value of 32 encodes as 0, so that's how we want to add it to
@@ -1266,16 +1221,6 @@ public:
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     int Val = CE->getValue();
     Inst.addOperand(MCOperand::CreateImm(Val == 32 ? 0 : Val));
-  }
-
-  void addARMSOImmOperands(MCInst &Inst, unsigned N) const {
-    assert(N == 1 && "Invalid number of operands!");
-    addExpr(Inst, getImm());
-  }
-
-  void addT2SOImmOperands(MCInst &Inst, unsigned N) const {
-    assert(N == 1 && "Invalid number of operands!");
-    addExpr(Inst, getImm());
   }
 
   void addT2SOImmNotOperands(MCInst &Inst, unsigned N) const {
@@ -1292,11 +1237,6 @@ public:
     // negation in the assembly source, so twiddle it here.
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     Inst.addOperand(MCOperand::CreateImm(~CE->getValue()));
-  }
-
-  void addSetEndImmOperands(MCInst &Inst, unsigned N) const {
-    assert(N == 1 && "Invalid number of operands!");
-    addExpr(Inst, getImm());
   }
 
   void addMemBarrierOptOperands(MCInst &Inst, unsigned N) const {

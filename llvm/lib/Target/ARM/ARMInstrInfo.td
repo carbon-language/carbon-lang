@@ -284,14 +284,6 @@ def lo16AllZero : PatLeaf<(i32 imm), [{
   return (((uint32_t)N->getZExtValue()) & 0xFFFFUL) == 0;
 }], hi16>;
 
-/// imm0_65535 - An immediate is in the range [0.65535].
-def Imm0_65535AsmOperand: AsmOperandClass { let Name = "Imm0_65535"; }
-def imm0_65535 : Operand<i32>, ImmLeaf<i32, [{
-  return Imm >= 0 && Imm < 65536;
-}]> {
-  let ParserMatchClass = Imm0_65535AsmOperand;
-}
-
 class BinOpWithFlagFrag<dag res> :
       PatFrag<(ops node:$LHS, node:$RHS, node:$FLAG), res>;
 class BinOpFrag<dag res> : PatFrag<(ops node:$LHS, node:$RHS), res>;
@@ -325,6 +317,9 @@ def fsub_mlx : PatFrag<(ops node:$lhs, node:$rhs),(fsub node:$lhs, node:$rhs),[{
 //===----------------------------------------------------------------------===//
 // Operand Definitions.
 //
+
+// Immediate operands with a shared generic asm render method.
+class ImmAsmOperand : AsmOperandClass { let RenderMethod = "addImmOperands"; }
 
 // Branch target.
 // FIXME: rename brtarget to t2_brtarget
@@ -496,7 +491,7 @@ def shift_so_reg_imm : Operand<i32>,    // reg reg imm
 
 // so_imm - Match a 32-bit shifter_operand immediate operand, which is an
 // 8-bit immediate rotated by an arbitrary number of bits.
-def SOImmAsmOperand: AsmOperandClass { let Name = "ARMSOImm"; }
+def SOImmAsmOperand: ImmAsmOperand { let Name = "ARMSOImm"; }
 def so_imm : Operand<i32>, ImmLeaf<i32, [{
     return ARM_AM::getSOImmVal(Imm) != -1;
   }]> {
@@ -521,7 +516,7 @@ def arm_i32imm : PatLeaf<(imm), [{
 }]>;
 
 /// imm0_7 predicate - Immediate in the range [0,7].
-def Imm0_7AsmOperand: AsmOperandClass { let Name = "Imm0_7"; }
+def Imm0_7AsmOperand: ImmAsmOperand { let Name = "Imm0_7"; }
 def imm0_7 : Operand<i32>, ImmLeaf<i32, [{
   return Imm >= 0 && Imm < 8;
 }]> {
@@ -529,7 +524,7 @@ def imm0_7 : Operand<i32>, ImmLeaf<i32, [{
 }
 
 /// imm0_15 predicate - Immediate in the range [0,15].
-def Imm0_15AsmOperand: AsmOperandClass { let Name = "Imm0_15"; }
+def Imm0_15AsmOperand: ImmAsmOperand { let Name = "Imm0_15"; }
 def imm0_15 : Operand<i32>, ImmLeaf<i32, [{
   return Imm >= 0 && Imm < 16;
 }]> {
@@ -537,7 +532,7 @@ def imm0_15 : Operand<i32>, ImmLeaf<i32, [{
 }
 
 /// imm0_31 predicate - True if the 32-bit immediate is in the range [0,31].
-def Imm0_31AsmOperand: AsmOperandClass { let Name = "Imm0_31"; }
+def Imm0_31AsmOperand: ImmAsmOperand { let Name = "Imm0_31"; }
 def imm0_31 : Operand<i32>, ImmLeaf<i32, [{
   return Imm >= 0 && Imm < 32;
 }]> {
@@ -545,7 +540,7 @@ def imm0_31 : Operand<i32>, ImmLeaf<i32, [{
 }
 
 /// imm0_32 predicate - True if the 32-bit immediate is in the range [0,32].
-def Imm0_32AsmOperand: AsmOperandClass { let Name = "Imm0_32"; }
+def Imm0_32AsmOperand: ImmAsmOperand { let Name = "Imm0_32"; }
 def imm0_32 : Operand<i32>, ImmLeaf<i32, [{
   return Imm >= 0 && Imm < 32;
 }]> {
@@ -553,9 +548,17 @@ def imm0_32 : Operand<i32>, ImmLeaf<i32, [{
 }
 
 /// imm0_255 predicate - Immediate in the range [0,255].
-def Imm0_255AsmOperand : AsmOperandClass { let Name = "Imm0_255"; }
+def Imm0_255AsmOperand : ImmAsmOperand { let Name = "Imm0_255"; }
 def imm0_255 : Operand<i32>, ImmLeaf<i32, [{ return Imm >= 0 && Imm < 256; }]> {
   let ParserMatchClass = Imm0_255AsmOperand;
+}
+
+/// imm0_65535 - An immediate is in the range [0.65535].
+def Imm0_65535AsmOperand: ImmAsmOperand { let Name = "Imm0_65535"; }
+def imm0_65535 : Operand<i32>, ImmLeaf<i32, [{
+  return Imm >= 0 && Imm < 65536;
+}]> {
+  let ParserMatchClass = Imm0_65535AsmOperand;
 }
 
 // imm0_65535_expr - For movt/movw - 16-bit immediate that can also reference
@@ -564,14 +567,14 @@ def imm0_255 : Operand<i32>, ImmLeaf<i32, [{ return Imm >= 0 && Imm < 256; }]> {
 // FIXME: This really needs a Thumb version separate from the ARM version.
 // While the range is the same, and can thus use the same match class,
 // the encoding is different so it should have a different encoder method.
-def Imm0_65535ExprAsmOperand: AsmOperandClass { let Name = "Imm0_65535Expr"; }
+def Imm0_65535ExprAsmOperand: ImmAsmOperand { let Name = "Imm0_65535Expr"; }
 def imm0_65535_expr : Operand<i32> {
   let EncoderMethod = "getHiLo16ImmOpValue";
   let ParserMatchClass = Imm0_65535ExprAsmOperand;
 }
 
 /// imm24b - True if the 32-bit immediate is encodable in 24 bits.
-def Imm24bitAsmOperand: AsmOperandClass { let Name = "Imm24bit"; }
+def Imm24bitAsmOperand: ImmAsmOperand { let Name = "Imm24bit"; }
 def imm24b : Operand<i32>, ImmLeaf<i32, [{
   return Imm >= 0 && Imm <= 0xffffff;
 }]> {

@@ -174,7 +174,7 @@ def s_cc_out : OptionalDefOperand<OtherVT, (ops CCR), (ops (i32 CPSR))> {
 
 // ARM special operands for disassembly only.
 //
-def SetEndAsmOperand : AsmOperandClass {
+def SetEndAsmOperand : ImmAsmOperand {
   let Name = "SetEndImm";
   let ParserMethod = "parseSetEndImm";
 }
@@ -820,7 +820,7 @@ class AMiscA1I<bits<8> opcod, bits<4> opc7_4, dag oops, dag iops,
 }
 
 // PKH instructions
-def PKHLSLAsmOperand : AsmOperandClass {
+def PKHLSLAsmOperand : ImmAsmOperand {
   let Name = "PKHLSLImm";
   let ParserMethod = "parsePKHLSLImm";
 }
