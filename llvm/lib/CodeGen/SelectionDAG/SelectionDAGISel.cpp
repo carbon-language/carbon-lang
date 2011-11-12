@@ -487,7 +487,7 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
   // Run the DAG combiner in pre-legalize mode.
   {
     NamedRegionTimer T("DAG Combining 1", GroupName, TimePassesIsEnabled);
-    CurDAG->Combine(Unrestricted, *AA, OptLevel);
+    CurDAG->Combine(BeforeLegalizeTypes, *AA, OptLevel);
   }
 
   DEBUG(dbgs() << "Optimized lowered selection DAG: BB#" << BlockNumber
@@ -515,7 +515,7 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
     {
       NamedRegionTimer T("DAG Combining after legalize types", GroupName,
                          TimePassesIsEnabled);
-      CurDAG->Combine(NoIllegalTypes, *AA, OptLevel);
+      CurDAG->Combine(AfterLegalizeTypes, *AA, OptLevel);
     }
 
     DEBUG(dbgs() << "Optimized type-legalized selection DAG: BB#" << BlockNumber
@@ -540,7 +540,7 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
     {
       NamedRegionTimer T("DAG Combining after legalize vectors", GroupName,
                          TimePassesIsEnabled);
-      CurDAG->Combine(NoIllegalOperations, *AA, OptLevel);
+      CurDAG->Combine(AfterLegalizeVectorOps, *AA, OptLevel);
     }
 
     DEBUG(dbgs() << "Optimized vector-legalized selection DAG: BB#"
@@ -562,7 +562,7 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
   // Run the DAG combiner in post-legalize mode.
   {
     NamedRegionTimer T("DAG Combining 2", GroupName, TimePassesIsEnabled);
-    CurDAG->Combine(NoIllegalOperations, *AA, OptLevel);
+    CurDAG->Combine(AfterLegalizeDAG, *AA, OptLevel);
   }
 
   DEBUG(dbgs() << "Optimized legalized selection DAG: BB#" << BlockNumber

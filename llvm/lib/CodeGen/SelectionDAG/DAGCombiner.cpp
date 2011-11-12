@@ -279,7 +279,7 @@ namespace {
 
   public:
     DAGCombiner(SelectionDAG &D, AliasAnalysis &A, CodeGenOpt::Level OL)
-      : DAG(D), TLI(D.getTargetLoweringInfo()), Level(Unrestricted),
+      : DAG(D), TLI(D.getTargetLoweringInfo()), Level(BeforeLegalizeTypes),
         OptLevel(OL), LegalOperations(false), LegalTypes(false), AA(A) {}
 
     /// Run - runs the dag combiner on all nodes in the work list
@@ -944,8 +944,8 @@ bool DAGCombiner::PromoteLoad(SDValue Op) {
 void DAGCombiner::Run(CombineLevel AtLevel) {
   // set the instance variables, so that the various visit routines may use it.
   Level = AtLevel;
-  LegalOperations = Level >= NoIllegalOperations;
-  LegalTypes = Level >= NoIllegalTypes;
+  LegalOperations = Level >= AfterLegalizeVectorOps;
+  LegalTypes = Level >= AfterLegalizeTypes;
 
   // Add all the dag nodes to the worklist.
   WorkList.reserve(DAG.allnodes_size());
@@ -5471,7 +5471,7 @@ SDValue DAGCombiner::visitSINT_TO_FP(SDNode *N) {
   // fold (sint_to_fp c1) -> c1fp
   if (N0C && OpVT != MVT::ppcf128 &&
       // ...but only if the target supports immediate floating-point values
-      (Level == llvm::Unrestricted ||
+      (!LegalOperations ||
        TLI.isOperationLegalOrCustom(llvm::ISD::ConstantFP, VT)))
     return DAG.getNode(ISD::SINT_TO_FP, N->getDebugLoc(), VT, N0);
 
@@ -5496,7 +5496,7 @@ SDValue DAGCombiner::visitUINT_TO_FP(SDNode *N) {
   // fold (uint_to_fp c1) -> c1fp
   if (N0C && OpVT != MVT::ppcf128 &&
       // ...but only if the target supports immediate floating-point values
-      (Level == llvm::Unrestricted ||
+      (!LegalOperations ||
        TLI.isOperationLegalOrCustom(llvm::ISD::ConstantFP, VT)))
     return DAG.getNode(ISD::UINT_TO_FP, N->getDebugLoc(), VT, N0);
 
@@ -5875,7 +5875,7 @@ SDValue DAGCombiner::visitBR_CC(SDNode *N) {
 /// the add / subtract in and all of its other uses are redirected to the
 /// new load / store.
 bool DAGCombiner::CombineToPreIndexedLoadStore(SDNode *N) {
-  if (!LegalOperations)
+  if (Level < AfterLegalizeDAG)
     return false;
 
   bool isLoad = true;
@@ -6007,7 +6007,7 @@ bool DAGCombiner::CombineToPreIndexedLoadStore(SDNode *N) {
 /// load / store effectively and all of its uses are redirected to the
 /// new load / store.
 bool DAGCombiner::CombineToPostIndexedLoadStore(SDNode *N) {
-  if (!LegalOperations)
+  if (Level < AfterLegalizeDAG)
     return false;
 
   bool isLoad = true;

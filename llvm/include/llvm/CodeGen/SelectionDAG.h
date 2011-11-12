@@ -112,9 +112,10 @@ public:
 };
 
 enum CombineLevel {
-  Unrestricted,   // Combine may create illegal operations and illegal types.
-  NoIllegalTypes, // Combine may create illegal operations but no illegal types.
-  NoIllegalOperations // Combine may only create legal operations and types.
+  BeforeLegalizeTypes,
+  AfterLegalizeTypes,
+  AfterLegalizeVectorOps,
+  AfterLegalizeDAG
 };
 
 class SelectionDAG;
