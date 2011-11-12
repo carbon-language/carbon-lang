@@ -1,6 +1,4 @@
-; RUN: llc < %s -march=x86 -stats -regalloc=linearscan -enable-lsr-nested |& grep {Number of loads added} | grep 2
-; RUN: llc < %s -march=x86 -stats -regalloc=linearscan -enable-lsr-nested |& grep {Number of spill slots allocated} | grep 1
-; RUN: llc < %s -march=x86 -stats -regalloc=linearscan -enable-lsr-nested |& grep {Number of machine instrs printed} | grep 34
+; RUN: llc < %s -march=x86 -stats -enable-lsr-nested |& grep {Number of spill slots allocated} | grep 1
 ; PR3495
 ;
 ; Note: this should not spill at all with either good LSR or good regalloc.

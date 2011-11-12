@@ -1,4 +1,4 @@
-; RUN: llc < %s -O0 -regalloc=linearscan -march=x86-64 -mattr=+mmx,+sse2 | FileCheck %s
+; RUN: llc < %s -O0 -regalloc=basic -march=x86-64 -mattr=+mmx,+sse2 | FileCheck %s
 ; PR4684
 
 target datalayout =
