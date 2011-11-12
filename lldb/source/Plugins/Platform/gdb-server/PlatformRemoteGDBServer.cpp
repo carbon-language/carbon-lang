@@ -391,7 +391,7 @@ PlatformRemoteGDBServer::Attach (lldb::pid_t pid,
                         assert (connect_url_len < sizeof(connect_url));
                         error = process_sp->ConnectRemote (connect_url);
                         if (error.Success())
-                            error = process_sp->Attach(pid);
+                            error = process_sp->Attach(pid, 0);
                     }
                 }
             }

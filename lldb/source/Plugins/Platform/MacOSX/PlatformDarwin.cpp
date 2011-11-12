@@ -443,7 +443,7 @@ PlatformDarwin::Attach (lldb::pid_t pid,
             process_sp = target->CreateProcess (listener, "gdb-remote");
             
             if (process_sp)
-                error = process_sp->Attach (pid);
+                error = process_sp->Attach (pid, 2);
         }
     }
     else

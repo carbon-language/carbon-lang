@@ -501,10 +501,10 @@ LaunchInNewTerminalWithAppleScript (const char *exe_path, ProcessLaunchInfo &lau
     
     if (launch_info.GetFlags().Test (eLaunchFlagLaunchInShell))
     {
-        const char *shell_executable = getenv("SHELL");
+        const char *shell_executable = "/bin/bash"; //getenv("SHELL");
         std::string safe_arg;
         if (launch_info.GetArchitecture().IsValid())
-            command.Printf(" -- %s -c 'exec /usr/bin/arch -arch %s ", shell_executable, launch_info.GetArchitecture().GetArchitectureName());
+            command.Printf(" -- %s -c 'exec /usr/bin/arch -arch %s", shell_executable, launch_info.GetArchitecture().GetArchitectureName());
         else
             command.Printf(" -- %s -c 'exec ", shell_executable);
         const char **argv = launch_info.GetArguments().GetConstArgumentVector ();

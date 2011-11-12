@@ -337,7 +337,7 @@ SBTarget::AttachToProcessWithID
 
         if (sb_process.IsValid())
         {
-            error.SetError (sb_process->Attach (pid));
+            error.SetError (sb_process->Attach (pid, 0));
             // If we are doing synchronous mode, then wait for the
             // process to stop!
             if (m_opaque_sp->GetDebugger().GetAsyncExecution () == false)

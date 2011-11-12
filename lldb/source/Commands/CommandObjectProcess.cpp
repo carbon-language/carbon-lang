@@ -232,6 +232,8 @@ public:
 
             if (m_options.launch_info.GetFlags().Test (eLaunchFlagLaunchInTTY))
             {
+                m_options.launch_info.GetArchitecture() = target->GetArchitecture();
+
                 process = target->GetPlatform()->DebugProcess (m_options.launch_info, 
                                                                debugger,
                                                                target,
@@ -695,7 +697,7 @@ public:
 
                     if (attach_pid != LLDB_INVALID_PROCESS_ID)
                     {
-                        error = process->Attach (attach_pid);
+                        error = process->Attach (attach_pid, 0);
                         if (error.Success())
                         {
                             result.SetStatus (eReturnStatusSuccessContinuingNoResult);

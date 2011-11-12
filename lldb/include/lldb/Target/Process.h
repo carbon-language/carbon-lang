@@ -1332,7 +1332,7 @@ public:
     ///     LLDB_INVALID_PROCESS_ID if attaching fails.
     //------------------------------------------------------------------
     virtual Error
-    Attach (lldb::pid_t pid);
+    Attach (lldb::pid_t pid, uint32_t exec_count);
 
     //------------------------------------------------------------------
     /// Attach to an existing process by process name.
@@ -2711,8 +2711,13 @@ protected:
         
         NextEventAction (Process *process) : 
             m_process(process)
-        {}
-        virtual ~NextEventAction() {}
+        {
+        }
+
+        virtual
+        ~NextEventAction() 
+        {
+        }
         
         virtual EventActionResult PerformAction (lldb::EventSP &event_sp) = 0;
         virtual void HandleBeingUnshipped () {};
@@ -2734,15 +2739,22 @@ protected:
     class AttachCompletionHandler : public NextEventAction
     {
     public:
-        AttachCompletionHandler (Process *process) :
-            NextEventAction(process)
-        {}
-        virtual ~AttachCompletionHandler() {}
+        AttachCompletionHandler (Process *process, uint32_t exec_count) :
+            NextEventAction (process),
+            m_exec_count (exec_count)
+        {
+        }
+
+        virtual 
+        ~AttachCompletionHandler() 
+        {
+        }
         
         virtual EventActionResult PerformAction (lldb::EventSP &event_sp);
         virtual EventActionResult HandleBeingInterrupted ();
         virtual const char *GetExitString();
     private:
+        uint32_t m_exec_count;
         std::string m_exit_string;
     };
 

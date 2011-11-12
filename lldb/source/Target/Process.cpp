@@ -2186,24 +2186,33 @@ Process::AttachCompletionHandler::PerformAction (lldb::EventSP &event_sp)
         
         case eStateStopped:
         case eStateCrashed:
-        {
-            // During attach, prior to sending the eStateStopped event, 
-            // lldb_private::Process subclasses must set the process must set
-            // the new process ID.
-            assert (m_process->GetID() != LLDB_INVALID_PROCESS_ID);
-            m_process->CompleteAttach ();
-            return eEventActionSuccess;
-        }
-            
-            
+            {
+                // During attach, prior to sending the eStateStopped event, 
+                // lldb_private::Process subclasses must set the process must set
+                // the new process ID.
+                assert (m_process->GetID() != LLDB_INVALID_PROCESS_ID);
+                if (m_exec_count > 0)
+                {
+                    --m_exec_count;
+                    m_process->Resume();
+                    return eEventActionRetry;
+                }
+                else
+                {
+                    m_process->CompleteAttach ();
+                    return eEventActionSuccess;
+                }
+            }
             break;
+
         default:
         case eStateExited:   
         case eStateInvalid:
-            m_exit_string.assign ("No valid Process");
-            return eEventActionExit;
             break;
     }
+
+    m_exit_string.assign ("No valid Process");
+    return eEventActionExit;
 }
 
 Process::NextEventAction::EventActionResult
@@ -2219,7 +2228,7 @@ Process::AttachCompletionHandler::GetExitString ()
 }
 
 Error
-Process::Attach (lldb::pid_t attach_pid)
+Process::Attach (lldb::pid_t attach_pid, uint32_t exec_count)
 {
 
     m_abi_sp.reset();
@@ -2236,7 +2245,8 @@ Process::Attach (lldb::pid_t attach_pid)
         error = DoAttachToProcessWithID (attach_pid);
         if (error.Success())
         {
-            SetNextEventAction(new Process::AttachCompletionHandler(this));
+            
+            SetNextEventAction(new Process::AttachCompletionHandler(this, exec_count));
             StartPrivateStateThread();
         }
         else
@@ -2316,7 +2326,7 @@ Process::Attach (const char *process_name, bool wait_for_launch)
             }
             else
             {
-                SetNextEventAction(new Process::AttachCompletionHandler(this));
+                SetNextEventAction(new Process::AttachCompletionHandler(this, 0));
                 StartPrivateStateThread();
             }
         }
@@ -2806,8 +2816,10 @@ Process::HandlePrivateEvent (EventSP &event_sp)
             case NextEventAction::eEventActionSuccess:
                 SetNextEventAction(NULL);
                 break;
+
             case NextEventAction::eEventActionRetry:
                 break;
+
             case NextEventAction::eEventActionExit:
                 // Handle Exiting Here.  If we already got an exited event,
                 // we should just propagate it.  Otherwise, swallow this event,
