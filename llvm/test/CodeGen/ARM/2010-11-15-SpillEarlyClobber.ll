@@ -1,4 +1,4 @@
-; RUN: llc < %s -verify-machineinstrs -spiller=standard
+; RUN: llc < %s -verify-machineinstrs -spiller=trivial
 ; RUN: llc < %s -verify-machineinstrs -spiller=inline
 ; PR8612
 ;
