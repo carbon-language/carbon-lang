@@ -2357,6 +2357,46 @@ static void ReadByValArg(MachineFunction &MF, SDValue Chain, DebugLoc dl,
   }
 }
 
+// Create frame object on stack and copy registers used for byval passing to it.
+static unsigned
+CopyMips64ByValRegs(MachineFunction &MF, SDValue Chain, DebugLoc dl,
+                    std::vector<SDValue>& OutChains, SelectionDAG &DAG,
+                    const CCValAssign &VA, const ISD::ArgFlagsTy& Flags,
+                    MachineFrameInfo *MFI, bool IsRegLoc,
+                    SmallVectorImpl<SDValue> &InVals, MipsFunctionInfo *MipsFI,
+                    EVT PtrTy) {
+  const unsigned *Reg = Mips64IntRegs + 8;
+  int FOOffset; // Frame object offset from virtual frame pointer.
+
+  if (IsRegLoc) {
+    Reg = std::find(Mips64IntRegs, Mips64IntRegs + 8, VA.getLocReg());
+    FOOffset = (Reg - Mips64IntRegs) * 8 - 8 * 8;
+    MipsFI->setRegSaveAreaSize(-FOOffset);
+  }
+  else
+    FOOffset = VA.getLocMemOffset();
+
+  // Create frame object.
+  unsigned NumRegs = (Flags.getByValSize() + 7) / 8;
+  unsigned LastFI = MFI->CreateFixedObject(NumRegs * 8, FOOffset, true);
+  SDValue FIN = DAG.getFrameIndex(LastFI, PtrTy);
+  InVals.push_back(FIN);
+
+  // Copy arg registers.
+  for (unsigned I = 0; (Reg != Mips64IntRegs + 8) && (I < NumRegs);
+       ++Reg, ++I) {
+    unsigned VReg = AddLiveIn(MF, *Reg, Mips::CPU64RegsRegisterClass);
+    SDValue StorePtr = DAG.getNode(ISD::ADD, dl, PtrTy, FIN,
+                                   DAG.getConstant(I * 8, PtrTy));
+    SDValue Store = DAG.getStore(Chain, dl, DAG.getRegister(VReg, MVT::i64),
+                                 StorePtr, MachinePointerInfo(), false,
+                                 false, 0);
+    OutChains.push_back(Store);
+  }
+  
+  return LastFI;
+}
+
 /// LowerFormalArguments - transform physical registers into virtual registers
 /// and generate load operations for arguments places on the stack.
 SDValue
@@ -2392,9 +2432,28 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     CCValAssign &VA = ArgLocs[i];
     EVT ValVT = VA.getValVT();
+    ISD::ArgFlagsTy Flags = Ins[i].Flags;
+    bool IsRegLoc = VA.isRegLoc();
+
+    if (Flags.isByVal()) {
+      assert(Flags.getByValSize() &&
+             "ByVal args of size 0 should have been ignored by front-end.");
+      if (IsO32) {
+        unsigned NumWords = (Flags.getByValSize() + 3) / 4;
+        LastFI = MFI->CreateFixedObject(NumWords * 4, VA.getLocMemOffset(),
+                                        true);
+        SDValue FIN = DAG.getFrameIndex(LastFI, getPointerTy());
+        InVals.push_back(FIN);
+        ReadByValArg(MF, Chain, dl, OutChains, DAG, NumWords, FIN, VA, Flags);
+      } else // N32/64
+        LastFI = CopyMips64ByValRegs(MF, Chain, dl, OutChains, DAG, VA, Flags,
+                                     MFI, IsRegLoc, InVals, MipsFI,
+                                     getPointerTy());
+      continue;
+    }
 
     // Arguments stored on registers
-    if (VA.isRegLoc()) {
+    if (IsRegLoc) {
       EVT RegVT = VA.getLocVT();
       unsigned ArgReg = VA.getLocReg();
       TargetRegisterClass *RC = 0;
@@ -2449,23 +2508,6 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
 
       // sanity check
       assert(VA.isMemLoc());
-
-      ISD::ArgFlagsTy Flags = Ins[i].Flags;
-
-      if (Flags.isByVal()) {
-        assert(IsO32 &&
-               "No support for ByVal args by ABIs other than O32 yet.");
-        assert(Flags.getByValSize() &&
-               "ByVal args of size 0 should have been ignored by front-end.");
-        unsigned NumWords = (Flags.getByValSize() + 3) / 4;
-        LastFI = MFI->CreateFixedObject(NumWords * 4, VA.getLocMemOffset(),
-                                        true);
-        SDValue FIN = DAG.getFrameIndex(LastFI, getPointerTy());
-        InVals.push_back(FIN);
-        ReadByValArg(MF, Chain, dl, OutChains, DAG, NumWords, FIN, VA, Flags);
-
-        continue;
-      }
 
       // The stack pointer offset is relative to the caller stack frame.
       LastFI = MFI->CreateFixedObject(ValVT.getSizeInBits()/8,
