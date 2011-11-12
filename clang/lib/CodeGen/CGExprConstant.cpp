@@ -843,25 +843,8 @@ public:
   }
 
 public:
-  llvm::Constant *EmitLValue(Expr *E) {
-    switch (E->getStmtClass()) {
-    default: break;
-    case Expr::CompoundLiteralExprClass: {
-      // Note that due to the nature of compound literals, this is guaranteed
-      // to be the only use of the variable, so we just generate it here.
-      CompoundLiteralExpr *CLE = cast<CompoundLiteralExpr>(E);
-      llvm::Constant* C = Visit(CLE->getInitializer());
-      // FIXME: "Leaked" on failure.
-      if (C)
-        C = new llvm::GlobalVariable(CGM.getModule(), C->getType(),
-                                     E->getType().isConstant(CGM.getContext()),
-                                     llvm::GlobalValue::InternalLinkage,
-                                     C, ".compoundliteral", 0, false,
-                          CGM.getContext().getTargetAddressSpace(E->getType()));
-      return C;
-    }
-    case Expr::DeclRefExprClass: {
-      ValueDecl *Decl = cast<DeclRefExpr>(E)->getDecl();
+  llvm::Constant *EmitLValue(APValue::LValueBase LVBase) {
+    if (const ValueDecl *Decl = LVBase.dyn_cast<const ValueDecl*>()) {
       if (Decl->hasAttr<WeakRefAttr>())
         return CGM.GetWeakRefReference(Decl);
       if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(Decl))
@@ -877,7 +860,25 @@ public:
           }
         }
       }
-      break;
+      return 0;
+    }
+
+    Expr *E = const_cast<Expr*>(LVBase.get<const Expr*>());
+    switch (E->getStmtClass()) {
+    default: break;
+    case Expr::CompoundLiteralExprClass: {
+      // Note that due to the nature of compound literals, this is guaranteed
+      // to be the only use of the variable, so we just generate it here.
+      CompoundLiteralExpr *CLE = cast<CompoundLiteralExpr>(E);
+      llvm::Constant* C = Visit(CLE->getInitializer());
+      // FIXME: "Leaked" on failure.
+      if (C)
+        C = new llvm::GlobalVariable(CGM.getModule(), C->getType(),
+                                     E->getType().isConstant(CGM.getContext()),
+                                     llvm::GlobalValue::InternalLinkage,
+                                     C, ".compoundliteral", 0, false,
+                          CGM.getContext().getTargetAddressSpace(E->getType()));
+      return C;
     }
     case Expr::StringLiteralClass:
       return CGM.GetAddrOfConstantStringFromLiteral(cast<StringLiteral>(E));
@@ -963,8 +964,8 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
                                Result.Val.getLValueOffset().getQuantity());
 
       llvm::Constant *C;
-      if (const Expr *LVBase = Result.Val.getLValueBase()) {
-        C = ConstExprEmitter(*this, CGF).EmitLValue(const_cast<Expr*>(LVBase));
+      if (APValue::LValueBase LVBase = Result.Val.getLValueBase()) {
+        C = ConstExprEmitter(*this, CGF).EmitLValue(LVBase);
 
         // Apply offset if necessary.
         if (!Offset->isNullValue()) {

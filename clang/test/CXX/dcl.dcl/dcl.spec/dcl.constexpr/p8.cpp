@@ -1,13 +1,17 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s
 
 struct S {
-  constexpr void f();
-  constexpr void g() const;
+  constexpr int f();
+  constexpr int g() const;
+  static constexpr int Sf();
 };
 
 void f(const S &s) {
   s.f();
   s.g();
+
+  int (*f)() = &S::Sf;
+  int (S::*g)() const = &S::g;
 }
 
 namespace std_example {

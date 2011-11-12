@@ -187,6 +187,10 @@ namespace StaticMemberFunction {
   static_assert_fold(S::f(19) == 800, "");
   static_assert_fold(s.f(19) == 800, "");
   static_assert_fold(n == 800, "");
+
+  constexpr int (*sf1)(int) = &S::f;
+  constexpr int (*sf2)(int) = &s.f;
+  constexpr const int *sk = &s.k;
 }
 
 namespace ParameterScopes {

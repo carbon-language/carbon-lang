@@ -29,12 +29,17 @@ namespace test2 {
   struct A {
     static const double d = 1.0;
     static const float f = d / 2;
-  };
+    static int g();
+  } a;
 
   // CHECK: @_ZN5test22t0E = global double {{1\.0+e\+0+}}, align 8
   // CHECK: @_ZN5test22t1E = global [2 x double] [double {{1\.0+e\+0+}}, double {{5\.0+e-0*}}1], align 16
+  // CHECK: @_ZN5test22t2E = global double* @_ZN5test21A1d
+  // CHECK: @_ZN5test22t3E = global {{.*}} @_ZN5test21A1g
   double t0 = A::d;
   double t1[] = { A::d, A::f };
+  const double *t2 = &a.d;
+  int (*t3)() = &a.g;
 }
 
 // We don't expect to fold this in the frontend, but make sure it doesn't crash.

@@ -2382,6 +2382,7 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
     // C++0x [dcl.constexpr]p8: A constexpr specifier for a non-static member
     // function that is not a constructor declares that function to be const.
     if (D.getDeclSpec().isConstexprSpecified() && !FreeFunction &&
+        D.getDeclSpec().getStorageClassSpec() != DeclSpec::SCS_static &&
         D.getName().getKind() != UnqualifiedId::IK_ConstructorName &&
         D.getName().getKind() != UnqualifiedId::IK_ConstructorTemplateId &&
         !(FnTy->getTypeQuals() & DeclSpec::TQ_const)) {

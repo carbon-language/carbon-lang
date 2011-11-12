@@ -18,6 +18,7 @@
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/PointerIntPair.h"
+#include "llvm/ADT/PointerUnion.h"
 
 namespace clang {
   class CharUnits;
@@ -25,6 +26,7 @@ namespace clang {
   class Expr;
   class FieldDecl;
   class Decl;
+  class ValueDecl;
 
 /// APValue - This class implements a discriminated union of [uninitialized]
 /// [APSInt] [APFloat], [Complex APSInt] [Complex APFloat], [Expr + Offset],
@@ -45,6 +47,7 @@ public:
     Struct,
     Union
   };
+  typedef llvm::PointerUnion<const ValueDecl *, const Expr *> LValueBase;
   typedef llvm::PointerIntPair<const Decl *, 1, bool> BaseOrMemberType;
   union LValuePathEntry {
     /// BaseOrMember - The FieldDecl or CXXRecordDecl indicating the next item
@@ -124,15 +127,14 @@ public:
   APValue(const APValue &RHS) : Kind(Uninitialized) {
     *this = RHS;
   }
-  APValue(const Expr *B, const CharUnits &O, NoLValuePath N)
+  APValue(LValueBase B, const CharUnits &O, NoLValuePath N)
       : Kind(Uninitialized) {
     MakeLValue(); setLValue(B, O, N);
   }
-  APValue(const Expr *B, const CharUnits &O, ArrayRef<LValuePathEntry> Path)
+  APValue(LValueBase B, const CharUnits &O, ArrayRef<LValuePathEntry> Path)
       : Kind(Uninitialized) {
     MakeLValue(); setLValue(B, O, Path);
   }
-  APValue(const Expr *B);
   APValue(UninitArray, unsigned InitElts, unsigned Size) : Kind(Uninitialized) {
     MakeArray(InitElts, Size);
   }
@@ -211,7 +213,7 @@ public:
     return const_cast<APValue*>(this)->getComplexFloatImag();
   }
 
-  const Expr* getLValueBase() const;
+  const LValueBase getLValueBase() const;
   CharUnits &getLValueOffset();
   const CharUnits &getLValueOffset() const {
     return const_cast<APValue*>(this)->getLValueOffset();
@@ -324,8 +326,8 @@ public:
     ((ComplexAPFloat*)(char*)Data)->Real = R;
     ((ComplexAPFloat*)(char*)Data)->Imag = I;
   }
-  void setLValue(const Expr *B, const CharUnits &O, NoLValuePath);
-  void setLValue(const Expr *B, const CharUnits &O,
+  void setLValue(LValueBase B, const CharUnits &O, NoLValuePath);
+  void setLValue(LValueBase B, const CharUnits &O,
                  ArrayRef<LValuePathEntry> Path);
   void setUnion(const FieldDecl *Field, const APValue &Value) {
     assert(isUnion() && "Invalid accessor");

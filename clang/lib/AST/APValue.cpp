@@ -21,7 +21,7 @@ using namespace clang;
 
 namespace {
   struct LVBase {
-    const Expr *Base;
+    APValue::LValueBase Base;
     CharUnits Offset;
     unsigned PathLength;
   };
@@ -73,11 +73,6 @@ APValue::StructData::~StructData() {
 APValue::UnionData::UnionData() : Field(0), Value(new APValue) {}
 APValue::UnionData::~UnionData () {
   delete Value;
-}
-
-APValue::APValue(const Expr* B) : Kind(Uninitialized) {
-  MakeLValue();
-  setLValue(B, CharUnits::Zero(), ArrayRef<LValuePathEntry>());
 }
 
 const APValue &APValue::operator=(const APValue &RHS) {
@@ -297,7 +292,7 @@ const DiagnosticBuilder &clang::operator<<(const DiagnosticBuilder &DB,
   return DB << Out.str();
 }
 
-const Expr* APValue::getLValueBase() const {
+const APValue::LValueBase APValue::getLValueBase() const {
   assert(isLValue() && "Invalid accessor");
   return ((const LV*)(const void*)Data)->Base;
 }
@@ -318,7 +313,7 @@ ArrayRef<APValue::LValuePathEntry> APValue::getLValuePath() const {
   return ArrayRef<LValuePathEntry>(LVal.getPath(), LVal.PathLength);
 }
 
-void APValue::setLValue(const Expr *B, const CharUnits &O, NoLValuePath) {
+void APValue::setLValue(LValueBase B, const CharUnits &O, NoLValuePath) {
   assert(isLValue() && "Invalid accessor");
   LV &LVal = *((LV*)(char*)Data);
   LVal.freePath();
@@ -327,7 +322,7 @@ void APValue::setLValue(const Expr *B, const CharUnits &O, NoLValuePath) {
   LVal.PathLength = (unsigned)-1;
 }
 
-void APValue::setLValue(const Expr *B, const CharUnits &O,
+void APValue::setLValue(LValueBase B, const CharUnits &O,
                         ArrayRef<LValuePathEntry> Path) {
   assert(isLValue() && "Invalid accessor");
   LV &LVal = *((LV*)(char*)Data);
