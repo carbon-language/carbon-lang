@@ -125,19 +125,6 @@ namespace llvm {
       return (unsigned)(IntervalPercentage * indexes_->getFunctionSize());
     }
 
-    /// conflictsWithPhysReg - Returns true if the specified register is used or
-    /// defined during the duration of the specified interval. Copies to and
-    /// from li.reg are allowed. This method is only able to analyze simple
-    /// ranges that stay within a single basic block. Anything else is
-    /// considered a conflict.
-    bool conflictsWithPhysReg(const LiveInterval &li, VirtRegMap &vrm,
-                              unsigned reg);
-
-    /// conflictsWithAliasRef - Similar to conflictsWithPhysRegRef except
-    /// it checks for alias uses and defs.
-    bool conflictsWithAliasRef(LiveInterval &li, unsigned Reg,
-                                   SmallPtrSet<MachineInstr*,32> &JoinedCopies);
-
     // Interval creation
     LiveInterval &getOrCreateInterval(unsigned reg) {
       Reg2IntervalMap::iterator I = r2iMap_.find(reg);
@@ -271,40 +258,12 @@ namespace llvm {
     /// print - Implement the dump method.
     virtual void print(raw_ostream &O, const Module* = 0) const;
 
-    /// addIntervalsForSpills - Create new intervals for spilled defs / uses of
-    /// the given interval. FIXME: It also returns the weight of the spill slot
-    /// (if any is created) by reference. This is temporary.
-    std::vector<LiveInterval*>
-    addIntervalsForSpills(const LiveInterval& i,
-                          const SmallVectorImpl<LiveInterval*> *SpillIs,
-                          const MachineLoopInfo *loopInfo, VirtRegMap& vrm);
-
-    /// spillPhysRegAroundRegDefsUses - Spill the specified physical register
-    /// around all defs and uses of the specified interval. Return true if it
-    /// was able to cut its interval.
-    bool spillPhysRegAroundRegDefsUses(const LiveInterval &li,
-                                       unsigned PhysReg, VirtRegMap &vrm);
-
     /// isReMaterializable - Returns true if every definition of MI of every
     /// val# of the specified interval is re-materializable. Also returns true
     /// by reference if all of the defs are load instructions.
     bool isReMaterializable(const LiveInterval &li,
                             const SmallVectorImpl<LiveInterval*> *SpillIs,
                             bool &isLoad);
-
-    /// isReMaterializable - Returns true if the definition MI of the specified
-    /// val# of the specified interval is re-materializable.
-    bool isReMaterializable(const LiveInterval &li, const VNInfo *ValNo,
-                            MachineInstr *MI);
-
-    /// getRepresentativeReg - Find the largest super register of the specified
-    /// physical register.
-    unsigned getRepresentativeReg(unsigned Reg) const;
-
-    /// getNumConflictsWithPhysReg - Return the number of uses and defs of the
-    /// specified interval that conflicts with the specified physical register.
-    unsigned getNumConflictsWithPhysReg(const LiveInterval &li,
-                                        unsigned PhysReg) const;
 
     /// intervalIsInOneMBB - Returns true if the specified interval is entirely
     /// within a single basic block.
@@ -378,84 +337,6 @@ namespace llvm {
                             MachineInstr *MI,
                             const SmallVectorImpl<LiveInterval*> *SpillIs,
                             bool &isLoad);
-
-    /// tryFoldMemoryOperand - Attempts to fold either a spill / restore from
-    /// slot / to reg or any rematerialized load into ith operand of specified
-    /// MI. If it is successul, MI is updated with the newly created MI and
-    /// returns true.
-    bool tryFoldMemoryOperand(MachineInstr* &MI, VirtRegMap &vrm,
-                              MachineInstr *DefMI, SlotIndex InstrIdx,
-                              SmallVector<unsigned, 2> &Ops,
-                              bool isSS, int FrameIndex, unsigned Reg);
-
-    /// canFoldMemoryOperand - Return true if the specified load / store
-    /// folding is possible.
-    bool canFoldMemoryOperand(MachineInstr *MI,
-                              SmallVector<unsigned, 2> &Ops,
-                              bool ReMatLoadSS) const;
-
-    /// anyKillInMBBAfterIdx - Returns true if there is a kill of the specified
-    /// VNInfo that's after the specified index but is within the basic block.
-    bool anyKillInMBBAfterIdx(const LiveInterval &li, const VNInfo *VNI,
-                              MachineBasicBlock *MBB,
-                              SlotIndex Idx) const;
-
-    /// hasAllocatableSuperReg - Return true if the specified physical register
-    /// has any super register that's allocatable.
-    bool hasAllocatableSuperReg(unsigned Reg) const;
-
-    /// SRInfo - Spill / restore info.
-    struct SRInfo {
-      SlotIndex index;
-      unsigned vreg;
-      bool canFold;
-      SRInfo(SlotIndex i, unsigned vr, bool f)
-        : index(i), vreg(vr), canFold(f) {}
-    };
-
-    bool alsoFoldARestore(int Id, SlotIndex index, unsigned vr,
-                          BitVector &RestoreMBBs,
-                          DenseMap<unsigned,std::vector<SRInfo> >&RestoreIdxes);
-    void eraseRestoreInfo(int Id, SlotIndex index, unsigned vr,
-                          BitVector &RestoreMBBs,
-                          DenseMap<unsigned,std::vector<SRInfo> >&RestoreIdxes);
-
-    /// handleSpilledImpDefs - Remove IMPLICIT_DEF instructions which are being
-    /// spilled and create empty intervals for their uses.
-    void handleSpilledImpDefs(const LiveInterval &li, VirtRegMap &vrm,
-                              const TargetRegisterClass* rc,
-                              std::vector<LiveInterval*> &NewLIs);
-
-    /// rewriteImplicitOps - Rewrite implicit use operands of MI (i.e. uses of
-    /// interval on to-be re-materialized operands of MI) with new register.
-    void rewriteImplicitOps(const LiveInterval &li,
-                           MachineInstr *MI, unsigned NewVReg, VirtRegMap &vrm);
-
-    /// rewriteInstructionForSpills, rewriteInstructionsForSpills - Helper
-    /// functions for addIntervalsForSpills to rewrite uses / defs for the given
-    /// live range.
-    bool rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
-        bool TrySplit, SlotIndex index, SlotIndex end,
-        MachineInstr *MI, MachineInstr *OrigDefMI, MachineInstr *DefMI,
-        unsigned Slot, int LdSlot,
-        bool isLoad, bool isLoadSS, bool DefIsReMat, bool CanDelete,
-        VirtRegMap &vrm, const TargetRegisterClass* rc,
-        SmallVector<int, 4> &ReMatIds, const MachineLoopInfo *loopInfo,
-        unsigned &NewVReg, unsigned ImpUse, bool &HasDef, bool &HasUse,
-        DenseMap<unsigned,unsigned> &MBBVRegsMap,
-        std::vector<LiveInterval*> &NewLIs);
-    void rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
-        LiveInterval::Ranges::const_iterator &I,
-        MachineInstr *OrigDefMI, MachineInstr *DefMI, unsigned Slot, int LdSlot,
-        bool isLoad, bool isLoadSS, bool DefIsReMat, bool CanDelete,
-        VirtRegMap &vrm, const TargetRegisterClass* rc,
-        SmallVector<int, 4> &ReMatIds, const MachineLoopInfo *loopInfo,
-        BitVector &SpillMBBs,
-        DenseMap<unsigned,std::vector<SRInfo> > &SpillIdxes,
-        BitVector &RestoreMBBs,
-        DenseMap<unsigned,std::vector<SRInfo> > &RestoreIdxes,
-        DenseMap<unsigned,unsigned> &MBBVRegsMap,
-        std::vector<LiveInterval*> &NewLIs);
 
     static LiveInterval* createInterval(unsigned Reg);
 
