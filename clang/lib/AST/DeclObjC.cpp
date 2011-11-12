@@ -217,6 +217,13 @@ void ObjCInterfaceDecl::mergeClassExtensionProtocolList(
   AllReferencedProtocols.set(ProtocolRefs.data(), ProtocolRefs.size(), C);
 }
 
+void ObjCInterfaceDecl::completedForwardDecl() {
+  assert(isForwardDecl() && "Only valid to call for forward refs");
+  ForwardDecl = false;
+  if (ASTMutationListener *L = getASTContext().getASTMutationListener())
+    L->CompletedObjCForwardRef(this);
+}
+
 /// getFirstClassExtension - Find first class extension of the given class.
 ObjCCategoryDecl* ObjCInterfaceDecl::getFirstClassExtension() const {
   for (ObjCCategoryDecl *CDecl = getCategoryList(); CDecl;
@@ -911,6 +918,13 @@ ObjCMethodDecl *ObjCProtocolDecl::lookupMethod(Selector Sel,
     if ((MethodDecl = (*I)->lookupMethod(Sel, isInstance)))
       return MethodDecl;
   return NULL;
+}
+
+void ObjCProtocolDecl::completedForwardDecl() {
+  assert(isForwardDecl() && "Only valid to call for forward refs");
+  isForwardProtoDecl = false;
+  if (ASTMutationListener *L = getASTContext().getASTMutationListener())
+    L->CompletedObjCForwardRef(this);
 }
 
 //===----------------------------------------------------------------------===//

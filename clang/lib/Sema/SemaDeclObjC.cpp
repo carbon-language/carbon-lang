@@ -377,18 +377,16 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
       return ActOnObjCContainerStartDefinition(IDecl);
     } else {
       IDecl->setLocation(ClassLoc);
-      IDecl->setForwardDecl(false);
       IDecl->setAtStartLoc(AtInterfaceLoc);
-      // If the forward decl was in a PCH, we need to write it again in a
-      // dependent AST file.
-      IDecl->setChangedSinceDeserialization(true);
       
       // Since this ObjCInterfaceDecl was created by a forward declaration,
       // we now add it to the DeclContext since it wasn't added before
       // (see ActOnForwardClassDeclaration).
       IDecl->setLexicalDeclContext(CurContext);
       CurContext->addDecl(IDecl);
-      
+
+      IDecl->completedForwardDecl();
+
       if (AttrList)
         ProcessDeclAttributeList(TUScope, IDecl, AttrList);
     }
@@ -588,19 +586,16 @@ Sema::ActOnStartProtocolInterface(SourceLocation AtProtoInterfaceLoc,
     // Make sure the cached decl gets a valid start location.
     PDecl->setAtStartLoc(AtProtoInterfaceLoc);
     PDecl->setLocation(ProtocolLoc);
-    PDecl->setForwardDecl(false);
     // Since this ObjCProtocolDecl was created by a forward declaration,
     // we now add it to the DeclContext since it wasn't added before
     PDecl->setLexicalDeclContext(CurContext);
     CurContext->addDecl(PDecl);
-    // Repeat in dependent AST files.
-    PDecl->setChangedSinceDeserialization(true);
+    PDecl->completedForwardDecl();
   } else {
     PDecl = ObjCProtocolDecl::Create(Context, CurContext, ProtocolName,
                                      ProtocolLoc, AtProtoInterfaceLoc,
                                      /*isForwardDecl=*/false);
     PushOnScopeChains(PDecl, TUScope);
-    PDecl->setForwardDecl(false);
   }
   if (AttrList)
     ProcessDeclAttributeList(TUScope, PDecl, AttrList);
@@ -925,7 +920,8 @@ Decl *Sema::ActOnStartClassImplementation(
     // Mark the interface as being completed, even if it was just as
     //   @class ....;
     // declaration; the user cannot reopen it.
-    IDecl->setForwardDecl(false);
+    if (IDecl->isForwardDecl())
+      IDecl->completedForwardDecl();
   }
 
   ObjCImplementationDecl* IMPDecl =

@@ -710,7 +710,8 @@ public:
   bool isInitiallyForwardDecl() const { return InitiallyForwardDecl; }
 
   bool isForwardDecl() const { return ForwardDecl; }
-  void setForwardDecl(bool val) { ForwardDecl = val; }
+
+  void completedForwardDecl();
 
   ObjCInterfaceDecl *getSuperClass() const {
     if (ExternallyCompleted)
@@ -1000,7 +1001,8 @@ public:
   bool isInitiallyForwardDecl() const { return InitiallyForwardDecl; }
 
   bool isForwardDecl() const { return isForwardProtoDecl; }
-  void setForwardDecl(bool val) { isForwardProtoDecl = val; }
+
+  void completedForwardDecl();
 
   // Location information, modeled after the Stmt API.
   SourceLocation getLocStart() const { return getAtStartLoc(); } // '@'protocol

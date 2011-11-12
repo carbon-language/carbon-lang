@@ -24,6 +24,7 @@ namespace clang {
   class FunctionTemplateDecl;
   class ObjCCategoryDecl;
   class ObjCInterfaceDecl;
+  class ObjCContainerDecl;
 
 /// \brief An abstract interface that should be implemented by listeners
 /// that want to be notified when an AST entity gets modified after its
@@ -60,6 +61,9 @@ public:
   /// \brief A new objc category class was added for an interface.
   virtual void AddedObjCCategoryToInterface(const ObjCCategoryDecl *CatD,
                                             const ObjCInterfaceDecl *IFD) {}
+
+  /// \brief A objc interface or protocol forward reference was completed.
+  virtual void CompletedObjCForwardRef(const ObjCContainerDecl *D) {}
 };
 
 } // end namespace clang

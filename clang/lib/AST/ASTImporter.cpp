@@ -3111,9 +3111,10 @@ Decl *ASTNodeImporter::VisitObjCProtocolDecl(ObjCProtocolDecl *D) {
                                          Name.getAsIdentifierInfo(), Loc,
                                          Importer.Import(D->getAtStartLoc()),
                                          D->isInitiallyForwardDecl());
-      ToProto->setForwardDecl(D->isForwardDecl());
       ToProto->setLexicalDeclContext(LexicalDC);
       LexicalDC->addDeclInternal(ToProto);
+      if (D->isInitiallyForwardDecl() && !D->isForwardDecl())
+        ToProto->completedForwardDecl();
     }
     Importer.Imported(D, ToProto);
 
@@ -3172,11 +3173,12 @@ Decl *ASTNodeImporter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
       ToIface = ObjCInterfaceDecl::Create(Importer.getToContext(), DC,
                                           Importer.Import(D->getAtStartLoc()),
                                           Name.getAsIdentifierInfo(), Loc,
-                                          D->isForwardDecl(),
+                                          D->isInitiallyForwardDecl(),
                                           D->isImplicitInterfaceDecl());
-      ToIface->setForwardDecl(D->isForwardDecl());
       ToIface->setLexicalDeclContext(LexicalDC);
       LexicalDC->addDeclInternal(ToIface);
+      if (D->isInitiallyForwardDecl() && !D->isForwardDecl())
+        ToIface->completedForwardDecl();
     }
     Importer.Imported(D, ToIface);
 
