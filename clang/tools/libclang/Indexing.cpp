@@ -75,47 +75,16 @@ public:
 
   /// MacroDefined - This hook is called whenever a macro definition is seen.
   virtual void MacroDefined(const Token &Id, const MacroInfo *MI) {
-    if (MI->isBuiltinMacro())
-      return;
-    if (IndexCtx.isNotFromSourceFile(MI->getDefinitionLoc()))
-      return;
-
-    SourceLocation Loc = MI->getDefinitionLoc();
-    SourceLocation DefBegin = MI->tokens_empty() ? Loc
-                                     : MI->getReplacementToken(0).getLocation();
-    IndexCtx.ppMacroDefined(Loc,
-                            Id.getIdentifierInfo()->getName(),
-                            DefBegin,
-                            MI->getDefinitionLength(PP.getSourceManager()),
-                            MI);
   }
 
   /// MacroUndefined - This hook is called whenever a macro #undef is seen.
   /// MI is released immediately following this callback.
   virtual void MacroUndefined(const Token &MacroNameTok, const MacroInfo *MI) {
-    if (MI->isBuiltinMacro())
-      return;
-    if (IndexCtx.isNotFromSourceFile(MI->getDefinitionLoc()))
-      return;
-
-    SourceLocation Loc = MacroNameTok.getLocation();
-    IndexCtx.ppMacroUndefined(Loc,
-                            MacroNameTok.getIdentifierInfo()->getName(),
-                            MI);
   }
 
   /// MacroExpands - This is called by when a macro invocation is found.
   virtual void MacroExpands(const Token &MacroNameTok, const MacroInfo* MI,
                             SourceRange Range) {
-    if (MI->isBuiltinMacro())
-      return;
-    if (IndexCtx.isNotFromSourceFile(MI->getDefinitionLoc()))
-      return;
-
-    SourceLocation Loc = MacroNameTok.getLocation();
-    IndexCtx.ppMacroExpanded(Loc,
-                             MacroNameTok.getIdentifierInfo()->getName(),
-                             MI);
   }
   
   /// SourceRangeSkipped - This hook is called when a source range is skipped.
@@ -140,11 +109,10 @@ public:
 
   virtual void Initialize(ASTContext &Context) {
     IndexCtx.setASTContext(Context);
-    IndexCtx.invokeStartedTranslationUnit();
+    IndexCtx.startedTranslationUnit();
   }
 
   virtual void HandleTranslationUnit(ASTContext &Ctx) {
-    IndexCtx.invokeFinishedTranslationUnit();
   }
 
   virtual void HandleTopLevelDecl(DeclGroupRef DG) {
@@ -404,39 +372,55 @@ static void clang_indexTranslationUnit_Impl(void *UserData) {
 
 extern "C" {
 
-int clang_index_isEntityTagKind(CXIdxEntityKind K) {
-  return CXIdxEntity_Enum <= K && K <= CXIdxEntity_CXXClass;
-}
-
-CXIdxTagDeclInfo *clang_index_getTagDeclInfo(CXIdxDeclInfo *DInfo) {
-  if (clang_index_isEntityTagKind(DInfo->entityInfo->kind))
-    return &static_cast<TagDeclInfo*>(DInfo)->CXTagDeclInfo;
-
-  return 0;
-}
-
 int clang_index_isEntityObjCContainerKind(CXIdxEntityKind K) {
   return CXIdxEntity_ObjCClass <= K && K <= CXIdxEntity_ObjCCategory;
 }
 
-CXIdxObjCContainerDeclInfo *
-clang_index_getObjCContainerDeclInfo(CXIdxDeclInfo *DInfo) {
+const CXIdxObjCContainerDeclInfo *
+clang_index_getObjCContainerDeclInfo(const CXIdxDeclInfo *DInfo) {
+  if (!DInfo)
+    return 0;
+
   if (clang_index_isEntityObjCContainerKind(DInfo->entityInfo->kind))
-    return &static_cast<ObjCContainerDeclInfo*>(DInfo)->CXObjCContDeclInfo;
+    return &static_cast<const ObjCContainerDeclInfo*>(DInfo)->ObjCContDeclInfo;
 
   return 0;
 }
 
-int clang_index_isEntityObjCCategoryKind(CXIdxEntityKind K) {
-  return K == CXIdxEntity_ObjCCategory;
-}
+const CXIdxObjCInterfaceDeclInfo *
+clang_index_getObjCInterfaceDeclInfo(const CXIdxDeclInfo *DInfo) {
+  if (!DInfo || DInfo->entityInfo->kind != CXIdxEntity_ObjCClass)
+    return 0;
 
-CXIdxObjCCategoryDeclInfo *
-clang_index_getObjCCategoryDeclInfo(CXIdxDeclInfo *DInfo){
-  if (clang_index_isEntityObjCCategoryKind(DInfo->entityInfo->kind))
-    return &static_cast<ObjCCategoryDeclInfo*>(DInfo)->CXObjCCatDeclInfo;
+  if (const CXIdxObjCContainerDeclInfo *
+        ContInfo = clang_index_getObjCContainerDeclInfo(DInfo)) {
+    if (ContInfo->kind == CXIdxObjCContainer_Interface)
+      return &static_cast<const ObjCInterfaceDeclInfo*>(DInfo)->ObjCInterDeclInfo;
+  }
 
   return 0;
+}
+
+const CXIdxObjCProtocolDeclInfo *
+clang_index_getObjCProtocolDeclInfo(const CXIdxDeclInfo *DInfo) {
+  if (!DInfo || DInfo->entityInfo->kind != CXIdxEntity_ObjCProtocol)
+    return 0;
+
+  if (const CXIdxObjCContainerDeclInfo *
+        ContInfo = clang_index_getObjCContainerDeclInfo(DInfo)) {
+    if (ContInfo->kind == CXIdxObjCContainer_Interface)
+      return &static_cast<const ObjCProtocolDeclInfo*>(DInfo)->ObjCProtoDeclInfo;
+  }
+
+  return 0;
+}
+
+const CXIdxObjCCategoryDeclInfo *
+clang_index_getObjCCategoryDeclInfo(const CXIdxDeclInfo *DInfo){
+  if (!DInfo || DInfo->entityInfo->kind != CXIdxEntity_ObjCCategory)
+    return 0;
+
+  return &static_cast<const ObjCCategoryDeclInfo*>(DInfo)->ObjCCatDeclInfo;
 }
 
 int clang_indexTranslationUnit(CXIndex CIdx,

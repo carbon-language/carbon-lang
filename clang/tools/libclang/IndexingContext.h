@@ -10,7 +10,7 @@
 #include "Index_Internal.h"
 #include "CXCursor.h"
 
-#include "clang/AST/Decl.h"
+#include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclGroup.h"
 #include "llvm/ADT/DenseMap.h"
 
@@ -26,16 +26,20 @@ struct DeclInfo : public CXIdxDeclInfo {
   CXIdxEntityInfo CXEntInfo;
 };
 
-struct TagDeclInfo : public DeclInfo {
-  CXIdxTagDeclInfo CXTagDeclInfo;
-};
-
 struct ObjCContainerDeclInfo : public DeclInfo {
-  CXIdxObjCContainerDeclInfo CXObjCContDeclInfo;
+  CXIdxObjCContainerDeclInfo ObjCContDeclInfo;
 };
 
 struct ObjCCategoryDeclInfo : public ObjCContainerDeclInfo {
-  CXIdxObjCCategoryDeclInfo CXObjCCatDeclInfo;
+  CXIdxObjCCategoryDeclInfo ObjCCatDeclInfo;
+};
+
+struct ObjCInterfaceDeclInfo : public ObjCCategoryDeclInfo {
+  CXIdxObjCInterfaceDeclInfo ObjCInterDeclInfo;
+};
+
+struct ObjCProtocolDeclInfo : public ObjCCategoryDeclInfo {
+  CXIdxObjCProtocolDeclInfo ObjCProtoDeclInfo;
 };
 
 class IndexingContext {
@@ -46,12 +50,8 @@ class IndexingContext {
   CXTranslationUnit CXTU;
   
   typedef llvm::DenseMap<const FileEntry *, CXIdxClientFile> FileMapTy;
-  typedef llvm::DenseMap<const NamedDecl *, CXIdxClientEntity> EntityMapTy;
-  typedef llvm::DenseMap<const void *, CXIdxClientMacro> MacroMapTy;
   typedef llvm::DenseMap<const DeclContext *, CXIdxClientContainer> ContainerMapTy;
   FileMapTy FileMap;
-  EntityMapTy EntityMap;
-  MacroMapTy MacroMap;
   ContainerMapTy ContainerMap;
 
   SmallVector<DeclGroupRef, 8> TUDeclsInObjCContainer;
@@ -87,6 +87,19 @@ class IndexingContext {
     SmallVectorImpl<char> &getBuffer() { return Scratch; }
   };
 
+  struct ObjCProtocolListInfo {
+    SmallVector<CXIdxObjCProtocolRefInfo, 4> ProtInfos;
+    SmallVector<CXIdxEntityInfo, 4> ProtEntities;
+    SmallVector<CXIdxObjCProtocolRefInfo *, 4> Prots;
+
+    CXIdxObjCProtocolRefInfo **getProtocolRefs() { return Prots.data(); }
+    unsigned getNumProtocols() { return (unsigned)Prots.size(); }
+
+    ObjCProtocolListInfo(const ObjCProtocolList &ProtList,
+                         IndexingContext &IdxCtx,
+                         IndexingContext::StrAdapter &SA);
+  };
+
 public:
   IndexingContext(CXClientData clientData, IndexerCallbacks &indexCallbacks,
                   unsigned indexOptions, CXTranslationUnit cxTU)
@@ -103,19 +116,7 @@ public:
                       StringRef filename, const FileEntry *File,
                       bool isImport, bool isAngled);
 
-  void ppMacroDefined(SourceLocation Loc, StringRef Name,
-                      SourceLocation DefBegin, unsigned Length,
-                      const void *OpaqueMacro);
-
-  void ppMacroUndefined(SourceLocation Loc, StringRef Name,
-                        const void *OpaqueMacro);
-
-  void ppMacroExpanded(SourceLocation Loc, StringRef Name,
-                       const void *OpaqueMacro);
-
-  void invokeStartedTranslationUnit();
-
-  void invokeFinishedTranslationUnit();
+  void startedTranslationUnit();
 
   void indexDecl(const Decl *D);
 
@@ -148,8 +149,6 @@ public:
   void handleObjCClass(const ObjCClassDecl *D);
   void handleObjCInterface(const ObjCInterfaceDecl *D);
   void handleObjCImplementation(const ObjCImplementationDecl *D);
-  
-  void defineObjCInterface(const ObjCInterfaceDecl *D);
 
   void handleObjCForwardProtocol(const ObjCProtocolDecl *D,
                                  SourceLocation Loc,
@@ -169,11 +168,6 @@ public:
                        const DeclContext *DC,
                        const Expr *E = 0,
                        CXIdxEntityRefKind Kind = CXIdxEntityRef_Direct);
-  
-  void startContainer(const NamedDecl *D, bool isStmtBody = false,
-                      const DeclContext *DC = 0);
-  
-  void endContainer(const DeclContext *DC);
 
   bool isNotFromSourceFile(SourceLocation Loc) const;
 
@@ -190,7 +184,7 @@ public:
 private:
   void handleDecl(const NamedDecl *D,
                   SourceLocation Loc, CXCursor Cursor,
-                  bool isRedeclaration, bool isDefinition,
+                  bool isRedeclaration, bool isDefinition, bool isContainer,
                   DeclInfo &DInfo);
 
   void handleObjCContainer(const ObjCContainerDecl *D,
@@ -200,11 +194,7 @@ private:
                            bool isImplementation,
                            ObjCContainerDeclInfo &ContDInfo);
 
-  void addEntityInMap(const NamedDecl *D, CXIdxClientEntity entity);
-
   void addContainerInMap(const DeclContext *DC, CXIdxClientContainer container);
-
-  CXIdxClientEntity getClientEntity(const NamedDecl *D);
 
   const NamedDecl *getEntityDecl(const NamedDecl *D) const;
 

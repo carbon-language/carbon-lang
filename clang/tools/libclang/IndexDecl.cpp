@@ -29,9 +29,7 @@ public:
     if (D->isThisDeclarationADefinition()) {
       const Stmt *Body = D->getBody();
       if (Body) {
-        IndexCtx.startContainer(D, /*isBody=*/true);
         IndexCtx.indexBody(Body, D);
-        IndexCtx.endContainer(D);
       }
     }
     return true;
@@ -93,10 +91,7 @@ public:
     IndexCtx.handleObjCInterface(D);
 
     IndexCtx.indexTUDeclsInObjCContainer();
-    IndexCtx.startContainer(D);
-    IndexCtx.defineObjCInterface(D);
     IndexCtx.indexDeclContext(D);
-    IndexCtx.endContainer(D);
     return true;
   }
 
@@ -108,9 +103,7 @@ public:
     IndexCtx.handleObjCProtocol(D);
 
     IndexCtx.indexTUDeclsInObjCContainer();
-    IndexCtx.startContainer(D);
     IndexCtx.indexDeclContext(D);
-    IndexCtx.endContainer(D);
     return true;
   }
 
@@ -118,9 +111,7 @@ public:
     IndexCtx.handleObjCImplementation(D);
 
     IndexCtx.indexTUDeclsInObjCContainer();
-    IndexCtx.startContainer(D);
     IndexCtx.indexDeclContext(D);
-    IndexCtx.endContainer(D);
     return true;
   }
 
@@ -128,9 +119,7 @@ public:
     IndexCtx.handleObjCCategory(D);
 
     IndexCtx.indexTUDeclsInObjCContainer();
-    IndexCtx.startContainer(D);
     IndexCtx.indexDeclContext(D);
-    IndexCtx.endContainer(D);
     return true;
   }
 
@@ -141,9 +130,7 @@ public:
     IndexCtx.handleObjCCategoryImpl(D);
 
     IndexCtx.indexTUDeclsInObjCContainer();
-    IndexCtx.startContainer(D);
     IndexCtx.indexDeclContext(D);
-    IndexCtx.endContainer(D);
     return true;
   }
 
@@ -157,9 +144,7 @@ public:
     if (D->isThisDeclarationADefinition()) {
       const Stmt *Body = D->getBody();
       if (Body) {
-        IndexCtx.startContainer(D, /*isBody=*/true);
         IndexCtx.indexBody(Body, D);
-        IndexCtx.endContainer(D);
       }
     }
     return true;

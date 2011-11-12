@@ -3941,55 +3941,10 @@ void clang_findReferencesInFileWithBlock(CXCursor, CXFile,
 typedef void *CXIdxClientFile;
 
 /**
- * \brief The client's data object that is associated with a unique entity in
- * the current translation unit that gets indexed. For example:
- * 
- *  \code
- *  @class Foo;
- *  @interface Foo
- *  @end
- *  \endcode
- *  
- *  In the example above there is only one entity introduced, the class 'Foo'.
- */
-typedef void *CXIdxClientEntity;
-
-/**
  * \brief The client's data object that is associated with a semantic container
  * of entities.
- * 
- *  \code
- *  // #1 \see startedTranslationUnit
- *  
- *  void func() { } // #2 \see startedStatementBody
- *  
- *  @interface Foo // #3 \see startedObjCContainer
- *  -(void)meth;
- *  @end
- *  
- *  @implementation Foo // #4 \see startedObjCContainer
- *  -(void)meth {} // #5 \see startedStatementBody
- *  @end
- *  
- *  class C { // #6 \see startedTagTypeDefinition
- *    void meth();
- *  };
- *  void C::meth() {} // #7 \see startedStatementBody
- *  \endcode
- *  
- *  In the example above the markings are wherever there is a callback that
- *  initiates a container context. The CXIdxContainer that the client returns
- *  for the callbacks will be passed along the indexed entities in the
- *  container. Note that C++ out-of-line member functions (#7) are considered
- *  as part of the C++ class container, not of the translation unit.
  */
 typedef void *CXIdxClientContainer;
-
-/**
- * \brief The client's data object that is associated with a macro definition
- * in the current translation unit that gets indexed.
- */
-typedef void *CXIdxClientMacro;
 
 /**
  * \brief The client's data object that is associated with an AST file (PCH
@@ -4041,52 +3996,6 @@ typedef struct {
   int isModule;
 } CXIdxImportedASTFileInfo;
 
-typedef struct {
-  /**
-   * \brief Location of the macro definition.
-   */
-  CXIdxLoc loc;
-  const char *name;
-} CXIdxMacroInfo;
-
-/**
- * \brief Data for \see ppMacroDefined callback.
- */
-typedef struct {
-  CXIdxMacroInfo *macroInfo;
-  CXIdxLoc defBegin;
-  /**
-   * \brief Length of macro definition in characters.
-   */
-  unsigned defLength;
-} CXIdxMacroDefinedInfo;
-
-/**
- * \brief Data for \see ppMacroUndefined callback.
- */
-typedef struct {
-  CXIdxLoc loc;
-  const char *name;
-  CXIdxClientMacro macro;
-} CXIdxMacroUndefinedInfo;
-
-/**
- * \brief Data for \see ppMacroExpanded callback.
- */
-typedef struct {
-  CXIdxLoc loc;
-  const char *name;
-  CXIdxClientMacro macro;
-} CXIdxMacroExpandedInfo;
-
-/**
- * \brief Data for \see importedMacro callback.
- */
-typedef struct {
-  CXIdxMacroInfo *macroInfo;
-  CXIdxClientASTFile ASTFile;
-} CXIdxImportedMacroInfo;
-
 typedef enum {
   CXIdxEntity_Unexposed     = 0,
   CXIdxEntity_Typedef       = 1,
@@ -4114,28 +4023,10 @@ typedef struct {
   CXIdxEntityKind kind;
   const char *name;
   const char *USR;
-  CXIdxClientEntity clientEntity;
 } CXIdxEntityInfo;
 
-/**
- * \brief Data for \see importedEntity callback.
- */
 typedef struct {
-  CXIdxEntityInfo *entityInfo;
-  CXCursor cursor;
-  CXIdxLoc loc;
-  CXIdxClientASTFile ASTFile;
-} CXIdxImportedEntityInfo;
-
-typedef struct {
-  CXIdxEntityInfo *entity;
-  CXCursor cursor;
-  CXIdxLoc loc;
-  int isObjCImpl;
-} CXIdxContainerInfo;
-
-typedef struct {
-  CXIdxEntityInfo *entityInfo;
+  const CXIdxEntityInfo *entityInfo;
   CXCursor cursor;
   CXIdxLoc loc;
   CXIdxClientContainer container;
@@ -4144,9 +4035,8 @@ typedef struct {
 } CXIdxDeclInfo;
 
 typedef struct {
-  CXIdxDeclInfo *declInfo;
-  int isAnonymous;
-} CXIdxTagDeclInfo;
+  CXIdxClientContainer *outContainer;
+} CXIdxDeclOut;
 
 typedef enum {
   CXIdxObjCContainer_ForwardRef = 0,
@@ -4155,50 +4045,39 @@ typedef enum {
 } CXIdxObjCContainerKind;
 
 typedef struct {
-  CXIdxDeclInfo *declInfo;
+  const CXIdxDeclInfo *declInfo;
   CXIdxObjCContainerKind kind;
 } CXIdxObjCContainerDeclInfo;
 
 typedef struct {
-  CXIdxObjCContainerDeclInfo *containerInfo;
-  CXIdxEntityInfo *objcClass;
+  const CXIdxObjCContainerDeclInfo *containerInfo;
+  const CXIdxEntityInfo *objcClass;
 } CXIdxObjCCategoryDeclInfo;
 
-/**
- * \brief Data for \see defineObjCClass callback.
- */
 typedef struct {
-  CXIdxEntityInfo *objcClass;
+  const CXIdxEntityInfo *base;
+  CXCursor cursor;
   CXIdxLoc loc;
-} CXIdxObjCBaseClassInfo;
+} CXIdxBaseClassInfo;
 
-/**
- * \brief Data for \see defineObjCClass callback.
- */
 typedef struct {
-  CXIdxEntityInfo *protocol;
+  const CXIdxEntityInfo *protocol;
+  CXCursor cursor;
   CXIdxLoc loc;
 } CXIdxObjCProtocolRefInfo;
 
-/**
- * \brief Data for \see defineObjCClass callback.
- */
 typedef struct {
-  CXCursor cursor;
-  CXIdxEntityInfo *objcClass;
-  CXIdxClientContainer container;
-  CXIdxObjCBaseClassInfo *baseInfo;
-  CXIdxObjCProtocolRefInfo **protocols;
+  const CXIdxDeclInfo *declInfo;
+  const CXIdxBaseClassInfo *superInfo;
+  const CXIdxObjCProtocolRefInfo *const *protocols;
   unsigned numProtocols;
-} CXIdxObjCClassDefineInfo;
+} CXIdxObjCInterfaceDeclInfo;
 
-/**
- * \brief Data for \see endedContainer callback.
- */
 typedef struct {
-  CXIdxClientContainer container;
-  CXIdxLoc endLoc;
-} CXIdxEndContainerInfo;
+  const CXIdxDeclInfo *declInfo;
+  const CXIdxObjCProtocolRefInfo *const *protocols;
+  unsigned numProtocols;
+} CXIdxObjCProtocolDeclInfo;
 
 /**
  * \brief Data for \see indexEntityReference callback.
@@ -4226,7 +4105,7 @@ typedef struct {
   /**
    * \brief The entity that gets referenced.
    */
-  CXIdxEntityInfo *referencedEntity;
+  const CXIdxEntityInfo *referencedEntity;
   /**
    * \brief Immediate "parent" of the reference. For example:
    * 
@@ -4237,7 +4116,7 @@ typedef struct {
    * The parent of reference of type 'Foo' is the variable 'var'.
    * parentEntity will be null for references inside statement bodies.
    */
-  CXIdxEntityInfo *parentEntity;
+  const CXIdxEntityInfo *parentEntity;
   /**
    * \brief Container context of the reference.
    */
@@ -4246,6 +4125,12 @@ typedef struct {
 } CXIdxEntityRefInfo;
 
 typedef struct {
+  /**
+   * \brief Called periodically to check whether indexing should be aborted.
+   * Should return 0 to continue, and non-zero to abort.
+   */
+  int (*abortQuery)(CXClientData client_data, void *reserved);
+
   /**
    * \brief Called when a diagnostic is emitted.
    */
@@ -4259,25 +4144,7 @@ typedef struct {
    * \brief Called when a file gets #included/#imported.
    */
   CXIdxClientFile (*ppIncludedFile)(CXClientData client_data,
-                              CXIdxIncludedFileInfo *);
-
-  /**
-   * \brief Called when a macro gets #defined.
-   */
-  CXIdxClientMacro (*ppMacroDefined)(CXClientData client_data,
-                               CXIdxMacroDefinedInfo *);
-
-  /**
-   * \brief Called when a macro gets undefined.
-   */
-  void (*ppMacroUndefined)(CXClientData client_data,
-                           CXIdxMacroUndefinedInfo *);
-
-  /**
-   * \brief Called when a macro gets expanded.
-   */
-  void (*ppMacroExpanded)(CXClientData client_data,
-                          CXIdxMacroExpandedInfo *);
+                                    const CXIdxIncludedFileInfo *);
   
   /**
    * \brief Called when a AST file (PCH or module) gets imported.
@@ -4285,72 +4152,41 @@ typedef struct {
    * AST files will not get indexed (there will not be callbacks to index all
    * the entities in an AST file). The recommended action is that, if the AST
    * file is not already indexed, to block further indexing and initiate a new
-   * indexing job specific to the AST file, so that references of entities of
-   * the AST file can be later associated with CXIdxEntities returned by
-   * \see importedEntity callbacks.
+   * indexing job specific to the AST file.
    */
   CXIdxClientASTFile (*importedASTFile)(CXClientData client_data,
-                                  CXIdxImportedASTFileInfo *);
-
-  /**
-   * \brief Called when an entity gets imported from an AST file. This generally
-   * happens when an entity from a PCH/module is referenced for the first time.
-   */
-  CXIdxClientEntity (*importedEntity)(CXClientData client_data,
-                                      CXIdxImportedEntityInfo *);
-
-  /**
-   * \brief Called when a macro gets imported from an AST file. This generally
-   * happens when a macro from a PCH/module is referenced for the first time.
-   */
-  CXIdxClientMacro (*importedMacro)(CXClientData client_data,
-                                    CXIdxImportedMacroInfo *);
+                                        const CXIdxImportedASTFileInfo *);
 
   /**
    * \brief Called at the beginning of indexing a translation unit.
    */
   CXIdxClientContainer (*startedTranslationUnit)(CXClientData client_data,
-                                           void *reserved);
+                                                 void *reserved);
 
-  CXIdxClientEntity (*indexDeclaration)(CXClientData client_data,
-                                        CXIdxDeclInfo *);
-
-  /**
-   * \brief Called to initiate a container context.
-   */
-  CXIdxClientContainer (*startedContainer)(CXClientData client_data,
-                                           CXIdxContainerInfo *);
-
-  /**
-   * \brief Called to define an ObjC class via its @interface.
-   */
-  void (*defineObjCClass)(CXClientData client_data,
-                          CXIdxObjCClassDefineInfo *);
-
-  /**
-   * \brief Called when a container context is ended.
-   */
-  void (*endedContainer)(CXClientData client_data,
-                         CXIdxEndContainerInfo *);
+  void (*indexDeclaration)(CXClientData client_data,
+                           const CXIdxDeclInfo *, const CXIdxDeclOut *);
 
   /**
    * \brief Called to index a reference of an entity.
    */
   void (*indexEntityReference)(CXClientData client_data,
-                               CXIdxEntityRefInfo *);
+                               const CXIdxEntityRefInfo *);
 
 } IndexerCallbacks;
 
-CINDEX_LINKAGE int clang_index_isEntityTagKind(CXIdxEntityKind);
-CINDEX_LINKAGE CXIdxTagDeclInfo *clang_index_getTagDeclInfo(CXIdxDeclInfo *);
-
 CINDEX_LINKAGE int clang_index_isEntityObjCContainerKind(CXIdxEntityKind);
-CINDEX_LINKAGE CXIdxObjCContainerDeclInfo *
-clang_index_getObjCContainerDeclInfo(CXIdxDeclInfo *);
+CINDEX_LINKAGE const CXIdxObjCContainerDeclInfo *
+clang_index_getObjCContainerDeclInfo(const CXIdxDeclInfo *);
 
-CINDEX_LINKAGE int clang_index_isEntityObjCCategoryKind(CXIdxEntityKind);
+CINDEX_LINKAGE const CXIdxObjCInterfaceDeclInfo *
+clang_index_getObjCInterfaceDeclInfo(const CXIdxDeclInfo *);
+
 CINDEX_LINKAGE
-CXIdxObjCCategoryDeclInfo *clang_index_getObjCCategoryDeclInfo(CXIdxDeclInfo *);
+const CXIdxObjCCategoryDeclInfo *
+clang_index_getObjCCategoryDeclInfo(const CXIdxDeclInfo *);
+
+CINDEX_LINKAGE const CXIdxObjCProtocolDeclInfo *
+clang_index_getObjCProtocolDeclInfo(const CXIdxDeclInfo *);
 
 /**
  * \brief Index the given source file and the translation unit corresponding
