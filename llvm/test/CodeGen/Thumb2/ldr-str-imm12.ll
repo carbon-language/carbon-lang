@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=thumbv7-apple-darwin -mcpu=cortex-a8 -relocation-model=pic -disable-fp-elim -regalloc=linearscan | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin -mcpu=cortex-a8 -relocation-model=pic -disable-fp-elim | FileCheck %s
 ; rdar://7352504
 ; Make sure we use "str r9, [sp, #+28]" instead of "sub.w r4, r7, #256" followed by "str r9, [r4, #-32]".
 
@@ -46,10 +46,10 @@ bb119:                                            ; preds = %bb20, %bb20
 
 bb420:                                            ; preds = %bb20, %bb20
 ; CHECK: bb420
-; CHECK: str{{(.w)?}} r{{[0-9]+}}, [sp]
-; CHECK: str{{(.w)?}} r{{[0-9]+}}, [sp, #4]
-; CHECK: str{{(.w)?}} r{{[0-9]+}}, [sp, #8]
-; CHECK: str{{(.w)?}} r{{[0-9]+}}, [sp, #24]
+; CHECK: str{{(.w)?}} r{{[0-9]+}}, [sp
+; CHECK: str{{(.w)?}} r{{[0-9]+}}, [sp
+; CHECK: str{{(.w)?}} r{{[0-9]+}}, [sp
+; CHECK: str{{(.w)?}} r{{[0-9]+}}, [sp
   store %union.rec* null, %union.rec** @zz_hold, align 4
   store %union.rec* null, %union.rec** @zz_res, align 4
   store %union.rec* %x, %union.rec** @zz_hold, align 4
