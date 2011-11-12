@@ -2026,6 +2026,90 @@ WriteByValArg(SDValue& ByValChain, SDValue Chain, DebugLoc dl,
                              MachinePointerInfo(0), MachinePointerInfo(0));
 }
 
+// Copy Mips64 byVal arg to registers and stack.
+void static
+PassByValArg64(SDValue& ByValChain, SDValue Chain, DebugLoc dl,
+               SmallVector<std::pair<unsigned, SDValue>, 16>& RegsToPass,
+               SmallVector<SDValue, 8>& MemOpChains, int& LastFI,
+               MachineFrameInfo *MFI, SelectionDAG &DAG, SDValue Arg,
+               const CCValAssign &VA, const ISD::ArgFlagsTy& Flags,
+               EVT PtrTy, bool isLittle) {
+  unsigned ByValSize = Flags.getByValSize();
+  unsigned Alignment = std::min(Flags.getByValAlign(), (unsigned)8);
+  bool IsRegLoc = VA.isRegLoc();
+  unsigned Offset = 0; // Offset in # of bytes from the beginning of struct.
+  unsigned LocMemOffset = 0;
+
+  if (!IsRegLoc)
+    LocMemOffset = VA.getLocMemOffset();
+  else {
+    const unsigned *Reg = std::find(Mips64IntRegs, Mips64IntRegs + 8,
+                                    VA.getLocReg());
+    const unsigned *RegEnd = Mips64IntRegs + 8;
+
+    // Copy double words to registers.
+    for (; (Reg != RegEnd) && (ByValSize >= Offset + 8); ++Reg, Offset += 8) {
+      SDValue LoadPtr = DAG.getNode(ISD::ADD, dl, PtrTy, Arg,
+                                    DAG.getConstant(Offset, PtrTy));
+      SDValue LoadVal = DAG.getLoad(MVT::i64, dl, Chain, LoadPtr,
+                                    MachinePointerInfo(), false, false, false,
+                                    Alignment);
+      MemOpChains.push_back(LoadVal.getValue(1));
+      RegsToPass.push_back(std::make_pair(*Reg, LoadVal));
+    }
+
+    // If there is an argument register available, copy the remainder of the
+    // byval argument with sub-doubleword loads and shifts.
+    if ((Reg != RegEnd) && (ByValSize != Offset)) {
+      assert((ByValSize < Offset + 8) &&
+             "Size of the remainder should be smaller than 8-byte.");
+      SDValue Val;
+      for (unsigned LoadSize = 4; Offset < ByValSize; LoadSize /= 2) {
+        unsigned RemSize = ByValSize - Offset;
+
+        if (RemSize < LoadSize)
+          continue;
+        
+        SDValue LoadPtr = DAG.getNode(ISD::ADD, dl, PtrTy, Arg,
+                                      DAG.getConstant(Offset, PtrTy));
+        SDValue LoadVal = 
+          DAG.getExtLoad(ISD::ZEXTLOAD, dl, MVT::i64, Chain, LoadPtr,
+                         MachinePointerInfo(), MVT::getIntegerVT(LoadSize * 8),
+                         false, false, Alignment);
+        MemOpChains.push_back(LoadVal.getValue(1));
+
+        // Offset in number of bits from double word boundary.
+        unsigned OffsetDW = (Offset % 8) * 8;
+        unsigned Shamt = isLittle ? OffsetDW : 64 - (OffsetDW + LoadSize * 8);
+        SDValue Shift = DAG.getNode(ISD::SHL, dl, MVT::i64, LoadVal,
+                                    DAG.getConstant(Shamt, MVT::i32));
+        
+        Val = Val.getNode() ? DAG.getNode(ISD::OR, dl, MVT::i64, Val, Shift) :
+                              Shift;
+        Offset += LoadSize;
+        Alignment = std::min(Alignment, LoadSize);
+      }
+      
+      RegsToPass.push_back(std::make_pair(*Reg, Val));
+      return;
+    }
+  }
+
+  unsigned MemCpySize = ByValSize - Offset;
+  if (MemCpySize) {
+    // Create a fixed object on stack at offset LocMemOffset and copy
+    // remainder of byval arg to it with memcpy.
+    SDValue Src = DAG.getNode(ISD::ADD, dl, PtrTy, Arg,
+                              DAG.getConstant(Offset, PtrTy));
+    LastFI = MFI->CreateFixedObject(MemCpySize, LocMemOffset, true);
+    SDValue Dst = DAG.getFrameIndex(LastFI, PtrTy);
+    ByValChain = DAG.getMemcpy(ByValChain, dl, Dst, Src,
+                               DAG.getConstant(MemCpySize, PtrTy), Alignment,
+                               /*isVolatile=*/false, /*AlwaysInline=*/false,
+                               MachinePointerInfo(0), MachinePointerInfo(0));
+  }
+}
+
 /// LowerCall - functions arguments are copied from virtual regs to
 /// (physical regs)/(stack frame), CALLSEQ_START and CALLSEQ_END are emitted.
 /// TODO: isTailCall.
@@ -2112,6 +2196,22 @@ MipsTargetLowering::LowerCall(SDValue InChain, SDValue Callee,
     SDValue Arg = OutVals[i];
     CCValAssign &VA = ArgLocs[i];
     MVT ValVT = VA.getValVT(), LocVT = VA.getLocVT();
+    ISD::ArgFlagsTy Flags = Outs[i].Flags;
+
+    // ByVal Arg.
+    if (Flags.isByVal()) {
+      assert(Flags.getByValSize() &&
+             "ByVal args of size 0 should have been ignored by front-end.");
+      if (IsO32)
+        WriteByValArg(ByValChain, Chain, dl, RegsToPass, MemOpChains, LastFI,
+                      MFI, DAG, Arg, VA, Flags, getPointerTy(),
+                      Subtarget->isLittle());
+      else
+        PassByValArg64(ByValChain, Chain, dl, RegsToPass, MemOpChains, LastFI,
+                       MFI, DAG, Arg, VA, Flags, getPointerTy(), 
+                       Subtarget->isLittle());
+      continue;
+    }
     
     // Promote the value if needed.
     switch (VA.getLocInfo()) {
@@ -2156,18 +2256,6 @@ MipsTargetLowering::LowerCall(SDValue InChain, SDValue Callee,
 
     // Register can't get to this point...
     assert(VA.isMemLoc());
-
-    // ByVal Arg.
-    ISD::ArgFlagsTy Flags = Outs[i].Flags;
-    if (Flags.isByVal()) {
-      assert(IsO32 &&
-             "No support for ByVal args by ABIs other than O32 yet.");
-      assert(Flags.getByValSize() &&
-             "ByVal args of size 0 should have been ignored by front-end.");
-      WriteByValArg(ByValChain, Chain, dl, RegsToPass, MemOpChains, LastFI, MFI,
-                    DAG, Arg, VA, Flags, getPointerTy(), Subtarget->isLittle());
-      continue;
-    }
 
     // Create the frame index object for this incoming parameter
     LastFI = MFI->CreateFixedObject(ValVT.getSizeInBits()/8,
