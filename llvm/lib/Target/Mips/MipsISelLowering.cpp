@@ -1772,8 +1772,6 @@ SDValue MipsTargetLowering::LowerATOMIC_FENCE(SDValue Op,
 //                      Calling Convention Implementation
 //===----------------------------------------------------------------------===//
 
-#include "MipsGenCallingConv.inc"
-
 //===----------------------------------------------------------------------===//
 // TODO: Implement a generic logic using tblgen that can support this.
 // Mips O32 ABI rules:
@@ -1879,6 +1877,46 @@ static bool CC_MipsO32(unsigned ValNo, MVT ValVT,
 
   return false; // CC must always match
 }
+
+static const unsigned Mips64IntRegs[8] =
+  {Mips::A0_64, Mips::A1_64, Mips::A2_64, Mips::A3_64,
+   Mips::T0_64, Mips::T1_64, Mips::T2_64, Mips::T3_64};
+static const unsigned Mips64DPRegs[8] =
+  {Mips::D12_64, Mips::D13_64, Mips::D14_64, Mips::D15_64,
+   Mips::D16_64, Mips::D17_64, Mips::D18_64, Mips::D19_64};
+
+static bool CC_Mips64Byval(unsigned ValNo, MVT ValVT, MVT LocVT,
+                           CCValAssign::LocInfo LocInfo,
+                           ISD::ArgFlagsTy ArgFlags, CCState &State) {
+  unsigned Align = std::max(ArgFlags.getByValAlign(), (unsigned)8);
+  unsigned Size  = (ArgFlags.getByValSize() + 7) / 8 * 8;
+  unsigned FirstIdx = State.getFirstUnallocated(Mips64IntRegs, 8);
+
+  assert(Align <= 16 && "Cannot handle alignments larger than 16.");
+
+  // If byval is 16-byte aligned, the first arg register must be even.  
+  if ((Align == 16) && (FirstIdx % 2)) {
+    State.AllocateReg(Mips64IntRegs[FirstIdx], Mips64DPRegs[FirstIdx]);
+    ++FirstIdx;
+  }
+
+  // Mark the registers allocated.
+  for (unsigned I = FirstIdx; Size && (I < 8); Size -= 8, ++I)
+    State.AllocateReg(Mips64IntRegs[I], Mips64DPRegs[I]);
+
+  // Allocate space on caller's stack.
+  unsigned Offset = State.AllocateStack(Size, Align);
+  
+  if (FirstIdx < 8)
+    State.addLoc(CCValAssign::getReg(ValNo, ValVT, Mips64IntRegs[FirstIdx],
+                                     LocVT, LocInfo));    
+  else
+    State.addLoc(CCValAssign::getMem(ValNo, ValVT, Offset, LocVT, LocInfo));
+
+  return true;
+}
+
+#include "MipsGenCallingConv.inc"
 
 //===----------------------------------------------------------------------===//
 //                  Call Calling Convention Implementation

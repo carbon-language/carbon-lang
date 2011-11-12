@@ -35,8 +35,9 @@ def RetCC_MipsO32 : CallingConv<[
 //===----------------------------------------------------------------------===//
 
 def CC_MipsN : CallingConv<[
-  // FIXME: Handle byval, complex and float double parameters.
-
+   // Handles byval parameters.
+  CCIfByVal<CCCustom<"CC_Mips64Byval">>,
+ 
   // Promote i8/i16/i32 arguments to i64.
   CCIfType<[i8, i16, i32], CCPromoteToType<i64>>,
 
