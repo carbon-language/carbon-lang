@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -O0 -fast-isel=false -regalloc=linearscan | grep mov | count 5
+; RUN: llc < %s -march=x86 -O0 -fast-isel=false -regalloc=basic | grep mov | count 5
 ; PR2343
 
 	%llvm.dbg.anchor.type = type { i32, i32 }

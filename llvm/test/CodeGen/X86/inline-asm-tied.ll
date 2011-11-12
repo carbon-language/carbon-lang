@@ -1,6 +1,8 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin9 -O0 -regalloc=linearscan | grep {movl	%edx, 4(%esp)} | count 2
+; RUN: llc < %s -mtriple=i386-apple-darwin9 -O0 -regalloc=basic | FileCheck %s
 ; rdar://6992609
 
+; CHECK: movl [[EDX:%e..]], 4(%esp)
+; CHECK: movl [[EDX]], 4(%esp)
 target triple = "i386-apple-darwin9.0"
 @llvm.used = appending global [1 x i8*] [i8* bitcast (i64 (i64)* @_OSSwapInt64 to i8*)], section "llvm.metadata"		; <[1 x i8*]*> [#uses=0]
 

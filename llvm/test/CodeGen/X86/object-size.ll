@@ -1,4 +1,4 @@
-; RUN: llc -O0 -regalloc=linearscan < %s -march=x86-64 | FileCheck %s -check-prefix=X64
+; RUN: llc -O0 -regalloc=basic < %s -march=x86-64 | FileCheck %s -check-prefix=X64
 
 ; ModuleID = 'ts.c'
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
@@ -12,8 +12,8 @@ entry:
   %tmp = load i8** @p                             ; <i8*> [#uses=1]
   %0 = call i64 @llvm.objectsize.i64(i8* %tmp, i1 0) ; <i64> [#uses=1]
   %cmp = icmp ne i64 %0, -1                       ; <i1> [#uses=1]
-; X64: movabsq $-1, %rax
-; X64: cmpq    $-1, %rax
+; X64: movabsq $-1, [[RAX:%r..]]
+; X64: cmpq    $-1, [[RAX]]
   br i1 %cmp, label %cond.true, label %cond.false
 
 cond.true:                                        ; preds = %entry
