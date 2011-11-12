@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=thumbv7-apple-darwin -regalloc=linearscan -disable-post-ra | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin -disable-post-ra | FileCheck %s
 
 ; The ARM magic hinting works best with linear scan.
 ; CHECK: ldrd
