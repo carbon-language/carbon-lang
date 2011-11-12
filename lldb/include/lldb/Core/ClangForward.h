@@ -80,6 +80,7 @@ namespace clang
     class ObjCEncodeExpr;
     class ObjCImplicitSetterGetterRefExpr;
     class ObjCInterfaceDecl;
+    class ObjCIvarDecl;
     class ObjCIvarRefExpr;
     class ObjCMessageExpr;
     class ObjCMethodDecl;

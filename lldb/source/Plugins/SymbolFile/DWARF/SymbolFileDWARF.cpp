@@ -14,6 +14,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclGroup.h"
+#include "clang/AST/DeclObjC.h"
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/LangOptions.h"
@@ -1324,6 +1325,12 @@ SymbolFileDWARF::ParseChildMembers
                     Declaration decl;
                     //DWARFExpression location;
                     const char *name = NULL;
+                    const char *prop_name = NULL;
+                    const char *prop_getter_name = NULL;
+                    const char *prop_setter_name = NULL;
+                    uint32_t        prop_attributes = 0;
+                    
+                    
                     bool is_artificial = false;
                     lldb::user_id_t encoding_uid = LLDB_INVALID_UID;
                     AccessType accessibility = eAccessNone;
@@ -1369,6 +1376,12 @@ SymbolFileDWARF::ParseChildMembers
                             case DW_AT_description:
                             case DW_AT_mutable:
                             case DW_AT_visibility:
+                            
+                            case DW_AT_APPLE_property_name:      prop_name = form_value.AsCString(&get_debug_str_data()); break;
+                            case DW_AT_APPLE_property_getter:    prop_getter_name = form_value.AsCString(&get_debug_str_data()); break;
+                            case DW_AT_APPLE_property_setter:    prop_setter_name = form_value.AsCString(&get_debug_str_data()); break;
+                            case DW_AT_APPLE_property_attribute: prop_attributes = form_value.Unsigned(); break;
+
                             default:
                             case DW_AT_sibling:
                                 break;
@@ -1415,13 +1428,14 @@ SymbolFileDWARF::ParseChildMembers
                     if (is_artificial == false)
                     {
                         Type *member_type = ResolveTypeUID(encoding_uid);
+                        clang::FieldDecl *field_decl = NULL;
                         if (member_type)
                         {
                             if (accessibility == eAccessNone)
                                 accessibility = default_accessibility;
                             member_accessibilities.push_back(accessibility);
 
-                            GetClangASTContext().AddFieldToRecordType (class_clang_type, 
+                            field_decl = GetClangASTContext().AddFieldToRecordType (class_clang_type, 
                                                                        name, 
                                                                        member_type->GetClangLayoutType(), 
                                                                        accessibility, 
@@ -1438,6 +1452,22 @@ SymbolFileDWARF::ParseChildMembers
                                 ReportError ("0x%8.8llx: DW_TAG_member refers to type 0x%8.8llx which was unable to be parsed",
                                              MakeUserID(die->GetOffset()),
                                              encoding_uid);
+                        }
+
+                        if (prop_name != NULL)
+                        {
+                            
+                            clang::ObjCIvarDecl *ivar_decl = clang::dyn_cast<clang::ObjCIvarDecl>(field_decl);
+                            assert (ivar_decl != NULL);
+                            
+
+                            GetClangASTContext().AddObjCClassProperty (class_clang_type,
+                                                                       prop_name,
+                                                                       0,
+                                                                       ivar_decl,
+                                                                       prop_setter_name,
+                                                                       prop_getter_name,
+                                                                       prop_attributes);
                         }
                     }
                 }

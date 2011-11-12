@@ -22,6 +22,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "clang/AST/TemplateBase.h"
 
+
 // Project includes
 #include "lldb/lldb-enumerations.h"
 #include "lldb/Core/ClangForward.h"
@@ -247,7 +248,7 @@ public:
                       int kind,
                       lldb::LanguageType language);
 
-    static bool
+    static clang::FieldDecl *
     AddFieldToRecordType (clang::ASTContext *ast,
                           lldb::clang_type_t record_qual_type,
                           const char *name,
@@ -255,7 +256,7 @@ public:
                           lldb::AccessType access,
                           uint32_t bitfield_bit_size);
     
-    bool
+    clang::FieldDecl *
     AddFieldToRecordType (lldb::clang_type_t record_qual_type,
                           const char *name,
                           lldb::clang_type_t field_type,
@@ -383,7 +384,7 @@ public:
                      bool isForwardDecl, 
                      bool isInternal);
     
-    static bool
+    static clang::FieldDecl *
     AddObjCClassIVar (clang::ASTContext *ast,
                       lldb::clang_type_t class_opaque_type, 
                       const char *name, 
@@ -392,7 +393,7 @@ public:
                       uint32_t bitfield_bit_size, 
                       bool isSynthesized);
     
-    bool
+    clang::FieldDecl *
     AddObjCClassIVar (lldb::clang_type_t class_opaque_type, 
                       const char *name, 
                       lldb::clang_type_t ivar_opaque_type, 
@@ -409,6 +410,41 @@ public:
                                                   isSynthesized);
     }
 
+    static bool
+    AddObjCClassProperty 
+    (
+        clang::ASTContext *ast,
+        lldb::clang_type_t class_opaque_type, 
+        const char *property_name,
+        lldb::clang_type_t property_opaque_type,  // The property type is only required if you don't have an ivar decl
+        clang::ObjCIvarDecl *ivar_decl,   
+        const char *property_setter_name,
+        const char *property_getter_name,
+        uint32_t property_attributes
+    );
+
+    bool
+    AddObjCClassProperty 
+    (
+        lldb::clang_type_t class_opaque_type, 
+        const char *property_name,
+        lldb::clang_type_t property_opaque_type,  
+        clang::ObjCIvarDecl *ivar_decl,   
+        const char *property_setter_name,
+        const char *property_getter_name,
+        uint32_t property_attributes
+    )
+    {
+        return ClangASTContext::AddObjCClassProperty (getASTContext(),
+                                                      class_opaque_type, 
+                                                      property_name,
+                                                      property_opaque_type,
+                                                      ivar_decl,
+                                                      property_setter_name,
+                                                      property_getter_name,
+                                                      property_attributes);
+    }
+    
     bool
     SetObjCSuperClass (lldb::clang_type_t class_clang_type,
                        lldb::clang_type_t superclass_clang_type);

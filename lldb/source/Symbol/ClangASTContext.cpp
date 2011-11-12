@@ -1782,7 +1782,7 @@ ClangASTContext::AddMethodToCXXRecordType
     return cxx_method_decl;
 }
 
-bool
+clang::FieldDecl *
 ClangASTContext::AddFieldToRecordType 
 (
     ASTContext *ast,
@@ -1794,8 +1794,9 @@ ClangASTContext::AddFieldToRecordType
 )
 {
     if (record_clang_type == NULL || field_type == NULL)
-        return false;
+        return NULL;
 
+    FieldDecl *field = NULL;
     IdentifierTable *identifier_table = &ast->Idents;
 
     assert (ast != NULL);
@@ -1818,7 +1819,7 @@ ClangASTContext::AddFieldToRecordType
                 APInt bitfield_bit_size_apint(ast->getTypeSize(ast->IntTy), bitfield_bit_size);
                 bit_width = new (*ast)IntegerLiteral (*ast, bitfield_bit_size_apint, ast->IntTy, SourceLocation());
             }
-            FieldDecl *field = FieldDecl::Create (*ast,
+            field = FieldDecl::Create (*ast,
                                                   record_decl,
                                                   SourceLocation(),
                                                   SourceLocation(),
@@ -1846,7 +1847,7 @@ ClangASTContext::AddFieldToRecordType
             if (objc_class_type)
             {
                 bool is_synthesized = false;
-                ClangASTContext::AddObjCClassIVar (ast,
+                field = ClangASTContext::AddObjCClassIVar (ast,
                                                    record_clang_type,
                                                    name,
                                                    field_type,
@@ -1856,7 +1857,7 @@ ClangASTContext::AddFieldToRecordType
             }
         }
     }
-    return false;
+    return field;
 }
 
 bool
@@ -2047,7 +2048,7 @@ ClangASTContext::SetObjCSuperClass (clang_type_t class_opaque_type, clang_type_t
 }
 
 
-bool
+FieldDecl *
 ClangASTContext::AddObjCClassIVar 
 (
     ASTContext *ast,
@@ -2060,8 +2061,10 @@ ClangASTContext::AddObjCClassIVar
 )
 {
     if (class_opaque_type == NULL || ivar_opaque_type == NULL)
-        return false;
+        return NULL;
 
+    ObjCIvarDecl *field = NULL;
+    
     IdentifierTable *identifier_table = &ast->Idents;
 
     assert (ast != NULL);
@@ -2087,16 +2090,16 @@ ClangASTContext::AddObjCClassIVar
                     bit_width = new (*ast)IntegerLiteral (*ast, bitfield_bit_size_apint, ast->IntTy, SourceLocation());
                 }
                 
-                ObjCIvarDecl *field = ObjCIvarDecl::Create (*ast,
-                                                            class_interface_decl,
-                                                            SourceLocation(),
-                                                            SourceLocation(),
-                                                            &identifier_table->get(name), // Identifier
-                                                            QualType::getFromOpaquePtr(ivar_opaque_type), // Field type
-                                                            NULL, // TypeSourceInfo *
-                                                            ConvertAccessTypeToObjCIvarAccessControl (access),
-                                                            bit_width,
-                                                            is_synthesized);
+                field = ObjCIvarDecl::Create (*ast,
+                                              class_interface_decl,
+                                              SourceLocation(),
+                                              SourceLocation(),
+                                              &identifier_table->get(name), // Identifier
+                                              QualType::getFromOpaquePtr(ivar_opaque_type), // Field type
+                                              NULL, // TypeSourceInfo *
+                                              ConvertAccessTypeToObjCIvarAccessControl (access),
+                                              bit_width,
+                                              is_synthesized);
                 
                 if (field)
                 {
@@ -2106,14 +2109,105 @@ ClangASTContext::AddObjCClassIVar
                     VerifyDecl(field);
 #endif
                     
-                    return true;
+                    return field;
                 }
+            }
+        }
+    }
+    return NULL;
+}
+
+bool
+ClangASTContext::AddObjCClassProperty 
+(
+    ASTContext *ast,
+    clang_type_t class_opaque_type, 
+    const char *property_name,
+    clang_type_t property_opaque_type,  
+    ObjCIvarDecl *ivar_decl,
+    const char *property_setter_name,
+    const char *property_getter_name,
+    uint32_t property_attributes
+)
+{
+    if (class_opaque_type == NULL)
+        return false;
+
+    IdentifierTable *identifier_table = &ast->Idents;
+
+    assert (ast != NULL);
+    assert (identifier_table != NULL);
+
+    QualType class_qual_type(QualType::getFromOpaquePtr(class_opaque_type));
+    const clang::Type *class_type = class_qual_type.getTypePtr();
+    if (class_type)
+    {
+        const ObjCObjectType *objc_class_type = dyn_cast<ObjCObjectType>(class_type);
+
+        if (objc_class_type)
+        {
+            ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
+            
+            // FIXME: For now, we don't know how to add properties if we don't have their associated ivar.
+            if (class_interface_decl && ivar_decl)
+            {
+                clang::TypeSourceInfo *prop_type_source;
+                if (ivar_decl)
+                    prop_type_source = ast->CreateTypeSourceInfo (ivar_decl->getType());
+                else
+                    prop_type_source = ast->CreateTypeSourceInfo (QualType::getFromOpaquePtr(property_opaque_type));
+                
+                ObjCPropertyDecl *property_decl = ObjCPropertyDecl::Create(*ast, 
+                                                                           class_interface_decl, 
+                                                                           SourceLocation(), // Source Location
+                                                                           &identifier_table->get(property_name),
+                                                                           SourceLocation(), //Source Location for AT
+                                                                           prop_type_source
+                                                                           );
+                 if (property_decl)
+                 {
+                    class_interface_decl->addDecl (property_decl);
+                    if (property_setter_name != NULL)
+                    {
+                        std::string property_setter_no_colon(property_setter_name, strlen(property_setter_name) - 1);
+                        clang::IdentifierInfo *setter_ident = &identifier_table->get(property_setter_no_colon.c_str());
+                        Selector setter_sel = ast->Selectors.getSelector(1, &setter_ident);
+                        property_decl->setSetterName(setter_sel);
+                        property_decl->setPropertyAttributes (clang::ObjCPropertyDecl::OBJC_PR_setter);
+                    }
+                    
+                    if (property_getter_name != NULL)
+                    {
+                        clang::IdentifierInfo *getter_ident = &identifier_table->get(property_getter_name);
+                        Selector getter_sel = ast->Selectors.getSelector(0, &getter_ident);
+                        property_decl->setGetterName(getter_sel);
+                        property_decl->setPropertyAttributes (clang::ObjCPropertyDecl::OBJC_PR_getter);
+
+                    }
+                        
+                    if (ivar_decl)
+                        property_decl->setPropertyIvarDecl (ivar_decl);
+                        
+                    if (property_attributes & DW_APPLE_PROPERTY_readonly) 
+                        property_decl->setPropertyAttributes (clang::ObjCPropertyDecl::OBJC_PR_readonly);
+                    if (property_attributes & DW_APPLE_PROPERTY_readwrite) 
+                        property_decl->setPropertyAttributes (clang::ObjCPropertyDecl::OBJC_PR_readwrite);
+                    if (property_attributes & DW_APPLE_PROPERTY_assign) 
+                        property_decl->setPropertyAttributes (clang::ObjCPropertyDecl::OBJC_PR_assign);
+                    if (property_attributes & DW_APPLE_PROPERTY_retain) 
+                        property_decl->setPropertyAttributes (clang::ObjCPropertyDecl::OBJC_PR_retain);
+                    if (property_attributes & DW_APPLE_PROPERTY_copy) 
+                        property_decl->setPropertyAttributes (clang::ObjCPropertyDecl::OBJC_PR_copy);
+                    if (property_attributes & DW_APPLE_PROPERTY_nonatomic) 
+                        property_decl->setPropertyAttributes (clang::ObjCPropertyDecl::OBJC_PR_nonatomic);
+
+                    return true;
+                 }
             }
         }
     }
     return false;
 }
-
 
 bool
 ClangASTContext::ObjCTypeHasIVars (clang_type_t class_opaque_type, bool check_superclass)
