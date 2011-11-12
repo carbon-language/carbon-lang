@@ -1,5 +1,5 @@
 module libA {
-  header "a1.h"
+  module a1 { header "a1.h" }
   header "a2.h"
 }
 
