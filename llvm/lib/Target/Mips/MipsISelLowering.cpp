@@ -820,7 +820,7 @@ MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     return EmitAtomicBinary(MI, BB, 4, Mips::AND);
   case Mips::ATOMIC_LOAD_AND_I64:
   case Mips::ATOMIC_LOAD_AND_I64_P8:
-    return EmitAtomicBinary(MI, BB, 48, Mips::AND64);
+    return EmitAtomicBinary(MI, BB, 8, Mips::AND64);
 
   case Mips::ATOMIC_LOAD_OR_I8:
   case Mips::ATOMIC_LOAD_OR_I8_P8:
