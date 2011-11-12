@@ -137,22 +137,22 @@ const FileEntry *HeaderSearch::lookupModule(StringRef ModuleName,
       if (!SearchDirs[Idx].isNormalDir())
         continue;
       
-      // Search for a module map in this directory, if we haven't already
-      // looked there.
-      if (!loadModuleMapFile(SearchDirs[Idx].getDir())) {
-        // If we found a module map, look for the module again.
+      // Search for a module map file in this directory.
+      if (loadModuleMapFile(SearchDirs[Idx].getDir()) == LMM_NewlyLoaded) {
+        // We just loaded a module map file; check whether the module is
+        // available now.
         Module = ModMap.findModule(ModuleName);
         if (Module)
           break;
       }
-      
+                
       // Search for a module map in a subdirectory with the same name as the
       // module.
       llvm::SmallString<128> NestedModuleMapDirName;
       NestedModuleMapDirName = SearchDirs[Idx].getDir()->getName();
       llvm::sys::path::append(NestedModuleMapDirName, ModuleName);
-      if (!loadModuleMapFile(NestedModuleMapDirName)) {
-        // If we found a module map, look for the module again.
+      if (loadModuleMapFile(NestedModuleMapDirName) == LMM_NewlyLoaded) {
+        // If we just loaded a module map file, look for the module again.
         Module = ModMap.findModule(ModuleName);
         if (Module)
           break;        
@@ -766,13 +766,19 @@ bool HeaderSearch::hasModuleMap(StringRef FileName,
       return false;
     
     // Try to load the module map file in this directory.
-    if (!loadModuleMapFile(Dir)) {      
+    switch (loadModuleMapFile(Dir)) {
+    case LMM_NewlyLoaded:
+    case LMM_AlreadyLoaded:
       // Success. All of the directories we stepped through inherit this module
       // map file.
       for (unsigned I = 0, N = FixUpDirectories.size(); I != N; ++I)
         DirectoryHasModuleMap[FixUpDirectories[I]] = true;
       
       return true;
+
+    case LMM_NoDirectory:
+    case LMM_InvalidModuleMap:
+      break;
     }
 
     // If we hit the top of our search, we're done.
@@ -794,18 +800,20 @@ StringRef HeaderSearch::findModuleForHeader(const FileEntry *File) {
   return StringRef();
 }
 
-bool HeaderSearch::loadModuleMapFile(StringRef DirName) {
+HeaderSearch::LoadModuleMapResult 
+HeaderSearch::loadModuleMapFile(StringRef DirName) {
   if (const DirectoryEntry *Dir = FileMgr.getDirectory(DirName))
     return loadModuleMapFile(Dir);
   
-  return true;
+  return LMM_NoDirectory;
 }
 
-bool HeaderSearch::loadModuleMapFile(const DirectoryEntry *Dir) {
+HeaderSearch::LoadModuleMapResult 
+HeaderSearch::loadModuleMapFile(const DirectoryEntry *Dir) {
   llvm::DenseMap<const DirectoryEntry *, bool>::iterator KnownDir
     = DirectoryHasModuleMap.find(Dir);
   if (KnownDir != DirectoryHasModuleMap.end())
-    return !KnownDir->second;
+    return KnownDir->second? LMM_AlreadyLoaded : LMM_InvalidModuleMap;
   
   llvm::SmallString<128> ModuleMapFileName;
   ModuleMapFileName += Dir->getName();
@@ -816,12 +824,12 @@ bool HeaderSearch::loadModuleMapFile(const DirectoryEntry *Dir) {
       // This directory has a module map.
       DirectoryHasModuleMap[Dir] = true;
       
-      return false;
+      return LMM_NewlyLoaded;
     }
   }
   
   // No suitable module map.
   DirectoryHasModuleMap[Dir] = false;
-  return true;
+  return LMM_InvalidModuleMap;
 }
 

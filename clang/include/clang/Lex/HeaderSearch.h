@@ -408,15 +408,35 @@ public:
   size_t getTotalMemory() const;
 
 private:
+  /// \brief Describes what happened when we tried to load a module map file.
+  enum LoadModuleMapResult {
+    /// \brief The module map file had already been loaded.
+    LMM_AlreadyLoaded,
+    /// \brief The module map file was loaded by this invocation.
+    LMM_NewlyLoaded,
+    /// \brief There is was directory with the given name.
+    LMM_NoDirectory,
+    /// \brief There was either no module map file or the module map file was
+    /// invalid.
+    LMM_InvalidModuleMap
+  };
+  
   /// \brief Try to load the module map file in the given directory.
   ///
-  /// \returns false if the module map was loaded successfully, true otherwise.
-  bool loadModuleMapFile(StringRef DirName);
+  /// \param DirName The name of the directory where we will look for a module
+  /// map file.
+  ///
+  /// \returns The result of attempting to load the module map file from the
+  /// named directory.
+  LoadModuleMapResult loadModuleMapFile(StringRef DirName);
 
   /// \brief Try to load the module map file in the given directory.
   ///
-  /// \returns false if the module map was loaded successfully, true otherwise.
-  bool loadModuleMapFile(const DirectoryEntry *Dir);
+  /// \param Dir The directory where we will look for a module map file.
+  ///
+  /// \returns The result of attempting to load the module map file from the
+  /// named directory.
+  LoadModuleMapResult loadModuleMapFile(const DirectoryEntry *Dir);
 
   /// getFileInfo - Return the HeaderFileInfo structure for the specified
   /// FileEntry.
