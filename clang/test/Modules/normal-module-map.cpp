@@ -9,6 +9,8 @@ int getUmbrella() {
   return umbrella; 
 }
 
+__import_module__ Umbrella2;
+
 #include "a1.h" // expected-error{{module 'libA' not found}}
 #include "b1.h"
 #include "nested/nested2.h"

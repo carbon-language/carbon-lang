@@ -408,6 +408,15 @@ public:
   size_t getTotalMemory() const;
 
 private:
+  /// \brief Try to load the module map file in the given directory.
+  ///
+  /// \returns false if the module map was loaded successfully, true otherwise.
+  bool loadModuleMapFile(StringRef DirName);
+
+  /// \brief Try to load the module map file in the given directory.
+  ///
+  /// \returns false if the module map was loaded successfully, true otherwise.
+  bool loadModuleMapFile(const DirectoryEntry *Dir);
 
   /// getFileInfo - Return the HeaderFileInfo structure for the specified
   /// FileEntry.

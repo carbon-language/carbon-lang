@@ -127,15 +127,45 @@ const FileEntry *HeaderSearch::lookupModule(StringRef ModuleName,
   if (!UmbrellaHeader)
     return 0;
   
-  // Look in the module map to determine if there is a module by this name
-  // that has an umbrella header.
+  // Look in the module map to determine if there is a module by this name.
+  ModuleMap::Module *Module = ModMap.findModule(ModuleName);
+  if (!Module) {
+    // Look through the various header search paths to load any avaiable module 
+    // maps, searching for a module map that describes this module.
+    for (unsigned Idx = 0, N = SearchDirs.size(); Idx != N; ++Idx) {
+      // Skip non-normal include paths
+      if (!SearchDirs[Idx].isNormalDir())
+        continue;
+      
+      // Search for a module map in this directory, if we haven't already
+      // looked there.
+      if (!loadModuleMapFile(SearchDirs[Idx].getDir())) {
+        // If we found a module map, look for the module again.
+        Module = ModMap.findModule(ModuleName);
+        if (Module)
+          break;
+      }
+      
+      // Search for a module map in a subdirectory with the same name as the
+      // module.
+      llvm::SmallString<128> NestedModuleMapDirName;
+      NestedModuleMapDirName = SearchDirs[Idx].getDir()->getName();
+      llvm::sys::path::append(NestedModuleMapDirName, ModuleName);
+      if (!loadModuleMapFile(NestedModuleMapDirName)) {
+        // If we found a module map, look for the module again.
+        Module = ModMap.findModule(ModuleName);
+        if (Module)
+          break;        
+      }
+    }
+  }
+
+  // If we have a module with an umbrella header 
   // FIXME: Even if it doesn't have an umbrella header, we should be able to
   // handle the module. However, the caller isn't ready for that yet.
-  if (ModuleMap::Module *Module = ModMap.findModule(ModuleName)) {
-    if (Module->UmbrellaHeader) {
-      *UmbrellaHeader = Module->UmbrellaHeader->getName();
-      return 0;
-    }
+  if (Module && Module->UmbrellaHeader) {
+    *UmbrellaHeader = Module->UmbrellaHeader->getName();
+    return 0;
   }
   
   // Look in each of the framework directories for an umbrella header with
@@ -735,45 +765,20 @@ bool HeaderSearch::hasModuleMap(StringRef FileName,
     if (!Dir)
       return false;
     
-    llvm::DenseMap<const DirectoryEntry *, bool>::iterator
-      KnownDir = DirectoryHasModuleMap.find(Dir);
-    if (KnownDir != DirectoryHasModuleMap.end()) {
-      // We have seen this directory before. If it has no module map file,
-      // we're done.
-      if (!KnownDir->second)
-        return false;
-      
-      // All of the directories we stepped through inherit this module map
-      // file.
+    // Try to load the module map file in this directory.
+    if (!loadModuleMapFile(Dir)) {      
+      // Success. All of the directories we stepped through inherit this module
+      // map file.
       for (unsigned I = 0, N = FixUpDirectories.size(); I != N; ++I)
         DirectoryHasModuleMap[FixUpDirectories[I]] = true;
       
       return true;
     }
-    
-    // We have not checked for a module map file in this directory yet;
-    // do so now.
-    llvm::SmallString<128> ModuleMapFileName;
-    ModuleMapFileName += Dir->getName();
-    llvm::sys::path::append(ModuleMapFileName, "module.map");
-    if (const FileEntry *ModuleMapFile = FileMgr.getFile(ModuleMapFileName)) {
-      // We have found a module map file. Try to parse it.
-      if (!ModMap.parseModuleMapFile(ModuleMapFile)) {
-        // This directory has a module map.
-        DirectoryHasModuleMap[Dir] = true;
-        
-        // All of the directories we stepped through inherit this module map
-        // file.
-        for (unsigned I = 0, N = FixUpDirectories.size(); I != N; ++I)
-          DirectoryHasModuleMap[FixUpDirectories[I]] = true;
-        
-        return true;
-      }
-    }
 
-    // This directory did not have a module map file.
-    DirectoryHasModuleMap[Dir] = false;
-    
+    // If we hit the top of our search, we're done.
+    if (Dir == Root)
+      return false;
+        
     // Keep track of all of the directories we checked, so we can mark them as
     // having module maps if we eventually do find a module map.
     FixUpDirectories.push_back(Dir);
@@ -789,4 +794,34 @@ StringRef HeaderSearch::findModuleForHeader(const FileEntry *File) {
   return StringRef();
 }
 
+bool HeaderSearch::loadModuleMapFile(StringRef DirName) {
+  if (const DirectoryEntry *Dir = FileMgr.getDirectory(DirName))
+    return loadModuleMapFile(Dir);
+  
+  return true;
+}
+
+bool HeaderSearch::loadModuleMapFile(const DirectoryEntry *Dir) {
+  llvm::DenseMap<const DirectoryEntry *, bool>::iterator KnownDir
+    = DirectoryHasModuleMap.find(Dir);
+  if (KnownDir != DirectoryHasModuleMap.end())
+    return !KnownDir->second;
+  
+  llvm::SmallString<128> ModuleMapFileName;
+  ModuleMapFileName += Dir->getName();
+  llvm::sys::path::append(ModuleMapFileName, "module.map");
+  if (const FileEntry *ModuleMapFile = FileMgr.getFile(ModuleMapFileName)) {
+    // We have found a module map file. Try to parse it.
+    if (!ModMap.parseModuleMapFile(ModuleMapFile)) {
+      // This directory has a module map.
+      DirectoryHasModuleMap[Dir] = true;
+      
+      return false;
+    }
+  }
+  
+  // No suitable module map.
+  DirectoryHasModuleMap[Dir] = false;
+  return true;
+}
 
