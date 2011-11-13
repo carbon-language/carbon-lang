@@ -18,22 +18,14 @@
 #define LLVM_CODEGEN_VIRTREGMAP_H
 
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/CodeGen/LiveInterval.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-#include "llvm/ADT/BitVector.h"
-#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/IndexedMap.h"
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/SmallVector.h"
-#include <map>
 
 namespace llvm {
-  class LiveIntervals;
   class MachineInstr;
   class MachineFunction;
   class MachineRegisterInfo;
   class TargetInstrInfo;
-  class TargetRegisterInfo;
   class raw_ostream;
   class SlotIndexes;
 
@@ -45,17 +37,11 @@ namespace llvm {
       MAX_STACK_SLOT = (1L << 18)-1
     };
 
-    enum ModRef { isRef = 1, isMod = 2, isModRef = 3 };
-    typedef std::multimap<MachineInstr*,
-                          std::pair<unsigned, ModRef> > MI2VirtMapTy;
-
   private:
     MachineRegisterInfo *MRI;
     const TargetInstrInfo *TII;
     const TargetRegisterInfo *TRI;
     MachineFunction *MF;
-
-    DenseMap<const TargetRegisterClass*, BitVector> allocatableRCRegs;
 
     /// Virt2PhysMap - This is a virtual to physical register
     /// mapping. Each virtual register is required to have an entry in

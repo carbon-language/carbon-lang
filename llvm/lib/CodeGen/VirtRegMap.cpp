@@ -19,7 +19,6 @@
 #define DEBUG_TYPE "virtregmap"
 #include "VirtRegMap.h"
 #include "llvm/Function.h"
-#include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -32,12 +31,8 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/ADT/BitVector.h"
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/SmallSet.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -62,14 +57,7 @@ bool VirtRegMap::runOnMachineFunction(MachineFunction &mf) {
   Virt2StackSlotMap.clear();
   Virt2SplitMap.clear();
 
-  allocatableRCRegs.clear();
-  for (TargetRegisterInfo::regclass_iterator I = TRI->regclass_begin(),
-         E = TRI->regclass_end(); I != E; ++I)
-    allocatableRCRegs.insert(std::make_pair(*I,
-                                            TRI->getAllocatableSet(mf, *I)));
-
   grow();
-  
   return false;
 }
 
