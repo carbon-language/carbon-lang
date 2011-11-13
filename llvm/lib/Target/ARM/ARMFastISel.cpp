@@ -2108,18 +2108,25 @@ bool ARMFastISel::SelectCall(const Instruction *I,
   MachineInstrBuilder MIB;
   unsigned CallOpc = ARMSelectCallOp(GV);
   // Explicitly adding the predicate here.
-  if(isThumb2)
+  if(isThumb2) {
     // Explicitly adding the predicate here.
     MIB = AddDefaultPred(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                                  TII.get(CallOpc)));
-  else
-    // Explicitly adding the predicate here.
-    MIB = AddDefaultPred(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                                 TII.get(CallOpc)));
-  if (!IntrMemName)
-    MIB.addGlobalAddress(GV, 0, 0);
-  else 
-    MIB.addExternalSymbol(IntrMemName, 0);
+    if (!IntrMemName)
+      MIB.addGlobalAddress(GV, 0, 0);
+    else 
+      MIB.addExternalSymbol(IntrMemName, 0);
+  } else {
+    if (!IntrMemName)
+      // Explicitly adding the predicate here.
+      MIB = AddDefaultPred(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                                   TII.get(CallOpc))
+            .addGlobalAddress(GV, 0, 0));
+    else
+      MIB = AddDefaultPred(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                                   TII.get(CallOpc))
+            .addExternalSymbol(IntrMemName, 0));
+  }
   
   // Add implicit physical register uses to the call.
   for (unsigned i = 0, e = RegArgs.size(); i != e; ++i)
@@ -2136,7 +2143,6 @@ bool ARMFastISel::SelectCall(const Instruction *I,
 }
 
 bool ARMFastISel::SelectIntrinsicCall(const IntrinsicInst &I) {
-  if (!isThumb2) return false;
   // FIXME: Handle more intrinsics.
   switch (I.getIntrinsicID()) {
   default: return false;

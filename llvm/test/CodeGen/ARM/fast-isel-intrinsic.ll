@@ -1,3 +1,4 @@
+; RUN: llc < %s -O0 -fast-isel-abort -relocation-model=dynamic-no-pic -mtriple=armv7-apple-darwin | FileCheck %s --check-prefix=ARM
 ; RUN: llc < %s -O0 -fast-isel-abort -relocation-model=dynamic-no-pic -mtriple=thumbv7-apple-darwin | FileCheck %s --check-prefix=THUMB
 
 @message1 = global [60 x i8] c"The LLVM Compiler Infrastructure\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00", align 1
@@ -10,7 +11,7 @@ define void @t1() nounwind ssp {
 ; ARM: movw r1, #64
 ; ARM: movw r2, #10
 ; ARM: uxtb r1, r1
-; ARM: bl #14
+; ARM: bl _memset
 ; THUMB: t1
 ; THUMB: ldr.n r0, LCPI0_0
 ; THUMB: adds r0, #5
@@ -36,7 +37,7 @@ define void @t2() nounwind ssp {
 ; ARM: str r0, [sp]                @ 4-byte Spill
 ; ARM: mov r0, r1
 ; ARM: ldr r1, [sp]                @ 4-byte Reload
-; ARM: bl #14
+; ARM: bl _memcpy
 ; THUMB: t2
 ; THUMB: ldr.n r0, LCPI1_0
 ; THUMB: ldr r0, [r0]
@@ -60,7 +61,7 @@ define void @t3() nounwind ssp {
 ; ARM: add r0, r0, #16
 ; ARM: movw r2, #10
 ; ARM: mov r0, r1
-; ARM: bl #14
+; ARM: bl _memmove
 ; THUMB: t3
 ; THUMB: ldr.n r0, LCPI2_0
 ; THUMB: ldr r0, [r0]
