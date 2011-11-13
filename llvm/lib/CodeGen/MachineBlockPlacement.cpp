@@ -211,6 +211,9 @@ class MachineBlockPlacement : public MachineFunctionPass {
   MachineBasicBlock *selectBestSuccessor(MachineBasicBlock *BB,
                                          BlockChain &Chain,
                                          const BlockFilterSet *BlockFilter);
+  MachineBasicBlock *selectBestCandidateBlock(
+      BlockChain &Chain, SmallVectorImpl<MachineBasicBlock *> &WorkList,
+      const BlockFilterSet *BlockFilter);
   void buildChain(MachineBasicBlock *BB, BlockChain &Chain,
                   SmallVectorImpl<MachineBasicBlock *> &Blocks,
                   const BlockFilterSet *BlockFilter = 0);
@@ -361,6 +364,45 @@ MachineBasicBlock *MachineBlockPlacement::selectBestSuccessor(
   return BestSucc;
 }
 
+/// \brief Select the best block from a worklist.
+///
+/// This looks through the provided worklist as a list of candidate basic
+/// blocks and select the most profitable one to place. The definition of
+/// profitable only really makes sense in the context of a loop. This returns
+/// the most frequently visited block in the worklist, which in the case of
+/// a loop, is the one most desirable to be physically close to the rest of the
+/// loop body in order to improve icache behavior.
+///
+/// \returns The best block found, or null if none are viable.
+MachineBasicBlock *MachineBlockPlacement::selectBestCandidateBlock(
+    BlockChain &Chain, SmallVectorImpl<MachineBasicBlock *> &WorkList,
+    const BlockFilterSet *BlockFilter) {
+  MachineBasicBlock *BestBlock = 0;
+  BlockFrequency BestFreq;
+  for (SmallVectorImpl<MachineBasicBlock *>::iterator WBI = WorkList.begin(),
+                                                      WBE = WorkList.end();
+       WBI != WBE; ++WBI) {
+    if (BlockFilter && !BlockFilter->count(*WBI))
+      continue;
+    BlockChain &SuccChain = *BlockToChain[*WBI];
+    if (&SuccChain == &Chain) {
+      DEBUG(dbgs() << "    " << getBlockName(*WBI)
+                   << " -> Already merged!\n");
+      continue;
+    }
+    assert(SuccChain.LoopPredecessors == 0 && "Found CFG-violating block");
+
+    BlockFrequency CandidateFreq = MBFI->getBlockFreq(*WBI);
+    DEBUG(dbgs() << "    " << getBlockName(*WBI) << " -> " << CandidateFreq
+                 << " (freq)\n");
+    if (BestBlock && BestFreq >= CandidateFreq)
+      continue;
+    BestBlock = *WBI;
+    BestFreq = CandidateFreq;
+  }
+  return BestBlock;
+}
+
 void MachineBlockPlacement::buildChain(
     MachineBasicBlock *BB,
     BlockChain &Chain,
@@ -384,30 +426,9 @@ void MachineBlockPlacement::buildChain(
     // If an immediate successor isn't available, look for the best viable
     // block among those we've identified as not violating the loop's CFG at
     // this point. This won't be a fallthrough, but it will increase locality.
-    if (!BestSucc) {
-      BlockFrequency BestFreq;
-      for (SmallVectorImpl<MachineBasicBlock *>::iterator WBI = BlockWorkList.begin(),
-                                                          WBE = BlockWorkList.end();
-           WBI != WBE; ++WBI) {
-        if (BlockFilter && !BlockFilter->count(*WBI))
-          continue;
-        BlockChain &SuccChain = *BlockToChain[*WBI];
-        if (&SuccChain == &Chain) {
-          DEBUG(dbgs() << "    " << getBlockName(*WBI)
-                       << " -> Already merged!\n");
-          continue;
-        }
-        assert(SuccChain.LoopPredecessors == 0 && "Found CFG-violating block");
+    if (!BestSucc)
+      BestSucc = selectBestCandidateBlock(Chain, BlockWorkList, BlockFilter);
 
-        BlockFrequency CandidateFreq = MBFI->getBlockFreq(*WBI);
-        DEBUG(dbgs() << "    " << getBlockName(*WBI) << " -> " << CandidateFreq
-                     << " (freq)\n");
-        if (BestSucc && BestFreq >= CandidateFreq)
-          continue;
-        BestSucc = *WBI;
-        BestFreq = CandidateFreq;
-      }
-    }
     if (!BestSucc) {
       DEBUG(dbgs() << "Finished forming chain for header block "
                    << getBlockNum(*Chain.begin()) << "\n");
