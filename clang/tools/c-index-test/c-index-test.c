@@ -45,6 +45,8 @@ static unsigned getDefaultParsingOptions() {
   return options;
 }
 
+static int checkForErrors(CXTranslationUnit TU);
+
 static void PrintExtent(FILE *out, unsigned begin_line, unsigned begin_column,
                         unsigned end_line, unsigned end_column) {
   fprintf(out, "[%d:%d - %d:%d]", begin_line, begin_column,
@@ -802,6 +804,9 @@ int perform_test_reparse_source(int argc, const char **argv, int trials,
     return 1;
   }
   
+  if (checkForErrors(TU) != 0)
+    return -1;
+
   if (getenv("CINDEXTEST_REMAP_AFTER_TRIAL")) {
     remap_after_trial =
         strtol(getenv("CINDEXTEST_REMAP_AFTER_TRIAL"), &endptr, 10);
@@ -818,9 +823,16 @@ int perform_test_reparse_source(int argc, const char **argv, int trials,
       clang_disposeIndex(Idx);
       return -1;      
     }
+
+    if (checkForErrors(TU) != 0)
+      return -1;
   }
   
   result = perform_test_load(Idx, TU, filter, NULL, Visitor, PV);
+
+  if (checkForErrors(TU) != 0)
+    return -1;
+
   free_remapped_files(unsaved_files, num_unsaved_files);
   clang_disposeIndex(Idx);
   return result;
