@@ -49,11 +49,8 @@ namespace {
   class StackSlotColoring : public MachineFunctionPass {
     bool ColorWithRegs;
     LiveStacks* LS;
-    VirtRegMap* VRM;
     MachineFrameInfo *MFI;
-    MachineRegisterInfo *MRI;
     const TargetInstrInfo  *TII;
-    const TargetRegisterInfo *TRI;
     const MachineLoopInfo *loopInfo;
 
     // SSIntervals - Spill slot intervals.
@@ -414,21 +411,16 @@ bool StackSlotColoring::runOnMachineFunction(MachineFunction &MF) {
     });
 
   MFI = MF.getFrameInfo();
-  MRI = &MF.getRegInfo(); 
   TII = MF.getTarget().getInstrInfo();
-  TRI = MF.getTarget().getRegisterInfo();
   LS = &getAnalysis<LiveStacks>();
-  VRM = &getAnalysis<VirtRegMap>();
   loopInfo = &getAnalysis<MachineLoopInfo>();
 
   bool Changed = false;
 
   unsigned NumSlots = LS->getNumIntervals();
-  if (NumSlots < 2) {
-    if (NumSlots == 0 || !VRM->HasUnusedRegisters())
-      // Nothing to do!
-      return false;
-  }
+  if (NumSlots == 0)
+    // Nothing to do!
+    return false;
 
   // If there are calls to setjmp or sigsetjmp, don't perform stack slot
   // coloring. The stack could be modified before the longjmp is executed,

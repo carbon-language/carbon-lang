@@ -132,9 +132,6 @@ namespace llvm {
     /// the register is implicitly defined.
     BitVector ImplicitDefed;
 
-    /// UnusedRegs - A list of physical registers that have not been used.
-    BitVector UnusedRegs;
-
     /// createSpillSlot - Allocate a spill slot for RC from MFI.
     unsigned createSpillSlot(const TargetRegisterClass *RC);
 
@@ -474,39 +471,6 @@ namespace llvm {
     /// RemoveMachineInstrFromMaps - MI is being erased, remove it from the
     /// the folded instruction map and spill point map.
     void RemoveMachineInstrFromMaps(MachineInstr *MI);
-
-    /// FindUnusedRegisters - Gather a list of allocatable registers that
-    /// have not been allocated to any virtual register.
-    bool FindUnusedRegisters(LiveIntervals* LIs);
-
-    /// HasUnusedRegisters - Return true if there are any allocatable registers
-    /// that have not been allocated to any virtual register.
-    bool HasUnusedRegisters() const {
-      return !UnusedRegs.none();
-    }
-
-    /// setRegisterUsed - Remember the physical register is now used.
-    void setRegisterUsed(unsigned Reg) {
-      UnusedRegs.reset(Reg);
-    }
-
-    /// isRegisterUnused - Return true if the physical register has not been
-    /// used.
-    bool isRegisterUnused(unsigned Reg) const {
-      return UnusedRegs[Reg];
-    }
-
-    /// getFirstUnusedRegister - Return the first physical register that has not
-    /// been used.
-    unsigned getFirstUnusedRegister(const TargetRegisterClass *RC) {
-      int Reg = UnusedRegs.find_first();
-      while (Reg != -1) {
-        if (allocatableRCRegs[RC][Reg])
-          return (unsigned)Reg;
-        Reg = UnusedRegs.find_next(Reg);
-      }
-      return 0;
-    }
 
     /// rewrite - Rewrite all instructions in MF to use only physical registers
     /// by mapping all virtual register operands to their assigned physical

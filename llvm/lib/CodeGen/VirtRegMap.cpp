@@ -221,41 +221,6 @@ void VirtRegMap::RemoveMachineInstrFromMaps(MachineInstr *MI) {
   EmergencySpillMap.erase(MI);
 }
 
-/// FindUnusedRegisters - Gather a list of allocatable registers that
-/// have not been allocated to any virtual register.
-bool VirtRegMap::FindUnusedRegisters(LiveIntervals* LIs) {
-  unsigned NumRegs = TRI->getNumRegs();
-  UnusedRegs.reset();
-  UnusedRegs.resize(NumRegs);
-
-  BitVector Used(NumRegs);
-  for (unsigned i = 0, e = MRI->getNumVirtRegs(); i != e; ++i) {
-    unsigned Reg = TargetRegisterInfo::index2VirtReg(i);
-    if (Virt2PhysMap[Reg] != (unsigned)VirtRegMap::NO_PHYS_REG)
-      Used.set(Virt2PhysMap[Reg]);
-  }
-
-  BitVector Allocatable = TRI->getAllocatableSet(*MF);
-  bool AnyUnused = false;
-  for (unsigned Reg = 1; Reg < NumRegs; ++Reg) {
-    if (Allocatable[Reg] && !Used[Reg] && !LIs->hasInterval(Reg)) {
-      bool ReallyUnused = true;
-      for (const unsigned *AS = TRI->getAliasSet(Reg); *AS; ++AS) {
-        if (Used[*AS] || LIs->hasInterval(*AS)) {
-          ReallyUnused = false;
-          break;
-        }
-      }
-      if (ReallyUnused) {
-        AnyUnused = true;
-        UnusedRegs.set(Reg);
-      }
-    }
-  }
-
-  return AnyUnused;
-}
-
 void VirtRegMap::rewrite(SlotIndexes *Indexes) {
   DEBUG(dbgs() << "********** REWRITE VIRTUAL REGISTERS **********\n"
                << "********** Function: "
