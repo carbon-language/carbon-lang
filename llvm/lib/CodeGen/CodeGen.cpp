@@ -42,7 +42,6 @@ void llvm::initializeCodeGen(PassRegistry &Registry) {
   initializePeepholeOptimizerPass(Registry);
   initializeProcessImplicitDefsPass(Registry);
   initializePEIPass(Registry);
-  initializeRALinScanPass(Registry);
   initializeRegisterCoalescerPass(Registry);
   initializeRenderMachineFunctionPass(Registry);
   initializeSlotIndexesPass(Registry);

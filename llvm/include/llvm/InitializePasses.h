@@ -192,7 +192,6 @@ void initializePathProfileVerifierPass(PassRegistry&);
 void initializeProfileVerifierPassPass(PassRegistry&);
 void initializePromotePassPass(PassRegistry&);
 void initializePruneEHPass(PassRegistry&);
-void initializeRALinScanPass(PassRegistry&);
 void initializeReassociatePass(PassRegistry&);
 void initializeRegToMemPass(PassRegistry&);
 void initializeRegionInfoPass(PassRegistry&);
