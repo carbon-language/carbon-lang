@@ -578,7 +578,7 @@ MachineInstr *InlineSpiller::traceSiblingValue(unsigned UseReg, VNInfo *UseVNI,
     if (unsigned SrcReg = isFullCopyOf(MI, Reg)) {
       if (isSibling(SrcReg)) {
         LiveInterval &SrcLI = LIS.getInterval(SrcReg);
-        LiveRange *SrcLR = SrcLI.getLiveRangeContaining(VNI->def.getUseIndex());
+        LiveRange *SrcLR = SrcLI.getLiveRangeContaining(VNI->def.getRegSlot(true));
         assert(SrcLR && "Copy from non-existing value");
         // Check if this COPY kills its source.
         SVI->second.KillsSource = (SrcLR->end == VNI->def);
@@ -665,8 +665,8 @@ void InlineSpiller::analyzeSiblingValues() {
 /// a spill at a better location.
 bool InlineSpiller::hoistSpill(LiveInterval &SpillLI, MachineInstr *CopyMI) {
   SlotIndex Idx = LIS.getInstructionIndex(CopyMI);
-  VNInfo *VNI = SpillLI.getVNInfoAt(Idx.getDefIndex());
-  assert(VNI && VNI->def == Idx.getDefIndex() && "Not defined by copy");
+  VNInfo *VNI = SpillLI.getVNInfoAt(Idx.getRegSlot());
+  assert(VNI && VNI->def == Idx.getRegSlot() && "Not defined by copy");
   SibValueMap::iterator I = SibValues.find(VNI);
   if (I == SibValues.end())
     return false;
@@ -769,9 +769,9 @@ void InlineSpiller::eliminateRedundantSpills(LiveInterval &SLI, VNInfo *VNI) {
       if (unsigned DstReg = isFullCopyOf(MI, Reg)) {
         if (isSibling(DstReg)) {
            LiveInterval &DstLI = LIS.getInterval(DstReg);
-           VNInfo *DstVNI = DstLI.getVNInfoAt(Idx.getDefIndex());
+           VNInfo *DstVNI = DstLI.getVNInfoAt(Idx.getRegSlot());
            assert(DstVNI && "Missing defined value");
-           assert(DstVNI->def == Idx.getDefIndex() && "Wrong copy def slot");
+           assert(DstVNI->def == Idx.getRegSlot() && "Wrong copy def slot");
            WorkList.push_back(std::make_pair(&DstLI, DstVNI));
         }
         continue;
@@ -823,7 +823,7 @@ void InlineSpiller::markValueUsed(LiveInterval *LI, VNInfo *VNI) {
       continue;
     LiveInterval &SnipLI = LIS.getInterval(MI->getOperand(1).getReg());
     assert(isRegToSpill(SnipLI.reg) && "Unexpected register in copy");
-    VNInfo *SnipVNI = SnipLI.getVNInfoAt(VNI->def.getUseIndex());
+    VNInfo *SnipVNI = SnipLI.getVNInfoAt(VNI->def.getRegSlot(true));
     assert(SnipVNI && "Snippet undefined before copy");
     WorkList.push_back(std::make_pair(&SnipLI, SnipVNI));
   } while (!WorkList.empty());
@@ -832,7 +832,7 @@ void InlineSpiller::markValueUsed(LiveInterval *LI, VNInfo *VNI) {
 /// reMaterializeFor - Attempt to rematerialize before MI instead of reloading.
 bool InlineSpiller::reMaterializeFor(LiveInterval &VirtReg,
                                      MachineBasicBlock::iterator MI) {
-  SlotIndex UseIdx = LIS.getInstructionIndex(MI).getUseIndex();
+  SlotIndex UseIdx = LIS.getInstructionIndex(MI).getRegSlot(true);
   VNInfo *ParentVNI = VirtReg.getVNInfoAt(UseIdx.getBaseIndex());
 
   if (!ParentVNI) {
@@ -906,7 +906,7 @@ bool InlineSpiller::reMaterializeFor(LiveInterval &VirtReg,
   DEBUG(dbgs() << "\t        " << UseIdx << '\t' << *MI);
 
   VNInfo *DefVNI = NewLI.getNextValue(DefIdx, 0, LIS.getVNInfoAllocator());
-  NewLI.addRange(LiveRange(DefIdx, UseIdx.getDefIndex(), DefVNI));
+  NewLI.addRange(LiveRange(DefIdx, UseIdx.getRegSlot(), DefVNI));
   DEBUG(dbgs() << "\tinterval: " << NewLI << '\n');
   ++NumRemats;
   return true;
@@ -1077,7 +1077,7 @@ void InlineSpiller::insertReload(LiveInterval &NewLI,
   TII.loadRegFromStackSlot(MBB, MI, NewLI.reg, StackSlot,
                            MRI.getRegClass(NewLI.reg), &TRI);
   --MI; // Point to load instruction.
-  SlotIndex LoadIdx = LIS.InsertMachineInstrInMaps(MI).getDefIndex();
+  SlotIndex LoadIdx = LIS.InsertMachineInstrInMaps(MI).getRegSlot();
   DEBUG(dbgs() << "\treload:  " << LoadIdx << '\t' << *MI);
   VNInfo *LoadVNI = NewLI.getNextValue(LoadIdx, 0,
                                        LIS.getVNInfoAllocator());
@@ -1092,7 +1092,7 @@ void InlineSpiller::insertSpill(LiveInterval &NewLI, const LiveInterval &OldLI,
   TII.storeRegToStackSlot(MBB, ++MI, NewLI.reg, true, StackSlot,
                           MRI.getRegClass(NewLI.reg), &TRI);
   --MI; // Point to store instruction.
-  SlotIndex StoreIdx = LIS.InsertMachineInstrInMaps(MI).getDefIndex();
+  SlotIndex StoreIdx = LIS.InsertMachineInstrInMaps(MI).getRegSlot();
   DEBUG(dbgs() << "\tspilled: " << StoreIdx << '\t' << *MI);
   VNInfo *StoreVNI = NewLI.getNextValue(Idx, 0, LIS.getVNInfoAllocator());
   NewLI.addRange(LiveRange(Idx, StoreIdx, StoreVNI));
@@ -1141,8 +1141,8 @@ void InlineSpiller::spillAroundUses(unsigned Reg) {
 
     // Find the slot index where this instruction reads and writes OldLI.
     // This is usually the def slot, except for tied early clobbers.
-    SlotIndex Idx = LIS.getInstructionIndex(MI).getDefIndex();
-    if (VNInfo *VNI = OldLI.getVNInfoAt(Idx.getUseIndex()))
+    SlotIndex Idx = LIS.getInstructionIndex(MI).getRegSlot();
+    if (VNInfo *VNI = OldLI.getVNInfoAt(Idx.getRegSlot(true)))
       if (SlotIndex::isSameInstr(Idx, VNI->def))
         Idx = VNI->def;
 

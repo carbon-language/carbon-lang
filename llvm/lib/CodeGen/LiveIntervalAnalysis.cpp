@@ -172,9 +172,9 @@ bool LiveIntervals::isPartialRedef(SlotIndex MIIdx, MachineOperand &MO,
   if (!MO.getSubReg() || MO.isEarlyClobber())
     return false;
 
-  SlotIndex RedefIndex = MIIdx.getDefIndex();
+  SlotIndex RedefIndex = MIIdx.getRegSlot();
   const LiveRange *OldLR =
-    interval.getLiveRangeContaining(RedefIndex.getUseIndex());
+    interval.getLiveRangeContaining(RedefIndex.getRegSlot(true));
   MachineInstr *DefMI = getInstructionFromIndex(OldLR->valno->def);
   if (DefMI != 0) {
     return DefMI->findRegisterDefOperandIdx(interval.reg) != -1;
@@ -197,11 +197,11 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
   LiveVariables::VarInfo& vi = lv_->getVarInfo(interval.reg);
   if (interval.empty()) {
     // Get the Idx of the defining instructions.
-    SlotIndex defIndex = MIIdx.getDefIndex();
+    SlotIndex defIndex = MIIdx.getRegSlot();
     // Earlyclobbers move back one, so that they overlap the live range
     // of inputs.
     if (MO.isEarlyClobber())
-      defIndex = MIIdx.getUseIndex();
+      defIndex = MIIdx.getRegSlot(true);
 
     // Make sure the first definition is not a partial redefinition. Add an
     // <imp-def> of the full register.
@@ -235,9 +235,9 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       // FIXME: what about dead vars?
       SlotIndex killIdx;
       if (vi.Kills[0] != mi)
-        killIdx = getInstructionIndex(vi.Kills[0]).getDefIndex();
+        killIdx = getInstructionIndex(vi.Kills[0]).getRegSlot();
       else
-        killIdx = defIndex.getStoreIndex();
+        killIdx = defIndex.getDeadSlot();
 
       // If the kill happens after the definition, we have an intra-block
       // live range.
@@ -285,7 +285,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
     for (unsigned i = 0, e = vi.Kills.size(); i != e; ++i) {
       MachineInstr *Kill = vi.Kills[i];
       SlotIndex Start = getMBBStartIdx(Kill->getParent());
-      SlotIndex killIdx = getInstructionIndex(Kill).getDefIndex();
+      SlotIndex killIdx = getInstructionIndex(Kill).getRegSlot();
 
       // Create interval with one of a NEW value number.  Note that this value
       // number isn't actually defined by an instruction, weird huh? :)
@@ -323,14 +323,14 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       // are actually two values in the live interval.  Because of this we
       // need to take the LiveRegion that defines this register and split it
       // into two values.
-      SlotIndex RedefIndex = MIIdx.getDefIndex();
+      SlotIndex RedefIndex = MIIdx.getRegSlot();
       if (MO.isEarlyClobber())
-        RedefIndex = MIIdx.getUseIndex();
+        RedefIndex = MIIdx.getRegSlot(true);
 
       const LiveRange *OldLR =
-        interval.getLiveRangeContaining(RedefIndex.getUseIndex());
+        interval.getLiveRangeContaining(RedefIndex.getRegSlot(true));
       VNInfo *OldValNo = OldLR->valno;
-      SlotIndex DefIndex = OldValNo->def.getDefIndex();
+      SlotIndex DefIndex = OldValNo->def.getRegSlot();
 
       // Delete the previous value, which should be short and continuous,
       // because the 2-addr copy must be in the same MBB as the redef.
@@ -356,7 +356,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       // If this redefinition is dead, we need to add a dummy unit live
       // range covering the def slot.
       if (MO.isDead())
-        interval.addRange(LiveRange(RedefIndex, RedefIndex.getStoreIndex(),
+        interval.addRange(LiveRange(RedefIndex, RedefIndex.getDeadSlot(),
                                     OldValNo));
 
       DEBUG({
@@ -368,9 +368,9 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       // live until the end of the block.  We've already taken care of the
       // rest of the live range.
 
-      SlotIndex defIndex = MIIdx.getDefIndex();
+      SlotIndex defIndex = MIIdx.getRegSlot();
       if (MO.isEarlyClobber())
-        defIndex = MIIdx.getUseIndex();
+        defIndex = MIIdx.getRegSlot(true);
 
       VNInfo *ValNo;
       MachineInstr *CopyMI = NULL;
@@ -402,10 +402,10 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
   DEBUG(dbgs() << "\t\tregister: " << PrintReg(interval.reg, tri_));
 
   SlotIndex baseIndex = MIIdx;
-  SlotIndex start = baseIndex.getDefIndex();
+  SlotIndex start = baseIndex.getRegSlot();
   // Earlyclobbers move back one.
   if (MO.isEarlyClobber())
-    start = MIIdx.getUseIndex();
+    start = MIIdx.getRegSlot(true);
   SlotIndex end = start;
 
   // If it is not used after definition, it is considered dead at
@@ -415,7 +415,7 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
   // advance below compensates.
   if (MO.isDead()) {
     DEBUG(dbgs() << " dead");
-    end = start.getStoreIndex();
+    end = start.getDeadSlot();
     goto exit;
   }
 
@@ -432,21 +432,21 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
 
     if (mi->killsRegister(interval.reg, tri_)) {
       DEBUG(dbgs() << " killed");
-      end = baseIndex.getDefIndex();
+      end = baseIndex.getRegSlot();
       goto exit;
     } else {
       int DefIdx = mi->findRegisterDefOperandIdx(interval.reg,false,false,tri_);
       if (DefIdx != -1) {
         if (mi->isRegTiedToUseOperand(DefIdx)) {
           // Two-address instruction.
-          end = baseIndex.getDefIndex();
+          end = baseIndex.getRegSlot();
         } else {
           // Another instruction redefines the register before it is ever read.
           // Then the register is essentially dead at the instruction that
           // defines it. Hence its interval is:
           // [defSlot(def), defSlot(def)+1)
           DEBUG(dbgs() << " dead");
-          end = start.getStoreIndex();
+          end = start.getDeadSlot();
         }
         goto exit;
       }
@@ -459,7 +459,7 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
   // instruction where we know it's dead is if it is live-in to the function
   // and never used. Another possible case is the implicit use of the
   // physical register has been deleted by two-address pass.
-  end = start.getStoreIndex();
+  end = start.getDeadSlot();
 
 exit:
   assert(start < end && "did not find end of interval?");
@@ -522,7 +522,7 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
   while (mi != E) {
     if (mi->killsRegister(interval.reg, tri_)) {
       DEBUG(dbgs() << " killed");
-      end = baseIndex.getDefIndex();
+      end = baseIndex.getRegSlot();
       SeenDefUse = true;
       break;
     } else if (mi->definesRegister(interval.reg, tri_)) {
@@ -531,7 +531,7 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
       // it. Hence its interval is:
       // [defSlot(def), defSlot(def)+1)
       DEBUG(dbgs() << " dead");
-      end = start.getStoreIndex();
+      end = start.getDeadSlot();
       SeenDefUse = true;
       break;
     }
@@ -547,7 +547,7 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
   if (!SeenDefUse) {
     if (isAlias) {
       DEBUG(dbgs() << " dead");
-      end = MIIdx.getStoreIndex();
+      end = MIIdx.getDeadSlot();
     } else {
       DEBUG(dbgs() << " live through");
       end = getMBBEndIdx(MBB);
@@ -667,7 +667,7 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
        MachineInstr *UseMI = I.skipInstruction();) {
     if (UseMI->isDebugValue() || !UseMI->readsVirtualRegister(li->reg))
       continue;
-    SlotIndex Idx = getInstructionIndex(UseMI).getUseIndex();
+    SlotIndex Idx = getInstructionIndex(UseMI).getRegSlot(true);
     VNInfo *VNI = li->getVNInfoAt(Idx);
     if (!VNI) {
       // This shouldn't happen: readsVirtualRegister returns true, but there is
@@ -700,9 +700,9 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
     // A use tied to an early-clobber def ends at the load slot and isn't caught
     // above. Catch it here instead. This probably only ever happens for inline
     // assembly.
-    if (VNI->def.isUse())
-      if (VNInfo *UVNI = li->getVNInfoAt(VNI->def.getLoadIndex()))
-        WorkList.push_back(std::make_pair(VNI->def.getLoadIndex(), UVNI));
+    if (VNI->def.isEarlyClobber())
+      if (VNInfo *UVNI = li->getVNInfoBefore(VNI->def))
+        WorkList.push_back(std::make_pair(VNI->def.getPrevSlot(), UVNI));
   }
 
   // Keep track of the PHIs that are in use.
@@ -825,8 +825,8 @@ void LiveIntervals::addKillFlags() {
     // Every instruction that kills Reg corresponds to a live range end point.
     for (LiveInterval::iterator RI = LI->begin(), RE = LI->end(); RI != RE;
          ++RI) {
-      // A LOAD index indicates an MBB edge.
-      if (RI->end.isLoad())
+      // A block index indicates an MBB edge.
+      if (RI->end.isBlock())
         continue;
       MachineInstr *MI = getInstructionFromIndex(RI->end);
       if (!MI)
@@ -978,11 +978,11 @@ LiveRange LiveIntervals::addLiveRangeToEndOfBlock(unsigned reg,
                                                   MachineInstr* startInst) {
   LiveInterval& Interval = getOrCreateInterval(reg);
   VNInfo* VN = Interval.getNextValue(
-    SlotIndex(getInstructionIndex(startInst).getDefIndex()),
+    SlotIndex(getInstructionIndex(startInst).getRegSlot()),
     startInst, getVNInfoAllocator());
   VN->setHasPHIKill(true);
   LiveRange LR(
-     SlotIndex(getInstructionIndex(startInst).getDefIndex()),
+     SlotIndex(getInstructionIndex(startInst).getRegSlot()),
      getMBBEndIdx(startInst->getParent()), VN);
   Interval.addRange(LR);
 

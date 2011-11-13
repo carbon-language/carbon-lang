@@ -76,7 +76,7 @@ bool SlotIndexes::runOnMachineFunction(MachineFunction &fn) {
     MachineBasicBlock *mbb = &*mbbItr;
 
     // Insert an index for the MBB start.
-    SlotIndex blockStartIndex(back(), SlotIndex::LOAD);
+    SlotIndex blockStartIndex(back(), SlotIndex::Slot_Block);
 
     for (MachineBasicBlock::iterator miItr = mbb->begin(), miEnd = mbb->end();
          miItr != miEnd; ++miItr) {
@@ -88,7 +88,8 @@ bool SlotIndexes::runOnMachineFunction(MachineFunction &fn) {
       push_back(createEntry(mi, index += SlotIndex::InstrDist));
 
       // Save this base index in the maps.
-      mi2iMap.insert(std::make_pair(mi, SlotIndex(back(), SlotIndex::LOAD)));
+      mi2iMap.insert(std::make_pair(mi, SlotIndex(back(),
+                                                  SlotIndex::Slot_Block)));
  
       ++functionSize;
     }
@@ -97,7 +98,8 @@ bool SlotIndexes::runOnMachineFunction(MachineFunction &fn) {
     push_back(createEntry(0, index += SlotIndex::InstrDist));
 
     MBBRanges[mbb->getNumber()].first = blockStartIndex;
-    MBBRanges[mbb->getNumber()].second = SlotIndex(back(), SlotIndex::LOAD);
+    MBBRanges[mbb->getNumber()].second = SlotIndex(back(),
+                                                   SlotIndex::Slot_Block);
     idx2MBBMap.push_back(IdxMBBPair(blockStartIndex, mbb));
   }
 
@@ -166,7 +168,7 @@ void SlotIndexes::dump() const {
 // Print a SlotIndex to a raw_ostream.
 void SlotIndex::print(raw_ostream &os) const {
   if (isValid())
-    os << entry().getIndex() << "LudS"[getSlot()];
+    os << entry().getIndex() << "Berd"[getSlot()];
   else
     os << "invalid";
 }

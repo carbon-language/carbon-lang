@@ -83,8 +83,8 @@ bool LiveRangeEdit::allUsesAvailableAt(const MachineInstr *OrigMI,
                                        SlotIndex OrigIdx,
                                        SlotIndex UseIdx,
                                        LiveIntervals &lis) {
-  OrigIdx = OrigIdx.getUseIndex();
-  UseIdx = UseIdx.getUseIndex();
+  OrigIdx = OrigIdx.getRegSlot(true);
+  UseIdx = UseIdx.getRegSlot(true);
   for (unsigned i = 0, e = OrigMI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = OrigMI->getOperand(i);
     if (!MO.isReg() || !MO.getReg() || MO.isDef())
@@ -151,7 +151,7 @@ SlotIndex LiveRangeEdit::rematerializeAt(MachineBasicBlock &MBB,
   tii.reMaterialize(MBB, MI, DestReg, 0, RM.OrigMI, tri);
   rematted_.insert(RM.ParentVNI);
   return lis.getSlotIndexes()->insertMachineInstrInMaps(--MI, Late)
-           .getDefIndex();
+           .getRegSlot();
 }
 
 void LiveRangeEdit::eraseVirtReg(unsigned Reg, LiveIntervals &LIS) {
@@ -221,7 +221,7 @@ void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
     while (!Dead.empty()) {
       MachineInstr *MI = Dead.pop_back_val();
       assert(MI->allDefsAreDead() && "Def isn't really dead");
-      SlotIndex Idx = LIS.getInstructionIndex(MI).getDefIndex();
+      SlotIndex Idx = LIS.getInstructionIndex(MI).getRegSlot();
 
       // Never delete inline asm.
       if (MI->isInlineAsm()) {

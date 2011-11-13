@@ -659,7 +659,7 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
       // Check LiveInts liveness and kill.
       if (TargetRegisterInfo::isVirtualRegister(Reg) &&
           LiveInts && !LiveInts->isNotInMIMap(MI)) {
-        SlotIndex UseIdx = LiveInts->getInstructionIndex(MI).getUseIndex();
+        SlotIndex UseIdx = LiveInts->getInstructionIndex(MI).getRegSlot(true);
         if (LiveInts->hasInterval(Reg)) {
           const LiveInterval &LI = LiveInts->getInterval(Reg);
           if (!LI.liveAt(UseIdx)) {
@@ -668,7 +668,7 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
           }
           // Check for extra kill flags.
           // Note that we allow missing kill flags for now.
-          if (MO->isKill() && !LI.killedAt(UseIdx.getDefIndex())) {
+          if (MO->isKill() && !LI.killedAt(UseIdx.getRegSlot())) {
             report("Live range continues after kill flag", MO, MONum);
             *OS << "Live range: " << LI << '\n';
           }
@@ -710,7 +710,7 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
       // Check LiveInts for a live range, but only for virtual registers.
       if (LiveInts && TargetRegisterInfo::isVirtualRegister(Reg) &&
           !LiveInts->isNotInMIMap(MI)) {
-        SlotIndex DefIdx = LiveInts->getInstructionIndex(MI).getDefIndex();
+        SlotIndex DefIdx = LiveInts->getInstructionIndex(MI).getRegSlot();
         if (LiveInts->hasInterval(Reg)) {
           const LiveInterval &LI = LiveInts->getInterval(Reg);
           if (const VNInfo *VNI = LI.getVNInfoAt(DefIdx)) {
@@ -800,11 +800,11 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
         LiveInts && !LiveInts->isNotInMIMap(MI)) {
       LiveInterval &LI = LiveStks->getInterval(MO->getIndex());
       SlotIndex Idx = LiveInts->getInstructionIndex(MI);
-      if (MCID.mayLoad() && !LI.liveAt(Idx.getUseIndex())) {
+      if (MCID.mayLoad() && !LI.liveAt(Idx.getRegSlot(true))) {
         report("Instruction loads from dead spill slot", MO, MONum);
         *OS << "Live stack: " << LI << '\n';
       }
-      if (MCID.mayStore() && !LI.liveAt(Idx.getDefIndex())) {
+      if (MCID.mayStore() && !LI.liveAt(Idx.getRegSlot())) {
         report("Instruction stores to dead spill slot", MO, MONum);
         *OS << "Live stack: " << LI << '\n';
       }
@@ -1085,13 +1085,14 @@ void MachineVerifier::verifyLiveIntervals() {
         // Early clobber defs begin at USE slots, but other defs must begin at
         // DEF slots.
         if (isEarlyClobber) {
-          if (!VNI->def.isUse()) {
-            report("Early clobber def must be at a USE slot", MF);
+          if (!VNI->def.isEarlyClobber()) {
+            report("Early clobber def must be at an early-clobber slot", MF);
             *OS << "Valno #" << VNI->id << " is defined at " << VNI->def
                 << " in " << LI << '\n';
           }
-        } else if (!VNI->def.isDef()) {
-          report("Non-PHI, non-early clobber def must be at a DEF slot", MF);
+        } else if (!VNI->def.isRegister()) {
+          report("Non-PHI, non-early clobber def must be at a register slot",
+                 MF);
           *OS << "Valno #" << VNI->id << " is defined at " << VNI->def
               << " in " << LI << '\n';
         }

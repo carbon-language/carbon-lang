@@ -560,12 +560,13 @@ namespace llvm {
 
     // For uses/defs recorded use/def indexes override current liveness and
     // instruction operands (Only for the interval which records the indexes).
-    if (i.isUse() || i.isDef()) {
+    // FIXME: This is all wrong, uses and defs share the same slots.
+    if (i.isEarlyClobber() || i.isRegister()) {
       UseDefs::const_iterator udItr = useDefs.find(li);
       if (udItr != useDefs.end()) {
         const SlotSet &slotSet = udItr->second;
         if (slotSet.count(i)) {
-          if (i.isUse()) {
+          if (i.isEarlyClobber()) {
             return Used;
           }
           // else
@@ -586,9 +587,9 @@ namespace llvm {
           return AliveStack;
         }
       } else {
-        if (i.isDef() && mi->definesRegister(li->reg, tri)) {
+        if (i.isRegister() && mi->definesRegister(li->reg, tri)) {
           return Defined;
-        } else if (i.isUse() && mi->readsRegister(li->reg)) {
+        } else if (i.isEarlyClobber() && mi->readsRegister(li->reg)) {
           return Used;
         } else {
           if (vrm == 0 || 
@@ -804,7 +805,7 @@ namespace llvm {
       os << indent + s(2) << "<tr height=6ex>\n";
       
       // Render the code column.
-      if (i.isLoad()) {
+      if (i.isBlock()) {
         MachineBasicBlock *mbb = sis->getMBBFromIndex(i);
         mi = sis->getInstructionFromIndex(i);
 
@@ -823,7 +824,7 @@ namespace llvm {
           }
           os << indent + s(4) << "</td>\n";
         } else {
-          i = i.getStoreIndex(); // <- Will be incremented to the next index.
+          i = i.getDeadSlot(); // <- Will be incremented to the next index.
           continue;
         }
       }
@@ -952,10 +953,10 @@ namespace llvm {
          rItr != rEnd; ++rItr) {
       const MachineInstr *mi = &*rItr;
       if (mi->readsRegister(li->reg)) {
-        useDefs[li].insert(lis->getInstructionIndex(mi).getUseIndex());
+        useDefs[li].insert(lis->getInstructionIndex(mi).getRegSlot(true));
       }
       if (mi->definesRegister(li->reg)) {
-        useDefs[li].insert(lis->getInstructionIndex(mi).getDefIndex());
+        useDefs[li].insert(lis->getInstructionIndex(mi).getRegSlot());
       }
     }
   }

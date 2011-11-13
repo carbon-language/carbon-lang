@@ -716,7 +716,7 @@ void ConnectedVNInfoEqClasses::Distribute(LiveInterval *LIV[],
       continue;
     // DBG_VALUE instructions should have been eliminated earlier.
     SlotIndex Idx = LIS.getInstructionIndex(MI);
-    Idx = MO.isUse() ? Idx.getUseIndex() : Idx.getDefIndex();
+    Idx = Idx.getRegSlot(MO.isUse());
     const VNInfo *VNI = LI.getVNInfoAt(Idx);
     assert(VNI && "Interval not live at use.");
     MO.setReg(LIV[getEqClass(VNI)]->reg);

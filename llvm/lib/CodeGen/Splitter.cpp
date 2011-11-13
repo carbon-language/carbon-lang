@@ -141,7 +141,7 @@ namespace llvm {
 
       ls.lis->InsertMachineInstrInMaps(copy);
 
-      SlotIndex copyDefIdx = ls.lis->getInstructionIndex(copy).getDefIndex();
+      SlotIndex copyDefIdx = ls.lis->getInstructionIndex(copy).getRegSlot();
 
       VNInfo *newVal = getNewVNI(preHeaderRange->valno);
       newVal->def = copyDefIdx;
@@ -175,7 +175,7 @@ namespace llvm {
 
         ls.lis->InsertMachineInstrInMaps(copy);
 
-        SlotIndex copyDefIdx = ls.lis->getInstructionIndex(copy).getDefIndex();
+        SlotIndex copyDefIdx = ls.lis->getInstructionIndex(copy).getRegSlot();
         
         // Blow away output range definition.
         outRange->valno->def = ls.lis->getInvalidIndex();
@@ -216,13 +216,13 @@ namespace llvm {
         SlotIndex instrIdx = ls.lis->getInstructionIndex(&instr);
         if (instr.modifiesRegister(li.reg, 0)) {
           LiveRange *defRange =
-            li.getLiveRangeContaining(instrIdx.getDefIndex());
+            li.getLiveRangeContaining(instrIdx.getRegSlot());
           if (defRange != 0) // May have caught this already.
             copyRange(*defRange);
         }
         if (instr.readsRegister(li.reg, 0)) {
           LiveRange *useRange =
-            li.getLiveRangeContaining(instrIdx.getUseIndex());
+            li.getLiveRangeContaining(instrIdx.getRegSlot(true));
           if (useRange != 0) { // May have caught this already.
             copyRange(*useRange);
           }

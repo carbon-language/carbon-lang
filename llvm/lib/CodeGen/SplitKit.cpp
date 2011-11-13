@@ -112,7 +112,7 @@ void SplitAnalysis::analyzeUses() {
        I = MRI.use_nodbg_begin(CurLI->reg), E = MRI.use_nodbg_end(); I != E;
        ++I)
     if (!I.getOperand().isUndef())
-      UseSlots.push_back(LIS.getInstructionIndex(&*I).getDefIndex());
+      UseSlots.push_back(LIS.getInstructionIndex(&*I).getRegSlot());
 
   array_pod_sort(UseSlots.begin(), UseSlots.end());
 
@@ -421,7 +421,7 @@ VNInfo *SplitEditor::defFromParent(unsigned RegIdx,
     CopyMI = BuildMI(MBB, I, DebugLoc(), TII.get(TargetOpcode::COPY), LI->reg)
                .addReg(Edit->getReg());
     Def = LIS.getSlotIndexes()->insertMachineInstrInMaps(CopyMI, Late)
-            .getDefIndex();
+            .getRegSlot();
     ++NumCopies;
   }
 
@@ -640,7 +640,7 @@ void SplitEditor::removeBackCopies(SmallVectorImpl<VNInfo*> &Copies) {
       DEBUG(dbgs() << "  cannot find simple kill of RegIdx " << RegIdx << '\n');
       forceRecompute(RegIdx, Edit->getParent().getVNInfoAt(Def));
     } else {
-      SlotIndex Kill = LIS.getInstructionIndex(MBBI).getDefIndex();
+      SlotIndex Kill = LIS.getInstructionIndex(MBBI).getRegSlot();
       DEBUG(dbgs() << "  move kill to " << Kill << '\t' << *MBBI);
       AssignI.setStop(Kill);
     }
@@ -958,7 +958,7 @@ void SplitEditor::rewriteAssigned(bool ExtendRanges) {
     // use the same register as the def, so just do that always.
     SlotIndex Idx = LIS.getInstructionIndex(MI);
     if (MO.isDef() || MO.isUndef())
-      Idx = MO.isEarlyClobber() ? Idx.getUseIndex() : Idx.getDefIndex();
+      Idx = Idx.getRegSlot(MO.isEarlyClobber());
 
     // Rewrite to the mapped register at Idx.
     unsigned RegIdx = RegAssign.lookup(Idx);
@@ -981,7 +981,7 @@ void SplitEditor::rewriteAssigned(bool ExtendRanges) {
       if (!Edit->getParent().liveAt(Idx))
         continue;
     } else
-      Idx = Idx.getUseIndex();
+      Idx = Idx.getRegSlot(true);
 
     getLRCalc(RegIdx).extend(LI, Idx.getNextSlot(), LIS.getSlotIndexes(),
                              &MDT, &LIS.getVNInfoAllocator());

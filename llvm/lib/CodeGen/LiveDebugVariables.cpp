@@ -468,7 +468,7 @@ bool LDVImpl::collectDebugValues(MachineFunction &mf) {
       // DBG_VALUE has no slot index, use the previous instruction instead.
       SlotIndex Idx = MBBI == MBB->begin() ?
         LIS->getMBBStartIdx(MBB) :
-        LIS->getInstructionIndex(llvm::prior(MBBI)).getDefIndex();
+        LIS->getInstructionIndex(llvm::prior(MBBI)).getRegSlot();
       // Handle consecutive DBG_VALUE instructions with the same slot index.
       do {
         if (handleDebugValue(MBBI, Idx)) {
@@ -575,15 +575,15 @@ UserValue::addDefsFromCopies(LiveInterval *LI, unsigned LocNo,
     // Is LocNo extended to reach this copy? If not, another def may be blocking
     // it, or we are looking at a wrong value of LI.
     SlotIndex Idx = LIS.getInstructionIndex(MI);
-    LocMap::iterator I = locInts.find(Idx.getUseIndex());
+    LocMap::iterator I = locInts.find(Idx.getRegSlot(true));
     if (!I.valid() || I.value() != LocNo)
       continue;
 
     if (!LIS.hasInterval(DstReg))
       continue;
     LiveInterval *DstLI = &LIS.getInterval(DstReg);
-    const VNInfo *DstVNI = DstLI->getVNInfoAt(Idx.getDefIndex());
-    assert(DstVNI && DstVNI->def == Idx.getDefIndex() && "Bad copy value");
+    const VNInfo *DstVNI = DstLI->getVNInfoAt(Idx.getRegSlot());
+    assert(DstVNI && DstVNI->def == Idx.getRegSlot() && "Bad copy value");
     CopyValues.push_back(std::make_pair(DstLI, DstVNI));
   }
 

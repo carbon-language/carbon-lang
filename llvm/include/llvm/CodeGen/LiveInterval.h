@@ -381,7 +381,7 @@ namespace llvm {
     /// point is not contained in the half-open live range. It is usually the
     /// getDefIndex() slot following its last use.
     bool killedAt(SlotIndex index) const {
-      const_iterator r = find(index.getUseIndex());
+      const_iterator r = find(index.getRegSlot(true));
       return r != end() && r->end == index;
     }
 
