@@ -537,7 +537,8 @@ void MachineBlockPlacement::buildLoopChains(MachineFunction &F,
 
     if (!LoopBlockSet.empty()) {
       BadLoop = true;
-      for (SmallPtrSet<MachineBasicBlock *, 16>::iterator LBI = LoopBlockSet.begin(), LBE = LoopBlockSet.end();
+      for (BlockFilterSet::iterator LBI = LoopBlockSet.begin(),
+                                    LBE = LoopBlockSet.end();
            LBI != LBE; ++LBI)
         dbgs() << "Loop contains blocks never placed into a chain!\n"
                << "  Loop header:  " << getBlockName(*L.block_begin()) << "\n"
@@ -597,7 +598,8 @@ void MachineBlockPlacement::buildCFGChains(MachineFunction &F) {
     for (MachineFunction::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
       FunctionBlockSet.insert(FI);
 
-    for (BlockChain::iterator BCI = FunctionChain.begin(), BCE = FunctionChain.end();
+    for (BlockChain::iterator BCI = FunctionChain.begin(),
+                              BCE = FunctionChain.end();
          BCI != BCE; ++BCI)
       if (!FunctionBlockSet.erase(*BCI)) {
         BadFunc = true;
@@ -607,8 +609,9 @@ void MachineBlockPlacement::buildCFGChains(MachineFunction &F) {
 
     if (!FunctionBlockSet.empty()) {
       BadFunc = true;
-      for (SmallPtrSet<MachineBasicBlock *, 16>::iterator FBI = FunctionBlockSet.begin(),
-           FBE = FunctionBlockSet.end(); FBI != FBE; ++FBI)
+      for (FunctionBlockSetType::iterator FBI = FunctionBlockSet.begin(),
+                                          FBE = FunctionBlockSet.end();
+           FBI != FBE; ++FBI)
         dbgs() << "Function contains blocks never placed into a chain!\n"
                << "  Bad block:    " << getBlockName(*FBI) << "\n";
     }
@@ -618,7 +621,8 @@ void MachineBlockPlacement::buildCFGChains(MachineFunction &F) {
   // Splice the blocks into place.
   MachineFunction::iterator InsertPos = F.begin();
   SmallVector<MachineOperand, 4> Cond; // For AnalyzeBranch.
-  for (BlockChain::iterator BI = FunctionChain.begin(), BE = FunctionChain.end();
+  for (BlockChain::iterator BI = FunctionChain.begin(),
+                            BE = FunctionChain.end();
        BI != BE; ++BI) {
     DEBUG(dbgs() << (BI == FunctionChain.begin() ? "Placing chain "
                                                   : "          ... ")
