@@ -709,6 +709,11 @@ static int perform_test_load(CXIndex Idx, CXTranslationUnit TU,
     PV(TU);
 
   PrintDiagnostics(TU);
+  if (checkForErrors(TU) != 0) {
+    clang_disposeTranslationUnit(TU);
+    return -1;
+  }
+
   clang_disposeTranslationUnit(TU);
   return 0;
 }
@@ -829,9 +834,6 @@ int perform_test_reparse_source(int argc, const char **argv, int trials,
   }
   
   result = perform_test_load(Idx, TU, filter, NULL, Visitor, PV);
-
-  if (checkForErrors(TU) != 0)
-    return -1;
 
   free_remapped_files(unsaved_files, num_unsaved_files);
   clang_disposeIndex(Idx);
