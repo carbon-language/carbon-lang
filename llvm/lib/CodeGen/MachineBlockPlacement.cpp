@@ -440,6 +440,13 @@ void MachineBlockPlacement::buildChain(
     if (!BestSucc)
       BestSucc = selectBestSuccessor(BB, Chain, BlockFilter);
 
+    if (BestSucc) {
+      // Zero out LoopPredecessors for the successor we're about to merge. We
+      // do this here instead of during the merge to catch cases where we
+      // didn't *intend* to merge despite non-zero loop predecessors.
+      BlockToChain[BestSucc]->LoopPredecessors = 0;
+    }
+
     // If an immediate successor isn't available, look for the best viable
     // block among those we've identified as not violating the loop's CFG at
     // this point. This won't be a fallthrough, but it will increase locality.
@@ -510,25 +517,34 @@ void MachineBlockPlacement::buildLoopChains(MachineFunction &F,
   buildChain(*L.block_begin(), LoopChain, BlockWorkList, &LoopBlockSet);
 
   DEBUG({
-    if (LoopChain.LoopPredecessors)
+    // Crash at the end so we get all of the debugging output first.
+    bool BadLoop = false;
+    if (LoopChain.LoopPredecessors) {
+      BadLoop = true;
       dbgs() << "Loop chain contains a block without its preds placed!\n"
              << "  Loop header:  " << getBlockName(*L.block_begin()) << "\n"
              << "  Chain header: " << getBlockName(*LoopChain.begin()) << "\n";
+    }
     for (BlockChain::iterator BCI = LoopChain.begin(), BCE = LoopChain.end();
          BCI != BCE; ++BCI)
-      if (!LoopBlockSet.erase(*BCI))
+      if (!LoopBlockSet.erase(*BCI)) {
+        BadLoop = true;
         dbgs() << "Loop chain contains a block not contained by the loop!\n"
                << "  Loop header:  " << getBlockName(*L.block_begin()) << "\n"
                << "  Chain header: " << getBlockName(*LoopChain.begin()) << "\n"
                << "  Bad block:    " << getBlockName(*BCI) << "\n";
+      }
 
-    if (!LoopBlockSet.empty())
+    if (!LoopBlockSet.empty()) {
+      BadLoop = true;
       for (SmallPtrSet<MachineBasicBlock *, 16>::iterator LBI = LoopBlockSet.begin(), LBE = LoopBlockSet.end();
            LBI != LBE; ++LBI)
         dbgs() << "Loop contains blocks never placed into a chain!\n"
                << "  Loop header:  " << getBlockName(*L.block_begin()) << "\n"
                << "  Chain header: " << getBlockName(*LoopChain.begin()) << "\n"
                << "  Bad block:    " << getBlockName(*LBI) << "\n";
+    }
+    assert(!BadLoop && "Detected problems with the placement of this loop.");
   });
 }
 
@@ -575,21 +591,28 @@ void MachineBlockPlacement::buildCFGChains(MachineFunction &F) {
 
   typedef SmallPtrSet<MachineBasicBlock *, 16> FunctionBlockSetType;
   DEBUG({
+    // Crash at the end so we get all of the debugging output first.
+    bool BadFunc = false;
     FunctionBlockSetType FunctionBlockSet;
     for (MachineFunction::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
       FunctionBlockSet.insert(FI);
 
     for (BlockChain::iterator BCI = FunctionChain.begin(), BCE = FunctionChain.end();
          BCI != BCE; ++BCI)
-      if (!FunctionBlockSet.erase(*BCI))
+      if (!FunctionBlockSet.erase(*BCI)) {
+        BadFunc = true;
         dbgs() << "Function chain contains a block not in the function!\n"
                << "  Bad block:    " << getBlockName(*BCI) << "\n";
+      }
 
-    if (!FunctionBlockSet.empty())
+    if (!FunctionBlockSet.empty()) {
+      BadFunc = true;
       for (SmallPtrSet<MachineBasicBlock *, 16>::iterator FBI = FunctionBlockSet.begin(),
            FBE = FunctionBlockSet.end(); FBI != FBE; ++FBI)
         dbgs() << "Function contains blocks never placed into a chain!\n"
                << "  Bad block:    " << getBlockName(*FBI) << "\n";
+    }
+    assert(!BadFunc && "Detected problems with the block placement.");
   });
 
   // Splice the blocks into place.
