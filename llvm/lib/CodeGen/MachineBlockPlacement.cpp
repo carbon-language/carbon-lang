@@ -208,6 +208,9 @@ class MachineBlockPlacement : public MachineFunctionPass {
                            MachineBasicBlock *LoopHeaderBB,
                            SmallVectorImpl<MachineBasicBlock *> &Blocks,
                            const BlockFilterSet *BlockFilter = 0);
+  MachineBasicBlock *selectBestSuccessor(MachineBasicBlock *BB,
+                                         BlockChain &Chain,
+                                         const BlockFilterSet *BlockFilter);
   void buildChain(MachineBasicBlock *BB, BlockChain &Chain,
                   SmallVectorImpl<MachineBasicBlock *> &Blocks,
                   const BlockFilterSet *BlockFilter = 0);
@@ -303,12 +306,60 @@ void MachineBlockPlacement::markChainSuccessors(
   }
 }
 
+/// \brief Select the best successor for a block.
+///
+/// This looks across all successors of a particular block and attempts to
+/// select the "best" one to be the layout successor. It only considers direct
+/// successors which also pass the block filter. It will attempt to avoid
+/// breaking CFG structure, but cave and break such structures in the case of
+/// very hot successor edges.
+///
+/// \returns The best successor block found, or null if none are viable.
+MachineBasicBlock *MachineBlockPlacement::selectBestSuccessor(
+    MachineBasicBlock *BB, BlockChain &Chain,
+    const BlockFilterSet *BlockFilter) {
+  const BranchProbability HotProb(4, 5); // 80%
+
+  MachineBasicBlock *BestSucc = 0;
+  BranchProbability BestProb = BranchProbability::getZero();
+  DEBUG(dbgs() << "Attempting merge from: " << getBlockName(BB) << "\n");
+  for (MachineBasicBlock::succ_iterator SI = BB->succ_begin(),
+                                        SE = BB->succ_end();
+       SI != SE; ++SI) {
+    if (BlockFilter && !BlockFilter->count(*SI))
+      continue;
+    BlockChain &SuccChain = *BlockToChain[*SI];
+    if (&SuccChain == &Chain) {
+      DEBUG(dbgs() << "    " << getBlockName(*SI) << " -> Already merged!\n");
+      continue;
+    }
+
+    BranchProbability SuccProb = MBPI->getEdgeProbability(BB, *SI);
+
+    // Only consider successors which are either "hot", or wouldn't violate
+    // any CFG constraints.
+    if (SuccChain.LoopPredecessors != 0 && SuccProb < HotProb) {
+      DEBUG(dbgs() << "    " << getBlockName(*SI) << " -> CFG conflict\n");
+      continue;
+    }
+
+    DEBUG(dbgs() << "    " << getBlockName(*SI) << " -> " << SuccProb
+                 << " (prob)"
+                 << (SuccChain.LoopPredecessors != 0 ? " (CFG break)" : "")
+                 << "\n");
+    if (BestSucc && BestProb >= SuccProb)
+      continue;
+    BestSucc = *SI;
+    BestProb = SuccProb;
+  }
+  return BestSucc;
+}
+
 void MachineBlockPlacement::buildChain(
     MachineBasicBlock *BB,
     BlockChain &Chain,
     SmallVectorImpl<MachineBasicBlock *> &BlockWorkList,
     const BlockFilterSet *BlockFilter) {
-  const BranchProbability HotProb(4, 5); // 80%
   assert(BB);
   assert(BlockToChain[BB] == &Chain);
   assert(*Chain.begin() == BB);
@@ -322,38 +373,7 @@ void MachineBlockPlacement::buildChain(
 
     // Look for the best viable successor if there is one to place immediately
     // after this block.
-    MachineBasicBlock *BestSucc = 0;
-    BranchProbability BestProb = BranchProbability::getZero();
-    DEBUG(dbgs() << "Attempting merge from: " << getBlockName(BB) << "\n");
-    for (MachineBasicBlock::succ_iterator SI = BB->succ_begin(),
-                                          SE = BB->succ_end();
-         SI != SE; ++SI) {
-      if (BlockFilter && !BlockFilter->count(*SI))
-        continue;
-      BlockChain &SuccChain = *BlockToChain[*SI];
-      if (&SuccChain == &Chain) {
-        DEBUG(dbgs() << "    " << getBlockName(*SI) << " -> Already merged!\n");
-        continue;
-      }
-
-      BranchProbability SuccProb = MBPI->getEdgeProbability(BB, *SI);
-
-      // Only consider successors which are either "hot", or wouldn't violate
-      // any CFG constraints.
-      if (SuccChain.LoopPredecessors != 0 && SuccProb < HotProb) {
-        DEBUG(dbgs() << "    " << getBlockName(*SI) << " -> CFG conflict\n");
-        continue;
-      }
-
-      DEBUG(dbgs() << "    " << getBlockName(*SI) << " -> " << SuccProb
-                   << " (prob)"
-                   << (SuccChain.LoopPredecessors != 0 ? " (CFG break)" : "")
-                   << "\n");
-      if (BestSucc && BestProb >= SuccProb)
-        continue;
-      BestSucc = *SI;
-      BestProb = SuccProb;
-    }
+    MachineBasicBlock *BestSucc = selectBestSuccessor(BB, Chain, BlockFilter);
 
     // If an immediate successor isn't available, look for the best viable
     // block among those we've identified as not violating the loop's CFG at
