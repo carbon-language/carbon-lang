@@ -2136,6 +2136,7 @@ bool ARMFastISel::SelectCall(const Instruction *I,
 }
 
 bool ARMFastISel::SelectIntrinsicCall(const IntrinsicInst &I) {
+  if (!isThumb2) return false;
   // FIXME: Handle more intrinsics.
   switch (I.getIntrinsicID()) {
   default: return false;
