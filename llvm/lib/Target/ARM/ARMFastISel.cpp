@@ -148,6 +148,8 @@ class ARMFastISel : public FastISel {
     virtual bool TargetSelectInstruction(const Instruction *I);
     virtual unsigned TargetMaterializeConstant(const Constant *C);
     virtual unsigned TargetMaterializeAlloca(const AllocaInst *AI);
+    virtual bool TryToFoldLoad(MachineInstr *MI, unsigned OpNo,
+                               const LoadInst *LI);
 
   #include "ARMGenFastISel.inc"
 
@@ -177,10 +179,12 @@ class ARMFastISel : public FastISel {
     bool isLoadTypeLegal(Type *Ty, MVT &VT);
     bool ARMEmitCmp(const Value *Src1Value, const Value *Src2Value,
                     bool isZExt);
-    bool ARMEmitLoad(EVT VT, unsigned &ResultReg, Address &Addr);
+    bool ARMEmitLoad(EVT VT, unsigned &ResultReg, Address &Addr, bool isZExt,
+                     bool allocReg);
+                     
     bool ARMEmitStore(EVT VT, unsigned SrcReg, Address &Addr);
     bool ARMComputeAddress(const Value *Obj, Address &Addr);
-    void ARMSimplifyAddress(Address &Addr, EVT VT);
+    void ARMSimplifyAddress(Address &Addr, EVT VT, bool useAM3);
     unsigned ARMEmitIntExt(EVT SrcVT, unsigned SrcReg, EVT DestVT, bool isZExt);
     unsigned ARMMaterializeFP(const ConstantFP *CFP, EVT VT);
     unsigned ARMMaterializeInt(const Constant *C, EVT VT);
@@ -213,7 +217,7 @@ class ARMFastISel : public FastISel {
     const MachineInstrBuilder &AddOptionalDefs(const MachineInstrBuilder &MIB);
     void AddLoadStoreOperands(EVT VT, Address &Addr,
                               const MachineInstrBuilder &MIB,
-                              unsigned Flags);
+                              unsigned Flags, bool useAM3);
 };
 
 } // end anonymous namespace
@@ -724,7 +728,7 @@ bool ARMFastISel::isLoadTypeLegal(Type *Ty, MVT &VT) {
 
   // If this is a type than can be sign or zero-extended to a basic operation
   // go ahead and accept it now.
-  if (VT == MVT::i8 || VT == MVT::i16)
+  if (VT == MVT::i1 || VT == MVT::i8 || VT == MVT::i16)
     return true;
 
   return false;
@@ -853,7 +857,7 @@ bool ARMFastISel::ARMComputeAddress(const Value *Obj, Address &Addr) {
   return Addr.Base.Reg != 0;
 }
 
-void ARMFastISel::ARMSimplifyAddress(Address &Addr, EVT VT) {
+void ARMFastISel::ARMSimplifyAddress(Address &Addr, EVT VT, bool useAM3) {
 
   assert(VT.isSimple() && "Non-simple types are invalid here!");
 
@@ -861,21 +865,18 @@ void ARMFastISel::ARMSimplifyAddress(Address &Addr, EVT VT) {
   switch (VT.getSimpleVT().SimpleTy) {
     default:
       assert(false && "Unhandled load/store type!");
-    case MVT::i16:
-      if (isThumb2)
-        // Integer loads/stores handle 12-bit offsets.
-        needsLowering = ((Addr.Offset & 0xfff) != Addr.Offset);
-      else
-        // ARM i16 integer loads/stores handle +/-imm8 offsets.
-        // FIXME: Negative offsets require special handling.
-        if (Addr.Offset > 255 || Addr.Offset < 0)
-          needsLowering = true;
       break;
     case MVT::i1:
     case MVT::i8:
+    case MVT::i16:
     case MVT::i32:
-      // Integer loads/stores handle 12-bit offsets.
-      needsLowering = ((Addr.Offset & 0xfff) != Addr.Offset);
+      if (!useAM3)
+        // Integer loads/stores handle 12-bit offsets.
+        needsLowering = ((Addr.Offset & 0xfff) != Addr.Offset);
+      else
+        // ARM halfword and signed byte load/stores use +/-imm8 offsets.
+        // FIXME: Negative offsets require special handling.
+        needsLowering = (Addr.Offset > 255 || Addr.Offset < 0);
       break;
     case MVT::f32:
     case MVT::f64:
@@ -911,7 +912,7 @@ void ARMFastISel::ARMSimplifyAddress(Address &Addr, EVT VT) {
 
 void ARMFastISel::AddLoadStoreOperands(EVT VT, Address &Addr,
                                        const MachineInstrBuilder &MIB,
-                                       unsigned Flags) {
+                                       unsigned Flags, bool useAM3) {
   // addrmode5 output depends on the selection dag addressing dividing the
   // offset by 4 that it then later multiplies. Do this here as well.
   if (VT.getSimpleVT().SimpleTy == MVT::f32 ||
@@ -931,8 +932,8 @@ void ARMFastISel::AddLoadStoreOperands(EVT VT, Address &Addr,
     // Now add the rest of the operands.
     MIB.addFrameIndex(FI);
 
-    // ARM halfword load/stores need an additional operand.
-    if (!isThumb2 && VT.getSimpleVT().SimpleTy == MVT::i16) MIB.addReg(0);
+    // ARM halfword and signed byte load/stores need an additional operand.
+    if (useAM3) MIB.addReg(0);
 
     MIB.addImm(Addr.Offset);
     MIB.addMemOperand(MMO);
@@ -940,29 +941,39 @@ void ARMFastISel::AddLoadStoreOperands(EVT VT, Address &Addr,
     // Now add the rest of the operands.
     MIB.addReg(Addr.Base.Reg);
 
-    // ARM halfword load/stores need an additional operand.
-    if (!isThumb2 && VT.getSimpleVT().SimpleTy == MVT::i16) MIB.addReg(0);
+    // ARM halfword and signed byte load/stores need an additional operand.
+    if (useAM3) MIB.addReg(0);
 
     MIB.addImm(Addr.Offset);
   }
   AddOptionalDefs(MIB);
 }
 
-bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg, Address &Addr) {
-
+bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg, Address &Addr,
+                              bool isZExt = true, bool allocReg = true) {
   assert(VT.isSimple() && "Non-simple types are invalid here!");
   unsigned Opc;
-  TargetRegisterClass *RC;
+  bool useAM3 = false;
+  TargetRegisterClass *RC;  
   switch (VT.getSimpleVT().SimpleTy) {
     // This is mostly going to be Neon/vector support.
     default: return false;
     case MVT::i1:
     case MVT::i8:
-      Opc = isThumb2 ? ARM::t2LDRBi12 : ARM::LDRBi12;
+      if (isZExt) {
+        Opc = isThumb2 ? ARM::t2LDRBi12 : ARM::LDRBi12;
+      } else {
+        Opc = isThumb2 ? ARM::t2LDRSBi12 : ARM::LDRSB;
+        if (!isThumb2) useAM3 = true;
+      }
       RC = ARM::GPRRegisterClass;
       break;
     case MVT::i16:
-      Opc = isThumb2 ? ARM::t2LDRHi12 : ARM::LDRH;
+      if (isZExt)
+        Opc = isThumb2 ? ARM::t2LDRHi12 : ARM::LDRH;
+      else
+        Opc = isThumb2 ? ARM::t2LDRSHi12 : ARM::LDRSH;
+      if (!isThumb2) useAM3 = true;
       RC = ARM::GPRRegisterClass;
       break;
     case MVT::i32:
@@ -979,13 +990,15 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg, Address &Addr) {
       break;
   }
   // Simplify this down to something we can handle.
-  ARMSimplifyAddress(Addr, VT);
+  ARMSimplifyAddress(Addr, VT, useAM3);
 
   // Create the base instruction, then add the operands.
-  ResultReg = createResultReg(RC);
+  if (allocReg)
+    ResultReg = createResultReg(RC);
+  assert (ResultReg > 255 && "Expected an allocated virtual register.");
   MachineInstrBuilder MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                                     TII.get(Opc), ResultReg);
-  AddLoadStoreOperands(VT, Addr, MIB, MachineMemOperand::MOLoad);
+  AddLoadStoreOperands(VT, Addr, MIB, MachineMemOperand::MOLoad, useAM3);
   return true;
 }
 
@@ -1011,6 +1024,7 @@ bool ARMFastISel::SelectLoad(const Instruction *I) {
 
 bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg, Address &Addr) {
   unsigned StrOpc;
+  bool useAM3 = false;
   switch (VT.getSimpleVT().SimpleTy) {
     // This is mostly going to be Neon/vector support.
     default: return false;
@@ -1028,6 +1042,7 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg, Address &Addr) {
       break;
     case MVT::i16:
       StrOpc = isThumb2 ? ARM::t2STRHi12 : ARM::STRH;
+      if (!isThumb2) useAM3 = true;
       break;
     case MVT::i32:
       StrOpc = isThumb2 ? ARM::t2STRi12 : ARM::STRi12;
@@ -1042,13 +1057,13 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg, Address &Addr) {
       break;
   }
   // Simplify this down to something we can handle.
-  ARMSimplifyAddress(Addr, VT);
+  ARMSimplifyAddress(Addr, VT, useAM3);
 
   // Create the base instruction, then add the operands.
   MachineInstrBuilder MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                                     TII.get(StrOpc))
                             .addReg(SrcReg, getKillRegState(true));
-  AddLoadStoreOperands(VT, Addr, MIB, MachineMemOperand::MOStore);
+  AddLoadStoreOperands(VT, Addr, MIB, MachineMemOperand::MOStore, useAM3);
   return true;
 }
 
@@ -2231,8 +2246,6 @@ unsigned ARMFastISel::ARMEmitIntExt(EVT SrcVT, unsigned SrcReg, EVT DestVT,
 bool ARMFastISel::SelectIntExt(const Instruction *I) {
   // On ARM, in general, integer casts don't involve legal types; this code
   // handles promotable integers.
-  // FIXME: We could save an instruction in many cases by special-casing
-  // load instructions.
   Type *DestTy = I->getType();
   Value *Src = I->getOperand(0);
   Type *SrcTy = Src->getType();
@@ -2298,6 +2311,52 @@ bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
     default: break;
   }
   return false;
+}
+
+/// TryToFoldLoad - The specified machine instr operand is a vreg, and that
+/// vreg is being provided by the specified load instruction.  If possible,
+/// try to fold the load as an operand to the instruction, returning true if
+/// successful.
+bool ARMFastISel::TryToFoldLoad(MachineInstr *MI, unsigned OpNo,
+                                const LoadInst *LI) {
+  // Verify we have a legal type before going any further.
+  MVT VT;
+  if (!isLoadTypeLegal(LI->getType(), VT))
+    return false;
+
+  // Combine load followed by zero- or sign-extend.
+  // ldrb r1, [r0]       ldrb r1, [r0]
+  // uxtb r2, r1     =>
+  // mov  r3, r2         mov  r3, r1
+  bool isZExt = true;
+  switch(MI->getOpcode()) {
+    default: return false;
+    case ARM::SXTH:
+    case ARM::t2SXTH:
+      isZExt = false;
+    case ARM::UXTH:
+    case ARM::t2UXTH:
+      if (VT != MVT::i16)
+        return false;
+    break;
+    case ARM::SXTB:
+    case ARM::t2SXTB:
+      isZExt = false;
+    case ARM::UXTB:
+    case ARM::t2UXTB:
+      if (VT != MVT::i8)
+        return false;
+    break;
+  }
+  // See if we can handle this address.
+  Address Addr;
+  if (!ARMComputeAddress(LI->getOperand(0), Addr)) return false;
+  
+  unsigned ResultReg = MI->getOperand(0).getReg();
+  if (!ARMEmitLoad(VT, ResultReg, Addr, isZExt, false))
+    return false;
+  MI->eraseFromParent();
+  return true;
 }
 
 namespace llvm {
