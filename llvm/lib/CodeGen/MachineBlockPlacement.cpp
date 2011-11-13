@@ -275,6 +275,12 @@ static std::string getBlockNum(MachineBasicBlock *BB) {
 }
 #endif
 
+/// \brief Mark a chain's successors as having one fewer preds.
+///
+/// When a chain is being merged into the "placed" chain, this routine will
+/// quickly walk the successors of each block in the chain and mark them as
+/// having one fewer active predecessor. It also adds any successors of this
+/// chain which reach the zero-predecessor state to the worklist passed in.
 void MachineBlockPlacement::markChainSuccessors(
     BlockChain &Chain,
     MachineBasicBlock *LoopHeaderBB,
