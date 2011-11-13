@@ -1206,7 +1206,7 @@ void InlineSpiller::spillAroundUses(unsigned Reg) {
        // This instruction defines a dead value.  We don't need to spill it,
        // but do create a live range for the dead value.
        VNInfo *VNI = NewLI.getNextValue(Idx, 0, LIS.getVNInfoAllocator());
-       NewLI.addRange(LiveRange(Idx, Idx.getNextSlot(), VNI));
+       NewLI.addRange(LiveRange(Idx, Idx.getDeadSlot(), VNI));
      }
     }
 

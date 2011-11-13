@@ -366,14 +366,14 @@ VNInfo *SplitEditor::defValue(unsigned RegIdx,
   // If the previous value was a simple mapping, add liveness for it now.
   if (VNInfo *OldVNI = InsP.first->second.getPointer()) {
     SlotIndex Def = OldVNI->def;
-    LI->addRange(LiveRange(Def, Def.getNextSlot(), OldVNI));
+    LI->addRange(LiveRange(Def, Def.getDeadSlot(), OldVNI));
     // No longer a simple mapping.  Switch to a complex, non-forced mapping.
     InsP.first->second = ValueForcePair();
   }
 
   // This is a complex mapping, add liveness for VNI
   SlotIndex Def = VNI->def;
-  LI->addRange(LiveRange(Def, Def.getNextSlot(), VNI));
+  LI->addRange(LiveRange(Def, Def.getDeadSlot(), VNI));
 
   return VNI;
 }
@@ -393,7 +393,7 @@ void SplitEditor::forceRecompute(unsigned RegIdx, const VNInfo *ParentVNI) {
   // This was previously a single mapping. Make sure the old def is represented
   // by a trivial live range.
   SlotIndex Def = VNI->def;
-  Edit->get(RegIdx)->addRange(LiveRange(Def, Def.getNextSlot(), VNI));
+  Edit->get(RegIdx)->addRange(LiveRange(Def, Def.getDeadSlot(), VNI));
   // Mark as complex mapped, forced.
   VFP = ValueForcePair(0, true);
 }
@@ -994,8 +994,8 @@ void SplitEditor::deleteRematVictims() {
     LiveInterval *LI = *I;
     for (LiveInterval::const_iterator LII = LI->begin(), LIE = LI->end();
            LII != LIE; ++LII) {
-      // Dead defs end at the store slot.
-      if (LII->end != LII->valno->def.getNextSlot())
+      // Dead defs end at the dead slot.
+      if (LII->end != LII->valno->def.getDeadSlot())
         continue;
       MachineInstr *MI = LIS.getInstructionFromIndex(LII->valno->def);
       assert(MI && "Missing instruction for dead def");

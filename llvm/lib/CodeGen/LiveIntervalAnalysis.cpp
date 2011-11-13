@@ -686,7 +686,7 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
     VNInfo *VNI = *I;
     if (VNI->isUnused())
       continue;
-    NewLI.addRange(LiveRange(VNI->def, VNI->def.getNextSlot(), VNI));
+    NewLI.addRange(LiveRange(VNI->def, VNI->def.getDeadSlot(), VNI));
 
     // A use tied to an early-clobber def ends at the load slot and isn't caught
     // above. Catch it here instead. This probably only ever happens for inline
@@ -751,7 +751,7 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
       continue;
     LiveInterval::iterator LII = NewLI.FindLiveRangeContaining(VNI->def);
     assert(LII != NewLI.end() && "Missing live range for PHI");
-    if (LII->end != VNI->def.getNextSlot())
+    if (LII->end != VNI->def.getDeadSlot())
       continue;
     if (VNI->isPHIDef()) {
       // This is a dead PHI. Remove it.
