@@ -248,7 +248,6 @@ public:
   static char ID;
 
 private:
-  void LRE_WillEraseInstruction(MachineInstr*);
   bool LRE_CanEraseVirtReg(unsigned);
   void LRE_WillShrinkVirtReg(unsigned);
   void LRE_DidCloneVirtReg(unsigned, unsigned);
@@ -349,11 +348,6 @@ void RAGreedy::getAnalysisUsage(AnalysisUsage &AU) const {
 //===----------------------------------------------------------------------===//
 //                     LiveRangeEdit delegate methods
 //===----------------------------------------------------------------------===//
-
-void RAGreedy::LRE_WillEraseInstruction(MachineInstr *MI) {
-  // LRE itself will remove from SlotIndexes and parent basic block.
-  VRM->RemoveMachineInstrFromMaps(MI);
-}
 
 bool RAGreedy::LRE_CanEraseVirtReg(unsigned VirtReg) {
   if (unsigned PhysReg = VRM->getPhys(VirtReg)) {

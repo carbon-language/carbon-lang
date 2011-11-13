@@ -58,14 +58,9 @@ bool VirtRegMap::runOnMachineFunction(MachineFunction &mf) {
   TRI = mf.getTarget().getRegisterInfo();
   MF = &mf;
 
-  LowSpillSlot = HighSpillSlot = NO_STACK_SLOT;
-  
   Virt2PhysMap.clear();
   Virt2StackSlotMap.clear();
   Virt2SplitMap.clear();
-  SpillSlotToUsesMap.clear();
-  
-  SpillSlotToUsesMap.resize(8);
 
   allocatableRCRegs.clear();
   for (TargetRegisterInfo::regclass_iterator I = TRI->regclass_begin(),
@@ -88,14 +83,6 @@ void VirtRegMap::grow() {
 unsigned VirtRegMap::createSpillSlot(const TargetRegisterClass *RC) {
   int SS = MF->getFrameInfo()->CreateSpillStackObject(RC->getSize(),
                                                       RC->getAlignment());
-  if (LowSpillSlot == NO_STACK_SLOT)
-    LowSpillSlot = SS;
-  if (HighSpillSlot == NO_STACK_SLOT || SS > HighSpillSlot)
-    HighSpillSlot = SS;
-  assert(SS >= LowSpillSlot && "Unexpected low spill slot");
-  unsigned Idx = SS-LowSpillSlot;
-  while (Idx >= SpillSlotToUsesMap.size())
-    SpillSlotToUsesMap.resize(SpillSlotToUsesMap.size()*2);
   ++NumSpillSlots;
   return SS;
 }
@@ -127,37 +114,6 @@ void VirtRegMap::assignVirt2StackSlot(unsigned virtReg, int SS) {
           (SS >= MF->getFrameInfo()->getObjectIndexBegin())) &&
          "illegal fixed frame index");
   Virt2StackSlotMap[virtReg] = SS;
-}
-
-void VirtRegMap::addSpillSlotUse(int FI, MachineInstr *MI) {
-  if (!MF->getFrameInfo()->isFixedObjectIndex(FI)) {
-    // If FI < LowSpillSlot, this stack reference was produced by
-    // instruction selection and is not a spill
-    if (FI >= LowSpillSlot) {
-      assert(FI >= 0 && "Spill slot index should not be negative!");
-      assert((unsigned)FI-LowSpillSlot < SpillSlotToUsesMap.size()
-             && "Invalid spill slot");
-      SpillSlotToUsesMap[FI-LowSpillSlot].insert(MI);
-    }
-  }
-}
-
-void VirtRegMap::RemoveMachineInstrFromMaps(MachineInstr *MI) {
-  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-    MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isFI())
-      continue;
-    int FI = MO.getIndex();
-    if (MF->getFrameInfo()->isFixedObjectIndex(FI))
-      continue;
-    // This stack reference was produced by instruction selection and
-    // is not a spill
-    if (FI < LowSpillSlot)
-      continue;
-    assert((unsigned)FI-LowSpillSlot < SpillSlotToUsesMap.size()
-           && "Invalid spill slot");
-    SpillSlotToUsesMap[FI-LowSpillSlot].erase(MI);
-  }
 }
 
 void VirtRegMap::rewrite(SlotIndexes *Indexes) {
@@ -236,7 +192,6 @@ void VirtRegMap::rewrite(SlotIndexes *Indexes) {
         ++NumIdCopies;
         if (MI->getNumOperands() == 2) {
           DEBUG(dbgs() << "Deleting identity copy.\n");
-          RemoveMachineInstrFromMaps(MI);
           if (Indexes)
             Indexes->removeMachineInstrFromMaps(MI);
           // It's safe to erase MI because MII has already been incremented.

@@ -74,12 +74,6 @@ namespace llvm {
     /// mapping.
     IndexedMap<unsigned, VirtReg2IndexFunctor> Virt2SplitMap;
 
-    /// LowSpillSlot, HighSpillSlot - Lowest and highest spill slot indexes.
-    int LowSpillSlot, HighSpillSlot;
-
-    /// SpillSlotToUsesMap - Records uses for each register spill slot.
-    SmallVector<SmallPtrSet<MachineInstr*, 4>, 8> SpillSlotToUsesMap;
-
     /// createSpillSlot - Allocate a spill slot for RC from MFI.
     unsigned createSpillSlot(const TargetRegisterClass *RC);
 
@@ -89,8 +83,7 @@ namespace llvm {
   public:
     static char ID;
     VirtRegMap() : MachineFunctionPass(ID), Virt2PhysMap(NO_PHYS_REG),
-                   Virt2StackSlotMap(NO_STACK_SLOT), Virt2SplitMap(0),
-                   LowSpillSlot(NO_STACK_SLOT), HighSpillSlot(NO_STACK_SLOT) { }
+                   Virt2StackSlotMap(NO_STACK_SLOT), Virt2SplitMap(0) { }
     virtual bool runOnMachineFunction(MachineFunction &MF);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -197,19 +190,6 @@ namespace llvm {
     /// @brief create a mapping for the specified virtual register to
     /// the specified stack slot
     void assignVirt2StackSlot(unsigned virtReg, int frameIndex);
-
-    /// @brief Records a spill slot use.
-    void addSpillSlotUse(int FrameIndex, MachineInstr *MI);
-
-    /// @brief Returns true if spill slot has been used.
-    bool isSpillSlotUsed(int FrameIndex) const {
-      assert(FrameIndex >= 0 && "Spill slot index should not be negative!");
-      return !SpillSlotToUsesMap[FrameIndex-LowSpillSlot].empty();
-    }
-
-    /// RemoveMachineInstrFromMaps - MI is being erased, remove it from the
-    /// the folded instruction map and spill point map.
-    void RemoveMachineInstrFromMaps(MachineInstr *MI);
 
     /// rewrite - Rewrite all instructions in MF to use only physical registers
     /// by mapping all virtual register operands to their assigned physical

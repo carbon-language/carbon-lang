@@ -726,7 +726,6 @@ bool InlineSpiller::hoistSpill(LiveInterval &SpillLI, MachineInstr *CopyMI) {
                           MRI.getRegClass(SVI.SpillReg), &TRI);
   --MII; // Point to store instruction.
   LIS.InsertMachineInstrInMaps(MII);
-  VRM.addSpillSlotUse(StackSlot, MII);
   DEBUG(dbgs() << "\thoisted: " << SVI.SpillVNI->def << '\t' << *MII);
 
   ++NumSpills;
@@ -1046,8 +1045,6 @@ bool InlineSpiller::foldMemoryOperand(MachineBasicBlock::iterator MI,
   if (!FoldMI)
     return false;
   LIS.ReplaceMachineInstrInMaps(MI, FoldMI);
-  if (!LoadMI)
-    VRM.addSpillSlotUse(StackSlot, FoldMI);
   MI->eraseFromParent();
 
   // TII.foldMemoryOperand may have left some implicit operands on the
@@ -1081,7 +1078,6 @@ void InlineSpiller::insertReload(LiveInterval &NewLI,
                            MRI.getRegClass(NewLI.reg), &TRI);
   --MI; // Point to load instruction.
   SlotIndex LoadIdx = LIS.InsertMachineInstrInMaps(MI).getDefIndex();
-  VRM.addSpillSlotUse(StackSlot, MI);
   DEBUG(dbgs() << "\treload:  " << LoadIdx << '\t' << *MI);
   VNInfo *LoadVNI = NewLI.getNextValue(LoadIdx, 0,
                                        LIS.getVNInfoAllocator());
@@ -1097,7 +1093,6 @@ void InlineSpiller::insertSpill(LiveInterval &NewLI, const LiveInterval &OldLI,
                           MRI.getRegClass(NewLI.reg), &TRI);
   --MI; // Point to store instruction.
   SlotIndex StoreIdx = LIS.InsertMachineInstrInMaps(MI).getDefIndex();
-  VRM.addSpillSlotUse(StackSlot, MI);
   DEBUG(dbgs() << "\tspilled: " << StoreIdx << '\t' << *MI);
   VNInfo *StoreVNI = NewLI.getNextValue(Idx, 0, LIS.getVNInfoAllocator());
   NewLI.addRange(LiveRange(Idx, StoreIdx, StoreVNI));
@@ -1254,7 +1249,6 @@ void InlineSpiller::spillAll() {
          MachineInstr *MI = RI.skipInstruction();) {
       assert(SnippetCopies.count(MI) && "Remaining use wasn't a snippet copy");
       // FIXME: Do this with a LiveRangeEdit callback.
-      VRM.RemoveMachineInstrFromMaps(MI);
       LIS.RemoveMachineInstrFromMaps(MI);
       MI->eraseFromParent();
     }
