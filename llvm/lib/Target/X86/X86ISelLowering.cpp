@@ -11036,12 +11036,13 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::PSIGNB:             return "X86ISD::PSIGNB";
   case X86ISD::PSIGNW:             return "X86ISD::PSIGNW";
   case X86ISD::PSIGND:             return "X86ISD::PSIGND";
+  case X86ISD::BLENDV:             return "X86ISD::BLENDV";
+  case X86ISD::FHADD:              return "X86ISD::FHADD";
+  case X86ISD::FHSUB:              return "X86ISD::FHSUB";
   case X86ISD::FMAX:               return "X86ISD::FMAX";
   case X86ISD::FMIN:               return "X86ISD::FMIN";
   case X86ISD::FRSQRT:             return "X86ISD::FRSQRT";
   case X86ISD::FRCP:               return "X86ISD::FRCP";
-  case X86ISD::FHADD:              return "X86ISD::FHADD";
-  case X86ISD::FHSUB:              return "X86ISD::FHSUB";
   case X86ISD::TLSADDR:            return "X86ISD::TLSADDR";
   case X86ISD::TLSCALL:            return "X86ISD::TLSCALL";
   case X86ISD::EH_RETURN:          return "X86ISD::EH_RETURN";
@@ -11081,6 +11082,9 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::XOR:                return "X86ISD::XOR";
   case X86ISD::AND:                return "X86ISD::AND";
   case X86ISD::ANDN:               return "X86ISD::ANDN";
+  case X86ISD::BLSI:               return "X86ISD::BLSI";
+  case X86ISD::BLSMSK:             return "X86ISD::BLSMSK";
+  case X86ISD::BLSR:               return "X86ISD::BLSR";
   case X86ISD::MUL_IMM:            return "X86ISD::MUL_IMM";
   case X86ISD::PTEST:              return "X86ISD::PTEST";
   case X86ISD::TESTP:              return "X86ISD::TESTP";
