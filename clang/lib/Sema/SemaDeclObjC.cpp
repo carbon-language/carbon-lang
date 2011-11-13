@@ -373,9 +373,15 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
       Diag(AtInterfaceLoc, diag::err_duplicate_class_def)<<IDecl->getDeclName();
       Diag(IDecl->getLocation(), diag::note_previous_definition);
 
-      // Return the previous class interface.
-      // FIXME: don't leak the objects passed in!
-      return ActOnObjCContainerStartDefinition(IDecl);
+      // Create a new one; the other may be in a different DeclContex, (e.g.
+      // this one may be in a LinkageSpecDecl while the other is not) which
+      // will break invariants.
+      IDecl = ObjCInterfaceDecl::Create(Context, CurContext, AtInterfaceLoc,
+                                        ClassName, ClassLoc);
+      if (AttrList)
+        ProcessDeclAttributeList(TUScope, IDecl, AttrList);
+      PushOnScopeChains(IDecl, TUScope);
+
     } else {
       IDecl->setLocation(ClassLoc);
       IDecl->setAtStartLoc(AtInterfaceLoc);
@@ -575,23 +581,30 @@ Sema::ActOnStartProtocolInterface(SourceLocation AtProtoInterfaceLoc,
     if (!PDecl->isForwardDecl()) {
       Diag(ProtocolLoc, diag::warn_duplicate_protocol_def) << ProtocolName;
       Diag(PDecl->getLocation(), diag::note_previous_definition);
-      // Just return the protocol we already had.
-      // FIXME: don't leak the objects passed in!
-      return ActOnObjCContainerStartDefinition(PDecl);
-    }
-    ObjCList<ObjCProtocolDecl> PList;
-    PList.set((ObjCProtocolDecl *const*)ProtoRefs, NumProtoRefs, Context);
-    err = CheckForwardProtocolDeclarationForCircularDependency(
-            ProtocolName, ProtocolLoc, PDecl->getLocation(), PList);
 
-    // Make sure the cached decl gets a valid start location.
-    PDecl->setAtStartLoc(AtProtoInterfaceLoc);
-    PDecl->setLocation(ProtocolLoc);
-    // Since this ObjCProtocolDecl was created by a forward declaration,
-    // we now add it to the DeclContext since it wasn't added before
-    PDecl->setLexicalDeclContext(CurContext);
-    CurContext->addDecl(PDecl);
-    PDecl->completedForwardDecl();
+      // Create a new one; the other may be in a different DeclContex, (e.g.
+      // this one may be in a LinkageSpecDecl while the other is not) which
+      // will break invariants.
+      // We will not add it to scope chains to ignore it as the warning says.
+      PDecl = ObjCProtocolDecl::Create(Context, CurContext, ProtocolName,
+                                       ProtocolLoc, AtProtoInterfaceLoc,
+                                       /*isForwardDecl=*/false);
+
+    } else {
+      ObjCList<ObjCProtocolDecl> PList;
+      PList.set((ObjCProtocolDecl *const*)ProtoRefs, NumProtoRefs, Context);
+      err = CheckForwardProtocolDeclarationForCircularDependency(
+              ProtocolName, ProtocolLoc, PDecl->getLocation(), PList);
+  
+      // Make sure the cached decl gets a valid start location.
+      PDecl->setAtStartLoc(AtProtoInterfaceLoc);
+      PDecl->setLocation(ProtocolLoc);
+      // Since this ObjCProtocolDecl was created by a forward declaration,
+      // we now add it to the DeclContext since it wasn't added before
+      PDecl->setLexicalDeclContext(CurContext);
+      CurContext->addDecl(PDecl);
+      PDecl->completedForwardDecl();
+    }
   } else {
     PDecl = ObjCProtocolDecl::Create(Context, CurContext, ProtocolName,
                                      ProtocolLoc, AtProtoInterfaceLoc,

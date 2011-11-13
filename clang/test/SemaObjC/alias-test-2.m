@@ -9,9 +9,9 @@
 
 @compatibility_alias  AliasForSuper Super;
 
-@interface MyAlias : AliasForSuper // expected-error {{duplicate interface definition for class 'MyWpModule'}}
+@implementation MyAlias : AliasForSuper // expected-error {{conflicting super class name 'Super'}}
 @end
 
-@implementation MyAlias : AliasForSuper // expected-error {{conflicting super class name 'Super'}}
+@interface MyAlias : AliasForSuper // expected-error {{duplicate interface definition for class 'MyWpModule'}}
 @end
 
