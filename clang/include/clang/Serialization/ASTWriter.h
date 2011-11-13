@@ -377,7 +377,7 @@ private:
                                const Preprocessor &PP,
                                StringRef isysroot);
   void WritePreprocessor(const Preprocessor &PP, bool IsModule);
-  void WriteHeaderSearch(HeaderSearch &HS, StringRef isysroot);
+  void WriteHeaderSearch(const HeaderSearch &HS, StringRef isysroot);
   void WritePreprocessorDetail(PreprocessingRecord &PPRec);
   void WritePragmaDiagnosticMappings(const DiagnosticsEngine &Diag);
   void WriteCXXBaseSpecifiersOffsets();

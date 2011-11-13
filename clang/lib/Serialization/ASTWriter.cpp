@@ -1220,14 +1220,14 @@ namespace {
   // Trait used for the on-disk hash table of header search information.
   class HeaderFileInfoTrait {
     ASTWriter &Writer;
-    HeaderSearch &HS;
+    const HeaderSearch &HS;
     
     // Keep track of the framework names we've used during serialization.
     SmallVector<char, 128> FrameworkStringData;
     llvm::StringMap<unsigned> FrameworkNameOffset;
     
   public:
-    HeaderFileInfoTrait(ASTWriter &Writer, HeaderSearch &HS) 
+    HeaderFileInfoTrait(ASTWriter &Writer, const HeaderSearch &HS) 
       : Writer(Writer), HS(HS) { }
     
     typedef const char *key_type;
@@ -1306,7 +1306,7 @@ namespace {
 /// \param HS The header search structure to save.
 ///
 /// \param Chain Whether we're creating a chained AST file.
-void ASTWriter::WriteHeaderSearch(HeaderSearch &HS, StringRef isysroot) {
+void ASTWriter::WriteHeaderSearch(const HeaderSearch &HS, StringRef isysroot) {
   SmallVector<const FileEntry *, 16> FilesByUID;
   HS.getFileMgr().GetUniqueIDMapping(FilesByUID);
   
@@ -1322,7 +1322,9 @@ void ASTWriter::WriteHeaderSearch(HeaderSearch &HS, StringRef isysroot) {
     if (!File)
       continue;
 
-    const HeaderFileInfo &HFI = HS.header_file_begin()[UID];
+    // Use HeaderSearch's getFileInfo to make sure we get the HeaderFileInfo
+    // from the external source if it was not provided already.
+    const HeaderFileInfo &HFI = HS.getFileInfo(File);
     if (HFI.External && Chain)
       continue;
 

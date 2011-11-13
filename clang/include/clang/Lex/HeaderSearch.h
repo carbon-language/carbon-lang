@@ -367,13 +367,16 @@ public:
   /// FIXME: This will need to be generalized for submodules.
   StringRef findModuleForHeader(const FileEntry *File);
   
-  typedef std::vector<HeaderFileInfo>::const_iterator header_file_iterator;
-  header_file_iterator header_file_begin() const { return FileInfo.begin(); }
-  header_file_iterator header_file_end() const { return FileInfo.end(); }
   unsigned header_file_size() const { return FileInfo.size(); }
 
   // Used by ASTReader.
   void setHeaderFileInfoForUID(HeaderFileInfo HFI, unsigned UID);
+
+  /// getFileInfo - Return the HeaderFileInfo structure for the specified
+  /// FileEntry.
+  const HeaderFileInfo &getFileInfo(const FileEntry *FE) const {
+    return const_cast<HeaderSearch*>(this)->getFileInfo(FE);
+  }
 
   // Used by external tools
   typedef std::vector<DirectoryLookup>::const_iterator search_dir_iterator;
