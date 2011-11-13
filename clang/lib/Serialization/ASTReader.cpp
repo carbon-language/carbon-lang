@@ -2660,6 +2660,24 @@ void ASTReader::InitializeContext() {
       if (Context.ObjCSelRedefinitionType.isNull())
         Context.ObjCSelRedefinitionType = GetType(ObjCSelRedef);
     }
+
+    if (unsigned Ucontext_t = SpecialTypes[SPECIAL_TYPE_UCONTEXT_T]) {
+      QualType Ucontext_tType = GetType(Ucontext_t);
+      if (Ucontext_tType.isNull()) {
+        Error("ucontext_t type is NULL");
+        return;
+      }
+
+      if (!Context.ucontext_tDecl) {
+        if (const TypedefType *Typedef = Ucontext_tType->getAs<TypedefType>())
+          Context.setucontext_tDecl(Typedef->getDecl());
+        else {
+          const TagType *Tag = Ucontext_tType->getAs<TagType>();
+          assert(Tag && "Invalid ucontext_t type in AST file");
+          Context.setucontext_tDecl(Tag->getDecl());
+        }
+      }
+    }
   }
   
   ReadPragmaDiagnosticMappings(Context.getDiagnostics());

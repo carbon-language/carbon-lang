@@ -1312,6 +1312,12 @@ NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
       Diag(Loc, diag::warn_implicit_decl_requires_setjmp)
         << Context.BuiltinInfo.GetName(BID);
     return 0;
+
+  case ASTContext::GE_Missing_ucontext:
+    if (ForRedeclaration)
+      Diag(Loc, diag::warn_implicit_decl_requires_ucontext)
+        << Context.BuiltinInfo.GetName(BID);
+    return 0;
   }
 
   if (!ForRedeclaration && Context.BuiltinInfo.isPredefinedLibFunction(BID)) {
@@ -3661,6 +3667,8 @@ Sema::ActOnTypedefNameDecl(Scope *S, DeclContext *DC, TypedefNameDecl *NewTD,
         Context.setjmp_bufDecl(NewTD);
       else if (II->isStr("sigjmp_buf"))
         Context.setsigjmp_bufDecl(NewTD);
+      else if (II->isStr("ucontext_t"))
+        Context.setucontext_tDecl(NewTD);
       else if (II->isStr("__builtin_va_list"))
         Context.setBuiltinVaListType(Context.getTypedefType(NewTD));
     }

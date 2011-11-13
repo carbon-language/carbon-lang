@@ -700,7 +700,9 @@ namespace clang {
       /// \brief Objective-C "Class" redefinition type
       SPECIAL_TYPE_OBJC_CLASS_REDEFINITION     = 7,
       /// \brief Objective-C "SEL" redefinition type
-      SPECIAL_TYPE_OBJC_SEL_REDEFINITION       = 8
+      SPECIAL_TYPE_OBJC_SEL_REDEFINITION       = 8,
+      /// \brief C ucontext_t typedef type
+      SPECIAL_TYPE_UCONTEXT_T                  = 9
     };
     
     /// \brief The number of special type IDs.

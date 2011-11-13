@@ -228,6 +228,9 @@ class ASTContext : public llvm::RefCountedBase<ASTContext> {
   /// \brief The type for the C sigjmp_buf type.
   TypeDecl *sigjmp_bufDecl;
 
+  /// \brief The type for the C ucontext_t type.
+  TypeDecl *ucontext_tDecl;
+
   /// \brief Type for the Block descriptor for Blocks CodeGen.
   ///
   /// Since this is only used for generation of debug info, it is not
@@ -963,6 +966,18 @@ public:
     return QualType();
   }
 
+  /// \brief Set the type for the C ucontext_t type.
+  void setucontext_tDecl(TypeDecl *ucontext_tDecl) {
+    this->ucontext_tDecl = ucontext_tDecl;
+  }
+
+  /// \brief Retrieve the C ucontext_t type.
+  QualType getucontext_tType() const {
+    if (ucontext_tDecl)
+      return getTypeDeclType(ucontext_tDecl);
+    return QualType();
+  }
+
   /// \brief The result type of logical operations, '<', '>', '!=', etc.
   QualType getLogicalOperationType() const {
     return getLangOptions().CPlusPlus ? BoolTy : IntTy;
@@ -1107,7 +1122,8 @@ public:
   enum GetBuiltinTypeError {
     GE_None,              //< No error
     GE_Missing_stdio,     //< Missing a type from <stdio.h>
-    GE_Missing_setjmp     //< Missing a type from <setjmp.h>
+    GE_Missing_setjmp,    //< Missing a type from <setjmp.h>
+    GE_Missing_ucontext   //< Missing a type from <ucontext.h>
   };
 
   /// GetBuiltinType - Return the type for the specified builtin.  If 

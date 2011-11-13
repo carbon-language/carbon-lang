@@ -257,10 +257,16 @@ def note_please_include_header : Note<
 def note_previous_builtin_declaration : Note<"%0 is a builtin with type %1">;
 def warn_implicit_decl_requires_stdio : Warning<
   "declaration of built-in function '%0' requires inclusion of the header "
-  "<stdio.h>">;
+  "<stdio.h>">,
+  InGroup<BuiltinRequiresHeader>;
 def warn_implicit_decl_requires_setjmp : Warning<
   "declaration of built-in function '%0' requires inclusion of the header "
-  "<setjmp.h>">;
+  "<setjmp.h>">,
+  InGroup<BuiltinRequiresHeader>;
+def warn_implicit_decl_requires_ucontext : Warning<
+  "declaration of built-in function '%0' requires inclusion of the header "
+  "<ucontext.h>">,
+  InGroup<BuiltinRequiresHeader>;
 def warn_redecl_library_builtin : Warning<
   "incompatible redeclaration of library function %0">;
 def err_builtin_definition : Error<"definition of builtin function %0">;
