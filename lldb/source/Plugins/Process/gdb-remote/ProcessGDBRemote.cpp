@@ -120,7 +120,6 @@ ProcessGDBRemote::CanDebug (Target &target, bool plugin_specified_by_name)
 ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
     Process (target, listener),
     m_flags (0),
-    m_stdio_mutex (Mutex::eMutexTypeRecursive),
     m_gdb_comm(false),
     m_debugserver_pid (LLDB_INVALID_PROCESS_ID),
     m_debugserver_thread (LLDB_INVALID_HOST_THREAD),
@@ -1753,41 +1752,6 @@ ProcessGDBRemote::DoDeallocateMemory (lldb::addr_t addr)
 //------------------------------------------------------------------
 // Process STDIO
 //------------------------------------------------------------------
-
-size_t
-ProcessGDBRemote::GetSTDOUT (char *buf, size_t buf_size, Error &error)
-{
-    Mutex::Locker locker(m_stdio_mutex);
-    size_t bytes_available = m_stdout_data.size();
-    if (bytes_available > 0)
-    {
-        LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
-        if (log)
-            log->Printf ("ProcessGDBRemote::%s (&%p[%lu]) ...", __FUNCTION__, buf, buf_size);
-        if (bytes_available > buf_size)
-        {
-            memcpy(buf, m_stdout_data.c_str(), buf_size);
-            m_stdout_data.erase(0, buf_size);
-            bytes_available = buf_size;
-        }
-        else
-        {
-            memcpy(buf, m_stdout_data.c_str(), bytes_available);
-            m_stdout_data.clear();
-
-            //ResetEventBits(eBroadcastBitSTDOUT);
-        }
-    }
-    return bytes_available;
-}
-
-size_t
-ProcessGDBRemote::GetSTDERR (char *buf, size_t buf_size, Error &error)
-{
-    // Can we get STDERR through the remote protocol?
-    return 0;
-}
-
 size_t
 ProcessGDBRemote::PutSTDIN (const char *src, size_t src_len, Error &error)
 {
@@ -2018,10 +1982,6 @@ ProcessGDBRemote::Clear()
 {
     m_flags = 0;
     m_thread_list.Clear();
-    {
-        Mutex::Locker locker(m_stdio_mutex);
-        m_stdout_data.clear();
-    }
 }
 
 Error

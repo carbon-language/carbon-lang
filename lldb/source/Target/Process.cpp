@@ -683,6 +683,7 @@ Process::Process(Target &target, Listener &listener) :
     m_stdio_communication ("process.stdio"),
     m_stdio_communication_mutex (Mutex::eMutexTypeRecursive),
     m_stdout_data (),
+    m_stderr_data (),
     m_memory_cache (*this),
     m_allocated_memory_cache (*this),
     m_attached_to_process (false),
@@ -3217,8 +3218,70 @@ Process::AppendSTDOUT (const char * s, size_t len)
 {
     Mutex::Locker locker (m_stdio_communication_mutex);
     m_stdout_data.append (s, len);
-    
     BroadcastEventIfUnique (eBroadcastBitSTDOUT, new ProcessEventData (GetTarget().GetProcessSP(), GetState()));
+}
+
+void
+Process::AppendSTDERR (const char * s, size_t len)
+{
+    Mutex::Locker locker (m_stdio_communication_mutex);
+    m_stderr_data.append (s, len);
+    BroadcastEventIfUnique (eBroadcastBitSTDERR, new ProcessEventData (GetTarget().GetProcessSP(), GetState()));
+}
+
+//------------------------------------------------------------------
+// Process STDIO
+//------------------------------------------------------------------
+
+size_t
+Process::GetSTDOUT (char *buf, size_t buf_size, Error &error)
+{
+    Mutex::Locker locker(m_stdio_communication_mutex);
+    size_t bytes_available = m_stdout_data.size();
+    if (bytes_available > 0)
+    {
+        LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
+        if (log)
+            log->Printf ("Process::GetSTDOUT (buf = %p, size = %zu)", buf, buf_size);
+        if (bytes_available > buf_size)
+        {
+            memcpy(buf, m_stdout_data.c_str(), buf_size);
+            m_stdout_data.erase(0, buf_size);
+            bytes_available = buf_size;
+        }
+        else
+        {
+            memcpy(buf, m_stdout_data.c_str(), bytes_available);
+            m_stdout_data.clear();
+        }
+    }
+    return bytes_available;
+}
+
+
+size_t
+Process::GetSTDERR (char *buf, size_t buf_size, Error &error)
+{
+    Mutex::Locker locker(m_stdio_communication_mutex);
+    size_t bytes_available = m_stderr_data.size();
+    if (bytes_available > 0)
+    {
+        LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
+        if (log)
+            log->Printf ("Process::GetSTDERR (buf = %p, size = %zu)", buf, buf_size);
+        if (bytes_available > buf_size)
+        {
+            memcpy(buf, m_stderr_data.c_str(), buf_size);
+            m_stderr_data.erase(0, buf_size);
+            bytes_available = buf_size;
+        }
+        else
+        {
+            memcpy(buf, m_stderr_data.c_str(), bytes_available);
+            m_stderr_data.clear();
+        }
+    }
+    return bytes_available;
 }
 
 void

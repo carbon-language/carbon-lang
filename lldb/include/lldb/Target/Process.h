@@ -2378,12 +2378,7 @@ public:
     ///     be made to retrieve more STDOUT data.
     //------------------------------------------------------------------
     virtual size_t
-    GetSTDOUT (char *buf, size_t buf_size, Error &error)
-    {
-        error.SetErrorString("stdout unsupported");
-        return 0;
-    }
-
+    GetSTDOUT (char *buf, size_t buf_size, Error &error);
 
     //------------------------------------------------------------------
     /// Get any available STDERR.
@@ -2407,11 +2402,7 @@ public:
     ///     be made to retrieve more STDERR data.
     //------------------------------------------------------------------
     virtual size_t
-    GetSTDERR (char *buf, size_t buf_size, Error &error)
-    {
-        error.SetErrorString("stderr unsupported");
-        return 0;
-    }
+    GetSTDERR (char *buf, size_t buf_size, Error &error);
 
     virtual size_t
     PutSTDIN (const char *buf, size_t buf_size, Error &error) 
@@ -2800,6 +2791,7 @@ protected:
     lldb_private::Communication m_stdio_communication;
     lldb_private::Mutex         m_stdio_communication_mutex;
     std::string                 m_stdout_data;
+    std::string                 m_stderr_data;
     MemoryCache                 m_memory_cache;
     AllocatedMemoryCache        m_allocated_memory_cache;
     bool                        m_attached_to_process;   /// Did we launch the process or attach to it?
@@ -2869,6 +2861,9 @@ protected:
     
     void
     AppendSTDOUT (const char *s, size_t len);
+    
+    void
+    AppendSTDERR (const char *s, size_t len);
     
     static void
     STDIOReadThreadBytesReceived (void *baton, const void *src, size_t src_len);

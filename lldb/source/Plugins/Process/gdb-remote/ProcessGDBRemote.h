@@ -173,12 +173,6 @@ public:
     // Process STDIO
     //------------------------------------------------------------------
     virtual size_t
-    GetSTDOUT (char *buf, size_t buf_size, lldb_private::Error &error);
-
-    virtual size_t
-    GetSTDERR (char *buf, size_t buf_size, lldb_private::Error &error);
-
-    virtual size_t
     PutSTDIN (const char *buf, size_t buf_size, lldb_private::Error &error);
 
     //----------------------------------------------------------------------
@@ -239,12 +233,6 @@ protected:
     bool
     ProcessIDIsValid ( ) const;
 
-//    static void
-//    STDIOReadThreadBytesReceived (void *baton, const void *src, size_t src_len);
-
-//    void
-//    AppendSTDOUT (const char* s, size_t len);
-
     void
     Clear ( );
 
@@ -289,7 +277,6 @@ protected:
     };
 
     lldb_private::Flags m_flags;            // Process specific flags (see eFlags enums)
-    lldb_private::Mutex m_stdio_mutex;      // Multithreaded protection for stdio
     GDBRemoteCommunicationClient m_gdb_comm;
     lldb::pid_t m_debugserver_pid;
     lldb::thread_t m_debugserver_thread;
