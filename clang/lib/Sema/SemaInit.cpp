@@ -3187,7 +3187,7 @@ static void TryReferenceInitialization(Sema &S,
     if (T1Quals != T2Quals)
       Sequence.AddQualificationConversionStep(cv1T1, ValueKind);
     Sequence.AddReferenceBindingStep(cv1T1,
-         /*bindingTemporary=*/(InitCategory.isPRValue() && !T2->isArrayType()));
+                                 /*bindingTemporary=*/InitCategory.isPRValue());
     return;
   }
 
