@@ -702,7 +702,7 @@ public:
                             size_t count = comp_unit_varlist_sp->GetSize();
                             if (count > 0)
                             {
-                                s.Printf ("Global in %s/%s:\n", 
+                                s.Printf ("Global variables for %s/%s:\n", 
                                           comp_unit->GetDirectory().GetCString(),
                                           comp_unit->GetFilename().GetCString());
 

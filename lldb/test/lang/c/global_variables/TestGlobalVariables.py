@@ -53,8 +53,9 @@ class GlobalVariablesTestCase(TestBase):
             substrs = ['GLOBAL: (int) g_file_global_int = 42',
                        'GLOBAL: (const char *) g_file_global_cstr',
                        '"g_file_global_cstr"',
-                       'GLOBAL: (const char *) g_file_static_cstr',
-                       '"g_file_static_cstr"'])
+                       'STATIC: (const char *) g_file_static_cstr',
+                       '"g_file_static_cstr"',
+                       'GLOBAL: (int) g_common_1 = 21'])
 
         # 'frame variable' should support address-of operator.
         self.runCmd("frame variable &g_file_global_int")

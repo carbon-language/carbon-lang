@@ -131,6 +131,30 @@ public:
     LocationListContainsAddress (lldb::addr_t loclist_base_addr, lldb::addr_t addr) const;
     
     //------------------------------------------------------------------
+    /// If a location is not a location list, return true if the location
+    /// contains a DW_OP_addr () opcode in the stream that matches \a 
+    /// file_addr. If file_addr is LLDB_INVALID_ADDRESS, the this 
+    /// function will return true if the variable there is any DW_OP_addr
+    /// in a location that (yet still is NOT a location list). This helps
+    /// us detect if a variable is a global or static variable since
+    /// there is no other indication from DWARF debug info.
+    ///
+    /// @param[in] file_addr
+    ///     The file address to search for in the location. 
+    ///
+    /// @return
+    ///     True if IsLocationList() is false and the \a file_addr was
+    ///     is contained in a DW_OP_addr location opcode or if \a file_addr
+    ///     was invalid and there are any DW_OP_addr opcodes, false 
+    ///     otherwise.
+    //------------------------------------------------------------------
+    bool
+    LocationContains_DW_OP_addr (lldb::addr_t file_addr = LLDB_INVALID_ADDRESS) const;
+
+    bool
+    Update_DW_OP_addr (lldb::addr_t file_addr);
+    
+    //------------------------------------------------------------------
     /// Make the expression parser read its location information from a
     /// given data source.  Does not change the offset and length
     ///

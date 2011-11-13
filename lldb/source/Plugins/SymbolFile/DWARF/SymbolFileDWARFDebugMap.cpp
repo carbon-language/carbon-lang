@@ -373,100 +373,36 @@ SymbolFileDWARFDebugMap::GetSymbolFileByCompUnitInfo (CompileUnitInfo *comp_unit
                                 // parsed to span the gaps, or we can find the global variable
                                 // sizes from the DWARF info as we are parsing.
 
-#if 0
-                                // First we find the non-stab entry that corresponds to the N_GSYM in the executable
-                                Symbol *exe_gsym_symbol = exe_symtab->FindFirstSymbolWithNameAndType(exe_symbol->GetMangled().GetName(Mangled::ePreferMangled), eSymbolTypeData, Symtab::eDebugNo, Symtab::eVisibilityAny);
-#else
-                                // The mach-o object file parser already matches up the N_GSYM with with the non-stab
-                                // entry, so we shouldn't have to do that. If this ever changes, enable the code above
-                                // in the "#if 0" block. STSYM's always match the symbol as found below.
-                                Symbol *exe_gsym_symbol = exe_symbol;
-#endif
                                 // Next we find the non-stab entry that corresponds to the N_GSYM in the .o file
-                                Symbol *oso_gsym_symbol = oso_symtab->FindFirstSymbolWithNameAndType(exe_symbol->GetMangled().GetName(), eSymbolTypeData, Symtab::eDebugNo, Symtab::eVisibilityAny);
-                                if (oso_gsym_symbol == NULL)
-                                    oso_gsym_symbol = oso_symtab->FindFirstSymbolWithNameAndType(exe_symbol->GetMangled().GetName(), eSymbolTypeExtern, Symtab::eDebugNo, Symtab::eVisibilityExtern);
-                                if (exe_gsym_symbol && oso_gsym_symbol && exe_gsym_symbol->GetAddressRangePtr() && oso_gsym_symbol->GetAddressRangePtr())
+                                Symbol *oso_gsym_symbol = oso_symtab->FindFirstSymbolWithNameAndType (exe_symbol->GetMangled().GetName(), 
+                                                                                                      eSymbolTypeData, 
+                                                                                                      Symtab::eDebugNo, 
+                                                                                                      Symtab::eVisibilityAny);
+
+                                if (exe_symbol && oso_gsym_symbol && exe_symbol->GetAddressRangePtr() && oso_gsym_symbol->GetAddressRangePtr())
                                 {
                                     // If we found the symbol, then we
-                                    Section* exe_gsym_section = const_cast<Section *>(exe_gsym_symbol->GetAddressRangePtr()->GetBaseAddress().GetSection());
+                                    Section* exe_gsym_section = const_cast<Section *>(exe_symbol->GetAddressRangePtr()->GetBaseAddress().GetSection());
                                     Section* oso_gsym_section = const_cast<Section *>(oso_gsym_symbol->GetAddressRangePtr()->GetBaseAddress().GetSection());
                                     if (oso_gsym_section)
                                     {
                                         SectionSP oso_gsym_section_sp (new Section (const_cast<Section *>(oso_gsym_symbol->GetAddressRangePtr()->GetBaseAddress().GetSection()),
-                                                                                   oso_module,                         // Module (the .o file)
-                                                                                   sect_id++,                          // Section ID starts at 0x10000 and increments so the section IDs don't overlap with the standard mach IDs
-                                                                                   exe_symbol->GetMangled().GetName(Mangled::ePreferMangled), // Name the section the same as the symbol for which is was generated!
-                                                                                   eSectionTypeDebug,
-                                                                                   oso_gsym_symbol->GetAddressRangePtr()->GetBaseAddress().GetOffset(),  // File VM address offset in the current section
-                                                                                   1,                                   // We don't know the size of the global, just do the main address for now.
-                                                                                   0, 0, 0));
+                                                                                    oso_module,                         // Module (the .o file)
+                                                                                    sect_id++,                          // Section ID starts at 0x10000 and increments so the section IDs don't overlap with the standard mach IDs
+                                                                                    exe_symbol->GetMangled().GetName(Mangled::ePreferMangled), // Name the section the same as the symbol for which is was generated!
+                                                                                    eSectionTypeDebug,
+                                                                                    oso_gsym_symbol->GetAddressRangePtr()->GetBaseAddress().GetOffset(),  // File VM address offset in the current section
+                                                                                    1,                                   // We don't know the size of the global, just do the main address for now.
+                                                                                    0, 0, 0));
 
                                         oso_gsym_section_sp->SetLinkedLocation (exe_gsym_section,
-                                                                               exe_gsym_symbol->GetValue().GetFileAddress() - exe_gsym_section->GetFileAddress());
+                                                                                exe_symbol->GetValue().GetFileAddress() - exe_gsym_section->GetFileAddress());
                                         oso_gsym_section->GetChildren().AddSection(oso_gsym_section_sp);
                                         comp_unit_info->debug_map_sections_sp->AddSection(oso_gsym_section_sp);
                                     }
                                 }
                             }
                             break;
-
-//                        case eSymbolTypeStatic:
-//                            {
-//                                // For each N_STSYM we remap the address for the global by making
-//                                // a new section that we add to the sections found in the .o file.
-//                                // This new section has the file address set to what the
-//                                // addresses are in the .o file, and the load address is adjusted
-//                                // to match where it ended up in the final executable! We do this
-//                                // before we parse any dwarf info so that when it goes get parsed
-//                                // all section/offset addresses that get registered will resolve
-//                                // correctly to the new addresses in the main executable. We
-//                                // initially set the section size to be 1 byte, but will need to
-//                                // fix up these addresses further after all globals have been
-//                                // parsed to span the gaps, or we can find the global variable
-//                                // sizes from the DWARF info as we are parsing.
-//
-//
-//                                Symbol *exe_stsym_symbol = exe_symbol;
-//                                // First we find the non-stab entry that corresponds to the N_STSYM in the .o file
-//                                Symbol *oso_stsym_symbol = oso_symtab->FindFirstSymbolWithNameAndType(exe_symbol->GetMangled().GetName(), eSymbolTypeData);
-//                                if (exe_stsym_symbol && oso_stsym_symbol)
-//                                {
-//                                    // If we found the symbol, then we
-//                                    Section* exe_stsym_section = const_cast<Section *>(exe_stsym_symbol->GetAddressRangePtr()->GetBaseAddress().GetSection());
-//                                    Section* oso_stsym_section = const_cast<Section *>(oso_stsym_symbol->GetAddressRangePtr()->GetBaseAddress().GetSection());
-//                                    if (oso_stsym_section)
-//                                    {
-//                                        // The load address of the symbol will use the section in the
-//                                        // executable that contains the debug map that corresponds to
-//                                        // the N_FUN symbol. We set the offset to reflect the offset
-//                                        // into that section since we are creating a new section.
-//                                        AddressRange stsym_load_range(exe_stsym_section, exe_stsym_symbol->GetValue().GetFileAddress() - exe_stsym_section->GetFileAddress(), 1);
-//                                        // We need the symbol's section offset address from the .o file, but
-//                                        // we need a non-zero size.
-//                                        AddressRange stsym_file_range(exe_stsym_symbol->GetAddressRangePtr()->GetBaseAddress().GetSection(), exe_stsym_symbol->GetAddressRangePtr()->GetBaseAddress().GetOffset(), 1);
-//
-//                                        // Now we create a section that we will add as a child of the
-//                                        // section in which the .o symbol (the N_FUN) exists.
-//
-//// TODO: mimic what I did for N_FUN if that works...
-////                                        // We use the 1 byte for the size because we don't know the
-////                                        // size of the global symbol without seeing the DWARF.
-////                                        SectionSP oso_fun_section_sp (new Section ( NULL, oso_module,                     // Module (the .o file)
-////                                                                                        sect_id++,                      // Section ID starts at 0x10000 and increments so the section IDs don't overlap with the standard mach IDs
-////                                                                                        exe_symbol->GetMangled().GetName(),// Name the section the same as the symbol for which is was generated!
-////                                                                                       // &stsym_load_range,              // Load offset is the offset into the executable section for the N_FUN from the debug map
-////                                                                                        &stsym_file_range,              // File section/offset is just the same os the symbol on the .o file
-////                                                                                        0, 0, 0));
-////
-////                                        // Now we add the new section to the .o file's sections as a child
-////                                        // of the section in which the N_SECT symbol exists.
-////                                        oso_stsym_section->GetChildren().AddSection(oso_fun_section_sp);
-////                                        comp_unit_info->debug_map_sections_sp->AddSection(oso_fun_section_sp);
-//                                    }
-//                                }
-//                            }
-//                            break;
                         }
                     }
                 }

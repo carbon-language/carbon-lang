@@ -238,7 +238,6 @@ ObjectFile::GetAddressClass (addr_t file_addr)
             {
             case eSymbolTypeAny:            return eAddressClassUnknown;
             case eSymbolTypeAbsolute:       return eAddressClassUnknown;
-            case eSymbolTypeExtern:         return eAddressClassUnknown;
             case eSymbolTypeCode:           return eAddressClassCode;
             case eSymbolTypeTrampoline:     return eAddressClassCode;
             case eSymbolTypeData:           return eAddressClassData;

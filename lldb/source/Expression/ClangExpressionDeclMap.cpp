@@ -746,7 +746,6 @@ ClangExpressionDeclMap::GetSymbolAddress (Target &target, const ConstString &nam
                 case eSymbolTypeParam:
                 case eSymbolTypeInvalid:
                 case eSymbolTypeAbsolute:
-                case eSymbolTypeExtern:
                 case eSymbolTypeException:
                 case eSymbolTypeSourceFile:
                 case eSymbolTypeHeaderFile:

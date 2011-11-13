@@ -190,8 +190,6 @@ def symbol_type_to_str(enum):
         return "invalid"
     elif enum == lldb.eSymbolTypeAbsolute:
         return "absolute"
-    elif enum == lldb.eSymbolTypeExtern:
-        return "extern"
     elif enum == lldb.eSymbolTypeCode:
         return "code"
     elif enum == lldb.eSymbolTypeData:

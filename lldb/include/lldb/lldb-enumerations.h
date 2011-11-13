@@ -428,7 +428,6 @@ namespace lldb {
         eSymbolTypeAny = 0,
         eSymbolTypeInvalid = 0,
         eSymbolTypeAbsolute,
-        eSymbolTypeExtern,
         eSymbolTypeCode,
         eSymbolTypeData,
         eSymbolTypeTrampoline,

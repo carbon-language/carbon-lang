@@ -5247,31 +5247,114 @@ SymbolFileDWARF::ParseVariableDIE
 
                 const DWARFDebugInfoEntry *sc_parent_die = GetParentSymbolContextDIE(die);
                 dw_tag_t parent_tag = sc_parent_die ? sc_parent_die->Tag() : 0;
+                SymbolContextScope * symbol_context_scope = NULL;
 
+                // DWARF doesn't specify if a DW_TAG_variable is a local, global
+                // or static variable, so we have to do a little digging by
+                // looking at the location of a varaible to see if it contains
+                // a DW_OP_addr opcode _somewhere_ in the definition. I say
+                // somewhere because clang likes to combine small global variables
+                // into the same symbol and have locations like:
+                // DW_OP_addr(0x1000), DW_OP_constu(2), DW_OP_plus
+                // So if we don't have a DW_TAG_formal_parameter, we can look at
+                // the location to see if it contains a DW_OP_addr opcode, and
+                // then we can correctly classify  our variables.
                 if (tag == DW_TAG_formal_parameter)
                     scope = eValueTypeVariableArgument;
-                else if (is_external || parent_tag == DW_TAG_compile_unit)
-                    scope = eValueTypeVariableGlobal;
+                else if (location.LocationContains_DW_OP_addr ())
+                {
+                    if (is_external)
+                    {
+                        if (m_debug_map_symfile)
+                        {
+                            // When leaving the DWARF in the .o files on darwin,
+                            // when we have a global variable that wasn't initialized,
+                            // the .o file might not have allocated a virtual
+                            // address for the global variable. In this case it will
+                            // have created a symbol for the global variable
+                            // that is undefined and external and the value will
+                            // be the byte size of the variable. When we do the
+                            // address map in SymbolFileDWARFDebugMap we rely on
+                            // having an address, we need to do some magic here
+                            // so we can get the correct address for our global 
+                            // variable. The address for all of these entries
+                            // will be zero, and there will be an undefined symbol
+                            // in this object file, and the executable will have
+                            // a matching symbol with a good address. So here we
+                            // dig up the correct address and replace it in the
+                            // location for the variable, and set the variable's
+                            // symbol context scope to be that of the main executable
+                            // so the file address will resolve correctly.
+                            if (location.LocationContains_DW_OP_addr (0))
+                            {
+                                
+                                // we have a possible uninitialized extern global
+                                Symtab *symtab = m_obj_file->GetSymtab();
+                                if (symtab)
+                                {
+                                    ConstString const_name(name);
+                                    Symbol *undefined_symbol = symtab->FindFirstSymbolWithNameAndType (const_name,
+                                                                                                       eSymbolTypeUndefined, 
+                                                                                                       Symtab::eDebugNo, 
+                                                                                                       Symtab::eVisibilityExtern);
+                                    
+                                    if (undefined_symbol)
+                                    {
+                                        ObjectFile *debug_map_objfile = m_debug_map_symfile->GetObjectFile();
+                                        if (debug_map_objfile)
+                                        {
+                                            Symtab *debug_map_symtab = debug_map_objfile->GetSymtab();
+                                            Symbol *defined_symbol = debug_map_symtab->FindFirstSymbolWithNameAndType (const_name,
+                                                                                                                       eSymbolTypeData, 
+                                                                                                                       Symtab::eDebugYes, 
+                                                                                                                       Symtab::eVisibilityExtern);
+                                            if (defined_symbol)
+                                            {
+                                                const AddressRange *defined_range = defined_symbol->GetAddressRangePtr();
+                                                if (defined_range)
+                                                {
+                                                    const addr_t defined_addr = defined_range->GetBaseAddress().GetFileAddress();
+                                                    if (defined_addr != LLDB_INVALID_ADDRESS)
+                                                    {
+                                                        if (location.Update_DW_OP_addr (defined_addr))
+                                                        {
+                                                            symbol_context_scope = defined_symbol;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        scope = eValueTypeVariableGlobal;
+                    }
+                    else
+                        scope = eValueTypeVariableStatic;
+                }
                 else
                     scope = eValueTypeVariableLocal;
 
-                SymbolContextScope * symbol_context_scope = NULL;
-                switch (parent_tag)
+                if (symbol_context_scope == NULL)
                 {
-                case DW_TAG_subprogram:
-                case DW_TAG_inlined_subroutine:
-                case DW_TAG_lexical_block:
-                    if (sc.function)
+                    switch (parent_tag)
                     {
-                        symbol_context_scope = sc.function->GetBlock(true).FindBlockByID(MakeUserID(sc_parent_die->GetOffset()));
-                        if (symbol_context_scope == NULL)
-                            symbol_context_scope = sc.function;
+                    case DW_TAG_subprogram:
+                    case DW_TAG_inlined_subroutine:
+                    case DW_TAG_lexical_block:
+                        if (sc.function)
+                        {
+                            symbol_context_scope = sc.function->GetBlock(true).FindBlockByID(MakeUserID(sc_parent_die->GetOffset()));
+                            if (symbol_context_scope == NULL)
+                                symbol_context_scope = sc.function;
+                        }
+                        break;
+                    
+                    default:
+                        symbol_context_scope = sc.comp_unit;
+                        break;
                     }
-                    break;
-                
-                default:
-                    symbol_context_scope = sc.comp_unit;
-                    break;
                 }
 
                 if (symbol_context_scope)

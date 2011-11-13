@@ -11,6 +11,7 @@
 
 #include <vector>
 
+#include "lldb/Core/DataEncoder.h"
 #include "lldb/Core/dwarf.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/RegisterValue.h"
@@ -193,19 +194,19 @@ DW_OP_value_to_name (uint32_t val)
     case 0x98: return "DW_OP_call2";
     case 0x99: return "DW_OP_call4";
     case 0x9a: return "DW_OP_call_ref";
-    case DW_OP_APPLE_array_ref: return "DW_OP_APPLE_array_ref";
-    case DW_OP_APPLE_extern: return "DW_OP_APPLE_extern";
+//    case DW_OP_APPLE_array_ref: return "DW_OP_APPLE_array_ref";
+//    case DW_OP_APPLE_extern: return "DW_OP_APPLE_extern";
     case DW_OP_APPLE_uninit: return "DW_OP_APPLE_uninit";
-    case DW_OP_APPLE_assign: return "DW_OP_APPLE_assign";
-    case DW_OP_APPLE_address_of: return "DW_OP_APPLE_address_of";
-    case DW_OP_APPLE_value_of: return "DW_OP_APPLE_value_of";
-    case DW_OP_APPLE_deref_type: return "DW_OP_APPLE_deref_type";
-    case DW_OP_APPLE_expr_local: return "DW_OP_APPLE_expr_local";
-    case DW_OP_APPLE_constf: return "DW_OP_APPLE_constf";
-    case DW_OP_APPLE_scalar_cast: return "DW_OP_APPLE_scalar_cast";
-    case DW_OP_APPLE_clang_cast: return "DW_OP_APPLE_clang_cast";
-    case DW_OP_APPLE_clear: return "DW_OP_APPLE_clear";
-    case DW_OP_APPLE_error: return "DW_OP_APPLE_error";
+//    case DW_OP_APPLE_assign: return "DW_OP_APPLE_assign";
+//    case DW_OP_APPLE_address_of: return "DW_OP_APPLE_address_of";
+//    case DW_OP_APPLE_value_of: return "DW_OP_APPLE_value_of";
+//    case DW_OP_APPLE_deref_type: return "DW_OP_APPLE_deref_type";
+//    case DW_OP_APPLE_expr_local: return "DW_OP_APPLE_expr_local";
+//    case DW_OP_APPLE_constf: return "DW_OP_APPLE_constf";
+//    case DW_OP_APPLE_scalar_cast: return "DW_OP_APPLE_scalar_cast";
+//    case DW_OP_APPLE_clang_cast: return "DW_OP_APPLE_clang_cast";
+//    case DW_OP_APPLE_clear: return "DW_OP_APPLE_clear";
+//    case DW_OP_APPLE_error: return "DW_OP_APPLE_error";
     default:
        snprintf (invalid, sizeof(invalid), "Unknown DW_OP constant: 0x%x", val);
        return invalid;
@@ -567,55 +568,55 @@ DWARFExpression::DumpLocation (Stream *s, uint32_t offset, uint32_t length, lldb
 //          break;
 //      case DW_OP_lo_user:     s->PutCString("DW_OP_lo_user"); break;                        // 0xe0
 //      case DW_OP_hi_user:     s->PutCString("DW_OP_hi_user"); break;                        // 0xff
-        case DW_OP_APPLE_extern:
-            s->Printf("DW_OP_APPLE_extern(%llu)", m_data.GetULEB128(&offset));
-            break;
-        case DW_OP_APPLE_array_ref:
-            s->PutCString("DW_OP_APPLE_array_ref");
-            break;
+//        case DW_OP_APPLE_extern:
+//            s->Printf("DW_OP_APPLE_extern(%llu)", m_data.GetULEB128(&offset));
+//            break;
+//        case DW_OP_APPLE_array_ref:
+//            s->PutCString("DW_OP_APPLE_array_ref");
+//            break;
         case DW_OP_APPLE_uninit:
             s->PutCString("DW_OP_APPLE_uninit");  // 0xF0
             break;
-        case DW_OP_APPLE_assign:        // 0xF1 - pops value off and assigns it to second item on stack (2nd item must have assignable context)
-            s->PutCString("DW_OP_APPLE_assign");
-            break;
-        case DW_OP_APPLE_address_of:    // 0xF2 - gets the address of the top stack item (top item must be a variable, or have value_type that is an address already)
-            s->PutCString("DW_OP_APPLE_address_of");
-            break;
-        case DW_OP_APPLE_value_of:      // 0xF3 - pops the value off the stack and pushes the value of that object (top item must be a variable, or expression local)
-            s->PutCString("DW_OP_APPLE_value_of");
-            break;
-        case DW_OP_APPLE_deref_type:    // 0xF4 - gets the address of the top stack item (top item must be a variable, or a clang type)
-            s->PutCString("DW_OP_APPLE_deref_type");
-            break;
-        case DW_OP_APPLE_expr_local:    // 0xF5 - ULEB128 expression local index
-            s->Printf("DW_OP_APPLE_expr_local(%llu)", m_data.GetULEB128(&offset));
-            break;
-        case DW_OP_APPLE_constf:        // 0xF6 - 1 byte float size, followed by constant float data
-            {
-                uint8_t float_length = m_data.GetU8(&offset);
-                s->Printf("DW_OP_APPLE_constf(<%u> ", float_length);
-                m_data.Dump(s, offset, eFormatHex, float_length, 1, UINT32_MAX, DW_INVALID_ADDRESS, 0, 0);
-                s->PutChar(')');
-                // Consume the float data
-                m_data.GetData(&offset, float_length);
-            }
-            break;
-        case DW_OP_APPLE_scalar_cast:
-            s->Printf("DW_OP_APPLE_scalar_cast(%s)", Scalar::GetValueTypeAsCString ((Scalar::Type)m_data.GetU8(&offset)));
-            break;
-        case DW_OP_APPLE_clang_cast:
-            {
-                clang::Type *clang_type = (clang::Type *)m_data.GetMaxU64(&offset, sizeof(void*));
-                s->Printf("DW_OP_APPLE_clang_cast(%p)", clang_type);
-            }
-            break;
-        case DW_OP_APPLE_clear:
-            s->PutCString("DW_OP_APPLE_clear");
-            break;
-        case DW_OP_APPLE_error:         // 0xFF - Stops expression evaluation and returns an error (no args)
-            s->PutCString("DW_OP_APPLE_error");
-            break;
+//        case DW_OP_APPLE_assign:        // 0xF1 - pops value off and assigns it to second item on stack (2nd item must have assignable context)
+//            s->PutCString("DW_OP_APPLE_assign");
+//            break;
+//        case DW_OP_APPLE_address_of:    // 0xF2 - gets the address of the top stack item (top item must be a variable, or have value_type that is an address already)
+//            s->PutCString("DW_OP_APPLE_address_of");
+//            break;
+//        case DW_OP_APPLE_value_of:      // 0xF3 - pops the value off the stack and pushes the value of that object (top item must be a variable, or expression local)
+//            s->PutCString("DW_OP_APPLE_value_of");
+//            break;
+//        case DW_OP_APPLE_deref_type:    // 0xF4 - gets the address of the top stack item (top item must be a variable, or a clang type)
+//            s->PutCString("DW_OP_APPLE_deref_type");
+//            break;
+//        case DW_OP_APPLE_expr_local:    // 0xF5 - ULEB128 expression local index
+//            s->Printf("DW_OP_APPLE_expr_local(%llu)", m_data.GetULEB128(&offset));
+//            break;
+//        case DW_OP_APPLE_constf:        // 0xF6 - 1 byte float size, followed by constant float data
+//            {
+//                uint8_t float_length = m_data.GetU8(&offset);
+//                s->Printf("DW_OP_APPLE_constf(<%u> ", float_length);
+//                m_data.Dump(s, offset, eFormatHex, float_length, 1, UINT32_MAX, DW_INVALID_ADDRESS, 0, 0);
+//                s->PutChar(')');
+//                // Consume the float data
+//                m_data.GetData(&offset, float_length);
+//            }
+//            break;
+//        case DW_OP_APPLE_scalar_cast:
+//            s->Printf("DW_OP_APPLE_scalar_cast(%s)", Scalar::GetValueTypeAsCString ((Scalar::Type)m_data.GetU8(&offset)));
+//            break;
+//        case DW_OP_APPLE_clang_cast:
+//            {
+//                clang::Type *clang_type = (clang::Type *)m_data.GetMaxU64(&offset, sizeof(void*));
+//                s->Printf("DW_OP_APPLE_clang_cast(%p)", clang_type);
+//            }
+//            break;
+//        case DW_OP_APPLE_clear:
+//            s->PutCString("DW_OP_APPLE_clear");
+//            break;
+//        case DW_OP_APPLE_error:         // 0xFF - Stops expression evaluation and returns an error (no args)
+//            s->PutCString("DW_OP_APPLE_error");
+//            break;
         }
     }
 }
@@ -796,6 +797,275 @@ ReadRegisterValueAsScalar
 //    }
 //    return false;
 //}
+
+static uint32_t
+GetOpcodeDataSize (const DataExtractor &data, const uint32_t data_offset, const uint8_t op)
+{
+    uint32_t offset = data_offset;
+    switch (op)
+    {
+        case DW_OP_addr:    
+        case DW_OP_call_ref:    // 0x9a 1 address sized offset of DIE (DWARF3)
+            return data.GetAddressByteSize();
+
+        // Opcodes with no arguments
+        case DW_OP_deref:   // 0x06
+        case DW_OP_dup:     // 0x12
+        case DW_OP_drop:    // 0x13
+        case DW_OP_over:    // 0x14
+        case DW_OP_swap:    // 0x16
+        case DW_OP_rot:     // 0x17
+        case DW_OP_xderef:  // 0x18
+        case DW_OP_abs:     // 0x19
+        case DW_OP_and:     // 0x1a
+        case DW_OP_div:     // 0x1b
+        case DW_OP_minus:   // 0x1c
+        case DW_OP_mod:     // 0x1d
+        case DW_OP_mul:     // 0x1e
+        case DW_OP_neg:     // 0x1f
+        case DW_OP_not:     // 0x20
+        case DW_OP_or:      // 0x21
+        case DW_OP_plus:    // 0x22
+        case DW_OP_shl:     // 0x24
+        case DW_OP_shr:     // 0x25
+        case DW_OP_shra:    // 0x26
+        case DW_OP_xor:     // 0x27
+        case DW_OP_eq:      // 0x29
+        case DW_OP_ge:      // 0x2a
+        case DW_OP_gt:      // 0x2b
+        case DW_OP_le:      // 0x2c
+        case DW_OP_lt:      // 0x2d
+        case DW_OP_ne:      // 0x2e
+        case DW_OP_lit0:    // 0x30
+        case DW_OP_lit1:    // 0x31
+        case DW_OP_lit2:    // 0x32
+        case DW_OP_lit3:    // 0x33
+        case DW_OP_lit4:    // 0x34
+        case DW_OP_lit5:    // 0x35
+        case DW_OP_lit6:    // 0x36
+        case DW_OP_lit7:    // 0x37
+        case DW_OP_lit8:    // 0x38
+        case DW_OP_lit9:    // 0x39
+        case DW_OP_lit10:   // 0x3A
+        case DW_OP_lit11:   // 0x3B
+        case DW_OP_lit12:   // 0x3C
+        case DW_OP_lit13:   // 0x3D
+        case DW_OP_lit14:   // 0x3E
+        case DW_OP_lit15:   // 0x3F
+        case DW_OP_lit16:   // 0x40
+        case DW_OP_lit17:   // 0x41
+        case DW_OP_lit18:   // 0x42
+        case DW_OP_lit19:   // 0x43
+        case DW_OP_lit20:   // 0x44
+        case DW_OP_lit21:   // 0x45
+        case DW_OP_lit22:   // 0x46
+        case DW_OP_lit23:   // 0x47
+        case DW_OP_lit24:   // 0x48
+        case DW_OP_lit25:   // 0x49
+        case DW_OP_lit26:   // 0x4A
+        case DW_OP_lit27:   // 0x4B
+        case DW_OP_lit28:   // 0x4C
+        case DW_OP_lit29:   // 0x4D
+        case DW_OP_lit30:   // 0x4E
+        case DW_OP_lit31:   // 0x4f
+        case DW_OP_reg0:    // 0x50
+        case DW_OP_reg1:    // 0x51
+        case DW_OP_reg2:    // 0x52
+        case DW_OP_reg3:    // 0x53
+        case DW_OP_reg4:    // 0x54
+        case DW_OP_reg5:    // 0x55
+        case DW_OP_reg6:    // 0x56
+        case DW_OP_reg7:    // 0x57
+        case DW_OP_reg8:    // 0x58
+        case DW_OP_reg9:    // 0x59
+        case DW_OP_reg10:   // 0x5A
+        case DW_OP_reg11:   // 0x5B
+        case DW_OP_reg12:   // 0x5C
+        case DW_OP_reg13:   // 0x5D
+        case DW_OP_reg14:   // 0x5E
+        case DW_OP_reg15:   // 0x5F
+        case DW_OP_reg16:   // 0x60
+        case DW_OP_reg17:   // 0x61
+        case DW_OP_reg18:   // 0x62
+        case DW_OP_reg19:   // 0x63
+        case DW_OP_reg20:   // 0x64
+        case DW_OP_reg21:   // 0x65
+        case DW_OP_reg22:   // 0x66
+        case DW_OP_reg23:   // 0x67
+        case DW_OP_reg24:   // 0x68
+        case DW_OP_reg25:   // 0x69
+        case DW_OP_reg26:   // 0x6A
+        case DW_OP_reg27:   // 0x6B
+        case DW_OP_reg28:   // 0x6C
+        case DW_OP_reg29:   // 0x6D
+        case DW_OP_reg30:   // 0x6E
+        case DW_OP_reg31:   // 0x6F
+        case DW_OP_nop:     // 0x96
+        case DW_OP_push_object_address: // 0x97 DWARF3
+        case DW_OP_form_tls_address:    // 0x9b DWARF3
+        case DW_OP_call_frame_cfa:      // 0x9c DWARF3
+            return 0; 
+
+        // Opcodes with a single 1 byte arguments
+        case DW_OP_const1u:     // 0x08 1 1-byte constant
+        case DW_OP_const1s:     // 0x09 1 1-byte constant
+        case DW_OP_pick:        // 0x15 1 1-byte stack index
+        case DW_OP_deref_size:  // 0x94 1 1-byte size of data retrieved
+        case DW_OP_xderef_size: // 0x95 1 1-byte size of data retrieved
+            return 1;
+            
+        // Opcodes with a single 2 byte arguments
+        case DW_OP_const2u:     // 0x0a 1 2-byte constant
+        case DW_OP_const2s:     // 0x0b 1 2-byte constant
+        case DW_OP_skip:        // 0x2f 1 signed 2-byte constant
+        case DW_OP_bra:         // 0x28 1 signed 2-byte constant
+        case DW_OP_call2:       // 0x98 1 2-byte offset of DIE (DWARF3)
+            return 2;
+            
+        // Opcodes with a single 4 byte arguments
+        case DW_OP_const4u:     // 0x0c 1 4-byte constant
+        case DW_OP_const4s:     // 0x0d 1 4-byte constant
+        case DW_OP_call4:       // 0x99 1 4-byte offset of DIE (DWARF3)
+            return 4;
+            
+        // Opcodes with a single 8 byte arguments
+        case DW_OP_const8u:     // 0x0e 1 8-byte constant
+        case DW_OP_const8s:     // 0x0f 1 8-byte constant
+             return 8;
+            
+        // All opcodes that have a single ULEB (signed or unsigned) argument
+        case DW_OP_constu:      // 0x10 1 ULEB128 constant
+        case DW_OP_consts:      // 0x11 1 SLEB128 constant
+        case DW_OP_plus_uconst: // 0x23 1 ULEB128 addend
+        case DW_OP_breg0:       // 0x70 1 ULEB128 register
+        case DW_OP_breg1:       // 0x71 1 ULEB128 register
+        case DW_OP_breg2:       // 0x72 1 ULEB128 register
+        case DW_OP_breg3:       // 0x73 1 ULEB128 register
+        case DW_OP_breg4:       // 0x74 1 ULEB128 register
+        case DW_OP_breg5:       // 0x75 1 ULEB128 register
+        case DW_OP_breg6:       // 0x76 1 ULEB128 register
+        case DW_OP_breg7:       // 0x77 1 ULEB128 register
+        case DW_OP_breg8:       // 0x78 1 ULEB128 register
+        case DW_OP_breg9:       // 0x79 1 ULEB128 register
+        case DW_OP_breg10:      // 0x7a 1 ULEB128 register
+        case DW_OP_breg11:      // 0x7b 1 ULEB128 register
+        case DW_OP_breg12:      // 0x7c 1 ULEB128 register
+        case DW_OP_breg13:      // 0x7d 1 ULEB128 register
+        case DW_OP_breg14:      // 0x7e 1 ULEB128 register
+        case DW_OP_breg15:      // 0x7f 1 ULEB128 register
+        case DW_OP_breg16:      // 0x80 1 ULEB128 register
+        case DW_OP_breg17:      // 0x81 1 ULEB128 register
+        case DW_OP_breg18:      // 0x82 1 ULEB128 register
+        case DW_OP_breg19:      // 0x83 1 ULEB128 register
+        case DW_OP_breg20:      // 0x84 1 ULEB128 register
+        case DW_OP_breg21:      // 0x85 1 ULEB128 register
+        case DW_OP_breg22:      // 0x86 1 ULEB128 register
+        case DW_OP_breg23:      // 0x87 1 ULEB128 register
+        case DW_OP_breg24:      // 0x88 1 ULEB128 register
+        case DW_OP_breg25:      // 0x89 1 ULEB128 register
+        case DW_OP_breg26:      // 0x8a 1 ULEB128 register
+        case DW_OP_breg27:      // 0x8b 1 ULEB128 register
+        case DW_OP_breg28:      // 0x8c 1 ULEB128 register
+        case DW_OP_breg29:      // 0x8d 1 ULEB128 register
+        case DW_OP_breg30:      // 0x8e 1 ULEB128 register
+        case DW_OP_breg31:      // 0x8f 1 ULEB128 register
+        case DW_OP_regx:        // 0x90 1 ULEB128 register
+        case DW_OP_fbreg:       // 0x91 1 SLEB128 offset
+        case DW_OP_piece:       // 0x93 1 ULEB128 size of piece addressed
+            data.Skip_LEB128(&offset); 
+            return offset - data_offset;   
+            
+        // All opcodes that have a 2 ULEB (signed or unsigned) arguments
+        case DW_OP_bregx:       // 0x92 2 ULEB128 register followed by SLEB128 offset
+        case DW_OP_bit_piece:   // 0x9d ULEB128 bit size, ULEB128 bit offset (DWARF3);
+            data.Skip_LEB128(&offset); 
+            data.Skip_LEB128(&offset); 
+            return offset - data_offset;   
+        default:
+            assert (!"Unhandled DW_OP_XXX opcode, add support for it");
+            break;
+    }
+    return UINT32_MAX;
+}
+
+bool
+DWARFExpression::LocationContains_DW_OP_addr (lldb::addr_t file_addr) const
+{
+    if (IsLocationList())
+        return false;
+    uint32_t offset = 0;
+    while (m_data.ValidOffset(offset))
+    {
+        const uint8_t op = m_data.GetU8(&offset);
+        
+        if (op == DW_OP_addr)
+        {
+            if (file_addr == LLDB_INVALID_ADDRESS)
+                return true;
+            addr_t op_file_addr = m_data.GetAddress(&offset);
+            if (op_file_addr == file_addr)
+                return true;
+        }
+        else
+        {
+            const uint32_t op_arg_size = GetOpcodeDataSize (m_data, offset, op);
+            if (op_arg_size == UINT32_MAX)
+                break;
+            offset += op_arg_size;
+        }
+    }
+    return false;
+}
+
+bool
+DWARFExpression::Update_DW_OP_addr (lldb::addr_t file_addr)
+{
+    if (IsLocationList())
+        return false;
+    uint32_t offset = 0;
+    while (m_data.ValidOffset(offset))
+    {
+        const uint8_t op = m_data.GetU8(&offset);
+        
+        if (op == DW_OP_addr)
+        {
+            const uint8_t addr_byte_size = m_data.GetAddressByteSize();
+            // We have to make a copy of the data as we don't know if this
+            // data is from a read only memory mapped buffer, so we duplicate
+            // all of the data first, then modify it, and if all goes well,
+            // we then replace the data for this expression
+            
+            // So first we copy the data into a heap buffer
+            std::auto_ptr<DataBufferHeap> head_data_ap (new DataBufferHeap (m_data.GetDataStart(), 
+                                                                            m_data.GetByteSize()));
+            
+            // Make en encoder so we can write the address into the buffer using
+            // the correct byte order (endianness)
+            DataEncoder encoder (head_data_ap->GetBytes(), 
+                                 head_data_ap->GetByteSize(),
+                                 m_data.GetByteOrder(),
+                                 addr_byte_size);
+            
+            // Replace the address in the new buffer
+            if (encoder.PutMaxU64 (offset, addr_byte_size, file_addr) == UINT32_MAX)
+                return false;
+
+            // All went well, so now we can reset the data using a shared
+            // pointer to the heap data so "m_data" will now correctly 
+            // manage the heap data.
+            m_data.SetData (DataBufferSP (head_data_ap.release()));
+            return true;
+        }
+        else
+        {
+            const uint32_t op_arg_size = GetOpcodeDataSize (m_data, offset, op);
+            if (op_arg_size == UINT32_MAX)
+                break;
+            offset += op_arg_size;
+        }
+    }
+    return false;
+}
 
 bool
 DWARFExpression::LocationListContainsAddress (lldb::addr_t loclist_base_addr, lldb::addr_t addr) const
@@ -2309,7 +2579,7 @@ DWARFExpression::Evaluate
                 error_ptr->SetErrorString ("Unimplemented opcode DW_OP_call4.");
             return false;
 
-
+#if 0
         //----------------------------------------------------------------------
         // OPCODE: DW_OP_call_ref
         // OPERANDS:
@@ -2344,15 +2614,15 @@ DWARFExpression::Evaluate
                 error_ptr->SetErrorString ("Unimplemented opcode DW_OP_call_ref.");
             return false;
 
-        //----------------------------------------------------------------------
-        // OPCODE: DW_OP_APPLE_array_ref
-        // OPERANDS: none
-        // DESCRIPTION: Pops a value off the stack and uses it as the array 
-        // index.  Pops a second value off the stack and uses it as the array
-        // itself.  Pushes a value onto the stack representing the element of
-        // the array specified by the index.
-        //----------------------------------------------------------------------
-        case DW_OP_APPLE_array_ref:
+                //----------------------------------------------------------------------
+                // OPCODE: DW_OP_APPLE_array_ref
+                // OPERANDS: none
+                // DESCRIPTION: Pops a value off the stack and uses it as the array 
+                // index.  Pops a second value off the stack and uses it as the array
+                // itself.  Pushes a value onto the stack representing the element of
+                // the array specified by the index.
+                //----------------------------------------------------------------------
+            case DW_OP_APPLE_array_ref:
             {
                 if (stack.size() < 2)
                 {
@@ -2375,7 +2645,7 @@ DWARFExpression::Evaluate
                         error_ptr->SetErrorString("Invalid array index.");
                     return false;
                 }
-            
+                
                 if (array_val.GetContextType() != Value::eContextTypeClangType)
                 {
                     if (error_ptr)
@@ -2433,7 +2703,7 @@ DWARFExpression::Evaluate
                 
                 stack.push_back(member);
             }
-            break;
+                break;
                 
         //----------------------------------------------------------------------
         // OPCODE: DW_OP_APPLE_uninit
@@ -2866,6 +3136,8 @@ DWARFExpression::Evaluate
             if (error_ptr)
                 error_ptr->SetErrorString ("Generic error.");
             return false;
+#endif // #if 0
+                
         }
     }
 

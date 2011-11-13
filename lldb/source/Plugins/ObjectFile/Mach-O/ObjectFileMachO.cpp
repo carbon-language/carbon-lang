@@ -273,7 +273,6 @@ ObjectFileMachO::GetAddressClass (lldb::addr_t file_addr)
             {
             case eSymbolTypeAny:            return eAddressClassUnknown;
             case eSymbolTypeAbsolute:       return eAddressClassUnknown;
-            case eSymbolTypeExtern:         return eAddressClassUnknown;
                     
             case eSymbolTypeCode:
             case eSymbolTypeTrampoline:
@@ -1195,7 +1194,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                             case NListTypeIndirect:         // N_INDR - Fall through
                             case NListTypePreboundUndefined:// N_PBUD - Fall through
                             case NListTypeUndefined:        // N_UNDF
-                                type = eSymbolTypeExtern;
+                                type = eSymbolTypeUndefined;
                                 break;
 
                             case NListTypeAbsolute:         // N_ABS
@@ -1458,7 +1457,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                         {
                                             Address so_addr(symbol_stub_addr, section_list);
 
-                                            if (stub_symbol->GetType() == eSymbolTypeExtern)
+                                            if (stub_symbol->GetType() == eSymbolTypeUndefined)
                                             {
                                                 // Change the external symbol into a trampoline that makes sense
                                                 // These symbols were N_UNDF N_EXT, and are useless to us, so we

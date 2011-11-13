@@ -317,7 +317,6 @@ Symbol::GetTypeAsString() const
     {
     ENUM_TO_CSTRING(Invalid);
     ENUM_TO_CSTRING(Absolute);
-    ENUM_TO_CSTRING(Extern);
     ENUM_TO_CSTRING(Code);
     ENUM_TO_CSTRING(Data);
     ENUM_TO_CSTRING(Trampoline);
