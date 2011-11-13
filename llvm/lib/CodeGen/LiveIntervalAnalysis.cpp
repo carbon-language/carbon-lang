@@ -658,8 +658,8 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
        MachineInstr *UseMI = I.skipInstruction();) {
     if (UseMI->isDebugValue() || !UseMI->readsVirtualRegister(li->reg))
       continue;
-    SlotIndex Idx = getInstructionIndex(UseMI).getRegSlot(true);
-    VNInfo *VNI = li->getVNInfoAt(Idx);
+    SlotIndex Idx = getInstructionIndex(UseMI).getRegSlot();
+    VNInfo *VNI = li->getVNInfoAt(Idx.getBaseIndex());
     if (!VNI) {
       // This shouldn't happen: readsVirtualRegister returns true, but there is
       // no live value. It is likely caused by a target getting <undef> flags
@@ -669,11 +669,11 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
                     << *li << '\n');
       continue;
     }
-    if (VNI->def == Idx) {
+    if (VNI->def == Idx.getRegSlot(true)) {
       // Special case: An early-clobber tied operand reads and writes the
       // register one slot early.
-      Idx = Idx.getPrevSlot();
-      VNI = li->getVNInfoAt(Idx);
+      Idx = Idx.getRegSlot(true);
+      VNI = li->getVNInfoBefore(Idx);
       assert(VNI && "Early-clobber tied value not available");
     }
     WorkList.push_back(std::make_pair(Idx, VNI));
@@ -693,7 +693,7 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
     // assembly.
     if (VNI->def.isEarlyClobber())
       if (VNInfo *UVNI = li->getVNInfoBefore(VNI->def))
-        WorkList.push_back(std::make_pair(VNI->def.getPrevSlot(), UVNI));
+        WorkList.push_back(std::make_pair(VNI->def, UVNI));
   }
 
   // Keep track of the PHIs that are in use.
@@ -704,11 +704,11 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
     SlotIndex Idx = WorkList.back().first;
     VNInfo *VNI = WorkList.back().second;
     WorkList.pop_back();
-    const MachineBasicBlock *MBB = getMBBFromIndex(Idx);
+    const MachineBasicBlock *MBB = getMBBFromIndex(Idx.getPrevSlot());
     SlotIndex BlockStart = getMBBStartIdx(MBB);
 
     // Extend the live range for VNI to be live at Idx.
-    if (VNInfo *ExtVNI = NewLI.extendInBlock(BlockStart, Idx.getNextSlot())) {
+    if (VNInfo *ExtVNI = NewLI.extendInBlock(BlockStart, Idx)) {
       (void)ExtVNI;
       assert(ExtVNI == VNI && "Unexpected existing value number");
       // Is this a PHIDef we haven't seen before?
@@ -719,9 +719,9 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
            PE = MBB->pred_end(); PI != PE; ++PI) {
         if (!LiveOut.insert(*PI))
           continue;
-        SlotIndex Stop = getMBBEndIdx(*PI).getPrevSlot();
+        SlotIndex Stop = getMBBEndIdx(*PI);
         // A predecessor is not required to have a live-out value for a PHI.
-        if (VNInfo *PVNI = li->getVNInfoAt(Stop))
+        if (VNInfo *PVNI = li->getVNInfoBefore(Stop))
           WorkList.push_back(std::make_pair(Stop, PVNI));
       }
       continue;
@@ -729,15 +729,16 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
 
     // VNI is live-in to MBB.
     DEBUG(dbgs() << " live-in at " << BlockStart << '\n');
-    NewLI.addRange(LiveRange(BlockStart, Idx.getNextSlot(), VNI));
+    NewLI.addRange(LiveRange(BlockStart, Idx, VNI));
 
     // Make sure VNI is live-out from the predecessors.
     for (MachineBasicBlock::const_pred_iterator PI = MBB->pred_begin(),
          PE = MBB->pred_end(); PI != PE; ++PI) {
       if (!LiveOut.insert(*PI))
         continue;
-      SlotIndex Stop = getMBBEndIdx(*PI).getPrevSlot();
-      assert(li->getVNInfoAt(Stop) == VNI && "Wrong value out of predecessor");
+      SlotIndex Stop = getMBBEndIdx(*PI);
+      assert(li->getVNInfoBefore(Stop) == VNI &&
+             "Wrong value out of predecessor");
       WorkList.push_back(std::make_pair(Stop, VNI));
     }
   }
