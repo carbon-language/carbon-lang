@@ -413,15 +413,32 @@ void MachineBlockPlacement::buildChain(
   assert(*Chain.begin() == BB);
   MachineBasicBlock *LoopHeaderBB = BB;
   markChainSuccessors(Chain, LoopHeaderBB, BlockWorkList, BlockFilter);
+  SmallVector<MachineOperand, 4> Cond; // For AnalyzeBranch.
   BB = *llvm::prior(Chain.end());
   for (;;) {
     assert(BB);
     assert(BlockToChain[BB] == &Chain);
     assert(*llvm::prior(Chain.end()) == BB);
+    MachineBasicBlock *BestSucc = 0;
 
-    // Look for the best viable successor if there is one to place immediately
-    // after this block.
-    MachineBasicBlock *BestSucc = selectBestSuccessor(BB, Chain, BlockFilter);
+    // Check for unreasonable branches, and forcibly merge the existing layout
+    // successor for them. We can handle cases that AnalyzeBranch can't: jump
+    // tables etc are fine. The case we want to handle specially is when there
+    // is potential fallthrough, but the branch cannot be analyzed. This
+    // includes blocks without terminators as well as other cases.
+    Cond.clear();
+    MachineBasicBlock *TBB = 0, *FBB = 0; // For AnalyzeBranch.
+    if (TII->AnalyzeBranch(*BB, TBB, FBB, Cond) && BB->canFallThrough()) {
+      MachineFunction::iterator I(BB);
+      assert(llvm::next(I) != BB->getParent()->end() &&
+             "The final block in the function can fallthrough!");
+      BestSucc = llvm::next(I);
+    }
+
+    // Otherwise, look for the best viable successor if there is one to place
+    // immediately after this block.
+    if (!BestSucc)
+      BestSucc = selectBestSuccessor(BB, Chain, BlockFilter);
 
     // If an immediate successor isn't available, look for the best viable
     // block among those we've identified as not violating the loop's CFG at
