@@ -13,6 +13,7 @@
 #include "lldb/API/SBStream.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Core/Stream.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -200,14 +201,15 @@ SBFileSpec::SetFileSpec (const lldb_private::FileSpec& fs)
 bool
 SBFileSpec::GetDescription (SBStream &description) const
 {
+    Stream &strm = description.ref();
     if (m_opaque_ap.get())
     {
         char path[PATH_MAX];
         if (m_opaque_ap->GetPath(path, sizeof(path)))
-            description.Printf ("%s", path);
+            strm.PutCString (path);
     }
     else
-        description.Printf ("No value");
+        strm.PutCString ("No value");
     
     return true;
 }

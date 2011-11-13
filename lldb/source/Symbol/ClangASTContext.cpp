@@ -2844,6 +2844,21 @@ ClangASTContext::GetNumFields (clang::ASTContext *ast, clang_type_t clang_type)
             count = ClangASTContext::GetNumFields (ast, cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr());
             break;
             
+        case clang::Type::ObjCObject:
+        case clang::Type::ObjCInterface:
+            if (GetCompleteQualType (ast, qual_type))
+            {
+                const ObjCObjectType *objc_class_type = dyn_cast<ObjCObjectType>(qual_type.getTypePtr());
+                if (objc_class_type)
+                {
+                    ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
+                    
+                    if (class_interface_decl)
+                        count = class_interface_decl->ivar_size();
+                }
+            }
+            break;
+
         default:
             break;
     }
@@ -2854,7 +2869,7 @@ clang_type_t
 ClangASTContext::GetDirectBaseClassAtIndex (clang::ASTContext *ast, 
                                             clang_type_t clang_type,
                                             uint32_t idx, 
-                                            uint32_t *byte_offset_ptr)
+                                            uint32_t *bit_offset_ptr)
 {
     if (clang_type == NULL)
         return 0;
@@ -2877,14 +2892,14 @@ ClangASTContext::GetDirectBaseClassAtIndex (clang::ASTContext *ast,
                     {
                         if (curr_idx == idx)
                         {
-                            if (byte_offset_ptr)
+                            if (bit_offset_ptr)
                             {
                                 const ASTRecordLayout &record_layout = ast->getASTRecordLayout(cxx_record_decl);
                                 const CXXRecordDecl *base_class_decl = cast<CXXRecordDecl>(base_class->getType()->getAs<RecordType>()->getDecl());
 //                                if (base_class->isVirtual())
-//                                    *byte_offset_ptr = record_layout.getVBaseClassOffset(base_class_decl).getQuantity() * 8;
+//                                    *bit_offset_ptr = record_layout.getVBaseClassOffset(base_class_decl).getQuantity() * 8;
 //                                else
-                                    *byte_offset_ptr = record_layout.getBaseClassOffset(base_class_decl).getQuantity() * 8;
+                                    *bit_offset_ptr = record_layout.getBaseClassOffset(base_class_decl).getQuantity() * 8;
                             }
                             return base_class->getType().getAsOpaquePtr();
                         }
@@ -2907,8 +2922,8 @@ ClangASTContext::GetDirectBaseClassAtIndex (clang::ASTContext *ast,
                         ObjCInterfaceDecl *superclass_interface_decl = class_interface_decl->getSuperClass();
                         if (superclass_interface_decl)
                         {
-                            if (byte_offset_ptr)
-                                *byte_offset_ptr = 0;
+                            if (bit_offset_ptr)
+                                *bit_offset_ptr = 0;
                             return ast->getObjCInterfaceType(superclass_interface_decl).getAsOpaquePtr();
                         }
                     }
@@ -2921,13 +2936,13 @@ ClangASTContext::GetDirectBaseClassAtIndex (clang::ASTContext *ast,
             return ClangASTContext::GetDirectBaseClassAtIndex (ast, 
                                                                cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(),
                                                                idx,
-                                                               byte_offset_ptr);
+                                                               bit_offset_ptr);
             
         case clang::Type::Elaborated:
             return  ClangASTContext::GetDirectBaseClassAtIndex (ast, 
                                                                 cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr(),
                                                                 idx,
-                                                                byte_offset_ptr);
+                                                                bit_offset_ptr);
             
         default:
             break;
@@ -2939,7 +2954,7 @@ clang_type_t
 ClangASTContext::GetVirtualBaseClassAtIndex (clang::ASTContext *ast, 
                                              clang_type_t clang_type,
                                              uint32_t idx, 
-                                             uint32_t *byte_offset_ptr)
+                                             uint32_t *bit_offset_ptr)
 {
     if (clang_type == NULL)
         return 0;
@@ -2962,11 +2977,11 @@ ClangASTContext::GetVirtualBaseClassAtIndex (clang::ASTContext *ast,
                     {
                         if (curr_idx == idx)
                         {
-                            if (byte_offset_ptr)
+                            if (bit_offset_ptr)
                             {
                                 const ASTRecordLayout &record_layout = ast->getASTRecordLayout(cxx_record_decl);
                                 const CXXRecordDecl *base_class_decl = cast<CXXRecordDecl>(base_class->getType()->getAs<RecordType>()->getDecl());
-                                *byte_offset_ptr = record_layout.getVBaseClassOffset(base_class_decl).getQuantity() * 8;
+                                *bit_offset_ptr = record_layout.getVBaseClassOffset(base_class_decl).getQuantity() * 8;
 
                             }
                             return base_class->getType().getAsOpaquePtr();
@@ -2980,13 +2995,13 @@ ClangASTContext::GetVirtualBaseClassAtIndex (clang::ASTContext *ast,
             return ClangASTContext::GetVirtualBaseClassAtIndex (ast, 
                                                                 cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(),
                                                                 idx,
-                                                                byte_offset_ptr);
+                                                                bit_offset_ptr);
             
         case clang::Type::Elaborated:
             return  ClangASTContext::GetVirtualBaseClassAtIndex (ast, 
                                                                  cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr(),
                                                                  idx,
-                                                                 byte_offset_ptr);
+                                                                 bit_offset_ptr);
             
         default:
             break;
@@ -2999,7 +3014,7 @@ ClangASTContext::GetFieldAtIndex (clang::ASTContext *ast,
                                   clang_type_t clang_type,
                                   uint32_t idx, 
                                   std::string& name,
-                                  uint32_t *byte_offset_ptr)
+                                  uint32_t *bit_offset_ptr)
 {
     if (clang_type == NULL)
         return 0;
@@ -3025,10 +3040,10 @@ ClangASTContext::GetFieldAtIndex (clang::ASTContext *ast,
                         
                         // Figure out the type byte size (field_type_info.first) and
                         // alignment (field_type_info.second) from the AST context.
-                        if (byte_offset_ptr)
+                        if (bit_offset_ptr)
                         {
                             const ASTRecordLayout &record_layout = ast->getASTRecordLayout(record_decl);
-                            *byte_offset_ptr = (record_layout.getFieldOffset (field_idx) + 7) / 8;
+                            *bit_offset_ptr = record_layout.getFieldOffset (field_idx);
                         }
                         
                         return field->getType().getAsOpaquePtr();
@@ -3064,10 +3079,10 @@ ClangASTContext::GetFieldAtIndex (clang::ASTContext *ast,
                                     
                                     name.assign(ivar_decl->getNameAsString());
 
-                                    if (byte_offset_ptr)
+                                    if (bit_offset_ptr)
                                     {
                                         const ASTRecordLayout &interface_layout = ast->getASTObjCInterfaceLayout(class_interface_decl);
-                                        *byte_offset_ptr = (interface_layout.getFieldOffset (ivar_idx) + 7)/8;
+                                        *bit_offset_ptr = interface_layout.getFieldOffset (ivar_idx);
                                     }
                                     
                                     return ivar_qual_type.getAsOpaquePtr();
@@ -3085,14 +3100,14 @@ ClangASTContext::GetFieldAtIndex (clang::ASTContext *ast,
                                                      cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(),
                                                      idx,
                                                      name,
-                                                     byte_offset_ptr);
+                                                     bit_offset_ptr);
             
         case clang::Type::Elaborated:
             return  ClangASTContext::GetFieldAtIndex (ast, 
                                                       cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr(),
                                                       idx,
                                                       name,
-                                                      byte_offset_ptr);
+                                                      bit_offset_ptr);
             
         default:
             break;

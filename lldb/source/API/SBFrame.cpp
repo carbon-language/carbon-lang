@@ -708,14 +708,15 @@ SBFrame::GetRegisters ()
 bool
 SBFrame::GetDescription (SBStream &description)
 {
+    Stream &strm = description.ref();
+
     if (m_opaque_sp)
     {
         Mutex::Locker api_locker (m_opaque_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
-        Stream &s = description.ref();
-        m_opaque_sp->DumpUsingSettingsFormat (&s);
+        m_opaque_sp->DumpUsingSettingsFormat (&strm);
     }
     else
-        description.Printf ("No value");
+        strm.PutCString ("No value");
 
     return true;
 }

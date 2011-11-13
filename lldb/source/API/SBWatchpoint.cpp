@@ -229,15 +229,16 @@ SBWatchpoint::SetCondition (const char *condition)
 bool
 SBWatchpoint::GetDescription (SBStream &description, DescriptionLevel level)
 {
+    Stream &strm = description.ref();
+
     if (m_opaque_sp)
     {
         Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        description.ref();
-        m_opaque_sp->GetDescription (description.get(), level);
-        description.get()->EOL();
+        m_opaque_sp->GetDescription (&strm, level);
+        strm.EOL();
     }
     else
-        description.Printf ("No value");
+        strm.PutCString ("No value");
 
     return true;
 }

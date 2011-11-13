@@ -32,8 +32,11 @@ public:
     GetType ();
 
     uint64_t
-    GetOffsetByteSize();
-
+    GetOffsetInBytes();
+    
+    uint64_t
+    GetOffsetInBits();
+    
 protected:
     std::auto_ptr<lldb_private::TypeMemberImpl> m_opaque_ap;
 };

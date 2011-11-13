@@ -100,14 +100,15 @@ SBSymbol::operator != (const SBSymbol &rhs) const
 bool
 SBSymbol::GetDescription (SBStream &description)
 {
+    Stream &strm = description.ref();
+
     if (m_opaque_ptr)
     {
-        description.ref();
-        m_opaque_ptr->GetDescription (description.get(), 
+        m_opaque_ptr->GetDescription (&strm,
                                       lldb::eDescriptionLevelFull, NULL);
     }
     else
-        description.Printf ("No value");
+        strm.PutCString ("No value");
     
     return true;
 }

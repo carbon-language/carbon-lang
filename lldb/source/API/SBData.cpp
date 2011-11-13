@@ -13,6 +13,8 @@
 
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Core/Stream.h"
+
 
 using namespace lldb;
 using namespace lldb_private;
@@ -414,21 +416,22 @@ SBData::GetString (lldb::SBError& error, uint32_t offset)
 bool
 SBData::GetDescription (lldb::SBStream &description, lldb::addr_t base_addr)
 {
+    Stream &strm = description.ref();
+
     if (m_opaque_sp)
     {
-        description.ref();
-        m_opaque_sp->Dump(description.get(),
-                          0,
-                          lldb::eFormatBytesWithASCII,
-                          1,
-                          m_opaque_sp->GetByteSize(),
-                          16,
-                          base_addr,
-                          0,
-                          0);
+        m_opaque_sp->Dump (&strm,
+                           0,
+                           lldb::eFormatBytesWithASCII,
+                           1,
+                           m_opaque_sp->GetByteSize(),
+                           16,
+                           base_addr,
+                           0,
+                           0);
     }
     else
-        description.Printf ("No Value");
+        strm.PutCString ("No value");
     
     return true;
 }

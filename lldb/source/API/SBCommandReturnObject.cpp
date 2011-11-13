@@ -221,27 +221,29 @@ SBCommandReturnObject::SetLLDBObjectPtr (CommandReturnObject *ptr)
 bool
 SBCommandReturnObject::GetDescription (SBStream &description)
 {
+    Stream &strm = description.ref();
+
     if (m_opaque_ap.get())
     {
         description.Printf ("Status:  ");
         lldb::ReturnStatus status = m_opaque_ap->GetStatus();
         if (status == lldb::eReturnStatusStarted)
-            description.Printf ("Started");
+            strm.PutCString ("Started");
         else if (status == lldb::eReturnStatusInvalid)
-            description.Printf ("Invalid");
+            strm.PutCString ("Invalid");
         else if (m_opaque_ap->Succeeded())
-            description.Printf ("Success");
+            strm.PutCString ("Success");
         else
-            description.Printf ("Fail");
+            strm.PutCString ("Fail");
 
         if (GetOutputSize() > 0)
-            description.Printf ("\nOutput Message:\n%s", GetOutput());
+            strm.Printf ("\nOutput Message:\n%s", GetOutput());
 
         if (GetErrorSize() > 0)
-            description.Printf ("\nError Message:\n%s", GetError());
+            strm.Printf ("\nError Message:\n%s", GetError());
     }
     else
-        description.Printf ("No value");
+        strm.PutCString ("No value");
 
     return true;
 }

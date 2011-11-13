@@ -205,13 +205,14 @@ SBEvent::GetCStringFromEvent (const SBEvent &event)
 bool
 SBEvent::GetDescription (SBStream &description)
 {
+    Stream &strm = description.ref();
+
     if (get())
     {
-        description.ref();
-        m_opaque_ptr->Dump (description.get());
+        m_opaque_ptr->Dump (&strm);
     }
     else
-        description.Printf ("No value");
+        strm.PutCString ("No value");
 
     return true;
 }
@@ -219,13 +220,14 @@ SBEvent::GetDescription (SBStream &description)
 bool
 SBEvent::GetDescription (SBStream &description) const
 {
+    Stream &strm = description.ref();
+
     if (get())
     {
-        description.ref();
-        m_opaque_ptr->Dump (description.get());
+        m_opaque_ptr->Dump (&strm);
     }
     else
-        description.Printf ("No value");
+        strm.PutCString ("No value");
 
     return true;
 }

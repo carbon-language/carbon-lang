@@ -326,16 +326,18 @@ SBSection::operator != (const SBSection &rhs)
 bool
 SBSection::GetDescription (SBStream &description)
 {
+    Stream &strm = description.ref();
+
     if (IsValid())
     {
         const Section *section = m_opaque_ap->GetSection();
         const addr_t file_addr = section->GetFileAddress();
-        description.Printf ("[0x%16.16llx-0x%16.16llx) ", file_addr, file_addr + section->GetByteSize());
-        section->DumpName(description.get());
+        strm.Printf ("[0x%16.16llx-0x%16.16llx) ", file_addr, file_addr + section->GetByteSize());
+        section->DumpName(&strm);
     }
     else
     {
-        description.Printf ("No value");
+        strm.PutCString ("No value");
     }
 
     return true;

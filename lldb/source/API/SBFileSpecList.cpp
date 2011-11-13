@@ -14,6 +14,7 @@
 #include "lldb/API/SBStream.h"
 #include "lldb/Core/FileSpecList.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Core/Stream.h"
 #include "lldb/Host/FileSpec.h"
 
 using namespace lldb;
@@ -121,19 +122,21 @@ SBFileSpecList::ref() const
 bool
 SBFileSpecList::GetDescription (SBStream &description) const
 {
+    Stream &strm = description.ref();
+
     if (m_opaque_ap.get())
     {
         uint32_t num_files = m_opaque_ap->GetSize();
-        description.Printf ("%d files: ", num_files);
+        strm.Printf ("%d files: ", num_files);
         for (uint32_t i = 0; i < num_files; i++)
         {
             char path[PATH_MAX];
             if (m_opaque_ap->GetFileSpecAtIndex(i).GetPath(path, sizeof(path)))
-                description.Printf ("\n    %s", path);
+                strm.Printf ("\n    %s", path);
         }
     }
     else
-        description.Printf ("No value");
+        strm.PutCString ("No value");
     
     return true;
 }

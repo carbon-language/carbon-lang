@@ -917,25 +917,14 @@ SBValue::GetExpressionPath (SBStream &description, bool qualify_cxx_base_classes
 bool
 SBValue::GetDescription (SBStream &description)
 {
+    Stream &strm = description.ref();
+
     if (m_opaque_sp)
     {
-        /*uint32_t ptr_depth = 0;
-        uint32_t curr_depth = 0;
-        uint32_t max_depth = UINT32_MAX;
-        bool show_types = false;
-        bool show_location = false;
-        bool use_objc = false;
-        lldb::DynamicValueType use_dynamic = eNoDynamicValues;
-        bool scope_already_checked = false;
-        bool flat_output = false;
-        bool use_synthetic = true;
-        uint32_t no_summary_depth = 0;
-        bool ignore_cap = false;*/
-        ValueObject::DumpValueObject (description.ref(), 
-                                      m_opaque_sp.get());
+        ValueObject::DumpValueObject (strm, m_opaque_sp.get());
     }
     else
-        description.Printf ("No value");
+        strm.PutCString ("No value");
 
     return true;
 }

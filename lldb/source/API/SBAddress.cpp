@@ -277,11 +277,11 @@ SBAddress::GetDescription (SBStream &description)
 {
     // Call "ref()" on the stream to make sure it creates a backing stream in
     // case there isn't one already...
-    description.ref();
+    Stream &strm = description.ref();
     if (m_opaque_ap.get())
-        m_opaque_ap->GetAddress().Dump (description.get(), NULL, Address::DumpStyleModuleWithFileAddress, Address::DumpStyleInvalid, 4);
+        m_opaque_ap->GetAddress().Dump (&strm, NULL, Address::DumpStyleModuleWithFileAddress, Address::DumpStyleInvalid, 4);
     else
-        description.Printf ("No value");
+        strm.PutCString ("No value");
 
     return true;
 }

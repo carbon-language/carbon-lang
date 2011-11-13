@@ -189,13 +189,14 @@ SBCompileUnit::reset (lldb_private::CompileUnit *lldb_object_ptr)
 bool
 SBCompileUnit::GetDescription (SBStream &description)
 {
+    Stream &strm = description.ref();
+
     if (m_opaque_ptr)
     {
-        description.ref();
-        m_opaque_ptr->Dump (description.get(), false);
+        m_opaque_ptr->Dump (&strm, false);
     }
     else
-        description.Printf ("No Value");
+        strm.PutCString ("No value");
     
     return true;
 }

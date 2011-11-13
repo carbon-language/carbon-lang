@@ -472,7 +472,7 @@ public:
     GetBroadcaster () const;
 
     bool
-    GetDescription (lldb::SBStream &description, lldb::DescriptionLevel description_level) const;
+    GetDescription (lldb::SBStream &description, lldb::DescriptionLevel description_level);
 };
 
 } // namespace lldb

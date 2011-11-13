@@ -146,6 +146,20 @@
                 return PyString_FromString (description.GetData());
         }
 }
+%extend lldb::SBType {
+        PyObject *lldb::SBType::__repr__ (){
+                lldb::SBStream description;
+                $self->GetDescription (description, lldb::eDescriptionLevelBrief);
+                return PyString_FromString (description.GetData());
+        }
+}
+%extend lldb::SBTypeMember {
+        PyObject *lldb::SBTypeMember::__repr__ (){
+                lldb::SBStream description;
+                $self->GetDescription (description, lldb::eDescriptionLevelBrief);
+                return PyString_FromString (description.GetData());
+        }
+}
 %extend lldb::SBThread {
         PyObject *lldb::SBThread::__repr__ (){
                 lldb::SBStream description;

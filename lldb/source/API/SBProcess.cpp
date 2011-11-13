@@ -814,6 +814,8 @@ SBProcess::get() const
 bool
 SBProcess::GetDescription (SBStream &description)
 {
+    Stream &strm = description.ref();
+
     if (m_opaque_sp)
     {
         char path[PATH_MAX];
@@ -823,15 +825,15 @@ SBProcess::GetDescription (SBStream &description)
         if (exe_module)
             exe_name = exe_module->GetFileSpec().GetFilename().AsCString();
 
-        description.Printf ("SBProcess: pid = %llu, state = %s, threads = %d%s%s", 
-                            m_opaque_sp->GetID(),
-                            lldb_private::StateAsCString (GetState()), 
-                            GetNumThreads(),
-                            exe_name ? ", executable = " : "",
-                            exe_name ? exe_name : "");
+        strm.Printf ("SBProcess: pid = %llu, state = %s, threads = %d%s%s", 
+                     m_opaque_sp->GetID(),
+                     lldb_private::StateAsCString (GetState()), 
+                     GetNumThreads(),
+                     exe_name ? ", executable = " : "",
+                     exe_name ? exe_name : "");
     }
     else
-        description.Printf ("No value");
+        strm.PutCString ("No value");
 
     return true;
 }

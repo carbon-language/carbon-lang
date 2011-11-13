@@ -18,6 +18,7 @@
 #include "lldb/API/SBStream.h"
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Core/Stream.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/ClangASTType.h"
 #include "lldb/Symbol/Type.h"
@@ -342,6 +343,23 @@ SBType::GetNumberOfFields ()
     return 0;
 }
 
+bool
+SBType::GetDescription (SBStream &description, lldb::DescriptionLevel description_level)
+{
+    Stream &strm = description.ref();
+
+    if (m_opaque_sp)
+    {
+        m_opaque_sp->GetDescription (strm, description_level);
+    }
+    else
+        strm.PutCString ("No value");
+    
+    return true;
+}
+
+
+
 SBTypeMember
 SBType::GetDirectBaseClassAtIndex (uint32_t idx)
 {
@@ -349,12 +367,12 @@ SBType::GetDirectBaseClassAtIndex (uint32_t idx)
     if (IsValid())
     {
         clang::ASTContext* ast = m_opaque_sp->GetASTContext();
-        uint32_t byte_offset = 0;
-        clang_type_t clang_type = ClangASTContext::GetDirectBaseClassAtIndex (ast, m_opaque_sp->GetOpaqueQualType(), idx, &byte_offset);
+        uint32_t bit_offset = 0;
+        clang_type_t clang_type = ClangASTContext::GetDirectBaseClassAtIndex (ast, m_opaque_sp->GetOpaqueQualType(), idx, &bit_offset);
         if (clang_type)
         {
             TypeImplSP type_impl_sp (new TypeImpl(ClangASTType (ast, clang_type)));
-            sb_type_member.reset (new TypeMemberImpl (type_impl_sp, byte_offset));
+            sb_type_member.reset (new TypeMemberImpl (type_impl_sp, bit_offset));
         }
     }
     return sb_type_member;
@@ -367,13 +385,13 @@ SBType::GetVirtualBaseClassAtIndex (uint32_t idx)
     SBTypeMember sb_type_member;
     if (IsValid())
     {
-        uint32_t byte_offset = 0;
+        uint32_t bit_offset = 0;
         clang::ASTContext* ast = m_opaque_sp->GetASTContext();
-        clang_type_t clang_type = ClangASTContext::GetVirtualBaseClassAtIndex (ast, m_opaque_sp->GetOpaqueQualType(), idx, &byte_offset);
+        clang_type_t clang_type = ClangASTContext::GetVirtualBaseClassAtIndex (ast, m_opaque_sp->GetOpaqueQualType(), idx, &bit_offset);
         if (clang_type)
         {
             TypeImplSP type_impl_sp (new TypeImpl(ClangASTType (ast, clang_type)));
-            sb_type_member.reset (new TypeMemberImpl (type_impl_sp, byte_offset));
+            sb_type_member.reset (new TypeMemberImpl (type_impl_sp, bit_offset));
         }        
     }
     return sb_type_member;
@@ -385,17 +403,17 @@ SBType::GetFieldAtIndex (uint32_t idx)
     SBTypeMember sb_type_member;
     if (IsValid())
     {
-        uint32_t byte_offset = 0;
+        uint32_t bit_offset = 0;
         clang::ASTContext* ast = m_opaque_sp->GetASTContext();
         std::string name_sstr;
-        clang_type_t clang_type = ClangASTContext::GetFieldAtIndex (ast, m_opaque_sp->GetOpaqueQualType(), idx, name_sstr, &byte_offset);
+        clang_type_t clang_type = ClangASTContext::GetFieldAtIndex (ast, m_opaque_sp->GetOpaqueQualType(), idx, name_sstr, &bit_offset);
         if (clang_type)
         {
             ConstString name;
             if (!name_sstr.empty())
                 name.SetCString(name_sstr.c_str());
             TypeImplSP type_impl_sp (new TypeImpl(ClangASTType (ast, clang_type)));
-            sb_type_member.reset (new TypeMemberImpl (type_impl_sp, byte_offset, name));
+            sb_type_member.reset (new TypeMemberImpl (type_impl_sp, bit_offset, name));
         }        
     }
     return sb_type_member;
@@ -545,12 +563,45 @@ SBTypeMember::GetType ()
 }
 
 uint64_t
-SBTypeMember::GetOffsetByteSize()
+SBTypeMember::GetOffsetInBytes()
 {
     if (m_opaque_ap.get())
         return (m_opaque_ap->GetBitOffset() + 7) / 8u;
     return 0;
 }
+
+uint64_t
+SBTypeMember::GetOffsetInBits()
+{
+    if (m_opaque_ap.get())
+        return m_opaque_ap->GetBitOffset();
+    return 0;
+}
+
+bool
+SBTypeMember::GetDescription (lldb::SBStream &description, lldb::DescriptionLevel description_level)
+{
+    Stream &strm = description.ref();
+
+    if (m_opaque_ap.get())
+    {
+        const uint32_t byte_offset = (m_opaque_ap->GetBitOffset() + 7) / 8u;
+        const char *name = m_opaque_ap->GetName().GetCString();
+        strm.Printf ("+%u: (", byte_offset);
+        
+        TypeImplSP type_impl_sp (m_opaque_ap->GetTypeImpl());
+        if (type_impl_sp)
+            type_impl_sp->GetDescription(strm, description_level);
+        
+        strm.Printf (") %s", name);
+    }
+    else
+    {
+        strm.PutCString ("No value");
+    }
+    return true;   
+}
+
 
 void
 SBTypeMember::reset(TypeMemberImpl *type_member_impl)

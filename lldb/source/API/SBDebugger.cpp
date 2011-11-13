@@ -965,14 +965,16 @@ SBDebugger::GetUseExternalEditor ()
 bool
 SBDebugger::GetDescription (SBStream &description)
 {
+    Stream &strm = description.ref();
+
     if (m_opaque_sp)
     {
         const char *name = m_opaque_sp->GetInstanceName().AsCString();
         user_id_t id = m_opaque_sp->GetID();
-        description.Printf ("Debugger (instance: \"%s\", id: %llu)", name, id);
+        strm.Printf ("Debugger (instance: \"%s\", id: %llu)", name, id);
     }
     else
-        description.Printf ("No value");
+        strm.PutCString ("No value");
     
     return true;
 }

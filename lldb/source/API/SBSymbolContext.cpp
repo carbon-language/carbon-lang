@@ -254,13 +254,14 @@ SBSymbolContext::get() const
 bool
 SBSymbolContext::GetDescription (SBStream &description)
 {
+    Stream &strm = description.ref();
+
     if (m_opaque_ap.get())
     {
-        description.ref();
-        m_opaque_ap->GetDescription (description.get(), lldb::eDescriptionLevelFull, NULL);
+        m_opaque_ap->GetDescription (&strm, lldb::eDescriptionLevelFull, NULL);
     }
     else
-        description.Printf ("No value");
+        strm.PutCString ("No value");
 
     return true;
 }

@@ -225,16 +225,18 @@ SBLineEntry::ref() const
 bool
 SBLineEntry::GetDescription (SBStream &description)
 {
+    Stream &strm = description.ref();
+
     if (m_opaque_ap.get())
     {
         char file_path[PATH_MAX*2];
         m_opaque_ap->file.GetPath (file_path, sizeof (file_path));
-        description.Printf ("%s:%u", file_path, GetLine());
+        strm.Printf ("%s:%u", file_path, GetLine());
         if (GetColumn() > 0)
-            description.Printf (":%u", GetColumn());
+            strm.Printf (":%u", GetColumn());
     }
     else
-        description.Printf ("No value");
+        strm.PutCString ("No value");
 
     return true;
 }

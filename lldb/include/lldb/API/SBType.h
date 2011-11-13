@@ -40,7 +40,14 @@ public:
     GetType ();
     
     uint64_t
-    GetOffsetByteSize();
+    GetOffsetInBytes();
+    
+    uint64_t
+    GetOffsetInBits();
+
+    bool
+    GetDescription (lldb::SBStream &description, 
+                    lldb::DescriptionLevel description_level);
     
 protected:
     friend class SBType;
@@ -127,6 +134,10 @@ public:
     static bool
     IsPointerType (void * clang_type);
         
+    bool
+    GetDescription (lldb::SBStream &description, 
+                    lldb::DescriptionLevel description_level);
+
 protected:
     
 #ifndef SWIG

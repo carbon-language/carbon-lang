@@ -1152,31 +1152,17 @@ SBTarget::GetBroadcaster () const
 bool
 SBTarget::GetDescription (SBStream &description, lldb::DescriptionLevel description_level)
 {
+    Stream &strm = description.ref();
+
     if (m_opaque_sp)
     {
-        description.ref();
-        m_opaque_sp->Dump (description.get(), description_level);
+        m_opaque_sp->Dump (&strm, description_level);
     }
     else
-        description.Printf ("No value");
+        strm.PutCString ("No value");
     
     return true;
 }
-
-bool
-SBTarget::GetDescription (SBStream &description, lldb::DescriptionLevel description_level) const
-{
-    if (m_opaque_sp)
-    {
-        description.ref();
-        m_opaque_sp->Dump (description.get(), description_level);
-    }
-    else
-        description.Printf ("No value");
-    
-    return true;
-}
-
 
 uint32_t
 SBTarget::FindFunctions (const char *name, 

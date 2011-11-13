@@ -1272,46 +1272,64 @@ ClangASTType::DumpTypeDescription (clang::ASTContext *ast_context, clang_type_t 
         llvm::SmallVector<char, 1024> buf;
         llvm::raw_svector_ostream llvm_ostrm (buf);
 
-        const clang::TagType *tag_type = llvm::dyn_cast<clang::TagType>(qual_type.getTypePtr());
-        if (tag_type)
+        const clang::Type::TypeClass type_class = qual_type->getTypeClass();
+        switch (type_class)
         {
-            clang::TagDecl *tag_decl = tag_type->getDecl();
-            if (tag_decl)
-                tag_decl->print(llvm_ostrm, 0);
-        }
-        else
-        {
-            const clang::Type::TypeClass type_class = qual_type->getTypeClass();
-            switch (type_class)
+        case clang::Type::ObjCObject:
+        case clang::Type::ObjCInterface:
+            if (ClangASTContext::GetCompleteType (ast_context, clang_type))
             {
-            case clang::Type::ObjCObject:
-            case clang::Type::ObjCInterface:
+                const clang::ObjCObjectType *objc_class_type = llvm::dyn_cast<clang::ObjCObjectType>(qual_type.getTypePtr());
+                assert (objc_class_type);
+                if (objc_class_type)
                 {
-                    const clang::ObjCObjectType *objc_class_type = llvm::dyn_cast<clang::ObjCObjectType>(qual_type.getTypePtr());
-                    assert (objc_class_type);
-                    if (objc_class_type)
+                    clang::ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
+                    if (class_interface_decl)
+                        class_interface_decl->print(llvm_ostrm, ast_context->getPrintingPolicy(), s->GetIndentLevel());
+                }
+            }
+            break;
+        
+        case clang::Type::Typedef:
+            {
+                const clang::TypedefType *typedef_type = qual_type->getAs<clang::TypedefType>();
+                if (typedef_type)
+                {
+                    const clang::TypedefNameDecl *typedef_decl = typedef_type->getDecl();
+                    std::string clang_typedef_name (typedef_decl->getQualifiedNameAsString());
+                    if (!clang_typedef_name.empty())
                     {
-                        clang::ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
-                        if (class_interface_decl)
-                            class_interface_decl->print(llvm_ostrm, ast_context->getPrintingPolicy(), s->GetIndentLevel());
+                        s->PutCString ("typedef ");
+                        s->PutCString (clang_typedef_name.c_str());
                     }
                 }
-                break;
-            
-            case clang::Type::Typedef:
-                {
-                    const clang::TypedefType *typedef_type = qual_type->getAs<clang::TypedefType>();
-                    if (typedef_type)
-                    {
-                        const clang::TypedefNameDecl *typedef_decl = typedef_type->getDecl();
-                        std::string clang_typedef_name (typedef_decl->getQualifiedNameAsString());
-                        if (!clang_typedef_name.empty())
-                            s->PutCString (clang_typedef_name.c_str());
-                    }
-                }
-                break;
+            }
+            break;
 
-            default:
+        case clang::Type::Record:
+            if (ClangASTContext::GetCompleteType (ast_context, clang_type))
+            {
+                const clang::RecordType *record_type = llvm::cast<clang::RecordType>(qual_type.getTypePtr());
+                const clang::RecordDecl *record_decl = record_type->getDecl();
+                const clang::CXXRecordDecl *cxx_record_decl = llvm::dyn_cast<clang::CXXRecordDecl>(record_decl);
+
+                if (cxx_record_decl)
+                    cxx_record_decl->print(llvm_ostrm, ast_context->getPrintingPolicy(), s->GetIndentLevel());
+                else
+                    record_decl->print(llvm_ostrm, ast_context->getPrintingPolicy(), s->GetIndentLevel());
+            }
+            break;
+
+        default:
+            {
+                const clang::TagType *tag_type = llvm::dyn_cast<clang::TagType>(qual_type.getTypePtr());
+                if (tag_type)
+                {
+                    clang::TagDecl *tag_decl = tag_type->getDecl();
+                    if (tag_decl)
+                        tag_decl->print(llvm_ostrm, 0);
+                }
+                else
                 {
                     std::string clang_type_name(qual_type.getAsString());
                     if (!clang_type_name.empty())

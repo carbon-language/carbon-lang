@@ -255,13 +255,14 @@ SBModule::ResolveSymbolContextForAddress (const SBAddress& addr, uint32_t resolv
 bool
 SBModule::GetDescription (SBStream &description)
 {
+    Stream &strm = description.ref();
+
     if (m_opaque_sp)
     {
-        description.ref();
-        m_opaque_sp->GetDescription (description.get());
+        m_opaque_sp->GetDescription (&strm);
     }
     else
-        description.Printf ("No value");
+        strm.PutCString ("No value");
 
     return true;
 }

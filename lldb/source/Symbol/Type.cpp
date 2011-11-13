@@ -777,3 +777,21 @@ TypeImpl::GetOpaqueQualType()
     
     return m_clang_ast_type.GetOpaqueQualType();
 }
+
+bool
+TypeImpl::GetDescription (lldb_private::Stream &strm, 
+                          lldb::DescriptionLevel description_level)
+{
+    if (m_clang_ast_type.IsValid())
+    {
+        ClangASTType::DumpTypeDescription (m_clang_ast_type.GetASTContext(), 
+                                           m_clang_ast_type.GetOpaqueQualType(), 
+                                           &strm);
+    }
+    else
+    {
+        strm.PutCString ("No value");
+    }
+    return true;
+}
+

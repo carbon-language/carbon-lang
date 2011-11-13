@@ -951,13 +951,14 @@ SBThread::operator*()
 bool
 SBThread::GetDescription (SBStream &description) const
 {
+    Stream &strm = description.ref();
+
     if (m_opaque_sp)
     {
-        StreamString strm;
-        description.Printf("SBThread: tid = 0x%4.4llx", m_opaque_sp->GetID());
+        strm.Printf("SBThread: tid = 0x%4.4llx", m_opaque_sp->GetID());
     }
     else
-        description.Printf ("No value");
+        strm.PutCString ("No value");
     
     return true;
 }
