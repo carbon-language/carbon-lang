@@ -36,7 +36,6 @@
 #include "Spiller.h"
 #include "Splitter.h"
 #include "VirtRegMap.h"
-#include "VirtRegRewriter.h"
 #include "RegisterCoalescer.h"
 #include "llvm/CodeGen/CalcSpillWeights.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
@@ -669,9 +668,7 @@ bool RegAllocPBQP::runOnMachineFunction(MachineFunction &MF) {
   DEBUG(dbgs() << "Post alloc VirtRegMap:\n" << *vrm << "\n");
 
   // Run rewriter
-  std::auto_ptr<VirtRegRewriter> rewriter(createVirtRegRewriter());
-
-  rewriter->runOnMachineFunction(*mf, *vrm, lis);
+  vrm->rewrite(lis->getSlotIndexes());
 
   return true;
 }
