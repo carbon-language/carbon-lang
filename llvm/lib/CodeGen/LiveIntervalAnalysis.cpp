@@ -197,11 +197,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
   LiveVariables::VarInfo& vi = lv_->getVarInfo(interval.reg);
   if (interval.empty()) {
     // Get the Idx of the defining instructions.
-    SlotIndex defIndex = MIIdx.getRegSlot();
-    // Earlyclobbers move back one, so that they overlap the live range
-    // of inputs.
-    if (MO.isEarlyClobber())
-      defIndex = MIIdx.getRegSlot(true);
+    SlotIndex defIndex = MIIdx.getRegSlot(MO.isEarlyClobber());
 
     // Make sure the first definition is not a partial redefinition. Add an
     // <imp-def> of the full register.
@@ -323,9 +319,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       // are actually two values in the live interval.  Because of this we
       // need to take the LiveRegion that defines this register and split it
       // into two values.
-      SlotIndex RedefIndex = MIIdx.getRegSlot();
-      if (MO.isEarlyClobber())
-        RedefIndex = MIIdx.getRegSlot(true);
+      SlotIndex RedefIndex = MIIdx.getRegSlot(MO.isEarlyClobber());
 
       const LiveRange *OldLR =
         interval.getLiveRangeContaining(RedefIndex.getRegSlot(true));
@@ -402,10 +396,7 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
   DEBUG(dbgs() << "\t\tregister: " << PrintReg(interval.reg, tri_));
 
   SlotIndex baseIndex = MIIdx;
-  SlotIndex start = baseIndex.getRegSlot();
-  // Earlyclobbers move back one.
-  if (MO.isEarlyClobber())
-    start = MIIdx.getRegSlot(true);
+  SlotIndex start = baseIndex.getRegSlot(MO.isEarlyClobber());
   SlotIndex end = start;
 
   // If it is not used after definition, it is considered dead at
