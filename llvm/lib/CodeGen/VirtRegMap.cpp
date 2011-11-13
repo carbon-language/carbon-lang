@@ -58,25 +58,14 @@ bool VirtRegMap::runOnMachineFunction(MachineFunction &mf) {
   TRI = mf.getTarget().getRegisterInfo();
   MF = &mf;
 
-  ReMatId = MAX_STACK_SLOT+1;
   LowSpillSlot = HighSpillSlot = NO_STACK_SLOT;
   
   Virt2PhysMap.clear();
   Virt2StackSlotMap.clear();
-  Virt2ReMatIdMap.clear();
   Virt2SplitMap.clear();
-  Virt2SplitKillMap.clear();
-  ReMatMap.clear();
-  ImplicitDefed.clear();
   SpillSlotToUsesMap.clear();
-  MI2VirtMap.clear();
-  SpillPt2VirtMap.clear();
-  RestorePt2VirtMap.clear();
-  EmergencySpillMap.clear();
-  EmergencySpillSlots.clear();
   
   SpillSlotToUsesMap.resize(8);
-  ImplicitDefed.resize(MF->getRegInfo().getNumVirtRegs());
 
   allocatableRCRegs.clear();
   for (TargetRegisterInfo::regclass_iterator I = TRI->regclass_begin(),
@@ -93,11 +82,7 @@ void VirtRegMap::grow() {
   unsigned NumRegs = MF->getRegInfo().getNumVirtRegs();
   Virt2PhysMap.resize(NumRegs);
   Virt2StackSlotMap.resize(NumRegs);
-  Virt2ReMatIdMap.resize(NumRegs);
   Virt2SplitMap.resize(NumRegs);
-  Virt2SplitKillMap.resize(NumRegs);
-  ReMatMap.resize(NumRegs);
-  ImplicitDefed.resize(NumRegs);
 }
 
 unsigned VirtRegMap::createSpillSlot(const TargetRegisterClass *RC) {
@@ -144,29 +129,6 @@ void VirtRegMap::assignVirt2StackSlot(unsigned virtReg, int SS) {
   Virt2StackSlotMap[virtReg] = SS;
 }
 
-int VirtRegMap::assignVirtReMatId(unsigned virtReg) {
-  assert(TargetRegisterInfo::isVirtualRegister(virtReg));
-  assert(Virt2ReMatIdMap[virtReg] == NO_STACK_SLOT &&
-         "attempt to assign re-mat id to already spilled register");
-  Virt2ReMatIdMap[virtReg] = ReMatId;
-  return ReMatId++;
-}
-
-void VirtRegMap::assignVirtReMatId(unsigned virtReg, int id) {
-  assert(TargetRegisterInfo::isVirtualRegister(virtReg));
-  assert(Virt2ReMatIdMap[virtReg] == NO_STACK_SLOT &&
-         "attempt to assign re-mat id to already spilled register");
-  Virt2ReMatIdMap[virtReg] = id;
-}
-
-int VirtRegMap::getEmergencySpillSlot(const TargetRegisterClass *RC) {
-  std::map<const TargetRegisterClass*, int>::iterator I =
-    EmergencySpillSlots.find(RC);
-  if (I != EmergencySpillSlots.end())
-    return I->second;
-  return EmergencySpillSlots[RC] = createSpillSlot(RC);
-}
-
 void VirtRegMap::addSpillSlotUse(int FI, MachineInstr *MI) {
   if (!MF->getFrameInfo()->isFixedObjectIndex(FI)) {
     // If FI < LowSpillSlot, this stack reference was produced by
@@ -178,25 +140,6 @@ void VirtRegMap::addSpillSlotUse(int FI, MachineInstr *MI) {
       SpillSlotToUsesMap[FI-LowSpillSlot].insert(MI);
     }
   }
-}
-
-void VirtRegMap::virtFolded(unsigned VirtReg, MachineInstr *OldMI,
-                            MachineInstr *NewMI, ModRef MRInfo) {
-  // Move previous memory references folded to new instruction.
-  MI2VirtMapTy::iterator IP = MI2VirtMap.lower_bound(NewMI);
-  for (MI2VirtMapTy::iterator I = MI2VirtMap.lower_bound(OldMI),
-         E = MI2VirtMap.end(); I != E && I->first == OldMI; ) {
-    MI2VirtMap.insert(IP, std::make_pair(NewMI, I->second));
-    MI2VirtMap.erase(I++);
-  }
-
-  // add new memory reference
-  MI2VirtMap.insert(IP, std::make_pair(NewMI, std::make_pair(VirtReg, MRInfo)));
-}
-
-void VirtRegMap::virtFolded(unsigned VirtReg, MachineInstr *MI, ModRef MRInfo) {
-  MI2VirtMapTy::iterator IP = MI2VirtMap.lower_bound(MI);
-  MI2VirtMap.insert(IP, std::make_pair(MI, std::make_pair(VirtReg, MRInfo)));
 }
 
 void VirtRegMap::RemoveMachineInstrFromMaps(MachineInstr *MI) {
@@ -215,10 +158,6 @@ void VirtRegMap::RemoveMachineInstrFromMaps(MachineInstr *MI) {
            && "Invalid spill slot");
     SpillSlotToUsesMap[FI-LowSpillSlot].erase(MI);
   }
-  MI2VirtMap.erase(MI);
-  SpillPt2VirtMap.erase(MI);
-  RestorePt2VirtMap.erase(MI);
-  EmergencySpillMap.erase(MI);
 }
 
 void VirtRegMap::rewrite(SlotIndexes *Indexes) {

@@ -70,67 +70,15 @@ namespace llvm {
     /// at.
     IndexedMap<int, VirtReg2IndexFunctor> Virt2StackSlotMap;
 
-    /// Virt2ReMatIdMap - This is virtual register to rematerialization id
-    /// mapping. Each spilled virtual register that should be remat'd has an
-    /// entry in it which corresponds to the remat id.
-    IndexedMap<int, VirtReg2IndexFunctor> Virt2ReMatIdMap;
-
     /// Virt2SplitMap - This is virtual register to splitted virtual register
     /// mapping.
     IndexedMap<unsigned, VirtReg2IndexFunctor> Virt2SplitMap;
-
-    /// Virt2SplitKillMap - This is splitted virtual register to its last use
-    /// (kill) index mapping.
-    IndexedMap<SlotIndex, VirtReg2IndexFunctor> Virt2SplitKillMap;
-
-    /// ReMatMap - This is virtual register to re-materialized instruction
-    /// mapping. Each virtual register whose definition is going to be
-    /// re-materialized has an entry in it.
-    IndexedMap<MachineInstr*, VirtReg2IndexFunctor> ReMatMap;
-
-    /// MI2VirtMap - This is MachineInstr to virtual register
-    /// mapping. In the case of memory spill code being folded into
-    /// instructions, we need to know which virtual register was
-    /// read/written by this instruction.
-    MI2VirtMapTy MI2VirtMap;
-
-    /// SpillPt2VirtMap - This records the virtual registers which should
-    /// be spilled right after the MachineInstr due to live interval
-    /// splitting.
-    std::map<MachineInstr*, std::vector<std::pair<unsigned,bool> > >
-    SpillPt2VirtMap;
-
-    /// RestorePt2VirtMap - This records the virtual registers which should
-    /// be restored right before the MachineInstr due to live interval
-    /// splitting.
-    std::map<MachineInstr*, std::vector<unsigned> > RestorePt2VirtMap;
-
-    /// EmergencySpillMap - This records the physical registers that should
-    /// be spilled / restored around the MachineInstr since the register
-    /// allocator has run out of registers.
-    std::map<MachineInstr*, std::vector<unsigned> > EmergencySpillMap;
-
-    /// EmergencySpillSlots - This records emergency spill slots used to
-    /// spill physical registers when the register allocator runs out of
-    /// registers. Ideally only one stack slot is used per function per
-    /// register class.
-    std::map<const TargetRegisterClass*, int> EmergencySpillSlots;
-
-    /// ReMatId - Instead of assigning a stack slot to a to be rematerialized
-    /// virtual register, an unique id is being assigned. This keeps track of
-    /// the highest id used so far. Note, this starts at (1<<18) to avoid
-    /// conflicts with stack slot numbers.
-    int ReMatId;
 
     /// LowSpillSlot, HighSpillSlot - Lowest and highest spill slot indexes.
     int LowSpillSlot, HighSpillSlot;
 
     /// SpillSlotToUsesMap - Records uses for each register spill slot.
     SmallVector<SmallPtrSet<MachineInstr*, 4>, 8> SpillSlotToUsesMap;
-
-    /// ImplicitDefed - One bit for each virtual register. If set it indicates
-    /// the register is implicitly defined.
-    BitVector ImplicitDefed;
 
     /// createSpillSlot - Allocate a spill slot for RC from MFI.
     unsigned createSpillSlot(const TargetRegisterClass *RC);
@@ -141,10 +89,7 @@ namespace llvm {
   public:
     static char ID;
     VirtRegMap() : MachineFunctionPass(ID), Virt2PhysMap(NO_PHYS_REG),
-                   Virt2StackSlotMap(NO_STACK_SLOT), 
-                   Virt2ReMatIdMap(NO_STACK_SLOT), Virt2SplitMap(0),
-                   Virt2SplitKillMap(SlotIndex()), ReMatMap(NULL),
-                   ReMatId(MAX_STACK_SLOT+1),
+                   Virt2StackSlotMap(NO_STACK_SLOT), Virt2SplitMap(0),
                    LowSpillSlot(NO_STACK_SLOT), HighSpillSlot(NO_STACK_SLOT) { }
     virtual bool runOnMachineFunction(MachineFunction &MF);
 
@@ -232,8 +177,7 @@ namespace llvm {
     /// @brief returns true if the specified virtual register is not
     /// mapped to a stack slot or rematerialized.
     bool isAssignedReg(unsigned virtReg) const {
-      if (getStackSlot(virtReg) == NO_STACK_SLOT &&
-          getReMatId(virtReg) == NO_STACK_SLOT)
+      if (getStackSlot(virtReg) == NO_STACK_SLOT)
         return true;
       // Split register can be assigned a physical register as well as a
       // stack slot or remat id.
@@ -247,191 +191,12 @@ namespace llvm {
       return Virt2StackSlotMap[virtReg];
     }
 
-    /// @brief returns the rematerialization id mapped to the specified virtual
-    /// register
-    int getReMatId(unsigned virtReg) const {
-      assert(TargetRegisterInfo::isVirtualRegister(virtReg));
-      return Virt2ReMatIdMap[virtReg];
-    }
-
     /// @brief create a mapping for the specifed virtual register to
     /// the next available stack slot
     int assignVirt2StackSlot(unsigned virtReg);
     /// @brief create a mapping for the specified virtual register to
     /// the specified stack slot
     void assignVirt2StackSlot(unsigned virtReg, int frameIndex);
-
-    /// @brief assign an unique re-materialization id to the specified
-    /// virtual register.
-    int assignVirtReMatId(unsigned virtReg);
-    /// @brief assign an unique re-materialization id to the specified
-    /// virtual register.
-    void assignVirtReMatId(unsigned virtReg, int id);
-
-    /// @brief returns true if the specified virtual register is being
-    /// re-materialized.
-    bool isReMaterialized(unsigned virtReg) const {
-      return ReMatMap[virtReg] != NULL;
-    }
-
-    /// @brief returns the original machine instruction being re-issued
-    /// to re-materialize the specified virtual register.
-    MachineInstr *getReMaterializedMI(unsigned virtReg) const {
-      return ReMatMap[virtReg];
-    }
-
-    /// @brief records the specified virtual register will be
-    /// re-materialized and the original instruction which will be re-issed
-    /// for this purpose.  If parameter all is true, then all uses of the
-    /// registers are rematerialized and it's safe to delete the definition.
-    void setVirtIsReMaterialized(unsigned virtReg, MachineInstr *def) {
-      ReMatMap[virtReg] = def;
-    }
-
-    /// @brief record the last use (kill) of a split virtual register.
-    void addKillPoint(unsigned virtReg, SlotIndex index) {
-      Virt2SplitKillMap[virtReg] = index;
-    }
-
-    SlotIndex getKillPoint(unsigned virtReg) const {
-      return Virt2SplitKillMap[virtReg];
-    }
-
-    /// @brief remove the last use (kill) of a split virtual register.
-    void removeKillPoint(unsigned virtReg) {
-      Virt2SplitKillMap[virtReg] = SlotIndex();
-    }
-
-    /// @brief returns true if the specified MachineInstr is a spill point.
-    bool isSpillPt(MachineInstr *Pt) const {
-      return SpillPt2VirtMap.find(Pt) != SpillPt2VirtMap.end();
-    }
-
-    /// @brief returns the virtual registers that should be spilled due to
-    /// splitting right after the specified MachineInstr.
-    std::vector<std::pair<unsigned,bool> > &getSpillPtSpills(MachineInstr *Pt) {
-      return SpillPt2VirtMap[Pt];
-    }
-
-    /// @brief records the specified MachineInstr as a spill point for virtReg.
-    void addSpillPoint(unsigned virtReg, bool isKill, MachineInstr *Pt) {
-      std::map<MachineInstr*, std::vector<std::pair<unsigned,bool> > >::iterator
-        I = SpillPt2VirtMap.find(Pt);
-      if (I != SpillPt2VirtMap.end())
-        I->second.push_back(std::make_pair(virtReg, isKill));
-      else {
-        std::vector<std::pair<unsigned,bool> > Virts;
-        Virts.push_back(std::make_pair(virtReg, isKill));
-        SpillPt2VirtMap.insert(std::make_pair(Pt, Virts));
-      }
-    }
-
-    /// @brief - transfer spill point information from one instruction to
-    /// another.
-    void transferSpillPts(MachineInstr *Old, MachineInstr *New) {
-      std::map<MachineInstr*, std::vector<std::pair<unsigned,bool> > >::iterator
-        I = SpillPt2VirtMap.find(Old);
-      if (I == SpillPt2VirtMap.end())
-        return;
-      while (!I->second.empty()) {
-        unsigned virtReg = I->second.back().first;
-        bool isKill = I->second.back().second;
-        I->second.pop_back();
-        addSpillPoint(virtReg, isKill, New);
-      }
-      SpillPt2VirtMap.erase(I);
-    }
-
-    /// @brief returns true if the specified MachineInstr is a restore point.
-    bool isRestorePt(MachineInstr *Pt) const {
-      return RestorePt2VirtMap.find(Pt) != RestorePt2VirtMap.end();
-    }
-
-    /// @brief returns the virtual registers that should be restoreed due to
-    /// splitting right after the specified MachineInstr.
-    std::vector<unsigned> &getRestorePtRestores(MachineInstr *Pt) {
-      return RestorePt2VirtMap[Pt];
-    }
-
-    /// @brief records the specified MachineInstr as a restore point for virtReg.
-    void addRestorePoint(unsigned virtReg, MachineInstr *Pt) {
-      std::map<MachineInstr*, std::vector<unsigned> >::iterator I =
-        RestorePt2VirtMap.find(Pt);
-      if (I != RestorePt2VirtMap.end())
-        I->second.push_back(virtReg);
-      else {
-        std::vector<unsigned> Virts;
-        Virts.push_back(virtReg);
-        RestorePt2VirtMap.insert(std::make_pair(Pt, Virts));
-      }
-    }
-
-    /// @brief - transfer restore point information from one instruction to
-    /// another.
-    void transferRestorePts(MachineInstr *Old, MachineInstr *New) {
-      std::map<MachineInstr*, std::vector<unsigned> >::iterator I =
-        RestorePt2VirtMap.find(Old);
-      if (I == RestorePt2VirtMap.end())
-        return;
-      while (!I->second.empty()) {
-        unsigned virtReg = I->second.back();
-        I->second.pop_back();
-        addRestorePoint(virtReg, New);
-      }
-      RestorePt2VirtMap.erase(I);
-    }
-
-    /// @brief records that the specified physical register must be spilled
-    /// around the specified machine instr.
-    void addEmergencySpill(unsigned PhysReg, MachineInstr *MI) {
-      if (EmergencySpillMap.find(MI) != EmergencySpillMap.end())
-        EmergencySpillMap[MI].push_back(PhysReg);
-      else {
-        std::vector<unsigned> PhysRegs;
-        PhysRegs.push_back(PhysReg);
-        EmergencySpillMap.insert(std::make_pair(MI, PhysRegs));
-      }
-    }
-
-    /// @brief returns true if one or more physical registers must be spilled
-    /// around the specified instruction.
-    bool hasEmergencySpills(MachineInstr *MI) const {
-      return EmergencySpillMap.find(MI) != EmergencySpillMap.end();
-    }
-
-    /// @brief returns the physical registers to be spilled and restored around
-    /// the instruction.
-    std::vector<unsigned> &getEmergencySpills(MachineInstr *MI) {
-      return EmergencySpillMap[MI];
-    }
-
-    /// @brief - transfer emergency spill information from one instruction to
-    /// another.
-    void transferEmergencySpills(MachineInstr *Old, MachineInstr *New) {
-      std::map<MachineInstr*,std::vector<unsigned> >::iterator I =
-        EmergencySpillMap.find(Old);
-      if (I == EmergencySpillMap.end())
-        return;
-      while (!I->second.empty()) {
-        unsigned virtReg = I->second.back();
-        I->second.pop_back();
-        addEmergencySpill(virtReg, New);
-      }
-      EmergencySpillMap.erase(I);
-    }
-
-    /// @brief return or get a emergency spill slot for the register class.
-    int getEmergencySpillSlot(const TargetRegisterClass *RC);
-
-    /// @brief Return lowest spill slot index.
-    int getLowSpillSlot() const {
-      return LowSpillSlot;
-    }
-
-    /// @brief Return highest spill slot index.
-    int getHighSpillSlot() const {
-      return HighSpillSlot;
-    }
 
     /// @brief Records a spill slot use.
     void addSpillSlotUse(int FrameIndex, MachineInstr *MI);
@@ -442,32 +207,6 @@ namespace llvm {
       return !SpillSlotToUsesMap[FrameIndex-LowSpillSlot].empty();
     }
 
-    /// @brief Mark the specified register as being implicitly defined.
-    void setIsImplicitlyDefined(unsigned VirtReg) {
-      ImplicitDefed.set(TargetRegisterInfo::virtReg2Index(VirtReg));
-    }
-
-    /// @brief Returns true if the virtual register is implicitly defined.
-    bool isImplicitlyDefined(unsigned VirtReg) const {
-      return ImplicitDefed[TargetRegisterInfo::virtReg2Index(VirtReg)];
-    }
-
-    /// @brief Updates information about the specified virtual register's value
-    /// folded into newMI machine instruction.
-    void virtFolded(unsigned VirtReg, MachineInstr *OldMI, MachineInstr *NewMI,
-                    ModRef MRInfo);
-
-    /// @brief Updates information about the specified virtual register's value
-    /// folded into the specified machine instruction.
-    void virtFolded(unsigned VirtReg, MachineInstr *MI, ModRef MRInfo);
-
-    /// @brief returns the virtual registers' values folded in memory
-    /// operands of this instruction
-    std::pair<MI2VirtMapTy::const_iterator, MI2VirtMapTy::const_iterator>
-    getFoldedVirts(MachineInstr* MI) const {
-      return MI2VirtMap.equal_range(MI);
-    }
-    
     /// RemoveMachineInstrFromMaps - MI is being erased, remove it from the
     /// the folded instruction map and spill point map.
     void RemoveMachineInstrFromMaps(MachineInstr *MI);
