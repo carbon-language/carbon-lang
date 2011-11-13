@@ -511,8 +511,8 @@ void ModuleMapParser::parseUmbrellaDecl() {
 ///     'header' string-literal
 void ModuleMapParser::parseHeaderDecl() {
   assert(Tok.is(MMToken::HeaderKeyword));
-  SourceLocation HeaderLoc = consumeToken();
-  
+  consumeToken();
+
   // Parse the header name.
   if (!Tok.is(MMToken::StringLiteral)) {
     Diags.Report(Tok.getLocation(), diag::err_mmap_expected_header) 
