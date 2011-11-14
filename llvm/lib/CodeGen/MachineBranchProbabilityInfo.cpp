@@ -27,19 +27,34 @@ INITIALIZE_PASS_END(MachineBranchProbabilityInfo, "machine-branch-prob",
 char MachineBranchProbabilityInfo::ID = 0;
 
 uint32_t MachineBranchProbabilityInfo::
-getSumForBlock(MachineBasicBlock *MBB) const {
-  uint32_t Sum = 0;
-
+getSumForBlock(MachineBasicBlock *MBB, uint32_t &Scale) const {
+  // First we compute the sum with 64-bits of precision, ensuring that cannot
+  // overflow by bounding the number of weights considered. Hopefully no one
+  // actually needs 2^32 successors.
+  assert(MBB->succ_size() < UINT32_MAX);
+  uint64_t Sum = 0;
+  Scale = 1;
   for (MachineBasicBlock::const_succ_iterator I = MBB->succ_begin(),
        E = MBB->succ_end(); I != E; ++I) {
-    MachineBasicBlock *Succ = *I;
-    uint32_t Weight = getEdgeWeight(MBB, Succ);
-    uint32_t PrevSum = Sum;
-
+    uint32_t Weight = getEdgeWeight(MBB, *I);
     Sum += Weight;
-    assert(Sum > PrevSum); (void) PrevSum;
   }
 
+  // If the computed sum fits in 32-bits, we're done.
+  if (Sum <= UINT32_MAX)
+    return Sum;
+
+  // Otherwise, compute the scale necessary to cause the weights to fit, and
+  // re-sum with that scale applied.
+  assert((Sum / UINT32_MAX) < UINT32_MAX);
+  Scale = (Sum / UINT32_MAX) + 1;
+  Sum = 0;
+  for (MachineBasicBlock::const_succ_iterator I = MBB->succ_begin(),
+       E = MBB->succ_end(); I != E; ++I) {
+    uint32_t Weight = getEdgeWeight(MBB, *I);
+    Sum += Weight / Scale;
+  }
+  assert(Sum <= UINT32_MAX);
   return Sum;
 }
 
@@ -89,8 +104,9 @@ MachineBranchProbabilityInfo::getHotSucc(MachineBasicBlock *MBB) const {
 BranchProbability
 MachineBranchProbabilityInfo::getEdgeProbability(MachineBasicBlock *Src,
                                                  MachineBasicBlock *Dst) const {
-  uint32_t N = getEdgeWeight(Src, Dst);
-  uint32_t D = getSumForBlock(Src);
+  uint32_t Scale = 1;
+  uint32_t D = getSumForBlock(Src, Scale);
+  uint32_t N = getEdgeWeight(Src, Dst) / Scale;
 
   return BranchProbability(N, D);
 }

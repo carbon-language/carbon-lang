@@ -271,3 +271,54 @@ loop.body5:
   %ptr2 = load i32** undef, align 4
   br label %loop.body3
 }
+
+define i32 @problematic_switch() {
+; This function's CFG caused overlow in the machine branch probability
+; calculation, triggering asserts. Make sure we don't crash on it.
+; CHECK: problematic_switch
+
+entry:
+  switch i32 undef, label %exit [
+    i32 879, label %bogus
+    i32 877, label %step
+    i32 876, label %step
+    i32 875, label %step
+    i32 874, label %step
+    i32 873, label %step
+    i32 872, label %step
+    i32 868, label %step
+    i32 867, label %step
+    i32 866, label %step
+    i32 861, label %step
+    i32 860, label %step
+    i32 856, label %step
+    i32 855, label %step
+    i32 854, label %step
+    i32 831, label %step
+    i32 830, label %step
+    i32 829, label %step
+    i32 828, label %step
+    i32 815, label %step
+    i32 814, label %step
+    i32 811, label %step
+    i32 806, label %step
+    i32 805, label %step
+    i32 804, label %step
+    i32 803, label %step
+    i32 802, label %step
+    i32 801, label %step
+    i32 800, label %step
+    i32 799, label %step
+    i32 798, label %step
+    i32 797, label %step
+    i32 796, label %step
+    i32 795, label %step
+  ]
+bogus:
+  unreachable
+step:
+  br label %exit
+exit:
+  %merge = phi i32 [ 3, %step ], [ 6, %entry ]
+  ret i32 %merge
+}
