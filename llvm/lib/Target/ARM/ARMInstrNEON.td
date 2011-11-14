@@ -5185,6 +5185,7 @@ def : Pat<(v2f64 (bitconvert (v4f32 QPR:$src))), (v2f64 QPR:$src)>;
 // Assembler aliases
 //
 
+// VAND/VEOR/VORR accept but do not require a type suffix.
 defm : VFPDTAnyInstAlias<"vand${p}", "$Vd, $Vn, $Vm",
                          (VANDd DPR:$Vd, DPR:$Vn, DPR:$Vm, pred:$p)>;
 defm : VFPDTAnyInstAlias<"vand${p}", "$Vd, $Vn, $Vm",
