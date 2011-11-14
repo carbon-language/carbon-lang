@@ -29,6 +29,11 @@ void f() {
   // CHECK-SHORTWCHAR: private unnamed_addr constant [6 x i16] [i16 1050, i16 1086, i16 1096, i16 1082, i16 1072, i16 0], align 2
   // CHECK-CPP0X: private unnamed_addr constant [6 x i32] [i32 1050, i32 1086, i32 1096, i32 1082, i32 1072, i32 0], align 4
   wchar_t const *b = L"Кошка";
+
+  // CHECK-C: private unnamed_addr constant [4 x i32] [i32 20320, i32 22909, i32 66304, i32 0], align 4
+  // CHECK-SHORTWCHAR: private unnamed_addr constant [4 x i16] [i16 20320, i16 22909, i16 768, i16 0], align 2
+  // CHECK-CPP0X: private unnamed_addr constant [4 x i32] [i32 20320, i32 22909, i32 66304, i32 0], align 4
+  wchar_t const *b2 = L"\x4f60\x597d\x10300";
   
 #if __cplusplus >= 201103L
   

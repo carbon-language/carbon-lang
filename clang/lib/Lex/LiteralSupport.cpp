@@ -1095,13 +1095,13 @@ void StringLiteralParser::init(const Token *StringToks, unsigned NumStringToks){
           // FIXME: Make the type of the result buffer correct instead of
           // using reinterpret_cast.
           UTF32 *ResultWidePtr = reinterpret_cast<UTF32*>(ResultPtr);
-          *ResultWidePtr = ResultChar & 0xFF;
+          *ResultWidePtr = ResultChar;
           ResultPtr += 4;
         } else if (CharByteWidth == 2) {
           // FIXME: Make the type of the result buffer correct instead of
           // using reinterpret_cast.
           UTF16 *ResultWidePtr = reinterpret_cast<UTF16*>(ResultPtr);
-          *ResultWidePtr = ResultChar & 0xFF;
+          *ResultWidePtr = ResultChar & 0xFFFF;
           ResultPtr += 2;
         } else {
           assert(CharByteWidth == 1 && "Unexpected char width");
