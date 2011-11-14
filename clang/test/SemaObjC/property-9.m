@@ -97,13 +97,13 @@ typedef signed char BOOL;
 @end
 
 // rdar://8774513
-@class MDAInstance; // expected-note {{forward class is declared here}}
+@class MDAInstance; // expected-note {{forward declaration of class here}}
 
 @interface MDATestDocument
 @property(retain) MDAInstance *instance;
 @end
 
 id f0(MDATestDocument *d) {
-  return d.instance.path; // expected-error {{property 'path' cannot be found in forward class object 'MDAInstance *'}}
+  return d.instance.path; // expected-error {{property 'path' cannot be found in forward class object 'MDAInstance'}}
 }
 

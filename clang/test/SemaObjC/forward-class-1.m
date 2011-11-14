@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
-@class FOO, BAR; // expected-note {{forward class is declared here}}
+@class FOO, BAR; // expected-note {{forward declaration of class here}}
 @class FOO, BAR;
 
 @interface INTF : FOO	// expected-error {{attempting to use the forward class 'FOO' as superclass of 'INTF'}}
@@ -46,7 +46,7 @@ typedef NSObject <XCElementP> XCElement;
 
 
 // rdar://9653341
-@class B; // expected-note {{forward class is declared here}}
+@class B; // expected-note {{forward declaration of class here}}
 @interface A : B {} // expected-error {{attempting to use the forward class 'B' as superclass of 'A'}}
 @end
 

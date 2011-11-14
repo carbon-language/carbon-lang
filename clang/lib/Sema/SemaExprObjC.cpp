@@ -591,13 +591,13 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
   }
   
   IdentifierInfo *Member = MemberName.getAsIdentifierInfo();
-
-  if (IFace->isForwardDecl()) {
-    Diag(MemberLoc, diag::err_property_not_found_forward_class)
-         << MemberName << QualType(OPT, 0);
-    Diag(IFace->getLocation(), diag::note_forward_class);
+  SourceRange BaseRange = Super? SourceRange(SuperLoc)
+                               : BaseExpr->getSourceRange();
+  if (RequireCompleteType(MemberLoc, OPT->getPointeeType(), 
+                          PDiag(diag::err_property_not_found_forward_class)
+                            << MemberName << BaseRange))
     return ExprError();
-  }
+  
   // Search for a declared property first.
   if (ObjCPropertyDecl *PD = IFace->FindPropertyDeclaration(Member)) {
     // Check whether we can reference this property.
@@ -722,14 +722,10 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
     QualType T = Ivar->getType();
     if (const ObjCObjectPointerType * OBJPT = 
         T->getAsObjCInterfacePointerType()) {
-      const ObjCInterfaceType *IFaceT = OBJPT->getInterfaceType();
-      if (ObjCInterfaceDecl *IFace = IFaceT->getDecl())
-        if (IFace->isForwardDecl()) {
-          Diag(MemberLoc, diag::err_property_not_as_forward_class)
-          << MemberName << IFace;
-          Diag(IFace->getLocation(), diag::note_forward_class);
-          return ExprError();
-        }
+      if (RequireCompleteType(MemberLoc, OBJPT->getPointeeType(), 
+                              PDiag(diag::err_property_not_as_forward_class)
+                                << MemberName << BaseExpr->getSourceRange()))
+        return ExprError();
     }
     Diag(MemberLoc, 
          diag::err_ivar_access_using_property_syntax_suggest)
@@ -1083,13 +1079,14 @@ ExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
     (void)DiagnoseUseOfDecl(Class, Loc);
   // Find the method we are messaging.
   if (!Method) {
-    if (Class->isForwardDecl()) {
-      if (getLangOptions().ObjCAutoRefCount) {
-        Diag(Loc, diag::err_arc_receiver_forward_class) << ReceiverType;
-      } else {
-        Diag(Loc, diag::warn_receiver_forward_class) << Class->getDeclName();
-      }
-
+    SourceRange TypeRange 
+      = SuperLoc.isValid()? SourceRange(SuperLoc)
+                          : ReceiverTypeInfo->getTypeLoc().getSourceRange();
+    if (RequireCompleteType(Loc, Context.getObjCInterfaceType(Class), 
+                            (getLangOptions().ObjCAutoRefCount
+                               ? PDiag(diag::err_arc_receiver_forward_class)
+                               : PDiag(diag::warn_receiver_forward_class))
+                                   << TypeRange)) {
       // A forward class used in messaging is treated as a 'Class'
       Method = LookupFactoryMethodInGlobalPool(Sel, 
                                                SourceRange(LBracLoc, RBracLoc));
@@ -1322,13 +1319,21 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
         // We allow sending a message to a pointer to an interface (an object).
         ClassDecl = OCIType->getInterfaceDecl();
 
-        if (ClassDecl->isForwardDecl() && getLangOptions().ObjCAutoRefCount) {
-          Diag(Loc, diag::err_arc_receiver_forward_instance)
-            << OCIType->getPointeeType()
-            << (Receiver ? Receiver->getSourceRange() : SourceRange(SuperLoc));
-          return ExprError();
+        // Try to complete the type. Under ARC, this is a hard error from which
+        // we don't try to recover.
+        const ObjCInterfaceDecl *forwardClass = 0;
+        if (RequireCompleteType(Loc, OCIType->getPointeeType(),
+              getLangOptions().ObjCAutoRefCount
+                ? PDiag(diag::err_arc_receiver_forward_instance)
+                    << (Receiver ? Receiver->getSourceRange() 
+                                 : SourceRange(SuperLoc))
+                : PDiag())) {
+          if (getLangOptions().ObjCAutoRefCount)
+            return ExprError();
+          
+          forwardClass = OCIType->getInterfaceDecl();
         }
-
+        
         // FIXME: consider using LookupInstanceMethodInGlobalPool, since it will be
         // faster than the following method (which can do *many* linear searches).
         // The idea is to add class info to MethodPool.
@@ -1338,7 +1343,6 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
           // Search protocol qualifiers.
           Method = LookupMethodInQualifiedType(Sel, OCIType, true);
         
-        const ObjCInterfaceDecl *forwardClass = 0;
         if (!Method) {
           // If we have implementations in scope, check "private" methods.
           Method = LookupPrivateInstanceMethod(Sel, ClassDecl);
@@ -1356,8 +1360,6 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
             if (OCIType->qual_empty()) {
               Method = LookupInstanceMethodInGlobalPool(Sel,
                                                  SourceRange(LBracLoc, RBracLoc));
-              if (OCIType->getInterfaceDecl()->isForwardDecl())
-                forwardClass = OCIType->getInterfaceDecl();
               if (Method && !forwardClass)
                 Diag(Loc, diag::warn_maynot_respond)
                   << OCIType->getInterfaceDecl()->getIdentifier() << Sel;

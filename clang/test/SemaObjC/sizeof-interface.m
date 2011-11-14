@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -verify -fsyntax-only %s
 
-@class I0;
+@class I0; // expected-note 3{{forward declaration of class here}}
 
 // rdar://6811884
 int g0 = sizeof(I0); // expected-error{{invalid application of 'sizeof' to an incomplete type 'I0'}}

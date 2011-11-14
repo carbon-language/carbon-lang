@@ -1060,13 +1060,13 @@ Sema::ActOnObjCForCollectionOperand(SourceLocation forLoc, Expr *collection) {
   ObjCInterfaceDecl *iface = objectType->getInterface();
 
   // If we have a forward-declared type, we can't do this check.
-  if (iface && iface->isForwardDecl()) {
-    // This is ill-formed under ARC.
-    if (getLangOptions().ObjCAutoRefCount) {
-      Diag(forLoc, diag::err_arc_collection_forward)
-        << pointerType->getPointeeType() << collection->getSourceRange();
-    }
-
+  // Under ARC, it is an error not to have a forward-declared class.
+  if (iface && 
+      RequireCompleteType(forLoc, QualType(objectType, 0),
+                          getLangOptions().ObjCAutoRefCount
+                            ? PDiag(diag::err_arc_collection_forward)
+                                << collection->getSourceRange()
+                          : PDiag(0))) {
     // Otherwise, if we have any useful type information, check that
     // the type declares the appropriate method.
   } else if (iface || !objectType->qual_empty()) {

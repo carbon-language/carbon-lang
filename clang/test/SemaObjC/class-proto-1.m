@@ -23,7 +23,7 @@
 
 @interface E2 <p1,p2,p3> @end  // expected-warning {{cannot find protocol definition for 'p3'}}
 
-@class U1, U2; // expected-note {{forward class is declared here}}
+@class U1, U2; // expected-note {{forward declaration of class here}}
 
 @interface E3 : U1 @end // expected-error {{attempting to use the forward class 'U1' as superclass of 'E3'}}
 

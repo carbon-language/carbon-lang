@@ -31,9 +31,9 @@
 
 @interface UnknownClass  (Category) @end // expected-error {{cannot find interface declaration for 'UnknownClass'}}
 
-@class MyClass2;
+@class MyClass2; // expected-note{{forward declaration of class here}}
 
-@interface MyClass2  (Category) @end  // expected-error {{cannot find interface declaration for 'MyClass2'}}
+@interface MyClass2  (Category) @end  // expected-error {{cannot define category for undefined class 'MyClass2'}}
 
 @interface XCRemoteComputerManager
 @end

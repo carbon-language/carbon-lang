@@ -373,6 +373,8 @@ def warn_property_attribute : Warning<
 def warn_property_types_are_incompatible : Warning<
   "property type %0 is incompatible with type %1 inherited from %2">;
 def err_undef_interface : Error<"cannot find interface declaration for %0">;
+def err_category_forward_interface : Error<
+  "cannot define %select{category|class extension}0 for undefined class %1">;
 def err_class_extension_after_impl : Error<
   "cannot declare class extension for %0 after class implementation">;
 def note_implementation_declared : Note<
@@ -3617,7 +3619,7 @@ def err_property_not_as_forward_class : Error<
   "property %0 refers to an incomplete Objective-C class %1 "
   "(with no @interface available)">;
 def note_forward_class : Note<
-  "forward class is declared here">;
+  "forward declaration of class here">;
 def err_duplicate_property : Error<
   "property has a previous declaration">;
 def ext_gnu_void_ptr : Extension<

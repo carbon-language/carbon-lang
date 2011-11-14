@@ -21,7 +21,7 @@ void f3(id o)
 }
 
 // rdar://8851803
-@class SomeOtherClass; // expected-note {{forward class is declared here}}
+@class SomeOtherClass; // expected-note {{forward declaration of class here}}
 
 @interface MyClass {
     SomeOtherClass *someOtherObject;

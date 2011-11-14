@@ -5,7 +5,7 @@
 @end
 Class isa;
 
-@class NotKnown;
+@class NotKnown; // expected-note{{forward declaration of class here}}
 
 void foo(NotKnown *n) {
   [isa new];

@@ -33,7 +33,7 @@ void test3(Object *o) {
   __sync_bool_compare_and_swap(&g, 0, o);
 }
 
-@class Incomplete_ObjC_class;
+@class Incomplete_ObjC_class; // expected-note{{forward declaration of class here}}
 struct Incomplete_struct; // expected-note {{forward declaration}}
 
 void test_encode() {

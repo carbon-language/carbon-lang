@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
-@class SUPER, Y; // expected-note 2 {{forward class is declared here}}
+@class SUPER, Y; // expected-note 2 {{forward declaration of class here}}
 
 @interface INTF :SUPER  // expected-error {{attempting to use the forward class 'SUPER' as superclass of 'INTF'}}
 @end

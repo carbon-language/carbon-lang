@@ -378,7 +378,7 @@ void test16(void) {
   [v test16_6: 0];
 }
 
-@class Test17;
+@class Test17; // expected-note 2{{forward declaration of class here}}
 @protocol Test17p
 - (void) test17;
 + (void) test17;
@@ -651,7 +651,7 @@ void test36(int first, ...) {
   __builtin_va_end(arglist);
 }
 
-@class Test37;
+@class Test37; // expected-note{{forward declaration of class here}}
 void test37(Test37 *c) {
   for (id y in c) { // expected-error {{collection expression type 'Test37' is a forward declaration}}
     (void) y;

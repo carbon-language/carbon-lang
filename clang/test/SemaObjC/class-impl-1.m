@@ -31,7 +31,7 @@ typedef int INTF3; // expected-note {{previous definition is here}}
 
 @implementation INTF4 @end // expected-warning {{cannot find interface declaration for 'INTF4'}}
 
-@class INTF5;
+@class INTF5; // expected-note{{forward declaration of class here}}
 
 @implementation INTF5 {  // expected-warning {{cannot find interface declaration for 'INTF5'}}
   int x;

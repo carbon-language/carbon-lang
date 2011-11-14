@@ -10,7 +10,7 @@ typedef struct _NSZone NSZone;
 @interface NSObject <NSObject> {} @end
 extern id NSAllocateObject(Class aClass, NSUInteger extraBytes, NSZone *zone);
 @class NSArray;
-@class NSMutableArray, NSIndexSet, NSView, NSPredicate, NSString, NSViewAnimation, NSTimer;
+@class NSMutableArray, NSIndexSet, NSView, NSPredicate, NSString, NSViewAnimation, NSTimer; // expected-note{{forward declaration of class here}}
 @interface FooBazController : NSObject {}
 @end
 typedef struct {} TazVersion;

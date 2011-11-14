@@ -4098,21 +4098,36 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
     return true;
 
   const TagType *Tag = T->getAs<TagType>();
+  const ObjCInterfaceType *IFace = 0;
+  
+  if (Tag) {
+    // Avoid diagnosing invalid decls as incomplete.
+    if (Tag->getDecl()->isInvalidDecl())
+      return true;
 
-  // Avoid diagnosing invalid decls as incomplete.
-  if (Tag && Tag->getDecl()->isInvalidDecl())
-    return true;
-
-  // Give the external AST source a chance to complete the type.
-  if (Tag && Tag->getDecl()->hasExternalLexicalStorage()) {
-    Context.getExternalSource()->CompleteType(Tag->getDecl());
-    if (!Tag->isIncompleteType())
-      return false;
+    // Give the external AST source a chance to complete the type.
+    if (Tag->getDecl()->hasExternalLexicalStorage()) {
+      Context.getExternalSource()->CompleteType(Tag->getDecl());
+      if (!Tag->isIncompleteType())
+        return false;
+    }
   }
-
+  else if ((IFace = T->getAs<ObjCInterfaceType>())) {
+    // Avoid diagnosing invalid decls as incomplete.
+    if (IFace->getDecl()->isInvalidDecl())
+      return true;
+    
+    // Give the external AST source a chance to complete the type.
+    if (IFace->getDecl()->hasExternalLexicalStorage()) {
+      Context.getExternalSource()->CompleteType(IFace->getDecl());
+      if (!IFace->isIncompleteType())
+        return false;
+    }
+  }
+    
   // We have an incomplete type. Produce a diagnostic.
   Diag(Loc, PD) << T;
-
+    
   // If we have a note, produce it.
   if (!Note.first.isInvalid())
     Diag(Note.first, Note.second);
@@ -4123,7 +4138,11 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
     Diag(Tag->getDecl()->getLocation(),
          Tag->isBeingDefined() ? diag::note_type_being_defined
                                : diag::note_forward_declaration)
-        << QualType(Tag, 0);
+      << QualType(Tag, 0);
+  
+  // If the Objective-C class was a forward declaration, produce a note.
+  if (IFace && !IFace->getDecl()->isInvalidDecl())
+    Diag(IFace->getDecl()->getLocation(), diag::note_forward_class);
 
   return true;
 }
