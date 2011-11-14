@@ -1793,12 +1793,12 @@ CommandInterpreter::GetConfirmationInputReaderCallback
         {
             reader.SetIsDone(true);
         }
-        else if (bytes[0] == 'y')
+        else if (bytes[0] == 'y' || bytes[0] == 'Y')
         {
             *response_ptr = true;
             reader.SetIsDone(true);
         }
-        else if (bytes[0] == 'n')
+        else if (bytes[0] == 'n' || bytes[0] == 'N')
         {
             *response_ptr = false;
             reader.SetIsDone(true);
@@ -1807,7 +1807,7 @@ CommandInterpreter::GetConfirmationInputReaderCallback
         {
             if (out_file.IsValid() && !reader.IsDone() && reader.GetPrompt())
             {
-                out_file.Printf ("Please answer \"y\" or \"n\"\n%s", reader.GetPrompt());
+                out_file.Printf ("Please answer \"y\" or \"Y\" or \"n\" or \"N\"\n%s", reader.GetPrompt());
                 out_file.Flush ();
             }
         }
