@@ -1995,35 +1995,51 @@ class NEONFPPat<dag pattern, dag result> : Pat<pattern, result> {
 // VFP/NEON Instruction aliases for type suffices.
 class VFPDataTypeInstAlias<string opc, string dt, string asm, dag Result> :
   InstAlias<!strconcat(opc, dt, asm), Result>;
-multiclass VFPDT8InstAlias<string opc, string asm, dag Result> {
-  def _8 : VFPDataTypeInstAlias<opc, ".8", asm, Result>;
+multiclass VFPDT8ReqInstAlias<string opc, string asm, dag Result> {
   def I8 : VFPDataTypeInstAlias<opc, ".i8", asm, Result>;
   def S8 : VFPDataTypeInstAlias<opc, ".s8", asm, Result>;
   def U8 : VFPDataTypeInstAlias<opc, ".u8", asm, Result>;
   def F8 : VFPDataTypeInstAlias<opc, ".p8", asm, Result>;
 }
-multiclass VFPDT16InstAlias<string opc, string asm, dag Result> {
-  def _16 : VFPDataTypeInstAlias<opc, ".16", asm, Result>;
+// VFPDT8ReqInstAlias plus plain ".8"
+multiclass VFPDT8InstAlias<string opc, string asm, dag Result> {
+  def _8 : VFPDataTypeInstAlias<opc, ".8", asm, Result>;
+  defm : VFPDT8ReqInstAlias<opc, asm, Result>;
+}
+multiclass VFPDT16ReqInstAlias<string opc, string asm, dag Result> {
   def I16 : VFPDataTypeInstAlias<opc, ".i16", asm, Result>;
   def S16 : VFPDataTypeInstAlias<opc, ".s16", asm, Result>;
   def U16 : VFPDataTypeInstAlias<opc, ".u16", asm, Result>;
   def F16 : VFPDataTypeInstAlias<opc, ".p16", asm, Result>;
 }
-multiclass VFPDT32InstAlias<string opc, string asm, dag Result> {
-  def _32 : VFPDataTypeInstAlias<opc, ".32",  asm, Result>;
+// VFPDT16ReqInstAlias plus plain ".16"
+multiclass VFPDT16InstAlias<string opc, string asm, dag Result> {
+  def _16 : VFPDataTypeInstAlias<opc, ".16", asm, Result>;
+  defm : VFPDT16ReqInstAlias<opc, asm, Result>;
+}
+multiclass VFPDT32ReqInstAlias<string opc, string asm, dag Result> {
   def I32 : VFPDataTypeInstAlias<opc, ".i32", asm, Result>;
   def S32 : VFPDataTypeInstAlias<opc, ".s32", asm, Result>;
   def U32 : VFPDataTypeInstAlias<opc, ".u32", asm, Result>;
   def F32 : VFPDataTypeInstAlias<opc, ".f32", asm, Result>;
   def F   : VFPDataTypeInstAlias<opc, ".f",   asm, Result>;
 }
-multiclass VFPDT64InstAlias<string opc, string asm, dag Result> {
-  def _64 : VFPDataTypeInstAlias<opc, ".64",  asm, Result>;
+// VFPDT32ReqInstAlias plus plain ".32"
+multiclass VFPDT32InstAlias<string opc, string asm, dag Result> {
+  def _32 : VFPDataTypeInstAlias<opc, ".32", asm, Result>;
+  defm : VFPDT32ReqInstAlias<opc, asm, Result>;
+}
+multiclass VFPDT64ReqInstAlias<string opc, string asm, dag Result> {
   def I64 : VFPDataTypeInstAlias<opc, ".i64", asm, Result>;
   def S64 : VFPDataTypeInstAlias<opc, ".s64", asm, Result>;
   def U64 : VFPDataTypeInstAlias<opc, ".u64", asm, Result>;
   def F64 : VFPDataTypeInstAlias<opc, ".f64", asm, Result>;
   def D   : VFPDataTypeInstAlias<opc, ".d",   asm, Result>;
+}
+// VFPDT64ReqInstAlias plus plain ".64"
+multiclass VFPDT64InstAlias<string opc, string asm, dag Result> {
+  def _64 : VFPDataTypeInstAlias<opc, ".64", asm, Result>;
+  defm : VFPDT64ReqInstAlias<opc, asm, Result>;
 }
 multiclass VFPDTAnyInstAlias<string opc, string asm, dag Result> {
   defm : VFPDT8InstAlias<opc, asm, Result>;
