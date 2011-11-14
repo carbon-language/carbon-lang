@@ -2992,8 +2992,7 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
     }
   }
   
-  // Resolve any declaration pointers within the declaration updates block and
-  // chained Objective-C categories block to declaration IDs.
+  // Resolve any declaration pointers within the declaration updates block.
   ResolveDeclUpdatesBlocks();
   
   // Form the record of special types.
@@ -3255,13 +3254,13 @@ void ASTWriter::WriteChainedObjCCategories() {
     if (isRewritten(Data.Interface))
       continue;
 
+    assert(Data.Interface->getCategoryList());
     serialization::DeclID
         HeadCatID = getDeclID(Data.Interface->getCategoryList());
-    assert(HeadCatID != 0 && "Category not written ?");
 
-    Record.push_back(GetDeclRef(Data.Interface));
+    Record.push_back(getDeclID(Data.Interface));
     Record.push_back(HeadCatID);
-    Record.push_back(GetDeclRef(Data.TailCategory));
+    Record.push_back(getDeclID(Data.TailCategory));
   }
   Stream.EmitRecord(OBJC_CHAINED_CATEGORIES, Record);
 }
@@ -4119,7 +4118,7 @@ void ASTWriter::AddedObjCCategoryToInterface(const ObjCCategoryDecl *CatD,
     return; // We already recorded that the tail of a category chain should be
             // attached to an interface.
 
-  ChainedObjCCategoriesData Data =  { IFD, CatD, 0, 0 };
+  ChainedObjCCategoriesData Data =  { IFD, CatD };
   LocalChainedObjCCategories.push_back(Data);
 }
 

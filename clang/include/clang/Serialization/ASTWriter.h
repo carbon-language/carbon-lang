@@ -276,12 +276,6 @@ private:
     /// \brief The local tail category ID that got chained to the imported
     /// interface.
     const ObjCCategoryDecl *TailCategory;
-
-    /// \brief ID corresponding to \c Interface.
-    serialization::DeclID InterfaceID;
-
-    /// \brief ID corresponding to TailCategoryID.
-    serialization::DeclID TailCategoryID;
   };
   /// \brief ObjC categories that got chained to an interface imported from
   /// another module.
