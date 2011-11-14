@@ -334,7 +334,15 @@ MachineBasicBlock *MachineBlockPlacement::selectBestSuccessor(
   const BranchProbability HotProb(4, 5); // 80%
 
   MachineBasicBlock *BestSucc = 0;
-  BranchProbability BestProb = BranchProbability::getZero();
+  // FIXME: Due to the performance of the probability and weight routines in
+  // the MBPI analysis, we manually compute probabilities using the edge
+  // weights. This is suboptimal as it means that the somewhat subtle
+  // definition of edge weight semantics is encoded here as well. We should
+  // improve the MBPI interface to effeciently support query patterns such as
+  // this.
+  uint32_t BestWeight = 0;
+  uint32_t WeightScale = 0;
+  uint32_t SumWeight = MBPI->getSumForBlock(BB, WeightScale);
   DEBUG(dbgs() << "Attempting merge from: " << getBlockName(BB) << "\n");
   for (MachineBasicBlock::succ_iterator SI = BB->succ_begin(),
                                         SE = BB->succ_end();
@@ -347,7 +355,8 @@ MachineBasicBlock *MachineBlockPlacement::selectBestSuccessor(
       continue;
     }
 
-    BranchProbability SuccProb = MBPI->getEdgeProbability(BB, *SI);
+    uint32_t SuccWeight = MBPI->getEdgeWeight(BB, *SI);
+    BranchProbability SuccProb(SuccWeight / WeightScale, SumWeight);
 
     // Only consider successors which are either "hot", or wouldn't violate
     // any CFG constraints.
@@ -360,10 +369,10 @@ MachineBasicBlock *MachineBlockPlacement::selectBestSuccessor(
                  << " (prob)"
                  << (SuccChain.LoopPredecessors != 0 ? " (CFG break)" : "")
                  << "\n");
-    if (BestSucc && BestProb >= SuccProb)
+    if (BestSucc && BestWeight >= SuccWeight)
       continue;
     BestSucc = *SI;
-    BestProb = SuccProb;
+    BestWeight = SuccWeight;
   }
   return BestSucc;
 }
