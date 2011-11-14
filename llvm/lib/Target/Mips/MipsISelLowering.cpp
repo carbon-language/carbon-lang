@@ -1918,6 +1918,30 @@ static bool CC_Mips64Byval(unsigned ValNo, MVT ValVT, MVT LocVT,
 
 #include "MipsGenCallingConv.inc"
 
+static void
+AnalyzeMips64CallOperands(CCState CCInfo,
+                          const SmallVectorImpl<ISD::OutputArg> &Outs) {
+  unsigned NumOps = Outs.size();
+  for (unsigned i = 0; i != NumOps; ++i) {
+    MVT ArgVT = Outs[i].VT;
+    ISD::ArgFlagsTy ArgFlags = Outs[i].Flags;
+    bool R;
+
+    if (Outs[i].IsFixed)
+      R = CC_MipsN(i, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, CCInfo);
+    else
+      R = CC_MipsN_VarArg(i, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, CCInfo);
+      
+#ifndef NDEBUG
+    if (R) {
+      dbgs() << "Call operand #" << i << " has unhandled type "
+             << EVT(ArgVT).getEVTString();
+#endif
+      llvm_unreachable(0);
+    }
+  }
+}
+
 //===----------------------------------------------------------------------===//
 //                  Call Calling Convention Implementation
 //===----------------------------------------------------------------------===//
@@ -2138,6 +2162,8 @@ MipsTargetLowering::LowerCall(SDValue InChain, SDValue Callee,
 
   if (IsO32)
     CCInfo.AnalyzeCallOperands(Outs, CC_MipsO32);
+  else if (HasMips64)
+    AnalyzeMips64CallOperands(CCInfo, Outs);
   else
     CCInfo.AnalyzeCallOperands(Outs, CC_Mips);
 
