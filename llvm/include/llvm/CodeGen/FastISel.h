@@ -21,9 +21,11 @@
 namespace llvm {
 
 class AllocaInst;
+class Constant;
 class ConstantFP;
 class FunctionLoweringInfo;
 class Instruction;
+class LoadInst;
 class MachineBasicBlock;
 class MachineConstantPool;
 class MachineFunction;
@@ -36,7 +38,8 @@ class TargetLowering;
 class TargetMachine;
 class TargetRegisterClass;
 class TargetRegisterInfo;
-class LoadInst;
+class User;
+class Value;
 
 /// FastISel - This is a fast-path instruction selection class that
 /// generates poor code and doesn't support illegal types or non-trivial

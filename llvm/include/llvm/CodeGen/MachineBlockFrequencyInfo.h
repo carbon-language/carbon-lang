@@ -20,6 +20,7 @@
 
 namespace llvm {
 
+class MachineBasicBlock;
 class MachineBranchProbabilityInfo;
 template<class BlockT, class FunctionT, class BranchProbInfoT>
 class BlockFrequencyImpl;
@@ -28,7 +29,8 @@ class BlockFrequencyImpl;
 /// machine basic block frequencies.
 class MachineBlockFrequencyInfo : public MachineFunctionPass {
 
-  BlockFrequencyImpl<MachineBasicBlock, MachineFunction, MachineBranchProbabilityInfo> *MBFI;
+  BlockFrequencyImpl<MachineBasicBlock, MachineFunction,
+                     MachineBranchProbabilityInfo> *MBFI;
 
 public:
   static char ID;

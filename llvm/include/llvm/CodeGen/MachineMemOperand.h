@@ -22,6 +22,7 @@ namespace llvm {
 
 class Value;
 class FoldingSetNodeID;
+class MDNode;
 class raw_ostream;
 
 /// MachinePointerInfo - This class contains a discriminated union of

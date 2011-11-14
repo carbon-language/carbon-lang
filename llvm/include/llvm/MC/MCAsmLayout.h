@@ -10,6 +10,7 @@
 #ifndef LLVM_MC_MCASMLAYOUT_H
 #define LLVM_MC_MCASMLAYOUT_H
 
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 
 namespace llvm {

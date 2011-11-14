@@ -14,18 +14,16 @@
 #ifndef LLVM_ANALYSIS_INLINECOST_H
 #define LLVM_ANALYSIS_INLINECOST_H
 
-#include <cassert>
-#include <climits>
-#include <vector>
+#include "llvm/Function.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/ValueMap.h"
 #include "llvm/Analysis/CodeMetrics.h"
+#include <cassert>
+#include <climits>
+#include <vector>
 
 namespace llvm {
 
-  class Value;
-  class Function;
-  class BasicBlock;
   class CallSite;
   template<class PtrType, unsigned SmallSize>
   class SmallPtrSet;
