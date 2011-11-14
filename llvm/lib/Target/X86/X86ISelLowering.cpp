@@ -944,9 +944,11 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v4i32, Custom);
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v4f32, Custom);
 
+    // FIXME: these should be Legal but thats only for the case where
+    // the index is constant.  For now custom expand to deal with that
     if (Subtarget->is64Bit()) {
-      setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v2i64, Legal);
-      setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v2i64, Legal);
+      setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v2i64, Custom);
+      setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v2i64, Custom);
     }
   }
 
@@ -6963,8 +6965,8 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT_SSE4(SDValue Op,
                                               Op.getOperand(0)),
                                               Op.getOperand(1));
     return DAG.getNode(ISD::BITCAST, dl, MVT::f32, Extract);
-  } else if (VT == MVT::i32) {
-    // ExtractPS works with constant index.
+  } else if (VT == MVT::i32 || VT == MVT::i64) {
+    // ExtractPS/pextrq works with constant index.
     if (isa<ConstantSDNode>(Op.getOperand(1)))
       return Op;
   }
@@ -7103,7 +7105,8 @@ X86TargetLowering::LowerINSERT_VECTOR_ELT_SSE4(SDValue Op,
     // Create this as a scalar to vector..
     N1 = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v4f32, N1);
     return DAG.getNode(X86ISD::INSERTPS, dl, VT, N0, N1, N2);
-  } else if (EltVT == MVT::i32 && isa<ConstantSDNode>(N2)) {
+  } else if ((EltVT == MVT::i32 || EltVT == MVT::i64) && 
+             isa<ConstantSDNode>(N2)) {
     // PINSR* works with constant index.
     return Op;
   }
