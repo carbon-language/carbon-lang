@@ -681,6 +681,27 @@ bool DiagnosticIDs::getDiagnosticsInGroup(
   return false;
 }
 
+StringRef DiagnosticIDs::getNearestWarningOption(StringRef Group) {
+  StringRef Best;
+  unsigned BestDistance = 0;
+  for (const WarningOption *i = OptionTable, *e = OptionTable + OptionTableSize;
+       i != e; ++i) {
+    // Don't suggest ignored warning flags.
+    if (!i->Members && !i->SubGroups)
+      continue;
+
+    unsigned Distance = i->getName().edit_distance(Group, true, BestDistance);
+
+    // Check if this is a better match.
+    if (Best.empty() || Distance < BestDistance) {
+      Best = i->getName();
+      BestDistance = Distance;
+    }
+  }
+
+  return Best;
+}
+
 /// ProcessDiag - This is the method used to report a diagnostic that is
 /// finally fully formed.
 bool DiagnosticIDs::ProcessDiag(DiagnosticsEngine &Diag) const {

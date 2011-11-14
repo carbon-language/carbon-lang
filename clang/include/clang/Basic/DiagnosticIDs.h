@@ -262,6 +262,10 @@ public:
   bool getDiagnosticsInGroup(StringRef Group,
                              llvm::SmallVectorImpl<diag::kind> &Diags) const;
 
+  /// \brief Get the warning option with the closest edit distance to the given
+  /// group name.
+  static StringRef getNearestWarningOption(StringRef Group);
+
 private:
   /// \brief Get the set of all diagnostic IDs in the given group.
   ///

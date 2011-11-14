@@ -120,7 +120,9 @@ void clang::ProcessWarningOptions(DiagnosticsEngine &Diags,
         } else if (DiagIDs->getDiagnosticsInGroup(Specifier, _Diags)) {
           Diags.Report(isPositive ? diag::warn_unknown_warning_option :
                        diag::warn_unknown_negative_warning_option)
-            << ("-W" + Opt.str());
+            << ("-W" + Opt.str())
+            << ("-Werror=" +
+                DiagnosticIDs::getNearestWarningOption(Specifier).str());
         }
         continue;
       }
@@ -150,7 +152,9 @@ void clang::ProcessWarningOptions(DiagnosticsEngine &Diags,
         } else if (DiagIDs->getDiagnosticsInGroup(Specifier, _Diags)) {
           Diags.Report(isPositive ? diag::warn_unknown_warning_option :
                        diag::warn_unknown_negative_warning_option)
-            << ("-W" + Opt.str());
+            << ("-W" + Opt.str())
+            << ("-Wfatal-errors=" +
+                DiagnosticIDs::getNearestWarningOption(Specifier).str());
         }
         continue;
       }
@@ -158,7 +162,8 @@ void clang::ProcessWarningOptions(DiagnosticsEngine &Diags,
       if (Report && DiagIDs->getDiagnosticsInGroup(Opt, _Diags)) {
         Diags.Report(isPositive ? diag::warn_unknown_warning_option :
                      diag::warn_unknown_negative_warning_option)
-          << ("-W" + Opt.str());
+          << ("-W" + Opt.str())
+          << ("-W" + DiagnosticIDs::getNearestWarningOption(Opt).str());
       } else {
         Diags.setDiagnosticGroupMapping(Opt, Mapping);
       }
