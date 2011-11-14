@@ -1932,8 +1932,8 @@ AnalyzeMips64CallOperands(CCState CCInfo,
     else
       R = CC_MipsN_VarArg(i, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, CCInfo);
       
-#ifndef NDEBUG
     if (R) {
+#ifndef NDEBUG
       dbgs() << "Call operand #" << i << " has unhandled type "
              << EVT(ArgVT).getEVTString();
 #endif
