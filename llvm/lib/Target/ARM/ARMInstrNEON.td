@@ -5179,3 +5179,21 @@ def : Pat<(v2f64 (bitconvert (v4i32 QPR:$src))), (v2f64 QPR:$src)>;
 def : Pat<(v2f64 (bitconvert (v8i16 QPR:$src))), (v2f64 QPR:$src)>;
 def : Pat<(v2f64 (bitconvert (v16i8 QPR:$src))), (v2f64 QPR:$src)>;
 def : Pat<(v2f64 (bitconvert (v4f32 QPR:$src))), (v2f64 QPR:$src)>;
+
+
+//===----------------------------------------------------------------------===//
+// Assembler aliases
+//
+
+defm : VFPDTAnyInstAlias<"vand${p}", "$Vd, $Vn, $Vm",
+                         (VANDd DPR:$Vd, DPR:$Vn, DPR:$Vm, pred:$p)>;
+defm : VFPDTAnyInstAlias<"vand${p}", "$Vd, $Vn, $Vm",
+                         (VANDq QPR:$Vd, QPR:$Vn, QPR:$Vm, pred:$p)>;
+defm : VFPDTAnyInstAlias<"veor${p}", "$Vd, $Vn, $Vm",
+                         (VEORd DPR:$Vd, DPR:$Vn, DPR:$Vm, pred:$p)>;
+defm : VFPDTAnyInstAlias<"veor${p}", "$Vd, $Vn, $Vm",
+                         (VEORq QPR:$Vd, QPR:$Vn, QPR:$Vm, pred:$p)>;
+defm : VFPDTAnyInstAlias<"vorr${p}", "$Vd, $Vn, $Vm",
+                         (VORRd DPR:$Vd, DPR:$Vn, DPR:$Vm, pred:$p)>;
+defm : VFPDTAnyInstAlias<"vorr${p}", "$Vd, $Vn, $Vm",
+                         (VORRq QPR:$Vd, QPR:$Vn, QPR:$Vm, pred:$p)>;
