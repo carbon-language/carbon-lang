@@ -25,6 +25,7 @@ namespace clang {
   class ObjCCategoryDecl;
   class ObjCInterfaceDecl;
   class ObjCContainerDecl;
+  class ObjCPropertyDecl;
 
 /// \brief An abstract interface that should be implemented by listeners
 /// that want to be notified when an AST entity gets modified after its
@@ -64,6 +65,18 @@ public:
 
   /// \brief A objc interface or protocol forward reference was completed.
   virtual void CompletedObjCForwardRef(const ObjCContainerDecl *D) {}
+
+  /// \brief A objc class extension redeclared or introduced a property.
+  ///
+  /// \param Prop the property in the class extension
+  ///
+  /// \param OrigProp the property from the original interface that was declared
+  /// or null if the property was introduced.
+  ///
+  /// \param ClassExt the class extension.
+  virtual void AddedObjCPropertyInClassExtension(const ObjCPropertyDecl *Prop,
+                                            const ObjCPropertyDecl *OrigProp,
+                                            const ObjCCategoryDecl *ClassExt) {}
 
   /// \brief The attributes list of a declaration was updated.
   virtual void UpdatedAttributeList(const Decl *D) {}

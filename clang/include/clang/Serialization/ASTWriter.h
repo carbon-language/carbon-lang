@@ -661,6 +661,9 @@ public:
   virtual void AddedObjCCategoryToInterface(const ObjCCategoryDecl *CatD,
                                             const ObjCInterfaceDecl *IFD);
   virtual void CompletedObjCForwardRef(const ObjCContainerDecl *D);
+  virtual void AddedObjCPropertyInClassExtension(const ObjCPropertyDecl *Prop,
+                                            const ObjCPropertyDecl *OrigProp,
+                                            const ObjCCategoryDecl *ClassExt);
   virtual void UpdatedAttributeList(const Decl *D);
 };
 

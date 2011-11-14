@@ -17,6 +17,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/ExprCXX.h"
+#include "clang/AST/ASTMutationListener.h"
 #include "llvm/ADT/DenseSet.h"
 
 using namespace clang;
@@ -271,6 +272,8 @@ Sema::HandlePropertyInClassExtension(Scope *S,
     // Make sure setter/getters are declared here.
     ProcessPropertyDecl(PDecl, CCPrimary, /* redeclaredProperty = */ 0,
                         /* lexicalDC = */ CDecl);
+    if (ASTMutationListener *L = Context.getASTMutationListener())
+      L->AddedObjCPropertyInClassExtension(PDecl, /*OrigProp=*/0, CDecl);
     return PDecl;
   }
   if (PIDecl->getType().getCanonicalType() 
@@ -343,6 +346,8 @@ Sema::HandlePropertyInClassExtension(Scope *S,
   *isOverridingProperty = true;
   // Make sure setter decl is synthesized, and added to primary class's list.
   ProcessPropertyDecl(PIDecl, CCPrimary, PDecl, CDecl);
+  if (ASTMutationListener *L = Context.getASTMutationListener())
+    L->AddedObjCPropertyInClassExtension(PDecl, PIDecl, CDecl);
   return 0;
 }
 

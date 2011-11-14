@@ -13,6 +13,10 @@
 
 @class I;
 
+@interface I2
+@property (readonly) id prop1;
+@end
+
 //===----------------------------------------------------------------------===//
 #elif !defined(HEADER2)
 #define HEADER2
@@ -32,6 +36,11 @@
 @interface I(Cat2)
 @end
 
+@interface I2()
+@property (readwrite,assign) id prop1;
+@property (copy) id prop2;
+@end
+
 //===----------------------------------------------------------------------===//
 #else
 //===----------------------------------------------------------------------===//
@@ -39,6 +48,10 @@
 void f(I* i) {
   [i meth]; // expected-warning {{not found}}
 }
+
+@implementation I2
+@synthesize prop1, prop2;
+@end
 
 //===----------------------------------------------------------------------===//
 #endif
