@@ -5240,6 +5240,10 @@ void clang_getOverriddenCursors(CXCursor cursor,
   SmallVector<CXCursor, 8> Overridden;
   cxcursor::getOverriddenCursors(cursor, Overridden);
 
+  // Don't allocate memory if we have no overriden cursors.
+  if (Overridden.size() == 0)
+    return;
+
   *num_overridden = Overridden.size();
   *overridden = new CXCursor [Overridden.size()];
   std::copy(Overridden.begin(), Overridden.end(), *overridden);
