@@ -874,9 +874,9 @@ void ARMFastISel::ARMSimplifyAddress(Address &Addr, EVT VT, bool useAM3) {
         // Integer loads/stores handle 12-bit offsets.
         needsLowering = ((Addr.Offset & 0xfff) != Addr.Offset);
         // Handle negative offsets.
-        if (isThumb2)
-          needsLowering = !(needsLowering && Subtarget->hasV6T2Ops() &&
-                            Addr.Offset < 0 && Addr.Offset > -256);
+        if (needsLowering && isThumb2)
+          needsLowering = !(Subtarget->hasV6T2Ops() && Addr.Offset < 0 &&
+                            Addr.Offset > -256);
       } else {
         // ARM halfword load/stores and signed byte loads use +/-imm8 offsets.
         needsLowering = (Addr.Offset > 255 || Addr.Offset < -255);
