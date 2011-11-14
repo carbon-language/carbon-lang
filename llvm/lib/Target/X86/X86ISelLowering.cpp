@@ -6623,7 +6623,6 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   EVT VT = Op.getValueType();
   DebugLoc dl = Op.getDebugLoc();
   unsigned NumElems = VT.getVectorNumElements();
-  bool isMMX = VT.getSizeInBits() == 64;
   bool V1IsUndef = V1.getOpcode() == ISD::UNDEF;
   bool V2IsUndef = V2.getOpcode() == ISD::UNDEF;
   bool V1IsSplat = false;
@@ -6632,9 +6631,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   MachineFunction &MF = DAG.getMachineFunction();
   bool OptForSize = MF.getFunction()->hasFnAttr(Attribute::OptimizeForSize);
 
-  // Shuffle operations on MMX not supported.
-  if (isMMX)
-    return Op;
+  assert(VT.getSizeInBits() != 64 && "Can't lower MMX shuffles");
 
   // Vector shuffle lowering takes 3 steps:
   //
@@ -6646,7 +6643,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   //    so the shuffle can be broken into other shuffles and the legalizer can
   //    try the lowering again.
   //
-  // The general ideia is that no vector_shuffle operation should be left to
+  // The general idea is that no vector_shuffle operation should be left to
   // be matched during isel, all of them must be converted to a target specific
   // node here.
 

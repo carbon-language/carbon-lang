@@ -80,8 +80,9 @@ multiclass sse12_fp_packed<bits<8> opc, string OpcodeStr, SDNode OpNode,
 multiclass sse12_fp_packed_logical_rm<bits<8> opc, RegisterClass RC, Domain d,
                                       string OpcodeStr, X86MemOperand x86memop,
                                       list<dag> pat_rr, list<dag> pat_rm,
-                                      bit Is2Addr = 1> {
-  let isCommutable = 1 in
+                                      bit Is2Addr = 1,
+                                      bit rr_hasSideEffects = 0> {
+  let isCommutable = 1, neverHasSideEffects = rr_hasSideEffects in
     def rr : PI<opc, MRMSrcReg, (outs RC:$dst), (ins RC:$src1, RC:$src2),
        !if(Is2Addr,
            !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
@@ -2629,7 +2630,7 @@ multiclass sse12_fp_packed_logical<bits<8> opc, string OpcodeStr,
   defm V#NAME#PS : sse12_fp_packed_logical_rm<opc, VR128, SSEPackedSingle,
        !strconcat(OpcodeStr, "ps"), f128mem, [],
        [(set VR128:$dst, (OpNode (bc_v2i64 (v4f32 VR128:$src1)),
-                                 (memopv2i64 addr:$src2)))], 0>, TB, VEX_4V;
+                                 (memopv2i64 addr:$src2)))], 0, 1>, TB, VEX_4V;
 
   defm V#NAME#PD : sse12_fp_packed_logical_rm<opc, VR128, SSEPackedDouble,
        !strconcat(OpcodeStr, "pd"), f128mem,
@@ -2926,12 +2927,15 @@ multiclass sse2_fp_unop_s<bits<8> opc, string OpcodeStr,
 
 /// sse2_fp_unop_s_avx - AVX SSE2 unops in scalar form.
 multiclass sse2_fp_unop_s_avx<bits<8> opc, string OpcodeStr> {
+  let neverHasSideEffects = 1 in {
   def SDr : SDI<opc, MRMSrcReg, (outs FR64:$dst), (ins FR64:$src1, FR64:$src2),
                !strconcat(OpcodeStr,
                           "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"), []>;
+  let mayLoad = 1 in
   def SDm : SDI<opc, MRMSrcMem, (outs FR64:$dst), (ins FR64:$src1,f64mem:$src2),
                !strconcat(OpcodeStr,
                           "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"), []>;
+  }
   def SDm_Int : SDI<opc, MRMSrcMem, (outs VR128:$dst),
                (ins VR128:$src1, sdmem:$src2),
                !strconcat(OpcodeStr,
@@ -3799,14 +3803,15 @@ let ExeDomain = SSEPackedInt in {
                          (outs VR128:$dst), (ins VR128:$src1, i32i8imm:$src2),
                          "psrldq\t{$src2, $dst|$dst, $src2}", []>;
     // PSRADQri doesn't exist in SSE[1-3].
-  }
-  def PANDNrr : PDI<0xDF, MRMSrcReg,
-                    (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
-                    "pandn\t{$src2, $dst|$dst, $src2}", []>;
+    def PANDNrr : PDI<0xDF, MRMSrcReg,
+                      (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
+                      "pandn\t{$src2, $dst|$dst, $src2}", []>;
 
-  def PANDNrm : PDI<0xDF, MRMSrcMem,
-                    (outs VR128:$dst), (ins VR128:$src1, i128mem:$src2),
-                    "pandn\t{$src2, $dst|$dst, $src2}", []>;
+    let mayLoad = 1 in
+    def PANDNrm : PDI<0xDF, MRMSrcMem,
+                      (outs VR128:$dst), (ins VR128:$src1, i128mem:$src2),
+                      "pandn\t{$src2, $dst|$dst, $src2}", []>;
+  }
 }
 } // Constraints = "$src1 = $dst"
 
@@ -5348,6 +5353,7 @@ let Predicates = [HasAVX] in {
 //===---------------------------------------------------------------------===//
 
 multiclass ssse3_palign<string asm, bit Is2Addr = 1> {
+  let neverHasSideEffects = 1 in {
   def R128rr : SS3AI<0x0F, MRMSrcReg, (outs VR128:$dst),
       (ins VR128:$src1, VR128:$src2, i8imm:$src3),
       !if(Is2Addr,
@@ -5355,6 +5361,7 @@ multiclass ssse3_palign<string asm, bit Is2Addr = 1> {
         !strconcat(asm,
                   "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}")),
       []>, OpSize;
+  let mayLoad = 1 in
   def R128rm : SS3AI<0x0F, MRMSrcMem, (outs VR128:$dst),
       (ins VR128:$src1, i128mem:$src2, i8imm:$src3),
       !if(Is2Addr,
@@ -5362,19 +5369,23 @@ multiclass ssse3_palign<string asm, bit Is2Addr = 1> {
         !strconcat(asm,
                   "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}")),
       []>, OpSize;
+  }
 }
 
 multiclass ssse3_palign_y<string asm, bit Is2Addr = 1> {
+  let neverHasSideEffects = 1 in {
   def R256rr : SS3AI<0x0F, MRMSrcReg, (outs VR256:$dst),
       (ins VR256:$src1, VR256:$src2, i8imm:$src3),
       !strconcat(asm,
                  "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
       []>, OpSize;
+  let mayLoad = 1 in
   def R256rm : SS3AI<0x0F, MRMSrcMem, (outs VR256:$dst),
       (ins VR256:$src1, i256mem:$src2, i8imm:$src3),
       !strconcat(asm,
                  "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
       []>, OpSize;
+  }
 }
 
 let Predicates = [HasAVX] in
@@ -5721,6 +5732,7 @@ multiclass SS41I_extract8<bits<8> opc, string OpcodeStr> {
                   "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                  [(set GR32:$dst, (X86pextrb (v16i8 VR128:$src1), imm:$src2))]>,
                  OpSize;
+  let neverHasSideEffects = 1, mayStore = 1 in
   def mr : SS4AIi8<opc, MRMDestMem, (outs),
                  (ins i8mem:$dst, VR128:$src1, i32i8imm:$src2),
                  !strconcat(OpcodeStr,
@@ -5743,6 +5755,7 @@ defm PEXTRB      : SS41I_extract8<0x14, "pextrb">;
 
 /// SS41I_extract16 - SSE 4.1 extract 16 bits to memory destination
 multiclass SS41I_extract16<bits<8> opc, string OpcodeStr> {
+  let neverHasSideEffects = 1, mayStore = 1 in
   def mr : SS4AIi8<opc, MRMDestMem, (outs),
                  (ins i16mem:$dst, VR128:$src1, i32i8imm:$src2),
                  !strconcat(OpcodeStr,
@@ -6720,19 +6733,21 @@ let Defs = [EFLAGS], usesCustomInserter = 1 in {
   defm VPCMPISTRM128 : pseudo_pcmpistrm<"#VPCMPISTRM128">, Requires<[HasAVX]>;
 }
 
-let Defs = [XMM0, EFLAGS], Predicates = [HasAVX] in {
+let Defs = [XMM0, EFLAGS], neverHasSideEffects = 1, Predicates = [HasAVX] in {
   def VPCMPISTRM128rr : SS42AI<0x62, MRMSrcReg, (outs),
       (ins VR128:$src1, VR128:$src2, i8imm:$src3),
       "vpcmpistrm\t{$src3, $src2, $src1|$src1, $src2, $src3}", []>, OpSize, VEX;
+  let mayLoad = 1 in
   def VPCMPISTRM128rm : SS42AI<0x62, MRMSrcMem, (outs),
       (ins VR128:$src1, i128mem:$src2, i8imm:$src3),
       "vpcmpistrm\t{$src3, $src2, $src1|$src1, $src2, $src3}", []>, OpSize, VEX;
 }
 
-let Defs = [XMM0, EFLAGS] in {
+let Defs = [XMM0, EFLAGS], neverHasSideEffects = 1 in {
   def PCMPISTRM128rr : SS42AI<0x62, MRMSrcReg, (outs),
       (ins VR128:$src1, VR128:$src2, i8imm:$src3),
       "pcmpistrm\t{$src3, $src2, $src1|$src1, $src2, $src3}", []>, OpSize;
+  let mayLoad = 1 in
   def PCMPISTRM128rm : SS42AI<0x62, MRMSrcMem, (outs),
       (ins VR128:$src1, i128mem:$src2, i8imm:$src3),
       "pcmpistrm\t{$src3, $src2, $src1|$src1, $src2, $src3}", []>, OpSize;
@@ -6756,19 +6771,21 @@ let Defs = [EFLAGS], Uses = [EAX, EDX], usesCustomInserter = 1 in {
 }
 
 let Predicates = [HasAVX],
-    Defs = [XMM0, EFLAGS], Uses = [EAX, EDX] in {
+    Defs = [XMM0, EFLAGS], Uses = [EAX, EDX], neverHasSideEffects = 1 in {
   def VPCMPESTRM128rr : SS42AI<0x60, MRMSrcReg, (outs),
       (ins VR128:$src1, VR128:$src3, i8imm:$src5),
       "vpcmpestrm\t{$src5, $src3, $src1|$src1, $src3, $src5}", []>, OpSize, VEX;
+  let mayLoad = 1 in
   def VPCMPESTRM128rm : SS42AI<0x60, MRMSrcMem, (outs),
       (ins VR128:$src1, i128mem:$src3, i8imm:$src5),
       "vpcmpestrm\t{$src5, $src3, $src1|$src1, $src3, $src5}", []>, OpSize, VEX;
 }
 
-let Defs = [XMM0, EFLAGS], Uses = [EAX, EDX] in {
+let Defs = [XMM0, EFLAGS], Uses = [EAX, EDX], neverHasSideEffects = 1 in {
   def PCMPESTRM128rr : SS42AI<0x60, MRMSrcReg, (outs),
       (ins VR128:$src1, VR128:$src3, i8imm:$src5),
       "pcmpestrm\t{$src5, $src3, $src1|$src1, $src3, $src5}", []>, OpSize;
+  let mayLoad = 1 in
   def PCMPESTRM128rm : SS42AI<0x60, MRMSrcMem, (outs),
       (ins VR128:$src1, i128mem:$src3, i8imm:$src5),
       "pcmpestrm\t{$src5, $src3, $src1|$src1, $src3, $src5}", []>, OpSize;
@@ -7071,12 +7088,14 @@ def AESKEYGENASSIST128rm : AESAI<0xDF, MRMSrcMem, (outs VR128:$dst),
 //===----------------------------------------------------------------------===//
 
 // Carry-less Multiplication instructions
+let neverHasSideEffects = 1 in {
 let Constraints = "$src1 = $dst" in {
 def PCLMULQDQrr : CLMULIi8<0x44, MRMSrcReg, (outs VR128:$dst),
            (ins VR128:$src1, VR128:$src2, i8imm:$src3),
            "pclmulqdq\t{$src3, $src2, $dst|$dst, $src2, $src3}",
            []>;
 
+let mayLoad = 1 in
 def PCLMULQDQrm : CLMULIi8<0x44, MRMSrcMem, (outs VR128:$dst),
            (ins VR128:$src1, i128mem:$src2, i8imm:$src3),
            "pclmulqdq\t{$src3, $src2, $dst|$dst, $src2, $src3}",
@@ -7089,10 +7108,12 @@ def VPCLMULQDQrr : AVXCLMULIi8<0x44, MRMSrcReg, (outs VR128:$dst),
            "vpclmulqdq\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
            []>;
 
+let mayLoad = 1 in
 def VPCLMULQDQrm : AVXCLMULIi8<0x44, MRMSrcMem, (outs VR128:$dst),
            (ins VR128:$src1, i128mem:$src2, i8imm:$src3),
            "vpclmulqdq\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
            []>;
+}
 
 
 multiclass pclmul_alias<string asm, int immop> {
