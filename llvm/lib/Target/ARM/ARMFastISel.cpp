@@ -875,8 +875,7 @@ void ARMFastISel::ARMSimplifyAddress(Address &Addr, EVT VT, bool useAM3) {
         needsLowering = ((Addr.Offset & 0xfff) != Addr.Offset);
       else
         // ARM halfword load/stores and signed byte loads use +/-imm8 offsets.
-        // FIXME: Negative offsets require special handling.
-        needsLowering = (Addr.Offset > 255 || Addr.Offset < 0);
+        needsLowering = (Addr.Offset > 255 || Addr.Offset < -255);
       break;
     case MVT::f32:
     case MVT::f64:
@@ -933,18 +932,26 @@ void ARMFastISel::AddLoadStoreOperands(EVT VT, Address &Addr,
     MIB.addFrameIndex(FI);
 
     // ARM halfword load/stores and signed byte loads need an additional operand.
-    if (useAM3) MIB.addReg(0);
-
-    MIB.addImm(Addr.Offset);
+    if (useAM3) {
+      signed Imm = (Addr.Offset < 0) ? (0x100 | -Addr.Offset) : Addr.Offset;
+      MIB.addReg(0);
+      MIB.addImm(Imm);
+    } else {
+      MIB.addImm(Addr.Offset);
+    }
     MIB.addMemOperand(MMO);
   } else {
     // Now add the rest of the operands.
     MIB.addReg(Addr.Base.Reg);
 
     // ARM halfword load/stores and signed byte loads need an additional operand.
-    if (useAM3) MIB.addReg(0);
-
-    MIB.addImm(Addr.Offset);
+    if (useAM3) {
+      signed Imm = (Addr.Offset < 0) ? (0x100 | -Addr.Offset) : Addr.Offset;
+      MIB.addReg(0);
+      MIB.addImm(Imm);
+    } else {
+      MIB.addImm(Addr.Offset);
+    }
   }
   AddOptionalDefs(MIB);
 }
