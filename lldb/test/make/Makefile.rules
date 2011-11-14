@@ -203,7 +203,7 @@ clean::
 ifeq "$(DYLIB_NAME)" ""
 	rm -rf "$(EXE)" "$(DSYM)" $(OBJECTS) $(PREREQS)
 else
-	rm -rf "$(EXE)" "$(DSYM)" $(OBJECTS) $(PREREQS) $(DYLIB_OBJECTS) $(DYLIB_FILENAME) $(DYLIB_FILENAME).dSYM
+	rm -rf "$(EXE)" "$(DSYM)" $(OBJECTS) $(PREREQS) $(DYLIB_OBJECTS) $(DYLIB_PREREQS) $(DYLIB_FILENAME) $(DYLIB_FILENAME).dSYM
 endif
 
 #----------------------------------------------------------------------
