@@ -977,6 +977,11 @@ Builder.CreateResume(UnwindData);
 
   <p>PPC32/ELF va_arg was implemented.</p>
   <p>PPC32 initial support for .o file writing was implemented.</p>
+  <p>MicroBlaze scheduling itineraries were added that model the
+     3-stage and the 5-stage pipeline architectures. The 3-stage
+     pipeline model can be selected with <code>-mcpu=mblaze3</code> 
+     and the 5-stage pipeline model can be selected with 
+     <code>-mcpu=mblaze5</code>.</p>
   
 <ul>
 <!--
