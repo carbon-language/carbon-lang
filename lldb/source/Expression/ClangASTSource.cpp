@@ -487,7 +487,7 @@ ClangASTSource::FindObjCMethodDecls (NameSearchContext &context)
     }
     else if (decl_name.isObjCOneArgSelector())
     {
-        ss.Printf("%s:", decl_name.getAsString().c_str());
+        ss.Printf("%s", decl_name.getAsString().c_str());
     }
     else
     {    
