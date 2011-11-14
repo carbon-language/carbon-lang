@@ -1757,7 +1757,7 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
   llvm::DIDescriptor FDContext(Unit);
   llvm::DIArray TParamsArray;
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-    // If there is a DISubprogram for  this function available then use it.
+    // If there is a DISubprogram for this function available then use it.
     llvm::DenseMap<const FunctionDecl *, llvm::WeakVH>::iterator
       FI = SPCache.find(FD);
     if (FI != SPCache.end()) {
