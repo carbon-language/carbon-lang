@@ -234,3 +234,40 @@ loop.body.2:
 exit:
   ret i32 %sum
 }
+
+define void @unnatural_cfg1() {
+; Test that we can handle a loop with an inner unnatural loop at the end of
+; a function. This is a gross CFG reduced out of the single source GCC.
+; CHECK: unnatural_cfg1
+; CHECK: %entry
+; CHECK: %loop.body1
+; CHECK: %loop.body3
+; CHECK: %loop.body2
+
+entry:
+  br label %loop.header
+
+loop.header:
+  br label %loop.body1
+
+loop.body1:
+  br i1 undef, label %loop.body3, label %loop.body2
+
+loop.body2:
+  %ptr = load i32** undef, align 4
+  br label %loop.body3
+
+loop.body3:
+  %myptr = phi i32* [ %ptr2, %loop.body5 ], [ %ptr, %loop.body2 ], [ undef, %loop.body1 ]
+  %bcmyptr = bitcast i32* %myptr to i32*
+  %val = load i32* %bcmyptr, align 4
+  %comp = icmp eq i32 %val, 48
+  br i1 %comp, label %loop.body4, label %loop.body5
+
+loop.body4:
+  br i1 undef, label %loop.header, label %loop.body5
+
+loop.body5:
+  %ptr2 = load i32** undef, align 4
+  br label %loop.body3
+}
