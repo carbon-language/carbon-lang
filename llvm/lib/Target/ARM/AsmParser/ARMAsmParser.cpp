@@ -714,7 +714,7 @@ public:
   bool isBitfield() const { return Kind == k_BitfieldDescriptor; }
   bool isPostIdxRegShifted() const { return Kind == k_PostIndexRegister; }
   bool isPostIdxReg() const {
-    return Kind == k_PostIndexRegister && PostIdxReg.ShiftTy == ARM_AM::no_shift;
+    return Kind == k_PostIndexRegister && PostIdxReg.ShiftTy ==ARM_AM::no_shift;
   }
   bool isMemNoOffset(bool alignOK = false) const {
     if (!isMemory())
@@ -1101,7 +1101,8 @@ public:
 
   void addRegShiftedRegOperands(MCInst &Inst, unsigned N) const {
     assert(N == 3 && "Invalid number of operands!");
-    assert(isRegShiftedReg() && "addRegShiftedRegOperands() on non RegShiftedReg!");
+    assert(isRegShiftedReg() &&
+           "addRegShiftedRegOperands() on non RegShiftedReg!");
     Inst.addOperand(MCOperand::CreateReg(RegShiftedReg.SrcReg));
     Inst.addOperand(MCOperand::CreateReg(RegShiftedReg.ShiftReg));
     Inst.addOperand(MCOperand::CreateImm(
@@ -1110,7 +1111,8 @@ public:
 
   void addRegShiftedImmOperands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
-    assert(isRegShiftedImm() && "addRegShiftedImmOperands() on non RegShiftedImm!");
+    assert(isRegShiftedImm() &&
+           "addRegShiftedImmOperands() on non RegShiftedImm!");
     Inst.addOperand(MCOperand::CreateReg(RegShiftedImm.SrcReg));
     Inst.addOperand(MCOperand::CreateImm(
       ARM_AM::getSORegOpc(RegShiftedImm.ShiftTy, RegShiftedImm.ShiftImm)));
@@ -1426,8 +1428,9 @@ public:
 
   void addMemRegOffsetOperands(MCInst &Inst, unsigned N) const {
     assert(N == 3 && "Invalid number of operands!");
-    unsigned Val = ARM_AM::getAM2Opc(Memory.isNegative ? ARM_AM::sub : ARM_AM::add,
-                                     Memory.ShiftImm, Memory.ShiftType);
+    unsigned Val =
+      ARM_AM::getAM2Opc(Memory.isNegative ? ARM_AM::sub : ARM_AM::add,
+                        Memory.ShiftImm, Memory.ShiftType);
     Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
     Inst.addOperand(MCOperand::CreateReg(Memory.OffsetRegNum));
     Inst.addOperand(MCOperand::CreateImm(Val));
