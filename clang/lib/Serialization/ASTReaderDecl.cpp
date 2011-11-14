@@ -1772,9 +1772,11 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
 
   // Load any relevant update records.
   loadDeclUpdateRecords(ID, D);
-  
+
+  // Load the category chain after recursive loading is finished.
   if (ObjCChainedCategoriesInterfaces.count(ID))
-    loadObjCChainedCategories(ID, cast<ObjCInterfaceDecl>(D));
+    PendingChainedObjCCategories.push_back(
+                                std::make_pair(cast<ObjCInterfaceDecl>(D), ID));
   
   // If we have deserialized a declaration that has a definition the
   // AST consumer might need to know about, queue it.

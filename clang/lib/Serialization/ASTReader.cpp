@@ -5543,6 +5543,14 @@ void ASTReader::FinishedDeserializing() {
       PendingPreviousDecls.pop_front();
     }
 
+    for (std::vector<std::pair<ObjCInterfaceDecl *,
+                               serialization::DeclID> >::iterator
+           I = PendingChainedObjCCategories.begin(),
+           E = PendingChainedObjCCategories.end(); I != E; ++I) {
+      loadObjCChainedCategories(I->second, I->first);
+    }
+    PendingChainedObjCCategories.clear();
+
     // We are not in recursive loading, so it's safe to pass the "interesting"
     // decls to the consumer.
     if (Consumer)

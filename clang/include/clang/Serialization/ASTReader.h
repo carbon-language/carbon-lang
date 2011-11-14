@@ -624,6 +624,11 @@ private:
   /// deeply nested calls when there are many redeclarations.
   std::deque<std::pair<Decl *, serialization::DeclID> > PendingPreviousDecls;
 
+  /// \brief We delay loading the chain of objc categories after recursive
+  /// loading of declarations is finished.
+  std::vector<std::pair<ObjCInterfaceDecl *, serialization::DeclID> >
+    PendingChainedObjCCategories;
+
   /// \brief Ready to load the previous declaration of the given Decl.
   void loadAndAttachPreviousDecl(Decl *D, serialization::DeclID ID);
 
