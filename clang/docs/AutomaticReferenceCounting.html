@@ -1482,9 +1482,12 @@ implementation.</p></div>
 <p>The <tt>self</tt> parameter variable of an Objective-C method is
 never actually retained by the implementation.  It is undefined
 behavior, or at least dangerous, to cause an object to be deallocated
-during a message send to that object.  To make this
-safe, <tt>self</tt> is implicitly <tt>const</tt> unless the method is
-in the <a href="#family.semantics.init"><tt>init</tt> family</a>.</p>
+during a message send to that object.</p>
+
+<p>To make this safe, for Objective-C instance methods <tt>self</tt> is
+implicitly <tt>const</tt> unless the method is in the <a
+href="#family.semantics.init"><tt>init</tt> family</a>. Further, <tt>self</tt>
+is <b>always</b> implicitly <tt>const</tt> within a class method.</p>
 
 <div class="rationale"><p>Rationale: the cost of
 retaining <tt>self</tt> in all methods was found to be prohibitive, as

@@ -3078,8 +3078,10 @@ def note_arc_gained_method_convention : Note<
   "declaration in interface is not in the '%select{alloc|copy|init|new}0' "
   "family because %select{its result type is not an object pointer|"
   "its result type is unrelated to its receiver type}1">;
-def err_typecheck_arr_assign_self : Error<
+def err_typecheck_arc_assign_self : Error<
   "cannot assign to 'self' outside of a method in the init family">;
+def err_typecheck_arc_assign_self_class_method : Error<
+  "cannot assign to 'self' in a class method">;
 def err_typecheck_arr_assign_enumeration : Error<
   "fast enumeration variables can't be modified in ARC by default; "
   "declare the variable __strong to allow this">;
