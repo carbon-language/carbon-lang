@@ -47,6 +47,11 @@ PTXTargetLowering::PTXTargetLowering(TargetMachine &TM)
   setBooleanVectorContents(ZeroOrOneBooleanContent); // FIXME: Is this correct?
   setMinFunctionAlignment(2);
 
+  // Let LLVM use loads/stores for all mem* operations
+  maxStoresPerMemcpy  = 4096;
+  maxStoresPerMemmove = 4096;
+  maxStoresPerMemset  = 4096;
+
   ////////////////////////////////////
   /////////// Expansion //////////////
   ////////////////////////////////////
