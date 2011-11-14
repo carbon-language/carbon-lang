@@ -95,6 +95,15 @@ Stmt *AnalysisDeclContext::getBody() const {
 const ImplicitParamDecl *AnalysisDeclContext::getSelfDecl() const {
   if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D))
     return MD->getSelfDecl();
+  if (const BlockDecl *BD = dyn_cast<BlockDecl>(D)) {
+    // See if 'self' was captured by the block.
+    for (BlockDecl::capture_const_iterator it = BD->capture_begin(),
+         et = BD->capture_end(); it != et; ++it) {
+      const VarDecl *VD = it->getVariable();
+      if (VD->getName() == "self")
+        return dyn_cast<ImplicitParamDecl>(VD);
+    }    
+  }
 
   return NULL;
 }

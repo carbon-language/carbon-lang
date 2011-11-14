@@ -1321,3 +1321,16 @@ void radar9414427() {
 @implementation RDar9465344
 @end
 
+// Don't crash when analyzing access to 'self' within a block.
+@interface Rdar10380300Base 
+- (void) foo;
+@end
+@interface Rdar10380300 : Rdar10380300Base @end
+@implementation Rdar10380300
+- (void)foo {
+  ^{
+    [super foo];
+  }();
+}
+@end
+
