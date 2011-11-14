@@ -2621,24 +2621,40 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
     Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Copy, Chain);
   }
 
-  if (isVarArg && IsO32) {
+  if (isVarArg) {
+    unsigned NumOfRegs = IsO32 ? 4 : 8;
+    const unsigned *ArgRegs = IsO32 ? O32IntRegs : Mips64IntRegs;
+    unsigned Idx = CCInfo.getFirstUnallocated(ArgRegs, NumOfRegs);
+    int FirstRegSlotOffset = IsO32 ? 0 : -64 ; // offset of $a0's slot.
+    TargetRegisterClass *RC
+      = IsO32 ? Mips::CPURegsRegisterClass : Mips::CPU64RegsRegisterClass;
+    unsigned RegSize = RC->getSize();
+    int RegSlotOffset = FirstRegSlotOffset + Idx * RegSize;
+
+    // Offset of the first variable argument from stack pointer.
+    int FirstVaArgOffset;
+
+    if (IsO32 || (Idx == NumOfRegs)) {
+      FirstVaArgOffset =
+        (CCInfo.getNextStackOffset() + RegSize - 1) / RegSize * RegSize;
+    } else
+      FirstVaArgOffset = RegSlotOffset;
+
     // Record the frame index of the first variable argument
     // which is a value necessary to VASTART.
-    unsigned NextStackOffset = CCInfo.getNextStackOffset();
-    assert(NextStackOffset % 4 == 0 &&
-           "NextStackOffset must be aligned to 4-byte boundaries.");
-    LastFI = MFI->CreateFixedObject(4, NextStackOffset, true);
+    LastFI = MFI->CreateFixedObject(RegSize, FirstVaArgOffset, true);
     MipsFI->setVarArgsFrameIndex(LastFI);
 
-    // If NextStackOffset is smaller than o32's 16-byte reserved argument area,
-    // copy the integer registers that have not been used for argument passing
-    // to the caller's stack frame.
-    for (; NextStackOffset < 16; NextStackOffset += 4) {
-      TargetRegisterClass *RC = Mips::CPURegsRegisterClass;
-      unsigned Idx = NextStackOffset / 4;
-      unsigned Reg = AddLiveIn(DAG.getMachineFunction(), O32IntRegs[Idx], RC);
-      SDValue ArgValue = DAG.getCopyFromReg(Chain, dl, Reg, MVT::i32);
-      LastFI = MFI->CreateFixedObject(4, NextStackOffset, true);
+    // Copy the integer registers that have not been used for argument passing
+    // to the argument register save area. For O32, the save area is allocated
+    // in the caller's stack frame, while for N32/64, it is allocated in the
+    // callee's stack frame.
+    for (int StackOffset = RegSlotOffset;
+         Idx < NumOfRegs; ++Idx, StackOffset += RegSize) {
+      unsigned Reg = AddLiveIn(DAG.getMachineFunction(), ArgRegs[Idx], RC);
+      SDValue ArgValue = DAG.getCopyFromReg(Chain, dl, Reg,
+                                            MVT::getIntegerVT(RegSize * 8));
+      LastFI = MFI->CreateFixedObject(RegSize, StackOffset, true);
       SDValue PtrOff = DAG.getFrameIndex(LastFI, getPointerTy());
       OutChains.push_back(DAG.getStore(Chain, dl, ArgValue, PtrOff,
                                        MachinePointerInfo(),
