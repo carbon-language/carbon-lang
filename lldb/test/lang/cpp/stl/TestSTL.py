@@ -11,6 +11,7 @@ class STLTestCase(TestBase):
 
     mydir = os.path.join("lang", "cpp", "stl")
 
+    # rdar://problem/10400981
     @unittest2.expectedFailure
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym(self):
@@ -18,6 +19,7 @@ class STLTestCase(TestBase):
         self.buildDsym()
         self.step_stl_exprs()
 
+    # rdar://problem/10400981
     @unittest2.expectedFailure
     def test_with_dwarf(self):
         """Test some expressions involving STL data types."""
@@ -64,6 +66,7 @@ class STLTestCase(TestBase):
         self.runCmd('expr for (int i = 0; i < hello_world.length(); ++i) { (void)printf("%c\\n", hello_world[i]); }')
 
         # rdar://problem/10373783
+        # rdar://problem/10400981
         self.expect('expr associative_array.size()',
             substrs = [' = 3'])
         self.expect('expr associative_array.count(hello_world)',
