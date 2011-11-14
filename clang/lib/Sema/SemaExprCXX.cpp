@@ -4092,6 +4092,10 @@ ExprResult Sema::MaybeBindToTemporary(Expr *E) {
         return Owned(E);
     }
 
+    // Don't reclaim an object of Class type.
+    if (!ReturnsRetained && E->getType()->isObjCARCImplicitlyUnretainedType())
+      return Owned(E);
+
     ExprNeedsCleanups = true;
 
     CastKind ck = (ReturnsRetained ? CK_ARCConsumeObject

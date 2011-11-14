@@ -1508,3 +1508,27 @@ void test66(void) {
 // CHECK-NEXT: [[T8:%.*]] = bitcast [[TEST66]]* [[T3]] to i8*
 // CHECK-NEXT: call void @objc_release(i8* [[T8]])
 // CHECK-NEXT: ret void
+
+// rdar://problem/9953540
+Class test67_helper(void);
+void test67(void) {
+  Class cl = test67_helper();
+}
+// CHECK:    define void @test67()
+// CHECK:      [[CL:%.*]] = alloca i8*, align 8
+// CHECK-NEXT: [[T0:%.*]] = call i8* @test67_helper()
+// CHECK-NEXT: store i8* [[T0]], i8** [[CL]], align 8
+// CHECK-NEXT: ret void
+
+Class test68_helper(void);
+void test68(void) {
+  __strong Class cl = test67_helper();
+}
+// CHECK:    define void @test68()
+// CHECK:      [[CL:%.*]] = alloca i8*, align 8
+// CHECK-NEXT: [[T0:%.*]] = call i8* @test67_helper()
+// CHECK-NEXT: [[T1:%.*]] = call i8* @objc_retainAutoreleasedReturnValue(i8* [[T0]])
+// CHECK-NEXT: store i8* [[T1]], i8** [[CL]], align 8
+// CHECK-NEXT: [[T2:%.*]] = load i8** [[CL]]
+// CHECK-NEXT: call void @objc_release(i8* [[T2]])
+// CHECK-NEXT: ret void
