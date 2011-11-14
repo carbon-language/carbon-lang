@@ -17,17 +17,18 @@
 #define LLVM_TRANSFORMS_UTILS_SIMPLIFYINDVAR_H
 
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ValueHandle.h"
 
 namespace llvm {
 
 extern cl::opt<bool> DisableIVRewrite;
 
-class Loop;
-class LoopInfo;
-class DominatorTree;
-class ScalarEvolution;
-class LPPassManager;
+class CastInst;
 class IVUsers;
+class Loop;
+class LPPassManager;
+class PHINode;
+class ScalarEvolution;
 
 /// Interface for visiting interesting IV users that are recognized but not
 /// simplified by this utility.

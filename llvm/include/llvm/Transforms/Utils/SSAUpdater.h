@@ -14,16 +14,18 @@
 #ifndef LLVM_TRANSFORMS_UTILS_SSAUPDATER_H
 #define LLVM_TRANSFORMS_UTILS_SSAUPDATER_H
 
+#include "llvm/ADT/StringRef.h"
+
 namespace llvm {
-  class Value;
   class BasicBlock;
-  class Use;
-  class PHINode;
+  class Instruction;
+  class LoadInst;
   template<typename T> class SmallVectorImpl;
   template<typename T> class SSAUpdaterTraits;
-  class DbgDeclareInst;
-  class DIBuilder;
-  class BumpPtrAllocator;
+  class PHINode;
+  class Type;
+  class Use;
+  class Value;
 
 /// SSAUpdater - This class updates SSA form for a set of values defined in
 /// multiple blocks.  This is used when code duplication or another unstructured
@@ -137,12 +139,7 @@ public:
   /// passed into the run method).  Clients should implement this with a more
   /// efficient version if possible.
   virtual bool isInstInList(Instruction *I,
-                            const SmallVectorImpl<Instruction*> &Insts) const {
-    for (unsigned i = 0, e = Insts.size(); i != e; ++i)
-      if (Insts[i] == I)
-        return true;
-    return false;
-  }
+                            const SmallVectorImpl<Instruction*> &Insts) const;
   
   /// doExtraRewritesBeforeFinalDeletion - This hook is invoked after all the
   /// stores are found and inserted as available values, but 

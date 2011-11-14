@@ -15,8 +15,16 @@
 #ifndef LLVM_TRANSFORMS_UTILS_SSAUPDATERIMPL_H
 #define LLVM_TRANSFORMS_UTILS_SSAUPDATERIMPL_H
 
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/Allocator.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/ValueHandle.h"
+
 namespace llvm {
 
+class CastInst;
+class PHINode;
 template<typename T> class SSAUpdaterTraits;
 
 template<typename UpdaterT>

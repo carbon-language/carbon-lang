@@ -518,3 +518,10 @@ run(const SmallVectorImpl<Instruction*> &Insts) const {
     User->eraseFromParent();
   }
 }
+
+bool
+LoadAndStorePromoter::isInstInList(Instruction *I,
+                                   const SmallVectorImpl<Instruction*> &Insts)
+                                   const {
+  return std::find(Insts.begin(), Insts.end(), I) != Insts.end();
+}
