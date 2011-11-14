@@ -1172,3 +1172,12 @@ def : VFP2InstAlias<"vstr$p $Dd, $addr",
                     (VSTRD DPR:$Dd, addrmode5:$addr, pred:$p)>;
 def : VFP2InstAlias<"vstr$p $Sd, $addr",
                     (VSTRS SPR:$Sd, addrmode5:$addr, pred:$p)>;
+// The suffix can also by typed.
+defm : VFPDT32InstAlias<"vldr$p", "$Sd, $addr",
+                        (VLDRS SPR:$Sd, addrmode5:$addr, pred:$p)>;
+defm : VFPDT32InstAlias<"vstr$p", "$Sd, $addr",
+                        (VSTRS SPR:$Sd, addrmode5:$addr, pred:$p)>;
+defm : VFPDT64InstAlias<"vldr$p", "$Dd, $addr",
+                        (VLDRD DPR:$Dd, addrmode5:$addr, pred:$p)>;
+defm : VFPDT64InstAlias<"vstr$p", "$Dd, $addr",
+                        (VSTRD DPR:$Dd, addrmode5:$addr, pred:$p)>;

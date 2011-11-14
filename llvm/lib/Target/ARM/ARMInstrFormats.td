@@ -1991,3 +1991,22 @@ class NVDupLane<bits<4> op19_16, bit op6, dag oops, dag iops,
 class NEONFPPat<dag pattern, dag result> : Pat<pattern, result> {
   list<Predicate> Predicates = [HasNEON,UseNEONForFP];
 }
+
+// VFP/NEON Instruction aliases for type suffices.
+class VFPDataTypeInstAlias<string opc, string dt, string asm, dag Result> :
+  InstAlias<!strconcat(opc, dt, asm), Result>;
+multiclass VFPDT32InstAlias<string opc, string asm, dag Result> {
+  def I32 : VFPDataTypeInstAlias<opc, ".i32", asm, Result>;
+  def S32 : VFPDataTypeInstAlias<opc, ".s32", asm, Result>;
+  def U32 : VFPDataTypeInstAlias<opc, ".u32", asm, Result>;
+  def F32 : VFPDataTypeInstAlias<opc, ".f32", asm, Result>;
+  def F   : VFPDataTypeInstAlias<opc, ".f",   asm, Result>;
+}
+multiclass VFPDT64InstAlias<string opc, string asm, dag Result> {
+  def I64 : VFPDataTypeInstAlias<opc, ".i64", asm, Result>;
+  def S64 : VFPDataTypeInstAlias<opc, ".s64", asm, Result>;
+  def U64 : VFPDataTypeInstAlias<opc, ".u64", asm, Result>;
+  def F64 : VFPDataTypeInstAlias<opc, ".f64", asm, Result>;
+  def D   : VFPDataTypeInstAlias<opc, ".d",   asm, Result>;
+}
+
