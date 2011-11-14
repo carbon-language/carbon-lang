@@ -8,7 +8,10 @@
 //===----------------------------------------------------------------------===//
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Threading.h"
+#include "llvm/Config/config.h"
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
 
 #include "gtest/gtest.h"
 
@@ -16,6 +19,7 @@ using namespace llvm;
 
 namespace {
 
+#ifdef HAVE_PTHREAD_H
 namespace test1 {
   llvm::ManagedStatic<int> ms;
   void *helper(void*) {
@@ -35,5 +39,6 @@ TEST(Initialize, MultipleThreads) {
   pthread_join(t2, NULL);
   llvm_stop_multithreaded();
 }
+#endif
 
 } // anonymous namespace
