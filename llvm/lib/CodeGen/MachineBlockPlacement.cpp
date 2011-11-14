@@ -492,9 +492,9 @@ void MachineBlockPlacement::buildChain(
     if (TII->AnalyzeBranch(*BB, TBB, FBB, Cond) && BB->canFallThrough()) {
       MachineFunction::iterator I(BB), NextI(llvm::next(I));
       // Ensure that the layout successor is a viable block, as we know that
-      // fallthrough is a possibility.
+      // fallthrough is a possibility. Note that this may not be a valid block
+      // in the loop, but we allow that to cope with degenerate situations.
       assert(NextI != BB->getParent()->end());
-      assert(!BlockFilter || BlockFilter->count(NextI));
       BestSucc = NextI;
     }
 
@@ -594,7 +594,10 @@ void MachineBlockPlacement::buildLoopChains(MachineFunction &F,
     for (BlockChain::iterator BCI = LoopChain.begin(), BCE = LoopChain.end();
          BCI != BCE; ++BCI)
       if (!LoopBlockSet.erase(*BCI)) {
-        BadLoop = true;
+        // We don't mark the loop as bad here because there are real situations
+        // where this can occur. For example, with an unanalyzable fallthrough
+        // from a loop block to a non-loop block.
+        // FIXME: Such constructs shouldn't exist. Track them down and fix them.
         dbgs() << "Loop chain contains a block not contained by the loop!\n"
                << "  Loop header:  " << getBlockName(*L.block_begin()) << "\n"
                << "  Chain header: " << getBlockName(*LoopChain.begin()) << "\n"
