@@ -24,22 +24,113 @@ namespace cxindex {
 
 struct DeclInfo : public CXIdxDeclInfo {
   CXIdxEntityInfo CXEntInfo;
+  enum DInfoKind {
+    Info_Decl,
+
+    Info_ObjCContainer,
+      Info_ObjCInterface,
+      Info_ObjCProtocol,
+      Info_ObjCCategory
+  };
+  
+  DInfoKind Kind;
+
+  DeclInfo(bool isRedeclaration, bool isDefinition, bool isContainer)
+    : Kind(Info_Decl) {
+    this->isRedeclaration = isRedeclaration;
+    this->isDefinition = isDefinition;
+    this->isContainer = isContainer;
+  }
+  DeclInfo(DInfoKind K,
+           bool isRedeclaration, bool isDefinition, bool isContainer)
+    : Kind(K) {
+    this->isRedeclaration = isRedeclaration;
+    this->isDefinition = isDefinition;
+    this->isContainer = isContainer;
+  }
+
+  static bool classof(const DeclInfo *) { return true; }
 };
 
 struct ObjCContainerDeclInfo : public DeclInfo {
   CXIdxObjCContainerDeclInfo ObjCContDeclInfo;
+
+  ObjCContainerDeclInfo(bool isForwardRef,
+                        bool isRedeclaration,
+                        bool isImplementation)
+    : DeclInfo(Info_ObjCContainer, isRedeclaration,
+               /*isDefinition=*/!isForwardRef, /*isContainer=*/!isForwardRef) {
+    init(isForwardRef, isImplementation);
+  }
+  ObjCContainerDeclInfo(DInfoKind K,
+                        bool isForwardRef,
+                        bool isRedeclaration,
+                        bool isImplementation)
+    : DeclInfo(K, isRedeclaration, /*isDefinition=*/!isForwardRef,
+               /*isContainer=*/!isForwardRef) {
+    init(isForwardRef, isImplementation);
+  }
+
+  static bool classof(const DeclInfo *D) {
+    return Info_ObjCContainer <= D->Kind && D->Kind <= Info_ObjCCategory;
+  }
+  static bool classof(const ObjCContainerDeclInfo *D) { return true; }
+
+private:
+  void init(bool isForwardRef, bool isImplementation) {
+    if (isForwardRef)
+      ObjCContDeclInfo.kind = CXIdxObjCContainer_ForwardRef;
+    else if (isImplementation)
+      ObjCContDeclInfo.kind = CXIdxObjCContainer_Implementation;
+    else
+      ObjCContDeclInfo.kind = CXIdxObjCContainer_Interface;
+  }
+};
+
+struct ObjCInterfaceDeclInfo : public ObjCContainerDeclInfo {
+  CXIdxObjCInterfaceDeclInfo ObjCInterDeclInfo;
+  CXIdxObjCProtocolRefListInfo ObjCProtoListInfo;
+
+  ObjCInterfaceDeclInfo(const ObjCInterfaceDecl *D)
+    : ObjCContainerDeclInfo(Info_ObjCInterface,
+                            /*isForwardRef=*/false,
+                            /*isRedeclaration=*/D->isInitiallyForwardDecl(),
+                            /*isImplementation=*/false) { }
+
+  static bool classof(const DeclInfo *D) {
+    return D->Kind == Info_ObjCInterface;
+  }
+  static bool classof(const ObjCInterfaceDeclInfo *D) { return true; }
+};
+
+struct ObjCProtocolDeclInfo : public ObjCContainerDeclInfo {
+  CXIdxObjCProtocolRefListInfo ObjCProtoRefListInfo;
+
+  ObjCProtocolDeclInfo(const ObjCProtocolDecl *D)
+    : ObjCContainerDeclInfo(Info_ObjCProtocol,
+                            /*isForwardRef=*/false,
+                            /*isRedeclaration=*/D->isInitiallyForwardDecl(),
+                            /*isImplementation=*/false) { }
+
+  static bool classof(const DeclInfo *D) {
+    return D->Kind == Info_ObjCProtocol;
+  }
+  static bool classof(const ObjCProtocolDeclInfo *D) { return true; }
 };
 
 struct ObjCCategoryDeclInfo : public ObjCContainerDeclInfo {
   CXIdxObjCCategoryDeclInfo ObjCCatDeclInfo;
-};
 
-struct ObjCInterfaceDeclInfo : public ObjCCategoryDeclInfo {
-  CXIdxObjCInterfaceDeclInfo ObjCInterDeclInfo;
-};
+  explicit ObjCCategoryDeclInfo(bool isImplementation)
+    : ObjCContainerDeclInfo(Info_ObjCCategory,
+                            /*isForwardRef=*/false,
+                            /*isRedeclaration=*/isImplementation,
+                            /*isImplementation=*/isImplementation) { }
 
-struct ObjCProtocolDeclInfo : public ObjCCategoryDeclInfo {
-  CXIdxObjCProtocolDeclInfo ObjCProtoDeclInfo;
+  static bool classof(const DeclInfo *D) {
+    return D->Kind == Info_ObjCCategory;
+  }
+  static bool classof(const ObjCCategoryDeclInfo *D) { return true; }
 };
 
 class IndexingContext {
@@ -92,8 +183,11 @@ class IndexingContext {
     SmallVector<CXIdxEntityInfo, 4> ProtEntities;
     SmallVector<CXIdxObjCProtocolRefInfo *, 4> Prots;
 
-    CXIdxObjCProtocolRefInfo **getProtocolRefs() { return Prots.data(); }
-    unsigned getNumProtocols() { return (unsigned)Prots.size(); }
+    CXIdxObjCProtocolRefListInfo getListInfo() {
+      CXIdxObjCProtocolRefListInfo Info = { Prots.data(),
+                                            (unsigned)Prots.size() };
+      return Info;
+    }
 
     ObjCProtocolListInfo(const ObjCProtocolList &ProtList,
                          IndexingContext &IdxCtx,
@@ -184,14 +278,10 @@ public:
 private:
   void handleDecl(const NamedDecl *D,
                   SourceLocation Loc, CXCursor Cursor,
-                  bool isRedeclaration, bool isDefinition, bool isContainer,
                   DeclInfo &DInfo);
 
   void handleObjCContainer(const ObjCContainerDecl *D,
                            SourceLocation Loc, CXCursor Cursor,
-                           bool isForwardRef,
-                           bool isRedeclaration,
-                           bool isImplementation,
                            ObjCContainerDeclInfo &ContDInfo);
 
   void addContainerInMap(const DeclContext *DC, CXIdxClientContainer container);

@@ -381,46 +381,56 @@ clang_index_getObjCContainerDeclInfo(const CXIdxDeclInfo *DInfo) {
   if (!DInfo)
     return 0;
 
-  if (clang_index_isEntityObjCContainerKind(DInfo->entityInfo->kind))
-    return &static_cast<const ObjCContainerDeclInfo*>(DInfo)->ObjCContDeclInfo;
+  const DeclInfo *DI = static_cast<const DeclInfo *>(DInfo);
+  if (const ObjCContainerDeclInfo *
+        ContInfo = dyn_cast<ObjCContainerDeclInfo>(DI))
+    return &ContInfo->ObjCContDeclInfo;
 
   return 0;
 }
 
 const CXIdxObjCInterfaceDeclInfo *
 clang_index_getObjCInterfaceDeclInfo(const CXIdxDeclInfo *DInfo) {
-  if (!DInfo || DInfo->entityInfo->kind != CXIdxEntity_ObjCClass)
+  if (!DInfo)
     return 0;
 
-  if (const CXIdxObjCContainerDeclInfo *
-        ContInfo = clang_index_getObjCContainerDeclInfo(DInfo)) {
-    if (ContInfo->kind == CXIdxObjCContainer_Interface)
-      return &static_cast<const ObjCInterfaceDeclInfo*>(DInfo)->ObjCInterDeclInfo;
-  }
-
-  return 0;
-}
-
-const CXIdxObjCProtocolDeclInfo *
-clang_index_getObjCProtocolDeclInfo(const CXIdxDeclInfo *DInfo) {
-  if (!DInfo || DInfo->entityInfo->kind != CXIdxEntity_ObjCProtocol)
-    return 0;
-
-  if (const CXIdxObjCContainerDeclInfo *
-        ContInfo = clang_index_getObjCContainerDeclInfo(DInfo)) {
-    if (ContInfo->kind == CXIdxObjCContainer_Interface)
-      return &static_cast<const ObjCProtocolDeclInfo*>(DInfo)->ObjCProtoDeclInfo;
-  }
+  const DeclInfo *DI = static_cast<const DeclInfo *>(DInfo);
+  if (const ObjCInterfaceDeclInfo *
+        InterInfo = dyn_cast<ObjCInterfaceDeclInfo>(DI))
+    return &InterInfo->ObjCInterDeclInfo;
 
   return 0;
 }
 
 const CXIdxObjCCategoryDeclInfo *
 clang_index_getObjCCategoryDeclInfo(const CXIdxDeclInfo *DInfo){
-  if (!DInfo || DInfo->entityInfo->kind != CXIdxEntity_ObjCCategory)
+  if (!DInfo)
     return 0;
 
-  return &static_cast<const ObjCCategoryDeclInfo*>(DInfo)->ObjCCatDeclInfo;
+  const DeclInfo *DI = static_cast<const DeclInfo *>(DInfo);
+  if (const ObjCCategoryDeclInfo *
+        CatInfo = dyn_cast<ObjCCategoryDeclInfo>(DI))
+    return &CatInfo->ObjCCatDeclInfo;
+
+  return 0;
+}
+
+const CXIdxObjCProtocolRefListInfo *
+clang_index_getObjCProtocolRefListInfo(const CXIdxDeclInfo *DInfo) {
+  if (!DInfo)
+    return 0;
+
+  const DeclInfo *DI = static_cast<const DeclInfo *>(DInfo);
+  
+  if (const ObjCInterfaceDeclInfo *
+        InterInfo = dyn_cast<ObjCInterfaceDeclInfo>(DI))
+    return InterInfo->ObjCInterDeclInfo.protocols;
+  
+  if (const ObjCProtocolDeclInfo *
+        ProtInfo = dyn_cast<ObjCProtocolDeclInfo>(DI))
+    return &ProtInfo->ObjCProtoRefListInfo;
+
+  return 0;
 }
 
 int clang_indexTranslationUnit(CXIndex CIdx,

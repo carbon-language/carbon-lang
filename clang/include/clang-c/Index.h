@@ -4008,14 +4008,15 @@ typedef enum {
   CXIdxEntity_ObjCProtocol  = 7,
   CXIdxEntity_ObjCCategory  = 8,
 
-  CXIdxEntity_ObjCMethod    = 9,
-  CXIdxEntity_ObjCProperty  = 10,
-  CXIdxEntity_ObjCIvar      = 11,
+  CXIdxEntity_ObjCInstanceMethod = 9,
+  CXIdxEntity_ObjCClassMethod    = 10,
+  CXIdxEntity_ObjCProperty  = 11,
+  CXIdxEntity_ObjCIvar      = 12,
 
-  CXIdxEntity_Enum          = 12,
-  CXIdxEntity_Struct        = 13, 
-  CXIdxEntity_Union         = 14, 
-  CXIdxEntity_CXXClass      = 15
+  CXIdxEntity_Enum          = 13,
+  CXIdxEntity_Struct        = 14,
+  CXIdxEntity_Union         = 15,
+  CXIdxEntity_CXXClass      = 16
 
 } CXIdxEntityKind;
 
@@ -4032,6 +4033,12 @@ typedef struct {
   CXIdxClientContainer container;
   int isRedeclaration;
   int isDefinition;
+  int isContainer;
+  /**
+   * \brief Whether the declaration exists in code or was created implicitly
+   * by the compiler, e.g. implicit objc methods for properties.
+   */
+  int isImplicit;
 } CXIdxDeclInfo;
 
 typedef struct {
@@ -4067,17 +4074,15 @@ typedef struct {
 } CXIdxObjCProtocolRefInfo;
 
 typedef struct {
-  const CXIdxDeclInfo *declInfo;
-  const CXIdxBaseClassInfo *superInfo;
   const CXIdxObjCProtocolRefInfo *const *protocols;
   unsigned numProtocols;
-} CXIdxObjCInterfaceDeclInfo;
+} CXIdxObjCProtocolRefListInfo;
 
 typedef struct {
-  const CXIdxDeclInfo *declInfo;
-  const CXIdxObjCProtocolRefInfo *const *protocols;
-  unsigned numProtocols;
-} CXIdxObjCProtocolDeclInfo;
+  const CXIdxObjCContainerDeclInfo *containerInfo;
+  const CXIdxBaseClassInfo *superInfo;
+  const CXIdxObjCProtocolRefListInfo *protocols;
+} CXIdxObjCInterfaceDeclInfo;
 
 /**
  * \brief Data for \see indexEntityReference callback.
@@ -4185,8 +4190,8 @@ CINDEX_LINKAGE
 const CXIdxObjCCategoryDeclInfo *
 clang_index_getObjCCategoryDeclInfo(const CXIdxDeclInfo *);
 
-CINDEX_LINKAGE const CXIdxObjCProtocolDeclInfo *
-clang_index_getObjCProtocolDeclInfo(const CXIdxDeclInfo *);
+CINDEX_LINKAGE const CXIdxObjCProtocolRefListInfo *
+clang_index_getObjCProtocolRefListInfo(const CXIdxDeclInfo *);
 
 /**
  * \brief Index the given source file and the translation unit corresponding
