@@ -18,6 +18,7 @@
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Analysis/DomainSpecific/CocoaConventions.h"
+#include "clang/AST/ParentMap.h"
 #include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
@@ -1815,6 +1816,20 @@ static inline bool contains(const SmallVectorImpl<ArgEffect>& V,
   return false;
 }
 
+static bool isPropertyAccess(const Stmt *S, ParentMap &PM) {
+  unsigned maxDepth = 4;
+  while (S && maxDepth) {
+    if (const PseudoObjectExpr *PO = dyn_cast<PseudoObjectExpr>(S)) {
+      if (!isa<ObjCMessageExpr>(PO->getSyntacticForm()))
+        return true;
+      return false;
+    }
+    S = PM.getParent(S);
+    --maxDepth;
+  }
+  return false;
+}
+
 PathDiagnosticPiece *CFRefReportVisitor::VisitNode(const ExplodedNode *N,
                                                    const ExplodedNode *PrevN,
                                                    BugReporterContext &BRC,
@@ -1851,10 +1866,11 @@ PathDiagnosticPiece *CFRefReportVisitor::VisitNode(const ExplodedNode *N,
       else
         os << "function call";
     }
-    else if (isa<ObjCMessageExpr>(S)) {
-      os << "Method";
-    } else {
-      os << "Property";
+    else {
+      assert(isa<ObjCMessageExpr>(S));      
+      // The message expression may have between written directly or as
+      // a property access.  Lazily determine which case we are looking at.
+      os << (isPropertyAccess(S, N->getParentMap()) ? "Property" : "Method");
     }
 
     if (CurrV.getObjKind() == RetEffect::CF) {
