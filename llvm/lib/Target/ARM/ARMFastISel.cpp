@@ -185,6 +185,9 @@ class ARMFastISel : public FastISel {
     bool ARMEmitStore(EVT VT, unsigned SrcReg, Address &Addr);
     bool ARMComputeAddress(const Value *Obj, Address &Addr);
     void ARMSimplifyAddress(Address &Addr, EVT VT, bool useAM3);
+    bool ARMIsMemXferSmall(uint64_t Len);
+    bool ARMTryEmitSmallMemXfer(Address Dest, Address Src, uint64_t Len,
+                                bool isMemCpy);
     unsigned ARMEmitIntExt(EVT SrcVT, unsigned SrcReg, EVT DestVT, bool isZExt);
     unsigned ARMMaterializeFP(const ConstantFP *CFP, EVT VT);
     unsigned ARMMaterializeInt(const Constant *C, EVT VT);
@@ -2193,18 +2196,76 @@ bool ARMFastISel::SelectCall(const Instruction *I,
   return true;
 }
 
+bool ARMFastISel::ARMIsMemXferSmall(uint64_t Len) {
+  return Len <= 16;
+}
+
+bool ARMFastISel::ARMTryEmitSmallMemXfer(Address Dest, Address Src, uint64_t Len,
+                                         bool isMemCpy) {
+  // FIXME: Memmove's require a little more care because their source and
+  // destination may overlap.
+  if (!isMemCpy)
+    return false;
+
+  // Make sure we don't bloat code by inlining very large memcpy's.
+  if (!ARMIsMemXferSmall(Len))
+    return false;
+
+  // We don't care about alignment here since we just emit integer accesses.
+  while (Len) {
+    MVT VT;
+    if (Len >= 4)
+      VT = MVT::i32;
+    else if (Len >= 2)
+      VT = MVT::i16;
+    else {
+      assert(Len == 1);
+      VT = MVT::i8;
+    }
+
+    bool RV;
+    unsigned ResultReg;
+    RV = ARMEmitLoad(VT, ResultReg, Src);
+    assert (RV = true && "Should be able to handle this load.");
+    RV = ARMEmitStore(VT, ResultReg, Dest);
+    assert (RV = true && "Should be able to handle this store.");
+
+    unsigned Size = VT.getSizeInBits()/8;
+    Len -= Size;
+    Dest.Offset += Size;
+    Src.Offset += Size;
+  }
+
+  return true;
+}
+
 bool ARMFastISel::SelectIntrinsicCall(const IntrinsicInst &I) {
   // FIXME: Handle more intrinsics.
   switch (I.getIntrinsicID()) {
   default: return false;
   case Intrinsic::memcpy:
   case Intrinsic::memmove: {
-    // FIXME: Small memcpy/memmove's are common enough that we want to do them
-    // without a call if possible.
     const MemTransferInst &MTI = cast<MemTransferInst>(I);
     // Don't handle volatile.
     if (MTI.isVolatile())
       return false;
+
+    // Disable inlining for memmove before calls to ComputeAddress.  Otherwise,
+    // we would emit dead code because we don't currently handle memmoves.
+    bool isMemCpy = (I.getIntrinsicID() == Intrinsic::memcpy);
+    if (isa<ConstantInt>(MTI.getLength()) && isMemCpy) {
+      // Small memcpy/memmove's are common enough that we want to do them
+      // without a call if possible.
+      uint64_t Len = cast<ConstantInt>(MTI.getLength())->getZExtValue();
+      if (ARMIsMemXferSmall(Len)) {
+        Address Dest, Src;
+        if (!ARMComputeAddress(MTI.getRawDest(), Dest) ||
+            !ARMComputeAddress(MTI.getRawSource(), Src))
+          return false;
+        if (ARMTryEmitSmallMemXfer(Dest, Src, Len, isMemCpy))
+          return true;
+      }
+    }
     
     if (!MTI.getLength()->getType()->isIntegerTy(32))
       return false;
