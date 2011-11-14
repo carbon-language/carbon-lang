@@ -120,3 +120,12 @@ void barR10376675(int *x) {
     *x = fooR10376675();
   } while (0);
 }
+
+// Test accesses to wide character strings doesn't break the analyzer.
+typedef int wchar_t;
+struct rdar10385775 {
+    wchar_t *name;
+};
+void RDar10385775(struct rdar10385775* p) {
+    p->name = L"a";
+}

@@ -1046,12 +1046,12 @@ SVal RegionStoreManager::RetrieveElement(Store store,
       // clients of RetrieveElement().
       if (i < 0)
         return UndefinedVal();
-      int64_t byteLength = Str->getByteLength();
-      // Technically, only i == byteLength is guaranteed to be null.
+      int64_t length = Str->getLength();
+      // Technically, only i == length is guaranteed to be null.
       // However, such overflows should be caught before reaching this point;
       // the only time such an access would be made is if a string literal was
       // used to initialize a larger array.
-      char c = (i >= byteLength) ? '\0' : Str->getString()[i];
+      char c = (i >= length) ? '\0' : Str->getCodeUnit(i);
       return svalBuilder.makeIntVal(c, T);
     }
   }
