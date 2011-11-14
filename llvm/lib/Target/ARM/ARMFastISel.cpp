@@ -870,12 +870,17 @@ void ARMFastISel::ARMSimplifyAddress(Address &Addr, EVT VT, bool useAM3) {
     case MVT::i8:
     case MVT::i16:
     case MVT::i32:
-      if (!useAM3)
+      if (!useAM3) {
         // Integer loads/stores handle 12-bit offsets.
         needsLowering = ((Addr.Offset & 0xfff) != Addr.Offset);
-      else
+        // Handle negative offsets.
+        if (isThumb2)
+          needsLowering = !(needsLowering && Subtarget->hasV6T2Ops() &&
+                            Addr.Offset < 0 && Addr.Offset > -256);
+      } else {
         // ARM halfword load/stores and signed byte loads use +/-imm8 offsets.
         needsLowering = (Addr.Offset > 255 || Addr.Offset < -255);
+      }
       break;
     case MVT::f32:
     case MVT::f64:
@@ -967,24 +972,42 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg, Address &Addr,
     default: return false;
     case MVT::i1:
     case MVT::i8:
-      if (isZExt) {
-        Opc = isThumb2 ? ARM::t2LDRBi12 : ARM::LDRBi12;
+      if (isThumb2) {
+        if (Addr.Offset < 0 && Addr.Offset > -256 && Subtarget->hasV6T2Ops())
+          Opc = isZExt ? ARM::t2LDRBi8 : ARM::t2LDRSBi8;
+        else
+          Opc = isZExt ? ARM::t2LDRBi12 : ARM::t2LDRSBi12;
       } else {
-        Opc = isThumb2 ? ARM::t2LDRSBi12 : ARM::LDRSB;
-        if (!isThumb2) useAM3 = true;
+        if (isZExt) {
+          Opc = ARM::LDRBi12;
+        } else {
+          Opc = ARM::LDRSB;
+          useAM3 = true;
+        }
       }
       RC = ARM::GPRRegisterClass;
       break;
     case MVT::i16:
-      if (isZExt)
-        Opc = isThumb2 ? ARM::t2LDRHi12 : ARM::LDRH;
-      else
-        Opc = isThumb2 ? ARM::t2LDRSHi12 : ARM::LDRSH;
-      if (!isThumb2) useAM3 = true;
+      if (isThumb2) {
+        if (Addr.Offset < 0 && Addr.Offset > -256 && Subtarget->hasV6T2Ops())
+          Opc = isZExt ? ARM::t2LDRHi8 : ARM::t2LDRSHi8;
+        else
+          Opc = isZExt ? ARM::t2LDRHi12 : ARM::t2LDRSHi12;
+      } else {
+        Opc = isZExt ? ARM::LDRH : ARM::LDRSH;
+        useAM3 = true;
+      }
       RC = ARM::GPRRegisterClass;
       break;
     case MVT::i32:
-      Opc = isThumb2 ? ARM::t2LDRi12 : ARM::LDRi12;
+      if (isThumb2) {
+        if (Addr.Offset < 0 && Addr.Offset > -256 && Subtarget->hasV6T2Ops())
+          Opc = ARM::t2LDRi8;
+        else
+          Opc = ARM::t2LDRi12;
+      } else {
+        Opc = ARM::LDRi12;
+      }
       RC = ARM::GPRRegisterClass;
       break;
     case MVT::f32:
@@ -1045,14 +1068,35 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg, Address &Addr) {
       SrcReg = Res;
     } // Fallthrough here.
     case MVT::i8:
-      StrOpc = isThumb2 ? ARM::t2STRBi12 : ARM::STRBi12;
+      if (isThumb2) {
+        if (Addr.Offset < 0 && Addr.Offset > -256 && Subtarget->hasV6T2Ops())
+          StrOpc = ARM::t2STRBi8;
+        else
+          StrOpc = ARM::t2STRBi12;
+      } else {
+        StrOpc = ARM::STRBi12;
+      }
       break;
     case MVT::i16:
-      StrOpc = isThumb2 ? ARM::t2STRHi12 : ARM::STRH;
-      if (!isThumb2) useAM3 = true;
+      if (isThumb2) {
+        if (Addr.Offset < 0 && Addr.Offset > -256 && Subtarget->hasV6T2Ops())
+          StrOpc = ARM::t2STRHi8;
+        else
+          StrOpc = ARM::t2STRHi12;
+      } else {
+        StrOpc = ARM::STRH;
+        useAM3 = true;
+      }
       break;
     case MVT::i32:
-      StrOpc = isThumb2 ? ARM::t2STRi12 : ARM::STRi12;
+      if (isThumb2) {
+        if (Addr.Offset < 0 && Addr.Offset > -256 && Subtarget->hasV6T2Ops())
+          StrOpc = ARM::t2STRi8;
+        else
+          StrOpc = ARM::t2STRi12;
+      } else {
+        StrOpc = ARM::STRi12;
+      }
       break;
     case MVT::f32:
       if (!Subtarget->hasVFP2()) return false;
