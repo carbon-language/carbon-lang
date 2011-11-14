@@ -215,7 +215,7 @@
 # CHECK:	vldmdb	r2!, {s7, s8, s9, s10, s11}
 0x05 0x3a 0x72 0xed
 
-# CHECK:	vldr.32	s23, [r2, #660]
+# CHECK:	vldr	s23, [r2, #660]
 0xa5 0xba 0xd2 0xed
 
 # CHECK:	strtvc	r5, [r3], r0, lsr #20

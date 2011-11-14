@@ -254,7 +254,7 @@ entry:
 ;CHECK: redundantVdup:
 ;CHECK: vmov.i8
 ;CHECK-NOT: vdup.8
-;CHECK: vstr.64
+;CHECK: vstr
 define void @redundantVdup(<8 x i8>* %ptr) nounwind {
   %1 = insertelement <8 x i8> undef, i8 -128, i32 0
   %2 = shufflevector <8 x i8> %1, <8 x i8> undef, <8 x i32> zeroinitializer

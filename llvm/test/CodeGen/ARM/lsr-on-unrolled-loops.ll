@@ -4,9 +4,9 @@
 ; constant offset addressing, so that each of the following stores
 ; uses the same register.
 
-; CHECK: vstr.32 s{{.*}}, [{{(r[0-9]+)|(lr)}}, #32]
-; CHECK: vstr.32 s{{.*}}, [{{(r[0-9]+)|(lr)}}, #64]
-; CHECK: vstr.32 s{{.*}}, [{{(r[0-9]+)|(lr)}}, #96]
+; CHECK: vstr s{{.*}}, [{{(r[0-9]+)|(lr)}}, #32]
+; CHECK: vstr s{{.*}}, [{{(r[0-9]+)|(lr)}}, #64]
+; CHECK: vstr s{{.*}}, [{{(r[0-9]+)|(lr)}}, #96]
 
 ; We can also save a register in the outer loop, but that requires
 ; performing LSR on the outer loop.

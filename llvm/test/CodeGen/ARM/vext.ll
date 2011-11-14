@@ -138,7 +138,7 @@ define <8 x i16> @test_illegal(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 ; Make sure this doesn't crash
 define arm_aapcscc void @test_elem_mismatch(<2 x i64>* nocapture %src, <4 x i16>* nocapture %dest) nounwind {
 ; CHECK: test_elem_mismatch:
-; CHECK: vstr.64
+; CHECK: vstr
   %tmp0 = load <2 x i64>* %src, align 16
   %tmp1 = bitcast <2 x i64> %tmp0 to <4 x i32>
   %tmp2 = extractelement <4 x i32> %tmp1, i32 0

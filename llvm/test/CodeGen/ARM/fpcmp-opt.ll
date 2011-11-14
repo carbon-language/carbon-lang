@@ -14,8 +14,8 @@ entry:
 ; FINITE: beq
 
 ; NAN: t1:
-; NAN: vldr.32 s0,
-; NAN: vldr.32 s1,
+; NAN: vldr s0,
+; NAN: vldr s1,
 ; NAN: vcmpe.f32 s1, s0
 ; NAN: vmrs apsr_nzcv, fpscr
 ; NAN: beq

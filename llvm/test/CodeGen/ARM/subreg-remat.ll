@@ -12,13 +12,13 @@ target triple = "thumbv7-apple-ios"
 ;
 ; CHECK: f1
 ; CHECK: vmov    s1, r0
-; CHECK: vldr.32 s0, LCPI
+; CHECK: vldr s0, LCPI
 ; The vector must be spilled:
-; CHECK: vstr.64 d0,
+; CHECK: vstr d0,
 ; CHECK: asm clobber d0
 ; And reloaded after the asm:
-; CHECK: vldr.64 [[D16:d[0-9]+]],
-; CHECK: vstr.64 [[D16]], [r1]
+; CHECK: vldr [[D16:d[0-9]+]],
+; CHECK: vstr [[D16]], [r1]
 define void @f1(float %x, <2 x float>* %p) {
   %v1 = insertelement <2 x float> undef, float %x, i32 1
   %v2 = insertelement <2 x float> %v1, float 0x400921FB60000000, i32 0
@@ -37,13 +37,13 @@ define void @f1(float %x, <2 x float>* %p) {
 ; virtual register.  It doesn't read the old value.
 ;
 ; CHECK: f2
-; CHECK: vldr.32 s0, LCPI
+; CHECK: vldr s0, LCPI
 ; The vector must not be spilled:
-; CHECK-NOT: vstr.64
+; CHECK-NOT: vstr
 ; CHECK: asm clobber d0
 ; But instead rematerialize after the asm:
-; CHECK: vldr.32 [[S0:s[0-9]+]], LCPI
-; CHECK: vstr.64 [[D0:d[0-9]+]], [r0]
+; CHECK: vldr [[S0:s[0-9]+]], LCPI
+; CHECK: vstr [[D0:d[0-9]+]], [r0]
 define void @f2(<2 x float>* %p) {
   %v2 = insertelement <2 x float> undef, float 0x400921FB60000000, i32 0
   %y = call double asm sideeffect "asm clobber $0", "=w,0,~{d1},~{d2},~{d3},~{d4},~{d5},~{d6},~{d7},~{d8},~{d9},~{d10},~{d11},~{d12},~{d13},~{d14},~{d15},~{d16},~{d17},~{d18},~{d19},~{d20},~{d21},~{d22},~{d23},~{d24},~{d25},~{d26},~{d27},~{d28},~{d29},~{d30},~{d31}"(<2 x float> %v2) nounwind

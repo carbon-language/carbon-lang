@@ -155,7 +155,7 @@ define <8 x i16> @t5(i16* %A, <8 x i16>* %B) nounwind {
 
 define <8 x i8> @t6(i8* %A, <8 x i8>* %B) nounwind {
 ; CHECK:        t6:
-; CHECK:        vldr.64
+; CHECK:        vldr
 ; CHECK:        vorr d[[D0:[0-9]+]], d[[D1:[0-9]+]]
 ; CHECK-NEXT:   vld2.8 {d[[D1]][1], d[[D0]][1]}
   %tmp1 = load <8 x i8>* %B                       ; <<8 x i8>> [#uses=2]
@@ -240,7 +240,7 @@ bb14:                                             ; preds = %bb6
 ; PR7157
 define arm_aapcs_vfpcc float @t9(%0* nocapture, %3* nocapture) nounwind {
 ; CHECK:        t9:
-; CHECK:        vldr.64
+; CHECK:        vldr
 ; CHECK-NOT:    vmov d{{.*}}, d16
 ; CHECK:        vmov.i32 d17
 ; CHECK-NEXT:   vstmia r0, {d16, d17}

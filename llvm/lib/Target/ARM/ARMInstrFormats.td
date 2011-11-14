@@ -1996,6 +1996,7 @@ class NEONFPPat<dag pattern, dag result> : Pat<pattern, result> {
 class VFPDataTypeInstAlias<string opc, string dt, string asm, dag Result> :
   InstAlias<!strconcat(opc, dt, asm), Result>;
 multiclass VFPDT32InstAlias<string opc, string asm, dag Result> {
+  def _32 : VFPDataTypeInstAlias<opc, ".32",  asm, Result>;
   def I32 : VFPDataTypeInstAlias<opc, ".i32", asm, Result>;
   def S32 : VFPDataTypeInstAlias<opc, ".s32", asm, Result>;
   def U32 : VFPDataTypeInstAlias<opc, ".u32", asm, Result>;
@@ -2003,6 +2004,7 @@ multiclass VFPDT32InstAlias<string opc, string asm, dag Result> {
   def F   : VFPDataTypeInstAlias<opc, ".f",   asm, Result>;
 }
 multiclass VFPDT64InstAlias<string opc, string asm, dag Result> {
+  def _64 : VFPDataTypeInstAlias<opc, ".64",  asm, Result>;
   def I64 : VFPDataTypeInstAlias<opc, ".i64", asm, Result>;
   def S64 : VFPDataTypeInstAlias<opc, ".s64", asm, Result>;
   def U64 : VFPDataTypeInstAlias<opc, ".u64", asm, Result>;

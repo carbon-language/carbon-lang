@@ -69,11 +69,11 @@ def vfp_f64imm : Operand<f64>,
 let canFoldAsLoad = 1, isReMaterializable = 1 in {
 
 def VLDRD : ADI5<0b1101, 0b01, (outs DPR:$Dd), (ins addrmode5:$addr),
-                 IIC_fpLoad64, "vldr", ".64\t$Dd, $addr",
+                 IIC_fpLoad64, "vldr", "\t$Dd, $addr",
                  [(set DPR:$Dd, (f64 (load addrmode5:$addr)))]>;
 
 def VLDRS : ASI5<0b1101, 0b01, (outs SPR:$Sd), (ins addrmode5:$addr),
-                 IIC_fpLoad32, "vldr", ".32\t$Sd, $addr",
+                 IIC_fpLoad32, "vldr", "\t$Sd, $addr",
                  [(set SPR:$Sd, (load addrmode5:$addr))]> {
   // Some single precision VFP instructions may be executed on both NEON and VFP
   // pipelines.
@@ -83,11 +83,11 @@ def VLDRS : ASI5<0b1101, 0b01, (outs SPR:$Sd), (ins addrmode5:$addr),
 } // End of 'let canFoldAsLoad = 1, isReMaterializable = 1 in'
 
 def VSTRD : ADI5<0b1101, 0b00, (outs), (ins DPR:$Dd, addrmode5:$addr),
-                 IIC_fpStore64, "vstr", ".64\t$Dd, $addr",
+                 IIC_fpStore64, "vstr", "\t$Dd, $addr",
                  [(store (f64 DPR:$Dd), addrmode5:$addr)]>;
 
 def VSTRS : ASI5<0b1101, 0b00, (outs), (ins SPR:$Sd, addrmode5:$addr),
-                 IIC_fpStore32, "vstr", ".32\t$Sd, $addr",
+                 IIC_fpStore32, "vstr", "\t$Sd, $addr",
                  [(store SPR:$Sd, addrmode5:$addr)]> {
   // Some single precision VFP instructions may be executed on both NEON and VFP
   // pipelines.
@@ -1163,21 +1163,12 @@ def FCONSTS : VFPAI<(outs SPR:$Sd), (ins vfp_f32imm:$imm),
 
 def : VFP2InstAlias<"fmstat${p}", (FMSTAT pred:$p)>;
 
-// The size suffix is optional for VLDR/VSTR
-def : VFP2InstAlias<"vldr$p $Dd, $addr",
-                    (VLDRD DPR:$Dd, addrmode5:$addr, pred:$p)>;
-def : VFP2InstAlias<"vldr$p $Sd, $addr",
-                    (VLDRS SPR:$Sd, addrmode5:$addr, pred:$p)>;
-def : VFP2InstAlias<"vstr$p $Dd, $addr",
-                    (VSTRD DPR:$Dd, addrmode5:$addr, pred:$p)>;
-def : VFP2InstAlias<"vstr$p $Sd, $addr",
-                    (VSTRS SPR:$Sd, addrmode5:$addr, pred:$p)>;
-// The suffix can also by typed.
-defm : VFPDT32InstAlias<"vldr$p", "$Sd, $addr",
+// VLDR/VSTR accept an optional type suffix.
+defm : VFPDT32InstAlias<"vldr${p}", "$Sd, $addr",
                         (VLDRS SPR:$Sd, addrmode5:$addr, pred:$p)>;
-defm : VFPDT32InstAlias<"vstr$p", "$Sd, $addr",
+defm : VFPDT32InstAlias<"vstr${p}", "$Sd, $addr",
                         (VSTRS SPR:$Sd, addrmode5:$addr, pred:$p)>;
-defm : VFPDT64InstAlias<"vldr$p", "$Dd, $addr",
+defm : VFPDT64InstAlias<"vldr${p}", "$Dd, $addr",
                         (VLDRD DPR:$Dd, addrmode5:$addr, pred:$p)>;
-defm : VFPDT64InstAlias<"vstr$p", "$Dd, $addr",
+defm : VFPDT64InstAlias<"vstr${p}", "$Dd, $addr",
                         (VSTRD DPR:$Dd, addrmode5:$addr, pred:$p)>;

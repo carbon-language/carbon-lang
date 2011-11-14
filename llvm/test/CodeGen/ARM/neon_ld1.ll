@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=arm -mattr=+neon | grep vldr.64 | count 4
-; RUN: llc < %s -march=arm -mattr=+neon | grep vstr.64
+; RUN: llc < %s -march=arm -mattr=+neon | grep vldr | count 4
+; RUN: llc < %s -march=arm -mattr=+neon | grep vstr
 ; RUN: llc < %s -march=arm -mattr=+neon | grep vmov
 
 define void @t1(<2 x i32>* %r, <4 x i16>* %a, <4 x i16>* %b) nounwind {

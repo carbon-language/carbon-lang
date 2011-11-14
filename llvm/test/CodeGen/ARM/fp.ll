@@ -42,7 +42,7 @@ entry:
 
 define double @h(double* %v) {
 ;CHECK: h:
-;CHECK: vldr.64
+;CHECK: vldr
 ;CHECK-NEXT: vmov
 entry:
         %tmp = load double* %v          ; <double> [#uses=1]

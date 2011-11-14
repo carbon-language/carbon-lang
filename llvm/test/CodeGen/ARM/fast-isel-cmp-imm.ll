@@ -26,9 +26,9 @@ entry:
 ; ARM: t1b
 ; THUMB: t1b
   %cmp = fcmp oeq float %a, -0.000000e+00
-; ARM: vldr.32
+; ARM: vldr
 ; ARM: vcmpe.f32 s{{[0-9]+}}, s{{[0-9]+}}
-; THUMB: vldr.32
+; THUMB: vldr
 ; THUMB: vcmpe.f32 s{{[0-9]+}}, s{{[0-9]+}}
   br i1 %cmp, label %if.then, label %if.end
 
@@ -63,9 +63,9 @@ entry:
 ; ARM: t2b
 ; THUMB: t2b
   %cmp = fcmp oeq double %a, -0.000000e+00
-; ARM: vldr.64
+; ARM: vldr
 ; ARM: vcmpe.f64 d{{[0-9]+}}, d{{[0-9]+}}
-; THUMB: vldr.64
+; THUMB: vldr
 ; THUMB: vcmpe.f64 d{{[0-9]+}}, d{{[0-9]+}}
   br i1 %cmp, label %if.then, label %if.end
 

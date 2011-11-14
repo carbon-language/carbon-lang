@@ -3,7 +3,7 @@ target triple = "thumbv7-apple-ios"
 
 ; The 0.0 constant is loaded from the constant pool and kept in a register.
 ; CHECK: %entry
-; CHECK: vldr.32 s
+; CHECK: vldr s
 ; The float loop variable is initialized with a vmovs from the constant register.
 ; The vmovs is first widened to a vmovd, and then converted to a vorr because of the v2f32 vadd.f32.
 ; CHECK: vorr [[DL:d[0-9]+]], [[DN:d[0-9]+]]
