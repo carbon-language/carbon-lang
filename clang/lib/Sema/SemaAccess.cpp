@@ -265,6 +265,9 @@ static AccessResult IsDerivedFromInclusive(const CXXRecordDecl *Derived,
   SmallVector<const CXXRecordDecl*, 8> Queue; // actually a stack
 
   while (true) {
+    if (Derived->isDependentContext() && !Derived->hasDefinition())
+      return AR_dependent;
+    
     for (CXXRecordDecl::base_class_const_iterator
            I = Derived->bases_begin(), E = Derived->bases_end(); I != E; ++I) {
 
