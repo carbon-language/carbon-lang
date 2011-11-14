@@ -766,6 +766,7 @@ bool MachineBlockPlacement::runOnMachineFunction(MachineFunction &F) {
   AlignLoops(F);
 
   BlockToChain.clear();
+  ChainAllocator.DestroyAll();
 
   // We always return true as we have no way to track whether the final order
   // differs from the original order.
