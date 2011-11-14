@@ -71,12 +71,14 @@ bool Constant::isAllOnesValue() const {
   if (const ConstantFP *CFP = dyn_cast<ConstantFP>(this))
     return CFP->getValueAPF().bitcastToAPInt().isAllOnesValue();
 
-  // Check for constant vectors
+  // Check for constant vectors which are splats of -1 values.
   if (const ConstantVector *CV = dyn_cast<ConstantVector>(this))
-    return CV->isAllOnesValue();
+    if (Constant *Splat = CV->getSplatValue())
+      return Splat->isAllOnesValue();
 
   return false;
 }
+
 // Constructor to create a '0' constant of arbitrary type...
 Constant *Constant::getNullValue(Type *Ty) {
   switch (Ty->getTypeID()) {
@@ -1069,26 +1071,6 @@ void ConstantStruct::destroyConstant() {
 void ConstantVector::destroyConstant() {
   getType()->getContext().pImpl->VectorConstants.remove(this);
   destroyConstantImpl();
-}
-
-/// This function will return true iff every element in this vector constant
-/// is set to all ones.
-/// @returns true iff this constant's elements are all set to all ones.
-/// @brief Determine if the value is all ones.
-bool ConstantVector::isAllOnesValue() const {
-  // Check out first element.
-  const Constant *Elt = getOperand(0);
-  const ConstantInt *CI = dyn_cast<ConstantInt>(Elt);
-  const ConstantFP *CF = dyn_cast<ConstantFP>(Elt);
-
-  // Then make sure all remaining elements point to the same value.
-  for (unsigned I = 1, E = getNumOperands(); I < E; ++I)
-    if (getOperand(I) != Elt)
-      return false;
-  
-  // First value is all-ones.
-  return (CI && CI->isAllOnesValue()) || 
-         (CF && CF->isAllOnesValue());
 }
 
 /// getSplatValue - If this is a splat constant, where all of the

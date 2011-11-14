@@ -475,12 +475,6 @@ public:
   inline VectorType *getType() const {
     return reinterpret_cast<VectorType*>(Value::getType());
   }
-  
-  /// This function will return true iff every element in this vector constant
-  /// is set to all ones.
-  /// @returns true iff this constant's emements are all set to all ones.
-  /// @brief Determine if the value is all ones.
-  bool isAllOnesValue() const;
 
   /// getSplatValue - If this is a splat constant, meaning that all of the
   /// elements have the same value, return that value. Otherwise return NULL.
