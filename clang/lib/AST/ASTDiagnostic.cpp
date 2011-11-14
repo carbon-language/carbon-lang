@@ -171,9 +171,16 @@ ConvertTypeToDiagnosticString(ASTContext &Context, QualType Ty,
     if (CompareCanTy == CanTy)
       continue;  // Same canonical types
     std::string CompareS = CompareTy.getAsString(Context.getPrintingPolicy());
-    if (CompareS != S)
-      continue;  // Original strings are different
-    std::string CompareCanS = CompareCanTy.getAsString(Context.getPrintingPolicy());
+    bool aka;
+    QualType CompareDesugar = Desugar(Context, CompareTy, aka);
+    std::string CompareDesugarStr =
+        CompareDesugar.getAsString(Context.getPrintingPolicy());
+    if (CompareS != S && CompareDesugarStr != S)
+      continue;  // The type string is different than the comparison string
+                 // and the desugared comparison string.
+    std::string CompareCanS =
+        CompareCanTy.getAsString(Context.getPrintingPolicy());
+    
     if (CompareCanS == CanS)
       continue;  // No new info from canonical type
 

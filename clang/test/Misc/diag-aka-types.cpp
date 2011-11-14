@@ -50,3 +50,19 @@ namespace std {
     f(v);  // expected-error{{no matching function for call to 'f'}}
   }
 }
+
+namespace ns {
+ struct str {
+   static void method(struct data *) {}
+ };
+}
+
+struct data { int i; };
+
+typedef void (*callback)(struct data *);
+
+void helper(callback cb) {} // expected-note{{candidate function not viable: no known conversion from 'void (*)(struct data *)' (aka 'void (*)(ns::data *)') to 'callback' (aka 'void (*)(struct data *)') for 1st argument;}}
+
+void test() {
+ helper(&ns::str::method); // expected-error{{no matching function for call to 'helper'}}
+}
