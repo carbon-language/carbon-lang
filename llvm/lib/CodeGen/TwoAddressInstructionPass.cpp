@@ -999,10 +999,8 @@ TwoAddressInstructionPass::RescheduleMIBelowKill(MachineBasicBlock *MBB,
   }
 
   // Move debug info as well.
-  if (From != MBB->begin()) {
-    while (llvm::prior(From)->isDebugValue())
-      --From;
-  }
+  while (From != MBB->begin() && llvm::prior(From)->isDebugValue())
+    --From;
 
   // Copies following MI may have been moved as well.
   nmi = To;
@@ -1146,9 +1144,8 @@ TwoAddressInstructionPass::RescheduleKillAboveMI(MachineBasicBlock *MBB,
 
   // Move the old kill above MI, don't forget to move debug info as well.
   MachineBasicBlock::iterator InsertPos = mi;
-  if (InsertPos != MBB->begin())
-    while (llvm::prior(InsertPos)->isDebugValue())
-      --InsertPos;
+  while (InsertPos != MBB->begin() && llvm::prior(InsertPos)->isDebugValue())
+    --InsertPos;
   MachineBasicBlock::iterator From = KillMI;
   MachineBasicBlock::iterator To = llvm::next(From);
   while (llvm::prior(From)->isDebugValue())
