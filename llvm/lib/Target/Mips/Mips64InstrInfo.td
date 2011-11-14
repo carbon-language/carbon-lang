@@ -219,11 +219,16 @@ def : Pat<(i64 immZExt16:$in),
 def : Pat<(i64 imm:$imm),
           (ORi64 (LUi64 (HI16 imm:$imm)), (LO16 imm:$imm))>;
 
-// zextloadi32_u
-def : Pat<(zextloadi32_u addr:$a), (DSRL32 (DSLL32 (ULW64_P8 addr:$a), 0), 0)>,
-      Requires<[IsN64]>;
-def : Pat<(zextloadi32_u addr:$a), (DSRL32 (DSLL32 (ULW64 addr:$a), 0), 0)>,
-      Requires<[NotN64]>;
+// extended loads
+let Predicates = [NotN64] in {
+  def : Pat<(extloadi32_a addr:$a), (DSRL32 (DSLL32 (LW64 addr:$a), 0), 0)>;
+  def : Pat<(zextloadi32_u addr:$a), (DSRL32 (DSLL32 (ULW64 addr:$a), 0), 0)>;
+}
+let Predicates = [IsN64] in {
+  def : Pat<(extloadi32_a addr:$a), (DSRL32 (DSLL32 (LW64_P8 addr:$a), 0), 0)>;
+  def : Pat<(zextloadi32_u addr:$a), 
+            (DSRL32 (DSLL32 (ULW64_P8 addr:$a), 0), 0)>;
+}
 
 // hi/lo relocs
 def : Pat<(i64 (MipsLo tglobaladdr:$in)), (DADDiu ZERO_64, tglobaladdr:$in)>;
