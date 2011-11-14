@@ -17,24 +17,30 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/CaptureTracking.h"
-#include "llvm/Constants.h"
-#include "llvm/Instructions.h"
-#include "llvm/Value.h"
-#include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/ADT/SmallSet.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/Support/CallSite.h"
 using namespace llvm;
 
-/// As its comment mentions, PointerMayBeCaptured can be expensive.
-/// However, it's not easy for BasicAA to cache the result, because
-/// it's an ImmutablePass. To work around this, bound queries at a
-/// fixed number of uses.
-///
-/// TODO: Write a new FunctionPass AliasAnalysis so that it can keep
-/// a cache. Then we can move the code from BasicAliasAnalysis into
-/// that path, and remove this threshold.
-static int const Threshold = 20;
+namespace {
+  struct SimpleCaptureTracker {
+    explicit SimpleCaptureTracker(bool ReturnCaptures)
+      : ReturnCaptures(ReturnCaptures), Captured(false) {}
+
+    void tooManyUses() { Captured = true; }
+
+    bool shouldExplore(Use *U) { return true; }
+
+    bool captured(Instruction *I) {
+      if (isa<ReturnInst>(I) && !ReturnCaptures)
+	return false;
+
+      Captured = true;
+      return true;
+    }
+
+    bool ReturnCaptures;
+
+    bool Captured;
+  };
+}
 
 /// PointerMayBeCaptured - Return true if this pointer value may be captured
 /// by the enclosing function (which is required to exist).  This routine can
@@ -45,104 +51,13 @@ static int const Threshold = 20;
 /// counts as capturing it or not.
 bool llvm::PointerMayBeCaptured(const Value *V,
                                 bool ReturnCaptures, bool StoreCaptures) {
-  assert(V->getType()->isPointerTy() && "Capture is for pointers only!");
-  SmallVector<Use*, Threshold> Worklist;
-  SmallSet<Use*, Threshold> Visited;
-  int Count = 0;
+  // TODO: If StoreCaptures is not true, we could do Fancy analysis
+  // to determine whether this store is not actually an escape point.
+  // In that case, BasicAliasAnalysis should be updated as well to
+  // take advantage of this.
+  (void)StoreCaptures;
 
-  for (Value::const_use_iterator UI = V->use_begin(), UE = V->use_end();
-       UI != UE; ++UI) {
-    // If there are lots of uses, conservatively say that the value
-    // is captured to avoid taking too much compile time.
-    if (Count++ >= Threshold)
-      return true;
-
-    Use *U = &UI.getUse();
-    Visited.insert(U);
-    Worklist.push_back(U);
-  }
-
-  while (!Worklist.empty()) {
-    Use *U = Worklist.pop_back_val();
-    Instruction *I = cast<Instruction>(U->getUser());
-    V = U->get();
-
-    switch (I->getOpcode()) {
-    case Instruction::Call:
-    case Instruction::Invoke: {
-      CallSite CS(I);
-      // Not captured if the callee is readonly, doesn't return a copy through
-      // its return value and doesn't unwind (a readonly function can leak bits
-      // by throwing an exception or not depending on the input value).
-      if (CS.onlyReadsMemory() && CS.doesNotThrow() && I->getType()->isVoidTy())
-        break;
-
-      // Not captured if only passed via 'nocapture' arguments.  Note that
-      // calling a function pointer does not in itself cause the pointer to
-      // be captured.  This is a subtle point considering that (for example)
-      // the callee might return its own address.  It is analogous to saying
-      // that loading a value from a pointer does not cause the pointer to be
-      // captured, even though the loaded value might be the pointer itself
-      // (think of self-referential objects).
-      CallSite::arg_iterator B = CS.arg_begin(), E = CS.arg_end();
-      for (CallSite::arg_iterator A = B; A != E; ++A)
-        if (A->get() == V && !CS.paramHasAttr(A - B + 1, Attribute::NoCapture))
-          // The parameter is not marked 'nocapture' - captured.
-          return true;
-      // Only passed via 'nocapture' arguments, or is the called function - not
-      // captured.
-      break;
-    }
-    case Instruction::Load:
-      // Loading from a pointer does not cause it to be captured.
-      break;
-    case Instruction::VAArg:
-      // "va-arg" from a pointer does not cause it to be captured.
-      break;
-    case Instruction::Ret:
-      if (ReturnCaptures)
-        return true;
-      break;
-    case Instruction::Store:
-      if (V == I->getOperand(0))
-        // Stored the pointer - conservatively assume it may be captured.
-        // TODO: If StoreCaptures is not true, we could do Fancy analysis
-        // to determine whether this store is not actually an escape point.
-        // In that case, BasicAliasAnalysis should be updated as well to
-        // take advantage of this.
-        return true;
-      // Storing to the pointee does not cause the pointer to be captured.
-      break;
-    case Instruction::BitCast:
-    case Instruction::GetElementPtr:
-    case Instruction::PHI:
-    case Instruction::Select:
-      // The original value is not captured via this if the new value isn't.
-      for (Instruction::use_iterator UI = I->use_begin(), UE = I->use_end();
-           UI != UE; ++UI) {
-        Use *U = &UI.getUse();
-        if (Visited.insert(U))
-          Worklist.push_back(U);
-      }
-      break;
-    case Instruction::ICmp:
-      // Don't count comparisons of a no-alias return value against null as
-      // captures. This allows us to ignore comparisons of malloc results
-      // with null, for example.
-      if (isNoAliasCall(V->stripPointerCasts()))
-        if (ConstantPointerNull *CPN =
-              dyn_cast<ConstantPointerNull>(I->getOperand(1)))
-          if (CPN->getType()->getAddressSpace() == 0)
-            break;
-      // Otherwise, be conservative. There are crazy ways to capture pointers
-      // using comparisons.
-      return true;
-    default:
-      // Something else - be conservative and say it is captured.
-      return true;
-    }
-  }
-
-  // All uses examined - not captured.
-  return false;
+  SimpleCaptureTracker SCT(ReturnCaptures);
+  PointerMayBeCaptured(V, SCT);
+  return SCT.Captured;
 }

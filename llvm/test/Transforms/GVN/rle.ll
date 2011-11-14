@@ -642,3 +642,28 @@ declare void @llvm.memset.p0i8.i64(i8* nocapture, i8, i64, i32, i1) nounwind
 
 declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, i1) nounwind
 
+;;===----------------------------------------------------------------------===;;
+;; Load -> Store dependency which isn't interfered with by a call that happens
+;; before the pointer was captured.
+;;===----------------------------------------------------------------------===;;
+
+%class.X = type { [8 x i8] }
+
+@_ZTV1X = weak_odr constant [5 x i8*] zeroinitializer
+@_ZTV1Y = weak_odr constant [5 x i8*] zeroinitializer
+
+declare void @use()
+declare void @use3(i8***, i8**)
+
+; PR8908
+define void @test_escape1() nounwind {
+  %x = alloca i8**, align 8
+  store i8** getelementptr inbounds ([5 x i8*]* @_ZTV1X, i64 0, i64 2), i8*** %x, align 8
+  call void @use() nounwind
+  %DEAD = load i8*** %x, align 8
+  call void @use3(i8*** %x, i8** %DEAD) nounwind
+  ret void
+; CHECK: test_escape1
+; CHECK-NOT: DEAD
+; CHECK: ret
+}
