@@ -810,7 +810,7 @@ void InlineSpiller::markValueUsed(LiveInterval *LI, VNInfo *VNI) {
       MachineBasicBlock *MBB = LIS.getMBBFromIndex(VNI->def);
       for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
              PE = MBB->pred_end(); PI != PE; ++PI) {
-        VNInfo *PVNI = LI->getVNInfoAt(LIS.getMBBEndIdx(*PI).getPrevSlot());
+        VNInfo *PVNI = LI->getVNInfoBefore(LIS.getMBBEndIdx(*PI));
         if (PVNI)
           WorkList.push_back(std::make_pair(LI, PVNI));
       }

@@ -586,7 +586,7 @@ SlotIndex SplitEditor::leaveIntvAtTop(MachineBasicBlock &MBB) {
 void SplitEditor::overlapIntv(SlotIndex Start, SlotIndex End) {
   assert(OpenIdx && "openIntv not called before overlapIntv");
   const VNInfo *ParentVNI = Edit->getParent().getVNInfoAt(Start);
-  assert(ParentVNI == Edit->getParent().getVNInfoAt(End.getPrevSlot()) &&
+  assert(ParentVNI == Edit->getParent().getVNInfoBefore(End) &&
          "Parent changes value in extended range");
   assert(LIS.getMBBFromIndex(Start) == LIS.getMBBFromIndex(End) &&
          "Range cannot span basic blocks");

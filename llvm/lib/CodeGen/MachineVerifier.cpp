@@ -1193,8 +1193,8 @@ void MachineVerifier::verifyLiveIntervals() {
         // Check that VNI is live-out of all predecessors.
         for (MachineBasicBlock::const_pred_iterator PI = MFI->pred_begin(),
              PE = MFI->pred_end(); PI != PE; ++PI) {
-          SlotIndex PEnd = LiveInts->getMBBEndIdx(*PI).getPrevSlot();
-          const VNInfo *PVNI = LI.getVNInfoAt(PEnd);
+          SlotIndex PEnd = LiveInts->getMBBEndIdx(*PI);
+          const VNInfo *PVNI = LI.getVNInfoBefore(PEnd);
 
           if (VNI->isPHIDef() && VNI->def == LiveInts->getMBBStartIdx(MFI))
             continue;
@@ -1202,7 +1202,7 @@ void MachineVerifier::verifyLiveIntervals() {
           if (!PVNI) {
             report("Register not marked live out of predecessor", *PI);
             *OS << "Valno #" << VNI->id << " live into BB#" << MFI->getNumber()
-                << '@' << LiveInts->getMBBStartIdx(MFI) << ", not live at "
+                << '@' << LiveInts->getMBBStartIdx(MFI) << ", not live before "
                 << PEnd << " in " << LI << '\n';
             continue;
           }
