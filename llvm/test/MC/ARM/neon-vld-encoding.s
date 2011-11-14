@@ -223,3 +223,31 @@
 
 @ CHECK: vld1.8	{d6, d7}, [r9]          @ encoding: [0x0f,0x6a,0x29,0xf4]
 @ CHECK: vld1.8	{d6, d7, d8, d9}, [r9]  @ encoding: [0x0f,0x62,0x29,0xf4]
+
+
+@ Spot-check additional size-suffix aliases.
+        vld1.8 {d2}, [r2]
+        vld1.p8 {d2}, [r2]
+        vld1.u8 {d2}, [r2]
+
+        vld1.8 {q2}, [r2]
+        vld1.p8 {q2}, [r2]
+        vld1.u8 {q2}, [r2]
+        vld1.f32 {q2}, [r2]
+
+        vld1.u8 {d2, d3, d4}, [r2]
+        vld1.i32 {d2, d3, d4}, [r2]
+        vld1.f64 {d2, d3, d4}, [r2]
+
+@ CHECK: vld1.8	{d2}, [r2]              @ encoding: [0x0f,0x27,0x22,0xf4]
+@ CHECK: vld1.8	{d2}, [r2]              @ encoding: [0x0f,0x27,0x22,0xf4]
+@ CHECK: vld1.8	{d2}, [r2]              @ encoding: [0x0f,0x27,0x22,0xf4]
+
+@ CHECK: vld1.8	{d4, d5}, [r2]          @ encoding: [0x0f,0x4a,0x22,0xf4]
+@ CHECK: vld1.8	{d4, d5}, [r2]          @ encoding: [0x0f,0x4a,0x22,0xf4]
+@ CHECK: vld1.8	{d4, d5}, [r2]          @ encoding: [0x0f,0x4a,0x22,0xf4]
+@ CHECK: vld1.32 {d4, d5}, [r2]         @ encoding: [0x8f,0x4a,0x22,0xf4]
+
+@ CHECK: vld1.8	{d2, d3, d4}, [r2]      @ encoding: [0x0f,0x26,0x22,0xf4]
+@ CHECK: vld1.32 {d2, d3, d4}, [r2]     @ encoding: [0x8f,0x26,0x22,0xf4]
+@ CHECK: vld1.64 {d2, d3, d4}, [r2]     @ encoding: [0xcf,0x26,0x22,0xf4]
