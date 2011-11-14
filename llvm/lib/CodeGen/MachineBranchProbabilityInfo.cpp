@@ -76,26 +76,18 @@ bool MachineBranchProbabilityInfo::isEdgeHot(MachineBasicBlock *Src,
 
 MachineBasicBlock *
 MachineBranchProbabilityInfo::getHotSucc(MachineBasicBlock *MBB) const {
-  uint32_t Sum = 0;
   uint32_t MaxWeight = 0;
   MachineBasicBlock *MaxSucc = 0;
-
   for (MachineBasicBlock::const_succ_iterator I = MBB->succ_begin(),
        E = MBB->succ_end(); I != E; ++I) {
-    MachineBasicBlock *Succ = *I;
-    uint32_t Weight = getEdgeWeight(MBB, Succ);
-    uint32_t PrevSum = Sum;
-
-    Sum += Weight;
-    assert(Sum > PrevSum); (void) PrevSum;
-
+    uint32_t Weight = getEdgeWeight(MBB, *I);
     if (Weight > MaxWeight) {
       MaxWeight = Weight;
-      MaxSucc = Succ;
+      MaxSucc = *I;
     }
   }
 
-  if (BranchProbability(MaxWeight, Sum) >= BranchProbability(4, 5))
+  if (getEdgeProbability(MBB, MaxSucc) >= BranchProbability(4, 5))
     return MaxSucc;
 
   return 0;

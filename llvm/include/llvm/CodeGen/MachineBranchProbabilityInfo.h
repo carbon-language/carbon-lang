@@ -59,6 +59,7 @@ public:
   bool isEdgeHot(MachineBasicBlock *Src, MachineBasicBlock *Dst) const;
 
   // Return a hot successor for the block BB or null if there isn't one.
+  // NB: This routine's complexity is linear on the number of successors.
   MachineBasicBlock *getHotSucc(MachineBasicBlock *MBB) const;
 
   // Return a probability as a fraction between 0 (0% probability) and
