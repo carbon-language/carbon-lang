@@ -2459,7 +2459,6 @@ CopyMips64ByValRegs(MachineFunction &MF, SDValue Chain, DebugLoc dl,
   if (IsRegLoc) {
     Reg = std::find(Mips64IntRegs, Mips64IntRegs + 8, VA.getLocReg());
     FOOffset = (Reg - Mips64IntRegs) * 8 - 8 * 8;
-    MipsFI->setRegSaveAreaSize(-FOOffset);
   }
   else
     FOOffset = VA.getLocMemOffset();

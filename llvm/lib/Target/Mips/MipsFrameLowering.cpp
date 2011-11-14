@@ -163,7 +163,6 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
     (MFI->getObjectOffset(MipsFI->getGPFI()) + RegSize) :
     MipsFI->getMaxCallFrameSize();
   unsigned StackSize = AlignOffset(LocalVarAreaOffset, StackAlign) +
-    AlignOffset(MipsFI->getRegSaveAreaSize(), StackAlign) +
     AlignOffset(MFI->getStackSize(), StackAlign);
 
    // Update stack size
