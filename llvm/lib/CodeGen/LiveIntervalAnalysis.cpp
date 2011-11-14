@@ -659,7 +659,9 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
     if (UseMI->isDebugValue() || !UseMI->readsVirtualRegister(li->reg))
       continue;
     SlotIndex Idx = getInstructionIndex(UseMI).getRegSlot();
-    VNInfo *VNI = li->getVNInfoAt(Idx.getBaseIndex());
+    // Note: This intentionally picks up the wrong VNI in case of an EC redef.
+    // See below.
+    VNInfo *VNI = li->getVNInfoBefore(Idx);
     if (!VNI) {
       // This shouldn't happen: readsVirtualRegister returns true, but there is
       // no live value. It is likely caused by a target getting <undef> flags
@@ -669,10 +671,11 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
                     << *li << '\n');
       continue;
     }
-    if (VNI->def == Idx.getRegSlot(true)) {
-      // Special case: An early-clobber tied operand reads and writes the
-      // register one slot early.
-      Idx = Idx.getRegSlot(true);
+    // Special case: An early-clobber tied operand reads and writes the
+    // register one slot early.  The getVNInfoBefore call above would have
+    // picked up the value defined by UseMI.  Adjust the kill slot and value.
+    if (SlotIndex::isSameInstr(VNI->def, Idx)) {
+      Idx = VNI->def;
       VNI = li->getVNInfoBefore(Idx);
       assert(VNI && "Early-clobber tied value not available");
     }
@@ -687,13 +690,6 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
     if (VNI->isUnused())
       continue;
     NewLI.addRange(LiveRange(VNI->def, VNI->def.getDeadSlot(), VNI));
-
-    // A use tied to an early-clobber def ends at the load slot and isn't caught
-    // above. Catch it here instead. This probably only ever happens for inline
-    // assembly.
-    if (VNI->def.isEarlyClobber())
-      if (VNInfo *UVNI = li->getVNInfoBefore(VNI->def))
-        WorkList.push_back(std::make_pair(VNI->def, UVNI));
   }
 
   // Keep track of the PHIs that are in use.
