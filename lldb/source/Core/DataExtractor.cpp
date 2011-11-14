@@ -1147,27 +1147,30 @@ DataExtractor::PeekCStr (uint32_t offset) const
 uint64_t
 DataExtractor::GetULEB128 (uint32_t *offset_ptr) const
 {
-    uint64_t result = 0;
-    if ( m_start < m_end )
+    const uint8_t *src = m_start + *offset_ptr;
+    const uint8_t *end = m_end;
+    
+    if (src < end)
     {
-        int shift = 0;
-        const uint8_t *src = m_start + *offset_ptr;
-        uint8_t byte;
-        int bytecount = 0;
-
-        while (src < m_end)
+        uint64_t result = *src++;
+        if (result >= 0x80)
         {
-            bytecount++;
-            byte = *src++;
-            result |= (byte & 0x7f) << shift;
-            if ((byte & 0x80) == 0)
-                break;
-            shift += 7;
+            result &= 0x7f;
+            int shift = 7;
+            while (src < end)
+            {
+                uint8_t byte = *src++;
+                result |= (byte & 0x7f) << shift;
+                if ((byte & 0x80) == 0)
+                    break;
+                shift += 7;
+            }
         }
-
-        *offset_ptr += bytecount;
+        *offset_ptr = (uint32_t)(src - m_start);
+        return result;
     }
-    return result;
+    
+    return 0;
 }
 
 //----------------------------------------------------------------------
