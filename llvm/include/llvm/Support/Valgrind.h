@@ -16,7 +16,24 @@
 #ifndef LLVM_SYSTEM_VALGRIND_H
 #define LLVM_SYSTEM_VALGRIND_H
 
+#include "llvm/Support/Compiler.h"
+#include "llvm/Config/config.h"
 #include <stddef.h>
+
+#if ENABLE_THREADS != 0 && !defined(NDEBUG)
+// tsan (Thread Sanitizer) is a valgrind-based tool that detects these exact
+// functions by name.
+extern "C" {
+LLVM_ATTRIBUTE_NOINLINE void AnnotateHappensAfter(const char *file, int line,
+                                                  const volatile void *cv);
+LLVM_ATTRIBUTE_NOINLINE void AnnotateHappensBefore(const char *file, int line,
+                                                   const volatile void *cv);
+LLVM_ATTRIBUTE_NOINLINE void AnnotateIgnoreWritesBegin(const char *file,
+                                                       int line);
+LLVM_ATTRIBUTE_NOINLINE void AnnotateIgnoreWritesEnd(const char *file,
+                                                     int line);
+}
+#endif
 
 namespace llvm {
 namespace sys {
@@ -26,6 +43,34 @@ namespace sys {
   // Discard valgrind's translation of code in the range [Addr .. Addr + Len).
   // Otherwise valgrind may continue to execute the old version of the code.
   void ValgrindDiscardTranslations(const void *Addr, size_t Len);
+
+#if ENABLE_THREADS != 0 && !defined(NDEBUG)
+  // Thread Sanitizer is a valgrind tool that finds races in code.
+  // See http://code.google.com/p/data-race-test/wiki/DynamicAnnotations .
+
+  // This marker is used to define a happens-before arc. The race detector will
+  // infer an arc from the begin to the end when they share the same pointer
+  // argument.
+  #define TsanHappensBefore(cv) \
+    AnnotateHappensBefore(__FILE__, __LINE__, cv)
+
+  // This marker defines the destination of a happens-before arc.
+  #define TsanHappensAfter(cv) \
+    AnnotateHappensAfter(__FILE__, __LINE__, cv)
+
+  // Ignore any races on writes between here and the next TsanIgnoreWritesEnd.
+  #define TsanIgnoreWritesBegin() \
+    AnnotateIgnoreWritesBegin(__FILE__, __LINE__)
+
+  // Resume checking for racy writes.
+  #define TsanIgnoreWritesEnd() \
+    AnnotateIgnoreWritesEnd(__FILE__, __LINE__)
+#else
+  #define TsanHappensBefore(cv)
+  #define TsanHappensAfter(cv)
+  #define TsanIgnoreWritesBegin()
+  #define TsanIgnoreWritesEnd()
+#endif
 }
 }
 

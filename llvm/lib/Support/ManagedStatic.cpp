@@ -27,8 +27,15 @@ void ManagedStaticBase::RegisterManagedStatic(void *(*Creator)(),
     if (Ptr == 0) {
       void* tmp = Creator ? Creator() : 0;
 
+      TsanHappensBefore(this);
       sys::MemoryFence();
+
+      // This write is racy against the first read in the ManagedStatic
+      // accessors. The race is benign because it does a second read after a
+      // memory fence, at which point it isn't possible to get a partial value.
+      TsanIgnoreWritesBegin();
       Ptr = tmp;
+      TsanIgnoreWritesEnd();
       DeleterFn = Deleter;
       
       // Add to list of managed statics.
@@ -72,4 +79,3 @@ void llvm::llvm_shutdown() {
 
   if (llvm_is_multithreaded()) llvm_stop_multithreaded();
 }
-

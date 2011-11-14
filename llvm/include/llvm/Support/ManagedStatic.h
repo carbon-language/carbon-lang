@@ -16,6 +16,7 @@
 
 #include "llvm/Support/Atomic.h"
 #include "llvm/Support/Threading.h"
+#include "llvm/Support/Valgrind.h"
 
 namespace llvm {
 
@@ -65,6 +66,7 @@ public:
     void* tmp = Ptr;
     if (llvm_is_multithreaded()) sys::MemoryFence();
     if (!tmp) RegisterManagedStatic(object_creator<C>, object_deleter<C>::call);
+    TsanHappensAfter(this);
 
     return *static_cast<C*>(Ptr);
   }
@@ -72,6 +74,7 @@ public:
     void* tmp = Ptr;
     if (llvm_is_multithreaded()) sys::MemoryFence();
     if (!tmp) RegisterManagedStatic(object_creator<C>, object_deleter<C>::call);
+    TsanHappensAfter(this);
 
     return static_cast<C*>(Ptr);
   }
@@ -79,6 +82,7 @@ public:
     void* tmp = Ptr;
     if (llvm_is_multithreaded()) sys::MemoryFence();
     if (!tmp) RegisterManagedStatic(object_creator<C>, object_deleter<C>::call);
+    TsanHappensAfter(this);
 
     return *static_cast<C*>(Ptr);
   }
@@ -86,6 +90,7 @@ public:
     void* tmp = Ptr;
     if (llvm_is_multithreaded()) sys::MemoryFence();
     if (!tmp) RegisterManagedStatic(object_creator<C>, object_deleter<C>::call);
+    TsanHappensAfter(this);
 
     return static_cast<C*>(Ptr);
   }
