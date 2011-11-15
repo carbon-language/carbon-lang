@@ -117,3 +117,30 @@ struct S {
 };
 
 struct C { char a[100], *e; } car = { .e = car.a };
+
+// <rdar://problem/10398199>
+namespace rdar10398199 {
+  class FooBase { protected: ~FooBase() {} };
+  class Foo : public FooBase {
+  public:
+    operator int&() const;
+  };
+  void stuff();
+  template <typename T> class FooImpl : public Foo {
+    T val;
+  public:
+    FooImpl(const T &x) : val(x) {}
+    ~FooImpl() { stuff(); }
+  };
+
+  template <typename T> FooImpl<T> makeFoo(const T& x) {
+    return FooImpl<T>(x);
+  }
+
+  void test() {
+    const Foo &x = makeFoo(42);
+    const int&y = makeFoo(42u);
+    (void)x;
+    (void)y;
+  };
+}

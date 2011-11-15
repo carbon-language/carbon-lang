@@ -639,6 +639,52 @@ CFGBlock *CFGBuilder::addInitializer(CXXCtorInitializer *I) {
   return Block;
 }
 
+/// \brief Retrieve the type of the temporary object whose lifetime was 
+/// extended by a local reference with the given initializer.
+static QualType getReferenceInitTemporaryType(ASTContext &Context,
+                                              const Expr *Init) {
+  while (true) {
+    // Skip parentheses.
+    Init = Init->IgnoreParens();
+    
+    // Skip through cleanups.
+    if (const ExprWithCleanups *EWC = dyn_cast<ExprWithCleanups>(Init)) {
+      Init = EWC->getSubExpr();
+      continue;
+    }
+    
+    // Skip through the temporary-materialization expression.
+    if (const MaterializeTemporaryExpr *MTE
+          = dyn_cast<MaterializeTemporaryExpr>(Init)) {
+      Init = MTE->GetTemporaryExpr();
+      continue;
+    }
+    
+    // Skip derived-to-base and no-op casts.
+    if (const CastExpr *CE = dyn_cast<CastExpr>(Init)) {
+      if ((CE->getCastKind() == CK_DerivedToBase ||
+           CE->getCastKind() == CK_UncheckedDerivedToBase ||
+           CE->getCastKind() == CK_NoOp) &&
+          Init->getType()->isRecordType()) {
+        Init = CE->getSubExpr();
+        continue;
+      }
+    }
+    
+    // Skip member accesses into rvalues.
+    if (const MemberExpr *ME = dyn_cast<MemberExpr>(Init)) {
+      if (!ME->isArrow() && ME->getBase()->isRValue()) {
+        Init = ME->getBase();
+        continue;
+      }
+    }
+    
+    break;
+  }
+
+  return Init->getType();
+}
+  
 /// addAutomaticObjDtors - Add to current block automatic objects destructors
 /// for objects in range of local scope positions. Use S as trigger statement
 /// for destructors.
@@ -667,9 +713,13 @@ void CFGBuilder::addAutomaticObjDtors(LocalScope::const_iterator B,
     // If this destructor is marked as a no-return destructor, we need to
     // create a new block for the destructor which does not have as a successor
     // anything built thus far: control won't flow out of this block.
-    QualType Ty = (*I)->getType().getNonReferenceType();
-    if (const ArrayType *AT = Context->getAsArrayType(Ty))
-      Ty = AT->getElementType();
+    QualType Ty;
+    if ((*I)->getType()->isReferenceType()) {
+      Ty = getReferenceInitTemporaryType(*Context, (*I)->getInit());
+    } else {
+      Ty = Context->getBaseElementType((*I)->getType());
+    }
+    
     const CXXDestructorDecl *Dtor = Ty->getAsCXXRecordDecl()->getDestructor();
     if (cast<FunctionType>(Dtor->getType())->getNoReturnAttr())
       Block = createNoReturnBlock();
@@ -799,16 +849,15 @@ LocalScope* CFGBuilder::addLocalScopeForVarDecl(VarDecl *VD,
 
   // Check for const references bound to temporary. Set type to pointee.
   QualType QT = VD->getType();
-  if (const ReferenceType* RT = QT.getTypePtr()->getAs<ReferenceType>()) {
-    QT = RT->getPointeeType();
-    if (!QT.isConstQualified())
-      return Scope;
+  if (QT.getTypePtr()->isReferenceType()) {
     if (!VD->extendsLifetimeOfTemporary())
       return Scope;
+
+    QT = getReferenceInitTemporaryType(*Context, VD->getInit());
   }
 
   // Check for constant size array. Set type to array element type.
-  if (const ConstantArrayType *AT = Context->getAsConstantArrayType(QT)) {
+  while (const ConstantArrayType *AT = Context->getAsConstantArrayType(QT)) {
     if (AT->getSize() == 0)
       return Scope;
     QT = AT->getElementType();
