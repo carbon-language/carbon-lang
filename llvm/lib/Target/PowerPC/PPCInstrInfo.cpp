@@ -22,7 +22,6 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -501,8 +500,7 @@ PPCInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
 
   const MachineFrameInfo &MFI = *MF.getFrameInfo();
   MachineMemOperand *MMO =
-    MF.getMachineMemOperand(
-                MachinePointerInfo(PseudoSourceValue::getFixedStack(FrameIdx)),
+    MF.getMachineMemOperand(MachinePointerInfo::getFixedStack(FrameIdx),
                             MachineMemOperand::MOStore,
                             MFI.getObjectSize(FrameIdx),
                             MFI.getObjectAlignment(FrameIdx));
@@ -623,8 +621,7 @@ PPCInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
 
   const MachineFrameInfo &MFI = *MF.getFrameInfo();
   MachineMemOperand *MMO =
-    MF.getMachineMemOperand(
-                MachinePointerInfo(PseudoSourceValue::getFixedStack(FrameIdx)),
+    MF.getMachineMemOperand(MachinePointerInfo::getFixedStack(FrameIdx),
                             MachineMemOperand::MOLoad,
                             MFI.getObjectSize(FrameIdx),
                             MFI.getObjectAlignment(FrameIdx));
