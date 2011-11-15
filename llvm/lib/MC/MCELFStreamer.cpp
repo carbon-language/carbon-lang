@@ -205,10 +205,10 @@ void MCELFStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
 
   if (MCELF::GetBinding(SD) == ELF_STB_Local) {
     const MCSection *Section = getAssembler().getContext().getELFSection(".bss",
-                                                                    ELF::SHT_NOBITS,
-                                                                    ELF::SHF_WRITE |
-                                                                    ELF::SHF_ALLOC,
-                                                                    SectionKind::getBSS());
+                                                         ELF::SHT_NOBITS,
+                                                         ELF::SHF_WRITE |
+                                                         ELF::SHF_ALLOC,
+                                                         SectionKind::getBSS());
     Symbol->setSection(*Section);
 
     struct LocalCommon L = {&SD, Size, ByteAlignment};

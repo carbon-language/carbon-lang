@@ -1579,8 +1579,8 @@ unsigned PPCELFObjectWriter::GetRelocType(const MCValue &Target,
   return Type;
 }
 
-void
-PPCELFObjectWriter::adjustFixupOffset(const MCFixup &Fixup, uint64_t &RelocOffset) {
+void PPCELFObjectWriter::
+adjustFixupOffset(const MCFixup &Fixup, uint64_t &RelocOffset) {
   switch ((unsigned)Fixup.getKind()) {
     case PPC::fixup_ppc_ha16:
     case PPC::fixup_ppc_lo16:

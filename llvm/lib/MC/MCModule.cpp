@@ -1,4 +1,4 @@
-//===- lib/MC/MCModule.cpp - MCModule implementation --------------------------===//
+//===- lib/MC/MCModule.cpp - MCModule implementation ----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
