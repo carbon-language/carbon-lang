@@ -843,6 +843,12 @@ void ScopStmt::dump() const { print(dbgs()); }
 //===----------------------------------------------------------------------===//
 /// Scop class implement
 
+void Scop::setContext(__isl_take isl_set* NewContext) {
+  NewContext = isl_set_align_params(NewContext, isl_set_get_space(Context));
+  isl_set_free(Context);
+  Context = NewContext;
+}
+
 void Scop::addParams(std::vector<const SCEV*> NewParameters) {
   for (std::vector<const SCEV*>::iterator PI = NewParameters.begin(),
        PE = NewParameters.end(); PI != PE; ++PI) {

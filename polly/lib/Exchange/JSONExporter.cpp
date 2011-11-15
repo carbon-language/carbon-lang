@@ -228,6 +228,19 @@ bool JSONImporter::runOnScop(Scop &scop) {
     return false;
   }
 
+  isl_set *OldContext = S->getContext();
+  isl_set *NewContext = isl_set_read_from_str(S->getIslCtx(),
+                                              jscop["context"].asCString());
+
+  for (unsigned i = 0; i < isl_set_dim(OldContext, isl_dim_param); i++) {
+    isl_id *id = isl_set_get_dim_id(OldContext, isl_dim_param, i);
+    NewContext = isl_set_set_dim_id(NewContext, isl_dim_param, i, id);
+
+  }
+
+  isl_set_free(OldContext);
+  S->setContext(NewContext);
+
   StatementToIslMapTy &NewScattering = *(new StatementToIslMapTy());
 
   int index = 0;

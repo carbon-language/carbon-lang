@@ -547,6 +547,8 @@ public:
   const_reverse_iterator rend()   const { return Stmts.rend();   }
   //@}
 
+  void setContext(isl_set* NewContext);
+
   /// @brief Align the parameters in the statement to the scop context
   void realignParams();
 
