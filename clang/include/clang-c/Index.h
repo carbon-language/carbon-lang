@@ -4059,6 +4059,8 @@ typedef struct {
 typedef struct {
   const CXIdxObjCContainerDeclInfo *containerInfo;
   const CXIdxEntityInfo *objcClass;
+  CXCursor classCursor;
+  CXIdxLoc classLoc;
 } CXIdxObjCCategoryDeclInfo;
 
 typedef struct {
@@ -4193,6 +4195,19 @@ clang_index_getObjCCategoryDeclInfo(const CXIdxDeclInfo *);
 CINDEX_LINKAGE const CXIdxObjCProtocolRefListInfo *
 clang_index_getObjCProtocolRefListInfo(const CXIdxDeclInfo *);
 
+typedef enum {
+  /**
+   * \brief Used to indicate that no special indexing options are needed.
+   */
+  CXIndexOpt_None = 0x0,
+  
+  /**
+   * \brief Used to indicate that \see indexEntityReference should be invoked
+   * for only one reference of an entity per source file.
+   */
+  CXIndexOpt_OneRefPerFile = 0x1
+} CXIndexOptFlags;
+
 /**
  * \brief Index the given source file and the translation unit corresponding
  * to that file via callbacks implemented through \see IndexerCallbacks.
@@ -4206,17 +4221,18 @@ clang_index_getObjCProtocolRefListInfo(const CXIdxDeclInfo *);
  * \param index_callbacks_size Size of \see IndexerCallbacks structure that gets
  * passed in index_callbacks.
  *
- * \param index_options Options affecting indexing; reserved.
+ * \param index_options A bitmask of options that affects how indexing is
+ * performed. This should be a bitwise OR of the CXIndexOpt_XXX flags.
  *
  * \param out_TU [out] pointer to store a CXTranslationUnit that can be reused
  * after indexing is finished. Set to NULL if you do not require it.
  *
- * \returns If there is a failure from which the compiler cannot recover returns
+ * \returns If there is a failure from which the there is no recovery, returns
  * non-zero, otherwise returns 0.
- * 
+ *
  * The rest of the parameters are the same as \see clang_parseTranslationUnit.
  */
-CINDEX_LINKAGE int clang_indexTranslationUnit(CXIndex CIdx,
+CINDEX_LINKAGE int clang_indexSourceFile(CXIndex CIdx,
                                          CXClientData client_data,
                                          IndexerCallbacks *index_callbacks,
                                          unsigned index_callbacks_size,
@@ -4228,6 +4244,28 @@ CINDEX_LINKAGE int clang_indexTranslationUnit(CXIndex CIdx,
                                          unsigned num_unsaved_files,
                                          CXTranslationUnit *out_TU,
                                          unsigned TU_options);
+
+/**
+ * \brief Index the given translation unit via callbacks implemented through
+ * \see IndexerCallbacks.
+ * 
+ * The order of callback invocations is not guaranteed to be the same as
+ * when indexing a source file. The high level order will be:
+ * 
+ *   -Preprocessor callbacks invocations
+ *   -Declaration/reference callbacks invocations
+ *   -Diagnostic callback invocations
+ *
+ * The parameters are the same as \see clang_indexSourceFile.
+ * 
+ * \returns If there is a failure from which the there is no recovery, returns
+ * non-zero, otherwise returns 0.
+ */
+CINDEX_LINKAGE int clang_indexTranslationUnit(CXTranslationUnit,
+                                              CXClientData client_data,
+                                              IndexerCallbacks *index_callbacks,
+                                              unsigned index_callbacks_size,
+                                              unsigned index_options);
 
 /**
  * \brief Retrieve the CXIdxFile, file, line, column, and offset represented by

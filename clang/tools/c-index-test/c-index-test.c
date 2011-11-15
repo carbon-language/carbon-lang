@@ -1765,6 +1765,10 @@ static void index_indexDeclaration(CXClientData client_data,
   if ((CatInfo = clang_index_getObjCCategoryDeclInfo(info))) {
     printEntityInfo("     <ObjCCategoryInfo>: class", client_data,
                     CatInfo->objcClass);
+    printf(" | cursor: ");
+    PrintCursor(CatInfo->classCursor);
+    printf(" | loc: ");
+    printCXIndexLoc(CatInfo->classLoc);
     printf("\n");
   }
 
@@ -1842,9 +1846,51 @@ static int index_file(int argc, const char **argv) {
   index_data.first_check_printed = 0;
   index_data.fail_for_error = 0;
 
-  result = clang_indexTranslationUnit(CIdx, &index_data,
-                                      &IndexCB,sizeof(IndexCB),
-                                      0, 0, argv, argc, 0, 0, 0, 0);
+  result = clang_indexSourceFile(CIdx, &index_data,
+                                 &IndexCB,sizeof(IndexCB),
+                                 0, 0, argv, argc, 0, 0, 0, 0);
+  if (index_data.fail_for_error)
+    return -1;
+
+  return result;
+}
+
+static int index_tu(int argc, const char **argv) {
+  CXIndex Idx;
+  CXTranslationUnit TU;
+  const char *check_prefix;
+  IndexData index_data;
+  int result;
+
+  check_prefix = 0;
+  if (argc > 0) {
+    if (strstr(argv[0], "-check-prefix=") == argv[0]) {
+      check_prefix = argv[0] + strlen("-check-prefix=");
+      ++argv;
+      --argc;
+    }
+  }
+
+  if (argc == 0) {
+    fprintf(stderr, "no ast file\n");
+    return -1;
+  }
+
+  if (!(Idx = clang_createIndex(/* excludeDeclsFromPCH */ 1,
+                                /* displayDiagnosics=*/1))) {
+    fprintf(stderr, "Could not create Index\n");
+    return 1;
+  }
+
+  if (!CreateTranslationUnit(Idx, argv[0], &TU))
+    return 1;
+
+  index_data.check_prefix = check_prefix;
+  index_data.first_check_printed = 0;
+  index_data.fail_for_error = 0;
+
+  result = clang_indexTranslationUnit(TU, &index_data,
+                                      &IndexCB,sizeof(IndexCB), 0);
   if (index_data.fail_for_error)
     return -1;
 
@@ -2394,6 +2440,7 @@ static void print_usage(void) {
     "       c-index-test -cursor-at=<site> <compiler arguments>\n"
     "       c-index-test -file-refs-at=<site> <compiler arguments>\n"
     "       c-index-test -index-file [-check-prefix=<FileCheck prefix>] <compiler arguments>\n"
+    "       c-index-test -index-tu [-check-prefix=<FileCheck prefix>] <AST file>\n"
     "       c-index-test -test-file-scan <AST file> <source file> "
           "[FileCheck prefix]\n");
   fprintf(stderr,
@@ -2449,6 +2496,8 @@ int cindextest_main(int argc, const char **argv) {
     return find_file_refs_at(argc, argv);
   if (argc > 2 && strcmp(argv[1], "-index-file") == 0)
     return index_file(argc - 2, argv + 2);
+  if (argc > 2 && strcmp(argv[1], "-index-tu") == 0)
+    return index_tu(argc - 2, argv + 2);
   else if (argc >= 4 && strncmp(argv[1], "-test-load-tu", 13) == 0) {
     CXCursorVisitor I = GetVisitor(argv[1] + 13);
     if (I)

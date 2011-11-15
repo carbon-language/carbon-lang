@@ -142,6 +142,7 @@ clang_index_getObjCProtocolRefListInfo
 clang_index_isEntityObjCContainerKind
 clang_indexLoc_getCXSourceLocation
 clang_indexLoc_getFileLocation
+clang_indexSourceFile
 clang_indexTranslationUnit
 clang_isAttribute
 clang_isConstQualifiedType

@@ -95,6 +95,13 @@ void IndexingContext::handleDiagnostic(const StoredDiagnostic &StoredDiag) {
   CB.diagnostic(ClientData, &CXDiag, 0);
 }
 
+void IndexingContext::handleDiagnostic(CXDiagnostic CXDiag) {
+  if (!CB.diagnostic)
+    return;
+
+  CB.diagnostic(ClientData, CXDiag, 0);
+}
+
 void IndexingContext::handleDecl(const NamedDecl *D,
                                  SourceLocation Loc, CXCursor Cursor,
                                  DeclInfo &DInfo) {
@@ -230,11 +237,17 @@ void IndexingContext::handleObjCCategory(const ObjCCategoryDecl *D) {
   ObjCCategoryDeclInfo CatDInfo(/*isImplementation=*/false);
   CXIdxEntityInfo ClassEntity;
   StrAdapter SA(*this);
+  const ObjCInterfaceDecl *IFaceD = D->getClassInterface();
+  SourceLocation ClassLoc = D->getLocation();
+  SourceLocation CategoryLoc = D->getCategoryNameLoc();
   getEntityInfo(D->getClassInterface(), ClassEntity, SA);
 
   CatDInfo.ObjCCatDeclInfo.containerInfo = &CatDInfo.ObjCContDeclInfo;
   CatDInfo.ObjCCatDeclInfo.objcClass = &ClassEntity;
-  handleObjCContainer(D, D->getLocation(), getCursor(D), CatDInfo);
+  CatDInfo.ObjCCatDeclInfo.classCursor =
+      MakeCursorObjCClassRef(IFaceD, ClassLoc, CXTU);
+  CatDInfo.ObjCCatDeclInfo.classLoc = getIndexLoc(ClassLoc);
+  handleObjCContainer(D, CategoryLoc, getCursor(D), CatDInfo);
 }
 
 void IndexingContext::handleObjCCategoryImpl(const ObjCCategoryImplDecl *D) {

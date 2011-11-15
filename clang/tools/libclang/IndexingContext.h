@@ -227,6 +227,7 @@ public:
   void indexBody(const Stmt *S, const DeclContext *DC);
 
   void handleDiagnostic(const StoredDiagnostic &StoredDiag);
+  void handleDiagnostic(CXDiagnostic CXDiag);
 
   void handleFunction(const FunctionDecl *FD);
 
@@ -265,6 +266,7 @@ public:
 
   bool isNotFromSourceFile(SourceLocation Loc) const;
 
+  void indexTopLevelDecl(Decl *D);
   void indexTUDeclsInObjCContainer();
   void indexDeclGroupRef(DeclGroupRef DG);
 

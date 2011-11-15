@@ -200,10 +200,10 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
-// clang_indexTranslationUnit Implementation
+// clang_indexSourceFileUnit Implementation
 //===----------------------------------------------------------------------===//
 
-struct IndexTranslationUnitInfo {
+struct IndexSourceFileInfo {
   CXIndex CIdx;
   CXClientData client_data;
   IndexerCallbacks *index_callbacks;
@@ -231,9 +231,9 @@ struct MemBufferOwner {
 
 } // anonymous namespace
 
-static void clang_indexTranslationUnit_Impl(void *UserData) {
-  IndexTranslationUnitInfo *ITUI =
-    static_cast<IndexTranslationUnitInfo*>(UserData);
+static void clang_indexSourceFile_Impl(void *UserData) {
+  IndexSourceFileInfo *ITUI =
+    static_cast<IndexSourceFileInfo*>(UserData);
   CXIndex CIdx = ITUI->CIdx;
   CXClientData client_data = ITUI->client_data;
   IndexerCallbacks *client_index_callbacks = ITUI->index_callbacks;
@@ -367,6 +367,141 @@ static void clang_indexTranslationUnit_Impl(void *UserData) {
 }
 
 //===----------------------------------------------------------------------===//
+// clang_indexTranslationUnit Implementation
+//===----------------------------------------------------------------------===//
+
+namespace {
+
+struct IndexTranslationUnitInfo {
+  CXTranslationUnit TU;
+  CXClientData client_data;
+  IndexerCallbacks *index_callbacks;
+  unsigned index_callbacks_size;
+  unsigned index_options;
+  int result;
+};
+
+} // anonymous namespace
+
+static void indexPreprocessingRecord(ASTUnit &Unit, IndexingContext &IdxCtx) {
+  Preprocessor &PP = Unit.getPreprocessor();
+  if (!PP.getPreprocessingRecord())
+    return;
+
+  PreprocessingRecord &PPRec = *PP.getPreprocessingRecord();
+
+  // FIXME: Only deserialize inclusion directives.
+  // FIXME: Only deserialize stuff from the last chained PCH, not the PCH/Module
+  // that it depends on.
+
+  bool OnlyLocal = !Unit.isMainFileAST() && Unit.getOnlyLocalDecls();
+  PreprocessingRecord::iterator I, E;
+  if (OnlyLocal) {
+    I = PPRec.local_begin();
+    E = PPRec.local_end();
+  } else {
+    I = PPRec.begin();
+    E = PPRec.end();
+  }
+
+  for (; I != E; ++I) {
+    PreprocessedEntity *PPE = *I;
+
+    if (InclusionDirective *ID = dyn_cast<InclusionDirective>(PPE)) {
+      IdxCtx.ppIncludedFile(ID->getSourceRange().getBegin(), ID->getFileName(),
+                     ID->getFile(), ID->getKind() == InclusionDirective::Import,
+                     !ID->wasInQuotes());
+    }
+  }
+}
+
+static void indexTranslationUnit(ASTUnit &Unit, IndexingContext &IdxCtx) {
+  // FIXME: Only deserialize stuff from the last chained PCH, not the PCH/Module
+  // that it depends on.
+
+  bool OnlyLocal = !Unit.isMainFileAST() && Unit.getOnlyLocalDecls();
+
+  if (OnlyLocal) {
+    for (ASTUnit::top_level_iterator TL = Unit.top_level_begin(),
+                                  TLEnd = Unit.top_level_end();
+           TL != TLEnd; ++TL) {
+      IdxCtx.indexTopLevelDecl(*TL);
+    }
+
+  } else {
+    TranslationUnitDecl *TUDecl = Unit.getASTContext().getTranslationUnitDecl();
+    for (TranslationUnitDecl::decl_iterator
+           I = TUDecl->decls_begin(), E = TUDecl->decls_end(); I != E; ++I) {
+      IdxCtx.indexTopLevelDecl(*I);
+    }
+  }
+}
+
+static void indexDiagnostics(CXTranslationUnit TU, IndexingContext &IdxCtx) {
+  unsigned Num = clang_getNumDiagnostics(TU);
+  for (unsigned i = 0; i != Num; ++i) {
+    CXDiagnostic Diag = clang_getDiagnostic(TU, i);
+    IdxCtx.handleDiagnostic(Diag);
+    clang_disposeDiagnostic(Diag);
+  }
+}
+
+static void clang_indexTranslationUnit_Impl(void *UserData) {
+  IndexTranslationUnitInfo *ITUI =
+    static_cast<IndexTranslationUnitInfo*>(UserData);
+  CXTranslationUnit TU = ITUI->TU;
+  CXClientData client_data = ITUI->client_data;
+  IndexerCallbacks *client_index_callbacks = ITUI->index_callbacks;
+  unsigned index_callbacks_size = ITUI->index_callbacks_size;
+  unsigned index_options = ITUI->index_options;
+  ITUI->result = 1; // init as error.
+
+  if (!TU)
+    return;
+  if (!client_index_callbacks || index_callbacks_size == 0)
+    return;
+
+  IndexerCallbacks CB;
+  memset(&CB, 0, sizeof(CB));
+  unsigned ClientCBSize = index_callbacks_size < sizeof(CB)
+                                  ? index_callbacks_size : sizeof(CB);
+  memcpy(&CB, client_index_callbacks, ClientCBSize);
+
+  llvm::OwningPtr<IndexingContext> IndexCtx;
+  IndexCtx.reset(new IndexingContext(client_data, CB, index_options, TU));
+
+  // Recover resources if we crash before exiting this method.
+  llvm::CrashRecoveryContextCleanupRegistrar<IndexingContext>
+    IndexCtxCleanup(IndexCtx.get());
+
+  llvm::OwningPtr<IndexingConsumer> IndexConsumer;
+  IndexConsumer.reset(new IndexingConsumer(*IndexCtx));
+
+  // Recover resources if we crash before exiting this method.
+  llvm::CrashRecoveryContextCleanupRegistrar<IndexingConsumer>
+    IndexConsumerCleanup(IndexConsumer.get());
+
+  ASTUnit *Unit = static_cast<ASTUnit *>(TU->TUData);
+  if (!Unit)
+    return;
+
+  FileManager &FileMgr = Unit->getFileManager();
+
+  if (Unit->getOriginalSourceFileName().empty())
+    IndexCtx->enteredMainFile(0);
+  else
+    IndexCtx->enteredMainFile(FileMgr.getFile(Unit->getOriginalSourceFileName()));
+
+  IndexConsumer->Initialize(Unit->getASTContext());
+
+  indexPreprocessingRecord(*Unit, *IndexCtx);
+  indexTranslationUnit(*Unit, *IndexCtx);
+  indexDiagnostics(TU, *IndexCtx);
+
+  ITUI->result = 0;
+}
+
+//===----------------------------------------------------------------------===//
 // libclang public APIs.
 //===----------------------------------------------------------------------===//
 
@@ -433,7 +568,7 @@ clang_index_getObjCProtocolRefListInfo(const CXIdxDeclInfo *DInfo) {
   return 0;
 }
 
-int clang_indexTranslationUnit(CXIndex CIdx,
+int clang_indexSourceFile(CXIndex CIdx,
                                 CXClientData client_data,
                                 IndexerCallbacks *index_callbacks,
                                 unsigned index_callbacks_size,
@@ -445,21 +580,22 @@ int clang_indexTranslationUnit(CXIndex CIdx,
                                 unsigned num_unsaved_files,
                                 CXTranslationUnit *out_TU,
                                 unsigned TU_options) {
-  IndexTranslationUnitInfo ITUI = { CIdx, client_data, index_callbacks,
+
+  IndexSourceFileInfo ITUI = { CIdx, client_data, index_callbacks,
                                     index_callbacks_size, index_options,
                                     source_filename, command_line_args,
                                     num_command_line_args, unsaved_files,
                                     num_unsaved_files, out_TU, TU_options, 0 };
 
   if (getenv("LIBCLANG_NOTHREADS")) {
-    clang_indexTranslationUnit_Impl(&ITUI);
+    clang_indexSourceFile_Impl(&ITUI);
     return ITUI.result;
   }
 
   llvm::CrashRecoveryContext CRC;
 
-  if (!RunSafely(CRC, clang_indexTranslationUnit_Impl, &ITUI)) {
-    fprintf(stderr, "libclang: crash detected during parsing: {\n");
+  if (!RunSafely(CRC, clang_indexSourceFile_Impl, &ITUI)) {
+    fprintf(stderr, "libclang: crash detected during indexing source file: {\n");
     fprintf(stderr, "  'source_filename' : '%s'\n", source_filename);
     fprintf(stderr, "  'command_line_args' : [");
     for (int i = 0; i != num_command_line_args; ++i) {
@@ -485,6 +621,31 @@ int clang_indexTranslationUnit(CXIndex CIdx,
       PrintLibclangResourceUsage(*out_TU);
   }
   
+  return ITUI.result;
+}
+
+int clang_indexTranslationUnit(CXTranslationUnit TU,
+                               CXClientData client_data,
+                               IndexerCallbacks *index_callbacks,
+                               unsigned index_callbacks_size,
+                               unsigned index_options) {
+
+  IndexTranslationUnitInfo ITUI = { TU, client_data, index_callbacks,
+                                    index_callbacks_size, index_options, 0 };
+
+  if (getenv("LIBCLANG_NOTHREADS")) {
+    clang_indexTranslationUnit_Impl(&ITUI);
+    return ITUI.result;
+  }
+
+  llvm::CrashRecoveryContext CRC;
+
+  if (!RunSafely(CRC, clang_indexTranslationUnit_Impl, &ITUI)) {
+    fprintf(stderr, "libclang: crash detected during indexing TU\n");
+    
+    return 1;
+  }
+
   return ITUI.result;
 }
 
