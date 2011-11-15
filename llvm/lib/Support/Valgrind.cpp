@@ -56,10 +56,10 @@ void llvm::sys::ValgrindDiscardTranslations(const void *Addr, size_t Len) {
 // These functions require no implementation, tsan just looks at the arguments
 // they're called with.
 extern "C" {
-void AnnotateHappensBefore(const char *file, int line,
-                           const volatile void *cv) {}
-void AnnotateHappensAfter(const char *file, int line,
-                          const volatile void *cv) {}
-void AnnotateIgnoreWritesBegin(const char *file, int line) {}
-void AnnotateIgnoreWritesEnd(const char *file, int line) {}
+LLVM_ATTRIBUTE_WEAK void AnnotateHappensBefore(const char *file, int line,
+                                               const volatile void *cv) {}
+LLVM_ATTRIBUTE_WEAK void AnnotateHappensAfter(const char *file, int line,
+                                              const volatile void *cv) {}
+LLVM_ATTRIBUTE_WEAK void AnnotateIgnoreWritesBegin(const char *file, int line){}
+LLVM_ATTRIBUTE_WEAK void AnnotateIgnoreWritesEnd(const char *file, int line) {}
 }
