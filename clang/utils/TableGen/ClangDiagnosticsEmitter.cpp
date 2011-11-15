@@ -303,6 +303,10 @@ void ClangDiagGroupsEmitter::run(raw_ostream &OS) {
     OS << "  { ";
     OS << I->first.size() << ", ";
     OS << "\"";
+    if (I->first.find_first_not_of("abcdefghijklmnopqrstuvwxyz"
+                                   "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                   "0123456789!@#$%^*-+=:?")!=std::string::npos)
+      throw "Invalid character in diagnostic group '" + I->first + "'";
     OS.write_escaped(I->first) << "\","
                                << std::string(MaxLen-I->first.size()+1, ' ');
     
