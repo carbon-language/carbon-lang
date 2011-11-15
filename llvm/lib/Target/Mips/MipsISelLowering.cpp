@@ -2063,6 +2063,7 @@ PassByValArg64(SDValue& ByValChain, SDValue Chain, DebugLoc dl,
   bool IsRegLoc = VA.isRegLoc();
   unsigned Offset = 0; // Offset in # of bytes from the beginning of struct.
   unsigned LocMemOffset = 0;
+  unsigned MemCpySize = ByValSize;
 
   if (!IsRegLoc)
     LocMemOffset = VA.getLocMemOffset();
@@ -2082,9 +2083,13 @@ PassByValArg64(SDValue& ByValChain, SDValue Chain, DebugLoc dl,
       RegsToPass.push_back(std::make_pair(*Reg, LoadVal));
     }
 
+    // Return if the struct has been fully copied. 
+    if (!(MemCpySize = ByValSize - Offset))
+      return;
+
     // If there is an argument register available, copy the remainder of the
     // byval argument with sub-doubleword loads and shifts.
-    if ((Reg != RegEnd) && (ByValSize != Offset)) {
+    if (Reg != RegEnd) {
       assert((ByValSize < Offset + 8) &&
              "Size of the remainder should be smaller than 8-byte.");
       SDValue Val;
@@ -2119,19 +2124,18 @@ PassByValArg64(SDValue& ByValChain, SDValue Chain, DebugLoc dl,
     }
   }
 
-  unsigned MemCpySize = ByValSize - Offset;
-  if (MemCpySize) {
-    // Create a fixed object on stack at offset LocMemOffset and copy
-    // remainder of byval arg to it with memcpy.
-    SDValue Src = DAG.getNode(ISD::ADD, dl, PtrTy, Arg,
-                              DAG.getConstant(Offset, PtrTy));
-    LastFI = MFI->CreateFixedObject(MemCpySize, LocMemOffset, true);
-    SDValue Dst = DAG.getFrameIndex(LastFI, PtrTy);
-    ByValChain = DAG.getMemcpy(ByValChain, dl, Dst, Src,
-                               DAG.getConstant(MemCpySize, PtrTy), Alignment,
-                               /*isVolatile=*/false, /*AlwaysInline=*/false,
-                               MachinePointerInfo(0), MachinePointerInfo(0));
-  }
+  assert(MemCpySize && "MemCpySize must not be zero.");
+
+  // Create a fixed object on stack at offset LocMemOffset and copy
+  // remainder of byval arg to it with memcpy.
+  SDValue Src = DAG.getNode(ISD::ADD, dl, PtrTy, Arg,
+                            DAG.getConstant(Offset, PtrTy));
+  LastFI = MFI->CreateFixedObject(MemCpySize, LocMemOffset, true);
+  SDValue Dst = DAG.getFrameIndex(LastFI, PtrTy);
+  ByValChain = DAG.getMemcpy(ByValChain, dl, Dst, Src,
+                             DAG.getConstant(MemCpySize, PtrTy), Alignment,
+                             /*isVolatile=*/false, /*AlwaysInline=*/false,
+                             MachinePointerInfo(0), MachinePointerInfo(0));
 }
 
 /// LowerCall - functions arguments are copied from virtual regs to
