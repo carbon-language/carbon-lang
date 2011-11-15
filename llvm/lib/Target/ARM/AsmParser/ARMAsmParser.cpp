@@ -2487,10 +2487,31 @@ parseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 // parse a vector register list
 ARMAsmParser::OperandMatchResultTy ARMAsmParser::
 parseVectorList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-  if(Parser.getTok().isNot(AsmToken::LCurly))
+  SMLoc S = Parser.getTok().getLoc();
+  // As an extension (to match gas), support a plain D register or Q register
+  // (without encosing curly braces) as a single or double entry list,
+  // respectively.
+  if (Parser.getTok().is(AsmToken::Identifier)) {
+    int Reg = tryParseRegister();
+    if (Reg == -1)
+      return MatchOperand_NoMatch;
+    SMLoc E = Parser.getTok().getLoc();
+    if (ARMMCRegisterClasses[ARM::DPRRegClassID].contains(Reg)) {
+      Operands.push_back(ARMOperand::CreateVectorList(Reg, 1, S, E));
+      return MatchOperand_Success;
+    }
+    if (ARMMCRegisterClasses[ARM::QPRRegClassID].contains(Reg)) {
+      Reg = getDRegFromQReg(Reg);
+      Operands.push_back(ARMOperand::CreateVectorList(Reg, 2, S, E));
+      return MatchOperand_Success;
+    }
+    Error(S, "vector register expected");
+    return MatchOperand_ParseFail;
+  }
+
+  if (Parser.getTok().isNot(AsmToken::LCurly))
     return MatchOperand_NoMatch;
 
-  SMLoc S = Parser.getTok().getLoc();
   Parser.Lex(); // Eat '{' token.
   SMLoc RegLoc = Parser.getTok().getLoc();
 
