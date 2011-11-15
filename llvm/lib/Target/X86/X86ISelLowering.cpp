@@ -5110,6 +5110,84 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, SmallVectorImpl<SDValue> &Elts,
   return SDValue();
 }
 
+/// isVectorBroadcast - Check if the node chain is suitable to be xformed to
+/// a vbroadcast node. We support two patterns:
+/// 1. A splat BUILD_VECTOR which uses a single scalar load.
+/// 2. A splat shuffle which uses a scalar_to_vector node which comes from
+/// a scalar load.
+/// The scalar load node is returned when a pattern is found, 
+/// or SDValue() otherwise. 
+static SDValue isVectorBroadcast(SDValue &Op) {
+  EVT VT = Op.getValueType();
+  SDValue V = Op;
+
+  if (V.hasOneUse() && V.getOpcode() == ISD::BITCAST)
+    V = V.getOperand(0);
+
+  //A suspected load to be broadcasted.
+  SDValue Ld;
+
+  switch (V.getOpcode()) {
+    default:
+      // Unknown pattern found.
+      return SDValue();
+
+    case ISD::BUILD_VECTOR: {
+      // The BUILD_VECTOR node must be a splat.
+      if (!isSplatVector(V.getNode())) 
+        return SDValue();
+
+      Ld = V.getOperand(0);
+    
+      // The suspected load node has several users. Make sure that all 
+      // of its users are from the BUILD_VECTOR node.
+      if (!Ld->hasNUsesOfValue(VT.getVectorNumElements(), 0)) 
+        return SDValue();
+      break; 
+    }
+
+    case ISD::VECTOR_SHUFFLE: {
+      ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
+
+      // Shuffles must have a splat mask where the first element is
+      // broadcasted.
+      if ((!SVOp->isSplat()) || SVOp->getMaskElt(0) != 0) 
+        return SDValue();
+
+      SDValue Sc = Op.getOperand(0);
+      if (Sc.getOpcode() != ISD::SCALAR_TO_VECTOR) 
+        return SDValue();
+
+      Ld = Sc.getOperand(0);
+
+      // The scalar_to_vector node and the suspected
+      // load node must have exactly one user.
+      if (!Sc.hasOneUse() || !Ld.hasOneUse())
+        return SDValue();
+      break;
+    }
+  }
+  
+  // The scalar source must be a normal load.
+  if (!ISD::isNormalLoad(Ld.getNode())) 
+    return SDValue();
+  
+  bool Is256 = VT.getSizeInBits() == 256;
+  bool Is128 = VT.getSizeInBits() == 128;
+  unsigned ScalarSize = Ld.getValueType().getSizeInBits();
+
+  // VBroadcast to YMM
+  if (Is256 && (ScalarSize == 32 || ScalarSize == 64))
+    return Ld;
+
+  // VBroadcast to XMM
+  if (Is128 && (ScalarSize == 32))
+    return Ld;
+
+  // Unsupported broadcast.
+  return SDValue();
+}
+
 SDValue
 X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
   DebugLoc dl = Op.getDebugLoc();
@@ -5137,6 +5215,10 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
 
     return getOnesVector(Op.getValueType(), DAG, dl);
   }
+
+  SDValue LD = isVectorBroadcast(Op);
+  if (Subtarget->hasAVX() && LD.getNode())
+      return DAG.getNode(X86ISD::VBROADCAST, dl, VT, LD);
 
   unsigned EVTBits = ExtVT.getSizeInBits();
 
@@ -6506,52 +6588,6 @@ static inline unsigned getVPERMILOpcode(EVT VT) {
   return 0;
 }
 
-/// isVectorBroadcast - Check if the node chain is suitable to be xformed to
-/// a vbroadcast node. The nodes are suitable whenever we can fold a load coming
-/// from a 32 or 64 bit scalar. Update Op to the desired load to be folded.
-static bool isVectorBroadcast(SDValue &Op) {
-  EVT VT = Op.getValueType();
-  bool Is256 = VT.getSizeInBits() == 256;
-
-  assert((VT.getSizeInBits() == 128 || Is256) &&
-         "Unsupported type for vbroadcast node");
-
-  SDValue V = Op;
-  if (V.hasOneUse() && V.getOpcode() == ISD::BITCAST)
-    V = V.getOperand(0);
-
-  if (Is256 && !(V.hasOneUse() &&
-                 V.getOpcode() == ISD::INSERT_SUBVECTOR &&
-                 V.getOperand(0).getOpcode() == ISD::UNDEF))
-    return false;
-
-  if (Is256)
-    V = V.getOperand(1);
-
-  if (!V.hasOneUse())
-    return false;
-
-  // Check the source scalar_to_vector type. 256-bit broadcasts are
-  // supported for 32/64-bit sizes, while 128-bit ones are only supported
-  // for 32-bit scalars.
-  if (V.getOpcode() != ISD::SCALAR_TO_VECTOR)
-    return false;
-
-  unsigned ScalarSize = V.getOperand(0).getValueType().getSizeInBits();
-  if (ScalarSize != 32 && ScalarSize != 64)
-    return false;
-  if (!Is256 && ScalarSize == 64)
-    return false;
-
-  V = V.getOperand(0);
-  if (!MayFoldLoad(V))
-    return false;
-
-  // Return the load node
-  Op = V;
-  return true;
-}
-
 static
 SDValue NormalizeVectorShuffle(SDValue Op, SelectionDAG &DAG,
                                const TargetLowering &TLI,
@@ -6577,8 +6613,9 @@ SDValue NormalizeVectorShuffle(SDValue Op, SelectionDAG &DAG,
       return Op;
 
     // Use vbroadcast whenever the splat comes from a foldable load
-    if (Subtarget->hasAVX() && isVectorBroadcast(V1))
-      return DAG.getNode(X86ISD::VBROADCAST, dl, VT, V1);
+    SDValue LD = isVectorBroadcast(Op);
+    if (Subtarget->hasAVX() && LD.getNode())
+      return DAG.getNode(X86ISD::VBROADCAST, dl, VT, LD);
 
     // Handle splats by matching through known shuffle masks
     if ((Size == 128 && NumElem <= 4) ||

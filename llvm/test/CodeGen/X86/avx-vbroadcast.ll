@@ -1,7 +1,4 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=corei7-avx -mattr=+avx | FileCheck %s
-; XFAIL: *
-
-; xfail this file for now because of PR8156, when it gets solved merge this with avx-splat.ll
 
 ; CHECK: vbroadcastsd (%
 define <4 x i64> @A(i64* %ptr) nounwind uwtable readnone ssp {
