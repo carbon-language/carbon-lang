@@ -140,10 +140,7 @@ bool X86TargetMachine::addPreEmitPass(PassManagerBase &PM,
       PM.add(createExecutionDependencyFixPass(&X86::VR128RegClass));
       ShouldPrint = true;
     }
-    if (Subtarget.hasAVX2()) {
-      // FIXME this should be turned on for just AVX, but the pass doesn't check
-      // that instructions are valid before replacing them and there are AVX2
-      // integer instructions in the table.
+    if (Subtarget.hasAVX()) {
       PM.add(createExecutionDependencyFixPass(&X86::VR256RegClass));
       ShouldPrint = true;
     }

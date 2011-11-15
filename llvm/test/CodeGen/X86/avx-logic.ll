@@ -7,7 +7,9 @@ entry:
   %1 = bitcast <4 x double> %y to <4 x i64>
   %and.i = and <4 x i64> %0, %1
   %2 = bitcast <4 x i64> %and.i to <4 x double>
-  ret <4 x double> %2
+  ; add forces execution domain
+  %3 = fadd <4 x double> %2, <double 0x0, double 0x0, double 0x0, double 0x0>
+  ret <4 x double> %3
 }
 
 ; CHECK: vandpd LCP{{.*}}(%rip)
@@ -16,7 +18,9 @@ entry:
   %0 = bitcast <4 x double> %y to <4 x i64>
   %and.i = and <4 x i64> %0, <i64 4616752568008179712, i64 4614838538166547251, i64 4612361558371493478, i64 4608083138725491507>
   %1 = bitcast <4 x i64> %and.i to <4 x double>
-  ret <4 x double> %1
+  ; add forces execution domain
+  %2 = fadd <4 x double> %1, <double 0x0, double 0x0, double 0x0, double 0x0>
+  ret <4 x double> %2
 }
 
 ; CHECK: vandps
@@ -45,7 +49,9 @@ entry:
   %1 = bitcast <4 x double> %y to <4 x i64>
   %xor.i = xor <4 x i64> %0, %1
   %2 = bitcast <4 x i64> %xor.i to <4 x double>
-  ret <4 x double> %2
+  ; add forces execution domain
+  %3 = fadd <4 x double> %2, <double 0x0, double 0x0, double 0x0, double 0x0>
+  ret <4 x double> %3
 }
 
 ; CHECK: vxorpd LCP{{.*}}(%rip)
@@ -54,7 +60,9 @@ entry:
   %0 = bitcast <4 x double> %y to <4 x i64>
   %xor.i = xor <4 x i64> %0, <i64 4616752568008179712, i64 4614838538166547251, i64 4612361558371493478, i64 4608083138725491507>
   %1 = bitcast <4 x i64> %xor.i to <4 x double>
-  ret <4 x double> %1
+  ; add forces execution domain
+  %2 = fadd <4 x double> %1, <double 0x0, double 0x0, double 0x0, double 0x0>
+  ret <4 x double> %2
 }
 
 ; CHECK: vxorps
@@ -83,7 +91,9 @@ entry:
   %1 = bitcast <4 x double> %y to <4 x i64>
   %or.i = or <4 x i64> %0, %1
   %2 = bitcast <4 x i64> %or.i to <4 x double>
-  ret <4 x double> %2
+  ; add forces execution domain
+  %3 = fadd <4 x double> %2, <double 0x0, double 0x0, double 0x0, double 0x0>
+  ret <4 x double> %3
 }
 
 ; CHECK: vorpd LCP{{.*}}(%rip)
@@ -92,7 +102,9 @@ entry:
   %0 = bitcast <4 x double> %y to <4 x i64>
   %or.i = or <4 x i64> %0, <i64 4616752568008179712, i64 4614838538166547251, i64 4612361558371493478, i64 4608083138725491507>
   %1 = bitcast <4 x i64> %or.i to <4 x double>
-  ret <4 x double> %1
+  ; add forces execution domain
+  %2 = fadd <4 x double> %1, <double 0x0, double 0x0, double 0x0, double 0x0>
+  ret <4 x double> %2
 }
 
 ; CHECK: vorps
@@ -122,7 +134,9 @@ entry:
   %1 = bitcast <4 x double> %y to <4 x i64>
   %and.i = and <4 x i64> %1, %neg.i
   %2 = bitcast <4 x i64> %and.i to <4 x double>
-  ret <4 x double> %2
+  ; add forces execution domain
+  %3 = fadd <4 x double> %2, <double 0x0, double 0x0, double 0x0, double 0x0>
+  ret <4 x double> %3
 }
 
 ; CHECK: vandnpd (%
@@ -134,7 +148,9 @@ entry:
   %1 = bitcast <4 x double> %tmp2 to <4 x i64>
   %and.i = and <4 x i64> %1, %neg.i
   %2 = bitcast <4 x i64> %and.i to <4 x double>
-  ret <4 x double> %2
+  ; add forces execution domain
+  %3 = fadd <4 x double> %2, <double 0x0, double 0x0, double 0x0, double 0x0>
+  ret <4 x double> %3
 }
 
 ; CHECK: vandnps
