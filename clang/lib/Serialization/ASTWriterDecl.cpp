@@ -472,7 +472,6 @@ void ASTDeclWriter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
   Writer.AddDeclRef(D->getCategoryList(), Record);
   Record.push_back(D->isInitiallyForwardDecl());
   Record.push_back(D->isForwardDecl());
-  Record.push_back(D->isImplicitInterfaceDecl());
   Writer.AddSourceLocation(D->getSuperClassLoc(), Record);
   Writer.AddSourceLocation(D->getLocEnd(), Record);
   Code = serialization::DECL_OBJC_INTERFACE;

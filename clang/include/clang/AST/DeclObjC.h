@@ -572,7 +572,6 @@ class ObjCInterfaceDecl : public ObjCContainerDecl {
   /// true.
   bool InitiallyForwardDecl : 1;
   bool ForwardDecl:1; // declared with @class.
-  bool InternalInterface:1; // true - no @interface for @implementation
 
   /// \brief Indicates that the contents of this Objective-C class will be
   /// completed by the external AST source when required.
@@ -794,8 +793,8 @@ public:
   /// isImplicitInterfaceDecl - check that this is an implicitly declared
   /// ObjCInterfaceDecl node. This is for legacy objective-c @implementation
   /// declaration without an @interface declaration.
-  bool isImplicitInterfaceDecl() const { return InternalInterface; }
-  void setImplicitInterfaceDecl(bool val) { InternalInterface = val; }
+  bool isImplicitInterfaceDecl() const { return isImplicit(); }
+  void setImplicitInterfaceDecl(bool val) { setImplicit(val); }
 
   /// ClassImplementsProtocol - Checks that 'lProto' protocol
   /// has been implemented in IDecl class, its super class or categories (if

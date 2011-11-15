@@ -654,7 +654,8 @@ ObjCInterfaceDecl(DeclContext *DC, SourceLocation atLoc, IdentifierInfo *Id,
     TypeForDecl(0), SuperClass(0),
     CategoryList(0), IvarList(0),
     InitiallyForwardDecl(FD), ForwardDecl(FD),
-    InternalInterface(isInternal), ExternallyCompleted(false) {
+    ExternallyCompleted(false) {
+  setImplicit(isInternal);
 }
 
 void ObjCInterfaceDecl::LoadExternalDefinition() const {

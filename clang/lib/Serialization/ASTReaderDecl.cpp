@@ -559,7 +559,6 @@ void ASTDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
   ID->setIvarList(0);
   ID->InitiallyForwardDecl = Record[Idx++];
   ID->ForwardDecl = Record[Idx++];
-  ID->setImplicitInterfaceDecl(Record[Idx++]);
   ID->setSuperClassLoc(ReadSourceLocation(Record, Idx));
   ID->setLocEnd(ReadSourceLocation(Record, Idx));
 }
