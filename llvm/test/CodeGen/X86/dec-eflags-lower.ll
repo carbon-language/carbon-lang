@@ -4,7 +4,7 @@
 
 define void @_Z7releaseP3obj(%struct.obj* nocapture %o) nounwind uwtable ssp {
 entry:
-; CHECK: decq	(%rdi)
+; CHECK: decq	(%{{rdi|rcx}})
 ; CHECK-NEXT: je
   %refcnt = getelementptr inbounds %struct.obj* %o, i64 0, i32 0
   %0 = load i64* %refcnt, align 8, !tbaa !0
