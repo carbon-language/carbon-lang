@@ -995,6 +995,7 @@ Builder.CreateResume(UnwindData);
 -->
 </ul>
 </div>
+
   
 <!--=========================================================================-->
 <h3>
@@ -1016,7 +1017,30 @@ Builder.CreateResume(UnwindData);
   <li>Initial support for MIPS64 has been added.</li>
 </ul>
 </div>
+
+<!--=========================================================================-->
+<h3>
+  <a name="PTX">PTX Target Improvements</a>
+</h3>
+
+<div>
   
+  <p>
+  The PTX back-end is still experimental, but is fairly usable for compute kernels
+  in LLVM 3.0.  Most scalar arithmetic is implemented, as well as intrinsics to
+  access the special PTX registers and sync instructions.  The major missing
+  pieces are texture/sampler support and some vector operations.</p>
+  
+  <p>That said, the backend is already being used for domain-specific languages
+  and works well with the <a href="http://www.pcc.me.uk/~peter/libclc/">libclc
+    library</a> to supply OpenCL built-ins.  With it, you can use Clang to compile
+  OpenCL code into PTX and execute it by loading the resulting PTX as a binary
+  blob using the nVidia OpenCL library.  It has been tested with several OpenCL
+  programs, including some from the nVidia GPU Computing SDK, and the performance
+  is on par with the nVidia compiler.</p>
+  
+</div>
+
 <!--=========================================================================-->
 <h3>
 <a name="OtherTS">Other Target Specific Improvements</a>
