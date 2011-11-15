@@ -1228,12 +1228,16 @@ _func:
         mul r3, r4, r6
         it eq
         muleq r3, r4, r5
+        it le
+        mulle r4, r4, r8
 
 @ CHECK: muls	r3, r4, r3              @ encoding: [0x63,0x43]
 @ CHECK: mul	r3, r4, r3              @ encoding: [0x04,0xfb,0x03,0xf3]
 @ CHECK: mul	r3, r4, r6              @ encoding: [0x04,0xfb,0x06,0xf3]
 @ CHECK: it	eq                      @ encoding: [0x08,0xbf]
 @ CHECK: muleq	r3, r4, r5              @ encoding: [0x04,0xfb,0x05,0xf3]
+@ CHECK: it	le                      @ encoding: [0xd8,0xbf]
+@ CHECK: mulle	r4, r4, r8              @ encoding: [0x04,0xfb,0x08,0xf4]
 
 
 @------------------------------------------------------------------------------

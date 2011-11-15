@@ -4098,6 +4098,7 @@ bool ARMAsmParser::shouldOmitCCOutOperand(StringRef Mnemonic,
       // remove the cc_out operand.
       (!isARMLowRegister(static_cast<ARMOperand*>(Operands[3])->getReg()) ||
        !isARMLowRegister(static_cast<ARMOperand*>(Operands[4])->getReg()) ||
+       !isARMLowRegister(static_cast<ARMOperand*>(Operands[5])->getReg()) ||
        !inITBlock() ||
        (static_cast<ARMOperand*>(Operands[3])->getReg() !=
         static_cast<ARMOperand*>(Operands[5])->getReg() &&
