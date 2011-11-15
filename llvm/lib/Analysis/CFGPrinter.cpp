@@ -77,7 +77,7 @@ namespace {
     }
 
     virtual bool runOnFunction(Function &F) {
-      std::string Filename = "cfg." + F.getNameStr() + ".dot";
+      std::string Filename = "cfg." + F.getName().str() + ".dot";
       errs() << "Writing '" << Filename << "'...";
       
       std::string ErrorInfo;
@@ -111,7 +111,7 @@ namespace {
     }
     
     virtual bool runOnFunction(Function &F) {
-      std::string Filename = "cfg." + F.getNameStr() + ".dot";
+      std::string Filename = "cfg." + F.getName().str() + ".dot";
       errs() << "Writing '" << Filename << "'...";
 
       std::string ErrorInfo;

@@ -118,7 +118,7 @@ std::string JITDebugRegisterer::MakeELF(const Function *F, DebugInfo &I) {
   if (JITEmitDebugInfoToDisk) {
     std::string Filename;
     raw_string_ostream O2(Filename);
-    O2 << "/tmp/llvm_function_" << I.FnStart << "_" << F->getNameStr() << ".o";
+    O2 << "/tmp/llvm_function_" << I.FnStart << "_" << F->getName() << ".o";
     O2.flush();
     std::string Errors;
     raw_fd_ostream O3(Filename.c_str(), Errors);

@@ -101,8 +101,8 @@ bool CallGraphSCC::runOnModule(Module &M) {
     errs() << "\nSCC #" << ++sccNum << " : ";
     for (std::vector<CallGraphNode*>::const_iterator I = nextSCC.begin(),
            E = nextSCC.end(); I != E; ++I)
-      errs() << ((*I)->getFunction() ? (*I)->getFunction()->getNameStr()
-                 : std::string("external node")) << ", ";
+      errs() << ((*I)->getFunction() ? (*I)->getFunction()->getName()
+                                     : "external node") << ", ";
     if (nextSCC.size() == 1 && SCCI.hasLoop())
       errs() << " (Has self-loop).";
   }

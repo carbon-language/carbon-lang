@@ -480,8 +480,8 @@ getEdgeWeight(const BasicBlock *Src, const BasicBlock *Dst) const {
 void BranchProbabilityInfo::
 setEdgeWeight(const BasicBlock *Src, const BasicBlock *Dst, uint32_t Weight) {
   Weights[std::make_pair(Src, Dst)] = Weight;
-  DEBUG(dbgs() << "set edge " << Src->getNameStr() << " -> "
-               << Dst->getNameStr() << " weight to " << Weight
+  DEBUG(dbgs() << "set edge " << Src->getName() << " -> "
+               << Dst->getName() << " weight to " << Weight
                << (isEdgeHot(Src, Dst) ? " [is HOT now]\n" : "\n"));
 }
 
@@ -501,7 +501,7 @@ BranchProbabilityInfo::printEdgeProbability(raw_ostream &OS,
                                             const BasicBlock *Dst) const {
 
   const BranchProbability Prob = getEdgeProbability(Src, Dst);
-  OS << "edge " << Src->getNameStr() << " -> " << Dst->getNameStr()
+  OS << "edge " << Src->getName() << " -> " << Dst->getName()
      << " probability is " << Prob
      << (isEdgeHot(Src, Dst) ? " [HOT edge]\n" : "\n");
 

@@ -29,13 +29,13 @@ struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
   DOTGraphTraits (bool isSimple=false) : DefaultDOTGraphTraits(isSimple) {}
 
   static std::string getGraphName(const Function *F) {
-    return "CFG for '" + F->getNameStr() + "' function";
+    return "CFG for '" + F->getName().str() + "' function";
   }
 
   static std::string getSimpleNodeLabel(const BasicBlock *Node,
                                         const Function *) {
     if (!Node->getName().empty())
-      return Node->getNameStr(); 
+      return Node->getName().str();
 
     std::string Str;
     raw_string_ostream OS(Str);

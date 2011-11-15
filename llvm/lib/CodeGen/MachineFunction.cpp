@@ -335,7 +335,7 @@ namespace llvm {
   DOTGraphTraits (bool isSimple=false) : DefaultDOTGraphTraits(isSimple) {}
 
     static std::string getGraphName(const MachineFunction *F) {
-      return "CFG for '" + F->getFunction()->getNameStr() + "' function";
+      return "CFG for '" + F->getFunction()->getName().str() + "' function";
     }
 
     std::string getNodeLabel(const MachineBasicBlock *Node,

@@ -340,7 +340,7 @@ Module *BugDriver::ExtractMappedBlocksFromModule(const
     // If the BB doesn't have a name, give it one so we have something to key
     // off of.
     if (!BB->hasName()) BB->setName("tmpbb");
-    BlocksToNotExtractFile.os() << BB->getParent()->getNameStr() << " "
+    BlocksToNotExtractFile.os() << BB->getParent()->getName() << " "
                                 << BB->getName() << "\n";
   }
   BlocksToNotExtractFile.os().close();

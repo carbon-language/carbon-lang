@@ -291,8 +291,8 @@ struct RegionPassPrinter : public RegionPass {
   virtual bool runOnRegion(Region *R, RGPassManager &RGM) {
     if (!Quiet) {
       Out << "Printing analysis '" << PassToPrint->getPassName() << "' for "
-        << "region: '" << R->getNameStr() << "' in function '"
-        << R->getEntry()->getParent()->getNameStr() << "':\n";
+          << "region: '" << R->getNameStr() << "' in function '"
+          << R->getEntry()->getParent()->getName() << "':\n";
     }
     // Get and print pass...
    getAnalysisID<Pass>(PassToPrint->getTypeInfo()).print(Out,

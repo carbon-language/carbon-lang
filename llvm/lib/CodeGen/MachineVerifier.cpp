@@ -320,7 +320,7 @@ void MachineVerifier::report(const char *msg, const MachineFunction *MF) {
     MF->print(*OS, Indexes);
   }
   *OS << "*** Bad machine code: " << msg << " ***\n"
-      << "- function:    " << MF->getFunction()->getNameStr() << "\n";
+      << "- function:    " << MF->getFunction()->getName() << "\n";
 }
 
 void MachineVerifier::report(const char *msg, const MachineBasicBlock *MBB) {

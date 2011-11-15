@@ -1902,7 +1902,7 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
   MadeIRChange = false;
   
   DEBUG(errs() << "\n\nINSTCOMBINE ITERATION #" << Iteration << " on "
-        << F.getNameStr() << "\n");
+               << F.getName() << "\n");
 
   {
     // Do a depth-first traversal of the function, populate the worklist with

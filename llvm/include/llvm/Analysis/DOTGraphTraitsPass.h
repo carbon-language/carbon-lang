@@ -31,7 +31,7 @@ struct DOTGraphTraitsViewer : public FunctionPass {
     std::string Title, GraphName;
     Graph = &getAnalysis<Analysis>();
     GraphName = DOTGraphTraits<Analysis*>::getGraphName(Graph);
-    Title = GraphName + " for '" + F.getNameStr() + "' function";
+    Title = GraphName + " for '" + F.getName().str() + "' function";
     ViewGraph(Graph, Name, Simple, Title);
 
     return false;
@@ -55,7 +55,7 @@ struct DOTGraphTraitsPrinter : public FunctionPass {
 
   virtual bool runOnFunction(Function &F) {
     Analysis *Graph;
-    std::string Filename = Name + "." + F.getNameStr() + ".dot";
+    std::string Filename = Name + "." + F.getName().str() + ".dot";
     errs() << "Writing '" << Filename << "'...";
 
     std::string ErrorInfo;
@@ -64,7 +64,7 @@ struct DOTGraphTraitsPrinter : public FunctionPass {
 
     std::string Title, GraphName;
     GraphName = DOTGraphTraits<Analysis*>::getGraphName(Graph);
-    Title = GraphName + " for '" + F.getNameStr() + "' function";
+    Title = GraphName + " for '" + F.getName().str() + "' function";
 
     if (ErrorInfo.empty())
       WriteGraph(File, Graph, Simple, Title);

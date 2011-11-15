@@ -158,7 +158,7 @@ void PEI::initShrinkWrappingInfo() {
   // via --shrink-wrap-func=<funcname>.
 #ifndef NDEBUG
   if (ShrinkWrapFunc != "") {
-    std::string MFName = MF->getFunction()->getNameStr();
+    std::string MFName = MF->getFunction()->getName().str();
     ShrinkWrapThisFunction = (MFName == ShrinkWrapFunc);
   }
 #endif
@@ -1045,7 +1045,7 @@ std::string PEI::getBasicBlockName(const MachineBasicBlock* MBB) {
     return "";
 
   if (MBB->getBasicBlock())
-    return MBB->getBasicBlock()->getNameStr();
+    return MBB->getBasicBlock()->getName().str();
 
   std::ostringstream name;
   name << "_MBB_" << MBB->getNumber();

@@ -125,8 +125,8 @@ namespace llvm {
         outCount++;
       }
     }
-    dbgs() << "Block " << BB->getNameStr()                << " in " 
-           << BB->getParent()->getNameStr()               << ":"
+    dbgs() << "Block " << BB->getName()                   << " in "
+           << BB->getParent()->getName()                  << ":"
            << "BBWeight="  << format("%20.20g",BBWeight)  << ","
            << "inWeight="  << format("%20.20g",inWeight)  << ","
            << "inCount="   << inCount                     << ","
@@ -143,8 +143,8 @@ namespace llvm {
 
   template<class FType, class BType>
   void ProfileVerifierPassT<FType, BType>::debugEntry (DetailedBlockInfo *DI) {
-    dbgs() << "TROUBLE: Block " << DI->BB->getNameStr()       << " in "
-           << DI->BB->getParent()->getNameStr()               << ":"
+    dbgs() << "TROUBLE: Block " << DI->BB->getName()          << " in "
+           << DI->BB->getParent()->getName()                  << ":"
            << "BBWeight="  << format("%20.20g",DI->BBWeight)  << ","
            << "inWeight="  << format("%20.20g",DI->inWeight)  << ","
            << "inCount="   << DI->inCount                     << ","
@@ -201,13 +201,13 @@ namespace llvm {
     double EdgeWeight = PI->getEdgeWeight(E);
     if (EdgeWeight == ProfileInfoT<FType, BType>::MissingValue) {
       dbgs() << "Edge " << E << " in Function " 
-             << ProfileInfoT<FType, BType>::getFunction(E)->getNameStr() << ": ";
+             << ProfileInfoT<FType, BType>::getFunction(E)->getName() << ": ";
       ASSERTMESSAGE("Edge has missing value");
       return 0;
     } else {
       if (EdgeWeight < 0) {
         dbgs() << "Edge " << E << " in Function " 
-               << ProfileInfoT<FType, BType>::getFunction(E)->getNameStr() << ": ";
+               << ProfileInfoT<FType, BType>::getFunction(E)->getName() << ": ";
         ASSERTMESSAGE("Edge has negative value");
       }
       return EdgeWeight;
@@ -220,8 +220,8 @@ namespace llvm {
                                                       DetailedBlockInfo *DI) {
     if (Error) {
       DEBUG(debugEntry(DI));
-      dbgs() << "Block " << DI->BB->getNameStr() << " in Function " 
-             << DI->BB->getParent()->getNameStr() << ": ";
+      dbgs() << "Block " << DI->BB->getName() << " in Function "
+             << DI->BB->getParent()->getName() << ": ";
       ASSERTMESSAGE(Message);
     }
     return;

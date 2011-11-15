@@ -24,7 +24,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include <vector>
-#include <sstream>
 #include <string>
 
 namespace llvm {
@@ -52,15 +51,16 @@ class BlockFrequencyImpl {
   const uint32_t EntryFreq;
 
   std::string getBlockName(BasicBlock *BB) const {
-    return BB->getNameStr();
+    return BB->getName().str();
   }
 
   std::string getBlockName(MachineBasicBlock *MBB) const {
-    std::stringstream ss;
+    std::string str;
+    raw_string_ostream ss(str);
     ss << "BB#" << MBB->getNumber();
 
     if (const BasicBlock *BB = MBB->getBasicBlock())
-      ss << " derived from LLVM BB " << BB->getNameStr();
+      ss << " derived from LLVM BB " << BB->getName();
 
     return ss.str();
   }

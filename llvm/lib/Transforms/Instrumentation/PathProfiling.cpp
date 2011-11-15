@@ -665,7 +665,7 @@ void BLInstrumentationDag::unlinkPhony() {
 // Generate a .dot graph to represent the DAG and pathNumbers
 void BLInstrumentationDag::generateDotGraph() {
   std::string errorInfo;
-  std::string functionName = getFunction().getNameStr();
+  std::string functionName = getFunction().getName().str();
   std::string filename = "pathdag." + functionName + ".dot";
 
   DEBUG (dbgs() << "Writing '" << filename << "'...\n");
@@ -750,7 +750,8 @@ Value* BLInstrumentationNode::getStartingPathNumber(){
 // Sets the Value of the pathNumber.  Used by the instrumentation code.
 void BLInstrumentationNode::setStartingPathNumber(Value* pathNumber) {
   DEBUG(dbgs() << "  SPN-" << getName() << " <-- " << (pathNumber ?
-                                                       pathNumber->getNameStr() : "unused") << "\n");
+                                                       pathNumber->getName() :
+                                                       "unused") << "\n");
   _startingPathNumber = pathNumber;
 }
 
@@ -760,7 +761,7 @@ Value* BLInstrumentationNode::getEndingPathNumber(){
 
 void BLInstrumentationNode::setEndingPathNumber(Value* pathNumber) {
   DEBUG(dbgs() << "  EPN-" << getName() << " <-- "
-        << (pathNumber ? pathNumber->getNameStr() : "unused") << "\n");
+               << (pathNumber ? pathNumber->getName() : "unused") << "\n");
   _endingPathNumber = pathNumber;
 }
 
@@ -1239,9 +1240,9 @@ void PathProfiler::insertInstrumentation(
       insertPoint++;
 
     DEBUG(dbgs() << "\nInstrumenting method call block '"
-          << node->getBlock()->getNameStr() << "'\n");
+                 << node->getBlock()->getName() << "'\n");
     DEBUG(dbgs() << "   Path number initialized: "
-          << ((node->getStartingPathNumber()) ? "yes" : "no") << "\n");
+                 << ((node->getStartingPathNumber()) ? "yes" : "no") << "\n");
 
     Value* newpn;
     if( node->getStartingPathNumber() ) {
@@ -1370,7 +1371,7 @@ bool PathProfiler::runOnModule(Module &M) {
     if (F->isDeclaration())
       continue;
 
-    DEBUG(dbgs() << "Function: " << F->getNameStr() << "\n");
+    DEBUG(dbgs() << "Function: " << F->getName() << "\n");
     functionNumber++;
 
     // set function number

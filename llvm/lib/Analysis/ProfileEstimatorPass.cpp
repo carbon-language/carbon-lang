@@ -332,7 +332,7 @@ bool ProfileEstimatorPass::runOnFunction(Function &F) {
   // Clear Minimal Edges.
   MinimalWeight.clear();
 
-  DEBUG(dbgs() << "Working on function " << F.getNameStr() << "\n");
+  DEBUG(dbgs() << "Working on function " << F.getName() << "\n");
 
   // Since the entry block is the first one and has no predecessors, the edge
   // (0,entry) is inserted with the starting weight of 1.

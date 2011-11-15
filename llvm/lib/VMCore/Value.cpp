@@ -66,7 +66,7 @@ Value::~Value() {
   // a <badref>
   //
   if (!use_empty()) {
-    dbgs() << "While deleting: " << *VTy << " %" << getNameStr() << "\n";
+    dbgs() << "While deleting: " << *VTy << " %" << getName() << "\n";
     for (use_iterator I = use_begin(), E = use_end(); I != E; ++I)
       dbgs() << "Use still stuck around after Def is destroyed:"
            << **I << "\n";
@@ -554,7 +554,7 @@ void ValueHandleBase::ValueIsDeleted(Value *V) {
   // All callbacks, weak references, and assertingVHs should be dropped by now.
   if (V->HasValueHandle) {
 #ifndef NDEBUG      // Only in +Asserts mode...
-    dbgs() << "While deleting: " << *V->getType() << " %" << V->getNameStr()
+    dbgs() << "While deleting: " << *V->getType() << " %" << V->getName()
            << "\n";
     if (pImpl->ValueHandles[V]->getKind() == Assert)
       llvm_unreachable("An asserting value handle still pointed to this"
@@ -617,8 +617,8 @@ void ValueHandleBase::ValueIsRAUWd(Value *Old, Value *New) {
       case Tracking:
       case Weak:
         dbgs() << "After RAUW from " << *Old->getType() << " %"
-          << Old->getNameStr() << " to " << *New->getType() << " %"
-          << New->getNameStr() << "\n";
+               << Old->getName() << " to " << *New->getType() << " %"
+               << New->getName() << "\n";
         llvm_unreachable("A tracking or weak value handle still pointed to the"
                          " old value!\n");
       default:
