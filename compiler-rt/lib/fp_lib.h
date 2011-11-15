@@ -24,6 +24,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <limits.h>
+#include "int_lib.h"
 
 #if defined SINGLE_PRECISION
 

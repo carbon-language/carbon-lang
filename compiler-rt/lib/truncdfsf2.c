@@ -41,7 +41,7 @@
 #include <limits.h>
 #include <stdbool.h>
 
-#include "abi.h"
+#include "int_lib.h"
 
 typedef double src_t;
 typedef uint64_t src_rep_t;

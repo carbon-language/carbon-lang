@@ -10,7 +10,6 @@
 // This file implements single-precision soft-float negation.
 //
 //===----------------------------------------------------------------------===//
-#include "abi.h"
 
 #define SINGLE_PRECISION
 #include "fp_lib.h"

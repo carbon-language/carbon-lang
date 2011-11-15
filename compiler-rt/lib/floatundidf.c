@@ -12,7 +12,6 @@
  * ===----------------------------------------------------------------------===
  */
 
-#include "abi.h"
 #include <float.h>
 
 /* Returns: convert a to a double, rounding toward even. */

@@ -16,6 +16,17 @@
 #ifndef INT_LIB_H
 #define INT_LIB_H
 
+/* ABI macro definitions */
+
+#if __ARM_EABI__
+# define ARM_EABI_FNALIAS(aeabi_name, name)         \
+  void __aeabi_##aeabi_name() __attribute__((alias("__" #name)));
+# define COMPILER_RT_ABI __attribute__((pcs("aapcs")))
+#else
+# define ARM_EABI_FNALIAS(aeabi_name, name)
+# define COMPILER_RT_ABI
+#endif
+
 /* Assumption:  signed integral is 2's complement */
 /* Assumption:  right shift of signed negative is arithmetic shift */
 

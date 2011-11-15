@@ -11,7 +11,6 @@
  *
  * ===----------------------------------------------------------------------===
  */
-#include "abi.h"
 
 #include "int_lib.h"
 /* Returns: convert a to a unsigned long long, rounding toward zero.

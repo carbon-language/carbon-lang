@@ -10,7 +10,6 @@
 // This file implements double-precision soft-float negation.
 //
 //===----------------------------------------------------------------------===//
-#include "abi.h"
 
 #define DOUBLE_PRECISION
 #include "fp_lib.h"

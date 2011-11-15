@@ -11,7 +11,6 @@
 // IEEE-754 default rounding (to nearest, ties to even).
 //
 //===----------------------------------------------------------------------===//
-#include "abi.h"
 
 #define DOUBLE_PRECISION
 #include "fp_lib.h"
