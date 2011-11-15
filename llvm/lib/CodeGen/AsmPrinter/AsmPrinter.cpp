@@ -736,6 +736,18 @@ void AsmPrinter::EmitFunctionBody() {
       OutStreamer.EmitRawText(StringRef("\tnop\n"));
   }
 
+  const Function *F = MF->getFunction();
+  for (Function::const_iterator i = F->begin(), e = F->end(); i != e; ++i) {
+    const BasicBlock *BB = i;
+    if (!BB->hasAddressTaken())
+      continue;
+    MCSymbol *Sym = GetBlockAddressSymbol(BB);
+    if (Sym->isDefined())
+      continue;
+    OutStreamer.AddComment("Address of block that was removed by CodeGen");
+    OutStreamer.EmitLabel(Sym);
+  }
+
   // Emit target-specific gunk after the function body.
   EmitFunctionBodyEnd();
 
