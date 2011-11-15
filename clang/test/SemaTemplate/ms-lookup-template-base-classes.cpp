@@ -48,3 +48,26 @@ template class B<int>;
 
 }
 
+
+
+namespace lookup_dependent_base_class_static_function {
+
+template <class T>
+class A {
+public:
+   static void static_func();// expected-note {{must qualify identifier to find this declaration in dependent base class}}
+   void func();// expected-note {{must qualify identifier to find this declaration in dependent base class}}
+};
+
+
+template <class T>
+class B : public A<T> {
+public:
+  static void z2(){
+    static_func();  // expected-warning {{use of identifier 'static_func' found via unqualified lookup into dependent bases of class templates is a Microsoft extension}}
+	  func(); // expected-warning {{use of identifier 'func' found via unqualified lookup into dependent bases of class templates is a Microsoft extension}} expected-error {{call to non-static member function without an object argument}}
+  }
+};
+template class B<int>; // expected-note {{requested here}}
+
+} 
