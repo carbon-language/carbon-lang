@@ -85,7 +85,8 @@ option</a></li>
       <li><a href="#dss_set">&lt;set&gt;</a></li>
       <li><a href="#dss_setvector">"llvm/ADT/SetVector.h"</a></li>
       <li><a href="#dss_uniquevector">"llvm/ADT/UniqueVector.h"</a></li>
-      <li><a href="#dss_otherset">Other Set-Like ContainerOptions</a></li>
+      <li><a href="#dss_immutableset">"llvm/ADT/ImmutableSet.h"</a></li>
+      <li><a href="#dss_otherset">Other Set-Like Container Options</a></li>
     </ul></li>
     <li><a href="#ds_map">Map-Like Containers (std::map, DenseMap, etc)</a>
     <ul>
@@ -97,6 +98,7 @@ option</a></li>
       <li><a href="#dss_intervalmap">"llvm/ADT/IntervalMap.h"</a></li>
       <li><a href="#dss_map">&lt;map&gt;</a></li>
       <li><a href="#dss_inteqclasses">"llvm/ADT/IntEqClasses.h"</a></li>
+      <li><a href="#dss_immutablemap">"llvm/ADT/ImmutableMap.h"</a></li>
       <li><a href="#dss_othermap">Other Map-Like Container Options</a></li>
     </ul></li>
     <li><a href="#ds_bit">BitVector-like containers</a>
@@ -1608,6 +1610,29 @@ factors, and produces a lot of malloc traffic.  It should be avoided.</p>
 
 </div>
 
+<!-- _______________________________________________________________________ -->
+<h4>
+  <a name="dss_immutableset">"llvm/ADT/ImmutableSet.h"</a>
+</h4>
+
+<div>
+
+<p>
+ImmutableSet is an immutable (functional) set implementation based on an AVL
+tree.
+Adding or removing elements is done through a Factory object and results in the
+creation of a new ImmutableSet object.
+If an ImmutableSet already exists with the given contents, then the existing one
+is returned; equality is compared with a FoldingSetNodeID.
+The time and space complexity of add or remove operations is logarithmic in the
+size of the original set.
+
+<p>
+There is no method for returning an element of the set, you can only check for
+membership.
+
+</div>
+
 
 <!-- _______________________________________________________________________ -->
 <h4>
@@ -1809,6 +1834,25 @@ returns the same representative.</p>
 integer 0..n-1 maps to an equivalence class number in the range 0..m-1, where m
 is the total number of equivalence classes. The map must be uncompressed before
 it can be edited again.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<h4>
+  <a name="dss_immutablemap">"llvm/ADT/ImmutableMap.h"</a>
+</h4>
+
+<div>
+
+<p>
+ImmutableMap is an immutable (functional) map implementation based on an AVL
+tree.
+Adding or removing elements is done through a Factory object and results in the
+creation of a new ImmutableMap object.
+If an ImmutableMap already exists with the given key set, then the existing one
+is returned; equality is compared with a FoldingSetNodeID.
+The time and space complexity of add or remove operations is logarithmic in the
+size of the original map.
 
 </div>
 
