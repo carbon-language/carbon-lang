@@ -1,7 +1,6 @@
 LEVEL = ../../make
 
-C_SOURCES := main.c
-OBJC_SOURCES := foo.m
+OBJC_SOURCES := main.m foo.m
 
 include $(LEVEL)/Makefile.rules
 

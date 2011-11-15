@@ -15,8 +15,8 @@ class ObjCTypeQueryTestCase(TestBase):
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
-        # Find the line number to break for main.c.
-        self.line = line_number('main.c',
+        # Find the line number to break for main.m.
+        self.line = line_number('main.m',
                                 "// Set breakpoint here, then do 'expr (NSArray*)array_token'.")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
@@ -34,14 +34,14 @@ class ObjCTypeQueryTestCase(TestBase):
         """The expression parser's type search should be wider than the current compilation unit."""
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
-        self.expect("breakpoint set -f main.c -l %d" % self.line,
+        self.expect("breakpoint set -f main.m -l %d" % self.line,
                     BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: file ='main.c', line = %d" %
+            startstr = "Breakpoint created: 1: file ='main.m', line = %d" %
                         self.line)
 
         self.runCmd("run", RUN_SUCCEEDED)
 
-        # Now do a NSArry type query from the 'main.c' compile uint.
+        # Now do a NSArry type query from the 'main.m' compile uint.
         self.expect("expression (NSArray*)array_token",
             substrs = ['(NSArray *) $0 = 0x'])
         # (NSArray *) $0 = 0x00007fff70118398
