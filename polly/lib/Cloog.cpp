@@ -179,6 +179,18 @@ CloogUnionDomain *Cloog::buildCloogUnionDomain() {
 CloogInput *Cloog::buildCloogInput() {
   CloogDomain *Context = cloog_domain_from_isl_set(S->getContext());
   CloogUnionDomain *Statements = buildCloogUnionDomain();
+
+  isl_set *ScopContext = S->getContext();
+
+  for (unsigned i = 0; i < isl_set_dim(ScopContext, isl_dim_param); i++) {
+    isl_id *id = isl_set_get_dim_id(ScopContext, isl_dim_param, i);
+    Statements = cloog_union_domain_set_name(Statements, CLOOG_PARAM, i,
+                                             isl_id_get_name(id));
+    isl_id_free(id);
+  }
+
+  isl_set_free(ScopContext);
+
   CloogInput *Input = cloog_input_alloc(Context, Statements);
   return Input;
 }
