@@ -46,7 +46,7 @@ EnableARM3Addr("enable-arm-3-addr-conv", cl::Hidden,
                cl::desc("Enable ARM 2-addr to 3-addr conv"));
 
 static cl::opt<bool>
-WidenVMOVS("widen-vmovs", cl::Hidden,
+WidenVMOVS("widen-vmovs", cl::Hidden, cl::init(true),
            cl::desc("Widen ARM vmovs to vmovd when possible"));
 
 /// ARM_MLxEntry - Record information about MLA / MLS instructions.
