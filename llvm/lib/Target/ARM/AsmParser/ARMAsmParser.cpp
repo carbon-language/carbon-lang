@@ -4106,6 +4106,20 @@ bool ARMAsmParser::shouldOmitCCOutOperand(StringRef Mnemonic,
         static_cast<ARMOperand*>(Operands[4])->getReg())))
     return true;
 
+  // Also check the 'mul' syntax variant that doesn't specify an explicit
+  // destination register.
+  if (isThumbTwo() && Mnemonic == "mul" && Operands.size() == 5 &&
+      static_cast<ARMOperand*>(Operands[1])->getReg() == 0 &&
+      static_cast<ARMOperand*>(Operands[3])->isReg() &&
+      static_cast<ARMOperand*>(Operands[4])->isReg() &&
+      // If the registers aren't low regs  or the cc_out operand is zero
+      // outside of an IT block, we have to use the 32-bit encoding, so
+      // remove the cc_out operand.
+      (!isARMLowRegister(static_cast<ARMOperand*>(Operands[3])->getReg()) ||
+       !isARMLowRegister(static_cast<ARMOperand*>(Operands[4])->getReg()) ||
+       !inITBlock()))
+    return true;
+
 
 
   // Register-register 'add/sub' for thumb does not have a cc_out operand

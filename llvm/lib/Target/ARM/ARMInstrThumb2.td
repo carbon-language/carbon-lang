@@ -4084,3 +4084,8 @@ def : t2InstAlias<"sxth${p} $Rd, $Rm$rot",
 // for isel.
 def : t2InstAlias<"mov${p} $Rd, $imm",
                   (t2MVNi rGPR:$Rd, t2_so_imm_not:$imm, pred:$p, zero_reg)>;
+
+
+// Wide 'mul' encoding can be specified with only two operands.
+def : t2InstAlias<"mul${p} $Rn, $Rm",
+                  (t2MUL rGPR:$Rn, rGPR:$Rn, rGPR:$Rm, pred:$p)>;
