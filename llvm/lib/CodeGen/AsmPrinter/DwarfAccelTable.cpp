@@ -60,7 +60,7 @@ void DwarfAccelTable::ComputeBucketCount(void) {
   uniques.resize(Data.size());
   for (size_t i = 0, e = Data.size(); i < e; ++i)
     uniques[i] = Data[i]->HashValue;
-  std::sort(uniques.begin(), uniques.end());
+  std::stable_sort(uniques.begin(), uniques.end());
   std::vector<uint32_t>::iterator p =
     std::unique(uniques.begin(), uniques.end());
   uint32_t num = std::distance(uniques.begin(), p);
@@ -73,6 +73,15 @@ void DwarfAccelTable::ComputeBucketCount(void) {
   Header.hashes_count = num;
 }
 
+namespace {
+  // DIESorter - comparison predicate that sorts DIEs by their offset.
+  struct DIESorter {
+    bool operator()(DIE *A, DIE *B) const {
+      return A->getOffset() < B->getOffset();
+    }
+  };
+}
+
 void DwarfAccelTable::FinalizeTable(AsmPrinter *Asm, const char *Prefix) {
   // Create the individual hash data outputs.
   for (StringMap<DIEArray>::iterator
@@ -80,7 +89,7 @@ void DwarfAccelTable::FinalizeTable(AsmPrinter *Asm, const char *Prefix) {
     struct HashData *Entry = new HashData((*EI).getKeyData());
 
     // Unique the entries.
-    std::sort((*EI).second.begin(), (*EI).second.end());
+    std::stable_sort((*EI).second.begin(), (*EI).second.end(), DIESorter());
     (*EI).second.erase(std::unique((*EI).second.begin(), (*EI).second.end()),
                        (*EI).second.end());
 
