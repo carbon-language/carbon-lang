@@ -152,6 +152,9 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
   bool ATUsed;
   unsigned GP = STI.isABI_N64() ? Mips::GP_64 : Mips::GP;
   unsigned T9 = STI.isABI_N64() ? Mips::T9_64 : Mips::T9;
+  unsigned SP = STI.isABI_N64() ? Mips::SP_64 : Mips::SP;
+  unsigned FP = STI.isABI_N64() ? Mips::FP_64 : Mips::FP;
+  unsigned ZERO = STI.isABI_N64() ? Mips::ZERO_64 : Mips::ZERO;
   unsigned ADDu = STI.isABI_N64() ? Mips::DADDu : Mips::ADDu;
   unsigned ADDiu = STI.isABI_N64() ? Mips::DADDiu : Mips::ADDiu;
   unsigned LUi = STI.isABI_N64() ? Mips::LUi64 : Mips::LUi;
@@ -198,10 +201,8 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineLocation DstML, SrcML;
 
   // Adjust stack : addi sp, sp, (-imm)
-  ATUsed = expandRegLargeImmPair(Mips::SP, -StackSize, NewReg, NewImm, MBB,
-                                 MBBI);
-  BuildMI(MBB, MBBI, dl, TII.get(Mips::ADDiu), Mips::SP)
-    .addReg(NewReg).addImm(NewImm);
+  ATUsed = expandRegLargeImmPair(SP, -StackSize, NewReg, NewImm, MBB, MBBI);
+  BuildMI(MBB, MBBI, dl, TII.get(ADDiu), SP).addReg(NewReg).addImm(NewImm);
 
   // FIXME: change this when mips goes MC".
   if (ATUsed)
@@ -261,14 +262,13 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
   // if framepointer enabled, set it to point to the stack pointer.
   if (hasFP(MF)) {
     // Insert instruction "move $fp, $sp" at this location.    
-    BuildMI(MBB, MBBI, dl, TII.get(Mips::ADDu), Mips::FP)
-      .addReg(Mips::SP).addReg(Mips::ZERO);
+    BuildMI(MBB, MBBI, dl, TII.get(ADDu), FP).addReg(SP).addReg(ZERO);
 
     // emit ".cfi_def_cfa_register $fp" 
     MCSymbol *SetFPLabel = MMI.getContext().CreateTempSymbol();
     BuildMI(MBB, MBBI, dl,
             TII.get(TargetOpcode::PROLOG_LABEL)).addSym(SetFPLabel);
-    DstML = MachineLocation(Mips::FP);
+    DstML = MachineLocation(FP);
     SrcML = MachineLocation(MachineLocation::VirtualFP);
     Moves.push_back(MachineMove(SetFPLabel, DstML, SrcML));
   }
@@ -292,6 +292,11 @@ void MipsFrameLowering::emitEpilogue(MachineFunction &MF,
   const MipsInstrInfo &TII =
     *static_cast<const MipsInstrInfo*>(MF.getTarget().getInstrInfo());
   DebugLoc dl = MBBI->getDebugLoc();
+  unsigned SP = STI.isABI_N64() ? Mips::SP_64 : Mips::SP;
+  unsigned FP = STI.isABI_N64() ? Mips::FP_64 : Mips::FP;
+  unsigned ZERO = STI.isABI_N64() ? Mips::ZERO_64 : Mips::ZERO;
+  unsigned ADDu = STI.isABI_N64() ? Mips::DADDu : Mips::ADDu;
+  unsigned ADDiu = STI.isABI_N64() ? Mips::DADDiu : Mips::ADDiu;
 
   // Get the number of bytes from FrameInfo
   unsigned StackSize = MFI->getStackSize();
@@ -309,16 +314,13 @@ void MipsFrameLowering::emitEpilogue(MachineFunction &MF,
       --I;
 
     // Insert instruction "move $sp, $fp" at this location.
-    BuildMI(MBB, I, dl, TII.get(Mips::ADDu), Mips::SP)
-      .addReg(Mips::FP).addReg(Mips::ZERO);
+    BuildMI(MBB, I, dl, TII.get(ADDu), SP).addReg(FP).addReg(ZERO);
   }
 
   // adjust stack  : insert addi sp, sp, (imm)
   if (StackSize) {
-    ATUsed = expandRegLargeImmPair(Mips::SP, StackSize, NewReg, NewImm, MBB,
-                                   MBBI);
-    BuildMI(MBB, MBBI, dl, TII.get(Mips::ADDiu), Mips::SP)
-      .addReg(NewReg).addImm(NewImm);
+    ATUsed = expandRegLargeImmPair(SP, StackSize, NewReg, NewImm, MBB, MBBI);
+    BuildMI(MBB, MBBI, dl, TII.get(ADDiu), SP).addReg(NewReg).addImm(NewImm);
 
     // FIXME: change this when mips goes MC".
     if (ATUsed)
@@ -330,13 +332,15 @@ void MipsFrameLowering::
 processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                      RegScavenger *RS) const {
   MachineRegisterInfo& MRI = MF.getRegInfo();
+  unsigned RA = STI.isABI_N64() ? Mips::RA_64 : Mips::RA;
+  unsigned FP = STI.isABI_N64() ? Mips::FP_64 : Mips::FP;
 
   // FIXME: remove this code if register allocator can correctly mark
   //        $fp and $ra used or unused.
 
   // Mark $fp and $ra as used or unused.
   if (hasFP(MF))
-    MRI.setPhysRegUsed(Mips::FP);
+    MRI.setPhysRegUsed(FP);
 
   // The register allocator might determine $ra is used after seeing 
   // instruction "jr $ra", but we do not want PrologEpilogInserter to insert
@@ -344,7 +348,7 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   // To correct this, $ra is explicitly marked unused if there is no
   // function call.
   if (MF.getFrameInfo()->hasCalls())
-    MRI.setPhysRegUsed(Mips::RA);
+    MRI.setPhysRegUsed(RA);
   else
-    MRI.setPhysRegUnused(Mips::RA);
+    MRI.setPhysRegUnused(RA);
 }

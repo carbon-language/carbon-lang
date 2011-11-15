@@ -285,7 +285,7 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
 
   if (MipsFI->isOutArgFI(FrameIndex) || MipsFI->isDynAllocFI(FrameIndex) ||
       (FrameIndex >= MinCSFI && FrameIndex <= MaxCSFI))
-    FrameReg = Mips::SP;
+    FrameReg = Subtarget.isABI_N64() ? Mips::SP_64 : Mips::SP;
   else
     FrameReg = getFrameRegister(MF); 
   
@@ -334,8 +334,10 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
 unsigned MipsRegisterInfo::
 getFrameRegister(const MachineFunction &MF) const {
   const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
+  bool IsN64 = Subtarget.isABI_N64();
 
-  return TFI->hasFP(MF) ? Mips::FP : Mips::SP;
+  return TFI->hasFP(MF) ? (IsN64 ? Mips::FP_64 : Mips::FP) :
+                          (IsN64 ? Mips::SP_64 : Mips::SP);
 }
 
 unsigned MipsRegisterInfo::
