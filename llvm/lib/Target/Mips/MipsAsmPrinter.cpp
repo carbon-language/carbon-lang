@@ -18,7 +18,6 @@
 #include "MipsInstrInfo.h"
 #include "MipsMachineFunction.h"
 #include "MipsMCInstLower.h"
-#include "MipsMCSymbolRefExpr.h"
 #include "InstPrinter/MipsInstPrinter.h"
 #include "MCTargetDesc/MipsBaseInfo.h"
 #include "llvm/ADT/SmallString.h"
