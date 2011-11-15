@@ -22,7 +22,6 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
-#include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLowering.h"

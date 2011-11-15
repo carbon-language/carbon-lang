@@ -21,7 +21,6 @@
 
 #include "LegalizeTypes.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/CodeGen/PseudoSourceValue.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
