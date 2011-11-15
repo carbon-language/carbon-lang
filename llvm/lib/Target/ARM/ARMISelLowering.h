@@ -146,6 +146,9 @@ namespace llvm {
       VMOVIMM,
       VMVNIMM,
 
+      // Vector move f32 immediate:
+      VMOVFPIMM,
+
       // Vector duplicate:
       VDUP,
       VDUPLANE,

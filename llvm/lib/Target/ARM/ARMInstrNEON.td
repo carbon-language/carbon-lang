@@ -39,6 +39,10 @@ def nImmVMOVI32 : Operand<i32> {
   let PrintMethod = "printNEONModImmOperand";
   let ParserMatchClass = nImmVMOVI32AsmOperand;
 }
+def nImmVMOVF32 : Operand<i32> {
+  let PrintMethod = "printFPImmOperand";
+  let ParserMatchClass = FPImmOperand;
+}
 def nImmSplatI64AsmOperand : AsmOperandClass { let Name = "NEONi64splat"; }
 def nImmSplatI64 : Operand<i32> {
   let PrintMethod = "printNEONModImmOperand";
@@ -173,6 +177,7 @@ def NEONvgetlanes : SDNode<"ARMISD::VGETLANEs", SDTARMVGETLN>;
 def SDTARMVMOVIMM : SDTypeProfile<1, 1, [SDTCisVec<0>, SDTCisVT<1, i32>]>;
 def NEONvmovImm   : SDNode<"ARMISD::VMOVIMM", SDTARMVMOVIMM>;
 def NEONvmvnImm   : SDNode<"ARMISD::VMVNIMM", SDTARMVMOVIMM>;
+def NEONvmovFPImm : SDNode<"ARMISD::VMOVFPIMM", SDTARMVMOVIMM>;
 
 def SDTARMVORRIMM : SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisSameAs<0, 1>,
                                            SDTCisVT<2, i32>]>;
@@ -4513,6 +4518,15 @@ def VMOVv2i64 : N1ModImm<1, 0b000, 0b1110, 0, 1, 1, 1, (outs QPR:$Vd),
                          (ins nImmSplatI64:$SIMM), IIC_VMOVImm,
                          "vmov", "i64", "$Vd, $SIMM", "",
                          [(set QPR:$Vd, (v2i64 (NEONvmovImm timm:$SIMM)))]>;
+
+def VMOVv2f32 : N1ModImm<1, 0b000, 0b1111, 0, 0, 0, 1, (outs DPR:$Vd),
+                         (ins nImmVMOVF32:$SIMM), IIC_VMOVImm,
+                         "vmov", "f32", "$Vd, $SIMM", "",
+                         [(set DPR:$Vd, (v2f32 (NEONvmovFPImm timm:$SIMM)))]>;
+def VMOVv4f32 : N1ModImm<1, 0b000, 0b1111, 0, 1, 0, 1, (outs QPR:$Vd),
+                         (ins nImmVMOVF32:$SIMM), IIC_VMOVImm,
+                         "vmov", "f32", "$Vd, $SIMM", "",
+                         [(set QPR:$Vd, (v4f32 (NEONvmovFPImm timm:$SIMM)))]>;
 } // isReMaterializable
 
 //   VMOV     : Vector Get Lane (move scalar to ARM core register)

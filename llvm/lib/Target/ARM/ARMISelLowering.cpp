@@ -912,6 +912,7 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::VGETLANEs:     return "ARMISD::VGETLANEs";
   case ARMISD::VMOVIMM:       return "ARMISD::VMOVIMM";
   case ARMISD::VMVNIMM:       return "ARMISD::VMVNIMM";
+  case ARMISD::VMOVFPIMM:     return "ARMISD::VMOVFPIMM";
   case ARMISD::VDUP:          return "ARMISD::VDUP";
   case ARMISD::VDUPLANE:      return "ARMISD::VDUPLANE";
   case ARMISD::VEXT:          return "ARMISD::VEXT";
@@ -3985,6 +3986,16 @@ SDValue ARMTargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
       if (Val.getNode()) {
         SDValue Vmov = DAG.getNode(ARMISD::VMVNIMM, dl, VmovVT, Val);
         return DAG.getNode(ISD::BITCAST, dl, VT, Vmov);
+      }
+
+      // Use vmov.f32 to materialize other v2f32 and v4f32 splats.
+      if (VT == MVT::v2f32 || VT == MVT::v4f32) {
+        ConstantFPSDNode *C = cast<ConstantFPSDNode>(Op.getOperand(0));
+        int ImmVal = ARM_AM::getFP32Imm(C->getValueAPF());
+        if (ImmVal != -1) {
+          SDValue Val = DAG.getTargetConstant(ImmVal, MVT::i32);
+          return DAG.getNode(ARMISD::VMOVFPIMM, dl, VT, Val);
+        }
       }
     }
   }

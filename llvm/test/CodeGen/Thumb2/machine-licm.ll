@@ -51,12 +51,11 @@ return:                                           ; preds = %bb, %entry
 define void @t2(i8* %ptr1, i8* %ptr2) nounwind {
 entry:
 ; CHECK: t2:
-; CHECK: mov.w [[R3:r[0-9]+]], #1065353216
-; CHECK: vdup.32 q{{.*}}, [[R3]]
+; CHECK: vmov.f32 q{{.*}}, #1.000000e+00
   br i1 undef, label %bb1, label %bb2
 
 bb1:
-; CHECK-NEXT: %bb1
+; CHECK: %bb1
   %indvar = phi i32 [ %indvar.next, %bb1 ], [ 0, %entry ]
   %tmp1 = shl i32 %indvar, 2
   %gep1 = getelementptr i8* %ptr1, i32 %tmp1

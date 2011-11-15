@@ -353,3 +353,21 @@ define void @noTruncStore(<4 x i32>* %a, <4 x i16>* %b) nounwind {
   store <4 x i16> %tmp2, <4 x i16>* %b, align 8
   ret void
 }
+
+; Use vmov.f32 to materialize f32 immediate splats
+; rdar://10437054
+define void @v_mov_v2f32(<2 x float>* nocapture %p) nounwind {
+entry:
+;CHECK: v_mov_v2f32:
+;CHECK: vmov.f32 d{{.*}}, #-1.600000e+01
+  store <2 x float> <float -1.600000e+01, float -1.600000e+01>, <2 x float>* %p, align 4
+  ret void
+}
+
+define void @v_mov_v4f32(<4 x float>* nocapture %p) nounwind {
+entry:
+;CHECK: v_mov_v4f32:
+;CHECK: vmov.f32 q{{.*}}, #3.100000e+01
+  store <4 x float> <float 3.100000e+01, float 3.100000e+01, float 3.100000e+01, float 3.100000e+01>, <4 x float>* %p, align 4
+  ret void
+}
