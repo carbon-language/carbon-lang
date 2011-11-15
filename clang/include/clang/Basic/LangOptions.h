@@ -54,6 +54,9 @@ public:
   /// If none is specified, abort (GCC-compatible behaviour).
   std::string OverflowHandler;
 
+  /// \brief The name of the current module.
+  std::string CurrentModule;
+  
   LangOptions();
 
   // Define accessors/mutators for language options of enumeration type.

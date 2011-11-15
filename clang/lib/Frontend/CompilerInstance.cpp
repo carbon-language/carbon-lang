@@ -278,9 +278,7 @@ void CompilerInstance::createPreprocessor() {
     llvm::sys::path::append(SpecificModuleCache,
                             getInvocation().getModuleHash());
   PP->getHeaderSearchInfo().configureModules(SpecificModuleCache,
-    getPreprocessorOpts().ModuleBuildPath.empty()
-      ? std::string()
-      : getPreprocessorOpts().ModuleBuildPath.back());
+                                             getLangOpts().CurrentModule);
 
   // Handle generating dependencies, if requested.
   const DependencyOutputOptions &DepOpts = getDependencyOutputOpts();
@@ -991,6 +989,9 @@ static void compileModule(CompilerInstance &ImportingInstance,
   // reset them to their default values.
   Invocation->getLangOpts().resetNonModularOptions();
   Invocation->getPreprocessorOpts().resetNonModularOptions();
+
+  // Note the name of the module we're building.
+  Invocation->getLangOpts().CurrentModule = ModuleName;
 
   // Note that this module is part of the module build path, so that we
   // can detect cycles in the module graph.

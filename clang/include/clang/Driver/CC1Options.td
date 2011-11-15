@@ -626,6 +626,9 @@ def nobuiltininc : Flag<"-nobuiltininc">,
 def fmodule_cache_path : Separate<"-fmodule-cache-path">, 
   MetaVarName<"<directory>">,
   HelpText<"Specify the module cache path">;           
+def fmodule_name : Joined<"-fmodule-name=">, 
+  MetaVarName<"<name>">,
+  HelpText<"Specify the name of the module to build">;           
 def fdisable_module_hash : Flag<"-fdisable-module-hash">,
   HelpText<"Disable the module hash">;
 def fauto_module_import : Flag<"-fauto-module-import">,

@@ -2789,6 +2789,10 @@ bool ASTReader::ParseLanguageOptions(
   LangOpts.set##Name(static_cast<LangOptions::Type>(Record[Idx++]));
 #include "clang/Basic/LangOptions.def"
     
+    unsigned Length = Record[Idx++];
+    LangOpts.CurrentModule.assign(Record.begin() + Idx, 
+                                  Record.begin() + Idx + Length);
+    Idx += Length;
     return Listener->ReadLanguageOptions(LangOpts);
   }
 

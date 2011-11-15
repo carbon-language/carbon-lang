@@ -26,5 +26,7 @@ void LangOptions::resetNonModularOptions() {
 #define BENIGN_ENUM_LANGOPT(Name, Type, Bits, Default, Description) \
   Name = Default;
 #include "clang/Basic/LangOptions.def"
+  
+  CurrentModule.clear();
 }
 
