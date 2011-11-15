@@ -108,6 +108,10 @@ public:
   }
 
   bool VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
+    const ObjCInterfaceDecl *Class = D->getClassInterface();
+    if (Class->isImplicitInterfaceDecl())
+      IndexCtx.handleObjCInterface(Class);
+
     IndexCtx.handleObjCImplementation(D);
 
     IndexCtx.indexTUDeclsInObjCContainer();

@@ -206,9 +206,8 @@ void IndexingContext::handleObjCInterface(const ObjCInterfaceDecl *D) {
 
 void IndexingContext::handleObjCImplementation(
                                               const ObjCImplementationDecl *D) {
-  const ObjCInterfaceDecl *Class = D->getClassInterface();
   ObjCContainerDeclInfo ContDInfo(/*isForwardRef=*/false,
-                      /*isRedeclaration=*/!Class->isImplicitInterfaceDecl(),
+                      /*isRedeclaration=*/true,
                       /*isImplementation=*/true);
   handleObjCContainer(D, D->getLocation(), getCursor(D), ContDInfo);
 }
