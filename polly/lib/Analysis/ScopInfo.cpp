@@ -870,7 +870,16 @@ __isl_give isl_id *Scop::getIdForParam(const SCEV *Parameter) const {
   if (IdIter == ParameterIds.end())
     return NULL;
 
-  std::string ParameterName = "p" + convertInt(IdIter->second);
+  std::string ParameterName;
+
+  if (const SCEVUnknown *ValueParameter = dyn_cast<SCEVUnknown>(Parameter)) {
+    Value *Val = ValueParameter->getValue();
+    ParameterName = Val->getNameStr();
+  }
+
+  if (ParameterName == "" || ParameterName.substr(0, 2) == "p_")
+    ParameterName = "p_" + convertInt(IdIter->second);
+
   return isl_id_alloc(getIslCtx(), ParameterName.c_str(), (void *) Parameter);
 }
 

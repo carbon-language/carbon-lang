@@ -29,18 +29,18 @@ bb2:                                              ; preds = %bb2, %.lr.ph
   ret void
 }
 
-; CHECK: if (M >= 1) {
-; CHECK:     for (c1=0;c1<=M-1;c1+=32) {
-; CHECK:           for (c2=c1;c2<=min(M-1,c1+31);c2++) {
+; CHECK: if (p_0 >= 1) {
+; CHECK:     for (c1=0;c1<=p_0-1;c1+=32) {
+; CHECK:           for (c2=c1;c2<=min(c1+31,p_0-1);c2++) {
 ; CHECK:                   Stmt_bb2(c2);
 ; CHECK:           }
 ; CHECK:     }
 ; CHECK: }
 
-; VECTOR: if (M >= 1) {
-; VECTOR:   for (c1=0;c1<=M-1;c1+=32) {
-; VECTOR:     for (c2=-4*floord(-c1,4);c2<=min(M-1,c1+31);c2+=4) {
-; VECTOR:       for (c3=c2;c3<=min(M-1,c2+3);c3++) {
+; VECTOR: if (p_0 >= 1) {
+; VECTOR:   for (c1=0;c1<=p_0-1;c1+=32) {
+; VECTOR:     for (c2=-4*floord(-c1,4);c2<=min(c1+31,p_0-1);c2+=4) {
+; VECTOR:       for (c3=c2;c3<=min(c2+3,p_0-1);c3++) {
 ; VECTOR:         Stmt_bb2(c3);
 ; VECTOR:       }
 ; VECTOR:     }

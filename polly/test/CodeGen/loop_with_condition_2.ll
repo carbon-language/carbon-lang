@@ -132,11 +132,11 @@ return:                                           ; preds = %for.end35, %if.then
 
 declare void @llvm.memset.p0i8.i64(i8* nocapture, i8, i64, i32, i1) nounwind
 
-; CHECK: for (c2=0;c2<=min(1023,M+1024);c2++) {
+; CHECK: for (c2=0;c2<=min(1023,m+1024);c2++) {
 ; CHECK:     Stmt_if_then(c2);
 ; CHECK:       Stmt_if_end(c2);
 ; CHECK: }
-; CHECK: for (c2=max(0,M+1025);c2<=1023;c2++) {
+; CHECK: for (c2=max(0,m+1025);c2<=1023;c2++) {
 ; CHECK:     Stmt_if_else(c2);
 ; CHECK:       Stmt_if_end(c2);
 ; CHECK: }

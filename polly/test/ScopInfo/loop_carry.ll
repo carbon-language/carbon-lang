@@ -47,46 +47,46 @@ bb2:                                              ; preds = %bb, %entry
 }
 
 ; CHECK: Context:
-; CHECK: [p0] -> { : }
+; CHECK: [n] -> { : }
 ; CHECK:     Statements {
 ; CHECK:     	Stmt_bb_nph
 ; CHECK:             Domain :=
-; CHECK:                 [p0] -> { Stmt_bb_nph[] : p0 >= 2 };
+; CHECK:                 [n] -> { Stmt_bb_nph[] : n >= 2 };
 ; CHECK:             Scattering :=
-; CHECK:                 [p0] -> { Stmt_bb_nph[] -> scattering[0, 0, 0] };
+; CHECK:                 [n] -> { Stmt_bb_nph[] -> scattering[0, 0, 0] };
 ; CHECK:             ReadAccess :=
-; CHECK:                 [p0] -> { Stmt_bb_nph[] -> MemRef_a[0] };
+; CHECK:                 [n] -> { Stmt_bb_nph[] -> MemRef_a[0] };
 ; CHECK:             WriteAccess :=
-; CHECK:                 [p0] -> { Stmt_bb_nph[] -> MemRef_k_05_reg2mem[0] };
+; CHECK:                 [n] -> { Stmt_bb_nph[] -> MemRef_k_05_reg2mem[0] };
 ; CHECK:             WriteAccess :=
-; CHECK:                 [p0] -> { Stmt_bb_nph[] -> MemRef__reg2mem[0] };
+; CHECK:                 [n] -> { Stmt_bb_nph[] -> MemRef__reg2mem[0] };
 ; CHECK:     	Stmt_bb
 ; CHECK:             Domain :=
-; CHECK:                 [p0] -> { Stmt_bb[i0] : i0 >= 0 and i0 <= -2 + p0 and p0 >= 2 };
+; CHECK:                 [n] -> { Stmt_bb[i0] : i0 >= 0 and i0 <= -2 + n and n >= 2 };
 ; CHECK:             Scattering :=
-; CHECK:                 [p0] -> { Stmt_bb[i0] -> scattering[1, i0, 0] };
+; CHECK:                 [n] -> { Stmt_bb[i0] -> scattering[1, i0, 0] };
 ; CHECK:             ReadAccess :=
-; CHECK:                 [p0] -> { Stmt_bb[i0] -> MemRef__reg2mem[0] };
+; CHECK:                 [n] -> { Stmt_bb[i0] -> MemRef__reg2mem[0] };
 ; CHECK:             ReadAccess :=
-; CHECK:                 [p0] -> { Stmt_bb[i0] -> MemRef_k_05_reg2mem[0] };
+; CHECK:                 [n] -> { Stmt_bb[i0] -> MemRef_k_05_reg2mem[0] };
 ; CHECK:             WriteAccess :=
-; CHECK:                 [p0] -> { Stmt_bb[i0] -> MemRef_a[1 + i0] };
+; CHECK:                 [n] -> { Stmt_bb[i0] -> MemRef_a[1 + i0] };
 ; CHECK:             ReadAccess :=
-; CHECK:                 [p0] -> { Stmt_bb[i0] -> MemRef_a[2 + 2i0] };
+; CHECK:                 [n] -> { Stmt_bb[i0] -> MemRef_a[2 + 2i0] };
 ; CHECK:             ReadAccess :=
-; CHECK:                 [p0] -> { Stmt_bb[i0] -> MemRef_a[4 + i0] };
+; CHECK:                 [n] -> { Stmt_bb[i0] -> MemRef_a[4 + i0] };
 ; CHECK:             WriteAccess :=
-; CHECK:                 [p0] -> { Stmt_bb[i0] -> MemRef_k_05_reg2mem[0] };
+; CHECK:                 [n] -> { Stmt_bb[i0] -> MemRef_k_05_reg2mem[0] };
 ; CHECK:             WriteAccess :=
-; CHECK:                 [p0] -> { Stmt_bb[i0] -> MemRef__reg2mem[0] };
+; CHECK:                 [n] -> { Stmt_bb[i0] -> MemRef__reg2mem[0] };
 ; CHECK:     	FinalRead
 ; CHECK:             Domain :=
-; CHECK:                 [p0] -> { FinalRead[0] };
+; CHECK:                 [n] -> { FinalRead[0] };
 ; CHECK:             Scattering :=
-; CHECK:                 [p0] -> { FinalRead[i0] -> scattering[200000000, o1, o2] };
+; CHECK:                 [n] -> { FinalRead[i0] -> scattering[200000000, o1, o2] };
 ; CHECK:             ReadAccess :=
-; CHECK:                 [p0] -> { FinalRead[i0] -> MemRef_a[o0] };
+; CHECK:                 [n] -> { FinalRead[i0] -> MemRef_a[o0] };
 ; CHECK:             ReadAccess :=
-; CHECK:                 [p0] -> { FinalRead[i0] -> MemRef_k_05_reg2mem[o0] };
+; CHECK:                 [n] -> { FinalRead[i0] -> MemRef_k_05_reg2mem[o0] };
 ; CHECK:             ReadAccess :=
 ; CHECK:                 -> { FinalRead[i0] -> MemRef__reg2mem[o0] };

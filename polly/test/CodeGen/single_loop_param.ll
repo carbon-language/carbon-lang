@@ -70,8 +70,8 @@ bb9:                                              ; preds = %bb8, %bb5
 
 declare void @llvm.memset.p0i8.i64(i8* nocapture, i8, i64, i32, i1) nounwind
 
-; CHECK: if (M >= 1) {
-; CHECK:     for (c2=0;c2<=M-1;c2++) {
+; CHECK: if (n >= 1) {
+; CHECK:     for (c2=0;c2<=n-1;c2++) {
 ; CHECK:           Stmt_bb2(c2);
 ; CHECK:             }
 ; CHECK: }
