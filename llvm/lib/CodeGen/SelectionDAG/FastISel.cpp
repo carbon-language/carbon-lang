@@ -96,6 +96,11 @@ bool FastISel::hasTrivialKill(const Value *V) const {
         !hasTrivialKill(Cast->getOperand(0)))
       return false;
 
+  // GEPs with all zero indices are trivially coalesced by fast-isel.
+  if (const GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(I))
+    if (GEP->hasAllZeroIndices() && !hasTrivialKill(GEP->getOperand(0)))
+      return false;
+
   // Only instructions with a single use in the same basic block are considered
   // to have trivial kills.
   return I->hasOneUse() &&
