@@ -815,7 +815,6 @@ void RAFast::AllocateBasicBlock() {
           if (!MO.isReg()) continue;
           unsigned Reg = MO.getReg();
           if (!TargetRegisterInfo::isVirtualRegister(Reg)) continue;
-          LiveDbgValueMap[Reg].push_back(MI);
           LiveRegMap::iterator LRI = LiveVirtRegs.find(Reg);
           if (LRI != LiveVirtRegs.end())
             setPhysReg(MI, i, LRI->second.PhysReg);
@@ -849,6 +848,7 @@ void RAFast::AllocateBasicBlock() {
               }
             }
           }
+          LiveDbgValueMap[Reg].push_back(MI);
         }
       }
       // Next instruction.
