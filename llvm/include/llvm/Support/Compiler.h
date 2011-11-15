@@ -61,7 +61,7 @@
 #define LLVM_ATTRIBUTE_READONLY
 #endif
 
-#if (__GNUC__ >= 4)
+#if (__GNUC__ >= 4) && !defined(__MINGW32__) && !defined(__CYGWIN__)
 #define LLVM_ATTRIBUTE_WEAK __attribute__((__weak__))
 #else
 #define LLVM_ATTRIBUTE_WEAK
