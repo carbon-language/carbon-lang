@@ -5023,3 +5023,7 @@ def LSLi : ARMAsmPseudo<"lsl${s}${p} $Rd, $Rm, $imm",
 def RORi : ARMAsmPseudo<"ror${s}${p} $Rd, $Rm, $imm",
                         (ins GPR:$Rd, GPR:$Rm, imm0_31:$imm, pred:$p,
                              cc_out:$s)>;
+
+// 'mul' instruction can be specified with only two operands.
+def : ARMInstAlias<"mul${s}${p} $Rn, $Rm",
+                   (MUL rGPR:$Rn, rGPR:$Rn, rGPR:$Rm, pred:$p, cc_out:$s)>;
