@@ -924,7 +924,7 @@ TwoAddressInstructionPass::RescheduleMIBelowKill(MachineBasicBlock *MBB,
   if (isTwoAddrUse(*KillMI, Reg, DstReg))
     return false;
 
-  bool SeenStore;
+  bool SeenStore = true;
   if (!MI->isSafeToMove(TII, AA, SeenStore))
     return false;
 
@@ -1071,7 +1071,7 @@ TwoAddressInstructionPass::RescheduleKillAboveMI(MachineBasicBlock *MBB,
   if (isTwoAddrUse(*KillMI, Reg, DstReg))
     return false;
 
-  bool SeenStore;
+  bool SeenStore = true;
   if (!KillMI->isSafeToMove(TII, AA, SeenStore))
     return false;
 
