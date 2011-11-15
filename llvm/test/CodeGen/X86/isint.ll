@@ -4,7 +4,7 @@ define i32 @isint_return(double %d) nounwind {
 ; CHECK-NOT: xor
 ; CHECK: cvt
   %i = fptosi double %d to i32
-; CHECK: cvt
+; CHECK-NEXT: cvt
   %e = sitofp i32 %i to double
 ; CHECK: cmpeqsd
   %c = fcmp oeq double %d, %e
@@ -19,7 +19,7 @@ declare void @foo()
 define void @isint_branch(double %d) nounwind {
 ; CHECK: cvt
   %i = fptosi double %d to i32
-; CHECK: cvt
+; CHECK-NEXT: cvt
   %e = sitofp i32 %i to double
 ; CHECK: ucomisd
   %c = fcmp oeq double %d, %e
