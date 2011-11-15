@@ -970,6 +970,27 @@ Builder.CreateResume(UnwindData);
   
 <!--=========================================================================-->
 <h3>
+<a name="MIPS">MIPS Target Improvements</a>
+</h3>
+
+<div>
+
+<p>New features and major changes in the MIPS target include:</p>
+
+<ul>
+  <li>Most MIPS32r1 and r2 instructions are now supported.</li>
+  <li>LE/BE MIPS32r1/r2 has been tested extensively.</li>
+  <li>O32 ABI has been fully tested.</li>
+  <li>MIPS backend has migrated to using the MC infrastructure for assembly printing. Initial support for direct object code emission has been implemented too.</li>
+  <li>Delay slot filler has been updated. Now it tries to fill delay slots with useful instructions instead of always filling them with NOPs.</li> 
+  <li>Support for old-style JIT is complete.</li>
+  <li>Support for old architectures (MIPS1 and MIPS2) has been removed.</li>
+  <li>Initial support for MIPS64 has been added.</li>
+</ul>
+</div>
+  
+<!--=========================================================================-->
+<h3>
 <a name="OtherTS">Other Target Specific Improvements</a>
 </h3>
 
