@@ -33,6 +33,7 @@
 
 #include <limits.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <math.h>
 
 /* If compiling for kernel use, call panic() instead of abort(). */

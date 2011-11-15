@@ -8,7 +8,8 @@
  * ===----------------------------------------------------------------------===
  */
 
-#include <stdint.h>
+#include "int_lib.h"
+
 #include <sys/mman.h>
 
 /* #include "config.h"

@@ -38,9 +38,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <stdint.h>
-#include <limits.h>
-
 #include "int_lib.h"
 
 typedef float src_t;

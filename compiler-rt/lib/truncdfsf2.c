@@ -37,10 +37,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <stdint.h>
-#include <limits.h>
-#include <stdbool.h>
-
 #include "int_lib.h"
 
 typedef double src_t;
