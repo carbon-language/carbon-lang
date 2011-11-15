@@ -712,6 +712,34 @@ be used to verify some algorithms.
 
 <p>LLVM 3.0 includes several major new capabilities:</p>
   
+<!-- Near dead:
+   Analysis/RegionInfo.h + Dom Frontiers
+   SparseBitVector: used in LiveVar.
+ 
+ -->
+  
+<!--
+ Type system rewrite.
+ Better performance for Neon code in clang due to SRoA improvements.
+ New regalloc on by default. Lin scan going away in 3.1
+ PGO / builtin_expect improvements (summary needed)
+ Big EH rewrite.
+ AVX support, assembler, compiler and disassembler.
+ IndVar improvements: andy
+ PTX backend improvements: Justin
+ llvm-rtdyld & MC JIT: JimG
+ InstAliases now automatically used in the asmprinter where they are shorter.
+ Integrated assembler on by default for arm/thumb?
+ PostOrder Dominator frontiers were removed.
+ Line Profiling / gcov support
+ EH and debug information produced with CFI directives, yielding smaller executables: http://blog.mozilla.com/respindola/2011/05/12/cfi-directives/
+ X86-64 generates smaller and faster code at -O0 (fast isel improvements)
+ Better code generation for Cortex-A9
+ Many APIs take ArrayRef's now.
+ Pass manager extension API.
+ 
+ -->
+  
 <ul>
 
 <!--
