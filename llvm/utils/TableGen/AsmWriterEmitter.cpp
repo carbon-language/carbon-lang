@@ -900,6 +900,13 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
           IAP->addCond(Cond);
           break;
         case CodeGenInstAlias::ResultOperand::K_Reg:
+          // If this is zero_reg, something's playing tricks we're not
+          // equipped to handle.
+          if (!CGA->ResultOperands[i].getRegister()) {
+            CantHandle = true;
+            break;
+          }
+
           Cond = std::string("MI->getOperand(") +
             llvm::utostr(i) + ").getReg() == " + Target.getName() +
             "::" + CGA->ResultOperands[i].getRegister()->getName();

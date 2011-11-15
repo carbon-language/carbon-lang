@@ -468,9 +468,13 @@ bool CodeGenInstAlias::tryAliasOpMatch(DagInit *Result, unsigned AliasOpNo,
   if (ADI && ADI->getDef()->getName() == "zero_reg") {
 
     // Check if this is an optional def.
-    if (!InstOpRec->isSubClassOf("OptionalDefOperand"))
-      throw TGError(Loc, "reg0 used for result that is not an "
-                    "OptionalDefOperand!");
+    // Tied operands where the source is a sub-operand of a complex operand
+    // need to represent both operands in the alias destination instruction.
+    // Allow zero_reg for the tied portion. This can and should go away once
+    // the MC representation of things doesn't use tied operands at all.
+    //if (!InstOpRec->isSubClassOf("OptionalDefOperand"))
+    //  throw TGError(Loc, "reg0 used for result that is not an "
+    //                "OptionalDefOperand!");
 
     ResOp = ResultOperand(static_cast<Record*>(0));
     return true;
@@ -537,8 +541,11 @@ CodeGenInstAlias::CodeGenInstAlias(Record *R, CodeGenTarget &T) : TheDef(R) {
   unsigned AliasOpNo = 0;
   for (unsigned i = 0, e = ResultInst->Operands.size(); i != e; ++i) {
 
-    // Tied registers don't have an entry in the result dag.
-    if (ResultInst->Operands[i].getTiedRegister() != -1)
+    // Tied registers don't have an entry in the result dag unless they're part
+    // of a complex operand, in which case we include them anyways, as we
+    // don't have any other way to specify the whole operand.
+    if (ResultInst->Operands[i].MINumOperands == 1 &&
+        ResultInst->Operands[i].getTiedRegister() != -1)
       continue;
 
     if (AliasOpNo >= Result->getNumArgs())
