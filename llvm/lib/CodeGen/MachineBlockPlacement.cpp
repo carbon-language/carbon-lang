@@ -214,11 +214,12 @@ class MachineBlockPlacement : public MachineFunctionPass {
   MachineBasicBlock *selectBestCandidateBlock(
       BlockChain &Chain, SmallVectorImpl<MachineBasicBlock *> &WorkList,
       const BlockFilterSet *BlockFilter);
-  MachineBasicBlock *getFirstUnplacedBlock(const BlockChain &PlacedChain,
-                                           ArrayRef<MachineBasicBlock *> Blocks,
-                                           unsigned &PrevUnplacedBlockIdx);
+  MachineBasicBlock *getFirstUnplacedBlock(
+      MachineFunction &F,
+      const BlockChain &PlacedChain,
+      MachineFunction::iterator &PrevUnplacedBlockIt,
+      const BlockFilterSet *BlockFilter);
   void buildChain(MachineBasicBlock *BB, BlockChain &Chain,
-                  ArrayRef<MachineBasicBlock *> Blocks,
                   SmallVectorImpl<MachineBasicBlock *> &BlockWorkList,
                   const BlockFilterSet *BlockFilter = 0);
   void buildLoopChains(MachineFunction &F, MachineLoop &L);
@@ -444,18 +445,20 @@ MachineBasicBlock *MachineBlockPlacement::selectBestCandidateBlock(
 ///
 /// This routine is called when we are unable to use the CFG to walk through
 /// all of the basic blocks and form a chain due to unnatural loops in the CFG.
-/// We walk through the sequence of blocks, starting from the
-/// LastUnplacedBlockIdx. We update this index to avoid re-scanning the entire
-/// sequence on repeated calls to this routine.
+/// We walk through the function's blocks in order, starting from the
+/// LastUnplacedBlockIt. We update this iterator on each call to avoid
+/// re-scanning the entire sequence on repeated calls to this routine.
 MachineBasicBlock *MachineBlockPlacement::getFirstUnplacedBlock(
-    const BlockChain &PlacedChain,
-    ArrayRef<MachineBasicBlock *> Blocks,
-    unsigned &PrevUnplacedBlockIdx) {
-  for (unsigned i = PrevUnplacedBlockIdx, e = Blocks.size(); i != e; ++i) {
-    MachineBasicBlock *BB = Blocks[i];
-    if (BlockToChain[BB] != &PlacedChain) {
-      PrevUnplacedBlockIdx = i;
-      return BB;
+    MachineFunction &F, const BlockChain &PlacedChain,
+    MachineFunction::iterator &PrevUnplacedBlockIt,
+    const BlockFilterSet *BlockFilter) {
+  for (MachineFunction::iterator I = PrevUnplacedBlockIt, E = F.end(); I != E;
+       ++I) {
+    if (BlockFilter && !BlockFilter->count(I))
+      continue;
+    if (BlockToChain[I] != &PlacedChain) {
+      PrevUnplacedBlockIt = I;
+      return I;
     }
   }
   return 0;
@@ -464,14 +467,14 @@ MachineBasicBlock *MachineBlockPlacement::getFirstUnplacedBlock(
 void MachineBlockPlacement::buildChain(
     MachineBasicBlock *BB,
     BlockChain &Chain,
-    ArrayRef<MachineBasicBlock *> Blocks,
     SmallVectorImpl<MachineBasicBlock *> &BlockWorkList,
     const BlockFilterSet *BlockFilter) {
   assert(BB);
   assert(BlockToChain[BB] == &Chain);
   assert(*Chain.begin() == BB);
   SmallVector<MachineOperand, 4> Cond; // For AnalyzeBranch.
-  unsigned PrevUnplacedBlockIdx = 0;
+  MachineFunction &F = *BB->getParent();
+  MachineFunction::iterator PrevUnplacedBlockIt = F.begin();
 
   MachineBasicBlock *LoopHeaderBB = BB;
   markChainSuccessors(Chain, LoopHeaderBB, BlockWorkList, BlockFilter);
@@ -510,7 +513,8 @@ void MachineBlockPlacement::buildChain(
       BestSucc = selectBestCandidateBlock(Chain, BlockWorkList, BlockFilter);
 
     if (!BestSucc) {
-      BestSucc = getFirstUnplacedBlock(Chain, Blocks, PrevUnplacedBlockIdx);
+      BestSucc = getFirstUnplacedBlock(F, Chain, PrevUnplacedBlockIt,
+                                       BlockFilter);
       if (!BestSucc)
         break;
 
@@ -579,8 +583,7 @@ void MachineBlockPlacement::buildLoopChains(MachineFunction &F,
       BlockWorkList.push_back(*BI);
   }
 
-  buildChain(*L.block_begin(), LoopChain, L.getBlocks(), BlockWorkList,
-             &LoopBlockSet);
+  buildChain(*L.block_begin(), LoopChain, BlockWorkList, &LoopBlockSet);
 
   DEBUG({
     // Crash at the end so we get all of the debugging output first.
@@ -630,17 +633,11 @@ void MachineBlockPlacement::buildCFGChains(MachineFunction &F) {
        ++LI)
     buildLoopChains(F, **LI);
 
-  // We need a vector of blocks so that buildChain can handle unnatural CFG
-  // constructs by searching for unplaced blocks and just concatenating them.
-  SmallVector<MachineBasicBlock *, 16> Blocks;
-  Blocks.reserve(F.size());
-
   SmallVector<MachineBasicBlock *, 16> BlockWorkList;
 
   SmallPtrSet<BlockChain *, 4> UpdatedPreds;
   for (MachineFunction::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI) {
     MachineBasicBlock *BB = &*FI;
-    Blocks.push_back(BB);
     BlockChain &Chain = *BlockToChain[BB];
     if (!UpdatedPreds.insert(&Chain))
       continue;
@@ -663,7 +660,7 @@ void MachineBlockPlacement::buildCFGChains(MachineFunction &F) {
   }
 
   BlockChain &FunctionChain = *BlockToChain[&F.front()];
-  buildChain(&F.front(), FunctionChain, Blocks, BlockWorkList);
+  buildChain(&F.front(), FunctionChain, BlockWorkList);
 
   typedef SmallPtrSet<MachineBasicBlock *, 16> FunctionBlockSetType;
   DEBUG({

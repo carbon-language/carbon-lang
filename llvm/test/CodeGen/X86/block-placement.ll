@@ -241,8 +241,8 @@ define void @unnatural_cfg1() {
 ; CHECK: unnatural_cfg1
 ; CHECK: %entry
 ; CHECK: %loop.body1
-; CHECK: %loop.body3
 ; CHECK: %loop.body2
+; CHECK: %loop.body3
 
 entry:
   br label %loop.header
@@ -270,6 +270,77 @@ loop.body4:
 loop.body5:
   %ptr2 = load i32** undef, align 4
   br label %loop.body3
+}
+
+define void @unnatural_cfg2() {
+; Test that we can handle a loop with a nested natural loop *and* an unnatural
+; loop. This was reduced from a crash on block placement when run over
+; single-source GCC.
+; CHECK: unnatural_cfg2
+; CHECK: %entry
+; CHECK: %loop.header
+; CHECK: %loop.body1
+; CHECK: %loop.body2
+; CHECK: %loop.body3
+; CHECK: %loop.inner1.begin
+; The end block is folded with %loop.body3...
+; CHECK-NOT: %loop.inner1.end
+; CHECK: %loop.body4
+; CHECK: %loop.inner2.begin
+; The loop.inner2.end block is folded
+; CHECK: %bail
+
+entry:
+  br label %loop.header
+
+loop.header:
+  %comp0 = icmp eq i32* undef, null
+  br i1 %comp0, label %bail, label %loop.body1
+
+loop.body1:
+  %val0 = load i32** undef, align 4
+  br i1 undef, label %loop.body2, label %loop.inner1.begin
+
+loop.body2:
+  br i1 undef, label %loop.body4, label %loop.body3
+
+loop.body3:
+  %ptr1 = getelementptr inbounds i32* %val0, i32 0
+  %castptr1 = bitcast i32* %ptr1 to i32**
+  %val1 = load i32** %castptr1, align 4
+  br label %loop.inner1.begin
+
+loop.inner1.begin:
+  %valphi = phi i32* [ %val2, %loop.inner1.end ], [ %val1, %loop.body3 ], [ %val0, %loop.body1 ]
+  %castval = bitcast i32* %valphi to i32*
+  %comp1 = icmp eq i32 undef, 48
+  br i1 %comp1, label %loop.inner1.end, label %loop.body4
+
+loop.inner1.end:
+  %ptr2 = getelementptr inbounds i32* %valphi, i32 0
+  %castptr2 = bitcast i32* %ptr2 to i32**
+  %val2 = load i32** %castptr2, align 4
+  br label %loop.inner1.begin
+
+loop.body4.dead:
+  br label %loop.body4
+
+loop.body4:
+  %comp2 = icmp ult i32 undef, 3
+  br i1 %comp2, label %loop.inner2.begin, label %loop.end
+
+loop.inner2.begin:
+  br i1 false, label %loop.end, label %loop.inner2.end
+
+loop.inner2.end:
+  %comp3 = icmp eq i32 undef, 1769472
+  br i1 %comp3, label %loop.end, label %loop.inner2.begin
+
+loop.end:
+  br label %loop.header
+
+bail:
+  unreachable
 }
 
 define i32 @problematic_switch() {
