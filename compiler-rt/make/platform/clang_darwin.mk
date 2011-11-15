@@ -67,7 +67,7 @@ endif
 
 ###
 
-CC := gcc
+CC := clang
 
 # Forcibly strip off any -arch, as that totally breaks our universal support.
 override CC := $(subst -arch ,-arch_,$(CC))

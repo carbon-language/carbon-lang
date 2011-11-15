@@ -37,7 +37,7 @@ UniversalArchs := i386 ppc x86_64
 #   <Option Name>.<Arch Name> := ...
 #   <Option Name>.<Config Name>.<Arch Name> := ...
 
-CC := gcc
+CC := clang
 
 CFLAGS := -Wall -Werror
 CFLAGS.Debug := $(CFLAGS) -g

@@ -5,8 +5,7 @@ Configs := m32 m64
 Arch := i386
 Arch.m64 := x86_64
 
-CC := gcc
-CC.m32 := clang
+CC := clang
 
 CFLAGS := -Wall -Werror
 CFLAGS.m32 := $(CFLAGS) -m32 -O3
