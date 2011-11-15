@@ -641,6 +641,20 @@ isl_map *scatteringForStmt(scoplib_matrix_p m, ScopStmt *PollyStmt,
 
   isl_ctx *ctx = PollyStmt->getParent()->getIslCtx();
   isl_space *Space = isl_dim_alloc(ctx, NbParam, NbIterators, NbScattering);
+
+  isl_space *ParamSpace = PollyStmt->getParent()->getParamSpace();
+
+  // We need to copy the isl_ids for the parameter dimensions to the new
+  // map. Without doing this the current map would have different
+  // ids then the new one, even though both are named identically.
+  for (unsigned i = 0; i < isl_space_dim(Space, isl_dim_param);
+       i++) {
+    isl_id *id = isl_space_get_dim_id(ParamSpace, isl_dim_param, i);
+    Space = isl_space_set_dim_id(Space, isl_dim_param, i, id);
+  }
+
+  isl_space_free(ParamSpace);
+
   Space = isl_space_set_tuple_name(Space, isl_dim_out, "scattering");
   Space = isl_space_set_tuple_name(Space, isl_dim_in, PollyStmt->getBaseName());
 
@@ -662,6 +676,14 @@ unsigned maxScattering(scoplib_statement_p stmt) {
 }
 
 typedef Dependences::StatementToIslMapTy StatementToIslMapTy;
+
+void freeStmtToIslMap(StatementToIslMapTy *Map) {
+  for (StatementToIslMapTy::iterator MI = Map->begin(), ME = Map->end();
+       MI != ME; ++MI)
+    isl_map_free(MI->second);
+
+  delete (Map);
+}
 
 /// @brief Read the new scattering from the scoplib description.
 ///
@@ -690,7 +712,7 @@ StatementToIslMapTy *readScattering(Scop *S, scoplib_scop_p OScop) {
 
     if (!stmt) {
       errs() << "Not enough statements available in OpenScop file\n";
-      delete &NewScattering;
+      freeStmtToIslMap(&NewScattering);
       return NULL;
     }
 
@@ -701,7 +723,7 @@ StatementToIslMapTy *readScattering(Scop *S, scoplib_scop_p OScop) {
 
   if (stmt) {
     errs() << "Too many statements in OpenScop file\n";
-    delete &NewScattering;
+    freeStmtToIslMap(&NewScattering);
     return NULL;
   }
 
@@ -720,6 +742,7 @@ bool ScopLib::updateScattering() {
     return false;
 
   if (!D->isValidScattering(NewScattering)) {
+    freeStmtToIslMap(NewScattering);
     errs() << "OpenScop file contains a scattering that changes the "
       << "dependences. Use -disable-polly-legality to continue anyways\n";
     return false;
@@ -730,9 +753,10 @@ bool ScopLib::updateScattering() {
     ScopStmt *Stmt = *SI;
 
     if (NewScattering->find(Stmt) != NewScattering->end())
-      Stmt->setScattering((*NewScattering)[Stmt]);
+      Stmt->setScattering(isl_map_copy((*NewScattering)[Stmt]));
   }
 
+  freeStmtToIslMap(NewScattering);
   return true;
 }
 }
