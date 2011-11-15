@@ -157,7 +157,14 @@ static_assert(!__has_trivial_constructor(NonTrivialDefCtor6), "NonTrivialDefCtor
 
 // Otherwise, the default constructor is non-trivial.
 class Trivial2 { Trivial2() = delete; };
-static_assert(__has_trivial_constructor(Trivial2), "NonTrivialDefCtor2 is trivial");
+static_assert(__has_trivial_constructor(Trivial2), "Trivial2 is trivial");
 
 class Trivial3 { Trivial3() = default; };
-static_assert(__has_trivial_constructor(Trivial3), "NonTrivialDefCtor3 is trivial");
+static_assert(__has_trivial_constructor(Trivial3), "Trivial3 is trivial");
+
+template<typename T> class Trivial4 { Trivial4() = default; };
+static_assert(__has_trivial_constructor(Trivial4<int>), "Trivial4 is trivial");
+
+template<typename T> class Trivial5 { Trivial5() = delete; };
+static_assert(__has_trivial_constructor(Trivial5<int>), "Trivial5 is trivial");
+

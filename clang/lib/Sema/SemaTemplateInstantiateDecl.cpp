@@ -1526,6 +1526,12 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
 
   SemaRef.CheckOverrideControl(Method);
 
+  // If a function is defined as defaulted or deleted, mark it as such now.
+  if (D->isDefaulted())
+    Method->setDefaulted();
+  if (D->isDeletedAsWritten())
+    Method->setDeletedAsWritten();
+
   if (FunctionTemplate) {
     // If there's a function template, let our caller handle it.
   } else if (Method->isInvalidDecl() && !Previous.empty()) {
