@@ -1499,6 +1499,9 @@ IRForTarget::MaterializeInternalVariable (GlobalVariable *global_variable)
     if (GlobalVariable::isExternalLinkage(global_variable->getLinkage()))
         return false;
     
+    if (global_variable == m_reloc_placeholder)
+        return true;
+    
     uint64_t offset = m_data_allocator->GetStream().GetSize();
     
     llvm::Type *variable_type = global_variable->getType();
