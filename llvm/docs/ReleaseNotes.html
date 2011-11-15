@@ -970,6 +970,10 @@ Builder.CreateResume(UnwindData);
 
 <ul>
 
+  <li>The X86 backend now supports
+    all <a href="http://llvm.org/PR879">inline assembly that uses the X86
+      floating point stack</a>.</li>
+  
   <li>The CRC32 intrinsics have been renamed.  The intrinsics were previously
       <code>@llvm.x86.sse42.crc32.[8|16|32]</code>
       and <code>@llvm.x86.sse42.crc64.[8|64]</code>. They have been renamed to
@@ -1264,10 +1268,6 @@ Builder.CreateResume(UnwindData);
 <div>
 
 <ul>
-  <li>The X86 backend does not yet support
-      all <a href="http://llvm.org/PR879">inline assembly that uses the X86
-      floating point stack</a>.  It supports the 'f' and 't' constraints, but
-      not 'u'.</li>
 
   <li>The X86-64 backend does not yet support the LLVM IR instruction
       <tt>va_arg</tt>. Currently, front-ends support variadic argument
