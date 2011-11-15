@@ -245,7 +245,7 @@ static void ParseConstraint(const std::string &CStr, CGIOperandList &Ops) {
   if (!Ops[DestOp.first].Constraints[DestOp.second].isNone())
     throw "Operand '" + DestOpName + "' cannot have multiple constraints!";
   Ops[DestOp.first].Constraints[DestOp.second] =
-  CGIOperandList::ConstraintInfo::getTied(FlatOpNo);
+    CGIOperandList::ConstraintInfo::getTied(FlatOpNo);
 }
 
 static void ParseConstraints(const std::string &CStr, CGIOperandList &Ops) {
