@@ -3573,14 +3573,17 @@ static const unsigned ReplaceableInstrsAVX2[][3] = {
 // FIXME: Some shuffle and unpack instructions have equivalents in different
 // domains, but they require a bit more work than just switching opcodes.
 
-static const unsigned *lookup(unsigned opcode, unsigned domain, bool hasAVX2) {
+static const unsigned *lookup(unsigned opcode, unsigned domain) {
   for (unsigned i = 0, e = array_lengthof(ReplaceableInstrs); i != e; ++i)
     if (ReplaceableInstrs[i][domain-1] == opcode)
       return ReplaceableInstrs[i];
-  if (domain != 3 || hasAVX2) // only use PackedInt domain if AVX2 is enabled
-    for (unsigned i = 0, e = array_lengthof(ReplaceableInstrsAVX2); i != e; ++i)
-      if (ReplaceableInstrsAVX2[i][domain-1] == opcode)
-        return ReplaceableInstrsAVX2[i];
+  return 0;
+}
+
+static const unsigned *lookupAVX2(unsigned opcode, unsigned domain) {
+  for (unsigned i = 0, e = array_lengthof(ReplaceableInstrsAVX2); i != e; ++i)
+    if (ReplaceableInstrsAVX2[i][domain-1] == opcode)
+      return ReplaceableInstrsAVX2[i];
   return 0;
 }
 
@@ -3588,16 +3591,21 @@ std::pair<uint16_t, uint16_t>
 X86InstrInfo::getExecutionDomain(const MachineInstr *MI) const {
   uint16_t domain = (MI->getDesc().TSFlags >> X86II::SSEDomainShift) & 3;
   bool hasAVX2 = TM.getSubtarget<X86Subtarget>().hasAVX2();
-  return std::make_pair(domain,
-                  domain && lookup(MI->getOpcode(), domain, hasAVX2) ? 0xe : 0);
+  uint16_t validDomains = 0;
+  if (domain && lookup(MI->getOpcode(), domain))
+    validDomains = 0xe;
+  else if (domain && lookupAVX2(MI->getOpcode(), domain))
+    validDomains = hasAVX2 ? 0xe : 0x6;
+  return std::make_pair(domain, validDomains);
 }
 
 void X86InstrInfo::setExecutionDomain(MachineInstr *MI, unsigned Domain) const {
   assert(Domain>0 && Domain<4 && "Invalid execution domain");
   uint16_t dom = (MI->getDesc().TSFlags >> X86II::SSEDomainShift) & 3;
   assert(dom && "Not an SSE instruction");
-  bool hasAVX2 = TM.getSubtarget<X86Subtarget>().hasAVX2();
-  const unsigned *table = lookup(MI->getOpcode(), dom, hasAVX2);
+  const unsigned *table = lookup(MI->getOpcode(), dom);
+  if (!table) // try the other table
+    table = lookupAVX2(MI->getOpcode(), dom);
   assert(table && "Cannot change domain");
   MI->setDesc(get(table[Domain-1]));
 }
