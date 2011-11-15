@@ -368,7 +368,7 @@ namespace llvm {
 void MachineFunction::viewCFG() const
 {
 #ifndef NDEBUG
-  ViewGraph(this, "mf" + getFunction()->getNameStr());
+  ViewGraph(this, "mf" + getFunction()->getName());
 #else
   errs() << "MachineFunction::viewCFG is only available in debug builds on "
          << "systems with Graphviz or gv!\n";
@@ -378,7 +378,7 @@ void MachineFunction::viewCFG() const
 void MachineFunction::viewCFGOnly() const
 {
 #ifndef NDEBUG
-  ViewGraph(this, "mf" + getFunction()->getNameStr(), true);
+  ViewGraph(this, "mf" + getFunction()->getName(), true);
 #else
   errs() << "MachineFunction::viewCFGOnly is only available in debug builds on "
          << "systems with Graphviz or gv!\n";

@@ -18,6 +18,7 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/IntEqClasses.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 
 namespace llvm {
@@ -61,7 +62,7 @@ private:
 /// Specialize WriteGraph, the standard implementation won't work.
 raw_ostream &WriteGraph(raw_ostream &O, const EdgeBundles &G,
                         bool ShortNames = false,
-                        const std::string &Title = "");
+                        const Twine &Title = "");
 
 } // end namespace llvm
 

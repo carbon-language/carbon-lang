@@ -77,7 +77,7 @@ void EdgeBundles::view() const {
 /// Specialize WriteGraph, the standard implementation won't work.
 raw_ostream &llvm::WriteGraph(raw_ostream &O, const EdgeBundles &G,
                               bool ShortNames,
-                              const std::string &Title) {
+                              const Twine &Title) {
   const MachineFunction *MF = G.getMachineFunction();
 
   O << "digraph {\n";
