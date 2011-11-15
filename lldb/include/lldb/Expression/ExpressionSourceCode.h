@@ -50,7 +50,8 @@ public:
     
     bool GetText (std::string &text, 
                   lldb::LanguageType wrapping_language, 
-                  bool const_object) const;
+                  bool const_object,
+                  bool static_method) const;
     
 private:
     ExpressionSourceCode (const char *name,

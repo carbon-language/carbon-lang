@@ -289,7 +289,18 @@ protected:
     //------------------------------------------------------------------
     void
     FindObjCMethodDecls (NameSearchContext &context);
-        
+    
+    //------------------------------------------------------------------
+    /// Find all Objective-C properties with a given name.
+    ///
+    /// @param[in] context
+    ///     The NameSearchContext that can construct Decls for this name.
+    ///     Its m_decl_name contains the name and its m_decl_context
+    ///     is the containing object.
+    //------------------------------------------------------------------
+    void
+    FindObjCPropertyDecls (NameSearchContext &context);
+    
     //------------------------------------------------------------------
     /// A wrapper for ClangASTContext::CopyType that sets a flag that
     /// indicates that we should not respond to queries during import.

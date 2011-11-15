@@ -56,6 +56,7 @@ ClangUserExpression::ClangUserExpression (const char *expr,
     m_objectivec (false),
     m_needs_object_ptr (false),
     m_const_object (false),
+    m_static_method(false),
     m_target (NULL),
     m_evaluated_statically (false),
     m_const_result ()
@@ -167,7 +168,7 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx, Error &err)
     }
     else if (clang::ObjCMethodDecl *method_decl = llvm::dyn_cast<clang::ObjCMethodDecl>(decl_context))
     {        
-        if (m_allow_objc && method_decl->isInstanceMethod())
+        if (m_allow_objc)
         {
             VariableList *vars = frame->GetVariableList(false);
             
@@ -193,6 +194,9 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx, Error &err)
             
             m_objectivec = true;
             m_needs_object_ptr = true;
+            
+            if (!method_decl->isInstanceMethod())
+                m_static_method = true;
         }
     }
 }
@@ -274,7 +278,7 @@ ClangUserExpression::Parse (Stream &error_stream,
     else
         lang_type = lldb::eLanguageTypeC;
     
-    if (!source_code->GetText(m_transformed_text, lang_type, m_const_object))
+    if (!source_code->GetText(m_transformed_text, lang_type, m_const_object, m_static_method))
     {
         error_stream.PutCString ("error: couldn't construct expression body");
         return false;

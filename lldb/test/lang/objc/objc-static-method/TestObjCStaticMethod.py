@@ -65,6 +65,11 @@ class TestObjCStaticMethod(TestBase):
         sel_name = cmd_value.GetSummary()
         self.assertTrue (sel_name == "\"doSomethingWithString:\"", "Got the right value for the selector as string.")
 
+        cmd_value = frame.EvaluateExpression ("[self doSomethingElseWithString:string]")
+        self.assertTrue (cmd_value.IsValid())
+        string_length = cmd_value.GetValueAsUnsigned()
+        self.assertTrue (string_length == 27, "Got the right value from another class method on the same class.")
+
 if __name__ == '__main__':
     import atexit
     lldb.SBDebugger.Initialize()

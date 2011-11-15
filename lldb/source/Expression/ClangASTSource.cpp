@@ -311,6 +311,10 @@ ClangASTSource::FindExternalVisibleDecls (NameSearchContext &context)
                                      current_id);
         }
     }
+    else if (const ObjCInterfaceDecl *interface_decl = dyn_cast<ObjCInterfaceDecl>(context.m_decl_context))
+    {
+        FindObjCPropertyDecls(context);
+    }
     else if (!isa<TranslationUnitDecl>(context.m_decl_context))
     {
         // we shouldn't be getting FindExternalVisibleDecls calls for these
@@ -566,6 +570,63 @@ ClangASTSource::FindObjCMethodDecls (NameSearchContext &context)
             context.AddNamedDecl(copied_method_decl);
         }
     }
+}
+
+void
+ClangASTSource::FindObjCPropertyDecls (NameSearchContext &context)
+{
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+
+    static unsigned int invocation_id = 0;
+    unsigned int current_id = invocation_id++;
+    
+    const ObjCInterfaceDecl *iface_decl = cast<ObjCInterfaceDecl>(context.m_decl_context);
+    Decl *orig_decl;
+    ASTContext *orig_ast_ctx;
+    
+    m_ast_importer->ResolveDeclOrigin(iface_decl, &orig_decl, &orig_ast_ctx);
+    
+    if (!orig_decl)
+        return;
+    
+    ObjCInterfaceDecl *orig_iface_decl = dyn_cast<ObjCInterfaceDecl>(orig_decl);
+    
+    if (!orig_iface_decl)
+        return;
+    
+    if (!ClangASTContext::GetCompleteDecl(orig_ast_ctx, orig_iface_decl))
+        return;
+    
+    std::string property_name_str = context.m_decl_name.getAsString();
+    StringRef property_name(property_name_str.c_str());
+    ObjCPropertyDecl *property_decl = orig_iface_decl->FindPropertyDeclaration(&orig_ast_ctx->Idents.get(property_name));
+    
+    if (log)
+        log->Printf("ClangASTSource::FindObjCPropertyDecls[%d] for property '%s.%s'",
+                    current_id, 
+                    iface_decl->getNameAsString().c_str(), 
+                    property_name_str.c_str());
+    
+    if (!property_decl)
+        return;
+    
+    Decl *copied_decl = m_ast_importer->CopyDecl(orig_ast_ctx, property_decl);
+    
+    if (!copied_decl)
+        return;
+    
+    ObjCPropertyDecl *copied_property_decl = dyn_cast<ObjCPropertyDecl>(copied_decl);
+    
+    if (!copied_property_decl)
+        return;
+    
+    if (log)
+    {
+        ASTDumper dumper((Decl*)copied_property_decl);
+        log->Printf("  CAS::FOPD[%d] found %s", current_id, dumper.GetCString());
+    }
+ 
+    context.AddNamedDecl(copied_property_decl);
 }
 
 void 

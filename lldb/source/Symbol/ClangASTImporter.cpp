@@ -186,14 +186,26 @@ clang::Decl
         to_namespace_decl->setHasExternalVisibleStorage();
     }
     
-    if (isa<ObjCInterfaceDecl>(from))
+    if (ObjCInterfaceDecl *from_interface_decl = dyn_cast<ObjCInterfaceDecl>(from))
     {
         ObjCInterfaceDecl *to_interface_decl = dyn_cast<ObjCInterfaceDecl>(to);
         
+        to_interface_decl->setHasExternalLexicalStorage();
         to_interface_decl->setHasExternalVisibleStorage();
         
-        if (!to_interface_decl->isForwardDecl())
-            to_interface_decl->setExternallyCompleted();
+        if (to_interface_decl->isForwardDecl())
+            to_interface_decl->completedForwardDecl();
+        
+        to_interface_decl->setExternallyCompleted();
+        
+        if (log)
+            log->Printf("    [ClangASTImporter] Imported %p, a %s named %s%s%s%s",
+                        to,
+                        ((clang::Decl*)from_interface_decl)->getDeclKindName(),
+                        from_interface_decl->getName().str().c_str(),
+                        (to_interface_decl->hasExternalLexicalStorage() ? " Lexical" : ""),
+                        (to_interface_decl->hasExternalVisibleStorage() ? " Visible" : ""),
+                        (to_interface_decl->isForwardDecl() ? " Forward" : ""));
     }
     
     return clang::ASTImporter::Imported(from, to);

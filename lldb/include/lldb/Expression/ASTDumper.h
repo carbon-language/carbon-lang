@@ -22,7 +22,7 @@ class ASTDumper
 public:
     ASTDumper (clang::Decl *decl);
     ASTDumper (clang::DeclContext *decl_ctx);
-    ASTDumper (clang::Type *type);
+    ASTDumper (const clang::Type *type);
     ASTDumper (clang::QualType type);
     ASTDumper (lldb::clang_type_t type);
     

@@ -11,6 +11,12 @@
   NSLog (@"String is: %@.", string); // Set breakpoint here.
 }
 
++(int) doSomethingElseWithString: (NSString *) string
+{
+  NSLog (@"String is still: %@.", string);
+  return [string length];
+}
+
 -(void) doSomethingWithNothing
 {
 }

@@ -63,7 +63,7 @@ ASTDumper::ASTDumper (clang::DeclContext *decl_ctx)
     decl_ctx->setHasExternalVisibleStorage(has_external_visible_storage);
 }
 
-ASTDumper::ASTDumper (clang::Type *type)
+ASTDumper::ASTDumper (const clang::Type *type)
 {
     m_dump = clang::QualType(type, 0).getAsString();
 }

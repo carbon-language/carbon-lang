@@ -1105,13 +1105,13 @@ ClangExpressionDeclMap::GetObjectPointer
 
     if (frame == NULL || process == NULL || target == NULL)
     {
-        err.SetErrorString("Couldn't load 'this' because the context is incomplete");
+        err.SetErrorStringWithFormat("Couldn't load '%s' because the context is incomplete", object_name.AsCString());
         return false;
     }
     
     if (!m_struct_vars->m_object_pointer_type.GetOpaqueQualType())
     {
-        err.SetErrorString("Couldn't load 'this' because its type is unknown");
+        err.SetErrorStringWithFormat("Couldn't load '%s' because its type is unknown", object_name.AsCString());
         return false;
     }
     
@@ -1121,7 +1121,7 @@ ClangExpressionDeclMap::GetObjectPointer
     
     if (!object_ptr_var)
     {
-        err.SetErrorStringWithFormat("Couldn't find '%s' with appropriate type in scope", object_name.GetCString());
+        err.SetErrorStringWithFormat("Couldn't find '%s' with appropriate type in scope", object_name.AsCString());
         return false;
     }
     
@@ -2224,12 +2224,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context)
                                      current_id);
         }
     }
-    else if (!isa<TranslationUnitDecl>(context.m_decl_context))
-    {
-        // we shouldn't be getting FindExternalVisibleDecls calls for these
-        return;
-    }
-    else
+    else if (isa<TranslationUnitDecl>(context.m_decl_context))
     {
         ClangNamespaceDecl namespace_decl;
         
@@ -2342,11 +2337,46 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             
             if (!frame)
                 return;
+         
+            SymbolContext sym_ctx = frame->GetSymbolContext(lldb::eSymbolContextFunction);
+            
+            if (!sym_ctx.function)
+                return;
+            
+            clang::DeclContext *decl_context;
+            
+            if (sym_ctx.block && sym_ctx.block->GetInlinedFunctionInfo())
+                decl_context = sym_ctx.block->GetClangDeclContextForInlinedFunction();
+            else
+                decl_context = sym_ctx.function->GetClangDeclContext();
+            
+            if (!decl_context)
+                return;
+            
+            clang::ObjCMethodDecl *method_decl = llvm::dyn_cast<clang::ObjCMethodDecl>(decl_context);
+            
+            if (!method_decl)
+                return;
+
+            ObjCInterfaceDecl* self_interface = method_decl->getClassInterface();
+            
+            if (!self_interface)
+                return;
+            
+            const clang::Type *interface_type = self_interface->getTypeForDecl();
+                    
+            TypeFromUser class_user_type(QualType(interface_type, 0).getAsOpaquePtr(),
+                                         &method_decl->getASTContext());
+            
+            if (log)
+            {
+                ASTDumper ast_dumper(interface_type);
+                log->Printf("  FEVD[%u] Adding type for $__lldb_objc_class: %s", current_id, ast_dumper.GetCString());
+            }
+                
+            AddOneType(context, class_user_type, current_id, false);
             
             VariableList *vars = frame->GetVariableList(false);
-            
-            if (!vars)
-                return;
             
             lldb::VariableSP self_var = vars->FindVariable(ConstString("self"));
             
@@ -2364,25 +2394,6 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                                         self_type->GetClangAST());
             
             m_struct_vars->m_object_pointer_type = self_user_type;
-            
-            void *pointer_target_type = NULL;
-            
-            if (!ClangASTContext::IsPointerType(self_user_type.GetOpaqueQualType(),
-                                                &pointer_target_type)
-                || pointer_target_type == NULL)
-                return;
-            
-            TypeFromUser class_user_type(pointer_target_type,
-                                         self_type->GetClangAST());
-            
-            if (log)
-            {
-                ASTDumper ast_dumper(pointer_target_type);
-                log->Printf("  FEVD[%u] Adding type for $__lldb_objc_class: %s", current_id, ast_dumper.GetCString());
-            }
-            
-            AddOneType(context, class_user_type, current_id, false);
-            
             return;
         }
         

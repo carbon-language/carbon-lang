@@ -13,7 +13,7 @@
 
 using namespace lldb_private;
 
-bool ExpressionSourceCode::GetText (std::string &text, lldb::LanguageType wrapping_language, bool const_object) const
+bool ExpressionSourceCode::GetText (std::string &text, lldb::LanguageType wrapping_language, bool const_object, bool static_method) const
 {
     if (m_wrap)
     {
@@ -59,21 +59,42 @@ bool ExpressionSourceCode::GetText (std::string &text, lldb::LanguageType wrappi
                                m_body.c_str());
             break;
         case lldb::eLanguageTypeObjC:
-            wrap_stream.Printf("%s                                                      \n"
-                                "typedef unsigned short unichar;                        \n"
-                                "@interface $__lldb_objc_class ($__lldb_category)       \n"
-                                "-(void)%s:(void *)$__lldb_arg;                         \n"
-                                "@end                                                   \n"
-                                "@implementation $__lldb_objc_class ($__lldb_category)  \n"
-                                "-(void)%s:(void *)$__lldb_arg                          \n"
-                                "{                                                      \n"
-                                "    %s;                                                \n"
-                                "}                                                      \n"
-                                "@end                                                   \n",
-                                m_prefix.c_str(),
-                                m_name.c_str(),
-                                m_name.c_str(),
-                                m_body.c_str());
+            if (static_method)
+            {
+                wrap_stream.Printf("%s                                                      \n"
+                                    "typedef unsigned short unichar;                        \n"
+                                    "@interface $__lldb_objc_class ($__lldb_category)       \n"
+                                    "+(void)%s:(void *)$__lldb_arg;                         \n"
+                                    "@end                                                   \n"
+                                    "@implementation $__lldb_objc_class ($__lldb_category)  \n"
+                                    "+(void)%s:(void *)$__lldb_arg                          \n"
+                                    "{                                                      \n"
+                                    "    %s;                                                \n"
+                                    "}                                                      \n"
+                                    "@end                                                   \n",
+                                    m_prefix.c_str(),
+                                    m_name.c_str(),
+                                    m_name.c_str(),
+                                    m_body.c_str());
+            }
+            else
+            {
+                wrap_stream.Printf("%s                                                      \n"
+                                   "typedef unsigned short unichar;                        \n"
+                                   "@interface $__lldb_objc_class ($__lldb_category)       \n"
+                                   "-(void)%s:(void *)$__lldb_arg;                         \n"
+                                   "@end                                                   \n"
+                                   "@implementation $__lldb_objc_class ($__lldb_category)  \n"
+                                   "-(void)%s:(void *)$__lldb_arg                          \n"
+                                   "{                                                      \n"
+                                   "    %s;                                                \n"
+                                   "}                                                      \n"
+                                   "@end                                                   \n",
+                                   m_prefix.c_str(),
+                                   m_name.c_str(),
+                                   m_name.c_str(),
+                                   m_body.c_str());
+            }
             break;
         }
         

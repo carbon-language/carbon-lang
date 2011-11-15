@@ -114,13 +114,9 @@ class ObjCDynamicValueTestCase(TestBase):
         self.assertTrue (backing_value.IsValid())
         self.assertTrue (backed_value.GetValueAsUnsigned (12345) == backing_value.GetValueAsUnsigned(23456))
 
-        #
-        # This doesn't work correctly yet, because the clang Sema::HandleExprPropertyRefExpr
-        # doesn't complete the class before looking up the property.
-        #
-        #unbacked_value = frame.EvaluateExpression("mine.unbackedInt", False)
-        #unbacked_error = unbacked_value.GetError()
-        #self.assertTrue (unbacked_error.Success())
+        unbacked_value = frame.EvaluateExpression("mine.unbackedInt", False)
+        unbacked_error = unbacked_value.GetError()
+        self.assertTrue (unbacked_error.Success())
         
 if __name__ == '__main__':
     import atexit

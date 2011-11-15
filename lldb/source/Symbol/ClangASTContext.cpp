@@ -931,19 +931,19 @@ ClangASTContext::GetBuiltInType_bool()
 clang_type_t
 ClangASTContext::GetBuiltInType_objc_id()
 {
-    return getASTContext()->getPointerType(getASTContext()->ObjCBuiltinIdTy).getAsOpaquePtr();
+    return getASTContext()->getObjCIdType().getAsOpaquePtr();
 }
 
 clang_type_t
 ClangASTContext::GetBuiltInType_objc_Class()
 {
-    return getASTContext()->getPointerType(getASTContext()->ObjCBuiltinClassTy).getAsOpaquePtr();
+    return getASTContext()->getObjCClassType().getAsOpaquePtr();
 }
 
 clang_type_t
 ClangASTContext::GetBuiltInType_objc_selector()
 {
-    return getASTContext()->getPointerType(getASTContext()->ObjCBuiltinSelTy).getAsOpaquePtr();
+    return getASTContext()->getObjCSelType().getAsOpaquePtr();
 }
 
 clang_type_t
@@ -4694,7 +4694,7 @@ ClangASTContext::CompleteTagDeclarationDefinition (clang_type_t clang_type)
         {
             ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
             
-            class_interface_decl->setForwardDecl(false);
+            class_interface_decl->completedForwardDecl();
         }
         
         const EnumType *enum_type = dyn_cast<EnumType>(qual_type.getTypePtr());
