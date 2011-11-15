@@ -311,7 +311,7 @@ ClangASTSource::FindExternalVisibleDecls (NameSearchContext &context)
                                      current_id);
         }
     }
-    else if (const ObjCInterfaceDecl *interface_decl = dyn_cast<ObjCInterfaceDecl>(context.m_decl_context))
+    else if (isa<ObjCInterfaceDecl>(context.m_decl_context))
     {
         FindObjCPropertyDecls(context);
     }
