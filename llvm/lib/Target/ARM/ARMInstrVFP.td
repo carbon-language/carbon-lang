@@ -1178,3 +1178,14 @@ def : VFP2InstAlias<"vmul${p}.f64 $Dn, $Dm",
                     (VMULD DPR:$Dn, DPR:$Dn, DPR:$Dm, pred:$p)>;
 def : VFP2InstAlias<"vmul${p}.f32 $Sn, $Sm",
                     (VMULS SPR:$Sn, SPR:$Sn, SPR:$Sm, pred:$p)>;
+
+// VMOV can accept optional .f32/.f64 suffix.
+def : VFP2InstAlias<"vmov${p}.f32 $Rt, $Sn",
+                    (VMOVRS GPR:$Rt, SPR:$Sn, pred:$p)>;
+def : VFP2InstAlias<"vmov${p}.f32 $Sn, $Rt",
+                    (VMOVSR SPR:$Sn, GPR:$Rt, pred:$p)>;
+
+def : VFP2InstAlias<"vmov${p}.f64 $Rt, $Rt2, $Dn",
+                    (VMOVRRD GPR:$Rt, GPR:$Rt2, DPR:$Dn, pred:$p)>;
+def : VFP2InstAlias<"vmov${p}.f64 $Dn, $Rt, $Rt2",
+                    (VMOVDRR DPR:$Dn, GPR:$Rt, GPR:$Rt2, pred:$p)>;
