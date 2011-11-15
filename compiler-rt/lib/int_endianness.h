@@ -1,4 +1,4 @@
-/* ===-- endianness.h - configuration header for compiler-rt ---------------===
+/* ===-- int_endianness.h - configuration header for compiler-rt ------------===
  *
  *		       The LLVM Compiler Infrastructure
  *
@@ -13,13 +13,8 @@
  * ===----------------------------------------------------------------------===
  */
 
-#ifndef ENDIANNESS_H
-#define ENDIANNESS_H
-
-/*
- * Known limitations:
- *   Middle endian systems are not handled currently.
- */
+#ifndef INT_ENDIANNESS_H
+#define INT_ENDIANNESS_H
 
 #if defined(__SVR4) && defined(__sun)
 #include <sys/byteorder.h>
@@ -91,4 +86,4 @@
 #error Unable to determine endian
 #endif /* Check we found an endianness correctly. */
 
-#endif /* ENDIANNESS_H */
+#endif /* INT_ENDIANNESS_H */

@@ -18,7 +18,7 @@
 #ifndef INT_TYPES_H
 #define INT_TYPES_H
 
-#include "endianness.h"
+#include "int_endianness.h"
 
 typedef      int si_int;
 typedef unsigned su_int;

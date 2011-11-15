@@ -16,6 +16,10 @@
 #ifndef INT_LIB_H
 #define INT_LIB_H
 
+/* Assumption: Signed integral is 2's complement. */
+/* Assumption: Right shift of signed negative is arithmetic shift. */
+/* Assumption: Endianness is little or big (not mixed). */
+
 /* ABI macro definitions */
 
 #if __ARM_EABI__
@@ -27,12 +31,8 @@
 # define COMPILER_RT_ABI
 #endif
 
-/* Assumption:  signed integral is 2's complement */
-/* Assumption:  right shift of signed negative is arithmetic shift */
-
 #include <limits.h>
 #include <stdint.h>
-#include "endianness.h"
 #include <math.h>
 
 /* If compiling for kernel use, call panic() instead of abort(). */
