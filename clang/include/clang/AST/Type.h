@@ -1367,6 +1367,10 @@ public:
   /// isSpecificPlaceholderType - Test for a specific placeholder type.
   bool isSpecificPlaceholderType(unsigned K) const;
 
+  /// isNonOverloadPlaceholderType - Test for a placeholder type
+  /// other than Overload;  see BuiltinType::isNonOverloadPlaceholderType.
+  bool isNonOverloadPlaceholderType() const;
+
   /// isIntegerType() does *not* include complex integers (a GCC extension).
   /// isComplexIntegerType() can be used to test for complex integers.
   bool isIntegerType() const;     // C99 6.2.5p17 (int, char, bool, enum)
@@ -1723,6 +1727,19 @@ public:
   /// expression.
   bool isPlaceholderType() const {
     return isPlaceholderTypeKind(getKind());
+  }
+
+  /// Determines whether this type is a placeholder type other than
+  /// Overload.  Most placeholder types require only syntactic
+  /// information about their context in order to be resolved (e.g.
+  /// whether it is a call expression), which means they can (and
+  /// should) be resolved in an earlier "phase" of analysis.
+  /// Overload expressions sometimes pick up further information
+  /// from their context, like whether the context expects a
+  /// specific function-pointer type, and so frequently need
+  /// special treatment.
+  bool isNonOverloadPlaceholderType() const {
+    return getKind() > Overload;
   }
 
   static bool classof(const Type *T) { return T->getTypeClass() == Builtin; }
@@ -4707,6 +4724,12 @@ inline bool Type::isSpecificPlaceholderType(unsigned K) const {
   assert(BuiltinType::isPlaceholderTypeKind((BuiltinType::Kind) K));
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(this))
     return (BT->getKind() == (BuiltinType::Kind) K);
+  return false;
+}
+
+inline bool Type::isNonOverloadPlaceholderType() const {
+  if (const BuiltinType *BT = dyn_cast<BuiltinType>(this))
+    return BT->isNonOverloadPlaceholderType();
   return false;
 }
 

@@ -3976,10 +3976,7 @@ Sema::ActOnInitList(SourceLocation LBraceLoc, MultiExprArg InitArgList,
   // Immediately handle non-overload placeholders.  Overloads can be
   // resolved contextually, but everything else here can't.
   for (unsigned I = 0; I != NumInit; ++I) {
-    if (const BuiltinType *pty
-          = InitList[I]->getType()->getAsPlaceholderType()) {
-      if (pty->getKind() == BuiltinType::Overload) continue;
-
+    if (InitList[I]->getType()->isNonOverloadPlaceholderType()) {
       ExprResult result = CheckPlaceholderExpr(InitList[I]);
 
       // Ignore failures; dropping the entire initializer list because

@@ -170,6 +170,9 @@ BUILTIN_TYPE(Dependent, DependentTy)
 //   &x->foo      # only if might be a static member function
 //   &Class::foo  # when a pointer-to-member; sub-expr also has this type
 // OverloadExpr::find can be used to analyze the expression.
+//
+// Overload should be the first placeholder type, or else change
+// BuiltinType::isNonOverloadPlaceholderType()
 PLACEHOLDER_TYPE(Overload, OverloadTy)
 
 // The type of a bound C++ non-static member function.

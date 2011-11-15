@@ -3342,8 +3342,14 @@ namespace {
 ///
 /// \returns true if deduction succeeded, false if it failed.
 bool
-Sema::DeduceAutoType(TypeSourceInfo *Type, Expr *Init,
+Sema::DeduceAutoType(TypeSourceInfo *Type, Expr *&Init,
                      TypeSourceInfo *&Result) {
+  if (Init->getType()->isNonOverloadPlaceholderType()) {
+    ExprResult result = CheckPlaceholderExpr(Init);
+    if (result.isInvalid()) return false;
+    Init = result.take();
+  }
+
   if (Init->isTypeDependent()) {
     Result = Type;
     return true;

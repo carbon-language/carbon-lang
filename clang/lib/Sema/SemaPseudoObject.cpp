@@ -775,12 +775,10 @@ ExprResult Sema::checkPseudoObjectAssignment(Scope *S, SourceLocation opcLoc,
                                         VK_RValue, OK_Ordinary, opcLoc);
 
   // Filter out non-overload placeholder types in the RHS.
-  if (const BuiltinType *PTy = RHS->getType()->getAsPlaceholderType()) {
-    if (PTy->getKind() != BuiltinType::Overload) {
-      ExprResult result = CheckPlaceholderExpr(RHS);
-      if (result.isInvalid()) return ExprError();
-      RHS = result.take();
-    }
+  if (RHS->getType()->isNonOverloadPlaceholderType()) {
+    ExprResult result = CheckPlaceholderExpr(RHS);
+    if (result.isInvalid()) return ExprError();
+    RHS = result.take();
   }
 
   Expr *opaqueRef = LHS->IgnoreParens();
