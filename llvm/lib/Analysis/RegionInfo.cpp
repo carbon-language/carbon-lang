@@ -186,18 +186,16 @@ std::string Region::getNameStr() const {
     raw_string_ostream OS(entryName);
 
     WriteAsOperand(OS, getEntry(), false);
-    entryName = OS.str();
   } else
-    entryName = getEntry()->getNameStr();
+    entryName = getEntry()->getName();
 
   if (getExit()) {
     if (getExit()->getName().empty()) {
       raw_string_ostream OS(exitName);
 
       WriteAsOperand(OS, getExit(), false);
-      exitName = OS.str();
     } else
-      exitName = getExit()->getNameStr();
+      exitName = getExit()->getName();
   } else
     exitName = "<Function Return>";
 

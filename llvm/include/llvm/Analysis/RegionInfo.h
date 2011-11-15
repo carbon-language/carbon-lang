@@ -681,7 +681,7 @@ inline raw_ostream &operator<<(raw_ostream &OS, const RegionNode &Node) {
   if (Node.isSubRegion())
     return OS << Node.getNodeAs<Region>()->getNameStr();
   else
-    return OS << Node.getNodeAs<BasicBlock>()->getNameStr();
+    return OS << Node.getNodeAs<BasicBlock>()->getName();
 }
 } // End llvm namespace
 #endif
