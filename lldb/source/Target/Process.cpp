@@ -251,7 +251,7 @@ ProcessInfo::SetArguments (const Args& args,
 }
 
 void
-ProcessLaunchInfo::FinalizeFileActions (Target *target, Process *process)
+ProcessLaunchInfo::FinalizeFileActions (Target *target)
 {
     // If notthing was specified, then check the process for any default 
     // settings that were set with "settings set"
@@ -304,6 +304,87 @@ ProcessLaunchInfo::FinalizeFileActions (Target *target, Process *process)
     }
 }
 
+
+bool
+ProcessLaunchInfo::ConvertArgumentsForLaunchingInShell (Error &error, bool localhost)
+{
+    error.Clear();
+
+    if (GetFlags().Test (eLaunchFlagLaunchInShell))
+    {
+        const char *shell_executable = GetShell();
+        if (shell_executable)
+        {
+            char shell_resolved_path[PATH_MAX];
+
+            if (localhost)
+            {
+                FileSpec shell_filespec (shell_executable, true);
+                
+                if (!shell_filespec.Exists())
+                {
+                    // Resolve the path in case we just got "bash", "sh" or "tcsh"
+                    if (!shell_filespec.ResolveExecutableLocation ())
+                    {
+                        error.SetErrorStringWithFormat("invalid shell path '%s'", shell_executable);
+                        return false;
+                    }
+                }
+                shell_filespec.GetPath (shell_resolved_path, sizeof(shell_resolved_path));
+                shell_executable = shell_resolved_path;
+            }
+            
+            Args shell_arguments;
+            std::string safe_arg;
+            shell_arguments.AppendArgument (shell_executable);
+            StreamString shell_command;
+            shell_arguments.AppendArgument ("-c");
+            shell_command.PutCString ("exec");
+            if (GetArchitecture().IsValid())
+            {
+                shell_command.Printf(" /usr/bin/arch -arch %s", GetArchitecture().GetArchitectureName());
+                // Set the resume count to 2: 
+                // 1 - stop in shell
+                // 2 - stop in /usr/bin/arch
+                // 3 - then we will stop in our program
+                SetResumeCount(2);
+            }
+            else
+            {
+                // Set the resume count to 1: 
+                // 1 - stop in shell
+                // 2 - then we will stop in our program
+                SetResumeCount(1);
+            }
+            
+            const char **argv = GetArguments().GetConstArgumentVector ();
+            if (argv)
+            {
+                for (size_t i=0; argv[i] != NULL; ++i)
+                {
+                    const char *arg = Args::GetShellSafeArgument (argv[i], safe_arg);
+                    shell_command.Printf(" %s", arg);
+                }
+            }
+            shell_arguments.AppendArgument (shell_command.GetString().c_str());
+            
+            m_executable.SetFile(shell_executable, false);
+            m_arguments = shell_arguments;
+            return true;
+        }
+        else
+        {
+            error.SetErrorString ("invalid shell path");
+        }
+    }
+    else
+    {
+        error.SetErrorString ("not launching in shell");
+    }
+    return false;
+}
+
+
 bool
 ProcessLaunchInfo::FileAction::Open (int fd, const char *path, bool read, bool write)
 {
@@ -312,11 +393,11 @@ ProcessLaunchInfo::FileAction::Open (int fd, const char *path, bool read, bool w
         m_action = eFileActionOpen;
         m_fd = fd;
         if (read && write)
-            m_arg = O_RDWR;
+            m_arg = O_NOCTTY | O_CREAT | O_RDWR;
         else if (read)
-            m_arg = O_RDONLY;
+            m_arg = O_NOCTTY | O_RDONLY;
         else
-            m_arg = O_WRONLY;
+            m_arg = O_NOCTTY | O_CREAT | O_WRONLY;
         m_path.assign (path);
         return true;
     }
@@ -404,7 +485,11 @@ ProcessLaunchInfo::FileAction::AddPosixSpawnFileAction (posix_spawn_file_actions
             else
             {
                 int oflag = info->m_arg;
+                
                 mode_t mode = 0;
+
+                if (oflag & O_CREAT)
+                    mode = 0640;
 
                 error.SetError (::posix_spawn_file_actions_addopen (file_actions, 
                                                                     info->m_fd,
@@ -496,7 +581,10 @@ ProcessLaunchCommandOptions::SetOptionValue (uint32_t option_idx, const char *op
             break;
             
         case 'c':   
-            launch_info.GetFlags().Set (eLaunchFlagLaunchInShell); 
+            if (option_arg && option_arg[0])
+                launch_info.SetShell (option_arg);
+            else
+                launch_info.SetShell ("/bin/bash");
             break;
             
         case 'v':
@@ -520,7 +608,7 @@ ProcessLaunchCommandOptions::g_option_table[] =
 { LLDB_OPT_SET_ALL, false, "working-dir",   'w', required_argument, NULL, 0, eArgTypePath,          "Set the current working directory to <path> when running the inferior."},
 { LLDB_OPT_SET_ALL, false, "arch",          'a', required_argument, NULL, 0, eArgTypeArchitecture,  "Set the architecture for the process to launch when ambiguous."},
 { LLDB_OPT_SET_ALL, false, "environment",   'v', required_argument, NULL, 0, eArgTypeNone,          "Specify an environment variable name/value stirng (--environement NAME=VALUE). Can be specified multiple times for subsequent environment entries."},
-{ LLDB_OPT_SET_ALL, false, "shell",         'c', no_argument,       NULL, 0, eArgTypeNone,          "Run the process in a shell (not supported on all platforms)."},
+{ LLDB_OPT_SET_ALL, false, "shell",         'c', optional_argument, NULL, 0, eArgTypePath,          "Run the process in a shell (not supported on all platforms)."},
 
 { LLDB_OPT_SET_1  , false, "stdin",         'i', required_argument, NULL, 0, eArgTypePath,    "Redirect stdin for the process to <path>."},
 { LLDB_OPT_SET_1  , false, "stdout",        'o', required_argument, NULL, 0, eArgTypePath,    "Redirect stdout for the process to <path>."},
@@ -2229,91 +2317,103 @@ Process::AttachCompletionHandler::GetExitString ()
 }
 
 Error
-Process::Attach (lldb::pid_t attach_pid, uint32_t exec_count)
+Process::Attach (ProcessAttachInfo &attach_info)
 {
-
     m_abi_sp.reset();
     m_process_input_reader.reset();
-
     m_dyld_ap.reset();
     m_os_ap.reset();
-
-    Error error (WillAttachToProcessWithID(attach_pid));
-    if (error.Success())
-    {
-        SetPublicState (eStateAttaching);
-
-        error = DoAttachToProcessWithID (attach_pid);
-        if (error.Success())
-        {
-            
-            SetNextEventAction(new Process::AttachCompletionHandler(this, exec_count));
-            StartPrivateStateThread();
-        }
-        else
-        {
-            if (GetID() != LLDB_INVALID_PROCESS_ID)
-            {
-                SetID (LLDB_INVALID_PROCESS_ID);
-                const char *error_string = error.AsCString();
-                if (error_string == NULL)
-                    error_string = "attach failed";
-
-                SetExitStatus(-1, error_string);
-            }
-        }
-    }
-    return error;
-}
-
-Error
-Process::Attach (const char *process_name, bool wait_for_launch)
-{
-    m_abi_sp.reset();
-    m_process_input_reader.reset();
     
-    // Find the process and its architecture.  Make sure it matches the architecture
-    // of the current Target, and if not adjust it.
+    lldb::pid_t attach_pid = attach_info.GetProcessID();
     Error error;
-    
-    if (!wait_for_launch)
+    if (attach_pid == LLDB_INVALID_PROCESS_ID)
     {
-        ProcessInstanceInfoList process_infos;
-        PlatformSP platform_sp (m_target.GetPlatform ());
-        assert (platform_sp.get());
+        char process_name[PATH_MAX];
         
-        if (platform_sp)
+        if (attach_info.GetExecutableFile().GetPath (process_name, sizeof(process_name)))
         {
-            ProcessInstanceInfoMatch match_info;
-            match_info.GetProcessInfo().SetName(process_name);
-            match_info.SetNameMatchType (eNameMatchEquals);
-            platform_sp->FindProcesses (match_info, process_infos);
-            if (process_infos.GetSize() > 1)
+            const bool wait_for_launch = attach_info.GetWaitForLaunch();
+            
+            if (wait_for_launch)
             {
-                error.SetErrorStringWithFormat ("more than one process named %s", process_name);
+                error = WillAttachToProcessWithName(process_name, wait_for_launch);
+                if (error.Success())
+                {
+                    SetPublicState (eStateAttaching);
+                    error = DoAttachToProcessWithName (process_name, wait_for_launch);
+                    if (error.Fail())
+                    {
+                        if (GetID() != LLDB_INVALID_PROCESS_ID)
+                        {
+                            SetID (LLDB_INVALID_PROCESS_ID);
+                            if (error.AsCString() == NULL)
+                                error.SetErrorString("attach failed");
+                            
+                            SetExitStatus(-1, error.AsCString());
+                        }
+                    }
+                    else
+                    {
+                        SetNextEventAction(new Process::AttachCompletionHandler(this, attach_info.GetResumeCount()));
+                        StartPrivateStateThread();
+                    }
+                    return error;
+                }
             }
-            else if (process_infos.GetSize() == 0)
+            else
             {
-                error.SetErrorStringWithFormat ("could not find a process named %s", process_name);
+                ProcessInstanceInfoList process_infos;
+                PlatformSP platform_sp (m_target.GetPlatform ());
+                
+                if (platform_sp)
+                {
+                    ProcessInstanceInfoMatch match_info;
+                    match_info.GetProcessInfo() = attach_info;
+                    match_info.SetNameMatchType (eNameMatchEquals);
+                    platform_sp->FindProcesses (match_info, process_infos);
+                    const uint32_t num_matches = process_infos.GetSize();
+                    if (num_matches == 1)
+                    {
+                        attach_pid = process_infos.GetProcessIDAtIndex(0);
+                        // Fall through and attach using the above process ID
+                    }
+                    else
+                    {
+                        match_info.GetProcessInfo().GetExecutableFile().GetPath (process_name, sizeof(process_name));    
+                        if (num_matches > 1)
+                            error.SetErrorStringWithFormat ("more than one process named %s", process_name);
+                        else
+                            error.SetErrorStringWithFormat ("could not find a process named %s", process_name);
+                    }
+                }
+                else
+                {        
+                    error.SetErrorString ("invalid platform, can't find processes by name");
+                    return error;
+                }
             }
         }
         else
-        {        
-            error.SetErrorString ("invalid platform");
+        {
+            error.SetErrorString ("invalid process name");
         }
     }
-
-    if (error.Success())
+    
+    if (attach_pid != LLDB_INVALID_PROCESS_ID)
     {
-        m_dyld_ap.reset();
-        m_os_ap.reset();
-        
-        error = WillAttachToProcessWithName(process_name, wait_for_launch);
+        error = WillAttachToProcessWithID(attach_pid);
         if (error.Success())
         {
             SetPublicState (eStateAttaching);
-            error = DoAttachToProcessWithName (process_name, wait_for_launch);
-            if (error.Fail())
+
+            error = DoAttachToProcessWithID (attach_pid);
+            if (error.Success())
+            {
+                
+                SetNextEventAction(new Process::AttachCompletionHandler(this, attach_info.GetResumeCount()));
+                StartPrivateStateThread();
+            }
+            else
             {
                 if (GetID() != LLDB_INVALID_PROCESS_ID)
                 {
@@ -2325,15 +2425,79 @@ Process::Attach (const char *process_name, bool wait_for_launch)
                     SetExitStatus(-1, error_string);
                 }
             }
-            else
-            {
-                SetNextEventAction(new Process::AttachCompletionHandler(this, 0));
-                StartPrivateStateThread();
-            }
         }
     }
     return error;
 }
+
+//Error
+//Process::Attach (const char *process_name, bool wait_for_launch)
+//{
+//    m_abi_sp.reset();
+//    m_process_input_reader.reset();
+//    
+//    // Find the process and its architecture.  Make sure it matches the architecture
+//    // of the current Target, and if not adjust it.
+//    Error error;
+//    
+//    if (!wait_for_launch)
+//    {
+//        ProcessInstanceInfoList process_infos;
+//        PlatformSP platform_sp (m_target.GetPlatform ());
+//        assert (platform_sp.get());
+//        
+//        if (platform_sp)
+//        {
+//            ProcessInstanceInfoMatch match_info;
+//            match_info.GetProcessInfo().SetName(process_name);
+//            match_info.SetNameMatchType (eNameMatchEquals);
+//            platform_sp->FindProcesses (match_info, process_infos);
+//            if (process_infos.GetSize() > 1)
+//            {
+//                error.SetErrorStringWithFormat ("more than one process named %s", process_name);
+//            }
+//            else if (process_infos.GetSize() == 0)
+//            {
+//                error.SetErrorStringWithFormat ("could not find a process named %s", process_name);
+//            }
+//        }
+//        else
+//        {        
+//            error.SetErrorString ("invalid platform");
+//        }
+//    }
+//
+//    if (error.Success())
+//    {
+//        m_dyld_ap.reset();
+//        m_os_ap.reset();
+//        
+//        error = WillAttachToProcessWithName(process_name, wait_for_launch);
+//        if (error.Success())
+//        {
+//            SetPublicState (eStateAttaching);
+//            error = DoAttachToProcessWithName (process_name, wait_for_launch);
+//            if (error.Fail())
+//            {
+//                if (GetID() != LLDB_INVALID_PROCESS_ID)
+//                {
+//                    SetID (LLDB_INVALID_PROCESS_ID);
+//                    const char *error_string = error.AsCString();
+//                    if (error_string == NULL)
+//                        error_string = "attach failed";
+//
+//                    SetExitStatus(-1, error_string);
+//                }
+//            }
+//            else
+//            {
+//                SetNextEventAction(new Process::AttachCompletionHandler(this, 0));
+//                StartPrivateStateThread();
+//            }
+//        }
+//    }
+//    return error;
+//}
 
 void
 Process::CompleteAttach ()

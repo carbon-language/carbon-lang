@@ -169,7 +169,9 @@ SBProcess::RemoteAttachToProcessWithID (lldb::pid_t pid, lldb::SBError& error)
         Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         if (m_opaque_sp->GetState() == eStateConnected)
         {
-            error.SetError (m_opaque_sp->Attach (pid, 0));            
+            ProcessAttachInfo attach_info;
+            attach_info.SetProcessID (pid);
+            error.SetError (m_opaque_sp->Attach (attach_info));            
         }
         else
         {

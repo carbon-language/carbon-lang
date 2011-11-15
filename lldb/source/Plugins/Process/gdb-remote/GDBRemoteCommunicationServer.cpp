@@ -335,7 +335,7 @@ GDBRemoteCommunicationServer::Handle_qfProcessInfo (StringExtractorGDBRemote &pa
                 StringExtractor extractor;
                 extractor.GetStringRef().swap(value);
                 extractor.GetHexByteString (value);
-                match_info.GetProcessInfo().SetName (value.c_str());
+                match_info.GetProcessInfo().GetExecutableFile().SetFile(value.c_str(), false);
             }
             else if (key.compare("name_match") == 0)
             {

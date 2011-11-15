@@ -305,7 +305,7 @@ namespace lldb_private {
         ///     appriopriate error fill into the \a error object.
         //------------------------------------------------------------------
         virtual lldb::ProcessSP
-        Attach (lldb::pid_t pid, 
+        Attach (ProcessAttachInfo &attach_info,
                 Debugger &debugger,
                 Target *target,       // Can be NULL, if NULL create a new target, else use existing one
                 Listener &listener,

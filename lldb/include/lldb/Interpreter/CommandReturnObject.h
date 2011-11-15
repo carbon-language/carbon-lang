@@ -141,6 +141,10 @@ public:
     void
     AppendErrorWithFormat (const char *format, ...)  __attribute__ ((format (printf, 2, 3)));
 
+    void
+    SetError (const Error &error, 
+              const char *fallback_error_cstr);
+
     lldb::ReturnStatus
     GetStatus();
 

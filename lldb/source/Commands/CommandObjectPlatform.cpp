@@ -653,27 +653,27 @@ protected:
                     break;
 
                 case 'n':
-                    match_info.GetProcessInfo().SetName (option_arg);
+                    match_info.GetProcessInfo().GetExecutableFile().SetFile (option_arg, false);
                     match_info.SetNameMatchType (eNameMatchEquals);
                     break;
 
                 case 'e':
-                    match_info.GetProcessInfo().SetName (option_arg);
+                    match_info.GetProcessInfo().GetExecutableFile().SetFile (option_arg, false);
                     match_info.SetNameMatchType (eNameMatchEndsWith);
                     break;
 
                 case 's':
-                    match_info.GetProcessInfo().SetName (option_arg);
+                    match_info.GetProcessInfo().GetExecutableFile().SetFile (option_arg, false);
                     match_info.SetNameMatchType (eNameMatchStartsWith);
                     break;
                     
                 case 'c':
-                    match_info.GetProcessInfo().SetName (option_arg);
+                    match_info.GetProcessInfo().GetExecutableFile().SetFile (option_arg, false);
                     match_info.SetNameMatchType (eNameMatchContains);
                     break;
                     
                 case 'r':
-                    match_info.GetProcessInfo().SetName (option_arg);
+                    match_info.GetProcessInfo().GetExecutableFile().SetFile (option_arg, false);
                     match_info.SetNameMatchType (eNameMatchRegularExpression);
                     break;
 

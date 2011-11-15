@@ -148,12 +148,6 @@ public:
         return m_executable.GetFilename().GetLength();
     }
     
-    void
-    SetName (const char *name)
-    {
-        m_executable.GetFilename().SetCString (name);
-    }
-    
     FileSpec &
     GetExecutableFile ()
     {
@@ -591,7 +585,7 @@ public:
     }
     
     void
-    FinalizeFileActions (Target *target, Process *process);
+    FinalizeFileActions (Target *target);
 
     size_t
     GetNumFileActions () const
@@ -671,21 +665,158 @@ public:
             m_plugin_name.clear();
     }
     
+    const char *
+    GetShell () const
+    {
+        if (m_shell.empty())
+            return NULL;
+        return m_shell.c_str();
+    }
+
+    void
+    SetShell (const char * path)
+    {
+        if (path && path[0])
+        {
+            m_shell.assign (path);
+            m_flags.Set (lldb::eLaunchFlagLaunchInShell);
+        }
+        else
+        {
+            m_shell.clear();
+            m_flags.Clear (lldb::eLaunchFlagLaunchInShell);
+        }
+    }
+
+    uint32_t
+    GetResumeCount () const
+    {
+        return m_resume_count;
+    }
+    
+    void
+    SetResumeCount (uint32_t c)
+    {
+        m_resume_count = c;
+    }
+
     void
     Clear ()
     {
         ProcessInfo::Clear();
         m_working_dir.clear();
         m_plugin_name.clear();
+        m_shell.clear();
         m_flags.Clear();
         m_file_actions.clear();
+        m_resume_count = 0;
     }
 
+    bool
+    ConvertArgumentsForLaunchingInShell (Error &error, bool localhost);
+    
 protected:
     std::string m_working_dir;
     std::string m_plugin_name;
+    std::string m_shell;
     Flags m_flags;       // Bitwise OR of bits from lldb::LaunchFlags
     std::vector<FileAction> m_file_actions; // File actions for any other files
+    uint32_t m_resume_count; // How many times do we resume after launching
+};
+
+//----------------------------------------------------------------------
+// ProcessLaunchInfo
+//
+// Describes any information that is required to launch a process.
+//----------------------------------------------------------------------
+    
+class ProcessAttachInfo : public ProcessInstanceInfo
+{
+public:
+    ProcessAttachInfo() :
+        ProcessInstanceInfo(),
+        m_plugin_name (),
+        m_resume_count (0),
+        m_wait_for_launch (false)
+    {
+    }
+
+    ProcessAttachInfo (const ProcessLaunchInfo &launch_info) :
+        ProcessInstanceInfo(),
+        m_plugin_name (),
+        m_resume_count (0),
+        m_wait_for_launch (false)
+    {
+        ProcessInfo::operator= (launch_info);
+        SetProcessPluginName (launch_info.GetProcessPluginName());
+        SetResumeCount (launch_info.GetResumeCount());
+    }
+    
+    bool
+    GetWaitForLaunch () const
+    {
+        return m_wait_for_launch;
+    }
+    
+    void
+    SetWaitForLaunch (bool b)
+    {
+        m_wait_for_launch = b;
+    }
+
+    uint32_t
+    GetResumeCount () const
+    {
+        return m_resume_count;
+    }
+    
+    void
+    SetResumeCount (uint32_t c)
+    {
+        m_resume_count = c;
+    }
+    
+    const char *
+    GetProcessPluginName () const
+    {
+        if (m_plugin_name.empty())
+            return NULL;
+        return m_plugin_name.c_str();
+    }
+    
+    void
+    SetProcessPluginName (const char *plugin)
+    {
+        if (plugin && plugin[0])
+            m_plugin_name.assign (plugin);
+        else
+            m_plugin_name.clear();
+    }
+
+    void
+    Clear ()
+    {
+        ProcessInstanceInfo::Clear();
+        m_plugin_name.clear();
+        m_resume_count = 0;
+        m_wait_for_launch = false;
+    }
+
+    bool
+    ProcessInfoSpecified () const
+    {
+        if (GetExecutableFile())
+            return true;
+        if (GetProcessID() != LLDB_INVALID_PROCESS_ID)
+            return true;
+        if (GetParentProcessID() != LLDB_INVALID_PROCESS_ID)
+            return true;
+        return false;
+    }
+protected:
+    std::string m_plugin_name;
+    uint32_t m_resume_count; // How many times do we resume after launching
+    bool m_wait_for_launch;
 };
 
 class ProcessLaunchCommandOptions : public Options
@@ -744,12 +875,12 @@ public:
     }
 
     ProcessInstanceInfoMatch (const char *process_name, 
-                      lldb_private::NameMatchType process_name_match_type) :
+                              lldb_private::NameMatchType process_name_match_type) :
         m_match_info (),
         m_name_match_type (process_name_match_type),
         m_match_all_users (false)
     {
-        m_match_info.SetName (process_name);
+        m_match_info.GetExecutableFile().SetFile(process_name, false);
     }
 
     ProcessInstanceInfo &
@@ -1316,11 +1447,12 @@ public:
     Launch (const ProcessLaunchInfo &launch_info);
 
     //------------------------------------------------------------------
-    /// Attach to an existing process using a process ID.
+    /// Attach to an existing process using the process attach info.
     ///
     /// This function is not meant to be overridden by Process
-    /// subclasses. It will first call Process::WillAttach (lldb::pid_t)
-    /// and if that returns \b true, Process::DoAttach (lldb::pid_t) will
+    /// subclasses. It will first call WillAttach (lldb::pid_t)
+    /// or WillAttach (const char *), and if that returns \b 
+    /// true, DoAttach (lldb::pid_t) or DoAttach (const char *) will
     /// be called to actually do the attach. If DoAttach returns \b
     /// true, then Process::DidAttach() will be called.
     ///
@@ -1332,28 +1464,8 @@ public:
     ///     LLDB_INVALID_PROCESS_ID if attaching fails.
     //------------------------------------------------------------------
     virtual Error
-    Attach (lldb::pid_t pid, uint32_t exec_count);
+    Attach (ProcessAttachInfo &attach_info);
 
-    //------------------------------------------------------------------
-    /// Attach to an existing process by process name.
-    ///
-    /// This function is not meant to be overridden by Process
-    /// subclasses. It will first call
-    /// Process::WillAttach (const char *) and if that returns \b
-    /// true, Process::DoAttach (const char *) will be called to
-    /// actually do the attach. If DoAttach returns \b true, then
-    /// Process::DidAttach() will be called.
-    ///
-    /// @param[in] process_name
-    ///     A process name to match against the current process list.
-    ///
-    /// @return
-    ///     Returns \a pid if attaching was successful, or
-    ///     LLDB_INVALID_PROCESS_ID if attaching fails.
-    //------------------------------------------------------------------
-    virtual Error
-    Attach (const char *process_name, bool wait_for_launch);
-    
     virtual Error
     ConnectRemote (const char *remote_url);
 

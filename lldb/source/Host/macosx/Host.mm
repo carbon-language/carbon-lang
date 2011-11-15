@@ -59,6 +59,12 @@
 #define _POSIX_SPAWN_DISABLE_ASLR       0x0100
 #endif
 
+extern "C" 
+{
+    int __pthread_chdir(const char *path);
+    int __pthread_fchdir (int fildes);
+}
+
 using namespace lldb;
 using namespace lldb_private;
 
@@ -431,25 +437,6 @@ tell application \"Terminal\"\n\
 	do script the_shell_script\n\
 end tell\n";
 
-static const char *
-GetShellSafeArgument (const char *unsafe_arg, std::string &safe_arg)
-{
-    safe_arg.assign (unsafe_arg);
-    size_t prev_pos = 0;
-    while (prev_pos < safe_arg.size())
-    {
-        // Escape spaces and quotes
-        size_t pos = safe_arg.find_first_of(" '\"", prev_pos);
-        if (pos != std::string::npos)
-        {
-            safe_arg.insert (pos, 1, '\\');
-            prev_pos = pos + 2;
-        }
-        else
-            break;
-    }
-    return safe_arg.c_str();
-}
 
 static Error
 LaunchInNewTerminalWithAppleScript (const char *exe_path, ProcessLaunchInfo &launch_info)
@@ -499,44 +486,22 @@ LaunchInNewTerminalWithAppleScript (const char *exe_path, ProcessLaunchInfo &lau
     if (launch_info.GetFlags().Test (eLaunchFlagDisableASLR))
         command.PutCString(" --disable-aslr");
     
-    if (launch_info.GetFlags().Test (eLaunchFlagLaunchInShell))
+    command.PutCString(" -- ");
+
+    const char **argv = launch_info.GetArguments().GetConstArgumentVector ();
+    if (argv)
     {
-        const char *shell_executable = "/bin/bash"; //getenv("SHELL");
-        std::string safe_arg;
-        if (launch_info.GetArchitecture().IsValid())
-            command.Printf(" -- %s -c 'exec /usr/bin/arch -arch %s", shell_executable, launch_info.GetArchitecture().GetArchitectureName());
-        else
-            command.Printf(" -- %s -c 'exec ", shell_executable);
-        const char **argv = launch_info.GetArguments().GetConstArgumentVector ();
-        if (argv)
+        for (size_t i=0; argv[i] != NULL; ++i)
         {
-            for (size_t i=0; argv[i] != NULL; ++i)
-            {
-                const char *arg = GetShellSafeArgument (i == 0 ? exe_path : argv[i], safe_arg);
-                command.Printf(" %s", arg);
-            }
+            if (i==0)
+                command.Printf(" '%s'", exe_path);
+            else
+                command.Printf(" '%s'", argv[i]);
         }
-        command.PutChar('\'');
     }
     else
     {
-        command.PutCString(" -- ");
-
-        const char **argv = launch_info.GetArguments().GetConstArgumentVector ();
-        if (argv)
-        {
-            for (size_t i=0; argv[i] != NULL; ++i)
-            {
-                if (i==0)
-                    command.Printf(" '%s'", exe_path);
-                else
-                    command.Printf(" '%s'", argv[i]);
-            }
-        }
-        else
-        {
-            command.Printf(" '%s'", exe_path);
-        }
+        command.Printf(" '%s'", exe_path);
     }
     command.PutCString (" ; echo Process exited with status $?");
     
@@ -1007,11 +972,11 @@ GetMacOSXProcessName (const ProcessInstanceInfoMatch *match_info_ptr,
                                                   match_info_ptr->GetNameMatchType(),
                                                   match_info_ptr->GetProcessInfo().GetName()))
         {
-            process_info.SetName (process_name);
+            process_info.GetExecutableFile().SetFile (process_name, false);
             return true;
         }
     }
-    process_info.SetName (NULL);
+    process_info.GetExecutableFile().Clear();
     return false;
 }
 
@@ -1306,6 +1271,11 @@ Host::LaunchProcess (ProcessLaunchInfo &launch_info)
     if (launch_info.GetFlags().Test (eLaunchFlagDisableASLR))
         flags |= _POSIX_SPAWN_DISABLE_ASLR;     // Darwin specific posix_spawn flag
     
+//#ifdef POSIX_SPAWN_CLOEXEC_DEFAULT
+//    // Close all files exception those with file actions if this is supported.
+//    flags |= POSIX_SPAWN_CLOEXEC_DEFAULT;       
+//#endif
+
     error.SetError( ::posix_spawnattr_setflags (&attr, flags), eErrorTypePOSIX);
     if (error.Fail() || log)
         error.PutToLog(log.get(), "::posix_spawnattr_setflags ( &attr, flags=0x%8.8x )", flags);
@@ -1347,6 +1317,13 @@ Host::LaunchProcess (ProcessLaunchInfo &launch_info)
     }
 
 
+    const char *working_dir = launch_info.GetWorkingDirectory();
+    if (working_dir)
+    {
+        // No more thread specific current working directory
+        __pthread_chdir (working_dir);
+    }
+    
     const size_t num_file_actions = launch_info.GetNumFileActions ();
     if (num_file_actions > 0)
     {
@@ -1410,6 +1387,12 @@ Host::LaunchProcess (ProcessLaunchInfo &launch_info)
                            envp);
     }
     
+    if (working_dir)
+    {
+        // No more thread specific current working directory
+        __pthread_fchdir (-1);
+    }
+
     if (pid != LLDB_INVALID_PROCESS_ID)
     {
         // If all went well, then set the process ID into the launch info

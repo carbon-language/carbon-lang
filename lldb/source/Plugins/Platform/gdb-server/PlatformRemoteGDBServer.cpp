@@ -337,7 +337,7 @@ PlatformRemoteGDBServer::LaunchProcess (ProcessLaunchInfo &launch_info)
 }
 
 lldb::ProcessSP
-PlatformRemoteGDBServer::Attach (lldb::pid_t pid, 
+PlatformRemoteGDBServer::Attach (lldb_private::ProcessAttachInfo &attach_info,
                                  Debugger &debugger,
                                  Target *target,       // Can be NULL, if NULL create a new target, else use existing one
                                  Listener &listener, 
@@ -391,7 +391,7 @@ PlatformRemoteGDBServer::Attach (lldb::pid_t pid,
                         assert (connect_url_len < sizeof(connect_url));
                         error = process_sp->ConnectRemote (connect_url);
                         if (error.Success())
-                            error = process_sp->Attach(pid, 0);
+                            error = process_sp->Attach(attach_info);
                     }
                 }
             }

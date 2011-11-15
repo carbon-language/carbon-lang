@@ -401,6 +401,9 @@ public:
     static const char *
     StringToVersion (const char *s, uint32_t &major, uint32_t &minor, uint32_t &update);
 
+    static const char *
+    GetShellSafeArgument (const char *unsafe_arg, std::string &safe_arg);
+
     // This one isn't really relevant to Arguments per se, but we're using the Args as a
     // general strings container, so...
     void

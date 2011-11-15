@@ -395,8 +395,15 @@ Error
 PlatformDarwin::LaunchProcess (ProcessLaunchInfo &launch_info)
 {
     Error error;
+    
     if (IsHost())
     {
+        if (launch_info.GetFlags().Test (eLaunchFlagLaunchInShell))
+        {
+            const bool is_localhost = true;
+            if (!launch_info.ConvertArgumentsForLaunchingInShell (error, is_localhost))
+                return error;
+        }
         error = Platform::LaunchProcess (launch_info);
     }
     else
@@ -410,13 +417,14 @@ PlatformDarwin::LaunchProcess (ProcessLaunchInfo &launch_info)
 }
 
 lldb::ProcessSP
-PlatformDarwin::Attach (lldb::pid_t pid, 
+PlatformDarwin::Attach (ProcessAttachInfo &attach_info,
                         Debugger &debugger,
                         Target *target,
                         Listener &listener, 
                         Error &error)
 {
     lldb::ProcessSP process_sp;
+    
     if (IsHost())
     {
         if (target == NULL)
@@ -438,18 +446,17 @@ PlatformDarwin::Attach (lldb::pid_t pid,
         if (target && error.Success())
         {
             debugger.GetTargetList().SetSelectedTarget(target);
-            // The darwin always currently uses the GDB remote debugger plug-in
-            // so even when debugging locally we are debugging remotely!
-            process_sp = target->CreateProcess (listener, "gdb-remote");
+
+            process_sp = target->CreateProcess (listener, attach_info.GetProcessPluginName());
             
             if (process_sp)
-                error = process_sp->Attach (pid, 2);
+                error = process_sp->Attach (attach_info);
         }
     }
     else
     {
         if (m_remote_platform_sp)
-            process_sp = m_remote_platform_sp->Attach (pid, debugger, target, listener, error);
+            process_sp = m_remote_platform_sp->Attach (attach_info, debugger, target, listener, error);
         else
             error.SetErrorString ("the platform is not currently connected");
     }

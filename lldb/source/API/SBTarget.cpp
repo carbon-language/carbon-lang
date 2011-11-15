@@ -337,7 +337,9 @@ SBTarget::AttachToProcessWithID
 
         if (sb_process.IsValid())
         {
-            error.SetError (sb_process->Attach (pid, 0));
+            ProcessAttachInfo attach_info;
+            attach_info.SetProcessID (pid);
+            error.SetError (sb_process->Attach (attach_info));            
             // If we are doing synchronous mode, then wait for the
             // process to stop!
             if (m_opaque_sp->GetDebugger().GetAsyncExecution () == false)
@@ -409,7 +411,10 @@ SBTarget::AttachToProcessWithName
 
         if (sb_process.IsValid())
         {
-            error.SetError (sb_process->Attach (name, wait_for));
+            ProcessAttachInfo attach_info;
+            attach_info.GetExecutableFile().SetFile(name, false);
+            attach_info.SetWaitForLaunch(wait_for);
+            error.SetError (sb_process->Attach (attach_info));
             // If we are doing synchronous mode, then wait for the
             // process to stop!
             if (m_opaque_sp->GetDebugger().GetAsyncExecution () == false)

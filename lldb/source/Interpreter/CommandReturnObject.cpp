@@ -13,6 +13,7 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Core/Error.h"
 #include "lldb/Core/StreamString.h"
 
 using namespace lldb;
@@ -134,6 +135,15 @@ CommandReturnObject::AppendError (const char *in_string, int len)
     GetErrorStream().Printf ("error: %*.*s\n", len, len, in_string);
 }
 
+void
+CommandReturnObject::SetError (const Error &error, const char *fallback_error_cstr)
+{
+    const char *error_cstr = error.AsCString();
+    if (error_cstr == NULL)
+        error_cstr = fallback_error_cstr;
+    AppendError (error_cstr);
+    SetStatus (eReturnStatusFailed);
+}
 // Similar to AppendError, but do not prepend 'Error: ' to message, and
 // don't append "\n" to the end of it.
 

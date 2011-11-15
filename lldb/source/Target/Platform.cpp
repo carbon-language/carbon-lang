@@ -577,16 +577,10 @@ Platform::DebugProcess (ProcessLaunchInfo &launch_info,
     error = LaunchProcess (launch_info);
     if (error.Success())
     {
-        lldb::pid_t pid = launch_info.GetProcessID();
-        if (pid != LLDB_INVALID_PROCESS_ID)
+        if (launch_info.GetProcessID() != LLDB_INVALID_PROCESS_ID)
         {
-            process_sp = Attach (pid, debugger, target, listener, error);
-            
-//            if (process_sp)
-//            {
-//                if (launch_info.GetFlags().IsClear (eLaunchFlagStopAtEntry))
-//                    process_sp->Resume();
-//            }
+            ProcessAttachInfo attach_info (launch_info);
+            process_sp = Attach (attach_info, debugger, target, listener, error);
         }
     }
     return process_sp;

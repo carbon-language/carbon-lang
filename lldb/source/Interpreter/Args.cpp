@@ -864,6 +864,26 @@ Args::StringToVersion (const char *s, uint32_t &major, uint32_t &minor, uint32_t
     return 0;
 }
 
+const char *
+Args::GetShellSafeArgument (const char *unsafe_arg, std::string &safe_arg)
+{
+    safe_arg.assign (unsafe_arg);
+    size_t prev_pos = 0;
+    while (prev_pos < safe_arg.size())
+    {
+        // Escape spaces and quotes
+        size_t pos = safe_arg.find_first_of(" '\"", prev_pos);
+        if (pos != std::string::npos)
+        {
+            safe_arg.insert (pos, 1, '\\');
+            prev_pos = pos + 2;
+        }
+        else
+            break;
+    }
+    return safe_arg.c_str();
+}
+
 
 int32_t
 Args::StringToOptionEnum (const char *s, OptionEnumValueElement *enum_values, int32_t fail_value, Error &error)

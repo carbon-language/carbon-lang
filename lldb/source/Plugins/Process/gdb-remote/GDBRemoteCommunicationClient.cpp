@@ -1243,7 +1243,7 @@ GDBRemoteCommunicationClient::DecodeProcessInfoResponse (StringExtractorGDBRemot
                 extractor.GetStringRef().swap(value);
                 extractor.SetFilePos(0);
                 extractor.GetHexByteString (value);
-                process_info.SetName (value.c_str());
+                process_info.GetExecutableFile().SetFile (value.c_str(), false);
             }
         }
         

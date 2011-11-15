@@ -112,6 +112,7 @@ class   NamedOption;
 class   PathMappingList;
 class   Platform;
 class   Process;
+class   ProcessAttachInfo;
 class   ProcessModID;
 class   ProcessInfo;
 class   ProcessInstanceInfo;
@@ -128,7 +129,7 @@ class   ScriptInterpreter;
 #ifndef LLDB_DISABLE_PYTHON
 class   ScriptInterpreterPython;
 struct  ScriptSummaryFormat;
-#endif // #ifndef LLDB_DISABLE_PYTHON
+#endif
 class   SearchFilter;
 class   Section;
 class   SectionImpl;
@@ -161,7 +162,7 @@ class   SyntheticChildren;
 class   SyntheticChildrenFrontEnd;
 #ifndef LLDB_DISABLE_PYTHON
 class   SyntheticScriptProvider;
-#endif // #ifndef LLDB_DISABLE_PYTHON
+#endif
 class   Target;
 class   TargetList;
 class   Thread;
