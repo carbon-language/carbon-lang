@@ -27,7 +27,6 @@
 #include "lldb/Core/Value.h"
 #include "lldb/Expression/ClangASTSource.h"
 #include "lldb/Expression/ClangExpressionVariable.h"
-#include "lldb/Symbol/ClangASTImporter.h"
 #include "lldb/Symbol/TaggedASTType.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Target/ExecutionContext.h"
@@ -687,7 +686,6 @@ private:
         SymbolContext               m_sym_ctx;          ///< The symbol context to use in finding variables and types.
         ClangPersistentVariables   *m_persistent_vars;  ///< The persistent variables for the process.
         bool                        m_enable_lookups;   ///< Set to true during parsing if we have found the first "$__lldb" name.
-        std::auto_ptr<ClangASTImporter> m_ast_importer; ///< The importer used to import types on the parser's behalf.
         TargetInfo                  m_target_info;      ///< Basic information about the target.
     private:
         ClangExpressionDeclMap     &m_decl_map;
