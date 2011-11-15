@@ -1172,3 +1172,9 @@ defm : VFPDT64InstAlias<"vldr${p}", "$Dd, $addr",
                         (VLDRD DPR:$Dd, addrmode5:$addr, pred:$p)>;
 defm : VFPDT64InstAlias<"vstr${p}", "$Dd, $addr",
                         (VSTRD DPR:$Dd, addrmode5:$addr, pred:$p)>;
+
+// VMUL has a two-operand form (implied destination operand)
+def : VFP2InstAlias<"vmul${p}.f64 $Dn, $Dm",
+                    (VMULD DPR:$Dn, DPR:$Dn, DPR:$Dm, pred:$p)>;
+def : VFP2InstAlias<"vmul${p}.f32 $Sn, $Sm",
+                    (VMULS SPR:$Sn, SPR:$Sn, SPR:$Sm, pred:$p)>;

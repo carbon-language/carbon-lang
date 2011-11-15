@@ -21,8 +21,14 @@
 @ CHECK: vmul.f64 d16, d17, d16      @ encoding: [0xa0,0x0b,0x61,0xee]
         vmul.f64        d16, d17, d16
 
+@ CHECK: vmul.f64	d20, d20, d17   @ encoding: [0xa1,0x4b,0x64,0xee]
+	vmul.f64  d20, d17
+
 @ CHECK: vmul.f32 s0, s1, s0         @ encoding: [0x80,0x0a,0x20,0xee]
         vmul.f32        s0, s1, s0
+
+@ CHECK: vmul.f32	s11, s11, s21   @ encoding: [0xaa,0x5a,0x65,0xee]
+	vmul.f32  s11, s21
 
 @ CHECK: vnmul.f64 d16, d17, d16     @ encoding: [0xe0,0x0b,0x61,0xee]
         vnmul.f64       d16, d17, d16
