@@ -1178,6 +1178,16 @@ def : VFP2InstAlias<"vmul${p}.f64 $Dn, $Dm",
                     (VMULD DPR:$Dn, DPR:$Dn, DPR:$Dm, pred:$p)>;
 def : VFP2InstAlias<"vmul${p}.f32 $Sn, $Sm",
                     (VMULS SPR:$Sn, SPR:$Sn, SPR:$Sm, pred:$p)>;
+// VADD has a two-operand form (implied destination operand)
+def : VFP2InstAlias<"vadd${p}.f64 $Dn, $Dm",
+                    (VADDD DPR:$Dn, DPR:$Dn, DPR:$Dm, pred:$p)>;
+def : VFP2InstAlias<"vadd${p}.f32 $Sn, $Sm",
+                    (VADDS SPR:$Sn, SPR:$Sn, SPR:$Sm, pred:$p)>;
+// VSUB has a two-operand form (implied destination operand)
+def : VFP2InstAlias<"vsub${p}.f64 $Dn, $Dm",
+                    (VSUBD DPR:$Dn, DPR:$Dn, DPR:$Dm, pred:$p)>;
+def : VFP2InstAlias<"vsub${p}.f32 $Sn, $Sm",
+                    (VSUBS SPR:$Sn, SPR:$Sn, SPR:$Sm, pred:$p)>;
 
 // VMOV can accept optional .f32/.f64 suffix.
 def : VFP2InstAlias<"vmov${p}.f32 $Rt, $Sn",
