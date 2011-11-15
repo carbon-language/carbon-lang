@@ -31,6 +31,8 @@ const char **g_table[2] = { days_of_week, weekdays };
 int main (int argc, char const *argv[])
 {
     int i;
+    int *my_int_ptr = &g_my_int;
+    printf("my_int_ptr points to location %p\n", my_int_ptr);
     const char **str_ptr = days_of_week;
     for (i = 0; i < 7; ++i)
         printf("%s\n", str_ptr[i]); // Break at this line

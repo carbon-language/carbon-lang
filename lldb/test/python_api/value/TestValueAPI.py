@@ -89,6 +89,16 @@ class ValueAPITestCase(TestBase):
             print cvf.format(weekdays)
             print rdf.format(g_table)
 
+        # Get variable 'my_int_ptr'.
+        value = frame0.FindVariable('my_int_ptr')
+        self.assertTrue(value, VALID_VARIABLE)
+        self.DebugSBValue(value)
+
+        # Get what 'my_int_ptr' points to.
+        pointed = value.GetChildAtIndex(0)
+        self.assertTrue(pointed, VALID_VARIABLE)
+        self.DebugSBValue(pointed)
+
         # Get variable 'str_ptr'.
         value = frame0.FindVariable('str_ptr')
         self.assertTrue(value, VALID_VARIABLE)
