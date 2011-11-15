@@ -41,6 +41,14 @@ UsePocc("polly-use-pocc",
        cl::desc("Use the PoCC optimizer instead of the one in isl"), cl::Hidden,
        cl::init(false));
 static cl::opt<bool>
+ImportJScop("polly-run-import-jscop",
+            cl::desc("Export the JScop description of the detected Scops"),
+            cl::Hidden, cl::init(false));
+static cl::opt<bool>
+ExportJScop("polly-run-export-jscop",
+            cl::desc("Export the JScop description of the detected Scops"),
+            cl::Hidden, cl::init(false));
+static cl::opt<bool>
 PollyViewer("polly-show",
        cl::desc("Enable the Polly DOT viewer in -O3"), cl::Hidden,
        cl::value_desc("Run the Polly DOT viewer at -O3"),
@@ -69,6 +77,8 @@ void initializePollyPasses(PassRegistry &Registry) {
   initializeCodePreparationPass(Registry);
   initializeDependencesPass(Registry);
   initializeIndependentBlocksPass(Registry);
+  initializeJSONExporterPass(Registry);
+  initializeJSONImporterPass(Registry);
   initializeIslScheduleOptimizerPass(Registry);
 #ifdef SCOPLIB_FOUND
   initializePoccPass(Registry);
@@ -137,6 +147,9 @@ static void registerPollyPasses(const llvm::PassManagerBuilder &Builder,
   if (PollyOnlyPrinter)
     PM.add(polly::createDOTOnlyPrinterPass());
 
+  if (ImportJScop)
+    PM.add(polly::createJSONImporterPass());
+
   if (!DisableScheduler) {
     if (!UsePocc)
       PM.add(polly::createIslScheduleOptimizerPass());
@@ -150,8 +163,11 @@ static void registerPollyPasses(const llvm::PassManagerBuilder &Builder,
       PM.add(polly::createIslScheduleOptimizerPass());
 #endif
     }
-
   }
+
+  if (ExportJScop)
+    PM.add(polly::createJSONExporterPass());
+
 
   if (!DisableCodegen)
     PM.add(polly::createCodeGenerationPass());

@@ -112,6 +112,8 @@ namespace llvm {
   void initializeCodeGenerationPass(llvm::PassRegistry&);
   void initializeCodePreparationPass(llvm::PassRegistry&);
   void initializeIndependentBlocksPass(llvm::PassRegistry&);
+  void initializeJSONExporterPass(llvm::PassRegistry&);
+  void initializeJSONImporterPass(llvm::PassRegistry&);
   void initializeIslScheduleOptimizerPass(llvm::PassRegistry&);
 #ifdef SCOPLIB_FOUND
   void initializePoccPass(llvm::PassRegistry&);
