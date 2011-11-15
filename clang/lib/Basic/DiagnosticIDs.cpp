@@ -683,7 +683,7 @@ bool DiagnosticIDs::getDiagnosticsInGroup(
 
 StringRef DiagnosticIDs::getNearestWarningOption(StringRef Group) {
   StringRef Best;
-  unsigned BestDistance = 0;
+  unsigned BestDistance = Group.size() + 1; // Sanity threshold.
   for (const WarningOption *i = OptionTable, *e = OptionTable + OptionTableSize;
        i != e; ++i) {
     // Don't suggest ignored warning flags.
@@ -691,9 +691,11 @@ StringRef DiagnosticIDs::getNearestWarningOption(StringRef Group) {
       continue;
 
     unsigned Distance = i->getName().edit_distance(Group, true, BestDistance);
-
-    // Check if this is a better match.
-    if (Best.empty() || Distance < BestDistance) {
+    if (Distance == BestDistance) {
+      // Two matches with the same distance, don't prefer one over the other.
+      Best = "";
+    } else if (Distance < BestDistance) {
+      // This is a better match.
       Best = i->getName();
       BestDistance = Distance;
     }

@@ -148,9 +148,15 @@ def warn_pch_compiler_options_mismatch : Error<
 def err_not_a_pch_file : Error<
     "'%0' does not appear to be a precompiled header file">, DefaultFatal;
 def warn_unknown_warning_option : Warning<
-    "unknown warning option '%0'; did you mean '%1'?">,
+    "unknown warning option '%0'">,
     InGroup<DiagGroup<"unknown-warning-option"> >;
 def warn_unknown_negative_warning_option : Warning<
+    "unknown warning option '%0'?">,
+    InGroup<DiagGroup<"unknown-warning-option"> >, DefaultIgnore;
+def warn_unknown_warning_option_suggest : Warning<
+    "unknown warning option '%0'; did you mean '%1'?">,
+    InGroup<DiagGroup<"unknown-warning-option"> >;
+def warn_unknown_negative_warning_option_suggest : Warning<
     "unknown warning option '%0'; did you mean '%1'?">,
     InGroup<DiagGroup<"unknown-warning-option"> >, DefaultIgnore;
 def warn_unknown_warning_specifier : Warning<

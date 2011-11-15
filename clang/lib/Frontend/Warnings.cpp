@@ -31,6 +31,21 @@
 #include <algorithm>
 using namespace clang;
 
+// EmitUnkownDiagWarning - Emit a warning and typo hint for unknown warning opts
+static void EmitUnkownDiagWarning(DiagnosticsEngine &Diags,
+                                  StringRef Prefix, StringRef Opt,
+                                  bool isPositive) {
+  StringRef Suggestion = DiagnosticIDs::getNearestWarningOption(Opt);
+  if (!Suggestion.empty())
+    Diags.Report(isPositive? diag::warn_unknown_warning_option_suggest :
+                             diag::warn_unknown_negative_warning_option_suggest)
+      << (Prefix.str() += Opt) << (Prefix.str() += Suggestion);
+  else
+    Diags.Report(isPositive? diag::warn_unknown_warning_option :
+                             diag::warn_unknown_negative_warning_option)
+      << (Prefix.str() += Opt);
+}
+
 void clang::ProcessWarningOptions(DiagnosticsEngine &Diags,
                                   const DiagnosticOptions &Opts) {
   Diags.setSuppressSystemWarnings(true);  // Default to -Wno-system-headers
@@ -118,11 +133,7 @@ void clang::ProcessWarningOptions(DiagnosticsEngine &Diags,
           // Set the warning as error flag for this specifier.
           Diags.setDiagnosticGroupWarningAsError(Specifier, isPositive);
         } else if (DiagIDs->getDiagnosticsInGroup(Specifier, _Diags)) {
-          Diags.Report(isPositive ? diag::warn_unknown_warning_option :
-                       diag::warn_unknown_negative_warning_option)
-            << ("-W" + Opt.str())
-            << ("-Werror=" +
-                DiagnosticIDs::getNearestWarningOption(Specifier).str());
+          EmitUnkownDiagWarning(Diags, "-Werror", Specifier, isPositive);
         }
         continue;
       }
@@ -150,20 +161,13 @@ void clang::ProcessWarningOptions(DiagnosticsEngine &Diags,
           // Set the error as fatal flag for this specifier.
           Diags.setDiagnosticGroupErrorAsFatal(Specifier, isPositive);
         } else if (DiagIDs->getDiagnosticsInGroup(Specifier, _Diags)) {
-          Diags.Report(isPositive ? diag::warn_unknown_warning_option :
-                       diag::warn_unknown_negative_warning_option)
-            << ("-W" + Opt.str())
-            << ("-Wfatal-errors=" +
-                DiagnosticIDs::getNearestWarningOption(Specifier).str());
+          EmitUnkownDiagWarning(Diags, "-Wfatal-errors", Specifier, isPositive);
         }
         continue;
       }
       
       if (Report && DiagIDs->getDiagnosticsInGroup(Opt, _Diags)) {
-        Diags.Report(isPositive ? diag::warn_unknown_warning_option :
-                     diag::warn_unknown_negative_warning_option)
-          << ("-W" + Opt.str())
-          << ("-W" + DiagnosticIDs::getNearestWarningOption(Opt).str());
+        EmitUnkownDiagWarning(Diags, "-W", Opt, isPositive);
       } else {
         Diags.setDiagnosticGroupMapping(Opt, Mapping);
       }
