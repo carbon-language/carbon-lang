@@ -285,6 +285,25 @@ bool JSONImporter::runOnScop(Scop &scop) {
       isl_map *newAccessMap = isl_map_read_from_str(S->getIslCtx(),
                                                     accesses.asCString());
       isl_map *currentAccessMap = (*MI)->getAccessRelation();
+
+      if (isl_map_dim(newAccessMap, isl_dim_param) !=
+          isl_map_dim(currentAccessMap, isl_dim_param)) {
+        errs() << "JScop file changes the number of parameter dimensions\n";
+        isl_map_free(currentAccessMap);
+        isl_map_free(newAccessMap);
+        return false;
+
+      }
+
+      // We need to copy the isl_ids for the parameter dimensions to the new
+      // map. Without doing this the current map would have different
+      // ids then the new one, even though both are named identically.
+      for (unsigned i = 0; i < isl_map_dim(currentAccessMap, isl_dim_param);
+           i++) {
+        isl_id *id = isl_map_get_dim_id(currentAccessMap, isl_dim_param, i);
+        newAccessMap = isl_map_set_dim_id(newAccessMap, isl_dim_param, i, id);
+      }
+
       if (!isl_map_has_equal_space(currentAccessMap, newAccessMap)) {
         errs() << "JScop file contains access function with incompatible "
                << "dimensions\n";
