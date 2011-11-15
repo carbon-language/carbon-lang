@@ -169,13 +169,14 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
   MFI->setStackSize(StackSize); 
   
   BuildMI(MBB, MBBI, dl, TII.get(Mips::NOREORDER));
+  BuildMI(MBB, MBBI, dl, TII.get(Mips::NOMACRO));
 
   // Emit instructions that set $gp using the the value of $t9.
   // O32 uses the directive .cpload while N32/64 requires three instructions to
   // do this.  
   // TODO: Do not emit these instructions if no instructions use $gp.
   if (isPIC && STI.isABI_O32())
-    BuildMI(MBB, MBBI, dl, TII.get(Mips::CPLOAD))
+    BuildMI(MBB, llvm::prior(MBBI), dl, TII.get(Mips::CPLOAD))
       .addReg(RegInfo->getPICCallReg());
   else if (STI.isABI_N64() || (isPIC && STI.isABI_N32())) {
     //  lui     $28,%hi(%neg(%gp_rel(fname)))
@@ -188,8 +189,6 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
     BuildMI(MBB, MBBI, dl, TII.get(ADDiu), GP).addReg(GP)
       .addGlobalAddress(FName, 0, MipsII::MO_GPOFF_LO);
   }
-
-  BuildMI(MBB, MBBI, dl, TII.get(Mips::NOMACRO));
 
   // No need to allocate space on the stack.
   if (StackSize == 0 && !MFI->adjustsStack()) return;
