@@ -52,7 +52,7 @@ public:
       inNonNoteDiagnostic(false)
   { 
     EmitPreamble();
-  };
+  }
   
   ~SDiagsWriter() {}
   
