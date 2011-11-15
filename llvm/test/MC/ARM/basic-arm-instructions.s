@@ -262,10 +262,12 @@ Lforward:
 	asr r2, r4, #32
 	asr r2, r4, #2
 	asr r2, r4, #0
+	asr r4, #2
 
 @ CHECK: asr	r2, r4, #32             @ encoding: [0x44,0x20,0xa0,0xe1]
 @ CHECK: asr	r2, r4, #2              @ encoding: [0x44,0x21,0xa0,0xe1]
 @ CHECK: mov	r2, r4                  @ encoding: [0x04,0x20,0xa0,0xe1]
+@ CHECK: asr	r4, r4, #2              @ encoding: [0x44,0x41,0xa0,0xe1]
 
 
 @------------------------------------------------------------------------------
@@ -794,10 +796,12 @@ Lforward:
 	lsl r2, r4, #31
 	lsl r2, r4, #1
 	lsl r2, r4, #0
+	lsl r4, #1
 
 @ CHECK: lsl	r2, r4, #31             @ encoding: [0x84,0x2f,0xa0,0xe1]
 @ CHECK: lsl	r2, r4, #1              @ encoding: [0x84,0x20,0xa0,0xe1]
 @ CHECK: mov	r2, r4                  @ encoding: [0x04,0x20,0xa0,0xe1]
+@ CHECK: lsl	r4, r4, #1              @ encoding: [0x84,0x40,0xa0,0xe1]
 
 
 @------------------------------------------------------------------------------
@@ -806,10 +810,12 @@ Lforward:
 	lsr r2, r4, #32
 	lsr r2, r4, #2
 	lsr r2, r4, #0
+	lsr r4, #2
 
 @ CHECK: lsr	r2, r4, #32             @ encoding: [0x24,0x20,0xa0,0xe1]
 @ CHECK: lsr	r2, r4, #2              @ encoding: [0x24,0x21,0xa0,0xe1]
 @ CHECK: mov	r2, r4                  @ encoding: [0x04,0x20,0xa0,0xe1]
+@ CHECK: lsr	r4, r4, #2              @ encoding: [0x24,0x41,0xa0,0xe1]
 
 
 @------------------------------------------------------------------------------
@@ -1346,10 +1352,12 @@ Lforward:
 	ror r2, r4, #31
 	ror r2, r4, #1
 	ror r2, r4, #0
+	ror r4, #1
 
 @ CHECK: ror	r2, r4, #31             @ encoding: [0xe4,0x2f,0xa0,0xe1]
 @ CHECK: ror	r2, r4, #1              @ encoding: [0xe4,0x20,0xa0,0xe1]
 @ CHECK: mov	r2, r4                  @ encoding: [0x04,0x20,0xa0,0xe1]
+@ CHECK: ror	r4, r4, #1              @ encoding: [0xe4,0x40,0xa0,0xe1]
 
 
 @------------------------------------------------------------------------------

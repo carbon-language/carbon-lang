@@ -5023,6 +5023,16 @@ def LSLi : ARMAsmPseudo<"lsl${s}${p} $Rd, $Rm, $imm",
 def RORi : ARMAsmPseudo<"ror${s}${p} $Rd, $Rm, $imm",
                         (ins GPR:$Rd, GPR:$Rm, imm0_31:$imm, pred:$p,
                              cc_out:$s)>;
+// shifter instructions also support a two-operand form.
+def : ARMInstAlias<"asr${s}${p} $Rm, $imm",
+                   (ASRi GPR:$Rm, GPR:$Rm, imm0_32:$imm, pred:$p, cc_out:$s)>;
+def : ARMInstAlias<"lsr${s}${p} $Rm, $imm",
+                   (LSRi GPR:$Rm, GPR:$Rm, imm0_32:$imm, pred:$p, cc_out:$s)>;
+def : ARMInstAlias<"lsl${s}${p} $Rm, $imm",
+                   (LSLi GPR:$Rm, GPR:$Rm, imm0_31:$imm, pred:$p, cc_out:$s)>;
+def : ARMInstAlias<"ror${s}${p} $Rm, $imm",
+                   (RORi GPR:$Rm, GPR:$Rm, imm0_31:$imm, pred:$p, cc_out:$s)>;
+
 
 // 'mul' instruction can be specified with only two operands.
 def : ARMInstAlias<"mul${s}${p} $Rn, $Rm",
