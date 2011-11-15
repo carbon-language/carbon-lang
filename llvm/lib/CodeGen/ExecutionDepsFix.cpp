@@ -650,10 +650,11 @@ bool ExeDepsFix::runOnMachineFunction(MachineFunction &mf) {
   bool anyregs = false;
   for (TargetRegisterClass::const_iterator I = RC->begin(), E = RC->end();
        I != E; ++I)
-    if (MF->getRegInfo().isPhysRegUsed(*I)) {
-      anyregs = true;
-      break;
-    }
+    for (const unsigned *AI = TRI->getOverlaps(*I); *AI; ++AI)
+      if (MF->getRegInfo().isPhysRegUsed(*AI)) {
+        anyregs = true;
+        break;
+      }
   if (!anyregs) return false;
 
   // Initialize the AliasMap on the first use.
