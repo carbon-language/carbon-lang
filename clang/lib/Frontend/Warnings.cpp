@@ -166,8 +166,9 @@ void clang::ProcessWarningOptions(DiagnosticsEngine &Diags,
         continue;
       }
       
-      if (Report && DiagIDs->getDiagnosticsInGroup(Opt, _Diags)) {
-        EmitUnkownDiagWarning(Diags, "-W", Opt, isPositive);
+      if (Report) {
+        if (DiagIDs->getDiagnosticsInGroup(Opt, _Diags))
+          EmitUnkownDiagWarning(Diags, "-W", Opt, isPositive);
       } else {
         Diags.setDiagnosticGroupMapping(Opt, Mapping);
       }
