@@ -45,7 +45,7 @@ using namespace llvm;
 /// DomainValue for each register, but it may contain multiple execution
 /// domains. A register value is initially created in a single execution
 /// domain, but if we were forced to pay the penalty of a domain crossing, we
-/// keep track of the fact the the register is now available in multiple
+/// keep track of the fact that the register is now available in multiple
 /// domains.
 namespace {
 struct DomainValue {
@@ -56,9 +56,6 @@ struct DomainValue {
   // possible domains for collapsing. For a collapsed DomainValue it is the
   // domains where the register is available for free.
   unsigned AvailableDomains;
-
-  // Position of the last defining instruction.
-  unsigned Dist;
 
   // Pointer to the next DomainValue in a chain.  When two DomainValues are
   // merged, Victim.Next is set to point to Victor, so old DomainValue
@@ -101,12 +98,27 @@ struct DomainValue {
 
   // Clear this DomainValue and point to next which has all its data.
   void clear() {
-    AvailableDomains = Dist = 0;
+    AvailableDomains = 0;
     Next = 0;
     Instrs.clear();
   }
 };
 }
+
+namespace {
+/// LiveReg - Information about a live register.
+struct LiveReg {
+  /// Value currently in this register, or NULL when no value is being tracked.
+  /// This counts as a DomainValue reference.
+  DomainValue *Value;
+
+  /// Instruction that defined this register, relative to the beginning of the
+  /// current basic block.  When a LiveReg is used to represent a live-out
+  /// register, this value is relative to the end of the basic block, so it
+  /// will be a negative number.
+  int Def;
+};
+} // anonynous namespace
 
 namespace {
 class ExeDepsFix : public MachineFunctionPass {
@@ -120,10 +132,17 @@ class ExeDepsFix : public MachineFunctionPass {
   const TargetRegisterInfo *TRI;
   std::vector<int> AliasMap;
   const unsigned NumRegs;
-  DomainValue **LiveRegs;
-  typedef DenseMap<MachineBasicBlock*,DomainValue**> LiveOutMap;
+  LiveReg *LiveRegs;
+  typedef DenseMap<MachineBasicBlock*, LiveReg*> LiveOutMap;
   LiveOutMap LiveOuts;
-  unsigned Distance;
+
+  /// Current instruction number.
+  /// The first instruction in each basic block is 0.
+  int CurInstr;
+
+  /// True when the current block has a predecessor that hasn't been visited
+  /// yet.
+  bool SeenUnknownBackEdge;
 
 public:
   ExeDepsFix(const TargetRegisterClass *rc)
@@ -160,10 +179,10 @@ private:
   void collapse(DomainValue *dv, unsigned domain);
   bool merge(DomainValue *A, DomainValue *B);
 
-  bool enterBasicBlock(MachineBasicBlock*);
+  void enterBasicBlock(MachineBasicBlock*);
   void leaveBasicBlock(MachineBasicBlock*);
   void visitInstr(MachineInstr*);
-  void visitGenericInstr(MachineInstr*);
+  void processDefs(MachineInstr*, bool Kill);
   void visitSoftInstr(MachineInstr*, unsigned mask);
   void visitHardInstr(MachineInstr*, unsigned domain);
 };
@@ -182,7 +201,6 @@ DomainValue *ExeDepsFix::alloc(int domain) {
   DomainValue *dv = Avail.empty() ?
                       new(Allocator.Allocate()) DomainValue :
                       Avail.pop_back_val();
-  dv->Dist = Distance;
   if (domain >= 0)
     dv->addDomain(domain);
   assert(dv->Refs == 0 && "Reference count wasn't cleared");
@@ -231,32 +249,31 @@ DomainValue *ExeDepsFix::resolve(DomainValue *&DVRef) {
 /// Set LiveRegs[rx] = dv, updating reference counts.
 void ExeDepsFix::setLiveReg(int rx, DomainValue *dv) {
   assert(unsigned(rx) < NumRegs && "Invalid index");
-  if (!LiveRegs) {
-    LiveRegs = new DomainValue*[NumRegs];
-    std::fill(LiveRegs, LiveRegs+NumRegs, (DomainValue*)0);
-  }
+  assert(LiveRegs && "Must enter basic block first.");
 
-  if (LiveRegs[rx] == dv)
+  if (LiveRegs[rx].Value == dv)
     return;
-  if (LiveRegs[rx])
-    release(LiveRegs[rx]);
-  LiveRegs[rx] = retain(dv);
+  if (LiveRegs[rx].Value)
+    release(LiveRegs[rx].Value);
+  LiveRegs[rx].Value = retain(dv);
 }
 
 // Kill register rx, recycle or collapse any DomainValue.
 void ExeDepsFix::kill(int rx) {
   assert(unsigned(rx) < NumRegs && "Invalid index");
-  if (!LiveRegs || !LiveRegs[rx]) return;
+  assert(LiveRegs && "Must enter basic block first.");
+  if (!LiveRegs[rx].Value)
+    return;
 
-  release(LiveRegs[rx]);
-  LiveRegs[rx] = 0;
+  release(LiveRegs[rx].Value);
+  LiveRegs[rx].Value = 0;
 }
 
 /// Force register rx into domain.
 void ExeDepsFix::force(int rx, unsigned domain) {
   assert(unsigned(rx) < NumRegs && "Invalid index");
-  DomainValue *dv;
-  if (LiveRegs && (dv = LiveRegs[rx])) {
+  assert(LiveRegs && "Must enter basic block first.");
+  if (DomainValue *dv = LiveRegs[rx].Value) {
     if (dv->isCollapsed())
       dv->addDomain(domain);
     else if (dv->hasDomain(domain))
@@ -265,8 +282,8 @@ void ExeDepsFix::force(int rx, unsigned domain) {
       // This is an incompatible open DomainValue. Collapse it to whatever and
       // force the new value into domain. This costs a domain crossing.
       collapse(dv, dv->getFirstDomain());
-      assert(LiveRegs[rx] && "Not live after collapse?");
-      LiveRegs[rx]->addDomain(domain);
+      assert(LiveRegs[rx].Value && "Not live after collapse?");
+      LiveRegs[rx].Value->addDomain(domain);
     }
   } else {
     // Set up basic collapsed DomainValue.
@@ -287,7 +304,7 @@ void ExeDepsFix::collapse(DomainValue *dv, unsigned domain) {
   // If there are multiple users, give them new, unique DomainValues.
   if (LiveRegs && dv->Refs > 1)
     for (unsigned rx = 0; rx != NumRegs; ++rx)
-      if (LiveRegs[rx] == dv)
+      if (LiveRegs[rx].Value == dv)
         setLiveReg(rx, alloc(domain));
 }
 
@@ -303,7 +320,6 @@ bool ExeDepsFix::merge(DomainValue *A, DomainValue *B) {
   if (!common)
     return false;
   A->AvailableDomains = common;
-  A->Dist = std::max(A->Dist, B->Dist);
   A->Instrs.append(B->Instrs.begin(), B->Instrs.end());
 
   // Clear the old DomainValue so we won't try to swizzle instructions twice.
@@ -312,66 +328,103 @@ bool ExeDepsFix::merge(DomainValue *A, DomainValue *B) {
   B->Next = retain(A);
 
   for (unsigned rx = 0; rx != NumRegs; ++rx)
-    if (LiveRegs[rx] == B)
+    if (LiveRegs[rx].Value == B)
       setLiveReg(rx, A);
   return true;
 }
 
 // enterBasicBlock - Set up LiveRegs by merging predecessor live-out values.
-// Return true if some predecessor hasn't been processed yet (like on a loop
-// back-edge).
-bool ExeDepsFix::enterBasicBlock(MachineBasicBlock *MBB) {
+void ExeDepsFix::enterBasicBlock(MachineBasicBlock *MBB) {
   // Detect back-edges from predecessors we haven't processed yet.
-  bool seenBackEdge = false;
+  SeenUnknownBackEdge = false;
+
+  // Reset instruction counter in each basic block.
+  CurInstr = 0;
+
+  // Set up LiveRegs to represent registers entering MBB.
+  if (!LiveRegs)
+    LiveRegs = new LiveReg[NumRegs];
+
+  // Default values are 'nothing happened a long time ago'.
+  for (unsigned rx = 0; rx != NumRegs; ++rx) {
+    LiveRegs[rx].Value = 0;
+    LiveRegs[rx].Def = -(1 << 20);
+  }
+
+  // This is the entry block.
+  if (MBB->pred_empty()) {
+    for (MachineBasicBlock::livein_iterator i = MBB->livein_begin(),
+         e = MBB->livein_end(); i != e; ++i) {
+      int rx = regIndex(*i);
+      if (rx < 0)
+        continue;
+      // Treat function live-ins as if they were defined just before the first
+      // instruction.  Usually, function arguments are set up immediately
+      // before the call.
+      LiveRegs[rx].Def = -1;
+    }
+    DEBUG(dbgs() << "BB#" << MBB->getNumber() << ": entry\n");
+    return;
+  }
 
   // Try to coalesce live-out registers from predecessors.
-  for (MachineBasicBlock::livein_iterator i = MBB->livein_begin(),
-         e = MBB->livein_end(); i != e; ++i) {
-    int rx = regIndex(*i);
-    if (rx < 0) continue;
-    for (MachineBasicBlock::const_pred_iterator pi = MBB->pred_begin(),
-           pe = MBB->pred_end(); pi != pe; ++pi) {
-      LiveOutMap::const_iterator fi = LiveOuts.find(*pi);
-      if (fi == LiveOuts.end()) {
-        seenBackEdge = true;
+  for (MachineBasicBlock::const_pred_iterator pi = MBB->pred_begin(),
+       pe = MBB->pred_end(); pi != pe; ++pi) {
+    LiveOutMap::const_iterator fi = LiveOuts.find(*pi);
+    if (fi == LiveOuts.end()) {
+      SeenUnknownBackEdge = true;
+      continue;
+    }
+    assert(fi->second && "Can't have NULL entries");
+
+    for (unsigned rx = 0; rx != NumRegs; ++rx) {
+      // Use the most recent predecessor def for each register.
+      LiveRegs[rx].Def = std::max(LiveRegs[rx].Def, fi->second[rx].Def);
+
+      DomainValue *pdv = resolve(fi->second[rx].Value);
+      if (!pdv)
         continue;
-      }
-      if (!fi->second)
-        continue;
-      DomainValue *pdv = resolve(fi->second[rx]);
-      if (!pdv) continue;
-      if (!LiveRegs || !LiveRegs[rx]) {
+      if (!LiveRegs[rx].Value) {
         setLiveReg(rx, pdv);
         continue;
       }
 
       // We have a live DomainValue from more than one predecessor.
-      if (LiveRegs[rx]->isCollapsed()) {
+      if (LiveRegs[rx].Value->isCollapsed()) {
         // We are already collapsed, but predecessor is not. Force him.
-        unsigned domain = LiveRegs[rx]->getFirstDomain();
-        if (!pdv->isCollapsed() && pdv->hasDomain(domain))
-          collapse(pdv, domain);
+        unsigned Domain = LiveRegs[rx].Value->getFirstDomain();
+        if (!pdv->isCollapsed() && pdv->hasDomain(Domain))
+          collapse(pdv, Domain);
         continue;
       }
 
       // Currently open, merge in predecessor.
       if (!pdv->isCollapsed())
-        merge(LiveRegs[rx], pdv);
+        merge(LiveRegs[rx].Value, pdv);
       else
         force(rx, pdv->getFirstDomain());
     }
   }
-  return seenBackEdge;
+  DEBUG(dbgs() << "BB#" << MBB->getNumber()
+        << (SeenUnknownBackEdge ? ": incomplete\n" : ": all preds known\n"));
 }
 
 void ExeDepsFix::leaveBasicBlock(MachineBasicBlock *MBB) {
+  assert(LiveRegs && "Must enter basic block first.");
   // Save live registers at end of MBB - used by enterBasicBlock().
   // Also use LiveOuts as a visited set to detect back-edges.
-  if (!LiveOuts.insert(std::make_pair(MBB, LiveRegs)).second && LiveRegs) {
+  bool First = LiveOuts.insert(std::make_pair(MBB, LiveRegs)).second;
+
+  if (First) {
+    // LiveRegs was inserted in LiveOuts.  Adjust all defs to be relative to
+    // the end of this block instead of the beginning.
+    for (unsigned i = 0, e = NumRegs; i != e; ++i)
+      LiveRegs[i].Def -= CurInstr;
+  } else {
     // Insertion failed, this must be the second pass.
     // Release all the DomainValues instead of keeping them.
     for (unsigned i = 0, e = NumRegs; i != e; ++i)
-      release(LiveRegs[i]);
+      release(LiveRegs[i].Value);
     delete[] LiveRegs;
   }
   LiveRegs = 0;
@@ -380,15 +433,52 @@ void ExeDepsFix::leaveBasicBlock(MachineBasicBlock *MBB) {
 void ExeDepsFix::visitInstr(MachineInstr *MI) {
   if (MI->isDebugValue())
     return;
-  ++Distance;
-  std::pair<uint16_t, uint16_t> domp = TII->getExecutionDomain(MI);
-  if (domp.first)
-    if (domp.second)
-      visitSoftInstr(MI, domp.second);
+
+  // Update instructions with explicit execution domains.
+  std::pair<uint16_t, uint16_t> DomP = TII->getExecutionDomain(MI);
+  if (DomP.first) {
+    if (DomP.second)
+      visitSoftInstr(MI, DomP.second);
     else
-      visitHardInstr(MI, domp.first);
-  else if (LiveRegs)
-    visitGenericInstr(MI);
+      visitHardInstr(MI, DomP.first);
+  }
+
+  // Process defs to track register ages, and kill values clobbered by generic
+  // instructions.
+  processDefs(MI, !DomP.first);
+}
+
+// Update def-ages for registers defined by MI.
+// If Kill is set, also kill off DomainValues clobbered by the defs.
+void ExeDepsFix::processDefs(MachineInstr *MI, bool Kill) {
+  assert(!MI->isDebugValue() && "Won't process debug values");
+  const MCInstrDesc &MCID = MI->getDesc();
+  for (unsigned i = 0,
+         e = MCID.isVariadic() ? MI->getNumOperands() : MCID.getNumDefs();
+         i != e; ++i) {
+    MachineOperand &MO = MI->getOperand(i);
+    if (!MO.isReg())
+      continue;
+    if (MO.isImplicit())
+      break;
+    if (MO.isUse())
+      continue;
+    int rx = regIndex(MO.getReg());
+    if (rx < 0)
+      continue;
+
+    // This instruction explicitly defines rx.
+    DEBUG(dbgs() << TRI->getName(RC->getRegister(rx)) << ":\t" << CurInstr
+                 << '\t' << *MI);
+
+    LiveRegs[rx].Def = CurInstr;
+
+    // Kill off domains redefined by generic instructions.
+    if (Kill)
+      kill(rx);
+  }
+
+  ++CurInstr;
 }
 
 // A hard instruction only works in one domain. All input registers will be
@@ -430,7 +520,7 @@ void ExeDepsFix::visitSoftInstr(MachineInstr *mi, unsigned mask) {
       if (!mo.isReg()) continue;
       int rx = regIndex(mo.getReg());
       if (rx < 0) continue;
-      if (DomainValue *dv = LiveRegs[rx]) {
+      if (DomainValue *dv = LiveRegs[rx].Value) {
         // Bitmask of domains that dv and available have in common.
         unsigned common = dv->getCommonDomains(available);
         // Is it possible to use this collapsed register for free?
@@ -459,52 +549,53 @@ void ExeDepsFix::visitSoftInstr(MachineInstr *mi, unsigned mask) {
 
   // Kill off any remaining uses that don't match available, and build a list of
   // incoming DomainValues that we want to merge.
-  SmallVector<DomainValue*,4> doms;
+  SmallVector<LiveReg, 4> Regs;
   for (SmallVector<int, 4>::iterator i=used.begin(), e=used.end(); i!=e; ++i) {
     int rx = *i;
-    DomainValue *dv = LiveRegs[rx];
+    const LiveReg &LR = LiveRegs[rx];
     // This useless DomainValue could have been missed above.
-    if (!dv->getCommonDomains(available)) {
-      kill(*i);
+    if (!LR.Value->getCommonDomains(available)) {
+      kill(rx);
       continue;
     }
-    // sorted, uniqued insert.
-    bool inserted = false;
-    for (SmallVector<DomainValue*,4>::iterator i = doms.begin(), e = doms.end();
-           i != e && !inserted; ++i) {
-      if (dv == *i)
-        inserted = true;
-      else if (dv->Dist < (*i)->Dist) {
-        inserted = true;
-        doms.insert(i, dv);
+    // Sorted insertion.
+    bool Inserted = false;
+    for (SmallVector<LiveReg, 4>::iterator i = Regs.begin(), e = Regs.end();
+           i != e && !Inserted; ++i) {
+      if (LR.Def < i->Def) {
+        Inserted = true;
+        Regs.insert(i, LR);
       }
     }
-    if (!inserted)
-      doms.push_back(dv);
+    if (!Inserted)
+      Regs.push_back(LR);
   }
 
   // doms are now sorted in order of appearance. Try to merge them all, giving
   // priority to the latest ones.
   DomainValue *dv = 0;
-  while (!doms.empty()) {
+  while (!Regs.empty()) {
     if (!dv) {
-      dv = doms.pop_back_val();
+      dv = Regs.pop_back_val().Value;
       continue;
     }
 
-    DomainValue *latest = doms.pop_back_val();
-    if (merge(dv, latest)) continue;
+    DomainValue *Latest = Regs.pop_back_val().Value;
+    // Skip already merged values.
+    if (Latest == dv || Latest->Next)
+      continue;
+    if (merge(dv, Latest))
+      continue;
 
     // If latest didn't merge, it is useless now. Kill all registers using it.
     for (SmallVector<int,4>::iterator i=used.begin(), e=used.end(); i != e; ++i)
-      if (LiveRegs[*i] == latest)
+      if (LiveRegs[*i].Value == Latest)
         kill(*i);
   }
 
   // dv is the DomainValue we are going to use for this instruction.
   if (!dv)
     dv = alloc();
-  dv->Dist = Distance;
   dv->AvailableDomains = available;
   dv->Instrs.push_back(mi);
 
@@ -514,21 +605,10 @@ void ExeDepsFix::visitSoftInstr(MachineInstr *mi, unsigned mask) {
     if (!mo.isReg()) continue;
     int rx = regIndex(mo.getReg());
     if (rx < 0) continue;
-    if (!LiveRegs || !LiveRegs[rx] || (mo.isDef() && LiveRegs[rx]!=dv)) {
+    if (!LiveRegs[rx].Value || (mo.isDef() && LiveRegs[rx].Value != dv)) {
       kill(rx);
       setLiveReg(rx, dv);
     }
-  }
-}
-
-void ExeDepsFix::visitGenericInstr(MachineInstr *mi) {
-  // Process explicit defs, kill any relevant registers redefined.
-  for (unsigned i = 0, e = mi->getDesc().getNumDefs(); i != e; ++i) {
-    MachineOperand &mo = mi->getOperand(i);
-    if (!mo.isReg()) continue;
-    int rx = regIndex(mo.getReg());
-    if (rx < 0) continue;
-    kill(rx);
   }
 }
 
@@ -537,8 +617,10 @@ bool ExeDepsFix::runOnMachineFunction(MachineFunction &mf) {
   TII = MF->getTarget().getInstrInfo();
   TRI = MF->getTarget().getRegisterInfo();
   LiveRegs = 0;
-  Distance = 0;
   assert(NumRegs == RC->getNumRegs() && "Bad regclass");
+
+  DEBUG(dbgs() << "********** FIX EXECUTION DEPENDENCIES: "
+               << RC->getName() << " **********\n");
 
   // If no relevant registers are used in the function, we can skip it
   // completely.
@@ -567,7 +649,8 @@ bool ExeDepsFix::runOnMachineFunction(MachineFunction &mf) {
   for (ReversePostOrderTraversal<MachineBasicBlock*>::rpo_iterator
          MBBI = RPOT.begin(), MBBE = RPOT.end(); MBBI != MBBE; ++MBBI) {
     MachineBasicBlock *MBB = *MBBI;
-    if (enterBasicBlock(MBB))
+    enterBasicBlock(MBB);
+    if (SeenUnknownBackEdge)
       Loops.push_back(MBB);
     for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end(); I != E;
         ++I)
@@ -590,8 +673,8 @@ bool ExeDepsFix::runOnMachineFunction(MachineFunction &mf) {
     if (FI == LiveOuts.end() || !FI->second)
       continue;
     for (unsigned i = 0, e = NumRegs; i != e; ++i)
-      if (FI->second[i])
-        release(FI->second[i]);
+      if (FI->second[i].Value)
+        release(FI->second[i].Value);
     delete[] FI->second;
   }
   LiveOuts.clear();
