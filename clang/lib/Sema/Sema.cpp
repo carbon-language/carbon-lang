@@ -968,7 +968,7 @@ static void noteOverloads(Sema &S, const UnresolvedSetImpl &Overloads,
     }
 
     NamedDecl *Fn = (*It)->getUnderlyingDecl();
-    S.Diag(Fn->getLocStart(), diag::note_possible_target_of_call);
+    S.Diag(Fn->getLocation(), diag::note_possible_target_of_call);
     ++ShownOverloads;
   }
 

@@ -185,8 +185,8 @@ struct Class : BaseClass
     template <class T>
     struct NestedClassTemplate {};
 
-    template <class T>  // expected-note{{possible target for call}}
-    static int& NestedFuncTemplate() { return variable; }
+    template <class T>
+    static int& NestedFuncTemplate() { return variable; }  // expected-note{{possible target for call}}
 
     template <class T>
     int& NestedMemfunTemplate() { return variable; }
