@@ -4,7 +4,7 @@ define i32 @isint_return(double %d) nounwind {
 ; CHECK-NOT: xor
 ; CHECK: cvt
   %i = fptosi double %d to i32
-; CHECK-NEXT: cvt
+; CHECK: cvt
   %e = sitofp i32 %i to double
 ; CHECK: cmpeqsd
   %c = fcmp oeq double %d, %e
