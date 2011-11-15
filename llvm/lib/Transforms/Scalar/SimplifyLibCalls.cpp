@@ -963,8 +963,7 @@ struct UnaryDoubleFPOpt : public LibCallOptimization {
 
     // floor((double)floatval) -> (double)floorf(floatval)
     Value *V = Cast->getOperand(0);
-    V = EmitUnaryFloatFnCall(V, Callee->getName().data(), B,
-                             Callee->getAttributes());
+    V = EmitUnaryFloatFnCall(V, Callee->getName(), B, Callee->getAttributes());
     return B.CreateFPExt(V, B.getDoubleTy());
   }
 };

@@ -68,7 +68,7 @@ namespace llvm {
   /// 'Op' and returns one value with the same type.  If 'Op' is a long double,
   /// 'l' is added as the suffix of name, if 'Op' is a float, we add a 'f'
   /// suffix.
-  Value *EmitUnaryFloatFnCall(Value *Op, const char *Name, IRBuilder<> &B,
+  Value *EmitUnaryFloatFnCall(Value *Op, StringRef Name, IRBuilder<> &B,
                               const AttrListPtr &Attrs);
 
   /// EmitPutChar - Emit a call to the putchar function.  This assumes that Char

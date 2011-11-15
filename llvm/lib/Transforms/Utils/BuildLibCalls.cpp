@@ -15,11 +15,12 @@
 #include "llvm/Type.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
+#include "llvm/Intrinsics.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/LLVMContext.h"
-#include "llvm/Intrinsics.h"
+#include "llvm/ADT/SmallString.h"
 
 using namespace llvm;
 
@@ -206,19 +207,16 @@ Value *llvm::EmitMemCmp(Value *Ptr1, Value *Ptr2,
 /// 'floor').  This function is known to take a single of type matching 'Op' and
 /// returns one value with the same type.  If 'Op' is a long double, 'l' is
 /// added as the suffix of name, if 'Op' is a float, we add a 'f' suffix.
-Value *llvm::EmitUnaryFloatFnCall(Value *Op, const char *Name,
-                                  IRBuilder<> &B, const AttrListPtr &Attrs) {
-  char NameBuffer[20];
+Value *llvm::EmitUnaryFloatFnCall(Value *Op, StringRef Name, IRBuilder<> &B,
+                                  const AttrListPtr &Attrs) {
+  SmallString<20> NameBuffer;
   if (!Op->getType()->isDoubleTy()) {
     // If we need to add a suffix, copy into NameBuffer.
-    unsigned NameLen = strlen(Name);
-    assert(NameLen < sizeof(NameBuffer)-2);
-    memcpy(NameBuffer, Name, NameLen);
+    NameBuffer += Name;
     if (Op->getType()->isFloatTy())
-      NameBuffer[NameLen] = 'f';  // floorf
+      NameBuffer += 'f'; // floorf
     else
-      NameBuffer[NameLen] = 'l';  // floorl
-    NameBuffer[NameLen+1] = 0;
+      NameBuffer += 'l'; // floorl
     Name = NameBuffer;
   }
 
