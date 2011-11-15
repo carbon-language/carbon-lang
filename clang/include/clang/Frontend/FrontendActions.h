@@ -67,22 +67,40 @@ protected:
 };
 
 class GeneratePCHAction : public ASTFrontendAction {
-  bool MakeModule;
-  
 protected:
   virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
                                          StringRef InFile);
 
   virtual TranslationUnitKind getTranslationUnitKind() { 
-    return MakeModule? TU_Module : TU_Prefix;
+    return TU_Prefix;
   }
 
   virtual bool hasASTFileSupport() const { return false; }
 
 public:
-  /// \brief Create a new action
-  explicit GeneratePCHAction(bool MakeModule) : MakeModule(MakeModule) { }
+  /// \brief Compute the AST consumer arguments that will be used to
+  /// create the PCHGenerator instance returned by CreateASTConsumer.
+  ///
+  /// \returns true if an error occurred, false otherwise.
+  static bool ComputeASTConsumerArguments(CompilerInstance &CI,
+                                          StringRef InFile,
+                                          std::string &Sysroot,
+                                          std::string &OutputFile,
+                                          raw_ostream *&OS);
+};
+
+class GenerateModuleAction : public ASTFrontendAction {
+protected:
+  virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
+                                         StringRef InFile);
   
+  virtual TranslationUnitKind getTranslationUnitKind() { 
+    return TU_Module;
+  }
+  
+  virtual bool hasASTFileSupport() const { return false; }
+  
+public:
   /// \brief Compute the AST consumer arguments that will be used to
   /// create the PCHGenerator instance returned by CreateASTConsumer.
   ///
