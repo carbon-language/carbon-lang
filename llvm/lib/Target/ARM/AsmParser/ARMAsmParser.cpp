@@ -3559,9 +3559,12 @@ parseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   }
 
   // If we have a '#', it's an immediate offset, else assume it's a register
-  // offset.
-  if (Parser.getTok().is(AsmToken::Hash)) {
-    Parser.Lex(); // Eat the '#'.
+  // offset. Be friendly and also accept a plain integer (without a leading
+  // hash) for gas compatibility.
+  if (Parser.getTok().is(AsmToken::Hash) ||
+      Parser.getTok().is(AsmToken::Integer)) {
+    if (Parser.getTok().is(AsmToken::Hash))
+      Parser.Lex(); // Eat the '#'.
     E = Parser.getTok().getLoc();
 
     bool isNegative = getParser().getTok().is(AsmToken::Minus);
