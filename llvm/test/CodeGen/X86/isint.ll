@@ -19,7 +19,7 @@ declare void @foo()
 define void @isint_branch(double %d) nounwind {
 ; CHECK: cvt
   %i = fptosi double %d to i32
-; CHECK-NEXT: cvt
+; CHECK: cvt
   %e = sitofp i32 %i to double
 ; CHECK: ucomisd
   %c = fcmp oeq double %d, %e

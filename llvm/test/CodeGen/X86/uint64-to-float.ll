@@ -38,7 +38,7 @@ target triple = "x86_64-apple-darwin10.0.0"
 ; CHECK-NEXT: jns LBB0_2
 ; CHECK: cvtsi2ss
 ; CHECK: LBB0_2
-; CHECK-NEXT: cvtsi2ss
+; CHECK: cvtsi2ss
 define float @test(i64 %a) {
 entry:
   %b = uitofp i64 %a to float
