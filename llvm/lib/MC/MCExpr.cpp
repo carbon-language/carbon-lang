@@ -26,38 +26,6 @@ STATISTIC(MCExprEvaluate, "Number of MCExpr evaluations");
 }
 }
 
-static bool printMipsSymbolRef(const MCSymbolRefExpr &SRE,
-                               const MCSymbol &Sym, raw_ostream &OS) {
-  MCSymbolRefExpr::VariantKind Kind= SRE.getKind();
-
-  switch (Kind) {
-  default:
-    return false;
-  case MCSymbolRefExpr::VK_Mips_None:     break;
-  case MCSymbolRefExpr::VK_Mips_GPREL:    OS << "%gp_rel("; break;
-  case MCSymbolRefExpr::VK_Mips_GOT_CALL: OS << "%call16("; break;
-  case MCSymbolRefExpr::VK_Mips_GOT:      OS << "%got(";    break;
-  case MCSymbolRefExpr::VK_Mips_ABS_HI:   OS << "%hi(";     break;
-  case MCSymbolRefExpr::VK_Mips_ABS_LO:   OS << "%lo(";     break;
-  case MCSymbolRefExpr::VK_Mips_TLSGD:    OS << "%tlsgd(";  break;
-  case MCSymbolRefExpr::VK_Mips_GOTTPREL: OS << "%gottprel("; break;
-  case MCSymbolRefExpr::VK_Mips_TPREL_HI: OS << "%tprel_hi("; break;
-  case MCSymbolRefExpr::VK_Mips_TPREL_LO: OS << "%tprel_lo("; break;
-  case MCSymbolRefExpr::VK_Mips_GPOFF_HI: OS << "%hi(%neg(%gp_rel("; break;
-  case MCSymbolRefExpr::VK_Mips_GPOFF_LO: OS << "%lo(%neg(%gp_rel("; break;
-  case MCSymbolRefExpr::VK_Mips_GOT_DISP: OS << "%got_disp("; break;
-  case MCSymbolRefExpr::VK_Mips_GOT_PAGE: OS << "%got_page("; break;
-  case MCSymbolRefExpr::VK_Mips_GOT_OFST: OS << "%got_ofst("; break;
-  }
-
-  OS << Sym;
-
-  if (Kind != MCSymbolRefExpr::VK_Mips_None)
-    OS << ')';
-
-  return true;
-}
-
 void MCExpr::print(raw_ostream &OS) const {
   switch (getKind()) {
   case MCExpr::Target:
@@ -72,9 +40,6 @@ void MCExpr::print(raw_ostream &OS) const {
     // Parenthesize names that start with $ so that they don't look like
     // absolute names.
     bool UseParens = Sym.getName()[0] == '$';
-
-    if (printMipsSymbolRef(SRE, Sym, OS))
-      return;
 
     if (SRE.getKind() == MCSymbolRefExpr::VK_PPC_DARWIN_HA16 ||
         SRE.getKind() == MCSymbolRefExpr::VK_PPC_DARWIN_LO16) {
