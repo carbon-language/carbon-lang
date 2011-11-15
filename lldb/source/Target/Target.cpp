@@ -26,6 +26,7 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/ValueObject.h"
+#include "lldb/Expression/ClangASTSource.h"
 #include "lldb/Expression/ClangUserExpression.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
@@ -171,6 +172,7 @@ Target::Destroy()
     m_search_filter_sp.reset();
     m_image_search_paths.Clear(notify);
     m_scratch_ast_context_ap.reset();
+    m_scratch_ast_source_ap.reset();
     m_persistent_variables.Clear();
     m_stop_hooks.clear();
     m_stop_hook_next_id = 0;
@@ -794,6 +796,7 @@ Target::SetExecutableModule (ModuleSP& executable_sp, bool get_dependent_files)
 {
     m_images.Clear();
     m_scratch_ast_context_ap.reset();
+    m_scratch_ast_source_ap.reset();
     
     if (executable_sp.get())
     {
@@ -1329,7 +1332,13 @@ Target::GetScratchClangASTContext()
 {
     // Now see if we know the target triple, and if so, create our scratch AST context:
     if (m_scratch_ast_context_ap.get() == NULL && m_arch.IsValid())
+    {
         m_scratch_ast_context_ap.reset (new ClangASTContext(m_arch.GetTriple().str().c_str()));
+        m_scratch_ast_source_ap.reset (new ClangASTSource(GetSP()));
+        m_scratch_ast_source_ap->InstallASTContext(m_scratch_ast_context_ap->getASTContext());
+        llvm::OwningPtr<clang::ExternalASTSource> proxy_ast_source(m_scratch_ast_source_ap->CreateProxy());
+        m_scratch_ast_context_ap->SetExternalSource(proxy_ast_source);
+    }
     return m_scratch_ast_context_ap.get();
 }
 

@@ -93,7 +93,6 @@ public:
     
     void BuildNamespaceMap (const clang::NamespaceDecl *decl);
 private:
-    
     struct DeclOrigin 
     {
         DeclOrigin () :
