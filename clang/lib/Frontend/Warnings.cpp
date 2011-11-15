@@ -31,8 +31,8 @@
 #include <algorithm>
 using namespace clang;
 
-// EmitUnkownDiagWarning - Emit a warning and typo hint for unknown warning opts
-static void EmitUnkownDiagWarning(DiagnosticsEngine &Diags,
+// EmitUnknownDiagWarning - Emit a warning and typo hint for unknown warning opts
+static void EmitUnknownDiagWarning(DiagnosticsEngine &Diags,
                                   StringRef Prefix, StringRef Opt,
                                   bool isPositive) {
   StringRef Suggestion = DiagnosticIDs::getNearestWarningOption(Opt);
@@ -133,7 +133,7 @@ void clang::ProcessWarningOptions(DiagnosticsEngine &Diags,
           // Set the warning as error flag for this specifier.
           Diags.setDiagnosticGroupWarningAsError(Specifier, isPositive);
         } else if (DiagIDs->getDiagnosticsInGroup(Specifier, _Diags)) {
-          EmitUnkownDiagWarning(Diags, "-Werror", Specifier, isPositive);
+          EmitUnknownDiagWarning(Diags, "-Werror", Specifier, isPositive);
         }
         continue;
       }
@@ -161,14 +161,14 @@ void clang::ProcessWarningOptions(DiagnosticsEngine &Diags,
           // Set the error as fatal flag for this specifier.
           Diags.setDiagnosticGroupErrorAsFatal(Specifier, isPositive);
         } else if (DiagIDs->getDiagnosticsInGroup(Specifier, _Diags)) {
-          EmitUnkownDiagWarning(Diags, "-Wfatal-errors", Specifier, isPositive);
+          EmitUnknownDiagWarning(Diags, "-Wfatal-errors", Specifier, isPositive);
         }
         continue;
       }
       
       if (Report) {
         if (DiagIDs->getDiagnosticsInGroup(Opt, _Diags))
-          EmitUnkownDiagWarning(Diags, "-W", Opt, isPositive);
+          EmitUnknownDiagWarning(Diags, "-W", Opt, isPositive);
       } else {
         Diags.setDiagnosticGroupMapping(Opt, Mapping);
       }
