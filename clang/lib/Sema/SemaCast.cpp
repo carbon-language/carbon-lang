@@ -2001,7 +2001,7 @@ void CastOperation::CheckCStyleCast() {
         DestType->isArithmeticType()) {
       Self.Diag(SrcExpr.get()->getLocStart(),
            diag::err_cast_pointer_to_non_pointer_int)
-        << SrcType << SrcExpr.get()->getSourceRange();
+        << DestType << SrcExpr.get()->getSourceRange();
       SrcExpr = ExprError();
       return;
     }
