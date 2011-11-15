@@ -4469,6 +4469,10 @@ def : InstAlias<"vmov${p} $Vd, $Vm",
                 (VORRd DPR:$Vd, DPR:$Vm, DPR:$Vm, pred:$p)>;
 def : InstAlias<"vmov${p} $Vd, $Vm",
                 (VORRq QPR:$Vd, QPR:$Vm, QPR:$Vm, pred:$p)>;
+defm : VFPDTAnyNoF64InstAlias<"vmov${p}", "$Vd, $Vm",
+                              (VORRd DPR:$Vd, DPR:$Vm, DPR:$Vm, pred:$p)>;
+defm : VFPDTAnyNoF64InstAlias<"vmov${p}", "$Vd, $Vm",
+                              (VORRq QPR:$Vd, QPR:$Vm, QPR:$Vm, pred:$p)>;
 
 //   VMOV     : Vector Move (Immediate)
 

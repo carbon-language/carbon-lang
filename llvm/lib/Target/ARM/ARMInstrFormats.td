@@ -2041,9 +2041,26 @@ multiclass VFPDT64InstAlias<string opc, string asm, dag Result> {
   def _64 : VFPDataTypeInstAlias<opc, ".64", asm, Result>;
   defm : VFPDT64ReqInstAlias<opc, asm, Result>;
 }
+multiclass VFPDT64NoF64ReqInstAlias<string opc, string asm, dag Result> {
+  def I64 : VFPDataTypeInstAlias<opc, ".i64", asm, Result>;
+  def S64 : VFPDataTypeInstAlias<opc, ".s64", asm, Result>;
+  def U64 : VFPDataTypeInstAlias<opc, ".u64", asm, Result>;
+  def D   : VFPDataTypeInstAlias<opc, ".d",   asm, Result>;
+}
+// VFPDT64ReqInstAlias plus plain ".64"
+multiclass VFPDT64NoF64InstAlias<string opc, string asm, dag Result> {
+  def _64 : VFPDataTypeInstAlias<opc, ".64", asm, Result>;
+  defm : VFPDT64ReqInstAlias<opc, asm, Result>;
+}
 multiclass VFPDTAnyInstAlias<string opc, string asm, dag Result> {
   defm : VFPDT8InstAlias<opc, asm, Result>;
   defm : VFPDT16InstAlias<opc, asm, Result>;
   defm : VFPDT32InstAlias<opc, asm, Result>;
   defm : VFPDT64InstAlias<opc, asm, Result>;
+}
+multiclass VFPDTAnyNoF64InstAlias<string opc, string asm, dag Result> {
+  defm : VFPDT8InstAlias<opc, asm, Result>;
+  defm : VFPDT16InstAlias<opc, asm, Result>;
+  defm : VFPDT32InstAlias<opc, asm, Result>;
+  defm : VFPDT64NoF64InstAlias<opc, asm, Result>;
 }
