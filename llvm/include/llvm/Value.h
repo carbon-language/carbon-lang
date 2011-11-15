@@ -117,18 +117,7 @@ public:
   /// getName() - Return a constant reference to the value's name. This is cheap
   /// and guaranteed to return the same reference as long as the value is not
   /// modified.
-  ///
-  /// This is currently guaranteed to return a StringRef for which data() points
-  /// to a valid null terminated string. The use of StringRef.data() is 
-  /// deprecated here, however, and clients should not rely on it. If such 
-  /// behavior is needed, clients should use expensive getNameStr(), or switch 
-  /// to an interface that does not depend on null termination.
   StringRef getName() const;
-
-  /// getNameStr() - Return the name of the specified value, *constructing a
-  /// string* to hold it.  This is guaranteed to construct a string and is very
-  /// expensive, clients should use getName() unless necessary.
-  std::string getNameStr() const;
 
   /// setName() - Change the name of the value, choosing a new unique name if
   /// the provided name is taken.

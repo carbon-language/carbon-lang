@@ -156,10 +156,6 @@ StringRef Value::getName() const {
   return Name->getKey();
 }
 
-std::string Value::getNameStr() const {
-  return getName().str();
-}
-
 void Value::setName(const Twine &NewName) {
   // Fast path for common IRBuilder case of setName("") when there is no name.
   if (NewName.isTriviallyEmpty() && !hasName())
