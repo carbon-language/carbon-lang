@@ -5232,6 +5232,19 @@ defm : VFPDT32ReqInstAlias<"vld1${p}", "$Vd, $Rn!",
           (VLD1d32wb_fixed VecListOneD:$Vd, zero_reg, addrmode6:$Rn, pred:$p)>;
 defm : VFPDT64ReqInstAlias<"vld1${p}", "$Vd, $Rn!",
           (VLD1d64wb_fixed VecListOneD:$Vd, zero_reg, addrmode6:$Rn, pred:$p)>;
+//        with writeback, register stride
+defm : VFPDT8ReqInstAlias<"vld1${p}", "$Vd, $Rn, $Rm",
+          (VLD1d8wb_register  VecListOneD:$Vd, zero_reg, addrmode6:$Rn,
+                              rGPR:$Rm, pred:$p)>;
+defm : VFPDT16ReqInstAlias<"vld1${p}", "$Vd, $Rn, $Rm",
+          (VLD1d16wb_register VecListOneD:$Vd, zero_reg, addrmode6:$Rn,
+                              rGPR:$Rm, pred:$p)>;
+defm : VFPDT32ReqInstAlias<"vld1${p}", "$Vd, $Rn, $Rm",
+          (VLD1d32wb_register VecListOneD:$Vd, zero_reg, addrmode6:$Rn,
+                              rGPR:$Rm, pred:$p)>;
+defm : VFPDT64ReqInstAlias<"vld1${p}", "$Vd, $Rn, $Rm",
+          (VLD1d64wb_register VecListOneD:$Vd, zero_reg, addrmode6:$Rn,
+                              rGPR:$Rm, pred:$p)>;
 
 // Load two D registers.
 defm : VFPDT8ReqInstAlias<"vld1${p}", "$Vd, $Rn",
@@ -5251,6 +5264,19 @@ defm : VFPDT32ReqInstAlias<"vld1${p}", "$Vd, $Rn!",
           (VLD1q32wb_fixed VecListTwoD:$Vd, zero_reg, addrmode6:$Rn, pred:$p)>;
 defm : VFPDT64ReqInstAlias<"vld1${p}", "$Vd, $Rn!",
           (VLD1q64wb_fixed VecListTwoD:$Vd, zero_reg, addrmode6:$Rn, pred:$p)>;
+//        with writeback, register stride
+defm : VFPDT8ReqInstAlias<"vld1${p}", "$Vd, $Rn, $Rm",
+          (VLD1q8wb_register  VecListTwoD:$Vd, zero_reg, addrmode6:$Rn,
+                              rGPR:$Rm, pred:$p)>;
+defm : VFPDT16ReqInstAlias<"vld1${p}", "$Vd, $Rn, $Rm",
+          (VLD1q16wb_register VecListTwoD:$Vd, zero_reg, addrmode6:$Rn,
+                              rGPR:$Rm, pred:$p)>;
+defm : VFPDT32ReqInstAlias<"vld1${p}", "$Vd, $Rn, $Rm",
+          (VLD1q32wb_register VecListTwoD:$Vd, zero_reg, addrmode6:$Rn,
+                              rGPR:$Rm, pred:$p)>;
+defm : VFPDT64ReqInstAlias<"vld1${p}", "$Vd, $Rn, $Rm",
+          (VLD1q64wb_register VecListTwoD:$Vd, zero_reg, addrmode6:$Rn,
+                              rGPR:$Rm, pred:$p)>;
 
 // Load three D registers.
 defm : VFPDT8ReqInstAlias<"vld1${p}", "$Vd, $Rn",
@@ -5274,6 +5300,19 @@ defm : VFPDT32ReqInstAlias<"vld1${p}", "$Vd, $Rn!",
 defm : VFPDT64ReqInstAlias<"vld1${p}", "$Vd, $Rn!",
                           (VLD1d64Twb_fixed VecListThreeD:$Vd, zero_reg,
                                             addrmode6:$Rn, pred:$p)>;
+//        with writeback, register stride
+defm : VFPDT8ReqInstAlias<"vld1${p}", "$Vd, $Rn, $Rm",
+                        (VLD1d8Twb_register VecListThreeD:$Vd, zero_reg,
+                                            addrmode6:$Rn, rGPR:$Rm, pred:$p)>;
+defm : VFPDT16ReqInstAlias<"vld1${p}", "$Vd, $Rn, $Rm",
+                        (VLD1d16Twb_register VecListThreeD:$Vd, zero_reg,
+                                             addrmode6:$Rn, rGPR:$Rm, pred:$p)>;
+defm : VFPDT32ReqInstAlias<"vld1${p}", "$Vd, $Rn, $Rm",
+                        (VLD1d32Twb_register VecListThreeD:$Vd, zero_reg,
+                                             addrmode6:$Rn, rGPR:$Rm, pred:$p)>;
+defm : VFPDT64ReqInstAlias<"vld1${p}", "$Vd, $Rn, $Rm",
+                        (VLD1d64Twb_register VecListThreeD:$Vd, zero_reg,
+                                             addrmode6:$Rn, rGPR:$Rm, pred:$p)>;
 
 
 // Load four D registers.
@@ -5298,6 +5337,19 @@ defm : VFPDT32ReqInstAlias<"vld1${p}", "$Vd, $Rn!",
 defm : VFPDT64ReqInstAlias<"vld1${p}", "$Vd, $Rn!",
                           (VLD1d64Qwb_fixed VecListFourD:$Vd, zero_reg,
                                             addrmode6:$Rn, pred:$p)>;
+//        with writeback, register stride
+defm : VFPDT8ReqInstAlias<"vld1${p}", "$Vd, $Rn, $Rm",
+                       (VLD1d8Qwb_register VecListFourD:$Vd, zero_reg,
+                                           addrmode6:$Rn, rGPR:$Rm, pred:$p)>;
+defm : VFPDT16ReqInstAlias<"vld1${p}", "$Vd, $Rn, $Rm",
+                       (VLD1d16Qwb_register VecListFourD:$Vd, zero_reg,
+                                            addrmode6:$Rn, rGPR:$Rm, pred:$p)>;
+defm : VFPDT32ReqInstAlias<"vld1${p}", "$Vd, $Rn, $Rm",
+                       (VLD1d32Qwb_register VecListFourD:$Vd, zero_reg,
+                                            addrmode6:$Rn, rGPR:$Rm, pred:$p)>;
+defm : VFPDT64ReqInstAlias<"vld1${p}", "$Vd, $Rn, $Rm",
+                       (VLD1d64Qwb_register VecListFourD:$Vd, zero_reg,
+                                            addrmode6:$Rn, rGPR:$Rm, pred:$p)>;
 
 // VST1 requires a size suffix, but also accepts type specific variants.
 // Store one D register.
@@ -5318,6 +5370,19 @@ defm : VFPDT32ReqInstAlias<"vst1${p}", "$Vd, $Rn!",
           (VST1d32wb_fixed zero_reg, addrmode6:$Rn, VecListOneD:$Vd, pred:$p)>;
 defm : VFPDT64ReqInstAlias<"vst1${p}", "$Vd, $Rn!",
           (VST1d64wb_fixed zero_reg, addrmode6:$Rn, VecListOneD:$Vd, pred:$p)>;
+//        with writeback, register stride
+defm : VFPDT8ReqInstAlias<"vst1${p}", "$Vd, $Rn, $Rm",
+          (VST1d8wb_register  zero_reg, addrmode6:$Rn, rGPR:$Rm,
+                              VecListOneD:$Vd, pred:$p)>;
+defm : VFPDT16ReqInstAlias<"vst1${p}", "$Vd, $Rn, $Rm",
+          (VST1d16wb_register zero_reg, addrmode6:$Rn, rGPR:$Rm,
+                              VecListOneD:$Vd, pred:$p)>;
+defm : VFPDT32ReqInstAlias<"vst1${p}", "$Vd, $Rn, $Rm",
+          (VST1d32wb_register zero_reg, addrmode6:$Rn, rGPR:$Rm,
+                              VecListOneD:$Vd, pred:$p)>;
+defm : VFPDT64ReqInstAlias<"vst1${p}", "$Vd, $Rn, $Rm",
+          (VST1d64wb_register zero_reg, addrmode6:$Rn, rGPR:$Rm,
+                              VecListOneD:$Vd, pred:$p)>;
 
 // Store two D registers.
 defm : VFPDT8ReqInstAlias<"vst1${p}", "$Vd, $Rn",
@@ -5337,6 +5402,19 @@ defm : VFPDT32ReqInstAlias<"vst1${p}", "$Vd, $Rn!",
           (VST1q32wb_fixed zero_reg, addrmode6:$Rn, VecListTwoD:$Vd, pred:$p)>;
 defm : VFPDT64ReqInstAlias<"vst1${p}", "$Vd, $Rn!",
           (VST1q64wb_fixed zero_reg, addrmode6:$Rn, VecListTwoD:$Vd, pred:$p)>;
+//        with writeback, register stride
+defm : VFPDT8ReqInstAlias<"vst1${p}", "$Vd, $Rn, $Rm",
+          (VST1q8wb_register  zero_reg, addrmode6:$Rn,
+                              rGPR:$Rm, VecListTwoD:$Vd, pred:$p)>;
+defm : VFPDT16ReqInstAlias<"vst1${p}", "$Vd, $Rn, $Rm",
+          (VST1q16wb_register zero_reg, addrmode6:$Rn,
+                              rGPR:$Rm, VecListTwoD:$Vd, pred:$p)>;
+defm : VFPDT32ReqInstAlias<"vst1${p}", "$Vd, $Rn, $Rm",
+          (VST1q32wb_register zero_reg, addrmode6:$Rn,
+                              rGPR:$Rm, VecListTwoD:$Vd, pred:$p)>;
+defm : VFPDT64ReqInstAlias<"vst1${p}", "$Vd, $Rn, $Rm",
+          (VST1q64wb_register zero_reg, addrmode6:$Rn,
+                              rGPR:$Rm, VecListTwoD:$Vd, pred:$p)>;
 
 // FIXME: The three and four register VST1 instructions haven't been moved
 // to the VecList* encoding yet, so we can't do assembly parsing support
