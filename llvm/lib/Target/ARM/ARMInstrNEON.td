@@ -5442,3 +5442,19 @@ defm : VFPDT64ReqInstAlias<"vst1${p}", "$Vd, $Rn, $Rm",
 //                          (VST1d32Q addrmode6:$Rn, VecListFourD:$Vd, pred:$p)>;
 //defm : VFPDT64ReqInstAlias<"vst1${p}", "$Vd, $Rn",
 //                          (VST1d64Q addrmode6:$Rn, VecListFourD:$Vd, pred:$p)>;
+
+
+// VTRN instructions data type suffix aliases for more-specific types.
+defm : VFPDT8ReqInstAlias <"vtrn${p}", "$Dd, $Dm",
+                          (VTRNd8 DPR:$Dd, DPR:$Dm, pred:$p)>;
+defm : VFPDT16ReqInstAlias<"vtrn${p}", "$Dd, $Dm",
+                          (VTRNd16 DPR:$Dd, DPR:$Dm, pred:$p)>;
+defm : VFPDT32ReqInstAlias<"vtrn${p}", "$Dd, $Dm",
+                          (VTRNd32 DPR:$Dd, DPR:$Dm, pred:$p)>;
+
+defm : VFPDT8ReqInstAlias <"vtrn${p}", "$Qd, $Qm",
+                          (VTRNq8 QPR:$Qd, QPR:$Qm, pred:$p)>;
+defm : VFPDT16ReqInstAlias<"vtrn${p}", "$Qd, $Qm",
+                          (VTRNq16 QPR:$Qd, QPR:$Qm, pred:$p)>;
+defm : VFPDT32ReqInstAlias<"vtrn${p}", "$Qd, $Qm",
+                          (VTRNq32 QPR:$Qd, QPR:$Qm, pred:$p)>;

@@ -44,3 +44,63 @@
 	vzip.16	q9, q8
 @ CHECK: vzip.32	q9, q8                  @ encoding: [0xe0,0x21,0xfa,0xf3]
 	vzip.32	q9, q8
+
+
+@ VTRN alternate size suffices
+
+        vtrn.8 d3, d9
+        vtrn.i8 d3, d9
+        vtrn.u8 d3, d9
+        vtrn.p8 d3, d9
+        vtrn.16 d3, d9
+        vtrn.i16 d3, d9
+        vtrn.u16 d3, d9
+        vtrn.p16 d3, d9
+        vtrn.32 d3, d9
+        vtrn.i32 d3, d9
+        vtrn.u32 d3, d9
+        vtrn.f32 d3, d9
+        vtrn.f d3, d9
+
+        vtrn.8 q14, q6
+        vtrn.i8 q14, q6
+        vtrn.u8 q14, q6
+        vtrn.p8 q14, q6
+        vtrn.16 q14, q6
+        vtrn.i16 q14, q6
+        vtrn.u16 q14, q6
+        vtrn.p16 q14, q6
+        vtrn.32 q14, q6
+        vtrn.i32 q14, q6
+        vtrn.u32 q14, q6
+        vtrn.f32 q14, q6
+        vtrn.f q14, q6
+
+@ CHECK: vtrn.8	d3, d9                  @ encoding: [0x89,0x30,0xb2,0xf3]
+@ CHECK: vtrn.8	d3, d9                  @ encoding: [0x89,0x30,0xb2,0xf3]
+@ CHECK: vtrn.8	d3, d9                  @ encoding: [0x89,0x30,0xb2,0xf3]
+@ CHECK: vtrn.8	d3, d9                  @ encoding: [0x89,0x30,0xb2,0xf3]
+@ CHECK: vtrn.16	d3, d9          @ encoding: [0x89,0x30,0xb6,0xf3]
+@ CHECK: vtrn.16	d3, d9          @ encoding: [0x89,0x30,0xb6,0xf3]
+@ CHECK: vtrn.16	d3, d9          @ encoding: [0x89,0x30,0xb6,0xf3]
+@ CHECK: vtrn.16	d3, d9          @ encoding: [0x89,0x30,0xb6,0xf3]
+@ CHECK: vtrn.32	d3, d9          @ encoding: [0x89,0x30,0xba,0xf3]
+@ CHECK: vtrn.32	d3, d9          @ encoding: [0x89,0x30,0xba,0xf3]
+@ CHECK: vtrn.32	d3, d9          @ encoding: [0x89,0x30,0xba,0xf3]
+@ CHECK: vtrn.32	d3, d9          @ encoding: [0x89,0x30,0xba,0xf3]
+@ CHECK: vtrn.32	d3, d9          @ encoding: [0x89,0x30,0xba,0xf3]
+
+@ CHECK: vtrn.8	q14, q6                 @ encoding: [0xcc,0xc0,0xf2,0xf3]
+@ CHECK: vtrn.8	q14, q6                 @ encoding: [0xcc,0xc0,0xf2,0xf3]
+@ CHECK: vtrn.8	q14, q6                 @ encoding: [0xcc,0xc0,0xf2,0xf3]
+@ CHECK: vtrn.8	q14, q6                 @ encoding: [0xcc,0xc0,0xf2,0xf3]
+@ CHECK: vtrn.16	q14, q6         @ encoding: [0xcc,0xc0,0xf6,0xf3]
+@ CHECK: vtrn.16	q14, q6         @ encoding: [0xcc,0xc0,0xf6,0xf3]
+@ CHECK: vtrn.16	q14, q6         @ encoding: [0xcc,0xc0,0xf6,0xf3]
+@ CHECK: vtrn.16	q14, q6         @ encoding: [0xcc,0xc0,0xf6,0xf3]
+@ CHECK: vtrn.32	q14, q6         @ encoding: [0xcc,0xc0,0xfa,0xf3]
+@ CHECK: vtrn.32	q14, q6         @ encoding: [0xcc,0xc0,0xfa,0xf3]
+@ CHECK: vtrn.32	q14, q6         @ encoding: [0xcc,0xc0,0xfa,0xf3]
+@ CHECK: vtrn.32	q14, q6         @ encoding: [0xcc,0xc0,0xfa,0xf3]
+@ CHECK: vtrn.32	q14, q6         @ encoding: [0xcc,0xc0,0xfa,0xf3]
+
