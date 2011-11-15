@@ -2366,7 +2366,7 @@ static unsigned getDRegFromQReg(unsigned QReg) {
   case ARM::Q6:  return ARM::D12;
   case ARM::Q7:  return ARM::D14;
   case ARM::Q8:  return ARM::D16;
-  case ARM::Q9:  return ARM::D19;
+  case ARM::Q9:  return ARM::D18;
   case ARM::Q10: return ARM::D20;
   case ARM::Q11: return ARM::D22;
   case ARM::Q12: return ARM::D24;
