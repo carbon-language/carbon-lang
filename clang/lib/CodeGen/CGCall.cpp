@@ -1513,7 +1513,10 @@ void CodeGenFunction::ExpandTypeToArgs(QualType Ty, RValue RV,
       llvm::Value *EltAddr = Builder.CreateConstGEP2_32(Addr, 0, Elt);
       LValue LV = MakeAddrLValue(EltAddr, EltTy);
       RValue EltRV;
-      if (CodeGenFunction::hasAggregateLLVMType(EltTy))
+      if (EltTy->isAnyComplexType())
+        // FIXME: Volatile?
+        EltRV = RValue::getComplex(LoadComplexFromAddr(LV.getAddress(), false));
+      else if (CodeGenFunction::hasAggregateLLVMType(EltTy))
         EltRV = RValue::getAggregate(LV.getAddress());
       else
         EltRV = EmitLoadOfLValue(LV);
@@ -1531,13 +1534,16 @@ void CodeGenFunction::ExpandTypeToArgs(QualType Ty, RValue RV,
       // FIXME: What are the right qualifiers here?
       LValue LV = EmitLValueForField(Addr, FD, 0);
       RValue FldRV;
-      if (CodeGenFunction::hasAggregateLLVMType(FT))
+      if (FT->isAnyComplexType())
+        // FIXME: Volatile?
+        FldRV = RValue::getComplex(LoadComplexFromAddr(LV.getAddress(), false));
+      else if (CodeGenFunction::hasAggregateLLVMType(FT))
         FldRV = RValue::getAggregate(LV.getAddress());
       else
         FldRV = EmitLoadOfLValue(LV);
       ExpandTypeToArgs(FT, FldRV, Args, IRFuncTy);
     }
-  } else if (isa<ComplexType>(Ty)) {
+  } else if (Ty->isAnyComplexType()) {
     ComplexPairTy CV = RV.getComplexVal();
     Args.push_back(CV.first);
     Args.push_back(CV.second);

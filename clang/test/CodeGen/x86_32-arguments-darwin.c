@@ -275,3 +275,8 @@ void f56(char a0, struct s56_0 a1,
   f56_0(1, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9,
         a10, a11, a12, a13);
 }
+
+// CHECK: define void @f57(i32 %x.0, i32 %x.1)
+// CHECK: call void @f57(
+struct s57 { _Complex int x; };
+void f57(struct s57 x) {} void f57a(void) { f57((struct s57){1}); }
