@@ -2216,6 +2216,63 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
     }
     break;
   }
+  case ISD::STORE: {
+    StoreSDNode *StoreNode = cast<StoreSDNode>(Node);
+    SDValue Chain = StoreNode->getOperand(0);
+    SDValue StoredVal = StoreNode->getOperand(1);
+    SDValue Address = StoreNode->getOperand(2);
+    SDValue Undef = StoreNode->getOperand(3);
+
+    if (StoreNode->getMemOperand()->getSize() != 8 ||
+        Undef->getOpcode() != ISD::UNDEF ||
+        Chain->getOpcode() != ISD::LOAD ||
+        StoredVal->getOpcode() != X86ISD::DEC ||
+        StoredVal.getResNo() != 0 ||
+        StoredVal->getOperand(0).getNode() != Chain.getNode())
+      break;
+
+    //OPC_CheckPredicate, 1, // Predicate_nontemporalstore
+    if (StoreNode->isNonTemporal())
+      break;
+
+    LoadSDNode *LoadNode = cast<LoadSDNode>(Chain.getNode());
+    if (LoadNode->getOperand(1) != Address ||
+        LoadNode->getOperand(2) != Undef)
+      break;
+
+    if (!ISD::isNormalLoad(LoadNode))
+      break;
+
+    if (!ISD::isNormalStore(StoreNode))
+      break;
+
+    // check load chain has only one use (from the store)
+    if (!Chain.hasOneUse())
+      break;
+
+    // Merge the input chains if they are not intra-pattern references.
+    SDValue InputChain = LoadNode->getOperand(0);
+
+    SDValue Base, Scale, Index, Disp, Segment;
+    if (!SelectAddr(LoadNode, LoadNode->getBasePtr(),
+                    Base, Scale, Index, Disp, Segment))
+      break;
+
+    MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(2);
+    MemOp[0] = StoreNode->getMemOperand();
+    MemOp[1] = LoadNode->getMemOperand();
+    const SDValue Ops[] = { Base, Scale, Index, Disp, Segment, InputChain };
+    MachineSDNode *Result = CurDAG->getMachineNode(X86::DEC64m,
+                                                   Node->getDebugLoc(),
+                                                   MVT::i32, MVT::Other, Ops,
+                                                   array_lengthof(Ops));
+    Result->setMemRefs(MemOp, MemOp + 2);
+
+    ReplaceUses(SDValue(StoreNode, 0), SDValue(Result, 1));
+    ReplaceUses(SDValue(StoredVal.getNode(), 1), SDValue(Result, 0));
+
+    return Result;
+  }
   }
 
   SDNode *ResNode = SelectCode(Node);

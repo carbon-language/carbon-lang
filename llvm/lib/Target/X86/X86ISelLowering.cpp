@@ -8263,8 +8263,10 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC,
     // climbing the DAG back to the root, and it doesn't seem to be worth the
     // effort.
     for (SDNode::use_iterator UI = Op.getNode()->use_begin(),
-           UE = Op.getNode()->use_end(); UI != UE; ++UI)
-      if (UI->getOpcode() != ISD::CopyToReg && UI->getOpcode() != ISD::SETCC)
+         UE = Op.getNode()->use_end(); UI != UE; ++UI)
+      if (UI->getOpcode() != ISD::CopyToReg &&
+          UI->getOpcode() != ISD::SETCC &&
+          UI->getOpcode() != ISD::STORE)
         goto default_case;
 
     if (ConstantSDNode *C =

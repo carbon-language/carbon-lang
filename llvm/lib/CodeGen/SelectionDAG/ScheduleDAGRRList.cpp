@@ -948,6 +948,11 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
     if (!TII->unfoldMemoryOperand(*DAG, N, NewNodes))
       return NULL;
 
+    // unfolding an x86 DEC64m operation results in store, dec, load which
+    // can't be handled here so quit
+    if (NewNodes.size() == 3)
+      return NULL;
+
     DEBUG(dbgs() << "Unfolding SU #" << SU->NodeNum << "\n");
     assert(NewNodes.size() == 2 && "Expected a load folding node!");
 
