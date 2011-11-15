@@ -17,7 +17,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (275):
+CHECK: Warnings without flags (274):
 CHECK-NEXT:   ext_anon_param_requires_type_specifier
 CHECK-NEXT:   ext_anonymous_struct_union_qualified
 CHECK-NEXT:   ext_array_init_copy
@@ -110,7 +110,6 @@ CHECK-NEXT:   warn_attribute_iboutlet
 CHECK-NEXT:   warn_attribute_ignored
 CHECK-NEXT:   warn_attribute_ignored_for_field_of_type
 CHECK-NEXT:   warn_attribute_malloc_pointer_only
-CHECK-NEXT:   warn_attribute_method_def
 CHECK-NEXT:   warn_attribute_nonnull_no_pointers
 CHECK-NEXT:   warn_attribute_precede_definition
 CHECK-NEXT:   warn_attribute_sentinel_named_arguments
