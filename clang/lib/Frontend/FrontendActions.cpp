@@ -85,7 +85,7 @@ ASTConsumer *GeneratePCHAction::CreateASTConsumer(CompilerInstance &CI,
 
   if (!CI.getFrontendOpts().RelocatablePCH)
     Sysroot.clear();
-  return new PCHGenerator(CI.getPreprocessor(), OutputFile, /*Module=*/false, 
+  return new PCHGenerator(CI.getPreprocessor(), OutputFile, MakeModule, 
                           Sysroot, OS);
 }
 
@@ -109,44 +109,6 @@ bool GeneratePCHAction::ComputeASTConsumerArguments(CompilerInstance &CI,
   if (!OS)
     return true;
 
-  OutputFile = CI.getFrontendOpts().OutputFile;
-  return false;
-}
-
-ASTConsumer *GenerateModuleAction::CreateASTConsumer(CompilerInstance &CI,
-                                                     StringRef InFile) {
-  std::string Sysroot;
-  std::string OutputFile;
-  raw_ostream *OS = 0;
-  if (ComputeASTConsumerArguments(CI, InFile, Sysroot, OutputFile, OS))
-    return 0;
-  
-  if (!CI.getFrontendOpts().RelocatablePCH)
-    Sysroot.clear();
-  return new PCHGenerator(CI.getPreprocessor(), OutputFile, /*Module=*/true, 
-                          Sysroot, OS);
-}
-
-bool GenerateModuleAction::ComputeASTConsumerArguments(CompilerInstance &CI,
-                                                       StringRef InFile,
-                                                       std::string &Sysroot,
-                                                       std::string &OutputFile,
-                                                       raw_ostream *&OS) {
-  Sysroot = CI.getHeaderSearchOpts().Sysroot;
-  if (CI.getFrontendOpts().RelocatablePCH && Sysroot.empty()) {
-    CI.getDiagnostics().Report(diag::err_relocatable_without_isysroot);
-    return true;
-  }
-  
-  // We use createOutputFile here because this is exposed via libclang, and we
-  // must disable the RemoveFileOnSignal behavior.
-  // We use a temporary to avoid race conditions.
-  OS = CI.createOutputFile(CI.getFrontendOpts().OutputFile, /*Binary=*/true,
-                           /*RemoveFileOnSignal=*/false, InFile,
-                           /*Extension=*/"", /*useTemporary=*/true);
-  if (!OS)
-    return true;
-  
   OutputFile = CI.getFrontendOpts().OutputFile;
   return false;
 }

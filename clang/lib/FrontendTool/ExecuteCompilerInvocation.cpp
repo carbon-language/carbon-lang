@@ -49,8 +49,8 @@ static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {
   case EmitCodeGenOnly:        return new EmitCodeGenOnlyAction();
   case EmitObj:                return new EmitObjAction();
   case FixIt:                  return new FixItAction();
-  case GenerateModule:         return new GenerateModuleAction();
-  case GeneratePCH:            return new GeneratePCHAction();
+  case GenerateModule:         return new GeneratePCHAction(true);
+  case GeneratePCH:            return new GeneratePCHAction(false);
   case GeneratePTH:            return new GeneratePTHAction();
   case InitOnly:               return new InitOnlyAction();
   case ParseSyntaxOnly:        return new SyntaxOnlyAction();

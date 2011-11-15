@@ -647,14 +647,13 @@ bool CompilerInstance::ExecuteAction(FrontendAction &Act) {
     llvm::EnableStatistics();
 
   for (unsigned i = 0, e = getFrontendOpts().Inputs.size(); i != e; ++i) {
-    InputKind InKind = getFrontendOpts().Inputs[i].first;
-    std::string InFile = getFrontendOpts().Inputs[i].second;
-    
+    const std::string &InFile = getFrontendOpts().Inputs[i].second;
+
     // Reset the ID tables if we are reusing the SourceManager.
     if (hasSourceManager())
       getSourceManager().clearIDTables();
 
-    if (Act.BeginSourceFile(*this, InFile, InKind)) {
+    if (Act.BeginSourceFile(*this, InFile, getFrontendOpts().Inputs[i].first)) {
       Act.Execute();
       Act.EndSourceFile();
     }
@@ -699,7 +698,7 @@ static InputKind getSourceInputKindFromOptions(const LangOptions &LangOpts) {
 namespace {
   struct CompileModuleData {
     CompilerInstance &Instance;
-    GenerateModuleAction &CreateModuleAction;
+    GeneratePCHAction &CreateModuleAction;
   };
 }
 
@@ -1024,7 +1023,7 @@ static void compileModule(CompilerInstance &ImportingInstance,
                              /*ShouldCloneClient=*/true);
 
   // Construct a module-generating action.
-  GenerateModuleAction CreateModuleAction;
+  GeneratePCHAction CreateModuleAction(true);
 
   // Execute the action to actually build the module in-place. Use a separate
   // thread so that we get a stack large enough.
