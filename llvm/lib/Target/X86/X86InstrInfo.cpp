@@ -2761,6 +2761,10 @@ X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
 ///
 static bool hasPartialRegUpdate(unsigned Opcode) {
   switch (Opcode) {
+  case X86::CVTSI2SSrr:
+  case X86::CVTSI2SS64rr:
+  case X86::CVTSI2SDrr:
+  case X86::CVTSI2SD64rr:
   case X86::CVTSD2SSrr:
   case X86::Int_CVTSD2SSrr:
   case X86::CVTSS2SDrr:
@@ -2787,6 +2791,54 @@ static bool hasPartialRegUpdate(unsigned Opcode) {
   }
 
   return false;
+}
+
+/// getPartialRegUpdateClearance - Inform the ExeDepsFix pass how many idle
+/// instructions we would like before a partial register update.
+unsigned X86InstrInfo::
+getPartialRegUpdateClearance(const MachineInstr *MI, unsigned OpNum,
+                             const TargetRegisterInfo *TRI) const {
+  if (OpNum != 0 || !hasPartialRegUpdate(MI->getOpcode()))
+    return 0;
+
+  // If MI is marked as reading Reg, the partial register update is wanted.
+  const MachineOperand &MO = MI->getOperand(0);
+  unsigned Reg = MO.getReg();
+  if (TargetRegisterInfo::isVirtualRegister(Reg)) {
+    if (MO.readsReg() || MI->readsVirtualRegister(Reg))
+      return 0;
+  } else {
+    if (MI->readsRegister(Reg, TRI))
+      return 0;
+  }
+
+  // If any of the preceding 16 instructions are reading Reg, insert a
+  // dependency breaking instruction.  The magic number is based on a few
+  // Nehalem experiments.
+  return 16;
+}
+
+void X86InstrInfo::
+breakPartialRegDependency(MachineBasicBlock::iterator MI, unsigned OpNum,
+                          const TargetRegisterInfo *TRI) const {
+  unsigned Reg = MI->getOperand(OpNum).getReg();
+  if (X86::VR128RegClass.contains(Reg)) {
+    // These instructions are all floating point domain, so xorps is the best
+    // choice.
+    bool HasAVX = TM.getSubtarget<X86Subtarget>().hasAVX();
+    unsigned Opc = HasAVX ? X86::VXORPSrr : X86::XORPSrr;
+    BuildMI(*MI->getParent(), MI, MI->getDebugLoc(), get(Opc), Reg)
+      .addReg(Reg, RegState::Undef).addReg(Reg, RegState::Undef);
+  } else if (X86::VR256RegClass.contains(Reg)) {
+    // Use vxorps to clear the full ymm register.
+    // It wants to read and write the xmm sub-register.
+    unsigned XReg = TRI->getSubReg(Reg, X86::sub_xmm);
+    BuildMI(*MI->getParent(), MI, MI->getDebugLoc(), get(X86::VXORPSrr), XReg)
+      .addReg(XReg, RegState::Undef).addReg(XReg, RegState::Undef)
+      .addReg(Reg, RegState::ImplicitDefine);
+  } else
+    return;
+  MI->addRegisterKilled(Reg, TRI, true);
 }
 
 MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,

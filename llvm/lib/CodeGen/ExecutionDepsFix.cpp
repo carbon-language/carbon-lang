@@ -471,11 +471,34 @@ void ExeDepsFix::processDefs(MachineInstr *MI, bool Kill) {
     DEBUG(dbgs() << TRI->getName(RC->getRegister(rx)) << ":\t" << CurInstr
                  << '\t' << *MI);
 
+    // How many instructions since rx was last written?
+    unsigned Clearance = CurInstr - LiveRegs[rx].Def;
     LiveRegs[rx].Def = CurInstr;
 
     // Kill off domains redefined by generic instructions.
     if (Kill)
       kill(rx);
+
+    // Verify clearance before partial register updates.
+    unsigned Pref = TII->getPartialRegUpdateClearance(MI, i, TRI);
+    if (!Pref)
+      continue;
+    DEBUG(dbgs() << "Clearance: " << Clearance << ", want " << Pref);
+    if (Pref > Clearance) {
+      DEBUG(dbgs() << ": Break dependency.\n");
+      TII->breakPartialRegDependency(MI, i, TRI);
+      continue;
+    }
+
+    // The current clearance seems OK, but we may be ignoring a def from a
+    // back-edge.
+    if (!SeenUnknownBackEdge || Pref <= unsigned(CurInstr)) {
+      DEBUG(dbgs() << ": OK.\n");
+      continue;
+    }
+
+    // A def from an unprocessed back-edge may make us break this dependency.
+    DEBUG(dbgs() << ": Wait for back-edge to resolve.\n");
   }
 
   ++CurInstr;
@@ -663,6 +686,10 @@ bool ExeDepsFix::runOnMachineFunction(MachineFunction &mf) {
   for (unsigned i = 0, e = Loops.size(); i != e; ++i) {
     MachineBasicBlock *MBB = Loops[i];
     enterBasicBlock(MBB);
+    for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end(); I != E;
+        ++I)
+      if (!I->isDebugValue())
+        processDefs(I, false);
     leaveBasicBlock(MBB);
   }
 

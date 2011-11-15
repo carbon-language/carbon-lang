@@ -345,6 +345,11 @@ public:
 
   void setExecutionDomain(MachineInstr *MI, unsigned Domain) const;
 
+  unsigned getPartialRegUpdateClearance(const MachineInstr *MI, unsigned OpNum,
+                                        const TargetRegisterInfo *TRI) const;
+  void breakPartialRegDependency(MachineBasicBlock::iterator MI, unsigned OpNum,
+                                 const TargetRegisterInfo *TRI) const;
+
   MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
                                       MachineInstr* MI,
                                       unsigned OpNum,

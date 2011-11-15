@@ -718,6 +718,74 @@ public:
   ///
   virtual void setExecutionDomain(MachineInstr *MI, unsigned Domain) const {}
 
+
+  /// getPartialRegUpdateClearance - Returns the preferred minimum clearance
+  /// before an instruction with an unwanted partial register update.
+  ///
+  /// Some instructions only write part of a register, and implicitly need to
+  /// read the other parts of the register.  This may cause unwanted stalls
+  /// preventing otherwise unrelated instructions from executing in parallel in
+  /// an out-of-order CPU.
+  ///
+  /// For example, the x86 instruction cvtsi2ss writes its result to bits
+  /// [31:0] of the destination xmm register. Bits [127:32] are unaffected, so
+  /// the instruction needs to wait for the old value of the register to become
+  /// available:
+  ///
+  ///   addps %xmm1, %xmm0
+  ///   movaps %xmm0, (%rax)
+  ///   cvtsi2ss %rbx, %xmm0
+  ///
+  /// In the code above, the cvtsi2ss instruction needs to wait for the addps
+  /// instruction before it can issue, even though the high bits of %xmm0
+  /// probably aren't needed.
+  ///
+  /// This hook returns the preferred clearance before MI, measured in
+  /// instructions.  Other defs of MI's operand OpNum are avoided in the last N
+  /// instructions before MI.  It should only return a positive value for
+  /// unwanted dependencies.  If the old bits of the defined register have
+  /// useful values, or if MI is determined to otherwise read the dependency,
+  /// the hook should return 0.
+  ///
+  /// The unwanted dependency may be handled by:
+  ///
+  /// 1. Allocating the same register for an MI def and use.  That makes the
+  ///    unwanted dependency identical to a required dependency.
+  ///
+  /// 2. Allocating a register for the def that has no defs in the previous N
+  ///    instructions.
+  ///
+  /// 3. Calling breakPartialRegDependency() with the same arguments.  This
+  ///    allows the target to insert a dependency breaking instruction.
+  ///
+  virtual unsigned
+  getPartialRegUpdateClearance(const MachineInstr *MI, unsigned OpNum,
+                               const TargetRegisterInfo *TRI) const {
+    // The default implementation returns 0 for no partial register dependency.
+    return 0;
+  }
+
+  /// breakPartialRegDependency - Insert a dependency-breaking instruction
+  /// before MI to eliminate an unwanted dependency on OpNum.
+  ///
+  /// If it wasn't possible to avoid a def in the last N instructions before MI
+  /// (see getPartialRegUpdateClearance), this hook will be called to break the
+  /// unwanted dependency.
+  ///
+  /// On x86, an xorps instruction can be used as a dependency breaker:
+  ///
+  ///   addps %xmm1, %xmm0
+  ///   movaps %xmm0, (%rax)
+  ///   xorps %xmm0, %xmm0
+  ///   cvtsi2ss %rbx, %xmm0
+  ///
+  /// An <imp-kill> operand should be added to MI if an instruction was
+  /// inserted.  This ties the instructions together in the post-ra scheduler.
+  ///
+  virtual void
+  breakPartialRegDependency(MachineBasicBlock::iterator MI, unsigned OpNum,
+                            const TargetRegisterInfo *TRI) const {}
+
 private:
   int CallFrameSetupOpcode, CallFrameDestroyOpcode;
 };
