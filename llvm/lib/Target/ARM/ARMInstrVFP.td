@@ -1189,3 +1189,8 @@ def : VFP2InstAlias<"vmov${p}.f64 $Rt, $Rt2, $Dn",
                     (VMOVRRD GPR:$Rt, GPR:$Rt2, DPR:$Dn, pred:$p)>;
 def : VFP2InstAlias<"vmov${p}.f64 $Dn, $Rt, $Rt2",
                     (VMOVDRR DPR:$Dn, GPR:$Rt, GPR:$Rt2, pred:$p)>;
+
+// VMOVS doesn't need the .f32 to disambiguate from the NEON encoding the way
+// VMOVD does.
+def : VFP2InstAlias<"vmov${p} $Sd, $Sm",
+                    (VMOVS SPR:$Sd, SPR:$Sm, pred:$p)>;
