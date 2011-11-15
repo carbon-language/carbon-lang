@@ -251,3 +251,11 @@
 @ CHECK: vld1.8	{d2, d3, d4}, [r2]      @ encoding: [0x0f,0x26,0x22,0xf4]
 @ CHECK: vld1.32 {d2, d3, d4}, [r2]     @ encoding: [0x8f,0x26,0x22,0xf4]
 @ CHECK: vld1.64 {d2, d3, d4}, [r2]     @ encoding: [0xcf,0x26,0x22,0xf4]
+
+
+@ Register lists can use the range syntax, just like VLDM
+	vld1.f64 {d2-d5}, [r2,:128]!
+	vld1.f64 {d2,d3,d4,d5}, [r2,:128]!
+
+@ CHECK: vld1.64 {d2, d3, d4, d5}, [r2, :128]! @ encoding: [0xed,0x22,0x22,0xf4]
+@ CHECK: vld1.64 {d2, d3, d4, d5}, [r2, :128]! @ encoding: [0xed,0x22,0x22,0xf4]

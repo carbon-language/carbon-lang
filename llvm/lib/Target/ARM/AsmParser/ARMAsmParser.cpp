@@ -2420,7 +2420,7 @@ parseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   while (Parser.getTok().is(AsmToken::Comma) ||
          Parser.getTok().is(AsmToken::Minus)) {
     if (Parser.getTok().is(AsmToken::Minus)) {
-      Parser.Lex(); // Eat the comma.
+      Parser.Lex(); // Eat the minus.
       SMLoc EndLoc = Parser.getTok().getLoc();
       int EndReg = tryParseRegister();
       if (EndReg == -1)
@@ -2530,7 +2530,39 @@ parseVectorList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     ++Count;
   }
 
-  while (Parser.getTok().is(AsmToken::Comma)) {
+  while (Parser.getTok().is(AsmToken::Comma) ||
+         Parser.getTok().is(AsmToken::Minus)) {
+    if (Parser.getTok().is(AsmToken::Minus)) {
+      Parser.Lex(); // Eat the minus.
+      SMLoc EndLoc = Parser.getTok().getLoc();
+      int EndReg = tryParseRegister();
+      if (EndReg == -1) {
+        Error(EndLoc, "register expected");
+        return MatchOperand_ParseFail;
+      }
+      // Allow Q regs and just interpret them as the two D sub-registers.
+      if (ARMMCRegisterClasses[ARM::QPRRegClassID].contains(EndReg))
+        EndReg = getDRegFromQReg(EndReg) + 1;
+      // If the register is the same as the start reg, there's nothing
+      // more to do.
+      if (Reg == EndReg)
+        continue;
+      // The register must be in the same register class as the first.
+      if (!ARMMCRegisterClasses[ARM::DPRRegClassID].contains(EndReg)) {
+        Error(EndLoc, "invalid register in register list");
+        return MatchOperand_ParseFail;
+      }
+      // Ranges must go from low to high.
+      if (Reg > EndReg) {
+        Error(EndLoc, "bad range in register list");
+        return MatchOperand_ParseFail;
+      }
+
+      // Add all the registers in the range to the register list.
+      Count += EndReg - Reg;
+      Reg = EndReg;
+      continue;
+    }
     Parser.Lex(); // Eat the comma.
     RegLoc = Parser.getTok().getLoc();
     int OldReg = Reg;
