@@ -22,6 +22,8 @@ CheckArches = \
 
 ###
 
+CC := clang
+
 Configs :=
 UniversalArchs :=
 
@@ -66,8 +68,6 @@ $(foreach config,$(Configs),\
 endif
 
 ###
-
-CC := clang
 
 # Forcibly strip off any -arch, as that totally breaks our universal support.
 override CC := $(subst -arch ,-arch_,$(CC))
