@@ -1863,3 +1863,9 @@
 # CHECK: vld1.32	{d22, d23, d24, d25}, [pc, :64]!
 0x9d 0xaa 0x41 0xf4
 # CHECK: vst1.32	{d26, d27}, [r1, :64]!
+
+0x10 0x0f 0x83 0xf2
+0x50 0x0f 0x83 0xf2
+# CHECK: vmov.f32	d0, #1.600000e+01
+# CHECK: vmov.f32	q0, #1.600000e+01
+

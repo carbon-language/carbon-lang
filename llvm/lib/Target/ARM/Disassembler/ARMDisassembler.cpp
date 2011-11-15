@@ -179,8 +179,6 @@ static DecodeStatus DecodeAddrMode7Operand(llvm::MCInst &Inst, unsigned Val,
                                uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeBranchImmInstruction(llvm::MCInst &Inst,unsigned Insn,
                                uint64_t Address, const void *Decoder);
-static DecodeStatus DecodeVCVTImmOperand(llvm::MCInst &Inst, unsigned Val,
-                               uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeAddrMode6Operand(llvm::MCInst &Inst, unsigned Val,
                                uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeVLDInstruction(llvm::MCInst &Inst, unsigned Val,
@@ -251,6 +249,11 @@ static DecodeStatus DecodeVMOVRRS(llvm::MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeSwap(llvm::MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeVCVTD(llvm::MCInst &Inst, unsigned Insn,
+                                uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeVCVTQ(llvm::MCInst &Inst, unsigned Insn,
+                                uint64_t Address, const void *Decoder);
+
 
 static DecodeStatus DecodeThumbAddSpecialReg(llvm::MCInst &Inst, uint16_t Insn,
                                uint64_t Address, const void *Decoder);
@@ -1920,12 +1923,6 @@ DecodeBranchImmInstruction(llvm::MCInst &Inst, unsigned Insn,
   return S;
 }
 
-
-static DecodeStatus DecodeVCVTImmOperand(llvm::MCInst &Inst, unsigned Val,
-                                 uint64_t Address, const void *Decoder) {
-  Inst.addOperand(MCOperand::CreateImm(64 - Val));
-  return MCDisassembler::Success;
-}
 
 static DecodeStatus DecodeAddrMode6Operand(llvm::MCInst &Inst, unsigned Val,
                                    uint64_t Address, const void *Decoder) {
@@ -4085,3 +4082,60 @@ static DecodeStatus DecodeSwap(llvm::MCInst &Inst, unsigned Insn,
 
   return S;
 }
+
+static DecodeStatus DecodeVCVTD(llvm::MCInst &Inst, unsigned Insn,
+                                uint64_t Address, const void *Decoder) {
+  unsigned Vd = (fieldFromInstruction32(Insn, 12, 4) << 0);
+  Vd |= (fieldFromInstruction32(Insn, 22, 1) << 4);
+  unsigned Vm = (fieldFromInstruction32(Insn, 0, 4) << 0);
+  Vm |= (fieldFromInstruction32(Insn, 5, 1) << 4);
+  unsigned imm = fieldFromInstruction32(Insn, 16, 6);
+  unsigned cmode = fieldFromInstruction32(Insn, 8, 4);
+
+  DecodeStatus S = MCDisassembler::Success;
+
+  // VMOVv2f32 is ambiguous with these decodings.
+  if (!(imm & 0x38 && cmode == 0xF)) {
+    Inst.setOpcode(ARM::VMOVv2f32);
+    return DecodeNEONModImmInstruction(Inst, Insn, Address, Decoder);
+  }
+
+  if (!(imm & 0x20)) Check(S, MCDisassembler::SoftFail);
+
+  if (!Check(S, DecodeDPRRegisterClass(Inst, Vd, Address, Decoder)))
+    return MCDisassembler::Fail;
+  if (!Check(S, DecodeDPRRegisterClass(Inst, Vm, Address, Decoder)))
+    return MCDisassembler::Fail;
+  Inst.addOperand(MCOperand::CreateImm(64 - imm));
+
+  return S;
+}
+
+static DecodeStatus DecodeVCVTQ(llvm::MCInst &Inst, unsigned Insn,
+                                uint64_t Address, const void *Decoder) {
+  unsigned Vd = (fieldFromInstruction32(Insn, 12, 4) << 0);
+  Vd |= (fieldFromInstruction32(Insn, 22, 1) << 4);
+  unsigned Vm = (fieldFromInstruction32(Insn, 0, 4) << 0);
+  Vm |= (fieldFromInstruction32(Insn, 5, 1) << 4);
+  unsigned imm = fieldFromInstruction32(Insn, 16, 6);
+  unsigned cmode = fieldFromInstruction32(Insn, 8, 4);
+
+  DecodeStatus S = MCDisassembler::Success;
+
+  // VMOVv4f32 is ambiguous with these decodings.
+  if (!(imm & 0x38) && cmode == 0xF) {
+    Inst.setOpcode(ARM::VMOVv4f32);
+    return DecodeNEONModImmInstruction(Inst, Insn, Address, Decoder);
+  }
+
+  if (!(imm & 0x20)) Check(S, MCDisassembler::SoftFail);
+
+  if (!Check(S, DecodeQPRRegisterClass(Inst, Vd, Address, Decoder)))
+    return MCDisassembler::Fail;
+  if (!Check(S, DecodeQPRRegisterClass(Inst, Vm, Address, Decoder)))
+    return MCDisassembler::Fail;
+  Inst.addOperand(MCOperand::CreateImm(64 - imm));
+
+  return S;
+}
+
