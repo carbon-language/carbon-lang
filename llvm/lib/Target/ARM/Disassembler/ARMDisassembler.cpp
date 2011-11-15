@@ -4095,7 +4095,7 @@ static DecodeStatus DecodeVCVTD(llvm::MCInst &Inst, unsigned Insn,
   DecodeStatus S = MCDisassembler::Success;
 
   // VMOVv2f32 is ambiguous with these decodings.
-  if (!(imm & 0x38 && cmode == 0xF)) {
+  if (!(imm & 0x38) && cmode == 0xF) {
     Inst.setOpcode(ARM::VMOVv2f32);
     return DecodeNEONModImmInstruction(Inst, Insn, Address, Decoder);
   }
