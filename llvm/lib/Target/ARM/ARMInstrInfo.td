@@ -1555,7 +1555,7 @@ PseudoInst<(outs), (ins i32imm:$amt, pred:$p), NoItinerary,
 }
 
 // Atomic pseudo-insts which will be lowered to ldrexd/strexd loops.
-// (These psuedos use a hand-written selection code).
+// (These pseudos use a hand-written selection code).
 let usesCustomInserter = 1, Defs = [CPSR], mayLoad = 1, mayStore = 1 in {
 def ATOMOR6432   : PseudoInst<(outs GPR:$dst1, GPR:$dst2),
                               (ins GPR:$addr, GPR:$src1, GPR:$src2),
