@@ -4153,13 +4153,19 @@ void ScalarEvolution::forgetValue(Value *V) {
 }
 
 /// getExact - Get the exact loop backedge taken count considering all loop
-/// exits. If all exits are computable, this is the minimum computed count.
+/// exits. A computable result can only be return for loops with a single exit.
+/// Returning the minimum taken count among all exits is incorrect because one
+/// of the loop's exit limit's may have been skipped. HowFarToZero assumes that
+/// the limit of each loop test is never skipped. This is a valid assumption as
+/// long as the loop exits via that test. For precise results, it is the
+/// caller's responsibility to specify the relevant loop exit using
+/// getExact(ExitingBlock, SE).
 const SCEV *
 ScalarEvolution::BackedgeTakenInfo::getExact(ScalarEvolution *SE) const {
   // If any exits were not computable, the loop is not computable.
   if (!ExitNotTaken.isCompleteList()) return SE->getCouldNotCompute();
 
-  // We need at least one computable exit.
+  // We need exactly one computable exit.
   if (!ExitNotTaken.ExitingBlock) return SE->getCouldNotCompute();
   assert(ExitNotTaken.ExactNotTaken && "uninitialized not-taken info");
 
@@ -4171,8 +4177,8 @@ ScalarEvolution::BackedgeTakenInfo::getExact(ScalarEvolution *SE) const {
 
     if (!BECount)
       BECount = ENT->ExactNotTaken;
-    else
-      BECount = SE->getUMinFromMismatchedTypes(BECount, ENT->ExactNotTaken);
+    else if (BECount != ENT->ExactNotTaken)
+      return SE->getCouldNotCompute();
   }
   assert(BECount && "Invalid not taken count for loop exit");
   return BECount;
@@ -4253,8 +4259,15 @@ ScalarEvolution::ComputeBackedgeTakenCount(const Loop *L) {
 
     if (MaxBECount == getCouldNotCompute())
       MaxBECount = EL.Max;
-    else if (EL.Max != getCouldNotCompute())
-      MaxBECount = getUMinFromMismatchedTypes(MaxBECount, EL.Max);
+    else if (EL.Max != getCouldNotCompute()) {
+      // We cannot take the "min" MaxBECount, because non-unit stride loops may
+      // skip some loop tests. Taking the max over the exits is sufficiently
+      // conservative.  TODO: We could do better taking into consideration
+      // that (1) the loop has unit stride (2) the last loop test is
+      // less-than/greater-than (3) any loop test is less-than/greater-than AND
+      // falls-through some constant times less then the other tests.
+      MaxBECount = getUMaxFromMismatchedTypes(MaxBECount, EL.Max);
+    }
   }
 
   return BackedgeTakenInfo(ExitCounts, CouldComputeBECount, MaxBECount);
@@ -4920,7 +4933,7 @@ const SCEV *ScalarEvolution::ComputeExitCountExhaustively(const Loop *L,
   // the loop symbolically to determine when the condition gets a value of
   // "ExitWhen".
 
-  unsigned MaxIterations = MaxBruteForceIterations;   // Limit analysis.  
+  unsigned MaxIterations = MaxBruteForceIterations;   // Limit analysis.
   for (unsigned IterationNum = 0; IterationNum != MaxIterations;++IterationNum){
     ConstantInt *CondVal =
       dyn_cast_or_null<ConstantInt>(EvaluateExpression(Cond, L,
@@ -5507,10 +5520,10 @@ ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L) {
   // behavior. Loops must exhibit defined behavior until a wrapped value is
   // actually used. So the trip count computed by udiv could be smaller than the
   // number of well-defined iterations.
-  if (AddRec->getNoWrapFlags(SCEV::FlagNW))
+  if (AddRec->getNoWrapFlags(SCEV::FlagNW)) {
     // FIXME: We really want an "isexact" bit for udiv.
     return getUDivExpr(Distance, CountDown ? getNegativeSCEV(Step) : Step);
-
+  }
   // Then, try to solve the above equation provided that Start is constant.
   if (const SCEVConstant *StartC = dyn_cast<SCEVConstant>(Start))
     return SolveLinEquationWithOverflow(StepC->getValue()->getValue(),

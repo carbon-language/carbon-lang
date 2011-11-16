@@ -2,8 +2,13 @@
 ; RUN: grep {\[%\]tmp7 = icmp eq i8 -28, -28} %t
 ; RUN: grep {\[%\]tmp8 = icmp eq i8 63, 63} %t
 ; PR4477
-
 ; Indvars should compute the exit values in loop.
+;
+; XFAIL: *
+; Indvars does not currently replace loop invariant values unless all
+; loop exits have the same exit value. We could handle some cases,
+; such as this, by making getSCEVAtScope() sensitive to a particular
+; loop exit.  See PR11388.
 
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:32:32"
 target triple = "i386-pc-linux-gnu"
