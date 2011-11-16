@@ -293,6 +293,8 @@ SelectionDAGLegalize::ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP) {
 static void ExpandUnalignedStore(StoreSDNode *ST, SelectionDAG &DAG,
                                  const TargetLowering &TLI,
                                  SelectionDAGLegalize *DAGLegalize) {
+  assert(ST->getAddressingMode() == ISD::UNINDEXED &&
+         "unaligned indexed stores not implemented!");
   SDValue Chain = ST->getChain();
   SDValue Ptr = ST->getBasePtr();
   SDValue Val = ST->getValue();
@@ -413,6 +415,8 @@ static void
 ExpandUnalignedLoad(LoadSDNode *LD, SelectionDAG &DAG,
                     const TargetLowering &TLI,
                     SDValue &ValResult, SDValue &ChainResult) {
+  assert(LD->getAddressingMode() == ISD::UNINDEXED &&
+         "unaligned indexed loads not implemented!");
   SDValue Chain = LD->getChain();
   SDValue Ptr = LD->getBasePtr();
   EVT VT = LD->getValueType(0);
