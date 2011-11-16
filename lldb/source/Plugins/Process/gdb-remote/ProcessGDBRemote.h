@@ -279,7 +279,6 @@ protected:
     lldb_private::Flags m_flags;            // Process specific flags (see eFlags enums)
     GDBRemoteCommunicationClient m_gdb_comm;
     lldb::pid_t m_debugserver_pid;
-    lldb::thread_t m_debugserver_thread;
     StringExtractorGDBRemote m_last_stop_packet;
     GDBRemoteDynamicRegisterInfo m_register_info;
     lldb_private::Broadcaster m_async_broadcaster;
@@ -308,8 +307,9 @@ protected:
     static bool
     MonitorDebugserverProcess (void *callback_baton,
                                lldb::pid_t pid,
-                               int signo,           // Zero for no signal
-                               int exit_status);    // Exit value of process if signal is zero
+                               bool exited,
+                               int signo,
+                               int exit_status);
 
     lldb::StateType
     SetThreadStopInfo (StringExtractor& stop_packet);

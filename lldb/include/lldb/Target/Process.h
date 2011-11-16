@@ -35,6 +35,7 @@
 #include "lldb/Expression/ClangPersistentVariables.h"
 #include "lldb/Expression/IRDynamicChecks.h"
 #include "lldb/Host/FileSpec.h"
+#include "lldb/Host/Host.h"
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/Options.h"
 #include "lldb/Target/ExecutionContextScope.h"
@@ -399,7 +400,7 @@ protected:
     uint32_t m_egid;    
     lldb::pid_t m_parent_pid;
 };
-    
+
     
 //----------------------------------------------------------------------
 // ProcessLaunchInfo
@@ -500,7 +501,15 @@ public:
                        const char *working_directory,
                        uint32_t launch_flags) :
         ProcessInfo(),
-        m_flags (launch_flags)
+        m_working_dir (),
+        m_plugin_name (),
+        m_shell (),
+        m_flags (launch_flags),
+        m_file_actions (), 
+        m_resume_count (0),
+        m_monitor_callback (NULL),
+        m_monitor_callback_baton (NULL),
+        m_monitor_signals (false)
     {
         if (stderr_path)
         {
@@ -715,6 +724,31 @@ public:
     bool
     ConvertArgumentsForLaunchingInShell (Error &error, bool localhost);
     
+    void
+    SetMonitorProcessCallback (Host::MonitorChildProcessCallback callback, 
+                               void *baton, 
+                               bool monitor_signals)
+    {
+        m_monitor_callback = callback;
+        m_monitor_callback_baton = baton;
+        m_monitor_signals = monitor_signals;
+    }
+
+    bool
+    MonitorProcess () const
+    {
+        if (m_monitor_callback && ProcessIDIsValid())
+        {
+            Host::StartMonitoringChildProcess (m_monitor_callback,
+                                               m_monitor_callback_baton,
+                                               GetProcessID(), 
+                                               m_monitor_signals);
+            return true;
+        }
+        return false;
+    }
+    
+
 protected:
     std::string m_working_dir;
     std::string m_plugin_name;
@@ -722,6 +756,9 @@ protected:
     Flags m_flags;       // Bitwise OR of bits from lldb::LaunchFlags
     std::vector<FileAction> m_file_actions; // File actions for any other files
     uint32_t m_resume_count; // How many times do we resume after launching
+    Host::MonitorChildProcessCallback m_monitor_callback;
+    void *m_monitor_callback_baton;
+    bool m_monitor_signals;
 };
 
 //----------------------------------------------------------------------
@@ -1360,6 +1397,7 @@ public:
     static bool
     SetProcessExitStatus (void *callback_baton,   // The callback baton which should be set to NULL
                           lldb::pid_t pid,        // The process ID we want to monitor
+                          bool exited,
                           int signo,              // Zero for no signal
                           int status);            // Exit value of process if signal is zero
 

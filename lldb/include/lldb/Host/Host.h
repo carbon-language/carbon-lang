@@ -29,6 +29,7 @@ class Host
 public:
     typedef bool (*MonitorChildProcessCallback) (void *callback_baton,
                                                  lldb::pid_t pid,
+                                                 bool exited,
                                                  int signal,    // Zero for no signal
                                                  int status);   // Exit value of process if signal is zero
 

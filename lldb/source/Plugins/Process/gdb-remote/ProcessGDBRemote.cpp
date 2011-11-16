@@ -122,7 +122,6 @@ ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
     m_flags (0),
     m_gdb_comm(false),
     m_debugserver_pid (LLDB_INVALID_PROCESS_ID),
-    m_debugserver_thread (LLDB_INVALID_HOST_THREAD),
     m_last_stop_packet (),
     m_register_info (),
     m_async_broadcaster ("lldb.process.gdb-remote.async-broadcaster"),
@@ -145,13 +144,6 @@ ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
 //----------------------------------------------------------------------
 ProcessGDBRemote::~ProcessGDBRemote()
 {
-    if (IS_VALID_LLDB_HOST_THREAD(m_debugserver_thread))
-    {
-        Host::ThreadCancel (m_debugserver_thread, NULL);
-        thread_result_t thread_result;
-        Host::ThreadJoin (m_debugserver_thread, &thread_result, NULL);
-        m_debugserver_thread = LLDB_INVALID_HOST_THREAD;
-    }
     //  m_mach_process.UnregisterNotificationCallbacks (this);
     Clear();
     // We need to call finalize on the process before destroying ourselves
@@ -669,11 +661,6 @@ ProcessGDBRemote::ConnectToDebugserver (const char *connect_url)
             error.SetErrorString("not connected to remote gdb server");
         return error;
     }
-    if (m_debugserver_pid != LLDB_INVALID_PROCESS_ID)
-        m_debugserver_thread = Host::StartMonitoringChildProcess (MonitorDebugserverProcess,
-                                                                  this,
-                                                                  m_debugserver_pid,
-                                                                  false);
     m_gdb_comm.ResetDiscoverableSettings();
     m_gdb_comm.QueryNoAckModeSupported ();
     m_gdb_comm.GetThreadSuffixSupported ();
@@ -2122,6 +2109,8 @@ ProcessGDBRemote::StartDebugserverProcess (const char *debugserver_url)    // Th
                 log->Printf("%s arguments:\n%s", debugserver_args.GetArgumentAtIndex(0), strm.GetData());
             }
 
+            launch_info.SetMonitorProcessCallback (MonitorDebugserverProcess, this, false);
+
             error = Host::LaunchProcess(launch_info);
 
             if (error.Success ())
@@ -2148,61 +2137,85 @@ ProcessGDBRemote::MonitorDebugserverProcess
 (
     void *callback_baton,
     lldb::pid_t debugserver_pid,
+    bool exited,        // True if the process did exit
     int signo,          // Zero for no signal
     int exit_status     // Exit value of process if signal is zero
 )
 {
-    // We pass in the ProcessGDBRemote inferior process it and name it
-    // "gdb_remote_pid". The process ID is passed in the "callback_baton"
-    // pointer value itself, thus we need the double cast...
+    // The baton is a "ProcessGDBRemote *". Now this class might be gone
+    // and might not exist anymore, so we need to carefully try to get the
+    // target for this process first since we have a race condition when
+    // we are done running between getting the notice that the inferior 
+    // process has died and the debugserver that was debugging this process.
+    // In our test suite, we are also continually running process after
+    // process, so we must be very careful to make sure:
+    // 1 - process object hasn't been deleted already
+    // 2 - that a new process object hasn't been recreated in its place
 
     // "debugserver_pid" argument passed in is the process ID for
     // debugserver that we are tracking...
+    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
 
     ProcessGDBRemote *process = (ProcessGDBRemote *)callback_baton;
 
-    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
+    // Get a shared pointer to the target that has a matching process pointer.
+    // This target could be gone, or the target could already have a new process
+    // object inside of it
+    TargetSP target_sp (Debugger::FindTargetWithProcess(process));
+
     if (log)
         log->Printf ("ProcessGDBRemote::MonitorDebugserverProcess (baton=%p, pid=%i, signo=%i (0x%x), exit_status=%i)", callback_baton, debugserver_pid, signo, signo, exit_status);
 
-    if (process)
+    if (target_sp)
     {
-        // Sleep for a half a second to make sure our inferior process has
-        // time to set its exit status before we set it incorrectly when
-        // both the debugserver and the inferior process shut down.
-        usleep (500000);
-        // If our process hasn't yet exited, debugserver might have died.
-        // If the process did exit, the we are reaping it.
-        const StateType state = process->GetState();
-        
-        if (process->m_debugserver_pid != LLDB_INVALID_PROCESS_ID &&
-            state != eStateInvalid &&
-            state != eStateUnloaded &&
-            state != eStateExited &&
-            state != eStateDetached)
+        // We found a process in a target that matches, but another thread
+        // might be in the process of launching a new process that will
+        // soon replace it, so get a shared pointer to the process so we
+        // can keep it alive.
+        ProcessSP process_sp (target_sp->GetProcessSP());
+        // Now we have a shared pointer to the process that can't go away on us
+        // so we now make sure it was the same as the one passed in, and also make
+        // sure that our previous "process *" didn't get deleted and have a new 
+        // "process *" created in its place with the same pointer. To verify this
+        // we make sure the process has our debugserver process ID. If we pass all
+        // of these tests, then we are sure that this process is the one we were
+        // looking for.
+        if (process_sp && process == process_sp.get() && process->m_debugserver_pid == debugserver_pid)
         {
-            char error_str[1024];
-            if (signo)
+            // Sleep for a half a second to make sure our inferior process has
+            // time to set its exit status before we set it incorrectly when
+            // both the debugserver and the inferior process shut down.
+            usleep (500000);
+            // If our process hasn't yet exited, debugserver might have died.
+            // If the process did exit, the we are reaping it.
+            const StateType state = process->GetState();
+            
+            if (process->m_debugserver_pid != LLDB_INVALID_PROCESS_ID &&
+                state != eStateInvalid &&
+                state != eStateUnloaded &&
+                state != eStateExited &&
+                state != eStateDetached)
             {
-                const char *signal_cstr = process->GetUnixSignals().GetSignalAsCString (signo);
-                if (signal_cstr)
-                    ::snprintf (error_str, sizeof (error_str), DEBUGSERVER_BASENAME " died with signal %s", signal_cstr);
+                char error_str[1024];
+                if (signo)
+                {
+                    const char *signal_cstr = process->GetUnixSignals().GetSignalAsCString (signo);
+                    if (signal_cstr)
+                        ::snprintf (error_str, sizeof (error_str), DEBUGSERVER_BASENAME " died with signal %s", signal_cstr);
+                    else
+                        ::snprintf (error_str, sizeof (error_str), DEBUGSERVER_BASENAME " died with signal %i", signo);
+                }
                 else
-                    ::snprintf (error_str, sizeof (error_str), DEBUGSERVER_BASENAME " died with signal %i", signo);
-            }
-            else
-            {
-                ::snprintf (error_str, sizeof (error_str), DEBUGSERVER_BASENAME " died with an exit status of 0x%8.8x", exit_status);
-            }
+                {
+                    ::snprintf (error_str, sizeof (error_str), DEBUGSERVER_BASENAME " died with an exit status of 0x%8.8x", exit_status);
+                }
 
-            process->SetExitStatus (-1, error_str);
+                process->SetExitStatus (-1, error_str);
+            }
+            // Debugserver has exited we need to let our ProcessGDBRemote
+            // know that it no longer has a debugserver instance
+            process->m_debugserver_pid = LLDB_INVALID_PROCESS_ID;
         }
-        // Debugserver has exited we need to let our ProcessGDBRemote
-        // know that it no longer has a debugserver instance
-        process->m_debugserver_pid = LLDB_INVALID_PROCESS_ID;
-        // We are returning true to this function below, so we can
-        // forget about the monitor handle.
-        process->m_debugserver_thread = LLDB_INVALID_HOST_THREAD;
     }
     return true;
 }

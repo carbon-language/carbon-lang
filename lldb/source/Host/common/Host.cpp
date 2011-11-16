@@ -56,6 +56,8 @@
 using namespace lldb;
 using namespace lldb_private;
 
+
+#if 1 // !defined (__APPLE__)
 struct MonitorInfo
 {
     lldb::pid_t pid;                            // The process ID to monitor
@@ -77,25 +79,20 @@ Host::StartMonitoringChildProcess
 )
 {
     lldb::thread_t thread = LLDB_INVALID_HOST_THREAD;
-    if (callback)
-    {
-        std::auto_ptr<MonitorInfo> info_ap(new MonitorInfo);
-            
-        info_ap->pid = pid;
-        info_ap->callback = callback;
-        info_ap->callback_baton = callback_baton;
-        info_ap->monitor_signals = monitor_signals;
+    MonitorInfo * info_ptr = new MonitorInfo();
         
-        char thread_name[256];
-        ::snprintf (thread_name, sizeof(thread_name), "<lldb.host.wait4(pid=%i)>", pid);
-        thread = ThreadCreate (thread_name,
-                               MonitorChildProcessThreadFunction,
-                               info_ap.get(),
-                               NULL);
-                               
-        if (IS_VALID_LLDB_HOST_THREAD(thread))
-            info_ap.release();
-    }
+    info_ptr->pid = pid;
+    info_ptr->callback = callback;
+    info_ptr->callback_baton = callback_baton;
+    info_ptr->monitor_signals = monitor_signals;
+    
+    char thread_name[256];
+    ::snprintf (thread_name, sizeof(thread_name), "<lldb.host.wait4(pid=%i)>", pid);
+    thread = ThreadCreate (thread_name,
+                           MonitorChildProcessThreadFunction,
+                           info_ptr,
+                           NULL);
+                           
     return thread;
 }
 
@@ -146,16 +143,15 @@ MonitorChildProcessThreadFunction (void *arg)
 
     int status = -1;
     const int options = 0;
-    struct rusage *rusage = NULL;
     while (1)
     {
         log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS);
         if (log)
-            log->Printf("%s ::wait4 (pid = %i, &status, options = %i, rusage = %p)...", function, pid, options, rusage);
+            log->Printf("%s ::wait_pid (pid = %i, &status, options = %i)...", function, pid, options);
 
         // Wait for all child processes
         ::pthread_testcancel ();
-        const lldb::pid_t wait_pid = ::wait4 (pid, &status, options, rusage);
+        const lldb::pid_t wait_pid = ::waitpid (pid, &status, options);
         ::pthread_testcancel ();
 
         if (wait_pid == -1)
@@ -200,11 +196,10 @@ MonitorChildProcessThreadFunction (void *arg)
 
                 log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS);
                 if (log)
-                    log->Printf ("%s ::wait4 (pid = %i, &status, options = %i, rusage = %p) => pid = %i, status = 0x%8.8x (%s), signal = %i, exit_state = %i",
+                    log->Printf ("%s ::waitpid (pid = %i, &status, options = %i) => pid = %i, status = 0x%8.8x (%s), signal = %i, exit_state = %i",
                                  function,
                                  wait_pid,
                                  options,
-                                 rusage,
                                  pid,
                                  status,
                                  status_cstr,
@@ -213,7 +208,9 @@ MonitorChildProcessThreadFunction (void *arg)
 
                 if (exited || (signal != 0 && monitor_signals))
                 {
-                    bool callback_return = callback (callback_baton, pid, signal, exit_status);
+                    bool callback_return = false;
+                    if (callback)
+                        callback_return = callback (callback_baton, pid, exited, signal, exit_status);
                     
                     // If our process exited, then this thread should exit
                     if (exited)
@@ -233,6 +230,8 @@ MonitorChildProcessThreadFunction (void *arg)
 
     return NULL;
 }
+
+#endif // #if !defined (__APPLE__)
 
 size_t
 Host::GetPageSize()

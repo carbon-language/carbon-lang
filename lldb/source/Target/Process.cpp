@@ -1136,15 +1136,23 @@ Process::SetExitStatus (int status, const char *cstr)
 // found in the global target list (we want to be completely sure that the
 // lldb_private::Process doesn't go away before we can deliver the signal.
 bool
-Process::SetProcessExitStatus
-(
-    void *callback_baton,
-    lldb::pid_t pid,
-    int signo,      // Zero for no signal
-    int exit_status      // Exit value of process if signal is zero
+Process::SetProcessExitStatus (void *callback_baton,
+                               lldb::pid_t pid,
+                               bool exited,
+                               int signo,          // Zero for no signal
+                               int exit_status     // Exit value of process if signal is zero
 )
 {
-    if (signo == 0 || exit_status)
+    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_PROCESS));
+    if (log)
+        log->Printf ("Process::SetProcessExitStatus (baton=%p, pid=%i, exited=%i, signal=%i, exit_status=%i)\n", 
+                     callback_baton,
+                     pid,
+                     exited,
+                     signo,
+                     exit_status);
+
+    if (exited)
     {
         TargetSP target_sp(Debugger::FindTargetWithProcessID (pid));
         if (target_sp)

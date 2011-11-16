@@ -1191,7 +1191,6 @@ Host::GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &process_info)
     return false;
 }
 
-
 Error
 Host::LaunchProcess (ProcessLaunchInfo &launch_info)
 {
@@ -1396,7 +1395,17 @@ Host::LaunchProcess (ProcessLaunchInfo &launch_info)
     if (pid != LLDB_INVALID_PROCESS_ID)
     {
         // If all went well, then set the process ID into the launch info
-        launch_info.SetProcessID(pid);        
+        launch_info.SetProcessID(pid);
+        
+        // Make sure we reap any processes we spawn or we will have zombies.
+        if (!launch_info.MonitorProcess())
+        {
+            const bool monitor_signals = false;
+            StartMonitoringChildProcess (Process::SetProcessExitStatus, 
+                                         NULL, 
+                                         pid, 
+                                         monitor_signals);
+        }
     }
     else
     {
@@ -1407,4 +1416,104 @@ Host::LaunchProcess (ProcessLaunchInfo &launch_info)
     return error;
 }
 
+#if 0
 
+lldb::thread_t
+Host::StartMonitoringChildProcess (Host::MonitorChildProcessCallback callback,
+                                   void *callback_baton,
+                                   lldb::pid_t pid,
+                                   bool monitor_signals)
+{
+    lldb::thread_t thread = LLDB_INVALID_HOST_THREAD;
+    unsigned long mask = DISPATCH_PROC_EXIT;
+    if (monitor_signals)
+        mask |= DISPATCH_PROC_SIGNAL;
+
+
+    dispatch_source_t source = ::dispatch_source_create (DISPATCH_SOURCE_TYPE_PROC, 
+                                                         pid, 
+                                                         mask, 
+                                                         ::dispatch_get_global_queue (DISPATCH_QUEUE_PRIORITY_DEFAULT,0));
+
+    printf ("Host::StartMonitoringChildProcess (callback=%p, baton=%p, pid=%i, monitor_signals=%i) source = %p\n", 
+            callback, 
+            callback_baton, 
+            (int)pid, 
+            monitor_signals, 
+            source);
+
+    if (source)
+    {
+        ::dispatch_source_set_cancel_handler (source, ^{
+            printf ("::dispatch_source_set_cancel_handler (source=%p, ^{...\n", source);
+            ::dispatch_release (source);
+        });
+        ::dispatch_source_set_event_handler (source, ^{
+            
+            printf ("::dispatch_source_set_event_handler (source=%p, ^{...\n", source);
+
+            int status= 0;
+            int wait_pid = 0;
+            bool cancel = false;
+            bool exited = false;
+            do
+            {
+                wait_pid = ::waitpid (pid, &status, 0);
+            } while (wait_pid < 0 && errno == EINTR);
+
+            if (wait_pid >= 0)
+            {
+                int signal = 0;
+                int exit_status = 0;
+                const char *status_cstr = NULL;
+                if (WIFSTOPPED(status))
+                {
+                    signal = WSTOPSIG(status);
+                    status_cstr = "STOPPED";
+                }
+                else if (WIFEXITED(status))
+                {
+                    exit_status = WEXITSTATUS(status);
+                    status_cstr = "EXITED";
+                    exited = true;
+                }
+                else if (WIFSIGNALED(status))
+                {
+                    signal = WTERMSIG(status);
+                    status_cstr = "SIGNALED";
+                    exited = true;
+                    exit_status = -1;
+                }
+                else
+                {
+                    status_cstr = "???";
+                }
+
+                LogSP log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
+                if (log)
+                    log->Printf ("::waitpid (pid = %i, &status, 0) => pid = %i, status = 0x%8.8x (%s), signal = %i, exit_status = %i",
+                                 pid,
+                                 wait_pid,
+                                 status,
+                                 status_cstr,
+                                 signal,
+                                 exit_status);
+                
+                if (callback)
+                    cancel = callback (callback_baton, pid, exited, signal, exit_status);
+                
+                if (exited)
+                {
+                    printf ("::dispatch_source_set_event_handler (source=%p, ^{...  dispatch_source_cancel(source);\n", source);
+                    ::dispatch_source_cancel(source);
+                }
+            }
+        });
+
+        ::dispatch_resume (source);
+    }
+    return thread;
+}
+
+
+#endif

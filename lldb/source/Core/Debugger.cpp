@@ -216,6 +216,22 @@ Debugger::FindTargetWithProcessID (lldb::pid_t pid)
     return target_sp;
 }
 
+TargetSP
+Debugger::FindTargetWithProcess (Process *process)
+{
+    TargetSP target_sp;
+    Mutex::Locker locker (GetDebuggerListMutex ());
+    DebuggerList &debugger_list = GetDebuggerList();
+    DebuggerList::iterator pos, end = debugger_list.end();
+    for (pos = debugger_list.begin(); pos != end; ++pos)
+    {
+        target_sp = (*pos)->GetTargetList().FindTargetWithProcess (process);
+        if (target_sp)
+            break;
+    }
+    return target_sp;
+}
+
 
 Debugger::Debugger () :
     UserID (g_unique_id++),

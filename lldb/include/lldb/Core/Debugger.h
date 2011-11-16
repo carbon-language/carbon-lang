@@ -260,6 +260,9 @@ public:
 
     static lldb::TargetSP
     FindTargetWithProcessID (lldb::pid_t pid);
+    
+    static lldb::TargetSP
+    FindTargetWithProcess (Process *process);
 
     static void
     Initialize ();
