@@ -205,6 +205,12 @@ IRForTarget::GetFunctionAddress (llvm::Function *fun,
                 name = g_memcpy_str;
             }
             break;
+        case Intrinsic::memset:
+            {
+                static lldb_private::ConstString g_memset_str ("memset");
+                name = g_memset_str;
+            }
+            break;
         }
         
         if (log && name)

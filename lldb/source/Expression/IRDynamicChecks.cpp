@@ -423,6 +423,17 @@ public:
     ~ObjcObjectChecker ()
     {
     }
+    
+    enum msgSend_type
+    {
+        eMsgSend = 0,
+        eMsgSendSuper,
+        eMsgSendSuper_stret,
+        eMsgSend_fpret,
+        eMsgSend_stret
+    };
+    
+    std::map <llvm::Instruction *, msgSend_type> msgSend_types;
 
 private:
     bool InstrumentInstruction(llvm::Instruction *inst)
@@ -437,8 +448,23 @@ private:
         
         // id objc_msgSend(id theReceiver, SEL theSelector, ...)
         
-        llvm::Value *target_object = call_inst->getArgOperand(0);;
-        llvm::Value *selector = call_inst->getArgOperand(1);
+        llvm::Value *target_object;
+        llvm::Value *selector;
+        
+        switch (msgSend_types[inst])
+        {
+        case eMsgSend:
+        case eMsgSend_fpret:
+            target_object = call_inst->getArgOperand(0);
+            selector = call_inst->getArgOperand(1);
+            break;
+        case eMsgSend_stret:
+            target_object = call_inst->getArgOperand(1);
+            selector = call_inst->getArgOperand(2);
+        case eMsgSendSuper:
+        case eMsgSendSuper_stret:
+            return true;
+        }
                 
         // Insert an instruction to cast the receiver id to int8_t*
         
@@ -505,8 +531,51 @@ private:
             if (log)
                 log->Printf("Found call to %s: %s\n", real_name->getAsString().c_str(), PrintValue(call_inst).c_str());
             
-            if (real_name->getAsString().find("objc_msgSend") != std::string::npos)
+            std::string name_str = real_name->getAsString();
+            const char* name_cstr = name_str.c_str();
+            
+            if (name_str.find("objc_msgSend") == std::string::npos)
+                return true;
+            
+            if (!strcmp(name_cstr, "objc_msgSend"))
+            {
                 RegisterInstruction(i);
+                msgSend_types[&i] = eMsgSend;
+                return true;
+            }
+            
+            if (!strcmp(name_cstr, "objc_msgSend_stret"))
+            {
+                RegisterInstruction(i);
+                msgSend_types[&i] = eMsgSend_stret;
+                return true;
+            }
+            
+            if (!strcmp(name_cstr, "objc_msgSend_fpret"))
+            {
+                RegisterInstruction(i);
+                msgSend_types[&i] = eMsgSend_fpret;
+                return true;
+            }
+            
+            if (!strcmp(name_cstr, "objc_msgSendSuper"))
+            {
+                RegisterInstruction(i);
+                msgSend_types[&i] = eMsgSendSuper;
+                return true;
+            }
+            
+            if (!strcmp(name_cstr, "objc_msgSendSuper_stret"))
+            {
+                RegisterInstruction(i);
+                msgSend_types[&i] = eMsgSendSuper_stret;
+                return true;
+            }
+            
+            if (log)
+                log->Printf("Function name '%s' contains 'objc_msgSend' but is not handled", name_str.c_str());
+            
+            return true;
         }
         
         return true;
