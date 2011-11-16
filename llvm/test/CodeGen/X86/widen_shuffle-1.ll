@@ -58,7 +58,6 @@ define <8 x i8> @shuf4(<4 x i8> %a, <4 x i8> %b) nounwind readnone {
 ; PR11389: another CONCAT_VECTORS case
 define void @shuf5(<8 x i8>* %p) nounwind {
 ; CHECK: shuf5:
-; CHECK-NOT: punpcklwd
   %v = shufflevector <2 x i8> <i8 4, i8 33>, <2 x i8> undef, <8 x i32> <i32 1, i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
   store <8 x i8> %v, <8 x i8>* %p, align 8
   ret void
