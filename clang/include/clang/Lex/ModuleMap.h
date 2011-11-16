@@ -27,6 +27,7 @@
 
 namespace clang {
   
+class DirectoryEntry;
 class FileEntry;
 class FileManager;
 class DiagnosticConsumer;
@@ -95,6 +96,14 @@ private:
   /// \brief Mapping from each header to the module that owns the contents of the
   /// that header.
   llvm::DenseMap<const FileEntry *, Module *> Headers;
+  
+  /// \brief Mapping from directories with umbrella headers to the module
+  /// that is generated from the umbrella header.
+  ///
+  /// This mapping is used to map headers that haven't explicitly been named
+  /// in the module map over to the module that includes them via its umbrella
+  /// header.
+  llvm::DenseMap<const DirectoryEntry *, Module *> UmbrellaDirs;
   
   friend class ModuleMapParser;
   

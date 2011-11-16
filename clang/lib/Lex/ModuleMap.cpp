@@ -81,6 +81,41 @@ ModuleMap::Module *ModuleMap::findModuleForHeader(const FileEntry *File) {
   if (Known != Headers.end())
     return Known->second;
   
+  const DirectoryEntry *Dir = File->getDir();
+  llvm::DenseMap<const DirectoryEntry *, Module *>::iterator KnownDir
+    = UmbrellaDirs.find(Dir);
+  if (KnownDir != UmbrellaDirs.end())
+    return KnownDir->second;
+
+  // Walk up the directory hierarchy looking for umbrella headers.
+  llvm::SmallVector<const DirectoryEntry *, 2> SkippedDirs;
+  StringRef DirName = Dir->getName();
+  do {
+    // Retrieve our parent path.
+    DirName = llvm::sys::path::parent_path(DirName);
+    if (DirName.empty())
+      break;
+    
+    // Resolve the parent path to a directory entry.
+    Dir = SourceMgr->getFileManager().getDirectory(DirName);
+    if (!Dir)
+      break;
+    
+    KnownDir = UmbrellaDirs.find(Dir);
+    if (KnownDir != UmbrellaDirs.end()) {
+      Module *Result = KnownDir->second;
+      
+      // Record each of the directories we stepped through as being part of
+      // the module we found, since the umbrella header covers them all.
+      for (unsigned I = 0, N = SkippedDirs.size(); I != N; ++I)
+        UmbrellaDirs[SkippedDirs[I]] = Result;
+      
+      return Result;
+    }
+    
+    SkippedDirs.push_back(Dir);
+  } while (true);
+  
   return 0;
 }
 
@@ -493,10 +528,15 @@ void ModuleMapParser::parseUmbrellaDecl() {
       Diags.Report(FileNameLoc, diag::err_mmap_header_conflict)
         << FileName << OwningModule->getFullModuleName();
       HadError = true;
+    } else if ((OwningModule = Map.UmbrellaDirs[Directory])) {
+      Diags.Report(UmbrellaLoc, diag::err_mmap_umbrella_clash)
+        << OwningModule->getFullModuleName();
+      HadError = true;
     } else {
       // Record this umbrella header.
       ActiveModule->UmbrellaHeader = File;
       Map.Headers[File] = ActiveModule;
+      Map.UmbrellaDirs[Directory] = ActiveModule;
     }
   } else {
     Diags.Report(FileNameLoc, diag::err_mmap_header_not_found)

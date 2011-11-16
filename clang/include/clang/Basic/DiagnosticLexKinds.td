@@ -397,5 +397,7 @@ def err_mmap_umbrella_header_conflict : Error<
   "module '%0' already has an umbrella header ('%1')">;
 def err_mmap_umbrella_header_submodule : Error<
   "submodule '%0' can not have an umbrella header">;
-  
+def err_mmap_umbrella_clash : Error<
+  "umbrella header for module '%0' already covers this directory">;
+
 }

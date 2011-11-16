@@ -4,10 +4,10 @@
 // RUN: %clang_cc1 -x objective-c -fmodule-cache-path %t -fmodule-name=libB -emit-module-from-map %S/Inputs/normal-module-map/module.map
 // RUN: %clang_cc1 -x objective-c -fmodule-cache-path %t -fmodule-name=libNested -emit-module-from-map %S/Inputs/normal-module-map/nested/module.map
 // RUN: %clang_cc1 -x objective-c -fmodule-cache-path %t -fauto-module-import -I %S/Inputs/normal-module-map %s -verify
-#include "Umbrella/Umbrella.h"
+#include "Umbrella/umbrella_sub.h"
 
 int getUmbrella() { 
-  return umbrella; 
+  return umbrella + umbrella_sub; 
 }
 
 __import_module__ Umbrella2;
