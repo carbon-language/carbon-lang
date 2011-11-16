@@ -239,12 +239,17 @@ void IndexingContext::handleObjCCategory(const ObjCCategoryDecl *D) {
   const ObjCInterfaceDecl *IFaceD = D->getClassInterface();
   SourceLocation ClassLoc = D->getLocation();
   SourceLocation CategoryLoc = D->getCategoryNameLoc();
-  getEntityInfo(D->getClassInterface(), ClassEntity, SA);
+  getEntityInfo(IFaceD, ClassEntity, SA);
 
   CatDInfo.ObjCCatDeclInfo.containerInfo = &CatDInfo.ObjCContDeclInfo;
-  CatDInfo.ObjCCatDeclInfo.objcClass = &ClassEntity;
-  CatDInfo.ObjCCatDeclInfo.classCursor =
-      MakeCursorObjCClassRef(IFaceD, ClassLoc, CXTU);
+  if (IFaceD) {
+    CatDInfo.ObjCCatDeclInfo.objcClass = &ClassEntity;
+    CatDInfo.ObjCCatDeclInfo.classCursor =
+        MakeCursorObjCClassRef(IFaceD, ClassLoc, CXTU);
+  } else {
+    CatDInfo.ObjCCatDeclInfo.objcClass = 0;
+    CatDInfo.ObjCCatDeclInfo.classCursor = clang_getNullCursor();
+  }
   CatDInfo.ObjCCatDeclInfo.classLoc = getIndexLoc(ClassLoc);
   handleObjCContainer(D, CategoryLoc, getCursor(D), CatDInfo);
 }
@@ -285,6 +290,27 @@ void IndexingContext::handleReference(const NamedDecl *D, SourceLocation Loc,
   if (isNotFromSourceFile(D->getLocation()))
     return;
 
+  D = getEntityDecl(D);
+
+  if (onlyOneRefPerFile()) {
+    SourceManager &SM = Ctx->getSourceManager();
+    SourceLocation FileLoc = SM.getFileLoc(Loc);
+
+    std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(Loc);
+    FileID FID = LocInfo.first;
+    if (FID.isInvalid())
+      return;
+    
+    const FileEntry *FE = SM.getFileEntryForID(FID);
+    if (!FE)
+      return;
+    RefFileOccurence RefOccur(FE, D);
+    std::pair<llvm::DenseSet<RefFileOccurence>::iterator, bool>
+      res = RefFileOccurences.insert(RefOccur);
+    if (!res.second)
+      return; // already in map.
+  }
+
   StrAdapter SA(*this);
   CXCursor Cursor = E ? MakeCXCursor(const_cast<Expr*>(E),
                                      const_cast<Decl*>(cast<Decl>(DC)), CXTU)
@@ -296,7 +322,7 @@ void IndexingContext::handleReference(const NamedDecl *D, SourceLocation Loc,
   CXIdxEntityRefInfo Info = { Cursor,
                               getIndexLoc(Loc),
                               &RefEntity,
-                              &ParentEntity,
+                              Parent ? &ParentEntity : 0,
                               getIndexContainerForDC(DC),
                               Kind };
   CB.indexEntityReference(ClientData, &Info);
@@ -431,6 +457,8 @@ void IndexingContext::translateLoc(SourceLocation Loc,
 void IndexingContext::getEntityInfo(const NamedDecl *D,
                                      CXIdxEntityInfo &EntityInfo,
                                      StrAdapter &SA) {
+  if (!D)
+    return;
   D = getEntityDecl(D);
   EntityInfo.kind = CXIdxEntity_Unexposed;
 

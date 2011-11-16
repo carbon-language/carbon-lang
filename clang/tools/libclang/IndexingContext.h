@@ -12,7 +12,7 @@
 
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclGroup.h"
-#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/DenseSet.h"
 
 namespace clang {
   class FileEntry;
@@ -133,6 +133,14 @@ struct ObjCCategoryDeclInfo : public ObjCContainerDeclInfo {
   static bool classof(const ObjCCategoryDeclInfo *D) { return true; }
 };
 
+struct RefFileOccurence {
+  const FileEntry *File;
+  const Decl *Dcl;
+
+  RefFileOccurence(const FileEntry *File, const Decl *Dcl)
+    : File(File), Dcl(Dcl) { }
+};
+
 class IndexingContext {
   ASTContext *Ctx;
   CXClientData ClientData;
@@ -144,6 +152,8 @@ class IndexingContext {
   typedef llvm::DenseMap<const DeclContext *, CXIdxClientContainer> ContainerMapTy;
   FileMapTy FileMap;
   ContainerMapTy ContainerMap;
+
+  llvm::DenseSet<RefFileOccurence> RefFileOccurences;
 
   SmallVector<DeclGroupRef, 8> TUDeclsInObjCContainer;
   
@@ -203,6 +213,10 @@ public:
   ASTContext &getASTContext() const { return *Ctx; }
 
   void setASTContext(ASTContext &ctx);
+
+  bool onlyOneRefPerFile() const {
+    return IndexOptions & CXIndexOpt_OneRefPerFile;
+  }
 
   void enteredMainFile(const FileEntry *File);
 
@@ -313,3 +327,31 @@ private:
 };
 
 }} // end clang::cxindex
+
+namespace llvm {
+  /// Define DenseMapInfo so that FileID's can be used as keys in DenseMap and
+  /// DenseSets.
+  template <>
+  struct DenseMapInfo<clang::cxindex::RefFileOccurence> {
+    static inline clang::cxindex::RefFileOccurence getEmptyKey() {
+      return clang::cxindex::RefFileOccurence(0, 0);
+    }
+
+    static inline clang::cxindex::RefFileOccurence getTombstoneKey() {
+      return clang::cxindex::RefFileOccurence((const clang::FileEntry *)~0,
+                                              (const clang::Decl *)~0);
+    }
+
+    static unsigned getHashValue(clang::cxindex::RefFileOccurence S) {
+      llvm::FoldingSetNodeID ID;
+      ID.AddPointer(S.File);
+      ID.AddPointer(S.Dcl);
+      return ID.ComputeHash();
+    }
+
+    static bool isEqual(clang::cxindex::RefFileOccurence LHS,
+                        clang::cxindex::RefFileOccurence RHS) {
+      return LHS.File == RHS.File && LHS.Dcl == RHS.Dcl;
+    }
+  };
+}
