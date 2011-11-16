@@ -194,10 +194,35 @@ clang::Decl
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
-    ASTContextMetadataSP context_md = m_master.GetContextMetadata(&to->getASTContext());
+    ASTContextMetadataSP to_context_md = m_master.GetContextMetadata(&to->getASTContext());
+    ASTContextMetadataSP from_context_md = m_master.MaybeGetContextMetadata(m_source_ctx);
     
-    context_md->m_origins[to] = DeclOrigin (m_source_ctx, from);
- 
+    if (from_context_md)
+    {
+        OriginMap &origins = from_context_md->m_origins;
+        
+        OriginMap::iterator origin_iter = origins.find(from);
+        
+        if (origin_iter != origins.end())
+            to_context_md->m_origins[to] = origin_iter->second;
+        
+        if (clang::NamespaceDecl *to_namespace = dyn_cast<clang::NamespaceDecl>(to))
+        {
+            clang::NamespaceDecl *from_namespace = dyn_cast<clang::NamespaceDecl>(from);
+            
+            NamespaceMetaMap &namespace_maps = from_context_md->m_namespace_maps;
+            
+            NamespaceMetaMap::iterator namespace_map_iter = namespace_maps.find(from_namespace);
+            
+            if (namespace_map_iter != namespace_maps.end())
+                to_context_md->m_namespace_maps[to_namespace] = namespace_map_iter->second;
+        }
+    }
+    else
+    {
+        to_context_md->m_origins[to] = DeclOrigin (m_source_ctx, from);
+    }
+        
     if (TagDecl *from_tag_decl = dyn_cast<TagDecl>(from))
     {
         TagDecl *to_tag_decl = dyn_cast<TagDecl>(to);

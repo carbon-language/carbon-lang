@@ -211,6 +211,17 @@ private:
         }
     }
     
+    ASTContextMetadataSP
+    MaybeGetContextMetadata (clang::ASTContext *dst_ctx)
+    {
+        ContextMetadataMap::iterator context_md_iter = m_metadata_map.find(dst_ctx);
+
+        if (context_md_iter != m_metadata_map.end())
+            return context_md_iter->second;
+        else
+            return ASTContextMetadataSP();
+    }
+    
     MinionSP
     GetMinion (clang::ASTContext *dst_ctx, clang::ASTContext *src_ctx)
     {
