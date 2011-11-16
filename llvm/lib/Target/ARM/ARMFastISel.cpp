@@ -1670,12 +1670,6 @@ bool ARMFastISel::SelectBinaryOp(const Instruction *I, unsigned ISDOpcode) {
   if (isFloat && !Subtarget->hasVFP2())
     return false;
 
-  unsigned Op1 = getRegForValue(I->getOperand(0));
-  if (Op1 == 0) return false;
-
-  unsigned Op2 = getRegForValue(I->getOperand(1));
-  if (Op2 == 0) return false;
-
   unsigned Opc;
   bool is64bit = VT == MVT::f64 || VT == MVT::i64;
   switch (ISDOpcode) {
@@ -1690,6 +1684,12 @@ bool ARMFastISel::SelectBinaryOp(const Instruction *I, unsigned ISDOpcode) {
       Opc = is64bit ? ARM::VMULD : ARM::VMULS;
       break;
   }
+  unsigned Op1 = getRegForValue(I->getOperand(0));
+  if (Op1 == 0) return false;
+
+  unsigned Op2 = getRegForValue(I->getOperand(1));
+  if (Op2 == 0) return false;
+
   unsigned ResultReg = createResultReg(TLI.getRegClassFor(VT));
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                           TII.get(Opc), ResultReg)
