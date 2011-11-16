@@ -5038,6 +5038,18 @@ def : ARMInstAlias<"lsl${s}${p} $Rm, $imm",
                    (LSLi GPR:$Rm, GPR:$Rm, imm0_31:$imm, pred:$p, cc_out:$s)>;
 def : ARMInstAlias<"ror${s}${p} $Rm, $imm",
                    (RORi GPR:$Rm, GPR:$Rm, imm0_31:$imm, pred:$p, cc_out:$s)>;
+def : ARMInstAlias<"asr${s}${p} $Rn, $Rm",
+                   (ASRr GPRnopc:$Rn, GPRnopc:$Rn, GPRnopc:$Rm, pred:$p,
+                         cc_out:$s)>;
+def : ARMInstAlias<"lsr${s}${p} $Rn, $Rm",
+                   (LSRr GPRnopc:$Rn, GPRnopc:$Rn, GPRnopc:$Rm, pred:$p,
+                         cc_out:$s)>;
+def : ARMInstAlias<"lsl${s}${p} $Rn, $Rm",
+                   (LSLr GPRnopc:$Rn, GPRnopc:$Rn, GPRnopc:$Rm, pred:$p,
+                         cc_out:$s)>;
+def : ARMInstAlias<"ror${s}${p} $Rn, $Rm",
+                   (RORr GPRnopc:$Rn, GPRnopc:$Rn, GPRnopc:$Rm, pred:$p,
+                         cc_out:$s)>;
 
 
 // 'mul' instruction can be specified with only two operands.
