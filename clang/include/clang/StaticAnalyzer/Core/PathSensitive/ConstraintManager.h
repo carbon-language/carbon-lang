@@ -39,8 +39,11 @@ public:
   std::pair<const ProgramState*, const ProgramState*>
     assumeDual(const ProgramState *state, DefinedSVal Cond)
   {
-    return std::make_pair(assume(state, Cond, true),
-                          assume(state, Cond, false));
+    std::pair<const ProgramState*, const ProgramState*> res =
+      std::make_pair(assume(state, Cond, true), assume(state, Cond, false));
+
+    assert(!(!res.first && !res.second) && "System is over constrained.");
+    return res;
   }
 
   virtual const llvm::APSInt* getSymVal(const ProgramState *state,
