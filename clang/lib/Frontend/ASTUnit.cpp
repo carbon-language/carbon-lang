@@ -853,6 +853,9 @@ public:
   }
 
   void handleTopLevelDecl(Decl *D) {
+    if (!D)
+      return;
+
     // FIXME: Currently ObjC method declarations are incorrectly being
     // reported as top-level declarations, even though their DeclContext
     // is the containing ObjC @interface/@implementation.  This is a

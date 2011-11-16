@@ -1487,7 +1487,8 @@ Parser::ParseObjCAtEndDeclaration(SourceRange atEnd) {
   Actions.DefaultSynthesizeProperties(getCurScope(), ObjCImpDecl);
   for (size_t i = 0; i < LateParsedObjCMethods.size(); ++i) {
     Decl *D = ParseLexedObjCMethodDefs(*LateParsedObjCMethods[i]);
-    DeclsInGroup.push_back(D);
+    if (D)
+      DeclsInGroup.push_back(D);
   }
   DeclsInGroup.push_back(ObjCImpDecl);
   
