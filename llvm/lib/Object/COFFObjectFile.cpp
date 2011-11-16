@@ -226,7 +226,9 @@ error_code COFFObjectFile::getSymbolNMTypeChar(DataRefImpl Symb,
     if (symb->StorageClass == COFF::IMAGE_SYM_CLASS_WEAK_EXTERNAL) {
       Result = 'w';
       return object_error::success; // Don't do ::toupper.
-    } else
+    } else if (symb->Value != 0) // Check for common symbols.
+      ret = 'c';
+    else
       ret = 'u';
     break;
   case COFF::IMAGE_SYM_ABSOLUTE:
