@@ -87,6 +87,8 @@ class CursorVisitor : public DeclVisitor<CursorVisitor, bool>,
   // iteration over all Decls contained lexically within an ObjC container.
   DeclContext::decl_iterator *DI_current;
   DeclContext::decl_iterator DE_current;
+  SmallVectorImpl<Decl *>::iterator *FileDI_current;
+  SmallVectorImpl<Decl *>::iterator FileDE_current;
 
   // Cache of pre-allocated worklists for data-recursion walk of Stmts.
   SmallVector<VisitorWorkList*, 5> WorkListFreeList;
@@ -134,7 +136,7 @@ public:
       Visitor(Visitor), ClientData(ClientData),
       VisitPreprocessorLast(VisitPreprocessorLast),
       VisitIncludedEntities(VisitIncludedPreprocessingEntries),
-      RegionOfInterest(RegionOfInterest), DI_current(0)
+      RegionOfInterest(RegionOfInterest), DI_current(0), FileDI_current(0)
   {
     Parent.kind = CXCursor_NoDeclFound;
     Parent.data[0] = 0;
