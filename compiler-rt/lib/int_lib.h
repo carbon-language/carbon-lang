@@ -37,10 +37,6 @@
 #include <stdbool.h>
 #include <float.h>
 
-#if !defined(INFINITY) && defined(HUGE_VAL)
-#define INFINITY HUGE_VAL
-#endif /* INFINITY */
-
 /* Include the commonly used internal type definitions. */
 #include "int_types.h"
 

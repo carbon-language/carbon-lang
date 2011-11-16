@@ -7,6 +7,7 @@
  */
 
 #include "DD.h"
+#include "../int_math.h"
 
 uint64_t __fixtfdi(long double input)
 {
@@ -64,7 +65,7 @@ uint64_t __fixtfdi(long double input)
 	/* Edge cases handled here: */
 	
 	/* |x| < 1, result is zero. */
-	if (1.0 > __builtin_fabs(x.s.hi))
+	if (1.0 > crt_fabs(x.s.hi))
 		return INT64_C(0);
 	
 	/* x very close to INT64_MIN, care must be taken to see which side we are on. */

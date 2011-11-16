@@ -14,7 +14,6 @@
 
 #include "int_lib.h"
 #include "int_math.h"
-#include <math.h>
 
 /* Returns: the product of a + ib and c + id */
 
@@ -33,41 +32,41 @@ __muldc3(double __a, double __b, double __c, double __d)
         int __recalc = 0;
         if (crt_isinf(__a) || crt_isinf(__b))
         {
-            __a = copysign(crt_isinf(__a) ? 1 : 0, __a);
-            __b = copysign(crt_isinf(__b) ? 1 : 0, __b);
+            __a = crt_copysign(crt_isinf(__a) ? 1 : 0, __a);
+            __b = crt_copysign(crt_isinf(__b) ? 1 : 0, __b);
             if (crt_isnan(__c))
-                __c = copysign(0, __c);
+                __c = crt_copysign(0, __c);
             if (crt_isnan(__d))
-                __d = copysign(0, __d);
+                __d = crt_copysign(0, __d);
             __recalc = 1;
         }
         if (crt_isinf(__c) || crt_isinf(__d))
         {
-            __c = copysign(crt_isinf(__c) ? 1 : 0, __c);
-            __d = copysign(crt_isinf(__d) ? 1 : 0, __d);
+            __c = crt_copysign(crt_isinf(__c) ? 1 : 0, __c);
+            __d = crt_copysign(crt_isinf(__d) ? 1 : 0, __d);
             if (crt_isnan(__a))
-                __a = copysign(0, __a);
+                __a = crt_copysign(0, __a);
             if (crt_isnan(__b))
-                __b = copysign(0, __b);
+                __b = crt_copysign(0, __b);
             __recalc = 1;
         }
         if (!__recalc && (crt_isinf(__ac) || crt_isinf(__bd) ||
                           crt_isinf(__ad) || crt_isinf(__bc)))
         {
             if (crt_isnan(__a))
-                __a = copysign(0, __a);
+                __a = crt_copysign(0, __a);
             if (crt_isnan(__b))
-                __b = copysign(0, __b);
+                __b = crt_copysign(0, __b);
             if (crt_isnan(__c))
-                __c = copysign(0, __c);
+                __c = crt_copysign(0, __c);
             if (crt_isnan(__d))
-                __d = copysign(0, __d);
+                __d = crt_copysign(0, __d);
             __recalc = 1;
         }
         if (__recalc)
         {
-            __real__ z = INFINITY * (__a * __c - __b * __d);
-            __imag__ z = INFINITY * (__a * __d + __b * __c);
+            __real__ z = CRT_INFINITY * (__a * __c - __b * __d);
+            __imag__ z = CRT_INFINITY * (__a * __d + __b * __c);
         }
     }
     return z;

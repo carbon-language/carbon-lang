@@ -4,20 +4,15 @@
 
 #include "DD.h"
 #include "../int_math.h"
-#include <math.h>
-
-#if !defined(INFINITY) && defined(HUGE_VAL)
-#define INFINITY HUGE_VAL
-#endif /* INFINITY */
 
 #define makeFinite(x) { \
-    (x).s.hi = __builtin_copysign(crt_isinf((x).s.hi) ? 1.0 : 0.0, (x).s.hi); \
+    (x).s.hi = crt_copysign(crt_isinf((x).s.hi) ? 1.0 : 0.0, (x).s.hi); \
     (x).s.lo = 0.0;                                                     \
   }
 
 #define zeroNaN() { \
     if (crt_isnan((x).s.hi)) {                                          \
-      (x).s.hi = __builtin_copysign(0.0, (x).s.hi);                     \
+      (x).s.hi = crt_copysign(0.0, (x).s.hi);                     \
       (x).s.lo = 0.0;                                                   \
     }                                                                   \
   }
@@ -84,9 +79,9 @@ __multc3(long double a, long double b, long double c, long double d)
 		
 		if (recalc)
 		{
-			real.s.hi = INFINITY * (aDD.s.hi*cDD.s.hi - bDD.s.hi*dDD.s.hi);
+			real.s.hi = CRT_INFINITY * (aDD.s.hi*cDD.s.hi - bDD.s.hi*dDD.s.hi);
 			real.s.lo = 0.0;
-			imag.s.hi = INFINITY * (aDD.s.hi*dDD.s.hi + bDD.s.hi*cDD.s.hi);
+			imag.s.hi = CRT_INFINITY * (aDD.s.hi*dDD.s.hi + bDD.s.hi*cDD.s.hi);
 			imag.s.lo = 0.0;
 		}
 	}

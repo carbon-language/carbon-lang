@@ -4,14 +4,13 @@
 
 #include "DD.h"
 #include "../int_math.h"
-#include <math.h>
 
-#if !defined(INFINITY) && defined(HUGE_VAL)
-#define INFINITY HUGE_VAL
-#endif /* INFINITY */
+#if !defined(CRT_INFINITY) && defined(HUGE_VAL)
+#define CRT_INFINITY HUGE_VAL
+#endif /* CRT_INFINITY */
 
 #define makeFinite(x) { \
-    (x).s.hi = __builtin_copysign(crt_isinf((x).s.hi) ? 1.0 : 0.0, (x).s.hi); \
+    (x).s.hi = crt_copysign(crt_isinf((x).s.hi) ? 1.0 : 0.0, (x).s.hi); \
     (x).s.lo = 0.0;                                                     \
   }
 
@@ -27,16 +26,16 @@ __divtc3(long double a, long double b, long double c, long double d)
 	DD dDD = { .ld = d };
 	
 	int ilogbw = 0;
-	const double logbw = logb(__builtin_fmax( __builtin_fabs(cDD.s.hi), __builtin_fabs(dDD.s.hi) ));
+	const double logbw = crt_logb(crt_fmax(crt_fabs(cDD.s.hi), crt_fabs(dDD.s.hi) ));
 	
 	if (crt_isfinite(logbw))
 	{
 		ilogbw = (int)logbw;
 		
-		cDD.s.hi = scalbn(cDD.s.hi, -ilogbw);
-		cDD.s.lo = scalbn(cDD.s.lo, -ilogbw);
-		dDD.s.hi = scalbn(dDD.s.hi, -ilogbw);
-		dDD.s.lo = scalbn(dDD.s.lo, -ilogbw);
+		cDD.s.hi = crt_scalbn(cDD.s.hi, -ilogbw);
+		cDD.s.lo = crt_scalbn(cDD.s.lo, -ilogbw);
+		dDD.s.hi = crt_scalbn(dDD.s.hi, -ilogbw);
+		dDD.s.lo = crt_scalbn(dDD.s.lo, -ilogbw);
 	}
 	
 	const long double denom = __gcc_qadd(__gcc_qmul(cDD.ld, cDD.ld), __gcc_qmul(dDD.ld, dDD.ld));
@@ -46,10 +45,10 @@ __divtc3(long double a, long double b, long double c, long double d)
 	DD real = { .ld = __gcc_qdiv(realNumerator, denom) };
 	DD imag = { .ld = __gcc_qdiv(imagNumerator, denom) };
 	
-	real.s.hi = scalbn(real.s.hi, -ilogbw);
-	real.s.lo = scalbn(real.s.lo, -ilogbw);
-	imag.s.hi = scalbn(imag.s.hi, -ilogbw);
-	imag.s.lo = scalbn(imag.s.lo, -ilogbw);
+	real.s.hi = crt_scalbn(real.s.hi, -ilogbw);
+	real.s.lo = crt_scalbn(real.s.lo, -ilogbw);
+	imag.s.hi = crt_scalbn(imag.s.hi, -ilogbw);
+	imag.s.lo = crt_scalbn(imag.s.lo, -ilogbw);
 	
 	if (crt_isnan(real.s.hi) && crt_isnan(imag.s.hi))
 	{
@@ -60,9 +59,9 @@ __divtc3(long double a, long double b, long double c, long double d)
 		if ((rDD.s.hi == 0.0) && (!crt_isnan(aDD.s.hi) ||
                                           !crt_isnan(bDD.s.hi)))
 		{
-			real.s.hi = __builtin_copysign(INFINITY,cDD.s.hi) * aDD.s.hi;
+			real.s.hi = crt_copysign(CRT_INFINITY,cDD.s.hi) * aDD.s.hi;
 			real.s.lo = 0.0;
-			imag.s.hi = __builtin_copysign(INFINITY,cDD.s.hi) * bDD.s.hi;
+			imag.s.hi = crt_copysign(CRT_INFINITY,cDD.s.hi) * bDD.s.hi;
 			imag.s.lo = 0.0;
 		}
 		
@@ -71,9 +70,9 @@ __divtc3(long double a, long double b, long double c, long double d)
 		{
 			makeFinite(aDD);
 			makeFinite(bDD);
-			real.s.hi = INFINITY * (aDD.s.hi*cDD.s.hi + bDD.s.hi*dDD.s.hi);
+			real.s.hi = CRT_INFINITY * (aDD.s.hi*cDD.s.hi + bDD.s.hi*dDD.s.hi);
 			real.s.lo = 0.0;
-			imag.s.hi = INFINITY * (bDD.s.hi*cDD.s.hi - aDD.s.hi*dDD.s.hi);
+			imag.s.hi = CRT_INFINITY * (bDD.s.hi*cDD.s.hi - aDD.s.hi*dDD.s.hi);
 			imag.s.lo = 0.0;
 		}
 		
@@ -82,9 +81,9 @@ __divtc3(long double a, long double b, long double c, long double d)
 		{
 			makeFinite(cDD);
 			makeFinite(dDD);
-			real.s.hi = __builtin_copysign(0.0,(aDD.s.hi*cDD.s.hi + bDD.s.hi*dDD.s.hi));
+			real.s.hi = crt_copysign(0.0,(aDD.s.hi*cDD.s.hi + bDD.s.hi*dDD.s.hi));
 			real.s.lo = 0.0;
-			imag.s.hi = __builtin_copysign(0.0,(bDD.s.hi*cDD.s.hi - aDD.s.hi*dDD.s.hi));
+			imag.s.hi = crt_copysign(0.0,(bDD.s.hi*cDD.s.hi - aDD.s.hi*dDD.s.hi));
 			imag.s.lo = 0.0;
 		}
 	}
