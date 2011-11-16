@@ -466,4 +466,21 @@ void rdar10202899_test3() {
   *p = 0xDEADBEEF;
 }
 
+// This used to crash the analyzer because of the unnamed bitfield.
+void PR11249()
+{
+  struct {
+    char f1:4;
+    char   :4;
+    char f2[1];
+    char f3;
+  } V = { 1, {2}, 3 };
+  int *p = 0;
+  if (V.f1 != 1)
+    *p = 0xDEADBEEF;  // no-warning
+  if (V.f2[0] != 2)
+    *p = 0xDEADBEEF;  // no-warning
+  if (V.f3 != 3)
+    *p = 0xDEADBEEF;  // no-warning
+}
 

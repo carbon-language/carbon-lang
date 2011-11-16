@@ -1506,10 +1506,14 @@ StoreRef RegionStoreManager::BindStruct(Store store, const TypedValueRegion* R,
   RecordDecl::field_iterator FI, FE;
   StoreRef newStore(store, *this);
   
-  for (FI = RD->field_begin(), FE = RD->field_end(); FI != FE; ++FI, ++VI) {
+  for (FI = RD->field_begin(), FE = RD->field_end(); FI != FE; ++FI) {
 
     if (VI == VE)
       break;
+
+    // Skip any unnamed bitfields to stay in sync with the initializers.
+    if ((*FI)->isUnnamedBitfield())
+      continue;
 
     QualType FTy = (*FI)->getType();
     const FieldRegion* FR = MRMgr.getFieldRegion(*FI, R);
@@ -1520,6 +1524,7 @@ StoreRef RegionStoreManager::BindStruct(Store store, const TypedValueRegion* R,
       newStore = BindStruct(newStore.getStore(), FR, *VI);
     else
       newStore = Bind(newStore.getStore(), svalBuilder.makeLoc(FR), *VI);
+    ++VI;
   }
 
   // There may be fewer values in the initialize list than the fields of struct.
