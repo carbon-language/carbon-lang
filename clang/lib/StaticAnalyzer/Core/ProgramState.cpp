@@ -15,6 +15,7 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramStateTrait.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SubEngine.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/TaintManager.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
@@ -622,4 +623,53 @@ bool ProgramState::scanReachableSymbols(const MemRegion * const *I,
       return false;
   }
   return true;
+}
+
+const ProgramState* ProgramState::addTaint(const Stmt *S,
+                                           TaintTagType Kind) const {
+  SymbolRef Sym = getSVal(S).getAsSymbol();
+  assert(Sym && "Cannot add taint to statements whose value is not a symbol");
+  return addTaint(Sym, Kind);
+}
+
+const ProgramState* ProgramState::addTaint(SymbolRef Sym,
+                                           TaintTagType Kind) const {
+  const ProgramState *NewState = set<TaintMap>(Sym, Kind);
+  assert(NewState);
+  return NewState;
+}
+
+bool ProgramState::isTainted(const Stmt *S, TaintTagType Kind) const {
+  return isTainted(getSVal(S), Kind);
+}
+
+bool ProgramState::isTainted(SVal V, TaintTagType Kind) const {
+  const SymExpr* Sym = V.getAsSymbol();
+  if (!Sym)
+    Sym = V.getAsSymbolicExpression();
+  if (!Sym)
+    return false;
+  return isTainted(Sym, Kind);
+}
+
+bool ProgramState::isTainted(const SymExpr* Sym, TaintTagType Kind) const {
+  // Check taint on derived symbols.
+  if (const SymbolDerived *SD = dyn_cast<SymbolDerived>(Sym))
+    return isTainted(SD->getParentSymbol(), Kind);
+
+  if (const SymIntExpr *SIE = dyn_cast<SymIntExpr>(Sym))
+    return isTainted(SIE->getLHS(), Kind);
+
+  if (const SymSymExpr *SSE = dyn_cast<SymSymExpr>(Sym))
+    return (isTainted(SSE->getLHS(), Kind) || isTainted(SSE->getRHS(), Kind));
+
+  // Check taint on the current symbol.
+  if (const SymbolData *SymR = dyn_cast<SymbolData>(Sym)) {
+    const TaintTagType *Tag = get<TaintMap>(SymR);
+    return (Tag && *Tag == Kind);
+  }
+
+  // TODO: Remove llvm unreachable.
+  llvm_unreachable("We do not know show to check taint on this symbol.");
+  return false;
 }

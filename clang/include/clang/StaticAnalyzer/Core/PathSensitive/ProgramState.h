@@ -19,6 +19,7 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/Environment.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/Store.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SValBuilder.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/TaintTag.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/ImmutableMap.h"
@@ -287,6 +288,19 @@ public:
   template <typename CB> CB
   scanReachableSymbols(const MemRegion * const *beg,
                        const MemRegion * const *end) const;
+
+  /// Create a new state in which the statement is marked as tainted.
+  const ProgramState* addTaint(const Stmt *S,
+                               TaintTagType Kind = TaintTagGeneric) const;
+
+  /// Create a new state in which the symbol is marked as tainted.
+  const ProgramState* addTaint(SymbolRef S,
+                               TaintTagType Kind = TaintTagGeneric) const;
+
+  /// Check if the statement is tainted in the current state.
+  bool isTainted(const Stmt *S, TaintTagType Kind = TaintTagGeneric) const;
+  bool isTainted(SVal V, TaintTagType Kind = TaintTagGeneric) const;
+  bool isTainted(const SymExpr* Sym, TaintTagType Kind = TaintTagGeneric) const;
 
   //==---------------------------------------------------------------------==//
   // Accessing the Generic Data Map (GDM).
