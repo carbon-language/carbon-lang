@@ -1336,14 +1336,32 @@ void NeonEmitter::runHeader(raw_ostream &OS) {
         mask |= 1 << GetNeonEnum(Proto, TypeVec[ti]);
       }
     }
-    bool HasPtr = (Proto.find('p') != std::string::npos);
-    bool HasConstPtr = (Proto.find('c') != std::string::npos);
+
+    // Check if the builtin function has a pointer or const pointer argument.
+    int PtrArgNum = -1;
+    bool HasConstPtr = false;
+    for (unsigned arg = 1, arge = Proto.size(); arg != arge; ++arg) {
+      char ArgType = Proto[arg];
+      if (ArgType == 'c') {
+        HasConstPtr = true;
+        PtrArgNum = arg - 1;
+        break;
+      }
+      if (ArgType == 'p') {
+        PtrArgNum = arg - 1;
+        break;
+      }
+    }
+    // For sret builtins, adjust the pointer argument index.
+    if (PtrArgNum >= 0 && (Proto[0] >= '2' && Proto[0] <= '4'))
+      PtrArgNum += 1;
+
     if (mask) {
       OS << "case ARM::BI__builtin_neon_"
          << MangleName(name, TypeVec[si], ClassB)
          << ": mask = " << "0x" << utohexstr(mask);
-      if (HasPtr)
-        OS << "; HasPtr = true";
+      if (PtrArgNum >= 0)
+        OS << "; PtrArgNum = " << PtrArgNum;
       if (HasConstPtr)
         OS << "; HasConstPtr = true";
       OS << "; break;\n";
@@ -1352,8 +1370,8 @@ void NeonEmitter::runHeader(raw_ostream &OS) {
       OS << "case ARM::BI__builtin_neon_"
          << MangleName(name, TypeVec[qi], ClassB)
          << ": mask = " << "0x" << utohexstr(qmask);
-      if (HasPtr)
-        OS << "; HasPtr = true";
+      if (PtrArgNum >= 0)
+        OS << "; PtrArgNum = " << PtrArgNum;
       if (HasConstPtr)
         OS << "; HasConstPtr = true";
       OS << "; break;\n";
