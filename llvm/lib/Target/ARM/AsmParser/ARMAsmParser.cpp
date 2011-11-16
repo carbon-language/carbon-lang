@@ -1946,18 +1946,15 @@ void ARMOperand::print(raw_ostream &OS) const {
     break;
   case k_ShiftedRegister:
     OS << "<so_reg_reg "
-       << RegShiftedReg.SrcReg
-       << ARM_AM::getShiftOpcStr(ARM_AM::getSORegShOp(RegShiftedReg.ShiftImm))
-       << ", " << RegShiftedReg.ShiftReg << ", "
-       << ARM_AM::getSORegOffset(RegShiftedReg.ShiftImm)
-       << ">";
+       << RegShiftedReg.SrcReg << " "
+       << ARM_AM::getShiftOpcStr(RegShiftedReg.ShiftTy)
+       << " " << RegShiftedReg.ShiftReg << ">";
     break;
   case k_ShiftedImmediate:
     OS << "<so_reg_imm "
-       << RegShiftedImm.SrcReg
-       << ARM_AM::getShiftOpcStr(ARM_AM::getSORegShOp(RegShiftedImm.ShiftImm))
-       << ", " << ARM_AM::getSORegOffset(RegShiftedImm.ShiftImm)
-       << ">";
+       << RegShiftedImm.SrcReg << " "
+       << ARM_AM::getShiftOpcStr(RegShiftedImm.ShiftTy)
+       << " #" << RegShiftedImm.ShiftImm << ">";
     break;
   case k_RotateImmediate:
     OS << "<ror " << " #" << (RotImm.Imm * 8) << ">";
