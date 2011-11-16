@@ -2217,6 +2217,18 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
     break;
   }
   case ISD::STORE: {
+    // The DEC64m tablegen pattern is currently not able to match the case where
+    // the EFLAGS on the original DEC are used.
+    // we'll need to improve tablegen to allow flags to be transferred from a
+    // node in the pattern to the result node.  probably with a new keyword
+    // for example, we have this
+    // def DEC64m : RI<0xFF, MRM1m, (outs), (ins i64mem:$dst), "dec{q}\t$dst",
+    //  [(store (add (loadi64 addr:$dst), -1), addr:$dst),
+    //   (implicit EFLAGS)]>;
+    // but maybe need something like this
+    // def DEC64m : RI<0xFF, MRM1m, (outs), (ins i64mem:$dst), "dec{q}\t$dst",
+    //  [(store (add (loadi64 addr:$dst), -1), addr:$dst),
+    //   (transferrable EFLAGS)]>;
     StoreSDNode *StoreNode = cast<StoreSDNode>(Node);
     SDValue Chain = StoreNode->getOperand(0);
     SDValue StoredVal = StoreNode->getOperand(1);
