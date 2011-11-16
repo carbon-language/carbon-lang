@@ -121,15 +121,15 @@ public:
   /// Otherwise return 0.
   const FunctionDecl *getAsFunctionDecl() const;
 
-  /// getAsLocSymbol - If this SVal is a location (subclasses Loc) and
-  ///  wraps a symbol, return that SymbolRef.  Otherwise return NULL.
+  /// If this SVal is a location (subclasses Loc) and
+  /// wraps a symbol, return that SymbolRef.  Otherwise return 0.
   SymbolRef getAsLocSymbol() const;
 
   /// Get the symbol in the SVal or its base region.
   SymbolRef getLocSymbolInBase() const;
 
-  /// getAsSymbol - If this Sval wraps a symbol return that SymbolRef.
-  ///  Otherwise return a SymbolRef where 'isValid()' returns false.
+  /// If this SVal wraps a symbol return that SymbolRef.
+  /// Otherwise, return 0.
   SymbolRef getAsSymbol() const;
 
   /// getAsSymbolicExpression - If this Sval wraps a symbolic expression then
