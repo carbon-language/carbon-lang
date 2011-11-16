@@ -1610,7 +1610,10 @@ static CXIdxClientContainer makeClientContainer(const CXIdxEntityInfo *info,
 }
 
 static void printCXIndexContainer(CXIdxClientContainer container) {
-  printf("[%s]", (const char *)container);
+  if (!container)
+    printf("[<<NULL>>]");
+  else
+    printf("[%s]", (const char *)container);
 }
 
 static const char *getEntityKindString(CXIdxEntityKind kind) {

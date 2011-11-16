@@ -259,11 +259,22 @@ void IndexingContext::handleObjCCategoryImpl(const ObjCCategoryImplDecl *D) {
   ObjCCategoryDeclInfo CatDInfo(/*isImplementation=*/true);
   CXIdxEntityInfo ClassEntity;
   StrAdapter SA(*this);
-  getEntityInfo(CatD->getClassInterface(), ClassEntity, SA);
+  const ObjCInterfaceDecl *IFaceD = CatD->getClassInterface();
+  SourceLocation ClassLoc = D->getLocation();
+  SourceLocation CategoryLoc = ClassLoc; //FIXME: D->getCategoryNameLoc();
+  getEntityInfo(IFaceD, ClassEntity, SA);
 
   CatDInfo.ObjCCatDeclInfo.containerInfo = &CatDInfo.ObjCContDeclInfo;
-  CatDInfo.ObjCCatDeclInfo.objcClass = &ClassEntity;
-  handleObjCContainer(D, D->getLocation(), getCursor(D), CatDInfo);
+  if (IFaceD) {
+    CatDInfo.ObjCCatDeclInfo.objcClass = &ClassEntity;
+    CatDInfo.ObjCCatDeclInfo.classCursor =
+        MakeCursorObjCClassRef(IFaceD, ClassLoc, CXTU);
+  } else {
+    CatDInfo.ObjCCatDeclInfo.objcClass = 0;
+    CatDInfo.ObjCCatDeclInfo.classCursor = clang_getNullCursor();
+  }
+  CatDInfo.ObjCCatDeclInfo.classLoc = getIndexLoc(ClassLoc);
+  handleObjCContainer(D, CategoryLoc, getCursor(D), CatDInfo);
 }
 
 void IndexingContext::handleObjCMethod(const ObjCMethodDecl *D) {
@@ -402,6 +413,8 @@ CXIdxClientContainer
 IndexingContext::getIndexContainerForDC(const DeclContext *DC) const {
   DC = getScopedContext(DC);
   ContainerMapTy::const_iterator I = ContainerMap.find(DC);
+  if (I == ContainerMap.end())
+    return 0;
 //  assert(I != ContainerMap.end() &&
 //         "Failed to include a scoped context in the container map");
   return I->second;
