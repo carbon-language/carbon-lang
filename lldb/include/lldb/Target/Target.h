@@ -221,7 +221,7 @@ protected:
     CreateInstanceName ();
     
     OptionValueFileSpec m_expr_prefix_file;
-    lldb::DataBufferSP m_expr_prefix_contents_sp;
+    std::string m_expr_prefix_contents;
     int m_prefer_dynamic_value;
     OptionValueBoolean m_skip_prologue;
     PathMappingList m_source_map;

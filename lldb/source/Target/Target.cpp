@@ -1430,8 +1430,8 @@ Target::UpdateInstanceName ()
 const char *
 Target::GetExpressionPrefixContentsAsCString ()
 {
-    if (m_expr_prefix_contents_sp)
-        return (const char *)m_expr_prefix_contents_sp->GetBytes();
+    if (!m_expr_prefix_contents.empty())
+        return m_expr_prefix_contents.c_str();
     return NULL;
 }
 
@@ -2160,7 +2160,7 @@ TargetInstanceSettings::TargetInstanceSettings
 ) :
     InstanceSettings (owner, name ? name : InstanceSettings::InvalidName().AsCString(), live_instance),
     m_expr_prefix_file (),
-    m_expr_prefix_contents_sp (),
+    m_expr_prefix_contents (),
     m_prefer_dynamic_value (2),
     m_skip_prologue (true, true),
     m_source_map (NULL, NULL),
@@ -2198,7 +2198,7 @@ TargetInstanceSettings::TargetInstanceSettings
 TargetInstanceSettings::TargetInstanceSettings (const TargetInstanceSettings &rhs) :
     InstanceSettings (*Target::GetSettingsController(), CreateInstanceName().AsCString()),
     m_expr_prefix_file (rhs.m_expr_prefix_file),
-    m_expr_prefix_contents_sp (rhs.m_expr_prefix_contents_sp),
+    m_expr_prefix_contents (rhs.m_expr_prefix_contents),
     m_prefer_dynamic_value (rhs.m_prefer_dynamic_value),
     m_skip_prologue (rhs.m_skip_prologue),
     m_source_map (rhs.m_source_map),
@@ -2231,7 +2231,7 @@ TargetInstanceSettings::operator= (const TargetInstanceSettings &rhs)
     if (this != &rhs)
     {
         m_expr_prefix_file = rhs.m_expr_prefix_file;
-        m_expr_prefix_contents_sp = rhs.m_expr_prefix_contents_sp;
+        m_expr_prefix_contents = rhs.m_expr_prefix_contents;
         m_prefer_dynamic_value = rhs.m_prefer_dynamic_value;
         m_skip_prologue = rhs.m_skip_prologue;
         m_source_map = rhs.m_source_map;
@@ -2280,17 +2280,19 @@ TargetInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_n
                         return;
                     }
             
-                    m_expr_prefix_contents_sp = m_expr_prefix_file.GetCurrentValue().ReadFileContents();
-            
-                    if (!m_expr_prefix_contents_sp && m_expr_prefix_contents_sp->GetByteSize() == 0)
+                    DataBufferSP file_contents = m_expr_prefix_file.GetCurrentValue().ReadFileContents();
+                    
+                    if (!file_contents && file_contents->GetByteSize() == 0)
                     {
                         err.SetErrorStringWithFormat ("couldn't read data from '%s'", value);
-                        m_expr_prefix_contents_sp.reset();
+                        m_expr_prefix_contents.clear();
                     }
+                    
+                    m_expr_prefix_contents.assign((const char*)file_contents->GetBytes(), file_contents->GetByteSize());
                 }
                 break;
             case eVarSetOperationClear:
-                m_expr_prefix_contents_sp.reset();
+                m_expr_prefix_contents.clear();
             }
         }
     }
