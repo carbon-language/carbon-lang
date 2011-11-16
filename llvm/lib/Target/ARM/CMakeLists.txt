@@ -62,8 +62,8 @@ add_llvm_library_dependencies(LLVMARMCodeGen
   LLVMTarget
   )
 
-# workaround for hanging compilation on MSVC10
-if( MSVC_VERSION EQUAL 1600 )
+# workaround for hanging compilation on MSVC9, 10
+if( MSVC_VERSION EQUAL 1600 OR MSVC_VERSION EQUAL 1500 )
 set_property(
   SOURCE ARMISelLowering.cpp
   PROPERTY COMPILE_FLAGS "/Od"
