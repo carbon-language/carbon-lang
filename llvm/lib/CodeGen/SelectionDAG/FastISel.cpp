@@ -39,6 +39,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "isel"
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Instructions.h"
@@ -58,7 +59,11 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/ADT/Statistic.h"
 using namespace llvm;
+
+STATISTIC(NumFastIselSuccessIndependent, "Number of insts selected by target-independent selector");
+STATISTIC(NumFastIselSuccessTarget, "Number of insts selected by target-specific selector");
 
 /// startNewBlock - Set the current block to which generated machine
 /// instructions will be appended, and clear the local CSE map.
@@ -765,12 +770,14 @@ FastISel::SelectInstruction(const Instruction *I) {
 
   // First, try doing target-independent selection.
   if (SelectOperator(I, I->getOpcode())) {
+    ++NumFastIselSuccessIndependent;
     DL = DebugLoc();
     return true;
   }
 
   // Next, try calling the target to attempt to handle the instruction.
   if (TargetSelectInstruction(I)) {
+    ++NumFastIselSuccessTarget;
     DL = DebugLoc();
     return true;
   }
