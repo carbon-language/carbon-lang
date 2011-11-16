@@ -1303,6 +1303,8 @@ bool ARMFastISel::ARMEmitCmp(const Value *Src1Value, const Value *Src2Value,
   int Imm = 0;
   bool UseImm = false;
   bool isNegativeImm = false;
+  // FIXME: At -O0 we don't have anything that canonicalizes operand order.
+  // Thus, Src1Value may be a ConstantInt, but we're missing it.
   if (const ConstantInt *ConstInt = dyn_cast<ConstantInt>(Src2Value)) {
     if (SrcVT == MVT::i32 || SrcVT == MVT::i16 || SrcVT == MVT::i8 ||
         SrcVT == MVT::i1) {
