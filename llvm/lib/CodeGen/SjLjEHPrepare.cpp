@@ -30,6 +30,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
@@ -364,13 +365,13 @@ void SjLjEHPass::lowerAcrossUnwindEdges(Function &F,
 bool SjLjEHPass::setupEntryBlockAndCallSites(Function &F) {
   SmallVector<ReturnInst*,     16> Returns;
   SmallVector<InvokeInst*,     16> Invokes;
-  SmallVector<LandingPadInst*, 16> LPads;
+  SmallSetVector<LandingPadInst*, 16> LPads;
 
   // Look through the terminators of the basic blocks to find invokes.
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
     if (InvokeInst *II = dyn_cast<InvokeInst>(BB->getTerminator())) {
       Invokes.push_back(II);
-      LPads.push_back(II->getUnwindDest()->getLandingPadInst());
+      LPads.insert(II->getUnwindDest()->getLandingPadInst());
     } else if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator())) {
       Returns.push_back(RI);
     }
@@ -382,7 +383,8 @@ bool SjLjEHPass::setupEntryBlockAndCallSites(Function &F) {
   lowerIncomingArguments(F);
   lowerAcrossUnwindEdges(F, Invokes);
 
-  Value *FuncCtx = setupFunctionContext(F, LPads);
+  Value *FuncCtx =
+    setupFunctionContext(F, makeArrayRef(LPads.begin(), LPads.end()));
   BasicBlock *EntryBB = F.begin();
   Type *Int32Ty = Type::getInt32Ty(F.getContext());
 
