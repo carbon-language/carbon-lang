@@ -50,6 +50,7 @@ public:
         m_ast_context (NULL),
         m_active_lookups ()
     {
+        m_ast_importer = m_target->GetClangASTImporter();
     }
     
     //------------------------------------------------------------------
@@ -71,13 +72,6 @@ public:
 	
     void InstallASTContext (clang::ASTContext *ast_context)
     {
-        if (!m_ast_importer.get() ||
-            m_ast_importer->TargetASTContext() != ast_context)
-        {
-            m_ast_importer.reset(new ClangASTImporter(ast_context));
-            m_ast_importer->InstallMapCompleter(*this);
-        }
-        
         m_ast_context = ast_context;
     }
     
@@ -329,8 +323,8 @@ protected:
     bool                    m_lookups_enabled;
 
     const lldb::TargetSP                m_target;           ///< The target to use in finding variables and types.
-	clang::ASTContext                  *m_ast_context;      ///< The parser's AST context, for copying types into
-    std::auto_ptr<ClangASTImporter>     m_ast_importer;
+	clang::ASTContext                  *m_ast_context;      ///< The AST context requests are coming in for.
+    ClangASTImporter                   *m_ast_importer;     ///< The target's AST importer.
     std::set<const char *>              m_active_lookups;
 };
 

@@ -41,6 +41,7 @@ class   BreakpointSiteList;
 class   Broadcaster;
 class   CPPLanguageRuntime;
 class   ClangASTContext;
+class   ClangASTImporter;
 class   ClangASTSource;
 class   ClangASTType;
 class   ClangNamespaceDecl;

@@ -801,6 +801,9 @@ public:
     ClangASTContext *
     GetScratchClangASTContext();
     
+    ClangASTImporter *
+    GetClangASTImporter();
+    
     const char *
     GetExpressionPrefixContentsAsCString ();
     
@@ -1054,6 +1057,7 @@ protected:
     PathMappingList m_image_search_paths;
     std::auto_ptr<ClangASTContext> m_scratch_ast_context_ap;
     std::auto_ptr<ClangASTSource> m_scratch_ast_source_ap;
+    std::auto_ptr<ClangASTImporter> m_ast_importer_ap;
     ClangPersistentVariables m_persistent_variables;      ///< These are the persistent variables associated with this process for the expression parser.
 
     SourceManager m_source_manager;

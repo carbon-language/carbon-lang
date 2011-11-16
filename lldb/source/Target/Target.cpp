@@ -61,6 +61,8 @@ Target::Target(Debugger &debugger, const ArchSpec &target_arch, const lldb::Plat
     m_search_filter_sp (),
     m_image_search_paths (ImageSearchPathsChanged, this),
     m_scratch_ast_context_ap (NULL),
+    m_scratch_ast_source_ap (NULL),
+    m_ast_importer_ap (NULL),
     m_persistent_variables (),
     m_source_manager(*this),
     m_stop_hooks (),
@@ -173,6 +175,7 @@ Target::Destroy()
     m_image_search_paths.Clear(notify);
     m_scratch_ast_context_ap.reset();
     m_scratch_ast_source_ap.reset();
+    m_ast_importer_ap.reset();
     m_persistent_variables.Clear();
     m_stop_hooks.clear();
     m_stop_hook_next_id = 0;
@@ -797,6 +800,7 @@ Target::SetExecutableModule (ModuleSP& executable_sp, bool get_dependent_files)
     m_images.Clear();
     m_scratch_ast_context_ap.reset();
     m_scratch_ast_source_ap.reset();
+    m_ast_importer_ap.reset();
     
     if (executable_sp.get())
     {
@@ -837,6 +841,7 @@ Target::SetExecutableModule (ModuleSP& executable_sp, bool get_dependent_files)
             }
         }
         
+        m_ast_importer_ap.reset(new ClangASTImporter());
     }
 
     UpdateInstanceName();
@@ -865,6 +870,8 @@ Target::SetArchitecture (const ArchSpec &arch_spec)
         ModuleSP executable_sp = GetExecutableModule ();
         m_images.Clear();
         m_scratch_ast_context_ap.reset();
+        m_scratch_ast_source_ap.reset();
+        m_ast_importer_ap.reset();
         // Need to do something about unsetting breakpoints.
         
         if (executable_sp)
@@ -1340,6 +1347,20 @@ Target::GetScratchClangASTContext()
         m_scratch_ast_context_ap->SetExternalSource(proxy_ast_source);
     }
     return m_scratch_ast_context_ap.get();
+}
+
+ClangASTImporter *
+Target::GetClangASTImporter()
+{
+    ClangASTImporter *ast_importer = m_ast_importer_ap.get();
+    
+    if (!ast_importer)
+    {
+        ast_importer = new ClangASTImporter();
+        m_ast_importer_ap.reset(ast_importer);
+    }
+    
+    return ast_importer;
 }
 
 void

@@ -19,10 +19,11 @@ using namespace lldb_private;
 using namespace clang;
 
 clang::QualType 
-ClangASTImporter::CopyType (clang::ASTContext *src_ast,
+ClangASTImporter::CopyType (clang::ASTContext *dst_ast,
+                            clang::ASTContext *src_ast,
                             clang::QualType type)
 {
-    MinionSP minion_sp (GetMinion(src_ast, false));
+    MinionSP minion_sp (GetMinion(dst_ast, src_ast));
     
     if (minion_sp)
         return minion_sp->Import(type);
@@ -31,15 +32,13 @@ ClangASTImporter::CopyType (clang::ASTContext *src_ast,
 }
 
 clang::Decl *
-ClangASTImporter::CopyDecl (clang::ASTContext *src_ast,
+ClangASTImporter::CopyDecl (clang::ASTContext *dst_ast,
+                            clang::ASTContext *src_ast,
                             clang::Decl *decl)
 {
     MinionSP minion_sp;
     
-    if (isa<clang::NamespaceDecl>(decl)) 
-        minion_sp = GetMinion(src_ast, true);
-    else
-        minion_sp = GetMinion(src_ast, false);
+    minion_sp = GetMinion(dst_ast, src_ast);
     
     if (minion_sp)
     {
@@ -77,7 +76,7 @@ ClangASTImporter::CompleteTagDecl (clang::TagDecl *decl)
     if (!ClangASTContext::GetCompleteDecl(decl_origin.ctx, decl_origin.decl))
         return;
     
-    MinionSP minion_sp (GetMinion(decl_origin.ctx, false));
+    MinionSP minion_sp (GetMinion(&decl->getASTContext(), decl_origin.ctx));
     
     if (minion_sp)
         minion_sp->ImportDefinition(decl_origin.decl);
@@ -98,7 +97,7 @@ ClangASTImporter::CompleteObjCInterfaceDecl (clang::ObjCInterfaceDecl *interface
     if (!ClangASTContext::GetCompleteDecl(decl_origin.ctx, decl_origin.decl))
         return;
     
-    MinionSP minion_sp (GetMinion(decl_origin.ctx, false));
+    MinionSP minion_sp (GetMinion(&interface_decl->getASTContext(), decl_origin.ctx));
     
     if (minion_sp)
         minion_sp->ImportDefinition(decl_origin.decl);
@@ -146,6 +145,18 @@ ClangASTImporter::BuildNamespaceMap(const clang::NamespaceDecl *decl)
     }
     
     RegisterNamespaceMap (decl, new_map);
+}
+
+void 
+ClangASTImporter::PurgeMaps (clang::ASTContext *dst_ast)
+{
+    for (MinionMap::iterator i = m_minions.begin(); i != m_minions.end(); )
+    {
+        if ((*i).first.dst == dst_ast)
+            m_minions.erase(i++);
+        else
+            ++i;
+    }
 }
 
 ClangASTImporter::NamespaceMapCompleter::~NamespaceMapCompleter ()

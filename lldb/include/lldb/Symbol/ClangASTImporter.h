@@ -28,24 +28,19 @@ namespace lldb_private {
 class ClangASTImporter 
 {
 public:
-    ClangASTImporter (clang::ASTContext *target_ctx) :
-        m_file_manager(clang::FileSystemOptions()),
-        m_target_ctx(target_ctx)
+    ClangASTImporter () :
+        m_file_manager(clang::FileSystemOptions())
     {
-    }
-    
-    clang::ASTContext *
-    TargetASTContext ()
-    {
-        return m_target_ctx;
     }
     
     clang::QualType
-    CopyType (clang::ASTContext *src_ctx,
+    CopyType (clang::ASTContext *dst_ctx,
+              clang::ASTContext *src_ctx,
               clang::QualType type);
     
     clang::Decl *
-    CopyDecl (clang::ASTContext *src_ctx,
+    CopyDecl (clang::ASTContext *dst_ctx,
+              clang::ASTContext *src_ctx,
               clang::Decl *decl);
         
     void
@@ -92,6 +87,8 @@ public:
     NamespaceMapSP GetNamespaceMap (const clang::NamespaceDecl *decl);
     
     void BuildNamespaceMap (const clang::NamespaceDecl *decl);
+    
+    void PurgeMaps (clang::ASTContext *dest_ast_ctx);
 private:
     struct DeclOrigin 
     {
@@ -130,13 +127,13 @@ private:
     {
     public:
         Minion (ClangASTImporter &master,
-                clang::ASTContext *source_ctx,
-                bool minimal) :
-            clang::ASTImporter(*master.m_target_ctx,
+                clang::ASTContext *target_ctx,
+                clang::ASTContext *source_ctx) :
+            clang::ASTImporter(*target_ctx,
                                master.m_file_manager,
                                *source_ctx,
                                master.m_file_manager,
-                               minimal),
+                               true /*minimal*/),
             m_master(master),
             m_source_ctx(source_ctx)
         {
@@ -149,24 +146,40 @@ private:
     };
     
     typedef lldb::SharedPtr<Minion>::Type               MinionSP;
-    typedef std::map<clang::ASTContext *, MinionSP>     MinionMap;
+    
+    struct MinionSpec
+    {
+        clang::ASTContext *dst;
+        clang::ASTContext *src;
+        
+        MinionSpec (clang::ASTContext *_dst,
+                    clang::ASTContext *_src) :
+            dst(_dst),
+            src(_src)
+        {
+        }
+        
+        bool operator<(const MinionSpec &rhs) const
+        {
+            if (dst < rhs.dst)
+                return true;
+            if (dst == rhs.dst && src < rhs.src)
+                return true;
+            return false;
+        }
+    };
+    
+    typedef std::map<MinionSpec, MinionSP>     MinionMap;
     
     MinionSP
-    GetMinion (clang::ASTContext *source_ctx, bool minimal)
+    GetMinion (clang::ASTContext *target_ctx, clang::ASTContext *source_ctx)
     {
-        MinionMap *minions;
+        MinionSpec spec(target_ctx, source_ctx);
         
-        minimal = true; // This override is temporary, while I sort out the attendant issues.
+        if (m_minions.find(spec) == m_minions.end())
+            m_minions[spec] = MinionSP(new Minion(*this, target_ctx, source_ctx));
         
-        if (minimal)
-            minions = &m_minimal_minions;
-        else
-            minions = &m_minions;
-        
-        if (minions->find(source_ctx) == minions->end())
-            (*minions)[source_ctx] = MinionSP(new Minion(*this, source_ctx, minimal));
-        
-        return (*minions)[source_ctx];
+        return m_minions[spec];
     }
     
     DeclOrigin
@@ -185,9 +198,7 @@ private:
     NamespaceMetaMap        m_namespace_maps;
     NamespaceMapCompleter  *m_map_completer;
     clang::FileManager      m_file_manager;
-    clang::ASTContext      *m_target_ctx;
     MinionMap               m_minions;
-    MinionMap               m_minimal_minions;
     OriginMap               m_origins;
 };
     

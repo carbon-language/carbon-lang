@@ -24,6 +24,7 @@ using namespace lldb_private;
 
 ClangASTSource::~ClangASTSource() 
 {
+    m_ast_importer->PurgeMaps(m_ast_context);
 }
 
 void
@@ -249,7 +250,7 @@ ClangASTSource::FindExternalLexicalDecls (const DeclContext *decl_context,
                     log->Printf("  FELD[%d] Adding lexical decl %s", current_id, ast_dumper.GetCString());
             }
             
-            Decl *copied_decl = m_ast_importer->CopyDecl(original_ctx, decl);
+            Decl *copied_decl = m_ast_importer->CopyDecl(m_ast_context, original_ctx, decl);
             
             decls.push_back(copied_decl);
         }
@@ -551,7 +552,7 @@ ClangASTSource::FindObjCMethodDecls (NameSearchContext &context)
         
         if (found_interface_decl->getName() == interface_decl->getName())
         {
-            Decl *copied_decl = m_ast_importer->CopyDecl(&method_decl->getASTContext(), method_decl);
+            Decl *copied_decl = m_ast_importer->CopyDecl(m_ast_context, &method_decl->getASTContext(), method_decl);
             
             if (!copied_decl)
                 continue;
@@ -610,7 +611,7 @@ ClangASTSource::FindObjCPropertyDecls (NameSearchContext &context)
     if (!property_decl)
         return;
     
-    Decl *copied_decl = m_ast_importer->CopyDecl(orig_ast_ctx, property_decl);
+    Decl *copied_decl = m_ast_importer->CopyDecl(m_ast_context, orig_ast_ctx, property_decl);
     
     if (!copied_decl)
         return;
@@ -734,7 +735,7 @@ ClangASTSource::AddNamespace (NameSearchContext &context, ClangASTImporter::Name
         
     const ClangNamespaceDecl &namespace_decl = namespace_decls->begin()->second;
     
-    Decl *copied_decl = m_ast_importer->CopyDecl(namespace_decl.GetASTContext(), namespace_decl.GetNamespaceDecl());
+    Decl *copied_decl = m_ast_importer->CopyDecl(m_ast_context, namespace_decl.GetASTContext(), namespace_decl.GetNamespaceDecl());
     
     NamespaceDecl *copied_namespace_decl = dyn_cast<NamespaceDecl>(copied_decl);
     
@@ -750,7 +751,7 @@ ClangASTSource::GuardedCopyType (ASTContext *dest_context,
 {    
     SetImportInProgress(true);
     
-    QualType ret_qual_type = m_ast_importer->CopyType (source_context, QualType::getFromOpaquePtr(clang_type));
+    QualType ret_qual_type = m_ast_importer->CopyType (m_ast_context, source_context, QualType::getFromOpaquePtr(clang_type));
     
     void *ret = ret_qual_type.getAsOpaquePtr();
     
