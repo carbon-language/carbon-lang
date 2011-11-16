@@ -309,5 +309,5 @@ namespace N6 {
   int a() { return y.x; }
   // CHECK: define i32 @_ZN2N61aEv
   // CHECK: [[REFLOAD3:%.*]] = load i8** getelementptr inbounds (%"struct.N6::x"* @_ZN2N61yE, i32 0, i32 0), align 8
-  // CHECK: %0 = load i8* [[REFLOAD3]], align 1
+  // CHECK: load i8* [[REFLOAD3]], align 1
 }
