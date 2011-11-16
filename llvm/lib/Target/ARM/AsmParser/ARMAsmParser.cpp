@@ -4613,6 +4613,32 @@ processInstruction(MCInst &Inst,
                    const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   switch (Inst.getOpcode()) {
   // Handle the MOV complex aliases.
+  case ARM::ASRr:
+  case ARM::LSRr:
+  case ARM::LSLr:
+  case ARM::RORr: {
+    ARM_AM::ShiftOpc ShiftTy;
+    switch(Inst.getOpcode()) {
+    default: llvm_unreachable("unexpected opcode!");
+    case ARM::ASRr: ShiftTy = ARM_AM::asr; break;
+    case ARM::LSRr: ShiftTy = ARM_AM::lsr; break;
+    case ARM::LSLr: ShiftTy = ARM_AM::lsl; break;
+    case ARM::RORr: ShiftTy = ARM_AM::ror; break;
+    }
+    // A shift by zero is a plain MOVr, not a MOVsi.
+    unsigned Shifter = ARM_AM::getSORegOpc(ShiftTy, 0);
+    MCInst TmpInst;
+    TmpInst.setOpcode(ARM::MOVsr);
+    TmpInst.addOperand(Inst.getOperand(0)); // Rd
+    TmpInst.addOperand(Inst.getOperand(1)); // Rn
+    TmpInst.addOperand(Inst.getOperand(2)); // Rm
+    TmpInst.addOperand(MCOperand::CreateImm(Shifter)); // Shift value and ty
+    TmpInst.addOperand(Inst.getOperand(3)); // CondCode
+    TmpInst.addOperand(Inst.getOperand(4));
+    TmpInst.addOperand(Inst.getOperand(5)); // cc_out
+    Inst = TmpInst;
+    return true;
+  }
   case ARM::ASRi:
   case ARM::LSRi:
   case ARM::LSLi:
