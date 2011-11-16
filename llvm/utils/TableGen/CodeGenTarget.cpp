@@ -90,7 +90,7 @@ std::string llvm::getEnumName(MVT::SimpleValueType T) {
   case MVT::Metadata: return "MVT::Metadata";
   case MVT::iPTR:     return "MVT::iPTR";
   case MVT::iPTRAny:  return "MVT::iPTRAny";
-  case MVT::untyped:  return "MVT::untyped";
+  case MVT::Untyped:  return "MVT::Untyped";
   default: assert(0 && "ILLEGAL VALUE TYPE!"); return "";
   }
 }
