@@ -44,6 +44,23 @@ static CXDiagnosticSetImpl *lazyCreateDiags(CXTranslationUnit TU,
   ASTUnit *AU = static_cast<ASTUnit *>(TU->TUData);
 
   if (TU->Diagnostics && checkIfChanged) {
+    // In normal use, ASTUnit's diagnostics should not change unless we reparse.
+    // Currently they can only change by using the internal testing flag
+    // '-error-on-deserialized-decl' which will error during deserialization of
+    // a declaration. What will happen is:
+    //
+    //  -c-index-test gets a CXTranslationUnit
+    //  -checks the diagnostics, the diagnostics set is lazily created,
+    //     no errors are reported
+    //  -later does an operation, like annotation of tokens, that triggers
+    //     -error-on-deserialized-decl, that will emit a diagnostic error,
+    //     that ASTUnit will catch and add to its stored diagnostics vector.
+    //  -c-index-test wants to check whether an error occurred after performing
+    //     the operation but can only query the lazily created set.
+    //
+    // We check here if a new diagnostic was appended since the last time the
+    // diagnostic set was created, in which case we reset it.
+
     CXDiagnosticSetImpl *
       Set = static_cast<CXDiagnosticSetImpl*>(TU->Diagnostics);
     if (AU->stored_diag_size() != Set->getNumDiagnostics()) {
