@@ -84,10 +84,9 @@ IOS_DEPLOYMENT_ARGS := -miphoneos-version-min=1.0
 IOSSIM_DEPLOYMENT_ARGS := -miphoneos-version-min=1.0
 
 # If an explicit ARM_SDK build variable is set, use that as the isysroot.
-ifneq ($(ARM_SDK),)
-IOS_DEPLOYMENT_ARGS += -isysroot $(ARM_SDK)
-IOSSIM_DEPLOYMENT_ARGS += -isysroot $(ARM_SDK)
-endif
+X86_OSX_DEPLOYMENT_ARGS += -isysroot $(ProjSrcRoot)/SDKs/darwin
+ARM_IOS_DEPLOYMENT_ARGS += -isysroot $(ProjSrcRoot)/SDKs/darwin
+X86_IOS_DEPLOYMENT_ARGS += -isysroot $(ProjSrcRoot)/SDKs/darwin
 
 CFLAGS.eprintf		:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 CFLAGS.10.4		:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
