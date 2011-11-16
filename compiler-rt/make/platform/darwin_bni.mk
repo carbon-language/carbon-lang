@@ -6,6 +6,9 @@ Configs := Debug Release Profile Static
 # We override this with RC_ARCHS because B&I may want to build on an ARCH we
 # haven't explicitly defined support for. If all goes well, this will just work
 # and the resulting lib will just have generic versions for anything unknown.
+ifndef RC_ARCHS
+$(error "unexpected build of 'darwin_bni' platform without RC_ARCHS set")
+endif
 UniversalArchs := $(RC_ARCHS)
 
 ifneq (,$(SDKROOT))
