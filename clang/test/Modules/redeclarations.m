@@ -1,22 +1,11 @@
-#ifdef MODULE_LEFT
-@class NSObject;
-#endif
-
-#ifdef MODULE_RIGHT
-@interface NSObject
-@end
-#endif
-
-#ifdef APP
-__import_module__ Right;
-__import_module__ Left;
+__import_module__ redeclarations_left;
+__import_module__ redeclarations_right;
 
 @interface MyObject : NSObject
 @end
-#endif
 
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -fmodule-cache-path %t -fdisable-module-hash -emit-module -o %t/Left.pcm -DMODULE_LEFT %s
-// RUN: %clang_cc1 -fmodule-cache-path %t -fdisable-module-hash -emit-module -o %t/Right.pcm -DMODULE_RIGHT %s
-// RUN: %clang_cc1 -fmodule-cache-path %t -fdisable-module-hash -DAPP %s -verify
+// RUN: %clang_cc1 -x objective-c -fmodule-cache-path %t -emit-module-from-map -fmodule-name=redeclarations_left %S/Inputs/module.map
+// RUN: %clang_cc1 -x objective-c -fmodule-cache-path %t -emit-module-from-map -fmodule-name=redeclarations_right %S/Inputs/module.map
+// RUN: %clang_cc1 -fmodule-cache-path %t %s -verify
 

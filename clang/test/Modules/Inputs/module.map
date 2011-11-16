@@ -10,3 +10,10 @@ module lookup_right_cxx { umbrella "lookup_right.hpp" }
 module module_private_left { umbrella "module_private_left.h" }
 module module_private_right { umbrella "module_private_right.h" }
 module macros { umbrella "macros.h" }
+module category_top { umbrella "category_top.h" }
+module category_left { umbrella "category_left.h" }
+module category_right { umbrella "category_right.h" }
+module category_bottom { umbrella "category_bottom.h" }
+module redeclarations_left { umbrella "redeclarations_left.h" }
+module redeclarations_right { umbrella "redeclarations_right.h" }
+module load_failure { umbrella "load_failure.h" }
