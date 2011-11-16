@@ -3695,10 +3695,14 @@ bool ComplexExprEvaluator::VisitCastExpr(const CastExpr *E) {
 }
 
 bool ComplexExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
+  if (E->isPtrMemOp() || E->isAssignmentOp())
+    return ExprEvaluatorBaseTy::VisitBinaryOperator(E);
+
   if (E->getOpcode() == BO_Comma) {
     VisitIgnoredValue(E->getLHS());
     return Visit(E->getRHS());
   }
+
   if (!Visit(E->getLHS()))
     return false;
 

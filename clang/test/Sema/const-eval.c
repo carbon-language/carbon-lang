@@ -108,3 +108,7 @@ int literalVsNull2 = 0 == "foo";
 
 // PR11385.
 int castViaInt[*(int*)(unsigned long)"test"]; // expected-error {{variable length array}}
+
+// PR11391.
+struct PR11391 { _Complex float f; } pr11391;
+EVAL_EXPR(42, __builtin_constant_p(pr11391.f = 1))
