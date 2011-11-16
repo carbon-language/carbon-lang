@@ -4,7 +4,7 @@
 
 #ifdef __x86_64__
 
-#include <stdint.h>
+#include "../int_lib.h"
 
 float __floatdisf(int64_t a)
 {

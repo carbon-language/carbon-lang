@@ -6,7 +6,6 @@
 /* This file implements the PowerPC unsigned long long -> long double conversion */
 
 #include "DD.h"
-#include <stdint.h>
 
 long double __floatunditf(uint64_t a) {
 	

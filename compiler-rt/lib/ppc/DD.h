@@ -1,7 +1,7 @@
 #ifndef __DD_HEADER
 #define __DD_HEADER
 
-#include <stdint.h>
+#include "../int_lib.h"
 
 typedef union {
 	long double ld;

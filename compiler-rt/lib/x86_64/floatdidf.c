@@ -6,7 +6,7 @@
 
 #ifdef __x86_64__
 
-#include <stdint.h>
+#include "../int_lib.h"
 
 double __floatdidf(int64_t a)
 {

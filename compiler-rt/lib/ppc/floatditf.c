@@ -6,7 +6,6 @@
 /* This file implements the PowerPC long long -> long double conversion */
 
 #include "DD.h"
-#include <stdint.h>
 
 long double __floatditf(int64_t a) {
 	

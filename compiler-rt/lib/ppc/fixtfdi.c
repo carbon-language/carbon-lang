@@ -7,7 +7,6 @@
  */
 
 #include "DD.h"
-#include <stdint.h>
 
 uint64_t __fixtfdi(long double input)
 {

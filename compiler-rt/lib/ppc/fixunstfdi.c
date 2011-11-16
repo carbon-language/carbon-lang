@@ -6,7 +6,6 @@
 /* This file implements the PowerPC 128-bit double-double -> uint64_t conversion */
 
 #include "DD.h"
-#include <stdint.h>
 
 uint64_t __fixunstfdi(long double input)
 {
