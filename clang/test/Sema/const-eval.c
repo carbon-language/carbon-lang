@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -triple i686-linux %s
 
 #define EVAL_EXPR(testno, expr) int test##testno = sizeof(struct{char qq[expr];});
 int x;
@@ -105,3 +105,6 @@ int weak_int_test = weak_int; // expected-error {{not a compile-time constant}}
 
 int literalVsNull1 = "foo" == 0;
 int literalVsNull2 = 0 == "foo";
+
+// PR11385.
+int castViaInt[*(int*)(unsigned long)"test"]; // expected-error {{variable length array}}

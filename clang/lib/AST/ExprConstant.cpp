@@ -3197,6 +3197,7 @@ bool IntExprEvaluator::VisitCastExpr(const CastExpr *E) {
       if (Info.Ctx.getTypeSize(DestType) != Info.Ctx.getTypeSize(SrcType))
         return false;
 
+      LV.Designator.setInvalid();
       LV.moveInto(Result);
       return true;
     }
