@@ -131,6 +131,7 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setOperationAction(ISD::GlobalTLSAddress,   MVT::i32,   Custom);
   setOperationAction(ISD::JumpTable,          MVT::i32,   Custom);
   setOperationAction(ISD::ConstantPool,       MVT::i32,   Custom);
+  setOperationAction(ISD::ConstantPool,       MVT::i64,   Custom);
   setOperationAction(ISD::SELECT,             MVT::f32,   Custom);
   setOperationAction(ISD::SELECT,             MVT::f64,   Custom);
   setOperationAction(ISD::SELECT,             MVT::i32,   Custom);
@@ -1651,16 +1652,19 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG) const
     SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, CPLo);
     ResNode = DAG.getNode(ISD::ADD, dl, MVT::i32, HiPart, Lo);
   } else {
-    SDValue CP = DAG.getTargetConstantPool(C, MVT::i32, N->getAlignment(),
-                                           N->getOffset(), MipsII::MO_GOT);
-    CP = DAG.getNode(MipsISD::WrapperPIC, dl, MVT::i32, CP);
-    SDValue Load = DAG.getLoad(MVT::i32, dl, DAG.getEntryNode(),
+    EVT ValTy = Op.getValueType();
+    unsigned GOTFlag = IsN64 ? MipsII::MO_GOT_PAGE : MipsII::MO_GOT;
+    unsigned OFSTFlag = IsN64 ? MipsII::MO_GOT_OFST : MipsII::MO_ABS_LO;
+    SDValue CP = DAG.getTargetConstantPool(C, ValTy, N->getAlignment(),
+                                           N->getOffset(), GOTFlag);
+    CP = DAG.getNode(MipsISD::WrapperPIC, dl, ValTy, CP);
+    SDValue Load = DAG.getLoad(ValTy, dl, DAG.getEntryNode(),
                                CP, MachinePointerInfo::getConstantPool(),
                                false, false, false, 0);
-    SDValue CPLo = DAG.getTargetConstantPool(C, MVT::i32, N->getAlignment(),
-                                             N->getOffset(), MipsII::MO_ABS_LO);
-    SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, CPLo);
-    ResNode = DAG.getNode(ISD::ADD, dl, MVT::i32, Load, Lo);
+    SDValue CPLo = DAG.getTargetConstantPool(C, ValTy, N->getAlignment(),
+                                             N->getOffset(), OFSTFlag);
+    SDValue Lo = DAG.getNode(MipsISD::Lo, dl, ValTy, CPLo);
+    ResNode = DAG.getNode(ISD::ADD, dl, ValTy, Load, Lo);
   }
 
   return ResNode;
