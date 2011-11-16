@@ -63,11 +63,12 @@ static MCAsmInfo *createMipsMCAsmInfo(const Target &T, StringRef TT) {
 }
 
 static MCCodeGenInfo *createMipsMCCodeGenInfo(StringRef TT, Reloc::Model RM,
-                                              CodeModel::Model CM) {
+                                              CodeModel::Model CM,
+                                              CodeGenOpt::Level OL) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
   if (RM == Reloc::Default)
     RM = Reloc::PIC_;
-  X->InitMCCodeGenInfo(RM, CM);
+  X->InitMCCodeGenInfo(RM, CM, OL);
   return X;
 }
 

@@ -38,8 +38,9 @@ extern "C" void LLVMInitializeARMTarget() {
 ///
 ARMBaseTargetMachine::ARMBaseTargetMachine(const Target &T, StringRef TT,
                                            StringRef CPU, StringRef FS,
-                                           Reloc::Model RM, CodeModel::Model CM)
-  : LLVMTargetMachine(T, TT, CPU, FS, RM, CM),
+                                           Reloc::Model RM, CodeModel::Model CM,
+                                           CodeGenOpt::Level OL)
+  : LLVMTargetMachine(T, TT, CPU, FS, RM, CM, OL),
     Subtarget(TT, CPU, FS),
     JITInfo(),
     InstrItins(Subtarget.getInstrItineraryData()) {
@@ -50,8 +51,9 @@ ARMBaseTargetMachine::ARMBaseTargetMachine(const Target &T, StringRef TT,
 
 ARMTargetMachine::ARMTargetMachine(const Target &T, StringRef TT,
                                    StringRef CPU, StringRef FS,
-                                   Reloc::Model RM, CodeModel::Model CM)
-  : ARMBaseTargetMachine(T, TT, CPU, FS, RM, CM), InstrInfo(Subtarget),
+                                   Reloc::Model RM, CodeModel::Model CM,
+                                   CodeGenOpt::Level OL)
+  : ARMBaseTargetMachine(T, TT, CPU, FS, RM, CM, OL), InstrInfo(Subtarget),
     DataLayout(Subtarget.isAPCS_ABI() ?
                std::string("e-p:32:32-f64:32:64-i64:32:64-"
                            "v128:32:128-v64:32:64-n32-S32") :
@@ -71,8 +73,9 @@ ARMTargetMachine::ARMTargetMachine(const Target &T, StringRef TT,
 
 ThumbTargetMachine::ThumbTargetMachine(const Target &T, StringRef TT,
                                        StringRef CPU, StringRef FS,
-                                       Reloc::Model RM, CodeModel::Model CM)
-  : ARMBaseTargetMachine(T, TT, CPU, FS, RM, CM),
+                                       Reloc::Model RM, CodeModel::Model CM,
+                                       CodeGenOpt::Level OL)
+  : ARMBaseTargetMachine(T, TT, CPU, FS, RM, CM, OL),
     InstrInfo(Subtarget.hasThumb2()
               ? ((ARMBaseInstrInfo*)new Thumb2InstrInfo(Subtarget))
               : ((ARMBaseInstrInfo*)new Thumb1InstrInfo(Subtarget))),
@@ -95,34 +98,30 @@ ThumbTargetMachine::ThumbTargetMachine(const Target &T, StringRef TT,
               : (ARMFrameLowering*)new Thumb1FrameLowering(Subtarget)) {
 }
 
-bool ARMBaseTargetMachine::addPreISel(PassManagerBase &PM,
-                                      CodeGenOpt::Level OptLevel) {
-  if (OptLevel != CodeGenOpt::None && EnableGlobalMerge)
+bool ARMBaseTargetMachine::addPreISel(PassManagerBase &PM) {
+  if (getOptLevel() != CodeGenOpt::None && EnableGlobalMerge)
     PM.add(createGlobalMergePass(getTargetLowering()));
 
   return false;
 }
 
-bool ARMBaseTargetMachine::addInstSelector(PassManagerBase &PM,
-                                           CodeGenOpt::Level OptLevel) {
-  PM.add(createARMISelDag(*this, OptLevel));
+bool ARMBaseTargetMachine::addInstSelector(PassManagerBase &PM) {
+  PM.add(createARMISelDag(*this, getOptLevel()));
   return false;
 }
 
-bool ARMBaseTargetMachine::addPreRegAlloc(PassManagerBase &PM,
-                                          CodeGenOpt::Level OptLevel) {
+bool ARMBaseTargetMachine::addPreRegAlloc(PassManagerBase &PM) {
   // FIXME: temporarily disabling load / store optimization pass for Thumb1.
-  if (OptLevel != CodeGenOpt::None && !Subtarget.isThumb1Only())
+  if (getOptLevel() != CodeGenOpt::None && !Subtarget.isThumb1Only())
     PM.add(createARMLoadStoreOptimizationPass(true));
-  if (OptLevel != CodeGenOpt::None && Subtarget.isCortexA9())
+  if (getOptLevel() != CodeGenOpt::None && Subtarget.isCortexA9())
     PM.add(createMLxExpansionPass());
   return true;
 }
 
-bool ARMBaseTargetMachine::addPreSched2(PassManagerBase &PM,
-                                        CodeGenOpt::Level OptLevel) {
+bool ARMBaseTargetMachine::addPreSched2(PassManagerBase &PM) {
   // FIXME: temporarily disabling load / store optimization pass for Thumb1.
-  if (OptLevel != CodeGenOpt::None) {
+  if (getOptLevel() != CodeGenOpt::None) {
     if (!Subtarget.isThumb1Only())
       PM.add(createARMLoadStoreOptimizationPass());
     if (Subtarget.hasNEON())
@@ -133,7 +132,7 @@ bool ARMBaseTargetMachine::addPreSched2(PassManagerBase &PM,
   // proper scheduling.
   PM.add(createARMExpandPseudoPass());
 
-  if (OptLevel != CodeGenOpt::None) {
+  if (getOptLevel() != CodeGenOpt::None) {
     if (!Subtarget.isThumb1Only())
       PM.add(createIfConverterPass());
   }
@@ -143,8 +142,7 @@ bool ARMBaseTargetMachine::addPreSched2(PassManagerBase &PM,
   return true;
 }
 
-bool ARMBaseTargetMachine::addPreEmitPass(PassManagerBase &PM,
-                                          CodeGenOpt::Level OptLevel) {
+bool ARMBaseTargetMachine::addPreEmitPass(PassManagerBase &PM) {
   if (Subtarget.isThumb2() && !Subtarget.prefers32BitThumb())
     PM.add(createThumb2SizeReductionPass());
 
@@ -153,7 +151,6 @@ bool ARMBaseTargetMachine::addPreEmitPass(PassManagerBase &PM,
 }
 
 bool ARMBaseTargetMachine::addCodeEmitter(PassManagerBase &PM,
-                                          CodeGenOpt::Level OptLevel,
                                           JITCodeEmitter &JCE) {
   // Machine code emitter pass for ARM.
   PM.add(createARMJITCodeEmitterPass(*this, JCE));

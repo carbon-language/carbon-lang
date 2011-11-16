@@ -43,16 +43,6 @@ class TargetSubtargetInfo;
 class formatted_raw_ostream;
 class raw_ostream;
 
-// Code generation optimization level.
-namespace CodeGenOpt {
-  enum Level {
-    None,        // -O0
-    Less,        // -O1
-    Default,     // -O2, -Os
-    Aggressive   // -O3
-  };
-}
-
 namespace Sched {
   enum Preference {
     None,             // No preference
@@ -212,6 +202,10 @@ public:
   /// medium, large, and target default.
   CodeModel::Model getCodeModel() const;
 
+  /// getOptLevel - Returns the optimization level: None, Less,
+  /// Default, or Aggressive.
+  CodeGenOpt::Level getOptLevel() const;
+
   /// getAsmVerbosityDefault - Returns the default value of asm verbosity.
   ///
   static bool getAsmVerbosityDefault();
@@ -255,7 +249,6 @@ public:
   virtual bool addPassesToEmitFile(PassManagerBase &,
                                    formatted_raw_ostream &,
                                    CodeGenFileType,
-                                   CodeGenOpt::Level,
                                    bool = true) {
     return true;
   }
@@ -268,7 +261,6 @@ public:
   ///
   virtual bool addPassesToEmitMachineCode(PassManagerBase &,
                                           JITCodeEmitter &,
-                                          CodeGenOpt::Level,
                                           bool = true) {
     return true;
   }
@@ -281,7 +273,6 @@ public:
   virtual bool addPassesToEmitMC(PassManagerBase &,
                                  MCContext *&,
                                  raw_ostream &,
-                                 CodeGenOpt::Level,
                                  bool = true) {
     return true;
   }
@@ -294,24 +285,23 @@ class LLVMTargetMachine : public TargetMachine {
 protected: // Can only create subclasses.
   LLVMTargetMachine(const Target &T, StringRef TargetTriple,
                     StringRef CPU, StringRef FS,
-                    Reloc::Model RM, CodeModel::Model CM);
+                    Reloc::Model RM, CodeModel::Model CM,
+                    CodeGenOpt::Level OL);
 
 private:
   /// addCommonCodeGenPasses - Add standard LLVM codegen passes used for
   /// both emitting to assembly files or machine code output.
   ///
-  bool addCommonCodeGenPasses(PassManagerBase &, CodeGenOpt::Level,
+  bool addCommonCodeGenPasses(PassManagerBase &,
                               bool DisableVerify, MCContext *&OutCtx);
 
 public:
   /// addPassesToEmitFile - Add passes to the specified pass manager to get the
   /// specified file emitted.  Typically this will involve several steps of code
-  /// generation.  If OptLevel is None, the code generator should emit code as
-  /// fast as possible, though the generated code may be less efficient.
+  /// generation.
   virtual bool addPassesToEmitFile(PassManagerBase &PM,
                                    formatted_raw_ostream &Out,
                                    CodeGenFileType FileType,
-                                   CodeGenOpt::Level,
                                    bool DisableVerify = true);
 
   /// addPassesToEmitMachineCode - Add passes to the specified pass manager to
@@ -322,7 +312,6 @@ public:
   ///
   virtual bool addPassesToEmitMachineCode(PassManagerBase &PM,
                                           JITCodeEmitter &MCE,
-                                          CodeGenOpt::Level,
                                           bool DisableVerify = true);
 
   /// addPassesToEmitMC - Add passes to the specified pass manager to get
@@ -333,27 +322,26 @@ public:
   virtual bool addPassesToEmitMC(PassManagerBase &PM,
                                  MCContext *&Ctx,
                                  raw_ostream &OS,
-                                 CodeGenOpt::Level OptLevel,
                                  bool DisableVerify = true);
 
   /// Target-Independent Code Generator Pass Configuration Options.
 
   /// addPreISelPasses - This method should add any "last minute" LLVM->LLVM
   /// passes (which are run just before instruction selector).
-  virtual bool addPreISel(PassManagerBase &, CodeGenOpt::Level) {
+  virtual bool addPreISel(PassManagerBase &) {
     return true;
   }
 
   /// addInstSelector - This method should install an instruction selector pass,
   /// which converts from LLVM code to machine instructions.
-  virtual bool addInstSelector(PassManagerBase &, CodeGenOpt::Level) {
+  virtual bool addInstSelector(PassManagerBase &) {
     return true;
   }
 
   /// addPreRegAlloc - This method may be implemented by targets that want to
   /// run passes immediately before register allocation. This should return
   /// true if -print-machineinstrs should print after these passes.
-  virtual bool addPreRegAlloc(PassManagerBase &, CodeGenOpt::Level) {
+  virtual bool addPreRegAlloc(PassManagerBase &) {
     return false;
   }
 
@@ -361,7 +349,7 @@ public:
   /// to run passes after register allocation but before prolog-epilog
   /// insertion.  This should return true if -print-machineinstrs should print
   /// after these passes.
-  virtual bool addPostRegAlloc(PassManagerBase &, CodeGenOpt::Level) {
+  virtual bool addPostRegAlloc(PassManagerBase &) {
     return false;
   }
 
@@ -369,14 +357,14 @@ public:
   /// run passes after prolog-epilog insertion and before the second instruction
   /// scheduling pass.  This should return true if -print-machineinstrs should
   /// print after these passes.
-  virtual bool addPreSched2(PassManagerBase &, CodeGenOpt::Level) {
+  virtual bool addPreSched2(PassManagerBase &) {
     return false;
   }
 
   /// addPreEmitPass - This pass may be implemented by targets that want to run
   /// passes immediately before machine code is emitted.  This should return
   /// true if -print-machineinstrs should print out the code after the passes.
-  virtual bool addPreEmitPass(PassManagerBase &, CodeGenOpt::Level) {
+  virtual bool addPreEmitPass(PassManagerBase &) {
     return false;
   }
 
@@ -384,7 +372,7 @@ public:
   /// addCodeEmitter - This pass should be overridden by the target to add a
   /// code emitter, if supported.  If this is not supported, 'true' should be
   /// returned.
-  virtual bool addCodeEmitter(PassManagerBase &, CodeGenOpt::Level,
+  virtual bool addCodeEmitter(PassManagerBase &,
                               JITCodeEmitter &) {
     return true;
   }

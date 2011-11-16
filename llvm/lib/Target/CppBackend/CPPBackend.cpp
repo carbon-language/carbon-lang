@@ -2065,7 +2065,6 @@ char CppWriter::ID = 0;
 bool CPPTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
                                            formatted_raw_ostream &o,
                                            CodeGenFileType FileType,
-                                           CodeGenOpt::Level OptLevel,
                                            bool DisableVerify) {
   if (FileType != TargetMachine::CGFT_AssemblyFile) return true;
   PM.add(new CppWriter(o));

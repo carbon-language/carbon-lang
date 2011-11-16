@@ -74,7 +74,8 @@ namespace llvm {
                                             StringRef TT);
     typedef MCCodeGenInfo *(*MCCodeGenInfoCtorFnTy)(StringRef TT,
                                                     Reloc::Model RM,
-                                                    CodeModel::Model CM);
+                                                    CodeModel::Model CM,
+                                                    CodeGenOpt::Level OL);
     typedef MCInstrInfo *(*MCInstrInfoCtorFnTy)(void);
     typedef MCInstrAnalysis *(*MCInstrAnalysisCtorFnTy)(const MCInstrInfo*Info);
     typedef MCRegisterInfo *(*MCRegInfoCtorFnTy)(StringRef TT);
@@ -86,7 +87,8 @@ namespace llvm {
                                                   StringRef CPU,
                                                   StringRef Features,
                                                   Reloc::Model RM,
-                                                  CodeModel::Model CM);
+                                                  CodeModel::Model CM,
+                                                  CodeGenOpt::Level OL);
     typedef AsmPrinter *(*AsmPrinterCtorTy)(TargetMachine &TM,
                                             MCStreamer &Streamer);
     typedef MCAsmBackend *(*MCAsmBackendCtorTy)(const Target &T, StringRef TT);
@@ -145,8 +147,8 @@ namespace llvm {
     /// registered.
     MCAsmInfoCtorFnTy MCAsmInfoCtorFn;
 
-    /// MCCodeGenInfoCtorFn - Constructor function for this target's MCCodeGenInfo,
-    /// if registered.
+    /// MCCodeGenInfoCtorFn - Constructor function for this target's
+    /// MCCodeGenInfo, if registered.
     MCCodeGenInfoCtorFnTy MCCodeGenInfoCtorFn;
 
     /// MCInstrInfoCtorFn - Constructor function for this target's MCInstrInfo,
@@ -277,10 +279,11 @@ namespace llvm {
     /// createMCCodeGenInfo - Create a MCCodeGenInfo implementation.
     ///
     MCCodeGenInfo *createMCCodeGenInfo(StringRef Triple, Reloc::Model RM,
-                                       CodeModel::Model CM) const {
+                                       CodeModel::Model CM,
+                                       CodeGenOpt::Level OL) const {
       if (!MCCodeGenInfoCtorFn)
         return 0;
-      return MCCodeGenInfoCtorFn(Triple, RM, CM);
+      return MCCodeGenInfoCtorFn(Triple, RM, CM, OL);
     }
 
     /// createMCInstrInfo - Create a MCInstrInfo implementation.
@@ -331,12 +334,13 @@ namespace llvm {
     /// either the target triple from the module, or the target triple of the
     /// host if that does not exist.
     TargetMachine *createTargetMachine(StringRef Triple, StringRef CPU,
-                               StringRef Features,
-                               Reloc::Model RM = Reloc::Default,
-                               CodeModel::Model CM = CodeModel::Default) const {
+                             StringRef Features,
+                             Reloc::Model RM = Reloc::Default,
+                             CodeModel::Model CM = CodeModel::Default,
+                             CodeGenOpt::Level OL = CodeGenOpt::Default) const {
       if (!TargetMachineCtorFn)
         return 0;
-      return TargetMachineCtorFn(*this, Triple, CPU, Features, RM, CM);
+      return TargetMachineCtorFn(*this, Triple, CPU, Features, RM, CM, OL);
     }
 
     /// createMCAsmBackend - Create a target specific assembly parser.
@@ -843,8 +847,8 @@ namespace llvm {
       TargetRegistry::RegisterMCCodeGenInfo(T, &Allocator);
     }
   private:
-    static MCCodeGenInfo *Allocator(StringRef TT,
-                                    Reloc::Model RM, CodeModel::Model CM) {
+    static MCCodeGenInfo *Allocator(StringRef TT, Reloc::Model RM,
+                                    CodeModel::Model CM, CodeGenOpt::Level OL) {
       return new MCCodeGenInfoImpl();
     }
   };
@@ -1014,8 +1018,9 @@ namespace llvm {
     static TargetMachine *Allocator(const Target &T, StringRef TT,
                                     StringRef CPU, StringRef FS,
                                     Reloc::Model RM,
-                                    CodeModel::Model CM) {
-      return new TargetMachineImpl(T, TT, CPU, FS, RM, CM);
+                                    CodeModel::Model CM,
+                                    CodeGenOpt::Level OL) {
+      return new TargetMachineImpl(T, TT, CPU, FS, RM, CM, OL);
     }
   };
 

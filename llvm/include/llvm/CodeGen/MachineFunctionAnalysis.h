@@ -26,17 +26,14 @@ class MachineFunction;
 struct MachineFunctionAnalysis : public FunctionPass {
 private:
   const TargetMachine &TM;
-  CodeGenOpt::Level OptLevel;
   MachineFunction *MF;
   unsigned NextFnNum;
 public:
   static char ID;
-  explicit MachineFunctionAnalysis(const TargetMachine &tm,
-                                   CodeGenOpt::Level OL = CodeGenOpt::Default);
+  explicit MachineFunctionAnalysis(const TargetMachine &tm);
   ~MachineFunctionAnalysis();
 
   MachineFunction &getMF() const { return *MF; }
-  CodeGenOpt::Level getOptLevel() const { return OptLevel; }
   
   virtual const char* getPassName() const {
     return "Machine Function Analysis";

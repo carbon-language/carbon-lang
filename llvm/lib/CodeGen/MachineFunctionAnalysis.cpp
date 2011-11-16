@@ -19,9 +19,8 @@ using namespace llvm;
 
 char MachineFunctionAnalysis::ID = 0;
 
-MachineFunctionAnalysis::MachineFunctionAnalysis(const TargetMachine &tm,
-                                                 CodeGenOpt::Level OL) :
-  FunctionPass(ID), TM(tm), OptLevel(OL), MF(0) {
+MachineFunctionAnalysis::MachineFunctionAnalysis(const TargetMachine &tm) :
+  FunctionPass(ID), TM(tm), MF(0) {
   initializeMachineModuleInfoPass(*PassRegistry::getPassRegistry());
 }
 

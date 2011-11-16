@@ -3604,7 +3604,6 @@ void CWriter::visitExtractValueInst(ExtractValueInst &EVI) {
 bool CTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
                                          formatted_raw_ostream &o,
                                          CodeGenFileType FileType,
-                                         CodeGenOpt::Level OptLevel,
                                          bool DisableVerify) {
   if (FileType != TargetMachine::CGFT_AssemblyFile) return true;
 

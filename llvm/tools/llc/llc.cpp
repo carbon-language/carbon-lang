@@ -306,10 +306,22 @@ int main(int argc, char **argv) {
     FeaturesStr = Features.getString();
   }
 
+  CodeGenOpt::Level OLvl = CodeGenOpt::Default;
+  switch (OptLevel) {
+  default:
+    errs() << argv[0] << ": invalid optimization level.\n";
+    return 1;
+  case ' ': break;
+  case '0': OLvl = CodeGenOpt::None; break;
+  case '1': OLvl = CodeGenOpt::Less; break;
+  case '2': OLvl = CodeGenOpt::Default; break;
+  case '3': OLvl = CodeGenOpt::Aggressive; break;
+  }
+
   std::auto_ptr<TargetMachine>
     target(TheTarget->createTargetMachine(TheTriple.getTriple(),
                                           MCPU, FeaturesStr,
-                                          RelocModel, CMModel));
+                                          RelocModel, CMModel, OLvl));
   assert(target.get() && "Could not allocate target machine!");
   TargetMachine &Target = *target.get();
 
@@ -331,18 +343,6 @@ int main(int argc, char **argv) {
   OwningPtr<tool_output_file> Out
     (GetOutputStream(TheTarget->getName(), TheTriple.getOS(), argv[0]));
   if (!Out) return 1;
-
-  CodeGenOpt::Level OLvl = CodeGenOpt::Default;
-  switch (OptLevel) {
-  default:
-    errs() << argv[0] << ": invalid optimization level.\n";
-    return 1;
-  case ' ': break;
-  case '0': OLvl = CodeGenOpt::None; break;
-  case '1': OLvl = CodeGenOpt::Less; break;
-  case '2': OLvl = CodeGenOpt::Default; break;
-  case '3': OLvl = CodeGenOpt::Aggressive; break;
-  }
 
   // Build up all of the passes that we want to do to the module.
   PassManager PM;
@@ -368,7 +368,7 @@ int main(int argc, char **argv) {
     formatted_raw_ostream FOS(Out->os());
 
     // Ask the target to add backend passes as necessary.
-    if (Target.addPassesToEmitFile(PM, FOS, FileType, OLvl, NoVerify)) {
+    if (Target.addPassesToEmitFile(PM, FOS, FileType, NoVerify)) {
       errs() << argv[0] << ": target does not support generation of this"
              << " file type!\n";
       return 1;

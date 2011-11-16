@@ -34,8 +34,9 @@ extern "C" void LLVMInitializeMBlazeTarget() {
 MBlazeTargetMachine::
 MBlazeTargetMachine(const Target &T, StringRef TT,
                     StringRef CPU, StringRef FS,
-                    Reloc::Model RM, CodeModel::Model CM):
-  LLVMTargetMachine(T, TT, CPU, FS, RM, CM),
+                    Reloc::Model RM, CodeModel::Model CM,
+                    CodeGenOpt::Level OL):
+  LLVMTargetMachine(T, TT, CPU, FS, RM, CM, OL),
   Subtarget(TT, CPU, FS),
   DataLayout("E-p:32:32:32-i8:8:8-i16:16:16"),
   InstrInfo(*this),
@@ -46,8 +47,7 @@ MBlazeTargetMachine(const Target &T, StringRef TT,
 
 // Install an instruction selector pass using
 // the ISelDag to gen MBlaze code.
-bool MBlazeTargetMachine::addInstSelector(PassManagerBase &PM,
-                                          CodeGenOpt::Level OptLevel) {
+bool MBlazeTargetMachine::addInstSelector(PassManagerBase &PM) {
   PM.add(createMBlazeISelDag(*this));
   return false;
 }
@@ -55,8 +55,7 @@ bool MBlazeTargetMachine::addInstSelector(PassManagerBase &PM,
 // Implemented by targets that want to run passes immediately before
 // machine code is emitted. return true if -print-machineinstrs should
 // print out the code after the passes.
-bool MBlazeTargetMachine::addPreEmitPass(PassManagerBase &PM,
-                                         CodeGenOpt::Level OptLevel) {
+bool MBlazeTargetMachine::addPreEmitPass(PassManagerBase &PM) {
   PM.add(createMBlazeDelaySlotFillerPass(*this));
   return true;
 }

@@ -62,11 +62,12 @@ static MCAsmInfo *createSPUMCAsmInfo(const Target &T, StringRef TT) {
 }
 
 static MCCodeGenInfo *createSPUMCCodeGenInfo(StringRef TT, Reloc::Model RM,
-                                      CodeModel::Model CM) {
+                                             CodeModel::Model CM,
+                                             CodeGenOpt::Level OL) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
   // For the time being, use static relocations, since there's really no
   // support for PIC yet.
-  X->InitMCCodeGenInfo(Reloc::Static, CM);
+  X->InitMCCodeGenInfo(Reloc::Static, CM, OL);
   return X;
 }
 

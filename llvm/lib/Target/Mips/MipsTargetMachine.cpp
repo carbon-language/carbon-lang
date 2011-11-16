@@ -36,8 +36,9 @@ MipsTargetMachine::
 MipsTargetMachine(const Target &T, StringRef TT,
                   StringRef CPU, StringRef FS,
                   Reloc::Model RM, CodeModel::Model CM,
+                  CodeGenOpt::Level OL,
                   bool isLittle):
-  LLVMTargetMachine(T, TT, CPU, FS, RM, CM),
+  LLVMTargetMachine(T, TT, CPU, FS, RM, CM, OL),
   Subtarget(TT, CPU, FS, isLittle),
   DataLayout(isLittle ?
              (Subtarget.isABI_N64() ?
@@ -54,31 +55,35 @@ MipsTargetMachine(const Target &T, StringRef TT,
 MipsebTargetMachine::
 MipsebTargetMachine(const Target &T, StringRef TT,
                     StringRef CPU, StringRef FS,
-                    Reloc::Model RM, CodeModel::Model CM) :
-  MipsTargetMachine(T, TT, CPU, FS, RM, CM, false) {}
+                    Reloc::Model RM, CodeModel::Model CM,
+                    CodeGenOpt::Level OL) :
+  MipsTargetMachine(T, TT, CPU, FS, RM, CM, OL, false) {}
 
 MipselTargetMachine::
 MipselTargetMachine(const Target &T, StringRef TT,
                     StringRef CPU, StringRef FS,
-                    Reloc::Model RM, CodeModel::Model CM) :
-  MipsTargetMachine(T, TT, CPU, FS, RM, CM, true) {}
+                    Reloc::Model RM, CodeModel::Model CM,
+                    CodeGenOpt::Level OL) :
+  MipsTargetMachine(T, TT, CPU, FS, RM, CM, OL, true) {}
 
 Mips64ebTargetMachine::
 Mips64ebTargetMachine(const Target &T, StringRef TT,
                       StringRef CPU, StringRef FS,
-                      Reloc::Model RM, CodeModel::Model CM) :
-  MipsTargetMachine(T, TT, CPU, FS, RM, CM, false) {}
+                      Reloc::Model RM, CodeModel::Model CM,
+                      CodeGenOpt::Level OL) :
+  MipsTargetMachine(T, TT, CPU, FS, RM, CM, OL, false) {}
 
 Mips64elTargetMachine::
 Mips64elTargetMachine(const Target &T, StringRef TT,
                       StringRef CPU, StringRef FS,
-                      Reloc::Model RM, CodeModel::Model CM) :
-  MipsTargetMachine(T, TT, CPU, FS, RM, CM, true) {}
+                      Reloc::Model RM, CodeModel::Model CM,
+                      CodeGenOpt::Level OL) :
+  MipsTargetMachine(T, TT, CPU, FS, RM, CM, OL, true) {}
 
 // Install an instruction selector pass using
 // the ISelDag to gen Mips code.
 bool MipsTargetMachine::
-addInstSelector(PassManagerBase &PM, CodeGenOpt::Level OptLevel)
+addInstSelector(PassManagerBase &PM)
 {
   PM.add(createMipsISelDag(*this));
   return false;
@@ -88,14 +93,14 @@ addInstSelector(PassManagerBase &PM, CodeGenOpt::Level OptLevel)
 // machine code is emitted. return true if -print-machineinstrs should
 // print out the code after the passes.
 bool MipsTargetMachine::
-addPreEmitPass(PassManagerBase &PM, CodeGenOpt::Level OptLevel)
+addPreEmitPass(PassManagerBase &PM)
 {
   PM.add(createMipsDelaySlotFillerPass(*this));
   return true;
 }
 
 bool MipsTargetMachine::
-addPreRegAlloc(PassManagerBase &PM, CodeGenOpt::Level OptLevel) {
+addPreRegAlloc(PassManagerBase &PM) {
   // Do not restore $gp if target is Mips64.
   // In N32/64, $gp is a callee-saved register.
   if (!Subtarget.hasMips64())
@@ -104,14 +109,13 @@ addPreRegAlloc(PassManagerBase &PM, CodeGenOpt::Level OptLevel) {
 }
 
 bool MipsTargetMachine::
-addPostRegAlloc(PassManagerBase &PM, CodeGenOpt::Level OptLevel) {
+addPostRegAlloc(PassManagerBase &PM) {
   PM.add(createMipsExpandPseudoPass(*this));
   return true;
 }
 
 bool MipsTargetMachine::addCodeEmitter(PassManagerBase &PM,
-                                          CodeGenOpt::Level OptLevel,
-                                          JITCodeEmitter &JCE) {
+                                       JITCodeEmitter &JCE) {
   // Machine code emitter pass for Mips.
   PM.add(createMipsJITCodeEmitterPass(*this, JCE));
   return false;

@@ -64,7 +64,7 @@ MCJIT::MCJIT(Module *m, TargetMachine *tm, TargetJITInfo &tji,
 
   // Turn the machine code intermediate representation into bytes in memory
   // that may be executed.
-  if (TM->addPassesToEmitMC(PM, Ctx, OS, CodeGenOpt::Default, false)) {
+  if (TM->addPassesToEmitMC(PM, Ctx, OS, false)) {
     report_fatal_error("Target does not support MC emission!");
   }
 

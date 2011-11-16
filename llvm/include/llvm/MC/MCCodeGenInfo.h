@@ -28,13 +28,20 @@ namespace llvm {
     ///
     CodeModel::Model CMModel;
 
+    /// OptLevel - Optimization level.
+    ///
+    CodeGenOpt::Level OptLevel;
+
   public:
     void InitMCCodeGenInfo(Reloc::Model RM = Reloc::Default,
-                           CodeModel::Model CM = CodeModel::Default);
+                           CodeModel::Model CM = CodeModel::Default,
+                           CodeGenOpt::Level OL = CodeGenOpt::Default);
 
     Reloc::Model getRelocationModel() const { return RelocationModel; }
 
     CodeModel::Model getCodeModel() const { return CMModel; }
+
+    CodeGenOpt::Level getOptLevel() const { return OptLevel; }
   };
 } // namespace llvm
 

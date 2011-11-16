@@ -226,6 +226,14 @@ CodeModel::Model TargetMachine::getCodeModel() const {
   return CodeGenInfo->getCodeModel();
 }
 
+/// getOptLevel - Returns the optimization level: None, Less,
+/// Default, or Aggressive.
+CodeGenOpt::Level TargetMachine::getOptLevel() const {
+  if (!CodeGenInfo)
+    return CodeGenOpt::Default;
+  return CodeGenInfo->getOptLevel();
+}
+
 bool TargetMachine::getAsmVerbosityDefault() {
   return AsmVerbosityDefault;
 }
