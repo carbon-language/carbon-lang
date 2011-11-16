@@ -1,6 +1,5 @@
 // RUN: rm -rf %t
 // RUN: %clang_cc1 -x objective-c -fmodule-cache-path %t -fauto-module-import -I %S/Inputs/normal-module-map %s -verify
-
 #include "Umbrella/Umbrella.h"
 
 int getUmbrella() { 
