@@ -39,9 +39,22 @@ CXDiagnosticSetImpl::~CXDiagnosticSetImpl() {
 
 CXDiagnosticImpl::~CXDiagnosticImpl() {}
 
-static CXDiagnosticSetImpl *lazyCreateDiags(CXTranslationUnit TU) {
+static CXDiagnosticSetImpl *lazyCreateDiags(CXTranslationUnit TU,
+                                            bool checkIfChanged = false) {
+  ASTUnit *AU = static_cast<ASTUnit *>(TU->TUData);
+
+  if (TU->Diagnostics && checkIfChanged) {
+    CXDiagnosticSetImpl *
+      Set = static_cast<CXDiagnosticSetImpl*>(TU->Diagnostics);
+    if (AU->stored_diag_size() != Set->getNumDiagnostics()) {
+      // Diagnostics in the ASTUnit were updated, reset the associated
+      // diagnostics.
+      delete Set;
+      TU->Diagnostics = 0;
+    }
+  }
+
   if (!TU->Diagnostics) {
-    ASTUnit *AU = static_cast<ASTUnit *>(TU->TUData);
     CXDiagnosticSetImpl *Set = new CXDiagnosticSetImpl();
     TU->Diagnostics = Set;
     
@@ -63,7 +76,7 @@ extern "C" {
 unsigned clang_getNumDiagnostics(CXTranslationUnit Unit) {
   if (!Unit->TUData)
     return 0;
-  return lazyCreateDiags(Unit)->getNumDiagnostics();
+  return lazyCreateDiags(Unit, /*checkIfChanged=*/true)->getNumDiagnostics();
 }
 
 CXDiagnostic clang_getDiagnostic(CXTranslationUnit Unit, unsigned Index) {
