@@ -1541,6 +1541,15 @@ public:
     return LValue::MakeAddr(V, T, Alignment, getContext(),
                             CGM.getTBAAInfo(T));
   }
+  LValue MakeNaturalAlignAddrLValue(llvm::Value *V, QualType T) {
+    unsigned Alignment;
+    if (T->isIncompleteType())
+      Alignment = 0;
+    else
+      Alignment = getContext().getTypeAlignInChars(T).getQuantity();
+    return LValue::MakeAddr(V, T, Alignment, getContext(),
+                            CGM.getTBAAInfo(T));
+  }
 
   /// CreateTempAlloca - This creates a alloca and inserts it into the entry
   /// block. The caller is responsible for setting an appropriate alignment on
