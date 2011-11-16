@@ -270,7 +270,7 @@ class recording(StringIO.StringIO):
 # From 2.7's subprocess.check_output() convenience function.
 # Return a tuple (stdoutdata, stderrdata).
 def system(*popenargs, **kwargs):
-    r"""Run command with arguments and return its output as a byte string.
+    r"""Run an os command with arguments and return its output as a byte string.
 
     If the exit code was non-zero it raises a CalledProcessError.  The
     CalledProcessError object will have the return code in the returncode
