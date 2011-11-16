@@ -121,11 +121,6 @@ DSYMUTIL=dsymutil
 else
 DSYMUTIL=true
 endif
-ifdef TargetCommonOpts
-BUGPOINT_TOPTS="-gcc-tool-args $(TargetCommonOpts)"
-else
-BUGPOINT_TOPTS=""
-endif
 
 ifneq ($(OCAMLOPT),)
 CC_FOR_OCAMLOPT := $(shell $(OCAMLOPT) -config | grep native_c_compiler | sed -e 's/native_c_compiler: //')
