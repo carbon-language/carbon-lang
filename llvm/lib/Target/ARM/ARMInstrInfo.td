@@ -470,6 +470,7 @@ def shift_so_reg_reg : Operand<i32>,    // reg reg imm
   let EncoderMethod = "getSORegRegOpValue";
   let PrintMethod = "printSORegRegOperand";
   let DecoderMethod = "DecodeSORegRegOperand";
+  let ParserMatchClass = ShiftedRegAsmOperand;
   let MIOperandInfo = (ops GPR, GPR, i32imm);
 }
 
@@ -480,6 +481,7 @@ def shift_so_reg_imm : Operand<i32>,    // reg reg imm
   let EncoderMethod = "getSORegImmOpValue";
   let PrintMethod = "printSORegImmOperand";
   let DecoderMethod = "DecodeSORegImmOperand";
+  let ParserMatchClass = ShiftedImmAsmOperand;
   let MIOperandInfo = (ops GPR, i32imm);
 }
 
