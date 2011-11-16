@@ -556,8 +556,10 @@ static void DumpArchive(const Archive *a) {
                                e = a->end_children(); i != e; ++i) {
     OwningPtr<Binary> child;
     if (error_code ec = i->getAsBinary(child)) {
-      errs() << ToolName << ": '" << a->getFileName() << "': " << ec.message()
-             << ".\n";
+      // Ignore non-object files.
+      if (ec != object_error::invalid_file_type)
+        errs() << ToolName << ": '" << a->getFileName() << "': " << ec.message()
+               << ".\n";
       continue;
     }
     if (ObjectFile *o = dyn_cast<ObjectFile>(child.get()))
