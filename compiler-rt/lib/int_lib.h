@@ -37,9 +37,6 @@
 #include <stdbool.h>
 #include <float.h>
 
-/* Include the system math.h, which we use in a number of places. */
-#include <math.h>
-
 /* If compiling for kernel use, call panic() instead of abort(). */
 #ifdef KERNEL_USE
 extern void panic (const char *, ...);
