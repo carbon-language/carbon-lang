@@ -1,19 +1,7 @@
-// RUN: %clang_cc1 -emit-module -o %t/macros.pcm -DMODULE %s
-// RUN: %clang_cc1 -verify -fmodule-cache-path %t -fdisable-module-hash %s
-// RUN: %clang_cc1 -E -fmodule-cache-path %t -fdisable-module-hash %s | FileCheck -check-prefix CHECK-PREPROCESSED %s
-
-#if defined(MODULE)
-#define INTEGER(X) int
-#define FLOAT float
-#define DOUBLE double
-
-#__export_macro__ INTEGER
-#__private_macro__ FLOAT
-#__private_macro__ MODULE
-
-int (INTEGER);
-
-#else
+// RUN: rm -rf %t
+// RUN: %clang_cc1 -emit-module-from-map -fmodule-cache-path %t -fmodule-name=macros %S/Inputs/module.map
+// RUN: %clang_cc1 -verify -fmodule-cache-path %t %s
+// RUN: %clang_cc1 -E -fmodule-cache-path %t %s | FileCheck -check-prefix CHECK-PREPROCESSED %s
 
 __import_module__ macros;
 
@@ -39,4 +27,3 @@ void f() {
   // CHECK-PREPROCESSED: int i = INTEGER;
   int i = INTEGER; // the value was exported, the macro was not.
 }
-#endif

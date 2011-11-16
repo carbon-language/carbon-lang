@@ -7,3 +7,6 @@ module lookup_left_objc { umbrella "lookup_left.h" }
 module lookup_right_objc { umbrella "lookup_right.h" }
 module lookup_left_cxx { umbrella "lookup_left.hpp" }
 module lookup_right_cxx { umbrella "lookup_right.hpp" }
+module module_private_left { umbrella "module_private_left.h" }
+module module_private_right { umbrella "module_private_right.h" }
+module macros { umbrella "macros.h" }
