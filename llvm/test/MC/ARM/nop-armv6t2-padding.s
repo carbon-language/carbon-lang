@@ -7,4 +7,4 @@ x:
       .align 4
       add r0, r1, r2
 
-@ CHECK: ('_section_data', '020081e0 007820e3 007820e3 007820e3 020081e0')
+@ CHECK: ('_section_data', '020081e0 00f020e3 00f020e3 00f020e3 020081e0')
