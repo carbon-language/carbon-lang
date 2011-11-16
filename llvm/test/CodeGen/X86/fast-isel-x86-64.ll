@@ -82,7 +82,7 @@ entry:
   ret i64 %mul
 
 ; CHECK: test6:
-; CHECK: leaq	(,%rdi,8), %rax
+; CHECK: shlq	$3, %rdi
 }
 
 define i32 @test7(i32 %x) nounwind ssp {
@@ -90,7 +90,7 @@ entry:
   %mul = mul nsw i32 %x, 8
   ret i32 %mul
 ; CHECK: test7:
-; CHECK: leal	(,%rdi,8), %eax
+; CHECK: shll	$3, %edi
 }
 
 

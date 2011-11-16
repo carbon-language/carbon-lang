@@ -68,6 +68,7 @@ namespace {
     MachineRegisterInfo *MRI;
     LiveVariables *LV;
     AliasAnalysis *AA;
+    CodeGenOpt::Level OptLevel;
 
     // DistanceMap - Keep track the distance of a MI from the start of the
     // current basic block.
@@ -571,6 +572,9 @@ bool
 TwoAddressInstructionPass::isProfitableToCommute(unsigned regB, unsigned regC,
                                        MachineInstr *MI, MachineBasicBlock *MBB,
                                        unsigned Dist) {
+  if (OptLevel == CodeGenOpt::None)
+    return false;
+
   // Determine if it's profitable to commute this two address instruction. In
   // general, we want no uses between this instruction and the definition of
   // the two-address register.
@@ -1193,6 +1197,9 @@ TryInstructionTransform(MachineBasicBlock::iterator &mi,
                         MachineFunction::iterator &mbbi,
                         unsigned SrcIdx, unsigned DstIdx, unsigned Dist,
                         SmallPtrSet<MachineInstr*, 8> &Processed) {
+  if (OptLevel == CodeGenOpt::None)
+    return false;
+
   MachineInstr &MI = *mi;
   const MCInstrDesc &MCID = MI.getDesc();
   unsigned regA = MI.getOperand(DstIdx).getReg();
@@ -1388,6 +1395,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
   InstrItins = TM.getInstrItineraryData();
   LV = getAnalysisIfAvailable<LiveVariables>();
   AA = &getAnalysis<AliasAnalysis>();
+  OptLevel = TM.getOptLevel();
 
   bool MadeChange = false;
 

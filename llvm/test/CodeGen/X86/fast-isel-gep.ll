@@ -82,9 +82,8 @@ define i64 @test5(i8* %A, i32 %I, i64 %B) nounwind {
   ret i64 %v11
 ; X64: test5:
 ; X64: movslq	%e[[A1]], %rax
-; X64-NEXT: movq	(%r[[A0]],%rax), %rax
-; X64-NEXT: addq	%{{rdx|r8}}, %rax
-; X64-NEXT: ret
+; X64-NEXT: (%r[[A0]],%rax),
+; X64: ret
 }
 
 ; PR9500, rdar://9156159 - Don't do non-local address mode folding,
