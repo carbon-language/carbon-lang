@@ -165,8 +165,6 @@ bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI,
   if (Module->UmbrellaHeader) {
     // FIXME: Deal with explicit submodule headers, which won't be contained
     // within the umbrella header.
-    fprintf(stderr, "note: using umbrella header \"%s\"\n", 
-            Module->UmbrellaHeader->getName());
     setCurrentFile(Module->UmbrellaHeader->getName(), getCurrentFileKind());
   } else {    
     // FIXME: Deal with the non-umbrella case, where we have to synthesize

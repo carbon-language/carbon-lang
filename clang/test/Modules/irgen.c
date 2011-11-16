@@ -1,10 +1,8 @@
-// RUN: %clang_cc1 -emit-module -triple x86_64-apple-darwin10 -o %t/module.pcm -DBUILD_MODULE %s
-// RUN: %clang_cc1 -fmodule-cache-path %t -triple x86_64-apple-darwin10 -fdisable-module-hash -emit-llvm -o - %s | FileCheck %s
+// RUN: rm -rf %t
+// RUN: %clang_cc1 -fmodule-cache-path %t -emit-module-from-map -fmodule-name=irgen -triple x86_64-apple-darwin10 %S/Inputs/module.map
+// RUN: %clang_cc1 -fmodule-cache-path %t -triple x86_64-apple-darwin10 -emit-llvm -o - %s | FileCheck %s
 
-#ifdef BUILD_MODULE
-static inline int triple(int x) { return x * 3; }
-#else
-__import_module__ module;
+__import_module__ irgen;
 
 // CHECK: define void @triple_value
 void triple_value(int *px) {
@@ -12,4 +10,3 @@ void triple_value(int *px) {
 }
 
 // CHECK: define internal i32 @triple(i32
-#endif
