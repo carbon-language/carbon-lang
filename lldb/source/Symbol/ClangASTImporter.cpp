@@ -31,6 +31,14 @@ ClangASTImporter::CopyType (clang::ASTContext *dst_ast,
     return QualType();
 }
 
+lldb::clang_type_t
+ClangASTImporter::CopyType (clang::ASTContext *dst_ast,
+                            clang::ASTContext *src_ast,
+                            lldb::clang_type_t type)
+{
+    return CopyType (dst_ast, src_ast, QualType::getFromOpaquePtr(type)).getAsOpaquePtr();
+}
+
 clang::Decl *
 ClangASTImporter::CopyDecl (clang::ASTContext *dst_ast,
                             clang::ASTContext *src_ast,

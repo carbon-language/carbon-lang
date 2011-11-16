@@ -38,6 +38,11 @@ public:
               clang::ASTContext *src_ctx,
               clang::QualType type);
     
+    lldb::clang_type_t
+    CopyType (clang::ASTContext *dst_ctx,
+              clang::ASTContext *src_ctx,
+              lldb::clang_type_t type);
+    
     clang::Decl *
     CopyDecl (clang::ASTContext *dst_ctx,
               clang::ASTContext *src_ctx,
