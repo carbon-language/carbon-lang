@@ -3,16 +3,17 @@
  */
 
 #include "DD.h"
+#include "../int_math.h"
 #include <math.h>
 
 #if !defined(INFINITY) && defined(HUGE_VAL)
 #define INFINITY HUGE_VAL
 #endif /* INFINITY */
 
-#define makeFinite(x)	{ \
-							(x).s.hi = __builtin_copysign(isinf((x).s.hi) ? 1.0 : 0.0, (x).s.hi); \
-							(x).s.lo = 0.0; \
-						}
+#define makeFinite(x) { \
+    (x).s.hi = __builtin_copysign(crt_isinf((x).s.hi) ? 1.0 : 0.0, (x).s.hi); \
+    (x).s.lo = 0.0;                                                     \
+  }
 
 long double __gcc_qadd(long double, long double);
 long double __gcc_qsub(long double, long double);
@@ -28,7 +29,7 @@ __divtc3(long double a, long double b, long double c, long double d)
 	int ilogbw = 0;
 	const double logbw = logb(__builtin_fmax( __builtin_fabs(cDD.s.hi), __builtin_fabs(dDD.s.hi) ));
 	
-	if (isfinite(logbw))
+	if (crt_isfinite(logbw))
 	{
 		ilogbw = (int)logbw;
 		
@@ -50,13 +51,14 @@ __divtc3(long double a, long double b, long double c, long double d)
 	imag.s.hi = scalbn(imag.s.hi, -ilogbw);
 	imag.s.lo = scalbn(imag.s.lo, -ilogbw);
 	
-	if (isnan(real.s.hi) && isnan(imag.s.hi))
+	if (crt_isnan(real.s.hi) && crt_isnan(imag.s.hi))
 	{
 		DD aDD = { .ld = a };
 		DD bDD = { .ld = b };
 		DD rDD = { .ld = denom };
 		
-		if ((rDD.s.hi == 0.0) && (!isnan(aDD.s.hi) || !isnan(bDD.s.hi)))
+		if ((rDD.s.hi == 0.0) && (!crt_isnan(aDD.s.hi) ||
+                                          !crt_isnan(bDD.s.hi)))
 		{
 			real.s.hi = __builtin_copysign(INFINITY,cDD.s.hi) * aDD.s.hi;
 			real.s.lo = 0.0;
@@ -64,7 +66,8 @@ __divtc3(long double a, long double b, long double c, long double d)
 			imag.s.lo = 0.0;
 		}
 		
-		else if ((isinf(aDD.s.hi) || isinf(bDD.s.hi)) && isfinite(cDD.s.hi) && isfinite(dDD.s.hi))
+		else if ((crt_isinf(aDD.s.hi) || crt_isinf(bDD.s.hi)) &&
+                         crt_isfinite(cDD.s.hi) && crt_isfinite(dDD.s.hi))
 		{
 			makeFinite(aDD);
 			makeFinite(bDD);
@@ -74,7 +77,8 @@ __divtc3(long double a, long double b, long double c, long double d)
 			imag.s.lo = 0.0;
 		}
 		
-		else if ((isinf(cDD.s.hi) || isinf(dDD.s.hi)) && isfinite(aDD.s.hi) && isfinite(bDD.s.hi))
+		else if ((crt_isinf(cDD.s.hi) || crt_isinf(dDD.s.hi)) &&
+                         crt_isfinite(aDD.s.hi) && crt_isfinite(bDD.s.hi))
 		{
 			makeFinite(cDD);
 			makeFinite(dDD);

@@ -3,23 +3,24 @@
  */
 
 #include "DD.h"
+#include "../int_math.h"
 #include <math.h>
 
 #if !defined(INFINITY) && defined(HUGE_VAL)
 #define INFINITY HUGE_VAL
 #endif /* INFINITY */
 
-#define makeFinite(x)	{ \
-							(x).s.hi = __builtin_copysign(isinf((x).s.hi) ? 1.0 : 0.0, (x).s.hi); \
-							(x).s.lo = 0.0; \
-						}
+#define makeFinite(x) { \
+    (x).s.hi = __builtin_copysign(crt_isinf((x).s.hi) ? 1.0 : 0.0, (x).s.hi); \
+    (x).s.lo = 0.0;                                                     \
+  }
 
-#define zeroNaN(x)		{ \
-							if (isnan((x).s.hi)) { \
-								(x).s.hi = __builtin_copysign(0.0, (x).s.hi); \
-								(x).s.lo = 0.0; \
-							} \
-						}
+#define zeroNaN() { \
+    if (crt_isnan((x).s.hi)) {                                          \
+      (x).s.hi = __builtin_copysign(0.0, (x).s.hi);                     \
+      (x).s.lo = 0.0;                                                   \
+    }                                                                   \
+  }
 
 long double __gcc_qadd(long double, long double);
 long double __gcc_qsub(long double, long double);
@@ -36,7 +37,7 @@ __multc3(long double a, long double b, long double c, long double d)
 	DD real = { .ld = __gcc_qsub(ac,bd) };
 	DD imag = { .ld = __gcc_qadd(ad,bc) };
 	
-	if (isnan(real.s.hi) && isnan(imag.s.hi))
+	if (crt_isnan(real.s.hi) && crt_isnan(imag.s.hi))
 	{
 		int recalc = 0;
 		
@@ -45,7 +46,7 @@ __multc3(long double a, long double b, long double c, long double d)
 		DD cDD = { .ld = c };
 		DD dDD = { .ld = d };
 		
-		if (isinf(aDD.s.hi) || isinf(bDD.s.hi))
+		if (crt_isinf(aDD.s.hi) || crt_isinf(bDD.s.hi))
 		{
 			makeFinite(aDD);
 			makeFinite(bDD);
@@ -54,7 +55,7 @@ __multc3(long double a, long double b, long double c, long double d)
 			recalc = 1;
 		}
 		
-		if (isinf(cDD.s.hi) || isinf(dDD.s.hi))
+		if (crt_isinf(cDD.s.hi) || crt_isinf(dDD.s.hi))
 		{
 			makeFinite(cDD);
 			makeFinite(dDD);
@@ -70,7 +71,8 @@ __multc3(long double a, long double b, long double c, long double d)
 			DD adDD = { .ld = ad };
 			DD bcDD = { .ld = bc };
 			
-			if (isinf(acDD.s.hi) || isinf(bdDD.s.hi) || isinf(adDD.s.hi) || isinf(bcDD.s.hi))
+			if (crt_isinf(acDD.s.hi) || crt_isinf(bdDD.s.hi) ||
+                            crt_isinf(adDD.s.hi) || crt_isinf(bcDD.s.hi))
 			{
 				zeroNaN(aDD);
 				zeroNaN(bDD);

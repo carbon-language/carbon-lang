@@ -13,6 +13,7 @@
  */
 
 #include "int_lib.h"
+#include "int_math.h"
 #include <math.h>
 
 /* Returns: the product of a + ib and c + id */
@@ -27,39 +28,39 @@ __muldc3(double __a, double __b, double __c, double __d)
     double _Complex z;
     __real__ z = __ac - __bd;
     __imag__ z = __ad + __bc;
-    if (isnan(__real__ z) && isnan(__imag__ z))
+    if (crt_isnan(__real__ z) && crt_isnan(__imag__ z))
     {
         int __recalc = 0;
-        if (isinf(__a) || isinf(__b))
+        if (crt_isinf(__a) || crt_isinf(__b))
         {
-            __a = copysign(isinf(__a) ? 1 : 0, __a);
-            __b = copysign(isinf(__b) ? 1 : 0, __b);
-            if (isnan(__c))
+            __a = copysign(crt_isinf(__a) ? 1 : 0, __a);
+            __b = copysign(crt_isinf(__b) ? 1 : 0, __b);
+            if (crt_isnan(__c))
                 __c = copysign(0, __c);
-            if (isnan(__d))
+            if (crt_isnan(__d))
                 __d = copysign(0, __d);
             __recalc = 1;
         }
-        if (isinf(__c) || isinf(__d))
+        if (crt_isinf(__c) || crt_isinf(__d))
         {
-            __c = copysign(isinf(__c) ? 1 : 0, __c);
-            __d = copysign(isinf(__d) ? 1 : 0, __d);
-            if (isnan(__a))
+            __c = copysign(crt_isinf(__c) ? 1 : 0, __c);
+            __d = copysign(crt_isinf(__d) ? 1 : 0, __d);
+            if (crt_isnan(__a))
                 __a = copysign(0, __a);
-            if (isnan(__b))
+            if (crt_isnan(__b))
                 __b = copysign(0, __b);
             __recalc = 1;
         }
-        if (!__recalc && (isinf(__ac) || isinf(__bd) ||
-                          isinf(__ad) || isinf(__bc)))
+        if (!__recalc && (crt_isinf(__ac) || crt_isinf(__bd) ||
+                          crt_isinf(__ad) || crt_isinf(__bc)))
         {
-            if (isnan(__a))
+            if (crt_isnan(__a))
                 __a = copysign(0, __a);
-            if (isnan(__b))
+            if (crt_isnan(__b))
                 __b = copysign(0, __b);
-            if (isnan(__c))
+            if (crt_isnan(__c))
                 __c = copysign(0, __c);
-            if (isnan(__d))
+            if (crt_isnan(__d))
                 __d = copysign(0, __d);
             __recalc = 1;
         }
