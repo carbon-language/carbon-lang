@@ -1158,7 +1158,7 @@ TwoAddressInstructionPass::RescheduleKillAboveMI(MachineBasicBlock *MBB,
     --From;
   MBB->splice(InsertPos, MBB, From, To);
 
-  nmi = llvm::prior(mi); // Backtrack so we process the moved instruction.
+  nmi = llvm::prior(InsertPos); // Backtrack so we process the moved instr.
   DistanceMap.erase(DI);
 
   if (LV) {
