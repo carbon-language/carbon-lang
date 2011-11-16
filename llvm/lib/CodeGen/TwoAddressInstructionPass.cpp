@@ -933,6 +933,7 @@ TwoAddressInstructionPass::RescheduleMIBelowKill(MachineBasicBlock *MBB,
     return false;
 
   SmallSet<unsigned, 2> Uses;
+  SmallSet<unsigned, 2> Kills;
   SmallSet<unsigned, 2> Defs;
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
@@ -943,8 +944,11 @@ TwoAddressInstructionPass::RescheduleMIBelowKill(MachineBasicBlock *MBB,
       continue;
     if (MO.isDef())
       Defs.insert(MOReg);
-    else
+    else {
       Uses.insert(MOReg);
+      if (MO.isKill() && MOReg != Reg)
+        Kills.insert(MOReg);
+    }
   }
 
   // Move the copies connected to MI down as well.
@@ -991,7 +995,8 @@ TwoAddressInstructionPass::RescheduleMIBelowKill(MachineBasicBlock *MBB,
       } else {
         if (Defs.count(MOReg))
           return false;
-        if (MOReg != Reg && MO.isKill() && Uses.count(MOReg))
+        if (MOReg != Reg &&
+            ((MO.isKill() && Uses.count(MOReg)) || Kills.count(MOReg)))
           // Don't want to extend other live ranges and update kills.
           return false;
       }
