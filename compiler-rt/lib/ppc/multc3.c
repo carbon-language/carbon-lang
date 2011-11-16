@@ -10,7 +10,7 @@
     (x).s.lo = 0.0;                                                     \
   }
 
-#define zeroNaN() { \
+#define zeroNaN(x) { \
     if (crt_isnan((x).s.hi)) {                                          \
       (x).s.hi = crt_copysign(0.0, (x).s.hi);                     \
       (x).s.lo = 0.0;                                                   \
