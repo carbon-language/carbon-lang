@@ -458,10 +458,11 @@ class JumpFJ<bits<6> op, string instr_asm>:
   FJ<op, (outs), (ins jmptarget:$target),
      !strconcat(instr_asm, "\t$target"), [(br bb:$target)], IIBranch>;
 
-let isBranch=1, isTerminator=1, isBarrier=1, rd=0, hasDelaySlot = 1 in
-class JumpFR<bits<6> op, bits<6> func, string instr_asm>:
-  FR<op, func, (outs), (ins CPURegs:$rs),
-     !strconcat(instr_asm, "\t$rs"), [(brind CPURegs:$rs)], IIBranch> {
+let isBranch=1, isTerminator=1, isBarrier=1, rd=0, hasDelaySlot = 1,
+    isIndirectBranch = 1 in
+class JumpFR<bits<6> op, bits<6> func, string instr_asm, RegisterClass RC>:
+  FR<op, func, (outs), (ins RC:$rs),
+     !strconcat(instr_asm, "\t$rs"), [(brind RC:$rs)], IIBranch> {
   let rt = 0;
   let rd = 0;
   let shamt = 0;
@@ -779,8 +780,7 @@ def SC_P8 : SCBase<0x38, "sc", CPURegs, mem64>, Requires<[IsN64]>;
 
 /// Jump and Branch Instructions
 def J       : JumpFJ<0x02, "j">;
-let isIndirectBranch = 1 in
-  def JR      : JumpFR<0x00, 0x08, "jr">;
+def JR      : JumpFR<0x00, 0x08, "jr", CPURegs>;
 def JAL     : JumpLink<0x03, "jal">;
 def JALR    : JumpLinkReg<0x00, 0x09, "jalr">;
 def BEQ     : CBranch<0x04, "beq", seteq, CPURegs>;

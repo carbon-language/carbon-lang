@@ -175,6 +175,7 @@ def SCD    : SCBase<0x3c, "scd", CPU64Regs, mem>, Requires<[NotN64]>;
 def SCD_P8 : SCBase<0x3c, "scd", CPU64Regs, mem64>, Requires<[IsN64]>;
 
 /// Jump and Branch Instructions
+def JR64   : JumpFR<0x00, 0x08, "jr", CPU64Regs>;
 def JAL64  : JumpLink64<0x03, "jal">;
 def JALR64 : JumpLinkReg64<0x00, 0x09, "jalr">;
 def BEQ64  : CBranch<0x04, "beq", seteq, CPU64Regs>;
