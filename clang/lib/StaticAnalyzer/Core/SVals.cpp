@@ -54,11 +54,11 @@ const FunctionDecl *SVal::getAsFunctionDecl() const {
       return CTR->getDecl();
   }
 
-  return NULL;
+  return 0;
 }
 
-/// getAsLocSymbol - If this SVal is a location (subclasses Loc) and
-///  wraps a symbol, return that SymbolRef.  Otherwise return 0.
+// If this SVal is a location (subclasses Loc) and wraps a symbol, return 
+// that SymbolRef.  Otherwise return 0.
 // FIXME: should we consider SymbolRef wrapped in CodeTextRegion?
 SymbolRef SVal::getAsLocSymbol() const {
   if (const nonloc::LocAsInteger *X = dyn_cast<nonloc::LocAsInteger>(this))
@@ -69,7 +69,7 @@ SymbolRef SVal::getAsLocSymbol() const {
     if (const SymbolicRegion *SymR = dyn_cast<SymbolicRegion>(R))
       return SymR->getSymbol();
   }
-  return NULL;
+  return 0;
 }
 
 /// Get the symbol in the SVal or its base region.
