@@ -28,6 +28,7 @@ def DeadCodeExperimental : Package<"deadcode">, InPackage<Experimental>, Hidden;
 
 def Security : Package <"security">;
 def SecurityExperimental : Package<"security">, InPackage<Experimental>, Hidden;
+def Taint : Package<"taint">, InPackage<SecurityExperimental>, Hidden;  
 
 def Unix : Package<"unix">;
 def UnixExperimental : Package<"unix">, InPackage<Experimental>, Hidden;
@@ -216,6 +217,18 @@ def MallocOverflowSecurityChecker : Checker<"MallocOverflow">,
   DescFile<"MallocOverflowSecurityChecker.cpp">;
 
 } // end "security.experimental"
+
+//===----------------------------------------------------------------------===//
+// Taint checkers.
+//===----------------------------------------------------------------------===//
+
+let ParentPackage = Taint in {
+
+def GenericTaintChecker : Checker<"TaintPropagation">,
+  HelpText<"Generate taint information used by other checkers">,
+  DescFile<"GenericTaintChecker.cpp">;
+
+} // end "experimental.security.taint"
 
 //===----------------------------------------------------------------------===//
 // Unix API checkers.
