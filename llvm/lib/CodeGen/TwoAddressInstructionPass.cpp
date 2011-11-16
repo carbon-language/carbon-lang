@@ -1115,6 +1115,7 @@ TwoAddressInstructionPass::RescheduleKillAboveMI(MachineBasicBlock *MBB,
         MCID.isTerminator())
       // Don't move pass calls, etc.
       return false;
+    SmallVector<unsigned, 2> OtherDefs;
     for (unsigned i = 0, e = OtherMI->getNumOperands(); i != e; ++i) {
       const MachineOperand &MO = OtherMI->getOperand(i);
       if (!MO.isReg())
@@ -1131,14 +1132,19 @@ TwoAddressInstructionPass::RescheduleKillAboveMI(MachineBasicBlock *MBB,
           // Don't want to extend other live ranges and update kills.
           return false;
       } else {
-        if (Uses.count(MOReg))
-          return false;
-        if (TargetRegisterInfo::isPhysicalRegister(MOReg) &&
-            LiveDefs.count(MOReg))
-          return false;
-        // Physical register def is seen.
-        Defs.erase(MOReg);
+        OtherDefs.push_back(MOReg);
       }
+    }
+
+    for (unsigned i = 0, e = OtherDefs.size(); i != e; ++i) {
+      unsigned MOReg = OtherDefs[i];
+      if (Uses.count(MOReg))
+        return false;
+      if (TargetRegisterInfo::isPhysicalRegister(MOReg) &&
+          LiveDefs.count(MOReg))
+        return false;
+      // Physical register def is seen.
+      Defs.erase(MOReg);
     }
   }
 
