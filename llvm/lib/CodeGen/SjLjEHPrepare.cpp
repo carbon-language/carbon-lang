@@ -48,10 +48,10 @@ namespace {
     Constant *BuiltinSetjmpFn;
     Constant *FrameAddrFn;
     Constant *StackAddrFn;
+    Constant *StackRestoreFn;
     Constant *LSDAAddrFn;
     Value *PersonalityFn;
     Constant *CallSiteFn;
-    Constant *DispatchSetupFn;
     Constant *FuncCtxFn;
     Value *CallSite;
   public:
@@ -107,11 +107,10 @@ bool SjLjEHPass::doInitialization(Module &M) {
                           (Type *)0);
   FrameAddrFn = Intrinsic::getDeclaration(&M, Intrinsic::frameaddress);
   StackAddrFn = Intrinsic::getDeclaration(&M, Intrinsic::stacksave);
+  StackRestoreFn = Intrinsic::getDeclaration(&M, Intrinsic::stackrestore);
   BuiltinSetjmpFn = Intrinsic::getDeclaration(&M, Intrinsic::eh_sjlj_setjmp);
   LSDAAddrFn = Intrinsic::getDeclaration(&M, Intrinsic::eh_sjlj_lsda);
   CallSiteFn = Intrinsic::getDeclaration(&M, Intrinsic::eh_sjlj_callsite);
-  DispatchSetupFn
-    = Intrinsic::getDeclaration(&M, Intrinsic::eh_sjlj_dispatch_setup);
   FuncCtxFn = Intrinsic::getDeclaration(&M, Intrinsic::eh_sjlj_functioncontext);
   PersonalityFn = 0;
 
@@ -459,6 +458,25 @@ bool SjLjEHPass::setupEntryBlockAndCallSites(Function &F) {
   CallInst *Register = CallInst::Create(RegisterFn, FuncCtx, "",
                                         EntryBB->getTerminator());
   Register->setDoesNotThrow();
+
+  // Following any allocas not in the entry block, update the saved SP in the
+  // jmpbuf to the new value.
+  for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
+    if (BB == F.begin())
+      continue;
+    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
+      if (CallInst *CI = dyn_cast<CallInst>(I)) {
+        if (CI->getCalledFunction() != StackRestoreFn)
+          continue;
+      } else if (!isa<AllocaInst>(I)) {
+        continue;
+      }
+      Instruction *StackAddr = CallInst::Create(StackAddrFn, "sp");
+      StackAddr->insertAfter(I);
+      Instruction *StoreStackAddr = new StoreInst(StackAddr, StackPtr, true);
+      StoreStackAddr->insertAfter(StackAddr);
+    }
+  }
 
   // Finally, for any returns from this function, if this function contains an
   // invoke, add a call to unregister the function context.
