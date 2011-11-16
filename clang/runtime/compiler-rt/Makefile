@@ -31,6 +31,40 @@ COMPILERRT_SRC_ROOT := $(LLVM_SRC_ROOT)/projects/compiler-rt
 # Additional flags to pass to Clang.
 CLANG_CCFLAGS := -no-integrated-as
 
+# We don't currently support building runtime libraries when we are
+# cross-compiling. The issue is that we really want to be set up so that the
+# available compiler targets are independent of the current build.
+#
+# Since we have to build the runtime libraries for the target, it requires we
+# have a cross compiler from the build machine to the target. Although in the
+# case where for the current build (host == target), we do have such a cross
+# compiler, but not defined in a way that is easy for us to reuse. Regardless,
+# that also wouldn't help for other possible compiler configurations.
+#
+# Thus, the simple set up we currently use is to assume that we will be using
+# the just built Clang to compile the compiler-rt libraries. As we grow better
+# cross compilation support inside Clang and tool support in LLVM, this makes it
+# easier for us to achieve the goal of having the compiler targets be easily
+# selected at configure time. However, this design does currently preclude the
+# building of compiler-rt libraries when the Clang itself is being cross
+# compiled.
+#
+# There are three possible solutions:
+#  1. Require building a build-target version of Clang when cross compiling. This
+#     is simplest, but als greatly increases the build time of cross builds.
+#
+#  2. Require cross builds have a build-target version of Clang available for
+#     use. This is a reasonable compromise on #1, as the compiler-rt libraries
+#     are simple enough that there is not a strong desire to ensure they are
+#     built with the exact version of Clang being used. Similarly, as Clang
+#     becomes a better cross compiler it is also increasingly more likely that
+#     the cross compiler being used will already be a version of Clang.
+#
+#  3. Come up with an alternate mechanism to define all the toolchain
+#     information that compiler-rt would need to build libraries for all the
+#     requested targets. This might be a simple short term solution, but is
+#     likely to be unwieldly and irritating to maintain in the long term.
+ifneq ($(LLVM_CROSS_COMPILING),1)
 ifneq ($(CLANG_NO_RUNTIME),1)
 ifeq ($(shell test -d $(COMPILERRT_SRC_ROOT) && echo OK),OK)
 
@@ -42,7 +76,7 @@ ifeq ($(shell test -d $(COMPILERRT_SRC_ROOT) && echo OK),OK)
 RuntimeDirs :=
 ifeq ($(OS),Darwin)
 RuntimeDirs += darwin
-RuntimeLibrary.darwin.Configs = eprintf 10.4 osx ios cc_kext
+RuntimeLibrary.darwin.Configs := eprintf 10.4 osx ios cc_kext
 
 # On Darwin, fake Clang into using the iOS assembler (since compiler-rt wants to
 # build ARM bits).
@@ -51,6 +85,11 @@ CLANG_CCFLAGS += -ccc-install-dir \
 	/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/
 endif
 endif
+
+####
+# The build rules below are designed to be generic and should only need to be
+# modified based on changes in the compiler-rt layout or build system.
+####
 
 # Rule to build the compiler-rt libraries we need.
 #
@@ -110,5 +149,6 @@ all-local:: $(RuntimeDirs:%=RuntimeLibrary.%)
 install-local:: $(RuntimeDirs:%=RuntimeLibraryInstall.%)
 clean-local:: CleanRuntimeLibraries
 
+endif
 endif
 endif
