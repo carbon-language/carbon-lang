@@ -135,15 +135,9 @@ bool X86TargetMachine::addPostRegAlloc(PassManagerBase &PM,
 bool X86TargetMachine::addPreEmitPass(PassManagerBase &PM,
                                       CodeGenOpt::Level OptLevel) {
   bool ShouldPrint = false;
-  if (OptLevel != CodeGenOpt::None) {
-    if (Subtarget.hasXMMInt()) {
-      PM.add(createExecutionDependencyFixPass(&X86::VR128RegClass));
-      ShouldPrint = true;
-    }
-    if (Subtarget.hasAVX()) {
-      PM.add(createExecutionDependencyFixPass(&X86::VR256RegClass));
-      ShouldPrint = true;
-    }
+  if (OptLevel != CodeGenOpt::None && Subtarget.hasXMMInt()) {
+    PM.add(createExecutionDependencyFixPass(&X86::VR128RegClass));
+    ShouldPrint = true;
   }
 
   if (Subtarget.hasAVX() && UseVZeroUpper) {
