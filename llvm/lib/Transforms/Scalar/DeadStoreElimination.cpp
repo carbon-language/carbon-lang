@@ -274,43 +274,35 @@ static Value *getStoredPointerOperand(Instruction *I) {
   }
 }
 
-static uint64_t getPointerSize(Value *V, AliasAnalysis &AA) {
+static uint64_t getPointerSize(const Value *V, AliasAnalysis &AA) {
   const TargetData *TD = AA.getTargetData();
 
-  if (CallInst *CI = dyn_cast<CallInst>(V)) {
-    assert(isMalloc(CI) && "Expected Malloc call!");
-    if (ConstantInt *C = dyn_cast<ConstantInt>(CI->getArgOperand(0)))
+  if (const CallInst *CI = extractMallocCall(V)) {
+    if (const ConstantInt *C = dyn_cast<ConstantInt>(CI->getArgOperand(0)))
       return C->getZExtValue();
-    return AliasAnalysis::UnknownSize;
   }
 
   if (TD == 0)
     return AliasAnalysis::UnknownSize;
 
-  if (AllocaInst *A = dyn_cast<AllocaInst>(V)) {
+  if (const AllocaInst *A = dyn_cast<AllocaInst>(V)) {
     // Get size information for the alloca
-    if (ConstantInt *C = dyn_cast<ConstantInt>(A->getArraySize()))
+    if (const ConstantInt *C = dyn_cast<ConstantInt>(A->getArraySize()))
       return C->getZExtValue() * TD->getTypeAllocSize(A->getAllocatedType());
-    return AliasAnalysis::UnknownSize;
   }
 
-  assert(isa<Argument>(V) && "Expected AllocaInst, malloc call or Argument!");
-  PointerType *PT = cast<PointerType>(V->getType());
-  return TD->getTypeAllocSize(PT->getElementType());
-}
+  if (const Argument *A = dyn_cast<Argument>(V)) {
+    if (A->hasByValAttr())
+      if (PointerType *PT = dyn_cast<PointerType>(A->getType()))
+        return TD->getTypeAllocSize(PT->getElementType());
+  }
 
-/// isObjectPointerWithTrustworthySize - Return true if the specified Value* is
-/// pointing to an object with a pointer size we can trust.
-static bool isObjectPointerWithTrustworthySize(const Value *V) {
-  if (const AllocaInst *AI = dyn_cast<AllocaInst>(V))
-    return !AI->isArrayAllocation();
-  if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(V))
-    return !GV->mayBeOverridden();
-  if (const Argument *A = dyn_cast<Argument>(V))
-    return A->hasByValAttr();
-  if (isMalloc(V))
-    return true;
-  return false;
+  if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
+    if (!GV->mayBeOverridden())
+      return TD->getTypeAllocSize(GV->getType()->getElementType());
+  }
+
+  return AliasAnalysis::UnknownSize;
 }
 
 namespace {
@@ -329,8 +321,8 @@ namespace {
 static OverwriteResult isOverwrite(const AliasAnalysis::Location &Later,
                                    const AliasAnalysis::Location &Earlier,
                                    AliasAnalysis &AA,
-                                   int64_t& EarlierOff,
-                                   int64_t& LaterOff) {
+                                   int64_t &EarlierOff,
+                                   int64_t &LaterOff) {
   const Value *P1 = Earlier.Ptr->stripPointerCasts();
   const Value *P2 = Later.Ptr->stripPointerCasts();
 
@@ -377,12 +369,10 @@ static OverwriteResult isOverwrite(const AliasAnalysis::Location &Later,
     return OverwriteUnknown;
 
   // If the "Later" store is to a recognizable object, get its size.
-  if (isObjectPointerWithTrustworthySize(UO2)) {
-    uint64_t ObjectSize =
-      TD.getTypeAllocSize(cast<PointerType>(UO2->getType())->getElementType());
+  uint64_t ObjectSize = getPointerSize(UO2, AA);
+  if (ObjectSize != AliasAnalysis::UnknownSize)
     if (ObjectSize == Later.Size && ObjectSize >= Earlier.Size)
       return OverwriteComplete;
-  }
 
   // Okay, we have stores to two completely different pointers.  Try to
   // decompose the pointer into a "base + constant_offset" form.  If the base
