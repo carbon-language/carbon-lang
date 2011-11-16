@@ -328,7 +328,8 @@ void test_catch_copy() {
 // CHECK:       9: [B4.8].operator int
 // CHECK:      10: [B4.9]()
 // CHECK:      11: [B4.10]
-// CHECK:       T: if [B4.11]
+// CHECK:      12: [B4.11]
+// CHECK:       T: if [B4.12]
 // CHECK:     Predecessors (1): B5
 // CHECK:     Successors (2): B3 B2
 // CHECK:  [ B0 (EXIT) ]
@@ -401,7 +402,8 @@ void test_catch_copy() {
 // CHECK:       9: [B8.8].operator int
 // CHECK:      10: [B8.9]()
 // CHECK:      11: [B8.10]
-// CHECK:       T: if [B8.11]
+// CHECK:      12: [B8.11]
+// CHECK:       T: if [B8.12]
 // CHECK:     Predecessors (1): B9
 // CHECK:     Successors (2): B7 B4
 // CHECK:  [ B0 (EXIT) ]
@@ -425,7 +427,8 @@ void test_catch_copy() {
 // CHECK:       7: [B2.6].operator int
 // CHECK:       8: [B2.7]()
 // CHECK:       9: [B2.8]
-// CHECK:       T: while [B2.9]
+// CHECK:      10: [B2.9]
+// CHECK:       T: while [B2.10]
 // CHECK:     Predecessors (2): B3 B5
 // CHECK:     Successors (2): B4 B1
 // CHECK:  [ B3 ]
@@ -467,7 +470,8 @@ void test_catch_copy() {
 // CHECK:       7: [B2.6].operator int
 // CHECK:       8: [B2.7]()
 // CHECK:       9: [B2.8]
-// CHECK:       T: while [B2.9]
+// CHECK:      10: [B2.9]
+// CHECK:       T: while [B2.10]
 // CHECK:     Predecessors (2): B3 B11
 // CHECK:     Successors (2): B10 B1
 // CHECK:  [ B3 ]
@@ -637,7 +641,8 @@ void test_catch_copy() {
 // CHECK:       8: [B2.7]
 // CHECK:       9: [B2.8].operator int
 // CHECK:      10: [B2.9]()
-// CHECK:       T: switch [B2.10]
+// CHECK:      11: [B2.10]
+// CHECK:       T: switch [B2.11]
 // CHECK:     Predecessors (1): B4
 // CHECK:     Successors (1): B1
 // CHECK:  [ B3 ]
@@ -671,7 +676,8 @@ void test_catch_copy() {
 // CHECK:       8: [B2.7]
 // CHECK:       9: [B2.8].operator int
 // CHECK:      10: [B2.9]()
-// CHECK:       T: switch [B2.10]
+// CHECK:      11: [B2.10]
+// CHECK:       T: switch [B2.11]
 // CHECK:     Predecessors (1): B9
 // CHECK:     Successors (3): B3 B8
 // CHECK:      B1
@@ -735,7 +741,8 @@ void test_catch_copy() {
 // CHECK:       7: [B2.6].operator int
 // CHECK:       8: [B2.7]()
 // CHECK:       9: [B2.8]
-// CHECK:       T: for (...; [B2.9]; )
+// CHECK:      10: [B2.9]
+// CHECK:       T: for (...; [B2.10]; )
 // CHECK:     Predecessors (2): B3 B5
 // CHECK:     Successors (2): B4 B1
 // CHECK:  [ B3 ]
@@ -778,7 +785,8 @@ void test_catch_copy() {
 // CHECK:       7: [B2.6].operator int
 // CHECK:       8: [B2.7]()
 // CHECK:       9: [B2.8]
-// CHECK:       T: for (...; [B2.9]; )
+// CHECK:      10: [B2.9]
+// CHECK:       T: for (...; [B2.10]; )
 // CHECK:     Predecessors (2): B3 B11
 // CHECK:     Successors (2): B10 B1
 // CHECK:  [ B3 ]

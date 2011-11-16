@@ -163,11 +163,11 @@ TestCtorInits::TestCtorInits()
 // CHECK:     Predecessors (1): B3
 // CHECK:     Successors (1): B1
 // CHECK:  [ B3 ]
-// CHECK:       1: [B4.5] && [B5.4]
+// CHECK:       1: [B4.6] && [B5.5]
 // CHECK:       2: foo
 // CHECK:       3: [B3.2]
 // CHECK:       4: [B3.3]([B3.1])
-// CHECK:       T: [B4.5] && ...
+// CHECK:       T: [B4.6] && ...
 // CHECK:     Predecessors (2): B5 B4
 // CHECK:     Successors (2): B2 B1
 // CHECK:  [ B4 ]
@@ -176,7 +176,8 @@ TestCtorInits::TestCtorInits()
 // CHECK:       3: [B4.2] (BindTemporary)
 // CHECK:       4: [B4.3].operator _Bool
 // CHECK:       5: [B4.4]()
-// CHECK:       T: [B4.5] && ...
+// CHECK:       6: [B4.5]
+// CHECK:       T: [B4.6] && ...
 // CHECK:     Predecessors (2): B6 B7
 // CHECK:     Successors (2): B5 B3
 // CHECK:  [ B5 ]
@@ -184,6 +185,7 @@ TestCtorInits::TestCtorInits()
 // CHECK:       2: [B5.1] (BindTemporary)
 // CHECK:       3: [B5.2].operator _Bool
 // CHECK:       4: [B5.3]()
+// CHECK:       5: [B5.4]
 // CHECK:     Predecessors (1): B4
 // CHECK:     Successors (1): B3
 // CHECK:  [ B6 ]
@@ -191,9 +193,9 @@ TestCtorInits::TestCtorInits()
 // CHECK:     Predecessors (1): B7
 // CHECK:     Successors (1): B4
 // CHECK:  [ B7 ]
-// CHECK:       1: [B8.4] && [B9.4]
+// CHECK:       1: [B8.5] && [B9.5]
 // CHECK:       2: bool a = A().operator _Bool() && B().operator _Bool();
-// CHECK:       T: [B8.4] && ...
+// CHECK:       T: [B8.5] && ...
 // CHECK:     Predecessors (2): B9 B8
 // CHECK:     Successors (2): B6 B4
 // CHECK:  [ B8 ]
@@ -201,7 +203,8 @@ TestCtorInits::TestCtorInits()
 // CHECK:       2: [B8.1] (BindTemporary)
 // CHECK:       3: [B8.2].operator _Bool
 // CHECK:       4: [B8.3]()
-// CHECK:       T: [B8.4] && ...
+// CHECK:       5: [B8.4]
+// CHECK:       T: [B8.5] && ...
 // CHECK:     Predecessors (1): B10
 // CHECK:     Successors (2): B9 B7
 // CHECK:  [ B9 ]
@@ -209,6 +212,7 @@ TestCtorInits::TestCtorInits()
 // CHECK:       2: [B9.1] (BindTemporary)
 // CHECK:       3: [B9.2].operator _Bool
 // CHECK:       4: [B9.3]()
+// CHECK:       5: [B9.4]
 // CHECK:     Predecessors (1): B8
 // CHECK:     Successors (1): B7
 // CHECK:  [ B0 (EXIT) ]
@@ -227,11 +231,11 @@ TestCtorInits::TestCtorInits()
 // CHECK:     Predecessors (1): B3
 // CHECK:     Successors (1): B1
 // CHECK:  [ B3 ]
-// CHECK:       1: [B4.5] || [B5.4]
+// CHECK:       1: [B4.6] || [B5.5]
 // CHECK:       2: foo
 // CHECK:       3: [B3.2]
 // CHECK:       4: [B3.3]([B3.1])
-// CHECK:       T: [B4.5] || ...
+// CHECK:       T: [B4.6] || ...
 // CHECK:     Predecessors (2): B5 B4
 // CHECK:     Successors (2): B1 B2
 // CHECK:  [ B4 ]
@@ -240,7 +244,8 @@ TestCtorInits::TestCtorInits()
 // CHECK:       3: [B4.2] (BindTemporary)
 // CHECK:       4: [B4.3].operator _Bool
 // CHECK:       5: [B4.4]()
-// CHECK:       T: [B4.5] || ...
+// CHECK:       6: [B4.5]
+// CHECK:       T: [B4.6] || ...
 // CHECK:     Predecessors (2): B6 B7
 // CHECK:     Successors (2): B3 B5
 // CHECK:  [ B5 ]
@@ -248,6 +253,7 @@ TestCtorInits::TestCtorInits()
 // CHECK:       2: [B5.1] (BindTemporary)
 // CHECK:       3: [B5.2].operator _Bool
 // CHECK:       4: [B5.3]()
+// CHECK:       5: [B5.4]
 // CHECK:     Predecessors (1): B4
 // CHECK:     Successors (1): B3
 // CHECK:  [ B6 ]
@@ -255,9 +261,9 @@ TestCtorInits::TestCtorInits()
 // CHECK:     Predecessors (1): B7
 // CHECK:     Successors (1): B4
 // CHECK:  [ B7 ]
-// CHECK:       1: [B8.4] || [B9.4]
+// CHECK:       1: [B8.5] || [B9.5]
 // CHECK:       2: bool a = A().operator _Bool() || B().operator _Bool();
-// CHECK:       T: [B8.4] || ...
+// CHECK:       T: [B8.5] || ...
 // CHECK:     Predecessors (2): B9 B8
 // CHECK:     Successors (2): B4 B6
 // CHECK:  [ B8 ]
@@ -265,7 +271,8 @@ TestCtorInits::TestCtorInits()
 // CHECK:       2: [B8.1] (BindTemporary)
 // CHECK:       3: [B8.2].operator _Bool
 // CHECK:       4: [B8.3]()
-// CHECK:       T: [B8.4] || ...
+// CHECK:       5: [B8.4]
+// CHECK:       T: [B8.5] || ...
 // CHECK:     Predecessors (1): B10
 // CHECK:     Successors (2): B7 B9
 // CHECK:  [ B9 ]
@@ -273,6 +280,7 @@ TestCtorInits::TestCtorInits()
 // CHECK:       2: [B9.1] (BindTemporary)
 // CHECK:       3: [B9.2].operator _Bool
 // CHECK:       4: [B9.3]()
+// CHECK:       5: [B9.4]
 // CHECK:     Predecessors (1): B8
 // CHECK:     Successors (1): B7
 // CHECK:  [ B0 (EXIT) ]
@@ -306,8 +314,9 @@ TestCtorInits::TestCtorInits()
 // CHECK:       3: [B4.2] (BindTemporary)
 // CHECK:       4: [B4.3].operator _Bool
 // CHECK:       5: [B4.4]()
-// CHECK:       6: ~B() (Temporary object destructor)
-// CHECK:       T: if [B4.5]
+// CHECK:       6: [B4.5]
+// CHECK:       7: ~B() (Temporary object destructor)
+// CHECK:       T: if [B4.6]
 // CHECK:     Predecessors (2): B5 B6
 // CHECK:     Successors (2): B3 B2
 // CHECK:  [ B5 ]
@@ -323,11 +332,11 @@ TestCtorInits::TestCtorInits()
 // CHECK:     Predecessors (1): B7
 // CHECK:     Successors (1): B4
 // CHECK:  [ B7 ]
-// CHECK:       1: [B10.4] ? [B8.5] : [B9.13]
+// CHECK:       1: [B10.5] ? [B8.5] : [B9.13]
 // CHECK:       2: [B7.1]
 // CHECK:       3: [B7.2]
 // CHECK:       4: A a = B().operator _Bool() ? A() : A(B().operator A());
-// CHECK:       T: [B10.4] ? ... : ...
+// CHECK:       T: [B10.5] ? ... : ...
 // CHECK:     Predecessors (2): B8 B9
 // CHECK:     Successors (2): B5 B6
 // CHECK:  [ B8 ]
@@ -343,8 +352,8 @@ TestCtorInits::TestCtorInits()
 // CHECK:       2: [B9.1] (BindTemporary)
 // CHECK:       3: [B9.2].operator A
 // CHECK:       4: [B9.3]()
-// CHECK:       5: [B9.4] (BindTemporary)
-// CHECK:       6: [B9.5]
+// CHECK:       5: [B9.4]
+// CHECK:       6: [B9.5] (BindTemporary)
 // CHECK:       7: [B9.6]
 // CHECK:       8: [B9.7]
 // CHECK:       9: [B9.8] (BindTemporary)
@@ -359,7 +368,8 @@ TestCtorInits::TestCtorInits()
 // CHECK:       2: [B10.1] (BindTemporary)
 // CHECK:       3: [B10.2].operator _Bool
 // CHECK:       4: [B10.3]()
-// CHECK:       T: [B10.4] ? ... : ...
+// CHECK:       5: [B10.4]
+// CHECK:       T: [B10.5] ? ... : ...
 // CHECK:     Predecessors (1): B11
 // CHECK:     Successors (2): B8 B9
 // CHECK:  [ B0 (EXIT) ]
@@ -387,13 +397,13 @@ TestCtorInits::TestCtorInits()
 // CHECK:     Predecessors (1): B4
 // CHECK:     Successors (1): B1
 // CHECK:  [ B4 ]
-// CHECK:       1: [B7.5] ? [B5.5] : [B6.13]
+// CHECK:       1: [B7.6] ? [B5.5] : [B6.13]
 // CHECK:       2: [B4.1]
 // CHECK:       3: [B4.2]
 // CHECK:       4: foo
 // CHECK:       5: [B4.4]
 // CHECK:       6: [B4.5]([B4.3])
-// CHECK:       T: [B7.5] ? ... : ...
+// CHECK:       T: [B7.6] ? ... : ...
 // CHECK:     Predecessors (2): B5 B6
 // CHECK:     Successors (2): B2 B3
 // CHECK:  [ B5 ]
@@ -409,8 +419,8 @@ TestCtorInits::TestCtorInits()
 // CHECK:       2: [B6.1] (BindTemporary)
 // CHECK:       3: [B6.2].operator A
 // CHECK:       4: [B6.3]()
-// CHECK:       5: [B6.4] (BindTemporary)
-// CHECK:       6: [B6.5]
+// CHECK:       5: [B6.4]
+// CHECK:       6: [B6.5] (BindTemporary)
 // CHECK:       7: [B6.6]
 // CHECK:       8: [B6.7]
 // CHECK:       9: [B6.8] (BindTemporary)
@@ -426,7 +436,8 @@ TestCtorInits::TestCtorInits()
 // CHECK:       3: [B7.2] (BindTemporary)
 // CHECK:       4: [B7.3].operator _Bool
 // CHECK:       5: [B7.4]()
-// CHECK:       T: [B7.5] ? ... : ...
+// CHECK:       6: [B7.5]
+// CHECK:       T: [B7.6] ? ... : ...
 // CHECK:     Predecessors (2): B8 B9
 // CHECK:     Successors (2): B5 B6
 // CHECK:  [ B8 ]
@@ -440,11 +451,11 @@ TestCtorInits::TestCtorInits()
 // CHECK:     Predecessors (1): B10
 // CHECK:     Successors (1): B7
 // CHECK:  [ B10 ]
-// CHECK:       1: [B13.4] ? [B11.5] : [B12.13]
+// CHECK:       1: [B13.5] ? [B11.5] : [B12.13]
 // CHECK:       2: [B10.1]
 // CHECK:       3: [B10.2]
 // CHECK:       4: const A &a = B().operator _Bool() ? A() : A(B().operator A());
-// CHECK:       T: [B13.4] ? ... : ...
+// CHECK:       T: [B13.5] ? ... : ...
 // CHECK:     Predecessors (2): B11 B12
 // CHECK:     Successors (2): B8 B9
 // CHECK:  [ B11 ]
@@ -460,8 +471,8 @@ TestCtorInits::TestCtorInits()
 // CHECK:       2: [B12.1] (BindTemporary)
 // CHECK:       3: [B12.2].operator A
 // CHECK:       4: [B12.3]()
-// CHECK:       5: [B12.4] (BindTemporary)
-// CHECK:       6: [B12.5]
+// CHECK:       5: [B12.4]
+// CHECK:       6: [B12.5] (BindTemporary)
 // CHECK:       7: [B12.6]
 // CHECK:       8: [B12.7]
 // CHECK:       9: [B12.8] (BindTemporary)
@@ -476,7 +487,8 @@ TestCtorInits::TestCtorInits()
 // CHECK:       2: [B13.1] (BindTemporary)
 // CHECK:       3: [B13.2].operator _Bool
 // CHECK:       4: [B13.3]()
-// CHECK:       T: [B13.4] ? ... : ...
+// CHECK:       5: [B13.4]
+// CHECK:       T: [B13.5] ? ... : ...
 // CHECK:     Predecessors (1): B14
 // CHECK:     Successors (2): B11 B12
 // CHECK:  [ B0 (EXIT) ]
@@ -505,7 +517,7 @@ TestCtorInits::TestCtorInits()
 // CHECK:       2: [B4.1]
 // CHECK:       3: [B4.2]
 // CHECK:       4: A a = A() ?: A();
-// CHECK:       T: [B7.4] ? ... : ...
+// CHECK:       T: [B7.5] ? ... : ...
 // CHECK:     Predecessors (2): B5 B6
 // CHECK:     Successors (2): B2 B3
 // CHECK:  [ B5 ]
@@ -528,7 +540,8 @@ TestCtorInits::TestCtorInits()
 // CHECK:       2: [B7.1] (BindTemporary)
 // CHECK:       3: .operator _Bool
 // CHECK:       4: [B7.3]()
-// CHECK:       T: [B7.4] ? ... : ...
+// CHECK:       5: [B7.4]
+// CHECK:       T: [B7.5] ? ... : ...
 // CHECK:     Predecessors (1): B8
 // CHECK:     Successors (2): B5 B6
 // CHECK:  [ B0 (EXIT) ]
@@ -559,7 +572,7 @@ TestCtorInits::TestCtorInits()
 // CHECK:       4: foo
 // CHECK:       5: [B4.4]
 // CHECK:       6: [B4.5]([B4.3])
-// CHECK:       T: [B7.5] ? ... : ...
+// CHECK:       T: [B7.6] ? ... : ...
 // CHECK:     Predecessors (2): B5 B6
 // CHECK:     Successors (2): B2 B3
 // CHECK:  [ B5 ]
@@ -583,7 +596,8 @@ TestCtorInits::TestCtorInits()
 // CHECK:       3: [B7.2] (BindTemporary)
 // CHECK:       4: .operator _Bool
 // CHECK:       5: [B7.4]()
-// CHECK:       T: [B7.5] ? ... : ...
+// CHECK:       6: [B7.5]
+// CHECK:       T: [B7.6] ? ... : ...
 // CHECK:     Predecessors (2): B9 B8
 // CHECK:     Successors (2): B5 B6
 // CHECK:  [ B8 ]
@@ -595,7 +609,7 @@ TestCtorInits::TestCtorInits()
 // CHECK:       2: [B9.1]
 // CHECK:       3: [B9.2]
 // CHECK:       4: const A &a = A() ?: A();
-// CHECK:       T: [B12.4] ? ... : ...
+// CHECK:       T: [B12.5] ? ... : ...
 // CHECK:     Predecessors (2): B10 B11
 // CHECK:     Successors (2): B7 B8
 // CHECK:  [ B10 ]
@@ -618,7 +632,8 @@ TestCtorInits::TestCtorInits()
 // CHECK:       2: [B12.1] (BindTemporary)
 // CHECK:       3: .operator _Bool
 // CHECK:       4: [B12.3]()
-// CHECK:       T: [B12.4] ? ... : ...
+// CHECK:       5: [B12.4]
+// CHECK:       T: [B12.5] ? ... : ...
 // CHECK:     Predecessors (1): B13
 // CHECK:     Successors (2): B10 B11
 // CHECK:  [ B0 (EXIT) ]
@@ -721,10 +736,11 @@ TestCtorInits::TestCtorInits()
 // CHECK:       3: [B1.2] (BindTemporary)
 // CHECK:       4: [B1.3].operator int
 // CHECK:       5: [B1.4]()
-// CHECK:       6: a
-// CHECK:       7: [B1.6] = [B1.5]
-// CHECK:       8: ~A() (Temporary object destructor)
-// CHECK:       9: int b;
+// CHECK:       6: [B1.5]
+// CHECK:       7: a
+// CHECK:       8: [B1.7] = [B1.6]
+// CHECK:       9: ~A() (Temporary object destructor)
+// CHECK:      10: int b;
 // CHECK:     Predecessors (1): B2
 // CHECK:     Successors (1): B0
 // CHECK:  [ B0 (EXIT) ]
@@ -757,5 +773,3 @@ TestCtorInits::TestCtorInits()
 // CHECK:  [ B0 (EXIT) ]
 // CHECK:     Predecessors (1): B1
 // CHECK:     Successors (0):
-
-

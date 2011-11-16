@@ -4676,9 +4676,9 @@ InitializationSequence::Perform(Sema &S,
       }
 
       bool RequiresCopy = !IsCopy && !isReferenceBinding(Steps.back());
-      if (RequiresCopy || shouldBindAsTemporary(Entity))
-        CurInit = S.MaybeBindToTemporary(CurInit.takeAs<Expr>());
-      else if (CreatedObject && shouldDestroyTemporary(Entity)) {
+      bool MaybeBindToTemp = RequiresCopy || shouldBindAsTemporary(Entity);
+
+      if (!MaybeBindToTemp && CreatedObject && shouldDestroyTemporary(Entity)) {
         QualType T = CurInit.get()->getType();
         if (const RecordType *Record = T->getAs<RecordType>()) {
           CXXDestructorDecl *Destructor
@@ -4694,11 +4694,11 @@ InitializationSequence::Perform(Sema &S,
                                                  CurInit.get()->getType(),
                                                  CastKind, CurInit.get(), 0,
                                                 CurInit.get()->getValueKind()));
-
+      if (MaybeBindToTemp)
+        CurInit = S.MaybeBindToTemporary(CurInit.takeAs<Expr>());
       if (RequiresCopy)
         CurInit = CopyObject(S, Entity.getType().getNonReferenceType(), Entity,
                              move(CurInit), /*IsExtraneousCopy=*/false);
-
       break;
     }
 

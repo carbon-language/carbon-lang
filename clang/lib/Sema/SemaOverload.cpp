@@ -4309,8 +4309,11 @@ Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, Expr *From,
                                                  HadMultipleCandidates);
       if (Result.isInvalid())
         return ExprError();
-
-      From = Result.get();
+      // Record usage of conversion in an implicit cast.
+      From = ImplicitCastExpr::Create(Context, Result.get()->getType(),
+                                      CK_UserDefinedConversion,
+                                      Result.get(), 0,
+                                      Result.get()->getValueKind());
     }
 
     // We'll complain below about a non-integral condition type.
@@ -4337,8 +4340,11 @@ Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, Expr *From,
                                                HadMultipleCandidates);
     if (Result.isInvalid())
       return ExprError();
-
-    From = Result.get();
+    // Record usage of conversion in an implicit cast.
+    From = ImplicitCastExpr::Create(Context, Result.get()->getType(),
+                                    CK_UserDefinedConversion,
+                                    Result.get(), 0,
+                                    Result.get()->getValueKind());
     break;
   }
 
@@ -9810,6 +9816,10 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
                                              Conv, HadMultipleCandidates);
     if (Call.isInvalid())
       return ExprError();
+    // Record usage of conversion in an implicit cast.
+    Call = Owned(ImplicitCastExpr::Create(Context, Call.get()->getType(),
+                                          CK_UserDefinedConversion,
+                                          Call.get(), 0, VK_RValue));
 
     return ActOnCallExpr(S, Call.get(), LParenLoc, MultiExprArg(Args, NumArgs),
                          RParenLoc);
