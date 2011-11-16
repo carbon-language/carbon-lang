@@ -558,7 +558,7 @@ namespace COFF {
     IMPORT_NAME_NOPREFIX   = 2,
     /// The import name is the public symbol name, but skipping the leading ?,
     /// @, or optionally _, and truncating at the first @.
-    IMPORT_NAME_UNDECORATE = 3,
+    IMPORT_NAME_UNDECORATE = 3
   };
 
   struct ImportHeader {
