@@ -502,8 +502,7 @@ MachineInstr *findLocalKill(unsigned Reg, MachineBasicBlock *MBB,
       continue;
     if (!UI.getOperand().isKill())
       return 0;
-    if (KillMI)
-      return 0;  // -O0 kill markers cannot be trusted?
+    assert(!KillMI && "More than one local kills?");
     KillMI = UseMI;
   }
 
