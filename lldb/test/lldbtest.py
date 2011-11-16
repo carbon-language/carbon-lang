@@ -296,6 +296,7 @@ def system(*popenargs, **kwargs):
     if 'stdout' in kwargs:
         raise ValueError('stdout argument not allowed, it will be overridden.')
     process = Popen(stdout=PIPE, stderr=PIPE, *popenargs, **kwargs)
+    pid = process.pid
     output, error = process.communicate()
     retcode = process.poll()
 
@@ -306,6 +307,7 @@ def system(*popenargs, **kwargs):
             args = list(popenargs)
         print >> sbuf
         print >> sbuf, "os command:", args
+        print >> sbuf, "with pid:", pid
         print >> sbuf, "stdout:", output
         print >> sbuf, "stderr:", error
         print >> sbuf, "retcode:", retcode
