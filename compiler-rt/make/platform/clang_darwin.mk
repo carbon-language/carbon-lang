@@ -79,28 +79,28 @@ CFLAGS := -Wall -Werror -O3 -fomit-frame-pointer
 # never depend on the environmental overrides. We simply set them to minimum
 # supported deployment target -- nothing in the compiler-rt libraries should
 # actually depend on the deployment target.
-X86_DEPLOYMENT_ARGS := -mmacosx-version-min=10.4
-ARM_DEPLOYMENT_ARGS := -miphoneos-version-min=1.0
+OSX_DEPLOYMENT_ARGS := -mmacosx-version-min=10.4
+IOS_DEPLOYMENT_ARGS := -miphoneos-version-min=1.0
+IOSSIM_DEPLOYMENT_ARGS := -miphoneos-version-min=1.0
 
 # If an explicit ARM_SDK build variable is set, use that as the isysroot.
 ifneq ($(ARM_SDK),)
-ARM_DEPLOYMENT_ARGS += -isysroot $(ARM_SDK)
+IOS_DEPLOYMENT_ARGS += -isysroot $(ARM_SDK)
+IOSSIM_DEPLOYMENT_ARGS += -isysroot $(ARM_SDK)
 endif
 
-CFLAGS.eprintf		:= $(CFLAGS) $(X86_DEPLOYMENT_ARGS)
-CFLAGS.10.4		:= $(CFLAGS) $(X86_DEPLOYMENT_ARGS)
-CFLAGS.ios.i386		:= $(CFLAGS) $(X86_DEPLOYMENT_ARGS)
-CFLAGS.ios.x86_64	:= $(CFLAGS) $(X86_DEPLOYMENT_ARGS)
-CFLAGS.ios.armv6	:= $(CFLAGS) $(ARM_DEPLOYMENT_ARGS)
-CFLAGS.ios.armv7	:= $(CFLAGS) $(ARM_DEPLOYMENT_ARGS)
-CFLAGS.osx.i386         := $(CFLAGS) $(X86_DEPLOYMENT_ARGS)
-CFLAGS.osx.x86_64       := $(CFLAGS) $(X86_DEPLOYMENT_ARGS)
-CFLAGS.osx.armv6        := $(CFLAGS) $(ARM_DEPLOYMENT_ARGS)
-CFLAGS.osx.armv7        := $(CFLAGS) $(ARM_DEPLOYMENT_ARGS)
-CFLAGS.cc_kext.i386	:= $(CFLAGS) $(X86_DEPLOYMENT_ARGS)
-CFLAGS.cc_kext.x86_64	:= $(CFLAGS) $(X86_DEPLOYMENT_ARGS)
-CFLAGS.cc_kext.armv6	:= $(CFLAGS) $(ARM_DEPLOYMENT_ARGS) -mthumb
-CFLAGS.cc_kext.armv7	:= $(CFLAGS) $(ARM_DEPLOYMENT_ARGS)
+CFLAGS.eprintf		:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
+CFLAGS.10.4		:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
+CFLAGS.ios.i386		:= $(CFLAGS) $(IOSSIM_DEPLOYMENT_ARGS)
+CFLAGS.ios.x86_64	:= $(CFLAGS) $(IOSSIM_DEPLOYMENT_ARGS)
+CFLAGS.ios.armv6	:= $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
+CFLAGS.ios.armv7	:= $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
+CFLAGS.osx.i386		:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
+CFLAGS.osx.x86_64	:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
+CFLAGS.cc_kext.i386	:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
+CFLAGS.cc_kext.x86_64	:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
+CFLAGS.cc_kext.armv6	:= $(CFLAGS) $(IOS_DEPLOYMENT_ARGS) -mthumb
+CFLAGS.cc_kext.armv7	:= $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
 
 FUNCTIONS.eprintf := eprintf
 FUNCTIONS.10.4 := eprintf floatundidf floatundisf floatundixf
