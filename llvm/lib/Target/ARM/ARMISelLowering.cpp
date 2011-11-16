@@ -686,7 +686,6 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   if (Subtarget->isTargetDarwin()) {
     setOperationAction(ISD::EH_SJLJ_SETJMP, MVT::i32, Custom);
     setOperationAction(ISD::EH_SJLJ_LONGJMP, MVT::Other, Custom);
-    setOperationAction(ISD::EH_SJLJ_DISPATCHSETUP, MVT::Other, Custom);
     setLibcallName(RTLIB::UNWIND_RESUME, "_Unwind_SjLj_Resume");
   }
 
@@ -863,7 +862,6 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
 
   case ARMISD::EH_SJLJ_SETJMP: return "ARMISD::EH_SJLJ_SETJMP";
   case ARMISD::EH_SJLJ_LONGJMP:return "ARMISD::EH_SJLJ_LONGJMP";
-  case ARMISD::EH_SJLJ_DISPATCHSETUP:return "ARMISD::EH_SJLJ_DISPATCHSETUP";
 
   case ARMISD::TC_RETURN:     return "ARMISD::TC_RETURN";
 
@@ -2209,14 +2207,6 @@ SDValue ARMTargetLowering::LowerGLOBAL_OFFSET_TABLE(SDValue Op,
                                false, false, false, 0);
   SDValue PICLabel = DAG.getConstant(ARMPCLabelIndex, MVT::i32);
   return DAG.getNode(ARMISD::PIC_ADD, dl, PtrVT, Result, PICLabel);
-}
-
-SDValue
-ARMTargetLowering::LowerEH_SJLJ_DISPATCHSETUP(SDValue Op, SelectionDAG &DAG)
-  const {
-  DebugLoc dl = Op.getDebugLoc();
-  return DAG.getNode(ARMISD::EH_SJLJ_DISPATCHSETUP, dl, MVT::Other,
-                     Op.getOperand(0), Op.getOperand(1));
 }
 
 SDValue
@@ -5024,7 +5014,6 @@ SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::GLOBAL_OFFSET_TABLE: return LowerGLOBAL_OFFSET_TABLE(Op, DAG);
   case ISD::EH_SJLJ_SETJMP: return LowerEH_SJLJ_SETJMP(Op, DAG);
   case ISD::EH_SJLJ_LONGJMP: return LowerEH_SJLJ_LONGJMP(Op, DAG);
-  case ISD::EH_SJLJ_DISPATCHSETUP: return LowerEH_SJLJ_DISPATCHSETUP(Op, DAG);
   case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG,
                                                                Subtarget);
   case ISD::BITCAST:       return ExpandBITCAST(Op.getNode(), DAG);
@@ -5566,52 +5555,6 @@ ARMTargetLowering::EmitAtomicBinary64(MachineInstr *MI, MachineBasicBlock *BB,
   return BB;
 }
 
-/// EmitBasePointerRecalculation - For functions using a base pointer, we
-/// rematerialize it (via the frame pointer).
-void ARMTargetLowering::
-EmitBasePointerRecalculation(MachineInstr *MI, MachineBasicBlock *MBB,
-                             MachineBasicBlock *DispatchBB) const {
-  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
-  const ARMBaseInstrInfo *AII = static_cast<const ARMBaseInstrInfo*>(TII);
-  MachineFunction &MF = *MI->getParent()->getParent();
-  ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
-  const ARMBaseRegisterInfo &RI = AII->getRegisterInfo();
-
-  if (!RI.hasBasePointer(MF)) return;
-
-  MachineBasicBlock::iterator MBBI = MI;
-
-  int32_t NumBytes = AFI->getFramePtrSpillOffset();
-  unsigned FramePtr = RI.getFrameRegister(MF);
-  assert(MF.getTarget().getFrameLowering()->hasFP(MF) &&
-         "Base pointer without frame pointer?");
-
-  if (AFI->isThumb2Function())
-    llvm::emitT2RegPlusImmediate(*MBB, MBBI, MI->getDebugLoc(), ARM::R6,
-                                 FramePtr, -NumBytes, ARMCC::AL, 0, *AII);
-  else if (AFI->isThumbFunction())
-    llvm::emitThumbRegPlusImmediate(*MBB, MBBI, MI->getDebugLoc(), ARM::R6,
-                                    FramePtr, -NumBytes, *AII, RI);
-  else
-    llvm::emitARMRegPlusImmediate(*MBB, MBBI, MI->getDebugLoc(), ARM::R6,
-                                  FramePtr, -NumBytes, ARMCC::AL, 0, *AII);
-
-  if (!RI.needsStackRealignment(MF)) return;
-
-  // If there's dynamic realignment, adjust for it.
-  MachineFrameInfo *MFI = MF.getFrameInfo();
-  unsigned MaxAlign = MFI->getMaxAlignment();
-  assert(!AFI->isThumb1OnlyFunction());
-
-  // Emit bic r6, r6, MaxAlign
-  unsigned bicOpc = AFI->isThumbFunction() ? ARM::t2BICri : ARM::BICri;
-  AddDefaultCC(
-    AddDefaultPred(
-      BuildMI(*MBB, MBBI, MI->getDebugLoc(), TII->get(bicOpc), ARM::R6)
-      .addReg(ARM::R6, RegState::Kill)
-      .addImm(MaxAlign - 1)));
-}
-
 /// SetupEntryBlockForSjLj - Insert code into the entry block that creates and
 /// registers the function context.
 void ARMTargetLowering::
@@ -5645,8 +5588,6 @@ SetupEntryBlockForSjLj(MachineInstr *MI, MachineBasicBlock *MBB,
   MachineMemOperand *FIMMOSt =
     MF->getMachineMemOperand(MachinePointerInfo::getFixedStack(FI),
                              MachineMemOperand::MOStore, 4, 4);
-
-  EmitBasePointerRecalculation(MI, MBB, DispatchBB);
 
   // Load the address of the dispatch MBB into the jump buffer.
   if (isThumb2) {
@@ -5820,6 +5761,8 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
     MF->getMachineMemOperand(MachinePointerInfo::getFixedStack(FI),
                              MachineMemOperand::MOLoad |
                              MachineMemOperand::MOVolatile, 4, 4);
+
+  BuildMI(DispatchBB, dl, TII->get(ARM::eh_sjlj_dispatchsetup));
 
   unsigned NumLPads = LPadList.size();
   if (Subtarget->isThumb2()) {

@@ -81,7 +81,6 @@ namespace llvm {
 
       EH_SJLJ_SETJMP,         // SjLj exception handling setjmp.
       EH_SJLJ_LONGJMP,        // SjLj exception handling longjmp.
-      EH_SJLJ_DISPATCHSETUP,  // SjLj exception handling dispatch setup.
 
       TC_RETURN,    // Tail call return pseudo.
 
@@ -410,7 +409,6 @@ namespace llvm {
                              ISD::ArgFlagsTy Flags) const;
     SDValue LowerEH_SJLJ_SETJMP(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerEH_SJLJ_LONGJMP(SDValue Op, SelectionDAG &DAG) const;
-    SDValue LowerEH_SJLJ_DISPATCHSETUP(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG,
                                     const ARMSubtarget *Subtarget) const;
     SDValue LowerBlockAddress(SDValue Op, SelectionDAG &DAG) const;
@@ -519,9 +517,6 @@ namespace llvm {
                                                unsigned Size,
                                                bool signExtend,
                                                ARMCC::CondCodes Cond) const;
-
-    void EmitBasePointerRecalculation(MachineInstr *MI, MachineBasicBlock *MBB,
-                                      MachineBasicBlock *DispatchBB) const;
 
     void SetupEntryBlockForSjLj(MachineInstr *MI,
                                 MachineBasicBlock *MBB,
