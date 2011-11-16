@@ -2988,6 +2988,8 @@ ClangExpressionDeclMap::AddOneFunction (NameSearchContext &context,
                              fun_type->GetName().GetCString(), 
                              fun_type->GetID());
             }
+            
+            return;
         }
     }
     else if (symbol)
