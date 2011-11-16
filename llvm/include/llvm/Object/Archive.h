@@ -34,6 +34,10 @@ public:
       return (Parent == other.Parent) && (Data.begin() == other.Data.begin());
     }
 
+    bool operator <(const Child &other) const {
+      return Data.begin() < other.Data.begin();
+    }
+
     Child getNext() const;
     error_code getName(StringRef &Result) const;
     int getLastModified() const;
@@ -62,6 +66,10 @@ public:
 
     bool operator!=(const child_iterator &other) const {
       return !(*this == other);
+    }
+
+    bool operator <(const child_iterator &other) const {
+      return child < other.child;
     }
 
     child_iterator& operator++() {  // Preincrement
