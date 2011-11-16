@@ -237,6 +237,18 @@ void CursorVisitor::visitFileRegion() {
     visitPreprocessedEntitiesInRegion();
 }
 
+static bool isInLexicalContext(Decl *D, DeclContext *DC) {
+  if (!DC)
+    return false;
+
+  for (DeclContext *DeclDC = D->getLexicalDeclContext();
+         DeclDC; DeclDC = DeclDC->getLexicalParent()) {
+    if (DeclDC == DC)
+      return true;
+  }
+  return false;
+}
+
 void CursorVisitor::visitDeclsFromFileRegion(FileID File,
                                              unsigned Offset, unsigned Length) {
   ASTUnit *Unit = static_cast<ASTUnit *>(TU->TUData);
@@ -270,9 +282,15 @@ void CursorVisitor::visitDeclsFromFileRegion(FileID File,
   assert(!Decls.empty());
 
   bool VisitedAtLeastOnce = false;
+  DeclContext *CurDC = 0;
   SmallVector<Decl *, 16>::iterator DIt = Decls.begin();
   for (SmallVector<Decl *, 16>::iterator DE = Decls.end(); DIt != DE; ++DIt) {
     Decl *D = *DIt;
+
+    if (isInLexicalContext(D, CurDC))
+      continue;
+
+    CurDC = dyn_cast<DeclContext>(D);
 
     // We handle forward decls via ObjCClassDecl.
     if (ObjCInterfaceDecl *InterD = dyn_cast<ObjCInterfaceDecl>(D)) {
@@ -284,6 +302,10 @@ void CursorVisitor::visitDeclsFromFileRegion(FileID File,
           !SM.isInFileID(SM.getFileLoc(InterD->getLocation()), File))
         continue;
     }
+
+    if (TagDecl *TD = dyn_cast<TagDecl>(D))
+      if (!TD->isFreeStanding())
+        continue;
 
     RangeComparisonResult CompRes = RangeCompare(SM, D->getSourceRange(),Range);
     if (CompRes == RangeBefore)

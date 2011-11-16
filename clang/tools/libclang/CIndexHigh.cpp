@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Index_Internal.h"
+#include "CursorVisitor.h"
 #include "CXCursor.h"
 #include "CXSourceLocation.h"
 #include "CXTranslationUnit.h"
@@ -16,6 +16,7 @@
 #include "clang/AST/DeclObjC.h"
 
 using namespace clang;
+using namespace cxcursor;
 
 static void getTopOverriddenMethods(CXTranslationUnit TU,
                                     Decl *D,
@@ -197,7 +198,6 @@ static void findIdRefsInFile(CXTranslationUnit TU, CXCursor declCursor,
                            CXCursorAndRangeVisitor Visitor) {
   assert(clang_isDeclaration(declCursor.kind));
   ASTUnit *Unit = static_cast<ASTUnit*>(TU->TUData);
-  ASTContext &Ctx = Unit->getASTContext();
   SourceManager &SM = Unit->getSourceManager();
 
   FileID FID = SM.translateFile(File);
@@ -211,35 +211,14 @@ static void findIdRefsInFile(CXTranslationUnit TU, CXCursor declCursor,
                         findFileIdRefVisit, &data);
     return;
   }
-  
-  if (FID == SM.getMainFileID() && !Unit->isMainFileAST()) {
-    SourceLocation FileLoc = SM.getLocForStartOfFile(FID);
-    TranslationUnitDecl *TUD = Ctx.getTranslationUnitDecl();
-    CXCursor TUCursor = clang_getTranslationUnitCursor(TU);
-    for (DeclContext::decl_iterator
-           I = TUD->noload_decls_begin(), E = TUD->noload_decls_end();
-         I != E; ++I) {
-      Decl *D = *I;
 
-      SourceRange R = D->getSourceRange();
-      if (R.isInvalid())
-        continue;
-      if (SM.isBeforeInTranslationUnit(R.getEnd(), FileLoc))
-        continue;
-
-      if (TagDecl *TD = dyn_cast<TagDecl>(D))
-        if (!TD->isFreeStanding())
-          continue;
-
-      CXCursor CurCursor = cxcursor::MakeCXCursor(D, TU);
-      findFileIdRefVisit(CurCursor, TUCursor, &data);
-      clang_visitChildren(CurCursor, findFileIdRefVisit, &data);
-    }
-    return;
-  }
-
-  clang_visitChildren(clang_getTranslationUnitCursor(TU),
-                      findFileIdRefVisit, &data);
+  SourceRange Range(SM.getLocForStartOfFile(FID), SM.getLocForEndOfFile(FID));
+  CursorVisitor FindIdRefsVisitor(TU,
+                                  findFileIdRefVisit, &data,
+                                  /*VisitPreprocessorLast=*/true,
+                                  /*VisitIncludedEntities=*/false,
+                                  Range);
+  FindIdRefsVisitor.visitFileRegion();
 }
 
 
