@@ -1,0 +1,4 @@
+module diamond_top { umbrella "diamond_top.h" }
+module diamond_left { umbrella "diamond_left.h" }
+module diamond_right { umbrella "diamond_right.h" }
+module diamond_bottom { umbrella "diamond_bottom.h" }

@@ -214,6 +214,9 @@ public:
     this->BuildingModule = BuildingModule;
   }
   
+  /// \brief Retrieve the path to the module cache.
+  StringRef getModuleCachePath() const { return ModuleCachePath; }
+  
   /// ClearFileInfo - Forget everything we know about headers so far.
   void ClearFileInfo() {
     FileInfo.clear();
@@ -366,6 +369,26 @@ public:
   ///
   /// FIXME: This will need to be generalized for submodules.
   StringRef findModuleForHeader(const FileEntry *File);
+  
+  
+  /// \brief Read the contents of the given module map file.
+  ///
+  /// \param File The module map file.
+  ///
+  /// \param OnlyModule If non-NULL, this will receive the 
+  ///
+  /// \returns true if an error occurred, false otherwise.
+  bool loadModuleMapFile(const FileEntry *File);
+  
+  /// \brief Retrieve a module with the given name.
+  ///
+  /// \param Name The name of the module to retrieve.
+  ///
+  /// \param AllowSearch If true, we're allowed to look for module maps within
+  /// the header search path. Otherwise, the module must already be known.
+  ///
+  /// \returns The module, if found; otherwise, null.
+  ModuleMap::Module *getModule(StringRef Name, bool AllowSearch = true);
   
   unsigned header_file_size() const { return FileInfo.size(); }
 

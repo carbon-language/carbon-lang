@@ -170,4 +170,12 @@ def warn_incompatible_analyzer_plugin_api : Warning<
     InGroup<DiagGroup<"analyzer-incompatible-plugin"> >;
 def note_incompatible_analyzer_plugin_api : Note<
     "current API version is '%0', but plugin was compiled with version '%1'">;
+    
+def err_module_map_not_found : Error<"module map file '%0' not found">, 
+  DefaultFatal;
+def err_missing_module_name : Error<
+  "no module name provided; specify one with -fmodule-name=">, 
+  DefaultFatal;
+def err_missing_module : Error<
+  "no module named '%0' declared in module map file '%1'">, DefaultFatal;
 }

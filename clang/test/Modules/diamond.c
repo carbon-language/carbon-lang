@@ -20,8 +20,9 @@ void test_diamond(int i, float f, double d, char c) {
   lr.left = 17;
 }
 
-// RUN: %clang_cc1 -emit-module -o %T/diamond_top.pcm %S/Inputs/diamond_top.h
-// RUN: %clang_cc1 -fmodule-cache-path %T -fdisable-module-hash -emit-module -o %T/diamond_left.pcm %S/Inputs/diamond_left.h
-// RUN: %clang_cc1 -fmodule-cache-path %T -fdisable-module-hash -emit-module -o %T/diamond_right.pcm %S/Inputs/diamond_right.h
-// RUN: %clang_cc1 -fmodule-cache-path %T -fdisable-module-hash -emit-module -o %T/diamond_bottom.pcm %S/Inputs/diamond_bottom.h
-// RUN: %clang_cc1 -fmodule-cache-path %T -fdisable-module-hash %s -verify
+// RUN: rm -rf %t
+// RUN: %clang_cc1 -emit-module-from-map -fmodule-cache-path %t -fmodule-name=diamond_top %S/Inputs/module.map
+// RUN: %clang_cc1 -emit-module-from-map -fmodule-cache-path %t -fmodule-name=diamond_left %S/Inputs/module.map
+// RUN: %clang_cc1 -emit-module-from-map -fmodule-cache-path %t -fmodule-name=diamond_right %S/Inputs/module.map
+// RUN: %clang_cc1 -emit-module-from-map -fmodule-cache-path %t -fmodule-name=diamond_bottom %S/Inputs/module.map
+// RUN: %clang_cc1 -fmodule-cache-path %t %s -verify

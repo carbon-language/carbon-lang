@@ -9,6 +9,7 @@
 
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/AST/ASTConsumer.h"
+#include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/Pragma.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Parse/Parser.h"
@@ -109,6 +110,98 @@ bool GeneratePCHAction::ComputeASTConsumerArguments(CompilerInstance &CI,
   if (!OS)
     return true;
 
+  OutputFile = CI.getFrontendOpts().OutputFile;
+  return false;
+}
+
+ASTConsumer *GenerateModuleAction::CreateASTConsumer(CompilerInstance &CI,
+                                                     StringRef InFile) {
+  std::string Sysroot;
+  std::string OutputFile;
+  raw_ostream *OS = 0;
+  if (ComputeASTConsumerArguments(CI, InFile, Sysroot, OutputFile, OS))
+    return 0;
+  
+  return new PCHGenerator(CI.getPreprocessor(), OutputFile, /*MakeModule=*/true, 
+                          Sysroot, OS);
+}
+
+bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI, 
+                                                 StringRef Filename) {
+  // Find the module map file.  
+  const FileEntry *ModuleMap = CI.getFileManager().getFile(Filename);
+  if (!ModuleMap)  {
+    CI.getDiagnostics().Report(diag::err_module_map_not_found)
+      << Filename;
+    return false;
+  }
+  
+  // Parse the module map file.
+  HeaderSearch &HS = CI.getPreprocessor().getHeaderSearchInfo();
+  if (HS.loadModuleMapFile(ModuleMap))
+    return false;
+  
+  if (CI.getLangOpts().CurrentModule.empty()) {
+    CI.getDiagnostics().Report(diag::err_missing_module_name);
+    
+    // FIXME: Eventually, we could consider asking whether there was just
+    // a single module described in the module map, and use that as a 
+    // default. Then it would be fairly trivial to just "compile" a module
+    // map with a single module (the common case).
+    return false;
+  }
+  
+  // Dig out the module definition.
+  ModuleMap::Module *Module = HS.getModule(CI.getLangOpts().CurrentModule,
+                                           /*AllowSearch=*/false);
+  if (!Module) {
+    CI.getDiagnostics().Report(diag::err_missing_module)
+      << CI.getLangOpts().CurrentModule << Filename;
+    
+    return false;
+  }
+  
+  // If there is an umbrella header, use it as our actual input file.
+  if (Module->UmbrellaHeader) {
+    // FIXME: Deal with explicit submodule headers, which won't be contained
+    // within the umbrella header.
+    fprintf(stderr, "note: using umbrella header \"%s\"\n", 
+            Module->UmbrellaHeader->getName());
+    setCurrentFile(Module->UmbrellaHeader->getName(), getCurrentFileKind());
+  } else {    
+    // FIXME: Deal with the non-umbrella case, where we have to synthesize
+    // a header to parse.
+    // FIXME: Diagnose, at least for now.
+    return false;
+  }
+  
+  return true;
+}
+
+bool GenerateModuleAction::ComputeASTConsumerArguments(CompilerInstance &CI,
+                                                       StringRef InFile,
+                                                       std::string &Sysroot,
+                                                       std::string &OutputFile,
+                                                       raw_ostream *&OS) {
+  // If no output file was provided, figure out where this module would go
+  // in the module cache.
+  if (CI.getFrontendOpts().OutputFile.empty()) {
+    HeaderSearch &HS = CI.getPreprocessor().getHeaderSearchInfo();
+    llvm::SmallString<256> ModuleFileName(HS.getModuleCachePath());
+    llvm::sys::path::append(ModuleFileName, 
+                            CI.getLangOpts().CurrentModule + ".pcm");
+    CI.getFrontendOpts().OutputFile = ModuleFileName.str();
+  }
+  
+  // We use createOutputFile here because this is exposed via libclang, and we
+  // must disable the RemoveFileOnSignal behavior.
+  // We use a temporary to avoid race conditions.
+  OS = CI.createOutputFile(CI.getFrontendOpts().OutputFile, /*Binary=*/true,
+                           /*RemoveFileOnSignal=*/false, InFile,
+                           /*Extension=*/"", /*useTemporary=*/true);
+  if (!OS)
+    return true;
+  
   OutputFile = CI.getFrontendOpts().OutputFile;
   return false;
 }

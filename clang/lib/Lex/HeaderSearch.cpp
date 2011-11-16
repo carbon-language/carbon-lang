@@ -800,6 +800,46 @@ StringRef HeaderSearch::findModuleForHeader(const FileEntry *File) {
   return StringRef();
 }
 
+bool HeaderSearch::loadModuleMapFile(const FileEntry *File) {
+  const DirectoryEntry *Dir = File->getDir();
+  
+  llvm::DenseMap<const DirectoryEntry *, bool>::iterator KnownDir
+    = DirectoryHasModuleMap.find(Dir);
+  if (KnownDir != DirectoryHasModuleMap.end())
+    return !KnownDir->second;
+  
+  bool Result = ModMap.parseModuleMapFile(File);
+  DirectoryHasModuleMap[Dir] = !Result;
+  return Result;
+}
+
+ModuleMap::Module *HeaderSearch::getModule(StringRef Name, bool AllowSearch) {
+  if (ModuleMap::Module *Module = ModMap.findModule(Name))
+    return Module;
+  
+  if (!AllowSearch)
+    return 0;
+  
+  for (unsigned I = 0, N = SearchDirs.size(); I != N; ++I) {
+    if (!SearchDirs[I].isNormalDir())
+      continue;
+    
+    switch (loadModuleMapFile(SearchDirs[I].getDir())) {
+    case LMM_AlreadyLoaded:
+    case LMM_InvalidModuleMap:
+    case LMM_NoDirectory:
+      break;
+        
+    case LMM_NewlyLoaded:
+      if (ModuleMap::Module *Module = ModMap.findModule(Name))
+        return Module;
+      break;
+    }
+  }
+  
+  return 0;
+}
+
 HeaderSearch::LoadModuleMapResult 
 HeaderSearch::loadModuleMapFile(StringRef DirName) {
   if (const DirectoryEntry *Dir = FileMgr.getDirectory(DirName))

@@ -50,6 +50,7 @@ static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {
   case EmitObj:                return new EmitObjAction();
   case FixIt:                  return new FixItAction();
   case GenerateModule:         return new GeneratePCHAction(true);
+  case GenerateModuleFromMap:  return new GenerateModuleAction;
   case GeneratePCH:            return new GeneratePCHAction(false);
   case GeneratePTH:            return new GeneratePTHAction();
   case InitOnly:               return new InitOnlyAction();
