@@ -115,6 +115,11 @@ static void addObjCARCOptPass(const PassManagerBuilder &Builder, PassManagerBase
     PM.add(createObjCARCOptPass());
 }
 
+static void addAddressSanitizerPass(const PassManagerBuilder &Builder,
+                                    PassManagerBase &PM) {
+  PM.add(createAddressSanitizerPass());
+}
+
 void EmitAssemblyHelper::CreatePasses() {
   unsigned OptLevel = CodeGenOpts.OptimizationLevel;
   CodeGenOptions::InliningMethod Inlining = CodeGenOpts.Inlining;
@@ -140,6 +145,11 @@ void EmitAssemblyHelper::CreatePasses() {
                            addObjCARCExpandPass);
     PMBuilder.addExtension(PassManagerBuilder::EP_ScalarOptimizerLate,
                            addObjCARCOptPass);
+  }
+
+  if (CodeGenOpts.AddressSanitizer) {
+    PMBuilder.addExtension(PassManagerBuilder::EP_ScalarOptimizerLate,
+                           addAddressSanitizerPass);
   }
   
   // Figure out TargetLibraryInfo.

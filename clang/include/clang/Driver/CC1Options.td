@@ -114,6 +114,8 @@ def fdebug_compilation_dir : Separate<"-fdebug-compilation-dir">,
   HelpText<"The compilation directory to embed in the debug info.">;
 def dwarf_debug_flags : Separate<"-dwarf-debug-flags">,
   HelpText<"The string to embed in the Dwarf debug flags record.">;
+def faddress_sanitizer: Flag<"-faddress-sanitizer">,
+  HelpText<"Enable AddressSanitizer instrumentation (memory error detection)">;
 def fforbid_guard_variables : Flag<"-fforbid-guard-variables">,
   HelpText<"Emit an error if a C++ static local initializer would need a guard variable">;
 def g : Flag<"-g">, HelpText<"Generate source level debug information">;

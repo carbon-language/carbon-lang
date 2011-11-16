@@ -1701,6 +1701,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (getToolChain().SupportsProfiling())
     Args.AddLastArg(CmdArgs, options::OPT_pg);
 
+  if (Args.hasFlag(options::OPT_faddress_sanitizer,
+                   options::OPT_fno_address_sanitizer, false))
+    CmdArgs.push_back("-faddress-sanitizer");
+
   // -flax-vector-conversions is default.
   if (!Args.hasFlag(options::OPT_flax_vector_conversions,
                     options::OPT_fno_lax_vector_conversions))
