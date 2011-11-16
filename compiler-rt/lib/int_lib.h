@@ -31,9 +31,13 @@
 # define COMPILER_RT_ABI
 #endif
 
+/* Include the standard compiler builtin headers we use functionality from. */
 #include <limits.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <float.h>
+
+/* Include the system math.h, which we use in a number of places. */
 #include <math.h>
 
 /* If compiling for kernel use, call panic() instead of abort(). */

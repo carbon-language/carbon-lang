@@ -12,8 +12,6 @@
  *===----------------------------------------------------------------------===
  */
 
-#include <float.h>
-
 /* Returns: convert a to a float, rounding toward even. */
 
 /* Assumption: float is a IEEE 32 bit floating point type 

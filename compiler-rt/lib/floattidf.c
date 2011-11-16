@@ -15,7 +15,6 @@
 #if __x86_64
 
 #include "int_lib.h"
-#include <float.h>
 
 /* Returns: convert a to a double, rounding toward even.*/
 
