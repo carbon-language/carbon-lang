@@ -113,19 +113,40 @@ ClangASTImporter::CompleteObjCInterfaceDecl (clang::ObjCInterfaceDecl *interface
     return;
 }
 
+ClangASTImporter::DeclOrigin
+ClangASTImporter::GetDeclOrigin(const clang::Decl *decl)
+{
+    ASTContextMetadataSP context_md = GetContextMetadata(&decl->getASTContext());
+    
+    OriginMap &origins = context_md->m_origins;
+    
+    OriginMap::iterator iter = origins.find(decl);
+    
+    if (iter != origins.end())
+        return iter->second;
+    else
+        return DeclOrigin();
+}
+
 void 
 ClangASTImporter::RegisterNamespaceMap(const clang::NamespaceDecl *decl, 
                                        NamespaceMapSP &namespace_map)
 {
-    m_namespace_maps[decl] = namespace_map;
+    ASTContextMetadataSP context_md = GetContextMetadata(&decl->getASTContext());
+    
+    context_md->m_namespace_maps[decl] = namespace_map;
 }
 
 ClangASTImporter::NamespaceMapSP 
 ClangASTImporter::GetNamespaceMap(const clang::NamespaceDecl *decl)
 {
-    NamespaceMetaMap::iterator iter = m_namespace_maps.find(decl);
+    ASTContextMetadataSP context_md = GetContextMetadata(&decl->getASTContext());
+
+    NamespaceMetaMap &namespace_maps = context_md->m_namespace_maps;
     
-    if (iter != m_namespace_maps.end())
+    NamespaceMetaMap::iterator iter = namespace_maps.find(decl);
+    
+    if (iter != namespace_maps.end())
         return iter->second;
     else
         return NamespaceMapSP();
@@ -134,6 +155,8 @@ ClangASTImporter::GetNamespaceMap(const clang::NamespaceDecl *decl)
 void 
 ClangASTImporter::BuildNamespaceMap(const clang::NamespaceDecl *decl)
 {
+    ASTContextMetadataSP context_md = GetContextMetadata(&decl->getASTContext());
+
     const DeclContext *parent_context = decl->getDeclContext();
     const NamespaceDecl *parent_namespace = dyn_cast<NamespaceDecl>(parent_context);
     NamespaceMapSP parent_map;
@@ -145,11 +168,11 @@ ClangASTImporter::BuildNamespaceMap(const clang::NamespaceDecl *decl)
     
     new_map.reset(new NamespaceMap);
  
-    if (m_map_completer)
+    if (context_md->m_map_completer)
     {
         std::string namespace_string = decl->getDeclName().getAsString();
     
-        m_map_completer->CompleteNamespaceMap (new_map, ConstString(namespace_string.c_str()), parent_map);
+        context_md->m_map_completer->CompleteNamespaceMap (new_map, ConstString(namespace_string.c_str()), parent_map);
     }
     
     RegisterNamespaceMap (decl, new_map);
@@ -158,13 +181,7 @@ ClangASTImporter::BuildNamespaceMap(const clang::NamespaceDecl *decl)
 void 
 ClangASTImporter::PurgeMaps (clang::ASTContext *dst_ast)
 {
-    for (MinionMap::iterator i = m_minions.begin(); i != m_minions.end(); )
-    {
-        if ((*i).first.dst == dst_ast)
-            m_minions.erase(i++);
-        else
-            ++i;
-    }
+    m_metadata_map.erase(dst_ast);
 }
 
 ClangASTImporter::NamespaceMapCompleter::~NamespaceMapCompleter ()
@@ -177,7 +194,9 @@ clang::Decl
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
-    m_master.m_origins[to] = DeclOrigin (m_source_ctx, from);
+    ASTContextMetadataSP context_md = m_master.GetContextMetadata(&to->getASTContext());
+    
+    context_md->m_origins[to] = DeclOrigin (m_source_ctx, from);
  
     if (TagDecl *from_tag_decl = dyn_cast<TagDecl>(from))
     {

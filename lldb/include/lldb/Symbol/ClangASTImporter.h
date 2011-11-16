@@ -84,9 +84,22 @@ public:
                                            NamespaceMapSP &parent_map) const = 0;
     };
     
-    void InstallMapCompleter (NamespaceMapCompleter &completer)
+    void InstallMapCompleter (clang::ASTContext *dst_ctx, NamespaceMapCompleter &completer)
     {
-        m_map_completer = &completer;
+        ASTContextMetadataSP context_md;
+        ContextMetadataMap::iterator context_md_iter = m_metadata_map.find(dst_ctx);
+        
+        if (context_md_iter == m_metadata_map.end())
+        {
+            context_md = ASTContextMetadataSP(new ASTContextMetadata(dst_ctx));
+            m_metadata_map[dst_ctx] = context_md;
+        }
+        else
+        {
+            context_md = context_md_iter->second;
+        }
+        
+        context_md->m_map_completer = &completer;
     }
                            
     NamespaceMapSP GetNamespaceMap (const clang::NamespaceDecl *decl);
@@ -150,61 +163,78 @@ private:
         clang::ASTContext  *m_source_ctx;
     };
     
-    typedef lldb::SharedPtr<Minion>::Type               MinionSP;
+    typedef lldb::SharedPtr<Minion>::Type                           MinionSP;
     
-    struct MinionSpec
+    typedef std::map<clang::ASTContext *, MinionSP>                 MinionMap;
+    
+    typedef std::map<const clang::NamespaceDecl *, NamespaceMapSP>  NamespaceMetaMap;
+    
+    struct ASTContextMetadata
     {
-        clang::ASTContext *dst;
-        clang::ASTContext *src;
-        
-        MinionSpec (clang::ASTContext *_dst,
-                    clang::ASTContext *_src) :
-            dst(_dst),
-            src(_src)
+        ASTContextMetadata(clang::ASTContext *dst_ctx) :
+            m_dst_ctx (dst_ctx),
+            m_minions (),
+            m_origins (),
+            m_namespace_maps (),
+            m_map_completer (NULL)
         {
         }
         
-        bool operator<(const MinionSpec &rhs) const
-        {
-            if (dst < rhs.dst)
-                return true;
-            if (dst == rhs.dst && src < rhs.src)
-                return true;
-            return false;
-        }
+        clang::ASTContext       *m_dst_ctx;
+        MinionMap                m_minions;
+        OriginMap                m_origins;
+        
+        NamespaceMetaMap         m_namespace_maps;
+        NamespaceMapCompleter   *m_map_completer;
     };
     
-    typedef std::map<MinionSpec, MinionSP>     MinionMap;
+    typedef lldb::SharedPtr<ASTContextMetadata>::Type               ASTContextMetadataSP;
+    
+    typedef std::map<const clang::ASTContext *, ASTContextMetadataSP> ContextMetadataMap;
+    
+    ContextMetadataMap      m_metadata_map;
+    
+    ASTContextMetadataSP
+    GetContextMetadata (clang::ASTContext *dst_ctx)
+    {
+        ContextMetadataMap::iterator context_md_iter = m_metadata_map.find(dst_ctx);
+        
+        if (context_md_iter == m_metadata_map.end())
+        {
+            ASTContextMetadataSP context_md = ASTContextMetadataSP(new ASTContextMetadata(dst_ctx));
+            m_metadata_map[dst_ctx] = context_md;
+            return context_md;
+        }
+        else
+        {
+            return context_md_iter->second;
+        }
+    }
     
     MinionSP
-    GetMinion (clang::ASTContext *target_ctx, clang::ASTContext *source_ctx)
+    GetMinion (clang::ASTContext *dst_ctx, clang::ASTContext *src_ctx)
     {
-        MinionSpec spec(target_ctx, source_ctx);
+        ASTContextMetadataSP context_md = GetContextMetadata(dst_ctx);
         
-        if (m_minions.find(spec) == m_minions.end())
-            m_minions[spec] = MinionSP(new Minion(*this, target_ctx, source_ctx));
+        MinionMap &minions = context_md->m_minions;
+        MinionMap::iterator minion_iter = minions.find(src_ctx);
         
-        return m_minions[spec];
+        if (minion_iter == minions.end())
+        {
+            MinionSP minion = MinionSP(new Minion(*this, dst_ctx, src_ctx));
+            minions[src_ctx] = minion;
+            return minion;
+        }
+        else
+        {
+            return minion_iter->second;
+        }       
     }
     
     DeclOrigin
-    GetDeclOrigin (const clang::Decl *decl)
-    {
-        OriginMap::iterator iter = m_origins.find(decl);
+    GetDeclOrigin (const clang::Decl *decl);
         
-        if (iter != m_origins.end())
-            return iter->second;
-        else
-            return DeclOrigin();
-    }
-    
-    typedef std::map <const clang::NamespaceDecl *, NamespaceMapSP> NamespaceMetaMap;
-    
-    NamespaceMetaMap        m_namespace_maps;
-    NamespaceMapCompleter  *m_map_completer;
     clang::FileManager      m_file_manager;
-    MinionMap               m_minions;
-    OriginMap               m_origins;
 };
     
 }
