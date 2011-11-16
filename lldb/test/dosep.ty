@@ -29,7 +29,6 @@ def walk_and_invoke(test_root, dotest_options):
             os.system(command)
 
 def main():
-    """Read the root dir and the path spec, invoke lldb-disasm.py on the file."""
     test_root = sys.path[0]
 
     parser = OptionParser(usage="""\
