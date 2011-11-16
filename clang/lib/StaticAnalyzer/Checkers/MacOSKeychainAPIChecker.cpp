@@ -440,16 +440,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
 void MacOSKeychainAPIChecker::checkPostStmt(const CallExpr *CE,
                                             CheckerContext &C) const {
   const ProgramState *State = C.getState();
-  const Expr *Callee = CE->getCallee();
-  SVal L = State->getSVal(Callee);
-
-  const FunctionDecl *funDecl = L.getAsFunctionDecl();
-  if (!funDecl)
-    return;
-  IdentifierInfo *funI = funDecl->getIdentifier();
-  if (!funI)
-    return;
-  StringRef funName = funI->getName();
+  StringRef funName = C.getCalleeName(CE);
 
   // If a value has been allocated, add it to the set for tracking.
   unsigned idx = getTrackedFunctionIndex(funName, true);

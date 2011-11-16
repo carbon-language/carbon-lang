@@ -142,6 +142,21 @@ public:
     Eng.getBugReporter().EmitReport(R);
   }
 
+  /// \brief Get the name of the called function (path-sensitive).
+  StringRef getCalleeName(const CallExpr *CE) {
+    const ProgramState *State = getState();
+    const Expr *Callee = CE->getCallee();
+    SVal L = State->getSVal(Callee);
+
+    const FunctionDecl *funDecl = L.getAsFunctionDecl();
+    if (!funDecl)
+      return StringRef();
+    IdentifierInfo *funI = funDecl->getIdentifier();
+    if (!funI)
+      return StringRef();
+    return funI->getName();
+  }
+
 private:
   ExplodedNode *addTransitionImpl(const ProgramState *State,
                                  bool MarkAsSink,
