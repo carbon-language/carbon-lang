@@ -321,6 +321,7 @@ my %CompileOptionMap = (
   '-nostdinc' => 0,
   '-fblocks' => 0,
   '-fno-builtin' => 0,
+  '-fobjc-arc' => 0,
   '-fobjc-gc-only' => 0,
   '-fobjc-gc' => 0,
   '-ffreestanding' => 0,
