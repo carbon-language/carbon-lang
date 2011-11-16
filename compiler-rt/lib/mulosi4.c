@@ -13,7 +13,6 @@
  */
 
 #include "int_lib.h"
-#include <stdlib.h>
 
 /* Returns: a * b */
 

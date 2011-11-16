@@ -10,7 +10,6 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
 
 #include "int_lib.h"
 

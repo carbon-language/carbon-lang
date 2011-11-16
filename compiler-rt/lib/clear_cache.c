@@ -8,8 +8,6 @@
  * ===----------------------------------------------------------------------===
  */
 
-#include <stdlib.h>
-
 #if __APPLE__
   #include <libkern/OSCacheControl.h>
 #endif
