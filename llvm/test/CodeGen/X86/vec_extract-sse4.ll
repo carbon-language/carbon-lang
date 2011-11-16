@@ -2,7 +2,7 @@
 ; RUN: not grep extractps   %t
 ; RUN: not grep pextrd      %t
 ; RUN: not grep pshufd  %t
-; RUN: grep movss   %t | count 2
+; RUN: not grep movss   %t
 
 define void @t1(float* %R, <4 x float>* %P1) nounwind {
 	%X = load <4 x float>* %P1

@@ -6936,10 +6936,23 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
                            DAG.getConstant(PtrOff, PtrType));
     }
 
-    return DAG.getLoad(LVT, N->getDebugLoc(), LN0->getChain(), NewPtr,
-                       LN0->getPointerInfo().getWithOffset(PtrOff),
-                       LN0->isVolatile(), LN0->isNonTemporal(), 
-                       LN0->isInvariant(), Align);
+    // The replacement we need to do here is a little tricky: we need to
+    // replace an extractelement of a load with a load.
+    // Use ReplaceAllUsesOfValuesWith to do the replacement.
+    SDValue Load = DAG.getLoad(LVT, N->getDebugLoc(), LN0->getChain(), NewPtr,
+                               LN0->getPointerInfo().getWithOffset(PtrOff),
+                               LN0->isVolatile(), LN0->isNonTemporal(), 
+                               LN0->isInvariant(), Align);
+    WorkListRemover DeadNodes(*this);
+    SDValue From[] = { SDValue(N, 0), SDValue(LN0,1) };
+    SDValue To[] = { Load.getValue(0), Load.getValue(1) };
+    DAG.ReplaceAllUsesOfValuesWith(From, To, 2, &DeadNodes);
+    // Since we're explcitly calling ReplaceAllUses, add the new node to the
+    // worklist explicitly as well.
+    AddToWorkList(Load.getNode());
+    // Make sure to revisit this node to clean it up; it will usually be dead.
+    AddToWorkList(N);
+    return SDValue(N, 0);
   }
 
   return SDValue();
