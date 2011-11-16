@@ -580,6 +580,7 @@ void SourceManager::overrideFileContents(const FileEntry *SourceFile,
   assert(IR && "getOrCreateContentCache() cannot return NULL");
 
   const_cast<SrcMgr::ContentCache *>(IR)->replaceBuffer(Buffer, DoNotFree);
+  const_cast<SrcMgr::ContentCache *>(IR)->BufferOverridden = true;
 }
 
 void SourceManager::overrideFileContents(const FileEntry *SourceFile,

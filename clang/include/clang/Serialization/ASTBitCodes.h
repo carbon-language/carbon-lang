@@ -452,7 +452,8 @@ namespace clang {
       SM_SLOC_BUFFER_ENTRY = 2,
       /// \brief Describes a blob that contains the data for a buffer
       /// entry. This kind of record always directly follows a
-      /// SM_SLOC_BUFFER_ENTRY record.
+      /// SM_SLOC_BUFFER_ENTRY record or a SM_SLOC_FILE_ENTRY with an
+      /// overridden buffer.
       SM_SLOC_BUFFER_BLOB = 3,
       /// \brief Describes a source location entry (SLocEntry) for a
       /// macro expansion.

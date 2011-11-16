@@ -102,8 +102,15 @@ namespace SrcMgr {
 
     /// NumLines - The number of lines in this ContentCache.  This is only valid
     /// if SourceLineCache is non-null.
-    unsigned NumLines;
+    unsigned NumLines : 31;
 
+    /// \brief Indicates whether the buffer itself was provided to override
+    /// the actual file contents.
+    ///
+    /// When true, the original entry may be a virtual file that does not
+    /// exist.
+    unsigned BufferOverridden : 1;
+    
     /// getBuffer - Returns the memory buffer for the associated content.
     ///
     /// \param Diag Object through which diagnostics will be emitted if the
