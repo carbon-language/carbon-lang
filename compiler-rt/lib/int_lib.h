@@ -37,20 +37,14 @@
 #include <stdbool.h>
 #include <float.h>
 
-/* If compiling for kernel use, call panic() instead of abort(). */
-#ifdef KERNEL_USE
-extern void panic (const char *, ...);
-#define compilerrt_abort() \
-  panic("%s:%d: abort in %s", __FILE__, __LINE__, __FUNCTION__)
-#else
-#define compilerrt_abort() abort()
-#endif
-
 #if !defined(INFINITY) && defined(HUGE_VAL)
 #define INFINITY HUGE_VAL
 #endif /* INFINITY */
 
 /* Include the commonly used internal type definitions. */
 #include "int_types.h"
+
+/* Include internal utility function declarations. */
+#include "int_util.h"
 
 #endif /* INT_LIB_H */

@@ -164,6 +164,7 @@ define PerPlatformConfigArch_template
 $(call Set,Tmp.Arch,$(1))
 $(call Set,Tmp.ObjPath,$(ProjObjRoot)/$(Tmp.Name)/$(Tmp.Config)/$(Tmp.Arch))
 $(call Set,Tmp.Functions,$(strip \
+  $(AlwaysRequiredModules) \
   $(call GetCNAVar,FUNCTIONS,$(Tmp.Key),$(Tmp.Config),$(Tmp.Arch))))
 $(call Set,Tmp.Optimized,$(strip \
   $(call GetCNAVar,OPTIMIZED,$(Tmp.Key),$(Tmp.Config),$(Tmp.Arch))))

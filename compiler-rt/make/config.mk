@@ -8,6 +8,11 @@ OS := $(shell uname)
 ProjSrcRoot := $(shell pwd)
 ProjObjRoot := $(ProjSrcRoot)
 
+# The list of modules which are required to be built into every library. This
+# should only be used for internal utilities which could be used in any other
+# module. Any other cases the platform should be allowed to opt-in to.
+AlwaysRequiredModules := int_util
+
 ###
 # Tool configuration variables.
 
