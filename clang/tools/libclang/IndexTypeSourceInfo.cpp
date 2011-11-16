@@ -36,6 +36,8 @@ public:
 
   bool VisitTagTypeLoc(TagTypeLoc TL) {
     TagDecl *D = TL.getDecl();
+    if (D->getParentFunctionOrMethod())
+      return true;
 
     if (TL.isDefinition()) {
       IndexCtx.indexTagDecl(D);

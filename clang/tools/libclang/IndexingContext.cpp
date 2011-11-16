@@ -283,6 +283,10 @@ void IndexingContext::handleReference(const NamedDecl *D, SourceLocation Loc,
                                       const DeclContext *DC,
                                       const Expr *E,
                                       CXIdxEntityRefKind Kind) {
+  if (!D)
+    return;
+  if (D->getParentFunctionOrMethod())
+    return;
   if (Loc.isInvalid())
     return;
   if (!CB.indexEntityReference)

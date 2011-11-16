@@ -32,35 +32,18 @@ public:
   }
 
   bool VisitDeclRefExpr(DeclRefExpr *E) {
-    const NamedDecl *D = E->getDecl();
-    if (!D)
-      return true;
-    if (D->getParentFunctionOrMethod())
-      return true;
-    
-    IndexCtx.handleReference(D, E->getLocation(), 0, ParentDC, E);
+    IndexCtx.handleReference(E->getDecl(), E->getLocation(), 0, ParentDC, E);
     return true;
   }
 
   bool VisitMemberExpr(MemberExpr *E) {
-    const NamedDecl *D = E->getMemberDecl();
-    if (!D)
-      return true;
-    if (D->getParentFunctionOrMethod())
-      return true;
-    
-    IndexCtx.handleReference(D, E->getMemberLoc(), 0, ParentDC, E);
+    IndexCtx.handleReference(E->getMemberDecl(), E->getMemberLoc(), 0, ParentDC,
+                             E);
     return true;
   }
 
   bool VisitObjCIvarRefExpr(ObjCIvarRefExpr *E) {
-    const NamedDecl *D = E->getDecl();
-    if (!D)
-      return true;
-    if (D->getParentFunctionOrMethod())
-      return true;
-    
-    IndexCtx.handleReference(D, E->getLocation(), 0, ParentDC, E);
+    IndexCtx.handleReference(E->getDecl(), E->getLocation(), 0, ParentDC, E);
     return true;
   }
 
