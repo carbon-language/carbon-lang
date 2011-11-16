@@ -4644,7 +4644,6 @@ processInstruction(MCInst &Inst,
   case ARM::LSLi:
   case ARM::RORi: {
     ARM_AM::ShiftOpc ShiftTy;
-    unsigned Amt = Inst.getOperand(2).getImm();
     switch(Inst.getOpcode()) {
     default: llvm_unreachable("unexpected opcode!");
     case ARM::ASRi: ShiftTy = ARM_AM::asr; break;
@@ -4653,6 +4652,7 @@ processInstruction(MCInst &Inst,
     case ARM::RORi: ShiftTy = ARM_AM::ror; break;
     }
     // A shift by zero is a plain MOVr, not a MOVsi.
+    unsigned Amt = Inst.getOperand(2).getImm();
     unsigned Opc = Amt == 0 ? ARM::MOVr : ARM::MOVsi;
     unsigned Shifter = ARM_AM::getSORegOpc(ShiftTy, Amt);
     MCInst TmpInst;
@@ -4664,6 +4664,19 @@ processInstruction(MCInst &Inst,
     TmpInst.addOperand(Inst.getOperand(3)); // CondCode
     TmpInst.addOperand(Inst.getOperand(4));
     TmpInst.addOperand(Inst.getOperand(5)); // cc_out
+    Inst = TmpInst;
+    return true;
+  }
+  case ARM::RRXi: {
+    unsigned Shifter = ARM_AM::getSORegOpc(ARM_AM::rrx, 0);
+    MCInst TmpInst;
+    TmpInst.setOpcode(ARM::MOVsi);
+    TmpInst.addOperand(Inst.getOperand(0)); // Rd
+    TmpInst.addOperand(Inst.getOperand(1)); // Rn
+    TmpInst.addOperand(MCOperand::CreateImm(Shifter)); // Shift value and ty
+    TmpInst.addOperand(Inst.getOperand(2)); // CondCode
+    TmpInst.addOperand(Inst.getOperand(3));
+    TmpInst.addOperand(Inst.getOperand(4)); // cc_out
     Inst = TmpInst;
     return true;
   }
