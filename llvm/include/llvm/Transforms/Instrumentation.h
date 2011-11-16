@@ -31,6 +31,9 @@ ModulePass *createPathProfilerPass();
 ModulePass *createGCOVProfilerPass(bool EmitNotes = true, bool EmitData = true,
                                    bool Use402Format = false);
 
+// Insert AddressSanitizer (address sanity checking) instrumentation
+ModulePass *createAddressSanitizerPass();
+
 } // End llvm namespace
 
 #endif

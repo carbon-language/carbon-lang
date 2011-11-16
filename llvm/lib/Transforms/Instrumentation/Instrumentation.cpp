@@ -24,6 +24,7 @@ void llvm::initializeInstrumentation(PassRegistry &Registry) {
   initializeOptimalEdgeProfilerPass(Registry);
   initializePathProfilerPass(Registry);
   initializeGCOVProfilerPass(Registry);
+  initializeAddressSanitizerPass(Registry);
 }
 
 /// LLVMInitializeInstrumentation - C binding for
