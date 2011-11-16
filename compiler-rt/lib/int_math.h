@@ -21,11 +21,28 @@
 #ifndef INT_MATH_H
 #define INT_MATH_H
 
+#ifndef __has_builtin
+#  define  __has_builtin(x) 0
+#endif
+
 #define CRT_INFINITY __builtin_huge_valf()
 
-#define crt_isfinite(x) __builtin_isfinite((x))
 #define crt_isinf(x) __builtin_isinf((x))
 #define crt_isnan(x) __builtin_isnan((x))
+
+/* Define crt_isfinite in terms of the builtin if available, otherwise provide
+ * an alternate version in terms of our other functions. This supports some
+ * versions of GCC which didn't have __builtin_isfinite.
+ */
+#if __has_builtin(__builtin_isfinite)
+#  define crt_isfinite(x) __builtin_isfinite((x))
+#else
+#  define crt_isfinite(x) \
+  __extension__(({ \
+      __typeof((x)) x_ = (x); \
+      !crt_isinf(x_) && !crt_isnan(x_); \
+    }))
+#endif
 
 #define crt_copysign(x, y) __builtin_copysign((x), (y))
 #define crt_copysignf(x, y) __builtin_copysignf((x), (y))
