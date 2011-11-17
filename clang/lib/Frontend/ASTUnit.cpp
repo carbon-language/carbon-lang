@@ -1877,7 +1877,7 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   AST.reset(new ASTUnit(false));
   ConfigureDiags(Diags, ArgBegin, ArgEnd, *AST, CaptureDiagnostics);
   AST->Diagnostics = Diags;
-
+  Diags = 0; // Zero out now to ease cleanup during crash recovery.
   AST->FileSystemOpts = CI->getFileSystemOpts();
   AST->FileMgr = new FileManager(AST->FileSystemOpts);
   AST->OnlyLocalDecls = OnlyLocalDecls;
@@ -1887,17 +1887,12 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   AST->NumStoredDiagnosticsFromDriver = StoredDiagnostics.size();
   AST->StoredDiagnostics.swap(StoredDiagnostics);
   AST->Invocation = CI;
+  CI = 0; // Zero out now to ease cleanup during crash recovery.
   AST->NestedMacroExpansions = NestedMacroExpansions;
   
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<ASTUnit>
     ASTUnitCleanup(AST.get());
-  llvm::CrashRecoveryContextCleanupRegistrar<CompilerInvocation,
-    llvm::CrashRecoveryContextReleaseRefCleanup<CompilerInvocation> >
-    CICleanup(CI.getPtr());
-  llvm::CrashRecoveryContextCleanupRegistrar<DiagnosticsEngine,
-    llvm::CrashRecoveryContextReleaseRefCleanup<DiagnosticsEngine> >
-    DiagCleanup(Diags.getPtr());
 
   return AST->LoadFromCompilerInvocation(PrecompilePreamble) ? 0 : AST.take();
 }
