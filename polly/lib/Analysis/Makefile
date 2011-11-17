@@ -6,6 +6,7 @@
 LEVEL=../..
 
 LIBRARYNAME=pollyanalysis
+USEDLIBS = pollysupport.a
 BUILD_ARCHIVE = 1
 
 CPP.Flags += $(POLLY_INC)
