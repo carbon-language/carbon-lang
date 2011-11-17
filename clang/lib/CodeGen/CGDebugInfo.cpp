@@ -851,7 +851,7 @@ CGDebugInfo::CreateCXXMemberFunction(const CXXMethodDecl *Method,
                           Virtuality, VIndex, ContainingType,
                           Flags, CGM.getLangOptions().Optimize);
   
-  SPCache[Method] = llvm::WeakVH(SP);
+  SPCache[Method->getCanonicalDecl()] = llvm::WeakVH(SP);
 
   return SP;
 }
@@ -1690,7 +1690,7 @@ llvm::DISubprogram CGDebugInfo::getFunctionDeclaration(const Decl *D) {
   getContextDescriptor(cast<Decl>(D->getDeclContext()));
 
   llvm::DenseMap<const FunctionDecl *, llvm::WeakVH>::iterator
-    MI = SPCache.find(FD);
+    MI = SPCache.find(FD->getCanonicalDecl());
   if (MI != SPCache.end()) {
     llvm::DISubprogram SP(dyn_cast_or_null<llvm::MDNode>(&*MI->second));
     if (SP.isSubprogram() && !llvm::DISubprogram(SP).isDefinition())
@@ -1701,7 +1701,7 @@ llvm::DISubprogram CGDebugInfo::getFunctionDeclaration(const Decl *D) {
          E = FD->redecls_end(); I != E; ++I) {
     const FunctionDecl *NextFD = *I;
     llvm::DenseMap<const FunctionDecl *, llvm::WeakVH>::iterator
-      MI = SPCache.find(NextFD);
+      MI = SPCache.find(NextFD->getCanonicalDecl());
     if (MI != SPCache.end()) {
       llvm::DISubprogram SP(dyn_cast_or_null<llvm::MDNode>(&*MI->second));
       if (SP.isSubprogram() && !llvm::DISubprogram(SP).isDefinition())
@@ -1759,7 +1759,7 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     // If there is a DISubprogram for this function available then use it.
     llvm::DenseMap<const FunctionDecl *, llvm::WeakVH>::iterator
-      FI = SPCache.find(FD);
+      FI = SPCache.find(FD->getCanonicalDecl());
     if (FI != SPCache.end()) {
       llvm::DIDescriptor SP(dyn_cast_or_null<llvm::MDNode>(&*FI->second));
       if (SP.isSubprogram() && llvm::DISubprogram(SP).isDefinition()) {
