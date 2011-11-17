@@ -35,7 +35,7 @@ namespace SCEVType {
 /// @brief The result the validator returns for a SCEV expression.
 class ValidatorResult {
   /// @brief The type of the expression
-  SCEVType::TYPE type;
+  SCEVType::TYPE Type;
 
   /// @brief The set of Parameters in the expression.
   std::vector<const SCEV*> Parameters;
@@ -43,40 +43,40 @@ class ValidatorResult {
 public:
 
   /// @brief Create an invalid result.
-  ValidatorResult() : type(SCEVType::INVALID) {};
+  ValidatorResult() : Type(SCEVType::INVALID) {};
 
   /// @brief The copy constructor
-  ValidatorResult(const ValidatorResult &vres) {
-    type = vres.type;
-    Parameters = vres.Parameters;
+  ValidatorResult(const ValidatorResult &Source) {
+    Type = Source.Type;
+    Parameters = Source.Parameters;
   };
 
   /// @brief Construct a result with a certain type and no parameters.
-  ValidatorResult(SCEVType::TYPE type) : type(type) {};
+  ValidatorResult(SCEVType::TYPE Type) : Type(Type) {};
 
   /// @brief Construct a result with a certain type and a single parameter.
-  ValidatorResult(SCEVType::TYPE type, const SCEV *Expr) : type(type) {
+  ValidatorResult(SCEVType::TYPE Type, const SCEV *Expr) : Type(Type) {
     Parameters.push_back(Expr);
   };
 
   /// @brief Is the analyzed SCEV constant during the execution of the SCoP.
   bool isConstant() {
-    return type == SCEVType::INT || type == SCEVType::PARAM;
+    return Type == SCEVType::INT || Type == SCEVType::PARAM;
   }
 
   /// @brief Is the analyzed SCEV valid.
   bool isValid() {
-    return type != SCEVType::INVALID;
+    return Type != SCEVType::INVALID;
   }
 
-  /// @brief Is the analyzed SCEV of type IV.
+  /// @brief Is the analyzed SCEV of Type IV.
   bool isIV() {
-    return type == SCEVType::IV;
+    return Type == SCEVType::IV;
   }
 
-  /// @brief Is the analyzed SCEV of type INT.
+  /// @brief Is the analyzed SCEV of Type INT.
   bool isINT() {
-    return type == SCEVType::INT;
+    return Type == SCEVType::INT;
   }
 
   /// @brief Get the parameters of this validator result.
@@ -93,13 +93,12 @@ public:
 
   /// @brief Merge a result.
   ///
-  /// This means to merge the parameters and to set the type to the most
-  /// specific type that matches both.
+  /// This means to merge the parameters and to set the Type to the most
+  /// specific Type that matches both.
   void merge(class ValidatorResult &ToMerge) {
-    type = std::max(type, ToMerge.type);
+    Type = std::max(Type, ToMerge.Type);
     addParamsFrom(ToMerge);
   }
-
 };
 
 /// Check if a SCEV is valid in a SCoP.
