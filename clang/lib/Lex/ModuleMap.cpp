@@ -127,6 +127,34 @@ ModuleMap::Module *ModuleMap::findModule(StringRef Name) {
   return 0;
 }
 
+ModuleMap::Module *
+ModuleMap::inferFrameworkModule(StringRef ModuleName, 
+                                const DirectoryEntry *FrameworkDir) {
+  // Check whether we've already found this module.
+  if (Module *Module = findModule(ModuleName))
+    return Module;
+  
+  // Look for an umbrella header.
+  llvm::SmallString<128> UmbrellaName = StringRef(FrameworkDir->getName());
+  llvm::sys::path::append(UmbrellaName, "Headers");
+  llvm::sys::path::append(UmbrellaName, ModuleName + ".h");
+  const FileEntry *UmbrellaHeader
+    = SourceMgr->getFileManager().getFile(UmbrellaName);
+  
+  // FIXME: If there's no umbrella header, we could probably scan the
+  // framework to load *everything*. But, it's not clear that this is a good
+  // idea.
+  if (!UmbrellaHeader)
+    return 0;
+  
+  Module *Result = new Module(ModuleName, SourceLocation());
+  Result->UmbrellaHeader = UmbrellaHeader;
+  Headers[UmbrellaHeader] = Result;
+  UmbrellaDirs[FrameworkDir] = Result;
+  Modules[ModuleName] = Result;
+  return Result;
+}
+
 static void indent(llvm::raw_ostream &OS, unsigned Spaces) {
   OS << std::string(' ', Spaces);
 }

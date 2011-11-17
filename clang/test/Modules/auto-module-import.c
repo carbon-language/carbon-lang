@@ -1,6 +1,6 @@
 
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -x objective-c -fmodule-cache-path %t -fauto-module-import -F %S/Inputs -verify %s 
+// RUN: %clang_cc1 -x objective-c -fmodule-cache-path %t -fauto-module-import -F %S/Inputs %s -verify
 
 #include <DependsOnModule/DependsOnModule.h>
 

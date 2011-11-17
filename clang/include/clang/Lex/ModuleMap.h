@@ -137,6 +137,11 @@ public:
   /// \returns The named module, if known; otherwise, returns null.
   Module *findModule(StringRef Name);
   
+  /// \brief Infer the contents of a framework module map from the given
+  /// framework directory.
+  Module *inferFrameworkModule(StringRef ModuleName, 
+                               const DirectoryEntry *FrameworkDir);
+                               
   /// \brief Parse the given module map file, and record any modules we 
   /// encounter.
   ///

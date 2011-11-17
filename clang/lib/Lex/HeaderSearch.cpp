@@ -311,7 +311,8 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(
     FrameworkName.push_back('/');
 
   // FrameworkName = "/System/Library/Frameworks/Cocoa"
-  FrameworkName.append(Filename.begin(), Filename.begin()+SlashPos);
+  StringRef ModuleName(Filename.begin(), SlashPos);
+  FrameworkName += ModuleName;
 
   // FrameworkName = "/System/Library/Frameworks/Cocoa.framework/"
   FrameworkName += ".framework/";
@@ -337,6 +338,18 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(
     RelativePath->append(Filename.begin()+SlashPos+1, Filename.end());
   }
 
+  // If we're allowed to look for modules, try to load or create the module
+  // corresponding to this framework.
+  ModuleMap::Module *Module = 0;
+  if (SuggestedModule) {
+    if (const DirectoryEntry *FrameworkDir
+                                    = FileMgr.getDirectory(FrameworkName)) {
+      if ((Module = HS.getFrameworkModule(ModuleName, FrameworkDir)) &&
+          Module->Name == BuildingModule)
+        Module = 0;
+    }
+  }
+  
   // Check "/System/Library/Frameworks/Cocoa.framework/Headers/file.h"
   unsigned OrigSize = FrameworkName.size();
 
@@ -348,16 +361,16 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(
     SearchPath->append(FrameworkName.begin(), FrameworkName.end()-1);
   }
 
-  /// Determine whether this is the module we're building or not.
-  bool AutomaticImport = SuggestedModule &&
-    (BuildingModule != StringRef(Filename.begin(), SlashPos)) &&
+  // Determine whether this is the module we're building or not.
+  // FIXME: Do we still need the ".." hack?
+  bool AutomaticImport = Module &&
     !Filename.substr(SlashPos + 1).startswith("..");
   
   FrameworkName.append(Filename.begin()+SlashPos+1, Filename.end());
   if (const FileEntry *FE = FileMgr.getFile(FrameworkName.str(),
                                             /*openFile=*/!AutomaticImport)) {
     if (AutomaticImport)
-      *SuggestedModule = StringRef(Filename.begin(), SlashPos);
+      *SuggestedModule = Module->Name;
     return FE;
   }
 
@@ -372,7 +385,7 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(
   const FileEntry *FE = FileMgr.getFile(FrameworkName.str(), 
                                         /*openFile=*/!AutomaticImport);
   if (FE && AutomaticImport)
-    *SuggestedModule = StringRef(Filename.begin(), SlashPos);
+    *SuggestedModule = Module->Name;
   return FE;
 }
 
@@ -839,6 +852,29 @@ ModuleMap::Module *HeaderSearch::getModule(StringRef Name, bool AllowSearch) {
   
   return 0;
 }
+  
+ModuleMap::Module *HeaderSearch::getFrameworkModule(StringRef Name, 
+                                                    const DirectoryEntry *Dir) {
+  if (ModuleMap::Module *Module = ModMap.findModule(Name))
+    return Module;
+  
+  // Try to load a module map file.
+  switch (loadModuleMapFile(Dir)) {
+  case LMM_InvalidModuleMap:
+    break;
+    
+  case LMM_AlreadyLoaded:
+  case LMM_NoDirectory:
+    return 0;
+    
+  case LMM_NewlyLoaded:
+    return ModMap.findModule(Name);
+  }
+  
+  // Try to infer a module map.
+  return ModMap.inferFrameworkModule(Name, Dir);
+}
+
 
 HeaderSearch::LoadModuleMapResult 
 HeaderSearch::loadModuleMapFile(StringRef DirName) {

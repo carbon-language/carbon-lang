@@ -389,6 +389,20 @@ public:
   ///
   /// \returns The module, if found; otherwise, null.
   ModuleMap::Module *getModule(StringRef Name, bool AllowSearch = true);
+
+  /// \brief Retrieve a module with the given name, which may be part of the
+  /// given framework.
+  ///
+  /// \param Name The name of the module to retrieve.
+  ///
+  /// \param Dir The framework directory (e.g., ModuleName.framework).
+  ///
+  /// \returns The module, if found; otherwise, null.
+  ModuleMap::Module *getFrameworkModule(StringRef Name, 
+                                        const DirectoryEntry *Dir);
+
+  /// \brief Retrieve the module map.
+  ModuleMap &getModuleMap() { return ModMap; }
   
   unsigned header_file_size() const { return FileInfo.size(); }
 
