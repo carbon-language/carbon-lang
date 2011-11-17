@@ -4346,7 +4346,7 @@ def err_only_constructors_take_base_inits : Error<
 def err_multiple_mem_initialization : Error <
   "multiple initializations given for non-static member %0">;
 def err_multiple_mem_union_initialization : Error <
-  "initializing multiple members of anonymous union">;
+  "initializing multiple members of union">;
 def err_multiple_base_initialization : Error <
   "multiple initializations given for base %0">;
 

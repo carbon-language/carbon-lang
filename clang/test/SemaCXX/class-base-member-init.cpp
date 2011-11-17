@@ -69,8 +69,8 @@ namespace test4 {
     };
 
     A(char _) : a(0), b(0) {}
-    A(short _) : a(0), c(0) {} // expected-error {{initializing multiple members of anonymous union}} expected-note {{previous initialization is here}}
-    A(int _) : d(0), e(0) {} // expected-error {{initializing multiple members of anonymous union}} expected-note {{previous initialization is here}}
-    A(long _) : a(0), d(0) {} // expected-error {{initializing multiple members of anonymous union}} expected-note {{previous initialization is here}}
+    A(short _) : a(0), c(0) {} // expected-error {{initializing multiple members of union}} expected-note {{previous initialization is here}}
+    A(int _) : d(0), e(0) {} // expected-error {{initializing multiple members of union}} expected-note {{previous initialization is here}}
+    A(long _) : a(0), d(0) {} // expected-error {{initializing multiple members of union}} expected-note {{previous initialization is here}}
   };
 }

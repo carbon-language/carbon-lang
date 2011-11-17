@@ -3065,11 +3065,9 @@ bool CheckRedundantUnionInit(Sema &S,
                              RedundantUnionMap &Unions) {
   FieldDecl *Field = Init->getAnyMember();
   RecordDecl *Parent = Field->getParent();
-  if (!Parent->isAnonymousStructOrUnion())
-    return false;
-
   NamedDecl *Child = Field;
-  do {
+
+  while (Parent->isAnonymousStructOrUnion() || Parent->isUnion()) {
     if (Parent->isUnion()) {
       UnionEntry &En = Unions[Parent];
       if (En.first && En.first != Child) {
@@ -3085,11 +3083,13 @@ bool CheckRedundantUnionInit(Sema &S,
         En.first = Child;
         En.second = Init;
       }
+      if (!Parent->isAnonymousStructOrUnion())
+        return false;
     }
 
     Child = Parent;
     Parent = cast<RecordDecl>(Parent->getDeclContext());
-  } while (Parent->isAnonymousStructOrUnion());
+  }
 
   return false;
 }

@@ -16,14 +16,17 @@ struct S {
 } s(0);
 
 union U {
-  int a = 0;
+  int a = 0; // desired-note 5 {{previous initialization is here}}
   char b = 'x';
 
   // FIXME: these should all be rejected
-  U() {} // desired-error {{at most one member of a union may be initialized}}
-  U(int) : a(1) {} // desired-error {{at most one member of a union may be initialized}}
-  U(char) : b('y') {} // desired-error {{at most one member of a union may be initialized}}
-  U(double) : a(1), b('y') {} // desired-error {{at most one member of a union may be initialized}}
+  U() {} // desired-error {{initializing multiple members of union}}
+  U(int) : a(1) {} // desired-error {{initializing multiple members of union}}
+  U(char) : b('y') {} // desired-error {{initializing multiple members of union}}
+  // this expected note should be removed & the note should appear on the 
+  // declaration of 'a' when this set of cases is handled correctly.
+  U(double) : a(1), // expected-note{{previous initialization is here}} desired-error {{initializing multiple members of union}}
+              b('y') {} // expected-error{{initializing multiple members of union}}
 };
 
 // PR10954: variant members do not acquire an implicit initializer.
