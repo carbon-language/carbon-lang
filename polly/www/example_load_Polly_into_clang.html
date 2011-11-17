@@ -15,37 +15,49 @@
 <h1>Load Polly into clang and automatically run it at -O3</h1>
 <!--=====================================================================-->
 
-<p>Warning: This example makes it very easy to use Polly. Still, please be aware
-that Polly is a young research project. It is expected to crash, produce
-invalid code or to hang in complex calculations even for simple examples. In
-case you see such a problem, please check the <a href="bugs.html">Bug
-database</a> and consider reporting the bug.
-<h2>Compiling code with Polly</h2>
-
-To compile code with Polly you only need to add <b>-Xclang -load -Xclang
-${POLLY_BUILD_DIR}/lib/LLVMPolly.so</b> to your command line or your CFLAGS and
-Polly is automatically executed at -O3.
-
+<p><b>Warning:</b> Even though this example makes it very easy to use Polly,
+you should be aware that Polly is a young research project. It is expected
+to crash, produce invalid code or to hang in complex calculations even for
+simple examples. In case you see such a problem, please check the <a
+href="bugs.html">Bug database</a> and consider reporting a bug.
 <p>
-<b>WARNING: clang/LLVM/Polly need to be in sync. This means
+<b>Warning II:</b> clang/LLVM/Polly need to be in sync. This means
             you need to compile them yourself from a recent svn/git checkout</b>
-            </p>
+<h2>Load Polly into clang</h2>
 
-<pre class="code">clang -Xclang -load -Xclang ${POLLY_BUILD_DIR}/lib/LLVMPolly.so -O3 file.c</pre>
+By loading Polly into clang (or opt) the Polly options become automatically
+available. You can load Polly either by adding the relevant commands to
+the CPPFLAGS or by creating an alias.
+
+<pre class="code">
+$ export CPPFLAGS="-Xclang -load -Xclang ${POLLY_BUILD_DIR}/lib/LLVMPolly.so"
+</pre>
+
+or
+<pre class="code">
+$ alias pollycc clang -Xclang -load -Xclang ${POLLY_BUILD_DIR}/lib/LLVMPolly.so
+</pre>
+
+<h2>Optimizing with Polly</h2>
+
+Optimizing with Polly is as easy as ading <b>-O3 -polly</b> to your compiler
+flags (Polly is only available at -O3).
+
+<pre class="code">pollycc -O3 -polly file.c</pre>
 
 <h2>Automatic OpenMP code generation</h2>
 
 To automatically detect parallel loops and generate OpenMP code for them you
 also need to add <b>-mllvm -enable-polly-openmp -lgomp</b> to your CFLAGS.
 
-<pre class="code">clang -Xclang -load -Xclang ${POLLY_BUILD_DIR}/lib/LLVMPolly.so -O3 -mllvm -enable-polly-openmp -lgomp file.c</pre>
+<pre class="code">pollycc -O3 -mllvm -enable-polly-openmp -lgomp file.c</pre>
 
 <h2>Automatic Vector code generation</h2>
 
 Automatic vector code generation can be enabled by adding <b>-mllvm
 -enable-polly-vector</b> to your CFLAGS.
 
-<pre class="code">clang -Xclang -load -Xclang ${POLLY_BUILD_DIR}/lib/LLVMPolly.so -O3 -mllvm -enable-polly-vector file.c</pre>
+<pre class="code">pollycc -O3 -mllvm -enable-polly-vector file.c</pre>
 
 <h2>Further options</h2>
 

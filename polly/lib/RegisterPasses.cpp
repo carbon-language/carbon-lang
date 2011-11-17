@@ -29,6 +29,10 @@
 using namespace llvm;
 
 static cl::opt<bool>
+PollyEnabled("polly", cl::desc("Enable the default passes of Polly in -O3"),
+             cl::init(false));
+
+static cl::opt<bool>
 DisableScheduler("polly-no-optimizer",
                  cl::desc("Disable Polly Scheduling Optimizer"), cl::Hidden,
                  cl::init(false));
@@ -104,12 +108,37 @@ static StaticInitializer InitializeEverything;
 
 static void registerPollyPasses(const llvm::PassManagerBuilder &Builder,
                                 llvm::PassManagerBase &PM) {
+  if (PollyOnlyPrinter || PollyPrinter || PollyOnlyViewer || PollyViewer ||
+      ExportJScop || ImportJScop)
+    PollyEnabled = true;
+
+  if (!PollyEnabled) {
+    if (UsePocc)
+      errs() << "The option -polly-use-pocc has no effect. "
+                "Polly was not enabled\n";
+
+    if (DisableCodegen)
+      errs() << "The option -polly-no-codegen has no effect. "
+                "Polly was not enabled\n";
+
+    if (DisableScheduler)
+      errs() << "The option -polly-no-optimizer has no effect. "
+                "Polly was not enabled\n";
+
+    return;
+  }
+
+  // Polly is only enabled at -O3
+  if (Builder.OptLevel != 3) {
+    errs() << "Polly should only be run with -O3. Disabling Polly.\n";
+    return;
+  }
+
   bool RunScheduler = !DisableScheduler;
   bool RunCodegen = !DisableCodegen;
 
-  // Polly is only enabled at -O3
-  if (Builder.OptLevel != 3)
-    return;
+
+
 
   // A standard set of optimization passes partially taken/copied from the
   // set of default optimization passes. It is used to bring the code into
