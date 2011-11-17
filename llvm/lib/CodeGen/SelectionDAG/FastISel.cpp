@@ -437,6 +437,11 @@ bool FastISel::SelectGetElementPtr(const User *I) {
 
   bool NIsKill = hasTrivialKill(I->getOperand(0));
 
+  // Keep a running tab of the total offset to coalesce multiple N = N + Offset
+  // into a single N = N + TotalOffset.
+  uint64_t TotalOffs = 0;
+  // FIXME: What's a good SWAG number for MaxOffs?
+  uint64_t MaxOffs = 2048;
   Type *Ty = I->getOperand(0)->getType();
   MVT VT = TLI.getPointerTy();
   for (GetElementPtrInst::const_op_iterator OI = I->op_begin()+1,
@@ -446,14 +451,15 @@ bool FastISel::SelectGetElementPtr(const User *I) {
       unsigned Field = cast<ConstantInt>(Idx)->getZExtValue();
       if (Field) {
         // N = N + Offset
-        uint64_t Offs = TD.getStructLayout(StTy)->getElementOffset(Field);
-        // FIXME: This can be optimized by combining the add with a
-        // subsequent one.
-        N = FastEmit_ri_(VT, ISD::ADD, N, NIsKill, Offs, VT);
-        if (N == 0)
-          // Unhandled operand. Halt "fast" selection and bail.
-          return false;
-        NIsKill = true;
+        TotalOffs += TD.getStructLayout(StTy)->getElementOffset(Field);
+        if (TotalOffs >= MaxOffs) {
+          N = FastEmit_ri_(VT, ISD::ADD, N, NIsKill, TotalOffs, VT);
+          if (N == 0)
+            // Unhandled operand. Halt "fast" selection and bail.
+            return false;
+          NIsKill = true;
+          TotalOffs = 0;
+        }
       }
       Ty = StTy->getElementType(Field);
     } else {
@@ -462,14 +468,26 @@ bool FastISel::SelectGetElementPtr(const User *I) {
       // If this is a constant subscript, handle it quickly.
       if (const ConstantInt *CI = dyn_cast<ConstantInt>(Idx)) {
         if (CI->isZero()) continue;
-        uint64_t Offs =
+        // N = N + Offset
+        TotalOffs += 
           TD.getTypeAllocSize(Ty)*cast<ConstantInt>(CI)->getSExtValue();
-        N = FastEmit_ri_(VT, ISD::ADD, N, NIsKill, Offs, VT);
+        if (TotalOffs >= MaxOffs) {
+          N = FastEmit_ri_(VT, ISD::ADD, N, NIsKill, TotalOffs, VT);
+          if (N == 0)
+            // Unhandled operand. Halt "fast" selection and bail.
+            return false;
+          NIsKill = true;
+          TotalOffs = 0;
+        }
+        continue;
+      }
+      if (TotalOffs) {
+        N = FastEmit_ri_(VT, ISD::ADD, N, NIsKill, TotalOffs, VT);
         if (N == 0)
           // Unhandled operand. Halt "fast" selection and bail.
           return false;
         NIsKill = true;
-        continue;
+        TotalOffs = 0;
       }
 
       // N = N + Idx * ElementSize;
@@ -493,6 +511,12 @@ bool FastISel::SelectGetElementPtr(const User *I) {
         // Unhandled operand. Halt "fast" selection and bail.
         return false;
     }
+  }
+  if (TotalOffs) {
+    N = FastEmit_ri_(VT, ISD::ADD, N, NIsKill, TotalOffs, VT);
+    if (N == 0)
+      // Unhandled operand. Halt "fast" selection and bail.
+      return false;
   }
 
   // We successfully emitted code for the given LLVM Instruction.
