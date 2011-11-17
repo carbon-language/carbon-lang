@@ -128,8 +128,11 @@ fs4all = True
 # Ignore the build search path relative to this script to locate the lldb.py module.
 ignore = False
 
+# By default, we do not skip build and cleanup.  Use '-S' option to override.
+skip_build_and_cleanup = False
+
 # By default, we skip long running test case.  Use '-l' option to override.
-skipLongRunningTest = True
+skip_long_running_test = True
 
 # By default, we print the build dir, lldb version, and svn info.  Use '-n' option to
 # turn it off.
@@ -210,6 +213,11 @@ where options:
 -r   : specify a dir to relocate the tests and their intermediate files to;
        the directory must not exist before running this test driver;
        no cleanup of intermediate test files is performed in this case
+-S   : skip the build and cleanup while running the test
+       use this option with care as you would need to build the inferior(s) by hand
+       and build the executable(s) with the correct name(s)
+       this can be used with '-# n' to stress test certain test cases for n number of
+       times
 -s   : specify the name of the dir created to store the session files of tests
        with errored or failed status; if not specified, the test driver uses the
        timestamp as the session dir name
@@ -337,7 +345,8 @@ def parseOptionsAndInitTestdirs():
     global fs4all
     global ignore
     global runHooks
-    global skipLongRunningTest
+    global skip_build_and_cleanup
+    global skip_long_running_test
     global noHeaders
     global regexp
     global rdir
@@ -448,7 +457,7 @@ def parseOptionsAndInitTestdirs():
             runHooks.append(sys.argv[index])
             index += 1
         elif sys.argv[index].startswith('-l'):
-            skipLongRunningTest = False
+            skip_long_running_test = False
             index += 1
         elif sys.argv[index].startswith('-n'):
             noHeaders = True
@@ -469,6 +478,9 @@ def parseOptionsAndInitTestdirs():
             if os.path.exists(rdir):
                 print "Relocated directory:", rdir, "must not exist!"
                 usage()
+            index += 1
+        elif sys.argv[index].startswith('-S'):
+            skip_build_and_cleanup = True
             index += 1
         elif sys.argv[index].startswith('-s'):
             # Increment by 1 to fetch the session dir name.
@@ -895,7 +907,7 @@ if delay:
 
 #
 # If '-l' is specified, do not skip the long running tests.
-if not skipLongRunningTest:
+if not skip_long_running_test:
     os.environ["LLDB_SKIP_LONG_RUNNING_TEST"] = "NO"
 
 #
@@ -926,6 +938,9 @@ lldb.blacklist = blacklist
 lldb.dont_do_python_api_test = dont_do_python_api_test
 lldb.just_do_python_api_test = just_do_python_api_test
 lldb.just_do_benchmarks_test = just_do_benchmarks_test
+
+# Do we need to skip build and cleanup?
+lldb.skip_build_and_cleanup = skip_build_and_cleanup
 
 # Put bmExecutable, bmBreakpointSpec, and bmIterationCount into the lldb namespace, too.
 lldb.bmExecutable = bmExecutable

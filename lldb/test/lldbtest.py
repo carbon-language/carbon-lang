@@ -438,7 +438,7 @@ class Base(unittest2.TestCase):
         Do class-wide cleanup.
         """
 
-        if doCleanup:
+        if doCleanup and not lldb.skip_build_and_cleanup:
             # First, let's do the platform-specific cleanup.
             module = builder_module()
             if not module.cleanup():
@@ -673,17 +673,13 @@ class Base(unittest2.TestCase):
 
         # Perform registered teardown cleanup.
         if doCleanup and self.doTearDownCleanup:
-            module = builder_module()
-            if not module.cleanup(self, dictionary=self.dict):
-                raise Exception("Don't know how to do cleanup with dictionary: " + self.dict)
+            self.cleanup(dictionary=self.dict)
 
         # In rare cases where there are multiple teardown cleanups added.
         if doCleanup and self.doTearDownCleanups:
-            module = builder_module()
             if self.dicts:
                 for dict in reversed(self.dicts):
-                    if not module.cleanup(self, dictionary=dict):
-                        raise Exception("Don't know how to do cleanup with dictionary: " + dict)
+                    self.cleanup(dictionary=dict)
 
         # Decide whether to dump the session info.
         self.dumpSessionInfo()
@@ -832,27 +828,35 @@ class Base(unittest2.TestCase):
 
     def buildDefault(self, architecture=None, compiler=None, dictionary=None):
         """Platform specific way to build the default binaries."""
+        if lldb.skip_build_and_cleanup:
+            return
         module = builder_module()
         if not module.buildDefault(self, architecture, compiler, dictionary):
             raise Exception("Don't know how to build default binary")
 
     def buildDsym(self, architecture=None, compiler=None, dictionary=None):
         """Platform specific way to build binaries with dsym info."""
+        if lldb.skip_build_and_cleanup:
+            return
         module = builder_module()
         if not module.buildDsym(self, architecture, compiler, dictionary):
             raise Exception("Don't know how to build binary with dsym")
 
     def buildDwarf(self, architecture=None, compiler=None, dictionary=None):
         """Platform specific way to build binaries with dwarf maps."""
+        if lldb.skip_build_and_cleanup:
+            return
         module = builder_module()
         if not module.buildDwarf(self, architecture, compiler, dictionary):
             raise Exception("Don't know how to build binary with dwarf")
 
     def cleanup(self, dictionary=None):
         """Platform specific way to do cleanup after build."""
+        if lldb.skip_build_and_cleanup:
+            return
         module = builder_module()
         if not module.cleanup(self, dictionary):
-            raise Exception("Don't know how to do cleanup")
+            raise Exception("Don't know how to do cleanup with dictionary: "+dictionary)
 
 
 class TestBase(Base):
