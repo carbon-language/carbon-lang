@@ -1074,6 +1074,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
     case APValue::Array:
     case APValue::Struct:
     case APValue::Union:
+    case APValue::MemberPointer:
       break;
     }
   }

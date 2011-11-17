@@ -1,8 +1,7 @@
-// RUN: %clang_cc1 -O1 -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm %s -o - | FileCheck %s
 
 // Check that the following construct, which is similar to one which occurs
-// in Firefox, is not misfolded (folding it correctly would be a bonus, but
-// that doesn't work at the moment, hence the -O1 in the runline).
+// in Firefox, is folded correctly.
 struct A { char x; };
 struct B { char y; };
 struct C : A,B {};

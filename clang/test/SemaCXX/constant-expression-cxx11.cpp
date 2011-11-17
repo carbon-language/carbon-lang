@@ -94,7 +94,7 @@ namespace TemplateArgumentConversion {
   template<int n> struct IntParam {};
 
   using IntParam0 = IntParam<0>;
-  // FIXME: This should be accepted once we do constexpr function invocation.
+  // FIXME: This should be accepted once we implement the new ICE rules.
   using IntParam0 = IntParam<id(0)>; // expected-error {{not an integral constant expression}}
   using IntParam0 = IntParam<MemberZero().zero>; // expected-error {{did you mean to call it with no arguments?}} expected-error {{not an integral constant expression}}
 }
@@ -104,7 +104,7 @@ namespace CaseStatements {
     switch (n) {
     // FIXME: Produce the 'add ()' fixit for this.
     case MemberZero().zero: // desired-error {{did you mean to call it with no arguments?}} expected-error {{not an integer constant expression}}
-    // FIXME: This should be accepted once we do constexpr function invocation.
+    // FIXME: This should be accepted once we implement the new ICE rules.
     case id(1): // expected-error {{not an integer constant expression}}
       return;
     }
@@ -432,6 +432,17 @@ constexpr int CountZero(const int *p, const int *q) {
 static_assert_fold(SumNonzero(arr) == 6, "");
 static_assert_fold(CountZero(arr, arr + 40) == 36, "");
 
+struct ArrayElem {
+  constexpr ArrayElem() : n(0) {}
+  int n;
+  constexpr int f() { return n; }
+};
+struct ArrayRVal {
+  constexpr ArrayRVal() {}
+  ArrayElem elems[10];
+};
+static_assert_fold(ArrayRVal().elems[3].f() == 0, "");
+
 }
 
 namespace DependentValues {
@@ -572,12 +583,13 @@ static_assert_fold(d.a == 3, "");
 
 }
 
-struct Base {
+struct Bottom { constexpr Bottom() {} };
+struct Base : Bottom {
   constexpr Base(int a = 42, const char *b = "test") : a(a), b(b) {}
   int a;
   const char *b;
 };
-struct Base2 {
+struct Base2 : Bottom {
   constexpr Base2(const int &r) : r(r) {}
   int q = 123;
   // FIXME: When we track the global for which we are computing the initializer,
@@ -607,6 +619,63 @@ static_assert_fold(&derived.r == &derived.a, ""); // expected-error {{}}
 static_assert_fold(!(derived == base), "");
 static_assert_fold(derived == base2, "");
 
+constexpr Bottom &bot1 = (Base&)derived;
+constexpr Bottom &bot2 = (Base2&)derived;
+static_assert_fold(&bot1 != &bot2, "");
+
+constexpr Bottom *pb1 = (Base*)&derived;
+constexpr Bottom *pb2 = (Base2*)&derived;
+static_assert_fold(pb1 != pb2, "");
+static_assert_fold(pb1 == &bot1, "");
+static_assert_fold(pb2 == &bot2, "");
+
+constexpr Base2 &fail = (Base2&)bot1; // expected-error {{constant expression}}
+constexpr Base &fail2 = (Base&)*pb2; // expected-error {{constant expression}}
+constexpr Base2 &ok2 = (Base2&)bot2;
+static_assert_fold(&ok2 == &derived, "");
+
+constexpr Base2 *pfail = (Base2*)pb1; // expected-error {{constant expression}}
+constexpr Base *pfail2 = (Base*)&bot2; // expected-error {{constant expression}}
+constexpr Base2 *pok2 = (Base2*)pb2;
+static_assert_fold(pok2 == &derived, "");
+static_assert_fold(&ok2 == pok2, "");
+static_assert_fold((Base2*)(Derived*)(Base*)pb1 == pok2, "");
+static_assert_fold((Derived*)(Base*)pb1 == (Derived*)pok2, "");
+
+constexpr Base *nullB = 42 - 6 * 7;
+static_assert_fold((Bottom*)nullB == 0, "");
+static_assert_fold((Derived*)nullB == 0, "");
+static_assert_fold((void*)(Bottom*)nullB == (void*)(Derived*)nullB, "");
+
+}
+
+namespace Temporaries {
+
+struct S {
+  constexpr S() {}
+  constexpr int f();
+};
+struct T : S {
+  constexpr T(int n) : S(), n(n) {}
+  int n;
+};
+constexpr int S::f() {
+  // 'this' must be the postfix-expression in a class member access expression,
+  // so we can't just use
+  //   return static_cast<T*>(this)->n;
+  return this->*(int(S::*))&T::n;
+}
+// The T temporary is implicitly cast to an S subobject, but we can recover the
+// T full-object via a base-to-derived cast, or a derived-to-base-casted member
+// pointer.
+static_assert_fold(T(3).f() == 3, "");
+
+constexpr int f(const S &s) {
+  return static_cast<const T&>(s).n;
+}
+constexpr int n = f(T(5));
+static_assert_fold(f(T(5)) == 5, "");
+
 }
 
 namespace Union {
@@ -624,6 +693,138 @@ static_assert_fold((&u[1].b)[1] == 2, ""); // expected-error {{constant expressi
 static_assert_fold(*(&(u[1].b) + 1 + 1) == 3, ""); // expected-error {{constant expression}}
 static_assert_fold((&(u[1]) + 1 + 1)->b == 3, "");
 
+}
+
+namespace MemberPointer {
+  struct A {
+    constexpr A(int n) : n(n) {}
+    int n;
+    constexpr int f() { return n + 3; }
+  };
+  constexpr A a(7);
+  static_assert_fold(A(5).*&A::n == 5, "");
+  static_assert_fold((&a)->*&A::n == 7, "");
+  static_assert_fold((A(8).*&A::f)() == 11, "");
+  static_assert_fold(((&a)->*&A::f)() == 10, "");
+
+  struct B : A {
+    constexpr B(int n, int m) : A(n), m(m) {}
+    int m;
+    constexpr int g() { return n + m + 1; }
+  };
+  constexpr B b(9, 13);
+  static_assert_fold(B(4, 11).*&A::n == 4, "");
+  static_assert_fold(B(4, 11).*&B::m == 11, "");
+  static_assert_fold(B(4, 11).*(int(A::*))&B::m == 11, "");
+  static_assert_fold((&b)->*&A::n == 9, "");
+  static_assert_fold((&b)->*&B::m == 13, "");
+  static_assert_fold((&b)->*(int(A::*))&B::m == 13, "");
+  static_assert_fold((B(4, 11).*&A::f)() == 7, "");
+  static_assert_fold((B(4, 11).*&B::g)() == 16, "");
+  static_assert_fold((B(4, 11).*(int(A::*)()const)&B::g)() == 16, "");
+  static_assert_fold(((&b)->*&A::f)() == 12, "");
+  static_assert_fold(((&b)->*&B::g)() == 23, "");
+  static_assert_fold(((&b)->*(int(A::*)()const)&B::g)() == 23, "");
+
+  struct S {
+    constexpr S(int m, int n, int (S::*pf)() const, int S::*pn) :
+      m(m), n(n), pf(pf), pn(pn) {}
+    constexpr S() : m(), n(), pf(&S::f), pn(&S::n) {}
+
+    constexpr int f() { return this->*pn; }
+    virtual int g() const;
+
+    int m, n;
+    int (S::*pf)() const;
+    int S::*pn;
+  };
+
+  constexpr int S::*pm = &S::m;
+  constexpr int S::*pn = &S::n;
+  constexpr int (S::*pf)() const = &S::f;
+  constexpr int (S::*pg)() const = &S::g;
+
+  constexpr S s(2, 5, &S::f, &S::m);
+
+  static_assert_fold((s.*&S::f)() == 2, "");
+  static_assert_fold((s.*s.pf)() == 2, "");
+
+  template<int n> struct T : T<n-1> {};
+  template<> struct T<0> { int n; };
+  template<> struct T<30> : T<29> { int m; };
+
+  T<17> t17;
+  T<30> t30;
+
+  constexpr int (T<10>::*deepn) = &T<0>::n;
+  static_assert_fold(&(t17.*deepn) == &t17.n, "");
+
+  constexpr int (T<15>::*deepm) = (int(T<10>::*))&T<30>::m;
+  constexpr int *pbad = &(t17.*deepm); // expected-error {{constant expression}}
+  static_assert_fold(&(t30.*deepm) == &t30.m, "");
+
+  constexpr T<5> *p17_5 = &t17;
+  constexpr T<13> *p17_13 = (T<13>*)p17_5;
+  constexpr T<23> *p17_23 = (T<23>*)p17_13; // expected-error {{constant expression}}
+  static_assert_fold(&(p17_5->*(int(T<3>::*))deepn) == &t17.n, "");
+  static_assert_fold(&(p17_13->*deepn) == &t17.n, "");
+  constexpr int *pbad2 = &(p17_13->*(int(T<9>::*))deepm); // expected-error {{constant expression}}
+
+  constexpr T<5> *p30_5 = &t30;
+  constexpr T<23> *p30_23 = (T<23>*)p30_5;
+  constexpr T<13> *p30_13 = p30_23;
+  static_assert_fold(&(p30_5->*(int(T<3>::*))deepn) == &t30.n, "");
+  static_assert_fold(&(p30_13->*deepn) == &t30.n, "");
+  static_assert_fold(&(p30_23->*deepn) == &t30.n, "");
+  static_assert_fold(&(p30_5->*(int(T<2>::*))deepm) == &t30.m, "");
+  static_assert_fold(&(((T<17>*)p30_13)->*deepm) == &t30.m, "");
+  static_assert_fold(&(p30_23->*deepm) == &t30.m, "");
+}
+
+namespace ArrayBaseDerived {
+
+  struct Base {
+    constexpr Base() {}
+    int n = 0;
+  };
+  struct Derived : Base {
+    constexpr Derived() {}
+    constexpr const int *f() { return &n; }
+  };
+
+  constexpr Derived a[10];
+  constexpr Derived *pd3 = const_cast<Derived*>(&a[3]);
+  constexpr Base *pb3 = const_cast<Derived*>(&a[3]);
+  static_assert_fold(pb3 == pd3, "");
+
+  // pb3 does not point to an array element.
+  constexpr Base *pb4 = pb3 + 1; // ok, one-past-the-end pointer.
+  constexpr int pb4n = pb4->n; // expected-error {{constant expression}}
+  constexpr Base *err_pb5 = pb3 + 2; // FIXME: reject this.
+  constexpr int err_pb5n = err_pb5->n; // expected-error {{constant expression}}
+  constexpr Base *err_pb2 = pb3 - 1; // FIXME: reject this.
+  constexpr int err_pb2n = err_pb2->n; // expected-error {{constant expression}}
+  constexpr Base *pb3a = pb4 - 1;
+
+  // pb4 does not point to a Derived.
+  constexpr Derived *err_pd4 = (Derived*)pb4; // expected-error {{constant expression}}
+  constexpr Derived *pd3a = (Derived*)pb3a;
+  constexpr int pd3n = pd3a->n;
+
+  // pd3a still points to the Derived array.
+  constexpr Derived *pd6 = pd3a + 3;
+  static_assert_fold(pd6 == &a[6], "");
+  constexpr Derived *pd9 = pd6 + 3;
+  constexpr Derived *pd10 = pd6 + 4;
+  constexpr int pd9n = pd9->n; // ok
+  constexpr int err_pd10n = pd10->n; // expected-error {{constant expression}}
+  constexpr int pd0n = pd10[-10].n;
+  constexpr int err_pdminus1n = pd10[-11].n; // expected-error {{constant expression}}
+
+  constexpr Base *pb9 = pd9;
+  constexpr const int *(Base::*pfb)() const =
+      static_cast<const int *(Base::*)() const>(&Derived::f);
+  static_assert_fold((pb9->*pfb)() == &a[9].n, "");
 }
 
 namespace Complex {

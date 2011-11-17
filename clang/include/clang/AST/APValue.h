@@ -27,6 +27,7 @@ namespace clang {
   class FieldDecl;
   class Decl;
   class ValueDecl;
+  class CXXRecordDecl;
 
 /// APValue - This class implements a discriminated union of [uninitialized]
 /// [APSInt] [APFloat], [Complex APSInt] [Complex APFloat], [Expr + Offset],
@@ -45,7 +46,8 @@ public:
     Vector,
     Array,
     Struct,
-    Union
+    Union,
+    MemberPointer
   };
   typedef llvm::PointerUnion<const ValueDecl *, const Expr *> LValueBase;
   typedef llvm::PointerIntPair<const Decl *, 1, bool> BaseOrMemberType;
@@ -96,6 +98,7 @@ private:
     UnionData();
     ~UnionData();
   };
+  struct MemberPointerData;
 
   enum {
     MaxSize = (sizeof(ComplexAPSInt) > sizeof(ComplexAPFloat) ?
@@ -131,9 +134,10 @@ public:
       : Kind(Uninitialized) {
     MakeLValue(); setLValue(B, O, N);
   }
-  APValue(LValueBase B, const CharUnits &O, ArrayRef<LValuePathEntry> Path)
+  APValue(LValueBase B, const CharUnits &O, ArrayRef<LValuePathEntry> Path,
+          bool OnePastTheEnd)
       : Kind(Uninitialized) {
-    MakeLValue(); setLValue(B, O, Path);
+    MakeLValue(); setLValue(B, O, Path, OnePastTheEnd);
   }
   APValue(UninitArray, unsigned InitElts, unsigned Size) : Kind(Uninitialized) {
     MakeArray(InitElts, Size);
@@ -144,6 +148,10 @@ public:
   explicit APValue(const FieldDecl *D, const APValue &V = APValue())
       : Kind(Uninitialized) {
     MakeUnion(); setUnion(D, V);
+  }
+  APValue(const ValueDecl *Member, bool IsDerivedMember,
+          ArrayRef<const CXXRecordDecl*> Path) : Kind(Uninitialized) {
+    MakeMemberPointer(Member, IsDerivedMember, Path);
   }
 
   ~APValue() {
@@ -161,6 +169,7 @@ public:
   bool isArray() const { return Kind == Array; }
   bool isStruct() const { return Kind == Struct; }
   bool isUnion() const { return Kind == Union; }
+  bool isMemberPointer() const { return Kind == MemberPointer; }
 
   void print(raw_ostream &OS) const;
   void dump() const;
@@ -218,6 +227,7 @@ public:
   const CharUnits &getLValueOffset() const {
     return const_cast<APValue*>(this)->getLValueOffset();
   }
+  bool isLValueOnePastTheEnd() const;
   bool hasLValuePath() const;
   ArrayRef<LValuePathEntry> getLValuePath() const;
 
@@ -297,6 +307,10 @@ public:
     return const_cast<APValue*>(this)->getUnionValue();
   }
 
+  const ValueDecl *getMemberPointerDecl() const;
+  bool isMemberPointerToDerivedMember() const;
+  ArrayRef<const CXXRecordDecl*> getMemberPointerPath() const;
+
   void setInt(const APSInt &I) {
     assert(isInt() && "Invalid accessor");
     *(APSInt*)(char*)Data = I;
@@ -328,7 +342,7 @@ public:
   }
   void setLValue(LValueBase B, const CharUnits &O, NoLValuePath);
   void setLValue(LValueBase B, const CharUnits &O,
-                 ArrayRef<LValuePathEntry> Path);
+                 ArrayRef<LValuePathEntry> Path, bool OnePastTheEnd);
   void setUnion(const FieldDecl *Field, const APValue &Value) {
     assert(isUnion() && "Invalid accessor");
     ((UnionData*)(char*)Data)->Field = Field;
@@ -376,6 +390,8 @@ private:
     new ((void*)(char*)Data) UnionData();
     Kind = Union;
   }
+  void MakeMemberPointer(const ValueDecl *Member, bool IsDerivedMember,
+                         ArrayRef<const CXXRecordDecl*> Path);
 };
 
 inline raw_ostream &operator<<(raw_ostream &OS, const APValue &V) {
