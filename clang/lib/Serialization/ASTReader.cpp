@@ -1147,8 +1147,10 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(int ID) {
                                                              NumFileDecls));
     }
     
-    if (OverriddenBuffer &&
-        !SourceMgr.getOrCreateContentCache(File)->BufferOverridden) {
+    const SrcMgr::ContentCache *ContentCache
+      = SourceMgr.getOrCreateContentCache(File);
+    if (OverriddenBuffer && !ContentCache->BufferOverridden &&
+        ContentCache->ContentsEntry == ContentCache->OrigEntry) {
       unsigned Code = SLocEntryCursor.ReadCode();
       Record.clear();
       unsigned RecCode
