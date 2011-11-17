@@ -153,7 +153,7 @@ openscop_statement_p OpenScop::initializeStatement(ScopStmt *stmt) {
 
 
   // Statement name
-  const char* entryName = stmt->getBaseName();
+  const char *entryName = stmt->getBaseName();
   Stmt->body = (char*)malloc(sizeof(char) * (strlen(entryName) + 1));
   strcpy(Stmt->body, entryName);
 

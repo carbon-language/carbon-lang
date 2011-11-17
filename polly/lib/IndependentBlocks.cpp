@@ -550,6 +550,6 @@ INITIALIZE_PASS_DEPENDENCY(ScopDetection)
 INITIALIZE_PASS_END(IndependentBlocks, "polly-independent",
                     "Polly - Create independent blocks", false, false)
 
-Pass* polly::createIndependentBlocksPass() {
+Pass *polly::createIndependentBlocksPass() {
   return new IndependentBlocks();
 }

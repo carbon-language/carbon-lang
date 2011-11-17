@@ -260,7 +260,7 @@ static RegisterPass<CloogExporter> A("polly-export-cloog",
                                     " (Writes a .cloog file for each Scop)"
                                     );
 
-llvm::Pass* polly::createCloogExporterPass() {
+llvm::Pass *polly::createCloogExporterPass() {
   return new CloogExporter();
 }
 
@@ -323,6 +323,6 @@ INITIALIZE_PASS_DEPENDENCY(ScopInfo)
 INITIALIZE_PASS_END(CloogInfo, "polly-cloog",
                     "Execute Cloog code generation", false, false)
 
-Pass* polly::createCloogInfoPass() {
+Pass *polly::createCloogInfoPass() {
   return new CloogInfo();
 }

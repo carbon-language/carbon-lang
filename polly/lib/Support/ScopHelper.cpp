@@ -37,7 +37,7 @@ public:
     return true;
   }
 
-  bool visitUnknown(const SCEVUnknown* S) {
+  bool visitUnknown(const SCEVUnknown *S) {
     Value *V = S->getValue();
 
     // An Instruction defined outside the region is invariant.
@@ -57,7 +57,7 @@ public:
     return true;
   }
 
-  bool visitMulExpr(const SCEVMulExpr* S) {
+  bool visitMulExpr(const SCEVMulExpr *S) {
     return visitNAryExpr(S);
   }
 

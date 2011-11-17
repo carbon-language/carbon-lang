@@ -25,7 +25,7 @@ struct ValidatorResult {
   };
 
   ValidatorResult(SCEVType::TYPE type) : type(type) {};
-  ValidatorResult(SCEVType::TYPE type, const SCEV* Expr) : type(type) {
+  ValidatorResult(SCEVType::TYPE type, const SCEV *Expr) : type(type) {
     Parameters.push_back(Expr);
   };
 
@@ -68,7 +68,7 @@ public:
     return ValidatorResult(SCEVType::INT);
   }
 
-  struct ValidatorResult visitTruncateExpr(const SCEVTruncateExpr* Expr) {
+  struct ValidatorResult visitTruncateExpr(const SCEVTruncateExpr *Expr) {
     ValidatorResult Op = visit(Expr->getOperand());
 
     // We currently do not represent a truncate expression as an affine
@@ -80,7 +80,7 @@ public:
     return ValidatorResult (SCEVType::INVALID);
   }
 
-  struct ValidatorResult visitZeroExtendExpr(const SCEVZeroExtendExpr * Expr) {
+  struct ValidatorResult visitZeroExtendExpr(const SCEVZeroExtendExpr *Expr) {
     ValidatorResult Op = visit(Expr->getOperand());
 
     // We currently do not represent a zero extend expression as an affine
@@ -92,7 +92,7 @@ public:
     return ValidatorResult(SCEVType::INVALID);
   }
 
-  struct ValidatorResult visitSignExtendExpr(const SCEVSignExtendExpr* Expr) {
+  struct ValidatorResult visitSignExtendExpr(const SCEVSignExtendExpr *Expr) {
     // We currently allow only signed SCEV expressions. In the case of a
     // signed value, a sign extend is a noop.
     //
@@ -100,7 +100,7 @@ public:
     return visit(Expr->getOperand());
   }
 
-  struct ValidatorResult visitAddExpr(const SCEVAddExpr* Expr) {
+  struct ValidatorResult visitAddExpr(const SCEVAddExpr *Expr) {
     ValidatorResult Return(SCEVType::INT);
 
     for (int i = 0, e = Expr->getNumOperands(); i < e; ++i) {
@@ -117,7 +117,7 @@ public:
     return Return;
   }
 
-  struct ValidatorResult visitMulExpr(const SCEVMulExpr* Expr) {
+  struct ValidatorResult visitMulExpr(const SCEVMulExpr *Expr) {
     ValidatorResult Return(SCEVType::INT);
 
     for (int i = 0, e = Expr->getNumOperands(); i < e; ++i) {
@@ -137,7 +137,7 @@ public:
     return Return;
   }
 
-  struct ValidatorResult visitUDivExpr(const SCEVUDivExpr* Expr) {
+  struct ValidatorResult visitUDivExpr(const SCEVUDivExpr *Expr) {
     ValidatorResult LHS = visit(Expr->getLHS());
     ValidatorResult RHS = visit(Expr->getRHS());
 
@@ -150,7 +150,7 @@ public:
     return ValidatorResult(SCEVType::INVALID);
   }
 
-  struct ValidatorResult visitAddRecExpr(const SCEVAddRecExpr* Expr) {
+  struct ValidatorResult visitAddRecExpr(const SCEVAddRecExpr *Expr) {
     if (!Expr->isAffine())
       return ValidatorResult(SCEVType::INVALID);
 
@@ -176,7 +176,7 @@ public:
     return Result;
   }
 
-  struct ValidatorResult visitSMaxExpr(const SCEVSMaxExpr* Expr) {
+  struct ValidatorResult visitSMaxExpr(const SCEVSMaxExpr *Expr) {
     ValidatorResult Return(SCEVType::INT);
 
     for (int i = 0, e = Expr->getNumOperands(); i < e; ++i) {
@@ -192,7 +192,7 @@ public:
     return Return;
   }
 
-  struct ValidatorResult visitUMaxExpr(const SCEVUMaxExpr* Expr) {
+  struct ValidatorResult visitUMaxExpr(const SCEVUMaxExpr *Expr) {
     ValidatorResult Return(SCEVType::PARAM);
 
     // We do not support unsigned operations. If 'Expr' is constant during Scop
@@ -209,7 +209,7 @@ public:
     return Return;
   }
 
-  ValidatorResult visitUnknown(const SCEVUnknown* Expr) {
+  ValidatorResult visitUnknown(const SCEVUnknown *Expr) {
     Value *V = Expr->getValue();
 
     if (isa<UndefValue>(V))

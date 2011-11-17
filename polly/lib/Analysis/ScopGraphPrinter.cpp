@@ -31,7 +31,7 @@ namespace llvm {
     static NodeType *getEntryNode(ScopDetection *SD) {
       return GraphTraits<RegionInfo*>::getEntryNode(SD->getRI());
     }
-    static nodes_iterator nodes_begin(ScopDetection* SD) {
+    static nodes_iterator nodes_begin(ScopDetection *SD) {
       return nodes_iterator::begin(getEntryNode(SD));
     }
     static nodes_iterator nodes_end(ScopDetection *SD) {
@@ -144,7 +144,7 @@ struct DOTGraphTraits<ScopDetection*> : public DOTGraphTraits<RegionNode*> {
 
     O.indent(2 * depth) << "}\n";
   }
-  static void addCustomGraphFeatures(const ScopDetection* SD,
+  static void addCustomGraphFeatures(const ScopDetection *SD,
                                      GraphWriter<ScopDetection*> &GW) {
     raw_ostream &O = GW.getOStream();
     O << "\tcolorscheme = \"paired12\"\n";
@@ -199,18 +199,18 @@ static RegisterPass<ScopOnlyPrinter>
 N("dot-scops-only",
   "Polly - Print Scops of function (with no function bodies)");
 
-Pass* polly::createDOTViewerPass() {
+Pass *polly::createDOTViewerPass() {
   return new ScopViewer();
 }
 
-Pass* polly::createDOTOnlyViewerPass() {
+Pass *polly::createDOTOnlyViewerPass() {
   return new ScopOnlyViewer();
 }
 
-Pass* polly::createDOTPrinterPass() {
+Pass *polly::createDOTPrinterPass() {
   return new ScopPrinter();
 }
 
-Pass* polly::createDOTOnlyPrinterPass() {
+Pass *polly::createDOTOnlyPrinterPass() {
   return new ScopOnlyPrinter();
 }

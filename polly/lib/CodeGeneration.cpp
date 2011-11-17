@@ -158,7 +158,7 @@ public:
     return S.getRegion();
   }
 
-  Value* makeVectorOperand(Value *operand, int vectorWidth) {
+  Value *makeVectorOperand(Value *operand, int vectorWidth) {
     if (operand->getType()->isVectorTy())
       return operand;
 
@@ -176,7 +176,7 @@ public:
     return Builder.CreateShuffleVector(vector, vector, splatVector);
   }
 
-  Value* getOperand(const Value *oldOperand, ValueMapT &BBMap,
+  Value *getOperand(const Value *oldOperand, ValueMapT &BBMap,
                     ValueMapT *VectorMap = 0) {
     const Instruction *OpInst = dyn_cast<Instruction>(oldOperand);
 
@@ -912,7 +912,7 @@ public:
   }
 
   /// @brief Add a new definition of an openmp subfunction.
-  Function* addOpenMPSubfunction(Module *M) {
+  Function *addOpenMPSubfunction(Module *M) {
     Function *F = Builder.GetInsertBlock()->getParent();
     const std::string &Name = F->getNameStr() + ".omp_subfn";
 
@@ -1608,6 +1608,6 @@ INITIALIZE_PASS_DEPENDENCY(TargetData)
 INITIALIZE_PASS_END(CodeGeneration, "polly-codegen",
                       "Polly - Create LLVM-IR form SCoPs", false, false)
 
-Pass* polly::createCodeGenerationPass() {
+Pass *polly::createCodeGenerationPass() {
   return new CodeGeneration();
 }

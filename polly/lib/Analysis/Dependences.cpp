@@ -235,7 +235,7 @@ bool Dependences::isValidScattering(StatementToIslMapTy *NewScattering) {
   return isValid;
 }
 
-isl_union_map* getCombinedScheduleForSpace(Scop *scop, unsigned dimLevel) {
+isl_union_map *getCombinedScheduleForSpace(Scop *scop, unsigned dimLevel) {
   isl_space *Space = scop->getParamSpace();
   isl_union_map *schedule = isl_union_map_empty(Space);
 
@@ -454,6 +454,6 @@ INITIALIZE_PASS_DEPENDENCY(ScopInfo)
 INITIALIZE_PASS_END(Dependences, "polly-dependences",
                     "Polly - Calculate dependences", false, false)
 
-Pass* polly::createDependencesPass() {
+Pass *polly::createDependencesPass() {
   return new Dependences();
 }

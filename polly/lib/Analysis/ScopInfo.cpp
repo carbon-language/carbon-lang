@@ -140,21 +140,21 @@ public:
     return isl_pw_aff_alloc(Domain, Affine);
   }
 
-  __isl_give isl_pw_aff *visitTruncateExpr(const SCEVTruncateExpr* Expr) {
+  __isl_give isl_pw_aff *visitTruncateExpr(const SCEVTruncateExpr *Expr) {
     assert(0 && "Not yet supported");
   }
 
-  __isl_give isl_pw_aff *visitZeroExtendExpr(const SCEVZeroExtendExpr * Expr) {
+  __isl_give isl_pw_aff *visitZeroExtendExpr(const SCEVZeroExtendExpr *Expr) {
     assert(0 && "Not yet supported");
   }
 
-  __isl_give isl_pw_aff *visitSignExtendExpr(const SCEVSignExtendExpr* Expr) {
+  __isl_give isl_pw_aff *visitSignExtendExpr(const SCEVSignExtendExpr *Expr) {
     // Assuming the value is signed, a sign extension is basically a noop.
     // TODO: Reconsider this as soon as we support unsigned values.
     return visit(Expr->getOperand());
   }
 
-  __isl_give isl_pw_aff *visitAddExpr(const SCEVAddExpr* Expr) {
+  __isl_give isl_pw_aff *visitAddExpr(const SCEVAddExpr *Expr) {
     isl_pw_aff *Sum = visit(Expr->getOperand(0));
 
     for (int i = 1, e = Expr->getNumOperands(); i < e; ++i) {
@@ -167,7 +167,7 @@ public:
     return Sum;
   }
 
-  __isl_give isl_pw_aff *visitMulExpr(const SCEVMulExpr* Expr) {
+  __isl_give isl_pw_aff *visitMulExpr(const SCEVMulExpr *Expr) {
     isl_pw_aff *Product = visit(Expr->getOperand(0));
 
     for (int i = 1, e = Expr->getNumOperands(); i < e; ++i) {
@@ -186,7 +186,7 @@ public:
     return Product;
   }
 
-  __isl_give isl_pw_aff *visitUDivExpr(const SCEVUDivExpr* Expr) {
+  __isl_give isl_pw_aff *visitUDivExpr(const SCEVUDivExpr *Expr) {
     assert(0 && "Not yet supported");
   }
 
@@ -197,7 +197,7 @@ public:
     return L->getLoopDepth() - outerLoop->getLoopDepth();
   }
 
-  __isl_give isl_pw_aff *visitAddRecExpr(const SCEVAddRecExpr* Expr) {
+  __isl_give isl_pw_aff *visitAddRecExpr(const SCEVAddRecExpr *Expr) {
     assert(Expr->isAffine() && "Only affine AddRecurrences allowed");
     assert(scop->getRegion().contains(Expr->getLoop())
            && "Scop does not contain the loop referenced in this AddRec");
@@ -217,7 +217,7 @@ public:
     return isl_pw_aff_add(Start, isl_pw_aff_mul(Step, LPwAff));
   }
 
-  __isl_give isl_pw_aff *visitSMaxExpr(const SCEVSMaxExpr* Expr) {
+  __isl_give isl_pw_aff *visitSMaxExpr(const SCEVSMaxExpr *Expr) {
     isl_pw_aff *Max = visit(Expr->getOperand(0));
 
     for (int i = 1, e = Expr->getNumOperands(); i < e; ++i) {
@@ -228,11 +228,11 @@ public:
     return Max;
   }
 
-  __isl_give isl_pw_aff *visitUMaxExpr(const SCEVUMaxExpr* Expr) {
+  __isl_give isl_pw_aff *visitUMaxExpr(const SCEVUMaxExpr *Expr) {
     assert(0 && "Not yet supported");
   }
 
-  __isl_give isl_pw_aff *visitUnknown(const SCEVUnknown* Expr) {
+  __isl_give isl_pw_aff *visitUnknown(const SCEVUnknown *Expr) {
     Value *Value = Expr->getValue();
 
     isl_space *Space;
@@ -843,7 +843,7 @@ void ScopStmt::dump() const { print(dbgs()); }
 //===----------------------------------------------------------------------===//
 /// Scop class implement
 
-void Scop::setContext(__isl_take isl_set* NewContext) {
+void Scop::setContext(__isl_take isl_set *NewContext) {
   NewContext = isl_set_align_params(NewContext, isl_set_get_space(Context));
   isl_set_free(Context);
   Context = NewContext;
