@@ -104,6 +104,9 @@ static StaticInitializer InitializeEverything;
 
 static void registerPollyPasses(const llvm::PassManagerBuilder &Builder,
                                 llvm::PassManagerBase &PM) {
+  bool RunScheduler = !DisableScheduler;
+  bool RunCodegen = !DisableCodegen;
+
   // Polly is only enabled at -O3
   if (Builder.OptLevel != 3)
     return;
@@ -150,10 +153,8 @@ static void registerPollyPasses(const llvm::PassManagerBuilder &Builder,
   if (ImportJScop)
     PM.add(polly::createJSONImporterPass());
 
-  if (!DisableScheduler) {
-    if (!UsePocc)
-      PM.add(polly::createIslScheduleOptimizerPass());
-    else {
+  if (RunScheduler) {
+    if (UsePocc) {
 #ifdef SCOPLIB_FOUND
       PM.add(polly::createPoccPass());
 #else
@@ -162,14 +163,15 @@ static void registerPollyPasses(const llvm::PassManagerBuilder &Builder,
              << "back to the isl optimizer.\n";
       PM.add(polly::createIslScheduleOptimizerPass());
 #endif
+    } else {
+      PM.add(polly::createIslScheduleOptimizerPass());
     }
   }
 
   if (ExportJScop)
     PM.add(polly::createJSONExporterPass());
 
-
-  if (!DisableCodegen)
+  if (RunCodegen)
     PM.add(polly::createCodeGenerationPass());
 }
 
