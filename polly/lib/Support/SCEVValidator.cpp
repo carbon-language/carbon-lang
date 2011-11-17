@@ -157,23 +157,23 @@ public:
     ValidatorResult Start = visit(Expr->getStart());
     ValidatorResult Recurrence = visit(Expr->getStepRecurrence(SE));
 
-    if (!Start.isValid() || !Recurrence.isValid() || Recurrence.isIV())
+    if (!Start.isValid() || !Recurrence.isConstant())
       return ValidatorResult(SCEVType::INVALID);
 
+    if (R->contains(Expr->getLoop())) {
+      if (Recurrence.isINT()) {
+        ValidatorResult Result(SCEVType::IV);
+        Result.addParamsFrom(Start);
+        return Result;
+      }
 
-    if (!R->contains(Expr->getLoop())) {
-      if (Start.isIV())
-        return ValidatorResult(SCEVType::INVALID);
-      else
-        return ValidatorResult(SCEVType::PARAM, Expr);
+      return ValidatorResult(SCEVType::INVALID);
     }
 
-    if (!Recurrence.isINT())
-      return ValidatorResult(SCEVType::INVALID);
+    if (Start.isConstant())
+      return ValidatorResult(SCEVType::PARAM, Expr);
 
-    ValidatorResult Result(SCEVType::IV);
-    Result.addParamsFrom(Start);
-    return Result;
+    return ValidatorResult(SCEVType::INVALID);
   }
 
   struct ValidatorResult visitSMaxExpr(const SCEVSMaxExpr *Expr) {
