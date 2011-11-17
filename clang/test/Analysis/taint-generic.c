@@ -12,3 +12,17 @@ void bufferFoo1(void)
   scanf("%d", &n);
   Buffer[n] = 1; // expected-warning {{Out of bound memory access }}
 }
+
+void bufferScanfArithmetic1(int x) {
+  int n;
+  scanf("%d", &n);
+  int m = (n - 3);
+  Buffer[m] = 1; // expected-warning {{Out of bound memory access }}
+}
+
+void bufferScanfArithmetic2(int x) {
+  int n;
+  scanf("%d", &n);
+  int m = (n + 3) * x;
+  Buffer[m] = 1; // expected-warning {{Out of bound memory access }}
+}

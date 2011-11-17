@@ -361,7 +361,8 @@ void ExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
       // UnknownVal.
       if ((InitVal.isUnknown() ||
            !getConstraintManager().canReasonAbout(InitVal)) &&
-          !VD->getType()->isReferenceType()) {
+          !VD->getType()->isReferenceType() &&
+          !Pred->getState()->isTainted(InitVal)) {
         InitVal = svalBuilder.getConjuredSymbolVal(NULL, InitEx,
                                  currentBuilderContext->getCurrentBlockCount());
       }

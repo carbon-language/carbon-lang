@@ -43,12 +43,14 @@ NonLoc SValBuilder::makeNonLoc(const SymExpr *lhs, BinaryOperator::Opcode op,
   // The Environment ensures we always get a persistent APSInt in
   // BasicValueFactory, so we don't need to get the APSInt from
   // BasicValueFactory again.
+  assert(lhs);
   assert(!Loc::isLocType(type));
   return nonloc::SymExprVal(SymMgr.getSymIntExpr(lhs, op, rhs, type));
 }
 
 NonLoc SValBuilder::makeNonLoc(const SymExpr *lhs, BinaryOperator::Opcode op,
                                const SymExpr *rhs, QualType type) {
+  assert(lhs && rhs);
   assert(SymMgr.getType(lhs) == SymMgr.getType(rhs));
   assert(!Loc::isLocType(type));
   return nonloc::SymExprVal(SymMgr.getSymSymExpr(lhs, op, rhs, type));
@@ -161,6 +163,29 @@ DefinedSVal SValBuilder::getBlockPointer(const BlockDecl *block,
 }
 
 //===----------------------------------------------------------------------===//
+
+SVal SValBuilder::generateUnknownVal(const ProgramState *State,
+                                     BinaryOperator::Opcode Op,
+                                     NonLoc LHS, NonLoc RHS,
+                                     QualType ResultTy) {
+  // If operands are tainted, create a symbol to ensure that we propagate taint.
+  if (State->isTainted(RHS) || State->isTainted(LHS)) {
+    const SymExpr *symLHS;
+    const SymExpr *symRHS;
+
+    if (const nonloc::ConcreteInt *rInt = dyn_cast<nonloc::ConcreteInt>(&RHS)) {
+      symLHS = LHS.getAsSymExpr();
+      return makeNonLoc(symLHS, Op, rInt->getValue(), ResultTy);
+    }
+    // TODO: Handle the case when lhs is ConcreteInt.
+
+    symLHS = LHS.getAsSymExpr();
+    symRHS = RHS.getAsSymExpr();
+    return makeNonLoc(symLHS, Op, symRHS, ResultTy);
+  }
+  return UnknownVal();
+}
+
 
 SVal SValBuilder::evalBinOp(const ProgramState *state, BinaryOperator::Opcode op,
                             SVal lhs, SVal rhs, QualType type) {
