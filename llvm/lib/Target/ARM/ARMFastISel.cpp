@@ -1114,7 +1114,7 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg, Address &Addr) {
   // Create the base instruction, then add the operands.
   MachineInstrBuilder MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                                     TII.get(StrOpc))
-                            .addReg(SrcReg, getKillRegState(true));
+                            .addReg(SrcReg);
   AddLoadStoreOperands(VT, Addr, MIB, MachineMemOperand::MOStore, useAM3);
   return true;
 }
