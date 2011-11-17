@@ -207,18 +207,17 @@ isl_union_map *getTiledPartialSchedule(isl_band *band) {
 
   partialSchedule = isl_band_get_partial_schedule(band);
 
-  if (!DisableTiling) {
-    ctx = isl_union_map_get_ctx(partialSchedule);
-    Space= isl_union_map_get_space(partialSchedule);
-    scheduleDimensions = isl_band_n_member(band);
+  if (DisableTiling)
+    return partialSchedule;
 
-    tileMap = getTileMap(ctx, scheduleDimensions, Space);
-    tileUnionMap = isl_union_map_from_map(isl_map_from_basic_map(tileMap));
-    tileUnionMap = isl_union_map_align_params(tileUnionMap, Space);
-    partialSchedule = isl_union_map_apply_range(partialSchedule, tileUnionMap);
-  }
+  ctx = isl_union_map_get_ctx(partialSchedule);
+  Space = isl_union_map_get_space(partialSchedule);
+  scheduleDimensions = isl_band_n_member(band);
 
-  return partialSchedule;
+  tileMap = getTileMap(ctx, scheduleDimensions, Space);
+  tileUnionMap = isl_union_map_from_map(isl_map_from_basic_map(tileMap));
+  tileUnionMap = isl_union_map_align_params(tileUnionMap, Space);
+  return isl_union_map_apply_range(partialSchedule, tileUnionMap);
 }
 
 static isl_map *getPrevectorMap(isl_ctx *ctx, int vectorDimension,
