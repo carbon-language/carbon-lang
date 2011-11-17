@@ -1,4 +1,4 @@
-#===- lib/Makefile.mk --------------------------------------*- Makefile -*--===#
+#===- lib/profile/Makefile.mk ------------------------------*- Makefile -*--===#
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -9,13 +9,6 @@
 
 SubDirs :=
 
-# Add arch specific optimized implementations.
-SubDirs += i386 ppc x86_64 arm
-
-# Add other submodules.
-SubDirs += profile
-
-# Define the variables for this specific directory.
 Sources := $(foreach file,$(wildcard $(Dir)/*.c),$(notdir $(file)))
 ObjNames := $(Sources:%.c=%.o)
 Implementation := Generic
