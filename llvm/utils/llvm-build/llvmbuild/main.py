@@ -21,6 +21,21 @@ def cmake_quote_string(value):
 
     return value
 
+def cmake_quote_path(value):
+    """
+    cmake_quote_path(value) -> str
+
+    Return a quoted form of the given value that is suitable for use in CMake
+    language files.
+    """
+
+    # CMake has a bug in it's Makefile generator that doesn't properly quote
+    # strings it generates. So instead of using proper quoting, we just use "/"
+    # style paths.  Currently, we only handle escaping backslashes.
+    value = value.replace("\\", "/")
+
+    return value
+
 def mk_quote_string_for_target(value):
     """
     mk_quote_string_for_target(target_name) -> str
@@ -430,7 +445,7 @@ class LLVMProjectInfo(object):
             print >>f, """\
 configure_file(\"%s\"
                ${CMAKE_CURRENT_BINARY_DIR}/DummyConfigureOutput)""" % (
-                cmake_quote_string(dep),)
+                cmake_quote_path(dep),)
 
         f.close()
 
