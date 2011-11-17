@@ -1091,8 +1091,10 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(int ID) {
     std::string OrigFilename(BlobStart, BlobStart + BlobLen);
     std::string Filename = OrigFilename;
     MaybeAddSystemRootToFilename(Filename);
-    const FileEntry *File = FileMgr.getFile(Filename, /*OpenFile=*/false,
-                                            /*CacheFailure=*/!OverriddenBuffer);
+    const FileEntry *File = 
+      OverriddenBuffer? FileMgr.getVirtualFile(Filename, (off_t)Record[4],
+                                               (time_t)Record[5])
+                      : FileMgr.getFile(Filename, /*OpenFile=*/false);
     if (File == 0 && !OriginalDir.empty() && !CurrentDir.empty() &&
         OriginalDir != CurrentDir) {
       std::string resolved = resolveFileRelativeToOriginalDir(Filename,
