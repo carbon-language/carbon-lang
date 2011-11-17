@@ -219,7 +219,7 @@ const FileEntry *DirectoryLookup::LookupFile(
     SmallVectorImpl<char> *SearchPath,
     SmallVectorImpl<char> *RelativePath,
     StringRef BuildingModule,
-    StringRef *SuggestedModule) const {
+    ModuleMap::Module **SuggestedModule) const {
   llvm::SmallString<1024> TmpDir;
   if (isNormalDir()) {
     // Concatenate the requested file onto the directory.
@@ -245,8 +245,8 @@ const FileEntry *DirectoryLookup::LookupFile(
       
       // If there is a module that corresponds to this header, 
       // suggest it.
-      StringRef Module = HS.findModuleForHeader(File);
-      if (!Module.empty() && Module != BuildingModule)
+      ModuleMap::Module *Module = HS.findModuleForHeader(File);
+      if (Module && Module->getTopLevelModuleName() != BuildingModule)
         *SuggestedModule = Module;
       
       return File;
@@ -285,7 +285,7 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(
     SmallVectorImpl<char> *SearchPath,
     SmallVectorImpl<char> *RelativePath,
     StringRef BuildingModule,
-    StringRef *SuggestedModule) const 
+    ModuleMap::Module **SuggestedModule) const 
 {
   FileManager &FileMgr = HS.getFileMgr();
 
@@ -370,7 +370,7 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(
   if (const FileEntry *FE = FileMgr.getFile(FrameworkName.str(),
                                             /*openFile=*/!AutomaticImport)) {
     if (AutomaticImport)
-      *SuggestedModule = Module->Name;
+      *SuggestedModule = Module;
     return FE;
   }
 
@@ -385,7 +385,7 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(
   const FileEntry *FE = FileMgr.getFile(FrameworkName.str(), 
                                         /*openFile=*/!AutomaticImport);
   if (FE && AutomaticImport)
-    *SuggestedModule = Module->Name;
+    *SuggestedModule = Module;
   return FE;
 }
 
@@ -408,10 +408,10 @@ const FileEntry *HeaderSearch::LookupFile(
     const FileEntry *CurFileEnt,
     SmallVectorImpl<char> *SearchPath,
     SmallVectorImpl<char> *RelativePath,
-    StringRef *SuggestedModule) 
+    ModuleMap::Module **SuggestedModule) 
 {
   if (SuggestedModule)
-    *SuggestedModule = StringRef();
+    *SuggestedModule = 0;
     
   // If 'Filename' is absolute, check to see if it exists and no searching.
   if (llvm::sys::path::is_absolute(Filename)) {
@@ -806,11 +806,11 @@ bool HeaderSearch::hasModuleMap(StringRef FileName,
   return false;
 }
 
-StringRef HeaderSearch::findModuleForHeader(const FileEntry *File) {
+ModuleMap::Module *HeaderSearch::findModuleForHeader(const FileEntry *File) {
   if (ModuleMap::Module *Module = ModMap.findModuleForHeader(File))
-    return Module->getTopLevelModuleName();
+    return Module;
   
-  return StringRef();
+  return 0;
 }
 
 bool HeaderSearch::loadModuleMapFile(const FileEntry *File) {

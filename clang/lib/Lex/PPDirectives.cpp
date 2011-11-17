@@ -486,7 +486,7 @@ const FileEntry *Preprocessor::LookupFile(
     const DirectoryLookup *&CurDir,
     SmallVectorImpl<char> *SearchPath,
     SmallVectorImpl<char> *RelativePath,
-    StringRef *SuggestedModule) {
+    ModuleMap::Module **SuggestedModule) {
   // If the header lookup mechanism may be relative to the current file, pass in
   // info about where the current file is.
   const FileEntry *CurFileEnt = 0;
@@ -1269,7 +1269,7 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
   llvm::SmallString<1024> RelativePath;
   // We get the raw path only if we have 'Callbacks' to which we later pass
   // the path.
-  StringRef SuggestedModule;
+  ModuleMap::Module *SuggestedModule = 0;
   const FileEntry *File = LookupFile(
       Filename, isAngled, LookupFrom, CurDir,
       Callbacks ? &SearchPath : NULL, Callbacks ? &RelativePath : NULL,
@@ -1277,9 +1277,13 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
 
   // If we are supposed to import a module rather than including the header,
   // do so now.
-  if (!SuggestedModule.empty()) {
+  if (SuggestedModule) {
+    // FIXME: Actually load the submodule that we were given.
+    while (SuggestedModule->Parent)
+      SuggestedModule = SuggestedModule->Parent;
+    
     TheModuleLoader.loadModule(IncludeTok.getLocation(),
-                               Identifiers.get(SuggestedModule),
+                               Identifiers.get(SuggestedModule->Name),
                                FilenameTok.getLocation());
     return;
   }

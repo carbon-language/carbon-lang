@@ -258,15 +258,15 @@ public:
   /// Filename for framework includes.
   ///
   /// \param SuggestedModule If non-null, and the file found is semantically
-  /// part of a known module, this will be set to the name of the module that
-  /// could be imported instead of preprocessing/parsing the file found.
+  /// part of a known module, this will be set to the module that should
+  /// be imported instead of preprocessing/parsing the file found.
   const FileEntry *LookupFile(StringRef Filename, bool isAngled,
                               const DirectoryLookup *FromDir,
                               const DirectoryLookup *&CurDir,
                               const FileEntry *CurFileEnt,
                               SmallVectorImpl<char> *SearchPath,
                               SmallVectorImpl<char> *RelativePath,
-                              StringRef *SuggestedModule);
+                              ModuleMap::Module **SuggestedModule);
 
   /// LookupSubframeworkHeader - Look up a subframework for the specified
   /// #include file.  For example, if #include'ing <HIToolbox/HIToolbox.h> from
@@ -366,9 +366,7 @@ public:
   bool hasModuleMap(StringRef Filename, const DirectoryEntry *Root);
   
   /// \brief Retrieve the module that corresponds to the given file, if any.
-  ///
-  /// FIXME: This will need to be generalized for submodules.
-  StringRef findModuleForHeader(const FileEntry *File);
+  ModuleMap::Module *findModuleForHeader(const FileEntry *File);
   
   
   /// \brief Read the contents of the given module map file.
