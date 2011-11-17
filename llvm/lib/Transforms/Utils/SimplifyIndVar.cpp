@@ -107,8 +107,8 @@ Value *SimplifyIndvar::foldIVUser(Instruction *UseInst, Instruction *IVOperand) 
 
     // Attempt to fold a binary operator with constant operand.
     // e.g. ((I + 1) >> 2) => I >> 2
-    if (IVOperand->getNumOperands() != 2 ||
-        !isa<ConstantInt>(IVOperand->getOperand(1)))
+    if (!isa<BinaryOperator>(IVOperand)
+        || !isa<ConstantInt>(IVOperand->getOperand(1)))
       return 0;
 
     IVSrc = IVOperand->getOperand(0);
