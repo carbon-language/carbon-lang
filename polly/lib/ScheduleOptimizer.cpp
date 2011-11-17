@@ -197,27 +197,30 @@ static isl_basic_map *getTileMap(isl_ctx *ctx, int scheduleDimensions,
   return tileMap;
 }
 
-isl_union_map *getTiledPartialSchedule(isl_band *band) {
-  isl_union_map *partialSchedule;
-  int scheduleDimensions;
+// getScheduleForBand - Get the schedule for this band.
+//
+// In case tiling is enabled, the schedule of the band is tiled.
+isl_union_map *getScheduleForBand(isl_band *Band) {
+  isl_union_map *PartialSchedule;
+  int Dimensions;
   isl_ctx *ctx;
   isl_space *Space;
-  isl_basic_map *tileMap;
-  isl_union_map *tileUnionMap;
+  isl_basic_map *TileMap;
+  isl_union_map *TileUMap;
 
-  partialSchedule = isl_band_get_partial_schedule(band);
+  PartialSchedule = isl_band_get_partial_schedule(Band);
 
   if (DisableTiling)
-    return partialSchedule;
+    return PartialSchedule;
 
-  ctx = isl_union_map_get_ctx(partialSchedule);
-  Space = isl_union_map_get_space(partialSchedule);
-  scheduleDimensions = isl_band_n_member(band);
+  ctx = isl_union_map_get_ctx(PartialSchedule);
+  Space = isl_union_map_get_space(PartialSchedule);
+  Dimensions = isl_band_n_member(Band);
 
-  tileMap = getTileMap(ctx, scheduleDimensions, Space);
-  tileUnionMap = isl_union_map_from_map(isl_map_from_basic_map(tileMap));
-  tileUnionMap = isl_union_map_align_params(tileUnionMap, Space);
-  return isl_union_map_apply_range(partialSchedule, tileUnionMap);
+  TileMap = getTileMap(ctx, Dimensions, Space);
+  TileUMap = isl_union_map_from_map(isl_map_from_basic_map(TileMap));
+  TileUMap = isl_union_map_align_params(TileUMap, Space);
+  return isl_union_map_apply_range(PartialSchedule, TileUMap);
 }
 
 static isl_map *getPrevectorMap(isl_ctx *ctx, int vectorDimension,
@@ -284,67 +287,75 @@ static isl_map *getPrevectorMap(isl_ctx *ctx, int vectorDimension,
   return isl_map_from_basic_map(tilingMap);
 }
 
-// tileBandList - Tile all bands contained in a band forest.
+// getScheduleForBandList - Get the scheduling map for a list of bands.
 //
-// Recursively walk the band forest and tile all bands in the forest. Return
-// a schedule that describes the tiled scattering.
-static isl_union_map *tileBandList(isl_band_list *blist) {
-  int numBands = isl_band_list_n_band(blist);
+// We walk recursively the forest of bands to combine the schedules of the
+// individual bands to the overall schedule. In case tiling is requested,
+// the individual bands are tiled.
+static isl_union_map *getScheduleForBandList(isl_band_list *BandList) {
+  int NumBands;
+  isl_union_map *Schedule;
+  isl_ctx *ctx;
 
-  isl_union_map *finalSchedule = 0;
+  ctx = isl_band_list_get_ctx(BandList);
+  NumBands = isl_band_list_n_band(BandList);
+  Schedule = 0;
 
-  for (int i = 0; i < numBands; i++) {
-    isl_band *band;
-    isl_union_map *partialSchedule;
-    band = isl_band_list_get_band(blist, i);
-    partialSchedule = getTiledPartialSchedule(band);
-    int scheduleDimensions = isl_band_n_member(band);
-    isl_space *Space = isl_union_map_get_space(partialSchedule);
+  for (int i = 0; i < NumBands; i++) {
+    isl_band *Band;
+    isl_union_map *PartialSchedule;
+    int ScheduleDimensions;
+    isl_space *Space;
 
+    Band = isl_band_list_get_band(BandList, i);
+    PartialSchedule = getScheduleForBand(Band);
+    ScheduleDimensions = isl_band_n_member(Band);
+    Space = isl_union_map_get_space(PartialSchedule);
 
-    if (isl_band_has_children(band)) {
-      isl_band_list *children = isl_band_get_children(band);
-      isl_union_map *suffixSchedule = tileBandList(children);
-      partialSchedule = isl_union_map_flat_range_product(partialSchedule,
-							 suffixSchedule);
-      isl_band_list_free(children);
+    if (isl_band_has_children(Band)) {
+      isl_band_list *Children;
+      isl_union_map *SuffixSchedule;
+
+      Children = isl_band_get_children(Band);
+      SuffixSchedule = getScheduleForBandList(Children);
+      PartialSchedule = isl_union_map_flat_range_product(PartialSchedule,
+							 SuffixSchedule);
+      isl_band_list_free(Children);
     } else if (EnablePollyVector) {
-      isl_map *tileMap;
-      isl_union_map *tileUnionMap;
-      isl_ctx *ctx;
+      for (int i = ScheduleDimensions - 1 ;  i >= 0 ; i--) {
+	if (isl_band_member_is_zero_distance(Band, i)) {
+          isl_map *TileMap;
+          isl_union_map *TileUMap;
 
-      ctx = isl_union_map_get_ctx(partialSchedule);
-      for (int i = scheduleDimensions - 1 ;  i >= 0 ; i--) {
-	if (isl_band_member_is_zero_distance(band, i)) {
-	  tileMap = getPrevectorMap(ctx, scheduleDimensions + i,
-				    scheduleDimensions * 2, 0);
-	  tileUnionMap = isl_union_map_from_map(tileMap);
-          tileUnionMap = isl_union_map_align_params(tileUnionMap,
-                                                    isl_space_copy(Space));
-	  partialSchedule = isl_union_map_apply_range(partialSchedule,
-						      tileUnionMap);
+	  TileMap = getPrevectorMap(ctx, ScheduleDimensions + i,
+				    ScheduleDimensions * 2, 0);
+	  TileUMap = isl_union_map_from_map(TileMap);
+          TileUMap = isl_union_map_align_params(TileUMap,
+                                                isl_space_copy(Space));
+	  PartialSchedule = isl_union_map_apply_range(PartialSchedule,
+						      TileUMap);
 	  break;
 	}
       }
     }
 
-    if (finalSchedule)
-      finalSchedule = isl_union_map_union(finalSchedule, partialSchedule);
+    if (Schedule)
+      Schedule = isl_union_map_union(Schedule, PartialSchedule);
     else
-      finalSchedule = partialSchedule;
+      Schedule = PartialSchedule;
 
-    isl_band_free(band);
+    isl_band_free(Band);
     isl_space_free(Space);
   }
 
-  return finalSchedule;
+  return Schedule;
 }
 
-static isl_union_map *tileSchedule(isl_schedule *schedule) {
-  isl_band_list *blist = isl_schedule_get_band_forest(schedule);
-  isl_union_map *tiledSchedule = tileBandList(blist);
-  isl_band_list_free(blist);
-  return tiledSchedule;
+static isl_union_map *getScheduleMap(isl_schedule *Schedule) {
+  isl_band_list *BandList = isl_schedule_get_band_forest(Schedule);
+  isl_union_map *ScheduleMap = getScheduleForBandList(BandList);
+  isl_band_list_free(BandList);
+  return ScheduleMap;
 }
 
 bool IslScheduleOptimizer::runOnScop(Scop &S) {
@@ -386,7 +397,7 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
   DEBUG(dbgs() << stringFromIslObj(schedule));
   DEBUG(dbgs() << "Individual bands: ");
 
-  isl_union_map *tiledSchedule = tileSchedule(schedule);
+  isl_union_map *ScheduleMap = getScheduleMap(schedule);
 
   for (Scop::iterator SI = S.begin(), SE = S.end(); SI != SE; ++SI) {
     ScopStmt *stmt = *SI;
@@ -396,7 +407,7 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
 
     isl_set *domain = stmt->getDomain();
     isl_union_map *stmtBand;
-    stmtBand = isl_union_map_intersect_domain(isl_union_map_copy(tiledSchedule),
+    stmtBand = isl_union_map_intersect_domain(isl_union_map_copy(ScheduleMap),
 					      isl_union_set_from_set(domain));
     isl_map *stmtSchedule;
     isl_union_map_foreach_map(stmtBand, getSingleMap, &stmtSchedule);
@@ -404,7 +415,7 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
     isl_union_map_free(stmtBand);
   }
 
-  isl_union_map_free(tiledSchedule);
+  isl_union_map_free(ScheduleMap);
   isl_schedule_free(schedule);
 
   unsigned maxScatDims = 0;
