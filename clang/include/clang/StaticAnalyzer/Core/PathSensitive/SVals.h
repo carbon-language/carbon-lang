@@ -136,6 +136,8 @@ public:
   ///  return that expression.  Otherwise return NULL.
   const SymExpr *getAsSymbolicExpression() const;
 
+  const SymExpr* getAsSymExpr() const;
+
   const MemRegion *getAsRegion() const;
 
   void dumpToStream(raw_ostream &OS) const;
