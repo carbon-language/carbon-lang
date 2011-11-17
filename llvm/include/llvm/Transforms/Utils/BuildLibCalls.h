@@ -20,6 +20,7 @@
 namespace llvm {
   class Value;
   class TargetData;
+  class TargetLibraryInfo;
   
   /// CastToCStr - Return V if it is an i8*, otherwise cast it to i8*.
   Value *CastToCStr(Value *V, IRBuilder<> &B);
@@ -86,12 +87,13 @@ namespace llvm {
 
   /// EmitFPutS - Emit a call to the puts function.  Str is required to be a
   /// pointer and File is a pointer to FILE.
-  void EmitFPutS(Value *Str, Value *File, IRBuilder<> &B, const TargetData *TD);
+  void EmitFPutS(Value *Str, Value *File, IRBuilder<> &B, const TargetData *TD,
+                 const TargetLibraryInfo *TLI);
 
   /// EmitFWrite - Emit a call to the fwrite function.  This assumes that Ptr is
   /// a pointer, Size is an 'intptr_t', and File is a pointer to FILE.
   void EmitFWrite(Value *Ptr, Value *Size, Value *File, IRBuilder<> &B,
-                  const TargetData *TD);
+                  const TargetData *TD, const TargetLibraryInfo *TLI);
 
   /// SimplifyFortifiedLibCalls - Helper class for folding checked library
   /// calls (e.g. __strcpy_chk) into their unchecked counterparts.

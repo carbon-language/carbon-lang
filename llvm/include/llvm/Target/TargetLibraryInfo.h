@@ -11,6 +11,7 @@
 #define LLVM_TARGET_TARGETLIBRARYINFO_H
 
 #include "llvm/Pass.h"
+#include "llvm/ADT/DenseMap.h"
 
 namespace llvm {
   class Triple;
@@ -37,7 +38,14 @@ namespace llvm {
       
       /// int fiprintf(FILE *stream, const char *format, ...);
       fiprintf,
-      
+
+      // size_t fwrite(const void *ptr, size_t size, size_t nitems,
+      //               FILE *stream);
+      fwrite,
+
+      // int fputs(const char *s, FILE *stream);
+      fputs,
+
       NumLibFuncs
     };
   }
@@ -46,7 +54,23 @@ namespace llvm {
 /// library functions are available for the current target, and allows a
 /// frontend to disable optimizations through -fno-builtin etc.
 class TargetLibraryInfo : public ImmutablePass {
-  unsigned char AvailableArray[(LibFunc::NumLibFuncs+7)/8];
+  unsigned char AvailableArray[(LibFunc::NumLibFuncs+3)/4];
+  llvm::DenseMap<unsigned, std::string> CustomNames;
+  static const char* StandardNames[LibFunc::NumLibFuncs];
+
+  enum AvailabilityState {
+    StandardName = 3, // (memset to all ones)
+    CustomName = 1,
+    Unavailable = 0  // (memset to all zeros)
+  };
+  void setState(LibFunc::Func F, AvailabilityState State) {
+    AvailableArray[F/4] &= ~(3 << 2*(F&3));
+    AvailableArray[F/4] |= State << 2*(F&3);
+  }
+  AvailabilityState getState(LibFunc::Func F) const {
+    return static_cast<AvailabilityState>((AvailableArray[F/4] >> 2*(F&3)) & 3);
+  }
+
 public:
   static char ID;
   TargetLibraryInfo();
@@ -56,19 +80,39 @@ public:
   /// has - This function is used by optimizations that want to match on or form
   /// a given library function.
   bool has(LibFunc::Func F) const {
-    return (AvailableArray[F/8] & (1 << (F&7))) != 0;
+    return getState(F) != Unavailable;
+  }
+
+  StringRef getName(LibFunc::Func F) const {
+    AvailabilityState State = getState(F);
+    if (State == Unavailable)
+      return StringRef();
+    if (State == StandardName)
+      return StandardNames[F];
+    assert(State == CustomName);
+    return CustomNames.find(F)->second;
   }
 
   /// setUnavailable - this can be used by whatever sets up TargetLibraryInfo to
   /// ban use of specific library functions.
   void setUnavailable(LibFunc::Func F) {
-    AvailableArray[F/8] &= ~(1 << (F&7));
+    setState(F, Unavailable);
   }
 
   void setAvailable(LibFunc::Func F) {
-    AvailableArray[F/8] |= 1 << (F&7);
+    setState(F, StandardName);
   }
-  
+
+  void setAvailableWithName(LibFunc::Func F, StringRef Name) {
+    if (StandardNames[F] != Name) {
+      setState(F, CustomName);
+      CustomNames[F] = Name;
+      assert(CustomNames.find(F) != CustomNames.end());
+    } else {
+      setState(F, StandardName);
+    }
+  }
+
   /// disableAllFunctions - This disables all builtins, which is used for
   /// options like -fno-builtin.
   void disableAllFunctions();

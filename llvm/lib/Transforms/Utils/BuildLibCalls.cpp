@@ -20,6 +20,9 @@
 #include "llvm/Module.h"
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetLibraryInfo.h"
+#include "llvm/LLVMContext.h"
+#include "llvm/Intrinsics.h"
 #include "llvm/ADT/SmallString.h"
 
 using namespace llvm;
@@ -297,20 +300,21 @@ void llvm::EmitFPutC(Value *Char, Value *File, IRBuilder<> &B,
 /// EmitFPutS - Emit a call to the puts function.  Str is required to be a
 /// pointer and File is a pointer to FILE.
 void llvm::EmitFPutS(Value *Str, Value *File, IRBuilder<> &B,
-                     const TargetData *TD) {
+                     const TargetData *TD, const TargetLibraryInfo *TLI) {
   Module *M = B.GetInsertBlock()->getParent()->getParent();
   AttributeWithIndex AWI[3];
   AWI[0] = AttributeWithIndex::get(1, Attribute::NoCapture);
   AWI[1] = AttributeWithIndex::get(2, Attribute::NoCapture);
   AWI[2] = AttributeWithIndex::get(~0u, Attribute::NoUnwind);
+  StringRef FPutsName = TLI->getName(LibFunc::fputs);
   Constant *F;
   if (File->getType()->isPointerTy())
-    F = M->getOrInsertFunction("fputs", AttrListPtr::get(AWI, 3),
+    F = M->getOrInsertFunction(FPutsName, AttrListPtr::get(AWI, 3),
                                B.getInt32Ty(),
                                B.getInt8PtrTy(),
                                File->getType(), NULL);
   else
-    F = M->getOrInsertFunction("fputs", B.getInt32Ty(),
+    F = M->getOrInsertFunction(FPutsName, B.getInt32Ty(),
                                B.getInt8PtrTy(),
                                File->getType(), NULL);
   CallInst *CI = B.CreateCall2(F, CastToCStr(Str, B), File, "fputs");
@@ -322,23 +326,25 @@ void llvm::EmitFPutS(Value *Str, Value *File, IRBuilder<> &B,
 /// EmitFWrite - Emit a call to the fwrite function.  This assumes that Ptr is
 /// a pointer, Size is an 'intptr_t', and File is a pointer to FILE.
 void llvm::EmitFWrite(Value *Ptr, Value *Size, Value *File,
-                      IRBuilder<> &B, const TargetData *TD) {
+                      IRBuilder<> &B, const TargetData *TD,
+                      const TargetLibraryInfo *TLI) {
   Module *M = B.GetInsertBlock()->getParent()->getParent();
   AttributeWithIndex AWI[3];
   AWI[0] = AttributeWithIndex::get(1, Attribute::NoCapture);
   AWI[1] = AttributeWithIndex::get(4, Attribute::NoCapture);
   AWI[2] = AttributeWithIndex::get(~0u, Attribute::NoUnwind);
   LLVMContext &Context = B.GetInsertBlock()->getContext();
+  StringRef FWriteName = TLI->getName(LibFunc::fwrite);
   Constant *F;
   if (File->getType()->isPointerTy())
-    F = M->getOrInsertFunction("fwrite", AttrListPtr::get(AWI, 3),
+    F = M->getOrInsertFunction(FWriteName, AttrListPtr::get(AWI, 3),
                                TD->getIntPtrType(Context),
                                B.getInt8PtrTy(),
                                TD->getIntPtrType(Context),
                                TD->getIntPtrType(Context),
                                File->getType(), NULL);
   else
-    F = M->getOrInsertFunction("fwrite", TD->getIntPtrType(Context),
+    F = M->getOrInsertFunction(FWriteName, TD->getIntPtrType(Context),
                                B.getInt8PtrTy(),
                                TD->getIntPtrType(Context),
                                TD->getIntPtrType(Context),
