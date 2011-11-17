@@ -33,12 +33,14 @@ namespace SCEVType {
 }
 
 /// @brief The result the validator returns for a SCEV expression.
-struct ValidatorResult {
+class ValidatorResult {
   /// @brief The type of the expression
   SCEVType::TYPE type;
 
   /// @brief The set of Parameters in the expression.
   std::vector<const SCEV*> Parameters;
+
+public:
 
   /// @brief Create an invalid result.
   ValidatorResult() : type(SCEVType::INVALID) {};
@@ -77,17 +79,32 @@ struct ValidatorResult {
     return type == SCEVType::INT;
   }
 
+  /// @brief Get the parameters of this validator result.
+  std::vector<const SCEV*> getParameters() {
+    return Parameters;
+  }
+
   /// @brief Add the parameters of Source to this result.
-  void addParamsFrom(struct ValidatorResult &Source) {
+  void addParamsFrom(class ValidatorResult &Source) {
     Parameters.insert(Parameters.end(),
                       Source.Parameters.begin(),
                       Source.Parameters.end());
   }
+
+  /// @brief Merge a result.
+  ///
+  /// This means to merge the parameters and to set the type to the most
+  /// specific type that matches both.
+  void merge(class ValidatorResult &ToMerge) {
+    type = std::max(type, ToMerge.type);
+    addParamsFrom(ToMerge);
+  }
+
 };
 
 /// Check if a SCEV is valid in a SCoP.
 struct SCEVValidator
-  : public SCEVVisitor<SCEVValidator, struct ValidatorResult> {
+  : public SCEVVisitor<SCEVValidator, class ValidatorResult> {
 private:
   const Region *R;
   ScalarEvolution &SE;
@@ -98,11 +115,11 @@ public:
                 const Value *BaseAddress) : R(R), SE(SE),
     BaseAddress(BaseAddress) {};
 
-  struct ValidatorResult visitConstant(const SCEVConstant *Constant) {
+  class ValidatorResult visitConstant(const SCEVConstant *Constant) {
     return ValidatorResult(SCEVType::INT);
   }
 
-  struct ValidatorResult visitTruncateExpr(const SCEVTruncateExpr *Expr) {
+  class ValidatorResult visitTruncateExpr(const SCEVTruncateExpr *Expr) {
     ValidatorResult Op = visit(Expr->getOperand());
 
     // We currently do not represent a truncate expression as an affine
@@ -111,22 +128,22 @@ public:
     if (Op.isConstant())
       return ValidatorResult(SCEVType::PARAM, Expr);
 
-    return ValidatorResult (SCEVType::INVALID);
+    return ValidatorResult(SCEVType::INVALID);
   }
 
-  struct ValidatorResult visitZeroExtendExpr(const SCEVZeroExtendExpr *Expr) {
+  class ValidatorResult visitZeroExtendExpr(const SCEVZeroExtendExpr *Expr) {
     ValidatorResult Op = visit(Expr->getOperand());
 
     // We currently do not represent a zero extend expression as an affine
     // expression. If it is constant during Scop execution, we treat it as a
     // parameter, otherwise we bail out.
     if (Op.isConstant())
-      return ValidatorResult (SCEVType::PARAM, Expr);
+      return ValidatorResult(SCEVType::PARAM, Expr);
 
     return ValidatorResult(SCEVType::INVALID);
   }
 
-  struct ValidatorResult visitSignExtendExpr(const SCEVSignExtendExpr *Expr) {
+  class ValidatorResult visitSignExtendExpr(const SCEVSignExtendExpr *Expr) {
     // We currently allow only signed SCEV expressions. In the case of a
     // signed value, a sign extend is a noop.
     //
@@ -134,7 +151,7 @@ public:
     return visit(Expr->getOperand());
   }
 
-  struct ValidatorResult visitAddExpr(const SCEVAddExpr *Expr) {
+  class ValidatorResult visitAddExpr(const SCEVAddExpr *Expr) {
     ValidatorResult Return(SCEVType::INT);
 
     for (int i = 0, e = Expr->getNumOperands(); i < e; ++i) {
@@ -143,35 +160,33 @@ public:
       if (!Op.isValid())
         return ValidatorResult(SCEVType::INVALID);
 
-      Return.type = std::max(Return.type, Op.type);
-      Return.addParamsFrom(Op);
+      Return.merge(Op);
     }
 
     // TODO: Check for NSW and NUW.
     return Return;
   }
 
-  struct ValidatorResult visitMulExpr(const SCEVMulExpr *Expr) {
+  class ValidatorResult visitMulExpr(const SCEVMulExpr *Expr) {
     ValidatorResult Return(SCEVType::INT);
 
     for (int i = 0, e = Expr->getNumOperands(); i < e; ++i) {
       ValidatorResult Op = visit(Expr->getOperand(i));
 
-      if (Op.type == SCEVType::INT)
+      if (Op.isINT())
         continue;
 
-      if (Op.type == SCEVType::INVALID || Return.type != SCEVType::INT)
+      if (!Op.isValid() || !Return.isINT())
         return ValidatorResult(SCEVType::INVALID);
 
-      Return.type = Op.type;
-      Return.addParamsFrom(Op);
+      Return.merge(Op);
     }
 
     // TODO: Check for NSW and NUW.
     return Return;
   }
 
-  struct ValidatorResult visitUDivExpr(const SCEVUDivExpr *Expr) {
+  class ValidatorResult visitUDivExpr(const SCEVUDivExpr *Expr) {
     ValidatorResult LHS = visit(Expr->getLHS());
     ValidatorResult RHS = visit(Expr->getRHS());
 
@@ -184,7 +199,7 @@ public:
     return ValidatorResult(SCEVType::INVALID);
   }
 
-  struct ValidatorResult visitAddRecExpr(const SCEVAddRecExpr *Expr) {
+  class ValidatorResult visitAddRecExpr(const SCEVAddRecExpr *Expr) {
     if (!Expr->isAffine())
       return ValidatorResult(SCEVType::INVALID);
 
@@ -210,7 +225,7 @@ public:
     return ValidatorResult(SCEVType::INVALID);
   }
 
-  struct ValidatorResult visitSMaxExpr(const SCEVSMaxExpr *Expr) {
+  class ValidatorResult visitSMaxExpr(const SCEVSMaxExpr *Expr) {
     ValidatorResult Return(SCEVType::INT);
 
     for (int i = 0, e = Expr->getNumOperands(); i < e; ++i) {
@@ -219,14 +234,13 @@ public:
       if (!Op.isValid())
         return ValidatorResult(SCEVType::INVALID);
 
-      Return.type = std::max(Return.type, Op.type);
-      Return.addParamsFrom(Op);
+      Return.merge(Op);
     }
 
     return Return;
   }
 
-  struct ValidatorResult visitUMaxExpr(const SCEVUMaxExpr *Expr) {
+  class ValidatorResult visitUMaxExpr(const SCEVUMaxExpr *Expr) {
     ValidatorResult Return(SCEVType::PARAM);
 
     // We do not support unsigned operations. If 'Expr' is constant during Scop
@@ -237,7 +251,7 @@ public:
       if (!Op.isConstant())
         return ValidatorResult(SCEVType::INVALID);
 
-      Return.addParamsFrom(Op);
+      Return.merge(Op);
     }
 
     return Return;
@@ -282,7 +296,7 @@ namespace polly {
     SCEVValidator Validator(R, SE, BaseAddress);
     ValidatorResult Result = Validator.visit(Expr);
 
-    return Result.Parameters;
+    return Result.getParameters();
   }
 }
 
