@@ -16,12 +16,13 @@
 
 #include <string>
 #include "clang/Basic/Visibility.h"
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
 
 namespace clang {
 
 /// LangOptions - This class keeps track of the various options that can be
 /// enabled, which controls the dialect of C that is accepted.
-class LangOptions {
+class LangOptions : public llvm::RefCountedBase<LangOptions> {
 public:
   typedef clang::Visibility Visibility;
   

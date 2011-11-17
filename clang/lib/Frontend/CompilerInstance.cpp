@@ -987,11 +987,11 @@ static void compileModule(CompilerInstance &ImportingInstance,
 
   // For any options that aren't intended to affect how a module is built,
   // reset them to their default values.
-  Invocation->getLangOpts().resetNonModularOptions();
+  Invocation->getLangOpts()->resetNonModularOptions();
   Invocation->getPreprocessorOpts().resetNonModularOptions();
 
   // Note the name of the module we're building.
-  Invocation->getLangOpts().CurrentModule = ModuleName;
+  Invocation->getLangOpts()->CurrentModule = ModuleName;
 
   // Note that this module is part of the module build path, so that we
   // can detect cycles in the module graph.
@@ -1004,7 +1004,7 @@ static void compileModule(CompilerInstance &ImportingInstance,
   FrontendOpts.DisableFree = false;
   FrontendOpts.Inputs.clear();
   FrontendOpts.Inputs.push_back(
-    std::make_pair(getSourceInputKindFromOptions(Invocation->getLangOpts()),
+    std::make_pair(getSourceInputKindFromOptions(*Invocation->getLangOpts()),
                                                  UmbrellaHeader));
 
   Invocation->getDiagnosticOpts().VerifyDiagnostics = 0;

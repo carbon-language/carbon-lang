@@ -20,6 +20,7 @@
 #include "clang/Sema/CodeCompleteConsumer.h"
 #include "clang/Lex/ModuleLoader.h"
 #include "clang/Lex/PreprocessingRecord.h"
+#include "clang/Basic/LangOptions.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/FileSystemOptions.h"
@@ -69,6 +70,7 @@ class GlobalCodeCompletionAllocator
 ///
 class ASTUnit : public ModuleLoader {
 private:
+  llvm::IntrusiveRefCntPtr<LangOptions>       LangOpts;
   llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diagnostics;
   llvm::IntrusiveRefCntPtr<FileManager>       FileMgr;
   llvm::IntrusiveRefCntPtr<SourceManager>     SourceMgr;

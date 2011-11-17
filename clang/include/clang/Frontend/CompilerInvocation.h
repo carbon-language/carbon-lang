@@ -61,7 +61,7 @@ class CompilerInvocation : public llvm::RefCountedBase<CompilerInvocation> {
   HeaderSearchOptions HeaderSearchOpts;
 
   /// Options controlling the language variant.
-  LangOptions LangOpts;
+  llvm::IntrusiveRefCntPtr<LangOptions> LangOpts;
 
   /// Options controlling the preprocessor (aside from #include handling).
   PreprocessorOptions PreprocessorOpts;
@@ -73,7 +73,7 @@ class CompilerInvocation : public llvm::RefCountedBase<CompilerInvocation> {
   TargetOptions TargetOpts;
 
 public:
-  CompilerInvocation() {}
+  CompilerInvocation();
 
   /// @name Utility Methods
   /// @{
@@ -111,7 +111,7 @@ public:
   /// \param LangStd - The input language standard.
   void setLangDefaults(InputKind IK,
                   LangStandard::Kind LangStd = LangStandard::lang_unspecified) {
-    setLangDefaults(LangOpts, IK, LangStd);
+    setLangDefaults(*LangOpts, IK, LangStd);
   }
 
   /// setLangDefaults - Set language defaults for the given input language and
@@ -166,8 +166,10 @@ public:
     return FrontendOpts;
   }
 
-  LangOptions &getLangOpts() { return LangOpts; }
-  const LangOptions &getLangOpts() const { return LangOpts; }
+  LangOptions *getLangOpts() { return LangOpts.getPtr(); }
+  const LangOptions *getLangOpts() const { return LangOpts.getPtr(); }
+
+  void setLangOpts(LangOptions *LangOpts);
 
   PreprocessorOptions &getPreprocessorOpts() { return PreprocessorOpts; }
   const PreprocessorOptions &getPreprocessorOpts() const {

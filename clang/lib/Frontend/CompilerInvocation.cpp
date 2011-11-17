@@ -30,6 +30,21 @@
 #include "llvm/Support/Path.h"
 using namespace clang;
 
+//===----------------------------------------------------------------------===//
+// Initialization.
+//===----------------------------------------------------------------------===//
+
+CompilerInvocation::CompilerInvocation()
+  : LangOpts(new LangOptions()) {}
+
+void CompilerInvocation::setLangOpts(LangOptions *LOpts) {
+  LangOpts = LOpts;
+}
+
+//===----------------------------------------------------------------------===//
+// Utility functions.
+//===----------------------------------------------------------------------===//
+
 static const char *getAnalysisStoreName(AnalysisStores Kind) {
   switch (Kind) {
   default:
@@ -892,7 +907,7 @@ void CompilerInvocation::toArgs(std::vector<std::string> &Res) {
   FileSystemOptsToArgs(getFileSystemOpts(), Res);
   FrontendOptsToArgs(getFrontendOpts(), Res);
   HeaderSearchOptsToArgs(getHeaderSearchOpts(), Res);
-  LangOptsToArgs(getLangOpts(), Res);
+  LangOptsToArgs(*getLangOpts(), Res);
   PreprocessorOptsToArgs(getPreprocessorOpts(), Res);
   PreprocessorOutputOptsToArgs(getPreprocessorOutputOpts(), Res);
   TargetOptsToArgs(getTargetOpts(), Res);
@@ -1982,9 +1997,9 @@ void CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
   ParseCodeGenArgs(Res.getCodeGenOpts(), *Args, DashX, Diags);
   ParseHeaderSearchArgs(Res.getHeaderSearchOpts(), *Args);
   if (DashX != IK_AST && DashX != IK_LLVM_IR) {
-    ParseLangArgs(Res.getLangOpts(), *Args, DashX, Diags);
+    ParseLangArgs(*Res.getLangOpts(), *Args, DashX, Diags);
     if (Res.getFrontendOpts().ProgramAction == frontend::RewriteObjC)
-      Res.getLangOpts().ObjCExceptions = 1;
+      Res.getLangOpts()->ObjCExceptions = 1;
   }
   // FIXME: ParsePreprocessorArgs uses the FileManager to read the contents of
   // PCH file and find the original header name. Remove the need to do that in
@@ -2057,9 +2072,9 @@ std::string CompilerInvocation::getModuleHash() const {
   
   // Extend the signature with the language options
 #define LANGOPT(Name, Bits, Default, Description) \
-  Signature.add(LangOpts.Name, Bits);
+  Signature.add(LangOpts->Name, Bits);
 #define ENUM_LANGOPT(Name, Type, Bits, Default, Description) \
-  Signature.add(static_cast<unsigned>(LangOpts.get##Name()), Bits);
+  Signature.add(static_cast<unsigned>(LangOpts->get##Name()), Bits);
 #define BENIGN_LANGOPT(Name, Bits, Default, Description)
 #define BENIGN_ENUM_LANGOPT(Name, Type, Bits, Default, Description)
 #include "clang/Basic/LangOptions.def"

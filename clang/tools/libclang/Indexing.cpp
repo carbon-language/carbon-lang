@@ -333,7 +333,7 @@ static void clang_indexSourceFile_Impl(void *UserData) {
   // (often very broken) source code, where spell-checking can have a
   // significant negative impact on performance (particularly when 
   // precompiled headers are involved), we disable it.
-  CInvok->getLangOpts().SpellChecking = false;
+  CInvok->getLangOpts()->SpellChecking = false;
 
   if (!requestedToGetTU)
     CInvok->getPreprocessorOpts().DetailedRecord = false;

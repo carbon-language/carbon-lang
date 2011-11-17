@@ -125,7 +125,7 @@ static bool checkForMigration(StringRef resourcesPath,
     return true;
   }
 
-  if (!CI.getLangOpts().ObjC1)
+  if (!CI.getLangOpts()->ObjC1)
     return false;
 
   arcmt::checkForManualIssues(CI,
@@ -167,13 +167,13 @@ static bool performTransformations(StringRef resourcesPath,
     return true;
   }
 
-  if (!origCI.getLangOpts().ObjC1)
+  if (!origCI.getLangOpts()->ObjC1)
     return false;
 
   MigrationProcess migration(origCI, DiagClient);
 
   std::vector<TransformFn>
-    transforms = arcmt::getAllTransformations(origCI.getLangOpts().getGC());
+    transforms = arcmt::getAllTransformations(origCI.getLangOpts()->getGC());
   assert(!transforms.empty());
 
   llvm::OwningPtr<PrintTransforms> transformPrinter;

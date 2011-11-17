@@ -1041,6 +1041,7 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
 
   // Configure the various subsystems.
   // FIXME: Should we retain the previous file manager?
+  LangOpts = &Clang->getLangOpts();
   FileSystemOpts = Clang->getFileSystemOpts();
   FileMgr = new FileManager(FileSystemOpts);
   SourceMgr = new SourceManager(getDiagnostics(), *FileMgr);
@@ -1247,7 +1248,7 @@ ASTUnit::ComputePreamble(CompilerInvocation &Invocation,
   }
   
   return std::make_pair(Buffer, Lexer::ComputePreamble(Buffer,
-                                                       Invocation.getLangOpts(),
+                                                       *Invocation.getLangOpts(),
                                                        MaxLines));
 }
 
@@ -2230,7 +2231,7 @@ void ASTUnit::CodeComplete(StringRef File, unsigned Line, unsigned Column,
   FrontendOpts.CodeCompletionAt.Column = Column;
 
   // Set the language options appropriately.
-  LangOpts = CCInvocation->getLangOpts();
+  LangOpts = *CCInvocation->getLangOpts();
 
   llvm::OwningPtr<CompilerInstance> Clang(new CompilerInstance());
 

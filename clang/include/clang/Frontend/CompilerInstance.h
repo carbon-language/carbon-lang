@@ -218,10 +218,10 @@ public:
   }
 
   LangOptions &getLangOpts() {
-    return Invocation->getLangOpts();
+    return *Invocation->getLangOpts();
   }
   const LangOptions &getLangOpts() const {
-    return Invocation->getLangOpts();
+    return *Invocation->getLangOpts();
   }
 
   PreprocessorOptions &getPreprocessorOpts() {
