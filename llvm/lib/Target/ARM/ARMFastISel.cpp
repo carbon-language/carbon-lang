@@ -684,6 +684,8 @@ unsigned ARMFastISel::TargetMaterializeConstant(const Constant *C) {
   return 0;
 }
 
+// TODO: unsigned ARMFastISel::TargetMaterializeFloatZero(const ConstantFP *CF);
+
 unsigned ARMFastISel::TargetMaterializeAlloca(const AllocaInst *AI) {
   // Don't handle dynamic allocas.
   if (!FuncInfo.StaticAllocaMap.count(AI)) return 0;
