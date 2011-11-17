@@ -448,8 +448,11 @@ bool AddressSanitizer::insertGlobalRedzones(Module &M) {
 
     if (!Ty->isSized()) continue;
     if (!G->hasInitializer()) continue;
-    if (GlobalVariable::mayBeOverridden(G->getLinkage()) ||
-        G->getLinkage() == GlobalVariable::AppendingLinkage)
+    // Touch only those globals that will not be defined in other modules.
+    // Don't handle ODR type linkages since other modules may be built w/o asan.
+    if (G->getLinkage() != GlobalVariable::GlobalVariable::ExternalLinkage &&
+        G->getLinkage() != GlobalVariable::GlobalVariable::PrivateLinkage &&
+        G->getLinkage() != GlobalVariable::GlobalVariable::InternalLinkage)
       continue;
     // For now, just ignore this Alloca if the alignment is large.
     if (G->getAlignment() > RedzoneSize) continue;
