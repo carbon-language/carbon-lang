@@ -46,6 +46,7 @@ namespace llvm {
 
   public:
     RefCountedBase() : ref_cnt(0) {}
+    RefCountedBase(const RefCountedBase &) : ref_cnt(0) {}
 
     void Retain() const { ++ref_cnt; }
     void Release() const {
@@ -67,6 +68,8 @@ namespace llvm {
 
   protected:
     RefCountedBaseVPTR() : ref_cnt(0) {}
+    RefCountedBaseVPTR(const RefCountedBaseVPTR &) : ref_cnt(0) {}
+
     virtual ~RefCountedBaseVPTR() {}
 
     void Retain() const { ++ref_cnt; }
