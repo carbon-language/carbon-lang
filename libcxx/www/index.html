@@ -143,9 +143,17 @@
   <li><code>svn co http://llvm.org/svn/llvm-project/libcxx/trunk libcxx</code></li>
   </ul>
 
-  <p>To build on Mac OS X 10.6, you need a helper library and header 
+  <p>
+     On Mac OS 10.7 (Lion), the easiest way to get this library is to install
+     Xcode 4.2 or later.  However if you want to install tip-of-trunk from here
+     (getting the bleeding edge), read on.
+  </p>
+
+  <p>To build on Mac OS X 10.6 (Snow Leopard), you need a helper library and header 
     <a href="http://home.roadrunner.com/~hinnant/libcppabi.zip">found here</a>.
-    cp cxxabi.h to /usr/include, and cp libc++abi.dylib to /usr/lib.
+    cp cxxabi.h to /usr/include, and cp libc++abi.dylib to /usr/lib.  On Mac OS
+    X 10.7 (Lion) and later, this helper library and header are already installed
+    for you.
     <p>
     
   <p>
@@ -155,7 +163,7 @@
   <ul>
     <li><code>cd libcxx/lib</code></li>
     <li><code>export TRIPLE=-apple-</code></li>
-    <li><code>export MACOSX_DEPLOYMENT_TARGET=10.6</code></li>
+    <li>Only on 10.6: <code>export MACOSX_DEPLOYMENT_TARGET=10.6</code></li>
     <li><code>./buildit</code></li>
   </ul>
   
