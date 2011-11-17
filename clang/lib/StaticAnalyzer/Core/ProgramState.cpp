@@ -644,15 +644,13 @@ bool ProgramState::isTainted(const Stmt *S, TaintTagType Kind) const {
 }
 
 bool ProgramState::isTainted(SVal V, TaintTagType Kind) const {
-  const SymExpr* Sym = V.getAsSymbol();
-  if (!Sym)
-    Sym = V.getAsSymbolicExpression();
-  if (!Sym)
-    return false;
-  return isTainted(Sym, Kind);
+  return isTainted(V.getAsSymExpr(), Kind);
 }
 
 bool ProgramState::isTainted(const SymExpr* Sym, TaintTagType Kind) const {
+  if (!Sym)
+    return false;
+
   // Check taint on derived symbols.
   if (const SymbolDerived *SD = dyn_cast<SymbolDerived>(Sym))
     return isTainted(SD->getParentSymbol(), Kind);
