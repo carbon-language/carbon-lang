@@ -1154,8 +1154,8 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
 void CompileUnit::constructSubrangeDIE(DIE &Buffer, DISubrange SR, DIE *IndexTy){
   DIE *DW_Subrange = new DIE(dwarf::DW_TAG_subrange_type);
   addDIEEntry(DW_Subrange, dwarf::DW_AT_type, dwarf::DW_FORM_ref4, IndexTy);
-  int64_t L = SR.getLo();
-  int64_t H = SR.getHi();
+  uint64_t L = SR.getLo();
+  uint64_t H = SR.getHi();
 
   // The L value defines the lower bounds which is typically zero for C/C++. The
   // H value is the upper bounds.  Values are 64 bit.  H - L + 1 is the size
@@ -1168,8 +1168,8 @@ void CompileUnit::constructSubrangeDIE(DIE &Buffer, DISubrange SR, DIE *IndexTy)
     return;
   }
   if (L)
-    addSInt(DW_Subrange, dwarf::DW_AT_lower_bound, 0, L);
-  addSInt(DW_Subrange, dwarf::DW_AT_upper_bound, 0, H);
+    addUInt(DW_Subrange, dwarf::DW_AT_lower_bound, 0, L);
+  addUInt(DW_Subrange, dwarf::DW_AT_upper_bound, 0, H);
   Buffer.addChild(DW_Subrange);
 }
 

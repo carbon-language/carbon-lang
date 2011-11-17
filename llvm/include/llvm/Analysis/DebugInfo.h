@@ -135,8 +135,8 @@ namespace llvm {
   public:
     explicit DISubrange(const MDNode *N = 0) : DIDescriptor(N) {}
 
-    int64_t getLo() const { return (int64_t)getUInt64Field(1); }
-    int64_t getHi() const { return (int64_t)getUInt64Field(2); }
+    uint64_t getLo() const { return getUInt64Field(1); }
+    uint64_t getHi() const { return getUInt64Field(2); }
   };
 
   /// DIArray - This descriptor holds an array of descriptors.
