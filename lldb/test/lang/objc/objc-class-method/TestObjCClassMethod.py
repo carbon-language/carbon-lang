@@ -6,7 +6,7 @@ import lldb
 import lldbutil
 from lldbtest import *
 
-class TestObjCStaticMethod(TestBase):
+class TestObjCClassMethod(TestBase):
 
     mydir = os.path.join("lang", "objc", "objc-class-method")
 
