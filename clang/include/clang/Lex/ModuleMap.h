@@ -73,7 +73,9 @@ public:
       : Name(Name), DefinitionLoc(DefinitionLoc), Parent(Parent), 
         UmbrellaHeader(0), IsExplicit(IsExplicit) {
     }
-           
+     
+    ~Module();
+    
     /// \brief Determine whether this module is a submodule.
     bool isSubModule() const { return Parent != 0; }
     

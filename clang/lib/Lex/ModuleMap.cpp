@@ -31,6 +31,15 @@ using namespace clang;
 // Module
 //----------------------------------------------------------------------------//
 
+ModuleMap::Module::~Module() {
+  for (llvm::StringMap<Module *>::iterator I = SubModules.begin(), 
+                                        IEnd = SubModules.end();
+       I != IEnd; ++I) {
+    delete I->getValue();
+  }
+
+}
+
 std::string ModuleMap::Module::getFullModuleName() const {
   llvm::SmallVector<StringRef, 2> Names;
   
@@ -72,6 +81,12 @@ ModuleMap::ModuleMap(FileManager &FileMgr, const DiagnosticConsumer &DC) {
 }
 
 ModuleMap::~ModuleMap() {
+  for (llvm::StringMap<Module *>::iterator I = Modules.begin(), 
+                                        IEnd = Modules.end();
+       I != IEnd; ++I) {
+    delete I->getValue();
+  }
+  
   delete SourceMgr;
 }
 
