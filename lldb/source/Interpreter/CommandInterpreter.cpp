@@ -1807,7 +1807,7 @@ CommandInterpreter::GetConfirmationInputReaderCallback
         {
             if (out_file.IsValid() && !reader.IsDone() && reader.GetPrompt())
             {
-                out_file.Printf ("Please answer \"y\" or \"Y\" or \"n\" or \"N\"\n%s", reader.GetPrompt());
+                out_file.Printf ("Please answer \"y\" or \"n\".\n%s", reader.GetPrompt());
                 out_file.Flush ();
             }
         }
