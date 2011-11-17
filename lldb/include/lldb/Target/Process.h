@@ -491,7 +491,15 @@ public:
     
     ProcessLaunchInfo () :
         ProcessInfo(),
-        m_flags ()
+        m_working_dir (),
+        m_plugin_name (),
+        m_shell (),
+        m_flags (0),
+        m_file_actions (), 
+        m_resume_count (0),
+        m_monitor_callback (NULL),
+        m_monitor_callback_baton (NULL),
+        m_monitor_signals (false)
     {
     }
 
@@ -1508,11 +1516,17 @@ public:
     ConnectRemote (const char *remote_url);
 
     bool
-    AttachedToProcess() const
+    GetShouldDetach () const
     {
-        return m_attached_to_process;
+        return m_should_detach;
     }
-    
+
+    void
+    SetShouldDetach (bool b)
+    {
+        m_should_detach = b;
+    }
+
     //------------------------------------------------------------------
     /// Get the image information address for the current process.
     ///
@@ -2944,7 +2958,7 @@ protected:
     std::string                 m_stderr_data;
     MemoryCache                 m_memory_cache;
     AllocatedMemoryCache        m_allocated_memory_cache;
-    bool                        m_attached_to_process;   /// Did we launch the process or attach to it?
+    bool                        m_should_detach;   /// Should we detach if the process object goes away with an explicit call to Kill or Detach?
 
     typedef std::map<lldb::LanguageType, lldb::LanguageRuntimeSP> LanguageRuntimeCollection; 
     LanguageRuntimeCollection m_language_runtimes;

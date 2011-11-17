@@ -581,6 +581,14 @@ Platform::DebugProcess (ProcessLaunchInfo &launch_info,
         {
             ProcessAttachInfo attach_info (launch_info);
             process_sp = Attach (attach_info, debugger, target, listener, error);
+            if (process_sp)
+            {
+                // Since we attached to the process, it will think it needs to detach
+                // if the process object just goes away without an explicit call to
+                // Process::Kill() or Process::Detach(), so let it know to kill the 
+                // process if this happens.
+                process_sp->SetShouldDetach (false);
+            }
         }
     }
     return process_sp;

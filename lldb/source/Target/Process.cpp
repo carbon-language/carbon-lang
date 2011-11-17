@@ -774,7 +774,7 @@ Process::Process(Target &target, Listener &listener) :
     m_stderr_data (),
     m_memory_cache (*this),
     m_allocated_memory_cache (*this),
-    m_attached_to_process (false),
+    m_should_detach (false),
     m_next_event_action_ap(),
     m_can_jit(eCanJITYes)
 {
@@ -818,6 +818,29 @@ Process::~Process()
 void
 Process::Finalize()
 {
+    switch (GetPrivateState())
+    {
+        case eStateConnected:
+        case eStateAttaching:
+        case eStateLaunching:
+        case eStateStopped:
+        case eStateRunning:
+        case eStateStepping:
+        case eStateCrashed:
+        case eStateSuspended:
+            if (GetShouldDetach())
+                Detach();
+            else
+                Destroy();
+            break;
+            
+        case eStateInvalid:
+        case eStateUnloaded:
+        case eStateDetached:
+        case eStateExited:
+            break;
+    }
+
     // Clear our broadcaster before we proceed with destroying
     Broadcaster::Clear();
 
@@ -1183,6 +1206,9 @@ Process::UpdateThreadListIfNeeded ()
         if (StateIsStoppedState (state, true))
         {
             Mutex::Locker locker (m_thread_list.GetMutex ());
+            // m_thread_list does have its own mutex, but we need to
+            // hold onto the mutex between the call to UpdateThreadList(...)
+            // and the os->UpdateThreadList(...) so it doesn't change on us
             ThreadList new_thread_list(this);
             // Always update the thread list with the protocol specific
             // thread list
@@ -2209,6 +2235,7 @@ Process::Launch (const ProcessLaunchInfo &launch_info)
             if (error.Success())
             {
                 SetPublicState (eStateLaunching);
+                m_should_detach = false;
 
                 // Now launch using these arguments.
                 error = DoLaunch (exe_module, launch_info);
@@ -2351,6 +2378,8 @@ Process::Attach (ProcessAttachInfo &attach_info)
                 error = WillAttachToProcessWithName(process_name, wait_for_launch);
                 if (error.Success())
                 {
+                    m_should_detach = true;
+
                     SetPublicState (eStateAttaching);
                     error = DoAttachToProcessWithName (process_name, wait_for_launch);
                     if (error.Fail())
@@ -2416,6 +2445,7 @@ Process::Attach (ProcessAttachInfo &attach_info)
         error = WillAttachToProcessWithID(attach_pid);
         if (error.Success())
         {
+            m_should_detach = true;
             SetPublicState (eStateAttaching);
 
             error = DoAttachToProcessWithID (attach_pid);
@@ -2516,7 +2546,6 @@ Process::CompleteAttach ()
 {
     // Let the process subclass figure out at much as it can about the process
     // before we go looking for a dynamic loader plug-in.
-    m_attached_to_process = true;
     DidAttach();
 
     // We just attached.  If we have a platform, ask it for the process architecture, and if it isn't

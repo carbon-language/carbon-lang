@@ -272,7 +272,7 @@ Debugger::Clear()
         ProcessSP process_sp (m_target_list.GetTargetAtIndex (i)->GetProcessSP());
         if (process_sp)
         {
-            if (process_sp->AttachedToProcess())
+            if (process_sp->GetShouldDetach())
                 process_sp->Detach();
             else
                 process_sp->Destroy();

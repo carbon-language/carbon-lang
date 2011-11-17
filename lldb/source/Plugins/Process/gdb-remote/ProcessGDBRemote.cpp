@@ -1171,6 +1171,9 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                 {
                     // thread in big endian hex
                     tid = Args::StringToUInt32 (value.c_str(), 0, 16);
+                    // m_thread_list does have its own mutex, but we need to
+                    // hold onto the mutex between the call to m_thread_list.FindThreadByID(...)
+                    // and the m_thread_list.AddThread(...) so it doesn't change on us
                     Mutex::Locker locker (m_thread_list.GetMutex ());
                     thread_sp = m_thread_list.FindThreadByID(tid, false);
                     if (!thread_sp)
