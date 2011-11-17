@@ -10,43 +10,77 @@
 using namespace llvm;
 
 namespace SCEVType {
-  enum TYPE {INT, PARAM, IV, INVALID};
+  /// @brief The type of a SCEV
+  ///
+  /// To check for the validity of a SCEV we assign to each SCEV a type. The
+  /// possible types are INT, PARAM, IV and INVALID. The order of the types is
+  /// important. The subexpressions of SCEV with a type X can only have a type
+  /// that is smaller or equal than X.
+  enum TYPE {
+             // An integer value.
+             INT,
+
+             // An expression that is constant during the execution of the Scop,
+             // but that may depend on parameters unknown at compile time.
+             PARAM,
+
+             // An expression that may change during the execution of the SCoP.
+             IV,
+
+             // An invalid expression.
+             INVALID
+  };
 }
 
+/// @brief The result the validator returns for a SCEV expression.
 struct ValidatorResult {
+  /// @brief The type of the expression
   SCEVType::TYPE type;
+
+  /// @brief The set of Parameters in the expression.
   std::vector<const SCEV*> Parameters;
 
+  /// @brief Create an invalid result.
   ValidatorResult() : type(SCEVType::INVALID) {};
 
+  /// @brief The copy constructor
   ValidatorResult(const ValidatorResult &vres) {
     type = vres.type;
     Parameters = vres.Parameters;
   };
 
+  /// @brief Construct a result with a certain type and no parameters.
   ValidatorResult(SCEVType::TYPE type) : type(type) {};
+
+  /// @brief Construct a result with a certain type and a single parameter.
   ValidatorResult(SCEVType::TYPE type, const SCEV *Expr) : type(type) {
     Parameters.push_back(Expr);
   };
 
+  /// @brief Is the analyzed SCEV constant during the execution of the SCoP.
   bool isConstant() {
     return type == SCEVType::INT || type == SCEVType::PARAM;
   }
 
+  /// @brief Is the analyzed SCEV valid.
   bool isValid() {
     return type != SCEVType::INVALID;
   }
 
+  /// @brief Is the analyzed SCEV of type IV.
   bool isIV() {
     return type == SCEVType::IV;
   }
 
+  /// @brief Is the analyzed SCEV of type INT.
   bool isINT() {
     return type == SCEVType::INT;
   }
 
+  /// @brief Add the parameters of Source to this result.
   void addParamsFrom(struct ValidatorResult &Source) {
-    Parameters.insert(Parameters.end(), Source.Parameters.begin(),
+    Parameters.insert(Parameters.end(),
+                      Source.Parameters.begin(),
                       Source.Parameters.end());
   }
 };
