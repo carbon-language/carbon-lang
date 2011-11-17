@@ -54,6 +54,12 @@ UniversalArchs.osx := $(call CheckArches,i386 x86_64)
 Configs += cc_kext
 UniversalArchs.cc_kext := $(call CheckArches,armv6 armv7 i386 x86_64)
 
+# Configurations which define the profiling support functions.
+Configs += profile_osx
+UniversalArchs.profile_osx := $(call CheckArches,i386 x86_64)
+Configs += profile_ios
+UniversalArchs.profile_ios := $(call CheckArches,i386 x86_64 armv6 armv7)
+
 # If RC_SUPPORTED_ARCHS is defined, treat it as a list of the architectures we
 # are intended to support and limit what we try to build to that.
 #
@@ -100,6 +106,12 @@ CFLAGS.cc_kext.i386	:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 CFLAGS.cc_kext.x86_64	:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 CFLAGS.cc_kext.armv6	:= $(CFLAGS) $(IOS_DEPLOYMENT_ARGS) -mthumb
 CFLAGS.cc_kext.armv7	:= $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
+CFLAGS.profile_osx.i386   := $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
+CFLAGS.profile_osx.x86_64 := $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
+CFLAGS.profile_ios.i386   := $(CFLAGS) $(IOSSIM_DEPLOYMENT_ARGS)
+CFLAGS.profile_ios.x86_64 := $(CFLAGS) $(IOSSIM_DEPLOYMENT_ARGS)
+CFLAGS.profile_ios.armv6  := $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
+CFLAGS.profile_ios.armv7  := $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
 
 FUNCTIONS.eprintf := eprintf
 FUNCTIONS.10.4 := eprintf floatundidf floatundisf floatundixf
@@ -116,6 +128,9 @@ FUNCTIONS.ios.armv6 := $(FUNCTIONS.ios) \
                        save_vfp_d8_d15_regs restore_vfp_d8_d15_regs
 
 FUNCTIONS.osx	:= mulosi4 mulodi4 muloti4
+
+FUNCTIONS.profile_osx := GCDAProfiling
+FUNCTIONS.profile_ios := GCDAProfiling
 
 CCKEXT_COMMON_FUNCTIONS := \
 	absvdi2 \
