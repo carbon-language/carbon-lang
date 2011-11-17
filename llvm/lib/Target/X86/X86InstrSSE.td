@@ -6014,13 +6014,13 @@ let ExeDomain = SSEPackedSingle in {
                     OpSize;
 
   // Vector intrinsic operation, mem
-  def PSm : Ii8<opcps, MRMSrcMem,
+  def PSm : SS4AIi8<opcps, MRMSrcMem,
                     (outs RC:$dst), (ins x86memop:$src1, i32i8imm:$src2),
                     !strconcat(OpcodeStr,
                     "ps\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                     [(set RC:$dst,
                           (V4F32Int (mem_frag32 addr:$src1),imm:$src2))]>,
-                    TA, OpSize, Requires<[HasSSE41]>;
+                    OpSize;
 } // ExeDomain = SSEPackedSingle
 
 let ExeDomain = SSEPackedDouble in {
@@ -6040,42 +6040,6 @@ let ExeDomain = SSEPackedDouble in {
                     [(set RC:$dst,
                           (V2F64Int (mem_frag64 addr:$src1),imm:$src2))]>,
                     OpSize;
-} // ExeDomain = SSEPackedDouble
-}
-
-multiclass sse41_fp_unop_rm_avx_p<bits<8> opcps, bits<8> opcpd,
-                   RegisterClass RC, X86MemOperand x86memop, string OpcodeStr> {
-let ExeDomain = SSEPackedSingle in {
-  // Intrinsic operation, reg.
-  // Vector intrinsic operation, reg
-  def PSr_AVX : SS4AIi8<opcps, MRMSrcReg,
-                    (outs RC:$dst), (ins RC:$src1, i32i8imm:$src2),
-                    !strconcat(OpcodeStr,
-                    "ps\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                    []>, OpSize;
-
-  // Vector intrinsic operation, mem
-  def PSm_AVX : Ii8<opcps, MRMSrcMem,
-                    (outs RC:$dst), (ins x86memop:$src1, i32i8imm:$src2),
-                    !strconcat(OpcodeStr,
-                    "ps\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                    []>, TA, OpSize, Requires<[HasSSE41]>;
-} // ExeDomain = SSEPackedSingle
-
-let ExeDomain = SSEPackedDouble in {
-  // Vector intrinsic operation, reg
-  def PDr_AVX : SS4AIi8<opcpd, MRMSrcReg,
-                    (outs RC:$dst), (ins RC:$src1, i32i8imm:$src2),
-                    !strconcat(OpcodeStr,
-                    "pd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                    []>, OpSize;
-
-  // Vector intrinsic operation, mem
-  def PDm_AVX : SS4AIi8<opcpd, MRMSrcMem,
-                    (outs RC:$dst), (ins x86memop:$src1, i32i8imm:$src2),
-                    !strconcat(OpcodeStr,
-                    "pd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                    []>, OpSize;
 } // ExeDomain = SSEPackedDouble
 }
 
@@ -6132,39 +6096,6 @@ let ExeDomain = GenericDomain in {
 } // ExeDomain = GenericDomain
 }
 
-multiclass sse41_fp_binop_rm_avx_s<bits<8> opcss, bits<8> opcsd,
-                                   string OpcodeStr> {
-let ExeDomain = GenericDomain in {
-  // Intrinsic operation, reg.
-  def SSr_AVX : SS4AIi8<opcss, MRMSrcReg,
-        (outs VR128:$dst), (ins VR128:$src1, VR128:$src2, i32i8imm:$src3),
-        !strconcat(OpcodeStr,
-                "ss\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
-        []>, OpSize;
-
-  // Intrinsic operation, mem.
-  def SSm_AVX : SS4AIi8<opcss, MRMSrcMem,
-        (outs VR128:$dst), (ins VR128:$src1, ssmem:$src2, i32i8imm:$src3),
-        !strconcat(OpcodeStr,
-                "ss\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
-        []>, OpSize;
-
-  // Intrinsic operation, reg.
-  def SDr_AVX : SS4AIi8<opcsd, MRMSrcReg,
-        (outs VR128:$dst), (ins VR128:$src1, VR128:$src2, i32i8imm:$src3),
-            !strconcat(OpcodeStr,
-                "sd\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
-        []>, OpSize;
-
-  // Intrinsic operation, mem.
-  def SDm_AVX : SS4AIi8<opcsd, MRMSrcMem,
-        (outs VR128:$dst), (ins VR128:$src1, sdmem:$src2, i32i8imm:$src3),
-            !strconcat(OpcodeStr,
-                "sd\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
-        []>, OpSize;
-} // ExeDomain = GenericDomain
-}
-
 // FP round - roundss, roundps, roundsd, roundpd
 let Predicates = [HasAVX] in {
   // Intrinsic form
@@ -6179,13 +6110,6 @@ let Predicates = [HasAVX] in {
   defm VROUND  : sse41_fp_binop_rm<0x0A, 0x0B, "vround",
                                   int_x86_sse41_round_ss,
                                   int_x86_sse41_round_sd, 0>, VEX_4V, VEX_LIG;
-
-  // Instructions for the assembler
-  defm VROUND  : sse41_fp_unop_rm_avx_p<0x08, 0x09, VR128, f128mem, "vround">,
-                                        VEX;
-  defm VROUNDY : sse41_fp_unop_rm_avx_p<0x08, 0x09, VR256, f256mem, "vround">,
-                                        VEX;
-  defm VROUND  : sse41_fp_binop_rm_avx_s<0x0A, 0x0B, "vround">, VEX_4V, VEX_LIG;
 }
 
 defm ROUND  : sse41_fp_unop_rm<0x08, 0x09, "round", f128mem, VR128,
@@ -6223,11 +6147,11 @@ def VPTESTYrm : SS48I<0x17, MRMSrcMem, (outs), (ins VR256:$src1, i256mem:$src2),
 
 let Defs = [EFLAGS] in {
 def PTESTrr : SS48I<0x17, MRMSrcReg, (outs), (ins VR128:$src1, VR128:$src2),
-              "ptest \t{$src2, $src1|$src1, $src2}",
+              "ptest\t{$src2, $src1|$src1, $src2}",
               [(set EFLAGS, (X86ptest VR128:$src1, (v4f32 VR128:$src2)))]>,
               OpSize;
 def PTESTrm : SS48I<0x17, MRMSrcMem, (outs), (ins VR128:$src1, f128mem:$src2),
-              "ptest \t{$src2, $src1|$src1, $src2}",
+              "ptest\t{$src2, $src1|$src1, $src2}",
               [(set EFLAGS, (X86ptest VR128:$src1, (memopv4f32 addr:$src2)))]>,
               OpSize;
 }
