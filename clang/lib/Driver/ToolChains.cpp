@@ -454,6 +454,19 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
     return;
   }
 
+  // If we are building profile support, link that library in.
+  if (Args.hasArg(options::OPT_fprofile_arcs) ||
+      Args.hasArg(options::OPT_fprofile_generate) ||
+      Args.hasArg(options::OPT_fcreate_profile) ||
+      Args.hasArg(options::OPT_coverage)) {
+    // Select the appropriate runtime library for the target.
+    if (isTargetIPhoneOS()) {
+      AddLinkRuntimeLib(Args, CmdArgs, "libclang_rt.profile_ios.a");
+    } else {
+      AddLinkRuntimeLib(Args, CmdArgs, "libclang_rt.profile_osx.a");
+    }
+  }
+
   // Otherwise link libSystem, then the dynamic runtime library, and finally any
   // target specific static runtime library.
   CmdArgs.push_back("-lSystem");

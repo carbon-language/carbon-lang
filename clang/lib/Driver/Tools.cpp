@@ -160,13 +160,6 @@ static void addProfileRT(const ToolChain &TC, const ArgList &Args,
   std::string ProfileRT =
     std::string(TC.getDriver().Dir) + "/../lib/libprofile_rt.a";
 
-  if (Triple.isOSDarwin()) {
-    // On Darwin, if the static library doesn't exist try the dylib.
-    bool Exists;
-    if (llvm::sys::fs::exists(ProfileRT, Exists) || !Exists)
-      ProfileRT.replace(ProfileRT.size() - 1, 1, "dylib");
-  }
-
   CmdArgs.push_back(Args.MakeArgString(ProfileRT));
 }
 
@@ -3588,8 +3581,6 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
       !Args.hasArg(options::OPT_nostartfiles)) {
     // endfile_spec is empty.
   }
-
-  addProfileRT(getToolChain(), Args, CmdArgs, getToolChain().getTriple());
 
   Args.AddAllArgs(CmdArgs, options::OPT_T_Group);
   Args.AddAllArgs(CmdArgs, options::OPT_F);
