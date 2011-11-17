@@ -42,6 +42,7 @@
 #include "lldb/Target/Memory.h"
 #include "lldb/Target/ThreadList.h"
 #include "lldb/Target/UnixSignals.h"
+#include "lldb/Utility/PseudoTerminal.h"
 
 namespace lldb_private {
 
@@ -496,6 +497,7 @@ public:
         m_shell (),
         m_flags (0),
         m_file_actions (), 
+        m_pty (),
         m_resume_count (0),
         m_monitor_callback (NULL),
         m_monitor_callback_baton (NULL),
@@ -514,6 +516,7 @@ public:
         m_shell (),
         m_flags (launch_flags),
         m_file_actions (), 
+        m_pty (),
         m_resume_count (0),
         m_monitor_callback (NULL),
         m_monitor_callback_baton (NULL),
@@ -602,7 +605,8 @@ public:
     }
     
     void
-    FinalizeFileActions (Target *target);
+    FinalizeFileActions (Target *target, 
+                         bool default_to_use_pty);
 
     size_t
     GetNumFileActions () const
@@ -756,6 +760,11 @@ public:
         return false;
     }
     
+    lldb_utility::PseudoTerminal &
+    GetPTY ()
+    {
+        return m_pty;
+    }
 
 protected:
     std::string m_working_dir;
@@ -763,6 +772,7 @@ protected:
     std::string m_shell;
     Flags m_flags;       // Bitwise OR of bits from lldb::LaunchFlags
     std::vector<FileAction> m_file_actions; // File actions for any other files
+    lldb_utility::PseudoTerminal m_pty;
     uint32_t m_resume_count; // How many times do we resume after launching
     Host::MonitorChildProcessCallback m_monitor_callback;
     void *m_monitor_callback_baton;
@@ -2845,6 +2855,9 @@ public:
     lldb::ProcessSP
     GetSP ();
     
+    void
+    SetSTDIOFileDescriptor (int file_descriptor);
+
 protected:
     //------------------------------------------------------------------
     // NextEventAction provides a way to register an action on the next
@@ -3040,9 +3053,6 @@ protected:
     
     void
     ResetProcessInputReader ();
-    
-    void
-    SetUpProcessInputReader (int file_descriptor);
     
     static size_t
     ProcessInputReaderCallback (void *baton,

@@ -251,7 +251,7 @@ ProcessInfo::SetArguments (const Args& args,
 }
 
 void
-ProcessLaunchInfo::FinalizeFileActions (Target *target)
+ProcessLaunchInfo::FinalizeFileActions (Target *target, bool default_to_use_pty)
 {
     // If notthing was specified, then check the process for any default 
     // settings that were set with "settings set"
@@ -270,36 +270,32 @@ ProcessLaunchInfo::FinalizeFileActions (Target *target)
             // (lldb) settings set target.input-path
             // (lldb) settings set target.output-path
             // (lldb) settings set target.error-path
+            const char *in_path = NULL;
+            const char *out_path = NULL;
+            const char *err_path = NULL;
             if (target)
             {
-                path = target->GetStandardErrorPath();
-                if (path)
+                in_path = target->GetStandardErrorPath();
+                out_path = target->GetStandardInputPath();
+                err_path = target->GetStandardOutputPath();
+            }
+            
+            if (default_to_use_pty && (!in_path && !out_path && !err_path))
+            {
+                if (m_pty.OpenFirstAvailableMaster (O_RDWR|O_NOCTTY, NULL, 0))
                 {
-                    const bool read = true;
-                    const bool write = true;
-                    AppendOpenFileAction(STDERR_FILENO, path, read, write);
-                }
-                path = target->GetStandardInputPath();
-                if (path)
-                {
-                    const bool read = true;
-                    const bool write = false;
-                    AppendOpenFileAction(STDIN_FILENO, path, read, write);
-                }
-                
-                path = target->GetStandardOutputPath();
-                if (path)
-                {
-                    const bool read = false;
-                    const bool write = true;
-                    AppendOpenFileAction(STDOUT_FILENO, path, read, write);
+                    in_path = out_path = err_path = m_pty.GetSlaveName (NULL, 0);
                 }
             }
 
-            // If we still don't have any actions...
-            if (m_file_actions.empty())
-            {
-            }
+            if (in_path)
+                AppendOpenFileAction(STDERR_FILENO, in_path, true, true);
+
+            if (out_path)
+                AppendOpenFileAction(STDIN_FILENO, out_path, true, false);
+
+            if (err_path)
+                AppendOpenFileAction(STDOUT_FILENO, err_path, false, true);            
         }
     }
 }
@@ -3549,7 +3545,7 @@ Process::ResetProcessInputReader ()
 }
 
 void
-Process::SetUpProcessInputReader (int file_descriptor)
+Process::SetSTDIOFileDescriptor (int file_descriptor)
 {
     // First set up the Read Thread for reading/handling process I/O
     

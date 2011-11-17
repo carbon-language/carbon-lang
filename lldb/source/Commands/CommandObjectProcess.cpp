@@ -236,7 +236,10 @@ public:
         if (environment.GetArgumentCount() > 0)
             m_options.launch_info.GetEnvironmentEntries ().AppendArguments (environment);
 
-        m_options.launch_info.FinalizeFileActions (target);
+        // Finalize the file actions, and if none were given, default to opening
+        // up a pseudo terminal
+        const bool default_to_use_pty = true;
+        m_options.launch_info.FinalizeFileActions (target, default_to_use_pty);
 
         if (state == eStateConnected)
         {

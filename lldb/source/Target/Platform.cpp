@@ -588,6 +588,16 @@ Platform::DebugProcess (ProcessLaunchInfo &launch_info,
                 // Process::Kill() or Process::Detach(), so let it know to kill the 
                 // process if this happens.
                 process_sp->SetShouldDetach (false);
+                
+                // If we didn't have any file actions, the pseudo terminal might
+                // have been used where the slave side was given as the file to
+                // open for stdin/out/err after we have already opened the master
+                // so we can read/write stdin/out/err.
+                int pty_fd = launch_info.GetPTY().ReleaseMasterFileDescriptor();
+                if (pty_fd != lldb_utility::PseudoTerminal::invalid_fd)
+                {
+                    process_sp->SetSTDIOFileDescriptor(pty_fd);
+                }
             }
         }
     }

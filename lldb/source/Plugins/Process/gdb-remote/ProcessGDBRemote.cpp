@@ -593,7 +593,7 @@ ProcessGDBRemote::DoLaunch (Module *exe_module, const ProcessLaunchInfo &launch_
                 if (!disable_stdio)
                 {
                     if (pty.GetMasterFileDescriptor() != lldb_utility::PseudoTerminal::invalid_fd)
-                        SetUpProcessInputReader (pty.ReleaseMasterFileDescriptor());
+                        SetSTDIOFileDescriptor (pty.ReleaseMasterFileDescriptor());
                 }
             }
         }
