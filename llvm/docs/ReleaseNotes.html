@@ -1268,24 +1268,9 @@ Builder.CreateResume(UnwindData);
 <div>
 
 <ul>
-
-  <li>The X86-64 backend does not yet support the LLVM IR instruction
-      <tt>va_arg</tt>. Currently, front-ends support variadic argument
-      constructs on X86-64 by lowering them manually.</li>
-
-  <li>Windows x64 (aka Win64) code generator has a few issues.
-    <ul>
-      <li>On mingw-w64, you will see unresolved symbol <tt>__chkstk</tt> due
-          to <a href="http://llvm.org/bugs/show_bug.cgi?id=8919">Bug 8919</a>.
-          It is fixed
-          in <a href="http://lists.cs.uiuc.edu/pipermail/llvm-commits/Week-of-Mon-20110321/118499.html">r128206</a>.</li>
-
-      <li>Miss-aligned MOVDQA might crash your program. It is due to
-          <a href="http://llvm.org/bugs/show_bug.cgi?id=9483">Bug 9483</a>, lack
-          of handling aligned internal globals.</li>
-      </ul>
-  </li>
-
+  <li>The X86-64 backend <a href="http://llvm.org/PR1740">does not yet support
+      the <tt>va_arg</tt> LLVM IR instruction</a>. Currently, front-ends support
+      variadic argument constructs on X86-64 by lowering them manually.</li>
 </ul>
 
 </div>
