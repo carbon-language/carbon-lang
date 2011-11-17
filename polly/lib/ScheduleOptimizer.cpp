@@ -299,7 +299,7 @@ static isl_union_map *getScheduleForBandList(isl_band_list *BandList) {
 
   ctx = isl_band_list_get_ctx(BandList);
   NumBands = isl_band_list_n_band(BandList);
-  Schedule = 0;
+  Schedule = isl_union_map_empty(isl_space_params_alloc(ctx, 0));
 
   for (int i = 0; i < NumBands; i++) {
     isl_band *Band;
@@ -339,10 +339,7 @@ static isl_union_map *getScheduleForBandList(isl_band_list *BandList) {
       }
     }
 
-    if (Schedule)
-      Schedule = isl_union_map_union(Schedule, PartialSchedule);
-    else
-      Schedule = PartialSchedule;
+    Schedule = isl_union_map_union(Schedule, PartialSchedule);
 
     isl_band_free(Band);
     isl_space_free(Space);
