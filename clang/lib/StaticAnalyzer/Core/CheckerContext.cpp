@@ -16,7 +16,7 @@
 using namespace clang;
 using namespace ento;
 
-StringRef CheckerContext::getCalleeName(const CallExpr *CE) {
+StringRef CheckerContext::getCalleeName(const CallExpr *CE) const {
   const ProgramState *State = getState();
   const Expr *Callee = CE->getCallee();
   SVal L = State->getSVal(Callee);
