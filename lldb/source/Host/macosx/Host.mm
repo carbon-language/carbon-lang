@@ -1421,8 +1421,6 @@ Host::LaunchProcess (ProcessLaunchInfo &launch_info)
     return error;
 }
 
-#if 0
-
 lldb::thread_t
 Host::StartMonitoringChildProcess (Host::MonitorChildProcessCallback callback,
                                    void *callback_baton,
@@ -1434,29 +1432,29 @@ Host::StartMonitoringChildProcess (Host::MonitorChildProcessCallback callback,
     if (monitor_signals)
         mask |= DISPATCH_PROC_SIGNAL;
 
+    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_HOST | LIBLLDB_LOG_PROCESS));
+
 
     dispatch_source_t source = ::dispatch_source_create (DISPATCH_SOURCE_TYPE_PROC, 
                                                          pid, 
                                                          mask, 
                                                          ::dispatch_get_global_queue (DISPATCH_QUEUE_PRIORITY_DEFAULT,0));
 
-    printf ("Host::StartMonitoringChildProcess (callback=%p, baton=%p, pid=%i, monitor_signals=%i) source = %p\n", 
-            callback, 
-            callback_baton, 
-            (int)pid, 
-            monitor_signals, 
-            source);
+    if (log)
+        log->Printf ("Host::StartMonitoringChildProcess (callback=%p, baton=%p, pid=%i, monitor_signals=%i) source = %p\n", 
+                     callback, 
+                     callback_baton, 
+                     (int)pid, 
+                     monitor_signals, 
+                     source);
 
     if (source)
     {
         ::dispatch_source_set_cancel_handler (source, ^{
-            printf ("::dispatch_source_set_cancel_handler (source=%p, ^{...\n", source);
             ::dispatch_release (source);
         });
         ::dispatch_source_set_event_handler (source, ^{
             
-            printf ("::dispatch_source_set_event_handler (source=%p, ^{...\n", source);
-
             int status= 0;
             int wait_pid = 0;
             bool cancel = false;
@@ -1494,7 +1492,6 @@ Host::StartMonitoringChildProcess (Host::MonitorChildProcessCallback callback,
                     status_cstr = "???";
                 }
 
-                LogSP log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
                 if (log)
                     log->Printf ("::waitpid (pid = %i, &status, 0) => pid = %i, status = 0x%8.8x (%s), signal = %i, exit_status = %i",
                                  pid,
@@ -1509,7 +1506,6 @@ Host::StartMonitoringChildProcess (Host::MonitorChildProcessCallback callback,
                 
                 if (exited)
                 {
-                    printf ("::dispatch_source_set_event_handler (source=%p, ^{...  dispatch_source_cancel(source);\n", source);
                     ::dispatch_source_cancel(source);
                 }
             }
@@ -1519,6 +1515,3 @@ Host::StartMonitoringChildProcess (Host::MonitorChildProcessCallback callback,
     }
     return thread;
 }
-
-
-#endif

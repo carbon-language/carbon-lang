@@ -57,7 +57,7 @@ using namespace lldb;
 using namespace lldb_private;
 
 
-#if 1 // !defined (__APPLE__)
+#if !defined (__APPLE__)
 struct MonitorInfo
 {
     lldb::pid_t pid;                            // The process ID to monitor
