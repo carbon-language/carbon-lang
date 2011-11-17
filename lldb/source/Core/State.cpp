@@ -90,7 +90,7 @@ lldb_private::StateIsRunningState (StateType state)
 }
 
 bool
-lldb_private::StateIsStoppedState (StateType state)
+lldb_private::StateIsStoppedState (StateType state, bool must_exist)
 {
     switch (state)
     {
@@ -105,9 +105,11 @@ lldb_private::StateIsStoppedState (StateType state)
         break;
 
     case eStateUnloaded:
+    case eStateExited:
+        return !must_exist;
+
     case eStateStopped:
     case eStateCrashed:
-    case eStateExited:
     case eStateSuspended:
         return true;
     }

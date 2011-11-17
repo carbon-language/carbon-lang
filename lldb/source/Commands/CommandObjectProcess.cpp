@@ -284,7 +284,8 @@ public:
                         if (synchronous_execution)
                         {
                             state = process->WaitForProcessToStop (NULL);
-                            if (!StateIsStoppedState(state))
+                            const bool must_be_alive = true;
+                            if (!StateIsStoppedState(state, must_be_alive))
                             {
                                 result.AppendErrorWithFormat ("process isn't stopped: %s", StateAsCString(state));
                             }                    

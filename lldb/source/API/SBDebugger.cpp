@@ -452,7 +452,7 @@ SBDebugger::StateIsStoppedState (StateType state)
 {
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
-    const bool result = lldb_private::StateIsStoppedState (state);
+    const bool result = lldb_private::StateIsStoppedState (state, false);
     if (log)
         log->Printf ("SBDebugger::StateIsStoppedState (state=%s) => %i", 
                      StateAsCString (state), result);

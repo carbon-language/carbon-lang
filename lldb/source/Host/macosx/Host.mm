@@ -68,6 +68,9 @@ extern "C"
 using namespace lldb;
 using namespace lldb_private;
 
+static pthread_once_t g_thread_create_once = PTHREAD_ONCE_INIT;
+static pthread_key_t g_thread_create_key = 0;
+
 class MacOSXDarwinThread
 {
 public:
@@ -98,12 +101,17 @@ public:
     ~MacOSXDarwinThread()
     {
         if (m_pool)
+        {
             [m_pool release];
+            m_pool = nil;
+        }
     }
 
     static void PThreadDestructor (void *v)
     {
-        delete (MacOSXDarwinThread*)v;
+        if (v)
+            delete static_cast<MacOSXDarwinThread*>(v);
+        ::pthread_setspecific (g_thread_create_key, NULL);
     }
 
 protected:
@@ -111,9 +119,6 @@ protected:
 private:
     DISALLOW_COPY_AND_ASSIGN (MacOSXDarwinThread);
 };
-
-static pthread_once_t g_thread_create_once = PTHREAD_ONCE_INIT;
-static pthread_key_t g_thread_create_key = 0;
 
 static void
 InitThreadCreated()

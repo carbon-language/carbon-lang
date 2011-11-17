@@ -1179,16 +1179,20 @@ Process::UpdateThreadListIfNeeded ()
     const uint32_t stop_id = GetStopID();
     if (m_thread_list.GetSize(false) == 0 || stop_id != m_thread_list.GetStopID())
     {
-        Mutex::Locker locker (m_thread_list.GetMutex ());
-        ThreadList new_thread_list(this);
-        // Always update the thread list with the protocol specific
-        // thread list
-        UpdateThreadList (m_thread_list, new_thread_list);
-        OperatingSystem *os = GetOperatingSystem ();
-        if (os)
-            os->UpdateThreadList (m_thread_list, new_thread_list);
-        m_thread_list.Update (new_thread_list);
-        m_thread_list.SetStopID (stop_id);
+        const StateType state = GetPrivateState();
+        if (StateIsStoppedState (state, true))
+        {
+            Mutex::Locker locker (m_thread_list.GetMutex ());
+            ThreadList new_thread_list(this);
+            // Always update the thread list with the protocol specific
+            // thread list
+            UpdateThreadList (m_thread_list, new_thread_list);
+            OperatingSystem *os = GetOperatingSystem ();
+            if (os)
+                os->UpdateThreadList (m_thread_list, new_thread_list);
+            m_thread_list.Update (new_thread_list);
+            m_thread_list.SetStopID (stop_id);
+        }
     }
 }
 
@@ -1236,7 +1240,7 @@ Process::SetPrivateState (StateType new_state)
     if (state_changed)
     {
         m_private_state.SetValueNoLock (new_state);
-        if (StateIsStoppedState(new_state))
+        if (StateIsStoppedState(new_state, false))
         {
             m_mod_id.BumpStopID();
             m_memory_cache.Clear();
@@ -2167,7 +2171,7 @@ Process::WaitForProcessStopPrivate (const TimeValue *timeout, EventSP &event_sp)
         event_sp.reset();
         state = WaitForStateChangedEventsPrivate (timeout, event_sp);
 
-        if (StateIsStoppedState(state))
+        if (StateIsStoppedState(state, false))
             break;
 
         // If state is invalid, then we timed out
@@ -2683,7 +2687,7 @@ Process::Halt ()
                     }
                     else
                     {
-                        if (StateIsStoppedState (state))
+                        if (StateIsStoppedState (state, false))
                         {
                             // We caused the process to interrupt itself, so mark this
                             // as such in the stop event so clients can tell an interrupted
@@ -4247,7 +4251,7 @@ void
 Process::GetStatus (Stream &strm)
 {
     const StateType state = GetState();
-    if (StateIsStoppedState(state))
+    if (StateIsStoppedState(state, false))
     {
         if (state == eStateExited)
         {
