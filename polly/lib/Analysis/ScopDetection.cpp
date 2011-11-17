@@ -154,7 +154,7 @@ bool ScopDetection::isValidCFG(BasicBlock &BB, DetectionContext &Context) const
   BranchInst *Br = dyn_cast<BranchInst>(TI);
 
   if (!Br)
-    INVALID(CFG, "Non branch instruction terminates BB: " + BB.getNameStr());
+    INVALID(CFG, "Non branch instruction terminates BB: " + BB.getName());
 
   if (Br->isUnconditional()) return true;
 
@@ -163,11 +163,11 @@ bool ScopDetection::isValidCFG(BasicBlock &BB, DetectionContext &Context) const
   // UndefValue is not allowed as condition.
   if (isa<UndefValue>(Condition))
     INVALID(AffFunc, "Condition based on 'undef' value in BB: "
-                     + BB.getNameStr());
+                     + BB.getName());
 
   // Only Constant and ICmpInst are allowed as condition.
   if (!(isa<Constant>(Condition) || isa<ICmpInst>(Condition)))
-    INVALID(AffFunc, "Condition in BB '" + BB.getNameStr() + "' neither "
+    INVALID(AffFunc, "Condition in BB '" + BB.getName() + "' neither "
                      "constant nor an icmp instruction");
 
   // Allow perfectly nested conditions.
@@ -185,14 +185,14 @@ bool ScopDetection::isValidCFG(BasicBlock &BB, DetectionContext &Context) const
     // Are both operands of the ICmp affine?
     if (isa<UndefValue>(ICmp->getOperand(0))
         || isa<UndefValue>(ICmp->getOperand(1)))
-      INVALID(AffFunc, "undef operand in branch at BB: " + BB.getNameStr());
+      INVALID(AffFunc, "undef operand in branch at BB: " + BB.getName());
 
     const SCEV *LHS = SE->getSCEV(ICmp->getOperand(0));
     const SCEV *RHS = SE->getSCEV(ICmp->getOperand(1));
 
     if (!isAffineExpr(&Context.CurRegion, LHS, *SE) ||
         !isAffineExpr(&Context.CurRegion, RHS, *SE))
-      INVALID(AffFunc, "Non affine branch in BB '" << BB.getNameStr()
+      INVALID(AffFunc, "Non affine branch in BB '" << BB.getName()
                         << "' with LHS: " << *LHS << " and RHS: " << *RHS);
   }
 
@@ -204,7 +204,7 @@ bool ScopDetection::isValidCFG(BasicBlock &BB, DetectionContext &Context) const
   // Allow perfectly nested conditions.
   Region *R = RI->getRegionFor(&BB);
   if (R->getEntry() != &BB)
-    INVALID(CFG, "Not well structured condition at BB: " + BB.getNameStr());
+    INVALID(CFG, "Not well structured condition at BB: " + BB.getName());
 
   return true;
 }
@@ -358,13 +358,13 @@ bool ScopDetection::isValidLoop(Loop *L, DetectionContext &Context) const {
   // No canonical induction variable.
   if (!IndVar)
     INVALID(IndVar, "No canonical IV at loop header: "
-                    << L->getHeader()->getNameStr());
+                    << L->getHeader()->getName());
 
   // Is the loop count affine?
   const SCEV *LoopCount = SE->getBackedgeTakenCount(L);
   if (!isAffineExpr(&Context.CurRegion, LoopCount, *SE))
     INVALID(LoopBound, "Non affine loop bound '" << *LoopCount << "' in loop: "
-                       << L->getHeader()->getNameStr());
+                       << L->getHeader()->getName());
 
   return true;
 }
@@ -525,7 +525,7 @@ bool ScopDetection::runOnFunction(llvm::Function &F) {
 
   releaseMemory();
 
-  if (OnlyFunction != "" && F.getNameStr() != OnlyFunction)
+  if (OnlyFunction != "" && F.getName() != OnlyFunction)
     return false;
 
   if(!isValidFunction(F))

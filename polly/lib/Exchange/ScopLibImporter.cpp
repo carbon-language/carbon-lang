@@ -62,7 +62,7 @@ char ScopLibImporter::ID = 0;
 namespace {
 std::string ScopLibImporter::getFileName(Scop *S) const {
   std::string FunctionName =
-    S->getRegion().getEntry()->getParent()->getNameStr();
+    S->getRegion().getEntry()->getParent()->getName();
   std::string FileName = FunctionName + "___" + S->getNameStr() + ".scoplib";
   return FileName;
 }
@@ -85,7 +85,7 @@ bool ScopLibImporter::runOnRegion(Region *R, RGPassManager &RGM) {
     return false;
   }
 
-  std::string FunctionName = R->getEntry()->getParent()->getNameStr();
+  std::string FunctionName = R->getEntry()->getParent()->getName();
   errs() << "Reading Scop '" << R->getNameStr() << "' in function '"
     << FunctionName << "' from '" << FileName << "'.\n";
 

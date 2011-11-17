@@ -73,11 +73,11 @@ void RegionSimplify::print(raw_ostream &O, const Module *M) const {
   O << "Region: " << r->getNameStr() << " Edges:\t";
 
   if (enteringBlock)
-    O << "Entering: [" << enteringBlock->getNameStr() << " -> "
+    O << "Entering: [" << enteringBlock->getName() << " -> "
       << r->getEntry()->getName() << "], ";
 
   if (exitingBlock) {
-    O << "Exiting: [" << exitingBlock->getNameStr() << " -> ";
+    O << "Exiting: [" << exitingBlock->getName() << " -> ";
     if (r->getExit())
       O << r->getExit()->getName();
     else

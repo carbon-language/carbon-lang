@@ -239,8 +239,7 @@ public:
     Value *VectorPtr = Builder.CreateBitCast(newPointer, vectorPtrType,
                                              "vector_ptr");
     LoadInst *VecLoad = Builder.CreateLoad(VectorPtr,
-                                        load->getNameStr()
-                                        + "_p_vec_full");
+                                           load->getName() + "_p_vec_full");
     if (!Aligned)
       VecLoad->setAlignment(8);
 
@@ -263,9 +262,9 @@ public:
     Type *vectorPtrType = getVectorPtrTy(pointer, 1);
     Value *newPointer = getOperand(pointer, BBMap);
     Value *vectorPtr = Builder.CreateBitCast(newPointer, vectorPtrType,
-                                             load->getNameStr() + "_p_vec_p");
+                                             load->getName() + "_p_vec_p");
     LoadInst *scalarLoad= Builder.CreateLoad(vectorPtr,
-                                          load->getNameStr() + "_p_splat_one");
+                                             load->getName() + "_p_splat_one");
 
     if (!Aligned)
       scalarLoad->setAlignment(8);
@@ -279,7 +278,7 @@ public:
 
     Value *vectorLoad = Builder.CreateShuffleVector(scalarLoad, scalarLoad,
                                                     splatVector,
-                                                    load->getNameStr()
+                                                    load->getName()
                                                     + "_p_splat");
     return vectorLoad;
   }
@@ -307,10 +306,10 @@ public:
     for (int i = 0; i < size; i++) {
       Value *newPointer = getOperand(pointer, scalarMaps[i]);
       Value *scalarLoad = Builder.CreateLoad(newPointer,
-                                             load->getNameStr() + "_p_scalar_");
+                                             load->getName() + "_p_scalar_");
       vector = Builder.CreateInsertElement(vector, scalarLoad,
                                            Builder.getInt32(i),
-                                           load->getNameStr() + "_p_vec_");
+                                           load->getName() + "_p_vec_");
     }
 
     return vector;
@@ -387,7 +386,7 @@ public:
     const Instruction *Inst = dyn_cast<Instruction>(load);
     Value *newPointer = generateLocationAccessed(Inst, pointer, BBMap);
     Value *scalarLoad = Builder.CreateLoad(newPointer,
-                                           load->getNameStr() + "_p_scalar_");
+                                           load->getName() + "_p_scalar_");
     return scalarLoad;
   }
 
@@ -444,7 +443,7 @@ public:
 
     Value *newInst = Builder.CreateBinOp(Inst->getOpcode(), newOpZero,
                                          newOpOne,
-                                         Inst->getNameStr() + "p_vec");
+                                         Inst->getName() + "p_vec");
     vectorMap[Inst] = newInst;
 
     return;
@@ -580,8 +579,7 @@ public:
     Function *F = Builder.GetInsertBlock()->getParent();
     LLVMContext &Context = F->getContext();
     BasicBlock *CopyBB = BasicBlock::Create(Context,
-                                            "polly." + BB->getNameStr()
-                                            + ".stmt",
+                                            "polly." + BB->getName() + ".stmt",
                                             F);
     Builder.CreateBr(CopyBB);
     DT->addNewBlock(CopyBB, Builder.GetInsertBlock());
@@ -914,11 +912,10 @@ public:
   /// @brief Add a new definition of an openmp subfunction.
   Function *addOpenMPSubfunction(Module *M) {
     Function *F = Builder.GetInsertBlock()->getParent();
-    const std::string &Name = F->getNameStr() + ".omp_subfn";
-
     std::vector<Type*> Arguments(1, Builder.getInt8PtrTy());
     FunctionType *FT = FunctionType::get(Builder.getVoidTy(), Arguments, false);
-    Function *FN = Function::Create(FT, Function::InternalLinkage, Name, M);
+    Function *FN = Function::Create(FT, Function::InternalLinkage,
+                                    F->getName() + ".omp_subfn", M);
     // Do not run any polly pass on the new function.
     SD->markFunctionAsInvalid(FN);
 

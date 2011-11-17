@@ -76,7 +76,7 @@ void ScopLib::initializeArrays() {
          VE = ArrayMap.end(); VI != VE; ++VI)
       if ((*VI).second == i) {
         const Value *V = (*VI).first;
-        std::string name = V->getNameStr();
+        std::string name = V->getName();
         scoplib->arrays[i] = (char*) malloc(sizeof(char*) * (name.size() + 1));
         strcpy(scoplib->arrays[i], name.c_str());
       }

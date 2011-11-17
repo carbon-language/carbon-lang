@@ -237,7 +237,8 @@ public:
 
     isl_space *Space;
 
-    isl_id *ID = isl_id_alloc(ctx, Value->getNameStr().c_str(), Value);
+    std::string ValueName = Value->getName();
+    isl_id *ID = isl_id_alloc(ctx, ValueName.c_str(), Value);
     Space = isl_space_set_alloc(ctx, 1, NbLoopSpaces);
     Space = isl_space_set_dim_id(Space, isl_dim_param, 0, ID);
 
@@ -874,7 +875,7 @@ __isl_give isl_id *Scop::getIdForParam(const SCEV *Parameter) const {
 
   if (const SCEVUnknown *ValueParameter = dyn_cast<SCEVUnknown>(Parameter)) {
     Value *Val = ValueParameter->getValue();
-    ParameterName = Val->getNameStr();
+    ParameterName = Val->getName();
   }
 
   if (ParameterName == "" || ParameterName.substr(0, 2) == "p_")

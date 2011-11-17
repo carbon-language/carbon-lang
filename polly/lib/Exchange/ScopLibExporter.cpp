@@ -54,7 +54,7 @@ char ScopLibExporter::ID = 0;
 
 std::string ScopLibExporter::getFileName(Scop *S) const {
   std::string FunctionName =
-    S->getRegion().getEntry()->getParent()->getNameStr();
+    S->getRegion().getEntry()->getParent()->getName();
   std::string FileName = FunctionName + "___" + S->getNameStr() + ".scoplib";
   return FileName;
 }
@@ -76,7 +76,7 @@ bool ScopLibExporter::runOnScop(Scop &scop) {
   scoplib.print(F);
   fclose(F);
 
-  std::string FunctionName = R->getEntry()->getParent()->getNameStr();
+  std::string FunctionName = R->getEntry()->getParent()->getName();
   errs() << "Writing Scop '" << R->getNameStr() << "' in function '"
     << FunctionName << "' to '" << FileName << "'.\n";
 

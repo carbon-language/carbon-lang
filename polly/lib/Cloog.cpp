@@ -210,7 +210,7 @@ struct CloogExporter : public ScopPass {
 
 }
 std::string CloogExporter::getFileName(Region *R) const {
-  std::string FunctionName = R->getEntry()->getParent()->getNameStr();
+  std::string FunctionName = R->getEntry()->getParent()->getName();
   std::string ExitName, EntryName;
 
   raw_string_ostream ExitStr(ExitName);
@@ -236,7 +236,7 @@ bool CloogExporter::runOnScop(Scop &S) {
   Region &R = S.getRegion();
   CloogInfo &C = getAnalysis<CloogInfo>();
 
-  std::string FunctionName = R.getEntry()->getParent()->getNameStr();
+  std::string FunctionName = R.getEntry()->getParent()->getName();
   std::string Filename = getFileName(&R);
 
   errs() << "Writing Scop '" << R.getNameStr() << "' in function '"
@@ -296,7 +296,7 @@ bool CloogInfo::runOnScop(Scop &S) {
 
   Function *F = S.getRegion().getEntry()->getParent();
 
-  DEBUG(dbgs() << ":: " << F->getNameStr());
+  DEBUG(dbgs() << ":: " << F->getName());
   DEBUG(dbgs() << " : " << S.getRegion().getNameStr() << "\n");;
   DEBUG(C->pprint(dbgs()));
 
@@ -306,7 +306,7 @@ bool CloogInfo::runOnScop(Scop &S) {
 void CloogInfo::printScop(raw_ostream &OS) const {
   Function *function = scop->getRegion().getEntry()->getParent();
 
-  OS << function->getNameStr() << "():\n";
+  OS << function->getName() << "():\n";
 
   C->pprint(OS);
 }

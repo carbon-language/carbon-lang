@@ -83,7 +83,7 @@ struct JSONImporter : public ScopPass {
 char JSONExporter::ID = 0;
 std::string JSONExporter::getFileName(Scop *S) const {
   std::string FunctionName =
-    S->getRegion().getEntry()->getParent()->getNameStr();
+    S->getRegion().getEntry()->getParent()->getName();
   std::string FileName = FunctionName + "___" + S->getNameStr() + ".jscop";
   return FileName;
 }
@@ -142,7 +142,7 @@ bool JSONExporter::runOnScop(Scop &scop) {
   std::string ErrInfo;
   tool_output_file F(FileName.c_str(), ErrInfo);
 
-  std::string FunctionName = R.getEntry()->getParent()->getNameStr();
+  std::string FunctionName = R.getEntry()->getParent()->getName();
   errs() << "Writing JScop '" << R.getNameStr() << "' in function '"
     << FunctionName << "' to '" << FileName << "'.\n";
 
@@ -182,7 +182,7 @@ Pass *polly::createJSONExporterPass() {
 char JSONImporter::ID = 0;
 std::string JSONImporter::getFileName(Scop *S) const {
   std::string FunctionName =
-    S->getRegion().getEntry()->getParent()->getNameStr();
+    S->getRegion().getEntry()->getParent()->getName();
   std::string FileName = FunctionName + "___" + S->getNameStr() + ".jscop";
 
   if (ImportPostfix != "")
@@ -207,7 +207,7 @@ bool JSONImporter::runOnScop(Scop &scop) {
 
   std::string FileName = ImportDir + "/" + getFileName(S);
 
-  std::string FunctionName = R.getEntry()->getParent()->getNameStr();
+  std::string FunctionName = R.getEntry()->getParent()->getName();
   errs() << "Reading JScop '" << R.getNameStr() << "' in function '"
     << FunctionName << "' from '" << FileName << "'.\n";
   OwningPtr<MemoryBuffer> result;
