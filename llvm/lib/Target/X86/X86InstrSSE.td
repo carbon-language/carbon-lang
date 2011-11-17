@@ -3891,28 +3891,34 @@ let Predicates = [HasAVX] in {
 
   def : Pat<(v16i8 (X86pcmpeqb VR128:$src1, VR128:$src2)),
             (VPCMPEQBrr VR128:$src1, VR128:$src2)>;
-  def : Pat<(v16i8 (X86pcmpeqb VR128:$src1, (memop addr:$src2))),
+  def : Pat<(v16i8 (X86pcmpeqb VR128:$src1,
+                    (bc_v16i8 (memopv2i64 addr:$src2)))),
             (VPCMPEQBrm VR128:$src1, addr:$src2)>;
   def : Pat<(v8i16 (X86pcmpeqw VR128:$src1, VR128:$src2)),
             (VPCMPEQWrr VR128:$src1, VR128:$src2)>;
-  def : Pat<(v8i16 (X86pcmpeqw VR128:$src1, (memop addr:$src2))),
+  def : Pat<(v8i16 (X86pcmpeqw VR128:$src1,
+                    (bc_v8i16 (memopv2i64 addr:$src2)))),
             (VPCMPEQWrm VR128:$src1, addr:$src2)>;
   def : Pat<(v4i32 (X86pcmpeqd VR128:$src1, VR128:$src2)),
             (VPCMPEQDrr VR128:$src1, VR128:$src2)>;
-  def : Pat<(v4i32 (X86pcmpeqd VR128:$src1, (memop addr:$src2))),
+  def : Pat<(v4i32 (X86pcmpeqd VR128:$src1,
+                    (bc_v4i32 (memopv2i64 addr:$src2)))),
             (VPCMPEQDrm VR128:$src1, addr:$src2)>;
 
   def : Pat<(v16i8 (X86pcmpgtb VR128:$src1, VR128:$src2)),
             (VPCMPGTBrr VR128:$src1, VR128:$src2)>;
-  def : Pat<(v16i8 (X86pcmpgtb VR128:$src1, (memop addr:$src2))),
+  def : Pat<(v16i8 (X86pcmpgtb VR128:$src1,
+                    (bc_v16i8 (memopv2i64 addr:$src2)))),
             (VPCMPGTBrm VR128:$src1, addr:$src2)>;
   def : Pat<(v8i16 (X86pcmpgtw VR128:$src1, VR128:$src2)),
             (VPCMPGTWrr VR128:$src1, VR128:$src2)>;
-  def : Pat<(v8i16 (X86pcmpgtw VR128:$src1, (memop addr:$src2))),
+  def : Pat<(v8i16 (X86pcmpgtw VR128:$src1,
+                    (bc_v8i16 (memopv2i64 addr:$src2)))),
             (VPCMPGTWrm VR128:$src1, addr:$src2)>;
   def : Pat<(v4i32 (X86pcmpgtd VR128:$src1, VR128:$src2)),
             (VPCMPGTDrr VR128:$src1, VR128:$src2)>;
-  def : Pat<(v4i32 (X86pcmpgtd VR128:$src1, (memop addr:$src2))),
+  def : Pat<(v4i32 (X86pcmpgtd VR128:$src1,
+                    (bc_v4i32 (memopv2i64 addr:$src2)))),
             (VPCMPGTDrm VR128:$src1, addr:$src2)>;
 }
 
@@ -3932,28 +3938,34 @@ let Predicates = [HasAVX2] in {
 
   def : Pat<(v32i8 (X86pcmpeqb VR256:$src1, VR256:$src2)),
             (VPCMPEQBYrr VR256:$src1, VR256:$src2)>;
-  def : Pat<(v32i8 (X86pcmpeqb VR256:$src1, (memop addr:$src2))),
+  def : Pat<(v32i8 (X86pcmpeqb VR256:$src1,
+                    (bc_v32i8 (memopv4i64 addr:$src2)))),
             (VPCMPEQBYrm VR256:$src1, addr:$src2)>;
   def : Pat<(v16i16 (X86pcmpeqw VR256:$src1, VR256:$src2)),
             (VPCMPEQWYrr VR256:$src1, VR256:$src2)>;
-  def : Pat<(v16i16 (X86pcmpeqw VR256:$src1, (memop addr:$src2))),
+  def : Pat<(v16i16 (X86pcmpeqw VR256:$src1,
+                     (bc_v16i16 (memopv4i64 addr:$src2)))),
             (VPCMPEQWYrm VR256:$src1, addr:$src2)>;
   def : Pat<(v8i32 (X86pcmpeqd VR256:$src1, VR256:$src2)),
             (VPCMPEQDYrr VR256:$src1, VR256:$src2)>;
-  def : Pat<(v8i32 (X86pcmpeqd VR256:$src1, (memop addr:$src2))),
+  def : Pat<(v8i32 (X86pcmpeqd VR256:$src1,
+                    (bc_v8i32 (memopv4i64 addr:$src2)))),
             (VPCMPEQDYrm VR256:$src1, addr:$src2)>;
 
   def : Pat<(v32i8 (X86pcmpgtb VR256:$src1, VR256:$src2)),
             (VPCMPGTBYrr VR256:$src1, VR256:$src2)>;
-  def : Pat<(v32i8 (X86pcmpgtb VR256:$src1, (memop addr:$src2))),
+  def : Pat<(v32i8 (X86pcmpgtb VR256:$src1,
+                    (bc_v32i8 (memopv4i64 addr:$src2)))),
             (VPCMPGTBYrm VR256:$src1, addr:$src2)>;
   def : Pat<(v16i16 (X86pcmpgtw VR256:$src1, VR256:$src2)),
             (VPCMPGTWYrr VR256:$src1, VR256:$src2)>;
-  def : Pat<(v16i16 (X86pcmpgtw VR256:$src1, (memop addr:$src2))),
+  def : Pat<(v16i16 (X86pcmpgtw VR256:$src1,
+                     (bc_v16i16 (memopv4i64 addr:$src2)))),
             (VPCMPGTWYrm VR256:$src1, addr:$src2)>;
   def : Pat<(v8i32 (X86pcmpgtd VR256:$src1, VR256:$src2)),
             (VPCMPGTDYrr VR256:$src1, VR256:$src2)>;
-  def : Pat<(v8i32 (X86pcmpgtd VR256:$src1, (memop addr:$src2))),
+  def : Pat<(v8i32 (X86pcmpgtd VR256:$src1,
+                    (bc_v8i32 (memopv4i64 addr:$src2)))),
             (VPCMPGTDYrm VR256:$src1, addr:$src2)>;
 }
 
@@ -3975,28 +3987,34 @@ let Constraints = "$src1 = $dst" in {
 let Predicates = [HasSSE2] in {
   def : Pat<(v16i8 (X86pcmpeqb VR128:$src1, VR128:$src2)),
             (PCMPEQBrr VR128:$src1, VR128:$src2)>;
-  def : Pat<(v16i8 (X86pcmpeqb VR128:$src1, (memop addr:$src2))),
+  def : Pat<(v16i8 (X86pcmpeqb VR128:$src1,
+                    (bc_v16i8 (memopv2i64 addr:$src2)))),
             (PCMPEQBrm VR128:$src1, addr:$src2)>;
   def : Pat<(v8i16 (X86pcmpeqw VR128:$src1, VR128:$src2)),
             (PCMPEQWrr VR128:$src1, VR128:$src2)>;
-  def : Pat<(v8i16 (X86pcmpeqw VR128:$src1, (memop addr:$src2))),
+  def : Pat<(v8i16 (X86pcmpeqw VR128:$src1,
+                    (bc_v8i16 (memopv2i64 addr:$src2)))),
             (PCMPEQWrm VR128:$src1, addr:$src2)>;
   def : Pat<(v4i32 (X86pcmpeqd VR128:$src1, VR128:$src2)),
             (PCMPEQDrr VR128:$src1, VR128:$src2)>;
-  def : Pat<(v4i32 (X86pcmpeqd VR128:$src1, (memop addr:$src2))),
+  def : Pat<(v4i32 (X86pcmpeqd VR128:$src1,
+                    (bc_v4i32 (memopv2i64 addr:$src2)))),
             (PCMPEQDrm VR128:$src1, addr:$src2)>;
 
   def : Pat<(v16i8 (X86pcmpgtb VR128:$src1, VR128:$src2)),
             (PCMPGTBrr VR128:$src1, VR128:$src2)>;
-  def : Pat<(v16i8 (X86pcmpgtb VR128:$src1, (memop addr:$src2))),
+  def : Pat<(v16i8 (X86pcmpgtb VR128:$src1,
+             (bc_v16i8 (memopv2i64 addr:$src2)))),
             (PCMPGTBrm VR128:$src1, addr:$src2)>;
   def : Pat<(v8i16 (X86pcmpgtw VR128:$src1, VR128:$src2)),
             (PCMPGTWrr VR128:$src1, VR128:$src2)>;
-  def : Pat<(v8i16 (X86pcmpgtw VR128:$src1, (memop addr:$src2))),
+  def : Pat<(v8i16 (X86pcmpgtw VR128:$src1,
+                    (bc_v8i16 (memopv2i64 addr:$src2)))),
             (PCMPGTWrm VR128:$src1, addr:$src2)>;
   def : Pat<(v4i32 (X86pcmpgtd VR128:$src1, VR128:$src2)),
             (PCMPGTDrr VR128:$src1, VR128:$src2)>;
-  def : Pat<(v4i32 (X86pcmpgtd VR128:$src1, (memop addr:$src2))),
+  def : Pat<(v4i32 (X86pcmpgtd VR128:$src1,
+                    (bc_v4i32 (memopv2i64 addr:$src2)))),
             (PCMPGTDrm VR128:$src1, addr:$src2)>;
 }
 
@@ -7754,29 +7772,29 @@ let Predicates = [HasAVX2] in {
             (VPSRAVDYrr VR256:$src1, VR256:$src2)>;
 
   def : Pat<(v4i32 (shl (v4i32 VR128:$src1),
-                    (v4i32 (bitconvert (memopv2i64 addr:$src2))))),
+                    (bc_v4i32 (memopv2i64 addr:$src2)))),
             (VPSLLVDrm VR128:$src1,  addr:$src2)>;
   def : Pat<(v2i64 (shl (v2i64 VR128:$src1), (memopv2i64 addr:$src2))),
             (VPSLLVQrm VR128:$src1,  addr:$src2)>;
   def : Pat<(v4i32 (srl (v4i32 VR128:$src1),
-                    (v4i32 (bitconvert (memopv2i64 addr:$src2))))),
+                    (bc_v4i32 (memopv2i64 addr:$src2)))),
             (VPSRLVDrm VR128:$src1,  addr:$src2)>;
   def : Pat<(v2i64 (srl (v2i64 VR128:$src1), (memopv2i64 addr:$src2))),
             (VPSRLVQrm VR128:$src1,  addr:$src2)>;
   def : Pat<(v4i32 (sra (v4i32 VR128:$src1),
-                    (v4i32 (bitconvert (memopv2i64 addr:$src2))))),
+                    (bc_v4i32 (memopv2i64 addr:$src2)))),
             (VPSRAVDrm VR128:$src1,  addr:$src2)>;
   def : Pat<(v8i32 (shl (v8i32 VR256:$src1),
-                    (v8i32 (bitconvert (memopv4i64 addr:$src2))))),
+                    (bc_v8i32 (memopv4i64 addr:$src2)))),
             (VPSLLVDYrm VR256:$src1, addr:$src2)>;
   def : Pat<(v4i64 (shl (v4i64 VR256:$src1), (memopv4i64 addr:$src2))),
             (VPSLLVQYrm VR256:$src1, addr:$src2)>;
   def : Pat<(v8i32 (srl (v8i32 VR256:$src1),
-                    (v8i32 (bitconvert (memopv4i64 addr:$src2))))),
+                    (bc_v8i32 (memopv4i64 addr:$src2)))),
             (VPSRLVDYrm VR256:$src1, addr:$src2)>;
   def : Pat<(v4i64 (srl (v4i64 VR256:$src1), (memopv4i64 addr:$src2))),
             (VPSRLVQYrm VR256:$src1, addr:$src2)>;
   def : Pat<(v8i32 (sra (v8i32 VR256:$src1),
-                    (v8i32 (bitconvert (memopv4i64 addr:$src2))))),
+                    (bc_v8i32 (memopv4i64 addr:$src2)))),
             (VPSRAVDYrm VR256:$src1, addr:$src2)>;
 }
