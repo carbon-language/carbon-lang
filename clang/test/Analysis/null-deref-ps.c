@@ -221,7 +221,7 @@ int* f10(int* p, signed char x, int y) {
   // This tests that our symbolication worked, and that we correctly test
   // x against 0 (with the same bitwidth).
   if (!x) {
-    if (!p) return; // expected-warning {{non-void function 'f10' should return a value}}
+    if (!p) return 0;
     *p = 10;
   }
   else p = 0;
