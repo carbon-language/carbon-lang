@@ -1704,6 +1704,15 @@ ProcessGDBRemote::DoAllocateMemory (size_t size, uint32_t permissions, Error &er
 }
 
 Error
+ProcessGDBRemote::GetMemoryRegionInfo (addr_t load_addr, 
+                                       MemoryRegionInfo &region_info)
+{
+    
+    Error error (m_gdb_comm.GetMemoryRegionInfo (load_addr, region_info));
+    return error;
+}
+
+Error
 ProcessGDBRemote::DoDeallocateMemory (lldb::addr_t addr)
 {
     Error error; 

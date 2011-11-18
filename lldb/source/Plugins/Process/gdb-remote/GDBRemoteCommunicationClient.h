@@ -17,6 +17,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/ArchSpec.h"
+#include "lldb/Target/Process.h"
 
 #include "GDBRemoteCommunication.h"
 
@@ -196,6 +197,10 @@ public:
     bool
     DeallocateMemory (lldb::addr_t addr);
 
+    lldb_private::Error
+    GetMemoryRegionInfo (lldb::addr_t addr, 
+                        lldb_private::MemoryRegionInfo &range_info); 
+
     const lldb_private::ArchSpec &
     GetHostArchitecture ();
     
@@ -332,6 +337,7 @@ protected:
     lldb_private::LazyBool m_supports_vCont_S;
     lldb_private::LazyBool m_qHostInfo_is_valid;
     lldb_private::LazyBool m_supports_alloc_dealloc_memory;
+    lldb_private::LazyBool m_supports_memory_region_info;
 
     bool
         m_supports_qProcessInfoPID:1,

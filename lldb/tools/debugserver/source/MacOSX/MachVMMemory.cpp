@@ -53,15 +53,21 @@ MachVMMemory::MaxBytesLeftInPage(nub_addr_t addr, nub_size_t count)
 }
 
 int
-MachVMMemory::MemoryRegionInfo(task_t task, nub_addr_t address, char *outbuf, nub_size_t outbufsize)
+MachVMMemory::GetMemoryRegionInfo(task_t task, nub_addr_t address, DNBRegionInfo *region_info)
 {
     MachVMRegion vmRegion(task);
-    outbuf[0] = '\0';
 
-    if (vmRegion.GetRegionForAddress(address) && vmRegion.GetRegionDescription(outbuf, outbufsize))
+    if (vmRegion.GetRegionForAddress(address))
+    {
+        region_info->addr = vmRegion.StartAddress();
+        region_info->size = vmRegion.GetByteSize();
+        region_info->permissions = vmRegion.GetDNBPermissions();
         return 1;
-    else
-        return 0;
+    }
+    region_info->addr = 0;
+    region_info->size = 0;
+    region_info->permissions = 0;
+    return 0;
 }
 
 nub_size_t

@@ -167,6 +167,10 @@ public:
     DoAllocateMemory (size_t size, uint32_t permissions, lldb_private::Error &error);
 
     virtual lldb_private::Error
+    GetMemoryRegionInfo (lldb::addr_t load_addr, 
+                         lldb_private::MemoryRegionInfo &region_info);
+    
+    virtual lldb_private::Error
     DoDeallocateMemory (lldb::addr_t ptr);
 
     //------------------------------------------------------------------

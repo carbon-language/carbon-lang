@@ -333,6 +333,13 @@ struct DNBExecutableImageInfo
     DNBSegment  *segments;      // Array of contiguous memory segments in executable
 };
 
+struct DNBRegionInfo
+{
+    nub_addr_t addr;
+    nub_addr_t size;
+    uint32_t permissions;
+};
+
 typedef nub_bool_t (*DNBCallbackBreakpointHit)(nub_process_t pid, nub_thread_t tid, nub_break_t breakID, void *baton);
 typedef nub_addr_t (*DNBCallbackNameToAddress)(nub_process_t pid, const char *name, const char *shlib_regex, void *baton);
 typedef nub_size_t (*DNBCallbackCopyExecutableImageInfos)(nub_process_t pid, struct DNBExecutableImageInfo **image_infos, nub_bool_t only_changed, void *baton);

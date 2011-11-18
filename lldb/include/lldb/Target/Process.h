@@ -27,6 +27,7 @@
 #include "lldb/Core/Communication.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Event.h"
+#include "lldb/Core/RangeMap.h"
 #include "lldb/Core/StringList.h"
 #include "lldb/Core/ThreadSafeValue.h"
 #include "lldb/Core/PluginInterface.h"
@@ -1171,6 +1172,77 @@ inline bool operator!= (const ProcessModID &lhs, const ProcessModID &rhs)
     else
         return false;
 }
+    
+class MemoryRegionInfo
+{
+public:
+    typedef Range<lldb::addr_t, lldb::addr_t> RangeType;
+    
+    MemoryRegionInfo () :
+        m_range (),
+        m_permissions (0)
+    {
+    }
+
+    ~MemoryRegionInfo ()
+    {
+    }
+
+    RangeType &
+    GetRange()
+    {
+        return m_range;
+    }
+
+    void
+    Clear()
+    {
+        m_range.Clear();
+        m_permissions = 0;
+    }
+
+    const RangeType &
+    GetRange() const
+    {
+        return m_range;
+    }
+    
+    // Pass in a uint32_t permissions with one or more lldb::Permissions 
+    // enumeration values logical OR'ed together.
+    bool
+    TestPermissions (uint32_t permissions) const
+    {
+        return m_permissions.AllSet(permissions);
+    }
+    
+    const Flags &
+    GetPermissions () const
+    {
+        return m_permissions;
+    }
+
+    void
+    SetPermissions (uint32_t permissions)
+    {
+        m_permissions.Reset(permissions);
+    }
+    
+    void
+    AddPermissions (uint32_t permissions)
+    {
+        m_permissions.Set (permissions);
+    }
+
+    void
+    RemovePermissions (uint32_t permissions)
+    {
+        m_permissions.Clear (permissions);
+    }
+
+protected:
+    RangeType m_range;
+    Flags m_permissions; // Uses lldb::Permissions enumeration values logical OR'ed together
+};
 
 //----------------------------------------------------------------------
 /// @class Process Process.h "lldb/Target/Process.h"
@@ -2478,6 +2550,25 @@ public:
     lldb::addr_t
     AllocateMemory (size_t size, uint32_t permissions, Error &error);
 
+    virtual Error
+    GetMemoryRegionInfo (lldb::addr_t load_addr, 
+                        MemoryRegionInfo &range_info)
+    {
+        Error error;
+        error.SetErrorString ("Process::GetMemoryRegionInfo() not supported");
+        return error;
+    }
+    
+    virtual uint32_t
+    GetLoadAddressPermissions (lldb::addr_t load_addr)
+    {
+        MemoryRegionInfo range_info;
+        Error error (GetMemoryRegionInfo (load_addr, range_info));
+        if (error.Success())
+            return range_info.GetPermissions().Get();
+        return 0;
+    }
+                  
     //------------------------------------------------------------------
     /// Determines whether executing JIT-compiled code in this process 
     /// is possible.

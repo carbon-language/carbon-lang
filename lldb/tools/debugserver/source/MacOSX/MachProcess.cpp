@@ -603,12 +603,6 @@ MachProcess::WriteMemory (nub_addr_t addr, nub_size_t size, const void *buf)
     return bytes_written;
 }
 
-int
-MachProcess::MemoryRegionInfo(nub_addr_t address, char *outbuf, nub_size_t outbufsize)
-{
-    return m_task.MemoryRegionInfo (address, outbuf, outbufsize);
-}
-
 void
 MachProcess::ReplyToAllExceptions ()
 {

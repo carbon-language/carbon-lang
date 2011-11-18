@@ -1139,13 +1139,12 @@ DNBProcessMemoryDeallocate (nub_process_t pid, nub_addr_t addr)
 //
 //----------------------------------------------------------------------
 int
-DNBMemoryRegionInfo (nub_process_t pid, nub_addr_t addr, char *outbuf, nub_size_t outbufsize)
+DNBMemoryRegionInfo (nub_process_t pid, nub_addr_t addr, DNBRegionInfo *region_info)
 {
     MachProcessSP procSP;
     if (GetProcessSP (pid, procSP))
-    {
-        return procSP->MemoryRegionInfo(addr, outbuf, outbufsize);
-    }
+        return procSP->Task().GetMemoryRegionInfo (addr, region_info);
+
     return -1;
 }
 

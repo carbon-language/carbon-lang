@@ -46,6 +46,7 @@ GDBRemoteCommunicationClient::GDBRemoteCommunicationClient(bool is_platform) :
     m_supports_vCont_S (eLazyBoolCalculate),
     m_qHostInfo_is_valid (eLazyBoolCalculate),
     m_supports_alloc_dealloc_memory (eLazyBoolCalculate),
+    m_supports_memory_region_info  (eLazyBoolCalculate),
     m_supports_qProcessInfoPID (true),
     m_supports_qfProcessInfo (true),
     m_supports_qUserName (true),
@@ -123,6 +124,7 @@ GDBRemoteCommunicationClient::ResetDiscoverableSettings()
     m_supports_vCont_S = eLazyBoolCalculate;
     m_qHostInfo_is_valid = eLazyBoolCalculate;
     m_supports_alloc_dealloc_memory = eLazyBoolCalculate;
+    m_supports_memory_region_info = eLazyBoolCalculate;
 
     m_supports_qProcessInfoPID = true;
     m_supports_qfProcessInfo = true;
@@ -1085,6 +1087,77 @@ GDBRemoteCommunicationClient::DeallocateMemory (addr_t addr)
     }
     return false;
 }
+
+Error
+GDBRemoteCommunicationClient::GetMemoryRegionInfo (lldb::addr_t addr, 
+                                                  lldb_private::MemoryRegionInfo &region_info)
+{
+    Error error;
+    region_info.Clear();
+
+    if (m_supports_memory_region_info != eLazyBoolNo)
+    {
+        m_supports_memory_region_info = eLazyBoolYes;
+        char packet[64];
+        const int packet_len = ::snprintf(packet, sizeof(packet), "qMemoryRegionInfo:%llx", (uint64_t)addr);
+        assert (packet_len < sizeof(packet));
+        StringExtractorGDBRemote response;
+        if (SendPacketAndWaitForResponse (packet, packet_len, response, false))
+        {
+            std::string name;
+            std::string value;
+            addr_t addr_value;
+            bool success = true;
+            while (success && response.GetNameColonValue(name, value))
+            {
+                if (name.compare ("start") == 0)
+                {
+                    addr_value = Args::StringToUInt64(value.c_str(), LLDB_INVALID_ADDRESS, 16, &success);
+                    if (success)
+                        region_info.GetRange().SetRangeBase(addr_value);
+                }
+                else if (name.compare ("size") == 0)
+                {
+                    addr_value = Args::StringToUInt64(value.c_str(), 0, 16, &success);
+                    if (success)
+                        region_info.GetRange().SetByteSize (addr_value);
+                }
+                else if (name.compare ("permissions") == 0)
+                {
+                    if (value.find('r') != std::string::npos)
+                        region_info.AddPermissions (ePermissionsReadable);
+                    if (value.find('w') != std::string::npos)
+                        region_info.AddPermissions (ePermissionsWritable);
+                    if (value.find('x') != std::string::npos)
+                        region_info.AddPermissions (ePermissionsExecutable);
+                }
+                else if (name.compare ("error") == 0)
+                {
+                    StringExtractorGDBRemote name_extractor;
+                    // Swap "value" over into "name_extractor"
+                    name_extractor.GetStringRef().swap(value);
+                    // Now convert the HEX bytes into a string value
+                    name_extractor.GetHexByteString (value);
+                    error.SetErrorString(value.c_str());
+                }
+            }
+        }
+        else
+        {
+            m_supports_memory_region_info = eLazyBoolNo;
+        }
+    }
+
+    if (m_supports_memory_region_info == eLazyBoolNo)
+    {
+        error.SetErrorString("qMemoryRegionInfo is not supported");
+    }
+    if (error.Fail())
+        region_info.Clear();
+    return error;
+
+}
+
 
 int
 GDBRemoteCommunicationClient::SetSTDIN (char const *path)

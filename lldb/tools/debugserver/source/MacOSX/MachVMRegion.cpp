@@ -134,7 +134,21 @@ MachVMRegion::GetRegionForAddress(nub_addr_t addr)
     mach_msg_type_number_t info_size = kRegionInfoSize;
     assert(sizeof(info_size) == 4);
     m_err = ::mach_vm_region_recurse (m_task, &m_start, &m_size, &m_depth, (vm_region_recurse_info_t)&m_data, &info_size);
-    if (DNBLogCheckLogBit(LOG_MEMORY_PROTECTIONS) || m_err.Fail())
+    const bool log_protections = DNBLogCheckLogBit(LOG_MEMORY_PROTECTIONS);
+    if (m_err.Success())
+    {
+        if ((addr < m_start) || (addr >= (m_start + m_size)))
+        {
+            m_err.SetErrorString("no region for address");
+            m_err.SetError(-1, DNBError::Generic);
+            if (log_protections)
+                m_err.LogThreaded("::mach_vm_region_recurse ( task = 0x%4.4x, address => 0x%8.8llx, size => %llu, nesting_depth => %d, info => %p, infoCnt => %d) addr = 0x%8.8llx not in range [0x%8.8llx - 0x%8.8llx)", 
+                                  m_task, (uint64_t)m_start, (uint64_t)m_size, m_depth, &m_data, info_size, (uint64_t)addr, (uint64_t)m_start, (uint64_t)m_start + m_size);
+            return false;
+        }
+    }
+    
+    if (log_protections || m_err.Fail())
         m_err.LogThreaded("::mach_vm_region_recurse ( task = 0x%4.4x, address => 0x%8.8llx, size => %llu, nesting_depth => %d, info => %p, infoCnt => %d) addr = 0x%8.8llx ", m_task, (uint64_t)m_start, (uint64_t)m_size, m_depth, &m_data, info_size, (uint64_t)addr);
     if (m_err.Fail())
     {
@@ -142,7 +156,7 @@ MachVMRegion::GetRegionForAddress(nub_addr_t addr)
     }
     else
     {
-        if (DNBLogCheckLogBit(LOG_MEMORY_PROTECTIONS))
+        if (log_protections)
         {
             DNBLogThreaded("info = { prot = %u, "
                              "max_prot = %u, "
@@ -178,26 +192,18 @@ MachVMRegion::GetRegionForAddress(nub_addr_t addr)
     return true;
 }
 
-bool
-MachVMRegion::GetRegionDescription (char *outbuf, nub_size_t outbufsize)
+uint32_t
+MachVMRegion::GetDNBPermissions () const
 {
-  if (m_addr == INVALID_NUB_ADDRESS || m_start == INVALID_NUB_ADDRESS || m_size == 0)
-      return false;
-  snprintf (outbuf, outbufsize, "start:%llx,size:%llx", m_start, m_size);
-  outbuf[outbufsize - 1] = '\0';
-
-  char tmpbuf[128];
-  strcpy (tmpbuf, ",permissions:");
-  if ((m_data.protection & VM_PROT_READ) == VM_PROT_READ)
-      strcat (tmpbuf, "r");
-  if ((m_data.protection & VM_PROT_WRITE) == VM_PROT_WRITE)
-      strcat (tmpbuf, "w");
-  if ((m_data.protection & VM_PROT_EXECUTE) == VM_PROT_EXECUTE)
-      strcat (tmpbuf, "x");
-  strlcat (outbuf, tmpbuf, outbufsize);
-
-  // It would be nice if we could figure out whether the memory region is stack memory or jitted code memory as well
-
-  outbuf[outbufsize - 1] = '\0';
-  return true;
+    if (m_addr == INVALID_NUB_ADDRESS || m_start == INVALID_NUB_ADDRESS || m_size == 0)
+      return 0;
+    uint32_t dnb_permissions = 0;
+    
+    if ((m_data.protection & VM_PROT_READ) == VM_PROT_READ)
+        dnb_permissions |= eMemoryPermissionsReadable;
+    if ((m_data.protection & VM_PROT_WRITE) == VM_PROT_WRITE)
+        dnb_permissions |= eMemoryPermissionsWritable;
+    if ((m_data.protection & VM_PROT_EXECUTE) == VM_PROT_EXECUTE)
+        dnb_permissions |= eMemoryPermissionsExecutable;
+    return dnb_permissions;
 }

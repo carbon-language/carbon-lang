@@ -66,7 +66,7 @@ nub_size_t      DNBProcessMemoryRead    (nub_process_t pid, nub_addr_t addr, nub
 nub_size_t      DNBProcessMemoryWrite   (nub_process_t pid, nub_addr_t addr, nub_size_t size, const void *buf) DNB_EXPORT;
 nub_addr_t      DNBProcessMemoryAllocate (nub_process_t pid, nub_size_t size, uint32_t permissions) DNB_EXPORT;
 nub_bool_t      DNBProcessMemoryDeallocate (nub_process_t pid, nub_addr_t addr) DNB_EXPORT;
-int             DNBMemoryRegionInfo (nub_process_t pid, nub_addr_t addr, char *outbuf, nub_size_t outbufsize);
+int             DNBMemoryRegionInfo     (nub_process_t pid, nub_addr_t addr, DNBRegionInfo *region_info) DNB_EXPORT;
 
 //----------------------------------------------------------------------
 // Process status
