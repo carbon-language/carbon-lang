@@ -292,3 +292,27 @@ struct s59 f59() { while (1) {} }
 // CHECK: define void @f60(%struct.s60* byval align 4, i32 %y)
 struct s60 { int x __attribute((aligned(8))); };
 void f60(struct s60 x, int y) {}
+
+// CHECK: define void @f61(i32 %x, %struct.s61* byval align 16 %y)
+typedef int T61 __attribute((vector_size(16)));
+struct s61 { T61 x; int y; };
+void f61(int x, struct s61 y) {}
+
+// CHECK: define void @f62(i32 %x, %struct.s62* byval align 4)
+typedef int T62 __attribute((vector_size(16)));
+struct s62 { T62 x; int y; } __attribute((packed, aligned(8)));
+void f62(int x, struct s62 y) {}
+
+// CHECK: define i32 @f63
+// CHECK: ptrtoint
+// CHECK: and {{.*}}, -16
+// CHECK: inttoptr
+typedef int T63 __attribute((vector_size(16)));
+struct s63 { T63 x; int y; };
+int f63(int i, ...) {
+  __builtin_va_list ap;
+  __builtin_va_start(ap, i);
+  struct s63 s = __builtin_va_arg(ap, struct s63);
+  __builtin_va_end(ap);
+  return s.y;
+}
