@@ -2478,6 +2478,9 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
   if (Inst)
     return;
 
+  // Copy the inner loc start from the pattern.
+  Function->setInnerLocStart(PatternDecl->getInnerLocStart());
+
   // If we're performing recursive template instantiation, create our own
   // queue of pending implicit instantiations that we will instantiate later,
   // while we're still within our own instantiation context.

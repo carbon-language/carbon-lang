@@ -1818,8 +1818,10 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
   if (!FieldsWithMemberInitializers.empty())
     ActOnFinishDelayedMemberInitializers(Instantiation);
 
-  if (TSK == TSK_ImplicitInstantiation)
+  if (TSK == TSK_ImplicitInstantiation) {
+    Instantiation->setLocStart(Pattern->getInnerLocStart());
     Instantiation->setRBraceLoc(Pattern->getRBraceLoc());
+  }
 
   if (Instantiation->isInvalidDecl())
     Invalid = true;
