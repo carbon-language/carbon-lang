@@ -110,8 +110,7 @@ Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS,
   if (getLang().DelayedTemplateParsing && 
       ((Actions.CurContext->isDependentContext() ||
         TemplateInfo.Kind != ParsedTemplateInfo::NonTemplate) && 
-        !Actions.IsInsideALocalClassWithinATemplateFunction()) &&
-        !D.getDeclSpec().isFriendSpecified()) {
+        !Actions.IsInsideALocalClassWithinATemplateFunction())) {
 
     if (FnD) {
       LateParsedTemplatedFunction *LPT =
