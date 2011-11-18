@@ -210,20 +210,19 @@ DWARFCompileUnit::ExtractDIEsIfNeeded (bool cu_die_only)
             AddDIE (die);
         }
 
-        const DWARFAbbreviationDeclaration* abbrDecl = die.GetAbbreviationDeclarationPtr();
-        if (abbrDecl)
-        {
-            // Normal DIE
-            if (abbrDecl->HasChildren())
-                ++depth;
-        }
-        else
+        if (die.IsNULL())
         {
             // NULL DIE.
             if (depth > 0)
                 --depth;
             if (depth == 0)
                 break;  // We are done with this compile unit!
+        }
+        else
+        {
+            // Normal DIE
+            if (die.HasChildren())
+                ++depth;
         }
 
     }
@@ -469,22 +468,20 @@ DWARFCompileUnit::SetDIERelations()
         // safely access the next die in the array.
         DWARFDebugInfoEntry* next_die = curr_die + 1;
 
-        const DWARFAbbreviationDeclaration* curr_die_abbrev = curr_die->GetAbbreviationDeclarationPtr();
-
-        if (curr_die_abbrev)
-        {
-            // Normal DIE
-            if (curr_die_abbrev->HasChildren())
-                next_die->SetParent(curr_die);
-            else
-                curr_die->SetSibling(next_die);
-        }
-        else
+        if (curr_die->IsNULL())
         {
             // NULL DIE that terminates a sibling chain
             DWARFDebugInfoEntry* parent = curr_die->GetParent();
             if (parent)
                 parent->SetSibling(next_die);
+        }
+        else
+        {
+            // Normal DIE
+            if (curr_die->HasChildren())
+                next_die->SetParent(curr_die);
+            else
+                curr_die->SetSibling(next_die);
         }
     }
 

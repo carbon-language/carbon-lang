@@ -11,9 +11,9 @@
 #define SymbolFileDWARF_DWARFDebugInfoEntry_h_
 
 #include "SymbolFileDWARF.h"
-
 #include "llvm/ADT/SmallVector.h"
 
+#include "DWARFDebugAbbrev.h"
 #include "DWARFAbbreviationDeclaration.h"
 #include "DWARFDebugRanges.h"
 #include <vector>
@@ -40,6 +40,8 @@ typedef UInt32ToDIEMap::const_iterator                      UInt32ToDIEMapConstI
 typedef std::multimap<uint32_t, const DWARFDebugInfoEntry*> UInt32ToDIEMMap;
 typedef UInt32ToDIEMMap::iterator                           UInt32ToDIEMMapIter;
 typedef UInt32ToDIEMMap::const_iterator                     UInt32ToDIEMMapConstIter;
+
+#define DIE_ABBR_IDX_BITSIZE 15
 
 class DWARFDebugInfoEntry
 {
@@ -105,7 +107,8 @@ public:
                     m_offset        (DW_INVALID_OFFSET),
                     m_parent_idx    (0),
                     m_sibling_idx   (0),
-                    m_abbrevDecl    (NULL)
+                    m_abbr_idx      (0),
+                    m_has_children  (false)
                 {
                 }
 
@@ -229,12 +232,6 @@ public:
                     const DWARFDebugInfoEntry& a,
                     const DWARFDebugInfoEntry& b);
 
-    bool        AppendDependentDIES(
-                    SymbolFileDWARF* dwarf2Data,
-                    const DWARFCompileUnit* cu,
-                    const bool add_children,
-                    DWARFDIECollection& die_offsets) const;
-
     void        Dump(
                     SymbolFileDWARF* dwarf2Data,
                     const DWARFCompileUnit* cu,
@@ -276,13 +273,44 @@ public:
                     int& call_column,
                     lldb_private::DWARFExpression *frame_base = NULL) const;
 
+    const DWARFAbbreviationDeclaration* 
+    GetAbbreviationDeclarationPtr (const DWARFCompileUnit *cu) const;
 
-    dw_tag_t    Tag()           const { return m_abbrevDecl ? m_abbrevDecl->Tag() : 0; }
-    bool        IsNULL()        const { return m_abbrevDecl == NULL; }
-    dw_offset_t GetOffset()     const { return m_offset; }
-    void        SetOffset(dw_offset_t offset) { m_offset = offset; }
-    uint32_t    NumAttributes() const { return m_abbrevDecl ? m_abbrevDecl->NumAttributes() : 0; }
-    bool        HasChildren()   const { return m_abbrevDecl != NULL && m_abbrevDecl->HasChildren(); }
+    dw_tag_t
+    Tag () const 
+    {
+        return m_tag;
+    }
+
+    bool
+    IsNULL() const 
+    {
+        return m_abbr_idx == 0; 
+    }
+
+    dw_offset_t
+    GetOffset () const 
+    { 
+        return m_offset; 
+    }
+
+    void
+    SetOffset (dw_offset_t offset)
+    { 
+        m_offset = offset; 
+    }
+
+    bool
+    HasChildren () const 
+    { 
+        return m_has_children;
+    }
+    
+    void
+    SetHasChildren (bool b)
+    {
+        m_has_children = b;
+    }
 
             // We know we are kept in a vector of contiguous entries, so we know
             // our parent will be some index behind "this".
@@ -323,13 +351,15 @@ public:
         else        
             m_sibling_idx = 0;
     }
-    const DWARFAbbreviationDeclaration* GetAbbreviationDeclarationPtr() const { return m_abbrevDecl; }
 
 protected:
-    dw_offset_t                         m_offset;       // Offset within the .debug_info of the start of this entry
-    uint32_t                            m_parent_idx;   // How many to subtract from "this" to get the parent. If zero this die has no parent
-    uint32_t                            m_sibling_idx;  // How many to add to "this" to get the sibling.
-    const DWARFAbbreviationDeclaration* m_abbrevDecl;
+    dw_offset_t m_offset;       // Offset within the .debug_info of the start of this entry
+    uint32_t    m_parent_idx;   // How many to subtract from "this" to get the parent. If zero this die has no parent
+    uint32_t    m_sibling_idx;  // How many to add to "this" to get the sibling.
+    uint32_t    m_abbr_idx:DIE_ABBR_IDX_BITSIZE,
+                m_has_children:1,
+                m_tag:16;
+                
 };
 
 #endif  // SymbolFileDWARF_DWARFDebugInfoEntry_h_

@@ -257,7 +257,6 @@ ProcessLaunchInfo::FinalizeFileActions (Target *target, bool default_to_use_pty)
     // settings that were set with "settings set"
     if (m_file_actions.empty())
     {
-        const char *path;
         if (m_flags.Test(eLaunchFlagDisableSTDIO))
         {
             AppendSuppressFileAction (STDERR_FILENO, true , true );

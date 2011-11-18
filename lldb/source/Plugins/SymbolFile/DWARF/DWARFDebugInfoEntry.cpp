@@ -113,23 +113,27 @@ DWARFDebugInfoEntry::FastExtract
 {
     m_offset = *offset_ptr;
 
-    dw_uleb128_t abbrCode = debug_info_data.GetULEB128 (offset_ptr);
+    uint64_t abbr_idx = debug_info_data.GetULEB128 (offset_ptr);
+    assert (abbr_idx < (1 << DIE_ABBR_IDX_BITSIZE));
+    m_abbr_idx = abbr_idx;
 
     assert (fixed_form_sizes);  // For best performance this should be specified!
     
-    if (abbrCode)
+    if (m_abbr_idx)
     {
         uint32_t offset = *offset_ptr;
 
-        m_abbrevDecl = cu->GetAbbreviations()->GetAbbreviationDeclaration(abbrCode);
+        const DWARFAbbreviationDeclaration *abbrevDecl = cu->GetAbbreviations()->GetAbbreviationDeclaration(m_abbr_idx);
         
+        m_tag = abbrevDecl->Tag();
+        m_has_children = abbrevDecl->HasChildren();
         // Skip all data in the .debug_info for the attributes
-        const uint32_t numAttributes = m_abbrevDecl->NumAttributes();
+        const uint32_t numAttributes = abbrevDecl->NumAttributes();
         register uint32_t i;
         register dw_form_t form;
         for (i=0; i<numAttributes; ++i)
         {
-            form = m_abbrevDecl->GetFormByIndexUnchecked(i);
+            form = abbrevDecl->GetFormByIndexUnchecked(i);
 
             const uint8_t fixed_skip_size = fixed_form_sizes [form];
             if (fixed_skip_size)
@@ -213,7 +217,8 @@ DWARFDebugInfoEntry::FastExtract
     }
     else
     {
-        m_abbrevDecl = NULL;
+        m_tag = 0;
+        m_has_children = false;
         return true;    // NULL debug tag entry
     }
 
@@ -246,28 +251,30 @@ DWARFDebugInfoEntry::Extract
     {
         m_offset = offset;
 
-        dw_uleb128_t abbrCode = debug_info_data.GetULEB128(&offset);
-
-        if (abbrCode)
+        const uint64_t abbr_idx = debug_info_data.GetULEB128(&offset);
+        assert (abbr_idx < (1 << DIE_ABBR_IDX_BITSIZE));
+        m_abbr_idx = abbr_idx;
+        if (abbr_idx)
         {
-            m_abbrevDecl = cu->GetAbbreviations()->GetAbbreviationDeclaration(abbrCode);
+            const DWARFAbbreviationDeclaration *abbrevDecl = cu->GetAbbreviations()->GetAbbreviationDeclaration(abbr_idx);
 
-            if (m_abbrevDecl)
+            if (abbrevDecl)
             {
-                dw_tag_t tag = m_abbrevDecl->Tag();
+                m_tag = abbrevDecl->Tag();
+                m_has_children = abbrevDecl->HasChildren();
 
-                bool isCompileUnitTag = tag == DW_TAG_compile_unit;
+                bool isCompileUnitTag = m_tag == DW_TAG_compile_unit;
                 if (cu && isCompileUnitTag)
                     ((DWARFCompileUnit*)cu)->SetBaseAddress(0);
 
                 // Skip all data in the .debug_info for the attributes
-                const uint32_t numAttributes = m_abbrevDecl->NumAttributes();
+                const uint32_t numAttributes = abbrevDecl->NumAttributes();
                 uint32_t i;
                 dw_attr_t attr;
                 dw_form_t form;
                 for (i=0; i<numAttributes; ++i)
                 {
-                    m_abbrevDecl->GetAttrAndFormByIndexUnchecked(i, attr, form);
+                    abbrevDecl->GetAttrAndFormByIndexUnchecked(i, attr, form);
 
                     if (isCompileUnitTag && ((attr == DW_AT_entry_pc) || (attr == DW_AT_low_pc)))
                     {
@@ -359,216 +366,14 @@ DWARFDebugInfoEntry::Extract
         }
         else
         {
-            m_abbrevDecl = NULL;
+            m_tag = 0;
+            m_has_children = false;
             *offset_ptr = offset;
             return true;    // NULL debug tag entry
         }
     }
 
     return false;
-}
-
-//----------------------------------------------------------------------
-// AppendDependentDIES()
-//----------------------------------------------------------------------
-bool
-DWARFDebugInfoEntry::AppendDependentDIES
-(
-    SymbolFileDWARF* dwarf2Data,
-    const DWARFCompileUnit* cu,
-    const bool add_children,
-    DWARFDIECollection& dependent_dies
-) const
-{
-    // Add this object's DIE offset
-    // The line below is the only place that should add a die to the
-    // dependent_dies collection as we have to be careful of recursion!
-    if ( !dependent_dies.Insert(this) )
-        return false;   // This DIE already exists in the collection, nothing to do!
-
-    //DEBUG_PRINTF("    dependent_dies.Insert(0x%8.8x)\n", GetOffset());///
-
-    if (m_abbrevDecl)
-    {
-        // Keep adding parent DIE offsets as long as the offsets do not
-        // already exist in the collection
-        const DWARFDebugInfoEntry* die = GetParent();
-        while ( die && die->AppendDependentDIES(dwarf2Data, cu, false, dependent_dies) )
-            die = die->GetParent();
-
-        bool add_non_subprogram_children = false;
-        bool add_children_override = false;
-
-        if (!add_children)
-        {
-            switch (m_abbrevDecl->Tag())
-            {
-            case DW_TAG_array_type:                                             break;
-            case DW_TAG_class_type:         add_non_subprogram_children = true; break;
-            case DW_TAG_entry_point:                                            break;
-            case DW_TAG_enumeration_type:                                       break;
-            case DW_TAG_formal_parameter:                                       break;
-            case DW_TAG_imported_declaration:                                   break;
-            case DW_TAG_label:                                                  break;
-            case DW_TAG_lexical_block:      add_children_override = true;       break;
-            case DW_TAG_member:                                                 break;
-            case DW_TAG_pointer_type:                                           break;
-            case DW_TAG_reference_type:                                         break;
-            case DW_TAG_compile_unit:                                           break;
-            case DW_TAG_string_type:                                            break;
-            case DW_TAG_structure_type:     add_non_subprogram_children = true; break;
-            case DW_TAG_subroutine_type:    add_children_override = true;       break;
-            case DW_TAG_typedef:                                                break;
-            case DW_TAG_union_type:         add_non_subprogram_children = true; break;
-            case DW_TAG_unspecified_parameters:                                 break;
-            case DW_TAG_variant:                                                break;
-            case DW_TAG_common_block:                                           break;
-            case DW_TAG_common_inclusion:                                       break;
-            case DW_TAG_inheritance:                                            break;
-            case DW_TAG_inlined_subroutine:                                     break;
-            case DW_TAG_module:                                                 break;
-            case DW_TAG_ptr_to_member_type:                                     break;
-            case DW_TAG_set_type:                                               break;
-            case DW_TAG_subrange_type:                                          break;
-            case DW_TAG_with_stmt:                                              break;
-            case DW_TAG_access_declaration:                                     break;
-            case DW_TAG_base_type:                                              break;
-            case DW_TAG_catch_block:                                            break;
-            case DW_TAG_const_type:                                             break;
-            case DW_TAG_constant:                                               break;
-            case DW_TAG_enumerator:                                             break;
-            case DW_TAG_file_type:                                              break;
-            case DW_TAG_friend:                                                 break;
-            case DW_TAG_namelist:                                               break;
-            case DW_TAG_namelist_item:                                          break;
-            case DW_TAG_packed_type:                                            break;
-            case DW_TAG_subprogram:             add_children_override = true;   break;
-            case DW_TAG_template_type_parameter:                                break;
-            case DW_TAG_template_value_parameter:                               break;
-            case DW_TAG_thrown_type:                                            break;
-            case DW_TAG_try_block:                                              break;
-            case DW_TAG_variant_part:                                           break;
-            case DW_TAG_variable:                                               break;
-            case DW_TAG_volatile_type:                                          break;
-            case DW_TAG_dwarf_procedure:                                        break;
-            case DW_TAG_restrict_type:                                          break;
-            case DW_TAG_interface_type:                                         break;
-            case DW_TAG_namespace:                                              break;
-            case DW_TAG_imported_module:                                        break;
-            case DW_TAG_unspecified_type:                                       break;
-            case DW_TAG_partial_unit:                                           break;
-            case DW_TAG_imported_unit:                                          break;
-            case DW_TAG_shared_type:                                            break;
-            }
-        }
-        const DataExtractor& debug_info_data = dwarf2Data->get_debug_info_data();
-
-        // Dump all data in the .debug_info for the attributes
-        const uint32_t numAttributes = m_abbrevDecl->NumAttributes();
-        uint32_t i;
-        dw_offset_t offset = GetOffset();
-        debug_info_data.Skip_LEB128(&offset);   // Skip abbreviation code
-
-        dw_attr_t attr;
-        dw_form_t form;
-        for (i=0; i<numAttributes; ++i)
-        {
-            m_abbrevDecl->GetAttrAndFormByIndexUnchecked(i, attr, form);
-            DWARFFormValue form_value(form);
-
-            switch (attr)
-            {
-            // All cases that use refer to another DIE should use this case
-            // without
-            // having to check the FORM of the attribute to tell if it refers to another
-            // DIE
-            case DW_AT_abstract_origin:
-            case DW_AT_import:
-            case DW_AT_discr:
-            case DW_AT_containing_type:
-            case DW_AT_base_types:
-            case DW_AT_friend:
-            case DW_AT_specification:
-            case DW_AT_type:
-            case DW_AT_common_reference:
-            case DW_AT_default_value:
-                {
-                    form_value.ExtractValue(debug_info_data, &offset, cu);
-                    DWARFCompileUnitSP cu_sp_ptr;
-                    const DWARFDebugInfoEntry* ref_die = const_cast<SymbolFileDWARF*>(dwarf2Data)->DebugInfo()->GetDIEPtr(form_value.Reference(cu), &cu_sp_ptr);
-                    if (ref_die)
-                        ref_die->AppendDependentDIES(dwarf2Data, cu_sp_ptr.get(), true, dependent_dies);
-                }
-                break;
-
-            default:
-                if (attr != DW_AT_sibling)
-                {
-                    switch (form_value.Form())
-                    {
-                    case DW_FORM_ref_addr:
-                    case DW_FORM_ref1:
-                    case DW_FORM_ref2:
-                    case DW_FORM_ref4:
-                    case DW_FORM_ref8:
-                    case DW_FORM_ref_udata:
-//                      Log::WarningVerbose("DWARFDebugInfoEntry::AppendDependentDIES() -- check on this item %s: attr = %s  form = %s",
-//                          DW_TAG_value_to_name(m_abbrevDecl->Tag()),
-//                          DW_AT_value_to_name(attr),
-//                          DW_FORM_value_to_name(form));
-                        break;
-                    }
-                }
-                form_value.SkipValue(debug_info_data, &offset, cu);
-                break;
-            }
-        }
-
-        if (m_abbrevDecl->HasChildren())
-        {
-            const DWARFDebugInfoEntry* child;
-            for (child = GetFirstChild(); child != NULL; child = child->GetSibling())
-            {
-                bool add = add_children || add_children_override;
-
-                if (!add)
-                {
-                    if (add_non_subprogram_children)
-                    {
-                        // add_non_subprogram_children is used for classes and structs
-                        // that may contain children that are the member variables that
-                        // may have functions as children and whom may add the class or
-                        // struct by adding their parent. We don't want to add any
-                        // functions though since they may have been optimized out. But
-                        // we do need to watch for declarations and keep them.
-                        if (child->Tag() == DW_TAG_subprogram)
-                        {
-                            // Check if this subprogram TAG had a DW_AT_declaration attribute set to 1.
-                            // If so we need to include this DIE so that we always have a complete view
-                            // of a class definition so debuggers can track down any weak symbols that
-                            // may not have had weak definition entries.
-                            if (child->GetAttributeValueAsUnsigned(dwarf2Data, cu, DW_AT_declaration, 0) == 1)
-                                add = true;
-                        }
-                        else
-                        {
-                            // Add all other items inside a class/struct
-                            add = true;
-                        }
-                    }
-                    else
-                    {
-                        // We don't need to add this child, only add it if it's a NULL tag
-                        add = child->IsNULL();
-                    }
-                }
-
-                if (add)
-                    child->AppendDependentDIES(dwarf2Data, cu, true, dependent_dies);
-            }
-        }
-    }
-    return true;
 }
 
 //----------------------------------------------------------------------
@@ -894,7 +699,10 @@ DWARFDebugInfoEntry::GetDIENamesAndRanges
     dw_addr_t hi_pc = DW_INVALID_ADDRESS;
     std::vector<dw_offset_t> die_offsets;
     bool set_frame_base_loclist_addr = false;
-    if (m_abbrevDecl)
+    
+    const DWARFAbbreviationDeclaration* abbrevDecl = GetAbbreviationDeclarationPtr(cu);
+
+    if (abbrevDecl)
     {
         const DataExtractor& debug_info_data = dwarf2Data->get_debug_info_data();
         uint32_t offset = m_offset;
@@ -905,13 +713,13 @@ DWARFDebugInfoEntry::GetDIENamesAndRanges
         // Skip the abbreviation code
         debug_info_data.Skip_LEB128(&offset);
 
-        const uint32_t numAttributes = m_abbrevDecl->NumAttributes();
+        const uint32_t numAttributes = abbrevDecl->NumAttributes();
         uint32_t i;
         dw_attr_t attr;
         dw_form_t form;
         for (i=0; i<numAttributes; ++i)
         {
-            m_abbrevDecl->GetAttrAndFormByIndexUnchecked(i, attr, form);
+            abbrevDecl->GetAttrAndFormByIndexUnchecked(i, attr, form);
             DWARFFormValue form_value(form);
             if (form_value.ExtractValue(debug_info_data, &offset, cu))
             {
@@ -1088,19 +896,21 @@ DWARFDebugInfoEntry::Dump
         s.Indent();
         if (abbrCode)
         {
-            if (m_abbrevDecl)
+            const DWARFAbbreviationDeclaration* abbrevDecl = GetAbbreviationDeclarationPtr(cu);
+
+            if (abbrevDecl)
             {
-                s.PutCString(DW_TAG_value_to_name(m_abbrevDecl->Tag()));
-                s.Printf( " [%u] %c\n", abbrCode, m_abbrevDecl->HasChildren() ? '*':' ');
+                s.PutCString(DW_TAG_value_to_name(abbrevDecl->Tag()));
+                s.Printf( " [%u] %c\n", abbrCode, abbrevDecl->HasChildren() ? '*':' ');
 
                 // Dump all data in the .debug_info for the attributes
-                const uint32_t numAttributes = m_abbrevDecl->NumAttributes();
+                const uint32_t numAttributes = abbrevDecl->NumAttributes();
                 uint32_t i;
                 dw_attr_t attr;
                 dw_form_t form;
                 for (i=0; i<numAttributes; ++i)
                 {
-                    m_abbrevDecl->GetAttrAndFormByIndexUnchecked(i, attr, form);
+                    abbrevDecl->GetAttrAndFormByIndexUnchecked(i, attr, form);
 
                     DumpAttribute(dwarf2Data, cu, debug_info_data, &offset, s, attr, form);
                 }
@@ -1326,7 +1136,9 @@ DWARFDebugInfoEntry::GetAttributes
     uint32_t curr_depth
 ) const
 {
-    if (m_abbrevDecl)
+    const DWARFAbbreviationDeclaration* abbrevDecl = GetAbbreviationDeclarationPtr(cu);
+
+    if (abbrevDecl)
     {
         if (fixed_form_sizes == NULL)
             fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize(cu->GetAddressByteSize());
@@ -1336,14 +1148,14 @@ DWARFDebugInfoEntry::GetAttributes
         // Skip the abbreviation code so we are at the data for the attributes
         debug_info_data.Skip_LEB128(&offset);
 
-        const uint32_t num_attributes = m_abbrevDecl->NumAttributes();
+        const uint32_t num_attributes = abbrevDecl->NumAttributes();
         uint32_t i;
         dw_attr_t attr;
         dw_form_t form;
         DWARFFormValue form_value;
         for (i=0; i<num_attributes; ++i)
         {
-            m_abbrevDecl->GetAttrAndFormByIndexUnchecked (i, attr, form);
+            abbrevDecl->GetAttrAndFormByIndexUnchecked (i, attr, form);
             
             // If we are tracking down DW_AT_specification or DW_AT_abstract_origin
             // attributes, the depth will be non-zero. We need to omit certain
@@ -1423,9 +1235,11 @@ DWARFDebugInfoEntry::GetAttributeValue
     dw_offset_t* end_attr_offset_ptr
 ) const
 {
-    if (m_abbrevDecl)
+    const DWARFAbbreviationDeclaration* abbrevDecl = GetAbbreviationDeclarationPtr(cu);
+
+    if (abbrevDecl)
     {
-        uint32_t attr_idx = m_abbrevDecl->FindAttributeIndex(attr);
+        uint32_t attr_idx = abbrevDecl->FindAttributeIndex(attr);
 
         if (attr_idx != DW_INVALID_INDEX)
         {
@@ -1438,10 +1252,10 @@ DWARFDebugInfoEntry::GetAttributeValue
 
             uint32_t idx=0;
             while (idx<attr_idx)
-                DWARFFormValue::SkipValue(m_abbrevDecl->GetFormByIndex(idx++), debug_info_data, &offset, cu);
+                DWARFFormValue::SkipValue(abbrevDecl->GetFormByIndex(idx++), debug_info_data, &offset, cu);
 
             const dw_offset_t attr_offset = offset;
-            form_value.SetForm(m_abbrevDecl->GetFormByIndex(idx));
+            form_value.SetForm(abbrevDecl->GetFormByIndex(idx));
             if (form_value.ExtractValue(debug_info_data, &offset, cu))
             {
                 if (end_attr_offset_ptr)
@@ -1749,7 +1563,7 @@ DWARFDebugInfoEntry::AppendTypeName
             else
             {
                 bool result = true;
-                const DWARFAbbreviationDeclaration* abbrevDecl = die.GetAbbreviationDeclarationPtr();
+                const DWARFAbbreviationDeclaration* abbrevDecl = die.GetAbbreviationDeclarationPtr(cu);
 
                 switch (abbrevDecl->Tag())
                 {
@@ -1831,10 +1645,9 @@ DWARFDebugInfoEntry::BuildAddressRangeTable
     DWARFDebugAranges* debug_aranges
 ) const
 {
-    if (m_abbrevDecl)
+    if (m_tag)
     {
-        dw_tag_t tag = m_abbrevDecl->Tag();
-        if (tag == DW_TAG_subprogram)
+        if (m_tag == DW_TAG_subprogram)
         {
             dw_addr_t hi_pc = DW_INVALID_ADDRESS;
             dw_addr_t lo_pc = GetAttributeValueAsUnsigned(dwarf2Data, cu, DW_AT_low_pc, DW_INVALID_ADDRESS);
@@ -1873,10 +1686,9 @@ DWARFDebugInfoEntry::BuildFunctionAddressRangeTable
     DWARFDebugAranges* debug_aranges
 ) const
 {
-    if (m_abbrevDecl)
+    if (m_tag)
     {
-        dw_tag_t tag = m_abbrevDecl->Tag();
-        if (tag == DW_TAG_subprogram)
+        if (m_tag == DW_TAG_subprogram)
         {
             dw_addr_t hi_pc = DW_INVALID_ADDRESS;
             dw_addr_t lo_pc = GetAttributeValueAsUnsigned(dwarf2Data, cu, DW_AT_low_pc, DW_INVALID_ADDRESS);
@@ -1913,13 +1725,12 @@ DWARFDebugInfoEntry::LookupAddress
 )
 {
     bool found_address = false;
-    if (m_abbrevDecl)
+    if (m_tag)
     {
         bool check_children = false;
         bool match_addr_range = false;
-        dw_tag_t tag = m_abbrevDecl->Tag();
     //  printf("0x%8.8x: %30s: address = 0x%8.8x - ", m_offset, DW_TAG_value_to_name(tag), address);
-        switch (tag)
+        switch (m_tag)
         {
         case DW_TAG_array_type                 : break;
         case DW_TAG_class_type                 : check_children = true; break;
@@ -1993,7 +1804,7 @@ DWARFDebugInfoEntry::LookupAddress
                     {
                         found_address = true;
                     //  puts("***MATCH***");
-                        switch (tag)
+                        switch (m_tag)
                         {
                         case DW_TAG_compile_unit:       // File
                             check_children = ((function_die != NULL) || (block_die != NULL));
@@ -2024,7 +1835,7 @@ DWARFDebugInfoEntry::LookupAddress
                 {   // compile units may not have a valid high/low pc when there
                     // are address gaps in subroutines so we must always search
                     // if there is no valid high and low PC
-                    check_children = (tag == DW_TAG_compile_unit) && ((function_die != NULL) || (block_die != NULL));
+                    check_children = (m_tag == DW_TAG_compile_unit) && ((function_die != NULL) || (block_die != NULL));
                 }
             }
             else
@@ -2043,7 +1854,7 @@ DWARFDebugInfoEntry::LookupAddress
                     {
                         found_address = true;
                     //  puts("***MATCH***");
-                        switch (tag)
+                        switch (m_tag)
                         {
                         case DW_TAG_compile_unit:       // File
                             check_children = ((function_die != NULL) || (block_die != NULL));
@@ -2091,6 +1902,14 @@ DWARFDebugInfoEntry::LookupAddress
         }
     }
     return found_address;
+}
+
+const DWARFAbbreviationDeclaration* 
+DWARFDebugInfoEntry::GetAbbreviationDeclarationPtr (const DWARFCompileUnit *cu) const
+{
+    if (m_abbr_idx)
+        return cu->GetAbbreviations()->GetAbbreviationDeclaration (m_abbr_idx);
+    return NULL;
 }
 
 
