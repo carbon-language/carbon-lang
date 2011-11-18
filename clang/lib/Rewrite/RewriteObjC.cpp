@@ -167,7 +167,7 @@ namespace {
     virtual void Initialize(ASTContext &context);
 
     // Top Level Driver code.
-    virtual void HandleTopLevelDecl(DeclGroupRef D) {
+    virtual bool HandleTopLevelDecl(DeclGroupRef D) {
       for (DeclGroupRef::iterator I = D.begin(), E = D.end(); I != E; ++I) {
         if (isa<ObjCClassDecl>((*I))) {
           RewriteForwardClassDecl(D);
@@ -175,6 +175,7 @@ namespace {
         }
         HandleTopLevelSingleDecl(*I);
       }
+      return true;
     }
     void HandleTopLevelSingleDecl(Decl *D);
     void HandleDeclInMainFile(Decl *D);

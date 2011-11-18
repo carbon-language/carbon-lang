@@ -115,12 +115,9 @@ public:
   virtual void HandleTranslationUnit(ASTContext &Ctx) {
   }
 
-  virtual void HandleTopLevelDecl(DeclGroupRef DG) {
+  virtual bool HandleTopLevelDecl(DeclGroupRef DG) {
     IndexCtx.indexDeclGroupRef(DG);
-    // FIXME: Indicate to parser to abort.
-//    if (IndexCtx.shouldAbort()) {
-//      
-//    }
+    return !IndexCtx.shouldAbort();
   }
 
   /// \brief Handle the specified top-level declaration that occurred inside

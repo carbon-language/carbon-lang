@@ -878,9 +878,10 @@ public:
     }
   }
 
-  void HandleTopLevelDecl(DeclGroupRef D) {
+  bool HandleTopLevelDecl(DeclGroupRef D) {
     for (DeclGroupRef::iterator it = D.begin(), ie = D.end(); it != ie; ++it)
       handleTopLevelDecl(*it);
+    return true;
   }
 
   // We're not interested in "interesting" decls.
@@ -926,7 +927,7 @@ public:
     Hash = 0;
   }
 
-  virtual void HandleTopLevelDecl(DeclGroupRef D) {
+  virtual bool HandleTopLevelDecl(DeclGroupRef D) {
     for (DeclGroupRef::iterator it = D.begin(), ie = D.end(); it != ie; ++it) {
       Decl *D = *it;
       // FIXME: Currently ObjC method declarations are incorrectly being
@@ -938,6 +939,7 @@ public:
       AddTopLevelDeclarationToHash(D, Hash);
       TopLevelDecls.push_back(D);
     }
+    return true;
   }
 
   virtual void HandleTranslationUnit(ASTContext &Ctx) {

@@ -183,9 +183,10 @@ void MultiplexConsumer::Initialize(ASTContext &Context) {
     Consumers[i]->Initialize(Context);
 }
 
-void MultiplexConsumer::HandleTopLevelDecl(DeclGroupRef D) {
+bool MultiplexConsumer::HandleTopLevelDecl(DeclGroupRef D) {
   for (size_t i = 0, e = Consumers.size(); i != e; ++i)
     Consumers[i]->HandleTopLevelDecl(D);
+  return true;
 }
 
 void MultiplexConsumer::HandleInterestingDecl(DeclGroupRef D) {

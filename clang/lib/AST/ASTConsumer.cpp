@@ -15,7 +15,9 @@
 #include "clang/AST/DeclGroup.h"
 using namespace clang;
 
-void ASTConsumer::HandleTopLevelDecl(DeclGroupRef D) {}
+bool ASTConsumer::HandleTopLevelDecl(DeclGroupRef D) {
+  return true;
+}
 
 void ASTConsumer::HandleInterestingDecl(DeclGroupRef D) {
   HandleTopLevelDecl(D);

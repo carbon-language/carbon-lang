@@ -33,7 +33,7 @@ public:
 
   // ASTConsumer
   virtual void Initialize(ASTContext &Context);
-  virtual void HandleTopLevelDecl(DeclGroupRef D);
+  virtual bool HandleTopLevelDecl(DeclGroupRef D);
   virtual void HandleInterestingDecl(DeclGroupRef D);
   virtual void HandleTranslationUnit(ASTContext &Ctx);
   virtual void HandleTagDeclDefinition(TagDecl *D);

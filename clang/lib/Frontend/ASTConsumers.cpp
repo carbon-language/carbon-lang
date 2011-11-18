@@ -66,9 +66,10 @@ namespace {
       this->Context = &Context;
     }
 
-    virtual void HandleTopLevelDecl(DeclGroupRef D) {
+    virtual bool HandleTopLevelDecl(DeclGroupRef D) {
       for (DeclGroupRef::iterator I = D.begin(), E = D.end(); I != E; ++I)
         HandleTopLevelSingleDecl(*I);
+      return true;
     }
 
     void HandleTopLevelSingleDecl(Decl *D);

@@ -79,15 +79,24 @@ void clang::ParseAST(Sema &S, bool PrintStats) {
   if (ExternalASTSource *External = S.getASTContext().getExternalSource())
     External->StartTranslationUnit(Consumer);
   
+  bool Abort = false;
   Parser::DeclGroupPtrTy ADecl;
   
   while (!P.ParseTopLevelDecl(ADecl)) {  // Not end of file.
     // If we got a null return and something *was* parsed, ignore it.  This
     // is due to a top-level semicolon, an action override, or a parse error
     // skipping something.
-    if (ADecl)
-      Consumer->HandleTopLevelDecl(ADecl.get());
+    if (ADecl) {
+      if (!Consumer->HandleTopLevelDecl(ADecl.get())) {
+        Abort = true;
+        break;
+      }
+    }
   };
+
+  if (Abort)
+    return;
+
   // Check for any pending objective-c implementation decl.
   while ((ADecl = P.FinishPendingObjCActions()))
     Consumer->HandleTopLevelDecl(ADecl.get());
