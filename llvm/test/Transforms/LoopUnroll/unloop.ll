@@ -427,3 +427,44 @@ if.end2413:                                       ; preds = %defchar
 return:                                           ; preds = %sw.bb304
   ret void
 }
+
+; PR11335: the most deeply nested block should be removed from the outer loop.
+; CHECK: @removeSubloopBlocks2
+; CHECK: for.cond3:
+; CHECK-NOT: br
+; CHECK: ret void
+define void @removeSubloopBlocks2() nounwind {
+entry:
+  %tobool.i = icmp ne i32 undef, 0
+  br label %lbl_616
+
+lbl_616.loopexit:                                 ; preds = %for.cond
+  br label %lbl_616
+
+lbl_616:                                          ; preds = %lbl_616.loopexit, %entry
+  br label %for.cond
+
+for.cond:                                         ; preds = %for.cond3, %lbl_616
+  br i1 false, label %for.cond1.preheader, label %lbl_616.loopexit
+
+for.cond1.preheader:                              ; preds = %for.cond
+  br label %for.cond1
+
+for.cond1.loopexit:                               ; preds = %for.cond.i
+  br label %for.cond1
+
+for.cond1:                                        ; preds = %for.cond1.loopexit, %for.cond1.preheader
+  br i1 false, label %for.body2, label %for.cond3
+
+for.body2:                                        ; preds = %for.cond1
+  br label %for.cond.i
+
+for.cond.i:                                       ; preds = %for.cond.i, %for.body2
+  br i1 %tobool.i, label %for.cond.i, label %for.cond1.loopexit
+
+for.cond3:                                        ; preds = %for.cond1
+  br i1 false, label %for.cond, label %if.end
+
+if.end:                                           ; preds = %for.cond3
+  ret void
+}
