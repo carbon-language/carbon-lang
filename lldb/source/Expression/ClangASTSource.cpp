@@ -135,7 +135,7 @@ ClangASTSource::CompleteType (TagDecl *tag_decl)
     
     if (log)
     {
-        log->Printf("    [CompleteTagDecl] Completing a TagDecl named %s", tag_decl->getName().str().c_str());
+        log->Printf("    [CompleteTagDecl] on (ASTContext*)%p Completing a TagDecl named %s", m_ast_context, tag_decl->getName().str().c_str());
         log->Printf("      [CTD] Before:");
         ASTDumper dumper((Decl*)tag_decl);
         dumper.ToLog(log, "      [CTD] ");
@@ -158,7 +158,7 @@ ClangASTSource::CompleteType (clang::ObjCInterfaceDecl *interface_decl)
     
     if (log)
     {
-        log->Printf("    [CompleteObjCInterfaceDecl] Completing an ObjCInterfaceDecl named %s", interface_decl->getName().str().c_str());
+        log->Printf("    [CompleteObjCInterfaceDecl] on (ASTContext*)%p Completing an ObjCInterfaceDecl named %s", m_ast_context, interface_decl->getName().str().c_str());
         log->Printf("      [COID] Before:");
         ASTDumper dumper((Decl*)interface_decl);
         dumper.ToLog(log, "      [COID] ");    
@@ -192,19 +192,24 @@ ClangASTSource::FindExternalLexicalDecls (const DeclContext *decl_context,
     if (log)
     {
         if (const NamedDecl *context_named_decl = dyn_cast<NamedDecl>(context_decl))
-            log->Printf("FindExternalLexicalDecls[%u] in '%s' (a %s) with %s predicate",
+            log->Printf("FindExternalLexicalDecls[%u] on (ASTContext*)%p in '%s' (%sDecl*)%p with %s predicate",
                         current_id,
+                        m_ast_context,
                         context_named_decl->getNameAsString().c_str(),
-                        context_decl->getDeclKindName(), 
+                        context_decl->getDeclKindName(),
+                        context_decl,
                         (predicate ? "non-null" : "null"));
         else if(context_decl)
-            log->Printf("FindExternalLexicalDecls[%u] in a %s with %s predicate",
+            log->Printf("FindExternalLexicalDecls[%u] on (ASTContext*)%p in (%sDecl*)%p with %s predicate",
                         current_id,
+                        m_ast_context,
                         context_decl->getDeclKindName(), 
+                        context_decl,
                         (predicate ? "non-null" : "null"));
         else
-            log->Printf("FindExternalLexicalDecls[%u] in a NULL context with %s predicate",
+            log->Printf("FindExternalLexicalDecls[%u] on (ASTContext*)%p in a NULL context with %s predicate",
                         current_id,
+                        m_ast_context,
                         (predicate ? "non-null" : "null"));
     }
     
@@ -274,11 +279,11 @@ ClangASTSource::FindExternalVisibleDecls (NameSearchContext &context)
     if (log)
     {
         if (!context.m_decl_context)
-            log->Printf("ClangASTSource::FindExternalVisibleDecls[%u] for '%s' in a NULL DeclContext", current_id, name.GetCString());
+            log->Printf("ClangASTSource::FindExternalVisibleDecls[%u] on (ASTContext*)%p for '%s' in a NULL DeclContext", current_id,                         m_ast_context, name.GetCString());
         else if (const NamedDecl *context_named_decl = dyn_cast<NamedDecl>(context.m_decl_context))
-            log->Printf("ClangASTSource::FindExternalVisibleDecls[%u] for '%s' in '%s'", current_id, name.GetCString(), context_named_decl->getNameAsString().c_str());
+            log->Printf("ClangASTSource::FindExternalVisibleDecls[%u] on (ASTContext*)%p for '%s' in '%s'", current_id, m_ast_context, name.GetCString(), context_named_decl->getNameAsString().c_str());
         else
-            log->Printf("ClangASTSource::FindExternalVisibleDecls[%u] for '%s' in a '%s'", current_id, name.GetCString(), context.m_decl_context->getDeclKindName());
+            log->Printf("ClangASTSource::FindExternalVisibleDecls[%u] on (ASTContext*)%p for '%s' in a '%s'", current_id, m_ast_context, name.GetCString(), context.m_decl_context->getDeclKindName());
     }
     
     context.m_namespace_map.reset(new ClangASTImporter::NamespaceMap);
@@ -511,8 +516,9 @@ ClangASTSource::FindObjCMethodDecls (NameSearchContext &context)
     ConstString selector_name(ss.GetData());
     
     if (log)
-        log->Printf("ClangASTSource::FindObjCMethodDecls[%d] for selector [%s %s]",
-                    current_id, 
+        log->Printf("ClangASTSource::FindObjCMethodDecls[%d] on (ASTContext*)%p for selector [%s %s]",
+                    current_id,
+                    m_ast_context,
                     interface_decl->getNameAsString().c_str(), 
                     selector_name.AsCString());
 
@@ -603,8 +609,9 @@ ClangASTSource::FindObjCPropertyDecls (NameSearchContext &context)
     ObjCPropertyDecl *property_decl = orig_iface_decl->FindPropertyDeclaration(&orig_ast_ctx->Idents.get(property_name));
     
     if (log)
-        log->Printf("ClangASTSource::FindObjCPropertyDecls[%d] for property '%s.%s'",
+        log->Printf("ClangASTSource::FindObjCPropertyDecls[%d] on (ASTContext*)%p for property '%s.%s'",
                     current_id, 
+                    m_ast_context,
                     iface_decl->getNameAsString().c_str(), 
                     property_name_str.c_str());
     
@@ -643,13 +650,15 @@ ClangASTSource::CompleteNamespaceMap (ClangASTImporter::NamespaceMapSP &namespac
     if (log)
     {
         if (parent_map && parent_map->size())
-            log->Printf("CompleteNamespaceMap[%u] Searching for namespace %s in namespace %s",
+            log->Printf("CompleteNamespaceMap[%u] on (ASTContext*)%p Searching for namespace %s in namespace %s",
                         current_id,
+                        m_ast_context,
                         name.GetCString(),
                         parent_map->begin()->second.GetNamespaceDecl()->getDeclName().getAsString().c_str());
         else
-            log->Printf("CompleteNamespaceMap[%u] Searching for namespace %s",
+            log->Printf("CompleteNamespaceMap[%u] on (ASTContext*)%p Searching for namespace %s",
                         current_id,
+                        m_ast_context,
                         name.GetCString());
     }
     

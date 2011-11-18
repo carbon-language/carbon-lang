@@ -647,12 +647,25 @@ IRForTarget::CreateResultVariable (llvm::Function &llvm_function)
         clang::QualType element_qual_type = pointer_pointertype->getPointeeType();
         
         m_result_type = lldb_private::TypeFromParser(element_qual_type.getAsOpaquePtr(),
-                                                        &result_decl->getASTContext());
+                                                     &result_decl->getASTContext());
     }
     else
     {
         m_result_type = lldb_private::TypeFromParser(result_var->getType().getAsOpaquePtr(),
-                                                        &result_decl->getASTContext());
+                                                     &result_decl->getASTContext());
+    }
+    
+    if (m_result_type.GetClangTypeBitWidth() == 0)
+    {
+        lldb_private::StreamString type_desc_stream;
+        m_result_type.DumpTypeDescription(&type_desc_stream);
+        
+        if (log)
+            log->Printf("Result type has size 0");
+        
+        if (m_error_stream)
+            m_error_stream->Printf("Internal error [IRForTarget]: Result type '%s' has invalid size\n", 
+                                   type_desc_stream.GetData());
     }
     
     if (log)
@@ -660,13 +673,15 @@ IRForTarget::CreateResultVariable (llvm::Function &llvm_function)
         lldb_private::StreamString type_desc_stream;
         m_result_type.DumpTypeDescription(&type_desc_stream);
         
-        log->Printf("Result decl type: \"%s\"", type_desc_stream.GetString().c_str());
+        log->Printf("Result decl type: \"%s\"", type_desc_stream.GetData());
     }
     
     m_result_name = m_decl_map->GetPersistentResultName();
     
     if (log)
-        log->Printf("Creating a new result global: \"%s\"", m_result_name.GetCString());
+        log->Printf("Creating a new result global: \"%s\" with size 0x%x", 
+                    m_result_name.GetCString(),
+                    m_result_type.GetClangTypeBitWidth() / 8);
         
     // Construct a new result global and set up its metadata
     
@@ -755,11 +770,12 @@ IRForTarget::CreateResultVariable (llvm::Function &llvm_function)
     }
     
     if (!m_const_result)
-        m_decl_map->AddPersistentVariable(result_decl, 
-                                          m_result_name, 
-                                          m_result_type,
-                                          true,
-                                          m_result_is_pointer);
+        if (!m_decl_map->AddPersistentVariable(result_decl, 
+                                               m_result_name, 
+                                               m_result_type,
+                                               true,
+                                               m_result_is_pointer))
+            return false;
         
     result_global->eraseFromParent();
     

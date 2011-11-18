@@ -1,0 +1,78 @@
+Index: include/clang/AST/DeclBase.h
+===================================================================
+--- include/clang/AST/DeclBase.h	(revision 144573)
++++ include/clang/AST/DeclBase.h	(working copy)
+@@ -807,6 +807,12 @@
+   /// storage that contains additional declarations that are visible
+   /// in this context.
+   mutable unsigned ExternalVisibleStorage : 1;
++  
++  /// \brief True if this declaration context is currently having
++  /// declarations added from its external lexical storage.  This flag
++  /// is intended to prevent One Definition Rule checking as the
++  /// declarations are imported.
++  mutable unsigned IsBeingCompletedFromLexicalStorage : 1;
+ 
+   /// \brief Pointer to the data structure used to lookup declarations
+   /// within this context (or a DependentStoredDeclsMap if this is a
+@@ -834,8 +840,8 @@
+ 
+    DeclContext(Decl::Kind K)
+      : DeclKind(K), ExternalLexicalStorage(false),
+-       ExternalVisibleStorage(false), LookupPtr(0), FirstDecl(0),
+-       LastDecl(0) { }
++       ExternalVisibleStorage(false), IsBeingCompletedFromLexicalStorage(false),
++       LookupPtr(0), FirstDecl(0), LastDecl(0) { }
+ 
+ public:
+   ~DeclContext();
+@@ -1339,6 +1345,14 @@
+     ExternalVisibleStorage = ES;
+   }
+ 
++  bool isBeingCompletedFromLexicalStorage() const { 
++    return IsBeingCompletedFromLexicalStorage;
++  }
++
++  void setIsBeingCompletedFromLexicalStorage(bool IBC) const {
++    IsBeingCompletedFromLexicalStorage = IBC;     
++  }
++
+   /// \brief Determine whether the given declaration is stored in the list of
+   /// declarations lexically within this context.
+   bool isDeclInLexicalTraversal(const Decl *D) const {
+Index: lib/AST/Decl.cpp
+===================================================================
+--- lib/AST/Decl.cpp	(revision 144573)
++++ lib/AST/Decl.cpp	(working copy)
+@@ -2405,8 +2405,14 @@
+   ExternalASTSource::Deserializing TheFields(Source);
+ 
+   SmallVector<Decl*, 64> Decls;
+-  LoadedFieldsFromExternalStorage = true;  
+-  switch (Source->FindExternalLexicalDeclsBy<FieldDecl>(this, Decls)) {
++  LoadedFieldsFromExternalStorage = true;
++    
++  setIsBeingCompletedFromLexicalStorage(true);
++  ExternalLoadResult LoadResult = 
++    Source->FindExternalLexicalDeclsBy<FieldDecl>(this, Decls);
++  setIsBeingCompletedFromLexicalStorage(false);
++
++  switch (LoadResult) {
+   case ELR_Success:
+     break;
+     
+Index: lib/AST/ASTImporter.cpp
+===================================================================
+--- lib/AST/ASTImporter.cpp	(revision 144573)
++++ lib/AST/ASTImporter.cpp	(working copy)
+@@ -2290,7 +2290,8 @@
+       
+       if (RecordDecl *FoundRecord = dyn_cast<RecordDecl>(Found)) {
+         if (RecordDecl *FoundDef = FoundRecord->getDefinition()) {
+-          if (!D->isCompleteDefinition() || IsStructuralMatch(D, FoundDef)) {
++          if (FoundDef->isBeingCompletedFromLexicalStorage() ||
++              !D->isCompleteDefinition() || IsStructuralMatch(D, FoundDef)) {
+             // The record types structurally match, or the "from" translation
+             // unit only had a forward declaration anyway; call it the same
+             // function.

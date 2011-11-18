@@ -156,13 +156,20 @@ else
     do_command ("cd '$SRCROOT' && svn co --quiet --revision $llvm_revision http://llvm.org/svn/llvm-project/llvm/trunk llvm", "checking out llvm from repository", 1); 
     print "Checking out clang sources from revision $clang_revision...\n";
     do_command ("cd '$llvm_srcroot/tools' && svn co --quiet --revision $clang_revision http://llvm.org/svn/llvm-project/cfe/trunk clang", "checking out clang from repository", 1);
-    print "Applying any local patches to LLVM...";
+    print "Applying any local patches to LLVM/Clang...";
     
     my @llvm_patches = bsd_glob("$ENV{SRCROOT}/scripts/llvm.*.diff");
     
     foreach my $patch (@llvm_patches)
     {
         do_command ("cd '$llvm_srcroot' && patch -p0 < $patch");
+    }
+
+    my @clang_patches = bsd_glob("$ENV{SRCROOT}/scripts/clang.*.diff");
+    
+    foreach my $patch (@clang_patches)
+    {
+        do_command ("cd '$llvm_srcroot/tools/clang' && patch -p0 < $patch");
     }
     
     print "Removing the llvm/test and llvm/tools/clang/test directories...\n";

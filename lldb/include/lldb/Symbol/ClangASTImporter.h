@@ -129,6 +129,12 @@ private:
             decl = rhs.decl;
         }
         
+        void operator= (const DeclOrigin &rhs)
+        {
+            ctx = rhs.ctx;
+            decl = rhs.decl;
+        }
+        
         bool 
         Valid ()
         {

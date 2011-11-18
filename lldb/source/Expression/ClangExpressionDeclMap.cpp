@@ -196,9 +196,9 @@ ClangExpressionDeclMap::BuildIntegerVariable (const ConstString &name,
 
     ASTContext *context(target->GetScratchClangASTContext()->getASTContext());
     
-    TypeFromUser user_type(ClangASTContext::CopyType(context, 
-                                                     type.GetASTContext(),
-                                                     type.GetOpaqueQualType()),
+    TypeFromUser user_type(m_ast_importer->CopyType(context, 
+                                                    type.GetASTContext(),
+                                                    type.GetOpaqueQualType()),
                            context);
     
     if (!m_parser_vars->m_persistent_vars->CreatePersistentVariable (exe_ctx->GetBestExecutionContextScope (),
@@ -285,9 +285,9 @@ ClangExpressionDeclMap::BuildCastVariable (const ConstString &name,
     if (!var_sp)
         return ClangExpressionVariableSP();
     
-    TypeFromUser user_type(ClangASTContext::CopyType(context, 
-                                                     type.GetASTContext(),
-                                                     type.GetOpaqueQualType()),
+    TypeFromUser user_type(m_ast_importer->CopyType(context, 
+                                                    type.GetASTContext(),
+                                                    type.GetOpaqueQualType()),
                            context);
     
     TypeFromUser var_type = var_sp->GetTypeFromUser();
@@ -424,10 +424,17 @@ ClangExpressionDeclMap::AddPersistentVariable
 
     ASTContext *context(target->GetScratchClangASTContext()->getASTContext());
     
-    TypeFromUser user_type(ClangASTContext::CopyType(context, 
-                                                     parser_type.GetASTContext(),
-                                                     parser_type.GetOpaqueQualType()),
+    TypeFromUser user_type(m_ast_importer->CopyType(context, 
+                                                    parser_type.GetASTContext(),
+                                                    parser_type.GetOpaqueQualType()),
                            context);
+    
+    if (!user_type.GetOpaqueQualType())
+    {
+        if (log)
+            log->Printf("Persistent variable's type wasn't copied successfully");
+        return false;
+    }
         
     if (!m_parser_vars->m_target_info.IsValid())
         return false;
@@ -499,7 +506,7 @@ ClangExpressionDeclMap::AddValueToStruct
         return false;
     
     if (log)
-        log->Printf("Adding value for decl %p [%s - %s] to the structure",
+        log->Printf("Adding value for (NamedDecl*)%p [%s - %s] to the structure",
                     decl,
                     name.GetCString(),
                     var_sp->GetName().GetCString());
@@ -936,8 +943,15 @@ ClangExpressionDeclMap::ReadTarget (uint8_t *data,
                 return err.Success();
             }
             case Value::eValueTypeHostAddress:
-                memcpy (data, (const void *)value.GetScalar().ULongLong(), length);
+            {
+                void *host_addr = (void*)value.GetScalar().ULongLong();
+                
+                if (!host_addr)
+                    return false;
+                
+                memcpy (data, host_addr, length);
                 return true;
+            }
             case Value::eValueTypeScalar:
                 return false;
         }
@@ -1370,12 +1384,16 @@ ClangExpressionDeclMap::DoMaterialize
             log->PutCString("Allocating memory for materialized argument struct");
         
         lldb::addr_t mem = process->AllocateMemory(m_struct_vars->m_struct_alignment + m_struct_vars->m_struct_size, 
-                                                           lldb::ePermissionsReadable | lldb::ePermissionsWritable,
-                                                           err);
+                                                   lldb::ePermissionsReadable | lldb::ePermissionsWritable,
+                                                   err);
         
         if (mem == LLDB_INVALID_ADDRESS)
+        {
+            err.SetErrorStringWithFormat("Couldn't allocate 0x%llx bytes for materialized argument struct", 
+                                         (unsigned long long)(m_struct_vars->m_struct_alignment + m_struct_vars->m_struct_size));
             return false;
-        
+        }
+            
         m_material_vars->m_allocated_area = mem;
     }
     
@@ -1400,8 +1418,11 @@ ClangExpressionDeclMap::DoMaterialize
                 RegisterContext *reg_ctx = exe_ctx.GetRegisterContext();
                 
                 if (!reg_ctx)
+                {
+                    err.SetErrorString("Couldn't get register context");
                     return false;
-                
+                }
+                    
                 if (!DoMaterializeOneRegister (dematerialize, 
                                                exe_ctx, 
                                                *reg_ctx, 
@@ -1413,7 +1434,10 @@ ClangExpressionDeclMap::DoMaterialize
             else
             {
                 if (!member_sp->m_jit_vars.get())
+                {
+                    err.SetErrorString("Variable being materialized doesn't have necessary state");
                     return false;
+                }
                 
                 if (!DoMaterializeOneVariable (dematerialize, 
                                                exe_ctx, 
@@ -1485,7 +1509,10 @@ ClangExpressionDeclMap::DoMaterializeOnePersistentVariable
     
     uint8_t *pvar_data = var_sp->GetValueBytes();
     if (pvar_data == NULL)
+    {
+        err.SetErrorString("Persistent variable being materialized contains no data");
         return false;
+    }
     
     Error error;
     Process *process = exe_ctx.GetProcessPtr();
@@ -1689,7 +1716,10 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
     StackFrame *frame = exe_ctx.GetFramePtr();
 
     if (!frame || !process || !target || !m_parser_vars.get() || !expr_var->m_parser_vars.get())
+    {
+        err.SetErrorString("Necessary state for variable materialization isn't present");
         return false;
+    }
     
     // Vital information about the value
     
@@ -2200,7 +2230,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context)
         ClangASTImporter::NamespaceMapSP namespace_map = m_ast_importer->GetNamespaceMap(namespace_context);
         
         if (log && log->GetVerbose())
-            log->Printf("  CEDM::FEVD[%u] Inspecting namespace map %p (%d entries)", 
+            log->Printf("  CEDM::FEVD[%u] Inspecting (NamespaceMap*)%p (%d entries)", 
                         current_id, 
                         namespace_map.get(), 
                         (int)namespace_map->size());
@@ -2873,7 +2903,7 @@ ClangExpressionDeclMap::ResolveUnknownTypes()
             QualType var_type = var_decl->getType();
             TypeFromParser parser_type(var_type.getAsOpaquePtr(), &var_decl->getASTContext());
             
-            lldb::clang_type_t copied_type = ClangASTContext::CopyType(scratch_ast_context, &var_decl->getASTContext(), var_type.getAsOpaquePtr());
+            lldb::clang_type_t copied_type = m_ast_importer->CopyType(scratch_ast_context, &var_decl->getASTContext(), var_type.getAsOpaquePtr());
             
             TypeFromUser user_type(copied_type, scratch_ast_context);
                         

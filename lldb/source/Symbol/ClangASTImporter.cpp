@@ -193,7 +193,26 @@ clang::Decl
 *ClangASTImporter::Minion::Imported (clang::Decl *from, clang::Decl *to)
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
-    
+        
+    if (log)
+    {
+        if (NamedDecl *from_named_decl = dyn_cast<clang::NamedDecl>(from))
+        {
+            log->Printf("    [ClangASTImporter] Imported (%sDecl*)%p, named %s (from (Decl*)%p)",
+                        from->getDeclKindName(),
+                        to,
+                        from_named_decl->getName().str().c_str(),
+                        from);
+        }
+        else
+        {
+            log->Printf("    [ClangASTImporter] Imported (%sDecl*)%p (from (Decl*)%p)",
+                        from->getDeclKindName(),
+                        to,
+                        from);
+        }
+    }
+
     ASTContextMetadataSP to_context_md = m_master.GetContextMetadata(&to->getASTContext());
     ASTContextMetadataSP from_context_md = m_master.MaybeGetContextMetadata(m_source_ctx);
     
@@ -204,7 +223,22 @@ clang::Decl
         OriginMap::iterator origin_iter = origins.find(from);
         
         if (origin_iter != origins.end())
+        {
             to_context_md->m_origins[to] = origin_iter->second;
+            
+            if (log)
+                log->Printf("    [ClangASTImporter] Propagated origin (Decl*)%p/(ASTContext*)%p from (ASTContext*)%p to (ASTContext*)%p",
+                            origin_iter->second.decl,
+                            origin_iter->second.ctx,
+                            &from->getASTContext(),
+                            &to->getASTContext());
+        }
+        else
+        {
+            if (log)
+                log->Printf("    [ClangASTImporter] Decl has no origin information in (ASTContext*)%p",
+                            &from->getASTContext());
+        }
         
         if (clang::NamespaceDecl *to_namespace = dyn_cast<clang::NamespaceDecl>(to))
         {
@@ -221,6 +255,12 @@ clang::Decl
     else
     {
         to_context_md->m_origins[to] = DeclOrigin (m_source_ctx, from);
+        
+        if (log)
+            log->Printf("    [ClangASTImporter] Sourced origin (Decl*)%p/(ASTContext*)%p into (ASTContext*)%p",
+                        from,
+                        m_source_ctx,
+                        &to->getASTContext());
     }
         
     if (TagDecl *from_tag_decl = dyn_cast<TagDecl>(from))
@@ -230,14 +270,13 @@ clang::Decl
         to_tag_decl->setHasExternalLexicalStorage();
                         
         if (log)
-            log->Printf("    [ClangASTImporter] Imported %p, a %s named %s%s%s [%s->%s]",
-                        to,
-                        ((clang::Decl*)from_tag_decl)->getDeclKindName(),
-                        from_tag_decl->getName().str().c_str(),
+            log->Printf("    [ClangASTImporter] To is a TagDecl - attributes %s%s [%s->%s]",
                         (to_tag_decl->hasExternalLexicalStorage() ? " Lexical" : ""),
                         (to_tag_decl->hasExternalVisibleStorage() ? " Visible" : ""),
                         (from_tag_decl->isCompleteDefinition() ? "complete" : "incomplete"),
                         (to_tag_decl->isCompleteDefinition() ? "complete" : "incomplete"));
+        
+        to_tag_decl = NULL;
     }
     
     if (isa<NamespaceDecl>(from))
@@ -249,7 +288,7 @@ clang::Decl
         to_namespace_decl->setHasExternalVisibleStorage();
     }
     
-    if (ObjCInterfaceDecl *from_interface_decl = dyn_cast<ObjCInterfaceDecl>(from))
+    if (isa<ObjCInterfaceDecl>(from))
     {
         ObjCInterfaceDecl *to_interface_decl = dyn_cast<ObjCInterfaceDecl>(to);
         
@@ -262,10 +301,7 @@ clang::Decl
         to_interface_decl->setExternallyCompleted();
         
         if (log)
-            log->Printf("    [ClangASTImporter] Imported %p, a %s named %s%s%s%s",
-                        to,
-                        ((clang::Decl*)from_interface_decl)->getDeclKindName(),
-                        from_interface_decl->getName().str().c_str(),
+            log->Printf("    [ClangASTImporter] To is an ObjCInterfaceDecl - attributes %s%s%s",
                         (to_interface_decl->hasExternalLexicalStorage() ? " Lexical" : ""),
                         (to_interface_decl->hasExternalVisibleStorage() ? " Visible" : ""),
                         (to_interface_decl->isForwardDecl() ? " Forward" : ""));
