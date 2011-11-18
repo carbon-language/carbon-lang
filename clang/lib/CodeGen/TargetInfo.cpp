@@ -292,6 +292,8 @@ static bool canExpandIndirectArgument(QualType Ty, ASTContext &Context) {
   if (!RD->isStruct() || isa<CXXRecordDecl>(RD))
     return false;
 
+  uint64_t Size = 0;
+
   for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
          i != e; ++i) {
     const FieldDecl *FD = *i;
@@ -304,7 +306,13 @@ static bool canExpandIndirectArgument(QualType Ty, ASTContext &Context) {
     // counts as "basic" is more complicated than what we were doing previously.
     if (FD->isBitField())
       return false;
+
+    Size += Context.getTypeSize(FD->getType());
   }
+
+  // Make sure there are not any holes in the struct.
+  if (Size != Context.getTypeSize(Ty))
+    return false;
 
   return true;
 }

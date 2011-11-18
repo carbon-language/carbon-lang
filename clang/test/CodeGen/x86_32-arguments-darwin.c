@@ -288,3 +288,7 @@ void f58(union u58 x) {}
 // CHECK: define i64 @f59()
 struct s59 { float x __attribute((aligned(8))); };
 struct s59 f59() { while (1) {} }
+
+// CHECK: define void @f60(%struct.s60* byval align 4, i32 %y)
+struct s60 { int x __attribute((aligned(8))); };
+void f60(struct s60 x, int y) {}
