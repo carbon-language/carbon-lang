@@ -7189,19 +7189,6 @@ def VBROADCASTI128 : avx_broadcast<0x5A, "vbroadcasti128", VR256, i128mem,
 def : Pat<(int_x86_avx_vbroadcastf128_ps_256 addr:$src),
           (VBROADCASTF128 addr:$src)>;
 
-def : Pat<(v8i32 (X86VBroadcast (loadi32 addr:$src))),
-          (VBROADCASTSSYrm addr:$src)>;
-def : Pat<(v4i64 (X86VBroadcast (loadi64 addr:$src))),
-          (VBROADCASTSDrm addr:$src)>;
-def : Pat<(v8f32 (X86VBroadcast (loadf32 addr:$src))),
-          (VBROADCASTSSYrm addr:$src)>;
-def : Pat<(v4f64 (X86VBroadcast (loadf64 addr:$src))),
-          (VBROADCASTSDrm addr:$src)>;
-
-def : Pat<(v4f32 (X86VBroadcast (loadf32 addr:$src))),
-          (VBROADCASTSSrm addr:$src)>;
-def : Pat<(v4i32 (X86VBroadcast (loadi32 addr:$src))),
-          (VBROADCASTSSrm addr:$src)>;
 
 //===----------------------------------------------------------------------===//
 // VINSERTF128 - Insert packed floating-point values
@@ -7556,6 +7543,40 @@ defm VPBROADCASTD  : avx2_broadcast<0x58, "vpbroadcastd", i32mem, loadi32,
 defm VPBROADCASTQ  : avx2_broadcast<0x59, "vpbroadcastq", i64mem, loadi64,
                                     int_x86_avx2_pbroadcastq_128,
                                     int_x86_avx2_pbroadcastq_256>;
+
+let Predicates = [HasAVX2] in {
+  def : Pat<(v16i8 (X86VBroadcast (loadi8 addr:$src))),
+          (VPBROADCASTBrm addr:$src)>;
+  def : Pat<(v32i8 (X86VBroadcast (loadi8 addr:$src))),
+          (VPBROADCASTBYrm addr:$src)>;
+  def : Pat<(v8i16 (X86VBroadcast (loadi16 addr:$src))),
+          (VPBROADCASTWrm addr:$src)>;
+  def : Pat<(v16i16 (X86VBroadcast (loadi16 addr:$src))),
+          (VPBROADCASTWYrm addr:$src)>;
+  def : Pat<(v4i32 (X86VBroadcast (loadi32 addr:$src))),
+          (VPBROADCASTDrm addr:$src)>;
+  def : Pat<(v8i32 (X86VBroadcast (loadi32 addr:$src))),
+          (VPBROADCASTDYrm addr:$src)>;
+  def : Pat<(v2i64 (X86VBroadcast (loadi64 addr:$src))),
+          (VPBROADCASTQrm addr:$src)>;
+  def : Pat<(v4i64 (X86VBroadcast (loadi64 addr:$src))),
+          (VPBROADCASTQYrm addr:$src)>;
+}
+
+// AVX1 broadcast patterns
+def : Pat<(v8i32 (X86VBroadcast (loadi32 addr:$src))),
+          (VBROADCASTSSYrm addr:$src)>;
+def : Pat<(v4i64 (X86VBroadcast (loadi64 addr:$src))),
+          (VBROADCASTSDrm addr:$src)>;
+def : Pat<(v8f32 (X86VBroadcast (loadf32 addr:$src))),
+          (VBROADCASTSSYrm addr:$src)>;
+def : Pat<(v4f64 (X86VBroadcast (loadf64 addr:$src))),
+          (VBROADCASTSDrm addr:$src)>;
+
+def : Pat<(v4f32 (X86VBroadcast (loadf32 addr:$src))),
+          (VBROADCASTSSrm addr:$src)>;
+def : Pat<(v4i32 (X86VBroadcast (loadi32 addr:$src))),
+          (VBROADCASTSSrm addr:$src)>;
 
 //===----------------------------------------------------------------------===//
 // VPERM - Permute instructions
