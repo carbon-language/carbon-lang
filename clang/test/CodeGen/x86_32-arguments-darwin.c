@@ -173,7 +173,7 @@ struct s42 { enum e40 f0; } f42(void) {  }
 // CHECK: define i64 @f43()
 struct s43 { enum e40 f0; int f1; } f43(void) {  }
 
-// CHECK: define i32 @f44()
+// CHECK: define void ()* @f44()
 struct s44 { vvbp f0; } f44(void) {  }
 
 // CHECK: define i64 @f45()
@@ -281,6 +281,10 @@ void f56(char a0, struct s56_0 a1,
 struct s57 { _Complex int x; };
 void f57(struct s57 x) {} void f57a(void) { f57((struct s57){1}); }
 
+// CHECK: define void @f58()
 union u58 {};
 void f58(union u58 x) {}
-// CHECK: define void @f58()
+
+// CHECK: define i64 @f59()
+struct s59 { float x __attribute((aligned(8))); };
+struct s59 f59() { while (1) {} }

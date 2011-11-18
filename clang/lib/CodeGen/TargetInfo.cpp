@@ -252,6 +252,11 @@ static const Type *isSingleElementStruct(QualType T, ASTContext &Context) {
     }
   }
 
+  // We don't consider a struct a single-element struct if it has
+  // padding beyond the element type.
+  if (Found && Context.getTypeSize(Found) != Context.getTypeSize(T))
+    return 0;
+
   return Found;
 }
 
@@ -561,51 +566,21 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy) const {
     if (!IsSmallStructInRegABI && !RetTy->isAnyComplexType())
       return ABIArgInfo::getIndirect(0);
 
-    // Classify "single element" structs as their element type.
-    if (const Type *SeltTy = isSingleElementStruct(RetTy, getContext())) {
-      if (const BuiltinType *BT = SeltTy->getAs<BuiltinType>()) {
-        if (BT->isIntegerType()) {
-          // We need to use the size of the structure, padding
-          // bit-fields can adjust that to be larger than the single
-          // element type.
-          uint64_t Size = getContext().getTypeSize(RetTy);
-          return ABIArgInfo::getDirect(
-            llvm::IntegerType::get(getVMContext(), (unsigned)Size));
-        }
-
-        if (BT->getKind() == BuiltinType::Float) {
-          assert(getContext().getTypeSize(RetTy) ==
-                 getContext().getTypeSize(SeltTy) &&
-                 "Unexpect single element structure size!");
-          return ABIArgInfo::getDirect(llvm::Type::getFloatTy(getVMContext()));
-        }
-
-        if (BT->getKind() == BuiltinType::Double) {
-          assert(getContext().getTypeSize(RetTy) ==
-                 getContext().getTypeSize(SeltTy) &&
-                 "Unexpect single element structure size!");
-          return ABIArgInfo::getDirect(llvm::Type::getDoubleTy(getVMContext()));
-        }
-      } else if (SeltTy->isPointerType()) {
-        // FIXME: It would be really nice if this could come out as the proper
-        // pointer type.
-        llvm::Type *PtrTy = llvm::Type::getInt8PtrTy(getVMContext());
-        return ABIArgInfo::getDirect(PtrTy);
-      } else if (SeltTy->isVectorType()) {
-        // 64- and 128-bit vectors are never returned in a
-        // register when inside a structure.
-        uint64_t Size = getContext().getTypeSize(RetTy);
-        if (Size == 64 || Size == 128)
-          return ABIArgInfo::getIndirect(0);
-
-        return classifyReturnType(QualType(SeltTy, 0));
-      }
-    }
-
     // Small structures which are register sized are generally returned
     // in a register.
     if (X86_32ABIInfo::shouldReturnTypeInRegister(RetTy, getContext())) {
       uint64_t Size = getContext().getTypeSize(RetTy);
+
+      // As a special-case, if the struct is a "single-element" struct, and
+      // the field is of type "float" or "double", return it in a
+      // floating-point register.  We apply a similar transformation for
+      // pointer types to improve the quality of the generated IR.
+      if (const Type *SeltTy = isSingleElementStruct(RetTy, getContext()))
+        if (SeltTy->isRealFloatingType() || SeltTy->hasPointerRepresentation())
+          return ABIArgInfo::getDirect(CGT.ConvertType(QualType(SeltTy, 0)));
+
+      // FIXME: We should be able to narrow this integer in cases with dead
+      // padding.
       return ABIArgInfo::getDirect(llvm::IntegerType::get(getVMContext(),Size));
     }
 
