@@ -71,7 +71,8 @@ class ConditionalBreakTestCase(TestBase):
         # The 10 in range(10) is just an arbitrary number, which means we would
         # like to try for at most 10 times.
         for j in range(10):
-            print "j is: ", j
+            if self.TraceOn():
+                print "j is: ", j
             thread = process.GetThreadAtIndex(0)
             
             if thread.GetNumFrames() >= 2:
@@ -103,13 +104,18 @@ class ConditionalBreakTestCase(TestBase):
         # executable, sets the breakpoint on c(), and adds the callback for the
         # breakpoint such that lldb only stops when the caller of c() is a().
         # the "my" package that defines the date() function.
-        print "About to source .lldb"
+        if self.TraceOn():
+            print "About to source .lldb"
 
+        if not self.TraceOn():
+            self.HideStdout()
         self.runCmd("command source .lldb")
 
-        print "About to run."
+        if self.TraceOn():
+            print "About to run."
         self.runCmd("run", RUN_SUCCEEDED)
-        print "Done running"
+        if self.TraceOn():
+            print "Done running"
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
