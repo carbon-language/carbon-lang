@@ -105,11 +105,14 @@ void IndexingContext::handleDiagnostic(CXDiagnostic CXDiag) {
 void IndexingContext::handleDecl(const NamedDecl *D,
                                  SourceLocation Loc, CXCursor Cursor,
                                  DeclInfo &DInfo) {
-  if (!CB.indexDeclaration)
+  if (!CB.indexDeclaration || !D)
     return;
 
   StrAdapter SA(*this);
   getEntityInfo(D, DInfo.CXEntInfo, SA);
+  if (!DInfo.CXEntInfo.USR || Loc.isInvalid())
+    return;
+
   DInfo.entityInfo = &DInfo.CXEntInfo;
   DInfo.cursor = Cursor;
   DInfo.loc = getIndexLoc(Loc);
@@ -307,6 +310,14 @@ void IndexingContext::handleReference(const NamedDecl *D, SourceLocation Loc,
 
   D = getEntityDecl(D);
 
+  StrAdapter SA(*this);
+  CXIdxEntityInfo RefEntity, ParentEntity;
+  getEntityInfo(D, RefEntity, SA);
+  if (!RefEntity.USR)
+    return;
+
+  getEntityInfo(Parent, ParentEntity, SA);
+
   if (onlyOneRefPerFile()) {
     SourceManager &SM = Ctx->getSourceManager();
     SourceLocation FileLoc = SM.getFileLoc(Loc);
@@ -326,14 +337,9 @@ void IndexingContext::handleReference(const NamedDecl *D, SourceLocation Loc,
       return; // already in map.
   }
 
-  StrAdapter SA(*this);
   CXCursor Cursor = E ? MakeCXCursor(const_cast<Expr*>(E),
                                      const_cast<Decl*>(cast<Decl>(DC)), CXTU)
                       : getRefCursor(D, Loc);
-
-  CXIdxEntityInfo RefEntity, ParentEntity;
-  getEntityInfo(D, RefEntity, SA);
-  getEntityInfo(Parent, ParentEntity, SA);
   CXIdxEntityRefInfo Info = { Cursor,
                               getIndexLoc(Loc),
                               &RefEntity,
@@ -543,7 +549,7 @@ void IndexingContext::getEntityInfo(const NamedDecl *D,
     unsigned Begin = SA.getCurSize();
     bool Ignore = getDeclCursorUSR(D, SA.getBuffer());
     if (Ignore) {
-      EntityInfo.USR = "";
+      EntityInfo.USR = 0;
     } else {
       EntityInfo.USR = SA.getCStr(Begin);
     }
