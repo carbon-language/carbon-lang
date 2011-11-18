@@ -317,7 +317,7 @@ int f63(int i, ...) {
   return s.y;
 }
 
-// CHECK: define i32 @f64(%struct.s64* nocapture byval align 4 %x)
+// CHECK: define void @f64(%struct.s64* byval align 4 %x)
 struct s64 { signed char a[0]; signed char b[]; };
 void f64(struct s64 x) {}
 

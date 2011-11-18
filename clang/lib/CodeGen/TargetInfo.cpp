@@ -688,7 +688,7 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty) const {
     }
 
     // Ignore empty structs/unions.
-    if (isEmptyRecord(Context, Ty, true))
+    if (isEmptyRecord(getContext(), Ty, true))
       return ABIArgInfo::getIgnore();
 
     // Expand small (<= 128-bit) record types when we know that the stack layout
