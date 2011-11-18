@@ -2108,9 +2108,6 @@ bool ARMFastISel::SelectCall(const Instruction *I,
     if (IntrMemName && e-i <= 2)
       break;
 
-    unsigned Arg = getRegForValue(*i);
-    if (Arg == 0)
-      return false;
     ISD::ArgFlagsTy Flags;
     unsigned AttrInd = i - CS.arg_begin() + 1;
     if (CS.paramHasAttr(AttrInd, Attribute::SExt))
@@ -2130,6 +2127,11 @@ bool ARMFastISel::SelectCall(const Instruction *I,
     if (!isTypeLegal(ArgTy, ArgVT) && ArgVT != MVT::i16 && ArgVT != MVT::i8 &&
         ArgVT != MVT::i1)
       return false;
+
+    unsigned Arg = getRegForValue(*i);
+    if (Arg == 0)
+      return false;
+
     unsigned OriginalAlignment = TD.getABITypeAlignment(ArgTy);
     Flags.setOrigAlign(OriginalAlignment);
 
