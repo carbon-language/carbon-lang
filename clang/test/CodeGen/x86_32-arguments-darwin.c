@@ -280,3 +280,7 @@ void f56(char a0, struct s56_0 a1,
 // CHECK: call void @f57(
 struct s57 { _Complex int x; };
 void f57(struct s57 x) {} void f57a(void) { f57((struct s57){1}); }
+
+union u58 {};
+void f58(union u58 x) {}
+// CHECK: define void @f58()
