@@ -1983,19 +1983,17 @@ static llvm::Value *EmitVAArgFromMemory(llvm::Value *VAListAddr,
 
   // AMD64-ABI 3.5.7p5: Step 7. Align l->overflow_arg_area upwards to a 16
   // byte boundary if alignment needed by type exceeds 8 byte boundary.
+  // It isn't stated explicitly in the standard, but in practice we use
+  // alignment greater than 16 where necessary.
   uint64_t Align = CGF.getContext().getTypeAlign(Ty) / 8;
   if (Align > 8) {
-    // Note that we follow the ABI & gcc here, even though the type
-    // could in theory have an alignment greater than 16. This case
-    // shouldn't ever matter in practice.
-
-    // overflow_arg_area = (overflow_arg_area + 15) & ~15;
+    // overflow_arg_area = (overflow_arg_area + align - 1) & -align;
     llvm::Value *Offset =
-      llvm::ConstantInt::get(CGF.Int32Ty, 15);
+      llvm::ConstantInt::get(CGF.Int64Ty, Align - 1);
     overflow_arg_area = CGF.Builder.CreateGEP(overflow_arg_area, Offset);
     llvm::Value *AsInt = CGF.Builder.CreatePtrToInt(overflow_arg_area,
                                                     CGF.Int64Ty);
-    llvm::Value *Mask = llvm::ConstantInt::get(CGF.Int64Ty, ~15LL);
+    llvm::Value *Mask = llvm::ConstantInt::get(CGF.Int64Ty, -(uint64_t)Align);
     overflow_arg_area =
       CGF.Builder.CreateIntToPtr(CGF.Builder.CreateAnd(AsInt, Mask),
                                  overflow_arg_area->getType(),

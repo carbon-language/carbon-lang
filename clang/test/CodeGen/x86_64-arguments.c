@@ -304,3 +304,17 @@ extern void func42(SA s);
 void func43(SA s) {
   func42(s);
 }
+
+// CHECK: define i32 @f44
+// CHECK: ptrtoint
+// CHECK-NEXT: and {{.*}}, -32
+// CHECK-NEXT: inttoptr
+typedef int T44 __attribute((vector_size(32)));
+struct s44 { T44 x; int y; };
+int f44(int i, ...) {
+  __builtin_va_list ap;
+  __builtin_va_start(ap, i);
+  struct s44 s = __builtin_va_arg(ap, struct s44);
+  __builtin_va_end(ap);
+  return s.y;
+}
