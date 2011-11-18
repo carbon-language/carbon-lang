@@ -179,6 +179,7 @@ struct AddressSanitizer : public ModulePass {
 
   void PoisonStack(const ArrayRef<AllocaInst*> &AllocaVec, IRBuilder<> IRB,
                    Value *ShadowBase, bool DoPoison);
+  bool LooksLikeCodeInBug11395(Instruction *I);
 
   Module      *CurrentModule;
   LLVMContext *C;
@@ -784,6 +785,17 @@ void AddressSanitizer::PoisonStack(const ArrayRef<AllocaInst*> &AllocaVec,
   }
 }
 
+// Workaround for bug 11395: we don't want to instrument stack in functions
+// with large assembly blobs (32-bit only), otherwise reg alloc may crash.
+bool AddressSanitizer::LooksLikeCodeInBug11395(Instruction *I) {
+  if (LongSize != 32) return false;
+  CallInst *CI = dyn_cast<CallInst>(I);
+  if (!CI || !CI->isInlineAsm()) return false;
+  if (CI->getNumArgOperands() <= 5) return false;
+  // We have inline assembly with quite a few arguments.
+  return true;
+}
+
 // Find all static Alloca instructions and put
 // poisoned red zones around all of them.
 // Then unpoison everything back before the function returns.
@@ -810,6 +822,7 @@ bool AddressSanitizer::poisonStackInFunction(Module &M, Function &F) {
     BasicBlock &BB = *FI;
     for (BasicBlock::iterator BI = BB.begin(), BE = BB.end();
          BI != BE; ++BI) {
+      if (LooksLikeCodeInBug11395(BI)) return false;
       if (isa<ReturnInst>(BI)) {
           RetVec.push_back(BI);
           continue;
