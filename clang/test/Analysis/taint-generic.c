@@ -26,3 +26,8 @@ void bufferScanfArithmetic2(int x) {
   int m = (n + 3) * x;
   Buffer[m] = 1; // expected-warning {{Out of bound memory access }}
 }
+
+void scanfArg() {
+  int t;
+  scanf("%d", t); // expected-warning {{Pointer argument is expected}}
+}

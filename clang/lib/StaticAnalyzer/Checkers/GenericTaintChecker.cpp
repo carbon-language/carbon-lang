@@ -26,7 +26,14 @@ using namespace ento;
 namespace {
 class GenericTaintChecker : public Checker< check::PostStmt<CallExpr> > {
 
-  mutable llvm::OwningPtr<BuiltinBug> BT;
+  mutable llvm::OwningPtr<BugType> BT;
+  void initBugType() const;
+
+  /// Given a pointer argument, get the symbol of the value it contains
+  /// (points to).
+  SymbolRef getPointedToSymbol(CheckerContext &C,
+                               const Expr* Arg,
+                               bool IssueWarning = true) const;
 
   /// Functions defining the attacke surface.
   typedef void (GenericTaintChecker::*FnCheck)(const CallExpr *,
@@ -37,6 +44,11 @@ class GenericTaintChecker : public Checker< check::PostStmt<CallExpr> > {
 public:
   void checkPostStmt(const CallExpr *CE, CheckerContext &C) const;
 };
+}
+
+inline void GenericTaintChecker::initBugType() const {
+  if (!BT)
+    BT.reset(new BugType("Tainted data checking", "General"));
 }
 
 void GenericTaintChecker::checkPostStmt(const CallExpr *CE,
@@ -59,10 +71,29 @@ void GenericTaintChecker::checkPostStmt(const CallExpr *CE,
     (this->*evalFunction)(CE, C);
 
 }
-static SymbolRef getPointedToSymbol(const ProgramState *State,
-                                    const Expr* Arg) {
+
+SymbolRef GenericTaintChecker::getPointedToSymbol(CheckerContext &C,
+                                                  const Expr* Arg,
+                                                  bool IssueWarning) const {
+  const ProgramState *State = C.getState();
   SVal AddrVal = State->getSVal(Arg->IgnoreParenCasts());
   Loc *AddrLoc = dyn_cast<Loc>(&AddrVal);
+
+  if (!AddrLoc && !IssueWarning)
+    return 0;
+
+  // If the Expr is not a location, issue a warning.
+  if (!AddrLoc) {
+    assert(IssueWarning);
+    if (ExplodedNode *N = C.generateSink(State)) {
+      initBugType();
+      BugReport *report = new BugReport(*BT, "Pointer argument is expected.",N);
+      report->addRange(Arg->getSourceRange());
+      C.EmitReport(report);
+    }
+    return 0;
+  }
+
   SVal Val = State->getSVal(*AddrLoc);
   return Val.getAsSymbol();
 }
@@ -78,7 +109,7 @@ void GenericTaintChecker::processScanf(const CallExpr *CE,
     // The arguments are pointer arguments. The data they are pointing at is
     // tainted after the call.
     const Expr* Arg = CE->getArg(i);
-    SymbolRef Sym = getPointedToSymbol(State, Arg);
+    SymbolRef Sym = getPointedToSymbol(C, Arg);
     if (Sym)
       State = State->addTaint(Sym);
   }

@@ -177,7 +177,6 @@ SVal SValBuilder::generateUnknownVal(const ProgramState *State,
       symLHS = LHS.getAsSymExpr();
       return makeNonLoc(symLHS, Op, rInt->getValue(), ResultTy);
     }
-    // TODO: Handle the case when lhs is ConcreteInt.
 
     symLHS = LHS.getAsSymExpr();
     symRHS = RHS.getAsSymExpr();
