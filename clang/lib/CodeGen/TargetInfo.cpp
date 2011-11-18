@@ -117,10 +117,14 @@ static bool isEmptyField(ASTContext &Context, const FieldDecl *FD,
 
   QualType FT = FD->getType();
 
-    // Constant arrays of empty records count as empty, strip them off.
+  // Constant arrays of empty records count as empty, strip them off.
+  // Constant arrays of zero length always count as empty.
   if (AllowArrays)
-    while (const ConstantArrayType *AT = Context.getAsConstantArrayType(FT))
+    while (const ConstantArrayType *AT = Context.getAsConstantArrayType(FT)) {
+      if (AT->getSize() == 0)
+        return true;
       FT = AT->getElementType();
+    }
 
   const RecordType *RT = FT->getAs<RecordType>();
   if (!RT)
@@ -684,7 +688,7 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty) const {
     }
 
     // Ignore empty structs/unions.
-    if (Ty->isRecordType() && getContext().getTypeSize(Ty) == 0)
+    if (isEmptyRecord(Context, Ty, true))
       return ABIArgInfo::getIgnore();
 
     // Expand small (<= 128-bit) record types when we know that the stack layout

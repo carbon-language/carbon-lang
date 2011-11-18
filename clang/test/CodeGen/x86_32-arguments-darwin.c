@@ -316,3 +316,11 @@ int f63(int i, ...) {
   __builtin_va_end(ap);
   return s.y;
 }
+
+// CHECK: define i32 @f64(%struct.s64* nocapture byval align 4 %x)
+struct s64 { signed char a[0]; signed char b[]; };
+void f64(struct s64 x) {}
+
+// CHECK: define float @f65()
+struct s65 { signed char a[0]; float b; };
+struct s65 f65() { return (struct s65){{},2}; }
