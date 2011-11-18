@@ -161,6 +161,9 @@ svn_info = ''
 # Default verbosity is 0.
 verbose = 0
 
+# Set to True only if verbose is 0 and LLDB trace mode is off.
+progress_bar = False
+
 # By default, search from the script directory.
 testdirs = [ sys.path[0] ]
 
@@ -344,6 +347,7 @@ def parseOptionsAndInitTestdirs():
     global filters
     global fs4all
     global ignore
+    global progress_bar
     global runHooks
     global skip_build_and_cleanup
     global skip_long_running_test
@@ -529,6 +533,10 @@ def parseOptionsAndInitTestdirs():
     # Do not specify both '-a' and '+a' at the same time.
     if dont_do_python_api_test and just_do_python_api_test:
         usage()
+
+    # The simple progress bar is turned on only if verbose == 0 and LLDB_COMMAND_TRACE is not 'YES'
+    if ("LLDB_COMMAND_TRACE" not in os.environ or os.environ["LLDB_COMMAND_TRACE"]!="YES") and verbose==0:
+        progress_bar = True
 
     # Gather all the dirs passed on the command line.
     if len(sys.argv) > index:
@@ -1076,11 +1084,10 @@ for ia in range(len(archs) if iterArchs else 1):
         #print "sys.stdout name is", sys.stdout.name
 
         # First, write out the number of collected test cases.
-        if not noHeaders:
-            sys.stderr.write(separator + "\n")
-            sys.stderr.write("Collected %d test%s\n\n"
-                             % (suite.countTestCases(),
-                                suite.countTestCases() != 1 and "s" or ""))
+        sys.stderr.write(separator + "\n")
+        sys.stderr.write("Collected %d test%s\n\n"
+                         % (suite.countTestCases(),
+                            suite.countTestCases() != 1 and "s" or ""))
 
         class LLDBTestResult(unittest2.TextTestResult):
             """
@@ -1121,6 +1128,16 @@ for ia in range(len(archs) if iterArchs else 1):
                 if self.showAll:
                     self.stream.write(self.fmt % self.counter)
                 super(LLDBTestResult, self).startTest(test)
+
+            def stopTest(self, test):
+                """Called when the given test has been run"""
+                if progress_bar:
+                    sys.__stdout__.write('.')
+                    sys.__stdout__.flush()
+                    if self.counter == suite.countTestCases():
+                        sys.__stdout__.write('\n')
+
+                super(LLDBTestResult, self).stopTest(test)
 
             def addError(self, test, err):
                 global sdir_has_content
