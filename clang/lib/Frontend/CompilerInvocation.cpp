@@ -34,12 +34,11 @@ using namespace clang;
 // Initialization.
 //===----------------------------------------------------------------------===//
 
-CompilerInvocation::CompilerInvocation()
+CompilerInvocationBase::CompilerInvocationBase()
   : LangOpts(new LangOptions()) {}
 
-void CompilerInvocation::setLangOpts(LangOptions *LOpts) {
-  LangOpts = LOpts;
-}
+CompilerInvocationBase::CompilerInvocationBase(const CompilerInvocationBase &X)
+  : LangOpts(new LangOptions(*X.getLangOpts())) {}
 
 //===----------------------------------------------------------------------===//
 // Utility functions.

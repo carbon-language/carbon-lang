@@ -190,7 +190,6 @@ createInvocationForMigration(CompilerInvocation &origCI) {
   CInvok->getPreprocessorOpts().ImplicitPTHInclude = std::string();
   std::string define = getARCMTMacroName();
   define += '=';
-  CInvok->setLangOpts(new LangOptions(*CInvok->getLangOpts()));
   CInvok->getPreprocessorOpts().addMacroDef(define);
   CInvok->getLangOpts()->ObjCAutoRefCount = true;
   CInvok->getLangOpts()->setGC(LangOptions::NonGC);
