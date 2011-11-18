@@ -1741,6 +1741,7 @@ static void index_indexDeclaration(CXClientData client_data,
   const CXIdxObjCCategoryDeclInfo *CatInfo;
   const CXIdxObjCInterfaceDeclInfo *InterInfo;
   const CXIdxObjCProtocolRefListInfo *ProtoInfo;
+  unsigned i;
   index_data = (IndexData *)client_data;
 
   printEntityInfo("[indexDeclaration]", client_data, info->entityInfo);
@@ -1754,6 +1755,13 @@ static void index_indexDeclaration(CXClientData client_data,
   printf(" | isDef: %d", info->isDefinition);
   printf(" | isContainer: %d", info->isContainer);
   printf(" | isImplicit: %d\n", info->isImplicit);
+
+  for (i = 0; i != info->numAttributes; ++i) {
+    printf("     <attribute>: ");
+    const CXIdxAttrInfo *Attr = info->attributes[i]; 
+    PrintCursor(Attr->cursor);
+    printf("\n");
+  }
 
   if (clang_index_isEntityObjCContainerKind(info->entityInfo->kind)) {
     const char *kindName = 0;
@@ -1813,7 +1821,7 @@ static void index_indexEntityReference(CXClientData client_data,
   printf(" | refkind: ");
   switch (info->kind) {
   case CXIdxEntityRef_Direct: printf("direct"); break;
-  case CXIdxEntityRef_ImplicitProperty: printf("implicit prop"); break;
+  case CXIdxEntityRef_Implicit: printf("implicit"); break;
   }
   printf("\n");
 }
@@ -1833,6 +1841,7 @@ static int index_file(int argc, const char **argv) {
   const char *check_prefix;
   CXIndex CIdx;
   IndexData index_data;
+  unsigned index_opts;
   int result;
 
   check_prefix = 0;
@@ -1854,9 +1863,12 @@ static int index_file(int argc, const char **argv) {
   index_data.first_check_printed = 0;
   index_data.fail_for_error = 0;
 
+  index_opts = 0;
+  if (getenv("CINDEXTEST_SUPPRESSREFS"))
+    index_opts |= CXIndexOpt_SuppressRedundantRefs;
+
   result = clang_indexSourceFile(CIdx, &index_data,
-                                 &IndexCB,sizeof(IndexCB),
-                                 CXIndexOpt_OneRefPerFile,
+                                 &IndexCB,sizeof(IndexCB), index_opts,
                                  0, argv, argc, 0, 0, 0, 0);
   if (index_data.fail_for_error)
     return -1;
@@ -1869,6 +1881,7 @@ static int index_tu(int argc, const char **argv) {
   CXTranslationUnit TU;
   const char *check_prefix;
   IndexData index_data;
+  unsigned index_opts;
   int result;
 
   check_prefix = 0;
@@ -1898,9 +1911,13 @@ static int index_tu(int argc, const char **argv) {
   index_data.first_check_printed = 0;
   index_data.fail_for_error = 0;
 
+  index_opts = 0;
+  if (getenv("CINDEXTEST_SUPPRESSREFS"))
+    index_opts |= CXIndexOpt_SuppressRedundantRefs;
+  
   result = clang_indexTranslationUnit(TU, &index_data,
                                       &IndexCB,sizeof(IndexCB),
-                                      CXIndexOpt_OneRefPerFile);
+                                      index_opts);
   if (index_data.fail_for_error)
     return -1;
 

@@ -4026,6 +4026,26 @@ typedef struct {
   const char *USR;
 } CXIdxEntityInfo;
 
+typedef enum {
+  CXIdxAttr_Unexposed     = 0,
+  CXIdxAttr_IBAction      = 1,
+  CXIdxAttr_IBOutlet      = 2,
+  CXIdxAttr_IBOutletCollection = 3
+} CXIdxAttrKind;
+
+typedef struct {
+  CXIdxAttrKind kind;
+  CXCursor cursor;
+  CXIdxLoc loc;
+} CXIdxAttrInfo;
+
+typedef struct {
+  const CXIdxAttrInfo *attrInfo;
+  const CXIdxEntityInfo *objcClass;
+  CXCursor classCursor;
+  CXIdxLoc classLoc;
+} CXIdxIBOutletCollectionAttrInfo;
+
 typedef struct {
   const CXIdxEntityInfo *entityInfo;
   CXCursor cursor;
@@ -4039,6 +4059,8 @@ typedef struct {
    * by the compiler, e.g. implicit objc methods for properties.
    */
   int isImplicit;
+  const CXIdxAttrInfo *const *attributes;
+  unsigned numAttributes;
 } CXIdxDeclInfo;
 
 typedef struct {
@@ -4095,9 +4117,10 @@ typedef enum {
    */
   CXIdxEntityRef_Direct = 1,
   /**
-   * \brief A reference of an ObjC method via the dot syntax.
+   * \brief An implicit reference, e.g. a reference of an ObjC method via the
+   * dot syntax.
    */
-  CXIdxEntityRef_ImplicitProperty = 2
+  CXIdxEntityRef_Implicit = 2
 } CXIdxEntityRefKind;
 
 /**
@@ -4139,10 +4162,10 @@ typedef struct {
   int (*abortQuery)(CXClientData client_data, void *reserved);
 
   /**
-   * \brief Called when a diagnostic is emitted.
+   * \brief Called at the end of indexing; passes the complete diagnostic set.
    */
   void (*diagnostic)(CXClientData client_data,
-                     CXDiagnostic, void *reserved);
+                     CXDiagnosticSet, void *reserved);
 
   CXIdxClientFile (*enteredMainFile)(CXClientData client_data,
                                CXFile mainFile, void *reserved);
@@ -4195,6 +4218,9 @@ clang_index_getObjCCategoryDeclInfo(const CXIdxDeclInfo *);
 CINDEX_LINKAGE const CXIdxObjCProtocolRefListInfo *
 clang_index_getObjCProtocolRefListInfo(const CXIdxDeclInfo *);
 
+CINDEX_LINKAGE const CXIdxIBOutletCollectionAttrInfo *
+clang_index_getIBOutletCollectionAttrInfo(const CXIdxAttrInfo *);
+
 typedef enum {
   /**
    * \brief Used to indicate that no special indexing options are needed.
@@ -4203,9 +4229,10 @@ typedef enum {
   
   /**
    * \brief Used to indicate that \see indexEntityReference should be invoked
-   * for only one reference of an entity per source file.
+   * for only one reference of an entity per source file that does not also
+   * include a declaration/definition of the entity.
    */
-  CXIndexOpt_OneRefPerFile = 0x1
+  CXIndexOpt_SuppressRedundantRefs = 0x1
 } CXIndexOptFlags;
 
 /**

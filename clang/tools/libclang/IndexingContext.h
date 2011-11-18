@@ -40,6 +40,8 @@ struct DeclInfo : public CXIdxDeclInfo {
     this->isRedeclaration = isRedeclaration;
     this->isDefinition = isDefinition;
     this->isContainer = isContainer;
+    attributes = 0;
+    numAttributes = 0;
   }
   DeclInfo(DInfoKind K,
            bool isRedeclaration, bool isDefinition, bool isContainer)
@@ -47,6 +49,8 @@ struct DeclInfo : public CXIdxDeclInfo {
     this->isRedeclaration = isRedeclaration;
     this->isDefinition = isDefinition;
     this->isContainer = isContainer;
+    attributes = 0;
+    numAttributes = 0;
   }
 
   static bool classof(const DeclInfo *) { return true; }
@@ -133,6 +137,34 @@ struct ObjCCategoryDeclInfo : public ObjCContainerDeclInfo {
   static bool classof(const ObjCCategoryDeclInfo *D) { return true; }
 };
 
+struct AttrInfo : public CXIdxAttrInfo {
+  const Attr *A;
+
+  AttrInfo(CXIdxAttrKind Kind, CXCursor C, CXIdxLoc Loc, const Attr *A) {
+    kind = Kind;
+    cursor = C;
+    loc = Loc;
+    this->A = A;
+  }
+
+  static bool classof(const AttrInfo *) { return true; }
+};
+
+struct IBOutletCollectionInfo : public AttrInfo {
+  CXIdxEntityInfo CXClassInfo;
+  CXIdxIBOutletCollectionAttrInfo IBCollInfo;
+
+  IBOutletCollectionInfo(CXCursor C, CXIdxLoc Loc, const Attr *A) :
+    AttrInfo(CXIdxAttr_IBOutletCollection, C, Loc, A) {
+    assert(C.kind == CXCursor_IBOutletCollectionAttr);
+  }
+
+  static bool classof(const AttrInfo *A) {
+    return A->kind == CXIdxAttr_IBOutletCollection;
+  }
+  static bool classof(const IBOutletCollectionInfo *D) { return true; }
+};
+
 struct RefFileOccurence {
   const FileEntry *File;
   const Decl *Dcl;
@@ -193,7 +225,7 @@ class IndexingContext {
     SmallVector<CXIdxEntityInfo, 4> ProtEntities;
     SmallVector<CXIdxObjCProtocolRefInfo *, 4> Prots;
 
-    CXIdxObjCProtocolRefListInfo getListInfo() {
+    CXIdxObjCProtocolRefListInfo getListInfo() const {
       CXIdxObjCProtocolRefListInfo Info = { Prots.data(),
                                             (unsigned)Prots.size() };
       return Info;
@@ -203,6 +235,21 @@ class IndexingContext {
                          IndexingContext &IdxCtx,
                          IndexingContext::StrAdapter &SA);
   };
+
+  struct AttrListInfo {
+    SmallVector<AttrInfo, 2> Attrs;
+    SmallVector<IBOutletCollectionInfo, 2> IBCollAttrs;
+    SmallVector<CXIdxAttrInfo *, 2> CXAttrs;
+
+    const CXIdxAttrInfo *const *getAttrs() const {
+      return CXAttrs.data();
+    }
+    unsigned getNumAttrs() const { return (unsigned)CXAttrs.size(); }
+
+    AttrListInfo(const Decl *D,
+                 IndexingContext &IdxCtx,
+                 IndexingContext::StrAdapter &SA);
+};
 
 public:
   IndexingContext(CXClientData clientData, IndexerCallbacks &indexCallbacks,
@@ -214,9 +261,11 @@ public:
 
   void setASTContext(ASTContext &ctx);
 
-  bool onlyOneRefPerFile() const {
-    return IndexOptions & CXIndexOpt_OneRefPerFile;
+  bool suppressRefs() const {
+    return IndexOptions & CXIndexOpt_SuppressRedundantRefs;
   }
+
+  bool shouldAbort();
 
   void enteredMainFile(const FileEntry *File);
 
@@ -240,39 +289,47 @@ public:
   
   void indexBody(const Stmt *S, const DeclContext *DC);
 
-  void handleDiagnostic(const StoredDiagnostic &StoredDiag);
-  void handleDiagnostic(CXDiagnostic CXDiag);
+  void handleDiagnosticSet(CXDiagnosticSet CXDiagSet);
 
-  void handleFunction(const FunctionDecl *FD);
+  bool handleFunction(const FunctionDecl *FD);
 
-  void handleVar(const VarDecl *D);
+  bool handleVar(const VarDecl *D);
 
-  void handleField(const FieldDecl *D);
+  bool handleField(const FieldDecl *D);
 
-  void handleEnumerator(const EnumConstantDecl *D);
+  bool handleEnumerator(const EnumConstantDecl *D);
 
-  void handleTagDecl(const TagDecl *D);
+  bool handleTagDecl(const TagDecl *D);
   
-  void handleTypedef(const TypedefDecl *D);
+  bool handleTypedef(const TypedefDecl *D);
 
-  void handleObjCClass(const ObjCClassDecl *D);
-  void handleObjCInterface(const ObjCInterfaceDecl *D);
-  void handleObjCImplementation(const ObjCImplementationDecl *D);
+  bool handleObjCClass(const ObjCClassDecl *D);
+  bool handleObjCInterface(const ObjCInterfaceDecl *D);
+  bool handleObjCImplementation(const ObjCImplementationDecl *D);
 
-  void handleObjCForwardProtocol(const ObjCProtocolDecl *D,
+  bool handleObjCForwardProtocol(const ObjCProtocolDecl *D,
                                  SourceLocation Loc,
                                  bool isRedeclaration);
 
-  void handleObjCProtocol(const ObjCProtocolDecl *D);
+  bool handleObjCProtocol(const ObjCProtocolDecl *D);
 
-  void handleObjCCategory(const ObjCCategoryDecl *D);
-  void handleObjCCategoryImpl(const ObjCCategoryImplDecl *D);
+  bool handleObjCCategory(const ObjCCategoryDecl *D);
+  bool handleObjCCategoryImpl(const ObjCCategoryImplDecl *D);
 
-  void handleObjCMethod(const ObjCMethodDecl *D);
+  bool handleObjCMethod(const ObjCMethodDecl *D);
 
-  void handleObjCProperty(const ObjCPropertyDecl *D);
+  bool handleSynthesizedObjCProperty(const ObjCPropertyImplDecl *D);
+  bool handleSynthesizedObjCMethod(const ObjCMethodDecl *D, SourceLocation Loc);
 
-  void handleReference(const NamedDecl *D, SourceLocation Loc,
+  bool handleObjCProperty(const ObjCPropertyDecl *D);
+
+  bool handleReference(const NamedDecl *D, SourceLocation Loc, CXCursor Cursor,
+                       const NamedDecl *Parent,
+                       const DeclContext *DC,
+                       const Expr *E = 0,
+                       CXIdxEntityRefKind Kind = CXIdxEntityRef_Direct);
+
+  bool handleReference(const NamedDecl *D, SourceLocation Loc,
                        const NamedDecl *Parent,
                        const DeclContext *DC,
                        const Expr *E = 0,
@@ -292,15 +349,17 @@ public:
                     unsigned *line, unsigned *column, unsigned *offset);
 
 private:
-  void handleDecl(const NamedDecl *D,
+  bool handleDecl(const NamedDecl *D,
                   SourceLocation Loc, CXCursor Cursor,
                   DeclInfo &DInfo);
 
-  void handleObjCContainer(const ObjCContainerDecl *D,
+  bool handleObjCContainer(const ObjCContainerDecl *D,
                            SourceLocation Loc, CXCursor Cursor,
                            ObjCContainerDeclInfo &ContDInfo);
 
   void addContainerInMap(const DeclContext *DC, CXIdxClientContainer container);
+
+  bool markEntityOccurrenceInFile(const NamedDecl *D, SourceLocation Loc);
 
   const NamedDecl *getEntityDecl(const NamedDecl *D) const;
 
@@ -319,8 +378,8 @@ private:
                      CXIdxEntityInfo &EntityInfo,
                      StrAdapter &SA);
 
-  CXCursor getCursor(const NamedDecl *D) {
-    return cxcursor::MakeCXCursor(const_cast<NamedDecl*>(D), CXTU);
+  CXCursor getCursor(const Decl *D) {
+    return cxcursor::MakeCXCursor(const_cast<Decl*>(D), CXTU);
   }
 
   CXCursor getRefCursor(const NamedDecl *D, SourceLocation Loc);

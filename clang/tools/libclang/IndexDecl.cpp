@@ -159,6 +159,32 @@ public:
     IndexCtx.indexTypeSourceInfo(D->getTypeSourceInfo(), D);
     return true;
   }
+
+  bool VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D) {
+    ObjCPropertyDecl *PD = D->getPropertyDecl();
+    IndexCtx.handleSynthesizedObjCProperty(D);
+
+    if (D->getPropertyImplementation() == ObjCPropertyImplDecl::Dynamic)
+      return true;
+    assert(D->getPropertyImplementation() == ObjCPropertyImplDecl::Synthesize);
+    
+    if (ObjCIvarDecl *IvarD = D->getPropertyIvarDecl()) {
+      if (!IvarD->getSynthesize())
+        IndexCtx.handleReference(IvarD, D->getPropertyIvarDeclLoc(), 0,
+                                 D->getDeclContext());
+    }
+
+    if (ObjCMethodDecl *MD = PD->getGetterMethodDecl()) {
+      if (MD->isSynthesized())
+        IndexCtx.handleSynthesizedObjCMethod(MD, D->getLocation());
+    }
+    if (ObjCMethodDecl *MD = PD->getSetterMethodDecl()) {
+      if (MD->isSynthesized())
+        IndexCtx.handleSynthesizedObjCMethod(MD, D->getLocation());
+    }
+
+    return true;
+  }
 };
 
 } // anonymous namespace

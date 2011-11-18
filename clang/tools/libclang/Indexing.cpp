@@ -117,6 +117,10 @@ public:
 
   virtual void HandleTopLevelDecl(DeclGroupRef DG) {
     IndexCtx.indexDeclGroupRef(DG);
+    // FIXME: Indicate to parser to abort.
+//    if (IndexCtx.shouldAbort()) {
+//      
+//    }
   }
 
   /// \brief Handle the specified top-level declaration that occurred inside
@@ -133,28 +137,8 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
-// IndexingDiagnosticConsumer
+// CaptureDiagnosticConsumer
 //===----------------------------------------------------------------------===//
-
-class IndexingDiagnosticConsumer : public DiagnosticConsumer {
-  IndexingContext &IndexCtx;
-  
-public:
-  explicit IndexingDiagnosticConsumer(IndexingContext &indexCtx)
-    : IndexCtx(indexCtx) {}
-  
-  virtual void HandleDiagnostic(DiagnosticsEngine::Level Level,
-                                const Diagnostic &Info) {
-    // Default implementation (Warnings/errors count).
-    DiagnosticConsumer::HandleDiagnostic(Level, Info);
-
-    IndexCtx.handleDiagnostic(StoredDiagnostic(Level, Info));
-  }
-
-  DiagnosticConsumer *clone(DiagnosticsEngine &Diags) const {
-    return new IgnoringDiagConsumer();
-  }
-};
 
 class CaptureDiagnosticConsumer : public DiagnosticConsumer {
   SmallVector<StoredDiagnostic, 4> Errors;
@@ -187,8 +171,6 @@ public:
 
   virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
                                          StringRef InFile) {
-    CI.getDiagnostics().setClient(new IndexingDiagnosticConsumer(IndexCtx),
-                                  /*own=*/true);
     IndexCtx.setASTContext(CI.getASTContext());
     Preprocessor &PP = CI.getPreprocessor();
     PP.addPPCallbacks(new IndexPPCallbacks(PP, IndexCtx));
@@ -426,6 +408,8 @@ static void indexTranslationUnit(ASTUnit &Unit, IndexingContext &IdxCtx) {
                                   TLEnd = Unit.top_level_end();
            TL != TLEnd; ++TL) {
       IdxCtx.indexTopLevelDecl(*TL);
+      if (IdxCtx.shouldAbort())
+        return;
     }
 
   } else {
@@ -433,17 +417,15 @@ static void indexTranslationUnit(ASTUnit &Unit, IndexingContext &IdxCtx) {
     for (TranslationUnitDecl::decl_iterator
            I = TUDecl->decls_begin(), E = TUDecl->decls_end(); I != E; ++I) {
       IdxCtx.indexTopLevelDecl(*I);
+      if (IdxCtx.shouldAbort())
+        return;
     }
   }
 }
 
 static void indexDiagnostics(CXTranslationUnit TU, IndexingContext &IdxCtx) {
-  unsigned Num = clang_getNumDiagnostics(TU);
-  for (unsigned i = 0; i != Num; ++i) {
-    CXDiagnostic Diag = clang_getDiagnostic(TU, i);
-    IdxCtx.handleDiagnostic(Diag);
-    clang_disposeDiagnostic(Diag);
-  }
+  // FIXME: Create a CXDiagnosticSet from TU;
+  // IdxCtx.handleDiagnosticSet(Set);
 }
 
 static void clang_indexTranslationUnit_Impl(void *UserData) {
@@ -564,6 +546,19 @@ clang_index_getObjCProtocolRefListInfo(const CXIdxDeclInfo *DInfo) {
   if (const ObjCProtocolDeclInfo *
         ProtInfo = dyn_cast<ObjCProtocolDeclInfo>(DI))
     return &ProtInfo->ObjCProtoRefListInfo;
+
+  return 0;
+}
+
+const CXIdxIBOutletCollectionAttrInfo *
+clang_index_getIBOutletCollectionAttrInfo(const CXIdxAttrInfo *AInfo) {
+  if (!AInfo)
+    return 0;
+
+  const AttrInfo *DI = static_cast<const AttrInfo *>(AInfo);
+  if (const IBOutletCollectionInfo *
+        IBInfo = dyn_cast<IBOutletCollectionInfo>(DI))
+    return &IBInfo->IBCollInfo;
 
   return 0;
 }

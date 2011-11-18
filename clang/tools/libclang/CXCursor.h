@@ -95,7 +95,7 @@ CXCursor MakeCursorTypeRef(const TypeDecl *Type, SourceLocation Loc,
 std::pair<TypeDecl *, SourceLocation> getCursorTypeRef(CXCursor C);
 
 /// \brief Create a reference to a template at the given location.
-CXCursor MakeCursorTemplateRef(TemplateDecl *Template, SourceLocation Loc,
+CXCursor MakeCursorTemplateRef(const TemplateDecl *Template, SourceLocation Loc,
                                CXTranslationUnit TU);
 
 /// \brief Unpack a TemplateRef cursor into the template it references and
@@ -104,7 +104,7 @@ std::pair<TemplateDecl *, SourceLocation> getCursorTemplateRef(CXCursor C);
 
 /// \brief Create a reference to a namespace or namespace alias at the given 
 /// location.
-CXCursor MakeCursorNamespaceRef(NamedDecl *NS, SourceLocation Loc,
+CXCursor MakeCursorNamespaceRef(const NamedDecl *NS, SourceLocation Loc,
                                 CXTranslationUnit TU);
 
 /// \brief Unpack a NamespaceRef cursor into the namespace or namespace alias
@@ -112,7 +112,7 @@ CXCursor MakeCursorNamespaceRef(NamedDecl *NS, SourceLocation Loc,
 std::pair<NamedDecl *, SourceLocation> getCursorNamespaceRef(CXCursor C);
 
 /// \brief Create a reference to a field at the given location.
-CXCursor MakeCursorMemberRef(FieldDecl *Field, SourceLocation Loc, 
+CXCursor MakeCursorMemberRef(const FieldDecl *Field, SourceLocation Loc, 
                              CXTranslationUnit TU);
   
 /// \brief Unpack a MemberRef cursor into the field it references and the 
