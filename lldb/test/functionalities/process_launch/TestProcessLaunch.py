@@ -122,18 +122,22 @@ class ProcessLaunchTestCase(TestBase):
 
         mywd = 'my_working_dir'
         out_file_name = "my_working_dir_test.out"
+        err_file_name = "my_working_dir_test.err"
 
         my_working_dir_path = os.path.join(os.getcwd(), mywd)
         out_file_path = os.path.join(my_working_dir_path, out_file_name)
+        err_file_path = os.path.join(my_working_dir_path, err_file_name)
 
         # Make sure the output files do not exist before launching the process
         try:
             os.remove (out_file_path)
+            os.remove (err_file_path)
         except OSError:
             pass
 
-        launch_command = "process launch -w %s -o %s" % (my_working_dir_path,
-                                                         out_file_path)
+        launch_command = "process launch -w %s -o %s -e %sl" % (my_working_dir_path,
+                                                                out_file_path,
+                                                                err_file_path)
 
         self.expect(launch_command,
                     patterns = [ "Process .* launched: .*a.out" ])
@@ -157,9 +161,10 @@ class ProcessLaunchTestCase(TestBase):
                 err_msg = err_msg + "The current working directory was not set correctly.\n"
                 out_f.close();
             
-        # Try to delete the 'stdout' file
+        # Try to delete the 'stdout' and 'stderr' files
         try:
             os.remove(out_file_path)
+            os.remove(err_file_path)
             pass
         except OSError:
             pass
