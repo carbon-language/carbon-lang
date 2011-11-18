@@ -1757,8 +1757,8 @@ static void index_indexDeclaration(CXClientData client_data,
   printf(" | isImplicit: %d\n", info->isImplicit);
 
   for (i = 0; i != info->numAttributes; ++i) {
+    const CXIdxAttrInfo *Attr = info->attributes[i];
     printf("     <attribute>: ");
-    const CXIdxAttrInfo *Attr = info->attributes[i]; 
     PrintCursor(Attr->cursor);
     printf("\n");
   }
