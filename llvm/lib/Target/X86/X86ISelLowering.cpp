@@ -11084,9 +11084,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::PINSRW:             return "X86ISD::PINSRW";
   case X86ISD::PSHUFB:             return "X86ISD::PSHUFB";
   case X86ISD::ANDNP:              return "X86ISD::ANDNP";
-  case X86ISD::PSIGNB:             return "X86ISD::PSIGNB";
-  case X86ISD::PSIGNW:             return "X86ISD::PSIGNW";
-  case X86ISD::PSIGND:             return "X86ISD::PSIGND";
+  case X86ISD::PSIGN:              return "X86ISD::PSIGN";
   case X86ISD::BLENDV:             return "X86ISD::BLENDV";
   case X86ISD::FHADD:              return "X86ISD::FHADD";
   case X86ISD::FHSUB:              return "X86ISD::FHSUB";
@@ -13928,18 +13926,11 @@ static SDValue PerformOrCombine(SDNode *N, SelectionDAG &DAG,
       Y = Y.getOperand(0);
       if (Y.getOpcode() == ISD::SUB && Y.getOperand(1) == X &&
           ISD::isBuildVectorAllZeros(Y.getOperand(0).getNode()) &&
-          X.getValueType() == MaskVT && X.getValueType() == Y.getValueType()){
-        unsigned Opc = 0;
-        switch (EltBits) {
-        case 8: Opc = X86ISD::PSIGNB; break;
-        case 16: Opc = X86ISD::PSIGNW; break;
-        case 32: Opc = X86ISD::PSIGND; break;
-        default: break;
-        }
-        if (Opc) {
-          SDValue Sign = DAG.getNode(Opc, DL, MaskVT, X, Mask.getOperand(1));
-          return DAG.getNode(ISD::BITCAST, DL, VT, Sign);
-        }
+          X.getValueType() == MaskVT && X.getValueType() == Y.getValueType() &&
+          (EltBits == 8 || EltBits == 16 || EltBits == 32)) {
+        SDValue Sign = DAG.getNode(X86ISD::PSIGN, DL, MaskVT, X,
+                                   Mask.getOperand(1));
+        return DAG.getNode(ISD::BITCAST, DL, VT, Sign);
       }
       // PBLENDVB only available on SSE 4.1
       if (!(Subtarget->hasSSE41() || Subtarget->hasAVX()))

@@ -5363,11 +5363,11 @@ let Predicates = [HasSSSE3] in {
   def : Pat<(X86pshufb VR128:$src, (bc_v16i8 (memopv2i64 addr:$mask))),
             (PSHUFBrm128 VR128:$src, addr:$mask)>;
 
-  def : Pat<(v16i8 (X86psignb VR128:$src1, VR128:$src2)),
+  def : Pat<(v16i8 (X86psign VR128:$src1, VR128:$src2)),
             (PSIGNBrr128 VR128:$src1, VR128:$src2)>;
-  def : Pat<(v8i16 (X86psignw VR128:$src1, VR128:$src2)),
+  def : Pat<(v8i16 (X86psign VR128:$src1, VR128:$src2)),
             (PSIGNWrr128 VR128:$src1, VR128:$src2)>;
-  def : Pat<(v4i32 (X86psignd VR128:$src1, VR128:$src2)),
+  def : Pat<(v4i32 (X86psign VR128:$src1, VR128:$src2)),
             (PSIGNDrr128 VR128:$src1, VR128:$src2)>;
 }
 
@@ -5377,20 +5377,20 @@ let Predicates = [HasAVX] in {
   def : Pat<(X86pshufb VR128:$src, (bc_v16i8 (memopv2i64 addr:$mask))),
             (VPSHUFBrm128 VR128:$src, addr:$mask)>;
 
-  def : Pat<(v16i8 (X86psignb VR128:$src1, VR128:$src2)),
+  def : Pat<(v16i8 (X86psign VR128:$src1, VR128:$src2)),
             (VPSIGNBrr128 VR128:$src1, VR128:$src2)>;
-  def : Pat<(v8i16 (X86psignw VR128:$src1, VR128:$src2)),
+  def : Pat<(v8i16 (X86psign VR128:$src1, VR128:$src2)),
             (VPSIGNWrr128 VR128:$src1, VR128:$src2)>;
-  def : Pat<(v4i32 (X86psignd VR128:$src1, VR128:$src2)),
+  def : Pat<(v4i32 (X86psign VR128:$src1, VR128:$src2)),
             (VPSIGNDrr128 VR128:$src1, VR128:$src2)>;
 }
 
 let Predicates = [HasAVX2] in {
-  def : Pat<(v32i8 (X86psignb VR256:$src1, VR256:$src2)),
+  def : Pat<(v32i8 (X86psign VR256:$src1, VR256:$src2)),
             (VPSIGNBrr256 VR256:$src1, VR256:$src2)>;
-  def : Pat<(v16i16 (X86psignw VR256:$src1, VR256:$src2)),
+  def : Pat<(v16i16 (X86psign VR256:$src1, VR256:$src2)),
             (VPSIGNWrr256 VR256:$src1, VR256:$src2)>;
-  def : Pat<(v8i32 (X86psignd VR256:$src1, VR256:$src2)),
+  def : Pat<(v8i32 (X86psign VR256:$src1, VR256:$src2)),
             (VPSIGNDrr256 VR256:$src1, VR256:$src2)>;
 }
 

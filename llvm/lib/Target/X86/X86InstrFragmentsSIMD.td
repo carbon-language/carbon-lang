@@ -51,13 +51,7 @@ def X86pshufb  : SDNode<"X86ISD::PSHUFB",
 def X86andnp   : SDNode<"X86ISD::ANDNP",
                  SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisSameAs<0,1>,
                                       SDTCisSameAs<0,2>]>>;
-def X86psignb  : SDNode<"X86ISD::PSIGNB",
-                 SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisSameAs<0,1>,
-                                      SDTCisSameAs<0,2>]>>;
-def X86psignw  : SDNode<"X86ISD::PSIGNW",
-                 SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisSameAs<0,1>,
-                                      SDTCisSameAs<0,2>]>>;
-def X86psignd  : SDNode<"X86ISD::PSIGND",
+def X86psign   : SDNode<"X86ISD::PSIGN",
                  SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisSameAs<0,1>,
                                       SDTCisSameAs<0,2>]>>;
 def X86pextrb  : SDNode<"X86ISD::PEXTRB",
