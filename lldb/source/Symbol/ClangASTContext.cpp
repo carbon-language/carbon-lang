@@ -1196,8 +1196,12 @@ ClangASTContext::CreateClassTemplateDecl (DeclContext *decl_ctx,
                                                               SourceLocation(),
                                                               SourceLocation(),
                                                               &identifier_info);
-            
-            
+    
+    // With templated classes, we say that a class is templated with
+    // specializations, but that the bare class has no functions.
+    template_cxx_decl->startDefinition();
+    template_cxx_decl->completeDefinition();
+    
     class_template_decl = ClassTemplateDecl::Create (*ast,
                                                      decl_ctx,  // What decl context do we use here? TU? The actual decl context?
                                                      SourceLocation(),
