@@ -392,18 +392,11 @@ RecognizableInstr::filter_ret RecognizableInstr::filter() const {
     
   // Filter out artificial instructions
     
-  if (Name.find("TAILJMP") != Name.npos    ||
-      Name.find("_Int") != Name.npos       ||
-      Name.find("_int") != Name.npos       ||
+  if (Name.find("_Int") != Name.npos       ||
       Name.find("Int_") != Name.npos       ||
       Name.find("_NOREX") != Name.npos     ||
-      Name.find("_TC") != Name.npos        ||
-      Name.find("EH_RETURN") != Name.npos  ||
-      Name.find("V_SET") != Name.npos      ||
-      Name.find("LOCK_") != Name.npos      ||
-      Name.find("WIN") != Name.npos        ||
-      Name.find("_AVX") != Name.npos       ||
-      Name.find("2SDL") != Name.npos)
+      Name.find("2SDL") != Name.npos       ||
+      Name == "LOCK_PREFIX")
     return FILTER_STRONG;
 
   // Filter out instructions with segment override prefixes.
@@ -440,12 +433,6 @@ RecognizableInstr::filter_ret RecognizableInstr::filter() const {
       Name.find("Xrr") != Name.npos ||
       Name.find("rr64") != Name.npos)
     return FILTER_WEAK;
-    
-  if (Name == "VMASKMOVDQU64"  ||
-      Name == "VEXTRACTPSrr64" ||
-      Name == "VMOVQd64rr"     ||
-      Name == "VMOVQs64rr")
-    return FILTER_WEAK;
 
   // Special cases.
 
@@ -460,29 +447,15 @@ RecognizableInstr::filter_ret RecognizableInstr::filter() const {
     return FILTER_WEAK;
   if (Name.find("Fs") != Name.npos)
     return FILTER_WEAK;
-  if (Name == "MOVLPDrr"          ||
-      Name == "MOVLPSrr"          ||
-      Name == "PUSHFQ"            ||
-      Name == "BSF16rr"           ||
-      Name == "BSF16rm"           ||
-      Name == "BSR16rr"           ||
-      Name == "BSR16rm"           ||
-      Name == "MOVSX16rm8"        ||
-      Name == "MOVSX16rr8"        ||
-      Name == "MOVZX16rm8"        ||
-      Name == "MOVZX16rr8"        ||
-      Name == "PUSH32i16"         ||
-      Name == "PUSH64i16"         ||
+  if (Name == "PUSH64i16"         ||
       Name == "MOVPQI2QImr"       ||
       Name == "VMOVPQI2QImr"      ||
-      Name == "MOVSDmr"           ||
-      Name == "MOVSDrm"           ||
-      Name == "MOVSSmr"           ||
-      Name == "MOVSSrm"           ||
       Name == "MMX_MOVD64rrv164"  ||
-      Name == "CRC32m16"          ||
       Name == "MOV64ri64i32"      ||
-      Name == "CRC32r16")
+      Name == "VMASKMOVDQU64"     ||
+      Name == "VEXTRACTPSrr64"    ||
+      Name == "VMOVQd64rr"        ||
+      Name == "VMOVQs64rr")
     return FILTER_WEAK;
 
   if (HasFROperands && Name.find("MOV") != Name.npos &&
