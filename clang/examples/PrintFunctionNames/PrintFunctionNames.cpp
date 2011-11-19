@@ -23,12 +23,14 @@ namespace {
 
 class PrintFunctionsConsumer : public ASTConsumer {
 public:
-  virtual void HandleTopLevelDecl(DeclGroupRef DG) {
+  virtual bool HandleTopLevelDecl(DeclGroupRef DG) {
     for (DeclGroupRef::iterator i = DG.begin(), e = DG.end(); i != e; ++i) {
       const Decl *D = *i;
       if (const NamedDecl *ND = dyn_cast<NamedDecl>(D))
         llvm::errs() << "top-level-decl: \"" << ND->getNameAsString() << "\"\n";
     }
+
+    return true;
   }
 };
 
