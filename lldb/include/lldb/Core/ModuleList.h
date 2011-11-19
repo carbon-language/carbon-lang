@@ -296,8 +296,15 @@ public:
     size_t
     FindSymbolsWithNameAndType (const ConstString &name,
                                 lldb::SymbolType symbol_type,
-                                SymbolContextList &sc_list);
+                                SymbolContextList &sc_list,
+                                bool append = false);
 
+    size_t
+    FindSymbolsMatchingRegExAndType (const RegularExpression &regex, 
+                                     lldb::SymbolType symbol_type, 
+                                     SymbolContextList &sc_list,
+                                     bool append = false);
+                                     
     //------------------------------------------------------------------
     /// Find types by name.
     ///

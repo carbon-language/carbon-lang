@@ -66,6 +66,11 @@ public:
     GetStepThroughTrampolinePlan (lldb_private::Thread &thread,
                                   bool stop_others);
 
+    virtual size_t
+    FindEquivalentSymbols (lldb_private::Symbol *original_symbol, 
+                           lldb_private::ModuleList &module_list, 
+                           lldb_private::SymbolContextList &equivalent_symbols);
+    
     virtual lldb_private::Error
     CanLoadImage ();
 

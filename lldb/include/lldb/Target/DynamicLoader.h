@@ -143,6 +143,31 @@ public:
 
 
     //------------------------------------------------------------------
+    /// Some dynamic loaders provide features where there are a group of symbols "equivalent to"
+    /// a given symbol one of which will be chosen when the symbol is bound.  If you want to
+    /// set a breakpoint on one of these symbols, you really need to set it on all the
+    /// equivalent symbols.
+    ///
+    ///
+    /// @param[in] original_symbol
+    ///     The symbol for which we are finding equivalences.
+    ///
+    /// @param[in] module_list
+    ///     The set of modules in which to search.
+    ///
+    /// @param[out] equivalent_symbols
+    ///     The equivalent symbol list - any equivalent symbols found are appended to this list.
+    ///
+    /// @return
+    ///    Number of equivalent symbols found.
+    //------------------------------------------------------------------
+    virtual size_t
+    FindEquivalentSymbols (Symbol *original_symbol, ModuleList &module_list, SymbolContextList &equivalent_symbols)
+    {
+        return 0;
+    }
+    
+    //------------------------------------------------------------------
     /// Ask if it is ok to try and load or unload an shared library 
     /// (image).
     ///

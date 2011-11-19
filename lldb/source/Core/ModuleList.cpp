@@ -248,14 +248,35 @@ ModuleList::FindGlobalVariables (const RegularExpression& regex,
 size_t
 ModuleList::FindSymbolsWithNameAndType (const ConstString &name, 
                                         SymbolType symbol_type, 
-                                        SymbolContextList &sc_list)
+                                        SymbolContextList &sc_list,
+                                        bool append)
 {
     Mutex::Locker locker(m_modules_mutex);
-    sc_list.Clear();
+    if (!append)
+        sc_list.Clear();
+    size_t initial_size = sc_list.GetSize();
+    
     collection::iterator pos, end = m_modules.end();
     for (pos = m_modules.begin(); pos != end; ++pos)
         (*pos)->FindSymbolsWithNameAndType (name, symbol_type, sc_list);
-    return sc_list.GetSize();
+    return sc_list.GetSize() - initial_size;
+}
+
+    size_t
+ModuleList::FindSymbolsMatchingRegExAndType (const RegularExpression &regex, 
+                                             lldb::SymbolType symbol_type, 
+                                             SymbolContextList &sc_list,
+                                             bool append)
+{
+    Mutex::Locker locker(m_modules_mutex);
+    if (!append)
+        sc_list.Clear();
+    size_t initial_size = sc_list.GetSize();
+    
+    collection::iterator pos, end = m_modules.end();
+    for (pos = m_modules.begin(); pos != end; ++pos)
+        (*pos)->FindSymbolsMatchingRegExAndType (regex, symbol_type, sc_list);
+    return sc_list.GetSize() - initial_size;
 }
 
 class ModuleMatches
