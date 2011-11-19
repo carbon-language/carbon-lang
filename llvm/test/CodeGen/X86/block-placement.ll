@@ -393,3 +393,28 @@ exit:
   %merge = phi i32 [ 3, %step ], [ 6, %entry ]
   ret i32 %merge
 }
+
+define void @fpcmp_unanalyzable_branch(i1 %cond) {
+entry:
+  br i1 %cond, label %entry.if.then_crit_edge, label %lor.lhs.false
+
+entry.if.then_crit_edge:
+  %.pre14 = load i8* undef, align 1, !tbaa !0
+  br label %if.then
+
+lor.lhs.false:
+  br i1 undef, label %if.end, label %exit
+
+exit:
+  %cmp.i = fcmp une double 0.000000e+00, undef
+  br i1 %cmp.i, label %if.then, label %if.end
+
+if.then:
+  %0 = phi i8 [ %.pre14, %entry.if.then_crit_edge ], [ undef, %exit ]
+  %1 = and i8 %0, 1
+  store i8 %1, i8* undef, align 4, !tbaa !0
+  br label %if.end
+
+if.end:
+  ret void
+}

@@ -355,6 +355,10 @@ MachineBasicBlock *MachineBlockPlacement::selectBestSuccessor(
       DEBUG(dbgs() << "    " << getBlockName(*SI) << " -> Already merged!\n");
       continue;
     }
+    if (*SI != *SuccChain.begin()) {
+      DEBUG(dbgs() << "    " << getBlockName(*SI) << " -> Mid chain!\n");
+      continue;
+    }
 
     uint32_t SuccWeight = MBPI->getEdgeWeight(BB, *SI);
     BranchProbability SuccProb(SuccWeight / WeightScale, SumWeight);
@@ -472,7 +476,6 @@ void MachineBlockPlacement::buildChain(
   assert(BB);
   assert(BlockToChain[BB] == &Chain);
   assert(*Chain.begin() == BB);
-  SmallVector<MachineOperand, 4> Cond; // For AnalyzeBranch.
   MachineFunction &F = *BB->getParent();
   MachineFunction::iterator PrevUnplacedBlockIt = F.begin();
 
@@ -485,26 +488,9 @@ void MachineBlockPlacement::buildChain(
     assert(*llvm::prior(Chain.end()) == BB);
     MachineBasicBlock *BestSucc = 0;
 
-    // Check for unreasonable branches, and forcibly merge the existing layout
-    // successor for them. We can handle cases that AnalyzeBranch can't: jump
-    // tables etc are fine. The case we want to handle specially is when there
-    // is potential fallthrough, but the branch cannot be analyzed. This
-    // includes blocks without terminators as well as other cases.
-    Cond.clear();
-    MachineBasicBlock *TBB = 0, *FBB = 0; // For AnalyzeBranch.
-    if (TII->AnalyzeBranch(*BB, TBB, FBB, Cond) && BB->canFallThrough()) {
-      MachineFunction::iterator I(BB), NextI(llvm::next(I));
-      // Ensure that the layout successor is a viable block, as we know that
-      // fallthrough is a possibility. Note that this may not be a valid block
-      // in the loop, but we allow that to cope with degenerate situations.
-      assert(NextI != BB->getParent()->end());
-      BestSucc = NextI;
-    }
-
-    // Otherwise, look for the best viable successor if there is one to place
-    // immediately after this block.
-    if (!BestSucc)
-      BestSucc = selectBestSuccessor(BB, Chain, BlockFilter);
+    // Look for the best viable successor if there is one to place immediately
+    // after this block.
+    BestSucc = selectBestSuccessor(BB, Chain, BlockFilter);
 
     // If an immediate successor isn't available, look for the best viable
     // block among those we've identified as not violating the loop's CFG at
@@ -624,9 +610,32 @@ void MachineBlockPlacement::buildLoopChains(MachineFunction &F,
 void MachineBlockPlacement::buildCFGChains(MachineFunction &F) {
   // Ensure that every BB in the function has an associated chain to simplify
   // the assumptions of the remaining algorithm.
-  for (MachineFunction::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
-    BlockToChain[&*FI] =
-      new (ChainAllocator.Allocate()) BlockChain(BlockToChain, &*FI);
+  SmallVector<MachineOperand, 4> Cond; // For AnalyzeBranch.
+  for (MachineFunction::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI) {
+    MachineBasicBlock *BB = FI;
+    BlockChain *&Chain = BlockToChain[BB];
+    Chain = new (ChainAllocator.Allocate()) BlockChain(BlockToChain, BB);
+    // Also, merge any blocks which we cannot reason about and must preserve
+    // the exact fallthrough behavior for.
+    for (;;) {
+      Cond.clear();
+      MachineBasicBlock *TBB = 0, *FBB = 0; // For AnalyzeBranch.
+      if (!TII->AnalyzeBranch(*BB, TBB, FBB, Cond) || !FI->canFallThrough())
+        break;
+
+      MachineFunction::iterator NextFI(llvm::next(FI));
+      MachineBasicBlock *NextBB = NextFI;
+      // Ensure that the layout successor is a viable block, as we know that
+      // fallthrough is a possibility.
+      assert(NextFI != FE && "Can't fallthrough past the last block.");
+      DEBUG(dbgs() << "Pre-merging due to unanalyzable fallthrough: "
+                   << getBlockName(BB) << " -> " << getBlockName(NextBB)
+                   << "\n");
+      Chain->merge(NextBB, 0);
+      FI = NextFI;
+      BB = NextBB;
+    }
+  }
 
   // Build any loop-based chains.
   for (MachineLoopInfo::iterator LI = MLI->begin(), LE = MLI->end(); LI != LE;
@@ -692,7 +701,6 @@ void MachineBlockPlacement::buildCFGChains(MachineFunction &F) {
 
   // Splice the blocks into place.
   MachineFunction::iterator InsertPos = F.begin();
-  SmallVector<MachineOperand, 4> Cond; // For AnalyzeBranch.
   for (BlockChain::iterator BI = FunctionChain.begin(),
                             BE = FunctionChain.end();
        BI != BE; ++BI) {
