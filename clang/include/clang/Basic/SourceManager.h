@@ -111,6 +111,31 @@ namespace SrcMgr {
     /// exist.
     unsigned BufferOverridden : 1;
     
+    ContentCache(const FileEntry *Ent = 0)
+      : Buffer(0, false), OrigEntry(Ent), ContentsEntry(Ent),
+        SourceLineCache(0), NumLines(0), BufferOverridden(false) {}
+    
+    ContentCache(const FileEntry *Ent, const FileEntry *contentEnt)
+      : Buffer(0, false), OrigEntry(Ent), ContentsEntry(contentEnt),
+        SourceLineCache(0), NumLines(0), BufferOverridden(false) {}
+    
+    ~ContentCache();
+    
+    /// The copy ctor does not allow copies where source object has either
+    ///  a non-NULL Buffer or SourceLineCache.  Ownership of allocated memory
+    ///  is not transferred, so this is a logical error.
+    ContentCache(const ContentCache &RHS)
+      : Buffer(0, false), SourceLineCache(0), BufferOverridden(false)
+    {
+      OrigEntry = RHS.OrigEntry;
+      ContentsEntry = RHS.ContentsEntry;
+      
+      assert (RHS.Buffer.getPointer() == 0 && RHS.SourceLineCache == 0 &&
+              "Passed ContentCache object cannot own a buffer.");
+      
+      NumLines = RHS.NumLines;
+    }
+
     /// getBuffer - Returns the memory buffer for the associated content.
     ///
     /// \param Diag Object through which diagnostics will be emitted if the
@@ -164,31 +189,6 @@ namespace SrcMgr {
     /// \brief Determine whether the buffer should be freed.
     bool shouldFreeBuffer() const {
       return (Buffer.getInt() & DoNotFreeFlag) == 0;
-    }
-
-    ContentCache(const FileEntry *Ent = 0)
-      : Buffer(0, false), OrigEntry(Ent), ContentsEntry(Ent),
-        SourceLineCache(0), NumLines(0) {}
-
-    ContentCache(const FileEntry *Ent, const FileEntry *contentEnt)
-      : Buffer(0, false), OrigEntry(Ent), ContentsEntry(contentEnt),
-        SourceLineCache(0), NumLines(0) {}
-
-    ~ContentCache();
-
-    /// The copy ctor does not allow copies where source object has either
-    ///  a non-NULL Buffer or SourceLineCache.  Ownership of allocated memory
-    ///  is not transferred, so this is a logical error.
-    ContentCache(const ContentCache &RHS)
-      : Buffer(0, false), SourceLineCache(0)
-    {
-      OrigEntry = RHS.OrigEntry;
-      ContentsEntry = RHS.ContentsEntry;
-
-      assert (RHS.Buffer.getPointer() == 0 && RHS.SourceLineCache == 0 &&
-              "Passed ContentCache object cannot own a buffer.");
-
-      NumLines = RHS.NumLines;
     }
 
   private:
