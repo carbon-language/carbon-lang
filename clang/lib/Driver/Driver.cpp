@@ -523,7 +523,7 @@ int Driver::ExecuteCompilation(const Compilation &C,
     // FIXME: See FIXME above regarding result code interpretation.
     if (Res < 0)
       Diag(clang::diag::err_drv_command_signalled)
-        << FailingTool.getShortName() << -Res;
+        << FailingTool.getShortName();
     else
       Diag(clang::diag::err_drv_command_failed)
         << FailingTool.getShortName() << Res;
