@@ -773,7 +773,7 @@ ProcessGDBRemote::DoAttachToProcessWithID (lldb::pid_t attach_pid)
         {
             char packet[64];
             const int packet_len = ::snprintf (packet, sizeof(packet), "vAttach;%x", attach_pid);
-            
+            SetID (attach_pid);            
             m_async_broadcaster.BroadcastEvent (eBroadcastBitAsyncContinue, new EventDataBytes (packet, packet_len));
         }
     }

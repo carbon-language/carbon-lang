@@ -55,9 +55,6 @@ public:
         m_base_addr = base_addr;
     }
 
-    void
-    SetDIERelations();
-
     const DWARFDebugInfoEntry*
     GetCompileUnitDIEOnly()
     {

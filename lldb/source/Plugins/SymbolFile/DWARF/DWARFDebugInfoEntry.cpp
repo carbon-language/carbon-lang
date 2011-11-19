@@ -112,11 +112,13 @@ DWARFDebugInfoEntry::FastExtract
 )
 {
     m_offset = *offset_ptr;
-
+    m_parent_idx = 0;
+    m_sibling_idx = 0;
+    m_empty_children = false;
     uint64_t abbr_idx = debug_info_data.GetULEB128 (offset_ptr);
     assert (abbr_idx < (1 << DIE_ABBR_IDX_BITSIZE));
     m_abbr_idx = abbr_idx;
-
+    
     assert (fixed_form_sizes);  // For best performance this should be specified!
     
     if (m_abbr_idx)
@@ -1918,4 +1920,29 @@ DWARFDebugInfoEntry::OffsetLessThan (const DWARFDebugInfoEntry& a, const DWARFDe
 {
     return a.GetOffset() < b.GetOffset();
 }
+
+void
+DWARFDebugInfoEntry::DumpDIECollection (Stream &strm, DWARFDebugInfoEntry::collection &die_collection)
+{
+    DWARFDebugInfoEntry::const_iterator pos;
+    DWARFDebugInfoEntry::const_iterator end = die_collection.end();
+    puts("offset    parent   sibling  child");
+    puts("--------  -------- -------- --------");
+    for (pos = die_collection.begin(); pos != end; ++pos)
+    {
+        const DWARFDebugInfoEntry& die_ref = *pos;
+        const DWARFDebugInfoEntry* p = die_ref.GetParent();
+        const DWARFDebugInfoEntry* s = die_ref.GetSibling();
+        const DWARFDebugInfoEntry* c = die_ref.GetFirstChild();
+        strm.Printf("%.8x: %.8x %.8x %.8x 0x%4.4x %s%s\n", 
+                    die_ref.GetOffset(),
+                    p ? p->GetOffset() : 0,
+                    s ? s->GetOffset() : 0,
+                    c ? c->GetOffset() : 0,
+                    die_ref.Tag(), 
+                    DW_TAG_value_to_name(die_ref.Tag()),
+                    die_ref.HasChildren() ? " *" : "");
+    }
+}
+
 
