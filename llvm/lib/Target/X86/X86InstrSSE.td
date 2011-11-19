@@ -3423,47 +3423,6 @@ multiclass PDI_binop_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
        [(set RC:$dst, (OpVT (OpNode RC:$src1,
                                      (bitconvert (memop_frag addr:$src2)))))]>;
 }
-
-/// PDI_binop_rm_v2i64 - Simple SSE2 binary operator whose type is v2i64.
-///
-/// FIXME: we could eliminate this and use PDI_binop_rm instead if tblgen knew
-/// to collapse (bitconvert VT to VT) into its operand.
-///
-multiclass PDI_binop_rm_v2i64<bits<8> opc, string OpcodeStr, SDNode OpNode,
-                              bit IsCommutable = 0, bit Is2Addr = 1> {
-  let isCommutable = IsCommutable in
-  def rr : PDI<opc, MRMSrcReg, (outs VR128:$dst),
-       (ins VR128:$src1, VR128:$src2),
-       !if(Is2Addr,
-           !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-           !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-       [(set VR128:$dst, (v2i64 (OpNode VR128:$src1, VR128:$src2)))]>;
-  def rm : PDI<opc, MRMSrcMem, (outs VR128:$dst),
-       (ins VR128:$src1, i128mem:$src2),
-       !if(Is2Addr,
-           !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-           !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-       [(set VR128:$dst, (OpNode VR128:$src1, (memopv2i64 addr:$src2)))]>;
-}
-
-/// PDI_binop_rm_v4i64 - Simple AVX2 binary operator whose type is v4i64.
-///
-/// FIXME: we could eliminate this and use PDI_binop_rm instead if tblgen knew
-/// to collapse (bitconvert VT to VT) into its operand.
-///
-multiclass PDI_binop_rm_v4i64<bits<8> opc, string OpcodeStr, SDNode OpNode,
-                              bit IsCommutable = 0> {
-  let isCommutable = IsCommutable in
-  def rr : PDI<opc, MRMSrcReg, (outs VR256:$dst),
-       (ins VR256:$src1, VR256:$src2),
-       !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-       [(set VR256:$dst, (v4i64 (OpNode VR256:$src1, VR256:$src2)))]>;
-  def rm : PDI<opc, MRMSrcMem, (outs VR256:$dst),
-       (ins VR256:$src1, i256mem:$src2),
-       !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-       [(set VR256:$dst, (OpNode VR256:$src1, (memopv4i64 addr:$src2)))]>;
-}
-
 } // ExeDomain = SSEPackedInt
 
 // 128-bit Integer Arithmetic
@@ -3475,7 +3434,8 @@ defm VPADDW  : PDI_binop_rm<0xFD, "vpaddw", add, v8i16, VR128, memopv2i64,
                             i128mem, 1, 0>, VEX_4V;
 defm VPADDD  : PDI_binop_rm<0xFE, "vpaddd", add, v4i32, VR128, memopv2i64,
                             i128mem, 1, 0>, VEX_4V;
-defm VPADDQ  : PDI_binop_rm_v2i64<0xD4, "vpaddq", add, 1, 0>, VEX_4V;
+defm VPADDQ  : PDI_binop_rm<0xD4, "vpaddq", add, v2i64, VR128, memopv2i64,
+                            i128mem, 1, 0>, VEX_4V;
 defm VPMULLW : PDI_binop_rm<0xD5, "vpmullw", mul, v8i16, VR128, memopv2i64,
                             i128mem, 1, 0>, VEX_4V;
 defm VPSUBB : PDI_binop_rm<0xF8, "vpsubb", sub, v16i8, VR128, memopv2i64,
@@ -3484,7 +3444,8 @@ defm VPSUBW : PDI_binop_rm<0xF9, "vpsubw", sub, v8i16, VR128, memopv2i64,
                             i128mem, 0, 0>, VEX_4V;
 defm VPSUBD : PDI_binop_rm<0xFA, "vpsubd", sub, v4i32, VR128, memopv2i64,
                             i128mem, 0, 0>, VEX_4V;
-defm VPSUBQ : PDI_binop_rm_v2i64<0xFB, "vpsubq", sub, 0, 0>, VEX_4V;
+defm VPSUBQ : PDI_binop_rm<0xFB, "vpsubq", sub, v2i64, VR128, memopv2i64,
+                            i128mem, 0, 0>, VEX_4V;
 
 // Intrinsic forms
 defm VPSUBSB  : PDI_binop_rm_int<0xE8, "vpsubsb" , int_x86_sse2_psubs_b,
@@ -3529,21 +3490,23 @@ defm VPSADBW  : PDI_binop_rm_int<0xF6, "vpsadbw", int_x86_sse2_psad_bw,
 
 let Predicates = [HasAVX2] in {
 defm VPADDBY  : PDI_binop_rm<0xFC, "vpaddb", add, v32i8, VR256, memopv4i64,
-                            i256mem, 1, 0>, VEX_4V;
+                             i256mem, 1, 0>, VEX_4V;
 defm VPADDWY  : PDI_binop_rm<0xFD, "vpaddw", add, v16i16, VR256, memopv4i64,
-                            i256mem, 1, 0>, VEX_4V;
+                             i256mem, 1, 0>, VEX_4V;
 defm VPADDDY  : PDI_binop_rm<0xFE, "vpaddd", add, v8i32, VR256, memopv4i64,
-                            i256mem, 1, 0>, VEX_4V;
-defm VPADDQY  : PDI_binop_rm_v4i64<0xD4, "vpaddq", add, 1>, VEX_4V;
+                             i256mem, 1, 0>, VEX_4V;
+defm VPADDQY  : PDI_binop_rm<0xD4, "vpaddq", add, v4i64, VR256, memopv4i64,
+                             i256mem, 1, 0>, VEX_4V;
 defm VPMULLWY : PDI_binop_rm<0xD5, "vpmullw", mul, v16i16, VR256, memopv4i64,
-                            i256mem, 1, 0>, VEX_4V;
+                             i256mem, 1, 0>, VEX_4V;
 defm VPSUBBY  : PDI_binop_rm<0xF8, "vpsubb", sub, v32i8, VR256, memopv4i64,
-                            i256mem, 0, 0>, VEX_4V;
+                             i256mem, 0, 0>, VEX_4V;
 defm VPSUBWY  : PDI_binop_rm<0xF9, "vpsubw", sub, v16i16,VR256, memopv4i64,
-                            i256mem,  0, 0>, VEX_4V;
+                             i256mem, 0, 0>, VEX_4V;
 defm VPSUBDY  : PDI_binop_rm<0xFA, "vpsubd", sub, v8i32, VR256, memopv4i64,
-                            i256mem, 0, 0>, VEX_4V;
-defm VPSUBQY  : PDI_binop_rm_v4i64<0xFB, "vpsubq", sub, 0>, VEX_4V;
+                             i256mem, 0, 0>, VEX_4V;
+defm VPSUBQY  : PDI_binop_rm<0xFB, "vpsubq", sub, v4i64, VR256, memopv4i64,
+                             i256mem, 0, 0>, VEX_4V;
 
 // Intrinsic forms
 defm VPSUBSBY  : PDI_binop_rm_int<0xE8, "vpsubsb" , int_x86_avx2_psubs_b,
@@ -3593,7 +3556,8 @@ defm PADDW  : PDI_binop_rm<0xFD, "paddw", add, v8i16, VR128, memopv2i64,
                            i128mem, 1>;
 defm PADDD  : PDI_binop_rm<0xFE, "paddd", add, v4i32, VR128, memopv2i64,
                            i128mem, 1>;
-defm PADDQ  : PDI_binop_rm_v2i64<0xD4, "paddq", add, 1>;
+defm PADDQ  : PDI_binop_rm<0xD4, "paddq", add, v2i64, VR128, memopv2i64,
+                           i128mem, 1>;
 defm PMULLW : PDI_binop_rm<0xD5, "pmullw", mul, v8i16, VR128, memopv2i64,
                            i128mem, 1>;
 defm PSUBB : PDI_binop_rm<0xF8, "psubb", sub, v16i8, VR128, memopv2i64,
@@ -3602,7 +3566,8 @@ defm PSUBW : PDI_binop_rm<0xF9, "psubw", sub, v8i16, VR128, memopv2i64,
                           i128mem>;
 defm PSUBD : PDI_binop_rm<0xFA, "psubd", sub, v4i32, VR128, memopv2i64,
                           i128mem>;
-defm PSUBQ : PDI_binop_rm_v2i64<0xFB, "psubq", sub>;
+defm PSUBQ : PDI_binop_rm<0xFB, "psubq", sub, v2i64, VR128, memopv2i64,
+                          i128mem>;
 
 // Intrinsic forms
 defm PSUBSB  : PDI_binop_rm_int<0xE8, "psubsb" , int_x86_sse2_psubs_b,
@@ -3678,9 +3643,12 @@ defm VPSRAD : PDI_binop_rmi_int<0xE2, 0x72, MRM4r, "vpsrad",
                                 int_x86_sse2_psra_d, int_x86_sse2_psrai_d,
                                 VR128, 0>, VEX_4V;
 
-defm VPAND : PDI_binop_rm_v2i64<0xDB, "vpand", and, 1, 0>, VEX_4V;
-defm VPOR  : PDI_binop_rm_v2i64<0xEB, "vpor" , or, 1, 0>, VEX_4V;
-defm VPXOR : PDI_binop_rm_v2i64<0xEF, "vpxor", xor, 1, 0>, VEX_4V;
+defm VPAND : PDI_binop_rm<0xDB, "vpand", and, v2i64, VR128, memopv2i64,
+                          i128mem, 1, 0>, VEX_4V;
+defm VPOR  : PDI_binop_rm<0xEB, "vpor" , or, v2i64, VR128, memopv2i64,
+                          i128mem, 1, 0>, VEX_4V;
+defm VPXOR : PDI_binop_rm<0xEF, "vpxor", xor, v2i64, VR128, memopv2i64,
+                          i128mem, 1, 0>, VEX_4V;
 
 let ExeDomain = SSEPackedInt in {
   let neverHasSideEffects = 1 in {
@@ -3737,9 +3705,12 @@ defm VPSRADY : PDI_binop_rmi_int<0xE2, 0x72, MRM4r, "vpsrad",
                                  int_x86_avx2_psra_d, int_x86_avx2_psrai_d,
                                  VR256, 0>, VEX_4V;
 
-defm VPANDY : PDI_binop_rm_v4i64<0xDB, "vpand", and, 1>, VEX_4V;
-defm VPORY  : PDI_binop_rm_v4i64<0xEB, "vpor" , or, 1>, VEX_4V;
-defm VPXORY : PDI_binop_rm_v4i64<0xEF, "vpxor", xor, 1>, VEX_4V;
+defm VPANDY : PDI_binop_rm<0xDB, "vpand", and, v4i64, VR256, memopv4i64,
+                           i256mem, 1, 0>, VEX_4V;
+defm VPORY  : PDI_binop_rm<0xEB, "vpor", or, v4i64, VR256, memopv4i64,
+                           i256mem, 1, 0>, VEX_4V;
+defm VPXORY : PDI_binop_rm<0xEF, "vpxor", xor, v4i64, VR256, memopv4i64,
+                           i256mem, 1, 0>, VEX_4V;
 
 let ExeDomain = SSEPackedInt in {
   let neverHasSideEffects = 1 in {
@@ -3796,9 +3767,12 @@ defm PSRAD : PDI_binop_rmi_int<0xE2, 0x72, MRM4r, "psrad",
                                int_x86_sse2_psra_d, int_x86_sse2_psrai_d,
                                VR128>;
 
-defm PAND : PDI_binop_rm_v2i64<0xDB, "pand", and, 1>;
-defm POR  : PDI_binop_rm_v2i64<0xEB, "por" , or, 1>;
-defm PXOR : PDI_binop_rm_v2i64<0xEF, "pxor", xor, 1>;
+defm PAND : PDI_binop_rm<0xDB, "pand", and, v2i64, VR128, memopv2i64,
+                         i128mem, 1>;
+defm POR  : PDI_binop_rm<0xEB, "por" , or, v2i64, VR128, memopv2i64,
+                         i128mem, 1>;
+defm PXOR : PDI_binop_rm<0xEF, "pxor", xor, v2i64, VR128, memopv2i64,
+                         i128mem, 1>;
 
 let ExeDomain = SSEPackedInt in {
   let neverHasSideEffects = 1 in {
@@ -7741,62 +7715,38 @@ defm VPMASKMOVQ : avx2_pmovmask<"vpmaskmovq",
 //===----------------------------------------------------------------------===//
 // Variable Bit Shifts
 //
-multiclass avx2_var_shift_i32<bits<8> opc, string OpcodeStr, SDNode OpNode> {
+multiclass avx2_var_shift<bits<8> opc, string OpcodeStr, SDNode OpNode,
+                          ValueType vt128, ValueType vt256> {
   def rr  : AVX28I<opc, MRMSrcReg, (outs VR128:$dst),
              (ins VR128:$src1, VR128:$src2),
              !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
              [(set VR128:$dst,
-               (v4i32 (OpNode VR128:$src1, (v4i32 VR128:$src2))))]>,
+               (vt128 (OpNode VR128:$src1, (vt128 VR128:$src2))))]>,
              VEX_4V;
   def rm  : AVX28I<opc, MRMSrcMem, (outs VR128:$dst),
              (ins VR128:$src1, i128mem:$src2),
              !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
              [(set VR128:$dst,
-               (v4i32 (OpNode VR128:$src1,
-                       (bc_v4i32 (memopv2i64 addr:$src2)))))]>, VEX_4V;
-  def Yrr : AVX28I<opc, MRMSrcReg, (outs VR256:$dst),
-             (ins VR256:$src1, VR256:$src2),
-             !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-             [(set VR256:$dst,
-               (v8i32 (OpNode VR256:$src1, (v8i32 VR256:$src2))))]>,
-             VEX_4V;
-  def Yrm : AVX28I<opc, MRMSrcMem, (outs VR256:$dst),
-             (ins VR256:$src1, i256mem:$src2),
-             !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-             [(set VR256:$dst,
-               (v8i32 (OpNode VR256:$src1,
-                       (bc_v8i32 (memopv4i64 addr:$src2)))))]>, VEX_4V;
-}
-
-multiclass avx2_var_shift_i64<bits<8> opc, string OpcodeStr, SDNode OpNode> {
-  def rr  : AVX28I<opc, MRMSrcReg, (outs VR128:$dst),
-             (ins VR128:$src1, VR128:$src2),
-             !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-             [(set VR128:$dst,
-               (v2i64 (OpNode VR128:$src1, (v2i64 VR128:$src2))))]>,
-             VEX_4V;
-  def rm  : AVX28I<opc, MRMSrcMem, (outs VR128:$dst),
-             (ins VR128:$src1, i128mem:$src2),
-             !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-             [(set VR128:$dst,
-               (v2i64 (OpNode VR128:$src1, (memopv2i64 addr:$src2))))]>,
+               (vt128 (OpNode VR128:$src1,
+                       (vt128 (bitconvert (memopv2i64 addr:$src2))))))]>,
              VEX_4V;
   def Yrr : AVX28I<opc, MRMSrcReg, (outs VR256:$dst),
              (ins VR256:$src1, VR256:$src2),
              !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
              [(set VR256:$dst,
-               (v4i64 (OpNode VR256:$src1, (v4i64 VR256:$src2))))]>,
+               (vt256 (OpNode VR256:$src1, (vt256 VR256:$src2))))]>,
              VEX_4V;
   def Yrm : AVX28I<opc, MRMSrcMem, (outs VR256:$dst),
              (ins VR256:$src1, i256mem:$src2),
              !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
              [(set VR256:$dst,
-               (v4i64 (OpNode VR256:$src1, (memopv4i64 addr:$src2))))]>,
+               (vt256 (OpNode VR256:$src1,
+                       (vt256 (bitconvert (memopv4i64 addr:$src2))))))]>,
              VEX_4V;
 }
 
-defm VPSLLVD : avx2_var_shift_i32<0x47, "vpsllvd", shl>;
-defm VPSLLVQ : avx2_var_shift_i64<0x47, "vpsllvq", shl>, VEX_W;
-defm VPSRLVD : avx2_var_shift_i32<0x45, "vpsrlvd", srl>;
-defm VPSRLVQ : avx2_var_shift_i64<0x45, "vpsrlvq", srl>, VEX_W;
-defm VPSRAVD : avx2_var_shift_i32<0x46, "vpsravd", sra>;
+defm VPSLLVD : avx2_var_shift<0x47, "vpsllvd", shl, v4i32, v8i32>;
+defm VPSLLVQ : avx2_var_shift<0x47, "vpsllvq", shl, v2i64, v4i64>, VEX_W;
+defm VPSRLVD : avx2_var_shift<0x45, "vpsrlvd", srl, v4i32, v8i32>;
+defm VPSRLVQ : avx2_var_shift<0x45, "vpsrlvq", srl, v2i64, v4i64>, VEX_W;
+defm VPSRAVD : avx2_var_shift<0x46, "vpsravd", sra, v4i32, v8i32>;
