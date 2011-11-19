@@ -414,12 +414,14 @@ namespace clang {
       BadConversionSequence Bad;
     };
 
-    ImplicitConversionSequence() : ConversionKind(Uninitialized) {}
+    ImplicitConversionSequence() 
+      : ConversionKind(Uninitialized), ListInitializationSequence(false) {}
     ~ImplicitConversionSequence() {
       destruct();
     }
     ImplicitConversionSequence(const ImplicitConversionSequence &Other)
-      : ConversionKind(Other.ConversionKind)
+      : ConversionKind(Other.ConversionKind), 
+        ListInitializationSequence(Other.ListInitializationSequence)
     {
       switch (ConversionKind) {
       case Uninitialized: break;
