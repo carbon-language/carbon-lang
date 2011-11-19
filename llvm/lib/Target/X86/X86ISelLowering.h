@@ -178,6 +178,12 @@ namespace llvm {
       /// BLEND family of opcodes
       BLENDV,
 
+      /// HADD - Integer horizontal add.
+      HADD,
+
+      /// HSUB - Integer horizontal sub.
+      HSUB,
+
       /// FHADD - Floating point horizontal add.
       FHADD,
 

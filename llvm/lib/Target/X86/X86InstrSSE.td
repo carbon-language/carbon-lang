@@ -5369,6 +5369,15 @@ let Predicates = [HasSSSE3] in {
             (PSIGNWrr128 VR128:$src1, VR128:$src2)>;
   def : Pat<(v4i32 (X86psign VR128:$src1, VR128:$src2)),
             (PSIGNDrr128 VR128:$src1, VR128:$src2)>;
+
+  def : Pat<(v8i16 (X86hadd VR128:$src1, VR128:$src2)),
+            (PHADDWrr128 VR128:$src1, VR128:$src2)>;
+  def : Pat<(v4i32 (X86hadd VR128:$src1, VR128:$src2)),
+            (PHADDDrr128 VR128:$src1, VR128:$src2)>;
+  def : Pat<(v8i16 (X86hsub VR128:$src1, VR128:$src2)),
+            (PHSUBWrr128 VR128:$src1, VR128:$src2)>;
+  def : Pat<(v4i32 (X86hsub VR128:$src1, VR128:$src2)),
+            (PHSUBDrr128 VR128:$src1, VR128:$src2)>;
 }
 
 let Predicates = [HasAVX] in {
@@ -5383,6 +5392,15 @@ let Predicates = [HasAVX] in {
             (VPSIGNWrr128 VR128:$src1, VR128:$src2)>;
   def : Pat<(v4i32 (X86psign VR128:$src1, VR128:$src2)),
             (VPSIGNDrr128 VR128:$src1, VR128:$src2)>;
+
+  def : Pat<(v8i16 (X86hadd VR128:$src1, VR128:$src2)),
+            (VPHADDWrr128 VR128:$src1, VR128:$src2)>;
+  def : Pat<(v4i32 (X86hadd VR128:$src1, VR128:$src2)),
+            (VPHADDDrr128 VR128:$src1, VR128:$src2)>;
+  def : Pat<(v8i16 (X86hsub VR128:$src1, VR128:$src2)),
+            (VPHSUBWrr128 VR128:$src1, VR128:$src2)>;
+  def : Pat<(v4i32 (X86hsub VR128:$src1, VR128:$src2)),
+            (VPHSUBDrr128 VR128:$src1, VR128:$src2)>;
 }
 
 let Predicates = [HasAVX2] in {
@@ -5392,6 +5410,15 @@ let Predicates = [HasAVX2] in {
             (VPSIGNWrr256 VR256:$src1, VR256:$src2)>;
   def : Pat<(v8i32 (X86psign VR256:$src1, VR256:$src2)),
             (VPSIGNDrr256 VR256:$src1, VR256:$src2)>;
+
+  def : Pat<(v16i16 (X86hadd VR256:$src1, VR256:$src2)),
+            (VPHADDWrr256 VR256:$src1, VR256:$src2)>;
+  def : Pat<(v8i32 (X86hadd VR256:$src1, VR256:$src2)),
+            (VPHADDDrr256 VR256:$src1, VR256:$src2)>;
+  def : Pat<(v16i16 (X86hsub VR256:$src1, VR256:$src2)),
+            (VPHSUBWrr256 VR256:$src1, VR256:$src2)>;
+  def : Pat<(v8i32 (X86hsub VR256:$src1, VR256:$src2)),
+            (VPHSUBDrr256 VR256:$src1, VR256:$src2)>;
 }
 
 //===---------------------------------------------------------------------===//

@@ -14670,7 +14670,24 @@ static SDValue OptimizeConditionalInDecrement(SDNode *N, SelectionDAG &DAG) {
                      DAG.getConstant(0, OtherVal.getValueType()), NewCmp);
 }
 
-static SDValue PerformSubCombine(SDNode *N, SelectionDAG &DAG) {
+/// PerformADDCombine - Do target-specific dag combines on integer adds.
+static SDValue PerformAddCombine(SDNode *N, SelectionDAG &DAG,
+                                 const X86Subtarget *Subtarget) {
+  EVT VT = N->getValueType(0);
+  SDValue Op0 = N->getOperand(0);
+  SDValue Op1 = N->getOperand(1);
+
+  // Try to synthesize horizontal adds from adds of shuffles.
+  if ((Subtarget->hasSSSE3() || Subtarget->hasAVX()) &&
+      (VT == MVT::v8i16 || VT == MVT::v4i32) &&
+      isHorizontalBinOp(Op0, Op1, true))
+    return DAG.getNode(X86ISD::HADD, N->getDebugLoc(), VT, Op0, Op1);
+
+  return OptimizeConditionalInDecrement(N, DAG);
+}
+
+static SDValue PerformSubCombine(SDNode *N, SelectionDAG &DAG,
+                                 const X86Subtarget *Subtarget) {
   SDValue Op0 = N->getOperand(0);
   SDValue Op1 = N->getOperand(1);
 
@@ -14692,6 +14709,13 @@ static SDValue PerformSubCombine(SDNode *N, SelectionDAG &DAG) {
     }
   }
 
+  // Try to synthesize horizontal adds from adds of shuffles.
+  EVT VT = N->getValueType(0);
+  if ((Subtarget->hasSSSE3() || Subtarget->hasAVX()) &&
+      (VT == MVT::v8i16 || VT == MVT::v4i32) &&
+      isHorizontalBinOp(Op0, Op1, false))
+    return DAG.getNode(X86ISD::HSUB, N->getDebugLoc(), VT, Op0, Op1);
+
   return OptimizeConditionalInDecrement(N, DAG);
 }
 
@@ -14705,8 +14729,8 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::VSELECT:
   case ISD::SELECT:         return PerformSELECTCombine(N, DAG, Subtarget);
   case X86ISD::CMOV:        return PerformCMOVCombine(N, DAG, DCI);
-  case ISD::ADD:            return OptimizeConditionalInDecrement(N, DAG);
-  case ISD::SUB:            return PerformSubCombine(N, DAG);
+  case ISD::ADD:            return PerformAddCombine(N, DAG, Subtarget);
+  case ISD::SUB:            return PerformSubCombine(N, DAG, Subtarget);
   case X86ISD::ADC:         return PerformADCCombine(N, DAG, DCI);
   case ISD::MUL:            return PerformMulCombine(N, DAG, DCI);
   case ISD::SHL:
