@@ -1556,10 +1556,12 @@ public:
   // R (S::*)(A) --> R (A)
   QualType ExtractUnqualifiedFunctionType(QualType PossiblyAFunctionType);
 
-  FunctionDecl *ResolveAddressOfOverloadedFunction(Expr *AddressOfExpr,
-                                                   QualType TargetType,
-                                                   bool Complain,
-                                                   DeclAccessPair &Found);
+  FunctionDecl *
+  ResolveAddressOfOverloadedFunction(Expr *AddressOfExpr,
+                                     QualType TargetType,
+                                     bool Complain,
+                                     DeclAccessPair &Found,
+                                     bool *pHadMultipleCandidates = 0);
 
   FunctionDecl *ResolveSingleFunctionTemplateSpecialization(OverloadExpr *ovl,
                                                    bool Complain = false,

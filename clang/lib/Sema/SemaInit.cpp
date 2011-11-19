@@ -2603,13 +2603,15 @@ bool InitializationSequence::endsWithNarrowing(ASTContext &Ctx,
   }
 }
 
-void InitializationSequence::AddAddressOverloadResolutionStep(
-                                                      FunctionDecl *Function,
-                                                      DeclAccessPair Found) {
+void
+InitializationSequence
+::AddAddressOverloadResolutionStep(FunctionDecl *Function,
+                                   DeclAccessPair Found,
+                                   bool HadMultipleCandidates) {
   Step S;
   S.Kind = SK_ResolveAddressOfOverloadedFunction;
   S.Type = Function->getType();
-  S.Function.HadMultipleCandidates = false;
+  S.Function.HadMultipleCandidates = HadMultipleCandidates;
   S.Function.Function = Function;
   S.Function.FoundDecl = Found;
   Steps.push_back(S);
@@ -2643,13 +2645,15 @@ void InitializationSequence::AddExtraneousCopyToTemporary(QualType T) {
   Steps.push_back(S);
 }
 
-void InitializationSequence::AddUserConversionStep(FunctionDecl *Function,
-                                                   DeclAccessPair FoundDecl,
-                                                   QualType T) {
+void
+InitializationSequence::AddUserConversionStep(FunctionDecl *Function,
+                                              DeclAccessPair FoundDecl,
+                                              QualType T,
+                                              bool HadMultipleCandidates) {
   Step S;
   S.Kind = SK_UserConversion;
   S.Type = T;
-  S.Function.HadMultipleCandidates = false;
+  S.Function.HadMultipleCandidates = HadMultipleCandidates;
   S.Function.Function = Function;
   S.Function.FoundDecl = FoundDecl;
   Steps.push_back(S);
@@ -2692,14 +2696,15 @@ void InitializationSequence::AddListInitializationStep(QualType T) {
 }
 
 void
-InitializationSequence::AddConstructorInitializationStep(
-                                              CXXConstructorDecl *Constructor,
-                                                       AccessSpecifier Access,
-                                                         QualType T) {
+InitializationSequence
+::AddConstructorInitializationStep(CXXConstructorDecl *Constructor,
+                                   AccessSpecifier Access,
+                                   QualType T,
+                                   bool HadMultipleCandidates) {
   Step S;
   S.Kind = SK_ConstructorInitialization;
   S.Type = T;
-  S.Function.HadMultipleCandidates = false;
+  S.Function.HadMultipleCandidates = HadMultipleCandidates;
   S.Function.Function = Constructor;
   S.Function.FoundDecl = DeclAccessPair::make(Constructor, Access);
   Steps.push_back(S);
@@ -2971,8 +2976,10 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
     T2 = cv1T1;
 
   // Add the user-defined conversion step.
+  bool HadMultipleCandidates = (CandidateSet.size() > 1);
   Sequence.AddUserConversionStep(Function, Best->FoundDecl,
-                                 T2.getNonLValueExprType(S.Context));
+                                 T2.getNonLValueExprType(S.Context),
+                                 HadMultipleCandidates);
 
   // Determine whether we need to perform derived-to-base or
   // cv-qualification adjustments.
@@ -3041,11 +3048,12 @@ static void TryReferenceInitialization(Sema &S,
   // type of the resulting function.
   if (S.Context.getCanonicalType(T2) == S.Context.OverloadTy) {
     DeclAccessPair Found;
-    if (FunctionDecl *Fn = S.ResolveAddressOfOverloadedFunction(Initializer,
-                                                                T1,
-                                                                false,
-                                                                Found)) {
-      Sequence.AddAddressOverloadResolutionStep(Fn, Found);
+    bool HadMultipleCandidates = false;
+    if (FunctionDecl *Fn
+        = S.ResolveAddressOfOverloadedFunction(Initializer, T1, false, Found,
+                                               &HadMultipleCandidates)) {
+      Sequence.AddAddressOverloadResolutionStep(Fn, Found,
+                                                HadMultipleCandidates);
       cv2T2 = Fn->getType();
       T2 = cv2T2.getUnqualifiedType();
     } else if (!T1->isRecordType()) {
@@ -3388,10 +3396,11 @@ static void TryConstructorInitialization(Sema &S,
 
   // Add the constructor initialization step. Any cv-qualification conversion is
   // subsumed by the initialization.
-  Sequence.AddConstructorInitializationStep(
-                                      cast<CXXConstructorDecl>(Best->Function),
-                                      Best->FoundDecl.getAccess(),
-                                      DestType);
+  bool HadMultipleCandidates = (CandidateSet.size() > 1);
+  CXXConstructorDecl *CtorDecl = cast<CXXConstructorDecl>(Best->Function);
+  Sequence.AddConstructorInitializationStep(CtorDecl,
+                                            Best->FoundDecl.getAccess(),
+                                            DestType, HadMultipleCandidates);
 }
 
 /// \brief Attempt value initialization (C++ [dcl.init]p7).
@@ -3589,11 +3598,13 @@ static void TryUserDefinedConversion(Sema &S,
 
   FunctionDecl *Function = Best->Function;
   S.MarkDeclarationReferenced(DeclLoc, Function);
+  bool HadMultipleCandidates = (CandidateSet.size() > 1);
 
   if (isa<CXXConstructorDecl>(Function)) {
     // Add the user-defined conversion step. Any cv-qualification conversion is
     // subsumed by the initialization.
-    Sequence.AddUserConversionStep(Function, Best->FoundDecl, DestType);
+    Sequence.AddUserConversionStep(Function, Best->FoundDecl, DestType,
+                                   HadMultipleCandidates);
     return;
   }
 
@@ -3606,11 +3617,13 @@ static void TryUserDefinedConversion(Sema &S,
     // we just make a note of the actual destination type (possibly a
     // base class of the type returned by the conversion function) and
     // let the user-defined conversion step handle the conversion.
-    Sequence.AddUserConversionStep(Function, Best->FoundDecl, DestType);
+    Sequence.AddUserConversionStep(Function, Best->FoundDecl, DestType,
+                                   HadMultipleCandidates);
     return;
   }
 
-  Sequence.AddUserConversionStep(Function, Best->FoundDecl, ConvType);
+  Sequence.AddUserConversionStep(Function, Best->FoundDecl, ConvType,
+                                 HadMultipleCandidates);
 
   // If the conversion following the call to the conversion function
   // is interesting, add it as a separate step.

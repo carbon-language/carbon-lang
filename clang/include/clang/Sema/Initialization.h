@@ -766,8 +766,9 @@ public:
   /// \param Function the function to which the overloaded function reference
   /// resolves.
   void AddAddressOverloadResolutionStep(FunctionDecl *Function,
-                                        DeclAccessPair Found);
-  
+                                        DeclAccessPair Found,
+                                        bool HadMultipleCandidates);
+
   /// \brief Add a new step in the initialization that performs a derived-to-
   /// base cast.
   ///
@@ -804,8 +805,9 @@ public:
   /// a constructor or a conversion function.
   void AddUserConversionStep(FunctionDecl *Function,
                              DeclAccessPair FoundDecl,
-                             QualType T);
-  
+                             QualType T,
+                             bool HadMultipleCandidates);
+
   /// \brief Add a new step that performs a qualification conversion to the
   /// given type.
   void AddQualificationConversionStep(QualType Ty,
@@ -821,7 +823,8 @@ public:
   /// \brief Add a constructor-initialization step.
   void AddConstructorInitializationStep(CXXConstructorDecl *Constructor,
                                         AccessSpecifier Access,
-                                        QualType T);
+                                        QualType T,
+                                        bool HadMultipleCandidates);
 
   /// \brief Add a zero-initialization step.
   void AddZeroInitializationStep(QualType T);

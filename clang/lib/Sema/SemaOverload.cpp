@@ -8189,7 +8189,9 @@ public:
       << OvlExpr->getSourceRange();
     S.NoteAllOverloadCandidates(OvlExpr);
   }
-  
+
+  bool hadMultipleCandidates() const { return (OvlExpr->getNumDecls() > 1); }
+
   int getNumMatches() const { return Matches.size(); }
   
   FunctionDecl* getMatchingFunctionDecl() const {
@@ -8219,16 +8221,18 @@ public:
 /// resolved, and NULL otherwise. When @p Complain is true, this
 /// routine will emit diagnostics if there is an error.
 FunctionDecl *
-Sema::ResolveAddressOfOverloadedFunction(Expr *AddressOfExpr, QualType TargetType,
-                                    bool Complain,
-                                    DeclAccessPair &FoundResult) {
-
+Sema::ResolveAddressOfOverloadedFunction(Expr *AddressOfExpr,
+                                         QualType TargetType,
+                                         bool Complain,
+                                         DeclAccessPair &FoundResult,
+                                         bool *pHadMultipleCandidates) {
   assert(AddressOfExpr->getType() == Context.OverloadTy);
-  
-  AddressOfFunctionResolver Resolver(*this, AddressOfExpr, TargetType, Complain);
+
+  AddressOfFunctionResolver Resolver(*this, AddressOfExpr, TargetType,
+                                     Complain);
   int NumMatches = Resolver.getNumMatches();
   FunctionDecl* Fn = 0;
-  if ( NumMatches == 0 && Complain) {
+  if (NumMatches == 0 && Complain) {
     if (Resolver.IsInvalidFormOfPointerToMemberFunction())
       Resolver.ComplainIsInvalidFormOfPointerToMemberFunction();
     else
@@ -8244,7 +8248,9 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *AddressOfExpr, QualType TargetTyp
     if (Complain)
       CheckAddressOfMemberAccess(AddressOfExpr, FoundResult);
   }
-  
+
+  if (pHadMultipleCandidates)
+    *pHadMultipleCandidates = Resolver.hadMultipleCandidates();
   return Fn;
 }
 
