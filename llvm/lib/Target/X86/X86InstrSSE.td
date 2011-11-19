@@ -7741,111 +7741,62 @@ defm VPMASKMOVQ : avx2_pmovmask<"vpmaskmovq",
 //===----------------------------------------------------------------------===//
 // Variable Bit Shifts
 //
-multiclass avx2_var_shift<bits<8> opc, string OpcodeStr,
-                          Intrinsic Int128, Intrinsic Int256> {
+multiclass avx2_var_shift_i32<bits<8> opc, string OpcodeStr, SDNode OpNode> {
   def rr  : AVX28I<opc, MRMSrcReg, (outs VR128:$dst),
              (ins VR128:$src1, VR128:$src2),
              !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-             [(set VR128:$dst, (Int128 VR128:$src1, VR128:$src2))]>, VEX_4V;
+             [(set VR128:$dst,
+               (v4i32 (OpNode VR128:$src1, (v4i32 VR128:$src2))))]>,
+             VEX_4V;
   def rm  : AVX28I<opc, MRMSrcMem, (outs VR128:$dst),
              (ins VR128:$src1, i128mem:$src2),
              !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
              [(set VR128:$dst,
-              (Int128 VR128:$src1, (bitconvert (memopv2i64 addr:$src2))))]>,
-             VEX_4V;
+               (v4i32 (OpNode VR128:$src1,
+                       (bc_v4i32 (memopv2i64 addr:$src2)))))]>, VEX_4V;
   def Yrr : AVX28I<opc, MRMSrcReg, (outs VR256:$dst),
              (ins VR256:$src1, VR256:$src2),
              !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-             [(set VR256:$dst, (Int256 VR256:$src1, VR256:$src2))]>, VEX_4V;
+             [(set VR256:$dst,
+               (v8i32 (OpNode VR256:$src1, (v8i32 VR256:$src2))))]>,
+             VEX_4V;
   def Yrm : AVX28I<opc, MRMSrcMem, (outs VR256:$dst),
              (ins VR256:$src1, i256mem:$src2),
              !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
              [(set VR256:$dst,
-               (Int256 VR256:$src1, (bitconvert (memopv4i64 addr:$src2))))]>,
-             VEX_4V;
+               (v8i32 (OpNode VR256:$src1,
+                       (bc_v8i32 (memopv4i64 addr:$src2)))))]>, VEX_4V;
 }
 
-multiclass avx2_var_shift_i64<bits<8> opc, string OpcodeStr,
-                              Intrinsic Int128, Intrinsic Int256> {
+multiclass avx2_var_shift_i64<bits<8> opc, string OpcodeStr, SDNode OpNode> {
   def rr  : AVX28I<opc, MRMSrcReg, (outs VR128:$dst),
              (ins VR128:$src1, VR128:$src2),
              !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-             [(set VR128:$dst, (Int128 VR128:$src1, VR128:$src2))]>, VEX_4V;
+             [(set VR128:$dst,
+               (v2i64 (OpNode VR128:$src1, (v2i64 VR128:$src2))))]>,
+             VEX_4V;
   def rm  : AVX28I<opc, MRMSrcMem, (outs VR128:$dst),
              (ins VR128:$src1, i128mem:$src2),
              !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
              [(set VR128:$dst,
-              (Int128 VR128:$src1, (memopv2i64 addr:$src2)))]>,
+               (v2i64 (OpNode VR128:$src1, (memopv2i64 addr:$src2))))]>,
              VEX_4V;
   def Yrr : AVX28I<opc, MRMSrcReg, (outs VR256:$dst),
              (ins VR256:$src1, VR256:$src2),
              !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-             [(set VR256:$dst, (Int256 VR256:$src1, VR256:$src2))]>, VEX_4V;
+             [(set VR256:$dst,
+               (v4i64 (OpNode VR256:$src1, (v4i64 VR256:$src2))))]>,
+             VEX_4V;
   def Yrm : AVX28I<opc, MRMSrcMem, (outs VR256:$dst),
              (ins VR256:$src1, i256mem:$src2),
              !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
              [(set VR256:$dst,
-               (Int256 VR256:$src1, (memopv4i64 addr:$src2)))]>,
+               (v4i64 (OpNode VR256:$src1, (memopv4i64 addr:$src2))))]>,
              VEX_4V;
 }
 
-defm VPSLLVD : avx2_var_shift<0x47, "vpsllvd", int_x86_avx2_psllv_d,
-                              int_x86_avx2_psllv_d_256>;
-defm VPSLLVQ : avx2_var_shift_i64<0x47, "vpsllvq", int_x86_avx2_psllv_q,
-                                  int_x86_avx2_psllv_q_256>, VEX_W;
-defm VPSRLVD : avx2_var_shift<0x45, "vpsrlvd", int_x86_avx2_psrlv_d,
-                              int_x86_avx2_psrlv_d_256>;
-defm VPSRLVQ : avx2_var_shift_i64<0x45, "vpsrlvq", int_x86_avx2_psrlv_q,
-                                  int_x86_avx2_psrlv_q_256>, VEX_W;
-defm VPSRAVD : avx2_var_shift<0x46, "vpsravd", int_x86_avx2_psrav_d,
-                              int_x86_avx2_psrav_d_256>;
-
-let Predicates = [HasAVX2] in {
-  def : Pat<(v4i32 (shl (v4i32 VR128:$src1), (v4i32 VR128:$src2))),
-            (VPSLLVDrr VR128:$src1, VR128:$src2)>;
-  def : Pat<(v2i64 (shl (v2i64 VR128:$src1), (v2i64 VR128:$src2))),
-            (VPSLLVQrr VR128:$src1, VR128:$src2)>;
-  def : Pat<(v4i32 (srl (v4i32 VR128:$src1), (v4i32 VR128:$src2))),
-            (VPSRLVDrr VR128:$src1, VR128:$src2)>;
-  def : Pat<(v2i64 (srl (v2i64 VR128:$src1), (v2i64 VR128:$src2))),
-            (VPSRLVQrr VR128:$src1, VR128:$src2)>;
-  def : Pat<(v4i32 (sra (v4i32 VR128:$src1), (v4i32 VR128:$src2))),
-            (VPSRAVDrr VR128:$src1, VR128:$src2)>;
-  def : Pat<(v8i32 (shl (v8i32 VR256:$src1), (v8i32 VR256:$src2))),
-            (VPSLLVDYrr VR256:$src1, VR256:$src2)>;
-  def : Pat<(v4i64 (shl (v4i64 VR256:$src1), (v4i64 VR256:$src2))),
-            (VPSLLVQYrr VR256:$src1, VR256:$src2)>;
-  def : Pat<(v8i32 (srl (v8i32 VR256:$src1), (v8i32 VR256:$src2))),
-            (VPSRLVDYrr VR256:$src1, VR256:$src2)>;
-  def : Pat<(v4i64 (srl (v4i64 VR256:$src1), (v4i64 VR256:$src2))),
-            (VPSRLVQYrr VR256:$src1, VR256:$src2)>;
-  def : Pat<(v8i32 (sra (v8i32 VR256:$src1), (v8i32 VR256:$src2))),
-            (VPSRAVDYrr VR256:$src1, VR256:$src2)>;
-
-  def : Pat<(v4i32 (shl (v4i32 VR128:$src1),
-                    (bc_v4i32 (memopv2i64 addr:$src2)))),
-            (VPSLLVDrm VR128:$src1,  addr:$src2)>;
-  def : Pat<(v2i64 (shl (v2i64 VR128:$src1), (memopv2i64 addr:$src2))),
-            (VPSLLVQrm VR128:$src1,  addr:$src2)>;
-  def : Pat<(v4i32 (srl (v4i32 VR128:$src1),
-                    (bc_v4i32 (memopv2i64 addr:$src2)))),
-            (VPSRLVDrm VR128:$src1,  addr:$src2)>;
-  def : Pat<(v2i64 (srl (v2i64 VR128:$src1), (memopv2i64 addr:$src2))),
-            (VPSRLVQrm VR128:$src1,  addr:$src2)>;
-  def : Pat<(v4i32 (sra (v4i32 VR128:$src1),
-                    (bc_v4i32 (memopv2i64 addr:$src2)))),
-            (VPSRAVDrm VR128:$src1,  addr:$src2)>;
-  def : Pat<(v8i32 (shl (v8i32 VR256:$src1),
-                    (bc_v8i32 (memopv4i64 addr:$src2)))),
-            (VPSLLVDYrm VR256:$src1, addr:$src2)>;
-  def : Pat<(v4i64 (shl (v4i64 VR256:$src1), (memopv4i64 addr:$src2))),
-            (VPSLLVQYrm VR256:$src1, addr:$src2)>;
-  def : Pat<(v8i32 (srl (v8i32 VR256:$src1),
-                    (bc_v8i32 (memopv4i64 addr:$src2)))),
-            (VPSRLVDYrm VR256:$src1, addr:$src2)>;
-  def : Pat<(v4i64 (srl (v4i64 VR256:$src1), (memopv4i64 addr:$src2))),
-            (VPSRLVQYrm VR256:$src1, addr:$src2)>;
-  def : Pat<(v8i32 (sra (v8i32 VR256:$src1),
-                    (bc_v8i32 (memopv4i64 addr:$src2)))),
-            (VPSRAVDYrm VR256:$src1, addr:$src2)>;
-}
+defm VPSLLVD : avx2_var_shift_i32<0x47, "vpsllvd", shl>;
+defm VPSLLVQ : avx2_var_shift_i64<0x47, "vpsllvq", shl>, VEX_W;
+defm VPSRLVD : avx2_var_shift_i32<0x45, "vpsrlvd", srl>;
+defm VPSRLVQ : avx2_var_shift_i64<0x45, "vpsrlvq", srl>, VEX_W;
+defm VPSRAVD : avx2_var_shift_i32<0x46, "vpsravd", sra>;
