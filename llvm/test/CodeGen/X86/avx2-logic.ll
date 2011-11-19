@@ -82,3 +82,15 @@ entry:
   %cond = or <8 x i32> %1, %2
   ret <8 x i32> %cond
 }
+
+define <8 x i32> @allOnes() nounwind {
+; CHECK: vpcmpeqd
+; CHECK-NOT: vinsert
+        ret <8 x i32> <i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1>
+}
+
+define <16 x i16> @allOnes2() nounwind {
+; CHECK: vpcmpeqd
+; CHECK-NOT: vinsert
+        ret <16 x i16> <i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1>
+}

@@ -376,6 +376,7 @@ ReSimplify:
   case X86::AVX_SET0PSY:   LowerUnaryToTwoAddr(OutMI, X86::VXORPSYrr); break;
   case X86::AVX_SET0PDY:   LowerUnaryToTwoAddr(OutMI, X86::VXORPDYrr); break;
   case X86::AVX_SETALLONES:  LowerUnaryToTwoAddr(OutMI, X86::VPCMPEQDrr); break;
+  case X86::AVX2_SETALLONES: LowerUnaryToTwoAddr(OutMI, X86::VPCMPEQDYrr);break;
 
   case X86::MOV16r0:
     LowerSubReg32_Op0(OutMI, X86::MOV32r0);   // MOV16r0 -> MOV32r0

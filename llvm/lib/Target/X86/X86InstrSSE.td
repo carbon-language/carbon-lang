@@ -318,6 +318,10 @@ let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
     isCodeGenOnly = 1, ExeDomain = SSEPackedInt, Predicates = [HasAVX] in
   def AVX_SETALLONES : PDI<0x76, MRMInitReg, (outs VR128:$dst), (ins), "",
                          [(set VR128:$dst, (v4i32 immAllOnesV))]>, VEX_4V;
+let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
+    isCodeGenOnly = 1, ExeDomain = SSEPackedInt, Predicates = [HasAVX2] in
+  def AVX2_SETALLONES : PDI<0x76, MRMInitReg, (outs VR256:$dst), (ins), "",
+                          [(set VR256:$dst, (v8i32 immAllOnesV))]>, VEX_4V;
 
 
 //===----------------------------------------------------------------------===//

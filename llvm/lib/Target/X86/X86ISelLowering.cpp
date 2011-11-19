@@ -4387,23 +4387,30 @@ static SDValue getZeroVector(EVT VT, bool HasXMMInt, SelectionDAG &DAG,
 }
 
 /// getOnesVector - Returns a vector of specified type with all bits set.
-/// Always build ones vectors as <4 x i32>. For 256-bit types, use two
-/// <4 x i32> inserted in a <8 x i32> appropriately. Then bitcast to their
-/// original type, ensuring they get CSE'd.
-static SDValue getOnesVector(EVT VT, SelectionDAG &DAG, DebugLoc dl) {
+/// Always build ones vectors as <4 x i32> or <8 x i32>. For 256-bit types with
+/// no AVX2 supprt, use two <4 x i32> inserted in a <8 x i32> appropriately.
+/// Then bitcast to their original type, ensuring they get CSE'd.
+static SDValue getOnesVector(EVT VT, bool HasAVX2, SelectionDAG &DAG,
+                             DebugLoc dl) {
   assert(VT.isVector() && "Expected a vector type");
   assert((VT.is128BitVector() || VT.is256BitVector())
          && "Expected a 128-bit or 256-bit vector type");
 
   SDValue Cst = DAG.getTargetConstant(~0U, MVT::i32);
-  SDValue Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32,
-                            Cst, Cst, Cst, Cst);
-
-  if (VT.is256BitVector()) {
-    SDValue InsV = Insert128BitVector(DAG.getNode(ISD::UNDEF, dl, MVT::v8i32),
-                              Vec, DAG.getConstant(0, MVT::i32), DAG, dl);
-    Vec = Insert128BitVector(InsV, Vec,
-                  DAG.getConstant(4 /* NumElems/2 */, MVT::i32), DAG, dl);
+  SDValue Vec;
+  if (VT.getSizeInBits() == 256) {
+    if (HasAVX2) { // AVX2
+      SDValue Ops[] = { Cst, Cst, Cst, Cst, Cst, Cst, Cst, Cst };
+      Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v8i32, Ops, 8);
+    } else { // AVX
+      Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, Cst, Cst, Cst, Cst);
+      SDValue InsV = Insert128BitVector(DAG.getNode(ISD::UNDEF, dl, MVT::v8i32),
+                                Vec, DAG.getConstant(0, MVT::i32), DAG, dl);
+      Vec = Insert128BitVector(InsV, Vec,
+                    DAG.getConstant(4 /* NumElems/2 */, MVT::i32), DAG, dl);
+    }
+  } else {
+    Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, Cst, Cst, Cst, Cst);
   }
 
   return DAG.getNode(ISD::BITCAST, dl, VT, Vec);
@@ -5221,12 +5228,14 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
   }
 
   // Vectors containing all ones can be matched by pcmpeqd on 128-bit width
-  // vectors or broken into v4i32 operations on 256-bit vectors.
+  // vectors or broken into v4i32 operations on 256-bit vectors. AVX2 can use
+  // vpcmpeqd on 256-bit vectors.
   if (ISD::isBuildVectorAllOnes(Op.getNode())) {
-    if (Op.getValueType() == MVT::v4i32)
+    if (Op.getValueType() == MVT::v4i32 ||
+        (Op.getValueType() == MVT::v8i32 && Subtarget->hasAVX2()))
       return Op;
 
-    return getOnesVector(Op.getValueType(), DAG, dl);
+    return getOnesVector(Op.getValueType(), Subtarget->hasAVX2(), DAG, dl);
   }
 
   SDValue LD = isVectorBroadcast(Op, Subtarget->hasAVX2());

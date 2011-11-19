@@ -2902,6 +2902,7 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
     switch (LoadMI->getOpcode()) {
     case X86::AVX_SET0PSY:
     case X86::AVX_SET0PDY:
+    case X86::AVX2_SETALLONES:
       Alignment = 32;
       break;
     case X86::V_SET0:
@@ -2947,6 +2948,7 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
   case X86::AVX_SET0PSY:
   case X86::AVX_SET0PDY:
   case X86::AVX_SETALLONES:
+  case X86::AVX2_SETALLONES:
   case X86::FsFLD0SD:
   case X86::FsFLD0SS:
   case X86::VFsFLD0SD:
@@ -2985,7 +2987,8 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
     else
       Ty = VectorType::get(Type::getInt32Ty(MF.getFunction()->getContext()), 4);
 
-    bool IsAllOnes = (Opc == X86::V_SETALLONES || Opc == X86::AVX_SETALLONES);
+    bool IsAllOnes = (Opc == X86::V_SETALLONES || Opc == X86::AVX_SETALLONES ||
+                      Opc == X86::AVX2_SETALLONES);
     const Constant *C = IsAllOnes ? Constant::getAllOnesValue(Ty) :
                                     Constant::getNullValue(Ty);
     unsigned CPI = MCP.getConstantPoolIndex(C, Alignment);
