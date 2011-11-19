@@ -79,7 +79,7 @@ public:
     ///     which need to be searched recursively.  That job falls to
     ///     TransformTopLevelDecl.
     //----------------------------------------------------------------------
-    void HandleTopLevelDecl(clang::DeclGroupRef D);
+    bool HandleTopLevelDecl(clang::DeclGroupRef D);
     
     //----------------------------------------------------------------------
     /// Passthrough stub

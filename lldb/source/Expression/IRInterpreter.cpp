@@ -617,7 +617,7 @@ public:
             {
                 // Special-case "this", "self", and "_cmd"
                 
-                std::string name_str = value->getNameStr();
+                std::string name_str = value->getName().str();
                 
                 if (name_str == "this" ||
                     name_str == "self" ||

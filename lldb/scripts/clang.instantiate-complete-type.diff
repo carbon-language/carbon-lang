@@ -1,0 +1,15 @@
+Index: lib/Sema/SemaTemplateInstantiate.cpp
+===================================================================
+--- lib/Sema/SemaTemplateInstantiate.cpp	(revision 144982)
++++ lib/Sema/SemaTemplateInstantiate.cpp	(working copy)
+@@ -1683,6 +1683,10 @@
+                        TemplateSpecializationKind TSK,
+                        bool Complain) {
+   bool Invalid = false;
++    
++  RequireCompleteType(Pattern->getLocation(), 
++                      QualType(Pattern->getTypeForDecl(), 0), 
++                      diag::err_incomplete_type);
+ 
+   CXXRecordDecl *PatternDef
+     = cast_or_null<CXXRecordDecl>(Pattern->getDefinition());

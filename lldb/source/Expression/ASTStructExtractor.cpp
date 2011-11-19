@@ -116,7 +116,7 @@ ASTStructExtractor::ExtractFromTopLevelDecl(Decl* D)
     }
 }
 
-void 
+bool 
 ASTStructExtractor::HandleTopLevelDecl(DeclGroupRef D)
 {
     DeclGroupRef::iterator decl_iterator;
@@ -131,7 +131,8 @@ ASTStructExtractor::HandleTopLevelDecl(DeclGroupRef D)
     }
     
     if (m_passthrough)
-        m_passthrough->HandleTopLevelDecl(D);
+        return m_passthrough->HandleTopLevelDecl(D);
+    return true;
 }
 
 void

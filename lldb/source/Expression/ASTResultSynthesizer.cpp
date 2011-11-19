@@ -108,7 +108,7 @@ ASTResultSynthesizer::TransformTopLevelDecl(Decl* D)
     }
 }
 
-void 
+bool 
 ASTResultSynthesizer::HandleTopLevelDecl(DeclGroupRef D)
 {
     DeclGroupRef::iterator decl_iterator;
@@ -123,7 +123,8 @@ ASTResultSynthesizer::HandleTopLevelDecl(DeclGroupRef D)
     }
     
     if (m_passthrough)
-        m_passthrough->HandleTopLevelDecl(D);
+        return m_passthrough->HandleTopLevelDecl(D);
+    return true;
 }
 
 bool 

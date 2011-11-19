@@ -107,7 +107,7 @@ IRForTarget::FixFunctionLinkage(llvm::Function &llvm_function)
     
     llvm_function.setLinkage(GlobalValue::ExternalLinkage);
     
-    std::string name = llvm_function.getNameStr();
+    std::string name = llvm_function.getName().str();
     
     return true;
 }
@@ -141,7 +141,7 @@ IRForTarget::HasSideEffects (llvm::Function &llvm_function)
                     std::string ptr_name;
                     
                     if (store_ptr->hasName())
-                        ptr_name = store_ptr->getNameStr();
+                        ptr_name = store_ptr->getName().str();
                     
                     if (isa <AllocaInst> (store_ptr))
                         break;
@@ -342,7 +342,7 @@ IRForTarget::ResolveFunctionPointers(llvm::Module &llvm_module,
         bool is_decl = fun->isDeclaration();
         
         if (log)
-            log->Printf("Examining %s function %s", (is_decl ? "declaration" : "non-declaration"), fun->getNameStr().c_str());
+            log->Printf("Examining %s function %s", (is_decl ? "declaration" : "non-declaration"), fun->getName().str().c_str());
         
         if (!is_decl)
             continue;

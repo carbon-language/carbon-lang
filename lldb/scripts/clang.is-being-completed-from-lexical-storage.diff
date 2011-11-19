@@ -1,6 +1,41 @@
+Index: lib/AST/ASTImporter.cpp
+===================================================================
+--- lib/AST/ASTImporter.cpp	(revision 144982)
++++ lib/AST/ASTImporter.cpp	(working copy)
+@@ -2300,7 +2300,8 @@
+       
+       if (RecordDecl *FoundRecord = dyn_cast<RecordDecl>(Found)) {
+         if (RecordDecl *FoundDef = FoundRecord->getDefinition()) {
+-          if (!D->isCompleteDefinition() || IsStructuralMatch(D, FoundDef)) {
++          if (FoundDef->isBeingCompletedFromLexicalStorage() ||
++              !D->isCompleteDefinition() || IsStructuralMatch(D, FoundDef)) {
+             // The record types structurally match, or the "from" translation
+             // unit only had a forward declaration anyway; call it the same
+             // function.
+Index: lib/AST/Decl.cpp
+===================================================================
+--- lib/AST/Decl.cpp	(revision 144982)
++++ lib/AST/Decl.cpp	(working copy)
+@@ -2405,8 +2405,14 @@
+   ExternalASTSource::Deserializing TheFields(Source);
+ 
+   SmallVector<Decl*, 64> Decls;
+-  LoadedFieldsFromExternalStorage = true;  
+-  switch (Source->FindExternalLexicalDeclsBy<FieldDecl>(this, Decls)) {
++  LoadedFieldsFromExternalStorage = true;
++    
++  setIsBeingCompletedFromLexicalStorage(true);
++  ExternalLoadResult LoadResult = 
++    Source->FindExternalLexicalDeclsBy<FieldDecl>(this, Decls);
++  setIsBeingCompletedFromLexicalStorage(false);
++
++  switch (LoadResult) {
+   case ELR_Success:
+     break;
+     
 Index: include/clang/AST/DeclBase.h
 ===================================================================
---- include/clang/AST/DeclBase.h	(revision 144573)
+--- include/clang/AST/DeclBase.h	(revision 144982)
 +++ include/clang/AST/DeclBase.h	(working copy)
 @@ -807,6 +807,12 @@
    /// storage that contains additional declarations that are visible
@@ -41,38 +76,3 @@ Index: include/clang/AST/DeclBase.h
    /// \brief Determine whether the given declaration is stored in the list of
    /// declarations lexically within this context.
    bool isDeclInLexicalTraversal(const Decl *D) const {
-Index: lib/AST/Decl.cpp
-===================================================================
---- lib/AST/Decl.cpp	(revision 144573)
-+++ lib/AST/Decl.cpp	(working copy)
-@@ -2405,8 +2405,14 @@
-   ExternalASTSource::Deserializing TheFields(Source);
- 
-   SmallVector<Decl*, 64> Decls;
--  LoadedFieldsFromExternalStorage = true;  
--  switch (Source->FindExternalLexicalDeclsBy<FieldDecl>(this, Decls)) {
-+  LoadedFieldsFromExternalStorage = true;
-+    
-+  setIsBeingCompletedFromLexicalStorage(true);
-+  ExternalLoadResult LoadResult = 
-+    Source->FindExternalLexicalDeclsBy<FieldDecl>(this, Decls);
-+  setIsBeingCompletedFromLexicalStorage(false);
-+
-+  switch (LoadResult) {
-   case ELR_Success:
-     break;
-     
-Index: lib/AST/ASTImporter.cpp
-===================================================================
---- lib/AST/ASTImporter.cpp	(revision 144573)
-+++ lib/AST/ASTImporter.cpp	(working copy)
-@@ -2290,7 +2290,8 @@
-       
-       if (RecordDecl *FoundRecord = dyn_cast<RecordDecl>(Found)) {
-         if (RecordDecl *FoundDef = FoundRecord->getDefinition()) {
--          if (!D->isCompleteDefinition() || IsStructuralMatch(D, FoundDef)) {
-+          if (FoundDef->isBeingCompletedFromLexicalStorage() ||
-+              !D->isCompleteDefinition() || IsStructuralMatch(D, FoundDef)) {
-             // The record types structurally match, or the "from" translation
-             // unit only had a forward declaration anyway; call it the same
-             // function.
