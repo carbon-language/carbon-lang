@@ -3824,51 +3824,51 @@ let ExeDomain = SSEPackedInt in {
 
 let Predicates = [HasAVX] in {
   def : Pat<(int_x86_sse2_psll_dq VR128:$src1, imm:$src2),
-            (v2i64 (VPSLLDQri VR128:$src1, (BYTE_imm imm:$src2)))>;
+            (VPSLLDQri VR128:$src1, (BYTE_imm imm:$src2))>;
   def : Pat<(int_x86_sse2_psrl_dq VR128:$src1, imm:$src2),
-            (v2i64 (VPSRLDQri VR128:$src1, (BYTE_imm imm:$src2)))>;
+            (VPSRLDQri VR128:$src1, (BYTE_imm imm:$src2))>;
   def : Pat<(int_x86_sse2_psll_dq_bs VR128:$src1, imm:$src2),
-            (v2i64 (VPSLLDQri VR128:$src1, imm:$src2))>;
+            (VPSLLDQri VR128:$src1, imm:$src2)>;
   def : Pat<(int_x86_sse2_psrl_dq_bs VR128:$src1, imm:$src2),
-            (v2i64 (VPSRLDQri VR128:$src1, imm:$src2))>;
+            (VPSRLDQri VR128:$src1, imm:$src2)>;
   def : Pat<(v2f64 (X86fsrl VR128:$src1, i32immSExt8:$src2)),
-            (v2f64 (VPSRLDQri VR128:$src1, (BYTE_imm imm:$src2)))>;
+            (VPSRLDQri VR128:$src1, (BYTE_imm imm:$src2))>;
 
   // Shift up / down and insert zero's.
   def : Pat<(v2i64 (X86vshl  VR128:$src, (i8 imm:$amt))),
-            (v2i64 (VPSLLDQri VR128:$src, (BYTE_imm imm:$amt)))>;
+            (VPSLLDQri VR128:$src, (BYTE_imm imm:$amt))>;
   def : Pat<(v2i64 (X86vshr  VR128:$src, (i8 imm:$amt))),
-            (v2i64 (VPSRLDQri VR128:$src, (BYTE_imm imm:$amt)))>;
+            (VPSRLDQri VR128:$src, (BYTE_imm imm:$amt))>;
 }
 
 let Predicates = [HasAVX2] in {
   def : Pat<(int_x86_avx2_psll_dq VR256:$src1, imm:$src2),
-            (v4i64 (VPSLLDQYri VR256:$src1, (BYTE_imm imm:$src2)))>;
+            (VPSLLDQYri VR256:$src1, (BYTE_imm imm:$src2))>;
   def : Pat<(int_x86_avx2_psrl_dq VR256:$src1, imm:$src2),
-            (v4i64 (VPSRLDQYri VR256:$src1, (BYTE_imm imm:$src2)))>;
+            (VPSRLDQYri VR256:$src1, (BYTE_imm imm:$src2))>;
   def : Pat<(int_x86_avx2_psll_dq_bs VR256:$src1, imm:$src2),
-            (v4i64 (VPSLLDQYri VR256:$src1, imm:$src2))>;
+            (VPSLLDQYri VR256:$src1, imm:$src2)>;
   def : Pat<(int_x86_avx2_psrl_dq_bs VR256:$src1, imm:$src2),
-            (v4i64 (VPSRLDQYri VR256:$src1, imm:$src2))>;
+            (VPSRLDQYri VR256:$src1, imm:$src2)>;
 }
 
 let Predicates = [HasSSE2] in {
   def : Pat<(int_x86_sse2_psll_dq VR128:$src1, imm:$src2),
-            (v2i64 (PSLLDQri VR128:$src1, (BYTE_imm imm:$src2)))>;
+            (PSLLDQri VR128:$src1, (BYTE_imm imm:$src2))>;
   def : Pat<(int_x86_sse2_psrl_dq VR128:$src1, imm:$src2),
-            (v2i64 (PSRLDQri VR128:$src1, (BYTE_imm imm:$src2)))>;
+            (PSRLDQri VR128:$src1, (BYTE_imm imm:$src2))>;
   def : Pat<(int_x86_sse2_psll_dq_bs VR128:$src1, imm:$src2),
-            (v2i64 (PSLLDQri VR128:$src1, imm:$src2))>;
+            (PSLLDQri VR128:$src1, imm:$src2)>;
   def : Pat<(int_x86_sse2_psrl_dq_bs VR128:$src1, imm:$src2),
-            (v2i64 (PSRLDQri VR128:$src1, imm:$src2))>;
+            (PSRLDQri VR128:$src1, imm:$src2)>;
   def : Pat<(v2f64 (X86fsrl VR128:$src1, i32immSExt8:$src2)),
-            (v2f64 (PSRLDQri VR128:$src1, (BYTE_imm imm:$src2)))>;
+            (PSRLDQri VR128:$src1, (BYTE_imm imm:$src2))>;
 
   // Shift up / down and insert zero's.
   def : Pat<(v2i64 (X86vshl  VR128:$src, (i8 imm:$amt))),
-            (v2i64 (PSLLDQri VR128:$src, (BYTE_imm imm:$amt)))>;
+            (PSLLDQri VR128:$src, (BYTE_imm imm:$amt))>;
   def : Pat<(v2i64 (X86vshr  VR128:$src, (i8 imm:$amt))),
-            (v2i64 (PSRLDQri VR128:$src, (BYTE_imm imm:$amt)))>;
+            (PSRLDQri VR128:$src, (BYTE_imm imm:$amt))>;
 }
 
 //===---------------------------------------------------------------------===//
@@ -5316,11 +5316,11 @@ let isCommutable = 0 in {
                                         int_x86_avx2_pmadd_ub_sw>, VEX_4V;
   defm VPSHUFB    : SS3I_binop_rm_int_y<0x00, "vpshufb", memopv32i8,
                                         int_x86_avx2_pshuf_b>, VEX_4V;
-  defm VPSIGNB    : SS3I_binop_rm_int_y<0x08, "vpsignb", memopv16i8,
+  defm VPSIGNB    : SS3I_binop_rm_int_y<0x08, "vpsignb", memopv32i8,
                                         int_x86_avx2_psign_b>, VEX_4V;
-  defm VPSIGNW    : SS3I_binop_rm_int_y<0x09, "vpsignw", memopv8i16,
+  defm VPSIGNW    : SS3I_binop_rm_int_y<0x09, "vpsignw", memopv16i16,
                                         int_x86_avx2_psign_w>, VEX_4V;
-  defm VPSIGND    : SS3I_binop_rm_int_y<0x0A, "vpsignd", memopv4i32,
+  defm VPSIGND    : SS3I_binop_rm_int_y<0x0A, "vpsignd", memopv8i32,
                                         int_x86_avx2_psign_d>, VEX_4V;
 }
 defm VPMULHRSW    : SS3I_binop_rm_int_y<0x0B, "vpmulhrsw", memopv16i16,
@@ -5363,11 +5363,11 @@ let Predicates = [HasSSSE3] in {
   def : Pat<(X86pshufb VR128:$src, (bc_v16i8 (memopv2i64 addr:$mask))),
             (PSHUFBrm128 VR128:$src, addr:$mask)>;
 
-  def : Pat<(X86psignb VR128:$src1, VR128:$src2),
+  def : Pat<(v16i8 (X86psignb VR128:$src1, VR128:$src2)),
             (PSIGNBrr128 VR128:$src1, VR128:$src2)>;
-  def : Pat<(X86psignw VR128:$src1, VR128:$src2),
+  def : Pat<(v8i16 (X86psignw VR128:$src1, VR128:$src2)),
             (PSIGNWrr128 VR128:$src1, VR128:$src2)>;
-  def : Pat<(X86psignd VR128:$src1, VR128:$src2),
+  def : Pat<(v4i32 (X86psignd VR128:$src1, VR128:$src2)),
             (PSIGNDrr128 VR128:$src1, VR128:$src2)>;
 }
 
@@ -5377,12 +5377,21 @@ let Predicates = [HasAVX] in {
   def : Pat<(X86pshufb VR128:$src, (bc_v16i8 (memopv2i64 addr:$mask))),
             (VPSHUFBrm128 VR128:$src, addr:$mask)>;
 
-  def : Pat<(X86psignb VR128:$src1, VR128:$src2),
+  def : Pat<(v16i8 (X86psignb VR128:$src1, VR128:$src2)),
             (VPSIGNBrr128 VR128:$src1, VR128:$src2)>;
-  def : Pat<(X86psignw VR128:$src1, VR128:$src2),
+  def : Pat<(v8i16 (X86psignw VR128:$src1, VR128:$src2)),
             (VPSIGNWrr128 VR128:$src1, VR128:$src2)>;
-  def : Pat<(X86psignd VR128:$src1, VR128:$src2),
+  def : Pat<(v4i32 (X86psignd VR128:$src1, VR128:$src2)),
             (VPSIGNDrr128 VR128:$src1, VR128:$src2)>;
+}
+
+let Predicates = [HasAVX2] in {
+  def : Pat<(v32i8 (X86psignb VR256:$src1, VR256:$src2)),
+            (VPSIGNBrr256 VR256:$src1, VR256:$src2)>;
+  def : Pat<(v16i16 (X86psignw VR256:$src1, VR256:$src2)),
+            (VPSIGNWrr256 VR256:$src1, VR256:$src2)>;
+  def : Pat<(v8i32 (X86psignd VR256:$src1, VR256:$src2)),
+            (VPSIGNDrr256 VR256:$src1, VR256:$src2)>;
 }
 
 //===---------------------------------------------------------------------===//
