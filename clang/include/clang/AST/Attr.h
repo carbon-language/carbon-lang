@@ -23,6 +23,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include <cassert>
 #include <cstring>
 #include <algorithm>
@@ -102,6 +103,9 @@ public:
 
   // Clone this attribute.
   virtual Attr* clone(ASTContext &C) const = 0;
+
+  // Pretty print this attribute.
+  virtual void printPretty(llvm::raw_ostream &OS, ASTContext &C) const = 0;
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Attr *) { return true; }

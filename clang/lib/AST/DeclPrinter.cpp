@@ -85,6 +85,7 @@ namespace {
 
     void PrintTemplateParameters(const TemplateParameterList *Params,
                                  const TemplateArgumentList *Args);
+    void prettyPrintAttributes(Decl *D);
   };
 }
 
@@ -180,6 +181,16 @@ raw_ostream& DeclPrinter::Indent(unsigned Indentation) {
   for (unsigned i = 0; i != Indentation; ++i)
     Out << "  ";
   return Out;
+}
+
+void DeclPrinter::prettyPrintAttributes(Decl *D) {
+  if (D->hasAttrs()) {
+    AttrVec &Attrs = D->getAttrs();
+    for (AttrVec::const_iterator i=Attrs.begin(), e=Attrs.end(); i!=e; ++i) {
+        Attr *A = *i;
+        A->printPretty(Out, Context);
+    }
+  }
 }
 
 void DeclPrinter::ProcessDeclGroup(SmallVectorImpl<Decl*>& Decls) {
@@ -320,6 +331,7 @@ void DeclPrinter::VisitTypedefDecl(TypedefDecl *D) {
       Out << "__module_private__ ";
   }
   Out << S;
+  prettyPrintAttributes(D);
 }
 
 void DeclPrinter::VisitTypeAliasDecl(TypeAliasDecl *D) {
@@ -350,6 +362,7 @@ void DeclPrinter::VisitEnumDecl(EnumDecl *D) {
     VisitDeclContext(D);
     Indent() << "}";
   }
+  prettyPrintAttributes(D);
 }
 
 void DeclPrinter::VisitRecordDecl(RecordDecl *D) {
@@ -466,12 +479,6 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
       }
     }
 
-    if (D->hasAttr<NoReturnAttr>())
-      Proto += " __attribute((noreturn))";
-
-    if (D->hasAttr<ReturnsTwiceAttr>())
-      Proto += " __attribute((returns_twice))";
-
     if (CXXConstructorDecl *CDecl = dyn_cast<CXXConstructorDecl>(D)) {
       bool HasInitializerList = false;
       for (CXXConstructorDecl::init_const_iterator B = CDecl->init_begin(),
@@ -542,6 +549,7 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
   }
 
   Out << Proto;
+  prettyPrintAttributes(D);
 
   if (D->isPure())
     Out << " = 0";
@@ -588,6 +596,7 @@ void DeclPrinter::VisitFieldDecl(FieldDecl *D) {
     Out << " = ";
     Init->printPretty(Out, Context, 0, Policy, Indentation);
   }
+  prettyPrintAttributes(D);
 }
 
 void DeclPrinter::VisitLabelDecl(LabelDecl *D) {
@@ -624,6 +633,7 @@ void DeclPrinter::VisitVarDecl(VarDecl *D) {
     if (D->hasCXXDirectInitializer())
       Out << ")";
   }
+  prettyPrintAttributes(D);
 }
 
 void DeclPrinter::VisitParmVarDecl(ParmVarDecl *D) {

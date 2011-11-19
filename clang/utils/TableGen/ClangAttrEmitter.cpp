@@ -98,6 +98,7 @@ namespace {
     virtual void writePCHReadArgs(raw_ostream &OS) const = 0;
     virtual void writePCHReadDecls(raw_ostream &OS) const = 0;
     virtual void writePCHWrite(raw_ostream &OS) const = 0;
+    virtual void writeValue(raw_ostream &OS) const = 0;
   };
 
   class SimpleArgument : public Argument {
@@ -135,6 +136,19 @@ namespace {
     void writePCHWrite(raw_ostream &OS) const {
       OS << "    " << WritePCHRecord(type, "SA->get" +
                                            std::string(getUpperName()) + "()");
+    }
+    void writeValue(raw_ostream &OS) const {
+      if (type == "FunctionDecl *") {
+        OS << "\" << get" << getUpperName() << "()->getNameInfo().getAsString() << \"";
+      } else if (type == "IdentifierInfo *") {
+        OS << "\" << get" << getUpperName() << "()->getName() << \"";
+      } else if (type == "QualType") {
+        OS << "\" << get" << getUpperName() << "().getAsString() << \"";
+      } else if (type == "SourceLocation") {
+        OS << "\" << get" << getUpperName() << "().getRawEncoding() << \"";
+      } else {
+        OS << "\" << get" << getUpperName() << "() << \"";
+      }
     }
   };
 
@@ -189,6 +203,9 @@ namespace {
     }
     void writePCHWrite(raw_ostream &OS) const {
       OS << "    AddString(SA->get" << getUpperName() << "(), Record);\n";
+    }
+    void writeValue(raw_ostream &OS) const {
+      OS << "\\\"\" << get" << getUpperName() << "() << \"\\\"";
     }
   };
 
@@ -293,6 +310,9 @@ namespace {
       OS << "      AddTypeSourceInfo(SA->get" << getUpperName()
          << "Type(), Record);\n";
     }
+    void writeValue(raw_ostream &OS) const {
+      OS << "\" << get" << getUpperName() << "(Ctx) << \"";
+    }
   };
 
   class VariadicArgument : public Argument {
@@ -362,6 +382,18 @@ namespace {
          << getLowerName() << "_end(); i != e; ++i)\n";
       OS << "      " << WritePCHRecord(type, "(*i)");
     }
+    void writeValue(raw_ostream &OS) const {
+      OS << "\";\n";
+      OS << "  bool isFirst = true;\n"
+         << "  for (" << getAttrName() << "Attr::" << getLowerName()
+         << "_iterator i = " << getLowerName() << "_begin(), e = "
+         << getLowerName() << "_end(); i != e; ++i) {\n"
+         << "    if (isFirst) isFirst = false;\n"
+         << "    else OS << \", \";\n"
+         << "    OS << *i;\n"
+         << "  }\n";
+      OS << "  OS << \"";
+    }
   };
 
   class EnumArgument : public Argument {
@@ -422,6 +454,9 @@ namespace {
     void writePCHWrite(raw_ostream &OS) const {
       OS << "Record.push_back(SA->get" << getUpperName() << "());\n";
     }
+    void writeValue(raw_ostream &OS) const {
+      OS << "\" << get" << getUpperName() << "() << \"";
+    }
   };
 
   class VersionArgument : public Argument {
@@ -462,6 +497,9 @@ namespace {
     }
     void writePCHWrite(raw_ostream &OS) const {
       OS << "    AddVersionTuple(SA->get" << getUpperName() << "(), Record);\n";
+    }
+    void writeValue(raw_ostream &OS) const {
+      OS << getLowerName() << "=\" << get" << getUpperName() << "() << \"";
     }
   };
 }
@@ -509,6 +547,15 @@ static Argument *createArgument(Record &Arg, StringRef Attr,
     }
   }
   return Ptr;
+}
+
+static void writeAvailabilityValue(raw_ostream &OS) {
+  OS << "\" << getPlatform()->getName();\n"
+     << "  if (!getIntroduced().empty()) OS << \", introduced=\" << getIntroduced();\n"
+     << "  if (!getDeprecated().empty()) OS << \", deprecated=\" << getDeprecated();\n"
+     << "  if (!getObsoleted().empty()) OS << \", obsoleted=\" << getObsoleted();\n"
+     << "  if (getUnavailable()) OS << \", unavailable\";\n"
+     << "  OS << \"";
 }
 
 void ClangAttrClassEmitter::run(raw_ostream &OS) {
@@ -571,6 +618,7 @@ void ClangAttrClassEmitter::run(raw_ostream &OS) {
     OS << "  }\n\n";
 
     OS << "  virtual " << R.getName() << "Attr *clone (ASTContext &C) const;\n";
+    OS << "  virtual void printPretty(llvm::raw_ostream &OS, ASTContext &Ctx) const;\n";
 
     for (ai = Args.begin(); ai != ae; ++ai) {
       (*ai)->writeAccessors(OS);
@@ -600,6 +648,7 @@ void ClangAttrImplEmitter::run(raw_ostream &OS) {
   for (; i != e; ++i) {
     Record &R = **i;
     std::vector<Record*> ArgRecords = R.getValueAsListOfDefs("Args");
+    std::vector<StringRef> Spellings = getValueAsListOfStrings(R, "Spellings");
     std::vector<Argument*> Args;
     for (ri = ArgRecords.begin(), re = ArgRecords.end(); ri != re; ++ri)
       Args.push_back(createArgument(**ri, R.getName()));
@@ -615,6 +664,24 @@ void ClangAttrImplEmitter::run(raw_ostream &OS) {
       (*ai)->writeCloneArgs(OS);
     }
     OS << ");\n}\n\n";
+
+    OS << "void " << R.getName() << "Attr::printPretty("
+       << "llvm::raw_ostream &OS, ASTContext &Ctx) const {\n";
+    if (Spellings.begin() != Spellings.end()) {
+      OS << "  OS << \" __attribute__((" << *Spellings.begin();
+      if (Args.size()) OS << "(";
+      if (*Spellings.begin()=="availability") {
+        writeAvailabilityValue(OS);
+      } else {
+        for (ai = Args.begin(); ai != ae; ++ai) {
+          if (ai!=Args.begin()) OS <<", ";
+          (*ai)->writeValue(OS);
+        }
+      }
+      if (Args.size()) OS << ")";
+      OS << "))\";\n";
+    }
+    OS << "}\n\n";
   }
 }
 
