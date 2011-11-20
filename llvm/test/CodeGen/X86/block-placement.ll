@@ -452,9 +452,9 @@ define i32 @test_global_cfg_break_profitability() {
 ; even though the probability of 'then' branching to the 'exit' block is very
 ; high.
 ; CHECK: test_global_cfg_break_profitability
-; CHECK: calll f
-; CHECK: calll g
-; CHECK: calll h
+; CHECK: calll {{_?}}f
+; CHECK: calll {{_?}}g
+; CHECK: calll {{_?}}h
 ; CHECK: ret
 
 entry:
