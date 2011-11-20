@@ -1008,7 +1008,8 @@ public:
                               const DirectoryLookup *&CurDir,
                               SmallVectorImpl<char> *SearchPath,
                               SmallVectorImpl<char> *RelativePath,
-                              ModuleMap::Module **SuggestedModule);
+                              ModuleMap::Module **SuggestedModule,
+                              bool SkipCache = false);
 
   /// GetCurLookup - The DirectoryLookup structure used to find the current
   /// FileEntry, if CurLexer is non-null and if applicable.  This allows us to

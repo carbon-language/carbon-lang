@@ -486,7 +486,8 @@ const FileEntry *Preprocessor::LookupFile(
     const DirectoryLookup *&CurDir,
     SmallVectorImpl<char> *SearchPath,
     SmallVectorImpl<char> *RelativePath,
-    ModuleMap::Module **SuggestedModule) {
+    ModuleMap::Module **SuggestedModule,
+    bool SkipCache) {
   // If the header lookup mechanism may be relative to the current file, pass in
   // info about where the current file is.
   const FileEntry *CurFileEnt = 0;
@@ -510,7 +511,7 @@ const FileEntry *Preprocessor::LookupFile(
   CurDir = CurDirLookup;
   const FileEntry *FE = HeaderInfo.LookupFile(
       Filename, isAngled, FromDir, CurDir, CurFileEnt,
-      SearchPath, RelativePath, SuggestedModule);
+      SearchPath, RelativePath, SuggestedModule, SkipCache);
   if (FE) return FE;
 
   // Otherwise, see if this is a subframework header.  If so, this is relative
@@ -1288,10 +1289,28 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
     return;
   }
   
-  // Notify the callback object that we've seen an inclusion directive.
-  if (Callbacks)
+  if (Callbacks) {
+    if (!File) {
+      // Give the clients a chance to recover.
+      llvm::SmallString<128> RecoveryPath;
+      if (Callbacks->FileNotFound(Filename, RecoveryPath)) {
+        if (const DirectoryEntry *DE = FileMgr.getDirectory(RecoveryPath)) {
+          // Add the recovery path to the list of search paths.
+          DirectoryLookup DL(DE, SrcMgr::C_User, true, false);
+          HeaderInfo.AddSearchPath(DL, isAngled);
+
+          // Try the lookup again, skipping the cache.
+          File = LookupFile(Filename, isAngled, LookupFrom, CurDir, 0, 0,
+                            AutoModuleImport ? &SuggestedModule : 0,
+                            /*SkipCache*/true);
+        }
+      }
+    }
+
+    // Notify the callback object that we've seen an inclusion directive.
     Callbacks->InclusionDirective(HashLoc, IncludeTok, Filename, isAngled, File,
                                   End, SearchPath, RelativePath);
+  }
 
   if (File == 0) {
     if (!SuppressIncludeNotFoundError)

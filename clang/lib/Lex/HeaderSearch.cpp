@@ -408,7 +408,8 @@ const FileEntry *HeaderSearch::LookupFile(
     const FileEntry *CurFileEnt,
     SmallVectorImpl<char> *SearchPath,
     SmallVectorImpl<char> *RelativePath,
-    ModuleMap::Module **SuggestedModule) 
+    ModuleMap::Module **SuggestedModule,
+    bool SkipCache)
 {
   if (SuggestedModule)
     *SuggestedModule = 0;
@@ -484,7 +485,7 @@ const FileEntry *HeaderSearch::LookupFile(
   // If the entry has been previously looked up, the first value will be
   // non-zero.  If the value is equal to i (the start point of our search), then
   // this is a matching hit.
-  if (CacheLookup.first == i+1) {
+  if (!SkipCache && CacheLookup.first == i+1) {
     // Skip querying potentially lots of directories for this lookup.
     i = CacheLookup.second;
   } else {

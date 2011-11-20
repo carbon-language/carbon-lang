@@ -207,6 +207,15 @@ public:
     //LookupFileCache.clear();
   }
 
+  /// AddSearchPath - Add an additional search path.
+  void AddSearchPath(const DirectoryLookup &dir, bool isAngled) {
+    unsigned idx = isAngled ? SystemDirIdx : AngledDirIdx;
+    SearchDirs.insert(SearchDirs.begin() + idx, dir);
+    if (!isAngled)
+      AngledDirIdx++;
+    SystemDirIdx++;
+  }
+
   /// \brief Set the path to the module cache and the name of the module
   /// we're building
   void configureModules(StringRef CachePath, StringRef BuildingModule) {
@@ -266,7 +275,8 @@ public:
                               const FileEntry *CurFileEnt,
                               SmallVectorImpl<char> *SearchPath,
                               SmallVectorImpl<char> *RelativePath,
-                              ModuleMap::Module **SuggestedModule);
+                              ModuleMap::Module **SuggestedModule,
+                              bool SkipCache = false);
 
   /// LookupSubframeworkHeader - Look up a subframework for the specified
   /// #include file.  For example, if #include'ing <HIToolbox/HIToolbox.h> from
