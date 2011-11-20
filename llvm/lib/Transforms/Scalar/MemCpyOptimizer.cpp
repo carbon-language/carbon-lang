@@ -950,7 +950,7 @@ bool MemCpyOpt::iterateOnFunction(Function &F) {
         RepeatInstruction = processMemMove(M);
       else if (CallSite CS = (Value*)I) {
         for (unsigned i = 0, e = CS.arg_size(); i != e; ++i)
-          if (CS.paramHasAttr(i+1, Attribute::ByVal))
+          if (CS.isByValArgument(i))
             MadeChange |= processByValArgument(CS, i);
       }
 

@@ -237,6 +237,16 @@ public:
 #undef CALLSITE_DELEGATE_GETTER
 #undef CALLSITE_DELEGATE_SETTER
 
+  /// @brief Determine whether this argument is not captured.
+  bool doesNotCapture(unsigned ArgNo) const {
+    return paramHasAttr(ArgNo + 1, Attribute::NoCapture);
+  }
+
+  /// @brief Determine whether this argument is passed by value.
+  bool isByValArgument(unsigned ArgNo) const {
+    return paramHasAttr(ArgNo + 1, Attribute::ByVal);
+  }
+
   /// hasArgument - Returns true if this CallSite passes the given Value* as an
   /// argument to the called function.
   bool hasArgument(const Value *Arg) const {

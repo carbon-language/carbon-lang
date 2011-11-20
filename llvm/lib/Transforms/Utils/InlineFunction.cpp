@@ -987,7 +987,7 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI) {
       // by them explicit.  However, we don't do this if the callee is readonly
       // or readnone, because the copy would be unneeded: the callee doesn't
       // modify the struct.
-      if (CalledFunc->paramHasAttr(ArgNo+1, Attribute::ByVal)) {
+      if (CS.isByValArgument(ArgNo)) {
         ActualArg = HandleByValArgument(ActualArg, TheCall, CalledFunc, IFI,
                                         CalledFunc->getParamAlignment(ArgNo+1));
  

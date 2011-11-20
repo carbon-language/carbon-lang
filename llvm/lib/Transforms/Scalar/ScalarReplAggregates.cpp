@@ -2534,13 +2534,12 @@ isOnlyCopiedFromConstantGlobal(Value *V, MemTransferInst *&TheCopy,
       // ignore it if we know that the value isn't captured.
       unsigned ArgNo = CS.getArgumentNo(UI);
       if (CS.onlyReadsMemory() &&
-          (CS.getInstruction()->use_empty() ||
-           CS.paramHasAttr(ArgNo+1, Attribute::NoCapture)))
+          (CS.getInstruction()->use_empty() || CS.doesNotCapture(ArgNo)))
         continue;
 
       // If this is being passed as a byval argument, the caller is making a
       // copy, so it is only a read of the alloca.
-      if (CS.paramHasAttr(ArgNo+1, Attribute::ByVal))
+      if (CS.isByValArgument(ArgNo))
         continue;
     }
 

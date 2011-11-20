@@ -393,8 +393,7 @@ MemoryDependenceAnalysis::getModRefInfo(const Instruction *Inst,
     // pointer were passed to arguments that were neither of these, then it
     // couldn't be no-capture.
     if (!(*CI)->getType()->isPointerTy() ||
-        (!CS.paramHasAttr(ArgNo+1, Attribute::NoCapture) &&
-         !CS.paramHasAttr(ArgNo+1, Attribute::ByVal)))
+        (!CS.doesNotCapture(ArgNo) && !CS.isByValArgument(ArgNo)))
       continue;
 
     // If this is a no-capture pointer argument, see if we can tell that it

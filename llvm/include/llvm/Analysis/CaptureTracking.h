@@ -104,7 +104,7 @@ void llvm::PointerMayBeCaptured(const llvm::Value *V, CaptureTracker &Tracker) {
       // (think of self-referential objects).
       CallSite::arg_iterator B = CS.arg_begin(), E = CS.arg_end();
       for (CallSite::arg_iterator A = B; A != E; ++A)
-        if (A->get() == V && !CS.paramHasAttr(A - B + 1, Attribute::NoCapture))
+        if (A->get() == V && !CS.doesNotCapture(A - B))
           // The parameter is not marked 'nocapture' - captured.
           if (Tracker.captured(I))
             return;
