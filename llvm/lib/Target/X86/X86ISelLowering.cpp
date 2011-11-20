@@ -10338,47 +10338,48 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
         return Res;
       }
 
-      if (Subtarget->hasAVX2()) {
-        if (VT == MVT::v4i64 && Op.getOpcode() == ISD::SHL)
-         return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                       DAG.getConstant(Intrinsic::x86_avx2_pslli_q, MVT::i32),
-                       R, DAG.getConstant(ShiftAmt, MVT::i32));
-
-        if (VT == MVT::v8i32 && Op.getOpcode() == ISD::SHL)
-         return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                       DAG.getConstant(Intrinsic::x86_avx2_pslli_d, MVT::i32),
-                       R, DAG.getConstant(ShiftAmt, MVT::i32));
-
-        if (VT == MVT::v16i16 && Op.getOpcode() == ISD::SHL)
-         return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                       DAG.getConstant(Intrinsic::x86_avx2_pslli_w, MVT::i32),
-                       R, DAG.getConstant(ShiftAmt, MVT::i32));
-
-        if (VT == MVT::v4i64 && Op.getOpcode() == ISD::SRL)
-         return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                       DAG.getConstant(Intrinsic::x86_avx2_psrli_q, MVT::i32),
-                       R, DAG.getConstant(ShiftAmt, MVT::i32));
-
-        if (VT == MVT::v8i32 && Op.getOpcode() == ISD::SRL)
-         return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                       DAG.getConstant(Intrinsic::x86_avx2_psrli_d, MVT::i32),
-                       R, DAG.getConstant(ShiftAmt, MVT::i32));
-
-        if (VT == MVT::v16i16 && Op.getOpcode() == ISD::SRL)
-         return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                       DAG.getConstant(Intrinsic::x86_avx2_psrli_w, MVT::i32),
-                       R, DAG.getConstant(ShiftAmt, MVT::i32));
-
-        if (VT == MVT::v8i32 && Op.getOpcode() == ISD::SRA)
-         return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                       DAG.getConstant(Intrinsic::x86_avx2_psrai_d, MVT::i32),
-                       R, DAG.getConstant(ShiftAmt, MVT::i32));
-
-        if (VT == MVT::v16i16 && Op.getOpcode() == ISD::SRA)
-         return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                       DAG.getConstant(Intrinsic::x86_avx2_psrai_w, MVT::i32),
-                       R, DAG.getConstant(ShiftAmt, MVT::i32));
+      if (Subtarget->hasAVX2() && VT == MVT::v32i8) {
+        if (Op.getOpcode() == ISD::SHL) {
+          // Make a large shift.
+          SDValue SHL =
+            DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
+                        DAG.getConstant(Intrinsic::x86_avx2_pslli_w, MVT::i32),
+                        R, DAG.getConstant(ShiftAmt, MVT::i32));
+          // Zero out the rightmost bits.
+          SmallVector<SDValue, 32> V(32, DAG.getConstant(uint8_t(-1U << ShiftAmt),
+                                                         MVT::i8));
+          return DAG.getNode(ISD::AND, dl, VT, SHL,
+                             DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &V[0], 32));
         }
+        if (Op.getOpcode() == ISD::SRL) {
+          // Make a large shift.
+          SDValue SRL =
+            DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
+                        DAG.getConstant(Intrinsic::x86_avx2_psrli_w, MVT::i32),
+                        R, DAG.getConstant(ShiftAmt, MVT::i32));
+          // Zero out the leftmost bits.
+          SmallVector<SDValue, 32> V(32, DAG.getConstant(uint8_t(-1U) >> ShiftAmt,
+                                                         MVT::i8));
+          return DAG.getNode(ISD::AND, dl, VT, SRL,
+                             DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &V[0], 32));
+        }
+        if (Op.getOpcode() == ISD::SRA) {
+          if (ShiftAmt == 7) {
+            // R s>> 7  ===  R s< 0
+            SDValue Zeros = getZeroVector(VT, true /* HasXMMInt */, DAG, dl);
+            return DAG.getNode(X86ISD::PCMPGTB, dl, VT, Zeros, R);
+          }
+
+          // R s>> a === ((R u>> a) ^ m) - m
+          SDValue Res = DAG.getNode(ISD::SRL, dl, VT, R, Amt);
+          SmallVector<SDValue, 32> V(32, DAG.getConstant(128 >> ShiftAmt,
+                                                         MVT::i8));
+          SDValue Mask = DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &V[0], 32);
+          Res = DAG.getNode(ISD::XOR, dl, VT, Res, Mask);
+          Res = DAG.getNode(ISD::SUB, dl, VT, Res, Mask);
+          return Res;
+        }
+      }
     }
   }
 

@@ -58,14 +58,14 @@ define <4 x i64> @variable_srl3(<4 x i64> %x, <4 x i64> %y) {
 }
 
 ; CHECK: variable_sra0
-; CHECK: psravd
+; CHECK: vpsravd
 ; CHECK: ret
 define <4 x i32> @variable_sra0(<4 x i32> %x, <4 x i32> %y) {
   %k = ashr <4 x i32> %x, %y
   ret <4 x i32> %k
 }
 ; CHECK: variable_sra1
-; CHECK: psravd
+; CHECK: vpsravd
 ; CHECK: ret
 define <8 x i32> @variable_sra1(<8 x i32> %x, <8 x i32> %y) {
   %k = ashr <8 x i32> %x, %y
@@ -127,7 +127,7 @@ define <16 x i16> @vshift07(<16 x i16> %a) nounwind readnone {
 }
 
 ; CHECK: variable_sra0_load
-; CHECK: psravd (%
+; CHECK: vpsravd (%
 ; CHECK: ret
 define <4 x i32> @variable_sra0_load(<4 x i32> %x, <4 x i32>* %y) {
   %y1 = load <4 x i32>* %y
@@ -136,7 +136,7 @@ define <4 x i32> @variable_sra0_load(<4 x i32> %x, <4 x i32>* %y) {
 }
 
 ; CHECK: variable_sra1_load
-; CHECK: psravd (%
+; CHECK: vpsravd (%
 ; CHECK: ret
 define <8 x i32> @variable_sra1_load(<8 x i32> %x, <8 x i32>* %y) {
   %y1 = load <8 x i32>* %y
@@ -145,7 +145,7 @@ define <8 x i32> @variable_sra1_load(<8 x i32> %x, <8 x i32>* %y) {
 }
 
 ; CHECK: variable_shl0_load
-; CHECK: psllvd (%
+; CHECK: vpsllvd (%
 ; CHECK: ret
 define <4 x i32> @variable_shl0_load(<4 x i32> %x, <4 x i32>* %y) {
   %y1 = load <4 x i32>* %y
@@ -153,7 +153,7 @@ define <4 x i32> @variable_shl0_load(<4 x i32> %x, <4 x i32>* %y) {
   ret <4 x i32> %k
 }
 ; CHECK: variable_shl1_load
-; CHECK: psllvd (%
+; CHECK: vpsllvd (%
 ; CHECK: ret
 define <8 x i32> @variable_shl1_load(<8 x i32> %x, <8 x i32>* %y) {
   %y1 = load <8 x i32>* %y
@@ -161,7 +161,7 @@ define <8 x i32> @variable_shl1_load(<8 x i32> %x, <8 x i32>* %y) {
   ret <8 x i32> %k
 }
 ; CHECK: variable_shl2_load
-; CHECK: psllvq (%
+; CHECK: vpsllvq (%
 ; CHECK: ret
 define <2 x i64> @variable_shl2_load(<2 x i64> %x, <2 x i64>* %y) {
   %y1 = load <2 x i64>* %y
@@ -169,7 +169,7 @@ define <2 x i64> @variable_shl2_load(<2 x i64> %x, <2 x i64>* %y) {
   ret <2 x i64> %k
 }
 ; CHECK: variable_shl3_load
-; CHECK: psllvq (%
+; CHECK: vpsllvq (%
 ; CHECK: ret
 define <4 x i64> @variable_shl3_load(<4 x i64> %x, <4 x i64>* %y) {
   %y1 = load <4 x i64>* %y
@@ -177,7 +177,7 @@ define <4 x i64> @variable_shl3_load(<4 x i64> %x, <4 x i64>* %y) {
   ret <4 x i64> %k
 }
 ; CHECK: variable_srl0_load
-; CHECK: psrlvd (%
+; CHECK: vpsrlvd (%
 ; CHECK: ret
 define <4 x i32> @variable_srl0_load(<4 x i32> %x, <4 x i32>* %y) {
   %y1 = load <4 x i32>* %y
@@ -185,7 +185,7 @@ define <4 x i32> @variable_srl0_load(<4 x i32> %x, <4 x i32>* %y) {
   ret <4 x i32> %k
 }
 ; CHECK: variable_srl1_load
-; CHECK: psrlvd (%
+; CHECK: vpsrlvd (%
 ; CHECK: ret
 define <8 x i32> @variable_srl1_load(<8 x i32> %x, <8 x i32>* %y) {
   %y1 = load <8 x i32>* %y
@@ -193,7 +193,7 @@ define <8 x i32> @variable_srl1_load(<8 x i32> %x, <8 x i32>* %y) {
   ret <8 x i32> %k
 }
 ; CHECK: variable_srl2_load
-; CHECK: psrlvq (%
+; CHECK: vpsrlvq (%
 ; CHECK: ret
 define <2 x i64> @variable_srl2_load(<2 x i64> %x, <2 x i64>* %y) {
   %y1 = load <2 x i64>* %y
@@ -201,10 +201,48 @@ define <2 x i64> @variable_srl2_load(<2 x i64> %x, <2 x i64>* %y) {
   ret <2 x i64> %k
 }
 ; CHECK: variable_srl3_load
-; CHECK: psrlvq (%
+; CHECK: vpsrlvq (%
 ; CHECK: ret
 define <4 x i64> @variable_srl3_load(<4 x i64> %x, <4 x i64>* %y) {
   %y1 = load <4 x i64>* %y
   %k = lshr <4 x i64> %x, %y1
   ret <4 x i64> %k
+}
+
+define <32 x i8> @shl9(<32 x i8> %A) nounwind {
+  %B = shl <32 x i8> %A, <i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3>
+  ret <32 x i8> %B
+; CHECK: shl9:
+; CHECK: vpsllw $3
+; CHECK: vpand
+; CHECK: ret
+}
+
+define <32 x i8> @shr9(<32 x i8> %A) nounwind {
+  %B = lshr <32 x i8> %A, <i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3>
+  ret <32 x i8> %B
+; CHECK: shr9:
+; CHECK: vpsrlw $3
+; CHECK: vpand
+; CHECK: ret
+}
+
+define <32 x i8> @sra_v32i8_7(<32 x i8> %A) nounwind {
+  %B = ashr <32 x i8> %A, <i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7>
+  ret <32 x i8> %B
+; CHECK: sra_v32i8_7:
+; CHECK: vxorps
+; CHECK: vpcmpgtb
+; CHECK: ret
+}
+
+define <32 x i8> @sra_v32i8(<32 x i8> %A) nounwind {
+  %B = ashr <32 x i8> %A, <i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3>
+  ret <32 x i8> %B
+; CHECK: sra_v32i8:
+; CHECK: vpsrlw $3
+; CHECK: vpand
+; CHECK: vpxor
+; CHECK: vpsubb
+; CHECK: ret
 }
