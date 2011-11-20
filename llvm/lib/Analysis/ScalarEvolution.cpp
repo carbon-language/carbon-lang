@@ -3601,9 +3601,9 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
     SCEV::NoWrapFlags Flags = SCEV::FlagAnyWrap;
     OverflowingBinaryOperator *OBO = cast<OverflowingBinaryOperator>(V);
     if (OBO->hasNoSignedWrap())
-      setFlags(Flags, SCEV::FlagNSW);
+      Flags = setFlags(Flags, SCEV::FlagNSW);
     if (OBO->hasNoUnsignedWrap())
-      setFlags(Flags, SCEV::FlagNUW);
+      Flags = setFlags(Flags, SCEV::FlagNUW);
     return getAddExpr(AddOps, Flags);
   }
   case Instruction::Mul: {
