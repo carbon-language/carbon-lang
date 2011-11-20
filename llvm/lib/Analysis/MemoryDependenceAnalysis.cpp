@@ -336,7 +336,7 @@ getLoadLoadClobberFullWidthSize(const Value *MemLocBase, int64_t MemLocOffs,
 namespace {
   /// Only find pointer captures which happen before the given instruction. Uses
   /// the dominator tree to determine whether one instruction is before another.
-  struct CapturesBefore {
+  struct CapturesBefore : public CaptureTracker {
     CapturesBefore(const Instruction *I, DominatorTree *DT)
       : BeforeHere(I), DT(DT), Captured(false) {}
 
@@ -381,7 +381,7 @@ MemoryDependenceAnalysis::getModRefInfo(const Instruction *Inst,
   if (!CS.getInstruction()) return AliasAnalysis::ModRef;
 
   CapturesBefore CB(Inst, DT);
-  llvm::PointerMayBeCaptured(Object, CB);
+  llvm::PointerMayBeCaptured(Object, &CB);
 
   if (isa<Constant>(Object) || CS.getInstruction() == Object || CB.Captured)
     return AliasAnalysis::ModRef;
