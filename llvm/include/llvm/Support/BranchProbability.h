@@ -42,7 +42,7 @@ public:
   uint32_t getDenominator() const { return D; }
 
   // Return (1 - Probability).
-  BranchProbability getCompl() {
+  BranchProbability getCompl() const {
     return BranchProbability(D - N, D);
   }
 
