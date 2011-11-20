@@ -365,9 +365,35 @@ MachineBasicBlock *MachineBlockPlacement::selectBestSuccessor(
 
     // Only consider successors which are either "hot", or wouldn't violate
     // any CFG constraints.
-    if (SuccChain.LoopPredecessors != 0 && SuccProb < HotProb) {
-      DEBUG(dbgs() << "    " << getBlockName(*SI) << " -> CFG conflict\n");
-      continue;
+    if (SuccChain.LoopPredecessors != 0) {
+      if (SuccProb < HotProb) {
+        DEBUG(dbgs() << "    " << getBlockName(*SI) << " -> CFG conflict\n");
+        continue;
+      }
+
+      // Make sure that a hot successor doesn't have a globally more important
+      // predecessor.
+      BlockFrequency CandidateEdgeFreq
+        = MBFI->getBlockFreq(BB) * SuccProb * HotProb.getCompl();
+      bool BadCFGConflict = false;
+      for (MachineBasicBlock::pred_iterator PI = (*SI)->pred_begin(),
+                                            PE = (*SI)->pred_end();
+           PI != PE; ++PI) {
+        if (*PI == *SI || (BlockFilter && !BlockFilter->count(*PI)) ||
+            BlockToChain[*PI] == &Chain)
+          continue;
+        BlockFrequency PredEdgeFreq
+          = MBFI->getBlockFreq(*PI) * MBPI->getEdgeProbability(*PI, *SI);
+        if (PredEdgeFreq >= CandidateEdgeFreq) {
+          BadCFGConflict = true;
+          break;
+        }
+      }
+      if (BadCFGConflict) {
+        DEBUG(dbgs() << "    " << getBlockName(*SI)
+                               << " -> non-cold CFG conflict\n");
+        continue;
+      }
     }
 
     DEBUG(dbgs() << "    " << getBlockName(*SI) << " -> " << SuccProb

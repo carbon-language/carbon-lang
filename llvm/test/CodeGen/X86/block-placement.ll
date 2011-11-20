@@ -439,3 +439,39 @@ if.end:
 }
 
 !1 = metadata !{metadata !"branch_weights", i32 1000, i32 1}
+
+declare i32 @f()
+declare i32 @g()
+declare i32 @h(i32 %x)
+
+define i32 @test_global_cfg_break_profitability() {
+; Check that our metrics for the profitability of a CFG break are global rather
+; than local. A successor may be very hot, but if the current block isn't, it
+; doesn't matter. Within this test the 'then' block is slightly warmer than the
+; 'else' block, but not nearly enough to merit merging it with the exit block
+; even though the probability of 'then' branching to the 'exit' block is very
+; high.
+; CHECK: test_global_cfg_break_profitability
+; CHECK: calll f
+; CHECK: calll g
+; CHECK: calll h
+; CHECK: ret
+
+entry:
+  br i1 undef, label %then, label %else, !prof !2
+
+then:
+  %then.result = call i32 @f()
+  br label %exit
+
+else:
+  %else.result = call i32 @g()
+  br label %exit
+
+exit:
+  %result = phi i32 [ %then.result, %then ], [ %else.result, %else ]
+  %result2 = call i32 @h(i32 %result)
+  ret i32 %result
+}
+
+!2 = metadata !{metadata !"branch_weights", i32 3, i32 1}
