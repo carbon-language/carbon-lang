@@ -220,6 +220,9 @@ public:
         }
         else
         {
+            // Save the arguments for subsequent runs in the current target.
+            target->SetRunArguments (launch_args);
+
             m_options.launch_info.GetArguments().AppendArguments (launch_args);
         }
         
