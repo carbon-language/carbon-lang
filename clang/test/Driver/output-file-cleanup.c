@@ -16,8 +16,6 @@
 // REQUIRES: shell
 // REQUIRES: crash-recovery
 
-// XFAIL: darwin
-
 #ifdef CRASH
 #pragma clang __debug crash
 #elif defined(MISSING)
