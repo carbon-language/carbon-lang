@@ -507,8 +507,13 @@ int Driver::ExecuteCompilation(const Compilation &C,
     return Res;
 
   // Otherwise, remove result files as well.
-  if (!C.getArgs().hasArg(options::OPT_save_temps))
+  if (!C.getArgs().hasArg(options::OPT_save_temps)) {
     C.CleanupFileList(C.getResultFiles(), true);
+
+    // Failure result files are valid unless we crashed.
+    if (Res < 0)
+      C.CleanupFileList(C.getFailureResultFiles(), true);
+  }
 
   // Print extra information about abnormal failures, if possible.
   //

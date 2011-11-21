@@ -218,11 +218,13 @@ void Clang::AddPreprocessingOptions(Compilation &C,
       DepFile = Output.getFilename();
     } else if (Arg *MF = Args.getLastArg(options::OPT_MF)) {
       DepFile = MF->getValue(Args);
+      C.addFailureResultFile(DepFile);
     } else if (A->getOption().matches(options::OPT_M) ||
                A->getOption().matches(options::OPT_MM)) {
       DepFile = "-";
     } else {
       DepFile = darwin::CC1::getDependencyFileName(Args, Inputs);
+      C.addFailureResultFile(DepFile);
     }
     CmdArgs.push_back("-dependency-file");
     CmdArgs.push_back(DepFile);
