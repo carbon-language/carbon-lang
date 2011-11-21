@@ -48,7 +48,7 @@ bool Pass::mustPreserveAnalysisID(char &AID) const {
   return Resolver->getAnalysisIfAvailable(&AID, true) != 0;
 }
 
-// dumpPassStructure - Implement the -debug-passes=Structure option
+// dumpPassStructure - Implement the -debug-pass=Structure option
 void Pass::dumpPassStructure(unsigned Offset) {
   dbgs().indent(Offset*2) << getPassName() << "\n";
 }
