@@ -56,6 +56,11 @@ td {
   <li><a href="#c_ms">Microsoft extensions</a></li>
   </ul>
 </li>
+<li><a href="#cxx">C++ Language Features</a>
+  <ul>
+  <li><a href="#cxx_implimits">Controlling implementation limits</a></li>
+  </ul>
+</li>
 <li><a href="#target_features">Target-Specific Features and Limitations</a>
   <ul>
   <li><a href="#target_arch">CPU Architectures Features and Limitations</a>
@@ -106,7 +111,7 @@ corresponding language specific section:</p>
     (C89+AMD1), ISO C99 (+TC1, TC2, TC3). </li>
 <li><a href="#objc">Objective-C Language</a>: ObjC 1, ObjC 2, ObjC 2.1, plus
     variants depending on base language.</li>
-<li><a href="#cxx">C++ Language Features</a></li>
+<li><a href="#cxx">C++ Language</a></li>
 <li><a href="#objcxx">Objective C++ Language</a></li>
 </ul>
 
@@ -986,6 +991,25 @@ controlling record layout. GCC also contains support for this feature,
 however where MSVC and GCC are incompatible clang follows the MSVC
 definition.</li>
 </ul>
+
+<!-- ======================================================================= -->
+<h2 id="cxx">C++ Language Features</h2>
+<!-- ======================================================================= -->
+
+<p>clang fully implements all of standard C++98 except for exported templates
+(which were removed in C++11), and
+<a href="http://clang.llvm.org/cxx_status.html">many C++11 features</a> are also
+implemented.</p>
+
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+<h3 id="cxx_implimits">Controlling implementation limits</h3>
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+
+<p><b>-fconstexpr-depth=N</b>: Sets the limit for recursive constexpr function
+invocations to N. The default is 512.</p>
+
+<p><b>-ftemplate-depth=N</b>: Sets the limit for recursively nested template
+instantiations to N. The default is 1024.</p>
 
 <!-- ======================================================================= -->
 <h2 id="target_features">Target-Specific Features and Limitations</h2>
