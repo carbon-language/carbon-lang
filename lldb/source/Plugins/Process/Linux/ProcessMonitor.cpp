@@ -1186,6 +1186,7 @@ ProcessMonitor::Attach(AttachArgs *args)
 bool
 ProcessMonitor::MonitorCallback(void *callback_baton,
                                 lldb::pid_t pid,
+                                bool exited,
                                 int signal,
                                 int status)
 {

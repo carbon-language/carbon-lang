@@ -253,7 +253,7 @@ private:
 
     static bool
     MonitorCallback(void *callback_baton,
-                    lldb::pid_t pid, int signal, int status);
+                    lldb::pid_t pid, bool exited, int signal, int status);
 
     static ProcessMessage
     MonitorSIGTRAP(ProcessMonitor *monitor,
