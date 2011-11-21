@@ -246,3 +246,23 @@ define <32 x i8> @sra_v32i8(<32 x i8> %A) nounwind {
 ; CHECK: vpsubb
 ; CHECK: ret
 }
+
+; CHECK: _sext_v16i16
+; CHECK: vpsllw
+; CHECK: vpsraw
+; CHECK-NOT: vinsertf128
+define <16 x i16> @sext_v16i16(<16 x i16> %a) nounwind {
+  %b = trunc <16 x i16> %a to <16 x i8>
+  %c = sext <16 x i8> %b to <16 x i16>
+  ret <16 x i16> %c
+}
+
+; CHECK: _sext_v8i32
+; CHECK: vpslld
+; CHECK: vpsrad
+; CHECK-NOT: vinsertf128
+define <8 x i32> @sext_v8i32(<8 x i32> %a) nounwind {
+  %b = trunc <8 x i32> %a to <8 x i16>
+  %c = sext <8 x i16> %b to <8 x i32>
+  ret <8 x i32> %c
+}

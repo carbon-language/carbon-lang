@@ -10571,9 +10571,9 @@ SDValue X86TargetLowering::LowerXALUO(SDValue Op, SelectionDAG &DAG) const {
 
 SDValue X86TargetLowering::LowerSIGN_EXTEND_INREG(SDValue Op, SelectionDAG &DAG) const{
   DebugLoc dl = Op.getDebugLoc();
-  SDNode* Node = Op.getNode();
-  EVT ExtraVT = cast<VTSDNode>(Node->getOperand(1))->getVT();
-  EVT VT = Node->getValueType(0);
+  EVT ExtraVT = cast<VTSDNode>(Op.getOperand(1))->getVT();
+  EVT VT = Op.getValueType();
+
   if (Subtarget->hasXMMInt() && VT.isVector()) {
     unsigned BitsDiff = VT.getScalarType().getSizeInBits() -
                         ExtraVT.getScalarType().getSizeInBits();
@@ -10584,21 +10584,55 @@ SDValue X86TargetLowering::LowerSIGN_EXTEND_INREG(SDValue Op, SelectionDAG &DAG)
     switch (VT.getSimpleVT().SimpleTy) {
       default:
         return SDValue();
-      case MVT::v4i32: {
+      case MVT::v4i32:
         SHLIntrinsicsID = Intrinsic::x86_sse2_pslli_d;
         SRAIntrinsicsID = Intrinsic::x86_sse2_psrai_d;
         break;
-      }
-      case MVT::v8i16: {
+      case MVT::v8i16:
         SHLIntrinsicsID = Intrinsic::x86_sse2_pslli_w;
         SRAIntrinsicsID = Intrinsic::x86_sse2_psrai_w;
         break;
-      }
+      case MVT::v8i32:
+      case MVT::v16i16:
+        if (!Subtarget->hasAVX())
+          return SDValue();
+        if (!Subtarget->hasAVX2()) {
+          // needs to be split
+          int NumElems = VT.getVectorNumElements();
+          SDValue Idx0 = DAG.getConstant(0, MVT::i32);
+          SDValue Idx1 = DAG.getConstant(NumElems/2, MVT::i32);
+
+          // Extract the LHS vectors
+          SDValue LHS = Op.getOperand(0);
+          SDValue LHS1 = Extract128BitVector(LHS, Idx0, DAG, dl);
+          SDValue LHS2 = Extract128BitVector(LHS, Idx1, DAG, dl);
+
+          MVT EltVT = VT.getVectorElementType().getSimpleVT();
+          EVT NewVT = MVT::getVectorVT(EltVT, NumElems/2);
+
+          EVT ExtraEltVT = ExtraVT.getVectorElementType();
+          int ExtraNumElems = ExtraVT.getVectorNumElements();
+          ExtraVT = EVT::getVectorVT(*DAG.getContext(), ExtraEltVT,
+                                     ExtraNumElems/2);
+          SDValue Extra = DAG.getValueType(ExtraVT);
+
+          LHS1 = DAG.getNode(Op.getOpcode(), dl, NewVT, LHS1, Extra);
+          LHS2 = DAG.getNode(Op.getOpcode(), dl, NewVT, LHS2, Extra);
+
+          return DAG.getNode(ISD::CONCAT_VECTORS, dl, VT, LHS1, LHS2);;
+        }
+        if (VT == MVT::v8i32) {
+          SHLIntrinsicsID = Intrinsic::x86_avx2_pslli_d;
+          SRAIntrinsicsID = Intrinsic::x86_avx2_psrai_d;
+        } else {
+          SHLIntrinsicsID = Intrinsic::x86_avx2_pslli_w;
+          SRAIntrinsicsID = Intrinsic::x86_avx2_psrai_w;
+        }
     }
 
     SDValue Tmp1 = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
                          DAG.getConstant(SHLIntrinsicsID, MVT::i32),
-                         Node->getOperand(0), ShAmt);
+                         Op.getOperand(0), ShAmt);
 
     return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
                        DAG.getConstant(SRAIntrinsicsID, MVT::i32),
