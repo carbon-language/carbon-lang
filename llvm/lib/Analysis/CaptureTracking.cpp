@@ -53,6 +53,9 @@ namespace {
 /// counts as capturing it or not.
 bool llvm::PointerMayBeCaptured(const Value *V,
                                 bool ReturnCaptures, bool StoreCaptures) {
+  assert(!isa<GlobalValue>(V) &&
+         "It doesn't make sense to ask whether a global is captured.");
+
   // TODO: If StoreCaptures is not true, we could do Fancy analysis
   // to determine whether this store is not actually an escape point.
   // In that case, BasicAliasAnalysis should be updated as well to

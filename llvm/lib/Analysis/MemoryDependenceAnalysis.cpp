@@ -375,7 +375,7 @@ MemoryDependenceAnalysis::getModRefInfo(const Instruction *Inst,
   // with a smarter AA in place, this test is just wasting compile time.
   if (!DT) return AliasAnalysis::ModRef;
   const Value *Object = GetUnderlyingObject(MemLoc.Ptr, TD);
-  if (!isIdentifiedObject(Object) || isa<GlobalVariable>(Object))
+  if (!isIdentifiedObject(Object) || isa<GlobalValue>(Object))
     return AliasAnalysis::ModRef;
   ImmutableCallSite CS(Inst);
   if (!CS.getInstruction()) return AliasAnalysis::ModRef;

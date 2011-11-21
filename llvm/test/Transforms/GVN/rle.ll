@@ -26,6 +26,15 @@ define i8 @crash0({i32, i32} %A, {i32, i32}* %P) {
   ret i8 %Y
 }
 
+;; No PR filed, crashed in CaptureTracker.
+declare void @helper()
+define void @crash1() {
+  tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* undef, i8* undef, i64 undef, i32 1, i1 false) nounwind
+  %tmp = load i8* bitcast (void ()* @helper to i8*)
+  %x = icmp eq i8 %tmp, 15
+  ret void
+}
+
 
 ;;===----------------------------------------------------------------------===;;
 ;; Store -> Load  and  Load -> Load forwarding where src and dst are different
