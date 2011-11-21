@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "CGCXXABI.h"
 #include "CGDebugInfo.h"
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
@@ -180,12 +179,10 @@ CodeGenFunction::CreateStaticVarDecl(const VarDecl &D,
 
   // Use the label if the variable is renamed with the asm-label extension.
   std::string Name;
-  if (D.hasAttr<AsmLabelAttr>()) {
-    llvm::raw_string_ostream Out(Name);
-    CGM.getCXXABI().getMangleContext().mangleName(&D, Out);
-  } else {
+  if (D.hasAttr<AsmLabelAttr>())
+    Name = CGM.getMangledName(&D);
+  else
     Name = GetStaticDeclName(*this, D, Separator);
-  }
 
   llvm::Type *LTy = CGM.getTypes().ConvertTypeForMem(Ty);
   llvm::GlobalVariable *GV =
