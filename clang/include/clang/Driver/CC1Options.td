@@ -584,6 +584,8 @@ def fvisibility_inlines_hidden : Flag<"-fvisibility-inlines-hidden">,
   HelpText<"Give inline C++ member functions default visibility by default">;
 def ftemplate_depth : Separate<"-ftemplate-depth">,
   HelpText<"Maximum depth of recursive template instantiation">;
+def fconstexpr_depth : Separate<"-fconstexpr-depth">,
+  HelpText<"Maximum depth of recursive constexpr function calls">;
 def Wlarge_by_value_copy : Separate<"-Wlarge-by-value-copy">,
   HelpText<"Warn if a function definition returns or accepts an object larger "
            "in bytes that a given value">;

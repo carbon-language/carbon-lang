@@ -257,9 +257,6 @@ namespace {
     /// CurrentCall - The top of the constexpr call stack.
     CallStackFrame *CurrentCall;
 
-    /// NumCalls - The number of calls we've evaluated so far.
-    unsigned NumCalls;
-
     /// CallStackDepth - The number of calls in the call stack right now.
     unsigned CallStackDepth;
 
@@ -282,7 +279,7 @@ namespace {
 
 
     EvalInfo(const ASTContext &C, Expr::EvalStatus &S)
-      : Ctx(C), EvalStatus(S), CurrentCall(0), NumCalls(0), CallStackDepth(0),
+      : Ctx(C), EvalStatus(S), CurrentCall(0), CallStackDepth(0),
         BottomFrame(*this, 0, 0), EvaluatingDecl(0), EvaluatingDeclValue(0) {}
 
     const CCValue *getOpaqueValue(const OpaqueValueExpr *e) const {
@@ -296,7 +293,11 @@ namespace {
       EvaluatingDeclValue = &Value;
     }
 
-    const LangOptions &getLangOpts() { return Ctx.getLangOptions(); }
+    const LangOptions &getLangOpts() const { return Ctx.getLangOptions(); }
+
+    bool atCallLimit() const {
+      return CallStackDepth > getLangOpts().ConstexprCallDepth;
+    }
   };
 
   CallStackFrame::CallStackFrame(EvalInfo &Info, const LValue *This,
@@ -1278,8 +1279,7 @@ static bool EvaluateArgs(ArrayRef<const Expr*> Args, ArgVector &ArgValues,
 static bool HandleFunctionCall(const LValue *This, ArrayRef<const Expr*> Args,
                                const Stmt *Body, EvalInfo &Info,
                                CCValue &Result) {
-  // FIXME: Implement a proper call limit, along with a command-line flag.
-  if (Info.NumCalls >= 1000000 || Info.CallStackDepth >= 512)
+  if (Info.atCallLimit())
     return false;
 
   ArgVector ArgValues(Args.size());
@@ -1296,7 +1296,7 @@ static bool HandleConstructorCall(const LValue &This,
                                   const CXXConstructorDecl *Definition,
                                   EvalInfo &Info,
                                   APValue &Result) {
-  if (Info.NumCalls >= 1000000 || Info.CallStackDepth >= 512)
+  if (Info.atCallLimit())
     return false;
 
   ArgVector ArgValues(Args.size());
