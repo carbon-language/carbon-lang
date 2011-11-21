@@ -144,11 +144,17 @@ def X86Punpcklbw  : SDNode<"X86ISD::PUNPCKLBW", SDTShuff2Op>;
 def X86Punpcklwd  : SDNode<"X86ISD::PUNPCKLWD", SDTShuff2Op>;
 def X86Punpckldq  : SDNode<"X86ISD::PUNPCKLDQ", SDTShuff2Op>;
 def X86Punpcklqdq : SDNode<"X86ISD::PUNPCKLQDQ", SDTShuff2Op>;
+def X86Punpcklwdy  : SDNode<"X86ISD::VPUNPCKLWDY", SDTShuff2Op>;
+def X86Punpckldqy  : SDNode<"X86ISD::VPUNPCKLDQY", SDTShuff2Op>;
+def X86Punpcklqdqy : SDNode<"X86ISD::VPUNPCKLQDQY", SDTShuff2Op>;
 
 def X86Punpckhbw  : SDNode<"X86ISD::PUNPCKHBW", SDTShuff2Op>;
 def X86Punpckhwd  : SDNode<"X86ISD::PUNPCKHWD", SDTShuff2Op>;
 def X86Punpckhdq  : SDNode<"X86ISD::PUNPCKHDQ", SDTShuff2Op>;
 def X86Punpckhqdq : SDNode<"X86ISD::PUNPCKHQDQ", SDTShuff2Op>;
+def X86Punpckhwdy  : SDNode<"X86ISD::VPUNPCKHWDY", SDTShuff2Op>;
+def X86Punpckhdqy  : SDNode<"X86ISD::VPUNPCKHDQY", SDTShuff2Op>;
+def X86Punpckhqdqy : SDNode<"X86ISD::VPUNPCKHQDQY", SDTShuff2Op>;
 
 def X86VPermilps  : SDNode<"X86ISD::VPERMILPS", SDTShuff2OpI>;
 def X86VPermilpsy : SDNode<"X86ISD::VPERMILPSY", SDTShuff2OpI>;
@@ -423,12 +429,12 @@ def movl : PatFrag<(ops node:$lhs, node:$rhs),
 
 def unpckl : PatFrag<(ops node:$lhs, node:$rhs),
                      (vector_shuffle node:$lhs, node:$rhs), [{
-  return X86::isUNPCKLMask(cast<ShuffleVectorSDNode>(N));
+  return X86::isUNPCKLMask(cast<ShuffleVectorSDNode>(N), Subtarget->hasAVX2());
 }]>;
 
 def unpckh : PatFrag<(ops node:$lhs, node:$rhs),
                      (vector_shuffle node:$lhs, node:$rhs), [{
-  return X86::isUNPCKHMask(cast<ShuffleVectorSDNode>(N));
+  return X86::isUNPCKHMask(cast<ShuffleVectorSDNode>(N), Subtarget->hasAVX2());
 }]>;
 
 def pshufd : PatFrag<(ops node:$lhs, node:$rhs),

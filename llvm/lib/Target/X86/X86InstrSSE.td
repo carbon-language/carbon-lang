@@ -4242,9 +4242,9 @@ let Predicates = [HasAVX] in {
 let Predicates = [HasAVX2] in {
   defm VPUNPCKLBW  : sse2_unpack_y<0x60, "vpunpcklbw", v32i8, X86Punpcklbw,
                                    bc_v32i8>, VEX_4V;
-  defm VPUNPCKLWD  : sse2_unpack_y<0x61, "vpunpcklwd", v16i16, X86Punpcklwd,
+  defm VPUNPCKLWD  : sse2_unpack_y<0x61, "vpunpcklwd", v16i16, X86Punpcklwdy,
                                    bc_v16i16>, VEX_4V;
-  defm VPUNPCKLDQ  : sse2_unpack_y<0x62, "vpunpckldq", v8i32, X86Punpckldq,
+  defm VPUNPCKLDQ  : sse2_unpack_y<0x62, "vpunpckldq", v8i32, X86Punpckldqy,
                                    bc_v8i32>, VEX_4V;
 
   /// FIXME: we could eliminate this and use sse2_unpack_y instead if tblgen
@@ -4252,19 +4252,19 @@ let Predicates = [HasAVX2] in {
   def VPUNPCKLQDQYrr : PDI<0x6C, MRMSrcReg,
             (outs VR256:$dst), (ins VR256:$src1, VR256:$src2),
             "vpunpcklqdq\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-            [(set VR256:$dst, (v4i64 (X86Punpcklqdq VR256:$src1,
-                                                    VR256:$src2)))]>, VEX_4V;
+            [(set VR256:$dst, (v4i64 (X86Punpcklqdqy VR256:$src1,
+                                                     VR256:$src2)))]>, VEX_4V;
   def VPUNPCKLQDQYrm : PDI<0x6C, MRMSrcMem,
             (outs VR256:$dst), (ins VR256:$src1, i256mem:$src2),
             "vpunpcklqdq\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-            [(set VR256:$dst, (v4i64 (X86Punpcklqdq VR256:$src1,
+            [(set VR256:$dst, (v4i64 (X86Punpcklqdqy VR256:$src1,
                                         (memopv4i64 addr:$src2))))]>, VEX_4V;
 
   defm VPUNPCKHBW  : sse2_unpack_y<0x68, "vpunpckhbw", v32i8, X86Punpckhbw,
                                    bc_v32i8>, VEX_4V;
-  defm VPUNPCKHWD  : sse2_unpack_y<0x69, "vpunpckhwd", v16i16, X86Punpckhwd,
+  defm VPUNPCKHWD  : sse2_unpack_y<0x69, "vpunpckhwd", v16i16, X86Punpckhwdy,
                                    bc_v16i16>, VEX_4V;
-  defm VPUNPCKHDQ  : sse2_unpack_y<0x6A, "vpunpckhdq", v8i32, X86Punpckhdq,
+  defm VPUNPCKHDQ  : sse2_unpack_y<0x6A, "vpunpckhdq", v8i32, X86Punpckhdqy,
                                    bc_v8i32>, VEX_4V;
 
   /// FIXME: we could eliminate this and use sse2_unpack_y instead if tblgen
@@ -4272,12 +4272,12 @@ let Predicates = [HasAVX2] in {
   def VPUNPCKHQDQYrr : PDI<0x6D, MRMSrcReg,
              (outs VR256:$dst), (ins VR256:$src1, VR256:$src2),
              "vpunpckhqdq\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-             [(set VR256:$dst, (v4i64 (X86Punpckhqdq VR256:$src1,
-                                                     VR256:$src2)))]>, VEX_4V;
+             [(set VR256:$dst, (v4i64 (X86Punpckhqdqy VR256:$src1,
+                                                      VR256:$src2)))]>, VEX_4V;
   def VPUNPCKHQDQYrm : PDI<0x6D, MRMSrcMem,
              (outs VR256:$dst), (ins VR256:$src1, i256mem:$src2),
              "vpunpckhqdq\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-             [(set VR256:$dst, (v4i64 (X86Punpckhqdq VR256:$src1,
+             [(set VR256:$dst, (v4i64 (X86Punpckhqdqy VR256:$src1,
                                         (memopv4i64 addr:$src2))))]>, VEX_4V;
 }
 

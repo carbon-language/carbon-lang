@@ -2851,6 +2851,9 @@ static bool isTargetShuffle(unsigned Opcode) {
   case X86ISD::PUNPCKLBW:
   case X86ISD::PUNPCKLDQ:
   case X86ISD::PUNPCKLQDQ:
+  case X86ISD::VPUNPCKLWDY:
+  case X86ISD::VPUNPCKLDQY:
+  case X86ISD::VPUNPCKLQDQY:
   case X86ISD::UNPCKHPS:
   case X86ISD::UNPCKHPD:
   case X86ISD::VUNPCKHPSY:
@@ -2859,6 +2862,9 @@ static bool isTargetShuffle(unsigned Opcode) {
   case X86ISD::PUNPCKHBW:
   case X86ISD::PUNPCKHDQ:
   case X86ISD::PUNPCKHQDQ:
+  case X86ISD::VPUNPCKHWDY:
+  case X86ISD::VPUNPCKHDQY:
+  case X86ISD::VPUNPCKHQDQY:
   case X86ISD::VPERMILPS:
   case X86ISD::VPERMILPSY:
   case X86ISD::VPERMILPD:
@@ -2932,6 +2938,9 @@ static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
   case X86ISD::PUNPCKLBW:
   case X86ISD::PUNPCKLDQ:
   case X86ISD::PUNPCKLQDQ:
+  case X86ISD::VPUNPCKLWDY:
+  case X86ISD::VPUNPCKLDQY:
+  case X86ISD::VPUNPCKLQDQY:
   case X86ISD::UNPCKHPS:
   case X86ISD::UNPCKHPD:
   case X86ISD::VUNPCKHPSY:
@@ -2940,6 +2949,9 @@ static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
   case X86ISD::PUNPCKHBW:
   case X86ISD::PUNPCKHDQ:
   case X86ISD::PUNPCKHQDQ:
+  case X86ISD::VPUNPCKHWDY:
+  case X86ISD::VPUNPCKHDQY:
+  case X86ISD::VPUNPCKHQDQY:
     return DAG.getNode(Opc, dl, VT, V1, V2);
   }
   return SDValue();
@@ -3550,13 +3562,14 @@ bool X86::isMOVLHPSMask(ShuffleVectorSDNode *N) {
 /// isUNPCKLMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a shuffle of elements that is suitable for input to UNPCKL.
 static bool isUNPCKLMask(const SmallVectorImpl<int> &Mask, EVT VT,
-                         bool V2IsSplat = false) {
+                         bool HasAVX2, bool V2IsSplat = false) {
   int NumElts = VT.getVectorNumElements();
 
   assert((VT.is128BitVector() || VT.is256BitVector()) &&
          "Unsupported vector type for unpckh");
 
-  if (VT.getSizeInBits() == 256 && NumElts != 4 && NumElts != 8)
+  if (VT.getSizeInBits() == 256 && NumElts != 4 && NumElts != 8 &&
+      (!HasAVX2 || NumElts != 16))
     return false;
 
   // Handle 128 and 256-bit vector lengths. AVX defines UNPCK* to operate
@@ -3590,22 +3603,23 @@ static bool isUNPCKLMask(const SmallVectorImpl<int> &Mask, EVT VT,
   return true;
 }
 
-bool X86::isUNPCKLMask(ShuffleVectorSDNode *N, bool V2IsSplat) {
+bool X86::isUNPCKLMask(ShuffleVectorSDNode *N, bool HasAVX2, bool V2IsSplat) {
   SmallVector<int, 8> M;
   N->getMask(M);
-  return ::isUNPCKLMask(M, N->getValueType(0), V2IsSplat);
+  return ::isUNPCKLMask(M, N->getValueType(0), HasAVX2, V2IsSplat);
 }
 
 /// isUNPCKHMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a shuffle of elements that is suitable for input to UNPCKH.
 static bool isUNPCKHMask(const SmallVectorImpl<int> &Mask, EVT VT,
-                         bool V2IsSplat = false) {
+                         bool HasAVX2, bool V2IsSplat = false) {
   int NumElts = VT.getVectorNumElements();
 
   assert((VT.is128BitVector() || VT.is256BitVector()) &&
          "Unsupported vector type for unpckh");
 
-  if (VT.getSizeInBits() == 256 && NumElts != 4 && NumElts != 8)
+  if (VT.getSizeInBits() == 256 && NumElts != 4 && NumElts != 8 &&
+      (!HasAVX2 || NumElts != 16))
     return false;
 
   // Handle 128 and 256-bit vector lengths. AVX defines UNPCK* to operate
@@ -3637,10 +3651,10 @@ static bool isUNPCKHMask(const SmallVectorImpl<int> &Mask, EVT VT,
   return true;
 }
 
-bool X86::isUNPCKHMask(ShuffleVectorSDNode *N, bool V2IsSplat) {
+bool X86::isUNPCKHMask(ShuffleVectorSDNode *N, bool HasAVX2, bool V2IsSplat) {
   SmallVector<int, 8> M;
   N->getMask(M);
-  return ::isUNPCKHMask(M, N->getValueType(0), V2IsSplat);
+  return ::isUNPCKHMask(M, N->getValueType(0), HasAVX2, V2IsSplat);
 }
 
 /// isUNPCKL_v_undef_Mask - Special case of isUNPCKLMask for canonical form
@@ -4625,6 +4639,9 @@ static SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG,
     case X86ISD::PUNPCKHWD:
     case X86ISD::PUNPCKHDQ:
     case X86ISD::PUNPCKHQDQ:
+    case X86ISD::VPUNPCKHWDY:
+    case X86ISD::VPUNPCKHDQY:
+    case X86ISD::VPUNPCKHQDQY:
       DecodePUNPCKHMask(NumElems, ShuffleMask);
       break;
     case X86ISD::UNPCKHPS:
@@ -4637,6 +4654,9 @@ static SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG,
     case X86ISD::PUNPCKLWD:
     case X86ISD::PUNPCKLDQ:
     case X86ISD::PUNPCKLQDQ:
+    case X86ISD::VPUNPCKLWDY:
+    case X86ISD::VPUNPCKLDQY:
+    case X86ISD::VPUNPCKLQDQY:
       DecodePUNPCKLMask(VT, ShuffleMask);
       break;
     case X86ISD::UNPCKLPS:
@@ -6558,36 +6578,46 @@ SDValue getMOVLP(SDValue &Op, DebugLoc &dl, SelectionDAG &DAG, bool HasXMMInt) {
                               X86::getShuffleSHUFImmediate(SVOp), DAG);
 }
 
-static inline unsigned getUNPCKLOpcode(EVT VT) {
+static inline unsigned getUNPCKLOpcode(EVT VT, bool HasAVX2) {
   switch(VT.getSimpleVT().SimpleTy) {
   case MVT::v4i32: return X86ISD::PUNPCKLDQ;
   case MVT::v2i64: return X86ISD::PUNPCKLQDQ;
   case MVT::v4f32: return X86ISD::UNPCKLPS;
   case MVT::v2f64: return X86ISD::UNPCKLPD;
-  case MVT::v8i32: // Use fp unit for int unpack.
+  case MVT::v8i32:
+    if (HasAVX2)   return X86ISD::VPUNPCKLDQY;
+    // else use fp unit for int unpack.
   case MVT::v8f32: return X86ISD::VUNPCKLPSY;
-  case MVT::v4i64: // Use fp unit for int unpack.
+  case MVT::v4i64:
+    if (HasAVX2)   return X86ISD::VPUNPCKLQDQY;
+    // else use fp unit for int unpack.
   case MVT::v4f64: return X86ISD::VUNPCKLPDY;
   case MVT::v16i8: return X86ISD::PUNPCKLBW;
   case MVT::v8i16: return X86ISD::PUNPCKLWD;
+  case MVT::v16i16: return X86ISD::VPUNPCKLWDY;
   default:
     llvm_unreachable("Unknown type for unpckl");
   }
   return 0;
 }
 
-static inline unsigned getUNPCKHOpcode(EVT VT) {
+static inline unsigned getUNPCKHOpcode(EVT VT, bool HasAVX2) {
   switch(VT.getSimpleVT().SimpleTy) {
   case MVT::v4i32: return X86ISD::PUNPCKHDQ;
   case MVT::v2i64: return X86ISD::PUNPCKHQDQ;
   case MVT::v4f32: return X86ISD::UNPCKHPS;
   case MVT::v2f64: return X86ISD::UNPCKHPD;
-  case MVT::v8i32: // Use fp unit for int unpack.
+  case MVT::v8i32:
+    if (HasAVX2)   return X86ISD::VPUNPCKHDQY;
+    // else use fp unit for int unpack.
   case MVT::v8f32: return X86ISD::VUNPCKHPSY;
-  case MVT::v4i64: // Use fp unit for int unpack.
+  case MVT::v4i64:
+    if (HasAVX2)   return X86ISD::VPUNPCKHQDQY;
+    // else use fp unit for int unpack.
   case MVT::v4f64: return X86ISD::VUNPCKHPDY;
   case MVT::v16i8: return X86ISD::PUNPCKHBW;
   case MVT::v8i16: return X86ISD::PUNPCKHWD;
+  case MVT::v16i16: return X86ISD::VPUNPCKHWDY;
   default:
     llvm_unreachable("Unknown type for unpckh");
   }
@@ -6688,6 +6718,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   bool V1IsSplat = false;
   bool V2IsSplat = false;
   bool HasXMMInt = Subtarget->hasXMMInt();
+  bool HasAVX2   = Subtarget->hasAVX2();
   MachineFunction &MF = DAG.getMachineFunction();
   bool OptForSize = MF.getFunction()->hasFnAttr(Attribute::OptimizeForSize);
 
@@ -6717,9 +6748,11 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   // NOTE: isPSHUFDMask can also match both masks below (unpckl_undef and
   // unpckh_undef). Only use pshufd if speed is more important than size.
   if (OptForSize && X86::isUNPCKL_v_undef_Mask(SVOp))
-    return getTargetShuffleNode(getUNPCKLOpcode(VT), dl, VT, V1, V1, DAG);
+    return getTargetShuffleNode(getUNPCKLOpcode(VT, HasAVX2), dl, VT, V1, V1,
+                                DAG);
   if (OptForSize && X86::isUNPCKH_v_undef_Mask(SVOp))
-    return getTargetShuffleNode(getUNPCKHOpcode(VT), dl, VT, V1, V1, DAG);
+    return getTargetShuffleNode(getUNPCKHOpcode(VT, HasAVX2), dl, VT, V1, V1,
+                                DAG);
 
   if (X86::isMOVDDUPMask(SVOp) &&
       (Subtarget->hasSSE3() || Subtarget->hasAVX()) &&
@@ -6730,9 +6763,10 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     return getMOVHighToLow(Op, dl, DAG);
 
   // Use to match splats
-  if (HasXMMInt && X86::isUNPCKHMask(SVOp) && V2IsUndef &&
+  if (HasXMMInt && X86::isUNPCKHMask(SVOp, Subtarget->hasAVX2()) && V2IsUndef &&
       (VT == MVT::v2f64 || VT == MVT::v2i64))
-    return getTargetShuffleNode(getUNPCKHOpcode(VT), dl, VT, V1, V1, DAG);
+    return getTargetShuffleNode(getUNPCKHOpcode(VT, HasAVX2), dl, VT, V1, V1,
+                                DAG);
 
   if (X86::isPSHUFDMask(SVOp)) {
     // The actual implementation will match the mask in the if above and then
@@ -6779,7 +6813,8 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   }
 
   // FIXME: fold these into legal mask.
-  if (X86::isMOVLHPSMask(SVOp) && !X86::isUNPCKLMask(SVOp))
+  if (X86::isMOVLHPSMask(SVOp) &&
+      !X86::isUNPCKLMask(SVOp, Subtarget->hasAVX2()))
     return getMOVLowToHigh(Op, dl, DAG, HasXMMInt);
 
   if (X86::isMOVHLPSMask(SVOp))
@@ -6832,11 +6867,13 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     return getMOVL(DAG, dl, VT, V2, V1);
   }
 
-  if (X86::isUNPCKLMask(SVOp))
-    return getTargetShuffleNode(getUNPCKLOpcode(VT), dl, VT, V1, V2, DAG);
+  if (X86::isUNPCKLMask(SVOp, Subtarget->hasAVX2()))
+    return getTargetShuffleNode(getUNPCKLOpcode(VT, HasAVX2), dl, VT, V1, V2,
+                                DAG);
 
-  if (X86::isUNPCKHMask(SVOp))
-    return getTargetShuffleNode(getUNPCKHOpcode(VT), dl, VT, V1, V2, DAG);
+  if (X86::isUNPCKHMask(SVOp, Subtarget->hasAVX2()))
+    return getTargetShuffleNode(getUNPCKHOpcode(VT, HasAVX2), dl, VT, V1, V2,
+                                DAG);
 
   if (V2IsSplat) {
     // Normalize mask so all entries that point to V2 points to its first
@@ -6845,9 +6882,9 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     SDValue NewMask = NormalizeMask(SVOp, DAG);
     ShuffleVectorSDNode *NSVOp = cast<ShuffleVectorSDNode>(NewMask);
     if (NSVOp != SVOp) {
-      if (X86::isUNPCKLMask(NSVOp, true)) {
+      if (X86::isUNPCKLMask(NSVOp, Subtarget->hasAVX2(), true)) {
         return NewMask;
-      } else if (X86::isUNPCKHMask(NSVOp, true)) {
+      } else if (X86::isUNPCKHMask(NSVOp, Subtarget->hasAVX2(), true)) {
         return NewMask;
       }
     }
@@ -6859,11 +6896,13 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     SDValue NewOp = CommuteVectorShuffle(SVOp, DAG);
     ShuffleVectorSDNode *NewSVOp = cast<ShuffleVectorSDNode>(NewOp);
 
-    if (X86::isUNPCKLMask(NewSVOp))
-      return getTargetShuffleNode(getUNPCKLOpcode(VT), dl, VT, V2, V1, DAG);
+    if (X86::isUNPCKLMask(NewSVOp, Subtarget->hasAVX2()))
+      return getTargetShuffleNode(getUNPCKLOpcode(VT, HasAVX2), dl, VT, V2, V1,
+                                  DAG);
 
-    if (X86::isUNPCKHMask(NewSVOp))
-      return getTargetShuffleNode(getUNPCKHOpcode(VT), dl, VT, V2, V1, DAG);
+    if (X86::isUNPCKHMask(NewSVOp, Subtarget->hasAVX2()))
+      return getTargetShuffleNode(getUNPCKHOpcode(VT, HasAVX2), dl, VT, V2, V1,
+                                  DAG);
   }
 
   // Normalize the node to match x86 shuffle ops if needed
@@ -6904,9 +6943,11 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
                                 X86::getShuffleSHUFImmediate(SVOp), DAG);
 
   if (X86::isUNPCKL_v_undef_Mask(SVOp))
-    return getTargetShuffleNode(getUNPCKLOpcode(VT), dl, VT, V1, V1, DAG);
+    return getTargetShuffleNode(getUNPCKLOpcode(VT, HasAVX2), dl, VT, V1, V1,
+                                DAG);
   if (X86::isUNPCKH_v_undef_Mask(SVOp))
-    return getTargetShuffleNode(getUNPCKHOpcode(VT), dl, VT, V1, V1, DAG);
+    return getTargetShuffleNode(getUNPCKHOpcode(VT, HasAVX2), dl, VT, V1, V1,
+                                DAG);
 
   //===--------------------------------------------------------------------===//
   // Generate target specific nodes for 128 or 256-bit shuffles only
@@ -11221,6 +11262,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::MOVSS:              return "X86ISD::MOVSS";
   case X86ISD::UNPCKLPS:           return "X86ISD::UNPCKLPS";
   case X86ISD::UNPCKLPD:           return "X86ISD::UNPCKLPD";
+  case X86ISD::VUNPCKLPSY:         return "X86ISD::VUNPCKLPSY";
   case X86ISD::VUNPCKLPDY:         return "X86ISD::VUNPCKLPDY";
   case X86ISD::UNPCKHPS:           return "X86ISD::UNPCKHPS";
   case X86ISD::UNPCKHPD:           return "X86ISD::UNPCKHPD";
@@ -11228,10 +11270,16 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::PUNPCKLWD:          return "X86ISD::PUNPCKLWD";
   case X86ISD::PUNPCKLDQ:          return "X86ISD::PUNPCKLDQ";
   case X86ISD::PUNPCKLQDQ:         return "X86ISD::PUNPCKLQDQ";
+  case X86ISD::VPUNPCKLWDY:        return "X86ISD::VPUNPCKLWDY";
+  case X86ISD::VPUNPCKLDQY:        return "X86ISD::VPUNPCKLDQY";
+  case X86ISD::VPUNPCKLQDQY:       return "X86ISD::VPUNPCKLQDQY";
   case X86ISD::PUNPCKHBW:          return "X86ISD::PUNPCKHBW";
   case X86ISD::PUNPCKHWD:          return "X86ISD::PUNPCKHWD";
   case X86ISD::PUNPCKHDQ:          return "X86ISD::PUNPCKHDQ";
   case X86ISD::PUNPCKHQDQ:         return "X86ISD::PUNPCKHQDQ";
+  case X86ISD::VPUNPCKHWDY:        return "X86ISD::VPUNPCKHWDY";
+  case X86ISD::VPUNPCKHDQY:        return "X86ISD::VPUNPCKHDQY";
+  case X86ISD::VPUNPCKHQDQY:       return "X86ISD::VPUNPCKHQDQY";
   case X86ISD::VBROADCAST:         return "X86ISD::VBROADCAST";
   case X86ISD::VPERMILPS:          return "X86ISD::VPERMILPS";
   case X86ISD::VPERMILPSY:         return "X86ISD::VPERMILPSY";
@@ -11356,8 +11404,8 @@ X86TargetLowering::isShuffleMaskLegal(const SmallVectorImpl<int> &M,
           isPSHUFHWMask(M, VT) ||
           isPSHUFLWMask(M, VT) ||
           isPALIGNRMask(M, VT, Subtarget->hasSSSE3() || Subtarget->hasAVX()) ||
-          isUNPCKLMask(M, VT) ||
-          isUNPCKHMask(M, VT) ||
+          isUNPCKLMask(M, VT, Subtarget->hasAVX2()) ||
+          isUNPCKHMask(M, VT, Subtarget->hasAVX2()) ||
           isUNPCKL_v_undef_Mask(M, VT) ||
           isUNPCKH_v_undef_Mask(M, VT));
 }
@@ -14819,6 +14867,9 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::PUNPCKHWD:
   case X86ISD::PUNPCKHDQ:
   case X86ISD::PUNPCKHQDQ:
+  case X86ISD::VPUNPCKHWDY:
+  case X86ISD::VPUNPCKHDQY:
+  case X86ISD::VPUNPCKHQDQY:
   case X86ISD::UNPCKHPS:
   case X86ISD::UNPCKHPD:
   case X86ISD::VUNPCKHPSY:
@@ -14827,6 +14878,9 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::PUNPCKLWD:
   case X86ISD::PUNPCKLDQ:
   case X86ISD::PUNPCKLQDQ:
+  case X86ISD::VPUNPCKLWDY:
+  case X86ISD::VPUNPCKLDQY:
+  case X86ISD::VPUNPCKLQDQY:
   case X86ISD::UNPCKLPS:
   case X86ISD::UNPCKLPD:
   case X86ISD::VUNPCKLPSY:

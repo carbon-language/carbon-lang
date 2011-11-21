@@ -285,10 +285,16 @@ namespace llvm {
       PUNPCKLWD,
       PUNPCKLDQ,
       PUNPCKLQDQ,
+      VPUNPCKLWDY,
+      VPUNPCKLDQY,
+      VPUNPCKLQDQY,
       PUNPCKHBW,
       PUNPCKHWD,
       PUNPCKHDQ,
       PUNPCKHQDQ,
+      VPUNPCKHWDY,
+      VPUNPCKHDQY,
+      VPUNPCKHQDQY,
       VPERMILPS,
       VPERMILPSY,
       VPERMILPD,
@@ -414,11 +420,13 @@ namespace llvm {
 
     /// isUNPCKLMask - Return true if the specified VECTOR_SHUFFLE operand
     /// specifies a shuffle of elements that is suitable for input to UNPCKL.
-    bool isUNPCKLMask(ShuffleVectorSDNode *N, bool V2IsSplat = false);
+    bool isUNPCKLMask(ShuffleVectorSDNode *N, bool HasAVX2,
+                      bool V2IsSplat = false);
 
     /// isUNPCKHMask - Return true if the specified VECTOR_SHUFFLE operand
     /// specifies a shuffle of elements that is suitable for input to UNPCKH.
-    bool isUNPCKHMask(ShuffleVectorSDNode *N, bool V2IsSplat = false);
+    bool isUNPCKHMask(ShuffleVectorSDNode *N, bool HasAVX2,
+                      bool V2IsSplat = false);
 
     /// isUNPCKL_v_undef_Mask - Special case of isUNPCKLMask for canonical form
     /// of vector_shuffle v, v, <0, 4, 1, 5>, i.e. vector_shuffle v, undef,
