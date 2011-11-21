@@ -249,7 +249,7 @@ PlatformLinux::GetSoftwareBreakpointTrapOpcode (Target &target,
 }
 
 lldb::ProcessSP
-PlatformLinux::Attach(lldb::pid_t pid,
+PlatformLinux::Attach(ProcessAttachInfo &attach_info,
                       Debugger &debugger,
                       Target *target,
                       Listener &listener,

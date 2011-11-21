@@ -95,8 +95,8 @@ namespace lldb_private {
                                          BreakpointSite *bp_site);
 
         virtual lldb::ProcessSP
-        Attach(lldb::pid_t pid, Debugger &debugger, Target *target,
-               Listener &listener, Error &error);
+        Attach(ProcessAttachInfo &attach_info, Debugger &debugger,
+               Target *target, Listener &listener, Error &error);
 
     protected:
         
