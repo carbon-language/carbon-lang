@@ -37,6 +37,8 @@ namespace llvm {
   /// addition to the interface here, you'll need to provide your own getters
   /// to see whether anything was captured.
   struct CaptureTracker {
+    virtual ~CaptureTracker();
+
     /// tooManyUses - The depth of traversal has breached a limit. There may be
     /// capturing instructions that will not be passed into captured().
     virtual void tooManyUses() = 0;

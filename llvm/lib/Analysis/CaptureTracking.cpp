@@ -19,6 +19,8 @@
 #include "llvm/Analysis/CaptureTracking.h"
 using namespace llvm;
 
+CaptureTracker::~CaptureTracker() {}
+
 namespace {
   struct SimpleCaptureTracker : public CaptureTracker {
     explicit SimpleCaptureTracker(bool ReturnCaptures)
