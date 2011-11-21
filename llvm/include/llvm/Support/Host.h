@@ -33,8 +33,8 @@ namespace sys {
     return !isLittleEndianHost();
   }
 
-  /// getDefaultTargetTriple() - Return the target triple of the running
-  /// system.
+  /// getDefaultTargetTriple() - Return the default target triple the compiler
+  /// has been configured to produce code for.
   ///
   /// The target triple is a string in the format of:
   ///   CPU_TYPE-VENDOR-OPERATING_SYSTEM
