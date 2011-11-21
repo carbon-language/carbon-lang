@@ -44,6 +44,14 @@ class DebuggerInstanceSettings : public InstanceSettings
 {
 public:
     
+    enum StopDisassemblyType
+    {
+        eStopDisassemblyTypeNever = 0,
+        eStopDisassemblyTypeNoSource,
+        eStopDisassemblyTypeAlways
+    };
+    
+
     DebuggerInstanceSettings (UserSettingsController &owner, bool live_instance = true, const char *name = NULL);
 
     DebuggerInstanceSettings (const DebuggerInstanceSettings &rhs);
@@ -80,6 +88,44 @@ public:
     SetTerminalWidth (uint32_t term_width)
     {
         m_term_width = term_width;
+    }
+
+    uint32_t
+    GetStopSourceLineCount (bool before) const
+    {
+        if (before)
+            return m_stop_source_before_count;
+        else
+            return m_stop_source_after_count;
+    }
+
+    
+    void
+    SetStopSourceLineCount (bool before, uint32_t n)
+    {
+        if (before)
+            m_stop_source_before_count = n;
+        else
+            m_stop_source_after_count = n;
+    }
+
+    StopDisassemblyType
+    GetStopDisassemblyDisplay () const
+    {
+        return m_stop_disassembly_display;
+    }
+    
+
+    uint32_t
+    GetDisassemblyLineCount () const
+    {
+        return m_stop_disassembly_count;
+    }
+    
+    void
+    SetDisassemblyLineCount (uint32_t n)
+    {
+        m_stop_disassembly_count = n;
     }
     
     const char *
@@ -169,7 +215,7 @@ public:
     {
         m_auto_confirm_on = auto_confirm_on;
     }
-        
+    
 protected:
 
     void
@@ -185,30 +231,15 @@ protected:
     const ConstString
     CreateInstanceName ();
 
-    static const ConstString &
-    PromptVarName ();
-
-    static const ConstString &
-    GetFrameFormatName ();
-
-    static const ConstString &
-    GetThreadFormatName ();
-
-    static const ConstString &
-    ScriptLangVarName ();
-  
-    static const ConstString &
-    TermWidthVarName ();
-  
-    static const ConstString &
-    UseExternalEditorVarName ();
-    
-    static const ConstString &
-    AutoConfirmName ();
+    static OptionEnumValueElement g_show_disassembly_enum_values[];
 
 private:
 
     uint32_t m_term_width;
+    uint32_t m_stop_source_before_count;
+    uint32_t m_stop_source_after_count;
+    uint32_t m_stop_disassembly_count;
+    StopDisassemblyType m_stop_disassembly_display;
     std::string m_prompt;
     std::string m_frame_format;
     std::string m_thread_format;

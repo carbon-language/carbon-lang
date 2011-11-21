@@ -1270,19 +1270,62 @@ StackFrame::GetStatus (Stream& strm,
     
     if (show_source)
     {
-        GetSymbolContext(eSymbolContextCompUnit | eSymbolContextLineEntry);
-    
-        if (m_sc.comp_unit && m_sc.line_entry.IsValid())
+        Target &target = GetThread().GetProcess().GetTarget();
+        Debugger &debugger = target.GetDebugger();
+        const uint32_t source_before = debugger.GetStopSourceLineCount(true);
+        const uint32_t source_after = debugger.GetStopSourceLineCount(false);
+        bool have_source = false;
+        if (source_before || source_after)
         {
-            Target &target = GetThread().GetProcess().GetTarget();
-            target.GetSourceManager().DisplaySourceLinesWithLineNumbers (
-                m_sc.line_entry.file,
-                m_sc.line_entry.line,
-                3,
-                3,
-                "->",
-                &strm);
+            GetSymbolContext(eSymbolContextCompUnit | eSymbolContextLineEntry);
+
+            if (m_sc.comp_unit && m_sc.line_entry.IsValid())
+            {
+                if (target.GetSourceManager().DisplaySourceLinesWithLineNumbers (m_sc.line_entry.file,
+                                                                                 m_sc.line_entry.line,
+                                                                                 source_before,
+                                                                                 source_after,
+                                                                                 "->",
+                                                                                 &strm))
+                {
+                    have_source = true;
+                }
+            }
+        }
+        DebuggerInstanceSettings::StopDisassemblyType disasm_display = debugger.GetStopDisassemblyDisplay ();
         
+        switch (disasm_display)
+        {
+        case DebuggerInstanceSettings::eStopDisassemblyTypeNever:
+            break;
+
+        case DebuggerInstanceSettings::eStopDisassemblyTypeNoSource:
+            if (have_source)
+                break;
+            // Fall through to next case
+        case DebuggerInstanceSettings::eStopDisassemblyTypeAlways:
+            {
+                const uint32_t disasm_lines = debugger.GetDisassemblyLineCount();
+                if (disasm_lines > 0)
+                {
+                    const ArchSpec &target_arch = target.GetArchitecture();
+                    AddressRange pc_range;
+                    pc_range.GetBaseAddress() = GetFrameCodeAddress();
+                    pc_range.SetByteSize(disasm_lines * target_arch.GetMaximumOpcodeByteSize());
+                    ExecutionContext exe_ctx;
+                    CalculateExecutionContext(exe_ctx);
+                    Disassembler::Disassemble (debugger,
+                                               target_arch,
+                                               NULL,
+                                               exe_ctx,
+                                               pc_range,
+                                               disasm_lines,
+                                               0,
+                                               Disassembler::eOptionMarkPCAddress,
+                                               strm);
+                }
+            }
+            break;
         }
     }
     return true;

@@ -61,6 +61,94 @@ GetDebuggerList()
 }
 
 
+static const ConstString &
+PromptVarName ()
+{
+    static ConstString g_const_string ("prompt");
+    return g_const_string;
+}
+
+static const ConstString &
+GetFrameFormatName ()
+{
+    static ConstString g_const_string ("frame-format");
+    return g_const_string;
+}
+
+static const ConstString &
+GetThreadFormatName ()
+{
+    static ConstString g_const_string ("thread-format");
+    return g_const_string;
+}
+
+static const ConstString &
+ScriptLangVarName ()
+{
+    static ConstString g_const_string ("script-lang");
+    return g_const_string;
+}
+
+static const ConstString &
+TermWidthVarName ()
+{
+    static ConstString g_const_string ("term-width");
+    return g_const_string;
+}
+
+static const ConstString &
+UseExternalEditorVarName ()
+{
+    static ConstString g_const_string ("use-external-editor");
+    return g_const_string;
+}
+
+static const ConstString &
+AutoConfirmName ()
+{
+    static ConstString g_const_string ("auto-confirm");
+    return g_const_string;
+}
+
+static const ConstString &
+StopSourceContextBeforeName ()
+{
+    static ConstString g_const_string ("stop-line-count-before");
+    return g_const_string;
+}
+
+static const ConstString &
+StopSourceContextAfterName ()
+{
+    static ConstString g_const_string ("stop-line-count-after");
+    return g_const_string;
+}
+
+static const ConstString &
+StopDisassemblyCountName ()
+{
+    static ConstString g_const_string ("stop-disassembly-count");
+    return g_const_string;
+}
+
+static const ConstString &
+StopDisassemblyDisplayName ()
+{
+    static ConstString g_const_string ("stop-disassembly-display");
+    return g_const_string;
+}
+
+OptionEnumValueElement
+DebuggerInstanceSettings::g_show_disassembly_enum_values[] =
+{
+    { eStopDisassemblyTypeNever,    "never",     "Never show disassembly when displaying a stop context."},
+    { eStopDisassemblyTypeNoSource, "no-source", "Show disassembly when there is no source information, or the source file is missing when displaying a stop context."},
+    { eStopDisassemblyTypeAlways,   "always",    "Always show disassembly when displaying a stop context."},
+    { 0, NULL, NULL }
+};
+
+
+
 #pragma mark Debugger
 
 UserSettingsControllerSP &
@@ -2108,6 +2196,10 @@ DebuggerInstanceSettings::DebuggerInstanceSettings
 ) :
     InstanceSettings (owner, name ? name : InstanceSettings::InvalidName().AsCString(), live_instance),
     m_term_width (80),
+    m_stop_source_before_count (3),
+    m_stop_source_after_count (3),
+    m_stop_disassembly_count (4),
+    m_stop_disassembly_display (eStopDisassemblyTypeNoSource),
     m_prompt (),
     m_frame_format (),
     m_thread_format (),    
@@ -2255,6 +2347,37 @@ DebuggerInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var
     {
         UserSettingsController::UpdateBooleanVariable (op, m_auto_confirm_on, value, false, err);
     }
+    else if (var_name == StopSourceContextBeforeName ())
+    {
+        uint32_t new_value = Args::StringToUInt32(value, UINT32_MAX, 10, NULL);
+        if (new_value != UINT32_MAX)
+            m_stop_source_before_count = new_value;
+        else
+            err.SetErrorStringWithFormat("invalid unsigned string value '%s' for the '%s' setting", value, StopSourceContextAfterName ().GetCString());
+    }
+    else if (var_name == StopSourceContextAfterName ())
+    {
+        uint32_t new_value = Args::StringToUInt32(value, UINT32_MAX, 10, NULL);
+        if (new_value != UINT32_MAX)
+            m_stop_source_after_count = new_value;
+        else
+            err.SetErrorStringWithFormat("invalid unsigned string value '%s' for the '%s' setting", value, StopSourceContextBeforeName ().GetCString());
+    }
+    else if (var_name == StopDisassemblyCountName ())
+    {
+        uint32_t new_value = Args::StringToUInt32(value, UINT32_MAX, 10, NULL);
+        if (new_value != UINT32_MAX)
+            m_stop_disassembly_count = new_value;
+        else
+            err.SetErrorStringWithFormat("invalid unsigned string value '%s' for the '%s' setting", value, StopDisassemblyCountName ().GetCString());
+    }
+    else if (var_name == StopDisassemblyDisplayName ())
+    {
+        int new_value;
+        UserSettingsController::UpdateEnumVariable (g_show_disassembly_enum_values, &new_value, value, err);
+        if (err.Success())
+            m_stop_disassembly_display = (StopDisassemblyType)new_value;
+    }
 }
 
 bool
@@ -2275,7 +2398,7 @@ DebuggerInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
     else if (var_name == TermWidthVarName())
     {
         StreamString width_str;
-        width_str.Printf ("%d", m_term_width);
+        width_str.Printf ("%u", m_term_width);
         value.AppendString (width_str.GetData());
     }
     else if (var_name == GetFrameFormatName ())
@@ -2299,6 +2422,31 @@ DebuggerInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
             value.AppendString ("true");
         else
             value.AppendString ("false");
+    }
+    else if (var_name == StopSourceContextAfterName ())
+    {
+        StreamString strm;
+        strm.Printf ("%u", m_stop_source_before_count);
+        value.AppendString (strm.GetData());
+    }
+    else if (var_name == StopSourceContextBeforeName ())
+    {
+        StreamString strm;
+        strm.Printf ("%u", m_stop_source_after_count);
+        value.AppendString (strm.GetData());
+    }
+    else if (var_name == StopDisassemblyCountName ())
+    {
+        StreamString strm;
+        strm.Printf ("%u", m_stop_disassembly_count);
+        value.AppendString (strm.GetData());
+    }
+    else if (var_name == StopDisassemblyDisplayName ())
+    {
+        if (m_stop_disassembly_display >= eStopDisassemblyTypeNever && m_stop_disassembly_display <= eStopDisassemblyTypeAlways)
+            value.AppendString (g_show_disassembly_enum_values[m_stop_disassembly_display].string_value);
+        else
+            value.AppendString ("<invalid>");
     }
     else
     {
@@ -2391,61 +2539,6 @@ DebuggerInstanceSettings::CreateInstanceName ()
     return ret_val;
 }
 
-const ConstString &
-DebuggerInstanceSettings::PromptVarName ()
-{
-    static ConstString prompt_var_name ("prompt");
-
-    return prompt_var_name;
-}
-
-const ConstString &
-DebuggerInstanceSettings::GetFrameFormatName ()
-{
-    static ConstString prompt_var_name ("frame-format");
-
-    return prompt_var_name;
-}
-
-const ConstString &
-DebuggerInstanceSettings::GetThreadFormatName ()
-{
-    static ConstString prompt_var_name ("thread-format");
-
-    return prompt_var_name;
-}
-
-const ConstString &
-DebuggerInstanceSettings::ScriptLangVarName ()
-{
-    static ConstString script_lang_var_name ("script-lang");
-
-    return script_lang_var_name;
-}
-
-const ConstString &
-DebuggerInstanceSettings::TermWidthVarName ()
-{
-    static ConstString term_width_var_name ("term-width");
-
-    return term_width_var_name;
-}
-
-const ConstString &
-DebuggerInstanceSettings::UseExternalEditorVarName ()
-{
-    static ConstString use_external_editor_var_name ("use-external-editor");
-
-    return use_external_editor_var_name;
-}
-
-const ConstString &
-DebuggerInstanceSettings::AutoConfirmName ()
-{
-    static ConstString use_external_editor_var_name ("auto-confirm");
-
-    return use_external_editor_var_name;
-}
 
 //--------------------------------------------------
 // SettingsController Variable Tables
@@ -2495,7 +2588,11 @@ Debugger::SettingsController::instance_settings_table[] =
 {   "script-lang",          eSetVarTypeString,      "python",               NULL, false, false, "The script language to be used for evaluating user-written scripts." },
 {   "term-width",           eSetVarTypeInt,         "80"    ,               NULL, false, false, "The maximum number of columns to use for displaying text." },
 {   "thread-format",        eSetVarTypeString,      DEFAULT_THREAD_FORMAT,  NULL, false, false, "The default thread format string to use when displaying thread information." },
-{   "use-external-editor",  eSetVarTypeBoolean,        "false",                NULL, false, false, "Whether to use an external editor or not." },
-{   "auto-confirm",         eSetVarTypeBoolean,        "false",                NULL, false, false, "If true all confirmation prompts will receive their default reply." },
+{   "use-external-editor",  eSetVarTypeBoolean,     "false",                NULL, false, false, "Whether to use an external editor or not." },
+{   "auto-confirm",         eSetVarTypeBoolean,     "false",                NULL, false, false, "If true all confirmation prompts will receive their default reply." },
+{   "stop-line-count-before",eSetVarTypeInt,        "3",                    NULL, false, false, "The number of sources lines to display that come before the current source line when displaying a stopped context." },
+{   "stop-line-count-after", eSetVarTypeInt,        "3",                    NULL, false, false, "The number of sources lines to display that come after the current source line when displaying a stopped context." },
+{   "stop-disassembly-count",  eSetVarTypeInt,      "0",                    NULL, false, false, "The number of disassembly lines to show when displaying a stopped context." },
+{   "stop-disassembly-display", eSetVarTypeEnum,    "no-source",           g_show_disassembly_enum_values, false, false, "Control when to display disassembly when displaying a stopped context." },
 {   NULL,                   eSetVarTypeNone,        NULL,                   NULL, false, false, NULL }
 };
