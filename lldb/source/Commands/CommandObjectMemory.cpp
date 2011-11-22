@@ -323,10 +323,10 @@ public:
         // Add the "--format" and "--count" options to group 1 and 3
         m_option_group.Append (&m_format_options, 
                                OptionGroupFormat::OPTION_GROUP_FORMAT | OptionGroupFormat::OPTION_GROUP_COUNT, 
-                               LLDB_OPT_SET_1 | LLDB_OPT_SET_3);
+                               LLDB_OPT_SET_1 | LLDB_OPT_SET_2 | LLDB_OPT_SET_3);
         m_option_group.Append (&m_format_options, 
                                OptionGroupFormat::OPTION_GROUP_GDB_FMT, 
-                               LLDB_OPT_SET_1 | LLDB_OPT_SET_2 | LLDB_OPT_SET_3);
+                               LLDB_OPT_SET_1 | LLDB_OPT_SET_3);
         // Add the "--size" option to group 1 and 2
         m_option_group.Append (&m_format_options, 
                                OptionGroupFormat::OPTION_GROUP_SIZE, 
