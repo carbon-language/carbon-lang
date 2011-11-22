@@ -682,7 +682,7 @@ void RAFast::handleThroughOperands(MachineInstr *MI,
   }
 
   SmallVector<unsigned, 8> PartialDefs;
-  DEBUG(dbgs() << "Allocating tied uses and early clobbers.\n");
+  DEBUG(dbgs() << "Allocating tied uses.\n");
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
     if (!MO.isReg()) continue;
@@ -704,13 +704,22 @@ void RAFast::handleThroughOperands(MachineInstr *MI,
       // That would confuse the later phys-def processing pass.
       LiveRegMap::iterator LRI = reloadVirtReg(MI, i, Reg, 0);
       PartialDefs.push_back(LRI->second.PhysReg);
-    } else if (MO.isEarlyClobber()) {
-      // Note: defineVirtReg may invalidate MO.
-      LiveRegMap::iterator LRI = defineVirtReg(MI, i, Reg, 0);
-      unsigned PhysReg = LRI->second.PhysReg;
-      if (setPhysReg(MI, i, PhysReg))
-        VirtDead.push_back(Reg);
     }
+  }
+
+  DEBUG(dbgs() << "Allocating early clobbers.\n");
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = MI->getOperand(i);
+    if (!MO.isReg()) continue;
+    unsigned Reg = MO.getReg();
+    if (!TargetRegisterInfo::isVirtualRegister(Reg)) continue;
+    if (!MO.isEarlyClobber())
+      continue;
+    // Note: defineVirtReg may invalidate MO.
+    LiveRegMap::iterator LRI = defineVirtReg(MI, i, Reg, 0);
+    unsigned PhysReg = LRI->second.PhysReg;
+    if (setPhysReg(MI, i, PhysReg))
+      VirtDead.push_back(Reg);
   }
 
   // Restore UsedInInstr to a state usable for allocating normal virtual uses.
