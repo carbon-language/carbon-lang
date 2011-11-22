@@ -475,3 +475,31 @@ exit:
 }
 
 !2 = metadata !{metadata !"branch_weights", i32 3, i32 1}
+
+declare i32 @__gxx_personality_v0(...)
+
+define void @test_eh_lpad_successor() {
+; Some times the landing pad ends up as the first successor of an invoke block.
+; When this happens, a strange result used to fall out of updateTerminators: we
+; didn't correctly locate the fallthrough successor, assuming blindly that the
+; first one was the fallthrough successor. As a result, we would add an
+; erroneous jump to the landing pad thinking *that* was the default successor.
+; CHECK: test_eh_lpad_successor
+; CHECK: %entry
+; CHECK-NOT: jmp
+; CHECK: %loop
+
+entry:
+  invoke i32 @f() to label %preheader unwind label %lpad
+
+preheader:
+  br label %loop
+
+lpad:
+  %lpad.val = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+          cleanup
+  resume { i8*, i32 } %lpad.val
+
+loop:
+  br label %loop
+}
