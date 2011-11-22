@@ -14,6 +14,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/Config/config.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Errno.h"
 #include "llvm/Support/Path.h"
@@ -320,11 +321,17 @@ error_code MemoryBuffer::getOpenFile(int FD, const char *Filename,
   char *BufPtr = const_cast<char*>(SB->getBufferStart());
 
   size_t BytesLeft = MapSize;
+#ifndef HAVE_PREAD
   if (lseek(FD, Offset, SEEK_SET) == -1)
     return error_code(errno, posix_category());
+#endif
 
   while (BytesLeft) {
+#ifdef HAVE_PREAD
+    ssize_t NumRead = ::pread(FD, BufPtr, BytesLeft, MapSize-BytesLeft+Offset);
+#else
     ssize_t NumRead = ::read(FD, BufPtr, BytesLeft);
+#endif
     if (NumRead == -1) {
       if (errno == EINTR)
         continue;

@@ -297,6 +297,9 @@
 /* Define to 1 if you have the `powf' function. */
 #cmakedefine HAVE_POWF ${HAVE_POWF}
 
+/* Define to 1 if you have the `pread' function. */
+#cmakedefine HAVE_PREAD ${HAVE_PREAD}
+
 /* Define if libtool can extract symbol lists from object files. */
 #undef HAVE_PRELOADED_SYMBOLS
 
