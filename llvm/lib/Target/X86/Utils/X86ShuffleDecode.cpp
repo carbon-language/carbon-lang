@@ -142,11 +142,32 @@ void DecodeSHUFPSMask(unsigned NElts, unsigned Imm,
   }
 }
 
-void DecodeUNPCKHPMask(unsigned NElts,
-                       SmallVectorImpl<unsigned> &ShuffleMask) {
-  for (unsigned i = 0; i != NElts/2; ++i) {
-    ShuffleMask.push_back(i+NElts/2);        // Reads from dest
-    ShuffleMask.push_back(i+NElts+NElts/2);  // Reads from src
+void DecodeUNPCKHPSMask(unsigned NElts,
+                        SmallVectorImpl<unsigned> &ShuffleMask) {
+  DecodeUNPCKHPMask(MVT::getVectorVT(MVT::i32, NElts), ShuffleMask);
+}
+
+void DecodeUNPCKHPDMask(unsigned NElts,
+                        SmallVectorImpl<unsigned> &ShuffleMask) {
+  DecodeUNPCKHPMask(MVT::getVectorVT(MVT::i64, NElts), ShuffleMask);
+}
+
+void DecodeUNPCKHPMask(EVT VT, SmallVectorImpl<unsigned> &ShuffleMask) {
+  unsigned NumElts = VT.getVectorNumElements();
+
+  // Handle 128 and 256-bit vector lengths. AVX defines UNPCK* to operate
+  // independently on 128-bit lanes.
+  unsigned NumLanes = VT.getSizeInBits() / 128;
+  if (NumLanes == 0 ) NumLanes = 1;  // Handle MMX
+  unsigned NumLaneElts = NumElts / NumLanes;
+
+  for (unsigned s = 0; s < NumLanes; ++s) {
+    unsigned Start = s * NumLaneElts + NumLaneElts/2;
+    unsigned End   = s * NumLaneElts + NumLaneElts;
+    for (unsigned i = Start; i != End; ++i) {
+      ShuffleMask.push_back(i);          // Reads from dest/src1
+      ShuffleMask.push_back(i+NumElts);  // Reads from src/src2
+    }
   }
 }
 
@@ -163,8 +184,7 @@ void DecodeUNPCKLPDMask(unsigned NElts,
 /// DecodeUNPCKLPMask - This decodes the shuffle masks for unpcklps/unpcklpd
 /// etc.  VT indicates the type of the vector allowing it to handle different
 /// datatypes and vector widths.
-void DecodeUNPCKLPMask(EVT VT,
-                       SmallVectorImpl<unsigned> &ShuffleMask) {
+void DecodeUNPCKLPMask(EVT VT, SmallVectorImpl<unsigned> &ShuffleMask) {
   unsigned NumElts = VT.getVectorNumElements();
 
   // Handle 128 and 256-bit vector lengths. AVX defines UNPCK* to operate
@@ -173,16 +193,13 @@ void DecodeUNPCKLPMask(EVT VT,
   if (NumLanes == 0 ) NumLanes = 1;  // Handle MMX
   unsigned NumLaneElts = NumElts / NumLanes;
 
-  unsigned Start = 0;
-  unsigned End = NumLaneElts / 2;
   for (unsigned s = 0; s < NumLanes; ++s) {
+    unsigned Start = s * NumLaneElts;
+    unsigned End   = s * NumLaneElts + NumLaneElts/2;
     for (unsigned i = Start; i != End; ++i) {
-      ShuffleMask.push_back(i);                 // Reads from dest/src1
-      ShuffleMask.push_back(i+NumLaneElts);  // Reads from src/src2
+      ShuffleMask.push_back(i);          // Reads from dest/src1
+      ShuffleMask.push_back(i+NumElts);  // Reads from src/src2
     }
-    // Process the next 128 bits.
-    Start += NumLaneElts;
-    End += NumLaneElts;
   }
 }
 

@@ -4653,7 +4653,7 @@ static SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG,
     case X86ISD::UNPCKHPD:
     case X86ISD::VUNPCKHPSY:
     case X86ISD::VUNPCKHPDY:
-      DecodeUNPCKHPMask(NumElems, ShuffleMask);
+      DecodeUNPCKHPMask(VT, ShuffleMask);
       break;
     case X86ISD::PUNPCKLBW:
     case X86ISD::PUNPCKLWD:

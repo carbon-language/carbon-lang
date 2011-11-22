@@ -67,8 +67,16 @@ void DecodePUNPCKHMask(unsigned NElts,
 void DecodeSHUFPSMask(unsigned NElts, unsigned Imm,
                       SmallVectorImpl<unsigned> &ShuffleMask);
 
-void DecodeUNPCKHPMask(unsigned NElts,
-                       SmallVectorImpl<unsigned> &ShuffleMask);
+void DecodeUNPCKHPSMask(unsigned NElts,
+                        SmallVectorImpl<unsigned> &ShuffleMask);
+
+void DecodeUNPCKHPDMask(unsigned NElts,
+                        SmallVectorImpl<unsigned> &ShuffleMask);
+
+/// DecodeUNPCKHPMask - This decodes the shuffle masks for unpckhps/unpckhpd
+/// etc.  VT indicates the type of the vector allowing it to handle different
+/// datatypes and vector widths.
+void DecodeUNPCKHPMask(EVT VT, SmallVectorImpl<unsigned> &ShuffleMask);
 
 void DecodeUNPCKLPSMask(unsigned NElts,
                         SmallVectorImpl<unsigned> &ShuffleMask);
@@ -79,8 +87,7 @@ void DecodeUNPCKLPDMask(unsigned NElts,
 /// DecodeUNPCKLPMask - This decodes the shuffle masks for unpcklps/unpcklpd
 /// etc.  VT indicates the type of the vector allowing it to handle different
 /// datatypes and vector widths.
-void DecodeUNPCKLPMask(EVT VT,
-                       SmallVectorImpl<unsigned> &ShuffleMask);
+void DecodeUNPCKLPMask(EVT VT, SmallVectorImpl<unsigned> &ShuffleMask);
 
 
 // DecodeVPERMILPSMask - Decodes VPERMILPS permutes for any 128-bit 32-bit
