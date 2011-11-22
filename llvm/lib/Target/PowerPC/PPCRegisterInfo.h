@@ -37,6 +37,9 @@ public:
   /// This is used for addressing modes.
   virtual const TargetRegisterClass *getPointerRegClass(unsigned Kind=0) const;  
 
+  unsigned getRegPressureLimit(const TargetRegisterClass *RC,
+                               MachineFunction &MF) const;
+
   /// Code Generation virtual methods...
   const unsigned *getCalleeSavedRegs(const MachineFunction* MF = 0) const;
 

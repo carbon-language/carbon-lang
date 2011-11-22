@@ -407,6 +407,8 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
 
   setInsertFencesForAtomic(true);
 
+  setSchedulingPreference(Sched::Hybrid);
+
   computeRegisterProperties();
 }
 

@@ -273,6 +273,27 @@ BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   return Reserved;
 }
 
+unsigned
+PPCRegisterInfo::getRegPressureLimit(const TargetRegisterClass *RC,
+                                         MachineFunction &MF) const {
+  const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
+  const unsigned DefaultSafety = 1;
+
+  switch (RC->getID()) {
+  default:
+    return 0;
+  case PPC::G8RCRegClassID:
+  case PPC::GPRCRegClassID: {
+    unsigned FP = TFI->hasFP(MF) ? 1 : 0;
+    return 32 - FP - DefaultSafety;
+  }
+  case PPC::F8RCRegClassID:
+  case PPC::F4RCRegClassID:
+  case PPC::VRRCRegClassID:
+    return 32 - DefaultSafety;
+  }
+}
+
 //===----------------------------------------------------------------------===//
 // Stack Frame Processing methods
 //===----------------------------------------------------------------------===//
