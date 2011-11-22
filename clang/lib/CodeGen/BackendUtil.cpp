@@ -147,7 +147,7 @@ void EmitAssemblyHelper::CreatePasses() {
                            addObjCARCOptPass);
   }
 
-  if (CodeGenOpts.AddressSanitizer) {
+  if (LangOpts.AddressSanitizer) {
     PMBuilder.addExtension(PassManagerBuilder::EP_ScalarOptimizerLate,
                            addAddressSanitizerPass);
   }
