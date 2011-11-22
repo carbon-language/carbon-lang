@@ -304,8 +304,7 @@ void TemplateSpecializationTypeLoc::initializeArgLocs(ASTContext &Context,
     case TemplateArgument::Integral:
     case TemplateArgument::Pack:
     case TemplateArgument::Expression:
-      // FIXME: Can we do better for declarations and integral values?
-      ArgInfos[i] = TemplateArgumentLocInfo();
+      ArgInfos[i] = TemplateArgumentLocInfo(Args[i].getAsExpr());
       break;
       
     case TemplateArgument::Type:
@@ -334,4 +333,3 @@ void TemplateSpecializationTypeLoc::initializeArgLocs(ASTContext &Context,
     }
   }
 }
-
