@@ -1087,6 +1087,12 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
   return C;
 }
 
+llvm::Constant *
+CodeGenModule::GetAddrOfConstantCompoundLiteral(const CompoundLiteralExpr *E) {
+  assert(E->isFileScope() && "not a file-scope compound literal expr");
+  return ConstExprEmitter(*this, 0).EmitLValue(E);
+}
+
 static uint64_t getFieldOffset(ASTContext &C, const FieldDecl *field) {
   const ASTRecordLayout &layout = C.getASTRecordLayout(field->getParent());
   return layout.getFieldOffset(field->getFieldIndex());

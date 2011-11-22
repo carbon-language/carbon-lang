@@ -599,6 +599,10 @@ public:
   llvm::Constant *GetAddrOfConstantCString(const std::string &str,
                                            const char *GlobalName=0,
                                            unsigned Alignment=1);
+
+  /// GetAddrOfConstantCompoundLiteral - Returns a pointer to a constant global
+  /// variable for the given file-scope compound literal expression.
+  llvm::Constant *GetAddrOfConstantCompoundLiteral(const CompoundLiteralExpr*E);
   
   /// \brief Retrieve the record type that describes the state of an
   /// Objective-C fast enumeration loop (for..in).

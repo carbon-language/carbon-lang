@@ -1947,6 +1947,11 @@ CodeGenFunction::EmitLValueForFieldInitialization(llvm::Value *BaseValue,
 }
 
 LValue CodeGenFunction::EmitCompoundLiteralLValue(const CompoundLiteralExpr *E){
+  if (E->isFileScope()) {
+    llvm::Value *GlobalPtr = CGM.GetAddrOfConstantCompoundLiteral(E);
+    return MakeAddrLValue(GlobalPtr, E->getType());
+  }
+
   llvm::Value *DeclPtr = CreateMemTemp(E->getType(), ".compoundliteral");
   const Expr *InitExpr = E->getInitializer();
   LValue Result = MakeAddrLValue(DeclPtr, E->getType());

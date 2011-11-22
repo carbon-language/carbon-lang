@@ -37,3 +37,8 @@ int g() {
   // CHECK-NEXT: ret i32 [[A0]]
   return v[0];
 }
+
+struct Z { int i[3]; };
+int *p = (Z){ {1, 2, 3} }.i;
+// CHECK: define {{.*}}__cxx_global_var_init()
+// CHECK: store i32* getelementptr inbounds (%struct.Z* @.compoundliteral, i32 0, i32 0, i32 0), i32** @p, align 8
