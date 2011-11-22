@@ -330,13 +330,8 @@ error_code MemoryBuffer::getOpenFile(int FD, const char *Filename,
         continue;
       // Error while reading.
       return error_code(errno, posix_category());
-    } else if (NumRead == 0) {
-      // We hit EOF early, truncate and terminate buffer.
-      Buf->BufferEnd = BufPtr;
-      *BufPtr = 0;
-      result.swap(SB);
-      return success;
     }
+    assert(NumRead != 0 && "fstat reported an invalid file size.");
     BytesLeft -= NumRead;
     BufPtr += NumRead;
   }
