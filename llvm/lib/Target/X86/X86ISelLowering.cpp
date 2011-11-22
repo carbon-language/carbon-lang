@@ -908,7 +908,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::SINT_TO_FP,         MVT::v4i32, Legal);
   }
 
-  if (Subtarget->hasSSE41() || Subtarget->hasAVX()) {
+  if (Subtarget->hasSSE41orAVX()) {
     setOperationAction(ISD::FFLOOR,             MVT::f32,   Legal);
     setOperationAction(ISD::FCEIL,              MVT::f32,   Legal);
     setOperationAction(ISD::FTRUNC,             MVT::f32,   Legal);
@@ -980,7 +980,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     }
   }
 
-  if (Subtarget->hasSSE42() || Subtarget->hasAVX())
+  if (Subtarget->hasSSE42orAVX())
     setOperationAction(ISD::SETCC,             MVT::v2i64, Custom);
 
   if (!UseSoftFloat && Subtarget->hasAVX()) {
@@ -3970,7 +3970,7 @@ static bool isCommutedMOVL(ShuffleVectorSDNode *N, bool V2IsSplat = false,
 /// Masks to match: <1, 1, 3, 3> or <1, 1, 3, 3, 5, 5, 7, 7>
 bool X86::isMOVSHDUPMask(ShuffleVectorSDNode *N,
                          const X86Subtarget *Subtarget) {
-  if (!Subtarget->hasSSE3() && !Subtarget->hasAVX())
+  if (!Subtarget->hasSSE3orAVX())
     return false;
 
   // The second vector must be undef
@@ -3998,7 +3998,7 @@ bool X86::isMOVSHDUPMask(ShuffleVectorSDNode *N,
 /// Masks to match: <0, 0, 2, 2> or <0, 0, 2, 2, 4, 4, 6, 6>
 bool X86::isMOVSLDUPMask(ShuffleVectorSDNode *N,
                          const X86Subtarget *Subtarget) {
-  if (!Subtarget->hasSSE3() && !Subtarget->hasAVX())
+  if (!Subtarget->hasSSE3orAVX())
     return false;
 
   // The second vector must be undef
@@ -5509,7 +5509,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
       return LD;
 
     // For SSE 4.1, use insertps to put the high elements into the low element.
-    if (getSubtarget()->hasSSE41() || getSubtarget()->hasAVX()) {
+    if (getSubtarget()->hasSSE41orAVX()) {
       SDValue Result;
       if (Op.getOperand(0).getOpcode() != ISD::UNDEF)
         Result = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Op.getOperand(0));
@@ -5680,7 +5680,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLEv8i16(SDValue Op,
   // quads, disable the next transformation since it does not help SSSE3.
   bool V1Used = InputQuads[0] || InputQuads[1];
   bool V2Used = InputQuads[2] || InputQuads[3];
-  if (Subtarget->hasSSSE3() || Subtarget->hasAVX()) {
+  if (Subtarget->hasSSSE3orAVX()) {
     if (InputQuads.count() == 2 && V1Used && V2Used) {
       BestLoQuad = InputQuads.find_first();
       BestHiQuad = InputQuads.find_next(BestLoQuad);
@@ -5753,7 +5753,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLEv8i16(SDValue Op,
   // If we have SSSE3, and all words of the result are from 1 input vector,
   // case 2 is generated, otherwise case 3 is generated.  If no SSSE3
   // is present, fall back to case 4.
-  if (Subtarget->hasSSSE3() || Subtarget->hasAVX()) {
+  if (Subtarget->hasSSSE3orAVX()) {
     SmallVector<SDValue,16> pshufbMask;
 
     // If we have elements from both input vectors, set the high bit of the
@@ -5821,8 +5821,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLEv8i16(SDValue Op,
     NewV = DAG.getVectorShuffle(MVT::v8i16, dl, NewV, DAG.getUNDEF(MVT::v8i16),
                                 &MaskV[0]);
 
-    if (NewV.getOpcode() == ISD::VECTOR_SHUFFLE &&
-        (Subtarget->hasSSSE3() || Subtarget->hasAVX()))
+    if (NewV.getOpcode() == ISD::VECTOR_SHUFFLE && Subtarget->hasSSSE3orAVX())
       NewV = getTargetShuffleNode(X86ISD::PSHUFLW, dl, MVT::v8i16,
                                NewV.getOperand(0),
                                X86::getShufflePSHUFLWImmediate(NewV.getNode()),
@@ -5850,8 +5849,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLEv8i16(SDValue Op,
     NewV = DAG.getVectorShuffle(MVT::v8i16, dl, NewV, DAG.getUNDEF(MVT::v8i16),
                                 &MaskV[0]);
 
-    if (NewV.getOpcode() == ISD::VECTOR_SHUFFLE &&
-        (Subtarget->hasSSSE3() || Subtarget->hasAVX()))
+    if (NewV.getOpcode() == ISD::VECTOR_SHUFFLE && Subtarget->hasSSSE3orAVX())
       NewV = getTargetShuffleNode(X86ISD::PSHUFHW, dl, MVT::v8i16,
                               NewV.getOperand(0),
                               X86::getShufflePSHUFHWImmediate(NewV.getNode()),
@@ -5917,7 +5915,7 @@ SDValue LowerVECTOR_SHUFFLEv16i8(ShuffleVectorSDNode *SVOp,
   }
 
   // If SSSE3, use 1 pshufb instruction per vector with elements in the result.
-  if (TLI.getSubtarget()->hasSSSE3() || TLI.getSubtarget()->hasAVX()) {
+  if (TLI.getSubtarget()->hasSSSE3orAVX()) {
     SmallVector<SDValue,16> pshufbMask;
 
     // If all result elements are from one input vector, then only translate
@@ -6762,8 +6760,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     return getTargetShuffleNode(getUNPCKHOpcode(VT, HasAVX2), dl, VT, V1, V1,
                                 DAG);
 
-  if (X86::isMOVDDUPMask(SVOp) &&
-      (Subtarget->hasSSE3() || Subtarget->hasAVX()) &&
+  if (X86::isMOVDDUPMask(SVOp) && Subtarget->hasSSE3orAVX() &&
       V2IsUndef && RelaxedMayFoldVectorLoad(V1))
     return getMOVDDup(Op, dl, V1, DAG);
 
@@ -6771,7 +6768,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     return getMOVHighToLow(Op, dl, DAG);
 
   // Use to match splats
-  if (HasXMMInt && X86::isUNPCKHMask(SVOp, Subtarget->hasAVX2()) && V2IsUndef &&
+  if (HasXMMInt && X86::isUNPCKHMask(SVOp, HasAVX2) && V2IsUndef &&
       (VT == MVT::v2f64 || VT == MVT::v2i64))
     return getTargetShuffleNode(getUNPCKHOpcode(VT, HasAVX2), dl, VT, V1, V1,
                                 DAG);
@@ -6796,8 +6793,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   bool isLeft = false;
   unsigned ShAmt = 0;
   SDValue ShVal;
-  bool isShift = getSubtarget()->hasXMMInt() &&
-                 isVectorShift(SVOp, DAG, isLeft, ShVal, ShAmt);
+  bool isShift = HasXMMInt && isVectorShift(SVOp, DAG, isLeft, ShVal, ShAmt);
   if (isShift && ShVal.hasOneUse()) {
     // If the shifted value has multiple uses, it may be cheaper to use
     // v_set0 + movlhps or movhlps, etc.
@@ -6821,8 +6817,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   }
 
   // FIXME: fold these into legal mask.
-  if (X86::isMOVLHPSMask(SVOp) &&
-      !X86::isUNPCKLMask(SVOp, Subtarget->hasAVX2()))
+  if (X86::isMOVLHPSMask(SVOp) && !X86::isUNPCKLMask(SVOp, HasAVX2))
     return getMOVLowToHigh(Op, dl, DAG, HasXMMInt);
 
   if (X86::isMOVHLPSMask(SVOp))
@@ -6875,11 +6870,11 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     return getMOVL(DAG, dl, VT, V2, V1);
   }
 
-  if (X86::isUNPCKLMask(SVOp, Subtarget->hasAVX2()))
+  if (X86::isUNPCKLMask(SVOp, HasAVX2))
     return getTargetShuffleNode(getUNPCKLOpcode(VT, HasAVX2), dl, VT, V1, V2,
                                 DAG);
 
-  if (X86::isUNPCKHMask(SVOp, Subtarget->hasAVX2()))
+  if (X86::isUNPCKHMask(SVOp, HasAVX2))
     return getTargetShuffleNode(getUNPCKHOpcode(VT, HasAVX2), dl, VT, V1, V2,
                                 DAG);
 
@@ -6890,9 +6885,9 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     SDValue NewMask = NormalizeMask(SVOp, DAG);
     ShuffleVectorSDNode *NSVOp = cast<ShuffleVectorSDNode>(NewMask);
     if (NSVOp != SVOp) {
-      if (X86::isUNPCKLMask(NSVOp, Subtarget->hasAVX2(), true)) {
+      if (X86::isUNPCKLMask(NSVOp, HasAVX2, true)) {
         return NewMask;
-      } else if (X86::isUNPCKHMask(NSVOp, Subtarget->hasAVX2(), true)) {
+      } else if (X86::isUNPCKHMask(NSVOp, HasAVX2, true)) {
         return NewMask;
       }
     }
@@ -6904,11 +6899,11 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     SDValue NewOp = CommuteVectorShuffle(SVOp, DAG);
     ShuffleVectorSDNode *NewSVOp = cast<ShuffleVectorSDNode>(NewOp);
 
-    if (X86::isUNPCKLMask(NewSVOp, Subtarget->hasAVX2()))
+    if (X86::isUNPCKLMask(NewSVOp, HasAVX2))
       return getTargetShuffleNode(getUNPCKLOpcode(VT, HasAVX2), dl, VT, V2, V1,
                                   DAG);
 
-    if (X86::isUNPCKHMask(NewSVOp, Subtarget->hasAVX2()))
+    if (X86::isUNPCKHMask(NewSVOp, HasAVX2))
       return getTargetShuffleNode(getUNPCKHOpcode(VT, HasAVX2), dl, VT, V2, V1,
                                   DAG);
   }
@@ -6923,7 +6918,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   SmallVector<int, 16> M;
   SVOp->getMask(M);
 
-  if (isPALIGNRMask(M, VT, Subtarget->hasSSSE3() || Subtarget->hasAVX()))
+  if (isPALIGNRMask(M, VT, Subtarget->hasSSSE3orAVX()))
     return getTargetShuffleNode(X86ISD::PALIGN, dl, VT, V1, V2,
                                 X86::getShufflePALIGNRImmediate(SVOp),
                                 DAG);
@@ -7109,7 +7104,7 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT(SDValue Op,
 
   assert(Vec.getValueSizeInBits() <= 128 && "Unexpected vector length");
 
-  if (Subtarget->hasSSE41() || Subtarget->hasAVX()) {
+  if (Subtarget->hasSSE41orAVX()) {
     SDValue Res = LowerEXTRACT_VECTOR_ELT_SSE4(Op, DAG);
     if (Res.getNode())
       return Res;
@@ -7251,7 +7246,7 @@ X86TargetLowering::LowerINSERT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) const {
     return Insert128BitVector(N0, V, Ins128Idx, DAG, dl);
   }
 
-  if (Subtarget->hasSSE41() || Subtarget->hasAVX())
+  if (Subtarget->hasSSE41orAVX())
     return LowerINSERT_VECTOR_ELT_SSE4(Op, DAG);
 
   if (EltVT == MVT::i8)
@@ -8741,9 +8736,9 @@ SDValue X86TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) const {
 
   // Check that the operation in question is available (most are plain SSE2,
   // but PCMPGTQ and PCMPEQQ have different requirements).
-  if (Opc == X86ISD::PCMPGTQ && !Subtarget->hasSSE42() && !Subtarget->hasAVX())
+  if (Opc == X86ISD::PCMPGTQ && !Subtarget->hasSSE42orAVX())
     return SDValue();
-  if (Opc == X86ISD::PCMPEQQ && !Subtarget->hasSSE41() && !Subtarget->hasAVX())
+  if (Opc == X86ISD::PCMPEQQ && !Subtarget->hasSSE41orAVX())
     return SDValue();
 
   // Since SSE has no unsigned integer comparisons, we need to flip  the sign
@@ -11403,7 +11398,7 @@ X86TargetLowering::isShuffleMaskLegal(const SmallVectorImpl<int> &M,
                                       EVT VT) const {
   // Very little shuffling can be done for 64-bit vectors right now.
   if (VT.getSizeInBits() == 64)
-    return isPALIGNRMask(M, VT, Subtarget->hasSSSE3() || Subtarget->hasAVX());
+    return isPALIGNRMask(M, VT, Subtarget->hasSSSE3orAVX());
 
   // FIXME: pshufb, blends, shifts.
   return (VT.getVectorNumElements() == 2 ||
@@ -11413,7 +11408,7 @@ X86TargetLowering::isShuffleMaskLegal(const SmallVectorImpl<int> &M,
           isPSHUFDMask(M, VT) ||
           isPSHUFHWMask(M, VT) ||
           isPSHUFLWMask(M, VT) ||
-          isPALIGNRMask(M, VT, Subtarget->hasSSSE3() || Subtarget->hasAVX()) ||
+          isPALIGNRMask(M, VT, Subtarget->hasSSSE3orAVX()) ||
           isUNPCKLMask(M, VT, Subtarget->hasAVX2()) ||
           isUNPCKHMask(M, VT, Subtarget->hasAVX2()) ||
           isUNPCKL_v_undef_Mask(M, VT) ||
@@ -11822,7 +11817,7 @@ X86TargetLowering::EmitAtomicMinMaxWithCustomInserter(MachineInstr *mInstr,
 MachineBasicBlock *
 X86TargetLowering::EmitPCMP(MachineInstr *MI, MachineBasicBlock *BB,
                             unsigned numArgs, bool memArg) const {
-  assert((Subtarget->hasSSE42() || Subtarget->hasAVX()) &&
+  assert(Subtarget->hasSSE42orAVX() &&
          "Target must have SSE4.2 or AVX features enabled");
 
   DebugLoc dl = MI->getDebugLoc();
@@ -13982,7 +13977,7 @@ static SDValue PerformOrCombine(SDNode *N, SelectionDAG &DAG,
 
   // look for psign/blend
   if (VT == MVT::v2i64 || VT == MVT::v4i64) {
-    if (!(Subtarget->hasSSSE3() || Subtarget->hasAVX()) ||
+    if (!Subtarget->hasSSSE3orAVX() ||
         (VT == MVT::v4i64 && !Subtarget->hasAVX2()))
       return SDValue();
 
@@ -14052,7 +14047,7 @@ static SDValue PerformOrCombine(SDNode *N, SelectionDAG &DAG,
         return DAG.getNode(ISD::BITCAST, DL, VT, Sign);
       }
       // PBLENDVB only available on SSE 4.1
-      if (!(Subtarget->hasSSE41() || Subtarget->hasAVX()))
+      if (!Subtarget->hasSSE41orAVX())
         return SDValue();
 
       EVT BlendVT = (VT == MVT::v4i64) ? MVT::v32i8 : MVT::v16i8;
@@ -14577,8 +14572,7 @@ static SDValue PerformFADDCombine(SDNode *N, SelectionDAG &DAG,
   SDValue RHS = N->getOperand(1);
 
   // Try to synthesize horizontal adds from adds of shuffles.
-  if ((Subtarget->hasSSE3() || Subtarget->hasAVX()) &&
-      (VT == MVT::v4f32 || VT == MVT::v2f64) &&
+  if (Subtarget->hasSSE3orAVX() && (VT == MVT::v4f32 || VT == MVT::v2f64) &&
       isHorizontalBinOp(LHS, RHS, true))
     return DAG.getNode(X86ISD::FHADD, N->getDebugLoc(), VT, LHS, RHS);
   return SDValue();
@@ -14592,8 +14586,7 @@ static SDValue PerformFSUBCombine(SDNode *N, SelectionDAG &DAG,
   SDValue RHS = N->getOperand(1);
 
   // Try to synthesize horizontal subs from subs of shuffles.
-  if ((Subtarget->hasSSE3() || Subtarget->hasAVX()) &&
-      (VT == MVT::v4f32 || VT == MVT::v2f64) &&
+  if (Subtarget->hasSSE3orAVX() && (VT == MVT::v4f32 || VT == MVT::v2f64) &&
       isHorizontalBinOp(LHS, RHS, false))
     return DAG.getNode(X86ISD::FHSUB, N->getDebugLoc(), VT, LHS, RHS);
   return SDValue();
@@ -14797,8 +14790,7 @@ static SDValue PerformAddCombine(SDNode *N, SelectionDAG &DAG,
   SDValue Op1 = N->getOperand(1);
 
   // Try to synthesize horizontal adds from adds of shuffles.
-  if ((Subtarget->hasSSSE3() || Subtarget->hasAVX()) &&
-      (VT == MVT::v8i16 || VT == MVT::v4i32) &&
+  if ((Subtarget->hasSSSE3orAVX()) && (VT == MVT::v8i16 || VT == MVT::v4i32) &&
       isHorizontalBinOp(Op0, Op1, true))
     return DAG.getNode(X86ISD::HADD, N->getDebugLoc(), VT, Op0, Op1);
 
@@ -14830,8 +14822,7 @@ static SDValue PerformSubCombine(SDNode *N, SelectionDAG &DAG,
 
   // Try to synthesize horizontal adds from adds of shuffles.
   EVT VT = N->getValueType(0);
-  if ((Subtarget->hasSSSE3() || Subtarget->hasAVX()) &&
-      (VT == MVT::v8i16 || VT == MVT::v4i32) &&
+  if ((Subtarget->hasSSSE3orAVX()) && (VT == MVT::v8i16 || VT == MVT::v4i32) &&
       isHorizontalBinOp(Op0, Op1, false))
     return DAG.getNode(X86ISD::HSUB, N->getDebugLoc(), VT, Op0, Op1);
 
