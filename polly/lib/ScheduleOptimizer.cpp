@@ -32,7 +32,7 @@
 #include "isl/schedule.h"
 #include "isl/band.h"
 
-#define DEBUG_TYPE "polly-optimize-isl"
+#define DEBUG_TYPE "polly-opt-isl"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/CommandLine.h"
 
@@ -432,11 +432,11 @@ void IslScheduleOptimizer::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<Dependences>();
 }
 
-INITIALIZE_PASS_BEGIN(IslScheduleOptimizer, "polly-optimize-isl",
+INITIALIZE_PASS_BEGIN(IslScheduleOptimizer, "polly-opt-isl",
                       "Polly - Optimize schedule of SCoP", false, false)
 INITIALIZE_PASS_DEPENDENCY(Dependences)
 INITIALIZE_PASS_DEPENDENCY(ScopInfo)
-INITIALIZE_PASS_END(IslScheduleOptimizer, "polly-optimize-isl",
+INITIALIZE_PASS_END(IslScheduleOptimizer, "polly-opt-isl",
                       "Polly - Optimize schedule of SCoP", false, false)
 
 Pass* polly::createIslScheduleOptimizerPass() {

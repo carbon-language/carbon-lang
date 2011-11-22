@@ -268,7 +268,8 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
   // disable this check to not cause irrelevant verification failures.
   if (!AS.isMustAlias() && !IgnoreAliasing)
     INVALID_NOVERIFY(Alias,
-                     "Possible aliasing found for value: " << *BaseValue);
+                     "Possible aliasing for value: " << BaseValue->getName()
+                     << "\n");
 
   return true;
 }

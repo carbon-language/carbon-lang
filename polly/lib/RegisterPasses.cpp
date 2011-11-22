@@ -26,6 +26,8 @@
 #include "polly/ScopInfo.h"
 #include "polly/TempScopInfo.h"
 
+#include <string>
+
 using namespace llvm;
 
 static cl::opt<bool>
@@ -40,10 +42,11 @@ static cl::opt<bool>
 DisableCodegen("polly-no-codegen",
        cl::desc("Disable Polly Code Generation"), cl::Hidden,
        cl::init(false));
-static cl::opt<bool>
-UsePocc("polly-use-pocc",
-       cl::desc("Use the PoCC optimizer instead of the one in isl"), cl::Hidden,
-       cl::init(false));
+static cl::opt<std::string>
+Optimizer("polly-optimizer",
+          cl::desc("Select the scheduling optimizer. " 
+                   "Either isl (default) or pocc."),
+          cl::Hidden, cl::init("isl"));
 static cl::opt<bool>
 ImportJScop("polly-run-import-jscop",
             cl::desc("Export the JScop description of the detected Scops"),
@@ -113,10 +116,6 @@ static void registerPollyPasses(const llvm::PassManagerBuilder &Builder,
     PollyEnabled = true;
 
   if (!PollyEnabled) {
-    if (UsePocc)
-      errs() << "The option -polly-use-pocc has no effect. "
-                "Polly was not enabled\n";
-
     if (DisableCodegen)
       errs() << "The option -polly-no-codegen has no effect. "
                 "Polly was not enabled\n";
@@ -183,16 +182,20 @@ static void registerPollyPasses(const llvm::PassManagerBuilder &Builder,
     PM.add(polly::createJSONImporterPass());
 
   if (RunScheduler) {
-    if (UsePocc) {
+    if (Optimizer == "pocc") {
 #ifdef SCOPLIB_FOUND
       PM.add(polly::createPoccPass());
 #else
       errs() << "Polly is compiled without scoplib support. As scoplib is "
-             << "required to run PoCC, PoCC is also not available. Falling "
-             << "back to the isl optimizer.\n";
+                "required to run PoCC, PoCC is also not available. Falling "
+                "back to the isl optimizer.\n";
       PM.add(polly::createIslScheduleOptimizerPass());
 #endif
+    } else if (Optimizer == "isl") {
+      PM.add(polly::createIslScheduleOptimizerPass());
     } else {
+      errs() << "Invalid optimizer. Only 'isl' and 'pocc' allowed. "
+                "Falling back to 'isl'.\n";
       PM.add(polly::createIslScheduleOptimizerPass());
     }
   }
