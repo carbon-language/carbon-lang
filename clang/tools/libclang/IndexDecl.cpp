@@ -52,8 +52,8 @@ public:
     return true;
   }
 
-  bool VisitTypedefDecl(TypedefDecl *D) {
-    IndexCtx.handleTypedef(D);
+  bool VisitTypedefDecl(TypedefNameDecl *D) {
+    IndexCtx.handleTypedefName(D);
     IndexCtx.indexTypeSourceInfo(D->getTypeSourceInfo(), D);
     return true;
   }
@@ -182,7 +182,32 @@ public:
       if (MD->isSynthesized())
         IndexCtx.handleSynthesizedObjCMethod(MD, D->getLocation());
     }
+    return true;
+  }
 
+  bool VisitClassTemplateDecl(ClassTemplateDecl *D) {
+    IndexCtx.handleClassTemplate(D);
+    if (D->isThisDeclarationADefinition())
+      IndexCtx.indexDeclContext(D->getTemplatedDecl());
+    return true;
+  }
+
+  bool VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
+    IndexCtx.handleFunctionTemplate(D);
+    FunctionDecl *FD = D->getTemplatedDecl();
+    IndexCtx.indexTypeSourceInfo(FD->getTypeSourceInfo(), D);
+    if (FD->isThisDeclarationADefinition()) {
+      const Stmt *Body = FD->getBody();
+      if (Body) {
+        IndexCtx.indexBody(Body, FD);
+      }
+    }
+    return true;
+  }
+
+  bool VisitTypeAliasTemplateDecl(TypeAliasTemplateDecl *D) {
+    IndexCtx.handleTypeAliasTemplate(D);
+    IndexCtx.indexTypeSourceInfo(D->getTemplatedDecl()->getTypeSourceInfo(), D);
     return true;
   }
 };

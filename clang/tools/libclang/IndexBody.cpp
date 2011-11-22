@@ -80,6 +80,12 @@ public:
     SaveAndRestore<bool> InPseudo(InPseudoObject, true);
     return base::TraversePseudoObjectExpr(E);
   }
+
+  bool VisitCXXConstructExpr(CXXConstructExpr *E) {
+    IndexCtx.handleReference(E->getConstructor(), E->getLocation(), 0,
+                             ParentDC, E);
+    return true;
+  }
 };
 
 } // anonymous namespace

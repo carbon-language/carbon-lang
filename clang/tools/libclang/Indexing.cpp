@@ -183,7 +183,7 @@ public:
 //===----------------------------------------------------------------------===//
 
 struct IndexSourceFileInfo {
-  CXIndex CIdx;
+  CXIndexAction idxAction;
   CXClientData client_data;
   IndexerCallbacks *index_callbacks;
   unsigned index_callbacks_size;
@@ -213,7 +213,7 @@ struct MemBufferOwner {
 static void clang_indexSourceFile_Impl(void *UserData) {
   IndexSourceFileInfo *ITUI =
     static_cast<IndexSourceFileInfo*>(UserData);
-  CXIndex CIdx = ITUI->CIdx;
+  CXIndex CIdx = (CXIndex)ITUI->idxAction;
   CXClientData client_data = ITUI->client_data;
   IndexerCallbacks *client_index_callbacks = ITUI->index_callbacks;
   unsigned index_callbacks_size = ITUI->index_callbacks_size;
@@ -352,11 +352,12 @@ static void clang_indexSourceFile_Impl(void *UserData) {
 namespace {
 
 struct IndexTranslationUnitInfo {
-  CXTranslationUnit TU;
+  CXIndexAction idxAction;
   CXClientData client_data;
   IndexerCallbacks *index_callbacks;
   unsigned index_callbacks_size;
   unsigned index_options;
+  CXTranslationUnit TU;
   int result;
 };
 
@@ -560,24 +561,76 @@ clang_index_getIBOutletCollectionAttrInfo(const CXIdxAttrInfo *AInfo) {
   return 0;
 }
 
-int clang_indexSourceFile(CXIndex CIdx,
-                                CXClientData client_data,
-                                IndexerCallbacks *index_callbacks,
-                                unsigned index_callbacks_size,
-                                unsigned index_options,
-                                const char *source_filename,
-                                const char * const *command_line_args,
-                                int num_command_line_args,
-                                struct CXUnsavedFile *unsaved_files,
-                                unsigned num_unsaved_files,
-                                CXTranslationUnit *out_TU,
-                                unsigned TU_options) {
+const CXIdxCXXClassDeclInfo *
+clang_index_getCXXClassDeclInfo(const CXIdxDeclInfo *DInfo) {
+  if (!DInfo)
+    return 0;
 
-  IndexSourceFileInfo ITUI = { CIdx, client_data, index_callbacks,
-                                    index_callbacks_size, index_options,
-                                    source_filename, command_line_args,
-                                    num_command_line_args, unsaved_files,
-                                    num_unsaved_files, out_TU, TU_options, 0 };
+  const DeclInfo *DI = static_cast<const DeclInfo *>(DInfo);
+  if (const CXXClassDeclInfo *ClassInfo = dyn_cast<CXXClassDeclInfo>(DI))
+    return &ClassInfo->CXXClassInfo;
+
+  return 0;
+}
+
+CXIdxClientContainer
+clang_index_getClientContainer(const CXIdxContainerInfo *info) {
+  if (!info)
+    return 0;
+  ContainerInfo *Container = (ContainerInfo*)info;
+  return Container->IndexCtx->getClientContainerForDC(Container->DC);
+}
+
+void clang_index_setClientContainer(const CXIdxContainerInfo *info,
+                                    CXIdxClientContainer client) {
+  if (!info)
+    return;
+  ContainerInfo *Container = (ContainerInfo*)info;
+  Container->IndexCtx->addContainerInMap(Container->DC, client);
+}
+
+CXIdxClientEntity clang_index_getClientEntity(const CXIdxEntityInfo *info) {
+  if (!info)
+    return 0;
+  EntityInfo *Entity = (EntityInfo*)info;
+  return Entity->IndexCtx->getClientEntity(Entity->Dcl);
+}
+
+void clang_index_setClientEntity(const CXIdxEntityInfo *info,
+                                 CXIdxClientEntity client) {
+  if (!info)
+    return;
+  EntityInfo *Entity = (EntityInfo*)info;
+  Entity->IndexCtx->setClientEntity(Entity->Dcl, client);
+}
+
+CXIndexAction clang_IndexAction_create(CXIndex CIdx) {
+  // For now, CXIndexAction is featureless. 
+  return CIdx;
+}
+
+void clang_IndexAction_dispose(CXIndexAction idxAction) {
+  // For now, CXIndexAction is featureless. 
+}
+
+int clang_indexSourceFile(CXIndexAction idxAction,
+                          CXClientData client_data,
+                          IndexerCallbacks *index_callbacks,
+                          unsigned index_callbacks_size,
+                          unsigned index_options,
+                          const char *source_filename,
+                          const char * const *command_line_args,
+                          int num_command_line_args,
+                          struct CXUnsavedFile *unsaved_files,
+                          unsigned num_unsaved_files,
+                          CXTranslationUnit *out_TU,
+                          unsigned TU_options) {
+
+  IndexSourceFileInfo ITUI = { idxAction, client_data, index_callbacks,
+                               index_callbacks_size, index_options,
+                               source_filename, command_line_args,
+                               num_command_line_args, unsaved_files,
+                               num_unsaved_files, out_TU, TU_options, 0 };
 
   if (getenv("LIBCLANG_NOTHREADS")) {
     clang_indexSourceFile_Impl(&ITUI);
@@ -616,14 +669,16 @@ int clang_indexSourceFile(CXIndex CIdx,
   return ITUI.result;
 }
 
-int clang_indexTranslationUnit(CXTranslationUnit TU,
+int clang_indexTranslationUnit(CXIndexAction idxAction,
                                CXClientData client_data,
                                IndexerCallbacks *index_callbacks,
                                unsigned index_callbacks_size,
-                               unsigned index_options) {
+                               unsigned index_options,
+                               CXTranslationUnit TU) {
 
-  IndexTranslationUnitInfo ITUI = { TU, client_data, index_callbacks,
-                                    index_callbacks_size, index_options, 0 };
+  IndexTranslationUnitInfo ITUI = { idxAction, client_data, index_callbacks,
+                                    index_callbacks_size, index_options, TU,
+                                    0 };
 
   if (getenv("LIBCLANG_NOTHREADS")) {
     clang_indexTranslationUnit_Impl(&ITUI);

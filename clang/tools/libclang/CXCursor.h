@@ -120,7 +120,7 @@ CXCursor MakeCursorMemberRef(const FieldDecl *Field, SourceLocation Loc,
 std::pair<FieldDecl *, SourceLocation> getCursorMemberRef(CXCursor C);
 
 /// \brief Create a CXX base specifier cursor.
-CXCursor MakeCursorCXXBaseSpecifier(CXXBaseSpecifier *B,
+CXCursor MakeCursorCXXBaseSpecifier(const CXXBaseSpecifier *B,
                                     CXTranslationUnit TU);
 
 /// \brief Unpack a CXXBaseSpecifier cursor into a CXXBaseSpecifier.

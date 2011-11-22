@@ -588,9 +588,9 @@ cxcursor::getCursorMemberRef(CXCursor C) {
                                        reinterpret_cast<uintptr_t>(C.data[1])));  
 }
 
-CXCursor cxcursor::MakeCursorCXXBaseSpecifier(CXXBaseSpecifier *B,
+CXCursor cxcursor::MakeCursorCXXBaseSpecifier(const CXXBaseSpecifier *B,
                                               CXTranslationUnit TU){
-  CXCursor C = { CXCursor_CXXBaseSpecifier, 0, { B, 0, TU } };
+  CXCursor C = { CXCursor_CXXBaseSpecifier, 0, { (void*)B, 0, TU } };
   return C;  
 }
 
