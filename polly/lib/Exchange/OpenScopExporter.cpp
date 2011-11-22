@@ -124,7 +124,7 @@ void OpenScop::initializeArrays() {
          VE = ArrayMap.end(); VI != VE; ++VI)
       if ((*VI).second == i) {
         const Value *V = (*VI).first;
-        std::string name = V->getNameStr();
+        std::string name = V->getName();
         openscop->arrays[i] = new char[name.size() + 1];
         strcpy(openscop->arrays[i], name.c_str());
       }
@@ -539,7 +539,7 @@ OpenScop::~OpenScop() {
 
 std::string ScopExporter::getFileName(Scop *S) const {
   std::string FunctionName =
-    S->getRegion().getEntry()->getParent()->getNameStr();
+    S->getRegion().getEntry()->getParent()->getName();
   std::string FileName = FunctionName + "___" + S->getNameStr() + ".scop";
   return FileName;
 }
@@ -565,7 +565,7 @@ bool ScopExporter::runOnScop(Scop &scop) {
   openscop.print(F);
   fclose(F);
 
-  std::string FunctionName = R.getEntry()->getParent()->getNameStr();
+  std::string FunctionName = R.getEntry()->getParent()->getName();
   errs() << "Writing Scop '" << R.getNameStr() << "' in function '"
     << FunctionName << "' to '" << FileName << "'.\n";
 

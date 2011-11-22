@@ -200,7 +200,7 @@ bool ScopImporter::updateScattering(Scop *S, openscop_scop_p OScop) {
 }
 std::string ScopImporter::getFileName(Scop *S) const {
   std::string FunctionName =
-    S->getRegion().getEntry()->getParent()->getNameStr();
+    S->getRegion().getEntry()->getParent()->getName();
   std::string FileName = FunctionName + "___" + S->getNameStr() + ".scop";
   return FileName;
 }
@@ -226,7 +226,7 @@ bool ScopImporter::runOnScop(Scop &scop) {
   openscop_scop_p openscop = openscop_scop_read(F);
   fclose(F);
 
-  std::string FunctionName = R.getEntry()->getParent()->getNameStr();
+  std::string FunctionName = R.getEntry()->getParent()->getName();
   errs() << "Reading Scop '" << R.getNameStr() << "' in function '"
     << FunctionName << "' from '" << FileName << "'.\n";
 
