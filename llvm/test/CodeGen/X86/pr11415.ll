@@ -1,4 +1,4 @@
-; RUN: llc %s -o - -regalloc=fast | FileCheck %s
+; RUN: llc -mtriple=x86_64-pc-linux %s -o - -regalloc=fast | FileCheck %s
 
 ; We used to consider the early clobber in the second asm statement as
 ; defining %0 before it was read. This caused us to omit the
