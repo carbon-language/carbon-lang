@@ -18,7 +18,7 @@ except KeyError,e:
     lit.fatal("unable to find %r parameter, use '--param=%s=VALUE'" % (key,key))
 
 config.substitutions.append(('%loadPolly', '-load '
-                             + config.llvm_libs_dir + '/LLVMPolly.so '))
+                             + config.llvm_libs_dir + '/LLVMPolly@LLVM_SHLIBEXT@'))
 config.substitutions.append(('%defaultOpts', ' -basicaa -polly-prepare -polly-region-simplify -scev-aa '))
 config.substitutions.append(('%polybenchOpts', ' -O3 -loop-simplify -indvars '))
 
