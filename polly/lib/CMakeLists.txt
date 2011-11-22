@@ -1,24 +1,18 @@
 add_subdirectory(Analysis)
+add_subdirectory(Exchange)
 add_subdirectory(Support)
 add_subdirectory(JSON)
 
 set(MODULE TRUE)
 set(LLVM_NO_RTTI 1)
 
-if (OPENSCOP_FOUND)
-  set(POLLY_EXCHANGE_FILES
-      Exchange/OpenScopImporter.cpp Exchange/OpenScopExporter.cpp)
-endif (OPENSCOP_FOUND)
 if (SCOPLIB_FOUND)
-  set(POLLY_SCOPLIB_FILES
-      Pocc.cpp
-      Exchange/ScopLib.cpp
-      Exchange/ScopLibExporter.cpp
-      Exchange/ScopLibImporter.cpp)
+  set(POLLY_SCOPLIB_FILES Pocc.cpp)
 endif (SCOPLIB_FOUND)
 
 set(LLVM_USED_LIBS
   PollyAnalysis
+  PollyExchange
   PollySupport
   PollyJSON
   )
@@ -33,13 +27,12 @@ add_polly_library(LLVMPolly
   RegionSimplify.cpp
   RegisterPasses.cpp
   ScheduleOptimizer.cpp
-  Exchange/JSONExporter.cpp
-  ${POLLY_EXCHANGE_FILES}
   ${POLLY_SCOPLIB_FILES}
   )
 
 add_dependencies(LLVMPolly
   PollyAnalysis
+  PollyExchange
   PollySupport
   PollyJSON
   )
