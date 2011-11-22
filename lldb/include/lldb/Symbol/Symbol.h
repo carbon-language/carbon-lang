@@ -111,10 +111,10 @@ public:
     GetByteSize () const { return m_addr_range.GetByteSize(); }
 
     lldb::SymbolType
-    GetType () const { return m_type; }
+    GetType () const { return (lldb::SymbolType)m_type; }
 
     void
-    SetType (lldb::SymbolType type) { m_type = type; }
+    SetType (lldb::SymbolType type) { m_type = (lldb::SymbolType)type; }
 
     const char *
     GetTypeAsString () const;
@@ -204,7 +204,6 @@ protected:
 
     uint32_t        m_uid;                  // User ID (usually the original symbol table index)
     Mangled         m_mangled;              // uniqued symbol name/mangled name pair
-    lldb::SymbolType m_type;                 // symbol type
     uint16_t        m_type_data;            // data specific to m_type
     uint16_t        m_type_data_resolved:1, // True if the data in m_type_data has already been calculated
                     m_is_synthetic:1,       // non-zero if this symbol is not actually in the symbol table, but synthesized from other info in the object file.
@@ -212,9 +211,10 @@ protected:
                     m_is_external:1,        // non-zero if this symbol is globally visible
                     m_size_is_sibling:1,    // m_size contains the index of this symbol's sibling
                     m_size_is_synthesized:1,// non-zero if this symbol's size was calculated using a delta between this symbol and the next
-                    m_searched_for_function:1;// non-zero if we have looked for the function associated with this symbol already.
-    AddressRange    m_addr_range;           // Contains the value, or the section offset address when the value is an address in a section, and the size (if any)
+                    m_searched_for_function:1,// non-zero if we have looked for the function associated with this symbol already.
+                    m_type:8;
     uint32_t        m_flags;                // A copy of the flags from the original symbol table, the ObjectFile plug-in can interpret these
+    AddressRange    m_addr_range;           // Contains the value, or the section offset address when the value is an address in a section, and the size (if any)
 };
 
 } // namespace lldb_private
