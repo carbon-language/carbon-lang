@@ -74,13 +74,11 @@ public:
     }
 
     void
-    AddDIE(DWARFDebugInfoEntry& die)
+    AddDIE (DWARFDebugInfoEntry& die)
     {
         // The average bytes per DIE entry has been seen to be
-        // around 14-20 so lets pre-reserve the needed memory for
-        // our DIE entries accordingly. Search forward for "Compute
-        // average bytes per DIE" to see #if'ed out code that does
-        // that determination.
+        // around 14-20 so lets pre-reserve half of that since
+        // we are now stripping the NULL tags. 
 
         // Only reserve the memory if we are adding children of
         // the main compile unit DIE. The compile unit DIE is always
@@ -88,7 +86,7 @@ public:
         // the first compile unit child DIE and should reserve
         // the memory.
         if (m_die_array.empty())
-            m_die_array.reserve(GetDebugInfoSize() / 14);
+            m_die_array.reserve(GetDebugInfoSize() / 24);
         m_die_array.push_back(die);
     }
 

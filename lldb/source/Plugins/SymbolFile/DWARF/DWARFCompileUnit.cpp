@@ -271,7 +271,17 @@ DWARFCompileUnit::ExtractDIEsIfNeeded (bool cu_die_only)
         }
         fprintf (stderr, "warning: DWARF compile unit extends beyond its bounds cu 0x%8.8x at 0x%8.8x in '%s'\n", GetOffset(), offset, path);
     }
+
+    // Since std::vector objects will double their size, we really need to
+    // make a new array with the perfect size so we don't end up wasting
+    // space. So here we copy and swap to make sure we don't have any extra
+    // memory taken up.
     
+    if (m_die_array.size () < m_die_array.capacity())
+    {
+        DWARFDebugInfoEntry::collection exact_size_die_array (m_die_array.begin(), m_die_array.end());
+        exact_size_die_array.swap (m_die_array);
+    }
     LogSP log (LogChannelDWARF::GetLogIfAll (DWARF_LOG_DEBUG_INFO));
     if (log)
     {

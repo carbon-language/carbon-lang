@@ -1926,8 +1926,8 @@ DWARFDebugInfoEntry::DumpDIECollection (Stream &strm, DWARFDebugInfoEntry::colle
 {
     DWARFDebugInfoEntry::const_iterator pos;
     DWARFDebugInfoEntry::const_iterator end = die_collection.end();
-    puts("offset    parent   sibling  child");
-    puts("--------  -------- -------- --------");
+    strm.PutCString("\noffset    parent   sibling  child\n");
+    strm.PutCString("--------  -------- -------- --------\n");
     for (pos = die_collection.begin(); pos != end; ++pos)
     {
         const DWARFDebugInfoEntry& die_ref = *pos;
