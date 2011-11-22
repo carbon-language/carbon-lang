@@ -1920,10 +1920,10 @@ bool Lexer::SkipBlockComment(Token &Result, const char *CurPtr) {
       while (CurPtr+16 <= BufferEnd) {
         int cmp = _mm_movemask_epi8(_mm_cmpeq_epi8(*(__m128i*)CurPtr, Slashes));
         if (cmp != 0) {
-          // Adjust the pointer to the first '/' that was found.
-          CurPtr += llvm::CountTrailingZeros_32(cmp);
-          C = *CurPtr++;
-          assert(C == '/');
+          // Adjust the pointer to point directly after the first slash. It's
+          // not necessary to set C here, it will be overwritten at the end of
+          // the outer loop.
+          CurPtr += llvm::CountTrailingZeros_32(cmp) + 1;
           goto FoundSlash;
         }
         CurPtr += 16;
