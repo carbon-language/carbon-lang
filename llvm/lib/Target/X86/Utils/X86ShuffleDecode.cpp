@@ -142,16 +142,6 @@ void DecodeSHUFPSMask(unsigned NElts, unsigned Imm,
   }
 }
 
-void DecodeUNPCKHPSMask(unsigned NElts,
-                        SmallVectorImpl<unsigned> &ShuffleMask) {
-  DecodeUNPCKHPMask(MVT::getVectorVT(MVT::i32, NElts), ShuffleMask);
-}
-
-void DecodeUNPCKHPDMask(unsigned NElts,
-                        SmallVectorImpl<unsigned> &ShuffleMask) {
-  DecodeUNPCKHPMask(MVT::getVectorVT(MVT::i64, NElts), ShuffleMask);
-}
-
 void DecodeUNPCKHPMask(EVT VT, SmallVectorImpl<unsigned> &ShuffleMask) {
   unsigned NumElts = VT.getVectorNumElements();
 
@@ -169,16 +159,6 @@ void DecodeUNPCKHPMask(EVT VT, SmallVectorImpl<unsigned> &ShuffleMask) {
       ShuffleMask.push_back(i+NumElts);  // Reads from src/src2
     }
   }
-}
-
-void DecodeUNPCKLPSMask(unsigned NElts,
-                        SmallVectorImpl<unsigned> &ShuffleMask) {
-  DecodeUNPCKLPMask(MVT::getVectorVT(MVT::i32, NElts), ShuffleMask);
-}
-
-void DecodeUNPCKLPDMask(unsigned NElts,
-                        SmallVectorImpl<unsigned> &ShuffleMask) {
-  DecodeUNPCKLPMask(MVT::getVectorVT(MVT::i64, NElts), ShuffleMask);
 }
 
 /// DecodeUNPCKLPMask - This decodes the shuffle masks for unpcklps/unpcklpd
