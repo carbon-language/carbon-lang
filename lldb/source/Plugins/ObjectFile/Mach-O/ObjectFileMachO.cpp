@@ -320,6 +320,7 @@ ObjectFileMachO::GetSymtab()
         m_symtab_ap.reset(new Symtab(this));
         Mutex::Locker symtab_locker (m_symtab_ap->GetMutex());
         ParseSymtab (true);
+        m_symtab_ap->Finalize ();
     }
     return m_symtab_ap.get();
 }
@@ -1488,6 +1489,8 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                         }
                     }
                 }
+                
+                
 
                 return symtab->GetNumSymbols();
             }
