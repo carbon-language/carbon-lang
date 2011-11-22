@@ -5,9 +5,6 @@
 #
 LEVEL :=..
 
-DIRS = Support
-USEDLIBS = pollysupport.a
-
 LIBRARYNAME=LLVMPolly
 LOADABLE_MODULE = 1
 
@@ -15,11 +12,17 @@ include $(LEVEL)/Makefile.config
 
 CPP.Flags += $(POLLY_INC)
 
-DIRS += Exchange
-USEDLIBS += pollyexchange.a
+DIRS = Exchange
+USEDLIBS = pollyexchange.a
 
 DIRS += Analysis
 USEDLIBS += pollyanalysis.a
+
+# This needs to  be added after the files that use it, otherwise some functions
+# from pollysupport are not available. They will be eliminated if they are
+# not used at the time of linking pollysupport.a
+DIRS += Support
+USEDLIBS += pollysupport.a
 
 DIRS += JSON
 USEDLIBS += pollyjson.a
