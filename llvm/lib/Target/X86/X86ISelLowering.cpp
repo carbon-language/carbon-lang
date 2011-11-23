@@ -8543,10 +8543,18 @@ SDValue X86TargetLowering::LowerToBT(SDValue And, ISD::CondCode CC,
       }
   } else if (Op1.getOpcode() == ISD::Constant) {
     ConstantSDNode *AndRHS = cast<ConstantSDNode>(Op1);
+    uint64_t AndRHSVal = AndRHS->getZExtValue();
     SDValue AndLHS = Op0;
-    if (AndRHS->getZExtValue() == 1 && AndLHS.getOpcode() == ISD::SRL) {
+
+    if (AndRHSVal == 1 && AndLHS.getOpcode() == ISD::SRL) {
       LHS = AndLHS.getOperand(0);
       RHS = AndLHS.getOperand(1);
+    }
+
+    // Use BT if the immediate can't be encoded in a TEST instruction.
+    if (!isUInt<32>(AndRHSVal) && isPowerOf2_64(AndRHSVal)) {
+      LHS = AndLHS;
+      RHS = DAG.getConstant(Log2_64_Ceil(AndRHSVal), LHS.getValueType());
     }
   }
 
