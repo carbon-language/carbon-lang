@@ -41,4 +41,4 @@ int g() {
 struct Z { int i[3]; };
 int *p = (Z){ {1, 2, 3} }.i;
 // CHECK: define {{.*}}__cxx_global_var_init()
-// CHECK: store i32* getelementptr inbounds (%struct.Z* @.compoundliteral, i32 0, i32 0, i32 0), i32** @p, align 8
+// CHECK: store i32* getelementptr inbounds (%struct.Z* @.compoundliteral, i32 0, i32 0, i32 0), i32** @p
