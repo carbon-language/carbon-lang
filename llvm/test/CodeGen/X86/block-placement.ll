@@ -504,6 +504,30 @@ loop:
   br label %loop
 }
 
+declare void @fake_throw() noreturn
+
+define void @test_eh_throw() {
+; For blocks containing a 'throw' (or similar functionality), we have
+; a no-return invoke. In this case, only EH successors will exist, and
+; fallthrough simply won't occur. Make sure we don't crash trying to update
+; terminators for such constructs.
+;
+; CHECK: test_eh_throw
+; CHECK: %entry
+; CHECK: %cleanup
+
+entry:
+  invoke void @fake_throw() to label %continue unwind label %cleanup
+
+continue:
+  unreachable
+
+cleanup:
+  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+          cleanup
+  unreachable
+}
+
 define void @test_unnatural_cfg_backwards_inner_loop() {
 ; Test that when we encounter an unnatural CFG structure after having formed
 ; a chain for an inner loop which happened to be laid out backwards we don't

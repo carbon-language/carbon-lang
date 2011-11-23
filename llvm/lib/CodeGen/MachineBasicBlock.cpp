@@ -305,6 +305,14 @@ void MachineBasicBlock::updateTerminator() {
         assert(!TBB && "Found more than one non-landing-pad successor!");
         TBB = *SI;
       }
+
+      // If there is no non-landing-pad successor, the block has no
+      // fall-through edges to be concerned with.
+      if (!TBB)
+        return;
+
+      // Finally update the unconditional successor to be reached via a branch
+      // if it would not be reached by fallthrough.
       if (!isLayoutSuccessor(TBB))
         TII->InsertBranch(*this, TBB, 0, Cond, dl);
     }
