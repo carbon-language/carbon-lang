@@ -123,16 +123,11 @@ bool StackProtector::RequiresStackProtector() const {
           // protectors.
           return true;
 
-        if (ArrayType *AT = dyn_cast<ArrayType>(AI->getAllocatedType())) {
-          // We apparently only care about character arrays.
-          if (!AT->getElementType()->isIntegerTy(8))
-            continue;
-
+        if (ArrayType *AT = dyn_cast<ArrayType>(AI->getAllocatedType()))
           // If an array has more than SSPBufferSize bytes of allocated space,
           // then we emit stack protectors.
           if (SSPBufferSize <= TD->getTypeAllocSize(AT))
             return true;
-        }
       }
   }
 

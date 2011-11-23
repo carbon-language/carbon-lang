@@ -1,7 +1,7 @@
 ; RUN: llc < %s -mtriple=i386-apple-darwin -mattr=+sse2 | FileCheck %s
 ; rdar://7434544
 
-define <2 x i64> @t2() nounwind ssp {
+define <2 x i64> @t2() nounwind {
 entry:
 ; CHECK: t2:
 ; CHECK: pshufd	$85, (%esp), %xmm0
