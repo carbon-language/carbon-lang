@@ -48,10 +48,10 @@ static bool isMallocCall(const CallInst *CI) {
   // FIXME: workaround for PR5130, this will be obsolete when a nobuiltin 
   // attribute will exist.
   FunctionType *FTy = Callee->getFunctionType();
-  if (FTy->getNumParams() != 1)
-    return false;
-  return FTy->getParamType(0)->isIntegerTy(32) ||
-         FTy->getParamType(0)->isIntegerTy(64);
+  return FTy->getReturnType() == Type::getInt8PtrTy(FTy->getContext()) &&
+         FTy->getNumParams() == 1 &&
+         (FTy->getParamType(0)->isIntegerTy(32) ||
+          FTy->getParamType(0)->isIntegerTy(64));
 }
 
 /// extractMallocCall - Returns the corresponding CallInst if the instruction
