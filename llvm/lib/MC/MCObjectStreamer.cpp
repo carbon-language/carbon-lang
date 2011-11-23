@@ -245,6 +245,16 @@ void MCObjectStreamer::EmitValueToOffset(const MCExpr *Offset,
   EmitFill(Res, Value, 0);
 }
 
+// Associate GPRel32 fixup with data and resize data area
+void MCObjectStreamer::EmitGPRel32Value(const MCExpr *Value) {
+  MCDataFragment *DF = getOrCreateDataFragment();
+
+  DF->addFixup(MCFixup::Create(DF->getContents().size(),
+                               Value,
+                               FK_GPRel_4));
+  DF->getContents().resize(DF->getContents().size() + 4, 0);
+}
+
 void MCObjectStreamer::Finish() {
   // Dump out the dwarf file & directory tables and line tables.
   if (getContext().hasDwarfFiles())

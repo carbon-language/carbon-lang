@@ -58,6 +58,7 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
   switch (Kind) {
   default:
     break;
+  case FK_GPRel_4:
   case FK_Data_4:
     Value &= 0xffffffff;
     break;
@@ -67,6 +68,9 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
   case Mips::fixup_Mips_LO16:
   case Mips::fixup_Mips_PC16:
     Value &= 0x0000ffff;
+    break;
+  case Mips::fixup_Mips_HI16:
+    Value >>= 16;
     break;
   }
 
@@ -104,15 +108,17 @@ public:
       llvm_unreachable("Unknown fixup kind!");
     case Mips::fixup_Mips_GOT16: // This will be fixed up at link time
      break;
+    case FK_GPRel_4:
     case FK_Data_4:
     case Mips::fixup_Mips_26:
     case Mips::fixup_Mips_LO16:
     case Mips::fixup_Mips_PC16:
+    case Mips::fixup_Mips_HI16:
       // For each byte of the fragment that the fixup touches, mask i
       // the fixup value. The Value has been "split up" into the appr
       // bitfields above.
       for (unsigned i = 0; i != 4; ++i) // FIXME - Need to support 2 and 8 bytes
-        Data[Offset + i] |= uint8_t((Value >> (i * 8)) & 0xff);
+        Data[Offset + i] += uint8_t((Value >> (i * 8)) & 0xff);
       break;
     }
   }

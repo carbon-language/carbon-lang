@@ -442,6 +442,8 @@ class ELFObjectWriter : public MCObjectWriter {
                         bool IsLittleEndian);
 
     virtual ~MipsELFObjectWriter();
+    virtual void WriteEFlags();
+
   protected:
     virtual unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                                   bool IsPCRel, bool IsRelocWithSymbol,

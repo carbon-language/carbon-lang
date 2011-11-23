@@ -599,7 +599,23 @@ enum {
   R_ARM_THM_TLS_DESCSEQ32     = 0x82
 };
 
+// Mips Specific e_flags
+enum {
+  EF_MIPS_NOREORDER = 0x00000001, // Don't reorder instructions
+  EF_MIPS_PIC       = 0x00000002, // Position independent code
+  EF_MIPS_CPIC      = 0x00000004, // Call object with Position independent code
+  EF_MIPS_ARCH_1    = 0x00000000, // MIPS1 instruction set
+  EF_MIPS_ARCH_2    = 0x10000000, // MIPS2 instruction set
+  EF_MIPS_ARCH_3    = 0x20000000, // MIPS3 instruction set
+  EF_MIPS_ARCH_4    = 0x30000000, // MIPS4 instruction set
+  EF_MIPS_ARCH_5    = 0x40000000, // MIPS5 instruction set
+  EF_MIPS_ARCH_32   = 0x60000000, // MIPS32 instruction set
+  EF_MIPS_ARCH_32R2 = 0x70000000, // mips32r2
+  EF_MIPS_ARCH      = 0xf0000000  // Mask for applying EF_MIPS_ARCH_ variant
+};
+
 // ELF Relocation types for Mips
+// .
 enum {
   R_MIPS_NONE              =  0,
   R_MIPS_16                =  1,

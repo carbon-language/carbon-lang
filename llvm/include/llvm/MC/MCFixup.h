@@ -26,6 +26,10 @@ enum MCFixupKind {
   FK_PCRel_2,    ///< A two-byte pc relative fixup.
   FK_PCRel_4,    ///< A four-byte pc relative fixup.
   FK_PCRel_8,    ///< A eight-byte pc relative fixup.
+  FK_GPRel_1,    ///< A one-byte gp relative fixup.
+  FK_GPRel_2,    ///< A two-byte gp relative fixup.
+  FK_GPRel_4,    ///< A four-byte gp relative fixup.
+  FK_GPRel_8,    ///< A eight-byte gp relative fixup.
 
   FirstTargetFixupKind = 128,
 

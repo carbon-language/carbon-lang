@@ -1825,6 +1825,12 @@ MipsELFObjectWriter::MipsELFObjectWriter(MCELFObjectTargetWriter *MOTW,
 
 MipsELFObjectWriter::~MipsELFObjectWriter() {}
 
+// FIXME: get the real EABI Version from the Triple.
+void MipsELFObjectWriter::WriteEFlags() {
+  Write32(ELF::EF_MIPS_NOREORDER |
+          ELF::EF_MIPS_ARCH_32R2);
+}
+
 unsigned MipsELFObjectWriter::GetRelocType(const MCValue &Target,
                                            const MCFixup &Fixup,
                                            bool IsPCRel,
@@ -1839,6 +1845,9 @@ unsigned MipsELFObjectWriter::GetRelocType(const MCValue &Target,
     llvm_unreachable("invalid fixup kind!");
   case FK_Data_4:
     Type = ELF::R_MIPS_32;
+    break;
+  case FK_GPRel_4:
+    Type = ELF::R_MIPS_GPREL32;
     break;
   case Mips::fixup_Mips_GPREL16:
     Type = ELF::R_MIPS_GPREL16;
