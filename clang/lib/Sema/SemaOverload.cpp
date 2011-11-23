@@ -2163,22 +2163,126 @@ bool Sema::IsBlockPointerConversion(QualType FromType, QualType ToType,
    return true;
 }
 
+enum {
+  ft_default,
+  ft_different_class,
+  ft_parameter_arity,
+  ft_parameter_mismatch,
+  ft_return_type,
+  ft_qualifer_mismatch
+};
+
+/// HandleFunctionTypeMismatch - Gives diagnostic information for differeing
+/// function types.  Catches different number of parameter, mismatch in
+/// parameter types, and different return types.
+void Sema::HandleFunctionTypeMismatch(PartialDiagnostic &PDiag,
+                                      QualType FromType, QualType ToType) {
+  // Get the function type from the pointers.
+  if (FromType->isMemberPointerType() && ToType->isMemberPointerType()) {
+    const MemberPointerType *FromMember = FromType->getAs<MemberPointerType>(),
+                            *ToMember = ToType->getAs<MemberPointerType>();
+    if (FromMember->getClass() != ToMember->getClass()) {
+      PDiag << ft_different_class << QualType(ToMember->getClass(), 0)
+            << QualType(FromMember->getClass(), 0);
+      return;
+    }
+    FromType = FromMember->getPointeeType();
+    ToType = ToMember->getPointeeType();
+  } else if (FromType->isPointerType() && ToType->isPointerType()) {
+    FromType = FromType->getPointeeType();
+    ToType = ToType->getPointeeType();
+  } else {
+    PDiag << ft_default;
+    return;
+  }
+
+  FromType = FromType.getNonReferenceType();
+  ToType = ToType.getNonReferenceType();
+
+  // If either type is not valid, of the types are the same, no extra info.
+  if (FromType.isNull() || ToType.isNull() ||
+      Context.hasSameType(FromType, ToType)) {
+    PDiag << ft_default;
+    return;
+  }
+
+  // Don't print extra info for non-specialized template functions.
+  if (FromType->isInstantiationDependentType() &&
+      !FromType->getAs<TemplateSpecializationType>()) {
+    PDiag << ft_default;
+    return;
+  }
+
+  const FunctionProtoType *FromFunction = FromType->getAs<FunctionProtoType>(),
+                          *ToFunction = ToType->getAs<FunctionProtoType>();
+
+  // Both types need to be function types.
+  if (!FromFunction || !ToFunction) {
+    PDiag << ft_default;
+    return;
+  }
+
+  if (FromFunction->getNumArgs() != ToFunction->getNumArgs()) {
+    PDiag << ft_parameter_arity << ToFunction->getNumArgs()
+          << FromFunction->getNumArgs();
+    return;
+  }
+
+  // Handle different parameter types.
+  unsigned ArgPos;
+  if (!FunctionArgTypesAreEqual(FromFunction, ToFunction, &ArgPos)) {
+    PDiag << ft_parameter_mismatch << ArgPos + 1
+          << ToFunction->getArgType(ArgPos)
+          << FromFunction->getArgType(ArgPos);
+    return;
+  }
+
+  // Handle different return type.
+  if (!Context.hasSameType(FromFunction->getResultType(),
+                           ToFunction->getResultType())) {
+    PDiag << ft_return_type << ToFunction->getResultType()
+          << FromFunction->getResultType();
+    return;
+  }
+
+  unsigned FromQuals = FromFunction->getTypeQuals(),
+           ToQuals = ToFunction->getTypeQuals();
+  if (FromQuals != ToQuals) {
+    PDiag << ft_qualifer_mismatch << ToQuals << FromQuals;
+    return;
+  }
+
+  // Unable to find a difference, so add no extra info.
+  PDiag << ft_default;
+}
+
 /// FunctionArgTypesAreEqual - This routine checks two function proto types
 /// for equlity of their argument types. Caller has already checked that
 /// they have same number of arguments. This routine assumes that Objective-C
 /// pointer types which only differ in their protocol qualifiers are equal.
+/// If the parameters are different, ArgPos will have the the parameter index
+/// of the first different parameter.
 bool Sema::FunctionArgTypesAreEqual(const FunctionProtoType *OldType,
-                                    const FunctionProtoType *NewType) {
-  if (!getLangOptions().ObjC1)
-    return std::equal(OldType->arg_type_begin(), OldType->arg_type_end(),
-                      NewType->arg_type_begin());
+                                    const FunctionProtoType *NewType,
+                                    unsigned *ArgPos) {
+  if (!getLangOptions().ObjC1) {
+    for (FunctionProtoType::arg_type_iterator O = OldType->arg_type_begin(),
+         N = NewType->arg_type_begin(),
+         E = OldType->arg_type_end(); O && (O != E); ++O, ++N) {
+      if (!Context.hasSameType(*O, *N)) {
+        if (ArgPos) *ArgPos = O - OldType->arg_type_begin();
+        return false;
+      }
+    }
+    return true;
+  }
 
   for (FunctionProtoType::arg_type_iterator O = OldType->arg_type_begin(),
        N = NewType->arg_type_begin(),
        E = OldType->arg_type_end(); O && (O != E); ++O, ++N) {
     QualType ToType = (*O);
     QualType FromType = (*N);
-    if (ToType != FromType) {
+    if (!Context.hasSameType(ToType, FromType)) {
       if (const PointerType *PTTo = ToType->getAs<PointerType>()) {
         if (const PointerType *PTFr = FromType->getAs<PointerType>())
           if ((PTTo->getPointeeType()->isObjCQualifiedIdType() &&
@@ -2194,6 +2298,7 @@ bool Sema::FunctionArgTypesAreEqual(const FunctionProtoType *OldType,
           if (PTTo->getInterfaceDecl() == PTFr->getInterfaceDecl())
             continue;
       }
+      if (ArgPos) *ArgPos = O - OldType->arg_type_begin();
       return false;
     }
   }
@@ -7015,17 +7120,19 @@ void MaybeEmitInheritedConstructorNote(Sema &S, FunctionDecl *Fn) {
 } // end anonymous namespace
 
 // Notes the location of an overload candidate.
-void Sema::NoteOverloadCandidate(FunctionDecl *Fn) {
+void Sema::NoteOverloadCandidate(FunctionDecl *Fn, QualType DestType) {
   std::string FnDesc;
   OverloadCandidateKind K = ClassifyOverloadCandidate(*this, Fn, FnDesc);
-  Diag(Fn->getLocation(), diag::note_ovl_candidate)
-    << (unsigned) K << FnDesc;
+  PartialDiagnostic PD = PDiag(diag::note_ovl_candidate)
+                             << (unsigned) K << FnDesc;
+  HandleFunctionTypeMismatch(PD, Fn->getType(), DestType);
+  Diag(Fn->getLocation(), PD);
   MaybeEmitInheritedConstructorNote(*this, Fn);
 }
 
 //Notes the location of all overload candidates designated through 
 // OverloadedExpr
-void Sema::NoteAllOverloadCandidates(Expr* OverloadedExpr) {
+void Sema::NoteAllOverloadCandidates(Expr* OverloadedExpr, QualType DestType) {
   assert(OverloadedExpr->getType() == Context.OverloadTy);
 
   OverloadExpr::FindResult Ovl = OverloadExpr::find(OverloadedExpr);
@@ -7036,10 +7143,10 @@ void Sema::NoteAllOverloadCandidates(Expr* OverloadedExpr) {
        I != IEnd; ++I) {
     if (FunctionTemplateDecl *FunTmpl = 
                 dyn_cast<FunctionTemplateDecl>((*I)->getUnderlyingDecl()) ) {
-      NoteOverloadCandidate(FunTmpl->getTemplatedDecl());   
+      NoteOverloadCandidate(FunTmpl->getTemplatedDecl(), DestType);
     } else if (FunctionDecl *Fun 
                       = dyn_cast<FunctionDecl>((*I)->getUnderlyingDecl()) ) {
-      NoteOverloadCandidate(Fun);
+      NoteOverloadCandidate(Fun, DestType);
     }
   }
 }
@@ -8132,7 +8239,7 @@ private:
                              << Matches[0].second->getDeclName(),
                            S.PDiag(diag::note_ovl_candidate)
                              << (unsigned) oc_function_template,
-                           Complain);
+                           Complain, TargetFunctionType);
 
     if (Result != MatchesCopy.end()) {
       // Make it the first and only element
@@ -8161,7 +8268,7 @@ public:
     S.Diag(OvlExpr->getLocStart(), diag::err_addr_ovl_no_viable)
         << OvlExpr->getName() << TargetFunctionType
         << OvlExpr->getSourceRange();
-    S.NoteAllOverloadCandidates(OvlExpr);
+    S.NoteAllOverloadCandidates(OvlExpr, TargetFunctionType);
   } 
   
   bool IsInvalidFormOfPointerToMemberFunction() const {
@@ -8187,7 +8294,7 @@ public:
     S.Diag(OvlExpr->getLocStart(), diag::err_addr_ovl_ambiguous)
       << OvlExpr->getName()
       << OvlExpr->getSourceRange();
-    S.NoteAllOverloadCandidates(OvlExpr);
+    S.NoteAllOverloadCandidates(OvlExpr, TargetFunctionType);
   }
 
   bool hadMultipleCandidates() const { return (OvlExpr->getNumDecls() > 1); }

@@ -9028,6 +9028,7 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
   FixItHint Hint;
   ConversionFixItGenerator ConvHints;
   bool MayHaveConvFixit = false;
+  bool MayHaveFunctionDiff = false;
 
   switch (ConvTy) {
   default: llvm_unreachable("Unknown conversion type");
@@ -9117,6 +9118,7 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
     ConvHints.tryToFixConversion(SrcExpr, SrcType, DstType, *this);
     MayHaveConvFixit = true;
     isInvalid = true;
+    MayHaveFunctionDiff = true;
     break;
   }
 
@@ -9155,7 +9157,14 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
   }
   if (MayHaveConvFixit) { FDiag << (unsigned) (ConvHints.Kind); }
 
+  if (MayHaveFunctionDiff)
+    HandleFunctionTypeMismatch(FDiag, SecondType, FirstType);
+
   Diag(Loc, FDiag);
+
+  if (SecondType == Context.OverloadTy)
+    NoteAllOverloadCandidates(OverloadExpr::find(SrcExpr).Expression,
+                              FirstType);
 
   if (CheckInferredResultType)
     EmitRelatedResultTypeNote(SrcExpr);

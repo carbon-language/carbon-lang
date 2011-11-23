@@ -1014,7 +1014,16 @@ def err_init_conversion_failed : Error<
   "cannot initialize %select{a variable|a parameter|return object|an "
   "exception object|a member subobject|an array element|a new value|a value|a "
   "base class|a constructor delegation|a vector element}0 of type %1 with an "
-  "%select{rvalue|lvalue}2 of type %3">;
+  "%select{rvalue|lvalue}2 of type %3"
+  "%select{|: different classes (%5 vs %6)"
+  "|: different number of parameters (%5 vs %6)"
+  "|: type mismatch in %ordinal5 parameter (%6 vs %7)"
+  "|: different return type (%5 vs %6)"
+  "|: different qualifiers ("
+  "%select{none|const|restrict|const and restrict|volatile|const and volatile|"
+  "volatile and restrict|const, volatile, and restrict}5 vs "
+  "%select{none|const|restrict|const and restrict|volatile|const and volatile|"
+  "volatile and restrict|const, volatile, and restrict}6)}4">;
 
 def err_lvalue_to_rvalue_ref : Error<"rvalue reference to type %0 cannot bind "
   "to lvalue of type %1">;
@@ -1823,7 +1832,16 @@ def note_ovl_candidate : Note<"candidate "
     "is the implicit move constructor|"
     "is the implicit copy assignment operator|"
     "is the implicit move assignment operator|"
-    "is an inherited constructor}0%1">;
+    "is an inherited constructor}0%1"
+    "%select{| has different class (expected %3 but has %4)"
+    "| has different number of parameters (expected %3 but has %4)"
+    "| has type mismatch in %ordinal3 parameter (expected %4 but has %5)"
+    "| has different return type (%3 expected but has %4)"
+    "| has different qualifiers (expected "
+    "%select{none|const|restrict|const and restrict|volatile|const and volatile"
+    "|volatile and restrict|const, volatile, and restrict}3 but found "
+    "%select{none|const|restrict|const and restrict|volatile|const and volatile"
+    "|volatile and restrict|const, volatile, and restrict}4)}2">;
 
 def note_ovl_candidate_inherited_constructor : Note<"inherited from here">;
 def note_ovl_candidate_bad_deduction : Note<
@@ -4022,11 +4040,21 @@ def err_typecheck_convert_incompatible : Error<
   "%select{from incompatible type|to parameter of incompatible type|"
   "from a function with incompatible result type|to incompatible type|"
   "with an expression of incompatible type|to parameter of incompatible type|"
-  "to incompatible type}2 %1; "
-  "%select{|dereference with *|"
-  "take the address with &|"
-  "remove *|"
-  "remove &}3">;
+  "to incompatible type}2 %1"
+  "%select{|; dereference with *|"
+  "; take the address with &|"
+  "; remove *|"
+  "; remove &}3"
+  "%select{|: different classes (%5 vs %6)"
+  "|: different number of parameters (%5 vs %6)"
+  "|: type mismatch at %ordinal5 parameter (%6 vs %7)"
+  "|: different return type (%5 vs %6)"
+  "|: different qualifiers ("
+  "%select{none|const|restrict|const and restrict|volatile|const and volatile|"
+  "volatile and restrict|const, volatile, and restrict}5 vs "
+  "%select{none|const|restrict|const and restrict|volatile|const and volatile|"
+  "volatile and restrict|const, volatile, and restrict}6)}4">;
+
 def warn_incompatible_qualified_id : Warning<
   "%select{assigning to|passing|returning|converting|initializing|sending|casting}2"
   " %0 "

@@ -1399,7 +1399,10 @@ public:
   bool IsBlockPointerConversion(QualType FromType, QualType ToType,
                                 QualType& ConvertedType);
   bool FunctionArgTypesAreEqual(const FunctionProtoType *OldType,
-                                const FunctionProtoType *NewType);
+                                const FunctionProtoType *NewType,
+                                unsigned *ArgPos = 0);
+  void HandleFunctionTypeMismatch(PartialDiagnostic &PDiag,
+                                  QualType FromType, QualType ToType);
 
   CastKind PrepareCastToObjCObjectPointer(ExprResult &E);
   bool CheckPointerConversion(Expr *From, QualType ToType,
@@ -1542,11 +1545,11 @@ public:
                                         bool StdNamespaceIsAssociated = false);
 
   // Emit as a 'note' the specific overload candidate
-  void NoteOverloadCandidate(FunctionDecl *Fn);
+  void NoteOverloadCandidate(FunctionDecl *Fn, QualType DestType = QualType());
 
   // Emit as a series of 'note's all template and non-templates
   // identified by the expression Expr
-  void NoteAllOverloadCandidates(Expr* E);
+  void NoteAllOverloadCandidates(Expr* E, QualType DestType = QualType());
 
   // [PossiblyAFunctionType]  -->   [Return]
   // NonFunctionType --> NonFunctionType
@@ -4642,7 +4645,8 @@ public:
                                            const PartialDiagnostic &NoneDiag,
                                            const PartialDiagnostic &AmbigDiag,
                                         const PartialDiagnostic &CandidateDiag,
-                                        bool Complain = true);
+                                        bool Complain = true,
+                                        QualType TargetType = QualType());
 
   ClassTemplatePartialSpecializationDecl *
   getMoreSpecializedPartialSpecialization(

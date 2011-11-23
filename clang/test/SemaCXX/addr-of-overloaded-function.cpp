@@ -145,3 +145,64 @@ namespace PR7425 {
     bar2();
   }
 }
+
+namespace test1 {
+  void fun(int x) {}
+
+  void parameter_number() {
+    void (*ptr1)(int, int) = &fun; // expected-error {{cannot initialize a variable of type 'void (*)(int, int)' with an rvalue of type 'void (*)(int)': different number of parameters (2 vs 1)}}
+    void (*ptr2)(int, int);
+    ptr2 = &fun;  // expected-error {{assigning to 'void (*)(int, int)' from incompatible type 'void (*)(int)': different number of parameters (2 vs 1)}}
+  }
+
+  void parameter_mismatch() {
+    void (*ptr1)(double) = &fun; // expected-error {{cannot initialize a variable of type 'void (*)(double)' with an rvalue of type 'void (*)(int)': type mismatch in 1st parameter ('double' vs 'int')}}
+    void (*ptr2)(double);
+    ptr2 = &fun; // expected-error {{assigning to 'void (*)(double)' from incompatible type 'void (*)(int)': type mismatch at 1st parameter ('double' vs 'int')}}
+  }
+
+  void return_type_test() {
+    int (*ptr1)(int) = &fun; // expected-error {{cannot initialize a variable of type 'int (*)(int)' with an rvalue of type 'void (*)(int)': different return type ('int' vs 'void')}}
+    int (*ptr2)(int);
+    ptr2 = &fun;  // expected-error {{assigning to 'int (*)(int)' from incompatible type 'void (*)(int)': different return type ('int' vs 'void')}}
+  }
+
+  int foo(double x, double y) {return 0;} // expected-note {{candidate function has different number of parameters (expected 1 but has 2)}}
+  int foo(int x, int y) {return 0;} // expected-note {{candidate function has different number of parameters (expected 1 but has 2)}}
+  int foo(double x) {return 0;} // expected-note {{candidate function has type mismatch at 1st parameter (expected 'int' but has 'double')}}
+  double foo(float x, float y) {return 0;} // expected-note {{candidate function has different number of parameters (expected 1 but has 2)}}
+  double foo(int x, float y) {return 0;} // expected-note {{candidate function has different number of parameters (expected 1 but has 2)}}
+  double foo(float x) {return 0;} // expected-note {{candidate function has type mismatch at 1st parameter (expected 'int' but has 'float')}}
+  double foo(int x) {return 0;} // expected-note {{candidate function has different return type ('int' expected but has 'double')}}
+  
+  int (*ptr)(int) = &foo; // expected-error {{address of overloaded function 'foo' does not match required type 'int (int)'}}
+
+  struct Qualifiers {
+    void N() {};
+    void C() const {};
+    void V() volatile {};
+    void R() __restrict {};
+    void CV() const volatile {};
+    void CR() const __restrict {};
+    void VR() volatile __restrict {};
+    void CVR() const volatile __restrict {};
+  };
+
+
+  void QualifierTest() {
+    void (Qualifiers::*X)();
+    X = &Qualifiers::C; // expected-error {{assigning to 'void (test1::Qualifiers::*)()' from incompatible type 'void (test1::Qualifiers::*)() const': different qualifiers (none vs const)}}
+    X = &Qualifiers::V; // expected-error{{assigning to 'void (test1::Qualifiers::*)()' from incompatible type 'void (test1::Qualifiers::*)() volatile': different qualifiers (none vs volatile)}}
+    X = &Qualifiers::R; // expected-error{{assigning to 'void (test1::Qualifiers::*)()' from incompatible type 'void (test1::Qualifiers::*)() restrict': different qualifiers (none vs restrict)}}
+    X = &Qualifiers::CV; // expected-error{{assigning to 'void (test1::Qualifiers::*)()' from incompatible type 'void (test1::Qualifiers::*)() const volatile': different qualifiers (none vs const and volatile)}}
+    X = &Qualifiers::CR; // expected-error{{assigning to 'void (test1::Qualifiers::*)()' from incompatible type 'void (test1::Qualifiers::*)() const restrict': different qualifiers (none vs const and restrict)}}
+    X = &Qualifiers::VR; // expected-error{{assigning to 'void (test1::Qualifiers::*)()' from incompatible type 'void (test1::Qualifiers::*)() volatile restrict': different qualifiers (none vs volatile and restrict)}}
+    X = &Qualifiers::CVR; // expected-error{{assigning to 'void (test1::Qualifiers::*)()' from incompatible type 'void (test1::Qualifiers::*)() const volatile restrict': different qualifiers (none vs const, volatile, and restrict)}}
+  }
+
+  struct Dummy {
+    void N() {};
+  };
+
+  void (Qualifiers::*X)() = &Dummy::N; // expected-error{{cannot initialize a variable of type 'void (test1::Qualifiers::*)()' with an rvalue of type 'void (test1::Dummy::*)()': different classes ('test1::Qualifiers' vs 'test1::Dummy')}}
+}

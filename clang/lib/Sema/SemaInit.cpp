@@ -5118,12 +5118,14 @@ bool InitializationSequence::Diagnose(Sema &S,
 
   case FK_ConversionFailed: {
     QualType FromType = Args[0]->getType();
-    S.Diag(Kind.getLocation(), diag::err_init_conversion_failed)
+    PartialDiagnostic PDiag = S.PDiag(diag::err_init_conversion_failed)
       << (int)Entity.getKind()
       << DestType
       << Args[0]->isLValue()
       << FromType
       << Args[0]->getSourceRange();
+    S.HandleFunctionTypeMismatch(PDiag, FromType, DestType);
+    S.Diag(Kind.getLocation(), PDiag);
     if (DestType.getNonReferenceType()->isObjCObjectPointerType() &&
         Args[0]->getType()->isObjCObjectPointerType())
       S.EmitRelatedResultTypeNote(Args[0]);
