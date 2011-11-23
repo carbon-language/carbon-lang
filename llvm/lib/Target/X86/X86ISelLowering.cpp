@@ -3431,6 +3431,41 @@ static unsigned getShuffleVSHUFPDYImmediate(SDNode *N) {
   return Mask;
 }
 
+/// CommuteVectorShuffleMask - Change values in a shuffle permute mask assuming
+/// the two vector operands have swapped position.
+static void CommuteVectorShuffleMask(SmallVectorImpl<int> &Mask, EVT VT) {
+  unsigned NumElems = VT.getVectorNumElements();
+  for (unsigned i = 0; i != NumElems; ++i) {
+    int idx = Mask[i];
+    if (idx < 0)
+      continue;
+    else if (idx < (int)NumElems)
+      Mask[i] = idx + NumElems;
+    else
+      Mask[i] = idx - NumElems;
+  }
+}
+
+/// isCommutedVSHUFP() - Return true if swapping operands will 
+///  allow to use the "vshufpd" or "vshufps" instruction 
+///  for 256-bit vectors
+static bool isCommutedVSHUFPMask(const SmallVectorImpl<int> &Mask, EVT VT,
+                               const X86Subtarget *Subtarget) {
+
+  unsigned NumElems = VT.getVectorNumElements();
+  if ((VT.getSizeInBits() != 256) || ((NumElems != 4) && (NumElems != 8)))
+    return false;
+
+  SmallVector<int, 8> CommutedMask;
+  for (unsigned i = 0; i < NumElems; ++i)
+    CommutedMask.push_back(Mask[i]);
+
+  CommuteVectorShuffleMask(CommutedMask, VT);
+  return (NumElems == 4) ? isVSHUFPDYMask(CommutedMask, VT, Subtarget):
+      isVSHUFPSYMask(CommutedMask, VT, Subtarget);
+}
+
+
 /// isSHUFPMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a shuffle of elements that is suitable for input to 128-bit
 /// SHUFPS and SHUFPD.
@@ -4231,21 +4266,6 @@ static SDValue CommuteVectorShuffle(ShuffleVectorSDNode *SVOp,
   }
   return DAG.getVectorShuffle(VT, SVOp->getDebugLoc(), SVOp->getOperand(1),
                               SVOp->getOperand(0), &MaskVec[0]);
-}
-
-/// CommuteVectorShuffleMask - Change values in a shuffle permute mask assuming
-/// the two vector operands have swapped position.
-static void CommuteVectorShuffleMask(SmallVectorImpl<int> &Mask, EVT VT) {
-  unsigned NumElems = VT.getVectorNumElements();
-  for (unsigned i = 0; i != NumElems; ++i) {
-    int idx = Mask[i];
-    if (idx < 0)
-      continue;
-    else if (idx < (int)NumElems)
-      Mask[i] = idx + NumElems;
-    else
-      Mask[i] = idx - NumElems;
-  }
 }
 
 /// ShouldXformToMOVHLPS - Return true if the node should be transformed to
@@ -6985,6 +7005,17 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   if (isVSHUFPDYMask(M, VT, Subtarget))
     return getTargetShuffleNode(getSHUFPOpcode(VT), dl, VT, V1, V2,
                                 getShuffleVSHUFPDYImmediate(SVOp), DAG);
+
+  // Try to swap operands in the node to match x86 shuffle ops
+  if (isCommutedVSHUFPMask(M, VT, Subtarget)) {
+    // Now we need to commute operands.
+    SVOp = cast<ShuffleVectorSDNode>(CommuteVectorShuffle(SVOp, DAG));
+    V1 = SVOp->getOperand(0);
+    V2 = SVOp->getOperand(1);
+    unsigned Immediate = (NumElems == 4) ? getShuffleVSHUFPDYImmediate(SVOp):
+        getShuffleVSHUFPSYImmediate(SVOp);
+    return getTargetShuffleNode(getSHUFPOpcode(VT), dl, VT, V1, V2, Immediate, DAG);
+  }
 
   //===--------------------------------------------------------------------===//
   // Since no target specific shuffle was selected for this generic one,

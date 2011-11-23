@@ -27,3 +27,17 @@ entry:
   %shuffle = shufflevector <4 x double> %a, <4 x double> %b, <4 x i32> <i32 0, i32 5, i32 2, i32 undef>
   ret <4 x double> %shuffle
 }
+
+; CHECK: vshufps $-55, %ymm
+define <8 x float> @E(<8 x float> %a, <8 x float> %b) nounwind uwtable readnone ssp {
+entry:
+  %shuffle = shufflevector <8 x float> %a, <8 x float> %b, <8 x i32> <i32 9, i32 10, i32 0, i32 3, i32 13, i32 14, i32 4, i32 7>
+  ret <8 x float> %shuffle
+}
+
+; CHECK: vshufpd  $8, %ymm
+define <4 x double> @F(<4 x double> %a, <4 x double> %b) nounwind uwtable readnone ssp {
+entry:
+  %shuffle = shufflevector <4 x double> %a, <4 x double> %b, <4 x i32> <i32 0, i32 4, i32 2, i32 7>
+  ret <4 x double> %shuffle
+}
