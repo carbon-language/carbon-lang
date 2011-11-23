@@ -260,7 +260,7 @@ void CursorVisitor::visitDeclsFromFileRegion(FileID File,
 
   // If we didn't find any file level decls for the file, try looking at the
   // file that it was included from.
-  while (Decls.empty()) {
+  while (Decls.empty() || Decls.front()->isTopLevelDeclInObjCContainer()) {
     bool Invalid = false;
     const SrcMgr::SLocEntry &SLEntry = SM.getSLocEntry(File, &Invalid);
     if (Invalid)

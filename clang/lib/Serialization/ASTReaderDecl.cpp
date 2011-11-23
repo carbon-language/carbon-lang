@@ -249,6 +249,7 @@ void ASTDeclReader::VisitDecl(Decl *D) {
   D->setImplicit(Record[Idx++]);
   D->setUsed(Record[Idx++]);
   D->setReferenced(Record[Idx++]);
+  D->TopLevelDeclInObjCContainer = Record[Idx++];
   D->setAccess((AccessSpecifier)Record[Idx++]);
   D->FromASTFile = true;
   D->ModulePrivate = Record[Idx++];

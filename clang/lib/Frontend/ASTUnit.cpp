@@ -2546,6 +2546,13 @@ void ASTUnit::findFileRegionDecls(FileID File, unsigned Offset, unsigned Length,
   if (BeginIt != LocDecls.begin())
     --BeginIt;
 
+  // If we are pointing at a top-level decl inside an objc container, we need
+  // to backtrack until we find it otherwise we will fail to report that the
+  // region overlaps with an objc container.
+  while (BeginIt != LocDecls.begin() &&
+         BeginIt->second->isTopLevelDeclInObjCContainer())
+    --BeginIt;
+
   LocDeclsTy::iterator
     EndIt = std::upper_bound(LocDecls.begin(), LocDecls.end(),
                              std::make_pair(Offset+Length, (Decl*)0),

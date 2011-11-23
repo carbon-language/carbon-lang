@@ -4293,6 +4293,14 @@ void ASTReader::FindFileRegionDecls(FileID File,
   if (BeginIt != DInfo.Decls.begin())
     --BeginIt;
 
+  // If we are pointing at a top-level decl inside an objc container, we need
+  // to backtrack until we find it otherwise we will fail to report that the
+  // region overlaps with an objc container.
+  while (BeginIt != DInfo.Decls.begin() &&
+         GetDecl(getGlobalDeclID(*DInfo.Mod, *BeginIt))
+             ->isTopLevelDeclInObjCContainer())
+    --BeginIt;
+
   ArrayRef<serialization::LocalDeclID>::iterator
     EndIt = std::upper_bound(DInfo.Decls.begin(), DInfo.Decls.end(),
                              EndLoc, DIDComp);

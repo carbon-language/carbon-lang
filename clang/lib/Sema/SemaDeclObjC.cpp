@@ -2326,6 +2326,8 @@ void Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd,
 
   for (unsigned i = 0; i != tuvNum; i++) {
     DeclGroupRef DG = allTUVars[i].getAsVal<DeclGroupRef>();
+    for (DeclGroupRef::iterator I = DG.begin(), E = DG.end(); I != E; ++I)
+      (*I)->setTopLevelDeclInObjCContainer();
     Consumer.HandleTopLevelDeclInObjCContainer(DG);
   }
 }

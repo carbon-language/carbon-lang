@@ -3152,7 +3152,13 @@ static bool RebuildDeclaratorInCurrentInstantiation(Sema &S, Declarator &D,
 
 Decl *Sema::ActOnDeclarator(Scope *S, Declarator &D) {
   D.setFunctionDefinitionKind(FDK_Declaration);
-  return HandleDeclarator(S, D, MultiTemplateParamsArg(*this));
+  Decl *Dcl = HandleDeclarator(S, D, MultiTemplateParamsArg(*this));
+
+  if (OriginalLexicalContext && OriginalLexicalContext->isObjCContainer() &&
+      Dcl->getDeclContext()->isFileContext())
+    Dcl->setTopLevelDeclInObjCContainer();
+
+  return Dcl;
 }
 
 /// DiagnoseClassNameShadow - Implement C++ [class.mem]p13:
@@ -4787,6 +4793,9 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
   FunctionDecl *NewFD = CreateNewFunctionDecl(*this, D, DC, R, TInfo, SC,
                                               isVirtualOkay);
   if (!NewFD) return 0;
+
+  if (OriginalLexicalContext && OriginalLexicalContext->isObjCContainer())
+    NewFD->setTopLevelDeclInObjCContainer();
 
   if (getLangOptions().CPlusPlus) {
     bool isInline = D.getDeclSpec().isInlineSpecified();

@@ -244,6 +244,12 @@ private:
   /// are regarded as "referenced" but not "used".
   unsigned Referenced : 1;
 
+  /// \brief Whether this declaration is a top-level declaration (function,
+  /// global variable, etc.) that is lexically inside an objc container
+  /// definition.
+  /// FIXME: Consider setting the lexical context to the objc container.
+  unsigned TopLevelDeclInObjCContainer : 1;
+
 protected:
   /// Access - Used by C++ decls for the access specifier.
   // NOTE: VC++ treats enums as signed, avoid using the AccessSpecifier enum
@@ -282,7 +288,7 @@ protected:
     : NextDeclInContext(0), DeclCtx(DC),
       Loc(L), DeclKind(DK), InvalidDecl(0),
       HasAttrs(false), Implicit(false), Used(false), Referenced(false),
-      Access(AS_none), FromASTFile(0),
+      TopLevelDeclInObjCContainer(false), Access(AS_none), FromASTFile(0),
       ModulePrivate(0),
       IdentifierNamespace(getIdentifierNamespaceForKind(DK)),
       HasCachedLinkage(0)
@@ -293,7 +299,7 @@ protected:
   Decl(Kind DK, EmptyShell Empty)
     : NextDeclInContext(0), DeclKind(DK), InvalidDecl(0),
       HasAttrs(false), Implicit(false), Used(false), Referenced(false),
-      Access(AS_none), FromASTFile(0),
+      TopLevelDeclInObjCContainer(false), Access(AS_none), FromASTFile(0),
       ModulePrivate(0),
       IdentifierNamespace(getIdentifierNamespaceForKind(DK)),
       HasCachedLinkage(0)
@@ -451,6 +457,17 @@ public:
   bool isReferenced() const;
 
   void setReferenced(bool R = true) { Referenced = R; }
+
+  /// \brief Whether this declaration is a top-level declaration (function,
+  /// global variable, etc.) that is lexically inside an objc container
+  /// definition.
+  bool isTopLevelDeclInObjCContainer() const {
+    return TopLevelDeclInObjCContainer;
+  }
+
+  void setTopLevelDeclInObjCContainer(bool V = true) {
+    TopLevelDeclInObjCContainer = V;
+  }
 
   /// \brief Determine the availability of the given declaration.
   ///
