@@ -455,6 +455,11 @@ bool AddressSanitizer::insertGlobalRedzones(Module &M) {
         G->getLinkage() != GlobalVariable::PrivateLinkage &&
         G->getLinkage() != GlobalVariable::InternalLinkage)
       continue;
+    // Two problems with thread-locals:
+    //   - The address of the main thread's copy can't be computed at link-time.
+    //   - Need to poison all copies, not just the main thread's one.
+    if (G->isThreadLocal())
+      continue;
     // For now, just ignore this Alloca if the alignment is large.
     if (G->getAlignment() > RedzoneSize) continue;
 
@@ -787,6 +792,7 @@ void AddressSanitizer::PoisonStack(const ArrayRef<AllocaInst*> &AllocaVec,
 
 // Workaround for bug 11395: we don't want to instrument stack in functions
 // with large assembly blobs (32-bit only), otherwise reg alloc may crash.
+// FIXME: remove once the bug 11395 is fixed.
 bool AddressSanitizer::LooksLikeCodeInBug11395(Instruction *I) {
   if (LongSize != 32) return false;
   CallInst *CI = dyn_cast<CallInst>(I);
