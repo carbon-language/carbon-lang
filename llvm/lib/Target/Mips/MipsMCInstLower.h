@@ -37,10 +37,12 @@ public:
   void Lower(const MachineInstr *MI, MCInst &OutMI) const;
   void LowerCPLOAD(const MachineInstr *MI, SmallVector<MCInst, 4>& MCInsts);
   void LowerCPRESTORE(const MachineInstr *MI, MCInst &OutMI);
+  void LowerUnalignedLoadStore(const MachineInstr *MI,
+		                           SmallVector<MCInst, 4>& MCInsts);
 private:
   MCOperand LowerSymbolOperand(const MachineOperand &MO,
                                MachineOperandType MOTy, unsigned Offset) const;
-  MCOperand LowerOperand(const MachineOperand& MO) const;
+  MCOperand LowerOperand(const MachineOperand& MO, unsigned offset = 0) const;
 };
 }
 

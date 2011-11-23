@@ -145,7 +145,9 @@ def brtarget    : Operand<OtherVT> {
   let EncoderMethod = "getBranchTargetOpValue";
   let OperandType = "OPERAND_PCREL";
 }
-def calltarget  : Operand<i32>;
+def calltarget  : Operand<iPTR> {
+  let EncoderMethod = "getJumpTargetOpValue";
+}
 def calltarget64: Operand<i64>;
 def simm16      : Operand<i32>;
 def simm16_64   : Operand<i64>;
@@ -378,6 +380,22 @@ class StoreM<bits<6> op, string instr_asm, PatFrag OpNode, RegisterClass RC,
   let isPseudo = Pseudo;
 }
 
+// Memory Load/Store
+let canFoldAsLoad = 1 in
+class LoadX<bits<6> op, RegisterClass RC,
+            Operand MemOpnd>:
+  FMem<op, (outs RC:$rt), (ins MemOpnd:$addr),
+     "",
+     [], IILoad> {
+}
+
+class StoreX<bits<6> op, RegisterClass RC,
+             Operand MemOpnd>:
+  FMem<op, (outs), (ins RC:$rt, MemOpnd:$addr),
+     "",
+     [], IIStore> {
+}
+
 // 32-bit load.
 multiclass LoadM32<bits<6> op, string instr_asm, PatFrag OpNode,
                    bit Pseudo = 0> {
@@ -396,6 +414,13 @@ multiclass LoadM64<bits<6> op, string instr_asm, PatFrag OpNode,
                Requires<[IsN64]>;
 } 
 
+// 32-bit load.
+multiclass LoadX32<bits<6> op> {
+  def #NAME# : LoadX<op, CPURegs, mem>,
+               Requires<[NotN64]>;
+  def _P8    : LoadX<op, CPURegs, mem64>,
+               Requires<[IsN64]>;
+}
 // 32-bit store.
 multiclass StoreM32<bits<6> op, string instr_asm, PatFrag OpNode,
                     bit Pseudo = 0> {
@@ -411,6 +436,14 @@ multiclass StoreM64<bits<6> op, string instr_asm, PatFrag OpNode,
   def #NAME# : StoreM<op, instr_asm, OpNode, CPU64Regs, mem, Pseudo>,
                Requires<[NotN64]>;
   def _P8    : StoreM<op, instr_asm, OpNode, CPU64Regs, mem64, Pseudo>,
+               Requires<[IsN64]>;
+}
+
+// 32-bit store.
+multiclass StoreX32<bits<6> op> {
+  def #NAME# : StoreX<op, CPURegs, mem>,
+               Requires<[NotN64]>;
+  def _P8    : StoreX<op, CPURegs, mem64>,
                Requires<[IsN64]>;
 }
 
@@ -760,6 +793,12 @@ defm ULHu    : LoadM32<0x25, "ulhu", zextloadi16_u, 1>;
 defm ULW     : LoadM32<0x23, "ulw",  load_u, 1>;
 defm USH     : StoreM32<0x29, "ush", truncstorei16_u, 1>;
 defm USW     : StoreM32<0x2b, "usw", store_u, 1>;
+
+/// Primitives for unaligned
+defm LWL     : LoadX32<0x22>;
+defm LWR     : LoadX32<0x26>;
+defm SWL     : StoreX32<0x2A>;
+defm SWR     : StoreX32<0x2E>;
 
 let hasSideEffects = 1 in
 def SYNC : MipsInst<(outs), (ins i32imm:$stype), "sync $stype",

@@ -78,12 +78,19 @@ void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
   // Enclose unaligned load or store with .macro & .nomacro directives.
   if (isUnalignedLoadStore(Opc)) {
-    MCInst Directive;
-    Directive.setOpcode(Mips::MACRO);
-    OutStreamer.EmitInstruction(Directive);
-    OutStreamer.EmitInstruction(TmpInst0);
-    Directive.setOpcode(Mips::NOMACRO);
-    OutStreamer.EmitInstruction(Directive);
+    if (OutStreamer.hasRawTextSupport()) {
+      MCInst Directive;
+      Directive.setOpcode(Mips::MACRO);
+      OutStreamer.EmitInstruction(Directive);
+      OutStreamer.EmitInstruction(TmpInst0);
+      Directive.setOpcode(Mips::NOMACRO);
+      OutStreamer.EmitInstruction(Directive);
+    } else {
+      MCInstLowering.LowerUnalignedLoadStore(MI, MCInsts);
+      for (SmallVector<MCInst, 4>::iterator I = MCInsts.begin(); I
+          != MCInsts.end(); ++I)
+        OutStreamer.EmitInstruction(*I);
+    }
     return;
   }
 
@@ -91,8 +98,8 @@ void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     // Lower CPLOAD and CPRESTORE
     if (Opc == Mips::CPLOAD) {
       MCInstLowering.LowerCPLOAD(MI, MCInsts);
-      for (SmallVector<MCInst, 4>::iterator I = MCInsts.begin();
-           I != MCInsts.end(); ++I)
+      for (SmallVector<MCInst, 4>::iterator I = MCInsts.begin(); I
+          != MCInsts.end(); ++I)
         OutStreamer.EmitInstruction(*I);
       return;
     }
@@ -101,7 +108,7 @@ void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       MCInstLowering.LowerCPRESTORE(MI, TmpInst0);
       OutStreamer.EmitInstruction(TmpInst0);
       return;
-    } 
+    }
   }
 
   OutStreamer.EmitInstruction(TmpInst0);

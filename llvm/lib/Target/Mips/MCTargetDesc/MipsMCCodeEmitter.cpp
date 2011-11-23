@@ -173,11 +173,21 @@ getMachineOpValue(const MCInst &MI, const MCOperand &MO,
   } else if (MO.isExpr()) {
     const MCExpr *Expr = MO.getExpr();
     MCExpr::ExprKind Kind = Expr->getKind();
+    unsigned Ret = 0;
+
+    if (Kind == MCExpr::Binary) {
+      const MCBinaryExpr *BE = static_cast<const MCBinaryExpr*>(Expr);
+      Expr = BE->getLHS();
+      Kind = Expr->getKind();
+      const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(BE->getRHS());
+      assert((Kind == MCExpr::SymbolRef) && CE &&
+             "Binary expression must be sym+const.");
+      Ret = CE->getValue();
+    }
+
     if (Kind == MCExpr::SymbolRef) {
-      Mips::Fixups FixupKind = Mips::fixup_Mips_NONE;
-      MCSymbolRefExpr::VariantKind SymRefKind =
-          cast<MCSymbolRefExpr>(Expr)->getKind();
-      switch(SymRefKind) {
+      Mips::Fixups FixupKind;
+      switch(cast<MCSymbolRefExpr>(Expr)->getKind()) {
       case MCSymbolRefExpr::VK_Mips_GPREL:
         FixupKind = Mips::fixup_Mips_GPREL16;
         break;
@@ -206,12 +216,12 @@ getMachineOpValue(const MCInst &MI, const MCOperand &MO,
         FixupKind = Mips::fixup_Mips_TPREL_LO;
         break;
       default:
-        return 0;
+        return Ret;
       } // switch
       Fixups.push_back(MCFixup::Create(0, Expr, MCFixupKind(FixupKind)));
     } // if SymbolRef
     // All of the information is in the fixup.
-    return 0;
+    return Ret;
   }
   llvm_unreachable("Unable to encode MCOperand!");
   // Not reached
@@ -234,15 +244,22 @@ MipsMCCodeEmitter::getMemEncoding(const MCInst &MI, unsigned OpNo,
 unsigned
 MipsMCCodeEmitter::getSizeExtEncoding(const MCInst &MI, unsigned OpNo,
                                       SmallVectorImpl<MCFixup> &Fixups) const {
-  // FIXME: implement
-  return 0;
+  assert(MI.getOperand(OpNo).isImm());
+  unsigned szEncoding = getMachineOpValue(MI, MI.getOperand(OpNo), Fixups);
+  return szEncoding - 1;
 }
 
+// FIXME: should be called getMSBEncoding
+//
 unsigned
 MipsMCCodeEmitter::getSizeInsEncoding(const MCInst &MI, unsigned OpNo,
                                       SmallVectorImpl<MCFixup> &Fixups) const {
-  // FIXME: implement
-  return 0;
+  assert(MI.getOperand(OpNo-1).isImm());
+  assert(MI.getOperand(OpNo).isImm());
+  unsigned pos = getMachineOpValue(MI, MI.getOperand(OpNo-1), Fixups);
+  unsigned sz = getMachineOpValue(MI, MI.getOperand(OpNo), Fixups);
+
+  return pos + sz - 1;
 }
 
 #include "MipsGenMCCodeEmitter.inc"

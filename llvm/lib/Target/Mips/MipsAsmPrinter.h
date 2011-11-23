@@ -27,9 +27,11 @@ class MachineBasicBlock;
 class Module;
 
 class LLVM_LIBRARY_VISIBILITY MipsAsmPrinter : public AsmPrinter {
-  const MipsSubtarget *Subtarget;
-  
+
 public:
+
+  const MipsSubtarget *Subtarget;
+
   explicit MipsAsmPrinter(TargetMachine &TM,  MCStreamer &Streamer)
     : AsmPrinter(TM, Streamer) {
     Subtarget = &TM.getSubtarget<MipsSubtarget>();
