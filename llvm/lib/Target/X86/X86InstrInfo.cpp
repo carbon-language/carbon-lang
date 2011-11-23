@@ -3606,8 +3606,11 @@ void X86InstrInfo::setExecutionDomain(MachineInstr *MI, unsigned Domain) const {
   uint16_t dom = (MI->getDesc().TSFlags >> X86II::SSEDomainShift) & 3;
   assert(dom && "Not an SSE instruction");
   const unsigned *table = lookup(MI->getOpcode(), dom);
-  if (!table) // try the other table
+  if (!table) { // try the other table
+    assert((TM.getSubtarget<X86Subtarget>().hasAVX2() || Domain < 3) &&
+           "256-bit vector operations only available in AVX2");
     table = lookupAVX2(MI->getOpcode(), dom);
+  }
   assert(table && "Cannot change domain");
   MI->setDesc(get(table[Domain-1]));
 }

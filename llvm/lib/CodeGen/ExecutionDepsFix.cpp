@@ -600,6 +600,9 @@ void ExeDepsFix::visitSoftInstr(MachineInstr *mi, unsigned mask) {
   while (!Regs.empty()) {
     if (!dv) {
       dv = Regs.pop_back_val().Value;
+      // Force the first dv to match the current instruction.
+      dv->AvailableDomains = dv->getCommonDomains(available);
+      assert(dv->AvailableDomains && "Domain should have been filtered");
       continue;
     }
 
@@ -617,9 +620,10 @@ void ExeDepsFix::visitSoftInstr(MachineInstr *mi, unsigned mask) {
   }
 
   // dv is the DomainValue we are going to use for this instruction.
-  if (!dv)
+  if (!dv) {
     dv = alloc();
-  dv->AvailableDomains = available;
+    dv->AvailableDomains = available;
+  }
   dv->Instrs.push_back(mi);
 
   // Finally set all defs and non-collapsed uses to dv.
