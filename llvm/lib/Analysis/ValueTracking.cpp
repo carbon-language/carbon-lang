@@ -248,9 +248,14 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
                 APInt::getHighBitsSet(BitWidth, LeadZ);
     KnownZero &= Mask;
 
-    if (isKnownNonNegative)
+    // Only make use of no-wrap flags if we failed to compute the sign bit
+    // directly.  This matters if the multiplication always overflows, in
+    // which case we prefer to follow the result of the direct computation,
+    // though as the program is invoking undefined behaviour we can choose
+    // whatever we like here.
+    if (isKnownNonNegative && !KnownOne.isNegative())
       KnownZero.setBit(BitWidth - 1);
-    else if (isKnownNegative)
+    else if (isKnownNegative && !KnownZero.isNegative())
       KnownOne.setBit(BitWidth - 1);
 
     return;
