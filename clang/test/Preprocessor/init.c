@@ -212,8 +212,8 @@
 // ARM:#define __THUMB_INTERWORK__ 1
 // ARM:#define __UINTMAX_TYPE__ long long unsigned int
 // ARM:#define __USER_LABEL_PREFIX__ _
-// ARM:#define __WCHAR_MAX__ 2147483647
-// ARM:#define __WCHAR_TYPE__ int
+// ARM:#define __WCHAR_MAX__ 4294967295U
+// ARM:#define __WCHAR_TYPE__ unsigned int
 // ARM:#define __WCHAR_WIDTH__ 32
 // ARM:#define __WINT_TYPE__ int
 // ARM:#define __WINT_WIDTH__ 32

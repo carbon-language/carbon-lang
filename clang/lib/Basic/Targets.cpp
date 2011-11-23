@@ -2404,6 +2404,8 @@ public:
   {
     SizeType = UnsignedInt;
     PtrDiffType = SignedInt;
+    // AAPCS 7.1.1, ARM-Linux ABI 2.4: type of wchar_t is unsigned int.
+    WCharType = UnsignedInt;
 
     // {} in inline assembly are neon specifiers, not assembly variant
     // specifiers.
@@ -2441,6 +2443,9 @@ public:
     if (Name == "apcs-gnu") {
       DoubleAlign = LongLongAlign = LongDoubleAlign = 32;
       SizeType = UnsignedLong;
+
+      // Revert to using SignedInt on apcs-gnu to comply with existing behaviour.
+      WCharType = SignedInt;
 
       // Do not respect the alignment of bit-field types when laying out
       // structures. This corresponds to PCC_BITFIELD_TYPE_MATTERS in gcc.
