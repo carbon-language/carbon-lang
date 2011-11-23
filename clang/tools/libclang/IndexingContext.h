@@ -28,6 +28,10 @@ namespace cxindex {
 struct EntityInfo : public CXIdxEntityInfo {
   const NamedDecl *Dcl;
   IndexingContext *IndexCtx;
+
+  EntityInfo() {
+    name = USR = 0;
+  }
 };
 
 struct ContainerInfo : public CXIdxContainerInfo {
@@ -225,35 +229,25 @@ class IndexingContext {
 
   SmallVector<DeclGroupRef, 8> TUDeclsInObjCContainer;
   
-  llvm::SmallString<256> StrScratch;
+  llvm::BumpPtrAllocator StrScratch;
   unsigned StrAdapterCount;
 
   class StrAdapter {
-    llvm::SmallString<256> &Scratch;
     IndexingContext &IdxCtx;
 
   public:
-    StrAdapter(IndexingContext &indexCtx)
-      : Scratch(indexCtx.StrScratch), IdxCtx(indexCtx) {
+    StrAdapter(IndexingContext &indexCtx) : IdxCtx(indexCtx) {
       ++IdxCtx.StrAdapterCount;
     }
 
     ~StrAdapter() {
       --IdxCtx.StrAdapterCount;
       if (IdxCtx.StrAdapterCount == 0)
-        Scratch.clear();
+        IdxCtx.StrScratch.Reset();
     }
 
     const char *toCStr(StringRef Str);
-
-    unsigned getCurSize() const { return Scratch.size(); }
-
-    const char *getCStr(unsigned CharIndex) {
-      Scratch.push_back('\0');
-      return Scratch.data() + CharIndex;
-    }
-
-    SmallVectorImpl<char> &getBuffer() { return Scratch; }
+    const char *copyCStr(StringRef Str);
   };
 
   struct ObjCProtocolListInfo {
@@ -305,7 +299,8 @@ public:
   IndexingContext(CXClientData clientData, IndexerCallbacks &indexCallbacks,
                   unsigned indexOptions, CXTranslationUnit cxTU)
     : Ctx(0), ClientData(clientData), CB(indexCallbacks),
-      IndexOptions(indexOptions), CXTU(cxTU), StrAdapterCount(0) { }
+      IndexOptions(indexOptions), CXTU(cxTU),
+      StrScratch(/*size=*/1024), StrAdapterCount(0) { }
 
   ASTContext &getASTContext() const { return *Ctx; }
 

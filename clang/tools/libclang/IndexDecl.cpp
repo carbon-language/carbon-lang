@@ -109,6 +109,9 @@ public:
 
   bool VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
     const ObjCInterfaceDecl *Class = D->getClassInterface();
+    if (!Class)
+      return true;
+
     if (Class->isImplicitInterfaceDecl())
       IndexCtx.handleObjCInterface(Class);
 
@@ -128,7 +131,8 @@ public:
   }
 
   bool VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D) {
-    if (D->getCategoryDecl()->getLocation().isInvalid())
+    const ObjCCategoryDecl *Cat = D->getCategoryDecl();
+    if (!Cat)
       return true;
 
     IndexCtx.handleObjCCategoryImpl(D);
