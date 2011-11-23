@@ -503,3 +503,44 @@ lpad:
 loop:
   br label %loop
 }
+
+define void @test_unnatural_cfg_backwards_inner_loop() {
+; Test that when we encounter an unnatural CFG structure after having formed
+; a chain for an inner loop which happened to be laid out backwards we don't
+; attempt to merge onto the wrong end of the inner loop just because we find it
+; first. This was reduced from a crasher in GCC's single source.
+;
+; CHECK: test_unnatural_cfg_backwards_inner_loop
+; CHECK: %entry
+; CHECK: %body
+; CHECK: %loop1
+; CHECK: %loop2b
+; CHECK: %loop2a
+
+entry:
+  br i1 undef, label %loop2a, label %body
+
+body:
+  br label %loop2a
+
+loop1:
+  %next.load = load i32** undef
+  br i1 %comp.a, label %loop2a, label %loop2b
+
+loop2a:
+  %var = phi i32* [ null, %entry ], [ null, %body ], [ %next.phi, %loop1 ]
+  %next.var = phi i32* [ null, %entry ], [ undef, %body ], [ %next.load, %loop1 ]
+  %comp.a = icmp eq i32* %var, null
+  br label %loop3
+
+loop2b:
+  %gep = getelementptr inbounds i32* %var.phi, i32 0
+  %next.ptr = bitcast i32* %gep to i32**
+  store i32* %next.phi, i32** %next.ptr
+  br label %loop3
+
+loop3:
+  %var.phi = phi i32* [ %next.phi, %loop2b ], [ %var, %loop2a ]
+  %next.phi = phi i32* [ %next.load, %loop2b ], [ %next.var, %loop2a ]
+  br label %loop1
+}
