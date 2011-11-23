@@ -870,30 +870,43 @@ unsigned APInt::countPopulationSlowCase() const {
   return Count;
 }
 
+/// Perform a logical right-shift from Src to Dst, which must be equal or
+/// non-overlapping, of Words words, by Shift, which must be less than 64.
+static void lshrNear(uint64_t *Dst, uint64_t *Src, unsigned Words,
+                     unsigned Shift) {
+  uint64_t Carry = 0;
+  for (int I = Words - 1; I >= 0; --I) {
+    uint64_t Tmp = Src[I];
+    Dst[I] = (Tmp >> Shift) | Carry;
+    Carry = Tmp << (64 - Shift);
+  }
+}
+
 APInt APInt::byteSwap() const {
   assert(BitWidth >= 16 && BitWidth % 16 == 0 && "Cannot byteswap!");
   if (BitWidth == 16)
     return APInt(BitWidth, ByteSwap_16(uint16_t(VAL)));
-  else if (BitWidth == 32)
+  if (BitWidth == 32)
     return APInt(BitWidth, ByteSwap_32(unsigned(VAL)));
-  else if (BitWidth == 48) {
+  if (BitWidth == 48) {
     unsigned Tmp1 = unsigned(VAL >> 16);
     Tmp1 = ByteSwap_32(Tmp1);
     uint16_t Tmp2 = uint16_t(VAL);
     Tmp2 = ByteSwap_16(Tmp2);
     return APInt(BitWidth, (uint64_t(Tmp2) << 32) | Tmp1);
-  } else if (BitWidth == 64)
-    return APInt(BitWidth, ByteSwap_64(VAL));
-  else {
-    APInt Result(BitWidth, 0);
-    char *pByte = (char*)Result.pVal;
-    for (unsigned i = 0; i < BitWidth / APINT_WORD_SIZE / 2; ++i) {
-      char Tmp = pByte[i];
-      pByte[i] = pByte[BitWidth / APINT_WORD_SIZE - 1 - i];
-      pByte[BitWidth / APINT_WORD_SIZE - i - 1] = Tmp;
-    }
-    return Result;
   }
+  if (BitWidth == 64)
+    return APInt(BitWidth, ByteSwap_64(VAL));
+
+  APInt Result(getNumWords() * APINT_BITS_PER_WORD, 0);
+  for (unsigned I = 0, N = getNumWords(); I != N; ++I)
+    Result.pVal[I] = ByteSwap_64(pVal[N - I - 1]);
+  if (Result.BitWidth != BitWidth) {
+    lshrNear(Result.pVal, Result.pVal, getNumWords(),
+             Result.BitWidth - BitWidth);
+    Result.BitWidth = BitWidth;
+  }
+  return Result;
 }
 
 APInt llvm::APIntOps::GreatestCommonDivisor(const APInt& API1,
@@ -1232,11 +1245,7 @@ APInt APInt::lshr(unsigned shiftAmt) const {
 
   // If we are shifting less than a word, compute the shift with a simple carry
   if (shiftAmt < APINT_BITS_PER_WORD) {
-    uint64_t carry = 0;
-    for (int i = getNumWords()-1; i >= 0; --i) {
-      val[i] = (pVal[i] >> shiftAmt) | carry;
-      carry = pVal[i] << (APINT_BITS_PER_WORD - shiftAmt);
-    }
+    lshrNear(val, pVal, getNumWords(), shiftAmt);
     return APInt(val, BitWidth).clearUnusedBits();
   }
 
