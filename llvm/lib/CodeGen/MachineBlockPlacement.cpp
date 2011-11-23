@@ -504,7 +504,6 @@ void MachineBlockPlacement::buildChain(
     const BlockFilterSet *BlockFilter) {
   assert(BB);
   assert(BlockToChain[BB] == &Chain);
-  assert(*Chain.begin() == BB);
   MachineFunction &F = *BB->getParent();
   MachineFunction::iterator PrevUnplacedBlockIt = F.begin();
 
@@ -614,8 +613,7 @@ void MachineBlockPlacement::buildLoopChains(MachineFunction &F,
       if (!LoopBlockSet.erase(*BCI)) {
         // We don't mark the loop as bad here because there are real situations
         // where this can occur. For example, with an unanalyzable fallthrough
-        // from a loop block to a non-loop block.
-        // FIXME: Such constructs shouldn't exist. Track them down and fix them.
+        // from a loop block to a non-loop block or vice versa.
         dbgs() << "Loop chain contains a block not contained by the loop!\n"
                << "  Loop header:  " << getBlockName(*L.block_begin()) << "\n"
                << "  Chain header: " << getBlockName(*LoopChain.begin()) << "\n"

@@ -568,3 +568,28 @@ loop3:
   %next.phi = phi i32* [ %next.load, %loop2b ], [ %next.var, %loop2a ]
   br label %loop1
 }
+
+define void @unanalyzable_branch_to_loop_header() {
+; Ensure that we can handle unanalyzable branches into loop headers. We
+; pre-form chains for unanalyzable branches, and will find the tail end of that
+; at the start of the loop. This function uses floating point comparison
+; fallthrough because that happens to always produce unanalyzable branches on
+; x86.
+;
+; CHECK: unanalyzable_branch_to_loop_header
+; CHECK: %entry
+; CHECK: %loop
+; CHECK: %exit
+
+entry:
+  %cmp = fcmp une double 0.000000e+00, undef
+  br i1 %cmp, label %loop, label %exit
+
+loop:
+  %cond = icmp eq i8 undef, 42
+  br i1 %cond, label %exit, label %loop
+
+exit:
+  ret void
+}
+
