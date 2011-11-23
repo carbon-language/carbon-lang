@@ -74,9 +74,6 @@ Preprocessor::Preprocessor(DiagnosticsEngine &diags, LangOptions &opts,
 
 Preprocessor::~Preprocessor() {
   assert(BacktrackPositions.empty() && "EnableBacktrack/Backtrack imbalance!");
-  assert(((MacroExpandingLexersStack.empty() && MacroExpandedTokens.empty()) ||
-          isCodeCompletionReached()) &&
-         "Preprocessor::HandleEndOfTokenLexer should have cleared those");
 
   while (!IncludeMacroStack.empty()) {
     delete IncludeMacroStack.back().TheLexer;
