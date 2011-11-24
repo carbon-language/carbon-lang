@@ -352,8 +352,8 @@ static_assert_fold(MangleChars(U"constexpr!") == 1768383, "");
 
 constexpr char c0 = "nought index"[0];
 constexpr char c1 = "nice index"[10];
-constexpr char c2 = "nasty index"[12]; // expected-error {{must be initialized by a constant expression}} expected-warning {{indexes past the end}}
-constexpr char c3 = "negative index"[-1]; // expected-error {{must be initialized by a constant expression}} expected-warning {{indexes before the beginning}}
+constexpr char c2 = "nasty index"[12]; // expected-error {{must be initialized by a constant expression}} expected-warning {{is past the end}}
+constexpr char c3 = "negative index"[-1]; // expected-error {{must be initialized by a constant expression}} expected-warning {{is before the beginning}}
 constexpr char c4 = ((char*)(int*)"no reinterpret_casts allowed")[14]; // expected-error {{must be initialized by a constant expression}}
 
 constexpr const char *p = "test" + 2;

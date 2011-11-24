@@ -6,14 +6,14 @@ int foo() {
   int z[1]; // expected-note {{array 'z' declared here}}
   int *p = &y[2]; // no-warning
   (void) sizeof(x[2]); // no-warning
-  y[2] = 2; // expected-warning {{array index of '2' indexes past the end of an array (that contains 2 elements)}}
-  z[1] = 'x'; // expected-warning {{array index of '1' indexes past the end of an array (that contains 1 element)}}
-  return x[2] +  // expected-warning {{array index of '2' indexes past the end of an array (that contains 2 elements)}}
-         y[-1] + // expected-warning {{array index of '-1' indexes before the beginning of the array}}
-         x[sizeof(x)] +  // expected-warning {{array index of '8' indexes past the end of an array (that contains 2 elements)}}
-         x[sizeof(x) / sizeof(x[0])] +  // expected-warning {{array index of '2' indexes past the end of an array (that contains 2 elements)}}
+  y[2] = 2; // expected-warning {{array index 2 is past the end of the array (which contains 2 elements)}}
+  z[1] = 'x'; // expected-warning {{array index 1 is past the end of the array (which contains 1 element)}}
+  return x[2] +  // expected-warning {{array index 2 is past the end of the array (which contains 2 elements)}}
+         y[-1] + // expected-warning {{array index -1 is before the beginning of the array}}
+         x[sizeof(x)] +  // expected-warning {{array index 8 is past the end of the array (which contains 2 elements)}}
+         x[sizeof(x) / sizeof(x[0])] +  // expected-warning {{array index 2 is past the end of the array (which contains 2 elements)}}
          x[sizeof(x) / sizeof(x[0]) - 1] + // no-warning
-         x[sizeof(x[2])]; // expected-warning {{array index of '4' indexes past the end of an array (that contains 2 elements)}}
+         x[sizeof(x[2])]; // expected-warning {{array index 4 is past the end of the array (which contains 2 elements)}}
 }
 
 // This code example tests that -Warray-bounds works with arrays that
@@ -27,7 +27,7 @@ void f1(int a[1]) {
 }
 
 void f2(const int (&a)[2]) { // expected-note {{declared here}}
-  int val = a[3];  // expected-warning {{array index of '3' indexes past the end of an array (that contains 2 elements)}}
+  int val = a[3];  // expected-warning {{array index 3 is past the end of the array (which contains 2 elements)}}
 }
 
 void test() {
@@ -40,33 +40,33 @@ void test() {
     short a[2]; // expected-note 4 {{declared here}}
     char c[4];
   } u;
-  u.a[3] = 1; // expected-warning {{array index of '3' indexes past the end of an array (that contains 2 elements)}}
+  u.a[3] = 1; // expected-warning {{array index 3 is past the end of the array (which contains 2 elements)}}
   u.c[3] = 1; // no warning
   short *p = &u.a[2]; // no warning
-  p = &u.a[3]; // expected-warning {{array index of '3' indexes past the end of an array (that contains 2 elements)}}
-  *(&u.a[2]) = 1; // expected-warning {{array index of '2' indexes past the end of an array (that contains 2 elements)}}
-  *(&u.a[3]) = 1; // expected-warning {{array index of '3' indexes past the end of an array (that contains 2 elements)}}
+  p = &u.a[3]; // expected-warning {{array index 3 is past the end of the array (which contains 2 elements)}}
+  *(&u.a[2]) = 1; // expected-warning {{array index 2 is past the end of the array (which contains 2 elements)}}
+  *(&u.a[3]) = 1; // expected-warning {{array index 3 is past the end of the array (which contains 2 elements)}}
   *(&u.c[3]) = 1; // no warning
 
   const int const_subscript = 3;
   int array[2]; // expected-note {{declared here}}
-  array[const_subscript] = 0;  // expected-warning {{array index of '3' indexes past the end of an array (that contains 2 elements)}}
+  array[const_subscript] = 0;  // expected-warning {{array index 3 is past the end of the array (which contains 2 elements)}}
 
   int *ptr;
   ptr[3] = 0; // no warning for pointer references
   int array2[] = { 0, 1, 2 }; // expected-note 2 {{declared here}}
 
-  array2[3] = 0; // expected-warning {{array index of '3' indexes past the end of an array (that contains 3 elements)}}
-  array2[2+2] = 0; // expected-warning {{array index of '4' indexes past the end of an array (that contains 3 elements)}}
+  array2[3] = 0; // expected-warning {{array index 3 is past the end of the array (which contains 3 elements)}}
+  array2[2+2] = 0; // expected-warning {{array index 4 is past the end of the array (which contains 3 elements)}}
 
   const char *str1 = "foo";
   char c1 = str1[5]; // no warning for pointers
 
   const char str2[] = "foo"; // expected-note {{declared here}}
-  char c2 = str2[5]; // expected-warning {{array index of '5' indexes past the end of an array (that contains 4 elements)}}
+  char c2 = str2[5]; // expected-warning {{array index 5 is past the end of the array (which contains 4 elements)}}
 
   int (*array_ptr)[2];
-  (*array_ptr)[3] = 1; // expected-warning {{array index of '3' indexes past the end of an array (that contains 2 elements)}}
+  (*array_ptr)[3] = 1; // expected-warning {{array index 3 is past the end of the array (which contains 2 elements)}}
 }
 
 template <int I> struct S {
@@ -74,8 +74,8 @@ template <int I> struct S {
 };
 template <int I> void f() {
   S<3> s;
-  s.arr[4] = 0; // expected-warning {{array index of '4' indexes past the end of an array (that contains 3 elements)}}
-  s.arr[I] = 0; // expected-warning {{array index of '5' indexes past the end of an array (that contains 3 elements)}}
+  s.arr[4] = 0; // expected-warning {{array index 4 is past the end of the array (which contains 3 elements)}}
+  s.arr[I] = 0; // expected-warning {{array index 5 is past the end of the array (which contains 3 elements)}}
 }
 
 void test_templates() {
@@ -88,13 +88,13 @@ void test_templates() {
 int test_no_warn_macro_unreachable() {
   int arr[SIZE]; // expected-note {{array 'arr' declared here}}
   return ARR_IN_MACRO(0, arr, SIZE) + // no-warning
-         ARR_IN_MACRO(1, arr, SIZE); // expected-warning{{array index of '10' indexes past the end of an array (that contains 10 elements)}}
+         ARR_IN_MACRO(1, arr, SIZE); // expected-warning{{array index 10 is past the end of the array (which contains 10 elements)}}
 }
 
 // This exhibited an assertion failure for a 32-bit build of Clang.
 int test_pr9240() {
   short array[100]; // expected-note {{array 'array' declared here}}
-  return array[(unsigned long long) 100]; // expected-warning {{array index of '100' indexes past the end of an array (that contains 100 elements)}}
+  return array[(unsigned long long) 100]; // expected-warning {{array index 100 is past the end of the array (which contains 100 elements)}}
 }
 
 // PR 9284 - a template parameter can cause an array bounds access to be
@@ -112,7 +112,7 @@ void pr9284b() {
     int arr[3 + (extendArray ? 1 : 0)]; // expected-note {{array 'arr' declared here}}
 
     if (!extendArray)
-        arr[3] = 42; // expected-warning{{array index of '3' indexes past the end of an array (that contains 3 elements)}}
+        arr[3] = 42; // expected-warning{{array index 3 is past the end of the array (which contains 3 elements)}}
 }
 
 void test_pr9284() {
@@ -131,7 +131,7 @@ int test_sizeof_as_condition(int flag) {
   int arr[2] = { 0, 0 }; // expected-note {{array 'arr' declared here}}
   if (flag) 
     return sizeof(char) != sizeof(char) ? arr[2] : arr[1];
-  return sizeof(char) == sizeof(char) ? arr[2] : arr[1]; // expected-warning {{array index of '2' indexes past the end of an array (that contains 2 elements)}}
+  return sizeof(char) == sizeof(char) ? arr[2] : arr[1]; // expected-warning {{array index 2 is past the end of the array (which contains 2 elements)}}
 }
 
 void test_switch() {
@@ -143,7 +143,7 @@ void test_switch() {
     }
     case 4: {
       int arr[2]; // expected-note {{array 'arr' declared here}}
-      arr[2] = 1; // expected-warning {{array index of '2' indexes past the end of an array (that contains 2 elements)}}
+      arr[2] = 1; // expected-warning {{array index 2 is past the end of the array (which contains 2 elements)}}
       break;
     }
     default: {
@@ -188,7 +188,7 @@ namespace tailpad {
   };
   
   char bar(struct foo *F) {
-    return F->c1[3]; // expected-warning {{array index of '3' indexes past the end of an array (that contains 1 element)}}
+    return F->c1[3]; // expected-warning {{array index 3 is past the end of the array (which contains 1 element)}}
     return F->c2[3]; // no warning, foo could have tail padding allocated.
   }
 }
@@ -199,20 +199,20 @@ namespace metaprogramming {
   template <int N> struct bar { char c[N]; }; // expected-note {{declared here}}
 
   char test(foo *F, bar<1> *B) {
-    return F->c[3] + // expected-warning {{array index of '3' indexes past the end of an array (that contains 1 element)}}
-           B->c[3]; // expected-warning {{array index of '3' indexes past the end of an array (that contains 1 element)}}
+    return F->c[3] + // expected-warning {{array index 3 is past the end of the array (which contains 1 element)}}
+           B->c[3]; // expected-warning {{array index 3 is past the end of the array (which contains 1 element)}}
   }
 }
 
 void bar(int x) {}
 int test_more() {
   int foo[5]; // expected-note 5 {{array 'foo' declared here}}
-  bar(foo[5]); // expected-warning {{array index of '5' indexes past the end of an array (that contains 5 elements)}}
-  ++foo[5]; // expected-warning {{array index of '5' indexes past the end of an array (that contains 5 elements)}}
-  if (foo[6]) // expected-warning {{array index of '6' indexes past the end of an array (that contains 5 elements)}}
-    return --foo[6]; // expected-warning {{array index of '6' indexes past the end of an array (that contains 5 elements)}}
+  bar(foo[5]); // expected-warning {{array index 5 is past the end of the array (which contains 5 elements)}}
+  ++foo[5]; // expected-warning {{array index 5 is past the end of the array (which contains 5 elements)}}
+  if (foo[6]) // expected-warning {{array index 6 is past the end of the array (which contains 5 elements)}}
+    return --foo[6]; // expected-warning {{array index 6 is past the end of the array (which contains 5 elements)}}
   else
-    return foo[5]; // expected-warning {{array index of '5' indexes past the end of an array (that contains 5 elements)}}
+    return foo[5]; // expected-warning {{array index 5 is past the end of the array (which contains 5 elements)}}
 }
 
 void test_pr10771() {
@@ -221,7 +221,7 @@ void test_pr10771() {
     ((char*)foo)[sizeof(foo) - 1] = '\0';  // no-warning
     *(((char*)foo) + sizeof(foo) - 1) = '\0';  // no-warning
 
-    ((char*)foo)[sizeof(foo)] = '\0';  // expected-warning {{array index of '32768' indexes past the end of an array (that contains 32768 elements)}}
+    ((char*)foo)[sizeof(foo)] = '\0';  // expected-warning {{array index 32768 is past the end of the array (which contains 32768 elements)}}
 
     // TODO: This should probably warn, too.
     *(((char*)foo) + sizeof(foo)) = '\0';  // no-warning
@@ -232,6 +232,5 @@ int test_pr11007_aux(const char * restrict, ...);
 // Test checking with varargs.
 void test_pr11007() {
   double a[5]; // expected-note {{array 'a' declared here}}
-  test_pr11007_aux("foo", a[1000]); // expected-warning {{array index of '1000' indexes past the end of an array}}
+  test_pr11007_aux("foo", a[1000]); // expected-warning {{array index 1000 is past the end of the array}}
 }
-

@@ -4661,10 +4661,10 @@ def warn_ptr_arith_exceeds_bounds : Warning<
   "contains %1 element%s2)">,
   InGroup<DiagGroup<"array-bounds-pointer-arithmetic">>, DefaultIgnore;
 def warn_array_index_precedes_bounds : Warning<
-  "array index of '%0' indexes before the beginning of the array">,
+  "array index %0 is before the beginning of the array">,
   InGroup<DiagGroup<"array-bounds">>;
 def warn_array_index_exceeds_bounds : Warning<
-  "array index of '%0' indexes past the end of an array (that contains %1 "
+  "array index %0 is past the end of the array (which contains %1 "
   "element%s2)">, InGroup<DiagGroup<"array-bounds">>;
 def note_array_index_out_of_bounds : Note<
   "array %0 declared here">;
