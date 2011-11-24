@@ -315,7 +315,7 @@ void MachineBlockPlacement::markChainSuccessors(
       // This is a cross-chain edge that is within the loop, so decrement the
       // loop predecessor count of the destination chain.
       if (SuccChain.LoopPredecessors > 0 && --SuccChain.LoopPredecessors == 0)
-        BlockWorkList.push_back(*SI);
+        BlockWorkList.push_back(*SuccChain.begin());
     }
   }
 }
@@ -594,7 +594,7 @@ void MachineBlockPlacement::buildLoopChains(MachineFunction &F,
     }
 
     if (Chain.LoopPredecessors == 0)
-      BlockWorkList.push_back(*BI);
+      BlockWorkList.push_back(*Chain.begin());
   }
 
   buildChain(*L.block_begin(), LoopChain, BlockWorkList, &LoopBlockSet);
@@ -692,7 +692,7 @@ void MachineBlockPlacement::buildCFGChains(MachineFunction &F) {
     }
 
     if (Chain.LoopPredecessors == 0)
-      BlockWorkList.push_back(BB);
+      BlockWorkList.push_back(*Chain.begin());
   }
 
   BlockChain &FunctionChain = *BlockToChain[&F.front()];

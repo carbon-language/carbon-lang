@@ -593,3 +593,59 @@ exit:
   ret void
 }
 
+define void @unanalyzable_branch_to_best_succ(i1 %cond) {
+; Ensure that we can handle unanalyzable branches where the destination block
+; gets selected as the optimal sucessor to merge.
+;
+; CHECK: unanalyzable_branch_to_best_succ
+; CHECK: %entry
+; CHECK: %foo
+; CHECK: %bar
+; CHECK: %exit
+
+entry:
+  ; Bias this branch toward bar to ensure we form that chain.
+  br i1 %cond, label %bar, label %foo, !prof !1
+
+foo:
+  %cmp = fcmp une double 0.000000e+00, undef
+  br i1 %cmp, label %bar, label %exit
+
+bar:
+  call i32 @f()
+  br label %exit
+
+exit:
+  ret void
+}
+
+define void @unanalyzable_branch_to_free_block(float %x) {
+; Ensure that we can handle unanalyzable branches where the destination block
+; gets selected as the best free block in the CFG.
+;
+; CHECK: unanalyzable_branch_to_free_block
+; CHECK: %entry
+; CHECK: %a
+; CHECK: %b
+; CHECK: %c
+; CHECK: %exit
+
+entry:
+  br i1 undef, label %a, label %b
+
+a:
+  call i32 @f()
+  br label %c
+
+b:
+  %cmp = fcmp une float %x, undef
+  br i1 %cmp, label %c, label %exit
+
+c:
+  call i32 @g()
+  br label %exit
+
+exit:
+  ret void
+}
+
