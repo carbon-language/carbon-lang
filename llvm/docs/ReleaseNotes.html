@@ -930,10 +930,16 @@ Builder.CreateResume(UnwindData);
    in.</p>
 
 <ul>
-<!--
-<li></li>
--->
+  <li>The ELF object streamers are much more full featured.</li>
+  <li>Target dependent relocation handling has been refactored into the Targets.</li>
+  <li>Early stage MC-JIT infrastructure has been implemented.</li>
 </ul>
+
+<p>The MC-JIT is a major new feature for MC, and will eventually grow to replace
+the current JIT implementation. It emits object files direct to memory and
+uses a runtime dynamic linker to resolve references and drive lazy compilation.
+The MC-JIT enables much greater code reuse between the JIT and the static
+compiler and provides better integration with the platform ABI as a result.</p>
 
 <p>For more information, please see
    the <a href="http://blog.llvm.org/2010/04/intro-to-llvm-mc-project.html">Intro
@@ -994,9 +1000,9 @@ Builder.CreateResume(UnwindData);
 <p>New features of the ARM target include:</p>
 
 <ul>
-<!--
-<li></li>
--->
+  <li>Reworked Set Jump Long Jump EH Lowering,</li>
+  <li>improved support for Cortex-M series processors, and</li>
+  <li>beta quality integrated assembler support.</li>
 </ul>
 </div>
 
