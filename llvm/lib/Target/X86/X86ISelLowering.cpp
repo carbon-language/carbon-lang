@@ -2851,10 +2851,6 @@ static bool isTargetShuffle(unsigned Opcode) {
   case X86ISD::PUNPCKLBW:
   case X86ISD::PUNPCKLDQ:
   case X86ISD::PUNPCKLQDQ:
-  case X86ISD::VPUNPCKLWDY:
-  case X86ISD::VPUNPCKLBWY:
-  case X86ISD::VPUNPCKLDQY:
-  case X86ISD::VPUNPCKLQDQY:
   case X86ISD::UNPCKHPS:
   case X86ISD::UNPCKHPD:
   case X86ISD::VUNPCKHPSY:
@@ -2863,10 +2859,6 @@ static bool isTargetShuffle(unsigned Opcode) {
   case X86ISD::PUNPCKHBW:
   case X86ISD::PUNPCKHDQ:
   case X86ISD::PUNPCKHQDQ:
-  case X86ISD::VPUNPCKHWDY:
-  case X86ISD::VPUNPCKHBWY:
-  case X86ISD::VPUNPCKHDQY:
-  case X86ISD::VPUNPCKHQDQY:
   case X86ISD::VPERMILPS:
   case X86ISD::VPERMILPSY:
   case X86ISD::VPERMILPD:
@@ -2940,10 +2932,6 @@ static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
   case X86ISD::PUNPCKLBW:
   case X86ISD::PUNPCKLDQ:
   case X86ISD::PUNPCKLQDQ:
-  case X86ISD::VPUNPCKLWDY:
-  case X86ISD::VPUNPCKLBWY:
-  case X86ISD::VPUNPCKLDQY:
-  case X86ISD::VPUNPCKLQDQY:
   case X86ISD::UNPCKHPS:
   case X86ISD::UNPCKHPD:
   case X86ISD::VUNPCKHPSY:
@@ -2952,10 +2940,6 @@ static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
   case X86ISD::PUNPCKHBW:
   case X86ISD::PUNPCKHDQ:
   case X86ISD::PUNPCKHQDQ:
-  case X86ISD::VPUNPCKHWDY:
-  case X86ISD::VPUNPCKHBWY:
-  case X86ISD::VPUNPCKHDQY:
-  case X86ISD::VPUNPCKHQDQY:
     return DAG.getNode(Opc, dl, VT, V1, V2);
   }
   return SDValue();
@@ -4663,10 +4647,6 @@ static SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG,
     case X86ISD::PUNPCKHWD:
     case X86ISD::PUNPCKHDQ:
     case X86ISD::PUNPCKHQDQ:
-    case X86ISD::VPUNPCKHBWY:
-    case X86ISD::VPUNPCKHWDY:
-    case X86ISD::VPUNPCKHDQY:
-    case X86ISD::VPUNPCKHQDQY:
       DecodePUNPCKHMask(NumElems, ShuffleMask);
       break;
     case X86ISD::UNPCKHPS:
@@ -4679,10 +4659,6 @@ static SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG,
     case X86ISD::PUNPCKLWD:
     case X86ISD::PUNPCKLDQ:
     case X86ISD::PUNPCKLQDQ:
-    case X86ISD::VPUNPCKLBWY:
-    case X86ISD::VPUNPCKLWDY:
-    case X86ISD::VPUNPCKLDQY:
-    case X86ISD::VPUNPCKLQDQY:
       DecodePUNPCKLMask(VT, ShuffleMask);
       break;
     case X86ISD::UNPCKLPS:
@@ -6609,17 +6585,17 @@ static inline unsigned getUNPCKLOpcode(EVT VT, bool HasAVX2) {
   case MVT::v4f32: return X86ISD::UNPCKLPS;
   case MVT::v2f64: return X86ISD::UNPCKLPD;
   case MVT::v8i32:
-    if (HasAVX2)   return X86ISD::VPUNPCKLDQY;
+    if (HasAVX2)   return X86ISD::PUNPCKLDQ;
     // else use fp unit for int unpack.
   case MVT::v8f32: return X86ISD::VUNPCKLPSY;
   case MVT::v4i64:
-    if (HasAVX2)   return X86ISD::VPUNPCKLQDQY;
+    if (HasAVX2)   return X86ISD::PUNPCKLQDQ;
     // else use fp unit for int unpack.
   case MVT::v4f64: return X86ISD::VUNPCKLPDY;
+  case MVT::v32i8:
   case MVT::v16i8: return X86ISD::PUNPCKLBW;
+  case MVT::v16i16:
   case MVT::v8i16: return X86ISD::PUNPCKLWD;
-  case MVT::v16i16: return X86ISD::VPUNPCKLWDY;
-  case MVT::v32i8: return X86ISD::VPUNPCKLBWY;
   default:
     llvm_unreachable("Unknown type for unpckl");
   }
@@ -6633,17 +6609,17 @@ static inline unsigned getUNPCKHOpcode(EVT VT, bool HasAVX2) {
   case MVT::v4f32: return X86ISD::UNPCKHPS;
   case MVT::v2f64: return X86ISD::UNPCKHPD;
   case MVT::v8i32:
-    if (HasAVX2)   return X86ISD::VPUNPCKHDQY;
+    if (HasAVX2)   return X86ISD::PUNPCKHDQ;
     // else use fp unit for int unpack.
   case MVT::v8f32: return X86ISD::VUNPCKHPSY;
   case MVT::v4i64:
-    if (HasAVX2)   return X86ISD::VPUNPCKHQDQY;
+    if (HasAVX2)   return X86ISD::PUNPCKHQDQ;
     // else use fp unit for int unpack.
   case MVT::v4f64: return X86ISD::VUNPCKHPDY;
+  case MVT::v32i8:
   case MVT::v16i8: return X86ISD::PUNPCKHBW;
+  case MVT::v16i16:
   case MVT::v8i16: return X86ISD::PUNPCKHWD;
-  case MVT::v16i16: return X86ISD::VPUNPCKHWDY;
-  case MVT::v32i8: return X86ISD::VPUNPCKHBWY;
   default:
     llvm_unreachable("Unknown type for unpckh");
   }
@@ -11312,18 +11288,10 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::PUNPCKLWD:          return "X86ISD::PUNPCKLWD";
   case X86ISD::PUNPCKLDQ:          return "X86ISD::PUNPCKLDQ";
   case X86ISD::PUNPCKLQDQ:         return "X86ISD::PUNPCKLQDQ";
-  case X86ISD::VPUNPCKLBWY:        return "X86ISD::VPUNPCKLBWY";
-  case X86ISD::VPUNPCKLWDY:        return "X86ISD::VPUNPCKLWDY";
-  case X86ISD::VPUNPCKLDQY:        return "X86ISD::VPUNPCKLDQY";
-  case X86ISD::VPUNPCKLQDQY:       return "X86ISD::VPUNPCKLQDQY";
   case X86ISD::PUNPCKHBW:          return "X86ISD::PUNPCKHBW";
   case X86ISD::PUNPCKHWD:          return "X86ISD::PUNPCKHWD";
   case X86ISD::PUNPCKHDQ:          return "X86ISD::PUNPCKHDQ";
   case X86ISD::PUNPCKHQDQ:         return "X86ISD::PUNPCKHQDQ";
-  case X86ISD::VPUNPCKHBWY:        return "X86ISD::VPUNPCKHBWY";
-  case X86ISD::VPUNPCKHWDY:        return "X86ISD::VPUNPCKHWDY";
-  case X86ISD::VPUNPCKHDQY:        return "X86ISD::VPUNPCKHDQY";
-  case X86ISD::VPUNPCKHQDQY:       return "X86ISD::VPUNPCKHQDQY";
   case X86ISD::VBROADCAST:         return "X86ISD::VBROADCAST";
   case X86ISD::VPERMILPS:          return "X86ISD::VPERMILPS";
   case X86ISD::VPERMILPSY:         return "X86ISD::VPERMILPSY";
@@ -14907,10 +14875,6 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::PUNPCKHWD:
   case X86ISD::PUNPCKHDQ:
   case X86ISD::PUNPCKHQDQ:
-  case X86ISD::VPUNPCKHBWY:
-  case X86ISD::VPUNPCKHWDY:
-  case X86ISD::VPUNPCKHDQY:
-  case X86ISD::VPUNPCKHQDQY:
   case X86ISD::UNPCKHPS:
   case X86ISD::UNPCKHPD:
   case X86ISD::VUNPCKHPSY:
@@ -14919,10 +14883,6 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::PUNPCKLWD:
   case X86ISD::PUNPCKLDQ:
   case X86ISD::PUNPCKLQDQ:
-  case X86ISD::VPUNPCKLBWY:
-  case X86ISD::VPUNPCKLWDY:
-  case X86ISD::VPUNPCKLDQY:
-  case X86ISD::VPUNPCKLQDQY:
   case X86ISD::UNPCKLPS:
   case X86ISD::UNPCKLPD:
   case X86ISD::VUNPCKLPSY:

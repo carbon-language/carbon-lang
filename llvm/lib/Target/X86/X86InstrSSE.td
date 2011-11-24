@@ -4218,35 +4218,43 @@ let Predicates = [HasAVX] in {
 }
 
 let Predicates = [HasAVX2] in {
-  defm VPUNPCKLBW  : sse2_unpack_y<0x60, "vpunpcklbw", v32i8, X86Punpcklbwy,
+  defm VPUNPCKLBW  : sse2_unpack_y<0x60, "vpunpcklbw", v32i8, X86Punpcklbw,
                                    bc_v32i8>, VEX_4V;
-  defm VPUNPCKLWD  : sse2_unpack_y<0x61, "vpunpcklwd", v16i16, X86Punpcklwdy,
+  defm VPUNPCKLWD  : sse2_unpack_y<0x61, "vpunpcklwd", v16i16, X86Punpcklwd,
                                    bc_v16i16>, VEX_4V;
-  defm VPUNPCKLDQ  : sse2_unpack_y<0x62, "vpunpckldq", v8i32, X86Punpckldqy,
+  defm VPUNPCKLDQ  : sse2_unpack_y<0x62, "vpunpckldq", v8i32, X86Punpckldq,
                                    bc_v8i32>, VEX_4V;
-  defm VPUNPCKLQDQ : sse2_unpack_y<0x6C, "vpunpcklqdq", v4i64, X86Punpcklqdqy,
+  defm VPUNPCKLQDQ : sse2_unpack_y<0x6C, "vpunpcklqdq", v4i64, X86Punpcklqdq,
                                    bc_v4i64>, VEX_4V;
 
-  defm VPUNPCKHBW  : sse2_unpack_y<0x68, "vpunpckhbw", v32i8, X86Punpckhbwy,
+  defm VPUNPCKHBW  : sse2_unpack_y<0x68, "vpunpckhbw", v32i8, X86Punpckhbw,
                                    bc_v32i8>, VEX_4V;
-  defm VPUNPCKHWD  : sse2_unpack_y<0x69, "vpunpckhwd", v16i16, X86Punpckhwdy,
+  defm VPUNPCKHWD  : sse2_unpack_y<0x69, "vpunpckhwd", v16i16, X86Punpckhwd,
                                    bc_v16i16>, VEX_4V;
-  defm VPUNPCKHDQ  : sse2_unpack_y<0x6A, "vpunpckhdq", v8i32, X86Punpckhdqy,
+  defm VPUNPCKHDQ  : sse2_unpack_y<0x6A, "vpunpckhdq", v8i32, X86Punpckhdq,
                                    bc_v8i32>, VEX_4V;
-  defm VPUNPCKHQDQ : sse2_unpack_y<0x6D, "vpunpckhqdq", v4i64, X86Punpckhqdqy,
+  defm VPUNPCKHQDQ : sse2_unpack_y<0x6D, "vpunpckhqdq", v4i64, X86Punpckhqdq,
                                    bc_v4i64>, VEX_4V;
 }
 
 let Constraints = "$src1 = $dst" in {
-  defm PUNPCKLBW  : sse2_unpack<0x60, "punpcklbw", v16i8, X86Punpcklbw, bc_v16i8>;
-  defm PUNPCKLWD  : sse2_unpack<0x61, "punpcklwd", v8i16, X86Punpcklwd, bc_v8i16>;
-  defm PUNPCKLDQ  : sse2_unpack<0x62, "punpckldq", v4i32, X86Punpckldq, bc_v4i32>;
-  defm PUNPCKLQDQ : sse2_unpack<0x6C, "punpcklqdq", v2i64, X86Punpcklqdq, bc_v2i64>;
+  defm PUNPCKLBW  : sse2_unpack<0x60, "punpcklbw", v16i8, X86Punpcklbw,
+                                bc_v16i8>;
+  defm PUNPCKLWD  : sse2_unpack<0x61, "punpcklwd", v8i16, X86Punpcklwd,
+                                bc_v8i16>;
+  defm PUNPCKLDQ  : sse2_unpack<0x62, "punpckldq", v4i32, X86Punpckldq,
+                                bc_v4i32>;
+  defm PUNPCKLQDQ : sse2_unpack<0x6C, "punpcklqdq", v2i64, X86Punpcklqdq,
+                                bc_v2i64>;
 
-  defm PUNPCKHBW  : sse2_unpack<0x68, "punpckhbw", v16i8, X86Punpckhbw, bc_v16i8>;
-  defm PUNPCKHWD  : sse2_unpack<0x69, "punpckhwd", v8i16, X86Punpckhwd, bc_v8i16>;
-  defm PUNPCKHDQ  : sse2_unpack<0x6A, "punpckhdq", v4i32, X86Punpckhdq, bc_v4i32>;
-  defm PUNPCKHQDQ : sse2_unpack<0x6D, "punpckhqdq", v2i64, X86Punpckhqdq, bc_v2i64>;
+  defm PUNPCKHBW  : sse2_unpack<0x68, "punpckhbw", v16i8, X86Punpckhbw,
+                                bc_v16i8>;
+  defm PUNPCKHWD  : sse2_unpack<0x69, "punpckhwd", v8i16, X86Punpckhwd,
+                                bc_v8i16>;
+  defm PUNPCKHDQ  : sse2_unpack<0x6A, "punpckhdq", v4i32, X86Punpckhdq,
+                                bc_v4i32>;
+  defm PUNPCKHQDQ : sse2_unpack<0x6D, "punpckhqdq", v2i64, X86Punpckhqdq,
+                                bc_v2i64>;
 }
 } // ExeDomain = SSEPackedInt
 
