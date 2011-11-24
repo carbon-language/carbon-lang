@@ -1523,10 +1523,11 @@ def : MnemonicAlias<"call", "calll">, Requires<[In32BitMode]>;
 def : MnemonicAlias<"call", "callq">, Requires<[In64BitMode]>;
 
 def : MnemonicAlias<"cbw",  "cbtw">;
+def : MnemonicAlias<"cwde", "cwtl">;
 def : MnemonicAlias<"cwd",  "cwtd">;
 def : MnemonicAlias<"cdq", "cltd">;
-def : MnemonicAlias<"cwde", "cwtl">;
 def : MnemonicAlias<"cdqe", "cltq">;
+def : MnemonicAlias<"cqo", "cqto">;
 
 // lret maps to lretl, it is not ambiguous with lretq.
 def : MnemonicAlias<"lret", "lretl">;

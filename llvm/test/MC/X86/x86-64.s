@@ -459,6 +459,7 @@ cwtl  // CHECK: cwtl
 cbw   // CHECK: cbtw
 cwd   // CHECK: cwtd
 cdq   // CHECK: cltd
+cqo   // CHECK: cqto
 
 // rdar://8456378 and PR7557 - fstsw
 fstsw %ax
