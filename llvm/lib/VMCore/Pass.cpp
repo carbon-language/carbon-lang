@@ -25,8 +25,6 @@ using namespace llvm;
 // Pass Implementation
 //
 
-Pass::Pass(PassKind K, char &pid) : Resolver(0), PassID(&pid), Kind(K) { }
-
 // Force out-of-line virtual method.
 Pass::~Pass() { 
   delete Resolver; 

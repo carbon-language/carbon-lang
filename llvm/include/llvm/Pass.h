@@ -86,7 +86,7 @@ class Pass {
   Pass(const Pass &);           // DO NOT IMPLEMENT
   
 public:
-  explicit Pass(PassKind K, char &pid);
+  explicit Pass(PassKind K, char &pid) : Resolver(0), PassID(&pid), Kind(K) { }
   virtual ~Pass();
 
   
@@ -99,7 +99,7 @@ public:
   virtual const char *getPassName() const;
 
   /// getPassID - Return the PassID number that corresponds to this pass.
-  virtual AnalysisID getPassID() const {
+  AnalysisID getPassID() const {
     return PassID;
   }
 
