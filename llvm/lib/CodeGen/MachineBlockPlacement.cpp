@@ -640,8 +640,8 @@ void MachineBlockPlacement::buildCFGChains(MachineFunction &F) {
   SmallVector<MachineOperand, 4> Cond; // For AnalyzeBranch.
   for (MachineFunction::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI) {
     MachineBasicBlock *BB = FI;
-    BlockChain *&Chain = BlockToChain[BB];
-    Chain = new (ChainAllocator.Allocate()) BlockChain(BlockToChain, BB);
+    BlockChain *Chain
+      = new (ChainAllocator.Allocate()) BlockChain(BlockToChain, BB);
     // Also, merge any blocks which we cannot reason about and must preserve
     // the exact fallthrough behavior for.
     for (;;) {
