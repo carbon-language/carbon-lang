@@ -466,10 +466,8 @@ ConstantRange ConstantRange::signExtend(uint32_t DstTySize) const {
 /// correspond to the possible range of values as if the source range had been
 /// truncated to the specified type.
 ConstantRange ConstantRange::truncate(uint32_t DstTySize) const {
-  unsigned SrcTySize = getBitWidth();
-  assert(SrcTySize > DstTySize && "Not a value truncation");
-  APInt Size(APInt::getLowBitsSet(SrcTySize, DstTySize));
-  if (isFullSet() || getSetSize().ugt(Size))
+  assert(getBitWidth() > DstTySize && "Not a value truncation");
+  if (isFullSet() || getSetSize().getActiveBits() > DstTySize)
     return ConstantRange(DstTySize, /*isFullSet=*/true);
 
   return ConstantRange(Lower.trunc(DstTySize), Upper.trunc(DstTySize));
