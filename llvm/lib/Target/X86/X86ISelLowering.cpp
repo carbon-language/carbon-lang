@@ -2845,16 +2845,12 @@ static bool isTargetShuffle(unsigned Opcode) {
   case X86ISD::MOVSD:
   case X86ISD::UNPCKLPS:
   case X86ISD::UNPCKLPD:
-  case X86ISD::VUNPCKLPSY:
-  case X86ISD::VUNPCKLPDY:
   case X86ISD::PUNPCKLWD:
   case X86ISD::PUNPCKLBW:
   case X86ISD::PUNPCKLDQ:
   case X86ISD::PUNPCKLQDQ:
   case X86ISD::UNPCKHPS:
   case X86ISD::UNPCKHPD:
-  case X86ISD::VUNPCKHPSY:
-  case X86ISD::VUNPCKHPDY:
   case X86ISD::PUNPCKHWD:
   case X86ISD::PUNPCKHBW:
   case X86ISD::PUNPCKHDQ:
@@ -2926,16 +2922,12 @@ static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
   case X86ISD::MOVSD:
   case X86ISD::UNPCKLPS:
   case X86ISD::UNPCKLPD:
-  case X86ISD::VUNPCKLPSY:
-  case X86ISD::VUNPCKLPDY:
   case X86ISD::PUNPCKLWD:
   case X86ISD::PUNPCKLBW:
   case X86ISD::PUNPCKLDQ:
   case X86ISD::PUNPCKLQDQ:
   case X86ISD::UNPCKHPS:
   case X86ISD::UNPCKHPD:
-  case X86ISD::VUNPCKHPSY:
-  case X86ISD::VUNPCKHPDY:
   case X86ISD::PUNPCKHWD:
   case X86ISD::PUNPCKHBW:
   case X86ISD::PUNPCKHDQ:
@@ -4651,8 +4643,6 @@ static SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG,
       break;
     case X86ISD::UNPCKHPS:
     case X86ISD::UNPCKHPD:
-    case X86ISD::VUNPCKHPSY:
-    case X86ISD::VUNPCKHPDY:
       DecodeUNPCKHPMask(VT, ShuffleMask);
       break;
     case X86ISD::PUNPCKLBW:
@@ -4663,8 +4653,6 @@ static SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG,
       break;
     case X86ISD::UNPCKLPS:
     case X86ISD::UNPCKLPD:
-    case X86ISD::VUNPCKLPSY:
-    case X86ISD::VUNPCKLPDY:
       DecodeUNPCKLPMask(VT, ShuffleMask);
       break;
     case X86ISD::MOVHLPS:
@@ -6582,16 +6570,16 @@ static inline unsigned getUNPCKLOpcode(EVT VT, bool HasAVX2) {
   switch(VT.getSimpleVT().SimpleTy) {
   case MVT::v4i32: return X86ISD::PUNPCKLDQ;
   case MVT::v2i64: return X86ISD::PUNPCKLQDQ;
-  case MVT::v4f32: return X86ISD::UNPCKLPS;
-  case MVT::v2f64: return X86ISD::UNPCKLPD;
   case MVT::v8i32:
     if (HasAVX2)   return X86ISD::PUNPCKLDQ;
     // else use fp unit for int unpack.
-  case MVT::v8f32: return X86ISD::VUNPCKLPSY;
+  case MVT::v8f32:
+  case MVT::v4f32: return X86ISD::UNPCKLPS;
   case MVT::v4i64:
     if (HasAVX2)   return X86ISD::PUNPCKLQDQ;
     // else use fp unit for int unpack.
-  case MVT::v4f64: return X86ISD::VUNPCKLPDY;
+  case MVT::v4f64:
+  case MVT::v2f64: return X86ISD::UNPCKLPD;
   case MVT::v32i8:
   case MVT::v16i8: return X86ISD::PUNPCKLBW;
   case MVT::v16i16:
@@ -6606,16 +6594,16 @@ static inline unsigned getUNPCKHOpcode(EVT VT, bool HasAVX2) {
   switch(VT.getSimpleVT().SimpleTy) {
   case MVT::v4i32: return X86ISD::PUNPCKHDQ;
   case MVT::v2i64: return X86ISD::PUNPCKHQDQ;
-  case MVT::v4f32: return X86ISD::UNPCKHPS;
-  case MVT::v2f64: return X86ISD::UNPCKHPD;
   case MVT::v8i32:
     if (HasAVX2)   return X86ISD::PUNPCKHDQ;
     // else use fp unit for int unpack.
-  case MVT::v8f32: return X86ISD::VUNPCKHPSY;
+  case MVT::v8f32:
+  case MVT::v4f32: return X86ISD::UNPCKHPS;
   case MVT::v4i64:
     if (HasAVX2)   return X86ISD::PUNPCKHQDQ;
     // else use fp unit for int unpack.
-  case MVT::v4f64: return X86ISD::VUNPCKHPDY;
+  case MVT::v4f64:
+  case MVT::v2f64: return X86ISD::UNPCKHPD;
   case MVT::v32i8:
   case MVT::v16i8: return X86ISD::PUNPCKHBW;
   case MVT::v16i16:
@@ -11280,8 +11268,6 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::MOVSS:              return "X86ISD::MOVSS";
   case X86ISD::UNPCKLPS:           return "X86ISD::UNPCKLPS";
   case X86ISD::UNPCKLPD:           return "X86ISD::UNPCKLPD";
-  case X86ISD::VUNPCKLPSY:         return "X86ISD::VUNPCKLPSY";
-  case X86ISD::VUNPCKLPDY:         return "X86ISD::VUNPCKLPDY";
   case X86ISD::UNPCKHPS:           return "X86ISD::UNPCKHPS";
   case X86ISD::UNPCKHPD:           return "X86ISD::UNPCKHPD";
   case X86ISD::PUNPCKLBW:          return "X86ISD::PUNPCKLBW";
@@ -14877,16 +14863,12 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::PUNPCKHQDQ:
   case X86ISD::UNPCKHPS:
   case X86ISD::UNPCKHPD:
-  case X86ISD::VUNPCKHPSY:
-  case X86ISD::VUNPCKHPDY:
   case X86ISD::PUNPCKLBW:
   case X86ISD::PUNPCKLWD:
   case X86ISD::PUNPCKLDQ:
   case X86ISD::PUNPCKLQDQ:
   case X86ISD::UNPCKLPS:
   case X86ISD::UNPCKLPD:
-  case X86ISD::VUNPCKLPSY:
-  case X86ISD::VUNPCKLPDY:
   case X86ISD::MOVHLPS:
   case X86ISD::MOVLHPS:
   case X86ISD::PSHUFD:
