@@ -58,3 +58,42 @@ let isAsmParserOnly = 1 in {
   defm VFNMSUBPS : fma_forms<0x9E, 0xAE, 0xBE, "vfnmsub", "ps">;
   defm VFNMSUBPD : fma_forms<0x9E, 0xAE, 0xBE, "vfnmsub", "pd">, VEX_W;
 }
+
+//===----------------------------------------------------------------------===//
+// FMA4 - AMD 4 operand Fused Multiply-Add instructions
+//===----------------------------------------------------------------------===//
+
+
+multiclass fma4s<bits<8> opc, string OpcodeStr> {
+  def rr : FMA4<opc, MRMSrcReg, (outs VR128:$dst),
+           (ins VR128:$src1, VR128:$src2, VR128:$src3),
+           !strconcat(OpcodeStr,
+           "\t{$src2, $src3, $src1, $dst|$dst, $src1, $src3, $src2}"),
+           []>, XOP_W;
+  def rm : FMA4<opc, MRMSrcMem, (outs VR128:$dst),
+           (ins VR128:$src1, VR128:$src2, f128mem:$src3),
+           !strconcat(OpcodeStr,
+           "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
+           []>, XOP_W;
+  def mr : FMA4<opc, MRMSrcMem, (outs VR128:$dst),
+           (ins VR128:$src1, f128mem:$src2, VR128:$src3),
+           !strconcat(OpcodeStr,
+           "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
+           []>;
+
+}
+
+let isAsmParserOnly = 1 in {
+  defm VFMADDSD4    : fma4s<0x6B, "vfmaddsd">;
+}
+
+// FMA4 Intrinsics patterns
+
+def : Pat<(int_x86_fma4_vfmadd_sd VR128:$src1, VR128:$src2, VR128:$src3),
+          (VFMADDSD4rr VR128:$src1, VR128:$src2, VR128:$src3)>;
+def : Pat<(int_x86_fma4_vfmadd_sd VR128:$src1, VR128:$src2,
+                                  (alignedloadv2f64 addr:$src3)),
+          (VFMADDSD4rm VR128:$src1, VR128:$src2, addr:$src3)>;
+def : Pat<(int_x86_fma4_vfmadd_sd VR128:$src1, (alignedloadv2f64 addr:$src2),
+                                  VR128:$src3),
+          (VFMADDSD4mr VR128:$src1, addr:$src2, VR128:$src3)>;

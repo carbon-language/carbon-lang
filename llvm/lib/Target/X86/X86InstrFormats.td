@@ -118,7 +118,7 @@ class VEX_I8IMM { bit hasVEX_i8ImmReg = 1; }
 class VEX_L  { bit hasVEX_L = 1; }
 class VEX_LIG { bit ignoresVEX_L = 1; }
 class Has3DNow0F0FOpcode  { bit has3DNow0F0FOpcode = 1; }
-
+class XOP_W { bit hasXOP_WPrefix = 1; }
 class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
               string AsmStr, Domain d = GenericDomain>
   : Instruction {
@@ -158,6 +158,7 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
   bit hasVEX_L = 0;         // Does this inst use large (256-bit) registers?
   bit ignoresVEX_L = 0;     // Does this instruction ignore the L-bit
   bit has3DNow0F0FOpcode =0;// Wacky 3dNow! encoding?
+  bit hasXOP_WPrefix = 0;   // Same bit as VEX_W, but used for swapping operands
 
   // TSFlags layout should be kept in sync with X86InstrInfo.h.
   let TSFlags{5-0}   = FormBits;
@@ -179,6 +180,7 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
   let TSFlags{38}    = hasVEX_L;
   let TSFlags{39}    = ignoresVEX_L;
   let TSFlags{40}    = has3DNow0F0FOpcode;
+  let TSFlags{41}    = hasXOP_WPrefix;
 }
 
 class PseudoI<dag oops, dag iops, list<dag> pattern>
@@ -495,6 +497,12 @@ class FMA3<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag>pattern>
       : I<o, F, outs, ins, asm, pattern, SSEPackedInt>, T8,
         OpSize, VEX_4V, Requires<[HasFMA3]>;
+
+// FMA4 Instruction Templates
+class FMA4<bits<8> o, Format F, dag outs, dag ins, string asm,
+           list<dag>pattern>
+      : I<o, F, outs, ins, asm, pattern, SSEPackedInt>, TA,
+        OpSize, VEX_4V, VEX_I8IMM, Requires<[HasFMA4]>;
 
 // X86-64 Instruction templates...
 //

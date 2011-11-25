@@ -418,7 +418,12 @@ namespace X86II {
     /// storing a classifier in the imm8 field.  To simplify our implementation,
     /// we handle this by storeing the classifier in the opcode field and using
     /// this flag to indicate that the encoder should do the wacky 3DNow! thing.
-    Has3DNow0F0FOpcode = 1U << 7
+    Has3DNow0F0FOpcode = 1U << 7,
+
+    /// XOP_W - Same bit as VEX_W. Used to indicate swapping of
+    /// operand 3 and 4 to be encoded in ModRM or I8IMM. This is used
+    /// for FMA4 and XOP instructions.
+    XOP_W = 1U << 8
   };
 
   // getBaseOpcodeFor - This function returns the "base" X86 opcode for the
@@ -488,9 +493,12 @@ namespace X86II {
       return 0;
     case X86II::MRMSrcMem: {
       bool HasVEX_4V = (TSFlags >> X86II::VEXShift) & X86II::VEX_4V;
+      bool HasXOP_W = (TSFlags >> X86II::VEXShift) & X86II::XOP_W;
       unsigned FirstMemOp = 1;
       if (HasVEX_4V)
         ++FirstMemOp;// Skip the register source (which is encoded in VEX_VVVV).
+      if (HasXOP_W)
+        ++FirstMemOp;// Skip the register source (which is encoded in I8IMM).
 
       // FIXME: Maybe lea should have its own form?  This is a horrible hack.
       //if (Opcode == X86::LEA64r || Opcode == X86::LEA64_32r ||

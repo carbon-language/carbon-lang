@@ -415,6 +415,10 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   // opcode extension, or ignored, depending on the opcode byte)
   unsigned char VEX_W = 0;
 
+  // XOP_W: opcode specific, same bit as VEX_W, but used to
+  // swap operand 3 and 4 for FMA4 and XOP instructions
+  unsigned char XOP_W = 0;
+
   // VEX_5M (VEX m-mmmmm field):
   //
   //  0b00000: Reserved for future use
@@ -452,6 +456,9 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
 
   if ((TSFlags >> X86II::VEXShift) & X86II::VEX_W)
     VEX_W = 1;
+
+  if ((TSFlags >> X86II::VEXShift) & X86II::XOP_W)
+    XOP_W = 1;
 
   if ((TSFlags >> X86II::VEXShift) & X86II::VEX_L)
     VEX_L = 1;
@@ -529,6 +536,9 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
     //  src1(ModR/M), MemAddr, imm8
     //  src1(ModR/M), MemAddr, src2(VEX_I8IMM)
     //
+    //  FMA4:
+    //  dst(ModR/M.reg), src1(VEX_4V), src2(ModR/M), src3(VEX_I8IMM)
+    //  dst(ModR/M.reg), src1(VEX_4V), src2(VEX_I8IMM), src3(ModR/M),
     if (X86II::isX86_64ExtendedReg(MI.getOperand(0).getReg()))
       VEX_R = 0x0;
 
@@ -629,7 +639,7 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   // 3 byte VEX prefix
   EmitByte(0xC4, CurByte, OS);
   EmitByte(VEX_R << 7 | VEX_X << 6 | VEX_B << 5 | VEX_5M, CurByte, OS);
-  EmitByte(LastByte | (VEX_W << 7), CurByte, OS);
+  EmitByte(LastByte | ((VEX_W | XOP_W) << 7), CurByte, OS);
 }
 
 /// DetermineREXPrefix - Determine if the MCInst has to be encoded with a X86-64
@@ -889,6 +899,8 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   // It uses the VEX.VVVV field?
   bool HasVEX_4V = (TSFlags >> X86II::VEXShift) & X86II::VEX_4V;
   bool HasVEX_4VOp3 = (TSFlags >> X86II::VEXShift) & X86II::VEX_4VOp3;
+  bool HasXOP_W = (TSFlags >> X86II::VEXShift) & X86II::XOP_W;
+  unsigned XOP_W_I8IMMOperand = 2;
 
   // Determine where the memory operand starts, if present.
   int MemoryOperand = X86II::getMemoryOperandNo(TSFlags, Opcode);
@@ -961,6 +973,10 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     if (HasVEX_4V) // Skip 1st src (which is encoded in VEX_VVVV)
       SrcRegNum++;
 
+    // GAS sets the XOP_W even with register operands, we want to match this.
+    // XOP_W is ignored, so there is no swapping of the operands
+    XOP_W_I8IMMOperand = 3;
+
     EmitRegModRMByte(MI.getOperand(SrcRegNum),
                      GetX86RegNum(MI.getOperand(CurOp)), CurByte, OS);
     CurOp = SrcRegNum + 1;
@@ -975,14 +991,20 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
       ++AddrOperands;
       ++FirstMemOp;  // Skip the register source (which is encoded in VEX_VVVV).
     }
+    if(HasXOP_W) // Skip second register source (encoded in I8IMM)
+      ++FirstMemOp;
 
     EmitByte(BaseOpcode, CurByte, OS);
 
     EmitMemModRMByte(MI, FirstMemOp, GetX86RegNum(MI.getOperand(CurOp)),
                      TSFlags, CurByte, OS, Fixups);
-    CurOp += AddrOperands + 1;
-    if (HasVEX_4VOp3)
-      ++CurOp;
+    if(HasXOP_W) {
+      CurOp = NumOps - 1; // We have consumed all except one operand (third)
+    } else {
+      CurOp += AddrOperands + 1;
+      if (HasVEX_4VOp3)
+        ++CurOp;
+    }
     break;
   }
 
@@ -1064,7 +1086,9 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     // The last source register of a 4 operand instruction in AVX is encoded
     // in bits[7:4] of a immediate byte, and bits[3:0] are ignored.
     if ((TSFlags >> X86II::VEXShift) & X86II::VEX_I8IMM) {
-      const MCOperand &MO = MI.getOperand(CurOp++);
+      const MCOperand &MO = MI.getOperand(HasXOP_W ? XOP_W_I8IMMOperand
+                                                   : CurOp);
+      CurOp++;
       bool IsExtReg = X86II::isX86_64ExtendedReg(MO.getReg());
       unsigned RegNum = (IsExtReg ? (1 << 7) : 0);
       RegNum |= GetX86RegNum(MO) << 4;
