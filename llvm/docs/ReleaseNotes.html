@@ -520,7 +520,7 @@ be used to verify some algorithms.
    its own interpreter. Pragmatic Smalltalk is a dialect of Smalltalk, built on
    top of LanguageKit, that interfaces directly with Objective-C, sharing the
    same object representation and message sending behaviour. These projects are
-   developed as part of the &Eacute;toi&eacute; desktop environment.</p>
+   developed as part of the &Eacute;toil&eacute; desktop environment.</p>
 
 </div>
 
@@ -802,7 +802,7 @@ Information about branch probability and basic block frequency is now available 
 <p>Converting from the old EH API to the new EH API is rather simple, because a
    lot of complexity has been removed. The two intrinsics,
    <code>@llvm.eh.exception</code> and <code>@llvm.eh.selector</code> have been
-   superceded by the <code>landingpad</code> instruction. Instead of generating
+   superseded by the <code>landingpad</code> instruction. Instead of generating
    a call to <code>@llvm.eh.exception</code> and <code>@llvm.eh.selector</code>:
 
 <div class="doc_code">
@@ -1112,7 +1112,7 @@ compiler and provides better integration with the platform ABI as a result.</p>
       "<code>load volatile</code>"/"<code>store volatile</code>".  The old
       syntax ("<code>volatile load</code>"/"<code>volatile store</code>")
       is still accepted, but is now considered deprecated.</li>
-  <li>The old atomic intrinscs (<code>llvm.memory.barrier</code> and
+  <li>The old atomic intrinsics (<code>llvm.memory.barrier</code> and
       <code>llvm.atomic.*</code>) are now gone.  Please use the new atomic
       instructions, described in the <a href="Atomics.html">atomics guide</a>.
 </ul>
@@ -1140,9 +1140,9 @@ compiler and provides better integration with the platform ABI as a result.</p>
    LLVM API changes are:</p>
 
 <ul>
-  <li>The biggest and most pervasive change is that llvm::Type's are no longer
+  <li>The biggest and most pervasive change is that llvm::Types are no longer
       returned or accepted as 'const' values.  Instead, just pass around
-      non-const Type's.</li>
+      non-const Types.</li>
   
   <li><code>PHINode::reserveOperandSpace</code> has been removed. Instead, you
       must specify how many operands to reserve space for when you create the
