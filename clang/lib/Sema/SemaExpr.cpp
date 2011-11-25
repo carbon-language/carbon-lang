@@ -1511,8 +1511,8 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
   // unqualified lookup.  This is useful when (for example) the
   // original lookup would not have found something because it was a
   // dependent name.
-  for (DeclContext *DC = SS.isEmpty() ? CurContext : 0;
-       DC; DC = DC->getParent()) {
+  DeclContext *DC = SS.isEmpty() ? CurContext : 0;
+  while (DC) {
     if (isa<CXXRecordDecl>(DC)) {
       LookupQualifiedName(R, DC);
 
@@ -1591,6 +1591,17 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
 
       R.clear();
     }
+
+    // In Microsoft mode, if we are performing lookup from within a friend
+    // function definition declared at class scope then we must set
+    // DC to the lexical parent to be able to search into the parent
+    // class.
+    if (getLangOptions().MicrosoftMode && DC->isFunctionOrMethod() &&
+        cast<FunctionDecl>(DC)->getFriendObjectKind() &&
+        DC->getLexicalParent()->isRecord())
+      DC = DC->getLexicalParent();
+    else
+      DC = DC->getParent();
   }
 
   // We didn't find anything, so try to correct for a typo.

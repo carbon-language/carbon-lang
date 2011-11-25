@@ -8825,7 +8825,7 @@ Sema::BuildOverloadedCallExpr(Scope *S, Expr *Fn, UnresolvedLookupExpr *ULE,
     // to instantiation time to be able to search into type dependent base
     // classes.
     if (getLangOptions().MicrosoftMode && CurContext->isDependentContext() && 
-        (isa<CXXMethodDecl>(CurContext) || isa<CXXRecordDecl>(CurContext))) {
+        (isa<FunctionDecl>(CurContext) || isa<CXXRecordDecl>(CurContext))) {
       CallExpr *CE = new (Context) CallExpr(Context, Fn, Args, NumArgs,
                                           Context.DependentTy, VK_RValue,
                                           RParenLoc);
