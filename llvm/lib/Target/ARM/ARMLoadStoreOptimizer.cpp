@@ -33,6 +33,7 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
