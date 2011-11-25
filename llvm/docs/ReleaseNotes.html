@@ -752,6 +752,9 @@ be used to verify some algorithms.
  Better code generation for Cortex-A9
  Many APIs take ArrayRef's now.
  Pass manager extension API.
+
+
+Information about branch probability and basic block frequency is now available within LLVM based on a combination of static branch prediction heuristics and __builtin_expect calls.  That information is currently used for register spill placement and if-conversion, with additional optimizations planned for future releases.  The same frameworks are intended for eventual use with profile-guided optimization, but that is not yet implemented.
  
  -->
   
