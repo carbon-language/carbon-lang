@@ -1,13 +1,19 @@
-; RUN: opt < %s -simplifycfg -S | grep {br i1} | count 1
+; RUN: opt < %s -simplifycfg -S | FileCheck %s
 
 define void @test(i32* %P, i32* %Q, i1 %A, i1 %B) {
+; CHECK: test
+; CHECK: br i1
+; CHECK-NOT: br i1
+; CHECK: ret
+; CHECK: ret
+
+entry:
         br i1 %A, label %a, label %b
-a:              ; preds = %0
+a:
         br i1 %B, label %b, label %c
-b:              ; preds = %a, %0
+b:
         store i32 123, i32* %P
         ret void
-c:              ; preds = %a
+c:
         ret void
 }
-
