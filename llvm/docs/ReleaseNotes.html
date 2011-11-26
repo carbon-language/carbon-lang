@@ -771,8 +771,6 @@ be used to verify some algorithms.
  Pass manager extension API.
 
 
-Information about branch probability and basic block frequency is now available within LLVM based on a combination of static branch prediction heuristics and __builtin_expect calls.  That information is currently used for register spill placement and if-conversion, with additional optimizations planned for future releases.  The same frameworks are intended for eventual use with profile-guided optimization, but that is not yet implemented.
- 
  -->
   
 <ul>
@@ -943,9 +941,13 @@ Builder.CreateResume(UnwindData);
    optimizers:</p>
 
 <ul>
-<!--
-<li></li>
--->
+<li>Information about <a href="BranchWeightMetadata.html">branch probability</a>
+    and basic block frequency is now available within LLVM, based on a
+    combination of static branch prediction heuristics and
+    <code>__builtin_expect</code> calls.  That information is currently used for
+    register spill placement and if-conversion, with additional optimizations
+    planned for future releases.  The same framework is intended for eventual
+    use with profile-guided optimization.</li>
 </li>
   
 </ul>
@@ -1010,6 +1012,8 @@ compiler and provides better integration with the platform ABI as a result.</p>
 <p>New features and major changes in the X86 target include:</p>
 
 <ul>
+  <li>The X86 backend, assembler and disassembler now completely support AVX.
+      To enable it pass <code>-mavx</code> to the compiler.</li>
 
   <li>The X86 backend now supports
     all <a href="http://llvm.org/PR879">inline assembly that uses the X86
