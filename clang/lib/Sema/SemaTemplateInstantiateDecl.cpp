@@ -862,7 +862,14 @@ Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
   // Finish handling of friends.
   if (isFriend) {
     DC->makeDeclVisibleInContext(Inst, /*Recoverable*/ false);
+    Inst->setLexicalDeclContext(Owner);
+    RecordInst->setLexicalDeclContext(Owner);
     return Inst;
+  }
+
+  if (D->isOutOfLine()) {
+    Inst->setLexicalDeclContext(D->getLexicalDeclContext());
+    RecordInst->setLexicalDeclContext(D->getLexicalDeclContext());
   }
 
   Owner->addDecl(Inst);
