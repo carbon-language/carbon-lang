@@ -278,9 +278,7 @@ namespace llvm {
       PUNPCKL,
       PUNPCKH,
       VPERMILPS,
-      VPERMILPSY,
       VPERMILPD,
-      VPERMILPDY,
       VPERM2F128,
       VBROADCAST,
 

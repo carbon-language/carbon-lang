@@ -2848,9 +2848,7 @@ static bool isTargetShuffle(unsigned Opcode) {
   case X86ISD::UNPCKHP:
   case X86ISD::PUNPCKH:
   case X86ISD::VPERMILPS:
-  case X86ISD::VPERMILPSY:
   case X86ISD::VPERMILPD:
-  case X86ISD::VPERMILPDY:
   case X86ISD::VPERM2F128:
     return true;
   }
@@ -2878,9 +2876,7 @@ static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
   case X86ISD::PSHUFHW:
   case X86ISD::PSHUFLW:
   case X86ISD::VPERMILPS:
-  case X86ISD::VPERMILPSY:
   case X86ISD::VPERMILPD:
-  case X86ISD::VPERMILPDY:
     return DAG.getNode(Opc, dl, VT, V1, DAG.getConstant(TargetMask, MVT::i8));
   }
 
@@ -4664,22 +4660,12 @@ static SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG,
     }
     case X86ISD::VPERMILPS:
       ImmN = N->getOperand(N->getNumOperands()-1);
-      DecodeVPERMILPSMask(4, cast<ConstantSDNode>(ImmN)->getZExtValue(),
-                        ShuffleMask);
-      break;
-    case X86ISD::VPERMILPSY:
-      ImmN = N->getOperand(N->getNumOperands()-1);
-      DecodeVPERMILPSMask(8, cast<ConstantSDNode>(ImmN)->getZExtValue(),
+      DecodeVPERMILPSMask(NumElems, cast<ConstantSDNode>(ImmN)->getZExtValue(),
                         ShuffleMask);
       break;
     case X86ISD::VPERMILPD:
       ImmN = N->getOperand(N->getNumOperands()-1);
-      DecodeVPERMILPDMask(2, cast<ConstantSDNode>(ImmN)->getZExtValue(),
-                        ShuffleMask);
-      break;
-    case X86ISD::VPERMILPDY:
-      ImmN = N->getOperand(N->getNumOperands()-1);
-      DecodeVPERMILPDMask(4, cast<ConstantSDNode>(ImmN)->getZExtValue(),
+      DecodeVPERMILPDMask(NumElems, cast<ConstantSDNode>(ImmN)->getZExtValue(),
                         ShuffleMask);
       break;
     case X86ISD::VPERM2F128:
@@ -6589,13 +6575,13 @@ static inline unsigned getUNPCKHOpcode(EVT VT, bool HasAVX2) {
 static inline unsigned getVPERMILOpcode(EVT VT) {
   switch(VT.getSimpleVT().SimpleTy) {
   case MVT::v4i32:
-  case MVT::v4f32: return X86ISD::VPERMILPS;
-  case MVT::v2i64:
-  case MVT::v2f64: return X86ISD::VPERMILPD;
+  case MVT::v4f32:
   case MVT::v8i32:
-  case MVT::v8f32: return X86ISD::VPERMILPSY;
+  case MVT::v8f32: return X86ISD::VPERMILPS;
+  case MVT::v2i64:
+  case MVT::v2f64:
   case MVT::v4i64:
-  case MVT::v4f64: return X86ISD::VPERMILPDY;
+  case MVT::v4f64: return X86ISD::VPERMILPD;
   default:
     llvm_unreachable("Unknown type for vpermil");
   }
@@ -6675,7 +6661,6 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   EVT VT = Op.getValueType();
   DebugLoc dl = Op.getDebugLoc();
   unsigned NumElems = VT.getVectorNumElements();
-  bool V1IsUndef = V1.getOpcode() == ISD::UNDEF;
   bool V2IsUndef = V2.getOpcode() == ISD::UNDEF;
   bool V1IsSplat = false;
   bool V2IsSplat = false;
@@ -6685,6 +6670,8 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   bool OptForSize = MF.getFunction()->hasFnAttr(Attribute::OptimizeForSize);
 
   assert(VT.getSizeInBits() != 64 && "Can't lower MMX shuffles");
+
+  assert(V1.getOpcode() != ISD::UNDEF && "Op 1 of shuffle should not be undef");
 
   // Vector shuffle lowering takes 3 steps:
   //
@@ -6759,8 +6746,6 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   }
 
   if (X86::isMOVLMask(SVOp)) {
-    if (V1IsUndef)
-      return V2;
     if (ISD::isBuildVectorAllZeros(V1.getNode()))
       return getVZextMovL(VT, VT, V2, DAG, Subtarget, dl);
     if (!X86::isMOVLPMask(SVOp)) {
@@ -6806,13 +6791,12 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   V2IsSplat = isSplatVector(V2.getNode());
 
   // Canonicalize the splat or undef, if present, to be on the RHS.
-  if ((V1IsSplat || V1IsUndef) && !(V2IsSplat || V2IsUndef)) {
+  if (V1IsSplat && !V2IsSplat) {
     Op = CommuteVectorShuffle(SVOp, DAG);
     SVOp = cast<ShuffleVectorSDNode>(Op);
     V1 = SVOp->getOperand(0);
     V2 = SVOp->getOperand(1);
     std::swap(V1IsSplat, V2IsSplat);
-    std::swap(V1IsUndef, V2IsUndef);
     Commuted = true;
   }
 
@@ -6865,7 +6849,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   }
 
   // Normalize the node to match x86 shuffle ops if needed
-  if (V2.getOpcode() != ISD::UNDEF && isCommutedSHUFP(SVOp))
+  if (!V2IsUndef && isCommutedSHUFP(SVOp))
     return CommuteVectorShuffle(SVOp, DAG);
 
   // The checks below are all present in isShuffleMaskLegal, but they are
@@ -11244,9 +11228,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::PUNPCKH:            return "X86ISD::PUNPCKH";
   case X86ISD::VBROADCAST:         return "X86ISD::VBROADCAST";
   case X86ISD::VPERMILPS:          return "X86ISD::VPERMILPS";
-  case X86ISD::VPERMILPSY:         return "X86ISD::VPERMILPSY";
   case X86ISD::VPERMILPD:          return "X86ISD::VPERMILPD";
-  case X86ISD::VPERMILPDY:         return "X86ISD::VPERMILPDY";
   case X86ISD::VPERM2F128:         return "X86ISD::VPERM2F128";
   case X86ISD::VASTART_SAVE_XMM_REGS: return "X86ISD::VASTART_SAVE_XMM_REGS";
   case X86ISD::VAARG_64:           return "X86ISD::VAARG_64";
@@ -14833,9 +14815,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::MOVSS:
   case X86ISD::MOVSD:
   case X86ISD::VPERMILPS:
-  case X86ISD::VPERMILPSY:
   case X86ISD::VPERMILPD:
-  case X86ISD::VPERMILPDY:
   case X86ISD::VPERM2F128:
   case ISD::VECTOR_SHUFFLE: return PerformShuffleCombine(N, DAG, DCI,Subtarget);
   }

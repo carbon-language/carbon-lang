@@ -7321,13 +7321,13 @@ let ExeDomain = SSEPackedDouble in {
                                int_x86_avx_vpermil_pd_256>;
 }
 
-def : Pat<(v8f32 (X86VPermilpsy VR256:$src1, (i8 imm:$imm))),
+def : Pat<(v8f32 (X86VPermilps VR256:$src1, (i8 imm:$imm))),
           (VPERMILPSYri VR256:$src1, imm:$imm)>;
-def : Pat<(v4f64 (X86VPermilpdy VR256:$src1, (i8 imm:$imm))),
+def : Pat<(v4f64 (X86VPermilpd VR256:$src1, (i8 imm:$imm))),
           (VPERMILPDYri VR256:$src1, imm:$imm)>;
-def : Pat<(v8i32 (X86VPermilpsy VR256:$src1, (i8 imm:$imm))),
+def : Pat<(v8i32 (X86VPermilps VR256:$src1, (i8 imm:$imm))),
           (VPERMILPSYri VR256:$src1, imm:$imm)>;
-def : Pat<(v4i64 (X86VPermilpdy VR256:$src1, (i8 imm:$imm))),
+def : Pat<(v4i64 (X86VPermilpd VR256:$src1, (i8 imm:$imm))),
           (VPERMILPDYri VR256:$src1, imm:$imm)>;
 
 //===----------------------------------------------------------------------===//
