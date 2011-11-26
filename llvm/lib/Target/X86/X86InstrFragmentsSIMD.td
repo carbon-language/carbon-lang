@@ -130,21 +130,11 @@ def X86Movhlpd : SDNode<"X86ISD::MOVHLPD", SDTShuff2Op>;
 def X86Movlps : SDNode<"X86ISD::MOVLPS", SDTShuff2Op>;
 def X86Movlpd : SDNode<"X86ISD::MOVLPD", SDTShuff2Op>;
 
-def X86Unpcklps  : SDNode<"X86ISD::UNPCKLPS", SDTShuff2Op>;
-def X86Unpcklpd  : SDNode<"X86ISD::UNPCKLPD", SDTShuff2Op>;
+def X86Unpcklp : SDNode<"X86ISD::UNPCKLP", SDTShuff2Op>;
+def X86Unpckhp : SDNode<"X86ISD::UNPCKHP", SDTShuff2Op>;
 
-def X86Unpckhps  : SDNode<"X86ISD::UNPCKHPS", SDTShuff2Op>;
-def X86Unpckhpd  : SDNode<"X86ISD::UNPCKHPD", SDTShuff2Op>;
-
-def X86Punpcklbw  : SDNode<"X86ISD::PUNPCKLBW", SDTShuff2Op>;
-def X86Punpcklwd  : SDNode<"X86ISD::PUNPCKLWD", SDTShuff2Op>;
-def X86Punpckldq  : SDNode<"X86ISD::PUNPCKLDQ", SDTShuff2Op>;
-def X86Punpcklqdq : SDNode<"X86ISD::PUNPCKLQDQ", SDTShuff2Op>;
-
-def X86Punpckhbw  : SDNode<"X86ISD::PUNPCKHBW", SDTShuff2Op>;
-def X86Punpckhwd  : SDNode<"X86ISD::PUNPCKHWD", SDTShuff2Op>;
-def X86Punpckhdq  : SDNode<"X86ISD::PUNPCKHDQ", SDTShuff2Op>;
-def X86Punpckhqdq : SDNode<"X86ISD::PUNPCKHQDQ", SDTShuff2Op>;
+def X86Punpckl : SDNode<"X86ISD::PUNPCKL", SDTShuff2Op>;
+def X86Punpckh : SDNode<"X86ISD::PUNPCKH", SDTShuff2Op>;
 
 def X86VPermilps  : SDNode<"X86ISD::VPERMILPS", SDTShuff2OpI>;
 def X86VPermilpsy : SDNode<"X86ISD::VPERMILPSY", SDTShuff2OpI>;
