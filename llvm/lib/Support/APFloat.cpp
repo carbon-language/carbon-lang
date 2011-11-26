@@ -1854,20 +1854,33 @@ APFloat::convert(const fltSemantics &toSemantics,
   lostFraction lostFraction;
   unsigned int newPartCount, oldPartCount;
   opStatus fs;
+  int shift;
+  const fltSemantics &fromSemantics = *semantics;
 
-  assertArithmeticOK(*semantics);
+  assertArithmeticOK(fromSemantics);
   assertArithmeticOK(toSemantics);
   lostFraction = lfExactlyZero;
   newPartCount = partCountForBits(toSemantics.precision + 1);
   oldPartCount = partCount();
+  shift = toSemantics.precision - fromSemantics.precision;
 
-  /* Handle storage complications.  If our new form is wider,
-     re-allocate our bit pattern into wider storage.  If it is
-     narrower, we ignore the excess parts, but if narrowing to a
-     single part we need to free the old storage.
-     Be careful not to reference significandParts for zeroes
-     and infinities, since it aborts.  */
+  bool X86SpecialNan = false;
+  if (&fromSemantics == &APFloat::x87DoubleExtended &&
+      &toSemantics != &APFloat::x87DoubleExtended && category == fcNaN &&
+      (!(*significandParts() & 0x8000000000000000ULL) ||
+       !(*significandParts() & 0x4000000000000000ULL))) {
+    // x86 has some unusual NaNs which cannot be represented in any other
+    // format; note them here.
+    X86SpecialNan = true;
+  }
+
+  // If this is a truncation, perform the shift before we narrow the storage.
+  if (shift < 0 && (category==fcNormal || category==fcNaN))
+    lostFraction = shiftRight(significandParts(), oldPartCount, -shift);
+
+  // Fix the storage so it can hold to new value.
   if (newPartCount > oldPartCount) {
+    // The new type requires more storage; make it available.
     integerPart *newParts;
     newParts = new integerPart[newPartCount];
     APInt::tcSet(newParts, 0, newPartCount);
@@ -1875,60 +1888,34 @@ APFloat::convert(const fltSemantics &toSemantics,
       APInt::tcAssign(newParts, significandParts(), oldPartCount);
     freeSignificand();
     significand.parts = newParts;
-  } else if (newPartCount < oldPartCount) {
-    /* Capture any lost fraction through truncation of parts so we get
-       correct rounding whilst normalizing.  */
-    if (category==fcNormal)
-      lostFraction = lostFractionThroughTruncation
-        (significandParts(), oldPartCount, toSemantics.precision);
-    if (newPartCount == 1) {
-        integerPart newPart = 0;
-        if (category==fcNormal || category==fcNaN)
-          newPart = significandParts()[0];
-        freeSignificand();
-        significand.part = newPart;
-    }
+  } else if (newPartCount == 1 && oldPartCount != 1) {
+    // Switch to built-in storage for a single part.
+    integerPart newPart = 0;
+    if (category==fcNormal || category==fcNaN)
+      newPart = significandParts()[0];
+    freeSignificand();
+    significand.part = newPart;
   }
 
+  // Now that we have the right storage, switch the semantics.
+  semantics = &toSemantics;
+
+  // If this is an extension, perform the shift now that the storage is
+  // available.
+  if (shift > 0 && (category==fcNormal || category==fcNaN))
+    APInt::tcShiftLeft(significandParts(), newPartCount, shift);
+
   if (category == fcNormal) {
-    /* Re-interpret our bit-pattern.  */
-    exponent += toSemantics.precision - semantics->precision;
-    semantics = &toSemantics;
     fs = normalize(rounding_mode, lostFraction);
     *losesInfo = (fs != opOK);
   } else if (category == fcNaN) {
-    int shift = toSemantics.precision - semantics->precision;
-    // Do this now so significandParts gets the right answer
-    const fltSemantics *oldSemantics = semantics;
-    semantics = &toSemantics;
-    *losesInfo = false;
-    // No normalization here, just truncate
-    if (shift>0)
-      APInt::tcShiftLeft(significandParts(), newPartCount, shift);
-    else if (shift < 0) {
-      unsigned ushift = -shift;
-      // Figure out if we are losing information.  This happens
-      // if are shifting out something other than 0s, or if the x87 long
-      // double input did not have its integer bit set (pseudo-NaN), or if the
-      // x87 long double input did not have its QNan bit set (because the x87
-      // hardware sets this bit when converting a lower-precision NaN to
-      // x87 long double).
-      if (APInt::tcLSB(significandParts(), newPartCount) < ushift)
-        *losesInfo = true;
-      if (oldSemantics == &APFloat::x87DoubleExtended &&
-          (!(*significandParts() & 0x8000000000000000ULL) ||
-           !(*significandParts() & 0x4000000000000000ULL)))
-        *losesInfo = true;
-      APInt::tcShiftRight(significandParts(), newPartCount, ushift);
-    }
+    *losesInfo = lostFraction != lfExactlyZero || X86SpecialNan;
     // gcc forces the Quiet bit on, which means (float)(double)(float_sNan)
     // does not give you back the same bits.  This is dubious, and we
     // don't currently do it.  You're really supposed to get
     // an invalid operation signal at runtime, but nobody does that.
     fs = opOK;
   } else {
-    semantics = &toSemantics;
-    fs = opOK;
     *losesInfo = false;
   }
 

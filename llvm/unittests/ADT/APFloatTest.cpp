@@ -653,4 +653,28 @@ TEST(APFloatTest, getLargest) {
   EXPECT_EQ(1.7976931348623158e+308, APFloat::getLargest(APFloat::IEEEdouble).convertToDouble());
 }
 
+TEST(APFloatTest, convert) {
+  bool losesInfo;
+  APFloat test(APFloat::IEEEdouble, "1.0");
+  test.convert(APFloat::IEEEsingle, APFloat::rmNearestTiesToEven, &losesInfo);
+  EXPECT_EQ(1.0f, test.convertToFloat());
+  EXPECT_FALSE(losesInfo);
+
+  test = APFloat(APFloat::x87DoubleExtended, "0x1p-53");
+  test.add(APFloat(APFloat::x87DoubleExtended, "1.0"), APFloat::rmNearestTiesToEven);
+  test.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven, &losesInfo);
+  EXPECT_EQ(1.0, test.convertToDouble());
+  EXPECT_TRUE(losesInfo);
+
+  test = APFloat(APFloat::IEEEquad, "0x1p-53");
+  test.add(APFloat(APFloat::IEEEquad, "1.0"), APFloat::rmNearestTiesToEven);
+  test.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven, &losesInfo);
+  EXPECT_EQ(1.0, test.convertToDouble());
+  EXPECT_TRUE(losesInfo);
+
+  test = APFloat(APFloat::x87DoubleExtended, "0xf.fffffffp+28");
+  test.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven, &losesInfo);
+  EXPECT_EQ(4294967295.0, test.convertToDouble());
+  EXPECT_FALSE(losesInfo);
+}
 }

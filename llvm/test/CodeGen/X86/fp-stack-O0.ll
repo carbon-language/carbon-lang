@@ -10,7 +10,7 @@ declare i32 @x2(x86_fp80, x86_fp80) nounwind
 ; Pass arguments on the stack.
 ; CHECK-NEXT: movq %rsp, [[RCX:%r..]]
 ; Copy constant-pool value.
-; CHECK-NEXT: fldt LCPI
+; CHECK-NEXT: fldl LCPI
 ; CHECK-NEXT: fstpt 16([[RCX]])
 ; Copy x1 return value.
 ; CHECK-NEXT: fstpt ([[RCX]])
