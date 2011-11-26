@@ -23,7 +23,7 @@
   #ifndef __OPTIMIZE__
     #error "__OPTIMIZE__ not defined"
   #endif
-  #ifdef __OPTIMIZE_SIZE__
+  #ifndef __OPTIMIZE_SIZE__
     #error "__OPTIMIZE_SIZE__ not defined"
   #endif
 #endif
