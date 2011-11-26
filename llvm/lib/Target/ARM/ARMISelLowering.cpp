@@ -72,7 +72,7 @@ ARMInterworking("arm-interworking", cl::Hidden,
   cl::desc("Enable / disable ARM interworking (for debugging only)"),
   cl::init(true));
 
-namespace llvm {
+namespace {
   class ARMCCState : public CCState {
   public:
     ARMCCState(CallingConv::ID CC, bool isVarArg, MachineFunction &MF,

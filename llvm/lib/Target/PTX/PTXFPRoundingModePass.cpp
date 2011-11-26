@@ -23,9 +23,11 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 
+using namespace llvm;
+
 // NOTE: PTXFPRoundingModePass should be executed just before emission.
 
-namespace llvm {
+namespace {
   /// PTXFPRoundingModePass - Pass to assign appropriate FP rounding modes to
   /// all FP instructions. Essentially, this pass just looks for all FP
   /// instructions that have a rounding mode set to RndDefault, and sets an
@@ -58,7 +60,7 @@ namespace llvm {
       void initializeMap();
       void processInstruction(MachineInstr &MI);
   }; // class PTXFPRoundingModePass
-} // namespace llvm
+} // end anonymous namespace
 
 using namespace llvm;
 

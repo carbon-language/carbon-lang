@@ -22,9 +22,11 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 
+using namespace llvm;
+
 // NOTE: PTXMFInfoExtract must after register allocation!
 
-namespace llvm {
+namespace {
   /// PTXMFInfoExtract - PTX specific code to extract of PTX machine
   /// function information for PTXAsmPrinter
   ///
@@ -42,7 +44,7 @@ namespace llvm {
         return "PTX Machine Function Info Extractor";
       }
   }; // class PTXMFInfoExtract
-} // namespace llvm
+} // end anonymous namespace
 
 using namespace llvm;
 

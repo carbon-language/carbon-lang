@@ -29,13 +29,11 @@ using namespace llvm;
 
 STATISTIC(FilledSlots, "Number of delay slots filled");
 
-namespace llvm {
-cl::opt<bool> MBDisableDelaySlotFiller(
+static cl::opt<bool> MBDisableDelaySlotFiller(
   "disable-mblaze-delay-filler",
   cl::init(false),
   cl::desc("Disable the MBlaze delay slot filter."),
   cl::Hidden);
-}
 
 namespace {
   struct Filler : public MachineFunctionPass {

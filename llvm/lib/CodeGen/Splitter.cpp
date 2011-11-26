@@ -38,8 +38,7 @@ INITIALIZE_PASS_DEPENDENCY(LiveIntervals)
 INITIALIZE_PASS_END(LoopSplitter, "loop-splitting",
                 "Split virtual regists across loop boundaries.", false, false)
 
-namespace llvm {
-
+namespace {
   class StartSlotComparator {
   public:
     StartSlotComparator(LiveIntervals &lis) : lis(lis) {}
@@ -50,6 +49,9 @@ namespace llvm {
   private:
     LiveIntervals &lis;
   };
+}
+
+namespace llvm {
 
   class LoopSplit {
   public:

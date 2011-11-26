@@ -32,13 +32,11 @@
 
 using namespace llvm;
 
-namespace llvm {
-  cl::opt<bool> MBDisableStackAdjust(
-    "disable-mblaze-stack-adjust",
-    cl::init(false),
-    cl::desc("Disable MBlaze stack layout adjustment."),
-    cl::Hidden);
-}
+static cl::opt<bool> MBDisableStackAdjust(
+  "disable-mblaze-stack-adjust",
+  cl::init(false),
+  cl::desc("Disable MBlaze stack layout adjustment."),
+  cl::Hidden);
 
 static void replaceFrameIndexes(MachineFunction &MF, 
                                 SmallVector<std::pair<int,int64_t>, 16> &FR) {

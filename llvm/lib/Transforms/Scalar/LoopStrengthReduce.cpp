@@ -77,19 +77,17 @@
 #include <algorithm>
 using namespace llvm;
 
-namespace llvm {
-cl::opt<bool> EnableNested(
+static cl::opt<bool> EnableNested(
   "enable-lsr-nested", cl::Hidden, cl::desc("Enable LSR on nested loops"));
 
-cl::opt<bool> EnableRetry(
-    "enable-lsr-retry", cl::Hidden, cl::desc("Enable LSR retry"));
+static cl::opt<bool> EnableRetry(
+  "enable-lsr-retry", cl::Hidden, cl::desc("Enable LSR retry"));
 
 // Temporary flag to cleanup congruent phis after LSR phi expansion.
 // It's currently disabled until we can determine whether it's truly useful or
 // not. The flag should be removed after the v3.0 release.
-cl::opt<bool> EnablePhiElim(
-    "enable-lsr-phielim", cl::Hidden, cl::desc("Enable LSR phi elimination"));
-}
+static cl::opt<bool> EnablePhiElim(
+  "enable-lsr-phielim", cl::Hidden, cl::desc("Enable LSR phi elimination"));
 
 namespace {
 

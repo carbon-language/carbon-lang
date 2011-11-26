@@ -58,18 +58,16 @@ STATISTIC(NumLFTR        , "Number of loop exit tests replaced");
 STATISTIC(NumElimExt     , "Number of IV sign/zero extends eliminated");
 STATISTIC(NumElimIV      , "Number of congruent IVs eliminated");
 
-namespace llvm {
-  cl::opt<bool> EnableIVRewrite(
-    "enable-iv-rewrite", cl::Hidden,
-    cl::desc("Enable canonical induction variable rewriting"));
+static cl::opt<bool> EnableIVRewrite(
+  "enable-iv-rewrite", cl::Hidden,
+  cl::desc("Enable canonical induction variable rewriting"));
 
-  // Trip count verification can be enabled by default under NDEBUG if we
-  // implement a strong expression equivalence checker in SCEV. Until then, we
-  // use the verify-indvars flag, which may assert in some cases.
-  cl::opt<bool> VerifyIndvars(
-    "verify-indvars", cl::Hidden,
-    cl::desc("Verify the ScalarEvolution result after running indvars"));
-}
+// Trip count verification can be enabled by default under NDEBUG if we
+// implement a strong expression equivalence checker in SCEV. Until then, we
+// use the verify-indvars flag, which may assert in some cases.
+static cl::opt<bool> VerifyIndvars(
+  "verify-indvars", cl::Hidden,
+  cl::desc("Verify the ScalarEvolution result after running indvars"));
 
 namespace {
   class IndVarSimplify : public LoopPass {

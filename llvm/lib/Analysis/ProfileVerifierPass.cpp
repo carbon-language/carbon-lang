@@ -30,7 +30,7 @@ static cl::opt<bool,false>
 ProfileVerifierDisableAssertions("profile-verifier-noassert",
      cl::desc("Disable assertions"));
 
-namespace llvm {
+namespace {
   template<class FType, class BType>
   class ProfileVerifierPassT : public FunctionPass {
 
