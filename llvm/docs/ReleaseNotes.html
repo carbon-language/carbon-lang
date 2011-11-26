@@ -120,9 +120,25 @@ Release Notes</a>.</h1>
   <li>Better detection of include and linking paths for system headers and
       libraries, especially for Linux distributions.</li>
 
-  <li>Implemented support
-      for <a href="http://clang.llvm.org/docs/AutomaticReferenceCounting.html">Automatic
-      Reference Counting</a> for Objective-C.</li>
+  <li>Several improvements to Objective-C support, including:
+
+    <ul>
+      <li><a href="http://clang.llvm.org/docs/AutomaticReferenceCounting.html">
+          Automatic Reference Counting</a> (ARC) and an improved memory model
+          cleanly separating object and C memory.</li>
+
+      <li>A migration tool for moving legacy code to ARC</li>
+
+      <li>Better support for data hiding, allowing instance variables to be
+          declared in implementation contexts or class extensions</li>
+      <li>Weak linking for classes</li>
+      <li>Improved static type checking by inferring the return type of methods
+      such as +alloc and -init.</li>
+    </ul>
+
+    Some new features require either the Mac OS X 10.7 / iOS 5 Objective-C
+    runtime, or version 1.6 or later of the GNUstep Objective-C runtime
+    version.</li>
 
   <li>Implemented a number of optimizations in <tt>libclang</tt>, the Clang C
       interface, to improve the performance of code completion and the mapping
@@ -220,6 +236,9 @@ Release Notes</a>.</h1>
 <p>Like compiler_rt, libc++ is now <a href="DeveloperPolicy.html#license">dual
    licensed</a> under the MIT and UIUC license, allowing it to be used more
    permissively.</p>
+
+<p>Libc++ has been ported to FreeBSD and imported into the base system.  It is
+   planned to be the default STL implementation for FreeBSD 10.</p>
 
 </div>
 
