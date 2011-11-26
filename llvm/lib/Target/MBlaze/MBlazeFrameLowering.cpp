@@ -33,7 +33,7 @@
 using namespace llvm;
 
 namespace llvm {
-  cl::opt<bool> DisableStackAdjust(
+  cl::opt<bool> MBDisableStackAdjust(
     "disable-mblaze-stack-adjust",
     cl::init(false),
     cl::desc("Disable MBlaze stack layout adjustment."),
@@ -85,7 +85,7 @@ static void replaceFrameIndexes(MachineFunction &MF,
 //===----------------------------------------------------------------------===//
 
 static void analyzeFrameIndexes(MachineFunction &MF) {
-  if (DisableStackAdjust) return;
+  if (MBDisableStackAdjust) return;
 
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MBlazeFunctionInfo *MBlazeFI = MF.getInfo<MBlazeFunctionInfo>();

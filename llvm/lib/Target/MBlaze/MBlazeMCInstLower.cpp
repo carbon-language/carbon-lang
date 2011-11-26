@@ -1,4 +1,4 @@
-//===-- MBLazeMCInstLower.cpp - Convert MBlaze MachineInstr to an MCInst---===//
+//===-- MBlazeMCInstLower.cpp - Convert MBlaze MachineInstr to an MCInst---===//
 //
 //                     The LLVM Compiler Infrastructure
 //

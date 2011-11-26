@@ -1,4 +1,4 @@
-//===-- MBLazeInstPrinter.h - Convert MBlaze MCInst to assembly syntax ----===//
+//===-- MBlazeInstPrinter.h - Convert MBlaze MCInst to assembly syntax ----===//
 //
 //                     The LLVM Compiler Infrastructure
 //

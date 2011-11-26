@@ -30,7 +30,7 @@ using namespace llvm;
 STATISTIC(FilledSlots, "Number of delay slots filled");
 
 namespace llvm {
-cl::opt<bool> DisableDelaySlotFiller(
+cl::opt<bool> MBDisableDelaySlotFiller(
   "disable-mblaze-delay-filler",
   cl::init(false),
   cl::desc("Disable the MBlaze delay slot filter."),
@@ -236,7 +236,7 @@ bool Filler::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
       MachineBasicBlock::iterator D = MBB.end();
       MachineBasicBlock::iterator J = I;
 
-      if (!DisableDelaySlotFiller)
+      if (!MBDisableDelaySlotFiller)
         D = findDelayInstr(MBB,I);
 
       ++FilledSlots;
