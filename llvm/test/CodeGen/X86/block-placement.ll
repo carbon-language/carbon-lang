@@ -169,6 +169,36 @@ exit:
   ret i32 %sum
 }
 
+define i32 @test_loop_rotate(i32 %i, i32* %a) {
+; Check that we rotate conditional exits from the loop to the bottom of the
+; loop, eliminating unconditional branches to the top.
+; CHECK: test_loop_rotate:
+; CHECK: %entry
+; CHECK: %body1
+; CHECK: %body0
+; CHECK: %exit
+
+entry:
+  br label %body0
+
+body0:
+  %iv = phi i32 [ 0, %entry ], [ %next, %body1 ]
+  %base = phi i32 [ 0, %entry ], [ %sum, %body1 ]
+  %next = add i32 %iv, 1
+  %exitcond = icmp eq i32 %next, %i
+  br i1 %exitcond, label %exit, label %body1
+
+body1:
+  %arrayidx = getelementptr inbounds i32* %a, i32 %iv
+  %0 = load i32* %arrayidx
+  %sum = add nsw i32 %0, %base
+  %bailcond1 = icmp eq i32 %sum, 42
+  br label %body0
+
+exit:
+  ret i32 %base
+}
+
 define i32 @test_loop_align(i32 %i, i32* %a) {
 ; Check that we provide basic loop body alignment with the block placement
 ; pass.

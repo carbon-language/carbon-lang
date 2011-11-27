@@ -121,13 +121,17 @@ public:
   }
 
   /// \brief Iterator over blocks within the chain.
-  typedef SmallVectorImpl<MachineBasicBlock *>::const_iterator iterator;
+  typedef SmallVectorImpl<MachineBasicBlock *>::iterator iterator;
+  typedef SmallVectorImpl<MachineBasicBlock *>::reverse_iterator
+      reverse_iterator;
 
   /// \brief Beginning of blocks within the chain.
-  iterator begin() const { return Blocks.begin(); }
+  iterator begin() { return Blocks.begin(); }
+  reverse_iterator rbegin() { return Blocks.rbegin(); }
 
   /// \brief End of blocks within the chain.
-  iterator end() const { return Blocks.end(); }
+  iterator end() { return Blocks.end(); }
+  reverse_iterator rend() { return Blocks.rend(); }
 
   /// \brief Merge a block chain into this one.
   ///
@@ -222,6 +226,8 @@ class MachineBlockPlacement : public MachineFunctionPass {
   void buildChain(MachineBasicBlock *BB, BlockChain &Chain,
                   SmallVectorImpl<MachineBasicBlock *> &BlockWorkList,
                   const BlockFilterSet *BlockFilter = 0);
+  void rotateLoop(MachineLoop &L, BlockChain &LoopChain,
+                  const BlockFilterSet &LoopBlockSet);
   void buildLoopChains(MachineFunction &F, MachineLoop &L);
   void buildCFGChains(MachineFunction &F);
   void AlignLoops(MachineFunction &F);
@@ -552,6 +558,88 @@ void MachineBlockPlacement::buildChain(
                << getBlockNum(*Chain.begin()) << "\n");
 }
 
+/// \brief Attempt to rotate loop chains ending in an unconditional backedge.
+///
+/// This is a very conservative attempt to rotate unconditional backedge jumps
+/// into fallthrough opportunities. It only attempts to perform the rotation
+/// when it is trivial to find a block within the loop which has a conditional
+/// loop exit. This block is then made the bottom of the chain, and the in-loop
+/// fallthrough block the top. That turns a conditional branch out of the loop
+/// into a conditional branch to the top of the loop while completely
+/// eliminitating an unconditional branch within the loop.
+void MachineBlockPlacement::rotateLoop(MachineLoop &L,
+                                       BlockChain &LoopChain,
+                                       const BlockFilterSet &LoopBlockSet) {
+  MachineBasicBlock *Header = *L.block_begin();
+  // Ensure that we have a chain of blocks which starts with the loop header.
+  // Otherwise, rotating the blocks might break an analyzable branch.
+  if (Header != *LoopChain.begin())
+    return;
+
+  // We only support rotating the loop chain as a unit, so look directly at the
+  // back of the chain and check that it has a backedge.
+  MachineBasicBlock *Latch = *llvm::prior(LoopChain.end());
+  if (Latch == Header ||
+      !Latch->isSuccessor(Header))
+    return;
+
+  // We need to analyze the branch and determine if rotating the loop will
+  // completely remove a branch. We bail if the analysis fails or we don't find
+  // an unconditional backedge.
+  SmallVector<MachineOperand, 4> Cond;
+  MachineBasicBlock *TBB = 0, *FBB = 0;
+  if (TII->AnalyzeBranch(*Latch, TBB, FBB, Cond) || !TBB || FBB || !Cond.empty())
+    return;
+  assert(TBB == Header && "Found backedge that doesn't go to the header!");
+
+  // Next we need to find a split point. This rotate algorithm is *very*
+  // narrow, and it only tries to do the rotate when it can find a split point
+  // which is an analyzable branch that exits the loop. Splitting there allows
+  // us to form a fallthrough out of the loop and a conditional jump to the top
+  // of the loop after rotation.
+  MachineBasicBlock *NewBottom = 0, *NewTop = 0;
+  BlockChain::iterator SplitIt = LoopChain.end();
+  for (BlockChain::reverse_iterator I = llvm::next(LoopChain.rbegin()),
+                                    E = LoopChain.rend();
+       I != E; ++I) {
+    Cond.clear();
+    TBB = FBB = 0;
+    if (TII->AnalyzeBranch(**I, TBB, FBB, Cond) || !TBB || Cond.empty())
+      continue;
+    // Swap things so that the in-loop successor is always in FBB or is an
+    // implicit fallthrough.
+    if (FBB && !LoopBlockSet.count(FBB))
+      std::swap(TBB, FBB);
+    // Check that we actually have a loop exit branch.
+    // FIXME: We should probably just use the LoopInfo for this.
+    if (!LoopBlockSet.count(TBB) && (!FBB || !LoopBlockSet.count(FBB))) {
+      // This is a very arbitrary restriction, but it ensures we don't disrupt
+      // the existing chain layout. We insist that the in-loop successor is
+      // chained as a fallthrough successor (even if the branch hasn't been
+      // updated to reflect that yet).
+      if (FBB && FBB != *llvm::prior(I))
+        continue;
+
+      NewBottom = *I;
+      NewTop = *llvm::prior(I);
+      SplitIt = I.base();
+      break;
+    }
+  }
+  if (!NewBottom || !NewTop ||
+      SplitIt == LoopChain.end() || SplitIt == LoopChain.begin())
+    return;
+  assert(BlockToChain[NewBottom] == &LoopChain);
+  assert(BlockToChain[NewTop] == &LoopChain);
+  assert(*SplitIt == NewTop);
+
+  // Rotate the chain and we're done.
+  DEBUG(dbgs() << "Rotating loop headed by: " << getBlockName(Header) << "\n"
+               << "  new top:    " << getBlockName(NewTop) << "\n"
+               << "  new bottom: " << getBlockName(NewBottom) << "\n");
+  std::rotate(LoopChain.begin(), SplitIt, LoopChain.end());
+}
+
 /// \brief Forms basic block chains from the natural loop structures.
 ///
 /// These chains are designed to preserve the existing *structure* of the code
@@ -598,6 +686,7 @@ void MachineBlockPlacement::buildLoopChains(MachineFunction &F,
   }
 
   buildChain(*L.block_begin(), LoopChain, BlockWorkList, &LoopBlockSet);
+  rotateLoop(L, LoopChain, LoopBlockSet);
 
   DEBUG({
     // Crash at the end so we get all of the debugging output first.
