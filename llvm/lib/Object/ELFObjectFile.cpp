@@ -325,7 +325,7 @@ class ELFObjectFile : public ObjectFile {
 protected:
   virtual error_code getSymbolNext(DataRefImpl Symb, SymbolRef &Res) const;
   virtual error_code getSymbolName(DataRefImpl Symb, StringRef &Res) const;
-  virtual error_code getSymbolOffset(DataRefImpl Symb, uint64_t &Res) const;
+  virtual error_code getSymbolFileOffset(DataRefImpl Symb, uint64_t &Res) const;
   virtual error_code getSymbolAddress(DataRefImpl Symb, uint64_t &Res) const;
   virtual error_code getSymbolSize(DataRefImpl Symb, uint64_t &Res) const;
   virtual error_code getSymbolNMTypeChar(DataRefImpl Symb, char &Res) const;
@@ -355,6 +355,8 @@ protected:
                                        RelocationRef &Res) const;
   virtual error_code getRelocationAddress(DataRefImpl Rel,
                                           uint64_t &Res) const;
+  virtual error_code getRelocationOffset(DataRefImpl Rel,
+                                         uint64_t &Res) const;
   virtual error_code getRelocationSymbol(DataRefImpl Rel,
                                          SymbolRef &Res) const;
   virtual error_code getRelocationType(DataRefImpl Rel,
@@ -462,7 +464,7 @@ ELFObjectFile<target_endianness, is64Bits>
 
 template<support::endianness target_endianness, bool is64Bits>
 error_code ELFObjectFile<target_endianness, is64Bits>
-                        ::getSymbolOffset(DataRefImpl Symb,
+                        ::getSymbolFileOffset(DataRefImpl Symb,
                                           uint64_t &Result) const {
   validateSymbol(Symb);
   const Elf_Sym  *symb = getSymbol(Symb);
@@ -486,7 +488,8 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   case ELF::STT_FUNC:
   case ELF::STT_OBJECT:
   case ELF::STT_NOTYPE:
-    Result = symb->st_value;
+    Result = symb->st_value +
+             (Section ? Section->sh_offset - Section->sh_addr : 0);
     return object_error::success;
   default:
     Result = UnknownAddressOrSize;
@@ -502,28 +505,25 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   const Elf_Sym  *symb = getSymbol(Symb);
   const Elf_Shdr *Section;
   switch (getSymbolTableIndex(symb)) {
-  case ELF::SHN_COMMON: // Fall through.
+  case ELF::SHN_COMMON:
    // Undefined symbols have no address yet.
   case ELF::SHN_UNDEF:
     Result = UnknownAddressOrSize;
     return object_error::success;
   case ELF::SHN_ABS:
-    Result = reinterpret_cast<uintptr_t>(base()+symb->st_value);
+    Result = symb->st_value;
     return object_error::success;
   default: Section = getSection(symb);
   }
-  const uint8_t* addr = base();
-  if (Section)
-    addr += Section->sh_offset;
+
   switch (symb->getType()) {
   case ELF::STT_SECTION:
-    Result = reinterpret_cast<uintptr_t>(addr);
+    Result = Section ? Section->sh_addr : UnknownAddressOrSize;
     return object_error::success;
-  case ELF::STT_FUNC: // Fall through.
-  case ELF::STT_OBJECT: // Fall through.
+  case ELF::STT_FUNC:
+  case ELF::STT_OBJECT:
   case ELF::STT_NOTYPE:
-    addr += symb->st_value;
-    Result = reinterpret_cast<uintptr_t>(addr);
+    Result = symb->st_value;
     return object_error::success;
   default:
     Result = UnknownAddressOrSize;
@@ -917,6 +917,29 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   }
 
   Result = offset;
+  return object_error::success;
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+error_code ELFObjectFile<target_endianness, is64Bits>
+                        ::getRelocationOffset(DataRefImpl Rel,
+                                              uint64_t &Result) const {
+  uint64_t offset;
+  const Elf_Shdr *sec = getSection(Rel.w.b);
+  switch (sec->sh_type) {
+    default :
+      report_fatal_error("Invalid section type in Rel!");
+    case ELF::SHT_REL : {
+      offset = getRel(Rel)->r_offset;
+      break;
+    }
+    case ELF::SHT_RELA : {
+      offset = getRela(Rel)->r_offset;
+      break;
+    }
+  }
+
+  Result = offset - sec->sh_addr;
   return object_error::success;
 }
 

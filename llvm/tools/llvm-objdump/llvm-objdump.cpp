@@ -186,7 +186,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
       bool contains;
       if (!error(i->containsSymbol(*si, contains)) && contains) {
         uint64_t Address;
-        if (error(si->getOffset(Address))) break;
+        if (error(si->getFileOffset(Address))) break;
         StringRef Name;
         if (error(si->getName(Name))) break;
         Symbols.push_back(std::make_pair(Address, Name));
@@ -485,7 +485,7 @@ static void PrintSymbolTable(const ObjectFile *o) {
       uint64_t Size;
       section_iterator Section = o->end_sections();
       if (error(si->getName(Name))) continue;
-      if (error(si->getOffset(Offset))) continue;
+      if (error(si->getFileOffset(Offset))) continue;
       if (error(si->isGlobal(Global))) continue;
       if (error(si->getType(Type))) continue;
       if (error(si->isWeak(Weak))) continue;
