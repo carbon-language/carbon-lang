@@ -199,6 +199,44 @@ exit:
   ret i32 %base
 }
 
+define void @test_loop_rotate_reversed_blocks() {
+; This test case (greatly reduced from an Olden bencmark) ensures that the loop
+; rotate implementation doesn't assume that loops are laid out in a particular
+; order. The first loop will get split into two basic blocks, with the loop
+; header coming after the loop latch.
+;
+; CHECK: test_loop_rotate_reversed_blocks
+; CHECK: %entry
+; Look for a jump into the middle of the loop, and no branches mid-way.
+; CHECK: jmp
+; CHECK: %loop1
+; CHECK-NOT: j{{\w*}} .LBB{{.*}}
+; CHECK: %loop1
+; CHECK: je
+
+entry:
+  %cond1 = load volatile i1* undef
+  br i1 %cond1, label %loop2.preheader, label %loop1
+
+loop1:
+  call i32 @f()
+  %cond2 = load volatile i1* undef
+  br i1 %cond2, label %loop2.preheader, label %loop1
+
+loop2.preheader:
+  call i32 @f()
+  %cond3 = load volatile i1* undef
+  br i1 %cond3, label %exit, label %loop2
+
+loop2:
+  call i32 @f()
+  %cond4 = load volatile i1* undef
+  br i1 %cond4, label %exit, label %loop2
+
+exit:
+  ret void
+}
+
 define i32 @test_loop_align(i32 %i, i32* %a) {
 ; Check that we provide basic loop body alignment with the block placement
 ; pass.
@@ -567,8 +605,8 @@ define void @test_unnatural_cfg_backwards_inner_loop() {
 ; CHECK: test_unnatural_cfg_backwards_inner_loop
 ; CHECK: %entry
 ; CHECK: %body
-; CHECK: %loop1
 ; CHECK: %loop2b
+; CHECK: %loop1
 ; CHECK: %loop2a
 
 entry:

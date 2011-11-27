@@ -585,12 +585,14 @@ void MachineBlockPlacement::rotateLoop(MachineLoop &L,
 
   // We need to analyze the branch and determine if rotating the loop will
   // completely remove a branch. We bail if the analysis fails or we don't find
-  // an unconditional backedge.
+  // an unconditional backedge. Note that this has to handle cases where the
+  // original order was rotated, and the chain has un-done it. As a result,
+  // there may not (yet) be the uncondiationl branch, but we can tell whether
+  // one will be added when updating the terminators.
   SmallVector<MachineOperand, 4> Cond;
   MachineBasicBlock *TBB = 0, *FBB = 0;
-  if (TII->AnalyzeBranch(*Latch, TBB, FBB, Cond) || !TBB || FBB || !Cond.empty())
+  if (TII->AnalyzeBranch(*Latch, TBB, FBB, Cond) || !Cond.empty())
     return;
-  assert(TBB == Header && "Found backedge that doesn't go to the header!");
 
   // Next we need to find a split point. This rotate algorithm is *very*
   // narrow, and it only tries to do the rotate when it can find a split point
@@ -604,27 +606,35 @@ void MachineBlockPlacement::rotateLoop(MachineLoop &L,
        I != E; ++I) {
     Cond.clear();
     TBB = FBB = 0;
-    if (TII->AnalyzeBranch(**I, TBB, FBB, Cond) || !TBB || Cond.empty())
+    // Ensure that this is a block with a conditional branch which we can
+    // analyze and re-form after rotating the loop. While it might be tempting
+    // to use the TBB or FBB output parameters from this, they will often be
+    // lies as they are only correct after the terminators have been updated,
+    // and we are mid-chain formation.
+    if (TII->AnalyzeBranch(**I, TBB, FBB, Cond) || Cond.empty())
       continue;
-    // Swap things so that the in-loop successor is always in FBB or is an
-    // implicit fallthrough.
-    if (FBB && !LoopBlockSet.count(FBB))
-      std::swap(TBB, FBB);
-    // Check that we actually have a loop exit branch.
-    // FIXME: We should probably just use the LoopInfo for this.
-    if (!LoopBlockSet.count(TBB) && (!FBB || !LoopBlockSet.count(FBB))) {
-      // This is a very arbitrary restriction, but it ensures we don't disrupt
-      // the existing chain layout. We insist that the in-loop successor is
-      // chained as a fallthrough successor (even if the branch hasn't been
-      // updated to reflect that yet).
-      if (FBB && FBB != *llvm::prior(I))
-        continue;
 
-      NewBottom = *I;
-      NewTop = *llvm::prior(I);
-      SplitIt = I.base();
-      break;
+    // See if this block is an exiting block from the loop. LoopInfo provides
+    // a nice API for this, but it's actuall N*M runtime where N is the number
+    // of blocks in the loop and M is the number of successors. We can
+    // eliminate the N by doing this ourselves.
+    // FIXME: The LoopInfo datastructure should be improved for these types of
+    // queries.
+    MachineBasicBlock *ExitB = 0;
+    for (MachineBasicBlock::succ_iterator SI = (*I)->succ_begin(), SE = (*I)->succ_end();
+         SI != SE; ++SI) {
+      if (!(*SI)->isLandingPad() && *SI != *I && !LoopBlockSet.count(*SI)) {
+        ExitB = *SI;
+        break;
+      }
     }
+    if (!ExitB)
+      continue;
+
+    NewBottom = *I;
+    NewTop = *llvm::prior(I);
+    SplitIt = I.base();
+    break;
   }
   if (!NewBottom || !NewTop ||
       SplitIt == LoopChain.end() || SplitIt == LoopChain.begin())
