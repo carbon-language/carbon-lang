@@ -751,7 +751,7 @@ be used to verify some algorithms.
  -->
   
 <!--
- Type system rewrite.
+ Type system rewrite: http://blog.llvm.org/2011/11/llvm-30-type-system-rewrite.html
  Better performance for Neon code in clang due to SRoA improvements.
  New regalloc on by default. Lin scan going away in 3.1
  PGO / builtin_expect improvements (summary needed)
@@ -769,8 +769,23 @@ be used to verify some algorithms.
  Better code generation for Cortex-A9
  Many APIs take ArrayRef's now.
  Pass manager extension API.
+ ARM inline asm constraints implemented.
+ LangRef.html#fnattrs uwtable attribute for asynch unwind tables.
+ better performance for indirect gotos.
+ llvm.prefetch now takes a 4th argument that specifies whether the prefetch happens to the icache or dcache.
+ New PackedVector, TinyPtrVector class (see Programmer's Manual)
+ New nonlazybind function attribute.
+ ARC language specific optimizer (Transforms/ObjCARC) a decent example of language-specific transformation.
+ LLVM 3.0 removes support for reading LLVM 2.8 and earlier files.
 
-
+ New llvm.expect intrinsic.
+ Table generated MC expansion logic for pseudo instructions that expand to multiple MC instructions through the PseudoInstExpansion class. (JimG)
+ New llvm.fma intrinsic.
+ 
+ Euro dev meeting and main one too.
+ New atomics instructions, "#i_fence" instruction.
+ X86: inline assembler supports .code32 and .code64.
+ 
  -->
   
 <ul>
