@@ -43,12 +43,14 @@ namespace {
   public:
     static char ID;
     GCOVProfiler()
-        : ModulePass(ID), EmitNotes(true), EmitData(true), Use402Format(false) {
+        : ModulePass(ID), EmitNotes(true), EmitData(true), Use402Format(false),
+          UseExtraChecksum(false) {
       initializeGCOVProfilerPass(*PassRegistry::getPassRegistry());
     }
-    GCOVProfiler(bool EmitNotes, bool EmitData, bool use402Format = false)
+    GCOVProfiler(bool EmitNotes, bool EmitData, bool use402Format = false,
+                 bool useExtraChecksum = false)
         : ModulePass(ID), EmitNotes(EmitNotes), EmitData(EmitData),
-          Use402Format(use402Format) {
+          Use402Format(use402Format), UseExtraChecksum(useExtraChecksum) {
       assert((EmitNotes || EmitData) && "GCOVProfiler asked to do nothing?");
       initializeGCOVProfilerPass(*PassRegistry::getPassRegistry());
     }
@@ -94,6 +96,7 @@ namespace {
     bool EmitNotes;
     bool EmitData;
     bool Use402Format;
+    bool UseExtraChecksum;
 
     Module *M;
     LLVMContext *Ctx;
@@ -167,7 +170,7 @@ namespace {
     }
 
     uint32_t length() {
-      // Here 2 = 1 for string lenght + 1 for '0' id#.
+      // Here 2 = 1 for string length + 1 for '0' id#.
       return lengthOfGCOVString(Filename) + 2 + Lines.size();
     }
 
@@ -244,10 +247,12 @@ namespace {
   // object users can construct, the blocks and lines will be rooted here.
   class GCOVFunction : public GCOVRecord {
    public:
-    GCOVFunction(DISubprogram SP, raw_ostream *os, bool Use402Format) {
+    GCOVFunction(DISubprogram SP, raw_ostream *os,
+                 bool Use402Format, bool UseExtraChecksum) {
       this->os = os;
 
       Function *F = SP.getFunction();
+      DEBUG(dbgs() << "Function: " << F->getName() << "\n");
       uint32_t i = 0;
       for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
         Blocks[BB] = new GCOVBlock(i++, os);
@@ -257,14 +262,14 @@ namespace {
       writeBytes(FunctionTag, 4);
       uint32_t BlockLen = 1 + 1 + 1 + lengthOfGCOVString(SP.getName()) +
           1 + lengthOfGCOVString(SP.getFilename()) + 1;
-      if (!Use402Format)
-        ++BlockLen; // For second checksum.
+      if (UseExtraChecksum)
+        ++BlockLen;
       write(BlockLen);
       uint32_t Ident = reinterpret_cast<intptr_t>((MDNode*)SP);
       write(Ident);
-      write(0);  // checksum #1
-      if (!Use402Format)
-        write(0);  // checksum #2
+      write(0);  // lineno checksum
+      if (UseExtraChecksum)
+        write(0);  // cfg checksum
       writeGCOVString(SP.getName());
       writeGCOVString(SP.getFilename());
       write(SP.getLineNumber());
@@ -290,6 +295,7 @@ namespace {
       for (int i = 0, e = Blocks.size() + 1; i != e; ++i) {
         write(0);  // No flags on our blocks.
       }
+      DEBUG(dbgs() << Blocks.size() << " blocks.\n");
 
       // Emit edges between blocks.
       for (DenseMap<BasicBlock *, GCOVBlock *>::iterator I = Blocks.begin(),
@@ -301,6 +307,8 @@ namespace {
         write(Block.OutEdges.size() * 2 + 1);
         write(Block.Number);
         for (int i = 0, e = Block.OutEdges.size(); i != e; ++i) {
+          DEBUG(dbgs() << Block.Number << " -> " << Block.OutEdges[i]->Number
+                       << "\n");
           write(Block.OutEdges[i]->Number);
           write(0);  // no flags
         }
@@ -350,68 +358,60 @@ bool GCOVProfiler::runOnModule(Module &M) {
 }
 
 void GCOVProfiler::emitGCNO() {
-  DenseMap<const MDNode *, raw_fd_ostream *> GcnoFiles;
   NamedMDNode *CU_Nodes = M->getNamedMetadata("llvm.dbg.cu");
-  if (CU_Nodes) {
-    for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i) {
-      // Each compile unit gets its own .gcno file. This means that whether we run
-      // this pass over the original .o's as they're produced, or run it after
-      // LTO, we'll generate the same .gcno files.
-      
-      DICompileUnit CU(CU_Nodes->getOperand(i));
-      raw_fd_ostream *&out = GcnoFiles[CU];
-      std::string ErrorInfo;
-      out = new raw_fd_ostream(mangleName(CU, "gcno").c_str(), ErrorInfo,
-                               raw_fd_ostream::F_Binary);
-      if (!Use402Format)
-        out->write("oncg*404MVLL", 12);
-      else
-        out->write("oncg*204MVLL", 12);
-  
-      DIArray SPs = CU.getSubprograms();
-      for (unsigned i = 0, e = SPs.getNumElements(); i != e; ++i) {
-        DISubprogram SP(SPs.getElement(i));
-        if (!SP.Verify()) continue;
-        raw_fd_ostream *&os = GcnoFiles[CU];
-        
-        Function *F = SP.getFunction();
-        if (!F) continue;
-        GCOVFunction Func(SP, os, Use402Format);
-        
-        for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
-          GCOVBlock &Block = Func.getBlock(BB);
-          TerminatorInst *TI = BB->getTerminator();
-          if (int successors = TI->getNumSuccessors()) {
-            for (int i = 0; i != successors; ++i) {
-              Block.addEdge(Func.getBlock(TI->getSuccessor(i)));
-            }
-          } else if (isa<ReturnInst>(TI)) {
-            Block.addEdge(Func.getReturnBlock());
-          }
-          
-          uint32_t Line = 0;
-          for (BasicBlock::iterator I = BB->begin(), IE = BB->end(); I != IE; ++I) {
-            const DebugLoc &Loc = I->getDebugLoc();
-            if (Loc.isUnknown()) continue;
-            if (Line == Loc.getLine()) continue;
-            Line = Loc.getLine();
-            if (SP != getDISubprogram(Loc.getScope(*Ctx))) continue;
-            
-            GCOVLines &Lines = Block.getFile(SP.getFilename());
-            Lines.addLine(Loc.getLine());
-          }
-        }
-        Func.writeOut();
-      }
-    }
-  }
+  if (!CU_Nodes) return;
 
-  for (DenseMap<const MDNode *, raw_fd_ostream *>::iterator
-           I = GcnoFiles.begin(), E = GcnoFiles.end(); I != E; ++I) {
-    raw_fd_ostream *&out = I->second;
-    out->write("\0\0\0\0\0\0\0\0", 8);  // EOF
-    out->close();
-    delete out;
+  for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i) {
+    // Each compile unit gets its own .gcno file. This means that whether we run
+    // this pass over the original .o's as they're produced, or run it after
+    // LTO, we'll generate the same .gcno files.
+
+    DICompileUnit CU(CU_Nodes->getOperand(i));
+    std::string ErrorInfo;
+    raw_fd_ostream out(mangleName(CU, "gcno").c_str(), ErrorInfo,
+                       raw_fd_ostream::F_Binary);
+    if (!Use402Format)
+      out.write("oncg*404MVLL", 12);
+    else
+      out.write("oncg*204MVLL", 12);
+
+    DIArray SPs = CU.getSubprograms();
+    for (unsigned i = 0, e = SPs.getNumElements(); i != e; ++i) {
+      DISubprogram SP(SPs.getElement(i));
+      if (!SP.Verify()) continue;
+
+      Function *F = SP.getFunction();
+      if (!F) continue;
+      GCOVFunction Func(SP, &out, Use402Format, UseExtraChecksum);
+
+      for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
+        GCOVBlock &Block = Func.getBlock(BB);
+        TerminatorInst *TI = BB->getTerminator();
+        if (int successors = TI->getNumSuccessors()) {
+          for (int i = 0; i != successors; ++i) {
+            Block.addEdge(Func.getBlock(TI->getSuccessor(i)));
+          }
+        } else if (isa<ReturnInst>(TI)) {
+          Block.addEdge(Func.getReturnBlock());
+        }
+
+        uint32_t Line = 0;
+        for (BasicBlock::iterator I = BB->begin(), IE = BB->end();
+             I != IE; ++I) {
+          const DebugLoc &Loc = I->getDebugLoc();
+          if (Loc.isUnknown()) continue;
+          if (Line == Loc.getLine()) continue;
+          Line = Loc.getLine();
+          if (SP != getDISubprogram(Loc.getScope(*Ctx))) continue;
+
+          GCOVLines &Lines = Block.getFile(SP.getFilename());
+          Lines.addLine(Loc.getLine());
+        }
+      }
+      Func.writeOut();
+    }
+    out.write("\0\0\0\0\0\0\0\0", 8);  // EOF
+    out.close();
   }
 }
 
