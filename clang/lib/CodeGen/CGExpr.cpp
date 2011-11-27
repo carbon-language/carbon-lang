@@ -210,6 +210,13 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
                             const CXXDestructorDecl *&ReferenceTemporaryDtor,
                             QualType &ObjCARCReferenceLifetimeType,
                             const NamedDecl *InitializedDecl) {
+  // Look through single-element init lists that claim to be lvalues. They're
+  // just syntactic wrappers in this case.
+  if (const InitListExpr *ILE = dyn_cast<InitListExpr>(E)) {
+    if (ILE->getNumInits() == 1 && ILE->isGLValue())
+      E = ILE->getInit(0);
+  }
+
   // Look through expressions for materialized temporaries (for now).
   if (const MaterializeTemporaryExpr *M 
                                       = dyn_cast<MaterializeTemporaryExpr>(E)) {
@@ -669,6 +676,10 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
     return EmitObjCEncodeExprLValue(cast<ObjCEncodeExpr>(E));
   case Expr::PseudoObjectExprClass:
     return EmitPseudoObjectLValue(cast<PseudoObjectExpr>(E));
+  case Expr::InitListExprClass:
+    assert(cast<InitListExpr>(E)->getNumInits() == 1 &&
+           "Only single-element init list can be lvalue.");
+    return EmitLValue(cast<InitListExpr>(E)->getInit(0));
 
   case Expr::BlockDeclRefExprClass:
     return EmitBlockDeclRefLValue(cast<BlockDeclRefExpr>(E));
@@ -728,7 +739,7 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
   case Expr::CXXConstCastExprClass:
   case Expr::ObjCBridgedCastExprClass:
     return EmitCastLValue(cast<CastExpr>(E));
-      
+
   case Expr::MaterializeTemporaryExprClass:
     return EmitMaterializeTemporaryExpr(cast<MaterializeTemporaryExpr>(E));
   }

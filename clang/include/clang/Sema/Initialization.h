@@ -530,6 +530,10 @@ public:
     SK_ListInitialization,
     /// \brief Perform list-initialization with a constructor.
     SK_ListConstructorCall,
+    /// \brief Unwrap the single-element initializer list for a reference.
+    SK_UnwrapInitList,
+    /// \brief Rewrap the single-element initializer list for a reference.
+    SK_RewrapInitList,
     /// \brief Perform initialization via a constructor.
     SK_ConstructorInitialization,
     /// \brief Zero-initialize the object
@@ -579,8 +583,12 @@ public:
       } Function;
 
       /// \brief When Kind = SK_ConversionSequence, the implicit conversion
-      /// sequence 
+      /// sequence.
       ImplicitConversionSequence *ICS;
+
+      /// \brief When Kind = SK_RewrapInitList, the syntactic form of the
+      /// wrapping list.
+      InitListExpr *WrappingSyntacticList;
     };
 
     void Destroy();
@@ -852,6 +860,10 @@ public:
   /// \brief Add a step to "produce" an Objective-C object (by
   /// retaining it).
   void AddProduceObjCObjectStep(QualType T);
+
+  /// \brief Add steps to unwrap a initializer list for a reference around a
+  /// single element and rewrap it at the end.
+  void RewrapReferenceInitList(QualType T, InitListExpr *Syntactic);
 
   /// \brief Note that this initialization sequence failed.
   void SetFailed(FailureKind Failure) {

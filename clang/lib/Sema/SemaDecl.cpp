@@ -6199,7 +6199,7 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
   // "ary" transitions from a VariableArrayType to a ConstantArrayType.
   if (!VDecl->isInvalidDecl() && (DclT != SavT)) {
     VDecl->setType(DclT);
-    Init->setType(DclT);
+    Init->setType(DclT.getNonReferenceType());
   }
   
   // Check any implicit conversions within the expression.

@@ -1034,6 +1034,9 @@ def err_lvalue_to_rvalue_ambig_ref : Error<"rvalue reference cannot bind to lval
 def err_not_reference_to_const_init : Error<
   "%select{non-const|volatile}0 lvalue reference to type %1 cannot be "
   "initialized with a %select{value|temporary}2 of type %3">;
+def err_lvalue_reference_bind_to_initlist : Error<
+  "%select{non-const|volatile}0 lvalue reference to type %1 cannot bind to an "
+  "initializer list temporary">;
 def err_lvalue_reference_bind_to_temporary : Error<
   "%select{non-const|volatile}0 lvalue reference to type %1 cannot bind to a "
   "temporary of type %2">;
