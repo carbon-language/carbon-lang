@@ -910,9 +910,10 @@ be used to verify some algorithms.
   <li>TableGen can now autogenerate MC expansion logic for pseudo
     instructions that expand to multiple MC instructions (through the
     PseudoInstExpansion class).</li>
-    
-  <li>XXX: llvm-objdump / dwarf parser library / llvm-dwarfdump (d0k)
-    object file parsing stuff and llvm-size (mspencer).  Status?</li>
+  <li>A new llvm-objdump and llvm-dwarfdump tools provide a start of a drop-in 
+    replacement for the corresponding tools that use LLVM libraries.  As part of
+    this, LLVM has the beginnings of a dwarf parsing library.</li>
+  <li>XXX: object file parsing stuff and llvm-size (mspencer).  Status?</li>
 </ul>
 
 </div>
