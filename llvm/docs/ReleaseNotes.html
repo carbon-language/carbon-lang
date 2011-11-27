@@ -1330,144 +1330,30 @@ compiler and provides better integration with the platform ABI as a result.</p>
 
 <div>
 
-<p>This section contains significant known problems with the LLVM system, listed
-   by component.  If you run into a problem, please check
-   the <a href="http://llvm.org/bugs/">LLVM bug database</a> and submit a bug if
-   there isn't already one.</p>
-
-<!-- ======================================================================= -->
-<h3>
-  <a name="experimental">Experimental features included with this release</a>
-</h3>
-
-<div>
-
-<p>The following components of this LLVM release are either untested, known to
-   be broken or unreliable, or are in early development.  These components
-   should not be relied on, and bugs should not be filed against them, but they
-   may be useful to some people.  In particular, if you would like to work on
-   one of these components, please contact us on
-   the <a href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">LLVMdev
-   list</a>.</p>
-
+<p>LLVM is generally a production quality compiler, and is used by a broad range
+   of applications and shipping in many products.  That said, not every
+   subsystem is as mature as the aggregate, particularly the more obscure
+   targets.  If you run into a problem, please check the <a
+   href="http://llvm.org/bugs/">LLVM bug database</a> and submit a bug if
+   there isn't already one or ask on the <a
+    href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">LLVMdev
+    list</a>.</p>
+  
+  <p>Known problem areas include:</p>
+  
 <ul>
-  <li>The Alpha, Blackfin, CellSPU, MicroBlaze, MSP430, MIPS, PTX, SystemZ and
-      XCore backends are experimental.</li>
+  <li>The Alpha, Blackfin, CellSPU, MSP430, PTX, SystemZ and
+      XCore backends are experimental, and several of these have already been
+      removed from mainline.</li>
 
-  <li><tt>llc</tt> "<tt>-filetype=obj</tt>" is experimental on all targets other
-      than darwin and ELF X86 systems.</li>
-</ul>
-
-</div>
-
-<!-- ======================================================================= -->
-<h3>
-  <a name="x86-be">Known problems with the X86 back-end</a>
-</h3>
-
-<div>
-
-<ul>
-  <li>The X86-64 backend <a href="http://llvm.org/PR1740">does not yet support
-      the <tt>va_arg</tt> LLVM IR instruction</a>. Currently, front-ends support
-      variadic argument constructs on X86-64 by lowering them manually.</li>
-</ul>
-
-</div>
-
-<!-- ======================================================================= -->
-<h3>
-  <a name="ppc-be">Known problems with the PowerPC back-end</a>
-</h3>
-
-<div>
-
-<ul>
-  <li>The PPC32/ELF support lacks PIC support.</li>
-</ul>
-
-</div>
-
-<!-- ======================================================================= -->
-<h3>
-  <a name="arm-be">Known problems with the ARM back-end</a>
-</h3>
-
-<div>
-
-<ul>
-  <li>Thumb mode works only on ARMv6 or higher processors. On sub-ARMv6
-      processors, thumb programs can crash or produce wrong results
-      (<a href="http://llvm.org/PR1388">PR1388</a>).</li>
-
-  <li>Compilation for ARM Linux OABI (old ABI) is supported but not fully
-      tested.</li>
-</ul>
-
-</div>
-
-<!-- ======================================================================= -->
-<h3>
-  <a name="sparc-be">Known problems with the SPARC back-end</a>
-</h3>
-
-<div>
-
-<ul>
-  <li>The SPARC backend only supports the 32-bit SPARC ABI (-m32); it does not
-      support the 64-bit SPARC ABI (-m64).</li>
-</ul>
-
-</div>
-
-<!-- ======================================================================= -->
-<h3>
-  <a name="mips-be">Known problems with the MIPS back-end</a>
-</h3>
-
-<div>
-
-<ul>
-  <li>64-bit MIPS targets are not supported yet.</li>
-</ul>
-
-</div>
-
-<!-- ======================================================================= -->
-<h3>
-  <a name="alpha-be">Known problems with the Alpha back-end</a>
-</h3>
-
-<div>
-
-<ul>
-  <li>On 21164s, some rare FP arithmetic sequences which may trap do not have
-      the appropriate nops inserted to ensure restartability.</li>
-</ul>
-
-</div>
-
-<!-- ======================================================================= -->
-<h3>
-  <a name="c-be">Known problems with the C back-end</a>
-</h3>
-
-<div>
-
-<p>The C backend has numerous problems and is not being actively maintained.
-   Depending on it for anything serious is not advised.</p>
-
-<ul>
-  <li><a href="http://llvm.org/PR802">The C backend has only basic support for
-      inline assembly code</a>.</li>
-
-  <li><a href="http://llvm.org/PR1658">The C backend violates the ABI of common
-      C++ programs</a>, preventing intermixing between C++ compiled by the CBE
-      and C++ code compiled with <tt>llc</tt> or native compilers.</li>
-
-  <li>The C backend does not support all exception handling constructs.</li>
-
-  <li>The C backend does not support arbitrary precision integers.</li>
+  <li>The integrated assembler, disassembler, and JIT is not supported by
+      several targets.  If an integrated assembler is not supported, then a
+      system assembler is required.  For more details, see the <a
+      href="CodeGenerator.html#targetfeatures">Target Features Matrix</a>.
+  </li>
+  
+  <li>The C backend has numerous problems and is not being actively maintained.
+    Depending on it for anything serious is not advised.</li>
 </ul>
 
 </div>
