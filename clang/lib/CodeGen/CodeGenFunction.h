@@ -1781,7 +1781,8 @@ public:
   void EmitNewArrayInitializer(const CXXNewExpr *E, QualType elementType,
                                llvm::Value *NewPtr, llvm::Value *NumElements);
 
-  void EmitCXXTemporary(const CXXTemporary *Temporary, llvm::Value *Ptr);
+  void EmitCXXTemporary(const CXXTemporary *Temporary, QualType TempType,
+                        llvm::Value *Ptr);
 
   llvm::Value *EmitCXXNewExpr(const CXXNewExpr *E);
   void EmitCXXDeleteExpr(const CXXDeleteExpr *E);

@@ -526,7 +526,7 @@ void AggExprEmitter::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
 
   // Push that destructor we promised.
   if (!wasExternallyDestructed)
-    CGF.EmitCXXTemporary(E->getTemporary(), Dest.getAddr());
+    CGF.EmitCXXTemporary(E->getTemporary(), E->getType(), Dest.getAddr());
 }
 
 void
