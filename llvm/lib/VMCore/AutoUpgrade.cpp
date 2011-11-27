@@ -107,38 +107,6 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
     }
 
     break;
-  case 'x': {
-    const char *NewFnName = NULL;
-    // This fixes the poorly named crc32 intrinsics.
-    if (Name == "x86.sse42.crc32.8")
-      NewFnName = "llvm.x86.sse42.crc32.32.8";
-    else if (Name == "x86.sse42.crc32.16")
-      NewFnName = "llvm.x86.sse42.crc32.32.16";
-    else if (Name == "x86.sse42.crc32.32")
-      NewFnName = "llvm.x86.sse42.crc32.32.32";
-    else if (Name == "x86.sse42.crc64.8")
-      NewFnName = "llvm.x86.sse42.crc32.64.8";
-    else if (Name == "x86.sse42.crc64.64")
-      NewFnName = "llvm.x86.sse42.crc32.64.64";
-    
-    if (NewFnName) {
-      F->setName(NewFnName);
-      NewFn = F;
-      return true;
-    }
-
-    // Calls to these instructions are transformed into unaligned loads.
-    if (Name == "x86.sse.loadu.ps" || Name == "x86.sse2.loadu.dq" ||
-        Name == "x86.sse2.loadu.pd")
-      return true;
-      
-    // Calls to these instructions are transformed into nontemporal stores.
-    if (Name == "x86.sse.movnt.ps"  || Name == "x86.sse2.movnt.dq" ||
-        Name == "x86.sse2.movnt.pd" || Name == "x86.sse2.movnt.i")
-      return true;
-
-    break;
-  }
   }
 
   //  This may not belong here. This function is effectively being overloaded 
@@ -176,54 +144,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
   assert(F && "CallInst has no function associated with it.");
 
   if (!NewFn) {
-    if (F->getName() == "llvm.x86.sse.loadu.ps" ||
-        F->getName() == "llvm.x86.sse2.loadu.dq" ||
-        F->getName() == "llvm.x86.sse2.loadu.pd") {
-      // Convert to a native, unaligned load.
-      Type *VecTy = CI->getType();
-      Type *IntTy = IntegerType::get(C, 128);
-      IRBuilder<> Builder(C);
-      Builder.SetInsertPoint(CI->getParent(), CI);
-
-      Value *BC = Builder.CreateBitCast(CI->getArgOperand(0),
-                                        PointerType::getUnqual(IntTy),
-                                        "cast");
-      LoadInst *LI = Builder.CreateLoad(BC, CI->getName());
-      LI->setAlignment(1);      // Unaligned load.
-      BC = Builder.CreateBitCast(LI, VecTy, "new.cast");
-
-      // Fix up all the uses with our new load.
-      if (!CI->use_empty())
-        CI->replaceAllUsesWith(BC);
-
-      // Remove intrinsic.
-      CI->eraseFromParent();
-    } else if (F->getName() == "llvm.x86.sse.movnt.ps" ||
-               F->getName() == "llvm.x86.sse2.movnt.dq" ||
-               F->getName() == "llvm.x86.sse2.movnt.pd" ||
-               F->getName() == "llvm.x86.sse2.movnt.i") {
-      IRBuilder<> Builder(C);
-      Builder.SetInsertPoint(CI->getParent(), CI);
-
-      Module *M = F->getParent();
-      SmallVector<Value *, 1> Elts;
-      Elts.push_back(ConstantInt::get(Type::getInt32Ty(C), 1));
-      MDNode *Node = MDNode::get(C, Elts);
-
-      Value *Arg0 = CI->getArgOperand(0);
-      Value *Arg1 = CI->getArgOperand(1);
-
-      // Convert the type of the pointer to a pointer to the stored type.
-      Value *BC = Builder.CreateBitCast(Arg0,
-                                        PointerType::getUnqual(Arg1->getType()),
-                                        "cast");
-      StoreInst *SI = Builder.CreateStore(Arg1, BC);
-      SI->setMetadata(M->getMDKindID("nontemporal"), Node);
-      SI->setAlignment(16);
-
-      // Remove intrinsic.
-      CI->eraseFromParent();
-    } else if (F->getName().startswith("llvm.atomic.cmp.swap")) {
+    if (F->getName().startswith("llvm.atomic.cmp.swap")) {
       IRBuilder<> Builder(C);
       Builder.SetInsertPoint(CI->getParent(), CI);
       Value *Val = Builder.CreateAtomicCmpXchg(CI->getArgOperand(0),

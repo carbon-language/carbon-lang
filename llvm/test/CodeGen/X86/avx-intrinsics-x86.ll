@@ -245,34 +245,6 @@ define <2 x double> @test_x86_sse2_div_sd(<2 x double> %a0, <2 x double> %a1) {
 declare <2 x double> @llvm.x86.sse2.div.sd(<2 x double>, <2 x double>) nounwind readnone
 
 
-define <16 x i8> @test_x86_sse2_loadu_dq(i8* %a0) {
-  ; CHECK: movl
-  ; CHECK: vmovups
-  %res = call <16 x i8> @llvm.x86.sse2.loadu.dq(i8* %a0) ; <<16 x i8>> [#uses=1]
-  ret <16 x i8> %res
-}
-declare <16 x i8> @llvm.x86.sse2.loadu.dq(i8*) nounwind readonly
-
-
-define <2 x double> @test_x86_sse2_loadu_pd(i8* %a0) {
-  ; CHECK: movl
-  ; CHECK: vmovups
-  %res = call <2 x double> @llvm.x86.sse2.loadu.pd(i8* %a0) ; <<2 x double>> [#uses=1]
-  ret <2 x double> %res
-}
-declare <2 x double> @llvm.x86.sse2.loadu.pd(i8*) nounwind readonly
-
-
-define void @test_x86_sse2_maskmov_dqu(<16 x i8> %a0, <16 x i8> %a1, i8* %a2) {
-  ; CHECK: pushl
-  ; CHECK: movl
-  ; CHECK: vmaskmovdqu
-  ; CHECK: popl
-  call void @llvm.x86.sse2.maskmov.dqu(<16 x i8> %a0, <16 x i8> %a1, i8* %a2)
-  ret void
-}
-declare void @llvm.x86.sse2.maskmov.dqu(<16 x i8>, <16 x i8>, i8*) nounwind
-
 
 define <2 x double> @test_x86_sse2_max_pd(<2 x double> %a0, <2 x double> %a1) {
   ; CHECK: vmaxpd
@@ -314,28 +286,6 @@ define i32 @test_x86_sse2_movmsk_pd(<2 x double> %a0) {
 declare i32 @llvm.x86.sse2.movmsk.pd(<2 x double>) nounwind readnone
 
 
-define void @test_x86_sse2_movnt_dq(i8* %a0, <2 x i64> %a1) {
-  ; CHECK: test_x86_sse2_movnt_dq
-  ; CHECK: movl
-  ; CHECK: vmovntdq
-  ; add operation forces the execution domain.
-  %a2 = add <2 x i64> %a1, <i64 1, i64 1>
-  call void @llvm.x86.sse2.movnt.dq(i8* %a0, <2 x i64> %a2)
-  ret void
-}
-declare void @llvm.x86.sse2.movnt.dq(i8*, <2 x i64>) nounwind
-
-
-define void @test_x86_sse2_movnt_pd(i8* %a0, <2 x double> %a1) {
-  ; CHECK test_x86_sse2_movnt_pd
-  ; CHECK: movl
-  ; CHECK: vmovntpd
-  ; fadd operation forces the execution domain.
-  %a2 = fadd <2 x double> %a1, <double 0x0, double 0x4200000000000000>
-  call void @llvm.x86.sse2.movnt.pd(i8* %a0, <2 x double> %a2)
-  ret void
-}
-declare void @llvm.x86.sse2.movnt.pd(i8*, <2 x double>) nounwind
 
 
 define <2 x double> @test_x86_sse2_mul_sd(<2 x double> %a0, <2 x double> %a1) {
@@ -967,14 +917,6 @@ define <4 x float> @test_x86_sse41_insertps(<4 x float> %a0, <4 x float> %a1) {
 declare <4 x float> @llvm.x86.sse41.insertps(<4 x float>, <4 x float>, i32) nounwind readnone
 
 
-define <2 x i64> @test_x86_sse41_movntdqa(i8* %a0) {
-  ; CHECK: movl
-  ; CHECK: vmovntdqa
-  %res = call <2 x i64> @llvm.x86.sse41.movntdqa(i8* %a0) ; <<2 x i64>> [#uses=1]
-  ret <2 x i64> %res
-}
-declare <2 x i64> @llvm.x86.sse41.movntdqa(i8*) nounwind readonly
-
 
 define <8 x i16> @test_x86_sse41_mpsadbw(<16 x i8> %a0, <16 x i8> %a1) {
   ; CHECK: vmpsadbw
@@ -1524,14 +1466,6 @@ define void @test_x86_sse_ldmxcsr(i8* %a0) {
 declare void @llvm.x86.sse.ldmxcsr(i8*) nounwind
 
 
-define <4 x float> @test_x86_sse_loadu_ps(i8* %a0) {
-  ; CHECK: movl
-  ; CHECK: vmovups
-  %res = call <4 x float> @llvm.x86.sse.loadu.ps(i8* %a0) ; <<4 x float>> [#uses=1]
-  ret <4 x float> %res
-}
-declare <4 x float> @llvm.x86.sse.loadu.ps(i8*) nounwind readonly
-
 
 define <4 x float> @test_x86_sse_max_ps(<4 x float> %a0, <4 x float> %a1) {
   ; CHECK: vmaxps
@@ -1572,14 +1506,6 @@ define i32 @test_x86_sse_movmsk_ps(<4 x float> %a0) {
 }
 declare i32 @llvm.x86.sse.movmsk.ps(<4 x float>) nounwind readnone
 
-
-define void @test_x86_sse_movnt_ps(i8* %a0, <4 x float> %a1) {
-  ; CHECK: movl
-  ; CHECK: vmovntps
-  call void @llvm.x86.sse.movnt.ps(i8* %a0, <4 x float> %a1)
-  ret void
-}
-declare void @llvm.x86.sse.movnt.ps(i8*, <4 x float>) nounwind
 
 
 define <4 x float> @test_x86_sse_mul_ss(<4 x float> %a0, <4 x float> %a1) {
@@ -2019,34 +1945,6 @@ define <32 x i8> @test_x86_avx_ldu_dq_256(i8* %a0) {
 declare <32 x i8> @llvm.x86.avx.ldu.dq.256(i8*) nounwind readonly
 
 
-define <32 x i8> @test_x86_avx_loadu_dq_256(i8* %a0) {
-  ; CHECK: vmovdqu
-  %a1 = call <32 x i8> @llvm.x86.avx.loadu.dq.256(i8* %a0) ; <<32 x i8>> [#uses=1]
-  ; add operation forces the execution domain.
-  %res = add <32 x i8> %a1, <i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1>
-  ret <32 x i8> %res
-}
-declare <32 x i8> @llvm.x86.avx.loadu.dq.256(i8*) nounwind readonly
-
-
-define <4 x double> @test_x86_avx_loadu_pd_256(i8* %a0) {
-  ; CHECK: vmovupd
-  %a1 = call <4 x double> @llvm.x86.avx.loadu.pd.256(i8* %a0) ; <<4 x double>> [#uses=1]
-  ; add operation forces the execution domain.
-  %res = fadd <4 x double> %a1, <double 0x0, double 0x0, double 0x0, double 0x0>
-  ret <4 x double> %res
-}
-declare <4 x double> @llvm.x86.avx.loadu.pd.256(i8*) nounwind readonly
-
-
-define <8 x float> @test_x86_avx_loadu_ps_256(i8* %a0) {
-  ; CHECK: vmovups
-  %res = call <8 x float> @llvm.x86.avx.loadu.ps.256(i8* %a0) ; <<8 x float>> [#uses=1]
-  ret <8 x float> %res
-}
-declare <8 x float> @llvm.x86.avx.loadu.ps.256(i8*) nounwind readonly
-
-
 define <2 x double> @test_x86_avx_maskload_pd(i8* %a0, <2 x double> %a1) {
   ; CHECK: vmaskmovpd
   %res = call <2 x double> @llvm.x86.avx.maskload.pd(i8* %a0, <2 x double> %a1) ; <<2 x double>> [#uses=1]
@@ -2159,31 +2057,9 @@ define i32 @test_x86_avx_movmsk_ps_256(<8 x float> %a0) {
 declare i32 @llvm.x86.avx.movmsk.ps.256(<8 x float>) nounwind readnone
 
 
-define void @test_x86_avx_movnt_dq_256(i8* %a0, <4 x i64> %a1) {
-  ; CHECK: vmovntdq
-  ; add operation forces the execution domain.
-  %a2 = add <4 x i64> %a1, <i64 1, i64 1, i64 1, i64 1>
-  call void @llvm.x86.avx.movnt.dq.256(i8* %a0, <4 x i64> %a2)
-  ret void
-}
-declare void @llvm.x86.avx.movnt.dq.256(i8*, <4 x i64>) nounwind
 
 
-define void @test_x86_avx_movnt_pd_256(i8* %a0, <4 x double> %a1) {
-  ; CHECK: vmovntpd
-  %a2 = fadd <4 x double> %a1, <double 0x0, double 0x0, double 0x0, double 0x0>
-  call void @llvm.x86.avx.movnt.pd.256(i8* %a0, <4 x double> %a2)
-  ret void
-}
-declare void @llvm.x86.avx.movnt.pd.256(i8*, <4 x double>) nounwind
 
-
-define void @test_x86_avx_movnt_ps_256(i8* %a0, <8 x float> %a1) {
-  ; CHECK: vmovntps
-  call void @llvm.x86.avx.movnt.ps.256(i8* %a0, <8 x float> %a1)
-  ret void
-}
-declare void @llvm.x86.avx.movnt.ps.256(i8*, <8 x float>) nounwind
 
 
 define i32 @test_x86_avx_ptestc_256(<4 x i64> %a0, <4 x i64> %a1) {
