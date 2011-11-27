@@ -209,6 +209,11 @@ Release Notes</a>.</h1>
 </h3>
 
 <div>
+  
+<p>LLDB is a ground-up implementation of a command line debugger, as well as a
+   debugger API that can be used from other applications.  LLDB makes use of the
+   Clang parser to provide high-fidelity expression parsing (particularly for
+   C++) and uses the LLVM JIT for target support.</p>
 
 <p>LLDB has advanced by leaps and bounds in the 3.0 timeframe.  It is
    dramatically more stable and useful, and includes both a
@@ -231,23 +236,6 @@ Release Notes</a>.</h1>
 
 <p>Libc++ has been ported to FreeBSD and imported into the base system.  It is
    planned to be the default STL implementation for FreeBSD 10.</p>
-
-</div>
-
-
-<!--=========================================================================-->
-<h3>
-<a name="LLBrowse">LLBrowse: IR Browser</a>
-</h3>
-
-<div>
-
-<p><a href="http://llvm.org/svn/llvm-project/llbrowse/trunk/doc/LLBrowse.html">
-   LLBrowse</a> is an interactive viewer for LLVM modules. It can load any LLVM
-   module and displays its contents as an expandable tree view, facilitating an
-   easy way to inspect types, functions, global variables, or metadata nodes. It
-   is fully cross-platform, being based on the popular wxWidgets GUI
-   toolkit.</p>
 
 </div>
 
@@ -286,7 +274,24 @@ Release Notes</a>.</h1>
 
 </div>
   
-  
+
+<!--=========================================================================-->
+<h3>
+<a name="LLBrowse">LLBrowse: IR Browser</a>
+</h3>
+
+<div>
+
+<p><a href="http://llvm.org/svn/llvm-project/llbrowse/trunk/doc/LLBrowse.html">
+   LLBrowse</a> is an interactive viewer for LLVM modules. It can load any LLVM
+   module and displays its contents as an expandable tree view, facilitating an
+   easy way to inspect types, functions, global variables, or metadata nodes. It
+   is fully cross-platform, being based on the popular wxWidgets GUI
+   toolkit.</p>
+
+</div>
+
+
 <!--=========================================================================-->
 <!--
 <h3>
