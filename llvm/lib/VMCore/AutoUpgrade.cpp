@@ -40,21 +40,6 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
   
   switch (Name[0]) {
   default: break;
-  case 'a':
-    if (Name.startswith("atomic.cmp.swap") ||
-        Name.startswith("atomic.swap") ||
-        Name.startswith("atomic.load.add") ||
-        Name.startswith("atomic.load.sub") ||
-        Name.startswith("atomic.load.and") ||
-        Name.startswith("atomic.load.nand") ||
-        Name.startswith("atomic.load.or") ||
-        Name.startswith("atomic.load.xor") ||
-        Name.startswith("atomic.load.max") ||
-        Name.startswith("atomic.load.min") ||
-        Name.startswith("atomic.load.umax") ||
-        Name.startswith("atomic.load.umin"))
-      return true;
-    break;
   case 'm':
     if (Name == "memory.barrier")
       return true;
@@ -96,59 +81,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
   assert(F && "CallInst has no function associated with it.");
 
   if (!NewFn) {
-    if (F->getName().startswith("llvm.atomic.cmp.swap")) {
-      IRBuilder<> Builder(C);
-      Builder.SetInsertPoint(CI->getParent(), CI);
-      Value *Val = Builder.CreateAtomicCmpXchg(CI->getArgOperand(0),
-                                               CI->getArgOperand(1),
-                                               CI->getArgOperand(2),
-                                               Monotonic);
-
-      // Replace intrinsic.
-      Val->takeName(CI);
-      if (!CI->use_empty())
-        CI->replaceAllUsesWith(Val);
-      CI->eraseFromParent();
-    } else if (F->getName().startswith("llvm.atomic")) {
-      IRBuilder<> Builder(C);
-      Builder.SetInsertPoint(CI->getParent(), CI);
-
-      AtomicRMWInst::BinOp Op;
-      if (F->getName().startswith("llvm.atomic.swap"))
-        Op = AtomicRMWInst::Xchg;
-      else if (F->getName().startswith("llvm.atomic.load.add"))
-        Op = AtomicRMWInst::Add;
-      else if (F->getName().startswith("llvm.atomic.load.sub"))
-        Op = AtomicRMWInst::Sub;
-      else if (F->getName().startswith("llvm.atomic.load.and"))
-        Op = AtomicRMWInst::And;
-      else if (F->getName().startswith("llvm.atomic.load.nand"))
-        Op = AtomicRMWInst::Nand;
-      else if (F->getName().startswith("llvm.atomic.load.or"))
-        Op = AtomicRMWInst::Or;
-      else if (F->getName().startswith("llvm.atomic.load.xor"))
-        Op = AtomicRMWInst::Xor;
-      else if (F->getName().startswith("llvm.atomic.load.max"))
-        Op = AtomicRMWInst::Max;
-      else if (F->getName().startswith("llvm.atomic.load.min"))
-        Op = AtomicRMWInst::Min;
-      else if (F->getName().startswith("llvm.atomic.load.umax"))
-        Op = AtomicRMWInst::UMax;
-      else if (F->getName().startswith("llvm.atomic.load.umin"))
-        Op = AtomicRMWInst::UMin;
-      else
-        llvm_unreachable("Unknown atomic");
-
-      Value *Val = Builder.CreateAtomicRMW(Op, CI->getArgOperand(0),
-                                           CI->getArgOperand(1),
-                                           Monotonic);
-
-      // Replace intrinsic.
-      Val->takeName(CI);
-      if (!CI->use_empty())
-        CI->replaceAllUsesWith(Val);
-      CI->eraseFromParent();
-    } else if (F->getName() == "llvm.memory.barrier") {
+    if (F->getName() == "llvm.memory.barrier") {
       IRBuilder<> Builder(C);
       Builder.SetInsertPoint(CI->getParent(), CI);
 
