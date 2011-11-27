@@ -594,8 +594,17 @@ let isReturn=1, isTerminator=1, hasDelaySlot=1, isBarrier=1,
 //===----------------------------------------------------------------------===//
 
 let neverHasSideEffects = 1 in {
-  def NOP :  MBlazeInst< 0x20, FC, (outs), (ins), "nop    ", [], IIC_ALU>;
+  def NOP :  MBlazeInst<0x20, FC, (outs), (ins), "nop    ", [], IIC_ALU>;
 }
+
+let Predicates=[HasPatCmp] in {
+  def CLZ :  TCLZ<0x24, 0x00E0, (outs GPR:$dst), (ins GPR:$src),
+                  "clz    $dst, $src", [], IIC_ALU>;
+}
+
+def IMEMBAR  : MBAR<0x2E, 0x0420004, (outs), (ins), "mbar   2", [], IIC_ALU>;
+def DMEMBAR  : MBAR<0x2E, 0x0220004, (outs), (ins), "mbar   1", [], IIC_ALU>;
+def IDMEMBAR : MBAR<0x2E, 0x0020004, (outs), (ins), "mbar   0", [], IIC_ALU>;
 
 let usesCustomInserter = 1 in {
   def Select_CC : MBlazePseudo<(outs GPR:$dst),

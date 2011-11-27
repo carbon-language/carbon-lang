@@ -1,17 +1,14 @@
 # RUN: llvm-mc --disassemble %s -triple=mblaze-unknown-unknown | FileCheck %s
 
 ################################################################################
-# Pattern instructions
+# Memory Barrier instructions
 ################################################################################
 
-# CHECK:    pcmpbf      r0, r1, r2
-0x80 0x01 0x14 0x00
+# CHECK:    mbar        0
+0xB8 0x02 0x00 0x04
 
-# CHECK:    pcmpne      r0, r1, r2
-0x8c 0x01 0x14 0x00
+# CHECK:    mbar        1
+0xB8 0x22 0x00 0x04
 
-# CHECK:    pcmpeq      r0, r1, r2
-0x88 0x01 0x14 0x00
-
-# CHECK:    clz         r0, r1
-0x90 0x01 0x00 0xE0
+# CHECK:    mbar        2
+0xB8 0x42 0x00 0x04

@@ -123,6 +123,7 @@ static unsigned decodeSEXT(uint32_t insn) {
     case 0x41: return MBlaze::SRL;
     case 0x21: return MBlaze::SRC;
     case 0x01: return MBlaze::SRA;
+    case 0xE0: return MBlaze::CLZ;
     }
 }
 
@@ -176,6 +177,13 @@ static unsigned decodeBR(uint32_t insn) {
 }
 
 static unsigned decodeBRI(uint32_t insn) {
+    switch (insn&0x3FFFFFF) {
+    default:        break;
+    case 0x0020004: return MBlaze::IDMEMBAR;
+    case 0x0220004: return MBlaze::DMEMBAR;
+    case 0x0420004: return MBlaze::IMEMBAR;
+    }
+
     switch ((insn>>16)&0x1F) {
     default:   return UNSUPPORTED;
     case 0x00: return MBlaze::BRI;
@@ -531,6 +539,9 @@ MCDisassembler::DecodeStatus MBlazeDisassembler::getInstruction(MCInst &instr,
   default: 
     return Fail;
 
+  case MBlazeII::FC:
+    break;
+
   case MBlazeII::FRRRR:
     if (RD == UNSUPPORTED || RA == UNSUPPORTED || RB == UNSUPPORTED)
       return Fail;
@@ -545,6 +556,13 @@ MCDisassembler::DecodeStatus MBlazeDisassembler::getInstruction(MCInst &instr,
     instr.addOperand(MCOperand::CreateReg(RD));
     instr.addOperand(MCOperand::CreateReg(RA));
     instr.addOperand(MCOperand::CreateReg(RB));
+    break;
+
+  case MBlazeII::FRR:
+    if (RD == UNSUPPORTED || RA == UNSUPPORTED)
+      return Fail;
+    instr.addOperand(MCOperand::CreateReg(RD));
+    instr.addOperand(MCOperand::CreateReg(RA));
     break;
 
   case MBlazeII::FRI:

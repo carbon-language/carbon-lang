@@ -35,6 +35,7 @@ def FRIR    : Format<17>; // RSUBI
 def FRRRR   : Format<18>; // RSUB, FRSUB
 def FRI     : Format<19>; // RSUB, FRSUB
 def FC      : Format<20>; // NOP
+def FRR     : Format<21>; // CLZ
 
 //===----------------------------------------------------------------------===//
 //  Describe MBlaze instructions format
@@ -201,4 +202,27 @@ class MSR<bits<6> op, bits<6> flags, dag outs, dag ins, string asmstr,
   let Inst{6-10}  = rd;
   let Inst{11-16} = flags;
   let Inst{17-31} = imm15;
+}
+
+//===----------------------------------------------------------------------===//
+// TCLZ instruction class in MBlaze : <|opcode|rd|imm15|>
+//===----------------------------------------------------------------------===//
+class TCLZ<bits<6> op, bits<16> flags, dag outs, dag ins, string asmstr,
+           list<dag> pattern, InstrItinClass itin> :
+           MBlazeInst<op, FRR, outs, ins, asmstr, pattern, itin> {
+  bits<5>  rd;
+  bits<5>  ra;
+
+  let Inst{6-10}  = rd;
+  let Inst{11-15}  = ra;
+  let Inst{16-31}  = flags;
+}
+
+//===----------------------------------------------------------------------===//
+// MBAR instruction class in MBlaze : <|opcode|rd|imm15|>
+//===----------------------------------------------------------------------===//
+class MBAR<bits<6> op, bits<26> flags, dag outs, dag ins, string asmstr,
+           list<dag> pattern, InstrItinClass itin> :
+           MBlazeInst<op, FC, outs, ins, asmstr, pattern, itin> {
+  let Inst{6-31}  = flags;
 }
