@@ -45,7 +45,8 @@ Release Notes</a>.</h1>
 
 <p>This document contains the release notes for the LLVM Compiler
    Infrastructure, release 3.0.  Here we describe the status of LLVM, including
-   major improvements from the previous release and significant known problems.
+   major improvements from the previous release, improvements in various
+   subprojects of LLVM, and some of the current users of the code.
    All LLVM releases may be downloaded from
    the <a href="http://llvm.org/releases/">LLVM releases web site</a>.</p>
 
@@ -62,14 +63,6 @@ Release Notes</a>.</h1>
 
 </div>
    
-<!-- Features that need text if they're finished for 3.1:
-  ARM EHABI
-  combiner-aa?
-  strong phi elim
-  loop dependence analysis
-  CorrelatedValuePropagation
-  lib/Transforms/IPO/MergeFunctions.cpp => consider for 3.1.
- -->
  
 <!-- *********************************************************************** -->
 <h2>
@@ -99,7 +92,7 @@ Release Notes</a>.</h1>
    provides a modular, library-based architecture that makes it suitable for
    creating or integrating with other development tools. Clang is considered a
    production-quality compiler for C, Objective-C, C++ and Objective-C++ on x86
-   (32- and 64-bit), and for darwin/arm targets.</p>
+   (32- and 64-bit), and for Darwin/ARM targets.</p>
 
 <p>In the LLVM 3.0 time-frame, the Clang team has made many improvements:</p>
 
@@ -109,9 +102,9 @@ Release Notes</a>.</h1>
   
   <li><a href="http://clang.llvm.org/cxx_status.html">Improved support</a> for
       the <a href="http://www.iso.org/iso/iso_catalogue/catalogue_tc/catalogue_detail.htm?csnumber=50372">C++
-      2011</a> standard, including implementations of non-static data member
-      initializers, alias templates, delegating constructors, the range-based
-      for loop, and implicitly-generated move constructors and move assignment
+      2011</a> standard (aka "C++'0x"), including implementations of non-static data member
+      initializers, alias templates, delegating constructors, range-based
+      for loops, and implicitly-generated move constructors and move assignment
       operators, among others.</li>
 
   <li>Implemented support for some features of the upcoming C1x standard,
@@ -127,18 +120,18 @@ Release Notes</a>.</h1>
           Automatic Reference Counting</a> (ARC) and an improved memory model
           cleanly separating object and C memory.</li>
 
-      <li>A migration tool for moving legacy code to ARC</li>
+      <li>A migration tool for moving manual retain/release code to ARC</li>
 
       <li>Better support for data hiding, allowing instance variables to be
           declared in implementation contexts or class extensions</li>
-      <li>Weak linking for classes</li>
+      <li>Weak linking support for Objective-C classes</li>
       <li>Improved static type checking by inferring the return type of methods
       such as +alloc and -init.</li>
     </ul>
 
-    Some new features require either the Mac OS X 10.7 / iOS 5 Objective-C
-    runtime, or version 1.6 or later of the GNUstep Objective-C runtime
-    version.</li>
+    Some new Objective-C features require either the Mac OS X 10.7 / iOS 5
+    Objective-C runtime, or version 1.6 or later of the GNUstep Objective-C
+    runtime version.</li>
 
   <li>Implemented a number of optimizations in <tt>libclang</tt>, the Clang C
       interface, to improve the performance of code completion and the mapping
@@ -169,6 +162,7 @@ Release Notes</a>.</h1>
 
 <p>The 3.0 release has the following notable changes:</p>
 
+  <ul>
   <li>GCC version 4.6 is now fully supported.</li>
 
   <li>Patching and building GCC is no longer required: the plugin should work
@@ -177,16 +171,12 @@ Release Notes</a>.</h1>
 
   <li>The <tt>-fplugin-arg-dragonegg-enable-gcc-optzns</tt> option, which runs
       GCC's optimizers as well as LLVM's, now works much better.  This is the
-      option to use if you want ultimate performance! It not yet completely
-      stable: it may cause the plugin to crash.</li>
+      option to use if you want ultimate performance! It is still experimental
+      though: it may cause the plugin to crash.</li>
 
   <li>The type and constant conversion logic has been almost entirely rewritten,
       fixing a multitude of obscure bugs.</li>
 
-<ul>
-<!--
-<li></li>
--->
 </ul>
 
 </div>
@@ -207,7 +197,9 @@ Release Notes</a>.</h1>
    implementations of this and other low-level routines (some are 3x faster than
    the equivalent libgcc routines).</p>
 
-<p>In the LLVM 3.0 timeframe,</p>
+<p>In the LLVM 3.0 timeframe, the target specific ARM code has converted to
+   "unified" assembly syntax, and several new functions have been added to the
+   library.</p>
 
 </div>
 
@@ -739,6 +731,15 @@ be used to verify some algorithms.
 </h3>
 
 <div>
+
+  <!-- Features that need text if they're finished for 3.1:
+   ARM EHABI
+   combiner-aa?
+   strong phi elim
+   loop dependence analysis
+   CorrelatedValuePropagation
+   lib/Transforms/IPO/MergeFunctions.cpp => consider for 3.1.
+   -->
 
 <p><b>llvm-gcc is gone</b>.  LLVM's configure script doesn't depend on llvm-gcc anymore, clean layering.</p>
 
