@@ -1057,18 +1057,16 @@ be used to verify some algorithms.
 
 <div>
 
-  <p>PPC32/ELF va_arg was implemented.</p>
-  <p>PPC32 initial support for .o file writing was implemented.</p>
-  <p>MicroBlaze scheduling itineraries were added that model the
-     3-stage and the 5-stage pipeline architectures. The 3-stage
-     pipeline model can be selected with <code>-mcpu=mblaze3</code> 
-     and the 5-stage pipeline model can be selected with 
-     <code>-mcpu=mblaze5</code>.</p>
-  
 <ul>
-<!--
-<li></li>
--->
+<li>Many PowerPC improvements have been implemented for ELF targets, including
+   support for varargs and initial support for direct .o file emission.</li>
+  
+<li>MicroBlaze scheduling itineraries were added that model the
+   3-stage and the 5-stage pipeline architectures. The 3-stage
+   pipeline model can be selected with <code>-mcpu=mblaze3</code> 
+   and the 5-stage pipeline model can be selected with 
+   <code>-mcpu=mblaze5</code>.</li>
+
 </ul>
 
 </div>
@@ -1085,27 +1083,31 @@ be used to verify some algorithms.
    from the previous release.</p>
 
 <ul>
-  <li>LLVM's configure script doesn't depend on llvm-gcc anymore, clean layering.</p>
-  LLVM 3.0 removes support for reading LLVM 2.8 and earlier files.  Aim to maintain compatibility all the way back to 3.0 "forever".
-  Frontend tests removed from llvm/test/Frontend* 
-  Tablegen has been split into a library, clang tblgen pieces now live in clang.
-  The llvm version is now named llvm-tblgen instead of tblgen.
-    PostOrder Dominator frontiers were removed.
-    LowerSetJmp pass removed, unused.
-
-
+<li>LLVM 3.0 removes support for reading LLVM 2.8 and earlier files, and LLVM
+    3.1 will eliminate support for reading LLVM 2.9 files.  Going forward, we
+    aim for all future versions of LLVM to read bitcode files and .ll files 
+    produced by LLVM 3.0.</li>
+<li>Tablegen has been split into a library, allowing the clang tblgen pieces
+    now live in the clang tree.  The llvm version has been renamed to
+    llvm-tblgen instead of tblgen.</li>
   <li>The <code>LLVMC</code> meta compiler driver was removed.</li>
-  <li>The <code>LowerSetJmp</code> pass wasn't used effectively by any
-      target and has been removed.</li>
+  <li>The unused PostOrder Dominator Frontiers and LowerSetJmp passes were removed.</li>
+
+
   <li>The old <code>TailDup</code> pass was not used in the standard pipeline
       and was unable to update ssa form, so it has been removed.
   <li>The syntax of volatile loads and stores in IR has been changed to
       "<code>load volatile</code>"/"<code>store volatile</code>".  The old
       syntax ("<code>volatile load</code>"/"<code>volatile store</code>")
-      is still accepted, but is now considered deprecated.</li>
+      is still accepted, but is now considered deprecated and will be removed in
+      3.1.</li>
+  <li>llvm-gcc's frontend tests have been removed from llvm/test/Frontend*, sunk
+    into the clang and dragonegg testsuites.</li>
   <li>The old atomic intrinsics (<code>llvm.memory.barrier</code> and
       <code>llvm.atomic.*</code>) are now gone.  Please use the new atomic
       instructions, described in the <a href="Atomics.html">atomics guide</a>.
+  <li>LLVM's configure script doesn't depend on llvm-gcc anymore, eliminating a
+      strange circular dependence between projects.</li>
 </ul>
 
 <h4>Windows (32-bit)</h4>
