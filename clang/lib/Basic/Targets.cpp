@@ -1587,23 +1587,26 @@ bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
       (Name != "sse4" && Name != "sse4.2" && Name != "sse4.1"))
     return false;
 
+  // FIXME: this should probably use a switch with fall through.
+
   if (Enabled) {
     if (Name == "mmx")
       Features["mmx"] = true;
     else if (Name == "sse")
-      Features["sse"] = true;
+      Features["mmx"] = Features["sse"] = true;
     else if (Name == "sse2")
-      Features["sse"] = Features["sse2"] = true;
+      Features["mmx"] = Features["sse"] = Features["sse2"] = true;
     else if (Name == "sse3")
-      Features["sse"] = Features["sse2"] = Features["sse3"] = true;
+      Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] =
+        true;
     else if (Name == "ssse3")
-      Features["sse"] = Features["sse2"] = Features["sse3"] =
+      Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] =
         Features["ssse3"] = true;
     else if (Name == "sse4" || Name == "sse4.2")
-      Features["sse"] = Features["sse2"] = Features["sse3"] =
+      Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] =
         Features["ssse3"] = Features["sse41"] = Features["sse42"] = true;
     else if (Name == "sse4.1")
-      Features["sse"] = Features["sse2"] = Features["sse3"] =
+      Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] =
         Features["ssse3"] = Features["sse41"] = true;
     else if (Name == "3dnow")
       Features["mmx"] = Features["3dnow"] = true;
@@ -1612,10 +1615,11 @@ bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
     else if (Name == "aes")
       Features["aes"] = true;
     else if (Name == "avx")
-      Features["avx"] = Features["sse"] = Features["sse2"] = Features["sse3"] =
-        Features["ssse3"] = Features["sse41"] = Features["sse42"] = true;
+      Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] =
+        Features["ssse3"] = Features["sse41"] = Features["sse42"] =
+        Features["avx"] = true;
     else if (Name == "sse4a")
-      Features["sse4a"] = true;
+      Features["mmx"] = Features["sse4a"] = true;
   } else {
     if (Name == "mmx")
       Features["mmx"] = Features["3dnow"] = Features["3dnowa"] = false;
@@ -3671,13 +3675,32 @@ TargetInfo *TargetInfo::CreateTargetInfo(DiagnosticsEngine &Diags,
   Target->getDefaultFeatures(Features);
 
   // Apply the user specified deltas.
+  // First the enables.
   for (std::vector<std::string>::const_iterator it = Opts.Features.begin(),
          ie = Opts.Features.end(); it != ie; ++it) {
     const char *Name = it->c_str();
 
+    if (Name[0] != '+')
+      continue;
+
     // Apply the feature via the target.
-    if ((Name[0] != '-' && Name[0] != '+') ||
-        !Target->setFeatureEnabled(Features, Name + 1, (Name[0] == '+'))) {
+    if (!Target->setFeatureEnabled(Features, Name + 1, true)) {
+      Diags.Report(diag::err_target_invalid_feature) << Name;
+      return 0;
+    }
+  }
+
+  // Then the disables.
+  for (std::vector<std::string>::const_iterator it = Opts.Features.begin(),
+         ie = Opts.Features.end(); it != ie; ++it) {
+    const char *Name = it->c_str();
+
+    if (Name[0] == '+')
+      continue;
+
+    // Apply the feature via the target.
+    if (Name[0] != '-' ||
+        !Target->setFeatureEnabled(Features, Name + 1, false)) {
       Diags.Report(diag::err_target_invalid_feature) << Name;
       return 0;
     }
