@@ -753,7 +753,7 @@ be used to verify some algorithms.
    llvm/lib/Archive - replace with lib object?
    -->
 
-<p>LLVM 3.0 includes several major changes:</p>
+<p>LLVM 3.0 includes several major changes and big features:</p>
 
 <ul>
 <li>llvm-gcc is no longer supported, and not included in the release.  We 
@@ -767,12 +767,19 @@ be used to verify some algorithms.
     href="http://blog.llvm.org/2011/09/greedy-register-allocation-in-llvm-30.html">blog post</a> or its talk at the <a 
       href="http://llvm.org/devmtg/2011-11/">Developer Meeting</a>
     for more information.</li>
-<li> New <a href="Atomics.html">atomics</a> instructions, "#i_fence" instruction, cmpxchg, atomicrmw too.  What target support (X86/ARM)? Also 'atomic load/store'. 
+<li>LLVM IR now includes full support for <a href="Atomics.html">atomics
+    memory operations</a> intended to support the C++'11 and C'1x memory models.
+    This includes <a href="LangRef.html#memoryops">atomic load and store,
+    compare and exchange, and read/modify/write instructions</a> as well as a
+    full set of <a href="LangRef.html#ordering">memory ordering constraints</a>.
+    Please see the <a href="Atomics.html">Atomics Guide</a> for more
+    information.
 </li>
 <li>The LLVM IR exception handling representation has been redesigned and
     reimplemented, making it more elegant, fixing a huge number of bugs, and
     enabling inlining and other optimizations.  Please see its blog post (XXX
-    not yet) for more information.</li>
+    not yet) and the <a href="ExceptionHandling.html">Exception Handling
+    documentation</a> for more information.</li>
 <li>The LLVM IR Type system has been redesigned and reimplemented, making it
     faster and solving some long-standing problems.
     Please see its <a 
@@ -780,13 +787,14 @@ be used to verify some algorithms.
     post</a> for more information.</li>
   
 <li>The MIPS backend has made major leaps in this release, going from an
-    experimental target to being virtually production quality that supports a
+    experimental target to being virtually production quality and supporting a
     wide variety of MIPS subtargets.  See the <a href="#MIPS">MIPS section</a>
     below for more information.</li>
   
 <li>The optimizer and code generator now supports gprof and gcov-style coverage
-    and profiling information, and includes a new llvm-cov tool.  Clang exposes
-    this through GCC-compatible command line options.</li>
+    and profiling information, and includes a new llvm-cov tool (but also works
+    with gcov).  Clang exposes coverage and profiling through GCC-compatible
+    command line options.</li>
 </ul>
 
 </div>
@@ -802,38 +810,28 @@ be used to verify some algorithms.
 <p>LLVM IR has several new features for better support of new targets and that
    expose new optimization opportunities:</p>
 
-  New llvm.expect intrinsic.
-  New llvm.fma intrinsic.
-
-  LangRef.html#fnattrs uwtable attribute for asynch unwind tables.
-  llvm.prefetch now takes a 4th argument that specifies whether the prefetch happens to the icache or dcache.
-  New nonlazybind function attribute.
-  data layout string can encode the natural alignment of the target's stack for better optimization (LangRef.html#datalayout)
-  returns_twice attribute (rafael)
-
-</div>
-
-<!--=========================================================================-->
-<h3>
-<a name="loopoptimization">Loop Optimization Improvements</a>
-</h3>
-
-<div>
-<p>The induction variable simplification pass in 3.0 only modifies
-   induction variables when profitable. Sign and zero extension
-   elimination, linear function test replacement, loop unrolling, and
-   other simplifications that require induction variable analysis have
-   been generalized so they no longer require loops to be rewritten in a
-   typically suboptimal form prior to optimization. This new design
-   preserves more IR level information, avoids undoing earlier loop
-   optimizations (particularly hand-optimized loops), and no longer
-   strongly depends on the code generator rewriting loops a second time
-   in a now optimal form--an intractable problem.</p>
-
-<p>The original behavior can be restored with -mllvm -enable-iv-rewrite;
-   however, support for this mode will be short lived. As such, bug
-   reports should be filed for any significant performance regressions
-   when moving from -mllvm -enable-iv-rewrite to the 3.0 default mode.</p>
+  <ul>
+  <li><a href="Atomics.html">Atomic memory accesses and memory ordering</a> are
+      now directly expressible in the IR.</li>
+  <li>A new <a href="LangRef.html#int_fma">llvm.fma intrinsic</a> directly
+    represents floating point multiply accumulate operations without an
+    intermediate rounding stage.</li>
+  <li>A new llvm.expect intrinsic (XXX not documented in langref) allows a
+     frontend to express expected control flow (and the __builtin_expect builtin
+    from GNU C).</li>
+  <li>The <a href="LangRef.html#int_prefetch">llvm.prefetch intrinsic</a> now
+    takes a 4th argument that specifies whether the prefetch happens from the
+    icache or dcache.</li>
+  <li>The new <a href="LangRef.html#uwtable">uwtable function attribute</a>
+    allows a frontend to control emission of unwind tables.</li>
+  <li>The new <a href="LangRef.html#fnattrs">nonlazybind function
+    attribute</a> allow optimization of Global Offset Table (GOT) accesses.</li>
+  <li>The new <a href="LangRef.html#returns_twice">returns_twice attribute</a>
+    allows better modeling of functions like setjmp.</li>
+  <li>The <a href="LangRef.html#datalayout">target datalayout</a> string can now
+    encode the natural alignment of the target's stack for better optimization.
+    </li>
+  </ul>
 </div>
 
 <!--=========================================================================-->
@@ -843,12 +841,14 @@ be used to verify some algorithms.
 
 <div>
 
-<p>In addition to a large array of minor performance tweaks and bug fixes, this
+<p>In addition to many minor performance tweaks and bug fixes, this
    release includes a few major enhancements and additions to the
    optimizers:</p>
 
 <ul>
-  Pass manager extension API.
+<li>The pass manager now has an extension API that allows front-ends and plugins
+    to insert their own optimizations in the well-known places in the standard
+    pass optimization pipeline.</li>
 
 <li>Information about <a href="BranchWeightMetadata.html">branch probability</a>
     and basic block frequency is now available within LLVM, based on a
@@ -857,10 +857,24 @@ be used to verify some algorithms.
     register spill placement and if-conversion, with additional optimizations
     planned for future releases.  The same framework is intended for eventual
     use with profile-guided optimization.</li>
-
-  ARC language specific optimizer (Transforms/ObjCARC) a decent example of language-specific transformation.
-
   
+<li>The "-indvars" induction variable simplification pass only modifies
+    induction variables when profitable. Sign and zero extension
+    elimination, linear function test replacement, loop unrolling, and
+    other simplifications that require induction variable analysis have
+    been generalized so they no longer require loops to be rewritten into 
+    canonical form prior to optimization. This new design
+    preserves more IR level information, avoids undoing earlier loop
+    optimizations (particularly hand-optimized loops), and no longer
+    requires the code generator to reconstruct loops into an optimal form -
+    an intractable problem.</li>
+
+<li>LLVM now includes a pass to optimize retain/release calls for the
+  <a href="http://clang.llvm.org/docs/AutomaticReferenceCounting.html">Automatic
+    Reference Counting</a> (ARC) Objective-C language feature (in
+    lib/Transforms/ObjCARC).  It is a decent example of implementing a
+    source-language-specific optimization in LLVM.</li>
+
 </ul>
 
 </div>
