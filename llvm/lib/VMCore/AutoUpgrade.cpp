@@ -37,9 +37,6 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
   if (Name.size() <= 8 || !Name.startswith("llvm."))
     return false;
   Name = Name.substr(5); // Strip off "llvm."
-
-  FunctionType *FTy = F->getFunctionType();
-  Module *M = F->getParent();
   
   switch (Name[0]) {
   default: break;
@@ -57,55 +54,10 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
         Name.startswith("atomic.load.umax") ||
         Name.startswith("atomic.load.umin"))
       return true;
-  case 'i':
-    //  This upgrades the old llvm.init.trampoline to the new
-    //  llvm.init.trampoline and llvm.adjust.trampoline pair.
-    if (Name == "init.trampoline") {
-      // The new llvm.init.trampoline returns nothing.
-      if (FTy->getReturnType()->isVoidTy())
-        break;
-
-      assert(FTy->getNumParams() == 3 && "old init.trampoline takes 3 args!");
-
-      // Change the name of the old intrinsic so that we can play with its type.
-      std::string NameTmp = F->getName();
-      F->setName("");
-      NewFn = cast<Function>(M->getOrInsertFunction(
-                               NameTmp,
-                               Type::getVoidTy(M->getContext()),
-                               FTy->getParamType(0), FTy->getParamType(1),
-                               FTy->getParamType(2), (Type *)0));
-      return true;
-    }
+    break;
   case 'm':
     if (Name == "memory.barrier")
       return true;
-  case 'p':
-    //  This upgrades the llvm.prefetch intrinsic to accept one more parameter,
-    //  which is a instruction / data cache identifier. The old version only
-    //  implicitly accepted the data version.
-    if (Name == "prefetch") {
-      // Don't do anything if it has the correct number of arguments already
-      if (FTy->getNumParams() == 4)
-        break;
-
-      assert(FTy->getNumParams() == 3 && "old prefetch takes 3 args!");
-      //  We first need to change the name of the old (bad) intrinsic, because
-      //  its type is incorrect, but we cannot overload that name. We
-      //  arbitrarily unique it here allowing us to construct a correctly named
-      //  and typed function below.
-      std::string NameTmp = F->getName();
-      F->setName("");
-      NewFn = cast<Function>(M->getOrInsertFunction(NameTmp,
-                                                    FTy->getReturnType(),
-                                                    FTy->getParamType(0),
-                                                    FTy->getParamType(1),
-                                                    FTy->getParamType(2),
-                                                    FTy->getParamType(2),
-                                                    (Type*)0));
-      return true;
-    }
-
     break;
   }
 
@@ -222,58 +174,6 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       llvm_unreachable("Unknown function for CallInst upgrade.");
     }
     return;
-  }
-
-  switch (NewFn->getIntrinsicID()) {
-  case Intrinsic::prefetch: {
-    IRBuilder<> Builder(C);
-    Builder.SetInsertPoint(CI->getParent(), CI);
-    llvm::Type *I32Ty = llvm::Type::getInt32Ty(CI->getContext());
-
-    // Add the extra "data cache" argument
-    Value *Operands[4] = { CI->getArgOperand(0), CI->getArgOperand(1),
-                           CI->getArgOperand(2),
-                           llvm::ConstantInt::get(I32Ty, 1) };
-    CallInst *NewCI = CallInst::Create(NewFn, Operands,
-                                       CI->getName(), CI);
-    NewCI->setTailCall(CI->isTailCall());
-    NewCI->setCallingConv(CI->getCallingConv());
-    //  Handle any uses of the old CallInst.
-    if (!CI->use_empty())
-      //  Replace all uses of the old call with the new cast which has the
-      //  correct type.
-      CI->replaceAllUsesWith(NewCI);
-
-    //  Clean up the old call now that it has been completely upgraded.
-    CI->eraseFromParent();
-    break;
-  }
-  case Intrinsic::init_trampoline: {
-
-    //  Transform
-    //    %tramp = call i8* llvm.init.trampoline (i8* x, i8* y, i8* z)
-    //  to
-    //    call void llvm.init.trampoline (i8* %x, i8* %y, i8* %z)
-    //    %tramp = call i8* llvm.adjust.trampoline (i8* %x)
-
-    Function *AdjustTrampolineFn =
-      cast<Function>(Intrinsic::getDeclaration(F->getParent(),
-                                               Intrinsic::adjust_trampoline));
-
-    IRBuilder<> Builder(C);
-    Builder.SetInsertPoint(CI);
-
-    Builder.CreateCall3(NewFn, CI->getArgOperand(0), CI->getArgOperand(1),
-                        CI->getArgOperand(2));
-
-    CallInst *AdjustCall = Builder.CreateCall(AdjustTrampolineFn,
-                                              CI->getArgOperand(0),
-                                              CI->getName());
-    if (!CI->use_empty())
-      CI->replaceAllUsesWith(AdjustCall);
-    CI->eraseFromParent();
-    break;
-  }
   }
 }
 

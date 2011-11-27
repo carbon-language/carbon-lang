@@ -6,7 +6,6 @@ declare i1 @llvm.isunordered.f32(float, float)
 
 declare i1 @llvm.isunordered.f64(double, double)
 
-declare void @llvm.prefetch(i8*, i32, i32)
 
 declare i8 @llvm.ctpop.i8(i8)
 
@@ -41,7 +40,6 @@ declare double @llvm.sqrt.f64(double)
 define void @libm() {
         fcmp uno float 1.000000e+00, 2.000000e+00               ; <i1>:1 [#uses=0]
         fcmp uno double 3.000000e+00, 4.000000e+00              ; <i1>:2 [#uses=0]
-        call void @llvm.prefetch( i8* null, i32 1, i32 3 )
         call float @llvm.sqrt.f32( float 5.000000e+00 )         ; <float>:3 [#uses=0]
         call double @llvm.sqrt.f64( double 6.000000e+00 )               ; <double>:4 [#uses=0]
         call i8  @llvm.ctpop.i8( i8 10 )                ; <i32>:5 [#uses=0]
