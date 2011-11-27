@@ -4116,7 +4116,8 @@ ExprResult Sema::MaybeBindToTemporary(Expr *E) {
   if (!getLangOptions().CPlusPlus)
     return Owned(E);
 
-  const RecordType *RT = E->getType()->getAs<RecordType>();
+  QualType ET = Context.getBaseElementType(E->getType());
+  const RecordType *RT = ET->getAs<RecordType>();
   if (!RT)
     return Owned(E);
 

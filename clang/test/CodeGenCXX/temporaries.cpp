@@ -519,3 +519,21 @@ namespace PR8623 {
     b ? A(2) : A(3);
   }
 }
+
+namespace PR11365 {
+  struct A { A(); ~A(); };
+
+  // CHECK: define void @_ZN7PR113653fooEv(
+  void foo() {
+    // CHECK: [[BEGIN:%.*]] = getelementptr inbounds [3 x [[A:%.*]]]* {{.*}}, i32 0, i32 0
+    // CHECK-NEXT: [[END:%.*]] = getelementptr inbounds [[A]]* [[BEGIN]], i64 3
+    // CHECK-NEXT: br label
+
+    // CHECK: [[PHI:%.*]] = phi
+    // CHECK-NEXT: [[ELEM:%.*]] = getelementptr inbounds [[A]]* [[PHI]], i64 -1
+    // CHECK-NEXT: call void @_ZN7PR113651AD1Ev([[A]]* [[ELEM]])
+    // CHECK-NEXT: icmp eq [[A]]* [[ELEM]], [[BEGIN]]
+    // CHECK-NEXT: br i1
+    (void) (A [3]) {};
+  }
+}

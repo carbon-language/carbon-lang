@@ -618,8 +618,9 @@ CXXTemporary *CXXTemporary::Create(ASTContext &C,
 CXXBindTemporaryExpr *CXXBindTemporaryExpr::Create(ASTContext &C,
                                                    CXXTemporary *Temp,
                                                    Expr* SubExpr) {
-  assert(SubExpr->getType()->isRecordType() &&
-         "Expression bound to a temporary must have record type!");
+  assert((SubExpr->getType()->isRecordType() ||
+          SubExpr->getType()->isArrayType()) &&
+         "Expression bound to a temporary must have record or array type!");
 
   return new (C) CXXBindTemporaryExpr(Temp, SubExpr);
 }
