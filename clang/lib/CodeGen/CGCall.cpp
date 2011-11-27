@@ -831,7 +831,8 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
       // FALL THROUGH
     case ABIArgInfo::Direct:
       if (RegParm > 0 &&
-          (ParamType->isIntegerType() || ParamType->isPointerType())) {
+          (ParamType->isIntegerType() || ParamType->isPointerType() ||
+           ParamType->isReferenceType())) {
         RegParm -=
         (Context.getTypeSize(ParamType) + PointerWidth - 1) / PointerWidth;
         if (RegParm >= 0)
