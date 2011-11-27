@@ -67,7 +67,7 @@ declare void @exit(i32) noreturn
 ; DAG Combiner can't fold this into a load of the 1'th byte.
 ; PR8757
 define i32 @test3(i32 *%P) nounwind ssp {
-  volatile store i32 128, i32* %P
+  store volatile i32 128, i32* %P
   %tmp4.pre = load i32* %P
   %phitmp = trunc i32 %tmp4.pre to i16
   %phitmp13 = shl i16 %phitmp, 8

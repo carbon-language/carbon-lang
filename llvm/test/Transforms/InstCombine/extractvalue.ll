@@ -88,7 +88,7 @@ define i32 @doubleextract2gep({i32, {i32, i32}}* %arg) {
 ; CHECK-NEXT: ret
 define i32 @nogep-multiuse({i32, i32}* %pair) {
         ; The load should be left unchanged since both parts are needed.
-        %L = volatile load {i32, i32}* %pair
+        %L = load volatile {i32, i32}* %pair
         %LHS = extractvalue {i32, i32} %L, 0
         %RHS = extractvalue {i32, i32} %L, 1
         %R = add i32 %LHS, %RHS
@@ -100,8 +100,8 @@ define i32 @nogep-multiuse({i32, i32}* %pair) {
 ; CHECK-NEXT: extractvalue
 ; CHECK-NEXT: ret
 define i32 @nogep-volatile({i32, i32}* %pair) {
-        ; The volatile load should be left unchanged.
-        %L = volatile load {i32, i32}* %pair
+        ; The load volatile should be left unchanged.
+        %L = load volatile {i32, i32}* %pair
         %E = extractvalue {i32, i32} %L, 1
         ret i32 %E
 }

@@ -12,7 +12,7 @@
 define void @foo(i32 %x) nounwind readnone {
 entry:
   %b = alloca i32, align 4                        ; <i32*> [#uses=1]
-  volatile store i32 -1, i32* %b
+  store volatile i32 -1, i32* %b
   ret void
 }
 

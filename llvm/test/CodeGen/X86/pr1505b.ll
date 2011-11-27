@@ -33,7 +33,7 @@ declare i32 @__cxa_atexit(void (i8*)*, i8*, i8*)
 define i32 @main() {
 entry:
 ; CHECK: flds
-	%tmp6 = volatile load float* @a		; <float> [#uses=1]
+	%tmp6 = load volatile float* @a		; <float> [#uses=1]
 ; CHECK: fstps (%esp)
 ; CHECK: tanf
 	%tmp9 = tail call float @tanf( float %tmp6 )		; <float> [#uses=1]
@@ -41,7 +41,7 @@ entry:
 ; CHECK: fstp
 
 ; CHECK: fldl
-	%tmp12 = volatile load double* @b		; <double> [#uses=1]
+	%tmp12 = load volatile double* @b		; <double> [#uses=1]
 ; CHECK: fstpl (%esp)
 ; CHECK: tan
 	%tmp13 = tail call double @tan( double %tmp12 )		; <double> [#uses=1]

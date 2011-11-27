@@ -13,6 +13,6 @@ entry:
   br label %bb
 
 bb:                                               ; preds = %bb, %entry
-  volatile store i32 525509670, i32* %p, align 4
+  store volatile i32 525509670, i32* %p, align 4
   br label %bb
 }

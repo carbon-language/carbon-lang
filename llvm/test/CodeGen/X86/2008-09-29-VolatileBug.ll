@@ -6,7 +6,7 @@
 
 define i32 @main() nounwind {
 entry:
-	%0 = volatile load i32* @g_407, align 4		; <i32> [#uses=1]
+	%0 = load volatile i32* @g_407, align 4		; <i32> [#uses=1]
 	%1 = trunc i32 %0 to i8		; <i8> [#uses=1]
 	%2 = tail call i32 @func_45(i8 zeroext %1) nounwind		; <i32> [#uses=0]
 	ret i32 0

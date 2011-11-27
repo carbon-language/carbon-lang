@@ -32,7 +32,7 @@ define i8 @am3(i8 %x, i16 %n) nounwind {
 ; CHECK:		bis.b	bar(r14), r15
 
 define i16 @am4(i16 %x) nounwind {
-	%1 = volatile load i16* inttoptr(i16 32 to i16*)
+	%1 = load volatile i16* inttoptr(i16 32 to i16*)
 	%2 = or i16 %1,%x
 	ret i16 %2
 }

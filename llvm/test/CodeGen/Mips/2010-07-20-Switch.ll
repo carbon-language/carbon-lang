@@ -3,8 +3,8 @@
 define i32 @main() nounwind readnone {
 entry:
   %x = alloca i32, align 4                        ; <i32*> [#uses=2]
-  volatile store i32 2, i32* %x, align 4
-  %0 = volatile load i32* %x, align 4             ; <i32> [#uses=1]
+  store volatile i32 2, i32* %x, align 4
+  %0 = load volatile i32* %x, align 4             ; <i32> [#uses=1]
 ; CHECK: lui $3, %hi($JTI0_0)
 ; CHECK: addiu $3, $3, %lo($JTI0_0)
 ; CHECK: sll $2, $2, 2

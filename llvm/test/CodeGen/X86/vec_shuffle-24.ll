@@ -5,7 +5,7 @@ entry:
 ; CHECK: punpckldq
 	%a = alloca <4 x i32>		; <<4 x i32>*> [#uses=2]
 	%b = alloca <4 x i32>		; <<4 x i32>*> [#uses=5]
-	volatile store <4 x i32> < i32 0, i32 1, i32 2, i32 3 >, <4 x i32>* %a
+	store volatile <4 x i32> < i32 0, i32 1, i32 2, i32 3 >, <4 x i32>* %a
 	%tmp = load <4 x i32>* %a		; <<4 x i32>> [#uses=1]
 	store <4 x i32> %tmp, <4 x i32>* %b
 	%tmp1 = load <4 x i32>* %b		; <<4 x i32>> [#uses=1]

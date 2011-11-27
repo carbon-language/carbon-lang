@@ -6,7 +6,7 @@
 
 define void @simple_vol_file() nounwind {
 entry:
-  %tmp = volatile load i32** @stat_vol_ptr_int, align 4
+  %tmp = load volatile i32** @stat_vol_ptr_int, align 4
   %0 = bitcast i32* %tmp to i8*
   call void @llvm.prefetch(i8* %0, i32 0, i32 0, i32 1)
   %tmp1 = load i32** @stat_ptr_vol_int, align 4

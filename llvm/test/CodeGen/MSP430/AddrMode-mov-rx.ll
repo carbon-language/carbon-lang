@@ -29,7 +29,7 @@ define i8 @am3(i16 %n) nounwind {
 ; CHECK:		mov.b	bar(r15), r15
 
 define i16 @am4() nounwind {
-	%1 = volatile load i16* inttoptr(i16 32 to i16*)
+	%1 = load volatile i16* inttoptr(i16 32 to i16*)
 	ret i16 %1
 }
 ; CHECK: am4:

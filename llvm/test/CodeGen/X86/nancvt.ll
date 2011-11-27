@@ -52,8 +52,8 @@ bb:		; preds = %bb23
 	%tmp17 = ashr i64 %tmp16, %.cast		; <i64> [#uses=1]
 	%tmp1718 = trunc i64 %tmp17 to i32		; <i32> [#uses=1]
 	%tmp19 = getelementptr [10 x i8]* @.str, i32 0, i32 0		; <i8*> [#uses=1]
-	volatile store i32 %tmp1718, i32* @var
-	volatile store i32 %tmp13, i32* @var
+	store volatile i32 %tmp1718, i32* @var
+	store volatile i32 %tmp13, i32* @var
 	%tmp21 = load i32* %i, align 4		; <i32> [#uses=1]
 	%tmp22 = add i32 %tmp21, 1		; <i32> [#uses=1]
 	store i32 %tmp22, i32* %i, align 4
@@ -86,7 +86,7 @@ bb28:		; preds = %bb46
 	%tmp3940 = bitcast float* %tmp39 to i32*		; <i32*> [#uses=1]
 	%tmp41 = load i32* %tmp3940, align 4		; <i32> [#uses=1]
 	%tmp42 = getelementptr [6 x i8]* @.str1, i32 0, i32 0		; <i8*> [#uses=1]
-	volatile store i32 %tmp41, i32* @var
+	store volatile i32 %tmp41, i32* @var
 	%tmp44 = load i32* %i, align 4		; <i32> [#uses=1]
 	%tmp45 = add i32 %tmp44, 1		; <i32> [#uses=1]
 	store i32 %tmp45, i32* %i, align 4
@@ -127,8 +127,8 @@ bb52:		; preds = %bb78
 	%tmp72 = ashr i64 %tmp70, %.cast71		; <i64> [#uses=1]
 	%tmp7273 = trunc i64 %tmp72 to i32		; <i32> [#uses=1]
 	%tmp74 = getelementptr [10 x i8]* @.str, i32 0, i32 0		; <i8*> [#uses=1]
-	volatile store i32 %tmp7273, i32* @var
-	volatile store i32 %tmp66, i32* @var
+	store volatile i32 %tmp7273, i32* @var
+	store volatile i32 %tmp66, i32* @var
 	%tmp76 = load i32* %i, align 4		; <i32> [#uses=1]
 	%tmp77 = add i32 %tmp76, 1		; <i32> [#uses=1]
 	store i32 %tmp77, i32* %i, align 4
@@ -161,7 +161,7 @@ bb84:		; preds = %bb101
 	%tmp9495 = bitcast float* %tmp94 to i32*		; <i32*> [#uses=1]
 	%tmp96 = load i32* %tmp9495, align 4		; <i32> [#uses=1]
 	%tmp97 = getelementptr [6 x i8]* @.str1, i32 0, i32 0		; <i8*> [#uses=1]
-	volatile store i32 %tmp96, i32* @var
+	store volatile i32 %tmp96, i32* @var
 	%tmp99 = load i32* %i, align 4		; <i32> [#uses=1]
 	%tmp100 = add i32 %tmp99, 1		; <i32> [#uses=1]
 	store i32 %tmp100, i32* %i, align 4

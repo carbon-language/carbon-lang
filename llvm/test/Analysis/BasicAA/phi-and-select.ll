@@ -17,8 +17,8 @@ false:
 exit:
   %a = phi double* [ %x, %true ], [ %y, %false ]
   %b = phi double* [ %x, %false ], [ %y, %true ]
-  volatile store double 0.0, double* %a
-  volatile store double 1.0, double* %b
+  store volatile double 0.0, double* %a
+  store volatile double 1.0, double* %b
   ret void
 }
 
@@ -27,8 +27,8 @@ define void @bar(i1 %m, double* noalias %x, double* noalias %y) {
 entry:
   %a = select i1 %m, double* %x, double* %y
   %b = select i1 %m, double* %y, double* %x
-  volatile store double 0.000000e+00, double* %a
-  volatile store double 1.000000e+00, double* %b
+  store volatile double 0.000000e+00, double* %a
+  store volatile double 1.000000e+00, double* %b
   ret void
 }
 
@@ -56,8 +56,8 @@ nfalse:
 
 nexit:
   %b = phi double* [ %v, %ntrue ], [ %w, %nfalse ]
-  volatile store double 0.0, double* %a
-  volatile store double 1.0, double* %b
+  store volatile double 0.0, double* %a
+  store volatile double 1.0, double* %b
   ret void
 }
 
@@ -67,7 +67,7 @@ define void @fin(i1 %m, double* noalias %x, double* noalias %y,
 entry:
   %a = select i1 %m, double* %x, double* %y
   %b = select i1 %n, double* %v, double* %w
-  volatile store double 0.000000e+00, double* %a
-  volatile store double 1.000000e+00, double* %b
+  store volatile double 0.000000e+00, double* %a
+  store volatile double 1.000000e+00, double* %b
   ret void
 }

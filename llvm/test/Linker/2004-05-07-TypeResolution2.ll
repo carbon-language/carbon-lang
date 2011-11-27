@@ -9,7 +9,7 @@ target datalayout = "e-p:32:32"
 define internal void @f1(%struct1* %tty) {
 loopentry.preheader:
 	%tmp.2.i.i = getelementptr %struct1* %tty, i64 0, i32 1		; <void (%struct2*)**> [#uses=1]
-	%tmp.3.i.i = volatile load void (%struct2*)** %tmp.2.i.i		; <void (%struct2*)*> [#uses=0]
+	%tmp.3.i.i = load volatile void (%struct2*)** %tmp.2.i.i		; <void (%struct2*)*> [#uses=0]
 	ret void
 }
 

@@ -30,10 +30,10 @@ entry:
 define void @h() {
 entry:
   %i = alloca i32, align 4
-  volatile store i32 10, i32* %i, align 4
+  store volatile i32 10, i32* %i, align 4
 ; CHECK: %tmp = load volatile i32* %i, align 4
 ; CHECK-next: call void @f(i32 undef)
-  %tmp = volatile load i32* %i, align 4
+  %tmp = load volatile i32* %i, align 4
   call void @f(i32 %tmp)
   ret void
 }

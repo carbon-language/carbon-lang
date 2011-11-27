@@ -90,7 +90,7 @@ entry:
 	br label %bb4
 
 bb:		; preds = %bb4
-	%0 = volatile load i32* @x, align 4		; <i32> [#uses=1]
+	%0 = load volatile i32* @x, align 4		; <i32> [#uses=1]
 	store i32 %0, i32* %vol.0, align 4
 	store i32 0, i32* %l_52, align 4
 	br label %bb2

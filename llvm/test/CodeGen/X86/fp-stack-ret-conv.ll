@@ -10,7 +10,7 @@ entry:
 	%tmp13 = tail call double @foo()
 	%tmp1314 = fptrunc double %tmp13 to float		; <float> [#uses=1]
 	%tmp3940 = fpext float %tmp1314 to double		; <double> [#uses=1]
-	volatile store double %tmp3940, double* %b
+	store volatile double %tmp3940, double* %b
 	ret void
 }
 

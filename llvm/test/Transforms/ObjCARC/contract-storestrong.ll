@@ -33,7 +33,7 @@ entry:
 define void @test1(i8* %p) {
 entry:
   %0 = tail call i8* @objc_retain(i8* %p) nounwind
-  %tmp = volatile load i8** @x, align 8
+  %tmp = load volatile i8** @x, align 8
   store i8* %0, i8** @x, align 8
   tail call void @objc_release(i8* %tmp) nounwind
   ret void
@@ -53,7 +53,7 @@ define void @test2(i8* %p) {
 entry:
   %0 = tail call i8* @objc_retain(i8* %p) nounwind
   %tmp = load i8** @x, align 8
-  volatile store i8* %0, i8** @x, align 8
+  store volatile i8* %0, i8** @x, align 8
   tail call void @objc_release(i8* %tmp) nounwind
   ret void
 }

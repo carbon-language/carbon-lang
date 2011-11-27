@@ -19,7 +19,7 @@ entry:
 
 loop:
   %i = phi i64 [ 0, %entry ], [ %i.next, %loop ]
-  volatile store i64 %i, i64* %p
+  store volatile i64 %i, i64* %p
   %i.next = add i64 %i, %s
   %c = icmp slt i64 %i.next, %n
   br i1 %c, label %loop, label %exit

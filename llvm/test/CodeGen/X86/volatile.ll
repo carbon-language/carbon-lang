@@ -4,14 +4,14 @@
 @x = external global double
 
 define void @foo() nounwind  {
-  %a = volatile load double* @x
-  volatile store double 0.0, double* @x
-  volatile store double 0.0, double* @x
-  %b = volatile load double* @x
+  %a = load volatile double* @x
+  store volatile double 0.0, double* @x
+  store volatile double 0.0, double* @x
+  %b = load volatile double* @x
   ret void
 }
 
 define void @bar() nounwind  {
-  %c = volatile load double* @x
+  %c = load volatile double* @x
   ret void
 }

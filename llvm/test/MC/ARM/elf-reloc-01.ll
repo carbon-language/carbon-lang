@@ -42,12 +42,12 @@ entry:
   ]
 
 bb:                                               ; preds = %entry
-  volatile store i32 11, i32* @var_tls, align 4
-  volatile store double 2.200000e+01, double* @var_tls_double, align 8
-  volatile store i32 33, i32* @var_static, align 4
-  volatile store double 4.400000e+01, double* @var_static_double, align 8
-  volatile store i32 55, i32* @var_global, align 4
-  volatile store double 6.600000e+01, double* @var_global_double, align 8
+  store volatile i32 11, i32* @var_tls, align 4
+  store volatile double 2.200000e+01, double* @var_tls_double, align 8
+  store volatile i32 33, i32* @var_static, align 4
+  store volatile double 4.400000e+01, double* @var_static_double, align 8
+  store volatile i32 55, i32* @var_global, align 4
+  store volatile double 6.600000e+01, double* @var_global_double, align 8
   br label %bb3
 
 bb2:                                              ; preds = %entry

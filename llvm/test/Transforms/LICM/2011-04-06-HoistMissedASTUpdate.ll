@@ -19,7 +19,7 @@ for.body4.lr.ph:
 
 for.body4:
   %l_612.11 = phi i32* [ undef, %for.body4.lr.ph ], [ %call19, %for.body4 ]
-  %tmp7 = volatile load i16* @g_39, align 2
+  %tmp7 = load volatile i16* @g_39, align 2
   %call = call i32** @func_108(i32*** undef)
   %call19 = call i32* @func_84(i32** %call)
   br i1 false, label %for.body4, label %for.cond.loopexit

@@ -14,7 +14,7 @@ loop:
   %i = phi i64 [ 0, %entry ], [ %i.next, %loop ]
   %ip = add i64 %i, 1
   %p.2.ip.1 = getelementptr [3 x [3 x double]]* %p, i64 2, i64 %ip, i64 1
-  volatile store double 0.0, double* %p.2.ip.1
+  store volatile double 0.0, double* %p.2.ip.1
   %i.next = add i64 %i, 1
   br label %loop
 }

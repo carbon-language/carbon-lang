@@ -46,7 +46,7 @@ else:		; preds = %entry
 }
 
 ; This load can't be safely moved above the call because that would change the
-; order in which the volatile loads are performed.
+; order in which the load volatiles are performed.
 define fastcc i32 @no_tailrecelim_3(i32* %a_arg, i32 %a_len_arg, i32 %start_arg) nounwind {
 entry:
 	%tmp2 = icmp sge i32 %start_arg, %a_len_arg		; <i1> [#uses=1]
@@ -58,7 +58,7 @@ if:		; preds = %entry
 else:		; preds = %entry
 	%tmp7 = add i32 %start_arg, 1		; <i32> [#uses=1]
 	%tmp8 = call fastcc i32 @no_tailrecelim_3(i32* %a_arg, i32 %a_len_arg, i32 %tmp7)		; <i32> [#uses=1]
-	%tmp9 = volatile load i32* %a_arg		; <i32> [#uses=1]
+	%tmp9 = load volatile i32* %a_arg		; <i32> [#uses=1]
 	%tmp10 = add i32 %tmp9, %tmp8		; <i32> [#uses=1]
 	ret i32 %tmp10
 }

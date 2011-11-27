@@ -68,7 +68,7 @@ define void @test4() noreturn nounwind {
   br label %1
 
 ; <label>:1                                       ; preds = %1, %0
-  volatile store i32* @g_47, i32** undef, align 8
+  store volatile i32* @g_47, i32** undef, align 8
   store i32 undef, i32* @g_47, align 4
   br label %1
 }

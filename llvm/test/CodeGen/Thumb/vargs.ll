@@ -13,9 +13,9 @@ entry:
 
 bb:             ; preds = %bb, %entry
         %a_addr.0 = phi i32 [ %a, %entry ], [ %tmp5, %bb ]              ; <i32> [#uses=2]
-        %tmp = volatile load i8** %va           ; <i8*> [#uses=2]
+        %tmp = load volatile i8** %va           ; <i8*> [#uses=2]
         %tmp2 = getelementptr i8* %tmp, i32 4           ; <i8*> [#uses=1]
-        volatile store i8* %tmp2, i8** %va
+        store volatile i8* %tmp2, i8** %va
         %tmp5 = add i32 %a_addr.0, -1           ; <i32> [#uses=1]
         %tmp.upgrd.2 = icmp eq i32 %a_addr.0, 1         ; <i1> [#uses=1]
         br i1 %tmp.upgrd.2, label %bb7, label %bb

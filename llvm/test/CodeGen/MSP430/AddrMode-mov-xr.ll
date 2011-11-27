@@ -29,7 +29,7 @@ define void @am3(i16 %i, i8 %a) nounwind {
 ; CHECK:		mov.b	r14, bar(r15)
 
 define void @am4(i16 %a) nounwind {
-	volatile store i16 %a, i16* inttoptr(i16 32 to i16*)
+	store volatile i16 %a, i16* inttoptr(i16 32 to i16*)
 	ret void
 }
 ; CHECK: am4:

@@ -84,7 +84,7 @@ entry:
   br i1 %3, label %func_4.exit.i, label %bb.i.i.i
 
 bb.i.i.i:                                         ; preds = %entry
-  %4 = volatile load i8* @g_100, align 1          ; <i8> [#uses=0]
+  %4 = load volatile i8* @g_100, align 1          ; <i8> [#uses=0]
   br label %func_4.exit.i
 
 ; CHECK: test4:
@@ -101,7 +101,7 @@ func_4.exit.i:                                    ; preds = %bb.i.i.i, %entry
   br i1 %brmerge.i, label %func_1.exit, label %bb.i.i
 
 bb.i.i:                                           ; preds = %func_4.exit.i
-  %5 = volatile load i8* @g_100, align 1          ; <i8> [#uses=0]
+  %5 = load volatile i8* @g_100, align 1          ; <i8> [#uses=0]
   br label %func_1.exit
 
 func_1.exit:                                      ; preds = %bb.i.i, %func_4.exit.i

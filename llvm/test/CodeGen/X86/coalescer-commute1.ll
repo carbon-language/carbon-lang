@@ -21,6 +21,6 @@ bb:		; preds = %bb, %entry
 	br i1 %exitcond, label %bb13, label %bb
 
 bb13:		; preds = %bb
-	volatile store float %tmp6, float* @G, align 4
+	store volatile float %tmp6, float* @G, align 4
 	ret void
 }

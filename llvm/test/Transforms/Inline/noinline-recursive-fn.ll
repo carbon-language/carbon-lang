@@ -17,7 +17,7 @@ entry:
 bb:                                               ; preds = %entry
   %1 = sub nsw i32 %x, 1                          ; <i32> [#uses=1]
   call void @foo(i32 %1) nounwind ssp
-  volatile store i32 1, i32* @g, align 4
+  store volatile i32 1, i32* @g, align 4
   ret void
 
 return:                                           ; preds = %entry
@@ -42,7 +42,7 @@ entry:
   %0 = bitcast i8* %Bar to void (i32, i8*, i8*)*
   %1 = sub nsw i32 %x, 1
   call void %0(i32 %1, i8* %Foo, i8* %Bar) nounwind
-  volatile store i32 42, i32* @g, align 4
+  store volatile i32 42, i32* @g, align 4
   ret void
 }
 
@@ -54,7 +54,7 @@ entry:
 bb:                                               ; preds = %entry
   %1 = bitcast i8* %Foo to void (i32, i8*, i8*)*  ; <void (i32, i8*, i8*)*> [#uses=1]
   call void %1(i32 %x, i8* %Foo, i8* %Bar) nounwind
-  volatile store i32 13, i32* @g, align 4
+  store volatile i32 13, i32* @g, align 4
   ret void
 
 return:                                           ; preds = %entry

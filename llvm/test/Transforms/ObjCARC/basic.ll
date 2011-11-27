@@ -167,7 +167,7 @@ entry:
 loop:
   %c = bitcast i32* %x to i8*
   call void @objc_release(i8* %c) nounwind
-  %j = volatile load i1* %q
+  %j = load volatile i1* %q
   br i1 %j, label %loop, label %return
 
 return:
@@ -190,7 +190,7 @@ entry:
 loop:
   %a = bitcast i32* %x to i8*
   %0 = call i8* @objc_retain(i8* %a) nounwind
-  %j = volatile load i1* %q
+  %j = load volatile i1* %q
   br i1 %j, label %loop, label %return
 
 return:

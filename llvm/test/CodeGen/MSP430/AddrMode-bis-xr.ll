@@ -35,9 +35,9 @@ define void @am3(i16 %i, i8 %x) nounwind {
 ; CHECK:		bis.b	r14, bar(r15)
 
 define void @am4(i16 %x) nounwind {
-	%1 = volatile load i16* inttoptr(i16 32 to i16*)
+	%1 = load volatile i16* inttoptr(i16 32 to i16*)
 	%2 = or i16 %x, %1
-	volatile store i16 %2, i16* inttoptr(i16 32 to i16*)
+	store volatile i16 %2, i16* inttoptr(i16 32 to i16*)
 	ret void
 }
 ; CHECK: am4:

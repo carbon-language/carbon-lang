@@ -314,7 +314,7 @@ bby:
   ]
 
 bb7:
-  volatile store i32 0, i32* @XYZ
+  store volatile i32 0, i32* @XYZ
   unreachable
 
 bbx:
@@ -323,7 +323,7 @@ bbx:
   ]
 
 bb12:
-  volatile store i32 0, i32* @XYZ
+  store volatile i32 0, i32* @XYZ
   unreachable
 
 return:
@@ -352,8 +352,8 @@ bby:
   ]
 
 bb7:
-  volatile store i32 0, i32* @XYZ
-  volatile store i32 1, i32* @XYZ
+  store volatile i32 0, i32* @XYZ
+  store volatile i32 1, i32* @XYZ
   unreachable
 
 bbx:
@@ -362,8 +362,8 @@ bbx:
   ]
 
 bb12:
-  volatile store i32 0, i32* @XYZ
-  volatile store i32 1, i32* @XYZ
+  store volatile i32 0, i32* @XYZ
+  store volatile i32 1, i32* @XYZ
   unreachable
 
 return:
@@ -390,8 +390,8 @@ bby:
   ]
 
 bb7:
-  volatile store i32 0, i32* @XYZ
-  volatile store i32 1, i32* @XYZ
+  store volatile i32 0, i32* @XYZ
+  store volatile i32 1, i32* @XYZ
   unreachable
 
 bbx:
@@ -400,8 +400,8 @@ bbx:
   ]
 
 bb12:
-  volatile store i32 0, i32* @XYZ
-  volatile store i32 1, i32* @XYZ
+  store volatile i32 0, i32* @XYZ
+  store volatile i32 1, i32* @XYZ
   unreachable
 
 return:

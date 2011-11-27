@@ -4,6 +4,6 @@
 @g = global i32 0		; <i32*> [#uses=1]
 
 define i32 @f() {
-	%t = volatile load i32* @g		; <i32> [#uses=1]
+	%t = load volatile i32* @g		; <i32> [#uses=1]
 	ret i32 %t
 }

@@ -142,13 +142,13 @@ define i32 @umultest4(i32 %n) nounwind {
 define void @powi(double %V, double *%P) {
 entry:
   %A = tail call double @llvm.powi.f64(double %V, i32 -1) nounwind
-  volatile store double %A, double* %P
+  store volatile double %A, double* %P
 
   %B = tail call double @llvm.powi.f64(double %V, i32 0) nounwind
-  volatile store double %B, double* %P
+  store volatile double %B, double* %P
 
   %C = tail call double @llvm.powi.f64(double %V, i32 1) nounwind
-  volatile store double %C, double* %P
+  store volatile double %C, double* %P
   ret void
 ; CHECK: @powi
 ; CHECK: %A = fdiv double 1.0{{.*}}, %V
@@ -183,13 +183,13 @@ define void @cmp.simplify(i32 %a, i32 %b, i1* %c) {
 entry:
   %lz = tail call i32 @llvm.ctlz.i32(i32 %a) nounwind readnone
   %lz.cmp = icmp eq i32 %lz, 32
-  volatile store i1 %lz.cmp, i1* %c
+  store volatile i1 %lz.cmp, i1* %c
   %tz = tail call i32 @llvm.cttz.i32(i32 %a) nounwind readnone
   %tz.cmp = icmp ne i32 %tz, 32
-  volatile store i1 %tz.cmp, i1* %c
+  store volatile i1 %tz.cmp, i1* %c
   %pop = tail call i32 @llvm.ctpop.i32(i32 %b) nounwind readnone
   %pop.cmp = icmp eq i32 %pop, 0
-  volatile store i1 %pop.cmp, i1* %c
+  store volatile i1 %pop.cmp, i1* %c
   ret void
 ; CHECK: @cmp.simplify
 ; CHECK-NEXT: entry:

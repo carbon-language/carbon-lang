@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=x86 | not grep movsd
 ; RUN: llc < %s -march=x86 | grep movw
 ; RUN: llc < %s -march=x86 | grep addw
-; These transforms are turned off for volatile loads and stores.
+; These transforms are turned off for load volatiles and stores.
 ; Check that they weren't turned off for all loads and stores!
 
 @atomic = global double 0.000000e+00		; <double*> [#uses=1]

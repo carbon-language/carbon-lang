@@ -59,7 +59,7 @@ define void @test3(i32 %i) {
 	br label %Loop
 Loop:
         ; Should not promote this to a register
-	%x = volatile load i32* @X
+	%x = load volatile i32* @X
 	%x2 = add i32 %x, 1	
 	store i32 %x2, i32* @X
 	br i1 true, label %Out, label %Loop
@@ -133,7 +133,7 @@ Loop:		; preds = %Loop, %0
 	%x2 = add i32 %x, 1		; <i32> [#uses=1]
 	store i32 %x2, i32* @X
         
-        volatile store i32* @X, i32** %P2
+        store volatile i32* @X, i32** %P2
         
 	%Next = add i32 %j, 1		; <i32> [#uses=2]
 	%cond = icmp eq i32 %Next, 0		; <i1> [#uses=1]

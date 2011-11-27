@@ -12,7 +12,7 @@ declare void @IODelay(i32)
 
 define i32 @_Z14ProgramByWordsPvyy(i8* %buffer, i64 %Offset, i64 %bufferSize) nounwind  {
 entry:
-	volatile store i8 -1, i8* null, align 1
+	store volatile i8 -1, i8* null, align 1
 	%tmp28 = icmp eq i8 0, 0		; <i1> [#uses=1]
 	br i1 %tmp28, label %bb107, label %bb
 
@@ -43,7 +43,7 @@ bb68:		; preds = %bb31
 	%tmp2021.i = trunc i64 %Pos.0.reg2mem.0 to i32		; <i32> [#uses=1]
 	%tmp202122.i = inttoptr i32 %tmp2021.i to i8*		; <i8*> [#uses=1]
 	tail call void @IODelay( i32 500 ) nounwind 
-	%tmp53.i = volatile load i16* null, align 2		; <i16> [#uses=2]
+	%tmp53.i = load volatile i16* null, align 2		; <i16> [#uses=2]
 	%tmp5455.i = zext i16 %tmp53.i to i32		; <i32> [#uses=1]
 	br i1 false, label %bb.i, label %bb65.i
 
@@ -59,7 +59,7 @@ bb70.i:		; preds = %bb65.i
 	ret i32 0
 
 _Z24unlock_then_erase_sectory.exit:		; preds = %bb65.i
-	volatile store i8 -1, i8* %tmp202122.i, align 1
+	store volatile i8 -1, i8* %tmp202122.i, align 1
 	%tmp93 = add i64 0, %Pos.0.reg2mem.0		; <i64> [#uses=2]
 	%tmp98 = add i64 0, %Offset		; <i64> [#uses=1]
 	%tmp100 = icmp ugt i64 %tmp98, %tmp93		; <i1> [#uses=1]

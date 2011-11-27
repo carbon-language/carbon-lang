@@ -21,7 +21,7 @@ false:
   ret i32 0
 }
 
-; But don't sink volatile loads...
+; But don't sink load volatiles...
 
 ;      CHECK: @foo2
 ;      CHECK: load volatile

@@ -151,7 +151,7 @@ entry:
 exit:
   %t3 = phi i32* [ %t4, %exit ]
   %t4 = bitcast i32* %t3 to i32*
-  %x = volatile load i32* %t3
+  %x = load volatile i32* %t3
   br label %exit
 }
 

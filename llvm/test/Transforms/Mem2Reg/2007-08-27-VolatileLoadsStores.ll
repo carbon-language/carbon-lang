@@ -1,6 +1,6 @@
 ; RUN: opt < %s -std-compile-opts -S | grep volatile | count 3
 ; PR1520
-; Don't promote volatile loads/stores. This is really needed to handle setjmp/lonjmp properly.
+; Don't promote load volatiles/stores. This is really needed to handle setjmp/lonjmp properly.
 
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:32:32"
 target triple = "i686-pc-linux-gnu"
@@ -14,7 +14,7 @@ entry:
 	%v = alloca i32, align 4		; <i32*> [#uses=3]
 	%tmp = alloca i32, align 4		; <i32*> [#uses=3]
 	%"alloca point" = bitcast i32 0 to i32		; <i32> [#uses=0]
-	volatile store i32 0, i32* %v, align 4
+	store volatile i32 0, i32* %v, align 4
 	%tmp1 = call i32 @_setjmp( %struct.__jmp_buf_tag* getelementptr ([1 x %struct.__jmp_buf_tag]* @j, i32 0, i32 0) )		; <i32> [#uses=1]
 	%tmp2 = icmp ne i32 %tmp1, 0		; <i1> [#uses=1]
 	%tmp23 = zext i1 %tmp2 to i8		; <i8> [#uses=1]
@@ -22,12 +22,12 @@ entry:
 	br i1 %toBool, label %bb, label %bb5
 
 bb:		; preds = %entry
-	%tmp4 = volatile load i32* %v, align 4		; <i32> [#uses=1]
+	%tmp4 = load volatile i32* %v, align 4		; <i32> [#uses=1]
 	store i32 %tmp4, i32* %tmp, align 4
 	br label %bb6
 
 bb5:		; preds = %entry
-	volatile store i32 1, i32* %v, align 4
+	store volatile i32 1, i32* %v, align 4
 	call void @g( )
 	store i32 0, i32* %tmp, align 4
 	br label %bb6

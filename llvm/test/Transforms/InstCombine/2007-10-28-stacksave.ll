@@ -26,7 +26,7 @@ lab:		; preds = %cleanup31, %entry
 	%tmp21 = getelementptr i32* %tmp1819, i32 0		; <i32*> [#uses=1]
 	store i32 1, i32* %tmp21, align 4
 	%tmp2223 = bitcast i32* %tmp1819 to i8*		; <i8*> [#uses=1]
-	volatile store i8* %tmp2223, i8** @p, align 4
+	store volatile i8* %tmp2223, i8** @p, align 4
 	%tmp25 = add i32 %n.0, 1		; <i32> [#uses=2]
 	%tmp27 = icmp sle i32 %tmp25, 999999		; <i1> [#uses=1]
 	%tmp2728 = zext i1 %tmp27 to i8		; <i8> [#uses=1]
