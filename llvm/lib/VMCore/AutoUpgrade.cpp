@@ -37,13 +37,10 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
   if (Name.size() <= 8 || !Name.startswith("llvm."))
     return false;
   Name = Name.substr(5); // Strip off "llvm."
-  
+
   switch (Name[0]) {
   default: break;
-  case 'm':
-    if (Name == "memory.barrier")
-      return true;
-    break;
+  // SOMEDAY: Add some.
   }
 
   //  This may not belong here. This function is effectively being overloaded 
@@ -75,38 +72,15 @@ bool llvm::UpgradeGlobalVariable(GlobalVariable *GV) {
 // order to seamlessly integrate with existing context.
 void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
   Function *F = CI->getCalledFunction();
-  LLVMContext &C = CI->getContext();
-  ImmutableCallSite CS(CI);
 
   assert(F && "CallInst has no function associated with it.");
 
-  if (!NewFn) {
-    if (F->getName() == "llvm.memory.barrier") {
-      IRBuilder<> Builder(C);
-      Builder.SetInsertPoint(CI->getParent(), CI);
-
-      // Note that this conversion ignores the "device" bit; it was not really
-      // well-defined, and got abused because nobody paid enough attention to
-      // get it right. In practice, this probably doesn't matter; application
-      // code generally doesn't need anything stronger than
-      // SequentiallyConsistent (and realistically, SequentiallyConsistent
-      // is lowered to a strong enough barrier for almost anything).
-
-      if (cast<ConstantInt>(CI->getArgOperand(1))->getZExtValue())
-        Builder.CreateFence(SequentiallyConsistent);
-      else if (!cast<ConstantInt>(CI->getArgOperand(0))->getZExtValue())
-        Builder.CreateFence(Release);
-      else if (!cast<ConstantInt>(CI->getArgOperand(3))->getZExtValue())
-        Builder.CreateFence(Acquire);
-      else
-        Builder.CreateFence(AcquireRelease);
-
-      // Remove intrinsic.
-      CI->eraseFromParent();
-    } else {
-      llvm_unreachable("Unknown function for CallInst upgrade.");
-    }
-    return;
+  if (NewFn) return;
+  
+  if (F->getName() == "llvm.something eventually") {
+    // UPGRADE HERE.
+  } else {
+    llvm_unreachable("Unknown function for CallInst upgrade.");
   }
 }
 
