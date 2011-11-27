@@ -776,14 +776,14 @@ be used to verify some algorithms.
  New PackedVector, TinyPtrVector class (see Programmer's Manual)
  New nonlazybind function attribute.
  ARC language specific optimizer (Transforms/ObjCARC) a decent example of language-specific transformation.
- LLVM 3.0 removes support for reading LLVM 2.8 and earlier files.
+ LLVM 3.0 removes support for reading LLVM 2.8 and earlier files.  Aim to maintain compatibility all the way back to 3.0 "forever".
 
  New llvm.expect intrinsic.
  Table generated MC expansion logic for pseudo instructions that expand to multiple MC instructions through the PseudoInstExpansion class. (JimG)
  New llvm.fma intrinsic.
  
  Euro dev meeting and main one too.
- New atomics instructions, "#i_fence" instruction, cmpxchg, atomicrmw too.  What target support?
+ New atomics instructions, "#i_fence" instruction, cmpxchg, atomicrmw too.  What target support? Also 'atomic load/store'.  See Atomics.html
  X86: inline assembler supports .code32 and .code64.
  Exception handling rewrite: new landingpad and resume instruction.  Unwind gone.
  LowerSetJmp pass removed, unused.
