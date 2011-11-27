@@ -587,7 +587,7 @@ void MachineBlockPlacement::rotateLoop(MachineLoop &L,
   // completely remove a branch. We bail if the analysis fails or we don't find
   // an unconditional backedge. Note that this has to handle cases where the
   // original order was rotated, and the chain has un-done it. As a result,
-  // there may not (yet) be the uncondiationl branch, but we can tell whether
+  // there may not (yet) be the unconditional branch, but we can tell whether
   // one will be added when updating the terminators.
   SmallVector<MachineOperand, 4> Cond;
   MachineBasicBlock *TBB = 0, *FBB = 0;
