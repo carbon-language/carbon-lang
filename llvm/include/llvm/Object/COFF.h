@@ -105,7 +105,7 @@ private:
 protected:
   virtual error_code getSymbolNext(DataRefImpl Symb, SymbolRef &Res) const;
   virtual error_code getSymbolName(DataRefImpl Symb, StringRef &Res) const;
-  virtual error_code getSymbolFileOffset(DataRefImpl Symb, uint64_t &Res) const;
+  virtual error_code getSymbolOffset(DataRefImpl Symb, uint64_t &Res) const;
   virtual error_code getSymbolAddress(DataRefImpl Symb, uint64_t &Res) const;
   virtual error_code getSymbolSize(DataRefImpl Symb, uint64_t &Res) const;
   virtual error_code getSymbolNMTypeChar(DataRefImpl Symb, char &Res) const;
@@ -135,8 +135,6 @@ protected:
                                        RelocationRef &Res) const;
   virtual error_code getRelocationAddress(DataRefImpl Rel,
                                           uint64_t &Res) const;
-  virtual error_code getRelocationOffset(DataRefImpl Rel,
-                                         uint64_t &Res) const;
   virtual error_code getRelocationSymbol(DataRefImpl Rel,
                                          SymbolRef &Res) const;
   virtual error_code getRelocationType(DataRefImpl Rel,

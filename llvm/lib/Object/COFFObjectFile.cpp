@@ -101,7 +101,7 @@ error_code COFFObjectFile::getSymbolNext(DataRefImpl Symb,
   return getSymbolName(symb, Result);
 }
 
-error_code COFFObjectFile::getSymbolFileOffset(DataRefImpl Symb,
+error_code COFFObjectFile::getSymbolOffset(DataRefImpl Symb,
                                             uint64_t &Result) const {
   const coff_symbol *symb = toSymb(Symb);
   const coff_section *Section = NULL;
@@ -113,7 +113,7 @@ error_code COFFObjectFile::getSymbolFileOffset(DataRefImpl Symb,
   if (Type == 'U' || Type == 'w')
     Result = UnknownAddressOrSize;
   else if (Section)
-    Result = Section->PointerToRawData + symb->Value;
+    Result = Section->VirtualAddress + symb->Value;
   else
     Result = symb->Value;
   return object_error::success;
@@ -131,9 +131,11 @@ error_code COFFObjectFile::getSymbolAddress(DataRefImpl Symb,
   if (Type == 'U' || Type == 'w')
     Result = UnknownAddressOrSize;
   else if (Section)
-    Result = Section->VirtualAddress + symb->Value;
+    Result = reinterpret_cast<uintptr_t>(base() +
+                                         Section->PointerToRawData +
+                                         symb->Value);
   else
-    Result = symb->Value;
+    Result = reinterpret_cast<uintptr_t>(base() + symb->Value);
   return object_error::success;
 }
 
@@ -619,11 +621,6 @@ error_code COFFObjectFile::getRelocationNext(DataRefImpl Rel,
 }
 error_code COFFObjectFile::getRelocationAddress(DataRefImpl Rel,
                                                 uint64_t &Res) const {
-  Res = toRel(Rel)->VirtualAddress;
-  return object_error::success;
-}
-error_code COFFObjectFile::getRelocationOffset(DataRefImpl Rel,
-                                               uint64_t &Res) const {
   Res = toRel(Rel)->VirtualAddress;
   return object_error::success;
 }

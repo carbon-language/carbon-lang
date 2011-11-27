@@ -419,7 +419,7 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
 
       // Start at the address of the symbol relative to the section's address.
       uint64_t Start = 0;
-      Symbols[SymIdx].getFileOffset(Start);
+      Symbols[SymIdx].getOffset(Start);
 
       // Stop disassembling either at the beginning of the next symbol or at
       // the end of the section.
@@ -432,7 +432,7 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
         if (NextSymType == SymbolRef::ST_Function) {
           Sections[SectIdx].containsSymbol(Symbols[NextSymIdx],
                                            containsNextSym);
-          Symbols[NextSymIdx].getFileOffset(NextSym);
+          Symbols[NextSymIdx].getOffset(NextSym);
           break;
         }
         ++NextSymIdx;
