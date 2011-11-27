@@ -571,6 +571,11 @@ MachineBlockPlacement::findBestLoopTop(MachineFunction &F,
   BlockFrequency BestExitEdgeFreq;
   MachineBasicBlock *ExitingBB = 0;
   MachineBasicBlock *LoopingBB = 0;
+  // If there are exits to outer loops, loop rotation can severely limit
+  // fallthrough opportunites unless it selects such an exit. Keep a set of
+  // blocks where rotating to exit with that block will reach an outer loop.
+  SmallPtrSet<MachineBasicBlock *, 4> BlocksExitingToOuterLoop;
+
   DEBUG(dbgs() << "Finding best loop exit for: "
                << getBlockName(L.getHeader()) << "\n");
   for (MachineLoop::block_iterator I = L.block_begin(),
@@ -641,6 +646,10 @@ MachineBlockPlacement::findBestLoopTop(MachineFunction &F,
         BestExitEdgeFreq = ExitEdgeFreq;
         ExitingBB = *I;
       }
+
+      if (MachineLoop *ExitLoop = MLI->getLoopFor(*SI))
+        if (ExitLoop->contains(&L))
+          BlocksExitingToOuterLoop.insert(*I);
     }
 
     // Restore the old exiting state, no viable looping successor was found.
@@ -657,6 +666,13 @@ MachineBlockPlacement::findBestLoopTop(MachineFunction &F,
   // Without a candidate exitting block or with only a single block in the
   // loop, just use the loop header to layout the loop.
   if (!ExitingBB || L.getNumBlocks() == 1)
+    return L.getHeader();
+
+  // Also, if we have exit blocks which lead to outer loops but didn't select
+  // one of them as the exiting block we are rotating toward, disable loop
+  // rotation altogether.
+  if (!BlocksExitingToOuterLoop.empty() &&
+      !BlocksExitingToOuterLoop.count(ExitingBB))
     return L.getHeader();
 
   assert(LoopingBB && "All successors of a loop block are exit blocks!");
