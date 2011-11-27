@@ -872,8 +872,8 @@ be used to verify some algorithms.
 <li>LLVM now includes a pass to optimize retain/release calls for the
   <a href="http://clang.llvm.org/docs/AutomaticReferenceCounting.html">Automatic
     Reference Counting</a> (ARC) Objective-C language feature (in
-    lib/Transforms/ObjCARC).  It is a decent example of implementing a
-    source-language-specific optimization in LLVM.</li>
+    lib/Transforms/Scalar/ObjCARC.cpp).  It is a decent example of implementing
+    a source-language-specific optimization in LLVM.</li>
 
 </ul>
 
@@ -889,34 +889,31 @@ be used to verify some algorithms.
 <p>The LLVM Machine Code (aka MC) subsystem was created to solve a number of
    problems in the realm of assembly, disassembly, object file format handling,
    and a number of other related areas that CPU instruction-set level tools work
-   in.</p>
+   in. For more information, please see
+  the <a href="http://blog.llvm.org/2010/04/intro-to-llvm-mc-project.html">Intro
+    to the LLVM MC Project Blog Post</a>.</p>
 
 <ul>
-  <li>The ELF object streamers are much more full featured.</li>
-  <li>Target dependent relocation handling has been refactored into the Targets.</li>
-  <li>Early stage MC-JIT infrastructure has been implemented.</li>
+  <li>The MC layer has undergone significant refactoring to eliminate layering
+    violations that caused it to pull in the LLVM compiler backend code.</li>
+  <li>The ELF object file writers are much more full featured.</li>
+  <li>The integrated assembler now supports #line directives.</li>
+  <li>An early implementation of a JIT built on top of the MC framework (known
+      as MC-JIT) has been implemented and will eventually replace the old JIT.
+    It emits object files direct to memory and uses a runtime dynamic linker to
+    resolve references and drive lazy compilation.  The MC-JIT enables much
+    greater code reuse between the JIT and the static compiler and provides
+    better integration with the platform ABI as a result.
+  </li>
+  <li>The assembly printer now makes uses of assemblers instruction aliases
+    (InstAliases) to print simplified mneumonics when possible.</li>
+  <li>TableGen can now autogenerate MC expansion logic for pseudo
+    instructions that expand to multiple MC instructions (through the
+    PseudoInstExpansion class).</li>
+    
+  <li>XXX: llvm-objdump / dwarf parser library / llvm-dwarfdump (d0k)
+    object file parsing stuff and llvm-size (mspencer).  Status?</li>
 </ul>
-
-<p>The MC-JIT is a major new feature for MC, and will eventually grow to replace
-the current JIT implementation. It emits object files direct to memory and
-uses a runtime dynamic linker to resolve references and drive lazy compilation.
-The MC-JIT enables much greater code reuse between the JIT and the static
-compiler and provides better integration with the platform ABI as a result.</p>
-
-<p>For more information, please see
-   the <a href="http://blog.llvm.org/2010/04/intro-to-llvm-mc-project.html">Intro
-   to the LLVM MC Project Blog Post</a>.</p>
-
-  
-  InstAliases now automatically used in the asmprinter where they are shorter.
-
-  Table generated MC expansion logic for pseudo instructions that expand to multiple MC instructions through the PseudoInstExpansion class. (JimG)
-  
-  #line directives in integrated assembler
-
-  llvm-rtdyld: JimG
-  llvm-objdump / dwarf parser library / llvm-dwarfdump (d0k)
-  object file parsing stuff and llvm-size (mspencer)
 
 </div>
 
@@ -932,20 +929,17 @@ compiler and provides better integration with the platform ABI as a result.</p>
    make it run faster:</p>
 
 <ul>
-  
-  better performance for indirect gotos through new tail dup pass.
+<li>LLVM generates substantially better code for indirect gotos due to a new
+    tail duplication pass, which can be a substantial performance win for
+    interpreter loops that use them.</li>
+<li>Exception handling and debug information is now emitted with CFI directives,
+    yielding <a href="http://blog.mozilla.com/respindola/2011/05/12/cfi-directives/">much smaller executables</a> for some C++ applications.
+</li>
 
-  Codegen now supports vector "select" operations on vector comparisons, turning
-  them into various optimized code sequences (e.g. using the SSE4/AVX "blend"
-  instructions).
-
-  EH and debug information produced with CFI directives, yielding smaller executables: http://blog.mozilla.com/respindola/2011/05/12/cfi-directives/
-
-  Domain fixing pass is now target independent (ExecutionDepsFix pass). (Jakob)
-
-<!--
-<li></li>
--->
+<li>The code generator now supports vector "select" operations on vector
+    comparisons, turning them into various optimized code sequences (e.g.
+    using the SSE4/AVX "blend" instructions).</li>
+<li>XXX: Domain fixing pass is now target independent (ExecutionDepsFix pass). (Jakob)</li>
 </ul>
 </div>
 
@@ -959,29 +953,30 @@ compiler and provides better integration with the platform ABI as a result.</p>
 <p>New features and major changes in the X86 target include:</p>
 
 <ul>
-  <li>The X86 backend, assembler and disassembler now completely support AVX.
-      To enable it pass <code>-mavx</code> to the compiler.</li>
+<li>The X86 backend, assembler and disassembler now have full support for AVX 1.
+    To enable it pass <code>-mavx</code> to the compiler. AVX2 implementation is
+    underway on mainline.</li>
+<li>The integrated assembler and disassembler now support a broad range of new
+    instructions including Atom, Ivy Bridge, <a
+    href="http://en.wikipedia.org/wiki/SSE4a">SSE4a/BMI</a> instructions, <a
+   href="http://en.wikipedia.org/wiki/RdRand">rdrand</a> and many others.</li>
+<li>The X86 backend now fully supports the <a href="http://llvm.org/PR879">X87
+  floating point stack inline assembly constraints</a>.</li>
+<li>The integrated assembler now supports the <tt>.code32</tt> and
+    <tt>.code64</tt> directives to switch between 32-bit and 64-bit
+    instructions.</li>
+<li>The X86 backend now synthesizes horizontal add/sub instructions from generic
+    vector code when the appropriate instructions are enabled.</li>
+<li>The X86-64 backend generates smaller and faster code at -O0 due to
+    improvements in fast instruction selection.</li>
+<li><a href="http://code.google.com/p/nativeclient/">Native Client</a>
+    subtarget support has been added.</li>
 
-  <li>The X86 backend now supports
-    all <a href="http://llvm.org/PR879">inline assembly that uses the X86
-      floating point stack</a>.</li>
-  
-  <li>The CRC32 intrinsics have been renamed.  The intrinsics were previously
-      <code>@llvm.x86.sse42.crc32.[8|16|32]</code>
-      and <code>@llvm.x86.sse42.crc64.[8|64]</code>. They have been renamed to
-      <code>@llvm.x86.sse42.crc32.32.[8|16|32]</code> and
-      <code>@llvm.x86.sse42.crc32.64.[8|64]</code>.</li>
-
-  X86: inline assembler supports .code32 and .code64.
-  AVX support, assembler, compiler and disassembler.
-  X86 backend support for NaCl (David Meyer / Nick L)
-  SSE domain fixing code enabled for AVX (Bruno/Jakob).  
-  X86 backend synthesizes horizontal add/sub instructions from generic code.
-  X86: Tons of encoding improvements and new instructions (e.g. Atom, Ivy Bridge,
-  and BMI instructions)
-  added to assembler and disassembler (Craig Topper)
-  X86-64 generates smaller and faster code at -O0 (fast isel improvements)
-
+<li>The CRC32 intrinsics have been renamed.  The intrinsics were previously
+    <code>@llvm.x86.sse42.crc32.[8|16|32]</code>
+    and <code>@llvm.x86.sse42.crc64.[8|64]</code>. They have been renamed to
+    <code>@llvm.x86.sse42.crc32.32.[8|16|32]</code> and
+    <code>@llvm.x86.sse42.crc32.64.[8|64]</code>.</li>
 </ul>
 
 </div>
