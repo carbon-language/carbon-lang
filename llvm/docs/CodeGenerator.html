@@ -2321,6 +2321,20 @@ is the key:</p>
   <td class="unknown"></td> <!-- XCore -->
 </tr>
 
+<tr>
+  <td><a href="#feat_segstacks">segmented stacks</a></td>
+  <td class="no"></td> <!-- ARM -->
+  <td class="no"></td> <!-- CellSPU -->
+  <td class="no"></td> <!-- MBlaze -->
+  <td class="no"></td> <!-- MSP430 -->
+  <td class="no"></td> <!-- Mips -->
+  <td class="no"></td> <!-- PTX -->
+  <td class="no"></td> <!-- PowerPC -->
+  <td class="no"></td> <!-- Sparc -->
+  <td class="partial"><a href="#feat_segstacks_x86">*</a></td> <!-- X86 -->
+  <td class="no"></td> <!-- XCore -->
+</tr>
+
 
 </table>
 
@@ -2401,6 +2415,22 @@ file to a .o file (as is the case for many C compilers).</p>
 are calls marked "<a href="LangRef.html#i_call">tail</a>" and use the fastcc
 calling convention.  Please see the <a href="#tailcallopt">tail call section
 more more details</a>.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<h4 id="feat_segstacks">Segmented Stacks</h4>
+
+<div>
+
+<p>This box indicates whether the target supports segmented stacks. This
+replaces the traditional large C stack with many linked segments. It
+is compatible with the <a href="http://gcc.gnu.org/wiki/SplitStacks">gcc
+implementation</a> used by the Go front end.</p>
+
+<p id="feat_segstacks_x86">Basic support exits on the X86 backend. Currently
+vararg don't work and the object files are not marked the way the gold
+linker expects, but simple Go program can be built by dragonegg.</p>
 
 </div>
 
