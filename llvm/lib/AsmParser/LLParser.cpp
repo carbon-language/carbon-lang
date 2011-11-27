@@ -120,8 +120,6 @@ bool LLParser::ValidateEndOfModule() {
   for (Module::iterator FI = M->begin(), FE = M->end(); FI != FE; )
     UpgradeCallsToIntrinsic(FI++); // must be post-increment, as we remove
 
-  // Check debug info intrinsics.
-  CheckDebugInfoIntrinsics(M);
   return false;
 }
 

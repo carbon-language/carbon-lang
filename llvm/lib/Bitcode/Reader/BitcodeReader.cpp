@@ -2701,9 +2701,6 @@ bool BitcodeReader::MaterializeModule(Module *M, std::string *ErrInfo) {
   }
   std::vector<std::pair<Function*, Function*> >().swap(UpgradedIntrinsics);
 
-  // Check debug info intrinsics.
-  CheckDebugInfoIntrinsics(TheModule);
-
   return false;
 }
 
