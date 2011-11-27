@@ -226,8 +226,9 @@ class MachineBlockPlacement : public MachineFunctionPass {
   void buildChain(MachineBasicBlock *BB, BlockChain &Chain,
                   SmallVectorImpl<MachineBasicBlock *> &BlockWorkList,
                   const BlockFilterSet *BlockFilter = 0);
-  void rotateLoop(MachineLoop &L, BlockChain &LoopChain,
-                  const BlockFilterSet &LoopBlockSet);
+  MachineBasicBlock *findBestLoopTop(MachineFunction &F,
+                                     MachineLoop &L,
+                                     const BlockFilterSet &LoopBlockSet);
   void buildLoopChains(MachineFunction &F, MachineLoop &L);
   void buildCFGChains(MachineFunction &F);
   void AlignLoops(MachineFunction &F);
@@ -558,96 +559,110 @@ void MachineBlockPlacement::buildChain(
                << getBlockNum(*Chain.begin()) << "\n");
 }
 
-/// \brief Attempt to rotate loop chains ending in an unconditional backedge.
+/// \brief Find the best loop top block for layout.
 ///
-/// This is a very conservative attempt to rotate unconditional backedge jumps
-/// into fallthrough opportunities. It only attempts to perform the rotation
-/// when it is trivial to find a block within the loop which has a conditional
-/// loop exit. This block is then made the bottom of the chain, and the in-loop
-/// fallthrough block the top. That turns a conditional branch out of the loop
-/// into a conditional branch to the top of the loop while completely
-/// eliminitating an unconditional branch within the loop.
-void MachineBlockPlacement::rotateLoop(MachineLoop &L,
-                                       BlockChain &LoopChain,
+/// This routine implements the logic to analyze the loop looking for the best
+/// block to layout at the top of the loop. Typically this is done to maximize
+/// fallthrough opportunities.
+MachineBasicBlock *
+MachineBlockPlacement::findBestLoopTop(MachineFunction &F,
+                                       MachineLoop &L,
                                        const BlockFilterSet &LoopBlockSet) {
-  MachineBasicBlock *Header = *L.block_begin();
-  // Ensure that we have a chain of blocks which starts with the loop header.
-  // Otherwise, rotating the blocks might break an analyzable branch.
-  if (Header != *LoopChain.begin())
-    return;
-
-  // We only support rotating the loop chain as a unit, so look directly at the
-  // back of the chain and check that it has a backedge.
-  MachineBasicBlock *Latch = *llvm::prior(LoopChain.end());
-  if (Latch == Header ||
-      !Latch->isSuccessor(Header))
-    return;
-
-  // We need to analyze the branch and determine if rotating the loop will
-  // completely remove a branch. We bail if the analysis fails or we don't find
-  // an unconditional backedge. Note that this has to handle cases where the
-  // original order was rotated, and the chain has un-done it. As a result,
-  // there may not (yet) be the unconditional branch, but we can tell whether
-  // one will be added when updating the terminators.
-  SmallVector<MachineOperand, 4> Cond;
-  MachineBasicBlock *TBB = 0, *FBB = 0;
-  if (TII->AnalyzeBranch(*Latch, TBB, FBB, Cond) || !Cond.empty())
-    return;
-
-  // Next we need to find a split point. This rotate algorithm is *very*
-  // narrow, and it only tries to do the rotate when it can find a split point
-  // which is an analyzable branch that exits the loop. Splitting there allows
-  // us to form a fallthrough out of the loop and a conditional jump to the top
-  // of the loop after rotation.
-  MachineBasicBlock *NewBottom = 0, *NewTop = 0;
-  BlockChain::iterator SplitIt = LoopChain.end();
-  for (BlockChain::reverse_iterator I = llvm::next(LoopChain.rbegin()),
-                                    E = LoopChain.rend();
+  BlockFrequency BestExitEdgeFreq;
+  MachineBasicBlock *ExitingBB = 0;
+  MachineBasicBlock *LoopingBB = 0;
+  DEBUG(dbgs() << "Finding best loop exit for: "
+               << getBlockName(L.getHeader()) << "\n");
+  for (MachineLoop::block_iterator I = L.block_begin(),
+                                   E = L.block_end();
        I != E; ++I) {
-    Cond.clear();
-    TBB = FBB = 0;
-    // Ensure that this is a block with a conditional branch which we can
-    // analyze and re-form after rotating the loop. While it might be tempting
-    // to use the TBB or FBB output parameters from this, they will often be
-    // lies as they are only correct after the terminators have been updated,
-    // and we are mid-chain formation.
-    if (TII->AnalyzeBranch(**I, TBB, FBB, Cond) || Cond.empty())
+    BlockChain &Chain = *BlockToChain[*I];
+    // Ensure that this block is at the end of a chain; otherwise it could be
+    // mid-way through an inner loop or a successor of an analyzable branch.
+    if (*I != *llvm::prior(Chain.end()))
       continue;
 
-    // See if this block is an exiting block from the loop. LoopInfo provides
-    // a nice API for this, but it's actuall N*M runtime where N is the number
-    // of blocks in the loop and M is the number of successors. We can
-    // eliminate the N by doing this ourselves.
-    // FIXME: The LoopInfo datastructure should be improved for these types of
-    // queries.
-    MachineBasicBlock *ExitB = 0;
-    for (MachineBasicBlock::succ_iterator SI = (*I)->succ_begin(), SE = (*I)->succ_end();
+    // Now walk the successors. We need to establish whether this has a viable
+    // exiting successor and whether it has a viable non-exiting successor.
+    // We store the old exiting state and restore it if a viable looping
+    // successor isn't found.
+    MachineBasicBlock *OldExitingBB = ExitingBB;
+    BlockFrequency OldBestExitEdgeFreq = BestExitEdgeFreq;
+    // We also compute and store the best looping successor for use in layout.
+    MachineBasicBlock *BestLoopSucc = 0;
+    // FIXME: Due to the performance of the probability and weight routines in
+    // the MBPI analysis, we use the internal weights. This is only valid
+    // because it is purely a ranking function, we don't care about anything
+    // but the relative values.
+    uint32_t BestLoopSuccWeight = 0;
+    // FIXME: We also manually compute the probabilities to avoid quadratic
+    // behavior.
+    uint32_t WeightScale = 0;
+    uint32_t SumWeight = MBPI->getSumForBlock(*I, WeightScale);
+    for (MachineBasicBlock::succ_iterator SI = (*I)->succ_begin(),
+                                          SE = (*I)->succ_end();
          SI != SE; ++SI) {
-      if (!(*SI)->isLandingPad() && *SI != *I && !LoopBlockSet.count(*SI)) {
-        ExitB = *SI;
-        break;
+      if ((*SI)->isLandingPad())
+        continue;
+      if (*SI == *I)
+        continue;
+      BlockChain &SuccChain = *BlockToChain[*SI];
+      // Don't split chains, either this chain or the successor's chain.
+      if (&Chain == &SuccChain || *SI != *SuccChain.begin()) {
+        DEBUG(dbgs() << "    " << (LoopBlockSet.count(*SI) ? "looping: "
+                                                           : "exiting: ")
+                     << getBlockName(*I) << " -> "
+                     << getBlockName(*SI) << " (chain conflict)\n");
+        continue;
+      }
+
+      uint32_t SuccWeight = MBPI->getEdgeWeight(*I, *SI);
+      if (LoopBlockSet.count(*SI)) {
+        DEBUG(dbgs() << "    looping: " << getBlockName(*I) << " -> "
+                     << getBlockName(*SI) << " (" << SuccWeight << ")\n");
+        if (BestLoopSucc && BestLoopSuccWeight >= SuccWeight)
+          continue;
+
+        BestLoopSucc = *SI;
+        BestLoopSuccWeight = SuccWeight;
+        continue;
+      }
+
+      BranchProbability SuccProb(SuccWeight / WeightScale, SumWeight);
+      BlockFrequency ExitEdgeFreq = MBFI->getBlockFreq(*I) * SuccProb;
+      DEBUG(dbgs() << "    exiting: " << getBlockName(*I) << " -> "
+                   << getBlockName(*SI) << " (" << ExitEdgeFreq << ")\n");
+      // Note that we slightly bias this toward an existing layout successor to
+      // retain incoming order in the absence of better information.
+      // FIXME: Should we bias this more strongly? It's pretty weak.
+      if (!ExitingBB || ExitEdgeFreq > BestExitEdgeFreq ||
+          ((*I)->isLayoutSuccessor(*SI) &&
+           !(ExitEdgeFreq < BestExitEdgeFreq))) {
+        BestExitEdgeFreq = ExitEdgeFreq;
+        ExitingBB = *I;
       }
     }
-    if (!ExitB)
+
+    // Restore the old exiting state, no viable looping successor was found.
+    if (!BestLoopSucc) {
+      ExitingBB = OldExitingBB;
+      BestExitEdgeFreq = OldBestExitEdgeFreq;
       continue;
+    }
 
-    NewBottom = *I;
-    NewTop = *llvm::prior(I);
-    SplitIt = I.base();
-    break;
+    // If this was best exiting block thus far, also record the looping block.
+    if (ExitingBB == *I)
+      LoopingBB = BestLoopSucc;
   }
-  if (!NewBottom || !NewTop ||
-      SplitIt == LoopChain.end() || SplitIt == LoopChain.begin())
-    return;
-  assert(BlockToChain[NewBottom] == &LoopChain);
-  assert(BlockToChain[NewTop] == &LoopChain);
-  assert(*SplitIt == NewTop);
+  // Without a candidate exitting block or with only a single block in the
+  // loop, just use the loop header to layout the loop.
+  if (!ExitingBB || L.getNumBlocks() == 1)
+    return L.getHeader();
 
-  // Rotate the chain and we're done.
-  DEBUG(dbgs() << "Rotating loop headed by: " << getBlockName(Header) << "\n"
-               << "  new top:    " << getBlockName(NewTop) << "\n"
-               << "  new bottom: " << getBlockName(NewBottom) << "\n");
-  std::rotate(LoopChain.begin(), SplitIt, LoopChain.end());
+  assert(LoopingBB && "All successors of a loop block are exit blocks!");
+  DEBUG(dbgs() << "  Best exiting block: " << getBlockName(ExitingBB) << "\n");
+  DEBUG(dbgs() << "  Best top block: " << getBlockName(LoopingBB) << "\n");
+  return LoopingBB;
 }
 
 /// \brief Forms basic block chains from the natural loop structures.
@@ -665,17 +680,21 @@ void MachineBlockPlacement::buildLoopChains(MachineFunction &F,
 
   SmallVector<MachineBasicBlock *, 16> BlockWorkList;
   BlockFilterSet LoopBlockSet(L.block_begin(), L.block_end());
-  BlockChain &LoopChain = *BlockToChain[L.getHeader()];
+
+  MachineBasicBlock *LayoutTop = findBestLoopTop(F, L, LoopBlockSet);
+  BlockChain &LoopChain = *BlockToChain[LayoutTop];
 
   // FIXME: This is a really lame way of walking the chains in the loop: we
   // walk the blocks, and use a set to prevent visiting a particular chain
   // twice.
   SmallPtrSet<BlockChain *, 4> UpdatedPreds;
+  assert(BlockToChain[LayoutTop]->LoopPredecessors == 0);
+  UpdatedPreds.insert(BlockToChain[LayoutTop]);
   for (MachineLoop::block_iterator BI = L.block_begin(),
                                    BE = L.block_end();
        BI != BE; ++BI) {
     BlockChain &Chain = *BlockToChain[*BI];
-    if (!UpdatedPreds.insert(&Chain) || BI == L.block_begin())
+    if (!UpdatedPreds.insert(&Chain))
       continue;
 
     assert(Chain.LoopPredecessors == 0);
@@ -695,8 +714,7 @@ void MachineBlockPlacement::buildLoopChains(MachineFunction &F,
       BlockWorkList.push_back(*Chain.begin());
   }
 
-  buildChain(*L.block_begin(), LoopChain, BlockWorkList, &LoopBlockSet);
-  rotateLoop(L, LoopChain, LoopBlockSet);
+  buildChain(LayoutTop, LoopChain, BlockWorkList, &LoopBlockSet);
 
   DEBUG({
     // Crash at the end so we get all of the debugging output first.

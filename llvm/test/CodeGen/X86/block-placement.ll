@@ -122,14 +122,14 @@ define i32 @test_loop_early_exits(i32 %i, i32* %a) {
 ; Check that we sink early exit blocks out of loop bodies.
 ; CHECK: test_loop_early_exits:
 ; CHECK: %entry
-; CHECK: %body1
 ; CHECK: %body2
 ; CHECK: %body3
 ; CHECK: %body4
-; CHECK: %exit
+; CHECK: %body1
 ; CHECK: %bail1
 ; CHECK: %bail2
 ; CHECK: %bail3
+; CHECK: %exit
 
 entry:
   br label %body1
@@ -346,9 +346,9 @@ define void @unnatural_cfg2() {
 ; single-source GCC.
 ; CHECK: unnatural_cfg2
 ; CHECK: %entry
-; CHECK: %loop.header
 ; CHECK: %loop.body1
 ; CHECK: %loop.body2
+; CHECK: %loop.header
 ; CHECK: %loop.body3
 ; CHECK: %loop.inner1.begin
 ; The end block is folded with %loop.body3...
