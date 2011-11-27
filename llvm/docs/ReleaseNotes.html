@@ -348,9 +348,8 @@ be used to verify some algorithms.
 
 <p>Since version 0.96 it
    has <a href="http://vrt-sourcefire.blogspot.com/2010/09/introduction-to-clamavs-low-level.html">bytecode
-   signatures</a> that allow writing detections for complex malware.</p>
-
-<p>It uses LLVM's JIT to speed up the execution of bytecode on X86, X86-64,
+   signatures</a> that allow writing detections for complex malware.
+   It uses LLVM's JIT to speed up the execution of bytecode on X86, X86-64,
    PPC32/64, falling back to its own interpreter otherwise.  The git version was
    updated to work with LLVM 3.0.</p>
 
@@ -388,8 +387,8 @@ be used to verify some algorithms.
 <div>
 
 <p><a href="http://cern.ch/cling">Cling</a> is an interactive compiler interface
-   (aka C++ interpreter). It uses LLVM's JIT and clang; it currently supports
-   C++ and C. It has a prompt interface, runs source files, calls into shared
+  (aka C++ interpreter). It supports C++ and C, and uses LLVM's JIT and the
+  Clang parser. It has a prompt interface, runs source files, calls into shared
    libraries, prints the value of expressions, even does runtime lookup of
    identifiers (dynamic scopes). And it just behaves like one would expect from
    an interpreter.</p>
@@ -562,8 +561,8 @@ be used to verify some algorithms.
    binary compatible with Microsoft.NET. Has an optional, dynamically-loaded
    LLVM code generation backend in Mini, the JIT compiler.</p>
 
-<p>Note that we use a Git mirror of LLVM with some patches. See:
-   https://github.com/mono/llvm</p>
+<p>Note that we use a Git mirror of LLVM <a
+    href="https://github.com/mono/llvm">with some patches</a>.</p>
 
 </div>
 
@@ -827,15 +826,12 @@ be used to verify some algorithms.
 </div>
 
 <!--=========================================================================-->
-<h3>
-<a name="coreimprovements">LLVM IR and Core Improvements</a>
-</h3>
 
-<div>
+<!-- EH details: to be moved to a blog post:
+ 
 
-<p>LLVM IR has several new features for better support of new targets and that
-   expose new optimization opportunities:</p>
-
+  
+  
 <p>One of the biggest changes is that 3.0 has a new exception handling
    system. The old system used LLVM intrinsics to convey the exception handling
    information to the code generator. It worked in most cases, but not
@@ -947,6 +943,23 @@ Builder.CreateResume(UnwindData);
 </pre>
 </div>
 
+
+ 
+ 
+ -->
+  
+<!--=========================================================================-->
+<h3>
+<a name="coreimprovements">LLVM IR and Core Improvements</a>
+</h3>
+
+<div>
+
+<p>LLVM IR has several new features for better support of new targets and that
+   expose new optimization opportunities:</p>
+
+  
+  
 </div>
 
 <!--=========================================================================-->
