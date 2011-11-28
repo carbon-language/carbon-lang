@@ -25,6 +25,7 @@ function usage() {
     echo " "
     echo "  -release <num>  The version number of the release"
     echo "  -rc <num>       The release candidate number"
+    echo "  -final          Tag final release candidate"
 }
 
 function tag_version() {
@@ -45,10 +46,10 @@ function tag_release_candidate() {
         if ! svn ls $base_url/$proj/tags/RELEASE_$release > /dev/null 2>&1 ; then
             svn mkdir -m "Creating release directory for release_$release." $base_url/$proj/tags/RELEASE_$release
         fi
-        if ! svn ls $base_url/$proj/tags/RELEASE_$release/rc$rc > /dev/null 2>&1 ; then
+        if ! svn ls $base_url/$proj/tags/RELEASE_$release/$rc > /dev/null 2>&1 ; then
             svn copy -m "Creating release candidate $rc from release_$release branch" \
                 $base_url/$proj/branches/release_$release \
-                $base_url/$proj/tags/RELEASE_$release/rc$rc
+                $base_url/$proj/tags/RELEASE_$release/$rc
         fi
     done
     set +x
@@ -62,7 +63,10 @@ while [ $# -gt 0 ]; do
             ;;
         -rc | --rc )
             shift
-            rc=$1
+            rc="rc$1"
+            ;;
+        -final | --final )
+            rc="final"
             ;;
         -h | --help | -help )
             usage

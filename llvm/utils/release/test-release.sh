@@ -42,6 +42,7 @@ function usage() {
     echo ""
     echo " -release X.Y      The release number to test."
     echo " -rc NUM           The pre-release candidate number."
+    echo " -final            The final release candidate."
     echo " -j NUM            Number of compile jobs to run. [default: 3]"
     echo " -build-dir DIR    Directory to perform testing in. [default: pwd]"
     echo " -no-checkout      Don't checkout the sources from SVN."
@@ -64,7 +65,10 @@ while [ $# -gt 0 ]; do
             ;;
         -rc | --rc | -RC | --RC )
             shift
-            RC=$1
+            RC="rc$1"
+            ;;
+        -final | --final )
+            RC=final
             ;;
         -j* )
             NumJobs="`echo $1 | sed -e 's,-j\([0-9]*\),\1,g'`"
@@ -142,7 +146,7 @@ if [ -z "$NumJobs" ]; then
 fi
 
 # Go to the build directory (may be different from CWD)
-BuildDir=$BuildDir/rc$RC
+BuildDir=$BuildDir/$RC
 mkdir -p $BuildDir
 cd $BuildDir
 
@@ -177,7 +181,7 @@ function check_valid_urls() {
     for proj in $projects ; do
         echo "# Validating $proj SVN URL"
 
-        if ! svn ls $Base_url/$proj/tags/RELEASE_$Release_no_dot/rc$RC > /dev/null 2>&1 ; then
+        if ! svn ls $Base_url/$proj/tags/RELEASE_$Release_no_dot/$RC > /dev/null 2>&1 ; then
             echo "llvm $Release release candidate $RC doesn't exist!"
             exit 1
         fi
@@ -190,7 +194,7 @@ function export_sources() {
 
     for proj in $projects ; do
         echo "# Exporting $proj $Release-RC$RC sources"
-        if ! svn export -q $Base_url/$proj/tags/RELEASE_$Release_no_dot/rc$RC $proj.src ; then
+        if ! svn export -q $Base_url/$proj/tags/RELEASE_$Release_no_dot/$RC $proj.src ; then
             echo "error: failed to export $proj project"
             exit 1
         fi
@@ -238,7 +242,7 @@ function configure_llvmCore() {
     echo "# Using C++ compiler: $cxx_compiler"
 
     cd $ObjDir
-    echo "# Configuring llvm $Release-rc$RC $Flavor"
+    echo "# Configuring llvm $Release-$RC $Flavor"
     echo "# $BuildDir/llvm.src/configure --prefix=$InstallDir \
         --enable-optimized=$Optimized \
         --enable-assertions=$Assertions"
@@ -262,12 +266,12 @@ function build_llvmCore() {
     fi
 
     cd $ObjDir
-    echo "# Compiling llvm $Release-rc$RC $Flavor"
+    echo "# Compiling llvm $Release-$RC $Flavor"
     echo "# ${MAKE} -j $NumJobs VERBOSE=1 $ExtraOpts"
     ${MAKE} -j $NumJobs VERBOSE=1 $ExtraOpts \
         2>&1 | tee $LogDir/llvm.make-Phase$Phase-$Flavor.log
 
-    echo "# Installing llvm $Release-rc$RC $Flavor"
+    echo "# Installing llvm $Release-$RC $Flavor"
     echo "# ${MAKE} install"
     ${MAKE} install \
         2>&1 | tee $LogDir/llvm.install-Phase$Phase-$Flavor.log
@@ -285,7 +289,7 @@ function build_dragonegg() {
     echo "# Targeted compiler: $gcc_compiler"
 
     cd $DragonEggObjDir
-    echo "# Compiling phase $Phase dragonegg $Release-rc$RC $Flavor"
+    echo "# Compiling phase $Phase dragonegg $Release-$RC $Flavor"
     echo -n "# CXX=$cxx_compiler TOP_DIR=$TOP_DIR GCC=$gcc_compiler "
     echo -n "LLVM_CONFIG=$LLVM_CONFIG ${MAKE} -f $TOP_DIR/Makefile "
     echo "-j $NumJobs VERBOSE=1"
@@ -331,7 +335,7 @@ for Flavor in $Flavors ; do
     echo ""
     echo ""
     echo "********************************************************************************"
-    echo "  Release:     $Release-rc$RC"
+    echo "  Release:     $Release-$RC"
     echo "  Build:       $Flavor"
     echo "  System Info: "
     echo "    `uname -a`"
@@ -341,21 +345,21 @@ for Flavor in $Flavors ; do
     c_compiler="$CC"
     cxx_compiler="$CXX"
 
-    llvmCore_phase1_objdir=$BuildDir/Phase1/$Flavor/llvmCore-$Release-rc$RC.obj
-    llvmCore_phase1_installdir=$BuildDir/Phase1/$Flavor/llvmCore-$Release-rc$RC.install
-    dragonegg_phase1_objdir=$BuildDir/Phase1/$Flavor/DragonEgg-$Release-rc$RC.obj
+    llvmCore_phase1_objdir=$BuildDir/Phase1/$Flavor/llvmCore-$Release-$RC.obj
+    llvmCore_phase1_installdir=$BuildDir/Phase1/$Flavor/llvmCore-$Release-$RC.install
+    dragonegg_phase1_objdir=$BuildDir/Phase1/$Flavor/DragonEgg-$Release-$RC.obj
 
-    llvmCore_phase2_objdir=$BuildDir/Phase2/$Flavor/llvmCore-$Release-rc$RC.obj
-    llvmCore_phase2_installdir=$BuildDir/Phase2/$Flavor/llvmCore-$Release-rc$RC.install
-    llvmCore_de_phase2_objdir=$BuildDir/Phase2/$Flavor/llvmCore-DragonEgg-$Release-rc$RC.obj
-    llvmCore_de_phase2_installdir=$BuildDir/Phase2/$Flavor/llvmCore-DragonEgg-$Release-rc$RC.install
-    dragonegg_phase2_objdir=$BuildDir/Phase2/$Flavor/DragonEgg-$Release-rc$RC.obj
+    llvmCore_phase2_objdir=$BuildDir/Phase2/$Flavor/llvmCore-$Release-$RC.obj
+    llvmCore_phase2_installdir=$BuildDir/Phase2/$Flavor/llvmCore-$Release-$RC.install
+    llvmCore_de_phase2_objdir=$BuildDir/Phase2/$Flavor/llvmCore-DragonEgg-$Release-$RC.obj
+    llvmCore_de_phase2_installdir=$BuildDir/Phase2/$Flavor/llvmCore-DragonEgg-$Release-$RC.install
+    dragonegg_phase2_objdir=$BuildDir/Phase2/$Flavor/DragonEgg-$Release-$RC.obj
 
-    llvmCore_phase3_objdir=$BuildDir/Phase3/$Flavor/llvmCore-$Release-rc$RC.obj
-    llvmCore_phase3_installdir=$BuildDir/Phase3/$Flavor/llvmCore-$Release-rc$RC.install
-    llvmCore_de_phase3_objdir=$BuildDir/Phase3/$Flavor/llvmCore-DragonEgg-$Release-rc$RC.obj
-    llvmCore_de_phase3_installdir=$BuildDir/Phase3/$Flavor/llvmCore-DragonEgg-$Release-rc$RC.install
-    dragonegg_phase3_objdir=$BuildDir/Phase3/$Flavor/DragonEgg-$Release-rc$RC.obj
+    llvmCore_phase3_objdir=$BuildDir/Phase3/$Flavor/llvmCore-$Release-$RC.obj
+    llvmCore_phase3_installdir=$BuildDir/Phase3/$Flavor/llvmCore-$Release-$RC.install
+    llvmCore_de_phase3_objdir=$BuildDir/Phase3/$Flavor/llvmCore-DragonEgg-$Release-$RC.obj
+    llvmCore_de_phase3_installdir=$BuildDir/Phase3/$Flavor/llvmCore-DragonEgg-$Release-$RC.install
+    dragonegg_phase3_objdir=$BuildDir/Phase3/$Flavor/DragonEgg-$Release-$RC.obj
 
     rm -rf $llvmCore_phase1_objdir
     rm -rf $llvmCore_phase1_installdir
@@ -494,7 +498,7 @@ for Flavor in $Flavors ; do
         test_llvmCore 1 $Flavor $llvmCore_phase1_objdir
     fi
 done
-) 2>&1 | tee $LogDir/testing.$Release-rc$RC.log
+) 2>&1 | tee $LogDir/testing.$Release-$RC.log
 
 set +e
 
