@@ -162,13 +162,6 @@ prose in a section of its own. When doing that, delete the notes.</p>
   <li>NRVO for blocks.</li>
   <li>Major improvements to the interactions between serializing and
   deserializing the AST and the preprocessor -- argiris</li>
-  <li>API -- Diagnostics API shuffle:
-    <ul>
-      <li>Diagnostic became DiagnosticEngine</li>
-      <li>DiagnosticClient became DiagnosticConsumer</li>
-      <li>DiagnosticInfo became Diagnostic</li>
-    </ul>
-  </li>
   <li>Major driver and system compatibility changes:
     <ul>
       <li>Correct support for many more hardware architecture pre-defined macros
@@ -201,6 +194,19 @@ prose in a section of its own. When doing that, delete the notes.</p>
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
 <h3 id="apichanges">Internal API Changes</h3>
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+
+These are major API changes that have happened since the 2.9 release of Clang.
+If upgrading an external codebase that uses Clang as a library, this section
+should help get you past the largest hurdles of upgrading.
+
+<h4 id="diagnosticrename">Diagnostic class names were shuffled</h4>
+<ul>
+  <li><code>Diagnostic</code> became <code>DiagnosticEngine</code></li>
+  <li><code>DiagnosticClient</code> became <code>DiagnosticConsumer</code></li>
+  <li><code>DiagnosticInfo</code> became <code>Diagnostic</code></li>
+</ul>
+Subclasses of <code>DiagnosticConsumer</code> were also then renamed to end with
+<code>Consumer</code>.
 
 <!-- ======================================================================= -->
 <h2 id="knownproblems">Significant Known Problems</h2>
