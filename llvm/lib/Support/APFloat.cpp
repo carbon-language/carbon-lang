@@ -1917,6 +1917,7 @@ APFloat::convert(const fltSemantics &toSemantics,
     fs = opOK;
   } else {
     *losesInfo = false;
+    fs = opOK;
   }
 
   return fs;
