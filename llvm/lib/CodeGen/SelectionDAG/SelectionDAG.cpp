@@ -6553,24 +6553,15 @@ unsigned SelectionDAG::InferPtrAlignment(SDValue Ptr) const {
   const GlobalValue *GV;
   int64_t GVOffset = 0;
   if (TLI.isGAPlusOffset(Ptr.getNode(), GV, GVOffset)) {
-    // If GV has specified alignment, then use it. Otherwise, use the preferred
-    // alignment.
-    unsigned Align = GV->getAlignment();
-    if (!Align) {
-      if (const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV)) {
-        if (GVar->hasInitializer()) {
-          const TargetData *TD = TLI.getTargetData();
-          Align = TD->getPreferredAlignment(GVar);
-        }
-      }
-      if (!Align)
-        // Conservatively returns zero here instead of using ABI alignment for
-        // type of the GV. If the type is a "packed" type, then the under-
-        // specified alignments is attached to the load / store instructions.
-        // In that case, the alignment of the type cannot be trusted.
-        return 0;
-    }
-    return MinAlign(Align, GVOffset);
+    unsigned PtrWidth = TLI.getPointerTy().getSizeInBits();
+    APInt AllOnes = APInt::getAllOnesValue(PtrWidth);
+    APInt KnownZero(PtrWidth, 0), KnownOne(PtrWidth, 0);
+    llvm::ComputeMaskedBits(const_cast<GlobalValue*>(GV), AllOnes,
+                            KnownZero, KnownOne, TLI.getTargetData());
+    unsigned AlignBits = KnownZero.countTrailingOnes();
+    unsigned Align = AlignBits ? 1 << std::min(31U, AlignBits) : 0;
+    if (Align)
+      return MinAlign(Align, GVOffset);
   }
 
   // If this is a direct reference to a stack slot, use information about the

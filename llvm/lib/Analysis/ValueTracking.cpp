@@ -103,14 +103,16 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
   if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
     unsigned Align = GV->getAlignment();
     if (Align == 0 && TD && GV->getType()->getElementType()->isSized()) {
-      Type *ObjectType = GV->getType()->getElementType();
-      // If the object is defined in the current Module, we'll be giving
-      // it the preferred alignment. Otherwise, we have to assume that it
-      // may only have the minimum ABI alignment.
-      if (!GV->isDeclaration() && !GV->mayBeOverridden())
-        Align = TD->getPrefTypeAlignment(ObjectType);
-      else
-        Align = TD->getABITypeAlignment(ObjectType);
+      if (GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV)) {
+        Type *ObjectType = GVar->getType()->getElementType();
+        // If the object is defined in the current Module, we'll be giving
+        // it the preferred alignment. Otherwise, we have to assume that it
+        // may only have the minimum ABI alignment.
+        if (!GVar->isDeclaration() && !GVar->mayBeOverridden())
+          Align = TD->getPreferredAlignment(GVar);
+        else
+          Align = TD->getABITypeAlignment(ObjectType);
+      }
     }
     if (Align > 0)
       KnownZero = Mask & APInt::getLowBitsSet(BitWidth,
