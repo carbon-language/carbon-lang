@@ -98,6 +98,12 @@ namespace lldb_private {
         Attach(ProcessAttachInfo &attach_info, Debugger &debugger,
                Target *target, Listener &listener, Error &error);
 
+        virtual bool
+        CanDebugProcess ()
+        {
+            return false;
+        }
+
     protected:
         
         
