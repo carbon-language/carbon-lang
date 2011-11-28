@@ -674,10 +674,20 @@ public:
   ///
   /// \param Unit - optionally an already created ASTUnit. Its ownership is not
   /// transfered.
+  ///
+  /// \param Persistent - if true the returned ASTUnit will be complete.
+  /// false means the caller is only interested in getting info through the
+  /// provided \see Action.
   static ASTUnit *LoadFromCompilerInvocationAction(CompilerInvocation *CI,
                               llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
                                              ASTFrontendAction *Action = 0,
-                                             ASTUnit *Unit = 0);
+                                             ASTUnit *Unit = 0,
+                                             bool Persistent = true,
+                                      StringRef ResourceFilesPath = StringRef(),
+                                             bool OnlyLocalDecls = false,
+                                             bool CaptureDiagnostics = false,
+                                             bool PrecompilePreamble = false,
+                                       bool CacheCodeCompletionResults = false);
 
   /// LoadFromCompilerInvocation - Create an ASTUnit from a source file, via a
   /// CompilerInvocation object.

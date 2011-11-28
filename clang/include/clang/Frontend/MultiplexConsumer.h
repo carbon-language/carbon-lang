@@ -37,6 +37,7 @@ public:
   virtual void HandleInterestingDecl(DeclGroupRef D);
   virtual void HandleTranslationUnit(ASTContext &Ctx);
   virtual void HandleTagDeclDefinition(TagDecl *D);
+  virtual void HandleTopLevelDeclInObjCContainer(DeclGroupRef D);
   virtual void CompleteTentativeDefinition(VarDecl *D);
   virtual void HandleVTable(CXXRecordDecl *RD, bool DefinitionRequired);
   virtual ASTMutationListener *GetASTMutationListener();

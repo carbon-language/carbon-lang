@@ -184,9 +184,10 @@ void MultiplexConsumer::Initialize(ASTContext &Context) {
 }
 
 bool MultiplexConsumer::HandleTopLevelDecl(DeclGroupRef D) {
+  bool Continue = true;
   for (size_t i = 0, e = Consumers.size(); i != e; ++i)
-    Consumers[i]->HandleTopLevelDecl(D);
-  return true;
+    Continue = Continue && Consumers[i]->HandleTopLevelDecl(D);
+  return Continue;
 }
 
 void MultiplexConsumer::HandleInterestingDecl(DeclGroupRef D) {
@@ -202,6 +203,11 @@ void MultiplexConsumer::HandleTranslationUnit(ASTContext &Ctx) {
 void MultiplexConsumer::HandleTagDeclDefinition(TagDecl *D) {
   for (size_t i = 0, e = Consumers.size(); i != e; ++i)
     Consumers[i]->HandleTagDeclDefinition(D);
+}
+
+void MultiplexConsumer::HandleTopLevelDeclInObjCContainer(DeclGroupRef D) {
+  for (size_t i = 0, e = Consumers.size(); i != e; ++i)
+    Consumers[i]->HandleTopLevelDeclInObjCContainer(D);
 }
 
 void MultiplexConsumer::CompleteTentativeDefinition(VarDecl *D) {

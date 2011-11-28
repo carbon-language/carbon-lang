@@ -1548,6 +1548,7 @@ typedef struct {
   const char *check_prefix;
   int first_check_printed;
   int fail_for_error;
+  int abort;
 } IndexData;
 
 static void printCheck(IndexData *data) {
@@ -1850,8 +1851,14 @@ static void index_indexEntityReference(CXClientData client_data,
   printf("\n");
 }
 
+static int index_abortQuery(CXClientData client_data, void *reserved) {
+  IndexData *index_data;
+  index_data = (IndexData *)client_data;
+  return index_data->abort;
+}
+
 static IndexerCallbacks IndexCB = {
-  0, /*abortQuery*/
+  index_abortQuery,
   index_diagnostic,
   index_enteredMainFile,
   index_ppIncludedFile,
@@ -1894,6 +1901,7 @@ static int index_file(int argc, const char **argv) {
   index_data.check_prefix = check_prefix;
   index_data.first_check_printed = 0;
   index_data.fail_for_error = 0;
+  index_data.abort = 0;
 
   index_opts = 0;
   if (getenv("CINDEXTEST_SUPPRESSREFS"))
@@ -1948,6 +1956,7 @@ static int index_tu(int argc, const char **argv) {
   index_data.check_prefix = check_prefix;
   index_data.first_check_printed = 0;
   index_data.fail_for_error = 0;
+  index_data.abort = 0;
 
   index_opts = 0;
   if (getenv("CINDEXTEST_SUPPRESSREFS"))

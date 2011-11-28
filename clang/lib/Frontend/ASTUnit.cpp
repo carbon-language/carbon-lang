@@ -27,6 +27,7 @@
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/FrontendOptions.h"
+#include "clang/Frontend/MultiplexConsumer.h"
 #include "clang/Frontend/Utils.h"
 #include "clang/Serialization/ASTReader.h"
 #include "clang/Serialization/ASTWriter.h"
@@ -1649,21 +1650,33 @@ ASTUnit *ASTUnit::create(CompilerInvocation *CI,
 ASTUnit *ASTUnit::LoadFromCompilerInvocationAction(CompilerInvocation *CI,
                               llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
                                              ASTFrontendAction *Action,
-                                             ASTUnit *Unit) {
+                                             ASTUnit *Unit,
+                                             bool Persistent,
+                                             StringRef ResourceFilesPath,
+                                             bool OnlyLocalDecls,
+                                             bool CaptureDiagnostics,
+                                             bool PrecompilePreamble,
+                                             bool CacheCodeCompletionResults) {
   assert(CI && "A CompilerInvocation is required");
 
   llvm::OwningPtr<ASTUnit> OwnAST;
   ASTUnit *AST = Unit;
   if (!AST) {
     // Create the AST unit.
-    OwnAST.reset(create(CI, Diags));
+    OwnAST.reset(create(CI, Diags, CaptureDiagnostics));
     AST = OwnAST.get();
   }
   
-  AST->OnlyLocalDecls = false;
-  AST->CaptureDiagnostics = false;
+  if (!ResourceFilesPath.empty()) {
+    // Override the resources path.
+    CI->getHeaderSearchOpts().ResourceDir = ResourceFilesPath;
+  }
+  AST->OnlyLocalDecls = OnlyLocalDecls;
+  AST->CaptureDiagnostics = CaptureDiagnostics;
+  if (PrecompilePreamble)
+    AST->PreambleRebuildCounter = 2;
   AST->TUKind = Action ? Action->getTranslationUnitKind() : TU_Complete;
-  AST->ShouldCacheCodeCompletionResults = false;
+  AST->ShouldCacheCodeCompletionResults = CacheCodeCompletionResults;
 
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<ASTUnit>
@@ -1742,7 +1755,17 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocationAction(CompilerInvocation *CI,
                             Clang->getFrontendOpts().Inputs[0].second,
                             Clang->getFrontendOpts().Inputs[0].first))
     return 0;
-  
+
+  if (Persistent && !TrackerAct) {
+    Clang->getPreprocessor().addPPCallbacks(
+     new MacroDefinitionTrackerPPCallbacks(AST->getCurrentTopLevelHashValue()));
+    std::vector<ASTConsumer*> Consumers;
+    if (Clang->hasASTConsumer())
+      Consumers.push_back(Clang->takeASTConsumer());
+    Consumers.push_back(new TopLevelDeclTrackerConsumer(*AST,
+                                           AST->getCurrentTopLevelHashValue()));
+    Clang->setASTConsumer(new MultiplexConsumer(Consumers));
+  }
   Act->Execute();
   
   // Steal the created target, context, and preprocessor.

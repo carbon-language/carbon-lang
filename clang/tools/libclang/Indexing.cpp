@@ -244,9 +244,6 @@ static void clang_indexSourceFile_Impl(void *UserData) {
 
   CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
 
-  (void)CXXIdx;
-  (void)TU_options;
-  
   CaptureDiagnosticConsumer *CaptureDiag = new CaptureDiagnosticConsumer();
 
   // Configure the diagnostics.
@@ -333,9 +330,38 @@ static void clang_indexSourceFile_Impl(void *UserData) {
   llvm::CrashRecoveryContextCleanupRegistrar<IndexingFrontendAction>
     IndexActionCleanup(IndexAction.get());
 
+  bool Persistent = requestedToGetTU;
+  StringRef ResourceFilesPath = CXXIdx->getClangResourcesPath();
+  bool OnlyLocalDecls = false;
+  bool CaptureDiagnostics = true;
+  bool PrecompilePreamble = false;
+  bool CacheCodeCompletionResults = false;
+  PreprocessorOptions &PPOpts = CInvok->getPreprocessorOpts(); 
+  PPOpts.DetailedRecord = false;
+  PPOpts.DetailedRecordIncludesNestedMacroExpansions = false;
+
+  if (requestedToGetTU) {
+    OnlyLocalDecls = CXXIdx->getOnlyLocalDecls();
+    PrecompilePreamble = TU_options & CXTranslationUnit_PrecompiledPreamble;
+    // FIXME: Add a flag for modules.
+    CacheCodeCompletionResults
+      = TU_options & CXTranslationUnit_CacheCompletionResults;
+    if (TU_options & CXTranslationUnit_DetailedPreprocessingRecord) {
+      PPOpts.DetailedRecord = true;
+      PPOpts.DetailedRecordIncludesNestedMacroExpansions
+          = (TU_options & CXTranslationUnit_NestedMacroExpansions);
+    }
+  }
+
   Unit = ASTUnit::LoadFromCompilerInvocationAction(CInvok.getPtr(), Diags,
                                                        IndexAction.get(),
-                                                       Unit);
+                                                       Unit,
+                                                       Persistent,
+                                                       ResourceFilesPath,
+                                                       OnlyLocalDecls,
+                                                       CaptureDiagnostics,
+                                                       PrecompilePreamble,
+                                                    CacheCodeCompletionResults);
   if (!Unit)
     return;
 
