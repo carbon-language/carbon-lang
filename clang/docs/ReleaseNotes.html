@@ -91,7 +91,9 @@ prose in a section of its own. When doing that, delete the notes.</p>
   section?</li>
   <li>Building Clang on windows -- mingw, 32 and 64 bit, native windows builds,
   cygwin. get chapuni to flesh out details.</li>
-  <li>Compiling C/C++ w/ MinGW (32/64) and Cygwin on Windows -- chapuny</li>
+  <li>Compiling C/C++ w/ MinGW (32/64) and Cygwin on Windows -- chapuni</li>
+  <li>C++ -- Parsing and AST support for Windows Structured Exception
+  Handling.</li>
   <li>C++11 -- noexcept (Sebastian Redl)</li>
   <li>Uninitialized values Clang warning rewrite -- more accurate, faster, able
   to differentiate between the possibility of an uninitialized use and the
@@ -102,7 +104,8 @@ prose in a section of its own. When doing that, delete the notes.</p>
     </ul>
   </li>
   <li>Support for language specific address spaces</li>
-  <li>Support for compiling on NetBSD systems -- Joerg Sonnenberger to fill out</li>
+  <li>Support for compiling on NetBSD systems -- Joerg Sonnenberger to fill
+  out</li>
   <li>Support for '--sysroot' based cross-compilation</li>
   <li>Crash recovery handling for libclang clients -- Ted</li>
   <li>Driver support for automatic preparation of reproduction steps for
@@ -113,10 +116,23 @@ prose in a section of its own. When doing that, delete the notes.</p>
   <li>Diagnostic improvements bucket?
     <ul>
       <li>Emitting fewer include stacks</li>
+      <li>Significantly better recovery when encountering misspelled type names
+      in a declaration context. r130082</li>
     </ul>
   </li>
   <li>C++ -- supported in the static analyzer: methods, new, constructors,
   destructors, etc.</li>
+  <li>Improved AST support for partially constructed nodes and incomplete
+  information for LLDB and other clients which dynamically build AST nodes.</li>
+  <li>Largely complete MSVC-compatible parsing mode -- fpichet</li>
+  <li>C1X -- static asserts and generic selections</li>
+  <li>C++11 -- alias declarations -- zygoloid</li>
+  <li>C++11 -- range-based-for loops -- zygoloid</li>
+  <li>C++11 -- delegating ctors -- zygoloid/scshunt<li>
+  <li>Memory reduction -- initializers, macro expansions, source locations,
+  etc.</li>
+  <li>Full set of type traits, sufficient to support C++11 standard libraries;
+  also expression traits.</li>
 </ul>
 
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
