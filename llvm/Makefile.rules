@@ -1503,12 +1503,19 @@ install-local::
 uninstall-local::
 	$(Echo) Uninstall circumvented with NO_INSTALL
 else
-DestTool = $(DESTDIR)$(PROJ_bindir)/$(TOOLEXENAME)
+
+ifdef INTERNAL_TOOL
+ToolBinDir = $(DESTDIR)$(PROJ_internal_prefix)/bin
+else
+ToolBinDir = $(DESTDIR)$(PROJ_bindir)
+endif
+DestTool = $(ToolBinDir)/$(TOOLEXENAME)
 
 install-local:: $(DestTool)
 
-$(DestTool): $(ToolBuildPath) $(DESTDIR)$(PROJ_bindir)
+$(DestTool): $(ToolBuildPath)
 	$(Echo) Installing $(BuildMode) $(DestTool)
+	$(Verb) $(MKDIR) $(ToolBinDir)
 	$(Verb) $(ProgInstall) $(ToolBuildPath) $(DestTool)
 
 uninstall-local::
@@ -1517,7 +1524,7 @@ uninstall-local::
 
 # TOOLALIAS install.
 ifdef TOOLALIAS
-DestToolAlias = $(DESTDIR)$(PROJ_bindir)/$(TOOLALIAS)$(EXEEXT)
+DestToolAlias = $(ToolBinDir)/$(TOOLALIAS)$(EXEEXT)
 
 install-local:: $(DestToolAlias)
 
@@ -2276,6 +2283,7 @@ printvars::
 	$(Echo) "LLVM_SRC_ROOT: " '$(LLVM_SRC_ROOT)'
 	$(Echo) "LLVM_OBJ_ROOT: " '$(LLVM_OBJ_ROOT)'
 	$(Echo) "PROJ_prefix  : " '$(PROJ_prefix)'
+	$(Echo) "PROJ_internal_prefix  : " '$(PROJ_internal_prefix)'
 	$(Echo) "PROJ_bindir  : " '$(PROJ_bindir)'
 	$(Echo) "PROJ_libdir  : " '$(PROJ_libdir)'
 	$(Echo) "PROJ_etcdir  : " '$(PROJ_etcdir)'

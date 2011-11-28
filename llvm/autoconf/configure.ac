@@ -885,6 +885,12 @@ AC_ARG_ENABLE(libffi,AS_HELP_STRING(
   esac],
   llvm_cv_enable_libffi=no)
 
+AC_ARG_WITH(internal-prefix,
+  AS_HELP_STRING([--with-internal-prefix],
+    [Installation directory for internal files]),,
+    withval="")
+AC_SUBST(INTERNAL_PREFIX,[$withval])
+
 dnl===-----------------------------------------------------------------------===
 dnl===
 dnl=== SECTION 4: Check for programs we need and that they are the right version
