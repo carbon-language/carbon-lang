@@ -99,7 +99,6 @@ prose in a section of its own. When doing that, delete the notes.</p>
   <li>Largely complete MSVC-compatible parsing mode -- fpichet</li>
   <li>Memory reduction -- initializers, macro expansions, source locations,
   etc.</li>
-  <li>CFI-based debug info -- nlewycky/espindola details</li>
   <li>ObjC ARC -- get a blurb from rjmccall</li>
   <li>ObjC related result type/instancetype</li>
   <li>Thread Safety attributes and correctness analysis added to Clang.</li>
@@ -185,6 +184,15 @@ to introspect the preprocessing.
   <li>Missing files during including headers reported.</li>
   <li>The exact source range for expanded macros can be retrieved.</li>
 </ul>
+
+<!--
+Nick and/or Rafael will flesh this out into a bit about the CFI / DWARF
+improvements.
+
+<h4 id="dwarf">DWARF Exception Handling uses CFI...</h4>
+Rafael had a zillion patches to emit stuff using .cfi directives... =]
+
+-->
 
 <!--
 Need Peter and/or Tanya to flesh this out if we want it in 3.0's notes.. The
