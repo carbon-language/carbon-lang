@@ -62,8 +62,8 @@ Release Notes</a>.</h1>
    <a href="http://llvm.org/releases/">releases page</a>.</p>
 
 </div>
-   
- 
+
+
 <!-- *********************************************************************** -->
 <h2>
   <a name="subproj">Sub-project Status Update</a>
@@ -99,7 +99,7 @@ Release Notes</a>.</h1>
 <ul>
   <li>Greatly improved support for building C++ applications, with greater
       stability and better diagnostics.</li>
-  
+
   <li><a href="http://clang.llvm.org/cxx_status.html">Improved support</a> for
       the <a href="http://www.iso.org/iso/iso_catalogue/catalogue_tc/catalogue_detail.htm?csnumber=50372">C++
       2011</a> standard (aka "C++'0x"), including implementations of non-static data member
@@ -109,7 +109,7 @@ Release Notes</a>.</h1>
 
   <li>Implemented support for some features of the upcoming C1x standard,
       including static assertions and generic selections.</li>
-  
+
   <li>Better detection of include and linking paths for system headers and
       libraries, especially for Linux distributions.</li>
 
@@ -138,7 +138,7 @@ Release Notes</a>.</h1>
       from source locations to abstract syntax tree nodes.</li>
 </ul>
 
-  
+
 <p>If Clang rejects your code but another compiler accepts it, please take a
    look at the <a href="http://clang.llvm.org/compatibility.html">language
    compatibility</a> guide to make sure this is not intentional or a known
@@ -209,7 +209,7 @@ Release Notes</a>.</h1>
 </h3>
 
 <div>
-  
+
 <p>LLDB is a ground-up implementation of a command line debugger, as well as a
    debugger API that can be used from other applications.  LLDB makes use of the
    Clang parser to provide high-fidelity expression parsing (particularly for
@@ -273,7 +273,7 @@ Release Notes</a>.</h1>
   </ul>
 
 </div>
-  
+
 
 <!--=========================================================================-->
 <h3>
@@ -326,7 +326,7 @@ be used to verify some algorithms.
 
 <!--=========================================================================-->
 <h3>AddressSanitizer</h3>
-  
+
 <div>
 
 <p><a href="http://code.google.com/p/address-sanitizer/">AddressSanitizer</a>
@@ -339,7 +339,7 @@ be used to verify some algorithms.
 
 <!--=========================================================================-->
 <h3>ClamAV</h3>
-  
+
 <div>
 
 <p><a href="http://www.clamav.net">Clam AntiVirus</a> is an open source (GPL)
@@ -407,10 +407,10 @@ be used to verify some algorithms.
    typing.</p>
 
 </div>
-  
+
 <!--=========================================================================-->
 <h3>Eero</h3>
-  
+
 <div>
 
 <p><a href="http://eerolanguage.org/">Eero</a> is a fully
@@ -426,7 +426,7 @@ be used to verify some algorithms.
 
 <!--=========================================================================-->
 <h3>FAUST Real-Time Audio Signal Processing Language</h3>
-  
+
 <div>
 
 <p><a href="http://faust.grame.fr/">FAUST</a> is a compiled language for
@@ -441,7 +441,7 @@ be used to verify some algorithms.
 
 <!--=========================================================================-->
 <h3>Glasgow Haskell Compiler (GHC)</h3>
-  
+
 <div>
 
 <p>GHC is an open source, state-of-the-art programming suite for Haskell, a
@@ -507,7 +507,7 @@ be used to verify some algorithms.
    example program.  ispc is licensed under the BSD license.</p>
 
 </div>
-  
+
 <!--=========================================================================-->
 <h3>The Julia Programming Language</h3>
 
@@ -597,7 +597,7 @@ be used to verify some algorithms.
 
 <!--=========================================================================-->
 <h3>Pure</h3>
-  
+
 <div>
 <p><a href="http://pure-lang.googlecode.com/">Pure</a> is an
   algebraic/functional programming language based on term rewriting. Programs
@@ -610,7 +610,7 @@ be used to verify some algorithms.
   languages (including the ability to load LLVM bitcode modules, and inline C,
   C++, Fortran and Faust code in Pure programs if the corresponding LLVM-enabled
   compilers are installed).</p>
-  
+
 <p>Pure version 0.48 has been tested and is known to work with LLVM 3.0
   (and continues to work with older LLVM releases &gt;= 2.5).</p>
 
@@ -671,7 +671,7 @@ be used to verify some algorithms.
    co-design flow from C/C++ programs down to synthesizable VHDL and parallel
    program binaries. Processor customization points include the register files,
    function units, supported operations, and the interconnection network.</p>
-  
+
 <p>TCE uses Clang and LLVM for C/C++ language support, target independent
    optimizations and also for parts of code generation. It generates new
    LLVM-based code generators "on the fly" for the designed TTA processors and
@@ -679,7 +679,7 @@ be used to verify some algorithms.
    per-target recompilation of larger parts of the compiler chain.</p>
 
 </div>
-  
+
 <!--=========================================================================-->
 <h3>Tart Programming Language</h3>
 
@@ -756,15 +756,15 @@ be used to verify some algorithms.
 <p>LLVM 3.0 includes several major changes and big features:</p>
 
 <ul>
-<li>llvm-gcc is no longer supported, and not included in the release.  We 
+<li>llvm-gcc is no longer supported, and not included in the release.  We
     recommend switching to <a
-       href="http://clang.llvm.org/">Clang</a> or <a 
+       href="http://clang.llvm.org/">Clang</a> or <a
        href="http://dragonegg.llvm.org/">DragonEgg</a>.</li>
 
 <li>The linear scan register allocator has been replaced with a new "greedy"
     register allocator, enabling live range splitting and many other
     optimizations that lead to better code quality.  Please see its <a
-    href="http://blog.llvm.org/2011/09/greedy-register-allocation-in-llvm-30.html">blog post</a> or its talk at the <a 
+    href="http://blog.llvm.org/2011/09/greedy-register-allocation-in-llvm-30.html">blog post</a> or its talk at the <a
       href="http://llvm.org/devmtg/2011-11/">Developer Meeting</a>
     for more information.</li>
 <li>LLVM IR now includes full support for <a href="Atomics.html">atomics
@@ -782,15 +782,15 @@ be used to verify some algorithms.
     documentation</a> for more information.</li>
 <li>The LLVM IR Type system has been redesigned and reimplemented, making it
     faster and solving some long-standing problems.
-    Please see its <a 
+    Please see its <a
     href="http://blog.llvm.org/2011/11/llvm-30-type-system-rewrite.html">blog
     post</a> for more information.</li>
-  
+
 <li>The MIPS backend has made major leaps in this release, going from an
     experimental target to being virtually production quality and supporting a
     wide variety of MIPS subtargets.  See the <a href="#MIPS">MIPS section</a>
     below for more information.</li>
-  
+
 <li>The optimizer and code generator now supports gprof and gcov-style coverage
     and profiling information, and includes a new llvm-cov tool (but also works
     with gcov).  Clang exposes coverage and profiling through GCC-compatible
@@ -799,7 +799,7 @@ be used to verify some algorithms.
 
 </div>
 
-  
+
 <!--=========================================================================-->
 <h3>
 <a name="coreimprovements">LLVM IR and Core Improvements</a>
@@ -857,12 +857,12 @@ be used to verify some algorithms.
     register spill placement and if-conversion, with additional optimizations
     planned for future releases.  The same framework is intended for eventual
     use with profile-guided optimization.</li>
-  
+
 <li>The "-indvars" induction variable simplification pass only modifies
     induction variables when profitable. Sign and zero extension
     elimination, linear function test replacement, loop unrolling, and
     other simplifications that require induction variable analysis have
-    been generalized so they no longer require loops to be rewritten into 
+    been generalized so they no longer require loops to be rewritten into
     canonical form prior to optimization. This new design
     preserves more IR level information, avoids undoing earlier loop
     optimizations (particularly hand-optimized loops), and no longer
@@ -910,10 +910,14 @@ be used to verify some algorithms.
   <li>TableGen can now autogenerate MC expansion logic for pseudo
     instructions that expand to multiple MC instructions (through the
     PseudoInstExpansion class).</li>
-  <li>A new llvm-objdump and llvm-dwarfdump tools provide a start of a drop-in 
-    replacement for the corresponding tools that use LLVM libraries.  As part of
+  <li>A new llvm-dwarfdump tool provides a start of a drop-in
+    replacement for the corresponding tool that use LLVM libraries.  As part of
     this, LLVM has the beginnings of a dwarf parsing library.</li>
-  <li>XXX: object file parsing stuff and llvm-size (mspencer).  Status?</li>
+  <li>llvm-objdump has more output including, symbol by symbol disassembly,
+      inline relocations, section headers, symbol tables, and section contents.
+      Support for archive files has also been added.</li>
+  <li>llvm-nm has gained support for archives of binary files.</li>
+  <li>llvm-size has been added. This tool prints out section sizes.</li>
 </ul>
 
 </div>
@@ -1011,7 +1015,7 @@ be used to verify some algorithms.
 </ul>
 </div>
 
-  
+
 <!--=========================================================================-->
 <h3>
 <a name="MIPS">MIPS Target Improvements</a>
@@ -1027,7 +1031,7 @@ be used to verify some algorithms.
   <li>LE/BE MIPS32r1/r2 has been tested extensively.</li>
   <li>O32 ABI has been fully tested.</li>
   <li>MIPS backend has migrated to using the MC infrastructure for assembly printing. Initial support for direct object code emission has been implemented too.</li>
-  <li>Delay slot filler has been updated. Now it tries to fill delay slots with useful instructions instead of always filling them with NOPs.</li> 
+  <li>Delay slot filler has been updated. Now it tries to fill delay slots with useful instructions instead of always filling them with NOPs.</li>
   <li>Support for old-style JIT is complete.</li>
   <li>Support for old architectures (MIPS1 and MIPS2) has been removed.</li>
   <li>Initial support for MIPS64 has been added.</li>
@@ -1040,13 +1044,13 @@ be used to verify some algorithms.
 </h3>
 
 <div>
-  
+
   <p>
   The PTX back-end is still experimental, but is fairly usable for compute kernels
   in LLVM 3.0.  Most scalar arithmetic is implemented, as well as intrinsics to
   access the special PTX registers and sync instructions.  The major missing
   pieces are texture/sampler support and some vector operations.</p>
-  
+
   <p>That said, the backend is already being used for domain-specific languages
   and works well with the <a href="http://www.pcc.me.uk/~peter/libclc/">libclc
     library</a> to supply OpenCL built-ins.  With it, you can use Clang to compile
@@ -1054,7 +1058,7 @@ be used to verify some algorithms.
   blob using the nVidia OpenCL library.  It has been tested with several OpenCL
   programs, including some from the nVidia GPU Computing SDK, and the performance
   is on par with the nVidia compiler.</p>
-  
+
 </div>
 
 <!--=========================================================================-->
@@ -1067,11 +1071,11 @@ be used to verify some algorithms.
 <ul>
 <li>Many PowerPC improvements have been implemented for ELF targets, including
    support for varargs and initial support for direct .o file emission.</li>
-  
+
 <li>MicroBlaze scheduling itineraries were added that model the
    3-stage and the 5-stage pipeline architectures. The 3-stage
-   pipeline model can be selected with <code>-mcpu=mblaze3</code> 
-   and the 5-stage pipeline model can be selected with 
+   pipeline model can be selected with <code>-mcpu=mblaze3</code>
+   and the 5-stage pipeline model can be selected with
    <code>-mcpu=mblaze5</code>.</li>
 
 </ul>
@@ -1092,7 +1096,7 @@ be used to verify some algorithms.
 <ul>
 <li>LLVM 3.0 removes support for reading LLVM 2.8 and earlier files, and LLVM
     3.1 will eliminate support for reading LLVM 2.9 files.  Going forward, we
-    aim for all future versions of LLVM to read bitcode files and .ll files 
+    aim for all future versions of LLVM to read bitcode files and .ll files
     produced by LLVM 3.0.</li>
 <li>Tablegen has been split into a library, allowing the clang tblgen pieces
     now live in the clang tree.  The llvm version has been renamed to
@@ -1143,7 +1147,7 @@ be used to verify some algorithms.
   <li>The biggest and most pervasive change is that llvm::Types are no longer
       returned or accepted as 'const' values.  Instead, just pass around
       non-const Types.</li>
-  
+
   <li><code>PHINode::reserveOperandSpace</code> has been removed. Instead, you
       must specify how many operands to reserve space for when you create the
       PHINode, by passing an extra argument
@@ -1260,9 +1264,9 @@ be used to verify some algorithms.
    there isn't already one or ask on the <a
     href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">LLVMdev
     list</a>.</p>
-  
+
   <p>Known problem areas include:</p>
-  
+
 <ul>
   <li>The Alpha, Blackfin, CellSPU, MSP430, PTX, SystemZ and
       XCore backends are experimental, and the Alpha, Blackfin and SystemZ
@@ -1273,7 +1277,7 @@ be used to verify some algorithms.
       system assembler is required.  For more details, see the <a
       href="CodeGenerator.html#targetfeatures">Target Features Matrix</a>.
   </li>
-  
+
   <li>The C backend has numerous problems and is not being actively maintained.
     Depending on it for anything serious is not advised.</li>
 </ul>
@@ -1306,10 +1310,10 @@ be used to verify some algorithms.
 <!--=========================================================================-->
 
 <!-- EH details: to be moved to a blog post:
- 
 
-  
-  
+
+
+
 <p>One of the biggest changes is that 3.0 has a new exception handling
    system. The old system used LLVM intrinsics to convey the exception handling
    information to the code generator. It worked in most cases, but not
@@ -1422,11 +1426,11 @@ Builder.CreateResume(UnwindData);
 </div>
 
 
- 
- 
+
+
  -->
 
-  
+
 <!-- *********************************************************************** -->
 
 <hr>
