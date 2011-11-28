@@ -497,8 +497,8 @@ public:
     if (loBitsSet == APINT_BITS_PER_WORD)
       return APInt(numBits, -1ULL);
     // For small values, return quickly.
-    if (numBits < APINT_BITS_PER_WORD)
-      return APInt(numBits, (1ULL << loBitsSet) - 1);
+    if (loBitsSet <= APINT_BITS_PER_WORD)
+      return APInt(numBits, -1ULL >> (APINT_BITS_PER_WORD - loBitsSet));
     return getAllOnesValue(numBits).lshr(numBits - loBitsSet);
   }
 
