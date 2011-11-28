@@ -96,22 +96,10 @@ prose in a section of its own. When doing that, delete the notes.</p>
   to differentiate between the possibility of an uninitialized use and the
   certainty of an uninitialized use.</li>
   <li>Support for language specific address spaces</li>
-  <li>Crash recovery handling for libclang clients -- Ted</li>
   <li>Driver support for automatic preparation of reproduction steps for
   compiler crashes -- Chad</li>
   <li>OS Availability attribute -- r128127</li>
   <li>GNU ObjectiveC Runtime support -- David Chisnall</li>
-  <li>libclang improvements bucket
-    <ul>
-      <li>Better Python Bindings</li>
-      <li>More AST coverage</li>
-      <li>Improved cursor support within macros, especially function-style macro
-      arguments.</li>
-      <li>Improved code completion surrounding macros, macro arguments, and
-      token pasting.</li>
-      <li>Improved code completion for in-class member functions.</li>
-    </ul>
-  </li>
   <li>Basic C++ support in the static analyzer.</li>
   <li>Improved AST support for partially constructed nodes and incomplete
   information for LLDB and other clients which dynamically build AST nodes.</li>
@@ -154,6 +142,22 @@ typedef int Integer;
   identifier itself.</li>
   <li>More rich macro expansion backtraces and some (limited) fix-it hints when
   diagnostics stem from macro arguments.</li>
+</ul>
+
+<h4 id="libclang">This release saw significant improvements to <code>libclang</code></h4>
+<ul>
+  <li>A broader set of the <code>libclang</code> API is exposed in the Python
+  bindings.</li>
+  <li>Much more of the Clang AST is exposed through <code>libclang</code>'s APIs
+  and cursors.</li>
+  <li>Cursors can now walk more effectively through macros, especially arguments
+  to function-style macros, and resolve to the underlying AST.</li>
+  <li>Improved code completion surrounding macros, macro arguments, and
+  token pasting.</li>
+  <li>Improved code completion for in-class member functions.</li>
+  <li>Crash recovery for <code>libclang</code> clients.</li>
+  <!-- Doug or Ted may want to flesh this out if there are relevant details I'm
+  glossing over... -->
 </ul>
 
 <h4 id="driver">The Clang GCC-compatible command-line driver improved dramatically</h4>
