@@ -17,7 +17,7 @@
 #define LLVM_SYSTEM_VALGRIND_H
 
 #include "llvm/Support/Compiler.h"
-#include "llvm/Config/config.h"
+#include "llvm/Config/llvm-config.h"
 #include <stddef.h>
 
 #if LLVM_ENABLE_THREADS != 0 && !defined(NDEBUG)
