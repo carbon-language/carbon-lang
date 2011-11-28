@@ -140,6 +140,7 @@ def X86VPermilps  : SDNode<"X86ISD::VPERMILPS", SDTShuff2OpI>;
 def X86VPermilpd  : SDNode<"X86ISD::VPERMILPD", SDTShuff2OpI>;
 
 def X86VPerm2f128 : SDNode<"X86ISD::VPERM2F128", SDTShuff3OpI>;
+def X86VPerm2i128 : SDNode<"X86ISD::VPERM2I128", SDTShuff3OpI>;
 
 def X86VBroadcast : SDNode<"X86ISD::VBROADCAST", SDTVBroadcast>;
 

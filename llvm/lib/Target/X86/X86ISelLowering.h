@@ -280,6 +280,7 @@ namespace llvm {
       VPERMILPS,
       VPERMILPD,
       VPERM2F128,
+      VPERM2I128,
       VBROADCAST,
 
       // VASTART_SAVE_XMM_REGS - Save xmm argument registers to the stack,
