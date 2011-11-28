@@ -98,12 +98,6 @@ prose in a section of its own. When doing that, delete the notes.</p>
   <li>Uninitialized values Clang warning rewrite -- more accurate, faster, able
   to differentiate between the possibility of an uninitialized use and the
   certainty of an uninitialized use.</li>
-  <li>Enhancements to PPCallbacks
-    <ul>
-      <li>exact include paths</li>
-      <li>source range for macro expansions</li>
-    </ul>
-  </li>
   <li>Support for language specific address spaces</li>
   <li>Support for compiling on NetBSD systems -- Joerg Sonnenberger to fill
   out</li>
@@ -174,6 +168,16 @@ prose in a section of its own. When doing that, delete the notes.</p>
   <li>Initial steps of CUDA support -- Peter</li>
   <li>Atomic builtins and C1X specifiers using the new LLVM atomic instructions
   and memory model -- efriedma, jyasskin</li>
+</ul>
+
+<h4 id="ppcallbacks">Expanded support for instrumenting the preprocessor through
+  callbacks</h4>
+Several enhancements were made to the <code>PPCallbacks</code> interface to expand the information available to tools and library users of Clang that wish to introspect the preprocessing.
+<ul>
+  <li>The exact text used between the <code>""</code>s or <code>&lt;&gt;</code>s is reported.</li>
+  <li>The header search path used to locate the header is reported.</li>
+  <li>Missing files during including headers reported.</li>
+  <li>The exact source range for expanded macros can be retrieved.</li>
 </ul>
 
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
