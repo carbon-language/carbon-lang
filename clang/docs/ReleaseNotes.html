@@ -155,8 +155,6 @@ prose in a section of its own. When doing that, delete the notes.</p>
   <li>CFI-based debug info -- nlewycky/espindola details</li>
   <li>ObjC ARC -- get a blurb from rjmccall</li>
   <li>ObjC related result type/instancetype</li>
-  <li>API -- The term "instantiation" w.r.t. macros in APIs has been completely
-  replaced by the term "expansion".</li>
   <li>Thread Safety attributes and correctness analysis added to Clang.</li>
   <li>API -- Many opaque typedefs in Sema around AST nodes are gone.</li>
   <li>NRVO for blocks.</li>
@@ -198,6 +196,28 @@ prose in a section of its own. When doing that, delete the notes.</p>
 These are major API changes that have happened since the 2.9 release of Clang.
 If upgrading an external codebase that uses Clang as a library, this section
 should help get you past the largest hurdles of upgrading.
+
+<h4 id="macroexpansion">Switched terminology from "instantiation" to "expansion"
+  for macros</h4>
+A great deal of comments and code changes fell out of this, but also every API
+relating to macros with the word "instantiation" (or some variant thereof) was
+renamed. An incomplete list of the most note-worthy ones is here:
+<ul>
+  <li><code>MacroInstantiation</code> became <code>MacroExpansion</code></li>
+  <li><code>SourceManager::getInstantiationLoc</code> became
+  <code>SourceManager::getExpansionLoc</code></li>
+  <li><code>SourceManager::getInstantiationRange</code> became
+  <code>SourceManager::getExpansionRange</code></li>
+  <li><code>SourceManager::getImmediateInstantiationRange</code> became
+  <code>SourceManager::getImmediateExpansionRange</code></li>
+  <li><code>SourceManager::getDecomposedInstantiationLoc</code> became
+  <code>SourceManager::getDecomposedExpansionLoc</code></li>
+  <li><code>SourceManager::getInstantiationColumnNumber</code> became
+  <code>SourceManager::getExpansionColumnNumber</code></li>
+  <li><code>SourceManager::getInstantiationLineNumber</code> became
+  <code>SourceManager::getExpansionLineNumber</code></li>
+  <!-- TODO: Make this more complete! -->
+</ul>
 
 <h4 id="diagnosticrename">Diagnostic class names were shuffled</h4>
 <ul>
