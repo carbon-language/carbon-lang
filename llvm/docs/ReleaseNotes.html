@@ -941,7 +941,10 @@ be used to verify some algorithms.
 <li>The code generator now supports vector "select" operations on vector
     comparisons, turning them into various optimized code sequences (e.g.
     using the SSE4/AVX "blend" instructions).</li>
-<li>XXX: Domain fixing pass is now target independent (ExecutionDepsFix pass). (Jakob)</li>
+<li>The SSE execution domain fix pass and the ARM NEON move fix pass have been
+    merged to a target independent execution dependency fix pass.  Targets can
+    override the <code>getExecutionDomain</code> and
+    <code>setExecutionDomain</code> hooks to use it.</li>
 </ul>
 </div>
 
