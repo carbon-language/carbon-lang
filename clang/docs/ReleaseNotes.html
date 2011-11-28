@@ -87,16 +87,10 @@ Clang's support for those languages.</p>
 the history. Anything still here needs to be distilled and turned into proper
 prose in a section of its own. When doing that, delete the notes.</p>
 <ul>
-  <li>Building Clang on windows -- mingw, 32 and 64 bit, native windows builds,
-  cygwin. get chapuni to flesh out details.</li>
-  <li>Compiling C/C++ w/ MinGW (32/64) and Cygwin on Windows -- chapuni</li>
-  <li>C++ -- Parsing and AST support for Windows Structured Exception
-  Handling.</li>
   <li>OS Availability attribute -- r128127</li>
   <li>GNU ObjectiveC Runtime support -- David Chisnall</li>
   <li>Improved AST support for partially constructed nodes and incomplete
   information for LLDB and other clients which dynamically build AST nodes.</li>
-  <li>Largely complete MSVC-compatible parsing mode -- fpichet</li>
   <li>Memory reduction -- initializers, macro expansions, source locations,
   etc.</li>
   <li>ObjC ARC -- get a blurb from rjmccall</li>
@@ -183,6 +177,19 @@ to introspect the preprocessing.
   <li>The header search path used to locate the header is reported.</li>
   <li>Missing files during including headers reported.</li>
   <li>The exact source range for expanded macros can be retrieved.</li>
+</ul>
+
+<h4 id="windows">Clang is building and tested regularly on Windows and can
+  compile limited subsets of code on Windows</h4>
+Clang is regularly built and tested on a variety of Windows platforms including
+MinGW 32-bit and 64-bit, Cygwin, and natively with MSVC. In addition, Clang can
+be used as a compiler in a few Windows contexts.
+<ul>
+  <li>Normal compilation supported for the MinGW target platform, in both 32-bit
+  and 64-bit, and the Cygwin target platform.</li>
+  <li>Parsing and AST support for Windows Structured Exception Handling.</li>
+  <li>Initial support for some MSVC language extensions and the ability to parse
+  a few native MSVC system headers.</li>
 </ul>
 
 <!--
