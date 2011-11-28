@@ -942,8 +942,11 @@ be used to verify some algorithms.
 <li>LLVM generates substantially better code for indirect gotos due to a new
     tail duplication pass, which can be a substantial performance win for
     interpreter loops that use them.</li>
-<li>Exception handling and debug information is now emitted with CFI directives,
-    yielding <a href="http://blog.mozilla.com/respindola/2011/05/12/cfi-directives/">much smaller executables</a> for some C++ applications.
+<li>Exception handling and debug frame information is now emitted with CFI
+    directives. This lets the assembler produce more compact info as it knows
+    the final offsets, yielding <a href="http://blog.mozilla.com/respindola/2011/05/12/cfi-directives/">much smaller executables</a> for some C++ applications.
+    If the system assembler doesn't support it, MC exands the directives when
+    the integrated assembler is not used.
 </li>
 
 <li>The code generator now supports vector "select" operations on vector
