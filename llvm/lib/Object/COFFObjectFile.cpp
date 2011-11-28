@@ -283,7 +283,7 @@ error_code COFFObjectFile::getSymbolSection(DataRefImpl Symb,
   if (symb->SectionNumber <= COFF::IMAGE_SYM_UNDEFINED)
     Result = end_sections();
   else {
-    const coff_section *sec;
+    const coff_section *sec = 0;
     if (error_code ec = getSection(symb->SectionNumber, sec)) return ec;
     DataRefImpl Sec;
     std::memset(&Sec, 0, sizeof(Sec));
@@ -389,7 +389,7 @@ error_code COFFObjectFile::sectionContainsSymbol(DataRefImpl Sec,
                                                  bool &Result) const {
   const coff_section *sec = toSec(Sec);
   const coff_symbol *symb = toSymb(Symb);
-  const coff_section *symb_sec;
+  const coff_section *symb_sec = 0;
   if (error_code ec = getSection(symb->SectionNumber, symb_sec)) return ec;
   if (symb_sec == sec)
     Result = true;
