@@ -6564,7 +6564,11 @@ unsigned SelectionDAG::InferPtrAlignment(SDValue Ptr) const {
         }
       }
       if (!Align)
-        Align = TLI.getTargetData()->getABITypeAlignment(GV->getType());
+        // Conservatively returns zero here instead of using ABI alignment for
+        // type of the GV. If the type is a "packed" type, then the under-
+        // specified alignments is attached to the load / store instructions.
+        // In that case, the alignment of the type cannot be trusted.
+        return 0;
     }
     return MinAlign(Align, GVOffset);
   }
