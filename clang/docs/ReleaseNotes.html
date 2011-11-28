@@ -81,6 +81,44 @@ Clang's support for those languages.</p>
 <h3 id="majorfeatures">Major New Features</h3>
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
 
+<h4 id="notes">Unorganized Notes</h4>
+<p>These are completely random notes as I'm organizing my thoughts and reviewing
+the history. Anything still here needs to be distilled and turned into proper
+prose in a section of its own. When doing that, delete the notes.</p>
+<ul>
+  <li>Make analyzer (especially as used w/ warnings in Clang) much faster</li>
+  <li>OpenCL support -- need details from Tanya and Peter -- separate language
+  section?</li>
+  <li>Building Clang on windows -- mingw, 32 and 64 bit, native windows builds,
+  cygwin. get chapuni to flesh out details.</li>
+  <li>Compiling C/C++ w/ MinGW (32/64) and Cygwin on Windows -- chapuny</li>
+  <li>C++11 -- noexcept (Sebastian Redl)</li>
+  <li>Uninitialized values Clang warning rewrite -- more accurate, faster, able
+  to differentiate between the possibility of an uninitialized use and the
+  certainty of an uninitialized use.</li>
+  <li>Enhancements to PPCallbacks
+    <ul>
+      <li>exact include paths<li>
+    </ul>
+  </li>
+  <li>Support for language specific address spaces</li>
+  <li>Support for compiling on NetBSD systems -- Joerg Sonnenberger to fill out</li>
+  <li>Support for '--sysroot' based cross-compilation</li>
+  <li>Crash recovery handling for libclang clients -- Ted</li>
+  <li>Driver support for automatic preparation of reproduction steps for
+  compiler crashes -- Chad</li>
+  <li>OS Availability attribute -- r128127</li>
+  <li>GNU ObjectiveC Runtime support -- David Chisnall</li>
+  <li>C++11 -- override</li>
+  <li>Diagnostic improvements bucket?
+    <ul>
+      <li>Emitting fewer include stacks</li>
+    </ul>
+  </li>
+  <li>C++ -- supported in the static analyzer: methods, new, constructors,
+  destructors, etc.</li>
+</ul>
+
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
 <h3 id="cchanges">C Language Changes in Clang</h3>
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
