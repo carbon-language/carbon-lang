@@ -3245,10 +3245,10 @@ static bool isPALIGNRMask(const SmallVectorImpl<int> &Mask, EVT VT,
 /// specifies a shuffle of elements that is suitable for input to 256-bit
 /// VSHUFPSY.
 static bool isVSHUFPYMask(const SmallVectorImpl<int> &Mask, EVT VT,
-                          const X86Subtarget *Subtarget) {
+                          bool HasAVX) {
   int NumElems = VT.getVectorNumElements();
 
-  if (!Subtarget->hasAVX() || VT.getSizeInBits() != 256)
+  if (!HasAVX || VT.getSizeInBits() != 256)
     return false;
 
   if (NumElems != 4 && NumElems != 8)
@@ -3308,7 +3308,81 @@ static bool isVSHUFPYMask(const SmallVectorImpl<int> &Mask, EVT VT,
       continue;
     if (!isUndefOrEqual(Mask[i], Mask[FstHalfIdx]+HalfSize))
       return false;
+  }
 
+  return true;
+}
+
+/// isCommutedVSHUFP() - Returns true if the shuffle mask is exactly
+/// the reverse of what x86 shuffles want. x86 shuffles requires the lower
+/// half elements to come from vector 1 (which would equal the dest.) and
+/// the upper half to come from vector 2.
+static bool isCommutedVSHUFPY(ShuffleVectorSDNode *N, bool HasAVX) {
+  EVT VT = N->getValueType(0);
+  int NumElems = VT.getVectorNumElements();
+  SmallVector<int, 8> Mask;
+  N->getMask(Mask);
+
+  if (!HasAVX || VT.getSizeInBits() != 256)
+    return false;
+
+  if (NumElems != 4 && NumElems != 8)
+    return false;
+
+  // VSHUFPSY divides the resulting vector into 4 chunks.
+  // The sources are also splitted into 4 chunks, and each destination
+  // chunk must come from a different source chunk.
+  //
+  //  SRC1 =>   X7    X6    X5    X4    X3    X2    X1    X0
+  //  SRC2 =>   Y7    Y6    Y5    Y4    Y3    Y2    Y1    Y9
+  //
+  //  DST  =>  Y7..Y4,   Y7..Y4,   X7..X4,   X7..X4,
+  //           Y3..Y0,   Y3..Y0,   X3..X0,   X3..X0
+  //
+  // VSHUFPDY divides the resulting vector into 4 chunks.
+  // The sources are also splitted into 4 chunks, and each destination
+  // chunk must come from a different source chunk.
+  //
+  //  SRC1 =>      X3       X2       X1       X0
+  //  SRC2 =>      Y3       Y2       Y1       Y0
+  //
+  //  DST  =>  Y3..Y2,  X3..X2,  Y1..Y0,  X1..X0
+  //
+  int QuarterSize = NumElems/4;
+  int HalfSize = QuarterSize*2;
+  for (int i = 0; i < QuarterSize; ++i)
+    if (!isUndefOrInRange(Mask[i], NumElems, NumElems+HalfSize))
+      return false;
+  for (int i = QuarterSize; i < QuarterSize*2; ++i)
+    if (!isUndefOrInRange(Mask[i], 0, HalfSize))
+      return false;
+
+  // For VSHUFPSY, the mask of the second half must be the same as the first
+  // but with // the appropriate offsets. This works in the same way as
+  // VPERMILPS // works with masks.
+  for (int i = QuarterSize*2; i < QuarterSize*3; ++i) {
+    if (!isUndefOrInRange(Mask[i], NumElems+HalfSize, NumElems*2))
+      return false;
+    if (NumElems == 4)
+      continue;
+    // VSHUFPSY handling
+    int FstHalfIdx = i-HalfSize;
+    if (Mask[FstHalfIdx] < 0)
+      continue;
+    if (!isUndefOrEqual(Mask[i], Mask[FstHalfIdx]+HalfSize))
+      return false;
+  }
+  for (int i = QuarterSize*3; i < NumElems; ++i) {
+    if (!isUndefOrInRange(Mask[i], HalfSize, NumElems))
+      return false;
+    if (NumElems == 4)
+      continue;
+    // VSHUFPSY handling
+    int FstHalfIdx = i-HalfSize;
+    if (Mask[FstHalfIdx] < 0)
+      continue;
+    if (!isUndefOrEqual(Mask[i], Mask[FstHalfIdx]+HalfSize))
+      return false;
   }
 
   return true;
@@ -3327,7 +3401,7 @@ static unsigned getShuffleVSHUFPYImmediate(SDNode *N) {
   int HalfSize = NumElems/2;
   unsigned Mul = (NumElems == 8) ? 2 : 1;
   unsigned Mask = 0;
-  for (int i = 0; i != NumElems ; ++i) {
+  for (int i = 0; i != NumElems; ++i) {
     int Elt = SVOp->getMaskElt(i);
     if (Elt < 0)
       continue;
@@ -3355,25 +3429,6 @@ static void CommuteVectorShuffleMask(SmallVectorImpl<int> &Mask, EVT VT) {
       Mask[i] = idx - NumElems;
   }
 }
-
-/// isCommutedVSHUFP() - Return true if swapping operands will 
-///  allow to use the "vshufpd" or "vshufps" instruction 
-///  for 256-bit vectors
-static bool isCommutedVSHUFPMask(const SmallVectorImpl<int> &Mask, EVT VT,
-                               const X86Subtarget *Subtarget) {
-
-  unsigned NumElems = VT.getVectorNumElements();
-  if ((VT.getSizeInBits() != 256) || ((NumElems != 4) && (NumElems != 8)))
-    return false;
-
-  SmallVector<int, 8> CommutedMask;
-  for (unsigned i = 0; i < NumElems; ++i)
-    CommutedMask.push_back(Mask[i]);
-
-  CommuteVectorShuffleMask(CommutedMask, VT);
-  return isVSHUFPYMask(CommutedMask, VT, Subtarget);
-}
-
 
 /// isSHUFPMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a shuffle of elements that is suitable for input to 128-bit
@@ -3404,7 +3459,7 @@ bool X86::isSHUFPMask(ShuffleVectorSDNode *N) {
   return ::isSHUFPMask(M, N->getValueType(0));
 }
 
-/// isCommutedSHUFP - Returns true if the shuffle mask is exactly
+/// isCommutedSHUFPMask - Returns true if the shuffle mask is exactly
 /// the reverse of what x86 shuffles want. x86 shuffles requires the lower
 /// half elements to come from vector 1 (which would equal the dest.) and
 /// the upper half to come from vector 2.
@@ -6802,7 +6857,8 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   }
 
   // Normalize the node to match x86 shuffle ops if needed
-  if (!V2IsUndef && isCommutedSHUFP(SVOp))
+  if (!V2IsUndef && (isCommutedSHUFP(SVOp) ||
+                     isCommutedVSHUFPY(SVOp, Subtarget->hasAVX())))
     return CommuteVectorShuffle(SVOp, DAG);
 
   // The checks below are all present in isShuffleMaskLegal, but they are
@@ -6870,19 +6926,9 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
                                 getShuffleVPERM2F128Immediate(SVOp), DAG);
 
   // Handle VSHUFPSY permutations
-  if (isVSHUFPYMask(M, VT, Subtarget))
+  if (isVSHUFPYMask(M, VT, Subtarget->hasAVX()))
     return getTargetShuffleNode(getSHUFPOpcode(VT), dl, VT, V1, V2,
                                 getShuffleVSHUFPYImmediate(SVOp), DAG);
-
-  // Try to swap operands in the node to match x86 shuffle ops
-  if (isCommutedVSHUFPMask(M, VT, Subtarget)) {
-    // Now we need to commute operands.
-    SVOp = cast<ShuffleVectorSDNode>(CommuteVectorShuffle(SVOp, DAG));
-    V1 = SVOp->getOperand(0);
-    V2 = SVOp->getOperand(1);
-    return getTargetShuffleNode(getSHUFPOpcode(VT), dl, VT, V1, V2,
-                                getShuffleVSHUFPYImmediate(SVOp), DAG);
-  }
 
   //===--------------------------------------------------------------------===//
   // Since no target specific shuffle was selected for this generic one,
