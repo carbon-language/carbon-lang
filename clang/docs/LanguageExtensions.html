@@ -103,6 +103,10 @@
   </ul>
 </li>
 <li><a href="#analyzerspecific">Static Analysis-Specific Extensions</a></li>
+<li><a href="#dynamicanalyzerspecific">Dynamic Analysis-Specific Extensions</a></li>
+  <ul>
+  <li><a href="#address_sanitizer">AddressSanitizer</a></li>
+  </ul>
 <li><a href="#threadsafety">Thread Safety Annotation Checking</a></li>
     <ul>
     <li><a href="#ts_noanal"><tt>no_thread_safety_analysis</tt></a></li>   
@@ -210,6 +214,11 @@ language feature) or 0 if not.  They can be used like this:</p>
 <code>__has_feature</code> can also be used to test for support for
 non-standardized features, i.e. features not prefixed <code>c_</code>,
 <code>cxx_</code> or <code>objc_</code>.</p>
+
+<p id="has_feature_for_non_language_features">
+Another use of <code>__has_feature</code> is to check for compiler features
+not related to the language standard, such as e.g.
+<a href="AddressSanitizer.html">AddressSanitizer</a>.
 
 <p>If the <code>-pedantic-errors</code> option is given,
 <code>__has_extension</code> is equivalent to <code>__has_feature</code>.</p>
@@ -1272,6 +1281,14 @@ balance in some way.</p>
 <p>Query for these features with <tt>__has_attribute(ns_consumed)</tt>,
 <tt>__has_attribute(ns_returns_retained)</tt>, etc.</p>
 
+<!-- ======================================================================= -->
+<h2 id="dynamicanalyzerspecific">Dynamic Analysis-Specific Extensions</h2>
+<!-- ======================================================================= -->
+<h3 id="address_sanitizer">AddressSanitizer</h3>
+<p> Use <code>__has_feature(address_sanitizer)</code>
+to check if the code is being built with <a
+  href="AddressSanitizer.html">AddressSanitizer</a>.
+</p>
 
 <!-- ======================================================================= -->
 <h2 id="threadsafety">Thread-Safety Annotation Checking</h2>

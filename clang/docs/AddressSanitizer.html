@@ -1,0 +1,85 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" 
+          "http://www.w3.org/TR/html4/strict.dtd">
+<!-- Material used from: HTML 4.01 specs: http://www.w3.org/TR/html401/ -->
+<html>
+<head>
+  <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+  <title>AddressSanitizer, a fast memory error detector</title>
+  <link type="text/css" rel="stylesheet" href="../menu.css">
+  <link type="text/css" rel="stylesheet" href="../content.css">
+  <style type="text/css">
+    td {
+            vertical-align: top;
+    }
+  </style>
+</head>
+<body>
+
+<!--#include virtual="../menu.html.incl"-->
+
+<h1>AddressSanitizer</h1>
+<ul> 
+  <li> <a href="intro">Introduction</a>
+  <li> <a href="usage">Usage</a>
+    <ul><li> <a href="has_feature">__has_feature(address_sanitizer)</a></ul>
+  <li> <a href="platforms">Supported Platforms</a>
+  <li> <a href="limitations">Limitations</a>
+  <li> <a href="status">Current Status</a>
+</ul>
+
+<h2 id="intro">Introduction</h2>
+AddressSanitizer is a fast memory error detector.
+It consists of a compiler instrumentation module and a run-time library.
+The tool can detect the following types of bugs:
+<ul> <li> Out-of-bounds accesses to  <ul><li>heap <li>stack <li>globals</ul>
+  <li> Use-after-free
+  <li> Use-after-return (to some extent)
+  <li> Double-free
+</ul>
+Typical slowdown introduced by AddressSanitizer is <b>2x</b>.
+
+<h2 id="intro">Usage</h2>
+In order to use AddressSanitizer simply compile and link your program with 
+<tt>-faddress-sanitizer</tt> flag and optimization level <tt>-O1</tt> or higher
+and then run it. If a bug is detected, the program will print an error message
+and exit.
+
+<h3 id="has_feature">__has_feature(address_sanitizer)</h3>
+In some cases one may need to execute different code depending on whether
+AddressSanitizer is enabled.
+<a href="LanguageExtensions.html#__has_feature_extension">__has_feature</a>
+can be used for this purpose.
+<pre>
+#if defined(__has_feature) && __has_feature(address_sanitizer)
+  code that runs only under AddressSanitizer
+#else
+  code that does not run under AddressSanitizer
+#endif
+</pre>
+
+<h2 id="platforms">Supported Platforms</h2>
+AddressSanitizer is supported on the following platforms:
+<ul> <li>Linux <ul> <li> i386 <li> x86_64 <li> ARM </ul>
+     <li>Darwin <ul> <li> i386 <li> x86_64 </ul>
+</ul>
+
+<h2 id="limitations">Limitations</h2>
+<ul>
+  <li> AddressSanitizer uses more real memory than a native run.
+  How much -- depends on the allocations sizes. The smaller the
+  allocations you make the bigger the overhead.
+  <li> On 64-bit platforms AddressSanitizer maps (but not reserves)
+  16+ Terabytes of virtual address space.
+  This means that tools like <tt>ulimit</tt> may not work as usually expected.
+  <li> Static linking is not supported.
+</ul>
+
+
+<h2 id="status">Current Status</h2>
+AddressSanitizer is work-in-progress and is not yet fully functional in the LLVM/Clang head.
+For the up-to-date usable version and full documentation refer to
+<a href="http://code.google.com/p/address-sanitizer/">http://code.google.com/p/address-sanitizer</a>.
+
+
+</body>
+</html>
