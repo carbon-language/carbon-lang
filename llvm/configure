@@ -694,7 +694,7 @@ JIT
 TARGET_HAS_JIT
 ENABLE_DOCS
 ENABLE_DOXYGEN
-ENABLE_THREADS
+LLVM_ENABLE_THREADS
 ENABLE_PTHREADS
 ENABLE_PIC
 ENABLE_SHARED
@@ -5155,11 +5155,11 @@ else
 fi
 
 case "$enableval" in
-  yes) ENABLE_THREADS=1
+  yes) LLVM_ENABLE_THREADS=1
  ;;
-  no)  ENABLE_THREADS=0
+  no)  LLVM_ENABLE_THREADS=0
  ;;
-  default) ENABLE_THREADS=1
+  default) LLVM_ENABLE_THREADS=1
  ;;
   *) { { echo "$as_me:$LINENO: error: Invalid setting for --enable-threads. Use \"yes\" or \"no\"" >&5
 echo "$as_me: error: Invalid setting for --enable-threads. Use \"yes\" or \"no\"" >&2;}
@@ -5167,7 +5167,7 @@ echo "$as_me: error: Invalid setting for --enable-threads. Use \"yes\" or \"no\"
 esac
 
 cat >>confdefs.h <<_ACEOF
-#define ENABLE_THREADS $ENABLE_THREADS
+#define LLVM_ENABLE_THREADS $LLVM_ENABLE_THREADS
 _ACEOF
 
 
@@ -12812,7 +12812,7 @@ _ACEOF
 fi
 
 
-if test "$ENABLE_THREADS" -eq 1 && test "$ENABLE_PTHREADS" -eq 1 ; then
+if test "$LLVM_ENABLE_THREADS" -eq 1 && test "$ENABLE_PTHREADS" -eq 1 ; then
 
 { echo "$as_me:$LINENO: checking for pthread_mutex_init in -lpthread" >&5
 echo $ECHO_N "checking for pthread_mutex_init in -lpthread... $ECHO_C" >&6; }
@@ -15525,7 +15525,7 @@ fi
 
 done
 
-if test "$ENABLE_THREADS" -eq 1 && test "$ENABLE_PTHREADS" -eq 1 ; then
+if test "$LLVM_ENABLE_THREADS" -eq 1 && test "$ENABLE_PTHREADS" -eq 1 ; then
 
 for ac_header in pthread.h
 do
@@ -21879,7 +21879,7 @@ JIT!$JIT$ac_delim
 TARGET_HAS_JIT!$TARGET_HAS_JIT$ac_delim
 ENABLE_DOCS!$ENABLE_DOCS$ac_delim
 ENABLE_DOXYGEN!$ENABLE_DOXYGEN$ac_delim
-ENABLE_THREADS!$ENABLE_THREADS$ac_delim
+LLVM_ENABLE_THREADS!$LLVM_ENABLE_THREADS$ac_delim
 ENABLE_PTHREADS!$ENABLE_PTHREADS$ac_delim
 ENABLE_PIC!$ENABLE_PIC$ac_delim
 ENABLE_SHARED!$ENABLE_SHARED$ac_delim

@@ -30,9 +30,6 @@
 /* Define if position independent code is enabled */
 #undef ENABLE_PIC
 
-/* Define if threads enabled */
-#undef ENABLE_THREADS
-
 /* Define if timestamp information (e.g., __DATE___) is allowed */
 #undef ENABLE_TIMESTAMPS
 
@@ -551,6 +548,9 @@
 
 /* Installation directory for documentation */
 #undef LLVM_DOCSDIR
+
+/* Define if threads enabled */
+#undef LLVM_ENABLE_THREADS
 
 /* Installation directory for config files */
 #undef LLVM_ETCDIR
