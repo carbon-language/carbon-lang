@@ -318,3 +318,11 @@ int f44(int i, ...) {
   __builtin_va_end(ap);
   return s.y;
 }
+
+// Text that vec3 returns the correct LLVM IR type.
+// CHECK: define i32 @foo(<3 x i64> %X)
+typedef long long3 __attribute((ext_vector_type(3)));
+int foo(long3 X)
+{
+  return 0;
+}

@@ -1427,7 +1427,7 @@ llvm::Type *X86_64ABIInfo::GetByteVectorType(QualType Ty) const {
   if (llvm::VectorType *VT = dyn_cast<llvm::VectorType>(IRType)){
     llvm::Type *EltTy = VT->getElementType();
     unsigned BitWidth = VT->getBitWidth();
-    if ((BitWidth == 128 || BitWidth == 256) &&
+    if ((BitWidth >= 128 && BitWidth <= 256) &&
         (EltTy->isFloatTy() || EltTy->isDoubleTy() ||
          EltTy->isIntegerTy(8) || EltTy->isIntegerTy(16) ||
          EltTy->isIntegerTy(32) || EltTy->isIntegerTy(64) ||
