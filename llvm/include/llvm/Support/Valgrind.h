@@ -20,7 +20,7 @@
 #include "llvm/Config/config.h"
 #include <stddef.h>
 
-#if ENABLE_THREADS != 0 && !defined(NDEBUG)
+#if LLVM_ENABLE_THREADS != 0 && !defined(NDEBUG)
 // tsan (Thread Sanitizer) is a valgrind-based tool that detects these exact
 // functions by name.
 extern "C" {
@@ -42,7 +42,7 @@ namespace sys {
   // Otherwise valgrind may continue to execute the old version of the code.
   void ValgrindDiscardTranslations(const void *Addr, size_t Len);
 
-#if ENABLE_THREADS != 0 && !defined(NDEBUG)
+#if LLVM_ENABLE_THREADS != 0 && !defined(NDEBUG)
   // Thread Sanitizer is a valgrind tool that finds races in code.
   // See http://code.google.com/p/data-race-test/wiki/DynamicAnnotations .
 

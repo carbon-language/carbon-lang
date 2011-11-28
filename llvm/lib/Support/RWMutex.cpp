@@ -20,7 +20,7 @@
 //===          independent code.
 //===----------------------------------------------------------------------===//
 
-#if !defined(ENABLE_THREADS) || ENABLE_THREADS == 0
+#if !defined(LLVM_ENABLE_THREADS) || LLVM_ENABLE_THREADS == 0
 // Define all methods as no-ops if threading is explicitly disabled
 namespace llvm {
 using namespace sys;

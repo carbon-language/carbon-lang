@@ -31,6 +31,9 @@
 /* Installation directory for documentation */
 #cmakedefine LLVM_DOCSDIR "${LLVM_DOCSDIR}"
 
+/* Define if threads enabled */
+#cmakedefine01 LLVM_ENABLE_THREADS
+
 /* Installation directory for config files */
 #cmakedefine LLVM_ETCDIR "${LLVM_ETCDIR}"
 

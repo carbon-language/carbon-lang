@@ -379,14 +379,15 @@ endif( PURE_WINDOWS )
 set(RETSIGTYPE void)
 
 if( LLVM_ENABLE_THREADS )
-  if( HAVE_PTHREAD_H OR WIN32 )
-    set(ENABLE_THREADS 1)
+  # Check if threading primitives aren't supported on this platform
+  if( NOT HAVE_PTHREAD_H AND NOT WIN32 )
+    set(LLVM_ENABLE_THREADS 0)
   endif()
 endif()
 
-if( ENABLE_THREADS )
+if( LLVM_ENABLE_THREADS )
   message(STATUS "Threads enabled.")
-else( ENABLE_THREADS )
+else( LLVM_ENABLE_THREADS )
   message(STATUS "Threads disabled.")
 endif()
 
