@@ -156,6 +156,32 @@ prose in a section of its own. When doing that, delete the notes.</p>
   <li>API -- The term "instantiation" w.r.t. macros in APIs has been completely
   replaced by the term "expansion".</li>
   <li>Thread Safety attributes and correctness analysis added to Clang.</li>
+  <li>API -- Many opaque typedefs in Sema around AST nodes are gone.</li>
+  <li>NRVO for blocks.</li>
+  <li>Major improvements to the interactions between serializing and
+  deserializing the AST and the preprocessor -- argiris</li>
+  <li>API -- Diagnostics API shuffle:
+    <ul>
+      <li>Diagnostic became DiagnosticEngine</li>
+      <li>DiagnosticClient became DiagnosticConsumer</li>
+      <li>DiagnosticInfo became Diagnostic</li>
+    </ul>
+  </li>
+  <li>Major driver and system compatibility changes:
+    <ul>
+      <li>Correct support for many more hardware architecture pre-defined macros
+      (e.g., __i686__).</li>
+      <li>Much more robust detection of library and header search paths on Linux
+      distributions.</li>
+      <li>Partial support for sysroot based cross compiling on Linux (like)
+      systems.</li>
+      <li>Improved support for locating and using libcxx, especially on
+      Darwin.</li>
+    </ul>
+  </li>
+  <li>Initial steps of CUDA support -- Peter</li>
+  <li>Atomic builtins and C1X specifiers using the new LLVM atomic instructions
+  and memory model -- efriedma, jyasskin</li>
 </ul>
 
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
