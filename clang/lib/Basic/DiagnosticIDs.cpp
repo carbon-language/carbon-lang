@@ -553,7 +553,7 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
   // Ignore -pedantic diagnostics inside __extension__ blocks.
   // (The diagnostics controlled by -pedantic are the extension diagnostics
   // that are not enabled by default.)
-  bool EnabledByDefault;
+  bool EnabledByDefault = false;
   bool IsExtensionDiag = isBuiltinExtensionDiag(DiagID, EnabledByDefault);
   if (Diag.AllExtensionsSilenced && IsExtensionDiag && !EnabledByDefault)
     return DiagnosticIDs::Ignored;
