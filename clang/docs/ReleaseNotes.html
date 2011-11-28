@@ -187,8 +187,11 @@ be used as a compiler in a few Windows contexts.
   <li>Normal compilation supported for the MinGW target platform, in both 32-bit
   and 64-bit, and the Cygwin target platform.</li>
   <li>Parsing and AST support for Windows Structured Exception Handling.</li>
-  <li>Initial support for some MSVC language extensions and the ability to parse
-  a few native MSVC system headers.</li>
+  <li>New -fms-compatibility flag to handle MSVC constructs that could change 
+  the meaning of an otherwise well formed program</li>
+  <li>clang can now parse all the MSVC 2010 standard C++ header files
+  in the nominal case, (still need to specifiy -nobuiltininc for some headers).</li>
+  <li>Improved support for MFC code parsing, (still a work in progress).</li>
 </ul>
 
 <!--
