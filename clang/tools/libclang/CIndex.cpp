@@ -286,6 +286,8 @@ void CursorVisitor::visitDeclsFromFileRegion(FileID File,
   SmallVector<Decl *, 16>::iterator DIt = Decls.begin();
   for (SmallVector<Decl *, 16>::iterator DE = Decls.end(); DIt != DE; ++DIt) {
     Decl *D = *DIt;
+    if (D->getSourceRange().isInvalid())
+      continue;
 
     if (isInLexicalContext(D, CurDC))
       continue;
