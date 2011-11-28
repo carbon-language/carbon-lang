@@ -76,6 +76,15 @@
    $1 = (char *) PyString_AsString($input);
    $2 = PyString_Size($input);
 }
+// Ditto for SBProcess::PutSTDIN(const char *src, size_t src_len).
+%typemap(in) (const char *src, size_t src_len) {
+   if (!PyString_Check($input)) {
+       PyErr_SetString(PyExc_ValueError, "Expecting a string");
+       return NULL;
+   }
+   $1 = (char *) PyString_AsString($input);
+   $2 = PyString_Size($input);
+}
 // And SBProcess::WriteMemory.
 %typemap(in) (const void *buf, size_t size) {
    if (!PyString_Check($input)) {

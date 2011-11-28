@@ -64,6 +64,10 @@ public:
     lldb::ByteOrder
     GetByteOrder() const;
 
+    %feature("autodoc", "
+    Writes data into the current process's stdin. API client specifies a Python
+    string as the only argument.
+    ") PutSTDIN;
     size_t
     PutSTDIN (const char *src, size_t src_len);
 

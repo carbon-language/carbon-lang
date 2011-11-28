@@ -8,7 +8,7 @@ import lldb
 def fuzz_obj(obj):
     obj.GetTarget()
     obj.GetByteOrder()
-    obj.PutSTDIN("my data", 7)
+    obj.PutSTDIN("my data")
     obj.GetSTDOUT(6)
     obj.GetSTDERR(6)
     event = lldb.SBEvent()
