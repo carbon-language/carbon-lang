@@ -1234,7 +1234,8 @@ Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(const Driver &D)
   } else if (HostArch == llvm::Triple::ppc64) {
     static const char *const PPC64LibDirs[] = { "/lib64", "/lib" };
     static const char *const PPC64Triples[] = {
-      "powerpc64-unknown-linux-gnu"
+      "powerpc64-unknown-linux-gnu",
+      "ppc64-redhat-linux"
     };
     LibDirs.append(PPC64LibDirs,
                    PPC64LibDirs + llvm::array_lengthof(PPC64LibDirs));
