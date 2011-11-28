@@ -104,17 +104,6 @@ prose in a section of its own. When doing that, delete the notes.</p>
   compiler crashes -- Chad</li>
   <li>OS Availability attribute -- r128127</li>
   <li>GNU ObjectiveC Runtime support -- David Chisnall</li>
-  <li>Diagnostic improvements bucket?
-    <ul>
-      <li>Emitting fewer include stacks</li>
-      <li>Significantly better recovery when encountering misspelled type names
-      in a declaration context. r130082</li>
-      <li>Expanded typo correction, most especially namespace-aware typo
-      correction in C++</li>
-      <li>Significantly more rich diagnostics w.r.t. macro expansion backtraces,
-      especially when macro arguments are involved.</li>
-    </ul>
-  </li>
   <li>libclang improvements bucket
     <ul>
       <li>Better Python Bindings</li>
@@ -143,6 +132,31 @@ prose in a section of its own. When doing that, delete the notes.</p>
   <li>NRVO for blocks.</li>
   <li>Major improvements to the interactions between serializing and
   deserializing the AST and the preprocessor -- argiris</li>
+</ul>
+
+<h4 id="diagnostics">A multitude of improvements to Clang's diagnostics</h4>
+Clang's diagnostics are constantly being improved to catch more issues, explain
+them more clearly, and provide more accurate source information about them.
+A few improvements since the 2.9 release that have a particularly high impact:
+<ul>
+  <li>Substantially shorter messages due to better recovery, fewer include
+  stacks, and tuning verbose features such as 'a.k.a.' type printing.</li>
+  <li>
+    Able to recover and correct from misspelled type names at the begging of statements. For example, Clang now emits:
+    <code>t.c:6:3: error: use of undeclared identifier 'integer'; did you mean
+'Integer'?
+  integer *i = 0;
+  ^~~~~~~
+  Integer
+t.c:1:13: note: 'Integer' declared here
+typedef int Integer;
+            ^</code>
+  </li>
+  <li>Expanded typo correction to (among other improvements) look across
+  namespaces and suggest namespace qualifiers in addition to misspellings of the
+  identifier itself.</li>
+  <li>More rich macro expansion backtraces and some (limited) fix-it hints when
+  diagnostics stem from macro arguments.</li>
 </ul>
 
 <h4 id="driver">The Clang GCC-compatible command-line driver improved dramatically</h4>
