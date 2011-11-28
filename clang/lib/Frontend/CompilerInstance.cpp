@@ -1045,15 +1045,14 @@ ModuleKey CompilerInstance::loadModule(SourceLocation ImportLoc,
     CurFile = SourceMgr.getFileEntryForID(SourceMgr.getMainFileID());
 
   // Search for a module with the given name.
-  std::string UmbrellaHeader;
+  ModuleMap::Module *Module = 0;
   std::string ModuleFileName;
   const FileEntry *ModuleFile
-    = PP->getHeaderSearchInfo().lookupModule(ModuleName.getName(),
-                                             &ModuleFileName,
-                                             &UmbrellaHeader);
+    = PP->getHeaderSearchInfo().lookupModule(ModuleName.getName(), Module,
+                                             &ModuleFileName);
 
   bool BuildingModule = false;
-  if (!ModuleFile && !UmbrellaHeader.empty()) {
+  if (!ModuleFile && Module && Module->UmbrellaHeader) {
     // We didn't find the module, but there is an umbrella header that
     // can be used to create the module file. Create a separate compilation
     // module to do so.
@@ -1080,8 +1079,9 @@ ModuleKey CompilerInstance::loadModule(SourceLocation ImportLoc,
     getDiagnostics().Report(ModuleNameLoc, diag::warn_module_build)
       << ModuleName.getName();
     BuildingModule = true;
-    compileModule(*this, ModuleName.getName(), ModuleFileName, UmbrellaHeader);
-    ModuleFile = PP->getHeaderSearchInfo().lookupModule(ModuleName.getName());
+    compileModule(*this, ModuleName.getName(), ModuleFileName, 
+                  Module->UmbrellaHeader->getName());
+    ModuleFile = FileMgr->getFile(ModuleFileName);
   }
 
   if (!ModuleFile) {

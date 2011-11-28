@@ -102,8 +102,10 @@ const HeaderMap *HeaderSearch::CreateHeaderMap(const FileEntry *FE) {
 }
 
 const FileEntry *HeaderSearch::lookupModule(StringRef ModuleName,
-                                            std::string *ModuleFileName,
-                                            std::string *UmbrellaHeader) {
+                                            ModuleMap::Module *&Module,
+                                            std::string *ModuleFileName) {
+  Module = 0;
+  
   // If we don't have a module cache path, we can't do anything.
   if (ModuleCachePath.empty()) {
     if (ModuleFileName)
@@ -116,24 +118,29 @@ const FileEntry *HeaderSearch::lookupModule(StringRef ModuleName,
   llvm::sys::path::append(FileName, ModuleName + ".pcm");
   if (ModuleFileName)
     *ModuleFileName = FileName.str();
-    
-  if (const FileEntry *ModuleFile
-        = getFileMgr().getFile(FileName, /*OpenFile=*/false,
-                               /*CacheFailure=*/false))
-    return ModuleFile;
-  
-  // We didn't find the module. If we're not supposed to look for an
-  // umbrella header, this is the end of the road.
-  if (!UmbrellaHeader)
-    return 0;
-  
+      
   // Look in the module map to determine if there is a module by this name.
-  ModuleMap::Module *Module = ModMap.findModule(ModuleName);
+  Module = ModMap.findModule(ModuleName);
   if (!Module) {
     // Look through the various header search paths to load any avaiable module 
     // maps, searching for a module map that describes this module.
     for (unsigned Idx = 0, N = SearchDirs.size(); Idx != N; ++Idx) {
-      // Skip non-normal include paths
+      if (SearchDirs[Idx].isFramework()) {
+        // Search for or infer a module map for a framework.
+        llvm::SmallString<128> FrameworkDirName;
+        FrameworkDirName += SearchDirs[Idx].getFrameworkDir()->getName();
+        llvm::sys::path::append(FrameworkDirName, ModuleName + ".framework");
+        if (const DirectoryEntry *FrameworkDir 
+              = FileMgr.getDirectory(FrameworkDirName)) {
+          Module = getFrameworkModule(ModuleName, FrameworkDir);
+          if (Module)
+            break;
+        }
+      }
+      
+      // FIXME: Figure out how header maps and module maps will work together.
+      
+      // Only deal with normal search directories.
       if (!SearchDirs[Idx].isNormalDir())
         continue;
       
@@ -160,39 +167,11 @@ const FileEntry *HeaderSearch::lookupModule(StringRef ModuleName,
     }
   }
 
-  // If we have a module with an umbrella header 
-  // FIXME: Even if it doesn't have an umbrella header, we should be able to
-  // handle the module. However, the caller isn't ready for that yet.
-  if (Module && Module->UmbrellaHeader) {
-    *UmbrellaHeader = Module->UmbrellaHeader->getName();
-    return 0;
-  }
-  
-  // Look in each of the framework directories for an umbrella header with
-  // the same name as the module.
-  llvm::SmallString<128> UmbrellaHeaderName;
-  UmbrellaHeaderName = ModuleName;
-  UmbrellaHeaderName += '/';
-  UmbrellaHeaderName += ModuleName;
-  UmbrellaHeaderName += ".h";
-  for (unsigned Idx = 0, N = SearchDirs.size(); Idx != N; ++Idx) {
-    // Skip non-framework include paths
-    if (!SearchDirs[Idx].isFramework())
-      continue;
-    
-    // Look for the umbrella header in this directory.
-    if (const FileEntry *HeaderFile
-          = SearchDirs[Idx].LookupFile(UmbrellaHeaderName, *this, 0, 0, 
-                                       StringRef(), 0)) {
-      *UmbrellaHeader = HeaderFile->getName();
-      return 0;
-    }
-  }
-  
-  // We did not find an umbrella header. Clear out the UmbrellaHeader pointee
-  // so our caller knows that we failed.
-  UmbrellaHeader->clear();
-  return 0;
+  // Look for the module file in the module cache.
+  // FIXME: If we didn't find a description of the module itself, should we
+  // even try to find the module in the cache?
+  return getFileMgr().getFile(FileName, /*OpenFile=*/false,
+                              /*CacheFailure=*/false);
 }
 
 //===----------------------------------------------------------------------===//

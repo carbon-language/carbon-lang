@@ -350,19 +350,17 @@ public:
   /// \brief Search in the module cache path for a module with the given
   /// name.
   ///
+  /// \param Module The module that was found with the given name, which 
+  /// describes the module and how to build it.
+  ///
   /// \param If non-NULL, will be set to the module file name we expected to
   /// find (regardless of whether it was actually found or not).
   ///
-  /// \param UmbrellaHeader If non-NULL, and no module was found in the module
-  /// cache, this routine will search in the framework paths to determine
-  /// whether a module can be built from an umbrella header. If so, the pointee
-  /// will be set to the path of the umbrella header.
-  ///
-  /// \returns A file describing the named module, if available, or NULL to
-  /// indicate that the module could not be found.
+  /// \returns A file describing the named module, if already available in the
+  /// cases, or NULL to indicate that the module could not be found.
   const FileEntry *lookupModule(StringRef ModuleName,
-                                std::string *ModuleFileName = 0,
-                                std::string *UmbrellaHeader = 0);
+                                ModuleMap::Module *&Module,
+                                std::string *ModuleFileName = 0);
   
   void IncrementFrameworkLookupCount() { ++NumFrameworkLookups; }
 
