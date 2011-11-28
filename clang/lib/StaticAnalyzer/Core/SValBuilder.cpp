@@ -90,23 +90,13 @@ DefinedOrUnknownSVal SValBuilder::getConjuredSymbolVal(const void *symbolTag,
                                                        const Expr *expr,
                                                        unsigned count) {
   QualType T = expr->getType();
-
-  if (!SymbolManager::canSymbolicate(T))
-    return UnknownVal();
-
-  SymbolRef sym = SymMgr.getConjuredSymbol(expr, count, symbolTag);
-
-  if (Loc::isLocType(T))
-    return loc::MemRegionVal(MemMgr.getSymbolicRegion(sym));
-
-  return nonloc::SymbolVal(sym);
+  return getConjuredSymbolVal(symbolTag, expr, T, count);
 }
 
 DefinedOrUnknownSVal SValBuilder::getConjuredSymbolVal(const void *symbolTag,
                                                        const Expr *expr,
                                                        QualType type,
                                                        unsigned count) {
-  
   if (!SymbolManager::canSymbolicate(type))
     return UnknownVal();
 
