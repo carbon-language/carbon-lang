@@ -68,6 +68,13 @@ static AvailabilityResult DiagnoseAvailabilityOfDecl(Sema &S,
   // See if this declaration is unavailable or deprecated.
   std::string Message;
   AvailabilityResult Result = D->getAvailability(&Message);
+  if (const EnumConstantDecl *ECD = dyn_cast<EnumConstantDecl>(D))
+    if (Result == AR_Available) {
+      const DeclContext *DC = ECD->getDeclContext();
+      if (const EnumDecl *TheEnumDecl = dyn_cast<EnumDecl>(DC))
+        Result = TheEnumDecl->getAvailability(&Message);
+    }
+  
   switch (Result) {
     case AR_Available:
     case AR_NotYetIntroduced:
@@ -158,7 +165,7 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc,
       if (const EnumDecl *TheEnumDecl = dyn_cast<EnumDecl>(DC))
         DiagnoseAvailabilityOfDecl(*this,
                           const_cast< EnumDecl *>(TheEnumDecl), 
-                          Loc, UnknownObjCClass);
+                          D->getLocation(), UnknownObjCClass);
     }
   return false;
 }

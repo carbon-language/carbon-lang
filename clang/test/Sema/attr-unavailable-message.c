@@ -34,16 +34,16 @@ enum foo {
     c = 3
 }__attribute__((deprecated()));  
 
-enum fee { // expected-note 2 {{declaration has been explicitly marked unavailable here}}
-    r = 1,
+enum fee { // expected-note {{declaration has been explicitly marked unavailable here}}
+    r = 1, // expected-note {{declaration has been explicitly marked unavailable here}}
     s = 2,
     t = 3
 }__attribute__((unavailable()));  
 
 enum fee f() { // expected-error {{error: 'fee' is unavailable}}
-    int i = a; // expected-warning {{'foo' is deprecated }}
+    int i = a; // expected-warning {{'a' is deprecated }}
 
     i = b; // expected-warning {{'b' is deprecated}}
 
-    return r; // expected-error {{'fee' is unavailable}}
+    return r; // expected-error {{'r' is unavailable}}
 }
