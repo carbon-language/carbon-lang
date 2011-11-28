@@ -1,4 +1,4 @@
-/*===---- cpuid.h - Basic type definitions ---------------------------------===
+/*===---- cpuid.h - X86 cpu model detection --------------------------------===
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
