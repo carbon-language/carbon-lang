@@ -4863,7 +4863,7 @@ InitializationSequence::Perform(Sema &S,
       Sema::CheckedConversionKind CCK 
         = Kind.isCStyleCast()? Sema::CCK_CStyleCast
         : Kind.isFunctionalCast()? Sema::CCK_FunctionalCast
-        : Kind.isExplicitCast()? Sema::CCK_OtherCast
+        : Kind.isStaticCast()? Sema::CCK_StaticCast
         : Sema::CCK_ImplicitConversion;
       ExprResult CurInitExprRes =
         S.PerformImplicitConversion(CurInit.get(), Step->Type, *Step->ICS,

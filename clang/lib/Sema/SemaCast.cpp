@@ -75,9 +75,9 @@ namespace {
     // Top-level semantics-checking routines.
     void CheckConstCast();
     void CheckReinterpretCast();
-    void CheckStaticCast();
+    void CheckStaticCast(bool &CastNodesCreated);
     void CheckDynamicCast();
-    void CheckCXXCStyleCast(bool FunctionalCast);
+    void CheckCXXCStyleCast(bool FunctionalCast, bool &CastNodesCreated);
     void CheckCStyleCast();
 
     /// Complete an apparently-successful cast operation that yields
@@ -283,12 +283,28 @@ Sema::BuildCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
                                                       Parens.getEnd()));
   }
   case tok::kw_static_cast: {
+    bool CastNodesCreated = false;
     if (!TypeDependent) {
-      Op.CheckStaticCast();
+      Op.CheckStaticCast(CastNodesCreated);
       if (Op.SrcExpr.isInvalid())
         return ExprError();
     }
     
+    // CheckStaticCast _may_ have already created the cast node. Let's check
+    if (CastNodesCreated) {
+      if (CXXStaticCastExpr *Cast =
+          dyn_cast<CXXStaticCastExpr>(Op.SrcExpr.get())) {
+        assert(!Cast->getTypeInfoAsWritten() &&
+               "The explicit cast node created by CheckStaticCast "
+               "has source type infos!");
+
+        Cast->setTypeInfoAsWritten(DestTInfo);
+        Cast->setOperatorLoc(OpLoc);
+        Cast->setRParenLoc(Parens.getEnd());
+        
+        return Op.complete(Cast);
+      }
+    }
     return Op.complete(CXXStaticCastExpr::Create(Context, Op.ResultType,
                                    Op.ValueKind, Op.Kind, Op.SrcExpr.take(),
                                                  &Op.BasePath, DestTInfo,
@@ -327,7 +343,7 @@ static bool tryDiagnoseOverloadedCast(Sema &S, CastType CT,
     = (CT == CT_CStyle)? InitializationKind::CreateCStyleCast(range.getBegin(),
                                                               range)
     : (CT == CT_Functional)? InitializationKind::CreateFunctionalCast(range)
-    : InitializationKind::CreateCast(/*type range?*/ range);
+    : InitializationKind::CreateStaticCast(/*type range?*/ range);
   InitializationSequence sequence(S, entity, initKind, &src, 1);
 
   assert(sequence.Failed() && "initialization succeeded on second try?");
@@ -714,7 +730,7 @@ void CastOperation::CheckReinterpretCast() {
 /// CheckStaticCast - Check that a static_cast\<DestType\>(SrcExpr) is valid.
 /// Refer to C++ 5.2.9 for details. Static casts are mostly used for making
 /// implicit conversions explicit and getting rid of data loss warnings.
-void CastOperation::CheckStaticCast() {
+void CastOperation::CheckStaticCast(bool &CastNodesCreated) {
   if (isPlaceholder()) {
     checkNonOverloadPlaceholders();
     if (SrcExpr.isInvalid())
@@ -747,9 +763,10 @@ void CastOperation::CheckStaticCast() {
       return;
   }
 
+  Expr *SrcExprOrig = SrcExpr.get();
   unsigned msg = diag::err_bad_cxx_cast_generic;
   TryCastResult tcr
-    = TryStaticCast(Self, SrcExpr, DestType, Sema::CCK_OtherCast, OpRange, msg,
+    = TryStaticCast(Self, SrcExpr, DestType, Sema::CCK_StaticCast, OpRange, msg,
                     Kind, BasePath);
   if (tcr != TC_Success && msg != 0) {
     if (SrcExpr.isInvalid())
@@ -767,10 +784,12 @@ void CastOperation::CheckStaticCast() {
     if (Kind == CK_BitCast)
       checkCastAlign();
     if (Self.getLangOptions().ObjCAutoRefCount)
-      checkObjCARCConversion(Sema::CCK_OtherCast);
+      checkObjCARCConversion(Sema::CCK_StaticCast);
   } else if (Kind == CK_BitCast) {
     checkCastAlign();
   }
+  
+  CastNodesCreated = (SrcExpr.get() != SrcExprOrig);
 }
 
 /// TryStaticCast - Check if a static cast can be performed, and do so if
@@ -1308,7 +1327,7 @@ TryStaticImplicitCast(Sema &Self, ExprResult &SrcExpr, QualType DestType,
         ? InitializationKind::CreateCStyleCast(OpRange.getBegin(), OpRange)
     : (CCK == Sema::CCK_FunctionalCast)
         ? InitializationKind::CreateFunctionalCast(OpRange)
-    : InitializationKind::CreateCast(OpRange);
+    : InitializationKind::CreateStaticCast(OpRange);
   Expr *SrcExprRaw = SrcExpr.get();
   InitializationSequence InitSeq(Self, Entity, InitKind, &SrcExprRaw, 1);
 
@@ -1742,7 +1761,9 @@ static TryCastResult TryReinterpretCast(Sema &Self, ExprResult &SrcExpr,
   return TC_Success;
 }                                     
 
-void CastOperation::CheckCXXCStyleCast(bool FunctionalStyle) {
+void CastOperation::CheckCXXCStyleCast(bool FunctionalStyle,
+                                       bool &CastNodesCreated) {
+  CastNodesCreated = false;
   // Handle placeholders.
   if (isPlaceholder()) {
     // C-style casts can resolve __unknown_any types.
@@ -1823,6 +1844,7 @@ void CastOperation::CheckCXXCStyleCast(bool FunctionalStyle) {
     = FunctionalStyle? Sema::CCK_FunctionalCast
                      : Sema::CCK_CStyleCast;
   if (tcr == TC_NotApplicable) {
+    Expr *SrcExprOrig = SrcExpr.get();
     // ... or if that is not possible, a static_cast, ignoring const, ...
     tcr = TryStaticCast(Self, SrcExpr, DestType, CCK, OpRange,
                         msg, Kind, BasePath);
@@ -1836,6 +1858,8 @@ void CastOperation::CheckCXXCStyleCast(bool FunctionalStyle) {
       if (SrcExpr.isInvalid())
         return;
     }
+    
+    CastNodesCreated = (SrcExpr.get() != SrcExprOrig);
   }
 
   if (Self.getLangOptions().ObjCAutoRefCount && tcr == TC_Success)
@@ -2053,8 +2077,9 @@ ExprResult Sema::BuildCStyleCastExpr(SourceLocation LPLoc,
   Op.DestRange = CastTypeInfo->getTypeLoc().getSourceRange();
   Op.OpRange = SourceRange(LPLoc, CastExpr->getLocEnd());
 
+  bool CastNodesCreated = false;
   if (getLangOptions().CPlusPlus) {
-    Op.CheckCXXCStyleCast(/*FunctionalStyle=*/ false);
+    Op.CheckCXXCStyleCast(/*FunctionalStyle=*/ false, CastNodesCreated);
   } else {
     Op.CheckCStyleCast();
   }
@@ -2062,6 +2087,20 @@ ExprResult Sema::BuildCStyleCastExpr(SourceLocation LPLoc,
   if (Op.SrcExpr.isInvalid())
     return ExprError();
 
+  // CheckCXXCStyleCast _may_ have already created the CStyleCastExpr
+  // node. Let's check.
+  if (CastNodesCreated) {
+    if (CStyleCastExpr *Cast = dyn_cast<CStyleCastExpr>(Op.SrcExpr.get())){
+      assert(!Cast->getTypeInfoAsWritten() &&
+             "The explicit cast node created by CheckStaticCast "
+             "has source type infos!");
+      Cast->setTypeInfoAsWritten(CastTypeInfo);
+      Cast->setLParenLoc(LPLoc);
+      Cast->setRParenLoc(RPLoc);
+      return Op.complete(Cast);
+    }
+  }
+  
   return Op.complete(CStyleCastExpr::Create(Context, Op.ResultType,
                               Op.ValueKind, Op.Kind, Op.SrcExpr.take(),
                               &Op.BasePath, CastTypeInfo, LPLoc, RPLoc));
@@ -2075,11 +2114,28 @@ ExprResult Sema::BuildCXXFunctionalCastExpr(TypeSourceInfo *CastTypeInfo,
   Op.DestRange = CastTypeInfo->getTypeLoc().getSourceRange();
   Op.OpRange = SourceRange(Op.DestRange.getBegin(), CastExpr->getLocEnd());
 
-  Op.CheckCXXCStyleCast(/*FunctionalStyle=*/ true);
+  bool CastNodesCreated = false;
+  Op.CheckCXXCStyleCast(/*FunctionalStyle=*/ true, CastNodesCreated);
   if (Op.SrcExpr.isInvalid())
     return ExprError();
 
+  // CheckCXXCStyleCast _may_ have already created the CXXFunctionalCastExpr
+  // node. Let's check.
+  if (CastNodesCreated) {
+    if (CXXFunctionalCastExpr *Cast =
+        dyn_cast<CXXFunctionalCastExpr>(Op.SrcExpr.get())){
+      assert(!Cast->getTypeInfoAsWritten() &&
+             "The explicit cast node created by CheckStaticCast "
+             "has source type infos!");
+      Cast->setTypeInfoAsWritten(CastTypeInfo);
+      Cast->setTypeBeginLoc(Op.DestRange.getBegin());
+      Cast->setRParenLoc(RPLoc);
+      return Op.complete(Cast);
+    }
+  }
+  
   return Op.complete(CXXFunctionalCastExpr::Create(Context, Op.ResultType,
                          Op.ValueKind, CastTypeInfo, Op.DestRange.getBegin(),
                          Op.Kind, Op.SrcExpr.take(), &Op.BasePath, RPLoc));
 }
+
