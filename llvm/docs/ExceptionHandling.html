@@ -38,7 +38,6 @@
   	<li><a href="#llvm_eh_sjlj_longjmp"><tt>llvm.eh.sjlj.longjmp</tt></a></li>
   	<li><a href="#llvm_eh_sjlj_lsda"><tt>llvm.eh.sjlj.lsda</tt></a></li>
   	<li><a href="#llvm_eh_sjlj_callsite"><tt>llvm.eh.sjlj.callsite</tt></a></li>
-  	<li><a href="#llvm_eh_sjlj_dispatchsetup"><tt>llvm.eh.sjlj.dispatchsetup</tt></a></li>
   </ol></li>
   <li><a href="#asm">Asm Table Formats</a>
   <ol>
@@ -495,25 +494,6 @@
    intrinsic identifies the callsite value associated with the
    following <tt>invoke</tt> instruction. This is used to ensure that landing
    pad entries in the LSDA are generated in matching order.</p>
-
-</div>
-
-<!-- ======================================================================= -->
-<h4>
-  <a name="llvm_eh_sjlj_dispatchsetup">llvm.eh.sjlj.dispatchsetup</a>
-</h4>
-
-<div>
-
-<pre>
-  void @llvm.eh.sjlj.dispatchsetup(i32 %dispatch_value)
-</pre>
-
-<p>For SJLJ based exception handling, the <tt>llvm.eh.sjlj.dispatchsetup</tt>
-   intrinsic is used by targets to do any unwind edge setup they need. By
-   default, no action is taken.</p>
-
-</div>
 
 </div>
 
