@@ -29,6 +29,7 @@ td {
       <li><a href="#cxxhanges">C++ Language Changes</a></li>
       <li><a href="#objchanges">Objective-C Language Changes</a></li>
       <li><a href="#apichanges">Internal API Changes</a></li>
+    </ul>
   </li>
   <li><a href="#knownproblems">Known Problems</a></li>
   <li><a href="#additionalinfo">Additional Information</a></li>
@@ -94,7 +95,6 @@ prose in a section of its own. When doing that, delete the notes.</p>
   <li>Compiling C/C++ w/ MinGW (32/64) and Cygwin on Windows -- chapuni</li>
   <li>C++ -- Parsing and AST support for Windows Structured Exception
   Handling.</li>
-  <li>C++11 -- noexcept (Sebastian Redl)</li>
   <li>Uninitialized values Clang warning rewrite -- more accurate, faster, able
   to differentiate between the possibility of an uninitialized use and the
   certainty of an uninitialized use.</li>
@@ -107,7 +107,6 @@ prose in a section of its own. When doing that, delete the notes.</p>
   compiler crashes -- Chad</li>
   <li>OS Availability attribute -- r128127</li>
   <li>GNU ObjectiveC Runtime support -- David Chisnall</li>
-  <li>C++11 -- override</li>
   <li>Diagnostic improvements bucket?
     <ul>
       <li>Emitting fewer include stacks</li>
@@ -136,16 +135,11 @@ prose in a section of its own. When doing that, delete the notes.</p>
   information for LLDB and other clients which dynamically build AST nodes.</li>
   <li>Largely complete MSVC-compatible parsing mode -- fpichet</li>
   <li>C1X -- static asserts and generic selections</li>
-  <li>C++11 -- alias declarations -- zygoloid</li>
-  <li>C++11 -- range-based-for loops -- zygoloid</li>
-  <li>C++11 -- nullptr -- zygoloid</li>
-  <li>C++11 -- in-class init -- zygoloid</li>
-  <li>C++11 -- raw string literals -- zygoloid</li>
-  <li>C++11 -- delegating ctors -- zygoloid/scshunt</li>
   <li>Memory reduction -- initializers, macro expansions, source locations,
   etc.</li>
-  <li>Full set of type traits, sufficient to support C++11 standard libraries;
-  also expression traits.</li>
+  <li>The Embarcadero
+  <a href="http://docwiki.embarcadero.com/RADStudio/en/Is_lvalue_expr"><tt>__is_lvalue_expr</tt></a> and
+  <a href="http://docwiki.embarcadero.com/RADStudio/en/Is_rvalue_expr"><tt>__is_rvalue_expr</tt></a> expression traits.</li>
   <li>CFI-based debug info -- nlewycky/espindola details</li>
   <li>ObjC ARC -- get a blurb from rjmccall</li>
   <li>ObjC related result type/instancetype</li>
@@ -187,6 +181,37 @@ Several enhancements were made to the <code>PPCallbacks</code> interface to expa
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
 <h3 id="cxxchanges">C++ Language Changes in Clang</h3>
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+
+<h4 id="cxx11changes">C++11 Feature Support</h4>
+
+<p>Clang 3.0 adds support for
+<a href="http://clang.llvm.org/cxx_status.html#cxx11">more of the language
+features</a> added in the latest ISO C++ standard, C++11. Use
+<tt>-std=c++11</tt> or <tt>-std=gnu++11</tt> to enable support for these
+features. The following are now considered to be of production quality:
+<ul>
+  <li>Range-based <tt>for</tt> loops</li>
+  <li>Alias declarations (a new syntax for <tt>typedef</tt> declarations),
+  including their <tt>template</tt> forms</li>
+  <li>Specifying default values for class data members within a class
+  definition</li>
+  <li>Constructors delegating to other constructors of the same class</li>
+  <li>The <tt>override</tt> context-sensitive keyword for virtual member
+  function declarations</li>
+  <li>Explicitly generating default function definitions with <tt>= default</tt>
+  </li>
+  <li>The <tt>nullptr</tt> keyword, and the corresponding type</li>
+  <li>Raw string literals with arbitary delimiters (for instance,
+  <tt>R"delim(str"ing)delim"</tt>)</li>
+  <li>Unicode string literals (for instance, <tt>U"\u1234"</tt>) and the
+  <tt>char16_t</tt> and <tt>char32_t</tt> built-in types
+  <li><tt>noexcept</tt> expressions and the <tt>noexcept</tt> specifier on
+  function declarations</li>
+  <li><tt>alignof</tt> expressions and the <tt>alignas</tt> specifier on
+  variable declarations</li>
+  <li>A full set of <a href="http://clang.llvm.org/docs/LanguageExtensions.html#checking_type_traits">type traits</a>,
+  sufficient to support C++11 standard libraries</li>
+</ul>
 
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
 <h3 id="objcchanges">Objective-C Language Changes in Clang</h3>
