@@ -1007,27 +1007,30 @@ SymbolFileDWARF::ParseCompileUnitLineTable (const SymbolContext &sc)
     if (dwarf_cu)
     {
         const DWARFDebugInfoEntry *dwarf_cu_die = dwarf_cu->GetCompileUnitDIEOnly();
-        const dw_offset_t cu_line_offset = dwarf_cu_die->GetAttributeValueAsUnsigned(this, dwarf_cu, DW_AT_stmt_list, DW_INVALID_OFFSET);
-        if (cu_line_offset != DW_INVALID_OFFSET)
+        if (dwarf_cu_die)
         {
-            std::auto_ptr<LineTable> line_table_ap(new LineTable(sc.comp_unit));
-            if (line_table_ap.get())
+            const dw_offset_t cu_line_offset = dwarf_cu_die->GetAttributeValueAsUnsigned(this, dwarf_cu, DW_AT_stmt_list, DW_INVALID_OFFSET);
+            if (cu_line_offset != DW_INVALID_OFFSET)
             {
-                ParseDWARFLineTableCallbackInfo info = { 
-                    line_table_ap.get(), 
-                    m_obj_file->GetSectionList(), 
-                    0, 
-                    0, 
-                    m_debug_map_symfile != NULL, 
-                    false, 
-                    DWARFDebugLine::Row(), 
-                    SectionSP(), 
-                    SectionSP()
-                };
-                uint32_t offset = cu_line_offset;
-                DWARFDebugLine::ParseStatementTable(get_debug_line_data(), &offset, ParseDWARFLineTableCallback, &info);
-                sc.comp_unit->SetLineTable(line_table_ap.release());
-                return true;
+                std::auto_ptr<LineTable> line_table_ap(new LineTable(sc.comp_unit));
+                if (line_table_ap.get())
+                {
+                    ParseDWARFLineTableCallbackInfo info = { 
+                        line_table_ap.get(), 
+                        m_obj_file->GetSectionList(), 
+                        0, 
+                        0, 
+                        m_debug_map_symfile != NULL, 
+                        false, 
+                        DWARFDebugLine::Row(), 
+                        SectionSP(), 
+                        SectionSP()
+                    };
+                    uint32_t offset = cu_line_offset;
+                    DWARFDebugLine::ParseStatementTable(get_debug_line_data(), &offset, ParseDWARFLineTableCallback, &info);
+                    sc.comp_unit->SetLineTable(line_table_ap.release());
+                    return true;
+                }
             }
         }
     }
