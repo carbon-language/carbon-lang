@@ -6206,13 +6206,20 @@ SDValue DAGCombiner::visitLOAD(SDNode *N) {
 
   // Try to infer better alignment information than the load already has.
   if (OptLevel != CodeGenOpt::None && LD->isUnindexed()) {
-    if (unsigned Align = DAG.InferPtrAlignment(Ptr)) {
-      if (Align > LD->getAlignment())
-        return DAG.getExtLoad(LD->getExtensionType(), N->getDebugLoc(),
-                              LD->getValueType(0),
-                              Chain, Ptr, LD->getPointerInfo(),
-                              LD->getMemoryVT(),
-                              LD->isVolatile(), LD->isNonTemporal(), Align);
+    unsigned ABIAlign = TLI.getTargetData()->
+      getABITypeAlignment(LD->getMemoryVT().getTypeForEVT(*DAG.getContext()));
+    unsigned LDAlign = LD->getAlignment();
+    // Do not touch loads with explicit alignments that are smaller than ABI
+    // alignment to avoid breaking loads from "packed" types.
+    if (!LDAlign || LDAlign >= ABIAlign) {
+      if (unsigned Align = DAG.InferPtrAlignment(Ptr)) {
+        if (Align > LDAlign)
+          return DAG.getExtLoad(LD->getExtensionType(), N->getDebugLoc(),
+                                LD->getValueType(0),
+                                Chain, Ptr, LD->getPointerInfo(),
+                                LD->getMemoryVT(),
+                                LD->isVolatile(), LD->isNonTemporal(), Align);
+      }
     }
   }
 
@@ -6669,11 +6676,18 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
 
   // Try to infer better alignment information than the store already has.
   if (OptLevel != CodeGenOpt::None && ST->isUnindexed()) {
-    if (unsigned Align = DAG.InferPtrAlignment(Ptr)) {
-      if (Align > ST->getAlignment())
-        return DAG.getTruncStore(Chain, N->getDebugLoc(), Value,
-                                 Ptr, ST->getPointerInfo(), ST->getMemoryVT(),
-                                 ST->isVolatile(), ST->isNonTemporal(), Align);
+    unsigned ABIAlign = TLI.getTargetData()->
+      getABITypeAlignment(ST->getMemoryVT().getTypeForEVT(*DAG.getContext()));
+    unsigned STAlign = ST->getAlignment();
+    // Do not touch stores with explicit alignments that are smaller than ABI
+    // alignment to avoid breaking stores from "packed" types.
+    if (!STAlign || STAlign >= ABIAlign) {
+      if (unsigned Align = DAG.InferPtrAlignment(Ptr)) {
+        if (Align > STAlign)
+          return DAG.getTruncStore(Chain, N->getDebugLoc(), Value,
+                                   Ptr, ST->getPointerInfo(), ST->getMemoryVT(),
+                                   ST->isVolatile(), ST->isNonTemporal(),Align);
+      }
     }
   }
 
