@@ -1360,7 +1360,7 @@ bool ARMFastISel::ARMEmitCmp(const Value *Src1Value, const Value *Src2Value,
   unsigned SrcReg1 = getRegForValue(Src1Value);
   if (SrcReg1 == 0) return false;
 
-  unsigned SrcReg2;
+  unsigned SrcReg2 = 0;
   if (!UseImm) {
     SrcReg2 = getRegForValue(Src2Value);
     if (SrcReg2 == 0) return false;
@@ -1577,7 +1577,7 @@ bool ARMFastISel::SelectSelect(const Instruction *I) {
       (ARM_AM::getSOImmVal(Imm) != -1);
   }
 
-  unsigned Op2Reg;
+  unsigned Op2Reg = 0;
   if (!UseImm) {
     Op2Reg = getRegForValue(I->getOperand(2));
     if (Op2Reg == 0) return false;
