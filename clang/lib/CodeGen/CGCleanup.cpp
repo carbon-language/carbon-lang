@@ -1099,6 +1099,6 @@ llvm::Value *CodeGenFunction::getNormalCleanupDestSlot() {
 void CodeGenFunction::EmitCXXTemporary(const CXXTemporary *Temporary,
                                        QualType TempType,
                                        llvm::Value *Ptr) {
-  pushDestroy(NormalAndEHCleanup, Ptr, TempType, destroyCXXObject,
+  pushDestroy(NormalAndEHCleanup, Ptr, TempType, *destroyCXXObject,
               /*useEHCleanup*/ true);
 }
