@@ -104,7 +104,6 @@ prose in a section of its own. When doing that, delete the notes.</p>
   <li>Improved AST support for partially constructed nodes and incomplete
   information for LLDB and other clients which dynamically build AST nodes.</li>
   <li>Largely complete MSVC-compatible parsing mode -- fpichet</li>
-  <li>C1X -- static asserts and generic selections</li>
   <li>Memory reduction -- initializers, macro expansions, source locations,
   etc.</li>
   <li>The Embarcadero
@@ -201,6 +200,17 @@ Clang has some (limited) support for compiling OpenCL.
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
 <h3 id="cchanges">C Language Changes in Clang</h3>
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+
+<h4 id="c1xchanges">C1X Feature Support</h4>
+
+<p>Clang 3.0 adds support for the
+<a href="http://clang.llvm.org/docs/LanguageExtensions.html#c1x">
+<code>_Alignas</code>, <code>_Generic</code>, and <code>_Static_assert</code>
+keywords</a>, drafted for inclusion in the next C standard, which is
+provisionally known as C1X. Use <code>-std=c1x</code> or <code>-std=gnu1x</code>
+to enable support for the new language standard. These features are
+backwards-compatible and are available as an extension in all language
+modes.</p>
 
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
 <h3 id="cxxchanges">C++ Language Changes in Clang</h3>
