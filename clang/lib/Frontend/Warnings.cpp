@@ -133,7 +133,7 @@ void clang::ProcessWarningOptions(DiagnosticsEngine &Diags,
           // Set the warning as error flag for this specifier.
           Diags.setDiagnosticGroupWarningAsError(Specifier, isPositive);
         } else if (DiagIDs->getDiagnosticsInGroup(Specifier, _Diags)) {
-          EmitUnknownDiagWarning(Diags, "-Werror", Specifier, isPositive);
+          EmitUnknownDiagWarning(Diags, "-Werror=", Specifier, isPositive);
         }
         continue;
       }
@@ -161,7 +161,8 @@ void clang::ProcessWarningOptions(DiagnosticsEngine &Diags,
           // Set the error as fatal flag for this specifier.
           Diags.setDiagnosticGroupErrorAsFatal(Specifier, isPositive);
         } else if (DiagIDs->getDiagnosticsInGroup(Specifier, _Diags)) {
-          EmitUnknownDiagWarning(Diags, "-Wfatal-errors", Specifier, isPositive);
+          EmitUnknownDiagWarning(Diags, "-Wfatal-errors=", Specifier,
+                                 isPositive);
         }
         continue;
       }
