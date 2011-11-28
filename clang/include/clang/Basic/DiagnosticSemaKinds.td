@@ -539,9 +539,9 @@ def warn_default_atomic_custom_getter_setter : Warning<
 def err_use_continuation_class : Error<
   "illegal redeclaration of property in continuation class %0"
   " (attribute must be 'readwrite', while its primary must be 'readonly')">;
-def warn_type_mismatch_continuation_class : Warning<
+def err_type_mismatch_continuation_class : Error<
   "type of property %0 in continuation class does not match "
-  "property type in primary class">, InGroup<ObjCContinuationPropertyType>;
+  "property type in primary class">;
 def err_use_continuation_class_redeclaration_readwrite : Error<
   "illegal redeclaration of 'readwrite' property in continuation class %0"
   " (perhaps you intended this to be a 'readwrite' redeclaration of a "
