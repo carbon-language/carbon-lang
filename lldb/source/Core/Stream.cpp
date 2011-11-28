@@ -168,10 +168,12 @@ Stream::Address (uint64_t addr, int addr_size, const char *prefix, const char *s
 void
 Stream::AddressRange(uint64_t lo_addr, uint64_t hi_addr, int addr_size, const char *prefix, const char *suffix)
 {
-    if (prefix != NULL)
+    if (prefix && prefix[0])
         PutCString (prefix);
     Address (lo_addr, addr_size, "[");
     Address (hi_addr, addr_size, "-", ")");
+    if (suffix && suffix[0])
+        PutCString (suffix);
 }
 
 
