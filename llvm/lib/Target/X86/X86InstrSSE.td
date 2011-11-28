@@ -657,6 +657,9 @@ let Predicates = [HasAVX] in {
   def : Pat<(v2f64 (X86Movlpd VR128:$src1, VR128:$src2)),
             (VMOVSDrr VR128:$src1, (EXTRACT_SUBREG (v2f64 VR128:$src2),
                                                    sub_sd))>;
+  def : Pat<(v2i64 (X86Movlpd VR128:$src1, VR128:$src2)),
+            (VMOVSDrr VR128:$src1, (EXTRACT_SUBREG (v2i64 VR128:$src2),
+                                                   sub_sd))>;
   def : Pat<(v4f32 (X86Movlps VR128:$src1, VR128:$src2)),
             (VMOVSDrr VR128:$src1, (EXTRACT_SUBREG (v4f32 VR128:$src2),
                                                    sub_sd))>;
