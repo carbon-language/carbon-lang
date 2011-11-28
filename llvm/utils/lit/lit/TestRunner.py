@@ -269,10 +269,7 @@ def executeShCmd(cmd, cfg, cwd, results):
 
     # Remove any named temporary files we created.
     for f in named_temp_files:
-        try:
-            os.remove(f)
-        except OSError:
-            pass
+        RemoveForce(f)
 
     if cmd.negate:
         exitCode = not exitCode
