@@ -151,22 +151,11 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc,
       return true;
     }
   }
-  AvailabilityResult Result =
-    DiagnoseAvailabilityOfDecl(*this, D, Loc, UnknownObjCClass);
+  DiagnoseAvailabilityOfDecl(*this, D, Loc, UnknownObjCClass);
 
   // Warn if this is used but marked unused.
   if (D->hasAttr<UnusedAttr>())
     Diag(Loc, diag::warn_used_but_marked_unused) << D->getDeclName();
-  // For available enumerator, it will become unavailable/deprecated
-  // if its enum declaration is as such.
-  if (Result == AR_Available)
-    if (const EnumConstantDecl *ECD = dyn_cast<EnumConstantDecl>(D)) {
-      const DeclContext *DC = ECD->getDeclContext();
-      if (const EnumDecl *TheEnumDecl = dyn_cast<EnumDecl>(DC))
-        DiagnoseAvailabilityOfDecl(*this,
-                          const_cast< EnumDecl *>(TheEnumDecl), 
-                          D->getLocation(), UnknownObjCClass);
-    }
   return false;
 }
 
