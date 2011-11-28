@@ -113,8 +113,12 @@ public:
   }
 
   bool isGCOwnedNonObjC(QualType T);
+  bool removePropertyAttribute(StringRef fromAttr, SourceLocation atLoc) {
+    return rewritePropertyAttribute(fromAttr, StringRef(), atLoc);
+  }
   bool rewritePropertyAttribute(StringRef fromAttr, StringRef toAttr,
                                 SourceLocation atLoc);
+  bool addPropertyAttribute(StringRef attr, SourceLocation atLoc);
 
   void traverse(TranslationUnitDecl *TU);
 

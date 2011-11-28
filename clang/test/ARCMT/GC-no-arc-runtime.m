@@ -71,3 +71,9 @@ __attribute__((objc_arc_weak_reference_unavailable))
   id x = NSMakeCollectable(cft);
 }
 @end
+
+@interface I5 {
+  __weak id prop;
+}
+@property (readonly) __weak id prop;
+@end

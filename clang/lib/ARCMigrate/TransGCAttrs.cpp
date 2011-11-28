@@ -261,9 +261,12 @@ static void checkAllAtProps(MigrationContext &MigrateCtx,
 
   SmallVector<std::pair<AttributedTypeLoc, ObjCPropertyDecl *>, 4> ATLs;
   bool hasWeak = false, hasStrong = false;
+  ObjCPropertyDecl::PropertyAttributeKind
+    Attrs = ObjCPropertyDecl::OBJC_PR_noattr;
   for (IndivPropsTy::iterator
          PI = IndProps.begin(), PE = IndProps.end(); PI != PE; ++PI) {
     ObjCPropertyDecl *PD = *PI;
+    Attrs = PD->getPropertyAttributesAsWritten();
     TypeSourceInfo *TInfo = PD->getTypeSourceInfo();
     if (!TInfo)
       return;
@@ -300,9 +303,10 @@ static void checkAllAtProps(MigrationContext &MigrateCtx,
       else
         toAttr = "unsafe_unretained";
     }
-    if (!MigrateCtx.rewritePropertyAttribute("assign", toAttr, AtLoc)) {
-      return;
-    }
+    if (Attrs & ObjCPropertyDecl::OBJC_PR_assign)
+      MigrateCtx.rewritePropertyAttribute("assign", toAttr, AtLoc);
+    else
+      MigrateCtx.addPropertyAttribute(toAttr, AtLoc);
   }
 
   for (unsigned i = 0, e = ATLs.size(); i != e; ++i) {

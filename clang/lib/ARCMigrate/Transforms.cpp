@@ -446,6 +446,55 @@ bool MigrationContext::rewritePropertyAttribute(StringRef fromAttr,
   return false;
 }
 
+bool MigrationContext::addPropertyAttribute(StringRef attr,
+                                            SourceLocation atLoc) {
+  if (atLoc.isMacroID())
+    return false;
+
+  SourceManager &SM = Pass.Ctx.getSourceManager();
+
+  // Break down the source location.
+  std::pair<FileID, unsigned> locInfo = SM.getDecomposedLoc(atLoc);
+
+  // Try to load the file buffer.
+  bool invalidTemp = false;
+  StringRef file = SM.getBufferData(locInfo.first, &invalidTemp);
+  if (invalidTemp)
+    return false;
+
+  const char *tokenBegin = file.data() + locInfo.second;
+
+  // Lex from the start of the given location.
+  Lexer lexer(SM.getLocForStartOfFile(locInfo.first),
+              Pass.Ctx.getLangOptions(),
+              file.begin(), tokenBegin, file.end());
+  Token tok;
+  lexer.LexFromRawLexer(tok);
+  if (tok.isNot(tok::at)) return false;
+  lexer.LexFromRawLexer(tok);
+  if (tok.isNot(tok::raw_identifier)) return false;
+  if (StringRef(tok.getRawIdentifierData(), tok.getLength())
+        != "property")
+    return false;
+  lexer.LexFromRawLexer(tok);
+
+  if (tok.isNot(tok::l_paren)) {
+    Pass.TA.insert(tok.getLocation(), std::string("(") + attr.str() + ") ");
+    return true;
+  }
+  
+  lexer.LexFromRawLexer(tok);
+  if (tok.is(tok::r_paren)) {
+    Pass.TA.insert(tok.getLocation(), attr);
+    return true;
+  }
+
+  if (tok.isNot(tok::raw_identifier)) return false;
+
+  Pass.TA.insert(tok.getLocation(), std::string(attr) + ", ");
+  return true;
+}
+
 void MigrationContext::traverse(TranslationUnitDecl *TU) {
   for (traverser_iterator
          I = traversers_begin(), E = traversers_end(); I != E; ++I)

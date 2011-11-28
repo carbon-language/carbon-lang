@@ -66,3 +66,9 @@ __attribute__((objc_arc_weak_reference_unavailable))
   id x = CFBridgingRelease(cft);
 }
 @end
+
+@interface I5 {
+  __unsafe_unretained id prop;
+}
+@property (unsafe_unretained, readonly)  id prop;
+@end
