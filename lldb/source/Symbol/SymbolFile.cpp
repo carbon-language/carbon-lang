@@ -7,10 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/lldb-private.h"
 #include "lldb/Symbol/SymbolFile.h"
+
+#include "lldb/lldb-private.h"
+#include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
+#include "lldb/Core/StreamString.h"
 #include "lldb/Symbol/ObjectFile.h"
 
 using namespace lldb_private;
@@ -68,3 +71,45 @@ SymbolFile::GetClangASTContext ()
     return m_obj_file->GetModule()->GetClangASTContext();
 }
 
+
+void
+SymbolFile::ReportError (const char *format, ...)
+{
+    StreamString module_description;
+    m_obj_file->GetModule()->GetDescription (&module_description, lldb::eDescriptionLevelBrief);
+    ::fprintf (stderr, "error: %s ", module_description.GetString().c_str());
+    
+    va_list args;
+    va_start (args, format);
+    vfprintf (stderr, format, args);
+    va_end (args);
+}
+
+void
+SymbolFile::ReportWarning (const char *format, ...)
+{
+    StreamString module_description;
+    m_obj_file->GetModule()->GetDescription (&module_description, lldb::eDescriptionLevelBrief);
+    ::fprintf (stderr, "warning: %s ", module_description.GetString().c_str());
+    
+    va_list args;
+    va_start (args, format);
+    vfprintf (stderr, format, args);
+    va_end (args);
+}
+
+void
+SymbolFile::LogMessage (Log *log, const char *format, ...)
+{
+    if (log)
+    {
+        StreamString log_message;
+        m_obj_file->GetModule()->GetDescription (&log_message, lldb::eDescriptionLevelBrief);
+        log_message.PutChar(' ');
+        va_list args;
+        va_start (args, format);
+        log_message.PrintfVarArg (format, args);
+        va_end (args);
+        log->PutCString (log_message.GetString().c_str());
+    }
+}

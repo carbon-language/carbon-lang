@@ -114,7 +114,8 @@ public:
     CalculateSymbolContextModule ();
 
     void
-    GetDescription (Stream *s);
+    GetDescription (Stream *s,
+                    lldb::DescriptionLevel level = lldb::eDescriptionLevelFull);
 
     //------------------------------------------------------------------
     /// Dump a description of this object to a Stream.
@@ -663,6 +664,19 @@ public:
     
     ClangASTContext &
     GetClangASTContext ();
+
+    // Special error functions that can do printf style formatting that will prepend the message with
+    // something appropriate for this module (like the architecture, path and object name (if any)). 
+    // This centralizes code so that everyone doesn't need to format their error and log messages on
+    // their own and keeps the output a bit more consistent.
+    void                    
+    LogMessage (Log *log, const char *format, ...) __attribute__ ((format (printf, 3, 4)));
+
+    void
+    ReportWarning (const char *format, ...) __attribute__ ((format (printf, 2, 3)));
+
+    void
+    ReportError (const char *format, ...) __attribute__ ((format (printf, 2, 3)));
 
 protected:
     //------------------------------------------------------------------

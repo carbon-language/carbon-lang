@@ -68,6 +68,7 @@ public:
         dw_attr_t FormAtIndex(uint32_t i) const { return m_infos[i].form; }
         bool ExtractFormValueAtIndex (SymbolFileDWARF* dwarf2Data, uint32_t i, DWARFFormValue &form_value) const;
         uint64_t FormValueAsUnsignedAtIndex (SymbolFileDWARF* dwarf2Data, uint32_t i, uint64_t fail_value) const;
+        uint64_t FormValueAsUnsigned (SymbolFileDWARF* dwarf2Data, dw_attr_t attr, uint64_t fail_value) const;
         uint32_t FindAttributeIndex(dw_attr_t attr) const;
         bool ContainsAttribute(dw_attr_t attr) const;
         bool RemoveAttribute(dw_attr_t attr);
@@ -226,6 +227,17 @@ public:
                     const dw_offset_t die_offset,
                     lldb_private::Stream &s);
 
+    const char * GetQualifiedName (
+                    SymbolFileDWARF* dwarf2Data, 
+                    DWARFCompileUnit* cu,
+                    std::string &storage) const;
+    
+    const char * GetQualifiedName (
+                    SymbolFileDWARF* dwarf2Data, 
+                    DWARFCompileUnit* cu,
+                    const DWARFDebugInfoEntry::Attributes& attributes,
+                    std::string &storage) const;
+
 //    static int  Compare(
 //                    SymbolFileDWARF* dwarf2Data,
 //                    dw_offset_t a_die_offset,
@@ -339,6 +351,13 @@ public:
             // be the next entry in the list...
             DWARFDebugInfoEntry*    GetFirstChild()         { return (HasChildren() && !m_empty_children) ? this + 1 : NULL; }
     const   DWARFDebugInfoEntry*    GetFirstChild() const   { return (HasChildren() && !m_empty_children) ? this + 1 : NULL; }
+
+    
+    const   DWARFDebugInfoEntry*    GetParentDeclContextDIE (SymbolFileDWARF* dwarf2Data, 
+                                                             DWARFCompileUnit* cu) const;
+    const   DWARFDebugInfoEntry*    GetParentDeclContextDIE (SymbolFileDWARF* dwarf2Data, 
+                                                             DWARFCompileUnit* cu, 
+                                                             const DWARFDebugInfoEntry::Attributes& attributes) const;
 
     void        
     SetParent (DWARFDebugInfoEntry* parent)     

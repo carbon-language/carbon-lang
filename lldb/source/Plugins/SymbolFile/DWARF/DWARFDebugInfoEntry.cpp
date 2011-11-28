@@ -92,6 +92,15 @@ DWARFDebugInfoEntry::Attributes::ExtractFormValueAtIndex (SymbolFileDWARF* dwarf
 }
 
 uint64_t
+DWARFDebugInfoEntry::Attributes::FormValueAsUnsigned (SymbolFileDWARF* dwarf2Data, dw_attr_t attr, uint64_t fail_value) const
+{
+    const uint32_t attr_idx = FindAttributeIndex (attr);
+    if (attr_idx != UINT32_MAX)
+        return FormValueAsUnsignedAtIndex (dwarf2Data, attr_idx, fail_value);
+    return fail_value;
+}
+
+uint64_t
 DWARFDebugInfoEntry::Attributes::FormValueAsUnsignedAtIndex(SymbolFileDWARF* dwarf2Data, uint32_t i, uint64_t fail_value) const
 {
     DWARFFormValue form_value;
@@ -1710,6 +1719,152 @@ DWARFDebugInfoEntry::BuildFunctionAddressRangeTable
             child = child->GetSibling();
         }
     }
+}
+
+
+const DWARFDebugInfoEntry *
+DWARFDebugInfoEntry::GetParentDeclContextDIE (SymbolFileDWARF* dwarf2Data, 
+											  DWARFCompileUnit* cu) const
+{
+	DWARFDebugInfoEntry::Attributes attributes;
+	GetAttributes(dwarf2Data, cu, NULL, attributes);
+	return GetParentDeclContextDIE (dwarf2Data, cu, attributes);
+}
+
+const DWARFDebugInfoEntry *
+DWARFDebugInfoEntry::GetParentDeclContextDIE (SymbolFileDWARF* dwarf2Data, 
+											  DWARFCompileUnit* cu,
+											  const DWARFDebugInfoEntry::Attributes& attributes) const
+{
+	const DWARFDebugInfoEntry * die = this;
+	
+	while (die != NULL)
+	{
+		// If this is the original DIE that we are searching for a declaration 
+		// for, then don't look in the cache as we don't want our own decl 
+		// context to be our decl context...
+		if (die != this)
+		{            
+			switch (die->Tag())
+			{
+				case DW_TAG_compile_unit:
+				case DW_TAG_namespace:
+				case DW_TAG_structure_type:
+				case DW_TAG_union_type:
+				case DW_TAG_class_type:
+					return die;
+					
+				default:
+					break;
+			}
+		}
+		
+		dw_offset_t die_offset;
+        
+		die_offset = attributes.FormValueAsUnsigned(dwarf2Data, DW_AT_specification, DW_INVALID_OFFSET);
+		if (die_offset != DW_INVALID_OFFSET)
+		{
+			const DWARFDebugInfoEntry *spec_die = cu->GetDIEPtr (die_offset);
+			if (spec_die)
+			{
+				const DWARFDebugInfoEntry *spec_die_decl_ctx_die = spec_die->GetParentDeclContextDIE (dwarf2Data, cu);
+				if (spec_die_decl_ctx_die)
+					return spec_die_decl_ctx_die;
+			}
+		}
+		
+        die_offset = attributes.FormValueAsUnsigned(dwarf2Data, DW_AT_abstract_origin, DW_INVALID_OFFSET);
+		if (die_offset != DW_INVALID_OFFSET)
+		{
+			const DWARFDebugInfoEntry *abs_die = cu->GetDIEPtr (die_offset);
+			if (abs_die)
+			{
+				const DWARFDebugInfoEntry *abs_die_decl_ctx_die = abs_die->GetParentDeclContextDIE (dwarf2Data, cu);
+				if (abs_die_decl_ctx_die)
+					return abs_die_decl_ctx_die;
+			}
+		}
+		
+		die = die->GetParent();
+	}
+    return NULL;
+}
+
+
+const char *
+DWARFDebugInfoEntry::GetQualifiedName (SymbolFileDWARF* dwarf2Data, 
+									   DWARFCompileUnit* cu,
+									   std::string &storage) const
+{
+	DWARFDebugInfoEntry::Attributes attributes;
+	GetAttributes(dwarf2Data, cu, NULL, attributes);
+	return GetQualifiedName (dwarf2Data, cu, attributes, storage);
+}
+
+const char*
+DWARFDebugInfoEntry::GetQualifiedName (SymbolFileDWARF* dwarf2Data, 
+									   DWARFCompileUnit* cu,
+									   const DWARFDebugInfoEntry::Attributes& attributes,
+									   std::string &storage) const
+{
+	
+	const char *name = GetName (dwarf2Data, cu);
+	
+	if (name)
+	{
+		const DWARFDebugInfoEntry *parent_decl_ctx_die = GetParentDeclContextDIE (dwarf2Data, cu);
+		storage.clear();
+		// TODO: change this to get the correct decl context parent....
+		while (parent_decl_ctx_die)
+		{
+			const dw_tag_t parent_tag = parent_decl_ctx_die->Tag();
+			switch (parent_tag)
+			{
+                case DW_TAG_namespace:
+				{
+					const char *namespace_name = parent_decl_ctx_die->GetName (dwarf2Data, cu);
+					if (namespace_name)
+					{
+						storage.insert (0, "::");
+						storage.insert (0, namespace_name);
+					}
+					else
+					{
+						storage.insert (0, "(anonymous namespace)::");
+					}
+					parent_decl_ctx_die = parent_decl_ctx_die->GetParentDeclContextDIE(dwarf2Data, cu);
+				}
+                    break;
+					
+                case DW_TAG_class_type:
+                case DW_TAG_structure_type:
+                case DW_TAG_union_type:
+				{
+					const char *class_union_struct_name = parent_decl_ctx_die->GetName (dwarf2Data, cu);
+                    
+					if (class_union_struct_name)
+					{
+						storage.insert (0, "::");
+						storage.insert (0, class_union_struct_name);
+					}
+					parent_decl_ctx_die = parent_decl_ctx_die->GetParentDeclContextDIE(dwarf2Data, cu);
+				}
+                    break;
+                    
+                default:
+                    parent_decl_ctx_die = NULL;
+                    break;
+			}
+		}
+		
+		if (storage.empty())
+			storage.append ("::");
+        
+		storage.append (name);
+	}
+	if (storage.empty())
+		return NULL;
+	return storage.c_str();
 }
 
 

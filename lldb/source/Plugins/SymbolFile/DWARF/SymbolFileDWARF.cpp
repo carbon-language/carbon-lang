@@ -2273,10 +2273,12 @@ SymbolFileDWARF::FindGlobalVariables (const ConstString &name, const lldb_privat
 
     if (log)
     {
-        log->Printf ("SymbolFileDWARF::FindGlobalVariables (file=\"%s/%s\", name=\"%s\", append=%u, max_matches=%u, variables)", 
-                     m_obj_file->GetFileSpec().GetDirectory().GetCString(),
-                     m_obj_file->GetFileSpec().GetFilename().GetCString(),
-                     name.GetCString(), append, max_matches);
+        LogMessage (log.get(), 
+                    "SymbolFileDWARF::FindGlobalVariables (name=\"%s\", namespace_decl=%p, append=%u, max_matches=%u, variables)", 
+                    name.GetCString(), 
+                    namespace_decl,
+                    append, 
+                    max_matches);
     }
     
     if (!NamespaceDeclMatchesThisSymbolFile(namespace_decl))
@@ -2369,10 +2371,11 @@ SymbolFileDWARF::FindGlobalVariables(const RegularExpression& regex, bool append
     
     if (log)
     {
-        log->Printf ("SymbolFileDWARF::FindGlobalVariables (file=\"%s/%s\", regex=\"%s\", append=%u, max_matches=%u, variables)", 
-                     m_obj_file->GetFileSpec().GetDirectory().GetCString(),
-                     m_obj_file->GetFileSpec().GetFilename().GetCString(),
-                     regex.GetText(), append, max_matches);
+        LogMessage (log.get(), 
+                    "SymbolFileDWARF::FindGlobalVariables (regex=\"%s\", append=%u, max_matches=%u, variables)", 
+                    regex.GetText(), 
+                    append, 
+                    max_matches);
     }
 
     DWARFDebugInfo* info = DebugInfo();
@@ -2649,10 +2652,11 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
     
     if (log)
     {
-        log->Printf ("SymbolFileDWARF::FindFunctions (file=\"%s/%s\", name=\"%s\", name_type_mask=0x%x, append=%u, sc_list)", 
-                     m_obj_file->GetFileSpec().GetDirectory().GetCString(),
-                     m_obj_file->GetFileSpec().GetFilename().GetCString(),
-                     name.GetCString(), name_type_mask, append);
+        LogMessage (log.get(), 
+                    "SymbolFileDWARF::FindFunctions (name=\"%s\", name_type_mask=0x%x, append=%u, sc_list)", 
+                    name.GetCString(), 
+                    name_type_mask, 
+                    append);
     }
 
     // If we aren't appending the results to this list, then clear the list
@@ -2922,10 +2926,10 @@ SymbolFileDWARF::FindFunctions(const RegularExpression& regex, bool append, Symb
     
     if (log)
     {
-        log->Printf ("SymbolFileDWARF::FindFunctions (file=\"%s/%s\", regex=\"%s\"append=%u, sc_list)", 
-                     m_obj_file->GetFileSpec().GetDirectory().GetCString(),
-                     m_obj_file->GetFileSpec().GetFilename().GetCString(),
-                     regex.GetText(), append);
+        LogMessage (log.get(), 
+                    "SymbolFileDWARF::FindFunctions (regex=\"%s\", append=%u, sc_list)", 
+                     regex.GetText(), 
+                    append);
     }
     
 
@@ -2957,40 +2961,6 @@ SymbolFileDWARF::FindFunctions(const RegularExpression& regex, bool append, Symb
     return sc_list.GetSize() - original_size;
 }
 
-void
-SymbolFileDWARF::ReportError (const char *format, ...)
-{
-    ::fprintf (stderr, 
-               "error: %s/%s ", 
-               m_obj_file->GetFileSpec().GetDirectory().GetCString(),
-               m_obj_file->GetFileSpec().GetFilename().GetCString());
-
-    if (m_obj_file->GetModule()->GetObjectName())
-        ::fprintf (stderr, "(%s) ", m_obj_file->GetModule()->GetObjectName().GetCString());
-
-    va_list args;
-    va_start (args, format);
-    vfprintf (stderr, format, args);
-    va_end (args);
-}
-
-void
-SymbolFileDWARF::ReportWarning (const char *format, ...)
-{
-    ::fprintf (stderr, 
-               "warning: %s/%s ", 
-               m_obj_file->GetFileSpec().GetDirectory().GetCString(),
-               m_obj_file->GetFileSpec().GetFilename().GetCString());
-
-    if (m_obj_file->GetModule()->GetObjectName())
-        ::fprintf (stderr, "(%s) ", m_obj_file->GetModule()->GetObjectName().GetCString());
-
-    va_list args;
-    va_start (args, format);
-    vfprintf (stderr, format, args);
-    va_end (args);
-}
-
 uint32_t
 SymbolFileDWARF::FindTypes(const SymbolContext& sc, const ConstString &name, const lldb_private::ClangNamespaceDecl *namespace_decl, bool append, uint32_t max_matches, TypeList& types)
 {
@@ -3002,10 +2972,11 @@ SymbolFileDWARF::FindTypes(const SymbolContext& sc, const ConstString &name, con
     
     if (log)
     {
-        log->Printf ("SymbolFileDWARF::FindTypes (file=\"%s/%s\", sc, name=\"%s\", append=%u, max_matches=%u, type_list)", 
-                     m_obj_file->GetFileSpec().GetDirectory().GetCString(),
-                     m_obj_file->GetFileSpec().GetFilename().GetCString(),
-                     name.GetCString(), append, max_matches);
+        LogMessage (log.get(), 
+                    "SymbolFileDWARF::FindTypes (sc, name=\"%s\", append=%u, max_matches=%u, type_list)", 
+                    name.GetCString(), 
+                    append, 
+                    max_matches);
     }
 
     // If we aren't appending the results to this list, then clear the list
@@ -3086,9 +3057,8 @@ SymbolFileDWARF::FindNamespace (const SymbolContext& sc,
     
     if (log)
     {
-        log->Printf ("SymbolFileDWARF::FindNamespace (file=\"%s/%s\", sc, name=\"%s\")", 
-                     m_obj_file->GetFileSpec().GetDirectory().GetCString(),
-                     m_obj_file->GetFileSpec().GetFilename().GetCString(),
+        LogMessage (log.get(), 
+                    "SymbolFileDWARF::FindNamespace (sc, name=\"%s\")", 
                      name.GetCString());
     }
     
@@ -3635,33 +3605,24 @@ SymbolFileDWARF::ResolveNamespaceDIE (DWARFCompileUnit *curr_cu, const DWARFDebu
             LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_INFO));
             if (log)
             {
-                const char *object_name = m_obj_file->GetModule()->GetObjectName().GetCString();
                 if (namespace_name)
                 {
-                    log->Printf ("ASTContext => %p: 0x%8.8llx: DW_TAG_namespace with DW_AT_name(\"%s\") => clang::NamespaceDecl * %p in %s/%s%s%s%s (original = %p)", 
+                    LogMessage (log.get(), 
+                                "ASTContext => %p: 0x%8.8llx: DW_TAG_namespace with DW_AT_name(\"%s\") => clang::NamespaceDecl *%p (original = %p)", 
                                  GetClangASTContext().getASTContext(),
                                  MakeUserID(die->GetOffset()),
                                  namespace_name,
                                  namespace_decl,
-                                 m_obj_file->GetFileSpec().GetDirectory().GetCString(),
-                                 m_obj_file->GetFileSpec().GetFilename().GetCString(),
-                                 object_name ? "(" : "",
-                                 object_name ? object_name : "",
-                                 object_name ? "(" : "",
                                  namespace_decl->getOriginalNamespace());
                 }
                 else
                 {
-                    log->Printf ("ASTContext => %p: 0x%8.8llx: DW_TAG_namespace (anonymous) => clang::NamespaceDecl * %p in %s/%s%s%s%s (original = %p)", 
-                                 GetClangASTContext().getASTContext(),
-                                 MakeUserID(die->GetOffset()),
-                                 namespace_decl,
-                                 m_obj_file->GetFileSpec().GetDirectory().GetCString(),
-                                 m_obj_file->GetFileSpec().GetFilename().GetCString(),
-                                 object_name ? "(" : "",
-                                 object_name ? object_name : "",
-                                 object_name ? "(" : "",
-                                 namespace_decl->getOriginalNamespace());
+                    LogMessage (log.get(),
+                                "ASTContext => %p: 0x%8.8llx: DW_TAG_namespace (anonymous) => clang::NamespaceDecl *%p (original = %p)", 
+                                GetClangASTContext().getASTContext(),
+                                MakeUserID(die->GetOffset()),
+                                namespace_decl,
+                                namespace_decl->getOriginalNamespace());
                 }
             }
 
@@ -4196,6 +4157,15 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         // current type index just in case we have a forward
                         // declaration followed by an actual declarations in the
                         // DWARF. If this fails, we need to look elsewhere...
+                        if (log)
+                        {
+                            LogMessage (log.get(), 
+                                        "SymbolFileDWARF(%p) - 0x%8.8x: %s type \"%s\" is forward declaration, trying to find real type", 
+                                        this,
+                                        die->GetOffset(), 
+                                        DW_TAG_value_to_name(tag),
+                                        type_name_cstr);
+                        }
                     
                         type_sp = FindDefinitionTypeForDIE (dwarf_cu, die, type_name_const_str);
 
@@ -4209,6 +4179,16 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
 
                         if (type_sp)
                         {
+                            if (log)
+                            {
+                                log->Printf ("SymbolFileDWARF(%p) - 0x%8.8x: %s type \"%s\" is forward declaration, real type is 0x%8.8llx", 
+                                             this,
+                                             die->GetOffset(), 
+                                             DW_TAG_value_to_name(tag),
+                                             type_name_cstr,
+                                             type_sp->GetID());
+                            }
+
                             // We found a real definition for this type elsewhere
                             // so lets use it and cache the fact that we found
                             // a complete type for this die

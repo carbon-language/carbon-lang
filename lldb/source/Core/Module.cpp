@@ -11,6 +11,7 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/ModuleList.h"
 #include "lldb/Core/RegularExpression.h"
+#include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/lldb-private-log.h"
 #include "lldb/Symbol/ObjectFile.h"
@@ -578,20 +579,74 @@ Module::GetArchitecture () const
 }
 
 void
-Module::GetDescription (Stream *s)
+Module::GetDescription (Stream *s, lldb::DescriptionLevel level)
 {
     Mutex::Locker locker (m_mutex);
 
-    if (m_arch.IsValid())
-        s->Printf("(%s) ", m_arch.GetArchitectureName());
+    if (level >= eDescriptionLevelFull)
+    {
+        if (m_arch.IsValid())
+            s->Printf("(%s) ", m_arch.GetArchitectureName());
+    }
 
-    char path[PATH_MAX];
-    if (m_file.GetPath(path, sizeof(path)))
-        s->PutCString(path);
+    if (level == eDescriptionLevelBrief)
+    {
+        const char *filename = m_file.GetFilename().GetCString();
+        if (filename)
+            s->PutCString (filename);
+    }
+    else
+    {
+        char path[PATH_MAX];
+        if (m_file.GetPath(path, sizeof(path)))
+            s->PutCString(path);
+    }
 
     const char *object_name = m_object_name.GetCString();
     if (object_name)
         s->Printf("(%s)", object_name);
+}
+
+void
+Module::ReportError (const char *format, ...)
+{
+    StreamString module_description;
+    GetDescription(&module_description, lldb::eDescriptionLevelBrief);
+    ::fprintf (stderr, "error: %s ", module_description.GetString().c_str());
+    
+    va_list args;
+    va_start (args, format);
+    vfprintf (stderr, format, args);
+    va_end (args);
+}
+
+void
+Module::ReportWarning (const char *format, ...)
+{
+    StreamString module_description;
+    GetDescription(&module_description, lldb::eDescriptionLevelBrief);
+    ::fprintf (stderr, "warning: %s ", module_description.GetString().c_str());
+    
+    va_list args;
+    va_start (args, format);
+    vfprintf (stderr, format, args);
+    va_end (args);
+}
+
+void
+Module::LogMessage (Log *log, const char *format, ...)
+{
+    if (log)
+    {
+        StreamString log_message;
+        GetDescription(&log_message, lldb::eDescriptionLevelBrief);
+        log_message.PutCString (": ");
+        va_list args;
+        va_start (args, format);
+        log_message.PrintfVarArg (format, args);
+        va_end (args);
+        log->PutCString(log_message.GetString().c_str());
+    }
 }
 
 void

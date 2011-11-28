@@ -276,6 +276,19 @@ namespace lldb_private {
         LaunchProcess (ProcessLaunchInfo &launch_info);
 
         //------------------------------------------------------------------
+        /// Not all platforms will support debugging a process by spawning
+        /// somehow halted for a debugger (specified using the 
+        /// "eLaunchFlagDebug" launch flag) and then attaching. If your 
+        /// platform doesn't support this, override this function and return
+        /// false.
+        //------------------------------------------------------------------
+        virtual bool
+        CanDebugProcess ()
+        {
+            return true; 
+        }
+
+        //------------------------------------------------------------------
         /// Subclasses should NOT need to implement this function as it uses
         /// the Platform::LaunchProcess() followed by Platform::Attach ()
         //------------------------------------------------------------------

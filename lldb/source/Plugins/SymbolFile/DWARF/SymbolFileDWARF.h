@@ -456,11 +456,6 @@ protected:
                             const lldb_private::ClangASTContext::TemplateParameterInfos &template_param_infos);
 
 
-    void
-    ReportError (const char *format, ...) __attribute__ ((format (printf, 2, 3)));
-    void
-    ReportWarning (const char *format, ...) __attribute__ ((format (printf, 2, 3)));
-    
     SymbolFileDWARFDebugMap *       m_debug_map_symfile;
     clang::TranslationUnitDecl *    m_clang_tu_decl;
     lldb_private::Flags             m_flags;

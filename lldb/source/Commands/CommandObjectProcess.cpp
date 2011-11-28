@@ -257,11 +257,23 @@ public:
             if (!m_options.launch_info.GetArchitecture().IsValid())
                 m_options.launch_info.GetArchitecture() = target->GetArchitecture();
 
-            process = target->GetPlatform()->DebugProcess (m_options.launch_info, 
-                                                           debugger,
-                                                           target,
-                                                           debugger.GetListener(),
-                                                           error).get();
+            PlatformSP platform_sp (target->GetPlatform());
+            
+            if (platform_sp && platform_sp->CanDebugProcess ())
+            {
+                process = target->GetPlatform()->DebugProcess (m_options.launch_info, 
+                                                               debugger,
+                                                               target,
+                                                               debugger.GetListener(),
+                                                               error).get();
+            }
+            else
+            {
+                const char *plugin_name = m_options.launch_info.GetProcessPluginName();
+                process = target->CreateProcess (debugger.GetListener(), plugin_name).get();
+                if (process)
+                    error = process->Launch (m_options.launch_info);
+            }
 
             if (process == NULL)
             {

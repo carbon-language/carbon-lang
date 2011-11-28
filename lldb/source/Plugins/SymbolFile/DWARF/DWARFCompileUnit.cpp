@@ -10,6 +10,7 @@
 #include "DWARFCompileUnit.h"
 
 #include "lldb/Core/Mangled.h"
+#include "lldb/Core/Module.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Symbol/ObjectFile.h"
@@ -164,14 +165,16 @@ DWARFCompileUnit::ExtractDIEsIfNeeded (bool cu_die_only)
 
     DWARFDebugInfoEntry die;
         // Keep a flat array of the DIE for binary lookup by DIE offset
-//    Log *log = LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_INFO);
-//        if (log)
-//            log->Printf("0x%8.8x: Compile Unit: length = 0x%8.8x, version = 0x%4.4x, abbr_offset = 0x%8.8x, addr_size = 0x%2.2x",
-//                        cu->GetOffset(),
-//                        cu->GetLength(),
-//                        cu->GetVersion(),
-//                        cu->GetAbbrevOffset(),
-//                        cu->GetAddressByteSize());
+    if (!cu_die_only)
+    {
+        LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_INFO));
+        if (log)
+        {
+            m_dwarf2Data->LogMessage (log.get(), 
+                                      "DWARFCompileUnit::ExtractDIEsIfNeeded () for compile unit at .debug_info[0x%8.8x]", 
+                                      GetOffset());
+        }
+    }
 
     uint32_t depth = 0;
     // We are in our compile unit, parse starting at the offset
@@ -263,13 +266,9 @@ DWARFCompileUnit::ExtractDIEsIfNeeded (bool cu_die_only)
     // unit header).
     if (offset > next_cu_offset)
     {
-        char path[PATH_MAX];
-        ObjectFile *objfile = m_dwarf2Data->GetObjectFile();
-        if (objfile)
-        {
-            objfile->GetFileSpec().GetPath(path, sizeof(path));
-        }
-        fprintf (stderr, "warning: DWARF compile unit extends beyond its bounds cu 0x%8.8x at 0x%8.8x in '%s'\n", GetOffset(), offset, path);
+        m_dwarf2Data->ReportWarning ("DWARF compile unit extends beyond its bounds cu 0x%8.8x at 0x%8.8x\n", 
+                                     GetOffset(), 
+                                     offset);
     }
 
     // Since std::vector objects will double their size, we really need to
@@ -282,7 +281,7 @@ DWARFCompileUnit::ExtractDIEsIfNeeded (bool cu_die_only)
         DWARFDebugInfoEntry::collection exact_size_die_array (m_die_array.begin(), m_die_array.end());
         exact_size_die_array.swap (m_die_array);
     }
-    LogSP log (LogChannelDWARF::GetLogIfAll (DWARF_LOG_DEBUG_INFO));
+    LogSP log (LogChannelDWARF::GetLogIfAll (DWARF_LOG_DEBUG_INFO | DWARF_LOG_VERBOSE));
     if (log)
     {
         StreamString strm;
@@ -404,10 +403,11 @@ DWARFCompileUnit::GetFunctionAranges ()
         LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_ARANGES));
 
         if (log)
-            log->Printf ("DWARFCompileUnit::GetFunctionAranges() for \"%s/%s\" compile unit at 0x%8.8x",
-                         m_dwarf2Data->GetObjectFile()->GetFileSpec().GetDirectory().GetCString(),
-                         m_dwarf2Data->GetObjectFile()->GetFileSpec().GetFilename().GetCString(),
-                         m_offset);
+        {
+            m_dwarf2Data->LogMessage (log.get(), 
+                                      "DWARFCompileUnit::GetFunctionAranges() for compile unit at .debug_info[0x%8.8x]",
+                                      GetOffset());
+        }
         DIE()->BuildFunctionAddressRangeTable (m_dwarf2Data, this, m_func_aranges_ap.get());
         const bool minimize = false;
         m_func_aranges_ap->Sort(minimize);
@@ -572,6 +572,15 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
     const DataExtractor* debug_str = &m_dwarf2Data->get_debug_str_data();
 
     const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (GetAddressByteSize());
+
+    LogSP log (LogChannelDWARF::GetLogIfAll (DWARF_LOG_LOOKUPS));
+    
+    if (log)
+    {
+        m_dwarf2Data->LogMessage (log.get(), 
+                                  "DWARFCompileUnit::Index() for compile unit at .debug_info[0x%8.8x]",
+                                  GetOffset());
+    }
 
     DWARFDebugInfoEntry::const_iterator pos;
     DWARFDebugInfoEntry::const_iterator begin = m_die_array.begin();
