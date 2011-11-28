@@ -2328,10 +2328,7 @@ minmax_element(_ForwardIterator __first, _ForwardIterator __last, _Compare __com
       if (++__first != __last)
       {
           if (__comp(*__first, *__result.first))
-          {
-              __result.second = __result.first;
               __result.first = __first;
-          }
           else
               __result.second = __first;
           while (++__first != __last)
