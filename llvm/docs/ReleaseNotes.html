@@ -942,9 +942,12 @@ be used to verify some algorithms.
     comparisons, turning them into various optimized code sequences (e.g.
     using the SSE4/AVX "blend" instructions).</li>
 <li>The SSE execution domain fix pass and the ARM NEON move fix pass have been
-    merged to a target independent execution dependency fix pass.  Targets can
-    override the <code>getExecutionDomain</code> and
-    <code>setExecutionDomain</code> hooks to use it.</li>
+    merged to a target independent execution dependency fix pass. This pass is
+    used to select alternative equivalent opcodes in a way that minimizes
+    execution domain crossings. Closely connected instructions are moved to
+    the same execution domain when possible. Targets can override the
+    <code>getExecutionDomain</code> and <code>setExecutionDomain</code> hooks
+    to use the pass.</li>
 </ul>
 </div>
 
