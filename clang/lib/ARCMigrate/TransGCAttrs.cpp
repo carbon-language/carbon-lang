@@ -326,7 +326,8 @@ static void checkAllProps(MigrationContext &MigrateCtx,
   for (unsigned i = 0, e = AllProps.size(); i != e; ++i) {
     ObjCPropertyDecl *PD = AllProps[i];
     if (PD->getPropertyAttributesAsWritten() &
-          ObjCPropertyDecl::OBJC_PR_assign) {
+          (ObjCPropertyDecl::OBJC_PR_assign |
+           ObjCPropertyDecl::OBJC_PR_readonly)) {
       SourceLocation AtLoc = PD->getAtLoc();
       if (AtLoc.isInvalid())
         continue;

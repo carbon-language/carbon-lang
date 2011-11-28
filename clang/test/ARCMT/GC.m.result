@@ -53,6 +53,8 @@ __attribute__((objc_arc_weak_reference_unavailable))
 @interface I4Impl {
   I4Impl *pds2;
   I4Impl *pds3;
+  __weak I4Impl *pw3;
+  __weak I4Impl *pw4;
 }
 @property (weak) I4Impl * pw1, * pw2;
 @property  I4Impl * ps;
@@ -60,10 +62,12 @@ __attribute__((objc_arc_weak_reference_unavailable))
 @property  I4Impl * pds2;
 @property (readwrite) I4Impl * pds3;
 @property (readonly) I4Impl * pds4;
+@property (weak, readonly)  I4Impl *pw3;
+@property (weak)  I4Impl *pw4;
 @end
 
 @implementation I4Impl
-@synthesize pw1, pw2, ps, pds, pds2, pds3, pds4;
+@synthesize pw1, pw2, pw3, pw4, ps, pds, pds2, pds3, pds4;
 
 -(void)test1:(CFTypeRef *)cft {
   id x = CFBridgingRelease(cft);

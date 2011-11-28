@@ -237,9 +237,12 @@ private:
       canUseWeak = false;
 
     for (PropsTy::iterator I = props.begin(), E = props.end(); I != E; ++I) {
-      if (isUserDeclared(I->IvarD))
-        Pass.TA.insert(I->IvarD->getLocation(),
-                       canUseWeak ? "__weak " : "__unsafe_unretained ");
+      if (isUserDeclared(I->IvarD)) {
+        if (I->IvarD &&
+            I->IvarD->getType().getObjCLifetime() != Qualifiers::OCL_Weak)
+          Pass.TA.insert(I->IvarD->getLocation(),
+                         canUseWeak ? "__weak " : "__unsafe_unretained ");
+      }
       if (I->ImplD)
         Pass.TA.clearDiagnostic(diag::err_arc_assign_property_ownership,
                                 I->ImplD->getLocation());
@@ -257,9 +260,12 @@ private:
       canUseWeak = false;
 
     for (PropsTy::iterator I = props.begin(), E = props.end(); I != E; ++I) {
-      if (isUserDeclared(I->IvarD))
-        Pass.TA.insert(I->IvarD->getLocation(),
-                       canUseWeak ? "__weak " : "__unsafe_unretained ");
+      if (isUserDeclared(I->IvarD)) {
+        if (I->IvarD &&
+            I->IvarD->getType().getObjCLifetime() != Qualifiers::OCL_Weak)
+          Pass.TA.insert(I->IvarD->getLocation(),
+                         canUseWeak ? "__weak " : "__unsafe_unretained ");
+      }
       if (I->ImplD) {
         Pass.TA.clearDiagnostic(diag::err_arc_assign_property_ownership,
                                 I->ImplD->getLocation());
