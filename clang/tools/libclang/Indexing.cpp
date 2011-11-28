@@ -317,7 +317,8 @@ static void clang_indexSourceFile_Impl(void *UserData) {
   if (!requestedToGetTU)
     CInvok->getPreprocessorOpts().DetailedRecord = false;
 
-  ASTUnit *Unit = ASTUnit::create(CInvok.getPtr(), Diags);
+  ASTUnit *Unit = ASTUnit::create(CInvok.getPtr(), Diags,
+                                  /*CaptureDiagnostics=*/true);
   llvm::OwningPtr<CXTUOwner> CXTU(new CXTUOwner(MakeCXTranslationUnit(Unit)));
 
   // Recover resources if we crash before exiting this method.

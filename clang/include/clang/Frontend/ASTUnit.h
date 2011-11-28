@@ -628,7 +628,8 @@ public:
 
   /// \brief Create a ASTUnit. Gets ownership of the passed CompilerInvocation. 
   static ASTUnit *create(CompilerInvocation *CI,
-                         llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diags);
+                         llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
+                         bool CaptureDiagnostics = false);
 
   /// \brief Create a ASTUnit from an AST file.
   ///
