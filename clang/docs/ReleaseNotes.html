@@ -92,14 +92,8 @@ prose in a section of its own. When doing that, delete the notes.</p>
   <li>Compiling C/C++ w/ MinGW (32/64) and Cygwin on Windows -- chapuni</li>
   <li>C++ -- Parsing and AST support for Windows Structured Exception
   Handling.</li>
-  <li>Uninitialized values Clang warning rewrite -- more accurate, faster, able
-  to differentiate between the possibility of an uninitialized use and the
-  certainty of an uninitialized use.</li>
-  <li>Driver support for automatic preparation of reproduction steps for
-  compiler crashes -- Chad</li>
   <li>OS Availability attribute -- r128127</li>
   <li>GNU ObjectiveC Runtime support -- David Chisnall</li>
-  <li>Basic C++ support in the static analyzer.</li>
   <li>Improved AST support for partially constructed nodes and incomplete
   information for LLDB and other clients which dynamically build AST nodes.</li>
   <li>Largely complete MSVC-compatible parsing mode -- fpichet</li>
@@ -136,6 +130,11 @@ typedef int Integer;
   identifier itself.</li>
   <li>More rich macro expansion backtraces and some (limited) fix-it hints when
   diagnostics stem from macro arguments.</li>
+  <li>Many new warnings have been added to catch common, bug-prone code
+  patterns.</li>
+  <li>Uninitialized values Clang warning was rewritten to be more accurate,
+  faster, and able to differentiate between the <em>possibility</em> of an
+  uninitialized use and the <em>certainty</em> of an uninitialized use.</li>
 </ul>
 
 <h4 id="libclang">This release saw significant improvements to <code>libclang</code></h4>
@@ -170,6 +169,9 @@ and support a much broader range of Linux distributions out of the box.
   on Darwin.</li>
   <!-- There are likely more Darwin-specific improvements to mention here? -->
   <!-- What support was added for FreeBSD? NetBSD? Anything noteworthy? -->
+  <li>Automatic detection of Clang crashes in the driver and preparation of
+  reproduction steps for filing bug reports.</li><!-- Chad, feel free to add
+  more details here. -->
 </ul>
 
 <h4 id="ppcallbacks">Expanded support for instrumenting the preprocessor through
