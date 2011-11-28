@@ -2633,6 +2633,19 @@ struct BaseAndFieldInfo {
     else
       IIK = IIK_Default;
   }
+  
+  bool isImplicitCopyOrMove() const {
+    switch (IIK) {
+    case IIK_Copy:
+    case IIK_Move:
+      return true;
+      
+    case IIK_Default:
+      return false;
+    }
+    
+    return false;
+  }
 };
 }
 
@@ -2678,7 +2691,7 @@ static bool CollectFieldInitializer(Sema &SemaRef, BaseAndFieldInfo &Info,
   // C++0x [class.base.init]p8: if the entity is a non-static data member that
   // has a brace-or-equal-initializer, the entity is initialized as specified
   // in [dcl.init].
-  if (Field->hasInClassInitializer()) {
+  if (Field->hasInClassInitializer() && !Info.isImplicitCopyOrMove()) {
     CXXCtorInitializer *Init;
     if (Indirect)
       Init = new (SemaRef.Context) CXXCtorInitializer(SemaRef.Context, Indirect,
@@ -8583,12 +8596,7 @@ Sema::ComputeDefaultedMoveCtorExceptionSpec(CXXRecordDecl *ClassDecl) {
   for (RecordDecl::field_iterator F = ClassDecl->field_begin(),
                                FEnd = ClassDecl->field_end();
        F != FEnd; ++F) {
-    if (F->hasInClassInitializer()) {
-      if (Expr *E = F->getInClassInitializer())
-        ExceptSpec.CalledExpr(E);
-      else if (!F->isInvalidDecl())
-        ExceptSpec.SetDelayed();
-    } else if (const RecordType *RecordTy
+    if (const RecordType *RecordTy
               = Context.getBaseElementType(F->getType())->getAs<RecordType>()) {
       CXXRecordDecl *FieldRecDecl = cast<CXXRecordDecl>(RecordTy->getDecl());
       CXXConstructorDecl *Constructor = LookupMovingConstructor(FieldRecDecl);
