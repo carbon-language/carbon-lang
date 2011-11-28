@@ -145,21 +145,27 @@ prose in a section of its own. When doing that, delete the notes.</p>
   <li>NRVO for blocks.</li>
   <li>Major improvements to the interactions between serializing and
   deserializing the AST and the preprocessor -- argiris</li>
-  <li>Major driver and system compatibility changes:
-    <ul>
-      <li>Correct support for many more hardware architecture pre-defined macros
-      (e.g., __i686__).</li>
-      <li>Much more robust detection of library and header search paths on Linux
-      distributions.</li>
-      <li>Partial support for sysroot based cross compiling on Linux (like)
-      systems.</li>
-      <li>Improved support for locating and using libcxx, especially on
-      Darwin.</li>
-    </ul>
-  </li>
   <li>Initial steps of CUDA support -- Peter</li>
   <li>Atomic builtins and C1X specifiers using the new LLVM atomic instructions
   and memory model -- efriedma, jyasskin</li>
+</ul>
+
+<h4 id="driver">The Clang GCC-compatible command-line driver improved dramatically</h4>
+A great deal of work went into the GCC-compatible driver for the 3.0 release
+making it support more operating systems, emulate GCC behavior more accurately,
+and support a much broader range of Linux distributions out of the box.
+<ul>
+  <li>More accurate support for hardware architecture pre-defined macros (e.g.,
+  __i686__).</li>
+  <li>Robust library and header search paths for the vast majority of x86 and
+  x86-64 Linux distributions.</li>
+  <li>Improved support for newer Darwin platforms.</li>
+  <li>Partial support for <code>--sysroot=...</code> based cross-compiling on
+  Linux (and similar) host systems.</li>
+  <li>Improved support for locating and using libcxx when installed, especially
+  on Darwin.</li>
+  <!-- There are likely more Darwin-specific improvements to mention here? -->
+  <!-- What support was added for FreeBSD? NetBSD? Anything noteworthy? -->
 </ul>
 
 <h4 id="ppcallbacks">Expanded support for instrumenting the preprocessor through
