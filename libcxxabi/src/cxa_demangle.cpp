@@ -15009,7 +15009,7 @@ __cxa_demangle(const char* mangled_name, char* buf, size_t* n, int* status)
         return NULL;
     }
     const size_t bs = 64 * 1024;
-    char static_buf[bs];
+    __attribute((aligned(16))) char static_buf[bs];
 
     buf = __libcxxabi::__demangle(__libcxxabi::__demangle(mangled_name,
                                                           static_buf, bs),
