@@ -67,9 +67,19 @@ public:
     size_t
     PutSTDIN (const char *src, size_t src_len);
 
+    %feature("autodoc", "
+    Reads data from the current process's stdout stream. API client specifies
+    the size of the buffer to read data into. It returns the byte buffer in a
+    Python string.
+    ") GetSTDOUT;
     size_t
     GetSTDOUT (char *dst, size_t dst_len) const;
 
+    %feature("autodoc", "
+    Reads data from the current process's stderr stream. API client specifies
+    the size of the buffer to read data into. It returns the byte buffer in a
+    Python string.
+    ") GetSTDERR;
     size_t
     GetSTDERR (char *dst, size_t dst_len) const;
 
