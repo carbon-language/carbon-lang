@@ -40,11 +40,6 @@ UnrollAllowPartial("unroll-allow-partial", cl::init(false), cl::Hidden,
   cl::desc("Allows loops to be partially unrolled until "
            "-unroll-threshold loop size is reached."));
 
-// Temporary flag to be removed in 3.0
-static cl::opt<bool>
-NoSCEVUnroll("disable-unroll-scev", cl::init(false), cl::Hidden,
-  cl::desc("Use ScalarEvolution to analyze loop trip counts for unrolling"));
-
 namespace {
   class LoopUnroll : public LoopPass {
   public:
@@ -148,20 +143,13 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   // Find trip count and trip multiple if count is not available
   unsigned TripCount = 0;
   unsigned TripMultiple = 1;
-  if (!NoSCEVUnroll) {
-    // Find "latch trip count". UnrollLoop assumes that control cannot exit
-    // via the loop latch on any iteration prior to TripCount. The loop may exit
-    // early via an earlier branch.
-    BasicBlock *LatchBlock = L->getLoopLatch();
-    if (LatchBlock) {
-      TripCount = SE->getSmallConstantTripCount(L, LatchBlock);
-      TripMultiple = SE->getSmallConstantTripMultiple(L, LatchBlock);
-    }
-  }
-  else {
-    TripCount = L->getSmallConstantTripCount();
-    if (TripCount == 0)
-      TripMultiple = L->getSmallConstantTripMultiple();
+  // Find "latch trip count". UnrollLoop assumes that control cannot exit
+  // via the loop latch on any iteration prior to TripCount. The loop may exit
+  // early via an earlier branch.
+  BasicBlock *LatchBlock = L->getLoopLatch();
+  if (LatchBlock) {
+    TripCount = SE->getSmallConstantTripCount(L, LatchBlock);
+    TripMultiple = SE->getSmallConstantTripMultiple(L, LatchBlock);
   }
   // Automatically select an unroll count.
   unsigned Count = CurrentCount;

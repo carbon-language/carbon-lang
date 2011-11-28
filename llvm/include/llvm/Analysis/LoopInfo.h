@@ -23,7 +23,6 @@
 //  * whether or not a particular block branches out of the loop
 //  * the successor blocks of the loop
 //  * the loop depth
-//  * the trip count
 //  * etc...
 //
 //===----------------------------------------------------------------------===//
@@ -586,37 +585,6 @@ public:
   /// variable.
   ///
   PHINode *getCanonicalInductionVariable() const;
-
-  /// getTripCount - Return a loop-invariant LLVM value indicating the number of
-  /// times the loop will be executed.  Note that this means that the backedge
-  /// of the loop executes N-1 times.  If the trip-count cannot be determined,
-  /// this returns null.
-  ///
-  /// The IndVarSimplify pass transforms loops to have a form that this
-  /// function easily understands.
-  ///
-  Value *getTripCount() const;
-
-  /// getSmallConstantTripCount - Returns the trip count of this loop as a
-  /// normal unsigned value, if possible. Returns 0 if the trip count is unknown
-  /// of not constant. Will also return 0 if the trip count is very large
-  /// (>= 2^32)
-  ///
-  /// The IndVarSimplify pass transforms loops to have a form that this
-  /// function easily understands.
-  ///
-  unsigned getSmallConstantTripCount() const;
-
-  /// getSmallConstantTripMultiple - Returns the largest constant divisor of the
-  /// trip count of this loop as a normal unsigned value, if possible. This
-  /// means that the actual trip count is always a multiple of the returned
-  /// value (don't forget the trip count could very well be zero as well!).
-  ///
-  /// Returns 1 if the trip count is unknown or not guaranteed to be the
-  /// multiple of a constant (which is also the case if the trip count is simply
-  /// constant, use getSmallConstantTripCount for that case), Will also return 1
-  /// if the trip count is very large (>= 2^32).
-  unsigned getSmallConstantTripMultiple() const;
 
   /// isLCSSAForm - Return true if the Loop is in LCSSA form
   bool isLCSSAForm(DominatorTree &DT) const;
