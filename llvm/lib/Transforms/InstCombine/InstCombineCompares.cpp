@@ -1657,6 +1657,14 @@ static Instruction *ProcessUGT_ADDCST_ADD(ICmpInst &I, Value *A, Value *B,
       CI1->getValue() != APInt::getLowBitsSet(CI1->getBitWidth(), NewWidth))
     return 0;
 
+  // This is only really a signed overflow check if the inputs have been
+  // sign-extended; check for that condition. For example, if CI2 is 2^31 and
+  // the operands of the add are 64 bits wide, we need at least 33 sign bits.
+  unsigned NeededSignBits = CI1->getBitWidth() - NewWidth + 1;
+  if (IC.ComputeNumSignBits(A) < NeededSignBits ||
+      IC.ComputeNumSignBits(B) < NeededSignBits)
+    return 0;
+
   // In order to replace the original add with a narrower
   // llvm.sadd.with.overflow, the only uses allowed are the add-with-constant
   // and truncates that discard the high bits of the add.  Verify that this is
