@@ -62,8 +62,10 @@
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
-STATISTIC(NumFastIselSuccessIndependent, "Number of insts selected by target-independent selector");
-STATISTIC(NumFastIselSuccessTarget, "Number of insts selected by target-specific selector");
+STATISTIC(NumFastIselSuccessIndependent, "Number of insts selected by "
+          "target-independent selector");
+STATISTIC(NumFastIselSuccessTarget, "Number of insts selected by "
+          "target-specific selector");
 
 /// startNewBlock - Set the current block to which generated machine
 /// instructions will be appended, and clear the local CSE map.
