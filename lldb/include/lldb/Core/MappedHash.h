@@ -98,7 +98,7 @@ public:
         virtual size_t
         GetByteSize (const HeaderData &header_data) = 0;
 
-        size_t
+        void
         SetHeaderDataByteSize (uint32_t header_data_byte_size)
         {
             header_data_len = header_data_byte_size;
