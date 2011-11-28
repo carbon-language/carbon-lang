@@ -1148,9 +1148,14 @@ be used to verify some algorithms.
    LLVM API changes are:</p>
 
 <ul>
-  <li>The biggest and most pervasive change is that llvm::Types are no longer
-      returned or accepted as 'const' values.  Instead, just pass around
-      non-const Types.</li>
+  <li>The biggest and most pervasive change is that the type system has been
+      rewritten: <code>PATypeHolder</code> and <code>OpaqueType</code> are gone,
+      and all APIs deal with <code>Type*</code> instead of <code>const
+      Type*</code>.  If you need to create recursive structures, then create a
+      named structure, and use <code>setBody()</code> when all its elements are
+      built.  Type merging and refining is gone too: named structures are not
+      merged with other structures, even if their layout is identical.  (of
+      course anonymous structures are still uniqued by layout).</li>
 
   <li><code>PHINode::reserveOperandSpace</code> has been removed. Instead, you
       must specify how many operands to reserve space for when you create the
@@ -1224,15 +1229,6 @@ be used to verify some algorithms.
       debugging information in the LLVM IR now expects clients to
       use <code>DIBuilder::finalize()</code> at the end of translation unit to
       complete debugging information encoding.</li>
-
-  <li>The way the type system works has been
-      rewritten: <code>PATypeHolder</code> and <code>OpaqueType</code> are gone,
-      and all APIs deal with <code>Type*</code> instead of <code>const
-      Type*</code>.  If you need to create recursive structures, then create a
-      named structure, and use <code>setBody()</code> when all its elements are
-      built.  Type merging and refining is gone too: named structures are not
-      merged with other structures, even if their layout is identical.  (of
-      course anonymous structures are still uniqued by layout).</li>
 
   <li>TargetSelect.h moved to Support/ from Target/</li>
 
