@@ -20,18 +20,12 @@
                   <li><a href="#alloca">Variable Sized Allocas</a></li>
                 </ol>
           </li>
-          <li><a href="#results">Results</a>
-            <ol>
-              <li><a href="#go">Go on LLVM</a></li>
-              <li><a href="#abi">Runtime ABI</a></li>
-            </ol>
-          </li>
         </ol>
 
         <h2><a name="intro">Introduction</a></h2>
         <div>
           <p>
-            Segmented stack allows stack space to be allocated incrementally than as a monolithic chunk (of some worst case size) at thread initialization. This is done by allocating stack blocks (henceforth called <em>stacklets</em>) and linking them into a doubly linked list. The function prologue is responsible for checking if the current stacklet has enough space for the function to execute; and if not, call into the libgcc runtime to allocate more stack space. Support for segmented stacks on x86 / Linux is currently being worked on.
+            Segmented stack allows stack space to be allocated incrementally than as a monolithic chunk (of some worst case size) at thread initialization. This is done by allocating stack blocks (henceforth called <em>stacklets</em>) and linking them into a doubly linked list. The function prologue is responsible for checking if the current stacklet has enough space for the function to execute; and if not, call into the libgcc runtime to allocate more stack space. When using <tt>llc</tt>, segmented stacks can be enabled by adding <tt>-segmented-stacks</tt> to the command line.
           </p>
           <p>
             The runtime functionality is <a href="http://gcc.gnu.org/wiki/SplitStacks">already there in libgcc</a>.

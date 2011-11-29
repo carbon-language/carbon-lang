@@ -936,7 +936,10 @@ be used to verify some algorithms.
    make it run faster:</p>
 
 <ul>
-<li>XXX: Segmented stacks.</li>
+<li>LLVM can now produce code that works with libgcc
+    to <a href="SegmentedStacks.html">dynamically allocate stack
+    segments</a>, as opposed to allocating a worst-case chunk of
+    virtual memory for each thread.</li>
 <li>LLVM generates substantially better code for indirect gotos due to a new
     tail duplication pass, which can be a substantial performance win for
     interpreter loops that use them.</li>
