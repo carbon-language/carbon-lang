@@ -697,10 +697,10 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
 
 // Get default architecture.
 static const char* getMipsArchFromCPU(StringRef CPUName) {
-  if (CPUName == "mips32r1" || CPUName == "4ke")
+  if (CPUName == "mips32" || CPUName == "mips32r2")
     return "mips";
 
-  assert((CPUName == "mips64r1" || CPUName == "mips64r2") &&
+  assert((CPUName == "mips64" || CPUName == "mips64r2") &&
          "Unexpected cpu name.");
 
   return "mips64";
@@ -709,9 +709,9 @@ static const char* getMipsArchFromCPU(StringRef CPUName) {
 // Get default target cpu.
 static const char* getMipsCPUFromArch(StringRef ArchName, const Driver &D) {
   if (ArchName == "mips" || ArchName == "mipsel")
-    return "mips32r1";
+    return "mips32";
   else if (ArchName == "mips64" || ArchName == "mips64el")
-    return "mips64r1";
+    return "mips64";
   else
     D.Diag(diag::err_drv_invalid_arch_name) << ArchName;
 
