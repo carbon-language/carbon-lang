@@ -72,6 +72,31 @@ static void indent(llvm::raw_ostream &OS, unsigned Spaces) {
   OS << std::string(Spaces, ' ');
 }
 
+static void printEscapedString(llvm::raw_ostream &OS, StringRef String) {
+  for (StringRef::iterator I = String.begin(), E = String.end(); I != E; ++I) {
+    unsigned char Char = *I;
+    
+    switch (Char) {
+    default:
+      if (isprint(Char))
+        OS << (char)Char;
+      else  // Output anything hard as an octal escape.
+        OS << '\\'
+        << (char)('0'+ ((Char >> 6) & 7))
+        << (char)('0'+ ((Char >> 3) & 7))
+        << (char)('0'+ ((Char >> 0) & 7));
+      break;
+      // Handle some common non-printable cases to make dumps prettier.
+    case '\\': OS << "\\\\"; break;
+    case '"': OS << "\\\""; break;
+    case '\n': OS << "\\n"; break;
+    case '\t': OS << "\\t"; break;
+    case '\a': OS << "\\a"; break;
+    case '\b': OS << "\\b"; break;
+    }
+  }
+}
+
 void ModuleMap::Module::print(llvm::raw_ostream &OS, unsigned Indent) const {
   indent(OS, Indent);
   if (IsFramework)
@@ -82,12 +107,16 @@ void ModuleMap::Module::print(llvm::raw_ostream &OS, unsigned Indent) const {
   
   if (UmbrellaHeader) {
     indent(OS, Indent + 2);
-    OS << "umbrella \"" << UmbrellaHeader->getName() << "\"\n";
+    OS << "umbrella \"";
+    printEscapedString(OS, UmbrellaHeader->getName());
+    OS << "\"\n";
   }
   
   for (unsigned I = 0, N = Headers.size(); I != N; ++I) {
     indent(OS, Indent + 2);
-    OS << "header \"" << Headers[I]->getName() << "\"\n";
+    OS << "header \"";
+    printEscapedString(OS, Headers[I]->getName());
+    OS << "\"\n";
   }
   
   for (llvm::StringMap<Module *>::const_iterator MI = SubModules.begin(), 
