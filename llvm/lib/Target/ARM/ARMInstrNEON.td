@@ -74,6 +74,7 @@ def VectorIndex32 : Operand<i32>, ImmLeaf<i32, [{
   let MIOperandInfo = (ops i32imm);
 }
 
+// Register list of one D register.
 def VecListOneDAsmOperand : AsmOperandClass {
   let Name = "VecListOneD";
   let ParserMethod = "parseVectorList";
