@@ -4297,6 +4297,17 @@ void Sema::CheckArrayAccess(const Expr *BaseExpr, const Expr *IndexExpr,
                           << IndexExpr->getSourceRange());
   }
 
+  if (!ND) {
+    // Try harder to find a NamedDecl to point at in the note.
+    while (const ArraySubscriptExpr *ASE =
+           dyn_cast<ArraySubscriptExpr>(BaseExpr))
+      BaseExpr = ASE->getBase()->IgnoreParenCasts();
+    if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(BaseExpr))
+      ND = dyn_cast<NamedDecl>(DRE->getDecl());
+    if (const MemberExpr *ME = dyn_cast<MemberExpr>(BaseExpr))
+      ND = dyn_cast<NamedDecl>(ME->getMemberDecl());
+  }
+
   if (ND)
     DiagRuntimeBehavior(ND->getLocStart(), BaseExpr,
                         PDiag(diag::note_array_index_out_of_bounds)

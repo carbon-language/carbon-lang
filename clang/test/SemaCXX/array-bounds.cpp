@@ -4,10 +4,14 @@ int foo() {
   int x[2]; // expected-note 4 {{array 'x' declared here}}
   int y[2]; // expected-note 2 {{array 'y' declared here}}
   int z[1]; // expected-note {{array 'z' declared here}}
+  int w[1][1]; // expected-note {{array 'w' declared here}}
+  int v[1][1][1]; // expected-note {{array 'v' declared here}}
   int *p = &y[2]; // no-warning
   (void) sizeof(x[2]); // no-warning
   y[2] = 2; // expected-warning {{array index 2 is past the end of the array (which contains 2 elements)}}
   z[1] = 'x'; // expected-warning {{array index 1 is past the end of the array (which contains 1 element)}}
+  w[0][2] = 0; // expected-warning {{array index 2 is past the end of the array (which contains 1 element)}}
+  v[0][0][2] = 0; // expected-warning {{array index 2 is past the end of the array (which contains 1 element)}}
   return x[2] +  // expected-warning {{array index 2 is past the end of the array (which contains 2 elements)}}
          y[-1] + // expected-warning {{array index -1 is before the beginning of the array}}
          x[sizeof(x)] +  // expected-warning {{array index 8 is past the end of the array (which contains 2 elements)}}
