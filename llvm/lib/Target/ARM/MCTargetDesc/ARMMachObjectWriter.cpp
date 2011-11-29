@@ -16,6 +16,7 @@
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCFixup.h"
 #include "llvm/MC/MCFixupKindInfo.h"
+#include "llvm/MC/MCMachOSymbolFlags.h"
 #include "llvm/MC/MCValue.h"
 #include "llvm/Object/MachOFormat.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -178,9 +179,16 @@ RecordARMMovwMovtRelocation(MachObjectWriter *Writer,
   case ARM::fixup_arm_movt_hi16:
   case ARM::fixup_arm_movt_hi16_pcrel:
     MovtBit = 1;
+    // The thumb bit shouldn't be set in the 'other-half' bit of the
+    // relocation, but it will be set in FixedValue if the base symbol
+    // is a thumb function. Clear it out here.
+    if (A_SD->getFlags() & SF_ThumbFunc)
+      FixedValue &= 0xfffffffe;
     break;
   case ARM::fixup_t2_movt_hi16:
   case ARM::fixup_t2_movt_hi16_pcrel:
+    if (A_SD->getFlags() & SF_ThumbFunc)
+      FixedValue &= 0xfffffffe;
     MovtBit = 1;
     // Fallthrough
   case ARM::fixup_t2_movw_lo16:
@@ -188,7 +196,6 @@ RecordARMMovwMovtRelocation(MachObjectWriter *Writer,
     ThumbBit = 1;
     break;
   }
-
 
   if (Type == macho::RIT_ARM_HalfDifference) {
     uint32_t OtherHalf = MovtBit
