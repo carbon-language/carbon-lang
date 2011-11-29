@@ -162,6 +162,8 @@ template <class T, class Allocator>
 #include <algorithm>
 #include <stdexcept>
 
+#include <__undef_min_max>
+
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 template <class _Tp, class _Allocator> class __deque_base;

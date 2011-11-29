@@ -109,6 +109,8 @@ template<> class numeric_limits<cv long double>;
 #include <__config>
 #include <type_traits>
 
+#include <__undef_min_max>
+
 #if defined(_MSC_VER)
 #include "support/win32/limits_win32.h"
 #endif // _MSC_VER
