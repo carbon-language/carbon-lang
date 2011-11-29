@@ -253,40 +253,35 @@ programs), first checkout and setup the <tt>test-suite</tt> module:</p>
 
 <div class="doc_code">
 <pre>
-% cd llvm/projects
+% cd ~/llvm/projects
 % svn co http://llvm.org/svn/llvm-project/test-suite/trunk test-suite
 % cd ..
-% ./configure --with-llvmgccdir=$LLVM_GCC_DIR
 </pre>
 </div>
 
-<p>where <tt>$LLVM_GCC_DIR</tt> is the directory where
-you <em>installed</em> llvm-gcc, not its src or obj
-dir. The <tt>--with-llvmgccdir</tt> option assumes that
-the <tt>llvm-gcc-4.2</tt> module was configured with
-<tt>--program-prefix=llvm-</tt>, and therefore that the C and C++
-compiler drivers are called <tt>llvm-gcc</tt> and <tt>llvm-g++</tt>
-respectively.  If this is not the case,
-use <tt>--with-llvmgcc</tt>/<tt>--with-llvmgxx</tt> to specify each
-executable's location.</p>
+<p>and then configure and build normally as you would from the
+<a href="http://llvm.org/docs/GettingStarted.html#quickstart">Getting Started
+Guide</a>. This will autodetect first the built clang if you are building
+clang, then <tt>clang</tt> in your path and finally look for <tt>llvm-gcc</tt>
+in your path.
 
 <p>Then, run the entire test suite by running make in the <tt>test-suite</tt>
-directory:</p>
+subdirectory of your build directory:</p>
 
 <div class="doc_code">
 <pre>
-% cd projects/test-suite
+% cd <i>where-you-built-llvm</i>/projects/test-suite
 % gmake
 </pre>
 </div>
 
-<p>Usually, running the "nightly" set of tests is a good idea, and you can also
+<p>Usually, running the "simple" set of tests is a good idea, and you can also
 let it generate a report by running:</p>
 
 <div class="doc_code">
 <pre>
-% cd projects/test-suite
-% gmake TEST=nightly report report.html
+% cd <i>where-you-built-llvm</i>/projects/test-suite
+% gmake TEST=simple report report.html
 </pre>
 </div>
 
