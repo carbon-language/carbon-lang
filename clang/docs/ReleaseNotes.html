@@ -87,12 +87,8 @@ Clang's support for those languages.</p>
 the history. Anything still here needs to be distilled and turned into proper
 prose in a section of its own. When doing that, delete the notes.</p>
 <ul>
-  <li>OS Availability attribute -- r128127</li>
-  <li>Improved AST support for partially constructed nodes and incomplete
-  information for LLDB and other clients which dynamically build AST nodes.</li>
   <li>Memory reduction -- initializers, macro expansions, source locations,
   etc.</li>
-  <li>Thread Safety attributes and correctness analysis added to Clang.</li>
   <li>Major improvements to the interactions between serializing and
   deserializing the AST and the preprocessor -- argiris</li>
 </ul>
@@ -192,6 +188,38 @@ be used as a compiler in a few Windows contexts.
   <li>Add support for function template specialization at class scope (-fms-extensions mode).</li>
   <li>Add support for Microsoft __if_exists/__if_not_exists statements (-fms-extensions mode).</li>
 </ul>
+
+<h4 id="availability">New availability attribute to detect and warn about API
+usage across OS X and iOS versions</h4>
+Clang now supports an attribute which documents the availability of an API
+across various platforms and releases, allowing interfaces to include
+information about what OS versions support the relevant features. Based on the
+targeted version of a compile, warnings for deprecated and unavailable
+interfaces will automatically be provided by Clang.
+
+<h4 id="threadsafety">Thread Safety annotations and analysis-based warnings</h4>
+A set of annotations were introduced to Clang to describe the various
+thread-safety concerns of a program, and an accompanying set of analysis based
+warnings will diagnose clearly unsafe code patterns. The annotations are
+described in the
+<a href="http://clang.llvm.org/docs/LanguageExtensions.html#threadsafety">extension specification</a>,
+and the warnings currently supported include:
+<ul>
+  <li>Calling functions without the required locks</li>
+  <li>Reading variables without the required locks</li>
+  <li>Writing to variables without an exclusive lock (even if holding a shared
+  lock)</li>
+  <li>Imbalance between locks and unlocks across loop entries and exits</li>
+  <li>Acquiring or releasing locks out of order</li>
+</ul>
+
+<h4 id="incompleteast">Improved support for partially constructed and/or
+incomplete ASTs</h4>
+For users such as LLDB that are dynamically forming C++ ASTs, sometimes it is
+either necessary or useful to form a partial or incomplete AST. Support for
+these use cases have improved through the introduction of "unknown" types and
+other AST constructs designed specifically for use cases without complete
+information about the C++ construct being formed.
 
 <!--
 Need Peter and/or Tanya to flesh this out if we want it in 3.0's notes.. The
