@@ -1,7 +1,7 @@
-// RUN: %clang_cc1 -pedantic -Wall -verify -fcxx-exceptions -x c++ %s
+// RUN: %clang_cc1 -pedantic -Wall -Wno-comment -verify -fcxx-exceptions -x c++ %s
 // RUN: cp %s %t
-// RUN: not %clang_cc1 -pedantic -Wall -fcxx-exceptions -fixit -x c++ %t
-// RUN: %clang_cc1 -fsyntax-only -pedantic -Wall -Werror -fcxx-exceptions -x c++ %t
+// RUN: not %clang_cc1 -pedantic -Wall -Wno-comment -fcxx-exceptions -fixit -x c++ %t
+// RUN: %clang_cc1 -fsyntax-only -pedantic -Wall -Werror -Wno-comment -fcxx-exceptions -x c++ %t
 
 /* This is a test of the various code modification hints that are
    provided as part of warning or extension diagnostics. All of the
@@ -134,4 +134,11 @@ int extraSemi1(); // expected-error {{stray ';' in function definition}}
 int extraSemi2(); // expected-error {{stray ';' in function definition}}
 try {
 } catch (...) {
+}
+
+template<class T> struct Mystery;
+template<class T> typedef Mystery<T>::type getMysteriousThing() { // \
+  expected-error {{function definition declared 'typedef'}} \
+  expected-error {{missing 'typename' prior to dependent}}
+  return Mystery<T>::get();
 }
