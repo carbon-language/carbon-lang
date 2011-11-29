@@ -68,6 +68,41 @@ StringRef ModuleMap::Module::getTopLevelModuleName() const {
   return Top->Name;
 }
 
+static void indent(llvm::raw_ostream &OS, unsigned Spaces) {
+  OS << std::string(' ', Spaces);
+}
+
+void ModuleMap::Module::print(llvm::raw_ostream &OS, unsigned Indent) const {
+  indent(OS, Indent);
+  if (IsFramework)
+    OS << "framework ";
+  if (IsExplicit)
+    OS << "explicit ";
+  OS << Name << " {\n";
+  
+  if (UmbrellaHeader) {
+    indent(OS, Indent + 2);
+    OS << "umbrella \"" << UmbrellaHeader->getName() << "\"\n";
+  }
+  
+  for (unsigned I = 0, N = Headers.size(); I != N; ++I) {
+    indent(OS, Indent + 2);
+    OS << "header \"" << Headers[I]->getName() << "\"\n";
+  }
+  
+  for (llvm::StringMap<Module *>::const_iterator MI = SubModules.begin(), 
+                                              MIEnd = SubModules.end();
+       MI != MIEnd; ++MI)
+    MI->getValue()->print(OS, Indent + 2);
+  
+  indent(OS, Indent);
+  OS << "}\n";
+}
+
+void ModuleMap::Module::dump() const {
+  print(llvm::errs());
+}
+
 //----------------------------------------------------------------------------//
 // Module map
 //----------------------------------------------------------------------------//
@@ -171,45 +206,12 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
   return Result;
 }
 
-static void indent(llvm::raw_ostream &OS, unsigned Spaces) {
-  OS << std::string(' ', Spaces);
-}
-
-static void dumpModule(llvm::raw_ostream &OS, ModuleMap::Module *M, 
-                       unsigned Indent) {
-  indent(OS, Indent);
-  if (M->IsFramework)
-    OS << "framework ";
-  if (M->IsExplicit)
-    OS << "explicit ";
-  OS << M->Name << " {\n";
-  
-  if (M->UmbrellaHeader) {
-    indent(OS, Indent + 2);
-    OS << "umbrella \"" << M->UmbrellaHeader->getName() << "\"\n";
-  }
-  
-  for (unsigned I = 0, N = M->Headers.size(); I != N; ++I) {
-    indent(OS, Indent + 2);
-    OS << "header \"" << M->Headers[I]->getName() << "\"\n";
-  }
-  
-  for (llvm::StringMap<ModuleMap::Module *>::iterator 
-            MI = M->SubModules.begin(), 
-         MIEnd = M->SubModules.end();
-       MI != MIEnd; ++MI)
-    dumpModule(llvm::errs(), MI->getValue(), Indent + 2);
-  
-  indent(OS, Indent);
-  OS << "}\n";
-}
-
 void ModuleMap::dump() {
   llvm::errs() << "Modules:";
   for (llvm::StringMap<Module *>::iterator M = Modules.begin(), 
                                         MEnd = Modules.end(); 
        M != MEnd; ++M)
-    dumpModule(llvm::errs(), M->getValue(), 2);
+    M->getValue()->print(llvm::errs(), 2);
   
   llvm::errs() << "Headers:";
   for (llvm::DenseMap<const FileEntry *, Module *>::iterator 

@@ -94,13 +94,20 @@ public:
       return false;
     }
     
-    
     /// \brief Retrieve the full name of this module, including the path from
     /// its top-level module.
     std::string getFullModuleName() const;
     
     /// \brief Retrieve the name of the top-level module.
+    ///
     StringRef getTopLevelModuleName() const;
+    
+    /// \brief Print the module map for this module to the given stream. 
+    ///
+    void print(llvm::raw_ostream &OS, unsigned Indent = 0) const;
+    
+    /// \brief Dump the contents of this module to the given output stream.
+    void dump() const;
   };
   
 private:
