@@ -93,8 +93,6 @@ prose in a section of its own. When doing that, delete the notes.</p>
   information for LLDB and other clients which dynamically build AST nodes.</li>
   <li>Memory reduction -- initializers, macro expansions, source locations,
   etc.</li>
-  <li>ObjC ARC -- get a blurb from rjmccall</li>
-  <li>ObjC related result type/instancetype</li>
   <li>Thread Safety attributes and correctness analysis added to Clang.</li>
   <li>Major improvements to the interactions between serializing and
   deserializing the AST and the preprocessor -- argiris</li>
@@ -260,6 +258,24 @@ form remains as an alias.
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
 <h3 id="objcchanges">Objective-C Language Changes in Clang</h3>
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+Clang 3.0 introduces several new Objective-C language features and improvements.
+
+<h4 id="objc_arc">Objective-C Automatic Reference Counting</h4>
+<!-- This is really just a stub for John to flesh out regarding ARC. -->
+ARC provides automated memory management for Objective-C programs that is
+compatible with existing retain/release code.  ARC is carefully built to
+be a reliable programming model that errs on the side of producing a
+compiler error instead of silently producing a runtime memory problem.
+ARC automates Objective-C objects, not malloc data, file descriptors,
+CoreFoundation datatypes or anything else. For more details, see the
+<a href="http://clang.llvm.org/docs/AutomaticReferenceCounting.html">full specification</a>.
+
+<h4 id="objc_instancetype">Objective-C Related Result Types / Instance
+Types</h4>
+Allows declaring new methods which follow the Cocoa conventions for methods
+such as <code>init</code> which always return objects that are an instance of
+the receiving class's type. For more details, see the
+<a href="http://clang.llvm.org/docs/LanguageExtensions.html#objc_instancetype">language extension documentation</a>.
 
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
 <h3 id="apichanges">Internal API Changes</h3>
