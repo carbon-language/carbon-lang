@@ -220,14 +220,16 @@ class DiagLoader {
                         Strings &strings, llvm::StringRef errorContext,
                         RecordData &Record,
                         const char *BlobStart,
-                        unsigned BlobLen);
+                        unsigned BlobLen,
+                        bool allowEmptyString = false);
 
   LoadResult readString(CXLoadedDiagnosticSetImpl &TopDiags,
                         llvm::StringRef &RetStr,
                         llvm::StringRef errorContext,
                         RecordData &Record,
                         const char *BlobStart,
-                        unsigned BlobLen);
+                        unsigned BlobLen,
+                        bool allowEmptyString = false);
 
   LoadResult readRange(CXLoadedDiagnosticSetImpl &TopDiags,
                        RecordData &Record, unsigned RecStartIdx,
@@ -445,13 +447,19 @@ LoadResult DiagLoader::readString(CXLoadedDiagnosticSetImpl &TopDiags,
                                   llvm::StringRef errorContext,
                                   RecordData &Record,
                                   const char *BlobStart,
-                                  unsigned BlobLen) {
+                                  unsigned BlobLen,
+                                  bool allowEmptyString) {
   
   // Basic buffer overflow check.
   if (BlobLen > 65536) {
     reportInvalidFile(std::string("Out-of-bounds string in ") +
                       std::string(errorContext));
     return Failure;
+  }
+
+  if (allowEmptyString && Record.size() >= 1 && BlobLen == 0) {
+    RetStr = "";
+    return Success;
   }
   
   if (Record.size() < 1 || BlobLen == 0) {
@@ -469,9 +477,11 @@ LoadResult DiagLoader::readString(CXLoadedDiagnosticSetImpl &TopDiags,
                                   llvm::StringRef errorContext,
                                   RecordData &Record,
                                   const char *BlobStart,
-                                  unsigned BlobLen) {
+                                  unsigned BlobLen,
+                                  bool allowEmptyString) {
   llvm::StringRef RetStr;
-  if (readString(TopDiags, RetStr, errorContext, Record, BlobStart, BlobLen))
+  if (readString(TopDiags, RetStr, errorContext, Record, BlobStart, BlobLen,
+                 allowEmptyString))
     return Failure;
   strings[Record[0]] = RetStr;
   return Success;
@@ -627,7 +637,8 @@ LoadResult DiagLoader::readDiagnosticBlock(llvm::BitstreamCursor &Stream,
         if (readRange(TopDiags, Record, 0, SR))
           return Failure;
         llvm::StringRef RetStr;
-        if (readString(TopDiags, RetStr, "FIXIT", Record, BlobStart, BlobLen))
+        if (readString(TopDiags, RetStr, "FIXIT", Record, BlobStart, BlobLen,
+                       /* allowEmptyString */ true))
           return Failure;
         D->FixIts.push_back(std::make_pair(SR, createCXString(RetStr, false)));
         continue;
