@@ -90,8 +90,9 @@ A few improvements since the 2.9 release that have a particularly high impact:
   <li>Substantially shorter messages due to better recovery, fewer include
   stacks, and tuning verbose features such as 'a.k.a.' type printing.</li>
   <li>
-    Able to recover and correct from misspelled type names at the begging of statements. For example, Clang now emits:
-    <pre><b>t.c:6:3: <span class="error">error:</span> use of undeclared identifier 'integer'; did you mean 'Integer'?</b>
+    Able to recover and correct from misspelled type names at the beging of
+    statements. For example, Clang now emits:
+<pre><b>t.c:6:3: <span class="error">error:</span> use of undeclared identifier 'integer'; did you mean 'Integer'?</b>
   integer *i = 0;
   <span class="caret">^~~~~~~</span>
   Integer
