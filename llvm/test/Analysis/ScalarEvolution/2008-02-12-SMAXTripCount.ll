@@ -1,6 +1,7 @@
-; RUN: opt < %s -scalar-evolution -analyze | grep {Loop %loop: backedge-taken count is (100 + (-100 smax %n))}
+; RUN: opt < %s -scalar-evolution -analyze | FileCheck %s
 ; PR2002
 
+; CHECK: Loop %loop: backedge-taken count is (100 + (-100 smax %n))
 define void @foo(i8 %n) {
 entry:
 	br label %loop
