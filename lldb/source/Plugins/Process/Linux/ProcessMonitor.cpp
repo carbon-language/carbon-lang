@@ -722,6 +722,30 @@ KillOperation::Execute(ProcessMonitor *monitor)
         m_result = true;
 }
 
+//------------------------------------------------------------------------------
+/// @class KillOperation
+/// @brief Implements ProcessMonitor::BringProcessIntoLimbo.
+class DetachOperation : public Operation
+{
+public:
+    DetachOperation(Error &result) : m_error(result) { }
+
+    void Execute(ProcessMonitor *monitor);
+
+private:
+    Error &m_error;
+};
+
+void
+DetachOperation::Execute(ProcessMonitor *monitor)
+{
+    lldb::pid_t pid = monitor->GetPID();
+
+    if (ptrace(PT_DETACH, pid, NULL, 0) < 0)
+        m_error.SetErrorToErrno();
+  
+}
+
 ProcessMonitor::OperationArgs::OperationArgs(ProcessMonitor *monitor)
     : m_monitor(monitor)
 {
@@ -1220,7 +1244,7 @@ ProcessMonitor::MonitorCallback(void *callback_baton,
 
 ProcessMessage
 ProcessMonitor::MonitorSIGTRAP(ProcessMonitor *monitor,
-                               const struct siginfo *info, lldb::pid_t pid)
+                               const siginfo_t *info, lldb::pid_t pid)
 {
     ProcessMessage message;
 
@@ -1261,7 +1285,7 @@ ProcessMonitor::MonitorSIGTRAP(ProcessMonitor *monitor,
 
 ProcessMessage
 ProcessMonitor::MonitorSignal(ProcessMonitor *monitor,
-                              const struct siginfo *info, lldb::pid_t pid)
+                              const siginfo_t *info, lldb::pid_t pid)
 {
     ProcessMessage message;
     int signo = info->si_signo;
@@ -1312,7 +1336,7 @@ ProcessMonitor::MonitorSignal(ProcessMonitor *monitor,
 }
 
 ProcessMessage::CrashReason
-ProcessMonitor::GetCrashReasonForSIGSEGV(const struct siginfo *info)
+ProcessMonitor::GetCrashReasonForSIGSEGV(const siginfo_t *info)
 {
     ProcessMessage::CrashReason reason;
     assert(info->si_signo == SIGSEGV);
@@ -1336,7 +1360,7 @@ ProcessMonitor::GetCrashReasonForSIGSEGV(const struct siginfo *info)
 }
 
 ProcessMessage::CrashReason
-ProcessMonitor::GetCrashReasonForSIGILL(const struct siginfo *info)
+ProcessMonitor::GetCrashReasonForSIGILL(const siginfo_t *info)
 {
     ProcessMessage::CrashReason reason;
     assert(info->si_signo == SIGILL);
@@ -1378,7 +1402,7 @@ ProcessMonitor::GetCrashReasonForSIGILL(const struct siginfo *info)
 }
 
 ProcessMessage::CrashReason
-ProcessMonitor::GetCrashReasonForSIGFPE(const struct siginfo *info)
+ProcessMonitor::GetCrashReasonForSIGFPE(const siginfo_t *info)
 {
     ProcessMessage::CrashReason reason;
     assert(info->si_signo == SIGFPE);
@@ -1420,7 +1444,7 @@ ProcessMonitor::GetCrashReasonForSIGFPE(const struct siginfo *info)
 }
 
 ProcessMessage::CrashReason
-ProcessMonitor::GetCrashReasonForSIGBUS(const struct siginfo *info)
+ProcessMonitor::GetCrashReasonForSIGBUS(const siginfo_t *info)
 {
     ProcessMessage::CrashReason reason;
     assert(info->si_signo == SIGBUS);
@@ -1646,7 +1670,9 @@ bool
 ProcessMonitor::Detach()
 {
     bool result;
-    KillOperation op(result);
+    lldb_private::Error error;
+    DetachOperation op(error);
+    result = error.Success();
     DoOperation(&op);
     StopMonitor();
     return result;

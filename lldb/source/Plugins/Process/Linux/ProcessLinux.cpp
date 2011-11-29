@@ -87,7 +87,6 @@ ProcessLinux::ProcessLinux(Target& target, Listener &listener)
       m_in_limbo(false),
       m_exit_now(false)
 {
-
 #if 0
     // FIXME: Putting this code in the ctor and saving the byte order in a
     // member variable is a hack to avoid const qual issues in GetByteOrder.
@@ -152,7 +151,6 @@ ProcessLinux::DoLaunch (Module *module,
 
     SetPrivateState(eStateLaunching);
 
-    uint32_t launch_flags = launch_info.GetFlags().Get();
     const char *stdin_path = NULL;
     const char *stdout_path = NULL;
     const char *stderr_path = NULL;
@@ -270,7 +268,13 @@ ProcessLinux::DoHalt(bool &caused_stop)
 Error
 ProcessLinux::DoDetach()
 {
-    return Error(1, eErrorTypeGeneric);
+    Error error;
+
+    error = m_monitor->Detach();
+    if (error.Success())
+        SetPrivateState(eStateDetached);
+
+    return error;
 }
 
 Error
@@ -388,7 +392,7 @@ bool
 ProcessLinux::IsAlive()
 {
     StateType state = GetPrivateState();
-    return state != eStateExited && state != eStateInvalid;
+    return state != eStateDetached && state != eStateExited && state != eStateInvalid;
 }
 
 size_t

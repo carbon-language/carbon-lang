@@ -28,7 +28,7 @@ namespace lldb_private {
         static void
         Terminate ();
         
-        PlatformLinux ();
+        PlatformLinux (bool is_host);
 
         virtual
         ~PlatformLinux();
@@ -43,7 +43,10 @@ namespace lldb_private {
         GetPluginNameStatic();
 
         static const char *
-        GetPluginDescriptionStatic();
+        GetShortPluginNameStatic(bool is_host);
+
+        static const char *
+        GetPluginDescriptionStatic(bool is_host);
 
         virtual const char *
         GetPluginName()
@@ -74,7 +77,7 @@ namespace lldb_private {
         virtual const char *
         GetDescription ()
         {
-            return GetPluginDescriptionStatic();
+            return GetPluginDescriptionStatic(IsHost());
         }
 
         virtual void
@@ -94,6 +97,9 @@ namespace lldb_private {
         GetSoftwareBreakpointTrapOpcode (Target &target, 
                                          BreakpointSite *bp_site);
 
+        virtual lldb_private::Error
+        LaunchProcess (lldb_private::ProcessLaunchInfo &launch_info);
+
         virtual lldb::ProcessSP
         Attach(ProcessAttachInfo &attach_info, Debugger &debugger,
                Target *target, Listener &listener, Error &error);
@@ -105,7 +111,7 @@ namespace lldb_private {
         }
 
     protected:
-        
+        lldb::PlatformSP m_remote_platform_sp; // Allow multiple ways to connect to a remote darwin OS
         
     private:
         DISALLOW_COPY_AND_ASSIGN (PlatformLinux);

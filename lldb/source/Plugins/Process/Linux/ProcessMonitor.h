@@ -257,23 +257,23 @@ private:
 
     static ProcessMessage
     MonitorSIGTRAP(ProcessMonitor *monitor,
-                   const struct siginfo *info, lldb::pid_t pid);
+                   const siginfo_t *info, lldb::pid_t pid);
 
     static ProcessMessage
     MonitorSignal(ProcessMonitor *monitor, 
-                  const struct siginfo *info, lldb::pid_t pid);
+                  const siginfo_t *info, lldb::pid_t pid);
 
     static ProcessMessage::CrashReason
-    GetCrashReasonForSIGSEGV(const struct siginfo *info);
+    GetCrashReasonForSIGSEGV(const siginfo_t *info);
 
     static ProcessMessage::CrashReason
-    GetCrashReasonForSIGILL(const struct siginfo *info);
+    GetCrashReasonForSIGILL(const siginfo_t *info);
 
     static ProcessMessage::CrashReason
-    GetCrashReasonForSIGFPE(const struct siginfo *info);
+    GetCrashReasonForSIGFPE(const siginfo_t *info);
 
     static ProcessMessage::CrashReason
-    GetCrashReasonForSIGBUS(const struct siginfo *info);
+    GetCrashReasonForSIGBUS(const siginfo_t *info);
 
     void
     DoOperation(Operation *op);
