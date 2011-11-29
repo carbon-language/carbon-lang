@@ -605,7 +605,7 @@ CXIdxClientContainer
 clang_index_getClientContainer(const CXIdxContainerInfo *info) {
   if (!info)
     return 0;
-  ContainerInfo *Container = (ContainerInfo*)info;
+  const ContainerInfo *Container = static_cast<const ContainerInfo *>(info);
   return Container->IndexCtx->getClientContainerForDC(Container->DC);
 }
 
@@ -613,14 +613,14 @@ void clang_index_setClientContainer(const CXIdxContainerInfo *info,
                                     CXIdxClientContainer client) {
   if (!info)
     return;
-  ContainerInfo *Container = (ContainerInfo*)info;
+  const ContainerInfo *Container = static_cast<const ContainerInfo *>(info);
   Container->IndexCtx->addContainerInMap(Container->DC, client);
 }
 
 CXIdxClientEntity clang_index_getClientEntity(const CXIdxEntityInfo *info) {
   if (!info)
     return 0;
-  EntityInfo *Entity = (EntityInfo*)info;
+  const EntityInfo *Entity = static_cast<const EntityInfo *>(info);
   return Entity->IndexCtx->getClientEntity(Entity->Dcl);
 }
 
@@ -628,7 +628,7 @@ void clang_index_setClientEntity(const CXIdxEntityInfo *info,
                                  CXIdxClientEntity client) {
   if (!info)
     return;
-  EntityInfo *Entity = (EntityInfo*)info;
+  const EntityInfo *Entity = static_cast<const EntityInfo *>(info);
   Entity->IndexCtx->setClientEntity(Entity->Dcl, client);
 }
 
