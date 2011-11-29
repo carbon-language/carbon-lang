@@ -909,10 +909,14 @@ private:
     ///
     /// @param[in] var
     ///     The LLDB Variable that needs a Decl.
+    ///
+    /// @param[in] valobj
+    ///     The LLDB ValueObject for that variable.
     //------------------------------------------------------------------
     void 
     AddOneVariable (NameSearchContext &context, 
                     lldb::VariableSP var,
+                    lldb::ValueObjectSP valobj,
                     unsigned int current_id);
     
     //------------------------------------------------------------------

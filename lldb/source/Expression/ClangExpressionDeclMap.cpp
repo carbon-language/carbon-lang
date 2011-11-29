@@ -2507,7 +2507,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             // If we found a variable in scope, no need to pull up function names
             if (err.Success() && var != NULL)
             {
-                AddOneVariable(context, var, current_id);
+                AddOneVariable(context, var, valobj, current_id);
                 context.m_found.variable = true;
                 return;
             }
@@ -2522,7 +2522,8 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             
             if (var)
             {
-                AddOneVariable(context, var, current_id);
+                valobj = frame->TrackGlobalVariable(var, eNoDynamicValues);
+                AddOneVariable(context, var, valobj, current_id);
                 context.m_found.variable = true;
             }
         }
@@ -2728,7 +2729,7 @@ ClangExpressionDeclMap::GetVariableValue
 }
 
 void
-ClangExpressionDeclMap::AddOneVariable (NameSearchContext &context, VariableSP var, unsigned int current_id)
+ClangExpressionDeclMap::AddOneVariable (NameSearchContext &context, VariableSP var, ValueObjectSP valobj, unsigned int current_id)
 {
     assert (m_parser_vars.get());
     
@@ -2757,11 +2758,8 @@ ClangExpressionDeclMap::AddOneVariable (NameSearchContext &context, VariableSP v
         
     std::string decl_name(context.m_decl_name.getAsString());
     ConstString entity_name(decl_name.c_str());
-    ClangExpressionVariableSP entity(m_found_entities.CreateVariable (m_parser_vars->m_exe_ctx->GetBestExecutionContextScope (),
-                                                                      entity_name, 
-                                                                      ut,
-                                                                      m_parser_vars->m_target_info.byte_order,
-                                                                      m_parser_vars->m_target_info.address_byte_size));
+    ClangExpressionVariableSP entity(m_found_entities.CreateVariable (valobj));
+    
     assert (entity.get());
     entity->EnableParserVars();
     entity->m_parser_vars->m_parser_type = pt;
