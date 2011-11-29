@@ -78,6 +78,7 @@ def VectorIndex32 : Operand<i32>, ImmLeaf<i32, [{
 def VecListOneDAsmOperand : AsmOperandClass {
   let Name = "VecListOneD";
   let ParserMethod = "parseVectorList";
+  let RenderMethod = "addVecListOperands";
 }
 def VecListOneD : RegisterOperand<DPR, "printVectorListOne"> {
   let ParserMatchClass = VecListOneDAsmOperand;
@@ -86,6 +87,7 @@ def VecListOneD : RegisterOperand<DPR, "printVectorListOne"> {
 def VecListTwoDAsmOperand : AsmOperandClass {
   let Name = "VecListTwoD";
   let ParserMethod = "parseVectorList";
+  let RenderMethod = "addVecListOperands";
 }
 def VecListTwoD : RegisterOperand<DPR, "printVectorListTwo"> {
   let ParserMatchClass = VecListTwoDAsmOperand;
@@ -94,6 +96,7 @@ def VecListTwoD : RegisterOperand<DPR, "printVectorListTwo"> {
 def VecListThreeDAsmOperand : AsmOperandClass {
   let Name = "VecListThreeD";
   let ParserMethod = "parseVectorList";
+  let RenderMethod = "addVecListOperands";
 }
 def VecListThreeD : RegisterOperand<DPR, "printVectorListThree"> {
   let ParserMatchClass = VecListThreeDAsmOperand;
@@ -102,6 +105,7 @@ def VecListThreeD : RegisterOperand<DPR, "printVectorListThree"> {
 def VecListFourDAsmOperand : AsmOperandClass {
   let Name = "VecListFourD";
   let ParserMethod = "parseVectorList";
+  let RenderMethod = "addVecListOperands";
 }
 def VecListFourD : RegisterOperand<DPR, "printVectorListFour"> {
   let ParserMatchClass = VecListFourDAsmOperand;
@@ -110,6 +114,7 @@ def VecListFourD : RegisterOperand<DPR, "printVectorListFour"> {
 def VecListTwoQAsmOperand : AsmOperandClass {
   let Name = "VecListTwoQ";
   let ParserMethod = "parseVectorList";
+  let RenderMethod = "addVecListOperands";
 }
 def VecListTwoQ : RegisterOperand<DPR, "printVectorListTwo"> {
   let ParserMatchClass = VecListTwoQAsmOperand;

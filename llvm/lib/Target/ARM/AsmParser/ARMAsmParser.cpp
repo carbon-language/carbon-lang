@@ -1527,36 +1527,8 @@ public:
     Inst.addOperand(MCOperand::CreateImm(unsigned(getProcIFlags())));
   }
 
-  void addVecListOneDOperands(MCInst &Inst, unsigned N) const {
+  void addVecListOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateReg(VectorList.RegNum));
-  }
-
-  void addVecListTwoDOperands(MCInst &Inst, unsigned N) const {
-    assert(N == 1 && "Invalid number of operands!");
-    // Only the first register actually goes on the instruction. The rest
-    // are implied by the opcode.
-    Inst.addOperand(MCOperand::CreateReg(VectorList.RegNum));
-  }
-
-  void addVecListThreeDOperands(MCInst &Inst, unsigned N) const {
-    assert(N == 1 && "Invalid number of operands!");
-    // Only the first register actually goes on the instruction. The rest
-    // are implied by the opcode.
-    Inst.addOperand(MCOperand::CreateReg(VectorList.RegNum));
-  }
-
-  void addVecListFourDOperands(MCInst &Inst, unsigned N) const {
-    assert(N == 1 && "Invalid number of operands!");
-    // Only the first register actually goes on the instruction. The rest
-    // are implied by the opcode.
-    Inst.addOperand(MCOperand::CreateReg(VectorList.RegNum));
-  }
-
-  void addVecListTwoQOperands(MCInst &Inst, unsigned N) const {
-    assert(N == 1 && "Invalid number of operands!");
-    // Only the first register actually goes on the instruction. The rest
-    // are implied by the opcode.
     Inst.addOperand(MCOperand::CreateReg(VectorList.RegNum));
   }
 
@@ -3444,7 +3416,7 @@ bool ARMAsmParser::
 cvtVLDwbFixed(MCInst &Inst, unsigned Opcode,
               const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   // Vd
-  ((ARMOperand*)Operands[3])->addVecListTwoDOperands(Inst, 1);
+  ((ARMOperand*)Operands[3])->addVecListOperands(Inst, 1);
   // Create a writeback register dummy placeholder.
   Inst.addOperand(MCOperand::CreateImm(0));
   // Vn
@@ -3458,7 +3430,7 @@ bool ARMAsmParser::
 cvtVLDwbRegister(MCInst &Inst, unsigned Opcode,
                  const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   // Vd
-  ((ARMOperand*)Operands[3])->addVecListTwoDOperands(Inst, 1);
+  ((ARMOperand*)Operands[3])->addVecListOperands(Inst, 1);
   // Create a writeback register dummy placeholder.
   Inst.addOperand(MCOperand::CreateImm(0));
   // Vn
@@ -3478,7 +3450,7 @@ cvtVSTwbFixed(MCInst &Inst, unsigned Opcode,
   // Vn
   ((ARMOperand*)Operands[4])->addAlignedMemoryOperands(Inst, 2);
   // Vt
-  ((ARMOperand*)Operands[3])->addVecListTwoDOperands(Inst, 1);
+  ((ARMOperand*)Operands[3])->addVecListOperands(Inst, 1);
   // pred
   ((ARMOperand*)Operands[1])->addCondCodeOperands(Inst, 2);
   return true;
@@ -3494,7 +3466,7 @@ cvtVSTwbRegister(MCInst &Inst, unsigned Opcode,
   // Vm
   ((ARMOperand*)Operands[5])->addRegOperands(Inst, 1);
   // Vt
-  ((ARMOperand*)Operands[3])->addVecListTwoDOperands(Inst, 1);
+  ((ARMOperand*)Operands[3])->addVecListOperands(Inst, 1);
   // pred
   ((ARMOperand*)Operands[1])->addCondCodeOperands(Inst, 2);
   return true;
