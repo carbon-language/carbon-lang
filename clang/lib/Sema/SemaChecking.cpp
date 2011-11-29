@@ -4202,8 +4202,11 @@ static bool IsTailPaddedMemberArray(Sema &S, llvm::APInt Size,
     return false;
 
   const RecordDecl *RD = dyn_cast<RecordDecl>(FD->getDeclContext());
-  if (!RD || !RD->isStruct())
-    return false;
+  if (!RD) return false;
+  if (RD->isUnion()) return false;
+  if (const CXXRecordDecl *CRD = dyn_cast<CXXRecordDecl>(RD)) {
+    if (!CRD->isStandardLayout()) return false;
+  }
 
   // See if this is the last field decl in the record.
   const Decl *D = FD;

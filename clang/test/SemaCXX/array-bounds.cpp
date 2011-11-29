@@ -190,10 +190,19 @@ namespace tailpad {
     int x;
     char c2[1];
   };
-  
-  char bar(struct foo *F) {
-    return F->c1[3]; // expected-warning {{array index 3 is past the end of the array (which contains 1 element)}}
-    return F->c2[3]; // no warning, foo could have tail padding allocated.
+
+  class baz {
+   public:
+    char c1[1]; // expected-note {{declared here}}
+    int x;
+    char c2[1];
+  };
+
+  char bar(struct foo *F, baz *B) {
+    return F->c1[3] + // expected-warning {{array index 3 is past the end of the array (which contains 1 element)}}
+           F->c2[3] + // no warning, foo could have tail padding allocated.
+           B->c1[3] + // expected-warning {{array index 3 is past the end of the array (which contains 1 element)}}
+           B->c2[3]; // no warning, baz could have tail padding allocated.
   }
 }
 
