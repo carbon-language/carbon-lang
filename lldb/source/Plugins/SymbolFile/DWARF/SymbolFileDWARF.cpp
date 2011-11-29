@@ -2211,7 +2211,7 @@ SymbolFileDWARF::NamespaceDeclMatchesThisSymbolFile (const ClangNamespaceDecl *n
     LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_LOOKUPS));
 
     if (log)
-        log->Printf("Valid namespace does not match symbol file");
+        LogMessage(log.get(), "Valid namespace does not match symbol file");
     
     return false;
 }
@@ -2237,7 +2237,7 @@ SymbolFileDWARF::DIEIsInNamespace (const ClangNamespaceDecl *namespace_decl,
             if (decl_ctx_die->Tag() != DW_TAG_namespace)
             {
                 if (log)
-                    log->Printf("Found a match, but its parent is not a namespace");
+                    LogMessage(log.get(), "Found a match, but its parent is not a namespace");
                 return false;
             }
                 
@@ -2246,7 +2246,7 @@ SymbolFileDWARF::DIEIsInNamespace (const ClangNamespaceDecl *namespace_decl,
             if (pos == m_decl_ctx_to_die.end())
             {
                 if (log)
-                    log->Printf("Found a match in a namespace, but its parent is not the requested namespace");
+                    LogMessage(log.get(), "Found a match in a namespace, but its parent is not the requested namespace");
                 
                 return false;
             }
@@ -2265,7 +2265,7 @@ SymbolFileDWARF::DIEIsInNamespace (const ClangNamespaceDecl *namespace_decl,
     }
     
     if (log)
-        log->Printf("Found a match, but its parent doesn't exist");
+        LogMessage(log.get(), "Found a match, but its parent doesn't exist");
     
     return false;
 }
@@ -3874,7 +3874,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
         {
             StreamString s;
             die->DumpLocation (this, dwarf_cu, s);
-            log->Printf ("SymbolFileDwarf::%s %s", __FUNCTION__, s.GetData());
+            LogMessage (log.get(), "SymbolFileDwarf::%s %s", __FUNCTION__, s.GetData());
             
         }
         
@@ -4046,6 +4046,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                     m_die_to_type[die] = DIE_IS_BEING_PARSED;
 
                     LanguageType class_language = eLanguageTypeUnknown;
+                    bool is_complete_objc_class = false;
                     //bool struct_is_class = false;
                     const size_t num_attributes = die->GetAttributes(this, dwarf_cu, NULL, attributes);
                     if (num_attributes > 0)
@@ -4093,6 +4094,10 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                     class_language = (LanguageType)form_value.Signed(); 
                                     break;
 
+                                case DW_AT_APPLE_objc_complete_type:
+                                    is_complete_objc_class = form_value.Signed(); 
+                                    break;
+                                        
                                 case DW_AT_allocated:
                                 case DW_AT_associated:
                                 case DW_AT_data_location:
@@ -4152,8 +4157,13 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         default_accessibility = eAccessPrivate;
                     }
 
+                    bool look_for_complete_objc_type = false;
+                    if (class_language == eLanguageTypeObjC)
+                    {
+                        look_for_complete_objc_type = !is_complete_objc_class;
+                    }
 
-                    if (is_forward_declaration)
+                    if (is_forward_declaration || look_for_complete_objc_type)
                     {
                         // We have a forward declaration to a type and we need
                         // to try and find a full declaration. We look in the
@@ -4163,11 +4173,12 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         if (log)
                         {
                             LogMessage (log.get(), 
-                                        "SymbolFileDWARF(%p) - 0x%8.8x: %s type \"%s\" is forward declaration, trying to find real type", 
+                                        "SymbolFileDWARF(%p) - 0x%8.8x: %s type \"%s\" is %s, trying to find complete type", 
                                         this,
                                         die->GetOffset(), 
                                         DW_TAG_value_to_name(tag),
-                                        type_name_cstr);
+                                        type_name_cstr,
+                                        look_for_complete_objc_type ? "an incomplete objective C type" : "a forward declaration");
                         }
                     
                         type_sp = FindDefinitionTypeForDIE (dwarf_cu, die, type_name_const_str);
@@ -4184,12 +4195,14 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         {
                             if (log)
                             {
-                                log->Printf ("SymbolFileDWARF(%p) - 0x%8.8x: %s type \"%s\" is forward declaration, real type is 0x%8.8llx", 
-                                             this,
-                                             die->GetOffset(), 
-                                             DW_TAG_value_to_name(tag),
-                                             type_name_cstr,
-                                             type_sp->GetID());
+                                LogMessage (log.get(),
+                                            "SymbolFileDWARF(%p) - 0x%8.8x: %s type \"%s\" is %s, complete type is 0x%8.8llx", 
+                                            this,
+                                            die->GetOffset(), 
+                                            DW_TAG_value_to_name(tag),
+                                            type_name_cstr,
+                                            look_for_complete_objc_type ? "an incomplete objective C type" : "a forward declaration",
+                                            type_sp->GetID());
                             }
 
                             // We found a real definition for this type elsewhere
