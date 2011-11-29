@@ -696,20 +696,6 @@ static InputKind getSourceInputKindFromOptions(const LangOptions &LangOpts) {
 }
 
 namespace {
-  struct CompileModuleData {
-    CompilerInstance &Instance;
-    GeneratePCHAction &CreateModuleAction;
-  };
-}
-
-/// \brief Helper function that executes the module-generating action under
-/// a crash recovery context.
-static void doCompileModule(void *UserData) {
-  CompileModuleData &Data = *reinterpret_cast<CompileModuleData *>(UserData);
-  Data.Instance.ExecuteAction(Data.CreateModuleAction);
-}
-
-namespace {
   struct CompileModuleMapData {
     CompilerInstance &Instance;
     GenerateModuleAction &CreateModuleAction;
@@ -1001,79 +987,60 @@ static void compileModule(CompilerInstance &ImportingInstance,
   llvm::IntrusiveRefCntPtr<CompilerInvocation> Invocation
     (new CompilerInvocation(ImportingInstance.getInvocation()));
 
+  PreprocessorOptions &PPOpts = Invocation->getPreprocessorOpts();
+  
   // For any options that aren't intended to affect how a module is built,
   // reset them to their default values.
   Invocation->getLangOpts()->resetNonModularOptions();
-  Invocation->getPreprocessorOpts().resetNonModularOptions();
+  PPOpts.resetNonModularOptions();
 
   // Note the name of the module we're building.
   Invocation->getLangOpts()->CurrentModule = Module->getTopLevelModuleName();
 
   // Note that this module is part of the module build path, so that we
   // can detect cycles in the module graph.
-  Invocation->getPreprocessorOpts().ModuleBuildPath
-    .push_back(Module->getTopLevelModuleName());
+  PPOpts.ModuleBuildPath.push_back(Module->getTopLevelModuleName());
 
-  if (const FileEntry *ModuleMapFile
-                                  = ModMap.getContainingModuleMapFile(Module)) {
-    // If there is a module map file, build the module using the module map.
-    // Set up the inputs/outputs so that we build the module from its umbrella
-    // header.
-    FrontendOptions &FrontendOpts = Invocation->getFrontendOpts();
-    FrontendOpts.OutputFile = ModuleFileName.str();
-    FrontendOpts.DisableFree = false;
-    FrontendOpts.Inputs.clear();
-    FrontendOpts.Inputs.push_back(
-      std::make_pair(getSourceInputKindFromOptions(*Invocation->getLangOpts()),
-                     ModuleMapFile->getName()));
-    
-    Invocation->getDiagnosticOpts().VerifyDiagnostics = 0;
-    
-    
-    assert(ImportingInstance.getInvocation().getModuleHash() ==
-           Invocation->getModuleHash() && "Module hash mismatch!");
-    
-    // Construct a compiler instance that will be used to actually create the
-    // module.
-    CompilerInstance Instance;
-    Instance.setInvocation(&*Invocation);
-    Instance.createDiagnostics(/*argc=*/0, /*argv=*/0,
-                               &ImportingInstance.getDiagnosticClient(),
-                               /*ShouldOwnClient=*/true,
-                               /*ShouldCloneClient=*/true);
-    
-    // Construct a module-generating action.
-    GenerateModuleAction CreateModuleAction;
-    
-    // Execute the action to actually build the module in-place. Use a separate
-    // thread so that we get a stack large enough.
-    const unsigned ThreadStackSize = 8 << 20;
-    llvm::CrashRecoveryContext CRC;
-    CompileModuleMapData Data = { Instance, CreateModuleAction };
-    CRC.RunSafelyOnThread(&doCompileMapModule, &Data, ThreadStackSize);
-    return;
-  } 
-  
-  // FIXME: Temporary fallback: generate the module from the umbrella header.
-  // This is currently used when we infer a module map from a framework.
-  assert(Module->UmbrellaHeader && "Inferred module map needs umbrella header");
-
+  // If there is a module map file, build the module using the module map.
   // Set up the inputs/outputs so that we build the module from its umbrella
   // header.
   FrontendOptions &FrontendOpts = Invocation->getFrontendOpts();
   FrontendOpts.OutputFile = ModuleFileName.str();
   FrontendOpts.DisableFree = false;
   FrontendOpts.Inputs.clear();
-  FrontendOpts.Inputs.push_back(
-    std::make_pair(getSourceInputKindFromOptions(*Invocation->getLangOpts()),
-                                           Module->UmbrellaHeader->getName()));
+  InputKind IK = getSourceInputKindFromOptions(*Invocation->getLangOpts());
 
+  // Get or create the module map that we'll use to build this module.
+  llvm::SmallString<128> TempModuleMapFileName;
+  if (const FileEntry *ModuleMapFile
+                                  = ModMap.getContainingModuleMapFile(Module)) {
+    // Use the module map where this module resides.
+    FrontendOpts.Inputs.push_back(std::make_pair(IK, ModuleMapFile->getName()));
+  } else {
+    // Create a temporary module map file.
+    TempModuleMapFileName = Module->Name;
+    TempModuleMapFileName += "-%%%%%%%%.map";
+    int FD;
+    if (llvm::sys::fs::unique_file(TempModuleMapFileName.str(), FD, 
+                                   TempModuleMapFileName,
+                                   /*makeAbsolute=*/false)
+          != llvm::errc::success)
+      return;
+
+    // Print the module map to this file.
+    llvm::raw_fd_ostream OS(FD, /*shouldClose=*/true);
+    Module->print(OS);
+    FrontendOpts.Inputs.push_back(
+      std::make_pair(IK, TempModuleMapFileName.str().str()));
+  }
+
+  // Don't free the remapped file buffers; they are owned by our caller.
+  PPOpts.RetainRemappedFileBuffers = true;
+    
   Invocation->getDiagnosticOpts().VerifyDiagnostics = 0;
-
-
   assert(ImportingInstance.getInvocation().getModuleHash() ==
-           Invocation->getModuleHash() && "Module hash mismatch!");
-
+         Invocation->getModuleHash() && "Module hash mismatch!");
+  
   // Construct a compiler instance that will be used to actually create the
   // module.
   CompilerInstance Instance;
@@ -1082,16 +1049,23 @@ static void compileModule(CompilerInstance &ImportingInstance,
                              &ImportingInstance.getDiagnosticClient(),
                              /*ShouldOwnClient=*/true,
                              /*ShouldCloneClient=*/true);
-
+  
   // Construct a module-generating action.
-  GeneratePCHAction CreateModuleAction(true);
-
+  GenerateModuleAction CreateModuleAction;
+  
   // Execute the action to actually build the module in-place. Use a separate
   // thread so that we get a stack large enough.
   const unsigned ThreadStackSize = 8 << 20;
   llvm::CrashRecoveryContext CRC;
-  CompileModuleData Data = { Instance, CreateModuleAction };
-  CRC.RunSafelyOnThread(&doCompileModule, &Data, ThreadStackSize);
+  CompileModuleMapData Data = { Instance, CreateModuleAction };
+  CRC.RunSafelyOnThread(&doCompileMapModule, &Data, ThreadStackSize);
+  
+  // Delete the temporary module map file.
+  // FIXME: Even though we're executing under crash protection, it would still
+  // be nice to do this with RemoveFileOnSignal when we can. However, that
+  // doesn't make sense for all clients, so clean this up manually.
+  if (!TempModuleMapFileName.empty())
+    llvm::sys::Path(TempModuleMapFileName).eraseFromDisk();
 }
 
 ModuleKey CompilerInstance::loadModule(SourceLocation ImportLoc,

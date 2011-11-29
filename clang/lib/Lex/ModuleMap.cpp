@@ -69,7 +69,7 @@ StringRef ModuleMap::Module::getTopLevelModuleName() const {
 }
 
 static void indent(llvm::raw_ostream &OS, unsigned Spaces) {
-  OS << std::string(' ', Spaces);
+  OS << std::string(Spaces, ' ');
 }
 
 void ModuleMap::Module::print(llvm::raw_ostream &OS, unsigned Indent) const {
@@ -78,7 +78,7 @@ void ModuleMap::Module::print(llvm::raw_ostream &OS, unsigned Indent) const {
     OS << "framework ";
   if (IsExplicit)
     OS << "explicit ";
-  OS << Name << " {\n";
+  OS << "module " << Name << " {\n";
   
   if (UmbrellaHeader) {
     indent(OS, Indent + 2);
@@ -586,28 +586,35 @@ void ModuleMapParser::parseUmbrellaDecl() {
   
   // Look for this file.
   llvm::SmallString<128> PathName;
-  PathName += Directory->getName();
-  unsigned PathLength = PathName.size();
   const FileEntry *File = 0;
-  if (ActiveModule->isPartOfFramework()) {
-    // Check whether this file is in the public headers.
-    llvm::sys::path::append(PathName, "Headers");
-    llvm::sys::path::append(PathName, FileName);
+  
+  if (llvm::sys::path::is_absolute(FileName)) {
+    PathName = FileName;
     File = SourceMgr.getFileManager().getFile(PathName);
+  } else {
+    // Search for the header file within the search directory.
+    PathName += Directory->getName();
+    unsigned PathLength = PathName.size();
+    if (ActiveModule->isPartOfFramework()) {
+      // Check whether this file is in the public headers.
+      llvm::sys::path::append(PathName, "Headers");
+      llvm::sys::path::append(PathName, FileName);
+      File = SourceMgr.getFileManager().getFile(PathName);
 
-    if (!File) {
-      // Check whether this file is in the private headers.
-      PathName.resize(PathLength);
-      llvm::sys::path::append(PathName, "PrivateHeaders");
+      if (!File) {
+        // Check whether this file is in the private headers.
+        PathName.resize(PathLength);
+        llvm::sys::path::append(PathName, "PrivateHeaders");
+        llvm::sys::path::append(PathName, FileName);
+        File = SourceMgr.getFileManager().getFile(PathName);
+      }
+      
+      // FIXME: Deal with subframeworks.
+    } else {
+      // Lookup for normal headers.
       llvm::sys::path::append(PathName, FileName);
       File = SourceMgr.getFileManager().getFile(PathName);
     }
-    
-    // FIXME: Deal with subframeworks.
-  } else {
-    // Lookup for normal headers.
-    llvm::sys::path::append(PathName, FileName);
-    File = SourceMgr.getFileManager().getFile(PathName);
   }
   
   // FIXME: We shouldn't be eagerly stat'ing every file named in a module map.
@@ -654,11 +661,14 @@ void ModuleMapParser::parseHeaderDecl() {
   
   // Look for this file.
   llvm::SmallString<128> PathName;
-  PathName += Directory->getName();
+  if (llvm::sys::path::is_relative(FileName)) {
+    // FIXME: Change this search to also look for private headers!
+    PathName += Directory->getName();
+    
+    if (ActiveModule->isPartOfFramework())
+      llvm::sys::path::append(PathName, "Headers");
+  }
   
-  if (ActiveModule->isPartOfFramework())
-    llvm::sys::path::append(PathName, "Headers");
-
   llvm::sys::path::append(PathName, FileName);
   
   // FIXME: We shouldn't be eagerly stat'ing every file named in a module map.
