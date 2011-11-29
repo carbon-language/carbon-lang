@@ -125,23 +125,27 @@ error_code MachOObjectFile::getSymbolName(DataRefImpl DRI,
   return object_error::success;
 }
 
-error_code MachOObjectFile::getSymbolOffset(DataRefImpl DRI,
-                                             uint64_t &Result) const {
-  uint64_t SectionOffset;
-  uint8_t SectionIndex;
+error_code MachOObjectFile::getSymbolFileOffset(DataRefImpl DRI,
+                                                uint64_t &Result) const {
   if (MachOObj->is64Bit()) {
     InMemoryStruct<macho::Symbol64TableEntry> Entry;
     getSymbol64TableEntry(DRI, Entry);
     Result = Entry->Value;
-    SectionIndex = Entry->SectionIndex;
+    if (Entry->SectionIndex) {
+      InMemoryStruct<macho::Section64> Section;
+      getSection64(Sections[Entry->SectionIndex-1], Section);
+      Result += Section->Offset - Section->Address;
+    }
   } else {
     InMemoryStruct<macho::SymbolTableEntry> Entry;
     getSymbolTableEntry(DRI, Entry);
     Result = Entry->Value;
-    SectionIndex = Entry->SectionIndex;
+    if (Entry->SectionIndex) {
+      InMemoryStruct<macho::Section> Section;
+      getSection(Sections[Entry->SectionIndex-1], Section);
+      Result += Section->Offset - Section->Address;
+    }
   }
-  getSectionAddress(Sections[SectionIndex-1], SectionOffset);
-  Result -= SectionOffset;
 
   return object_error::success;
 }
@@ -162,7 +166,64 @@ error_code MachOObjectFile::getSymbolAddress(DataRefImpl DRI,
 
 error_code MachOObjectFile::getSymbolSize(DataRefImpl DRI,
                                           uint64_t &Result) const {
-  Result = UnknownAddressOrSize;
+  uint32_t LoadCommandCount = MachOObj->getHeader().NumLoadCommands;
+  uint64_t BeginOffset;
+  uint64_t EndOffset = 0;
+  uint8_t SectionIndex;
+  if (MachOObj->is64Bit()) {
+    InMemoryStruct<macho::Symbol64TableEntry> Entry;
+    getSymbol64TableEntry(DRI, Entry);
+    BeginOffset = Entry->Value;
+    SectionIndex = Entry->SectionIndex;
+    if (!SectionIndex) {
+      Result = UnknownAddressOrSize;
+      return object_error::success;
+    }
+    // Unfortunately symbols are unsorted so we need to touch all
+    // symbols from load command
+    DRI.d.b = 0;
+    uint32_t Command = DRI.d.a;
+    while (Command == DRI.d.a) {
+      moveToNextSymbol(DRI);
+      if (DRI.d.a < LoadCommandCount) {
+        getSymbol64TableEntry(DRI, Entry);
+        if (Entry->SectionIndex == SectionIndex && Entry->Value > BeginOffset)
+          if (!EndOffset || Entry->Value < EndOffset)
+            EndOffset = Entry->Value;
+      }
+      DRI.d.b++;
+    }
+  } else {
+    InMemoryStruct<macho::SymbolTableEntry> Entry;
+    getSymbolTableEntry(DRI, Entry);
+    BeginOffset = Entry->Value;
+    SectionIndex = Entry->SectionIndex;
+    if (!SectionIndex) {
+      Result = UnknownAddressOrSize;
+      return object_error::success;
+    }
+    // Unfortunately symbols are unsorted so we need to touch all
+    // symbols from load command
+    DRI.d.b = 0;
+    uint32_t Command = DRI.d.a;
+    while (Command == DRI.d.a) {
+      moveToNextSymbol(DRI);
+      if (DRI.d.a < LoadCommandCount) {
+        getSymbolTableEntry(DRI, Entry);
+        if (Entry->SectionIndex == SectionIndex && Entry->Value > BeginOffset)
+          if (!EndOffset || Entry->Value < EndOffset)
+            EndOffset = Entry->Value;
+      }
+      DRI.d.b++;
+    }
+  }
+  if (!EndOffset) {
+    uint64_t Size;
+    getSectionSize(Sections[SectionIndex-1], Size);
+    getSectionAddress(Sections[SectionIndex-1], EndOffset);
+    EndOffset += Size;
+  }
+  Result = EndOffset - BeginOffset;
   return object_error::success;
 }
 
@@ -275,7 +336,7 @@ error_code MachOObjectFile::getSymbolSection(DataRefImpl Symb,
   if (index == 0)
     Res = end_sections();
   else
-    Res = section_iterator(SectionRef(Sections[index], this));
+    Res = section_iterator(SectionRef(Sections[index-1], this));
 
   return object_error::success;
 }
@@ -614,12 +675,26 @@ error_code MachOObjectFile::getRelocationAddress(DataRefImpl Rel,
   bool isScattered = (Arch != Triple::x86_64) &&
                      (RE->Word0 & macho::RF_Scattered);
   uint64_t RelAddr = 0;
-  if (isScattered) 
+  if (isScattered)
     RelAddr = RE->Word0 & 0xFFFFFF;
   else
     RelAddr = RE->Word0;
 
   Res = reinterpret_cast<uintptr_t>(sectAddress + RelAddr);
+  return object_error::success;
+}
+error_code MachOObjectFile::getRelocationOffset(DataRefImpl Rel,
+                                                uint64_t &Res) const {
+  InMemoryStruct<macho::RelocationEntry> RE;
+  getRelocation(Rel, RE);
+
+  unsigned Arch = getArch();
+  bool isScattered = (Arch != Triple::x86_64) &&
+                     (RE->Word0 & macho::RF_Scattered);
+  if (isScattered)
+    Res = RE->Word0 & 0xFFFFFF;
+  else
+    Res = RE->Word0;
   return object_error::success;
 }
 error_code MachOObjectFile::getRelocationSymbol(DataRefImpl Rel,

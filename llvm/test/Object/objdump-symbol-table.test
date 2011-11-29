@@ -2,6 +2,8 @@ RUN: llvm-objdump -t %p/Inputs/trivial-object-test.coff-i386 \
 RUN:              | FileCheck %s -check-prefix COFF-i386
 RUN: llvm-objdump -t %p/Inputs/trivial-object-test.elf-i386 \
 RUN:              | FileCheck %s -check-prefix ELF-i386
+RUN: llvm-objdump -t %p/Inputs/trivial-object-test.macho-i386 \
+RUN:              | FileCheck %s -check-prefix macho-i386
 
 COFF-i386: trivial-object-test.coff-i386:     file format
 COFF-i386: SYMBOL TABLE:
@@ -23,3 +25,9 @@ ELF-i386: 00000031 l    d  .note.GNU-stack        00000000 .note.GNU-stack
 ELF-i386: 00000000 g     F .text  00000024 main
 ELF-i386: 00000000         *UND*  00000000 SomeOtherFunction
 ELF-i386: 00000000         *UND*  00000000 puts
+
+macho-i386: trivial-object-test.macho-i386:        file format Mach-O 32-bit i386
+macho-i386: SYMBOL TABLE:
+macho-i386: 00000000 g     F __TEXT,__text  00000024 _main
+macho-i386: 00000000         *UND*  00000000 _SomeOtherFunction
+macho-i386: 00000000         *UND*  00000000 _puts

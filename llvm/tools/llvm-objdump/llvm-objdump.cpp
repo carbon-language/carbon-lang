@@ -186,7 +186,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
       bool contains;
       if (!error(i->containsSymbol(*si, contains)) && contains) {
         uint64_t Address;
-        if (error(si->getOffset(Address))) break;
+        if (error(si->getAddress(Address))) break;
         StringRef Name;
         if (error(si->getName(Name))) break;
         Symbols.push_back(std::make_pair(Address, Name));
@@ -477,7 +477,7 @@ static void PrintSymbolTable(const ObjectFile *o) {
                          se = o->end_symbols(); si != se; si.increment(ec)) {
       if (error(ec)) return;
       StringRef Name;
-      uint64_t Offset;
+      uint64_t Address;
       bool Global;
       SymbolRef::Type Type;
       bool Weak;
@@ -485,7 +485,7 @@ static void PrintSymbolTable(const ObjectFile *o) {
       uint64_t Size;
       section_iterator Section = o->end_sections();
       if (error(si->getName(Name))) continue;
-      if (error(si->getOffset(Offset))) continue;
+      if (error(si->getAddress(Address))) continue;
       if (error(si->isGlobal(Global))) continue;
       if (error(si->getType(Type))) continue;
       if (error(si->isWeak(Weak))) continue;
@@ -493,8 +493,10 @@ static void PrintSymbolTable(const ObjectFile *o) {
       if (error(si->getSize(Size))) continue;
       if (error(si->getSection(Section))) continue;
 
-      if (Offset == UnknownAddressOrSize)
-        Offset = 0;
+      if (Address == UnknownAddressOrSize)
+        Address = 0;
+      if (Size == UnknownAddressOrSize)
+        Size = 0;
       char GlobLoc = ' ';
       if (Type != SymbolRef::ST_External)
         GlobLoc = Global ? 'g' : 'l';
@@ -506,7 +508,7 @@ static void PrintSymbolTable(const ObjectFile *o) {
       else if (Type == SymbolRef::ST_Function)
         FileFunc = 'F';
 
-      outs() << format("%08"PRIx64, Offset) << " "
+      outs() << format("%08"PRIx64, Address) << " "
              << GlobLoc // Local -> 'l', Global -> 'g', Neither -> ' '
              << (Weak ? 'w' : ' ') // Weak?
              << ' ' // Constructor. Not supported yet.

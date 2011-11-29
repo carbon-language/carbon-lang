@@ -104,6 +104,7 @@ public:
   error_code getNext(RelocationRef &Result) const;
 
   error_code getAddress(uint64_t &Result) const;
+  error_code getOffset(uint64_t &Result) const;
   error_code getSymbol(SymbolRef &Result) const;
   error_code getType(uint64_t &Result) const;
 
@@ -195,7 +196,7 @@ public:
 
   error_code getName(StringRef &Result) const;
   error_code getAddress(uint64_t &Result) const;
-  error_code getOffset(uint64_t &Result) const;
+  error_code getFileOffset(uint64_t &Result) const;
   error_code getSize(uint64_t &Result) const;
   error_code getType(SymbolRef::Type &Result) const;
 
@@ -254,7 +255,7 @@ protected:
   virtual error_code getSymbolNext(DataRefImpl Symb, SymbolRef &Res) const = 0;
   virtual error_code getSymbolName(DataRefImpl Symb, StringRef &Res) const = 0;
   virtual error_code getSymbolAddress(DataRefImpl Symb, uint64_t &Res) const =0;
-  virtual error_code getSymbolOffset(DataRefImpl Symb, uint64_t &Res) const =0;
+  virtual error_code getSymbolFileOffset(DataRefImpl Symb, uint64_t &Res) const =0;
   virtual error_code getSymbolSize(DataRefImpl Symb, uint64_t &Res) const = 0;
   virtual error_code getSymbolType(DataRefImpl Symb,
                                    SymbolRef::Type &Res) const = 0;
@@ -289,6 +290,8 @@ protected:
                                        RelocationRef &Res) const = 0;
   virtual error_code getRelocationAddress(DataRefImpl Rel,
                                           uint64_t &Res) const =0;
+  virtual error_code getRelocationOffset(DataRefImpl Rel,
+                                         uint64_t &Res) const =0;
   virtual error_code getRelocationSymbol(DataRefImpl Rel,
                                          SymbolRef &Res) const = 0;
   virtual error_code getRelocationType(DataRefImpl Rel,
@@ -363,8 +366,8 @@ inline error_code SymbolRef::getAddress(uint64_t &Result) const {
   return OwningObject->getSymbolAddress(SymbolPimpl, Result);
 }
 
-inline error_code SymbolRef::getOffset(uint64_t &Result) const {
-  return OwningObject->getSymbolOffset(SymbolPimpl, Result);
+inline error_code SymbolRef::getFileOffset(uint64_t &Result) const {
+  return OwningObject->getSymbolFileOffset(SymbolPimpl, Result);
 }
 
 inline error_code SymbolRef::getSize(uint64_t &Result) const {
@@ -484,6 +487,10 @@ inline error_code RelocationRef::getNext(RelocationRef &Result) const {
 
 inline error_code RelocationRef::getAddress(uint64_t &Result) const {
   return OwningObject->getRelocationAddress(RelocationPimpl, Result);
+}
+
+inline error_code RelocationRef::getOffset(uint64_t &Result) const {
+  return OwningObject->getRelocationOffset(RelocationPimpl, Result);
 }
 
 inline error_code RelocationRef::getSymbol(SymbolRef &Result) const {

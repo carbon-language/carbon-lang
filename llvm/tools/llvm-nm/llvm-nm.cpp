@@ -286,7 +286,7 @@ static void DumpSymbolNamesFromObject(ObjectFile *obj) {
       if (error(i->getSize(s.Size))) break;
     }
     if (PrintAddress)
-      if (error(i->getOffset(s.Address))) break;
+      if (error(i->getAddress(s.Address))) break;
     if (error(i->getNMTypeChar(s.TypeChar))) break;
     if (error(i->getName(s.Name))) break;
     SymbolList.push_back(s);
