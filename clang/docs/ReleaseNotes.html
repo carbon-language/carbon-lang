@@ -211,13 +211,20 @@ these use cases have improved through the introduction of "unknown" types and
 other AST constructs designed specifically for use cases without complete
 information about the C++ construct being formed.
 
-<!--
-Need Peter and/or Tanya to flesh this out if we want it in 3.0's notes.. The
-state isn't clear just from documentation or commit logs.
+<h4 id="opencl">Initial work to support compiling OpenCL C with Clang</h4>
+<p>Clang has some (limited) support for compiling OpenCL C.  The 3.0
+release adds support for the <tt>vec_step</tt> operator, address space
+qualifiers (<tt>__private</tt>, <tt>__global</tt>, <tt>__local</tt> and
+<tt>__constant</tt>), improved vector literal support and code generation
+support for the <a href="http://llvm.org/docs/ReleaseNotes.html#PTX">PTX
+target</a>.</p>
 
-<h4 id="opencl">Initial work to support compiling OpenCL with Clang</h4>
-Clang has some (limited) support for compiling OpenCL.
--->
+<p>Using the <a href="http://www.pcc.me.uk/~peter/libclc/">libclc library</a>
+to supply OpenCL C built-ins, you can use Clang to compile OpenCL C code
+into PTX and execute it by loading the resulting PTX as a binary blob using
+the nVidia OpenCL library.  It has been tested with several OpenCL programs,
+including some from the nVidia GPU Computing SDK, and the performance is on
+par with the nVidia compiler.</p>
 
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
 <h3 id="cchanges">C Language Changes in Clang</h3>
