@@ -11,12 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-// FIXME: This code isn't layered right, the headers should be moved to
-// include llvm/MC/MCDisassembler or something.
-#include "../../lib/MC/MCDisassembler/EDDisassembler.h"
-#include "../../lib/MC/MCDisassembler/EDInst.h"
-#include "../../lib/MC/MCDisassembler/EDOperand.h"
-#include "../../lib/MC/MCDisassembler/EDToken.h"
+#include "EDDisassembler.h"
+#include "EDInst.h"
+#include "EDOperand.h"
+#include "EDToken.h"
 #include "llvm-c/EnhancedDisassembly.h"
 using namespace llvm;
 

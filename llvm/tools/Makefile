@@ -56,14 +56,6 @@ ifeq ($(ENABLE_PIC),1)
   endif
 
   PARALLEL_DIRS += bugpoint-passes
-
-  # The edis library is only supported if ARM and/or X86 are enabled, and if
-  # LLVM is being built PIC on platforms that support dylibs.
-  ifneq ($(DISABLE_EDIS),1)
-    ifneq ($(filter $(TARGETS_TO_BUILD), X86 ARM),)
-      PARALLEL_DIRS += edis
-    endif
-  endif
 endif
 
 ifdef LLVM_HAS_POLLY
