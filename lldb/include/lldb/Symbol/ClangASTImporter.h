@@ -106,7 +106,8 @@ public:
     
     void BuildNamespaceMap (const clang::NamespaceDecl *decl);
     
-    void PurgeMaps (clang::ASTContext *dest_ast_ctx);
+    void ForgetDestination (clang::ASTContext *dst_ctx);
+    void ForgetSource (clang::ASTContext *dst_ctx, clang::ASTContext *src_ctx);
 private:
     struct DeclOrigin 
     {

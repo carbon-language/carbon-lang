@@ -179,9 +179,30 @@ ClangASTImporter::BuildNamespaceMap(const clang::NamespaceDecl *decl)
 }
 
 void 
-ClangASTImporter::PurgeMaps (clang::ASTContext *dst_ast)
+ClangASTImporter::ForgetDestination (clang::ASTContext *dst_ast)
 {
     m_metadata_map.erase(dst_ast);
+}
+
+void
+ClangASTImporter::ForgetSource (clang::ASTContext *dst_ast, clang::ASTContext *src_ast)
+{
+    ASTContextMetadataSP md = MaybeGetContextMetadata (dst_ast);
+    
+    if (!md)
+        return;
+ 
+    md->m_minions.erase(src_ast);
+    
+    for (OriginMap::iterator iter = md->m_origins.begin();
+         iter != md->m_origins.end();
+         )
+    {
+        if (iter->second.ctx == src_ast)
+            md->m_origins.erase(iter++);
+        else
+            ++iter;
+    }
 }
 
 ClangASTImporter::NamespaceMapCompleter::~NamespaceMapCompleter ()

@@ -24,7 +24,20 @@ using namespace lldb_private;
 
 ClangASTSource::~ClangASTSource() 
 {
-    m_ast_importer->PurgeMaps(m_ast_context);
+    m_ast_importer->ForgetDestination(m_ast_context);
+    
+    ClangASTContext *scratch_clang_ast_context = m_target->GetScratchClangASTContext();
+    
+    if (!scratch_clang_ast_context)
+        return;
+    
+    clang::ASTContext *scratch_ast_context = scratch_clang_ast_context->getASTContext();
+    
+    if (!scratch_ast_context)
+        return;
+    
+    if (m_ast_context != scratch_ast_context)
+        m_ast_importer->ForgetSource(scratch_ast_context, m_ast_context);
 }
 
 void
