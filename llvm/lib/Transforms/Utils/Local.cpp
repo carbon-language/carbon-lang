@@ -748,6 +748,10 @@ static unsigned enforceKnownAlignment(Value *V, unsigned Align,
     // If there is a large requested alignment and we can, bump up the alignment
     // of the global.
     if (GV->isDeclaration()) return Align;
+    // If the memory we set aside for the global may not be the memory used by
+    // the final program then it is impossible for us to reliably enforce the
+    // preferred alignment.
+    if (GV->isWeakForLinker()) return Align;
     
     if (GV->getAlignment() >= PrefAlign)
       return GV->getAlignment();
