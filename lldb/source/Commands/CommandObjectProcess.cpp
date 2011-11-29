@@ -35,87 +35,6 @@ class CommandObjectProcessLaunch : public CommandObject
 {
 public:
 
-//    class CommandOptions : public Options
-//    {
-//    public:
-//
-//        CommandOptions (CommandInterpreter &interpreter) :
-//            Options(interpreter)
-//        {
-//            // Keep default values of all options in one place: OptionParsingStarting ()
-//            OptionParsingStarting ();
-//        }
-//
-//        ~CommandOptions ()
-//        {
-//        }
-//
-//        Error
-//        SetOptionValue (uint32_t option_idx, const char *option_arg)
-//        {
-//            Error error;
-//            char short_option = (char) m_getopt_table[option_idx].val;
-//
-//            switch (short_option)
-//            {
-//                case 's':   stop_at_entry = true;               break;
-//                case 'e':   stderr_path.assign (option_arg);    break;
-//                case 'i':   stdin_path.assign (option_arg);     break;
-//                case 'o':   stdout_path.assign (option_arg);    break;
-//                case 'p':   plugin_name.assign (option_arg);    break;
-//                case 'n':   no_stdio = true;                    break;
-//                case 'w':   working_dir.assign (option_arg);    break;
-//                case 't':   
-//                    if (option_arg && option_arg[0])
-//                        tty_name.assign (option_arg);
-//                    in_new_tty = true; 
-//                    break;
-//                default:
-//                    error.SetErrorStringWithFormat("invalid short option character '%c'", short_option);
-//                    break;
-//
-//            }
-//            return error;
-//        }
-//
-//        void
-//        OptionParsingStarting ()
-//        {
-//            stop_at_entry = false;
-//            in_new_tty = false;
-//            tty_name.clear();
-//            stdin_path.clear();
-//            stdout_path.clear();
-//            stderr_path.clear();
-//            plugin_name.clear();
-//            working_dir.clear();
-//            no_stdio = false;
-//        }
-//
-//        const OptionDefinition*
-//        GetDefinitions ()
-//        {
-//            return g_option_table;
-//        }
-//
-//        // Options table: Required for subclasses of Options.
-//
-//        static OptionDefinition g_option_table[];
-//
-//        // Instance variables to hold the values for command options.
-//
-//        bool stop_at_entry;
-//        bool in_new_tty;
-//        bool no_stdio;
-//        std::string tty_name;
-//        std::string stderr_path;
-//        std::string stdin_path;
-//        std::string stdout_path;
-//        std::string plugin_name;
-//        std::string working_dir;
-//
-//    };
-
     CommandObjectProcessLaunch (CommandInterpreter &interpreter) :
         CommandObject (interpreter,
                        "process launch",
@@ -175,7 +94,7 @@ public:
         exe_module->GetFileSpec().GetPath (filename, sizeof(filename));
 
         const bool add_exe_file_as_first_arg = true;
-        m_options.launch_info.SetExecutableFile(exe_module->GetFileSpec(), add_exe_file_as_first_arg);
+        m_options.launch_info.SetExecutableFile(exe_module->GetPlatformFileSpec(), add_exe_file_as_first_arg);
         
         StateType state = eStateInvalid;
         Process *process = m_interpreter.GetExecutionContext().GetProcessPtr();
@@ -593,7 +512,7 @@ public:
                 if (!m_options.attach_info.ProcessInfoSpecified ())
                 {
                     if (old_exec_module_sp)
-                        m_options.attach_info.GetExecutableFile().GetFilename() = old_exec_module_sp->GetFileSpec().GetFilename();
+                        m_options.attach_info.GetExecutableFile().GetFilename() = old_exec_module_sp->GetPlatformFileSpec().GetFilename();
 
                     if (!m_options.attach_info.ProcessInfoSpecified ())
                     {
