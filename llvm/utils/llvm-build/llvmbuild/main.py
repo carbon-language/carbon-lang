@@ -354,6 +354,37 @@ class LLVMProjectInfo(object):
         print >>f, '};'
         f.close()
 
+    def get_required_libraries_for_component(self, ci, traverse_groups = False):
+        """
+        get_required_libraries_for_component(component_info) -> iter
+
+        Given a Library component info descriptor, return an iterator over all
+        of the directly required libraries for linking with this component. If
+        traverse_groups is True, then library and target groups will be
+        traversed to include their required libraries.
+        """
+
+        assert ci.type_name in ('Library', 'LibraryGroup', 'TargetGroup')
+
+        for name in ci.required_libraries:
+            # Get the dependency info.
+            dep = self.component_info_map[name]
+
+            # If it is a library, yield it.
+            if dep.type_name == 'Library':
+                yield dep
+                continue
+
+            # Otherwise if it is a group, yield or traverse depending on what
+            # was requested.
+            if dep.type_name in ('LibraryGroup', 'TargetGroup'):
+                if not traverse_groups:
+                    yield dep
+                    continue
+
+                for res in self.get_required_libraries_for_component(dep, True):
+                    yield res
+
     def get_fragment_dependencies(self):
         """
         get_fragment_dependencies() -> iter
@@ -446,6 +477,24 @@ class LLVMProjectInfo(object):
 configure_file(\"%s\"
                ${CMAKE_CURRENT_BINARY_DIR}/DummyConfigureOutput)""" % (
                 cmake_quote_path(dep),)
+
+        # Write the properties we use to encode the required library dependency
+        # information in a form CMake can easily use directly.
+        print >>f, """
+# Explicit library dependency information.
+#
+# The following property assignments effectively create a map from component
+# names to required libraries, in a way that is easily accessed from CMake."""
+        for ci in self.ordered_component_infos:
+            # We only write the information for libraries currently.
+            if ci.type_name != 'Library':
+                continue
+
+            print >>f, """\
+set_property(GLOBAL PROPERTY LLVMBUILD_LIB_DEPS_%s %s)""" % (
+                ci.get_prefixed_library_name(), " ".join(sorted(
+                     dep.get_prefixed_library_name()
+                     for dep in self.get_required_libraries_for_component(ci))))
 
         f.close()
 

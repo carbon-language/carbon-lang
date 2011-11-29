@@ -138,6 +138,23 @@ class LibraryComponentInfo(ComponentInfo):
     def get_library_name(self):
         return self.library_name or self.name
 
+    def get_prefixed_library_name(self):
+        """
+        get_prefixed_library_name() -> str
+
+        Return the library name prefixed by the project name. This is generally
+        what the library name will be on disk.
+        """
+
+        basename = self.get_library_name()
+
+        # FIXME: We need to get the prefix information from an explicit project
+        # object, or something.
+        if basename in ('gtest', 'gtest_main'):
+            return basename
+
+        return 'LLVM%s' % basename
+
     def get_llvmconfig_component_name(self):
         return self.get_library_name().lower()
 
