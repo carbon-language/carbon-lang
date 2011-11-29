@@ -484,3 +484,11 @@ void PR11249()
     *p = 0xDEADBEEF;  // no-warning
 }
 
+// Handle doing a load from the memory associated with the code for
+// a function.
+extern double nan( const char * );
+double PR11450() {
+  double NaN = *(double*) nan;
+  return NaN;
+}
+

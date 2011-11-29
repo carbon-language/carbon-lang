@@ -882,16 +882,14 @@ SVal RegionStoreManager::Retrieve(Store store, Loc L, QualType T) {
 
   const MemRegion *MR = cast<loc::MemRegionVal>(L).getRegion();
 
-  if (isa<AllocaRegion>(MR) || isa<SymbolicRegion>(MR)) {
+  if (isa<AllocaRegion>(MR) ||
+      isa<SymbolicRegion>(MR) ||
+      isa<CodeTextRegion>(MR)) {
     if (T.isNull()) {
       const SymbolicRegion *SR = cast<SymbolicRegion>(MR);
       T = SR->getSymbol()->getType(Ctx);
     }
     MR = GetElementZeroRegion(MR, T);
-  }
-
-  if (isa<CodeTextRegion>(MR)) {
-    llvm_unreachable("Why load from a code text region?");
   }
 
   // FIXME: Perhaps this method should just take a 'const MemRegion*' argument
