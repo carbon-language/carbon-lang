@@ -11,6 +11,9 @@
         vst1.8  {d16, d17, d18}, [r0, :64]
         vst1.8  {d16, d17, d18}, [r0, :64]!
         vst1.8  {d16, d17, d18}, [r0], r3
+        vst1.8  {d16, d17, d18, d19}, [r0, :64]
+        vst1.16  {d16, d17, d18, d19}, [r1, :64]!
+        vst1.64  {d16, d17, d18, d19}, [r3], r2
 
 @ CHECK: vst1.8	{d16}, [r0, :64]        @ encoding: [0x1f,0x07,0x40,0xf4]
 @ CHECK: vst1.16 {d16}, [r0]            @ encoding: [0x4f,0x07,0x40,0xf4]
@@ -23,6 +26,9 @@
 @ CHECK: vst1.8	{d16, d17, d18}, [r0, :64] @ encoding: [0x1f,0x06,0x40,0xf4]
 @ CHECK: vst1.8	{d16, d17, d18}, [r0, :64]! @ encoding: [0x1d,0x06,0x40,0xf4]
 @ CHECK: vst1.8	{d16, d17, d18}, [r0], r3 @ encoding: [0x03,0x06,0x40,0xf4]
+@ CHECK: vst1.8	{d16, d17, d18, d19}, [r0, :64] @ encoding: [0x1f,0x02,0x40,0xf4]
+@ CHECK: vst1.16 {d16, d17, d18, d19}, [r1, :64]! @ encoding: [0x5d,0x02,0x41,0xf4]
+@ CHECK: vst1.64 {d16, d17, d18, d19}, [r3], r2 @ encoding: [0xc2,0x02,0x43,0xf4]
 
 
 @	vst2.8	{d16, d17}, [r0, :64]

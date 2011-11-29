@@ -1373,35 +1373,47 @@ def VST1d64TPseudoWB_register : VSTQQWBPseudo<IIC_VST1x3u>;
 // ...with 4 registers
 class VST1D4<bits<4> op7_4, string Dt>
   : NLdSt<0, 0b00, 0b0010, op7_4, (outs),
-          (ins addrmode6:$Rn, DPR:$Vd, DPR:$src2, DPR:$src3, DPR:$src4),
-          IIC_VST1x4, "vst1", Dt, "\\{$Vd, $src2, $src3, $src4\\}, $Rn", "",
+          (ins addrmode6:$Rn, VecListFourD:$Vd),
+          IIC_VST1x4, "vst1", Dt, "$Vd, $Rn", "",
           []> {
   let Rm = 0b1111;
   let Inst{5-4} = Rn{5-4};
   let DecoderMethod = "DecodeVSTInstruction";
 }
-class VST1D4WB<bits<4> op7_4, string Dt>
-  : NLdSt<0, 0b00, 0b0010, op7_4, (outs GPR:$wb),
-          (ins addrmode6:$Rn, am6offset:$Rm,
-           DPR:$Vd, DPR:$src2, DPR:$src3, DPR:$src4), IIC_VST1x4u,
-          "vst1", Dt, "\\{$Vd, $src2, $src3, $src4\\}, $Rn$Rm",
-          "$Rn.addr = $wb", []> {
-  let Inst{5-4} = Rn{5-4};
-  let DecoderMethod = "DecodeVSTInstruction";
+multiclass VST1D4WB<bits<4> op7_4, string Dt> {
+  def _fixed : NLdSt<0,0b00,0b0010,op7_4, (outs GPR:$wb),
+                    (ins addrmode6:$Rn, VecListFourD:$Vd), IIC_VLD1x4u,
+                     "vst1", Dt, "$Vd, $Rn!",
+                     "$Rn.addr = $wb", []> {
+    let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
+    let Inst{5-4} = Rn{5-4};
+    let DecoderMethod = "DecodeVSTInstruction";
+    let AsmMatchConverter = "cvtVSTwbFixed";
+  }
+  def _register : NLdSt<0,0b00,0b0010,op7_4, (outs GPR:$wb),
+                        (ins addrmode6:$Rn, rGPR:$Rm, VecListFourD:$Vd),
+                        IIC_VLD1x4u,
+                        "vst1", Dt, "$Vd, $Rn, $Rm",
+                        "$Rn.addr = $wb", []> {
+    let Inst{5-4} = Rn{5-4};
+    let DecoderMethod = "DecodeVSTInstruction";
+    let AsmMatchConverter = "cvtVSTwbRegister";
+  }
 }
 
-def VST1d8Q      : VST1D4<{0,0,?,?}, "8">;
-def VST1d16Q     : VST1D4<{0,1,?,?}, "16">;
-def VST1d32Q     : VST1D4<{1,0,?,?}, "32">;
-def VST1d64Q     : VST1D4<{1,1,?,?}, "64">;
+def VST1d8Q     : VST1D4<{0,0,?,?}, "8">;
+def VST1d16Q    : VST1D4<{0,1,?,?}, "16">;
+def VST1d32Q    : VST1D4<{1,0,?,?}, "32">;
+def VST1d64Q    : VST1D4<{1,1,?,?}, "64">;
 
-def VST1d8Q_UPD  : VST1D4WB<{0,0,?,?}, "8">;
-def VST1d16Q_UPD : VST1D4WB<{0,1,?,?}, "16">;
-def VST1d32Q_UPD : VST1D4WB<{1,0,?,?}, "32">;
-def VST1d64Q_UPD : VST1D4WB<{1,1,?,?}, "64">;
+defm VST1d8Qwb  : VST1D4WB<{0,0,?,?}, "8">;
+defm VST1d16Qwb : VST1D4WB<{0,1,?,?}, "16">;
+defm VST1d32Qwb : VST1D4WB<{1,0,?,?}, "32">;
+defm VST1d64Qwb : VST1D4WB<{1,1,?,?}, "64">;
 
-def VST1d64QPseudo     : VSTQQPseudo<IIC_VST1x4>;
-def VST1d64QPseudo_UPD : VSTQQWBPseudo<IIC_VST1x4u>;
+def VST1d64QPseudo            : VSTQQPseudo<IIC_VST1x4>;
+def VST1d64QPseudoWB_fixed    : VSTQQWBPseudo<IIC_VST1x4u>;
+def VST1d64QPseudoWB_register : VSTQQWBPseudo<IIC_VST1x4u>;
 
 //   VST2     : Vector Store (multiple 2-element structures)
 class VST2D<bits<4> op11_8, bits<4> op7_4, string Dt>
