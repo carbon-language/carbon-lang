@@ -1,7 +1,10 @@
-; RUN: llc < %s -march=arm -mattr=+neon | grep vldmia | count 4
-; RUN: llc < %s -march=arm -mattr=+neon | grep vstmia | count 1
-; RUN: llc < %s -march=arm -mattr=+neon | grep vmov  | count 2
+; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
 
+; CHECK: t1
+; CHECK: vldmia
+; CHECK: vldmia
+; CHECK: vadd.i64 q
+; CHECK: vstmia
 define void @t1(<4 x i32>* %r, <2 x i64>* %a, <2 x i64>* %b) nounwind {
 entry:
 	%0 = load <2 x i64>* %a, align 16		; <<2 x i64>> [#uses=1]
@@ -12,6 +15,12 @@ entry:
 	ret void
 }
 
+; CHECK: t2
+; CHECK: vldmia
+; CHECK: vldmia
+; CHECK: vsub.i64 q
+; CHECK: vmov r0, r1, d
+; CHECK: vmov r2, r3, d
 define <4 x i32> @t2(<2 x i64>* %a, <2 x i64>* %b) nounwind readonly {
 entry:
 	%0 = load <2 x i64>* %a, align 16		; <<2 x i64>> [#uses=1]
