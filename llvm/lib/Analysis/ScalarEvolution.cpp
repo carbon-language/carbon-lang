@@ -188,6 +188,14 @@ void SCEV::print(raw_ostream &OS) const {
         OS << OpStr;
     }
     OS << ")";
+    switch (NAry->getSCEVType()) {
+    case scAddExpr:
+    case scMulExpr:
+      if (NAry->getNoWrapFlags(FlagNUW))
+        OS << "<nuw>";
+      if (NAry->getNoWrapFlags(FlagNSW))
+        OS << "<nsw>";
+    }
     return;
   }
   case scUDivExpr: {
