@@ -960,7 +960,7 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
   PointerType *PTy = cast<PointerType>(Callee->getType());
   FunctionType *FTy = cast<FunctionType>(PTy->getElementType());
   if (FTy->isVarArg()) {
-    int ix = FTy->getNumParams() + (isa<InvokeInst>(Callee) ? 2 : 0);
+    int ix = FTy->getNumParams();
     // See if we can optimize any arguments passed through the varargs area of
     // the call.
     for (CallSite::arg_iterator I = CS.arg_begin()+FTy->getNumParams(),
