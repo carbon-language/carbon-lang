@@ -75,7 +75,7 @@ PlatformDarwin::ResolveExecutable (const FileSpec &exe_file,
         else
         {
             exe_file.GetPath (exe_path, sizeof(exe_path));
-            error.SetErrorStringWithFormat ("enable to find executable for '%s'", exe_path);
+            error.SetErrorStringWithFormat ("unable to find executable for '%s'", exe_path);
         }
     }
     else
