@@ -252,7 +252,8 @@ static void clang_indexSourceFile_Impl(void *UserData) {
     Diags(CompilerInstance::createDiagnostics(DiagOpts, num_command_line_args, 
                                                 command_line_args,
                                                 CaptureDiag,
-                                                /*ShouldOwnClient=*/true));
+                                                /*ShouldOwnClient=*/true,
+                                                /*ShouldCloneClient=*/false));
 
   // Recover resources if we crash before exiting this function.
   llvm::CrashRecoveryContextCleanupRegistrar<DiagnosticsEngine,
