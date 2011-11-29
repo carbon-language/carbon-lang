@@ -57,8 +57,9 @@ MCAsmInfoDarwin::MCAsmInfoDarwin() {
 
   HiddenVisibilityAttr = MCSA_PrivateExtern;
   HiddenDeclarationVisibilityAttr = MCSA_Invalid;
+
   // Doesn't support protected visibility.
-  ProtectedVisibilityAttr = MCSA_Global;
+  ProtectedVisibilityAttr = MCSA_Invalid;
   
   HasDotTypeDotSizeDirective = false;
   HasNoDeadStrip = true;
