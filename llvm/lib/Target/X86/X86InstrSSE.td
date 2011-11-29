@@ -7336,7 +7336,7 @@ def : Pat<(v4i64 (X86VPermilpd VR256:$src1, (i8 imm:$imm))),
 //===----------------------------------------------------------------------===//
 // VPERM2F128 - Permute Floating-Point Values in 128-bit chunks
 //
-let neverHasSideEffects = 1 in {
+let neverHasSideEffects = 1, ExeDomain = SSEPackedSingle in {
 def VPERM2F128rr : AVXAIi8<0x06, MRMSrcReg, (outs VR256:$dst),
           (ins VR256:$src1, VR256:$src2, i8imm:$src3),
           "vperm2f128\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
