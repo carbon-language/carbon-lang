@@ -15,8 +15,8 @@ typedef void *  __attribute__ ((NSObject)) CGColorRef2; // expected-error {{__at
 
 @property(copy) CGColorRef x;
 // rdar: // 7809460
-typedef struct CGColor *CGColorRefNoNSObject;
-@property (nonatomic, retain) __attribute__((NSObject)) CGColorRefNoNSObject color;
+typedef struct CGColor * __attribute__((NSObject)) CGColorRefNoNSObject;
+@property (nonatomic, retain) CGColorRefNoNSObject color;
 @end
 
 void setProperty(id self, id value)  {
@@ -38,5 +38,17 @@ int main(int argc, char *argv[]) {
     if (tmp != to.x)
       to.x = tmp;
     return 0;
+}
+
+// rdar://10453342
+@interface I
+{
+   __attribute__((NSObject)) void * color; // expected-warning {{__attribute ((NSObject)) may be put on a typedef only, attribute is ignored}}
+}
+@property (nonatomic, retain) __attribute__((NSObject)) void * color; // expected-warning {{__attribute ((NSObject)) may be put on a typedef only, attribute is ignored}} \
+                                // expected-error {{property with 'retain (or strong)' attribute must be of object type}}
+@end
+void test_10453342() {
+    char* __attribute__((NSObject)) string2 = 0; // expected-warning {{__attribute ((NSObject)) may be put on a typedef only, attribute is ignored}}
 }
 

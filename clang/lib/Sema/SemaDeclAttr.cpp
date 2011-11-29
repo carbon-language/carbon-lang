@@ -1746,6 +1746,10 @@ static void handleObjCNSObject(Sema &S, Decl *D, const AttributeList &Attr) {
       return;
     }
   }
+  else {
+    S.Diag(D->getLocation(), diag::warn_nsobject_attribute);
+    return;
+  }
   D->addAttr(::new (S.Context) ObjCNSObjectAttr(Attr.getRange(), S.Context));
 }
 
