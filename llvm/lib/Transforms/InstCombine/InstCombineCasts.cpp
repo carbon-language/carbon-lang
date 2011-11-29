@@ -14,6 +14,7 @@
 #include "InstCombine.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Support/PatternMatch.h"
 using namespace llvm;
 using namespace PatternMatch;
@@ -1213,10 +1214,10 @@ Instruction *InstCombiner::visitFPTrunc(FPTruncInst &CI) {
   }
   
   // Fold (fptrunc (sqrt (fpext x))) -> (sqrtf x)
-  // NOTE: This should be disabled by -fno-builtin-sqrt if we ever support it.
+  const TargetLibraryInfo &TLI = getAnalysis<TargetLibraryInfo>();
   CallInst *Call = dyn_cast<CallInst>(CI.getOperand(0));
-  if (Call && Call->getCalledFunction() &&
-      Call->getCalledFunction()->getName() == "sqrt" &&
+  if (Call && Call->getCalledFunction() && TLI.has(LibFunc::sqrtf) &&
+      Call->getCalledFunction()->getName() == TLI.getName(LibFunc::sqrt) &&
       Call->getNumArgOperands() == 1 &&
       Call->hasOneUse()) {
     CastInst *Arg = dyn_cast<CastInst>(Call->getArgOperand(0));

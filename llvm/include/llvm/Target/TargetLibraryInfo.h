@@ -35,6 +35,15 @@ namespace llvm {
       
       /// int siprintf(char *str, const char *format, ...);
       siprintf,
+
+      /// double sqrt(double x);
+      sqrt,
+
+      /// long double sqrtl(long double x);
+      sqrtl,
+
+      /// float sqrtf(float x);
+      sqrtf,
       
       /// int fiprintf(FILE *stream, const char *format, ...);
       fiprintf,

@@ -28,6 +28,9 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "memset_pattern16",
     "iprintf",
     "siprintf",
+    "sqrt",
+    "sqrtl",
+    "sqrtf",
     "fiprintf",
     "fwrite",
     "fputs"
