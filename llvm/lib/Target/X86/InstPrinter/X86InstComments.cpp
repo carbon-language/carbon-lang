@@ -163,14 +163,16 @@ void llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
     Src2Name = getRegName(MI->getOperand(2).getReg());
     // FALL THROUGH.
   case X86::SHUFPDrmi:
-    DecodeSHUFPMask(MVT::v2f64, MI->getOperand(3).getImm(), ShuffleMask);
+    DecodeSHUFPMask(MVT::v2f64, MI->getOperand(MI->getNumOperands()-1).getImm(),
+                    ShuffleMask);
     Src1Name = getRegName(MI->getOperand(0).getReg());
     break;
   case X86::VSHUFPDrri:
     Src2Name = getRegName(MI->getOperand(2).getReg());
     // FALL THROUGH.
   case X86::VSHUFPDrmi:
-    DecodeSHUFPMask(MVT::v2f64, MI->getOperand(3).getImm(), ShuffleMask);
+    DecodeSHUFPMask(MVT::v2f64, MI->getOperand(MI->getNumOperands()-1).getImm(),
+                    ShuffleMask);
     Src1Name = getRegName(MI->getOperand(1).getReg());
     DestName = getRegName(MI->getOperand(0).getReg());
     break;
@@ -178,7 +180,8 @@ void llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
     Src2Name = getRegName(MI->getOperand(2).getReg());
     // FALL THROUGH.
   case X86::VSHUFPDYrmi:
-    DecodeSHUFPMask(MVT::v4f64, MI->getOperand(3).getImm(), ShuffleMask);
+    DecodeSHUFPMask(MVT::v4f64, MI->getOperand(MI->getNumOperands()-1).getImm(),
+                    ShuffleMask);
     Src1Name = getRegName(MI->getOperand(1).getReg());
     DestName = getRegName(MI->getOperand(0).getReg());
     break;
@@ -187,14 +190,16 @@ void llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
     Src2Name = getRegName(MI->getOperand(2).getReg());
     // FALL THROUGH.
   case X86::SHUFPSrmi:
-    DecodeSHUFPMask(MVT::v4f32, MI->getOperand(3).getImm(), ShuffleMask);
+    DecodeSHUFPMask(MVT::v4f32, MI->getOperand(MI->getNumOperands()-1).getImm(),
+                    ShuffleMask);
     Src1Name = getRegName(MI->getOperand(0).getReg());
     break;
   case X86::VSHUFPSrri:
     Src2Name = getRegName(MI->getOperand(2).getReg());
     // FALL THROUGH.
   case X86::VSHUFPSrmi:
-    DecodeSHUFPMask(MVT::v4f32, MI->getOperand(3).getImm(), ShuffleMask);
+    DecodeSHUFPMask(MVT::v4f32, MI->getOperand(MI->getNumOperands()-1).getImm(),
+                    ShuffleMask);
     Src1Name = getRegName(MI->getOperand(1).getReg());
     DestName = getRegName(MI->getOperand(0).getReg());
     break;
@@ -202,7 +207,8 @@ void llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
     Src2Name = getRegName(MI->getOperand(2).getReg());
     // FALL THROUGH.
   case X86::VSHUFPSYrmi:
-    DecodeSHUFPMask(MVT::v8f32, MI->getOperand(3).getImm(), ShuffleMask);
+    DecodeSHUFPMask(MVT::v8f32, MI->getOperand(MI->getNumOperands()-1).getImm(),
+                    ShuffleMask);
     Src1Name = getRegName(MI->getOperand(1).getReg());
     DestName = getRegName(MI->getOperand(0).getReg());
     break;
