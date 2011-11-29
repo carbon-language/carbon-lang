@@ -1,4 +1,4 @@
-; RUN: llc -march=mips -mcpu=4ke < %s | FileCheck %s
+; RUN: llc -march=mips -mcpu=mips32r2 < %s | FileCheck %s
 
 ; CHECK:  rotrv $2, $4
 define i32 @rot0(i32 %a, i32 %b) nounwind readnone {

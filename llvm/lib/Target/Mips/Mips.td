@@ -79,9 +79,9 @@ def FeatureMips64r2    : SubtargetFeature<"mips64r2", "MipsArchVersion",
 class Proc<string Name, list<SubtargetFeature> Features>
  : Processor<Name, MipsGenericItineraries, Features>;
 
-def : Proc<"mips32r1", [FeatureMips32]>;
-def : Proc<"4ke", [FeatureMips32r2]>;
-def : Proc<"mips64r1", [FeatureMips64]>;
+def : Proc<"mips32", [FeatureMips32]>;
+def : Proc<"mips32r2", [FeatureMips32r2]>;
+def : Proc<"mips64", [FeatureMips64]>;
 def : Proc<"mips64r2", [FeatureMips64r2]>;
 
 def MipsAsmWriter : AsmWriter {

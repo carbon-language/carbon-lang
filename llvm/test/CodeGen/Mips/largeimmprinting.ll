@@ -1,4 +1,4 @@
-; RUN: llc -march=mipsel -mcpu=4ke < %s | FileCheck %s
+; RUN: llc -march=mipsel -mcpu=mips32r2 < %s | FileCheck %s
 
 %struct.S1 = type { [65536 x i8] }
 

@@ -1,5 +1,5 @@
-; RUN: llc  < %s -march=mips64el -mcpu=mips64r1 -mattr=n64 | FileCheck %s -check-prefix=CHECK-N64
-; RUN: llc  < %s -march=mips64el -mcpu=mips64r1 -mattr=n32 | FileCheck %s -check-prefix=CHECK-N32
+; RUN: llc  < %s -march=mips64el -mcpu=mips64 -mattr=n64 | FileCheck %s -check-prefix=CHECK-N64
+; RUN: llc  < %s -march=mips64el -mcpu=mips64 -mattr=n32 | FileCheck %s -check-prefix=CHECK-N32
 
 @c = common global i8 0, align 4
 @s = common global i16 0, align 4

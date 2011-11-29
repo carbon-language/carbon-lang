@@ -1,4 +1,4 @@
-; RUN: llc -march=mips -mcpu=4ke < %s | FileCheck %s
+; RUN: llc -march=mips -mcpu=mips32r2 < %s | FileCheck %s
 
 define i32 @ext0_5_9(i32 %s, i32 %pos, i32 %sz) nounwind readnone {
 entry:
