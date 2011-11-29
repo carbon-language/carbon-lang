@@ -28,11 +28,3 @@ add_llvm_library(LLVMTransformUtils
   Utils.cpp
   ValueMapper.cpp
   )
-
-add_llvm_library_dependencies(LLVMTransformUtils
-  LLVMAnalysis
-  LLVMCore
-  LLVMSupport
-  LLVMTarget
-  LLVMipa
-  )

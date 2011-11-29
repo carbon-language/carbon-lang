@@ -4,9 +4,4 @@ add_llvm_library(LLVMMSP430AsmPrinter
   MSP430InstPrinter.cpp
   )
 
-add_llvm_library_dependencies(LLVMMSP430AsmPrinter
-  LLVMMC
-  LLVMSupport
-  )
-
 add_dependencies(LLVMMSP430AsmPrinter MSP430CommonTableGen)

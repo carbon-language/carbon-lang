@@ -27,20 +27,6 @@ add_llvm_target(PowerPCCodeGen
   PPCSelectionDAGInfo.cpp
   )
 
-add_llvm_library_dependencies(LLVMPowerPCCodeGen
-  LLVMAnalysis
-  LLVMAsmPrinter
-  LLVMCodeGen
-  LLVMCore
-  LLVMMC
-  LLVMPowerPCAsmPrinter
-  LLVMPowerPCDesc
-  LLVMPowerPCInfo
-  LLVMSelectionDAG
-  LLVMSupport
-  LLVMTarget
-  )
-
 add_subdirectory(InstPrinter)
 add_subdirectory(TargetInfo)
 add_subdirectory(MCTargetDesc)

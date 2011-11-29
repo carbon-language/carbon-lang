@@ -99,15 +99,5 @@ add_llvm_library(LLVMCodeGen
   VirtRegMap.cpp
   )
 
-add_llvm_library_dependencies(LLVMCodeGen
-  LLVMAnalysis
-  LLVMCore
-  LLVMMC
-  LLVMScalarOpts
-  LLVMSupport
-  LLVMTarget
-  LLVMTransformUtils
-  )
-
 add_subdirectory(SelectionDAG)
 add_subdirectory(AsmPrinter)

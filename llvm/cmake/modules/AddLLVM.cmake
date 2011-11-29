@@ -35,9 +35,6 @@ macro(add_llvm_library name)
   target_link_libraries(${name} ${lib_deps})
 endmacro(add_llvm_library name)
 
-macro(add_llvm_library_dependencies name)
-endmacro(add_llvm_library_dependencies name)
-
 macro(add_llvm_loadable_module name)
   if( NOT LLVM_ON_UNIX OR CYGWIN )
     message(STATUS "Loadable modules not supported on this platform.

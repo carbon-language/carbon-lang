@@ -10,7 +10,3 @@ add_llvm_library(LLVMDebugInfo
   DWARFDebugLine.cpp
   DWARFFormValue.cpp
   )
-
-add_llvm_library_dependencies(LLVMDebugInfo
-  LLVMSupport
-  )

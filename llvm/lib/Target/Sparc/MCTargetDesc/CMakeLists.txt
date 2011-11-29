@@ -3,10 +3,4 @@ add_llvm_library(LLVMSparcDesc
   SparcMCAsmInfo.cpp
   )
 
-add_llvm_library_dependencies(LLVMSparcDesc
-  LLVMMC
-  LLVMSparcInfo
-  LLVMSupport
-  )
-
 add_dependencies(LLVMSparcDesc SparcCommonTableGen)

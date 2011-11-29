@@ -5,9 +5,3 @@ add_llvm_library(LLVMipa
   GlobalsModRef.cpp
   IPA.cpp
   )
-
-add_llvm_library_dependencies(LLVMipa
-  LLVMAnalysis
-  LLVMCore
-  LLVMSupport
-  )

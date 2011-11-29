@@ -5,8 +5,3 @@ add_llvm_library(LLVMARMAsmPrinter
   )
 
 add_dependencies(LLVMARMAsmPrinter ARMCommonTableGen)
-
-add_llvm_library_dependencies(LLVMARMAsmPrinter
-  LLVMMC
-  LLVMSupport
-  )

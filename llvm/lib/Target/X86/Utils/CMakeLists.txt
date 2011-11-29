@@ -4,9 +4,4 @@ add_llvm_library(LLVMX86Utils
   X86ShuffleDecode.cpp
   )
 
-add_llvm_library_dependencies(LLVMX86Utils
-  LLVMCore
-  LLVMSupport
-  )
-
 add_dependencies(LLVMX86Utils X86CommonTableGen)

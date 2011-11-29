@@ -6,11 +6,4 @@ add_llvm_library(LLVMPowerPCDesc
   PPCPredicates.cpp
   )
 
-add_llvm_library_dependencies(LLVMPowerPCDesc
-  LLVMMC
-  LLVMPowerPCAsmPrinter
-  LLVMPowerPCInfo
-  LLVMSupport
-  )
-
 add_dependencies(LLVMPowerPCDesc PowerPCCommonTableGen)

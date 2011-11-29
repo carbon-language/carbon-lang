@@ -6,11 +6,3 @@ add_llvm_library(LLVMARMAsmParser
   )
 
 add_dependencies(LLVMARMAsmParser ARMCommonTableGen)
-
-add_llvm_library_dependencies(LLVMARMAsmParser
-  LLVMARMDesc
-  LLVMARMInfo
-  LLVMMC
-  LLVMMCParser
-  LLVMSupport
-  )

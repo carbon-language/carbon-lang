@@ -20,13 +20,3 @@ add_llvm_library(LLVMSelectionDAG
   TargetLowering.cpp
   TargetSelectionDAGInfo.cpp
   )
-
-add_llvm_library_dependencies(LLVMSelectionDAG
-  LLVMAnalysis
-  LLVMCodeGen
-  LLVMCore
-  LLVMMC
-  LLVMSupport
-  LLVMTarget
-  LLVMTransformUtils
-  )

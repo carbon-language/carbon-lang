@@ -13,12 +13,6 @@ add_llvm_library(LLVMTarget
   TargetSubtargetInfo.cpp
   )
 
-add_llvm_library_dependencies(LLVMTarget
-  LLVMCore
-  LLVMMC
-  LLVMSupport
-  )
-
 foreach(t ${LLVM_TARGETS_TO_BUILD})
   message(STATUS "Targeting ${t}")
   add_subdirectory(${t})

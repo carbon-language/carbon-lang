@@ -13,11 +13,3 @@ add_llvm_library(LLVMInstCombine
   InstCombineSimplifyDemanded.cpp
   InstCombineVectorOps.cpp
   )
-
-add_llvm_library_dependencies(LLVMInstCombine
-  LLVMAnalysis
-  LLVMCore
-  LLVMSupport
-  LLVMTarget
-  LLVMTransformUtils
-  )

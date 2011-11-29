@@ -37,5 +37,3 @@ add_llvm_library(LLVMCore
   ValueTypes.cpp
   Verifier.cpp
   )
-
-add_llvm_library_dependencies(LLVMCore LLVMSupport)

@@ -4,9 +4,4 @@ add_llvm_library(LLVMMipsAsmPrinter
   MipsInstPrinter.cpp
   )
 
-add_llvm_library_dependencies(LLVMMipsAsmPrinter
-  LLVMMC
-  LLVMSupport
-  )
-
 add_dependencies(LLVMMipsAsmPrinter MipsCommonTableGen)

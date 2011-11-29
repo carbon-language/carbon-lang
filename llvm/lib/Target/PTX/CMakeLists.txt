@@ -25,20 +25,6 @@ add_llvm_target(PTXCodeGen
   PTXTargetMachine.cpp
   )
 
-add_llvm_library_dependencies(LLVMPTXCodeGen
-  LLVMAnalysis
-  LLVMAsmPrinter
-  LLVMCodeGen
-  LLVMCore
-  LLVMMC
-  LLVMPTXDesc
-  LLVMPTXInfo
-  LLVMSelectionDAG
-  LLVMSupport
-  LLVMTarget
-  LLVMTransformUtils
-  )
-
 add_subdirectory(TargetInfo)
 add_subdirectory(InstPrinter)
 add_subdirectory(MCTargetDesc)

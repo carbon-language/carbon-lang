@@ -6,9 +6,3 @@ add_llvm_library(LLVMMCDisassembler
   EDOperand.cpp
   EDToken.cpp
   )
-
-add_llvm_library_dependencies(LLVMMCDisassembler
-  LLVMMC
-  LLVMMCParser
-  LLVMSupport
-  )
