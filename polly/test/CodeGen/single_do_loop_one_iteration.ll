@@ -11,7 +11,7 @@ entry:
   %arraydecay = getelementptr inbounds [20 x i32]* %A, i32 0, i32 0 ; <i32*> [#uses=1]
   %arrayidx = getelementptr inbounds i32* %arraydecay, i64 0 ; <i32*> [#uses=1]
   store i32 1, i32* %arrayidx
-  call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
+  fence seq_cst
   br label %do.body
 
 do.body:                                          ; preds = %do.cond, %entry
@@ -24,7 +24,7 @@ do.cond:                                          ; preds = %do.body
   br i1 false, label %do.body, label %do.end
 
 do.end:                                           ; preds = %do.cond
-  call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
+  fence seq_cst
   %arraydecay4 = getelementptr inbounds [20 x i32]* %A, i32 0, i32 0 ; <i32*> [#uses=1]
   %arrayidx5 = getelementptr inbounds i32* %arraydecay4, i64 0 ; <i32*> [#uses=1]
   %tmp6 = load i32* %arrayidx5                    ; <i32> [#uses=1]
@@ -42,5 +42,4 @@ return:                                           ; preds = %if.else, %if.then
   ret i32 %retval.0
 }
 
-declare void @llvm.memory.barrier(i1, i1, i1, i1, i1) nounwind
 ; CHECK: S0(0)

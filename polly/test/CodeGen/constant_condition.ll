@@ -20,8 +20,6 @@ bb3:                                              ; preds = %bb2, %bb1
   ret void
 }
 
-declare void @llvm.memory.barrier(i1, i1, i1, i1, i1) nounwind
-
 define i32 @main() nounwind {
 bb:
   store i32 2, i32* getelementptr inbounds ([1 x i32]* @A, i32 0, i32 0)

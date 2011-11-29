@@ -1,7 +1,7 @@
 #define N 20
 #include "limits.h"
 #include <stdio.h>
-volatile  int A[2 * N];
+int A[2 * N];
 
 void single_do_loop_scev_replace() {
   int i;

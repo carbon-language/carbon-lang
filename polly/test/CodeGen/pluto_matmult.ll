@@ -11,7 +11,7 @@ target triple = "x86_64-unknown-linux-gnu"
 
 define void @pluto_matmult() nounwind {
 entry:
-  call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
+  fence seq_cst
   br label %for.cond
 
 for.cond:                                         ; preds = %for.inc44, %entry
@@ -68,11 +68,9 @@ for.inc44:                                        ; preds = %for.end43
   br label %for.cond
 
 for.end47:                                        ; preds = %for.cond
-  call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
+  fence seq_cst
   ret void
 }
-
-declare void @llvm.memory.barrier(i1, i1, i1, i1, i1) nounwind
 
 define i32 @main() nounwind {
 entry:

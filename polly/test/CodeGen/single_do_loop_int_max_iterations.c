@@ -1,7 +1,7 @@
 #define N 20
 #include "limits.h"
 #include <stdio.h>
-volatile  int A[N];
+int A[N];
 
 void single_do_loop_int_max_iterations() {
   int i;

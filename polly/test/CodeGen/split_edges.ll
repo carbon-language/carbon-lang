@@ -4,7 +4,7 @@ target triple = "x86_64-pc-linux-gnu"
 
 define void @loop_with_condition() nounwind {
 bb0:
-  call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
+  fence seq_cst
   br label %bb1
 
 bb1:
@@ -25,13 +25,10 @@ bb4:
   br label %bb5
 
 bb5:
-  call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
+  fence seq_cst
   ret void
 
 }
-
-declare void @llvm.memory.barrier(i1, i1, i1, i1, i1) nounwind
-
 
 ; CHECK: polly.enterScop
 ; CHECK: polly.finalMerge

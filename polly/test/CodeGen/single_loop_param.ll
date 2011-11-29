@@ -8,7 +8,7 @@ target triple = "x86_64-pc-linux-gnu"
 
 define void @bar(i64 %n) nounwind {
 bb:
-  call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
+  fence seq_cst
   br label %bb1
 
 bb1:                                              ; preds = %bb3, %bb
@@ -26,11 +26,9 @@ bb3:                                              ; preds = %bb2
   br label %bb1
 
 bb4:                                              ; preds = %bb1
-  call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
+  fence seq_cst
   ret void
 }
-
-declare void @llvm.memory.barrier(i1, i1, i1, i1, i1) nounwind
 
 define i32 @main() nounwind {
 bb:

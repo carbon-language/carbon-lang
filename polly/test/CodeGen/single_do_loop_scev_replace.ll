@@ -14,7 +14,7 @@ target triple = "x86_64-unknown-linux-gnu"
 
 define void @single_do_loop_scev_replace() nounwind {
 entry:
-  call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
+  fence seq_cst
   br label %do.body
 
 do.body:                                          ; preds = %do.cond, %entry
@@ -25,25 +25,23 @@ do.body:                                          ; preds = %do.cond, %entry
   br label %do.cond
 
 do.cond:                                          ; preds = %do.body
-  volatile store i32 %i.0, i32* %arrayidx
+  store i32 %i.0, i32* %arrayidx
   %indvar.next = add i64 %indvar, 1               ; <i64> [#uses=2]
   %exitcond = icmp ne i64 %indvar.next, 20        ; <i1> [#uses=1]
   br i1 %exitcond, label %do.body, label %do.end
 
 do.end:                                           ; preds = %do.cond
-  call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
+  fence seq_cst
   ret void
 }
-
-declare void @llvm.memory.barrier(i1, i1, i1, i1, i1) nounwind
 
 define i32 @main() nounwind {
 entry:
   call void @single_do_loop_scev_replace()
   %tmp = load %struct._IO_FILE** @stdout          ; <%struct._IO_FILE*> [#uses=1]
-  %tmp1 = volatile load i32* getelementptr inbounds ([40 x i32]* @A, i32 0, i32 0) ; <i32> [#uses=1]
+  %tmp1 = load i32* getelementptr inbounds ([40 x i32]* @A, i32 0, i32 0) ; <i32> [#uses=1]
   %call = call i32 (%struct._IO_FILE*, i8*, ...)* @fprintf(%struct._IO_FILE* %tmp, i8* getelementptr inbounds ([11 x i8]* @.str, i32 0, i32 0), i32 %tmp1) ; <i32> [#uses=0]
-  %tmp2 = volatile load i32* getelementptr inbounds ([40 x i32]* @A, i32 0, i64 38) ; <i32> [#uses=1]
+  %tmp2 = load i32* getelementptr inbounds ([40 x i32]* @A, i32 0, i64 38) ; <i32> [#uses=1]
   %cmp = icmp eq i32 %tmp2, 19                    ; <i1> [#uses=1]
   br i1 %cmp, label %if.then, label %if.else
 

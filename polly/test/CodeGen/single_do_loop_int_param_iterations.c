@@ -1,6 +1,6 @@
-#define N 20
+define N 20
 #include "limits.h"
-volatile int A[N];
+int A[N];
 
 void bar (int n) {
   int i;

@@ -8,7 +8,7 @@ target triple = "x86_64-unknown-linux-gnu"
 
 define void @bar(i32 %n) nounwind {
 entry:
-  call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
+  fence seq_cst
   %tmp = mul i32 %n, 2                            ; <i32> [#uses=2]
   %tmp1 = icmp sgt i32 %tmp, 1                    ; <i1> [#uses=1]
   %smax = select i1 %tmp1, i32 %tmp, i32 1        ; <i32> [#uses=1]
@@ -16,7 +16,7 @@ entry:
 
 do.body:                                          ; preds = %do.cond, %entry
   %0 = phi i32 [ 0, %entry ], [ %inc, %do.cond ]  ; <i32> [#uses=2]
-  volatile store i32 %0, i32* getelementptr inbounds ([20 x i32]* @A, i32 0, i32 0)
+  store i32 %0, i32* getelementptr inbounds ([20 x i32]* @A, i32 0, i32 0)
   %inc = add nsw i32 %0, 1                        ; <i32> [#uses=2]
   br label %do.cond
 
@@ -25,17 +25,15 @@ do.cond:                                          ; preds = %do.body
   br i1 %exitcond, label %do.body, label %do.end
 
 do.end:                                           ; preds = %do.cond
-  call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
+  fence seq_cst
   ret void
 }
 
-declare void @llvm.memory.barrier(i1, i1, i1, i1, i1) nounwind
-
 define i32 @main() nounwind {
 entry:
-  volatile store i32 0, i32* getelementptr inbounds ([20 x i32]* @A, i32 0, i32 0)
+  store i32 0, i32* getelementptr inbounds ([20 x i32]* @A, i32 0, i32 0)
   call void @bar(i32 10)
-  %tmp = volatile load i32* getelementptr inbounds ([20 x i32]* @A, i32 0, i32 0) ; <i32> [#uses=1]
+  %tmp = load i32* getelementptr inbounds ([20 x i32]* @A, i32 0, i32 0) ; <i32> [#uses=1]
   %cmp = icmp eq i32 %tmp, 19                     ; <i1> [#uses=1]
   br i1 %cmp, label %if.then, label %if.else
 

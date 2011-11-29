@@ -49,7 +49,7 @@ for.cond1:                                        ; preds = %for.inc, %for.body
 for.body4:                                        ; preds = %for.cond1
   %conv = sitofp i32 %add to double               ; <double> [#uses=1]
   store double %conv, double* %arrayidx10
-  call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
+  fence seq_cst
   %conv13 = sitofp i32 %mul to double             ; <double> [#uses=1]
   store double %conv13, double* %arrayidx20
   store double 0.000000e+00, double* %arrayidx27
@@ -69,8 +69,6 @@ for.inc29:                                        ; preds = %for.end
 for.end32:                                        ; preds = %for.cond
   ret void
 }
-
-declare void @llvm.memory.barrier(i1, i1, i1, i1, i1) nounwind
 
 define void @print_array() nounwind {
 entry:
@@ -128,7 +126,7 @@ declare i32 @fprintf(%struct._IO_FILE*, i8*, ...)
 
 define void @do_pluto_matmult() nounwind {
 entry:
-  call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
+  fence seq_cst
   br label %do.body
 
 do.body:                                          ; preds = %do.cond42, %entry
@@ -176,7 +174,7 @@ do.cond42:                                        ; preds = %do.end39
   br i1 %exitcond6, label %do.body, label %do.end45
 
 do.end45:                                         ; preds = %do.cond42
-  call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
+  fence seq_cst
   ret void
 }
 

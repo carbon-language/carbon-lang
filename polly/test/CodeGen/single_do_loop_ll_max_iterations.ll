@@ -8,13 +8,13 @@ target triple = "x86_64-unknown-linux-gnu"
 
 define i32 @main() nounwind {
 entry:
-  volatile store i64 0, i64* getelementptr inbounds ([20 x i64]* @A, i32 0, i32 0)
-  call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
+  store i64 0, i64* getelementptr inbounds ([20 x i64]* @A, i32 0, i32 0)
+  fence seq_cst
   br label %do.body
 
 do.body:                                          ; preds = %do.cond, %entry
   %0 = phi i64 [ 0, %entry ], [ %inc, %do.cond ]  ; <i64> [#uses=2]
-  volatile store i64 %0, i64* getelementptr inbounds ([20 x i64]* @A, i32 0, i32 0)
+  store i64 %0, i64* getelementptr inbounds ([20 x i64]* @A, i32 0, i32 0)
   %inc = add nsw i64 %0, 1                        ; <i64> [#uses=2]
   br label %do.cond
 
@@ -23,8 +23,8 @@ do.cond:                                          ; preds = %do.body
   br i1 %exitcond, label %do.body, label %do.end
 
 do.end:                                           ; preds = %do.cond
-  call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
-  %tmp3 = volatile load i64* getelementptr inbounds ([20 x i64]* @A, i32 0, i32 0) ; <i64> [#uses=1]
+  fence seq_cst
+  %tmp3 = load i64* getelementptr inbounds ([20 x i64]* @A, i32 0, i32 0) ; <i64> [#uses=1]
   %cmp4 = icmp eq i64 %tmp3, 9223372036854775806  ; <i1> [#uses=1]
   br i1 %cmp4, label %if.then, label %if.else
 
@@ -39,6 +39,5 @@ return:                                           ; preds = %if.else, %if.then
   ret i32 %retval.0
 }
 
-declare void @llvm.memory.barrier(i1, i1, i1, i1, i1) nounwind
 ; CHECK:for (c2=0;c2<=9223372036854775806;c2++) {
 

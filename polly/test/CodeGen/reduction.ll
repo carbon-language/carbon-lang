@@ -17,7 +17,7 @@ define i32 @main() nounwind {
   %5 = getelementptr inbounds [1021 x i32]* %A, i32 0, i32 0 ; <i32*> [#uses=1]
   %6 = getelementptr inbounds i32* %5, i64 1      ; <i32*> [#uses=1]
   store i32 1, i32* %6
-  call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
+  fence seq_cst
   br label %7
 
 ; <label>:7                                       ; preds = %14, %0
@@ -46,7 +46,7 @@ define i32 @main() nounwind {
 
 ; <label>:15                                      ; preds = %7
   %red.0.lcssa = phi i32 [ %red.0, %7 ]           ; <i32> [#uses=1]
-  call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
+  fence seq_cst
   %16 = icmp ne i32 %red.0.lcssa, 382399368       ; <i1> [#uses=1]
   br i1 %16, label %17, label %18
 
@@ -60,5 +60,4 @@ define i32 @main() nounwind {
 
 declare void @llvm.memset.p0i8.i64(i8* nocapture, i8, i64, i32, i1) nounwind
 
-declare void @llvm.memory.barrier(i1, i1, i1, i1, i1) nounwind
 ; CHECK:  Could not generate independent blocks

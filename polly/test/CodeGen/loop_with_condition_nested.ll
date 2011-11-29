@@ -9,7 +9,7 @@ target triple = "x86_64-pc-linux-gnu"
 
 define void @loop_with_condition() nounwind {
 ; <label>:0
-  call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
+  fence seq_cst
   br label %1
 
 ; <label>:1                                       ; preds = %10, %0
@@ -48,11 +48,9 @@ define void @loop_with_condition() nounwind {
   br label %1
 
 ; <label>:11                                      ; preds = %1
-  call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
+  fence seq_cst
   ret void
 }
-
-declare void @llvm.memory.barrier(i1, i1, i1, i1, i1) nounwind
 
 define i32 @main() nounwind {
 ; <label>:0
