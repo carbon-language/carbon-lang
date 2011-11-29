@@ -80,9 +80,6 @@ protected:
   virtual bool hasASTFileSupport() const { return false; }
 
 public:
-  /// \brief Create a new action
-  explicit GeneratePCHAction(bool MakeModule) : MakeModule(MakeModule) { }
-  
   /// \brief Compute the AST consumer arguments that will be used to
   /// create the PCHGenerator instance returned by CreateASTConsumer.
   ///

@@ -1,6 +1,6 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -fmodule-cache-path %t -fmodule-name=module_private_left -x c++ -emit-module-from-map %S/Inputs/module.map
-// RUN: %clang_cc1 -fmodule-cache-path %t -fmodule-name=module_private_right -x c++ -emit-module-from-map %S/Inputs/module.map
+// RUN: %clang_cc1 -fmodule-cache-path %t -fmodule-name=module_private_left -x c++ -emit-module %S/Inputs/module.map
+// RUN: %clang_cc1 -fmodule-cache-path %t -fmodule-name=module_private_right -x c++ -emit-module %S/Inputs/module.map
 // RUN: %clang_cc1 -fmodule-cache-path %t %s -verify
 
 __import_module__ module_private_left;

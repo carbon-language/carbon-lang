@@ -1,8 +1,8 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -fmodule-cache-path %t -x objective-c -fmodule-name=category_top -emit-module-from-map %S/Inputs/module.map
-// RUN: %clang_cc1 -fmodule-cache-path %t -x objective-c -fmodule-name=category_left -emit-module-from-map %S/Inputs/module.map
-// RUN: %clang_cc1 -fmodule-cache-path %t -x objective-c -fmodule-name=category_right -emit-module-from-map %S/Inputs/module.map
-// RUN: %clang_cc1 -fmodule-cache-path %t -x objective-c -fmodule-name=category_bottom -emit-module-from-map %S/Inputs/module.map
+// RUN: %clang_cc1 -fmodule-cache-path %t -x objective-c -fmodule-name=category_top -emit-module %S/Inputs/module.map
+// RUN: %clang_cc1 -fmodule-cache-path %t -x objective-c -fmodule-name=category_left -emit-module %S/Inputs/module.map
+// RUN: %clang_cc1 -fmodule-cache-path %t -x objective-c -fmodule-name=category_right -emit-module %S/Inputs/module.map
+// RUN: %clang_cc1 -fmodule-cache-path %t -x objective-c -fmodule-name=category_bottom -emit-module %S/Inputs/module.map
 // RUN: %clang_cc1 -fmodule-cache-path %t %s -verify
 
 __import_module__ category_bottom;

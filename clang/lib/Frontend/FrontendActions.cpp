@@ -86,7 +86,7 @@ ASTConsumer *GeneratePCHAction::CreateASTConsumer(CompilerInstance &CI,
 
   if (!CI.getFrontendOpts().RelocatablePCH)
     Sysroot.clear();
-  return new PCHGenerator(CI.getPreprocessor(), OutputFile, MakeModule, 
+  return new PCHGenerator(CI.getPreprocessor(), OutputFile, /*Module=*/false, 
                           Sysroot, OS);
 }
 

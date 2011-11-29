@@ -1,5 +1,5 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -emit-module-from-map -fmodule-cache-path %t -fmodule-name=macros %S/Inputs/module.map
+// RUN: %clang_cc1 -emit-module -fmodule-cache-path %t -fmodule-name=macros %S/Inputs/module.map
 // RUN: %clang_cc1 -verify -fmodule-cache-path %t %s
 // RUN: %clang_cc1 -E -fmodule-cache-path %t %s | FileCheck -check-prefix CHECK-PREPROCESSED %s
 

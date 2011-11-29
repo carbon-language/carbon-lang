@@ -15,8 +15,8 @@ void test(int i, float f) {
 }
 
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -emit-module-from-map -fmodule-cache-path %t -fmodule-name=lookup_left_cxx -x c++ %S/Inputs/module.map -verify
-// RUN: %clang_cc1 -emit-module-from-map -fmodule-cache-path %t -fmodule-name=lookup_right_cxx -x c++ %S/Inputs/module.map -verify
+// RUN: %clang_cc1 -emit-module -fmodule-cache-path %t -fmodule-name=lookup_left_cxx -x c++ %S/Inputs/module.map -verify
+// RUN: %clang_cc1 -emit-module -fmodule-cache-path %t -fmodule-name=lookup_right_cxx -x c++ %S/Inputs/module.map -verify
 // RUN: %clang_cc1 -x c++ -fmodule-cache-path %t %s -verify
 // RUN: %clang_cc1 -ast-print -x c++ -fmodule-cache-path %t %s | FileCheck -check-prefix=CHECK-PRINT %s
 

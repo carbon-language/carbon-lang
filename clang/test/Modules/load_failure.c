@@ -7,7 +7,7 @@ __import_module__ load_failure;
 #endif
 
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -x c++ -fmodule-cache-path %t -fdisable-module-hash -emit-module-from-map -fmodule-name=load_failure %S/Inputs/module.map
+// RUN: %clang_cc1 -x c++ -fmodule-cache-path %t -fdisable-module-hash -emit-module -fmodule-name=load_failure %S/Inputs/module.map
 // RUN: %clang_cc1 -fmodule-cache-path %t -fdisable-module-hash %s -DNONEXISTENT 2>&1 | FileCheck -check-prefix=CHECK-NONEXISTENT %s
 // CHECK-NONEXISTENT: load_failure.c:2:19: fatal error: module 'load_nonexistent' not found
 

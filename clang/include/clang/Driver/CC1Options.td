@@ -378,9 +378,7 @@ def ast_view : Flag<"-ast-view">,
 def print_decl_contexts : Flag<"-print-decl-contexts">,
   HelpText<"Print DeclContexts and their Decls">;
 def emit_module : Flag<"-emit-module">,
-  HelpText<"Generate pre-compiled module file">;
-def emit_module_from_map : Flag<"-emit-module-from-map">,
-  HelpText<"Generate pre-compiled module file from module map">;
+  HelpText<"Generate pre-compiled module file from a module map">;
 def emit_pth : Flag<"-emit-pth">,
   HelpText<"Generate pre-tokenized header file">;
 def emit_pch : Flag<"-emit-pch">,

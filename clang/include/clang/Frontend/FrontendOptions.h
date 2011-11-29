@@ -35,7 +35,6 @@ namespace frontend {
     EmitObj,                ///< Emit a .o file.
     FixIt,                  ///< Parse and apply any fixits to the source.
     GenerateModule,         ///< Generate pre-compiled module.
-    GenerateModuleFromMap,  ///< Generate pre-compiled module from module map.
     GeneratePCH,            ///< Generate pre-compiled header.
     GeneratePTH,            ///< Generate pre-tokenized header.
     InitOnly,               ///< Only execute frontend initialization.
