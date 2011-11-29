@@ -3991,13 +3991,7 @@ public:
              CommandReturnObject &result)
     {
         Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
-        if (target)
-        {
-            bool notify = true;
-            target->GetImageSearchPathList().Clear(notify);
-            result.SetStatus (eReturnStatusSuccessFinishNoResult);
-        }
-        else
+        if (!target)
         {
             result.AppendError ("invalid target\n");
             result.SetStatus (eReturnStatusFailed);
