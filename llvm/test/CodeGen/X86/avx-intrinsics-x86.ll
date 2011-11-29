@@ -2140,7 +2140,8 @@ declare <8 x float> @llvm.x86.avx.sqrt.ps.256(<8 x float>) nounwind readnone
 
 
 define void @test_x86_avx_storeu_dq_256(i8* %a0, <32 x i8> %a1) {
-  ; CHECK: vmovdqu
+  ; FIXME: unfortunately the execution domain fix pass changes this to vmovups and its hard to force with no 256-bit integer instructions
+  ; CHECK: vmovups
   ; add operation forces the execution domain.
   %a2 = add <32 x i8> %a1, <i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1>
   call void @llvm.x86.avx.storeu.dq.256(i8* %a0, <32 x i8> %a2)

@@ -7147,7 +7147,7 @@ def : Pat<(int_x86_avx_vbroadcastf128_ps_256 addr:$src),
 //===----------------------------------------------------------------------===//
 // VINSERTF128 - Insert packed floating-point values
 //
-let neverHasSideEffects = 1 in {
+let neverHasSideEffects = 1, ExeDomain = SSEPackedSingle in {
 def VINSERTF128rr : AVXAIi8<0x18, MRMSrcReg, (outs VR256:$dst),
           (ins VR256:$src1, VR128:$src2, i8imm:$src3),
           "vinsertf128\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
@@ -7194,7 +7194,7 @@ def : Pat<(vinsertf128_insert:$ins (v16i16 VR256:$src1), (v8i16 VR128:$src2),
 //===----------------------------------------------------------------------===//
 // VEXTRACTF128 - Extract packed floating-point values
 //
-let neverHasSideEffects = 1 in {
+let neverHasSideEffects = 1, ExeDomain = SSEPackedSingle in {
 def VEXTRACTF128rr : AVXAIi8<0x19, MRMDestReg, (outs VR128:$dst),
           (ins VR256:$src1, i8imm:$src2),
           "vextractf128\t{$src2, $src1, $dst|$dst, $src1, $src2}",

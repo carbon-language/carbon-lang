@@ -3568,10 +3568,14 @@ static const unsigned ReplaceableInstrsAVX2[][3] = {
   { X86::VANDPSYrr,    X86::VANDPDYrr,    X86::VPANDYrr    },
   { X86::VORPSYrm,     X86::VORPDYrm,     X86::VPORYrm     },
   { X86::VORPSYrr,     X86::VORPDYrr,     X86::VPORYrr     },
-  { X86::VPERM2F128rm, X86::VPERM2F128rm, X86::VPERM2I128rm },
-  { X86::VPERM2F128rr, X86::VPERM2F128rr, X86::VPERM2I128rr },
   { X86::VXORPSYrm,    X86::VXORPDYrm,    X86::VPXORYrm    },
-  { X86::VXORPSYrr,    X86::VXORPDYrr,    X86::VPXORYrr    }
+  { X86::VXORPSYrr,    X86::VXORPDYrr,    X86::VPXORYrr    },
+  { X86::VEXTRACTF128mr, X86::VEXTRACTF128mr, X86::VEXTRACTI128mr },
+  { X86::VEXTRACTF128rr, X86::VEXTRACTF128rr, X86::VEXTRACTI128rr },
+  { X86::VINSERTF128rm,  X86::VINSERTF128rm,  X86::VINSERTI128rm },
+  { X86::VINSERTF128rr,  X86::VINSERTF128rr,  X86::VINSERTI128rr },
+  { X86::VPERM2F128rm,   X86::VPERM2F128rm,   X86::VPERM2I128rm },
+  { X86::VPERM2F128rr,   X86::VPERM2F128rr,   X86::VPERM2I128rr }
 };
 
 // FIXME: Some shuffle and unpack instructions have equivalents in different
