@@ -10,6 +10,7 @@
 #include "DisassemblerLLVM.h"
 
 #include "llvm-c/EnhancedDisassembly.h"
+#include "llvm/Support/TargetSelect.h"
 
 #include "lldb/Core/Address.h"
 #include "lldb/Core/DataExtractor.h"
@@ -669,6 +670,16 @@ DisassemblerLLVM::DisassemblerLLVM(const ArchSpec &arch) :
     m_disassembler (NULL),
     m_disassembler_thumb (NULL) // For ARM only
 {
+    // Initialize the LLVM objects needed to use the disassembler.
+    static struct InitializeLLVM {
+        InitializeLLVM() {
+            llvm::InitializeAllTargetInfos();
+            llvm::InitializeAllTargetMCs();
+            llvm::InitializeAllAsmParsers();
+            llvm::InitializeAllDisassemblers();
+        }
+    } InitializeLLVM;
+
     const std::string &arch_triple = arch.GetTriple().str();
     if (!arch_triple.empty())
     {

@@ -10,6 +10,7 @@
 #include "UnwindAssembly-x86.h"
 
 #include "llvm-c/EnhancedDisassembly.h"
+#include "llvm/Support/TargetSelect.h"
 
 #include "lldb/Core/Address.h"
 #include "lldb/Core/Error.h"
@@ -488,6 +489,16 @@ AssemblyParse_x86::instruction_length (Address addr, int &length)
         triple = "i386-unknown-unknown";
     else
         triple = "x86_64-unknown-unknown";
+
+    // Initialize the LLVM objects needed to use the disassembler.
+    static struct InitializeLLVM {
+        InitializeLLVM() {
+            llvm::InitializeAllTargetInfos();
+            llvm::InitializeAllTargetMCs();
+            llvm::InitializeAllAsmParsers();
+            llvm::InitializeAllDisassemblers();
+        }
+    } InitializeLLVM;
 
     EDDisassemblerRef disasm;
     EDInstRef         cur_insn;
