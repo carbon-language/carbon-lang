@@ -1592,7 +1592,7 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
     // function definition declared at class scope then we must set
     // DC to the lexical parent to be able to search into the parent
     // class.
-    if (getLangOptions().MicrosoftMode && DC->isFunctionOrMethod() &&
+    if (getLangOptions().MicrosoftMode && isa<FunctionDecl>(DC) &&
         cast<FunctionDecl>(DC)->getFriendObjectKind() &&
         DC->getLexicalParent()->isRecord())
       DC = DC->getLexicalParent();
