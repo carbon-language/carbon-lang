@@ -1,8 +1,4 @@
 // RUN: rm -rf %t
-// FIXME: Eventually, we should be able to remove these explicit module creation lines
-// RUN: %clang_cc1 -x objective-c -fmodule-cache-path %t -fmodule-name=libA -emit-module-from-map %S/Inputs/normal-module-map/module.map
-// RUN: %clang_cc1 -x objective-c -fmodule-cache-path %t -fmodule-name=libB -emit-module-from-map %S/Inputs/normal-module-map/module.map
-// RUN: %clang_cc1 -x objective-c -fmodule-cache-path %t -fmodule-name=libNested -emit-module-from-map %S/Inputs/normal-module-map/nested/module.map
 // RUN: %clang_cc1 -x objective-c -fmodule-cache-path %t -fauto-module-import -I %S/Inputs/normal-module-map %s -verify
 #include "Umbrella/umbrella_sub.h"
 

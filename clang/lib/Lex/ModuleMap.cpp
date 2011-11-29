@@ -206,6 +206,15 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
   return Result;
 }
 
+const FileEntry *
+ModuleMap::getContainingModuleMapFile(ModuleMap::Module *Module) {
+  if (Module->DefinitionLoc.isInvalid() || !SourceMgr)
+    return 0;
+
+  return SourceMgr->getFileEntryForID(
+           SourceMgr->getFileID(Module->DefinitionLoc));
+}
+
 void ModuleMap::dump() {
   llvm::errs() << "Modules:";
   for (llvm::StringMap<Module *>::iterator M = Modules.begin(), 

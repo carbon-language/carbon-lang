@@ -166,7 +166,16 @@ public:
   /// framework directory.
   Module *inferFrameworkModule(StringRef ModuleName, 
                                const DirectoryEntry *FrameworkDir);
-                               
+  
+  /// \brief Retrieve the module map file containing the definition of the given
+  /// module.
+  ///
+  /// \param Module The module whose module map file will be returned, if known.
+  ///
+  /// \returns The file entry for the module map file containing the given
+  /// module, or NULL if the module definition was inferred.
+  const FileEntry *getContainingModuleMapFile(ModuleMap::Module *Module);
+  
   /// \brief Parse the given module map file, and record any modules we 
   /// encounter.
   ///
