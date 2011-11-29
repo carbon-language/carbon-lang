@@ -132,10 +132,6 @@ Release Notes</a>.</h1>
     Objective-C runtime, or version 1.6 or later of the GNUstep Objective-C
     runtime version.</li>
 
-  <li>Improved support for OpenCL C, including the <tt>vec_step</tt> operator,
-      address space qualifiers, improved vector literal support and code
-      generation support for the <a href="#PTX">PTX target</a>.</li>
-
   <li>Implemented a number of optimizations in <tt>libclang</tt>, the Clang C
       interface, to improve the performance of code completion and the mapping
       from source locations to abstract syntax tree nodes.</li>
@@ -1061,12 +1057,9 @@ be used to verify some algorithms.
   pieces are texture/sampler support and some vector operations.</p>
 
   <p>That said, the backend is already being used for domain-specific languages
-  and works well with the <a href="http://www.pcc.me.uk/~peter/libclc/">libclc
-    library</a> to supply OpenCL built-ins.  With it, you can use Clang to compile
-  OpenCL code into PTX and execute it by loading the resulting PTX as a binary
-  blob using the nVidia OpenCL library.  It has been tested with several OpenCL
-  programs, including some from the nVidia GPU Computing SDK, and the performance
-  is on par with the nVidia compiler.</p>
+  and can be used by Clang to
+  <a href="http://clang.llvm.org/docs/ReleaseNotes.html#opencl">compile OpenCL
+  C code</a> into PTX.</p>
 
 </div>
 
