@@ -218,6 +218,7 @@ ASTUnit::ASTUnit(bool _MainFileIsAST)
     OwnsRemappedFileBuffers(true),
     NumStoredDiagnosticsFromDriver(0),
     PreambleRebuildCounter(0), SavedMainFileBuffer(0), PreambleBuffer(0),
+    NumWarningsInPreamble(0),
     ShouldCacheCodeCompletionResults(false),
     NestedMacroExpansions(true),
     CompletionCacheTopLevelHashValue(0),
