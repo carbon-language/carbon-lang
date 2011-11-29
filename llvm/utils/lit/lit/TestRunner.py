@@ -53,7 +53,9 @@ def WinWaitReleased(f):
         WinRename(f, t) # rename
         WinRename(t, f) # restore
     except WindowsError, (winerror, strerror):
-        if winerror == 3: # ERROR_PATH_NOT_FOUND
+        if winerror in (2, 3):
+            # 2: ERROR_FILE_NOT_FOUND
+            # 3: ERROR_PATH_NOT_FOUND
             pass
         else:
             raise
