@@ -28,6 +28,14 @@ entry:
   ret <4 x i64> %shuffle
 }
 
+; CHECK: vpermilpd
+define <4 x i64> @funcQ(<4 x i64>* %a) nounwind uwtable readnone ssp {
+entry:
+  %a2 = load <4 x i64>* %a
+  %shuffle = shufflevector <4 x i64> %a2, <4 x i64> undef, <4 x i32> <i32 1, i32 0, i32 3, i32 3>
+  ret <4 x i64> %shuffle
+}
+
 ; vpermil should match masks like this: <u,3,1,2,4,u,5,6>. Check that the
 ; target specific mask was correctly generated.
 ; CHECK: vpermilps $-100

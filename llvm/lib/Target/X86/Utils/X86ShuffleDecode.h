@@ -64,8 +64,8 @@ void DecodePUNPCKLMask(EVT VT,
 void DecodePUNPCKHMask(unsigned NElts,
                        SmallVectorImpl<unsigned> &ShuffleMask);
 
-void DecodeSHUFPSMask(unsigned NElts, unsigned Imm,
-                      SmallVectorImpl<unsigned> &ShuffleMask);
+void DecodeSHUFPMask(EVT VT, unsigned Imm,
+                     SmallVectorImpl<unsigned> &ShuffleMask);
 
 /// DecodeUNPCKHPMask - This decodes the shuffle masks for unpckhps/unpckhpd
 /// etc.  VT indicates the type of the vector allowing it to handle different

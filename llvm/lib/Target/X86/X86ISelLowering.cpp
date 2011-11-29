@@ -4567,9 +4567,8 @@ static SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG,
     case X86ISD::SHUFPS:
     case X86ISD::SHUFPD:
       ImmN = N->getOperand(N->getNumOperands()-1);
-      DecodeSHUFPSMask(NumElems,
-                       cast<ConstantSDNode>(ImmN)->getZExtValue(),
-                       ShuffleMask);
+      DecodeSHUFPMask(VT, cast<ConstantSDNode>(ImmN)->getZExtValue(),
+                      ShuffleMask);
       break;
     case X86ISD::PUNPCKH:
       DecodePUNPCKHMask(NumElems, ShuffleMask);

@@ -7332,6 +7332,15 @@ def : Pat<(v8i32 (X86VPermilps VR256:$src1, (i8 imm:$imm))),
           (VPERMILPSYri VR256:$src1, imm:$imm)>;
 def : Pat<(v4i64 (X86VPermilpd VR256:$src1, (i8 imm:$imm))),
           (VPERMILPDYri VR256:$src1, imm:$imm)>;
+def : Pat<(v8f32 (X86VPermilps (memopv8f32 addr:$src1), (i8 imm:$imm))),
+          (VPERMILPSYmi addr:$src1, imm:$imm)>;
+def : Pat<(v4f64 (X86VPermilpd (memopv4f64 addr:$src1), (i8 imm:$imm))),
+          (VPERMILPDYmi addr:$src1, imm:$imm)>;
+def : Pat<(v8i32 (X86VPermilps (bc_v8i32 (memopv4i64 addr:$src1)),
+                               (i8 imm:$imm))),
+          (VPERMILPSYmi addr:$src1, imm:$imm)>;
+def : Pat<(v4i64 (X86VPermilpd (memopv4i64 addr:$src1), (i8 imm:$imm))),
+          (VPERMILPDYmi addr:$src1, imm:$imm)>;
 
 //===----------------------------------------------------------------------===//
 // VPERM2F128 - Permute Floating-Point Values in 128-bit chunks

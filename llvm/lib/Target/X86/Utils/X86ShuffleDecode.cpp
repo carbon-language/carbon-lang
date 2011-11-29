@@ -128,17 +128,27 @@ void DecodePUNPCKHMask(unsigned NElts,
   }
 }
 
-void DecodeSHUFPSMask(unsigned NElts, unsigned Imm,
-                      SmallVectorImpl<unsigned> &ShuffleMask) {
-  // Part that reads from dest.
-  for (unsigned i = 0; i != NElts/2; ++i) {
-    ShuffleMask.push_back(Imm % NElts);
-    Imm /= NElts;
-  }
-  // Part that reads from src.
-  for (unsigned i = 0; i != NElts/2; ++i) {
-    ShuffleMask.push_back(Imm % NElts + NElts);
-    Imm /= NElts;
+void DecodeSHUFPMask(EVT VT, unsigned Imm,
+                     SmallVectorImpl<unsigned> &ShuffleMask) {
+  unsigned NumElts = VT.getVectorNumElements();
+
+  unsigned NumLanes = VT.getSizeInBits() / 128;
+  unsigned NumLaneElts = NumElts / NumLanes;
+
+  int NewImm = Imm;
+  for (unsigned l = 0; l < NumLanes; ++l) {
+    unsigned LaneStart = l * NumLaneElts;
+    // Part that reads from dest.
+    for (unsigned i = 0; i != NumLaneElts/2; ++i) {
+      ShuffleMask.push_back(NewImm % NumLaneElts + LaneStart);
+      NewImm /= NumLaneElts;
+    }
+    // Part that reads from src.
+    for (unsigned i = 0; i != NumLaneElts/2; ++i) {
+      ShuffleMask.push_back(NewImm % NumLaneElts + NumElts + LaneStart);
+      NewImm /= NumLaneElts;
+    }
+    if (NumLaneElts == 4) NewImm = Imm; // reload imm
   }
 }
 
