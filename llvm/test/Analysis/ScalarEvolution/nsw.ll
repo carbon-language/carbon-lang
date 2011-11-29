@@ -104,3 +104,21 @@ for.body.i.i:                                     ; preds = %entry, %for.body.i.
 _ZSt4fillIPiiEvT_S1_RKT0_.exit:                   ; preds = %for.body.i.i, %entry
   ret void
 }
+
+; A single AddExpr exists for (%a + %b), which is not always <nsw>.
+; CHECK: @addnsw
+; CHECK-NOT: --> (%a + %b)<nsw>
+define i32 @addnsw(i32 %a, i32 %b) nounwind ssp {
+entry:
+  %tmp = add i32 %a, %b
+  %cmp = icmp sgt i32 %tmp, 0
+  br i1 %cmp, label %greater, label %exit
+
+greater:
+  %tmp2 = add nsw i32 %a, %b
+  br label %exit
+
+exit:
+  %result = phi i32 [ %a, %entry ], [ %tmp2, %greater ]
+  ret i32 %result
+}
