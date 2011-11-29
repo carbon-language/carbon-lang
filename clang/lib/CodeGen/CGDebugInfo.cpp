@@ -1214,7 +1214,8 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   if (ID->isForwardDecl()) {
     llvm::DIType FwdDecl =
       DBuilder.createStructType(Unit, ID->getName(),
-                                DefUnit, Line, 0, 0, 0,
+                                DefUnit, Line, 0, 0,
+                                llvm::DIDescriptor::FlagFwdDecl,
                                 llvm::DIArray(), RuntimeLang);
     return FwdDecl;
   }
