@@ -545,7 +545,6 @@ bool IndexingContext::handleCXXRecordDecl(const CXXRecordDecl *RD,
 bool IndexingContext::markEntityOccurrenceInFile(const NamedDecl *D,
                                                  SourceLocation Loc) {
   SourceManager &SM = Ctx->getSourceManager();
-  SourceLocation FileLoc = SM.getFileLoc(Loc);
   D = getEntityDecl(D);
   
   std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(Loc);
