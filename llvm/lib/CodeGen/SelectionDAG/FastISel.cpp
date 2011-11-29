@@ -66,6 +66,7 @@ STATISTIC(NumFastIselSuccessIndependent, "Number of insts selected by "
           "target-independent selector");
 STATISTIC(NumFastIselSuccessTarget, "Number of insts selected by "
           "target-specific selector");
+STATISTIC(NumFastIselDead, "Number of dead insts removed on failure");
 
 /// startNewBlock - Set the current block to which generated machine
 /// instructions will be appended, and clear the local CSE map.
@@ -307,6 +308,18 @@ void FastISel::recomputeInsertPt() {
   while (FuncInfo.InsertPt != FuncInfo.MBB->end() &&
          FuncInfo.InsertPt->getOpcode() == TargetOpcode::EH_LABEL)
     ++FuncInfo.InsertPt;
+}
+
+void FastISel::removeDeadCode(MachineBasicBlock::iterator I,
+                              MachineBasicBlock::iterator E) {
+  assert (I && E && std::distance(I, E) > 0 && "Invalid iterator!");
+  while (I != E) {
+    MachineInstr *Dead = &*I;
+    ++I;
+    Dead->eraseFromParent();
+    ++NumFastIselDead;
+  }
+  recomputeInsertPt();
 }
 
 FastISel::SavePoint FastISel::enterLocalValueArea() {
@@ -794,19 +807,33 @@ FastISel::SelectInstruction(const Instruction *I) {
 
   DL = I->getDebugLoc();
 
+  MachineBasicBlock::iterator SavedInsertPt = FuncInfo.InsertPt;
+
   // First, try doing target-independent selection.
   if (SelectOperator(I, I->getOpcode())) {
     ++NumFastIselSuccessIndependent;
     DL = DebugLoc();
     return true;
   }
+  // Remove dead code.  However, ignore call instructions since we've flushed 
+  // the local value map and recomputed the insert point.
+  if (!isa<CallInst>(I)) {
+    recomputeInsertPt();
+    if (SavedInsertPt != FuncInfo.InsertPt)
+      removeDeadCode(FuncInfo.InsertPt, SavedInsertPt);
+  }
 
   // Next, try calling the target to attempt to handle the instruction.
+  SavedInsertPt = FuncInfo.InsertPt;
   if (TargetSelectInstruction(I)) {
     ++NumFastIselSuccessTarget;
     DL = DebugLoc();
     return true;
   }
+  // Check for dead code and remove as necessary.
+  recomputeInsertPt();
+  if (SavedInsertPt != FuncInfo.InsertPt)
+    removeDeadCode(FuncInfo.InsertPt, SavedInsertPt);
 
   DL = DebugLoc();
   return false;

@@ -381,6 +381,10 @@ private:
 
   /// hasTrivialKill - Test whether the given value has exactly one use.
   bool hasTrivialKill(const Value *V) const;
+
+  /// removeDeadCode - Remove all dead instructions between the I and E.
+  void removeDeadCode(MachineBasicBlock::iterator I,
+                      MachineBasicBlock::iterator E);
 };
 
 }
