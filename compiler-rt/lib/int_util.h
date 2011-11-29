@@ -24,6 +24,9 @@
                                                  __FUNCTION__)
 void compilerrt_abort_impl(const char *file, int line,
                            const char *function)
+#ifndef KERNEL_USE
+  __attribute__((weak))
+#endif
   __attribute__((noreturn)) __attribute__((visibility("hidden")));
 
 #endif /* INT_UTIL_H */
