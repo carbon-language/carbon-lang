@@ -343,6 +343,12 @@ void clang_findReferencesInFile(CXCursor cursor, CXFile file,
     return;
   }
 
+  ASTUnit *CXXUnit = cxcursor::getCursorASTUnit(cursor);
+  if (!CXXUnit)
+    return;
+
+  ASTUnit::ConcurrencyCheck Check(*CXXUnit);
+
   if (cursor.kind == CXCursor_MacroDefinition ||
       cursor.kind == CXCursor_MacroExpansion) {
     findMacroRefsInFile(cxcursor::getCursorTU(cursor),
@@ -369,9 +375,6 @@ void clang_findReferencesInFile(CXCursor cursor, CXFile file,
                       "declaration\n";
     return;
   }
-
-  ASTUnit *CXXUnit = cxcursor::getCursorASTUnit(cursor);
-  ASTUnit::ConcurrencyCheck Check(*CXXUnit);
 
   findIdRefsInFile(cxcursor::getCursorTU(cursor),
                    refCursor,
