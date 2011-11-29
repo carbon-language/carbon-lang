@@ -962,9 +962,13 @@ void LockFileManager::waitForUnlock() {
 /// umbrella header, using the options provided by the importing compiler
 /// instance.
 static void compileModule(CompilerInstance &ImportingInstance,
-                          StringRef ModuleName,
-                          StringRef ModuleFileName,
-                          StringRef UmbrellaHeader) {
+                          ModuleMap::Module *Module,
+                          StringRef ModuleFileName) {
+  // FIXME: Currently, we can only handle modules that have an umbrella 
+  // header. That's lame.
+  if (!Module->UmbrellaHeader)
+    return;
+  
   LockFileManager Locked(ModuleFileName);
   switch (Locked) {
   case LockFileManager::LFS_Error:
@@ -991,11 +995,12 @@ static void compileModule(CompilerInstance &ImportingInstance,
   Invocation->getPreprocessorOpts().resetNonModularOptions();
 
   // Note the name of the module we're building.
-  Invocation->getLangOpts()->CurrentModule = ModuleName;
+  Invocation->getLangOpts()->CurrentModule = Module->getTopLevelModuleName();
 
   // Note that this module is part of the module build path, so that we
   // can detect cycles in the module graph.
-  Invocation->getPreprocessorOpts().ModuleBuildPath.push_back(ModuleName);
+  Invocation->getPreprocessorOpts().ModuleBuildPath
+    .push_back(Module->getTopLevelModuleName());
 
   // Set up the inputs/outputs so that we build the module from its umbrella
   // header.
@@ -1005,7 +1010,7 @@ static void compileModule(CompilerInstance &ImportingInstance,
   FrontendOpts.Inputs.clear();
   FrontendOpts.Inputs.push_back(
     std::make_pair(getSourceInputKindFromOptions(*Invocation->getLangOpts()),
-                                                 UmbrellaHeader));
+                                           Module->UmbrellaHeader->getName()));
 
   Invocation->getDiagnosticOpts().VerifyDiagnostics = 0;
 
@@ -1052,10 +1057,9 @@ ModuleKey CompilerInstance::loadModule(SourceLocation ImportLoc,
                                              &ModuleFileName);
 
   bool BuildingModule = false;
-  if (!ModuleFile && Module && Module->UmbrellaHeader) {
-    // We didn't find the module, but there is an umbrella header that
-    // can be used to create the module file. Create a separate compilation
-    // module to do so.
+  if (!ModuleFile && Module) {
+    // The module is not cached, but we have a module map from which we can
+    // build the module.
 
     // Check whether there is a cycle in the module graph.
     SmallVectorImpl<std::string> &ModuleBuildPath
@@ -1079,8 +1083,7 @@ ModuleKey CompilerInstance::loadModule(SourceLocation ImportLoc,
     getDiagnostics().Report(ModuleNameLoc, diag::warn_module_build)
       << ModuleName.getName();
     BuildingModule = true;
-    compileModule(*this, ModuleName.getName(), ModuleFileName, 
-                  Module->UmbrellaHeader->getName());
+    compileModule(*this, Module, ModuleFileName);
     ModuleFile = FileMgr->getFile(ModuleFileName);
   }
 
