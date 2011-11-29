@@ -5557,26 +5557,18 @@ public:
     CCK_CStyleCast,
     /// \brief A functional-style cast.
     CCK_FunctionalCast,
-    /// \breif A static cast
-    CCK_StaticCast,
     /// \brief A cast other than a C-style cast.
     CCK_OtherCast
   };
 
-  /// CastExprToType - If Expr is not of type 'Type', insert a cast of the
-  /// specified kind.
-  /// Redundant implicit casts are merged together.
-  ExprResult CastExprToType(Expr *E, QualType Ty,
-                            CastKind Kind, ExprValueKind VK,
-                            const CXXCastPath *BasePath,
-                            CheckedConversionKind CCK);
-     
-  /// ImpCastExprToType - If Expr is not of type 'Type', insert an implicit cast.
-  /// If there is already an implicit cast, merge into the existing one.
-  /// The result is of the given category.
+  /// ImpCastExprToType - If Expr is not of type 'Type', insert an implicit
+  /// cast.  If there is already an implicit cast, merge into the existing one.
+  /// If isLvalue, the result of the cast is an lvalue.
   ExprResult ImpCastExprToType(Expr *E, QualType Type, CastKind CK,
                                ExprValueKind VK = VK_RValue,
-                               const CXXCastPath *BasePath = 0);
+                               const CXXCastPath *BasePath = 0,
+                               CheckedConversionKind CCK
+                                  = CCK_ImplicitConversion);
 
   /// ScalarTypeToBooleanCastKind - Returns the cast kind corresponding
   /// to the conversion from scalar type ScalarTy to the Boolean type.
@@ -5765,10 +5757,10 @@ public:
                                        AssignmentAction Action,
                                        CheckedConversionKind CCK
                                           = CCK_ImplicitConversion);
-  ExprResult PerformConversion(Expr *From, QualType ToType,
-                               const StandardConversionSequence& SCS,
-                               AssignmentAction Action,
-                               CheckedConversionKind CCK);
+  ExprResult PerformImplicitConversion(Expr *From, QualType ToType,
+                                       const StandardConversionSequence& SCS,
+                                       AssignmentAction Action,
+                                       CheckedConversionKind CCK);
 
   /// the following "Check" methods will return a valid/converted QualType
   /// or a null QualType (indicating an error diagnostic was issued).

@@ -178,11 +178,9 @@ public:
   /// \brief Retrieve the location of the cast operator keyword, e.g.,
   /// "static_cast".
   SourceLocation getOperatorLoc() const { return Loc; }
-  void setOperatorLoc(SourceLocation const& OpLoc) { Loc = OpLoc; }
 
   /// \brief Retrieve the location of the closing parenthesis.
   SourceLocation getRParenLoc() const { return RParenLoc; }
-  void setRParenLoc(SourceLocation const& Loc) { RParenLoc = Loc; }
 
   SourceRange getSourceRange() const {
     return SourceRange(Loc, RParenLoc);

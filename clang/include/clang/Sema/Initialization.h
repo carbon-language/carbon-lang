@@ -340,7 +340,7 @@ private:
     SIK_Default = IK_Default, ///< Default initialization
     SIK_Value = IK_Value,     ///< Value initialization
     SIK_ImplicitValue,        ///< Implicit value initialization
-    SIK_DirectStaticCast,  ///< Direct initialization due to a static cast
+    SIK_DirectCast,  ///< Direct initialization due to a cast
     /// \brief Direct initialization due to a C-style cast.
     SIK_DirectCStyleCast,
     /// \brief Direct initialization due to a functional-style cast.
@@ -372,8 +372,8 @@ public:
 
   /// \brief Create a direct initialization due to a cast that isn't a C-style 
   /// or functional cast.
-  static InitializationKind CreateStaticCast(SourceRange TypeRange) {
-    return InitializationKind(SIK_DirectStaticCast,
+  static InitializationKind CreateCast(SourceRange TypeRange) {
+    return InitializationKind(SIK_DirectCast,
                               TypeRange.getBegin(), TypeRange.getBegin(), 
                               TypeRange.getEnd());
   }
@@ -425,7 +425,7 @@ public:
   
   /// \brief Determine whether this initialization is an explicit cast.
   bool isExplicitCast() const {
-    return Kind == SIK_DirectStaticCast || 
+    return Kind == SIK_DirectCast || 
            Kind == SIK_DirectCStyleCast ||
            Kind == SIK_DirectFunctionalCast;
   }
@@ -440,11 +440,6 @@ public:
     return Kind == SIK_DirectCStyleCast;
   }
 
-  /// brief Determine whether this is a static cast.
-  bool isStaticCast() const {
-    return Kind == SIK_DirectStaticCast;
-  }
-  
   /// brief Determine whether this is a functional-style cast.
   bool isFunctionalCast() const {
     return Kind == SIK_DirectFunctionalCast;

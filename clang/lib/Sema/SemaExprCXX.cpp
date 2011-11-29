@@ -2125,8 +2125,8 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
                                 CheckedConversionKind CCK) {
   switch (ICS.getKind()) {
   case ImplicitConversionSequence::StandardConversion: {
-    ExprResult Res = PerformConversion(From, ToType, ICS.Standard,
-                                       Action, CCK);
+    ExprResult Res = PerformImplicitConversion(From, ToType, ICS.Standard,
+                                               Action, CCK);
     if (Res.isInvalid())
       return ExprError();
     From = Res.take();
@@ -2160,8 +2160,9 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
       // Watch out for elipsis conversion.
       if (!ICS.UserDefined.EllipsisConversion) {
         ExprResult Res =
-          PerformConversion(From, BeforeToType,
-                            ICS.UserDefined.Before, AA_Converting, CCK);
+          PerformImplicitConversion(From, BeforeToType,
+                                    ICS.UserDefined.Before, AA_Converting,
+                                    CCK);
         if (Res.isInvalid())
           return ExprError();
         From = Res.take();
@@ -2181,8 +2182,8 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
 
       From = CastArg.take();
 
-      return PerformConversion(From, ToType, ICS.UserDefined.After,
-                               AA_Converting, CCK);
+      return PerformImplicitConversion(From, ToType, ICS.UserDefined.After,
+                                       AA_Converting, CCK);
   }
 
   case ImplicitConversionSequence::AmbiguousConversion:
@@ -2202,13 +2203,13 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
   return Owned(From);
 }
 
-/// PerformConversion - Perform a conversion of the
+/// PerformImplicitConversion - Perform an implicit conversion of the
 /// expression From to the type ToType by following the standard
 /// conversion sequence SCS. Returns the converted
 /// expression. Flavor is the context in which we're performing this
 /// conversion, for use in error messages.
 ExprResult
-Sema::PerformConversion(Expr *From, QualType ToType,
+Sema::PerformImplicitConversion(Expr *From, QualType ToType,
                                 const StandardConversionSequence& SCS,
                                 AssignmentAction Action, 
                                 CheckedConversionKind CCK) {
@@ -2262,7 +2263,7 @@ Sema::PerformConversion(Expr *From, QualType ToType,
     FromType = From->getType();
   }
 
-  // Perform the first conversion step.
+  // Perform the first implicit conversion.
   switch (SCS.First) {
   case ICK_Identity:
     // Nothing to do.
@@ -2277,21 +2278,21 @@ Sema::PerformConversion(Expr *From, QualType ToType,
 
   case ICK_Array_To_Pointer:
     FromType = Context.getArrayDecayedType(FromType);
-    From = CastExprToType(From, FromType, CK_ArrayToPointerDecay, 
-                          VK_RValue, /*BasePath=*/0, CCK).take();
+    From = ImpCastExprToType(From, FromType, CK_ArrayToPointerDecay, 
+                             VK_RValue, /*BasePath=*/0, CCK).take();
     break;
 
   case ICK_Function_To_Pointer:
     FromType = Context.getPointerType(FromType);
-    From = CastExprToType(From, FromType, CK_FunctionToPointerDecay, 
-                          VK_RValue, /*BasePath=*/0, CCK).take();
+    From = ImpCastExprToType(From, FromType, CK_FunctionToPointerDecay, 
+                             VK_RValue, /*BasePath=*/0, CCK).take();
     break;
 
   default:
     llvm_unreachable("Improper first standard conversion");
   }
 
-  // Perform the second conversion step
+  // Perform the second implicit conversion
   switch (SCS.Second) {
   case ICK_Identity:
     // If both sides are functions (or pointers/references to them), there could
@@ -2307,20 +2308,20 @@ Sema::PerformConversion(Expr *From, QualType ToType,
     if (CheckExceptionSpecCompatibility(From, ToType))
       return ExprError();
 
-    From = CastExprToType(From, ToType, CK_NoOp, 
-                          VK_RValue, /*BasePath=*/0, CCK).take();
+    From = ImpCastExprToType(From, ToType, CK_NoOp, 
+                             VK_RValue, /*BasePath=*/0, CCK).take();
     break;
 
   case ICK_Integral_Promotion:
   case ICK_Integral_Conversion:
-    From = CastExprToType(From, ToType, CK_IntegralCast, 
-                          VK_RValue, /*BasePath=*/0, CCK).take();
+    From = ImpCastExprToType(From, ToType, CK_IntegralCast, 
+                             VK_RValue, /*BasePath=*/0, CCK).take();
     break;
 
   case ICK_Floating_Promotion:
   case ICK_Floating_Conversion:
-    From = CastExprToType(From, ToType, CK_FloatingCast, 
-                          VK_RValue, /*BasePath=*/0, CCK).take();
+    From = ImpCastExprToType(From, ToType, CK_FloatingCast, 
+                             VK_RValue, /*BasePath=*/0, CCK).take();
     break;
 
   case ICK_Complex_Promotion:
@@ -2338,23 +2339,23 @@ Sema::PerformConversion(Expr *From, QualType ToType,
     } else {
       CK = CK_IntegralComplexCast;
     }
-    From = CastExprToType(From, ToType, CK, 
-                          VK_RValue, /*BasePath=*/0, CCK).take();
+    From = ImpCastExprToType(From, ToType, CK, 
+                             VK_RValue, /*BasePath=*/0, CCK).take();
     break;
   }
 
   case ICK_Floating_Integral:
     if (ToType->isRealFloatingType())
-      From = CastExprToType(From, ToType, CK_IntegralToFloating, 
-                            VK_RValue, /*BasePath=*/0, CCK).take();
+      From = ImpCastExprToType(From, ToType, CK_IntegralToFloating, 
+                               VK_RValue, /*BasePath=*/0, CCK).take();
     else
-      From = CastExprToType(From, ToType, CK_FloatingToIntegral, 
-                            VK_RValue, /*BasePath=*/0, CCK).take();
+      From = ImpCastExprToType(From, ToType, CK_FloatingToIntegral, 
+                               VK_RValue, /*BasePath=*/0, CCK).take();
     break;
 
   case ICK_Compatible_Conversion:
-      From = CastExprToType(From, ToType, CK_NoOp, 
-                            VK_RValue, /*BasePath=*/0, CCK).take();
+      From = ImpCastExprToType(From, ToType, CK_NoOp, 
+                               VK_RValue, /*BasePath=*/0, CCK).take();
     break;
 
   case ICK_Writeback_Conversion:
@@ -2402,7 +2403,8 @@ Sema::PerformConversion(Expr *From, QualType ToType,
       From = E.take();
     }
 
-    From = CastExprToType(From, ToType, Kind, VK_RValue, &BasePath, CCK).take();
+    From = ImpCastExprToType(From, ToType, Kind, VK_RValue, &BasePath, CCK)
+             .take();
     break;
   }
 
@@ -2413,7 +2415,8 @@ Sema::PerformConversion(Expr *From, QualType ToType,
       return ExprError();
     if (CheckExceptionSpecCompatibility(From, ToType))
       return ExprError();
-    From = CastExprToType(From, ToType, Kind, VK_RValue, &BasePath, CCK).take();
+    From = ImpCastExprToType(From, ToType, Kind, VK_RValue, &BasePath, CCK)
+             .take();
     break;
   }
 
@@ -2424,9 +2427,9 @@ Sema::PerformConversion(Expr *From, QualType ToType,
       FromType = Context.FloatTy;
     }
 
-    From = CastExprToType(From, Context.BoolTy,
-                          ScalarTypeToBooleanCastKind(FromType), 
-                          VK_RValue, /*BasePath=*/0, CCK).take();
+    From = ImpCastExprToType(From, Context.BoolTy,
+                             ScalarTypeToBooleanCastKind(FromType), 
+                             VK_RValue, /*BasePath=*/0, CCK).take();
     break;
 
   case ICK_Derived_To_Base: {
@@ -2439,20 +2442,20 @@ Sema::PerformConversion(Expr *From, QualType ToType,
                                      CStyle))
       return ExprError();
 
-    From = CastExprToType(From, ToType.getNonReferenceType(),
-                          CK_DerivedToBase, From->getValueKind(),
-                          &BasePath, CCK).take();
+    From = ImpCastExprToType(From, ToType.getNonReferenceType(),
+                      CK_DerivedToBase, From->getValueKind(),
+                      &BasePath, CCK).take();
     break;
   }
 
   case ICK_Vector_Conversion:
-    From = CastExprToType(From, ToType, CK_BitCast, 
-                          VK_RValue, /*BasePath=*/0, CCK).take();
+    From = ImpCastExprToType(From, ToType, CK_BitCast, 
+                             VK_RValue, /*BasePath=*/0, CCK).take();
     break;
 
   case ICK_Vector_Splat:
-    From = CastExprToType(From, ToType, CK_VectorSplat, 
-                          VK_RValue, /*BasePath=*/0, CCK).take();
+    From = ImpCastExprToType(From, ToType, CK_VectorSplat, 
+                             VK_RValue, /*BasePath=*/0, CCK).take();
     break;
 
   case ICK_Complex_Real:
@@ -2465,22 +2468,17 @@ Sema::PerformConversion(Expr *From, QualType ToType,
       if (Context.hasSameUnqualifiedType(ElType, From->getType())) {
         // do nothing
       } else if (From->getType()->isRealFloatingType()) {
-        From = CastExprToType(From, ElType,
-                              isFloatingComplex ? CK_FloatingCast
-                                                : CK_FloatingToIntegral,
-                              VK_RValue, /*BasePath=*/0, CCK).take();
+        From = ImpCastExprToType(From, ElType,
+                isFloatingComplex ? CK_FloatingCast : CK_FloatingToIntegral).take();
       } else {
         assert(From->getType()->isIntegerType());
-        From = CastExprToType(From, ElType,
-                              isFloatingComplex ? CK_IntegralToFloating
-                                                : CK_IntegralCast,
-                              VK_RValue, /*BasePath=*/0, CCK).take();
+        From = ImpCastExprToType(From, ElType,
+                isFloatingComplex ? CK_IntegralToFloating : CK_IntegralCast).take();
       }
       // y -> _Complex y
-      From = CastExprToType(From, ToType,
-                            isFloatingComplex ? CK_FloatingRealToComplex
-                                              : CK_IntegralRealToComplex,
-                            VK_RValue, /*BasePath=*/ 0, CCK).take();
+      From = ImpCastExprToType(From, ToType,
+                   isFloatingComplex ? CK_FloatingRealToComplex
+                                     : CK_IntegralRealToComplex).take();
 
     // Case 2.  _Complex x -> y
     } else {
@@ -2491,32 +2489,30 @@ Sema::PerformConversion(Expr *From, QualType ToType,
       bool isFloatingComplex = ElType->isRealFloatingType();
 
       // _Complex x -> x
-      From = CastExprToType(From, ElType,
-                            isFloatingComplex ? CK_FloatingComplexToReal
-                                              : CK_IntegralComplexToReal, 
-                            VK_RValue, /*BasePath=*/0, CCK).take();
+      From = ImpCastExprToType(From, ElType,
+                   isFloatingComplex ? CK_FloatingComplexToReal
+                                     : CK_IntegralComplexToReal, 
+                               VK_RValue, /*BasePath=*/0, CCK).take();
 
       // x -> y
       if (Context.hasSameUnqualifiedType(ElType, ToType)) {
         // do nothing
       } else if (ToType->isRealFloatingType()) {
-        From = CastExprToType(From, ToType,
-                              isFloatingComplex ? CK_FloatingCast 
-                                                : CK_IntegralToFloating, 
-                              VK_RValue, /*BasePath=*/0, CCK).take();
+        From = ImpCastExprToType(From, ToType,
+                   isFloatingComplex ? CK_FloatingCast : CK_IntegralToFloating, 
+                                 VK_RValue, /*BasePath=*/0, CCK).take();
       } else {
         assert(ToType->isIntegerType());
-        From = CastExprToType(From, ToType,
-                              isFloatingComplex ? CK_FloatingToIntegral
-                                                : CK_IntegralCast, 
-                              VK_RValue, /*BasePath=*/0, CCK).take();
+        From = ImpCastExprToType(From, ToType,
+                   isFloatingComplex ? CK_FloatingToIntegral : CK_IntegralCast, 
+                                 VK_RValue, /*BasePath=*/0, CCK).take();
       }
     }
     break;
   
   case ICK_Block_Pointer_Conversion: {
-    From = CastExprToType(From, ToType.getUnqualifiedType(), CK_BitCast,
-                          VK_RValue, /*BasePath=*/0, CCK).take();
+    From = ImpCastExprToType(From, ToType.getUnqualifiedType(), CK_BitCast,
+                             VK_RValue, /*BasePath=*/0, CCK).take();
     break;
   }
       
@@ -2551,8 +2547,8 @@ Sema::PerformConversion(Expr *From, QualType ToType,
     // target type isn't a reference.
     ExprValueKind VK = ToType->isReferenceType() ?
                                   From->getValueKind() : VK_RValue;
-    From = CastExprToType(From, ToType.getNonLValueExprType(Context),
-                          CK_NoOp, VK, /*BasePath=*/0, CCK).take();
+    From = ImpCastExprToType(From, ToType.getNonLValueExprType(Context),
+                             CK_NoOp, VK, /*BasePath=*/0, CCK).take();
 
     if (SCS.DeprecatedStringLiteralToCharPtr &&
         !getLangOptions().WritableStrings)

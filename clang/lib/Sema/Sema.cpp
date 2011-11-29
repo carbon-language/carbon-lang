@@ -234,16 +234,13 @@ void Sema::PrintStats() const {
   AnalysisWarnings.PrintStats();
 }
 
-/// CastExprToType - If Expr is not of type 'Type', insert a cast of the
-/// specified kind.
-/// Redundant implicit casts are merged together.
-/// Pay attention: if CCK != CCK_ImplicitConversion,
-/// users of this function must fill
-/// SourceTypeInfos and SourceLocations later
-ExprResult Sema::CastExprToType(Expr *E, QualType Ty,
-                                CastKind Kind, ExprValueKind VK,
-                                const CXXCastPath *BasePath,
-                                CheckedConversionKind CCK) {
+/// ImpCastExprToType - If Expr is not of type 'Type', insert an implicit cast.
+/// If there is already an implicit cast, merge into the existing one.
+/// The result is of the given category.
+ExprResult Sema::ImpCastExprToType(Expr *E, QualType Ty,
+                                   CastKind Kind, ExprValueKind VK,
+                                   const CXXCastPath *BasePath,
+                                   CheckedConversionKind CCK) {
 #ifndef NDEBUG
   if (VK == VK_RValue && !E->isRValue()) {
     switch (Kind) {
@@ -279,41 +276,16 @@ ExprResult Sema::CastExprToType(Expr *E, QualType Ty,
       MarkVTableUsed(E->getLocStart(), 
                      cast<CXXRecordDecl>(RecordTy->getDecl()));
   }
-  
-  switch(CCK) {
-    default:
-      llvm_unreachable("Unexpected CheckedConversionKind");
-    case CCK_ImplicitConversion:
-      if (ImplicitCastExpr *ImpCast = dyn_cast<ImplicitCastExpr>(E)) {
-        if (ImpCast->getCastKind() == Kind && (!BasePath || BasePath->empty())) {
-          ImpCast->setType(Ty);
-          ImpCast->setValueKind(VK);
-          return Owned(E);
-        }
-      }
-      return Owned(ImplicitCastExpr::Create(Context, Ty, Kind, E, BasePath, VK));
-    case CCK_CStyleCast:
-      return Owned(CStyleCastExpr::Create(Context, Ty, VK, Kind, E, BasePath,
-                                          0, SourceLocation(), SourceLocation()));
-    case CCK_FunctionalCast:
-      return Owned(CXXFunctionalCastExpr::Create(Context, Ty, VK, 0,
-                                                 SourceLocation(), Kind, E,
-                                                 BasePath, SourceLocation()));
-    case CCK_StaticCast:
-      return Owned(CXXStaticCastExpr::Create(Context, Ty, VK, Kind, E, BasePath,
-                                             0, SourceLocation(),
-                                             SourceLocation()));
-  }
-  
-}
 
-/// ImpCastExprToType - If Expr is not of type 'Type', insert an implicit cast.
-/// If there is already an implicit cast, merge into the existing one.
-/// The result is of the given category.
-ExprResult Sema::ImpCastExprToType(Expr *E, QualType Ty,
-                                   CastKind Kind, ExprValueKind VK,
-                                   const CXXCastPath *BasePath) {
-  return CastExprToType(E, Ty, Kind, VK, BasePath, CCK_ImplicitConversion);
+  if (ImplicitCastExpr *ImpCast = dyn_cast<ImplicitCastExpr>(E)) {
+    if (ImpCast->getCastKind() == Kind && (!BasePath || BasePath->empty())) {
+      ImpCast->setType(Ty);
+      ImpCast->setValueKind(VK);
+      return Owned(E);
+    }
+  }
+
+  return Owned(ImplicitCastExpr::Create(Context, Ty, Kind, E, BasePath, VK));
 }
 
 /// ScalarTypeToBooleanCastKind - Returns the cast kind corresponding
